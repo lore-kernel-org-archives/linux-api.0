@@ -1,381 +1,227 @@
-From: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v3 5/5] selftests/cgroup: add tests for cloning into cgroups
-Date: Fri, 17 Jan 2020 01:21:43 +0100
-Message-ID: <20200117002143.15559-6-christian.brauner@ubuntu.com>
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Subject: [PATCH v3 3/5] cgroup: refactor fork helpers
+Date: Fri, 17 Jan 2020 01:21:41 +0100
+Message-ID: <20200117002143.15559-4-christian.brauner@ubuntu.com>
 References: <20200117002143.15559-1-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20200117002143.15559-1-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Roman Gushchin <guro-b10kYP2dOMg@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200117002143.15559-1-christian.brauner@ubuntu.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Tejun Heo <tj@kernel.org>
+Cc: Oleg Nesterov <oleg@redhat.com>, Christian Brauner <christian.brauner@ubuntu.com>, Johannes Weiner <hannes@cmpxchg.org>, Li Zefan <lizefan@huawei.com>, cgroups@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Expand the cgroup test-suite to include tests for CLONE_INTO_CGROUP.
-This adds the following tests:
-- CLONE_INTO_CGROUP manages to clone a process directly into a correctly
-  delegated cgroup
-- CLONE_INTO_CGROUP fails to clone a process into a cgroup that has been
-  removed after we've opened an fd to it
-- CLONE_INTO_CGROUP fails to clone a process into an invalid domain
-  cgroup
-- CLONE_INTO_CGROUP adheres to the no internal process constraint
-- CLONE_INTO_CGROUP works with the freezer feature
+This refactors the fork helpers so they can be easily modified in the
+next patches. The patch just passes in the parent task_struct and moves
+the cgroup threadgroup rwsem grab and release into the helpers. The
+don't need to be directly exposed in fork.c.
 
-Cc: Roman Gushchin <guro-b10kYP2dOMg@public.gmane.org>
-Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Signed-off-by: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Cc: Tejun Heo <tj@kernel.org>
+Cc: Johannes Weiner <hannes@cmpxchg.org>
+Cc: Li Zefan <lizefan@huawei.com>
+Cc: cgroups@vger.kernel.org
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v1 */
-Link: https://lore.kernel.org/r/20191218173516.7875-4-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+patch not present
 
 /* v2 */
-Link: https://lore.kernel.org/r/20191223061504.28716-4-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
-unchanged
+patch not present
 
 /* v3 */
-unchanged
----
- tools/testing/selftests/cgroup/Makefile       |   6 +-
- tools/testing/selftests/cgroup/cgroup_util.c  | 126 ++++++++++++++++++
- tools/testing/selftests/cgroup/cgroup_util.h  |   4 +
- tools/testing/selftests/cgroup/test_core.c    |  64 +++++++++
- .../selftests/clone3/clone3_selftests.h       |  19 ++-
- 5 files changed, 214 insertions(+), 5 deletions(-)
+patch introduced
+- Tejun Heo <tj@kernel.org>:
+  - split into separate commmit
 
-diff --git a/tools/testing/selftests/cgroup/Makefile b/tools/testing/selftests/cgroup/Makefile
-index 66aafe1f5746..967f268fde74 100644
---- a/tools/testing/selftests/cgroup/Makefile
-+++ b/tools/testing/selftests/cgroup/Makefile
-@@ -11,6 +11,6 @@ TEST_GEN_PROGS += test_freezer
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+---
+ include/linux/cgroup.h | 18 +++++++++-----
+ kernel/cgroup/cgroup.c | 56 ++++++++++++++++++++++++++----------------
+ kernel/fork.c          | 12 +++------
+ 3 files changed, 51 insertions(+), 35 deletions(-)
+
+diff --git a/include/linux/cgroup.h b/include/linux/cgroup.h
+index d7ddebd0cdec..5349465bfac1 100644
+--- a/include/linux/cgroup.h
++++ b/include/linux/cgroup.h
+@@ -121,9 +121,12 @@ int proc_cgroup_show(struct seq_file *m, struct pid_namespace *ns,
+ 		     struct pid *pid, struct task_struct *tsk);
  
- include ../lib.mk
+ void cgroup_fork(struct task_struct *p);
+-extern int cgroup_can_fork(struct task_struct *p);
+-extern void cgroup_cancel_fork(struct task_struct *p);
+-extern void cgroup_post_fork(struct task_struct *p);
++extern int cgroup_can_fork(struct task_struct *parent,
++			   struct task_struct *child);
++extern void cgroup_cancel_fork(struct task_struct *parent,
++			       struct task_struct *child);
++extern void cgroup_post_fork(struct task_struct *parent,
++			     struct task_struct *child);
+ void cgroup_exit(struct task_struct *p);
+ void cgroup_release(struct task_struct *p);
+ void cgroup_free(struct task_struct *p);
+@@ -707,9 +710,12 @@ static inline int cgroupstats_build(struct cgroupstats *stats,
+ 				    struct dentry *dentry) { return -EINVAL; }
  
--$(OUTPUT)/test_memcontrol: cgroup_util.c
--$(OUTPUT)/test_core: cgroup_util.c
--$(OUTPUT)/test_freezer: cgroup_util.c
-+$(OUTPUT)/test_memcontrol: cgroup_util.c ../clone3/clone3_selftests.h
-+$(OUTPUT)/test_core: cgroup_util.c ../clone3/clone3_selftests.h
-+$(OUTPUT)/test_freezer: cgroup_util.c ../clone3/clone3_selftests.h
-diff --git a/tools/testing/selftests/cgroup/cgroup_util.c b/tools/testing/selftests/cgroup/cgroup_util.c
-index 8f7131dcf1ff..8a637ca7d73a 100644
---- a/tools/testing/selftests/cgroup/cgroup_util.c
-+++ b/tools/testing/selftests/cgroup/cgroup_util.c
-@@ -15,6 +15,7 @@
- #include <unistd.h>
+ static inline void cgroup_fork(struct task_struct *p) {}
+-static inline int cgroup_can_fork(struct task_struct *p) { return 0; }
+-static inline void cgroup_cancel_fork(struct task_struct *p) {}
+-static inline void cgroup_post_fork(struct task_struct *p) {}
++static inline int cgroup_can_fork(struct task_struct *parent,
++				  struct task_struct *child) { return 0; }
++static inline void cgroup_cancel_fork(struct task_struct *parent,
++			       struct task_struct *child) {};
++static inline void cgroup_post_fork(struct task_struct *parent,
++				    struct task_struct *child) {};
+ static inline void cgroup_exit(struct task_struct *p) {}
+ static inline void cgroup_release(struct task_struct *p) {}
+ static inline void cgroup_free(struct task_struct *p) {}
+diff --git a/kernel/cgroup/cgroup.c b/kernel/cgroup/cgroup.c
+index f05efc2677c8..49d8cf087e10 100644
+--- a/kernel/cgroup/cgroup.c
++++ b/kernel/cgroup/cgroup.c
+@@ -5902,17 +5902,22 @@ static struct cgroup *cgroup_get_from_file(struct file *f)
  
- #include "cgroup_util.h"
-+#include "../clone3/clone3_selftests.h"
- 
- static ssize_t read_text(const char *path, char *buf, size_t max_len)
+ /**
+  * cgroup_can_fork - called on a new task before the process is exposed
+- * @child: the task in question.
++ * @parent: the parent process of @child
++ * @child: the child process of @parent
++ * @kargs: the arguments passed to create the child process
+  *
+- * This calls the subsystem can_fork() callbacks. If the can_fork() callback
+- * returns an error, the fork aborts with that error code. This allows for
+- * a cgroup subsystem to conditionally allow or deny new forks.
++ * This calls the subsystem can_fork() callbacks. If the cgroup_can_fork()
++ * callback returns an error, the fork aborts with that error code. This
++ * allows for a cgroup subsystem to conditionally allow or deny new forks.
+  */
+-int cgroup_can_fork(struct task_struct *child)
++int cgroup_can_fork(struct task_struct *parent, struct task_struct *child)
++	__acquires(&cgroup_threadgroup_rwsem) __releases(&cgroup_threadgroup_rwsem)
  {
-@@ -331,12 +332,112 @@ int cg_run(const char *cgroup,
+ 	struct cgroup_subsys *ss;
+ 	int i, j, ret;
+ 
++	cgroup_threadgroup_change_begin(parent);
++
+ 	do_each_subsys_mask(ss, i, have_canfork_callback) {
+ 		ret = ss->can_fork(child);
+ 		if (ret)
+@@ -5929,17 +5934,22 @@ int cgroup_can_fork(struct task_struct *child)
+ 			ss->cancel_fork(child);
  	}
- }
  
-+pid_t clone_into_cgroup(int cgroup_fd)
-+{
-+#ifdef CLONE_ARGS_SIZE_VER2
-+	pid_t pid;
++	cgroup_threadgroup_change_end(parent);
 +
-+	struct clone_args args = {
-+		.flags = CLONE_INTO_CGROUP,
-+		.exit_signal = SIGCHLD,
-+		.cgroup = cgroup_fd,
-+	};
-+
-+	pid = sys_clone3(&args, sizeof(struct clone_args));
-+	/*
-+	 * Verify that this is a genuine test failure:
-+	 * ENOSYS -> clone3() not available
-+	 * E2BIG  -> CLONE_INTO_CGROUP not available
-+	 */
-+	if (pid < 0 && (errno == ENOSYS || errno == E2BIG))
-+		goto pretend_enosys;
-+
-+	return pid;
-+
-+pretend_enosys:
-+#endif
-+	errno = ENOSYS;
-+	return -ENOSYS;
-+}
-+
-+int clone_reap(pid_t pid, int options)
-+{
-+	int ret;
-+	siginfo_t info = {
-+		.si_signo = 0,
-+	};
-+
-+again:
-+	ret = waitid(P_PID, pid, &info, options | __WALL | __WNOTHREAD);
-+	if (ret < 0) {
-+		if (errno == EINTR)
-+			goto again;
-+		return -1;
-+	}
-+
-+	if (options & WEXITED) {
-+		if (WIFEXITED(info.si_status))
-+			return WEXITSTATUS(info.si_status);
-+	}
-+
-+	if (options & WSTOPPED) {
-+		if (WIFSTOPPED(info.si_status))
-+			return WSTOPSIG(info.si_status);
-+	}
-+
-+	if (options & WCONTINUED) {
-+		if (WIFCONTINUED(info.si_status))
-+			return 0;
-+	}
-+
-+	return -1;
-+}
-+
-+int dirfd_open_opath(const char *dir)
-+{
-+	return open(dir, O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW | O_PATH);
-+}
-+
-+#define close_prot_errno(fd)                                                   \
-+	if (fd >= 0) {                                                         \
-+		int _e_ = errno;                                               \
-+		close(fd);                                                     \
-+		errno = _e_;                                                   \
-+	}
-+
-+static int clone_into_cgroup_run_nowait(const char *cgroup,
-+					int (*fn)(const char *cgroup, void *arg),
-+					void *arg)
-+{
-+	int cgroup_fd;
-+	pid_t pid;
-+
-+	cgroup_fd =  dirfd_open_opath(cgroup);
-+	if (cgroup_fd < 0)
-+		return -1;
-+
-+	pid = clone_into_cgroup(cgroup_fd);
-+	close_prot_errno(cgroup_fd);
-+	if (pid == 0)
-+		exit(fn(cgroup, arg));
-+
-+	return pid;
-+}
-+
- int cg_run_nowait(const char *cgroup,
- 		  int (*fn)(const char *cgroup, void *arg),
- 		  void *arg)
- {
- 	int pid;
- 
-+	pid = clone_into_cgroup_run_nowait(cgroup, fn, arg);
-+	if (pid > 0)
-+		return pid;
-+
-+	/* Genuine test failure. */
-+	if (pid < 0 && errno != ENOSYS)
-+		return -1;
-+
- 	pid = fork();
- 	if (pid == 0) {
- 		char buf[64];
-@@ -450,3 +551,28 @@ int proc_read_strstr(int pid, bool thread, const char *item, const char *needle)
- 
- 	return strstr(buf, needle) ? 0 : -1;
- }
-+
-+int clone_into_cgroup_run_wait(const char *cgroup)
-+{
-+	int cgroup_fd;
-+	pid_t pid;
-+
-+	cgroup_fd =  dirfd_open_opath(cgroup);
-+	if (cgroup_fd < 0)
-+		return -1;
-+
-+	pid = clone_into_cgroup(cgroup_fd);
-+	close_prot_errno(cgroup_fd);
-+	if (pid < 0)
-+		return -1;
-+
-+	if (pid == 0)
-+		exit(EXIT_SUCCESS);
-+
-+	/*
-+	 * We don't care whether this fails. We only care whether the initial
-+	 * clone succeeded.
-+	 */
-+	(void)clone_reap(pid, WEXITED);
-+	return 0;
-+}
-diff --git a/tools/testing/selftests/cgroup/cgroup_util.h b/tools/testing/selftests/cgroup/cgroup_util.h
-index 49c54fbdb229..5a1305dd1f0b 100644
---- a/tools/testing/selftests/cgroup/cgroup_util.h
-+++ b/tools/testing/selftests/cgroup/cgroup_util.h
-@@ -50,3 +50,7 @@ extern int cg_wait_for_proc_count(const char *cgroup, int count);
- extern int cg_killall(const char *cgroup);
- extern ssize_t proc_read_text(int pid, bool thread, const char *item, char *buf, size_t size);
- extern int proc_read_strstr(int pid, bool thread, const char *item, const char *needle);
-+extern pid_t clone_into_cgroup(int cgroup_fd);
-+extern int clone_reap(pid_t pid, int options);
-+extern int clone_into_cgroup_run_wait(const char *cgroup);
-+extern int dirfd_open_opath(const char *dir);
-diff --git a/tools/testing/selftests/cgroup/test_core.c b/tools/testing/selftests/cgroup/test_core.c
-index c5ca669feb2b..96e016ccafe0 100644
---- a/tools/testing/selftests/cgroup/test_core.c
-+++ b/tools/testing/selftests/cgroup/test_core.c
-@@ -25,8 +25,11 @@
- static int test_cgcore_populated(const char *root)
- {
- 	int ret = KSFT_FAIL;
-+	int err;
- 	char *cg_test_a = NULL, *cg_test_b = NULL;
- 	char *cg_test_c = NULL, *cg_test_d = NULL;
-+	int cgroup_fd = -EBADF;
-+	pid_t pid;
- 
- 	cg_test_a = cg_name(root, "cg_test_a");
- 	cg_test_b = cg_name(root, "cg_test_a/cg_test_b");
-@@ -78,6 +81,52 @@ static int test_cgcore_populated(const char *root)
- 	if (cg_read_strcmp(cg_test_d, "cgroup.events", "populated 0\n"))
- 		goto cleanup;
- 
-+	/* Test that we can directly clone into a new cgroup. */
-+	cgroup_fd = dirfd_open_opath(cg_test_d);
-+	if (cgroup_fd < 0)
-+		goto cleanup;
-+
-+	pid = clone_into_cgroup(cgroup_fd);
-+	if (pid < 0) {
-+		if (errno == ENOSYS)
-+			goto cleanup_pass;
-+		goto cleanup;
-+	}
-+
-+	if (pid == 0) {
-+		if (raise(SIGSTOP))
-+			exit(EXIT_FAILURE);
-+		exit(EXIT_SUCCESS);
-+	}
-+
-+	err = cg_read_strcmp(cg_test_d, "cgroup.events", "populated 1\n");
-+
-+	(void)clone_reap(pid, WSTOPPED);
-+	(void)kill(pid, SIGCONT);
-+	(void)clone_reap(pid, WEXITED);
-+
-+	if (err)
-+		goto cleanup;
-+
-+	if (cg_read_strcmp(cg_test_d, "cgroup.events", "populated 0\n"))
-+		goto cleanup;
-+
-+	/* Remove cgroup. */
-+	if (cg_test_d) {
-+		cg_destroy(cg_test_d);
-+		free(cg_test_d);
-+		cg_test_d = NULL;
-+	}
-+
-+	pid = clone_into_cgroup(cgroup_fd);
-+	if (pid < 0)
-+		goto cleanup_pass;
-+	if (pid == 0)
-+		exit(EXIT_SUCCESS);
-+	(void)clone_reap(pid, WEXITED);
-+	goto cleanup;
-+
-+cleanup_pass:
- 	ret = KSFT_PASS;
- 
- cleanup:
-@@ -93,6 +142,8 @@ static int test_cgcore_populated(const char *root)
- 	free(cg_test_c);
- 	free(cg_test_b);
- 	free(cg_test_a);
-+	if (cgroup_fd >= 0)
-+		close(cgroup_fd);
  	return ret;
  }
  
-@@ -136,6 +187,16 @@ static int test_cgcore_invalid_domain(const char *root)
- 	if (errno != EOPNOTSUPP)
- 		goto cleanup;
- 
-+	if (!clone_into_cgroup_run_wait(child))
-+		goto cleanup;
-+
-+	if (errno == ENOSYS)
-+		goto cleanup_pass;
-+
-+	if (errno != EOPNOTSUPP)
-+		goto cleanup;
-+
-+cleanup_pass:
- 	ret = KSFT_PASS;
- 
- cleanup:
-@@ -345,6 +406,9 @@ static int test_cgcore_internal_process_constraint(const char *root)
- 	if (!cg_enter_current(parent))
- 		goto cleanup;
- 
-+	if (!clone_into_cgroup_run_wait(parent))
-+		goto cleanup;
-+
- 	ret = KSFT_PASS;
- 
- cleanup:
-diff --git a/tools/testing/selftests/clone3/clone3_selftests.h b/tools/testing/selftests/clone3/clone3_selftests.h
-index a3f2c8ad8bcc..91c1a78ddb39 100644
---- a/tools/testing/selftests/clone3/clone3_selftests.h
-+++ b/tools/testing/selftests/clone3/clone3_selftests.h
-@@ -5,12 +5,24 @@
- 
- #define _GNU_SOURCE
- #include <sched.h>
-+#include <linux/sched.h>
-+#include <linux/types.h>
- #include <stdint.h>
- #include <syscall.h>
--#include <linux/types.h>
-+#include <sys/wait.h>
-+
-+#include "../kselftest.h"
- 
- #define ptr_to_u64(ptr) ((__u64)((uintptr_t)(ptr)))
- 
-+#ifndef CLONE_INTO_CGROUP
-+#define CLONE_INTO_CGROUP 0x200000000ULL /* Clone into a specific cgroup given the right permissions. */
-+#endif
-+
-+#ifndef CLONE_ARGS_SIZE_VER0
-+#define CLONE_ARGS_SIZE_VER0 64
-+#endif
-+
- #ifndef __NR_clone3
- #define __NR_clone3 -1
- struct clone_args {
-@@ -22,10 +34,13 @@ struct clone_args {
- 	__aligned_u64 stack;
- 	__aligned_u64 stack_size;
- 	__aligned_u64 tls;
-+#define CLONE_ARGS_SIZE_VER1 80
- 	__aligned_u64 set_tid;
- 	__aligned_u64 set_tid_size;
-+#define CLONE_ARGS_SIZE_VER2 88
-+	__aligned_u64 cgroup;
- };
--#endif
-+#endif /* __NR_clone3 */
- 
- static pid_t sys_clone3(struct clone_args *args, size_t size)
+ /**
+- * cgroup_cancel_fork - called if a fork failed after cgroup_can_fork()
+- * @child: the task in question
+- *
+- * This calls the cancel_fork() callbacks if a fork failed *after*
+- * cgroup_can_fork() succeded.
+- */
+-void cgroup_cancel_fork(struct task_struct *child)
++  * cgroup_cancel_fork - called if a fork failed after cgroup_can_fork()
++  * @parent: the parent process of @child
++  * @child: the child process of @parent
++  * @kargs: the arguments passed to create the child process
++  *
++  * This calls the cancel_fork() callbacks if a fork failed *after*
++  * cgroup_can_fork() succeded.
++  */
++void cgroup_cancel_fork(struct task_struct *parent, struct task_struct *child)
++	__releases(&cgroup_threadgroup_rwsem)
  {
+ 	struct cgroup_subsys *ss;
+ 	int i;
+@@ -5947,19 +5957,21 @@ void cgroup_cancel_fork(struct task_struct *child)
+ 	for_each_subsys(ss, i)
+ 		if (ss->cancel_fork)
+ 			ss->cancel_fork(child);
++
++	cgroup_threadgroup_change_end(parent);
+ }
+ 
+ /**
+- * cgroup_post_fork - called on a new task after adding it to the task list
+- * @child: the task in question
+- *
+- * Adds the task to the list running through its css_set if necessary and
+- * call the subsystem fork() callbacks.  Has to be after the task is
+- * visible on the task list in case we race with the first call to
+- * cgroup_task_iter_start() - to guarantee that the new task ends up on its
+- * list.
++ * cgroup_post_fork - finalize cgroup setup for the child process
++ * @parent: the parent process of @child
++ * @child: the child process of @parent
++ * @kargs: the arguments passed to create the child process
++ *
++ * Attach the child process to its css_set calling the subsystem fork()
++ * callbacks.
+  */
+-void cgroup_post_fork(struct task_struct *child)
++void cgroup_post_fork(struct task_struct *parent, struct task_struct *child)
++	__releases(&cgroup_threadgroup_rwsem)
+ {
+ 	struct cgroup_subsys *ss;
+ 	struct css_set *cset;
+@@ -6002,6 +6014,8 @@ void cgroup_post_fork(struct task_struct *child)
+ 	do_each_subsys_mask(ss, i, have_fork_callback) {
+ 		ss->fork(child);
+ 	} while_each_subsys_mask();
++
++	cgroup_threadgroup_change_end(parent);
+ }
+ 
+ /**
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 080809560072..c76758dbd594 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -2165,16 +2165,15 @@ static __latent_entropy struct task_struct *copy_process(
+ 	INIT_LIST_HEAD(&p->thread_group);
+ 	p->task_works = NULL;
+ 
+-	cgroup_threadgroup_change_begin(current);
+ 	/*
+ 	 * Ensure that the cgroup subsystem policies allow the new process to be
+ 	 * forked. It should be noted the the new process's css_set can be changed
+ 	 * between here and cgroup_post_fork() if an organisation operation is in
+ 	 * progress.
+ 	 */
+-	retval = cgroup_can_fork(p);
++	retval = cgroup_can_fork(current, p);
+ 	if (retval)
+-		goto bad_fork_cgroup_threadgroup_change_end;
++		goto bad_fork_put_pidfd;
+ 
+ 	/*
+ 	 * From this point on we must avoid any synchronous user-space
+@@ -2279,8 +2278,7 @@ static __latent_entropy struct task_struct *copy_process(
+ 	write_unlock_irq(&tasklist_lock);
+ 
+ 	proc_fork_connector(p);
+-	cgroup_post_fork(p);
+-	cgroup_threadgroup_change_end(current);
++	cgroup_post_fork(current, p);
+ 	perf_event_fork(p);
+ 
+ 	trace_task_newtask(p, clone_flags);
+@@ -2291,9 +2289,7 @@ static __latent_entropy struct task_struct *copy_process(
+ bad_fork_cancel_cgroup:
+ 	spin_unlock(&current->sighand->siglock);
+ 	write_unlock_irq(&tasklist_lock);
+-	cgroup_cancel_fork(p);
+-bad_fork_cgroup_threadgroup_change_end:
+-	cgroup_threadgroup_change_end(current);
++	cgroup_cancel_fork(current, p);
+ bad_fork_put_pidfd:
+ 	if (clone_flags & CLONE_PIDFD) {
+ 		fput(pidfile);
 -- 
 2.25.0
