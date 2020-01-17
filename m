@@ -1,132 +1,29 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH] fscrypt: reserve flags for hardware-wrapped keys feature
-Date: Thu, 16 Jan 2020 11:20:08 -0800
-Message-ID: <20200116192008.35766-1-ebiggers@kernel.org>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH] fscrypt: reserve flags for hardware-wrapped keys feature
+Date: Fri, 17 Jan 2020 00:12:46 -0800
+Message-ID: <20200117081246.GA16846@infradead.org>
+References: <20200116192008.35766-1-ebiggers@kernel.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Sender: linux-ext4-owner@vger.kernel.org
-To: linux-fscrypt@vger.kernel.org
-Cc: linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mtd@lists.infradead.org, Barani Muthukumaran <bmuthuku@codeaurora.org>, Gaurav Kashyap <gaurkash@codeaurora.org>, Theodore Ts'o <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20200116192008.35766-1-ebiggers-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Eric Biggers <ebiggers-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: linux-fscrypt-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Barani Muthukumaran <bmuthuku-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Gaurav Kashyap <gaurkash-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Eric Biggers <ebiggers@google.com>
+On Thu, Jan 16, 2020 at 11:20:08AM -0800, Eric Biggers wrote:
+> From: Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> 
+> Reserve flags for the hardware-wrapped keys feature which is being
+> worked on [1].  FSCRYPT_POLICY_FLAG_HW_WRAPPED_KEY will denote that the
+> encryption policy needs a hardware-wrapped key to be unlocked.
+> FSCRYPT_ADD_KEY_FLAG_HW_WRAPPED will denote that the key being added is
+> a hardware-wrapped key.
+> 
+> This reservation is tentative, and these codepoints may be reused if the
+> feature is not upstreamed.
 
-Reserve flags for the hardware-wrapped keys feature which is being
-worked on [1].  FSCRYPT_POLICY_FLAG_HW_WRAPPED_KEY will denote that the
-encryption policy needs a hardware-wrapped key to be unlocked.
-FSCRYPT_ADD_KEY_FLAG_HW_WRAPPED will denote that the key being added is
-a hardware-wrapped key.
-
-This reservation is tentative, and these codepoints may be reused if the
-feature is not upstreamed.
-
-[1] https://android-review.googlesource.com/c/kernel/common/+/1200864
-
-Signed-off-by: Eric Biggers <ebiggers@google.com>
----
- Documentation/filesystems/fscrypt.rst | 5 +++--
- fs/crypto/keyring.c                   | 5 ++++-
- fs/crypto/policy.c                    | 4 +++-
- include/uapi/linux/fscrypt.h          | 9 ++++++---
- 4 files changed, 16 insertions(+), 7 deletions(-)
-
-diff --git a/Documentation/filesystems/fscrypt.rst b/Documentation/filesystems/fscrypt.rst
-index 9c53336d06a438..4c443d7b1fc6b5 100644
---- a/Documentation/filesystems/fscrypt.rst
-+++ b/Documentation/filesystems/fscrypt.rst
-@@ -639,7 +639,8 @@ follows::
-             struct fscrypt_key_specifier key_spec;
-             __u32 raw_size;
-             __u32 key_id;
--            __u32 __reserved[8];
-+            __u32 flags;
-+            __u32 __reserved[7];
-             __u8 raw[];
-     };
- 
-@@ -658,7 +659,7 @@ follows::
- 
-     struct fscrypt_provisioning_key_payload {
-             __u32 type;
--            __u32 __reserved;
-+            __u32 flags;
-             __u8 raw[];
-     };
- 
-diff --git a/fs/crypto/keyring.c b/fs/crypto/keyring.c
-index 098ff2e0f0bb41..fc27f5d08d7dbe 100644
---- a/fs/crypto/keyring.c
-+++ b/fs/crypto/keyring.c
-@@ -477,7 +477,7 @@ static int fscrypt_provisioning_key_preparse(struct key_preparsed_payload *prep)
- 	    payload->type != FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER)
- 		return -EINVAL;
- 
--	if (payload->__reserved)
-+	if (payload->flags)
- 		return -EINVAL;
- 
- 	prep->payload.data[0] = kmemdup(payload, prep->datalen, GFP_KERNEL);
-@@ -606,6 +606,9 @@ int fscrypt_ioctl_add_key(struct file *filp, void __user *_uarg)
- 	if (!valid_key_spec(&arg.key_spec))
- 		return -EINVAL;
- 
-+	if (arg.flags)
-+		return -EINVAL;
-+
- 	if (memchr_inv(arg.__reserved, 0, sizeof(arg.__reserved)))
- 		return -EINVAL;
- 
-diff --git a/fs/crypto/policy.c b/fs/crypto/policy.c
-index f1cff83c151acf..36a2bb077b6910 100644
---- a/fs/crypto/policy.c
-+++ b/fs/crypto/policy.c
-@@ -139,7 +139,9 @@ static bool fscrypt_supported_v2_policy(const struct fscrypt_policy_v2 *policy,
- 		return false;
- 	}
- 
--	if (policy->flags & ~FSCRYPT_POLICY_FLAGS_VALID) {
-+	if (policy->flags & ~(FSCRYPT_POLICY_FLAGS_PAD_MASK |
-+			      FSCRYPT_POLICY_FLAG_DIRECT_KEY |
-+			      FSCRYPT_POLICY_FLAG_IV_INO_LBLK_64)) {
- 		fscrypt_warn(inode, "Unsupported encryption flags (0x%02x)",
- 			     policy->flags);
- 		return false;
-diff --git a/include/uapi/linux/fscrypt.h b/include/uapi/linux/fscrypt.h
-index 0d8a6f47711c32..fad624a4c5feda 100644
---- a/include/uapi/linux/fscrypt.h
-+++ b/include/uapi/linux/fscrypt.h
-@@ -19,7 +19,8 @@
- #define FSCRYPT_POLICY_FLAGS_PAD_MASK		0x03
- #define FSCRYPT_POLICY_FLAG_DIRECT_KEY		0x04
- #define FSCRYPT_POLICY_FLAG_IV_INO_LBLK_64	0x08
--#define FSCRYPT_POLICY_FLAGS_VALID		0x0F
-+#define FSCRYPT_POLICY_FLAG_HW_WRAPPED_KEY	0x10
-+#define FSCRYPT_POLICY_FLAGS_VALID		0x1F
- 
- /* Encryption algorithms */
- #define FSCRYPT_MODE_AES_256_XTS		1
-@@ -116,7 +117,7 @@ struct fscrypt_key_specifier {
-  */
- struct fscrypt_provisioning_key_payload {
- 	__u32 type;
--	__u32 __reserved;
-+	__u32 flags;
- 	__u8 raw[];
- };
- 
-@@ -125,7 +126,9 @@ struct fscrypt_add_key_arg {
- 	struct fscrypt_key_specifier key_spec;
- 	__u32 raw_size;
- 	__u32 key_id;
--	__u32 __reserved[8];
-+#define FSCRYPT_ADD_KEY_FLAG_HW_WRAPPED			0x00000001
-+	__u32 flags;
-+	__u32 __reserved[7];
- 	__u8 raw[];
- };
- 
-
-base-commit: 2d8f7f119b0b2ce5e7ff0e8024b0763bf42b99c9
--- 
-2.25.0.rc1.283.g88dfdc4193-goog
+NAK.  While the feature itself sounds really useful we don't just
+reserve format bits for code not upstream.
