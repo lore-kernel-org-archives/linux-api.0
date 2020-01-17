@@ -1,20 +1,20 @@
 From: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v4 4/6] cgroup: add cgroup_may_write() helper
-Date: Fri, 17 Jan 2020 19:12:17 +0100
-Message-ID: <20200117181219.14542-5-christian.brauner@ubuntu.com>
+Subject: [PATCH v4 2/6] cgroup: add cgroup_get_from_file() helper
+Date: Fri, 17 Jan 2020 19:12:15 +0100
+Message-ID: <20200117181219.14542-3-christian.brauner@ubuntu.com>
 References: <20200117181219.14542-1-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <20200117181219.14542-1-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Add a cgroup_may_write() helper which we can use in the
-CLONE_INTO_CGROUP patch series to verify that we can write to the
-destination cgroup.
+Add a helper cgroup_get_from_file(). The helper will be used in
+subsequent patches to retrieve a cgroup while holding a reference to the
+struct file it was taken from.
 
 Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Cc: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
@@ -29,61 +29,72 @@ patch not present
 patch not present
 
 /* v3 */
-patch not present
+Link: https://lore.kernel.org/r/20200117002143.15559-3-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+patch introduced
+- Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>:
+  - split cgroup_get_from_file() changes into separate commmit
 
 /* v4 */
-patch introduced
+unchanged
 ---
- kernel/cgroup/cgroup.c | 24 +++++++++++++++++-------
- 1 file changed, 17 insertions(+), 7 deletions(-)
+ kernel/cgroup/cgroup.c | 30 +++++++++++++++++++-----------
+ 1 file changed, 19 insertions(+), 11 deletions(-)
 
 diff --git a/kernel/cgroup/cgroup.c b/kernel/cgroup/cgroup.c
-index 49d8cf087e10..b110b435ae49 100644
+index ad1f9fea5c14..f05efc2677c8 100644
 --- a/kernel/cgroup/cgroup.c
 +++ b/kernel/cgroup/cgroup.c
-@@ -4649,13 +4649,28 @@ static int cgroup_procs_show(struct seq_file *s, void *v)
- 	return 0;
+@@ -5882,6 +5882,24 @@ void cgroup_fork(struct task_struct *child)
+ 	INIT_LIST_HEAD(&child->cg_list);
  }
  
-+static int cgroup_may_write(const struct cgroup *cgrp, struct super_block *sb)
++static struct cgroup *cgroup_get_from_file(struct file *f)
 +{
-+	int ret;
-+	struct inode *inode;
++	struct cgroup_subsys_state *css;
++	struct cgroup *cgrp;
 +
-+	lockdep_assert_held(&cgroup_mutex);
++	css = css_tryget_online_from_dir(f->f_path.dentry, NULL);
++	if (IS_ERR(css))
++		return ERR_CAST(css);
 +
-+	inode = kernfs_get_inode(sb, cgrp->procs_file.kn);
-+	if (!inode)
-+		return -ENOMEM;
++	cgrp = css->cgroup;
++	if (!cgroup_on_dfl(cgrp)) {
++		cgroup_put(cgrp);
++		return ERR_PTR(-EBADF);
++	}
 +
-+	ret = inode_permission(inode, MAY_WRITE);
-+	iput(inode);
-+	return ret;
++	return cgrp;
 +}
 +
- static int cgroup_procs_write_permission(struct cgroup *src_cgrp,
- 					 struct cgroup *dst_cgrp,
- 					 struct super_block *sb)
+ /**
+  * cgroup_can_fork - called on a new task before the process is exposed
+  * @child: the task in question.
+@@ -6170,7 +6188,6 @@ EXPORT_SYMBOL_GPL(cgroup_get_from_path);
+  */
+ struct cgroup *cgroup_get_from_fd(int fd)
  {
- 	struct cgroup_namespace *ns = current->nsproxy->cgroup_ns;
- 	struct cgroup *com_cgrp = src_cgrp;
--	struct inode *inode;
- 	int ret;
+-	struct cgroup_subsys_state *css;
+ 	struct cgroup *cgrp;
+ 	struct file *f;
  
- 	lockdep_assert_held(&cgroup_mutex);
-@@ -4665,12 +4680,7 @@ static int cgroup_procs_write_permission(struct cgroup *src_cgrp,
- 		com_cgrp = cgroup_parent(com_cgrp);
+@@ -6178,17 +6195,8 @@ struct cgroup *cgroup_get_from_fd(int fd)
+ 	if (!f)
+ 		return ERR_PTR(-EBADF);
  
- 	/* %current should be authorized to migrate to the common ancestor */
--	inode = kernfs_get_inode(sb, com_cgrp->procs_file.kn);
--	if (!inode)
--		return -ENOMEM;
+-	css = css_tryget_online_from_dir(f->f_path.dentry, NULL);
++	cgrp = cgroup_get_from_file(f);
+ 	fput(f);
+-	if (IS_ERR(css))
+-		return ERR_CAST(css);
 -
--	ret = inode_permission(inode, MAY_WRITE);
--	iput(inode);
-+	ret = cgroup_may_write(com_cgrp, sb);
- 	if (ret)
- 		return ret;
- 
+-	cgrp = css->cgroup;
+-	if (!cgroup_on_dfl(cgrp)) {
+-		cgroup_put(cgrp);
+-		return ERR_PTR(-EBADF);
+-	}
+-
+ 	return cgrp;
+ }
+ EXPORT_SYMBOL_GPL(cgroup_get_from_fd);
 -- 
 2.25.0
