@@ -1,80 +1,94 @@
-From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2 2/5] mm: introduce external memory hinting API
-Date: Fri, 17 Jan 2020 09:32:39 -0800
-Message-ID: <20200117173239.GB140922@google.com>
-References: <20200116235953.163318-1-minchan@kernel.org>
- <20200116235953.163318-3-minchan@kernel.org>
- <20200117115225.GV19428@dhcp22.suse.cz>
- <20200117155837.bowyjpndfiym6cgs@box>
+From: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v4 0/6] clone3 & cgroups: allow spawning processes into cgroups
+Date: Fri, 17 Jan 2020 19:12:13 +0100
+Message-ID: <20200117181219.14542-1-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20200117155837.bowyjpndfiym6cgs@box>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
-Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleksandr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Suren Baghdasaryan <surenb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tim Murray <timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sandeep Patil <sspatil-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, John Dias <joaodias-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, sjpark-ebkRAfMGSJGzQB+pC5nmwQ@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 17, 2020 at 06:58:37PM +0300, Kirill A. Shutemov wrote:
-> On Fri, Jan 17, 2020 at 12:52:25PM +0100, Michal Hocko wrote:
-> > On Thu 16-01-20 15:59:50, Minchan Kim wrote:
-> > > There is usecase that System Management Software(SMS) want to give
-> > > a memory hint like MADV_[COLD|PAGEEOUT] to other processes and
-> > > in the case of Android, it is the ActivityManagerService.
-> > > 
-> > > It's similar in spirit to madvise(MADV_WONTNEED), but the information
-> > > required to make the reclaim decision is not known to the app. Instead,
-> > > it is known to the centralized userspace daemon(ActivityManagerService),
-> > > and that daemon must be able to initiate reclaim on its own without
-> > > any app involvement.
-> > > 
-> > > To solve the issue, this patch introduces new syscall process_madvise(2).
-> > > It uses pidfd of an external processs to give the hint.
-> > > 
-> > >  int process_madvise(int pidfd, void *addr, size_t length, int advise,
-> > > 			unsigned long flag);
-> > > 
-> > > Since it could affect other process's address range, only privileged
-> > > process(CAP_SYS_PTRACE) or something else(e.g., being the same UID)
-> > > gives it the right to ptrace the process could use it successfully.
-> > > The flag argument is reserved for future use if we need to extend the
-> > > API.
-> > > 
-> > > I think supporting all hints madvise has/will supported/support to
-> > > process_madvise is rather risky. Because we are not sure all hints make
-> > > sense from external process and implementation for the hint may rely on
-> > > the caller being in the current context so it could be error-prone.
-> > > Thus, I just limited hints as MADV_[COLD|PAGEOUT] in this patch.
-> > > 
-> > > If someone want to add other hints, we could hear hear the usecase and
-> > > review it for each hint. It's more safe for maintainace rather than
-> > > introducing a buggy syscall but hard to fix it later.
-> > 
-> > I have brought this up when we discussed this in the past but there is
-> > no reflection on that here so let me bring that up again. 
-> > 
-> > I believe that the interface has an inherent problem that it is racy.
-> > The external entity needs to know the address space layout of the target
-> > process to do anyhing useful on it. The address space is however under
-> > the full control of the target process though and the external entity
-> > has no means to find out that the layout has changed. So
-> > time-to-check-time-to-act is an inherent problem.
-> > 
-> > This is a serious design flaw and it should be explained why it doesn't
-> > matter or how to use the interface properly to prevent that problem.
-> 
-> I agree, it looks flawed.
-> 
-> Also I don't see what System Management Software can generically do on
-> sub-process level. I mean how can it decide which part of address space is
-> less important than other.
-> 
-> I see how a manager can indicate that this process (or a group of
-> processes) is less important than other, but on per-addres-range basis?
+Hey Tejun,
 
-For example, memory ranges shared by several processes or critical for the
-latency, we could avoid those ranges to be cold/pageout to prevent
-unncecessary CPU burning/paging.
+This is v4 of the promised series to enable spawning processes into a
+target cgroup different from the parent's cgroup.
 
-I also think people don't want to give an KSM hint to non-mergeable area.
+/* v1 */
+Link: https://lore.kernel.org/r/20191218173516.7875-1-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+
+/* v2 */
+Link: https://lore.kernel.org/r/20191223061504.28716-1-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+Rework locking and remove unneeded helper functions. Please see
+individual patch changelogs for details.
+With this I've been able to run the cgroup selftests and stress tests in
+loops for a long time without any regressions or deadlocks; lockdep and
+kasan did not complain either.
+
+/* v3 */
+Link: https://lore.kernel.org/r/20200117002143.15559-1-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+Split preliminary work into separate patches.
+See changelog of individual commits.
+
+/* v4 */
+Verify that we have write access to the target cgroup. This is usually
+done by the vfs but since we aren't going through the vfs with
+CLONE_INTO_CGROUP we need to do it ourselves.
+
+With this cgroup migration will be a lot easier, and accounting will be
+more exact. It also allows for nice features such as creating a frozen
+process by spawning it into a frozen cgroup.
+The code simplifies container creation and exec logic quite a bit as
+well.
+
+I've tried to contain all core changes for this features in
+kernel/cgroup/* to avoid exposing cgroup internals. This has mostly
+worked.
+When a new process is supposed to be spawned in a cgroup different from
+the parent's then we briefly acquire the cgroup mutex right before
+fork()'s point of no return and drop it once the child process has been
+attached to the tasklist and to its css_set. This is done to ensure that
+the cgroup isn't removed behind our back. The cgroup mutex is _only_
+held in this case; the usual case, where the child is created in the
+same cgroup as the parent does not acquire it since the cgroup can't be
+removed.
+
+The series already comes with proper testing. Once we've decided that
+this approach is good I'll expand the test-suite even more.
+
+The branch can be found in the following locations:
+[1]: kernel.org: https://git.kernel.org/pub/scm/linux/kernel/git/brauner/linux.git/log/?h=clone_into_cgroup
+[2]: github.com: https://github.com/brauner/linux/tree/clone_into_cgroup
+[3]: gitlab.com: https://gitlab.com/brauner/linux/commits/clone_into_cgroup
+
+Thanks!
+Christian
+
+Christian Brauner (6):
+  cgroup: unify attach permission checking
+  cgroup: add cgroup_get_from_file() helper
+  cgroup: refactor fork helpers
+  cgroup: add cgroup_may_write() helper
+  clone3: allow spawning processes into cgroups
+  selftests/cgroup: add tests for cloning into cgroups
+
+ include/linux/cgroup-defs.h                   |   6 +-
+ include/linux/cgroup.h                        |  26 +-
+ include/linux/sched/task.h                    |   4 +
+ include/uapi/linux/sched.h                    |   5 +
+ kernel/cgroup/cgroup.c                        | 310 ++++++++++++++----
+ kernel/cgroup/pids.c                          |  16 +-
+ kernel/fork.c                                 |  19 +-
+ tools/testing/selftests/cgroup/Makefile       |   6 +-
+ tools/testing/selftests/cgroup/cgroup_util.c  | 126 +++++++
+ tools/testing/selftests/cgroup/cgroup_util.h  |   4 +
+ tools/testing/selftests/cgroup/test_core.c    |  64 ++++
+ .../selftests/clone3/clone3_selftests.h       |  19 +-
+ 12 files changed, 521 insertions(+), 84 deletions(-)
+
+
+base-commit: b3a987b0264d3ddbb24293ebff10eddfc472f653
+-- 
+2.25.0
