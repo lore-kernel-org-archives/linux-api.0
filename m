@@ -1,45 +1,20 @@
 From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2 2/3] clone3: allow spawning processes into cgroups
-Date: Fri, 17 Jan 2020 08:53:11 -0800
-Message-ID: <20200117165311.GH2677547@devbig004.ftw2.facebook.com>
-References: <20191223061504.28716-1-christian.brauner@ubuntu.com>
- <20191223061504.28716-3-christian.brauner@ubuntu.com>
- <20200107163204.GB2677547@devbig004.ftw2.facebook.com>
- <20200108180906.l4mvtdmh7nm2z7sc@wittgenstein>
- <20200116122944.nj3e66eusxu6sb44@wittgenstein>
+Subject: Re: [PATCH v3 0/5] clone3 & cgroups: allow spawning processes into
+ cgroups
+Date: Fri, 17 Jan 2020 08:54:31 -0800
+Message-ID: <20200117165431.GI2677547@devbig004.ftw2.facebook.com>
+References: <20200117002143.15559-1-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20200116122944.nj3e66eusxu6sb44@wittgenstein>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20200117002143.15559-1-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello, Christian.
-
-Sorry about late reply.
-
-On Thu, Jan 16, 2020 at 01:29:44PM +0100, Christian Brauner wrote:
-> Could it be that you misread cgroup_attach_permissions()? Because it
-> does check for write permissions on the destination cgroup.procs file.
-> That's why I've added the cgroup_get_from_file() helper. :) See:
-> 
-> static int cgroup_attach_permissions(struct cgroup *src_cgrp,
-> 				     struct cgroup *dst_cgrp,
-> 				     struct super_block *sb, bool thread)
-> {
-> 	int ret = 0;
-> 
-> 	ret = cgroup_procs_write_permission(src_cgrp, dst_cgrp, sb);
-> 	if (ret)
-> 		return ret;
-
-So, if you look at cgroup_procs_write_permission(), it's only checking
-the write perm of the common ancestor, not the destination because it
-assumes that the destination is already checked by the vfs layer, and
-we need to check both.
+Hey, imma wait for v4 w/ the perm check fixed.
 
 Thanks.
 
