@@ -1,190 +1,87 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v2 5/5] mm: support both pid and pidfd for process_madvise
-Date: Thu, 16 Jan 2020 15:59:53 -0800
-Message-ID: <20200116235953.163318-6-minchan@kernel.org>
-References: <20200116235953.163318-1-minchan@kernel.org>
+From: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v3 0/5] clone3 & cgroups: allow spawning processes into cgroups
+Date: Fri, 17 Jan 2020 01:21:38 +0100
+Message-ID: <20200117002143.15559-1-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200116235953.163318-1-minchan@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, linux-api@vger.kernel.org, oleksandr@redhat.com, Suren Baghdasaryan <surenb@google.com>, Tim Murray <timmurray@google.com>, Daniel Colascione <dancol@google.com>, Sandeep Patil <sspatil@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Shakeel Butt <shakeelb@google.com>, John Dias <joaodias@google.com>, ktkhai@virtuozzo.com, christian.brauner@ubuntu.com, sjpark@amazon.de, Minchan Kim <minchan@kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-There is a demand[1] to support pid as well pidfd for process_madvise
-to reduce unncessary syscall to get pidfd if the user has control of
-the targer process(ie, they could gaurantee the process is not gone
-or pid is not reused. Or, it might be okay to give a hint to wrong
-process).
+Hey Tejun,
 
-This patch aims for supporting both options like waitid(2). So, the
-syscall is currently,
+This is v3 of the promised series to enable spawning processes into a
+target cgroup different from the parent's cgroup.
 
-	int process_madvise(int which, pid_t pid, void *addr,
-		size_t length, int advise, unsigned long flag);
+/* v1 */
+Link: https://lore.kernel.org/r/20191218173516.7875-1-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
 
-@which is actually idtype_t for userspace libray and currently,
-it supports P_PID and P_PIDFD.
+/* v2 */
+Link: https://lore.kernel.org/r/20191223061504.28716-1-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+Rework locking and remove unneeded helper functions. Please see
+individual patch changelogs for details.
+With this I've been able to run the cgroup selftests and stress tests in
+loops for a long time without any regressions or deadlocks; lockdep and
+kasan did not complain either.
 
-[1]  https://lore.kernel.org/linux-mm/9d849087-3359-c4ab-fbec-859e8186c509@virtuozzo.com/
-Signed-off-by: Minchan Kim <minchan@kernel.org>
----
- include/linux/pid.h      |  1 +
- include/linux/syscalls.h |  3 ++-
- kernel/exit.c            | 17 -----------------
- kernel/pid.c             | 17 +++++++++++++++++
- mm/madvise.c             | 34 ++++++++++++++++++++++------------
- 5 files changed, 42 insertions(+), 30 deletions(-)
+/* v3 */
+Split preliminary work into separate patches.
+See changelog of individual commits.
 
-diff --git a/include/linux/pid.h b/include/linux/pid.h
-index 998ae7d24450..023d9c3a8edc 100644
---- a/include/linux/pid.h
-+++ b/include/linux/pid.h
-@@ -75,6 +75,7 @@ extern const struct file_operations pidfd_fops;
- struct file;
- 
- extern struct pid *pidfd_pid(const struct file *file);
-+extern struct pid *pidfd_get_pid(unsigned int fd);
- 
- static inline struct pid *get_pid(struct pid *pid)
- {
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 1b58a11ff49f..27060e59db37 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -877,7 +877,8 @@ asmlinkage long sys_munlockall(void);
- asmlinkage long sys_mincore(unsigned long start, size_t len,
- 				unsigned char __user * vec);
- asmlinkage long sys_madvise(unsigned long start, size_t len, int behavior);
--asmlinkage long sys_process_madvise(int pidfd, unsigned long start,
-+
-+asmlinkage long sys_process_madvise(int which, pid_t pid, unsigned long start,
- 			size_t len, int behavior, unsigned long flags);
- asmlinkage long sys_remap_file_pages(unsigned long start, unsigned long size,
- 			unsigned long prot, unsigned long pgoff,
-diff --git a/kernel/exit.c b/kernel/exit.c
-index bcbd59888e67..7698843b1411 100644
---- a/kernel/exit.c
-+++ b/kernel/exit.c
-@@ -1466,23 +1466,6 @@ static long do_wait(struct wait_opts *wo)
- 	return retval;
- }
- 
--static struct pid *pidfd_get_pid(unsigned int fd)
--{
--	struct fd f;
--	struct pid *pid;
--
--	f = fdget(fd);
--	if (!f.file)
--		return ERR_PTR(-EBADF);
--
--	pid = pidfd_pid(f.file);
--	if (!IS_ERR(pid))
--		get_pid(pid);
--
--	fdput(f);
--	return pid;
--}
--
- static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
- 			  int options, struct rusage *ru)
- {
-diff --git a/kernel/pid.c b/kernel/pid.c
-index 2278e249141d..a41a89d5dad2 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -496,6 +496,23 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
- 	return idr_get_next(&ns->idr, &nr);
- }
- 
-+struct pid *pidfd_get_pid(unsigned int fd)
-+{
-+	struct fd f;
-+	struct pid *pid;
-+
-+	f = fdget(fd);
-+	if (!f.file)
-+		return ERR_PTR(-EBADF);
-+
-+	pid = pidfd_pid(f.file);
-+	if (!IS_ERR(pid))
-+		get_pid(pid);
-+
-+	fdput(f);
-+	return pid;
-+}
-+
- /**
-  * pidfd_create() - Create a new pid file descriptor.
-  *
-diff --git a/mm/madvise.c b/mm/madvise.c
-index 89557998d287..2ac62716e5b8 100644
---- a/mm/madvise.c
-+++ b/mm/madvise.c
-@@ -1192,11 +1192,10 @@ SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
- 	return madvise_common(current, current->mm, start, len_in, behavior);
- }
- 
--SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
-+SYSCALL_DEFINE6(process_madvise, int, which, pid_t, upid, unsigned long, start,
- 		size_t, len_in, int, behavior, unsigned long, flags)
- {
- 	int ret;
--	struct fd f;
- 	struct pid *pid;
- 	struct task_struct *task;
- 	struct mm_struct *mm;
-@@ -1207,20 +1206,31 @@ SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
- 	if (!process_madvise_behavior_valid(behavior))
- 		return -EINVAL;
- 
--	f = fdget(pidfd);
--	if (!f.file)
--		return -EBADF;
-+	switch (which) {
-+	case P_PID:
-+		if (upid <= 0)
-+			return -EINVAL;
-+
-+		pid = find_get_pid(upid);
-+		if (!pid)
-+			return -ESRCH;
-+		break;
-+	case P_PIDFD:
-+		if (upid < 0)
-+			return -EINVAL;
- 
--	pid = pidfd_pid(f.file);
--	if (IS_ERR(pid)) {
--		ret = PTR_ERR(pid);
--		goto fdput;
-+		pid = pidfd_get_pid(upid);
-+		if (IS_ERR(pid))
-+			return PTR_ERR(pid);
-+		break;
-+	default:
-+		return -EINVAL;
- 	}
- 
- 	task = get_pid_task(pid, PIDTYPE_PID);
- 	if (!task) {
- 		ret = -ESRCH;
--		goto fdput;
-+		goto put_pid;
- 	}
- 
- 	mm = mm_access(task, PTRACE_MODE_ATTACH_FSCREDS);
-@@ -1233,7 +1243,7 @@ SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
- 	mmput(mm);
- release_task:
- 	put_task_struct(task);
--fdput:
--	fdput(f);
-+put_pid:
-+	put_pid(pid);
- 	return ret;
- }
+With this cgroup migration will be a lot easier, and accounting will be
+more exact. It also allows for nice features such as creating a frozen
+process by spawning it into a frozen cgroup.
+The code simplifies container creation and exec logic quite a bit as
+well.
+
+I've tried to contain all core changes for this features in
+kernel/cgroup/* to avoid exposing cgroup internals. This has mostly
+worked.
+When a new process is supposed to be spawned in a cgroup different from
+the parent's then we briefly acquire the cgroup mutex right before
+fork()'s point of no return and drop it once the child process has been
+attached to the tasklist and to its css_set. This is done to ensure that
+the cgroup isn't removed behind our back. The cgroup mutex is _only_
+held in this case; the usual case, where the child is created in the
+same cgroup as the parent does not acquire it since the cgroup can't be
+removed.
+
+The series already comes with proper testing. Once we've decided that
+this approach is good I'll expand the test-suite even more.
+
+The branch can be found in the following locations:
+[1]: kernel.org: https://git.kernel.org/pub/scm/linux/kernel/git/brauner/linux.git/log/?h=clone_into_cgroup
+[2]: github.com: https://github.com/brauner/linux/tree/clone_into_cgroup
+[3]: gitlab.com: https://gitlab.com/brauner/linux/commits/clone_into_cgroup
+
+Thanks!
+Christian
+
+Christian Brauner (5):
+  cgroup: unify attach permission checking
+  cgroup: add cgroup_get_from_file() helper
+  cgroup: refactor fork helpers
+  clone3: allow spawning processes into cgroups
+  selftests/cgroup: add tests for cloning into cgroups
+
+ include/linux/cgroup-defs.h                   |   6 +-
+ include/linux/cgroup.h                        |  26 +-
+ include/linux/sched/task.h                    |   4 +
+ include/uapi/linux/sched.h                    |   5 +
+ kernel/cgroup/cgroup.c                        | 277 ++++++++++++++----
+ kernel/cgroup/pids.c                          |  16 +-
+ kernel/fork.c                                 |  19 +-
+ tools/testing/selftests/cgroup/Makefile       |   6 +-
+ tools/testing/selftests/cgroup/cgroup_util.c  | 126 ++++++++
+ tools/testing/selftests/cgroup/cgroup_util.h  |   4 +
+ tools/testing/selftests/cgroup/test_core.c    |  64 ++++
+ .../selftests/clone3/clone3_selftests.h       |  19 +-
+ 12 files changed, 495 insertions(+), 77 deletions(-)
+
+
+base-commit: b3a987b0264d3ddbb24293ebff10eddfc472f653
 -- 
-2.25.0.rc1.283.g88dfdc4193-goog
+2.25.0
