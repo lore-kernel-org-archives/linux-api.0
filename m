@@ -1,75 +1,52 @@
-From: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
-Subject: Re: [PATCH v2 2/5] mm: introduce external memory hinting API
-Date: Fri, 17 Jan 2020 18:58:37 +0300
-Message-ID: <20200117155837.bowyjpndfiym6cgs@box>
-References: <20200116235953.163318-1-minchan@kernel.org>
- <20200116235953.163318-3-minchan@kernel.org>
- <20200117115225.GV19428@dhcp22.suse.cz>
+From: "Theodore Y. Ts'o" <tytso@mit.edu>
+Subject: Re: [PATCH] fscrypt: reserve flags for hardware-wrapped keys feature
+Date: Fri, 17 Jan 2020 11:40:54 -0500
+Message-ID: <20200117164054.GD448999@mit.edu>
+References: <20200116192008.35766-1-ebiggers@kernel.org>
+ <20200117081246.GA16846@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=m.gmane-mx.org@lists.infradead.org>
 Content-Disposition: inline
-In-Reply-To: <20200117115225.GV19428-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleksandr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Suren Baghdasaryan <surenb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tim Murray <timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sandeep Patil <sspatil-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, John Dias <joaodias-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, sjpark-ebkRAfMGSJGzQB+pC5nmwQ@public.gmane.org
+In-Reply-To: <20200117081246.GA16846@infradead.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
+List-Post: <mailto:linux-mtd@lists.infradead.org>
+List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
+Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=m.gmane-mx.org@lists.infradead.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Barani Muthukumaran <bmuthuku@codeaurora.org>, Gaurav Kashyap <gaurkash@codeaurora.org>, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, Eric Biggers <ebiggers@kernel.org>, linux-fscrypt@vger.kernel.org, linux-mtd@lists.infradead.org, Jaegeuk Kim <jaegeuk@kernel.org>, linux-ext4@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 17, 2020 at 12:52:25PM +0100, Michal Hocko wrote:
-> On Thu 16-01-20 15:59:50, Minchan Kim wrote:
-> > There is usecase that System Management Software(SMS) want to give
-> > a memory hint like MADV_[COLD|PAGEEOUT] to other processes and
-> > in the case of Android, it is the ActivityManagerService.
+On Fri, Jan 17, 2020 at 12:12:46AM -0800, Christoph Hellwig wrote:
+> On Thu, Jan 16, 2020 at 11:20:08AM -0800, Eric Biggers wrote:
+> > From: Eric Biggers <ebiggers@google.com>
 > > 
-> > It's similar in spirit to madvise(MADV_WONTNEED), but the information
-> > required to make the reclaim decision is not known to the app. Instead,
-> > it is known to the centralized userspace daemon(ActivityManagerService),
-> > and that daemon must be able to initiate reclaim on its own without
-> > any app involvement.
+> > Reserve flags for the hardware-wrapped keys feature which is being
+> > worked on [1].  FSCRYPT_POLICY_FLAG_HW_WRAPPED_KEY will denote that the
+> > encryption policy needs a hardware-wrapped key to be unlocked.
+> > FSCRYPT_ADD_KEY_FLAG_HW_WRAPPED will denote that the key being added is
+> > a hardware-wrapped key.
 > > 
-> > To solve the issue, this patch introduces new syscall process_madvise(2).
-> > It uses pidfd of an external processs to give the hint.
-> > 
-> >  int process_madvise(int pidfd, void *addr, size_t length, int advise,
-> > 			unsigned long flag);
-> > 
-> > Since it could affect other process's address range, only privileged
-> > process(CAP_SYS_PTRACE) or something else(e.g., being the same UID)
-> > gives it the right to ptrace the process could use it successfully.
-> > The flag argument is reserved for future use if we need to extend the
-> > API.
-> > 
-> > I think supporting all hints madvise has/will supported/support to
-> > process_madvise is rather risky. Because we are not sure all hints make
-> > sense from external process and implementation for the hint may rely on
-> > the caller being in the current context so it could be error-prone.
-> > Thus, I just limited hints as MADV_[COLD|PAGEOUT] in this patch.
-> > 
-> > If someone want to add other hints, we could hear hear the usecase and
-> > review it for each hint. It's more safe for maintainace rather than
-> > introducing a buggy syscall but hard to fix it later.
+> > This reservation is tentative, and these codepoints may be reused if the
+> > feature is not upstreamed.
 > 
-> I have brought this up when we discussed this in the past but there is
-> no reflection on that here so let me bring that up again. 
-> 
-> I believe that the interface has an inherent problem that it is racy.
-> The external entity needs to know the address space layout of the target
-> process to do anyhing useful on it. The address space is however under
-> the full control of the target process though and the external entity
-> has no means to find out that the layout has changed. So
-> time-to-check-time-to-act is an inherent problem.
-> 
-> This is a serious design flaw and it should be explained why it doesn't
-> matter or how to use the interface properly to prevent that problem.
+> NAK.  While the feature itself sounds really useful we don't just
+> reserve format bits for code not upstream.
 
-I agree, it looks flawed.
+I disagree; saving a codepoint to avoid accidental collision of a
+feature bit is a good and proper thing to do.
 
-Also I don't see what System Management Software can generically do on
-sub-process level. I mean how can it decide which part of address space is
-less important than other.
+Reviewed-by: Theodore Ts'o <tytso@mit.edu>
 
-I see how a manager can indicate that this process (or a group of
-processes) is less important than other, but on per-addres-range basis?
+							- Ted
 
--- 
- Kirill A. Shutemov
+
+______________________________________________________
+Linux MTD discussion mailing list
+http://lists.infradead.org/mailman/listinfo/linux-mtd/
