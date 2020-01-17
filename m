@@ -1,87 +1,96 @@
 From: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v3 0/5] clone3 & cgroups: allow spawning processes into cgroups
-Date: Fri, 17 Jan 2020 01:21:38 +0100
-Message-ID: <20200117002143.15559-1-christian.brauner@ubuntu.com>
+Subject: [PATCH v3 2/5] cgroup: add cgroup_get_from_file() helper
+Date: Fri, 17 Jan 2020 01:21:40 +0100
+Message-ID: <20200117002143.15559-3-christian.brauner@ubuntu.com>
+References: <20200117002143.15559-1-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20200117002143.15559-1-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hey Tejun,
+Add a helper cgroup_get_from_file(). The helper will be used in
+subsequent patches to retrieve a cgroup while holding a reference to the
+struct file it was taken from.
 
-This is v3 of the promised series to enable spawning processes into a
-target cgroup different from the parent's cgroup.
-
+Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
+Cc: Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Cc: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Signed-off-by: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+---
 /* v1 */
-Link: https://lore.kernel.org/r/20191218173516.7875-1-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+patch not present
 
 /* v2 */
-Link: https://lore.kernel.org/r/20191223061504.28716-1-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
-Rework locking and remove unneeded helper functions. Please see
-individual patch changelogs for details.
-With this I've been able to run the cgroup selftests and stress tests in
-loops for a long time without any regressions or deadlocks; lockdep and
-kasan did not complain either.
+patch not present
 
 /* v3 */
-Split preliminary work into separate patches.
-See changelog of individual commits.
+patch introduced
+- Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>:
+  - split cgroup_get_from_file() changes into separate commmit
+---
+ kernel/cgroup/cgroup.c | 30 +++++++++++++++++++-----------
+ 1 file changed, 19 insertions(+), 11 deletions(-)
 
-With this cgroup migration will be a lot easier, and accounting will be
-more exact. It also allows for nice features such as creating a frozen
-process by spawning it into a frozen cgroup.
-The code simplifies container creation and exec logic quite a bit as
-well.
-
-I've tried to contain all core changes for this features in
-kernel/cgroup/* to avoid exposing cgroup internals. This has mostly
-worked.
-When a new process is supposed to be spawned in a cgroup different from
-the parent's then we briefly acquire the cgroup mutex right before
-fork()'s point of no return and drop it once the child process has been
-attached to the tasklist and to its css_set. This is done to ensure that
-the cgroup isn't removed behind our back. The cgroup mutex is _only_
-held in this case; the usual case, where the child is created in the
-same cgroup as the parent does not acquire it since the cgroup can't be
-removed.
-
-The series already comes with proper testing. Once we've decided that
-this approach is good I'll expand the test-suite even more.
-
-The branch can be found in the following locations:
-[1]: kernel.org: https://git.kernel.org/pub/scm/linux/kernel/git/brauner/linux.git/log/?h=clone_into_cgroup
-[2]: github.com: https://github.com/brauner/linux/tree/clone_into_cgroup
-[3]: gitlab.com: https://gitlab.com/brauner/linux/commits/clone_into_cgroup
-
-Thanks!
-Christian
-
-Christian Brauner (5):
-  cgroup: unify attach permission checking
-  cgroup: add cgroup_get_from_file() helper
-  cgroup: refactor fork helpers
-  clone3: allow spawning processes into cgroups
-  selftests/cgroup: add tests for cloning into cgroups
-
- include/linux/cgroup-defs.h                   |   6 +-
- include/linux/cgroup.h                        |  26 +-
- include/linux/sched/task.h                    |   4 +
- include/uapi/linux/sched.h                    |   5 +
- kernel/cgroup/cgroup.c                        | 277 ++++++++++++++----
- kernel/cgroup/pids.c                          |  16 +-
- kernel/fork.c                                 |  19 +-
- tools/testing/selftests/cgroup/Makefile       |   6 +-
- tools/testing/selftests/cgroup/cgroup_util.c  | 126 ++++++++
- tools/testing/selftests/cgroup/cgroup_util.h  |   4 +
- tools/testing/selftests/cgroup/test_core.c    |  64 ++++
- .../selftests/clone3/clone3_selftests.h       |  19 +-
- 12 files changed, 495 insertions(+), 77 deletions(-)
-
-
-base-commit: b3a987b0264d3ddbb24293ebff10eddfc472f653
+diff --git a/kernel/cgroup/cgroup.c b/kernel/cgroup/cgroup.c
+index ad1f9fea5c14..f05efc2677c8 100644
+--- a/kernel/cgroup/cgroup.c
++++ b/kernel/cgroup/cgroup.c
+@@ -5882,6 +5882,24 @@ void cgroup_fork(struct task_struct *child)
+ 	INIT_LIST_HEAD(&child->cg_list);
+ }
+ 
++static struct cgroup *cgroup_get_from_file(struct file *f)
++{
++	struct cgroup_subsys_state *css;
++	struct cgroup *cgrp;
++
++	css = css_tryget_online_from_dir(f->f_path.dentry, NULL);
++	if (IS_ERR(css))
++		return ERR_CAST(css);
++
++	cgrp = css->cgroup;
++	if (!cgroup_on_dfl(cgrp)) {
++		cgroup_put(cgrp);
++		return ERR_PTR(-EBADF);
++	}
++
++	return cgrp;
++}
++
+ /**
+  * cgroup_can_fork - called on a new task before the process is exposed
+  * @child: the task in question.
+@@ -6170,7 +6188,6 @@ EXPORT_SYMBOL_GPL(cgroup_get_from_path);
+  */
+ struct cgroup *cgroup_get_from_fd(int fd)
+ {
+-	struct cgroup_subsys_state *css;
+ 	struct cgroup *cgrp;
+ 	struct file *f;
+ 
+@@ -6178,17 +6195,8 @@ struct cgroup *cgroup_get_from_fd(int fd)
+ 	if (!f)
+ 		return ERR_PTR(-EBADF);
+ 
+-	css = css_tryget_online_from_dir(f->f_path.dentry, NULL);
++	cgrp = cgroup_get_from_file(f);
+ 	fput(f);
+-	if (IS_ERR(css))
+-		return ERR_CAST(css);
+-
+-	cgrp = css->cgroup;
+-	if (!cgroup_on_dfl(cgrp)) {
+-		cgroup_put(cgrp);
+-		return ERR_PTR(-EBADF);
+-	}
+-
+ 	return cgrp;
+ }
+ EXPORT_SYMBOL_GPL(cgroup_get_from_fd);
 -- 
 2.25.0
