@@ -1,7 +1,7 @@
 From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
-Subject: [PATCH v29 04/12] LRNG - add switchable DRNG support
-Date: Sun, 19 Jan 2020 22:14:37 +0100
-Message-ID: <2873504.ZWMft1h3jb@positron.chronox.de>
+Subject: [PATCH v29 02/12] LRNG - allocate one DRNG instance per NUMA node
+Date: Sun, 19 Jan 2020 22:13:36 +0100
+Message-ID: <2888749.a34ANFCpAk@positron.chronox.de>
 References: <6157374.ptSnyUpaCn@positron.chronox.de> <5951792.lmNsirYsPE@positron.chronox.de> <1967138.dxe05VgvIB@positron.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
@@ -13,38 +13,21 @@ To: Arnd Bergmann <arnd@arndb.de>
 Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matth>
 List-Id: linux-api@vger.kernel.org
 
-The DRNG switch support allows replacing the DRNG mechanism of the
-LRNG. The switching support rests on the interface definition of
-include/linux/lrng.h. A new DRNG is implemented by filling in the
-interface defined in this header file.
+In order to improve NUMA-locality when serving getrandom(2) requests,
+allocate one DRNG instance per node.
 
-In addition to the DRNG, the extension also has to provide a hash
-implementation that is used to hash the entropy pool for random number
-extraction.
+The DRNG instance that is present right from the start of the kernel is
+reused as the first per-NUMA-node DRNG. For all remaining online NUMA
+nodes a new DRNG instance is allocated.
 
-Note: It is permissible to implement a DRNG whose operations may sleep.
-However, the hash function must not sleep.
+During boot time, the multiple DRNG instances are seeded sequentially.
+With this, the first DRNG instance (referenced as the initial DRNG
+in the code) is completely seeded with 256 bits of entropy before the
+next DRNG instance is completely seeded.
 
-The switchable DRNG support allows replacing the DRNG at runtime.
-However, only one DRNG extension is allowed to be loaded at any given
-time. Before replacing it with another DRNG implementation, the possibly
-existing DRNG extension must be unloaded.
-
-The switchable DRNG extension activates the new DRNG during load time.
-It is expected, however, that such a DRNG switch would be done only once
-by an administrator to load the intended DRNG implementation.
-
-It is permissible to compile DRNG extensions either as kernel modules or
-statically. The initialization of the DRNG extension should be performed
-with a late_initcall to ensure the extension is available when user
-space starts but after all other initialization completed.
-The initialization is performed by registering the function call data
-structure with the lrng_set_drng_cb function. In order to unload the
-DRNG extension, lrng_set_drng_cb must be invoked with the NULL
-parameter.
-
-The DRNG extension should always provide a security strength that is at
-least as strong as LRNG_DRNG_SECURITY_STRENGTH_BITS.
+When random numbers are requested, the NUMA-node-local DRNG is checked
+whether it has been already fully seeded. If this is not the case, the
+initial DRNG is used to serve the request.
 
 CC: "Eric W. Biederman" <ebiederm@xmission.com>
 CC: "Alexander E. Patrakov" <patrakov@gmail.com>
@@ -69,47 +52,51 @@ Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 =2D--
- drivers/char/lrng/Kconfig       |   7 ++
- drivers/char/lrng/Makefile      |   1 +
- drivers/char/lrng/lrng_switch.c | 182 ++++++++++++++++++++++++++++++++
- 3 files changed, 190 insertions(+)
- create mode 100644 drivers/char/lrng/lrng_switch.c
+ drivers/char/lrng/Makefile        |   2 +
+ drivers/char/lrng/lrng_internal.h |   5 ++
+ drivers/char/lrng/lrng_numa.c     | 101 ++++++++++++++++++++++++++++++
+ 3 files changed, 108 insertions(+)
+ create mode 100644 drivers/char/lrng/lrng_numa.c
 
-diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 56f13efd3592..cb701bb0b8b6 100644
-=2D-- a/drivers/char/lrng/Kconfig
-+++ b/drivers/char/lrng/Kconfig
-@@ -64,4 +64,11 @@ config LRNG_POOL_SIZE
- 	default 7 if LRNG_POOL_SIZE_65536
- 	default 8 if LRNG_POOL_SIZE_131072
-=20
-+menuconfig LRNG_DRNG_SWITCH
-+	bool "Support DRNG runtime switching"
-+	help
-+	  The Linux RNG per default uses a ChaCha20 DRNG that is
-+	  accessible via the external interfaces. With this configuration
-+	  option other DRNGs can be selected and loaded at runtime.
-+
- endif # LRNG
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index e69c176f0161..31cfe87c999e 100644
+index 1d2a0211973d..0a32f22c2c1a 100644
 =2D-- a/drivers/char/lrng/Makefile
 +++ b/drivers/char/lrng/Makefile
-@@ -10,3 +10,4 @@ obj-y				+=3D lrng_pool.o lrng_aux.o \
+@@ -7,3 +7,5 @@ obj-y				+=3D lrng_pool.o lrng_aux.o \
+ 				   lrng_sw_noise.o lrng_archrandom.o \
+ 				   lrng_drng.o lrng_chacha20.o \
+ 				   lrng_interfaces.o \
++
++obj-$(CONFIG_NUMA)		+=3D lrng_numa.o
+diff --git a/drivers/char/lrng/lrng_internal.h b/drivers/char/lrng/lrng_int=
+ernal.h
+index edf38121ec65..ecb0a7ad5e7e 100644
+=2D-- a/drivers/char/lrng/lrng_internal.h
++++ b/drivers/char/lrng/lrng_internal.h
+@@ -246,8 +246,13 @@ int lrng_drng_get_sleep(u8 *outbuf, u32 outbuflen);
+ void lrng_drng_force_reseed(void);
+ void lrng_drng_seed_work(struct work_struct *dummy);
 =20
- obj-$(CONFIG_NUMA)		+=3D lrng_numa.o
- obj-$(CONFIG_SYSCTL)		+=3D lrng_proc.o
-+obj-$(CONFIG_LRNG_DRNG_SWITCH)	+=3D lrng_switch.o
-diff --git a/drivers/char/lrng/lrng_switch.c b/drivers/char/lrng/lrng_switc=
-h.c
++#ifdef CONFIG_NUMA
++struct lrng_drng **lrng_drng_instances(void);
++void lrng_drngs_numa_alloc(void);
++#else	/* CONFIG_NUMA */
+ static inline struct lrng_drng **lrng_drng_instances(void) { return NULL; }
+ static inline void lrng_drngs_numa_alloc(void) { return; }
++#endif /* CONFIG_NUMA */
+=20
+ /************************** Health Test linking code *********************=
+*****/
+=20
+diff --git a/drivers/char/lrng/lrng_numa.c b/drivers/char/lrng/lrng_numa.c
 new file mode 100644
-index 000000000000..7101bda9d7aa
+index 000000000000..947c5b3ed517
 =2D-- /dev/null
-+++ b/drivers/char/lrng/lrng_switch.c
-@@ -0,0 +1,182 @@
++++ b/drivers/char/lrng/lrng_numa.c
+@@ -0,0 +1,101 @@
 +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
 +/*
-+ * LRNG DRNG switching support
++ * LRNG NUMA support
 + *
 + * Copyright (C) 2016 - 2020, Stephan Mueller <smueller@chronox.de>
 + */
@@ -117,181 +104,96 @@ index 000000000000..7101bda9d7aa
 +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 +
 +#include <linux/lrng.h>
++#include <linux/slab.h>
 +
 +#include "lrng_internal.h"
 +
-+static int lrng_drng_switch(struct lrng_drng *drng_store,
-+			    const struct lrng_crypto_cb *cb, int node)
++static struct lrng_drng **lrng_drng __read_mostly =3D NULL;
++
++struct lrng_drng **lrng_drng_instances(void)
 +{
-+	const struct lrng_crypto_cb *old_cb;
-+	unsigned long flags =3D 0;
-+	int ret;
-+	u8 seed[LRNG_DRNG_SECURITY_STRENGTH_BYTES];
-+	void *new_drng =3D cb->lrng_drng_alloc(LRNG_DRNG_SECURITY_STRENGTH_BYTES);
-+	void *old_drng, *new_hash, *old_hash;
-+	bool sl =3D false, reset_drng =3D !lrng_get_available();
-+
-+	if (IS_ERR(new_drng)) {
-+		pr_warn("could not allocate new DRNG for NUMA node %d (%ld)\n",
-+			node, PTR_ERR(new_drng));
-+		return PTR_ERR(new_drng);
-+	}
-+
-+	new_hash =3D cb->lrng_hash_alloc(seed, sizeof(seed));
-+	if (IS_ERR(new_hash)) {
-+		pr_warn("could not allocate new LRNG pool hash (%ld)\n",
-+			PTR_ERR(new_hash));
-+		cb->lrng_drng_dealloc(new_drng);
-+		return PTR_ERR(new_hash);
-+	}
-+
-+	lrng_drng_lock(drng_store, &flags);
-+
-+	/*
-+	 * Pull from existing DRNG to seed new DRNG regardless of seed status
-+	 * of old DRNG -- the entropy state for the DRNG is left unchanged which
-+	 * implies that als the new DRNG is reseeded when deemed necessary. This
-+	 * seeding of the new DRNG shall only ensure that the new DRNG has the
-+	 * same entropy as the old DRNG.
-+	 */
-+	ret =3D drng_store->crypto_cb->lrng_drng_generate_helper(
-+				drng_store->drng, seed, sizeof(seed));
-+	lrng_drng_unlock(drng_store, &flags);
-+
-+	if (ret < 0) {
-+		reset_drng =3D true;
-+		pr_warn("getting random data from DRNG failed for NUMA node %d (%d)\n",
-+			node, ret);
-+	} else {
-+		/* seed new DRNG with data */
-+		ret =3D cb->lrng_drng_seed_helper(new_drng, seed, ret);
-+		if (ret < 0) {
-+			reset_drng =3D true;
-+			pr_warn("seeding of new DRNG failed for NUMA node %d (%d)\n",
-+				node, ret);
-+		} else {
-+			pr_debug("seeded new DRNG of NUMA node %d instance from old DRNG instan=
-ce\n",
-+				 node);
-+		}
-+	}
-+
-+	mutex_lock(&drng_store->lock);
-+	/*
-+	 * If we switch the DRNG from the initial ChaCha20 DRNG to something
-+	 * else, there is a lock transition from spin lock to mutex (see
-+	 * lrng_drng_is_atomic and how the lock is taken in lrng_drng_lock).
-+	 * Thus, we need to take both locks during the transition phase.
-+	 */
-+	if (lrng_drng_is_atomic(drng_store)) {
-+		spin_lock_irqsave(&drng_store->spin_lock, flags);
-+		sl =3D true;
-+	}
-+
-+	if (reset_drng)
-+		lrng_drng_reset(drng_store);
-+
-+	old_drng =3D drng_store->drng;
-+	old_cb =3D drng_store->crypto_cb;
-+	drng_store->drng =3D new_drng;
-+	drng_store->crypto_cb =3D cb;
-+
-+	old_hash =3D drng_store->hash;
-+	drng_store->hash =3D new_hash;
-+	pr_info("Entropy pool read-hash allocated for DRNG for NUMA node %d\n",
-+		node);
-+
-+	if (sl)
-+		spin_unlock_irqrestore(&drng_store->spin_lock, flags);
-+	mutex_unlock(&drng_store->lock);
-+
-+	/* ChaCha20 serves as atomic instance left untouched. */
-+	if (old_drng !=3D &chacha20) {
-+		old_cb->lrng_drng_dealloc(old_drng);
-+		old_cb->lrng_hash_dealloc(old_hash);
-+	}
-+
-+	pr_info("DRNG of NUMA node %d switched\n", node);
-+
-+	return 0;
++	return lrng_drng;
 +}
 +
-+/*
-+ * Switch the existing DRNG instances with new using the new crypto callba=
-cks.
-+ * The caller must hold the lrng_crypto_cb_update lock.
-+ */
-+static int lrng_drngs_switch(const struct lrng_crypto_cb *cb)
++/* Allocate the data structures for the per-NUMA node DRNGs */
++static void _lrng_drngs_numa_alloc(struct work_struct *work)
 +{
-+	struct lrng_drng **lrng_drng =3D lrng_drng_instances();
++	struct lrng_drng **drngs;
 +	struct lrng_drng *lrng_drng_init =3D lrng_drng_init_instance();
-+	int ret =3D 0;
-+
-+	/* Update DRNG */
-+	if (lrng_drng) {
-+		u32 node;
-+
-+		for_each_online_node(node) {
-+			if (lrng_drng[node])
-+				ret =3D lrng_drng_switch(lrng_drng[node], cb,
-+						       node);
-+		}
-+	} else {
-+		ret =3D lrng_drng_switch(lrng_drng_init, cb, 0);
-+	}
-+
-+	if (!ret)
-+		lrng_set_available();
-+
-+	return 0;
-+}
-+
-+/**
-+ * lrng_set_drng_cb - Register new cryptographic callback functions for DR=
-NG
-+ * The registering implies that all old DRNG states are replaced with new
-+ * DRNG states.
-+ *
-+ * @cb: Callback functions to be registered -- if NULL, use the default
-+ *	callbacks pointing to the ChaCha20 DRNG.
-+ *
-+ * Return:
-+ * * 0 on success
-+ * * < 0 on error
-+ */
-+int lrng_set_drng_cb(const struct lrng_crypto_cb *cb)
-+{
-+	struct lrng_drng *lrng_drng_init =3D lrng_drng_init_instance();
-+	int ret;
-+
-+	if (!cb)
-+		cb =3D &lrng_cc20_crypto_cb;
++	u32 node;
++	bool init_drng_used =3D false;
 +
 +	mutex_lock(&lrng_crypto_cb_update);
 +
-+	/*
-+	 * If a callback other than the default is set, allow it only to be
-+	 * set back to the default callback. This ensures that multiple
-+	 * different callbacks can be registered at the same time. If a
-+	 * callback different from the current callback and the default
-+	 * callback shall be set, the current callback must be deregistered
-+	 * (e.g. the kernel module providing it must be unloaded) and the new
-+	 * implementation can be registered.
-+	 */
-+	if ((cb !=3D &lrng_cc20_crypto_cb) &&
-+	    (lrng_drng_init->crypto_cb !=3D &lrng_cc20_crypto_cb)) {
-+		pr_warn("disallow setting new cipher callbacks, unload the old callbacks=
- first!\n");
-+		ret =3D -EINVAL;
-+		goto out;
++	/* per-NUMA-node DRNGs are already present */
++	if (lrng_drng)
++		goto unlock;
++
++	drngs =3D kcalloc(nr_node_ids, sizeof(void *), GFP_KERNEL|__GFP_NOFAIL);
++	for_each_online_node(node) {
++		struct lrng_drng *drng;
++
++		if (!init_drng_used) {
++			drngs[node] =3D lrng_drng_init;
++			init_drng_used =3D true;
++			continue;
++		}
++
++		drng =3D kmalloc_node(sizeof(struct lrng_drng),
++				     GFP_KERNEL|__GFP_NOFAIL, node);
++		memset(drng, 0, sizeof(lrng_drng));
++
++		drng->crypto_cb =3D lrng_drng_init->crypto_cb;
++		drng->drng =3D drng->crypto_cb->lrng_drng_alloc(
++					LRNG_DRNG_SECURITY_STRENGTH_BYTES);
++		if (IS_ERR(drng->drng)) {
++			kfree(drng);
++			goto err;
++		}
++
++		mutex_init(&drng->lock);
++		spin_lock_init(&drng->spin_lock);
++
++		/*
++		 * No reseeding of NUMA DRNGs from previous DRNGs as this
++		 * would complicate the code. Let it simply reseed.
++		 */
++		lrng_drng_reset(drng);
++		drngs[node] =3D drng;
++
++		lrng_pool_inc_numa_node();
++		pr_info("DRNG for NUMA node %d allocated\n", node);
 +	}
 +
-+	ret =3D lrng_drngs_switch(cb);
++	/* Ensure that all NUMA nodes receive changed memory here. */
++	mb();
 +
-+out:
++	if (!cmpxchg(&lrng_drng, NULL, drngs))
++		goto unlock;
++
++err:
++	for_each_online_node(node) {
++		struct lrng_drng *drng =3D drngs[node];
++
++		if (drng =3D=3D lrng_drng_init)
++			continue;
++
++		if (drng) {
++			drng->crypto_cb->lrng_drng_dealloc(drng->drng);
++			kfree(drng);
++		}
++	}
++	kfree(drngs);
++
++unlock:
 +	mutex_unlock(&lrng_crypto_cb_update);
-+	return ret;
 +}
-+EXPORT_SYMBOL(lrng_set_drng_cb);
++
++static DECLARE_WORK(lrng_drngs_numa_alloc_work, _lrng_drngs_numa_alloc);
++
++void lrng_drngs_numa_alloc(void)
++{
++	schedule_work(&lrng_drngs_numa_alloc_work);
++}
 =2D-=20
 2.24.1
