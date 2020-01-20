@@ -1,61 +1,35 @@
-From: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v4 1/6] cgroup: unify attach permission checking
-Date: Mon, 20 Jan 2020 15:46:28 +0100
-Message-ID: <20200120144627.2ttqolx3md6vyfew@wittgenstein>
+From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v4 5/6] clone3: allow spawning processes into cgroups
+Date: Mon, 20 Jan 2020 16:39:30 +0100
+Message-ID: <20200120153930.GE30403@redhat.com>
 References: <20200117181219.14542-1-christian.brauner@ubuntu.com>
- <20200117181219.14542-2-christian.brauner@ubuntu.com>
- <20200120144244.GD30403@redhat.com>
+ <20200117181219.14542-6-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20200120144244.GD30403-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20200117181219.14542-6-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 20, 2020 at 03:42:45PM +0100, Oleg Nesterov wrote:
-> I guess I am totally confused, but...
-> 
-> On 01/17, Christian Brauner wrote:
-> >
-> > +static inline bool cgroup_same_domain(const struct cgroup *src_cgrp,
-> > +				      const struct cgroup *dst_cgrp)
-> > +{
-> > +	return src_cgrp->dom_cgrp == dst_cgrp->dom_cgrp;
-> > +}
-> > +
-> > +static int cgroup_attach_permissions(struct cgroup *src_cgrp,
-> > +				     struct cgroup *dst_cgrp,
-> > +				     struct super_block *sb, bool thread)
-> > +{
-> > +	int ret = 0;
-> > +
-> > +	ret = cgroup_procs_write_permission(src_cgrp, dst_cgrp, sb);
-> > +	if (ret)
-> > +		return ret;
-> > +
-> > +	ret = cgroup_migrate_vet_dst(dst_cgrp);
-> > +	if (ret)
-> > +		return ret;
-> > +
-> > +	if (thread &&
-> > +	    !cgroup_same_domain(src_cgrp->dom_cgrp, dst_cgrp->dom_cgrp))
->                                         ^^^^^^^^^^          ^^^^^^^^^^
-> 
->              cgroup_same_domain(src_cgrp, dst_cgrp)
-> 
-> no?
-> 
-> And given that cgroup_same_domain() has no other users, perhaps it can
-> simply check
-> 
-> 	     src_cgrp->dom_cgrp != dst_cgrp->dom_cgrp
+On 01/17, Christian Brauner wrote:
+>
+> +static int cgroup_css_set_fork(struct task_struct *parent,
+> +			       struct kernel_clone_args *kargs)
+...
+> +	kargs->cset = find_css_set(cset, dst_cgrp);
+> +	if (!kargs->cset) {
+> +		ret = -ENOMEM;
+> +		goto err;
+> +	}
+> +
+> +	if (cgroup_is_dead(dst_cgrp)) {
+> +		ret = -ENODEV;
+> +		goto err;
+                ^^^^^^^^
 
-Yeah, I just added it because the helper is very descriptive given its
-name. Maybe too descriptive given my braino.
-I'll just remove it in favor of this check and give it a small comment.
+this looks wrong... don't we need put_css_set(kargs->cset) before "goto err" ?
 
-Thanks!
-Christian
+Oleg.
