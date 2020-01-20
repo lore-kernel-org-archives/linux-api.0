@@ -1,71 +1,75 @@
-From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2 2/5] mm: introduce external memory hinting API
-Date: Mon, 20 Jan 2020 16:44:47 +0100
-Message-ID: <20200120154447.GL18451@dhcp22.suse.cz>
-References: <20200116235953.163318-1-minchan@kernel.org>
- <20200116235953.163318-3-minchan@kernel.org>
- <20200117115225.GV19428@dhcp22.suse.cz>
- <f57fb198-4070-d3b4-b6bd-43b29ff40a2c@virtuozzo.com>
- <20200120112722.GY18451@dhcp22.suse.cz>
- <20200120123935.onlls7enjtzenbvt@box>
- <20200120132405.GF18451@dhcp22.suse.cz>
- <20200120142132.srf4igph4zmecu7b@box>
+From: Dan Carpenter <dan.carpenter@oracle.com>
+Subject: Re: KASAN: slab-out-of-bounds Read in bitmap_ip_ext_cleanup
+Date: Mon, 20 Jan 2020 20:46:15 +0300
+Message-ID: <20200120174615.GE21151@kadam>
+References: <000000000000bdb5b2059c865f5c@google.com>
+ <000000000000c795fa059c884c21@google.com>
+ <20200120131930.pbhbsrm4bk4lq3d7@wittgenstein>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane-mx.org@lists.infradead.org>
 Content-Disposition: inline
-In-Reply-To: <20200120142132.srf4igph4zmecu7b@box>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
-Cc: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleksandr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Suren Baghdasaryan <surenb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tim Murray <timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sandeep Patil <sspatil-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, John Dias <joaodias-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, sjpark-ebkRAfMGSJGzQB+pC5nmwQ@public.gmane.org
+In-Reply-To: <20200120131930.pbhbsrm4bk4lq3d7@wittgenstein>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane-mx.org@lists.infradead.org
+To: Christian Brauner <christian.brauner@ubuntu.com>
+Cc: mareklindner@neomailbox.ch, peterz@infradead.org, catalin.marinas@arm.com, a@unstable.cc, jcmvbkbc@gmail.com, syzbot <syzbot+6491ea8f6dddbf04930e@syzkaller.appspotmail.com>, hpa@zytor.com, will@kernel.org, elena.reshetova@intel.com, hare@suse.com, johannes.berg@intel.com, florent.fourcot@wifirst.fr, x86@kernel.org, linux@armlinux.org.uk, kadlec@netfilter.org, coreteam@netfilter.org, geert@linux-m68k.org, allison@lohutok.net, pablo@netfilter.org, linux-arm-kernel@lists.infradead.org, linux-xtensa@linux-xtensa.org, arnd@arndb.de, heiko.carstens@de.ibm.com, syzkaller-bugs@googlegroups.com, bp@alien8.de, viro@zeniv.linux.org.uk, tglx@linutronix.de, mingo@redhat.com, christian@brauner.io, axboe@kernel.dk, chris@zankel.net, jeremy@azazel.net, sw@simonwunderlich.de, linux-api@vger.kernel.org, b.a.t.m.a.n@lists.open-mesh.org, fw@strlen.de, linux-kernel@vger.kernel.orgnetfilter
 List-Id: linux-api@vger.kernel.org
 
-On Mon 20-01-20 17:21:32, Kirill A. Shutemov wrote:
-> On Mon, Jan 20, 2020 at 02:24:05PM +0100, Michal Hocko wrote:
-> > On Mon 20-01-20 15:39:35, Kirill A. Shutemov wrote:
-> > > On Mon, Jan 20, 2020 at 12:27:22PM +0100, Michal Hocko wrote:
-> > > > On Mon 20-01-20 13:24:35, Kirill Tkhai wrote:
-> > [...]
-> > > > > Even two threads on common memory need a synchronization
-> > > > > to manage mappings in a sane way. Managing memory from two processes
-> > > > > is the same in principle, and the only difference is that another level
-> > > > > of synchronization is required.
-> > > > 
-> > > > Well, not really. The operation might simply attempt to perform an
-> > > > operation on a specific memory area and get a failure if it doesn't
-> > > > reference the same object anymore. What I think we need is some form of
-> > > > a handle to operate on. In the past we have discussed several
-> > > > directions. I was proposing /proc/self/map_anon/ (analogous to
-> > > > map_files) where you could inspect anonymous memory and get a file
-> > > > handle for it. madvise would then operate on the fd and then there
-> > > > shouldn't be a real problem to revalidate that the object is still
-> > > > valid. But there was no general enthusiasm about that approach. There
-> > > > are likely some land mines on the way.
-> > > 
-> > > Converting anon memory to file-backed is bad idea and going to backfire.
-> > 
-> > I didn't mean to convert. I meant to expose that information via proc
-> > the same way we do for file backed mappings. That shouldn't really
-> > require to re-design the way how anonymous vma work IMO. But I haven't
-> > tried that so there might be many gotchas there.
-> > 
-> > There are obvious things to think about though. Such fd cannot be sent
-> > to other processes (SCM stuff), mmap of the file would have to be
-> > disallowed and many others I am not aware of. I am not even pushing this
-> > direction because I am not convinced about how viable it is myself. But
-> > it would sound like a nice extension of the existing mechanism we have
-> > and a file based madvise sounds attractive to me as well because we
-> > already have that.
-> 
-> If the fd cannot be passed around or mmaped what does it represent?
+On Mon, Jan 20, 2020 at 02:19:31PM +0100, Christian Brauner wrote:
+> On Sun, Jan 19, 2020 at 05:35:01PM -0800, syzbot wrote:
+> > syzbot has bisected this bug to:
+> > =
 
-Because it is a cookie maintained by the kernel.
+> > commit d68dbb0c9ac8b1ff52eb09aa58ce6358400fa939
+> > Author: Christian Brauner <christian@brauner.io>
+> > Date:   Thu Jun 20 23:26:35 2019 +0000
+> > =
 
-> And how is it different from plain address?
+> >     arch: handle arches who do not yet define clone3
+> > =
 
-Kernel can revalidate that the given fd is denoting the vma it was
-created for and simply fail with ENOENT or whatever suits if somebody
-did unmap and mmap to the same address.
--- 
-Michal Hocko
-SUSE Labs
+> > bisection log:  https://syzkaller.appspot.com/x/bisect.txt?x=3D1456fed1=
+e00000
+> > start commit:   09d4f10a net: sched: act_ctinfo: fix memory leak
+> > git tree:       net
+> > final crash:    https://syzkaller.appspot.com/x/report.txt?x=3D1656fed1=
+e00000
+> > console output: https://syzkaller.appspot.com/x/log.txt?x=3D1256fed1e00=
+000
+> > kernel config:  https://syzkaller.appspot.com/x/.config?x=3D7e89bd00623=
+fe71e
+> > dashboard link: https://syzkaller.appspot.com/bug?extid=3D6491ea8f6dddb=
+f04930e
+> > syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=3D141af959e=
+00000
+> > C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=3D1067fa85e00=
+000
+> > =
+
+> > Reported-by: syzbot+6491ea8f6dddbf04930e@syzkaller.appspotmail.com
+> > Fixes: d68dbb0c9ac8 ("arch: handle arches who do not yet define clone3")
+> > =
+
+> > For information about bisection process see: https://goo.gl/tpsmEJ#bise=
+ction
+> =
+
+> This bisect seems bogus.
+> =
+
+
+Yeah.  J=F3zsef Kadlecsik already fixed the bug in a different thread.  It
+was reported as seven different bugs so there was a bunch of threads for
+it.
+
+regards,
+dan carpenter
