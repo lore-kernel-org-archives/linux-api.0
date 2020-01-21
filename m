@@ -1,61 +1,133 @@
-From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2 2/5] mm: introduce external memory hinting API
-Date: Tue, 21 Jan 2020 10:43:29 -0800
-Message-ID: <20200121184329.GG140922@google.com>
-References: <20200116235953.163318-1-minchan@kernel.org>
- <20200116235953.163318-3-minchan@kernel.org>
- <20200117115225.GV19428@dhcp22.suse.cz>
- <f57fb198-4070-d3b4-b6bd-43b29ff40a2c@virtuozzo.com>
- <20200120112722.GY18451@dhcp22.suse.cz>
- <20200120123935.onlls7enjtzenbvt@box>
- <20200120132405.GF18451@dhcp22.suse.cz>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH v1] pin_on_cpu: Introduce thread CPU pinning system
+ call
+Date: Tue, 21 Jan 2020 14:47:01 -0500 (EST)
+Message-ID: <430172781.596271.1579636021412.JavaMail.zimbra@efficios.com>
+References: <20200121160312.26545-1-mathieu.desnoyers@efficios.com> <CAG48ez2bQdoT9y7HkyU06DTazysUDdPdJe+gyV-NxgQA7JWQVQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20200120132405.GF18451-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleksandr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Suren Baghdasaryan <surenb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tim Murray <timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sandeep Patil <sspatil-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, John Dias <joaodias-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, sjpark-ebkRAfMGSJGzQB+pC5nmwQ@public.gmane.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAG48ez2bQdoT9y7HkyU06DTazysUDdPdJe+gyV-NxgQA7JWQVQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jann Horn <jannh@google.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Ingo Molnar <mingo@redhat.com>, Catalin Marinas <catalin.marinas@arm.com>, Dave Watson <davejwatson@fb.com>, Will Deacon <will.deacon@arm.com>, shuah <shuah@kernel.org>, Andi Kleen <andi@firstfloor.org>, linux-kselftest <linux-kselftest@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Chris Lameter <cl@linux.com>, Russell King <linux@arm.linux.org.uk>, Michael Kerrisk <mtk.manpages@gmail.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Paul Turner <pjt@google.com>, Boqun Feng <boqun.feng@gmail.com>, Josh Triplett <josh@joshtriplett.org>, rostedt <rostedt@goodmis.org>, Ben Maurer <bmaur>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 20, 2020 at 02:24:05PM +0100, Michal Hocko wrote:
-> On Mon 20-01-20 15:39:35, Kirill A. Shutemov wrote:
-> > On Mon, Jan 20, 2020 at 12:27:22PM +0100, Michal Hocko wrote:
-> > > On Mon 20-01-20 13:24:35, Kirill Tkhai wrote:
-> [...]
-> > > > Even two threads on common memory need a synchronization
-> > > > to manage mappings in a sane way. Managing memory from two processes
-> > > > is the same in principle, and the only difference is that another level
-> > > > of synchronization is required.
-> > > 
-> > > Well, not really. The operation might simply attempt to perform an
-> > > operation on a specific memory area and get a failure if it doesn't
-> > > reference the same object anymore. What I think we need is some form of
-> > > a handle to operate on. In the past we have discussed several
-> > > directions. I was proposing /proc/self/map_anon/ (analogous to
-> > > map_files) where you could inspect anonymous memory and get a file
-> > > handle for it. madvise would then operate on the fd and then there
-> > > shouldn't be a real problem to revalidate that the object is still
-> > > valid. But there was no general enthusiasm about that approach. There
-> > > are likely some land mines on the way.
-> > 
-> > Converting anon memory to file-backed is bad idea and going to backfire.
-> 
-> I didn't mean to convert. I meant to expose that information via proc
-> the same way we do for file backed mappings. That shouldn't really
-> require to re-design the way how anonymous vma work IMO. But I haven't
-> tried that so there might be many gotchas there.
-> 
-> There are obvious things to think about though. Such fd cannot be sent
-> to other processes (SCM stuff), mmap of the file would have to be
-> disallowed and many others I am not aware of. I am not even pushing this
-> direction because I am not convinced about how viable it is myself. But
-> it would sound like a nice extension of the existing mechanism we have
-> and a file based madvise sounds attractive to me as well because we
-> already have that.
+----- On Jan 21, 2020, at 12:20 PM, Jann Horn jannh@google.com wrote:
 
-I am not a fan of fd based approach but I already reserved last argument
-of the API as extendable field so we could use the field as "fd" when we
-really need that kinds of fine-grained synchronization model if it's not
-enough with SGISTOP, freezer and so.
+> On Tue, Jan 21, 2020 at 5:13 PM Mathieu Desnoyers
+> <mathieu.desnoyers@efficios.com> wrote:
+>> There is an important use-case which is not possible with the
+>> "rseq" (Restartable Sequences) system call, which was left as
+>> future work.
+>>
+>> That use-case is to modify user-space per-cpu data structures
+>> belonging to specific CPUs which may be brought offline and
+>> online again by CPU hotplug. This can be used by memory
+>> allocators to migrate free memory pools when CPUs are brought
+>> offline, or by ring buffer consumers to target specific per-CPU
+>> buffers, even when CPUs are brought offline.
+>>
+>> A few rather complex prior attempts were made to solve this.
+>> Those were based on in-kernel interpreters (cpu_opv, do_on_cpu).
+>> That complexity was generally frowned upon, even by their author.
+>>
+>> This patch fulfills this use-case in a refreshingly simple way:
+>> it introduces a "pin_on_cpu" system call, which allows user-space
+>> threads to pin themselves on a specific CPU (which needs to be
+>> present in the thread's allowed cpu mask), and then clear this
+>> pinned state.
+> [...]
+>> For instance, this allows implementing this userspace library API
+>> for incrementing a per-cpu counter for a specific cpu number
+>> received as parameter:
+>>
+>> static inline __attribute__((always_inline))
+>> int percpu_addv(intptr_t *v, intptr_t count, int cpu)
+>> {
+>>         int ret;
+>>
+>>         ret = rseq_addv(v, count, cpu);
+>> check:
+>>         if (rseq_unlikely(ret)) {
+>>                 pin_on_cpu_set(cpu);
+>>                 ret = rseq_addv(v, count, percpu_current_cpu());
+>>                 pin_on_cpu_clear();
+>>                 goto check;
+>>         }
+>>         return 0;
+>> }
+> 
+> What does userspace have to do if the set of allowed CPUs switches all
+> the time? For example, on Android, if you first open Chrome and then
+> look at its allowed CPUs, Chrome is allowed to use all CPU cores
+> because it's running in the foreground:
+> 
+> walleye:/ # ps -AZ | grep 'android.chrome$'
+> u:r:untrusted_app:s0:c145,c256,c512,c768 u0_a145 7845 805 1474472
+> 197868 SyS_epoll_wait f09c0194 S com.android.chrome
+> walleye:/ # grep cpuset /proc/7845/cgroup; grep Cpus_allowed_list
+> /proc/7845/status
+> 3:cpuset:/top-app
+> Cpus_allowed_list: 0-7
+> 
+> But if you then switch to the home screen, the application is moved
+> into a different cgroup, and is restricted to two CPU cores:
+> 
+> walleye:/ # grep cpuset /proc/7845/cgroup; grep Cpus_allowed_list
+> /proc/7845/status
+> 3:cpuset:/background
+> Cpus_allowed_list: 0-1
+
+Then at that point, pin_on_cpu() would only be allowed to pin on
+CPUs 0 and 1.
+
+> At the same time, I also wonder whether it is a good idea to allow
+> userspace to stay active on a CPU even after the task has been told to
+> move to another CPU core - that's probably not exactly a big deal, but
+> seems suboptimal to me.
+
+Do you mean the following scenario for a given task ?
+
+1) set affinity to CPU 0,1,2
+2) pin on CPU 2
+3) set affinity to CPU 0,1
+
+In the patch I propose here, step (3) is forbidden by this added check in
+__set_cpus_allowed_ptr, which is used by sched_setaffinity(2):
+
++       /* Prevent removing the currently pinned CPU from the allowed cpu mask. */
++       if (is_pinned_task(p) && !cpumask_test_cpu(p->pinned_cpu, new_mask)) {
++               ret = -EINVAL;
++               goto out;
++       }
+
+
+> I'm wondering whether it might be possible to rework this mechanism
+> such that, instead of moving the current task onto a target CPU, it
+> prevents all *other* threads of the current process from running on
+> that CPU (either entirely or in user mode). That might be the easiest
+> way to take care of issues like CPU hotplugging and changing cpusets
+> all at once? The only potential issue I see with that approach would
+> be that you wouldn't be able to use it for inter-process
+> communication; and I have no idea whether this would be good or bad
+> performance-wise.
+
+Firstly, inter-process communication over shared memory is one of my use-cases
+(for lttng-ust's ring buffer).
+
+I'm not convinced that applying constraints on all other threads belonging to
+the current process would be easier or faster than migrating the current thread
+over to the target CPU. I'm unsure how those additional constraints would
+fit with other threads already having their own cpu affinity masks (which
+could generate an empty cpumask by adding an extra constraint).
+
+Thanks for the feedback!
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
