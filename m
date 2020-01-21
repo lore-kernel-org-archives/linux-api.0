@@ -1,93 +1,99 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [RFC PATCH v1] pin_on_cpu: Introduce thread CPU pinning system call
-Date: Tue, 21 Jan 2020 18:20:47 +0100
-Message-ID: <CAG48ez2bQdoT9y7HkyU06DTazysUDdPdJe+gyV-NxgQA7JWQVQ@mail.gmail.com>
-References: <20200121160312.26545-1-mathieu.desnoyers@efficios.com>
+From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2 4/5] mm/madvise: allow KSM hints for remote API
+Date: Tue, 21 Jan 2020 09:45:01 -0800
+Message-ID: <20200121174501.GD140922@google.com>
+References: <20200116235953.163318-1-minchan@kernel.org>
+ <20200116235953.163318-5-minchan@kernel.org>
+ <37338e14-5a55-1926-b6c1-5f98b6a6fdb5@virtuozzo.com>
+ <20200117123400.o3ne6kazkovq4okd@butterfly.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200121160312.26545-1-mathieu.desnoyers@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, kernel list <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Ingo Molnar <mingo@redhat.com>, Catalin Marinas <catalin.marinas@arm.com>, Dave Watson <davejwatson@fb.com>, Will Deacon <will.deacon@arm.com>, Shuah Khan <shuah@kernel.org>, Andi Kleen <andi@firstfloor.org>, "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>, "H . Peter Anvin" <hpa@zytor.com>, Chris Lameter <cl@linux.com>, Russell King <linux@arm.linux.org.uk>, Michael Kerrisk <mtk.manpages@gmail.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Paul Turner <pjt@google.com>, Boqun Feng <boqun.feng@gmail.com>, Josh Triplett <josh@joshtriplett.org>, Stev
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20200117123400.o3ne6kazkovq4okd-1pX4wqAwPg9Bd2nDH4ldLLp2dZbC/Bob@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Oleksandr Natalenko <oleksandr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Suren Baghdasaryan <surenb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tim Murray <timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sandeep Patil <sspatil-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, John Dias <joaodias-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, sjpark-ebkRAfMGSJGzQB+pC5nmwQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 21, 2020 at 5:13 PM Mathieu Desnoyers
-<mathieu.desnoyers@efficios.com> wrote:
-> There is an important use-case which is not possible with the
-> "rseq" (Restartable Sequences) system call, which was left as
-> future work.
->
-> That use-case is to modify user-space per-cpu data structures
-> belonging to specific CPUs which may be brought offline and
-> online again by CPU hotplug. This can be used by memory
-> allocators to migrate free memory pools when CPUs are brought
-> offline, or by ring buffer consumers to target specific per-CPU
-> buffers, even when CPUs are brought offline.
->
-> A few rather complex prior attempts were made to solve this.
-> Those were based on in-kernel interpreters (cpu_opv, do_on_cpu).
-> That complexity was generally frowned upon, even by their author.
->
-> This patch fulfills this use-case in a refreshingly simple way:
-> it introduces a "pin_on_cpu" system call, which allows user-space
-> threads to pin themselves on a specific CPU (which needs to be
-> present in the thread's allowed cpu mask), and then clear this
-> pinned state.
-[...]
-> For instance, this allows implementing this userspace library API
-> for incrementing a per-cpu counter for a specific cpu number
-> received as parameter:
->
-> static inline __attribute__((always_inline))
-> int percpu_addv(intptr_t *v, intptr_t count, int cpu)
-> {
->         int ret;
->
->         ret = rseq_addv(v, count, cpu);
-> check:
->         if (rseq_unlikely(ret)) {
->                 pin_on_cpu_set(cpu);
->                 ret = rseq_addv(v, count, percpu_current_cpu());
->                 pin_on_cpu_clear();
->                 goto check;
->         }
->         return 0;
-> }
+On Fri, Jan 17, 2020 at 01:34:00PM +0100, Oleksandr Natalenko wrote:
+> Hi.
+> 
+> On Fri, Jan 17, 2020 at 01:13:14PM +0300, Kirill Tkhai wrote:
+> > On 17.01.2020 02:59, Minchan Kim wrote:
+> > > From: Oleksandr Natalenko <oleksandr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> > > 
+> > > It all began with the fact that KSM works only on memory that is marked
+> > > by madvise(). And the only way to get around that is to either:
+> > > 
+> > >   * use LD_PRELOAD; or
+> > >   * patch the kernel with something like UKSM or PKSM.
+> > > 
+> > > (i skip ptrace can of worms here intentionally)
+> > > 
+> > > To overcome this restriction, lets employ a new remote madvise API. This
+> > > can be used by some small userspace helper daemon that will do auto-KSM
+> > > job for us.
+> > > 
+> > > I think of two major consumers of remote KSM hints:
+> > > 
+> > >   * hosts, that run containers, especially similar ones and especially in
+> > >     a trusted environment, sharing the same runtime like Node.js;
+> > > 
+> > >   * heavy applications, that can be run in multiple instances, not
+> > >     limited to opensource ones like Firefox, but also those that cannot be
+> > >     modified since they are binary-only and, maybe, statically linked.
+> > > 
+> > > Speaking of statistics, more numbers can be found in the very first
+> > > submission, that is related to this one [1]. For my current setup with
+> > > two Firefox instances I get 100 to 200 MiB saved for the second instance
+> > > depending on the amount of tabs.
+> > > 
+> > > 1 FF instance with 15 tabs:
+> > > 
+> > >    $ echo "$(cat /sys/kernel/mm/ksm/pages_sharing) * 4 / 1024" | bc
+> > >    410
+> > > 
+> > > 2 FF instances, second one has 12 tabs (all the tabs are different):
+> > > 
+> > >    $ echo "$(cat /sys/kernel/mm/ksm/pages_sharing) * 4 / 1024" | bc
+> > >    592
+> > > 
+> > > At the very moment I do not have specific numbers for containerised
+> > > workload, but those should be comparable in case the containers share
+> > > similar/same runtime.
+> > > 
+> > > [1] https://lore.kernel.org/patchwork/patch/1012142/
+> > > 
+> > > Signed-off-by: Oleksandr Natalenko <oleksandr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> > > Signed-off-by: Minchan Kim <minchan-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> > > ---
+> > >  mm/madvise.c | 2 ++
+> > >  1 file changed, 2 insertions(+)
+> > > 
+> > > diff --git a/mm/madvise.c b/mm/madvise.c
+> > > index 84cffd0900f1..89557998d287 100644
+> > > --- a/mm/madvise.c
+> > > +++ b/mm/madvise.c
+> > > @@ -1000,6 +1000,8 @@ process_madvise_behavior_valid(int behavior)
+> > >  	switch (behavior) {
+> > >  	case MADV_COLD:
+> > >  	case MADV_PAGEOUT:
+> > > +	case MADV_MERGEABLE:
+> > > +	case MADV_UNMERGEABLE:
+> > >  		return true;
+> > >  	default:
+> > >  		return false;
+> > 
+> > Remote madvise on KSM parameters should be OK.
+> > 
+> > One thing is madvise_behavior_valid() places MADV_MERGEABLE/UNMERGEABLE
+> > in #ifdef brackes, so -EINVAL is returned by madvise() syscall if KSM
+> > is not enabled. Here we should follow the same way for symmetry.
+> > 
+> 
+> Thanks for the suggestion.
+> 
+> Minchan, shall you adopt it directly, or I should send a separate patch?
 
-What does userspace have to do if the set of allowed CPUs switches all
-the time? For example, on Android, if you first open Chrome and then
-look at its allowed CPUs, Chrome is allowed to use all CPU cores
-because it's running in the foreground:
-
-walleye:/ # ps -AZ | grep 'android.chrome$'
-u:r:untrusted_app:s0:c145,c256,c512,c768 u0_a145 7845 805 1474472
-197868 SyS_epoll_wait f09c0194 S com.android.chrome
-walleye:/ # grep cpuset /proc/7845/cgroup; grep Cpus_allowed_list
-/proc/7845/status
-3:cpuset:/top-app
-Cpus_allowed_list: 0-7
-
-But if you then switch to the home screen, the application is moved
-into a different cgroup, and is restricted to two CPU cores:
-
-walleye:/ # grep cpuset /proc/7845/cgroup; grep Cpus_allowed_list
-/proc/7845/status
-3:cpuset:/background
-Cpus_allowed_list: 0-1
-
-At the same time, I also wonder whether it is a good idea to allow
-userspace to stay active on a CPU even after the task has been told to
-move to another CPU core - that's probably not exactly a big deal, but
-seems suboptimal to me.
-
-
-I'm wondering whether it might be possible to rework this mechanism
-such that, instead of moving the current task onto a target CPU, it
-prevents all *other* threads of the current process from running on
-that CPU (either entirely or in user mode). That might be the easiest
-way to take care of issues like CPU hotplugging and changing cpusets
-all at once? The only potential issue I see with that approach would
-be that you wouldn't be able to use it for inter-process
-communication; and I have no idea whether this would be good or bad
-performance-wise.
+I will handle it in next spin.
