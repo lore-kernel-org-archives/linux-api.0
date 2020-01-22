@@ -1,102 +1,138 @@
-From: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
-Subject: Re: [PATCH ghak90 V8 12/16] audit: contid check descendancy and nesting
-Date: Wed, 22 Jan 2020 16:29:05 -0500
-Message-ID: <CAHC9VhT1+mx_tVzyXD=UBqagqYgAFjZ=X1A6oBiMvjVCn8=V-w@mail.gmail.com>
-References: <cover.1577736799.git.rgb@redhat.com> <cfbb80a08fc770dd0dcf6dac6ff307a80d877c3f.1577736799.git.rgb@redhat.com>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [PATCH ghak90 V8 13/16] audit: track container nesting
+Date: Wed, 22 Jan 2020 16:29:12 -0500
+Message-ID: <CAHC9VhRkH=YEjAY6dJJHSp934grHnf=O4RiqLu3U8DzdVQOZkg@mail.gmail.com>
+References: <cover.1577736799.git.rgb@redhat.com> <6452955c1e038227a5cd169f689f3fd3db27513f.1577736799.git.rgb@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cfbb80a08fc770dd0dcf6dac6ff307a80d877c3f.1577736799.git.rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux-Audit Mailing List <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, omosnace-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org, Dan Walsh <dwalsh-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, mpatel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <6452955c1e038227a5cd169f689f3fd3db27513f.1577736799.git.rgb@redhat.com>
+Sender: netdev-owner@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 31, 2019 at 2:51 PM Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+On Tue, Dec 31, 2019 at 2:51 PM Richard Guy Briggs <rgb@redhat.com> wrote:
 >
-> Require the target task to be a descendant of the container
-> orchestrator/engine.
+> Track the parent container of a container to be able to filter and
+> report nesting.
 >
-> You would only change the audit container ID from one set or inherited
-> value to another if you were nesting containers.
->
-> If changing the contid, the container orchestrator/engine must be a
-> descendant and not same orchestrator as the one that set it so it is not
-> possible to change the contid of another orchestrator's container.
->
-> Since the task_is_descendant() function is used in YAMA and in audit,
-> remove the duplication and pull the function into kernel/core/sched.c
->
-> Signed-off-by: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Now that we have a way to track and check the parent container of a
+> container, modify the contid field format to be able to report that
+> nesting using a carrat ("^") separator to indicate nesting.  The
+> original field format was "contid=<contid>" for task-associated records
+> and "contid=<contid>[,<contid>[...]]" for network-namespace-associated
+> records.  The new field format is
+> "contid=<contid>[^<contid>[...]][,<contid>[...]]".
+
+Let's make sure we always use a comma as a separator, even when
+recording the parent information, for example:
+"contid=<contid>[,^<contid>[...]][,<contid>[...]]"
+
+> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
 > ---
->  include/linux/sched.h    |  3 +++
->  kernel/audit.c           | 44 ++++++++++++++++++++++++++++++++++++--------
->  kernel/sched/core.c      | 33 +++++++++++++++++++++++++++++++++
->  security/yama/yama_lsm.c | 33 ---------------------------------
->  4 files changed, 72 insertions(+), 41 deletions(-)
+>  include/linux/audit.h |  1 +
+>  kernel/audit.c        | 53 +++++++++++++++++++++++++++++++++++++++++++--------
+>  kernel/audit.h        |  1 +
+>  kernel/auditfilter.c  | 17 ++++++++++++++++-
+>  kernel/auditsc.c      |  2 +-
+>  5 files changed, 64 insertions(+), 10 deletions(-)
 
 ...
 
 > diff --git a/kernel/audit.c b/kernel/audit.c
-> index f7a8d3288ca0..ef8e07524c46 100644
+> index ef8e07524c46..68be59d1a89b 100644
 > --- a/kernel/audit.c
 > +++ b/kernel/audit.c
-> @@ -2603,22 +2610,43 @@ int audit_set_contid(struct task_struct *task, u64 contid)
->         oldcontid = audit_get_contid(task);
->         read_lock(&tasklist_lock);
->         /* Don't allow the contid to be unset */
-> -       if (!audit_contid_valid(contid))
+
+> @@ -492,6 +493,7 @@ void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p)
+>                 audit_netns_contid_add(new->net_ns, contid);
+>  }
+>
+> +void audit_log_contid(struct audit_buffer *ab, u64 contid);
+
+If we need a forward declaration, might as well just move it up near
+the top of the file with the rest of the declarations.
+
+> +void audit_log_contid(struct audit_buffer *ab, u64 contid)
+> +{
+> +       struct audit_contobj *cont = NULL, *prcont = NULL;
+> +       int h;
+
+It seems safer to pass the audit container ID object and not the u64.
+
 > +       if (!audit_contid_valid(contid)) {
->                 rc = -EINVAL;
-> +               goto unlock;
-> +       }
->         /* Don't allow the contid to be set to the same value again */
-> -       else if (contid == oldcontid) {
-> +       if (contid == oldcontid) {
->                 rc = -EADDRINUSE;
-> +               goto unlock;
-> +       }
->         /* if we don't have caps, reject */
-> -       else if (!capable(CAP_AUDIT_CONTROL))
-> +       if (!capable(CAP_AUDIT_CONTROL)) {
->                 rc = -EPERM;
-> -       /* if task has children or is not single-threaded, deny */
-> -       else if (!list_empty(&task->children))
-> +               goto unlock;
-> +       }
-> +       /* if task has children, deny */
-> +       if (!list_empty(&task->children)) {
->                 rc = -EBUSY;
-> -       else if (!(thread_group_leader(task) && thread_group_empty(task)))
-> +               goto unlock;
-> +       }
-> +       /* if task is not single-threaded, deny */
-> +       if (!(thread_group_leader(task) && thread_group_empty(task))) {
->                 rc = -EALREADY;
-> -       /* if contid is already set, deny */
-> -       else if (audit_contid_set(task))
-> +               goto unlock;
-> +       }
+> +               audit_log_format(ab, "%llu", contid);
 
-It seems like the if/else-if conversion above should be part of an
-earlier patchset.
+Do we really want to print (u64)-1 here?  Since this is a known
+invalid number, would "?" be a better choice?
 
-> +       /* if task is not descendant, block */
-> +       if (task == current) {
-> +               rc = -EBADSLT;
-> +               goto unlock;
+> +               return;
 > +       }
-> +       if (!task_is_descendant(current, task)) {
-> +               rc = -EXDEV;
-> +               goto unlock;
+> +       h = audit_hash_contid(contid);
+> +       rcu_read_lock();
+> +       list_for_each_entry_rcu(cont, &audit_contid_hash[h], list)
+> +               if (cont->id == contid) {
+> +                       prcont = cont;
+
+Why not just pull the code below into the body of this if statement?
+It all needs to be done under the RCU read lock anyway and the code
+would read much better this way.
+
+> +                       break;
+> +               }
+> +       if (!prcont) {
+> +               audit_log_format(ab, "%llu", contid);
+> +               goto out;
 > +       }
+> +       while (prcont) {
+> +               audit_log_format(ab, "%llu", prcont->id);
+> +               prcont = prcont->parent;
+> +               if (prcont)
+> +                       audit_log_format(ab, "^");
 
-I understand you are trying to provide a unique error code for each
-failure case, but this is getting silly.  Let's group the descendent
-checks under the same error code.
+In the interest of limiting the number of calls to audit_log_format(),
+how about something like the following:
 
-> +       /* only allow contid setting again if nesting */
-> +       if (audit_contid_set(task) && audit_contid_isowner(task))
->                 rc = -ECHILD;
+  audit_log_format("%llu", cont);
+  iter = cont->parent;
+  while (iter) {
+    if (iter->parent)
+      audit_log_format("^%llu,", iter);
+    else
+      audit_log_format("^%llu", iter);
+    iter = iter->parent;
+  }
 
-Should that be "!audit_contid_isowner()"?
+> +       }
+> +out:
+> +       rcu_read_unlock();
+> +}
+> +
+>  /*
+>   * audit_log_container_id - report container info
+>   * @context: task or local context for record
+
+...
+
+> @@ -2705,9 +2741,10 @@ int audit_set_contid(struct task_struct *task, u64 contid)
+>         if (!ab)
+>                 return rc;
+>
+> -       audit_log_format(ab,
+> -                        "op=set opid=%d contid=%llu old-contid=%llu",
+> -                        task_tgid_nr(task), contid, oldcontid);
+> +       audit_log_format(ab, "op=set opid=%d contid=", task_tgid_nr(task));
+> +       audit_log_contid(ab, contid);
+> +       audit_log_format(ab, " old-contid=");
+> +       audit_log_contid(ab, oldcontid);
+
+This is an interesting case where contid and old-contid are going to
+be largely the same, only the first (current) ID is going to be
+different; do we want to duplicate all of those IDs?
+
+
+>         audit_log_end(ab);
+>         return rc;
+>  }
+> @@ -2723,9 +2760,9 @@ void audit_log_container_drop(void)
