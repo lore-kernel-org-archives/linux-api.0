@@ -1,156 +1,275 @@
 From: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
-Subject: Re: [PATCH ghak90 V8 02/16] audit: add container id
-Date: Wed, 22 Jan 2020 16:28:02 -0500
-Message-ID: <CAHC9VhTKE_3bOXs+UcpKDQhatKH92uY3Hy=JA4sXXVGOC0ek8A@mail.gmail.com>
-References: <cover.1577736799.git.rgb@redhat.com> <70ad50e69185c50843d5e14462f1c4f03655d503.1577736799.git.rgb@redhat.com>
+Subject: Re: [PATCH ghak90 V8 04/16] audit: convert to contid list to check
+ for orch/engine ownership
+Date: Wed, 22 Jan 2020 16:28:16 -0500
+Message-ID: <CAHC9VhRRW2fFcgBs-R_BZ7ZWCP5wsXA9DB1RUM=QeKj2xZkS2Q@mail.gmail.com>
+References: <cover.1577736799.git.rgb@redhat.com> <a911acf0b209c05dc156fb6b57f9da45778747ce.1577736799.git.rgb@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <70ad50e69185c50843d5e14462f1c4f03655d503.1577736799.git.rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <a911acf0b209c05dc156fb6b57f9da45778747ce.1577736799.git.rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux-Audit Mailing List <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, omosnace-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org, Dan Walsh <dwalsh-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, mpatel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 31, 2019 at 2:49 PM Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+On Tue, Dec 31, 2019 at 2:50 PM Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
 >
-> Implement the proc fs write to set the audit container identifier of a
-> process, emitting an AUDIT_CONTAINER_OP record to document the event.
+> Store the audit container identifier in a refcounted kernel object that
+> is added to the master list of audit container identifiers.  This will
+> allow multiple container orchestrators/engines to work on the same
+> machine without danger of inadvertantly re-using an existing identifier.
+> It will also allow an orchestrator to inject a process into an existing
+> container by checking if the original container owner is the one
+> injecting the task.  A hash table list is used to optimize searches.
 >
-> This is a write from the container orchestrator task to a proc entry of
-> the form /proc/PID/audit_containerid where PID is the process ID of the
-> newly created task that is to become the first task in a container, or
-> an additional task added to a container.
->
-> The write expects up to a u64 value (unset: 18446744073709551615).
->
-> The writer must have capability CAP_AUDIT_CONTROL.
->
-> This will produce a record such as this:
->   type=CONTAINER_OP msg=audit(2018-06-06 12:39:29.636:26949) : op=set opid=2209 contid=123456 old-contid=18446744073709551615
->
-> The "op" field indicates an initial set.  The "opid" field is the
-> object's PID, the process being "contained".  New and old audit
-> container identifier values are given in the "contid" fields.
->
-> It is not permitted to unset the audit container identifier.
-> A child inherits its parent's audit container identifier.
->
-> Please see the github audit kernel issue for the main feature:
->   https://github.com/linux-audit/audit-kernel/issues/90
-> Please see the github audit userspace issue for supporting additions:
->   https://github.com/linux-audit/audit-userspace/issues/51
-> Please see the github audit testsuiite issue for the test case:
->   https://github.com/linux-audit/audit-testsuite/issues/64
-> Please see the github audit wiki for the feature overview:
->   https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
->
-> Signed-off-by: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Acked-by: Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-> Acked-by: Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Acked-by: Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>
-> Reviewed-by: Ondrej Mosnacek <omosnace-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 > Signed-off-by: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 > ---
->  fs/proc/base.c             | 36 ++++++++++++++++++++++++++++
->  include/linux/audit.h      | 25 ++++++++++++++++++++
->  include/uapi/linux/audit.h |  2 ++
->  kernel/audit.c             | 58 ++++++++++++++++++++++++++++++++++++++++++++++
->  kernel/audit.h             |  1 +
->  kernel/auditsc.c           |  4 ++++
->  6 files changed, 126 insertions(+)
+>  include/linux/audit.h | 14 ++++++--
+>  kernel/audit.c        | 98 ++++++++++++++++++++++++++++++++++++++++++++++++---
+>  kernel/audit.h        |  8 +++++
+>  3 files changed, 112 insertions(+), 8 deletions(-)
 
 ...
 
-> diff --git a/kernel/audit.c b/kernel/audit.c
-> index 397f8fb4836a..2d7707426b7d 100644
-> --- a/kernel/audit.c
-> +++ b/kernel/audit.c
-> @@ -2356,6 +2358,62 @@ int audit_signal_info(int sig, struct task_struct *t)
->         return audit_signal_info_syscall(t);
+> diff --git a/include/linux/audit.h b/include/linux/audit.h
+> index a045b34ecf44..0e6dbe943ae4 100644
+> --- a/include/linux/audit.h
+> +++ b/include/linux/audit.h
+> @@ -94,10 +94,18 @@ struct audit_ntp_data {
+>  struct audit_ntp_data {};
+>  #endif
+>
+> +struct audit_contobj {
+> +       struct list_head        list;
+> +       u64                     id;
+> +       struct task_struct      *owner;
+> +       refcount_t              refcount;
+> +       struct rcu_head         rcu;
+> +};
+> +
+>  struct audit_task_info {
+>         kuid_t                  loginuid;
+>         unsigned int            sessionid;
+> -       u64                     contid;
+> +       struct audit_contobj    *cont;
+>  #ifdef CONFIG_AUDITSYSCALL
+>         struct audit_context    *ctx;
+>  #endif
+> @@ -203,9 +211,9 @@ static inline unsigned int audit_get_sessionid(struct task_struct *tsk)
+>
+>  static inline u64 audit_get_contid(struct task_struct *tsk)
+>  {
+> -       if (!tsk->audit)
+> +       if (!tsk->audit || !tsk->audit->cont)
+>                 return AUDIT_CID_UNSET;
+> -       return tsk->audit->contid;
+> +       return tsk->audit->cont->id;
 >  }
 >
-> +/*
-> + * audit_set_contid - set current task's audit contid
-> + * @task: target task
-> + * @contid: contid value
-> + *
-> + * Returns 0 on success, -EPERM on permission failure.
-> + *
-> + * Called (set) from fs/proc/base.c::proc_contid_write().
-> + */
-> +int audit_set_contid(struct task_struct *task, u64 contid)
+>  extern u32 audit_enabled;
+> diff --git a/kernel/audit.c b/kernel/audit.c
+> index 2d7707426b7d..4bab20f5f781 100644
+> --- a/kernel/audit.c
+> +++ b/kernel/audit.c
+> @@ -212,6 +218,31 @@ void __init audit_task_init(void)
+>                                              0, SLAB_PANIC, NULL);
+>  }
+>
+> +static struct audit_contobj *_audit_contobj(struct task_struct *tsk)
 > +{
-> +       u64 oldcontid;
-> +       int rc = 0;
-> +       struct audit_buffer *ab;
+> +       if (!tsk->audit)
+> +               return NULL;
+> +       return tsk->audit->cont;
+
+It seems like it would be safer to grab a reference here (e.g.
+_audit_contobj_hold(...)), yes?  Or are you confident we will never
+have tsk go away while the caller is holding on to the returned audit
+container ID object?
+
+> +}
 > +
-> +       task_lock(task);
-> +       /* Can't set if audit disabled */
-> +       if (!task->audit) {
-> +               task_unlock(task);
-> +               return -ENOPROTOOPT;
+> +/* audit_contobj_list_lock must be held by caller unless new */
+> +static void _audit_contobj_hold(struct audit_contobj *cont)
+> +{
+> +       refcount_inc(&cont->refcount);
+> +}
+
+If we are going to call the matching decrement function "_put" it
+seems like we might want to call the function about "_get".  Further,
+we can also have it return an audit_contobj pointer in case the caller
+needs to do an assignment as well (which seems typical if you need to
+bump the refcount):
+
+  _audit_contobj_get(audit_contobj *cont)
+  {
+    if (cont)
+      refcount_inc(cont);
+    return cont;
+  }
+
+> +/* audit_contobj_list_lock must be held by caller */
+> +static void _audit_contobj_put(struct audit_contobj *cont)
+> +{
+> +       if (!cont)
+> +               return;
+> +       if (refcount_dec_and_test(&cont->refcount)) {
+> +               put_task_struct(cont->owner);
+> +               list_del_rcu(&cont->list);
+> +               kfree_rcu(cont, rcu);
 > +       }
-> +       oldcontid = audit_get_contid(task);
-> +       read_lock(&tasklist_lock);
-> +       /* Don't allow the audit containerid to be unset */
-> +       if (!audit_contid_valid(contid))
-> +               rc = -EINVAL;
-> +       /* if we don't have caps, reject */
-> +       else if (!capable(CAP_AUDIT_CONTROL))
-> +               rc = -EPERM;
-> +       /* if task has children or is not single-threaded, deny */
-> +       else if (!list_empty(&task->children))
-> +               rc = -EBUSY;
-> +       else if (!(thread_group_leader(task) && thread_group_empty(task)))
-> +               rc = -EALREADY;
-
-[NOTE: there is a bigger issue below which I think is going to require
-a respin/fixup of this patch so I'm going to take the opportunity to
-do a bit more bikeshedding ;)]
-
-It seems like we could combine both the thread/children checks under a
-single -EBUSY return value.  In both cases the caller should be able
-to determine if the target process is multi-threaded for has spawned
-children, yes?  FWIW, my motivation for this question is that
--EALREADY seems like a poor choice here.
-
-> +       /* if contid is already set, deny */
-> +       else if (audit_contid_set(task))
-> +               rc = -ECHILD;
-
-Does -EEXIST make more sense here?
-
-> +       read_unlock(&tasklist_lock);
-> +       if (!rc)
-> +               task->audit->contid = contid;
-> +       task_unlock(task);
-> +
-> +       if (!audit_enabled)
-> +               return rc;
-> +
-> +       ab = audit_log_start(audit_context(), GFP_KERNEL, AUDIT_CONTAINER_OP);
-> +       if (!ab)
-> +               return rc;
-> +
-> +       audit_log_format(ab,
-> +                        "op=set opid=%d contid=%llu old-contid=%llu",
-> +                        task_tgid_nr(task), contid, oldcontid);
-> +       audit_log_end(ab);
-
-Assuming audit is enabled we always emit the record above, even if we
-were not actually able to set the Audit Container ID (ACID); this
-seems wrong to me.  I think the proper behavior would be to either add
-a "res=" field to indicate success/failure or only emit the record
-when we actually change a task's ACID.  Considering the impact that
-the ACID value will potentially have on the audit stream, it seems
-like always logging the record and including a "res=" field may be the
-safer choice.
-
-
-> +       return rc;
 > +}
 > +
 >  /**
->   * audit_log_end - end one audit record
->   * @ab: the audit_buffer
+>   * audit_alloc - allocate an audit info block for a task
+>   * @tsk: task
+> @@ -232,7 +263,11 @@ int audit_alloc(struct task_struct *tsk)
+>         }
+>         info->loginuid = audit_get_loginuid(current);
+>         info->sessionid = audit_get_sessionid(current);
+> -       info->contid = audit_get_contid(current);
+> +       spin_lock(&audit_contobj_list_lock);
+> +       info->cont = _audit_contobj(current);
+> +       if (info->cont)
+> +               _audit_contobj_hold(info->cont);
+> +       spin_unlock(&audit_contobj_list_lock);
+
+If we are taking a spinlock in order to bump the refcount, does it
+really need to be a refcount_t or can we just use a normal integer?
+In RCU protected lists a spinlock is usually used to protect
+adds/removes to the list, not the content of individual list items.
+
+My guess is you probably want to use the spinlock as described above
+(list add/remove protection) and manipulate the refcount_t inside a
+RCU read lock protected region.
+
+>         tsk->audit = info;
+>
+>         ret = audit_alloc_syscall(tsk);
+> @@ -267,6 +302,9 @@ void audit_free(struct task_struct *tsk)
+>         /* Freeing the audit_task_info struct must be performed after
+>          * audit_log_exit() due to need for loginuid and sessionid.
+>          */
+> +       spin_lock(&audit_contobj_list_lock);
+> +       _audit_contobj_put(tsk->audit->cont);
+> +       spin_unlock(&audit_contobj_list_lock);
+
+This is another case of refcount_t vs normal integer in a spinlock
+protected region.
+
+>         info = tsk->audit;
+>         tsk->audit = NULL;
+>         kmem_cache_free(audit_task_cache, info);
+> @@ -2365,6 +2406,9 @@ int audit_signal_info(int sig, struct task_struct *t)
+>   *
+>   * Returns 0 on success, -EPERM on permission failure.
+>   *
+> + * If the original container owner goes away, no task injection is
+> + * possible to an existing container.
+> + *
+>   * Called (set) from fs/proc/base.c::proc_contid_write().
+>   */
+>  int audit_set_contid(struct task_struct *task, u64 contid)
+> @@ -2381,9 +2425,12 @@ int audit_set_contid(struct task_struct *task, u64 contid)
+>         }
+>         oldcontid = audit_get_contid(task);
+>         read_lock(&tasklist_lock);
+> -       /* Don't allow the audit containerid to be unset */
+> +       /* Don't allow the contid to be unset */
+>         if (!audit_contid_valid(contid))
+>                 rc = -EINVAL;
+> +       /* Don't allow the contid to be set to the same value again */
+> +       else if (contid == oldcontid) {
+> +               rc = -EADDRINUSE;
+
+First, is that brace a typo?  It looks like it.  Did this compile?
+
+Second, can you explain why (re)setting the audit container ID to the
+same value is something we need to prohibit?  I'm guessing it has
+something to do with explicitly set vs inherited, but I don't want to
+assume too much about your thinking behind this.
+
+If it is "set vs inherited", would allowing an orchestrator to
+explicitly "set" an inherited audit container ID provide some level or
+protection against moving the task?
+
+>         /* if we don't have caps, reject */
+>         else if (!capable(CAP_AUDIT_CONTROL))
+>                 rc = -EPERM;
+> @@ -2396,8 +2443,49 @@ int audit_set_contid(struct task_struct *task, u64 contid)
+>         else if (audit_contid_set(task))
+>                 rc = -ECHILD;
+>         read_unlock(&tasklist_lock);
+> -       if (!rc)
+> -               task->audit->contid = contid;
+> +       if (!rc) {
+> +               struct audit_contobj *oldcont = _audit_contobj(task);
+> +               struct audit_contobj *cont = NULL, *newcont = NULL;
+> +               int h = audit_hash_contid(contid);
+> +
+> +               rcu_read_lock();
+> +               list_for_each_entry_rcu(cont, &audit_contid_hash[h], list)
+> +                       if (cont->id == contid) {
+> +                               /* task injection to existing container */
+> +                               if (current == cont->owner) {
+
+Do we have any protection against the task pointed to by cont->owner
+going away and a new task with the same current pointer value (no
+longer the legitimate audit container ID owner) manipulating the
+target task's audit container ID?
+
+> +                                       spin_lock(&audit_contobj_list_lock);
+> +                                       _audit_contobj_hold(cont);
+> +                                       spin_unlock(&audit_contobj_list_lock);
+
+More of the recount_t vs integer/spinlock question.
+
+> +                                       newcont = cont;
+> +                               } else {
+> +                                       rc = -ENOTUNIQ;
+> +                                       goto conterror;
+> +                               }
+> +                               break;
+> +                       }
+> +               if (!newcont) {
+> +                       newcont = kmalloc(sizeof(*newcont), GFP_ATOMIC);
+> +                       if (newcont) {
+> +                               INIT_LIST_HEAD(&newcont->list);
+> +                               newcont->id = contid;
+> +                               get_task_struct(current);
+> +                               newcont->owner = current;
+
+newcont->owner = get_task_struct(current);
+
+(This is what I was talking about above with returning the struct
+pointer in the _get/_hold function)
+
+> +                               refcount_set(&newcont->refcount, 1);
+> +                               spin_lock(&audit_contobj_list_lock);
+> +                               list_add_rcu(&newcont->list, &audit_contid_hash[h]);
+> +                               spin_unlock(&audit_contobj_list_lock);
+
+I think we might have a problem where multiple tasks could race adding
+the same audit container ID and since there is no check inside the
+spinlock protected region we could end up adding multiple instances of
+the same audit container ID, yes?
+
+> +                       } else {
+> +                               rc = -ENOMEM;
+> +                               goto conterror;
+> +                       }
+> +               }
+> +               task->audit->cont = newcont;
+> +               spin_lock(&audit_contobj_list_lock);
+> +               _audit_contobj_put(oldcont);
+> +               spin_unlock(&audit_contobj_list_lock);
+
+More of the refcount_t/integer/spinlock question.
+
+
+> +conterror:
+> +               rcu_read_unlock();
+> +       }
+>         task_unlock(task);
+>
+>         if (!audit_enabled)
