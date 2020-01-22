@@ -1,62 +1,202 @@
-From: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
-Subject: Re: [PATCH ghak90 V8 07/16] audit: add contid support for signalling
- the audit daemon
-Date: Wed, 22 Jan 2020 16:28:39 -0500
-Message-ID: <CAHC9VhSuwJGryfrBfzxG01zwb-O_7dbjS0x0a3w-XjcNuYSAcg@mail.gmail.com>
-References: <cover.1577736799.git.rgb@redhat.com> <7d7933d742fdf4a94c84b791906a450b16f2e81f.1577736799.git.rgb@redhat.com>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [PATCH ghak90 V8 11/16] audit: add support for containerid to
+ network namespaces
+Date: Wed, 22 Jan 2020 16:28:57 -0500
+Message-ID: <CAHC9VhRw3Fj9-hi+Vj8JJb_GXM4B9N5hRXa9H6aQkuuFqJJ15w@mail.gmail.com>
+References: <cover.1577736799.git.rgb@redhat.com> <2954ed671a7622ddf3abdb8854dbba2ad13e9f33.1577736799.git.rgb@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <7d7933d742fdf4a94c84b791906a450b16f2e81f.1577736799.git.rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux-Audit Mailing List <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, omosnace-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org, Dan Walsh <dwalsh-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, mpatel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <2954ed671a7622ddf3abdb8854dbba2ad13e9f33.1577736799.git.rgb@redhat.com>
+Sender: netdev-owner@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 31, 2019 at 2:50 PM Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+On Tue, Dec 31, 2019 at 2:51 PM Richard Guy Briggs <rgb@redhat.com> wrote:
 >
-> Add audit container identifier support to the action of signalling the
-> audit daemon.
+> This also adds support to qualify NETFILTER_PKT records.
 >
-> Since this would need to add an element to the audit_sig_info struct,
-> a new record type AUDIT_SIGNAL_INFO2 was created with a new
-> audit_sig_info2 struct.  Corresponding support is required in the
-> userspace code to reflect the new record request and reply type.
-> An older userspace won't break since it won't know to request this
-> record type.
+> Audit events could happen in a network namespace outside of a task
+> context due to packets received from the net that trigger an auditing
+> rule prior to being associated with a running task.  The network
+> namespace could be in use by multiple containers by association to the
+> tasks in that network namespace.  We still want a way to attribute
+> these events to any potential containers.  Keep a list per network
+> namespace to track these audit container identifiiers.
 >
-> Signed-off-by: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Add/increment the audit container identifier on:
+> - initial setting of the audit container identifier via /proc
+> - clone/fork call that inherits an audit container identifier
+> - unshare call that inherits an audit container identifier
+> - setns call that inherits an audit container identifier
+> Delete/decrement the audit container identifier on:
+> - an inherited audit container identifier dropped when child set
+> - process exit
+> - unshare call that drops a net namespace
+> - setns call that drops a net namespace
+>
+> Add audit container identifier auxiliary record(s) to NETFILTER_PKT
+> event standalone records.  Iterate through all potential audit container
+> identifiers associated with a network namespace.
+>
+> Please see the github audit kernel issue for contid net support:
+>   https://github.com/linux-audit/audit-kernel/issues/92
+> Please see the github audit testsuiite issue for the test case:
+>   https://github.com/linux-audit/audit-testsuite/issues/64
+> Please see the github audit wiki for the feature overview:
+>   https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
+> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> Acked-by: Neil Horman <nhorman@tuxdriver.com>
+> Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
 > ---
->  include/linux/audit.h       |  7 +++++++
->  include/uapi/linux/audit.h  |  1 +
->  kernel/audit.c              | 35 +++++++++++++++++++++++++++++++++++
->  kernel/audit.h              |  1 +
->  security/selinux/nlmsgtab.c |  1 +
->  5 files changed, 45 insertions(+)
+>  include/linux/audit.h    |  24 +++++++++
+>  kernel/audit.c           | 132 ++++++++++++++++++++++++++++++++++++++++++++++-
+>  kernel/nsproxy.c         |   4 ++
+>  net/netfilter/nft_log.c  |  11 +++-
+>  net/netfilter/xt_AUDIT.c |  11 +++-
+>  5 files changed, 176 insertions(+), 6 deletions(-)
 
 ...
 
+> diff --git a/include/linux/audit.h b/include/linux/audit.h
+> index 5531d37a4226..ed8d5b74758d 100644
+> --- a/include/linux/audit.h
+> +++ b/include/linux/audit.h
+> @@ -12,6 +12,7 @@
+>  #include <linux/sched.h>
+>  #include <linux/ptrace.h>
+>  #include <uapi/linux/audit.h>
+> +#include <linux/refcount.h>
+>
+>  #define AUDIT_INO_UNSET ((unsigned long)-1)
+>  #define AUDIT_DEV_UNSET ((dev_t)-1)
+> @@ -121,6 +122,13 @@ struct audit_task_info {
+>
+>  extern struct audit_task_info init_struct_audit;
+>
+> +struct audit_contobj_netns {
+> +       struct list_head        list;
+> +       u64                     id;
+
+Since we now track audit container IDs in their own structure, why not
+link directly to the audit container ID object (and bump the
+refcount)?
+
+> +       refcount_t              refcount;
+> +       struct rcu_head         rcu;
+> +};
+> +
+>  extern int is_audit_feature_set(int which);
+>
+>  extern int __init audit_register_class(int class, unsigned *list);
+> @@ -225,6 +233,12 @@ static inline u64 audit_get_contid(struct task_struct *tsk)
+>  }
+>
+>  extern void audit_log_container_id(struct audit_context *context, u64 contid);
+> +extern void audit_netns_contid_add(struct net *net, u64 contid);
+> +extern void audit_netns_contid_del(struct net *net, u64 contid);
+> +extern void audit_switch_task_namespaces(struct nsproxy *ns,
+> +                                        struct task_struct *p);
+> +extern void audit_log_netns_contid_list(struct net *net,
+> +                                       struct audit_context *context);
+>
+>  extern u32 audit_enabled;
+>
+> @@ -297,6 +311,16 @@ static inline u64 audit_get_contid(struct task_struct *tsk)
+>
+>  static inline void audit_log_container_id(struct audit_context *context, u64 contid)
+>  { }
+> +static inline void audit_netns_contid_add(struct net *net, u64 contid)
+> +{ }
+> +static inline void audit_netns_contid_del(struct net *net, u64 contid)
+> +{ }
+> +static inline void audit_switch_task_namespaces(struct nsproxy *ns,
+> +                                               struct task_struct *p)
+> +{ }
+> +static inline void audit_log_netns_contid_list(struct net *net,
+> +                                              struct audit_context *context)
+> +{ }
+>
+>  #define audit_enabled AUDIT_OFF
+>
 > diff --git a/kernel/audit.c b/kernel/audit.c
-> index 0871c3e5d6df..51159c94041c 100644
+> index d4e6eafe5644..f7a8d3288ca0 100644
 > --- a/kernel/audit.c
 > +++ b/kernel/audit.c
-> @@ -126,6 +126,14 @@ struct auditd_connection {
->  kuid_t         audit_sig_uid = INVALID_UID;
->  pid_t          audit_sig_pid = -1;
->  u32            audit_sig_sid = 0;
-> +/* Since the signal information is stored in the record buffer at the
-> + * time of the signal, but not retrieved until later, there is a chance
-> + * that the last process in the container could terminate before the
-> + * signal record is delivered.  In this circumstance, there is a chance
-> + * the orchestrator could reuse the audit container identifier, causing
-> + * an overlap of audit records that refer to the same audit container
-> + * identifier, but a different container instance.  */
-> +u64            audit_sig_cid = AUDIT_CID_UNSET;
+> @@ -59,6 +59,7 @@
+>  #include <linux/freezer.h>
+>  #include <linux/pid_namespace.h>
+>  #include <net/netns/generic.h>
+> +#include <net/net_namespace.h>
+>
+>  #include "audit.h"
+>
+> @@ -86,9 +87,13 @@
+>  /**
+>   * struct audit_net - audit private network namespace data
+>   * @sk: communication socket
+> + * @contid_list: audit container identifier list
+> + * @contid_list_lock audit container identifier list lock
+>   */
+>  struct audit_net {
+>         struct sock *sk;
+> +       struct list_head contid_list;
+> +       spinlock_t contid_list_lock;
+>  };
+>
+>  /**
+> @@ -305,8 +310,11 @@ struct audit_task_info init_struct_audit = {
+>  void audit_free(struct task_struct *tsk)
+>  {
+>         struct audit_task_info *info = tsk->audit;
+> +       struct nsproxy *ns = tsk->nsproxy;
+>
+>         audit_free_syscall(tsk);
+> +       if (ns)
+> +               audit_netns_contid_del(ns->net_ns, audit_get_contid(tsk));
+>         /* Freeing the audit_task_info struct must be performed after
+>          * audit_log_exit() due to need for loginuid and sessionid.
+>          */
+> @@ -409,6 +417,120 @@ static struct sock *audit_get_sk(const struct net *net)
+>         return aunet->sk;
+>  }
+>
+> +void audit_netns_contid_add(struct net *net, u64 contid)
+> +{
+> +       struct audit_net *aunet;
+> +       struct list_head *contid_list;
+> +       struct audit_contobj_netns *cont;
+> +
+> +       if (!net)
+> +               return;
+> +       if (!audit_contid_valid(contid))
+> +               return;
+> +       aunet = net_generic(net, audit_net_id);
+> +       if (!aunet)
+> +               return;
+> +       contid_list = &aunet->contid_list;
+> +       rcu_read_lock();
+> +       list_for_each_entry_rcu(cont, contid_list, list)
+> +               if (cont->id == contid) {
+> +                       spin_lock(&aunet->contid_list_lock);
+> +                       refcount_inc(&cont->refcount);
+> +                       spin_unlock(&aunet->contid_list_lock);
+> +                       goto out;
+> +               }
+> +       cont = kmalloc(sizeof(*cont), GFP_ATOMIC);
+> +       if (cont) {
+> +               INIT_LIST_HEAD(&cont->list);
+> +               cont->id = contid;
+> +               refcount_set(&cont->refcount, 1);
+> +               spin_lock(&aunet->contid_list_lock);
+> +               list_add_rcu(&cont->list, contid_list);
+> +               spin_unlock(&aunet->contid_list_lock);
+> +       }
+> +out:
+> +       rcu_read_unlock();
+> +}
 
-I believe we could prevent the case mentioned above by taking an
-additional reference to the audit container ID object when the signal
-information is collected, dropping it only after the signal
-information is collected by userspace or another process signals the
-audit daemon.  Yes, it would block that audit container ID from being
-reused immediately, but since we are talking about one number out of
-2^64 that seems like a reasonable tradeoff.
+See my comments about refcount_t, spinlocks, and list manipulation
+races from earlier in the patchset; the same thing applies to the
+function above.
