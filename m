@@ -1,139 +1,94 @@
 From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [PATCH ghak90 V8 07/16] audit: add contid support for signalling
- the audit daemon
-Date: Thu, 23 Jan 2020 16:35:55 -0500
-Message-ID: <CAHC9VhQ2_MQdGAT6Pda9FRe6s0y4JC1XUQenpr-VJiyq9M_CBw@mail.gmail.com>
-References: <cover.1577736799.git.rgb@redhat.com> <7d7933d742fdf4a94c84b791906a450b16f2e81f.1577736799.git.rgb@redhat.com>
- <CAHC9VhSuwJGryfrBfzxG01zwb-O_7dbjS0x0a3w-XjcNuYSAcg@mail.gmail.com>
- <20200123162918.b3jbed7tbvr2sf2p@madcap2.tricolour.ca> <CAHC9VhTusiQoudB8G5jjDFyM9WxBUAjZ6_X35ywJ063Jb75dQA@mail.gmail.com>
- <20200123200412.j2aucdp3cvk57prw@madcap2.tricolour.ca>
+Subject: Re: [PATCH ghak90 V8 12/16] audit: contid check descendancy and nesting
+Date: Thu, 23 Jan 2020 16:47:38 -0500
+Message-ID: <CAHC9VhQtAfW-+sK3Gb6y=jPYOkyXnopO94k+u_6UKAAaACg44Q@mail.gmail.com>
+References: <cover.1577736799.git.rgb@redhat.com> <cfbb80a08fc770dd0dcf6dac6ff307a80d877c3f.1577736799.git.rgb@redhat.com>
+ <CAHC9VhT1+mx_tVzyXD=UBqagqYgAFjZ=X1A6oBiMvjVCn8=V-w@mail.gmail.com> <20200123210240.sq64tptjm3ds7xss@madcap2.tricolour.ca>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <netfilter-devel-owner@vger.kernel.org>
-In-Reply-To: <20200123200412.j2aucdp3cvk57prw@madcap2.tricolour.ca>
-Sender: netfilter-devel-owner@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200123210240.sq64tptjm3ds7xss@madcap2.tricolour.ca>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Richard Guy Briggs <rgb@redhat.com>
-Cc: nhorman@tuxdriver.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, dhowells@redhat.com, Linux-Audit Mailing List <linux-audit@redhat.com>, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, simo@redhat.com, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>, mpatel@redhat.com, Serge Hallyn <serge@hallyn.com>
+Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 23, 2020 at 3:04 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> On 2020-01-23 12:09, Paul Moore wrote:
-> > On Thu, Jan 23, 2020 at 11:29 AM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > > On 2020-01-22 16:28, Paul Moore wrote:
-> > > > On Tue, Dec 31, 2019 at 2:50 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > > > >
-> > > > > Add audit container identifier support to the action of signalling the
-> > > > > audit daemon.
-> > > > >
-> > > > > Since this would need to add an element to the audit_sig_info struct,
-> > > > > a new record type AUDIT_SIGNAL_INFO2 was created with a new
-> > > > > audit_sig_info2 struct.  Corresponding support is required in the
-> > > > > userspace code to reflect the new record request and reply type.
-> > > > > An older userspace won't break since it won't know to request this
-> > > > > record type.
-> > > > >
-> > > > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > > > > ---
-> > > > >  include/linux/audit.h       |  7 +++++++
-> > > > >  include/uapi/linux/audit.h  |  1 +
-> > > > >  kernel/audit.c              | 35 +++++++++++++++++++++++++++++++++++
-> > > > >  kernel/audit.h              |  1 +
-> > > > >  security/selinux/nlmsgtab.c |  1 +
-> > > > >  5 files changed, 45 insertions(+)
-> > > >
-> > > > ...
-> > > >
-> > > > > diff --git a/kernel/audit.c b/kernel/audit.c
-> > > > > index 0871c3e5d6df..51159c94041c 100644
-> > > > > --- a/kernel/audit.c
-> > > > > +++ b/kernel/audit.c
-> > > > > @@ -126,6 +126,14 @@ struct auditd_connection {
-> > > > >  kuid_t         audit_sig_uid = INVALID_UID;
-> > > > >  pid_t          audit_sig_pid = -1;
-> > > > >  u32            audit_sig_sid = 0;
-> > > > > +/* Since the signal information is stored in the record buffer at the
-> > > > > + * time of the signal, but not retrieved until later, there is a chance
-> > > > > + * that the last process in the container could terminate before the
-> > > > > + * signal record is delivered.  In this circumstance, there is a chance
-> > > > > + * the orchestrator could reuse the audit container identifier, causing
-> > > > > + * an overlap of audit records that refer to the same audit container
-> > > > > + * identifier, but a different container instance.  */
-> > > > > +u64            audit_sig_cid = AUDIT_CID_UNSET;
-> > > >
-> > > > I believe we could prevent the case mentioned above by taking an
-> > > > additional reference to the audit container ID object when the signal
-> > > > information is collected, dropping it only after the signal
-> > > > information is collected by userspace or another process signals the
-> > > > audit daemon.  Yes, it would block that audit container ID from being
-> > > > reused immediately, but since we are talking about one number out of
-> > > > 2^64 that seems like a reasonable tradeoff.
+On Thu, Jan 23, 2020 at 4:03 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2020-01-22 16:29, Paul Moore wrote:
+> > On Tue, Dec 31, 2019 at 2:51 PM Richard Guy Briggs <rgb@redhat.com> wrote:
 > > >
-> > > I had thought that through and should have been more explicit about that
-> > > situation when I documented it.  We could do that, but then the syscall
-> > > records would be connected with the call from auditd on shutdown to
-> > > request that signal information, rather than the exit of that last
-> > > process that was using that container.  This strikes me as misleading.
-> > > Is that really what we want?
+> > > Require the target task to be a descendant of the container
+> > > orchestrator/engine.
+> > >
+> > > You would only change the audit container ID from one set or inherited
+> > > value to another if you were nesting containers.
+> > >
+> > > If changing the contid, the container orchestrator/engine must be a
+> > > descendant and not same orchestrator as the one that set it so it is not
+> > > possible to change the contid of another orchestrator's container.
+> > >
+> > > Since the task_is_descendant() function is used in YAMA and in audit,
+> > > remove the duplication and pull the function into kernel/core/sched.c
+> > >
+> > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > > ---
+> > >  include/linux/sched.h    |  3 +++
+> > >  kernel/audit.c           | 44 ++++++++++++++++++++++++++++++++++++--------
+> > >  kernel/sched/core.c      | 33 +++++++++++++++++++++++++++++++++
+> > >  security/yama/yama_lsm.c | 33 ---------------------------------
+> > >  4 files changed, 72 insertions(+), 41 deletions(-)
 > >
-> >  ???
+> > ...
 > >
-> > I think one of us is not understanding the other; maybe it's me, maybe
-> > it's you, maybe it's both of us.
+> > > diff --git a/kernel/audit.c b/kernel/audit.c
+> > > index f7a8d3288ca0..ef8e07524c46 100644
+> > > --- a/kernel/audit.c
+> > > +++ b/kernel/audit.c
+> > > @@ -2603,22 +2610,43 @@ int audit_set_contid(struct task_struct *task, u64 contid)
+> > >         oldcontid = audit_get_contid(task);
+> > >         read_lock(&tasklist_lock);
+> > >         /* Don't allow the contid to be unset */
+> > > -       if (!audit_contid_valid(contid))
+> > > +       if (!audit_contid_valid(contid)) {
+> > >                 rc = -EINVAL;
+> > > +               goto unlock;
+> > > +       }
+> > >         /* Don't allow the contid to be set to the same value again */
+> > > -       else if (contid == oldcontid) {
+> > > +       if (contid == oldcontid) {
+> > >                 rc = -EADDRINUSE;
+> > > +               goto unlock;
+> > > +       }
+> > >         /* if we don't have caps, reject */
+> > > -       else if (!capable(CAP_AUDIT_CONTROL))
+> > > +       if (!capable(CAP_AUDIT_CONTROL)) {
+> > >                 rc = -EPERM;
+> > > -       /* if task has children or is not single-threaded, deny */
+> > > -       else if (!list_empty(&task->children))
+> > > +               goto unlock;
+> > > +       }
+> > > +       /* if task has children, deny */
+> > > +       if (!list_empty(&task->children)) {
+> > >                 rc = -EBUSY;
+> > > -       else if (!(thread_group_leader(task) && thread_group_empty(task)))
+> > > +               goto unlock;
+> > > +       }
+> > > +       /* if task is not single-threaded, deny */
+> > > +       if (!(thread_group_leader(task) && thread_group_empty(task))) {
+> > >                 rc = -EALREADY;
+> > > -       /* if contid is already set, deny */
+> > > -       else if (audit_contid_set(task))
+> > > +               goto unlock;
+> > > +       }
 > >
-> > Anyway, here is what I was trying to convey with my original comment
-> > ... When we record the audit container ID in audit_signal_info() we
-> > take an extra reference to the audit container ID object so that it
-> > will not disappear (and get reused) until after we respond with an
-> > AUDIT_SIGNAL_INFO2.  In audit_receive_msg() when we do the
-> > AUDIT_SIGNAL_INFO2 processing we drop the extra reference we took in
-> > audit_signal_info().  Unless I'm missing some other change you made,
-> > this *shouldn't* affect the syscall records, all it does is preserve
-> > the audit container ID object in the kernel's ACID store so it doesn't
-> > get reused.
+> > It seems like the if/else-if conversion above should be part of an
+> > earlier patchset.
 >
-> This is exactly what I had understood.  I hadn't considered the extra
-> details below in detail due to my original syscall concern, but they
-> make sense.
->
-> The syscall I refer to is the one connected with the drop of the
-> audit container identifier by the last process that was in that
-> container in patch 5/16.  The production of this record is contingent on
-> the last ref in a contobj being dropped.  So if it is due to that ref
-> being maintained by audit_signal_info() until the AUDIT_SIGNAL_INFO2
-> record it fetched, then it will appear that the fetch action closed the
-> container rather than the last process in the container to exit.
->
-> Does this make sense?
+> I had considered that, but it wasn't obvious where that conversion
+> should happen since it wasn't necessary earlier and is now.  I can move
+> it earlier if you feel strongly about it.
 
-More so than your original reply, at least to me anyway.
-
-It makes sense that the audit container ID wouldn't be marked as
-"dead" since it would still be very much alive and available for use
-by the orchestrator, the question is if that is desirable or not.  I
-think the answer to this comes down the preserving the correctness of
-the audit log.
-
-If the audit container ID reported by AUDIT_SIGNAL_INFO2 has been
-reused then I think there is a legitimate concern that the audit log
-is not correct, and could be misleading.  If we solve that by grabbing
-an extra reference, then there could also be some confusion as
-userspace considers a container to be "dead" while the audit container
-ID still exists in the kernel, and the kernel generated audit
-container ID death record will not be generated until much later (and
-possibly be associated with a different event, but that could be
-solved by unassociating the container death record).  Of the two
-approaches, I think the latter is safer in that it preserves the
-correctness of the audit log, even though it could result in a delay
-of the container death record.
-
-Neither way is perfect, so if you have any other ideas I'm all ears.
-
-> > (We do need to do some extra housekeeping in audit_signal_info() to
-> > deal with the case where nobody asks for AUDIT_SIGNAL_INFO2 -
-> > basically if audit_sig_cid is not NULL we should drop a reference
-> > before assigning it a new object pointer, and of course we would need
-> > to set audit_sig_cid to NULL in audit_receive_msg() after sending it
-> > up to userspace and dropping the extra ref.)
+Not particularly.
 
 -- 
 paul moore
