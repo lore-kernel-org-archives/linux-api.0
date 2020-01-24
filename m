@@ -1,72 +1,67 @@
-From: Rich Felker <dalias@libc.org>
-Subject: Proposal to fix pwrite with O_APPEND via pwritev2 flag
-Date: Thu, 23 Jan 2020 19:02:43 -0500
-Message-ID: <20200124000243.GA12112@brightrain.aerifal.cx>
+From: Sasha Levin <sashal@kernel.org>
+Subject: [PATCH AUTOSEL 5.4 04/33] libbpf: Fix BTF-defined map's __type macro handling of arrays
+Date: Thu, 23 Jan 2020 20:16:39 -0500
+Message-ID: <20200124011708.18232-4-sashal@kernel.org>
+References: <20200124011708.18232-1-sashal@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+Content-Transfer-Encoding: 8bit
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20200124011708.18232-1-sashal@kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Cc: Andrii Nakryiko <andriin@fb.com>, Alexei Starovoitov <ast@kernel.org>, Sasha Levin <sashal@kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-There's a longstanding unfixable (due to API stability) bug in the
-pwrite syscall:
+From: Andrii Nakryiko <andriin@fb.com>
 
-http://man7.org/linux/man-pages/man2/pwrite.2.html#BUGS
+[ Upstream commit a53ba15d81995868651dd28a85d8045aef3d4e20 ]
 
-whereby it wrongly honors O_APPEND if set, ignoring the caller-passed
-offset. Now that there's a pwritev2 syscall that takes a flags
-argument, it's possible to fix this without breaking stability by
-adding a new RWF_NOAPPEND flag, which callers that want the fixed
-behavior can then pass.
+Due to a quirky C syntax of declaring pointers to array or function
+prototype, existing __type() macro doesn't work with map key/value types
+that are array or function prototype. One has to create a typedef first
+and use it to specify key/value type for a BPF map.  By using typeof(),
+pointer to type is now handled uniformly for all kinds of types. Convert
+one of self-tests as a demonstration.
 
-I have a completely untested patch to add such a flag, but would like
-to get a feel for whether the concept is acceptable before putting
-time into testing it. If so, I'll submit this as a proper patch with
-detailed commit message etc. Draft is below.
+Signed-off-by: Andrii Nakryiko <andriin@fb.com>
+Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+Link: https://lore.kernel.org/bpf/20191004040211.2434033-1-andriin@fb.com
+Signed-off-by: Sasha Levin <sashal@kernel.org>
+---
+ tools/testing/selftests/bpf/bpf_helpers.h                | 2 +-
+ tools/testing/selftests/bpf/progs/test_get_stack_rawtp.c | 3 +--
+ 2 files changed, 2 insertions(+), 3 deletions(-)
 
-Rich
-
-
-
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index e0d909d35763..3a769a972f79 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -3397,6 +3397,8 @@ static inline int kiocb_set_rw_flags(struct kiocb *ki, rwf_t flags)
- {
- 	if (unlikely(flags & ~RWF_SUPPORTED))
- 		return -EOPNOTSUPP;
-+	if (unlikely((flags & RWF_APPEND) && (flags & RWF_NOAPPEND)))
-+		return -EINVAL;
+diff --git a/tools/testing/selftests/bpf/bpf_helpers.h b/tools/testing/selftests/bpf/bpf_helpers.h
+index 54a50699bbfda..9f77cbaac01c1 100644
+--- a/tools/testing/selftests/bpf/bpf_helpers.h
++++ b/tools/testing/selftests/bpf/bpf_helpers.h
+@@ -3,7 +3,7 @@
+ #define __BPF_HELPERS__
  
- 	if (flags & RWF_NOWAIT) {
- 		if (!(ki->ki_filp->f_mode & FMODE_NOWAIT))
-@@ -3411,6 +3413,8 @@ static inline int kiocb_set_rw_flags(struct kiocb *ki, rwf_t flags)
- 		ki->ki_flags |= (IOCB_DSYNC | IOCB_SYNC);
- 	if (flags & RWF_APPEND)
- 		ki->ki_flags |= IOCB_APPEND;
-+	if (flags & RWF_NOAPPEND)
-+		ki->ki_flags &= ~IOCB_APPEND;
- 	return 0;
- }
+ #define __uint(name, val) int (*name)[val]
+-#define __type(name, val) val *name
++#define __type(name, val) typeof(val) *name
  
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index 379a612f8f1d..591357d9b3c9 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -299,8 +299,11 @@ typedef int __bitwise __kernel_rwf_t;
- /* per-IO O_APPEND */
- #define RWF_APPEND	((__force __kernel_rwf_t)0x00000010)
+ /* helper macro to print out debug messages */
+ #define bpf_printk(fmt, ...)				\
+diff --git a/tools/testing/selftests/bpf/progs/test_get_stack_rawtp.c b/tools/testing/selftests/bpf/progs/test_get_stack_rawtp.c
+index f8ffa3f3d44bb..6cc4479ac9df6 100644
+--- a/tools/testing/selftests/bpf/progs/test_get_stack_rawtp.c
++++ b/tools/testing/selftests/bpf/progs/test_get_stack_rawtp.c
+@@ -47,12 +47,11 @@ struct {
+  * issue and avoid complicated C programming massaging.
+  * This is an acceptable workaround since there is one entry here.
+  */
+-typedef __u64 raw_stack_trace_t[2 * MAX_STACK_RAWTP];
+ struct {
+ 	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+ 	__uint(max_entries, 1);
+ 	__type(key, __u32);
+-	__type(value, raw_stack_trace_t);
++	__type(value, __u64[2 * MAX_STACK_RAWTP]);
+ } rawdata_map SEC(".maps");
  
-+/* per-IO negation of O_APPEND */
-+#define RWF_NOAPPEND	((__force __kernel_rwf_t)0x00000020)
-+
- /* mask of flags supported by the kernel */
- #define RWF_SUPPORTED	(RWF_HIPRI | RWF_DSYNC | RWF_SYNC | RWF_NOWAIT |\
--			 RWF_APPEND)
-+			 RWF_APPEND | RWF_NOAPPEND)
- 
- #endif /* _UAPI_LINUX_FS_H */
+ SEC("raw_tracepoint/sys_enter")
+-- 
+2.20.1
