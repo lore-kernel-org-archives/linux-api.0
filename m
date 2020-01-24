@@ -1,64 +1,118 @@
-From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 5.4 077/107] selftests: mlxsw: qos_mc_aware: Fix mausezahn invocation
-Date: Fri, 24 Jan 2020 09:17:47 -0500
-Message-ID: <20200124141817.28793-77-sashal@kernel.org>
-References: <20200124141817.28793-1-sashal@kernel.org>
+From: Mike Christie <mchristi@redhat.com>
+Subject: Re: [PATCH] Add prctl support for controlling mem reclaim V4
+Date: Fri, 24 Jan 2020 10:22:33 -0600
+Message-ID: <5E2B19C9.6080907@redhat.com>
+References: <20191112001900.9206-1-mchristi@redhat.com>
+ <CALvZod47XyD2x8TuZcb9PgeVY14JBwNhsUpN3RAeAt+RJJC=hg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200124141817.28793-1-sashal@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc: Petr Machata <petrm@mellanox.com>, Amit Cohen <amitc@mellanox.com>, Ido Schimmel <idosch@mellanox.com>, "David S . Miller" <davem@davemloft.net>, Sasha Levin <sashal@kernel.org>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <CALvZod47XyD2x8TuZcb9PgeVY14JBwNhsUpN3RAeAt+RJJC=hg@mail.gmail.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Shakeel Butt <shakeelb@google.com>, Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-api@vger.kernel.org, idryomov@gmail.com, Michal Hocko <mhocko@kernel.org>, david@fromorbit.com, Linux MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-scsi@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-block@vger.kernel.org, martin@urbackup.org, Damien.LeMoal@wdc.com, Michal Hocko <mhocko@suse.com>, Masato Suzuki <masato.suzuki@wdc.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Petr Machata <petrm@mellanox.com>
+On 12/05/2019 04:43 PM, Shakeel Butt wrote:
+> On Mon, Nov 11, 2019 at 4:19 PM Mike Christie <mchristi@redhat.com> wrote:
+>>
+>> There are several storage drivers like dm-multipath, iscsi, tcmu-runner,
+>> amd nbd that have userspace components that can run in the IO path. For
+>> example, iscsi and nbd's userspace deamons may need to recreate a socket
+>> and/or send IO on it, and dm-multipath's daemon multipathd may need to
+>> send SG IO or read/write IO to figure out the state of paths and re-set
+>> them up.
+>>
+>> In the kernel these drivers have access to GFP_NOIO/GFP_NOFS and the
+>> memalloc_*_save/restore functions to control the allocation behavior,
+>> but for userspace we would end up hitting an allocation that ended up
+>> writing data back to the same device we are trying to allocate for.
+>> The device is then in a state of deadlock, because to execute IO the
+>> device needs to allocate memory, but to allocate memory the memory
+>> layers want execute IO to the device.
+>>
+>> Here is an example with nbd using a local userspace daemon that performs
+>> network IO to a remote server. We are using XFS on top of the nbd device,
+>> but it can happen with any FS or other modules layered on top of the nbd
+>> device that can write out data to free memory.  Here a nbd daemon helper
+>> thread, msgr-worker-1, is performing a write/sendmsg on a socket to execute
+>> a request. This kicks off a reclaim operation which results in a WRITE to
+>> the nbd device and the nbd thread calling back into the mm layer.
+>>
+>> [ 1626.609191] msgr-worker-1   D    0  1026      1 0x00004000
+>> [ 1626.609193] Call Trace:
+>> [ 1626.609195]  ? __schedule+0x29b/0x630
+>> [ 1626.609197]  ? wait_for_completion+0xe0/0x170
+>> [ 1626.609198]  schedule+0x30/0xb0
+>> [ 1626.609200]  schedule_timeout+0x1f6/0x2f0
+>> [ 1626.609202]  ? blk_finish_plug+0x21/0x2e
+>> [ 1626.609204]  ? _xfs_buf_ioapply+0x2e6/0x410
+>> [ 1626.609206]  ? wait_for_completion+0xe0/0x170
+>> [ 1626.609208]  wait_for_completion+0x108/0x170
+>> [ 1626.609210]  ? wake_up_q+0x70/0x70
+>> [ 1626.609212]  ? __xfs_buf_submit+0x12e/0x250
+>> [ 1626.609214]  ? xfs_bwrite+0x25/0x60
+>> [ 1626.609215]  xfs_buf_iowait+0x22/0xf0
+>> [ 1626.609218]  __xfs_buf_submit+0x12e/0x250
+>> [ 1626.609220]  xfs_bwrite+0x25/0x60
+>> [ 1626.609222]  xfs_reclaim_inode+0x2e8/0x310
+>> [ 1626.609224]  xfs_reclaim_inodes_ag+0x1b6/0x300
+>> [ 1626.609227]  xfs_reclaim_inodes_nr+0x31/0x40
+>> [ 1626.609228]  super_cache_scan+0x152/0x1a0
+>> [ 1626.609231]  do_shrink_slab+0x12c/0x2d0
+>> [ 1626.609233]  shrink_slab+0x9c/0x2a0
+>> [ 1626.609235]  shrink_node+0xd7/0x470
+>> [ 1626.609237]  do_try_to_free_pages+0xbf/0x380
+>> [ 1626.609240]  try_to_free_pages+0xd9/0x1f0
+>> [ 1626.609245]  __alloc_pages_slowpath+0x3a4/0xd30
+>> [ 1626.609251]  ? ___slab_alloc+0x238/0x560
+>> [ 1626.609254]  __alloc_pages_nodemask+0x30c/0x350
+>> [ 1626.609259]  skb_page_frag_refill+0x97/0xd0
+>> [ 1626.609274]  sk_page_frag_refill+0x1d/0x80
+>> [ 1626.609279]  tcp_sendmsg_locked+0x2bb/0xdd0
+>> [ 1626.609304]  tcp_sendmsg+0x27/0x40
+>> [ 1626.609307]  sock_sendmsg+0x54/0x60
+>> [ 1626.609308]  ___sys_sendmsg+0x29f/0x320
+>> [ 1626.609313]  ? sock_poll+0x66/0xb0
+>> [ 1626.609318]  ? ep_item_poll.isra.15+0x40/0xc0
+>> [ 1626.609320]  ? ep_send_events_proc+0xe6/0x230
+>> [ 1626.609322]  ? hrtimer_try_to_cancel+0x54/0xf0
+>> [ 1626.609324]  ? ep_read_events_proc+0xc0/0xc0
+>> [ 1626.609326]  ? _raw_write_unlock_irq+0xa/0x20
+>> [ 1626.609327]  ? ep_scan_ready_list.constprop.19+0x218/0x230
+>> [ 1626.609329]  ? __hrtimer_init+0xb0/0xb0
+>> [ 1626.609331]  ? _raw_spin_unlock_irq+0xa/0x20
+>> [ 1626.609334]  ? ep_poll+0x26c/0x4a0
+>> [ 1626.609337]  ? tcp_tsq_write.part.54+0xa0/0xa0
+>> [ 1626.609339]  ? release_sock+0x43/0x90
+>> [ 1626.609341]  ? _raw_spin_unlock_bh+0xa/0x20
+>> [ 1626.609342]  __sys_sendmsg+0x47/0x80
+>> [ 1626.609347]  do_syscall_64+0x5f/0x1c0
+>> [ 1626.609349]  ? prepare_exit_to_usermode+0x75/0xa0
+>> [ 1626.609351]  entry_SYSCALL_64_after_hwframe+0x44/0xa9
+>>
+>> This patch adds a new prctl command that daemons can use after they have
+>> done their initial setup, and before they start to do allocations that
+>> are in the IO path. It sets the PF_MEMALLOC_NOIO and PF_LESS_THROTTLE
+>> flags so both userspace block and FS threads can use it to avoid the
+>> allocation recursion and try to prevent from being throttled while
+>> writing out data to free up memory.
+>>
+>> Signed-off-by: Mike Christie <mchristi@redhat.com>
+>> Acked-by: Michal Hocko <mhocko@suse.com>
+>> Tested-by: Masato Suzuki <masato.suzuki@wdc.com>
+>> Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
+> 
+> I suppose this patch should be routed through MM tree, so, CCing Andrew.
+>
 
-[ Upstream commit fef6d6704944c7be72fd2b77c021f1aed3d5df0d ]
+Andrew and other mm/storage developers,
 
-Mausezahn does not recognize "own" as a keyword on source IP address. As a
-result, the MC stream is not running at all, and therefore no UC
-degradation can be observed even in principle.
+Do I need to handle anything else for this patch, or are there any other
+concerns? Is this maybe something we want to talk about at a quick LSF
+session?
 
-Fix the invocation, and tighten the test: due to the minimum shaper
-configured at the MC TCs, we always expect about 20% degradation. Fail the
-test if it is lower.
-
-Fixes: 573363a68f27 ("selftests: mlxsw: Add qos_lib.sh")
-Signed-off-by: Petr Machata <petrm@mellanox.com>
-Reported-by: Amit Cohen <amitc@mellanox.com>
-Signed-off-by: Ido Schimmel <idosch@mellanox.com>
-Signed-off-by: David S. Miller <davem@davemloft.net>
-Signed-off-by: Sasha Levin <sashal@kernel.org>
----
- tools/testing/selftests/drivers/net/mlxsw/qos_mc_aware.sh | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
-
-diff --git a/tools/testing/selftests/drivers/net/mlxsw/qos_mc_aware.sh b/tools/testing/selftests/drivers/net/mlxsw/qos_mc_aware.sh
-index 47315fe48d5af..24dd8ed485802 100755
---- a/tools/testing/selftests/drivers/net/mlxsw/qos_mc_aware.sh
-+++ b/tools/testing/selftests/drivers/net/mlxsw/qos_mc_aware.sh
-@@ -232,7 +232,7 @@ test_mc_aware()
- 	stop_traffic
- 	local ucth1=${uc_rate[1]}
- 
--	start_traffic $h1 own bc bc
-+	start_traffic $h1 192.0.2.65 bc bc
- 
- 	local d0=$(date +%s)
- 	local t0=$(ethtool_stats_get $h3 rx_octets_prio_0)
-@@ -254,7 +254,11 @@ test_mc_aware()
- 			ret = 100 * ($ucth1 - $ucth2) / $ucth1
- 			if (ret > 0) { ret } else { 0 }
- 		    ")
--	check_err $(bc <<< "$deg > 25")
-+
-+	# Minimum shaper of 200Mbps on MC TCs should cause about 20% of
-+	# degradation on 1Gbps link.
-+	check_err $(bc <<< "$deg < 15") "Minimum shaper not in effect"
-+	check_err $(bc <<< "$deg > 25") "MC traffic degrades UC performance too much"
- 
- 	local interval=$((d1 - d0))
- 	local mc_ir=$(rate $u0 $u1 $interval)
--- 
-2.20.1
+I have retested it with Linus's current tree. It still applies cleanly
+(just some offsets), and fixes the problem described above we have been
+hitting.
