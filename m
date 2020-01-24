@@ -1,95 +1,72 @@
-From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [PATCH ghak90 V8 12/16] audit: contid check descendancy and nesting
-Date: Thu, 23 Jan 2020 16:47:38 -0500
-Message-ID: <CAHC9VhQtAfW-+sK3Gb6y=jPYOkyXnopO94k+u_6UKAAaACg44Q@mail.gmail.com>
-References: <cover.1577736799.git.rgb@redhat.com> <cfbb80a08fc770dd0dcf6dac6ff307a80d877c3f.1577736799.git.rgb@redhat.com>
- <CAHC9VhT1+mx_tVzyXD=UBqagqYgAFjZ=X1A6oBiMvjVCn8=V-w@mail.gmail.com> <20200123210240.sq64tptjm3ds7xss@madcap2.tricolour.ca>
+From: Rich Felker <dalias@libc.org>
+Subject: Proposal to fix pwrite with O_APPEND via pwritev2 flag
+Date: Thu, 23 Jan 2020 19:02:43 -0500
+Message-ID: <20200124000243.GA12112@brightrain.aerifal.cx>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200123210240.sq64tptjm3ds7xss@madcap2.tricolour.ca>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
+To: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 23, 2020 at 4:03 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> On 2020-01-22 16:29, Paul Moore wrote:
-> > On Tue, Dec 31, 2019 at 2:51 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > >
-> > > Require the target task to be a descendant of the container
-> > > orchestrator/engine.
-> > >
-> > > You would only change the audit container ID from one set or inherited
-> > > value to another if you were nesting containers.
-> > >
-> > > If changing the contid, the container orchestrator/engine must be a
-> > > descendant and not same orchestrator as the one that set it so it is not
-> > > possible to change the contid of another orchestrator's container.
-> > >
-> > > Since the task_is_descendant() function is used in YAMA and in audit,
-> > > remove the duplication and pull the function into kernel/core/sched.c
-> > >
-> > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > > ---
-> > >  include/linux/sched.h    |  3 +++
-> > >  kernel/audit.c           | 44 ++++++++++++++++++++++++++++++++++++--------
-> > >  kernel/sched/core.c      | 33 +++++++++++++++++++++++++++++++++
-> > >  security/yama/yama_lsm.c | 33 ---------------------------------
-> > >  4 files changed, 72 insertions(+), 41 deletions(-)
-> >
-> > ...
-> >
-> > > diff --git a/kernel/audit.c b/kernel/audit.c
-> > > index f7a8d3288ca0..ef8e07524c46 100644
-> > > --- a/kernel/audit.c
-> > > +++ b/kernel/audit.c
-> > > @@ -2603,22 +2610,43 @@ int audit_set_contid(struct task_struct *task, u64 contid)
-> > >         oldcontid = audit_get_contid(task);
-> > >         read_lock(&tasklist_lock);
-> > >         /* Don't allow the contid to be unset */
-> > > -       if (!audit_contid_valid(contid))
-> > > +       if (!audit_contid_valid(contid)) {
-> > >                 rc = -EINVAL;
-> > > +               goto unlock;
-> > > +       }
-> > >         /* Don't allow the contid to be set to the same value again */
-> > > -       else if (contid == oldcontid) {
-> > > +       if (contid == oldcontid) {
-> > >                 rc = -EADDRINUSE;
-> > > +               goto unlock;
-> > > +       }
-> > >         /* if we don't have caps, reject */
-> > > -       else if (!capable(CAP_AUDIT_CONTROL))
-> > > +       if (!capable(CAP_AUDIT_CONTROL)) {
-> > >                 rc = -EPERM;
-> > > -       /* if task has children or is not single-threaded, deny */
-> > > -       else if (!list_empty(&task->children))
-> > > +               goto unlock;
-> > > +       }
-> > > +       /* if task has children, deny */
-> > > +       if (!list_empty(&task->children)) {
-> > >                 rc = -EBUSY;
-> > > -       else if (!(thread_group_leader(task) && thread_group_empty(task)))
-> > > +               goto unlock;
-> > > +       }
-> > > +       /* if task is not single-threaded, deny */
-> > > +       if (!(thread_group_leader(task) && thread_group_empty(task))) {
-> > >                 rc = -EALREADY;
-> > > -       /* if contid is already set, deny */
-> > > -       else if (audit_contid_set(task))
-> > > +               goto unlock;
-> > > +       }
-> >
-> > It seems like the if/else-if conversion above should be part of an
-> > earlier patchset.
->
-> I had considered that, but it wasn't obvious where that conversion
-> should happen since it wasn't necessary earlier and is now.  I can move
-> it earlier if you feel strongly about it.
+There's a longstanding unfixable (due to API stability) bug in the
+pwrite syscall:
 
-Not particularly.
+http://man7.org/linux/man-pages/man2/pwrite.2.html#BUGS
 
--- 
-paul moore
-www.paul-moore.com
+whereby it wrongly honors O_APPEND if set, ignoring the caller-passed
+offset. Now that there's a pwritev2 syscall that takes a flags
+argument, it's possible to fix this without breaking stability by
+adding a new RWF_NOAPPEND flag, which callers that want the fixed
+behavior can then pass.
+
+I have a completely untested patch to add such a flag, but would like
+to get a feel for whether the concept is acceptable before putting
+time into testing it. If so, I'll submit this as a proper patch with
+detailed commit message etc. Draft is below.
+
+Rich
+
+
+
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index e0d909d35763..3a769a972f79 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -3397,6 +3397,8 @@ static inline int kiocb_set_rw_flags(struct kiocb *ki, rwf_t flags)
+ {
+ 	if (unlikely(flags & ~RWF_SUPPORTED))
+ 		return -EOPNOTSUPP;
++	if (unlikely((flags & RWF_APPEND) && (flags & RWF_NOAPPEND)))
++		return -EINVAL;
+ 
+ 	if (flags & RWF_NOWAIT) {
+ 		if (!(ki->ki_filp->f_mode & FMODE_NOWAIT))
+@@ -3411,6 +3413,8 @@ static inline int kiocb_set_rw_flags(struct kiocb *ki, rwf_t flags)
+ 		ki->ki_flags |= (IOCB_DSYNC | IOCB_SYNC);
+ 	if (flags & RWF_APPEND)
+ 		ki->ki_flags |= IOCB_APPEND;
++	if (flags & RWF_NOAPPEND)
++		ki->ki_flags &= ~IOCB_APPEND;
+ 	return 0;
+ }
+ 
+diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+index 379a612f8f1d..591357d9b3c9 100644
+--- a/include/uapi/linux/fs.h
++++ b/include/uapi/linux/fs.h
+@@ -299,8 +299,11 @@ typedef int __bitwise __kernel_rwf_t;
+ /* per-IO O_APPEND */
+ #define RWF_APPEND	((__force __kernel_rwf_t)0x00000010)
+ 
++/* per-IO negation of O_APPEND */
++#define RWF_NOAPPEND	((__force __kernel_rwf_t)0x00000020)
++
+ /* mask of flags supported by the kernel */
+ #define RWF_SUPPORTED	(RWF_HIPRI | RWF_DSYNC | RWF_SYNC | RWF_NOWAIT |\
+-			 RWF_APPEND)
++			 RWF_APPEND | RWF_NOAPPEND)
+ 
+ #endif /* _UAPI_LINUX_FS_H */
