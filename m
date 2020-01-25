@@ -1,224 +1,68 @@
-From: Alexey Gladkov <gladkov.alexey@gmail.com>
-Subject: [PATCH v7 09/11] proc: add option to mount only a pids subset
-Date: Sat, 25 Jan 2020 14:05:39 +0100
-Message-ID: <20200125130541.450409-10-gladkov.alexey@gmail.com>
+From: Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v7 11/11] proc: Move hidepid values to uapi as they are user interface to mount
+Date: Sat, 25 Jan 2020 14:05:41 +0100
+Message-ID: <20200125130541.450409-12-gladkov.alexey@gmail.com>
 References: <20200125130541.450409-1-gladkov.alexey@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200125130541.450409-1-gladkov.alexey@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: LKML <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux Security Module <linux-security-module@vger.kernel.org>
-Cc: Akinobu Mita <akinobu.mita@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Alexey Gladkov <gladkov.alexey@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Daniel Micay <danielmicay@gmail.com>, Djalal Harouni <tixxdz@gmail.com>, "Dmitry V . Levin" <ldv@altlinux.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ingo Molnar <mingo@kernel.org>, "J . Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Linus Torvalds <torvalds@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Solar Designer <solar@openwall.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20200125130541.450409-1-gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kernel Hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Security Module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Dmitry V . Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "J . Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Solar Designer <solar-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This allows to hide all files and directories in the procfs that are not
-related to tasks.
-
-Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
+Suggested-by: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 ---
- fs/proc/generic.c       |  9 +++++++++
- fs/proc/inode.c         |  7 +++++++
- fs/proc/internal.h      | 10 ++++++++++
- fs/proc/root.c          | 36 ++++++++++++++++++++++++++++++++++++
- include/linux/proc_fs.h |  7 +++++++
- 5 files changed, 69 insertions(+)
+ include/linux/proc_fs.h      |  9 +--------
+ include/uapi/linux/proc_fs.h | 13 +++++++++++++
+ 2 files changed, 14 insertions(+), 8 deletions(-)
+ create mode 100644 include/uapi/linux/proc_fs.h
 
-diff --git a/fs/proc/generic.c b/fs/proc/generic.c
-index 64e9ee1b129e..6f6517d63053 100644
---- a/fs/proc/generic.c
-+++ b/fs/proc/generic.c
-@@ -267,6 +267,11 @@ struct dentry *proc_lookup_de(struct inode *dir, struct dentry *dentry,
- struct dentry *proc_lookup(struct inode *dir, struct dentry *dentry,
- 		unsigned int flags)
- {
-+	struct proc_fs_info *fs_info = proc_sb_info(dir->i_sb);
-+
-+	if (proc_fs_pidonly(fs_info) == PROC_PIDONLY_ON)
-+		return ERR_PTR(-ENOENT);
-+
- 	return proc_lookup_de(dir, dentry, PDE(dir));
- }
- 
-@@ -323,6 +328,10 @@ int proc_readdir_de(struct file *file, struct dir_context *ctx,
- int proc_readdir(struct file *file, struct dir_context *ctx)
- {
- 	struct inode *inode = file_inode(file);
-+	struct proc_fs_info *fs_info = proc_sb_info(inode->i_sb);
-+
-+	if (proc_fs_pidonly(fs_info) == PROC_PIDONLY_ON)
-+		return 1;
- 
- 	return proc_readdir_de(file, ctx, PDE(inode));
- }
-diff --git a/fs/proc/inode.c b/fs/proc/inode.c
-index 70b722fb8811..f35eef117775 100644
---- a/fs/proc/inode.c
-+++ b/fs/proc/inode.c
-@@ -114,6 +114,9 @@ static int proc_show_options(struct seq_file *seq, struct dentry *root)
- 	if (hidepid != HIDEPID_OFF)
- 		seq_printf(seq, ",hidepid=%u", hidepid);
- 
-+	if (proc_fs_pidonly(fs_info) != PROC_PIDONLY_OFF)
-+		seq_printf(seq, ",subset=pidfs");
-+
- 	return 0;
- }
- 
-@@ -333,12 +336,16 @@ proc_reg_get_unmapped_area(struct file *file, unsigned long orig_addr,
- 
- static int proc_reg_open(struct inode *inode, struct file *file)
- {
-+	struct proc_fs_info *fs_info = proc_sb_info(inode->i_sb);
- 	struct proc_dir_entry *pde = PDE(inode);
- 	int rv = 0;
- 	typeof_member(struct file_operations, open) open;
- 	typeof_member(struct file_operations, release) release;
- 	struct pde_opener *pdeo;
- 
-+	if (proc_fs_pidonly(fs_info) == PROC_PIDONLY_ON)
-+		return -ENOENT;
-+
- 	/*
- 	 * Ensure that
- 	 * 1) PDE's ->release hook will be called no matter what
-diff --git a/fs/proc/internal.h b/fs/proc/internal.h
-index ff2f274b2e0d..e2c729267317 100644
---- a/fs/proc/internal.h
-+++ b/fs/proc/internal.h
-@@ -126,6 +126,11 @@ static inline void proc_fs_set_hide_pid(struct proc_fs_info *fs_info, int hide_p
- 	fs_info->hide_pid = hide_pid;
- }
- 
-+static inline void proc_fs_set_pidonly(struct proc_fs_info *fs_info, int value)
-+{
-+	fs_info->pidonly = value;
-+}
-+
- static inline void proc_fs_set_pid_gid(struct proc_fs_info *fs_info, kgid_t gid)
- {
- 	fs_info->pid_gid = gid;
-@@ -141,6 +146,11 @@ static inline kgid_t proc_fs_pid_gid(struct proc_fs_info *fs_info)
- 	return fs_info->pid_gid;
- }
- 
-+static inline int proc_fs_pidonly(struct proc_fs_info *fs_info)
-+{
-+	return fs_info->pidonly;
-+}
-+
- void task_dump_owner(struct task_struct *task, umode_t mode,
- 		     kuid_t *ruid, kgid_t *rgid);
- 
-diff --git a/fs/proc/root.c b/fs/proc/root.c
-index 57276cb65528..8e8d5c930e32 100644
---- a/fs/proc/root.c
-+++ b/fs/proc/root.c
-@@ -34,16 +34,19 @@ struct proc_fs_context {
- 	unsigned int		mask;
- 	int			hidepid;
- 	int			gid;
-+	int			pidonly;
- };
- 
- enum proc_param {
- 	Opt_gid,
- 	Opt_hidepid,
-+	Opt_subset,
- };
- 
- static const struct fs_parameter_spec proc_param_specs[] = {
- 	fsparam_u32("gid",	Opt_gid),
- 	fsparam_u32("hidepid",	Opt_hidepid),
-+	fsparam_string("subset",	Opt_subset),
- 	{}
- };
- 
-@@ -61,6 +64,30 @@ valid_hidepid(unsigned int value)
- 		value == HIDEPID_NOT_PTRACABLE);
- }
- 
-+static inline int
-+proc_parse_subset_param(struct fs_context *fc, char *value)
-+{
-+	struct proc_fs_context *ctx = fc->fs_private;
-+
-+	while (value) {
-+		char *ptr = strchr(value, ',');
-+
-+		if (ptr != NULL)
-+			*ptr++ = '\0';
-+
-+		if (*value != '\0') {
-+			if (!strcmp(value, "pidfs")) {
-+				ctx->pidonly = PROC_PIDONLY_ON;
-+			} else {
-+				return invalf(fc, "proc: unsupported subset option - %s\n", value);
-+			}
-+		}
-+		value = ptr;
-+	}
-+
-+	return 0;
-+}
-+
- static int proc_parse_param(struct fs_context *fc, struct fs_parameter *param)
- {
- 	struct proc_fs_context *ctx = fc->fs_private;
-@@ -82,6 +109,11 @@ static int proc_parse_param(struct fs_context *fc, struct fs_parameter *param)
- 		ctx->hidepid = result.uint_32;
- 		break;
- 
-+	case Opt_subset:
-+		if (proc_parse_subset_param(fc, param->string) < 0)
-+			return -EINVAL;
-+		break;
-+
- 	default:
- 		return -EINVAL;
- 	}
-@@ -102,6 +134,7 @@ static void proc_apply_options(struct proc_fs_info *fs_info,
- 
- 		proc_fs_set_pid_gid(fs_info, proc_fs_pid_gid(pidns_fs_info));
- 		proc_fs_set_hide_pid(fs_info, proc_fs_hide_pid(pidns_fs_info));
-+		proc_fs_set_pidonly(fs_info, proc_fs_pidonly(pidns_fs_info));
- 	}
- 
- 	if (ctx->mask & (1 << Opt_gid))
-@@ -109,6 +142,9 @@ static void proc_apply_options(struct proc_fs_info *fs_info,
- 
- 	if (ctx->mask & (1 << Opt_hidepid))
- 		proc_fs_set_hide_pid(fs_info, ctx->hidepid);
-+
-+	if (ctx->mask & (1 << Opt_subset))
-+		proc_fs_set_pidonly(fs_info, ctx->pidonly);
- }
- 
- static int proc_fill_super(struct super_block *s, struct fs_context *fc)
 diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
-index 6822548405a7..3ad0a47c3556 100644
+index 3ad0a47c3556..f2b4a411d371 100644
 --- a/include/linux/proc_fs.h
 +++ b/include/linux/proc_fs.h
-@@ -20,6 +20,12 @@ enum {
- 	HIDEPID_NOT_PTRACABLE = 4, /* Limit pids to only ptracable pids */
- };
+@@ -7,19 +7,12 @@
  
-+/* definitions for proc mount option pidonly */
+ #include <linux/types.h>
+ #include <linux/fs.h>
++#include <uapi/linux/proc_fs.h>
+ 
+ struct proc_dir_entry;
+ struct seq_file;
+ struct seq_operations;
+ 
+-/* definitions for hide_pid field */
+-enum {
+-	HIDEPID_OFF	  = 0,
+-	HIDEPID_NO_ACCESS = 1,
+-	HIDEPID_INVISIBLE = 2,
+-	HIDEPID_NOT_PTRACABLE = 4, /* Limit pids to only ptracable pids */
+-};
+-
+ /* definitions for proc mount option pidonly */
+ enum {
+ 	PROC_PIDONLY_OFF = 0,
+diff --git a/include/uapi/linux/proc_fs.h b/include/uapi/linux/proc_fs.h
+new file mode 100644
+index 000000000000..1e3374efffe2
+--- /dev/null
++++ b/include/uapi/linux/proc_fs.h
+@@ -0,0 +1,13 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++#ifndef _UAPI_PROC_FS_H
++#define _UAPI_PROC_FS_H
++
++/* definitions for hide_pid field */
 +enum {
-+	PROC_PIDONLY_OFF = 0,
-+	PROC_PIDONLY_ON  = 1,
++	HIDEPID_OFF           = 0,
++	HIDEPID_NO_ACCESS     = 1,
++	HIDEPID_INVISIBLE     = 2,
++	HIDEPID_NOT_PTRACABLE = 4,
 +};
 +
- struct proc_fs_info {
- 	struct list_head pidns_entry;    /* Node in procfs_mounts of a pidns */
- 	struct super_block *m_super;
-@@ -28,6 +34,7 @@ struct proc_fs_info {
- 	struct dentry *proc_thread_self; /* For /proc/thread-self */
- 	kgid_t pid_gid;
- 	int hide_pid;
-+	int pidonly;
- };
- 
- static inline struct proc_fs_info *proc_sb_info(struct super_block *sb)
++#endif
 -- 
 2.24.1
