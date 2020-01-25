@@ -1,7 +1,7 @@
 From: Alexey Gladkov <gladkov.alexey@gmail.com>
-Subject: [PATCH v7 02/11] proc: add proc_fs_info struct to store proc information
-Date: Sat, 25 Jan 2020 14:05:32 +0100
-Message-ID: <20200125130541.450409-3-gladkov.alexey@gmail.com>
+Subject: [PATCH v7 08/11] proc: instantiate only pids that we can ptrace on 'hidepid=4' mount option
+Date: Sat, 25 Jan 2020 14:05:38 +0100
+Message-ID: <20200125130541.450409-9-gladkov.alexey@gmail.com>
 References: <20200125130541.450409-1-gladkov.alexey@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,258 +12,98 @@ To: LKML <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@list
 Cc: Akinobu Mita <akinobu.mita@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Alexey Gladkov <gladkov.alexey@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Daniel Micay <danielmicay@gmail.com>, Djalal Harouni <tixxdz@gmail.com>, "Dmitry V . Levin" <ldv@altlinux.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ingo Molnar <mingo@kernel.org>, "J . Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Linus Torvalds <torvalds@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Solar Designer <solar@openwall.com>
 List-Id: linux-api@vger.kernel.org
 
-This is a preparation patch that adds proc_fs_info to be able to store
-different procfs options and informations. Right now some mount options
-are stored inside the pid namespace which makes it hard to change or
-modernize procfs without affecting pid namespaces. Plus we do want to
-treat proc as more of a real mount point and filesystem. procfs is part
-of Linux API where it offers some features using filesystem syscalls and
-in order to support some features where we are able to have multiple
-instances of procfs, each one with its mount options inside the same pid
-namespace, we have to separate these procfs instances.
-
-This is the same feature that was also added to other Linux interfaces
-like devpts in order to support containers, sandboxes, and to have
-multiple instances of devpts filesystem [1].
-
-[1] https://elixir.bootlin.com/linux/v3.4/source/Documentation/filesystems/devpts.txt
+If "hidepid=4" mount option is set then do not instantiate pids that
+we can not ptrace. "hidepid=4" means that procfs should only contain
+pids that the caller can ptrace.
 
 Cc: Kees Cook <keescook@chromium.org>
-Suggested-by: Andy Lutomirski <luto@kernel.org>
+Cc: Andy Lutomirski <luto@kernel.org>
 Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
 Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
 ---
- fs/locks.c              |  6 +++--
- fs/proc/base.c          |  8 +++++--
- fs/proc/inode.c         |  4 ++--
- fs/proc/root.c          | 49 +++++++++++++++++++++++++++--------------
- include/linux/proc_fs.h | 11 ++++++++-
- 5 files changed, 54 insertions(+), 24 deletions(-)
+ fs/proc/base.c          | 15 +++++++++++++++
+ fs/proc/root.c          | 14 +++++++++++---
+ include/linux/proc_fs.h |  1 +
+ 3 files changed, 27 insertions(+), 3 deletions(-)
 
-diff --git a/fs/locks.c b/fs/locks.c
-index 6970f55daf54..21200e3005e4 100644
---- a/fs/locks.c
-+++ b/fs/locks.c
-@@ -2795,7 +2795,8 @@ static void lock_get_status(struct seq_file *f, struct file_lock *fl,
- {
- 	struct inode *inode = NULL;
- 	unsigned int fl_pid;
--	struct pid_namespace *proc_pidns = file_inode(f->file)->i_sb->s_fs_info;
-+	struct proc_fs_info *fs_info = proc_sb_info(file_inode(f->file)->i_sb);
-+	struct pid_namespace *proc_pidns = fs_info->pid_ns;
- 
- 	fl_pid = locks_translate_pid(fl, proc_pidns);
- 	/*
-@@ -2873,7 +2874,8 @@ static int locks_show(struct seq_file *f, void *v)
- {
- 	struct locks_iterator *iter = f->private;
- 	struct file_lock *fl, *bfl;
--	struct pid_namespace *proc_pidns = file_inode(f->file)->i_sb->s_fs_info;
-+	struct proc_fs_info *fs_info = proc_sb_info(file_inode(f->file)->i_sb);
-+	struct pid_namespace *proc_pidns = fs_info->pid_ns;
- 
- 	fl = hlist_entry(v, struct file_lock, fl_link);
- 
 diff --git a/fs/proc/base.c b/fs/proc/base.c
-index ebea9501afb8..672e71c52dbd 100644
+index f4f1bcb28603..b55d205a7f6e 100644
 --- a/fs/proc/base.c
 +++ b/fs/proc/base.c
-@@ -3243,6 +3243,7 @@ struct dentry *proc_pid_lookup(struct dentry *dentry, unsigned int flags)
+@@ -699,6 +699,14 @@ static bool has_pid_permissions(struct proc_fs_info *fs_info,
+ 				 struct task_struct *task,
+ 				 int hide_pid_min)
  {
- 	struct task_struct *task;
- 	unsigned tgid;
-+	struct proc_fs_info *fs_info;
- 	struct pid_namespace *ns;
- 	struct dentry *result = ERR_PTR(-ENOENT);
- 
-@@ -3250,7 +3251,8 @@ struct dentry *proc_pid_lookup(struct dentry *dentry, unsigned int flags)
- 	if (tgid == ~0U)
- 		goto out;
- 
--	ns = dentry->d_sb->s_fs_info;
-+	fs_info = proc_sb_info(dentry->d_sb);
-+	ns = fs_info->pid_ns;
- 	rcu_read_lock();
- 	task = find_task_by_pid_ns(tgid, ns);
- 	if (task)
-@@ -3538,6 +3540,7 @@ static struct dentry *proc_task_lookup(struct inode *dir, struct dentry * dentry
- 	struct task_struct *task;
- 	struct task_struct *leader = get_proc_task(dir);
- 	unsigned tid;
-+	struct proc_fs_info *fs_info;
- 	struct pid_namespace *ns;
- 	struct dentry *result = ERR_PTR(-ENOENT);
- 
-@@ -3548,7 +3551,8 @@ static struct dentry *proc_task_lookup(struct inode *dir, struct dentry * dentry
- 	if (tid == ~0U)
- 		goto out;
- 
--	ns = dentry->d_sb->s_fs_info;
-+	fs_info = proc_sb_info(dentry->d_sb);
-+	ns = fs_info->pid_ns;
- 	rcu_read_lock();
- 	task = find_task_by_pid_ns(tid, ns);
- 	if (task)
-diff --git a/fs/proc/inode.c b/fs/proc/inode.c
-index dbe43a50caf2..b631608dfbcc 100644
---- a/fs/proc/inode.c
-+++ b/fs/proc/inode.c
-@@ -104,8 +104,8 @@ void __init proc_init_kmemcache(void)
- 
- static int proc_show_options(struct seq_file *seq, struct dentry *root)
- {
--	struct super_block *sb = root->d_sb;
--	struct pid_namespace *pid = sb->s_fs_info;
-+	struct proc_fs_info *fs_info = proc_sb_info(root->d_sb);
-+	struct pid_namespace *pid = fs_info->pid_ns;
- 
- 	if (!gid_eq(pid->pid_gid, GLOBAL_ROOT_GID))
- 		seq_printf(seq, ",gid=%u", from_kgid_munged(&init_user_ns, pid->pid_gid));
-diff --git a/fs/proc/root.c b/fs/proc/root.c
-index 0b7c8dffc9ae..d449f095f0f7 100644
---- a/fs/proc/root.c
-+++ b/fs/proc/root.c
-@@ -30,7 +30,7 @@
- #include "internal.h"
- 
- struct proc_fs_context {
--	struct pid_namespace	*pid_ns;
-+	struct proc_fs_info	*fs_info;
- 	unsigned int		mask;
- 	int			hidepid;
- 	int			gid;
-@@ -97,7 +97,8 @@ static void proc_apply_options(struct super_block *s,
- 
- static int proc_fill_super(struct super_block *s, struct fs_context *fc)
- {
--	struct pid_namespace *pid_ns = get_pid_ns(s->s_fs_info);
-+	struct proc_fs_context *ctx = fc->fs_private;
-+	struct pid_namespace *pid_ns = get_pid_ns(ctx->fs_info->pid_ns);
- 	struct inode *root_inode;
- 	int ret;
- 
-@@ -145,7 +146,8 @@ static int proc_fill_super(struct super_block *s, struct fs_context *fc)
- static int proc_reconfigure(struct fs_context *fc)
- {
- 	struct super_block *sb = fc->root->d_sb;
--	struct pid_namespace *pid = sb->s_fs_info;
-+	struct proc_fs_info *fs_info = proc_sb_info(sb);
-+	struct pid_namespace *pid = fs_info->pid_ns;
- 
- 	sync_filesystem(sb);
- 
-@@ -157,14 +159,14 @@ static int proc_get_tree(struct fs_context *fc)
- {
- 	struct proc_fs_context *ctx = fc->fs_private;
- 
--	return get_tree_keyed(fc, proc_fill_super, ctx->pid_ns);
-+	return get_tree_keyed(fc, proc_fill_super, ctx->fs_info);
- }
- 
- static void proc_fs_context_free(struct fs_context *fc)
- {
- 	struct proc_fs_context *ctx = fc->fs_private;
- 
--	put_pid_ns(ctx->pid_ns);
-+	put_pid_ns(ctx->fs_info->pid_ns);
- 	kfree(ctx);
- }
- 
-@@ -178,14 +180,27 @@ static const struct fs_context_operations proc_fs_context_ops = {
- static int proc_init_fs_context(struct fs_context *fc)
- {
- 	struct proc_fs_context *ctx;
-+	struct pid_namespace *pid_ns;
- 
- 	ctx = kzalloc(sizeof(struct proc_fs_context), GFP_KERNEL);
- 	if (!ctx)
- 		return -ENOMEM;
- 
--	ctx->pid_ns = get_pid_ns(task_active_pid_ns(current));
-+	pid_ns = get_pid_ns(task_active_pid_ns(current));
++	/*
++	 * If 'hidpid' mount option is set force a ptrace check,
++	 * we indicate that we are using a filesystem syscall
++	 * by passing PTRACE_MODE_READ_FSCREDS
++	 */
++	if (proc_fs_hide_pid(fs_info) == HIDEPID_NOT_PTRACABLE)
++		return ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS);
 +
-+	if (!pid_ns->proc_mnt) {
-+		ctx->fs_info = kzalloc(sizeof(struct proc_fs_info), GFP_KERNEL);
-+		if (!ctx->fs_info) {
-+			kfree(ctx);
-+			return -ENOMEM;
-+		}
-+		ctx->fs_info->pid_ns = pid_ns;
-+	} else {
-+		ctx->fs_info = proc_sb_info(pid_ns->proc_mnt->mnt_sb);
+ 	if (proc_fs_hide_pid(fs_info) < hide_pid_min)
+ 		return true;
+ 	if (in_group_p(proc_fs_pid_gid(fs_info)))
+@@ -3274,7 +3282,14 @@ struct dentry *proc_pid_lookup(struct dentry *dentry, unsigned int flags)
+ 	if (!task)
+ 		goto out;
+ 
++	/* Limit procfs to only ptracable tasks */
++	if (proc_fs_hide_pid(fs_info) == HIDEPID_NOT_PTRACABLE) {
++		if (!has_pid_permissions(fs_info, task, HIDEPID_NO_ACCESS))
++			goto out_put_task;
 +	}
 +
- 	put_user_ns(fc->user_ns);
--	fc->user_ns = get_user_ns(ctx->pid_ns->user_ns);
-+	fc->user_ns = get_user_ns(ctx->fs_info->pid_ns->user_ns);
- 	fc->fs_private = ctx;
- 	fc->ops = &proc_fs_context_ops;
- 	return 0;
-@@ -193,15 +208,15 @@ static int proc_init_fs_context(struct fs_context *fc)
+ 	result = proc_pid_instantiate(dentry, task, NULL);
++out_put_task:
+ 	put_task_struct(task);
+ out:
+ 	return result;
+diff --git a/fs/proc/root.c b/fs/proc/root.c
+index 3bb8df360cf7..57276cb65528 100644
+--- a/fs/proc/root.c
++++ b/fs/proc/root.c
+@@ -52,6 +52,15 @@ static const struct fs_parameter_description proc_fs_parameters = {
+ 	.specs		= proc_param_specs,
+ };
  
- static void proc_kill_sb(struct super_block *sb)
- {
--	struct pid_namespace *ns;
-+	struct proc_fs_info *fs_info = proc_sb_info(sb);
- 
--	ns = (struct pid_namespace *)sb->s_fs_info;
--	if (ns->proc_self)
--		dput(ns->proc_self);
--	if (ns->proc_thread_self)
--		dput(ns->proc_thread_self);
-+	if (fs_info->pid_ns->proc_self)
-+		dput(fs_info->pid_ns->proc_self);
-+	if (fs_info->pid_ns->proc_thread_self)
-+		dput(fs_info->pid_ns->proc_thread_self);
- 	kill_anon_super(sb);
--	put_pid_ns(ns);
-+	put_pid_ns(fs_info->pid_ns);
-+	kfree(fs_info);
- }
- 
- static struct file_system_type proc_fs_type = {
-@@ -314,10 +329,10 @@ int pid_ns_prepare_proc(struct pid_namespace *ns)
- 	}
- 
- 	ctx = fc->fs_private;
--	if (ctx->pid_ns != ns) {
--		put_pid_ns(ctx->pid_ns);
-+	if (ctx->fs_info->pid_ns != ns) {
-+		put_pid_ns(ctx->fs_info->pid_ns);
- 		get_pid_ns(ns);
--		ctx->pid_ns = ns;
-+		ctx->fs_info->pid_ns = ns;
- 	}
- 
- 	mnt = fc_mount(fc);
-diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
-index a705aa2d03f9..2d79489e55aa 100644
---- a/include/linux/proc_fs.h
-+++ b/include/linux/proc_fs.h
-@@ -12,6 +12,15 @@ struct proc_dir_entry;
- struct seq_file;
- struct seq_operations;
- 
-+struct proc_fs_info {
-+	struct pid_namespace *pid_ns;
-+};
-+
-+static inline struct proc_fs_info *proc_sb_info(struct super_block *sb)
++static inline int
++valid_hidepid(unsigned int value)
 +{
-+	return sb->s_fs_info;
++	return (value == HIDEPID_OFF ||
++		value == HIDEPID_NO_ACCESS ||
++		value == HIDEPID_INVISIBLE ||
++		value == HIDEPID_NOT_PTRACABLE);
 +}
 +
- #ifdef CONFIG_PROC_FS
- 
- typedef int (*proc_write_t)(struct file *, char *, size_t);
-@@ -146,7 +155,7 @@ int open_related_ns(struct ns_common *ns,
- /* get the associated pid namespace for a file in procfs */
- static inline struct pid_namespace *proc_pid_ns(const struct inode *inode)
+ static int proc_parse_param(struct fs_context *fc, struct fs_parameter *param)
  {
--	return inode->i_sb->s_fs_info;
-+	return proc_sb_info(inode->i_sb)->pid_ns;
- }
+ 	struct proc_fs_context *ctx = fc->fs_private;
+@@ -68,10 +77,9 @@ static int proc_parse_param(struct fs_context *fc, struct fs_parameter *param)
+ 		break;
  
- #endif /* _LINUX_PROC_FS_H */
+ 	case Opt_hidepid:
++		if (!valid_hidepid(result.uint_32))
++			return invalf(fc, "proc: unknown value of hidepid.\n");
+ 		ctx->hidepid = result.uint_32;
+-		if (ctx->hidepid < HIDEPID_OFF ||
+-		    ctx->hidepid > HIDEPID_INVISIBLE)
+-			return invalf(fc, "proc: hidepid value must be between 0 and 2.\n");
+ 		break;
+ 
+ 	default:
+diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
+index f307940f8311..6822548405a7 100644
+--- a/include/linux/proc_fs.h
++++ b/include/linux/proc_fs.h
+@@ -17,6 +17,7 @@ enum {
+ 	HIDEPID_OFF	  = 0,
+ 	HIDEPID_NO_ACCESS = 1,
+ 	HIDEPID_INVISIBLE = 2,
++	HIDEPID_NOT_PTRACABLE = 4, /* Limit pids to only ptracable pids */
+ };
+ 
+ struct proc_fs_info {
 -- 
 2.24.1
