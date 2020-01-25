@@ -1,176 +1,133 @@
 From: Alexey Gladkov <gladkov.alexey@gmail.com>
-Subject: [PATCH v7 06/11] proc: support mounting procfs instances inside same pid namespace
-Date: Sat, 25 Jan 2020 14:05:36 +0100
-Message-ID: <20200125130541.450409-7-gladkov.alexey@gmail.com>
+Subject: [PATCH v7 05/11] proc: add helpers to set and get proc hidepid and gid mount options
+Date: Sat, 25 Jan 2020 14:05:35 +0100
+Message-ID: <20200125130541.450409-6-gladkov.alexey@gmail.com>
 References: <20200125130541.450409-1-gladkov.alexey@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-security-module-owner@vger.kernel.org>
 In-Reply-To: <20200125130541.450409-1-gladkov.alexey@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: owner-linux-security-module@vger.kernel.org
 To: LKML <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux Security Module <linux-security-module@vger.kernel.org>
 Cc: Akinobu Mita <akinobu.mita@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Alexey Gladkov <gladkov.alexey@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Daniel Micay <danielmicay@gmail.com>, Djalal Harouni <tixxdz@gmail.com>, "Dmitry V . Levin" <ldv@altlinux.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ingo Molnar <mingo@kernel.org>, "J . Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Linus Torvalds <torvalds@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Solar Designer <solar@openwall.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch allows to have multiple procfs instances inside the
-same pid namespace. The aim here is lightweight sandboxes, and to allow
-that we have to modernize procfs internals.
-
-1) The main aim of this work is to have on embedded systems one
-supervisor for apps. Right now we have some lightweight sandbox support,
-however if we create pid namespacess we have to manages all the
-processes inside too, where our goal is to be able to run a bunch of
-apps each one inside its own mount namespace without being able to
-notice each other. We only want to use mount namespaces, and we want
-procfs to behave more like a real mount point.
-
-2) Linux Security Modules have multiple ptrace paths inside some
-subsystems, however inside procfs, the implementation does not guarantee
-that the ptrace() check which triggers the security_ptrace_check() hook
-will always run. We have the 'hidepid' mount option that can be used to
-force the ptrace_may_access() check inside has_pid_permissions() to run.
-The problem is that 'hidepid' is per pid namespace and not attached to
-the mount point, any remount or modification of 'hidepid' will propagate
-to all other procfs mounts.
-
-This also does not allow to support Yama LSM easily in desktop and user
-sessions. Yama ptrace scope which restricts ptrace and some other
-syscalls to be allowed only on inferiors, can be updated to have a
-per-task context, where the context will be inherited during fork(),
-clone() and preserved across execve(). If we support multiple private
-procfs instances, then we may force the ptrace_may_access() on
-/proc/<pids>/ to always run inside that new procfs instances. This will
-allow to specifiy on user sessions if we should populate procfs with
-pids that the user can ptrace or not.
-
-By using Yama ptrace scope, some restricted users will only be able to see
-inferiors inside /proc, they won't even be able to see their other
-processes. Some software like Chromium, Firefox's crash handler, Wine
-and others are already using Yama to restrict which processes can be
-ptracable. With this change this will give the possibility to restrict
-/proc/<pids>/ but more importantly this will give desktop users a
-generic and usuable way to specifiy which users should see all processes
-and which users can not.
-
-Side notes:
-* This covers the lack of seccomp where it is not able to parse
-arguments, it is easy to install a seccomp filter on direct syscalls
-that operate on pids, however /proc/<pid>/ is a Linux ABI using
-filesystem syscalls. With this change LSMs should be able to analyze
-open/read/write/close...
-
-In the new patchset version I removed the 'newinstance' option
-as Eric W. Biederman suggested.
+This is a cleaning patch to add helpers to set and get proc mount
+options instead of directly using them. This make it easy to track
+what's happening and easy to update in future.
 
 Cc: Kees Cook <keescook@chromium.org>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Andy Lutomirski <luto@kernel.org>
+Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
 Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
 ---
- fs/proc/root.c | 41 ++++++++++++++++++-----------------------
- 1 file changed, 18 insertions(+), 23 deletions(-)
+ fs/proc/base.c     |  6 +++---
+ fs/proc/inode.c    | 11 +++++++----
+ fs/proc/internal.h | 20 ++++++++++++++++++++
+ fs/proc/root.c     |  8 ++++----
+ 4 files changed, 34 insertions(+), 11 deletions(-)
 
-diff --git a/fs/proc/root.c b/fs/proc/root.c
-index efd76c004e86..5d5cba4c899b 100644
---- a/fs/proc/root.c
-+++ b/fs/proc/root.c
-@@ -82,7 +82,7 @@ static int proc_parse_param(struct fs_context *fc, struct fs_parameter *param)
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index caca1929fee1..4ccb280a3e79 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -699,9 +699,9 @@ static bool has_pid_permissions(struct proc_fs_info *fs_info,
+ 				 struct task_struct *task,
+ 				 int hide_pid_min)
+ {
+-	if (fs_info->hide_pid < hide_pid_min)
++	if (proc_fs_hide_pid(fs_info) < hide_pid_min)
+ 		return true;
+-	if (in_group_p(fs_info->pid_gid))
++	if (in_group_p(proc_fs_pid_gid(fs_info)))
+ 		return true;
+ 	return ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS);
+ }
+@@ -720,7 +720,7 @@ static int proc_pid_permission(struct inode *inode, int mask)
+ 	put_task_struct(task);
+ 
+ 	if (!has_perms) {
+-		if (fs_info->hide_pid == HIDEPID_INVISIBLE) {
++		if (proc_fs_hide_pid(fs_info) == HIDEPID_INVISIBLE) {
+ 			/*
+ 			 * Let's make getdents(), stat(), and open()
+ 			 * consistent with each other.  If a process
+diff --git a/fs/proc/inode.c b/fs/proc/inode.c
+index b90c233e5968..70b722fb8811 100644
+--- a/fs/proc/inode.c
++++ b/fs/proc/inode.c
+@@ -105,11 +105,14 @@ void __init proc_init_kmemcache(void)
+ static int proc_show_options(struct seq_file *seq, struct dentry *root)
+ {
+ 	struct proc_fs_info *fs_info = proc_sb_info(root->d_sb);
++	int hidepid = proc_fs_hide_pid(fs_info);
++	kgid_t gid = proc_fs_pid_gid(fs_info);
+ 
+-	if (!gid_eq(fs_info->pid_gid, GLOBAL_ROOT_GID))
+-		seq_printf(seq, ",gid=%u", from_kgid_munged(&init_user_ns, fs_info->pid_gid));
+-	if (fs_info->hide_pid != HIDEPID_OFF)
+-		seq_printf(seq, ",hidepid=%u", fs_info->hide_pid);
++	if (!gid_eq(gid, GLOBAL_ROOT_GID))
++		seq_printf(seq, ",gid=%u", from_kgid_munged(&init_user_ns, gid));
++
++	if (hidepid != HIDEPID_OFF)
++		seq_printf(seq, ",hidepid=%u", hidepid);
+ 
  	return 0;
  }
+diff --git a/fs/proc/internal.h b/fs/proc/internal.h
+index cd0c8d5ce9a1..ff2f274b2e0d 100644
+--- a/fs/proc/internal.h
++++ b/fs/proc/internal.h
+@@ -121,6 +121,26 @@ static inline struct task_struct *get_proc_task(const struct inode *inode)
+ 	return get_pid_task(proc_pid(inode), PIDTYPE_PID);
+ }
  
--static void proc_apply_options(struct super_block *s,
-+static void proc_apply_options(struct proc_fs_info *fs_info,
- 			       struct fs_context *fc,
- 			       struct pid_namespace *pid_ns,
- 			       struct user_namespace *user_ns)
-@@ -90,15 +90,17 @@ static void proc_apply_options(struct super_block *s,
- 	struct proc_fs_context *ctx = fc->fs_private;
++static inline void proc_fs_set_hide_pid(struct proc_fs_info *fs_info, int hide_pid)
++{
++	fs_info->hide_pid = hide_pid;
++}
++
++static inline void proc_fs_set_pid_gid(struct proc_fs_info *fs_info, kgid_t gid)
++{
++	fs_info->pid_gid = gid;
++}
++
++static inline int proc_fs_hide_pid(struct proc_fs_info *fs_info)
++{
++	return fs_info->hide_pid;
++}
++
++static inline kgid_t proc_fs_pid_gid(struct proc_fs_info *fs_info)
++{
++	return fs_info->pid_gid;
++}
++
+ void task_dump_owner(struct task_struct *task, umode_t mode,
+ 		     kuid_t *ruid, kgid_t *rgid);
+ 
+diff --git a/fs/proc/root.c b/fs/proc/root.c
+index 1ca47d446aa4..efd76c004e86 100644
+--- a/fs/proc/root.c
++++ b/fs/proc/root.c
+@@ -91,14 +91,14 @@ static void proc_apply_options(struct super_block *s,
  
  	if (pid_ns->proc_mnt) {
--		struct proc_fs_info *fs_info = proc_sb_info(pid_ns->proc_mnt->mnt_sb);
--		proc_fs_set_pid_gid(ctx->fs_info, proc_fs_pid_gid(fs_info));
--		proc_fs_set_hide_pid(ctx->fs_info, proc_fs_hide_pid(fs_info));
-+		struct proc_fs_info *pidns_fs_info = proc_sb_info(pid_ns->proc_mnt->mnt_sb);
-+
-+		proc_fs_set_pid_gid(fs_info, proc_fs_pid_gid(pidns_fs_info));
-+		proc_fs_set_hide_pid(fs_info, proc_fs_hide_pid(pidns_fs_info));
+ 		struct proc_fs_info *fs_info = proc_sb_info(pid_ns->proc_mnt->mnt_sb);
+-		ctx->fs_info->pid_gid = fs_info->pid_gid;
+-		ctx->fs_info->hide_pid = fs_info->hide_pid;
++		proc_fs_set_pid_gid(ctx->fs_info, proc_fs_pid_gid(fs_info));
++		proc_fs_set_hide_pid(ctx->fs_info, proc_fs_hide_pid(fs_info));
  	}
  
  	if (ctx->mask & (1 << Opt_gid))
--		proc_fs_set_pid_gid(ctx->fs_info, make_kgid(user_ns, ctx->gid));
-+		proc_fs_set_pid_gid(fs_info, make_kgid(user_ns, ctx->gid));
-+
+-		ctx->fs_info->pid_gid = make_kgid(user_ns, ctx->gid);
++		proc_fs_set_pid_gid(ctx->fs_info, make_kgid(user_ns, ctx->gid));
  	if (ctx->mask & (1 << Opt_hidepid))
--		proc_fs_set_hide_pid(ctx->fs_info, ctx->hidepid);
-+		proc_fs_set_hide_pid(fs_info, ctx->hidepid);
+-		ctx->fs_info->hide_pid = ctx->hidepid;
++		proc_fs_set_hide_pid(ctx->fs_info, ctx->hidepid);
  }
  
  static int proc_fill_super(struct super_block *s, struct fs_context *fc)
-@@ -108,7 +110,7 @@ static int proc_fill_super(struct super_block *s, struct fs_context *fc)
- 	struct inode *root_inode;
- 	int ret;
- 
--	proc_apply_options(s, fc, pid_ns, current_user_ns());
-+	proc_apply_options(ctx->fs_info, fc, pid_ns, current_user_ns());
- 
- 	/* User space would break if executables or devices appear on proc */
- 	s->s_iflags |= SB_I_USERNS_VISIBLE | SB_I_NOEXEC | SB_I_NODEV;
-@@ -118,6 +120,7 @@ static int proc_fill_super(struct super_block *s, struct fs_context *fc)
- 	s->s_magic = PROC_SUPER_MAGIC;
- 	s->s_op = &proc_sops;
- 	s->s_time_gran = 1;
-+	s->s_fs_info = ctx->fs_info;
- 
- 	/*
- 	 * procfs isn't actually a stacking filesystem; however, there is
-@@ -157,15 +160,13 @@ static int proc_reconfigure(struct fs_context *fc)
- 
- 	sync_filesystem(sb);
- 
--	proc_apply_options(sb, fc, pid, current_user_ns());
-+	proc_apply_options(fs_info, fc, pid, current_user_ns());
- 	return 0;
- }
- 
- static int proc_get_tree(struct fs_context *fc)
- {
--	struct proc_fs_context *ctx = fc->fs_private;
--
--	return get_tree_keyed(fc, proc_fill_super, ctx->fs_info);
-+	return get_tree_nodev(fc, proc_fill_super);
- }
- 
- static void proc_fs_context_free(struct fs_context *fc)
-@@ -186,25 +187,19 @@ static const struct fs_context_operations proc_fs_context_ops = {
- static int proc_init_fs_context(struct fs_context *fc)
- {
- 	struct proc_fs_context *ctx;
--	struct pid_namespace *pid_ns;
- 
- 	ctx = kzalloc(sizeof(struct proc_fs_context), GFP_KERNEL);
- 	if (!ctx)
- 		return -ENOMEM;
- 
--	pid_ns = get_pid_ns(task_active_pid_ns(current));
--
--	if (!pid_ns->proc_mnt) {
--		ctx->fs_info = kzalloc(sizeof(struct proc_fs_info), GFP_KERNEL);
--		if (!ctx->fs_info) {
--			kfree(ctx);
--			return -ENOMEM;
--		}
--		ctx->fs_info->pid_ns = pid_ns;
--	} else {
--		ctx->fs_info = proc_sb_info(pid_ns->proc_mnt->mnt_sb);
-+	ctx->fs_info = kzalloc(sizeof(struct proc_fs_info), GFP_KERNEL);
-+	if (!ctx->fs_info) {
-+		kfree(ctx);
-+		return -ENOMEM;
- 	}
- 
-+	ctx->fs_info->pid_ns = get_pid_ns(task_active_pid_ns(current));
-+
- 	put_user_ns(fc->user_ns);
- 	fc->user_ns = get_user_ns(ctx->fs_info->pid_ns->user_ns);
- 	fc->fs_private = ctx;
 -- 
 2.24.1
