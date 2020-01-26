@@ -1,62 +1,54 @@
-From: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
-Subject: Re: [RFC PATCH 07/14] Add sample notification program [ver #3]
-Date: Sun, 26 Jan 2020 07:47:30 -0800
-Message-ID: <20200126154730.GA18893@roeck-us.net>
-References: <157909503552.20155.3030058841911628518.stgit@warthog.procyon.org.uk>
- <157909509882.20155.1159021562184142124.stgit@warthog.procyon.org.uk>
+From: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
+Subject: Re: [PATCH v2] mm: Add MREMAP_DONTUNMAP to mremap().
+Date: Mon, 27 Jan 2020 01:06:50 +0300
+Message-ID: <20200126220650.i4lwljpvohpgvsi2@box>
+References: <20200123014627.71720-1-bgeffon@google.com>
+ <20200124190625.257659-1-bgeffon@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <157909509882.20155.1159021562184142124.stgit-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
-Sender: linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org, raven-PKsaG3nR2I+sTnJN9+BGXg@public.gmane.org, Christian Brauner <christian-STijNZzMWpgWenYVfaLwtA@public.gmane.org>, keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20200124190625.257659-1-bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Michael S . Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Joel Fernandes <joel-QYYGw3jwrUn5owFQY34kdNi2O/JbrIOy@public.gmane.org>, Yu Zhao <yuzhao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Jesse Barnes <jsbarnes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 15, 2020 at 01:31:38PM +0000, David Howells wrote:
-> The sample program is run like:
-> 
-> 	./samples/watch_queue/watch_test
-> 
-> and watches "/" for mount changes and the current session keyring for key
-> changes:
-> 
-> 	# keyctl add user a a @s
-> 	1035096409
-> 	# keyctl unlink 1035096409 @s
-> 
-> producing:
-> 
-> 	# ./watch_test
-> 	read() = 16
-> 	NOTIFY[000]: ty=000001 sy=02 i=00000110
-> 	KEY 2ffc2e5d change=2[linked] aux=1035096409
-> 	read() = 16
-> 	NOTIFY[000]: ty=000001 sy=02 i=00000110
-> 	KEY 2ffc2e5d change=3[unlinked] aux=1035096409
-> 
-> Other events may be produced, such as with a failing disk:
-> 
-> 	read() = 22
-> 	NOTIFY[000]: ty=000003 sy=02 i=00000416
-> 	USB 3-7.7 dev-reset e=0 r=0
-> 	read() = 24
-> 	NOTIFY[000]: ty=000002 sy=06 i=00000418
-> 	BLOCK 00800050 e=6[critical medium] s=64000ef8
-> 
-> This corresponds to:
-> 
-> 	blk_update_request: critical medium error, dev sdf, sector 1677725432 op 0x0:(READ) flags 0x0 phys_seg 1 prio class 0
-> 
-> in dmesg.
-> 
-> Signed-off-by: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+On Fri, Jan 24, 2020 at 11:06:25AM -0800, Brian Geffon wrote:
+> When remapping an anonymous, private mapping, if MREMAP_DONTUNMAP is
+> set, the source mapping will not be removed. Instead it will be
+> cleared as if a brand new anonymous, private mapping had been created
+> atomically as part of the mremap() call.  If a userfaultfd was watching
+> the source, it will continue to watch the new mapping.  For a mapping
+> that is shared or not anonymous, MREMAP_DONTUNMAP will cause the
+> mremap() call to fail. MREMAP_DONTUNMAP implies that MREMAP_FIXED is
+> also used.
 
-mips:allmodconfig:
+Implies? From code it looks like it requires MREMAP_FIXED. And
+MREMAP_FIXED requires MREMAP_MAYMOVE. That's strange flag chaining.
+I don't really see need in such dependencies. It maybe indeed implied, not
+requied.
 
-samples/watch_queue/watch_test.c: In function ‘keyctl_watch_key’:
-samples/watch_queue/watch_test.c:34:17: error: ‘__NR_keyctl’ undeclared
+> The final result is two equally sized VMAs where the
+> destination contains the PTEs of the source.
 
-Guenter
+Could you clarify rmap situation here? How the rmap hierarchy will look
+like before and after the operation. Can the new VMA merge with the old
+one? Sounds fishy to me.
+
+> We hope to use this in Chrome OS where with userfaultfd we could write
+> an anonymous mapping to disk without having to STOP the process or worry
+> about VMA permission changes.
+> 
+> This feature also has a use case in Android, Lokesh Gidra has said
+> that "As part of using userfaultfd for GC, We'll have to move the physical
+> pages of the java heap to a separate location. For this purpose mremap
+> will be used. Without the MREMAP_DONTUNMAP flag, when I mremap the java
+> heap, its virtual mapping will be removed as well. Therefore, we'll
+> require performing mmap immediately after. This is not only time consuming
+> but also opens a time window where a native thread may call mmap and
+> reserve the java heap's address range for its own usage. This flag
+> solves the problem."
+
+-- 
+ Kirill A. Shutemov
