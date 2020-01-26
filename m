@@ -1,44 +1,62 @@
-From: Tycho Andersen <tycho-E0fblnxP3wo@public.gmane.org>
-Subject: Re: [PATCH 3/4] seccomp: Add SECCOMP_USER_NOTIF_FLAG_PIDFD to get
- pidfd on listener trap
-Date: Sat, 25 Jan 2020 21:42:56 -0800
-Message-ID: <20200126054256.GB4151@cisco>
-References: <20200124091743.3357-1-sargun@sargun.me>
- <20200124091743.3357-4-sargun@sargun.me>
- <20200124180332.GA4151@cisco>
- <CAMp4zn_WXwxJ6Md4rgFzdAY_xea4TmVDdQc1iJDObEMm5Yc79g@mail.gmail.com>
+From: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
+Subject: Re: [RFC PATCH 07/14] Add sample notification program [ver #3]
+Date: Sun, 26 Jan 2020 07:47:30 -0800
+Message-ID: <20200126154730.GA18893@roeck-us.net>
+References: <157909503552.20155.3030058841911628518.stgit@warthog.procyon.org.uk>
+ <157909509882.20155.1159021562184142124.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAMp4zn_WXwxJ6Md4rgFzdAY_xea4TmVDdQc1iJDObEMm5Yc79g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sargun Dhillon <sargun-GaZTRHToo+CzQB+pC5nmwQ@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <157909509882.20155.1159021562184142124.stgit-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
+Sender: linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org, raven-PKsaG3nR2I+sTnJN9+BGXg@public.gmane.org, Christian Brauner <christian-STijNZzMWpgWenYVfaLwtA@public.gmane.org>, keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 24, 2020 at 12:09:37PM -0800, Sargun Dhillon wrote:
-> On Fri, Jan 24, 2020 at 10:03 AM Tycho Andersen <tycho-E0fblnxP3wo@public.gmane.org> wrote:
-> >
-> > On Fri, Jan 24, 2020 at 01:17:42AM -0800, Sargun Dhillon wrote:
-> > > Currently, this just opens the group leader of the thread that triggere
-> > > the event, as pidfds (currently) are limited to group leaders.
-> >
-> > I don't love the semantics of this; when they're not limited to thread
-> > group leaders any more, we won't be able to change this. Is that work
-> > far off?
-> >
-> > Tycho
+On Wed, Jan 15, 2020 at 01:31:38PM +0000, David Howells wrote:
+> The sample program is run like:
 > 
-> We would be able to change this in the future if we introduced a flag like
-> SECCOMP_USER_NOTIF_FLAG_PIDFD_THREAD which would send a
-> pidfd that's for the thread, and not just the group leader. The flag could
-> either be XOR with SECCOMP_USER_NOTIF_FLAG_PIDFD, or
-> could require both. Alternatively, we can rename
-> SECCOMP_USER_NOTIF_FLAG_PIDFD to
-> SECCOMP_USER_NOTIF_FLAG_GROUP_LEADER_PIDFD.
+> 	./samples/watch_queue/watch_test
+> 
+> and watches "/" for mount changes and the current session keyring for key
+> changes:
+> 
+> 	# keyctl add user a a @s
+> 	1035096409
+> 	# keyctl unlink 1035096409 @s
+> 
+> producing:
+> 
+> 	# ./watch_test
+> 	read() = 16
+> 	NOTIFY[000]: ty=000001 sy=02 i=00000110
+> 	KEY 2ffc2e5d change=2[linked] aux=1035096409
+> 	read() = 16
+> 	NOTIFY[000]: ty=000001 sy=02 i=00000110
+> 	KEY 2ffc2e5d change=3[unlinked] aux=1035096409
+> 
+> Other events may be produced, such as with a failing disk:
+> 
+> 	read() = 22
+> 	NOTIFY[000]: ty=000003 sy=02 i=00000416
+> 	USB 3-7.7 dev-reset e=0 r=0
+> 	read() = 24
+> 	NOTIFY[000]: ty=000002 sy=06 i=00000418
+> 	BLOCK 00800050 e=6[critical medium] s=64000ef8
+> 
+> This corresponds to:
+> 
+> 	blk_update_request: critical medium error, dev sdf, sector 1677725432 op 0x0:(READ) flags 0x0 phys_seg 1 prio class 0
+> 
+> in dmesg.
+> 
+> Signed-off-by: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 
-Ok, but then isn't this just another temporary API? Seems like it's
-worth waiting until the Right Way exists.
+mips:allmodconfig:
 
-Tycho
+samples/watch_queue/watch_test.c: In function ‘keyctl_watch_key’:
+samples/watch_queue/watch_test.c:34:17: error: ‘__NR_keyctl’ undeclared
+
+Guenter
