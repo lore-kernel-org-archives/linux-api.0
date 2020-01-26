@@ -1,86 +1,192 @@
-From: Aleksa Sarai <asarai@suse.de>
-Subject: Re: [PATCH 3/4] seccomp: Add SECCOMP_USER_NOTIF_FLAG_PIDFD to get
- pidfd on listener trap
-Date: Sun, 26 Jan 2020 15:14:39 +1100
-Message-ID: <20200126041439.liwfmb4h74zmhi76@yavin.dot.cyphar.com>
-References: <20200124091743.3357-1-sargun@sargun.me>
- <20200124091743.3357-4-sargun@sargun.me>
- <20200126040325.5eimmm7hli5qcqrr@yavin.dot.cyphar.com>
+From: Nathan Chancellor <natechancellor-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2] mm: Add MREMAP_DONTUNMAP to mremap().
+Date: Sat, 25 Jan 2020 22:16:42 -0700
+Message-ID: <20200126051642.GA39508@ubuntu-x2-xlarge-x86>
+References: <20200123014627.71720-1-bgeffon@google.com>
+ <20200124190625.257659-1-bgeffon@google.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="hqgjtbxoii2e4zog"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20200126040325.5eimmm7hli5qcqrr@yavin.dot.cyphar.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Sargun Dhillon <sargun@sargun.me>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, christian.brauner@ubuntu.com
+In-Reply-To: <20200124190625.257659-1-bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Michael S . Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Joel Fernandes <joel-QYYGw3jwrUn5owFQY34kdNi2O/JbrIOy@public.gmane.org>, Yu Zhao <yuzhao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Jesse Barnes <jsbarnes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, clang-built-linux-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+Hi Brian,
 
---hqgjtbxoii2e4zog
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+On Fri, Jan 24, 2020 at 11:06:25AM -0800, Brian Geffon wrote:
+> When remapping an anonymous, private mapping, if MREMAP_DONTUNMAP is
+> set, the source mapping will not be removed. Instead it will be
+> cleared as if a brand new anonymous, private mapping had been created
+> atomically as part of the mremap() call.  If a userfaultfd was watching
+> the source, it will continue to watch the new mapping.  For a mapping
+> that is shared or not anonymous, MREMAP_DONTUNMAP will cause the
+> mremap() call to fail. MREMAP_DONTUNMAP implies that MREMAP_FIXED is
+> also used. The final result is two equally sized VMAs where the
+> destination contains the PTEs of the source.
+> 
+> We hope to use this in Chrome OS where with userfaultfd we could write
+> an anonymous mapping to disk without having to STOP the process or worry
+> about VMA permission changes.
+> 
+> This feature also has a use case in Android, Lokesh Gidra has said
+> that "As part of using userfaultfd for GC, We'll have to move the physical
+> pages of the java heap to a separate location. For this purpose mremap
+> will be used. Without the MREMAP_DONTUNMAP flag, when I mremap the java
+> heap, its virtual mapping will be removed as well. Therefore, we'll
+> require performing mmap immediately after. This is not only time consuming
+> but also opens a time window where a native thread may call mmap and
+> reserve the java heap's address range for its own usage. This flag
+> solves the problem."
+> 
+> Signed-off-by: Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> ---
+>  include/uapi/linux/mman.h |  5 +++--
+>  mm/mremap.c               | 37 ++++++++++++++++++++++++++++++-------
+>  2 files changed, 33 insertions(+), 9 deletions(-)
+> 
+> diff --git a/include/uapi/linux/mman.h b/include/uapi/linux/mman.h
+> index fc1a64c3447b..923cc162609c 100644
+> --- a/include/uapi/linux/mman.h
+> +++ b/include/uapi/linux/mman.h
+> @@ -5,8 +5,9 @@
+>  #include <asm/mman.h>
+>  #include <asm-generic/hugetlb_encode.h>
+>  
+> -#define MREMAP_MAYMOVE	1
+> -#define MREMAP_FIXED	2
+> +#define MREMAP_MAYMOVE		1
+> +#define MREMAP_FIXED		2
+> +#define MREMAP_DONTUNMAP	4
+>  
+>  #define OVERCOMMIT_GUESS		0
+>  #define OVERCOMMIT_ALWAYS		1
+> diff --git a/mm/mremap.c b/mm/mremap.c
+> index 122938dcec15..bf97c3eb538b 100644
+> --- a/mm/mremap.c
+> +++ b/mm/mremap.c
+> @@ -318,8 +318,8 @@ unsigned long move_page_tables(struct vm_area_struct *vma,
+>  static unsigned long move_vma(struct vm_area_struct *vma,
+>  		unsigned long old_addr, unsigned long old_len,
+>  		unsigned long new_len, unsigned long new_addr,
+> -		bool *locked, struct vm_userfaultfd_ctx *uf,
+> -		struct list_head *uf_unmap)
+> +		bool *locked, unsigned long flags,
+> +		struct vm_userfaultfd_ctx *uf, struct list_head *uf_unmap)
+>  {
+>  	struct mm_struct *mm = vma->vm_mm;
+>  	struct vm_area_struct *new_vma;
+> @@ -408,6 +408,13 @@ static unsigned long move_vma(struct vm_area_struct *vma,
+>  	if (unlikely(vma->vm_flags & VM_PFNMAP))
+>  		untrack_pfn_moved(vma);
+>  
+> +	if (unlikely(!err && (flags & MREMAP_DONTUNMAP))) {
+> +		if (vm_flags & VM_ACCOUNT)
+> +			vma->vm_flags |= VM_ACCOUNT;
+> +
+> +		goto out;
+> +	}
+> +
+>  	if (do_munmap(mm, old_addr, old_len, uf_unmap) < 0) {
+>  		/* OOM: unable to split vma, just get accounts right */
+>  		vm_unacct_memory(excess >> PAGE_SHIFT);
+> @@ -422,6 +429,7 @@ static unsigned long move_vma(struct vm_area_struct *vma,
+>  			vma->vm_next->vm_flags |= VM_ACCOUNT;
+>  	}
+>  
+> +out:
+>  	if (vm_flags & VM_LOCKED) {
+>  		mm->locked_vm += new_len >> PAGE_SHIFT;
+>  		*locked = true;
+> @@ -497,7 +505,7 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
+>  
+>  static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
+>  		unsigned long new_addr, unsigned long new_len, bool *locked,
+> -		struct vm_userfaultfd_ctx *uf,
+> +		unsigned long flags, struct vm_userfaultfd_ctx *uf,
+>  		struct list_head *uf_unmap_early,
+>  		struct list_head *uf_unmap)
+>  {
+> @@ -545,6 +553,17 @@ static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
+>  		old_len = new_len;
+>  	}
+>  
+> +	/*
+> +	 * MREMAP_DONTUNMAP expands by old_len + (new_len - old_len), we will
+> +	 * check that we can expand by old_len and vma_to_resize will handle
+> +	 * the vma growing.
+> +	 */
+> +	if (unlikely(flags & MREMAP_DONTUNMAP && !may_expand_vm(mm,
+> +				vma->vm_flags, old_len >> PAGE_SHIFT))) {
 
-On 2020-01-26, Aleksa Sarai <cyphar@cyphar.com> wrote:
-> On 2020-01-24, Sargun Dhillon <sargun@sargun.me> wrote:
-> >  static long seccomp_notify_recv(struct seccomp_filter *filter,
-> >  				void __user *buf)
-> >  {
-> >  	struct seccomp_knotif *knotif =3D NULL, *cur;
-> >  	struct seccomp_notif unotif;
-> > +	struct task_struct *group_leader;
-> > +	bool send_pidfd;
-> >  	ssize_t ret;
-> > =20
-> > +	if (copy_from_user(&unotif, buf, sizeof(unotif)))
-> > +		return -EFAULT;
-> >  	/* Verify that we're not given garbage to keep struct extensible. */
-> > -	ret =3D check_zeroed_user(buf, sizeof(unotif));
-> > -	if (ret < 0)
-> > -		return ret;
-> > -	if (!ret)
-> > +	if (unotif.id ||
-> > +	    unotif.pid ||
-> > +	    memchr_inv(&unotif.data, 0, sizeof(unotif.data)) ||
-> > +	    unotif.pidfd)
-> > +		return -EINVAL;
->=20
-> IMHO this check is more confusing than the original check_zeroed_user().
-> Something like the following is simpler and less prone to forgetting to
-> add a new field in the future:
->=20
-> 	if (memchr_inv(&unotif, 0, sizeof(unotif)))
-> 		return -EINVAL;
+We received a Clang build report that vma is used uninitialized here
+(they aren't being publicly sent to LKML due to GCC vs Clang
+warning/error overlap):
 
-Also the check in the patch doesn't ensure that any unnamed padding is
-zeroed -- memchr_inv(&unotif, 0, sizeof(unotif)) does.
+https://groups.google.com/d/msg/clang-built-linux/gE5wRaeHdSI/xVA0MBQVEgAJ
 
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
+Sure enough, vma is initialized first in the next block. Not sure if
+this section should be moved below that initialization or if something
+else should be done to resolve it but that dereference will obviously be
+fatal.
 
---hqgjtbxoii2e4zog
-Content-Type: application/pgp-signature; name="signature.asc"
+Cheers,
+Nathan
 
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCAAdFiEEXzbGxhtUYBJKdfWmnhiqJn3bjbQFAl4tEiwACgkQnhiqJn3b
-jbTteQ/+JshgPkAMJKFvNtMDmJpL7P7c3yj6E3WmLPyOsxvBYndxxt2T8/NGEkps
-dyUtBVjqguB9yUDaHUw5K7Ac86pAlyjG+gQVO0tk3LKA649QJoa05hLw6ix0Eg4E
-W9CkIDesL5daNxCn5Qm6fhB8/KTK2ex4JAQEhLX6wyx2/q+5J0i+ZDdDVhMlQC4N
-XZ+s8p3O6j+sEtA7W1cO7Xq+GWqwOtH772Cy4BT1s6hIIpkBS05VXtN6rzwKj15D
-8QkXyfBhHk1p6C92tr/N0RHZ2k5Im2ySDGGg9G6BVOSoUAIPvUyjRlPIj6gSXsuN
-0HvC4olEAD/9ZQQIoPtfSGYpvG9y/tndpAGKMDZjfKmg/IGFHrfTLAUPPvOYCSox
-elV4e8mfwRu2oOZaYwBRasWc7NNUdYwetOkaRwnMiMoxSMHCBK1JBkhwjVoohAsM
-C84aTpwyJcqCx+HB8drVI28eZp1+ukA/aDdxSW4l6gUSkfwxrkIEMOEFSlwQfrH3
-5R3uYw6FTZL2Pcs6TN1W2oVawF7BYkQnvpvG8iHaflgkICajnMpWrcJT6l+IdkQq
-dmtwaJKc/ExzVmlNzwyVD4nKg00Du1am5Fithn6eRZWj9GY5pMhz6qh9xZJgA03J
-KOtokDIAmVO+C1CieF4aj394NbS4gYm0u9aXgyv0yG6060jcaXw=
-=TQFh
------END PGP SIGNATURE-----
-
---hqgjtbxoii2e4zog--
+> +		ret = -ENOMEM;
+> +		goto out;
+> +	}
+> +
+>  	vma = vma_to_resize(addr, old_len, new_len, &charged);
+>  	if (IS_ERR(vma)) {
+>  		ret = PTR_ERR(vma);
+> @@ -561,7 +580,7 @@ static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
+>  	if (IS_ERR_VALUE(ret))
+>  		goto out1;
+>  
+> -	ret = move_vma(vma, addr, old_len, new_len, new_addr, locked, uf,
+> +	ret = move_vma(vma, addr, old_len, new_len, new_addr, locked, flags, uf,
+>  		       uf_unmap);
+>  	if (!(offset_in_page(ret)))
+>  		goto out;
+> @@ -609,12 +628,15 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
+>  	addr = untagged_addr(addr);
+>  	new_addr = untagged_addr(new_addr);
+>  
+> -	if (flags & ~(MREMAP_FIXED | MREMAP_MAYMOVE))
+> +	if (flags & ~(MREMAP_FIXED | MREMAP_MAYMOVE | MREMAP_DONTUNMAP))
+>  		return ret;
+>  
+>  	if (flags & MREMAP_FIXED && !(flags & MREMAP_MAYMOVE))
+>  		return ret;
+>  
+> +	if (flags & MREMAP_DONTUNMAP && !(flags & MREMAP_FIXED))
+> +		return ret;
+> +
+>  	if (offset_in_page(addr))
+>  		return ret;
+>  
+> @@ -634,7 +656,8 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
+>  
+>  	if (flags & MREMAP_FIXED) {
+>  		ret = mremap_to(addr, old_len, new_addr, new_len,
+> -				&locked, &uf, &uf_unmap_early, &uf_unmap);
+> +				&locked, flags, &uf, &uf_unmap_early,
+> +				&uf_unmap);
+>  		goto out;
+>  	}
+>  
+> @@ -712,7 +735,7 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
+>  		}
+>  
+>  		ret = move_vma(vma, addr, old_len, new_len, new_addr,
+> -			       &locked, &uf, &uf_unmap);
+> +			       &locked, flags, &uf, &uf_unmap);
+>  	}
+>  out:
+>  	if (offset_in_page(ret)) {
+> -- 
+> 2.25.0.341.g760bfbb309-goog
+> 
