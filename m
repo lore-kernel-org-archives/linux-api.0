@@ -1,33 +1,61 @@
-From: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v2] mm: Add MREMAP_DONTUNMAP to mremap().
-Date: Mon, 27 Jan 2020 11:13:02 +0100
-Message-ID: <87imkxxl5d.fsf@oldenburg2.str.redhat.com>
-References: <20200123014627.71720-1-bgeffon@google.com>
-        <20200124190625.257659-1-bgeffon@google.com>
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Subject: Re: [PATCH] Add prctl support for controlling mem reclaim V4
+Date: Mon, 27 Jan 2020 14:02:59 +0100
+Message-ID: <20200127130258.2bknkl3mwpkfyml4@wittgenstein>
+References: <20191112001900.9206-1-mchristi@redhat.com>
+ <CALvZod47XyD2x8TuZcb9PgeVY14JBwNhsUpN3RAeAt+RJJC=hg@mail.gmail.com>
+ <5E2B19C9.6080907@redhat.com>
+ <20200124211642.GB7216@dread.disaster.area>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20200124190625.257659-1-bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> (Brian Geffon's
-        message of "Fri, 24 Jan 2020 11:06:25 -0800")
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Michael S . Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Joel Fernandes <joel-QYYGw3jwrUn5owFQY34kdNi2O/JbrIOy@public.gmane.org>, Yu Zhao <yuzhao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Jesse Barnes <jsbarnes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200124211642.GB7216@dread.disaster.area>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: Mike Christie <mchristi@redhat.com>, Shakeel Butt <shakeelb@google.com>, Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org, idryomov@gmail.com, Michal Hocko <mhocko@kernel.org>, Linux MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-scsi@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-block@vger.kernel.org, martin@urbackup.org, Damien.LeMoal@wdc.com, Michal Hocko <mhocko@suse.com>, Masato Suzuki <masato.suzuki@wdc.com>
 List-Id: linux-api@vger.kernel.org
 
-* Brian Geffon:
+On Sat, Jan 25, 2020 at 08:16:42AM +1100, Dave Chinner wrote:
+> On Fri, Jan 24, 2020 at 10:22:33AM -0600, Mike Christie wrote:
+> > On 12/05/2019 04:43 PM, Shakeel Butt wrote:
+> > > On Mon, Nov 11, 2019 at 4:19 PM Mike Christie <mchristi@redhat.com> wrote:
+> > >> This patch adds a new prctl command that daemons can use after they have
+> > >> done their initial setup, and before they start to do allocations that
+> > >> are in the IO path. It sets the PF_MEMALLOC_NOIO and PF_LESS_THROTTLE
+> > >> flags so both userspace block and FS threads can use it to avoid the
+> > >> allocation recursion and try to prevent from being throttled while
+> > >> writing out data to free up memory.
+> > >>
+> > >> Signed-off-by: Mike Christie <mchristi@redhat.com>
+> > >> Acked-by: Michal Hocko <mhocko@suse.com>
+> > >> Tested-by: Masato Suzuki <masato.suzuki@wdc.com>
+> > >> Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
+> > > 
+> > > I suppose this patch should be routed through MM tree, so, CCing Andrew.
+> > >
+> > 
+> > Andrew and other mm/storage developers,
+> > 
+> > Do I need to handle anything else for this patch, or are there any other
+> > concerns? Is this maybe something we want to talk about at a quick LSF
+> > session?
+> > 
+> > I have retested it with Linus's current tree. It still applies cleanly
+> > (just some offsets), and fixes the problem described above we have been
+> > hitting.
+> 
+> I must have missed this version being posted (just looked it up on
+> lore.kernel.org). As far as I'm concerned this is good to go and it
+> is absolutely necessary for userspace IO stacks to function
+> correctly.
+> 
+> Reviewed-by: Dave Chinner <dchinner@redhat.com>
+> 
+> If no manintainer picks it up before the next merge window, then I
 
-> When remapping an anonymous, private mapping, if MREMAP_DONTUNMAP is
-> set, the source mapping will not be removed. Instead it will be
-> cleared as if a brand new anonymous, private mapping had been created
-> atomically as part of the mremap() call.  If a userfaultfd was watching
-> the source, it will continue to watch the new mapping.  For a mapping
-> that is shared or not anonymous, MREMAP_DONTUNMAP will cause the
-> mremap() call to fail. MREMAP_DONTUNMAP implies that MREMAP_FIXED is
-> also used. The final result is two equally sized VMAs where the
-> destination contains the PTEs of the source.
+Since prctl() is thread-management and fs people seem to be happy and
+have acked it I can pick this up too if noone objects and send this
+along with the rest of process management.
 
-What will be the protection flags of the source mapping?  Will they
-remain unchanged?  Or PROT_NONE?
-
-Thanks,
-Florian
+Christian
