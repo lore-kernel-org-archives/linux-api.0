@@ -1,44 +1,62 @@
-From: Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v2] mm: Add MREMAP_DONTUNMAP to mremap().
-Date: Mon, 27 Jan 2020 14:33:44 -0800
-Message-ID: <CADyq12xCpTzLpYC16FjnM60tHhCfnccNfg6JJuqcBd_6ACDGcQ@mail.gmail.com>
-References: <20200123014627.71720-1-bgeffon@google.com> <20200124190625.257659-1-bgeffon@google.com>
- <87imkxxl5d.fsf@oldenburg2.str.redhat.com>
+From: Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v7 07/11] proc: flush task dcache entries from all procfs
+ instances
+Date: Tue, 28 Jan 2020 00:23:53 +0100
+Message-ID: <20200127232352.s3mvvfkrta3i5h7w@comp-core-i7-2640m-0182e6>
+References: <20200125130541.450409-1-gladkov.alexey@gmail.com>
+ <20200125130541.450409-8-gladkov.alexey@gmail.com>
+ <CAHk-=wiGNSQCA8TYa1Akp0_GRpe=ELKDPkDX5nzM5R=oDy1U+Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87imkxxl5d.fsf-fjB847h8rq1N9UpBYOmNkhcY2uh10dtjAL8bYrjMMd8@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAHk-=wiGNSQCA8TYa1Akp0_GRpe=ELKDPkDX5nzM5R=oDy1U+Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Michael S . Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Joel Fernandes <joel-QYYGw3jwrUn5owFQY34kdNi2O/JbrIOy@public.gmane.org>, Yu Zhao <yuzhao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Jesse Barnes <jsbarnes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kernel Hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Security Module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Dmitry V . Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "J . Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Florian,
-copy_vma will make a copy of the existing VMA leaving the old VMA
-unchanged, so the source keeps its existing protections, this is what
-makes it very useful along with userfaultfd.
+On Sat, Jan 25, 2020 at 10:45:25AM -0800, Linus Torvalds wrote:
+> On Sat, Jan 25, 2020 at 5:06 AM Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> >
+> > This allows to flush dcache entries of a task on multiple procfs mounts
+> > per pid namespace.
+> 
+> From a quick read-through, this is the only one I really react negatively to.
+> 
+> The locking looks odd. It only seems to protect the new proc_mounts
+> list, but then it's a whole big rwsem, and it's taken over all of
+> proc_flush_task_mnt(), and the locking is exported to all over as a
+> result of that - including the dummy functions for "there is no proc"
+> case.
+> 
+> And proc_flush_task_mnt() itself should need no locking over any of
+> it, so it's all just for the silly looping over the list.
 
-Thanks,
-Brian
+Thank you, I will rework this part.
 
+> So
+> 
+>  (a) this looks fishy and feels wrong - I get a very strong feeling
+> that the locking is wrong to begin with, and could/should have been
+> done differently
+> 
+>  (b) all the locking should have been internal to /proc, and those
+> wrappers shouldn't exist in a common header file (and certainly not
+> for the non-proc case).
+> 
+> Yes, (a) is just a feeling, and I don't have any great suggestions.
+> Maybe make it an RCU list and use a spinlock for updating it?
 
-On Mon, Jan 27, 2020 at 2:13 AM Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->
-> * Brian Geffon:
->
-> > When remapping an anonymous, private mapping, if MREMAP_DONTUNMAP is
-> > set, the source mapping will not be removed. Instead it will be
-> > cleared as if a brand new anonymous, private mapping had been created
-> > atomically as part of the mremap() call.  If a userfaultfd was watching
-> > the source, it will continue to watch the new mapping.  For a mapping
-> > that is shared or not anonymous, MREMAP_DONTUNMAP will cause the
-> > mremap() call to fail. MREMAP_DONTUNMAP implies that MREMAP_FIXED is
-> > also used. The final result is two equally sized VMAs where the
-> > destination contains the PTEs of the source.
->
-> What will be the protection flags of the source mapping?  Will they
-> remain unchanged?  Or PROT_NONE?
->
-> Thanks,
-> Florian
->
+I’m thinking, is it possible to get rid of proc_flush_task at all ?
+Maybe we can try to flush dcache during readdir for example.
+
+> But (b) is pretty much a non-starter in this form. Those wrappers
+> shouldn't be in a globally exported core header file. No way.
+> 
+>                Linus
+> 
+
+-- 
+Rgrds, legion
