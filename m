@@ -1,66 +1,87 @@
-From: Brian Geffon <bgeffon@google.com>
-Subject: Re: [PATCH v2] mm: Add MREMAP_DONTUNMAP to mremap().
-Date: Mon, 27 Jan 2020 17:35:40 -0800
-Message-ID: <CADyq12xCK_3MhGi88Am5P6DVZvrW8vqtyJMHO0zjNhvhYegm1w@mail.gmail.com>
-References: <20200123014627.71720-1-bgeffon@google.com> <20200124190625.257659-1-bgeffon@google.com>
- <20200126220650.i4lwljpvohpgvsi2@box>
+From: Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+Subject: IORING_REGISTER_CREDS[_UPDATE]() and credfd_create()?
+Date: Tue, 28 Jan 2020 11:18:58 +0100
+Message-ID: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9@samba.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200126220650.i4lwljpvohpgvsi2@box>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Kirill A. Shutemov" <kirill@shutemov.name>
-Cc: Andrew Morton <akpm@linux-foundation.org>, "Michael S . Tsirkin" <mst@redhat.com>, Arnd Bergmann <arnd@arndb.de>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Andrea Arcangeli <aarcange@redhat.com>, Sonny Rao <sonnyrao@google.com>, Minchan Kim <minchan@kernel.org>, Joel Fernandes <joel@joelfernandes.org>, Yu Zhao <yuzhao@google.com>, Jesse Barnes <jsbarnes@google.com>
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="xNzVPy8fiuzDJ2gb2kehFMEhKE9xoboE2"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Cc: io-uring <io-uring-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Kirill,
-Thanks for taking the time to look at this. I'll update the wording to
-make it clear that MREMAP_FIXED is required with MREMAP_DONTUNMAP.
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--xNzVPy8fiuzDJ2gb2kehFMEhKE9xoboE2
+Content-Type: multipart/mixed; boundary="0TIZ41FG6UqAgh5j0FNuYtlsRwIPAejbR";
+ protected-headers="v1"
+From: Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Cc: io-uring <io-uring-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
+ Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Message-ID: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+Subject: IORING_REGISTER_CREDS[_UPDATE]() and credfd_create()?
 
-Regarding rmap, you're completely right I'm going to roll a new patch
-which will call unlink_anon_vmas() to make sure the rmap is correct,
-I'll also explicitly check that the vma is anonymous and not shared
-returning EINVAL if not, how does that sound?
+--0TIZ41FG6UqAgh5j0FNuYtlsRwIPAejbR
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: quoted-printable
 
-Brian
+Hi Jens,
 
-On Sun, Jan 26, 2020 at 2:06 PM Kirill A. Shutemov <kirill@shutemov.name> wrote:
->
-> On Fri, Jan 24, 2020 at 11:06:25AM -0800, Brian Geffon wrote:
-> > When remapping an anonymous, private mapping, if MREMAP_DONTUNMAP is
-> > set, the source mapping will not be removed. Instead it will be
-> > cleared as if a brand new anonymous, private mapping had been created
-> > atomically as part of the mremap() call.  If a userfaultfd was watching
-> > the source, it will continue to watch the new mapping.  For a mapping
-> > that is shared or not anonymous, MREMAP_DONTUNMAP will cause the
-> > mremap() call to fail. MREMAP_DONTUNMAP implies that MREMAP_FIXED is
-> > also used.
->
-> Implies? From code it looks like it requires MREMAP_FIXED. And
-> MREMAP_FIXED requires MREMAP_MAYMOVE. That's strange flag chaining.
-> I don't really see need in such dependencies. It maybe indeed implied, not
-> requied.
->
-> > The final result is two equally sized VMAs where the
-> > destination contains the PTEs of the source.
->
-> Could you clarify rmap situation here? How the rmap hierarchy will look
-> like before and after the operation. Can the new VMA merge with the old
-> one? Sounds fishy to me.
->
-> > We hope to use this in Chrome OS where with userfaultfd we could write
-> > an anonymous mapping to disk without having to STOP the process or worry
-> > about VMA permission changes.
-> >
-> > This feature also has a use case in Android, Lokesh Gidra has said
-> > that "As part of using userfaultfd for GC, We'll have to move the physical
-> > pages of the java heap to a separate location. For this purpose mremap
-> > will be used. Without the MREMAP_DONTUNMAP flag, when I mremap the java
-> > heap, its virtual mapping will be removed as well. Therefore, we'll
-> > require performing mmap immediately after. This is not only time consuming
-> > but also opens a time window where a native thread may call mmap and
-> > reserve the java heap's address range for its own usage. This flag
-> > solves the problem."
->
-> --
->  Kirill A. Shutemov
+now that we have IORING_FEAT_CUR_PERSONALITY...
+
+How can we optimize the fileserver case now, in order to avoid the
+overhead of always calling 5 syscalls before io_uring_enter()?:
+
+ /* gain root again */
+ setresuid(-1,0,-1); setresgid(-1,0,-1)
+ /* impersonate the user with groups */
+ setgroups(num, grps); setresgid(-1,gid,-1); setresuid(-1,uid,-1);
+ /* trigger the operation */
+ io_uring_enter();
+
+I guess some kind of IORING_REGISTER_CREDS[_UPDATE] would be
+good, together with a IOSQE_FIXED_CREDS in order to specify
+credentials per operation.
+
+Or we make it much more generic and introduce a credsfd_create()
+syscall in order to get an fd for a credential handle, maybe
+together with another syscall to activate the credentials of
+the current thread (or let a write to the fd trigger the activation
+in order to avoid an additional syscall number).
+
+Having just an fd would allow IORING_REGISTER_CREDS[_UPDATE]
+to be just an array of int values instead of a more complex
+structure to define the credentials.
+
+What do you think?
+metze
+
+
+--0TIZ41FG6UqAgh5j0FNuYtlsRwIPAejbR--
+
+--xNzVPy8fiuzDJ2gb2kehFMEhKE9xoboE2
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEEfFbGo3YXpfgryIw9DbX1YShpvVYFAl4wCpYACgkQDbX1YShp
+vVZt3BAAjKYeQZedFfZ8ij6ejIxHBo0u3zRitnsiSkVJdsEbF/0Jq8vuBuubvzxi
+6XVS+2ltgT+f68teBrkz1kpYoxqU8w7xcT9i3A5bg37mc6wjm05xPYpy9tgfbI4a
+Y1hNo+Ia+/OFS/l0obvnL7AFOanWXvE6U9YFIuMJIdNuT54iZZUOSNgHnlQI8im8
+80T6D3liylKA7w4qcrT/sy3jaXbeqvazes1R3jOdaGzVt0E1I95xuhnqM2oApW1U
++jnUc1mfUw2teG2T3+PJ2rY+59x38fo/l/WpQ2EGXM/j48IQL59uZGz/umHLyzDR
+xtphlKWhXCUzNnqlPPKmgRwh77cwsKtt14FGYlGZmfKFLIIGTITjhz2HQFAAxSpq
+TN20FpQsYg4SSWmTWy44fK1J0PQ6beT9b1FD1n051oTcLLgRPxCwOuCS7vAST9Bh
+BU3v/k6Yxp1z7FDKvlxN9oXdxWdl2W4T9q6Xoa5sZGTUmb1Uu3EWhVFlJQ4hpZ2O
+TaHD60j0tMJcC57/KgNaTxyan0x61juJUtUQfYg2O1+CBN5bnhsZEprdwUY210wO
+iJVi+O426r9vQS2kNY3mdp6NX1xSJDl+pzU7UA0bS4aFYbrFq14+0V/TiyVcIGqW
+wgVisDPg4eScq8idAJ7yRnh9ArfAV9amdx3snhTKAxpDesizWeM=
+=Og5/
+-----END PGP SIGNATURE-----
+
+--xNzVPy8fiuzDJ2gb2kehFMEhKE9xoboE2--
