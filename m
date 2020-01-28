@@ -1,87 +1,59 @@
-From: Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
-Subject: IORING_REGISTER_CREDS[_UPDATE]() and credfd_create()?
-Date: Tue, 28 Jan 2020 11:18:58 +0100
-Message-ID: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9@samba.org>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH v7 02/11] proc: add proc_fs_info struct to store proc
+ information
+Date: Tue, 28 Jan 2020 14:43:37 +0100
+Message-ID: <20200128134337.GC17943@redhat.com>
+References: <20200125130541.450409-1-gladkov.alexey@gmail.com>
+ <20200125130541.450409-3-gladkov.alexey@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="xNzVPy8fiuzDJ2gb2kehFMEhKE9xoboE2"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-Cc: io-uring <io-uring-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-security-module-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200125130541.450409-3-gladkov.alexey@gmail.com>
+Sender: owner-linux-security-module@vger.kernel.org
+To: Alexey Gladkov <gladkov.alexey@gmail.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux Security Module <linux-security-module@vger.kernel.org>, Akinobu Mita <akinobu.mita@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Daniel Micay <danielmicay@gmail.com>, Djalal Harouni <tixxdz@gmail.com>, "Dmitry V . Levin" <ldv@altlinux.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ingo Molnar <mingo@kernel.org>, "J . Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---xNzVPy8fiuzDJ2gb2kehFMEhKE9xoboE2
-Content-Type: multipart/mixed; boundary="0TIZ41FG6UqAgh5j0FNuYtlsRwIPAejbR";
- protected-headers="v1"
-From: Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
-To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-Cc: io-uring <io-uring-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
- Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Message-ID: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
-Subject: IORING_REGISTER_CREDS[_UPDATE]() and credfd_create()?
+On 01/25, Alexey Gladkov wrote:
+>
+>  static int proc_init_fs_context(struct fs_context *fc)
+>  {
+>  	struct proc_fs_context *ctx;
+> +	struct pid_namespace *pid_ns;
+>
+>  	ctx = kzalloc(sizeof(struct proc_fs_context), GFP_KERNEL);
+>  	if (!ctx)
+>  		return -ENOMEM;
+>
+> -	ctx->pid_ns = get_pid_ns(task_active_pid_ns(current));
+> +	pid_ns = get_pid_ns(task_active_pid_ns(current));
+> +
+> +	if (!pid_ns->proc_mnt) {
+> +		ctx->fs_info = kzalloc(sizeof(struct proc_fs_info), GFP_KERNEL);
+> +		if (!ctx->fs_info) {
+> +			kfree(ctx);
+> +			return -ENOMEM;
+> +		}
+> +		ctx->fs_info->pid_ns = pid_ns;
+> +	} else {
+> +		ctx->fs_info = proc_sb_info(pid_ns->proc_mnt->mnt_sb);
+> +	}
+> +
 
---0TIZ41FG6UqAgh5j0FNuYtlsRwIPAejbR
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: quoted-printable
+it seems that this code lacks put_pid_ns() if pid_ns->proc_mnt != NULL
+or if kzalloc() fails?
 
-Hi Jens,
+Or, better,
 
-now that we have IORING_FEAT_CUR_PERSONALITY...
+	pid_ns = task_active_pid_ns();
 
-How can we optimize the fileserver case now, in order to avoid the
-overhead of always calling 5 syscalls before io_uring_enter()?:
+	if (!pid_ns->proc_mnt) {
+		ctx->fs_info = kzalloc();
+		...
+		ctx->fs_info->pid_ns = get_pid_ns(pid_ns);
+	}
 
- /* gain root again */
- setresuid(-1,0,-1); setresgid(-1,0,-1)
- /* impersonate the user with groups */
- setgroups(num, grps); setresgid(-1,gid,-1); setresuid(-1,uid,-1);
- /* trigger the operation */
- io_uring_enter();
+No?
 
-I guess some kind of IORING_REGISTER_CREDS[_UPDATE] would be
-good, together with a IOSQE_FIXED_CREDS in order to specify
-credentials per operation.
-
-Or we make it much more generic and introduce a credsfd_create()
-syscall in order to get an fd for a credential handle, maybe
-together with another syscall to activate the credentials of
-the current thread (or let a write to the fd trigger the activation
-in order to avoid an additional syscall number).
-
-Having just an fd would allow IORING_REGISTER_CREDS[_UPDATE]
-to be just an array of int values instead of a more complex
-structure to define the credentials.
-
-What do you think?
-metze
-
-
---0TIZ41FG6UqAgh5j0FNuYtlsRwIPAejbR--
-
---xNzVPy8fiuzDJ2gb2kehFMEhKE9xoboE2
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCgAdFiEEfFbGo3YXpfgryIw9DbX1YShpvVYFAl4wCpYACgkQDbX1YShp
-vVZt3BAAjKYeQZedFfZ8ij6ejIxHBo0u3zRitnsiSkVJdsEbF/0Jq8vuBuubvzxi
-6XVS+2ltgT+f68teBrkz1kpYoxqU8w7xcT9i3A5bg37mc6wjm05xPYpy9tgfbI4a
-Y1hNo+Ia+/OFS/l0obvnL7AFOanWXvE6U9YFIuMJIdNuT54iZZUOSNgHnlQI8im8
-80T6D3liylKA7w4qcrT/sy3jaXbeqvazes1R3jOdaGzVt0E1I95xuhnqM2oApW1U
-+jnUc1mfUw2teG2T3+PJ2rY+59x38fo/l/WpQ2EGXM/j48IQL59uZGz/umHLyzDR
-xtphlKWhXCUzNnqlPPKmgRwh77cwsKtt14FGYlGZmfKFLIIGTITjhz2HQFAAxSpq
-TN20FpQsYg4SSWmTWy44fK1J0PQ6beT9b1FD1n051oTcLLgRPxCwOuCS7vAST9Bh
-BU3v/k6Yxp1z7FDKvlxN9oXdxWdl2W4T9q6Xoa5sZGTUmb1Uu3EWhVFlJQ4hpZ2O
-TaHD60j0tMJcC57/KgNaTxyan0x61juJUtUQfYg2O1+CBN5bnhsZEprdwUY210wO
-iJVi+O426r9vQS2kNY3mdp6NX1xSJDl+pzU7UA0bS4aFYbrFq14+0V/TiyVcIGqW
-wgVisDPg4eScq8idAJ7yRnh9ArfAV9amdx3snhTKAxpDesizWeM=
-=Og5/
------END PGP SIGNATURE-----
-
---xNzVPy8fiuzDJ2gb2kehFMEhKE9xoboE2--
+Oleg.
