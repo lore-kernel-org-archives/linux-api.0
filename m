@@ -1,66 +1,70 @@
-From: Will Deacon <will-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v3] mm: Add MREMAP_DONTUNMAP to mremap().
-Date: Tue, 28 Jan 2020 15:26:42 +0000
-Message-ID: <20200128152641.GA29776@willie-the-truck>
-References: <20200123014627.71720-1-bgeffon@google.com>
- <20200127053056.213679-1-bgeffon@google.com>
+From: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Subject: Re: IORING_REGISTER_CREDS[_UPDATE]() and credfd_create()?
+Date: Tue, 28 Jan 2020 09:10:28 -0700
+Message-ID: <d6bc8139-abbe-8a8d-7da1-4eeafd9eebe7@kernel.dk>
+References: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9@samba.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20200127053056.213679-1-bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Michael S . Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Joel Fernandes <joel-QYYGw3jwrUn5owFQY34kdNi2O/JbrIOy@public.gmane.org>, Yu Zhao <yuzhao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Jesse Barnes <jsbarnes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Nathan Chancellor <natechancellor-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+Cc: io-uring <io-uring-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Brian,
+On 1/28/20 3:18 AM, Stefan Metzmacher wrote:
+> Hi Jens,
+> 
+> now that we have IORING_FEAT_CUR_PERSONALITY...
+> 
+> How can we optimize the fileserver case now, in order to avoid the
+> overhead of always calling 5 syscalls before io_uring_enter()?:
+> 
+>  /* gain root again */
+>  setresuid(-1,0,-1); setresgid(-1,0,-1)
+>  /* impersonate the user with groups */
+>  setgroups(num, grps); setresgid(-1,gid,-1); setresuid(-1,uid,-1);
+>  /* trigger the operation */
+>  io_uring_enter();
+> 
+> I guess some kind of IORING_REGISTER_CREDS[_UPDATE] would be
+> good, together with a IOSQE_FIXED_CREDS in order to specify
+> credentials per operation.
+> 
+> Or we make it much more generic and introduce a credsfd_create()
+> syscall in order to get an fd for a credential handle, maybe
+> together with another syscall to activate the credentials of
+> the current thread (or let a write to the fd trigger the activation
+> in order to avoid an additional syscall number).
+> 
+> Having just an fd would allow IORING_REGISTER_CREDS[_UPDATE]
+> to be just an array of int values instead of a more complex
+> structure to define the credentials.
 
-On Sun, Jan 26, 2020 at 09:30:56PM -0800, Brian Geffon wrote:
-> When remapping an anonymous, private mapping, if MREMAP_DONTUNMAP is
-> set, the source mapping will not be removed. Instead it will be
-> cleared as if a brand new anonymous, private mapping had been created
-> atomically as part of the mremap() call.  If a userfaultfd was watching
-> the source, it will continue to watch the new mapping.  For a mapping
-> that is shared or not anonymous, MREMAP_DONTUNMAP will cause the
-> mremap() call to fail. MREMAP_DONTUNMAP requires that MREMAP_FIXED is
-> also used. The final result is two equally sized VMAs where the
-> destination contains the PTEs of the source.
->    
-> We hope to use this in Chrome OS where with userfaultfd we could write
-> an anonymous mapping to disk without having to STOP the process or worry
-> about VMA permission changes.
->    
-> This feature also has a use case in Android, Lokesh Gidra has said
-> that "As part of using userfaultfd for GC, We'll have to move the physical
-> pages of the java heap to a separate location. For this purpose mremap
-> will be used. Without the MREMAP_DONTUNMAP flag, when I mremap the java
-> heap, its virtual mapping will be removed as well. Therefore, we'll
-> require performing mmap immediately after. This is not only time consuming
-> but also opens a time window where a native thread may call mmap and
-> reserve the java heap's address range for its own usage. This flag
-> solves the problem."
+I'd rather avoid having to add more infrastructure for this, even if
+credsfd_create() would be nifty.
 
-Hmm, this sounds like you're dealing with a multi-threaded environment,
-yet your change only supports private mappings. How does that work?
+With that in mind, something like:
 
-It's also worrying because, with two private mappings of the same anonymous
-memory live simultaneously, you run the risk of hitting D-cache aliasing
-issues on some architectures and losing coherency between them as a result
-(even in a single-threaded scenario). Is userspace just supposed to deal
-with this, or should we be enforcing SHMLBA alignment?
- 
-> Signed-off-by: Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> ---
->  include/uapi/linux/mman.h |  5 +++--
->  mm/mremap.c               | 38 +++++++++++++++++++++++++++++++-------
->  2 files changed, 34 insertions(+), 9 deletions(-)
+- Application does IORING_REGISTER_CREDS, which returns some index
+- Add a IORING_OP_USE_CREDS opcode, which sets the creds associated
+  with dependent commands
+- Actual request is linked to the IORING_OP_USE_CREDS command, any
+  link off IORING_OP_USE_CREDS will use those credentials
+- IORING_UNREGISTER_CREDS removes the registered creds
 
-Could you also a include a patch to update the mremap man page, please?
+Just throwing that out there, definitely willing to entertain other
+methods that make sense for this. Trying to avoid needing to put this
+information in the SQE itself, hence the idea to use a chain of links
+for it.
 
-https://www.kernel.org/doc/man-pages/patches.html
+The downside is that we'll need to maintain an array of key -> creds,
+but that's probably not a big deal.
 
-Cheers,
+What do you think? Ideally I'd like to get this done for 5.6 even if we
+are a bit late, so you'll have everything you need with that release.
 
-Will
+-- 
+Jens Axboe
