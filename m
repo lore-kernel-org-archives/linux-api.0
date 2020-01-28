@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 Subject: Re: IORING_REGISTER_CREDS[_UPDATE]() and credfd_create()?
-Date: Tue, 28 Jan 2020 16:40:27 -0700
-Message-ID: <6c401e23-de7c-1fc1-4122-33d53fcf9700@kernel.dk>
+Date: Tue, 28 Jan 2020 16:51:20 -0700
+Message-ID: <35eebae7-76dd-52ee-58b2-4f9e85caee40@kernel.dk>
 References: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9@samba.org>
  <d6bc8139-abbe-8a8d-7da1-4eeafd9eebe7@kernel.dk>
  <688e187a-75dd-89d9-921c-67de228605ce@samba.org>
@@ -10,49 +10,109 @@ References: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9@samba.org>
  <0d4f43d8-a0c4-920b-5b8f-127c1c5a3fad@kernel.dk>
  <b88f0590-71c9-d2bd-9d17-027b05d30d7a@kernel.dk>
  <2d7e7fa2-e725-8beb-90b9-6476d48bdb33@gmail.com>
+ <6c401e23-de7c-1fc1-4122-33d53fcf9700@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <2d7e7fa2-e725-8beb-90b9-6476d48bdb33-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <6c401e23-de7c-1fc1-4122-33d53fcf9700-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
 Cc: io-uring <io-uring-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 1/28/20 4:36 PM, Pavel Begunkov wrote:
-> On 28/01/2020 22:42, Jens Axboe wrote:
->> I didn't like it becoming a bit too complicated, both in terms of
->> implementation and use. And the fact that we'd have to jump through
->> hoops to make this work for a full chain.
+On 1/28/20 4:40 PM, Jens Axboe wrote:
+> On 1/28/20 4:36 PM, Pavel Begunkov wrote:
+>> On 28/01/2020 22:42, Jens Axboe wrote:
+>>> I didn't like it becoming a bit too complicated, both in terms of
+>>> implementation and use. And the fact that we'd have to jump through
+>>> hoops to make this work for a full chain.
+>>>
+>>> So I punted and just added sqe->personality and IOSQE_PERSONALITY.
+>>> This makes it way easier to use. Same branch:
+>>>
+>>> https://git.kernel.dk/cgit/linux-block/log/?h=for-5.6/io_uring-vfs-creds
+>>>
+>>> I'd feel much better with this variant for 5.6.
+>>>
 >>
->> So I punted and just added sqe->personality and IOSQE_PERSONALITY.
->> This makes it way easier to use. Same branch:
+>> Checked out ("don't use static creds/mm assignments")
 >>
->> https://git.kernel.dk/cgit/linux-block/log/?h=for-5.6/io_uring-vfs-creds
->>
->> I'd feel much better with this variant for 5.6.
->>
+>> 1. do we miscount cred refs? We grab one in get_current_cred() for each async
+>> request, but if (worker->creds != work->creds) it will never be put.
 > 
-> Checked out ("don't use static creds/mm assignments")
-> 
-> 1. do we miscount cred refs? We grab one in get_current_cred() for each async
-> request, but if (worker->creds != work->creds) it will never be put.
+> Yeah I think you're right, that needs a bit of fixing up.
 
-Yeah I think you're right, that needs a bit of fixing up.
+I think this may have gotten fixed with the later addition posted today?
+I'll double check. But for the newer stuff, we put it for both cases
+when the request is freed.
 
-> 2. shouldn't worker->creds be named {old,saved,etc}_creds? It's set as
+>> 2. shouldn't worker->creds be named {old,saved,etc}_creds? It's set as
+>>
+>>     worker->creds = override_creds(work->creds);
+>>
+>> Where override_creds() returns previous creds. And if so, then the following
+>> fast check looks strange:
+>>
+>>     worker->creds != work->creds
 > 
->     worker->creds = override_creds(work->creds);
-> 
-> Where override_creds() returns previous creds. And if so, then the following
-> fast check looks strange:
-> 
->     worker->creds != work->creds
+> Don't care too much about the naming, but the logic does appear off.
+> I'll take a look at both of these tonight, unless you beat me to it.
 
-Don't care too much about the naming, but the logic does appear off.
-I'll take a look at both of these tonight, unless you beat me to it.
+Testing this now, what a braino.
+
+diff --git a/fs/io-wq.c b/fs/io-wq.c
+index ee49e8852d39..8fbbadf04cc3 100644
+--- a/fs/io-wq.c
++++ b/fs/io-wq.c
+@@ -56,7 +56,8 @@ struct io_worker {
+ 
+ 	struct rcu_head rcu;
+ 	struct mm_struct *mm;
+-	const struct cred *creds;
++	const struct cred *cur_creds;
++	const struct cred *saved_creds;
+ 	struct files_struct *restore_files;
+ };
+ 
+@@ -135,9 +136,9 @@ static bool __io_worker_unuse(struct io_wqe *wqe, struct io_worker *worker)
+ {
+ 	bool dropped_lock = false;
+ 
+-	if (worker->creds) {
+-		revert_creds(worker->creds);
+-		worker->creds = NULL;
++	if (worker->saved_creds) {
++		revert_creds(worker->saved_creds);
++		worker->cur_creds = worker->saved_creds = NULL;
+ 	}
+ 
+ 	if (current->files != worker->restore_files) {
+@@ -424,10 +425,11 @@ static void io_wq_switch_mm(struct io_worker *worker, struct io_wq_work *work)
+ static void io_wq_switch_creds(struct io_worker *worker,
+ 			       struct io_wq_work *work)
+ {
+-	if (worker->creds)
+-		revert_creds(worker->creds);
++	if (worker->saved_creds)
++		revert_creds(worker->saved_creds);
+ 
+-	worker->creds = override_creds(work->creds);
++	worker->saved_creds = override_creds(work->creds);
++	worker->cur_creds = work->creds;
+ }
+ 
+ static void io_worker_handle_work(struct io_worker *worker)
+@@ -480,7 +482,7 @@ static void io_worker_handle_work(struct io_worker *worker)
+ 		}
+ 		if (work->mm != worker->mm)
+ 			io_wq_switch_mm(worker, work);
+-		if (worker->creds != work->creds)
++		if (worker->cur_creds != work->creds)
+ 			io_wq_switch_creds(worker, work);
+ 		/*
+ 		 * OK to set IO_WQ_WORK_CANCEL even for uncancellable work,
 
 -- 
 Jens Axboe
