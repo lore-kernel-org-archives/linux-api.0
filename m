@@ -1,301 +1,219 @@
-From: Elichai Turkel <elichai.turkel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Missing size_t declaration in UAPI
-Date: Wed, 29 Jan 2020 13:41:12 +0200
-Message-ID: <CALN7hC+C7Ln5wDTW74r-eSChje3N6=79_qrr3TDCCF5WnWO2mg@mail.gmail.com>
-References: <CALN7hCJRe1uL6pd+VwgzDt=5giMVjvX+YpF28f5qbLOVCZf4GQ@mail.gmail.com>
- <04EB5627-FD42-4397-995B-FDF051CFCFB5@brauner.io> <CALN7hC+YmHGpniNKBiD03cBnTyO+cqXhrVvE7SdtgEb7GkG-LQ@mail.gmail.com>
- <87d0e19qvh.fsf@mid.deneb.enyo.de> <CALN7hC+QS=PJLvtH4k8paVae6PzLdAQJXyU64gUxXu-ULMKvng@mail.gmail.com>
- <87sgmv5s8l.fsf@mid.deneb.enyo.de>
+From: Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+Subject: Re: IORING_REGISTER_CREDS[_UPDATE]() and credfd_create()?
+Date: Wed, 29 Jan 2020 14:11:02 +0100
+Message-ID: <821243e7-b470-ad7a-c1a5-535bee58e76d@samba.org>
+References: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9@samba.org>
+ <d6bc8139-abbe-8a8d-7da1-4eeafd9eebe7@kernel.dk>
+ <688e187a-75dd-89d9-921c-67de228605ce@samba.org>
+ <b29e972e-5ca0-8b5f-46b3-36f93d865723@kernel.dk>
+ <1ac31828-e915-6180-cdb4-36685442ea75@kernel.dk>
+ <0d4f43d8-a0c4-920b-5b8f-127c1c5a3fad@kernel.dk>
+ <b88f0590-71c9-d2bd-9d17-027b05d30d7a@kernel.dk>
+ <2d7e7fa2-e725-8beb-90b9-6476d48bdb33@gmail.com>
+ <6c401e23-de7c-1fc1-4122-33d53fcf9700@kernel.dk>
+ <35eebae7-76dd-52ee-58b2-4f9e85caee40@kernel.dk>
+ <d3f9c1a4-8b28-3cfe-de88-503837a143bc@gmail.com>
+ <c9e58b5c-f66e-8406-16d5-fd6df1a27e77@kernel.dk>
+ <6e5ab6bf-6ff1-14df-1988-a80a7c6c9294@gmail.com>
+ <2019e952-df2a-6b57-3571-73c525c5ba1a@kernel.dk>
+ <0df4904f-780b-5d5f-8700-41df47a1b470@kernel.dk>
+ <5406612e-299d-9d6e-96fc-c962eb93887f@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="RNLVW4EKoBAHUQUfqL7tZ7QYYQEGm1WCn"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87sgmv5s8l.fsf-ZqZwdwZz9NfTBotR3TxKnbNAH6kLmebB@public.gmane.org>
+In-Reply-To: <5406612e-299d-9d6e-96fc-c962eb93887f-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>
+To: Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Cc: io-uring <io-uring-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi, I want to continue that discussion
-I see three options to resolve this:
-1. Add `#include <stddef.h>` in every header that uses `size_t` (patch
-provided).
-2. Add `#include <stddef.h>` to `asm-generic/posix_types.h` and make
-sure every header that uses `size_t` will include that.
-3. Replace all usages of `size_t` with `__kernel_size_t`.
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--RNLVW4EKoBAHUQUfqL7tZ7QYYQEGm1WCn
+Content-Type: multipart/mixed; boundary="viy5iQdNsiwmTYiYhyjIGXGXRbnYn1RAi";
+ protected-headers="v1"
+From: Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+To: Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Cc: io-uring <io-uring-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
+ Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Message-ID: <821243e7-b470-ad7a-c1a5-535bee58e76d-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+Subject: Re: IORING_REGISTER_CREDS[_UPDATE]() and credfd_create()?
+References: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+ <d6bc8139-abbe-8a8d-7da1-4eeafd9eebe7-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+ <688e187a-75dd-89d9-921c-67de228605ce-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+ <b29e972e-5ca0-8b5f-46b3-36f93d865723-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+ <1ac31828-e915-6180-cdb4-36685442ea75-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+ <0d4f43d8-a0c4-920b-5b8f-127c1c5a3fad-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+ <b88f0590-71c9-d2bd-9d17-027b05d30d7a-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+ <2d7e7fa2-e725-8beb-90b9-6476d48bdb33-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+ <6c401e23-de7c-1fc1-4122-33d53fcf9700-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+ <35eebae7-76dd-52ee-58b2-4f9e85caee40-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+ <d3f9c1a4-8b28-3cfe-de88-503837a143bc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+ <c9e58b5c-f66e-8406-16d5-fd6df1a27e77-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+ <6e5ab6bf-6ff1-14df-1988-a80a7c6c9294-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+ <2019e952-df2a-6b57-3571-73c525c5ba1a-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+ <0df4904f-780b-5d5f-8700-41df47a1b470-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+ <5406612e-299d-9d6e-96fc-c962eb93887f-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <5406612e-299d-9d6e-96fc-c962eb93887f-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-Included a patch for the first option but if people prefer I'll
-provide patches for the rest.
-I never contributed code to linux so feedback on your thoughts and the
-process are more than welcome :)
+--viy5iQdNsiwmTYiYhyjIGXGXRbnYn1RAi
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: quoted-printable
 
-```
-diff --git a/include/uapi/linux/agpgart.h b/include/uapi/linux/agpgart.h
-index f52510451..9630abcb8 100644
---- a/include/uapi/linux/agpgart.h
-+++ b/include/uapi/linux/agpgart.h
-@@ -52,7 +52,7 @@
+Am 29.01.20 um 11:17 schrieb Pavel Begunkov:
+> On 29/01/2020 03:54, Jens Axboe wrote:
+>> On 1/28/20 5:24 PM, Jens Axboe wrote:
+>>> On 1/28/20 5:21 PM, Pavel Begunkov wrote:
+>>>> On 29/01/2020 03:20, Jens Axboe wrote:
+>>>>> On 1/28/20 5:10 PM, Pavel Begunkov wrote:
+>>>>>>>>> Checked out ("don't use static creds/mm assignments")
+>>>>>>>>>
+>>>>>>>>> 1. do we miscount cred refs? We grab one in get_current_cred() =
+for each async
+>>>>>>>>> request, but if (worker->creds !=3D work->creds) it will never =
+be put.
+>>>>>>>>
+>>>>>>>> Yeah I think you're right, that needs a bit of fixing up.
+>>>>>>>
+>>>>>>
+>>>>>> Hmm, it seems it leaks it unconditionally, as it grabs in a ref in=
 
- #ifndef __KERNEL__
- #include <linux/types.h>
--#include <stdlib.h>
-+#include <stddef.h>
+>>>>>> override_creds().
+>>>>>>
+>>>>>
+>>>>> We grab one there, and an extra one. Then we drop one of them inlin=
+e,
+>>>>> and the other in __io_req_aux_free().
+>>>>>
+>>>> Yeah, with the last patch it should make it even
+>>>
+>>> OK good we agree on that. I should probably pull back that bit to the=
 
- struct agp_version {
-  __u16 major;
-diff --git a/include/uapi/linux/arcfb.h b/include/uapi/linux/arcfb.h
-index 7a9008b36..f7018f92b 100644
---- a/include/uapi/linux/arcfb.h
-+++ b/include/uapi/linux/arcfb.h
-@@ -2,6 +2,10 @@
- #ifndef __LINUX_ARCFB_H__
- #define __LINUX_ARCFB_H__
-
-+#ifndef __KERNEL__
-+#include <stddef.h>
-+#endif
-+
- #define FBIO_WAITEVENT _IO('F', 0x88)
- #define FBIO_GETCONTROL2 _IOR('F', 0x89, size_t)
-
-diff --git a/include/uapi/linux/coda.h b/include/uapi/linux/coda.h
-index aa34c2dca..1b909ef35 100644
---- a/include/uapi/linux/coda.h
-+++ b/include/uapi/linux/coda.h
-@@ -97,6 +97,7 @@ typedef unsigned long long u_quad_t;
- #include <linux/time.h>
- #define cdev_t u_quad_t
- #ifndef __KERNEL__
-+#include <stddef.h>
- #if !defined(_UQUAD_T_) && (!defined(__GLIBC__) || __GLIBC__ < 2)
- #define _UQUAD_T_ 1
- typedef unsigned long long u_quad_t;
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index 379a612f8..edd20ca84 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -15,6 +15,7 @@
- #include <linux/types.h>
- #ifndef __KERNEL__
- #include <linux/fscrypt.h>
-+#include <stddef.h>
- #endif
-
- /* Use of MS_* flags within the kernel is restricted to core mount(2) code. */
-diff --git a/include/uapi/linux/fsmap.h b/include/uapi/linux/fsmap.h
-index 91fd519a3..521c2f650 100644
---- a/include/uapi/linux/fsmap.h
-+++ b/include/uapi/linux/fsmap.h
-@@ -10,6 +10,9 @@
- #define _LINUX_FSMAP_H
-
- #include <linux/types.h>
-+#ifndef __KERNEL__
-+#include <stddef.h>
-+#endif
-
- /*
-  * Structure for FS_IOC_GETFSMAP.
-diff --git a/include/uapi/linux/i8k.h b/include/uapi/linux/i8k.h
-index 268e6268f..91c478cca 100644
---- a/include/uapi/linux/i8k.h
-+++ b/include/uapi/linux/i8k.h
-@@ -18,6 +18,10 @@
- #ifndef _LINUX_I8K_H
- #define _LINUX_I8K_H
-
-+#ifndef __KERNEL__
-+#include <stddef.h>
-+#endif
-+
- #define I8K_PROC "/proc/i8k"
- #define I8K_PROC_FMT "1.0"
-
-diff --git a/include/uapi/linux/if_pppox.h b/include/uapi/linux/if_pppox.h
-index e7a693c28..1b3ebaab1 100644
---- a/include/uapi/linux/if_pppox.h
-+++ b/include/uapi/linux/if_pppox.h
-@@ -28,6 +28,10 @@
- #include <linux/in.h>
- #include <linux/in6.h>
-
-+#ifndef __KERNEL__
-+#include <stddef.h>
-+#endif
-+
- /* For user-space programs to pick up these definitions
-  * which they wouldn't get otherwise without defining __KERNEL__
-  */
-diff --git a/include/uapi/linux/kexec.h b/include/uapi/linux/kexec.h
-index 05669c87a..5873e22f8 100644
---- a/include/uapi/linux/kexec.h
-+++ b/include/uapi/linux/kexec.h
-@@ -8,6 +8,9 @@
-  */
-
- #include <linux/types.h>
-+#ifndef __KERNEL__
-+#include <stddef.h>
-+#endif
-
- /* kexec flags for different usage scenarios */
- #define KEXEC_ON_CRASH 0x00000001
-@@ -47,6 +50,7 @@
- #define KEXEC_SEGMENT_MAX 16
-
- #ifndef __KERNEL__
-+#include <stddef.h>
- /*
-  * This structure is used to hold the arguments that are used when
-  * loading  kernel binaries.
-diff --git a/include/uapi/linux/matroxfb.h b/include/uapi/linux/matroxfb.h
-index 23e025b7e..50fd2453a 100644
---- a/include/uapi/linux/matroxfb.h
-+++ b/include/uapi/linux/matroxfb.h
-@@ -7,6 +7,10 @@
- #include <linux/videodev2.h>
- #include <linux/fb.h>
-
-+#ifndef __KERNEL__
-+#include <stddef.h>
-+#endif
-+
- struct matroxioc_output_mode {
-  __u32 output; /* which output */
- #define MATROXFB_OUTPUT_PRIMARY 0x0000
-diff --git a/include/uapi/linux/nfc.h b/include/uapi/linux/nfc.h
-index f6e3c8c9c..491607e9b 100644
---- a/include/uapi/linux/nfc.h
-+++ b/include/uapi/linux/nfc.h
-@@ -23,6 +23,9 @@
-
- #include <linux/types.h>
- #include <linux/socket.h>
-+#ifndef __KERNEL__
-+#include <stddef.h>
-+#endif
-
- #define NFC_GENL_NAME "nfc"
- #define NFC_GENL_VERSION 1
-diff --git a/include/uapi/linux/omapfb.h b/include/uapi/linux/omapfb.h
-index 44f43af4c..21a4803bf 100644
---- a/include/uapi/linux/omapfb.h
-+++ b/include/uapi/linux/omapfb.h
-@@ -28,6 +28,9 @@
- #include <linux/fb.h>
- #include <linux/ioctl.h>
- #include <linux/types.h>
-+#ifndef __KERNEL__
-+#include <stddef.h>
-+#endif
-
- /* IOCTL commands. */
-
-diff --git a/include/uapi/linux/pmu.h b/include/uapi/linux/pmu.h
-index f2fc1bd80..1664bdd3c 100644
---- a/include/uapi/linux/pmu.h
-+++ b/include/uapi/linux/pmu.h
-@@ -122,6 +122,9 @@ enum {
-  * Ioctl commands for the /dev/pmu device
-  */
- #include <linux/ioctl.h>
-+#ifndef __KERNEL__
-+#include <stddef.h>
-+#endif
-
- /* no param */
- #define PMU_IOC_SLEEP _IO('B', 0)
-diff --git a/include/uapi/linux/radeonfb.h b/include/uapi/linux/radeonfb.h
-index 86eafb805..428a99482 100644
---- a/include/uapi/linux/radeonfb.h
-+++ b/include/uapi/linux/radeonfb.h
-@@ -4,6 +4,9 @@
-
- #include <asm/ioctl.h>
- #include <linux/types.h>
-+#ifndef __KERNEL__
-+#include <stddef.h>
-+#endif
-
- #define ATY_RADEON_LCD_ON 0x00000001
- #define ATY_RADEON_CRT_ON 0x00000002
-diff --git a/include/uapi/linux/reiserfs_xattr.h
-b/include/uapi/linux/reiserfs_xattr.h
-index 28f10842f..f121bc88a 100644
---- a/include/uapi/linux/reiserfs_xattr.h
-+++ b/include/uapi/linux/reiserfs_xattr.h
-@@ -7,6 +7,9 @@
- #define _LINUX_REISERFS_XATTR_H
-
- #include <linux/types.h>
-+#ifndef __KERNEL__
-+#include <stddef.h>
-+#endif
-
- /* Magic value in header */
- #define REISERFS_XATTR_MAGIC 0x52465841 /* "RFXA" */
-diff --git a/include/uapi/linux/seg6_iptunnel.h
-b/include/uapi/linux/seg6_iptunnel.h
-index 09fb608a3..b4debe869 100644
---- a/include/uapi/linux/seg6_iptunnel.h
-+++ b/include/uapi/linux/seg6_iptunnel.h
-@@ -16,6 +16,9 @@
- #define _UAPI_LINUX_SEG6_IPTUNNEL_H
-
- #include <linux/seg6.h> /* For struct ipv6_sr_hdr. */
-+#ifndef __KERNEL__
-+#include <stddef.h>
-+#endif
-
- enum {
-  SEG6_IPTUNNEL_UNSPEC,
-diff --git a/include/uapi/linux/sysctl.h b/include/uapi/linux/sysctl.h
-index 87aa2a6d9..f56befb69 100644
---- a/include/uapi/linux/sysctl.h
-+++ b/include/uapi/linux/sysctl.h
-@@ -26,6 +26,9 @@
- #include <linux/kernel.h>
- #include <linux/types.h>
- #include <linux/compiler.h>
-+#ifndef __KERNEL__
-+#include <stddef.h>
-+#endif
-
- #define CTL_MAXNAME 10 /* how many path components do we allow in a
-    call to sysctl?   In other words, what is
-diff --git a/include/uapi/xen/privcmd.h b/include/uapi/xen/privcmd.h
-index d20295560..51cf59019 100644
---- a/include/uapi/xen/privcmd.h
-+++ b/include/uapi/xen/privcmd.h
-@@ -38,6 +38,10 @@
- #include <linux/compiler.h>
- #include <xen/interface/xen.h>
-
-+#ifndef __KERNEL__
-+#include <stddef.h>
-+#endif
-+
- struct privcmd_hypercall {
-  __u64 op;
-  __u64 arg[5];
-```
+>>> original patch to avoid having a hole in there...
+>>
+>> Done
+>>
+>=20
+> ("io_uring/io-wq: don't use static creds/mm assignments") and ("io_urin=
+g:
+> support using a registered personality for commands") looks good now.
+>=20
+> Reviewed-by: Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
 
-On Sun, Nov 10, 2019 at 11:36 PM Florian Weimer <fw-d32yF4oPJVt0XxTmqZlbVQ@public.gmane.org> wrote:
->
-> * Elichai Turkel:
->
-> >>>> <stddef.h> is expected to be provided by the compiler. It's probably
-> >>>> easier to fix your build environment.
-> >
-> > `<stddef.h>` is obviously *provided* by the compiler. but it's still
-> > need to be *included*.
-> > so maybe I'm going too far and we just need to include `<stddef.h>` in
-> > `linux/types.h`.
->
-> Yes, that should work.  <linux/types.h> obviously must be compatible
-> with <stddef.h>.
+I'm very happy with the design, thanks!
+That exactly what I had in mind:-)
+
+It would also work with IORING_SETUP_SQPOLL, correct?
+
+However I think there're a few things to improve/simplify.
+
+> https://git.kernel.dk/cgit/linux-block/commit/?h=3Dfor-5.6/io_uring-vfs=
+&id=3Da26d26412e1e1783473f9dc8f030c3af3d54b1a6
+
+In fs/io_uring.c mmgrab() and get_current_cred() are used together in
+two places, why is put_cred() called in __io_req_aux_free while
+mmdrop() is called from io_put_work(). I think both should be called
+in io_put_work(), that makes the code much easier to understand.
+
+My guess is that you choose __io_req_aux_free() for put_cred() because
+of the following patches, but I'll explain on the other commit
+why it's not needed.
+
+> https://git.kernel.dk/cgit/linux-block/commit/?h=3Dfor-5.6/io_uring-vfs=
+&id=3Dd9db233adf034bd7855ba06190525e10a05868be
+
+A minor one would be starting with 1 instead of 0 and using
+idr_alloc_cyclic() in order to avoid immediate reuse of ids.
+That way we could include the id in the tracing message and
+0 would mean the current creds were used.
+
+> +static int io_remove_personalities(int id, void *p, void *data)
+> +{
+> +	struct io_ring_ctx *ctx =3D data;
+> +
+> +	idr_remove(&ctx->personality_idr, id);
+
+Here we need something like:
+put_creds((const struct cred *)p);
+
+> +	return 0;
+> +}
 
 
+The io_uring_register() calles would look like this, correct?
 
--- 
-PGP: 5607C93B5F86650C
+ id =3D io_uring_register(ring_fd, IORING_REGISTER_PERSONALITY, NULL, 0);=
+
+ io_uring_register(ring_fd, IORING_UNREGISTER_PERSONALITY, NULL, id);
+
+> https://git.kernel.dk/cgit/linux-block/commit/?h=3Dfor-5.6/io_uring-vfs=
+&id=3Deec9e69e0ad9ad364e1b6a5dfc52ad576afee235
+> +
+> +	if (sqe_flags & IOSQE_PERSONALITY) {
+> +		int id =3D READ_ONCE(sqe->personality);
+> +
+> +		req->work.creds =3D idr_find(&ctx->personality_idr, id);
+> +		if (unlikely(!req->work.creds)) {
+> +			ret =3D -EINVAL;
+> +			goto err_req;
+> +		}
+> +		get_cred(req->work.creds);> +		old_creds =3D override_creds(req->wor=
+k.creds);
+> +	}
+> +
+
+Here we could use a helper variable
+const struct cred *personality_creds;
+and leave req->work.creds as NULL.
+It means we can avoid the explicit get_cred() call
+and can skip the following hunk too:
+
+> @@ -3977,7 +3977,8 @@ static int io_req_defer_prep(struct io_kiocb *req=
+,
+>  		mmgrab(current->mm);
+>  		req->work.mm =3D current->mm;
+>  	}
+> -	req->work.creds =3D get_current_cred();
+> +	if (!req->work.creds)
+> +		req->work.creds =3D get_current_cred();
+> =20
+>  	switch (req->opcode) {
+>  	case IORING_OP_NOP:
+
+The override_creds(personality_creds) has changed current->cred
+and get_current_cred() will just pick it up as in the default case.
+
+This would make the patch much simpler and allows put_cred() to be
+in io_put_work() instead of __io_req_aux_free() as explained above.
+
+metze
+
+
+--viy5iQdNsiwmTYiYhyjIGXGXRbnYn1RAi--
+
+--RNLVW4EKoBAHUQUfqL7tZ7QYYQEGm1WCn
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEEfFbGo3YXpfgryIw9DbX1YShpvVYFAl4xhGYACgkQDbX1YShp
+vVblORAAk3+0dsJ+7dJDj7s3cPMGwHImQCaRkJPDkVDd1pYf8/+IA1VNfqapN8jw
+wsyrPJp7nEy6+W/qtMciv0afEfCNlC6VdAiqWQOriI5qBMIrn8XPlq0+FGpjvUxd
+6NrIbxPGsgq7NYiMzVhKyv1lC69OZtZ4rPNaI/QAwZMeyd699sy5al/yGzCaMJEv
+RWnrG6OSNvf/Snn2xrz7F3Ri/NJLoKrlA6DyKwWMbD2hygUqrX/wes3RV0cthvvE
+h3vYZbeyuhoNWoCx+nK7gizHuNzlT1eW9yJiEtZE6uToKUEVsey0Bf2qHu21MFA3
+6Eri0m/EeD7GtNugb6hk4AQL7AtXWRbZotweefttYGPm+tQDtMWmaZA/er0Nk1La
+AbImJaWRCaoqXW77c1bzHNsWl9w6VZZrIAqv/cbumRg35Glqh5QbbqP4+nmeEupy
+vUvMkd2lctYWEPnUK2BVy4T0tzDhPxjANQ9dG94HFpUI6k9LSkXfl3TaOr/3ntAc
+M+/V02YF9IVX31IXrQX4U89BpDnsopfsa8hImBhdl+Y7Bmu7gsjlmOa5FOnIQx0N
+O0X3bxrvsU4UEWxPHtBsvqw7MNEnmMo5FjhDx7Lq8j//wSc58qUvqMQINghsWtHr
+l7YX0Q+Eig2KV9R/AXd8rzSwmeittDup4DiHm+geTV8RAEuB7xA=
+=WGgZ
+-----END PGP SIGNATURE-----
+
+--RNLVW4EKoBAHUQUfqL7tZ7QYYQEGm1WCn--
