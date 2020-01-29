@@ -1,48 +1,87 @@
-From: Carlos O'Donell <codonell-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: Including both linux/time.h and linux/input.h causes failure
-Date: Wed, 29 Jan 2020 12:16:26 -0500
-Message-ID: <88ab5e38-254a-430d-67cf-1840b0e51c35@redhat.com>
-References: <CALN7hC+f+D8xsaJBt+MCXDfk51oHCoQeUVmFydNdkW+_DeqTiw@mail.gmail.com>
+From: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Subject: Re: IORING_REGISTER_CREDS[_UPDATE]() and credfd_create()?
+Date: Wed, 29 Jan 2020 10:34:10 -0700
+Message-ID: <9aef3b3b-7e71-f7f1-b366-2517b4d52719@kernel.dk>
+References: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9@samba.org>
+ <d6bc8139-abbe-8a8d-7da1-4eeafd9eebe7@kernel.dk>
+ <688e187a-75dd-89d9-921c-67de228605ce@samba.org>
+ <b29e972e-5ca0-8b5f-46b3-36f93d865723@kernel.dk>
+ <1ac31828-e915-6180-cdb4-36685442ea75@kernel.dk>
+ <0d4f43d8-a0c4-920b-5b8f-127c1c5a3fad@kernel.dk>
+ <b88f0590-71c9-d2bd-9d17-027b05d30d7a@kernel.dk>
+ <2d7e7fa2-e725-8beb-90b9-6476d48bdb33@gmail.com>
+ <6c401e23-de7c-1fc1-4122-33d53fcf9700@kernel.dk>
+ <35eebae7-76dd-52ee-58b2-4f9e85caee40@kernel.dk>
+ <d3f9c1a4-8b28-3cfe-de88-503837a143bc@gmail.com>
+ <c9e58b5c-f66e-8406-16d5-fd6df1a27e77@kernel.dk>
+ <6e5ab6bf-6ff1-14df-1988-a80a7c6c9294@gmail.com>
+ <2019e952-df2a-6b57-3571-73c525c5ba1a@kernel.dk>
+ <0df4904f-780b-5d5f-8700-41df47a1b470@kernel.dk>
+ <5406612e-299d-9d6e-96fc-c962eb93887f@gmail.com>
+ <821243e7-b470-ad7a-c1a5-535bee58e76d@samba.org>
+ <9a419bc5-4445-318d-87aa-1474b49266dd@gmail.com>
+ <40d52623-5f9c-d804-cdeb-b7da6b13cb4f@samba.org>
+ <3e1289de-8d8e-49cf-cc9f-fb7bc67f35d5@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALN7hC+f+D8xsaJBt+MCXDfk51oHCoQeUVmFydNdkW+_DeqTiw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <3e1289de-8d8e-49cf-cc9f-fb7bc67f35d5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Elichai Turkel <elichai.turkel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+Cc: io-uring <io-uring-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 1/29/20 10:14 AM, Elichai Turkel wrote:
-> Hi,
-> The following header: <wrapper.h>:
-> ```
-> #include <linux/input.h>
-> #include <linux/time.h>
-> ```
-> Will cause the compiler to fail because of redefinition of a lot of
-> time related structs, that are declared once in `linux/time.h` and
-> then again via `bits/types/struct_timeval.h` which is included through
-> `linux/input.h > sys/time.h -> bits/types/struct_timeval.h`
- 
-This is another header-coordination issue between the kernel and libc.
+On 1/29/20 7:23 AM, Pavel Begunkov wrote:
+>>>> The override_creds(personality_creds) has changed current->cred
+>>>> and get_current_cred() will just pick it up as in the default case.
+>>>>
+>>>> This would make the patch much simpler and allows put_cred() to be
+>>>> in io_put_work() instead of __io_req_aux_free() as explained above.
+>>>>
+>>>
+>>> It's one extra get_current_cred(). I'd prefer to find another way to
+>>> clean this up.
+>>
+>> As far as I can see it avoids a get_cred() in the IOSQE_PERSONALITY case
+>> and the if (!req->work.creds) for both cases.
+> 
+> Great, that you turned attention to that! override_creds() is already
+> grabbing a ref, so it shouldn't call get_cred() there.
+> So, that's a bug.
 
-In this case it's linux/time.h vs. sys/time.h.
+It's not though - one is dropped in that function, the other when the
+request is freed. So we do need two references to it. With the proposed
+change to keep the override_creds() variable local for that spot we
+don't, and the get_cred() can then go.
 
-"Synchronizing Headers"
-https://sourceware.org/glibc/wiki/Synchronizing_Headers
-- Just added your case.
+> It could be I'm wrong with the statement above, need to recheck all this
+> code to be sure.
 
-It's not immediate clear to me if the UAPI header is clean enough to
-use directly in glibc or not, and that's often the simplest way to fix
-things.
+I think you are :-)
 
-When you can't just use the kernel header definitions then you have
-to work through the conflict and decide if you want to allow both headers
-to be potentially included and in which orders to support it.
+> BTW, io_req_defer_prep() may be called twice for a req, so you will
+> reassign it without putting a ref. It's safer to leave NULL checks. At
+> least, until I've done reworking and fixing preparation paths.
 
-Why do you need both headers included?
+Agree, the NULL checks are safer and we should keep them.
+
+Going through the rest of this thread, I'm making the following changes:
+
+- ID must be > 0. I like that change, as we don't need an sqe flag to
+  select personality then, and it also makes it obvious that id == 0 is
+  just using current creds.
+
+- Fixed the missing put_cred() in the teardown
+
+- Use a local variable in io_submit_sqe() instead of assigning the
+  creds to req->work.creds there
+
+- Use cyclic idr allocation
+
+I'm going to fold in as appropriate. If there are fixes needed on top of
+that, let's do them separately.
 
 -- 
-Cheers,
-Carlos.
+Jens Axboe
