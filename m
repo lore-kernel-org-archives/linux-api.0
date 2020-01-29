@@ -1,62 +1,105 @@
-From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH] move_pages.2: Returning positive value is a new error
- case
-Date: Wed, 29 Jan 2020 20:11:05 +0100
-Message-ID: <20200129191105.GQ24244@dhcp22.suse.cz>
-References: <1580322632-93332-1-git-send-email-yang.shi@linux.alibaba.com>
- <20200129185842.GP24244@dhcp22.suse.cz>
- <0db6a002-d067-8acd-65ee-8c87a32ff769@linux.alibaba.com>
+From: Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+Subject: Re: IORING_REGISTER_CREDS[_UPDATE]() and credfd_create()?
+Date: Wed, 29 Jan 2020 21:09:32 +0100
+Message-ID: <2d20bbcf-c04a-a02d-2850-cc7cc5a439f7@samba.org>
+References: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9@samba.org>
+ <b29e972e-5ca0-8b5f-46b3-36f93d865723@kernel.dk>
+ <1ac31828-e915-6180-cdb4-36685442ea75@kernel.dk>
+ <0d4f43d8-a0c4-920b-5b8f-127c1c5a3fad@kernel.dk>
+ <b88f0590-71c9-d2bd-9d17-027b05d30d7a@kernel.dk>
+ <2d7e7fa2-e725-8beb-90b9-6476d48bdb33@gmail.com>
+ <6c401e23-de7c-1fc1-4122-33d53fcf9700@kernel.dk>
+ <35eebae7-76dd-52ee-58b2-4f9e85caee40@kernel.dk>
+ <d3f9c1a4-8b28-3cfe-de88-503837a143bc@gmail.com>
+ <c9e58b5c-f66e-8406-16d5-fd6df1a27e77@kernel.dk>
+ <6e5ab6bf-6ff1-14df-1988-a80a7c6c9294@gmail.com>
+ <2019e952-df2a-6b57-3571-73c525c5ba1a@kernel.dk>
+ <0df4904f-780b-5d5f-8700-41df47a1b470@kernel.dk>
+ <5406612e-299d-9d6e-96fc-c962eb93887f@gmail.com>
+ <821243e7-b470-ad7a-c1a5-535bee58e76d@samba.org>
+ <9a419bc5-4445-318d-87aa-1474b49266dd@gmail.com>
+ <40d52623-5f9c-d804-cdeb-b7da6b13cb4f@samba.org>
+ <3e1289de-8d8e-49cf-cc9f-fb7bc67f35d5@gmail.com>
+ <9aef3b3b-7e71-f7f1-b366-2517b4d52719@kernel.dk>
+ <b3382961-8288-ec09-9019-5248f87dd86c@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <0db6a002-d067-8acd-65ee-8c87a32ff769-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
+In-Reply-To: <b3382961-8288-ec09-9019-5248f87dd86c-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Yang Shi <yang.shi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: io-uring <io-uring-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 29-01-20 11:05:11, Yang Shi wrote:
+Am 29.01.20 um 18:42 schrieb Jens Axboe:
+> On 1/29/20 10:34 AM, Jens Axboe wrote:
+>> On 1/29/20 7:23 AM, Pavel Begunkov wrote:
+>>>>>> The override_creds(personality_creds) has changed current->cred
+>>>>>> and get_current_cred() will just pick it up as in the default case.
+>>>>>>
+>>>>>> This would make the patch much simpler and allows put_cred() to be
+>>>>>> in io_put_work() instead of __io_req_aux_free() as explained above.
+>>>>>>
+>>>>>
+>>>>> It's one extra get_current_cred(). I'd prefer to find another way to
+>>>>> clean this up.
+>>>>
+>>>> As far as I can see it avoids a get_cred() in the IOSQE_PERSONALITY case
+>>>> and the if (!req->work.creds) for both cases.
+>>>
+>>> Great, that you turned attention to that! override_creds() is already
+>>> grabbing a ref, so it shouldn't call get_cred() there.
+>>> So, that's a bug.
+>>
+>> It's not though - one is dropped in that function, the other when the
+>> request is freed. So we do need two references to it. With the proposed
+>> change to keep the override_creds() variable local for that spot we
+>> don't, and the get_cred() can then go.
+>>
+>>> It could be I'm wrong with the statement above, need to recheck all this
+>>> code to be sure.
+>>
+>> I think you are :-)
+>>
+>>> BTW, io_req_defer_prep() may be called twice for a req, so you will
+>>> reassign it without putting a ref. It's safer to leave NULL checks. At
+>>> least, until I've done reworking and fixing preparation paths.
+>>
+>> Agree, the NULL checks are safer and we should keep them.
+>>
+>> Going through the rest of this thread, I'm making the following changes:
+>>
+>> - ID must be > 0. I like that change, as we don't need an sqe flag to
+>>   select personality then, and it also makes it obvious that id == 0 is
+>>   just using current creds.
+>>
+>> - Fixed the missing put_cred() in the teardown
+>>
+>> - Use a local variable in io_submit_sqe() instead of assigning the
+>>   creds to req->work.creds there
+>>
+>> - Use cyclic idr allocation
+>>
+>> I'm going to fold in as appropriate. If there are fixes needed on top of
+>> that, let's do them separately.
 > 
-> 
-> On 1/29/20 10:58 AM, Michal Hocko wrote:
-> > On Thu 30-01-20 02:30:32, Yang Shi wrote:
-> > > Since commit a49bd4d71637 ("mm, numa: rework do_pages_move"),
-> > > the semantic of move_pages() has changed to return the number of
-> > > non-migrated pages if they were result of a non-fatal reasons (usually a
-> > > busy page).  This was an unintentional change that hasn't been noticed
-> > > except for LTP tests which checked for the documented behavior.
-> > > 
-> > > There are two ways to go around this change.  We can even get back to the
-> > > original behavior and return -EAGAIN whenever migrate_pages is not able
-> > > to migrate pages due to non-fatal reasons.  Another option would be to
-> > > simply continue with the changed semantic and extend move_pages
-> > > documentation to clarify that -errno is returned on an invalid input or
-> > > when migration simply cannot succeed (e.g. -ENOMEM, -EBUSY) or the
-> > > number of pages that couldn't have been migrated due to ephemeral
-> > > reasons (e.g. page is pinned or locked for other reasons).
-> > > 
-> > > We decided to keep the second option in kernel because this behavior is in
-> > > place for some time without anybody complaining and possibly new users
-> > > depending on it.  Also it allows to have a slightly easier error handling
-> > > as the caller knows that it is worth to retry when err > 0.
-> > > 
-> > > Update man pages to reflect the new semantic.
-> > Thanks a lot! Looks good to me. I would just add a note that it is
-> > generally recommended to pre-initialize status array by -1 to have a
-> > reliable way to check which pages have been migrated. The man page says
-> > "The array contains valid values only if move_pages() did not return an
-> > error."
-> > 
-> > I would just add. "Pre initialization of the array to -1 or similar
-> > value which cannot represent a real numa node could help to identify
-> > pages that have been migrated".
-> 
-> Sure. Adding this note right after the explanation of positive value error
-> seems fine?
+> In particular, would love a patch that only assigns req->work.creds if
+> we do go async, so we can leave the put_cred() in io_put_work()
+> instead of needing it in __io_req_aux_free().
 
-I would just follow up on the existing note about valid values.
+I made some improvements here:
 
--- 
-Michal Hocko
-SUSE Labs
+https://git.samba.org/?p=metze/linux/wip.git;a=shortlog;h=refs/heads/for-5.6/io_uring-vfs
+
+Feel free to squash
+https://git.samba.org/?p=metze/linux/wip.git;a=commitdiff;h=ce8812c9b935467bb08ed4d528dd92b9f67e221c
+into
+https://git.samba.org/?p=metze/linux/wip.git;a=commitdiff;h=22021e95e73d4658a6c834a3276886e127ab8425
+and add my review to it.
+
+If you're confident that it's safe you can
+call io_req_work_drop_env() also in io_put_work(),
+
+metze
