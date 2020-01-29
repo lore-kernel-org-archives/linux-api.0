@@ -1,7 +1,7 @@
-From: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+From: Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: IORING_REGISTER_CREDS[_UPDATE]() and credfd_create()?
-Date: Wed, 29 Jan 2020 10:42:14 -0700
-Message-ID: <b3382961-8288-ec09-9019-5248f87dd86c@kernel.dk>
+Date: Wed, 29 Jan 2020 20:46:16 +0300
+Message-ID: <d27dce12-66b9-9389-871e-714299270809@gmail.com>
 References: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9@samba.org>
  <688e187a-75dd-89d9-921c-67de228605ce@samba.org>
  <b29e972e-5ca0-8b5f-46b3-36f93d865723@kernel.dk>
@@ -29,11 +29,11 @@ Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <9aef3b3b-7e71-f7f1-b366-2517b4d52719-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
 Cc: io-uring <io-uring-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 1/29/20 10:34 AM, Jens Axboe wrote:
+On 1/29/2020 8:34 PM, Jens Axboe wrote:
 > On 1/29/20 7:23 AM, Pavel Begunkov wrote:
 >>>>> The override_creds(personality_creds) has changed current->cred
 >>>>> and get_current_cred() will just pick it up as in the default case.
@@ -56,11 +56,22 @@ On 1/29/20 10:34 AM, Jens Axboe wrote:
 > request is freed. So we do need two references to it. With the proposed
 > change to keep the override_creds() variable local for that spot we
 > don't, and the get_cred() can then go.
+
+You're right here. It seems, it was too much looking at the same code :)
+
 > 
 >> It could be I'm wrong with the statement above, need to recheck all this
 >> code to be sure.
 > 
 > I think you are :-)
+
+Considering above, there shouldn't be much difference indeed.
+One extra rcu_dereference() in get_current_creds() instead of
+get_cred(), but that's nothing.
+
+Later we can hide one get by using submission state from the long
+patchset, I sent a while ago.
+
 > 
 >> BTW, io_req_defer_prep() may be called twice for a req, so you will
 >> reassign it without putting a ref. It's safer to leave NULL checks. At
@@ -83,10 +94,7 @@ On 1/29/20 10:34 AM, Jens Axboe wrote:
 > 
 > I'm going to fold in as appropriate. If there are fixes needed on top of
 > that, let's do them separately.
-
-In particular, would love a patch that only assigns req->work.creds if
-we do go async, so we can leave the put_cred() in io_put_work()
-instead of needing it in __io_req_aux_free().
+> 
 
 -- 
-Jens Axboe
+Pavel Begunkov
