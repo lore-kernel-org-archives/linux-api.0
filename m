@@ -1,7 +1,7 @@
 From: Omar Sandoval <osandov-nWWhXC5lh1RBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC PATCH xfstests] generic: add smoke test for AT_LINK_REPLACE
-Date: Wed, 29 Jan 2020 00:58:27 -0800
-Message-ID: <f23621bea2e8d5f919389131b84fa0226b90f502.1580253372.git.osandov__7338.8369449944$1580288328$gmane$org@fb.com>
+Subject: [RFC PATCH man-pages] link.2: Document new AT_LINK_REPLACE flag
+Date: Wed, 29 Jan 2020 00:58:28 -0800
+Message-ID: <8480e876e2810afb0485a080ce1cef182f86967f.1580253342.git.osandov__40473.3399789379$1580288328$gmane$org@fb.com>
 References: <cover.1580251857.git.osandov@fb.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,158 +9,242 @@ Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <cover.1580251857.git.osandov-b10kYP2dOMg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: kernel-team-b10kYP2dOMg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Xi Wang <xi-GmWTxIRN22iJaUV4rX00uodd74u8MsAO@public.gmane.org>, fstests-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: kernel-team-b10kYP2dOMg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Xi Wang <xi-GmWTxIRN22iJaUV4rX00uodd74u8MsAO@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov-b10kYP2dOMg@public.gmane.org>
 
-Cc: fstests-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Signed-off-by: Omar Sandoval <osandov-b10kYP2dOMg@public.gmane.org>
 ---
- common/rc             |  2 +-
- tests/generic/593     | 97 +++++++++++++++++++++++++++++++++++++++++++
- tests/generic/593.out |  6 +++
- tests/generic/group   |  1 +
- 4 files changed, 105 insertions(+), 1 deletion(-)
- create mode 100755 tests/generic/593
- create mode 100644 tests/generic/593.out
+ man2/link.2 | 191 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 191 insertions(+)
 
-diff --git a/common/rc b/common/rc
-index eeac1355..257f65a1 100644
---- a/common/rc
-+++ b/common/rc
-@@ -2172,7 +2172,7 @@ _require_xfs_io_command()
- 		;;
- 	"flink")
- 		local testlink=$TEST_DIR/$$.link.xfs_io
--		testio=`$XFS_IO_PROG -F -f -c "flink $testlink" $testfile 2>&1`
-+		testio=`$XFS_IO_PROG -F -f -c "flink $param $testlink" $testfile 2>&1`
- 		rm -f $testlink > /dev/null 2>&1
- 		;;
- 	"-T")
-diff --git a/tests/generic/593 b/tests/generic/593
-new file mode 100755
-index 00000000..8a9fee02
---- /dev/null
-+++ b/tests/generic/593
-@@ -0,0 +1,97 @@
-+#! /bin/bash
-+# SPDX-License-Identifier: GPL-2.0
-+# Copyright (c) 2020 Facebook.  All Rights Reserved.
-+#
-+# FS QA Test 593
-+#
-+# Smoke test linkat() with AT_LINK_REPLACE.
-+#
-+seq=`basename $0`
-+seqres=$RESULT_DIR/$seq
-+echo "QA output created by $seq"
+diff --git a/man2/link.2 b/man2/link.2
+index 649ba00c7..0097e3071 100644
+--- a/man2/link.2
++++ b/man2/link.2
+@@ -174,6 +174,60 @@ like this:
+ linkat(AT_FDCWD, "/proc/self/fd/<fd>", newdirfd,
+        newname, AT_SYMLINK_FOLLOW);
+ .EE
++.TP
++.BR AT_LINK_REPLACE " (since Linux 5.7)"
++If
++.I newpath
++exists, replace it atomically.
++There is no point at which another process attempting to access
++.I newpath
++will find it missing.
++If
++.I newpath
++exists but the operation fails,
++the original entry specified by
++.I newpath
++will remain in place.
++This does not guarantee data integrity;
++see EXAMPLE below for how to use this for crash-safe file replacement with
++.BR O_TMPFILE .
++.IP
++If
++.I newpath
++is replaced,
++any other hard links referring to the original file are unaffected.
++Open file descriptors for
++.I newpath
++are also unaffected.
++.IP
++.I newpath
++must not be a directory.
++.IP
++If the entry specified by
++.I newpath
++refers to the file specified by
++.I oldpath,
++.BR linkat ()
++does nothing and returns a success status.
++Note that this comparison does not follow mounts on
++.IR newpath .
++.IP
++Otherwise,
++.I newpath
++must not be a mount point in the local namespace.
++If it is a mount point in another namespace and the operation succeeds,
++all mounts are detached from
++.I newpath
++in all namespaces, as is the case for
++.BR rename (2),
++.BR rmdir (2),
++and
++.BR unlink (2).
++.IP
++If
++.I newpath
++refers to a symbolic link,
++the link will be replaced.
+ .in
+ .PP
+ Before kernel 2.6.18, the
+@@ -293,10 +347,34 @@ or
+ .I newdirfd
+ is not a valid file descriptor.
+ .TP
++.B EBUSY
++.B AT_LINK_REPLACE
++was specified in
++.IR flags ,
++.I newpath
++does not refer to the file specified by
++.IR oldpath ,
++and
++.I newpath
++is in use by the system
++(for example, it is a mount point in the local namespace).
++.TP
+ .B EINVAL
+ An invalid flag value was specified in
+ .IR flags .
+ .TP
++.B EINVAL
++The filesystem does not support one of the flags in
++.IR flags .
++.TP
++.B EISDIR
++.B AT_LINK_REPLACE
++was specified in
++.I flags
++and
++.I newpath
++refers to an existing directory.
++.TP
+ .B ENOENT
+ .B AT_EMPTY_PATH
+ was specified in
+@@ -344,6 +422,31 @@ was specified in
+ is an empty string, and
+ .IR olddirfd
+ refers to a directory.
++.TP
++.B EPERM
++.B AT_LINK_REPLACE
++was specified in
++.I flags
++and
++.I newpath
++refers to an immutable or append-only file
++or a file in an immutable or append-only directory.
++(See
++.BR ioctl_iflags (2).)
++.TP
++.BR EPERM " or " EACCES
++.B AT_LINK_REPLACE
++was specified in
++.IR flags ,
++the directory containing
++.I newpath
++has the sticky bit
++.RB ( S_ISVTX )
++set, and the process's effective UID is neither the UID of the file to
++be deleted nor that of the directory containing it, and
++the process is not privileged (Linux: does not have the
++.B CAP_FOWNER
++capability).
+ .SH VERSIONS
+ .BR linkat ()
+ was added to Linux in kernel 2.6.16;
+@@ -421,6 +524,94 @@ performs the link creation and dies before it can say so.
+ Use
+ .BR stat (2)
+ to find out if the link got created.
++.SH EXAMPLE
++The following program demonstrates the use of
++.BR linkat ()
++with
++.B AT_LINK_REPLACE
++and
++.BR open (2)
++with
++.B O_TMPFILE
++for crash-safe file replacement.
++.SS Example output
++.in +4n
++.EX
++$ \fBecho bar > foo\fP
++$ \fB./replace foo\fP
++$ \fBcat foo\fP
++hello, world
++.EE
++.in
++.SS Program source (replace.c)
++.EX
++#define _GNU_SOURCE
++#include <fcntl.h>
++#include <libgen.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
++#include <sys/stat.h>
++#include <sys/types.h>
 +
-+here=`pwd`
-+tmp=/tmp/$$
-+status=1	# failure is the default!
-+trap "_cleanup; exit \$status" 0 1 2 3 15
-+
-+_cleanup()
++int
++main(int argc, char *argv[])
 +{
-+	cd /
-+	rm -f $tmp.*
++	char *path, *dirc, *basec, *dir, *base;
++	int fd, dirfd;
++
++	if (argc != 2) {
++		fprintf(stderr, "usage: %s PATH\en", argv[0]);
++		exit(EXIT_FAILURE);
++	}
++
++	path = argv[1];
++
++	dirc = strdup(path);
++	basec = strdup(path);
++	if (!dirc || !basec) {
++		perror("strdup");
++		exit(EXIT_FAILURE);
++	}
++	dir = dirname(dirc);
++	base = basename(basec);
++
++	/* Open the parent directory. */
++	dirfd = open(dir, O_DIRECTORY | O_RDONLY);
++	if (dirfd == -1) {
++		perror("open");
++		exit(EXIT_FAILURE);
++	}
++
++	/* Open a temporary file, write data to it, and persist it. */
++	fd = open(dir, O_TMPFILE | O_RDWR, 0644);
++	if (fd == -1) {
++		perror("open");
++		exit(EXIT_FAILURE);
++	}
++	if (write(fd, "hello, world\en", 13) == -1) {
++		perror("write");
++		exit(EXIT_FAILURE);
++	}
++	if (fsync(fd) == -1) {
++		perror("fsync");
++		exit(EXIT_FAILURE);
++	}
++
++	/* Replace the original file and persist the directory. */
++	if (linkat(fd, "", dirfd, base, AT_EMPTY_PATH | AT_LINK_REPLACE) == -1) {
++		perror("linkat");
++		exit(EXIT_FAILURE);
++	}
++	if (fsync(dirfd) == -1) {
++		perror("fsync");
++		exit(EXIT_FAILURE);
++	}
++
++	exit(EXIT_SUCCESS);
 +}
-+
-+# get standard environment, filters and checks
-+. ./common/rc
-+. ./common/filter
-+
-+# remove previous $seqres.full before test
-+rm -f $seqres.full
-+
-+_supported_fs generic
-+_supported_os Linux
-+_require_test
-+_require_xfs_io_command "-T"
-+_require_xfs_io_command "flink" "-f"
-+
-+same_file() {
-+	[[ "$(stat -c '%d %i' "$1")" = "$(stat -c '%d %i' "$2")" ]]
-+}
-+
-+touch "$TEST_DIR/$seq.src"
-+touch "$TEST_DIR/$seq.tgt"
-+$XFS_IO_PROG -c "flink -f $TEST_DIR/$seq.tgt" "$TEST_DIR/$seq.src"
-+same_file "$TEST_DIR/$seq.src" "$TEST_DIR/$seq.tgt" ||
-+	echo "Target was not replaced"
-+
-+# Linking to the same file should be a noop.
-+$XFS_IO_PROG -c "flink -f $TEST_DIR/$seq.src" "$TEST_DIR/$seq.src"
-+$XFS_IO_PROG -c "flink -f $TEST_DIR/$seq.tgt" "$TEST_DIR/$seq.src"
-+same_file "$TEST_DIR/$seq.src" "$TEST_DIR/$seq.tgt" || echo "Target changed?"
-+
-+# Should work with O_TMPFILE.
-+$XFS_IO_PROG -c "flink -f $TEST_DIR/$seq.tgt" -T "$TEST_DIR"
-+stat -c '%h' "$TEST_DIR/$seq.tgt"
-+same_file "$TEST_DIR/$seq.src" "$TEST_DIR/$seq.tgt" &&
-+	echo "Target was not replaced"
-+
-+# It's okay if the target doesn't exist.
-+$XFS_IO_PROG -c "flink -f $TEST_DIR/$seq.tgt2" "$TEST_DIR/$seq.src"
-+same_file "$TEST_DIR/$seq.src" "$TEST_DIR/$seq.tgt2" ||
-+	echo "Target was not created"
-+
-+# Can't replace directories.
-+mkdir "$TEST_DIR/$seq.dir"
-+$XFS_IO_PROG -c "flink -f $TEST_DIR/$seq.dir" "$TEST_DIR/$seq.src"
-+cd "$TEST_DIR/$seq.dir"
-+$XFS_IO_PROG -c "flink -f ." "$TEST_DIR/$seq.src"
-+$XFS_IO_PROG -c "flink -f .." "$TEST_DIR/$seq.src"
-+cd - &> /dev/null
-+
-+# Can't replace local mount points.
-+touch "$TEST_DIR/$seq.mnt"
-+$MOUNT_PROG --bind "$TEST_DIR/$seq.mnt" "$TEST_DIR/$seq.mnt"
-+$XFS_IO_PROG -c "flink -f $TEST_DIR/$seq.mnt" "$TEST_DIR/$seq.src"
-+
-+# Can replace mount points in other namespaces, though.
-+unshare -m \
-+	bash -c "$UMOUNT_PROG $TEST_DIR/$seq.mnt; $XFS_IO_PROG -c \"flink -f $TEST_DIR/$seq.mnt\" $TEST_DIR/$seq.src"
-+if $UMOUNT_PROG "$TEST_DIR/$seq.mnt" &> /dev/null; then
-+	echo "Mount point was not detached"
-+fi
-+same_file "$TEST_DIR/$seq.src" "$TEST_DIR/$seq.mnt" ||
-+	echo "Mount point was not replaced"
-+
-+# Should replace symlinks, not follow them.
-+touch "$TEST_DIR/$seq.symtgt"
-+ln -s "$TEST_DIR/$seq.symtgt" "$TEST_DIR/$seq.sym"
-+$XFS_IO_PROG -c "flink -f $TEST_DIR/$seq.sym" "$TEST_DIR/$seq.src"
-+same_file "$TEST_DIR/$seq.src" "$TEST_DIR/$seq.sym" ||
-+	echo "Symlink was not replaced"
-+same_file "$TEST_DIR/$seq.src" "$TEST_DIR/$seq.symtgt" &&
-+	echo "Symlink target was replaced"
-+
-+rm -rf "$TEST_DIR/$seq."*
-+
-+status=0
-+exit
-diff --git a/tests/generic/593.out b/tests/generic/593.out
-new file mode 100644
-index 00000000..834c34bf
---- /dev/null
-+++ b/tests/generic/593.out
-@@ -0,0 +1,6 @@
-+QA output created by 593
-+1
-+flink: Is a directory
-+flink: Is a directory
-+flink: Is a directory
-+flink: Device or resource busy
-diff --git a/tests/generic/group b/tests/generic/group
-index 6fe62505..0a87efca 100644
---- a/tests/generic/group
-+++ b/tests/generic/group
-@@ -595,3 +595,4 @@
- 590 auto prealloc preallocrw
- 591 auto quick rw pipe splice
- 592 auto quick encrypt
-+593 auto quick hardlink
++.EE
+ .SH SEE ALSO
+ .BR ln (1),
+ .BR open (2),
 -- 
 2.25.0
