@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 Subject: Re: IORING_REGISTER_CREDS[_UPDATE]() and credfd_create()?
-Date: Tue, 28 Jan 2020 17:24:14 -0700
-Message-ID: <2019e952-df2a-6b57-3571-73c525c5ba1a@kernel.dk>
+Date: Tue, 28 Jan 2020 17:54:18 -0700
+Message-ID: <0df4904f-780b-5d5f-8700-41df47a1b470@kernel.dk>
 References: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9@samba.org>
  <d6bc8139-abbe-8a8d-7da1-4eeafd9eebe7@kernel.dk>
  <688e187a-75dd-89d9-921c-67de228605ce@samba.org>
@@ -15,39 +15,43 @@ References: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9@samba.org>
  <d3f9c1a4-8b28-3cfe-de88-503837a143bc@gmail.com>
  <c9e58b5c-f66e-8406-16d5-fd6df1a27e77@kernel.dk>
  <6e5ab6bf-6ff1-14df-1988-a80a7c6c9294@gmail.com>
+ <2019e952-df2a-6b57-3571-73c525c5ba1a@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <6e5ab6bf-6ff1-14df-1988-a80a7c6c9294-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <2019e952-df2a-6b57-3571-73c525c5ba1a-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
 Cc: io-uring <io-uring-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 1/28/20 5:21 PM, Pavel Begunkov wrote:
-> On 29/01/2020 03:20, Jens Axboe wrote:
->> On 1/28/20 5:10 PM, Pavel Begunkov wrote:
->>>>>> Checked out ("don't use static creds/mm assignments")
+On 1/28/20 5:24 PM, Jens Axboe wrote:
+> On 1/28/20 5:21 PM, Pavel Begunkov wrote:
+>> On 29/01/2020 03:20, Jens Axboe wrote:
+>>> On 1/28/20 5:10 PM, Pavel Begunkov wrote:
+>>>>>>> Checked out ("don't use static creds/mm assignments")
+>>>>>>>
+>>>>>>> 1. do we miscount cred refs? We grab one in get_current_cred() for each async
+>>>>>>> request, but if (worker->creds != work->creds) it will never be put.
 >>>>>>
->>>>>> 1. do we miscount cred refs? We grab one in get_current_cred() for each async
->>>>>> request, but if (worker->creds != work->creds) it will never be put.
+>>>>>> Yeah I think you're right, that needs a bit of fixing up.
 >>>>>
->>>>> Yeah I think you're right, that needs a bit of fixing up.
+>>>>
+>>>> Hmm, it seems it leaks it unconditionally, as it grabs in a ref in
+>>>> override_creds().
 >>>>
 >>>
->>> Hmm, it seems it leaks it unconditionally, as it grabs in a ref in
->>> override_creds().
+>>> We grab one there, and an extra one. Then we drop one of them inline,
+>>> and the other in __io_req_aux_free().
 >>>
->>
->> We grab one there, and an extra one. Then we drop one of them inline,
->> and the other in __io_req_aux_free().
->>
-> Yeah, with the last patch it should make it even
+>> Yeah, with the last patch it should make it even
+> 
+> OK good we agree on that. I should probably pull back that bit to the
+> original patch to avoid having a hole in there...
 
-OK good we agree on that. I should probably pull back that bit to the
-original patch to avoid having a hole in there...
+Done
 
 -- 
 Jens Axboe
