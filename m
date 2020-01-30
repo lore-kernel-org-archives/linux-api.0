@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 Subject: Re: IORING_REGISTER_CREDS[_UPDATE]() and credfd_create()?
-Date: Wed, 29 Jan 2020 18:08:00 -0700
-Message-ID: <9ce2e571-ed84-211a-4e99-d830ecdaf0e2@kernel.dk>
+Date: Wed, 29 Jan 2020 19:20:52 -0700
+Message-ID: <6372aa92-6b28-4a5f-ca6d-7741e1c8592e@kernel.dk>
 References: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9@samba.org>
  <d6bc8139-abbe-8a8d-7da1-4eeafd9eebe7@kernel.dk>
  <688e187a-75dd-89d9-921c-67de228605ce@samba.org>
@@ -11,102 +11,117 @@ References: <ea9f2f27-e9fe-7016-5d5f-56fe1fdfc7a9@samba.org>
  <b88f0590-71c9-d2bd-9d17-027b05d30d7a@kernel.dk>
  <CAG48ez17Ums4s=gjai-Lakr2tWf9bjmYYeNb5aGrwAD51ypZMA@mail.gmail.com>
  <4f833fc5-b4c0-c304-c3c2-f63c050b90a2@kernel.dk>
+ <9ce2e571-ed84-211a-4e99-d830ecdaf0e2@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <4f833fc5-b4c0-c304-c3c2-f63c050b90a2-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+In-Reply-To: <9ce2e571-ed84-211a-4e99-d830ecdaf0e2-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Cc: Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, io-uring <io-uring-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 1/29/20 10:34 AM, Jens Axboe wrote:
-> On 1/29/20 7:59 AM, Jann Horn wrote:
->> On Tue, Jan 28, 2020 at 8:42 PM Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org> wrote:
->>> On 1/28/20 11:04 AM, Jens Axboe wrote:
->>>> On 1/28/20 10:19 AM, Jens Axboe wrote:
->> [...]
->>>>> #1 adds support for registering the personality of the invoking task,
->>>>> and #2 adds support for IORING_OP_USE_CREDS. Right now it's limited to
->>>>> just having one link, it doesn't support a chain of them.
->> [...]
->>> I didn't like it becoming a bit too complicated, both in terms of
->>> implementation and use. And the fact that we'd have to jump through
->>> hoops to make this work for a full chain.
+On 1/29/20 6:08 PM, Jens Axboe wrote:
+> On 1/29/20 10:34 AM, Jens Axboe wrote:
+>> On 1/29/20 7:59 AM, Jann Horn wrote:
+>>> On Tue, Jan 28, 2020 at 8:42 PM Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org> wrote:
+>>>> On 1/28/20 11:04 AM, Jens Axboe wrote:
+>>>>> On 1/28/20 10:19 AM, Jens Axboe wrote:
+>>> [...]
+>>>>>> #1 adds support for registering the personality of the invoking task,
+>>>>>> and #2 adds support for IORING_OP_USE_CREDS. Right now it's limited to
+>>>>>> just having one link, it doesn't support a chain of them.
+>>> [...]
+>>>> I didn't like it becoming a bit too complicated, both in terms of
+>>>> implementation and use. And the fact that we'd have to jump through
+>>>> hoops to make this work for a full chain.
+>>>>
+>>>> So I punted and just added sqe->personality and IOSQE_PERSONALITY.
+>>>> This makes it way easier to use. Same branch:
+>>>>
+>>>> https://git.kernel.dk/cgit/linux-block/log/?h=for-5.6/io_uring-vfs-creds
+>>>>
+>>>> I'd feel much better with this variant for 5.6.
 >>>
->>> So I punted and just added sqe->personality and IOSQE_PERSONALITY.
->>> This makes it way easier to use. Same branch:
+>>> Some general feedback from an inspectability/debuggability perspective:
 >>>
->>> https://git.kernel.dk/cgit/linux-block/log/?h=for-5.6/io_uring-vfs-creds
->>>
->>> I'd feel much better with this variant for 5.6.
+>>> At some point, it might be nice if you could add a .show_fdinfo
+>>> handler to the io_uring_fops that makes it possible to get a rough
+>>> overview over the state of the uring by reading /proc/$pid/fdinfo/$fd,
+>>> just like e.g. eventfd (see eventfd_show_fdinfo()). It might be
+>>> helpful for debugging to be able to see information about the fixed
+>>> files and buffers that have been registered. Same for the
+>>> personalities; that information might also be useful when someone is
+>>> trying to figure out what privileges a running process actually has.
 >>
->> Some general feedback from an inspectability/debuggability perspective:
->>
->> At some point, it might be nice if you could add a .show_fdinfo
->> handler to the io_uring_fops that makes it possible to get a rough
->> overview over the state of the uring by reading /proc/$pid/fdinfo/$fd,
->> just like e.g. eventfd (see eventfd_show_fdinfo()). It might be
->> helpful for debugging to be able to see information about the fixed
->> files and buffers that have been registered. Same for the
->> personalities; that information might also be useful when someone is
->> trying to figure out what privileges a running process actually has.
+>> Agree, that would be a very useful addition. I'll take a look at it.
 > 
-> Agree, that would be a very useful addition. I'll take a look at it.
+> Jann, how much info are you looking for? Here's a rough start, just
+> shows the number of registered files and buffers, and lists the
+> personalities registered. We could also dump the buffer info for
+> each of them, and ditto for the files. Not sure how much verbosity
+> is acceptable in fdinfo?
+> 
+> Here's the test app for personality:
+> 
+> # cat 3
+> pos:	0
+> flags:	02000002
+> mnt_id:	14
+> user-files: 0
+> user-bufs: 0
+> personalities:
+> 	    1: uid=0/gid=0
 
-Jann, how much info are you looking for? Here's a rough start, just
-shows the number of registered files and buffers, and lists the
-personalities registered. We could also dump the buffer info for
-each of them, and ditto for the files. Not sure how much verbosity
-is acceptable in fdinfo?
-
-Here's the test app for personality:
-
-# cat 3
-pos:	0
-flags:	02000002
-mnt_id:	14
-user-files: 0
-user-bufs: 0
-personalities:
-	    1: uid=0/gid=0
+Here's one that adds the registered buffers and files as well. So
+essentially this shows any info on the registered parts.
 
 
 diff --git a/fs/io_uring.c b/fs/io_uring.c
-index c5ca84a305d3..0b2c7d800297 100644
+index c5ca84a305d3..e306691bc7a4 100644
 --- a/fs/io_uring.c
 +++ b/fs/io_uring.c
-@@ -6511,6 +6505,45 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int, fd, u32, to_submit,
+@@ -6511,6 +6505,55 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int, fd, u32, to_submit,
  	return submitted ? submitted : ret;
  }
  
-+struct ring_show_idr {
-+	struct io_ring_ctx *ctx;
-+	struct seq_file *m;
-+};
-+
 +static int io_uring_show_cred(int id, void *p, void *data)
 +{
-+	struct ring_show_idr *r = data;
 +	const struct cred *cred = p;
++	struct seq_file *m = data;
 +
-+	seq_printf(r->m, "\t%5d: uid=%u/gid=%u\n", id, cred->uid.val,
-+						cred->gid.val);
++	seq_printf(m, "%5d: uid=%u/gid=%u\n", id, cred->uid.val, cred->gid.val);
 +	return 0;
 +}
 +
 +static void __io_uring_show_fdinfo(struct io_ring_ctx *ctx, struct seq_file *m)
 +{
-+	struct ring_show_idr r = { .ctx = ctx, .m = m };
++	int i;
 +
 +	mutex_lock(&ctx->uring_lock);
 +	seq_printf(m, "user-files: %d\n", ctx->nr_user_files);
++	for (i = 0; i < ctx->nr_user_files; i++) {
++		struct fixed_file_table *table;
++		struct file *f;
++
++		table = &ctx->file_data->table[i >> IORING_FILE_TABLE_SHIFT];
++		f = table->files[i & IORING_FILE_TABLE_MASK];
++		if (f)
++			seq_printf(m, "%5d: %s\n", i, file_dentry(f)->d_iname);
++		else
++			seq_printf(m, "%5d: <none>\n", i);
++	}
 +	seq_printf(m, "user-bufs: %d\n", ctx->nr_user_bufs);
++	for (i = 0; i < ctx->nr_user_bufs; i++) {
++		struct io_mapped_ubuf *buf = &ctx->user_bufs[i];
++
++		seq_printf(m, "%5d: 0x%llx/%lu\n", i, buf->ubuf, buf->len);
++	}
 +	if (!idr_is_empty(&ctx->personality_idr)) {
 +		seq_printf(m, "personalities:\n");
-+		idr_for_each(&ctx->personality_idr, io_uring_show_cred, &r);
++		idr_for_each(&ctx->personality_idr, io_uring_show_cred, m);
 +	}
 +	mutex_unlock(&ctx->uring_lock);
 +}
@@ -124,7 +139,7 @@ index c5ca84a305d3..0b2c7d800297 100644
  static const struct file_operations io_uring_fops = {
  	.release	= io_uring_release,
  	.flush		= io_uring_flush,
-@@ -6521,6 +6554,7 @@ static const struct file_operations io_uring_fops = {
+@@ -6521,6 +6564,7 @@ static const struct file_operations io_uring_fops = {
  #endif
  	.poll		= io_uring_poll,
  	.fasync		= io_uring_fasync,
