@@ -1,191 +1,456 @@
-From: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-Subject: Re: IORING_REGISTER_CREDS[_UPDATE]() and credfd_create()?
-Date: Thu, 30 Jan 2020 08:34:26 -0700
-Message-ID: <18629b74-d954-3939-fafa-c71c4423ac17@kernel.dk>
-References: <d6bc8139-abbe-8a8d-7da1-4eeafd9eebe7@kernel.dk>
- <688e187a-75dd-89d9-921c-67de228605ce@samba.org>
- <b29e972e-5ca0-8b5f-46b3-36f93d865723@kernel.dk>
- <1ac31828-e915-6180-cdb4-36685442ea75@kernel.dk>
- <0d4f43d8-a0c4-920b-5b8f-127c1c5a3fad@kernel.dk>
- <b88f0590-71c9-d2bd-9d17-027b05d30d7a@kernel.dk>
- <CAG48ez17Ums4s=gjai-Lakr2tWf9bjmYYeNb5aGrwAD51ypZMA@mail.gmail.com>
- <4f833fc5-b4c0-c304-c3c2-f63c050b90a2@kernel.dk>
- <9ce2e571-ed84-211a-4e99-d830ecdaf0e2@kernel.dk>
- <CAG48ez1qVCoOwcdA7YZcKObQ9frWNxCjHOp6RYeqd+q_n4KJJQ@mail.gmail.com>
- <20200130102635.ar2bohr7n4li2hyd@wittgenstein>
- <cf801c52-7719-bb5c-c999-ab9aab0d4871@kernel.dk>
- <0b72d000-02be-9974-900f-d94af1cbc08a@samba.org>
+From: Mike Rapoport <rppt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: [RFC PATCH] mm: extend memfd with ability to create "secret" memory
+ areas
+Date: Thu, 30 Jan 2020 18:23:41 +0200
+Message-ID: <20200130162340.GA14232@rapoport-lnx>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <0b72d000-02be-9974-900f-d94af1cbc08a-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
-Content-Language: en-US
+Content-Disposition: inline
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: io-uring <io-uring-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Alan Cox <alan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, James Bottomley <jejb-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Reshetova, Elena" <elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tycho Andersen <tycho-E0fblnxP3wo@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 1/30/20 7:47 AM, Stefan Metzmacher wrote:
-> Am 30.01.20 um 15:11 schrieb Jens Axboe:
->> On 1/30/20 3:26 AM, Christian Brauner wrote:
->>> On Thu, Jan 30, 2020 at 11:11:58AM +0100, Jann Horn wrote:
->>>> On Thu, Jan 30, 2020 at 2:08 AM Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org> wrote:
->>>>> On 1/29/20 10:34 AM, Jens Axboe wrote:
->>>>>> On 1/29/20 7:59 AM, Jann Horn wrote:
->>>>>>> On Tue, Jan 28, 2020 at 8:42 PM Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org> wrote:
->>>>>>>> On 1/28/20 11:04 AM, Jens Axboe wrote:
->>>>>>>>> On 1/28/20 10:19 AM, Jens Axboe wrote:
->>>>>>> [...]
->>>>>>>>>> #1 adds support for registering the personality of the invoking task,
->>>>>>>>>> and #2 adds support for IORING_OP_USE_CREDS. Right now it's limited to
->>>>>>>>>> just having one link, it doesn't support a chain of them.
->>>>>>> [...]
->>>>>>>> I didn't like it becoming a bit too complicated, both in terms of
->>>>>>>> implementation and use. And the fact that we'd have to jump through
->>>>>>>> hoops to make this work for a full chain.
->>>>>>>>
->>>>>>>> So I punted and just added sqe->personality and IOSQE_PERSONALITY.
->>>>>>>> This makes it way easier to use. Same branch:
->>>>>>>>
->>>>>>>> https://git.kernel.dk/cgit/linux-block/log/?h=for-5.6/io_uring-vfs-creds
->>>>>>>>
->>>>>>>> I'd feel much better with this variant for 5.6.
->>>>>>>
->>>>>>> Some general feedback from an inspectability/debuggability perspective:
->>>>>>>
->>>>>>> At some point, it might be nice if you could add a .show_fdinfo
->>>>>>> handler to the io_uring_fops that makes it possible to get a rough
->>>>>>> overview over the state of the uring by reading /proc/$pid/fdinfo/$fd,
->>>>>>> just like e.g. eventfd (see eventfd_show_fdinfo()). It might be
->>>>>>> helpful for debugging to be able to see information about the fixed
->>>>>>> files and buffers that have been registered. Same for the
->>>>>>> personalities; that information might also be useful when someone is
->>>>>>> trying to figure out what privileges a running process actually has.
->>>>>>
->>>>>> Agree, that would be a very useful addition. I'll take a look at it.
->>>>>
->>>>> Jann, how much info are you looking for? Here's a rough start, just
->>>>> shows the number of registered files and buffers, and lists the
->>>>> personalities registered. We could also dump the buffer info for
->>>>> each of them, and ditto for the files. Not sure how much verbosity
->>>>> is acceptable in fdinfo?
->>>>
->>>> At the moment, I personally am just interested in this from the
->>>> perspective of being able to audit the state of personalities, to make
->>>> important information about the security state of processes visible.
->>>>
->>>> Good point about verbosity in fdinfo - I'm not sure about that myself either.
->>>>
->>>>> Here's the test app for personality:
->>>>
->>>> Oh, that was quick...
->>>>
->>>>> # cat 3
->>>>> pos:    0
->>>>> flags:  02000002
->>>>> mnt_id: 14
->>>>> user-files: 0
->>>>> user-bufs: 0
->>>>> personalities:
->>>>>             1: uid=0/gid=0
->>>>>
->>>>>
->>>>> diff --git a/fs/io_uring.c b/fs/io_uring.c
->>>>> index c5ca84a305d3..0b2c7d800297 100644
->>>>> --- a/fs/io_uring.c
->>>>> +++ b/fs/io_uring.c
->>>>> @@ -6511,6 +6505,45 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int, fd, u32, to_submit,
->>>>>         return submitted ? submitted : ret;
->>>>>  }
->>>>>
->>>>> +struct ring_show_idr {
->>>>> +       struct io_ring_ctx *ctx;
->>>>> +       struct seq_file *m;
->>>>> +};
->>>>> +
->>>>> +static int io_uring_show_cred(int id, void *p, void *data)
->>>>> +{
->>>>> +       struct ring_show_idr *r = data;
->>>>> +       const struct cred *cred = p;
->>>>> +
->>>>> +       seq_printf(r->m, "\t%5d: uid=%u/gid=%u\n", id, cred->uid.val,
->>>>> +                                               cred->gid.val);
->>>>
->>>> As Stefan said, the ->uid and ->gid aren't very useful, since when a
->>>> process switches UIDs for accessing things in the filesystem, it
->>>> probably only changes its EUID and FSUID, not its RUID.
->>>> I think what's particularly relevant for uring would be the ->fsuid
->>>> and the ->fsgid along with ->cap_effective; and perhaps for some
->>>> operations also the ->euid and ->egid. The real UID/GID aren't really
->>>> relevant when performing normal filesystem operations and such.
->>>
->>> This should probably just use the same format that is found in
->>> /proc/<pid>/status to make it easy for tools to use the same parsing
->>> logic and for the sake of consistency. We've adapted the same format for
->>> pidfds. So that would mean:
->>>
->>> Uid:	1000	1000	1000	1000
->>> Gid:	1000	1000	1000	1000
->>>
->>> Which would be: Real, effective, saved set, and filesystem {G,U}IDs
->>>
->>> And CapEff in /proc/<pid>/status has the format:
->>> CapEff:	0000000000000000
->>
->> I agree, consistency is good. I've added this, and also changed the
->> naming to be CamelCase, which is seems like most of them are. Now it
->> looks like this:
->>
->> pos:	0
->> flags:	02000002
->> mnt_id:	14
->> UserFiles:     0
->> UserBufs:     0
->> Personalities:
->>     1
->> 	Uid:	0		0		0		0
->> 	Gid:	0		0		0		0
->> 	Groups:	0
->> 	CapEff:	0000003fffffffff
->>
->> for a single personality registered (root). I have to indent it an extra
->> tab to display each personality.
-> 
-> That looks good.
-> 
-> Maybe also print some details of struct io_ring_ctx,
-> flags and the ring sizes, ctx->cred.
-> 
-> Maybe details for io_wq and sqo_thread.
+Hi,
 
-Yeah, I agree that we should probably just add a ton more, there's
-plenty of information that would be useful. But let's start simple - I
-forgot to CC you on the patch I just sent out, but it's basically the
-above cleaned up. We dump information that's registered with the ring,
-that's the theme right now. I'd be happy to add some of the state
-information as well, we should do that as a separate patch.
+This is essentially a resend of my attempt to implement "secret" mappings
+using a file descriptor [1]. 
 
-> Maybe pending requests?
-> I'm not sure about how io_wq threads work in detail.
-> Is it possible that a large number of blocking request
-> (against an external harddisk with disconnected cable)
-> to block other blocking requests to a working ssd?
-> It would be good to diagnose such situations from
-> the output.
+I've done a couple of experiments with secret/exclusive/whatever
+memory backed by a file-descriptor using a chardev and memfd_create
+syscall. There is indeed no need for VM_ flag, but there are still places
+that would require special care, e.g vm_normal_page(), madvise(DO_FORK), so
+it won't be completely free of core mm modifications.
 
-io_uring doesn't necessarily track pending requests, only if it has to.
-For bounded request time IO, like the above, it'll depend on the
-concurrency level. If you setup the ring with eg N entries, that'll be
-at most N pending bounded requests. If all of those are blocked because
-the disk isn't responding, yes, that could happen. At least until the
-timeout happens.
+Below is a POC that implements extension to memfd_create() that allows
+mapping of a "secret" memory. The "secrecy" mode should be explicitly set
+using ioctl(), for now I've implemented exclusive and uncached mappings.
 
-> How is this supposed to be ABI-wise? Is it possible to change
-> the output in later kernel versions?
+The POC primarily indented to illustrate a possible userspace API for
+fd-based secret memory. The idea is that user will create a file
+descriptor using a system call. The user than has to use ioctl() to define
+the desired mode of operation and only when the mode is set it is possible
+to mmap() the memory. I.e something like
 
-We should always be able to append to the file, I'd just prefer if we
-don't change the format of lines that have already been added.
+	fd = memfd_create("secret", MFD_SECRET);
+	ioctl(fd, MFD_SECRET_UNCACHED);
+	ptr = mmap(NULL, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED,
+		   fd, 0);
+
+
+The ioctl() allows a lot of flexibility in how the secrecy should be
+defined. It could be either a request for a particular protection (e.g.
+exclusive, uncached) or something like "secrecy level" from "a bit more
+secret than normally" to "do your best even at the expense of performance".
+The POC implements the first option and the modes are mutually exclusive
+for now, but there is no fundamental reason they cannot be mixed.
+
+I've chosen memfd over a chardev as it seem to play more neatly with
+anon_inodes and would allow simple (ab)use of the page cache for tracking
+pages allocated for the "secret" mappings as well as using
+address_space_operations for e.g. page migration callbacks.
+
+The POC implementation uses set_memory/pageattr APIs to manipulate the
+direct map and does not address the direct map fragmentation issue.
+
+Of course this is something that must be addressed, as well as
+modifications to core mm to required keep the secret memory secret, but I'd
+really like to focus on the userspace ABI first.
+
+[1] https://lore.kernel.org/lkml/1572171452-7958-1-git-send-email-rppt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org/
+[1] https://lore.kernel.org/lkml/20191205153400.GA25575@rapoport-lnx/
+
+>From 5ca6fb6fc3e68d7b27ef04faa19bed4e2813f7f9 Mon Sep 17 00:00:00 2001
+From: Mike Rapoport <rppt-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>
+Date: Mon, 18 Nov 2019 09:32:22 +0200
+Subject: [PATCH] mm: extend memfd with ability to create "secret" memory areas
+
+Extend memfd_create() system call with the ability to create memory areas
+visible only in the context of the owning process and not mapped not only
+to other processes but in the kernel page tables as well.
+
+The user will create a file descriptor using the memfd_create system call.
+The user than has to use ioctl() to define the desired protection mode for
+the memory associated with that file descriptor and only when the mode is
+set it is possible to mmap() the memory. For instance, the following
+exapmple will create an uncached mapping (error handling is omitted):
+
+        fd = memfd_create("secret", MFD_SECRET);
+        ioctl(fd, MFD_SECRET_UNCACHED);
+	ftruncate(fd. MAP_SIZE);
+        ptr = mmap(NULL, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED,
+		   fd, 0);
+
+Signed-off-by: Mike Rapoport <rppt-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>
+---
+ include/linux/memfd.h      |   9 ++
+ include/uapi/linux/magic.h |   1 +
+ include/uapi/linux/memfd.h |   6 +
+ mm/Kconfig                 |   4 +
+ mm/Makefile                |   1 +
+ mm/memfd.c                 |  10 +-
+ mm/secretmem.c             | 244 +++++++++++++++++++++++++++++++++++++
+ 7 files changed, 273 insertions(+), 2 deletions(-)
+ create mode 100644 mm/secretmem.c
+
+diff --git a/include/linux/memfd.h b/include/linux/memfd.h
+index 4f1600413f91..d3ca7285f51a 100644
+--- a/include/linux/memfd.h
++++ b/include/linux/memfd.h
+@@ -13,4 +13,13 @@ static inline long memfd_fcntl(struct file *f, unsigned int c, unsigned long a)
+ }
+ #endif
+ 
++#ifdef CONFIG_MEMFD_SECRETMEM
++extern struct file *secretmem_file_create(const char *name, unsigned int flags);
++#else
++static inline struct file *secretmem_file_create(const char *name, unsigned int flags)
++{
++	return ERR_PTR(-EINVAL);
++}
++#endif
++
+ #endif /* __LINUX_MEMFD_H */
+diff --git a/include/uapi/linux/magic.h b/include/uapi/linux/magic.h
+index 3ac436376d79..c0104e6da894 100644
+--- a/include/uapi/linux/magic.h
++++ b/include/uapi/linux/magic.h
+@@ -95,5 +95,6 @@
+ #define DMA_BUF_MAGIC		0x444d4142	/* "DMAB" */
+ #define Z3FOLD_MAGIC		0x33
+ #define PPC_CMM_MAGIC		0xc7571590
++#define SECRETMEM_MAGIC		0x5345434d	/* "SECM" */
+ 
+ #endif /* __LINUX_MAGIC_H__ */
+diff --git a/include/uapi/linux/memfd.h b/include/uapi/linux/memfd.h
+index 7a8a26751c23..3320a79b638d 100644
+--- a/include/uapi/linux/memfd.h
++++ b/include/uapi/linux/memfd.h
+@@ -8,6 +8,12 @@
+ #define MFD_CLOEXEC		0x0001U
+ #define MFD_ALLOW_SEALING	0x0002U
+ #define MFD_HUGETLB		0x0004U
++#define MFD_SECRET		0x0008U
++
++/* ioctls for secret memory */
++#define MFD_SECRET_IOCTL '-'
++#define MFD_SECRET_EXCLUSIVE	_IOW(MFD_SECRET_IOCTL, 0x13, unsigned long)
++#define MFD_SECRET_UNCACHED	_IOW(MFD_SECRET_IOCTL, 0x14, unsigned long)
+ 
+ /*
+  * Huge page size encoding when MFD_HUGETLB is specified, and a huge page
+diff --git a/mm/Kconfig b/mm/Kconfig
+index ab80933be65f..2a8956d9048d 100644
+--- a/mm/Kconfig
++++ b/mm/Kconfig
+@@ -739,4 +739,8 @@ config ARCH_HAS_HUGEPD
+ config MAPPING_DIRTY_HELPERS
+         bool
+ 
++config MEMFD_SECRETMEM
++        def_bool MEMFD_CREATE && ARCH_HAS_SET_DIRECT_MAP
++
++
+ endmenu
+diff --git a/mm/Makefile b/mm/Makefile
+index 1937cc251883..9399e823ccdb 100644
+--- a/mm/Makefile
++++ b/mm/Makefile
+@@ -108,3 +108,4 @@ obj-$(CONFIG_ZONE_DEVICE) += memremap.o
+ obj-$(CONFIG_HMM_MIRROR) += hmm.o
+ obj-$(CONFIG_MEMFD_CREATE) += memfd.o
+ obj-$(CONFIG_MAPPING_DIRTY_HELPERS) += mapping_dirty_helpers.o
++obj-$(CONFIG_MEMFD_SECRETMEM) += secretmem.o
+diff --git a/mm/memfd.c b/mm/memfd.c
+index 2647c898990c..3e1cc37e0389 100644
+--- a/mm/memfd.c
++++ b/mm/memfd.c
+@@ -245,7 +245,8 @@ long memfd_fcntl(struct file *file, unsigned int cmd, unsigned long arg)
+ #define MFD_NAME_PREFIX_LEN (sizeof(MFD_NAME_PREFIX) - 1)
+ #define MFD_NAME_MAX_LEN (NAME_MAX - MFD_NAME_PREFIX_LEN)
+ 
+-#define MFD_ALL_FLAGS (MFD_CLOEXEC | MFD_ALLOW_SEALING | MFD_HUGETLB)
++#define MFD_SECRET_MASK (MFD_CLOEXEC | MFD_SECRET)
++#define MFD_ALL_FLAGS (MFD_CLOEXEC | MFD_ALLOW_SEALING | MFD_HUGETLB | MFD_SECRET)
+ 
+ SYSCALL_DEFINE2(memfd_create,
+ 		const char __user *, uname,
+@@ -257,6 +258,9 @@ SYSCALL_DEFINE2(memfd_create,
+ 	char *name;
+ 	long len;
+ 
++	if (flags & ~(unsigned int)MFD_SECRET_MASK)
++		return -EINVAL;
++
+ 	if (!(flags & MFD_HUGETLB)) {
+ 		if (flags & ~(unsigned int)MFD_ALL_FLAGS)
+ 			return -EINVAL;
+@@ -296,7 +300,9 @@ SYSCALL_DEFINE2(memfd_create,
+ 		goto err_name;
+ 	}
+ 
+-	if (flags & MFD_HUGETLB) {
++	if (flags & MFD_SECRET) {
++		file = secretmem_file_create(name, flags);
++	} else if (flags & MFD_HUGETLB) {
+ 		struct user_struct *user = NULL;
+ 
+ 		file = hugetlb_file_setup(name, 0, VM_NORESERVE, &user,
+diff --git a/mm/secretmem.c b/mm/secretmem.c
+new file mode 100644
+index 000000000000..ac67a67aa29c
+--- /dev/null
++++ b/mm/secretmem.c
+@@ -0,0 +1,244 @@
++// SPDX-License-Identifier: GPL-2.0
++#include <linux/mm.h>
++#include <linux/fs.h>
++#include <linux/mount.h>
++#include <linux/memfd.h>
++#include <linux/printk.h>
++#include <linux/pagemap.h>
++#include <linux/pseudo_fs.h>
++#include <linux/set_memory.h>
++#include <linux/sched/signal.h>
++
++#include <uapi/linux/memfd.h>
++#include <uapi/linux/magic.h>
++
++#include <asm/tlbflush.h>
++
++#define SECRETMEM_EXCLUSIVE	0x1
++#define SECRETMEM_UNCACHED	0x2
++
++struct secretmem_state {
++	unsigned int mode;
++	unsigned long nr_pages;
++};
++
++static struct page *secretmem_alloc_page(gfp_t gfp)
++{
++	/*
++	 * FIXME: use a cache of large pages to reduce the direct map
++	 * fragmentation
++	 */
++	return alloc_page(gfp);
++}
++
++static int secretmem_check_limits(struct vm_fault *vmf)
++{
++	struct secretmem_state *state = vmf->vma->vm_file->private_data;
++	struct inode *inode = file_inode(vmf->vma->vm_file);
++	unsigned long limit;
++
++	if (((loff_t)vmf->pgoff << PAGE_SHIFT) >= i_size_read(inode))
++		return -EINVAL;
++
++	limit = rlimit(RLIMIT_MEMLOCK) >> PAGE_SHIFT;
++	if (state->nr_pages + 1 >= limit)
++		return -EPERM;
++
++	return 0;
++}
++
++static vm_fault_t secretmem_fault(struct vm_fault *vmf)
++{
++	struct secretmem_state *state = vmf->vma->vm_file->private_data;
++	struct address_space *mapping = vmf->vma->vm_file->f_mapping;
++	pgoff_t offset = vmf->pgoff;
++	unsigned long addr;
++	struct page *page;
++	int ret;
++
++	ret = secretmem_check_limits(vmf);
++	if (ret)
++		return vmf_error(ret);
++
++	page = find_get_entry(mapping, offset);
++	if (!page) {
++		page = secretmem_alloc_page(vmf->gfp_mask);
++		if (!page)
++			return vmf_error(-ENOMEM);
++
++		ret = add_to_page_cache_lru(page, mapping, offset, vmf->gfp_mask);
++		if (unlikely(ret)) {
++			put_page(page);
++			return vmf_error(ret);
++		}
++
++		ret = set_direct_map_invalid_noflush(page);
++		if (ret) {
++			delete_from_page_cache(page);
++			return vmf_error(ret);
++		}
++
++		addr = (unsigned long)page_address(page);
++		flush_tlb_kernel_range(addr, addr + PAGE_SIZE);
++
++		__SetPageUptodate(page);
++
++		state->nr_pages++;
++		ret = VM_FAULT_LOCKED;
++	}
++
++	vmf->page = page;
++	return ret;
++}
++
++static const struct vm_operations_struct secretmem_vm_ops = {
++	.fault = secretmem_fault,
++};
++
++static int secretmem_mmap(struct file *file, struct vm_area_struct *vma)
++{
++	struct secretmem_state *state = file->private_data;
++	unsigned long mode = state->mode;
++
++	if (!mode)
++		return -EINVAL;
++
++	switch (mode) {
++	case SECRETMEM_UNCACHED:
++		vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
++		/* fallthrough */
++	case SECRETMEM_EXCLUSIVE:
++		vma->vm_ops = &secretmem_vm_ops;
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++static long secretmem_ioctl(struct file *file, unsigned cmd, unsigned long arg)
++{
++	struct secretmem_state *state = file->private_data;
++	unsigned long mode = state->mode;
++
++	if (mode)
++		return -EINVAL;
++
++	switch (cmd) {
++	case MFD_SECRET_EXCLUSIVE:
++		mode = SECRETMEM_EXCLUSIVE;
++		break;
++	case MFD_SECRET_UNCACHED:
++		mode = SECRETMEM_UNCACHED;
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	state->mode = mode;
++
++	return 0;
++}
++
++static int secretmem_release(struct inode *inode, struct file *file)
++{
++	struct secretmem_state *state = file->private_data;
++
++	kfree(state);
++
++	return 0;
++}
++
++const struct file_operations secretmem_fops = {
++	.release	= secretmem_release,
++	.mmap		= secretmem_mmap,
++	.unlocked_ioctl = secretmem_ioctl,
++	.compat_ioctl	= secretmem_ioctl,
++};
++
++static bool secretmem_isolate_page(struct page *page, isolate_mode_t mode)
++{
++	return false;
++}
++
++static int secretmem_migratepage(struct address_space *mapping,
++				 struct page *newpage, struct page *page,
++				 enum migrate_mode mode)
++{
++	return -EBUSY;
++}
++
++static void secretmem_freepage(struct page *page)
++{
++	set_direct_map_default_noflush(page);
++}
++
++static const struct address_space_operations secretmem_aops = {
++	.freepage	= secretmem_freepage,
++	.migratepage	= secretmem_migratepage,
++	.isolate_page	= secretmem_isolate_page,
++};
++
++static struct vfsmount *secretmem_mnt;
++
++struct file *secretmem_file_create(const char *name, unsigned int flags)
++{
++	struct inode *inode = alloc_anon_inode(secretmem_mnt->mnt_sb);
++	struct file *file = ERR_PTR(-ENOMEM);
++	struct secretmem_state *state;
++
++	if (IS_ERR(inode))
++		return ERR_CAST(inode);
++
++	state = kzalloc(sizeof(*state), GFP_KERNEL);
++	if (!state)
++		goto err_free_inode;
++
++	file = alloc_file_pseudo(inode, secretmem_mnt, "secretmem",
++				 O_RDWR, &secretmem_fops);
++	if (IS_ERR(file))
++		goto err_free_state;
++
++	mapping_set_unevictable(inode->i_mapping);
++
++	inode->i_mapping->private_data = state;
++	inode->i_mapping->a_ops = &secretmem_aops;
++
++	/* pretend we are a normal file with zero size */
++	inode->i_mode |= S_IFREG;
++	inode->i_size = 0;
++
++	file->private_data = state;
++
++	return file;
++
++err_free_state:
++	kfree(state);
++err_free_inode:
++	iput(inode);
++	return file;
++}
++
++static int secretmem_init_fs_context(struct fs_context *fc)
++{
++	return init_pseudo(fc, SECRETMEM_MAGIC) ? 0 : -ENOMEM;
++}
++
++static struct file_system_type secretmem_fs = {
++	.name		= "secretmem",
++	.init_fs_context = secretmem_init_fs_context,
++	.kill_sb	= kill_anon_super,
++};
++
++static int secretmem_init(void)
++{
++	int ret = 0;
++
++	secretmem_mnt = kern_mount(&secretmem_fs);
++	if (IS_ERR(secretmem_mnt))
++		ret = PTR_ERR(secretmem_mnt);
++
++	return ret;
++}
++fs_initcall(secretmem_init);
+-- 
+2.24.0
+
 
 -- 
-Jens Axboe
+Sincerely yours,
+Mike.
