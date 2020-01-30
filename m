@@ -1,8 +1,10 @@
 From: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 Subject: Re: IORING_REGISTER_CREDS[_UPDATE]() and credfd_create()?
-Date: Thu, 30 Jan 2020 08:29:30 -0700
-Message-ID: <e6d98755-7122-63f5-2047-18ef9f42c60e@kernel.dk>
-References: <b29e972e-5ca0-8b5f-46b3-36f93d865723@kernel.dk>
+Date: Thu, 30 Jan 2020 08:34:26 -0700
+Message-ID: <18629b74-d954-3939-fafa-c71c4423ac17@kernel.dk>
+References: <d6bc8139-abbe-8a8d-7da1-4eeafd9eebe7@kernel.dk>
+ <688e187a-75dd-89d9-921c-67de228605ce@samba.org>
+ <b29e972e-5ca0-8b5f-46b3-36f93d865723@kernel.dk>
  <1ac31828-e915-6180-cdb4-36685442ea75@kernel.dk>
  <0d4f43d8-a0c4-920b-5b8f-127c1c5a3fad@kernel.dk>
  <b88f0590-71c9-d2bd-9d17-027b05d30d7a@kernel.dk>
@@ -12,20 +14,20 @@ References: <b29e972e-5ca0-8b5f-46b3-36f93d865723@kernel.dk>
  <CAG48ez1qVCoOwcdA7YZcKObQ9frWNxCjHOp6RYeqd+q_n4KJJQ@mail.gmail.com>
  <20200130102635.ar2bohr7n4li2hyd@wittgenstein>
  <cf801c52-7719-bb5c-c999-ab9aab0d4871@kernel.dk>
- <20200130151342.u554shnaliau42jq@wittgenstein>
+ <0b72d000-02be-9974-900f-d94af1cbc08a@samba.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20200130151342.u554shnaliau42jq@wittgenstein>
+In-Reply-To: <0b72d000-02be-9974-900f-d94af1cbc08a-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
 Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Cc: Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, io-uring <io-uring-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Stefan Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: io-uring <io-uring-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 1/30/20 8:13 AM, Christian Brauner wrote:
-> On Thu, Jan 30, 2020 at 07:11:08AM -0700, Jens Axboe wrote:
+On 1/30/20 7:47 AM, Stefan Metzmacher wrote:
+> Am 30.01.20 um 15:11 schrieb Jens Axboe:
 >> On 1/30/20 3:26 AM, Christian Brauner wrote:
 >>> On Thu, Jan 30, 2020 at 11:11:58AM +0100, Jann Horn wrote:
 >>>> On Thu, Jan 30, 2020 at 2:08 AM Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org> wrote:
@@ -74,29 +76,116 @@ On 1/30/20 8:13 AM, Christian Brauner wrote:
 >>>> important information about the security state of processes visible.
 >>>>
 >>>> Good point about verbosity in fdinfo - I'm not sure about that myself either.
+>>>>
+>>>>> Here's the test app for personality:
+>>>>
+>>>> Oh, that was quick...
+>>>>
+>>>>> # cat 3
+>>>>> pos:    0
+>>>>> flags:  02000002
+>>>>> mnt_id: 14
+>>>>> user-files: 0
+>>>>> user-bufs: 0
+>>>>> personalities:
+>>>>>             1: uid=0/gid=0
+>>>>>
+>>>>>
+>>>>> diff --git a/fs/io_uring.c b/fs/io_uring.c
+>>>>> index c5ca84a305d3..0b2c7d800297 100644
+>>>>> --- a/fs/io_uring.c
+>>>>> +++ b/fs/io_uring.c
+>>>>> @@ -6511,6 +6505,45 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int, fd, u32, to_submit,
+>>>>>         return submitted ? submitted : ret;
+>>>>>  }
+>>>>>
+>>>>> +struct ring_show_idr {
+>>>>> +       struct io_ring_ctx *ctx;
+>>>>> +       struct seq_file *m;
+>>>>> +};
+>>>>> +
+>>>>> +static int io_uring_show_cred(int id, void *p, void *data)
+>>>>> +{
+>>>>> +       struct ring_show_idr *r = data;
+>>>>> +       const struct cred *cred = p;
+>>>>> +
+>>>>> +       seq_printf(r->m, "\t%5d: uid=%u/gid=%u\n", id, cred->uid.val,
+>>>>> +                                               cred->gid.val);
+>>>>
+>>>> As Stefan said, the ->uid and ->gid aren't very useful, since when a
+>>>> process switches UIDs for accessing things in the filesystem, it
+>>>> probably only changes its EUID and FSUID, not its RUID.
+>>>> I think what's particularly relevant for uring would be the ->fsuid
+>>>> and the ->fsgid along with ->cap_effective; and perhaps for some
+>>>> operations also the ->euid and ->egid. The real UID/GID aren't really
+>>>> relevant when performing normal filesystem operations and such.
+>>>
+>>> This should probably just use the same format that is found in
+>>> /proc/<pid>/status to make it easy for tools to use the same parsing
+>>> logic and for the sake of consistency. We've adapted the same format for
+>>> pidfds. So that would mean:
+>>>
+>>> Uid:	1000	1000	1000	1000
+>>> Gid:	1000	1000	1000	1000
+>>>
+>>> Which would be: Real, effective, saved set, and filesystem {G,U}IDs
+>>>
+>>> And CapEff in /proc/<pid>/status has the format:
+>>> CapEff:	0000000000000000
+>>
+>> I agree, consistency is good. I've added this, and also changed the
+>> naming to be CamelCase, which is seems like most of them are. Now it
+>> looks like this:
+>>
+>> pos:	0
+>> flags:	02000002
+>> mnt_id:	14
+>> UserFiles:     0
+>> UserBufs:     0
+>> Personalities:
+>>     1
+>> 	Uid:	0		0		0		0
+>> 	Gid:	0		0		0		0
+>> 	Groups:	0
+>> 	CapEff:	0000003fffffffff
+>>
+>> for a single personality registered (root). I have to indent it an extra
+>> tab to display each personality.
 > 
-> Afaik, there's no rule here. I would expect that it shouldn't exceed
-> 4096kb just because that is the limit that seems to be enforced for
-> writes to proc files atm; other than that it should be the wild west.
-> The fdinfo files are mostly interesting for anon_inode fds imho and the
-> ones that come to mind right now simply don't have a lot of information
-> to provide:
+> That looks good.
 > 
-> eventfd
-> timerfd
-> seccomp_notify_fd
+> Maybe also print some details of struct io_ring_ctx,
+> flags and the ring sizes, ctx->cred.
 > 
-> Potentially, the mount fds from David could be extended in the future.
+> Maybe details for io_wq and sqo_thread.
 
-4MB is huge, I'd not get anywhere near that. So I'd say the current
-format is probably fine. I honed it a little bit to be prettier, looks
-good to me. I'll send it out for review.
+Yeah, I agree that we should probably just add a ton more, there's
+plenty of information that would be useful. But let's start simple - I
+forgot to CC you on the patch I just sent out, but it's basically the
+above cleaned up. We dump information that's registered with the ring,
+that's the theme right now. I'd be happy to add some of the state
+information as well, we should do that as a separate patch.
 
-> (Side note: One thing that comes to mind is that we should probably
-> enforce^Wdocument that all fdinfo files use CamelCase?)
+> Maybe pending requests?
+> I'm not sure about how io_wq threads work in detail.
+> Is it possible that a large number of blocking request
+> (against an external harddisk with disconnected cable)
+> to block other blocking requests to a working ssd?
+> It would be good to diagnose such situations from
+> the output.
 
-Fine with me, seems to already be the norm, would be nice to have it
-documented.
+io_uring doesn't necessarily track pending requests, only if it has to.
+For bounded request time IO, like the above, it'll depend on the
+concurrency level. If you setup the ring with eg N entries, that'll be
+at most N pending bounded requests. If all of those are blocked because
+the disk isn't responding, yes, that could happen. At least until the
+timeout happens.
+
+> How is this supposed to be ABI-wise? Is it possible to change
+> the output in later kernel versions?
+
+We should always be able to append to the file, I'd just prefer if we
+don't change the format of lines that have already been added.
 
 -- 
 Jens Axboe
