@@ -1,23 +1,160 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [RFC PATCH v4 1/4] fs: add flags argument to i_op->link()
-Date: Fri, 31 Jan 2020 13:48:42 +0000
-Message-ID: <134625.1580478522@warthog.procyon.org.uk>
-References: <5b94d23baef8c2a256384f436650f4c4868915a2.1580251857.git.osandov@fb.com> <cover.1580251857.git.osandov@fb.com>
+From: Steve Grubb <sgrubb@redhat.com>
+Subject: Re: [PATCH ghak90 V8 13/16] audit: track container nesting
+Date: Fri, 31 Jan 2020 09:50:08 -0500
+Message-ID: <5238532.OiMyN8JqPO@x2>
+References: <cover.1577736799.git.rgb@redhat.com> <6452955c1e038227a5cd169f689f3fd3db27513f.1577736799.git.rgb@redhat.com> <CAHC9VhRkH=YEjAY6dJJHSp934grHnf=O4RiqLu3U8DzdVQOZkg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <5b94d23baef8c2a256384f436650f4c4868915a2.1580251857.git.osandov@fb.com>
-Content-ID: <134624.1580478522.1@warthog.procyon.org.uk>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Omar Sandoval <osandov@osandov.com>
-Cc: dhowells@redhat.com, linux-fsdevel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, kernel-team@fb.com, linux-api@vger.kernel.org, Amir Goldstein <amir73il@gmail.com>, Xi Wang <xi@cs.washington.edu>
+Content-Transfer-Encoding: 7Bit
+Return-path: <netfilter-devel-owner@vger.kernel.org>
+In-Reply-To: <CAHC9VhRkH=YEjAY6dJJHSp934grHnf=O4RiqLu3U8DzdVQOZkg@mail.gmail.com>
+Sender: netfilter-devel-owner@vger.kernel.org
+To: Paul Moore <paul@paul-moore.com>
+Cc: Richard Guy Briggs <rgb@redhat.com>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-Omar Sandoval <osandov@osandov.com> wrote:
+On Wednesday, January 22, 2020 4:29:12 PM EST Paul Moore wrote:
+> On Tue, Dec 31, 2019 at 2:51 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > Track the parent container of a container to be able to filter and
+> > report nesting.
+> > 
+> > Now that we have a way to track and check the parent container of a
+> > container, modify the contid field format to be able to report that
+> > nesting using a carrat ("^") separator to indicate nesting.  The
+> > original field format was "contid=<contid>" for task-associated records
+> > and "contid=<contid>[,<contid>[...]]" for network-namespace-associated
+> > records.  The new field format is
+> > "contid=<contid>[^<contid>[...]][,<contid>[...]]".
+> 
+> Let's make sure we always use a comma as a separator, even when
+> recording the parent information, for example:
+> "contid=<contid>[,^<contid>[...]][,<contid>[...]]"
+> 
+> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > ---
+> > 
+> >  include/linux/audit.h |  1 +
+> >  kernel/audit.c        | 53
+> >  +++++++++++++++++++++++++++++++++++++++++++-------- kernel/audit.h     
+> >    |  1 +
+> >  kernel/auditfilter.c  | 17 ++++++++++++++++-
+> >  kernel/auditsc.c      |  2 +-
+> >  5 files changed, 64 insertions(+), 10 deletions(-)
+> 
+> ...
+> 
+> > diff --git a/kernel/audit.c b/kernel/audit.c
+> > index ef8e07524c46..68be59d1a89b 100644
+> > --- a/kernel/audit.c
+> > +++ b/kernel/audit.c
+> > 
+> > @@ -492,6 +493,7 @@ void audit_switch_task_namespaces(struct nsproxy *ns,
+> > struct task_struct *p)> 
+> >                 audit_netns_contid_add(new->net_ns, contid);
+> >  
+> >  }
+> > 
+> > +void audit_log_contid(struct audit_buffer *ab, u64 contid);
+> 
+> If we need a forward declaration, might as well just move it up near
+> the top of the file with the rest of the declarations.
+> 
+> > +void audit_log_contid(struct audit_buffer *ab, u64 contid)
+> > +{
+> > +       struct audit_contobj *cont = NULL, *prcont = NULL;
+> > +       int h;
+> 
+> It seems safer to pass the audit container ID object and not the u64.
+> 
+> > +       if (!audit_contid_valid(contid)) {
+> > +               audit_log_format(ab, "%llu", contid);
+> 
+> Do we really want to print (u64)-1 here?  Since this is a known
+> invalid number, would "?" be a better choice?
 
-> -	int (*link) (struct dentry *,struct inode *,struct dentry *);
-> +	int (*link) (struct dentry *,struct inode *,struct dentry *, int);
+The established pattern is that we print -1 when its unset and "?" when its 
+totalling missing. So, how could this be invalid? It should be set or not. 
+That is unless its totally missing just like when we do not run with selinux 
+enabled and a context just doesn't exist.
 
-Can you make it unsigned int?
+-Steve
 
-David
+
+> > +               return;
+> > +       }
+> > +       h = audit_hash_contid(contid);
+> > +       rcu_read_lock();
+> > +       list_for_each_entry_rcu(cont, &audit_contid_hash[h], list)
+> > +               if (cont->id == contid) {
+> > +                       prcont = cont;
+> 
+> Why not just pull the code below into the body of this if statement?
+> It all needs to be done under the RCU read lock anyway and the code
+> would read much better this way.
+> 
+> > +                       break;
+> > +               }
+> > +       if (!prcont) {
+> > +               audit_log_format(ab, "%llu", contid);
+> > +               goto out;
+> > +       }
+> > +       while (prcont) {
+> > +               audit_log_format(ab, "%llu", prcont->id);
+> > +               prcont = prcont->parent;
+> > +               if (prcont)
+> > +                       audit_log_format(ab, "^");
+> 
+> In the interest of limiting the number of calls to audit_log_format(),
+> how about something like the following:
+> 
+>   audit_log_format("%llu", cont);
+>   iter = cont->parent;
+>   while (iter) {
+>     if (iter->parent)
+>       audit_log_format("^%llu,", iter);
+>     else
+>       audit_log_format("^%llu", iter);
+>     iter = iter->parent;
+>   }
+> 
+> > +       }
+> > +out:
+> > +       rcu_read_unlock();
+> > +}
+> > +
+> > 
+> >  /*
+> >  
+> >   * audit_log_container_id - report container info
+> >   * @context: task or local context for record
+> 
+> ...
+> 
+> > @@ -2705,9 +2741,10 @@ int audit_set_contid(struct task_struct *task, u64
+> > contid)> 
+> >         if (!ab)
+> >         
+> >                 return rc;
+> > 
+> > -       audit_log_format(ab,
+> > -                        "op=set opid=%d contid=%llu old-contid=%llu",
+> > -                        task_tgid_nr(task), contid, oldcontid);
+> > +       audit_log_format(ab, "op=set opid=%d contid=",
+> > task_tgid_nr(task)); +       audit_log_contid(ab, contid);
+> > +       audit_log_format(ab, " old-contid=");
+> > +       audit_log_contid(ab, oldcontid);
+> 
+> This is an interesting case where contid and old-contid are going to
+> be largely the same, only the first (current) ID is going to be
+> different; do we want to duplicate all of those IDs?
+> 
+> >         audit_log_end(ab);
+> >         return rc;
+> >  
+> >  }
+> > 
+> > @@ -2723,9 +2760,9 @@ void audit_log_container_drop(void)
+> 
+> --
+> paul moore
+> www.paul-moore.com
