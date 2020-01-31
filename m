@@ -1,83 +1,30 @@
-From: Yang Shi <yang.shi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
-Subject: Re: [PATCH] move_pages.2: Returning positive value is a new error
- case
-Date: Fri, 31 Jan 2020 11:40:54 -0800
-Message-ID: <f49736e1-316f-57d4-cd25-5f75b145e033@linux.alibaba.com>
-References: <1580322632-93332-1-git-send-email-yang.shi@linux.alibaba.com>
- <9aac5bff-3a18-ec5f-5aa0-82c38d367590@redhat.com>
+From: Omar Sandoval <osandov-nWWhXC5lh1RBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [RFC PATCH v4 1/4] fs: add flags argument to i_op->link()
+Date: Fri, 31 Jan 2020 12:24:59 -0800
+Message-ID: <20200131202459.GA787405@vader>
+References: <5b94d23baef8c2a256384f436650f4c4868915a2.1580251857.git.osandov@fb.com>
+ <cover.1580251857.git.osandov@fb.com>
+ <134625.1580478522@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <9aac5bff-3a18-ec5f-5aa0-82c38d367590-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Content-Language: en-US
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Hildenbrand <david-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, mhocko-IBi9RG/b67k@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <134625.1580478522-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, kernel-team-b10kYP2dOMg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Xi Wang <xi-GmWTxIRN22iJaUV4rX00uodd74u8MsAO@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Fri, Jan 31, 2020 at 01:48:42PM +0000, David Howells wrote:
+> Omar Sandoval <osandov-nWWhXC5lh1RBDgjK7y7TUQ@public.gmane.org> wrote:
+> 
+> > -	int (*link) (struct dentry *,struct inode *,struct dentry *);
+> > +	int (*link) (struct dentry *,struct inode *,struct dentry *, int);
+> 
+> Can you make it unsigned int?
+> 
+> David
+> 
 
-
-On 1/31/20 2:49 AM, David Hildenbrand wrote:
-> On 29.01.20 19:30, Yang Shi wrote:
->> Since commit a49bd4d71637 ("mm, numa: rework do_pages_move"),
->> the semantic of move_pages() has changed to return the number of
->> non-migrated pages if they were result of a non-fatal reasons (usually a
->> busy page).  This was an unintentional change that hasn't been noticed
->> except for LTP tests which checked for the documented behavior.
->>
->> There are two ways to go around this change.  We can even get back to the
->> original behavior and return -EAGAIN whenever migrate_pages is not able
->> to migrate pages due to non-fatal reasons.  Another option would be to
->> simply continue with the changed semantic and extend move_pages
->> documentation to clarify that -errno is returned on an invalid input or
->> when migration simply cannot succeed (e.g. -ENOMEM, -EBUSY) or the
->> number of pages that couldn't have been migrated due to ephemeral
->> reasons (e.g. page is pinned or locked for other reasons).
->>
->> We decided to keep the second option in kernel because this behavior is in
->> place for some time without anybody complaining and possibly new users
->> depending on it.  Also it allows to have a slightly easier error handling
->> as the caller knows that it is worth to retry when err > 0.
->>
->> Update man pages to reflect the new semantic.
->>
->> Cc: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
->> Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> Signed-off-by: Yang Shi <yang.shi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
->> ---
->>   man2/move_pages.2 | 6 +++++-
->>   1 file changed, 5 insertions(+), 1 deletion(-)
->>
->> diff --git a/man2/move_pages.2 b/man2/move_pages.2
->> index 1bf1053..c6cf3f8 100644
->> --- a/man2/move_pages.2
->> +++ b/man2/move_pages.2
->> @@ -164,9 +164,13 @@ returns zero.
->>   .\" do the right thing?
->>   On error, it returns \-1, and sets
->>   .I errno
->> -to indicate the error.
->> +to indicate the error. Or positive value to report the number of
->> +non-migrated pages.
-> "If a positive value is returned, it's the number of non-migrated pages".
->
->>   .SH ERRORS
->>   .TP
->> +.B Positive value
->> +The number of non-migrated pages if they were result of a non-fatal
->> +reasons since version 4.17.
-> s/result/the result/ ?
->
-> s/a reasons/reasons/ ?
->
-> s/since version 4.17/(since 4.17)/ ?
-
-Thanks. Will fix in new version.
-
->
->>   .B E2BIG
->>   Too many pages to move.
->>   Since Linux 2.6.29,
->>
->
+For some reason, the linkat() syscall takes an int, but you're right,
+might as well make it an unsigned int in the VFS.
