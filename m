@@ -1,160 +1,83 @@
-From: Steve Grubb <sgrubb@redhat.com>
-Subject: Re: [PATCH ghak90 V8 13/16] audit: track container nesting
-Date: Fri, 31 Jan 2020 09:50:08 -0500
-Message-ID: <5238532.OiMyN8JqPO@x2>
-References: <cover.1577736799.git.rgb@redhat.com> <6452955c1e038227a5cd169f689f3fd3db27513f.1577736799.git.rgb@redhat.com> <CAHC9VhRkH=YEjAY6dJJHSp934grHnf=O4RiqLu3U8DzdVQOZkg@mail.gmail.com>
+From: Yang Shi <yang.shi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
+Subject: Re: [PATCH] move_pages.2: Returning positive value is a new error
+ case
+Date: Fri, 31 Jan 2020 11:40:54 -0800
+Message-ID: <f49736e1-316f-57d4-cd25-5f75b145e033@linux.alibaba.com>
+References: <1580322632-93332-1-git-send-email-yang.shi@linux.alibaba.com>
+ <9aac5bff-3a18-ec5f-5aa0-82c38d367590@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <netfilter-devel-owner@vger.kernel.org>
-In-Reply-To: <CAHC9VhRkH=YEjAY6dJJHSp934grHnf=O4RiqLu3U8DzdVQOZkg@mail.gmail.com>
-Sender: netfilter-devel-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: Richard Guy Briggs <rgb@redhat.com>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <9aac5bff-3a18-ec5f-5aa0-82c38d367590-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Language: en-US
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Hildenbrand <david-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, mhocko-IBi9RG/b67k@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday, January 22, 2020 4:29:12 PM EST Paul Moore wrote:
-> On Tue, Dec 31, 2019 at 2:51 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > Track the parent container of a container to be able to filter and
-> > report nesting.
-> > 
-> > Now that we have a way to track and check the parent container of a
-> > container, modify the contid field format to be able to report that
-> > nesting using a carrat ("^") separator to indicate nesting.  The
-> > original field format was "contid=<contid>" for task-associated records
-> > and "contid=<contid>[,<contid>[...]]" for network-namespace-associated
-> > records.  The new field format is
-> > "contid=<contid>[^<contid>[...]][,<contid>[...]]".
-> 
-> Let's make sure we always use a comma as a separator, even when
-> recording the parent information, for example:
-> "contid=<contid>[,^<contid>[...]][,<contid>[...]]"
-> 
-> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > ---
-> > 
-> >  include/linux/audit.h |  1 +
-> >  kernel/audit.c        | 53
-> >  +++++++++++++++++++++++++++++++++++++++++++-------- kernel/audit.h     
-> >    |  1 +
-> >  kernel/auditfilter.c  | 17 ++++++++++++++++-
-> >  kernel/auditsc.c      |  2 +-
-> >  5 files changed, 64 insertions(+), 10 deletions(-)
-> 
-> ...
-> 
-> > diff --git a/kernel/audit.c b/kernel/audit.c
-> > index ef8e07524c46..68be59d1a89b 100644
-> > --- a/kernel/audit.c
-> > +++ b/kernel/audit.c
-> > 
-> > @@ -492,6 +493,7 @@ void audit_switch_task_namespaces(struct nsproxy *ns,
-> > struct task_struct *p)> 
-> >                 audit_netns_contid_add(new->net_ns, contid);
-> >  
-> >  }
-> > 
-> > +void audit_log_contid(struct audit_buffer *ab, u64 contid);
-> 
-> If we need a forward declaration, might as well just move it up near
-> the top of the file with the rest of the declarations.
-> 
-> > +void audit_log_contid(struct audit_buffer *ab, u64 contid)
-> > +{
-> > +       struct audit_contobj *cont = NULL, *prcont = NULL;
-> > +       int h;
-> 
-> It seems safer to pass the audit container ID object and not the u64.
-> 
-> > +       if (!audit_contid_valid(contid)) {
-> > +               audit_log_format(ab, "%llu", contid);
-> 
-> Do we really want to print (u64)-1 here?  Since this is a known
-> invalid number, would "?" be a better choice?
-
-The established pattern is that we print -1 when its unset and "?" when its 
-totalling missing. So, how could this be invalid? It should be set or not. 
-That is unless its totally missing just like when we do not run with selinux 
-enabled and a context just doesn't exist.
-
--Steve
 
 
-> > +               return;
-> > +       }
-> > +       h = audit_hash_contid(contid);
-> > +       rcu_read_lock();
-> > +       list_for_each_entry_rcu(cont, &audit_contid_hash[h], list)
-> > +               if (cont->id == contid) {
-> > +                       prcont = cont;
-> 
-> Why not just pull the code below into the body of this if statement?
-> It all needs to be done under the RCU read lock anyway and the code
-> would read much better this way.
-> 
-> > +                       break;
-> > +               }
-> > +       if (!prcont) {
-> > +               audit_log_format(ab, "%llu", contid);
-> > +               goto out;
-> > +       }
-> > +       while (prcont) {
-> > +               audit_log_format(ab, "%llu", prcont->id);
-> > +               prcont = prcont->parent;
-> > +               if (prcont)
-> > +                       audit_log_format(ab, "^");
-> 
-> In the interest of limiting the number of calls to audit_log_format(),
-> how about something like the following:
-> 
->   audit_log_format("%llu", cont);
->   iter = cont->parent;
->   while (iter) {
->     if (iter->parent)
->       audit_log_format("^%llu,", iter);
->     else
->       audit_log_format("^%llu", iter);
->     iter = iter->parent;
->   }
-> 
-> > +       }
-> > +out:
-> > +       rcu_read_unlock();
-> > +}
-> > +
-> > 
-> >  /*
-> >  
-> >   * audit_log_container_id - report container info
-> >   * @context: task or local context for record
-> 
-> ...
-> 
-> > @@ -2705,9 +2741,10 @@ int audit_set_contid(struct task_struct *task, u64
-> > contid)> 
-> >         if (!ab)
-> >         
-> >                 return rc;
-> > 
-> > -       audit_log_format(ab,
-> > -                        "op=set opid=%d contid=%llu old-contid=%llu",
-> > -                        task_tgid_nr(task), contid, oldcontid);
-> > +       audit_log_format(ab, "op=set opid=%d contid=",
-> > task_tgid_nr(task)); +       audit_log_contid(ab, contid);
-> > +       audit_log_format(ab, " old-contid=");
-> > +       audit_log_contid(ab, oldcontid);
-> 
-> This is an interesting case where contid and old-contid are going to
-> be largely the same, only the first (current) ID is going to be
-> different; do we want to duplicate all of those IDs?
-> 
-> >         audit_log_end(ab);
-> >         return rc;
-> >  
-> >  }
-> > 
-> > @@ -2723,9 +2760,9 @@ void audit_log_container_drop(void)
-> 
-> --
-> paul moore
-> www.paul-moore.com
+On 1/31/20 2:49 AM, David Hildenbrand wrote:
+> On 29.01.20 19:30, Yang Shi wrote:
+>> Since commit a49bd4d71637 ("mm, numa: rework do_pages_move"),
+>> the semantic of move_pages() has changed to return the number of
+>> non-migrated pages if they were result of a non-fatal reasons (usually a
+>> busy page).  This was an unintentional change that hasn't been noticed
+>> except for LTP tests which checked for the documented behavior.
+>>
+>> There are two ways to go around this change.  We can even get back to the
+>> original behavior and return -EAGAIN whenever migrate_pages is not able
+>> to migrate pages due to non-fatal reasons.  Another option would be to
+>> simply continue with the changed semantic and extend move_pages
+>> documentation to clarify that -errno is returned on an invalid input or
+>> when migration simply cannot succeed (e.g. -ENOMEM, -EBUSY) or the
+>> number of pages that couldn't have been migrated due to ephemeral
+>> reasons (e.g. page is pinned or locked for other reasons).
+>>
+>> We decided to keep the second option in kernel because this behavior is in
+>> place for some time without anybody complaining and possibly new users
+>> depending on it.  Also it allows to have a slightly easier error handling
+>> as the caller knows that it is worth to retry when err > 0.
+>>
+>> Update man pages to reflect the new semantic.
+>>
+>> Cc: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
+>> Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>> Signed-off-by: Yang Shi <yang.shi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
+>> ---
+>>   man2/move_pages.2 | 6 +++++-
+>>   1 file changed, 5 insertions(+), 1 deletion(-)
+>>
+>> diff --git a/man2/move_pages.2 b/man2/move_pages.2
+>> index 1bf1053..c6cf3f8 100644
+>> --- a/man2/move_pages.2
+>> +++ b/man2/move_pages.2
+>> @@ -164,9 +164,13 @@ returns zero.
+>>   .\" do the right thing?
+>>   On error, it returns \-1, and sets
+>>   .I errno
+>> -to indicate the error.
+>> +to indicate the error. Or positive value to report the number of
+>> +non-migrated pages.
+> "If a positive value is returned, it's the number of non-migrated pages".
+>
+>>   .SH ERRORS
+>>   .TP
+>> +.B Positive value
+>> +The number of non-migrated pages if they were result of a non-fatal
+>> +reasons since version 4.17.
+> s/result/the result/ ?
+>
+> s/a reasons/reasons/ ?
+>
+> s/since version 4.17/(since 4.17)/ ?
+
+Thanks. Will fix in new version.
+
+>
+>>   .B E2BIG
+>>   Too many pages to move.
+>>   Since Linux 2.6.29,
+>>
+>
