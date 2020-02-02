@@ -1,36 +1,124 @@
 From: Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH man-pages v2 0/2] document openat2(2)
-Date: Mon,  3 Feb 2020 02:19:05 +1100
-Message-ID: <20200202151907.23587-1-cyphar@cyphar.com>
+Subject: [PATCH man-pages v2 1/2] path_resolution.7: update to mention openat2(2) features
+Date: Mon,  3 Feb 2020 02:19:06 +1100
+Message-ID: <20200202151907.23587-2-cyphar@cyphar.com>
+References: <20200202151907.23587-1-cyphar@cyphar.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20200202151907.23587-1-cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>
 Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Cc: Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>, Christian Brauner <christian-STijNZzMWpgWenYVfaLwtA@public.gmane.org>, Aleksa Sarai <asarai-l3A5Bk7waGM@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Patch changelog:
-  v2:
-    * Updated based on the new (now-merged) structure layout and semantics.
-  v1: <https://lore.kernel.org/linux-man/20191206142931.28138-1-cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org/>
-    * Updated based on Kerrisk's review.
- RFC: <https://lore.kernel.org/linux-man/20191003145542.17490-1-cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org/>
+Signed-off-by: Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>
+---
+ man7/path_resolution.7 | 56 ++++++++++++++++++++++++++++--------------
+ 1 file changed, 38 insertions(+), 18 deletions(-)
 
-Now that openat2(2) has landed in Linus's tree[1], here is the
-associated man-page changes to document it.
-
-[1]: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=b55eef872a96738ea9cb35774db5ce9a7d3a648f
-
-Aleksa Sarai (2):
-  path_resolution.7: update to mention openat2(2) features
-  openat2.2: document new openat2(2) syscall
-
- man2/open.2            |  17 ++
- man2/openat2.2         | 471 +++++++++++++++++++++++++++++++++++++++++
- man7/path_resolution.7 |  56 +++--
- 3 files changed, 526 insertions(+), 18 deletions(-)
- create mode 100644 man2/openat2.2
-
+diff --git a/man7/path_resolution.7 b/man7/path_resolution.7
+index 07664ed8faec..b4a65cc53120 100644
+--- a/man7/path_resolution.7
++++ b/man7/path_resolution.7
+@@ -29,30 +29,38 @@ path_resolution \- how a pathname is resolved to a file
+ Some UNIX/Linux system calls have as parameter one or more filenames.
+ A filename (or pathname) is resolved as follows.
+ .SS Step 1: start of the resolution process
+-If the pathname starts with the \(aq/\(aq character,
+-the starting lookup directory
+-is the root directory of the calling process.
+-(A process inherits its
+-root directory from its parent.
+-Usually this will be the root directory
+-of the file hierarchy.
+-A process may get a different root directory
+-by use of the
++If the pathname starts with the \(aq/\(aq character, the starting lookup
++directory is the root directory of the calling process.
++A process inherits its root directory from its parent.
++Usually this will be the root directory of the file hierarchy.
++A process may get a different root directory by use of the
+ .BR chroot (2)
+-system call.
++system call, or may temporarily use a different root directory by using
++.BR openat2 (2)
++with the
++.B RESOLVE_IN_ROOT
++flag set.
++.PP
+ A process may get an entirely private mount namespace in case
+ it\(emor one of its ancestors\(emwas started by an invocation of the
+ .BR clone (2)
+ system call that had the
+ .B CLONE_NEWNS
+-flag set.)
++flag set.
+ This handles the \(aq/\(aq part of the pathname.
+ .PP
+-If the pathname does not start with the \(aq/\(aq character, the
+-starting lookup directory of the resolution process is the current working
+-directory of the process.
+-(This is also inherited from the parent.
+-It can be changed by use of the
++If the pathname does not start with the \(aq/\(aq character, the starting
++lookup directory of the resolution process is the current working directory of
++the process \(em or in the case of
++.BR openat (2)-style
++system calls, the
++.I dfd
++argument (or the current working directory if
++.B AT_FDCWD
++is passed as the
++.I dfd
++argument). The current working directory is inherited from the parent, and can
++be changed by use of the
+ .BR chdir (2)
+ system call.)
+ .PP
+@@ -91,7 +99,7 @@ Upon error, that error is returned.
+ If the result is not a directory, an
+ .B ENOTDIR
+ error is returned.
+-If the resolution of the symlink is successful and returns a directory,
++If the resolution of the symbolic link is successful and returns a directory,
+ we set the current lookup directory to that directory, and go to
+ the next component.
+ Note that the resolution process here can involve recursion if the
+@@ -124,6 +132,12 @@ the kernel's pathname-resolution code
+ was reworked to eliminate the use of recursion,
+ so that the only limit that remains is the maximum of 40
+ resolutions for the entire pathname.
++.PP
++The resolution of symbolic links during this stage can be blocked by using
++.BR openat2 (2),
++with the
++.B RESOLVE_NO_SYMLINKS
++flag set.
+ .SS Step 3: find the final entry
+ The lookup of the final component of the pathname goes just like
+ that of all other components, as described in the previous step,
+@@ -145,7 +159,7 @@ The path resolution process will assume that these entries have
+ their conventional meanings, regardless of whether they are
+ actually present in the physical filesystem.
+ .PP
+-One cannot walk down past the root: "/.." is the same as "/".
++One cannot walk up past the root: "/.." is the same as "/".
+ .SS Mount points
+ After a "mount dev path" command, the pathname "path" refers to
+ the root of the filesystem hierarchy on the device "dev", and no
+@@ -154,6 +168,12 @@ longer to whatever it referred to earlier.
+ One can walk out of a mounted filesystem: "path/.." refers to
+ the parent directory of "path",
+ outside of the filesystem hierarchy on "dev".
++.PP
++Traversal of mount points can be blocked by using
++.BR openat2 (2),
++with the
++.B RESOLVE_NO_XDEV
++flag set (though note that this also restricts bind mount traversal).
+ .SS Trailing slashes
+ If a pathname ends in a \(aq/\(aq, that forces resolution of the preceding
+ component as in Step 2: it has to exist and resolve to a directory.
 -- 
 2.25.0
