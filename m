@@ -1,114 +1,174 @@
-From: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH ghak90 V8 05/16] audit: log drop of contid on exit of
- last task
-Date: Tue, 4 Feb 2020 18:02:35 -0500
-Message-ID: <20200204230235.dwunh76dum4kkssp@madcap2.tricolour.ca>
+From: Richard Guy Briggs <rgb@redhat.com>
+Subject: Re: [PATCH ghak90 V8 07/16] audit: add contid support for signalling
+ the audit daemon
+Date: Tue, 4 Feb 2020 18:14:54 -0500
+Message-ID: <20200204231454.oxa7pyvuxbj466fj@madcap2.tricolour.ca>
 References: <cover.1577736799.git.rgb@redhat.com>
- <b3725abab452beaba740ac58f76144e6c3bda2fa.1577736799.git.rgb@redhat.com>
- <CAHC9VhQ=+4P6Rr1S1-sNb2X-CbYYKMQMJDGP=bBr8GG3xLD8qQ@mail.gmail.com>
+ <7d7933d742fdf4a94c84b791906a450b16f2e81f.1577736799.git.rgb@redhat.com>
+ <CAHC9VhSuwJGryfrBfzxG01zwb-O_7dbjS0x0a3w-XjcNuYSAcg@mail.gmail.com>
+ <20200123162918.b3jbed7tbvr2sf2p@madcap2.tricolour.ca>
+ <CAHC9VhTusiQoudB8G5jjDFyM9WxBUAjZ6_X35ywJ063Jb75dQA@mail.gmail.com>
+ <20200123200412.j2aucdp3cvk57prw@madcap2.tricolour.ca>
+ <CAHC9VhQ2_MQdGAT6Pda9FRe6s0y4JC1XUQenpr-VJiyq9M_CBw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <netfilter-devel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAHC9VhQ=+4P6Rr1S1-sNb2X-CbYYKMQMJDGP=bBr8GG3xLD8qQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
-Cc: containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux-Audit Mailing List <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, omosnace-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org, Dan Walsh <dwalsh-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, mpatel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+In-Reply-To: <CAHC9VhQ2_MQdGAT6Pda9FRe6s0y4JC1XUQenpr-VJiyq9M_CBw@mail.gmail.com>
+Sender: netfilter-devel-owner@vger.kernel.org
+To: Paul Moore <paul@paul-moore.com>
+Cc: nhorman@tuxdriver.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, dhowells@redhat.com, Linux-Audit Mailing List <linux-audit@redhat.com>, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, simo@redhat.com, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>, mpatel@redhat.com, Serge Hallyn <serge@hallyn.com>
 List-Id: linux-api@vger.kernel.org
 
-On 2020-01-22 16:28, Paul Moore wrote:
-> On Tue, Dec 31, 2019 at 2:50 PM Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+On 2020-01-23 16:35, Paul Moore wrote:
+> On Thu, Jan 23, 2020 at 3:04 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > On 2020-01-23 12:09, Paul Moore wrote:
+> > > On Thu, Jan 23, 2020 at 11:29 AM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > > > On 2020-01-22 16:28, Paul Moore wrote:
+> > > > > On Tue, Dec 31, 2019 at 2:50 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > > > > >
+> > > > > > Add audit container identifier support to the action of signalling the
+> > > > > > audit daemon.
+> > > > > >
+> > > > > > Since this would need to add an element to the audit_sig_info struct,
+> > > > > > a new record type AUDIT_SIGNAL_INFO2 was created with a new
+> > > > > > audit_sig_info2 struct.  Corresponding support is required in the
+> > > > > > userspace code to reflect the new record request and reply type.
+> > > > > > An older userspace won't break since it won't know to request this
+> > > > > > record type.
+> > > > > >
+> > > > > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > > > > > ---
+> > > > > >  include/linux/audit.h       |  7 +++++++
+> > > > > >  include/uapi/linux/audit.h  |  1 +
+> > > > > >  kernel/audit.c              | 35 +++++++++++++++++++++++++++++++++++
+> > > > > >  kernel/audit.h              |  1 +
+> > > > > >  security/selinux/nlmsgtab.c |  1 +
+> > > > > >  5 files changed, 45 insertions(+)
+> > > > >
+> > > > > ...
+> > > > >
+> > > > > > diff --git a/kernel/audit.c b/kernel/audit.c
+> > > > > > index 0871c3e5d6df..51159c94041c 100644
+> > > > > > --- a/kernel/audit.c
+> > > > > > +++ b/kernel/audit.c
+> > > > > > @@ -126,6 +126,14 @@ struct auditd_connection {
+> > > > > >  kuid_t         audit_sig_uid = INVALID_UID;
+> > > > > >  pid_t          audit_sig_pid = -1;
+> > > > > >  u32            audit_sig_sid = 0;
+> > > > > > +/* Since the signal information is stored in the record buffer at the
+> > > > > > + * time of the signal, but not retrieved until later, there is a chance
+> > > > > > + * that the last process in the container could terminate before the
+> > > > > > + * signal record is delivered.  In this circumstance, there is a chance
+> > > > > > + * the orchestrator could reuse the audit container identifier, causing
+> > > > > > + * an overlap of audit records that refer to the same audit container
+> > > > > > + * identifier, but a different container instance.  */
+> > > > > > +u64            audit_sig_cid = AUDIT_CID_UNSET;
+> > > > >
+> > > > > I believe we could prevent the case mentioned above by taking an
+> > > > > additional reference to the audit container ID object when the signal
+> > > > > information is collected, dropping it only after the signal
+> > > > > information is collected by userspace or another process signals the
+> > > > > audit daemon.  Yes, it would block that audit container ID from being
+> > > > > reused immediately, but since we are talking about one number out of
+> > > > > 2^64 that seems like a reasonable tradeoff.
+> > > >
+> > > > I had thought that through and should have been more explicit about that
+> > > > situation when I documented it.  We could do that, but then the syscall
+> > > > records would be connected with the call from auditd on shutdown to
+> > > > request that signal information, rather than the exit of that last
+> > > > process that was using that container.  This strikes me as misleading.
+> > > > Is that really what we want?
+> > >
+> > >  ???
+> > >
+> > > I think one of us is not understanding the other; maybe it's me, maybe
+> > > it's you, maybe it's both of us.
+> > >
+> > > Anyway, here is what I was trying to convey with my original comment
+> > > ... When we record the audit container ID in audit_signal_info() we
+> > > take an extra reference to the audit container ID object so that it
+> > > will not disappear (and get reused) until after we respond with an
+> > > AUDIT_SIGNAL_INFO2.  In audit_receive_msg() when we do the
+> > > AUDIT_SIGNAL_INFO2 processing we drop the extra reference we took in
+> > > audit_signal_info().  Unless I'm missing some other change you made,
+> > > this *shouldn't* affect the syscall records, all it does is preserve
+> > > the audit container ID object in the kernel's ACID store so it doesn't
+> > > get reused.
 > >
-> > Since we are tracking the life of each audit container indentifier, we
-> > can match the creation event with the destruction event.  Log the
-> > destruction of the audit container identifier when the last process in
-> > that container exits.
+> > This is exactly what I had understood.  I hadn't considered the extra
+> > details below in detail due to my original syscall concern, but they
+> > make sense.
 > >
-> > Signed-off-by: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> > ---
-> >  kernel/audit.c   | 17 +++++++++++++++++
-> >  kernel/audit.h   |  2 ++
-> >  kernel/auditsc.c |  2 ++
-> >  3 files changed, 21 insertions(+)
+> > The syscall I refer to is the one connected with the drop of the
+> > audit container identifier by the last process that was in that
+> > container in patch 5/16.  The production of this record is contingent on
+> > the last ref in a contobj being dropped.  So if it is due to that ref
+> > being maintained by audit_signal_info() until the AUDIT_SIGNAL_INFO2
+> > record it fetched, then it will appear that the fetch action closed the
+> > container rather than the last process in the container to exit.
 > >
-> > diff --git a/kernel/audit.c b/kernel/audit.c
-> > index 4bab20f5f781..fa8f1aa3a605 100644
-> > --- a/kernel/audit.c
-> > +++ b/kernel/audit.c
-> > @@ -2502,6 +2502,23 @@ int audit_set_contid(struct task_struct *task, u64 contid)
-> >         return rc;
-> >  }
-> >
-> > +void audit_log_container_drop(void)
-> > +{
-> > +       struct audit_buffer *ab;
-> > +
-> > +       if (!current->audit || !current->audit->cont ||
-> > +           refcount_read(&current->audit->cont->refcount) > 1)
-> > +               return;
-> > +       ab = audit_log_start(audit_context(), GFP_KERNEL, AUDIT_CONTAINER_OP);
-> > +       if (!ab)
-> > +               return;
-> > +
-> > +       audit_log_format(ab, "op=drop opid=%d contid=%llu old-contid=%llu",
-> > +                        task_tgid_nr(current), audit_get_contid(current),
-> > +                        audit_get_contid(current));
-> > +       audit_log_end(ab);
-> > +}
+> > Does this make sense?
 > 
-> Assumine we are careful about where we call it in audit_free(...), you
-> are confident we can't do this as part of _audit_contobj_put(...),
-> yes?
-
-We need audit_log_container_drop in audit_free_syscall() due to needing
-context, which gets freed in audit_free_syscall() called from
-audit_free().
-
-We need audit_log_container_drop in audit_log_exit() due to having that
-record included before the EOE record at the end of audit_log_exit().
-
-We could put in _contobj_put() if we drop context and any attempt to
-connect it with a syscall record, which I strongly discourage.
-
-The syscall record contains info about subject, container_id record only
-contains info about container object other than subj pid.
-
-> >  /**
-> >   * audit_log_end - end one audit record
-> >   * @ab: the audit_buffer
-> > diff --git a/kernel/audit.h b/kernel/audit.h
-> > index e4a31aa92dfe..162de8366b32 100644
-> > --- a/kernel/audit.h
-> > +++ b/kernel/audit.h
-> > @@ -255,6 +255,8 @@ extern void audit_log_d_path_exe(struct audit_buffer *ab,
-> >  extern struct tty_struct *audit_get_tty(void);
-> >  extern void audit_put_tty(struct tty_struct *tty);
-> >
-> > +extern void audit_log_container_drop(void);
-> > +
-> >  /* audit watch/mark/tree functions */
-> >  #ifdef CONFIG_AUDITSYSCALL
-> >  extern unsigned int audit_serial(void);
-> > diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-> > index 0e2d50533959..bd855794ad26 100644
-> > --- a/kernel/auditsc.c
-> > +++ b/kernel/auditsc.c
-> > @@ -1568,6 +1568,8 @@ static void audit_log_exit(void)
-> >
-> >         audit_log_proctitle();
-> >
-> > +       audit_log_container_drop();
-> > +
-> >         /* Send end of event record to help user space know we are finished */
-> >         ab = audit_log_start(context, GFP_KERNEL, AUDIT_EOE);
-> >         if (ab)
-> > --
-> > 1.8.3.1
-> >
+> More so than your original reply, at least to me anyway.
 > 
-> --
+> It makes sense that the audit container ID wouldn't be marked as
+> "dead" since it would still be very much alive and available for use
+> by the orchestrator, the question is if that is desirable or not.  I
+> think the answer to this comes down the preserving the correctness of
+> the audit log.
+> 
+> If the audit container ID reported by AUDIT_SIGNAL_INFO2 has been
+> reused then I think there is a legitimate concern that the audit log
+> is not correct, and could be misleading.  If we solve that by grabbing
+> an extra reference, then there could also be some confusion as
+> userspace considers a container to be "dead" while the audit container
+> ID still exists in the kernel, and the kernel generated audit
+> container ID death record will not be generated until much later (and
+> possibly be associated with a different event, but that could be
+> solved by unassociating the container death record).
+
+How does syscall association of the death record with AUDIT_SIGNAL_INFO2
+possibly get associated with another event?  Or is the syscall
+association with the fetch for the AUDIT_SIGNAL_INFO2 the other event?
+
+Another idea might be to bump the refcount in audit_signal_info() but
+mark tht contid as dead so it can't be reused if we are concerned that
+the dead contid be reused?
+
+There is still the problem later that the reported contid is incomplete
+compared to the rest of the contid reporting cycle wrt nesting since
+AUDIT_SIGNAL_INFO2 will need to be more complex w/2 variable length
+fields to accommodate a nested contid list.
+
+>  Of the two
+> approaches, I think the latter is safer in that it preserves the
+> correctness of the audit log, even though it could result in a delay
+> of the container death record.
+
+I prefer the former since it strongly indicates last task in the
+container.  The AUDIT_SIGNAL_INFO2 msg has the pid and other subject
+attributes and the contid to strongly link the responsible party.
+
+> Neither way is perfect, so if you have any other ideas I'm all ears.
+> 
+> > > (We do need to do some extra housekeeping in audit_signal_info() to
+> > > deal with the case where nobody asks for AUDIT_SIGNAL_INFO2 -
+> > > basically if audit_sig_cid is not NULL we should drop a reference
+> > > before assigning it a new object pointer, and of course we would need
+> > > to set audit_sig_cid to NULL in audit_receive_msg() after sending it
+> > > up to userspace and dropping the extra ref.)
+> 
+> -- 
 > paul moore
 > www.paul-moore.com
 > 
 
 - RGB
+
+--
+Richard Guy Briggs <rgb@redhat.com>
+Sr. S/W Engineer, Kernel Security, Base Operating Systems
+Remote, Ottawa, Red Hat Canada
+IRC: rgb, SunRaycer
+Voice: +1.647.777.2635, Internal: (81) 32635
