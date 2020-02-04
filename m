@@ -1,76 +1,36 @@
-From: Yang Shi <yang.shi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
-Subject: [v3 PATCH] move_pages.2: Returning positive value is a new error case
-Date: Tue,  4 Feb 2020 03:18:27 +0800
-Message-ID: <1580757507-120233-1-git-send-email-yang.shi@linux.alibaba.com>
+From: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v5 5/6] clone3: allow spawning processes into cgroups
+Date: Tue, 4 Feb 2020 12:13:07 +0100
+Message-ID: <20200204111307.hxtundpcneju2y7n@wittgenstein>
+References: <20200121154844.411-1-christian.brauner@ubuntu.com>
+ <20200121154844.411-6-christian.brauner@ubuntu.com>
+ <20200129132719.GD11384@blackbody.suse.cz>
+ <20200202093702.cdlyytywty7hk3rn@wittgenstein>
+ <20200203143228.GC13360@blackbody.suse.cz>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20200203143228.GC13360-9OudH3eul5jcvrawFnH+a6VXKuFTiq87@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mhocko-IBi9RG/b67k@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, david-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-Cc: yang.shi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michal =?utf-8?Q?Koutn=C3=BD?= <mkoutny-IBi9RG/b67k@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Since commit a49bd4d71637 ("mm, numa: rework do_pages_move"),
-the semantic of move_pages() has changed to return the number of
-non-migrated pages if they were result of a non-fatal reasons (usually a
-busy page).  This was an unintentional change that hasn't been noticed
-except for LTP tests which checked for the documented behavior.
+On Mon, Feb 03, 2020 at 03:32:28PM +0100, Michal Koutný wrote:
+> On Sun, Feb 02, 2020 at 10:37:02AM +0100, Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> wrote:
+> > cgroup_post_fork() is called past the point of no return for fork and
+> > cgroup_css_set_put_fork() is explicitly documented as only being
+> > callable before forks point of no return:
+> I missed this and somehow incorrectly assumed it's called at the end of
+> fork too. I find the css_set refcounting correct now.
+> 
+> BTW any reason why not to utilize cgroup_css_set_put_fork() for the
+> regular cleanup in cgroup_post_fork() too?
 
-There are two ways to go around this change.  We can even get back to the
-original behavior and return -EAGAIN whenever migrate_pages is not able
-to migrate pages due to non-fatal reasons.  Another option would be to
-simply continue with the changed semantic and extend move_pages
-documentation to clarify that -errno is returned on an invalid input or
-when migration simply cannot succeed (e.g. -ENOMEM, -EBUSY) or the
-number of pages that couldn't have been migrated due to ephemeral
-reasons (e.g. page is pinned or locked for other reasons).
+Hmyeah, should be doable if we do:
+kargs->cset = NULL;
+cgroup_css_set_put_fork(kargs);
 
-We decided to keep the second option in kernel because this behavior is in
-place for some time without anybody complaining and possibly new users
-depending on it.  Also it allows to have a slightly easier error handling
-as the caller knows that it is worth to retry when err > 0.
-
-Update man pages to reflect the new semantic.
-
-Cc: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
-Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Yang Shi <yang.shi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
----
-v3: * Fixed the comments from David Hildenbrand.
-    * Fixed the inaccuracy about pre-initialized status array values.
-v2: * Added notes about status array per Michal.
-    * Added Michal's Acked-by.
-
- man2/move_pages.2 | 10 ++++++++--
- 1 file changed, 8 insertions(+), 2 deletions(-)
-
-diff --git a/man2/move_pages.2 b/man2/move_pages.2
-index 1bf1053..50c83a4 100644
---- a/man2/move_pages.2
-+++ b/man2/move_pages.2
-@@ -104,7 +104,9 @@ pages that need to be moved.
- is an array of integers that return the status of each page.
- The array contains valid values only if
- .BR move_pages ()
--did not return an error.
-+did not return an error.  Pre-initialization of the array to the value
-+which cannot represent a real numa node or valid error of status array
-+could help to identify pages that have been migrated
- .PP
- .I flags
- specify what types of pages to move.
-@@ -164,9 +166,13 @@ returns zero.
- .\" do the right thing?
- On error, it returns \-1, and sets
- .I errno
--to indicate the error.
-+to indicate the error. If positive value is returned, it is the number of
-+non-migrated pages.
- .SH ERRORS
- .TP
-+.B Positive value
-+The number of non-migrated pages if they were the result of non-fatal
-+reasons (since version 4.17).
- .B E2BIG
- Too many pages to move.
- Since Linux 2.6.29,
--- 
-1.8.3.1
+Christian
