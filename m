@@ -1,52 +1,29 @@
-From: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v5 5/6] clone3: allow spawning processes into cgroups
-Date: Tue, 4 Feb 2020 16:01:44 +0100
-Message-ID: <20200204150144.fojbdmuyr7bnvgnj@wittgenstein>
-References: <20200121154844.411-1-christian.brauner@ubuntu.com>
- <20200121154844.411-6-christian.brauner@ubuntu.com>
- <20200204115351.GD14879@hirez.programming.kicks-ass.net>
+From: Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH ghak90 V8 13/16] audit: track container nesting
+Date: Tue, 04 Feb 2020 10:47:22 -0500
+Message-ID: <3665686.i1MIc9PeWa@x2>
+References: <cover.1577736799.git.rgb@redhat.com> <5238532.OiMyN8JqPO@x2> <20200204131944.esnzcqvnecfnqgbi@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20200204115351.GD14879-Nxj+rRp3nVydTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20200204131944.esnzcqvnecfnqgbi-bcJWsdo4jJjeVoXN4CMphl7TgLCtbB0G@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux-Audit Mailing List <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, omosnace-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org, Dan Walsh <dwalsh-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, mpatel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 04, 2020 at 12:53:51PM +0100, Peter Zijlstra wrote:
-> On Tue, Jan 21, 2020 at 04:48:43PM +0100, Christian Brauner wrote:
-> > This adds support for creating a process in a different cgroup than its
-> > parent. Callers can limit and account processes and threads right from
-> > the moment they are spawned:
-> > - A service manager can directly spawn new services into dedicated
-> >   cgroups.
-> > - A process can be directly created in a frozen cgroup and will be
-> >   frozen as well.
-> > - The initial accounting jitter experienced by process supervisors and
-> >   daemons is eliminated with this.
-> > - Threaded applications or even thread implementations can choose to
-> >   create a specific cgroup layout where each thread is spawned
-> >   directly into a dedicated cgroup.
-> > 
-> > This feature is limited to the unified hierarchy. Callers need to pass
-> > an directory file descriptor for the target cgroup. The caller can
-> > choose to pass an O_PATH file descriptor. All usual migration
-> > restrictions apply, i.e. there can be no processes in inner nodes. In
-> > general, creating a process directly in a target cgroup adheres to all
-> > migration restrictions.
+On Tuesday, February 4, 2020 8:19:44 AM EST Richard Guy Briggs wrote:
+> > The established pattern is that we print -1 when its unset and "?" when
+> > its totalling missing. So, how could this be invalid? It should be set
+> > or not. That is unless its totally missing just like when we do not run
+> > with selinux enabled and a context just doesn't exist.
 > 
-> AFAICT, he *big* win here is avoiding the write side of the
-> cgroup_threadgroup_rwsem. Or am I mis-reading the patch?
-
-No, you're absolutely right. I just didn't bother putting implementation
-specifics in the cover letter and I probably should have. So thanks for
-pointing that out!
-
+> Ok, so in this case it is clearly unset, so should be -1, which will be a
+> 20-digit number when represented as an unsigned long long int.
 > 
-> That global lock is what makes moving tasks/threads around super
-> expensive, avoiding that by use of this clone() variant wins the day.
+> Thank you for that clarification Steve.
 
-:)
-Christian
+It is literally a  -1.  ( 2 characters)
+
+-Steve
