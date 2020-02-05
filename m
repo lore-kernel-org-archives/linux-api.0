@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v9 6/7] mm: Update alloc_set_pte() for zero page
-Date: Wed,  5 Feb 2020 10:23:07 -0800
-Message-ID: <20200205182308.4028-7-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v9 1/7] x86/cet/ibt: Add Kconfig option for user-mode Indirect Branch Tracking
+Date: Wed,  5 Feb 2020 10:23:02 -0800
+Message-ID: <20200205182308.4028-2-yu-cheng.yu@intel.com>
 References: <20200205182308.4028-1-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,40 +12,63 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Update alloc_set_pte() for the zero-page case.  A special mapping can also
-use a zero page for read.  One use case is the Indirect Branch Tracking
-legacy code page (introduced next).
+Introduce Kconfig option X86_INTEL_BRANCH_TRACKING_USER.
+
+Indirect Branch Tracking (IBT) provides protection against CALL-/JMP-
+oriented programming attacks.  It is active when the kernel has this
+feature enabled, and the processor and the application support it.
+When this feature is enabled, legacy non-IBT applications continue to
+work, but without IBT protection.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- mm/memory.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ arch/x86/Kconfig  | 15 +++++++++++++++
+ arch/x86/Makefile |  7 +++++++
+ 2 files changed, 22 insertions(+)
 
-diff --git a/mm/memory.c b/mm/memory.c
-index 6daa28614327..58c1e4b60991 100644
---- a/mm/memory.c
-+++ b/mm/memory.c
-@@ -3447,6 +3447,12 @@ vm_fault_t alloc_set_pte(struct vm_fault *vmf, struct mem_cgroup *memcg,
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index d1447380e02e..563f3c81f323 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1998,6 +1998,21 @@ config X86_INTEL_SHADOW_STACK_USER
  
- 	flush_icache_page(vma, page);
- 	entry = mk_pte(page, vma->vm_page_prot);
-+
-+	if (is_zero_pfn(pte_pfn(entry))) {
-+		entry = pte_mkspecial(entry);
-+		goto alloc_set_pte_out;
-+	}
-+
- 	if (write)
- 		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
- 	/* copy-on-write page */
-@@ -3459,6 +3465,8 @@ vm_fault_t alloc_set_pte(struct vm_fault *vmf, struct mem_cgroup *memcg,
- 		inc_mm_counter_fast(vma->vm_mm, mm_counter_file(page));
- 		page_add_file_rmap(page, false);
- 	}
-+
-+alloc_set_pte_out:
- 	set_pte_at(vma->vm_mm, vmf->address, vmf->pte, entry);
+ 	  If unsure, say y.
  
- 	/* no need to invalidate: a not-present page won't be cached */
++config X86_INTEL_BRANCH_TRACKING_USER
++	prompt "Intel Indirect Branch Tracking for user-mode"
++	def_bool n
++	depends on CPU_SUP_INTEL && X86_64
++	select X86_INTEL_CET
++	---help---
++	  Indirect Branch Tracking (IBT) provides protection against
++	  CALL-/JMP-oriented programming attacks.  It is active when
++	  the kernel has this feature enabled, and the processor and
++	  the application support it.  When this feature is enabled,
++	  legacy non-IBT applications continue to work, but without
++	  IBT protection.
++
++	  If unsure, say y
++
+ config EFI
+ 	bool "EFI runtime service support"
+ 	depends on ACPI
+diff --git a/arch/x86/Makefile b/arch/x86/Makefile
+index c34f5befa4c8..f97b2c1c4d04 100644
+--- a/arch/x86/Makefile
++++ b/arch/x86/Makefile
+@@ -156,6 +156,13 @@ ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
+   endif
+ endif
+ 
++# Check compiler ibt support
++ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
++  ifeq ($(call cc-option-yn, -fcf-protection=branch), n)
++      $(error CONFIG_X86_INTEL_BRANCH_TRACKING_USER not supported by compiler)
++  endif
++endif
++
+ #
+ # If the function graph tracer is used with mcount instead of fentry,
+ # '-maccumulate-outgoing-args' is needed to prevent a GCC bug
 -- 
 2.21.0
