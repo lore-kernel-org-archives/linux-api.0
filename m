@@ -1,395 +1,61 @@
-From: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v6 6/6] selftests/cgroup: add tests for cloning into cgroups
-Date: Wed,  5 Feb 2020 14:26:23 +0100
-Message-ID: <20200205132623.670015-7-christian.brauner@ubuntu.com>
-References: <20200205132623.670015-1-christian.brauner@ubuntu.com>
+From: Yu-cheng Yu <yu-cheng.yu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [RFC PATCH v9 02/27] x86/cpufeatures: Add CET CPU feature flags for Control-flow Enforcement Technology (CET)
+Date: Wed,  5 Feb 2020 10:19:10 -0800
+Message-ID: <20200205181935.3712-3-yu-cheng.yu@intel.com>
+References: <20200205181935.3712-1-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20200205132623.670015-1-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Roman Gushchin <guro-b10kYP2dOMg@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20200205181935.3712-1-yu-cheng.yu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Balbir Singh <bsingharora-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Eugene Syromiatnikov <esyr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H.J. Lu" <hjl.tools-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Nadav Amit <nadav.amit-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Yu-cheng Yu <yu-cheng.yu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Expand the cgroup test-suite to include tests for CLONE_INTO_CGROUP.
-This adds the following tests:
-- CLONE_INTO_CGROUP manages to clone a process directly into a correctly
-  delegated cgroup
-- CLONE_INTO_CGROUP fails to clone a process into a cgroup that has been
-  removed after we've opened an fd to it
-- CLONE_INTO_CGROUP fails to clone a process into an invalid domain
-  cgroup
-- CLONE_INTO_CGROUP adheres to the no internal process constraint
-- CLONE_INTO_CGROUP works with the freezer feature
+Add CPU feature flags for Control-flow Enforcement Technology (CET).
 
-Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Acked-by: Roman Gushchin <guro-b10kYP2dOMg@public.gmane.org>
-Signed-off-by: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+CPUID.(EAX=7,ECX=0):ECX[bit 7] Shadow stack
+CPUID.(EAX=7,ECX=0):EDX[bit 20] Indirect Branch Tracking
+
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Reviewed-by: Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>
 ---
-/* v1 */
-Link: https://lore.kernel.org/r/20191218173516.7875-4-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+ arch/x86/include/asm/cpufeatures.h | 2 ++
+ arch/x86/kernel/cpu/cpuid-deps.c   | 2 ++
+ 2 files changed, 4 insertions(+)
 
-/* v2 */
-Link: https://lore.kernel.org/r/20191223061504.28716-4-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
-unchanged
-
-/* v3 */
-Link: https://lore.kernel.org/r/20200117002143.15559-6-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
-unchanged
-
-/* v4 */
-Link: https://lore.kernel.org/r/20200117181219.14542-7-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
-unchanged
-
-/* v5 */
-Link: https://lore.kernel.org/r/20200121154844.411-7-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
-unchanged
-- Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>:
-  - add Acked-by: Roman Gushchin <guro-b10kYP2dOMg@public.gmane.org>
-
-/* v6 */
-unchanged
----
- tools/testing/selftests/cgroup/Makefile       |   6 +-
- tools/testing/selftests/cgroup/cgroup_util.c  | 126 ++++++++++++++++++
- tools/testing/selftests/cgroup/cgroup_util.h  |   4 +
- tools/testing/selftests/cgroup/test_core.c    |  64 +++++++++
- .../selftests/clone3/clone3_selftests.h       |  19 ++-
- 5 files changed, 214 insertions(+), 5 deletions(-)
-
-diff --git a/tools/testing/selftests/cgroup/Makefile b/tools/testing/selftests/cgroup/Makefile
-index 66aafe1f5746..967f268fde74 100644
---- a/tools/testing/selftests/cgroup/Makefile
-+++ b/tools/testing/selftests/cgroup/Makefile
-@@ -11,6 +11,6 @@ TEST_GEN_PROGS += test_freezer
- 
- include ../lib.mk
- 
--$(OUTPUT)/test_memcontrol: cgroup_util.c
--$(OUTPUT)/test_core: cgroup_util.c
--$(OUTPUT)/test_freezer: cgroup_util.c
-+$(OUTPUT)/test_memcontrol: cgroup_util.c ../clone3/clone3_selftests.h
-+$(OUTPUT)/test_core: cgroup_util.c ../clone3/clone3_selftests.h
-+$(OUTPUT)/test_freezer: cgroup_util.c ../clone3/clone3_selftests.h
-diff --git a/tools/testing/selftests/cgroup/cgroup_util.c b/tools/testing/selftests/cgroup/cgroup_util.c
-index 8f7131dcf1ff..8a637ca7d73a 100644
---- a/tools/testing/selftests/cgroup/cgroup_util.c
-+++ b/tools/testing/selftests/cgroup/cgroup_util.c
-@@ -15,6 +15,7 @@
- #include <unistd.h>
- 
- #include "cgroup_util.h"
-+#include "../clone3/clone3_selftests.h"
- 
- static ssize_t read_text(const char *path, char *buf, size_t max_len)
- {
-@@ -331,12 +332,112 @@ int cg_run(const char *cgroup,
- 	}
- }
- 
-+pid_t clone_into_cgroup(int cgroup_fd)
-+{
-+#ifdef CLONE_ARGS_SIZE_VER2
-+	pid_t pid;
-+
-+	struct clone_args args = {
-+		.flags = CLONE_INTO_CGROUP,
-+		.exit_signal = SIGCHLD,
-+		.cgroup = cgroup_fd,
-+	};
-+
-+	pid = sys_clone3(&args, sizeof(struct clone_args));
-+	/*
-+	 * Verify that this is a genuine test failure:
-+	 * ENOSYS -> clone3() not available
-+	 * E2BIG  -> CLONE_INTO_CGROUP not available
-+	 */
-+	if (pid < 0 && (errno == ENOSYS || errno == E2BIG))
-+		goto pretend_enosys;
-+
-+	return pid;
-+
-+pretend_enosys:
-+#endif
-+	errno = ENOSYS;
-+	return -ENOSYS;
-+}
-+
-+int clone_reap(pid_t pid, int options)
-+{
-+	int ret;
-+	siginfo_t info = {
-+		.si_signo = 0,
-+	};
-+
-+again:
-+	ret = waitid(P_PID, pid, &info, options | __WALL | __WNOTHREAD);
-+	if (ret < 0) {
-+		if (errno == EINTR)
-+			goto again;
-+		return -1;
-+	}
-+
-+	if (options & WEXITED) {
-+		if (WIFEXITED(info.si_status))
-+			return WEXITSTATUS(info.si_status);
-+	}
-+
-+	if (options & WSTOPPED) {
-+		if (WIFSTOPPED(info.si_status))
-+			return WSTOPSIG(info.si_status);
-+	}
-+
-+	if (options & WCONTINUED) {
-+		if (WIFCONTINUED(info.si_status))
-+			return 0;
-+	}
-+
-+	return -1;
-+}
-+
-+int dirfd_open_opath(const char *dir)
-+{
-+	return open(dir, O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW | O_PATH);
-+}
-+
-+#define close_prot_errno(fd)                                                   \
-+	if (fd >= 0) {                                                         \
-+		int _e_ = errno;                                               \
-+		close(fd);                                                     \
-+		errno = _e_;                                                   \
-+	}
-+
-+static int clone_into_cgroup_run_nowait(const char *cgroup,
-+					int (*fn)(const char *cgroup, void *arg),
-+					void *arg)
-+{
-+	int cgroup_fd;
-+	pid_t pid;
-+
-+	cgroup_fd =  dirfd_open_opath(cgroup);
-+	if (cgroup_fd < 0)
-+		return -1;
-+
-+	pid = clone_into_cgroup(cgroup_fd);
-+	close_prot_errno(cgroup_fd);
-+	if (pid == 0)
-+		exit(fn(cgroup, arg));
-+
-+	return pid;
-+}
-+
- int cg_run_nowait(const char *cgroup,
- 		  int (*fn)(const char *cgroup, void *arg),
- 		  void *arg)
- {
- 	int pid;
- 
-+	pid = clone_into_cgroup_run_nowait(cgroup, fn, arg);
-+	if (pid > 0)
-+		return pid;
-+
-+	/* Genuine test failure. */
-+	if (pid < 0 && errno != ENOSYS)
-+		return -1;
-+
- 	pid = fork();
- 	if (pid == 0) {
- 		char buf[64];
-@@ -450,3 +551,28 @@ int proc_read_strstr(int pid, bool thread, const char *item, const char *needle)
- 
- 	return strstr(buf, needle) ? 0 : -1;
- }
-+
-+int clone_into_cgroup_run_wait(const char *cgroup)
-+{
-+	int cgroup_fd;
-+	pid_t pid;
-+
-+	cgroup_fd =  dirfd_open_opath(cgroup);
-+	if (cgroup_fd < 0)
-+		return -1;
-+
-+	pid = clone_into_cgroup(cgroup_fd);
-+	close_prot_errno(cgroup_fd);
-+	if (pid < 0)
-+		return -1;
-+
-+	if (pid == 0)
-+		exit(EXIT_SUCCESS);
-+
-+	/*
-+	 * We don't care whether this fails. We only care whether the initial
-+	 * clone succeeded.
-+	 */
-+	(void)clone_reap(pid, WEXITED);
-+	return 0;
-+}
-diff --git a/tools/testing/selftests/cgroup/cgroup_util.h b/tools/testing/selftests/cgroup/cgroup_util.h
-index 49c54fbdb229..5a1305dd1f0b 100644
---- a/tools/testing/selftests/cgroup/cgroup_util.h
-+++ b/tools/testing/selftests/cgroup/cgroup_util.h
-@@ -50,3 +50,7 @@ extern int cg_wait_for_proc_count(const char *cgroup, int count);
- extern int cg_killall(const char *cgroup);
- extern ssize_t proc_read_text(int pid, bool thread, const char *item, char *buf, size_t size);
- extern int proc_read_strstr(int pid, bool thread, const char *item, const char *needle);
-+extern pid_t clone_into_cgroup(int cgroup_fd);
-+extern int clone_reap(pid_t pid, int options);
-+extern int clone_into_cgroup_run_wait(const char *cgroup);
-+extern int dirfd_open_opath(const char *dir);
-diff --git a/tools/testing/selftests/cgroup/test_core.c b/tools/testing/selftests/cgroup/test_core.c
-index c5ca669feb2b..96e016ccafe0 100644
---- a/tools/testing/selftests/cgroup/test_core.c
-+++ b/tools/testing/selftests/cgroup/test_core.c
-@@ -25,8 +25,11 @@
- static int test_cgcore_populated(const char *root)
- {
- 	int ret = KSFT_FAIL;
-+	int err;
- 	char *cg_test_a = NULL, *cg_test_b = NULL;
- 	char *cg_test_c = NULL, *cg_test_d = NULL;
-+	int cgroup_fd = -EBADF;
-+	pid_t pid;
- 
- 	cg_test_a = cg_name(root, "cg_test_a");
- 	cg_test_b = cg_name(root, "cg_test_a/cg_test_b");
-@@ -78,6 +81,52 @@ static int test_cgcore_populated(const char *root)
- 	if (cg_read_strcmp(cg_test_d, "cgroup.events", "populated 0\n"))
- 		goto cleanup;
- 
-+	/* Test that we can directly clone into a new cgroup. */
-+	cgroup_fd = dirfd_open_opath(cg_test_d);
-+	if (cgroup_fd < 0)
-+		goto cleanup;
-+
-+	pid = clone_into_cgroup(cgroup_fd);
-+	if (pid < 0) {
-+		if (errno == ENOSYS)
-+			goto cleanup_pass;
-+		goto cleanup;
-+	}
-+
-+	if (pid == 0) {
-+		if (raise(SIGSTOP))
-+			exit(EXIT_FAILURE);
-+		exit(EXIT_SUCCESS);
-+	}
-+
-+	err = cg_read_strcmp(cg_test_d, "cgroup.events", "populated 1\n");
-+
-+	(void)clone_reap(pid, WSTOPPED);
-+	(void)kill(pid, SIGCONT);
-+	(void)clone_reap(pid, WEXITED);
-+
-+	if (err)
-+		goto cleanup;
-+
-+	if (cg_read_strcmp(cg_test_d, "cgroup.events", "populated 0\n"))
-+		goto cleanup;
-+
-+	/* Remove cgroup. */
-+	if (cg_test_d) {
-+		cg_destroy(cg_test_d);
-+		free(cg_test_d);
-+		cg_test_d = NULL;
-+	}
-+
-+	pid = clone_into_cgroup(cgroup_fd);
-+	if (pid < 0)
-+		goto cleanup_pass;
-+	if (pid == 0)
-+		exit(EXIT_SUCCESS);
-+	(void)clone_reap(pid, WEXITED);
-+	goto cleanup;
-+
-+cleanup_pass:
- 	ret = KSFT_PASS;
- 
- cleanup:
-@@ -93,6 +142,8 @@ static int test_cgcore_populated(const char *root)
- 	free(cg_test_c);
- 	free(cg_test_b);
- 	free(cg_test_a);
-+	if (cgroup_fd >= 0)
-+		close(cgroup_fd);
- 	return ret;
- }
- 
-@@ -136,6 +187,16 @@ static int test_cgcore_invalid_domain(const char *root)
- 	if (errno != EOPNOTSUPP)
- 		goto cleanup;
- 
-+	if (!clone_into_cgroup_run_wait(child))
-+		goto cleanup;
-+
-+	if (errno == ENOSYS)
-+		goto cleanup_pass;
-+
-+	if (errno != EOPNOTSUPP)
-+		goto cleanup;
-+
-+cleanup_pass:
- 	ret = KSFT_PASS;
- 
- cleanup:
-@@ -345,6 +406,9 @@ static int test_cgcore_internal_process_constraint(const char *root)
- 	if (!cg_enter_current(parent))
- 		goto cleanup;
- 
-+	if (!clone_into_cgroup_run_wait(parent))
-+		goto cleanup;
-+
- 	ret = KSFT_PASS;
- 
- cleanup:
-diff --git a/tools/testing/selftests/clone3/clone3_selftests.h b/tools/testing/selftests/clone3/clone3_selftests.h
-index a3f2c8ad8bcc..91c1a78ddb39 100644
---- a/tools/testing/selftests/clone3/clone3_selftests.h
-+++ b/tools/testing/selftests/clone3/clone3_selftests.h
-@@ -5,12 +5,24 @@
- 
- #define _GNU_SOURCE
- #include <sched.h>
-+#include <linux/sched.h>
-+#include <linux/types.h>
- #include <stdint.h>
- #include <syscall.h>
--#include <linux/types.h>
-+#include <sys/wait.h>
-+
-+#include "../kselftest.h"
- 
- #define ptr_to_u64(ptr) ((__u64)((uintptr_t)(ptr)))
- 
-+#ifndef CLONE_INTO_CGROUP
-+#define CLONE_INTO_CGROUP 0x200000000ULL /* Clone into a specific cgroup given the right permissions. */
-+#endif
-+
-+#ifndef CLONE_ARGS_SIZE_VER0
-+#define CLONE_ARGS_SIZE_VER0 64
-+#endif
-+
- #ifndef __NR_clone3
- #define __NR_clone3 -1
- struct clone_args {
-@@ -22,10 +34,13 @@ struct clone_args {
- 	__aligned_u64 stack;
- 	__aligned_u64 stack_size;
- 	__aligned_u64 tls;
-+#define CLONE_ARGS_SIZE_VER1 80
- 	__aligned_u64 set_tid;
- 	__aligned_u64 set_tid_size;
-+#define CLONE_ARGS_SIZE_VER2 88
-+	__aligned_u64 cgroup;
+diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+index e9b62498fe75..a2c6b1b5c026 100644
+--- a/arch/x86/include/asm/cpufeatures.h
++++ b/arch/x86/include/asm/cpufeatures.h
+@@ -336,6 +336,7 @@
+ #define X86_FEATURE_OSPKE		(16*32+ 4) /* OS Protection Keys Enable */
+ #define X86_FEATURE_WAITPKG		(16*32+ 5) /* UMONITOR/UMWAIT/TPAUSE Instructions */
+ #define X86_FEATURE_AVX512_VBMI2	(16*32+ 6) /* Additional AVX512 Vector Bit Manipulation Instructions */
++#define X86_FEATURE_SHSTK		(16*32+ 7) /* Shadow Stack */
+ #define X86_FEATURE_GFNI		(16*32+ 8) /* Galois Field New Instructions */
+ #define X86_FEATURE_VAES		(16*32+ 9) /* Vector AES */
+ #define X86_FEATURE_VPCLMULQDQ		(16*32+10) /* Carry-Less Multiplication Double Quadword */
+@@ -361,6 +362,7 @@
+ #define X86_FEATURE_MD_CLEAR		(18*32+10) /* VERW clears CPU buffers */
+ #define X86_FEATURE_TSX_FORCE_ABORT	(18*32+13) /* "" TSX_FORCE_ABORT */
+ #define X86_FEATURE_PCONFIG		(18*32+18) /* Intel PCONFIG */
++#define X86_FEATURE_IBT			(18*32+20) /* Indirect Branch Tracking */
+ #define X86_FEATURE_SPEC_CTRL		(18*32+26) /* "" Speculation Control (IBRS + IBPB) */
+ #define X86_FEATURE_INTEL_STIBP		(18*32+27) /* "" Single Thread Indirect Branch Predictors */
+ #define X86_FEATURE_FLUSH_L1D		(18*32+28) /* Flush L1D cache */
+diff --git a/arch/x86/kernel/cpu/cpuid-deps.c b/arch/x86/kernel/cpu/cpuid-deps.c
+index 3cbe24ca80ab..fec83cc74b9e 100644
+--- a/arch/x86/kernel/cpu/cpuid-deps.c
++++ b/arch/x86/kernel/cpu/cpuid-deps.c
+@@ -69,6 +69,8 @@ static const struct cpuid_dep cpuid_deps[] = {
+ 	{ X86_FEATURE_CQM_MBM_TOTAL,		X86_FEATURE_CQM_LLC   },
+ 	{ X86_FEATURE_CQM_MBM_LOCAL,		X86_FEATURE_CQM_LLC   },
+ 	{ X86_FEATURE_AVX512_BF16,		X86_FEATURE_AVX512VL  },
++	{ X86_FEATURE_SHSTK,			X86_FEATURE_XSAVES    },
++	{ X86_FEATURE_IBT,			X86_FEATURE_XSAVES    },
+ 	{}
  };
--#endif
-+#endif /* __NR_clone3 */
  
- static pid_t sys_clone3(struct clone_args *args, size_t size)
- {
 -- 
-2.25.0
+2.21.0
