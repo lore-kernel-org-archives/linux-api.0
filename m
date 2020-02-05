@@ -1,48 +1,129 @@
-From: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
+From: Paul Moore <paul@paul-moore.com>
 Subject: Re: [PATCH ghak90 V8 13/16] audit: track container nesting
-Date: Wed, 5 Feb 2020 17:57:55 -0500
-Message-ID: <CAHC9VhQnNUM8XQpFykx_Rg0zNLCaCWDo=HSY3RPhN3ft-RpyHw@mail.gmail.com>
-References: <cover.1577736799.git.rgb@redhat.com> <3665686.i1MIc9PeWa@x2>
- <CAHC9VhRHfjuv5yyn+nQ2LbHtcezBcjKtOQ69ssYrXOiExuCjBw@mail.gmail.com> <35934535.C1y6eIYgqz@x2>
+Date: Wed, 5 Feb 2020 18:05:52 -0500
+Message-ID: <CAHC9VhSVN3mNb5enhLR1hY+ekiAyiYWbehrwd_zN7kz13dF=1w@mail.gmail.com>
+References: <cover.1577736799.git.rgb@redhat.com> <6452955c1e038227a5cd169f689f3fd3db27513f.1577736799.git.rgb@redhat.com>
+ <CAHC9VhRkH=YEjAY6dJJHSp934grHnf=O4RiqLu3U8DzdVQOZkg@mail.gmail.com> <20200130192753.n7jjrshbhrczjzoe@madcap2.tricolour.ca>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <35934535.C1y6eIYgqz@x2>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux-Audit Mailing List <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, omosnace-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org, Dan Walsh <dwalsh-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, mpatel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200130192753.n7jjrshbhrczjzoe@madcap2.tricolour.ca>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: nhorman@tuxdriver.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, dhowells@redhat.com, Linux-Audit Mailing List <linux-audit@redhat.com>, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, simo@redhat.com, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>, mpatel@redhat.com, Serge Hallyn <serge@hallyn.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 4, 2020 at 1:12 PM Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> On Tuesday, February 4, 2020 10:52:36 AM EST Paul Moore wrote:
-> > On Tue, Feb 4, 2020 at 10:47 AM Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> > > On Tuesday, February 4, 2020 8:19:44 AM EST Richard Guy Briggs wrote:
-> > > > > The established pattern is that we print -1 when its unset and "?"
-> > > > > when
-> > > > > its totalling missing. So, how could this be invalid? It should be
-> > > > > set
-> > > > > or not. That is unless its totally missing just like when we do not
-> > > > > run
-> > > > > with selinux enabled and a context just doesn't exist.
-> > > >
-> > > > Ok, so in this case it is clearly unset, so should be -1, which will be
-> > > > a
-> > > > 20-digit number when represented as an unsigned long long int.
-> > > >
-> > > > Thank you for that clarification Steve.
+On Thu, Jan 30, 2020 at 2:28 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2020-01-22 16:29, Paul Moore wrote:
+> > On Tue, Dec 31, 2019 at 2:51 PM Richard Guy Briggs <rgb@redhat.com> wrote:
 > > >
-> > > It is literally a  -1.  ( 2 characters)
+> > > Track the parent container of a container to be able to filter and
+> > > report nesting.
+> > >
+> > > Now that we have a way to track and check the parent container of a
+> > > container, modify the contid field format to be able to report that
+> > > nesting using a carrat ("^") separator to indicate nesting.  The
+> > > original field format was "contid=<contid>" for task-associated records
+> > > and "contid=<contid>[,<contid>[...]]" for network-namespace-associated
+> > > records.  The new field format is
+> > > "contid=<contid>[^<contid>[...]][,<contid>[...]]".
 > >
-> > Well, not as Richard has currently written the code, it is a "%llu".
-> > This was why I asked the question I did; if we want the "-1" here we
-> > probably want to special case that as I don't think we want to display
-> > audit container IDs as signed numbers in general.
+> > Let's make sure we always use a comma as a separator, even when
+> > recording the parent information, for example:
+> > "contid=<contid>[,^<contid>[...]][,<contid>[...]]"
 >
-> OK, then go with the long number, we'll fix it in the interpretation. I guess
-> we do the same thing for auid.
+> The intent here is to clearly indicate and separate nesting from
+> parallel use of several containers by one netns.  If we do away with
+> that distinction, then we lose that inheritance accountability and
+> should really run the list through a "uniq" function to remove the
+> produced redundancies.  This clear inheritance is something Steve was
+> looking for since tracking down individual events/records to show that
+> inheritance was not aways feasible due to rolled logs or search effort.
 
-As I said above, I'm okay with a special case handling for unset/"-1"
-in this case.
+Perhaps my example wasn't clear.  I'm not opposed to the little
+carat/hat character indicating a container's parent, I just think it
+would be good to also include a comma *in*addition* to the carat/hat.
+
+> > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > > ---
+> > >  include/linux/audit.h |  1 +
+> > >  kernel/audit.c        | 53 +++++++++++++++++++++++++++++++++++++++++++--------
+> > >  kernel/audit.h        |  1 +
+> > >  kernel/auditfilter.c  | 17 ++++++++++++++++-
+> > >  kernel/auditsc.c      |  2 +-
+> > >  5 files changed, 64 insertions(+), 10 deletions(-)
+> >
+> > ...
+> >
+> > > diff --git a/kernel/audit.c b/kernel/audit.c
+> > > index ef8e07524c46..68be59d1a89b 100644
+> > > --- a/kernel/audit.c
+> > > +++ b/kernel/audit.c
+> >
+> > > @@ -492,6 +493,7 @@ void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p)
+> > >                 audit_netns_contid_add(new->net_ns, contid);
+> > >  }
+> > >
+> > > +void audit_log_contid(struct audit_buffer *ab, u64 contid);
+> >
+> > If we need a forward declaration, might as well just move it up near
+> > the top of the file with the rest of the declarations.
+>
+> Ok.
+>
+> > > +void audit_log_contid(struct audit_buffer *ab, u64 contid)
+> > > +{
+> > > +       struct audit_contobj *cont = NULL, *prcont = NULL;
+> > > +       int h;
+> >
+> > It seems safer to pass the audit container ID object and not the u64.
+>
+> It would also be faster, but in some places it isn't available such as
+> for ptrace and signal targets.  This also links back to the drop record
+> refcounts to hold onto the contobj until process exit, or signal
+> delivery.
+>
+> What we could do is to supply two potential parameters, a contobj and/or
+> a contid, and have it use the contobj if it is valid, otherwise, use the
+> contid, as is done for names and paths supplied to audit_log_name().
+
+Let's not do multiple parameters, that begs for misuse, let's take the
+wrapper function route:
+
+ func a(int id) {
+   // important stuff
+ }
+
+ func ao(struct obj) {
+   a(obj.id);
+ }
+
+... and we can add a comment that you *really* should be using the
+variant that passes an object.
+
+> > > @@ -2705,9 +2741,10 @@ int audit_set_contid(struct task_struct *task, u64 contid)
+> > >         if (!ab)
+> > >                 return rc;
+> > >
+> > > -       audit_log_format(ab,
+> > > -                        "op=set opid=%d contid=%llu old-contid=%llu",
+> > > -                        task_tgid_nr(task), contid, oldcontid);
+> > > +       audit_log_format(ab, "op=set opid=%d contid=", task_tgid_nr(task));
+> > > +       audit_log_contid(ab, contid);
+> > > +       audit_log_format(ab, " old-contid=");
+> > > +       audit_log_contid(ab, oldcontid);
+> >
+> > This is an interesting case where contid and old-contid are going to
+> > be largely the same, only the first (current) ID is going to be
+> > different; do we want to duplicate all of those IDs?
+>
+> At first when I read your comment, I thought we could just take contid
+> and drop oldcontid, but if it fails, we still want all the information,
+> so given the way I've set up the search code in userspace, listing only
+> the newest contid in the contid field and all the rest in oldcontid
+> could be a good compromise.
+
+This is along the lines of what I was thinking.
 
 -- 
 paul moore
