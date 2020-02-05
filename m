@@ -1,94 +1,102 @@
 From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [PATCH ghak90 V8 11/16] audit: add support for containerid to
- network namespaces
-Date: Wed, 5 Feb 2020 17:51:30 -0500
-Message-ID: <CAHC9VhT0NELsrEeTmX15GaZ1SE-qZiQmz9-WweRGWRPcGN5EmA@mail.gmail.com>
-References: <cover.1577736799.git.rgb@redhat.com> <2954ed671a7622ddf3abdb8854dbba2ad13e9f33.1577736799.git.rgb@redhat.com>
- <CAHC9VhRw3Fj9-hi+Vj8JJb_GXM4B9N5hRXa9H6aQkuuFqJJ15w@mail.gmail.com> <20200204234258.uwaqk3s3c42fxews@madcap2.tricolour.ca>
+Subject: Re: [PATCH ghak90 V8 16/16] audit: add capcontid to set contid
+ outside init_user_ns
+Date: Wed, 5 Feb 2020 17:56:48 -0500
+Message-ID: <CAHC9VhSsfBbfYmqLoR=QBgF5_VwbA8Dqqz97MjqwwJ6Jq6fHwA@mail.gmail.com>
+References: <cover.1577736799.git.rgb@redhat.com> <5941671b6b6b5de28ab2cc80e72f288cf83291d5.1577736799.git.rgb@redhat.com>
+ <CAHC9VhQYXQp+C0EHwLuW50yUenfH4KF1xKQdS=bn_OzHfnFmmg@mail.gmail.com> <20200205003930.2efpm4tvrisgmj4t@madcap2.tricolour.ca>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20200204234258.uwaqk3s3c42fxews@madcap2.tricolour.ca>
-Sender: netdev-owner@vger.kernel.org
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20200205003930.2efpm4tvrisgmj4t@madcap2.tricolour.ca>
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: Richard Guy Briggs <rgb@redhat.com>
 Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 4, 2020 at 6:43 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> On 2020-01-22 16:28, Paul Moore wrote:
+On Tue, Feb 4, 2020 at 7:39 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2020-01-22 16:29, Paul Moore wrote:
 > > On Tue, Dec 31, 2019 at 2:51 PM Richard Guy Briggs <rgb@redhat.com> wrote:
 > > >
-> > > This also adds support to qualify NETFILTER_PKT records.
+> > > Provide a mechanism similar to CAP_AUDIT_CONTROL to explicitly give a
+> > > process in a non-init user namespace the capability to set audit
+> > > container identifiers.
 > > >
-> > > Audit events could happen in a network namespace outside of a task
-> > > context due to packets received from the net that trigger an auditing
-> > > rule prior to being associated with a running task.  The network
-> > > namespace could be in use by multiple containers by association to the
-> > > tasks in that network namespace.  We still want a way to attribute
-> > > these events to any potential containers.  Keep a list per network
-> > > namespace to track these audit container identifiiers.
-> > >
-> > > Add/increment the audit container identifier on:
-> > > - initial setting of the audit container identifier via /proc
-> > > - clone/fork call that inherits an audit container identifier
-> > > - unshare call that inherits an audit container identifier
-> > > - setns call that inherits an audit container identifier
-> > > Delete/decrement the audit container identifier on:
-> > > - an inherited audit container identifier dropped when child set
-> > > - process exit
-> > > - unshare call that drops a net namespace
-> > > - setns call that drops a net namespace
-> > >
-> > > Add audit container identifier auxiliary record(s) to NETFILTER_PKT
-> > > event standalone records.  Iterate through all potential audit container
-> > > identifiers associated with a network namespace.
-> > >
-> > > Please see the github audit kernel issue for contid net support:
-> > >   https://github.com/linux-audit/audit-kernel/issues/92
-> > > Please see the github audit testsuiite issue for the test case:
-> > >   https://github.com/linux-audit/audit-testsuite/issues/64
-> > > Please see the github audit wiki for the feature overview:
-> > >   https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
-> > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > > Acked-by: Neil Horman <nhorman@tuxdriver.com>
-> > > Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
-> > > ---
-> > >  include/linux/audit.h    |  24 +++++++++
-> > >  kernel/audit.c           | 132 ++++++++++++++++++++++++++++++++++++++++++++++-
-> > >  kernel/nsproxy.c         |   4 ++
-> > >  net/netfilter/nft_log.c  |  11 +++-
-> > >  net/netfilter/xt_AUDIT.c |  11 +++-
-> > >  5 files changed, 176 insertions(+), 6 deletions(-)
+> > > Provide /proc/$PID/audit_capcontid interface to capcontid.
+> > > Valid values are: 1==enabled, 0==disabled
 > >
-> > ...
-> >
-> > > diff --git a/include/linux/audit.h b/include/linux/audit.h
-> > > index 5531d37a4226..ed8d5b74758d 100644
-> > > --- a/include/linux/audit.h
-> > > +++ b/include/linux/audit.h
-> > > @@ -12,6 +12,7 @@
-> > >  #include <linux/sched.h>
-> > >  #include <linux/ptrace.h>
-> > >  #include <uapi/linux/audit.h>
-> > > +#include <linux/refcount.h>
-> > >
-> > >  #define AUDIT_INO_UNSET ((unsigned long)-1)
-> > >  #define AUDIT_DEV_UNSET ((dev_t)-1)
-> > > @@ -121,6 +122,13 @@ struct audit_task_info {
-> > >
-> > >  extern struct audit_task_info init_struct_audit;
-> > >
-> > > +struct audit_contobj_netns {
-> > > +       struct list_head        list;
-> > > +       u64                     id;
-> >
-> > Since we now track audit container IDs in their own structure, why not
-> > link directly to the audit container ID object (and bump the
-> > refcount)?
+> > It would be good to be more explicit about "enabled" and "disabled" in
+> > the commit description.  For example, which setting allows the target
+> > task to set audit container IDs of it's children processes?
 >
-> Ok, I've done this but at first I had doubts about the complexity.
+> Ok...
+>
+> > > Report this action in message type AUDIT_SET_CAPCONTID 1022 with fields
+> > > opid= capcontid= old-capcontid=
+> > >
+> > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > > ---
+> > >  fs/proc/base.c             | 55 ++++++++++++++++++++++++++++++++++++++++++++++
+> > >  include/linux/audit.h      | 14 ++++++++++++
+> > >  include/uapi/linux/audit.h |  1 +
+> > >  kernel/audit.c             | 35 +++++++++++++++++++++++++++++
+> > >  4 files changed, 105 insertions(+)
 
-Yes, it will be more complex, but it should be much safer.
+...
+
+> > > diff --git a/kernel/audit.c b/kernel/audit.c
+> > > index 1287f0b63757..1c22dd084ae8 100644
+> > > --- a/kernel/audit.c
+> > > +++ b/kernel/audit.c
+> > > @@ -2698,6 +2698,41 @@ static bool audit_contid_isowner(struct task_struct *tsk)
+> > >         return false;
+> > >  }
+> > >
+> > > +int audit_set_capcontid(struct task_struct *task, u32 enable)
+> > > +{
+> > > +       u32 oldcapcontid;
+> > > +       int rc = 0;
+> > > +       struct audit_buffer *ab;
+> > > +
+> > > +       if (!task->audit)
+> > > +               return -ENOPROTOOPT;
+> > > +       oldcapcontid = audit_get_capcontid(task);
+> > > +       /* if task is not descendant, block */
+> > > +       if (task == current)
+> > > +               rc = -EBADSLT;
+> > > +       else if (!task_is_descendant(current, task))
+> > > +               rc = -EXDEV;
+> >
+> > See my previous comments about error code sanity.
+>
+> I'll go with EXDEV.
+>
+> > > +       else if (current_user_ns() == &init_user_ns) {
+> > > +               if (!capable(CAP_AUDIT_CONTROL) && !audit_get_capcontid(current))
+> > > +                       rc = -EPERM;
+> >
+> > I think we just want to use ns_capable() in the context of the current
+> > userns to check CAP_AUDIT_CONTROL, yes?  Something like this ...
+>
+> I thought we had firmly established in previous discussion that
+> CAP_AUDIT_CONTROL in anything other than init_user_ns was completely irrelevant
+> and untrustable.
+
+In the case of a container with multiple users, and multiple
+applications, one being a nested orchestrator, it seems relevant to
+allow that container to control which of it's processes are able to
+exercise CAP_AUDIT_CONTROL.  Granted, we still want to control it
+within the overall host, e.g. the container in question must be
+allowed to run a nested orchestrator, but allowing the container
+itself to provide it's own granularity seems like the right thing to
+do.
+
+> >   if (current_user_ns() != &init_user_ns) {
+> >     if (!ns_capable(CAP_AUDIT_CONTROL) || !audit_get_capcontid())
+> >       rc = -EPERM;
+> >   } else if (!capable(CAP_AUDIT_CONTROL))
+> >     rc = -EPERM;
+> >
 
 -- 
 paul moore
