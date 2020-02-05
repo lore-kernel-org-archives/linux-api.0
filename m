@@ -1,112 +1,140 @@
-From: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v6 2/6] cgroup: add cgroup_get_from_file() helper
-Date: Wed,  5 Feb 2020 14:26:19 +0100
-Message-ID: <20200205132623.670015-3-christian.brauner@ubuntu.com>
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Subject: [PATCH v6 1/6] cgroup: unify attach permission checking
+Date: Wed,  5 Feb 2020 14:26:18 +0100
+Message-ID: <20200205132623.670015-2-christian.brauner@ubuntu.com>
 References: <20200205132623.670015-1-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20200205132623.670015-1-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, =?UTF-8?q?Michal=20Koutn=C3=BD?= <mkoutny-IBi9RG/b67k@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200205132623.670015-1-christian.brauner@ubuntu.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Tejun Heo <tj@kernel.org>
+Cc: Oleg Nesterov <oleg@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian.brauner@ubuntu.com>, Li Zefan <lizefan@huawei.com>, Johannes Weiner <hannes@cmpxchg.org>, cgroups@vger.kernel.org, =?UTF-8?q?Michal=20Koutn=C3=BD?= <mkoutny@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-Add a helper cgroup_get_from_file(). The helper will be used in
-subsequent patches to retrieve a cgroup while holding a reference to the
-struct file it was taken from.
+The core codepaths to check whether a process can be attached to a
+cgroup are the same for threads and thread-group leaders. Only a small
+piece of code verifying that source and destination cgroup are in the
+same domain differentiates the thread permission checking from
+thread-group leader permission checking.
+Since cgroup_migrate_vet_dst() only matters cgroup2 - it is a noop on
+cgroup1 - we can move it out of cgroup_attach_task().
+All checks can now be consolidated into a new helper
+cgroup_attach_permissions() callable from both cgroup_procs_write() and
+cgroup_threads_write().
 
-Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
-Cc: Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Cc: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Acked-by: Michal Koutný <mkoutny-IBi9RG/b67k@public.gmane.org>
-Signed-off-by: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Cc: Tejun Heo <tj@kernel.org>
+Cc: Li Zefan <lizefan@huawei.com>
+Cc: Johannes Weiner <hannes@cmpxchg.org>
+Cc: cgroups@vger.kernel.org
+Acked-by: Michal Koutný <mkoutny@suse.com>
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v1 */
-patch not present
+Link: https://lore.kernel.org/r/20191218173516.7875-2-christian.brauner@ubuntu.com
 
 /* v2 */
-patch not present
+Link: https://lore.kernel.org/r/20191223061504.28716-2-christian.brauner@ubuntu.com
+- Christian Brauner <christian.brauner@ubuntu.com>:
+  - Fix return value of cgroup_attach_permissions. It used to return 0
+    when it should've returned -EOPNOTSUPP.
+  - Fix call to cgroup_attach_permissions() in cgroup_procs_write(). It
+    accidently specified that a thread was moved causing an additional
+    check for domain-group equality to be executed that is not needed.
 
 /* v3 */
-Link: https://lore.kernel.org/r/20200117002143.15559-3-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
-patch introduced
-- Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>:
-  - split cgroup_get_from_file() changes into separate commmit
+Link: https://lore.kernel.org/r/20200117002143.15559-2-christian.brauner@ubuntu.com
+unchanged
 
 /* v4 */
-Link: https://lore.kernel.org/r/20200117181219.14542-3-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+Link: https://lore.kernel.org/r/20200117181219.14542-2-christian.brauner@ubuntu.com
 unchanged
 
 /* v5 */
-Link: https://lore.kernel.org/r/20200121154844.411-3-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+Link: https://lore.kernel.org/r/20200121154844.411-2-christian.brauner@ubuntu.com
 unchanged
 
 /* v6 */
-unchanged
-- Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>:
-  - add Acked-by: Michal Koutný <mkoutny-IBi9RG/b67k@public.gmane.org>
+- Michal Koutný <mkoutny@suse.com>:
+  - Invert logic to use threadgroup argument to match other codepaths.
 ---
- kernel/cgroup/cgroup.c | 30 +++++++++++++++++++-----------
- 1 file changed, 19 insertions(+), 11 deletions(-)
+ kernel/cgroup/cgroup.c | 39 +++++++++++++++++++++++++--------------
+ 1 file changed, 25 insertions(+), 14 deletions(-)
 
 diff --git a/kernel/cgroup/cgroup.c b/kernel/cgroup/cgroup.c
-index 5f84177e2065..7c1c8677849e 100644
+index 735af8f15f95..5f84177e2065 100644
 --- a/kernel/cgroup/cgroup.c
 +++ b/kernel/cgroup/cgroup.c
-@@ -5875,6 +5875,24 @@ void cgroup_fork(struct task_struct *child)
- 	INIT_LIST_HEAD(&child->cg_list);
+@@ -2719,11 +2719,7 @@ int cgroup_attach_task(struct cgroup *dst_cgrp, struct task_struct *leader,
+ {
+ 	DEFINE_CGROUP_MGCTX(mgctx);
+ 	struct task_struct *task;
+-	int ret;
+-
+-	ret = cgroup_migrate_vet_dst(dst_cgrp);
+-	if (ret)
+-		return ret;
++	int ret = 0;
+ 
+ 	/* look up all src csets */
+ 	spin_lock_irq(&css_set_lock);
+@@ -4690,6 +4686,26 @@ static int cgroup_procs_write_permission(struct cgroup *src_cgrp,
+ 	return 0;
  }
  
-+static struct cgroup *cgroup_get_from_file(struct file *f)
++static int cgroup_attach_permissions(struct cgroup *src_cgrp,
++				     struct cgroup *dst_cgrp,
++				     struct super_block *sb, bool threadgroup)
 +{
-+	struct cgroup_subsys_state *css;
-+	struct cgroup *cgrp;
++	int ret = 0;
 +
-+	css = css_tryget_online_from_dir(f->f_path.dentry, NULL);
-+	if (IS_ERR(css))
-+		return ERR_CAST(css);
++	ret = cgroup_procs_write_permission(src_cgrp, dst_cgrp, sb);
++	if (ret)
++		return ret;
 +
-+	cgrp = css->cgroup;
-+	if (!cgroup_on_dfl(cgrp)) {
-+		cgroup_put(cgrp);
-+		return ERR_PTR(-EBADF);
-+	}
++	ret = cgroup_migrate_vet_dst(dst_cgrp);
++	if (ret)
++		return ret;
 +
-+	return cgrp;
++	if (!threadgroup && (src_cgrp->dom_cgrp != dst_cgrp->dom_cgrp))
++		ret = -EOPNOTSUPP;
++
++	return ret;
 +}
 +
- /**
-  * cgroup_can_fork - called on a new task before the process is exposed
-  * @child: the task in question.
-@@ -6163,7 +6181,6 @@ EXPORT_SYMBOL_GPL(cgroup_get_from_path);
-  */
- struct cgroup *cgroup_get_from_fd(int fd)
+ static ssize_t cgroup_procs_write(struct kernfs_open_file *of,
+ 				  char *buf, size_t nbytes, loff_t off)
  {
--	struct cgroup_subsys_state *css;
- 	struct cgroup *cgrp;
- 	struct file *f;
+@@ -4712,8 +4728,8 @@ static ssize_t cgroup_procs_write(struct kernfs_open_file *of,
+ 	src_cgrp = task_cgroup_from_root(task, &cgrp_dfl_root);
+ 	spin_unlock_irq(&css_set_lock);
  
-@@ -6171,17 +6188,8 @@ struct cgroup *cgroup_get_from_fd(int fd)
- 	if (!f)
- 		return ERR_PTR(-EBADF);
+-	ret = cgroup_procs_write_permission(src_cgrp, dst_cgrp,
+-					    of->file->f_path.dentry->d_sb);
++	ret = cgroup_attach_permissions(src_cgrp, dst_cgrp,
++					of->file->f_path.dentry->d_sb, true);
+ 	if (ret)
+ 		goto out_finish;
  
--	css = css_tryget_online_from_dir(f->f_path.dentry, NULL);
-+	cgrp = cgroup_get_from_file(f);
- 	fput(f);
--	if (IS_ERR(css))
--		return ERR_CAST(css);
+@@ -4757,16 +4773,11 @@ static ssize_t cgroup_threads_write(struct kernfs_open_file *of,
+ 	spin_unlock_irq(&css_set_lock);
+ 
+ 	/* thread migrations follow the cgroup.procs delegation rule */
+-	ret = cgroup_procs_write_permission(src_cgrp, dst_cgrp,
+-					    of->file->f_path.dentry->d_sb);
++	ret = cgroup_attach_permissions(src_cgrp, dst_cgrp,
++					of->file->f_path.dentry->d_sb, false);
+ 	if (ret)
+ 		goto out_finish;
+ 
+-	/* and must be contained in the same domain */
+-	ret = -EOPNOTSUPP;
+-	if (src_cgrp->dom_cgrp != dst_cgrp->dom_cgrp)
+-		goto out_finish;
 -
--	cgrp = css->cgroup;
--	if (!cgroup_on_dfl(cgrp)) {
--		cgroup_put(cgrp);
--		return ERR_PTR(-EBADF);
--	}
--
- 	return cgrp;
- }
- EXPORT_SYMBOL_GPL(cgroup_get_from_fd);
+ 	ret = cgroup_attach_task(dst_cgrp, task, false);
+ 
+ out_finish:
 -- 
 2.25.0
