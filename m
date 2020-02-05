@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v9 20/27] ELF: UAPI and Kconfig additions for ELF program properties
-Date: Wed,  5 Feb 2020 10:19:28 -0800
-Message-ID: <20200205181935.3712-21-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v9 18/27] x86/cet/shstk: Introduce WRUSS instruction
+Date: Wed,  5 Feb 2020 10:19:26 -0800
+Message-ID: <20200205181935.3712-19-yu-cheng.yu@intel.com>
 References: <20200205181935.3712-1-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,66 +12,63 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Introduce basic ELF definitions relating to the NT_GNU_PROPERTY_TYPE_0
-note.
+WRUSS is a new kernel-mode instruction but writes directly to user Shadow
+Stack (SHSTK) memory.  This is used to construct a return address on SHSTK
+for the signal handler.
+
+This instruction can fault if the user SHSTK is not valid SHSTK memory.
+In that case, the kernel does a fixup.
+
+v4:
+- Change to asm goto.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
- fs/Kconfig.binfmt        | 3 +++
- include/linux/elf.h      | 8 ++++++++
- include/uapi/linux/elf.h | 1 +
- 3 files changed, 12 insertions(+)
+ arch/x86/include/asm/special_insns.h | 32 ++++++++++++++++++++++++++++
+ 1 file changed, 32 insertions(+)
 
-diff --git a/fs/Kconfig.binfmt b/fs/Kconfig.binfmt
-index 62dc4f577ba1..d2cfe0729a73 100644
---- a/fs/Kconfig.binfmt
-+++ b/fs/Kconfig.binfmt
-@@ -36,6 +36,9 @@ config COMPAT_BINFMT_ELF
- config ARCH_BINFMT_ELF_STATE
- 	bool
+diff --git a/arch/x86/include/asm/special_insns.h b/arch/x86/include/asm/special_insns.h
+index 6d37b8fcfc77..1b9b2e79c353 100644
+--- a/arch/x86/include/asm/special_insns.h
++++ b/arch/x86/include/asm/special_insns.h
+@@ -222,6 +222,38 @@ static inline void clwb(volatile void *__p)
+ 		: [pax] "a" (p));
+ }
  
-+config ARCH_USE_GNU_PROPERTY
-+	bool
++#ifdef CONFIG_X86_INTEL_CET
++#if defined(CONFIG_IA32_EMULATION) || defined(CONFIG_X86_X32)
++static inline int write_user_shstk_32(unsigned long addr, unsigned int val)
++{
++	asm_volatile_goto("1: wrussd %1, (%0)\n"
++			  _ASM_EXTABLE(1b, %l[fail])
++			  :: "r" (addr), "r" (val)
++			  :: fail);
++	return 0;
++fail:
++	return -EPERM;
++}
++#else
++static inline int write_user_shstk_32(unsigned long addr, unsigned int val)
++{
++	WARN_ONCE(1, "%s used but not supported.\n", __func__);
++	return -EFAULT;
++}
++#endif
 +
- config BINFMT_ELF_FDPIC
- 	bool "Kernel support for FDPIC ELF binaries"
- 	default y if !BINFMT_ELF
-diff --git a/include/linux/elf.h b/include/linux/elf.h
-index e3649b3e970e..459cddcceaac 100644
---- a/include/linux/elf.h
-+++ b/include/linux/elf.h
-@@ -2,6 +2,7 @@
- #ifndef _LINUX_ELF_H
- #define _LINUX_ELF_H
- 
-+#include <linux/types.h>
- #include <asm/elf.h>
- #include <uapi/linux/elf.h>
- 
-@@ -56,4 +57,11 @@ static inline int elf_coredump_extra_notes_write(struct coredump_params *cprm) {
- extern int elf_coredump_extra_notes_size(void);
- extern int elf_coredump_extra_notes_write(struct coredump_params *cprm);
- #endif
++static inline int write_user_shstk_64(unsigned long addr, unsigned long val)
++{
++	asm_volatile_goto("1: wrussq %1, (%0)\n"
++			  _ASM_EXTABLE(1b, %l[fail])
++			  :: "r" (addr), "r" (val)
++			  :: fail);
++	return 0;
++fail:
++	return -EPERM;
++}
++#endif /* CONFIG_X86_INTEL_CET */
 +
-+/* NT_GNU_PROPERTY_TYPE_0 header */
-+struct gnu_property {
-+	u32 pr_type;
-+	u32 pr_datasz;
-+};
-+
- #endif /* _LINUX_ELF_H */
-diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
-index 34c02e4290fe..c37731407074 100644
---- a/include/uapi/linux/elf.h
-+++ b/include/uapi/linux/elf.h
-@@ -36,6 +36,7 @@ typedef __s64	Elf64_Sxword;
- #define PT_LOPROC  0x70000000
- #define PT_HIPROC  0x7fffffff
- #define PT_GNU_EH_FRAME		0x6474e550
-+#define PT_GNU_PROPERTY		0x6474e553
+ #define nop() asm volatile ("nop")
  
- #define PT_GNU_STACK	(PT_LOOS + 0x474e551)
  
 -- 
 2.21.0
