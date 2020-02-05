@@ -1,318 +1,489 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v9 22/27] ELF: Add ELF program property parsing support
-Date: Wed,  5 Feb 2020 10:19:30 -0800
-Message-ID: <20200205181935.3712-23-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v9 19/27] x86/cet/shstk: Handle signals for Shadow Stack
+Date: Wed,  5 Feb 2020 10:19:27 -0800
+Message-ID: <20200205181935.3712-20-yu-cheng.yu@intel.com>
 References: <20200205181935.3712-1-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-doc-owner@vger.kernel.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
 In-Reply-To: <20200205181935.3712-1-yu-cheng.yu@intel.com>
-Sender: linux-doc-owner@vger.kernel.org
+Sender: linux-arch-owner@vger.kernel.org
 To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@kernel.org>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Dave Martin <Dave.Martin@arm.com>
+To deliver a signal, create a Shadow Stack (SHSTK) restore token and put
+the token and the signal restorer address on the SHSTK.  For sigreturn,
+verify the token and restore the SHSTK pointer.
 
-ELF program properties will be needed for detecting whether to
-enable optional architecture or ABI features for a new ELF process.
+Introduce a signal context extension struct 'sc_ext', which is used to save
+SHSTK restore token address and WAIT_ENDBR status.  WAIT_ENDBR will be
+introduced later in the Indirect Branch Tracking (IBT) series, but add that
+into sc_ext now to keep the struct stable in case the IBT series is applied
+later.
 
-For now, there are no generic properties that we care about, so do
-nothing unless CONFIG_ARCH_USE_GNU_PROPERTY=y.
+v9:
+- Update CET MSR access according to XSAVES supervisor state changes.
+- Add 'wait_endbr' to struct 'sc_ext'.
+- Update and simplify signal frame allocation, setup, and restoration.
+- Update commit log text.
 
-Otherwise, the presence of properties using the PT_PROGRAM_PROPERTY
-phdrs entry (if any), and notify each property to the arch code.
+v2:
+- Move CET status from sigcontext to a separate struct sc_ext, which is
+  located above the fpstate on the signal frame.
+- Add a restore token for sigreturn address.
 
-For now, the added code is not used.
-
-Signed-off-by: Dave Martin <Dave.Martin@arm.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- fs/binfmt_elf.c          | 127 +++++++++++++++++++++++++++++++++++++++
- fs/compat_binfmt_elf.c   |   4 ++
- include/linux/elf.h      |  19 ++++++
- include/uapi/linux/elf.h |   4 ++
- 4 files changed, 154 insertions(+)
+ arch/x86/ia32/ia32_signal.c            |  17 +++
+ arch/x86/include/asm/cet.h             |   7 ++
+ arch/x86/include/asm/fpu/internal.h    |   2 +
+ arch/x86/include/uapi/asm/sigcontext.h |   9 ++
+ arch/x86/kernel/cet.c                  | 153 +++++++++++++++++++++++++
+ arch/x86/kernel/fpu/signal.c           |  89 ++++++++++++++
+ arch/x86/kernel/signal.c               |  10 ++
+ 7 files changed, 287 insertions(+)
 
-diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
-index ecd8d2698515..054446f93442 100644
---- a/fs/binfmt_elf.c
-+++ b/fs/binfmt_elf.c
-@@ -39,12 +39,18 @@
- #include <linux/sched/coredump.h>
- #include <linux/sched/task_stack.h>
- #include <linux/sched/cputime.h>
-+#include <linux/sizes.h>
-+#include <linux/types.h>
- #include <linux/cred.h>
- #include <linux/dax.h>
- #include <linux/uaccess.h>
- #include <asm/param.h>
- #include <asm/page.h>
+diff --git a/arch/x86/ia32/ia32_signal.c b/arch/x86/ia32/ia32_signal.c
+index 30416d7f19d4..c0bb350a3d2d 100644
+--- a/arch/x86/ia32/ia32_signal.c
++++ b/arch/x86/ia32/ia32_signal.c
+@@ -35,6 +35,7 @@
+ #include <asm/sigframe.h>
+ #include <asm/sighandling.h>
+ #include <asm/smap.h>
++#include <asm/cet.h>
  
-+#ifndef ELF_COMPAT
-+#define ELF_COMPAT 0
-+#endif
-+
- #ifndef user_long_t
- #define user_long_t long
- #endif
-@@ -678,6 +684,111 @@ static unsigned long load_elf_interp(struct elfhdr *interp_elf_ex,
-  * libraries.  There is no binary dependent code anywhere else.
-  */
- 
-+static int parse_elf_property(const char *data, size_t *off, size_t datasz,
-+			      struct arch_elf_state *arch,
-+			      bool have_prev_type, u32 *prev_type)
-+{
-+	size_t o, step;
-+	const struct gnu_property *pr;
-+	int ret;
-+
-+	if (*off == datasz)
-+		return -ENOENT;
-+
-+	if (WARN_ON(*off > datasz || *off % ELF_GNU_PROPERTY_ALIGN))
-+		return -EIO;
-+	o = *off;
-+	datasz -= *off;
-+
-+	if (datasz < sizeof(*pr))
-+		return -EIO;
-+	pr = (const struct gnu_property *)(data + o);
-+	o += sizeof(*pr);
-+	datasz -= sizeof(*pr);
-+
-+	if (pr->pr_datasz > datasz)
-+		return -EIO;
-+
-+	WARN_ON(o % ELF_GNU_PROPERTY_ALIGN);
-+	step = round_up(pr->pr_datasz, ELF_GNU_PROPERTY_ALIGN);
-+	if (step > datasz)
-+		return -EIO;
-+
-+	/* Properties are supposed to be unique and sorted on pr_type: */
-+	if (have_prev_type && pr->pr_type <= *prev_type)
-+		return -EIO;
-+	*prev_type = pr->pr_type;
-+
-+	ret = arch_parse_elf_property(pr->pr_type, data + o,
-+				      pr->pr_datasz, ELF_COMPAT, arch);
-+	if (ret)
-+		return ret;
-+
-+	*off = o + step;
-+	return 0;
-+}
-+
-+#define NOTE_DATA_SZ SZ_1K
-+#define GNU_PROPERTY_TYPE_0_NAME "GNU"
-+#define NOTE_NAME_SZ (sizeof(GNU_PROPERTY_TYPE_0_NAME))
-+
-+static int parse_elf_properties(struct file *f, const struct elf_phdr *phdr,
-+				struct arch_elf_state *arch)
-+{
-+	union {
-+		struct elf_note nhdr;
-+		char data[NOTE_DATA_SZ];
-+	} note;
-+	loff_t pos;
-+	ssize_t n;
-+	size_t off, datasz;
-+	int ret;
-+	bool have_prev_type;
-+	u32 prev_type;
-+
-+	if (!IS_ENABLED(CONFIG_ARCH_USE_GNU_PROPERTY) || !phdr)
-+		return 0;
-+
-+	/* load_elf_binary() shouldn't call us unless this is true... */
-+	if (WARN_ON(phdr->p_type != PT_GNU_PROPERTY))
-+		return -EIO;
-+
-+	/* If the properties are crazy large, that's too bad (for now): */
-+	if (phdr->p_filesz > sizeof(note))
-+		return -ENOEXEC;
-+
-+	pos = phdr->p_offset;
-+	n = kernel_read(f, &note, phdr->p_filesz, &pos);
-+
-+	BUILD_BUG_ON(sizeof(note) < sizeof(note.nhdr) + NOTE_NAME_SZ);
-+	if (n < 0 || n < sizeof(note.nhdr) + NOTE_NAME_SZ)
-+		return -EIO;
-+
-+	if (note.nhdr.n_type != NT_GNU_PROPERTY_TYPE_0 ||
-+	    note.nhdr.n_namesz != NOTE_NAME_SZ ||
-+	    strncmp(note.data + sizeof(note.nhdr),
-+		    GNU_PROPERTY_TYPE_0_NAME, n - sizeof(note.nhdr)))
-+		return -EIO;
-+
-+	off = round_up(sizeof(note.nhdr) + NOTE_NAME_SZ,
-+		       ELF_GNU_PROPERTY_ALIGN);
-+	if (off > n)
-+		return -EIO;
-+
-+	if (note.nhdr.n_descsz > n - off)
-+		return -EIO;
-+	datasz = off + note.nhdr.n_descsz;
-+
-+	have_prev_type = false;
-+	do {
-+		ret = parse_elf_property(note.data, &off, datasz, arch,
-+					 have_prev_type, &prev_type);
-+		have_prev_type = true;
-+	} while (!ret);
-+
-+	return ret == -ENOENT ? 0 : ret;
-+}
-+
- static int load_elf_binary(struct linux_binprm *bprm)
+ /*
+  * Do a signal return; undo the signal stack.
+@@ -223,6 +224,7 @@ static void __user *get_sigframe(struct ksignal *ksig, struct pt_regs *regs,
+ 				 void __user **fpstate)
  {
- 	struct file *interpreter = NULL; /* to shut gcc up */
-@@ -685,6 +796,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
- 	int load_addr_set = 0;
- 	unsigned long error;
- 	struct elf_phdr *elf_ppnt, *elf_phdata, *interp_elf_phdata = NULL;
-+	struct elf_phdr *elf_property_phdata = NULL;
- 	unsigned long elf_bss, elf_brk;
- 	int bss_prot = 0;
- 	int retval, i;
-@@ -731,6 +843,11 @@ static int load_elf_binary(struct linux_binprm *bprm)
- 	for (i = 0; i < loc->elf_ex.e_phnum; i++, elf_ppnt++) {
- 		char *elf_interpreter;
+ 	unsigned long sp, fx_aligned, math_size;
++	void __user *restorer = NULL;
  
-+		if (elf_ppnt->p_type == PT_GNU_PROPERTY) {
-+			elf_property_phdata = elf_ppnt;
-+			continue;
-+		}
+ 	/* Default to using normal stack */
+ 	sp = regs->sp;
+@@ -236,8 +238,23 @@ static void __user *get_sigframe(struct ksignal *ksig, struct pt_regs *regs,
+ 		 ksig->ka.sa.sa_restorer)
+ 		sp = (unsigned long) ksig->ka.sa.sa_restorer;
+ 
++	if (ksig->ka.sa.sa_flags & SA_RESTORER) {
++		restorer = ksig->ka.sa.sa_restorer;
++	} else if (current->mm->context.vdso) {
++		if (ksig->ka.sa.sa_flags & SA_SIGINFO)
++			restorer = current->mm->context.vdso +
++				vdso_image_32.sym___kernel_rt_sigreturn;
++		else
++			restorer = current->mm->context.vdso +
++				vdso_image_32.sym___kernel_sigreturn;
++	}
 +
- 		if (elf_ppnt->p_type != PT_INTERP)
- 			continue;
- 
-@@ -818,9 +935,14 @@ static int load_elf_binary(struct linux_binprm *bprm)
- 			goto out_free_dentry;
- 
- 		/* Pass PT_LOPROC..PT_HIPROC headers to arch code */
-+		elf_property_phdata = NULL;
- 		elf_ppnt = interp_elf_phdata;
- 		for (i = 0; i < loc->interp_elf_ex.e_phnum; i++, elf_ppnt++)
- 			switch (elf_ppnt->p_type) {
-+			case PT_GNU_PROPERTY:
-+				elf_property_phdata = elf_ppnt;
-+				break;
+ 	sp = fpu__alloc_mathframe(sp, 1, &fx_aligned, &math_size);
+ 	*fpstate = (struct _fpstate_32 __user *) sp;
 +
- 			case PT_LOPROC ... PT_HIPROC:
- 				retval = arch_elf_pt_proc(&loc->interp_elf_ex,
- 							  elf_ppnt, interpreter,
-@@ -831,6 +953,11 @@ static int load_elf_binary(struct linux_binprm *bprm)
- 			}
- 	}
- 
-+	retval = parse_elf_properties(interpreter ?: bprm->file,
-+				      elf_property_phdata, &arch_state);
-+	if (retval)
-+		goto out_free_dentry;
++	if (save_cet_to_sigframe(*fpstate, (unsigned long)restorer, 1))
++		return (void __user *) -1L;
 +
- 	/*
- 	 * Allow arch code to reject the ELF at this point, whilst it's
- 	 * still possible to return an error to the code that invoked
-diff --git a/fs/compat_binfmt_elf.c b/fs/compat_binfmt_elf.c
-index aaad4ca1217e..13a087bc816b 100644
---- a/fs/compat_binfmt_elf.c
-+++ b/fs/compat_binfmt_elf.c
-@@ -17,6 +17,8 @@
- #include <linux/elfcore-compat.h>
- #include <linux/time.h>
+ 	if (copy_fpstate_to_sigframe(*fpstate, (void __user *)fx_aligned,
+ 				     math_size) < 0)
+ 		return (void __user *) -1L;
+diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+index c44c991ca91f..409d4f91a0dc 100644
+--- a/arch/x86/include/asm/cet.h
++++ b/arch/x86/include/asm/cet.h
+@@ -6,6 +6,8 @@
+ #include <linux/types.h>
  
-+#define ELF_COMPAT	1
+ struct task_struct;
++struct sc_ext;
 +
  /*
-  * Rename the basic ELF layout types to refer to the 32-bit class of files.
+  * Per-thread CET status
   */
-@@ -28,11 +30,13 @@
- #undef	elf_shdr
- #undef	elf_note
- #undef	elf_addr_t
-+#undef	ELF_GNU_PROPERTY_ALIGN
- #define elfhdr		elf32_hdr
- #define elf_phdr	elf32_phdr
- #define elf_shdr	elf32_shdr
- #define elf_note	elf32_note
- #define elf_addr_t	Elf32_Addr
-+#define ELF_GNU_PROPERTY_ALIGN	ELF32_GNU_PROPERTY_ALIGN
+@@ -18,8 +20,13 @@ struct cet_status {
+ #ifdef CONFIG_X86_INTEL_CET
+ int cet_setup_shstk(void);
+ void cet_disable_free_shstk(struct task_struct *p);
++int cet_restore_signal(bool ia32, struct sc_ext *sc);
++int cet_setup_signal(bool ia32, unsigned long rstor, struct sc_ext *sc);
+ #else
+ static inline void cet_disable_free_shstk(struct task_struct *p) {}
++static inline int cet_restore_signal(bool ia32, struct sc_ext *sc) { return -EINVAL; }
++static inline int cet_setup_signal(bool ia32, unsigned long rstor,
++				   struct sc_ext *sc) { return -EINVAL; }
+ #endif
+ 
+ #define cpu_x86_cet_enabled() \
+diff --git a/arch/x86/include/asm/fpu/internal.h b/arch/x86/include/asm/fpu/internal.h
+index 42159f45bf9c..241521c0ed02 100644
+--- a/arch/x86/include/asm/fpu/internal.h
++++ b/arch/x86/include/asm/fpu/internal.h
+@@ -476,6 +476,8 @@ static inline void copy_kernel_to_fpregs(union fpregs_state *fpstate)
+ 	__copy_kernel_to_fpregs(fpstate, -1);
+ }
+ 
++extern int save_cet_to_sigframe(void __user *fp, unsigned long restorer,
++				int is_ia32);
+ extern int copy_fpstate_to_sigframe(void __user *buf, void __user *fp, int size);
  
  /*
-  * Some data types as stored in coredump.
-diff --git a/include/linux/elf.h b/include/linux/elf.h
-index 459cddcceaac..7bdc6da160c7 100644
---- a/include/linux/elf.h
-+++ b/include/linux/elf.h
-@@ -22,6 +22,9 @@
- 	SET_PERSONALITY(ex)
- #endif
- 
-+#define ELF32_GNU_PROPERTY_ALIGN	4
-+#define ELF64_GNU_PROPERTY_ALIGN	8
-+
- #if ELF_CLASS == ELFCLASS32
- 
- extern Elf32_Dyn _DYNAMIC [];
-@@ -32,6 +35,7 @@ extern Elf32_Dyn _DYNAMIC [];
- #define elf_addr_t	Elf32_Off
- #define Elf_Half	Elf32_Half
- #define Elf_Word	Elf32_Word
-+#define ELF_GNU_PROPERTY_ALIGN	ELF32_GNU_PROPERTY_ALIGN
- 
- #else
- 
-@@ -43,6 +47,7 @@ extern Elf64_Dyn _DYNAMIC [];
- #define elf_addr_t	Elf64_Off
- #define Elf_Half	Elf64_Half
- #define Elf_Word	Elf64_Word
-+#define ELF_GNU_PROPERTY_ALIGN	ELF64_GNU_PROPERTY_ALIGN
- 
- #endif
- 
-@@ -64,4 +69,18 @@ struct gnu_property {
- 	u32 pr_datasz;
+diff --git a/arch/x86/include/uapi/asm/sigcontext.h b/arch/x86/include/uapi/asm/sigcontext.h
+index 844d60eb1882..cf2d55db3be4 100644
+--- a/arch/x86/include/uapi/asm/sigcontext.h
++++ b/arch/x86/include/uapi/asm/sigcontext.h
+@@ -196,6 +196,15 @@ struct _xstate {
+ 	/* New processor state extensions go here: */
  };
  
-+struct arch_elf_state;
++/*
++ * Located at the end of sigcontext->fpstate, aligned to 8.
++ */
++struct sc_ext {
++	unsigned long total_size;
++	unsigned long ssp;
++	unsigned long wait_endbr;
++};
 +
-+#ifndef CONFIG_ARCH_USE_GNU_PROPERTY
-+static inline int arch_parse_elf_property(u32 type, const void *data,
-+					  size_t datasz, bool compat,
-+					  struct arch_elf_state *arch)
+ /*
+  * The 32-bit signal frame:
+  */
+diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
+index b4c7d88e9a8f..cba5c7656aab 100644
+--- a/arch/x86/kernel/cet.c
++++ b/arch/x86/kernel/cet.c
+@@ -19,6 +19,8 @@
+ #include <asm/fpu/xstate.h>
+ #include <asm/fpu/types.h>
+ #include <asm/cet.h>
++#include <asm/special_insns.h>
++#include <uapi/asm/sigcontext.h>
+ 
+ static void start_update_msrs(void)
+ {
+@@ -69,6 +71,80 @@ static unsigned long alloc_shstk(unsigned long size)
+ 	return addr;
+ }
+ 
++#define TOKEN_MODE_MASK	3UL
++#define TOKEN_MODE_64	1UL
++#define IS_TOKEN_64(token) ((token & TOKEN_MODE_MASK) == TOKEN_MODE_64)
++#define IS_TOKEN_32(token) ((token & TOKEN_MODE_MASK) == 0)
++
++/*
++ * Verify the restore token at the address of 'ssp' is
++ * valid and then set shadow stack pointer according to the
++ * token.
++ */
++static int verify_rstor_token(bool ia32, unsigned long ssp,
++			      unsigned long *new_ssp)
 +{
++	unsigned long token;
++
++	*new_ssp = 0;
++
++	if (!IS_ALIGNED(ssp, 8))
++		return -EINVAL;
++
++	if (get_user(token, (unsigned long __user *)ssp))
++		return -EFAULT;
++
++	/* Is 64-bit mode flag correct? */
++	if (!ia32 && !IS_TOKEN_64(token))
++		return -EINVAL;
++	else if (ia32 && !IS_TOKEN_32(token))
++		return -EINVAL;
++
++	token &= ~TOKEN_MODE_MASK;
++
++	/*
++	 * Restore address properly aligned?
++	 */
++	if ((!ia32 && !IS_ALIGNED(token, 8)) || !IS_ALIGNED(token, 4))
++		return -EINVAL;
++
++	/*
++	 * Token was placed properly?
++	 */
++	if ((ALIGN_DOWN(token, 8) - 8) != ssp)
++		return -EINVAL;
++
++	*new_ssp = token;
 +	return 0;
 +}
-+#else
-+extern int arch_parse_elf_property(u32 type, const void *data, size_t datasz,
-+				   bool compat, struct arch_elf_state *arch);
++
++/*
++ * Create a restore token on the shadow stack.
++ * A token is always 8-byte and aligned to 8.
++ */
++static int create_rstor_token(bool ia32, unsigned long ssp,
++			      unsigned long *new_ssp)
++{
++	unsigned long addr;
++
++	*new_ssp = 0;
++
++	if ((!ia32 && !IS_ALIGNED(ssp, 8)) || !IS_ALIGNED(ssp, 4))
++		return -EINVAL;
++
++	addr = ALIGN_DOWN(ssp, 8) - 8;
++
++	/* Is the token for 64-bit? */
++	if (!ia32)
++		ssp |= TOKEN_MODE_64;
++
++	if (write_user_shstk_64(addr, ssp))
++		return -EFAULT;
++
++	*new_ssp = addr;
++	return 0;
++}
++
+ int cet_setup_shstk(void)
+ {
+ 	unsigned long addr, size;
+@@ -119,3 +195,80 @@ void cet_disable_free_shstk(struct task_struct *tsk)
+ 	cet->shstk_size = 0;
+ 	cet->shstk_enabled = 0;
+ }
++
++/*
++ * Called from __fpu__restore_sig() and XSAVES buffer is protected by
++ * set_thread_flag(TIF_NEED_FPU_LOAD).
++ */
++int cet_restore_signal(bool ia32, struct sc_ext *sc_ext)
++{
++	struct cet_user_state *cet_user_state;
++	struct cet_status *cet = &current->thread.cet;
++	unsigned long new_ssp = 0;
++	u64 msr_val = 0;
++	int err;
++
++	if (!cet->shstk_enabled)
++		return 0;
++
++	cet_user_state = get_xsave_addr(&current->thread.fpu.state.xsave,
++					XFEATURE_CET_USER);
++	if (!cet_user_state)
++		return -1;
++
++	if (cet->shstk_enabled) {
++		err = verify_rstor_token(ia32, sc_ext->ssp, &new_ssp);
++		if (err)
++			return err;
++
++		cet_user_state->user_ssp = new_ssp;
++		msr_val |= MSR_IA32_CET_SHSTK_EN;
++	}
++
++	cet_user_state->user_cet = msr_val;
++	return 0;
++}
++
++/*
++ * Setup the shadow stack for the signal handler: first,
++ * create a restore token to keep track of the current ssp,
++ * and then the return address of the signal handler.
++ */
++int cet_setup_signal(bool ia32, unsigned long rstor_addr, struct sc_ext *sc_ext)
++{
++	struct cet_status *cet = &current->thread.cet;
++	unsigned long ssp = 0, new_ssp = 0;
++	int err;
++
++	if (!cet->shstk_enabled)
++		return 0;
++
++	if (cet->shstk_enabled) {
++		if (!rstor_addr)
++			return -EINVAL;
++
++		ssp = cet_get_shstk_addr();
++		err = create_rstor_token(ia32, ssp, &new_ssp);
++		if (err)
++			return err;
++
++		if (ia32) {
++			ssp = new_ssp - sizeof(u32);
++			err = write_user_shstk_32(ssp, (unsigned int)rstor_addr);
++		} else {
++			ssp = new_ssp - sizeof(u64);
++			err = write_user_shstk_64(ssp, rstor_addr);
++		}
++
++		if (err)
++			return err;
++
++		sc_ext->ssp = new_ssp;
++	}
++
++	start_update_msrs();
++	if (cet->shstk_enabled)
++		wrmsrl(MSR_IA32_PL3_SSP, ssp);
++	end_update_msrs();
++
++	return 0;
+diff --git a/arch/x86/kernel/fpu/signal.c b/arch/x86/kernel/fpu/signal.c
+index 0d3e06a772b0..875cc0fadce3 100644
+--- a/arch/x86/kernel/fpu/signal.c
++++ b/arch/x86/kernel/fpu/signal.c
+@@ -52,6 +52,69 @@ static inline int check_for_xstate(struct fxregs_state __user *buf,
+ 	return 0;
+ }
+ 
++int save_cet_to_sigframe(void __user *fp, unsigned long restorer, int is_ia32)
++{
++	int err = 0;
++
++#ifdef CONFIG_X86_INTEL_CET
++	if (!current->thread.cet.shstk_enabled)
++		return 0;
++
++	if (fp) {
++		struct sc_ext ext = {0, 0, 0};
++
++		err = cet_setup_signal(is_ia32, restorer, &ext);
++		if (!err) {
++			void __user *p = fp;
++
++			ext.total_size = sizeof(ext);
++
++			if (is_ia32)
++				p += sizeof(struct fregs_state);
++
++			p += fpu_user_xstate_size + FP_XSTATE_MAGIC2_SIZE;
++			p = (void __user *)ALIGN((unsigned long)p, 8);
++
++			if (copy_to_user(p, &ext, sizeof(ext)))
++				return -EFAULT;
++		}
++	}
 +#endif
 +
- #endif /* _LINUX_ELF_H */
-diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
-index 61251ecabdd7..518651708d8f 100644
---- a/include/uapi/linux/elf.h
-+++ b/include/uapi/linux/elf.h
-@@ -368,6 +368,7 @@ typedef struct elf64_shdr {
-  * Notes used in ET_CORE. Architectures export some of the arch register sets
-  * using the corresponding note types via the PTRACE_GETREGSET and
-  * PTRACE_SETREGSET requests.
-+ * The note name for all these is "LINUX".
-  */
- #define NT_PRSTATUS	1
- #define NT_PRFPREG	2
-@@ -430,6 +431,9 @@ typedef struct elf64_shdr {
- #define NT_MIPS_FP_MODE	0x801		/* MIPS floating-point mode */
- #define NT_MIPS_MSA	0x802		/* MIPS SIMD registers */
- 
-+/* Note types with note name "GNU" */
-+#define NT_GNU_PROPERTY_TYPE_0	5
++	return err;
++}
 +
- /* Note header in a PT_NOTE section */
- typedef struct elf32_note {
-   Elf32_Word	n_namesz;	/* Name size */
++static int restore_cet_from_sigframe(int is_ia32, void __user *fp)
++{
++	int err = 0;
++
++#ifdef CONFIG_X86_INTEL_CET
++	if (!current->thread.cet.shstk_enabled)
++		return 0;
++
++	if (fp) {
++		struct sc_ext ext = {0, 0, 0};
++		void __user *p = fp;
++
++		if (is_ia32)
++			p += sizeof(struct fregs_state);
++
++		p += fpu_user_xstate_size + FP_XSTATE_MAGIC2_SIZE;
++		p = (void __user *)ALIGN((unsigned long)p, 8);
++
++		if (copy_from_user(&ext, p, sizeof(ext)))
++			return -EFAULT;
++
++		if (ext.total_size != sizeof(ext))
++			return -EFAULT;
++
++		err = cet_restore_signal(is_ia32, &ext);
++	}
++#endif
++
++	return err;
++}
++
+ /*
+  * Signal frame handlers.
+  */
+@@ -367,6 +430,10 @@ static int __fpu__restore_sig(void __user *buf, void __user *buf_fx, int size)
+ 		pagefault_disable();
+ 		ret = copy_user_to_fpregs_zeroing(buf_fx, xfeatures_user, fx_only);
+ 		pagefault_enable();
++
++		if (!ret)
++			ret = restore_cet_from_sigframe(0, buf);
++
+ 		if (!ret) {
+ 			if (xfeatures_mask_supervisor())
+ 				copy_kernel_to_xregs(&fpu->state.xsave,
+@@ -397,6 +464,10 @@ static int __fpu__restore_sig(void __user *buf, void __user *buf_fx, int size)
+ 		sanitize_restored_user_xstate(&fpu->state, envp, xfeatures_user,
+ 					      fx_only);
+ 
++		ret = restore_cet_from_sigframe((int)ia32_fxstate, buf);
++		if (ret)
++			goto err_out;
++
+ 		fpregs_lock();
+ 		if (unlikely(init_bv))
+ 			copy_kernel_to_xregs(&init_fpstate.xsave, init_bv);
+@@ -468,12 +539,30 @@ int fpu__restore_sig(void __user *buf, int ia32_frame)
+ 	return __fpu__restore_sig(buf, buf_fx, size);
+ }
+ 
++static unsigned long fpu__alloc_sigcontext_ext(unsigned long sp)
++{
++	/*
++	 * sigcontext_ext is at: fpu + fpu_user_xstate_size +
++	 * FP_XSTATE_MAGIC2_SIZE, then aligned to 8.
++	 */
++	if (cpu_x86_cet_enabled()) {
++		struct cet_status *cet = &current->thread.cet;
++
++		if (cet->shstk_enabled)
++			sp -= (sizeof(struct sc_ext) + 8);
++	}
++
++	return sp;
++}
++
+ unsigned long
+ fpu__alloc_mathframe(unsigned long sp, int ia32_frame,
+ 		     unsigned long *buf_fx, unsigned long *size)
+ {
+ 	unsigned long frame_size = xstate_sigframe_size();
+ 
++	sp = fpu__alloc_sigcontext_ext(sp);
++
+ 	*buf_fx = sp = round_down(sp - frame_size, 64);
+ 	if (ia32_frame && use_fxsr()) {
+ 		frame_size += sizeof(struct fregs_state);
+diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
+index ce9421ec285f..b26f5084a8a1 100644
+--- a/arch/x86/kernel/signal.c
++++ b/arch/x86/kernel/signal.c
+@@ -46,6 +46,7 @@
+ 
+ #include <asm/sigframe.h>
+ #include <asm/signal.h>
++#include <asm/cet.h>
+ 
+ #define COPY(x)			do {			\
+ 	get_user_ex(regs->x, &sc->x);			\
+@@ -246,6 +247,9 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
+ 	unsigned long buf_fx = 0;
+ 	int onsigstack = on_sig_stack(sp);
+ 	int ret;
++#ifdef CONFIG_X86_64
++	void __user *restorer = NULL;
++#endif
+ 
+ 	/* redzone */
+ 	if (IS_ENABLED(CONFIG_X86_64))
+@@ -277,6 +281,12 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
+ 	if (onsigstack && !likely(on_sig_stack(sp)))
+ 		return (void __user *)-1L;
+ 
++#ifdef CONFIG_X86_64
++	if (ka->sa.sa_flags & SA_RESTORER)
++		restorer = ka->sa.sa_restorer;
++	ret = save_cet_to_sigframe(*fpstate, (unsigned long)restorer, 0);
++#endif
++
+ 	/* save i387 and extended state */
+ 	ret = copy_fpstate_to_sigframe(*fpstate, (void __user *)buf_fx, math_size);
+ 	if (ret < 0)
 -- 
 2.21.0
