@@ -1,43 +1,35 @@
-From: Dave Hansen <dave.hansen@intel.com>
-Subject: Re: [RFC PATCH] mm: extend memfd with ability to create "secret"
- memory areas
-Date: Thu, 6 Feb 2020 10:51:13 -0800
-Message-ID: <df5a888b-1a11-e806-741d-94684b22c966@intel.com>
-References: <20200130162340.GA14232@rapoport-lnx>
+From: Yu-cheng Yu <yu-cheng.yu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH v9 01/27] Documentation/x86: Add CET description
+Date: Thu, 06 Feb 2020 12:17:30 -0800
+Message-ID: <b0e7e487d1bf92bf19df2ecf199b90c76d9097dd.camel@intel.com>
+References: <20200205181935.3712-1-yu-cheng.yu@intel.com>
+         <20200205181935.3712-2-yu-cheng.yu@intel.com>
+         <af5ee976-3b57-4afe-6304-fcab8de45c77@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200130162340.GA14232@rapoport-lnx>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Rapoport <rppt@kernel.org>, linux-kernel@vger.kernel.org
-Cc: Alan Cox <alan@linux.intel.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Christopher Lameter <cl@linux.com>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Matthew Wilcox <willy@infradead.org>, Peter Zijlstra <peterz@infradead.org>, "Reshetova, Elena" <elena.reshetova@intel.com>, Thomas Gleixner <tglx@linutronix.de>, Tycho Andersen <tycho@tycho.ws>, linux-api@vger.kernel.org, linux-mm@kvack.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <af5ee976-3b57-4afe-6304-fcab8de45c77-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Balbir Singh <bsingharora-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Eugene Syromiatnikov <esyr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H.J. Lu" <hjl.tools-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 1/30/20 8:23 AM, Mike Rapoport wrote:
->  include/linux/memfd.h      |   9 ++
->  include/uapi/linux/magic.h |   1 +
->  include/uapi/linux/memfd.h |   6 +
->  mm/Kconfig                 |   4 +
->  mm/Makefile                |   1 +
->  mm/memfd.c                 |  10 +-
->  mm/secretmem.c             | 244 +++++++++++++++++++++++++++++++++++++
->  7 files changed, 273 insertions(+), 2 deletions(-)
+On Wed, 2020-02-05 at 16:16 -0800, Randy Dunlap wrote:
+> Hi,
+> 
+> I have a few comments and a question (please see inline below).
+> 
+> 
+> On 2/5/20 10:19 AM, Yu-cheng Yu wrote:
+[...]
+> > +arch_prctl(ARCH_X86_CET_LOCK)
+> > +    Lock in CET feature.
+> 
+> which feature?
 
-It seems pretty self-contained and relatively harmless.
+Both SHSTK and IBT are locked.  They cannot be turned off afterwards.
 
-But, how much work is it going to be to tell the rest of the kernel that
-page_to_virt() doesn't work any more?  Do we need to make kmap() work on
-these?
+I will check things you pointed out.
 
-I guess fixing vm_normal_page() would fix a lot of that.
-
-In general, my concern about creating little self-contained memory types
-is that they will get popular and folks will start wanting more features
-from them.  For instance, what if I want NUMA affinity, migration, or
-large page mappings that are secret?
-
-Can these pages work as guest memory?
-
-Who would the first users of this thing be?
+Thanks,
+Yu-cheng
