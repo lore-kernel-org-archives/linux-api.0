@@ -1,215 +1,154 @@
-From: Randy Dunlap <rdunlap@infradead.org>
-Subject: Re: [RFC PATCH v9 01/27] Documentation/x86: Add CET description
-Date: Wed, 5 Feb 2020 16:16:05 -0800
-Message-ID: <af5ee976-3b57-4afe-6304-fcab8de45c77@infradead.org>
-References: <20200205181935.3712-1-yu-cheng.yu@intel.com>
- <20200205181935.3712-2-yu-cheng.yu@intel.com>
+From: Richard Guy Briggs <rgb@redhat.com>
+Subject: Re: [PATCH ghak90 V8 16/16] audit: add capcontid to set contid
+	outside init_user_ns
+Date: Thu, 6 Feb 2020 07:51:35 -0500
+Message-ID: <20200206125135.u4dmybkmvxfgui2b@madcap2.tricolour.ca>
+References: <cover.1577736799.git.rgb@redhat.com>
+	<5941671b6b6b5de28ab2cc80e72f288cf83291d5.1577736799.git.rgb@redhat.com>
+	<CAHC9VhQYXQp+C0EHwLuW50yUenfH4KF1xKQdS=bn_OzHfnFmmg@mail.gmail.com>
+	<20200205003930.2efpm4tvrisgmj4t@madcap2.tricolour.ca>
+	<CAHC9VhSsfBbfYmqLoR=QBgF5_VwbA8Dqqz97MjqwwJ6Jq6fHwA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200205181935.3712-2-yu-cheng.yu@intel.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@kernel.org>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>
+Return-path: <linux-audit-bounces@redhat.com>
+In-Reply-To: <CAHC9VhSsfBbfYmqLoR=QBgF5_VwbA8Dqqz97MjqwwJ6Jq6fHwA@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/linux-audit>,
+	<mailto:linux-audit-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/linux-audit>
+List-Post: <mailto:linux-audit@redhat.com>
+List-Help: <mailto:linux-audit-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-audit>,
+	<mailto:linux-audit-request@redhat.com?subject=subscribe>
+Sender: linux-audit-bounces@redhat.com
+Errors-To: linux-audit-bounces@redhat.com
+Content-Disposition: inline
+To: Paul Moore <paul@paul-moore.com>
+Cc: nhorman@tuxdriver.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, dhowells@redhat.com, Linux-Audit Mailing List <linux-audit@redhat.com>, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, simo@redhat.com, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>, mpatel@redhat.com, Serge Hallyn <serge@hallyn.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
-
-I have a few comments and a question (please see inline below).
-
-
-On 2/5/20 10:19 AM, Yu-cheng Yu wrote:
-> Explain no_cet_shstk/no_cet_ibt kernel parameters, and introduce a new
-> document on Control-flow Enforcement Technology (CET).
+On 2020-02-05 17:56, Paul Moore wrote:
+> On Tue, Feb 4, 2020 at 7:39 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > On 2020-01-22 16:29, Paul Moore wrote:
+> > > On Tue, Dec 31, 2019 at 2:51 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > > >
+> > > > Provide a mechanism similar to CAP_AUDIT_CONTROL to explicitly give a
+> > > > process in a non-init user namespace the capability to set audit
+> > > > container identifiers.
+> > > >
+> > > > Provide /proc/$PID/audit_capcontid interface to capcontid.
+> > > > Valid values are: 1==enabled, 0==disabled
+> > >
+> > > It would be good to be more explicit about "enabled" and "disabled" in
+> > > the commit description.  For example, which setting allows the target
+> > > task to set audit container IDs of it's children processes?
+> >
+> > Ok...
+> >
+> > > > Report this action in message type AUDIT_SET_CAPCONTID 1022 with fields
+> > > > opid= capcontid= old-capcontid=
+> > > >
+> > > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > > > ---
+> > > >  fs/proc/base.c             | 55 ++++++++++++++++++++++++++++++++++++++++++++++
+> > > >  include/linux/audit.h      | 14 ++++++++++++
+> > > >  include/uapi/linux/audit.h |  1 +
+> > > >  kernel/audit.c             | 35 +++++++++++++++++++++++++++++
+> > > >  4 files changed, 105 insertions(+)
 > 
-> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-> ---
->  .../admin-guide/kernel-parameters.txt         |   6 +
->  Documentation/x86/index.rst                   |   1 +
->  Documentation/x86/intel_cet.rst               | 294 ++++++++++++++++++
->  3 files changed, 301 insertions(+)
->  create mode 100644 Documentation/x86/intel_cet.rst
+> ...
 > 
+> > > > diff --git a/kernel/audit.c b/kernel/audit.c
+> > > > index 1287f0b63757..1c22dd084ae8 100644
+> > > > --- a/kernel/audit.c
+> > > > +++ b/kernel/audit.c
+> > > > @@ -2698,6 +2698,41 @@ static bool audit_contid_isowner(struct task_struct *tsk)
+> > > >         return false;
+> > > >  }
+> > > >
+> > > > +int audit_set_capcontid(struct task_struct *task, u32 enable)
+> > > > +{
+> > > > +       u32 oldcapcontid;
+> > > > +       int rc = 0;
+> > > > +       struct audit_buffer *ab;
+> > > > +
+> > > > +       if (!task->audit)
+> > > > +               return -ENOPROTOOPT;
+> > > > +       oldcapcontid = audit_get_capcontid(task);
+> > > > +       /* if task is not descendant, block */
+> > > > +       if (task == current)
+> > > > +               rc = -EBADSLT;
+> > > > +       else if (!task_is_descendant(current, task))
+> > > > +               rc = -EXDEV;
+> > >
+> > > See my previous comments about error code sanity.
+> >
+> > I'll go with EXDEV.
+> >
+> > > > +       else if (current_user_ns() == &init_user_ns) {
+> > > > +               if (!capable(CAP_AUDIT_CONTROL) && !audit_get_capcontid(current))
+> > > > +                       rc = -EPERM;
+> > >
+> > > I think we just want to use ns_capable() in the context of the current
+> > > userns to check CAP_AUDIT_CONTROL, yes?  Something like this ...
+> >
+> > I thought we had firmly established in previous discussion that
+> > CAP_AUDIT_CONTROL in anything other than init_user_ns was completely irrelevant
+> > and untrustable.
+> 
+> In the case of a container with multiple users, and multiple
+> applications, one being a nested orchestrator, it seems relevant to
+> allow that container to control which of it's processes are able to
+> exercise CAP_AUDIT_CONTROL.  Granted, we still want to control it
+> within the overall host, e.g. the container in question must be
+> allowed to run a nested orchestrator, but allowing the container
+> itself to provide it's own granularity seems like the right thing to
+> do.
 
-> diff --git a/Documentation/x86/intel_cet.rst b/Documentation/x86/intel_cet.rst
-> new file mode 100644
-> index 000000000000..71e2462fea5c
-> --- /dev/null
-> +++ b/Documentation/x86/intel_cet.rst
-> @@ -0,0 +1,294 @@
-> +.. SPDX-License-Identifier: GPL-2.0
-> +
-> +=========================================
-> +Control-flow Enforcement Technology (CET)
-> +=========================================
-> +
+Looking back to discussion on the v6 patch 2/10 (2019-05-30 15:29 Paul
+Moore[1], 2019-07-08 14:05 RGB[2]) , it occurs to me that the
+ns_capable(CAP_AUDIT_CONTROL) application was dangerous since there was
+no parental accountability in storage or reporting.  Now that is in
+place, it does seem a bit more reasonable to allow it, but I'm still not
+clear on why we would want both mechanisms now.  I don't understand what
+the last line in that email meant: "We would probably still want a
+ns_capable(CAP_AUDIT_CONTROL) restriction in this case."  Allow
+ns_capable(CAP_AUDIT_CONTROL) to govern these actions, or restrict
+ns_capable(CAP_AUDIT_CONTROL) from being used to govern these actions?
 
-...
+If an unprivileged user has been given capcontid to be able run their
+own container orchestrator/engine and spawns a user namespace with
+CAP_AUDIT_CONTROL, what matters is capcontid, and not CAP_AUDIT_CONTROL.
+I could see needing CAP_AUDIT_CONTROL *in addition* to capcontid to give
+it finer grained control, but since capcontid would have to be given to
+each process explicitly anways, I don't see the point.
 
-> +
-> +[5] CET system calls
-> +====================
-> +
-> +The following arch_prctl() system calls are added for CET:
-> +
-> +arch_prctl(ARCH_X86_CET_STATUS, unsigned long *addr)
-> +    Return CET feature status.
-> +
-> +    The parameter 'addr' is a pointer to a user buffer.
-> +    On returning to the caller, the kernel fills the following
-> +    information::
-> +
-> +        *addr       = SHSTK/IBT status
-> +        *(addr + 1) = SHSTK base address
-> +        *(addr + 2) = SHSTK size
-> +
-> +arch_prctl(ARCH_X86_CET_DISABLE, unsigned long features)
-> +    Disable SHSTK and/or IBT specified in 'features'.  Return -EPERM
-> +    if CET is locked.
-> +
-> +arch_prctl(ARCH_X86_CET_LOCK)
-> +    Lock in CET feature.
+If that unprivileged user had not been given capcontid,
+giving itself or one of its descendants CAP_AUDIT_CONTROL should not let
+it jump into the game all of a sudden unless the now chained audit
+container identifiers are deemed accountable enough.  And then now we
+need those hard limits on container depth and network namespace
+container membership.
 
-which feature?
+> > >   if (current_user_ns() != &init_user_ns) {
+> > >     if (!ns_capable(CAP_AUDIT_CONTROL) || !audit_get_capcontid())
+> > >       rc = -EPERM;
+> > >   } else if (!capable(CAP_AUDIT_CONTROL))
+> > >     rc = -EPERM;
+> > >
+> 
+> paul moore
 
-> +
-> +arch_prctl(ARCH_X86_CET_ALLOC_SHSTK, unsigned long *addr)
-> +    Allocate a new SHSTK and put a restore token at top.
-> +
-> +    The parameter 'addr' is a pointer to a user buffer and indicates
-> +    the desired SHSTK size to allocate.  On returning to the caller,
-> +    the kernel fills '*addr' with the base address of the new SHSTK.
-> +
-> +arch_prctl(ARCH_X86_CET_MARK_LEGACY_CODE, unsigned long *addr)
-> +    Mark an address range as IBT legacy code.
-> +
-> +    The parameter 'addr' is a pointer to a user buffer that has the
-> +    following information::
-> +
-> +        *addr       = starting linear address of the legacy code
-> +        *(addr + 1) = size of the legacy code
-> +        *(addr + 2) = set (1); clear (0)
-> +
-> +Note:
-> +  There is no CET-enabling arch_prctl function.  By design, CET is
-> +  enabled automatically if the binary and the system can support it.
-> +
-> +  The parameters passed are always unsigned 64-bit.  When an IA32
-> +  application passing pointers, it should only use the lower 32 bits.
-> +
-> +[6] The implementation of the SHSTK
-> +===================================
-> +
-> +SHSTK size
-> +----------
-> +
-> +A task's SHSTK is allocated from memory to a fixed size of
-> +RLIMIT_STACK.  A compat-mode thread's SHSTK size is 1/4 of
-> +RLIMIT_STACK.  The smaller 32-bit thread SHSTK allows more threads to
-> +share a 32-bit address space.
-> +
-> +Signal
-> +------
-> +
-> +The main program and its signal handlers use the same SHSTK.  Because
-> +the SHSTK stores only return addresses, a large SHSTK will cover the
-> +condition that both the program stack and the sigaltstack run out.
-> +
-> +The kernel creates a restore token at the SHSTK restoring address and
-> +verifies that token when restoring from the signal handler.
-> +
-> +IBT for signal delivering and sigreturn is the same as the main
-> +program's setup; except for WAIT_ENDBR status, which can be read from
+[1] https://www.redhat.com/archives/linux-audit/2019-May/msg00085.html
+	https://lkml.org/lkml/2019/5/30/1380
+[2] https://www.redhat.com/archives/linux-audit/2019-July/msg00003.html
+	https://lkml.org/lkml/2019/7/8/1051
 
-s/;/,/
+- RGB
 
-> +MSR_IA32_U_CET.  In general, a task is in WAIT_ENDBR after an
-> +indirect CALL/JMP and before the next instruction starts.
-> +
-> +A task's WAIT_ENDBR is reset for its signal handler, but preserved on
-> +the task's stack; and then restored from sigreturn.
-
-s/;/,/
-
-> +
-> +Fork
-> +----
-> +
-> +The SHSTK's vma has VM_SHSTK flag set; its PTEs are required to be
-> +read-only and dirty.  When a SHSTK PTE is not present, RO, and dirty,
-> +a SHSTK access triggers a page fault with an additional SHSTK bit set
-> +in the page fault error code.
-> +
-> +When a task forks a child, its SHSTK PTEs are copied and both the
-> +parent's and the child's SHSTK PTEs are cleared of the dirty bit.
-> +Upon the next SHSTK access, the resulting SHSTK page fault is handled
-> +by page copy/re-use.
-> +
-> +When a pthread child is created, the kernel allocates a new SHSTK for
-> +the new thread.
-> +
-> +Setjmp/Longjmp
-> +--------------
-> +
-> +Longjmp unwinds SHSTK until it matches the program stack.
-> +
-> +Ucontext
-> +--------
-> +
-> +In GLIBC, getcontext/setcontext is implemented in similar way as
-> +setjmp/longjmp.
-> +
-> +When makecontext creates a new ucontext, a new SHSTK is allocated for
-> +that context with ARCH_X86_CET_ALLOC_SHSTK syscall.  The kernel
-> +creates a restore token at the top of the new SHSTK and the user-mode
-> +code switches to the new SHSTK with the RSTORSSP instruction.
-> +
-> +[7] The management of read-only & dirty PTEs for SHSTK
-> +======================================================
-> +
-> +A RO and dirty PTE exists in the following cases:
-> +
-> +(a) A page is modified and then shared with a fork()'ed child;
-> +(b) A R/O page that has been COW'ed;
-> +(c) A SHSTK page.
-> +
-> +The processor only checks the dirty bit for (c).  To prevent the use
-> +of non-SHSTK memory as SHSTK, we use a spare bit of the 64-bit PTE as
-> +DIRTY_SW for (a) and (b) above.  This results to the following PTE
-> +settings::
-> +
-> +    Modified PTE:             (R/W + DIRTY_HW)
-> +    Modified and shared PTE:  (R/O + DIRTY_SW)
-> +    R/O PTE, COW'ed:          (R/O + DIRTY_SW)
-> +    SHSTK PTE:                (R/O + DIRTY_HW)
-> +    SHSTK PTE, COW'ed:        (R/O + DIRTY_HW)
-> +    SHSTK PTE, shared:        (R/O + DIRTY_SW)
-> +
-> +Note that DIRTY_SW is only used in R/O PTEs but not R/W PTEs.
-> +
-> +[8] The implementation of IBT legacy bitmap
-> +===========================================
-> +
-> +When IBT is active, a non-IBT-capable legacy library can be executed
-> +if its address ranges are specified in the legacy code bitmap.  The
-> +bitmap covers the whole user-space address, which is TASK_SIZE_MAX
-> +for 64-bit and TASK_SIZE for IA32, and its each bit indicates a 4-KB
-
-confusing:
-                                          its each bit
-
-> +legacy code page.  It is read-only from an application, and setup by
-> +the kernel as a special mapping when the first time the application
-
-                           drop:   when
-
-> +calls arch_prctl(ARCH_X86_CET_MARK_LEGACY_CODE).  The application
-> +manages the bitmap through the arch_prctl.
-
-                      through the arch_prctl() interface.
-
-
-cheers.
--- 
-~Randy
+--
+Richard Guy Briggs <rgb@redhat.com>
+Sr. S/W Engineer, Kernel Security, Base Operating Systems
+Remote, Ottawa, Red Hat Canada
+IRC: rgb, SunRaycer
+Voice: +1.647.777.2635, Internal: (81) 32635
