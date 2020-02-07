@@ -1,94 +1,62 @@
 From: Brian Geffon <bgeffon@google.com>
-Subject: [PATCH] mremap.2: Add information for MREMAP_DONTUNMAP.
-Date: Fri,  7 Feb 2020 12:21:24 -0800
-Message-ID: <20200207202124.68949-1-bgeffon@google.com>
-References: <20200207201856.46070-1-bgeffon@google.com>
+Subject: Re: [PATCH v2] mm: Add MREMAP_DONTUNMAP to mremap().
+Date: Fri, 7 Feb 2020 12:42:15 -0800
+Message-ID: <CADyq12x98QspiWSqNui1OH8+FEUzVyJwxia+ho00S2+Q+PmTjw@mail.gmail.com>
+References: <20200123014627.71720-1-bgeffon@google.com> <20200124190625.257659-1-bgeffon@google.com>
+ <20200126220650.i4lwljpvohpgvsi2@box> <CADyq12xCK_3MhGi88Am5P6DVZvrW8vqtyJMHO0zjNhvhYegm1w@mail.gmail.com>
+ <20200129104655.egvpavc2tzozlbqe@box> <CADyq12xgnVByYOkL=GcszYYKzDpg254QEOFoW8=e1y=bmOCcFQ@mail.gmail.com>
+ <20200203130940.enfvdsbn42hhoaki@box>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200207201856.46070-1-bgeffon@google.com>
+In-Reply-To: <20200203130940.enfvdsbn42hhoaki@box>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: "Michael S . Tsirkin" <mst@redhat.com>, Brian Geffon <bgeffon@google.com>, Arnd Bergmann <arnd@arndb.de>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Will Deacon <will@kernel.org>, Andrea Arcangeli <aarcange@redhat.com>, Sonny Rao <sonnyrao@google.com>, Minchan Kim <minchan@kernel.org>, Joel Fernandes <joel@joelfernandes.org>, Yu Zhao <yuzhao@google.com>, Jesse Barnes <jsbarnes@google.com>, Nathan Chancellor <natechancellor@gmail.com>, Florian Weimer <fweimer@redhat.com>, "Kirill A . Shutemov" <kirill@shutemov.name>
+To: "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc: Andrew Morton <akpm@linux-foundation.org>, "Michael S . Tsirkin" <mst@redhat.com>, Arnd Bergmann <arnd@arndb.de>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Andrea Arcangeli <aarcange@redhat.com>, Sonny Rao <sonnyrao@google.com>, Minchan Kim <minchan@kernel.org>, Joel Fernandes <joel@joelfernandes.org>, Yu Zhao <yuzhao@google.com>, Jesse Barnes <jsbarnes@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Brian Geffon <bgeffon@google.com>
----
- man2/mremap.2 | 27 ++++++++++++++++++++++++++-
- 1 file changed, 26 insertions(+), 1 deletion(-)
+Hi Kirill,
+I started a new thread https://lkml.org/lkml/2020/2/7/640 for my v4
+patch. But I wanted to quickly address your comments. Regarding the
+concern around the rmap, no changes actually need to be made. If we
+were to unlink_anon_vma(vma) and then set vma->anon_vma = NULL, that
+would be fine but then as soon as there was a fault the same anon_vma
+would be attached since it's a private anonymous mapping. So there is
+really nothing to do regarding the rmap.
 
-diff --git a/man2/mremap.2 b/man2/mremap.2
-index d73fb64fa..c660a45be 100644
---- a/man2/mremap.2
-+++ b/man2/mremap.2
-@@ -26,7 +26,8 @@
- .\" 1996-04-12 Tom Bjorkholm <tomb@mydata.se>
- .\"            Update for Linux 1.3.87 and later
- .\" 2005-10-11 mtk: Added NOTES for MREMAP_FIXED; revised EINVAL text.
--.\"
-+.\" 2020-02-05 Brian Geffon <bgeffon@google.com>
-+.\"            Update for MREMAP_DONTUNMAP.
- .TH MREMAP 2 2019-03-06 "Linux" "Linux Programmer's Manual"
- .SH NAME
- mremap \- remap a virtual memory address
-@@ -129,6 +130,13 @@ If
- is specified, then
- .B MREMAP_MAYMOVE
- must also be specified.
-+.TP
-+.BR MREMAP_DONTUNMAP " (since Linux ?.?)"
-+This flag which must be used in conjuction with
-+.B MREMAP_MAYMOVE
-+remaps a mapping to a new address and it does not unmap the mapping at \fIold_address\fP. This flag can only be used with private anonymous mappings. Any access to the range specified at \fIold_address\fP after completion will result in a page fault. If a
-+.BR userfaultfd (2)
-+was registered on the mapping specified by \fIold_address\fP it will continue to watch that mapping for faults.
- .PP
- If the memory segment specified by
- .I old_address
-@@ -176,6 +184,8 @@ a value other than
- .B MREMAP_MAYMOVE
- or
- .B MREMAP_FIXED
-+or
-+.B MREMAP_DONTUNMAP
- was specified in
- .IR flags ;
- .IP *
-@@ -197,9 +207,14 @@ and
- .IR old_size ;
- .IP *
- .B MREMAP_FIXED
-+or
-+.B MREMAP_DONTUNMAP
- was specified without also specifying
- .BR MREMAP_MAYMOVE ;
- .IP *
-+.B MREMAP_DONTUNMAP
-+was specified with an \fIold_address\fP that was not private anonymous;
-+.IP *
- \fIold_size\fP was zero and \fIold_address\fP does not refer to a
- shareable mapping (but see BUGS);
- .IP *
-@@ -209,10 +224,20 @@ flag was not specified.
- .RE
- .TP
- .B ENOMEM
-+Not enough memory was available to complete the operation.
-+Possible causes are:
-+.RS
-+.IP * 3
- The memory area cannot be expanded at the current virtual address, and the
- .B MREMAP_MAYMOVE
- flag is not set in \fIflags\fP.
- Or, there is not enough (virtual) memory available.
-+.IP *
-+.B MREMAP_DONTUNMAP
-+was used without
-+.B MREMAP_FIXED
-+causing a new mapping to be created that would exceed the virtual memory available or it would exceed the maximum number of allowed mappings.
-+.RE
- .SH CONFORMING TO
- This call is Linux-specific, and should not be used in programs
- intended to be portable.
--- 
-2.25.0.341.g760bfbb309-goog
+I considered the two flag approach but since I could not come up with
+a concrete use case of MREMAP_MUSTMOVE I decided to just leave the
+single MREMAP_DONTUNMAP flag, the two flag approach would be only for
+clarifying the operations so I'm not sure it's worth it. (Still trying
+to come up with a better name). But I've attached a man page diff to
+the latest patch.
+
+Thanks,
+Brian
+
+On Mon, Feb 3, 2020 at 5:09 AM Kirill A. Shutemov <kirill@shutemov.name> wrote:
+>
+> On Sun, Feb 02, 2020 at 05:17:53AM +0100, Brian Geffon wrote:
+> > On Wed, Jan 29, 2020 at 11:46 AM Kirill A. Shutemov
+> > <kirill@shutemov.name> wrote:
+> > > Any better options for the flag name? (I have none)
+> >
+> > The other option is that it's broken up into two new flags the first
+> > MREMAP_MUSTMOVE which can be used regardless of whether or not you're
+> > leaving the original mapping mapped. This would do exactly what it
+> > describes: move the mapping to a new address with or without
+> > MREMAP_FIXED, this keeps consistency with MAYMOVE.
+> >
+> > The second flag would be the new MREMAP_DONTUNMAP flag which requires
+> > MREMAP_MUSTMOVE, again with or without MREMAP_FIXED.
+> >
+> > What are your thoughts on this?
+>
+> Sounds reasonable.
+>
+> MREMAP_DONTUNMAP doesn't really convey that you move pages to the new
+> mapping, but leave empty mapping behind. But I guess there's only so much
+> you can encode into the name. (Patch to the man page should do the rest)
+>
+> --
+>  Kirill A. Shutemov
