@@ -1,145 +1,134 @@
 From: Jeff Layton <jlayton@kernel.org>
-Subject: [PATCH v3 1/3] vfs: track per-sb writeback errors and report them to syncfs
-Date: Fri,  7 Feb 2020 12:04:21 -0500
-Message-ID: <20200207170423.377931-2-jlayton@kernel.org>
+Subject: [PATCH v3 3/3] vfs: add a new ioctl for fetching the superblock's errseq_t
+Date: Fri,  7 Feb 2020 12:04:23 -0500
+Message-ID: <20200207170423.377931-4-jlayton@kernel.org>
 References: <20200207170423.377931-1-jlayton@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <20200207170423.377931-1-jlayton@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: viro@zeniv.linux.org.uk
 Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, andres@anarazel.de, willy@infradead.org, dhowells@redhat.com, hch@infradead.org, jack@suse.cz, akpm@linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
 From: Jeff Layton <jlayton@redhat.com>
 
-Usually we suggest that applications call fsync when they want to
-ensure that all data written to the file has made it to the backing
-store, but that can be inefficient when there are a lot of open
-files.
+Some time ago, the PostgreSQL developers mentioned that they'd like a
+way to tell whether there have been any writeback errors on a given
+filesystem without having to forcibly sync out all buffered writes.
 
-Calling syncfs on the filesystem can be more efficient in some
-situations, but the error reporting doesn't currently work the way most
-people expect. If a single inode on a filesystem reports a writeback
-error, syncfs won't necessarily return an error. syncfs only returns an
-error if __sync_blockdev fails, and on some filesystems that's a no-op.
-
-It would be better if syncfs reported an error if there were any writeback
-failures. Then applications could call syncfs to see if there are any
-errors on any open files, and could then call fsync on all of the other
-descriptors to figure out which one failed.
-
-This patch adds a new errseq_t to struct super_block, and has
-mapping_set_error also record writeback errors there.
-
-To report those errors, we also need to keep an errseq_t for in struct
-file to act as a cursor, but growing struct file for this purpose is
-undesirable. We could just reuse f_wb_err, but someone could mix calls
-to fsync and syncfs and that would break things.
-
-This patch implements an alternative suggested by Willy. When the file
-is opened with O_PATH, then we repurpose the f_wb_err cursor to track
-s_wb_err. Any file opened with O_PATH will not have an fsync
-file_operation, and attempts to fsync such a fd will return -EBADF.
-
-Note that calling syncfs on an O_PATH descriptor today will also return
--EBADF, so this scheme gives userland a way to tell whether this
-mechanism will work at runtime.
+Now that we have a per-sb errseq_t that tracks whether any inode on the
+filesystem might have failed writeback, we can present that to userland
+applications via a new interface. Add a new generic fs ioctl for that
+purpose. This just reports the current state of the errseq_t counter
+with the SEEN bit masked off.
 
 Cc: Andres Freund <andres@anarazel.de>
-Cc: Matthew Wilcox <willy@infradead.org>
 Signed-off-by: Jeff Layton <jlayton@kernel.org>
 ---
- fs/open.c               | 6 +++---
- fs/sync.c               | 9 ++++++++-
- include/linux/fs.h      | 3 +++
- include/linux/pagemap.h | 5 ++++-
- 4 files changed, 18 insertions(+), 5 deletions(-)
+ fs/ioctl.c              |  4 ++++
+ include/linux/errseq.h  |  1 +
+ include/uapi/linux/fs.h |  1 +
+ lib/errseq.c            | 33 +++++++++++++++++++++++++++++++--
+ 4 files changed, 37 insertions(+), 2 deletions(-)
 
-diff --git a/fs/open.c b/fs/open.c
-index 0788b3715731..de10a0bf7697 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -744,12 +744,10 @@ static int do_dentry_open(struct file *f,
- 	f->f_inode = inode;
- 	f->f_mapping = inode->i_mapping;
+diff --git a/fs/ioctl.c b/fs/ioctl.c
+index 7c9a5df5a597..41e991cec4c3 100644
+--- a/fs/ioctl.c
++++ b/fs/ioctl.c
+@@ -705,6 +705,10 @@ static int do_vfs_ioctl(struct file *filp, unsigned int fd,
+ 	case FS_IOC_FIEMAP:
+ 		return ioctl_fiemap(filp, argp);
  
--	/* Ensure that we skip any errors that predate opening of the file */
--	f->f_wb_err = filemap_sample_wb_err(f->f_mapping);
--
- 	if (unlikely(f->f_flags & O_PATH)) {
- 		f->f_mode = FMODE_PATH | FMODE_OPENED;
- 		f->f_op = &empty_fops;
-+		f->f_wb_err = errseq_sample(&f->f_path.dentry->d_sb->s_wb_err);
- 		return 0;
- 	}
- 
-@@ -759,6 +757,8 @@ static int do_dentry_open(struct file *f,
- 		goto cleanup_file;
- 	}
- 
-+	f->f_wb_err = filemap_sample_wb_err(f->f_mapping);
++	case FS_IOC_GETFSERR:
++		return put_user(errseq_scrape(&inode->i_sb->s_wb_err),
++				(unsigned int __user *)argp);
 +
- 	if (f->f_mode & FMODE_WRITE && !special_file(inode->i_mode)) {
- 		error = get_write_access(inode);
- 		if (unlikely(error))
-diff --git a/fs/sync.c b/fs/sync.c
-index 4d1ff010bc5a..8373d0372767 100644
---- a/fs/sync.c
-+++ b/fs/sync.c
-@@ -159,7 +159,7 @@ void emergency_sync(void)
+ 	case FIGETBSZ:
+ 		/* anon_bdev filesystems may not have a block size */
+ 		if (!inode->i_sb->s_blocksize)
+diff --git a/include/linux/errseq.h b/include/linux/errseq.h
+index fc2777770768..de165623fa86 100644
+--- a/include/linux/errseq.h
++++ b/include/linux/errseq.h
+@@ -9,6 +9,7 @@ typedef u32	errseq_t;
+ 
+ errseq_t errseq_set(errseq_t *eseq, int err);
+ errseq_t errseq_sample(errseq_t *eseq);
++errseq_t errseq_scrape(errseq_t *eseq);
+ int errseq_check(errseq_t *eseq, errseq_t since);
+ int errseq_check_and_advance(errseq_t *eseq, errseq_t *since);
+ #endif
+diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+index 379a612f8f1d..c39b37fba7f9 100644
+--- a/include/uapi/linux/fs.h
++++ b/include/uapi/linux/fs.h
+@@ -214,6 +214,7 @@ struct fsxattr {
+ #define FS_IOC_FSSETXATTR		_IOW('X', 32, struct fsxattr)
+ #define FS_IOC_GETFSLABEL		_IOR(0x94, 49, char[FSLABEL_MAX])
+ #define FS_IOC_SETFSLABEL		_IOW(0x94, 50, char[FSLABEL_MAX])
++#define FS_IOC_GETFSERR			_IOR('e', 1, unsigned int)
+ 
+ /*
+  * Inode flags (FS_IOC_GETFLAGS / FS_IOC_SETFLAGS)
+diff --git a/lib/errseq.c b/lib/errseq.c
+index 81f9e33aa7e7..8ded0920eed3 100644
+--- a/lib/errseq.c
++++ b/lib/errseq.c
+@@ -108,7 +108,7 @@ errseq_t errseq_set(errseq_t *eseq, int err)
+ EXPORT_SYMBOL(errseq_set);
+ 
+ /**
+- * errseq_sample() - Grab current errseq_t value.
++ * errseq_sample() - Grab current errseq_t value (or 0 if it hasn't been seen)
+  * @eseq: Pointer to errseq_t to be sampled.
+  *
+  * This function allows callers to initialise their errseq_t variable.
+@@ -117,7 +117,7 @@ EXPORT_SYMBOL(errseq_set);
+  * see it the next time it checks for an error.
+  *
+  * Context: Any context.
+- * Return: The current errseq value.
++ * Return: The current errseq value or 0 if it wasn't previously seen
   */
- SYSCALL_DEFINE1(syncfs, int, fd)
+ errseq_t errseq_sample(errseq_t *eseq)
  {
--	struct fd f = fdget(fd);
-+	struct fd f = fdget_raw(fd);
- 	struct super_block *sb;
- 	int ret;
- 
-@@ -171,6 +171,13 @@ SYSCALL_DEFINE1(syncfs, int, fd)
- 	ret = sync_filesystem(sb);
- 	up_read(&sb->s_umount);
- 
-+	if (f.file->f_flags & O_PATH) {
-+		int ret2 = errseq_check_and_advance(&sb->s_wb_err,
-+						    &f.file->f_wb_err);
-+		if (ret == 0)
-+			ret = ret2;
-+	}
-+
- 	fdput(f);
- 	return ret;
+@@ -130,6 +130,35 @@ errseq_t errseq_sample(errseq_t *eseq)
  }
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 6eae91c0668f..bdbb0cbad03a 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1514,6 +1514,9 @@ struct super_block {
- 	/* Being remounted read-only */
- 	int s_readonly_remount;
+ EXPORT_SYMBOL(errseq_sample);
  
-+	/* per-sb errseq_t for reporting writeback errors via syncfs */
-+	errseq_t s_wb_err;
++/**
++ * errseq_scrape() - Grab current errseq_t value
++ * @eseq: Pointer to errseq_t to be sampled.
++ *
++ * This function allows callers to scrape the current value of an errseq_t.
++ * Unlike errseq_sample, this will always return the current value with
++ * the SEEN flag unset, even when the value has not yet been seen.
++ *
++ * Context: Any context.
++ * Return: The current errseq value with ERRSEQ_SEEN masked off
++ */
++errseq_t errseq_scrape(errseq_t *eseq)
++{
++	errseq_t old = READ_ONCE(*eseq);
 +
- 	/* AIO completions deferred from interrupt context */
- 	struct workqueue_struct *s_dio_done_wq;
- 	struct hlist_head s_pins;
-diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index ccb14b6a16b5..897439475315 100644
---- a/include/linux/pagemap.h
-+++ b/include/linux/pagemap.h
-@@ -51,7 +51,10 @@ static inline void mapping_set_error(struct address_space *mapping, int error)
- 		return;
- 
- 	/* Record in wb_err for checkers using errseq_t based tracking */
--	filemap_set_wb_err(mapping, error);
-+	__filemap_set_wb_err(mapping, error);
++	/*
++	 * For the common case of no errors ever having been set, we can skip
++	 * marking the SEEN bit. Once an error has been set, the value will
++	 * never go back to zero.
++	 */
++	if (old != 0) {
++		errseq_t new = old | ERRSEQ_SEEN;
++		if (old != new)
++			cmpxchg(eseq, old, new);
++	}
++	return old & ~ERRSEQ_SEEN;
++}
++EXPORT_SYMBOL(errseq_scrape);
 +
-+	/* Record it in superblock */
-+	errseq_set(&mapping->host->i_sb->s_wb_err, error);
- 
- 	/* Record it in flags for now, for legacy callers */
- 	if (error == -ENOSPC)
+ /**
+  * errseq_check() - Has an error occurred since a particular sample point?
+  * @eseq: Pointer to errseq_t value to be checked.
 -- 
 2.24.1
