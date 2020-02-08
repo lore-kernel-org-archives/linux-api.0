@@ -1,92 +1,71 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH -manpage 2/2] memfd_create.2: Update manpage with new
- memfd F_SEAL_FUTURE_WRITE seal
-Date: Sat, 8 Feb 2020 12:58:33 +0100
-Message-ID: <3349d0f2-6ea0-4e3a-1d9b-5a105edc34c8@gmail.com>
-References: <20190314214844.207430-1-joel@joelfernandes.org>
- <20190314214844.207430-3-joel@joelfernandes.org>
+From: Mike Rapoport <rppt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [RFC PATCH] mm: extend memfd with ability to create "secret"
+ memory areas
+Date: Sat, 8 Feb 2020 19:39:22 +0200
+Message-ID: <20200208173922.GA15879@hump>
+References: <20200130162340.GA14232@rapoport-lnx>
+ <df5a888b-1a11-e806-741d-94684b22c966@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20190314214844.207430-3-joel-QYYGw3jwrUn5owFQY34kdNi2O/JbrIOy@public.gmane.org>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <df5a888b-1a11-e806-741d-94684b22c966-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Joel Fernandes (Google)" <joel-QYYGw3jwrUn5owFQY34kdNi2O/JbrIOy@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>
+To: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, James Bottomley <jejb-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Reshetova, Elena" <elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tycho Andersen <tycho-E0fblnxP3wo@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hello Joel,
-
-On 3/14/19 10:48 PM, Joel Fernandes (Google) wrote:
-> More details of the seal can be found in the LKML patch:
-> https://lore.kernel.org/lkml/20181120052137.74317-1-joel-QYYGw3jwrUn5owFQY34kdNi2O/JbrIOy@public.gmane.org/T/#t
+On Thu, Feb 06, 2020 at 10:51:13AM -0800, Dave Hansen wrote:
+> On 1/30/20 8:23 AM, Mike Rapoport wrote:
+> >  include/linux/memfd.h      |   9 ++
+> >  include/uapi/linux/magic.h |   1 +
+> >  include/uapi/linux/memfd.h |   6 +
+> >  mm/Kconfig                 |   4 +
+> >  mm/Makefile                |   1 +
+> >  mm/memfd.c                 |  10 +-
+> >  mm/secretmem.c             | 244 +++++++++++++++++++++++++++++++++++++
+> >  7 files changed, 273 insertions(+), 2 deletions(-)
 > 
-> Signed-off-by: Joel Fernandes (Google) <joel-QYYGw3jwrUn5owFQY34kdNi2O/JbrIOy@public.gmane.org>
-
-Thanks! Patch applied
-
-Cheers,
-
-Michael
-
-
-
-> ---
->  man2/memfd_create.2 | 15 ++++++++++++++-
->  1 file changed, 14 insertions(+), 1 deletion(-)
+> It seems pretty self-contained and relatively harmless.
 > 
-> diff --git a/man2/memfd_create.2 b/man2/memfd_create.2
-> index 15b1362f5525..3b7f032407ed 100644
-> --- a/man2/memfd_create.2
-> +++ b/man2/memfd_create.2
-> @@ -280,7 +280,15 @@ in order to restrict further modifications on the file.
->  (If placing the seal
->  .BR F_SEAL_WRITE ,
->  then it will be necessary to first unmap the shared writable mapping
-> -created in the previous step.)
-> +created in the previous step. Otherwise, behavior similar to
-> +.BR F_SEAL_WRITE
-> +can be achieved, by using
-> +.BR F_SEAL_FUTURE_WRITE
-> +which will prevent future writes via
-> +.BR mmap (2)
-> +and
-> +.BR write (2)
-> +from succeeding, while keeping existing shared writable mappings).
->  .IP 4.
->  A second process obtains a file descriptor for the
->  .BR tmpfs (5)
-> @@ -425,6 +433,7 @@ main(int argc, char *argv[])
->          fprintf(stderr, "\et\etg \- F_SEAL_GROW\en");
->          fprintf(stderr, "\et\ets \- F_SEAL_SHRINK\en");
->          fprintf(stderr, "\et\etw \- F_SEAL_WRITE\en");
-> +        fprintf(stderr, "\et\etW \- F_SEAL_FUTURE_WRITE\en");
->          fprintf(stderr, "\et\etS \- F_SEAL_SEAL\en");
->          exit(EXIT_FAILURE);
->      }
-> @@ -463,6 +472,8 @@ main(int argc, char *argv[])
->              seals |= F_SEAL_SHRINK;
->          if (strchr(seals_arg, \(aqw\(aq) != NULL)
->              seals |= F_SEAL_WRITE;
-> +        if (strchr(seals_arg, \(aqW\(aq) != NULL)
-> +            seals |= F_SEAL_FUTURE_WRITE;
->          if (strchr(seals_arg, \(aqS\(aq) != NULL)
->              seals |= F_SEAL_SEAL;
->  
-> @@ -518,6 +529,8 @@ main(int argc, char *argv[])
->          printf(" GROW");
->      if (seals & F_SEAL_WRITE)
->          printf(" WRITE");
-> +    if (seals & F_SEAL_FUTURE_WRITE)
-> +        printf(" FUTURE_WRITE");
->      if (seals & F_SEAL_SHRINK)
->          printf(" SHRINK");
->      printf("\en");
-> 
+> But, how much work is it going to be to tell the rest of the kernel that
+> page_to_virt() doesn't work any more?
 
+Why page_to_virt() won't work anymore? Or you refer to that the kernel code
+won't be able to access the page contents?
+
+> Do we need to make kmap() work on these?
+
+I don't think we need to make kmap() work on these. The idea is to prevent
+kernel from accessing such memory areas.
+ 
+> I guess fixing vm_normal_page() would fix a lot of that.
+> 
+> In general, my concern about creating little self-contained memory types
+> is that they will get popular and folks will start wanting more features
+> from them.  For instance, what if I want NUMA affinity, migration, or
+> large page mappings that are secret?
+
+Sure, why not :)
+Well, this is true for any feature: it may become popular, people will
+start using it and it will add more complexity.
+
+My goal is to design this thing keeping in mind that all the above (and
+probably more) will be requested sooner or later.
+ 
+> Can these pages work as guest memory?
+
+Actually, this is one of the driving usecases. I believe that people that
+use mem=X to limit kernel control of the memory and the manage the
+remaining memory for the guests can switch to fd-based approach.
+ 
+> Who would the first users of this thing be?
+
+We were thinking about using such areas to store small secrets, e.g. with
+openssl_malloc().
+
+Another usecase is the VM memory.
 
 -- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Sincerely yours,
+Mike.
