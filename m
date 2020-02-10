@@ -1,93 +1,90 @@
-From: "Reshetova, Elena" <elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: RE: [RFC PATCH] mm: extend memfd with ability to create "secret"
- memory areas
-Date: Mon, 10 Feb 2020 08:06:49 +0000
-Message-ID: <BL0PR11MB3281C858712D469C88F52537E7190@BL0PR11MB3281.namprd11.prod.outlook.com>
-References: <20200130162340.GA14232@rapoport-lnx>
- <df5a888b-1a11-e806-741d-94684b22c966@intel.com>
- <20200208173922.GA15879@hump>
+From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [v3 PATCH] move_pages.2: Returning positive value is a new error
+ case
+Date: Mon, 10 Feb 2020 10:36:35 +0100
+Message-ID: <20200210093635.GC10636@dhcp22.suse.cz>
+References: <1580757507-120233-1-git-send-email-yang.shi@linux.alibaba.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20200208173922.GA15879@hump>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Rapoport <rppt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Hansen, Dave" <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alan Cox <alan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, James Bottomley <jejb-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tycho Andersen <tycho-E0fblnxP3wo@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1580757507-120233-1-git-send-email-yang.shi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Yang Shi <yang.shi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, david-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On Tue 04-02-20 03:18:27, Yang Shi wrote:
+> Since commit a49bd4d71637 ("mm, numa: rework do_pages_move"),
+> the semantic of move_pages() has changed to return the number of
+> non-migrated pages if they were result of a non-fatal reasons (usually a
+> busy page).  This was an unintentional change that hasn't been noticed
+> except for LTP tests which checked for the documented behavior.
+> 
+> There are two ways to go around this change.  We can even get back to the
+> original behavior and return -EAGAIN whenever migrate_pages is not able
+> to migrate pages due to non-fatal reasons.  Another option would be to
+> simply continue with the changed semantic and extend move_pages
+> documentation to clarify that -errno is returned on an invalid input or
+> when migration simply cannot succeed (e.g. -ENOMEM, -EBUSY) or the
+> number of pages that couldn't have been migrated due to ephemeral
+> reasons (e.g. page is pinned or locked for other reasons).
+> 
+> We decided to keep the second option in kernel because this behavior is in
+> place for some time without anybody complaining and possibly new users
+> depending on it.  Also it allows to have a slightly easier error handling
+> as the caller knows that it is worth to retry when err > 0.
+> 
+> Update man pages to reflect the new semantic.
+> 
+> Cc: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
+> Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Yang Shi <yang.shi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
 
-> On Thu, Feb 06, 2020 at 10:51:13AM -0800, Dave Hansen wrote:
-> > On 1/30/20 8:23 AM, Mike Rapoport wrote:
-> > >  include/linux/memfd.h      |   9 ++
-> > >  include/uapi/linux/magic.h |   1 +
-> > >  include/uapi/linux/memfd.h |   6 +
-> > >  mm/Kconfig                 |   4 +
-> > >  mm/Makefile                |   1 +
-> > >  mm/memfd.c                 |  10 +-
-> > >  mm/secretmem.c             | 244 +++++++++++++++++++++++++++++++++++=
-++
-> > >  7 files changed, 273 insertions(+), 2 deletions(-)
-> >
-> > It seems pretty self-contained and relatively harmless.
-> >
-> > But, how much work is it going to be to tell the rest of the kernel tha=
-t
-> > page_to_virt() doesn't work any more?
->=20
-> Why page_to_virt() won't work anymore? Or you refer to that the kernel co=
-de
-> won't be able to access the page contents?
->=20
-> > Do we need to make kmap() work on these?
->=20
-> I don't think we need to make kmap() work on these. The idea is to preven=
-t
-> kernel from accessing such memory areas.
->=20
-> > I guess fixing vm_normal_page() would fix a lot of that.
-> >
-> > In general, my concern about creating little self-contained memory type=
-s
-> > is that they will get popular and folks will start wanting more feature=
-s
-> > from them.  For instance, what if I want NUMA affinity, migration, or
-> > large page mappings that are secret?
->=20
-> Sure, why not :)
-> Well, this is true for any feature: it may become popular, people will
-> start using it and it will add more complexity.
->=20
-> My goal is to design this thing keeping in mind that all the above (and
-> probably more) will be requested sooner or later.
->=20
-> > Can these pages work as guest memory?
->=20
-> Actually, this is one of the driving usecases. I believe that people that
-> use mem=3DX to limit kernel control of the memory and the manage the
-> remaining memory for the guests can switch to fd-based approach.
->=20
-> > Who would the first users of this thing be?
->=20
-> We were thinking about using such areas to store small secrets, e.g. with
-> openssl_malloc().
->=20
+Acked-by: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
 
-To elaborate more on this - openssl has "secure heap" feature [1], which=20
-is basically a mmap area with MLOCK_ONFAULT and MADV_DONTDUMP.
-It is optional feature and can be used for storing things like RSA private =
-keys
-in a bit more secure memory area (vs. just normal allocation). It is fully=
-=20
-transparent for userspace applications (hidden behind openssl API), but=20
-provides additional security when enabled. So, it seems like a natural cand=
-idate
-for smth like securememory, which in addition to MLOCK_ONFAULT and=20
-MADV_DONTDUMP can provide further security guarantees like exclusive=20
-memory and no-caching.=20
+> ---
+> v3: * Fixed the comments from David Hildenbrand.
+>     * Fixed the inaccuracy about pre-initialized status array values.
+> v2: * Added notes about status array per Michal.
+>     * Added Michal's Acked-by.
+> 
+>  man2/move_pages.2 | 10 ++++++++--
+>  1 file changed, 8 insertions(+), 2 deletions(-)
+> 
+> diff --git a/man2/move_pages.2 b/man2/move_pages.2
+> index 1bf1053..50c83a4 100644
+> --- a/man2/move_pages.2
+> +++ b/man2/move_pages.2
+> @@ -104,7 +104,9 @@ pages that need to be moved.
+>  is an array of integers that return the status of each page.
+>  The array contains valid values only if
+>  .BR move_pages ()
+> -did not return an error.
+> +did not return an error.  Pre-initialization of the array to the value
+> +which cannot represent a real numa node or valid error of status array
+> +could help to identify pages that have been migrated
+>  .PP
+>  .I flags
+>  specify what types of pages to move.
+> @@ -164,9 +166,13 @@ returns zero.
+>  .\" do the right thing?
+>  On error, it returns \-1, and sets
+>  .I errno
+> -to indicate the error.
+> +to indicate the error. If positive value is returned, it is the number of
+> +non-migrated pages.
+>  .SH ERRORS
+>  .TP
+> +.B Positive value
+> +The number of non-migrated pages if they were the result of non-fatal
+> +reasons (since version 4.17).
+>  .B E2BIG
+>  Too many pages to move.
+>  Since Linux 2.6.29,
+> -- 
+> 1.8.3.1
 
-[1] https://www.openssl.org/docs/manmaster/man3/OPENSSL_secure_malloc.html
-
-Best Regards,
-Elena.
+-- 
+Michal Hocko
+SUSE Labs
