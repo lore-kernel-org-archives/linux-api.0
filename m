@@ -1,52 +1,108 @@
-From: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
-Subject: Re: [PATCH v2] mm: Add MREMAP_DONTUNMAP to mremap().
-Date: Mon, 10 Feb 2020 13:35:56 +0300
-Message-ID: <20200210103556.wz72op4g554qn5jm@box>
-References: <20200123014627.71720-1-bgeffon@google.com>
- <20200124190625.257659-1-bgeffon@google.com>
- <20200126220650.i4lwljpvohpgvsi2@box>
- <CADyq12xCK_3MhGi88Am5P6DVZvrW8vqtyJMHO0zjNhvhYegm1w@mail.gmail.com>
- <20200129104655.egvpavc2tzozlbqe@box>
- <CADyq12xgnVByYOkL=GcszYYKzDpg254QEOFoW8=e1y=bmOCcFQ@mail.gmail.com>
- <20200203130940.enfvdsbn42hhoaki@box>
- <CADyq12x98QspiWSqNui1OH8+FEUzVyJwxia+ho00S2+Q+PmTjw@mail.gmail.com>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
+Subject: Re: [PATCH v4] mm: Add MREMAP_DONTUNMAP to mremap().
+Date: Mon, 10 Feb 2020 13:45:20 +0300
+Message-ID: <20200210104520.cfs2oytkrf5ihd3m@box>
+References: <20200207201856.46070-1-bgeffon@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CADyq12x98QspiWSqNui1OH8+FEUzVyJwxia+ho00S2+Q+PmTjw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Michael S . Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Joel Fernandes <joel-QYYGw3jwrUn5owFQY34kdNi2O/JbrIOy@public.gmane.org>, Yu Zhao <yuzhao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Jesse Barnes <jsbarnes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20200207201856.46070-1-bgeffon@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Brian Geffon <bgeffon@google.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, "Michael S . Tsirkin" <mst@redhat.com>, Arnd Bergmann <arnd@arndb.de>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Will Deacon <will@kernel.org>, Andrea Arcangeli <aarcange@redhat.com>, Sonny Rao <sonnyrao@google.com>, Minchan Kim <minchan@kernel.org>, Joel Fernandes <joel@joelfernandes.org>, Yu Zhao <yuzhao@google.com>, Jesse Barnes <jsbarnes@google.com>, Nathan Chancellor <natechancellor@gmail.com>, Florian Weimer <fweimer@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 07, 2020 at 12:42:15PM -0800, Brian Geffon wrote:
-> Hi Kirill,
-> I started a new thread https://lkml.org/lkml/2020/2/7/640 for my v4
-> patch. But I wanted to quickly address your comments. Regarding the
-> concern around the rmap, no changes actually need to be made. If we
-> were to unlink_anon_vma(vma) and then set vma->anon_vma = NULL, that
-> would be fine but then as soon as there was a fault the same anon_vma
-> would be attached since it's a private anonymous mapping. So there is
-> really nothing to do regarding the rmap.
+On Fri, Feb 07, 2020 at 12:18:56PM -0800, Brian Geffon wrote:
+> When remapping an anonymous, private mapping, if MREMAP_DONTUNMAP is
+> set, the source mapping will not be removed. Instead it will be
+> cleared as if a brand new anonymous, private mapping had been created
+> atomically as part of the mremap() call.  If a userfaultfd was watching
+> the source, it will continue to watch the new mapping.  For a mapping
+> that is shared or not anonymous, MREMAP_DONTUNMAP will cause the
+> mremap() call to fail. Because MREMAP_DONTUNMAP always results in moving
+> a VMA you MUST use the MREMAP_MAYMOVE flag. The final result is two
+> equally sized VMAs where the destination contains the PTEs of the source.
+> 
+> We hope to use this in Chrome OS where with userfaultfd we could write
+> an anonymous mapping to disk without having to STOP the process or worry
+> about VMA permission changes.
+> 
+> This feature also has a use case in Android, Lokesh Gidra has said
+> that "As part of using userfaultfd for GC, We'll have to move the physical
+> pages of the java heap to a separate location. For this purpose mremap
+> will be used. Without the MREMAP_DONTUNMAP flag, when I mremap the java
+> heap, its virtual mapping will be removed as well. Therefore, we'll
+> require performing mmap immediately after. This is not only time consuming
+> but also opens a time window where a native thread may call mmap and
+> reserve the java heap's address range for its own usage. This flag
+> solves the problem."
+>            
+> Signed-off-by: Brian Geffon <bgeffon@google.com>
+> ---
+>  include/uapi/linux/mman.h |  5 +-
+>  mm/mremap.c               | 98 ++++++++++++++++++++++++++++++---------
+>  2 files changed, 80 insertions(+), 23 deletions(-)
+> 
+> diff --git a/include/uapi/linux/mman.h b/include/uapi/linux/mman.h
+> index fc1a64c3447b..923cc162609c 100644
+> --- a/include/uapi/linux/mman.h
+> +++ b/include/uapi/linux/mman.h
+> @@ -5,8 +5,9 @@
+>  #include <asm/mman.h>
+>  #include <asm-generic/hugetlb_encode.h>
+>  
+> -#define MREMAP_MAYMOVE	1
+> -#define MREMAP_FIXED	2
+> +#define MREMAP_MAYMOVE		1
+> +#define MREMAP_FIXED		2
+> +#define MREMAP_DONTUNMAP	4
+>  
+>  #define OVERCOMMIT_GUESS		0
+>  #define OVERCOMMIT_ALWAYS		1
+> diff --git a/mm/mremap.c b/mm/mremap.c
+> index 122938dcec15..9f4aa17f178b 100644
+> --- a/mm/mremap.c
+> +++ b/mm/mremap.c
+> @@ -318,8 +318,8 @@ unsigned long move_page_tables(struct vm_area_struct *vma,
+>  static unsigned long move_vma(struct vm_area_struct *vma,
+>  		unsigned long old_addr, unsigned long old_len,
+>  		unsigned long new_len, unsigned long new_addr,
+> -		bool *locked, struct vm_userfaultfd_ctx *uf,
+> -		struct list_head *uf_unmap)
+> +		bool *locked, unsigned long flags,
+> +		struct vm_userfaultfd_ctx *uf, struct list_head *uf_unmap)
+>  {
+>  	struct mm_struct *mm = vma->vm_mm;
+>  	struct vm_area_struct *new_vma;
+> @@ -408,11 +408,41 @@ static unsigned long move_vma(struct vm_area_struct *vma,
+>  	if (unlikely(vma->vm_flags & VM_PFNMAP))
+>  		untrack_pfn_moved(vma);
+>  
+> +	if (unlikely(!err && (flags & MREMAP_DONTUNMAP))) {
+> +		if (vm_flags & VM_ACCOUNT) {
+> +			/* Always put back VM_ACCOUNT since we won't unmap */
+> +			vma->vm_flags |= VM_ACCOUNT;
+> +
+> +			vm_acct_memory(vma_pages(new_vma));
+> +		}
+> +
+> +		/*
+> +		 * locked_vm accounting: if the mapping remained the same size
+> +		 * it will have just moved and we don't need to touch locked_vm
+> +		 * because we skip the do_unmap. If the mapping shrunk before
+> +		 * being moved then the do_unmap on that portion will have
+> +		 * adjusted vm_locked. Only if the mapping grows do we need to
+> +		 * do something special; the reason is locked_vm only accounts
+> +		 * for old_len, but we're now adding new_len - old_len locked
+> +		 * bytes to the new mapping.
+> +		 */
+> +		if (new_len > old_len)
+> +			mm->locked_vm += (new_len - old_len) >> PAGE_SHIFT;
 
-Okay.
+Hm. How do you enforce that we're not over RLIMIT_MEMLOCK?
 
-My worry was that we create a new VMA with the same anon_vma *and*
-vm_pgoff, but I just realized we can do the same with the current
-mremap(2) plus following mmap(2) in the old place. So it's not regression.
-
-I guess we are fine here.
-
-> I considered the two flag approach but since I could not come up with
-> a concrete use case of MREMAP_MUSTMOVE I decided to just leave the
-> single MREMAP_DONTUNMAP flag, the two flag approach would be only for
-> clarifying the operations so I'm not sure it's worth it. (Still trying
-> to come up with a better name). But I've attached a man page diff to
-> the latest patch.
-
-At least it doesn't have 'FIXED' semantics forced on user. It's fine with
-me.
 
 -- 
  Kirill A. Shutemov
