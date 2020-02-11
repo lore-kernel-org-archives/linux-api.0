@@ -1,48 +1,27 @@
-From: Randy Dunlap <rdunlap@infradead.org>
-Subject: Re: [PATCH 01/24] user_namespace: introduce fsid mappings
- infrastructure
-Date: Tue, 11 Feb 2020 09:26:17 -0800
-Message-ID: <25217d8b-f3e9-7362-e3d9-d8c37bf39558@infradead.org>
-References: <20200211165753.356508-1-christian.brauner@ubuntu.com>
- <20200211165753.356508-2-christian.brauner@ubuntu.com>
+From: "Edgecombe, Rick P" <rick.p.edgecombe-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH] mm: extend memfd with ability to create "secret"
+ memory areas
+Date: Tue, 11 Feb 2020 19:52:47 +0000
+Message-ID: <ab0a11ad5fde0cc71a725aac3ea81cc996e35bf1.camel@intel.com>
+References: <20200130162340.GA14232@rapoport-lnx>
+         <df5a888b-1a11-e806-741d-94684b22c966@intel.com>
+         <20200208173922.GA15879@hump>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200211165753.356508-2-christian.brauner@ubuntu.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20200208173922.GA15879@hump>
 Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>, =?UTF-8?Q?St=c3=a9phane_Graber?= <stgraber@ubuntu.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Aleksa Sarai <cyphar@cyphar.com>, Jann Horn <jannh@google.com>
-Cc: smbarber@chromium.org, Alexander Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Serge Hallyn <serge@hallyn.com>, James Morris <jmorris@namei.org>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, containers@lists.linux-foundation.org, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org
+Content-ID: <7C45F3DD1BF1A748ACA077A657B22C5C-Hry67jCOGbCcE4WynfumptQqCkab/8FMAL8bYrjMMd8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "rppt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <rppt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Hansen, Dave" <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org" <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "jejb-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org" <jejb-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, "alan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org" <alan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org" <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org" <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, "cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org" <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, "akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org" <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Reshetova, Elena" <elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "tycho-E0fblnxP3wo@public.gmane.org" <tycho-E0fblnxP3wo@public.gmane.org>, "luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 2/11/20 8:57 AM, Christian Brauner wrote:
-> diff --git a/init/Kconfig b/init/Kconfig
-> index a34064a031a5..4da082e4f787 100644
-> --- a/init/Kconfig
-> +++ b/init/Kconfig
-> @@ -1102,6 +1102,17 @@ config USER_NS
->  
->  	  If unsure, say N.
->  
-> +config USER_NS_FSID
-> +	bool "User namespace fsid mappings"
-> +	depends on USER_NS
-> +	default n
-> +	help
-> +	  This allows containers, to alter their filesystem id mappings.
-
-                   no comma   ^^^^
-
-> +	  With this containers with different id mappings can still share
-> +	  the same filesystem.
-> +
-> +	  If unsure, say N.
-> +
->  config PID_NS
->  	bool "PID Namespaces"
->  	default y
-
-
--- 
-~Randy
+T24gU2F0LCAyMDIwLTAyLTA4IGF0IDE5OjM5ICswMjAwLCBNaWtlIFJhcG9wb3J0IHdyb3RlOg0K
+PiA+IERvIHdlIG5lZWQgdG8gbWFrZSBrbWFwKCkgd29yayBvbiB0aGVzZT8NCj4gDQo+IEkgZG9u
+J3QgdGhpbmsgd2UgbmVlZCB0byBtYWtlIGttYXAoKSB3b3JrIG9uIHRoZXNlLiBUaGUgaWRlYSBp
+cyB0byBwcmV2ZW50DQo+IGtlcm5lbCBmcm9tIGFjY2Vzc2luZyBzdWNoIG1lbW9yeSBhcmVhcy4N
+Cg0KRm9yIHRoZSBWTSB1c2UgY2FzZSwgS1ZNIGRvZXMga21hcCgpIGd1ZXN0IG1lbW9yeSB3aGVu
+IGVtdWxhdGluZyBwYWdlIHRhYmxlDQpvcGVyYXRpb25zIGluIHNvbWUgY2FzZXM6DQphcmNoL3g4
+Ni9rdm0vcGFnaW5nX3RtcGwuaDpGTkFNRShjbXB4Y2hnX2dwdGUpLg0K
