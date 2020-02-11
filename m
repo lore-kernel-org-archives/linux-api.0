@@ -1,76 +1,67 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: Re: [PATCH v3 5/5] mm: support both pid and pidfd for process_madvise
-Date: Tue, 11 Feb 2020 13:11:49 -0800
-Message-ID: <20200211211149.GC185752@google.com>
-References: <20200128001641.5086-1-minchan@kernel.org>
- <20200128001641.5086-6-minchan@kernel.org>
- <CAKgT0Ue9y=CL-f8xNXLo70nSk1wR_tG6TYXQUYpfk42PkHWeug@mail.gmail.com>
+From: Al Viro <viro@zeniv.linux.org.uk>
+Subject: Re: [PATCH v8 07/11] proc: flush task dcache entries from all procfs
+ instances
+Date: Tue, 11 Feb 2020 22:45:53 +0000
+Message-ID: <20200211224553.GK23230@ZenIV.linux.org.uk>
+References: <20200210150519.538333-1-gladkov.alexey@gmail.com>
+ <20200210150519.538333-8-gladkov.alexey@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAKgT0Ue9y=CL-f8xNXLo70nSk1wR_tG6TYXQUYpfk42PkHWeug@mail.gmail.com>
+In-Reply-To: <20200210150519.538333-8-gladkov.alexey@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexander Duyck <alexander.duyck@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, oleksandr@redhat.com, Suren Baghdasaryan <surenb@google.com>, Tim Murray <timmurray@google.com>, Daniel Colascione <dancol@google.com>, Sandeep Patil <sspatil@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Shakeel Butt <shakeelb@google.com>, John Dias <joaodias@google.com>, Joel Fernandes <joel@joelfernandes.org>
+To: Alexey Gladkov <gladkov.alexey@gmail.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux Security Module <linux-security-module@vger.kernel.org>, Akinobu Mita <akinobu.mita@gmail.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Daniel Micay <danielmicay@gmail.com>, Djalal Harouni <tixxdz@gmail.com>, "Dmitry V . Levin" <ldv@altlinux.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ingo Molnar <mingo@kernel.org>, "J . Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 10, 2020 at 03:12:52PM -0800, Alexander Duyck wrote:
-> On Mon, Jan 27, 2020 at 4:17 PM Minchan Kim <minchan@kernel.org> wrote:
-> >
-> > There is a demand[1] to support pid as well pidfd for process_madvise
-> > to reduce unncessary syscall to get pidfd if the user has control of
-> > the targer process(ie, they could gaurantee the process is not gone
-> > or pid is not reused. Or, it might be okay to give a hint to wrong
-> > process).
+On Mon, Feb 10, 2020 at 04:05:15PM +0100, Alexey Gladkov wrote:
+> This allows to flush dcache entries of a task on multiple procfs mounts
+> per pid namespace.
 > 
-> It looks like you misspelled several items in here including
-> "unnecessary", "target", and "guarantee".
+> The RCU lock is used because the number of reads at the task exit time
+> is much larger than the number of procfs mounts.
+> 
+> Cc: Kees Cook <keescook@chromium.org>
+> Cc: Andy Lutomirski <luto@kernel.org>
+> Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
+> Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
+> Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
+> ---
+>  fs/proc/base.c                | 20 +++++++++++++++-----
+>  fs/proc/root.c                | 27 ++++++++++++++++++++++++++-
+>  include/linux/pid_namespace.h |  2 ++
+>  include/linux/proc_fs.h       |  2 ++
+>  4 files changed, 45 insertions(+), 6 deletions(-)
+> 
+> diff --git a/fs/proc/base.c b/fs/proc/base.c
+> index 4ccb280a3e79..24b7c620ded3 100644
+> --- a/fs/proc/base.c
+> +++ b/fs/proc/base.c
+> @@ -3133,7 +3133,7 @@ static const struct inode_operations proc_tgid_base_inode_operations = {
+>  	.permission	= proc_pid_permission,
+>  };
+>  
+> -static void proc_flush_task_mnt(struct vfsmount *mnt, pid_t pid, pid_t tgid)
+> +static void proc_flush_task_mnt_root(struct dentry *mnt_root, pid_t pid, pid_t tgid)
+>  {
+>  	struct dentry *dentry, *leader, *dir;
+>  	char buf[10 + 1];
+> @@ -3142,7 +3142,7 @@ static void proc_flush_task_mnt(struct vfsmount *mnt, pid_t pid, pid_t tgid)
+>  	name.name = buf;
+>  	name.len = snprintf(buf, sizeof(buf), "%u", pid);
+>  	/* no ->d_hash() rejects on procfs */
+> -	dentry = d_hash_and_lookup(mnt->mnt_root, &name);
+> +	dentry = d_hash_and_lookup(mnt_root, &name);
+>  	if (dentry) {
+>  		d_invalidate(dentry);
+... which can block
+>  		dput(dentry);
+... and so can this
 
-Thanks, will fix it.
+> +		rcu_read_lock();
+> +		list_for_each_entry_rcu(fs_info, &upid->ns->proc_mounts, pidns_entry) {
+> +			mnt_root = fs_info->m_super->s_root;
+> +			proc_flush_task_mnt_root(mnt_root, upid->nr, tgid->numbers[i].nr);
 
-> 
-> > This patch aims for supporting both options like waitid(2). So, the
-> > syscall is currently,
-> >
-> >         int process_madvise(int which, pid_t pid, void *addr,
-> >                 size_t length, int advise, unsigned long flag);
-> >
-> > @which is actually idtype_t for userspace libray and currently,
-> > it supports P_PID and P_PIDFD.
-> >
-> > [1]  https://lore.kernel.org/linux-mm/9d849087-3359-c4ab-fbec-859e8186c509@virtuozzo.com/
-> > Signed-off-by: Minchan Kim <minchan@kernel.org>
-> > ---
-> >  include/linux/pid.h      |  1 +
-> >  include/linux/syscalls.h |  3 ++-
-> >  kernel/exit.c            | 17 -----------------
-> >  kernel/pid.c             | 17 +++++++++++++++++
-> >  mm/madvise.c             | 34 ++++++++++++++++++++++------------
-> >  5 files changed, 42 insertions(+), 30 deletions(-)
-> >
-> > diff --git a/include/linux/pid.h b/include/linux/pid.h
-> > index 998ae7d24450..023d9c3a8edc 100644
-> > --- a/include/linux/pid.h
-> > +++ b/include/linux/pid.h
-> > @@ -75,6 +75,7 @@ extern const struct file_operations pidfd_fops;
-> >  struct file;
-> >
-> >  extern struct pid *pidfd_pid(const struct file *file);
-> > +extern struct pid *pidfd_get_pid(unsigned int fd);
-> >
-> >  static inline struct pid *get_pid(struct pid *pid)
-> >  {
-> 
-> So really this is two patches interleaved. You have the moving of the
-> pidfd_get_pid function and the update of the syscall. Personally I
-> would make the function move a separate patch and place it before you
-> define the syscall and fold the syscall changes into your original
-> patch.
-> 
-> Doing that you wouldn't have to worry about the syscall changing in
-> behavior midway through a bisect. It would either be there or it
-> wouldn't.
-
-Will try it.
-Thanks!
+... making that more than slightly unsafe.
