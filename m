@@ -1,142 +1,77 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH 10/24] stat: handle fsid mappings
-Date: Tue, 11 Feb 2020 17:57:39 +0100
-Message-ID: <20200211165753.356508-11-christian.brauner@ubuntu.com>
+From: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH 03/24] proc: add /proc/<pid>/fsgid_map
+Date: Tue, 11 Feb 2020 17:57:32 +0100
+Message-ID: <20200211165753.356508-4-christian.brauner@ubuntu.com>
 References: <20200211165753.356508-1-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20200211165753.356508-1-christian.brauner@ubuntu.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Aleksa Sarai <cyphar@cyphar.com>, Jann Horn <jannh@google.com>
-Cc: smbarber@chromium.org, Alexander Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Serge Hallyn <serge@hallyn.com>, James Morris <jmorris@namei.org>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, containers@lists.linux-foundation.org, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20200211165753.356508-1-christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: smbarber-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Switch attribute functions looking up fsids to them up in the fsid mappings. If
-no fsid mappings are setup the behavior is unchanged, i.e. fsids are looked up
-in the id mappings.
+The /proc/<pid>/fsgid_map file can be written to once to setup an fsgid mapping
+for a user namespace. Writing to this file has the same restrictions as writing
+to /proc/<pid>/fsgid_map.
 
-Filesystems that share a superblock in all user namespaces they are mounted in
-will retain their old semantics even with the introduction of fsidmappings.
+root@e1-vm:/# cat /proc/13023/fsgid_map
+         0     300000     100000
 
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+Fsid mappings have always been around. They are currently always identical to
+the id mappings for a user namespace. This means, currently whenever an fsid
+needs to be looked up the kernel will use the id mapping of the user namespace.
+With the introduction of fsid mappings the kernel will now lookup fsids in the
+fsid mappings of the user namespace. If no fsid mapping exists the kernel will
+continue looking up fsids in the id mappings of the user namespace. Hence, if a
+system supports fsid mappings through /proc/<pid>/fs*id_map and a container
+runtime is not aware of fsid mappings it or does not use them it will it will
+continue to work just as before.
+
+Signed-off-by: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/stat.c            | 48 +++++++++++++++++++++++++++++++++++---------
- include/linux/stat.h |  1 +
- 2 files changed, 39 insertions(+), 10 deletions(-)
+ fs/proc/base.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
 
-diff --git a/fs/stat.c b/fs/stat.c
-index c38e4c2e1221..1cced54e79d4 100644
---- a/fs/stat.c
-+++ b/fs/stat.c
-@@ -10,6 +10,7 @@
- #include <linux/errno.h>
- #include <linux/file.h>
- #include <linux/highuid.h>
-+#include <linux/fsuidgid.h>
- #include <linux/fs.h>
- #include <linux/namei.h>
- #include <linux/security.h>
-@@ -77,6 +78,8 @@ int vfs_getattr_nosec(const struct path *path, struct kstat *stat,
- 	if (IS_AUTOMOUNT(inode))
- 		stat->attributes |= STATX_ATTR_AUTOMOUNT;
- 
-+	stat->userns_visible = is_userns_visible(inode->i_sb->s_iflags);
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index ad5f6adc9344..e085ad579604 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -2884,6 +2884,11 @@ static int proc_fsuid_map_open(struct inode *inode, struct file *file)
+ {
+ 	return proc_id_map_open(inode, file, &proc_fsuid_seq_operations);
+ }
 +
- 	if (inode->i_op->getattr)
- 		return inode->i_op->getattr(path, stat, request_mask,
- 					    query_flags);
-@@ -229,8 +232,13 @@ static int cp_old_stat(struct kstat *stat, struct __old_kernel_stat __user * sta
- 	tmp.st_nlink = stat->nlink;
- 	if (tmp.st_nlink != stat->nlink)
- 		return -EOVERFLOW;
--	SET_UID(tmp.st_uid, from_kuid_munged(current_user_ns(), stat->uid));
--	SET_GID(tmp.st_gid, from_kgid_munged(current_user_ns(), stat->gid));
-+	if (stat->userns_visible) {
-+		SET_UID(tmp.st_uid, from_kuid_munged(current_user_ns(), stat->uid));
-+		SET_GID(tmp.st_gid, from_kgid_munged(current_user_ns(), stat->gid));
-+	} else {
-+		SET_UID(tmp.st_uid, from_kfsuid_munged(current_user_ns(), stat->uid));
-+		SET_GID(tmp.st_gid, from_kfsgid_munged(current_user_ns(), stat->gid));
-+	}
- 	tmp.st_rdev = old_encode_dev(stat->rdev);
- #if BITS_PER_LONG == 32
- 	if (stat->size > MAX_NON_LFS)
-@@ -317,8 +325,13 @@ static int cp_new_stat(struct kstat *stat, struct stat __user *statbuf)
- 	tmp.st_nlink = stat->nlink;
- 	if (tmp.st_nlink != stat->nlink)
- 		return -EOVERFLOW;
--	SET_UID(tmp.st_uid, from_kuid_munged(current_user_ns(), stat->uid));
--	SET_GID(tmp.st_gid, from_kgid_munged(current_user_ns(), stat->gid));
-+	if (stat->userns_visible) {
-+		SET_UID(tmp.st_uid, from_kuid_munged(current_user_ns(), stat->uid));
-+		SET_GID(tmp.st_gid, from_kgid_munged(current_user_ns(), stat->gid));
-+	} else {
-+		SET_UID(tmp.st_uid, from_kfsuid_munged(current_user_ns(), stat->uid));
-+		SET_GID(tmp.st_gid, from_kfsgid_munged(current_user_ns(), stat->gid));
-+	}
- 	tmp.st_rdev = encode_dev(stat->rdev);
- 	tmp.st_size = stat->size;
- 	tmp.st_atime = stat->atime.tv_sec;
-@@ -461,8 +474,13 @@ static long cp_new_stat64(struct kstat *stat, struct stat64 __user *statbuf)
++static int proc_fsgid_map_open(struct inode *inode, struct file *file)
++{
++	return proc_id_map_open(inode, file, &proc_fsgid_seq_operations);
++}
  #endif
- 	tmp.st_mode = stat->mode;
- 	tmp.st_nlink = stat->nlink;
--	tmp.st_uid = from_kuid_munged(current_user_ns(), stat->uid);
--	tmp.st_gid = from_kgid_munged(current_user_ns(), stat->gid);
-+	if (stat->userns_visible) {
-+		tmp.st_uid, from_kuid_munged(current_user_ns(), stat->uid);
-+		tmp.st_gid, from_kgid_munged(current_user_ns(), stat->gid);
-+	} else {
-+		tmp.st_uid, from_kfsuid_munged(current_user_ns(), stat->uid);
-+		tmp.st_gid, from_kfsgid_munged(current_user_ns(), stat->gid);
-+	}
- 	tmp.st_atime = stat->atime.tv_sec;
- 	tmp.st_atime_nsec = stat->atime.tv_nsec;
- 	tmp.st_mtime = stat->mtime.tv_sec;
-@@ -534,8 +552,13 @@ cp_statx(const struct kstat *stat, struct statx __user *buffer)
- 	tmp.stx_blksize = stat->blksize;
- 	tmp.stx_attributes = stat->attributes;
- 	tmp.stx_nlink = stat->nlink;
--	tmp.stx_uid = from_kuid_munged(current_user_ns(), stat->uid);
--	tmp.stx_gid = from_kgid_munged(current_user_ns(), stat->gid);
-+	if (stat->userns_visible) {
-+		tmp.stx_uid = from_kuid_munged(current_user_ns(), stat->uid);
-+		tmp.stx_gid = from_kgid_munged(current_user_ns(), stat->gid);
-+	} else {
-+		tmp.stx_uid = from_kfsuid_munged(current_user_ns(), stat->uid);
-+		tmp.stx_gid = from_kfsgid_munged(current_user_ns(), stat->gid);
-+	}
- 	tmp.stx_mode = stat->mode;
- 	tmp.stx_ino = stat->ino;
- 	tmp.stx_size = stat->size;
-@@ -605,8 +628,13 @@ static int cp_compat_stat(struct kstat *stat, struct compat_stat __user *ubuf)
- 	tmp.st_nlink = stat->nlink;
- 	if (tmp.st_nlink != stat->nlink)
- 		return -EOVERFLOW;
--	SET_UID(tmp.st_uid, from_kuid_munged(current_user_ns(), stat->uid));
--	SET_GID(tmp.st_gid, from_kgid_munged(current_user_ns(), stat->gid));
-+	if (stat->userns_visible) {
-+		SET_UID(tmp.st_uid, from_kuid_munged(current_user_ns(), stat->uid));
-+		SET_GID(tmp.st_gid, from_kgid_munged(current_user_ns(), stat->gid));
-+	} else {
-+		SET_UID(tmp.st_uid, from_kfsuid_munged(current_user_ns(), stat->uid));
-+		SET_GID(tmp.st_gid, from_kfsgid_munged(current_user_ns(), stat->gid));
-+	}
- 	tmp.st_rdev = old_encode_dev(stat->rdev);
- 	if ((u64) stat->size > MAX_NON_LFS)
- 		return -EOVERFLOW;
-diff --git a/include/linux/stat.h b/include/linux/stat.h
-index 528c4baad091..e6d4ba73a970 100644
---- a/include/linux/stat.h
-+++ b/include/linux/stat.h
-@@ -47,6 +47,7 @@ struct kstat {
- 	struct timespec64 ctime;
- 	struct timespec64 btime;			/* File creation time */
- 	u64		blocks;
-+	bool		userns_visible;
- };
  
+ static const struct file_operations proc_uid_map_operations = {
+@@ -2918,6 +2923,14 @@ static const struct file_operations proc_fsuid_map_operations = {
+ 	.llseek		= seq_lseek,
+ 	.release	= proc_id_map_release,
+ };
++
++static const struct file_operations proc_fsgid_map_operations = {
++	.open		= proc_fsgid_map_open,
++	.write		= proc_fsgid_map_write,
++	.read		= seq_read,
++	.llseek		= seq_lseek,
++	.release	= proc_id_map_release,
++};
  #endif
+ 
+ static int proc_setgroups_open(struct inode *inode, struct file *file)
+@@ -3098,6 +3111,7 @@ static const struct pid_entry tgid_base_stuff[] = {
+ #ifdef CONFIG_USER_NS
+ #ifdef CONFIG_USER_NS_FSID
+ 	REG("fsuid_map",  S_IRUGO|S_IWUSR, proc_fsuid_map_operations),
++	REG("fsgid_map",  S_IRUGO|S_IWUSR, proc_fsgid_map_operations),
+ #endif
+ 	REG("uid_map",    S_IRUGO|S_IWUSR, proc_uid_map_operations),
+ 	REG("gid_map",    S_IRUGO|S_IWUSR, proc_gid_map_operations),
 -- 
 2.25.0
