@@ -1,90 +1,68 @@
-From: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 1/1] prctl.2: doc PR_SET/GET_IO_FLUSHER
-Date: Tue, 11 Feb 2020 15:17:25 +0100
-Message-ID: <20200211141725.4vbnh3iifbbaquec@wittgenstein>
-References: <20200210221557.8021-1-mchristi@redhat.com>
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Subject: [PATCH 05/24] proc: task_state(): use from_kfs{g,u}id_munged
+Date: Tue, 11 Feb 2020 17:57:34 +0100
+Message-ID: <20200211165753.356508-6-christian.brauner@ubuntu.com>
+References: <20200211165753.356508-1-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20200210221557.8021-1-mchristi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Christie <mchristi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, masato.suzuki-Sjgp3cTcYWE@public.gmane.org, damien.lemoal-Sjgp3cTcYWE@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, bvanassche-HInyCGIudOg@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200211165753.356508-1-christian.brauner@ubuntu.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Aleksa Sarai <cyphar@cyphar.com>, Jann Horn <jannh@google.com>
+Cc: smbarber@chromium.org, Alexander Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Serge Hallyn <serge@hallyn.com>, James Morris <jmorris@namei.org>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, containers@lists.linux-foundation.org, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>
 List-Id: linux-api@vger.kernel.org
 
-I think you've missed:
-mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+If fsid mappings have been written, this will cause proc to look at fsid
+mappings for the user namespace. If no fsid mappings have been written the
+behavior is as before.
 
-:)
+Here is part of the output from /proc/<pid>/status from the initial user
+namespace for systemd running in an unprivileged container as user namespace
+root with id mapping 0 100000 100000 and fsid mapping 0 300000 100000:
 
-Christian
+Name:	systemd
+Umask:	0000
+State:	S (sleeping)
+Tgid:	13023
+Ngid:	0
+Pid:	13023
+PPid:	13008
+TracerPid:	0
+Uid:	100000	100000	100000	300000
+Gid:	100000	100000	100000	300000
+FDSize:	64
+Groups:
 
-On Mon, Feb 10, 2020 at 04:15:57PM -0600, Mike Christie wrote:
-> This patch documents the PR_SET_IO_FLUSHER and PR_GET_IO_FLUSHER
-> prctl commands added to the linux kernel for 5.6 in commit:
-> 
-> commit 8d19f1c8e1937baf74e1962aae9f90fa3aeab463
-> Author: Mike Christie <mchristi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Date:   Mon Nov 11 18:19:00 2019 -0600
-> 
->     prctl: PR_{G,S}ET_IO_FLUSHER to support controlling memory reclaim
-> 
-> Signed-off-by: Mike Christie <mchristi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> ---
-> 
-> V2:
-> - My initial patch for this was very bad. This version is almost 100%
-> taken word for word from Dave Chinner's review comments.
-> 
-> 
->  man2/prctl.2 | 25 +++++++++++++++++++++++++
->  1 file changed, 25 insertions(+)
-> 
-> diff --git a/man2/prctl.2 b/man2/prctl.2
-> index 720ec04e4..b481d186b 100644
-> --- a/man2/prctl.2
-> +++ b/man2/prctl.2
-> @@ -1381,6 +1381,30 @@ system call on Tru64).
->  for information on versions and architectures.)
->  Return unaligned access control bits, in the location pointed to by
->  .IR "(unsigned int\ *) arg2" .
-> +.TP
-> +.B PR_SET_IO_FLUSHER (Since Linux 5.6)
-> +An IO_FLUSHER is a user process that the kernel uses to issue IO
-> +that cleans dirty page cache data and/or filesystem metadata. The
-> +kernel may need to clean this memory when under memory pressure in
-> +order to free it. This means there is potential for a memory reclaim
-> +recursion deadlock if the user process attempts to allocate memory
-> +and the kernel then blocks waiting for it to clean memory before it
-> +can make reclaim progress.
-> +
-> +The kernel avoids these recursion problems internally via a special
-> +process state that prevents recursive reclaim from issuing new IO.
-> +If \fIarg2\fP is 1, the \fPPR_SET_IO_FLUSHER\fP control allows a userspace
-> +process to set up this same process state and hence avoid the memory
-> +reclaim recursion deadlocks in the same manner the kernel avoids them.
-> +If \fIarg2\fP is 0, the process will clear the IO_FLUSHER state, and the
-> +default behavior will be used.
-> +
-> +Examples of IO_FLUSHER applications are FUSE daemons, zoned disk
-> +emulation daemons, etc."
-> +.TP
-> +.B PR_GET_IO_FLUSHER (Since Linux 5.6)
-> +Return as the function result 1 if the caller is in the IO_FLUSHER state and
-> +0 if not.
->  .SH RETURN VALUE
->  On success,
->  .BR PR_GET_DUMPABLE ,
-> @@ -1395,6 +1419,7 @@ On success,
->  .BR PR_GET_SPECULATION_CTRL ,
->  .BR PR_MCE_KILL_GET ,
->  .BR PR_CAP_AMBIENT + PR_CAP_AMBIENT_IS_SET ,
-> +.BR PR_GET_IO_FLUSHER ,
->  and (if it returns)
->  .BR PR_GET_SECCOMP
->  return the nonnegative values described above.
-> -- 
-> 2.21.0
-> 
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+---
+ fs/proc/array.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/fs/proc/array.c b/fs/proc/array.c
+index 5efaf3708ec6..d4a04f85a67e 100644
+--- a/fs/proc/array.c
++++ b/fs/proc/array.c
+@@ -91,6 +91,7 @@
+ #include <linux/string_helpers.h>
+ #include <linux/user_namespace.h>
+ #include <linux/fs_struct.h>
++#include <linux/fsuidgid.h>
+ 
+ #include <asm/pgtable.h>
+ #include <asm/processor.h>
+@@ -193,11 +194,11 @@ static inline void task_state(struct seq_file *m, struct pid_namespace *ns,
+ 	seq_put_decimal_ull(m, "\nUid:\t", from_kuid_munged(user_ns, cred->uid));
+ 	seq_put_decimal_ull(m, "\t", from_kuid_munged(user_ns, cred->euid));
+ 	seq_put_decimal_ull(m, "\t", from_kuid_munged(user_ns, cred->suid));
+-	seq_put_decimal_ull(m, "\t", from_kuid_munged(user_ns, cred->fsuid));
++	seq_put_decimal_ull(m, "\t", from_kfsuid_munged(user_ns, cred->fsuid));
+ 	seq_put_decimal_ull(m, "\nGid:\t", from_kgid_munged(user_ns, cred->gid));
+ 	seq_put_decimal_ull(m, "\t", from_kgid_munged(user_ns, cred->egid));
+ 	seq_put_decimal_ull(m, "\t", from_kgid_munged(user_ns, cred->sgid));
+-	seq_put_decimal_ull(m, "\t", from_kgid_munged(user_ns, cred->fsgid));
++	seq_put_decimal_ull(m, "\t", from_kfsgid_munged(user_ns, cred->fsgid));
+ 	seq_put_decimal_ull(m, "\nFDSize:\t", max_fds);
+ 
+ 	seq_puts(m, "\nGroups:\t");
+-- 
+2.25.0
