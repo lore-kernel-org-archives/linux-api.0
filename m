@@ -1,44 +1,34 @@
-From: Daniel Colascione <dancol@google.com>
-Subject: Re: [PATCH v2 0/6] Harden userfaultfd
-Date: Tue, 11 Feb 2020 15:27:10 -0800
-Message-ID: <CAKOZueuh2MR4UKi60-GVgPkXjncHx8J=mTTjRquB82CfS7DxBA@mail.gmail.com>
-References: <20200211225547.235083-1-dancol@google.com> <9ae20f6e-c5c0-4fd7-5b61-77218d19480b@schaufler-ca.com>
+From: Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v4] mm: Add MREMAP_DONTUNMAP to mremap().
+Date: Tue, 11 Feb 2020 15:32:26 -0800
+Message-ID: <CADyq12ySxau=SyyNp6VSbwmvRm6Kq1=Y62wTbQZoEAQ1XaXcuw@mail.gmail.com>
+References: <20200207201856.46070-1-bgeffon@google.com> <CAKOZuevHH1pamEKy5n5RLWDP=tHk6_9bR+g3G+HKnqm_srHvrw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <9ae20f6e-c5c0-4fd7-5b61-77218d19480b@schaufler-ca.com>
-Sender: owner-linux-security-module@vger.kernel.org
-To: Casey Schaufler <casey@schaufler-ca.com>
-Cc: Tim Murray <timmurray@google.com>, Nosh Minwalla <nosh@google.com>, Nick Kralevich <nnk@google.com>, Lokesh Gidra <lokeshgidra@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, selinux@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAKOZuevHH1pamEKy5n5RLWDP=tHk6_9bR+g3G+HKnqm_srHvrw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Michael S . Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Deacon <will-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Joel Fernandes <joel-QYYGw3jwrUn5owFQY34kdNi2O/JbrIOy@public.gmane.org>, Yu Zhao <yuzhao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Jesse Barnes <jsbarnes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Nathan Chancellor <natechancellor-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Kirill A . Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 11, 2020 at 3:13 PM Casey Schaufler <casey@schaufler-ca.com> wrote:
->
-> On 2/11/2020 2:55 PM, Daniel Colascione wrote:
-> > Userfaultfd in unprivileged contexts could be potentially very
-> > useful. We'd like to harden userfaultfd to make such unprivileged use
-> > less risky. This patch series allows SELinux to manage userfaultfd
-> > file descriptors and allows administrators to limit userfaultfd to
-> > servicing user-mode faults, increasing the difficulty of using
-> > userfaultfd in exploit chains invoking delaying kernel faults.
-> >
-> > A new anon_inodes interface allows callers to opt into SELinux
-> > management of anonymous file objects. In this mode, anon_inodes
-> > creates new ephemeral inodes for anonymous file objects instead of
-> > reusing a singleton dummy inode. A new LSM hook gives security modules
-> > an opportunity to configure and veto these ephemeral inodes.
-> >
-> > Existing anon_inodes users must opt into the new functionality.
-> >
-> > Daniel Colascione (6):
-> >   Add a new flags-accepting interface for anonymous inodes
-> >   Add a concept of a "secure" anonymous file
-> >   Teach SELinux about a new userfaultfd class
-> >   Wire UFFD up to SELinux
-> >   Let userfaultfd opt out of handling kernel-mode faults
-> >   Add a new sysctl for limiting userfaultfd to user mode faults
->
-> This must be posted to the linux Security Module list
-> <linux-security-module@vger.kernel.org>
+Hi Daniel,
 
-Added. I thought selinux@ was sufficient.
+> What about making the
+> left-behind mapping PROT_NONE? This way, we'll still solve the
+> address-space race in Lokesh's use case (because even a PROT_NONE
+> mapping reserves address space) but won't incur any additional commit
+> until someone calls mprotect(PROT_WRITE) on the left-behind mapping.
+
+This limits the usefulness of the feature IMO and really is too
+specific to that one use case, suppose you want to snapshot a memory
+region to disk without having to stop a thread you can
+mremap(MREMAP_DONTUNMAP) it to another location and safely write it to
+disk knowing the faulting thread will be stopped and you can handle it
+later if it was registered with userfaultfd, if we were to also change
+it to PROT_NONE that thread would see a SEGV. There are other examples
+where you can possibly use this flag instead of VM_UFFD_WP, but
+changing the protections of the mapping prevents you from being able
+to do this without a funny signal handler dance.
+
+Brian
