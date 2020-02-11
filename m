@@ -1,67 +1,50 @@
-From: Al Viro <viro@zeniv.linux.org.uk>
-Subject: Re: [PATCH v8 07/11] proc: flush task dcache entries from all procfs
- instances
-Date: Tue, 11 Feb 2020 22:45:53 +0000
-Message-ID: <20200211224553.GK23230@ZenIV.linux.org.uk>
-References: <20200210150519.538333-1-gladkov.alexey@gmail.com>
- <20200210150519.538333-8-gladkov.alexey@gmail.com>
+From: Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v2 0/6] Harden userfaultfd
+Date: Tue, 11 Feb 2020 14:55:41 -0800
+Message-ID: <20200211225547.235083-1-dancol@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200210150519.538333-8-gladkov.alexey@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexey Gladkov <gladkov.alexey@gmail.com>
-Cc: LKML <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux Security Module <linux-security-module@vger.kernel.org>, Akinobu Mita <akinobu.mita@gmail.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Daniel Micay <danielmicay@gmail.com>, Djalal Harouni <tixxdz@gmail.com>, "Dmitry V . Levin" <ldv@altlinux.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ingo Molnar <mingo@kernel.org>, "J . Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Jonathan Corbet <corbet@lwn.net>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, nosh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, nnk-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, lokeshgidra-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, selinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 10, 2020 at 04:05:15PM +0100, Alexey Gladkov wrote:
-> This allows to flush dcache entries of a task on multiple procfs mounts
-> per pid namespace.
-> 
-> The RCU lock is used because the number of reads at the task exit time
-> is much larger than the number of procfs mounts.
-> 
-> Cc: Kees Cook <keescook@chromium.org>
-> Cc: Andy Lutomirski <luto@kernel.org>
-> Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
-> Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
-> Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
-> ---
->  fs/proc/base.c                | 20 +++++++++++++++-----
->  fs/proc/root.c                | 27 ++++++++++++++++++++++++++-
->  include/linux/pid_namespace.h |  2 ++
->  include/linux/proc_fs.h       |  2 ++
->  4 files changed, 45 insertions(+), 6 deletions(-)
-> 
-> diff --git a/fs/proc/base.c b/fs/proc/base.c
-> index 4ccb280a3e79..24b7c620ded3 100644
-> --- a/fs/proc/base.c
-> +++ b/fs/proc/base.c
-> @@ -3133,7 +3133,7 @@ static const struct inode_operations proc_tgid_base_inode_operations = {
->  	.permission	= proc_pid_permission,
->  };
->  
-> -static void proc_flush_task_mnt(struct vfsmount *mnt, pid_t pid, pid_t tgid)
-> +static void proc_flush_task_mnt_root(struct dentry *mnt_root, pid_t pid, pid_t tgid)
->  {
->  	struct dentry *dentry, *leader, *dir;
->  	char buf[10 + 1];
-> @@ -3142,7 +3142,7 @@ static void proc_flush_task_mnt(struct vfsmount *mnt, pid_t pid, pid_t tgid)
->  	name.name = buf;
->  	name.len = snprintf(buf, sizeof(buf), "%u", pid);
->  	/* no ->d_hash() rejects on procfs */
-> -	dentry = d_hash_and_lookup(mnt->mnt_root, &name);
-> +	dentry = d_hash_and_lookup(mnt_root, &name);
->  	if (dentry) {
->  		d_invalidate(dentry);
-... which can block
->  		dput(dentry);
-... and so can this
+Userfaultfd in unprivileged contexts could be potentially very
+useful. We'd like to harden userfaultfd to make such unprivileged use
+less risky. This patch series allows SELinux to manage userfaultfd
+file descriptors and allows administrators to limit userfaultfd to
+servicing user-mode faults, increasing the difficulty of using
+userfaultfd in exploit chains invoking delaying kernel faults.
 
-> +		rcu_read_lock();
-> +		list_for_each_entry_rcu(fs_info, &upid->ns->proc_mounts, pidns_entry) {
-> +			mnt_root = fs_info->m_super->s_root;
-> +			proc_flush_task_mnt_root(mnt_root, upid->nr, tgid->numbers[i].nr);
+A new anon_inodes interface allows callers to opt into SELinux
+management of anonymous file objects. In this mode, anon_inodes
+creates new ephemeral inodes for anonymous file objects instead of
+reusing a singleton dummy inode. A new LSM hook gives security modules
+an opportunity to configure and veto these ephemeral inodes.
 
-... making that more than slightly unsafe.
+Existing anon_inodes users must opt into the new functionality.
+
+Daniel Colascione (6):
+  Add a new flags-accepting interface for anonymous inodes
+  Add a concept of a "secure" anonymous file
+  Teach SELinux about a new userfaultfd class
+  Wire UFFD up to SELinux
+  Let userfaultfd opt out of handling kernel-mode faults
+  Add a new sysctl for limiting userfaultfd to user mode faults
+
+ Documentation/admin-guide/sysctl/vm.rst | 13 ++++
+ fs/anon_inodes.c                        | 89 +++++++++++++++++--------
+ fs/userfaultfd.c                        | 29 ++++++--
+ include/linux/anon_inodes.h             | 27 ++++++--
+ include/linux/lsm_hooks.h               |  8 +++
+ include/linux/security.h                |  2 +
+ include/linux/userfaultfd_k.h           |  3 +
+ include/uapi/linux/userfaultfd.h        |  9 +++
+ kernel/sysctl.c                         |  9 +++
+ security/security.c                     |  8 +++
+ security/selinux/hooks.c                | 68 +++++++++++++++++++
+ security/selinux/include/classmap.h     |  2 +
+ 12 files changed, 229 insertions(+), 38 deletions(-)
+
+-- 
+2.25.0.225.g125e21ebc7-goog
