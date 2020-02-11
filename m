@@ -1,119 +1,58 @@
-From: Daniel Colascione <dancol@google.com>
-Subject: [PATCH v2 6/6] Add a new sysctl for limiting userfaultfd to user mode faults
-Date: Tue, 11 Feb 2020 14:55:47 -0800
-Message-ID: <20200211225547.235083-7-dancol@google.com>
+From: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+Subject: Re: [PATCH v2 0/6] Harden userfaultfd
+Date: Tue, 11 Feb 2020 15:13:40 -0800
+Message-ID: <9ae20f6e-c5c0-4fd7-5b61-77218d19480b@schaufler-ca.com>
 References: <20200211225547.235083-1-dancol@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200211225547.235083-1-dancol@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: dancol@google.com, timmurray@google.com, nosh@google.com, nnk@google.com, lokeshgidra@google.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, selinux@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20200211225547.235083-1-dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, nosh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, nnk-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, lokeshgidra-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, selinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Add a new sysctl knob unprivileged_userfaultfd_user_mode_only.
-This sysctl can be set to either zero or one. When zero (the default)
-the system lets all users call userfaultfd with or without
-UFFD_USER_MODE_ONLY, modulo other access controls. When
-unprivileged_userfaultfd_user_mode_only is set to one, users without
-CAP_SYS_PTRACE must pass UFFD_USER_MODE_ONLY to userfaultfd or the API
-will fail with EPERM. This facility allows administrators to reduce
-the likelihood that an attacker with access to userfaultfd can delay
-faulting kernel code to widen timing windows for other exploits.
+On 2/11/2020 2:55 PM, Daniel Colascione wrote:
+> Userfaultfd in unprivileged contexts could be potentially very
+> useful. We'd like to harden userfaultfd to make such unprivileged use
+> less risky. This patch series allows SELinux to manage userfaultfd
+> file descriptors and allows administrators to limit userfaultfd to
+> servicing user-mode faults, increasing the difficulty of using
+> userfaultfd in exploit chains invoking delaying kernel faults.
+>
+> A new anon_inodes interface allows callers to opt into SELinux
+> management of anonymous file objects. In this mode, anon_inodes
+> creates new ephemeral inodes for anonymous file objects instead of
+> reusing a singleton dummy inode. A new LSM hook gives security modules
+> an opportunity to configure and veto these ephemeral inodes.
+>
+> Existing anon_inodes users must opt into the new functionality.
+>
+> Daniel Colascione (6):
+>   Add a new flags-accepting interface for anonymous inodes
+>   Add a concept of a "secure" anonymous file
+>   Teach SELinux about a new userfaultfd class
+>   Wire UFFD up to SELinux
+>   Let userfaultfd opt out of handling kernel-mode faults
+>   Add a new sysctl for limiting userfaultfd to user mode faults
 
-Signed-off-by: Daniel Colascione <dancol@google.com>
----
- Documentation/admin-guide/sysctl/vm.rst | 13 +++++++++++++
- fs/userfaultfd.c                        | 11 ++++++++++-
- include/linux/userfaultfd_k.h           |  1 +
- kernel/sysctl.c                         |  9 +++++++++
- 4 files changed, 33 insertions(+), 1 deletion(-)
+This must be posted to the linux Security Module list
+<linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-diff --git a/Documentation/admin-guide/sysctl/vm.rst b/Documentation/admin-guide/sysctl/vm.rst
-index 64aeee1009ca..1f416aff68b9 100644
---- a/Documentation/admin-guide/sysctl/vm.rst
-+++ b/Documentation/admin-guide/sysctl/vm.rst
-@@ -847,6 +847,19 @@ privileged users (with SYS_CAP_PTRACE capability).
- 
- The default value is 1.
- 
-+unprivileged_userfaultfd_user_mode_only
-+========================================
-+
-+This flag controls whether unprivileged users can use the userfaultfd
-+system calls to handle page faults in kernel mode.  If set to zero,
-+userfaultfd works with or without UFFD_USER_MODE_ONLY, modulo
-+unprivileged_userfaultfd above.  If set to one, users without
-+SYS_CAP_PTRACE must pass UFFD_USER_MODE_ONLY in order for userfaultfd
-+to succeed.  Prohibiting use of userfaultfd for handling faults from
-+kernel mode may make certain vulnerabilities more difficult
-+to exploit.
-+
-+The default value is 0.
- 
- user_reserve_kbytes
- ===================
-diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
-index 47825a804d63..d39bdf177f8c 100644
---- a/fs/userfaultfd.c
-+++ b/fs/userfaultfd.c
-@@ -29,6 +29,7 @@
- #include <linux/hugetlb.h>
- 
- int sysctl_unprivileged_userfaultfd __read_mostly = 1;
-+int sysctl_unprivileged_userfaultfd_user_mode_only __read_mostly = 0;
- 
- static struct kmem_cache *userfaultfd_ctx_cachep __read_mostly;
- 
-@@ -1951,8 +1952,16 @@ SYSCALL_DEFINE1(userfaultfd, int, flags)
- 	static const int uffd_flags = UFFD_USER_MODE_ONLY;
- 	struct userfaultfd_ctx *ctx;
- 	int fd;
-+	bool need_cap_check = false;
- 
--	if (!sysctl_unprivileged_userfaultfd && !capable(CAP_SYS_PTRACE))
-+	if (!sysctl_unprivileged_userfaultfd)
-+		need_cap_check = true;
-+
-+	if (sysctl_unprivileged_userfaultfd_user_mode_only &&
-+	    (flags & UFFD_USER_MODE_ONLY) == 0)
-+		need_cap_check = true;
-+
-+	if (need_cap_check && !capable(CAP_SYS_PTRACE))
- 		return -EPERM;
- 
- 	BUG_ON(!current->mm);
-diff --git a/include/linux/userfaultfd_k.h b/include/linux/userfaultfd_k.h
-index 549c8b0cca52..efe14abb2dc8 100644
---- a/include/linux/userfaultfd_k.h
-+++ b/include/linux/userfaultfd_k.h
-@@ -29,6 +29,7 @@
- #define UFFD_FLAGS_SET (EFD_SHARED_FCNTL_FLAGS)
- 
- extern int sysctl_unprivileged_userfaultfd;
-+extern int sysctl_unprivileged_userfaultfd_user_mode_only;
- 
- extern const struct file_operations userfaultfd_fops;
- 
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index d396aaaf19a3..0650063c3741 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -1740,6 +1740,15 @@ static struct ctl_table vm_table[] = {
- 		.extra1		= SYSCTL_ZERO,
- 		.extra2		= SYSCTL_ONE,
- 	},
-+	{
-+		.procname	= "unprivileged_userfaultfd_user_mode_only",
-+		.data		= &sysctl_unprivileged_userfaultfd_user_mode_only,
-+		.maxlen		= sizeof(sysctl_unprivileged_userfaultfd_user_mode_only),
-+		.mode		= 0644,
-+		.proc_handler	= proc_dointvec_minmax,
-+		.extra1		= SYSCTL_ZERO,
-+		.extra2		= SYSCTL_ONE,
-+	},
- #endif
- 	{ }
- };
--- 
-2.25.0.225.g125e21ebc7-goog
+>
+>  Documentation/admin-guide/sysctl/vm.rst | 13 ++++
+>  fs/anon_inodes.c                        | 89 +++++++++++++++++--------
+>  fs/userfaultfd.c                        | 29 ++++++--
+>  include/linux/anon_inodes.h             | 27 ++++++--
+>  include/linux/lsm_hooks.h               |  8 +++
+>  include/linux/security.h                |  2 +
+>  include/linux/userfaultfd_k.h           |  3 +
+>  include/uapi/linux/userfaultfd.h        |  9 +++
+>  kernel/sysctl.c                         |  9 +++
+>  security/security.c                     |  8 +++
+>  security/selinux/hooks.c                | 68 +++++++++++++++++++
+>  security/selinux/include/classmap.h     |  2 +
+>  12 files changed, 229 insertions(+), 38 deletions(-)
+>
