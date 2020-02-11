@@ -1,9 +1,8 @@
-From: Andres Freund <andres@anarazel.de>,
-        David Howells <dhowells@redhat.com>
+From: Andres Freund <andres@anarazel.de>
 Subject: Re: [PATCH v3 0/3] vfs: have syncfs() return error when there are
  writeback errors
-Date: Mon, 10 Feb 2020 15:59:57 -0800
-Message-ID: <20200210235957.zwtozoml3bcbrerl@alap3.anarazel.de>
+Date: Mon, 10 Feb 2020 16:04:05 -0800
+Message-ID: <20200211000405.5fohxgpt554gmnhu@alap3.anarazel.de>
 References: <20200207170423.377931-1-jlayton@kernel.org>
  <20200207205243.GP20628@dread.disaster.area>
  <20200207212012.7jrivg2bvuvvful5@alap3.anarazel.de>
@@ -19,6 +18,8 @@ Cc: Jeff Layton <jlayton@kernel.org>, viro@zeniv.linux.org.uk, linux-fsdevel@vge
 List-Id: linux-api@vger.kernel.org
 
 Hi,
+
+(sorry if somebody got this twice)
 
 David added you, because there's discussion about your notify work
 below.
