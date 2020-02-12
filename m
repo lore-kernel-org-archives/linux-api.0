@@ -1,60 +1,75 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH v7 2/2] fpga: dfl: fme: add performance reporting support
-Date: Wed, 12 Feb 2020 05:20:45 -0800
-Message-ID: <20200212132045.GC1789899@kroah.com>
-References: <1581306469-22629-1-git-send-email-hao.wu@intel.com>
- <1581306469-22629-3-git-send-email-hao.wu@intel.com>
- <20200210163400.GA21900@willie-the-truck>
- <20200212031929.GB5645@hao-dev>
- <20200212053035.GA382718@kroah.com>
- <20200212100211.GA10436@hao-dev>
+From: Alexey Gladkov <gladkov.alexey@gmail.com>
+Subject: Re: [PATCH v8 07/11] proc: flush task dcache entries from all procfs
+ instances
+Date: Wed, 12 Feb 2020 15:26:38 +0100
+Message-ID: <20200212142637.dhcrgy252qw6eg42@comp-core-i7-2640m-0182e6>
+References: <20200210150519.538333-1-gladkov.alexey@gmail.com>
+ <20200210150519.538333-8-gladkov.alexey@gmail.com>
+ <20200211224553.GK23230@ZenIV.linux.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20200212100211.GA10436@hao-dev>
+In-Reply-To: <20200211224553.GK23230@ZenIV.linux.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: Will Deacon <will@kernel.org>, mdf@kernel.org, mark.rutland@arm.com, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, atull@kernel.org, yilun.xu@intel.com, Luwei Kang <luwei.kang@intel.com>
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: LKML <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux Security Module <linux-security-module@vger.kernel.org>, Akinobu Mita <akinobu.mita@gmail.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Daniel Micay <danielmicay@gmail.com>, Djalal Harouni <tixxdz@gmail.com>, "Dmitry V . Levin" <ldv@altlinux.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ingo Molnar <mingo@kernel.org>, "J . Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Feb 12, 2020 at 06:02:11PM +0800, Wu Hao wrote:
-> On Tue, Feb 11, 2020 at 09:30:35PM -0800, Greg KH wrote:
-> > On Wed, Feb 12, 2020 at 11:19:29AM +0800, Wu Hao wrote:
-> > > On Mon, Feb 10, 2020 at 04:34:01PM +0000, Will Deacon wrote:
-> > > > Hi,
-> > > > 
-> > > > On Mon, Feb 10, 2020 at 11:47:49AM +0800, Wu Hao wrote:
-> > > > > This patch adds support for performance reporting private feature
-> > > > > for FPGA Management Engine (FME). Now it supports several different
-> > > > > performance counters, including 'basic', 'cache', 'fabric', 'vtd'
-> > > > > and 'vtd_sip'. It allows user to use standard linux tools to access
-> > > > > these performance counters.
-> > > > 
-> > > > I had a quick look at this, and it mostly looks alright to me. Just a few
-> > > > high-level comments/questions:
-> > > 
-> > > Hi Will
-> > > 
-> > > Thanks a lot for the review! :)
-> > > 
-> > > > 
-> > > >   - I would still prefer for the PMU drivers to live under drivers/perf/
-> > > 
-> > > Hm.. one possible way is to create a platform device, and introduce a new
-> > > platform device driver under drivers/perf/.
+On Tue, Feb 11, 2020 at 10:45:53PM +0000, Al Viro wrote:
+> On Mon, Feb 10, 2020 at 04:05:15PM +0100, Alexey Gladkov wrote:
+> > This allows to flush dcache entries of a task on multiple procfs mounts
+> > per pid namespace.
 > > 
-> > No, do not abuse platform drivers, you have a real device, use it.
+> > The RCU lock is used because the number of reads at the task exit time
+> > is much larger than the number of procfs mounts.
+> > 
+> > Cc: Kees Cook <keescook@chromium.org>
+> > Cc: Andy Lutomirski <luto@kernel.org>
+> > Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
+> > Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
+> > Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
+> > ---
+> >  fs/proc/base.c                | 20 +++++++++++++++-----
+> >  fs/proc/root.c                | 27 ++++++++++++++++++++++++++-
+> >  include/linux/pid_namespace.h |  2 ++
+> >  include/linux/proc_fs.h       |  2 ++
+> >  4 files changed, 45 insertions(+), 6 deletions(-)
+> > 
+> > diff --git a/fs/proc/base.c b/fs/proc/base.c
+> > index 4ccb280a3e79..24b7c620ded3 100644
+> > --- a/fs/proc/base.c
+> > +++ b/fs/proc/base.c
+> > @@ -3133,7 +3133,7 @@ static const struct inode_operations proc_tgid_base_inode_operations = {
+> >  	.permission	= proc_pid_permission,
+> >  };
+> >  
+> > -static void proc_flush_task_mnt(struct vfsmount *mnt, pid_t pid, pid_t tgid)
+> > +static void proc_flush_task_mnt_root(struct dentry *mnt_root, pid_t pid, pid_t tgid)
+> >  {
+> >  	struct dentry *dentry, *leader, *dir;
+> >  	char buf[10 + 1];
+> > @@ -3142,7 +3142,7 @@ static void proc_flush_task_mnt(struct vfsmount *mnt, pid_t pid, pid_t tgid)
+> >  	name.name = buf;
+> >  	name.len = snprintf(buf, sizeof(buf), "%u", pid);
+> >  	/* no ->d_hash() rejects on procfs */
+> > -	dentry = d_hash_and_lookup(mnt->mnt_root, &name);
+> > +	dentry = d_hash_and_lookup(mnt_root, &name);
+> >  	if (dentry) {
+> >  		d_invalidate(dentry);
+> ... which can block
+> >  		dput(dentry);
+> ... and so can this
 > 
-> Sure, thanks for the comments. Then I don't have any other idea to move code to
-> drivers/perf/ directory, so probably only can live with current code.
+> > +		rcu_read_lock();
+> > +		list_for_each_entry_rcu(fs_info, &upid->ns->proc_mounts, pidns_entry) {
+> > +			mnt_root = fs_info->m_super->s_root;
+> > +			proc_flush_task_mnt_root(mnt_root, upid->nr, tgid->numbers[i].nr);
+> 
+> ... making that more than slightly unsafe.
 
-The location of the file in the kernel tree has no bearing on if you use
-a platform device, a USB device, or a PCI device.  It is just a location
-of a file.
+I see. So, I can't use rcu locks here as well as spinlocks.
+Thanks!
 
-You are interacting with the perf api as the driver's primary userspace
-api, so put the driver into the drivers/perf/ directory.  That's all
-that Will is asking you to do here.
-
-greg k-h
+-- 
+Rgrds, legion
