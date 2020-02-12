@@ -1,89 +1,202 @@
 From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH v4 0/8] introduce memory hinting API for external process
-Date: Wed, 12 Feb 2020 15:39:38 -0800
-Message-ID: <20200212233946.246210-1-minchan@kernel.org>
+Subject: [PATCH v4 1/8] mm: pass task to do_madvise
+Date: Wed, 12 Feb 2020 15:39:39 -0800
+Message-ID: <20200212233946.246210-2-minchan@kernel.org>
+References: <20200212233946.246210-1-minchan@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20200212233946.246210-1-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleksandr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Suren Baghdasaryan <surenb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tim Murray <timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sandeep Patil <sspatil-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, John Dias <joaodias-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Joel Fernandes <joel-QYYGw3jwrUn5owFQY34kdNi2O/JbrIOy@public.gmane.org>, Alexander Duyck <alexander.h.duyck-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Now, we have MADV_PAGEOUT and MADV_COLD as madvise hinting API. With that,
-application could give hints to kernel what memory range are preferred to be
-reclaimed. However, in some platform(e.g., Android), the information
-required to make the hinting decision is not known to the app.
-Instead, it is known to a centralized userspace daemon(e.g., ActivityManagerService),
-and that daemon must be able to initiate reclaim on its own without any app
-involvement.
+In upcoming patches, do_madvise will be called from external process
+context so it shouldn't asssume "current" is always hinted process's
+task_struct. Thus, let's get the mm_struct from vma->vm_mm, not
+current because vma is always hinted process's one. And let's pass
+*current* as new task argument of do_madvise so it shouldn't change
+existing behavior.
 
-To solve the concern, this patch introduces new syscall - process_madvise(2).
-Bascially, it's same with madvise(2) syscall but it has some differences.
+Signed-off-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+---
+ fs/io_uring.c      |  2 +-
+ include/linux/mm.h |  3 ++-
+ mm/madvise.c       | 37 ++++++++++++++++++++-----------------
+ 3 files changed, 23 insertions(+), 19 deletions(-)
 
-1. It needs pidfd of target process to provide the hint
-2. It supports only MADV_{COLD|PAGEOUT|MERGEABLE|UNMEREABLE} at this moment.
-   Other hints in madvise will be opened when there are explicit requests from
-   community to prevent unexpected bugs we couldn't support.
-3. Only privileged processes can do something for other process's address
-   space.
-
-For more detail of the new API, please see "mm: introduce external memory hinting API"
-description in this patchset.
-
-Minchan Kim (6):
-  mm: pass task to do_madvise
-  mm: introduce external memory hinting API
-  mm: validate mm in do_madvise
-  mm: check fatal signal pending of target process
-  pid: export pidfd_get_pid
-  mm: support both pid and pidfd for process_madvise
-
-Oleksandr Natalenko (2):
-  mm/madvise: employ mmget_still_valid for write lock
-  mm/madvise: allow KSM hints for remote API
-
-* from v3 - https://lore.kernel.org/linux-mm/20200128001641.5086-1-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org/
-  * verify task->mm aftere access_mm - Oleg
-  * split some patches for easy review - Alexander
-  * clean up fatal signal checking - Suren
-
-* from v2 - https://lore.kernel.org/linux-mm/20200116235953.163318-1-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org/
-  * check signal callee and caller to bail out - Kirill Tkhai
-  * put more clarification for justification of new API
-
-* from v1 - https://lore.kernel.org/linux-mm/20200110213433.94739-1-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org/
-  * fix syscall number - SeongJae
-  * use get_pid_task - Kirill Tkhai
-  * extend API to support pid as well as pidfd - Kirill Tkhai
-
- arch/alpha/kernel/syscalls/syscall.tbl      |   1 +
- arch/arm/tools/syscall.tbl                  |   1 +
- arch/arm64/include/asm/unistd.h             |   2 +-
- arch/arm64/include/asm/unistd32.h           |   2 +
- arch/ia64/kernel/syscalls/syscall.tbl       |   1 +
- arch/m68k/kernel/syscalls/syscall.tbl       |   1 +
- arch/microblaze/kernel/syscalls/syscall.tbl |   1 +
- arch/mips/kernel/syscalls/syscall_n32.tbl   |   1 +
- arch/mips/kernel/syscalls/syscall_n64.tbl   |   1 +
- arch/parisc/kernel/syscalls/syscall.tbl     |   1 +
- arch/powerpc/kernel/syscalls/syscall.tbl    |   1 +
- arch/s390/kernel/syscalls/syscall.tbl       |   1 +
- arch/sh/kernel/syscalls/syscall.tbl         |   1 +
- arch/sparc/kernel/syscalls/syscall.tbl      |   1 +
- arch/x86/entry/syscalls/syscall_32.tbl      |   1 +
- arch/x86/entry/syscalls/syscall_64.tbl      |   1 +
- arch/xtensa/kernel/syscalls/syscall.tbl     |   1 +
- fs/io_uring.c                               |   2 +-
- include/linux/mm.h                          |   3 +-
- include/linux/pid.h                         |   1 +
- include/linux/syscalls.h                    |   3 +
- include/uapi/asm-generic/unistd.h           |   4 +-
- kernel/exit.c                               |  17 ---
- kernel/pid.c                                |  17 +++
- kernel/sys_ni.c                             |   1 +
- mm/madvise.c                                | 149 ++++++++++++++++----
- 26 files changed, 170 insertions(+), 46 deletions(-)
-
+diff --git a/fs/io_uring.c b/fs/io_uring.c
+index 63beda9bafc5..6307206b970f 100644
+--- a/fs/io_uring.c
++++ b/fs/io_uring.c
+@@ -2736,7 +2736,7 @@ static int io_madvise(struct io_kiocb *req, struct io_kiocb **nxt,
+ 	if (force_nonblock)
+ 		return -EAGAIN;
+ 
+-	ret = do_madvise(ma->addr, ma->len, ma->advice);
++	ret = do_madvise(current, ma->addr, ma->len, ma->advice);
+ 	if (ret < 0)
+ 		req_set_fail_links(req);
+ 	io_cqring_add_event(req, ret);
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 52269e56c514..8cb41131ec96 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -2323,7 +2323,8 @@ extern int __do_munmap(struct mm_struct *, unsigned long, size_t,
+ 		       struct list_head *uf, bool downgrade);
+ extern int do_munmap(struct mm_struct *, unsigned long, size_t,
+ 		     struct list_head *uf);
+-extern int do_madvise(unsigned long start, size_t len_in, int behavior);
++extern int do_madvise(struct task_struct *task, unsigned long start,
++			size_t len_in, int behavior);
+ 
+ static inline unsigned long
+ do_mmap_pgoff(struct file *file, unsigned long addr,
+diff --git a/mm/madvise.c b/mm/madvise.c
+index 43b47d3fae02..ab4011ba2d9e 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -256,6 +256,7 @@ static long madvise_willneed(struct vm_area_struct *vma,
+ {
+ 	struct file *file = vma->vm_file;
+ 	loff_t offset;
++	struct mm_struct *mm = vma->vm_mm;
+ 
+ 	*prev = vma;
+ #ifdef CONFIG_SWAP
+@@ -288,12 +289,12 @@ static long madvise_willneed(struct vm_area_struct *vma,
+ 	 */
+ 	*prev = NULL;	/* tell sys_madvise we drop mmap_sem */
+ 	get_file(file);
+-	up_read(&current->mm->mmap_sem);
++	up_read(&mm->mmap_sem);
+ 	offset = (loff_t)(start - vma->vm_start)
+ 			+ ((loff_t)vma->vm_pgoff << PAGE_SHIFT);
+ 	vfs_fadvise(file, offset, end - start, POSIX_FADV_WILLNEED);
+ 	fput(file);
+-	down_read(&current->mm->mmap_sem);
++	down_read(&mm->mmap_sem);
+ 	return 0;
+ }
+ 
+@@ -674,9 +675,7 @@ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
+ 	}
+ out:
+ 	if (nr_swap) {
+-		if (current->mm == mm)
+-			sync_mm_rss(mm);
+-
++		sync_mm_rss(mm);
+ 		add_mm_counter(mm, MM_SWAPENTS, nr_swap);
+ 	}
+ 	arch_leave_lazy_mmu_mode();
+@@ -756,6 +755,7 @@ static long madvise_dontneed_free(struct vm_area_struct *vma,
+ 				  unsigned long start, unsigned long end,
+ 				  int behavior)
+ {
++	struct mm_struct *mm = vma->vm_mm;
+ 	*prev = vma;
+ 	if (!can_madv_lru_vma(vma))
+ 		return -EINVAL;
+@@ -763,8 +763,8 @@ static long madvise_dontneed_free(struct vm_area_struct *vma,
+ 	if (!userfaultfd_remove(vma, start, end)) {
+ 		*prev = NULL; /* mmap_sem has been dropped, prev is stale */
+ 
+-		down_read(&current->mm->mmap_sem);
+-		vma = find_vma(current->mm, start);
++		down_read(&mm->mmap_sem);
++		vma = find_vma(mm, start);
+ 		if (!vma)
+ 			return -ENOMEM;
+ 		if (start < vma->vm_start) {
+@@ -818,6 +818,7 @@ static long madvise_remove(struct vm_area_struct *vma,
+ 	loff_t offset;
+ 	int error;
+ 	struct file *f;
++	struct mm_struct *mm = vma->vm_mm;
+ 
+ 	*prev = NULL;	/* tell sys_madvise we drop mmap_sem */
+ 
+@@ -845,13 +846,13 @@ static long madvise_remove(struct vm_area_struct *vma,
+ 	get_file(f);
+ 	if (userfaultfd_remove(vma, start, end)) {
+ 		/* mmap_sem was not released by userfaultfd_remove() */
+-		up_read(&current->mm->mmap_sem);
++		up_read(&mm->mmap_sem);
+ 	}
+ 	error = vfs_fallocate(f,
+ 				FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
+ 				offset, end - start);
+ 	fput(f);
+-	down_read(&current->mm->mmap_sem);
++	down_read(&mm->mmap_sem);
+ 	return error;
+ }
+ 
+@@ -1044,7 +1045,8 @@ madvise_behavior_valid(int behavior)
+  *  -EBADF  - map exists, but area maps something that isn't a file.
+  *  -EAGAIN - a kernel resource was temporarily unavailable.
+  */
+-int do_madvise(unsigned long start, size_t len_in, int behavior)
++int do_madvise(struct task_struct *task, unsigned long start,
++					size_t len_in, int behavior)
+ {
+ 	unsigned long end, tmp;
+ 	struct vm_area_struct *vma, *prev;
+@@ -1053,6 +1055,7 @@ int do_madvise(unsigned long start, size_t len_in, int behavior)
+ 	int write;
+ 	size_t len;
+ 	struct blk_plug plug;
++	struct mm_struct *mm = task->mm;
+ 
+ 	start = untagged_addr(start);
+ 
+@@ -1082,10 +1085,10 @@ int do_madvise(unsigned long start, size_t len_in, int behavior)
+ 
+ 	write = madvise_need_mmap_write(behavior);
+ 	if (write) {
+-		if (down_write_killable(&current->mm->mmap_sem))
++		if (down_write_killable(&mm->mmap_sem))
+ 			return -EINTR;
+ 	} else {
+-		down_read(&current->mm->mmap_sem);
++		down_read(&mm->mmap_sem);
+ 	}
+ 
+ 	/*
+@@ -1093,7 +1096,7 @@ int do_madvise(unsigned long start, size_t len_in, int behavior)
+ 	 * ranges, just ignore them, but return -ENOMEM at the end.
+ 	 * - different from the way of handling in mlock etc.
+ 	 */
+-	vma = find_vma_prev(current->mm, start, &prev);
++	vma = find_vma_prev(mm, start, &prev);
+ 	if (vma && start > vma->vm_start)
+ 		prev = vma;
+ 
+@@ -1130,19 +1133,19 @@ int do_madvise(unsigned long start, size_t len_in, int behavior)
+ 		if (prev)
+ 			vma = prev->vm_next;
+ 		else	/* madvise_remove dropped mmap_sem */
+-			vma = find_vma(current->mm, start);
++			vma = find_vma(mm, start);
+ 	}
+ out:
+ 	blk_finish_plug(&plug);
+ 	if (write)
+-		up_write(&current->mm->mmap_sem);
++		up_write(&mm->mmap_sem);
+ 	else
+-		up_read(&current->mm->mmap_sem);
++		up_read(&mm->mmap_sem);
+ 
+ 	return error;
+ }
+ 
+ SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
+ {
+-	return do_madvise(start, len_in, behavior);
++	return do_madvise(current, start, len_in, behavior);
+ }
 -- 
 2.25.0.225.g125e21ebc7-goog
