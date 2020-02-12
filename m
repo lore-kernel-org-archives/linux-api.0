@@ -1,69 +1,65 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH v8 07/11] proc: flush task dcache entries from all procfs instances
-Date: Wed, 12 Feb 2020 13:16:38 -0600
-Message-ID: <87v9obipk9.fsf@x220.int.ebiederm.org>
-References: <20200210150519.538333-1-gladkov.alexey@gmail.com>
-        <20200210150519.538333-8-gladkov.alexey@gmail.com>
-        <87v9odlxbr.fsf@x220.int.ebiederm.org>
-        <20200212144921.sykucj4mekcziicz@comp-core-i7-2640m-0182e6>
-        <87tv3vkg1a.fsf@x220.int.ebiederm.org>
-        <CAHk-=wg52stFtUxMOxs3afkwDWmWn1JXC7RJ7dPsTrJbnxpZVg@mail.gmail.com>
+From: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v2 0/6] Harden userfaultfd
+Date: Wed, 12 Feb 2020 14:41:00 -0500
+Message-ID: <20200212194100.GA29809@redhat.com>
+References: <20200211225547.235083-1-dancol@google.com>
+ <202002112332.BE71455@keescook>
+ <CAG48ez0ogRxvCK1aCnviN+nBqp6gmbUD7NjaMKvA7bF=esAc1A@mail.gmail.com>
+ <20200212171416.GD1083891@xz-x1>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAHk-=wg52stFtUxMOxs3afkwDWmWn1JXC7RJ7dPsTrJbnxpZVg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-        (Linus Torvalds's message of "Wed, 12 Feb 2020 10:45:06 -0800")
+Content-Disposition: inline
+In-Reply-To: <20200212171416.GD1083891@xz-x1>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kernel Hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Security Module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Dmitry V . Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "J . Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>Ke
+To: Peter Xu <peterx-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tim Murray <timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Nosh Minwalla <nosh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Nick Kralevich <nnk-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Lokesh Gidra <lokeshgidra-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, kernel list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, SElinux list <selinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mike Rapoport <rppt-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> writes:
+Hello everyone,
 
-> On Wed, Feb 12, 2020 at 7:01 AM Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->>
->> Fundamentally proc_flush_task is an optimization.  Just getting rid of
->> dentries earlier.  At least at one point it was an important
->> optimization because the old process dentries would just sit around
->> doing nothing for anyone.
->
-> I'm pretty sure it's still important. It's very easy to generate a
-> _ton_ of dentries with /proc.
->
->> I wonder if instead of invalidating specific dentries we could instead
->> fire wake up a shrinker and point it at one or more instances of proc.
->
-> It shouldn't be the dentries themselves that are a freeing problem.
-> They're being RCU-free'd anyway because of lookup. It's the
-> proc_mounts list that is the problem, isn't it?
->
-> So it's just fs_info that needs to be rcu-delayed because it contains
-> that list. Or is there something else?
+On Wed, Feb 12, 2020 at 12:14:16PM -0500, Peter Xu wrote:
+> Right. AFAICT QEMU uses it far more than disk IOs.  A guest page can
+> be accessed by any kernel component on the destination host during a
+> postcopy procedure.  It can be as simple as when a vcpu writes to a
+> missing guest page which still resides on the source host, then KVM
+> will get a page fault and trap into userfaultfd asking for that page.
+> The same thing happens to other modules like vhost, etc., as long as a
+> missing guest page is touched by a kernel module.
 
-The fundamental dcache thing we are playing with is:
+Correct.
 
-	dentry = d_hash_and_lookup(proc_root, &name);
-	if (dentry) {
-		d_invalidate(dentry);
-		dput(dentry);
-	}
+How does the android garbage collection work to make sure there cannot
+be kernel faults on the missing memory?
 
-As Al pointed out upthread dput and d_invalidate can both sleep.
+If I understood correctly (I didn't have much time to review sorry)
+what's proposed with regard to limiting uffd events from kernel
+faults, the only use case I know that could deal with it is the
+UFFD_FEATURE_SIGBUS but that's not normal userfaultfd: that's also the
+only feature required from uffd to implement a pure malloc library in
+userland that never takes the mmap sem for writing to implement
+userland mremap/mmap/munmap lib calls (as those will convert to
+UFFDIO_ZEROPAGE and MADV_DONTNEED internally to the lib and there will
+be always a single vma). We just need to extend UFFDIO_ZEROPAGE to map
+the THP zeropage to make this future pure-uffd malloc lib perform
+better.
 
-The dput can potentially go away if we use __d_lookup_rcu instead of
-d_lookup.
+On the other end I'm also planning a mremap_vma_merge userland syscall
+that will merge fragmented vmas.
 
-The challenge is d_invalidate.
+Currently once you have a nice heap all contiguous but with small
+objects and you free the fragments you can't build THP anymore even if
+you make the memory virtually contiguous again by calling mremap. That
+just build up a ton of vmas slowing down the app forever and also
+preventing THP collapsing ever again.
 
-It has the fundamentally sleeping detach_mounts loop.  Even
-shrink_dcache_parent has a cond_sched() in there to ensure it doesn't
-live lock the system.
+mremap_vma_merge will require no new kernel feature, but it
+fundamentally must be able to handle kernel faults. If databases
+starts to use that, how can you enable this feature without breaking
+random apps then?
 
-We could and arguabley should set DCACHE_CANT_MOUNT on the proc pid
-dentries.  Which will prevent having to deal with mounts.
+So it'd be a feature usable only by one user (Android) perhaps? And
+only until you start defragging the vmas of small objects?
 
-But I don't see an easy way of getting shrink_dcache_parent to run
-without sleeping.  Ideas?
-
-
-Eric
+Thanks,
+Andrea
