@@ -1,41 +1,49 @@
-From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCH v8 07/11] proc: flush task dcache entries from all procfs instances
-Date: Wed, 12 Feb 2020 13:02:40 -0800
-Message-ID: <CAHk-=wi5FOGV_3tALK3n6E2fK3Oa_yCYkYQtCSaXLSEm2DUCKg@mail.gmail.com>
-References: <20200210150519.538333-8-gladkov.alexey@gmail.com>
- <87v9odlxbr.fsf@x220.int.ebiederm.org> <20200212144921.sykucj4mekcziicz@comp-core-i7-2640m-0182e6>
- <87tv3vkg1a.fsf@x220.int.ebiederm.org> <CAHk-=wg52stFtUxMOxs3afkwDWmWn1JXC7RJ7dPsTrJbnxpZVg@mail.gmail.com>
- <87v9obipk9.fsf@x220.int.ebiederm.org> <CAHk-=wgwmu4jpmOqW0+Lz0dcem1Fub=ThLHvmLobf_WqCq7bwg@mail.gmail.com>
- <20200212200335.GO23230@ZenIV.linux.org.uk> <CAHk-=wi+1CPShMFvJNPfnrJ8DD8uVKUOQ5TQzQUNGLUkeoahkg@mail.gmail.com>
- <20200212203833.GQ23230@ZenIV.linux.org.uk> <20200212204124.GR23230@ZenIV.linux.org.uk>
+From: Jonathan Corbet <corbet@lwn.net>
+Subject: Re: [RFC PATCH] mm: extend memfd with ability to create "secret"
+ memory areas
+Date: Wed, 12 Feb 2020 14:10:29 -0700
+Message-ID: <20200212141029.7b89acee@lwn.net>
+References: <20200130162340.GA14232@rapoport-lnx>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20200212204124.GR23230-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kernel Hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Security Module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Dmitry V . Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "J . Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200130162340.GA14232@rapoport-lnx>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Rapoport <rppt@kernel.org>
+Cc: linux-kernel@vger.kernel.org, Alan Cox <alan@linux.intel.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Christopher Lameter <cl@linux.com>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Matthew Wilcox <willy@infradead.org>, Peter Zijlstra <peterz@infradead.org>, "Reshetova, Elena" <elena.reshetova@intel.com>, Thomas Gleixner <tglx@linutronix.de>, Tycho Andersen <tycho@tycho.ws>, linux-api@vger.kernel.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Feb 12, 2020 at 12:41 PM Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org> wrote:
->
-> On Wed, Feb 12, 2020 at 08:38:33PM +0000, Al Viro wrote:
-> >
-> > Wait, I thought the whole point of that had been to allow multiple
-> > procfs instances for the same userns?  Confused...
->
-> s/userns/pidns/, sorry
+On Thu, 30 Jan 2020 18:23:41 +0200
+Mike Rapoport <rppt@kernel.org> wrote:
 
-Right, but we still hold the ref to it here...
+> Hi,
+> 
+> This is essentially a resend of my attempt to implement "secret" mappings
+> using a file descriptor [1]. 
 
-[ Looks more ]
+So one little thing I was curious about as I read through the patch...
 
-Oooh. No we don't. Exactly because we don't hold the lock, only the
-rcu lifetime, the ref can go away from under us. I see what your
-concern is.
+> +static int secretmem_check_limits(struct vm_fault *vmf)
+> +{
+> +	struct secretmem_state *state = vmf->vma->vm_file->private_data;
+> +	struct inode *inode = file_inode(vmf->vma->vm_file);
+> +	unsigned long limit;
+> +
+> +	if (((loff_t)vmf->pgoff << PAGE_SHIFT) >= i_size_read(inode))
+> +		return -EINVAL;
+> +
+> +	limit = rlimit(RLIMIT_MEMLOCK) >> PAGE_SHIFT;
+> +	if (state->nr_pages + 1 >= limit)
+> +		return -EPERM;
+> +
+> +	return 0;
+> +}
 
-Ouch, this is more painful than I expected - the code flow looked so
-simple. I really wanted to avoid a new lock during process shutdown,
-because that has always been somewhat painful.
+If I'm not mistaken, this means each memfd can be RLIMIT_MEMLOCK in length,
+with no global limit on the number of locked pages.  What's keeping me from
+creating 1000 of these things and locking down lots of RAM?
 
-            Linus
+Thanks,
+
+jon
