@@ -1,122 +1,106 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v4 8/8] mm: support both pid and pidfd for process_madvise
-Date: Wed, 12 Feb 2020 15:39:46 -0800
-Message-ID: <20200212233946.246210-9-minchan@kernel.org>
-References: <20200212233946.246210-1-minchan@kernel.org>
+From: Andrea Arcangeli <aarcange@redhat.com>
+Subject: Re: [PATCH v2 0/6] Harden userfaultfd
+Date: Wed, 12 Feb 2020 18:41:19 -0500
+Message-ID: <20200212234119.GB29809@redhat.com>
+References: <20200211225547.235083-1-dancol@google.com>
+ <202002112332.BE71455@keescook>
+ <CAG48ez0ogRxvCK1aCnviN+nBqp6gmbUD7NjaMKvA7bF=esAc1A@mail.gmail.com>
+ <20200212171416.GD1083891@xz-x1>
+ <20200212194100.GA29809@redhat.com>
+ <CAKOZuevusieaKCt5r-jnQ5ArGfw5Otszq2CAcrqFi6MYxkKwtA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200212233946.246210-1-minchan@kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAKOZuevusieaKCt5r-jnQ5ArGfw5Otszq2CAcrqFi6MYxkKwtA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, linux-api@vger.kernel.org, oleksandr@redhat.com, Suren Baghdasaryan <surenb@google.com>, Tim Murray <timmurray@google.com>, Daniel Colascione <dancol@google.com>, Sandeep Patil <sspatil@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Shakeel Butt <shakeelb@google.com>, John Dias <joaodias@google.com>, Joel Fernandes <joel@joelfernandes.org>, Alexander Duyck <alexander.h.duyck@linux.intel.com>, Minchan Kim <minchan@kernel.org>, Christian Brauner <christian@brauner.io>, Kirill Tkhai <ktkhai@virtuozzo.com>
+To: Daniel Colascione <dancol@google.com>
+Cc: Peter Xu <peterx@redhat.com>, Jann Horn <jannh@google.com>, Kees Cook <keescook@chromium.org>, Tim Murray <timmurray@google.com>, Nosh Minwalla <nosh@google.com>, Nick Kralevich <nnk@google.com>, Lokesh Gidra <lokeshgidra@google.com>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, SElinux list <selinux@vger.kernel.org>, Mike Rapoport <rppt@linux.ibm.com>, linux-security-module <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-There is a demand[1] to support pid as well pidfd for process_madvise
-to reduce unnecessary syscall to get pidfd if the user has control of
-the target process(ie, they could guarantee the process is not gone
-or pid is not reused. Or, it might be okay to give a hint to wrong
-process).
+Hi Daniel,
 
-This patch aims for supporting both options like waitid(2). So, the
-syscall is currently,
+On Wed, Feb 12, 2020 at 12:04:39PM -0800, Daniel Colascione wrote:
+> We don't pass pointers to the heap into system calls. (Big primitive
+> arrays, ByteBuffer, etc. are allocated off the regular heap.)
 
-	int process_madvise(int which, pid_t pid, void *addr,
-		size_t length, int advise, unsigned long flag);
+That sounds pretty restrictive, I wonder what you gain by enforcing
+that invariant or if it just happened incidentally for some other
+reason?  Do you need to copy that memory every time if you need to do
+I/O on it? Are you sure this won't need to change any time soon to
+increase performance?
 
-@which is actually idtype_t for userspace libray and currently,
-it supports P_PID and P_PIDFD.
+> I don't understand what you mean. The purpose of preventing UFFD from
+> handling kernel faults is exploit mitigation.
 
-[1]  https://lore.kernel.org/linux-mm/9d849087-3359-c4ab-fbec-859e8186c509@virtuozzo.com/
+That part was clear. What wasn't clear is what the new feature
+does exactly and what it blocks, because it's all about blocking or
+how does it make things more secure?
 
-Cc: Christian Brauner <christian@brauner.io>
-Suggested-by: Kirill Tkhai <ktkhai@virtuozzo.com>
-Signed-off-by: Minchan Kim <minchan@kernel.org>
----
- include/linux/syscalls.h |  3 ++-
- mm/madvise.c             | 34 ++++++++++++++++++++++------------
- 2 files changed, 24 insertions(+), 13 deletions(-)
+> The key requirement here is the ability to prevent unprivileged
+> processes from using UFFD to widen kernel exploit windows by
+> preventing UFFD from taking kernel faults. Forcing unprivileged
+> processes to use UFFD only with UFFD_FEATURE_SIGBUS would satisfy this
+> requirement, but it's much less flexible and unnecessarily couples two
+> features.
 
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index e4cd2c2f8bb4..f5ada20e2943 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -876,7 +876,8 @@ asmlinkage long sys_munlockall(void);
- asmlinkage long sys_mincore(unsigned long start, size_t len,
- 				unsigned char __user * vec);
- asmlinkage long sys_madvise(unsigned long start, size_t len, int behavior);
--asmlinkage long sys_process_madvise(int pidfd, unsigned long start,
-+
-+asmlinkage long sys_process_madvise(int which, pid_t pid, unsigned long start,
- 			size_t len, int behavior, unsigned long flags);
- asmlinkage long sys_remap_file_pages(unsigned long start, unsigned long size,
- 			unsigned long prot, unsigned long pgoff,
-diff --git a/mm/madvise.c b/mm/madvise.c
-index b1237466657e..32833d0ba574 100644
---- a/mm/madvise.c
-+++ b/mm/madvise.c
-@@ -1190,11 +1190,10 @@ SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
- 	return do_madvise(current, start, len_in, behavior);
- }
- 
--SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
-+SYSCALL_DEFINE6(process_madvise, int, which, pid_t, upid, unsigned long, start,
- 		size_t, len_in, int, behavior, unsigned long, flags)
- {
- 	int ret;
--	struct fd f;
- 	struct pid *pid;
- 	struct task_struct *task;
- 	struct mm_struct *mm;
-@@ -1205,20 +1204,31 @@ SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
- 	if (!process_madvise_behavior_valid(behavior))
- 		return -EINVAL;
- 
--	f = fdget(pidfd);
--	if (!f.file)
--		return -EBADF;
-+	switch (which) {
-+	case P_PID:
-+		if (upid <= 0)
-+			return -EINVAL;
-+
-+		pid = find_get_pid(upid);
-+		if (!pid)
-+			return -ESRCH;
-+		break;
-+	case P_PIDFD:
-+		if (upid < 0)
-+			return -EINVAL;
- 
--	pid = pidfd_pid(f.file);
--	if (IS_ERR(pid)) {
--		ret = PTR_ERR(pid);
--		goto fdput;
-+		pid = pidfd_get_pid(upid);
-+		if (IS_ERR(pid))
-+			return PTR_ERR(pid);
-+		break;
-+	default:
-+		return -EINVAL;
- 	}
- 
- 	task = get_pid_task(pid, PIDTYPE_PID);
- 	if (!task) {
- 		ret = -ESRCH;
--		goto fdput;
-+		goto put_pid;
- 	}
- 
- 	mm = mm_access(task, PTRACE_MODE_ATTACH_FSCREDS);
-@@ -1231,7 +1241,7 @@ SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
- 	mmput(mm);
- release_task:
- 	put_task_struct(task);
--fdput:
--	fdput(f);
-+put_pid:
-+	put_pid(pid);
- 	return ret;
- }
--- 
-2.25.0.225.g125e21ebc7-goog
+I mentioned it in case you could use something like that model.
+
+> > On the other end I'm also planning a mremap_vma_merge userland syscall
+> > that will merge fragmented vmas.
+> 
+> This is probably a separate discussion, but does that operation really
+> need to be a system call? Historically, userspace has operated mostly
+
+mremap_vma_merge was not intended as a system call, if implemented as
+a system call it wouldn't use uffd.
+
+> on page ranges and not VMAs per se, and the kernel has been free to
+
+Userland doesn't need to know anything.. unless it wants to optimize.
+
+The userland can know full well if it does certain mremap operations
+and puts its ranges virtually contiguous in a non linear way, so that
+the kernel cannot merge the vmas.
+
+> merge and split VMAs as needed for its internal purposes. This
+> approach has serious negative side effects (like making munmap
+> fallible: see [1]), but it is what it is.
+> 
+> [1] https://lore.kernel.org/linux-mm/CAKOZuetOD6MkGPVvYFLj5RXh200FaDyu3sQqZviVRhTFFS3fjA@mail.gmail.com/
+
+The fact it's fallible is a secondary concern here. Even if you make
+it unlimited, if it grows it slowdown everything and also prevents THP
+to be collapsed. Even the scalability of the mmap_sem worsens.
+
+> > Currently once you have a nice heap all contiguous but with small
+> > objects and you free the fragments you can't build THP anymore even if
+> > you make the memory virtually contiguous again by calling mremap. That
+> > just build up a ton of vmas slowing down the app forever and also
+> > preventing THP collapsing ever again.
+> 
+> Shouldn't the THP background kthread take care of merging VMAs?
+
+The solution can't depend on any THP feature, because the buildup of
+vmas is a scalability issue and a performance regression over time
+even if THP is not configured in the kernel. However once that's
+solved THP also gets naturally optimized.
+
+What should happen (in my view) is just the simplest solution that can
+defrag and forcefully merge the vmas without having to stop or restart
+the app.
+
+> Presumably, those apps wouldn't issue the system call on address
+> ranges managed with a non-kernel-fault UFFD.
+
+So the new security feature won't have to block kernel faults on those
+apps and they can run side by side with the blocked app?
+
+> We shouldn't be fragmenting at all, either at the memory level or the
+> VMA level. The GC is a moving collector, and we don't punch holes in
+> the heap.
+
+That sounds good.
+
+Thanks,
+Andrea
