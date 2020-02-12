@@ -1,116 +1,154 @@
-From: Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v2 1/6] Add a new flags-accepting interface for anonymous inodes
-Date: Wed, 12 Feb 2020 09:23:09 -0800
-Message-ID: <CAKOZuet1vcDwkqoJgqmDjg7pjLGfvh11ZdUZpoyoXXWdz9Y4CQ@mail.gmail.com>
-References: <20200211225547.235083-1-dancol@google.com> <20200211225547.235083-2-dancol@google.com>
- <88ea16bd-38be-b4f9-dfb3-e0626f5b6aaf@tycho.nsa.gov>
+From: Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>
+Subject: Re: [PATCH v2 3/6] Teach SELinux about a new userfaultfd class
+Date: Wed, 12 Feb 2020 13:04:29 -0500
+Message-ID: <ae8adb92-9c6e-2318-a3b9-903ead3848b5@tycho.nsa.gov>
+References: <20200211225547.235083-1-dancol@google.com>
+ <20200211225547.235083-4-dancol@google.com>
+ <ef13d728-9f1e-5e38-28a1-7ed7134840e4@tycho.nsa.gov>
+ <CAKOZuesUVSYJ6EjHFL3QyiWKVmyhm1fLp5Bm_SHjB3_s1gn08A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <88ea16bd-38be-b4f9-dfb3-e0626f5b6aaf-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>
+In-Reply-To: <CAKOZuesUVSYJ6EjHFL3QyiWKVmyhm1fLp5Bm_SHjB3_s1gn08A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>
+To: Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Cc: Tim Murray <timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Nosh Minwalla <nosh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Nick Kralevich <nnk-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Lokesh Gidra <lokeshgidra-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, selinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Thanks again for the review.
+On 2/12/20 12:19 PM, Daniel Colascione wrote:
+> Thanks for taking a look.
+> 
+> On Wed, Feb 12, 2020 at 9:04 AM Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org> wrote:
+>>
+>> On 2/11/20 5:55 PM, Daniel Colascione wrote:
+>>> Use the secure anonymous inode LSM hook we just added to let SELinux
+>>> policy place restrictions on userfaultfd use. The create operation
+>>> applies to processes creating new instances of these file objects;
+>>> transfer between processes is covered by restrictions on read, write,
+>>> and ioctl access already checked inside selinux_file_receive.
+>>>
+>>> Signed-off-by: Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+>>
+>> (please add linux-fsdevel and viro to the cc for future versions of this
+>> patch since it changes the VFS)
+>>
+>>> ---
+>>> diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
+>>> index 1659b59fb5d7..e178f6f40e93 100644
+>>> --- a/security/selinux/hooks.c
+>>> +++ b/security/selinux/hooks.c
+>>> @@ -2915,6 +2919,69 @@ static int selinux_inode_init_security(struct inode *inode, struct inode *dir,
+>>> +
+>>> +     /*
+>>> +      * We shouldn't be creating secure anonymous inodes before LSM
+>>> +      * initialization completes.
+>>> +      */
+>>> +     if (unlikely(!selinux_state.initialized))
+>>> +             return -EBUSY;
+>>
+>> I don't think this is viable; any arbitrary actions are possible before
+>> policy is loaded, and a Linux distro can be brought up fully with
+>> SELinux enabled and no policy loaded.  You'll just need to have a
+>> default behavior prior to initialization.
+> 
+> We'd have to fail open then, I think, and return an S_PRIVATE inode
+> (the regular anon inode).
 
-On Wed, Feb 12, 2020 at 8:36 AM Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org> wrote:
->
-> On 2/11/20 5:55 PM, Daniel Colascione wrote:
-> > Add functions forwarding from the old names to the new ones so we
-> > don't need to change any callers.
-> >
-> > Signed-off-by: Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
->
-> (please add linux-fsdevel, viro to cc on future versions of this patch
-> since this is a VFS change)
->
-> > ---
-> >   fs/anon_inodes.c            | 62 ++++++++++++++++++++++---------------
-> >   include/linux/anon_inodes.h | 27 +++++++++++++---
-> >   2 files changed, 59 insertions(+), 30 deletions(-)
-> >
-> > diff --git a/fs/anon_inodes.c b/fs/anon_inodes.c
-> > index 89714308c25b..caa36019afca 100644
-> > --- a/fs/anon_inodes.c
-> > +++ b/fs/anon_inodes.c
-> > @@ -56,60 +56,71 @@ static struct file_system_type anon_inode_fs_type = {
-> >   };
-> >
-> >   /**
-> > - * anon_inode_getfile - creates a new file instance by hooking it up to an
-> > - *                      anonymous inode, and a dentry that describe the "class"
-> > - *                      of the file
-> > + * anon_inode_getfile2 - creates a new file instance by hooking it up to
-> > + *                       an anonymous inode, and a dentry that describe
-> > + *                       the "class" of the file
->
-> Not going to bikeshed on names but anon_inode_getfile_flags or _secure
-> or something would be more descriptive.
+Not sure why.  You aren't doing anything in the hook that actually 
+relies on selinux_state.initialized being set (i.e. nothing requires a 
+policy).  The avc_has_perm() call will just succeed until a policy is 
+loaded.  So if these inodes are created prior to policy load, they will 
+get assigned the task SID (which would be the kernel SID prior to policy 
+load or first exec or write to /proc/self/attr/current afterward) and 
+UFFD class (in your current code), be permitted, and then once policy is 
+loaded any further access will get checked against the kernel SID.
 
-_flags is fine, but I think _secure is overfitting.
+>>> +     /*
+>>> +      * We only get here once per ephemeral inode.  The inode has
+>>> +      * been initialized via inode_alloc_security but is otherwise
+>>> +      * untouched, so check that the state is as
+>>> +      * inode_alloc_security left it.
+>>> +      */
+>>> +     BUG_ON(isec->initialized != LABEL_INVALID);
+>>> +     BUG_ON(isec->sclass != SECCLASS_FILE);
+>>
+>> I think the kernel discourages overuse of BUG_ON/BUG/...
+> 
+> I'm not sure what counts as overuse.
 
-> >    *
-> >    * @name:    [in]    name of the "class" of the new file
-> >    * @fops:    [in]    file operations for the new file
-> >    * @priv:    [in]    private data for the new file (will be file's private_data)
-> > - * @flags:   [in]    flags
-> > + * @flags:   [in]    flags for the file
-> > + * @anon_inode_flags: [in] flags for anon_inode*
->
-> Do we really envision ever needing more than one new flag here?  If not,
-> then making it a bool secure parameter or encoding it as an
-> unused/ignored flag bit in the existing flags argument would seem
-> preferable.
+Me either (not my rule) but I'm pretty sure this counts or you'd see a 
+lot more of these kinds of BUG_ON() checks throughout.  Try to reserve 
+them for really critical cases.
 
-A bool and a flag is the same as far as the machine is concerned with
-respect to argument passing, and I find the flag much more descriptive
-than a bare "true" or a "false" scattered at call sites. Besides, a
-flags argument could lead to less churn later.
+>>> +
+>>> +#ifdef CONFIG_USERFAULTFD
+>>> +     if (fops == &userfaultfd_fops)
+>>> +             isec->sclass = SECCLASS_UFFD;
+>>> +#endif
+>>
+>> Not sure we want or need to introduce a new security class for each user
+>> of anonymous inodes since the permissions should be the same as for
+>> file.
+> 
+> The purpose of this change is to apply special policy to userfaultfd
+> FDs in particular. Isn't having a UFFD security class the best way to
+> go about that? (There's no path.) Am I missing something?
 
-> In some cases, we actually want the "anon inode" to inherit the security
-> context of a related inode (e.g. ioctls on /dev/kvm can create anon
-> inodes representing VMs, vCPUs, etc and further ioctls are performed on
-> those inodes), in which case we may need the caller to pass in the
-> related inode as well.
+It is probably the simplest approach; it just doesn't generalize to all 
+users of anonymous inodes. We can distinguish them in one of two ways: 
+use a different class like you did (requires a code change every time we 
+add a new one and yet another duplicate of the file class) or use a 
+different SID/context/type. The latter could be achieved by calling 
+security_transition_sid() with the provided name wrapped in a qstr and 
+specifying type_transition rules on the name.  Then policy could define 
+derived types for each domain, ala
+type_transition init self:file "[userfaultfd]" init_userfaultfd;
+type_transition untrusted_app self:file "[userfaultfd]" 
+untrusted_app_userfaultfd;
+...
 
-See my other reply on this subject. Passing an optional related inode
-seems like a decent approach here.
+>> Also not sure we want to be testing fops for each such case.
+> 
+> I was also thinking of just providing some kind of context string
+> (maybe the name), which might be friendlier to modules, but the loose
+> coupling kind of scares me, and for this particular application, since
+> UFFD is always in the core and never in a module, checking the fops
+> seems a bit more robust and doesn't hurt anything.
 
-> >    *
-> > - * Creates a new file by hooking it on a single inode. This is useful for files
-> > + * Creates a new file by hooking it on an unspecified inode. This is useful for files
-> >    * that do not need to have a full-fledged inode in order to operate correctly.
-> >    * All the files created with anon_inode_getfile() will share a single inode,
-> >    * hence saving memory and avoiding code duplication for the file/inode/dentry
-> >    * setup.  Returns the newly created file* or an error pointer.
-> > + *
-> > + * anon_inode_flags must be zero.
-> >    */
-> > -struct file *anon_inode_getfile(const char *name,
-> > -                             const struct file_operations *fops,
-> > -                             void *priv, int flags)
-> > +struct file *anon_inode_getfile2(const char *name,
-> > +                              const struct file_operations *fops,
-> > +                              void *priv, int flags, int anon_inode_flags)
-> >   {
-> > +     struct inode *inode;
-> >       struct file *file;
-> >
-> > -     if (IS_ERR(anon_inode_inode))
-> > -             return ERR_PTR(-ENODEV);
-> > -
-> > -     if (fops->owner && !try_module_get(fops->owner))
-> > -             return ERR_PTR(-ENOENT);
-> > +     if (anon_inode_flags)
-> > +             return ERR_PTR(-EINVAL);
->
-> Not sure this is how it is normally done (i.e. one patch to just
-> introduce an extended interface but disallow all use of it, then a
-> separate patch to introduce the first use).  Would recommend combining;
-> otherwise reviewers can't see how it will be used without looking at both.
+Yes, not sure how the vfs folks feel about either coupling (the 
+name-based one or the fops-based one).  Neither seems great.
 
-All things being equal, finer-grained patches are better: they allow
-for easier bisection. But I don't feel strongly one way or the other
-here, so let's see what other reviewers say.
+>> We
+>> were looking at possibly leveraging the name as a key and using
+>> security_transition_sid() to generate a distinct SID/context/type for
+>> the inode via type_transition rules in policy.  We have some WIP along
+>> those lines.
+> 
+> Where? Any chance it would be ready soon? I'd rather not hold up this
+> work for a more general mechanism.
+
+Hopefully will have a patch available soon.  But not saying this 
+necessarily has to wait either.
+
+>>> +     /*
+>>> +      * Always give secure anonymous inodes the sid of the
+>>> +      * creating task.
+>>> +      */
+>>> +
+>>> +     isec->sid = tsec->sid;
+>>
+>> This doesn't generalize for other users of anonymous inodes, e.g. the
+>> /dev/kvm case where we'd rather inherit the SID and class from the
+>> original /dev/kvm inode itself.
+> 
+> I think someone mentioned on the first version of this patch that we
+> could make it more flexible if the need arose. If we do want to do it
+> now, we could have the anon_inode security hook accept a "parent" or
+> "context" inode that modules could inspect for the purposes of forming
+> the new inode's SID. Does that make sense to you?
+
+Yes, that's the approach in our current WIP, except we call it a 
+"related" inode since it isn't necessarily connected to the anon inode 
+in any vfs sense.
