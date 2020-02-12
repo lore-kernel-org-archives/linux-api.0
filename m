@@ -1,122 +1,31 @@
-From: Steve Grubb <sgrubb@redhat.com>
-Subject: Re: [PATCH ghak90 V8 07/16] audit: add contid support for signalling the audit daemon
-Date: Wed, 12 Feb 2020 17:38:45 -0500
-Message-ID: <3142237.YMNxv0uec1@x2>
-References: <cover.1577736799.git.rgb@redhat.com> <20200204231454.oxa7pyvuxbj466fj@madcap2.tricolour.ca> <CAHC9VhQquokw+7UOU=G0SsD35UdgmfysVKCGCE87JVaoTkbisg@mail.gmail.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH v6 0/6] clone3 & cgroups: allow spawning processes into
+ cgroups
+Date: Wed, 12 Feb 2020 18:01:27 -0500
+Message-ID: <20200212230127.GA88887@mtj.thefacebook.com>
+References: <20200205132623.670015-1-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CAHC9VhQquokw+7UOU=G0SsD35UdgmfysVKCGCE87JVaoTkbisg@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: linux-audit@redhat.com
-Cc: Paul Moore <paul@paul-moore.com>, Richard Guy Briggs <rgb@redhat.com>, nhorman@tuxdriver.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, dhowells@redhat.com, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, simo@redhat.com, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>, mpatel@redhat.com, Serge Hallyn <serge@hallyn.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200205132623.670015-1-christian.brauner@ubuntu.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christian Brauner <christian.brauner@ubuntu.com>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>, Peter Zijlstra <peterz@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday, February 5, 2020 5:50:28 PM EST Paul Moore wrote:
-> > > > > ... When we record the audit container ID in audit_signal_info() we
-> > > > > take an extra reference to the audit container ID object so that it
-> > > > > will not disappear (and get reused) until after we respond with an
-> > > > > AUDIT_SIGNAL_INFO2.  In audit_receive_msg() when we do the
-> > > > > AUDIT_SIGNAL_INFO2 processing we drop the extra reference we took
-> > > > > in
-> > > > > audit_signal_info().  Unless I'm missing some other change you
-> > > > > made,
-> > > > > this *shouldn't* affect the syscall records, all it does is
-> > > > > preserve
-> > > > > the audit container ID object in the kernel's ACID store so it
-> > > > > doesn't
-> > > > > get reused.
-> > > > 
-> > > > This is exactly what I had understood.  I hadn't considered the extra
-> > > > details below in detail due to my original syscall concern, but they
-> > > > make sense.
-> > > > 
-> > > > The syscall I refer to is the one connected with the drop of the
-> > > > audit container identifier by the last process that was in that
-> > > > container in patch 5/16.  The production of this record is contingent
-> > > > on
-> > > > the last ref in a contobj being dropped.  So if it is due to that ref
-> > > > being maintained by audit_signal_info() until the AUDIT_SIGNAL_INFO2
-> > > > record it fetched, then it will appear that the fetch action closed
-> > > > the
-> > > > container rather than the last process in the container to exit.
-> > > > 
-> > > > Does this make sense?
-> > > 
-> > > More so than your original reply, at least to me anyway.
-> > > 
-> > > It makes sense that the audit container ID wouldn't be marked as
-> > > "dead" since it would still be very much alive and available for use
-> > > by the orchestrator, the question is if that is desirable or not.  I
-> > > think the answer to this comes down the preserving the correctness of
-> > > the audit log.
-> > > 
-> > > If the audit container ID reported by AUDIT_SIGNAL_INFO2 has been
-> > > reused then I think there is a legitimate concern that the audit log
-> > > is not correct, and could be misleading.  If we solve that by grabbing
-> > > an extra reference, then there could also be some confusion as
-> > > userspace considers a container to be "dead" while the audit container
-> > > ID still exists in the kernel, and the kernel generated audit
-> > > container ID death record will not be generated until much later (and
-> > > possibly be associated with a different event, but that could be
-> > > solved by unassociating the container death record).
-> > 
-> > How does syscall association of the death record with AUDIT_SIGNAL_INFO2
-> > possibly get associated with another event?  Or is the syscall
-> > association with the fetch for the AUDIT_SIGNAL_INFO2 the other event?
+On Wed, Feb 05, 2020 at 02:26:17PM +0100, Christian Brauner wrote:
+> Hey Tejun,
 > 
-> The issue is when does the audit container ID "die".  If it is when
-> the last task in the container exits, then the death record will be
-> associated when the task's exit.  If the audit container ID lives on
-> until the last reference of it in the audit logs, including the
-> SIGNAL_INFO2 message, the death record will be associated with the
-> related SIGNAL_INFO2 syscalls, or perhaps unassociated depending on
-> the details of the syscalls/netlink.
-> 
-> > Another idea might be to bump the refcount in audit_signal_info() but
-> > mark tht contid as dead so it can't be reused if we are concerned that
-> > the dead contid be reused?
-> 
-> Ooof.  Yes, maybe, but that would be ugly.
-> 
-> > There is still the problem later that the reported contid is incomplete
-> > compared to the rest of the contid reporting cycle wrt nesting since
-> > AUDIT_SIGNAL_INFO2 will need to be more complex w/2 variable length
-> > fields to accommodate a nested contid list.
-> 
-> Do we really care about the full nested audit container ID list in the
-> SIGNAL_INFO2 record?
-> 
-> > > Of the two
-> > > approaches, I think the latter is safer in that it preserves the
-> > > correctness of the audit log, even though it could result in a delay
-> > > of the container death record.
-> > 
-> > I prefer the former since it strongly indicates last task in the
-> > container.  The AUDIT_SIGNAL_INFO2 msg has the pid and other subject
-> > attributes and the contid to strongly link the responsible party.
-> 
-> Steve is the only one who really tracks the security certifications
-> that are relevant to audit, see what the certification requirements
-> have to say and we can revisit this.
+> This is v6 of the promised series to enable spawning processes into a
+> target cgroup different from the parent's cgroup.
 
-Sever Virtualization Protection Profile is the closest applicable standard
+Applied 1-6 to cgroup/for-5.7. There was a conflict with 0cd9d33ace33
+("cgroup: init_tasks shouldn't be linked to the root cgroup") which
+got fixed up while applying. I'd really appreciate if you can take a
+look to see everything is ok.
 
-https://www.niap-ccevs.org/Profile/Info.cfm?PPID=408&id=408
+Thanks a lot for working on this. This is really great.
 
-It is silent on audit requirements for the lifecycle of a VM. I assume that 
-all that is needed is what the orchestrator says its doing at the high level. 
-So, if an orchestrator wants to shutdown a container, the orchestrator must 
-log that intent and its results. In a similar fashion, systemd logs that it's 
-killing a service and we don't actually hook the exit syscall of the service 
-to record that.
-
-Now, if a container was being used as a VPS, and it had a fully functioning 
-userspace, it's own services, and its very own audit daemon, then in this 
-case it would care who sent a signal to its auditd. The tenant of that 
-container may have to comply with PCI-DSS or something else. It would log the 
-audit service is being terminated and systemd would record that its tearing 
-down the environment. The OS doesn't need to do anything.
-
--Steve
+-- 
+tejun
