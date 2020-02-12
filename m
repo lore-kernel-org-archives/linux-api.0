@@ -1,95 +1,122 @@
-From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH v4 7/8] pid: export pidfd_get_pid
-Date: Wed, 12 Feb 2020 15:39:45 -0800
-Message-ID: <20200212233946.246210-8-minchan@kernel.org>
+From: Minchan Kim <minchan@kernel.org>
+Subject: [PATCH v4 8/8] mm: support both pid and pidfd for process_madvise
+Date: Wed, 12 Feb 2020 15:39:46 -0800
+Message-ID: <20200212233946.246210-9-minchan@kernel.org>
 References: <20200212233946.246210-1-minchan@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20200212233946.246210-1-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleksandr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Suren Baghdasaryan <surenb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tim Murray <timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sandeep Patil <sspatil-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, John Dias <joaodias-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Joel Fernandes <joel-QYYGw3jwrUn5owFQY34kdNi2O/JbrIOy@public.gmane.org>, Alexander Duyck <alexander.h.duyck-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Christian Brauner <christian-STijNZzMWpgWenYVfaLwtA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200212233946.246210-1-minchan@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, linux-api@vger.kernel.org, oleksandr@redhat.com, Suren Baghdasaryan <surenb@google.com>, Tim Murray <timmurray@google.com>, Daniel Colascione <dancol@google.com>, Sandeep Patil <sspatil@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Shakeel Butt <shakeelb@google.com>, John Dias <joaodias@google.com>, Joel Fernandes <joel@joelfernandes.org>, Alexander Duyck <alexander.h.duyck@linux.intel.com>, Minchan Kim <minchan@kernel.org>, Christian Brauner <christian@brauner.io>, Kirill Tkhai <ktkhai@virtuozzo.com>
 List-Id: linux-api@vger.kernel.org
 
-process_madvise syscall needs pidfd_get_pid function to translate
-pidfd to pid so this patch exports the function.
+There is a demand[1] to support pid as well pidfd for process_madvise
+to reduce unnecessary syscall to get pidfd if the user has control of
+the target process(ie, they could guarantee the process is not gone
+or pid is not reused. Or, it might be okay to give a hint to wrong
+process).
 
-Cc: Christian Brauner <christian-STijNZzMWpgWenYVfaLwtA@public.gmane.org>
-Signed-off-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+This patch aims for supporting both options like waitid(2). So, the
+syscall is currently,
+
+	int process_madvise(int which, pid_t pid, void *addr,
+		size_t length, int advise, unsigned long flag);
+
+@which is actually idtype_t for userspace libray and currently,
+it supports P_PID and P_PIDFD.
+
+[1]  https://lore.kernel.org/linux-mm/9d849087-3359-c4ab-fbec-859e8186c509@virtuozzo.com/
+
+Cc: Christian Brauner <christian@brauner.io>
+Suggested-by: Kirill Tkhai <ktkhai@virtuozzo.com>
+Signed-off-by: Minchan Kim <minchan@kernel.org>
 ---
- include/linux/pid.h |  1 +
- kernel/exit.c       | 17 -----------------
- kernel/pid.c        | 17 +++++++++++++++++
- 3 files changed, 18 insertions(+), 17 deletions(-)
+ include/linux/syscalls.h |  3 ++-
+ mm/madvise.c             | 34 ++++++++++++++++++++++------------
+ 2 files changed, 24 insertions(+), 13 deletions(-)
 
-diff --git a/include/linux/pid.h b/include/linux/pid.h
-index 998ae7d24450..023d9c3a8edc 100644
---- a/include/linux/pid.h
-+++ b/include/linux/pid.h
-@@ -75,6 +75,7 @@ extern const struct file_operations pidfd_fops;
- struct file;
- 
- extern struct pid *pidfd_pid(const struct file *file);
-+extern struct pid *pidfd_get_pid(unsigned int fd);
- 
- static inline struct pid *get_pid(struct pid *pid)
- {
-diff --git a/kernel/exit.c b/kernel/exit.c
-index 0b81b26a872a..43375f9d8bbc 100644
---- a/kernel/exit.c
-+++ b/kernel/exit.c
-@@ -1470,23 +1470,6 @@ static long do_wait(struct wait_opts *wo)
- 	return retval;
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index e4cd2c2f8bb4..f5ada20e2943 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -876,7 +876,8 @@ asmlinkage long sys_munlockall(void);
+ asmlinkage long sys_mincore(unsigned long start, size_t len,
+ 				unsigned char __user * vec);
+ asmlinkage long sys_madvise(unsigned long start, size_t len, int behavior);
+-asmlinkage long sys_process_madvise(int pidfd, unsigned long start,
++
++asmlinkage long sys_process_madvise(int which, pid_t pid, unsigned long start,
+ 			size_t len, int behavior, unsigned long flags);
+ asmlinkage long sys_remap_file_pages(unsigned long start, unsigned long size,
+ 			unsigned long prot, unsigned long pgoff,
+diff --git a/mm/madvise.c b/mm/madvise.c
+index b1237466657e..32833d0ba574 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -1190,11 +1190,10 @@ SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
+ 	return do_madvise(current, start, len_in, behavior);
  }
  
--static struct pid *pidfd_get_pid(unsigned int fd)
--{
+-SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
++SYSCALL_DEFINE6(process_madvise, int, which, pid_t, upid, unsigned long, start,
+ 		size_t, len_in, int, behavior, unsigned long, flags)
+ {
+ 	int ret;
 -	struct fd f;
--	struct pid *pid;
--
--	f = fdget(fd);
--	if (!f.file)
--		return ERR_PTR(-EBADF);
--
--	pid = pidfd_pid(f.file);
--	if (!IS_ERR(pid))
--		get_pid(pid);
--
--	fdput(f);
--	return pid;
--}
--
- static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
- 			  int options, struct rusage *ru)
- {
-diff --git a/kernel/pid.c b/kernel/pid.c
-index 0f4ecb57214c..360ba480a2a9 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -496,6 +496,23 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
- 	return idr_get_next(&ns->idr, &nr);
- }
+ 	struct pid *pid;
+ 	struct task_struct *task;
+ 	struct mm_struct *mm;
+@@ -1205,20 +1204,31 @@ SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
+ 	if (!process_madvise_behavior_valid(behavior))
+ 		return -EINVAL;
  
-+struct pid *pidfd_get_pid(unsigned int fd)
-+{
-+	struct fd f;
-+	struct pid *pid;
+-	f = fdget(pidfd);
+-	if (!f.file)
+-		return -EBADF;
++	switch (which) {
++	case P_PID:
++		if (upid <= 0)
++			return -EINVAL;
 +
-+	f = fdget(fd);
-+	if (!f.file)
-+		return ERR_PTR(-EBADF);
-+
-+	pid = pidfd_pid(f.file);
-+	if (!IS_ERR(pid))
-+		get_pid(pid);
-+
-+	fdput(f);
-+	return pid;
-+}
-+
- /**
-  * pidfd_create() - Create a new pid file descriptor.
-  *
++		pid = find_get_pid(upid);
++		if (!pid)
++			return -ESRCH;
++		break;
++	case P_PIDFD:
++		if (upid < 0)
++			return -EINVAL;
+ 
+-	pid = pidfd_pid(f.file);
+-	if (IS_ERR(pid)) {
+-		ret = PTR_ERR(pid);
+-		goto fdput;
++		pid = pidfd_get_pid(upid);
++		if (IS_ERR(pid))
++			return PTR_ERR(pid);
++		break;
++	default:
++		return -EINVAL;
+ 	}
+ 
+ 	task = get_pid_task(pid, PIDTYPE_PID);
+ 	if (!task) {
+ 		ret = -ESRCH;
+-		goto fdput;
++		goto put_pid;
+ 	}
+ 
+ 	mm = mm_access(task, PTRACE_MODE_ATTACH_FSCREDS);
+@@ -1231,7 +1241,7 @@ SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
+ 	mmput(mm);
+ release_task:
+ 	put_task_struct(task);
+-fdput:
+-	fdput(f);
++put_pid:
++	put_pid(pid);
+ 	return ret;
+ }
 -- 
 2.25.0.225.g125e21ebc7-goog
