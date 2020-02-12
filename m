@@ -1,51 +1,90 @@
-From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v7 2/2] fpga: dfl: fme: add performance reporting support
-Date: Wed, 12 Feb 2020 18:02:11 +0800
-Message-ID: <20200212100211.GA10436@hao-dev>
-References: <1581306469-22629-1-git-send-email-hao.wu@intel.com>
- <1581306469-22629-3-git-send-email-hao.wu@intel.com>
- <20200210163400.GA21900@willie-the-truck>
- <20200212031929.GB5645@hao-dev>
- <20200212053035.GA382718@kroah.com>
+From: Jeff Layton <jlayton@kernel.org>
+Subject: Re: [PATCH v3 0/3] vfs: have syncfs() return error when there are
+ writeback errors
+Date: Wed, 12 Feb 2020 07:21:19 -0500
+Message-ID: <13f20458cd8b72026cec364b6b8b8e4d636ebe94.camel@kernel.org>
+References: <20200207170423.377931-1-jlayton@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20200212053035.GA382718-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Will Deacon <will-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, yilun.xu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, Luwei Kang <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200207170423.377931-1-jlayton@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: viro@zeniv.linux.org.uk
+Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, andres@anarazel.de, willy@infradead.org, dhowells@redhat.com, hch@infradead.org, jack@suse.cz, akpm@linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 11, 2020 at 09:30:35PM -0800, Greg KH wrote:
-> On Wed, Feb 12, 2020 at 11:19:29AM +0800, Wu Hao wrote:
-> > On Mon, Feb 10, 2020 at 04:34:01PM +0000, Will Deacon wrote:
-> > > Hi,
-> > > 
-> > > On Mon, Feb 10, 2020 at 11:47:49AM +0800, Wu Hao wrote:
-> > > > This patch adds support for performance reporting private feature
-> > > > for FPGA Management Engine (FME). Now it supports several different
-> > > > performance counters, including 'basic', 'cache', 'fabric', 'vtd'
-> > > > and 'vtd_sip'. It allows user to use standard linux tools to access
-> > > > these performance counters.
-> > > 
-> > > I had a quick look at this, and it mostly looks alright to me. Just a few
-> > > high-level comments/questions:
-> > 
-> > Hi Will
-> > 
-> > Thanks a lot for the review! :)
-> > 
-> > > 
-> > >   - I would still prefer for the PMU drivers to live under drivers/perf/
-> > 
-> > Hm.. one possible way is to create a platform device, and introduce a new
-> > platform device driver under drivers/perf/.
+On Fri, 2020-02-07 at 12:04 -0500, Jeff Layton wrote:
+> You're probably wondering -- Where are v1 and v2 sets?
 > 
-> No, do not abuse platform drivers, you have a real device, use it.
+> I did the first couple of versions of this set back in 2018, and then
+> got dragged off to work on other things. I'd like to resurrect this set
+> though, as I think it's valuable overall, and I have need of it for some
+> other work I'm doing.
+> 
+> Currently, syncfs does not return errors when one of the inodes fails to
+> be written back. It will return errors based on the legacy AS_EIO and
+> AS_ENOSPC flags when syncing out the block device fails, but that's not
+> particularly helpful for filesystems that aren't backed by a blockdev.
+> It's also possible for a stray sync to lose those errors.
+> 
+> The basic idea is to track writeback errors at the superblock level,
+> so that we can quickly and easily check whether something bad happened
+> without having to fsync each file individually. syncfs is then changed
+> to reliably report writeback errors, and a new ioctl is added to allow
+> userland to get at the current errseq_t value w/o having to sync out
+> anything.
+> 
+> I do have a xfstest for this. I do not yet have manpage patches, but
+> I'm happy to roll some once there is consensus on the interface.
+> 
+> Caveats:
+> 
+> - Having different behavior for an O_PATH descriptor in syncfs is
+>   a bit odd, but it means that we don't have to grow struct file. Is
+>   that acceptable from an API standpoint?
+> 
 
-Sure, thanks for the comments. Then I don't have any other idea to move code to
-drivers/perf/ directory, so probably only can live with current code.
+There are a couple of other options besides requiring an O_PATH fd here:
 
-Thanks
-Hao
+1) we could just add a new errseq_t field to struct file for this. On my
+machine (x86_64) there is 4 bytes of padding at the end of struct file.
+An errseq_t would slot in there without changing the slab object size.
+YMMV on other arches of course.
+
+2) we could add a new fcntl command value (F_SYNCFS or something?), that
+would flip the fd to being suitable for syncfs. If you tried to use the
+fd to do a fsync at that point, we could return an error.
+
+Anyone else have other thoughts on how best to do this?
+
+> - This adds a new generic fs ioctl to allow userland to scrape the
+>   current superblock's errseq_t value. It may be best to present this
+>   to userland via fsinfo() instead (once that's merged). I'm fine with
+>   dropping the last patch for now and reworking it for fsinfo if so.
+> 
+
+To be clear, as I stated in earlier replies, I think we can drop the
+ioctl. If we did want something like this, I think we'd want to expose
+it via fsinfo() instead, and that could be done after the syncfs changes
+went in.
+
+> Jeff Layton (3):
+>   vfs: track per-sb writeback errors and report them to syncfs
+>   buffer: record blockdev write errors in super_block that it backs
+>   vfs: add a new ioctl for fetching the superblock's errseq_t
+> 
+>  fs/buffer.c             |  2 ++
+>  fs/ioctl.c              |  4 ++++
+>  fs/open.c               |  6 +++---
+>  fs/sync.c               |  9 ++++++++-
+>  include/linux/errseq.h  |  1 +
+>  include/linux/fs.h      |  3 +++
+>  include/linux/pagemap.h |  5 ++++-
+>  include/uapi/linux/fs.h |  1 +
+>  lib/errseq.c            | 33 +++++++++++++++++++++++++++++++--
+>  9 files changed, 57 insertions(+), 7 deletions(-)
+> 
+
+-- 
+Jeff Layton <jlayton@kernel.org>
