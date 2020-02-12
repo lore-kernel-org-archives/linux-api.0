@@ -1,109 +1,163 @@
-From: Stephen Smalley <sds@tycho.nsa.gov>
-Subject: Re: [PATCH v2 3/6] Teach SELinux about a new userfaultfd class
-Date: Wed, 12 Feb 2020 12:05:38 -0500
-Message-ID: <ef13d728-9f1e-5e38-28a1-7ed7134840e4@tycho.nsa.gov>
-References: <20200211225547.235083-1-dancol@google.com>
- <20200211225547.235083-4-dancol@google.com>
+From: Alexey Gladkov <gladkov.alexey@gmail.com>
+Subject: Re: [PATCH v8 07/11] proc: flush task dcache entries from all procfs
+ instances
+Date: Wed, 12 Feb 2020 18:08:37 +0100
+Message-ID: <20200212170836.kiqogl4cqdpyjjk3@comp-core-i7-2640m-0182e6>
+References: <20200210150519.538333-1-gladkov.alexey@gmail.com>
+ <20200210150519.538333-8-gladkov.alexey@gmail.com>
+ <87v9odlxbr.fsf@x220.int.ebiederm.org>
+ <20200212144921.sykucj4mekcziicz@comp-core-i7-2640m-0182e6>
+ <87tv3vkg1a.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200211225547.235083-4-dancol@google.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <87tv3vkg1a.fsf@x220.int.ebiederm.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>, timmurray@google.com, nosh@google.com, nnk@google.com, lokeshgidra@google.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, selinux@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux Security Module <linux-security-module@vger.kernel.org>, Akinobu Mita <akinobu.mita@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Daniel Micay <danielmicay@gmail.com>, Djalal Harouni <tixxdz@gmail.com>, "Dmitry V . Levin" <ldv@altlinux.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ingo Molnar <mingo@kernel.org>, "J . Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Jonathan Corbet <corbet@lwn.net>Ke
 List-Id: linux-api@vger.kernel.org
 
-On 2/11/20 5:55 PM, Daniel Colascione wrote:
-> Use the secure anonymous inode LSM hook we just added to let SELinux
-> policy place restrictions on userfaultfd use. The create operation
-> applies to processes creating new instances of these file objects;
-> transfer between processes is covered by restrictions on read, write,
-> and ioctl access already checked inside selinux_file_receive.
+On Wed, Feb 12, 2020 at 08:59:29AM -0600, Eric W. Biederman wrote:
+> Alexey Gladkov <gladkov.alexey@gmail.com> writes:
 > 
-> Signed-off-by: Daniel Colascione <dancol@google.com>
+> > On Mon, Feb 10, 2020 at 07:36:08PM -0600, Eric W. Biederman wrote:
+> >> Alexey Gladkov <gladkov.alexey@gmail.com> writes:
+> >> 
+> >> > This allows to flush dcache entries of a task on multiple procfs mounts
+> >> > per pid namespace.
+> >> >
+> >> > The RCU lock is used because the number of reads at the task exit time
+> >> > is much larger than the number of procfs mounts.
+> >> 
+> >> A couple of quick comments.
+> >> 
+> >> > Cc: Kees Cook <keescook@chromium.org>
+> >> > Cc: Andy Lutomirski <luto@kernel.org>
+> >> > Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
+> >> > Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
+> >> > Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
+> >> > ---
+> >> >  fs/proc/base.c                | 20 +++++++++++++++-----
+> >> >  fs/proc/root.c                | 27 ++++++++++++++++++++++++++-
+> >> >  include/linux/pid_namespace.h |  2 ++
+> >> >  include/linux/proc_fs.h       |  2 ++
+> >> >  4 files changed, 45 insertions(+), 6 deletions(-)
+> >> >
+> >> > diff --git a/fs/proc/base.c b/fs/proc/base.c
+> >> > index 4ccb280a3e79..24b7c620ded3 100644
+> >> > --- a/fs/proc/base.c
+> >> > +++ b/fs/proc/base.c
+> >> > @@ -3133,7 +3133,7 @@ static const struct inode_operations proc_tgid_base_inode_operations = {
+> >> >  	.permission	= proc_pid_permission,
+> >> >  };
+> >> >  
+> >> > -static void proc_flush_task_mnt(struct vfsmount *mnt, pid_t pid, pid_t tgid)
+> >> > +static void proc_flush_task_mnt_root(struct dentry *mnt_root, pid_t pid, pid_t tgid)
+> >> Perhaps just rename things like:
+> >> > +static void proc_flush_task_root(struct dentry *root, pid_t pid, pid_t tgid)
+> >> >  {
+> >> 
+> >> I don't think the mnt_ prefix conveys any information, and it certainly
+> >> makes everything longer and more cumbersome.
+> >> 
+> >> >  	struct dentry *dentry, *leader, *dir;
+> >> >  	char buf[10 + 1];
+> >> > @@ -3142,7 +3142,7 @@ static void proc_flush_task_mnt(struct vfsmount *mnt, pid_t pid, pid_t tgid)
+> >> >  	name.name = buf;
+> >> >  	name.len = snprintf(buf, sizeof(buf), "%u", pid);
+> >> >  	/* no ->d_hash() rejects on procfs */
+> >> > -	dentry = d_hash_and_lookup(mnt->mnt_root, &name);
+> >> > +	dentry = d_hash_and_lookup(mnt_root, &name);
+> >> >  	if (dentry) {
+> >> >  		d_invalidate(dentry);
+> >> >  		dput(dentry);
+> >> > @@ -3153,7 +3153,7 @@ static void proc_flush_task_mnt(struct vfsmount *mnt, pid_t pid, pid_t tgid)
+> >> >  
+> >> >  	name.name = buf;
+> >> >  	name.len = snprintf(buf, sizeof(buf), "%u", tgid);
+> >> > -	leader = d_hash_and_lookup(mnt->mnt_root, &name);
+> >> > +	leader = d_hash_and_lookup(mnt_root, &name);
+> >> >  	if (!leader)
+> >> >  		goto out;
+> >> >  
+> >> > @@ -3208,14 +3208,24 @@ void proc_flush_task(struct task_struct *task)
+> >> >  	int i;
+> >> >  	struct pid *pid, *tgid;
+> >> >  	struct upid *upid;
+> >> > +	struct dentry *mnt_root;
+> >> > +	struct proc_fs_info *fs_info;
+> >> >  
+> >> >  	pid = task_pid(task);
+> >> >  	tgid = task_tgid(task);
+> >> >  
+> >> >  	for (i = 0; i <= pid->level; i++) {
+> >> >  		upid = &pid->numbers[i];
+> >> > -		proc_flush_task_mnt(upid->ns->proc_mnt, upid->nr,
+> >> > -					tgid->numbers[i].nr);
+> >> > +
+> >> > +		rcu_read_lock();
+> >> > +		list_for_each_entry_rcu(fs_info, &upid->ns->proc_mounts, pidns_entry) {
+> >> > +			mnt_root = fs_info->m_super->s_root;
+> >> > +			proc_flush_task_mnt_root(mnt_root, upid->nr, tgid->numbers[i].nr);
+> >> > +		}
+> >> > +		rcu_read_unlock();
+> >> > +
+> >> > +		mnt_root = upid->ns->proc_mnt->mnt_root;
+> >> > +		proc_flush_task_mnt_root(mnt_root, upid->nr, tgid->numbers[i].nr);
+> >> 
+> >> I don't think this following of proc_mnt is needed.  It certainly
+> >> shouldn't be.  The loop through all of the super blocks should be
+> >> enough.
+> >
+> > Yes, thanks!
+> >
+> >> Once this change goes through.  UML can be given it's own dedicated
+> >> proc_mnt for the initial pid namespace, and proc_mnt can be removed
+> >> entirely.
+> >
+> > After you deleted the old sysctl syscall we could probably do it.
+> >
+> >> Unless something has changed recently UML is the only other user of
+> >> pid_ns->proc_mnt.  That proc_mnt really only exists to make the loop in
+> >> proc_flush_task easy to write.
+> >
+> > Now I think, is there any way to get rid of proc_mounts or even
+> > proc_flush_task somehow.
+> >
+> >> It also probably makes sense to take the rcu_read_lock() over
+> >> that entire for loop.
+> >
+> > Al Viro pointed out to me that I cannot use rcu locks here :(
+> 
+> Fundamentally proc_flush_task is an optimization.  Just getting rid of
+> dentries earlier.  At least at one point it was an important
+> optimization because the old process dentries would just sit around
+> doing nothing for anyone.
+> 
+> I wonder if instead of invalidating specific dentries we could instead
+> fire wake up a shrinker and point it at one or more instances of proc.
+> 
+> The practical challenge I see is something might need to access the
+> dentries to see that they are invalid.
+> 
+> We definitely could try without this optimization and see what happens.
 
-(please add linux-fsdevel and viro to the cc for future versions of this 
-patch since it changes the VFS)
+When Linus said that a semaphore for proc_mounts is a bad idea, I tried
+to come up with some kind of asynchronous way to clear it per superblock.
+I gave up with the asynchronous GC because userspace can quite easily get
+ahead of it.
 
-> ---
-> diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
-> index 1659b59fb5d7..e178f6f40e93 100644
-> --- a/security/selinux/hooks.c
-> +++ b/security/selinux/hooks.c
-> @@ -2915,6 +2919,69 @@ static int selinux_inode_init_security(struct inode *inode, struct inode *dir,
->   	return 0;
->   }
->   
-> +static int selinux_inode_init_security_anon(struct inode *inode,
-> +					    const char *name,
-> +					    const struct file_operations *fops)
-> +{
-> +	const struct task_security_struct *tsec = selinux_cred(current_cred());
-> +	struct common_audit_data ad;
-> +	struct inode_security_struct *isec;
-> +
-> +	if (unlikely(IS_PRIVATE(inode)))
-> +		return 0;
+Without this optimization the kernel starts to consume a lot of memory
+during intensive reading /proc. I tried to do:
 
-Seems like this is precluded by the caller and would be a bug?  If 
-needed at all, take it to the security_inode_init_security_anon() so it 
-doesn't have to be repeated in each security module.
+while :; do
+	for x in `seq 0 9`; do sleep 0.1; done;
+	ls /proc/[0-9]*;
+done >/dev/null;
 
-> +
-> +	/*
-> +	 * We shouldn't be creating secure anonymous inodes before LSM
-> +	 * initialization completes.
-> +	 */
-> +	if (unlikely(!selinux_state.initialized))
-> +		return -EBUSY;
+and memory consumption went up without proc_flush_task. Since we have
+mounted procfs in each container, this is dangerous.
 
-I don't think this is viable; any arbitrary actions are possible before 
-policy is loaded, and a Linux distro can be brought up fully with 
-SELinux enabled and no policy loaded.  You'll just need to have a 
-default behavior prior to initialization.
-
-> +
-> +	isec = selinux_inode(inode);
-> +
-> +	/*
-> +	 * We only get here once per ephemeral inode.  The inode has
-> +	 * been initialized via inode_alloc_security but is otherwise
-> +	 * untouched, so check that the state is as
-> +	 * inode_alloc_security left it.
-> +	 */
-> +	BUG_ON(isec->initialized != LABEL_INVALID);
-> +	BUG_ON(isec->sclass != SECCLASS_FILE);
-
-I think the kernel discourages overuse of BUG_ON/BUG/...
-
-> +
-> +#ifdef CONFIG_USERFAULTFD
-> +	if (fops == &userfaultfd_fops)
-> +		isec->sclass = SECCLASS_UFFD;
-> +#endif
-
-Not sure we want or need to introduce a new security class for each user 
-of anonymous inodes since the permissions should be the same as for 
-file.  Also not sure we want to be testing fops for each such case.  We 
-were looking at possibly leveraging the name as a key and using 
-security_transition_sid() to generate a distinct SID/context/type for 
-the inode via type_transition rules in policy.  We have some WIP along 
-those lines.
-
-> +
-> +	if (isec->sclass == SECCLASS_FILE) {
-> +		printk(KERN_WARNING "refusing to create secure anonymous inode "
-> +		       "of unknown type");
-> +		return -EOPNOTSUPP;
-> +	}
-> +	/*
-> +	 * Always give secure anonymous inodes the sid of the
-> +	 * creating task.
-> +	 */
-> +
-> +	isec->sid = tsec->sid;
-
-This doesn't generalize for other users of anonymous inodes, e.g. the 
-/dev/kvm case where we'd rather inherit the SID and class from the 
-original /dev/kvm inode itself.
+-- 
+Rgrds, legion
