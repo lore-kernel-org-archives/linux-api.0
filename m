@@ -1,56 +1,74 @@
-From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCH v8 07/11] proc: flush task dcache entries from all procfs instances
-Date: Wed, 12 Feb 2020 16:48:14 -0800
-Message-ID: <CAHk-=wgmn9Qds0VznyphouSZW6e42GWDT5H1dpZg8pyGDGN+=w@mail.gmail.com>
-References: <20200210150519.538333-8-gladkov.alexey@gmail.com>
- <87v9odlxbr.fsf@x220.int.ebiederm.org> <20200212144921.sykucj4mekcziicz@comp-core-i7-2640m-0182e6>
- <87tv3vkg1a.fsf@x220.int.ebiederm.org> <CAHk-=wg52stFtUxMOxs3afkwDWmWn1JXC7RJ7dPsTrJbnxpZVg@mail.gmail.com>
- <87v9obipk9.fsf@x220.int.ebiederm.org> <CAHk-=wgwmu4jpmOqW0+Lz0dcem1Fub=ThLHvmLobf_WqCq7bwg@mail.gmail.com>
- <20200212200335.GO23230@ZenIV.linux.org.uk> <CAHk-=wi+1CPShMFvJNPfnrJ8DD8uVKUOQ5TQzQUNGLUkeoahkg@mail.gmail.com>
- <20200212203833.GQ23230@ZenIV.linux.org.uk> <20200212204124.GR23230@ZenIV.linux.org.uk>
- <CAHk-=wi5FOGV_3tALK3n6E2fK3Oa_yCYkYQtCSaXLSEm2DUCKg@mail.gmail.com> <87lfp7h422.fsf@x220.int.ebiederm.org>
+From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v7 2/2] fpga: dfl: fme: add performance reporting support
+Date: Thu, 13 Feb 2020 10:51:59 +0800
+Message-ID: <20200213025159.GA11784@hao-dev>
+References: <1581306469-22629-1-git-send-email-hao.wu@intel.com>
+ <1581306469-22629-3-git-send-email-hao.wu@intel.com>
+ <20200210163400.GA21900@willie-the-truck>
+ <20200212031929.GB5645@hao-dev>
+ <20200212053035.GA382718@kroah.com>
+ <20200212100211.GA10436@hao-dev>
+ <20200212132045.GC1789899@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87lfp7h422.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20200212132045.GC1789899-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kernel Hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Security Module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Dmitry V . Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "J . Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Kees
+To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Will Deacon <will-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, yilun.xu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, Luwei Kang <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Feb 12, 2020 at 1:48 PM Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->
-> The good news is proc_flush_task isn't exactly called from process exit.
-> proc_flush_task is called during zombie clean up. AKA release_task.
+On Wed, Feb 12, 2020 at 05:20:45AM -0800, Greg KH wrote:
+> On Wed, Feb 12, 2020 at 06:02:11PM +0800, Wu Hao wrote:
+> > On Tue, Feb 11, 2020 at 09:30:35PM -0800, Greg KH wrote:
+> > > On Wed, Feb 12, 2020 at 11:19:29AM +0800, Wu Hao wrote:
+> > > > On Mon, Feb 10, 2020 at 04:34:01PM +0000, Will Deacon wrote:
+> > > > > Hi,
+> > > > > 
+> > > > > On Mon, Feb 10, 2020 at 11:47:49AM +0800, Wu Hao wrote:
+> > > > > > This patch adds support for performance reporting private feature
+> > > > > > for FPGA Management Engine (FME). Now it supports several different
+> > > > > > performance counters, including 'basic', 'cache', 'fabric', 'vtd'
+> > > > > > and 'vtd_sip'. It allows user to use standard linux tools to access
+> > > > > > these performance counters.
+> > > > > 
+> > > > > I had a quick look at this, and it mostly looks alright to me. Just a few
+> > > > > high-level comments/questions:
+> > > > 
+> > > > Hi Will
+> > > > 
+> > > > Thanks a lot for the review! :)
+> > > > 
+> > > > > 
+> > > > >   - I would still prefer for the PMU drivers to live under drivers/perf/
+> > > > 
+> > > > Hm.. one possible way is to create a platform device, and introduce a new
+> > > > platform device driver under drivers/perf/.
+> > > 
+> > > No, do not abuse platform drivers, you have a real device, use it.
+> > 
+> > Sure, thanks for the comments. Then I don't have any other idea to move code to
+> > drivers/perf/ directory, so probably only can live with current code.
+> 
+> The location of the file in the kernel tree has no bearing on if you use
+> a platform device, a USB device, or a PCI device.  It is just a location
+> of a file.
+> 
+> You are interacting with the perf api as the driver's primary userspace
+> api, so put the driver into the drivers/perf/ directory.  That's all
+> that Will is asking you to do here.
 
-Yeah, that at least avoids some of the nasty locking while dying debug problems.
+Thanks a lot for the patient explanation. : )
 
-But the one I was more worried about was actually the lock contention
-issue with lots of processes. The lock is basically a single global
-lock in many situations - yes, it's technically per-ns, but in a lot
-of cases you really only have one namespace anyway.
+Actually this patch only adds a new file to existing fme platform driver, fme
+platform driver already has several different types userspace interfaces,
+including hwmon, sysfs and etc, so the new perf api is only one of them, as
+we can't move the whole fme platform driver into drivers/perf/, we feel that
+maybe we should keep that code together with other fme files in drivers/fpga/.
 
-And we've had problems with global locks in this area before, notably
-the one you call out:
+Thanks
+Hao
 
-> Further after proc_flush_task does it's thing the code goes
-> and does "write_lock_irq(&task_list_lock);"
-
-Yeah, so it's not introducing a new issue, but it is potentially
-making something we already know is bad even worse.
-
-> What would be downside of having a mutex for a list of proc superblocks?
-> A mutex that is taken for both reading and writing the list.
-
-That's what the original patch actually was, and I was hoping we could
-avoid that thing.
-
-An rwsem would be possibly better, since most cases by far are likely
-about reading.
-
-And yes, I'm very aware of the task_list_lock, but it's literally why
-I don't want to make a new one.
-
-I'm _hoping_ we can some day come up with something better than task_list_lock.
-
-            Linus
+> 
+> greg k-h
