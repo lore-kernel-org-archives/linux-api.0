@@ -1,6 +1,42 @@
-From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Return-Path: <SRS0=tdOb=4B=vger.kernel.org=linux-api-owner@kernel.org>
+X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
+	aws-us-west-2-korg-lkml-1.web.codeaurora.org
+X-Spam-Level: 
+X-Spam-Status: No, score=-2.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
+Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AA2AEC352A4
+	for <linux-api@archiver.kernel.org>; Thu, 13 Feb 2020 03:12:46 +0000 (UTC)
+Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
+	by mail.kernel.org (Postfix) with ESMTP id 85B5B20724
+	for <linux-api@archiver.kernel.org>; Thu, 13 Feb 2020 03:12:46 +0000 (UTC)
+Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
+        id S1729404AbgBMDMq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 12 Feb 2020 22:12:46 -0500
+Received: from mga01.intel.com ([192.55.52.88]:16902 "EHLO mga01.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1729378AbgBMDMp (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 12 Feb 2020 22:12:45 -0500
+X-Amp-Result: UNKNOWN
+X-Amp-Original-Verdict: FILE UNKNOWN
+X-Amp-File-Uploaded: False
+Received: from orsmga001.jf.intel.com ([10.7.209.18])
+  by fmsmga101.fm.intel.com with ESMTP/TLS/DHE-RSA-AES256-GCM-SHA384; 12 Feb 2020 19:12:45 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.70,434,1574150400"; 
+   d="scan'208";a="313601327"
+Received: from hao-dev.bj.intel.com (HELO localhost) ([10.238.157.65])
+  by orsmga001.jf.intel.com with ESMTP; 12 Feb 2020 19:12:42 -0800
+Date:   Thu, 13 Feb 2020 10:51:59 +0800
+From:   Wu Hao <hao.wu@intel.com>
+To:     Greg KH <gregkh@linuxfoundation.org>
+Cc:     Will Deacon <will@kernel.org>, mdf@kernel.org,
+        mark.rutland@arm.com, linux-fpga@vger.kernel.org,
+        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        atull@kernel.org, yilun.xu@intel.com,
+        Luwei Kang <luwei.kang@intel.com>
 Subject: Re: [PATCH v7 2/2] fpga: dfl: fme: add performance reporting support
-Date: Thu, 13 Feb 2020 10:51:59 +0800
 Message-ID: <20200213025159.GA11784@hao-dev>
 References: <1581306469-22629-1-git-send-email-hao.wu@intel.com>
  <1581306469-22629-3-git-send-email-hao.wu@intel.com>
@@ -9,15 +45,16 @@ References: <1581306469-22629-1-git-send-email-hao.wu@intel.com>
  <20200212053035.GA382718@kroah.com>
  <20200212100211.GA10436@hao-dev>
  <20200212132045.GC1789899@kroah.com>
-Mime-Version: 1.0
+MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20200212132045.GC1789899-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Will Deacon <will-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, yilun.xu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, Luwei Kang <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-List-Id: linux-api@vger.kernel.org
+In-Reply-To: <20200212132045.GC1789899@kroah.com>
+User-Agent: Mutt/1.5.24 (2015-08-30)
+Sender: linux-api-owner@vger.kernel.org
+Precedence: bulk
+List-ID: <linux-api.vger.kernel.org>
+X-Mailing-List: linux-api@vger.kernel.org
+Message-ID: <20200213025159.Y6eI27AxD9vnf7-VNqedPuxXarh3bWgPanDFZIP2X1c@z>
 
 On Wed, Feb 12, 2020 at 05:20:45AM -0800, Greg KH wrote:
 > On Wed, Feb 12, 2020 at 06:02:11PM +0800, Wu Hao wrote:
