@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 57D95C3B1BE
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:41:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AAE96C2BA83
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:41:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 28174222C2
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:41:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7DF0020848
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:41:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730373AbgBNSlf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 14 Feb 2020 13:41:35 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:33879 "EHLO
+        id S2389283AbgBNSlu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 14 Feb 2020 13:41:50 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:33897 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729595AbgBNSlf (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 13:41:35 -0500
+        with ESMTP id S2388570AbgBNSlt (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 13:41:49 -0500
 Received: from ip5f5bf7ec.dynamic.kabel-deutschland.de ([95.91.247.236] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1j2fqo-0000uO-Ph; Fri, 14 Feb 2020 18:38:06 +0000
+        id 1j2fqg-0000uO-Qn; Fri, 14 Feb 2020 18:37:58 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
         "Eric W. Biederman" <ebiederm@xmission.com>,
@@ -40,9 +40,9 @@ Cc:     smbarber@chromium.org, Seth Forshee <seth.forshee@canonical.com>,
         containers@lists.linux-foundation.org,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v2 27/28] ptrace: adapt ptrace_may_access() to always uses unmapped fsids
-Date:   Fri, 14 Feb 2020 19:35:53 +0100
-Message-Id: <20200214183554.1133805-28-christian.brauner@ubuntu.com>
+Subject: [PATCH v2 20/28] open: handle fsid mappings
+Date:   Fri, 14 Feb 2020 19:35:46 +0100
+Message-Id: <20200214183554.1133805-21-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.25.0
 In-Reply-To: <20200214183554.1133805-1-christian.brauner@ubuntu.com>
 References: <20200214183554.1133805-1-christian.brauner@ubuntu.com>
@@ -53,33 +53,63 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-ptrace_may_access() with PTRACE_MODE_FSCREDS is only used with proc and proc
-wants to use the unmapped fsids.
+Let chown_common() lookup fsids in the fsid mappings. If no fsid mappings are
+setup the behavior is unchanged, i.e. fsids are looked up in the id mappings.
+do_faccessat() just needs to translate from real ids into fsids.
 
-Cc: Jann Horn <jannh@google.com>
+Filesystems that share a superblock in all user namespaces they are mounted in
+will retain their old semantics even with the introduction of fsidmappings.
+
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
-patch added
+- Christian Brauner <christian.brauner@ubuntu.com>:
+  - handle faccessat() too
 ---
- kernel/ptrace.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ fs/open.c | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
 
-diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-index 43d6179508d6..3734713cc0dd 100644
---- a/kernel/ptrace.c
-+++ b/kernel/ptrace.c
-@@ -304,8 +304,8 @@ static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
- 		return 0;
- 	rcu_read_lock();
- 	if (mode & PTRACE_MODE_FSCREDS) {
--		caller_uid = cred->fsuid;
--		caller_gid = cred->fsgid;
-+		caller_uid = cred->kfsuid;
-+		caller_gid = cred->kfsgid;
- 	} else {
- 		/*
- 		 * Using the euid would make more sense here, but something
+diff --git a/fs/open.c b/fs/open.c
+index 0788b3715731..4e092845728f 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -32,6 +32,7 @@
+ #include <linux/ima.h>
+ #include <linux/dnotify.h>
+ #include <linux/compat.h>
++#include <linux/fsuidgid.h>
+ 
+ #include "internal.h"
+ 
+@@ -361,8 +362,10 @@ long do_faccessat(int dfd, const char __user *filename, int mode)
+ 	if (!override_cred)
+ 		return -ENOMEM;
+ 
+-	override_cred->fsuid = override_cred->uid;
+-	override_cred->fsgid = override_cred->gid;
++	override_cred->kfsuid = override_cred->uid;
++	override_cred->kfsgid = override_cred->gid;
++	override_cred->fsuid = kuid_to_kfsuid(override_cred->user_ns, override_cred->uid);
++	override_cred->fsgid = kgid_to_kfsgid(override_cred->user_ns, override_cred->gid);
+ 
+ 	if (!issecure(SECURE_NO_SETUID_FIXUP)) {
+ 		/* Clear the capabilities if we switch to a non-root user */
+@@ -626,8 +629,13 @@ static int chown_common(const struct path *path, uid_t user, gid_t group)
+ 	kuid_t uid;
+ 	kgid_t gid;
+ 
+-	uid = make_kuid(current_user_ns(), user);
+-	gid = make_kgid(current_user_ns(), group);
++	if (is_userns_visible(inode->i_sb->s_iflags)) {
++		uid = make_kuid(current_user_ns(), user);
++		gid = make_kgid(current_user_ns(), group);
++	} else {
++		uid = make_kfsuid(current_user_ns(), user);
++		gid = make_kfsgid(current_user_ns(), group);
++	}
+ 
+ retry_deleg:
+ 	newattrs.ia_valid =  ATTR_CTIME;
 -- 
 2.25.0
 
