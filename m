@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4C128C3B1BE
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:40:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A876BC2BA83
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:40:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 2481F22314
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:40:03 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7614120848
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:40:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730727AbgBNSkC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 14 Feb 2020 13:40:02 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:33798 "EHLO
+        id S1730609AbgBNSkY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 14 Feb 2020 13:40:24 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:33818 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729781AbgBNSkB (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 13:40:01 -0500
+        with ESMTP id S1729781AbgBNSkX (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 13:40:23 -0500
 Received: from ip5f5bf7ec.dynamic.kabel-deutschland.de ([95.91.247.236] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1j2fqp-0000uO-PK; Fri, 14 Feb 2020 18:38:07 +0000
+        id 1j2fql-0000uO-JW; Fri, 14 Feb 2020 18:38:03 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
         "Eric W. Biederman" <ebiederm@xmission.com>,
@@ -40,9 +40,9 @@ Cc:     smbarber@chromium.org, Seth Forshee <seth.forshee@canonical.com>,
         containers@lists.linux-foundation.org,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v2 28/28] devpts: handle fsid mappings
-Date:   Fri, 14 Feb 2020 19:35:54 +0100
-Message-Id: <20200214183554.1133805-29-christian.brauner@ubuntu.com>
+Subject: [PATCH v2 24/28] commoncap: cap_task_fix_setuid(): handle fsid mappings
+Date:   Fri, 14 Feb 2020 19:35:50 +0100
+Message-Id: <20200214183554.1133805-25-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.25.0
 In-Reply-To: <20200214183554.1133805-1-christian.brauner@ubuntu.com>
 References: <20200214183554.1133805-1-christian.brauner@ubuntu.com>
@@ -53,57 +53,39 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-When a uid or gid mount option is specified with devpts have it lookup the
-corresponding kfsids in the fsid mappings. If no fsid mappings are setup the
-behavior is unchanged, i.e. fsids are looked up in the id mappings.
+Switch cap_task_fix_setuid() to lookup fsids in the fsid mappings. If no fsid
+mappings are setup the behavior is unchanged, i.e. fsids are looked up in the
+id mappings.
 
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
 unchanged
 ---
- fs/devpts/inode.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
+ security/commoncap.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/fs/devpts/inode.c b/fs/devpts/inode.c
-index 42e5a766d33c..139958892572 100644
---- a/fs/devpts/inode.c
-+++ b/fs/devpts/inode.c
+diff --git a/security/commoncap.c b/security/commoncap.c
+index 9641695d8383..0581c6aa8bdc 100644
+--- a/security/commoncap.c
++++ b/security/commoncap.c
 @@ -24,6 +24,7 @@
- #include <linux/parser.h>
- #include <linux/fsnotify.h>
- #include <linux/seq_file.h>
+ #include <linux/user_namespace.h>
+ #include <linux/binfmts.h>
+ #include <linux/personality.h>
 +#include <linux/fsuidgid.h>
  
- #define DEVPTS_DEFAULT_MODE 0600
  /*
-@@ -277,7 +278,7 @@ static int parse_mount_options(char *data, int op, struct pts_mount_opts *opts)
- 		case Opt_uid:
- 			if (match_int(&args[0], &option))
- 				return -EINVAL;
--			uid = make_kuid(current_user_ns(), option);
-+			uid = make_kfsuid(current_user_ns(), option);
- 			if (!uid_valid(uid))
- 				return -EINVAL;
- 			opts->uid = uid;
-@@ -286,7 +287,7 @@ static int parse_mount_options(char *data, int op, struct pts_mount_opts *opts)
- 		case Opt_gid:
- 			if (match_int(&args[0], &option))
- 				return -EINVAL;
--			gid = make_kgid(current_user_ns(), option);
-+			gid = make_kfsgid(current_user_ns(), option);
- 			if (!gid_valid(gid))
- 				return -EINVAL;
- 			opts->gid = gid;
-@@ -410,7 +411,7 @@ static int devpts_show_options(struct seq_file *seq, struct dentry *root)
- 			   from_kuid_munged(&init_user_ns, opts->uid));
- 	if (opts->setgid)
- 		seq_printf(seq, ",gid=%u",
--			   from_kgid_munged(&init_user_ns, opts->gid));
-+			   from_kfsgid_munged(&init_user_ns, opts->gid));
- 	seq_printf(seq, ",mode=%03o", opts->mode);
- 	seq_printf(seq, ",ptmxmode=%03o", opts->ptmxmode);
- 	if (opts->max < NR_UNIX98_PTY_MAX)
+  * If a non-root user executes a setuid-root binary in
+@@ -1061,7 +1062,7 @@ int cap_task_fix_setuid(struct cred *new, const struct cred *old, int flags)
+ 		 *          if not, we might be a bit too harsh here.
+ 		 */
+ 		if (!issecure(SECURE_NO_SETUID_FIXUP)) {
+-			kuid_t root_uid = make_kuid(old->user_ns, 0);
++			kuid_t root_uid = make_kfsuid(old->user_ns, 0);
+ 			if (uid_eq(old->fsuid, root_uid) && !uid_eq(new->fsuid, root_uid))
+ 				new->cap_effective =
+ 					cap_drop_fs_set(new->cap_effective);
 -- 
 2.25.0
 
