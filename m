@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CD1E1C2BA83
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:37:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 581BDC3B1BE
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:38:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id A7A8220848
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:37:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3206F20848
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:38:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730437AbgBNSh4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 14 Feb 2020 13:37:56 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:33597 "EHLO
+        id S1730526AbgBNSh7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 14 Feb 2020 13:37:59 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:33634 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728239AbgBNSh4 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 13:37:56 -0500
+        with ESMTP id S1728239AbgBNSh7 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 13:37:59 -0500
 Received: from ip5f5bf7ec.dynamic.kabel-deutschland.de ([95.91.247.236] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1j2fqK-0000uO-9H; Fri, 14 Feb 2020 18:37:36 +0000
+        id 1j2fqM-0000uO-FL; Fri, 14 Feb 2020 18:37:38 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
         "Eric W. Biederman" <ebiederm@xmission.com>,
@@ -40,9 +40,9 @@ Cc:     smbarber@chromium.org, Seth Forshee <seth.forshee@canonical.com>,
         containers@lists.linux-foundation.org,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v2 03/28] proc: add /proc/<pid>/fsgid_map
-Date:   Fri, 14 Feb 2020 19:35:29 +0100
-Message-Id: <20200214183554.1133805-4-christian.brauner@ubuntu.com>
+Subject: [PATCH v2 05/28] proc: task_state(): use from_kfs{g,u}id_munged
+Date:   Fri, 14 Feb 2020 19:35:31 +0100
+Message-Id: <20200214183554.1133805-6-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.25.0
 In-Reply-To: <20200214183554.1133805-1-christian.brauner@ubuntu.com>
 References: <20200214183554.1133805-1-christian.brauner@ubuntu.com>
@@ -53,70 +53,61 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The /proc/<pid>/fsgid_map file can be written to once to setup an fsgid mapping
-for a user namespace. Writing to this file has the same restrictions as writing
-to /proc/<pid>/fsgid_map.
+If fsid mappings have been written, this will cause proc to look at fsid
+mappings for the user namespace. If no fsid mappings have been written the
+behavior is as before.
 
-root@e1-vm:/# cat /proc/13023/fsgid_map
-         0     300000     100000
+Here is part of the output from /proc/<pid>/status from the initial user
+namespace for systemd running in an unprivileged container as user namespace
+root with id mapping 0 100000 100000 and fsid mapping 0 300000 100000:
 
-Fsid mappings have always been around. They are currently always identical to
-the id mappings for a user namespace. This means, currently whenever an fsid
-needs to be looked up the kernel will use the id mapping of the user namespace.
-With the introduction of fsid mappings the kernel will now lookup fsids in the
-fsid mappings of the user namespace. If no fsid mapping exists the kernel will
-continue looking up fsids in the id mappings of the user namespace. Hence, if a
-system supports fsid mappings through /proc/<pid>/fs*id_map and a container
-runtime is not aware of fsid mappings it or does not use them it will it will
-continue to work just as before.
+Name:	systemd
+Umask:	0000
+State:	S (sleeping)
+Tgid:	13023
+Ngid:	0
+Pid:	13023
+PPid:	13008
+TracerPid:	0
+Uid:	100000	100000	100000	300000
+Gid:	100000	100000	100000	300000
+FDSize:	64
+Groups:
 
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
 unchanged
 ---
- fs/proc/base.c | 14 ++++++++++++++
- 1 file changed, 14 insertions(+)
+ fs/proc/array.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 5fb28004663e..1303cdd2e617 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -2975,6 +2975,11 @@ static int proc_fsuid_map_open(struct inode *inode, struct file *file)
- {
- 	return proc_id_map_open(inode, file, &proc_fsuid_seq_operations);
- }
-+
-+static int proc_fsgid_map_open(struct inode *inode, struct file *file)
-+{
-+	return proc_id_map_open(inode, file, &proc_fsgid_seq_operations);
-+}
- #endif
+diff --git a/fs/proc/array.c b/fs/proc/array.c
+index 5efaf3708ec6..d4a04f85a67e 100644
+--- a/fs/proc/array.c
++++ b/fs/proc/array.c
+@@ -91,6 +91,7 @@
+ #include <linux/string_helpers.h>
+ #include <linux/user_namespace.h>
+ #include <linux/fs_struct.h>
++#include <linux/fsuidgid.h>
  
- static const struct file_operations proc_uid_map_operations = {
-@@ -3009,6 +3014,14 @@ static const struct file_operations proc_fsuid_map_operations = {
- 	.llseek		= seq_lseek,
- 	.release	= proc_id_map_release,
- };
-+
-+static const struct file_operations proc_fsgid_map_operations = {
-+	.open		= proc_fsgid_map_open,
-+	.write		= proc_fsgid_map_write,
-+	.read		= seq_read,
-+	.llseek		= seq_lseek,
-+	.release	= proc_id_map_release,
-+};
- #endif
+ #include <asm/pgtable.h>
+ #include <asm/processor.h>
+@@ -193,11 +194,11 @@ static inline void task_state(struct seq_file *m, struct pid_namespace *ns,
+ 	seq_put_decimal_ull(m, "\nUid:\t", from_kuid_munged(user_ns, cred->uid));
+ 	seq_put_decimal_ull(m, "\t", from_kuid_munged(user_ns, cred->euid));
+ 	seq_put_decimal_ull(m, "\t", from_kuid_munged(user_ns, cred->suid));
+-	seq_put_decimal_ull(m, "\t", from_kuid_munged(user_ns, cred->fsuid));
++	seq_put_decimal_ull(m, "\t", from_kfsuid_munged(user_ns, cred->fsuid));
+ 	seq_put_decimal_ull(m, "\nGid:\t", from_kgid_munged(user_ns, cred->gid));
+ 	seq_put_decimal_ull(m, "\t", from_kgid_munged(user_ns, cred->egid));
+ 	seq_put_decimal_ull(m, "\t", from_kgid_munged(user_ns, cred->sgid));
+-	seq_put_decimal_ull(m, "\t", from_kgid_munged(user_ns, cred->fsgid));
++	seq_put_decimal_ull(m, "\t", from_kfsgid_munged(user_ns, cred->fsgid));
+ 	seq_put_decimal_ull(m, "\nFDSize:\t", max_fds);
  
- static int proc_setgroups_open(struct inode *inode, struct file *file)
-@@ -3195,6 +3208,7 @@ static const struct pid_entry tgid_base_stuff[] = {
- #ifdef CONFIG_USER_NS
- #ifdef CONFIG_USER_NS_FSID
- 	REG("fsuid_map",  S_IRUGO|S_IWUSR, proc_fsuid_map_operations),
-+	REG("fsgid_map",  S_IRUGO|S_IWUSR, proc_fsgid_map_operations),
- #endif
- 	REG("uid_map",    S_IRUGO|S_IWUSR, proc_uid_map_operations),
- 	REG("gid_map",    S_IRUGO|S_IWUSR, proc_gid_map_operations),
+ 	seq_puts(m, "\nGroups:\t");
 -- 
 2.25.0
 
