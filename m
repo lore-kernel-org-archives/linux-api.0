@@ -2,67 +2,68 @@ Return-Path: <SRS0=Hu9T=4C=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+X-Spam-Status: No, score=-11.4 required=3.0 tests=DKIMWL_WL_MED,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_IN_DEF_DKIM_WL autolearn=no
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 37934C2BA83
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:06:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B06A5C3F68F
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:26:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 0D86F24654
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:06:46 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1581700007;
-	bh=NARawqSoAFd3tsEOnot1lKQQZD+bRGTZ7N6PxcATUR4=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
-	b=X2iV8PYoxRCAgX+I1rgESIeWNdAEF6BH0uXLtdAjV5iG0eWNJ13UybOqT2aBoEBsz
-	 x4G5eJgFJT3LY/nciYU2jCayNfSLEfyAP695iAz4oC1Pw4Pb7icZsG9xrZ1UMn367N
-	 tqOtAbOpoN9lomwTyDDit796kcj9581dCzDT78A8=
+	by mail.kernel.org (Postfix) with ESMTP id 8929F24676
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:26:00 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="mvatJYP9"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2405268AbgBNRGb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 14 Feb 2020 12:06:31 -0500
-Received: from mail-pl1-f196.google.com ([209.85.214.196]:41419 "EHLO
-        mail-pl1-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2404173AbgBNRGa (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 12:06:30 -0500
-Received: by mail-pl1-f196.google.com with SMTP id t14so3944859plr.8;
-        Fri, 14 Feb 2020 09:06:29 -0800 (PST)
+        id S2391159AbgBNRZ7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 14 Feb 2020 12:25:59 -0500
+Received: from mail-ot1-f65.google.com ([209.85.210.65]:34064 "EHLO
+        mail-ot1-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2391765AbgBNRZ6 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 12:25:58 -0500
+Received: by mail-ot1-f65.google.com with SMTP id j16so9889837otl.1
+        for <linux-api@vger.kernel.org>; Fri, 14 Feb 2020 09:25:57 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=R66XKPvBxqpxo7iMIyU+G3YX3vLAVwMoSg/oCCOPM6c=;
-        b=I0kE/hGL8Zsgc74d67WkWf94B3lrUOTjc1PnWdmkE3Pk2rAq4CLywAIj9CqgPFwD4U
-         /i/SCuPL7Mvju9Y7uTHUXYdvbmfrQTdUunPd5tT1eKug/losWVdNHFIboyvjCKmCrxnk
-         pC9fE8pM+3WNCV5Zfy0Jftj2HaV12cNwvGbH4W7wfcmCCoaJF8fBX5+SPLr8vTMRcCxM
-         fuervFFcOuTBJ1XiyNz8HHSSnAeL94e0t/RySterT2+/SW4e3Gq6LeZYJRVYDLQMCNJE
-         dItl0BRKzgfOSBgCrAEdeUnSHvIxxochJo1wjbFKsjmJTxJCBeQD5xh2tF+UcCU51KOb
-         xM1g==
+        d=google.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=pSMjarGrsUPgAx4tKo+8H+L0Szt0s9yVAf2VYNsMa0o=;
+        b=mvatJYP90LnHgm4N3PgyesVQnHTRUe3LaAPWZ8NIe/6hGTT9VXzGU4p93LbBGMbcjX
+         /yS+R0dEibti1vzOD9ljhXo77ULGzns2X3pNni2DVSQZLibtfeHATYRWKLw7hUcFvwrb
+         kZvvSwqU8+PCs/3gZBUwSpBAWg2eV6/8nYAhDloNoFzfqXj3FLn0igJIUnlgGxFRnqp7
+         Yyx9Tbb5VcHJwVWeLWoCCt8BWIUPNSuibtHv9hDWURcgYOJUrI1WjA+YHwa/H24k6Wic
+         UcGcSvj50fKLOtLiH8Xl62mzM2CoJd6JwKQw4ClcmGH5keWOYMc+C2kftdXdx+iFwwWv
+         zolQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=R66XKPvBxqpxo7iMIyU+G3YX3vLAVwMoSg/oCCOPM6c=;
-        b=ik0/Sl4SGiqkKGOC9Fq1Qhf2Rf+UBUgAtl9zR7j68ixgVlEbODisOoQsc8BBFcyMlK
-         6Vi8CGylxKeRB+t0zGPHf0QQk53IEc0mMn7lVqbQBYNxHbBM7LWaQv//tZv/Qld90OuA
-         W4CZxUTJKOEneMXQ0xTyCmRhGBAEVG7uc6VZnuY9E6tMlGt2wL7lmhmuF9mKLeHv6QiP
-         czJUXhunWQ3F27+NrnWlazIieoeTS21UutlfGmm+Asj2knYFxi7ufMsw6tS45gBRTKHr
-         k8CIt+579/iSOwxiMFVX9Lbz9Nz8Ko/6wnTcpZKxSVWAVR4abfEVgriPIvquWuSqQr0z
-         Bw3g==
-X-Gm-Message-State: APjAAAWusyxnKsaKLAtVev1SN43NraQ62ZsmPpAovHUlzFBWqgoW32yA
-        VaOT603cNTcZPS2ZMxN7eqw=
-X-Google-Smtp-Source: APXvYqz5cYkCvXS9hd5Np+Hbagcxe+bpyjSJHEfYShA6ygQz8K5or1mGdHjY13gyXIHKMm0BXLc7aA==
-X-Received: by 2002:a17:902:a610:: with SMTP id u16mr4245899plq.305.1581699989175;
-        Fri, 14 Feb 2020 09:06:29 -0800 (PST)
-Received: from bbox-1.mtv.corp.google.com ([2620:15c:211:1:3e01:2939:5992:52da])
-        by smtp.gmail.com with ESMTPSA id a13sm7662924pfg.65.2020.02.14.09.06.22
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 14 Feb 2020 09:06:26 -0800 (PST)
-From:   Minchan Kim <minchan@kernel.org>
-To:     Andrew Morton <akpm@linux-foundation.org>
-Cc:     LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
-        linux-api@vger.kernel.org, oleksandr@redhat.com,
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=pSMjarGrsUPgAx4tKo+8H+L0Szt0s9yVAf2VYNsMa0o=;
+        b=kl3xbwoLSzfcBAMOQ3W4kcxMPY+kGz3TtetgJy0QSf/yDJ3wUJ8oakNmBzvjr0C4yc
+         b1cFJCWbi6N20iPLLoJUcq7t12KWmbJVKMoseVjy8yRO0OT3RQ5mR/FNTGvrfYAwV4jK
+         lE49Lm+aFIj3sYXNCUNbMG9hjWBcAhvUqYsMosgNiZe8jmyR2XM1r3wKHLmdYMTewubq
+         WQo49KI0UTBR0nnkmltWcTC2iWTf2SuPlTqvNpGHY6I8zqTgiRpMQqRitCfQLYxwSoUZ
+         tJBD29vXTK72SPn9WtAqTxrOrnhPT7F1oUpY2F6OqsPnzceN1b0K2Vh/pXvGi5/Og/N8
+         sHsw==
+X-Gm-Message-State: APjAAAUTpmWGERgeTnoarWM/0MoaT91nN59X7Nog2LI5wgorayNKaPO6
+        1BjuIBSZdC2SjnndX++ADPG4qwd/5dblx2YRrKEY2+brs5Lwig==
+X-Google-Smtp-Source: APXvYqxPBAMd0tGmcjPd0FZvV4wf35i2R/TBjgEwIelMFvAF+MVxbxS6HVKJ8WwbllYOc5XQ8Fb54aD+vOj9De/2vRU=
+X-Received: by 2002:a05:6830:1d6e:: with SMTP id l14mr3117234oti.32.1581701156723;
+ Fri, 14 Feb 2020 09:25:56 -0800 (PST)
+MIME-Version: 1.0
+References: <20200214170520.160271-1-minchan@kernel.org> <20200214170520.160271-2-minchan@kernel.org>
+In-Reply-To: <20200214170520.160271-2-minchan@kernel.org>
+From:   Jann Horn <jannh@google.com>
+Date:   Fri, 14 Feb 2020 18:25:30 +0100
+Message-ID: <CAG48ez3S5+EasZ1ZWcMQYZQQ5zJOBtY-_C7oz6DMfG4Gcyig1g@mail.gmail.com>
+Subject: Re: [PATCH v5 1/7] mm: pass task and mm to do_madvise
+To:     Minchan Kim <minchan@kernel.org>, Jens Axboe <axboe@kernel.dk>,
+        io-uring <io-uring@vger.kernel.org>
+Cc:     Andrew Morton <akpm@linux-foundation.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-mm <linux-mm@kvack.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        Oleksandr Natalenko <oleksandr@redhat.com>,
         Suren Baghdasaryan <surenb@google.com>,
         Tim Murray <timmurray@google.com>,
         Daniel Colascione <dancol@google.com>,
@@ -74,129 +75,43 @@ Cc:     LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
         Shakeel Butt <shakeelb@google.com>,
         John Dias <joaodias@google.com>,
         Joel Fernandes <joel@joelfernandes.org>, sj38.park@gmail.com,
-        alexander.h.duyck@linux.intel.com, Jann Horn <jannh@google.com>,
-        Minchan Kim <minchan@kernel.org>,
-        Christian Brauner <christian@brauner.io>,
-        Kirill Tkhai <ktkhai@virtuozzo.com>
-Subject: [PATCH v5 5/7] mm: support both pid and pidfd for process_madvise
-Date:   Fri, 14 Feb 2020 09:05:18 -0800
-Message-Id: <20200214170520.160271-6-minchan@kernel.org>
-X-Mailer: git-send-email 2.25.0.265.gbab2e86ba0-goog
-In-Reply-To: <20200214170520.160271-1-minchan@kernel.org>
-References: <20200214170520.160271-1-minchan@kernel.org>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+        Alexander Duyck <alexander.h.duyck@linux.intel.com>
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-There is a demand[1] to support pid as well pidfd for process_madvise
-to reduce unnecessary syscall to get pidfd if the user has control of
-the target process(ie, they could guarantee the process is not gone
-or pid is not reused. Or, it might be okay to give a hint to wrong
-process).
++Jens and io-uring list
 
-This patch aims for supporting both options like waitid(2). So, the
-syscall is currently,
+On Fri, Feb 14, 2020 at 6:06 PM Minchan Kim <minchan@kernel.org> wrote:
+> In upcoming patches, do_madvise will be called from external process
+> context so we shouldn't asssume "current" is always hinted process's
+> task_struct.
+[...]
+> [1] http://lore.kernel.org/r/CAG48ez27=pwm5m_N_988xT1huO7g7h6arTQL44zev6TD-h-7Tg@mail.gmail.com
+[...]
+> diff --git a/fs/io_uring.c b/fs/io_uring.c
+[...]
+> @@ -2736,7 +2736,7 @@ static int io_madvise(struct io_kiocb *req, struct io_kiocb **nxt,
+>         if (force_nonblock)
+>                 return -EAGAIN;
+>
+> -       ret = do_madvise(ma->addr, ma->len, ma->advice);
+> +       ret = do_madvise(current, current->mm, ma->addr, ma->len, ma->advice);
+>         if (ret < 0)
+>                 req_set_fail_links(req);
+>         io_cqring_add_event(req, ret);
 
-	int process_madvise(int which, pid_t pid, void *addr,
-		size_t length, int advise, unsigned long flag);
-
-@which is actually idtype_t for userspace libray and currently,
-it supports P_PID and P_PIDFD.
-
-[1]  https://lore.kernel.org/linux-mm/9d849087-3359-c4ab-fbec-859e8186c509@virtuozzo.com/
-
-Cc: Christian Brauner <christian@brauner.io>
-Suggested-by: Kirill Tkhai <ktkhai@virtuozzo.com>
-Signed-off-by: Minchan Kim <minchan@kernel.org>
----
- include/linux/syscalls.h |  3 ++-
- mm/madvise.c             | 34 ++++++++++++++++++++++------------
- 2 files changed, 24 insertions(+), 13 deletions(-)
-
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index e4cd2c2f8bb4..f5ada20e2943 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -876,7 +876,8 @@ asmlinkage long sys_munlockall(void);
- asmlinkage long sys_mincore(unsigned long start, size_t len,
- 				unsigned char __user * vec);
- asmlinkage long sys_madvise(unsigned long start, size_t len, int behavior);
--asmlinkage long sys_process_madvise(int pidfd, unsigned long start,
-+
-+asmlinkage long sys_process_madvise(int which, pid_t pid, unsigned long start,
- 			size_t len, int behavior, unsigned long flags);
- asmlinkage long sys_remap_file_pages(unsigned long start, unsigned long size,
- 			unsigned long prot, unsigned long pgoff,
-diff --git a/mm/madvise.c b/mm/madvise.c
-index fca3a9e9bd39..bbbfea93396a 100644
---- a/mm/madvise.c
-+++ b/mm/madvise.c
-@@ -1180,11 +1180,10 @@ SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
- 	return do_madvise(current, current->mm, start, len_in, behavior);
- }
- 
--SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
-+SYSCALL_DEFINE6(process_madvise, int, which, pid_t, upid, unsigned long, start,
- 		size_t, len_in, int, behavior, unsigned long, flags)
- {
- 	int ret;
--	struct fd f;
- 	struct pid *pid;
- 	struct task_struct *task;
- 	struct mm_struct *mm;
-@@ -1195,20 +1194,31 @@ SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
- 	if (!process_madvise_behavior_valid(behavior))
- 		return -EINVAL;
- 
--	f = fdget(pidfd);
--	if (!f.file)
--		return -EBADF;
-+	switch (which) {
-+	case P_PID:
-+		if (upid <= 0)
-+			return -EINVAL;
-+
-+		pid = find_get_pid(upid);
-+		if (!pid)
-+			return -ESRCH;
-+		break;
-+	case P_PIDFD:
-+		if (upid < 0)
-+			return -EINVAL;
- 
--	pid = pidfd_pid(f.file);
--	if (IS_ERR(pid)) {
--		ret = PTR_ERR(pid);
--		goto fdput;
-+		pid = pidfd_get_pid(upid);
-+		if (IS_ERR(pid))
-+			return PTR_ERR(pid);
-+		break;
-+	default:
-+		return -EINVAL;
- 	}
- 
- 	task = get_pid_task(pid, PIDTYPE_PID);
- 	if (!task) {
- 		ret = -ESRCH;
--		goto fdput;
-+		goto put_pid;
- 	}
- 
- 	mm = mm_access(task, PTRACE_MODE_ATTACH_FSCREDS);
-@@ -1221,7 +1231,7 @@ SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
- 	mmput(mm);
- release_task:
- 	put_task_struct(task);
--fdput:
--	fdput(f);
-+put_pid:
-+	put_pid(pid);
- 	return ret;
- }
--- 
-2.25.0.265.gbab2e86ba0-goog
-
+Jens, can you have a look at this change and the following patch
+<https://lore.kernel.org/linux-mm/20200214170520.160271-4-minchan@kernel.org/>
+("[PATCH v5 3/7] mm: check fatal signal pending of target process")?
+Basically Minchan's patch tries to plumb through the identity of the
+target task so that if that task gets killed in the middle of the
+operation, the (potentially long-running and costly) madvise operation
+can be cancelled. Just passing in "current" instead (which in this
+case is the uring worker thread AFAIK) doesn't really break anything,
+other than making the optimization not work, but I wonder whether this
+couldn't be done more cleanly - maybe by passing in NULL to mean "we
+don't know who the target task is", since I think we don't know that
+here?
