@@ -7,58 +7,58 @@ X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2C572C3B1A1
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:06:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A7D1DC3B1A1
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:06:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id EEB7E24650
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:06:29 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 81EEB206CC
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:06:36 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1581699990;
-	bh=CtU60NLaTklGPxG/O66eggoF66Ea5tFPpNBFXO+uvAg=;
+	s=default; t=1581699996;
+	bh=R8IPHafpk6mNTTytsOKn27aAC+igEInjANGrd3cam60=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
-	b=MdBZ99KhBX0xn5PZLW4yINkHfn7c2yh07uRYeRUl/uVSdZ/Jjh1Ybn8yhjnlc12gE
-	 fyt4ecXoRN/Lh3tvDQ3e3s1aCFjO1At6EURlesC0QBnWlTPMocoi1K4T8ichnpwCJV
-	 KMnP4VDBWcSDkz3J6+uLSXf22soGWN9ZY+RwwnGQ=
+	b=njZbeoRuQAidneA3VbrDFjmM/VQpZ17A9NZW3ElYTEW1zVHAcPQlF9ZkxJ1+lahWi
+	 S7XJA7h0J+Sxe/my/czY2/X3TU1/oZPdmPv+mWg00iGWFPmLpuOozMTNtmRpytNcTF
+	 7UJ700dl0dujuQ5f8VEQDs6XyyPioSfh+znKc/HU=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2394487AbgBNRGQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 14 Feb 2020 12:06:16 -0500
-Received: from mail-pl1-f196.google.com ([209.85.214.196]:33387 "EHLO
-        mail-pl1-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2389048AbgBNRGQ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 12:06:16 -0500
-Received: by mail-pl1-f196.google.com with SMTP id ay11so3962174plb.0;
-        Fri, 14 Feb 2020 09:06:15 -0800 (PST)
+        id S2394505AbgBNRGf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 14 Feb 2020 12:06:35 -0500
+Received: from mail-pl1-f193.google.com ([209.85.214.193]:33405 "EHLO
+        mail-pl1-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2394142AbgBNRGd (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 12:06:33 -0500
+Received: by mail-pl1-f193.google.com with SMTP id ay11so3962464plb.0;
+        Fri, 14 Feb 2020 09:06:33 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=6O9W6E1G75ixyJ8UyGK5wFctz4OpO1Qs9ZxeNViXQcw=;
-        b=fJSfsGyC407k83sWyG04J1cZ5klu0v6fArOiL05DGBT/mDIowCmGclgtwynM9GsMWV
-         GojNIdYdoVHdVvWV6RKNJ5XkR1rRdI958VtKnYBRNlT6v8zyUyN+KSKoHtEz1jblIxfK
-         m15PLqaDSmHFUMj6vokz97v9OGjB9GqZPpJnlziFqAuCcBaajX+Fk/ZyQvYUAit8/dtl
-         QV8QJeXu6U6z2uId7L3VOkviLHd1Rg3qfF6ZTt/0pzckKFT4T7e7K2oo68vo5mM9TsHA
-         Uj/2a4C9nJCcOgxA82BwmXtxpb2nryOdfO3qNPgrKuRE6MQfhlZksKKlv6YIPpQbSFdI
-         0/pQ==
+        bh=V7GUkh8wE1dRQiutiAZwQygV0oqWtMLGFWC+ZDS/JnU=;
+        b=RQvOq32m45tdZVuQ4eP1UET1YZUzdiMgqS7sSPeokFVt7jEldPUoBqPTKGstnRngbF
+         75+1ncGimpxQlYmLre/iK7NDvLq5nH9Hi2GOxUwGhbRCZJZt2puGtJKk1yDtaNxdvTOa
+         H/HYX/Zmw9vTr3fPSoY7uBY66RtNlMV/AMAWXeRe+em474RVFHaMWlLU35ynOr5o0Aln
+         3w27QgjvOu2G2AsRfDdNSepSUB0fIO/aFIzpGmYcuoM5LFW+01oXGF0iKP2e7kzay49e
+         Mv30kROuXKTJkKiBAtSpcvfYw77pEgG193ErM30jobYpwJHikPO41vYt6EZFzgMttboN
+         PzsA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=6O9W6E1G75ixyJ8UyGK5wFctz4OpO1Qs9ZxeNViXQcw=;
-        b=CDS6MSAw1fb29pVY17Jkb4EsDOOtaAC6XVRfl7HCKbD+t7YwAKPU05fvYptuqXwasd
-         KRsDPFTdOWPAAsQtbyTe7D1KDUasXhkJOSCUAalpu9ms8Pbk6FslPSSTSxND9b/dKKYF
-         fj383+vrflazrxVGSXWJiMPzONRAqcxsKf8Av90zZY0w8/gxLKiRy11MrcbVO1PKH0oO
-         dJMRFXDfphAm9tGENHwiaoqfIjDqekfrlEntJ8OXmYKk0snx60pE6bJcyplPDf8f0lTs
-         KwI6uulf2dlx6bl9VTbdR0x1N0ksqTqg7vlSMGJRgPlQlSUsH7qunNK6xNnrViiw2/Y3
-         02pA==
-X-Gm-Message-State: APjAAAWS9G40f6uEUOVz+9F0GOM6q7Leh1HWu2m7A0ctemJKM5gcUEDv
-        AqYPIF8IADdEmRIaOqm5/3M=
-X-Google-Smtp-Source: APXvYqxf5zE4iH5O+upXaWZUjVzDrEgNkGr2eak0SnNRXweSahgmncbHlkn17pa7YUG4jUsWitWu4w==
-X-Received: by 2002:a17:90a:20c4:: with SMTP id f62mr4957285pjg.70.1581699975081;
-        Fri, 14 Feb 2020 09:06:15 -0800 (PST)
+        bh=V7GUkh8wE1dRQiutiAZwQygV0oqWtMLGFWC+ZDS/JnU=;
+        b=ZSmsquOoGvWnzQGKYysxZcpEsUnO/fK6GzLXlgAKioyWgq3pQuqCpH8jJp4e2Ag4rC
+         /fu3soyR1pA3vUIUxCzcNMSAW52Q9tAUdjd99lZ9pgeg/eAE6EI1cXTHddD5ncahXB02
+         FGLK6il+3yoW5OCrCZsnpisARiPxAvwUovJGil3XkgSi9+7/CYJ2lysC6nE3HHdujx+r
+         8kZXVK5rH9lAS3jvsFt/nXo9l9oWlW170Z8F6ztF5+ZAI6yZTTnbdrO4hcMf4hELkof4
+         yaKPHTsayET7lSdmtjotm+yFN8bRFLdTQq1T+7Qr1ELQjNd5PFM2JVrXcnIAUyGqCSMS
+         ItKQ==
+X-Gm-Message-State: APjAAAXKHRhZJbD695PZ17sXiObCZIFkddj+Feu1dMts3/y8V+2VYJq9
+        2HJHt9edm0Atc1p018uVwOU=
+X-Google-Smtp-Source: APXvYqxGn47fJ2zoDaJU+qvDPEHLfhiapXpwP4YiNrmS4xOrwHPdDO5MUL/VY69qyCv30aJDRferSg==
+X-Received: by 2002:a17:90b:46cf:: with SMTP id jx15mr4967429pjb.2.1581699993075;
+        Fri, 14 Feb 2020 09:06:33 -0800 (PST)
 Received: from bbox-1.mtv.corp.google.com ([2620:15c:211:1:3e01:2939:5992:52da])
-        by smtp.gmail.com with ESMTPSA id a13sm7662924pfg.65.2020.02.14.09.06.08
+        by smtp.gmail.com with ESMTPSA id a13sm7662924pfg.65.2020.02.14.09.06.29
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 14 Feb 2020 09:06:11 -0800 (PST)
+        Fri, 14 Feb 2020 09:06:30 -0800 (PST)
 From:   Minchan Kim <minchan@kernel.org>
 To:     Andrew Morton <akpm@linux-foundation.org>
 Cc:     LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
@@ -76,9 +76,9 @@ Cc:     LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
         Joel Fernandes <joel@joelfernandes.org>, sj38.park@gmail.com,
         alexander.h.duyck@linux.intel.com, Jann Horn <jannh@google.com>,
         Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v5 3/7] mm: check fatal signal pending of target process
-Date:   Fri, 14 Feb 2020 09:05:16 -0800
-Message-Id: <20200214170520.160271-4-minchan@kernel.org>
+Subject: [PATCH v5 6/7] mm/madvise: employ mmget_still_valid for write lock
+Date:   Fri, 14 Feb 2020 09:05:19 -0800
+Message-Id: <20200214170520.160271-7-minchan@kernel.org>
 X-Mailer: git-send-email 2.25.0.265.gbab2e86ba0-goog
 In-Reply-To: <20200214170520.160271-1-minchan@kernel.org>
 References: <20200214170520.160271-1-minchan@kernel.org>
@@ -89,134 +89,39 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Bail out to prevent unnecessary CPU overhead if target process ha
-pending fatal signal during MADV_COLD| MADV_PAGEOUT operation.
+From: Oleksandr Natalenko <oleksandr@redhat.com>
 
+Do the very same trick as we already do since 04f5866e41fb. KSM hints
+will require locking mmap_sem for write since they modify vm_flags, so
+for remote KSM hinting this additional check is needed.
+
+Signed-off-by: Oleksandr Natalenko <oleksandr@redhat.com>
 Signed-off-by: Minchan Kim <minchan@kernel.org>
 ---
- mm/madvise.c | 27 +++++++++++++++++++--------
- 1 file changed, 19 insertions(+), 8 deletions(-)
+ mm/madvise.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
 diff --git a/mm/madvise.c b/mm/madvise.c
-index fadc8d758a46..fca3a9e9bd39 100644
+index bbbfea93396a..762a68205e65 100644
 --- a/mm/madvise.c
 +++ b/mm/madvise.c
-@@ -36,6 +36,7 @@
- struct madvise_walk_private {
- 	struct mmu_gather *tlb;
- 	bool pageout;
-+	struct task_struct *task;
- };
- 
- /*
-@@ -316,6 +317,9 @@ static int madvise_cold_or_pageout_pte_range(pmd_t *pmd,
- 	if (fatal_signal_pending(current))
- 		return -EINTR;
- 
-+	if (fatal_signal_pending(private->task))
-+		return -EINTR;
-+
- #ifdef CONFIG_TRANSPARENT_HUGEPAGE
- 	if (pmd_trans_huge(*pmd)) {
- 		pmd_t orig_pmd;
-@@ -471,12 +475,14 @@ static const struct mm_walk_ops cold_walk_ops = {
- };
- 
- static void madvise_cold_page_range(struct mmu_gather *tlb,
-+			     struct task_struct *task,
- 			     struct vm_area_struct *vma,
- 			     unsigned long addr, unsigned long end)
- {
- 	struct madvise_walk_private walk_private = {
- 		.pageout = false,
- 		.tlb = tlb,
-+		.task = task,
- 	};
- 
- 	tlb_start_vma(tlb, vma);
-@@ -484,7 +490,8 @@ static void madvise_cold_page_range(struct mmu_gather *tlb,
- 	tlb_end_vma(tlb, vma);
- }
- 
--static long madvise_cold(struct vm_area_struct *vma,
-+static long madvise_cold(struct task_struct *task,
-+			struct vm_area_struct *vma,
- 			struct vm_area_struct **prev,
- 			unsigned long start_addr, unsigned long end_addr)
- {
-@@ -497,19 +504,21 @@ static long madvise_cold(struct vm_area_struct *vma,
- 
- 	lru_add_drain();
- 	tlb_gather_mmu(&tlb, mm, start_addr, end_addr);
--	madvise_cold_page_range(&tlb, vma, start_addr, end_addr);
-+	madvise_cold_page_range(&tlb, task, vma, start_addr, end_addr);
- 	tlb_finish_mmu(&tlb, start_addr, end_addr);
- 
- 	return 0;
- }
- 
- static void madvise_pageout_page_range(struct mmu_gather *tlb,
-+			     struct task_struct *task,
- 			     struct vm_area_struct *vma,
- 			     unsigned long addr, unsigned long end)
- {
- 	struct madvise_walk_private walk_private = {
- 		.pageout = true,
- 		.tlb = tlb,
-+		.task = task,
- 	};
- 
- 	tlb_start_vma(tlb, vma);
-@@ -533,7 +542,8 @@ static inline bool can_do_pageout(struct vm_area_struct *vma)
- 		inode_permission(file_inode(vma->vm_file), MAY_WRITE) == 0;
- }
- 
--static long madvise_pageout(struct vm_area_struct *vma,
-+static long madvise_pageout(struct task_struct *task,
-+			struct vm_area_struct *vma,
- 			struct vm_area_struct **prev,
- 			unsigned long start_addr, unsigned long end_addr)
- {
-@@ -549,7 +559,7 @@ static long madvise_pageout(struct vm_area_struct *vma,
- 
- 	lru_add_drain();
- 	tlb_gather_mmu(&tlb, mm, start_addr, end_addr);
--	madvise_pageout_page_range(&tlb, vma, start_addr, end_addr);
-+	madvise_pageout_page_range(&tlb, task, vma, start_addr, end_addr);
- 	tlb_finish_mmu(&tlb, start_addr, end_addr);
- 
- 	return 0;
-@@ -929,7 +939,8 @@ static int madvise_inject_error(int behavior,
- #endif
- 
- static long
--madvise_vma(struct vm_area_struct *vma, struct vm_area_struct **prev,
-+madvise_vma(struct task_struct *task, struct vm_area_struct *vma,
-+		struct vm_area_struct **prev,
- 		unsigned long start, unsigned long end, int behavior)
- {
- 	switch (behavior) {
-@@ -938,9 +949,9 @@ madvise_vma(struct vm_area_struct *vma, struct vm_area_struct **prev,
- 	case MADV_WILLNEED:
- 		return madvise_willneed(vma, prev, start, end);
- 	case MADV_COLD:
--		return madvise_cold(vma, prev, start, end);
-+		return madvise_cold(task, vma, prev, start, end);
- 	case MADV_PAGEOUT:
--		return madvise_pageout(vma, prev, start, end);
-+		return madvise_pageout(task, vma, prev, start, end);
- 	case MADV_FREE:
- 	case MADV_DONTNEED:
- 		return madvise_dontneed_free(vma, prev, start, end, behavior);
-@@ -1140,7 +1151,7 @@ int do_madvise(struct task_struct *task, struct mm_struct *mm,
- 			tmp = end;
- 
- 		/* Here vma->vm_start <= start < tmp <= (end|vma->vm_end). */
--		error = madvise_vma(vma, &prev, start, tmp, behavior);
-+		error = madvise_vma(task, vma, &prev, start, tmp, behavior);
- 		if (error)
- 			goto out;
- 		start = tmp;
+@@ -1117,6 +1117,8 @@ int do_madvise(struct task_struct *task, struct mm_struct *mm,
+ 	if (write) {
+ 		if (down_write_killable(&mm->mmap_sem))
+ 			return -EINTR;
++		if (current->mm != mm && !mmget_still_valid(mm))
++			goto skip_mm;
+ 	} else {
+ 		down_read(&mm->mmap_sem);
+ 	}
+@@ -1167,6 +1169,7 @@ int do_madvise(struct task_struct *task, struct mm_struct *mm,
+ 	}
+ out:
+ 	blk_finish_plug(&plug);
++skip_mm:
+ 	if (write)
+ 		up_write(&mm->mmap_sem);
+ 	else
 -- 
 2.25.0.265.gbab2e86ba0-goog
 
