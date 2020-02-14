@@ -4,61 +4,61 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B81DCC2BA83
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:06:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 37934C2BA83
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:06:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 8EFDC24654
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:06:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0D86F24654
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:06:46 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1581700000;
-	bh=etQC//k0JqpiGWBjjnUt/TvV96mGXcD50j0xCcIyy/U=;
+	s=default; t=1581700007;
+	bh=NARawqSoAFd3tsEOnot1lKQQZD+bRGTZ7N6PxcATUR4=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
-	b=wElySzfls8M7qGWm8c5Ql/f6SXkQfq2nX4u0YDCUo8bCjG1Y0xWetlCOhC9w7Oan3
-	 oaIRCaTG69Jdi7UOhp3JDg8aplUrVgGSiUPjVP5wkVe+zuxu49t24sJ3fMIL+rztr8
-	 EfrNeeg0Wpw6nY2Y233G3TFwDbz7pnwzCkMMlGwU=
+	b=X2iV8PYoxRCAgX+I1rgESIeWNdAEF6BH0uXLtdAjV5iG0eWNJ13UybOqT2aBoEBsz
+	 x4G5eJgFJT3LY/nciYU2jCayNfSLEfyAP695iAz4oC1Pw4Pb7icZsG9xrZ1UMn367N
+	 tqOtAbOpoN9lomwTyDDit796kcj9581dCzDT78A8=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2394461AbgBNRGj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 14 Feb 2020 12:06:39 -0500
-Received: from mail-pf1-f195.google.com ([209.85.210.195]:46176 "EHLO
-        mail-pf1-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2394142AbgBNRGi (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 12:06:38 -0500
-Received: by mail-pf1-f195.google.com with SMTP id k29so5153792pfp.13;
-        Fri, 14 Feb 2020 09:06:38 -0800 (PST)
+        id S2405268AbgBNRGb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 14 Feb 2020 12:06:31 -0500
+Received: from mail-pl1-f196.google.com ([209.85.214.196]:41419 "EHLO
+        mail-pl1-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2404173AbgBNRGa (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 12:06:30 -0500
+Received: by mail-pl1-f196.google.com with SMTP id t14so3944859plr.8;
+        Fri, 14 Feb 2020 09:06:29 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=QW1XPYsqgB39eZebwl/0zlcNp074EgOP5RJbtqrekRI=;
-        b=tjv0/8H5C4Q/P1CI4cMR+BGXtWyW85rmKZmanW8HGhITwLhPbQWFNhHgGWNwfUZgbS
-         Q3Ds+v9zX14E43xMVdfMkET1cjZr0SG6/okyVsha5tB67+3fCOgLaK9a/3zixj5dumXV
-         EwkFFlBhntJR+z+QnAeuBU+WzLNCx921Oz12VOiunXgMR2idXeMVhUwFBww8Eky1hLYC
-         gQdOIWHJa3AxDPvShHWfx1sbbHqQFjKQdjvezK9XlCZr+5kdh7Fg1Xx6vjqHkQfRNzra
-         i/RgKelzECG0vCdgocqy1TBiiNxyeI3lz4ztEGQf6mnCztYzpPycUlxBjfSlRbHW8u+V
-         SJ9w==
+        bh=R66XKPvBxqpxo7iMIyU+G3YX3vLAVwMoSg/oCCOPM6c=;
+        b=I0kE/hGL8Zsgc74d67WkWf94B3lrUOTjc1PnWdmkE3Pk2rAq4CLywAIj9CqgPFwD4U
+         /i/SCuPL7Mvju9Y7uTHUXYdvbmfrQTdUunPd5tT1eKug/losWVdNHFIboyvjCKmCrxnk
+         pC9fE8pM+3WNCV5Zfy0Jftj2HaV12cNwvGbH4W7wfcmCCoaJF8fBX5+SPLr8vTMRcCxM
+         fuervFFcOuTBJ1XiyNz8HHSSnAeL94e0t/RySterT2+/SW4e3Gq6LeZYJRVYDLQMCNJE
+         dItl0BRKzgfOSBgCrAEdeUnSHvIxxochJo1wjbFKsjmJTxJCBeQD5xh2tF+UcCU51KOb
+         xM1g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=QW1XPYsqgB39eZebwl/0zlcNp074EgOP5RJbtqrekRI=;
-        b=Os1YygolZuRpHaeUNCu11YqyD237t/1NdKqts9fSJpTozxmMXfoP968C1U7WfylrJj
-         NvXnZUpPGVD34s2o0p/+k970PDf3fn65Vdx/EALgaQcGdljTAh9QnEV8aEh82mGud7hR
-         0Dk2+IPfwxpnBrNMGjTbvy4MHVRHopGAZ6EL9ANeqDzt0GZWXqqUdts0TaInI6RHmy6M
-         CSYrU0dG0YAcdy4FBAJaG42ov9j8qKAlpa5oejkiBy205mlGCXVojp9RaMrEahGyMIV0
-         FS7KTI3h4spTprjkSzRU5SfHNvvnk92py4UNX2yeRnBGbPoqbkJfcbMTAsmkbO1EbcK+
-         L/gw==
-X-Gm-Message-State: APjAAAVId6r+tuLX4U8TKMFBM+WMJBdmXHeeJ4TWvL9bZkFM5obse70A
-        w/4QRM/P7owblltJqkVjpqo=
-X-Google-Smtp-Source: APXvYqzPa9D1Lmoi4ZgRT/Il+guBGFLg4E8qSkXjuDrKMdjBDKsbzorml+cGx3N3NMnTf7FbxXP7tw==
-X-Received: by 2002:a63:4b65:: with SMTP id k37mr4615617pgl.46.1581699997969;
-        Fri, 14 Feb 2020 09:06:37 -0800 (PST)
+        bh=R66XKPvBxqpxo7iMIyU+G3YX3vLAVwMoSg/oCCOPM6c=;
+        b=ik0/Sl4SGiqkKGOC9Fq1Qhf2Rf+UBUgAtl9zR7j68ixgVlEbODisOoQsc8BBFcyMlK
+         6Vi8CGylxKeRB+t0zGPHf0QQk53IEc0mMn7lVqbQBYNxHbBM7LWaQv//tZv/Qld90OuA
+         W4CZxUTJKOEneMXQ0xTyCmRhGBAEVG7uc6VZnuY9E6tMlGt2wL7lmhmuF9mKLeHv6QiP
+         czJUXhunWQ3F27+NrnWlazIieoeTS21UutlfGmm+Asj2knYFxi7ufMsw6tS45gBRTKHr
+         k8CIt+579/iSOwxiMFVX9Lbz9Nz8Ko/6wnTcpZKxSVWAVR4abfEVgriPIvquWuSqQr0z
+         Bw3g==
+X-Gm-Message-State: APjAAAWusyxnKsaKLAtVev1SN43NraQ62ZsmPpAovHUlzFBWqgoW32yA
+        VaOT603cNTcZPS2ZMxN7eqw=
+X-Google-Smtp-Source: APXvYqz5cYkCvXS9hd5Np+Hbagcxe+bpyjSJHEfYShA6ygQz8K5or1mGdHjY13gyXIHKMm0BXLc7aA==
+X-Received: by 2002:a17:902:a610:: with SMTP id u16mr4245899plq.305.1581699989175;
+        Fri, 14 Feb 2020 09:06:29 -0800 (PST)
 Received: from bbox-1.mtv.corp.google.com ([2620:15c:211:1:3e01:2939:5992:52da])
-        by smtp.gmail.com with ESMTPSA id a13sm7662924pfg.65.2020.02.14.09.06.33
+        by smtp.gmail.com with ESMTPSA id a13sm7662924pfg.65.2020.02.14.09.06.22
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 14 Feb 2020 09:06:36 -0800 (PST)
+        Fri, 14 Feb 2020 09:06:26 -0800 (PST)
 From:   Minchan Kim <minchan@kernel.org>
 To:     Andrew Morton <akpm@linux-foundation.org>
 Cc:     LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
@@ -76,10 +76,11 @@ Cc:     LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
         Joel Fernandes <joel@joelfernandes.org>, sj38.park@gmail.com,
         alexander.h.duyck@linux.intel.com, Jann Horn <jannh@google.com>,
         Minchan Kim <minchan@kernel.org>,
-        SeongJae Park <sjpark@amazon.de>
-Subject: [PATCH v5 7/7] mm/madvise: allow KSM hints for remote API
-Date:   Fri, 14 Feb 2020 09:05:20 -0800
-Message-Id: <20200214170520.160271-8-minchan@kernel.org>
+        Christian Brauner <christian@brauner.io>,
+        Kirill Tkhai <ktkhai@virtuozzo.com>
+Subject: [PATCH v5 5/7] mm: support both pid and pidfd for process_madvise
+Date:   Fri, 14 Feb 2020 09:05:18 -0800
+Message-Id: <20200214170520.160271-6-minchan@kernel.org>
 X-Mailer: git-send-email 2.25.0.265.gbab2e86ba0-goog
 In-Reply-To: <20200214170520.160271-1-minchan@kernel.org>
 References: <20200214170520.160271-1-minchan@kernel.org>
@@ -90,72 +91,112 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Oleksandr Natalenko <oleksandr@redhat.com>
+There is a demand[1] to support pid as well pidfd for process_madvise
+to reduce unnecessary syscall to get pidfd if the user has control of
+the target process(ie, they could guarantee the process is not gone
+or pid is not reused. Or, it might be okay to give a hint to wrong
+process).
 
-It all began with the fact that KSM works only on memory that is marked
-by madvise(). And the only way to get around that is to either:
+This patch aims for supporting both options like waitid(2). So, the
+syscall is currently,
 
-  * use LD_PRELOAD; or
-  * patch the kernel with something like UKSM or PKSM.
+	int process_madvise(int which, pid_t pid, void *addr,
+		size_t length, int advise, unsigned long flag);
 
-(i skip ptrace can of worms here intentionally)
+@which is actually idtype_t for userspace libray and currently,
+it supports P_PID and P_PIDFD.
 
-To overcome this restriction, lets employ a new remote madvise API. This
-can be used by some small userspace helper daemon that will do auto-KSM
-job for us.
+[1]  https://lore.kernel.org/linux-mm/9d849087-3359-c4ab-fbec-859e8186c509@virtuozzo.com/
 
-I think of two major consumers of remote KSM hints:
-
-  * hosts, that run containers, especially similar ones and especially in
-    a trusted environment, sharing the same runtime like Node.js;
-
-  * heavy applications, that can be run in multiple instances, not
-    limited to opensource ones like Firefox, but also those that cannot be
-    modified since they are binary-only and, maybe, statically linked.
-
-Speaking of statistics, more numbers can be found in the very first
-submission, that is related to this one [1]. For my current setup with
-two Firefox instances I get 100 to 200 MiB saved for the second instance
-depending on the amount of tabs.
-
-1 FF instance with 15 tabs:
-
-   $ echo "$(cat /sys/kernel/mm/ksm/pages_sharing) * 4 / 1024" | bc
-   410
-
-2 FF instances, second one has 12 tabs (all the tabs are different):
-
-   $ echo "$(cat /sys/kernel/mm/ksm/pages_sharing) * 4 / 1024" | bc
-   592
-
-At the very moment I do not have specific numbers for containerised
-workload, but those should be comparable in case the containers share
-similar/same runtime.
-
-[1] https://lore.kernel.org/patchwork/patch/1012142/
-
-Reviewed-by: SeongJae Park <sjpark@amazon.de>
-Signed-off-by: Oleksandr Natalenko <oleksandr@redhat.com>
+Cc: Christian Brauner <christian@brauner.io>
+Suggested-by: Kirill Tkhai <ktkhai@virtuozzo.com>
 Signed-off-by: Minchan Kim <minchan@kernel.org>
 ---
- mm/madvise.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ include/linux/syscalls.h |  3 ++-
+ mm/madvise.c             | 34 ++++++++++++++++++++++------------
+ 2 files changed, 24 insertions(+), 13 deletions(-)
 
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index e4cd2c2f8bb4..f5ada20e2943 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -876,7 +876,8 @@ asmlinkage long sys_munlockall(void);
+ asmlinkage long sys_mincore(unsigned long start, size_t len,
+ 				unsigned char __user * vec);
+ asmlinkage long sys_madvise(unsigned long start, size_t len, int behavior);
+-asmlinkage long sys_process_madvise(int pidfd, unsigned long start,
++
++asmlinkage long sys_process_madvise(int which, pid_t pid, unsigned long start,
+ 			size_t len, int behavior, unsigned long flags);
+ asmlinkage long sys_remap_file_pages(unsigned long start, unsigned long size,
+ 			unsigned long prot, unsigned long pgoff,
 diff --git a/mm/madvise.c b/mm/madvise.c
-index 762a68205e65..0ecacfe93166 100644
+index fca3a9e9bd39..bbbfea93396a 100644
 --- a/mm/madvise.c
 +++ b/mm/madvise.c
-@@ -1004,6 +1004,10 @@ process_madvise_behavior_valid(int behavior)
- 	switch (behavior) {
- 	case MADV_COLD:
- 	case MADV_PAGEOUT:
-+#ifdef CONFIG_KSM
-+	case MADV_MERGEABLE:
-+	case MADV_UNMERGEABLE:
-+#endif
- 		return true;
- 	default:
- 		return false;
+@@ -1180,11 +1180,10 @@ SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
+ 	return do_madvise(current, current->mm, start, len_in, behavior);
+ }
+ 
+-SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
++SYSCALL_DEFINE6(process_madvise, int, which, pid_t, upid, unsigned long, start,
+ 		size_t, len_in, int, behavior, unsigned long, flags)
+ {
+ 	int ret;
+-	struct fd f;
+ 	struct pid *pid;
+ 	struct task_struct *task;
+ 	struct mm_struct *mm;
+@@ -1195,20 +1194,31 @@ SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
+ 	if (!process_madvise_behavior_valid(behavior))
+ 		return -EINVAL;
+ 
+-	f = fdget(pidfd);
+-	if (!f.file)
+-		return -EBADF;
++	switch (which) {
++	case P_PID:
++		if (upid <= 0)
++			return -EINVAL;
++
++		pid = find_get_pid(upid);
++		if (!pid)
++			return -ESRCH;
++		break;
++	case P_PIDFD:
++		if (upid < 0)
++			return -EINVAL;
+ 
+-	pid = pidfd_pid(f.file);
+-	if (IS_ERR(pid)) {
+-		ret = PTR_ERR(pid);
+-		goto fdput;
++		pid = pidfd_get_pid(upid);
++		if (IS_ERR(pid))
++			return PTR_ERR(pid);
++		break;
++	default:
++		return -EINVAL;
+ 	}
+ 
+ 	task = get_pid_task(pid, PIDTYPE_PID);
+ 	if (!task) {
+ 		ret = -ESRCH;
+-		goto fdput;
++		goto put_pid;
+ 	}
+ 
+ 	mm = mm_access(task, PTRACE_MODE_ATTACH_FSCREDS);
+@@ -1221,7 +1231,7 @@ SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
+ 	mmput(mm);
+ release_task:
+ 	put_task_struct(task);
+-fdput:
+-	fdput(f);
++put_pid:
++	put_pid(pid);
+ 	return ret;
+ }
 -- 
 2.25.0.265.gbab2e86ba0-goog
 
