@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AAE96C2BA83
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:41:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2C4CFC2BA83
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:42:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 7DF0020848
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:41:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 01DA9222C2
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:42:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2389283AbgBNSlu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 14 Feb 2020 13:41:50 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:33897 "EHLO
+        id S2389892AbgBNSmO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 14 Feb 2020 13:42:14 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:33920 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2388570AbgBNSlt (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 13:41:49 -0500
+        with ESMTP id S2388592AbgBNSmO (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 13:42:14 -0500
 Received: from ip5f5bf7ec.dynamic.kabel-deutschland.de ([95.91.247.236] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1j2fqg-0000uO-Qn; Fri, 14 Feb 2020 18:37:58 +0000
+        id 1j2fqn-0000uO-SV; Fri, 14 Feb 2020 18:38:05 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
         "Eric W. Biederman" <ebiederm@xmission.com>,
@@ -40,9 +40,9 @@ Cc:     smbarber@chromium.org, Seth Forshee <seth.forshee@canonical.com>,
         containers@lists.linux-foundation.org,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v2 20/28] open: handle fsid mappings
-Date:   Fri, 14 Feb 2020 19:35:46 +0100
-Message-Id: <20200214183554.1133805-21-christian.brauner@ubuntu.com>
+Subject: [PATCH v2 26/28] exec: bprm_fill_uid(): handle fsid mappings
+Date:   Fri, 14 Feb 2020 19:35:52 +0100
+Message-Id: <20200214183554.1133805-27-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.25.0
 In-Reply-To: <20200214183554.1133805-1-christian.brauner@ubuntu.com>
 References: <20200214183554.1133805-1-christian.brauner@ubuntu.com>
@@ -53,63 +53,95 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Let chown_common() lookup fsids in the fsid mappings. If no fsid mappings are
-setup the behavior is unchanged, i.e. fsids are looked up in the id mappings.
-do_faccessat() just needs to translate from real ids into fsids.
+Make sure that during suid/sgid binary execution we lookup the fsids in the
+fsid mappings. If the kernel is compiled without fsid mappings or now fsid
+mappings are setup the behavior is unchanged.
 
-Filesystems that share a superblock in all user namespaces they are mounted in
-will retain their old semantics even with the introduction of fsidmappings.
+Assuming we have a binary in a given user namespace that is owned by 0:0 in the
+given user namespace which appears as 300000:300000 on-disk in the initial user
+namespace. Now assume we write an id mapping of 0 100000 100000 and an fsid
+mapping for 0 300000 300000 in the user namespace. When we hit bprm_fill_uid()
+during setid execution we will retrieve inode kuid=100000 and kgid=1000000. We
+first check whether there's an fsid mapping for these kids. In our scenario we
+find that they map to fsuid=0 and fsgid=0 in the user namespace. Now we
+translate them into kids in the id mapping. In our example they translate to
+kuid=100000 and kgid=100000 which means the file will ultimately run as uid=0
+and gid=0 in the user namespace and as uid=100000, gid=100000 in the initial
+user namespace.
+Let's alter the example and assume that there is an fsid mapping of 0 300000
+300000 set up but no id mapping has been setup for the user namespace. In this
+the last step of translating into a valid kid pair in the id mappings will fail
+and we will behave as before and ignore the sid bits.
 
+Cc: Jann Horn <jannh@google.com>
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
+patch added
 - Christian Brauner <christian.brauner@ubuntu.com>:
-  - handle faccessat() too
+  - Make sure that bprm_fill_uid() handles fsid mappings.
 ---
- fs/open.c | 16 ++++++++++++----
- 1 file changed, 12 insertions(+), 4 deletions(-)
+ fs/exec.c | 25 +++++++++++++++++++------
+ 1 file changed, 19 insertions(+), 6 deletions(-)
 
-diff --git a/fs/open.c b/fs/open.c
-index 0788b3715731..4e092845728f 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -32,6 +32,7 @@
- #include <linux/ima.h>
- #include <linux/dnotify.h>
+diff --git a/fs/exec.c b/fs/exec.c
+index db17be51b112..9e4a7e757cef 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -62,6 +62,7 @@
+ #include <linux/oom.h>
  #include <linux/compat.h>
+ #include <linux/vmalloc.h>
 +#include <linux/fsuidgid.h>
  
- #include "internal.h"
+ #include <linux/uaccess.h>
+ #include <asm/mmu_context.h>
+@@ -1518,8 +1519,8 @@ static void bprm_fill_uid(struct linux_binprm *bprm)
+ {
+ 	struct inode *inode;
+ 	unsigned int mode;
+-	kuid_t uid;
+-	kgid_t gid;
++	kuid_t uid, euid;
++	kgid_t gid, egid;
  
-@@ -361,8 +362,10 @@ long do_faccessat(int dfd, const char __user *filename, int mode)
- 	if (!override_cred)
- 		return -ENOMEM;
+ 	/*
+ 	 * Since this can be called multiple times (via prepare_binprm),
+@@ -1551,18 +1552,30 @@ static void bprm_fill_uid(struct linux_binprm *bprm)
+ 	inode_unlock(inode);
  
--	override_cred->fsuid = override_cred->uid;
--	override_cred->fsgid = override_cred->gid;
-+	override_cred->kfsuid = override_cred->uid;
-+	override_cred->kfsgid = override_cred->gid;
-+	override_cred->fsuid = kuid_to_kfsuid(override_cred->user_ns, override_cred->uid);
-+	override_cred->fsgid = kgid_to_kfsgid(override_cred->user_ns, override_cred->gid);
+ 	/* We ignore suid/sgid if there are no mappings for them in the ns */
+-	if (!kuid_has_mapping(bprm->cred->user_ns, uid) ||
+-		 !kgid_has_mapping(bprm->cred->user_ns, gid))
++	if (!kfsuid_has_mapping(bprm->cred->user_ns, uid) ||
++		 !kfsgid_has_mapping(bprm->cred->user_ns, gid))
+ 		return;
  
- 	if (!issecure(SECURE_NO_SETUID_FIXUP)) {
- 		/* Clear the capabilities if we switch to a non-root user */
-@@ -626,8 +629,13 @@ static int chown_common(const struct path *path, uid_t user, gid_t group)
- 	kuid_t uid;
- 	kgid_t gid;
- 
--	uid = make_kuid(current_user_ns(), user);
--	gid = make_kgid(current_user_ns(), group);
-+	if (is_userns_visible(inode->i_sb->s_iflags)) {
-+		uid = make_kuid(current_user_ns(), user);
-+		gid = make_kgid(current_user_ns(), group);
-+	} else {
-+		uid = make_kfsuid(current_user_ns(), user);
-+		gid = make_kfsgid(current_user_ns(), group);
++	if (mode & S_ISUID) {
++		euid = kfsuid_to_kuid(bprm->cred->user_ns, uid);
++		if (!uid_valid(euid))
++			return;
 +	}
++
++	if ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP)) {
++		egid = kfsgid_to_kgid(bprm->cred->user_ns, gid);
++		if (!gid_valid(egid))
++			return;
++	}
++
+ 	if (mode & S_ISUID) {
+ 		bprm->per_clear |= PER_CLEAR_ON_SETID;
+-		bprm->cred->euid = uid;
++		bprm->cred->euid = euid;
+ 	}
  
- retry_deleg:
- 	newattrs.ia_valid =  ATTR_CTIME;
+ 	if ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP)) {
+ 		bprm->per_clear |= PER_CLEAR_ON_SETID;
+-		bprm->cred->egid = gid;
++		bprm->cred->egid = egid;
+ 	}
+ }
+ 
 -- 
 2.25.0
 
