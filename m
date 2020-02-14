@@ -2,147 +2,127 @@ Return-Path: <SRS0=Hu9T=4C=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no
+X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 012B6C3B1BA
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:22:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A78A3C3B1BE
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:37:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id C3CB52168B
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:22:13 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20150623.gappssmtp.com header.i=@kernel-dk.20150623.gappssmtp.com header.b="t2X1vD6b"
+	by mail.kernel.org (Postfix) with ESMTP id 83ADB24650
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:37:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2394902AbgBNSWM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 14 Feb 2020 13:22:12 -0500
-Received: from mail-il1-f195.google.com ([209.85.166.195]:42814 "EHLO
-        mail-il1-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2394897AbgBNSWL (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 13:22:11 -0500
-Received: by mail-il1-f195.google.com with SMTP id x2so26930ila.9
-        for <linux-api@vger.kernel.org>; Fri, 14 Feb 2020 10:22:10 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
-        h=subject:to:cc:references:from:message-id:date:user-agent
-         :mime-version:in-reply-to:content-language:content-transfer-encoding;
-        bh=8qwb+lRTuOpes8xtaV7AKCv3PBGORM2BmFGpjI+nmpE=;
-        b=t2X1vD6b4vzcyYKeWXV148o4eFIVd6WZxhJItit3wq0vnRe4HvYJfLkKUtMgcWQ31G
-         VRLaorGbSK79Vevj9soE5iVXOq4dndvM/jy6LXriqeIR7wVc/V5sh+kCLYL1dMz/FMhh
-         0ByPRUiwxDqlk832uRr5+d8IQC4TmpXV+IZFWMs4hE01jDeDKdDVdeQK/w7TuEU1idTX
-         iNNKPQ1lBKOnsHbI5uk29dUPX5LUlBNqubasFicW8i16gcKFyEAoLmyVtUsr428vyzqF
-         /RMsqtg+N7J7QD6XXBHChqF8QBdXyN+kV/9a+dLg2xoDdjk8SOqUqj1rZ8GAkQtUoar1
-         7MbA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-language
-         :content-transfer-encoding;
-        bh=8qwb+lRTuOpes8xtaV7AKCv3PBGORM2BmFGpjI+nmpE=;
-        b=DdQ8FNkV3bephIVbNvdMkj0ap/jhwa2CG2n//Zlb4lRQk+2kn1Ez+Gk05kPqQGI59Y
-         r1cieRs2J4bL0qHvWH+e38WbJHh7A+a7XjORevOR8ZCN4+EzeOLxWx7FkjA4x8/DqoC8
-         Qrk4yh4iWeryvbCxi5GIL7xXck39FHSXCYOSc/KkU22mDH5Fpln3ris/XxmGmcaU89Nw
-         sEq70GJfDRNbxB3D9jFXdWjnajkuDqLVcTq0bopMWeZqAztsqnTpc3FNHwyrx3gTLTx9
-         VFfgJ40+7RhNt8qDpzRT+gvZ+Ckb+Lvw/8MFcIWW5t5VRHmnAD0Ho31zatRA25FhwgRR
-         Tsyw==
-X-Gm-Message-State: APjAAAXzLdawW5CIv9J4soHK1tE9q+FcBo0NNBHChasLBiYy1gSEW5vZ
-        LTJ8aLHhcgFNxW05Ml8ZVcX4MVxIKvI=
-X-Google-Smtp-Source: APXvYqzvncynTCDmYylq3A4KCMdXhy5MVQ9TmDi4HIhCpbFZz8Z/rnYpRK1Wy38BVNpmc/kvq8GaTg==
-X-Received: by 2002:a92:b68a:: with SMTP id m10mr4384218ill.255.1581704530319;
-        Fri, 14 Feb 2020 10:22:10 -0800 (PST)
-Received: from [192.168.1.159] ([65.144.74.34])
-        by smtp.gmail.com with ESMTPSA id j17sm2230109ild.45.2020.02.14.10.22.08
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 14 Feb 2020 10:22:09 -0800 (PST)
-Subject: Re: [PATCH v5 1/7] mm: pass task and mm to do_madvise
-To:     Jann Horn <jannh@google.com>, Minchan Kim <minchan@kernel.org>,
-        io-uring <io-uring@vger.kernel.org>
-Cc:     Andrew Morton <akpm@linux-foundation.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-mm <linux-mm@kvack.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        Oleksandr Natalenko <oleksandr@redhat.com>,
-        Suren Baghdasaryan <surenb@google.com>,
-        Tim Murray <timmurray@google.com>,
-        Daniel Colascione <dancol@google.com>,
-        Sandeep Patil <sspatil@google.com>,
-        Sonny Rao <sonnyrao@google.com>,
-        Brian Geffon <bgeffon@google.com>,
-        Michal Hocko <mhocko@suse.com>,
-        Johannes Weiner <hannes@cmpxchg.org>,
-        Shakeel Butt <shakeelb@google.com>,
-        John Dias <joaodias@google.com>,
-        Joel Fernandes <joel@joelfernandes.org>, sj38.park@gmail.com,
-        Alexander Duyck <alexander.h.duyck@linux.intel.com>
-References: <20200214170520.160271-1-minchan@kernel.org>
- <20200214170520.160271-2-minchan@kernel.org>
- <CAG48ez3S5+EasZ1ZWcMQYZQQ5zJOBtY-_C7oz6DMfG4Gcyig1g@mail.gmail.com>
-From:   Jens Axboe <axboe@kernel.dk>
-Message-ID: <68044a15-6a31-e432-3105-f2f1af9f4b74@kernel.dk>
-Date:   Fri, 14 Feb 2020 11:22:08 -0700
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.4.1
+        id S1729806AbgBNShv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 14 Feb 2020 13:37:51 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:33529 "EHLO
+        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728239AbgBNShv (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 13:37:51 -0500
+Received: from ip5f5bf7ec.dynamic.kabel-deutschland.de ([95.91.247.236] helo=wittgenstein.fritz.box)
+        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.86_2)
+        (envelope-from <christian.brauner@ubuntu.com>)
+        id 1j2fqJ-0000uO-4E; Fri, 14 Feb 2020 18:37:35 +0000
+From:   Christian Brauner <christian.brauner@ubuntu.com>
+To:     =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
+        "Eric W. Biederman" <ebiederm@xmission.com>,
+        Aleksa Sarai <cyphar@cyphar.com>, Jann Horn <jannh@google.com>
+Cc:     smbarber@chromium.org, Seth Forshee <seth.forshee@canonical.com>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        Alexey Dobriyan <adobriyan@gmail.com>,
+        Serge Hallyn <serge@hallyn.com>,
+        James Morris <jmorris@namei.org>,
+        Kees Cook <keescook@chromium.org>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Phil Estes <estesp@gmail.com>, linux-kernel@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org,
+        containers@lists.linux-foundation.org,
+        linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
+        Christian Brauner <christian.brauner@ubuntu.com>
+Subject: [PATCH v2 02/28] proc: add /proc/<pid>/fsuid_map
+Date:   Fri, 14 Feb 2020 19:35:28 +0100
+Message-Id: <20200214183554.1133805-3-christian.brauner@ubuntu.com>
+X-Mailer: git-send-email 2.25.0
+In-Reply-To: <20200214183554.1133805-1-christian.brauner@ubuntu.com>
+References: <20200214183554.1133805-1-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
-In-Reply-To: <CAG48ez3S5+EasZ1ZWcMQYZQQ5zJOBtY-_C7oz6DMfG4Gcyig1g@mail.gmail.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 2/14/20 10:25 AM, Jann Horn wrote:
-> +Jens and io-uring list
-> 
-> On Fri, Feb 14, 2020 at 6:06 PM Minchan Kim <minchan@kernel.org> wrote:
->> In upcoming patches, do_madvise will be called from external process
->> context so we shouldn't asssume "current" is always hinted process's
->> task_struct.
-> [...]
->> [1] http://lore.kernel.org/r/CAG48ez27=pwm5m_N_988xT1huO7g7h6arTQL44zev6TD-h-7Tg@mail.gmail.com
-> [...]
->> diff --git a/fs/io_uring.c b/fs/io_uring.c
-> [...]
->> @@ -2736,7 +2736,7 @@ static int io_madvise(struct io_kiocb *req, struct io_kiocb **nxt,
->>         if (force_nonblock)
->>                 return -EAGAIN;
->>
->> -       ret = do_madvise(ma->addr, ma->len, ma->advice);
->> +       ret = do_madvise(current, current->mm, ma->addr, ma->len, ma->advice);
->>         if (ret < 0)
->>                 req_set_fail_links(req);
->>         io_cqring_add_event(req, ret);
-> 
-> Jens, can you have a look at this change and the following patch
-> <https://lore.kernel.org/linux-mm/20200214170520.160271-4-minchan@kernel.org/>
-> ("[PATCH v5 3/7] mm: check fatal signal pending of target process")?
-> Basically Minchan's patch tries to plumb through the identity of the
-> target task so that if that task gets killed in the middle of the
-> operation, the (potentially long-running and costly) madvise operation
-> can be cancelled. Just passing in "current" instead (which in this
-> case is the uring worker thread AFAIK) doesn't really break anything,
-> other than making the optimization not work, but I wonder whether this
-> couldn't be done more cleanly - maybe by passing in NULL to mean "we
-> don't know who the target task is", since I think we don't know that
-> here?
+The /proc/<pid>/fsuid_map file can be written to once to setup an fsuid mapping
+for a user namespace. Writing to this file has the same restrictions as writing
+to /proc/<pid>/fsuid_map:
 
-Thanks for bringing this to my attention, patches that touch io_uring
-(or anything else) really should be CC'ed to the maintainer(s) of those
-areas...
+root@e1-vm:/# cat /proc/13023/fsuid_map
+         0     300000     100000
 
-Yeah, the change above won't do the right thing for io_uring, in fact
-it'll always be the wrong task. So I'd second Jann's question, and ask
-if we really need the actual task, or if NULL could be used? For
-cancelation purposes, I'm guessing you want the task that's actually
-doing the operation, even if it's on behalf of someone else. That makes
-the interface a bit weird, as you'd assume the task/mm passed in would
-be related to the madvise itself, not just for cancelation.
+Fsid mappings have always been around. They are currently always identical to
+the id mappings for a user namespace. This means, currently whenever an fsid
+needs to be looked up the kernel will use the id mapping of the user namespace.
+With the introduction of fsid mappings the kernel will now lookup fsids in the
+fsid mappings of the user namespace. If no fsid mapping exists the kernel will
+continue looking up fsids in the id mappings of the user namespace. Hence, if a
+system supports fsid mappings through /proc/<pid>/fs*id_map and a container
+runtime is not aware of fsid mappings it or does not use them it will it will
+continue to work just as before.
 
-Would be nice with some clarification, so we can figure out an approach
-that would actually work.
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+---
+/* v2 */
+unchanged
+---
+ fs/proc/base.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
 
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index c7c64272b0fa..5fb28004663e 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -2970,6 +2970,13 @@ static int proc_projid_map_open(struct inode *inode, struct file *file)
+ 	return proc_id_map_open(inode, file, &proc_projid_seq_operations);
+ }
+ 
++#ifdef CONFIG_USER_NS_FSID
++static int proc_fsuid_map_open(struct inode *inode, struct file *file)
++{
++	return proc_id_map_open(inode, file, &proc_fsuid_seq_operations);
++}
++#endif
++
+ static const struct file_operations proc_uid_map_operations = {
+ 	.open		= proc_uid_map_open,
+ 	.write		= proc_uid_map_write,
+@@ -2994,6 +3001,16 @@ static const struct file_operations proc_projid_map_operations = {
+ 	.release	= proc_id_map_release,
+ };
+ 
++#ifdef CONFIG_USER_NS_FSID
++static const struct file_operations proc_fsuid_map_operations = {
++	.open		= proc_fsuid_map_open,
++	.write		= proc_fsuid_map_write,
++	.read		= seq_read,
++	.llseek		= seq_lseek,
++	.release	= proc_id_map_release,
++};
++#endif
++
+ static int proc_setgroups_open(struct inode *inode, struct file *file)
+ {
+ 	struct user_namespace *ns = NULL;
+@@ -3176,6 +3193,9 @@ static const struct pid_entry tgid_base_stuff[] = {
+ 	ONE("io",	S_IRUSR, proc_tgid_io_accounting),
+ #endif
+ #ifdef CONFIG_USER_NS
++#ifdef CONFIG_USER_NS_FSID
++	REG("fsuid_map",  S_IRUGO|S_IWUSR, proc_fsuid_map_operations),
++#endif
+ 	REG("uid_map",    S_IRUGO|S_IWUSR, proc_uid_map_operations),
+ 	REG("gid_map",    S_IRUGO|S_IWUSR, proc_gid_map_operations),
+ 	REG("projid_map", S_IRUGO|S_IWUSR, proc_projid_map_operations),
 -- 
-Jens Axboe
+2.25.0
 
