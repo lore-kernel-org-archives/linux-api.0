@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 58DC1C3B1BF
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:38:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 86907C2BA83
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:38:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 26591222C2
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:38:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 62EBD222C2
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:38:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730772AbgBNSiL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 14 Feb 2020 13:38:11 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:33734 "EHLO
+        id S1730742AbgBNSiJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 14 Feb 2020 13:38:09 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:33722 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730561AbgBNSiK (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 13:38:10 -0500
+        with ESMTP id S2389468AbgBNSiJ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 13:38:09 -0500
 Received: from ip5f5bf7ec.dynamic.kabel-deutschland.de ([95.91.247.236] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1j2fqZ-0000uO-2n; Fri, 14 Feb 2020 18:37:51 +0000
+        id 1j2fqd-0000uO-Bq; Fri, 14 Feb 2020 18:37:55 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
         "Eric W. Biederman" <ebiederm@xmission.com>,
@@ -40,9 +40,9 @@ Cc:     smbarber@chromium.org, Seth Forshee <seth.forshee@canonical.com>,
         containers@lists.linux-foundation.org,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v2 15/28] fs: add is_userns_visible() helper
-Date:   Fri, 14 Feb 2020 19:35:41 +0100
-Message-Id: <20200214183554.1133805-16-christian.brauner@ubuntu.com>
+Subject: [PATCH v2 18/28] capability: privileged_wrt_inode_uidgid(): handle fsid mappings
+Date:   Fri, 14 Feb 2020 19:35:44 +0100
+Message-Id: <20200214183554.1133805-19-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.25.0
 In-Reply-To: <20200214183554.1133805-1-christian.brauner@ubuntu.com>
 References: <20200214183554.1133805-1-christian.brauner@ubuntu.com>
@@ -53,33 +53,49 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Introduce a helper which makes it possible to detect fileystems whose
-superblock is visible in multiple user namespace. This currently only
-means proc and sys. Such filesystems usually have special semantics so their
-behavior will not be changed with the introduction of fsid mappings.
+Switch privileged_wrt_inode_uidgid() to lookup fsids in the fsid mappings. If
+no fsid mappings are setup the behavior is unchanged, i.e. fsids are looked up
+in the id mappings.
+
+Filesystems that share a superblock in all user namespaces they are mounted in
+will retain their old semantics even with the introduction of fsidmappings.
 
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
 unchanged
 ---
- include/linux/fs.h | 5 +++++
- 1 file changed, 5 insertions(+)
+ kernel/capability.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 3cd4fe6b845e..fdc8fb2d786b 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -3651,4 +3651,9 @@ static inline int inode_drain_writes(struct inode *inode)
- 	return filemap_write_and_wait(inode->i_mapping);
+diff --git a/kernel/capability.c b/kernel/capability.c
+index 1444f3954d75..2b0c1dc992e2 100644
+--- a/kernel/capability.c
++++ b/kernel/capability.c
+@@ -19,6 +19,8 @@
+ #include <linux/pid_namespace.h>
+ #include <linux/user_namespace.h>
+ #include <linux/uaccess.h>
++#include <linux/fsuidgid.h>
++#include <linux/fs.h>
+ 
+ /*
+  * Leveraged for setting/resetting capabilities
+@@ -486,8 +488,12 @@ EXPORT_SYMBOL(file_ns_capable);
+  */
+ bool privileged_wrt_inode_uidgid(struct user_namespace *ns, const struct inode *inode)
+ {
+-	return kuid_has_mapping(ns, inode->i_uid) &&
+-		kgid_has_mapping(ns, inode->i_gid);
++	if (is_userns_visible(inode->i_sb->s_iflags))
++		return kuid_has_mapping(ns, inode->i_uid) &&
++		       kgid_has_mapping(ns, inode->i_gid);
++
++	return kfsuid_has_mapping(ns, inode->i_uid) &&
++	       kfsgid_has_mapping(ns, inode->i_gid);
  }
  
-+static inline bool is_userns_visible(unsigned long iflags)
-+{
-+	return (iflags & SB_I_USERNS_VISIBLE);
-+}
-+
- #endif /* _LINUX_FS_H */
+ /**
 -- 
 2.25.0
 
