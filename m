@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2A997C3B1BF
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:38:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 629B2C2BA83
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:38:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 0732220848
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:38:46 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3B19420848
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 18:38:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730636AbgBNSiC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 14 Feb 2020 13:38:02 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:33667 "EHLO
+        id S2390463AbgBNSiq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 14 Feb 2020 13:38:46 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:33676 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730561AbgBNSiC (ORCPT
+        with ESMTP id S1730585AbgBNSiC (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 13:38:02 -0500
 Received: from ip5f5bf7ec.dynamic.kabel-deutschland.de ([95.91.247.236] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1j2fqP-0000uO-HU; Fri, 14 Feb 2020 18:37:41 +0000
+        id 1j2fqU-0000uO-Ht; Fri, 14 Feb 2020 18:37:46 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
         "Eric W. Biederman" <ebiederm@xmission.com>,
@@ -40,9 +40,9 @@ Cc:     smbarber@chromium.org, Seth Forshee <seth.forshee@canonical.com>,
         containers@lists.linux-foundation.org,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v2 08/28] sys: __sys_setfsgid(): handle fsid mappings
-Date:   Fri, 14 Feb 2020 19:35:34 +0100
-Message-Id: <20200214183554.1133805-9-christian.brauner@ubuntu.com>
+Subject: [PATCH v2 12/28] sys:__sys_setregid(): handle fsid mappings
+Date:   Fri, 14 Feb 2020 19:35:38 +0100
+Message-Id: <20200214183554.1133805-13-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.25.0
 In-Reply-To: <20200214183554.1133805-1-christian.brauner@ubuntu.com>
 References: <20200214183554.1133805-1-christian.brauner@ubuntu.com>
@@ -53,63 +53,65 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Switch setfsgid() to lookup fsids in the fsid mappings. If no fsid mappings are
+Switch setregid() to lookup fsids in the fsid mappings. If no fsid mappings are
 setup the behavior is unchanged, i.e. fsids are looked up in the id mappings.
 
-A caller can only setfs{g,u}id() to a given id if the id maps to a valid kid in
-both the id and fsid maps of the caller's user namespace. This is always the
-case when no id mappings and fsid mappings have been written. It is also always
-the case when an id mapping has been written which includes the target id and
-but no fsid mappings have been written. All non-fsid mapping aware workloads
-will thus work just as before.
-Requiring a valid mapping for the target id in both the id and fsid mappings of
-the container simplifies permission checking for userns visible filesystems
-such as proc.
+During setregid() the kfsgid is set to the kegid corresponding the egid that is
+requested by userspace. If the requested egid is -1 the kfsgid is reset to the
+current kegid. For the latter case this means we need to lookup the
+corresponding userspace egid corresponding to the current kegid in the id
+mappings and translate this egid into the corresponding kfsgid in the fsid
+mappings.
+
+The kfsid to cleanly handle userns visible filesystem is set as before.
+
+We require that a user must have a valid fsid mapping for the target id. This
+is consistent with how the setid calls work today without fsid mappings.
 
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
 - Christian Brauner <christian.brauner@ubuntu.com>:
-  - Set unmapped fsid as well.
+  - set kfsid which is used when dealing with proc permission checking
 ---
- kernel/sys.c | 11 ++++++++---
- 1 file changed, 8 insertions(+), 3 deletions(-)
+ kernel/sys.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
 
 diff --git a/kernel/sys.c b/kernel/sys.c
-index 13f790dbda71..864fa78f25a7 100644
+index 4697e010bbd7..22eea030d9e7 100644
 --- a/kernel/sys.c
 +++ b/kernel/sys.c
-@@ -849,15 +849,19 @@ long __sys_setfsgid(gid_t gid)
+@@ -354,7 +354,7 @@ long __sys_setregid(gid_t rgid, gid_t egid)
  	const struct cred *old;
  	struct cred *new;
- 	gid_t old_fsgid;
--	kgid_t kgid;
-+	kgid_t kgid, kfsgid;
+ 	int retval;
+-	kgid_t krgid, kegid;
++	kgid_t krgid, kegid, kfsgid;
  
- 	old = current_cred();
--	old_fsgid = from_kgid_munged(old->user_ns, old->fsgid);
-+	old_fsgid = from_kfsgid_munged(old->user_ns, old->fsgid);
- 
--	kgid = make_kgid(old->user_ns, gid);
-+	kgid = make_kfsgid(old->user_ns, gid);
- 	if (!gid_valid(kgid))
- 		return old_fsgid;
- 
-+	kfsgid = make_kgid(old->user_ns, gid);
-+	if (!gid_valid(kfsgid))
-+		return old_fsgid;
-+
- 	new = prepare_creds();
- 	if (!new)
- 		return old_fsgid;
-@@ -867,6 +871,7 @@ long __sys_setfsgid(gid_t gid)
- 	    ns_capable(old->user_ns, CAP_SETGID)) {
- 		if (!gid_eq(kgid, old->fsgid)) {
- 			new->fsgid = kgid;
-+			new->kfsgid = kfsgid;
- 			goto change_okay;
- 		}
+ 	krgid = make_kgid(ns, rgid);
+ 	kegid = make_kgid(ns, egid);
+@@ -386,12 +386,20 @@ long __sys_setregid(gid_t rgid, gid_t egid)
+ 			new->egid = kegid;
+ 		else
+ 			goto error;
++		kfsgid = make_kfsgid(ns, egid);
++	} else {
++		kfsgid = kgid_to_kfsgid(new->user_ns, new->egid);
++	}
++	if (!gid_valid(kfsgid)) {
++		retval = -EINVAL;
++		goto error;
  	}
+ 
+ 	if (rgid != (gid_t) -1 ||
+ 	    (egid != (gid_t) -1 && !gid_eq(kegid, old->gid)))
+ 		new->sgid = new->egid;
+-	new->fsgid = new->egid;
++	new->kfsgid = new->egid;
++	new->fsgid = kfsgid;
+ 
+ 	return commit_creds(new);
+ 
 -- 
 2.25.0
 
