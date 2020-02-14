@@ -2,178 +2,182 @@ Return-Path: <SRS0=Hu9T=4C=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-4.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E3E10C3B1A1
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 16:54:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 452C3C3B1A4
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:05:44 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id B3BE124650
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 16:54:59 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="lmZfsuR8"
+	by mail.kernel.org (Postfix) with ESMTP id 14BD12067D
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:05:44 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1581699944;
+	bh=eYqX7AWY488wKb2LnqqQ3zaj7auPtqmHBMFyrTUFCTU=;
+	h=From:To:Cc:Subject:Date:List-ID:From;
+	b=1H5BMBe9a23Or5nx7XV5ADciseOF5J/1T6JshmZ0aiCWIlsmzbupVec3TaTo8C1zR
+	 QYH4lBqismy4T5RP8rANxKxK1glrOBGskxMl/lq20UQoK0n66U368tI2Igp0CaCZ3P
+	 3SDsnD9lkKyTkrpt1zBuNRyc9/gfk8tNSsEzLjYM=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729770AbgBNQyy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 14 Feb 2020 11:54:54 -0500
-Received: from mail.efficios.com ([167.114.26.124]:59858 "EHLO
-        mail.efficios.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2404925AbgBNQyx (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 11:54:53 -0500
-Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id B00CE23ACB5;
-        Fri, 14 Feb 2020 11:54:50 -0500 (EST)
-Received: from mail.efficios.com ([127.0.0.1])
-        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
-        with ESMTP id b0oj3fE8KmnK; Fri, 14 Feb 2020 11:54:50 -0500 (EST)
-Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id 3FDA723A8FB;
-        Fri, 14 Feb 2020 11:54:50 -0500 (EST)
-DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 3FDA723A8FB
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
-        s=default; t=1581699290;
-        bh=NiKdD4GMaJ2MLkmF5uW6TCLm7+mQJ4RNezaFecTBBrc=;
-        h=Date:From:To:Message-ID:MIME-Version;
-        b=lmZfsuR8mMqnn/jkQx05Bu1jbK8vDIOmqGJaHkWup/0MlxAA/1gicJaDAkdKhB944
-         GhMWtw7u4HFvMPw+aOfPYDhGY8fYj94hJSqomzcvUQBEeMBMUqkjAspJwK+hPPzp0v
-         Yh3RwAaRgapqzNq2bhTAaE0Db8eNkjVBhTOlh7UHB8u3yN1mKoay4Ml35xHH1SAGRi
-         vFcltsNIlMjLtOyiKmpk1D6uXX1lq+u61akr0QrigKoV9FgAuzxw+kC6GOFwsAtBFd
-         5iW9l5E9ypdtJkwRrprv6leD3FA/K+deK8lIBVdDd1NFl5tzr+2MrrxQAZQUO15PkR
-         TYhq6aPXyutGQ==
-X-Virus-Scanned: amavisd-new at efficios.com
-Received: from mail.efficios.com ([127.0.0.1])
-        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
-        with ESMTP id a7LVwWYzJImk; Fri, 14 Feb 2020 11:54:50 -0500 (EST)
-Received: from mail03.efficios.com (mail03.efficios.com [167.114.26.124])
-        by mail.efficios.com (Postfix) with ESMTP id 2291D23AF8E;
-        Fri, 14 Feb 2020 11:54:50 -0500 (EST)
-Date:   Fri, 14 Feb 2020 11:54:50 -0500 (EST)
-From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-To:     Florian Weimer <fweimer@redhat.com>
-Cc:     "H. Peter Anvin" <hpa@zytor.com>, Chris Lameter <cl@linux.com>,
-        Jann Horn <jannh@google.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        linux-kernel <linux-kernel@vger.kernel.org>,
-        Joel Fernandes <joelaf@google.com>,
-        Ingo Molnar <mingo@redhat.com>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Dave Watson <davejwatson@fb.com>,
-        Will Deacon <will.deacon@arm.com>, shuah <shuah@kernel.org>,
-        Andi Kleen <andi@firstfloor.org>,
-        linux-kselftest <linux-kselftest@vger.kernel.org>,
-        Russell King <linux@arm.linux.org.uk>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Paul <paulmck@linux.vnet.ibm.com>, Paul Turner <pjt@google.com>,
-        Boqun Feng <boqun.feng@gmail.com>,
-        Josh Triplett <josh@joshtriplett.org>,
-        rostedt <rostedt@goodmis.org>, Ben Maurer <bmaurer@fb.com>,
-        linux-api <linux-api@vger.kernel.org>,
-        Andy Lutomirski <luto@amacapital.net>
-Message-ID: <1713146428.2610.1581699290029.JavaMail.zimbra@efficios.com>
-In-Reply-To: <87blql5hfb.fsf@oldenburg2.str.redhat.com>
-References: <20200121160312.26545-1-mathieu.desnoyers@efficios.com> <2049164886.596497.1579641536619.JavaMail.zimbra@efficios.com> <alpine.DEB.2.21.2001212141590.1231@www.lameter.com> <1648013936.596672.1579655468604.JavaMail.zimbra@efficios.com> <ead7a565-9a23-a7d7-904d-c4860f63952a@zytor.com> <87a76efuux.fsf@oldenburg2.str.redhat.com> <134428560.600911.1580153955842.JavaMail.zimbra@efficios.com> <87blql5hfb.fsf@oldenburg2.str.redhat.com>
-Subject: Re: [RFC PATCH v1] pin_on_cpu: Introduce thread CPU pinning system
- call
+        id S2392573AbgBNRFm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 14 Feb 2020 12:05:42 -0500
+Received: from mail-pj1-f68.google.com ([209.85.216.68]:53396 "EHLO
+        mail-pj1-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2388947AbgBNRFl (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 12:05:41 -0500
+Received: by mail-pj1-f68.google.com with SMTP id n96so4123966pjc.3;
+        Fri, 14 Feb 2020 09:05:41 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=DNlByY054icvI6mdU8f/7zppc96H8+Hj/ekQYXNSLtg=;
+        b=PG+iPDIXxskkfRMUJ5ywooQu/7tHQ1k/SbkMSTelZdJJeTH0qzLSJkj+/qtsJzLqdr
+         S3D3du4ZMClP79gCmH6VSQSPbbZigTC+l5VqHDNKWrELIJxIT6eNruvuM9alnMAZndw2
+         6x+u3omu+FlPlk9VkvEcK/PMhps3ZQS8xDr9nok8CQnEEYcWAjXJAcdgHwbfa4IZQafP
+         Co1xKRyGEodbKPlyK3W9i/B2x5xd3KmLjPamuSYPWlOQJHGwX9ashaFJX+Eggk65H+CL
+         bopnx+uS8t+WMMpJ0IE+FtB2Zm3oGgKHCbCZidQPVKoI1nUK7EFQQONb1iYi1PH6LMTZ
+         l7pg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :mime-version:content-transfer-encoding;
+        bh=DNlByY054icvI6mdU8f/7zppc96H8+Hj/ekQYXNSLtg=;
+        b=RkwC7xM8qzGjlJ15CkctX5+bXEuTn75Vj1CSt7I3sRmPGtCIBPhn3K8009uco42q5h
+         UuZBp5nDVs8jNNTmqMLhC92LmmeS4pd3pkiAv8gayZwNcEmx2dF9VRCLw9KDpl8UQbJ2
+         Koz9ymx/7Sgj5opYJnAR5nA67Zxsc2mUgnSLRvuXR7suSfZRW6jZguVQZRcBnUn275x/
+         J8+cqL0WzlZcPfrh3Sj8uyG8hpLm10f/c1juLL5Ip+j9Obi2FXPhV+4hsy6LdfecYvmA
+         u0ljzmOZdjvttJ6XaraSDQcgW/wCFDgTFaRS830BDb+cVlWZyddSvNUJzY/sdh0xf4DS
+         X8Xg==
+X-Gm-Message-State: APjAAAXjK5R0PONWBv4eoH26e/X3Ym6HEOXSXiexpOAEcXb4F5+WE/Un
+        19g3FXDS6iXKMhKWtUwrsUE=
+X-Google-Smtp-Source: APXvYqwVi2UegPb1oX4Cfj9nK1b3+YMr3+jpWlK6EWbFDOQEPfELPcREZMhSMA5sDOLmJmNAcaykfg==
+X-Received: by 2002:a17:90a:c708:: with SMTP id o8mr4872545pjt.104.1581699940461;
+        Fri, 14 Feb 2020 09:05:40 -0800 (PST)
+Received: from bbox-1.mtv.corp.google.com ([2620:15c:211:1:3e01:2939:5992:52da])
+        by smtp.gmail.com with ESMTPSA id a13sm7662924pfg.65.2020.02.14.09.05.30
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 14 Feb 2020 09:05:34 -0800 (PST)
+From:   Minchan Kim <minchan@kernel.org>
+To:     Andrew Morton <akpm@linux-foundation.org>
+Cc:     LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
+        linux-api@vger.kernel.org, oleksandr@redhat.com,
+        Suren Baghdasaryan <surenb@google.com>,
+        Tim Murray <timmurray@google.com>,
+        Daniel Colascione <dancol@google.com>,
+        Sandeep Patil <sspatil@google.com>,
+        Sonny Rao <sonnyrao@google.com>,
+        Brian Geffon <bgeffon@google.com>,
+        Michal Hocko <mhocko@suse.com>,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Shakeel Butt <shakeelb@google.com>,
+        John Dias <joaodias@google.com>,
+        Joel Fernandes <joel@joelfernandes.org>, sj38.park@gmail.com,
+        alexander.h.duyck@linux.intel.com, Jann Horn <jannh@google.com>,
+        Minchan Kim <minchan@kernel.org>
+Subject: [PATCH v5 0/7] introduce memory hinting API for external process
+Date:   Fri, 14 Feb 2020 09:05:13 -0800
+Message-Id: <20200214170520.160271-1-minchan@kernel.org>
+X-Mailer: git-send-email 2.25.0.265.gbab2e86ba0-goog
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-X-Originating-IP: [167.114.26.124]
-X-Mailer: Zimbra 8.8.15_GA_3899 (ZimbraWebClient - FF72 (Linux)/8.8.15_GA_3895)
-Thread-Topic: pin_on_cpu: Introduce thread CPU pinning system call
-Thread-Index: cTvqdrvCQudYKnfodFshnn5ecRABXA==
+Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
------ On Jan 30, 2020, at 6:10 AM, Florian Weimer fweimer@redhat.com wrote:
+Now, we have MADV_PAGEOUT and MADV_COLD as madvise hinting API. With that,
+application could give hints to kernel what memory range are preferred to be
+reclaimed. However, in some platform(e.g., Android), the information
+required to make the hinting decision is not known to the app.
+Instead, it is known to a centralized userspace daemon(e.g., ActivityManagerService),
+and that daemon must be able to initiate reclaim on its own without any app
+involvement.
 
-> * Mathieu Desnoyers:
-> 
->> It brings an interesting idea to the table though. Let's assume for now that
->> the only intended use of pin_on_cpu(2) would be to allow rseq(2) critical
->> sections to update per-cpu data on specific cpu number targets. In fact,
->> considering that userspace can be preempted at any point, we still need a
->> mechanism to guarantee atomicity with respect to other threads running on
->> the same runqueue, which rseq(2) provides. Therefore, that assumption does
->> not appear too far-fetched.
->>
->> There are 2 scenarios we need to consider here:
->>
->> A) pin_on_cpu(2) targets a CPU which is not part of the affinity mask.
->>
->> This case is easy: pin_on_cpu can return an error, and the caller needs to act
->> accordingly (e.g. figure out that this is a design error and report it, or
->> decide that it really did not want to touch that per-cpu data that badly and
->> make the entire process fall-back to a mechanism which does not use per-cpu
->> data at all from that point onwards)
-> 
-> Affinity masks currently are not like process memory: there is an
-> expectation that they can be altered from outside the process.
+To solve the concern, this patch introduces new syscall - process_madvise(2).
+Bascially, it's same with madvise(2) syscall but it has some differences.
 
-Yes, that's my main issue.
+1. It needs pidfd of target process to provide the hint
+2. It supports only MADV_{COLD|PAGEOUT|MERGEABLE|UNMEREABLE} at this moment.
+   Other hints in madvise will be opened when there are explicit requests from
+   community to prevent unexpected bugs we couldn't support.
+3. Only privileged processes can do something for other process's address
+   space.
 
-> Given that the caller may not have any ways to recover from the
-> suggested pin_on_cpu behavior, that seems problematic.
+For more detail of the new API, please see "mm: introduce external memory hinting API"
+description in this patchset.
 
-Indeed.
+Minchan Kim (6):
+  mm: pass task to do_madvise
+  mm: introduce external memory hinting API
+  mm: validate mm in do_madvise
+  mm: check fatal signal pending of target process
+  pid: export pidfd_get_pid
+  mm: support both pid and pidfd for process_madvise
 
-> 
-> What I would expect is that if pin_on_cpu cannot achieve implied
-> exclusion by running on the associated CPU, it acquires a lock that
-> prevents others pin_on_cpu calls from entering the critical section, and
-> tasks in the same task group from running on that CPU (if the CPU
-> becomes available to the task group).  The second part should maintain
-> exclusion of rseq sequences even if their fast path is not changed.
+Oleksandr Natalenko (2):
+  mm/madvise: employ mmget_still_valid for write lock
+  mm/madvise: allow KSM hints for remote API
 
-I try to avoid mutual exclusion over shared memory as rseq fallback whenever
-I can, so we can use rseq from lock-free algorithms without losing lock-freedom.
+* from v4 - https://lore.kernel.org/linux-mm/20200212233946.246210-1-minchan@kernel.org/
+  * pass mm down to functions, not accessing task->mm - Jann
+  * clean up - Alexander
+  * add Reviewed-by - Alexander, SeongJae
+  * patch reordering
 
-> (On the other hand, I'm worried that per-CPU data structures are a dead
-> end for user space unless we get containerized affinity masks, so that
-> contains only see resources that are actually available to them.)
+* from v3 - https://lore.kernel.org/linux-mm/20200128001641.5086-1-minchan@kernel.org/
+  * verify task->mm aftere access_mm - Oleg
+  * split some patches for easy review - Alexander
+  * clean up fatal signal checking - Suren
 
-I'm currently implementing a prototype of the following ideas, and I'm curious to
-read your thoughts on those:
+* from v2 - https://lore.kernel.org/linux-mm/20200116235953.163318-1-minchan@kernel.org/
+  * check signal callee and caller to bail out - Kirill Tkhai
+  * put more clarification for justification of new API
 
-I'm adding a "affinity_pinned" flag to the task struct of each thread. It can
-be set and cleared only by the owner thread through pin_on_cpu syscall commands.
-When the affinity is pinned by a thread, trying to change its affinity (from an
-external thread, or possibly from itself) will fail.
+* from v1 - https://lore.kernel.org/linux-mm/20200110213433.94739-1-minchan@kernel.org/
+  * fix syscall number - SeongJae
+  * use get_pid_task - Kirill Tkhai
+  * extend API to support pid as well as pidfd - Kirill Tkhai
 
-Whenever a thread would (temporarily) pin itself on a specific CPU, it would
-also pin its affinity mask as a side-effect. When a thread unpins from a CPU,
-the affinity mask stays pinned. The purpose of keeping this affinity pinned
-state per-thread is to ensure we don't end up with tiny race windows where
-changing the thread's affinity mask "typically" works, but fails once in a
-while because it's done concurrently with a 1ms long cpu pinning. This would
-lead to flaky code, and I try hard to avoid that.
+Minchan Kim (5):
+  mm: pass task and mm to do_madvise
+  mm: introduce external memory hinting API
+  mm: check fatal signal pending of target process
+  pid: export pidfd_get_pid
+  mm: support both pid and pidfd for process_madvise
 
-How changing this affinity should fail (from sched_setaffinity and cpusets) is a
-big unanswered question. I see two major alternatives so far:
+Oleksandr Natalenko (2):
+  mm/madvise: employ mmget_still_valid for write lock
+  mm/madvise: allow KSM hints for remote API
 
-1) We deliver a signal to the target thread (SIGKILL ? SIGSEGV ?), considering
-   that failure to be able to change its affinity mask means we need to send a
-   signal. How exactly would the killed application recover (or if it should)
-   is still unclear.
-
-2) Return an error to the sched_setaffinity or cpusets caller, and let it deal
-   with the error as it sees fit: ignore it, log it, or send a signal.
-
-I think option (2) provides the most flexiblity, and moves policy outside of
-the kernel, which is a good thing. However, looking at how cpusets seems to
-simply ignore errors when setting a task's cpumask, I wonder if asking from
-cpusets to handle any kind of error is asking too much. :-/
-
-Thanks,
-
-Mathieu
-
-
-
+ arch/alpha/kernel/syscalls/syscall.tbl      |   1 +
+ arch/arm/tools/syscall.tbl                  |   1 +
+ arch/arm64/include/asm/unistd.h             |   2 +-
+ arch/arm64/include/asm/unistd32.h           |   2 +
+ arch/ia64/kernel/syscalls/syscall.tbl       |   1 +
+ arch/m68k/kernel/syscalls/syscall.tbl       |   1 +
+ arch/microblaze/kernel/syscalls/syscall.tbl |   1 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl   |   1 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl   |   1 +
+ arch/parisc/kernel/syscalls/syscall.tbl     |   1 +
+ arch/powerpc/kernel/syscalls/syscall.tbl    |   1 +
+ arch/s390/kernel/syscalls/syscall.tbl       |   1 +
+ arch/sh/kernel/syscalls/syscall.tbl         |   1 +
+ arch/sparc/kernel/syscalls/syscall.tbl      |   1 +
+ arch/x86/entry/syscalls/syscall_32.tbl      |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl      |   1 +
+ arch/xtensa/kernel/syscalls/syscall.tbl     |   1 +
+ fs/io_uring.c                               |   2 +-
+ include/linux/mm.h                          |   3 +-
+ include/linux/pid.h                         |   1 +
+ include/linux/syscalls.h                    |   3 +
+ include/uapi/asm-generic/unistd.h           |   4 +-
+ kernel/exit.c                               |  17 ---
+ kernel/pid.c                                |  17 +++
+ kernel/sys_ni.c                             |   1 +
+ mm/madvise.c                                | 142 ++++++++++++++++----
+ 26 files changed, 165 insertions(+), 44 deletions(-)
 
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+2.25.0.265.gbab2e86ba0-goog
+
