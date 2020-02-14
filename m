@@ -2,96 +2,175 @@ Return-Path: <SRS0=Hu9T=4C=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
+X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A8185C3B1A1
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:06:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D5C98C3F68F
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:06:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 7856820637
-	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:06:12 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="YMESWuIs"
+	by mail.kernel.org (Postfix) with ESMTP id B0972206CC
+	for <linux-api@archiver.kernel.org>; Fri, 14 Feb 2020 17:06:28 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1581699988;
+	bh=Mn70puXdAoaD/XdCh4DIolw6QuHN6ney2nBsYiMELEo=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
+	b=LRSn/rJRQYjo7JhV0Bwd5+NrhTYHLJNkYQlUwbCU4+kO6epaHPBfXzTNICXIJabd8
+	 3+gQuv8kaZrXXdFRxl2ofHUcCQ3MkoMJj0RMci+JiRbVkDeDkXV+nzFCWrVKnjZIuA
+	 ZV8wzFCDMwQtGbRM+rp0CNNA36zzaxlRjHdVtSWw=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2392276AbgBNRGK (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 14 Feb 2020 12:06:10 -0500
-Received: from mail-lj1-f193.google.com ([209.85.208.193]:44335 "EHLO
-        mail-lj1-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2392462AbgBNRGJ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 12:06:09 -0500
-Received: by mail-lj1-f193.google.com with SMTP id q8so11468039ljj.11;
-        Fri, 14 Feb 2020 09:06:08 -0800 (PST)
+        id S2403948AbgBNRGX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 14 Feb 2020 12:06:23 -0500
+Received: from mail-pl1-f195.google.com ([209.85.214.195]:43286 "EHLO
+        mail-pl1-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2394502AbgBNRGW (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Feb 2020 12:06:22 -0500
+Received: by mail-pl1-f195.google.com with SMTP id p11so3938114plq.10;
+        Fri, 14 Feb 2020 09:06:22 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=from:to:cc:subject:date:message-id;
-        bh=U+GOvbpQG5UqF/JyIXafr2HFQH54O+9fIORiMKWoN9w=;
-        b=YMESWuIsUJerFKvWLzO+dCkm5MiLYBbLAcFgQcIzq9b/M/3DRpgTeBbsCDYMZw1MTg
-         GWb1eUmS46moMBwNnYSrJcKmCMlo4IIrLg/LUME9UiZ5R2p8sc3tgmCXb9qdJKbQgkLG
-         IM4FA/eDiQ7A7yVB8bJugbDZ63nU0R63pcsUBIlOBz8je5ruhWRObh3krpKpnU92OI7J
-         K8+IauQXTno4qt0rtDp/urYROl2hi89kZiHU/HPrk+SDFfg+FNyKSp3KIg73mCYBEmBj
-         0DkI1N/bfwyAhjW5W8cV4bXWDDEYt83qN0Mu+fMZrkdxgkn8WU1EfMa2GEaBQYm4a1Wn
-         0Oqg==
+        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=gRy5L/NnyJoS2OmlDqUm+MfIJpvKwHXn+HXMaRFsP54=;
+        b=a3RgWYknp3aBE8KobRcbN/rCDxpNx9DBj5n7uvvVHS2JEIrakFpt7XwPXPmxZzG3l6
+         +wuaX5L6PqE1/IqPrTWiEMrTiUydOnsonFMYRhixjJyhg/DNlrNh1F9KetYktv0wevo9
+         A3/rVuwX1FxopwKr7ShZ3xoBw/ZoX3HQwpvBjuR2zBSX6fh4hXXCkSDZvoq+Xgv4wPyH
+         jMfRW2dIg+uPxb1dxWa12TvwNbgnvfh5AQhdGLQWXxhBWYBg5cNoOmeizIPe6ucXYZYG
+         LRupuxhsdoMeF9i/JkdpqJXoYZzzb5HmAIg0fWbRVIhQA1kNYwaQ4xZmr/khBwvy+InK
+         GMYQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id;
-        bh=U+GOvbpQG5UqF/JyIXafr2HFQH54O+9fIORiMKWoN9w=;
-        b=SzSn2LesVV+w2lSTMgaZp044DA+pVWmmch05ekiH7wHeYNIGU9oPu7twwG/arbisZG
-         V6d7BlX3zNJfepurrcPHV1k0ZhXktltA9L0Qvc1d09+oDd8H0pgxJFInu0zgSOl1KqFM
-         +8NPklkOEW8s5TvYh19ZURl42bDoh4Zj3v27Ds8pF3wXEwffFS/uHtEpX9GRntGf8l3L
-         +oQkjYUPE7/T/t2/q3KzVEXMXRlhPv6BPwYvk8YuhkxGy7x6G4QeFKQhHSfjvl0/gUOt
-         65Z1fi598w+HLg2LZLR0VheCyWnQN8gWioeQOsbacp5S9RQ6XVBCOWPcmhv+l+JUm/Hi
-         Ud4A==
-X-Gm-Message-State: APjAAAUQw8mdpW7NFT7lPFfw3EvbhDHfK1kar/wJa91Ldpqzc0QzrAQ4
-        xstEGuEW9p1sK4YqwTDIbAk=
-X-Google-Smtp-Source: APXvYqzjC8iNkYfJyuOtvpZsAh//9ILGI/ZxOKZbpipy8WkGWX6GW6NcDhuwKtP4Mxt4VBxDPawlRQ==
-X-Received: by 2002:a2e:9587:: with SMTP id w7mr2704208ljh.42.1581699967362;
-        Fri, 14 Feb 2020 09:06:07 -0800 (PST)
-Received: from localhost.localdomain.localdomain ([131.228.2.21])
-        by smtp.gmail.com with ESMTPSA id p12sm3217470lfc.43.2020.02.14.09.06.05
-        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
-        Fri, 14 Feb 2020 09:06:06 -0800 (PST)
-From:   Li Xinhai <lixinhai.lxh@gmail.com>
-To:     mtk.manpages@gmail.com
-Cc:     linux-man@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-mm@kvack.org, akpm@linux-foundation.org
-Subject: [PATCH manpage] mbind.2: remove note about MPOL_MF_STRICT been ignored
-Date:   Fri, 14 Feb 2020 17:03:58 +0000
-Message-Id: <1581699838-7483-1-git-send-email-lixinhai.lxh@gmail.com>
-X-Mailer: git-send-email 1.8.3.1
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :in-reply-to:references:mime-version:content-transfer-encoding;
+        bh=gRy5L/NnyJoS2OmlDqUm+MfIJpvKwHXn+HXMaRFsP54=;
+        b=QSkyIET1HhjLQOIeVGM7f7n/ctMOF1lbwoiLsHOPNk3FXn66Ei/mKvU88BFZrZW/rx
+         ZKohrf1SrINdqP4o9ND6T75KFprnnyZLZLQilBlSraJKuGl9XcswvVPGbRQ13EQQkl/2
+         e759tdHZKOqgewwDyGhGZAxO3DmSm/m5m+RpWUWyg70Ne58aB/AHsQoB6rovVl31CmkQ
+         UtS7+OtcnUvXg0S/riwZJOfr2jtHptED36HNySAvrDZMXzM3VDVPwfOl3Me9FTrpFaAU
+         nLgu4b7ZG9MVdlXyW2a0bfyHsRg3jRBZX5h8kC4O7/Htq2OOr9KrwFXa7sE+Fgyf27Tu
+         TJrQ==
+X-Gm-Message-State: APjAAAULtjokXqnh9fKnzLRld/t+PI2PeLPmoCAMllCxOk4Qm/2JiPnU
+        2OS8YhoOKYvbfkk7p2R+G98=
+X-Google-Smtp-Source: APXvYqxkQjUfp4sJ7OTXS5M1xqiEpED7kh+kjiS+rgHdddd36PL3o1LAU+jD/WiYx/YX1/Cx4dhMoA==
+X-Received: by 2002:a17:902:b215:: with SMTP id t21mr4293214plr.190.1581699981877;
+        Fri, 14 Feb 2020 09:06:21 -0800 (PST)
+Received: from bbox-1.mtv.corp.google.com ([2620:15c:211:1:3e01:2939:5992:52da])
+        by smtp.gmail.com with ESMTPSA id a13sm7662924pfg.65.2020.02.14.09.06.15
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 14 Feb 2020 09:06:19 -0800 (PST)
+From:   Minchan Kim <minchan@kernel.org>
+To:     Andrew Morton <akpm@linux-foundation.org>
+Cc:     LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
+        linux-api@vger.kernel.org, oleksandr@redhat.com,
+        Suren Baghdasaryan <surenb@google.com>,
+        Tim Murray <timmurray@google.com>,
+        Daniel Colascione <dancol@google.com>,
+        Sandeep Patil <sspatil@google.com>,
+        Sonny Rao <sonnyrao@google.com>,
+        Brian Geffon <bgeffon@google.com>,
+        Michal Hocko <mhocko@suse.com>,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Shakeel Butt <shakeelb@google.com>,
+        John Dias <joaodias@google.com>,
+        Joel Fernandes <joel@joelfernandes.org>, sj38.park@gmail.com,
+        alexander.h.duyck@linux.intel.com, Jann Horn <jannh@google.com>,
+        Minchan Kim <minchan@kernel.org>,
+        Christian Brauner <christian@brauner.io>
+Subject: [PATCH v5 4/7] pid: export pidfd_get_pid
+Date:   Fri, 14 Feb 2020 09:05:17 -0800
+Message-Id: <20200214170520.160271-5-minchan@kernel.org>
+X-Mailer: git-send-email 2.25.0.265.gbab2e86ba0-goog
+In-Reply-To: <20200214170520.160271-1-minchan@kernel.org>
+References: <20200214170520.160271-1-minchan@kernel.org>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Current code ignores the MPOL_MF_STRICT when handling hugetlb mapping,
-now patch([1]) handles MPOL_MF_STRICT in same semantic as other mapping.
-So, we can remove the note about 'MPOL_MF_STRICT is ignored on huge page
-mappings', and no changes to other part of man-page.
+process_madvise syscall needs pidfd_get_pid function to translate
+pidfd to pid so this patch exports the function.
 
-[1] https://lore.kernel.org/linux-mm/1581559627-6206-1-git-send-email-lixinhai.lxh@gmail.com/
-
-Signed-off-by: Li Xinhai <lixinhai.lxh@gmail.com>
+Cc: Christian Brauner <christian@brauner.io>
+Suggested-by: Alexander Duyck <alexander.h.duyck@linux.intel.com>
+Reviewed-by: Alexander Duyck <alexander.h.duyck@linux.intel.com>
+Signed-off-by: Minchan Kim <minchan@kernel.org>
 ---
- man2/mbind.2 | 3 ---
- 1 file changed, 3 deletions(-)
+ include/linux/pid.h |  1 +
+ kernel/exit.c       | 17 -----------------
+ kernel/pid.c        | 17 +++++++++++++++++
+ 3 files changed, 18 insertions(+), 17 deletions(-)
 
-diff --git a/man2/mbind.2 b/man2/mbind.2
-index 16644ff..8c07270 100644
---- a/man2/mbind.2
-+++ b/man2/mbind.2
-@@ -471,9 +471,6 @@ Support for huge page policy was added with 2.6.16.
- For interleave policy to be effective on huge page mappings the
- policied memory needs to be tens of megabytes or larger.
- .PP
--.B MPOL_MF_STRICT
--is ignored on huge page mappings.
--.PP
- .B MPOL_MF_MOVE
- and
- .B MPOL_MF_MOVE_ALL
+diff --git a/include/linux/pid.h b/include/linux/pid.h
+index 998ae7d24450..023d9c3a8edc 100644
+--- a/include/linux/pid.h
++++ b/include/linux/pid.h
+@@ -75,6 +75,7 @@ extern const struct file_operations pidfd_fops;
+ struct file;
+ 
+ extern struct pid *pidfd_pid(const struct file *file);
++extern struct pid *pidfd_get_pid(unsigned int fd);
+ 
+ static inline struct pid *get_pid(struct pid *pid)
+ {
+diff --git a/kernel/exit.c b/kernel/exit.c
+index 0b81b26a872a..43375f9d8bbc 100644
+--- a/kernel/exit.c
++++ b/kernel/exit.c
+@@ -1470,23 +1470,6 @@ static long do_wait(struct wait_opts *wo)
+ 	return retval;
+ }
+ 
+-static struct pid *pidfd_get_pid(unsigned int fd)
+-{
+-	struct fd f;
+-	struct pid *pid;
+-
+-	f = fdget(fd);
+-	if (!f.file)
+-		return ERR_PTR(-EBADF);
+-
+-	pid = pidfd_pid(f.file);
+-	if (!IS_ERR(pid))
+-		get_pid(pid);
+-
+-	fdput(f);
+-	return pid;
+-}
+-
+ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
+ 			  int options, struct rusage *ru)
+ {
+diff --git a/kernel/pid.c b/kernel/pid.c
+index 0f4ecb57214c..360ba480a2a9 100644
+--- a/kernel/pid.c
++++ b/kernel/pid.c
+@@ -496,6 +496,23 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
+ 	return idr_get_next(&ns->idr, &nr);
+ }
+ 
++struct pid *pidfd_get_pid(unsigned int fd)
++{
++	struct fd f;
++	struct pid *pid;
++
++	f = fdget(fd);
++	if (!f.file)
++		return ERR_PTR(-EBADF);
++
++	pid = pidfd_pid(f.file);
++	if (!IS_ERR(pid))
++		get_pid(pid);
++
++	fdput(f);
++	return pid;
++}
++
+ /**
+  * pidfd_create() - Create a new pid file descriptor.
+  *
 -- 
-1.8.3.1
+2.25.0.265.gbab2e86ba0-goog
 
