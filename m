@@ -8,59 +8,58 @@ X-Spam-Status: No, score=-9.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DF1B7C33FA5
-	for <linux-api@archiver.kernel.org>; Mon, 17 Feb 2020 13:15:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5CFA9C33FA0
+	for <linux-api@archiver.kernel.org>; Mon, 17 Feb 2020 13:15:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id B7E9C208C4
-	for <linux-api@archiver.kernel.org>; Mon, 17 Feb 2020 13:15:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2C817206E2
+	for <linux-api@archiver.kernel.org>; Mon, 17 Feb 2020 13:15:33 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="qDRAcOHU"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="MI1CsE3t"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729201AbgBQNPa (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 17 Feb 2020 08:15:30 -0500
-Received: from mail-wm1-f66.google.com ([209.85.128.66]:36173 "EHLO
-        mail-wm1-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729166AbgBQNPa (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 17 Feb 2020 08:15:30 -0500
-Received: by mail-wm1-f66.google.com with SMTP id p17so18420317wma.1;
-        Mon, 17 Feb 2020 05:15:27 -0800 (PST)
+        id S1729163AbgBQNP1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 17 Feb 2020 08:15:27 -0500
+Received: from mail-wr1-f68.google.com ([209.85.221.68]:39939 "EHLO
+        mail-wr1-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1729062AbgBQNP0 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 17 Feb 2020 08:15:26 -0500
+Received: by mail-wr1-f68.google.com with SMTP id t3so19676958wru.7;
+        Mon, 17 Feb 2020 05:15:24 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=MPopq/7KWlkqXSzsgjde6MGol3l+YXrmzEp29RmzokU=;
-        b=qDRAcOHUX9VxeSvORk3o+sADAPDgCaqhH5cSU8Ru9a3zXMNofts+XQywJQHur123ht
-         F47i/iTUfHJy0OSgmKcaQFUeO17lDZF4dfBmVZmUlB7Lp2LqrUvQoIhLKecoOx8Yl8d4
-         52q48KWGlFQBoFuIUchnYhlVtfasWp235JSqCUXOfa9AhqgqEN0QUetFW522XMWQ0ag9
-         J21beKFPPsRpIiEcu5oMOcTmjpHGS7BUrftl2uhISJsmK/BLU/QYid0dBUUpOKGmmd3Q
-         69Gyqvxu1g0lJfDI8NgmJpgOx47EnRq5ks+0wHyEP/9/2hYUHRWF30/+8s6KeZbm9PMc
-         2zVA==
+        bh=VlYgvIwOdhyhUz4lK253x8q9VozlyCJr3zdxshyY+mw=;
+        b=MI1CsE3t508bvqGqsR/YJOYTgE4BHulTJmrTHvlwbfU557s/0tkF6F/priYIEdFP0k
+         lrlWyoaiklt6lxareJN+oz+RKCbw6s50n6m8DJ/BCBA41YR1iGf77n5JREsF+qeJHptW
+         xYG7u7L6NU4WLyWUzvNNlp1Xh55xmaS8wAn0h1kGpIj0MJOQnHc+vVgNjx8QlAOWb7Z3
+         eRXi3ggkxZAXrwbFc3UElXjBO8wVYoXcOx9iIRCs51n2OjrLR0ejKNIGSuZbtAg5+f55
+         Y5N4M3y36q6q159JOK8MmJ+hbjF/8qHckryW6rZg/+E84YfcnZv2NT/z49hqraDC2b7n
+         eQ/w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references;
-        bh=MPopq/7KWlkqXSzsgjde6MGol3l+YXrmzEp29RmzokU=;
-        b=fcUkeqENTApv5gIhKhOYGGg16cCrbZQFG/p0i2PJ+joM9WkDOx5mTJxOi/W7DV9Ina
-         Jje1pmiU/7sMcFbipgAjbbXUfOo4bpHxKl9iTyUUHggouz+kSg6WFTNlqt6SSPTE8G1c
-         vEtAk2lyxLFPsMPEZy0WAu06nP5iu2fvd2YSpENjf+w+gVBlZiaQEEC2/81hh33TJ3PB
-         9LqhqJDPMvYTgLVdjHxUeJF3bHZHYwZcdOxSntlh+VALFkAt54oALQcu2q8MNmx7kGiC
-         4jkSu877LCGwszThasx3Xc/zb+C4oyVXK0NbWnUn1Jlh2FtWHxULJ9UzfdcbpyQ5nGA1
-         X7Yg==
-X-Gm-Message-State: APjAAAU5OFG8Xg6kglpgJjgmMMb27Lyrr/z3Y4RubIGPAEnc8j18tOI5
-        XIoBStrwrGIVOYy51cmgZyA=
-X-Google-Smtp-Source: APXvYqxt5XPM/viO/n6hl+qybwvNVOoVNy2BqL1jaE0LIpXLtnI56oDVdrqcCyar5IFH1m6SHQfBmA==
-X-Received: by 2002:a7b:c084:: with SMTP id r4mr21117319wmh.99.1581945326868;
-        Mon, 17 Feb 2020 05:15:26 -0800 (PST)
+        bh=VlYgvIwOdhyhUz4lK253x8q9VozlyCJr3zdxshyY+mw=;
+        b=XhdcBmqAtY0phDAjTvBB+d2lhnfFX4w446dvkNRYFgsUSw0nGS3vUt7ESVH8p4KuYS
+         OF4X5cquaQR7CUjlg9mhb3i910JCb2qhXw8Mil49PG2HcsylWclJfpmYBi89v5bySEdL
+         81piiOZc+3T9cxR6e//EICLcDQ4xWNsstVEMauAku9MulrC4YNolaFrFKsYCkEWhor1F
+         +o5AhaGFBjbM9n4B1h9TxsSjsd4lBsnZT3XBogiJLStPgWuJFGtfWf2zOt04ZB6x2TLd
+         TTiGzXykIx4NQ+N+0jtoxbdAQe0ptWKGhTwhxcBYaTRsMp0yXLQweeR/EuXmHHKJeC30
+         SDeA==
+X-Gm-Message-State: APjAAAVh4igHzg4ASRXHlY7gL9LtSZJAQLunDJrK5HyRofqL2guzyysK
+        QbK0O044hAPjmiLcpO069Vs=
+X-Google-Smtp-Source: APXvYqzmUIQoOqIgTBovSm/QkZx5mdkuDOVo9yqPteD/kS0Fn+nzk0DQFVV8CpvZnFE3r9ryAqFb2A==
+X-Received: by 2002:adf:ca07:: with SMTP id o7mr21638636wrh.49.1581945323285;
+        Mon, 17 Feb 2020 05:15:23 -0800 (PST)
 Received: from amir-ThinkPad-T480.ctera.local (bzq-166-168-31-246.red.bezeqint.net. [31.168.166.246])
-        by smtp.gmail.com with ESMTPSA id m21sm545745wmi.27.2020.02.17.05.15.25
+        by smtp.gmail.com with ESMTPSA id m21sm545745wmi.27.2020.02.17.05.15.22
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 17 Feb 2020 05:15:26 -0800 (PST)
+        Mon, 17 Feb 2020 05:15:22 -0800 (PST)
 From:   Amir Goldstein <amir73il@gmail.com>
 To:     Jan Kara <jack@suse.cz>
-Cc:     linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org,
-        Matthew Bobrowski <mbobrowski@mbobrowski.org>
-Subject: [BONUS][PATCH v2 16/16] fanotify: support limited functionality for unprivileged users
-Date:   Mon, 17 Feb 2020 15:14:55 +0200
-Message-Id: <20200217131455.31107-17-amir73il@gmail.com>
+Cc:     linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
+Subject: [PATCH v2 13/16] fanotify: report name info for FAN_DIR_MODIFY event
+Date:   Mon, 17 Feb 2020 15:14:52 +0200
+Message-Id: <20200217131455.31107-14-amir73il@gmail.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20200217131455.31107-1-amir73il@gmail.com>
 References: <20200217131455.31107-1-amir73il@gmail.com>
@@ -69,173 +68,292 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add support for new fanotify_init() flag FAN_UNPRIVILEGED.
-User may request an unprivileged event listener using this flag even if
-user is privileged.
+Report event FAN_DIR_MODIFY with name in a variable length record similar
+to how fid's are reported.  With name info reporting implemented, setting
+FAN_DIR_MODIFY in mark mask is now allowed.
 
-An unprivileged event listener does not get an open file descriptor in
-the event nor the process pid of another process.  An unprivileged event
-listener cannot request permission events, cannot set mount/filesystem
-marks and cannot request unlimited queue/marks.
+When events are reported with name, the reported fid identifies the
+directory and the name follows the fid. The info record type for this
+event info is FAN_EVENT_INFO_TYPE_DFID_NAME.
 
-This enables the limited functionality similar to inotify when watching a
-set of files and directories for OPEN/ACCESS/MODIFY/CLOSE events, without
-requiring SYS_CAP_ADMIN privileges.
+For now, all reported events have at most one info record which is
+either FAN_EVENT_INFO_TYPE_FID or FAN_EVENT_INFO_TYPE_DFID_NAME (for
+FAN_DIR_MODIFY).  Later on, events "on child" will report both records.
 
-The FAN_DIR_MODIFY event and FAN_REPORT_FID_NAME init flag, provide a
-method for an unprivileged event listener watching a set of directories
-(with FAN_EVENT_ON_CHILD) to monitor all changes inside those directories.
+There are several ways that an application can use this information:
 
-This typically requires that the listener keeps a map of watched
-directory fid to dirfd (O_PATH), where fid is obtained with
-name_to_handle_at() before starting to watch for changes.
+1. When watching a single directory, the name is always relative to
+the watched directory, so application need to fstatat(2) the name
+relative to the watched directory.
 
-When getting an event, the reported fid of the parent should be resolved
-to dirfd and fstatsat(2) with dirfd and name should be used to query the
-state of the filesystem entry.
+2. When watching a set of directories, the application could keep a map
+of dirfd for all watched directories and hash the map by fid obtained
+with name_to_handle_at(2).  When getting a name event, the fid in the
+event info could be used to lookup the base dirfd in the map and then
+call fstatat(2) with that dirfd.
 
-Note that even though events do not report the event creator pid,
-fanotify does not merge similar events on the same object that were
-generated by different processes. This is aligned with exiting behavior
-when generating processes are outside of the listener pidns (which
-results in reporting 0 pid to listener).
+3. When watching a filesystem (FAN_MARK_FILESYSTEM) or a large set of
+directories, the application could use open_by_handle_at(2) with the fid
+in event info to obtain dirfd for the directory where event happened and
+call fstatat(2) with this dirfd.
 
-Cc: <linux-api@vger.kernel.org>
+The last option scales better for a large number of watched directories.
+The first two options may be available in the future also for non
+privileged fanotify watchers, because open_by_handle_at(2) requires
+the CAP_DAC_READ_SEARCH capability.
+
 Signed-off-by: Amir Goldstein <amir73il@gmail.com>
 ---
- fs/notify/fanotify/fanotify_user.c | 42 ++++++++++++++++++++++++++----
- include/linux/fanotify.h           | 16 +++++++++++-
- include/uapi/linux/fanotify.h      |  1 +
- 3 files changed, 53 insertions(+), 6 deletions(-)
+ fs/notify/fanotify/fanotify.c      |   2 +-
+ fs/notify/fanotify/fanotify_user.c | 120 ++++++++++++++++++++++-------
+ include/linux/fanotify.h           |   3 +-
+ include/uapi/linux/fanotify.h      |   1 +
+ 4 files changed, 98 insertions(+), 28 deletions(-)
 
+diff --git a/fs/notify/fanotify/fanotify.c b/fs/notify/fanotify/fanotify.c
+index fc75dc53a218..b651c18d3a93 100644
+--- a/fs/notify/fanotify/fanotify.c
++++ b/fs/notify/fanotify/fanotify.c
+@@ -478,7 +478,7 @@ static int fanotify_handle_event(struct fsnotify_group *group,
+ 	BUILD_BUG_ON(FAN_OPEN_EXEC != FS_OPEN_EXEC);
+ 	BUILD_BUG_ON(FAN_OPEN_EXEC_PERM != FS_OPEN_EXEC_PERM);
+ 
+-	BUILD_BUG_ON(HWEIGHT32(ALL_FANOTIFY_EVENT_BITS) != 19);
++	BUILD_BUG_ON(HWEIGHT32(ALL_FANOTIFY_EVENT_BITS) != 20);
+ 
+ 	mask = fanotify_group_event_mask(group, iter_info, mask, data,
+ 					 data_type);
 diff --git a/fs/notify/fanotify/fanotify_user.c b/fs/notify/fanotify/fanotify_user.c
-index 5d369aa5d1bc..ac2cdb5287fe 100644
+index 284f3548bb79..a1bafc21ebbb 100644
 --- a/fs/notify/fanotify/fanotify_user.c
 +++ b/fs/notify/fanotify/fanotify_user.c
-@@ -328,11 +328,21 @@ static ssize_t copy_event_to_user(struct fsnotify_group *group,
- 	metadata.vers = FANOTIFY_METADATA_VERSION;
- 	metadata.reserved = 0;
- 	metadata.mask = event->mask & FANOTIFY_OUTGOING_EVENTS;
--	metadata.pid = pid_vnr(event->pid);
-+	/*
-+	 * An unprivileged event listener does not get an open file descriptor
-+	 * in the event nor another generating process pid. If the event was
-+	 * generated by the unprivileged process itself, self pid is reported.
-+	 */
-+	if (!FAN_GROUP_FLAG(group, FAN_UNPRIVILEGED) ||
-+	    task_tgid(current) == event->pid)
-+		metadata.pid = pid_vnr(event->pid);
-+	else
-+		metadata.pid = 0;
+@@ -51,20 +51,32 @@ struct kmem_cache *fanotify_name_event_cachep __read_mostly;
+ struct kmem_cache *fanotify_perm_event_cachep __read_mostly;
  
- 	if (FAN_GROUP_FLAG(group, FAN_REPORT_FID)) {
- 		metadata.event_len += fanotify_event_info_len(event);
--	} else if (fanotify_event_has_path(event)) {
-+	} else if (!FAN_GROUP_FLAG(group, FAN_UNPRIVILEGED) &&
-+		   fanotify_event_has_path(event)) {
+ #define FANOTIFY_EVENT_ALIGN 4
++#define FANOTIFY_INFO_HDR_LEN \
++	(sizeof(struct fanotify_event_info_fid) + sizeof(struct file_handle))
+ 
+-static int fanotify_fid_info_len(struct fanotify_fid_hdr *fh)
++static int fanotify_fid_info_len(int fh_len, int name_len)
+ {
+-	return roundup(sizeof(struct fanotify_event_info_fid) +
+-		       sizeof(struct file_handle) + fh->len,
+-		       FANOTIFY_EVENT_ALIGN);
++	int info_len = fh_len;
++
++	if (name_len)
++		info_len += name_len + 1;
++
++	return roundup(FANOTIFY_INFO_HDR_LEN + info_len, FANOTIFY_EVENT_ALIGN);
+ }
+ 
+ static int fanotify_event_info_len(struct fanotify_event *event)
+ {
+-	if (!fanotify_event_has_fid(event))
+-		return 0;
++	int info_len = 0;
++
++	if (fanotify_event_has_fid(event))
++		info_len += fanotify_fid_info_len(event->fh.len, 0);
++
++	if (fanotify_event_has_dfid_name(event)) {
++		info_len += fanotify_fid_info_len(event->dfh.len,
++					fanotify_event_name_len(event));
++	}
+ 
+-	return fanotify_fid_info_len(&event->fh);
++	return info_len;
+ }
+ 
+ /*
+@@ -210,23 +222,34 @@ static int process_access_response(struct fsnotify_group *group,
+ 	return -ENOENT;
+ }
+ 
+-static int copy_fid_to_user(__kernel_fsid_t *fsid, struct fanotify_fid_hdr *fh,
+-			    struct fanotify_fid *fid, char __user *buf)
++static int copy_info_to_user(__kernel_fsid_t *fsid, struct fanotify_fid_hdr *fh,
++			     struct fanotify_fid *fid, const struct qstr *name,
++			     char __user *buf, size_t count)
+ {
+ 	struct fanotify_event_info_fid info = { };
+ 	struct file_handle handle = { };
+-	unsigned char bounce[FANOTIFY_INLINE_FH_LEN], *data;
++	unsigned char bounce[max(FANOTIFY_INLINE_FH_LEN, DNAME_INLINE_LEN)];
++	const unsigned char *data;
+ 	size_t fh_len = fh->len;
+-	size_t len = fanotify_fid_info_len(fh);
++	size_t name_len = name ? name->len : 0;
++	size_t info_len = fanotify_fid_info_len(fh_len, name_len);
++	size_t len = info_len;
++
++	pr_debug("%s: fh_len=%lu name_len=%lu, info_len=%lu, count=%lu\n",
++		 __func__, fh_len, name_len, info_len, count);
+ 
+-	if (!len)
++	if (!fh_len || (name && !name_len))
+ 		return 0;
+ 
+-	if (WARN_ON_ONCE(len < sizeof(info) + sizeof(handle) + fh_len))
++	if (WARN_ON_ONCE(len < sizeof(info) || len > count))
+ 		return -EFAULT;
+ 
+-	/* Copy event info fid header followed by vaiable sized file handle */
+-	info.hdr.info_type = FAN_EVENT_INFO_TYPE_FID;
++	/*
++	 * Copy event info fid header followed by vaiable sized file handle
++	 * and optionally followed by vaiable sized filename.
++	 */
++	info.hdr.info_type = name_len ? FAN_EVENT_INFO_TYPE_DFID_NAME :
++					FAN_EVENT_INFO_TYPE_FID;
+ 	info.hdr.len = len;
+ 	info.fsid = *fsid;
+ 	if (copy_to_user(buf, &info, sizeof(info)))
+@@ -234,6 +257,9 @@ static int copy_fid_to_user(__kernel_fsid_t *fsid, struct fanotify_fid_hdr *fh,
+ 
+ 	buf += sizeof(info);
+ 	len -= sizeof(info);
++	if (WARN_ON_ONCE(len < sizeof(handle)))
++		return -EFAULT;
++
+ 	handle.handle_type = fh->type;
+ 	handle.handle_bytes = fh_len;
+ 	if (copy_to_user(buf, &handle, sizeof(handle)))
+@@ -241,9 +267,12 @@ static int copy_fid_to_user(__kernel_fsid_t *fsid, struct fanotify_fid_hdr *fh,
+ 
+ 	buf += sizeof(handle);
+ 	len -= sizeof(handle);
++	if (WARN_ON_ONCE(len < fh_len))
++		return -EFAULT;
++
+ 	/*
+-	 * For an inline fh, copy through stack to exclude the copy from
+-	 * usercopy hardening protections.
++	 * For an inline fh and inline file name, copy through stack to exclude
++	 * the copy from usercopy hardening protections.
+ 	 */
+ 	data = fanotify_fid_fh(fid, fh_len);
+ 	if (fh_len <= FANOTIFY_INLINE_FH_LEN) {
+@@ -253,14 +282,33 @@ static int copy_fid_to_user(__kernel_fsid_t *fsid, struct fanotify_fid_hdr *fh,
+ 	if (copy_to_user(buf, data, fh_len))
+ 		return -EFAULT;
+ 
+-	/* Pad with 0's */
+ 	buf += fh_len;
+ 	len -= fh_len;
++
++	if (name_len) {
++		/* Copy the filename with terminating null */
++		name_len++;
++		if (WARN_ON_ONCE(len < name_len))
++			return -EFAULT;
++
++		data = name->name;
++		if (name_len <= DNAME_INLINE_LEN) {
++			memcpy(bounce, data, name_len);
++			data = bounce;
++		}
++		if (copy_to_user(buf, data, name_len))
++			return -EFAULT;
++
++		buf += name_len;
++		len -= name_len;
++	}
++
++	/* Pad with 0's */
+ 	WARN_ON_ONCE(len < 0 || len >= FANOTIFY_EVENT_ALIGN);
+ 	if (len > 0 && clear_user(buf, len))
+ 		return -EFAULT;
+ 
+-	return 0;
++	return info_len;
+ }
+ 
+ static ssize_t copy_event_to_user(struct fsnotify_group *group,
+@@ -282,12 +330,12 @@ static ssize_t copy_event_to_user(struct fsnotify_group *group,
+ 	metadata.mask = event->mask & FANOTIFY_OUTGOING_EVENTS;
+ 	metadata.pid = pid_vnr(event->pid);
+ 
+-	if (fanotify_event_has_path(event)) {
++	if (FAN_GROUP_FLAG(group, FAN_REPORT_FID)) {
++		metadata.event_len += fanotify_event_info_len(event);
++	} else if (fanotify_event_has_path(event)) {
  		fd = create_fd(group, event, &f);
  		if (fd < 0)
  			return fd;
-@@ -845,12 +855,26 @@ SYSCALL_DEFINE2(fanotify_init, unsigned int, flags, unsigned int, event_f_flags)
- 	int f_flags, fd;
- 	struct user_struct *user;
- 	struct fanotify_event *oevent;
-+	unsigned int class = flags & FANOTIFY_CLASS_BITS;
+-	} else if (fanotify_event_has_fid(event)) {
+-		metadata.event_len += fanotify_event_info_len(event);
+ 	}
+ 	metadata.fd = fd;
  
- 	pr_debug("%s: flags=%x event_f_flags=%x\n",
- 		 __func__, flags, event_f_flags);
+@@ -302,16 +350,36 @@ static ssize_t copy_event_to_user(struct fsnotify_group *group,
+ 	if (copy_to_user(buf, &metadata, FAN_EVENT_METADATA_LEN))
+ 		goto out_close_fd;
  
--	if (!capable(CAP_SYS_ADMIN))
-+	if (flags & FAN_UNPRIVILEGED) {
-+		/*
-+		 * User can request an unprivileged event listener even if
-+		 * user is privileged. An unprivileged event listener does not
-+		 * get an open file descriptor in the event nor the proccess id
-+		 * of another process. An unprivileged event listener and cannot
-+		 * request permission events, cannot set mount/filesystem marks
-+		 * and cannot request unlimited queue/marks.
-+		 */
-+		if ((flags & ~FANOTIFY_UNPRIV_INIT_FLAGS) ||
-+		    class != FAN_CLASS_NOTIF)
-+			return -EINVAL;
-+	} else if (!capable(CAP_SYS_ADMIN)) {
- 		return -EPERM;
-+	}
- 
- #ifdef CONFIG_AUDITSYSCALL
- 	if (flags & ~(FANOTIFY_INIT_FLAGS | FAN_ENABLE_AUDIT))
-@@ -916,7 +940,7 @@ SYSCALL_DEFINE2(fanotify_init, unsigned int, flags, unsigned int, event_f_flags)
- 	group->fanotify_data.f_flags = event_f_flags;
- 	init_waitqueue_head(&group->fanotify_data.access_waitq);
- 	INIT_LIST_HEAD(&group->fanotify_data.access_list);
--	switch (flags & FANOTIFY_CLASS_BITS) {
-+	switch (class) {
- 	case FAN_CLASS_NOTIF:
- 		group->priority = FS_PRIO_0;
- 		break;
-@@ -1101,6 +1125,14 @@ static int do_fanotify_mark(int fanotify_fd, unsigned int flags, __u64 mask,
- 	    group->priority == FS_PRIO_0)
- 		goto fput_and_out;
- 
-+	/*
-+	 * An unprivileged event listener is not allowed to watch a mount
-+	 * point nor a filesystem.
-+	 */
-+	if (FAN_GROUP_FLAG(group, FAN_UNPRIVILEGED) &&
-+	    mark_type != FAN_MARK_INODE)
-+		goto fput_and_out;
++	buf += FAN_EVENT_METADATA_LEN;
++	count -= FAN_EVENT_METADATA_LEN;
 +
- 	/*
- 	 * Events with data type inode do not carry enough information to report
- 	 * event->fd, so we do not allow setting a mask for inode events unless
-@@ -1214,7 +1246,7 @@ COMPAT_SYSCALL_DEFINE6(fanotify_mark,
-  */
- static int __init fanotify_user_setup(void)
- {
--	BUILD_BUG_ON(HWEIGHT32(FANOTIFY_INIT_FLAGS) != 9);
-+	BUILD_BUG_ON(HWEIGHT32(FANOTIFY_INIT_FLAGS) != 10);
- 	BUILD_BUG_ON(HWEIGHT32(FANOTIFY_MARK_FLAGS) != 9);
+ 	if (fanotify_is_perm_event(event->mask))
+ 		FANOTIFY_PE(fsn_event)->fd = fd;
  
- 	fanotify_mark_cache = KMEM_CACHE(fsnotify_mark,
+-	if (fanotify_event_has_path(event)) {
++	if (f)
+ 		fd_install(fd, f);
+-	} else if (fanotify_event_has_fid(event)) {
+-		ret = copy_fid_to_user(&event->fsid, &event->fh, &event->fid,
+-				       buf + FAN_EVENT_METADATA_LEN);
++
++	/* Event info records order is: dir fid + name, child fid */
++	if (fanotify_event_has_dfid_name(event)) {
++		struct fanotify_name_event *fne = FANOTIFY_NE(fsn_event);
++
++		ret = copy_info_to_user(&event->fsid, &event->dfh, &fne->dfid,
++					&fne->name, buf, count);
+ 		if (ret < 0)
+ 			return ret;
++
++		buf += ret;
++		count -= ret;
++	}
++
++	if (fanotify_event_has_fid(event)) {
++		ret = copy_info_to_user(&event->fsid, &event->fh, &event->fid,
++					NULL, buf, count);
++		if (ret < 0)
++			return ret;
++
++		buf += ret;
++		count -= ret;
+ 	}
+ 
+ 	return metadata.event_len;
 diff --git a/include/linux/fanotify.h b/include/linux/fanotify.h
-index 5412a25c54c0..93107b44e4e1 100644
+index b79fa9bb7359..3049a6c06d9e 100644
 --- a/include/linux/fanotify.h
 +++ b/include/linux/fanotify.h
-@@ -21,7 +21,21 @@
- #define FANOTIFY_INIT_FLAGS	(FANOTIFY_CLASS_BITS | \
- 				 FAN_REPORT_TID | FAN_REPORT_FID_NAME | \
- 				 FAN_CLOEXEC | FAN_NONBLOCK | \
--				 FAN_UNLIMITED_QUEUE | FAN_UNLIMITED_MARKS)
-+				 FAN_UNLIMITED_QUEUE | FAN_UNLIMITED_MARKS | \
-+				 FAN_UNPRIVILEGED)
-+
-+/*
-+ * fanotify_init() flags allowed for unprivileged listener.
-+ * FAN_CLASS_NOTIF in this mask is purely semantic because it is zero,
-+ * but it is the only class we allow for unprivileged listener.
-+ * Since unprivileged listener does not provide file descriptors in events,
-+ * FAN_REPORT_FID_NAME makes sense, but it is not a must.
-+ * FAN_REPORT_TID does not make sense for unprivileged listener, which uses
-+ * event->pid only to filter out events generated by listener process itself.
-+ */
-+#define FANOTIFY_UNPRIV_INIT_FLAGS	(FAN_CLOEXEC | FAN_NONBLOCK | \
-+					 FAN_CLASS_NOTIF | FAN_UNPRIVILEGED | \
-+					 FAN_REPORT_FID_NAME)
+@@ -47,7 +47,8 @@
+  * Directory entry modification events - reported only to directory
+  * where entry is modified and not to a watching parent.
+  */
+-#define FANOTIFY_DIRENT_EVENTS	(FAN_MOVE | FAN_CREATE | FAN_DELETE)
++#define FANOTIFY_DIRENT_EVENTS	(FAN_MOVE | FAN_CREATE | FAN_DELETE | \
++				 FAN_DIR_MODIFY)
  
- #define FANOTIFY_MARK_TYPE_BITS	(FAN_MARK_INODE | FAN_MARK_MOUNT | \
- 				 FAN_MARK_FILESYSTEM)
+ /* Events that can only be reported with data type FSNOTIFY_EVENT_INODE */
+ #define FANOTIFY_INODE_EVENTS	(FANOTIFY_DIRENT_EVENTS | \
 diff --git a/include/uapi/linux/fanotify.h b/include/uapi/linux/fanotify.h
-index 04181769bb50..2be673862a43 100644
+index 615fa2c87179..2b56e194b858 100644
 --- a/include/uapi/linux/fanotify.h
 +++ b/include/uapi/linux/fanotify.h
-@@ -50,6 +50,7 @@
- #define FAN_UNLIMITED_QUEUE	0x00000010
- #define FAN_UNLIMITED_MARKS	0x00000020
- #define FAN_ENABLE_AUDIT	0x00000040
-+#define FAN_UNPRIVILEGED	0x00000080
+@@ -117,6 +117,7 @@ struct fanotify_event_metadata {
+ };
  
- /* Flags to determine fanotify event format */
- #define FAN_REPORT_TID		0x00000100	/* event->pid is thread id */
+ #define FAN_EVENT_INFO_TYPE_FID		1
++#define FAN_EVENT_INFO_TYPE_DFID_NAME	2
+ 
+ /* Variable length info record following event metadata */
+ struct fanotify_event_info_header {
 -- 
 2.17.1
 
