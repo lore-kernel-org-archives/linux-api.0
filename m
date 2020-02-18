@@ -4,25 +4,25 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DF841C34042
-	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:36:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E6580C34026
+	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:36:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id C195F21D56
-	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:36:04 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CA1F72464E
+	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:36:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726799AbgBROgE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S1727555AbgBROgE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Tue, 18 Feb 2020 09:36:04 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:53056 "EHLO
+Received: from youngberry.canonical.com ([91.189.89.112]:53040 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726996AbgBROfk (ORCPT
+        with ESMTP id S1726851AbgBROfk (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 09:35:40 -0500
 Received: from ip5f5bf7ec.dynamic.kabel-deutschland.de ([95.91.247.236] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1j43y7-0000fF-DX; Tue, 18 Feb 2020 14:35:23 +0000
+        id 1j43y1-0000fF-Cw; Tue, 18 Feb 2020 14:35:17 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
         "Eric W. Biederman" <ebiederm@xmission.com>,
@@ -39,9 +39,9 @@ Cc:     smbarber@chromium.org, Seth Forshee <seth.forshee@canonical.com>,
         containers@lists.linux-foundation.org,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v3 19/25] commoncap: handle fsid mappings with vfs caps
-Date:   Tue, 18 Feb 2020 15:34:05 +0100
-Message-Id: <20200218143411.2389182-20-christian.brauner@ubuntu.com>
+Subject: [PATCH v3 13/25] stat: handle fsid mappings
+Date:   Tue, 18 Feb 2020 15:33:59 +0100
+Message-Id: <20200218143411.2389182-14-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.25.0
 In-Reply-To: <20200218143411.2389182-1-christian.brauner@ubuntu.com>
 References: <20200218143411.2389182-1-christian.brauner@ubuntu.com>
@@ -52,9 +52,12 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Switch vfs cap helpers to lookup fsids in the fsid mappings. If no fsid
-mappings are setup the behavior is unchanged, i.e. fsids are looked up in the
-id mappings.
+Switch attribute functions looking up fsids to them up in the fsid mappings. If
+no fsid mappings are setup the behavior is unchanged, i.e. fsids are looked up
+in the id mappings.
+
+Filesystems that share a superblock in all user namespaces they are mounted in
+will retain their old semantics even with the introduction of fsid mappings.
 
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
@@ -62,75 +65,126 @@ Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 unchanged
 
 /* v3 */
-unchanged
+- Tycho Andersen <tycho@tycho.ws>:
+  - Replace , with = when converting to uid and gid in cp_new_stat64().
 ---
- security/commoncap.c | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ fs/stat.c            | 48 +++++++++++++++++++++++++++++++++++---------
+ include/linux/stat.h |  1 +
+ 2 files changed, 39 insertions(+), 10 deletions(-)
 
-diff --git a/security/commoncap.c b/security/commoncap.c
-index 0581c6aa8bdc..d2259dc0450b 100644
---- a/security/commoncap.c
-+++ b/security/commoncap.c
-@@ -328,7 +328,7 @@ static bool rootid_owns_currentns(kuid_t kroot)
- 		return false;
+diff --git a/fs/stat.c b/fs/stat.c
+index 030008796479..612714ebacb4 100644
+--- a/fs/stat.c
++++ b/fs/stat.c
+@@ -10,6 +10,7 @@
+ #include <linux/errno.h>
+ #include <linux/file.h>
+ #include <linux/highuid.h>
++#include <linux/fsuidgid.h>
+ #include <linux/fs.h>
+ #include <linux/namei.h>
+ #include <linux/security.h>
+@@ -79,6 +80,8 @@ int vfs_getattr_nosec(const struct path *path, struct kstat *stat,
+ 	if (IS_AUTOMOUNT(inode))
+ 		stat->attributes |= STATX_ATTR_AUTOMOUNT;
  
- 	for (ns = current_user_ns(); ; ns = ns->parent) {
--		if (from_kuid(ns, kroot) == 0)
-+		if (from_kfsuid(ns, kroot) == 0)
- 			return true;
- 		if (ns == &init_user_ns)
- 			break;
-@@ -411,11 +411,11 @@ int cap_inode_getsecurity(struct inode *inode, const char *name, void **buffer,
++	stat->userns_visible = is_userns_visible(inode->i_sb->s_iflags);
++
+ 	if (inode->i_op->getattr)
+ 		return inode->i_op->getattr(path, stat, request_mask,
+ 					    query_flags);
+@@ -239,8 +242,13 @@ static int cp_old_stat(struct kstat *stat, struct __old_kernel_stat __user * sta
+ 	tmp.st_nlink = stat->nlink;
+ 	if (tmp.st_nlink != stat->nlink)
+ 		return -EOVERFLOW;
+-	SET_UID(tmp.st_uid, from_kuid_munged(current_user_ns(), stat->uid));
+-	SET_GID(tmp.st_gid, from_kgid_munged(current_user_ns(), stat->gid));
++	if (stat->userns_visible) {
++		SET_UID(tmp.st_uid, from_kuid_munged(current_user_ns(), stat->uid));
++		SET_GID(tmp.st_gid, from_kgid_munged(current_user_ns(), stat->gid));
++	} else {
++		SET_UID(tmp.st_uid, from_kfsuid_munged(current_user_ns(), stat->uid));
++		SET_GID(tmp.st_gid, from_kfsgid_munged(current_user_ns(), stat->gid));
++	}
+ 	tmp.st_rdev = old_encode_dev(stat->rdev);
+ #if BITS_PER_LONG == 32
+ 	if (stat->size > MAX_NON_LFS)
+@@ -327,8 +335,13 @@ static int cp_new_stat(struct kstat *stat, struct stat __user *statbuf)
+ 	tmp.st_nlink = stat->nlink;
+ 	if (tmp.st_nlink != stat->nlink)
+ 		return -EOVERFLOW;
+-	SET_UID(tmp.st_uid, from_kuid_munged(current_user_ns(), stat->uid));
+-	SET_GID(tmp.st_gid, from_kgid_munged(current_user_ns(), stat->gid));
++	if (stat->userns_visible) {
++		SET_UID(tmp.st_uid, from_kuid_munged(current_user_ns(), stat->uid));
++		SET_GID(tmp.st_gid, from_kgid_munged(current_user_ns(), stat->gid));
++	} else {
++		SET_UID(tmp.st_uid, from_kfsuid_munged(current_user_ns(), stat->uid));
++		SET_GID(tmp.st_gid, from_kfsgid_munged(current_user_ns(), stat->gid));
++	}
+ 	tmp.st_rdev = encode_dev(stat->rdev);
+ 	tmp.st_size = stat->size;
+ 	tmp.st_atime = stat->atime.tv_sec;
+@@ -471,8 +484,13 @@ static long cp_new_stat64(struct kstat *stat, struct stat64 __user *statbuf)
+ #endif
+ 	tmp.st_mode = stat->mode;
+ 	tmp.st_nlink = stat->nlink;
+-	tmp.st_uid = from_kuid_munged(current_user_ns(), stat->uid);
+-	tmp.st_gid = from_kgid_munged(current_user_ns(), stat->gid);
++	if (stat->userns_visible) {
++		tmp.st_uid = from_kuid_munged(current_user_ns(), stat->uid);
++		tmp.st_gid = from_kgid_munged(current_user_ns(), stat->gid);
++	} else {
++		tmp.st_uid = from_kfsuid_munged(current_user_ns(), stat->uid);
++		tmp.st_gid = from_kfsgid_munged(current_user_ns(), stat->gid);
++	}
+ 	tmp.st_atime = stat->atime.tv_sec;
+ 	tmp.st_atime_nsec = stat->atime.tv_nsec;
+ 	tmp.st_mtime = stat->mtime.tv_sec;
+@@ -544,8 +562,13 @@ cp_statx(const struct kstat *stat, struct statx __user *buffer)
+ 	tmp.stx_blksize = stat->blksize;
+ 	tmp.stx_attributes = stat->attributes;
+ 	tmp.stx_nlink = stat->nlink;
+-	tmp.stx_uid = from_kuid_munged(current_user_ns(), stat->uid);
+-	tmp.stx_gid = from_kgid_munged(current_user_ns(), stat->gid);
++	if (stat->userns_visible) {
++		tmp.stx_uid = from_kuid_munged(current_user_ns(), stat->uid);
++		tmp.stx_gid = from_kgid_munged(current_user_ns(), stat->gid);
++	} else {
++		tmp.stx_uid = from_kfsuid_munged(current_user_ns(), stat->uid);
++		tmp.stx_gid = from_kfsgid_munged(current_user_ns(), stat->gid);
++	}
+ 	tmp.stx_mode = stat->mode;
+ 	tmp.stx_ino = stat->ino;
+ 	tmp.stx_size = stat->size;
+@@ -615,8 +638,13 @@ static int cp_compat_stat(struct kstat *stat, struct compat_stat __user *ubuf)
+ 	tmp.st_nlink = stat->nlink;
+ 	if (tmp.st_nlink != stat->nlink)
+ 		return -EOVERFLOW;
+-	SET_UID(tmp.st_uid, from_kuid_munged(current_user_ns(), stat->uid));
+-	SET_GID(tmp.st_gid, from_kgid_munged(current_user_ns(), stat->gid));
++	if (stat->userns_visible) {
++		SET_UID(tmp.st_uid, from_kuid_munged(current_user_ns(), stat->uid));
++		SET_GID(tmp.st_gid, from_kgid_munged(current_user_ns(), stat->gid));
++	} else {
++		SET_UID(tmp.st_uid, from_kfsuid_munged(current_user_ns(), stat->uid));
++		SET_GID(tmp.st_gid, from_kfsgid_munged(current_user_ns(), stat->gid));
++	}
+ 	tmp.st_rdev = old_encode_dev(stat->rdev);
+ 	if ((u64) stat->size > MAX_NON_LFS)
+ 		return -EOVERFLOW;
+diff --git a/include/linux/stat.h b/include/linux/stat.h
+index 528c4baad091..e6d4ba73a970 100644
+--- a/include/linux/stat.h
++++ b/include/linux/stat.h
+@@ -47,6 +47,7 @@ struct kstat {
+ 	struct timespec64 ctime;
+ 	struct timespec64 btime;			/* File creation time */
+ 	u64		blocks;
++	bool		userns_visible;
+ };
  
- 	nscap = (struct vfs_ns_cap_data *) tmpbuf;
- 	root = le32_to_cpu(nscap->rootid);
--	kroot = make_kuid(fs_ns, root);
-+	kroot = make_kfsuid(fs_ns, root);
- 
--	/* If the root kuid maps to a valid uid in current ns, then return
-+	/* If the root kfsuid maps to a valid uid in current ns, then return
- 	 * this as a nscap. */
--	mappedroot = from_kuid(current_user_ns(), kroot);
-+	mappedroot = from_kfsuid(current_user_ns(), kroot);
- 	if (mappedroot != (uid_t)-1 && mappedroot != (uid_t)0) {
- 		if (alloc) {
- 			*buffer = tmpbuf;
-@@ -460,7 +460,7 @@ static kuid_t rootid_from_xattr(const void *value, size_t size,
- 	if (size == XATTR_CAPS_SZ_3)
- 		rootid = le32_to_cpu(nscap->rootid);
- 
--	return make_kuid(task_ns, rootid);
-+	return make_kfsuid(task_ns, rootid);
- }
- 
- static bool validheader(size_t size, const struct vfs_cap_data *cap)
-@@ -501,7 +501,7 @@ int cap_convert_nscap(struct dentry *dentry, void **ivalue, size_t size)
- 	if (!uid_valid(rootid))
- 		return -EINVAL;
- 
--	nsrootid = from_kuid(fs_ns, rootid);
-+	nsrootid = from_kfsuid(fs_ns, rootid);
- 	if (nsrootid == -1)
- 		return -EINVAL;
- 
-@@ -600,7 +600,7 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data
- 
- 	cpu_caps->magic_etc = magic_etc = le32_to_cpu(caps->magic_etc);
- 
--	rootkuid = make_kuid(fs_ns, 0);
-+	rootkuid = make_kfsuid(fs_ns, 0);
- 	switch (magic_etc & VFS_CAP_REVISION_MASK) {
- 	case VFS_CAP_REVISION_1:
- 		if (size != XATTR_CAPS_SZ_1)
-@@ -616,7 +616,7 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data
- 		if (size != XATTR_CAPS_SZ_3)
- 			return -EINVAL;
- 		tocopy = VFS_CAP_U32_3;
--		rootkuid = make_kuid(fs_ns, le32_to_cpu(nscaps->rootid));
-+		rootkuid = make_kfsuid(fs_ns, le32_to_cpu(nscaps->rootid));
- 		break;
- 
- 	default:
+ #endif
 -- 
 2.25.0
 
