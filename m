@@ -7,401 +7,241 @@ X-Spam-Status: No, score=-6.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B53E2C3404D
-	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 17:06:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 14765C3404B
+	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 17:06:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 8520C21D56
-	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 17:06:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D78092465A
+	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 17:06:04 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="A/4aY2nV"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JuB19HaG"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726980AbgBRRGF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 18 Feb 2020 12:06:05 -0500
-Received: from us-smtp-delivery-1.mimecast.com ([207.211.31.120]:21376 "EHLO
-        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1726882AbgBRRGB (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 12:06:01 -0500
+        id S1727001AbgBRRGD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 18 Feb 2020 12:06:03 -0500
+Received: from us-smtp-1.mimecast.com ([205.139.110.61]:54160 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1727078AbgBRRGC (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 12:06:02 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1582045560;
+        s=mimecast20190719; t=1582045561;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=XduuWJw7Kh9OZ9+fe+cz7QO/twaGM75wONCYGs7V0Ss=;
-        b=A/4aY2nV6SRqy61hkOFPeuA3x7EkAiBbW0r+9zsEhV0oyuzoe0+bubxinFdYzZlZWm1O8z
-        jD1HkIHYqFPZloRN5GZIA7v6ru2b9P7WwJaM50pLdXrbicnOV1kvT20z1XwHo3Sbu2QBlc
-        QC8cw/YM3vMVZMemhgTrmsXuAWcf5Ns=
+        bh=RK4fXk/nlqQZvM5xiHnv6XbhijwmUPQA7G8Km4Ldnrs=;
+        b=JuB19HaG/GphygAZ8Lp2rlZ3QynD2XflLLmlZJMpEONDK5J3Xpq5HCoiARgSG7GBM/0p9N
+        saW41XJRP+sGDD8ESwFstjBIWS6GXJ9xKeHYdDDI1A9p934qukc0/LRn+TCVfuqxLa7TgI
+        zVMI3wUimIqUvgEad3dPSgXGPo+lX3w=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-369-RB90VsxkMfi1M4fxg1Q9fw-1; Tue, 18 Feb 2020 12:05:47 -0500
-X-MC-Unique: RB90VsxkMfi1M4fxg1Q9fw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-328-NydyL36vOWKYbJjCC1KVDQ-1; Tue, 18 Feb 2020 12:05:19 -0500
+X-MC-Unique: NydyL36vOWKYbJjCC1KVDQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9F37A8017CC;
-        Tue, 18 Feb 2020 17:05:45 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 68BED8010EB;
+        Tue, 18 Feb 2020 17:05:15 +0000 (UTC)
 Received: from warthog.procyon.org.uk (ovpn-122-163.rdu2.redhat.com [10.10.122.163])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 12EE28B560;
-        Tue, 18 Feb 2020 17:05:43 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id CCE275D9E2;
+        Tue, 18 Feb 2020 17:05:13 +0000 (UTC)
 Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
         Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
         Kingdom.
         Registered in England and Wales under Company Registration No. 3798903
-Subject: [PATCH 06/19] vfs: Allow fsinfo() to look up a mount object by ID
- [ver #16]
+Subject: [PATCH 02/19] fsinfo: Add syscalls to other arches [ver #16]
 From:   David Howells <dhowells@redhat.com>
 To:     viro@zeniv.linux.org.uk
 Cc:     dhowells@redhat.com, raven@themaw.net, mszeredi@redhat.com,
         christian@brauner.io, linux-api@vger.kernel.org,
         linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
-Date:   Tue, 18 Feb 2020 17:05:43 +0000
-Message-ID: <158204554334.3299825.5795356452329641891.stgit@warthog.procyon.org.uk>
+Date:   Tue, 18 Feb 2020 17:05:13 +0000
+Message-ID: <158204551308.3299825.11782813238111590104.stgit@warthog.procyon.org.uk>
 In-Reply-To: <158204549488.3299825.3783690177353088425.stgit@warthog.procyon.org.uk>
 References: <158204549488.3299825.3783690177353088425.stgit@warthog.procyon.org.uk>
 User-Agent: StGit/0.21
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Allow the fsinfo() syscall to look up a mount object by ID rather than by
-pathname.  This is necessary as there can be multiple mounts stacked up at
-the same pathname and there's no way to look through them otherwise.
-
-This is done by passing FSINFO_FLAGS_QUERY_MOUNT to fsinfo() in the
-parameters and then passing the mount ID as a string to fsinfo() in place
-of the filename:
-
-	struct fsinfo_params params = {
-		.flags	 = FSINFO_FLAGS_QUERY_MOUNT,
-		.request = FSINFO_ATTR_IDS,
-	};
-
-	ret = fsinfo(AT_FDCWD, "21", &params, buffer, sizeof(buffer));
-
-The caller is only permitted to query a mount object if the root directory
-of that mount connects directly to the current chroot if dfd == AT_FDCWD[*]
-or the directory specified by dfd otherwise.  Note that this is not
-available to the pathwalk of any other syscall.
-
-[*] This needs to be something other than AT_FDCWD, perhaps AT_FDROOT.
-
-[!] This probably needs an LSM hook.
-
-[!] This might want to check the permissions on all the intervening dirs -
-    but it would have to do that under RCU conditions.
-
-[!] This might want to check a CAP_* flag.
+Add the fsinfo syscall to the other arches.
 
 Signed-off-by: David Howells <dhowells@redhat.com>
 ---
 
- fs/fsinfo.c                 |   53 +++++++++++++++++++
- fs/internal.h               |    2 +
- fs/namespace.c              |  117 ++++++++++++++++++++++++++++++++++++++++++-
- include/uapi/linux/fsinfo.h |    1 
- samples/vfs/test-fsinfo.c   |   11 +++-
- 5 files changed, 179 insertions(+), 5 deletions(-)
+ arch/alpha/kernel/syscalls/syscall.tbl      |    1 +
+ arch/arm/tools/syscall.tbl                  |    1 +
+ arch/arm64/include/asm/unistd.h             |    2 +-
+ arch/arm64/include/asm/unistd32.h           |    2 +-
+ arch/ia64/kernel/syscalls/syscall.tbl       |    1 +
+ arch/m68k/kernel/syscalls/syscall.tbl       |    2 ++
+ arch/microblaze/kernel/syscalls/syscall.tbl |    1 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl   |    1 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl   |    1 +
+ arch/mips/kernel/syscalls/syscall_o32.tbl   |    1 +
+ arch/parisc/kernel/syscalls/syscall.tbl     |    1 +
+ arch/powerpc/kernel/syscalls/syscall.tbl    |    1 +
+ arch/s390/kernel/syscalls/syscall.tbl       |    1 +
+ arch/sh/kernel/syscalls/syscall.tbl         |    1 +
+ arch/sparc/kernel/syscalls/syscall.tbl      |    1 +
+ arch/xtensa/kernel/syscalls/syscall.tbl     |    1 +
+ 16 files changed, 17 insertions(+), 2 deletions(-)
 
-diff --git a/fs/fsinfo.c b/fs/fsinfo.c
-index f8e85762fc47..ddc11cc40b45 100644
---- a/fs/fsinfo.c
-+++ b/fs/fsinfo.c
-@@ -464,6 +464,56 @@ static int vfs_fsinfo_fd(unsigned int fd, struct fsinfo_context *ctx)
- 	return ret;
- }
+diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
+index 36d42da7466a..961750417ef2 100644
+--- a/arch/alpha/kernel/syscalls/syscall.tbl
++++ b/arch/alpha/kernel/syscalls/syscall.tbl
+@@ -477,3 +477,4 @@
+ # 545 reserved for clone3
+ 547	common	openat2				sys_openat2
+ 548	common	pidfd_getfd			sys_pidfd_getfd
++549	common	fsinfo				sys_fsinfo
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index 4d1cf74a2caa..e6b9dfe01471 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -451,3 +451,4 @@
+ 435	common	clone3				sys_clone3
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	fsinfo				sys_fsinfo
+diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
+index 1dd22da1c3a9..75f04a1023be 100644
+--- a/arch/arm64/include/asm/unistd.h
++++ b/arch/arm64/include/asm/unistd.h
+@@ -38,7 +38,7 @@
+ #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE + 5)
+ #define __ARM_NR_COMPAT_END		(__ARM_NR_COMPAT_BASE + 0x800)
  
-+/*
-+ * Look up the root of a mount object.  This allows access to mount objects
-+ * (and their attached superblocks) that can't be retrieved by path because
-+ * they're entirely covered.
-+ *
-+ * We only permit access to a mount that has a direct path between either the
-+ * dentry pointed to by dfd or to our chroot (if dfd is AT_FDCWD).
-+ */
-+static int vfs_fsinfo_mount(int dfd, const char __user *filename,
-+			    struct fsinfo_context *ctx)
-+{
-+	struct path path;
-+	struct fd f = {};
-+	char *name;
-+	long mnt_id;
-+	int ret;
-+
-+	if (!filename)
-+		return -EINVAL;
-+
-+	name = strndup_user(filename, 32);
-+	if (IS_ERR(name))
-+		return PTR_ERR(name);
-+	ret = kstrtoul(name, 0, &mnt_id);
-+	if (ret < 0)
-+		goto out_name;
-+	if (mnt_id > INT_MAX)
-+		goto out_name;
-+
-+	if (dfd != AT_FDCWD) {
-+		ret = -EBADF;
-+		f = fdget_raw(dfd);
-+		if (!f.file)
-+			goto out_name;
-+	}
-+
-+	ret = lookup_mount_object(f.file ? &f.file->f_path : NULL,
-+				  mnt_id, &path);
-+	if (ret < 0)
-+		goto out_fd;
-+
-+	ret = vfs_fsinfo(&path, ctx);
-+	path_put(&path);
-+out_fd:
-+	fdput(f);
-+out_name:
-+	kfree(name);
-+	return ret;
-+}
-+
- /**
-  * sys_fsinfo - System call to get filesystem information
-  * @dfd: Base directory to pathwalk from or fd referring to filesystem.
-@@ -533,6 +583,9 @@ SYSCALL_DEFINE5(fsinfo,
- 			return -EINVAL;
- 		ret = vfs_fsinfo_fd(dfd, &ctx);
- 		break;
-+	case FSINFO_FLAGS_QUERY_MOUNT:
-+		ret = vfs_fsinfo_mount(dfd, pathname, &ctx);
-+		break;
- 	default:
- 		return -EINVAL;
- 	}
-diff --git a/fs/internal.h b/fs/internal.h
-index f3f280b952a3..2ccd2b2eae88 100644
---- a/fs/internal.h
-+++ b/fs/internal.h
-@@ -91,6 +91,8 @@ extern int __mnt_want_write_file(struct file *);
- extern void __mnt_drop_write_file(struct file *);
+-#define __NR_compat_syscalls		439
++#define __NR_compat_syscalls		440
+ #endif
  
- extern void dissolve_on_fput(struct vfsmount *);
-+extern int lookup_mount_object(struct path *, int, struct path *);
-+
- /*
-  * fs_struct.c
-  */
-diff --git a/fs/namespace.c b/fs/namespace.c
-index 5c84aadb6aa1..c24d779e0095 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -63,7 +63,7 @@ static int __init set_mphash_entries(char *str)
- __setup("mphash_entries=", set_mphash_entries);
- 
- static u64 event;
--static DEFINE_IDA(mnt_id_ida);
-+static DEFINE_IDR(mnt_id_ida);
- static DEFINE_IDA(mnt_group_ida);
- 
- static struct hlist_head *mount_hashtable __read_mostly;
-@@ -104,17 +104,27 @@ static inline struct hlist_head *mp_hash(struct dentry *dentry)
- 
- static int mnt_alloc_id(struct mount *mnt)
- {
--	int res = ida_alloc(&mnt_id_ida, GFP_KERNEL);
-+	int res;
- 
-+	/* Allocate an ID, but don't set the pointer back to the mount until
-+	 * later, as once we do that, we have to follow RCU protocols to get
-+	 * rid of the mount struct.
-+	 */
-+	res = idr_alloc(&mnt_id_ida, NULL, 0, INT_MAX, GFP_KERNEL);
- 	if (res < 0)
- 		return res;
- 	mnt->mnt_id = res;
- 	return 0;
- }
- 
-+static void mnt_publish_id(struct mount *mnt)
-+{
-+	idr_replace(&mnt_id_ida, mnt, mnt->mnt_id);
-+}
-+
- static void mnt_free_id(struct mount *mnt)
- {
--	ida_free(&mnt_id_ida, mnt->mnt_id);
-+	idr_remove(&mnt_id_ida, mnt->mnt_id);
- }
- 
- /*
-@@ -957,6 +967,7 @@ struct vfsmount *vfs_create_mount(struct fs_context *fc)
- 	lock_mount_hash();
- 	list_add_tail(&mnt->mnt_instance, &mnt->mnt.mnt_sb->s_mounts);
- 	unlock_mount_hash();
-+	mnt_publish_id(mnt);
- 	return &mnt->mnt;
- }
- EXPORT_SYMBOL(vfs_create_mount);
-@@ -1050,6 +1061,7 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
- 	lock_mount_hash();
- 	list_add_tail(&mnt->mnt_instance, &sb->s_mounts);
- 	unlock_mount_hash();
-+	mnt_publish_id(mnt);
- 
- 	if ((flag & CL_SLAVE) ||
- 	    ((flag & CL_SHARED_TO_SLAVE) && IS_MNT_SHARED(old))) {
-@@ -3986,3 +3998,102 @@ const struct proc_ns_operations mntns_operations = {
- 	.install	= mntns_install,
- 	.owner		= mntns_owner,
- };
-+
-+/*
-+ * See if one path point connects directly to another by ancestral relationship
-+ * across mountpoints.  Must call with the RCU read lock held.
-+ */
-+static bool are_paths_connected(struct path *ancestor, struct path *to_check)
-+{
-+	struct mount *mnt, *parent;
-+	struct path cursor;
-+	unsigned seq;
-+	bool connected;
-+
-+	seq = 0;
-+restart:
-+	cursor = *to_check;
-+
-+	read_seqbegin_or_lock(&rename_lock, &seq);
-+	while (cursor.mnt != ancestor->mnt) {
-+		mnt = real_mount(cursor.mnt);
-+		parent = READ_ONCE(mnt->mnt_parent);
-+		if (mnt == parent)
-+			goto failed;
-+		cursor.dentry = READ_ONCE(mnt->mnt_mountpoint);
-+		cursor.mnt = &parent->mnt;
-+	}
-+
-+	while (cursor.dentry != ancestor->dentry) {
-+		if (cursor.dentry == cursor.mnt->mnt_root ||
-+		    IS_ROOT(cursor.dentry))
-+			goto failed;
-+		cursor.dentry = READ_ONCE(cursor.dentry->d_parent);
-+	}
-+
-+	connected = true;
-+out:
-+	done_seqretry(&rename_lock, seq);
-+	return connected;
-+
-+failed:
-+	if (need_seqretry(&rename_lock, seq)) {
-+		seq = 1;
-+		goto restart;
-+	}
-+	connected = false;
-+	goto out;
-+}
-+
-+/**
-+ * lookup_mount_object - Look up a vfsmount object by ID
-+ * @root: The mount root must connect backwards to this point (or chroot if NULL).
-+ * @id: The ID of the mountpoint.
-+ * @_mntpt: Where to return the resulting mountpoint path.
-+ *
-+ * Look up the root of the mount with the corresponding ID.  This is only
-+ * permitted if that mount connects directly to the specified root/chroot.
-+ */
-+int lookup_mount_object(struct path *root, int mnt_id, struct path *_mntpt)
-+{
-+	struct mount *mnt;
-+	struct path stop, mntpt = {};
-+	int ret = -EPERM;
-+
-+	if (!root)
-+		get_fs_root(current->fs, &stop);
-+	else
-+		stop = *root;
-+
-+	rcu_read_lock();
-+	lock_mount_hash();
-+	mnt = idr_find(&mnt_id_ida, mnt_id);
-+	if (!mnt)
-+		goto out_unlock_mh;
-+	if (mnt->mnt.mnt_flags & (MNT_SYNC_UMOUNT | MNT_UMOUNT | MNT_DOOMED))
-+		goto out_unlock_mh;
-+	if (mnt_get_count(mnt) == 0)
-+		goto out_unlock_mh;
-+	mnt_add_count(mnt, 1);
-+	mntpt.mnt = &mnt->mnt;
-+	mntpt.dentry = dget(mnt->mnt.mnt_root);
-+	unlock_mount_hash();
-+
-+	if (are_paths_connected(&stop, &mntpt)) {
-+		*_mntpt = mntpt;
-+		mntpt.mnt = NULL;
-+		mntpt.dentry = NULL;
-+		ret = 0;
-+	}
-+
-+out_unlock:
-+	rcu_read_unlock();
-+	if (!root)
-+		path_put(&stop);
-+	path_put(&mntpt);
-+	return ret;
-+
-+out_unlock_mh:
-+	unlock_mount_hash();
-+	goto out_unlock;
-+}
-diff --git a/include/uapi/linux/fsinfo.h b/include/uapi/linux/fsinfo.h
-index f40b5c0b5516..7efc1169738d 100644
---- a/include/uapi/linux/fsinfo.h
-+++ b/include/uapi/linux/fsinfo.h
-@@ -40,6 +40,7 @@ struct fsinfo_params {
- #define FSINFO_FLAGS_QUERY_TYPE	0x0007 /* What object should fsinfo() query? */
- #define FSINFO_FLAGS_QUERY_PATH	0x0000 /* - path, specified by dirfd,pathname,AT_EMPTY_PATH */
- #define FSINFO_FLAGS_QUERY_FD	0x0001 /* - fd specified by dirfd */
-+#define FSINFO_FLAGS_QUERY_MOUNT 0x0002	/* - mount object (path=>mount_id, dirfd=>subtree) */
- 	__u32	request;	/* ID of requested attribute */
- 	__u32	Nth;		/* Instance of it (some may have multiple) */
- 	__u32	Mth;		/* Subinstance of Nth instance */
-diff --git a/samples/vfs/test-fsinfo.c b/samples/vfs/test-fsinfo.c
-index d6ec5713364f..5bb4e817e5d7 100644
---- a/samples/vfs/test-fsinfo.c
-+++ b/samples/vfs/test-fsinfo.c
-@@ -560,16 +560,22 @@ int main(int argc, char **argv)
- 	bool meta = false;
- 	int raw = 0, opt, Nth, Mth;
- 
--	while ((opt = getopt(argc, argv, "adlmr"))) {
-+	while ((opt = getopt(argc, argv, "Madlmr"))) {
- 		switch (opt) {
-+		case 'M':
-+			params.at_flags = 0;
-+			params.flags = FSINFO_FLAGS_QUERY_MOUNT;
-+			continue;
- 		case 'a':
- 			params.at_flags |= AT_NO_AUTOMOUNT;
-+			params.flags |= FSINFO_FLAGS_QUERY_PATH;
- 			continue;
- 		case 'd':
- 			debug = true;
- 			continue;
- 		case 'l':
- 			params.at_flags &= ~AT_SYMLINK_NOFOLLOW;
-+			params.flags |= FSINFO_FLAGS_QUERY_PATH;
- 			continue;
- 		case 'm':
- 			meta = true;
-@@ -585,7 +591,8 @@ int main(int argc, char **argv)
- 	argv += optind;
- 
- 	if (argc != 1) {
--		printf("Format: test-fsinfo [-alr] <file>\n");
-+		printf("Format: test-fsinfo [-adlr] <file>\n");
-+		printf("Format: test-fsinfo [-dr] -M <mnt_id>\n");
- 		exit(2);
- 	}
- 
+ #define __ARCH_WANT_SYS_CLONE
+diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
+index c1c61635f89c..7d1225de47e6 100644
+--- a/arch/arm64/include/asm/unistd32.h
++++ b/arch/arm64/include/asm/unistd32.h
+@@ -873,7 +873,7 @@ __SYSCALL(__NR_fsopen, sys_fsopen)
+ __SYSCALL(__NR_fsconfig, sys_fsconfig)
+ #define __NR_fsmount 432
+ __SYSCALL(__NR_fsmount, sys_fsmount)
+-#define __NR_fspick 433
++#define __NR_fspick 434
+ __SYSCALL(__NR_fspick, sys_fspick)
+ #define __NR_pidfd_open 434
+ __SYSCALL(__NR_pidfd_open, sys_pidfd_open)
+diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
+index 042911e670b8..9018a3a6b067 100644
+--- a/arch/ia64/kernel/syscalls/syscall.tbl
++++ b/arch/ia64/kernel/syscalls/syscall.tbl
+@@ -358,3 +358,4 @@
+ # 435 reserved for clone3
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	fsinfo				sys_fsinfo
+diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
+index f4f49fcb76d0..10172bb6ba1f 100644
+--- a/arch/m68k/kernel/syscalls/syscall.tbl
++++ b/arch/m68k/kernel/syscalls/syscall.tbl
+@@ -437,3 +437,5 @@
+ 435	common	clone3				__sys_clone3
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++# 435 reserved for clone3
++439	common	fsinfo				sys_fsinfo
+diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
+index 4c67b11f9c9e..58665073c1f0 100644
+--- a/arch/microblaze/kernel/syscalls/syscall.tbl
++++ b/arch/microblaze/kernel/syscalls/syscall.tbl
+@@ -443,3 +443,4 @@
+ 435	common	clone3				sys_clone3
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	fsinfo				sys_fsinfo
+diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
+index 1f9e8ad636cc..1f07a89473c3 100644
+--- a/arch/mips/kernel/syscalls/syscall_n32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
+@@ -376,3 +376,4 @@
+ 435	n32	clone3				__sys_clone3
+ 437	n32	openat2				sys_openat2
+ 438	n32	pidfd_getfd			sys_pidfd_getfd
++439	n32	fsinfo				sys_fsinfo
+diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
+index c0b9d802dbf6..3c853ca54901 100644
+--- a/arch/mips/kernel/syscalls/syscall_n64.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
+@@ -352,3 +352,4 @@
+ 435	n64	clone3				__sys_clone3
+ 437	n64	openat2				sys_openat2
+ 438	n64	pidfd_getfd			sys_pidfd_getfd
++439	n64	fsinfo				sys_fsinfo
+diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
+index ac586774c980..727f54542bf4 100644
+--- a/arch/mips/kernel/syscalls/syscall_o32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
+@@ -425,3 +425,4 @@
+ 435	o32	clone3				__sys_clone3
+ 437	o32	openat2				sys_openat2
+ 438	o32	pidfd_getfd			sys_pidfd_getfd
++439	o32	fsinfo				sys_fsinfo
+diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
+index 52a15f5cd130..2e9576638d80 100644
+--- a/arch/parisc/kernel/syscalls/syscall.tbl
++++ b/arch/parisc/kernel/syscalls/syscall.tbl
+@@ -435,3 +435,4 @@
+ 435	common	clone3				sys_clone3_wrapper
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	fsinfo				sys_fsinfo
+diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
+index 35b61bfc1b1a..397190734ca7 100644
+--- a/arch/powerpc/kernel/syscalls/syscall.tbl
++++ b/arch/powerpc/kernel/syscalls/syscall.tbl
+@@ -519,3 +519,4 @@
+ 435	nospu	clone3				ppc_clone3
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	fsinfo				sys_fsinfo
+diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
+index bd7bd3581a0f..e9340d712dcd 100644
+--- a/arch/s390/kernel/syscalls/syscall.tbl
++++ b/arch/s390/kernel/syscalls/syscall.tbl
+@@ -440,3 +440,4 @@
+ 435  common	clone3			sys_clone3			sys_clone3
+ 437  common	openat2			sys_openat2			sys_openat2
+ 438  common	pidfd_getfd		sys_pidfd_getfd			sys_pidfd_getfd
++439  common	fsinfo			sys_fsinfo			sys_fsinfo
+diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
+index c7a30fcd135f..7bb5ec284fbb 100644
+--- a/arch/sh/kernel/syscalls/syscall.tbl
++++ b/arch/sh/kernel/syscalls/syscall.tbl
+@@ -440,3 +440,4 @@
+ # 435 reserved for clone3
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	fsinfo				sys_fsinfo
+diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
+index f13615ecdecc..a902b757ace2 100644
+--- a/arch/sparc/kernel/syscalls/syscall.tbl
++++ b/arch/sparc/kernel/syscalls/syscall.tbl
+@@ -483,3 +483,4 @@
+ # 435 reserved for clone3
+ 437	common	openat2			sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	fsinfo				sys_fsinfo
+diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
+index 85a9ab1bc04d..f82702a7ab38 100644
+--- a/arch/xtensa/kernel/syscalls/syscall.tbl
++++ b/arch/xtensa/kernel/syscalls/syscall.tbl
+@@ -408,3 +408,4 @@
+ 435	common	clone3				sys_clone3
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	fsinfo				sys_fsinfo
 
 
