@@ -4,25 +4,25 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0954EC3403F
-	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:36:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EC982C3403D
+	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:37:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D508420801
-	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:36:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CDE6B24656
+	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:37:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727885AbgBROgu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 18 Feb 2020 09:36:50 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:52969 "EHLO
+        id S1726636AbgBROg6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 18 Feb 2020 09:36:58 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:53142 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726620AbgBROff (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 09:35:35 -0500
+        with ESMTP id S1726620AbgBROg5 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 09:36:57 -0500
 Received: from ip5f5bf7ec.dynamic.kabel-deutschland.de ([95.91.247.236] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1j43xz-0000fF-2a; Tue, 18 Feb 2020 14:35:15 +0000
+        id 1j43yB-0000fF-Br; Tue, 18 Feb 2020 14:35:27 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
         "Eric W. Biederman" <ebiederm@xmission.com>,
@@ -39,9 +39,9 @@ Cc:     smbarber@chromium.org, Seth Forshee <seth.forshee@canonical.com>,
         containers@lists.linux-foundation.org,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v3 11/25] inode: inode_owner_or_capable(): handle fsid mappings
-Date:   Tue, 18 Feb 2020 15:33:57 +0100
-Message-Id: <20200218143411.2389182-12-christian.brauner@ubuntu.com>
+Subject: [PATCH v3 22/25] devpts: handle fsid mappings
+Date:   Tue, 18 Feb 2020 15:34:08 +0100
+Message-Id: <20200218143411.2389182-23-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.25.0
 In-Reply-To: <20200218143411.2389182-1-christian.brauner@ubuntu.com>
 References: <20200218143411.2389182-1-christian.brauner@ubuntu.com>
@@ -52,12 +52,9 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Switch inode_owner_or_capable() to lookup fsids in the fsid mappings. If no
-fsid mappings are setup the behavior is unchanged, i.e. fsids are looked up in
-the id mappings.
-
-Filesystems that share a superblock in all user namespaces they are mounted in
-will retain their old semantics even with the introduction of fsid mappings.
+When a uid or gid mount option is specified with devpts have it lookup the
+corresponding kfsids in the fsid mappings. If no fsid mappings are setup the
+behavior is unchanged, i.e. fsids are looked up in the id mappings.
 
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
@@ -67,35 +64,48 @@ unchanged
 /* v3 */
 unchanged
 ---
- fs/inode.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+ fs/devpts/inode.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
-diff --git a/fs/inode.c b/fs/inode.c
-index 7d57068b6b7a..81d7a30b381d 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -21,6 +21,7 @@
- #include <linux/ratelimit.h>
- #include <linux/list_lru.h>
- #include <linux/iversion.h>
+diff --git a/fs/devpts/inode.c b/fs/devpts/inode.c
+index 42e5a766d33c..139958892572 100644
+--- a/fs/devpts/inode.c
++++ b/fs/devpts/inode.c
+@@ -24,6 +24,7 @@
+ #include <linux/parser.h>
+ #include <linux/fsnotify.h>
+ #include <linux/seq_file.h>
 +#include <linux/fsuidgid.h>
- #include <trace/events/writeback.h>
- #include "internal.h"
  
-@@ -2087,8 +2088,12 @@ bool inode_owner_or_capable(const struct inode *inode)
- 		return true;
- 
- 	ns = current_user_ns();
--	if (kuid_has_mapping(ns, inode->i_uid) && ns_capable(ns, CAP_FOWNER))
-+	if (is_userns_visible(inode->i_sb->s_iflags)) {
-+		if (kuid_has_mapping(ns, inode->i_uid) && ns_capable(ns, CAP_FOWNER))
-+			return true;
-+	} else if (kfsuid_has_mapping(ns, inode->i_uid) && ns_capable(ns, CAP_FOWNER)) {
- 		return true;
-+	}
- 	return false;
- }
- EXPORT_SYMBOL(inode_owner_or_capable);
+ #define DEVPTS_DEFAULT_MODE 0600
+ /*
+@@ -277,7 +278,7 @@ static int parse_mount_options(char *data, int op, struct pts_mount_opts *opts)
+ 		case Opt_uid:
+ 			if (match_int(&args[0], &option))
+ 				return -EINVAL;
+-			uid = make_kuid(current_user_ns(), option);
++			uid = make_kfsuid(current_user_ns(), option);
+ 			if (!uid_valid(uid))
+ 				return -EINVAL;
+ 			opts->uid = uid;
+@@ -286,7 +287,7 @@ static int parse_mount_options(char *data, int op, struct pts_mount_opts *opts)
+ 		case Opt_gid:
+ 			if (match_int(&args[0], &option))
+ 				return -EINVAL;
+-			gid = make_kgid(current_user_ns(), option);
++			gid = make_kfsgid(current_user_ns(), option);
+ 			if (!gid_valid(gid))
+ 				return -EINVAL;
+ 			opts->gid = gid;
+@@ -410,7 +411,7 @@ static int devpts_show_options(struct seq_file *seq, struct dentry *root)
+ 			   from_kuid_munged(&init_user_ns, opts->uid));
+ 	if (opts->setgid)
+ 		seq_printf(seq, ",gid=%u",
+-			   from_kgid_munged(&init_user_ns, opts->gid));
++			   from_kfsgid_munged(&init_user_ns, opts->gid));
+ 	seq_printf(seq, ",mode=%03o", opts->mode);
+ 	seq_printf(seq, ",ptmxmode=%03o", opts->ptmxmode);
+ 	if (opts->max < NR_UNIX98_PTY_MAX)
 -- 
 2.25.0
 
