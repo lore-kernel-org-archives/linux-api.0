@@ -4,25 +4,25 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 25750C3403D
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DF841C34042
 	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:36:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 0840C24649
+	by mail.kernel.org (Postfix) with ESMTP id C195F21D56
 	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:36:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727362AbgBROfz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 18 Feb 2020 09:35:55 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:53068 "EHLO
+        id S1726799AbgBROgE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 18 Feb 2020 09:36:04 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:53056 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727108AbgBROfm (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 09:35:42 -0500
+        with ESMTP id S1726996AbgBROfk (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 09:35:40 -0500
 Received: from ip5f5bf7ec.dynamic.kabel-deutschland.de ([95.91.247.236] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1j43y5-0000fF-CD; Tue, 18 Feb 2020 14:35:21 +0000
+        id 1j43y7-0000fF-DX; Tue, 18 Feb 2020 14:35:23 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
         "Eric W. Biederman" <ebiederm@xmission.com>,
@@ -39,9 +39,9 @@ Cc:     smbarber@chromium.org, Seth Forshee <seth.forshee@canonical.com>,
         containers@lists.linux-foundation.org,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v3 17/25] commoncap: cap_bprm_set_creds(): handle fsid mappings
-Date:   Tue, 18 Feb 2020 15:34:03 +0100
-Message-Id: <20200218143411.2389182-18-christian.brauner@ubuntu.com>
+Subject: [PATCH v3 19/25] commoncap: handle fsid mappings with vfs caps
+Date:   Tue, 18 Feb 2020 15:34:05 +0100
+Message-Id: <20200218143411.2389182-20-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.25.0
 In-Reply-To: <20200218143411.2389182-1-christian.brauner@ubuntu.com>
 References: <20200218143411.2389182-1-christian.brauner@ubuntu.com>
@@ -52,68 +52,85 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-During exec the kfsids are currently reset to the effective kids. To retain the
-same semantics with the introduction of fsid mappings, we lookup the userspace
-effective id in the id mappings and translate the effective id into the
-corresponding kfsid in the fsid mapping. This means, the behavior is unchanged
-when no fsid mappings are setup and the semantics stay the same even when fsid
-mappings are setup.
+Switch vfs cap helpers to lookup fsids in the fsid mappings. If no fsid
+mappings are setup the behavior is unchanged, i.e. fsids are looked up in the
+id mappings.
 
-Cc: Jann Horn <jannh@google.com>
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
-- Christian Brauner <christian.brauner@ubuntu.com>:
-  - Reset kfsids used for userns visible filesystems such as proc too.
+unchanged
 
 /* v3 */
 unchanged
 ---
- security/commoncap.c | 17 ++++++++++++++---
- 1 file changed, 14 insertions(+), 3 deletions(-)
+ security/commoncap.c | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
 
 diff --git a/security/commoncap.c b/security/commoncap.c
-index f4ee0ae106b2..55e6cc24f887 100644
+index 0581c6aa8bdc..d2259dc0450b 100644
 --- a/security/commoncap.c
 +++ b/security/commoncap.c
-@@ -24,6 +24,7 @@
- #include <linux/user_namespace.h>
- #include <linux/binfmts.h>
- #include <linux/personality.h>
-+#include <linux/fsuidgid.h>
+@@ -328,7 +328,7 @@ static bool rootid_owns_currentns(kuid_t kroot)
+ 		return false;
  
- /*
-  * If a non-root user executes a setuid-root binary in
-@@ -810,7 +811,10 @@ int cap_bprm_set_creds(struct linux_binprm *bprm)
- 	struct cred *new = bprm->cred;
- 	bool effective = false, has_fcap = false, is_setid;
- 	int ret;
--	kuid_t root_uid;
-+	kuid_t root_uid, kfsuid;
-+	kgid_t kfsgid;
-+	uid_t fsuid;
-+	gid_t fsgid;
+ 	for (ns = current_user_ns(); ; ns = ns->parent) {
+-		if (from_kuid(ns, kroot) == 0)
++		if (from_kfsuid(ns, kroot) == 0)
+ 			return true;
+ 		if (ns == &init_user_ns)
+ 			break;
+@@ -411,11 +411,11 @@ int cap_inode_getsecurity(struct inode *inode, const char *name, void **buffer,
  
- 	if (WARN_ON(!cap_ambient_invariant_ok(old)))
- 		return -EPERM;
-@@ -847,8 +851,15 @@ int cap_bprm_set_creds(struct linux_binprm *bprm)
- 						   old->cap_permitted);
- 	}
+ 	nscap = (struct vfs_ns_cap_data *) tmpbuf;
+ 	root = le32_to_cpu(nscap->rootid);
+-	kroot = make_kuid(fs_ns, root);
++	kroot = make_kfsuid(fs_ns, root);
  
--	new->suid = new->fsuid = new->euid;
--	new->sgid = new->fsgid = new->egid;
-+	fsuid = from_kuid_munged(new->user_ns, new->euid);
-+	kfsuid = make_kfsuid(new->user_ns, fsuid);
-+	new->suid = new->kfsuid = new->euid;
-+	new->fsuid = kfsuid;
-+
-+	fsgid = from_kgid_munged(new->user_ns, new->egid);
-+	kfsgid = make_kfsgid(new->user_ns, fsgid);
-+	new->sgid = new->kfsgid = new->egid;
-+	new->fsgid = kfsgid;
+-	/* If the root kuid maps to a valid uid in current ns, then return
++	/* If the root kfsuid maps to a valid uid in current ns, then return
+ 	 * this as a nscap. */
+-	mappedroot = from_kuid(current_user_ns(), kroot);
++	mappedroot = from_kfsuid(current_user_ns(), kroot);
+ 	if (mappedroot != (uid_t)-1 && mappedroot != (uid_t)0) {
+ 		if (alloc) {
+ 			*buffer = tmpbuf;
+@@ -460,7 +460,7 @@ static kuid_t rootid_from_xattr(const void *value, size_t size,
+ 	if (size == XATTR_CAPS_SZ_3)
+ 		rootid = le32_to_cpu(nscap->rootid);
  
- 	/* File caps or setid cancels ambient. */
- 	if (has_fcap || is_setid)
+-	return make_kuid(task_ns, rootid);
++	return make_kfsuid(task_ns, rootid);
+ }
+ 
+ static bool validheader(size_t size, const struct vfs_cap_data *cap)
+@@ -501,7 +501,7 @@ int cap_convert_nscap(struct dentry *dentry, void **ivalue, size_t size)
+ 	if (!uid_valid(rootid))
+ 		return -EINVAL;
+ 
+-	nsrootid = from_kuid(fs_ns, rootid);
++	nsrootid = from_kfsuid(fs_ns, rootid);
+ 	if (nsrootid == -1)
+ 		return -EINVAL;
+ 
+@@ -600,7 +600,7 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data
+ 
+ 	cpu_caps->magic_etc = magic_etc = le32_to_cpu(caps->magic_etc);
+ 
+-	rootkuid = make_kuid(fs_ns, 0);
++	rootkuid = make_kfsuid(fs_ns, 0);
+ 	switch (magic_etc & VFS_CAP_REVISION_MASK) {
+ 	case VFS_CAP_REVISION_1:
+ 		if (size != XATTR_CAPS_SZ_1)
+@@ -616,7 +616,7 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data
+ 		if (size != XATTR_CAPS_SZ_3)
+ 			return -EINVAL;
+ 		tocopy = VFS_CAP_U32_3;
+-		rootkuid = make_kuid(fs_ns, le32_to_cpu(nscaps->rootid));
++		rootkuid = make_kfsuid(fs_ns, le32_to_cpu(nscaps->rootid));
+ 		break;
+ 
+ 	default:
 -- 
 2.25.0
 
