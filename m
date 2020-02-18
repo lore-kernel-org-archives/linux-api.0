@@ -6,23 +6,23 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 025CDC34040
-	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:37:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E2472C34026
+	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:37:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id DA1E8208C4
-	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:37:03 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C68BB24654
+	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:37:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726655AbgBROgu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 18 Feb 2020 09:36:50 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:52971 "EHLO
+        id S1726762AbgBROff (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 18 Feb 2020 09:35:35 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:52955 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726645AbgBROff (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 09:35:35 -0500
+        with ESMTP id S1726567AbgBROfe (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 09:35:34 -0500
 Received: from ip5f5bf7ec.dynamic.kabel-deutschland.de ([95.91.247.236] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1j43xr-0000fF-7O; Tue, 18 Feb 2020 14:35:07 +0000
+        id 1j43xq-0000fF-Bx; Tue, 18 Feb 2020 14:35:06 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
         "Eric W. Biederman" <ebiederm@xmission.com>,
@@ -39,9 +39,9 @@ Cc:     smbarber@chromium.org, Seth Forshee <seth.forshee@canonical.com>,
         containers@lists.linux-foundation.org,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v3 03/25] proc: add /proc/<pid>/fsgid_map
-Date:   Tue, 18 Feb 2020 15:33:49 +0100
-Message-Id: <20200218143411.2389182-4-christian.brauner@ubuntu.com>
+Subject: [PATCH v3 02/25] proc: add /proc/<pid>/fsuid_map
+Date:   Tue, 18 Feb 2020 15:33:48 +0100
+Message-Id: <20200218143411.2389182-3-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.25.0
 In-Reply-To: <20200218143411.2389182-1-christian.brauner@ubuntu.com>
 References: <20200218143411.2389182-1-christian.brauner@ubuntu.com>
@@ -52,11 +52,11 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The /proc/<pid>/fsgid_map file can be written once to setup an fsgid mapping
+The /proc/<pid>/fsuid_map file can be written once to setup an fsuid mapping
 for a user namespace. Writing to this file has the same restrictions as writing
-to /proc/<pid>/fsgid_map.
+to /proc/<pid>/fsuid_map:
 
-root@e1-vm:/# cat /proc/13023/fsgid_map
+root@e1-vm:/# cat /proc/13023/fsuid_map
          0     300000     100000
 
 Fsid mappings have always been around. They are currently always identical to
@@ -78,48 +78,54 @@ unchanged
 - Christian Brauner <christian.brauner@ubuntu.com>:
   - Fix grammar in commit message.
 ---
- fs/proc/base.c | 14 ++++++++++++++
- 1 file changed, 14 insertions(+)
+ fs/proc/base.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
 
 diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 5fb28004663e..1303cdd2e617 100644
+index c7c64272b0fa..5fb28004663e 100644
 --- a/fs/proc/base.c
 +++ b/fs/proc/base.c
-@@ -2975,6 +2975,11 @@ static int proc_fsuid_map_open(struct inode *inode, struct file *file)
- {
- 	return proc_id_map_open(inode, file, &proc_fsuid_seq_operations);
+@@ -2970,6 +2970,13 @@ static int proc_projid_map_open(struct inode *inode, struct file *file)
+ 	return proc_id_map_open(inode, file, &proc_projid_seq_operations);
  }
-+
-+static int proc_fsgid_map_open(struct inode *inode, struct file *file)
-+{
-+	return proc_id_map_open(inode, file, &proc_fsgid_seq_operations);
-+}
- #endif
  
++#ifdef CONFIG_USER_NS_FSID
++static int proc_fsuid_map_open(struct inode *inode, struct file *file)
++{
++	return proc_id_map_open(inode, file, &proc_fsuid_seq_operations);
++}
++#endif
++
  static const struct file_operations proc_uid_map_operations = {
-@@ -3009,6 +3014,14 @@ static const struct file_operations proc_fsuid_map_operations = {
- 	.llseek		= seq_lseek,
+ 	.open		= proc_uid_map_open,
+ 	.write		= proc_uid_map_write,
+@@ -2994,6 +3001,16 @@ static const struct file_operations proc_projid_map_operations = {
  	.release	= proc_id_map_release,
  };
-+
-+static const struct file_operations proc_fsgid_map_operations = {
-+	.open		= proc_fsgid_map_open,
-+	.write		= proc_fsgid_map_write,
+ 
++#ifdef CONFIG_USER_NS_FSID
++static const struct file_operations proc_fsuid_map_operations = {
++	.open		= proc_fsuid_map_open,
++	.write		= proc_fsuid_map_write,
 +	.read		= seq_read,
 +	.llseek		= seq_lseek,
 +	.release	= proc_id_map_release,
 +};
- #endif
- 
++#endif
++
  static int proc_setgroups_open(struct inode *inode, struct file *file)
-@@ -3195,6 +3208,7 @@ static const struct pid_entry tgid_base_stuff[] = {
- #ifdef CONFIG_USER_NS
- #ifdef CONFIG_USER_NS_FSID
- 	REG("fsuid_map",  S_IRUGO|S_IWUSR, proc_fsuid_map_operations),
-+	REG("fsgid_map",  S_IRUGO|S_IWUSR, proc_fsgid_map_operations),
+ {
+ 	struct user_namespace *ns = NULL;
+@@ -3176,6 +3193,9 @@ static const struct pid_entry tgid_base_stuff[] = {
+ 	ONE("io",	S_IRUSR, proc_tgid_io_accounting),
  #endif
+ #ifdef CONFIG_USER_NS
++#ifdef CONFIG_USER_NS_FSID
++	REG("fsuid_map",  S_IRUGO|S_IWUSR, proc_fsuid_map_operations),
++#endif
  	REG("uid_map",    S_IRUGO|S_IWUSR, proc_uid_map_operations),
  	REG("gid_map",    S_IRUGO|S_IWUSR, proc_gid_map_operations),
+ 	REG("projid_map", S_IRUGO|S_IWUSR, proc_projid_map_operations),
 -- 
 2.25.0
 
