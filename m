@@ -7,179 +7,252 @@ X-Spam-Status: No, score=-6.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D3FC0C34026
-	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 17:07:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4E140C34048
+	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 17:07:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id A95B120801
-	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 17:07:19 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1FAE82176D
+	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 17:07:57 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Cf5XhqAy"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="dWtz+4cA"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726787AbgBRRHT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 18 Feb 2020 12:07:19 -0500
-Received: from us-smtp-2.mimecast.com ([207.211.31.81]:58417 "EHLO
+        id S1726640AbgBRRH4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 18 Feb 2020 12:07:56 -0500
+Received: from us-smtp-2.mimecast.com ([205.139.110.61]:52739 "EHLO
         us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1726863AbgBRRHS (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 12:07:18 -0500
+        by vger.kernel.org with ESMTP id S1726911AbgBRRH4 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 12:07:56 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1582045638;
+        s=mimecast20190719; t=1582045674;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=Yz1PYlAw+vwqrPPhOUgTLgnA2ip0cR1UD//JiPCA6VE=;
-        b=Cf5XhqAyAKryQWPTCKBJh9zflFwEoLvRgTerMjpHXO/vhHQgKa0GuPiNTLwljnKt7fZmGf
-        8O+yjPpHzvcGtXFw0udHIYHygW9fRUye7GrPfrCblB+ZtyoyrrtuWKHq1aVLk3I/QyuE7i
-        rPbb4FPCVMR0IWCy9z05Xuu3n6gjKSQ=
+        bh=+wUKdUlz9U8UTwNyokp0ScO/lvYBNbQyisRDz0h80to=;
+        b=dWtz+4cAyZqpg1Go++QUxeXq3UPSl1te41rI25+R6jWDxEfVI/DVWbb4kv55STJ+PuVexp
+        lEt/UWQTeTZU5Jzu0xHmcz1b5jjibDhVYmnEQWyVWjfvr3p+N/1UvfGxOMhmhliMLB58pT
+        Lf0AuWp+a5zJS3GOIO9O+hYlpQRGZmI=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-425-0aXLmRmnPv6grXEqVq-w4Q-1; Tue, 18 Feb 2020 12:06:47 -0500
-X-MC-Unique: 0aXLmRmnPv6grXEqVq-w4Q-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-438-HqrXiQhMO3So81JYbc6GfA-1; Tue, 18 Feb 2020 12:07:30 -0500
+X-MC-Unique: HqrXiQhMO3So81JYbc6GfA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 00C6F800D54;
-        Tue, 18 Feb 2020 17:06:46 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7F5B4100F63D;
+        Tue, 18 Feb 2020 17:07:28 +0000 (UTC)
 Received: from warthog.procyon.org.uk (ovpn-122-163.rdu2.redhat.com [10.10.122.163])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 8BFD260BE1;
-        Tue, 18 Feb 2020 17:06:44 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id B58159183B;
+        Tue, 18 Feb 2020 17:07:26 +0000 (UTC)
 Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
         Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
         Kingdom.
         Registered in England and Wales under Company Registration No. 3798903
-Subject: [PATCH 14/19] notifications: sample: Display mount tree change
- notifications [ver #16]
+Subject: [PATCH 19/19] nfs: Add example filesystem information [ver #16]
 From:   David Howells <dhowells@redhat.com>
 To:     viro@zeniv.linux.org.uk
 Cc:     dhowells@redhat.com, raven@themaw.net, mszeredi@redhat.com,
         christian@brauner.io, linux-api@vger.kernel.org,
         linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
-Date:   Tue, 18 Feb 2020 17:06:43 +0000
-Message-ID: <158204560384.3299825.6958748686538640876.stgit@warthog.procyon.org.uk>
+Date:   Tue, 18 Feb 2020 17:07:26 +0000
+Message-ID: <158204564600.3299825.1942403408111770890.stgit@warthog.procyon.org.uk>
 In-Reply-To: <158204549488.3299825.3783690177353088425.stgit@warthog.procyon.org.uk>
 References: <158204549488.3299825.3783690177353088425.stgit@warthog.procyon.org.uk>
 User-Agent: StGit/0.21
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This is run like:
-
-	./watch_test
-
-and watches "/" for changes to the mount topology and the attributes of
-individual mount objects.
-
-	# mount -t tmpfs none /mnt
-	# mount -o remount,ro /mnt
-	# mount -o remount,rw /mnt
-
-producing:
-
-	# ./watch_test
-	read() = 16
-	NOTIFY[000]: ty=000002 sy=00 i=02000010
-	MOUNT 00000060 change=0[new_mount] aux=416
-	read() = 16
-	NOTIFY[000]: ty=000002 sy=04 i=02010010
-	MOUNT 000001a0 change=4[setattr] aux=0
-	read() = 16
-	NOTIFY[000]: ty=000002 sy=04 i=02010010
-	MOUNT 000001a0 change=4[setattr] aux=0
+Add the ability to list NFS server addresses and hostname, timestamp
+information and capabilities as an example.
 
 Signed-off-by: David Howells <dhowells@redhat.com>
+cc: linux-nfs@vger.kernel.org
 ---
 
- samples/watch_queue/watch_test.c |   39 +++++++++++++++++++++++++++++++++++++-
- 1 file changed, 38 insertions(+), 1 deletion(-)
+ fs/nfs/Makefile             |    1 +
+ fs/nfs/internal.h           |    8 ++++++++
+ fs/nfs/nfs4super.c          |    1 +
+ fs/nfs/super.c              |    1 +
+ include/uapi/linux/fsinfo.h |   29 +++++++++++++++++++++++++++++
+ samples/vfs/test-fsinfo.c   |   40 ++++++++++++++++++++++++++++++++++++++++
+ 6 files changed, 80 insertions(+)
 
-diff --git a/samples/watch_queue/watch_test.c b/samples/watch_queue/watch_test.c
-index 0eaff5dc04c3..49d185150506 100644
---- a/samples/watch_queue/watch_test.c
-+++ b/samples/watch_queue/watch_test.c
-@@ -26,6 +26,9 @@
- #ifndef __NR_watch_devices
- #define __NR_watch_devices -1
- #endif
-+#ifndef __NR_watch_mount
-+#define __NR_watch_mount -1
+diff --git a/fs/nfs/Makefile b/fs/nfs/Makefile
+index 2433c3e03cfa..20fbc9596833 100644
+--- a/fs/nfs/Makefile
++++ b/fs/nfs/Makefile
+@@ -13,6 +13,7 @@ nfs-y 			:= client.o dir.o file.o getroot.o inode.o super.o \
+ nfs-$(CONFIG_ROOT_NFS)	+= nfsroot.o
+ nfs-$(CONFIG_SYSCTL)	+= sysctl.o
+ nfs-$(CONFIG_NFS_FSCACHE) += fscache.o fscache-index.o
++nfs-$(CONFIG_FSINFO)	+= fsinfo.o
+ 
+ obj-$(CONFIG_NFS_V2) += nfsv2.o
+ nfsv2-y := nfs2super.o proc.o nfs2xdr.o
+diff --git a/fs/nfs/internal.h b/fs/nfs/internal.h
+index f80c47d5ff27..4ddf0da25740 100644
+--- a/fs/nfs/internal.h
++++ b/fs/nfs/internal.h
+@@ -10,6 +10,7 @@
+ #include <linux/sunrpc/addr.h>
+ #include <linux/nfs_page.h>
+ #include <linux/wait_bit.h>
++#include <linux/fsinfo.h>
+ 
+ #define NFS_SB_MASK (SB_RDONLY|SB_NOSUID|SB_NODEV|SB_NOEXEC|SB_SYNCHRONOUS)
+ 
+@@ -247,6 +248,13 @@ extern const struct svc_version nfs4_callback_version4;
+ /* fs_context.c */
+ extern struct file_system_type nfs_fs_type;
+ 
++/* fsinfo.c */
++#ifdef CONFIG_FSINFO
++extern const struct fsinfo_attribute nfs_fsinfo_attributes[];
++#else
++#define nfs_fsinfo_attributes NULL
 +#endif
- 
- #define BUF_SIZE 256
- 
-@@ -58,6 +61,27 @@ static void saw_key_change(struct watch_notification *n, size_t len)
- 	       k->key_id, n->subtype, key_subtypes[n->subtype], k->aux);
- }
- 
-+static const char *mount_subtypes[256] = {
-+	[NOTIFY_MOUNT_NEW_MOUNT]	= "new_mount",
-+	[NOTIFY_MOUNT_UNMOUNT]		= "unmount",
-+	[NOTIFY_MOUNT_EXPIRY]		= "expiry",
-+	[NOTIFY_MOUNT_READONLY]		= "readonly",
-+	[NOTIFY_MOUNT_SETATTR]		= "setattr",
-+	[NOTIFY_MOUNT_MOVE_FROM]	= "move_from",
-+	[NOTIFY_MOUNT_MOVE_TO]		= "move_to",
-+};
 +
-+static void saw_mount_change(struct watch_notification *n, size_t len)
-+{
-+	struct mount_notification *m = (struct mount_notification *)n;
-+
-+	if (len != sizeof(struct mount_notification))
-+		return;
-+
-+	printf("MOUNT %08x change=%u[%s] aux=%u\n",
-+	       m->triggered_on, n->subtype, mount_subtypes[n->subtype], m->changed_mount);
-+}
+ /* pagelist.c */
+ extern int __init nfs_init_nfspagecache(void);
+ extern void nfs_destroy_nfspagecache(void);
+diff --git a/fs/nfs/nfs4super.c b/fs/nfs/nfs4super.c
+index 1475f932d7da..1b75144e24f4 100644
+--- a/fs/nfs/nfs4super.c
++++ b/fs/nfs/nfs4super.c
+@@ -26,6 +26,7 @@ static const struct super_operations nfs4_sops = {
+ 	.write_inode	= nfs4_write_inode,
+ 	.drop_inode	= nfs_drop_inode,
+ 	.statfs		= nfs_statfs,
++	.fsinfo_attributes = nfs_fsinfo_attributes,
+ 	.evict_inode	= nfs4_evict_inode,
+ 	.umount_begin	= nfs_umount_begin,
+ 	.show_options	= nfs_show_options,
+diff --git a/fs/nfs/super.c b/fs/nfs/super.c
+index dada09b391c6..fbc2cf5f803b 100644
+--- a/fs/nfs/super.c
++++ b/fs/nfs/super.c
+@@ -76,6 +76,7 @@ const struct super_operations nfs_sops = {
+ 	.write_inode	= nfs_write_inode,
+ 	.drop_inode	= nfs_drop_inode,
+ 	.statfs		= nfs_statfs,
++	.fsinfo_attributes = nfs_fsinfo_attributes,
+ 	.evict_inode	= nfs_evict_inode,
+ 	.umount_begin	= nfs_umount_begin,
+ 	.show_options	= nfs_show_options,
+diff --git a/include/uapi/linux/fsinfo.h b/include/uapi/linux/fsinfo.h
+index da9a6f48ec5b..7c97d65333ec 100644
+--- a/include/uapi/linux/fsinfo.h
++++ b/include/uapi/linux/fsinfo.h
+@@ -40,6 +40,11 @@
+ 
+ #define FSINFO_ATTR_EXT4_TIMESTAMPS	0x400	/* Ext4 superblock timestamps */
+ 
++#define FSINFO_ATTR_NFS_INFO		0x500	/* Information about an NFS mount */
++#define FSINFO_ATTR_NFS_SERVER_NAME	0x501	/* Name of the server (string) */
++#define FSINFO_ATTR_NFS_SERVER_ADDRESSES 0x502	/* List of addresses of the server */
++#define FSINFO_ATTR_NFS_GSSAPI_NAME	0x503	/* GSSAPI acceptor name */
 +
  /*
-  * Consume and display events.
-  */
-@@ -134,6 +158,9 @@ static void consumer(int fd)
- 			default:
- 				printf("other type\n");
- 				break;
-+			case WATCH_TYPE_MOUNT_NOTIFY:
-+				saw_mount_change(&n.n, len);
-+				break;
- 			}
+  * Optional fsinfo() parameter structure.
+  *
+@@ -339,4 +344,28 @@ struct fsinfo_ext4_timestamps {
  
- 			p += len;
-@@ -142,12 +169,17 @@ static void consumer(int fd)
+ #define FSINFO_ATTR_EXT4_TIMESTAMPS__STRUCT struct fsinfo_ext4_timestamps
+ 
++/*
++ * Information struct for fsinfo(FSINFO_ATTR_NFS_INFO).
++ *
++ * Get information about an NFS mount.
++ */
++struct fsinfo_nfs_info {
++	__u32		version;
++	__u32		minor_version;
++	__u32		transport_proto;
++};
++
++#define FSINFO_ATTR_NFS_INFO__STRUCT struct fsinfo_nfs_info
++
++/*
++ * Information struct for fsinfo(FSINFO_ATTR_NFS_SERVER_ADDRESSES).
++ *
++ * Get the addresses of the server for an NFS mount.
++ */
++struct fsinfo_nfs_server_address {
++	struct __kernel_sockaddr_storage address;
++};
++
++#define FSINFO_ATTR_NFS_SERVER_ADDRESSES__STRUCT struct fsinfo_nfs_server_address
++
+ #endif /* _UAPI_LINUX_FSINFO_H */
+diff --git a/samples/vfs/test-fsinfo.c b/samples/vfs/test-fsinfo.c
+index 53251ee98d1c..68652db686e8 100644
+--- a/samples/vfs/test-fsinfo.c
++++ b/samples/vfs/test-fsinfo.c
+@@ -393,6 +393,40 @@ static void dump_ext4_fsinfo_timestamps(void *reply, unsigned int size)
+ 	printf("\tlast-err: %s\n", dump_ext4_time(buffer, r->last_error_time));
  }
  
- static struct watch_notification_filter filter = {
--	.nr_filters	= 1,
-+	.nr_filters	= 2,
- 	.filters = {
- 		[0]	= {
- 			.type			= WATCH_TYPE_KEY_NOTIFY,
- 			.subtype_filter[0]	= UINT_MAX,
- 		},
-+		[1] = {
-+			.type			= WATCH_TYPE_MOUNT_NOTIFY,
-+			// Reject move-from notifications
-+			.subtype_filter[0]	= UINT_MAX & ~(1 << NOTIFY_MOUNT_MOVE_FROM),
-+		},
- 	},
++static void dump_nfs_fsinfo_info(void *reply, unsigned int size)
++{
++	struct fsinfo_nfs_info *r = reply;
++
++	printf("ver=%u.%u proto=%u\n", r->version, r->minor_version, r->transport_proto);
++}
++
++static void dump_nfs_fsinfo_server_addresses(void *reply, unsigned int size)
++{
++	struct fsinfo_nfs_server_address *r = reply;
++	struct sockaddr_storage *ss = (struct sockaddr_storage *)&r->address;
++	struct sockaddr_in6 *sin6;
++	struct sockaddr_in *sin;
++	char buf[1024];
++
++	switch (ss->ss_family) {
++	case AF_INET:
++		sin = (struct sockaddr_in *)ss;
++		if (!inet_ntop(AF_INET, &sin->sin_addr, buf, sizeof(buf)))
++			break;
++		printf("%5u %s\n", ntohs(sin->sin_port), buf);
++		return;
++	case AF_INET6:
++		sin6 = (struct sockaddr_in6 *)ss;
++		if (!inet_ntop(AF_INET6, &sin6->sin6_addr, buf, sizeof(buf)))
++			break;
++		printf("%5u %s\n", ntohs(sin6->sin6_port), buf);
++		return;
++	default:
++		printf("family=%u\n", ss->ss_family);
++		return;
++	}
++}
++
+ static void dump_string(void *reply, unsigned int size)
+ {
+ 	char *s = reply, *p;
+@@ -424,6 +458,8 @@ static void dump_string(void *reply, unsigned int size)
+ #define dump_fsinfo_generic_mount_point		dump_string
+ #define dump_afs_cell_name			dump_string
+ #define dump_afs_server_name			dump_string
++#define dump_nfs_fsinfo_server_name		dump_string
++#define dump_nfs_fsinfo_gssapi_name		dump_string
+ 
+ /*
+  *
+@@ -468,6 +504,10 @@ static const struct fsinfo_attribute fsinfo_attributes[] = {
+ 	FSINFO_STRING	(FSINFO_ATTR_AFS_SERVER_NAME,	afs_server_name),
+ 	FSINFO_LIST_N	(FSINFO_ATTR_AFS_SERVER_ADDRESSES, afs_fsinfo_server_address),
+ 	FSINFO_VSTRUCT	(FSINFO_ATTR_EXT4_TIMESTAMPS,	ext4_fsinfo_timestamps),
++	FSINFO_VSTRUCT	(FSINFO_ATTR_NFS_INFO,		nfs_fsinfo_info),
++	FSINFO_STRING	(FSINFO_ATTR_NFS_SERVER_NAME,	nfs_fsinfo_server_name),
++	FSINFO_LIST	(FSINFO_ATTR_NFS_SERVER_ADDRESSES, nfs_fsinfo_server_addresses),
++	FSINFO_STRING	(FSINFO_ATTR_NFS_GSSAPI_NAME,	nfs_fsinfo_gssapi_name),
+ 	{}
  };
  
-@@ -181,6 +213,11 @@ int main(int argc, char **argv)
- 		exit(1);
- 	}
- 
-+	if (syscall(__NR_watch_mount, AT_FDCWD, "/", 0, fd, 0x02) == -1) {
-+		perror("watch_mount");
-+		exit(1);
-+	}
-+
- 	consumer(fd);
- 	exit(0);
- }
 
 
