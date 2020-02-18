@@ -6,23 +6,23 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E2472C34026
-	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:37:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1F26EC34026
+	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:37:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id C68BB24654
-	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:37:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E915424649
+	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:37:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726762AbgBROff (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 18 Feb 2020 09:35:35 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:52955 "EHLO
+        id S1727206AbgBROhH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 18 Feb 2020 09:37:07 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:52967 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726567AbgBROfe (ORCPT
+        with ESMTP id S1726569AbgBROfe (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 09:35:34 -0500
 Received: from ip5f5bf7ec.dynamic.kabel-deutschland.de ([95.91.247.236] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1j43xq-0000fF-Bx; Tue, 18 Feb 2020 14:35:06 +0000
+        id 1j43xx-0000fF-20; Tue, 18 Feb 2020 14:35:13 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
         "Eric W. Biederman" <ebiederm@xmission.com>,
@@ -39,9 +39,9 @@ Cc:     smbarber@chromium.org, Seth Forshee <seth.forshee@canonical.com>,
         containers@lists.linux-foundation.org,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v3 02/25] proc: add /proc/<pid>/fsuid_map
-Date:   Tue, 18 Feb 2020 15:33:48 +0100
-Message-Id: <20200218143411.2389182-3-christian.brauner@ubuntu.com>
+Subject: [PATCH v3 09/25] fs: add is_userns_visible() helper
+Date:   Tue, 18 Feb 2020 15:33:55 +0100
+Message-Id: <20200218143411.2389182-10-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.25.0
 In-Reply-To: <20200218143411.2389182-1-christian.brauner@ubuntu.com>
 References: <20200218143411.2389182-1-christian.brauner@ubuntu.com>
@@ -52,22 +52,10 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The /proc/<pid>/fsuid_map file can be written once to setup an fsuid mapping
-for a user namespace. Writing to this file has the same restrictions as writing
-to /proc/<pid>/fsuid_map:
-
-root@e1-vm:/# cat /proc/13023/fsuid_map
-         0     300000     100000
-
-Fsid mappings have always been around. They are currently always identical to
-the id mappings for a user namespace. This means, currently whenever an fsid
-needs to be looked up the kernel will use the id mapping of the user namespace.
-With the introduction of fsid mappings the kernel will now lookup fsids in the
-fsid mappings of the user namespace. If no fsid mapping exists the kernel will
-continue looking up fsids in the id mappings of the user namespace. Hence, if a
-system supports fsid mappings through /proc/<pid>/fs*id_map and a container
-runtime is not aware of fsid mappings it or does not use them it will it will
-continue to work just as before.
+Introduce a helper which makes it possible to detect fileystems whose
+superblock is visible in multiple user namespace. This currently only
+means proc and sys. Such filesystems usually have special semantics so their
+behavior will not be changed with the introduction of fsid mappings.
 
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
@@ -75,57 +63,25 @@ Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 unchanged
 
 /* v3 */
-- Christian Brauner <christian.brauner@ubuntu.com>:
-  - Fix grammar in commit message.
+unchanged
 ---
- fs/proc/base.c | 20 ++++++++++++++++++++
- 1 file changed, 20 insertions(+)
+ include/linux/fs.h | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index c7c64272b0fa..5fb28004663e 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -2970,6 +2970,13 @@ static int proc_projid_map_open(struct inode *inode, struct file *file)
- 	return proc_id_map_open(inode, file, &proc_projid_seq_operations);
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 3cd4fe6b845e..fdc8fb2d786b 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -3651,4 +3651,9 @@ static inline int inode_drain_writes(struct inode *inode)
+ 	return filemap_write_and_wait(inode->i_mapping);
  }
  
-+#ifdef CONFIG_USER_NS_FSID
-+static int proc_fsuid_map_open(struct inode *inode, struct file *file)
++static inline bool is_userns_visible(unsigned long iflags)
 +{
-+	return proc_id_map_open(inode, file, &proc_fsuid_seq_operations);
++	return (iflags & SB_I_USERNS_VISIBLE);
 +}
-+#endif
 +
- static const struct file_operations proc_uid_map_operations = {
- 	.open		= proc_uid_map_open,
- 	.write		= proc_uid_map_write,
-@@ -2994,6 +3001,16 @@ static const struct file_operations proc_projid_map_operations = {
- 	.release	= proc_id_map_release,
- };
- 
-+#ifdef CONFIG_USER_NS_FSID
-+static const struct file_operations proc_fsuid_map_operations = {
-+	.open		= proc_fsuid_map_open,
-+	.write		= proc_fsuid_map_write,
-+	.read		= seq_read,
-+	.llseek		= seq_lseek,
-+	.release	= proc_id_map_release,
-+};
-+#endif
-+
- static int proc_setgroups_open(struct inode *inode, struct file *file)
- {
- 	struct user_namespace *ns = NULL;
-@@ -3176,6 +3193,9 @@ static const struct pid_entry tgid_base_stuff[] = {
- 	ONE("io",	S_IRUSR, proc_tgid_io_accounting),
- #endif
- #ifdef CONFIG_USER_NS
-+#ifdef CONFIG_USER_NS_FSID
-+	REG("fsuid_map",  S_IRUGO|S_IWUSR, proc_fsuid_map_operations),
-+#endif
- 	REG("uid_map",    S_IRUGO|S_IWUSR, proc_uid_map_operations),
- 	REG("gid_map",    S_IRUGO|S_IWUSR, proc_gid_map_operations),
- 	REG("projid_map", S_IRUGO|S_IWUSR, proc_projid_map_operations),
+ #endif /* _LINUX_FS_H */
 -- 
 2.25.0
 
