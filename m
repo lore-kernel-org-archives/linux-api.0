@@ -6,23 +6,23 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 51C93C3403F
-	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:36:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AE452C34026
+	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:36:44 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 2AB9320801
-	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:36:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 88F65208C4
+	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 14:36:44 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726902AbgBROfi (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S1726863AbgBROfi (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Tue, 18 Feb 2020 09:35:38 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:53006 "EHLO
+Received: from youngberry.canonical.com ([91.189.89.112]:53017 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726799AbgBROfi (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 09:35:38 -0500
+        with ESMTP id S1726605AbgBROfh (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 09:35:37 -0500
 Received: from ip5f5bf7ec.dynamic.kabel-deutschland.de ([95.91.247.236] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1j43y0-0000fF-GX; Tue, 18 Feb 2020 14:35:16 +0000
+        id 1j43xp-0000fF-G1; Tue, 18 Feb 2020 14:35:05 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
         "Eric W. Biederman" <ebiederm@xmission.com>,
@@ -39,9 +39,9 @@ Cc:     smbarber@chromium.org, Seth Forshee <seth.forshee@canonical.com>,
         containers@lists.linux-foundation.org,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v3 12/25] capability: privileged_wrt_inode_uidgid(): handle fsid mappings
-Date:   Tue, 18 Feb 2020 15:33:58 +0100
-Message-Id: <20200218143411.2389182-13-christian.brauner@ubuntu.com>
+Subject: [PATCH v3 01/25] user_namespace: introduce fsid mappings infrastructure
+Date:   Tue, 18 Feb 2020 15:33:47 +0100
+Message-Id: <20200218143411.2389182-2-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.25.0
 In-Reply-To: <20200218143411.2389182-1-christian.brauner@ubuntu.com>
 References: <20200218143411.2389182-1-christian.brauner@ubuntu.com>
@@ -52,52 +52,274 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Switch privileged_wrt_inode_uidgid() to lookup fsids in the fsid mappings. If
-no fsid mappings are setup the behavior is unchanged, i.e. fsids are looked up
-in the id mappings.
+This introduces the infrastructure to setup fsid mappings which will be used in
+later patches.
+All new code depends on CONFIG_USER_NS_FSID=y. It currently defaults to "N".
+If CONFIG_USER_NS_FSID is not set, no new code is added.
 
-Filesystems that share a superblock in all user namespaces they are mounted in
-will retain their old semantics even with the introduction of fsid mappings.
+In this patch fsuid_m_show() and fsgid_m_show() are introduced. They are
+identical to uid_m_show() and gid_m_show() until we introduce from_kfsuid() and
+from_kfsgid() in a follow-up patch.
 
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
-unchanged
+- Randy Dunlap <rdunlap@infradead.org>:
+  - Fix typo in USER_NS_FSID kconfig documentation.
 
 /* v3 */
 unchanged
 ---
- kernel/capability.c | 10 ++++++++--
- 1 file changed, 8 insertions(+), 2 deletions(-)
+ include/linux/user_namespace.h |  10 +++
+ init/Kconfig                   |  11 +++
+ kernel/user.c                  |  22 ++++++
+ kernel/user_namespace.c        | 122 +++++++++++++++++++++++++++++++++
+ 4 files changed, 165 insertions(+)
 
-diff --git a/kernel/capability.c b/kernel/capability.c
-index 1444f3954d75..2b0c1dc992e2 100644
---- a/kernel/capability.c
-+++ b/kernel/capability.c
-@@ -19,6 +19,8 @@
- #include <linux/pid_namespace.h>
- #include <linux/user_namespace.h>
- #include <linux/uaccess.h>
-+#include <linux/fsuidgid.h>
-+#include <linux/fs.h>
+diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
+index 6ef1c7109fc4..e44742b0cf8a 100644
+--- a/include/linux/user_namespace.h
++++ b/include/linux/user_namespace.h
+@@ -56,6 +56,10 @@ enum ucount_type {
+ struct user_namespace {
+ 	struct uid_gid_map	uid_map;
+ 	struct uid_gid_map	gid_map;
++#ifdef CONFIG_USER_NS_FSID
++	struct uid_gid_map	fsuid_map;
++	struct uid_gid_map	fsgid_map;
++#endif
+ 	struct uid_gid_map	projid_map;
+ 	atomic_t		count;
+ 	struct user_namespace	*parent;
+@@ -127,6 +131,12 @@ struct seq_operations;
+ extern const struct seq_operations proc_uid_seq_operations;
+ extern const struct seq_operations proc_gid_seq_operations;
+ extern const struct seq_operations proc_projid_seq_operations;
++#ifdef CONFIG_USER_NS_FSID
++extern const struct seq_operations proc_fsuid_seq_operations;
++extern const struct seq_operations proc_fsgid_seq_operations;
++extern ssize_t proc_fsuid_map_write(struct file *, const char __user *, size_t, loff_t *);
++extern ssize_t proc_fsgid_map_write(struct file *, const char __user *, size_t, loff_t *);
++#endif
+ extern ssize_t proc_uid_map_write(struct file *, const char __user *, size_t, loff_t *);
+ extern ssize_t proc_gid_map_write(struct file *, const char __user *, size_t, loff_t *);
+ extern ssize_t proc_projid_map_write(struct file *, const char __user *, size_t, loff_t *);
+diff --git a/init/Kconfig b/init/Kconfig
+index cfee56c151f1..d4d0beeba48f 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1111,6 +1111,17 @@ config USER_NS
  
- /*
-  * Leveraged for setting/resetting capabilities
-@@ -486,8 +488,12 @@ EXPORT_SYMBOL(file_ns_capable);
-  */
- bool privileged_wrt_inode_uidgid(struct user_namespace *ns, const struct inode *inode)
- {
--	return kuid_has_mapping(ns, inode->i_uid) &&
--		kgid_has_mapping(ns, inode->i_gid);
-+	if (is_userns_visible(inode->i_sb->s_iflags))
-+		return kuid_has_mapping(ns, inode->i_uid) &&
-+		       kgid_has_mapping(ns, inode->i_gid);
+ 	  If unsure, say N.
+ 
++config USER_NS_FSID
++	bool "User namespace fsid mappings"
++	depends on USER_NS
++	default n
++	help
++	  This allows containers to alter their filesystem id mappings.
++	  With this containers with different id mappings can still share
++	  the same filesystem.
 +
-+	return kfsuid_has_mapping(ns, inode->i_uid) &&
-+	       kfsgid_has_mapping(ns, inode->i_gid);
++	  If unsure, say N.
++
+ config PID_NS
+ 	bool "PID Namespaces"
+ 	default y
+diff --git a/kernel/user.c b/kernel/user.c
+index 5235d7f49982..2ccaea9b810b 100644
+--- a/kernel/user.c
++++ b/kernel/user.c
+@@ -55,6 +55,28 @@ struct user_namespace init_user_ns = {
+ 			},
+ 		},
+ 	},
++#ifdef CONFIG_USER_NS_FSID
++	.fsuid_map = {
++		.nr_extents = 1,
++		{
++			.extent[0] = {
++				.first = 0,
++				.lower_first = 0,
++				.count = 4294967295U,
++			},
++		},
++	},
++	.fsgid_map = {
++		.nr_extents = 1,
++		{
++			.extent[0] = {
++				.first = 0,
++				.lower_first = 0,
++				.count = 4294967295U,
++			},
++		},
++	},
++#endif
+ 	.count = ATOMIC_INIT(3),
+ 	.owner = GLOBAL_ROOT_UID,
+ 	.group = GLOBAL_ROOT_GID,
+diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+index 8eadadc478f9..cbdf456f95f0 100644
+--- a/kernel/user_namespace.c
++++ b/kernel/user_namespace.c
+@@ -191,6 +191,16 @@ static void free_user_ns(struct work_struct *work)
+ 			kfree(ns->projid_map.forward);
+ 			kfree(ns->projid_map.reverse);
+ 		}
++#ifdef CONFIG_USER_NS_FSID
++		if (ns->fsgid_map.nr_extents > UID_GID_MAP_MAX_BASE_EXTENTS) {
++			kfree(ns->fsgid_map.forward);
++			kfree(ns->fsgid_map.reverse);
++		}
++		if (ns->fsuid_map.nr_extents > UID_GID_MAP_MAX_BASE_EXTENTS) {
++			kfree(ns->fsuid_map.forward);
++			kfree(ns->fsuid_map.reverse);
++		}
++#endif
+ 		retire_userns_sysctls(ns);
+ 		key_free_user_ns(ns);
+ 		ns_free_inum(&ns->ns);
+@@ -637,6 +647,50 @@ static int projid_m_show(struct seq_file *seq, void *v)
+ 	return 0;
  }
  
- /**
++#ifdef CONFIG_USER_NS_FSID
++static int fsuid_m_show(struct seq_file *seq, void *v)
++{
++	struct user_namespace *ns = seq->private;
++	struct uid_gid_extent *extent = v;
++	struct user_namespace *lower_ns;
++	uid_t lower;
++
++	lower_ns = seq_user_ns(seq);
++	if ((lower_ns == ns) && lower_ns->parent)
++		lower_ns = lower_ns->parent;
++
++	lower = from_kuid(lower_ns, KUIDT_INIT(extent->lower_first));
++
++	seq_printf(seq, "%10u %10u %10u\n",
++		extent->first,
++		lower,
++		extent->count);
++
++	return 0;
++}
++
++static int fsgid_m_show(struct seq_file *seq, void *v)
++{
++	struct user_namespace *ns = seq->private;
++	struct uid_gid_extent *extent = v;
++	struct user_namespace *lower_ns;
++	gid_t lower;
++
++	lower_ns = seq_user_ns(seq);
++	if ((lower_ns == ns) && lower_ns->parent)
++		lower_ns = lower_ns->parent;
++
++	lower = from_kgid(lower_ns, KGIDT_INIT(extent->lower_first));
++
++	seq_printf(seq, "%10u %10u %10u\n",
++		extent->first,
++		lower,
++		extent->count);
++
++	return 0;
++}
++#endif
++
+ static void *m_start(struct seq_file *seq, loff_t *ppos,
+ 		     struct uid_gid_map *map)
+ {
+@@ -674,6 +728,22 @@ static void *projid_m_start(struct seq_file *seq, loff_t *ppos)
+ 	return m_start(seq, ppos, &ns->projid_map);
+ }
+ 
++#ifdef CONFIG_USER_NS_FSID
++static void *fsuid_m_start(struct seq_file *seq, loff_t *ppos)
++{
++	struct user_namespace *ns = seq->private;
++
++	return m_start(seq, ppos, &ns->fsuid_map);
++}
++
++static void *fsgid_m_start(struct seq_file *seq, loff_t *ppos)
++{
++	struct user_namespace *ns = seq->private;
++
++	return m_start(seq, ppos, &ns->fsgid_map);
++}
++#endif
++
+ static void *m_next(struct seq_file *seq, void *v, loff_t *pos)
+ {
+ 	(*pos)++;
+@@ -706,6 +776,22 @@ const struct seq_operations proc_projid_seq_operations = {
+ 	.show = projid_m_show,
+ };
+ 
++#ifdef CONFIG_USER_NS_FSID
++const struct seq_operations proc_fsuid_seq_operations = {
++	.start = fsuid_m_start,
++	.stop = m_stop,
++	.next = m_next,
++	.show = fsuid_m_show,
++};
++
++const struct seq_operations proc_fsgid_seq_operations = {
++	.start = fsgid_m_start,
++	.stop = m_stop,
++	.next = m_next,
++	.show = fsgid_m_show,
++};
++#endif
++
+ static bool mappings_overlap(struct uid_gid_map *new_map,
+ 			     struct uid_gid_extent *extent)
+ {
+@@ -1081,6 +1167,42 @@ ssize_t proc_projid_map_write(struct file *file, const char __user *buf,
+ 			 &ns->projid_map, &ns->parent->projid_map);
+ }
+ 
++#ifdef CONFIG_USER_NS_FSID
++ssize_t proc_fsuid_map_write(struct file *file, const char __user *buf,
++			     size_t size, loff_t *ppos)
++{
++	struct seq_file *seq = file->private_data;
++	struct user_namespace *ns = seq->private;
++	struct user_namespace *seq_ns = seq_user_ns(seq);
++
++	if (!ns->parent)
++		return -EPERM;
++
++	if ((seq_ns != ns) && (seq_ns != ns->parent))
++		return -EPERM;
++
++	return map_write(file, buf, size, ppos, CAP_SETUID, &ns->fsuid_map,
++			 &ns->parent->fsuid_map);
++}
++
++ssize_t proc_fsgid_map_write(struct file *file, const char __user *buf,
++			     size_t size, loff_t *ppos)
++{
++	struct seq_file *seq = file->private_data;
++	struct user_namespace *ns = seq->private;
++	struct user_namespace *seq_ns = seq_user_ns(seq);
++
++	if (!ns->parent)
++		return -EPERM;
++
++	if ((seq_ns != ns) && (seq_ns != ns->parent))
++		return -EPERM;
++
++	return map_write(file, buf, size, ppos, CAP_SETGID, &ns->fsgid_map,
++			 &ns->parent->fsgid_map);
++}
++#endif
++
+ static bool new_idmap_permitted(const struct file *file,
+ 				struct user_namespace *ns, int cap_setid,
+ 				struct uid_gid_map *new_map)
 -- 
 2.25.0
 
