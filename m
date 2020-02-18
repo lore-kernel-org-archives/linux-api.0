@@ -2,243 +2,144 @@ Return-Path: <SRS0=PoQX=4G=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 70A0FC34026
-	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 17:08:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5244CC34026
+	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 17:20:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 3CACA20801
-	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 17:08:33 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="a3OcFXYx"
+	by mail.kernel.org (Postfix) with ESMTP id 3298920801
+	for <linux-api@archiver.kernel.org>; Tue, 18 Feb 2020 17:20:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726757AbgBRRIc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 18 Feb 2020 12:08:32 -0500
-Received: from us-smtp-2.mimecast.com ([205.139.110.61]:47982 "EHLO
-        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1726761AbgBRRIc (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 12:08:32 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1582045711;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=6V7zDpOQY9QcI4zPVvzGV9kIfcQ6hip+cWutIuPFGeo=;
-        b=a3OcFXYxOWWA27OkgKcpSq8xMem3VE9xbhgn2yCiVhVAXnz/IPI7nk1G4HRN8QuS5vVR92
-        NLQ6vQejDMX8JHBmlCldOkZi5vUrTq9YaHIu3F4lZglcBafA9CRB1XmwD7/A7K+O60dHh9
-        OBSWlBD742Y+ZC3TZP5yiS7NsxXwiz4=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-234-YNV1lRqkMy2rc36AMLl3rA-1; Tue, 18 Feb 2020 12:07:03 -0500
-X-MC-Unique: YNV1lRqkMy2rc36AMLl3rA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D9740800D5B;
-        Tue, 18 Feb 2020 17:07:01 +0000 (UTC)
-Received: from warthog.procyon.org.uk (ovpn-122-163.rdu2.redhat.com [10.10.122.163])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 6683A8B554;
-        Tue, 18 Feb 2020 17:07:00 +0000 (UTC)
-Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
-        Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
-        Kingdom.
-        Registered in England and Wales under Company Registration No. 3798903
-Subject: [PATCH 16/19] fsinfo: Provide superblock notification counter [ver
- #16]
-From:   David Howells <dhowells@redhat.com>
-To:     viro@zeniv.linux.org.uk
-Cc:     dhowells@redhat.com, raven@themaw.net, mszeredi@redhat.com,
-        christian@brauner.io, linux-api@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
-Date:   Tue, 18 Feb 2020 17:06:58 +0000
-Message-ID: <158204561872.3299825.4717297716890589985.stgit@warthog.procyon.org.uk>
-In-Reply-To: <158204549488.3299825.3783690177353088425.stgit@warthog.procyon.org.uk>
-References: <158204549488.3299825.3783690177353088425.stgit@warthog.procyon.org.uk>
-User-Agent: StGit/0.21
+        id S1726707AbgBRRUY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 18 Feb 2020 12:20:24 -0500
+Received: from rhlx01.hs-esslingen.de ([129.143.116.10]:44156 "EHLO
+        rhlx01.hs-esslingen.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726415AbgBRRUY (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 12:20:24 -0500
+X-Greylist: delayed 535 seconds by postgrey-1.27 at vger.kernel.org; Tue, 18 Feb 2020 12:20:23 EST
+Received: by rhlx01.hs-esslingen.de (Postfix, from userid 1203)
+        id F2D7B29C4924; Tue, 18 Feb 2020 18:11:26 +0100 (CET)
+Date:   Tue, 18 Feb 2020 18:11:26 +0100
+From:   Adrian Reber <adrian@lisas.de>
+To:     Christian Brauner <christian.brauner@ubuntu.com>
+Cc:     "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>,
+        Dmitry Safonov <dima@arista.com>,
+        Linux Kernel <linux-kernel@vger.kernel.org>,
+        Dmitry Safonov <0x7f454c46@gmail.com>,
+        Andy Lutomirski <luto@kernel.org>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Cyrill Gorcunov <gorcunov@openvz.org>,
+        "Eric W. Biederman" <ebiederm@xmission.com>,
+        "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,
+        Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>,
+        Oleg Nesterov <oleg@redhat.com>,
+        Pavel Emelyanov <ovzxemul@gmail.com>,
+        Shuah Khan <shuah@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        containers <containers@lists.linux-foundation.org>,
+        criu@openvz.org, Linux API <linux-api@vger.kernel.org>,
+        x86@kernel.org, Andrei Vagin <avagin@gmail.com>
+Subject: Re: Time Namespaces: CLONE_NEWTIME and clone3()?
+Message-ID: <20200218171126.GF2322403@lisas.de>
+References: <20191112012724.250792-1-dima@arista.com>
+ <20191112012724.250792-4-dima@arista.com>
+ <CAHO5Pa2_7BzZPCXjFj4f=YoX28M4q2Au=h6GrzN-EjRffMo1iw@mail.gmail.com>
+ <20200217145908.7epzz5nescccwvzv@wittgenstein>
+ <CAKgNAkjfdWFwNdFzdBY81_8WZJNtbtztfjO9T2YNQDV4ThNiNw@mail.gmail.com>
+ <20200217230331.he6p5bs766zp6smx@wittgenstein>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20200217230331.he6p5bs766zp6smx@wittgenstein>
+X-Url:  <http://lisas.de/~adrian/>
+X-Operating-System: Linux (5.4.8-200.fc31.x86_64)
+X-Load-Average: 7.47 8.46 9.12
+X-Unexpected: The Spanish Inquisition
+X-GnuPG-Key: gpg --recv-keys D3C4906A
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Provide an fsinfo attribute to export the superblock notification counter
-so that it can be polled in the case of a notification buffer overrun.
-This is accessed with:
+On Tue, Feb 18, 2020 at 12:03:31AM +0100, Christian Brauner wrote:
+> On Mon, Feb 17, 2020 at 10:47:53PM +0100, Michael Kerrisk (man-pages) wrote:
+> > Hello Christian,
+> > 
+> > On Mon, 17 Feb 2020 at 16:15, Christian Brauner
+> > <christian.brauner@ubuntu.com> wrote:
+> > >
+> > > On Mon, Feb 17, 2020 at 03:20:55PM +0100, Michael Kerrisk wrote:
+> > > > Hello Dmitry, Andrei,
+> > > >
+> > > > Is the CLONE_NEWTIME flag intended to be usable with clone3()? The
+> > > > mail quoted below implies (in my reading) that this should be possible
+> > > > once clone3() is available, which it is by now. (See also [1].)
+> > > >
+> > > > If the answer is yes, CLONE_NEWTIME  should be usable with clone3(),
+> > > > then I have a bug report and a question.
+> > > >
+> > > > I successfully used CLONE_NEWTIME with unshare(). But if I try to use
+> > > > CLONE_NEWSIGNAL with clone3(), it errors out with EINVAL, because of
+> > >
+> > > s/CLONE_NEWSIGNAL/CLONE_NEWTIME/
+> > >
+> > > > the following check in clone3_args_valid():
+> > > >
+> > > >         /*
+> > > >          * - make the CLONE_DETACHED bit reuseable for clone3
+> > > >          * - make the CSIGNAL bits reuseable for clone3
+> > > >          */
+> > > >         if (kargs->flags & (CLONE_DETACHED | CSIGNAL))
+> > > >                 return false;
+> > > >
+> > > > The problem is that CLONE_NEWTIME matches one of the bits in the
+> > > > CSIGNAL mask. If the intention is to allow CLONE_NEWTIME with
+> > > > clone3(), then either the bit needs to be redefined, or the error
+> > > > checking in clone3_args_valid() needs to be reworked.
+> > >
+> > > If this is intended to be useable with clone3() the check should be
+> > > adapted to allow for CLONE_NEWTIME. (I asked about this a while ago I
+> > > think.)
+> > > But below rather sounds like it should simply be an unshare() flag. The
+> > > code seems to set frozen_offsets to true right after copy_namespaces()
+> > > in timens_on_fork(new_ns, tsk) and so the offsets can't be changed
+> > > anymore unless I'm reading this wrong.
+> > > Alternatives seem to either make timens_offsets writable once after fork
+> > > and before exec, I guess - though that's probably not going to work
+> > > with the vdso judging from timens_on_fork().
+> > >
+> > > The other alternative is that Andrei and Dmitry send me a patch to
+> > > enable CLONE_NEWTIME with clone3() by exposing struct timens_offsets (or
+> > > a version of it) in the uapi and extend struct clone_args to include a
+> > > pointer to a struct timens_offset that is _only_ set when CLONE_NEWTIME
+> > > is set.
+> > > Though the unshare() way sounds way less invasive simpler.
+> > 
+> > Actually, I think the alternative you propose just here is better. I
+> > imagine there are times when one will want to create multiple
+> > namespaces with a single call to clone3(), including a time namespace.
+> > I think this should be allowed by the API. And, otherwise, clone3()
+> > becomes something of a second-class citizen for creating namespaces.
+> > (I don't really get the "less invasive" argument. Implementing this is
+> > just a piece of kernel to code to make user-space's life a bit simpler
+> > and more consistent.)
+> 
+> I don't particularly mind either way. If there's actual users that need
+> to set it at clone3() time then we can extend it. So I'd like to hear
+> what Adrian, Dmitry, and Thomas think since they are well-versed how
+> this will be used in the wild. I'm weary of exposing a whole new uapi
+> struct and extending clone3() without any real use-case but I'm happy to
+> if there is!
 
-	struct fsinfo_params params = {
-		.request = FSINFO_ATTR_SB_NOTIFICATIONS,
-	};
+Re-creating a time namespace during restore via clone3() would be CRIU's
+preferred way of doing this. If available CRIU is already using
+clone3(), especially because of set_tid, and for the time namespace we
+would also rely on clone3() to re-create it.
 
-and returns a structure that looks like:
+I will provide a patch to extend clone3() to handle the creation of a
+new time namespace.
 
-	struct fsinfo_sb_notifications {
-		__u64	watch_id;
-		__u32	notify_counter;
-		__u32	__reserved[1];
-	};
-
-Where watch_id is a number uniquely identifying the superblock in
-notification records and notify_counter is incremented for each
-superblock notification posted.
-
-Signed-off-by: David Howells <dhowells@redhat.com>
----
-
- fs/fsinfo.c                      |   11 +++++++++++
- include/linux/fs.h               |    4 ++++
- include/uapi/linux/fsinfo.h      |   12 ++++++++++++
- include/uapi/linux/watch_queue.h |    2 +-
- samples/vfs/test-fsinfo.c        |   12 ++++++++++--
- 5 files changed, 38 insertions(+), 3 deletions(-)
-
-diff --git a/fs/fsinfo.c b/fs/fsinfo.c
-index b57fbcd3a7a5..72fc4f790a5a 100644
---- a/fs/fsinfo.c
-+++ b/fs/fsinfo.c
-@@ -226,6 +226,16 @@ static int fsinfo_generic_volume_id(struct path *path, struct fsinfo_context *ct
- 	return fsinfo_string(path->dentry->d_sb->s_id, ctx);
- }
- 
-+static int fsinfo_generic_sb_notifications(struct path *path, struct fsinfo_context *ctx)
-+{
-+	struct fsinfo_sb_notifications *p = ctx->buffer;
-+	struct super_block *sb = path->dentry->d_sb;
-+
-+	p->watch_id		= sb->s_unique_id;
-+	p->notify_counter	= atomic_read(&sb->s_notify_counter);
-+	return sizeof(*p);
-+}
-+
- static int fsinfo_attribute_info(struct path *path, struct fsinfo_context *ctx)
- {
- 	const struct fsinfo_attribute *attr;
-@@ -292,6 +302,7 @@ static const struct fsinfo_attribute fsinfo_common_attributes[] = {
- 	FSINFO_STRING 	(FSINFO_ATTR_VOLUME_ID,		fsinfo_generic_volume_id),
- 	FSINFO_VSTRUCT	(FSINFO_ATTR_VOLUME_UUID,	fsinfo_generic_volume_uuid),
- 	FSINFO_VSTRUCT	(FSINFO_ATTR_FEATURES,		fsinfo_generic_features),
-+	FSINFO_VSTRUCT	(FSINFO_ATTR_SB_NOTIFICATIONS,	fsinfo_generic_sb_notifications),
- 
- 	FSINFO_VSTRUCT	(FSINFO_ATTR_FSINFO,		fsinfo_generic_fsinfo),
- 	FSINFO_VSTRUCT_N(FSINFO_ATTR_FSINFO_ATTRIBUTE_INFO, fsinfo_attribute_info),
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 423a6f03cdf8..30b910d591db 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1558,6 +1558,7 @@ struct super_block {
- #ifdef CONFIG_SB_NOTIFICATIONS
- 	struct watch_list	*s_watchers;
- #endif
-+	atomic_t		s_notify_counter;
- } __randomize_layout;
- 
- /* Helper functions so that in most cases filesystems will
-@@ -3677,6 +3678,7 @@ static inline void notify_sb(struct super_block *s,
- 			     u32 info)
- {
- #ifdef CONFIG_SB_NOTIFICATIONS
-+	atomic_inc(&s->s_notify_counter);
- 	if (unlikely(s->s_watchers)) {
- 		struct superblock_notification n = {
- 			.watch.type	= WATCH_TYPE_SB_NOTIFY,
-@@ -3699,6 +3701,7 @@ static inline void notify_sb(struct super_block *s,
- static inline int notify_sb_error(struct super_block *s, int error)
- {
- #ifdef CONFIG_SB_NOTIFICATIONS
-+	atomic_inc(&s->s_notify_counter);
- 	if (unlikely(s->s_watchers)) {
- 		struct superblock_error_notification n = {
- 			.s.watch.type	= WATCH_TYPE_SB_NOTIFY,
-@@ -3722,6 +3725,7 @@ static inline int notify_sb_error(struct super_block *s, int error)
- static inline int notify_sb_EQDUOT(struct super_block *s)
- {
- #ifdef CONFIG_SB_NOTIFICATIONS
-+	atomic_inc(&s->s_notify_counter);
- 	if (unlikely(s->s_watchers)) {
- 		struct superblock_notification n = {
- 			.watch.type	= WATCH_TYPE_SB_NOTIFY,
-diff --git a/include/uapi/linux/fsinfo.h b/include/uapi/linux/fsinfo.h
-index 5926b16aac4e..5467f88ca9b0 100644
---- a/include/uapi/linux/fsinfo.h
-+++ b/include/uapi/linux/fsinfo.h
-@@ -23,6 +23,7 @@
- #define FSINFO_ATTR_VOLUME_UUID		0x06	/* Volume UUID (LE uuid) */
- #define FSINFO_ATTR_VOLUME_NAME		0x07	/* Volume name (string) */
- #define FSINFO_ATTR_FEATURES		0x08	/* Filesystem features (bits) */
-+#define FSINFO_ATTR_SB_NOTIFICATIONS	0x09	/* sb_notify() information */
- 
- #define FSINFO_ATTR_FSINFO_ATTRIBUTE_INFO 0x100	/* Information about attr N (for path) */
- #define FSINFO_ATTR_FSINFO_ATTRIBUTES	0x101	/* List of supported attrs (for path) */
-@@ -300,6 +301,17 @@ struct fsinfo_volume_uuid {
- 
- #define FSINFO_ATTR_VOLUME_UUID__STRUCT struct fsinfo_volume_uuid
- 
-+/*
-+ * Information struct for fsinfo(FSINFO_ATTR_SB_NOTIFICATIONS).
-+ */
-+struct fsinfo_sb_notifications {
-+	__u64		watch_id;	/* Watch ID for superblock. */
-+	__u32		notify_counter;	/* Number of notifications. */
-+	__u32		__reserved[1];
-+};
-+
-+#define FSINFO_ATTR_SB_NOTIFICATIONS__STRUCT struct fsinfo_sb_notifications
-+
- /*
-  * Information struct for fsinfo(FSINFO_ATTR_AFS_SERVER_ADDRESSES).
-  *
-diff --git a/include/uapi/linux/watch_queue.h b/include/uapi/linux/watch_queue.h
-index 190d27073302..586f4af965ac 100644
---- a/include/uapi/linux/watch_queue.h
-+++ b/include/uapi/linux/watch_queue.h
-@@ -151,7 +151,7 @@ enum superblock_notification_type {
-  */
- struct superblock_notification {
- 	struct watch_notification watch; /* WATCH_TYPE_SB_NOTIFY */
--	__u64	sb_id;			/* 64-bit superblock ID [fsinfo_ids::f_sb_id] */
-+	__u64	sb_id;		/* 64-bit superblock ID [fsinfo_sb_notifications::watch_id] */
- };
- 
- struct superblock_error_notification {
-diff --git a/samples/vfs/test-fsinfo.c b/samples/vfs/test-fsinfo.c
-index 6ad0f84c4327..fd425c08b00b 100644
---- a/samples/vfs/test-fsinfo.c
-+++ b/samples/vfs/test-fsinfo.c
-@@ -306,6 +306,15 @@ static void dump_fsinfo_generic_mount_child(void *reply, unsigned int size)
- 	printf("%8x %8x\n", f->mnt_id, f->change_counter);
- }
- 
-+static void dump_fsinfo_generic_sb_notifications(void *reply, unsigned int size)
-+{
-+	struct fsinfo_sb_notifications *f = reply;
-+
-+	printf("\n");
-+	printf("\twatch_id: %llx\n", (unsigned long long)f->watch_id);
-+	printf("\tnotifs  : %llx\n", (unsigned long long)f->notify_counter);
-+}
-+
- static void dump_afs_fsinfo_server_address(void *reply, unsigned int size)
- {
- 	struct fsinfo_afs_server_address *f = reply;
-@@ -416,12 +425,11 @@ static const struct fsinfo_attribute fsinfo_attributes[] = {
- 	FSINFO_STRING	(FSINFO_ATTR_VOLUME_ID,		fsinfo_generic_volume_id),
- 	FSINFO_VSTRUCT	(FSINFO_ATTR_VOLUME_UUID,	fsinfo_generic_volume_uuid),
- 	FSINFO_STRING	(FSINFO_ATTR_VOLUME_NAME,	fsinfo_generic_volume_name),
--
-+	FSINFO_VSTRUCT	(FSINFO_ATTR_SB_NOTIFICATIONS,	fsinfo_generic_sb_notifications),
- 	FSINFO_VSTRUCT	(FSINFO_ATTR_MOUNT_INFO,	fsinfo_generic_mount_info),
- 	FSINFO_STRING	(FSINFO_ATTR_MOUNT_DEVNAME,	fsinfo_generic_mount_devname),
- 	FSINFO_LIST	(FSINFO_ATTR_MOUNT_CHILDREN,	fsinfo_generic_mount_child),
- 	FSINFO_STRING_N	(FSINFO_ATTR_MOUNT_POINT,	fsinfo_generic_mount_point),
--
- 	FSINFO_STRING	(FSINFO_ATTR_AFS_CELL_NAME,	afs_cell_name),
- 	FSINFO_STRING	(FSINFO_ATTR_AFS_SERVER_NAME,	afs_server_name),
- 	FSINFO_LIST_N	(FSINFO_ATTR_AFS_SERVER_ADDRESSES, afs_fsinfo_server_address),
-
-
+		Adrian
