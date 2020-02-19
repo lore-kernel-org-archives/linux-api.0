@@ -2,535 +2,327 @@ Return-Path: <SRS0=+5Ll=4H=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 39310C34031
-	for <linux-api@archiver.kernel.org>; Wed, 19 Feb 2020 01:45:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D560CC34031
+	for <linux-api@archiver.kernel.org>; Wed, 19 Feb 2020 02:33:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id E92792465A
-	for <linux-api@archiver.kernel.org>; Wed, 19 Feb 2020 01:45:05 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1582076706;
-	bh=q5KqAXTmtLr9vlVLuaKJu4qKVnR66Qqf+4H7EqjfvKI=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
-	b=TYDExXeHZwnE1xN6G8/aj4ZJElfftp/WubZqDORHOSunKV/hIHpDXPhvcHL99HTiA
-	 OAo+4D529yRCf1fJVuZltWY6m4IOH0ZoUCLJbKh6xyEAO7lxx1VuQq40whcyUPVCXw
-	 fO1LqV9+SYPqBYgaKM513XCK9AZbIeIp6qouXJrU=
+	by mail.kernel.org (Postfix) with ESMTP id A231F2176D
+	for <linux-api@archiver.kernel.org>; Wed, 19 Feb 2020 02:33:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728028AbgBSBom (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 18 Feb 2020 20:44:42 -0500
-Received: from mail-pl1-f196.google.com ([209.85.214.196]:35434 "EHLO
-        mail-pl1-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728010AbgBSBom (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 20:44:42 -0500
-Received: by mail-pl1-f196.google.com with SMTP id g6so8866777plt.2;
-        Tue, 18 Feb 2020 17:44:41 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=/uerOg+KI8MGW1ap2KGnaGftsJGBTidOo1+rZtfxdOY=;
-        b=GhTKqJ4cYm5BWxSLyGL1XuxMLi3Qu3UJXXmVfHSihjpeyHtMEFS4MSl6CPdHnGGkM7
-         tDK5k0NbEayW7recHCIiImw4Qr07Rve9KnZd/FBoP/IomWtmyZgEqmI1V6T6nsAQURDX
-         VnWAh0531SdGL6kyDfcV2zUataXarakR+NZQmOKOZM3FDmG7LBE/ww5siw3g0QvWELDD
-         +kmWwB+CH8n2iZfTaIa/3dNdhheE/ArAavbWqb6joKTYSn95Cea2gFJRxFg5RBSINx2Z
-         Ya0nOD/rIJZkkR1IDdjQXdN8EdV9HlKK2ajkM2lLQTWt8OwVXyvrkLHLCXpri8/RNvi5
-         d2tA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=/uerOg+KI8MGW1ap2KGnaGftsJGBTidOo1+rZtfxdOY=;
-        b=Jtpueut5YT5FO8/SOyQ1sgAD1O2sLcWzFQuQmJWYOfhoCYqi5DbdUScOKkwEaIdWnD
-         JXm7GRIAadB72RExHqxDMXkMVndU5NxAIaaLf7kixXG+JJEF6O+v7cQYwbbnYYsO6Tck
-         qaid29hjQJfu+oOwZ8X2AGsg8eDgcPRrdtTF25/zOonAl4Tm+hM8etT/TvfNDX4hQZs8
-         koqFgkTPfDbPAUcJa/rxyioQrEw9d9mFNSZkj3ryM3r9/DwBAQAVK/8TWAbk0effJdfA
-         S13uH12Z6AHm5V1ZPaBcdudhaVmFxpmUMpWSdoSJeaPbHnE5okMXgp9dZfCWsAfjpeM9
-         57Zw==
-X-Gm-Message-State: APjAAAUXs3Pb/t6TwXtXnaCdEQ0vL2x4VAnSGdfb0lFncM/5S2Wd8HXJ
-        ynNTzCB5/hF/4b7uRasaTuQ=
-X-Google-Smtp-Source: APXvYqyjCalHzVRtBKaZqK2yYbe3NgWudXxtikbYS/6q96RzsSKFZdvO/2wviIDLpSzeEsUe2Azfwg==
-X-Received: by 2002:a17:90a:7f93:: with SMTP id m19mr6000008pjl.92.1582076680967;
-        Tue, 18 Feb 2020 17:44:40 -0800 (PST)
-Received: from bbox-1.mtv.corp.google.com ([2620:15c:211:1:3e01:2939:5992:52da])
-        by smtp.gmail.com with ESMTPSA id t186sm221192pgd.26.2020.02.18.17.44.39
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 18 Feb 2020 17:44:39 -0800 (PST)
-From:   Minchan Kim <minchan@kernel.org>
-To:     Andrew Morton <akpm@linux-foundation.org>
-Cc:     LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
-        linux-api@vger.kernel.org, oleksandr@redhat.com,
-        Suren Baghdasaryan <surenb@google.com>,
-        Tim Murray <timmurray@google.com>,
-        Daniel Colascione <dancol@google.com>,
-        Sandeep Patil <sspatil@google.com>,
-        Sonny Rao <sonnyrao@google.com>,
-        Brian Geffon <bgeffon@google.com>,
-        Michal Hocko <mhocko@suse.com>,
-        Johannes Weiner <hannes@cmpxchg.org>,
-        Shakeel Butt <shakeelb@google.com>,
-        John Dias <joaodias@google.com>,
-        Joel Fernandes <joel@joelfernandes.org>, sj38.park@gmail.com,
-        alexander.h.duyck@linux.intel.com, Jann Horn <jannh@google.com>,
-        Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v6 2/7] mm: introduce external memory hinting API
-Date:   Tue, 18 Feb 2020 17:44:28 -0800
-Message-Id: <20200219014433.88424-3-minchan@kernel.org>
-X-Mailer: git-send-email 2.25.0.265.gbab2e86ba0-goog
-In-Reply-To: <20200219014433.88424-1-minchan@kernel.org>
-References: <20200219014433.88424-1-minchan@kernel.org>
+        id S1726939AbgBSCdb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 18 Feb 2020 21:33:31 -0500
+Received: from mail.hallyn.com ([178.63.66.53]:49358 "EHLO mail.hallyn.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726799AbgBSCdb (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 18 Feb 2020 21:33:31 -0500
+Received: by mail.hallyn.com (Postfix, from userid 1001)
+        id 9396D46B; Tue, 18 Feb 2020 20:33:26 -0600 (CST)
+Date:   Tue, 18 Feb 2020 20:33:26 -0600
+From:   "Serge E. Hallyn" <serge@hallyn.com>
+To:     Christian Brauner <christian.brauner@ubuntu.com>
+Cc:     =?iso-8859-1?Q?St=E9phane?= Graber <stgraber@ubuntu.com>,
+        "Eric W. Biederman" <ebiederm@xmission.com>,
+        Aleksa Sarai <cyphar@cyphar.com>, Jann Horn <jannh@google.com>,
+        smbarber@chromium.org, Seth Forshee <seth.forshee@canonical.com>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        Alexey Dobriyan <adobriyan@gmail.com>,
+        Serge Hallyn <serge@hallyn.com>,
+        James Morris <jmorris@namei.org>,
+        Kees Cook <keescook@chromium.org>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Phil Estes <estesp@gmail.com>, linux-kernel@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org,
+        containers@lists.linux-foundation.org,
+        linux-security-module@vger.kernel.org, linux-api@vger.kernel.org
+Subject: Re: [PATCH v3 01/25] user_namespace: introduce fsid mappings
+ infrastructure
+Message-ID: <20200219023326.GA19144@mail.hallyn.com>
+References: <20200218143411.2389182-1-christian.brauner@ubuntu.com>
+ <20200218143411.2389182-2-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20200218143411.2389182-2-christian.brauner@ubuntu.com>
+User-Agent: Mutt/1.9.4 (2018-02-28)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-There is usecase that System Management Software(SMS) want to give
-a memory hint like MADV_[COLD|PAGEEOUT] to other processes and
-in the case of Android, it is the ActivityManagerService.
+On Tue, Feb 18, 2020 at 03:33:47PM +0100, Christian Brauner wrote:
+> This introduces the infrastructure to setup fsid mappings which will be used in
+> later patches.
+> All new code depends on CONFIG_USER_NS_FSID=y. It currently defaults to "N".
+> If CONFIG_USER_NS_FSID is not set, no new code is added.
+> 
+> In this patch fsuid_m_show() and fsgid_m_show() are introduced. They are
+> identical to uid_m_show() and gid_m_show() until we introduce from_kfsuid() and
+> from_kfsgid() in a follow-up patch.
+> 
+> Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 
-It's similar in spirit to madvise(MADV_WONTNEED), but the information
-required to make the reclaim decision is not known to the app. Instead,
-it is known to the centralized userspace daemon(ActivityManagerService),
-and that daemon must be able to initiate reclaim on its own without
-any app involvement.
+Acked-by: Serge Hallyn <serge@hallyn.com>
 
-To solve the issue, this patch introduces a new syscall process_madvise(2).
-It uses pidfd of an external process to give the hint.
-
- int process_madvise(int pidfd, void *addr, size_t length, int advise,
-			unsigned long flag);
-
-Since it could affect other process's address range, only privileged
-process(CAP_SYS_PTRACE) or something else(e.g., being the same UID)
-gives it the right to ptrace the process could use it successfully.
-The flag argument is reserved for future use if we need to extend the
-API.
-
-I think supporting all hints madvise has/will supported/support to
-process_madvise is rather risky. Because we are not sure all hints make
-sense from external process and implementation for the hint may rely on
-the caller being in the current context so it could be error-prone.
-Thus, I just limited hints as MADV_[COLD|PAGEOUT] in this patch.
-
-If someone want to add other hints, we could hear hear the usecase and
-review it for each hint. It's safer for maintenance rather than
-introducing a buggy syscall but hard to fix it later.
-
-Q.1 - Why does any external entity have better knowledge?
-
-Quote from Sandeep
-"For Android, every application (including the special SystemServer) are forked
-from Zygote. The reason of course is to share as many libraries and classes between
-the two as possible to benefit from the preloading during boot.
-
-After applications start, (almost) all of the APIs  end up calling into this
-SystemServer process over IPC (binder) and back to the application.
-
-In a fully running system, the SystemServer monitors every single process
-periodically to calculate their PSS / RSS and also decides which process is
-"important" to the user for interactivity.
-
-So, because of how these processes start _and_ the fact that the SystemServer
-is looping to monitor each process, it does tend to *know* which address
-range of the application is not used / useful.
-
-Besides, we can never rely on applications to clean things up themselves.
-We've had the "hey app1, the system is low on memory, please trim your
-memory usage down" notifications for a long time[1]. They rely on
-applications honoring the broadcasts and very few do.
-
-So, if we want to avoid the inevitable killing of the application and
-restarting it, some way to be able to tell the OS about unimportant memory in
-these applications will be useful.
-
-- ssp
-
-Q.2 - How to guarantee the race(i.e., object validation) between when giving a
-hint from an external process and get the hint from the target process?
-
-process_madvise operates on the target process's address space as it exists
-at the instant that process_madvise is called. If the space target process
-can run between the time the process_madvise process inspects the target
-process address space and the time that process_madvise is actually called,
-process_madvise may operate on memory regions that the calling process does
-not expect. It's the responsibility of the process calling process_madvise
-to close this race condition. For example, the calling process can suspend
-the target process with ptrace, SIGSTOP, or the freezer cgroup so that it
-doesn't have an opportunity to change its own address space before
-process_madvise is called. Another option is to operate on memory regions
-that the caller knows a priori will be unchanged in the target process.
-Yet another option is to accept the race for certain process_madvise calls
-after reasoning that mistargeting will do no harm. The suggested API itself
-does not provide synchronization. It also apply other APIs like move_pages,
-process_vm_write.
-
-The race isn't really a problem though. Why is it so wrong to require
-that callers do their own synchronization in some manner? Nobody objects
-to write(2) merely because it's possible for two processes to open the same
-file and clobber each other's writes --- instead, we tell people to use
-flock or something. Think about mmap. It never guarantees newly allocated
-address space is still valid when the user tries to access it because other
-threads could unmap the memory right before. That's where we need
-synchronization by using other API or design from userside. It shouldn't
-be part of API itself. If someone needs more fine-grained synchronization
-rather than process level, there were two ideas suggested - cookie[2] and
-anon-fd[3]. Both are applicable via using last reserved argument of the API
-but I don't think it's necessary right now since we have already ways to
-prevent the race so don't want to add additional complexity with more
-fine-grained optimization model.
-
-To make the API extend, it reserved an unsigned long as last argument
-so we could support it in future if someone really needs it.
-
-Q.3 - Why doesn't ptrace work?
-
-Injecting an madvise in the target process using ptrace would not work for us
-because such injected madvise would have to be executed by the target process,
-which means that process would have to be runnable and that creates the risk
-of the abovementioned race and hinting a wrong VMA. Furthermore, we want to
-act the hint in caller's context, not calle because calle is usually limited
-in cpuset/cgroups or even freezed state so they can't act by themselves
-quick enough, which causes more thrashing/kill. It doesn't work if the
-target process are ptraced(e.g., strace, debugger, minidump) because  a
-process can have at most one ptracer.
-
-[1] https://developer.android.com/topic/performance/memory"
-[2] process_getinfo for getting the cookie which is updated whenever
-    vma of process address layout are changed - Daniel Colascione
-- https://lore.kernel.org/lkml/20190520035254.57579-1-minchan@kernel.org/T/#m7694416fd179b2066a2c62b5b139b14e3894e224
-[3] anonymous fd which is used for the object(i.e., address range)
-    validation - Michal Hocko
-- https://lore.kernel.org/lkml/20200120112722.GY18451@dhcp22.suse.cz/
-
-Signed-off-by: Minchan Kim <minchan@kernel.org>
----
- arch/alpha/kernel/syscalls/syscall.tbl      |  1 +
- arch/arm/tools/syscall.tbl                  |  1 +
- arch/arm64/include/asm/unistd.h             |  2 +-
- arch/arm64/include/asm/unistd32.h           |  2 +
- arch/ia64/kernel/syscalls/syscall.tbl       |  1 +
- arch/m68k/kernel/syscalls/syscall.tbl       |  1 +
- arch/microblaze/kernel/syscalls/syscall.tbl |  1 +
- arch/mips/kernel/syscalls/syscall_n32.tbl   |  1 +
- arch/mips/kernel/syscalls/syscall_n64.tbl   |  1 +
- arch/parisc/kernel/syscalls/syscall.tbl     |  1 +
- arch/powerpc/kernel/syscalls/syscall.tbl    |  1 +
- arch/s390/kernel/syscalls/syscall.tbl       |  1 +
- arch/sh/kernel/syscalls/syscall.tbl         |  1 +
- arch/sparc/kernel/syscalls/syscall.tbl      |  1 +
- arch/x86/entry/syscalls/syscall_32.tbl      |  1 +
- arch/x86/entry/syscalls/syscall_64.tbl      |  1 +
- arch/xtensa/kernel/syscalls/syscall.tbl     |  1 +
- include/linux/syscalls.h                    |  2 +
- include/uapi/asm-generic/unistd.h           |  4 +-
- kernel/sys_ni.c                             |  1 +
- mm/madvise.c                                | 64 +++++++++++++++++++++
- 21 files changed, 88 insertions(+), 2 deletions(-)
-
-diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
-index 36d42da7466a..c82952e6fb80 100644
---- a/arch/alpha/kernel/syscalls/syscall.tbl
-+++ b/arch/alpha/kernel/syscalls/syscall.tbl
-@@ -477,3 +477,4 @@
- # 545 reserved for clone3
- 547	common	openat2				sys_openat2
- 548	common	pidfd_getfd			sys_pidfd_getfd
-+549	common	process_madvise			sys_process_madvise
-diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
-index 4d1cf74a2caa..54c2719fec46 100644
---- a/arch/arm/tools/syscall.tbl
-+++ b/arch/arm/tools/syscall.tbl
-@@ -451,3 +451,4 @@
- 435	common	clone3				sys_clone3
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	process_madvise			sys_process_madvise
-diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
-index 1dd22da1c3a9..75f04a1023be 100644
---- a/arch/arm64/include/asm/unistd.h
-+++ b/arch/arm64/include/asm/unistd.h
-@@ -38,7 +38,7 @@
- #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE + 5)
- #define __ARM_NR_COMPAT_END		(__ARM_NR_COMPAT_BASE + 0x800)
- 
--#define __NR_compat_syscalls		439
-+#define __NR_compat_syscalls		440
- #endif
- 
- #define __ARCH_WANT_SYS_CLONE
-diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
-index c1c61635f89c..2a27be7a1f91 100644
---- a/arch/arm64/include/asm/unistd32.h
-+++ b/arch/arm64/include/asm/unistd32.h
-@@ -883,6 +883,8 @@ __SYSCALL(__NR_clone3, sys_clone3)
- __SYSCALL(__NR_openat2, sys_openat2)
- #define __NR_pidfd_getfd 438
- __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
-+#define __NR_process_madvise 439
-+__SYSCALL(__NR_process_madvise, process_madvise)
- 
- /*
-  * Please add new compat syscalls above this comment and update
-diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
-index 042911e670b8..9524af1c318c 100644
---- a/arch/ia64/kernel/syscalls/syscall.tbl
-+++ b/arch/ia64/kernel/syscalls/syscall.tbl
-@@ -358,3 +358,4 @@
- # 435 reserved for clone3
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	process_madvise			sys_process_madvise
-diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
-index f4f49fcb76d0..8197050c097c 100644
---- a/arch/m68k/kernel/syscalls/syscall.tbl
-+++ b/arch/m68k/kernel/syscalls/syscall.tbl
-@@ -437,3 +437,4 @@
- 435	common	clone3				__sys_clone3
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	process_madvise			sys_process_madvise
-diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
-index 4c67b11f9c9e..c5b6c8afe445 100644
---- a/arch/microblaze/kernel/syscalls/syscall.tbl
-+++ b/arch/microblaze/kernel/syscalls/syscall.tbl
-@@ -443,3 +443,4 @@
- 435	common	clone3				sys_clone3
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	process_madvise			sys_process_madvise
-diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
-index 1f9e8ad636cc..8ec8c558aa9c 100644
---- a/arch/mips/kernel/syscalls/syscall_n32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
-@@ -376,3 +376,4 @@
- 435	n32	clone3				__sys_clone3
- 437	n32	openat2				sys_openat2
- 438	n32	pidfd_getfd			sys_pidfd_getfd
-+439	n32	process_madvise			sys_process_madvise
-diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
-index c0b9d802dbf6..0078f891bb92 100644
---- a/arch/mips/kernel/syscalls/syscall_n64.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
-@@ -352,3 +352,4 @@
- 435	n64	clone3				__sys_clone3
- 437	n64	openat2				sys_openat2
- 438	n64	pidfd_getfd			sys_pidfd_getfd
-+439	n64	process_madvise			sys_process_madvise
-diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
-index 52a15f5cd130..09c3b5dc6855 100644
---- a/arch/parisc/kernel/syscalls/syscall.tbl
-+++ b/arch/parisc/kernel/syscalls/syscall.tbl
-@@ -435,3 +435,4 @@
- 435	common	clone3				sys_clone3_wrapper
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	process_madvise			sys_process_madvise
-diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
-index 35b61bfc1b1a..97eac48c2937 100644
---- a/arch/powerpc/kernel/syscalls/syscall.tbl
-+++ b/arch/powerpc/kernel/syscalls/syscall.tbl
-@@ -519,3 +519,4 @@
- 435	nospu	clone3				ppc_clone3
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	process_madvise			sys_process_madvise
-diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
-index bd7bd3581a0f..8dc8bfd958ea 100644
---- a/arch/s390/kernel/syscalls/syscall.tbl
-+++ b/arch/s390/kernel/syscalls/syscall.tbl
-@@ -440,3 +440,4 @@
- 435  common	clone3			sys_clone3			sys_clone3
- 437  common	openat2			sys_openat2			sys_openat2
- 438  common	pidfd_getfd		sys_pidfd_getfd			sys_pidfd_getfd
-+439  common	process_madvise		sys_process_madvise		sys_process_madvise
-diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
-index c7a30fcd135f..e69d98040777 100644
---- a/arch/sh/kernel/syscalls/syscall.tbl
-+++ b/arch/sh/kernel/syscalls/syscall.tbl
-@@ -440,3 +440,4 @@
- # 435 reserved for clone3
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	process_madvise			sys_process_madvise
-diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
-index f13615ecdecc..6f6e66dd51f9 100644
---- a/arch/sparc/kernel/syscalls/syscall.tbl
-+++ b/arch/sparc/kernel/syscalls/syscall.tbl
-@@ -483,3 +483,4 @@
- # 435 reserved for clone3
- 437	common	openat2			sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	process_madvise			sys_process_madvise
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index c17cb77eb150..1b2184549e27 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -442,3 +442,4 @@
- 435	i386	clone3			sys_clone3			__ia32_sys_clone3
- 437	i386	openat2			sys_openat2			__ia32_sys_openat2
- 438	i386	pidfd_getfd		sys_pidfd_getfd			__ia32_sys_pidfd_getfd
-+439	i386	process_madvise		sys_process_madvise		__ia32_sys_process_madvise
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 44d510bc9b78..82d60eb1e00d 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -359,6 +359,7 @@
- 435	common	clone3			__x64_sys_clone3/ptregs
- 437	common	openat2			__x64_sys_openat2
- 438	common	pidfd_getfd		__x64_sys_pidfd_getfd
-+439	common	process_madvise		__x64_sys_process_madvise
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
-index 85a9ab1bc04d..165cae047770 100644
---- a/arch/xtensa/kernel/syscalls/syscall.tbl
-+++ b/arch/xtensa/kernel/syscalls/syscall.tbl
-@@ -408,3 +408,4 @@
- 435	common	clone3				sys_clone3
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	process_madvise			sys_process_madvise
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 1815065d52f3..e4cd2c2f8bb4 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -876,6 +876,8 @@ asmlinkage long sys_munlockall(void);
- asmlinkage long sys_mincore(unsigned long start, size_t len,
- 				unsigned char __user * vec);
- asmlinkage long sys_madvise(unsigned long start, size_t len, int behavior);
-+asmlinkage long sys_process_madvise(int pidfd, unsigned long start,
-+			size_t len, int behavior, unsigned long flags);
- asmlinkage long sys_remap_file_pages(unsigned long start, unsigned long size,
- 			unsigned long prot, unsigned long pgoff,
- 			unsigned long flags);
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 3a3201e4618e..85d8c9376a63 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -855,9 +855,11 @@ __SYSCALL(__NR_clone3, sys_clone3)
- __SYSCALL(__NR_openat2, sys_openat2)
- #define __NR_pidfd_getfd 438
- __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
-+#define __NR_pidfd_getfd 439
-+__SYSCALL(__NR_process_madvise, sys_process_madvise)
- 
- #undef __NR_syscalls
--#define __NR_syscalls 439
-+#define __NR_syscalls 440
- 
- /*
-  * 32 bit systems traditionally used different
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index 3b69a560a7ac..6c7332776e8e 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -280,6 +280,7 @@ COND_SYSCALL(mlockall);
- COND_SYSCALL(munlockall);
- COND_SYSCALL(mincore);
- COND_SYSCALL(madvise);
-+COND_SYSCALL(process_madvise);
- COND_SYSCALL(remap_file_pages);
- COND_SYSCALL(mbind);
- COND_SYSCALL_COMPAT(mbind);
-diff --git a/mm/madvise.c b/mm/madvise.c
-index f75c86b6c463..f29155b8185d 100644
---- a/mm/madvise.c
-+++ b/mm/madvise.c
-@@ -17,6 +17,7 @@
- #include <linux/falloc.h>
- #include <linux/fadvise.h>
- #include <linux/sched.h>
-+#include <linux/sched/mm.h>
- #include <linux/ksm.h>
- #include <linux/fs.h>
- #include <linux/file.h>
-@@ -986,6 +987,18 @@ madvise_behavior_valid(int behavior)
- 	}
- }
- 
-+static bool
-+process_madvise_behavior_valid(int behavior)
-+{
-+	switch (behavior) {
-+	case MADV_COLD:
-+	case MADV_PAGEOUT:
-+		return true;
-+	default:
-+		return false;
-+	}
-+}
-+
- /*
-  * The madvise(2) system call.
-  *
-@@ -1033,6 +1046,11 @@ madvise_behavior_valid(int behavior)
-  *  MADV_DONTDUMP - the application wants to prevent pages in the given range
-  *		from being included in its core dump.
-  *  MADV_DODUMP - cancel MADV_DONTDUMP: no longer exclude from core dump.
-+ *  MADV_COLD - the application uses the memory less so the kernel can
-+ *		deactivate the memory to evict them quickly when the memory
-+ *		pressure happen.
-+ *  MADV_PAGEOUT - the application uses the memroy very rarely so kernel can
-+ *		page out the memory instantly.
-  *
-  * return values:
-  *  zero    - success
-@@ -1150,3 +1168,49 @@ SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
- {
- 	return do_madvise(current, current->mm, start, len_in, behavior);
- }
-+
-+SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
-+		size_t, len_in, int, behavior, unsigned long, flags)
-+{
-+	int ret;
-+	struct fd f;
-+	struct pid *pid;
-+	struct task_struct *task;
-+	struct mm_struct *mm;
-+
-+	if (flags != 0)
-+		return -EINVAL;
-+
-+	if (!process_madvise_behavior_valid(behavior))
-+		return -EINVAL;
-+
-+	f = fdget(pidfd);
-+	if (!f.file)
-+		return -EBADF;
-+
-+	pid = pidfd_pid(f.file);
-+	if (IS_ERR(pid)) {
-+		ret = PTR_ERR(pid);
-+		goto fdput;
-+	}
-+
-+	task = get_pid_task(pid, PIDTYPE_PID);
-+	if (!task) {
-+		ret = -ESRCH;
-+		goto fdput;
-+	}
-+
-+	mm = mm_access(task, PTRACE_MODE_ATTACH_FSCREDS);
-+	if (IS_ERR_OR_NULL(mm)) {
-+		ret = IS_ERR(mm) ? PTR_ERR(mm) : -ESRCH;
-+		goto release_task;
-+	}
-+
-+	ret = do_madvise(task, mm, start, len_in, behavior);
-+	mmput(mm);
-+release_task:
-+	put_task_struct(task);
-+fdput:
-+	fdput(f);
-+	return ret;
-+}
--- 
-2.25.0.265.gbab2e86ba0-goog
-
+> ---
+> /* v2 */
+> - Randy Dunlap <rdunlap@infradead.org>:
+>   - Fix typo in USER_NS_FSID kconfig documentation.
+> 
+> /* v3 */
+> unchanged
+> ---
+>  include/linux/user_namespace.h |  10 +++
+>  init/Kconfig                   |  11 +++
+>  kernel/user.c                  |  22 ++++++
+>  kernel/user_namespace.c        | 122 +++++++++++++++++++++++++++++++++
+>  4 files changed, 165 insertions(+)
+> 
+> diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
+> index 6ef1c7109fc4..e44742b0cf8a 100644
+> --- a/include/linux/user_namespace.h
+> +++ b/include/linux/user_namespace.h
+> @@ -56,6 +56,10 @@ enum ucount_type {
+>  struct user_namespace {
+>  	struct uid_gid_map	uid_map;
+>  	struct uid_gid_map	gid_map;
+> +#ifdef CONFIG_USER_NS_FSID
+> +	struct uid_gid_map	fsuid_map;
+> +	struct uid_gid_map	fsgid_map;
+> +#endif
+>  	struct uid_gid_map	projid_map;
+>  	atomic_t		count;
+>  	struct user_namespace	*parent;
+> @@ -127,6 +131,12 @@ struct seq_operations;
+>  extern const struct seq_operations proc_uid_seq_operations;
+>  extern const struct seq_operations proc_gid_seq_operations;
+>  extern const struct seq_operations proc_projid_seq_operations;
+> +#ifdef CONFIG_USER_NS_FSID
+> +extern const struct seq_operations proc_fsuid_seq_operations;
+> +extern const struct seq_operations proc_fsgid_seq_operations;
+> +extern ssize_t proc_fsuid_map_write(struct file *, const char __user *, size_t, loff_t *);
+> +extern ssize_t proc_fsgid_map_write(struct file *, const char __user *, size_t, loff_t *);
+> +#endif
+>  extern ssize_t proc_uid_map_write(struct file *, const char __user *, size_t, loff_t *);
+>  extern ssize_t proc_gid_map_write(struct file *, const char __user *, size_t, loff_t *);
+>  extern ssize_t proc_projid_map_write(struct file *, const char __user *, size_t, loff_t *);
+> diff --git a/init/Kconfig b/init/Kconfig
+> index cfee56c151f1..d4d0beeba48f 100644
+> --- a/init/Kconfig
+> +++ b/init/Kconfig
+> @@ -1111,6 +1111,17 @@ config USER_NS
+>  
+>  	  If unsure, say N.
+>  
+> +config USER_NS_FSID
+> +	bool "User namespace fsid mappings"
+> +	depends on USER_NS
+> +	default n
+> +	help
+> +	  This allows containers to alter their filesystem id mappings.
+> +	  With this containers with different id mappings can still share
+> +	  the same filesystem.
+> +
+> +	  If unsure, say N.
+> +
+>  config PID_NS
+>  	bool "PID Namespaces"
+>  	default y
+> diff --git a/kernel/user.c b/kernel/user.c
+> index 5235d7f49982..2ccaea9b810b 100644
+> --- a/kernel/user.c
+> +++ b/kernel/user.c
+> @@ -55,6 +55,28 @@ struct user_namespace init_user_ns = {
+>  			},
+>  		},
+>  	},
+> +#ifdef CONFIG_USER_NS_FSID
+> +	.fsuid_map = {
+> +		.nr_extents = 1,
+> +		{
+> +			.extent[0] = {
+> +				.first = 0,
+> +				.lower_first = 0,
+> +				.count = 4294967295U,
+> +			},
+> +		},
+> +	},
+> +	.fsgid_map = {
+> +		.nr_extents = 1,
+> +		{
+> +			.extent[0] = {
+> +				.first = 0,
+> +				.lower_first = 0,
+> +				.count = 4294967295U,
+> +			},
+> +		},
+> +	},
+> +#endif
+>  	.count = ATOMIC_INIT(3),
+>  	.owner = GLOBAL_ROOT_UID,
+>  	.group = GLOBAL_ROOT_GID,
+> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+> index 8eadadc478f9..cbdf456f95f0 100644
+> --- a/kernel/user_namespace.c
+> +++ b/kernel/user_namespace.c
+> @@ -191,6 +191,16 @@ static void free_user_ns(struct work_struct *work)
+>  			kfree(ns->projid_map.forward);
+>  			kfree(ns->projid_map.reverse);
+>  		}
+> +#ifdef CONFIG_USER_NS_FSID
+> +		if (ns->fsgid_map.nr_extents > UID_GID_MAP_MAX_BASE_EXTENTS) {
+> +			kfree(ns->fsgid_map.forward);
+> +			kfree(ns->fsgid_map.reverse);
+> +		}
+> +		if (ns->fsuid_map.nr_extents > UID_GID_MAP_MAX_BASE_EXTENTS) {
+> +			kfree(ns->fsuid_map.forward);
+> +			kfree(ns->fsuid_map.reverse);
+> +		}
+> +#endif
+>  		retire_userns_sysctls(ns);
+>  		key_free_user_ns(ns);
+>  		ns_free_inum(&ns->ns);
+> @@ -637,6 +647,50 @@ static int projid_m_show(struct seq_file *seq, void *v)
+>  	return 0;
+>  }
+>  
+> +#ifdef CONFIG_USER_NS_FSID
+> +static int fsuid_m_show(struct seq_file *seq, void *v)
+> +{
+> +	struct user_namespace *ns = seq->private;
+> +	struct uid_gid_extent *extent = v;
+> +	struct user_namespace *lower_ns;
+> +	uid_t lower;
+> +
+> +	lower_ns = seq_user_ns(seq);
+> +	if ((lower_ns == ns) && lower_ns->parent)
+> +		lower_ns = lower_ns->parent;
+> +
+> +	lower = from_kuid(lower_ns, KUIDT_INIT(extent->lower_first));
+> +
+> +	seq_printf(seq, "%10u %10u %10u\n",
+> +		extent->first,
+> +		lower,
+> +		extent->count);
+> +
+> +	return 0;
+> +}
+> +
+> +static int fsgid_m_show(struct seq_file *seq, void *v)
+> +{
+> +	struct user_namespace *ns = seq->private;
+> +	struct uid_gid_extent *extent = v;
+> +	struct user_namespace *lower_ns;
+> +	gid_t lower;
+> +
+> +	lower_ns = seq_user_ns(seq);
+> +	if ((lower_ns == ns) && lower_ns->parent)
+> +		lower_ns = lower_ns->parent;
+> +
+> +	lower = from_kgid(lower_ns, KGIDT_INIT(extent->lower_first));
+> +
+> +	seq_printf(seq, "%10u %10u %10u\n",
+> +		extent->first,
+> +		lower,
+> +		extent->count);
+> +
+> +	return 0;
+> +}
+> +#endif
+> +
+>  static void *m_start(struct seq_file *seq, loff_t *ppos,
+>  		     struct uid_gid_map *map)
+>  {
+> @@ -674,6 +728,22 @@ static void *projid_m_start(struct seq_file *seq, loff_t *ppos)
+>  	return m_start(seq, ppos, &ns->projid_map);
+>  }
+>  
+> +#ifdef CONFIG_USER_NS_FSID
+> +static void *fsuid_m_start(struct seq_file *seq, loff_t *ppos)
+> +{
+> +	struct user_namespace *ns = seq->private;
+> +
+> +	return m_start(seq, ppos, &ns->fsuid_map);
+> +}
+> +
+> +static void *fsgid_m_start(struct seq_file *seq, loff_t *ppos)
+> +{
+> +	struct user_namespace *ns = seq->private;
+> +
+> +	return m_start(seq, ppos, &ns->fsgid_map);
+> +}
+> +#endif
+> +
+>  static void *m_next(struct seq_file *seq, void *v, loff_t *pos)
+>  {
+>  	(*pos)++;
+> @@ -706,6 +776,22 @@ const struct seq_operations proc_projid_seq_operations = {
+>  	.show = projid_m_show,
+>  };
+>  
+> +#ifdef CONFIG_USER_NS_FSID
+> +const struct seq_operations proc_fsuid_seq_operations = {
+> +	.start = fsuid_m_start,
+> +	.stop = m_stop,
+> +	.next = m_next,
+> +	.show = fsuid_m_show,
+> +};
+> +
+> +const struct seq_operations proc_fsgid_seq_operations = {
+> +	.start = fsgid_m_start,
+> +	.stop = m_stop,
+> +	.next = m_next,
+> +	.show = fsgid_m_show,
+> +};
+> +#endif
+> +
+>  static bool mappings_overlap(struct uid_gid_map *new_map,
+>  			     struct uid_gid_extent *extent)
+>  {
+> @@ -1081,6 +1167,42 @@ ssize_t proc_projid_map_write(struct file *file, const char __user *buf,
+>  			 &ns->projid_map, &ns->parent->projid_map);
+>  }
+>  
+> +#ifdef CONFIG_USER_NS_FSID
+> +ssize_t proc_fsuid_map_write(struct file *file, const char __user *buf,
+> +			     size_t size, loff_t *ppos)
+> +{
+> +	struct seq_file *seq = file->private_data;
+> +	struct user_namespace *ns = seq->private;
+> +	struct user_namespace *seq_ns = seq_user_ns(seq);
+> +
+> +	if (!ns->parent)
+> +		return -EPERM;
+> +
+> +	if ((seq_ns != ns) && (seq_ns != ns->parent))
+> +		return -EPERM;
+> +
+> +	return map_write(file, buf, size, ppos, CAP_SETUID, &ns->fsuid_map,
+> +			 &ns->parent->fsuid_map);
+> +}
+> +
+> +ssize_t proc_fsgid_map_write(struct file *file, const char __user *buf,
+> +			     size_t size, loff_t *ppos)
+> +{
+> +	struct seq_file *seq = file->private_data;
+> +	struct user_namespace *ns = seq->private;
+> +	struct user_namespace *seq_ns = seq_user_ns(seq);
+> +
+> +	if (!ns->parent)
+> +		return -EPERM;
+> +
+> +	if ((seq_ns != ns) && (seq_ns != ns->parent))
+> +		return -EPERM;
+> +
+> +	return map_write(file, buf, size, ppos, CAP_SETGID, &ns->fsgid_map,
+> +			 &ns->parent->fsgid_map);
+> +}
+> +#endif
+> +
+>  static bool new_idmap_permitted(const struct file *file,
+>  				struct user_namespace *ns, int cap_setid,
+>  				struct uid_gid_map *new_map)
+> -- 
+> 2.25.0
