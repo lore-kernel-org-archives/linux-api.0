@@ -4,61 +4,61 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 58892C3404D
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B0BD8C3404E
 	for <linux-api@archiver.kernel.org>; Wed, 19 Feb 2020 01:44:58 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 2CFF524655
+	by mail.kernel.org (Postfix) with ESMTP id 84D3C24655
 	for <linux-api@archiver.kernel.org>; Wed, 19 Feb 2020 01:44:58 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
 	s=default; t=1582076698;
-	bh=Kl5EEa8K/viPRNqADAGULtOt5epdA/11uKKXfrDtfyw=;
+	bh=aVQwG9WbHNNYU4OqvOToBzjPL2hM+OZFJ3Hcvpg3sqs=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
-	b=IotkNHT/7mnh5/VB4stCTFkK7hsC+28vlaSTq2PQnEuxfjAnkFoU9HaP2UfVfE8uh
-	 cNAlCxEhUnhBZqd9no414BrFvpxZBm0xUI8qTBDEs+Hbc2ZzKIY3PVNoy7QuXa/6Ad
-	 Ht611hlH8PEj3+49P9Cj2tyRVJ80e3Oj0PNnku5E=
+	b=ewLDTKoOz3M9Lnk0nvgDcAGG3GN4O2iaG20OCgxR+L+5AEoD/86NVSw1+DOGy1Ewj
+	 LmUOmKZ16ipriTDiXGqxbxXXbrh2X6NiDHwY4N+wRVnTfutOA2AbZpIh6sWlz9zUTn
+	 47fozfJtUCgj2xlFtZqV06W8jJVy5yBlBy8gD03Y=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727743AbgBSBop (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 18 Feb 2020 20:44:45 -0500
-Received: from mail-pj1-f68.google.com ([209.85.216.68]:53990 "EHLO
-        mail-pj1-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728071AbgBSBop (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 20:44:45 -0500
-Received: by mail-pj1-f68.google.com with SMTP id n96so1859826pjc.3;
-        Tue, 18 Feb 2020 17:44:44 -0800 (PST)
+        id S1728025AbgBSBo5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 18 Feb 2020 20:44:57 -0500
+Received: from mail-pl1-f194.google.com ([209.85.214.194]:46273 "EHLO
+        mail-pl1-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728093AbgBSBos (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Feb 2020 20:44:48 -0500
+Received: by mail-pl1-f194.google.com with SMTP id y8so8842798pll.13;
+        Tue, 18 Feb 2020 17:44:48 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=zcb6D3u81fCeQ2AWI9laxyN/xHYitLuojX9wxAp2vtU=;
-        b=dP4zgAzSfngeY16XyCngdzYL3pA1g5T7uI7IbBGs38Cq9dhKFWbybu8yMh8d3nAD4l
-         /smEEZHCE8hdOT1p5Ki7jOPlAOMdxzFeVJpT9MyA6I06e+Qa2TrhbleCy3DxunYXCIB5
-         D8GzFREe6yi8L2+5EabIqS4RtkmKjOH3XX5gBw386Q6653dNSqn6QYCGdDD6ky9ct7PC
-         hmsAWGl1MPwo1xiXi9NkuxlWWdOk8VEPVGoPVf5vp15fDxY1BhsrwI64d3tyXz0oU8dJ
-         15XR2gKbskMrpyjLEm1yKNrut0+p2Rmv43IVU9hL6gPIA/zlWyZ7DJr/gZUvxZP//EY5
-         +3qw==
+        bh=/6BKpu6I9GWZilmKCDR/xIEf9kb10U/fQ/hS1RFxo/E=;
+        b=AeiF/BUIODJ7Elpdb3GXCCzXBoQS9IDbCw9VSMC/jL+pPhcr/hr375CchvyTPhz7Pw
+         0UOfnIko0AblDWL/yTdmeiTlRoIfhMWdWFD3hNHRiqveweEiIFdLmzsDjyssGqVlyrTi
+         febRwSW0h0+kaMkhfKy6efdR7uMe5zL+d+KmyIKLPs0rgr5VxIwjrVpWWZEPFxsMwZ23
+         J/8duxiMxzzsojGZ4V6XQhchtynRJdtbiMasGQl4+ZCJDiom8Qude7YarbGY5V0fKzVt
+         AFoKRAVeNBBiW7zrGGHfvJ2A02+p1VpXuF6g0cnYJV37hKbKe7v2cv28gZItVOFqnAa3
+         aTPg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=zcb6D3u81fCeQ2AWI9laxyN/xHYitLuojX9wxAp2vtU=;
-        b=kgT22ekkYYvXWgiwoHilMfU25m5X0NJvdKuse3yzvJIeoHIXA8/TO4UQ3fXX3zkBxM
-         MsdNNU5KZGbsGubZZWjDiRDQKHFR/EFqM9C3yh6GFgGVlLhLFJ4zVr+DIuNAbR9KQcB5
-         T8GmroqeQp+7AwTq9ShK/4fAV7UMUhY36qm97CiU6NQ6s2CwelKnpmh0P2yo+6u6beRm
-         dQJoyK9ekXnukfq7HL91OJkeUkjQ4ZzKnk9YMT21F3YxGGj2vJzTYOnJhMfNp7V68MI2
-         7HuKT0Uxa8IEFcrEKe6GJo8kOelcdN7d+sBEHnztRM7oCrUcfJGN+wTTRxiuWNQQCyQD
-         emuw==
-X-Gm-Message-State: APjAAAXplYKSJ6KqvrxeYge9QYlT3a6/L+DVfZeY3w7TjNifRCO4DCTQ
-        g1+KrEBYNQodi3P2A5XGFiM=
-X-Google-Smtp-Source: APXvYqwB1UZyTj2FO+7mAGa5Fn4Vvj4rqp0gh1on14j7stLGrsDNA8wBC6nZZTSkwSGyGrI+AfiauQ==
-X-Received: by 2002:a17:902:740c:: with SMTP id g12mr24779284pll.166.1582076684396;
-        Tue, 18 Feb 2020 17:44:44 -0800 (PST)
+        bh=/6BKpu6I9GWZilmKCDR/xIEf9kb10U/fQ/hS1RFxo/E=;
+        b=X6bBqnh+Vay65Dt7+KWdz9qnZChyqpyeUDcRs7GFRhcmfLQAx2d7p4lEGWnGDNymss
+         lv0zIO013ayjHzwaSbKZPtbQeTbclxZGqpOwDVepQp80JTv3/tHNdLx0gw0FdKEou29k
+         qqgdy7uAsxaN0p+xjZwFfta+A5huVscI/LkyQqYg3aIivb+0P9xCLTuRRl2GzC05Ww52
+         X45s/K0kTz6CX7g0AW8uM0rcKQRxq5AavjKvqvj2AP8Uwsyf57Eq0Kr6zFA5tcyIFBt3
+         /JUhCXydd6fmqqSV6NoO/0iq9ubCSEBQVnp9xe88bxcwEmy27Ehix2Dp7Zk5+u7gEr5L
+         oW3A==
+X-Gm-Message-State: APjAAAXIuviPlr27hGfTalXtCPJlW1GjgkcAdLgGXic2bXtoLmgarRma
+        Liee8CgWhDjrefZ6idchxRQ=
+X-Google-Smtp-Source: APXvYqwwKle6VVN2am3/CWIym5vOlHdjzCyQZW3QPgCSqnuGkU97ImrWpOZRQFtL2HjvnrD66h8CEw==
+X-Received: by 2002:a17:902:8f8e:: with SMTP id z14mr24068362plo.195.1582076688168;
+        Tue, 18 Feb 2020 17:44:48 -0800 (PST)
 Received: from bbox-1.mtv.corp.google.com ([2620:15c:211:1:3e01:2939:5992:52da])
-        by smtp.gmail.com with ESMTPSA id t186sm221192pgd.26.2020.02.18.17.44.42
+        by smtp.gmail.com with ESMTPSA id t186sm221192pgd.26.2020.02.18.17.44.46
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 18 Feb 2020 17:44:43 -0800 (PST)
+        Tue, 18 Feb 2020 17:44:46 -0800 (PST)
 From:   Minchan Kim <minchan@kernel.org>
 To:     Andrew Morton <akpm@linux-foundation.org>
 Cc:     LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
@@ -75,12 +75,10 @@ Cc:     LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
         John Dias <joaodias@google.com>,
         Joel Fernandes <joel@joelfernandes.org>, sj38.park@gmail.com,
         alexander.h.duyck@linux.intel.com, Jann Horn <jannh@google.com>,
-        Minchan Kim <minchan@kernel.org>,
-        Christoph Hellwig <hch@infradead.org>,
-        Christian Brauner <christian@brauner.io>
-Subject: [PATCH v6 4/7] pid: move pidfd_get_pid function to pid.c
-Date:   Tue, 18 Feb 2020 17:44:30 -0800
-Message-Id: <20200219014433.88424-5-minchan@kernel.org>
+        Minchan Kim <minchan@kernel.org>
+Subject: [PATCH v6 6/7] mm/madvise: employ mmget_still_valid for write lock
+Date:   Tue, 18 Feb 2020 17:44:32 -0800
+Message-Id: <20200219014433.88424-7-minchan@kernel.org>
 X-Mailer: git-send-email 2.25.0.265.gbab2e86ba0-goog
 In-Reply-To: <20200219014433.88424-1-minchan@kernel.org>
 References: <20200219014433.88424-1-minchan@kernel.org>
@@ -91,88 +89,39 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-process_madvise syscall needs pidfd_get_pid function to translate
-pidfd to pid so this patch move the function to kernel/pid.c.
+From: Oleksandr Natalenko <oleksandr@redhat.com>
 
-Cc: Christoph Hellwig <hch@infradead.org>
-Cc: Christian Brauner <christian@brauner.io>
-Suggested-by: Alexander Duyck <alexander.h.duyck@linux.intel.com>
-Reviewed-by: Alexander Duyck <alexander.h.duyck@linux.intel.com>
+Do the very same trick as we already do since 04f5866e41fb. KSM hints
+will require locking mmap_sem for write since they modify vm_flags, so
+for remote KSM hinting this additional check is needed.
+
+Signed-off-by: Oleksandr Natalenko <oleksandr@redhat.com>
 Signed-off-by: Minchan Kim <minchan@kernel.org>
 ---
- include/linux/pid.h |  1 +
- kernel/exit.c       | 17 -----------------
- kernel/pid.c        | 17 +++++++++++++++++
- 3 files changed, 18 insertions(+), 17 deletions(-)
+ mm/madvise.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/include/linux/pid.h b/include/linux/pid.h
-index 998ae7d24450..993f68cb45c2 100644
---- a/include/linux/pid.h
-+++ b/include/linux/pid.h
-@@ -75,6 +75,7 @@ extern const struct file_operations pidfd_fops;
- struct file;
- 
- extern struct pid *pidfd_pid(const struct file *file);
-+struct pid *pidfd_get_pid(unsigned int fd);
- 
- static inline struct pid *get_pid(struct pid *pid)
- {
-diff --git a/kernel/exit.c b/kernel/exit.c
-index 0b81b26a872a..43375f9d8bbc 100644
---- a/kernel/exit.c
-+++ b/kernel/exit.c
-@@ -1470,23 +1470,6 @@ static long do_wait(struct wait_opts *wo)
- 	return retval;
- }
- 
--static struct pid *pidfd_get_pid(unsigned int fd)
--{
--	struct fd f;
--	struct pid *pid;
--
--	f = fdget(fd);
--	if (!f.file)
--		return ERR_PTR(-EBADF);
--
--	pid = pidfd_pid(f.file);
--	if (!IS_ERR(pid))
--		get_pid(pid);
--
--	fdput(f);
--	return pid;
--}
--
- static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
- 			  int options, struct rusage *ru)
- {
-diff --git a/kernel/pid.c b/kernel/pid.c
-index 0f4ecb57214c..360ba480a2a9 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -496,6 +496,23 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
- 	return idr_get_next(&ns->idr, &nr);
- }
- 
-+struct pid *pidfd_get_pid(unsigned int fd)
-+{
-+	struct fd f;
-+	struct pid *pid;
-+
-+	f = fdget(fd);
-+	if (!f.file)
-+		return ERR_PTR(-EBADF);
-+
-+	pid = pidfd_pid(f.file);
-+	if (!IS_ERR(pid))
-+		get_pid(pid);
-+
-+	fdput(f);
-+	return pid;
-+}
-+
- /**
-  * pidfd_create() - Create a new pid file descriptor.
-  *
+diff --git a/mm/madvise.c b/mm/madvise.c
+index f6d9b9e66243..c55a18fe71f9 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -1118,6 +1118,8 @@ int do_madvise(struct task_struct *target_task, struct mm_struct *mm,
+ 	if (write) {
+ 		if (down_write_killable(&mm->mmap_sem))
+ 			return -EINTR;
++		if (current->mm != mm && !mmget_still_valid(mm))
++			goto skip_mm;
+ 	} else {
+ 		down_read(&mm->mmap_sem);
+ 	}
+@@ -1169,6 +1171,7 @@ int do_madvise(struct task_struct *target_task, struct mm_struct *mm,
+ 	}
+ out:
+ 	blk_finish_plug(&plug);
++skip_mm:
+ 	if (write)
+ 		up_write(&mm->mmap_sem);
+ 	else
 -- 
 2.25.0.265.gbab2e86ba0-goog
 
