@@ -2,178 +2,84 @@ Return-Path: <SRS0=K+Eq=4I=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.3 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 42760C11D25
-	for <linux-api@archiver.kernel.org>; Thu, 20 Feb 2020 20:54:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DF644C11D00
+	for <linux-api@archiver.kernel.org>; Thu, 20 Feb 2020 22:10:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 249EB208E4
-	for <linux-api@archiver.kernel.org>; Thu, 20 Feb 2020 20:54:54 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A1DC220801
+	for <linux-api@archiver.kernel.org>; Thu, 20 Feb 2020 22:10:33 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=mbobrowski-org.20150623.gappssmtp.com header.i=@mbobrowski-org.20150623.gappssmtp.com header.b="SoeRUsx6"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729052AbgBTUyu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 20 Feb 2020 15:54:50 -0500
-Received: from out02.mta.xmission.com ([166.70.13.232]:50204 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728400AbgBTUyu (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 20 Feb 2020 15:54:50 -0500
-Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out02.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.90_1)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1j4sqP-0002HF-0g; Thu, 20 Feb 2020 13:54:49 -0700
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
-        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        (Exim 4.87)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1j4sqN-00069Y-Au; Thu, 20 Feb 2020 13:54:48 -0700
-From:   ebiederm@xmission.com (Eric W. Biederman)
-To:     Linus Torvalds <torvalds@linux-foundation.org>
-Cc:     Al Viro <viro@zeniv.linux.org.uk>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Kernel Hardening <kernel-hardening@lists.openwall.com>,
-        Linux API <linux-api@vger.kernel.org>,
-        Linux FS Devel <linux-fsdevel@vger.kernel.org>,
-        Linux Security Module <linux-security-module@vger.kernel.org>,
-        Akinobu Mita <akinobu.mita@gmail.com>,
-        Alexey Dobriyan <adobriyan@gmail.com>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Daniel Micay <danielmicay@gmail.com>,
-        Djalal Harouni <tixxdz@gmail.com>,
-        "Dmitry V . Levin" <ldv@altlinux.org>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        "J . Bruce Fields" <bfields@fieldses.org>,
-        Jeff Layton <jlayton@poochiereds.net>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Oleg Nesterov <oleg@redhat.com>,
-        Solar Designer <solar@openwall.com>
-References: <20200210150519.538333-8-gladkov.alexey@gmail.com>
-        <87v9odlxbr.fsf@x220.int.ebiederm.org>
-        <20200212144921.sykucj4mekcziicz@comp-core-i7-2640m-0182e6>
-        <87tv3vkg1a.fsf@x220.int.ebiederm.org>
-        <CAHk-=wg52stFtUxMOxs3afkwDWmWn1JXC7RJ7dPsTrJbnxpZVg@mail.gmail.com>
-        <87v9obipk9.fsf@x220.int.ebiederm.org>
-        <CAHk-=wgwmu4jpmOqW0+Lz0dcem1Fub=ThLHvmLobf_WqCq7bwg@mail.gmail.com>
-        <20200212200335.GO23230@ZenIV.linux.org.uk>
-        <CAHk-=wi+1CPShMFvJNPfnrJ8DD8uVKUOQ5TQzQUNGLUkeoahkg@mail.gmail.com>
-        <20200212203833.GQ23230@ZenIV.linux.org.uk>
-        <20200212204124.GR23230@ZenIV.linux.org.uk>
-        <CAHk-=wi5FOGV_3tALK3n6E2fK3Oa_yCYkYQtCSaXLSEm2DUCKg@mail.gmail.com>
-        <87lfp7h422.fsf@x220.int.ebiederm.org>
-        <CAHk-=wgmn9Qds0VznyphouSZW6e42GWDT5H1dpZg8pyGDGN+=w@mail.gmail.com>
-        <87pnejf6fz.fsf@x220.int.ebiederm.org>
-        <871rqpaswu.fsf_-_@x220.int.ebiederm.org>
-Date:   Thu, 20 Feb 2020 14:52:47 -0600
-In-Reply-To: <871rqpaswu.fsf_-_@x220.int.ebiederm.org> (Eric W. Biederman's
-        message of "Thu, 20 Feb 2020 14:46:25 -0600")
-Message-ID: <87r1yp7zhc.fsf_-_@x220.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
+        id S1729045AbgBTWKd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 20 Feb 2020 17:10:33 -0500
+Received: from mail-pf1-f193.google.com ([209.85.210.193]:34768 "EHLO
+        mail-pf1-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728996AbgBTWKd (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 20 Feb 2020 17:10:33 -0500
+Received: by mail-pf1-f193.google.com with SMTP id i6so83466pfc.1
+        for <linux-api@vger.kernel.org>; Thu, 20 Feb 2020 14:10:27 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=mbobrowski-org.20150623.gappssmtp.com; s=20150623;
+        h=date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to:user-agent;
+        bh=s3qScU3LxilFb/Kfn9mTZZUWCwQksK34AFtWAW2NAKA=;
+        b=SoeRUsx69E7wQb7Ba6BGEQXkcnejiJb/5LOOV6DUIgL8w0wyvqVxQGlLh71EnkKWCl
+         l/28rBfECVCfvtM3X9stjNGKEn//csKQaIMr+MQ8WRv6Gj6pPHiS1UCs33xF10rbGQiN
+         rce7HxHNQ1AEEOY3qEVfOjGNC/Uvk4tiJK4/KpednpEvBjWQzq53P8tillJvpj5WFwGI
+         4d6t5o1/aNL1JHoWXhXw9D6hSf4fx4yAOZG5pxbwBVTfI6xE3pMutu2n3nIt0lNiDnzA
+         kQpeH09HFBLKMXbcvhfkLQ9Ql8dazbuUBo9k0NspLLvzxu6osEUDQ2Vur2Npiax5UCTZ
+         yQpg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to:user-agent;
+        bh=s3qScU3LxilFb/Kfn9mTZZUWCwQksK34AFtWAW2NAKA=;
+        b=uPFOUAxH0sDM+AwaCxTTb56ozjW5TVcl2E/gHUpkbCdsB8j0cX1r+BSHZ9r73LQ3l8
+         3SQMcp8DgIxZP+9i0QMKgPK+Q00vEDeNt7ZBUcLDNv28EoBU6Ub8fCPB9g/n11ortT2B
+         RDA7Wr0ucb/o6zsAxtviz/EEsBPCRvtqbeklQLfsxzu0Xuc/AIbYUKlFP80IlYOFxm/p
+         lqfWEFckXyQgWmIkWp7diWmSZCr+Q8oF8rRfgOD/rNOBpIVB/uQiVqEq4RSrQ4lc/NaB
+         0jJdYfgOFohOijVkDN7v7UUtH3o1MavgWgvvY7Y4hQCTVQx3kauuNugXrNp2lrT3+USv
+         2IKw==
+X-Gm-Message-State: APjAAAWhrnIurfyB0lgPAE5QFHEB0N6eHND+C4buQA1aokTogXeO53N4
+        k3lXJxiUXUx8jxkwDFhKAUwMvI7X6A==
+X-Google-Smtp-Source: APXvYqwGmHNhTysHbkt132cf1y+nRJgMUHLm0pj4oiNwD0/iz+8OFMEEcG5ZrwrHnPuJR1J7+6qjhg==
+X-Received: by 2002:a65:6454:: with SMTP id s20mr36095737pgv.386.1582236627248;
+        Thu, 20 Feb 2020 14:10:27 -0800 (PST)
+Received: from athena.bobrowski.net (n114-75-163-224.bla4.nsw.optusnet.com.au. [114.75.163.224])
+        by smtp.gmail.com with ESMTPSA id f8sm383948pjg.28.2020.02.20.14.10.24
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 20 Feb 2020 14:10:26 -0800 (PST)
+Date:   Fri, 21 Feb 2020 09:10:21 +1100
+From:   Matthew Bobrowski <mbobrowski@mbobrowski.org>
+To:     Amir Goldstein <amir73il@gmail.com>
+Cc:     Jan Kara <jack@suse.cz>, linux-fsdevel@vger.kernel.org,
+        linux-api@vger.kernel.org
+Subject: Re: [PATCH v2 00/16] Fanotify event with name info
+Message-ID: <20200220221021.GA4379@athena.bobrowski.net>
+References: <20200217131455.31107-1-amir73il@gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1j4sqN-00069Y-Au;;;mid=<87r1yp7zhc.fsf_-_@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1/YvfDt9LJUlANZXt5NnLd7OKfeCre6VOM=
-X-SA-Exim-Connect-IP: 68.227.160.95
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: [PATCH 7/7] proc: Ensure we see the exit of each process tid exactly once
-X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20200217131455.31107-1-amir73il@gmail.com>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+On Mon, Feb 17, 2020 at 03:14:39PM +0200, Amir Goldstein wrote:
+> This is v2 of the fanotify name info series.
+>
+> The user requirement for the name info feature, as well as early UAPI
+> discussions can be found in this [1] lore thread.
 
-When the thread group leader changes during exec and the old leaders
-thread is reaped proc_flush_pid will flush the dentries for the entire
-process because the leader still has it's original pid.
+Oh, wonderful. I'm keen to have this feature come to fruition.
 
-Fix this by exchanging the pids in an rcu safe manner,
-and wrapping the code to do that up in a helper exchange_tids.
+After my wedding, which is this Saturday (tomorrow), I'll come around
+to reviewing this series.
 
-When I removed switch_exec_pids and introduced this behavior
-in d73d65293e3e ("[PATCH] pidhash: kill switch_exec_pids") there
-really was nothing that cared as flushing happened with
-the cached dentry and de_thread flushed both of them on exec.
-
-This lack of fully exchanging pids became a problem a few months later
-when I introduced 48e6484d4902 ("[PATCH] proc: Rewrite the proc dentry
-flush on exit optimization").  Which overlooked the de_thread case
-was no longer swapping pids, and I was looking up proc dentries
-by task->pid.
-
-The current behavior isn't properly a bug as everything in proc will
-continue to work correctly just a little bit less efficiently.  Fix
-this just so there are no little surprise corner cases waiting to bite
-people.
-
-Fixes: 48e6484d4902 ("[PATCH] proc: Rewrite the proc dentry flush on exit optimization").
-Signed-off-by: Eric W. Biederman <ebiederm@xmission.com>
----
- fs/exec.c           |  5 +----
- include/linux/pid.h |  1 +
- kernel/pid.c        | 16 ++++++++++++++++
- 3 files changed, 18 insertions(+), 4 deletions(-)
-
-diff --git a/fs/exec.c b/fs/exec.c
-index db17be51b112..3f0bc293442e 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -1148,11 +1148,8 @@ static int de_thread(struct task_struct *tsk)
- 
- 		/* Become a process group leader with the old leader's pid.
- 		 * The old leader becomes a thread of the this thread group.
--		 * Note: The old leader also uses this pid until release_task
--		 *       is called.  Odd but simple and correct.
- 		 */
--		tsk->pid = leader->pid;
--		change_pid(tsk, PIDTYPE_PID, task_pid(leader));
-+		exchange_tids(tsk, leader);
- 		transfer_pid(leader, tsk, PIDTYPE_TGID);
- 		transfer_pid(leader, tsk, PIDTYPE_PGID);
- 		transfer_pid(leader, tsk, PIDTYPE_SID);
-diff --git a/include/linux/pid.h b/include/linux/pid.h
-index 01a0d4e28506..0f40b5f1c32c 100644
---- a/include/linux/pid.h
-+++ b/include/linux/pid.h
-@@ -101,6 +101,7 @@ extern void attach_pid(struct task_struct *task, enum pid_type);
- extern void detach_pid(struct task_struct *task, enum pid_type);
- extern void change_pid(struct task_struct *task, enum pid_type,
- 			struct pid *pid);
-+extern void exchange_tids(struct task_struct *task, struct task_struct *old);
- extern void transfer_pid(struct task_struct *old, struct task_struct *new,
- 			 enum pid_type);
- 
-diff --git a/kernel/pid.c b/kernel/pid.c
-index 0f4ecb57214c..0085b15478fb 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -359,6 +359,22 @@ void change_pid(struct task_struct *task, enum pid_type type,
- 	attach_pid(task, type);
- }
- 
-+void exchange_tids(struct task_struct *ntask, struct task_struct *otask)
-+{
-+	/* pid_links[PIDTYPE_PID].next is always NULL */
-+	struct pid *npid = READ_ONCE(ntask->thread_pid);
-+	struct pid *opid = READ_ONCE(otask->thread_pid);
-+
-+	rcu_assign_pointer(opid->tasks[PIDTYPE_PID].first, &ntask->pid_links[PIDTYPE_PID]);
-+	rcu_assign_pointer(npid->tasks[PIDTYPE_PID].first, &otask->pid_links[PIDTYPE_PID]);
-+	rcu_assign_pointer(ntask->thread_pid, opid);
-+	rcu_assign_pointer(otask->thread_pid, npid);
-+	WRITE_ONCE(ntask->pid_links[PIDTYPE_PID].pprev, &opid->tasks[PIDTYPE_PID].first);
-+	WRITE_ONCE(otask->pid_links[PIDTYPE_PID].pprev, &npid->tasks[PIDTYPE_PID].first);
-+	WRITE_ONCE(ntask->pid, pid_nr(opid));
-+	WRITE_ONCE(otask->pid, pid_nr(npid));
-+}
-+
- /* transfer_pid is an optimization of attach_pid(new), detach_pid(old) */
- void transfer_pid(struct task_struct *old, struct task_struct *new,
- 			   enum pid_type type)
--- 
-2.20.1
-
+/M
