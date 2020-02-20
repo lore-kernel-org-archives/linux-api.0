@@ -2,122 +2,225 @@ Return-Path: <SRS0=K+Eq=4I=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+X-Spam-Status: No, score=-0.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=no autolearn_force=no
-	version=3.4.0
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F1CC3C11D04
-	for <linux-api@archiver.kernel.org>; Thu, 20 Feb 2020 09:17:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 10742C11D04
+	for <linux-api@archiver.kernel.org>; Thu, 20 Feb 2020 10:34:44 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id C7A3B24654
-	for <linux-api@archiver.kernel.org>; Thu, 20 Feb 2020 09:17:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D18F324676
+	for <linux-api@archiver.kernel.org>; Thu, 20 Feb 2020 10:34:43 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=amazon.com header.i=@amazon.com header.b="jXYZt7ec"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NjDV+Hdy"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726830AbgBTJRK (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 20 Feb 2020 04:17:10 -0500
-Received: from smtp-fw-6001.amazon.com ([52.95.48.154]:50344 "EHLO
-        smtp-fw-6001.amazon.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726803AbgBTJRK (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 20 Feb 2020 04:17:10 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-  d=amazon.com; i=@amazon.com; q=dns/txt; s=amazon201209;
-  t=1582190230; x=1613726230;
-  h=from:to:cc:subject:date:message-id:in-reply-to:
-   mime-version;
-  bh=3DR/UH6MEPv43yGUiIRitijjOdGjwQGa0V2AAfInCYM=;
-  b=jXYZt7ecjO//M2DtZFe7S/88uwuivVGtxYP3w9IjYHXziFkxMPac4syI
-   EWmZDMaR9G5fERwQUBrT8aq1hlnq/C56fODq1+OFLaBVuHjywne3dGBe2
-   s0fI66AolilQBh16dLwToq9TucNLCTg5tAkg8aALGNMMjwtU/fB+aoGNf
-   M=;
-IronPort-SDR: wz79lME026lmGTeEOVhzNMQUXbePBwBbna1HEI5VzRyyhMCftsQsZad6YIlel6EqMNx4l17IFr
- UdYdDtsWdvnQ==
-X-IronPort-AV: E=Sophos;i="5.70,463,1574121600"; 
-   d="scan'208";a="18729860"
-Received: from iad12-co-svc-p1-lb1-vlan3.amazon.com (HELO email-inbound-relay-2c-397e131e.us-west-2.amazon.com) ([10.43.8.6])
-  by smtp-border-fw-out-6001.iad6.amazon.com with ESMTP; 20 Feb 2020 09:16:56 +0000
-Received: from EX13MTAUEA002.ant.amazon.com (pdx4-ws-svc-p6-lb7-vlan3.pdx.amazon.com [10.170.41.166])
-        by email-inbound-relay-2c-397e131e.us-west-2.amazon.com (Postfix) with ESMTPS id 537CAA2660;
-        Thu, 20 Feb 2020 09:16:54 +0000 (UTC)
-Received: from EX13D31EUA001.ant.amazon.com (10.43.165.15) by
- EX13MTAUEA002.ant.amazon.com (10.43.61.77) with Microsoft SMTP Server (TLS)
- id 15.0.1236.3; Thu, 20 Feb 2020 09:16:54 +0000
-Received: from u886c93fd17d25d.ant.amazon.com (10.43.161.45) by
- EX13D31EUA001.ant.amazon.com (10.43.165.15) with Microsoft SMTP Server (TLS)
- id 15.0.1367.3; Thu, 20 Feb 2020 09:16:45 +0000
-From:   SeongJae Park <sjpark@amazon.com>
-To:     Andrew Morton <akpm@linux-foundation.org>
-CC:     Minchan Kim <minchan@kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-mm <linux-mm@kvack.org>, <linux-api@vger.kernel.org>,
-        <oleksandr@redhat.com>, Suren Baghdasaryan <surenb@google.com>,
-        Tim Murray <timmurray@google.com>,
-        Daniel Colascione <dancol@google.com>,
-        Sandeep Patil <sspatil@google.com>,
-        Sonny Rao <sonnyrao@google.com>,
-        Brian Geffon <bgeffon@google.com>,
-        Michal Hocko <mhocko@suse.com>,
-        Johannes Weiner <hannes@cmpxchg.org>,
-        Shakeel Butt <shakeelb@google.com>,
-        John Dias <joaodias@google.com>,
-        Joel Fernandes <joel@joelfernandes.org>, <sj38.park@gmail.com>,
-        <alexander.h.duyck@linux.intel.com>, Jann Horn <jannh@google.com>
-Subject: Re: Re: [PATCH v6 0/7] introduce memory hinting API for external process
-Date:   Thu, 20 Feb 2020 10:16:31 +0100
-Message-ID: <20200220091631.31949-1-sjpark@amazon.com>
-X-Mailer: git-send-email 2.17.1
-In-Reply-To: <20200219120123.07dda51c29006a892059ccde@linux-foundation.org> (raw)
+        id S1727134AbgBTKen (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 20 Feb 2020 05:34:43 -0500
+Received: from us-smtp-1.mimecast.com ([207.211.31.81]:54217 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1727091AbgBTKen (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 20 Feb 2020 05:34:43 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1582194882;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=IbRiHn2UAAo1XhaSQjnQaPYh19kM6Kh7056eiuL/Ryo=;
+        b=NjDV+Hdyxg0zMBZB8zr582tLfOk1YjRYU+3uvqFltugQn9LSf5bHAY1Jhol7FQ3zJVF6dN
+        j3OrKzU47eKawxteomPfgxACihDdS8iB+A5wY9xOWT1UzWxSla7cUgDwFirqQBX7wNTKfT
+        idPoF+/t41ftlu5eP4Yj/Clk4E+iLBc=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-117-qU9IaiWhN92zMfQkTauxHw-1; Thu, 20 Feb 2020 05:34:40 -0500
+X-MC-Unique: qU9IaiWhN92zMfQkTauxHw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9F8D1801FA6;
+        Thu, 20 Feb 2020 10:34:38 +0000 (UTC)
+Received: from warthog.procyon.org.uk (ovpn-122-163.rdu2.redhat.com [10.10.122.163])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id BBEF85DA76;
+        Thu, 20 Feb 2020 10:34:36 +0000 (UTC)
+Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
+        Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
+        Kingdom.
+        Registered in England and Wales under Company Registration No. 3798903
+From:   David Howells <dhowells@redhat.com>
+In-Reply-To: <20200219163128.GB9496@magnolia>
+References: <20200219163128.GB9496@magnolia> <158204549488.3299825.3783690177353088425.stgit@warthog.procyon.org.uk> <158204550281.3299825.6344518327575765653.stgit@warthog.procyon.org.uk>
+To:     "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc:     dhowells@redhat.com, viro@zeniv.linux.org.uk, raven@themaw.net,
+        mszeredi@redhat.com, christian@brauner.io,
+        linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 01/19] vfs: syscall: Add fsinfo() to query filesystem information [ver #16]
 MIME-Version: 1.0
-Content-Type: text/plain
-X-Originating-IP: [10.43.161.45]
-X-ClientProxiedBy: EX13D06UWA002.ant.amazon.com (10.43.160.143) To
- EX13D31EUA001.ant.amazon.com (10.43.165.15)
+Content-Type: text/plain; charset="us-ascii"
+Content-ID: <542410.1582194875.1@warthog.procyon.org.uk>
+Content-Transfer-Encoding: quoted-printable
+Date:   Thu, 20 Feb 2020 10:34:35 +0000
+Message-ID: <542411.1582194875@warthog.procyon.org.uk>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, 19 Feb 2020 12:01:23 -0800 Andrew Morton <akpm@linux-foundation.org> wrote:
+Darrick J. Wong <darrick.wong@oracle.com> wrote:
 
-> On Tue, 18 Feb 2020 17:44:26 -0800 Minchan Kim <minchan@kernel.org> wrote:
-> 
-> > Now, we have MADV_PAGEOUT and MADV_COLD as madvise hinting API. With that,
-> > application could give hints to kernel what memory range are preferred to be
-> > reclaimed. However, in some platform(e.g., Android), the information
-> > required to make the hinting decision is not known to the app.
-> > Instead, it is known to a centralized userspace daemon(e.g., ActivityManagerService),
-> > and that daemon must be able to initiate reclaim on its own without any app
-> > involvement.
-> > 
-> 
-> This patchset doesn't seem to be getting a lot of interest from other
-> potential users?  It seems very specialized.  Are there or will there
-> ever be any users of this apart from one Android daemon?
-> 
-> Also, it doesn't terribly hard for ActivityManagerService to tell
-> another process "now run madvise with these arguments".  Please explain
-> why this is not practical in ActivityManagerService and also within
-> other potential users of this syscall.
+> > +	p->f_blocks.hi	=3D 0;
+> > +	p->f_blocks.lo	=3D buf.f_blocks;
+> =
 
-I personally have interest in and hope successful development/merge of this
-patchset.
+> Er... are there filesystems (besides that (xfs++)++ one) that require
+> u128 counters?  I suspect that the Very Large Fields are for future
+> expandability, but I also wonder about the whether it's worth the
+> complexity of doing this, since the structures can always be
+> version-revved later.
 
-The interested usecases of 'madvise_process()' for me is optimizations of
-general memory-intensive workloads having dynamic data access patterns on
-hierarchical memory systems (e.g., multi-tier memory or fast storage based swap
-devices).  In more detail, I'm already using a part of this patchset for my RFC
-patchset implementing Data Access Monitoring-based Operation Schemes[1].  For
-my specific case, I don't need new system call but only target task argument,
-though.
+I'm making a relatively cheap allowance for future expansion.  Dave Chinne=
+r
+has mentioned at one of the LSFs that 16EiB may be exceeded soon (though I
+hate to think of fscking such a beastie).  I know that the YFS variant of =
+AFS
+supports 96-bit vnode numbers (which I translate to inode numbers).  What =
+I'm
+trying to avoid is the problem we have with stat/statfs where under some
+circumstances we have to return an error (ERANGE?) because we can't repres=
+ent
+the number if someone asks for an older version of the struct.
 
-Once in a past, before joining my current company, I tried using 'madvise()' to
-optimize some scientific HPC programs.  The improvement results were clear, but
-optimizing each of the workloads was challenging and time-consuming.  I believe
-this new systemcall to be very helpful for such cases, either.
+Since the buffer is (meant to be) pre-cleared, the filesystem can just ign=
+ore
+the high word if it's never going to set it.  In fact, fsinfo_generic_stat=
+fs
+doesn't need to set them either.
 
-[1] https://lore.kernel.org/linux-mm/20200218085309.18346-1-sjpark@amazon.com/
+> XFS inodes are u64 values...
+> ...and the max symlink target length is 1k, not PAGE_SIZE...
 
+Yeah, and AFS(YFS) has 96-bit inode numbers.  The filesystem's fsinfo tabl=
+e is
+read first so that the filesystem can override this.
 
-Thanks,
-SeongJae Park
+> ...so is the usage model here that XFS should call fsinfo_generic_limits
+> to fill out the fsinfo_limits structure, modify the values in
+> ctx->buffer as appropriate for XFS, and then return the structure size?
+
+Actually, I should export some these so that you can do that.  I'll export
+fsinfo_generic_{timestamp_info,supports,limits} for now.
+
+> > +#define FSINFO_ATTR_VOLUME_ID		0x05	/* Volume ID (string) */
+> > +#define FSINFO_ATTR_VOLUME_UUID		0x06	/* Volume UUID (LE uuid) */
+> > +#define FSINFO_ATTR_VOLUME_NAME		0x07	/* Volume name (string) */
+> =
+
+> I think I've muttered about the distinction between volume id and
+> volume name before, but I'm still wondering how confusing that will be
+> for users?  Let me check my assumptions, though:
+> =
+
+> Volume ID is whatever's in super_block.s_id, which (at least for xfs and
+> ext4) is the device name (e.g. "sda1").  I guess that's useful for
+> correlating a thing you can call fsinfo() on against strings that were
+> logged in dmesg.
+>
+> Volume name I think is the fs label (e.g. "home"), which I think will
+> have to be implemented separately by each filesystem, and that's why
+> there's no generic vfs implementation.
+
+Yes.  For AFS, for example, this would be the name of the volume (which ma=
+y be
+changed), whereas the volume ID is the number in the protocol that actuall=
+y
+refers to the volume (which cannot be changed).
+
+And, as you say, for blockdev mounts, the ID is the device name and the vo=
+lume
+name is filesystem specific.
+
+> The 7 -> 0 -> 1 sequence here confused me until I figured out that
+> QUERY_TYPE is the mask for QUERY_{PATH,FD}.
+
+Changed to FSINFO_FLAGS_QUERY_MASK.
+
+> > +struct fsinfo_limits {
+> > +...
+> > +	__u32	__reserved[1];
+> =
+
+> I wonder if these structures ought to reserve more space than a single u=
+32...
+
+No need.  Part of the way the interface is designed is that the version nu=
+mber
+for a particular VSTRUCT-type attribute is also the length.  So a newer
+version is also longer.  All the old fields must be retained and filled in=
+.
+New fields are tagged on the end.
+
+If userspace asks for an older version than is supported, it gets a trunca=
+ted
+return.  If it asks for a newer version, the extra fields it is expecting =
+are
+all set to 0.  Either way, the length (and thus the version) the kernel
+supports is returned - not the length copied.
+
+The __reserved fields are there because they represent padding (the struct=
+ is
+going to be aligned/padded according to __u64 in this case).  Ideally, I'd
+mark the structs __packed, but this messes with the alignment and may make=
+ the
+compiler do funny tricks to get out any field larger than a byte.
+
+I've renamed them to __padding.
+
+> > +struct fsinfo_supports {
+> > +	__u64	stx_attributes;		/* What statx::stx_attributes are supported *=
+/
+> > +	__u32	stx_mask;		/* What statx::stx_mask bits are supported */
+> > +	__u32	ioc_flags;		/* What FS_IOC_* flags are supported */
+> =
+
+> "IOC"?  That just means 'ioctl'.  Is this field supposed to return the
+> supported FS_IOC_GETFLAGS flags, or the supported FS_IOC_FSGETXATTR
+> flags?
+
+FS_IOC_[GS]ETFLAGS is what I meant.
+
+> I suspect it would also be a big help to be able to tell userspace which
+> of the flags can be set, and which can be cleared.
+
+How about:
+
+	__u32	fs_ioc_getflags;	/* What FS_IOC_GETFLAGS may return */
+	__u32	fs_ioc_setflags_set;	/* What FS_IOC_SETFLAGS may set */
+	__u32	fs_ioc_setflags_clear;	/* What FS_IOC_SETFLAGS may clear */
+
+> > +struct fsinfo_timestamp_one {
+> > +	__s64	minimum;	/* Minimum timestamp value in seconds */
+> > +	__u64	maximum;	/* Maximum timestamp value in seconds */
+> =
+
+> Given that time64_t is s64, why is the maximum here u64?
+
+Well, I assume it extremely unlikely that the maximum can be before 1970, =
+so
+there doesn't seem any need to allow the maximum to be negative.  Furtherm=
+ore,
+it would be feasible that you could encounter a filesystem with a u64
+filesystem that doesn't support dates before 1970.
+
+On the other hand, if Linux is still going when __s64 seconds from 1970 wr=
+aps,
+it will be impressive, but I'm not sure we'll be around to see it...  Some=
+one
+will have to cast a resurrection spell on Arnd to fix that one.
+
+However, since signed/unsigned comparisons may have issues, I can turn it =
+into
+an __s64 also if that is preferred.
+
+David
+
