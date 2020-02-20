@@ -2,109 +2,118 @@ Return-Path: <SRS0=K+Eq=4I=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+X-Spam-Status: No, score=-8.4 required=3.0 tests=DKIMWL_WL_MED,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,USER_IN_DEF_DKIM_WL autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1987BC11D00
-	for <linux-api@archiver.kernel.org>; Thu, 20 Feb 2020 23:41:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2DF85C11D00
+	for <linux-api@archiver.kernel.org>; Thu, 20 Feb 2020 23:56:23 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id E9F06208CD
-	for <linux-api@archiver.kernel.org>; Thu, 20 Feb 2020 23:41:17 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EC989208CD
+	for <linux-api@archiver.kernel.org>; Thu, 20 Feb 2020 23:56:22 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="XXGyT2OT"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729347AbgBTXlR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 20 Feb 2020 18:41:17 -0500
-Received: from out02.mta.xmission.com ([166.70.13.232]:38500 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729234AbgBTXlR (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 20 Feb 2020 18:41:17 -0500
-Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out02.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.90_1)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1j4vRT-0002Tu-CA; Thu, 20 Feb 2020 16:41:15 -0700
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
-        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        (Exim 4.87)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1j4vRS-0003Oz-LG; Thu, 20 Feb 2020 16:41:15 -0700
-From:   ebiederm@xmission.com (Eric W. Biederman)
-To:     Al Viro <viro@zeniv.linux.org.uk>
-Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Kernel Hardening <kernel-hardening@lists.openwall.com>,
-        Linux API <linux-api@vger.kernel.org>,
-        Linux FS Devel <linux-fsdevel@vger.kernel.org>,
-        Linux Security Module <linux-security-module@vger.kernel.org>,
-        Akinobu Mita <akinobu.mita@gmail.com>,
-        Alexey Dobriyan <adobriyan@gmail.com>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Daniel Micay <danielmicay@gmail.com>,
-        Djalal Harouni <tixxdz@gmail.com>,
-        "Dmitry V . Levin" <ldv@altlinux.org>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        "J . Bruce Fields" <bfields@fieldses.org>,
-        Jeff Layton <jlayton@poochiereds.net>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Oleg Nesterov <oleg@redhat.com>,
-        Solar Designer <solar@openwall.com>
-References: <CAHk-=wi+1CPShMFvJNPfnrJ8DD8uVKUOQ5TQzQUNGLUkeoahkg@mail.gmail.com>
-        <20200212203833.GQ23230@ZenIV.linux.org.uk>
-        <20200212204124.GR23230@ZenIV.linux.org.uk>
-        <CAHk-=wi5FOGV_3tALK3n6E2fK3Oa_yCYkYQtCSaXLSEm2DUCKg@mail.gmail.com>
-        <87lfp7h422.fsf@x220.int.ebiederm.org>
-        <CAHk-=wgmn9Qds0VznyphouSZW6e42GWDT5H1dpZg8pyGDGN+=w@mail.gmail.com>
-        <87pnejf6fz.fsf@x220.int.ebiederm.org>
-        <871rqpaswu.fsf_-_@x220.int.ebiederm.org>
-        <87blpt9e6m.fsf_-_@x220.int.ebiederm.org>
-        <20200220225420.GR23230@ZenIV.linux.org.uk>
-        <20200220230309.GS23230@ZenIV.linux.org.uk>
-Date:   Thu, 20 Feb 2020 17:39:14 -0600
-In-Reply-To: <20200220230309.GS23230@ZenIV.linux.org.uk> (Al Viro's message of
-        "Thu, 20 Feb 2020 23:03:09 +0000")
-Message-ID: <87blps7rrx.fsf@x220.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
+        id S1729342AbgBTX4W (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 20 Feb 2020 18:56:22 -0500
+Received: from mail-ed1-f65.google.com ([209.85.208.65]:41049 "EHLO
+        mail-ed1-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1729234AbgBTX4W (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 20 Feb 2020 18:56:22 -0500
+Received: by mail-ed1-f65.google.com with SMTP id c26so153215eds.8
+        for <linux-api@vger.kernel.org>; Thu, 20 Feb 2020 15:56:21 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=NNDEYAC7DB9YZj2gZI9Z6zcgcjYXY0WlNUd/lj4aAPs=;
+        b=XXGyT2OTWpB64th/vPVkrN8ruW2f9cZk6TbylbolgAVKvklROGPImgdexYcm7PLy+f
+         BQTWWPL1F3qIN7l3Dq0t9Uu68LaVEjTVVH3auFqU7GxZPXIvpkmrC16+4Z1H1cJOebL5
+         Lvo1QJHLtGwmVRsdCOiaMRq4DYeqlDXcfrVJdD7R2pwkOZREAbrYu4uO69FSE1NQjX41
+         LHAhCWZNeW5WU9pBAp27tB02+HKXN20P76igbJaaQi0x/nItXf1MM5UocyVhxVMtvBJ3
+         ayy3sAy5iev4TWkVL/NJTUQfH2mnlc/NEqADgydaiOsyVsK7eC5LwvaXHBbFhtT3g4wp
+         4ivQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=NNDEYAC7DB9YZj2gZI9Z6zcgcjYXY0WlNUd/lj4aAPs=;
+        b=Q9aD9F4kSMt4UdqPXlResk1EHtyBYGNstPraDFD7UnDTnTpHcPJFuK5BbapF0fqFIN
+         Invi2o0kzUoOkgXOhR7xJOeifzfP1v+jUfeJJtORd05h0kGuUvNfISiWw7Xuqmrzn2TA
+         oCtTyzZVS3WaZFNe3HO34bxW/t9nposSWzVFvB8lhoNjrMCAkBL6ASH0fw6rWGJ6OWBa
+         Ti2nAUoYlhTS4ow7SmKQXs7WshcPyf6cAZKz0RppI5zYBvyU1XGghnfcv1Jb8Kf3gFMm
+         wKTZHqy1Vj+0aZZ8aYuZ6YZE9BPl3XCXcX/Zw7RGsa21Z1DlFpgITdB6i3Sh39ZsvrV3
+         8wQg==
+X-Gm-Message-State: APjAAAUMtA8hzWT4BnPjovq7kwckUDaMdAnQaqXB321ws5+8DmY52gGe
+        d8LJELmmzV4PHQzS7XVURA3qamIxkEM/QT2R/kTbyQ==
+X-Google-Smtp-Source: APXvYqzpKwKC1T9/jdMm4FY8y3lkou+3lv6gj8We0ELkhEzlN9PeYavWhHfqwfiG/wqIc9ypFDi9U3oCF2x+1nSM0Og=
+X-Received: by 2002:a05:6402:6c7:: with SMTP id n7mr30390013edy.177.1582242980107;
+ Thu, 20 Feb 2020 15:56:20 -0800 (PST)
 MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1j4vRS-0003Oz-LG;;;mid=<87blps7rrx.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX19OdZjKNTBNxrAmd9oO+cyfw3wUEl55Vpc=
-X-SA-Exim-Connect-IP: 68.227.160.95
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: Re: [PATCH 4/7] proc: Use d_invalidate in proc_prune_siblings_dcache
-X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
+References: <20200218173221.237674-1-bgeffon@google.com> <20200220115744.ummq6j5ejp5qojic@box>
+In-Reply-To: <20200220115744.ummq6j5ejp5qojic@box>
+From:   Brian Geffon <bgeffon@google.com>
+Date:   Thu, 20 Feb 2020 15:55:53 -0800
+Message-ID: <CADyq12y2uJh2ROBajA1D5H6OLEyFrKKEXH=yQC-8ELF0+UiNzw@mail.gmail.com>
+Subject: Re: [PATCH v6 1/2] mm: Add MREMAP_DONTUNMAP to mremap().
+To:     "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc:     Andrew Morton <akpm@linux-foundation.org>,
+        "Michael S . Tsirkin" <mst@redhat.com>,
+        Arnd Bergmann <arnd@arndb.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-mm <linux-mm@kvack.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        Andy Lutomirski <luto@amacapital.net>,
+        Will Deacon <will@kernel.org>,
+        Andrea Arcangeli <aarcange@redhat.com>,
+        Sonny Rao <sonnyrao@google.com>,
+        Minchan Kim <minchan@kernel.org>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Yu Zhao <yuzhao@google.com>,
+        Jesse Barnes <jsbarnes@google.com>,
+        Florian Weimer <fweimer@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Al Viro <viro@zeniv.linux.org.uk> writes:
+Hi Kirill,
 
-> On Thu, Feb 20, 2020 at 10:54:20PM +0000, Al Viro wrote:
->> On Thu, Feb 20, 2020 at 02:49:53PM -0600, Eric W. Biederman wrote:
->> > 
->> > The function d_prune_aliases has the problem that it will only prune
->> > aliases thare are completely unused.  It will not remove aliases for
->> > the dcache or even think of removing mounts from the dcache.  For that
->> > behavior d_invalidate is needed.
->> > 
->> > To use d_invalidate replace d_prune_aliases with d_find_alias
->> > followed by d_invalidate and dput.  This is safe and complete
->> > because no inode in proc has any hardlinks or aliases.
->> 
->> s/no inode.*/it's a fucking directory inode./
+> I have hard time understanding the case when new_len != old_len.
 >
-> Wait... You are using it for sysctls as well?  Ho-hum...  The thing is,
-> for sysctls you are likely to run into consequent entries with the
-> same superblock, making for a big pile of useless playing with
-> ->s_active...  And yes, that applied to mainline as well
+> Correct me if I'm wrong, but looks like that you change the size of old
+> mapping to be the new_len and then create a new of the same new_len.
+>
+> This doesn't look right to me.
+>
+> In my opinion, MREMAP_DONTUNMAP has to leave the old mapping intact. And
+> create the new mapping adjusted to the new_len.
+>
+> Other option is to force new_len == old_len if MREMAP_DONTUNMAP is
+> specified. It would simplify the implementation. And I don't see why
+> anybody would really want anything else.
 
-Which is why I worked to merge the two cases since they were so close.
-Fewer things to fix and more eyeballs on the code.
+I had been approaching this as, "do what mremap would have done in
+this situation except skip the last step." Meaning, whatever the final
+state of the old mapping was MREMAP_DONTUNMAP meant that you should
+just not do the unmap operation on the old mapping at the end. But I
+understand why it's confusing, especially when in the case of the VMA
+growing you're left with the old vma of size old_len and the new_vma
+of size new_len but only containing old_len worth of pages.
+Personally, I don't think this is a problem having that behavior
+because it can be documented and it just adds a small amount of
+flexibility.
 
-Eric
+Nonetheless, I agree with you and I also cannot come up with a
+situation where you'd actually want to do this so I'm willing to
+restrict it to old_len == new_len and return -EINVAL if not, it
+simplifies it a bit and accounting becomes a easier because the
+outcome is always the same two mappings of size old_len and the size
+of the locked_vm never changes. We can always allow the resize
+operation later if there becomes a need. If everyone is okay with this
+restriction I can send a new patch.
 
-
+Thank you again,
+Brian
