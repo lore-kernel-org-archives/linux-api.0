@@ -6,28 +6,28 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A8FF8C11D2F
-	for <linux-api@archiver.kernel.org>; Mon, 24 Feb 2020 16:29:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9CA88C11D2F
+	for <linux-api@archiver.kernel.org>; Mon, 24 Feb 2020 16:30:29 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 85F3A2084E
-	for <linux-api@archiver.kernel.org>; Mon, 24 Feb 2020 16:29:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 70E842080D
+	for <linux-api@archiver.kernel.org>; Mon, 24 Feb 2020 16:30:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727843AbgBXQ3z (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 24 Feb 2020 11:29:55 -0500
-Received: from out02.mta.xmission.com ([166.70.13.232]:49632 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727636AbgBXQ3y (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 24 Feb 2020 11:29:54 -0500
+        id S1727730AbgBXQa3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 24 Feb 2020 11:30:29 -0500
+Received: from out01.mta.xmission.com ([166.70.13.231]:47882 "EHLO
+        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727177AbgBXQa2 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 24 Feb 2020 11:30:28 -0500
 Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out02.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        by out01.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.90_1)
         (envelope-from <ebiederm@xmission.com>)
-        id 1j6GcD-0004Pr-JA; Mon, 24 Feb 2020 09:29:53 -0700
+        id 1j6Gcl-0004et-I3; Mon, 24 Feb 2020 09:30:27 -0700
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
         by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
         (Exim 4.87)
         (envelope-from <ebiederm@xmission.com>)
-        id 1j6GcC-0007x0-LM; Mon, 24 Feb 2020 09:29:53 -0700
+        id 1j6Gcj-00087b-GZ; Mon, 24 Feb 2020 09:30:26 -0700
 From:   ebiederm@xmission.com (Eric W. Biederman)
 To:     Linus Torvalds <torvalds@linux-foundation.org>
 Cc:     Al Viro <viro@zeniv.linux.org.uk>,
@@ -69,18 +69,18 @@ References: <20200210150519.538333-8-gladkov.alexey@gmail.com>
         <87pnejf6fz.fsf@x220.int.ebiederm.org>
         <871rqpaswu.fsf_-_@x220.int.ebiederm.org>
         <871rqk2brn.fsf_-_@x220.int.ebiederm.org>
-Date:   Mon, 24 Feb 2020 10:27:49 -0600
+Date:   Mon, 24 Feb 2020 10:28:22 -0600
 In-Reply-To: <871rqk2brn.fsf_-_@x220.int.ebiederm.org> (Eric W. Biederman's
         message of "Mon, 24 Feb 2020 10:25:16 -0600")
-Message-ID: <87k14c0x2y.fsf_-_@x220.int.ebiederm.org>
+Message-ID: <87eeuk0x21.fsf_-_@x220.int.ebiederm.org>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
-X-XM-SPF: eid=1j6GcC-0007x0-LM;;;mid=<87k14c0x2y.fsf_-_@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1/PBz/fWPf6jpbA0LkgeAc4T35MgRRLVLo=
+X-XM-SPF: eid=1j6Gcj-00087b-GZ;;;mid=<87eeuk0x21.fsf_-_@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1/swQCQNy2YwWznsTE8zPB0PTznWyDneD8=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: [PATCH v2 3/6] proc: In proc_prune_siblings_dcache cache an aquired super block
+Subject: [PATCH v2 4/6] proc: Use d_invalidate in proc_prune_siblings_dcache
 X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
 X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Sender: linux-api-owner@vger.kernel.org
@@ -89,65 +89,114 @@ List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
 
-Because there are likely to be several sysctls in a row on the
-same superblock cache the super_block after the count has
-been raised and don't deactivate it until we are processing
-another super_block.
+The function d_prune_aliases has the problem that it will only prune
+aliases thare are completely unused.  It will not remove aliases for
+the dcache or even think of removing mounts from the dcache.  For that
+behavior d_invalidate is needed.
+
+To use d_invalidate replace d_prune_aliases with d_find_alias followed
+by d_invalidate and dput.
+
+For completeness the directory and the non-directory cases are
+separated because in theory (although not in currently in practice for
+proc) directories can only ever have a single dentry while
+non-directories can have hardlinks and thus multiple dentries.
+As part of this separation use d_find_any_alias for directories
+to spare d_find_alias the extra work of doing that.
+
+Plus the differences between d_find_any_alias and d_find_alias makes
+it clear why the directory and non-directory code and not share code.
+
+To make it clear these routines now invalidate dentries rename
+proc_prune_siblings_dache to proc_invalidate_siblings_dcache, and rename
+proc_sys_prune_dcache proc_sys_invalidate_dcache.
+
+V2: Split the directory and non-directory cases.  To make this
+    code robust to future changes in proc.
 
 Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- fs/proc/inode.c | 14 ++++++++++----
- 1 file changed, 10 insertions(+), 4 deletions(-)
+ fs/proc/inode.c       | 16 ++++++++++++++--
+ fs/proc/internal.h    |  2 +-
+ fs/proc/proc_sysctl.c |  8 ++++----
+ 3 files changed, 19 insertions(+), 7 deletions(-)
 
 diff --git a/fs/proc/inode.c b/fs/proc/inode.c
-index 74ce4a8d05eb..fa2dc732cd77 100644
+index fa2dc732cd77..ba6acd300ce1 100644
 --- a/fs/proc/inode.c
 +++ b/fs/proc/inode.c
-@@ -108,10 +108,11 @@ void proc_prune_siblings_dcache(struct hlist_head *inodes, spinlock_t *lock)
+@@ -103,7 +103,7 @@ void __init proc_init_kmemcache(void)
+ 	BUILD_BUG_ON(sizeof(struct proc_dir_entry) >= SIZEOF_PDE);
+ }
+ 
+-void proc_prune_siblings_dcache(struct hlist_head *inodes, spinlock_t *lock)
++void proc_invalidate_siblings_dcache(struct hlist_head *inodes, spinlock_t *lock)
+ {
  	struct inode *inode;
  	struct proc_inode *ei;
- 	struct hlist_node *node;
--	struct super_block *sb;
-+	struct super_block *old_sb = NULL;
- 
- 	rcu_read_lock();
- 	for (;;) {
-+		struct super_block *sb;
- 		node = hlist_first_rcu(inodes);
- 		if (!node)
- 			break;
-@@ -122,23 +123,28 @@ void proc_prune_siblings_dcache(struct hlist_head *inodes, spinlock_t *lock)
- 
- 		inode = &ei->vfs_inode;
- 		sb = inode->i_sb;
--		if (!atomic_inc_not_zero(&sb->s_active))
-+		if ((sb != old_sb) && !atomic_inc_not_zero(&sb->s_active))
- 			continue;
- 		inode = igrab(inode);
- 		rcu_read_unlock();
-+		if (sb != old_sb) {
-+			if (old_sb)
-+				deactivate_super(old_sb);
-+			old_sb = sb;
-+		}
- 		if (unlikely(!inode)) {
--			deactivate_super(sb);
- 			rcu_read_lock();
+@@ -137,7 +137,19 @@ void proc_prune_siblings_dcache(struct hlist_head *inodes, spinlock_t *lock)
  			continue;
  		}
  
- 		d_prune_aliases(inode);
+-		d_prune_aliases(inode);
++		if (S_ISDIR(inode->i_mode)) {
++			struct dentry *dir = d_find_any_alias(inode);
++			if (dir) {
++				d_invalidate(dir);
++				dput(dir);
++			}
++		} else {
++			struct dentry *dentry;
++			while ((dentry = d_find_alias(inode))) {
++				d_invalidate(dentry);
++				dput(dentry);
++			}
++		}
  		iput(inode);
--		deactivate_super(sb);
  
  		rcu_read_lock();
- 	}
- 	rcu_read_unlock();
-+	if (old_sb)
-+		deactivate_super(old_sb);
+diff --git a/fs/proc/internal.h b/fs/proc/internal.h
+index ba9a991824a5..fd470172675f 100644
+--- a/fs/proc/internal.h
++++ b/fs/proc/internal.h
+@@ -210,7 +210,7 @@ extern const struct inode_operations proc_pid_link_inode_operations;
+ extern const struct super_operations proc_sops;
+ 
+ void proc_init_kmemcache(void);
+-void proc_prune_siblings_dcache(struct hlist_head *inodes, spinlock_t *lock);
++void proc_invalidate_siblings_dcache(struct hlist_head *inodes, spinlock_t *lock);
+ void set_proc_pid_nlink(void);
+ extern struct inode *proc_get_inode(struct super_block *, struct proc_dir_entry *);
+ extern void proc_entry_rundown(struct proc_dir_entry *);
+diff --git a/fs/proc/proc_sysctl.c b/fs/proc/proc_sysctl.c
+index 5da9d7f7ae34..b6f5d459b087 100644
+--- a/fs/proc/proc_sysctl.c
++++ b/fs/proc/proc_sysctl.c
+@@ -267,9 +267,9 @@ static void unuse_table(struct ctl_table_header *p)
+ 			complete(p->unregistering);
  }
  
- static int proc_show_options(struct seq_file *seq, struct dentry *root)
+-static void proc_sys_prune_dcache(struct ctl_table_header *head)
++static void proc_sys_invalidate_dcache(struct ctl_table_header *head)
+ {
+-	proc_prune_siblings_dcache(&head->inodes, &sysctl_lock);
++	proc_invalidate_siblings_dcache(&head->inodes, &sysctl_lock);
+ }
+ 
+ /* called under sysctl_lock, will reacquire if has to wait */
+@@ -291,10 +291,10 @@ static void start_unregistering(struct ctl_table_header *p)
+ 		spin_unlock(&sysctl_lock);
+ 	}
+ 	/*
+-	 * Prune dentries for unregistered sysctls: namespaced sysctls
++	 * Invalidate dentries for unregistered sysctls: namespaced sysctls
+ 	 * can have duplicate names and contaminate dcache very badly.
+ 	 */
+-	proc_sys_prune_dcache(p);
++	proc_sys_invalidate_dcache(p);
+ 	/*
+ 	 * do not remove from the list until nobody holds it; walking the
+ 	 * list in do_sysctl() relies on that.
 -- 
 2.25.0
 
