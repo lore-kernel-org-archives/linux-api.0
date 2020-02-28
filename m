@@ -6,28 +6,28 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AD166C3F2CD
-	for <linux-api@archiver.kernel.org>; Fri, 28 Feb 2020 20:20:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DA8FDC3F2CD
+	for <linux-api@archiver.kernel.org>; Fri, 28 Feb 2020 20:21:32 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 873B420637
-	for <linux-api@archiver.kernel.org>; Fri, 28 Feb 2020 20:20:56 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B10AF246A2
+	for <linux-api@archiver.kernel.org>; Fri, 28 Feb 2020 20:21:32 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726974AbgB1UU4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 28 Feb 2020 15:20:56 -0500
-Received: from out02.mta.xmission.com ([166.70.13.232]:58806 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725900AbgB1UU4 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 28 Feb 2020 15:20:56 -0500
-Received: from in02.mta.xmission.com ([166.70.13.52])
-        by out02.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        id S1725805AbgB1UVc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 28 Feb 2020 15:21:32 -0500
+Received: from out01.mta.xmission.com ([166.70.13.231]:48570 "EHLO
+        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725900AbgB1UVc (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 28 Feb 2020 15:21:32 -0500
+Received: from in01.mta.xmission.com ([166.70.13.51])
+        by out01.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.90_1)
         (envelope-from <ebiederm@xmission.com>)
-        id 1j7m7y-0006J6-Sk; Fri, 28 Feb 2020 13:20:54 -0700
+        id 1j7m8Y-0008CC-TQ; Fri, 28 Feb 2020 13:21:30 -0700
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
-        by in02.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
+        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
         (Exim 4.87)
         (envelope-from <ebiederm@xmission.com>)
-        id 1j7m7x-0002pK-QT; Fri, 28 Feb 2020 13:20:54 -0700
+        id 1j7m8X-0002B5-4f; Fri, 28 Feb 2020 13:21:30 -0700
 From:   ebiederm@xmission.com (Eric W. Biederman)
 To:     <linux-kernel@vger.kernel.org>
 Cc:     Al Viro <viro@zeniv.linux.org.uk>,
@@ -72,109 +72,186 @@ References: <20200210150519.538333-8-gladkov.alexey@gmail.com>
         <871rqpaswu.fsf_-_@x220.int.ebiederm.org>
         <871rqk2brn.fsf_-_@x220.int.ebiederm.org>
         <878skmsbyy.fsf_-_@x220.int.ebiederm.org>
-Date:   Fri, 28 Feb 2020 14:18:43 -0600
+Date:   Fri, 28 Feb 2020 14:19:22 -0600
 In-Reply-To: <878skmsbyy.fsf_-_@x220.int.ebiederm.org> (Eric W. Biederman's
         message of "Fri, 28 Feb 2020 14:17:41 -0600")
-Message-ID: <87wo86qxcs.fsf_-_@x220.int.ebiederm.org>
+Message-ID: <87r1yeqxbp.fsf_-_@x220.int.ebiederm.org>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
-X-XM-SPF: eid=1j7m7x-0002pK-QT;;;mid=<87wo86qxcs.fsf_-_@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX19/GoFUi05+QdGnxptjvdL+9xjBop5u87I=
+X-XM-SPF: eid=1j7m8X-0002B5-4f;;;mid=<87r1yeqxbp.fsf_-_@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX19VfyN/lsDbEeYKOAeN0gaGhdR50pzHuEY=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: [PATCH 2/3] uml: Create a private mount of proc for mconsole
+Subject: [PATCH 3/3] proc: Remove the now unnecessary internal mount of proc
 X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
+X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
 
-The mconsole code only ever accesses proc for the initial pid
-namespace.  Instead of depending upon the proc_mnt which is
-for proc_flush_task have uml create it's own mount of proc
-instead.
+There remains no more code in the kernel using pids_ns->proc_mnt,
+therefore remove it from the kernel.
 
-This allows proc_flush_task to evolve and remove the
-need for having a proc_mnt to do it's job.
+The big benefit of this change is that one of the most error prone and
+tricky parts of the pid namespace implementation, maintaining kernel
+mounts of proc is removed.
 
-Cc: Jeff Dike <jdike@addtoit.com>
-Cc: Richard Weinberger <richard@nod.at>
-Cc: Anton Ivanov <anton.ivanov@cambridgegreys.com>
-Signed-off-by: Eric W. Biederman <ebiederm@xmission.com>
+In addition removing the unnecessary complexity of the kernel mount
+fixes a regression that caused the proc mount options to be ignored.
+Now that the initial mount of proc comes from userspace, those mount
+options are again honored.  This fixes Android's usage of the proc
+hidepid option.
+
+Reported-by: Alistair Strachan <astrachan@google.com>
+Fixes: e94591d0d90c ("proc: Convert proc_mount to use mount_ns.")
+Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- arch/um/drivers/mconsole_kern.c | 28 +++++++++++++++++++++++++++-
- 1 file changed, 27 insertions(+), 1 deletion(-)
+ fs/proc/root.c                | 36 -----------------------------------
+ include/linux/pid_namespace.h |  2 --
+ include/linux/proc_ns.h       |  5 -----
+ kernel/pid.c                  |  8 --------
+ kernel/pid_namespace.c        |  7 -------
+ 5 files changed, 58 deletions(-)
 
-diff --git a/arch/um/drivers/mconsole_kern.c b/arch/um/drivers/mconsole_kern.c
-index e8f5c81c2c6c..30575bd92975 100644
---- a/arch/um/drivers/mconsole_kern.c
-+++ b/arch/um/drivers/mconsole_kern.c
-@@ -36,6 +36,8 @@
- #include "mconsole_kern.h"
- #include <os.h>
+diff --git a/fs/proc/root.c b/fs/proc/root.c
+index 608233dfd29c..2633f10446c3 100644
+--- a/fs/proc/root.c
++++ b/fs/proc/root.c
+@@ -292,39 +292,3 @@ struct proc_dir_entry proc_root = {
+ 	.subdir		= RB_ROOT,
+ 	.name		= "/proc",
+ };
+-
+-int pid_ns_prepare_proc(struct pid_namespace *ns)
+-{
+-	struct proc_fs_context *ctx;
+-	struct fs_context *fc;
+-	struct vfsmount *mnt;
+-
+-	fc = fs_context_for_mount(&proc_fs_type, SB_KERNMOUNT);
+-	if (IS_ERR(fc))
+-		return PTR_ERR(fc);
+-
+-	if (fc->user_ns != ns->user_ns) {
+-		put_user_ns(fc->user_ns);
+-		fc->user_ns = get_user_ns(ns->user_ns);
+-	}
+-
+-	ctx = fc->fs_private;
+-	if (ctx->pid_ns != ns) {
+-		put_pid_ns(ctx->pid_ns);
+-		get_pid_ns(ns);
+-		ctx->pid_ns = ns;
+-	}
+-
+-	mnt = fc_mount(fc);
+-	put_fs_context(fc);
+-	if (IS_ERR(mnt))
+-		return PTR_ERR(mnt);
+-
+-	ns->proc_mnt = mnt;
+-	return 0;
+-}
+-
+-void pid_ns_release_proc(struct pid_namespace *ns)
+-{
+-	kern_unmount(ns->proc_mnt);
+-}
+diff --git a/include/linux/pid_namespace.h b/include/linux/pid_namespace.h
+index 2ed6af88794b..4956e362e55e 100644
+--- a/include/linux/pid_namespace.h
++++ b/include/linux/pid_namespace.h
+@@ -33,7 +33,6 @@ struct pid_namespace {
+ 	unsigned int level;
+ 	struct pid_namespace *parent;
+ #ifdef CONFIG_PROC_FS
+-	struct vfsmount *proc_mnt;
+ 	struct dentry *proc_self;
+ 	struct dentry *proc_thread_self;
+ #endif
+@@ -42,7 +41,6 @@ struct pid_namespace {
+ #endif
+ 	struct user_namespace *user_ns;
+ 	struct ucounts *ucounts;
+-	struct work_struct proc_work;
+ 	kgid_t pid_gid;
+ 	int hide_pid;
+ 	int reboot;	/* group exit code if this pidns was rebooted */
+diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
+index 4626b1ac3b6c..e1106a077c1a 100644
+--- a/include/linux/proc_ns.h
++++ b/include/linux/proc_ns.h
+@@ -50,16 +50,11 @@ enum {
  
-+static struct vfsmount *proc_mnt = NULL;
-+
- static int do_unlink_socket(struct notifier_block *notifier,
- 			    unsigned long what, void *data)
+ #ifdef CONFIG_PROC_FS
+ 
+-extern int pid_ns_prepare_proc(struct pid_namespace *ns);
+-extern void pid_ns_release_proc(struct pid_namespace *ns);
+ extern int proc_alloc_inum(unsigned int *pino);
+ extern void proc_free_inum(unsigned int inum);
+ 
+ #else /* CONFIG_PROC_FS */
+ 
+-static inline int pid_ns_prepare_proc(struct pid_namespace *ns) { return 0; }
+-static inline void pid_ns_release_proc(struct pid_namespace *ns) {}
+-
+ static inline int proc_alloc_inum(unsigned int *inum)
  {
-@@ -123,7 +125,7 @@ void mconsole_log(struct mc_request *req)
+ 	*inum = 1;
+diff --git a/kernel/pid.c b/kernel/pid.c
+index ca08d6a3aa77..60820e72634c 100644
+--- a/kernel/pid.c
++++ b/kernel/pid.c
+@@ -144,9 +144,6 @@ void free_pid(struct pid *pid)
+ 			/* Handle a fork failure of the first process */
+ 			WARN_ON(ns->child_reaper);
+ 			ns->pid_allocated = 0;
+-			/* fall through */
+-		case 0:
+-			schedule_work(&ns->proc_work);
+ 			break;
+ 		}
  
- void mconsole_proc(struct mc_request *req)
- {
--	struct vfsmount *mnt = init_pid_ns.proc_mnt;
-+	struct vfsmount *mnt = proc_mnt;
- 	char *buf;
- 	int len;
- 	struct file *file;
-@@ -134,6 +136,10 @@ void mconsole_proc(struct mc_request *req)
- 	ptr += strlen("proc");
- 	ptr = skip_spaces(ptr);
+@@ -247,11 +244,6 @@ struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
+ 		tmp = tmp->parent;
+ 	}
  
-+	if (!mnt) {
-+		mconsole_reply(req, "Proc not available", 1, 0);
-+		goto out;
-+	}
- 	file = file_open_root(mnt->mnt_root, mnt, ptr, O_RDONLY, 0);
- 	if (IS_ERR(file)) {
- 		mconsole_reply(req, "Failed to open file", 1, 0);
-@@ -683,6 +689,24 @@ void mconsole_stack(struct mc_request *req)
- 	with_console(req, stack_proc, to);
+-	if (unlikely(is_child_reaper(pid))) {
+-		if (pid_ns_prepare_proc(ns))
+-			goto out_free;
+-	}
+-
+ 	get_pid_ns(ns);
+ 	refcount_set(&pid->count, 1);
+ 	for (type = 0; type < PIDTYPE_MAX; ++type)
+diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
+index d40017e79ebe..318fcc6ba301 100644
+--- a/kernel/pid_namespace.c
++++ b/kernel/pid_namespace.c
+@@ -57,12 +57,6 @@ static struct kmem_cache *create_pid_cachep(unsigned int level)
+ 	return READ_ONCE(*pkc);
  }
  
-+static int __init mount_proc(void)
-+{
-+	struct file_system_type *proc_fs_type;
-+	struct vfsmount *mnt;
-+
-+	proc_fs_type = get_fs_type("proc");
-+	if (!proc_fs_type)
-+		return -ENODEV;
-+
-+	mnt = kern_mount(proc_fs_type);
-+	put_filesystem(proc_fs_type);
-+	if (IS_ERR(mnt))
-+		return PTR_ERR(mnt);
-+
-+	proc_mnt = mnt;
-+	return 0;
-+}
-+
- /*
-  * Changed by mconsole_setup, which is __setup, and called before SMP is
-  * active.
-@@ -696,6 +720,8 @@ static int __init mconsole_init(void)
- 	int err;
- 	char file[UNIX_PATH_MAX];
+-static void proc_cleanup_work(struct work_struct *work)
+-{
+-	struct pid_namespace *ns = container_of(work, struct pid_namespace, proc_work);
+-	pid_ns_release_proc(ns);
+-}
+-
+ static struct ucounts *inc_pid_namespaces(struct user_namespace *ns)
+ {
+ 	return inc_ucount(ns, current_euid(), UCOUNT_PID_NAMESPACES);
+@@ -114,7 +108,6 @@ static struct pid_namespace *create_pid_namespace(struct user_namespace *user_ns
+ 	ns->user_ns = get_user_ns(user_ns);
+ 	ns->ucounts = ucounts;
+ 	ns->pid_allocated = PIDNS_ADDING;
+-	INIT_WORK(&ns->proc_work, proc_cleanup_work);
  
-+	mount_proc();
-+
- 	if (umid_file_name("mconsole", file, sizeof(file)))
- 		return -1;
- 	snprintf(mconsole_socket_name, sizeof(file), "%s", file);
+ 	return ns;
+ 
 -- 
 2.25.0
 
