@@ -2,32 +2,32 @@ Return-Path: <SRS0=XSN6=4Q=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EFB82C3F2D2
-	for <linux-api@archiver.kernel.org>; Fri, 28 Feb 2020 20:19:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 35346C3F2D2
+	for <linux-api@archiver.kernel.org>; Fri, 28 Feb 2020 20:20:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id CC9C524677
-	for <linux-api@archiver.kernel.org>; Fri, 28 Feb 2020 20:19:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 14A19246A8
+	for <linux-api@archiver.kernel.org>; Fri, 28 Feb 2020 20:20:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1725900AbgB1UTz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 28 Feb 2020 15:19:55 -0500
-Received: from out02.mta.xmission.com ([166.70.13.232]:58168 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725805AbgB1UTz (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 28 Feb 2020 15:19:55 -0500
+        id S1727005AbgB1UUX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 28 Feb 2020 15:20:23 -0500
+Received: from out03.mta.xmission.com ([166.70.13.233]:42060 "EHLO
+        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726400AbgB1UUX (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 28 Feb 2020 15:20:23 -0500
 Received: from in02.mta.xmission.com ([166.70.13.52])
-        by out02.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        by out03.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.90_1)
         (envelope-from <ebiederm@xmission.com>)
-        id 1j7m6v-00068n-3K; Fri, 28 Feb 2020 13:19:49 -0700
+        id 1j7m7S-0001W3-Bn; Fri, 28 Feb 2020 13:20:22 -0700
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
         by in02.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
         (Exim 4.87)
         (envelope-from <ebiederm@xmission.com>)
-        id 1j7m6u-0002fJ-0Y; Fri, 28 Feb 2020 13:19:48 -0700
+        id 1j7m7R-0002lL-EH; Fri, 28 Feb 2020 13:20:22 -0700
 From:   ebiederm@xmission.com (Eric W. Biederman)
 To:     <linux-kernel@vger.kernel.org>
 Cc:     Al Viro <viro@zeniv.linux.org.uk>,
@@ -71,18 +71,19 @@ References: <20200210150519.538333-8-gladkov.alexey@gmail.com>
         <87pnejf6fz.fsf@x220.int.ebiederm.org>
         <871rqpaswu.fsf_-_@x220.int.ebiederm.org>
         <871rqk2brn.fsf_-_@x220.int.ebiederm.org>
-Date:   Fri, 28 Feb 2020 14:17:41 -0600
-In-Reply-To: <871rqk2brn.fsf_-_@x220.int.ebiederm.org> (Eric W. Biederman's
-        message of "Mon, 24 Feb 2020 10:25:16 -0600")
-Message-ID: <878skmsbyy.fsf_-_@x220.int.ebiederm.org>
+        <878skmsbyy.fsf_-_@x220.int.ebiederm.org>
+Date:   Fri, 28 Feb 2020 14:18:14 -0600
+In-Reply-To: <878skmsbyy.fsf_-_@x220.int.ebiederm.org> (Eric W. Biederman's
+        message of "Fri, 28 Feb 2020 14:17:41 -0600")
+Message-ID: <8736ausby1.fsf_-_@x220.int.ebiederm.org>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
-X-XM-SPF: eid=1j7m6u-0002fJ-0Y;;;mid=<878skmsbyy.fsf_-_@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX184o7/7/rMRoEK9hF/5tZ1Qs2V3r2fvMT0=
+X-XM-SPF: eid=1j7m7R-0002lL-EH;;;mid=<8736ausby1.fsf_-_@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1+WuHbOA66kXQc+ge/fBSMlwuwEjasAimw=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: [PATCH 0/3] proc: Actually honor the mount options
+Subject: [PATCH 1/3] uml: Don't consult current to find the proc_mnt in mconsole_proc
 X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
 X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Sender: linux-api-owner@vger.kernel.org
@@ -91,50 +92,38 @@ List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
 
-Proc mount option handling is broken, and it has been since I
-accidentally broke it in the middle 2006.
+Inspection of the control flow reveals that mconsole_proc is either
+called from mconsole_stop called from mc_work_proc or from
+mc_work_proc directly.  The function mc_work_proc is dispatched to a
+kernel thread with schedule_work.
 
-The problem is that because we perform an internal mount of proc
-before user space mounts proc all of the mount options that user
-specifies when mounting proc are ignored.
+All of the threads that run dispatched by schedule_work are in the
+init pid namespace.
 
-You can set those mount options with a remount but that is rather
-surprising.
+So make the code clearer and by using init_pid_ns instead of
+task_active_pid_ns(current).
 
-This most directly affects android which is using hidpid=2 by default.
+Cc: Jeff Dike <jdike@addtoit.com>
+Cc: Richard Weinberger <richard@nod.at>
+Cc: Anton Ivanov <anton.ivanov@cambridgegreys.com>
+Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+---
+ arch/um/drivers/mconsole_kern.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Now that the sysctl system call support has been removed, and we have
-settled on way of flushing proc dentries when a process exits without
-using proc_mnt, there is an simple and easy fix.
+diff --git a/arch/um/drivers/mconsole_kern.c b/arch/um/drivers/mconsole_kern.c
+index b80a1d616e4e..e8f5c81c2c6c 100644
+--- a/arch/um/drivers/mconsole_kern.c
++++ b/arch/um/drivers/mconsole_kern.c
+@@ -123,7 +123,7 @@ void mconsole_log(struct mc_request *req)
+ 
+ void mconsole_proc(struct mc_request *req)
+ {
+-	struct vfsmount *mnt = task_active_pid_ns(current)->proc_mnt;
++	struct vfsmount *mnt = init_pid_ns.proc_mnt;
+ 	char *buf;
+ 	int len;
+ 	struct file *file;
+-- 
+2.25.0
 
-a) Give UML mconsole it's own private mount of proc to use.
-b) Stop creating the internal mount of proc
-
-We still need Alexey Gladkov's full patch to get proc mount options to
-work inside of UML, and to be generally useful.  This set of changes
-is just enough to get them working as well as they have in the past.
-
-If anyone sees any problem with this code please let me know.
-
-Otherwise I plan to merge these set of fixes through my tree.
-
-Link: https://lore.kernel.org/lkml/87r21tuulj.fsf@x220.int.ebiederm.org/
-Link: https://lore.kernel.org/lkml/871rqk2brn.fsf_-_@x220.int.ebiederm.org/
-Link: https://lore.kernel.org/lkml/20200210150519.538333-1-gladkov.alexey@gmail.com/
-Link: https://lore.kernel.org/lkml/20180611195744.154962-1-astrachan@google.com/
-Fixes: e94591d0d90c ("proc: Convert proc_mount to use mount_ns.")
-
-Eric W. Biederman (3):
-      uml: Don't consult current to find the proc_mnt in mconsole_proc
-      uml: Create a private mount of proc for mconsole
-      proc: Remove the now unnecessary internal mount of proc
-
- arch/um/drivers/mconsole_kern.c | 28 +++++++++++++++++++++++++++-
- fs/proc/root.c                  | 36 ------------------------------------
- include/linux/pid_namespace.h   |  2 --
- include/linux/proc_ns.h         |  5 -----
- kernel/pid.c                    |  8 --------
- kernel/pid_namespace.c          |  7 -------
- 6 files changed, 27 insertions(+), 59 deletions(-)
-
-Eric
