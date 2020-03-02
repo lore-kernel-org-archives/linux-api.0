@@ -2,73 +2,80 @@ Return-Path: <SRS0=cjBL=4T=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-0.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7ABD8C3F2D7
-	for <linux-api@archiver.kernel.org>; Mon,  2 Mar 2020 12:55:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C1F4DC3F2D1
+	for <linux-api@archiver.kernel.org>; Mon,  2 Mar 2020 14:27:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 4D3DE2187F
-	for <linux-api@archiver.kernel.org>; Mon,  2 Mar 2020 12:55:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8766F214DB
+	for <linux-api@archiver.kernel.org>; Mon,  2 Mar 2020 14:27:15 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QMDe9GMu"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727784AbgCBMze (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 2 Mar 2020 07:55:34 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:56364 "EHLO
-        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727173AbgCBMze (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 2 Mar 2020 07:55:34 -0500
-Received: from ip5f5bf7ec.dynamic.kabel-deutschland.de ([95.91.247.236] helo=wittgenstein)
-        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.86_2)
-        (envelope-from <christian.brauner@ubuntu.com>)
-        id 1j8kbc-0005MT-1m; Mon, 02 Mar 2020 12:55:32 +0000
-Date:   Mon, 2 Mar 2020 13:55:31 +0100
-From:   Christian Brauner <christian.brauner@ubuntu.com>
-To:     Florian Weimer <fweimer@redhat.com>
-Cc:     David Howells <dhowells@redhat.com>, linux-api@vger.kernel.org,
-        viro@zeniv.linux.org.uk, metze@samba.org,
-        torvalds@linux-foundation.org, cyphar@cyphar.com,
+        id S1727053AbgCBO1P (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 2 Mar 2020 09:27:15 -0500
+Received: from us-smtp-2.mimecast.com ([205.139.110.61]:23767 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1727032AbgCBO1P (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 2 Mar 2020 09:27:15 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1583159233;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=3+UBgX7eoIkK/t5w+2bDxE2KMKopb4wrJcspZOaATZ0=;
+        b=QMDe9GMumFcSmscgXll4YP/p48LlYMrLgrVZHrlQoSqyE1u5oQzpgDOXP647yyAHT/1OFH
+        1dCVzLvSYIhXbUn9Am7ULnXGPaRkAEOWbbdybwhRTHOaCiX68Y/NTLCG/wSYBtqY0MJ501
+        ow7gHL6F1LE/GWm2fRHMxhghhECRU9c=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-72-_RitG97wNkGAfE8aopeJaA-1; Mon, 02 Mar 2020 09:27:12 -0500
+X-MC-Unique: _RitG97wNkGAfE8aopeJaA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DDC02107ACCC;
+        Mon,  2 Mar 2020 14:27:10 +0000 (UTC)
+Received: from warthog.procyon.org.uk (ovpn-120-182.rdu2.redhat.com [10.10.120.182])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id D890C5D9C9;
+        Mon,  2 Mar 2020 14:27:08 +0000 (UTC)
+Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
+        Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
+        Kingdom.
+        Registered in England and Wales under Company Registration No. 3798903
+From:   David Howells <dhowells@redhat.com>
+In-Reply-To: <20200302115239.pcxvej3szmricxzu@wittgenstein>
+References: <20200302115239.pcxvej3szmricxzu@wittgenstein> <96563.1582901612@warthog.procyon.org.uk> <20200228152427.rv3crd7akwdhta2r@wittgenstein> <87h7z7ngd4.fsf@oldenburg2.str.redhat.com>
+To:     Christian Brauner <christian.brauner@ubuntu.com>
+Cc:     dhowells@redhat.com, Florian Weimer <fweimer@redhat.com>,
+        linux-api@vger.kernel.org, viro@zeniv.linux.org.uk,
+        metze@samba.org, torvalds@linux-foundation.org, cyphar@cyphar.com,
         linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 Subject: Re: Have RESOLVE_* flags superseded AT_* flags for new syscalls?
-Message-ID: <20200302125531.7z2viveb3zxhqkuj@wittgenstein>
-References: <96563.1582901612@warthog.procyon.org.uk>
- <20200228152427.rv3crd7akwdhta2r@wittgenstein>
- <87h7z7ngd4.fsf@oldenburg2.str.redhat.com>
- <20200302115239.pcxvej3szmricxzu@wittgenstein>
- <8736arnel9.fsf@oldenburg2.str.redhat.com>
- <20200302121959.it3iophjavbhtoyp@wittgenstein>
- <20200302123510.bm3a2zssohwvkaa4@wittgenstein>
- <87y2sjlygl.fsf@oldenburg2.str.redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <87y2sjlygl.fsf@oldenburg2.str.redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-ID: <848281.1583159228.1@warthog.procyon.org.uk>
+Date:   Mon, 02 Mar 2020 14:27:08 +0000
+Message-ID: <848282.1583159228@warthog.procyon.org.uk>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Mar 02, 2020 at 01:42:50PM +0100, Florian Weimer wrote:
-> * Christian Brauner:
-> 
-> > One difference to openat() is that openat2() doesn't silently ignore
-> > unknown flags. But I'm not sure that would matter for iplementing
-> > openat() via openat2() since there are no flags that openat() knows about
-> > that openat2() doesn't know about afaict. So the only risks would be
-> > programs that accidently have a bit set that isn't used yet.
-> 
-> Will there be any new flags for openat in the future?  If not, we can
-> just use a constant mask in an openat2-based implementation of openat.
+Christian Brauner <christian.brauner@ubuntu.com> wrote:
 
-From past experiences with other syscalls I would expect that any new
-features would only be available through openat2().
-The way I see it in general is that a revised version of a syscall
-basically deprecates the old syscall _wrt to new features_, i.e. new
-features will only be available through the revised version unless there
-are very strong reasons to also allow it in the old version (security
-bug or whatever).
-(But I don't want to be presumptuous here and pretend I can make any
-definiteve statement. Ultimately it's up to the community, I guess. :))
+> > AT_SYMLINK_NOFOLLOW only applies to the last pathname component anyway,
+> > so it's relatively little protection.
+> 
+> So this is partially why I think it's at least worth considerings: the
+> new RESOLVE_NO_SYMLINKS flag does block all symlink resolution, not just
+> for the last component in contrast to AT_SYMLINK_NOFOLLOW. This is
+> 278121417a72d87fb29dd8c48801f80821e8f75a
 
-Christian
+That sounds like a potentially significant UAPI change.  What will that break?
+
+David
+
