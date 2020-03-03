@@ -2,125 +2,195 @@ Return-Path: <SRS0=K6MG=4U=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-2.3 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0610DC3F2D9
-	for <linux-api@archiver.kernel.org>; Tue,  3 Mar 2020 16:51:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 83571C3F2C6
+	for <linux-api@archiver.kernel.org>; Tue,  3 Mar 2020 16:55:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D6EDA217F4
-	for <linux-api@archiver.kernel.org>; Tue,  3 Mar 2020 16:51:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 48C9E21775
+	for <linux-api@archiver.kernel.org>; Tue,  3 Mar 2020 16:55:24 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel-dk.20150623.gappssmtp.com header.i=@kernel-dk.20150623.gappssmtp.com header.b="SHP4Uw6H"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730442AbgCCQvV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 3 Mar 2020 11:51:21 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:49178 "EHLO
-        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730115AbgCCQvU (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 3 Mar 2020 11:51:20 -0500
-Received: from ip5f5bf7ec.dynamic.kabel-deutschland.de ([95.91.247.236] helo=wittgenstein)
-        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.86_2)
-        (envelope-from <christian.brauner@ubuntu.com>)
-        id 1j9Akd-0004ZP-Kd; Tue, 03 Mar 2020 16:50:35 +0000
-Date:   Tue, 3 Mar 2020 17:50:34 +0100
-From:   Christian Brauner <christian.brauner@ubuntu.com>
-To:     "Eric W. Biederman" <ebiederm@xmission.com>
-Cc:     Bernd Edlinger <bernd.edlinger@hotmail.de>,
-        Kees Cook <keescook@chromium.org>,
-        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Alexey Dobriyan <adobriyan@gmail.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Oleg Nesterov <oleg@redhat.com>,
-        Frederic Weisbecker <frederic@kernel.org>,
-        Andrei Vagin <avagin@gmail.com>,
-        Ingo Molnar <mingo@kernel.org>,
-        "Peter Zijlstra (Intel)" <peterz@infradead.org>,
-        Yuyang Du <duyuyang@gmail.com>,
-        David Hildenbrand <david@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Anshuman Khandual <anshuman.khandual@arm.com>,
-        David Howells <dhowells@redhat.com>,
-        James Morris <jamorris@linux.microsoft.com>,
+        id S1729356AbgCCQzX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 3 Mar 2020 11:55:23 -0500
+Received: from mail-io1-f66.google.com ([209.85.166.66]:40339 "EHLO
+        mail-io1-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727064AbgCCQzX (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 3 Mar 2020 11:55:23 -0500
+Received: by mail-io1-f66.google.com with SMTP id m22so4336102ioj.7
+        for <linux-api@vger.kernel.org>; Tue, 03 Mar 2020 08:55:23 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
+        h=subject:to:cc:references:from:message-id:date:user-agent
+         :mime-version:in-reply-to:content-language:content-transfer-encoding;
+        bh=8bZht07bPqvyVs51MmKlUDCBipIAwVU9OTwKqsIEvs8=;
+        b=SHP4Uw6HvUlPaUs9IYB16AOCis0EH3YzejdOEBRWeds0i79JF0JfXrI0pVYQsMwrDb
+         WB+DYvR5cNaV8QmCLEUKpzGPNgdMardTT5O6bIFEIZQCxYHi0w0eiZe7xJ5js40tFMo/
+         VDIKRVWKxpVYJPC0cQr15xJYMpuBbyGccD/rBHyvX5L03X0TdVPnXRkifL4nvQARjTzA
+         6HBR7dz5832egFWxtqG2opZfTX93h0QynLjTC1oqlHHXYX5/Bx7yRcQPMnTLHW37El18
+         GIrCKTVdpnpJ7IAfqLopMlvclCzdIoRAG5Nq6iBhma57TC53If7Jkf5KoAUqYbIn6TSG
+         Qj3w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
+         :user-agent:mime-version:in-reply-to:content-language
+         :content-transfer-encoding;
+        bh=8bZht07bPqvyVs51MmKlUDCBipIAwVU9OTwKqsIEvs8=;
+        b=JrH2ZCZ0kMQJzBNalSfp0KhCsRCbZZO6mHcOvwocaUEwx8QG0zj8aRHgSiExzE0O3T
+         5O9uqrGvd+Cd9MVP/rcXgyOXbcBfb3gfIknGaUQTcjjVLk1Fm0PqTXSzvk1wsOk5YAkF
+         7TJexzfGe51Wc3MHkwL1Dp3lxzUwM62TIm3vkN54MX4rs8SQnypG6P7k9E2m6k9tXmIV
+         25iTLGZozgolF43RdjYirRnNokXDVcbnsi+E8/0r7coneb24CvarSUqSNI0O6cO4DSru
+         xnEeO2VHPNxfqriHCO43YWgeL3mW5+y5IW8C/PsD4P2TCR1GJpvcDk44k4VbQoS211Gv
+         4xHQ==
+X-Gm-Message-State: ANhLgQ0nUCrri47PE24ZuI2kksGulDM97ANqj7zeVqrG/8fDbRF9D1Bx
+        xPr/dStNuigZB0O4Itv/0Wvv7w==
+X-Google-Smtp-Source: ADFU+vu3gnbtn1lj+jlLJO4BOpYV3sXet/yFpoqsVX1PFu20YDo94CkBQTfjpkni8ZEFJzh/CMzehg==
+X-Received: by 2002:a6b:8b8c:: with SMTP id n134mr2442924iod.58.1583254522700;
+        Tue, 03 Mar 2020 08:55:22 -0800 (PST)
+Received: from [192.168.1.159] ([65.144.74.34])
+        by smtp.gmail.com with ESMTPSA id u80sm7993352ili.77.2020.03.03.08.55.21
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 03 Mar 2020 08:55:22 -0800 (PST)
+Subject: Re: [PATCH 00/17] VFS: Filesystem information and notifications [ver
+ #17]
+To:     Jeff Layton <jlayton@kernel.org>,
         Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Shakeel Butt <shakeelb@google.com>,
-        Jason Gunthorpe <jgg@ziepe.ca>,
-        Christian Kellner <christian@kellner.me>,
-        Andrea Arcangeli <aarcange@redhat.com>,
-        Aleksa Sarai <cyphar@cyphar.com>,
-        "Dmitry V. Levin" <ldv@altlinux.org>,
-        "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-        "linux-mm@kvack.org" <linux-mm@kvack.org>,
-        "stable@vger.kernel.org" <stable@vger.kernel.org>,
-        linux-api@vger.kernel.org
-Subject: Re: [PATCHv5] exec: Fix a deadlock in ptrace
-Message-ID: <20200303165034.5w76hbatbnr64pkd@wittgenstein>
-References: <87k142lpfz.fsf@x220.int.ebiederm.org>
- <AM6PR03MB51704206634C009500A8080DE4E70@AM6PR03MB5170.eurprd03.prod.outlook.com>
- <875zfmloir.fsf@x220.int.ebiederm.org>
- <AM6PR03MB51707ABF20B6CBBECC34865FE4E70@AM6PR03MB5170.eurprd03.prod.outlook.com>
- <87v9nmjulm.fsf@x220.int.ebiederm.org>
- <AM6PR03MB5170B976E6387FDDAD59A118E4E70@AM6PR03MB5170.eurprd03.prod.outlook.com>
- <202003021531.C77EF10@keescook>
- <20200303085802.eqn6jbhwxtmz4j2x@wittgenstein>
- <AM6PR03MB5170285B336790D3450E2644E4E40@AM6PR03MB5170.eurprd03.prod.outlook.com>
- <87v9nlii0b.fsf@x220.int.ebiederm.org>
+        Jann Horn <jannh@google.com>
+Cc:     Miklos Szeredi <miklos@szeredi.hu>, Karel Zak <kzak@redhat.com>,
+        David Howells <dhowells@redhat.com>,
+        Ian Kent <raven@themaw.net>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        James Bottomley <James.Bottomley@hansenpartnership.com>,
+        Steven Whitehouse <swhiteho@redhat.com>,
+        Miklos Szeredi <mszeredi@redhat.com>,
+        viro <viro@zeniv.linux.org.uk>,
+        Christian Brauner <christian@brauner.io>,
+        "Darrick J. Wong" <darrick.wong@oracle.com>,
+        Linux API <linux-api@vger.kernel.org>,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        lkml <linux-kernel@vger.kernel.org>
+References: <CAJfpegtu6VqhPdcudu79TX3e=_NZaJ+Md3harBGV7Bg_-+fR8Q@mail.gmail.com>
+ <1509948.1583226773@warthog.procyon.org.uk>
+ <CAJfpegtOwyaWpNfjomRVOt8NKqT94O5n4-LOHTR7YZT9fadVHA@mail.gmail.com>
+ <20200303113814.rsqhljkch6tgorpu@ws.net.home>
+ <20200303130347.GA2302029@kroah.com> <20200303131434.GA2373427@kroah.com>
+ <CAJfpegt0aQVvoDeBXOu2xZh+atZQ+q5uQ_JRxe46E8cZ7sHRwg@mail.gmail.com>
+ <20200303134316.GA2509660@kroah.com> <20200303141030.GA2811@kroah.com>
+ <CAG48ez3Z2V8J7dpO6t8nw7O2cMJ6z8vwLZXLAoKGH3OnCb-7JQ@mail.gmail.com>
+ <20200303142407.GA47158@kroah.com>
+ <030888a2-db3e-919d-d8ef-79dcc10779f9@kernel.dk>
+ <acb1753c78a019fb0d54ba29077cef144047f70f.camel@kernel.org>
+From:   Jens Axboe <axboe@kernel.dk>
+Message-ID: <7a05adc8-1ca9-c900-7b24-305f1b3a9b86@kernel.dk>
+Date:   Tue, 3 Mar 2020 09:55:20 -0700
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.4.1
 MIME-Version: 1.0
+In-Reply-To: <acb1753c78a019fb0d54ba29077cef144047f70f.camel@kernel.org>
 Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <87v9nlii0b.fsf@x220.int.ebiederm.org>
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Mar 03, 2020 at 09:18:44AM -0600, Eric W. Biederman wrote:
-> Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
+On 3/3/20 9:51 AM, Jeff Layton wrote:
+> On Tue, 2020-03-03 at 08:44 -0700, Jens Axboe wrote:
+>> On 3/3/20 7:24 AM, Greg Kroah-Hartman wrote:
+>>> On Tue, Mar 03, 2020 at 03:13:26PM +0100, Jann Horn wrote:
+>>>> On Tue, Mar 3, 2020 at 3:10 PM Greg Kroah-Hartman
+>>>> <gregkh@linuxfoundation.org> wrote:
+>>>>> On Tue, Mar 03, 2020 at 02:43:16PM +0100, Greg Kroah-Hartman wrote:
+>>>>>> On Tue, Mar 03, 2020 at 02:34:42PM +0100, Miklos Szeredi wrote:
+>>>>>>> On Tue, Mar 3, 2020 at 2:14 PM Greg Kroah-Hartman
+>>>>>>> <gregkh@linuxfoundation.org> wrote:
+>>>>>>>
+>>>>>>>>> Unlimited beers for a 21-line kernel patch?  Sign me up!
+>>>>>>>>>
+>>>>>>>>> Totally untested, barely compiled patch below.
+>>>>>>>>
+>>>>>>>> Ok, that didn't even build, let me try this for real now...
+>>>>>>>
+>>>>>>> Some comments on the interface:
+>>>>>>
+>>>>>> Ok, hey, let's do this proper :)
+>>>>>
+>>>>> Alright, how about this patch.
+>>>>>
+>>>>> Actually tested with some simple sysfs files.
+>>>>>
+>>>>> If people don't strongly object, I'll add "real" tests to it, hook it up
+>>>>> to all arches, write a manpage, and all the fun fluff a new syscall
+>>>>> deserves and submit it "for real".
+>>>>
+>>>> Just FYI, io_uring is moving towards the same kind of thing... IIRC
+>>>> you can already use it to batch a bunch of open() calls, then batch a
+>>>> bunch of read() calls on all the new fds and close them at the same
+>>>> time. And I think they're planning to add support for doing
+>>>> open()+read()+close() all in one go, too, except that it's a bit
+>>>> complicated because passing forward the file descriptor in a generic
+>>>> way is a bit complicated.
+>>>
+>>> It is complicated, I wouldn't recommend using io_ring for reading a
+>>> bunch of procfs or sysfs files, that feels like a ton of overkill with
+>>> too much setup/teardown to make it worth while.
+>>>
+>>> But maybe not, will have to watch and see how it goes.
+>>
+>> It really isn't, and I too thinks it makes more sense than having a
+>> system call just for the explicit purpose of open/read/close. As Jann
+>> said, you can't currently do a linked sequence of open/read/close,
+>> because the fd passing between them isn't done. But that will come in
+>> the future. If the use case is "a bunch of files", then you could
+>> trivially do "open bunch", "read bunch", "close bunch" in three separate
+>> steps.
+>>
+>> Curious what the use case is for this that warrants a special system
+>> call?
+>>
 > 
-> > This fixes a deadlock in the tracer when tracing a multi-threaded
-> > application that calls execve while more than one thread are running.
-> >
-> > I observed that when running strace on the gcc test suite, it always
-> > blocks after a while, when expect calls execve, because other threads
-> > have to be terminated.  They send ptrace events, but the strace is no
-> > longer able to respond, since it is blocked in vm_access.
-> >
-> > The deadlock is always happening when strace needs to access the
-> > tracees process mmap, while another thread in the tracee starts to
-> > execve a child process, but that cannot continue until the
-> > PTRACE_EVENT_EXIT is handled and the WIFEXITED event is received:
+> Agreed. I'd really rather see something more general-purpose than the
+> proposed readfile(). At least with NFS and SMB, you can compound
+> together fairly arbitrary sorts of operations, and it'd be nice to be
+> able to pattern calls into the kernel for those sorts of uses.
 > 
-> A couple of things.
+> So, NFSv4 has the concept of a current_stateid that is maintained by the
+> server. So basically you can do all this (e.g.) in a single compound:
 > 
-> Why do we think it is safe to change the behavior exposed to userspace?
-> Not the deadlock but all of the times the current code would not
-> deadlock?
+> open <some filehandle get a stateid>
+> write <using that stateid>
+> close <same stateid>
 > 
-> Especially given that this is a small window it might be hard for people
-> to track down and report so we need a strong argument that this won't
-> break existing userspace before we just change things.
+> It'd be nice to be able to do something similar with io_uring. Make it
+> so that when you do an open, you set the "current fd" inside the
+> kernel's context, and then be able to issue io_uring requests that
+> specify a magic "fd" value that use it.
 > 
-> Usually surveying all of the users of a system call that we can find
-> and checking to see if they might be affected by the change in behavior
-> is difficult enough that we usually opt for not being lazy and
-> preserving the behavior.
-> 
-> This patch is up to two changes in behavior now, that could potentially
-> affect a whole array of programs.  Adding linux-api so that this change
-> in behavior can be documented if/when this change goes through.
-> 
-> If you can split the documentation and test fixes out into separate
-> patches that would help reviewing this code, or please make it explicit
-> that the your are changing documentation about behavior that is changing
-> with this patch.
+> That would be a really useful pattern.
 
-Agreed. I think it'd be good to do it in three patches:
-1. unrelated documentation update
-2. fix + documentation changes specific to the fix
-3. test(s)
+For io_uring, you can link requests that you submit into a chain. Each
+link in the chain is done in sequence. Which means that you could do:
 
-Christian
+<open some file><read from that file><close that file>
+
+in a single sequence. The only thing that is missing right now is a way
+to have the return of that open propagated to the 'fd' of the read and
+close, and it's actually one of the topics to discuss at LSFMM next
+month.
+
+One approach would be to use BPF to handle this passing, another
+suggestion has been to have the read/close specify some magic 'fd' value
+that just means "inherit fd from result of previous". The latter sounds
+very close to the stateid you mention above, and the upside here is that
+it wouldn't explode the necessary toolchain to need to include BPF.
+
+In other words, this is really close to being reality and practically
+feasible.
+
+-- 
+Jens Axboe
+
