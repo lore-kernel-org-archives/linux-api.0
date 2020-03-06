@@ -6,130 +6,118 @@ X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1ED5CC10F25
-	for <linux-api@archiver.kernel.org>; Fri,  6 Mar 2020 16:58:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 39E75C10DCE
+	for <linux-api@archiver.kernel.org>; Fri,  6 Mar 2020 17:18:21 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 0249C208C3
-	for <linux-api@archiver.kernel.org>; Fri,  6 Mar 2020 16:58:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 108F72051A
+	for <linux-api@archiver.kernel.org>; Fri,  6 Mar 2020 17:18:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726314AbgCFQ57 convert rfc822-to-8bit (ORCPT
-        <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 6 Mar 2020 11:57:59 -0500
-Received: from eu-smtp-delivery-151.mimecast.com ([207.82.80.151]:24614 "EHLO
-        eu-smtp-delivery-151.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1726368AbgCFQ57 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 6 Mar 2020 11:57:59 -0500
-Received: from AcuMS.aculab.com (156.67.243.126 [156.67.243.126]) (Using
- TLS) by relay.mimecast.com with ESMTP id
- uk-mta-20-vOmmemdGMmSebKCtFim0sQ-1; Fri, 06 Mar 2020 16:57:55 +0000
-X-MC-Unique: vOmmemdGMmSebKCtFim0sQ-1
-Received: from AcuMS.Aculab.com (fd9f:af1c:a25b:0:43c:695e:880f:8750) by
- AcuMS.aculab.com (fd9f:af1c:a25b:0:43c:695e:880f:8750) with Microsoft SMTP
- Server (TLS) id 15.0.1347.2; Fri, 6 Mar 2020 16:57:55 +0000
-Received: from AcuMS.Aculab.com ([fe80::43c:695e:880f:8750]) by
- AcuMS.aculab.com ([fe80::43c:695e:880f:8750%12]) with mapi id 15.00.1347.000;
- Fri, 6 Mar 2020 16:57:55 +0000
-From:   David Laight <David.Laight@ACULAB.COM>
-To:     'Peter Zijlstra' <peterz@infradead.org>,
-        =?iso-8859-1?Q?Andr=E9_Almeida?= <andrealmeid@collabora.com>
-CC:     Florian Weimer <fweimer@redhat.com>,
-        "Pierre-Loup A. Griffais" <pgriffais@valvesoftware.com>,
+        id S1726533AbgCFRSU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 6 Mar 2020 12:18:20 -0500
+Received: from out01.mta.xmission.com ([166.70.13.231]:56238 "EHLO
+        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725935AbgCFRSU (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 6 Mar 2020 12:18:20 -0500
+Received: from in02.mta.xmission.com ([166.70.13.52])
+        by out01.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.90_1)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1jAGc4-0001Lk-Ci; Fri, 06 Mar 2020 10:18:16 -0700
+Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
+        by in02.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
+        (Exim 4.87)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1jAGc3-0002xI-5G; Fri, 06 Mar 2020 10:18:15 -0700
+From:   ebiederm@xmission.com (Eric W. Biederman)
+To:     Bernd Edlinger <bernd.edlinger@hotmail.de>
+Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
+        Kees Cook <keescook@chromium.org>,
+        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Alexey Dobriyan <adobriyan@gmail.com>,
         Thomas Gleixner <tglx@linutronix.de>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "kernel@collabora.com" <kernel@collabora.com>,
-        "krisman@collabora.com" <krisman@collabora.com>,
-        "shuah@kernel.org" <shuah@kernel.org>,
-        "linux-kselftest@vger.kernel.org" <linux-kselftest@vger.kernel.org>,
-        "rostedt@goodmis.org" <rostedt@goodmis.org>,
-        "ryao@gentoo.org" <ryao@gentoo.org>,
-        "dvhart@infradead.org" <dvhart@infradead.org>,
-        "mingo@redhat.com" <mingo@redhat.com>,
-        "z.figura12@gmail.com" <z.figura12@gmail.com>,
-        "steven@valvesoftware.com" <steven@valvesoftware.com>,
-        "steven@liquorix.net" <steven@liquorix.net>,
-        "malteskarupke@web.de" <malteskarupke@web.de>,
-        "carlos@redhat.com" <carlos@redhat.com>,
-        "adhemerval.zanella@linaro.org" <adhemerval.zanella@linaro.org>,
-        "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
-Subject: RE: 'simple' futex interface [Was: [PATCH v3 1/4] futex: Implement
- mechanism to wait on any of several futexes]
-Thread-Topic: 'simple' futex interface [Was: [PATCH v3 1/4] futex: Implement
- mechanism to wait on any of several futexes]
-Thread-Index: AQHV8x8l7LKRap7vfU2BMMqcavNvO6g7ya9A
-Date:   Fri, 6 Mar 2020 16:57:54 +0000
-Message-ID: <0271e473ddcf463bb030eb4cbecbe888@AcuMS.aculab.com>
-References: <87tv3aflqm.fsf@nanos.tec.linutronix.de>
- <967d5047-2cb6-d6d8-6107-edb99a4c9696@valvesoftware.com>
- <87o8thg031.fsf@nanos.tec.linutronix.de>
- <beb82055-96fa-cb64-a06e-9d7a0946587b@valvesoftware.com>
- <20200303120050.GC2596@hirez.programming.kicks-ass.net>
- <87pndth9ur.fsf@oldenburg2.str.redhat.com>
- <20200303132150.GD2596@hirez.programming.kicks-ass.net>
- <878skhh7og.fsf@oldenburg2.str.redhat.com>
- <20200303150104.GE2596@hirez.programming.kicks-ass.net>
- <52406c54-60b3-dcfe-65d8-4c425459e37b@collabora.com>
- <20200305185136.GB3348@worktop.programming.kicks-ass.net>
-In-Reply-To: <20200305185136.GB3348@worktop.programming.kicks-ass.net>
-Accept-Language: en-GB, en-US
-Content-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-ms-exchange-transport-fromentityheader: Hosted
-x-originating-ip: [10.202.205.107]
+        Oleg Nesterov <oleg@redhat.com>,
+        Frederic Weisbecker <frederic@kernel.org>,
+        Andrei Vagin <avagin@gmail.com>,
+        Ingo Molnar <mingo@kernel.org>,
+        "Peter Zijlstra \(Intel\)" <peterz@infradead.org>,
+        Yuyang Du <duyuyang@gmail.com>,
+        David Hildenbrand <david@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Anshuman Khandual <anshuman.khandual@arm.com>,
+        David Howells <dhowells@redhat.com>,
+        James Morris <jamorris@linux.microsoft.com>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Shakeel Butt <shakeelb@google.com>,
+        Jason Gunthorpe <jgg@ziepe.ca>,
+        Christian Kellner <christian@kellner.me>,
+        Andrea Arcangeli <aarcange@redhat.com>,
+        Aleksa Sarai <cyphar@cyphar.com>,
+        "Dmitry V. Levin" <ldv@altlinux.org>,
+        "linux-doc\@vger.kernel.org" <linux-doc@vger.kernel.org>,
+        "linux-kernel\@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "linux-fsdevel\@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+        "linux-mm\@kvack.org" <linux-mm@kvack.org>,
+        "stable\@vger.kernel.org" <stable@vger.kernel.org>,
+        "linux-api\@vger.kernel.org" <linux-api@vger.kernel.org>
+References: <AM6PR03MB5170EB4427BF5C67EE98FF09E4E60@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <AM6PR03MB5170B976E6387FDDAD59A118E4E70@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <202003021531.C77EF10@keescook>
+        <20200303085802.eqn6jbhwxtmz4j2x@wittgenstein>
+        <AM6PR03MB5170285B336790D3450E2644E4E40@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <87v9nlii0b.fsf@x220.int.ebiederm.org>
+        <AM6PR03MB5170609D44967E044FD1BE40E4E40@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <87a74xi4kz.fsf@x220.int.ebiederm.org>
+        <AM6PR03MB51705AA3009B4986BB6EF92FE4E50@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <87r1y8dqqz.fsf@x220.int.ebiederm.org>
+        <AM6PR03MB517053AED7DC89F7C0704B7DE4E50@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <AM6PR03MB51703B44170EAB4626C9B2CAE4E20@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <87tv32cxmf.fsf_-_@x220.int.ebiederm.org>
+        <87o8tacxl3.fsf_-_@x220.int.ebiederm.org>
+        <AM6PR03MB5170B05CFDAF21D8A99B7E48E4E20@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <87pndqax3j.fsf@x220.int.ebiederm.org>
+        <AM6PR03MB5170688693E4114CA9367211E4E30@AM6PR03MB5170.eurprd03.prod.outlook.com>
+Date:   Fri, 06 Mar 2020 11:16:00 -0600
+In-Reply-To: <AM6PR03MB5170688693E4114CA9367211E4E30@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        (Bernd Edlinger's message of "Fri, 6 Mar 2020 16:26:34 +0000")
+Message-ID: <87v9nh9zfz.fsf@x220.int.ebiederm.org>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: aculab.com
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain
+X-XM-SPF: eid=1jAGc3-0002xI-5G;;;mid=<87v9nh9zfz.fsf@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX19gmt4QeYoR+3AHca+FGN8CxL45iobMdDI=
+X-SA-Exim-Connect-IP: 68.227.160.95
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: Re: [PATCH 1/2] exec: Properly mark the point of no return
+X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
+X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Peter Zijlstra
-> Sent: 05 March 2020 18:52
-+> On Thu, Mar 05, 2020 at 01:14:17PM -0300, André Almeida wrote:
-> 
-> > >   sys_futex_wait(void *uaddr, u64 val, unsigned long flags, ktime_t *timo);
-> > >   struct futex_wait {
-> > > 	  void *uaddr;
-> > > 	  u64 val;
-> > > 	  u64 flags;
-> > >   };
-> > >   sys_futex_waitv(struct futex_wait *waiters, unsigned int nr_waiters,
-> > > 		  u64 flags, ktime_t *timo);
-> > >   sys_futex_wake(void *uaddr, unsigned int nr, u64 flags);
-> > >   sys_futex_cmp_requeue(void *uaddr1, void *uaddr2, unsigned int nr_wake,
-> > > 		  unsigned int nr_requeue, u64 cmpval, unsigned long flags);
-> > >
-> > > And that makes 7 arguments for cmp_requeue, which can't be. Maybe we if
-> > > combine nr_wake and nr_requeue in one as 2 u16... ?
-> > >
-> > > And then we need to go detector if the platform supports it or not..
-> > >
-> >
-> > Thanks everyone for the feedback around our mechanism. Are the
-> > performance benefits of implementing a syscall to wait on a single futex
-> > significant enough to maintain it instead of just using
-> > `sys_futex_waitv()` with `nr_waiters = 1`? If we join both cases in a
-> > single interface, we may even add a new member for NUMA hint in `struct
-> > futex_wait`.
-> 
-> My consideration was that avoiding the get_user/copy_from_user might
-> become measurable on !PTI systems with SMAP.
-> 
-> But someone would have to build it and measure it before we can be sure
-> of course.
+Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
 
-An extra copy_from_user is likely to be noticable.
-It certainly makes recvmsg() slower than recv().
-Especially if the hardended usercopy crap gets involved.
+> On 3/6/20 6:09 AM, Eric W. Biederman wrote:
+>> Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
+>> 
+>>> On 3/5/20 10:15 PM, Eric W. Biederman wrote:
+>>>>
+>>>> Add a flag binfmt->unrecoverable to mark when execution has gotten to
+>>>> the point where it is impossible to return to userspace with the
+>>>> calling process unchanged.
+>>>>
+>>>> While techinically this state starts as soon as de_thread starts
+>
+> typo: s/techinically/technically/
 
-	David
- 
+>>>> killing threads, the only return path at that point is if there is a
+>>>> fatal signal pending.  I have choosen instead to set unrecoverable
+>
+> I'm not good at english, is this chosen ?
+>
 
--
-Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT, UK
-Registration No: 1397386 (Wales)
+Yes.  Defintley worth fixing.
 
+Eric
