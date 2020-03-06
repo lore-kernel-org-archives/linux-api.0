@@ -2,82 +2,101 @@ Return-Path: <SRS0=u3R8=4X=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-8.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D12CCC10F00
-	for <linux-api@archiver.kernel.org>; Fri,  6 Mar 2020 12:09:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DD4E5C10DCE
+	for <linux-api@archiver.kernel.org>; Fri,  6 Mar 2020 12:52:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id A93CF2072D
-	for <linux-api@archiver.kernel.org>; Fri,  6 Mar 2020 12:09:28 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B24852072D
+	for <linux-api@archiver.kernel.org>; Fri,  6 Mar 2020 12:52:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726378AbgCFMJW convert rfc822-to-8bit (ORCPT
-        <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 6 Mar 2020 07:09:22 -0500
-Received: from albireo.enyo.de ([37.24.231.21]:58366 "EHLO albireo.enyo.de"
+        id S1726194AbgCFMwN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 6 Mar 2020 07:52:13 -0500
+Received: from mx2.suse.de ([195.135.220.15]:59298 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726300AbgCFMJW (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 6 Mar 2020 07:09:22 -0500
-Received: from [172.17.203.2] (helo=deneb.enyo.de)
-        by albireo.enyo.de with esmtps (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        id 1jABmy-0002N2-LF; Fri, 06 Mar 2020 12:09:12 +0000
-Received: from fw by deneb.enyo.de with local (Exim 4.92)
-        (envelope-from <fw@deneb.enyo.de>)
-        id 1jABlN-0005No-Ln; Fri, 06 Mar 2020 13:07:33 +0100
-From:   Florian Weimer <fw@deneb.enyo.de>
-To:     YunQiang Su <syq@debian.org>
-Cc:     Laurent Vivier <laurent@vivier.eu>, torvalds@linux-foundation.org,
-        Greg KH <gregkh@linuxfoundation.org>,
-        akpm@linux-foundation.org, Al Viro <viro@zeniv.linux.org.uk>,
-        James Bottomley <James.Bottomley@hansenpartnership.com>,
-        linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
-        libc-alpha@sourceware.org
-Subject: Re: [PATCH] binfmt_misc: pass binfmt_misc P flag to the interpreter
-References: <20200306080905.173466-1-syq@debian.org>
-        <87r1y53npd.fsf@mid.deneb.enyo.de>
-        <8441f497-61eb-5c14-bf1e-c90a464105a7@vivier.eu>
-        <87mu8t3mlw.fsf@mid.deneb.enyo.de>
-        <40da389d-4e74-2644-2e7c-04d988fcc26f@vivier.eu>
-        <CAKcpw6WEO5Rmsv+WFkOMrkH+0jwtFKKy7b2n3U9xgv-xGC0UUQ@mail.gmail.com>
-        <87v9nhzp6w.fsf@mid.deneb.enyo.de>
-        <CAKcpw6VF1N2gTVXeWLU4aVOuARf5oN6yPg9O=RCzgkMrjXmxYQ@mail.gmail.com>
-Date:   Fri, 06 Mar 2020 13:07:33 +0100
-In-Reply-To: <CAKcpw6VF1N2gTVXeWLU4aVOuARf5oN6yPg9O=RCzgkMrjXmxYQ@mail.gmail.com>
-        (YunQiang Su's message of "Fri, 6 Mar 2020 19:48:35 +0800")
-Message-ID: <87r1y5zny2.fsf@mid.deneb.enyo.de>
+        id S1726171AbgCFMwN (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 6 Mar 2020 07:52:13 -0500
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.220.254])
+        by mx2.suse.de (Postfix) with ESMTP id 5C2F3B138;
+        Fri,  6 Mar 2020 12:52:10 +0000 (UTC)
+Subject: Re: [PATCH v7 6/7] mm/madvise: employ mmget_still_valid for write
+ lock
+To:     Minchan Kim <minchan@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>
+Cc:     LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
+        linux-api@vger.kernel.org, oleksandr@redhat.com,
+        Suren Baghdasaryan <surenb@google.com>,
+        Tim Murray <timmurray@google.com>,
+        Daniel Colascione <dancol@google.com>,
+        Sandeep Patil <sspatil@google.com>,
+        Sonny Rao <sonnyrao@google.com>,
+        Brian Geffon <bgeffon@google.com>,
+        Michal Hocko <mhocko@suse.com>,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Shakeel Butt <shakeelb@google.com>,
+        John Dias <joaodias@google.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Jann Horn <jannh@google.com>,
+        alexander.h.duyck@linux.intel.com, sj38.park@gmail.com
+References: <20200302193630.68771-1-minchan@kernel.org>
+ <20200302193630.68771-7-minchan@kernel.org>
+From:   Vlastimil Babka <vbabka@suse.cz>
+Message-ID: <d21c85b2-2493-e538-5419-79cf049a469e@suse.cz>
+Date:   Fri, 6 Mar 2020 13:52:07 +0100
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.5.0
 MIME-Version: 1.0
+In-Reply-To: <20200302193630.68771-7-minchan@kernel.org>
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-* YunQiang Su:
+On 3/2/20 8:36 PM, Minchan Kim wrote:
+> From: Oleksandr Natalenko <oleksandr@redhat.com>
+> 
+> Do the very same trick as we already do since 04f5866e41fb. KSM hints
+> will require locking mmap_sem for write since they modify vm_flags, so
+> for remote KSM hinting this additional check is needed.
+> 
+> Reviewed-by: Suren Baghdasaryan <surenb@google.com>
+> Signed-off-by: Oleksandr Natalenko <oleksandr@redhat.com>
+> Signed-off-by: Minchan Kim <minchan@kernel.org>
+> ---
+>  mm/madvise.c | 3 +++
+>  1 file changed, 3 insertions(+)
+> 
+> diff --git a/mm/madvise.c b/mm/madvise.c
+> index e794367f681e..e77c6c1fad34 100644
+> --- a/mm/madvise.c
+> +++ b/mm/madvise.c
+> @@ -1118,6 +1118,8 @@ int do_madvise(struct task_struct *target_task, struct mm_struct *mm,
+>  	if (write) {
+>  		if (down_write_killable(&mm->mmap_sem))
+>  			return -EINTR;
+> +		if (current->mm != mm && !mmget_still_valid(mm))
+> +			goto skip_mm;
 
-> Florian Weimer <fw@deneb.enyo.de> 于2020年3月6日周五 下午7:42写道：
->>
->> * YunQiang Su:
->>
->> > AT_* only has 32 slot and now. I was afraid that maybe we shouldn't take one.
->> >    /* AT_* values 18 through 22 are reserved */
->> >    27,28,29,30 are not used now.
->> > Which should we use?
->>
->> Where does this limit of 32 tags come from?  I don't see it from a
->> userspace perspective.
->
-> Sorry it is my mistake: In linux/auxvec.h, I saw
->
-> #define AT_RANDOM 25    /* address of 16 random bytes */
-> #define AT_HWCAP2 26    /* extension of AT_HWCAP */
->
-> #define AT_EXECFN  31   /* filename of program */
->
-> The number jump to 31 from 26.
->
-> It is my fault: in x86_64-linux-gnu/bits/auxv.h, the max number is 47 now.
+This will return 0, is that correct? Shoudln't there be a similar error e.g. as
+when finding the task by pid fails (-ESRCH ?), because IIUC the task here is
+going away and dumping the core?
 
-So AT_* tags aren't a scarce resource after all?
+>  	} else {
+>  		down_read(&mm->mmap_sem);
+>  	}
+> @@ -1169,6 +1171,7 @@ int do_madvise(struct task_struct *target_task, struct mm_struct *mm,
+>  	}
+>  out:
+>  	blk_finish_plug(&plug);
+> +skip_mm:
+>  	if (write)
+>  		up_write(&mm->mmap_sem);
+>  	else
+> 
+
