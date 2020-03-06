@@ -2,107 +2,115 @@ Return-Path: <SRS0=u3R8=4X=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E67E9C10DCE
-	for <linux-api@archiver.kernel.org>; Fri,  6 Mar 2020 16:03:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2D9CCC10DCE
+	for <linux-api@archiver.kernel.org>; Fri,  6 Mar 2020 16:03:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id B14502187F
-	for <linux-api@archiver.kernel.org>; Fri,  6 Mar 2020 16:03:45 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1583510625;
-	bh=QF4D5q4VwrFUcxRBIMtk5XOzapjkh05UIXSQstGH7+0=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:List-ID:From;
-	b=sn+B4I0/ua9fjKnM5IIyFL4d6c+KSj0PA3Mpl4/WP8s681P0jmKvCaiDNQxbC0Egk
-	 oP8rU3H5EACGK1TjhGk2doyY8VD6hy2hTo/YU/awdQ0Us2WDJBkWvD0Xr3VhARJLff
-	 TpNKaJmcEyTXmxBohdmnb7QmEz1c61F3Fzvao1lc=
+	by mail.kernel.org (Postfix) with ESMTP id 1112D2187F
+	for <linux-api@archiver.kernel.org>; Fri,  6 Mar 2020 16:03:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727000AbgCFQDp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 6 Mar 2020 11:03:45 -0500
-Received: from mail.kernel.org ([198.145.29.99]:38712 "EHLO mail.kernel.org"
+        id S1726368AbgCFQDy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 6 Mar 2020 11:03:54 -0500
+Received: from mx2.suse.de ([195.135.220.15]:40886 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725935AbgCFQDp (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 6 Mar 2020 11:03:45 -0500
-Received: from localhost (lfbn-ncy-1-985-231.w90-101.abo.wanadoo.fr [90.101.63.231])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 4721F217F4;
-        Fri,  6 Mar 2020 16:03:44 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1583510624;
-        bh=QF4D5q4VwrFUcxRBIMtk5XOzapjkh05UIXSQstGH7+0=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=OHD5uqdhc655gnIwuyL89XtqW8E8WwfzfAwLv7T8e04VbXb2vVdjYeGpmJAh3y2+A
-         M4p6WF0DkIYU6ciNOv2Pmedt8CesS1mSV5GIqxVUE3tk6wwpG0Sjtz+rRZixQ7v0LV
-         Rkka9o8uE7lJhRpKEZmpZhEofyuNNOyTTUabdEeY=
-Date:   Fri, 6 Mar 2020 17:03:42 +0100
-From:   Frederic Weisbecker <frederic@kernel.org>
-To:     Alex Belits <abelits@marvell.com>
-Cc:     "rostedt@goodmis.org" <rostedt@goodmis.org>,
-        "mingo@kernel.org" <mingo@kernel.org>,
-        "peterz@infradead.org" <peterz@infradead.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        Prasun Kapoor <pkapoor@marvell.com>,
-        "tglx@linutronix.de" <tglx@linutronix.de>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        "linux-mm@vger.kernel.org" <linux-mm@vger.kernel.org>,
-        "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>
-Subject: Re: [PATCH 08/12] task_isolation: don't interrupt CPUs with
- tick_nohz_full_kick_cpu()
-Message-ID: <20200306160341.GE8590@lenoir>
-References: <4473787e1b6bc3cc226067e8d122092a678b63de.camel@marvell.com>
- <d7ce01e57d4a35b126e1cb96a63109eaa9781cb6.camel@marvell.com>
+        id S1725935AbgCFQDy (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 6 Mar 2020 11:03:54 -0500
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.220.254])
+        by mx2.suse.de (Postfix) with ESMTP id CF114B1F3;
+        Fri,  6 Mar 2020 16:03:51 +0000 (UTC)
+Subject: Re: [PATCH v7 6/7] mm/madvise: employ mmget_still_valid for write
+ lock
+To:     Oleksandr Natalenko <oleksandr@redhat.com>
+Cc:     Minchan Kim <minchan@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-mm <linux-mm@kvack.org>, linux-api@vger.kernel.org,
+        Suren Baghdasaryan <surenb@google.com>,
+        Tim Murray <timmurray@google.com>,
+        Daniel Colascione <dancol@google.com>,
+        Sandeep Patil <sspatil@google.com>,
+        Sonny Rao <sonnyrao@google.com>,
+        Brian Geffon <bgeffon@google.com>,
+        Michal Hocko <mhocko@suse.com>,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Shakeel Butt <shakeelb@google.com>,
+        John Dias <joaodias@google.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Jann Horn <jannh@google.com>,
+        alexander.h.duyck@linux.intel.com, sj38.park@gmail.com
+References: <20200302193630.68771-1-minchan@kernel.org>
+ <20200302193630.68771-7-minchan@kernel.org>
+ <d21c85b2-2493-e538-5419-79cf049a469e@suse.cz>
+ <20200306130303.kztv64f52qknxb6k@butterfly.localdomain>
+From:   Vlastimil Babka <vbabka@suse.cz>
+Message-ID: <86fc8d7b-ad6b-1691-b022-025d01e9e8e3@suse.cz>
+Date:   Fri, 6 Mar 2020 17:03:50 +0100
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.5.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <d7ce01e57d4a35b126e1cb96a63109eaa9781cb6.camel@marvell.com>
-User-Agent: Mutt/1.9.4 (2018-02-28)
+In-Reply-To: <20200306130303.kztv64f52qknxb6k@butterfly.localdomain>
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Mar 04, 2020 at 04:12:40PM +0000, Alex Belits wrote:
-> From: Yuri Norov <ynorov@marvell.com>
+On 3/6/20 2:03 PM, Oleksandr Natalenko wrote:
+> Hello.
 > 
-> For nohz_full CPUs the desirable behavior is to receive interrupts
-> generated by tick_nohz_full_kick_cpu(). But for hard isolation it's
-> obviously not desirable because it breaks isolation.
+> On Fri, Mar 06, 2020 at 01:52:07PM +0100, Vlastimil Babka wrote:
+>> > diff --git a/mm/madvise.c b/mm/madvise.c
+>> > index e794367f681e..e77c6c1fad34 100644
+>> > --- a/mm/madvise.c
+>> > +++ b/mm/madvise.c
+>> > @@ -1118,6 +1118,8 @@ int do_madvise(struct task_struct *target_task, struct mm_struct *mm,
+>> >  	if (write) {
+>> >  		if (down_write_killable(&mm->mmap_sem))
+>> >  			return -EINTR;
+>> > +		if (current->mm != mm && !mmget_still_valid(mm))
+>> > +			goto skip_mm;
+>> 
+>> This will return 0, is that correct? Shoudln't there be a similar error e.g. as
+>> when finding the task by pid fails (-ESRCH ?), because IIUC the task here is
+>> going away and dumping the core?
 > 
-> This patch adds check for it.
+> Yeah.
 > 
-> Signed-off-by: Alex Belits <abelits@marvell.com>
-> ---
->  kernel/time/tick-sched.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
+> Something like this then:
 > 
-> diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
-> index 1d4dec9d3ee7..fe4503ba1316 100644
-> --- a/kernel/time/tick-sched.c
-> +++ b/kernel/time/tick-sched.c
-> @@ -20,6 +20,7 @@
->  #include <linux/sched/clock.h>
->  #include <linux/sched/stat.h>
->  #include <linux/sched/nohz.h>
-> +#include <linux/isolation.h>
->  #include <linux/module.h>
->  #include <linux/irq_work.h>
->  #include <linux/posix-timers.h>
-> @@ -262,7 +263,7 @@ static void tick_nohz_full_kick(void)
->   */
->  void tick_nohz_full_kick_cpu(int cpu)
->  {
-> -	if (!tick_nohz_full_cpu(cpu))
-> +	if (!tick_nohz_full_cpu(cpu) || task_isolation_on_cpu(cpu))
->  		return;
+> ===
+> diff --git a/mm/madvise.c b/mm/madvise.c
+> index 48d1da08c160..7ed2f4d13924 100644
+> --- a/mm/madvise.c
+> +++ b/mm/madvise.c
+> @@ -1122,6 +1122,10 @@ int do_madvise(struct task_struct *target_task, struct mm_struct *mm,
+>  	if (write) {
+>  		if (down_write_killable(&mm->mmap_sem))
+>  			return -EINTR;
+> +		if (current->mm != mm && !mmget_still_valid(mm)) {
+> +			error = -ESRCH;
+> +			goto skip_mm;
+> +		}
+>  	} else {
+>  		down_read(&mm->mmap_sem);
+>  	}
+> @@ -1173,6 +1177,7 @@ int do_madvise(struct task_struct *target_task, struct mm_struct *mm,
+>  	}
+>  out:
+>  	blk_finish_plug(&plug);
+> +skip_mm:
+>  	if (write)
+>  		up_write(&mm->mmap_sem);
+>  	else
+> 
+> ===
+> 
+> ?
 
-I fear you can't do that. A nohz full CPU is kicked for a reason.
-As for the other cases, you need to fix the callers.
-
-In the general case, randomly ignoring an interrupt is a correctness
-issue.
-
-Thanks.
+Yep, thanks.
