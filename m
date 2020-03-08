@@ -6,28 +6,28 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A40B2C10DCE
-	for <linux-api@archiver.kernel.org>; Sun,  8 Mar 2020 21:38:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0DBB7C10DCE
+	for <linux-api@archiver.kernel.org>; Sun,  8 Mar 2020 21:39:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 77F9720684
-	for <linux-api@archiver.kernel.org>; Sun,  8 Mar 2020 21:38:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DE84920684
+	for <linux-api@archiver.kernel.org>; Sun,  8 Mar 2020 21:39:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726352AbgCHVii (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 8 Mar 2020 17:38:38 -0400
-Received: from out02.mta.xmission.com ([166.70.13.232]:45782 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726346AbgCHVih (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 8 Mar 2020 17:38:37 -0400
-Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out02.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        id S1726414AbgCHVjP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 8 Mar 2020 17:39:15 -0400
+Received: from out03.mta.xmission.com ([166.70.13.233]:38094 "EHLO
+        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726346AbgCHVjP (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 8 Mar 2020 17:39:15 -0400
+Received: from in02.mta.xmission.com ([166.70.13.52])
+        by out03.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.90_1)
         (envelope-from <ebiederm@xmission.com>)
-        id 1jB3d4-0007cP-VM; Sun, 08 Mar 2020 15:38:35 -0600
+        id 1jB3dg-0006F5-8i; Sun, 08 Mar 2020 15:39:12 -0600
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
-        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
+        by in02.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
         (Exim 4.87)
         (envelope-from <ebiederm@xmission.com>)
-        id 1jB3d3-0001ox-Uq; Sun, 08 Mar 2020 15:38:34 -0600
+        id 1jB3df-0006JX-Fb; Sun, 08 Mar 2020 15:39:12 -0600
 From:   ebiederm@xmission.com (Eric W. Biederman)
 To:     Bernd Edlinger <bernd.edlinger@hotmail.de>
 Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
@@ -80,110 +80,63 @@ References: <AM6PR03MB5170EB4427BF5C67EE98FF09E4E60@AM6PR03MB5170.eurprd03.prod.
         <AM6PR03MB51703B44170EAB4626C9B2CAE4E20@AM6PR03MB5170.eurprd03.prod.outlook.com>
         <87tv32cxmf.fsf_-_@x220.int.ebiederm.org>
         <87v9ne5y4y.fsf_-_@x220.int.ebiederm.org>
-Date:   Sun, 08 Mar 2020 16:36:17 -0500
+Date:   Sun, 08 Mar 2020 16:36:55 -0500
 In-Reply-To: <87v9ne5y4y.fsf_-_@x220.int.ebiederm.org> (Eric W. Biederman's
         message of "Sun, 08 Mar 2020 16:34:37 -0500")
-Message-ID: <87k13u5y26.fsf_-_@x220.int.ebiederm.org>
+Message-ID: <87eeu25y14.fsf_-_@x220.int.ebiederm.org>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
-X-XM-SPF: eid=1jB3d3-0001ox-Uq;;;mid=<87k13u5y26.fsf_-_@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX181hWQFhcXeH2DZ7lmXnC5JxL6rk00Uo9s=
+X-XM-SPF: eid=1jB3df-0006JX-Fb;;;mid=<87eeu25y14.fsf_-_@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1/19vvWGcAS1aLsfnI/zloMbNkjZQWb3n0=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: [PATCH v2 2/5] exec: Factor unshare_sighand out of de_thread and call it separately
+Subject: [PATCH v2 3/5] exec: Move cleanup of posix timers on exec out of de_thread
 X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
+X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
 
-This makes the code clearer and makes it easier to implement a mutex
-that is not taken over any locations that may block indefinitely waiting
-for userspace.
+These functions have very little to do with de_thread move them out
+of de_thread an into flush_old_exec proper so it can be more clearly
+seen what flush_old_exec is doing.
 
 Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- fs/exec.c | 39 ++++++++++++++++++++++++++-------------
- 1 file changed, 26 insertions(+), 13 deletions(-)
+ fs/exec.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/fs/exec.c b/fs/exec.c
-index c3f34791f2f0..ff74b9a74d34 100644
+index ff74b9a74d34..215d86f77b63 100644
 --- a/fs/exec.c
 +++ b/fs/exec.c
-@@ -1194,6 +1194,23 @@ static int de_thread(struct task_struct *tsk)
- 	flush_itimer_signals();
- #endif
+@@ -1189,11 +1189,6 @@ static int de_thread(struct task_struct *tsk)
+ 	/* we have changed execution domain */
+ 	tsk->exit_signal = SIGCHLD;
  
-+	BUG_ON(!thread_group_leader(tsk));
-+	return 0;
-+
-+killed:
-+	/* protects against exit_notify() and __exit_signal() */
-+	read_lock(&tasklist_lock);
-+	sig->group_exit_task = NULL;
-+	sig->notify_count = 0;
-+	read_unlock(&tasklist_lock);
-+	return -EAGAIN;
-+}
-+
-+
-+static int unshare_sighand(struct task_struct *me)
-+{
-+	struct sighand_struct *oldsighand = me->sighand;
-+
- 	if (refcount_read(&oldsighand->count) != 1) {
- 		struct sighand_struct *newsighand;
- 		/*
-@@ -1210,23 +1227,13 @@ static int de_thread(struct task_struct *tsk)
- 
- 		write_lock_irq(&tasklist_lock);
- 		spin_lock(&oldsighand->siglock);
--		rcu_assign_pointer(tsk->sighand, newsighand);
-+		rcu_assign_pointer(me->sighand, newsighand);
- 		spin_unlock(&oldsighand->siglock);
- 		write_unlock_irq(&tasklist_lock);
- 
- 		__cleanup_sighand(oldsighand);
- 	}
+-#ifdef CONFIG_POSIX_TIMERS
+-	exit_itimers(sig);
+-	flush_itimer_signals();
+-#endif
 -
--	BUG_ON(!thread_group_leader(tsk));
+ 	BUG_ON(!thread_group_leader(tsk));
  	return 0;
--
--killed:
--	/* protects against exit_notify() and __exit_signal() */
--	read_lock(&tasklist_lock);
--	sig->group_exit_task = NULL;
--	sig->notify_count = 0;
--	read_unlock(&tasklist_lock);
--	return -EAGAIN;
- }
  
- char *__get_task_comm(char *buf, size_t buf_size, struct task_struct *tsk)
-@@ -1264,13 +1271,19 @@ int flush_old_exec(struct linux_binprm * bprm)
- 	int retval;
- 
- 	/*
--	 * Make sure we have a private signal table and that
--	 * we are unassociated from the previous thread group.
-+	 * Make this the only thread in the thread group.
- 	 */
- 	retval = de_thread(me);
+@@ -1277,6 +1272,11 @@ int flush_old_exec(struct linux_binprm * bprm)
  	if (retval)
  		goto out;
  
-+	/*
-+	 * Make the signal table private.
-+	 */
-+	retval = unshare_sighand(me);
-+	if (retval)
-+		goto out;
++#ifdef CONFIG_POSIX_TIMERS
++	exit_itimers(me->signal);
++	flush_itimer_signals();
++#endif
 +
  	/*
- 	 * Must be called _before_ exec_mmap() as bprm->mm is
- 	 * not visibile until then. This also enables the update
+ 	 * Make the signal table private.
+ 	 */
 -- 
 2.25.0
 
