@@ -4,30 +4,30 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0B014C10DCE
-	for <linux-api@archiver.kernel.org>; Sun,  8 Mar 2020 21:40:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 922D7C10F27
+	for <linux-api@archiver.kernel.org>; Sun,  8 Mar 2020 21:41:11 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D233320863
-	for <linux-api@archiver.kernel.org>; Sun,  8 Mar 2020 21:40:19 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6BA0A2084E
+	for <linux-api@archiver.kernel.org>; Sun,  8 Mar 2020 21:41:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726352AbgCHVkT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 8 Mar 2020 17:40:19 -0400
-Received: from out01.mta.xmission.com ([166.70.13.231]:38012 "EHLO
-        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726346AbgCHVkT (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 8 Mar 2020 17:40:19 -0400
-Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out01.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        id S1726403AbgCHVlI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 8 Mar 2020 17:41:08 -0400
+Received: from out03.mta.xmission.com ([166.70.13.233]:38304 "EHLO
+        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726346AbgCHVlH (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 8 Mar 2020 17:41:07 -0400
+Received: from in02.mta.xmission.com ([166.70.13.52])
+        by out03.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.90_1)
         (envelope-from <ebiederm@xmission.com>)
-        id 1jB3ej-0002V8-HH; Sun, 08 Mar 2020 15:40:17 -0600
+        id 1jB3fV-0006Qr-9X; Sun, 08 Mar 2020 15:41:05 -0600
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
-        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
+        by in02.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
         (Exim 4.87)
         (envelope-from <ebiederm@xmission.com>)
-        id 1jB3ei-0001yk-Px; Sun, 08 Mar 2020 15:40:17 -0600
+        id 1jB3fU-0006bj-Fr; Sun, 08 Mar 2020 15:41:05 -0600
 From:   ebiederm@xmission.com (Eric W. Biederman)
 To:     Bernd Edlinger <bernd.edlinger@hotmail.de>
 Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
@@ -80,92 +80,144 @@ References: <AM6PR03MB5170EB4427BF5C67EE98FF09E4E60@AM6PR03MB5170.eurprd03.prod.
         <AM6PR03MB51703B44170EAB4626C9B2CAE4E20@AM6PR03MB5170.eurprd03.prod.outlook.com>
         <87tv32cxmf.fsf_-_@x220.int.ebiederm.org>
         <87v9ne5y4y.fsf_-_@x220.int.ebiederm.org>
-Date:   Sun, 08 Mar 2020 16:38:00 -0500
+Date:   Sun, 08 Mar 2020 16:38:48 -0500
 In-Reply-To: <87v9ne5y4y.fsf_-_@x220.int.ebiederm.org> (Eric W. Biederman's
         message of "Sun, 08 Mar 2020 16:34:37 -0500")
-Message-ID: <875zfe5xzb.fsf_-_@x220.int.ebiederm.org>
+Message-ID: <87zhcq4jdj.fsf_-_@x220.int.ebiederm.org>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
-X-XM-SPF: eid=1jB3ei-0001yk-Px;;;mid=<875zfe5xzb.fsf_-_@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX19uDaHxN1o1BnoS4P9Gkr5iEXx0ynhPWgE=
+X-XM-SPF: eid=1jB3fU-0006bj-Fr;;;mid=<87zhcq4jdj.fsf_-_@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX18BoLeVKTmhJXInoxrgoo4cUvE+MboM0ho=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: [PATCH v2 4/5] exec: Move exec_mmap right after de_thread in flush_old_exec
+Subject: [PATCH v2 5/5] exec: Add a exec_update_mutex to replace cred_guard_mutex
 X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
+X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
 
-I have read through the code in exec_mmap and I do not see anything
-that depends on sighand or the sighand lock, or on signals in anyway
-so this should be safe.
+The cred_guard_mutex is problematic.  The cred_guard_mutex is held
+over the userspace accesses as the arguments from userspace are read.
+The cred_guard_mutex is held of PTRACE_EVENT_EXIT as the the other
+threads are killed.  The cred_guard_mutex is held over
+"put_user(0, tsk->clear_child_tid)" in exit_mm().
 
-This rearrangement of code has two siginficant benefits.  It makes
-the determination of passing the point of no return by testing bprm->mm
-accurate.  All failures prior to that point in flush_old_exec are
-either truly recoverable or they are fatal.
+Any of those can result in deadlock, as the cred_guard_mutex is held
+over a possible indefinite userspace waits for userspace.
 
-Futher this consolidates all of the possible indefinite waits for
-userspace together at the top of flush_old_exec.  The possible wait
-for a ptracer on PTRACE_EVENT_EXIT, the possible wait for a page fault
-to be resolved in clear_child_tid, and the possible wait for a page
-fault in exit_robust_list.
+Add exec_update_mutex that is only held over exec updating process
+with the new contents of exec, so that code that needs not to be
+confused by exec changing the mm and the cred in ways that can not
+happen during ordinary execution of a process.
 
-This consolidation allows the creation of a mutex to replace
-cred_guard_mutex that is not held of possible indefinite userspace
-waits.  Which will allow removing deadlock scenarios from the kernel.
+The plan is to switch the users of cred_guard_mutex to
+exec_udpate_mutex one by one.  This lets us move forward while still
+being careful and not introducing any regressions.
 
+Link: https://lore.kernel.org/lkml/20160921152946.GA24210@dhcp22.suse.cz/
+Link: https://lore.kernel.org/lkml/AM6PR03MB5170B06F3A2B75EFB98D071AE4E60@AM6PR03MB5170.eurprd03.prod.outlook.com/
+Link: https://lore.kernel.org/linux-fsdevel/20161102181806.GB1112@redhat.com/
+Link: https://lore.kernel.org/lkml/20160923095031.GA14923@redhat.com/
+Link: https://lore.kernel.org/lkml/20170213141452.GA30203@redhat.com/
+Ref: 45c1a159b85b ("Add PTRACE_O_TRACEVFORKDONE and PTRACE_O_TRACEEXIT facilities.")
+Ref: 456f17cd1a28 ("[PATCH] user-vm-unlock-2.5.31-A2")
 Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- fs/exec.c | 24 ++++++++++++------------
- 1 file changed, 12 insertions(+), 12 deletions(-)
+ fs/exec.c                    | 9 +++++++++
+ include/linux/sched/signal.h | 9 ++++++++-
+ init/init_task.c             | 1 +
+ kernel/fork.c                | 1 +
+ 4 files changed, 19 insertions(+), 1 deletion(-)
 
 diff --git a/fs/exec.c b/fs/exec.c
-index 215d86f77b63..d820a7272a76 100644
+index d820a7272a76..ffeebb1f167b 100644
 --- a/fs/exec.c
 +++ b/fs/exec.c
-@@ -1272,18 +1272,6 @@ int flush_old_exec(struct linux_binprm * bprm)
- 	if (retval)
- 		goto out;
+@@ -1014,6 +1014,7 @@ static int exec_mmap(struct mm_struct *mm)
+ {
+ 	struct task_struct *tsk;
+ 	struct mm_struct *old_mm, *active_mm;
++	int ret;
  
--#ifdef CONFIG_POSIX_TIMERS
--	exit_itimers(me->signal);
--	flush_itimer_signals();
--#endif
--
--	/*
--	 * Make the signal table private.
--	 */
--	retval = unshare_sighand(me);
--	if (retval)
--		goto out;
--
- 	/*
- 	 * Must be called _before_ exec_mmap() as bprm->mm is
- 	 * not visibile until then. This also enables the update
-@@ -1307,6 +1295,18 @@ int flush_old_exec(struct linux_binprm * bprm)
+ 	/* Notify parent that we're no longer interested in the old VM */
+ 	tsk = current;
+@@ -1034,6 +1035,11 @@ static int exec_mmap(struct mm_struct *mm)
+ 			return -EINTR;
+ 		}
+ 	}
++
++	ret = mutex_lock_killable(&tsk->signal->exec_update_mutex);
++	if (ret)
++		return ret;
++
+ 	task_lock(tsk);
+ 	active_mm = tsk->active_mm;
+ 	membarrier_exec_mmap(mm);
+@@ -1438,6 +1444,8 @@ static void free_bprm(struct linux_binprm *bprm)
+ {
+ 	free_arg_pages(bprm);
+ 	if (bprm->cred) {
++		if (!bprm->mm)
++			mutex_unlock(&current->signal->exec_update_mutex);
+ 		mutex_unlock(&current->signal->cred_guard_mutex);
+ 		abort_creds(bprm->cred);
+ 	}
+@@ -1487,6 +1495,7 @@ void install_exec_creds(struct linux_binprm *bprm)
+ 	 * credentials; any time after this it may be unlocked.
  	 */
- 	bprm->mm = NULL;
+ 	security_bprm_committed_creds(bprm);
++	mutex_unlock(&current->signal->exec_update_mutex);
+ 	mutex_unlock(&current->signal->cred_guard_mutex);
+ }
+ EXPORT_SYMBOL(install_exec_creds);
+diff --git a/include/linux/sched/signal.h b/include/linux/sched/signal.h
+index 88050259c466..a29df79540ce 100644
+--- a/include/linux/sched/signal.h
++++ b/include/linux/sched/signal.h
+@@ -224,7 +224,14 @@ struct signal_struct {
  
-+#ifdef CONFIG_POSIX_TIMERS
-+	exit_itimers(me->signal);
-+	flush_itimer_signals();
-+#endif
-+
-+	/*
-+	 * Make the signal table private.
-+	 */
-+	retval = unshare_sighand(me);
-+	if (retval)
-+		goto out;
-+
- 	set_fs(USER_DS);
- 	me->flags &= ~(PF_RANDOMIZE | PF_FORKNOEXEC | PF_KTHREAD |
- 					PF_NOFREEZE | PF_NO_SETAFFINITY);
+ 	struct mutex cred_guard_mutex;	/* guard against foreign influences on
+ 					 * credential calculations
+-					 * (notably. ptrace) */
++					 * (notably. ptrace)
++					 * Deprecated do not use in new code.
++					 * Use exec_update_mutex instead.
++					 */
++	struct mutex exec_update_mutex;	/* Held while task_struct is being
++					 * updated during exec, and may have
++					 * inconsistent permissions.
++					 */
+ } __randomize_layout;
+ 
+ /*
+diff --git a/init/init_task.c b/init/init_task.c
+index 9e5cbe5eab7b..bd403ed3e418 100644
+--- a/init/init_task.c
++++ b/init/init_task.c
+@@ -26,6 +26,7 @@ static struct signal_struct init_signals = {
+ 	.multiprocess	= HLIST_HEAD_INIT,
+ 	.rlim		= INIT_RLIMITS,
+ 	.cred_guard_mutex = __MUTEX_INITIALIZER(init_signals.cred_guard_mutex),
++	.exec_update_mutex = __MUTEX_INITIALIZER(init_signals.exec_update_mutex),
+ #ifdef CONFIG_POSIX_TIMERS
+ 	.posix_timers = LIST_HEAD_INIT(init_signals.posix_timers),
+ 	.cputimer	= {
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 60a1295f4384..12896a6ecee6 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1594,6 +1594,7 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
+ 	sig->oom_score_adj_min = current->signal->oom_score_adj_min;
+ 
+ 	mutex_init(&sig->cred_guard_mutex);
++	mutex_init(&sig->exec_update_mutex);
+ 
+ 	return 0;
+ }
 -- 
 2.25.0
 
