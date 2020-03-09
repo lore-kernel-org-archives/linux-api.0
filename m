@@ -2,32 +2,32 @@ Return-Path: <SRS0=YmEt=42=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E971C10F29
-	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 18:26:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6F119C3F2C6
+	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 18:38:43 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 67BEB208C3
-	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 18:26:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 56F59215A4
+	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 18:38:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727390AbgCIS0x (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 9 Mar 2020 14:26:53 -0400
-Received: from out03.mta.xmission.com ([166.70.13.233]:36482 "EHLO
-        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727350AbgCIS0x (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Mar 2020 14:26:53 -0400
-Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out03.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        id S1727380AbgCISim (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 9 Mar 2020 14:38:42 -0400
+Received: from out01.mta.xmission.com ([166.70.13.231]:37496 "EHLO
+        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726661AbgCISim (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Mar 2020 14:38:42 -0400
+Received: from in02.mta.xmission.com ([166.70.13.52])
+        by out01.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.90_1)
         (envelope-from <ebiederm@xmission.com>)
-        id 1jBN72-0001Yq-SW; Mon, 09 Mar 2020 12:26:48 -0600
+        id 1jBNIV-0000rV-6s; Mon, 09 Mar 2020 12:38:39 -0600
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
-        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
+        by in02.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
         (Exim 4.87)
         (envelope-from <ebiederm@xmission.com>)
-        id 1jBN71-00066p-Tz; Mon, 09 Mar 2020 12:26:48 -0600
+        id 1jBNIU-0005Pe-BL; Mon, 09 Mar 2020 12:38:38 -0600
 From:   ebiederm@xmission.com (Eric W. Biederman)
 To:     Bernd Edlinger <bernd.edlinger@hotmail.de>
 Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
@@ -79,90 +79,65 @@ References: <AM6PR03MB5170EB4427BF5C67EE98FF09E4E60@AM6PR03MB5170.eurprd03.prod.
         <878sk94eay.fsf@x220.int.ebiederm.org>
         <AM6PR03MB517086003BD2C32E199690A3E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
         <87r1y12yc7.fsf@x220.int.ebiederm.org>
-Date:   Mon, 09 Mar 2020 13:24:30 -0500
-In-Reply-To: <87r1y12yc7.fsf@x220.int.ebiederm.org> (Eric W. Biederman's
-        message of "Mon, 09 Mar 2020 13:10:48 -0500")
-Message-ID: <87k13t2xpd.fsf@x220.int.ebiederm.org>
+        <87k13t2xpd.fsf@x220.int.ebiederm.org>
+Date:   Mon, 09 Mar 2020 13:36:20 -0500
+In-Reply-To: <87k13t2xpd.fsf@x220.int.ebiederm.org> (Eric W. Biederman's
+        message of "Mon, 09 Mar 2020 13:24:30 -0500")
+Message-ID: <87d09l2x5n.fsf@x220.int.ebiederm.org>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
-X-XM-SPF: eid=1jBN71-00066p-Tz;;;mid=<87k13t2xpd.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1/WnV4wYiwwbgU9GE0A9FUPBqxzJcDuRb4=
+X-XM-SPF: eid=1jBNIU-0005Pe-BL;;;mid=<87d09l2x5n.fsf@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1/fZjeW/NriwHgNNjscJbvec1XcCRYAn24=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
 Subject: Re: [PATCH v2 5/5] exec: Add a exec_update_mutex to replace cred_guard_mutex
 X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
+X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-ebiederm@xmission.com (Eric W. Biederman) writes:
 
-> Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
->
->> On 3/9/20 6:40 PM, Eric W. Biederman wrote:
->>> Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
->>> 
->>>> On 3/8/20 10:38 PM, Eric W. Biederman wrote:
->>>>>
->>>>> The cred_guard_mutex is problematic.  The cred_guard_mutex is held
->>>>> over the userspace accesses as the arguments from userspace are read.
->>>>> The cred_guard_mutex is held of PTRACE_EVENT_EXIT as the the other
->>>                                 ^ over
->>>>
->>>> ... is held while waiting for the trace parent to handle PTRACE_EVENT_EXIT
->>>> or something?
->>> 
->>> Yes.  Let me see if I can phrase that better.
->>> 
->>>> I wonder if we also should mention that
->>>> it is held while waiting for the trace parent to
->>>> receive the exit code with "wait"?
->>> 
->>> I don't think we have to spell out the details of how it all works,
->>> unless that makes things clearer.  Kernel developers can be expected
->>> to figure out how the kernel works.  The critical thing is that it is
->>> an indefinite wait for userspace to take action.
->>> 
->>> But I will look.
->>> 
->>>>> threads are killed.  The cred_guard_mutex is held over
->>>>> "put_user(0, tsk->clear_child_tid)" in exit_mm().
->>>>>
->>>>> Any of those can result in deadlock, as the cred_guard_mutex is held
->>>>> over a possible indefinite userspace waits for userspace.
->>>>>
->>>>> Add exec_update_mutex that is only held over exec updating process
->>>>
->>>> Add ?
->>> 
->>> Yes.  That is what the change does: add exec_update_mutex.
->>> 
->>
->> I just kind of missed the "subject" in this sentence,
->> like "This patch adds an exec_update_mutex that is ..."
->> but english is a foreign language for me, so may be okay as is.
->
-> English has a lot of options.  I think this is a stylistic difference.
->
-> Instead of being an observer and describing what the change does:
-> "This patch adds exec_update_mutex ..."  
->
-> I was being there in the moment and saying/commading what is happening:
-> "Add exec_update_mutex ..."
->
-> Using the more immdediate form ends up with more concise and clearer
-> sentences.
->
-> Every one of my writing teachers in school emphasized that point
-> and I see the who it works when I write things.  But writing is hard and
-> I still tend toward long rambling sentences with many qualifiers that
-> confuse and detract from the point rather than make it clear what is
-> happening.
+My rewritten change description reads as follows:
 
-And reading through it all now I can see your confusion.  That
-description of my changes was not well done.  Reworking it now.
+    exec: Add a exec_update_mutex to replace cred_guard_mutex
+    
+    The cred_guard_mutex is problematic as it is held over possibly
+    indefinite waits for userspace.  The possilbe indefinite waits for
+    userspace that I have identified are: The cred_guard_mutex is held in
+    PTRACE_EVENT_EXIT waiting for the tracer.  The cred_guard_mutex is
+    held over "put_user(0, tsk->clear_child_tid)" in exit_mm().  The
+    cred_guard_mutex is held over "get_user(futex_offset, ...")  in
+    exit_robust_list.  The cred_guard_mutex held over copy_strings.
+    
+    The functions get_user and put_user can trigger a page fault which can
+    potentially wait indefinitely in the case of userfaultfd or if
+    userspace implements part of the page fault path.
+    
+    In any of those cases the userspace process that the kernel is waiting
+    for might userspace might make a different system call that winds up
+    taking the cred_guard_mutex and result in deadlock.
+    
+    Holding a mutex over any of those possibly indefinite waits for
+    userspace does not appear necessary.  Add exec_update_mutex that will
+    just cover updating the process during exec where the permissions and
+    the objects pointed to by the task struct may be out of sync.
+    
+    The plan is to switch the users of cred_guard_mutex to
+    exec_udpate_mutex one by one.  This lets us move forward while still
+    being careful and not introducing any regressions.
+    
+    Link: https://lore.kernel.org/lkml/20160921152946.GA24210@dhcp22.suse.cz/
+    Link: https://lore.kernel.org/lkml/AM6PR03MB5170B06F3A2B75EFB98D071AE4E60@AM6PR03MB5170.eurprd03.prod.outlook.com/
+    Link: https://lore.kernel.org/linux-fsdevel/20161102181806.GB1112@redhat.com/
+    Link: https://lore.kernel.org/lkml/20160923095031.GA14923@redhat.com/
+    Link: https://lore.kernel.org/lkml/20170213141452.GA30203@redhat.com/
+    Ref: 45c1a159b85b ("Add PTRACE_O_TRACEVFORKDONE and PTRACE_O_TRACEEXIT facilities.")
+    Ref: 456f17cd1a28 ("[PATCH] user-vm-unlock-2.5.31-A2")
+    Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+
+Does that sound better?
 
 Eric
