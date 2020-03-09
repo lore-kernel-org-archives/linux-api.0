@@ -6,28 +6,28 @@ X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0053AC10F27
-	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 18:13:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E971C10F29
+	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 18:26:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id C89B820578
-	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 18:13:16 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 67BEB208C3
+	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 18:26:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726661AbgCISNQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 9 Mar 2020 14:13:16 -0400
-Received: from out01.mta.xmission.com ([166.70.13.231]:58336 "EHLO
-        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726467AbgCISNQ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Mar 2020 14:13:16 -0400
+        id S1727390AbgCIS0x (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 9 Mar 2020 14:26:53 -0400
+Received: from out03.mta.xmission.com ([166.70.13.233]:36482 "EHLO
+        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727350AbgCIS0x (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Mar 2020 14:26:53 -0400
 Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out01.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        by out03.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.90_1)
         (envelope-from <ebiederm@xmission.com>)
-        id 1jBMtm-0006L5-Mh; Mon, 09 Mar 2020 12:13:06 -0600
+        id 1jBN72-0001Yq-SW; Mon, 09 Mar 2020 12:26:48 -0600
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
         by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
         (Exim 4.87)
         (envelope-from <ebiederm@xmission.com>)
-        id 1jBMtl-0002m4-KU; Mon, 09 Mar 2020 12:13:06 -0600
+        id 1jBN71-00066p-Tz; Mon, 09 Mar 2020 12:26:48 -0600
 From:   ebiederm@xmission.com (Eric W. Biederman)
 To:     Bernd Edlinger <bernd.edlinger@hotmail.de>
 Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
@@ -78,15 +78,16 @@ References: <AM6PR03MB5170EB4427BF5C67EE98FF09E4E60@AM6PR03MB5170.eurprd03.prod.
         <AM6PR03MB5170BC58D90BAD80CDEF3F8BE4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
         <878sk94eay.fsf@x220.int.ebiederm.org>
         <AM6PR03MB517086003BD2C32E199690A3E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
-Date:   Mon, 09 Mar 2020 13:10:48 -0500
-In-Reply-To: <AM6PR03MB517086003BD2C32E199690A3E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        (Bernd Edlinger's message of "Mon, 9 Mar 2020 18:01:35 +0000")
-Message-ID: <87r1y12yc7.fsf@x220.int.ebiederm.org>
+        <87r1y12yc7.fsf@x220.int.ebiederm.org>
+Date:   Mon, 09 Mar 2020 13:24:30 -0500
+In-Reply-To: <87r1y12yc7.fsf@x220.int.ebiederm.org> (Eric W. Biederman's
+        message of "Mon, 09 Mar 2020 13:10:48 -0500")
+Message-ID: <87k13t2xpd.fsf@x220.int.ebiederm.org>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
-X-XM-SPF: eid=1jBMtl-0002m4-KU;;;mid=<87r1y12yc7.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX18QzwMdGCf8P173K+LAq8xnIr+Kw2IIWJI=
+X-XM-SPF: eid=1jBN71-00066p-Tz;;;mid=<87k13t2xpd.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1/WnV4wYiwwbgU9GE0A9FUPBqxzJcDuRb4=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
 Subject: Re: [PATCH v2 5/5] exec: Add a exec_update_mutex to replace cred_guard_mutex
@@ -97,66 +98,71 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
+ebiederm@xmission.com (Eric W. Biederman) writes:
 
-> On 3/9/20 6:40 PM, Eric W. Biederman wrote:
->> Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
->> 
->>> On 3/8/20 10:38 PM, Eric W. Biederman wrote:
->>>>
->>>> The cred_guard_mutex is problematic.  The cred_guard_mutex is held
->>>> over the userspace accesses as the arguments from userspace are read.
->>>> The cred_guard_mutex is held of PTRACE_EVENT_EXIT as the the other
->>                                 ^ over
->>>
->>> ... is held while waiting for the trace parent to handle PTRACE_EVENT_EXIT
->>> or something?
->> 
->> Yes.  Let me see if I can phrase that better.
->> 
->>> I wonder if we also should mention that
->>> it is held while waiting for the trace parent to
->>> receive the exit code with "wait"?
->> 
->> I don't think we have to spell out the details of how it all works,
->> unless that makes things clearer.  Kernel developers can be expected
->> to figure out how the kernel works.  The critical thing is that it is
->> an indefinite wait for userspace to take action.
->> 
->> But I will look.
->> 
->>>> threads are killed.  The cred_guard_mutex is held over
->>>> "put_user(0, tsk->clear_child_tid)" in exit_mm().
->>>>
->>>> Any of those can result in deadlock, as the cred_guard_mutex is held
->>>> over a possible indefinite userspace waits for userspace.
->>>>
->>>> Add exec_update_mutex that is only held over exec updating process
->>>
->>> Add ?
->> 
->> Yes.  That is what the change does: add exec_update_mutex.
->> 
+> Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
 >
-> I just kind of missed the "subject" in this sentence,
-> like "This patch adds an exec_update_mutex that is ..."
-> but english is a foreign language for me, so may be okay as is.
+>> On 3/9/20 6:40 PM, Eric W. Biederman wrote:
+>>> Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
+>>> 
+>>>> On 3/8/20 10:38 PM, Eric W. Biederman wrote:
+>>>>>
+>>>>> The cred_guard_mutex is problematic.  The cred_guard_mutex is held
+>>>>> over the userspace accesses as the arguments from userspace are read.
+>>>>> The cred_guard_mutex is held of PTRACE_EVENT_EXIT as the the other
+>>>                                 ^ over
+>>>>
+>>>> ... is held while waiting for the trace parent to handle PTRACE_EVENT_EXIT
+>>>> or something?
+>>> 
+>>> Yes.  Let me see if I can phrase that better.
+>>> 
+>>>> I wonder if we also should mention that
+>>>> it is held while waiting for the trace parent to
+>>>> receive the exit code with "wait"?
+>>> 
+>>> I don't think we have to spell out the details of how it all works,
+>>> unless that makes things clearer.  Kernel developers can be expected
+>>> to figure out how the kernel works.  The critical thing is that it is
+>>> an indefinite wait for userspace to take action.
+>>> 
+>>> But I will look.
+>>> 
+>>>>> threads are killed.  The cred_guard_mutex is held over
+>>>>> "put_user(0, tsk->clear_child_tid)" in exit_mm().
+>>>>>
+>>>>> Any of those can result in deadlock, as the cred_guard_mutex is held
+>>>>> over a possible indefinite userspace waits for userspace.
+>>>>>
+>>>>> Add exec_update_mutex that is only held over exec updating process
+>>>>
+>>>> Add ?
+>>> 
+>>> Yes.  That is what the change does: add exec_update_mutex.
+>>> 
+>>
+>> I just kind of missed the "subject" in this sentence,
+>> like "This patch adds an exec_update_mutex that is ..."
+>> but english is a foreign language for me, so may be okay as is.
+>
+> English has a lot of options.  I think this is a stylistic difference.
+>
+> Instead of being an observer and describing what the change does:
+> "This patch adds exec_update_mutex ..."  
+>
+> I was being there in the moment and saying/commading what is happening:
+> "Add exec_update_mutex ..."
+>
+> Using the more immdediate form ends up with more concise and clearer
+> sentences.
+>
+> Every one of my writing teachers in school emphasized that point
+> and I see the who it works when I write things.  But writing is hard and
+> I still tend toward long rambling sentences with many qualifiers that
+> confuse and detract from the point rather than make it clear what is
+> happening.
 
-English has a lot of options.  I think this is a stylistic difference.
-
-Instead of being an observer and describing what the change does:
-"This patch adds exec_update_mutex ..."  
-
-I was being there in the moment and saying/commading what is happening:
-"Add exec_update_mutex ..."
-
-Using the more immdediate form ends up with more concise and clearer
-sentences.
-
-Every one of my writing teachers in school emphasized that point
-and I see the who it works when I write things.  But writing is hard and
-I still tend toward long rambling sentences with many qualifiers that
-confuse and detract from the point rather than make it clear what is
-happening.
+And reading through it all now I can see your confusion.  That
+description of my changes was not well done.  Reworking it now.
 
 Eric
