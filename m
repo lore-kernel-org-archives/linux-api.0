@@ -2,36 +2,35 @@ Return-Path: <SRS0=YmEt=42=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D6FE6C10F27
-	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 19:44:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 377DFC10F29
+	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 19:47:37 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id BCE2124656
-	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 19:44:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 177E120828
+	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 19:47:37 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726170AbgCITor (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 9 Mar 2020 15:44:47 -0400
-Received: from out01.mta.xmission.com ([166.70.13.231]:60524 "EHLO
+        id S1726384AbgCITrg (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 9 Mar 2020 15:47:36 -0400
+Received: from out01.mta.xmission.com ([166.70.13.231]:33434 "EHLO
         out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726168AbgCITor (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Mar 2020 15:44:47 -0400
+        with ESMTP id S1725992AbgCITrg (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Mar 2020 15:47:36 -0400
 Received: from in01.mta.xmission.com ([166.70.13.51])
         by out01.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.90_1)
         (envelope-from <ebiederm@xmission.com>)
-        id 1jBOKT-0000LK-LE; Mon, 09 Mar 2020 13:44:45 -0600
+        id 1jBONC-0000ls-98; Mon, 09 Mar 2020 13:47:34 -0600
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
         by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
         (Exim 4.87)
         (envelope-from <ebiederm@xmission.com>)
-        id 1jBOKS-0006B0-CQ; Mon, 09 Mar 2020 13:44:45 -0600
+        id 1jBONB-0006yu-FV; Mon, 09 Mar 2020 13:47:34 -0600
 From:   ebiederm@xmission.com (Eric W. Biederman)
-To:     "Dmitry V. Levin" <ldv@altlinux.org>
-Cc:     Bernd Edlinger <bernd.edlinger@hotmail.de>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
+To:     Bernd Edlinger <bernd.edlinger@hotmail.de>
+Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
         Kees Cook <keescook@chromium.org>,
         Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
         Alexander Viro <viro@zeniv.linux.org.uk>,
@@ -55,35 +54,42 @@ Cc:     Bernd Edlinger <bernd.edlinger@hotmail.de>,
         Christian Kellner <christian@kellner.me>,
         Andrea Arcangeli <aarcange@redhat.com>,
         Aleksa Sarai <cyphar@cyphar.com>,
+        "Dmitry V. Levin" <ldv@altlinux.org>,
         "linux-doc\@vger.kernel.org" <linux-doc@vger.kernel.org>,
         "linux-kernel\@vger.kernel.org" <linux-kernel@vger.kernel.org>,
         "linux-fsdevel\@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
         "linux-mm\@kvack.org" <linux-mm@kvack.org>,
         "stable\@vger.kernel.org" <stable@vger.kernel.org>,
         "linux-api\@vger.kernel.org" <linux-api@vger.kernel.org>
-References: <87v9ne5y4y.fsf_-_@x220.int.ebiederm.org>
-        <87zhcq4jdj.fsf_-_@x220.int.ebiederm.org>
-        <AM6PR03MB5170BC58D90BAD80CDEF3F8BE4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <878sk94eay.fsf@x220.int.ebiederm.org>
-        <AM6PR03MB517086003BD2C32E199690A3E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <87r1y12yc7.fsf@x220.int.ebiederm.org>
-        <87k13t2xpd.fsf@x220.int.ebiederm.org>
-        <87d09l2x5n.fsf@x220.int.ebiederm.org>
-        <AM6PR03MB5170F0F9DC18F5EA77C9A857E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <871rq12vxu.fsf@x220.int.ebiederm.org>
-        <20200309193332.GA13534@altlinux.org>
-Date:   Mon, 09 Mar 2020 14:42:26 -0500
-In-Reply-To: <20200309193332.GA13534@altlinux.org> (Dmitry V. Levin's message
-        of "Mon, 9 Mar 2020 22:33:33 +0300")
-Message-ID: <871rq11fj1.fsf@x220.int.ebiederm.org>
+References: <AM6PR03MB5170EB4427BF5C67EE98FF09E4E60@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <87v9nmjulm.fsf@x220.int.ebiederm.org>
+        <AM6PR03MB5170B976E6387FDDAD59A118E4E70@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <202003021531.C77EF10@keescook>
+        <20200303085802.eqn6jbhwxtmz4j2x@wittgenstein>
+        <AM6PR03MB5170285B336790D3450E2644E4E40@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <87v9nlii0b.fsf@x220.int.ebiederm.org>
+        <AM6PR03MB5170609D44967E044FD1BE40E4E40@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <87a74xi4kz.fsf@x220.int.ebiederm.org>
+        <AM6PR03MB51705AA3009B4986BB6EF92FE4E50@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <87r1y8dqqz.fsf@x220.int.ebiederm.org>
+        <AM6PR03MB517053AED7DC89F7C0704B7DE4E50@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <AM6PR03MB51703B44170EAB4626C9B2CAE4E20@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <87tv32cxmf.fsf_-_@x220.int.ebiederm.org>
+        <87v9ne5y4y.fsf_-_@x220.int.ebiederm.org>
+        <875zfe5xzb.fsf_-_@x220.int.ebiederm.org>
+        <AM6PR03MB5170C3A4319BA6A057C3CCACE4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
+Date:   Mon, 09 Mar 2020 14:45:15 -0500
+In-Reply-To: <AM6PR03MB5170C3A4319BA6A057C3CCACE4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        (Bernd Edlinger's message of "Mon, 9 Mar 2020 19:34:59 +0000")
+Message-ID: <87tv2xz510.fsf@x220.int.ebiederm.org>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
-X-XM-SPF: eid=1jBOKS-0006B0-CQ;;;mid=<871rq11fj1.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX19p24kmlglnsW31glyAX+zom+2dc6zCzvk=
+X-XM-SPF: eid=1jBONB-0006yu-FV;;;mid=<87tv2xz510.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX19PMadbznaJfutgyOFU+nq1+wKoP70FUBk=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: Re: [PATCH v2 5/5] exec: Add a exec_update_mutex to replace cred_guard_mutex
+Subject: Re: [PATCH v2 4/5] exec: Move exec_mmap right after de_thread in flush_old_exec
 X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
 X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Sender: linux-api-owner@vger.kernel.org
@@ -91,29 +97,39 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-"Dmitry V. Levin" <ldv@altlinux.org> writes:
+Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
 
-> On Mon, Mar 09, 2020 at 02:02:37PM -0500, Eric W. Biederman wrote:
->> Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
+> On 3/8/20 10:38 PM, Eric W. Biederman wrote:
 >> 
->> > On 3/9/20 7:36 PM, Eric W. Biederman wrote:
->> >> 
->> >> 
->> >> Does that sound better?
->> >> 
->> >
->> > almost done.
->> 
->> I think this text is finally clean.
->> 
->>     exec: Add exec_update_mutex to replace cred_guard_mutex
->>     
->>     The cred_guard_mutex is problematic as it is held over possibly
->>     indefinite waits for userspace.  The possilbe indefinite waits for
+>> This consolidation allows the creation of a mutex to replace
+>> cred_guard_mutex that is not held of possible indefinite userspace
 >
-> -------------------------------------------^^^^^^^^ possible?
+> can you also reword this "held of" thing here as well?
 
+Done:
 
-Yes.  Thank you.  Fixed.
+    exec: Move exec_mmap right after de_thread in flush_old_exec
+    
+    I have read through the code in exec_mmap and I do not see anything
+    that depends on sighand or the sighand lock, or on signals in anyway
+    so this should be safe.
+    
+    This rearrangement of code has two siginficant benefits.  It makes
+    the determination of passing the point of no return by testing bprm->mm
+    accurate.  All failures prior to that point in flush_old_exec are
+    either truly recoverable or they are fatal.
+    
+    Futher this consolidates all of the possible indefinite waits for
+    userspace together at the top of flush_old_exec.  The possible wait
+    for a ptracer on PTRACE_EVENT_EXIT, the possible wait for a page fault
+    to be resolved in clear_child_tid, and the possible wait for a page
+    fault in exit_robust_list.
+    
+    This consolidation allows the creation of a mutex to replace
+    cred_guard_mutex that is not held over possible indefinite userspace
+    waits.  Which will allow removing deadlock scenarios from the kernel.
+    
+    Reviewed-by: Bernd Edlinger <bernd.edlinger@hotmail.de>
+    Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 
 Eric
