@@ -2,32 +2,32 @@ Return-Path: <SRS0=YmEt=42=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=no
+X-Spam-Status: No, score=-5.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B541DC10F25
-	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 19:37:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 24401C10F25
+	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 19:42:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 904952465A
-	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 19:37:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0184224656
+	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 19:42:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726195AbgCIThw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 9 Mar 2020 15:37:52 -0400
-Received: from out03.mta.xmission.com ([166.70.13.233]:57330 "EHLO
-        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726156AbgCIThv (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Mar 2020 15:37:51 -0400
+        id S1726202AbgCITmL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 9 Mar 2020 15:42:11 -0400
+Received: from out02.mta.xmission.com ([166.70.13.232]:51124 "EHLO
+        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725992AbgCITmL (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Mar 2020 15:42:11 -0400
 Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out03.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        by out02.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.90_1)
         (envelope-from <ebiederm@xmission.com>)
-        id 1jBODe-00015d-OU; Mon, 09 Mar 2020 13:37:42 -0600
+        id 1jBOHw-0001gR-05; Mon, 09 Mar 2020 13:42:08 -0600
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
         by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
         (Exim 4.87)
         (envelope-from <ebiederm@xmission.com>)
-        id 1jBODd-0004Wy-QQ; Mon, 09 Mar 2020 13:37:42 -0600
+        id 1jBOHv-0005RY-BJ; Mon, 09 Mar 2020 13:42:07 -0600
 From:   ebiederm@xmission.com (Eric W. Biederman)
 To:     Bernd Edlinger <bernd.edlinger@hotmail.de>
 Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
@@ -79,15 +79,15 @@ References: <AM6PR03MB5170EB4427BF5C67EE98FF09E4E60@AM6PR03MB5170.eurprd03.prod.
         <AM6PR03MB5170F0F9DC18F5EA77C9A857E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
         <871rq12vxu.fsf@x220.int.ebiederm.org>
         <AM6PR03MB5170DF45E3245F55B95CCD91E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
-Date:   Mon, 09 Mar 2020 14:35:24 -0500
+Date:   Mon, 09 Mar 2020 14:39:48 -0500
 In-Reply-To: <AM6PR03MB5170DF45E3245F55B95CCD91E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
         (Bernd Edlinger's message of "Mon, 9 Mar 2020 19:24:58 +0000")
-Message-ID: <87fteh1fur.fsf@x220.int.ebiederm.org>
+Message-ID: <877dzt1fnf.fsf@x220.int.ebiederm.org>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
-X-XM-SPF: eid=1jBODd-0004Wy-QQ;;;mid=<87fteh1fur.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1+DDWQI5cjwElTn1n4Tvz89F0vLYf/zGAA=
+X-XM-SPF: eid=1jBOHv-0005RY-BJ;;;mid=<877dzt1fnf.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1+Fc4XJOPZKxp1dWtQ4/KNx9CzyIa+wi0k=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
 Subject: Re: [PATCH v2 5/5] exec: Add a exec_update_mutex to replace cred_guard_mutex
@@ -101,44 +101,7 @@ X-Mailing-List: linux-api@vger.kernel.org
 Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
 
 > On 3/9/20 8:02 PM, Eric W. Biederman wrote:
->> Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
 >> 
->>> On 3/9/20 7:36 PM, Eric W. Biederman wrote:
->>>>
->>>>
->>>> Does that sound better?
->>>>
->>>
->>> almost done.
->> 
->> I think this text is finally clean.
->> 
->>     exec: Add exec_update_mutex to replace cred_guard_mutex
->>     
->>     The cred_guard_mutex is problematic as it is held over possibly
->>     indefinite waits for userspace.  The possilbe indefinite waits for
->>     userspace that I have identified are: The cred_guard_mutex is held in
->>     PTRACE_EVENT_EXIT waiting for the tracer.  The cred_guard_mutex is
->>     held over "put_user(0, tsk->clear_child_tid)" in exit_mm().  The
->>     cred_guard_mutex is held over "get_user(futex_offset, ...")  in
->>     exit_robust_list.  The cred_guard_mutex held over copy_strings.
->>     
->>     The functions get_user and put_user can trigger a page fault which can
->>     potentially wait indefinitely in the case of userfaultfd or if
->>     userspace implements part of the page fault path.
->>     
->>     In any of those cases the userspace process that the kernel is waiting
->>     for might make a different system call that winds up taking the
->>     cred_guard_mutex and result in deadlock.
->>     
->>     Holding a mutex over any of those possibly indefinite waits for
->>     userspace does not appear necessary.  Add exec_update_mutex that will
->>     just cover updating the process during exec where the permissions and
->>     the objects pointed to by the task struct may be out of sync.
->>     
->>     The plan is to switch the users of cred_guard_mutex to
->>     exec_update_mutex one by one.  This lets us move forward while still
->>     being careful and not introducing any regressions.
 >>     
 >>     Link: https://lore.kernel.org/lkml/20160921152946.GA24210@dhcp22.suse.cz/
 >>     Link: https://lore.kernel.org/lkml/AM6PR03MB5170B06F3A2B75EFB98D071AE4E60@AM6PR03MB5170.eurprd03.prod.outlook.com/
@@ -151,39 +114,9 @@ Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
 > I checked the urls they all work.
 > Just one last question, are these git references?
 > I can't find them in my linux git tree (cloned from linus' git)?
->
-> Sorry for being pedantically.
 
-You have to track down tglx's historicaly git tree from when everything
-was in bitkeeper.
+I will add this tag to help people figure out what is going on.
 
-But yes they are git references and yes they work.  Just that part
-of the history is not in linux.git.
-
->>     Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
->> 
->> 
->> Bernd do you want to give me your Reviewed-by for this part of the
->> series?
->> 
->
-> Sure also the other parts of course.
->
-> Reviewed-by: Bernd Edlinger <bernd.edlinger@hotmail.de>
->
->> After that do you think you can write the obvious patch for mm_access?
->> 
->
-> Yes, I can do that.
-> I also have some typos in comments, will make them extra patches as well.
->
-> I wonder if the test case is okay to include the ptrace_attach altough
-> that is not yet passing?
-
-It is an existing kernel but that it doesn't pass.
-
-My sense is that if you include it as a separate patch if it is a
-problem for someone we can identify it easily via bisect and we do
-whatever is appropriate.
+History Tree: https://git.kernel.org/pub/scm/linux/kernel/git/tglx/history.git
 
 Eric
