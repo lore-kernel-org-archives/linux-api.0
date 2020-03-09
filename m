@@ -2,35 +2,36 @@ Return-Path: <SRS0=YmEt=42=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 24401C10F25
-	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 19:42:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D6FE6C10F27
+	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 19:44:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 0184224656
-	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 19:42:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BCE2124656
+	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 19:44:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726202AbgCITmL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 9 Mar 2020 15:42:11 -0400
-Received: from out02.mta.xmission.com ([166.70.13.232]:51124 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725992AbgCITmL (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Mar 2020 15:42:11 -0400
+        id S1726170AbgCITor (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 9 Mar 2020 15:44:47 -0400
+Received: from out01.mta.xmission.com ([166.70.13.231]:60524 "EHLO
+        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726168AbgCITor (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Mar 2020 15:44:47 -0400
 Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out02.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        by out01.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.90_1)
         (envelope-from <ebiederm@xmission.com>)
-        id 1jBOHw-0001gR-05; Mon, 09 Mar 2020 13:42:08 -0600
+        id 1jBOKT-0000LK-LE; Mon, 09 Mar 2020 13:44:45 -0600
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
         by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
         (Exim 4.87)
         (envelope-from <ebiederm@xmission.com>)
-        id 1jBOHv-0005RY-BJ; Mon, 09 Mar 2020 13:42:07 -0600
+        id 1jBOKS-0006B0-CQ; Mon, 09 Mar 2020 13:44:45 -0600
 From:   ebiederm@xmission.com (Eric W. Biederman)
-To:     Bernd Edlinger <bernd.edlinger@hotmail.de>
-Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
+To:     "Dmitry V. Levin" <ldv@altlinux.org>
+Cc:     Bernd Edlinger <bernd.edlinger@hotmail.de>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
         Kees Cook <keescook@chromium.org>,
         Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
         Alexander Viro <viro@zeniv.linux.org.uk>,
@@ -54,21 +55,13 @@ Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
         Christian Kellner <christian@kellner.me>,
         Andrea Arcangeli <aarcange@redhat.com>,
         Aleksa Sarai <cyphar@cyphar.com>,
-        "Dmitry V. Levin" <ldv@altlinux.org>,
         "linux-doc\@vger.kernel.org" <linux-doc@vger.kernel.org>,
         "linux-kernel\@vger.kernel.org" <linux-kernel@vger.kernel.org>,
         "linux-fsdevel\@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
         "linux-mm\@kvack.org" <linux-mm@kvack.org>,
         "stable\@vger.kernel.org" <stable@vger.kernel.org>,
         "linux-api\@vger.kernel.org" <linux-api@vger.kernel.org>
-References: <AM6PR03MB5170EB4427BF5C67EE98FF09E4E60@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <87a74xi4kz.fsf@x220.int.ebiederm.org>
-        <AM6PR03MB51705AA3009B4986BB6EF92FE4E50@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <87r1y8dqqz.fsf@x220.int.ebiederm.org>
-        <AM6PR03MB517053AED7DC89F7C0704B7DE4E50@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <AM6PR03MB51703B44170EAB4626C9B2CAE4E20@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <87tv32cxmf.fsf_-_@x220.int.ebiederm.org>
-        <87v9ne5y4y.fsf_-_@x220.int.ebiederm.org>
+References: <87v9ne5y4y.fsf_-_@x220.int.ebiederm.org>
         <87zhcq4jdj.fsf_-_@x220.int.ebiederm.org>
         <AM6PR03MB5170BC58D90BAD80CDEF3F8BE4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
         <878sk94eay.fsf@x220.int.ebiederm.org>
@@ -78,16 +71,16 @@ References: <AM6PR03MB5170EB4427BF5C67EE98FF09E4E60@AM6PR03MB5170.eurprd03.prod.
         <87d09l2x5n.fsf@x220.int.ebiederm.org>
         <AM6PR03MB5170F0F9DC18F5EA77C9A857E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
         <871rq12vxu.fsf@x220.int.ebiederm.org>
-        <AM6PR03MB5170DF45E3245F55B95CCD91E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
-Date:   Mon, 09 Mar 2020 14:39:48 -0500
-In-Reply-To: <AM6PR03MB5170DF45E3245F55B95CCD91E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        (Bernd Edlinger's message of "Mon, 9 Mar 2020 19:24:58 +0000")
-Message-ID: <877dzt1fnf.fsf@x220.int.ebiederm.org>
+        <20200309193332.GA13534@altlinux.org>
+Date:   Mon, 09 Mar 2020 14:42:26 -0500
+In-Reply-To: <20200309193332.GA13534@altlinux.org> (Dmitry V. Levin's message
+        of "Mon, 9 Mar 2020 22:33:33 +0300")
+Message-ID: <871rq11fj1.fsf@x220.int.ebiederm.org>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
-X-XM-SPF: eid=1jBOHv-0005RY-BJ;;;mid=<877dzt1fnf.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1+Fc4XJOPZKxp1dWtQ4/KNx9CzyIa+wi0k=
+X-XM-SPF: eid=1jBOKS-0006B0-CQ;;;mid=<871rq11fj1.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX19p24kmlglnsW31glyAX+zom+2dc6zCzvk=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
 Subject: Re: [PATCH v2 5/5] exec: Add a exec_update_mutex to replace cred_guard_mutex
@@ -98,25 +91,29 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
+"Dmitry V. Levin" <ldv@altlinux.org> writes:
 
-> On 3/9/20 8:02 PM, Eric W. Biederman wrote:
+> On Mon, Mar 09, 2020 at 02:02:37PM -0500, Eric W. Biederman wrote:
+>> Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
 >> 
+>> > On 3/9/20 7:36 PM, Eric W. Biederman wrote:
+>> >> 
+>> >> 
+>> >> Does that sound better?
+>> >> 
+>> >
+>> > almost done.
+>> 
+>> I think this text is finally clean.
+>> 
+>>     exec: Add exec_update_mutex to replace cred_guard_mutex
 >>     
->>     Link: https://lore.kernel.org/lkml/20160921152946.GA24210@dhcp22.suse.cz/
->>     Link: https://lore.kernel.org/lkml/AM6PR03MB5170B06F3A2B75EFB98D071AE4E60@AM6PR03MB5170.eurprd03.prod.outlook.com/
->>     Link: https://lore.kernel.org/linux-fsdevel/20161102181806.GB1112@redhat.com/
->>     Link: https://lore.kernel.org/lkml/20160923095031.GA14923@redhat.com/
->>     Link: https://lore.kernel.org/lkml/20170213141452.GA30203@redhat.com/
->>     Ref: 45c1a159b85b ("Add PTRACE_O_TRACEVFORKDONE and PTRACE_O_TRACEEXIT facilities.")
->>     Ref: 456f17cd1a28 ("[PATCH] user-vm-unlock-2.5.31-A2")
+>>     The cred_guard_mutex is problematic as it is held over possibly
+>>     indefinite waits for userspace.  The possilbe indefinite waits for
 >
-> I checked the urls they all work.
-> Just one last question, are these git references?
-> I can't find them in my linux git tree (cloned from linus' git)?
+> -------------------------------------------^^^^^^^^ possible?
 
-I will add this tag to help people figure out what is going on.
 
-History Tree: https://git.kernel.org/pub/scm/linux/kernel/git/tglx/history.git
+Yes.  Thank you.  Fixed.
 
 Eric
