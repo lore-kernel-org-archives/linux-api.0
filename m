@@ -3,66 +3,67 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C9C5C10F27
-	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 21:13:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EBD0BC3F2C6
+	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 22:02:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 7B9FA24676
-	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 21:13:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C8CD424655
+	for <linux-api@archiver.kernel.org>; Mon,  9 Mar 2020 22:02:51 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Uo33X2KR"
+	dkim=pass (2048-bit key) header.d=amacapital-net.20150623.gappssmtp.com header.i=@amacapital-net.20150623.gappssmtp.com header.b="k7m0mMFH"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726169AbgCIVNK (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 9 Mar 2020 17:13:10 -0400
-Received: from mail-oi1-f195.google.com ([209.85.167.195]:36337 "EHLO
-        mail-oi1-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726118AbgCIVNK (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Mar 2020 17:13:10 -0400
-Received: by mail-oi1-f195.google.com with SMTP id t24so11715073oij.3;
-        Mon, 09 Mar 2020 14:13:08 -0700 (PDT)
+        id S1726809AbgCIWCv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 9 Mar 2020 18:02:51 -0400
+Received: from mail-pf1-f195.google.com ([209.85.210.195]:34298 "EHLO
+        mail-pf1-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726698AbgCIWCv (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Mar 2020 18:02:51 -0400
+Received: by mail-pf1-f195.google.com with SMTP id 23so3671003pfj.1
+        for <linux-api@vger.kernel.org>; Mon, 09 Mar 2020 15:02:50 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc:content-transfer-encoding;
-        bh=3z8EHLpMCQvcYpt6UukodjjMPaKQSfJoSvh+H1FwXpE=;
-        b=Uo33X2KRJb36R+pDGYk+8RIeN85dKzwpgdLbDUPr+9B9BMZ85RveP6Gg4P9oyZxbm4
-         2K3e4tdKvGoGtgRpjcwgMiWQZt8UJb/UFNJHw5tLF0NOWHFrNFdyRXTkFSbkf5H4tsc6
-         IcpYpKYWqffJV6s2v90EZdhLsDqIKsO+RfndJ8vdAPvApbSRQC+o9evQVkA1fncfVn94
-         /r1A5ShhXUejgZgxKKIPCMr3s+3DprNyhVawLwBIFSWp9lSWYYnxpaTqXttawWDI94Z0
-         rwKxBj33qEtxur5xqGdRtakBXCrM+5cjMBQn/XmEncvVst15+znYnLuBqtLxKgb9OaTt
-         ARPA==
+        d=amacapital-net.20150623.gappssmtp.com; s=20150623;
+        h=content-transfer-encoding:from:mime-version:subject:date:message-id
+         :references:cc:in-reply-to:to;
+        bh=B5OgwLbxTYL8rRn4EF2MAfAN7hpkfoK750t2M4UCwgo=;
+        b=k7m0mMFH+E9q0CRxNmkcw/WjIiU3u8HYrkthyvX44sVEWwSTtlfL9zkRTWaymm0suE
+         z/oxWHIuh8U6qpYlzE/uQv8I2nH9Cq7mWonmkYvAA8FFoEtNExjsUyB3EkAR5IIui3Ws
+         +ZMeEfw+tUooprJRQE2K4pBEIO+Krj+J200DwENOWzFav0P5RAzc3ZcoEkQn+KZ47yOP
+         sdY2c3TneVv0k2YoQhIYlkhgHyfLOenohLqOLf4d/BxIX9wXrvTZrJtuN4qlRQwHs3sN
+         XaZtsypjg/xuhgxYLejS54RIfQ8WhqX/OAyaeMB6VFTlZEOYPGbWmt8vZtK38VR6V4UD
+         z3tA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc:content-transfer-encoding;
-        bh=3z8EHLpMCQvcYpt6UukodjjMPaKQSfJoSvh+H1FwXpE=;
-        b=XaRcRA0nnFmk6hUImivNgx9D/4/iz6PE4iE+71d3TjFW9RVjTA2V2/+5wjvWgMBhBm
-         XNclZSpwrGhfWJ8JL/Nwc6u+duX3OLhmim5PkI3qae1HbRus1MGcpGjMu0j2pt8ytvJI
-         YLPlcXa7Lolo6e1mUbj1GkTBR+4zmpzr+A/0pu68C6C9nEpLYVsZEOIh5rS2Jr7KO/Ub
-         P7JozaSqeZ9SfzuNVOWa4IrZsVMr77HR03H5Fq8JSHN51EANQ1n8FzPrGmpC+D61y0u7
-         mSPH65yPrq9PfxKCFkdiLTlK3PM7tlbciDKtKIMvEtZyBVNVIpqiCAgufA8YCxnAeOHN
-         MfXQ==
-X-Gm-Message-State: ANhLgQ2vVITex+zonIROH+r5Hv99/GsMYcyolwHIvlO9BfOSB3U7Fi5W
-        y0bz+nEgO9yO6/QhMgOhE7flTErhC4mO8WOUCP8=
-X-Google-Smtp-Source: ADFU+vuIWAeuG6fp3KaR1L5/2IvghcQfrXPwsJh/m5EVZSNOWjVc3Evh0yp9ILZ/129trtK5JRkTF3lPbT5uuTXehkU=
-X-Received: by 2002:aca:aa12:: with SMTP id t18mr853523oie.95.1583788387706;
- Mon, 09 Mar 2020 14:13:07 -0700 (PDT)
-MIME-Version: 1.0
-References: <CAMe9rOoRTVUzNC88Ho2XTTNJCymrd3L=XdB9xFcgxPVwAZ0FWA@mail.gmail.com>
- <AE81FEF5-ECC5-46AA-804D-9D64E656D16E@amacapital.net> <CAMe9rOoDMenvD9XRL1szR5yLQEwv9Q6f4O7CtwbdZ-cJqzezKA@mail.gmail.com>
- <0088001c-0b12-a7dc-ff2a-9d5c282fa36b@intel.com>
-In-Reply-To: <0088001c-0b12-a7dc-ff2a-9d5c282fa36b@intel.com>
-From:   "H.J. Lu" <hjl.tools@gmail.com>
-Date:   Mon, 9 Mar 2020 14:12:31 -0700
-Message-ID: <CAMe9rOqf0OHL9397Vikgb=UWhRMf+FmGq-9VAJNmfmzNMMDkCw@mail.gmail.com>
+        h=x-gm-message-state:content-transfer-encoding:from:mime-version
+         :subject:date:message-id:references:cc:in-reply-to:to;
+        bh=B5OgwLbxTYL8rRn4EF2MAfAN7hpkfoK750t2M4UCwgo=;
+        b=RYk/+UipgerV4G8LbixnqeLlYmK8cSwhyb2iR9w2I5xMd8HF09c9AvTE37cq36PWFS
+         1QdjfLW1aK2A4soOwyfwl1gEepwBgpfML81GMuwnRtFvt3dFoaRU2z0nnOVEaQLSU0KA
+         P3PGlUMP7bb6fo+rMfJNw0kOwiHNfTVFrd6kMvSPoDBY4/Y+3rNqy7DFLhPmJljAzrnB
+         0xFpedwExcFo6qzBhV9C7CgF46zkKECmbCMtF/LJYDJPl8JBeSGsJIm2z4vUPOn9aIjS
+         ywr9hFnQFK+HEoR4CFa1HAe3PhGxCw/vjNuwLGF+muTeqipGVtKEITNEZVJZlBa1OPBk
+         AM0g==
+X-Gm-Message-State: ANhLgQ34YOo1Bgz8hDNgEYi5uqgWSCnrxyzaPrA+WG6XBOUvofRBlLBx
+        Fdh8d3oPR8eV5qDvc43E+hJxxQ==
+X-Google-Smtp-Source: ADFU+vsx7LnRrhN+zK+Ce/q90rwl9eKyvQc5jsl61yoaiGP1sPVaeB+aS/NwpUfls6ugHik69LHdsA==
+X-Received: by 2002:aa7:8805:: with SMTP id c5mr19035175pfo.142.1583791369790;
+        Mon, 09 Mar 2020 15:02:49 -0700 (PDT)
+Received: from ?IPv6:2600:1010:b008:e441:7cf7:7af3:4ebc:f96b? ([2600:1010:b008:e441:7cf7:7af3:4ebc:f96b])
+        by smtp.gmail.com with ESMTPSA id y28sm21152320pgc.69.2020.03.09.15.02.48
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 09 Mar 2020 15:02:48 -0700 (PDT)
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+From:   Andy Lutomirski <luto@amacapital.net>
+Mime-Version: 1.0 (1.0)
 Subject: Re: [RFC PATCH v9 01/27] Documentation/x86: Add CET description
-To:     Dave Hansen <dave.hansen@intel.com>
-Cc:     Andy Lutomirski <luto@amacapital.net>,
+Date:   Mon, 9 Mar 2020 15:02:47 -0700
+Message-Id: <2F4A39C5-34EF-4D41-A178-08C34FFA9762@amacapital.net>
+References: <CAMe9rOqf0OHL9397Vikgb=UWhRMf+FmGq-9VAJNmfmzNMMDkCw@mail.gmail.com>
+Cc:     Dave Hansen <dave.hansen@intel.com>,
         Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        "the arch/x86 maintainers" <x86@kernel.org>,
+        the arch/x86 maintainers <x86@kernel.org>,
         "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
         Ingo Molnar <mingo@redhat.com>,
@@ -88,41 +89,52 @@ Cc:     Andy Lutomirski <luto@amacapital.net>,
         "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
         Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
         Dave Martin <Dave.Martin@arm.com>, x86-patch-review@intel.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <CAMe9rOqf0OHL9397Vikgb=UWhRMf+FmGq-9VAJNmfmzNMMDkCw@mail.gmail.com>
+To:     "H.J. Lu" <hjl.tools@gmail.com>
+X-Mailer: iPhone Mail (17D50)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Mar 9, 2020 at 1:59 PM Dave Hansen <dave.hansen@intel.com> wrote:
->
-> On 3/9/20 1:54 PM, H.J. Lu wrote:
-> >> If a program with the magic ELF CET flags missing can=E2=80=99t make a
-> >> thread with IBT and/or SHSTK enabled, then I think we=E2=80=99ve made =
-an
-> >> error and should fix it.
-> >>
-> > A non-CET program can start a CET program and vice versa.
->
-> Could we be specific here, please?
->
-> HJ are you saying that:
-> * CET program can execve() a non-CET program, and
-> * a non-CET program can execve() a CET program
->
-> ?
 
-Yes.
+> On Mar 9, 2020, at 2:13 PM, H.J. Lu <hjl.tools@gmail.com> wrote:
+>=20
+> =EF=BB=BFOn Mon, Mar 9, 2020 at 1:59 PM Dave Hansen <dave.hansen@intel.com=
+> wrote:
+>>=20
+>> On 3/9/20 1:54 PM, H.J. Lu wrote:
+>>>> If a program with the magic ELF CET flags missing can=E2=80=99t make a
+>>>> thread with IBT and/or SHSTK enabled, then I think we=E2=80=99ve made a=
+n
+>>>> error and should fix it.
+>>>>=20
+>>> A non-CET program can start a CET program and vice versa.
+>>=20
+>> Could we be specific here, please?
+>>=20
+>> HJ are you saying that:
+>> * CET program can execve() a non-CET program, and
+>> * a non-CET program can execve() a CET program
+>>=20
+>> ?
+>=20
+> Yes.
+>=20
+>> That's obvious.
+>>=20
+>> But what are the rules for clone()?  Should there be rules for
+>> mismatches for CET enabling between threads if a process (not child
+>> processes)?
+>=20
+> What did you mean? A threaded application is either CET enabled or not
+> CET enabled.   A new thread from clone makes no difference.
 
-> That's obvious.
->
-> But what are the rules for clone()?  Should there be rules for
-> mismatches for CET enabling between threads if a process (not child
-> processes)?
+Why?  Dave=E2=80=99s example seems like a good reason to allow per-thread co=
+ntrol.
 
-What did you mean? A threaded application is either CET enabled or not
-CET enabled.   A new thread from clone makes no difference.
 
---=20
-H.J.
+
+>=20
+> --=20
+> H.J.
