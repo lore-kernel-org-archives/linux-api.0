@@ -2,135 +2,150 @@ Return-Path: <SRS0=yzTb=43=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.9 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AB379C10F27
-	for <linux-api@archiver.kernel.org>; Tue, 10 Mar 2020 00:18:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2390FC18E5A
+	for <linux-api@archiver.kernel.org>; Tue, 10 Mar 2020 01:21:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 7874B24655
-	for <linux-api@archiver.kernel.org>; Tue, 10 Mar 2020 00:18:29 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E152B24649
+	for <linux-api@archiver.kernel.org>; Tue, 10 Mar 2020 01:21:07 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=anarazel.de header.i=@anarazel.de header.b="hCLjptm8";
-	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="hR1CHx7s"
+	dkim=pass (2048-bit key) header.d=amacapital-net.20150623.gappssmtp.com header.i=@amacapital-net.20150623.gappssmtp.com header.b="g/iv7CpG"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727487AbgCJAS1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 9 Mar 2020 20:18:27 -0400
-Received: from new4-smtp.messagingengine.com ([66.111.4.230]:39277 "EHLO
-        new4-smtp.messagingengine.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1726937AbgCJAS0 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Mar 2020 20:18:26 -0400
-Received: from compute3.internal (compute3.nyi.internal [10.202.2.43])
-        by mailnew.nyi.internal (Postfix) with ESMTP id 35D6B2B17;
-        Mon,  9 Mar 2020 20:18:25 -0400 (EDT)
-Received: from mailfrontend2 ([10.202.2.163])
-  by compute3.internal (MEProxy); Mon, 09 Mar 2020 20:18:25 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=anarazel.de; h=
-        date:from:to:cc:subject:message-id:references:mime-version
-        :content-type:in-reply-to; s=fm1; bh=y2GQYGvf1VdVHeGmvE5sDqwzusj
-        gACWrEd8rXJZj1/8=; b=hCLjptm8wkq6KP7tCx7x9OtPNkX0eMvm5L8o2L97Wdo
-        y7vZrsFkN2f4S8Xv4R8dqRogUS/9W/QJ66jTev5Aoip48Jo0P4gB73pf4vehqIPK
-        JjNTp8MWQ1ArZcM945bWyUlu9TnTT7vRowJNgZw7oaWVz+6Ro+kUV+BvaTb/Axir
-        Rd6auBHkdyebUJ4UZ8DYveKmdHVSu6fdUbPx5wy2rYk0qCyFwSg38WMAwVPUg5Ku
-        GA4lOOXpIKxaAK22UekVw8FFJzKTa6OzjJ9Oxk/T3qcyaA35MUgwyxYjd1ZtgS6K
-        i5h6lcNjdPFhMmGhYyeM8m3cEHGO/5NZU3TbC7SzNdw==
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
-        messagingengine.com; h=cc:content-type:date:from:in-reply-to
-        :message-id:mime-version:references:subject:to:x-me-proxy
-        :x-me-proxy:x-me-sender:x-me-sender:x-sasl-enc; s=fm2; bh=y2GQYG
-        vf1VdVHeGmvE5sDqwzusjgACWrEd8rXJZj1/8=; b=hR1CHx7sGSLI0tfsHsnts5
-        3Hmffp3/lf5X5mVKSJZiHGvay1HEsa/lAhINcfhikONaFnXvPMdWcLXqeI65qu98
-        5IGZzvzrZLQ9rEQZTkcsAFr2dIvY4csYaQValDPkpQpiqkp6DIy7g6XepjoptqAM
-        TAM4ZHUlxf1IYp29XvsF7D7DaBJDJkw0kAtUKVLfY/O4E08dDeL6j/ykjMW5rpWe
-        5XcWL8In/VDf8l+3tnGbBDB8uwSj9B1NPqbn3/lNK7AcsnmcVtwEgK191sA2Nh4G
-        LIeRxCXeQnoCNpMDjJXnTOClDNOcp3XeJNhqoSjyqGciCTV5p+IuLeAxePrsi5bg
-        ==
-X-ME-Sender: <xms:z9xmXj9MdiMQxb3sWpQ0zpHMFqyrXHaQEw8NK1xMORNkzGXW3ZRTzQ>
-X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedugedrudduledgudelucetufdoteggodetrfdotf
-    fvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdfqfgfvpdfurfetoffkrfgpnffqhgen
-    uceurghilhhouhhtmecufedttdenucesvcftvggtihhpihgvnhhtshculddquddttddmne
-    cujfgurhepfffhvffukfhfgggtuggjsehttdertddttddvnecuhfhrohhmpeetnhgurhgv
-    shcuhfhrvghunhguuceorghnughrvghssegrnhgrrhgriigvlhdruggvqeenucfkphepie
-    ejrdduiedtrddvudejrddvhedtnecuvehluhhsthgvrhfuihiivgeptdenucfrrghrrghm
-    pehmrghilhhfrhhomheprghnughrvghssegrnhgrrhgriigvlhdruggv
-X-ME-Proxy: <xmx:z9xmXg-FyPlg1L30wL5k3gQsDNd-t7jy7bKj8Kt6liqh63q9EbY7mw>
-    <xmx:z9xmXuF-0sjXCm1U5Zku5J7ltPA7_BmZzh1YdA3oUYFbwW4JBHao7g>
-    <xmx:z9xmXicuLoixXJ2XZ_721dkzztz4dN0Kp240Oq1ekOXjgrpEZlsUkw>
-    <xmx:0dxmXho2KzunPEg77nJRP3TUrcGMSb00ReWWFfVGCGI3mSgfDxoD0Q>
-Received: from intern.anarazel.de (c-67-160-217-250.hsd1.ca.comcast.net [67.160.217.250])
-        by mail.messagingengine.com (Postfix) with ESMTPA id 007C43061856;
-        Mon,  9 Mar 2020 20:18:23 -0400 (EDT)
-Date:   Mon, 9 Mar 2020 17:18:21 -0700
-From:   Andres Freund <andres@anarazel.de>
-To:     Jeff Layton <jlayton@redhat.com>
-Cc:     David Howells <dhowells@redhat.com>, torvalds@linux-foundation.org,
-        viro@zeniv.linux.org.uk, Theodore Ts'o <tytso@mit.edu>,
-        Stefan Metzmacher <metze@samba.org>,
-        Andreas Dilger <adilger.kernel@dilger.ca>,
-        linux-ext4@vger.kernel.org, Aleksa Sarai <cyphar@cyphar.com>,
-        Trond Myklebust <trond.myklebust@hammerspace.com>,
-        Anna Schumaker <anna.schumaker@netapp.com>,
-        linux-nfs@vger.kernel.org, linux-api@vger.kernel.org,
-        raven@themaw.net, mszeredi@redhat.com, christian@brauner.io,
-        jannh@google.com, darrick.wong@oracle.com, kzak@redhat.com,
-        linux-fsdevel@vger.kernel.org,
-        linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 00/14] VFS: Filesystem information [ver #18]
-Message-ID: <20200310001821.vb7qwfhnq67rsknn@alap3.anarazel.de>
-References: <158376244589.344135.12925590041630631412.stgit@warthog.procyon.org.uk>
- <2d31e2658e5f6651dc7d9908c4c12b6ba461fc88.camel@redhat.com>
- <20200309192240.nqf5bxylptw7mdm3@alap3.anarazel.de>
- <32c384ac3adf0cf924d3071a13af7edffe53cc2b.camel@redhat.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <32c384ac3adf0cf924d3071a13af7edffe53cc2b.camel@redhat.com>
+        id S1726378AbgCJBVF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 9 Mar 2020 21:21:05 -0400
+Received: from mail-pj1-f66.google.com ([209.85.216.66]:52905 "EHLO
+        mail-pj1-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726197AbgCJBVF (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Mar 2020 21:21:05 -0400
+Received: by mail-pj1-f66.google.com with SMTP id f15so670214pjq.2
+        for <linux-api@vger.kernel.org>; Mon, 09 Mar 2020 18:21:04 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=amacapital-net.20150623.gappssmtp.com; s=20150623;
+        h=content-transfer-encoding:mime-version:subject:from:in-reply-to:cc
+         :date:message-id:references:to;
+        bh=mrUxxgNRy+5E4bEZVXAZNOiHka9AVVm3vCKbU9l6fA4=;
+        b=g/iv7CpG8/DiYA4NA/mKsrAq67vf66xkLwrtr0OnzjXecbrlOk01TyaasjqzOJ/cy6
+         jkjE+yfOHqhIEodGUnCwDH2I67yhqD/opVoCRpcoVgu+agPVZLyJsNAcnfduPxpLnSIY
+         FWAJ7VcA1vbAbasZjJHBV3szxpyaw/IjVhpRpaZZAzmlolgnoqTrx5PFTbyFCLsWL/hh
+         e+FHgrtXApyn35w6Vpk1Rs7+FEhw6F26iHRoXV7X8YTvuouFOniMH3ge0MiWbLs+nVG7
+         4yVzA5v9uxjBTgJSNciJkl25N5hFus4/aSfLvMtEJHuvytjNWQXk1EtEGjXwJI8TsJ8b
+         Lf5w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:content-transfer-encoding:mime-version:subject
+         :from:in-reply-to:cc:date:message-id:references:to;
+        bh=mrUxxgNRy+5E4bEZVXAZNOiHka9AVVm3vCKbU9l6fA4=;
+        b=KW1SyjQdsQYAooPFg+M3PHlJTEWzD0kapgcRoE2NeZxfAwKZPS6B1KJrYJPcQLdODh
+         fStw8CsiDsyx+6VMlAu8O6JgZfxSIGxFwI3Rxli8/kYeurq37ZpAjcMNZ8hybMCw1YHB
+         2o20mWZpnf7jxQfpI4ZObxXFmxJwfg+VOeWxEx1FgfUGrNsuMmnSOciWrOXaaLRiDgz5
+         2LzIkdoGiI1bUmjSSgKDJZaispG/M8knihzVzqdMt84moBM1EHUwmlriFpFHLJHrejlG
+         DY9+udfVP3FvBC/oNQdFLSkLZrcPTTYZftYJfLSqKqomVOTPGnBCmz2Oi85k9Vab9K/T
+         Oh/A==
+X-Gm-Message-State: ANhLgQ3KAoLHRbwu2YM2Zl3+NEAyPwSJMXjCiw+Ca1qFvurH6ge/pp92
+        lBdkpNnH83mgu0M/nAS2/SEnVg==
+X-Google-Smtp-Source: ADFU+vsv4okX8I4n8qmcxoYDTnfJmLGi0d3Bk5liMiDsLRDCvsApNaCvlR6NOzyOKkYBsF2RXUSNlQ==
+X-Received: by 2002:a17:902:8a8f:: with SMTP id p15mr14339433plo.45.1583803264156;
+        Mon, 09 Mar 2020 18:21:04 -0700 (PDT)
+Received: from ?IPv6:2600:1010:b047:6b2c:4878:83f4:4223:51c6? ([2600:1010:b047:6b2c:4878:83f4:4223:51c6])
+        by smtp.gmail.com with ESMTPSA id 17sm14250924pfu.166.2020.03.09.18.21.02
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 09 Mar 2020 18:21:03 -0700 (PDT)
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Mime-Version: 1.0 (1.0)
+Subject: Re: [RFC PATCH v9 01/27] Documentation/x86: Add CET description
+From:   Andy Lutomirski <luto@amacapital.net>
+In-Reply-To: <CAMe9rOpJjaro_qK6kghGNuSHDaP_MjVaZMbok2kbuBD48VmvXg@mail.gmail.com>
+Cc:     Dave Hansen <dave.hansen@intel.com>,
+        Yu-cheng Yu <yu-cheng.yu@intel.com>,
+        the arch/x86 maintainers <x86@kernel.org>,
+        "H. Peter Anvin" <hpa@zytor.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>,
+        LKML <linux-kernel@vger.kernel.org>,
+        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
+        Linux-MM <linux-mm@kvack.org>,
+        linux-arch <linux-arch@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andy Lutomirski <luto@kernel.org>,
+        Balbir Singh <bsingharora@gmail.com>,
+        Borislav Petkov <bp@alien8.de>,
+        Cyrill Gorcunov <gorcunov@gmail.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Eugene Syromiatnikov <esyr@redhat.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Nadav Amit <nadav.amit@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
+        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
+        Dave Martin <Dave.Martin@arm.com>, x86-patch-review@intel.com
+Date:   Mon, 9 Mar 2020 18:21:01 -0700
+Message-Id: <E7E7A2AE-500A-4817-B00A-BE419E89C6F9@amacapital.net>
+References: <CAMe9rOpJjaro_qK6kghGNuSHDaP_MjVaZMbok2kbuBD48VmvXg@mail.gmail.com>
+To:     "H.J. Lu" <hjl.tools@gmail.com>
+X-Mailer: iPhone Mail (17D50)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi,
+I am baffled by this discussion.
 
-On 2020-03-09 18:49:31 -0400, Jeff Layton wrote:
-> On Mon, 2020-03-09 at 12:22 -0700, Andres Freund wrote:
-> > On 2020-03-09 13:50:59 -0400, Jeff Layton wrote:
-> > > I sent a patch a few weeks ago to make syncfs() return errors when there
-> > > have been writeback errors on the superblock. It's not merged yet, but
-> > > once we have something like that in place, we could expose info from the
-> > > errseq_t to userland using this interface.
-> >
-> > I'm still a bit worried about the details of errseq_t being exposed to
-> > userland. Partially because it seems to restrict further evolution of
-> > errseq_t, and partially because it will likely up with userland trying
-> > to understand it (it's e.g. just too attractive to report a count of
-> > errors etc).
->
-> Trying to interpret the counter field won't really tell you anything.
-> The counter is not incremented unless someone has queried the value
-> since it was last checked. A single increment could represent a single
-> writeback error or 10000 identical ones.
+>> On Mar 9, 2020, at 5:09 PM, H.J. Lu <hjl.tools@gmail.com> wrote:
+>>=20
+>> =EF=BB=BFOn Mon, Mar 9, 2020 at 4:59 PM Andy Lutomirski <luto@amacapital.=
+net> wrote:
+>=20
+>>>> .
+>> This could presumably have been fixed by having libpcre or sljit
+>> disable IBT before calling into JIT code or by running the JIT code in
+>> another thread.  In the other direction, a non-CET libpcre build could
+>> build IBT-capable JITted code and enable JIT (by syscall if we allow
+>> that or by creating a thread?) when calling it.  And IBT has this
+>=20
+> This is not how thread in user space works.
 
-Oh, right.  A zero errseq would still indicate something, but that's
-probably fine.
+void create_cet_thread(void (*func)(), unsigned int cet_flags);
 
+I could implement this using clone() if the kernel provides the requisite su=
+pport. Sure, creating threads behind libc=E2=80=99s back like this is perilo=
+us, but it can be done.
 
-> > Is there a reason to not instead report a 64bit counter instead of the
-> > cookie? In contrast to the struct file case we'd only have the space
-> > overhead once per superblock, rather than once per #files * #fd. And it
-> > seems that the maintenance of that counter could be done without
-> > widespread changes, e.g. instead/in addition to your change:
+>=20
+>> fancy legacy bitmap to allow non-instrumented code to run with IBT on,
+>> although SHSTK doesn't have hardware support for a similar feature.
+>=20
+> All these changes are called CET enabing.
 
-> What problem would moving to a 64-bit counter solve? I get the concern
-> about people trying to get a counter out of the cookie field, but giving
-> people an explicit 64-bit counter seems even more open to
-> misinterpretation.
+What does that mean?  If program A loads library B, and library B very caref=
+ully loads CET-mismatched code, program A may be blissfully unaware.
 
-Well, you could get an actual error count out of it? I was thinking that
-that value would get incremented every time mapping_set_error() is
-called, which should make it a meaningful count?
+>=20
+>> So, sure, the glibc-linked ELF ecosystem needs some degree of CET
+>> coordination, but it is absolutely not the case that a process MUST
+>> have all CET or no CET.  Let's please support the complicated cases in
+>> the kernel and the ABI too.  If glibc wants to make it annoying to do
+>> complicated things, so be it.  People work behind glibc's back all the
+>> time.
+>=20
+> CET is no different from NX in this regard.
 
-Greetings,
+NX is in the page tables, and CET, mostly, is not.  Also, we seriously flubb=
+ed READ_IMPLIES_EXEC and made it affect far more mappings than ever should h=
+ave been affected.
 
-Andres Freund
+If a legacy program (non-NX-aware) loads a newer library, and the library op=
+ens a device node and mmaps it PROT_READ, it gets RX.  This is not a good de=
+sign. In fact, it=E2=80=99s actively problematic.
+
+Let us please not take Linux=E2=80=99s NX legacy support as an example of go=
+od design.=
