@@ -2,38 +2,61 @@ Return-Path: <SRS0=yzTb=43=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AFC22C3F2D0
-	for <linux-api@archiver.kernel.org>; Tue, 10 Mar 2020 21:00:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 42FD2C3F2C6
+	for <linux-api@archiver.kernel.org>; Tue, 10 Mar 2020 21:00:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 82D2E222C4
-	for <linux-api@archiver.kernel.org>; Tue, 10 Mar 2020 21:00:02 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 04DE4222C3
+	for <linux-api@archiver.kernel.org>; Tue, 10 Mar 2020 21:00:49 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="E4fHeovR"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726411AbgCJVAB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 10 Mar 2020 17:00:01 -0400
-Received: from out02.mta.xmission.com ([166.70.13.232]:49438 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726100AbgCJVAB (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 10 Mar 2020 17:00:01 -0400
-Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out02.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.90_1)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1jBlym-00067f-DA; Tue, 10 Mar 2020 14:59:56 -0600
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
-        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        (Exim 4.87)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1jBlyk-0006E3-MQ; Tue, 10 Mar 2020 14:59:55 -0600
-From:   ebiederm@xmission.com (Eric W. Biederman)
-To:     Jann Horn <jannh@google.com>
-Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
-        Bernd Edlinger <bernd.edlinger@hotmail.de>,
-        Kees Cook <keescook@chromium.org>,
-        Jonathan Corbet <corbet@lwn.net>,
+        id S1727506AbgCJVAo (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 10 Mar 2020 17:00:44 -0400
+Received: from mail-pg1-f193.google.com ([209.85.215.193]:35835 "EHLO
+        mail-pg1-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726271AbgCJVAo (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 10 Mar 2020 17:00:44 -0400
+Received: by mail-pg1-f193.google.com with SMTP id 7so6877001pgr.2
+        for <linux-api@vger.kernel.org>; Tue, 10 Mar 2020 14:00:43 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=chromium.org; s=google;
+        h=date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to;
+        bh=8rwWaGaAnCRv7abCrLVGP/12v6tm69sSb/N4biM+MpU=;
+        b=E4fHeovRMCTEHPf2Y5E/1XX89oUv6PPRO7U0xbU19Ojqt9o6vTvNVOrSjmjVlksK0u
+         WT3MVOTY1M10Pq6ui6+/FqibefM1Uq0luC+0aYMB0nLC3CZ3xdern/rFtpoTc70jV0mw
+         55hRTwk9a28dM92Eddl4f7pViHS37XCoNZMBo=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=8rwWaGaAnCRv7abCrLVGP/12v6tm69sSb/N4biM+MpU=;
+        b=cJq49tBAsNBYZhmFk6xA3joU8Lq+SyjRM8OS8LZ3MPL32annvjrguZNYXHaD4tCf0S
+         2Kw0duDveDgf/Elax/cF/TydHHyNXYRbA1ZnVzP5g6WC/e0G2ACBKIbn8Mw3bWQvB9y3
+         ScReRMLk6t/IIOMZhLaArOdngtj/WQvAIQWSdlxbzgFdAEDHStVhvaxTOY8J9vfg3hCv
+         RAsC7f65MgDud57+qFbXD/Avot7GHed9fKb15g7bEmQSFigEya2t1y8UN9tz9Osqz0bN
+         wbWAnjPqTtynz7fVT+LxIG0+PR3BlE8XD0TeJSQlimNxo+4irO+/QdouaBvfYAJ1Pqey
+         K50Q==
+X-Gm-Message-State: ANhLgQ3imG8T6v3ycacr3PYp0TtBjaNNzLafjaXAtq1zFqlQZgVsANqN
+        19/OpckvlejQBmlJXQce8P2Hvg==
+X-Google-Smtp-Source: ADFU+vvzzBsNUhcLuygLAbVhS+hIcIHULf8laQU65uTwnTJV1Vz6m0g3VGILMP5riK69aqdvEmItOA==
+X-Received: by 2002:a63:2542:: with SMTP id l63mr22436554pgl.312.1583874043288;
+        Tue, 10 Mar 2020 14:00:43 -0700 (PDT)
+Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
+        by smtp.gmail.com with ESMTPSA id c201sm3106135pfc.73.2020.03.10.14.00.41
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 10 Mar 2020 14:00:41 -0700 (PDT)
+Date:   Tue, 10 Mar 2020 14:00:40 -0700
+From:   Kees Cook <keescook@chromium.org>
+To:     Bernd Edlinger <bernd.edlinger@hotmail.de>
+Cc:     "Eric W. Biederman" <ebiederm@xmission.com>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
         Alexander Viro <viro@zeniv.linux.org.uk>,
         Andrew Morton <akpm@linux-foundation.org>,
         Alexey Dobriyan <adobriyan@gmail.com>,
@@ -42,7 +65,7 @@ Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
         Frederic Weisbecker <frederic@kernel.org>,
         Andrei Vagin <avagin@gmail.com>,
         Ingo Molnar <mingo@kernel.org>,
-        "Peter Zijlstra \(Intel\)" <peterz@infradead.org>,
+        "Peter Zijlstra (Intel)" <peterz@infradead.org>,
         Yuyang Du <duyuyang@gmail.com>,
         David Hildenbrand <david@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -56,124 +79,119 @@ Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
         Andrea Arcangeli <aarcange@redhat.com>,
         Aleksa Sarai <cyphar@cyphar.com>,
         "Dmitry V. Levin" <ldv@altlinux.org>,
-        "linux-doc\@vger.kernel.org" <linux-doc@vger.kernel.org>,
-        "linux-kernel\@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-fsdevel\@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-        "linux-mm\@kvack.org" <linux-mm@kvack.org>,
-        "stable\@vger.kernel.org" <stable@vger.kernel.org>,
-        "linux-api\@vger.kernel.org" <linux-api@vger.kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Sargun Dhillon <sargun@sargun.me>
-References: <87r1y8dqqz.fsf@x220.int.ebiederm.org>
-        <AM6PR03MB517053AED7DC89F7C0704B7DE4E50@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <AM6PR03MB51703B44170EAB4626C9B2CAE4E20@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <87tv32cxmf.fsf_-_@x220.int.ebiederm.org>
-        <87v9ne5y4y.fsf_-_@x220.int.ebiederm.org>
-        <87eeu25y14.fsf_-_@x220.int.ebiederm.org>
-        <20200309195909.h2lv5uawce5wgryx@wittgenstein>
-        <877dztz415.fsf@x220.int.ebiederm.org>
-        <20200309201729.yk5sd26v4bz4gtou@wittgenstein>
-        <87k13txnig.fsf@x220.int.ebiederm.org>
-        <20200310085540.pztaty2mj62xt2nm@wittgenstein>
-        <87wo7svy96.fsf_-_@x220.int.ebiederm.org>
-        <CAG48ez2cUZMVOAXfHPNjKjYsMSaWkjUjOCHo0KYZ+oXQUW4viA@mail.gmail.com>
-        <87k13sui1p.fsf@x220.int.ebiederm.org>
-        <CAG48ez2vRgaEVJ=Rs8gn6HkGO6syL8MpSOUq7BNN+OUE1uYxCA@mail.gmail.com>
-        <CAG48ez1LjW1xAGe-5tNtstCWxG2bkiHaQUMOcJNjx=z-2Wc2Jw@mail.gmail.com>
-Date:   Tue, 10 Mar 2020 15:57:35 -0500
-In-Reply-To: <CAG48ez1LjW1xAGe-5tNtstCWxG2bkiHaQUMOcJNjx=z-2Wc2Jw@mail.gmail.com>
-        (Jann Horn's message of "Tue, 10 Mar 2020 21:10:59 +0100")
-Message-ID: <87lfo8rkqo.fsf@x220.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
+        "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+        "linux-mm@kvack.org" <linux-mm@kvack.org>,
+        "stable@vger.kernel.org" <stable@vger.kernel.org>,
+        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Subject: Re: [PATCH 1/4] exec: Fix a deadlock in ptrace
+Message-ID: <202003101359.8BEE26F322@keescook>
+References: <878sk94eay.fsf@x220.int.ebiederm.org>
+ <AM6PR03MB517086003BD2C32E199690A3E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
+ <87r1y12yc7.fsf@x220.int.ebiederm.org>
+ <87k13t2xpd.fsf@x220.int.ebiederm.org>
+ <87d09l2x5n.fsf@x220.int.ebiederm.org>
+ <AM6PR03MB5170F0F9DC18F5EA77C9A857E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
+ <871rq12vxu.fsf@x220.int.ebiederm.org>
+ <AM6PR03MB5170DF45E3245F55B95CCD91E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
+ <877dzt1fnf.fsf@x220.int.ebiederm.org>
+ <AM6PR03MB517033EAD25BED15CC84E17DE4FF0@AM6PR03MB5170.eurprd03.prod.outlook.com>
 MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1jBlyk-0006E3-MQ;;;mid=<87lfo8rkqo.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1+legm72Gnu4YbUlNo0F2EELZNKSd0AFy8=
-X-SA-Exim-Connect-IP: 68.227.160.95
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: Re: [PATCH] pidfd: Stop taking cred_guard_mutex
-X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <AM6PR03MB517033EAD25BED15CC84E17DE4FF0@AM6PR03MB5170.eurprd03.prod.outlook.com>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Jann Horn <jannh@google.com> writes:
+On Tue, Mar 10, 2020 at 02:43:41PM +0100, Bernd Edlinger wrote:
+> This fixes a deadlock in the tracer when tracing a multi-threaded
+> application that calls execve while more than one thread are running.
+> 
+> I observed that when running strace on the gcc test suite, it always
+> blocks after a while, when expect calls execve, because other threads
+> have to be terminated.  They send ptrace events, but the strace is no
+> longer able to respond, since it is blocked in vm_access.
+> 
+> The deadlock is always happening when strace needs to access the
+> tracees process mmap, while another thread in the tracee starts to
+> execve a child process, but that cannot continue until the
+> PTRACE_EVENT_EXIT is handled and the WIFEXITED event is received:
+> 
+> strace          D    0 30614  30584 0x00000000
+> Call Trace:
+> __schedule+0x3ce/0x6e0
+> schedule+0x5c/0xd0
+> schedule_preempt_disabled+0x15/0x20
+> __mutex_lock.isra.13+0x1ec/0x520
+> __mutex_lock_killable_slowpath+0x13/0x20
+> mutex_lock_killable+0x28/0x30
+> mm_access+0x27/0xa0
+> process_vm_rw_core.isra.3+0xff/0x550
+> process_vm_rw+0xdd/0xf0
+> __x64_sys_process_vm_readv+0x31/0x40
+> do_syscall_64+0x64/0x220
+> entry_SYSCALL_64_after_hwframe+0x44/0xa9
+> 
+> expect          D    0 31933  30876 0x80004003
+> Call Trace:
+> __schedule+0x3ce/0x6e0
+> schedule+0x5c/0xd0
+> flush_old_exec+0xc4/0x770
+> load_elf_binary+0x35a/0x16c0
+> search_binary_handler+0x97/0x1d0
+> __do_execve_file.isra.40+0x5d4/0x8a0
+> __x64_sys_execve+0x49/0x60
+> do_syscall_64+0x64/0x220
+> entry_SYSCALL_64_after_hwframe+0x44/0xa9
+> 
+> This changes mm_access to use the new exec_update_mutex
+> instead of cred_guard_mutex.
+> 
+> This patch is based on the following patch by Eric W. Biederman:
+> "[PATCH 0/5] Infrastructure to allow fixing exec deadlocks"
+> Link: https://lore.kernel.org/lkml/87v9ne5y4y.fsf_-_@x220.int.ebiederm.org/
+> 
+> Signed-off-by: Bernd Edlinger <bernd.edlinger@hotmail.de>
 
-> On Tue, Mar 10, 2020 at 9:00 PM Jann Horn <jannh@google.com> wrote:
->> On Tue, Mar 10, 2020 at 8:29 PM Eric W. Biederman <ebiederm@xmission.com> wrote:
->> > Jann Horn <jannh@google.com> writes:
->> > > On Tue, Mar 10, 2020 at 7:54 PM Eric W. Biederman <ebiederm@xmission.com> wrote:
->> > >> During exec some file descriptors are closed and the files struct is
->> > >> unshared.  But all of that can happen at other times and it has the
->> > >> same protections during exec as at ordinary times.  So stop taking the
->> > >> cred_guard_mutex as it is useless.
->> > >>
->> > >> Furthermore he cred_guard_mutex is a bad idea because it is deadlock
->> > >> prone, as it is held in serveral while waiting possibly indefinitely
->> > >> for userspace to do something.
-> [...]
->> > > If you make this change, then if this races with execution of a setuid
->> > > program that afterwards e.g. opens a unix domain socket, an attacker
->> > > will be able to steal that socket and inject messages into
->> > > communication with things like DBus. procfs currently has the same
->> > > race, and that still needs to be fixed, but at least procfs doesn't
->> > > let you open things like sockets because they don't have a working
->> > > ->open handler, and it enforces the normal permission check for
->> > > opening files.
->> >
->> > It isn't only exec that can change credentials.  Do we need a lock for
->> > changing credentials?
-> [...]
->> > If we need a lock around credential change let's design and build that.
->> > Having a mismatch between what a lock is designed to do, and what
->> > people use it for can only result in other bugs as people get confused.
->>
->> Hmm... what benefits do we get from making it a separate lock? I guess
->> it would allow us to make it a per-task lock instead of a
->> signal_struct-wide one? That might be helpful...
->
-> But actually, isn't the core purpose of the cred_guard_mutex to guard
-> against concurrent credential changes anyway? That's what almost
-> everyone uses it for, and it's in the name...
+Cool, yes, on top of the new infrastructure this looks correct to me --
+the new mutex wraps mm changes and mm_access() is looking at *drum roll*
+the mm! :)
 
-Having been through all of the users nope.
+Reviewed-by: Kees Cook <keescook@chromium.org>
 
-Maybe someone tried to repurpose for that.  I haven't traced through
-when it went the it was renamed from cred_exec_mutex to
-cred_guard_mutex.
+-Kees
 
-The original purpose was to make make exec and ptrace deadlock.  But it
-was seen as being there to allow safely calculating the new credentials
-before the point of now return.  Because if a process is ptraced or not
-affects the new credential calculations.  Unfortunately offering that
-guarantee fundamentally leads to deadlock.
+> ---
+>  kernel/fork.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/kernel/fork.c b/kernel/fork.c
+> index c12595a..5720ff3 100644
+> --- a/kernel/fork.c
+> +++ b/kernel/fork.c
+> @@ -1224,7 +1224,7 @@ struct mm_struct *mm_access(struct task_struct *task, unsigned int mode)
+>  	struct mm_struct *mm;
+>  	int err;
+>  
+> -	err =  mutex_lock_killable(&task->signal->cred_guard_mutex);
+> +	err =  mutex_lock_killable(&task->signal->exec_update_mutex);
+>  	if (err)
+>  		return ERR_PTR(err);
+>  
+> @@ -1234,7 +1234,7 @@ struct mm_struct *mm_access(struct task_struct *task, unsigned int mode)
+>  		mmput(mm);
+>  		mm = ERR_PTR(-EACCES);
+>  	}
+> -	mutex_unlock(&task->signal->cred_guard_mutex);
+> +	mutex_unlock(&task->signal->exec_update_mutex);
+>  
+>  	return mm;
+>  }
+> -- 
+> 1.9.1
 
-So ptrace_attach and seccomp use the cred_guard_mutex to guarantee
-a deadlock.
-
-The common use is to take cred_guard_mutex to guard the window when
-credentials and process details are out of sync in exec.  But there
-is at least do_io_accounting that seems to have the same justification
-for holding __pidfd_fget.
-
-With effort I suspect we can replace exec_change_mutex with task_lock.
-When we are guaranteed to be single threaded placing exec_change_mutex
-in signal_struct doesn't really help us (except maybe in some races?).
-
-The deep problem is no one really understands cred_guard_mutex so it is
-a mess.  Code with poorly defined semantics is always wrong somewhere
-for someone.  Which is part of why I am attacking this and having the
-conversations to make certain I understand what is going on.
-
-I see your point about commit_creds making a process undumpable.  So in
-practice it really is only exec that changes creds in a way that
-ptrace_may_access will allow the process to be inspected.
-
-So I guess for now the practical non-regressing course is to change
-everything to my exec_change_mutex, removing the deadlock.  Then we
-figure out how to cleanly deal with the races inspecting a process with
-changing credentials has.
-
-Eric
+-- 
+Kees Cook
