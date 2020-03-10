@@ -2,53 +2,34 @@ Return-Path: <SRS0=yzTb=43=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.7 required=3.0 tests=FORGED_MUA_MOZILLA,
-	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,MSGID_FROM_MTA_HEADER,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 048FAC3F2C6
-	for <linux-api@archiver.kernel.org>; Tue, 10 Mar 2020 13:44:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5E546C3F2C6
+	for <linux-api@archiver.kernel.org>; Tue, 10 Mar 2020 15:16:09 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D5E0A24694
-	for <linux-api@archiver.kernel.org>; Tue, 10 Mar 2020 13:44:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3B20821927
+	for <linux-api@archiver.kernel.org>; Tue, 10 Mar 2020 15:16:09 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727877AbgCJNoM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 10 Mar 2020 09:44:12 -0400
-Received: from mail-oln040092064070.outbound.protection.outlook.com ([40.92.64.70]:44472
-        "EHLO EUR01-DB5-obe.outbound.protection.outlook.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1726353AbgCJNoM (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 10 Mar 2020 09:44:12 -0400
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=DFhvp+Oo45MXHFV30ls6zqT7/546uqQptqKa+nZwGSFJbMbVs39WFCMR3R4+ZWtEAPmWz9sSFvBXcMZn0AT/yyLwW7fPZQV+dlBtynTVIP92g9Hxt3mC4Y7u2NXWrtqaQir7P0PO6wu+IfzH74keqMDowVxzqJzGSOSOpRA4Y/yvMjGVDbcIe0c/AV7POZGdy2re8ydZbI3rSxPq3OGoFEZpY8V32jOHuEcebdKL9+fn6muJ4RtebV5KSddLfS3ZYy7sGlR5cf/TgMsECc/ZUOX/9DVPFWSgsNP4byzCIhuIDwYFNrCk1fJ5RpqAF1VSV3aclDIfckMkv36j+4KKmw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=qOZY463IAaXjiQVx7MRIl6eponpktQjQKIZPtfN8f0A=;
- b=cXWMpRR2CIXaZtvc0JBPdHMXIE7pdrMYY7W6C6JhFuzZdWpCjYoZepNahB2O+2VlSpx7pZ8TpRWAX05N85gT+L3sGVRt84yudbYdNT19apQzmZQHE+m2+vU1c4h71IFqhLRfscPzzvMwXdo3uXFUzNJ9HKE3rlGSHTYKnNs2zepozadCv+p3vXZ2r6CNhjqmwqgL5W2V/jrQyZmIUUfDqGyzUf6hePedfauhxZm6L9VUO569ZrrcRTc86IQnCh6na7FRhuWCEXoqN7FDcU5tXdGO0pb82xbZNwolU6vIRRo/4SBWAo5T+HgEzLtKz2Pw4pQKGZSZiQb11/Ybt1F1fQ==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=hotmail.de; dmarc=pass action=none header.from=hotmail.de;
- dkim=pass header.d=hotmail.de; arc=none
-Received: from HE1EUR01FT023.eop-EUR01.prod.protection.outlook.com
- (2a01:111:e400:7e18::37) by
- HE1EUR01HT005.eop-EUR01.prod.protection.outlook.com (2a01:111:e400:7e18::492)
- with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.2793.11; Tue, 10 Mar
- 2020 13:44:03 +0000
-Received: from AM6PR03MB5170.eurprd03.prod.outlook.com (10.152.0.52) by
- HE1EUR01FT023.mail.protection.outlook.com (10.152.0.162) with Microsoft SMTP
- Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.20.2793.11 via Frontend Transport; Tue, 10 Mar 2020 13:44:03 +0000
-X-IncomingTopHeaderMarker: OriginalChecksum:2534592BB12048E38E56F803EF8B67E0599C52D4D49AF5C559ECF8080DBF5FF9;UpperCasedChecksum:01EBD96ECEB138968F5094E9AB20D61588959F6B6FFED1F4D775C0A1AC968775;SizeAsReceived:10294;Count:50
-Received: from AM6PR03MB5170.eurprd03.prod.outlook.com
- ([fe80::1956:d274:cab3:b4dd]) by AM6PR03MB5170.eurprd03.prod.outlook.com
- ([fe80::1956:d274:cab3:b4dd%6]) with mapi id 15.20.2793.013; Tue, 10 Mar 2020
- 13:44:03 +0000
-From:   Bernd Edlinger <bernd.edlinger@hotmail.de>
-Subject: [PATCH 2/4] selftests/ptrace: add test cases for dead-locks
-To:     "Eric W. Biederman" <ebiederm@xmission.com>
+        id S1726436AbgCJPQH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 10 Mar 2020 11:16:07 -0400
+Received: from out01.mta.xmission.com ([166.70.13.231]:54422 "EHLO
+        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726283AbgCJPQH (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 10 Mar 2020 11:16:07 -0400
+Received: from in02.mta.xmission.com ([166.70.13.52])
+        by out01.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.90_1)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1jBgby-0004CF-1k; Tue, 10 Mar 2020 09:16:02 -0600
+Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
+        by in02.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
+        (Exim 4.87)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1jBgbx-0004Li-5P; Tue, 10 Mar 2020 09:16:01 -0600
+From:   ebiederm@xmission.com (Eric W. Biederman)
+To:     Bernd Edlinger <bernd.edlinger@hotmail.de>
 Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
         Kees Cook <keescook@chromium.org>,
         Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
@@ -60,7 +41,7 @@ Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
         Frederic Weisbecker <frederic@kernel.org>,
         Andrei Vagin <avagin@gmail.com>,
         Ingo Molnar <mingo@kernel.org>,
-        "Peter Zijlstra (Intel)" <peterz@infradead.org>,
+        "Peter Zijlstra \(Intel\)" <peterz@infradead.org>,
         Yuyang Du <duyuyang@gmail.com>,
         David Hildenbrand <david@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -74,191 +55,129 @@ Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
         Andrea Arcangeli <aarcange@redhat.com>,
         Aleksa Sarai <cyphar@cyphar.com>,
         "Dmitry V. Levin" <ldv@altlinux.org>,
-        "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-        "linux-mm@kvack.org" <linux-mm@kvack.org>,
-        "stable@vger.kernel.org" <stable@vger.kernel.org>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+        "linux-doc\@vger.kernel.org" <linux-doc@vger.kernel.org>,
+        "linux-kernel\@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "linux-fsdevel\@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+        "linux-mm\@kvack.org" <linux-mm@kvack.org>,
+        "stable\@vger.kernel.org" <stable@vger.kernel.org>,
+        "linux-api\@vger.kernel.org" <linux-api@vger.kernel.org>
 References: <AM6PR03MB5170EB4427BF5C67EE98FF09E4E60@AM6PR03MB5170.eurprd03.prod.outlook.com>
- <87r1y8dqqz.fsf@x220.int.ebiederm.org>
- <AM6PR03MB517053AED7DC89F7C0704B7DE4E50@AM6PR03MB5170.eurprd03.prod.outlook.com>
- <AM6PR03MB51703B44170EAB4626C9B2CAE4E20@AM6PR03MB5170.eurprd03.prod.outlook.com>
- <87tv32cxmf.fsf_-_@x220.int.ebiederm.org>
- <87v9ne5y4y.fsf_-_@x220.int.ebiederm.org>
- <87zhcq4jdj.fsf_-_@x220.int.ebiederm.org>
- <AM6PR03MB5170BC58D90BAD80CDEF3F8BE4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
- <878sk94eay.fsf@x220.int.ebiederm.org>
- <AM6PR03MB517086003BD2C32E199690A3E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
- <87r1y12yc7.fsf@x220.int.ebiederm.org> <87k13t2xpd.fsf@x220.int.ebiederm.org>
- <87d09l2x5n.fsf@x220.int.ebiederm.org>
- <AM6PR03MB5170F0F9DC18F5EA77C9A857E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
- <871rq12vxu.fsf@x220.int.ebiederm.org>
- <AM6PR03MB5170DF45E3245F55B95CCD91E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
- <877dzt1fnf.fsf@x220.int.ebiederm.org>
-Message-ID: <AM6PR03MB51703199741A2C27A78980FFE4FF0@AM6PR03MB5170.eurprd03.prod.outlook.com>
-Date:   Tue, 10 Mar 2020 14:44:01 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
- Thunderbird/60.6.1
-In-Reply-To: <877dzt1fnf.fsf@x220.int.ebiederm.org>
-Content-Type: text/plain; charset=windows-1252
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
-X-ClientProxiedBy: AM0PR06CA0084.eurprd06.prod.outlook.com
- (2603:10a6:208:fa::25) To AM6PR03MB5170.eurprd03.prod.outlook.com
- (2603:10a6:20b:ca::23)
-X-Microsoft-Original-Message-ID: <fbd7c68e-4094-2f9b-fbb0-5f43a706128d@hotmail.de>
+        <87r1y8dqqz.fsf@x220.int.ebiederm.org>
+        <AM6PR03MB517053AED7DC89F7C0704B7DE4E50@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <AM6PR03MB51703B44170EAB4626C9B2CAE4E20@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <87tv32cxmf.fsf_-_@x220.int.ebiederm.org>
+        <87v9ne5y4y.fsf_-_@x220.int.ebiederm.org>
+        <87zhcq4jdj.fsf_-_@x220.int.ebiederm.org>
+        <AM6PR03MB5170BC58D90BAD80CDEF3F8BE4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <878sk94eay.fsf@x220.int.ebiederm.org>
+        <AM6PR03MB517086003BD2C32E199690A3E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <87r1y12yc7.fsf@x220.int.ebiederm.org>
+        <87k13t2xpd.fsf@x220.int.ebiederm.org>
+        <87d09l2x5n.fsf@x220.int.ebiederm.org>
+        <AM6PR03MB5170F0F9DC18F5EA77C9A857E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <871rq12vxu.fsf@x220.int.ebiederm.org>
+        <AM6PR03MB5170DF45E3245F55B95CCD91E4FE0@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        <877dzt1fnf.fsf@x220.int.ebiederm.org>
+        <AM6PR03MB517033EAD25BED15CC84E17DE4FF0@AM6PR03MB5170.eurprd03.prod.outlook.com>
+Date:   Tue, 10 Mar 2020 10:13:42 -0500
+In-Reply-To: <AM6PR03MB517033EAD25BED15CC84E17DE4FF0@AM6PR03MB5170.eurprd03.prod.outlook.com>
+        (Bernd Edlinger's message of "Tue, 10 Mar 2020 14:43:41 +0100")
+Message-ID: <87d09kxmxl.fsf@x220.int.ebiederm.org>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
-X-MS-Exchange-MessageSentRepresentingType: 1
-Received: from [192.168.1.101] (92.77.140.102) by AM0PR06CA0084.eurprd06.prod.outlook.com (2603:10a6:208:fa::25) with Microsoft SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.2793.16 via Frontend Transport; Tue, 10 Mar 2020 13:44:01 +0000
-X-Microsoft-Original-Message-ID: <fbd7c68e-4094-2f9b-fbb0-5f43a706128d@hotmail.de>
-X-TMN:  [mbH5VsuP3pnDx5S83zh5PLwQRoDsVQ4R]
-X-MS-PublicTrafficType: Email
-X-IncomingHeaderCount: 50
-X-EOPAttributedMessage: 0
-X-MS-Office365-Filtering-Correlation-Id: f77651f4-c28d-44e1-771b-08d7c4f91823
-X-MS-TrafficTypeDiagnostic: HE1EUR01HT005:
-X-Microsoft-Antispam: BCL:0;
-X-Microsoft-Antispam-Message-Info: e3lk3mxrLBIqFPpGQyawO5+/E2DepRJw7nqU8+HOzUUV1tJZ5vXQ4OQxytSOH1PYS4u0VTkVrm3Ma/vPULqTzVD0oeY1W0nn/ROspV4OKXXw5aQI5BMO+LwqI3IQK7rlJjz9hgWJC0ShTt8eB+l4D4m3YnjZoNchxqx6NCl9ExDqRv035keCQeu5ZtRBYiEI
-X-MS-Exchange-AntiSpam-MessageData: UD3Fct7HirAC7qOQjBjLnzGmOlwPO0C65kL3A1S8q+1f/GsK7MYg9HzUCHCkqI7sA+dMLnxcfKeES/ctFXneRsd1eCglzjw2FOhCdSEakOwSEYWbIuQP8ojNt0stkZgqAozUAM0tip7VaTqslbmwYw==
-X-OriginatorOrg: outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: f77651f4-c28d-44e1-771b-08d7c4f91823
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 10 Mar 2020 13:44:03.1660
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 84df9e7f-e9f6-40af-b435-aaaaaaaaaaaa
-X-MS-Exchange-CrossTenant-FromEntityHeader: Internet
-X-MS-Exchange-CrossTenant-RMS-PersistedConsumerOrg: 00000000-0000-0000-0000-000000000000
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: HE1EUR01HT005
+Content-Type: text/plain
+X-XM-SPF: eid=1jBgbx-0004Li-5P;;;mid=<87d09kxmxl.fsf@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1/eOO49tMC1vtWTUcFarj2ncADp1TyDOKs=
+X-SA-Exim-Connect-IP: 68.227.160.95
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: Re: [PATCH 1/4] exec: Fix a deadlock in ptrace
+X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
+X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This adds test cases for ptrace deadlocks.
+Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
 
-Additionally fixes a compile problem in get_syscall_info.c,
-observed with gcc-4.8.4:
+> This fixes a deadlock in the tracer when tracing a multi-threaded
+> application that calls execve while more than one thread are running.
+>
+> I observed that when running strace on the gcc test suite, it always
+> blocks after a while, when expect calls execve, because other threads
+> have to be terminated.  They send ptrace events, but the strace is no
+> longer able to respond, since it is blocked in vm_access.
+>
+> The deadlock is always happening when strace needs to access the
+> tracees process mmap, while another thread in the tracee starts to
+> execve a child process, but that cannot continue until the
+> PTRACE_EVENT_EXIT is handled and the WIFEXITED event is received:
 
-get_syscall_info.c: In function 'get_syscall_info':
-get_syscall_info.c:93:3: error: 'for' loop initial declarations are only
-                                 allowed in C99 mode
-   for (unsigned int i = 0; i < ARRAY_SIZE(args); ++i) {
-   ^
-get_syscall_info.c:93:3: note: use option -std=c99 or -std=gnu99 to compile
-                               your code
+Overall this looks good.  Mind if I change the subject to:
+"exec: Fix a deadlock in strace" ?
 
-Signed-off-by: Bernd Edlinger <bernd.edlinger@hotmail.de>
----
- tools/testing/selftests/ptrace/Makefile   |  4 +-
- tools/testing/selftests/ptrace/vmaccess.c | 86 +++++++++++++++++++++++++++++++
- 2 files changed, 88 insertions(+), 2 deletions(-)
- create mode 100644 tools/testing/selftests/ptrace/vmaccess.c
+Eric
 
-diff --git a/tools/testing/selftests/ptrace/Makefile b/tools/testing/selftests/ptrace/Makefile
-index c0b7f89..2f1f532 100644
---- a/tools/testing/selftests/ptrace/Makefile
-+++ b/tools/testing/selftests/ptrace/Makefile
-@@ -1,6 +1,6 @@
- # SPDX-License-Identifier: GPL-2.0-only
--CFLAGS += -iquote../../../../include/uapi -Wall
-+CFLAGS += -std=c99 -pthread -iquote../../../../include/uapi -Wall
- 
--TEST_GEN_PROGS := get_syscall_info peeksiginfo
-+TEST_GEN_PROGS := get_syscall_info peeksiginfo vmaccess
- 
- include ../lib.mk
-diff --git a/tools/testing/selftests/ptrace/vmaccess.c b/tools/testing/selftests/ptrace/vmaccess.c
-new file mode 100644
-index 0000000..4db327b
---- /dev/null
-+++ b/tools/testing/selftests/ptrace/vmaccess.c
-@@ -0,0 +1,86 @@
-+// SPDX-License-Identifier: GPL-2.0+
-+/*
-+ * Copyright (c) 2020 Bernd Edlinger <bernd.edlinger@hotmail.de>
-+ * All rights reserved.
-+ *
-+ * Check whether /proc/$pid/mem can be accessed without causing deadlocks
-+ * when de_thread is blocked with ->cred_guard_mutex held.
-+ */
-+
-+#include "../kselftest_harness.h"
-+#include <stdio.h>
-+#include <fcntl.h>
-+#include <pthread.h>
-+#include <signal.h>
-+#include <unistd.h>
-+#include <sys/ptrace.h>
-+
-+static void *thread(void *arg)
-+{
-+	ptrace(PTRACE_TRACEME, 0, 0L, 0L);
-+	return NULL;
-+}
-+
-+TEST(vmaccess)
-+{
-+	int f, pid = fork();
-+	char mm[64];
-+
-+	if (!pid) {
-+		pthread_t pt;
-+
-+		pthread_create(&pt, NULL, thread, NULL);
-+		pthread_join(pt, NULL);
-+		execlp("true", "true", NULL);
-+	}
-+
-+	sleep(1);
-+	sprintf(mm, "/proc/%d/mem", pid);
-+	f = open(mm, O_RDONLY);
-+	ASSERT_GE(f, 0);
-+	close(f);
-+	f = kill(pid, SIGCONT);
-+	ASSERT_EQ(f, 0);
-+}
-+
-+TEST(attach)
-+{
-+	int s, k, pid = fork();
-+
-+	if (!pid) {
-+		pthread_t pt;
-+
-+		pthread_create(&pt, NULL, thread, NULL);
-+		pthread_join(pt, NULL);
-+		execlp("sleep", "sleep", "2", NULL);
-+	}
-+
-+	sleep(1);
-+	k = ptrace(PTRACE_ATTACH, pid, 0L, 0L);
-+	ASSERT_EQ(errno, EAGAIN);
-+	ASSERT_EQ(k, -1);
-+	k = waitpid(-1, &s, WNOHANG);
-+	ASSERT_NE(k, -1);
-+	ASSERT_NE(k, 0);
-+	ASSERT_NE(k, pid);
-+	ASSERT_EQ(WIFEXITED(s), 1);
-+	ASSERT_EQ(WEXITSTATUS(s), 0);
-+	sleep(1);
-+	k = ptrace(PTRACE_ATTACH, pid, 0L, 0L);
-+	ASSERT_EQ(k, 0);
-+	k = waitpid(-1, &s, 0);
-+	ASSERT_EQ(k, pid);
-+	ASSERT_EQ(WIFSTOPPED(s), 1);
-+	ASSERT_EQ(WSTOPSIG(s), SIGSTOP);
-+	k = ptrace(PTRACE_DETACH, pid, 0L, 0L);
-+	ASSERT_EQ(k, 0);
-+	k = waitpid(-1, &s, 0);
-+	ASSERT_EQ(k, pid);
-+	ASSERT_EQ(WIFEXITED(s), 1);
-+	ASSERT_EQ(WEXITSTATUS(s), 0);
-+	k = waitpid(-1, NULL, 0);
-+	ASSERT_EQ(k, -1);
-+	ASSERT_EQ(errno, ECHILD);
-+}
-+
-+TEST_HARNESS_MAIN
--- 
-1.9.1
+
+>
+> strace          D    0 30614  30584 0x00000000
+> Call Trace:
+> __schedule+0x3ce/0x6e0
+> schedule+0x5c/0xd0
+> schedule_preempt_disabled+0x15/0x20
+> __mutex_lock.isra.13+0x1ec/0x520
+> __mutex_lock_killable_slowpath+0x13/0x20
+> mutex_lock_killable+0x28/0x30
+> mm_access+0x27/0xa0
+> process_vm_rw_core.isra.3+0xff/0x550
+> process_vm_rw+0xdd/0xf0
+> __x64_sys_process_vm_readv+0x31/0x40
+> do_syscall_64+0x64/0x220
+> entry_SYSCALL_64_after_hwframe+0x44/0xa9
+>
+> expect          D    0 31933  30876 0x80004003
+> Call Trace:
+> __schedule+0x3ce/0x6e0
+> schedule+0x5c/0xd0
+> flush_old_exec+0xc4/0x770
+> load_elf_binary+0x35a/0x16c0
+> search_binary_handler+0x97/0x1d0
+> __do_execve_file.isra.40+0x5d4/0x8a0
+> __x64_sys_execve+0x49/0x60
+> do_syscall_64+0x64/0x220
+> entry_SYSCALL_64_after_hwframe+0x44/0xa9
+>
+> This changes mm_access to use the new exec_update_mutex
+> instead of cred_guard_mutex.
+>
+> This patch is based on the following patch by Eric W. Biederman:
+> "[PATCH 0/5] Infrastructure to allow fixing exec deadlocks"
+> Link: https://lore.kernel.org/lkml/87v9ne5y4y.fsf_-_@x220.int.ebiederm.org/
+>
+> Signed-off-by: Bernd Edlinger <bernd.edlinger@hotmail.de>
+> ---
+>  kernel/fork.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+>
+> diff --git a/kernel/fork.c b/kernel/fork.c
+> index c12595a..5720ff3 100644
+> --- a/kernel/fork.c
+> +++ b/kernel/fork.c
+> @@ -1224,7 +1224,7 @@ struct mm_struct *mm_access(struct task_struct *task, unsigned int mode)
+>  	struct mm_struct *mm;
+>  	int err;
+>  
+> -	err =  mutex_lock_killable(&task->signal->cred_guard_mutex);
+> +	err =  mutex_lock_killable(&task->signal->exec_update_mutex);
+>  	if (err)
+>  		return ERR_PTR(err);
+>  
+> @@ -1234,7 +1234,7 @@ struct mm_struct *mm_access(struct task_struct *task, unsigned int mode)
+>  		mmput(mm);
+>  		mm = ERR_PTR(-EACCES);
+>  	}
+> -	mutex_unlock(&task->signal->cred_guard_mutex);
+> +	mutex_unlock(&task->signal->exec_update_mutex);
+>  
+>  	return mm;
+>  }
