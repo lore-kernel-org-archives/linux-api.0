@@ -2,150 +2,132 @@ Return-Path: <SRS0=yzTb=43=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2390FC18E5A
-	for <linux-api@archiver.kernel.org>; Tue, 10 Mar 2020 01:21:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 354A6C10F25
+	for <linux-api@archiver.kernel.org>; Tue, 10 Mar 2020 01:21:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id E152B24649
-	for <linux-api@archiver.kernel.org>; Tue, 10 Mar 2020 01:21:07 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=amacapital-net.20150623.gappssmtp.com header.i=@amacapital-net.20150623.gappssmtp.com header.b="g/iv7CpG"
+	by mail.kernel.org (Postfix) with ESMTP id 0706924649
+	for <linux-api@archiver.kernel.org>; Tue, 10 Mar 2020 01:21:25 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1583803285;
+	bh=u9kUqBJzwaMl1xWmNDrHnhfCq3UF0EHAoU/xNxKwn0g=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:List-ID:From;
+	b=HNFxMCvixCUIMdV1fZqMmhz5bONh+WpNcXOYlFTq4o0olDmLp91xUtbDLPN/6CGur
+	 l4AvYCC9Ys58PIZFbFkVSY+uVBnLbeM1xuepk5VfZRnlBEHiyjnU4UMpqAVY/e6H4w
+	 mBANBD4kS5vOYsj6rI8/vw8gsOv2CHBo2itJuc+0=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726378AbgCJBVF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 9 Mar 2020 21:21:05 -0400
-Received: from mail-pj1-f66.google.com ([209.85.216.66]:52905 "EHLO
-        mail-pj1-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726197AbgCJBVF (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Mar 2020 21:21:05 -0400
-Received: by mail-pj1-f66.google.com with SMTP id f15so670214pjq.2
-        for <linux-api@vger.kernel.org>; Mon, 09 Mar 2020 18:21:04 -0700 (PDT)
+        id S1726202AbgCJBVY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 9 Mar 2020 21:21:24 -0400
+Received: from mail-lj1-f194.google.com ([209.85.208.194]:37547 "EHLO
+        mail-lj1-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726156AbgCJBVY (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Mar 2020 21:21:24 -0400
+Received: by mail-lj1-f194.google.com with SMTP id d12so12254712lji.4
+        for <linux-api@vger.kernel.org>; Mon, 09 Mar 2020 18:21:21 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=amacapital-net.20150623.gappssmtp.com; s=20150623;
-        h=content-transfer-encoding:mime-version:subject:from:in-reply-to:cc
-         :date:message-id:references:to;
-        bh=mrUxxgNRy+5E4bEZVXAZNOiHka9AVVm3vCKbU9l6fA4=;
-        b=g/iv7CpG8/DiYA4NA/mKsrAq67vf66xkLwrtr0OnzjXecbrlOk01TyaasjqzOJ/cy6
-         jkjE+yfOHqhIEodGUnCwDH2I67yhqD/opVoCRpcoVgu+agPVZLyJsNAcnfduPxpLnSIY
-         FWAJ7VcA1vbAbasZjJHBV3szxpyaw/IjVhpRpaZZAzmlolgnoqTrx5PFTbyFCLsWL/hh
-         e+FHgrtXApyn35w6Vpk1Rs7+FEhw6F26iHRoXV7X8YTvuouFOniMH3ge0MiWbLs+nVG7
-         4yVzA5v9uxjBTgJSNciJkl25N5hFus4/aSfLvMtEJHuvytjNWQXk1EtEGjXwJI8TsJ8b
-         Lf5w==
+        d=linux-foundation.org; s=google;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=nCY2IMHfivjHreZOPal2MmhDh1XB1BJ/jVXGh7sofMY=;
+        b=dttz1Aai8q2mA5120RQHpU6FQZ0oWB6GoxZWjBIoKe7rJ6/0ECieO/iRN6XUsDDmpY
+         P8ZM/s3EiQ2yKP5NbwrdbruCnctvDp6KQ/31+Dn7/6XLJ6IfHlJYcxNGPxHn1UbBU0iV
+         LA0J4YsQpHP85wdc4zfWiUV0qC/skOAfeo6iw=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:content-transfer-encoding:mime-version:subject
-         :from:in-reply-to:cc:date:message-id:references:to;
-        bh=mrUxxgNRy+5E4bEZVXAZNOiHka9AVVm3vCKbU9l6fA4=;
-        b=KW1SyjQdsQYAooPFg+M3PHlJTEWzD0kapgcRoE2NeZxfAwKZPS6B1KJrYJPcQLdODh
-         fStw8CsiDsyx+6VMlAu8O6JgZfxSIGxFwI3Rxli8/kYeurq37ZpAjcMNZ8hybMCw1YHB
-         2o20mWZpnf7jxQfpI4ZObxXFmxJwfg+VOeWxEx1FgfUGrNsuMmnSOciWrOXaaLRiDgz5
-         2LzIkdoGiI1bUmjSSgKDJZaispG/M8knihzVzqdMt84moBM1EHUwmlriFpFHLJHrejlG
-         DY9+udfVP3FvBC/oNQdFLSkLZrcPTTYZftYJfLSqKqomVOTPGnBCmz2Oi85k9Vab9K/T
-         Oh/A==
-X-Gm-Message-State: ANhLgQ3KAoLHRbwu2YM2Zl3+NEAyPwSJMXjCiw+Ca1qFvurH6ge/pp92
-        lBdkpNnH83mgu0M/nAS2/SEnVg==
-X-Google-Smtp-Source: ADFU+vsv4okX8I4n8qmcxoYDTnfJmLGi0d3Bk5liMiDsLRDCvsApNaCvlR6NOzyOKkYBsF2RXUSNlQ==
-X-Received: by 2002:a17:902:8a8f:: with SMTP id p15mr14339433plo.45.1583803264156;
-        Mon, 09 Mar 2020 18:21:04 -0700 (PDT)
-Received: from ?IPv6:2600:1010:b047:6b2c:4878:83f4:4223:51c6? ([2600:1010:b047:6b2c:4878:83f4:4223:51c6])
-        by smtp.gmail.com with ESMTPSA id 17sm14250924pfu.166.2020.03.09.18.21.02
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=nCY2IMHfivjHreZOPal2MmhDh1XB1BJ/jVXGh7sofMY=;
+        b=toGgjggPfS57RLT8I7jHKPE/Qg1S37S8+a+sQOeSkg9EAWjtp1BVDxOqtLkxl4KGn3
+         djJEYt9XrTmV+4F34oJGqMMWGucxx/xMNHomlmLbfzKoew/2ORCPDoNU/h2Vj+Q4b9cs
+         miRLVcgnSQwHzi8EvJnMD03RNcXcaJm8/fE4tptuUryOmD/hqibgnxwsf53+baN4t76X
+         mt4E84Xq+M30M2aMg0BS6RAAJ5jD4JF+Q8tjdzvCmIsz1zss0c6nQ9aK7gZsIub7zlMt
+         lfIx9ZHxYkttBzySePu4QnWc9UlA7AZNqAljMexdaIad/bxZxlkt59+Q87Ioix/XSWvM
+         CRzA==
+X-Gm-Message-State: ANhLgQ0Ocs7G0iyH4sfBmn7mLrJyYV4ZSvM7sh0UgfMxmwSfJiU/Jp8I
+        hXGv8QVdjIEWKgrGkCQuSU1PJ4Hi8P0=
+X-Google-Smtp-Source: ADFU+vt8nd5jVFQVwzqnGjfHOIJMB7Pdmkid3ujIcBs+C0SdxYZYfjeACr37d6XSfTKUV6D4phBxow==
+X-Received: by 2002:a2e:b530:: with SMTP id z16mr10988656ljm.216.1583803280759;
+        Mon, 09 Mar 2020 18:21:20 -0700 (PDT)
+Received: from mail-lj1-f169.google.com (mail-lj1-f169.google.com. [209.85.208.169])
+        by smtp.gmail.com with ESMTPSA id z8sm9724410ljk.94.2020.03.09.18.21.20
+        for <linux-api@vger.kernel.org>
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 09 Mar 2020 18:21:03 -0700 (PDT)
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Mime-Version: 1.0 (1.0)
-Subject: Re: [RFC PATCH v9 01/27] Documentation/x86: Add CET description
-From:   Andy Lutomirski <luto@amacapital.net>
-In-Reply-To: <CAMe9rOpJjaro_qK6kghGNuSHDaP_MjVaZMbok2kbuBD48VmvXg@mail.gmail.com>
-Cc:     Dave Hansen <dave.hansen@intel.com>,
-        Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        the arch/x86 maintainers <x86@kernel.org>,
-        "H. Peter Anvin" <hpa@zytor.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
-        Linux-MM <linux-mm@kvack.org>,
-        linux-arch <linux-arch@vger.kernel.org>,
+        Mon, 09 Mar 2020 18:21:20 -0700 (PDT)
+Received: by mail-lj1-f169.google.com with SMTP id f13so12261585ljp.0
+        for <linux-api@vger.kernel.org>; Mon, 09 Mar 2020 18:21:20 -0700 (PDT)
+X-Received: by 2002:a19:520a:: with SMTP id m10mr11117505lfb.30.1583802856199;
+ Mon, 09 Mar 2020 18:14:16 -0700 (PDT)
+MIME-Version: 1.0
+References: <158376244589.344135.12925590041630631412.stgit@warthog.procyon.org.uk>
+ <158376245699.344135.7522994074747336376.stgit@warthog.procyon.org.uk> <20200310005549.adrn3yf4mbljc5f6@yavin>
+In-Reply-To: <20200310005549.adrn3yf4mbljc5f6@yavin>
+From:   Linus Torvalds <torvalds@linux-foundation.org>
+Date:   Mon, 9 Mar 2020 18:14:00 -0700
+X-Gmail-Original-Message-ID: <CAHk-=wiEBNFJ0_riJnpuUXTO7+_HByVo-R3pGoB_84qv3LzHxA@mail.gmail.com>
+Message-ID: <CAHk-=wiEBNFJ0_riJnpuUXTO7+_HByVo-R3pGoB_84qv3LzHxA@mail.gmail.com>
+Subject: Re: [PATCH 01/14] VFS: Add additional RESOLVE_* flags [ver #18]
+To:     Aleksa Sarai <cyphar@cyphar.com>
+Cc:     David Howells <dhowells@redhat.com>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Stefan Metzmacher <metze@samba.org>,
+        Ian Kent <raven@themaw.net>,
+        Miklos Szeredi <mszeredi@redhat.com>,
+        Christian Brauner <christian@brauner.io>,
+        Jann Horn <jannh@google.com>,
+        "Darrick J. Wong" <darrick.wong@oracle.com>,
+        Karel Zak <kzak@redhat.com>, jlayton@redhat.com,
         Linux API <linux-api@vger.kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Andy Lutomirski <luto@kernel.org>,
-        Balbir Singh <bsingharora@gmail.com>,
-        Borislav Petkov <bp@alien8.de>,
-        Cyrill Gorcunov <gorcunov@gmail.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Eugene Syromiatnikov <esyr@redhat.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Nadav Amit <nadav.amit@gmail.com>,
-        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
-        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
-        Dave Martin <Dave.Martin@arm.com>, x86-patch-review@intel.com
-Date:   Mon, 9 Mar 2020 18:21:01 -0700
-Message-Id: <E7E7A2AE-500A-4817-B00A-BE419E89C6F9@amacapital.net>
-References: <CAMe9rOpJjaro_qK6kghGNuSHDaP_MjVaZMbok2kbuBD48VmvXg@mail.gmail.com>
-To:     "H.J. Lu" <hjl.tools@gmail.com>
-X-Mailer: iPhone Mail (17D50)
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        LSM List <linux-security-module@vger.kernel.org>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-I am baffled by this discussion.
+On Mon, Mar 9, 2020 at 5:56 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
+>
+> On 2020-03-09, David Howells <dhowells@redhat.com> wrote:
+> > This is necessary for fsinfo() to use RESOLVE_* flags instead of AT_* flags
+> > if the latter are to be considered deprecated for new system calls.
+> >
+> > Also make openat2() handle RESOLVE_NO_TRAILING_SYMLINKS.
 
->> On Mar 9, 2020, at 5:09 PM, H.J. Lu <hjl.tools@gmail.com> wrote:
->>=20
->> =EF=BB=BFOn Mon, Mar 9, 2020 at 4:59 PM Andy Lutomirski <luto@amacapital.=
-net> wrote:
->=20
->>>> .
->> This could presumably have been fixed by having libpcre or sljit
->> disable IBT before calling into JIT code or by running the JIT code in
->> another thread.  In the other direction, a non-CET libpcre build could
->> build IBT-capable JITted code and enable JIT (by syscall if we allow
->> that or by creating a thread?) when calling it.  And IBT has this
->=20
-> This is not how thread in user space works.
+No, please let's not do this.
 
-void create_cet_thread(void (*func)(), unsigned int cet_flags);
+We have O_NOFOLLOW, and we can't get rid of it.
 
-I could implement this using clone() if the kernel provides the requisite su=
-pport. Sure, creating threads behind libc=E2=80=99s back like this is perilo=
-us, but it can be done.
+So adding RESOLVE_NO_TRAILING_SYMLINKS isn't a cleanup. It's just
+extra complexity for absolutely zero gain.
 
->=20
->> fancy legacy bitmap to allow non-instrumented code to run with IBT on,
->> although SHSTK doesn't have hardware support for a similar feature.
->=20
-> All these changes are called CET enabing.
 
-What does that mean?  If program A loads library B, and library B very caref=
-ully loads CET-mismatched code, program A may be blissfully unaware.
+> After thinking about what Christian said some more, I reckon we
+> shouldn't support both O_NOFOLLOW and RESOLVE_NO_TRAILING_SYMLINKS. But
+> that means we'll need to cherry-pick this patch and get it into mainline
+> before v5.6.
 
->=20
->> So, sure, the glibc-linked ELF ecosystem needs some degree of CET
->> coordination, but it is absolutely not the case that a process MUST
->> have all CET or no CET.  Let's please support the complicated cases in
->> the kernel and the ABI too.  If glibc wants to make it annoying to do
->> complicated things, so be it.  People work behind glibc's back all the
->> time.
->=20
-> CET is no different from NX in this regard.
+No.
 
-NX is in the page tables, and CET, mostly, is not.  Also, we seriously flubb=
-ed READ_IMPLIES_EXEC and made it affect far more mappings than ever should h=
-ave been affected.
+It simply means that we shouldn't have RESOLVE_NO_TRAILING_SYMLINKS at all.
 
-If a legacy program (non-NX-aware) loads a newer library, and the library op=
-ens a device node and mmaps it PROT_READ, it gets RX.  This is not a good de=
-sign. In fact, it=E2=80=99s actively problematic.
+Adding that flag is a mistake. It causes problems like this, where
+subtlenly people say "what if both flags are set".
 
-Let us please not take Linux=E2=80=99s NX legacy support as an example of go=
-od design.=
+Just don't do it.
+
+There's no way in hell we can ever get rid of O_NOFOLLOW anyway, since
+people will continue to use plain open() and openat().
+
+So adding RESOLVE_NO_TRAILING_SYMLINKS is entirely redundant.
+
+Don't deprecate the old flags that are going to always stay around,
+don't add stupid new flags that add no value.
+
+It's that easy.
+
+              Linus
