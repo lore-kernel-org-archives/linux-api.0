@@ -2,160 +2,137 @@ Return-Path: <SRS0=wisl=44=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-1.7 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,FSL_HELO_FAKE,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8F84FC10DCE
-	for <linux-api@archiver.kernel.org>; Wed, 11 Mar 2020 00:17:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C0296C10DCE
+	for <linux-api@archiver.kernel.org>; Wed, 11 Mar 2020 00:36:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 442F0215A4
-	for <linux-api@archiver.kernel.org>; Wed, 11 Mar 2020 00:17:46 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7D3B3215A4
+	for <linux-api@archiver.kernel.org>; Wed, 11 Mar 2020 00:36:51 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1583887011;
+	bh=4kRfeINODboa2z4c+8D8exjL2sbcQ0JoaVZFJvfMarE=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:List-ID:From;
+	b=El31TeNfpo45Fcv8XXqvPG3vQnQEl+ioIvVZen/mtEorZQe2ysr7RwTjdQDbymmJw
+	 vSIp3YyGd9yZKdKOgbIuVWCdWvWeZb6Ycz1sCZ14yljmp4WFkgw5a9J+Q6SMJf4hvn
+	 jJOBHqb/e04GY93wsh48mpubJ2NciZwhPGTuj47w=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727397AbgCKARp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 10 Mar 2020 20:17:45 -0400
-Received: from out02.mta.xmission.com ([166.70.13.232]:40022 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726463AbgCKARp (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 10 Mar 2020 20:17:45 -0400
-Received: from in02.mta.xmission.com ([166.70.13.52])
-        by out02.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.90_1)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1jBp3z-0008FJ-R6; Tue, 10 Mar 2020 18:17:31 -0600
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
-        by in02.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        (Exim 4.87)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1jBp3y-0000VK-Vy; Tue, 10 Mar 2020 18:17:31 -0600
-From:   ebiederm@xmission.com (Eric W. Biederman)
-To:     Jann Horn <jannh@google.com>
-Cc:     Bernd Edlinger <bernd.edlinger@hotmail.de>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        Kees Cook <keescook@chromium.org>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Alexey Dobriyan <adobriyan@gmail.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Oleg Nesterov <oleg@redhat.com>,
-        Frederic Weisbecker <frederic@kernel.org>,
-        Andrei Vagin <avagin@gmail.com>,
-        Ingo Molnar <mingo@kernel.org>,
-        "Peter Zijlstra \(Intel\)" <peterz@infradead.org>,
-        Yuyang Du <duyuyang@gmail.com>,
-        David Hildenbrand <david@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Anshuman Khandual <anshuman.khandual@arm.com>,
-        David Howells <dhowells@redhat.com>,
-        James Morris <jamorris@linux.microsoft.com>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        id S1727648AbgCKAgv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 10 Mar 2020 20:36:51 -0400
+Received: from mail-pg1-f195.google.com ([209.85.215.195]:40479 "EHLO
+        mail-pg1-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727397AbgCKAgu (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 10 Mar 2020 20:36:50 -0400
+Received: by mail-pg1-f195.google.com with SMTP id t24so200696pgj.7;
+        Tue, 10 Mar 2020 17:36:49 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to:user-agent;
+        bh=Vd8wwy++z15II2/dBTfgFL0hl+Hgv4lR23h2vNOMvr8=;
+        b=gxytofn9W2QC+J7wiTxoPyNReGrF4fQbxnTPT7y1SfofqH/tO7P9KaK/AxJ7YDULR2
+         llXuUYi3KZ30I/0U78DBzoH9KwNNhT0pI6h8BrLZWEl3sOtXyQNTOPVDB7Y7h+ZtXUgD
+         8YqZ2meiORv/1U7kCKZLyOKflDgrGkFPbJGeneIvb0sJfYQhG2E3yWOQ21Xmt6q/Xv0N
+         Ejxkv4cx2XagjdiNXWYwaWUN7m2Wkqff4SFMyFb3NBn8ZzbEk1lN07bcJ7xzpT70UST3
+         BDbPtAAvqOCVIbTQRBZ1lM3JSa5f3a2Vn3/ygxh5TWRBuhJcE4x2BmKwcVtEzA6rVCBw
+         dEtw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:date:from:to:cc:subject:message-id
+         :references:mime-version:content-disposition:in-reply-to:user-agent;
+        bh=Vd8wwy++z15II2/dBTfgFL0hl+Hgv4lR23h2vNOMvr8=;
+        b=PxhGNO5IEcAj8y0DwUpNhwGcKSpI/voYTRMGs6ikuXYFIOpg1urYff7H55yXoiSWVg
+         ivfFXDOaWZUAvg6N1CoPpiU/minHXbZBREd5fVjK8FnnIjoUbuoO3jFcxg4yXPJUDxy3
+         J1lFxl7oM2FnYJ3MTrOnnTCuE1rorkK472cx7zMOURkdrGmr3GXbPx2MvFkcxsUQjBzX
+         NVQGvRsZpGiWVLXhnOAJNI5vziMET79lmi+ntbtNU3B8RYXQBcD2beacfjMe3de2PdSx
+         kW7xXE3zo4X4W2A3CNF4fwdEyT0oNhG+K+H+2sAu0zs/9OwOPv+W1DsRZ2/P5MxkoLGi
+         b5Cg==
+X-Gm-Message-State: ANhLgQ3Emf/sEevdCgN3jXNSuj2MpaKuses0d5eHg3s92iP9dKsRbfIJ
+        o1L3p1aaF2GPVm464H8ykMc=
+X-Google-Smtp-Source: ADFU+vswEpqqcw4XX2RthZfi5bdsShhNz14MpEtyAQ7rosc6C1e6e/ydxWEzoYFqo+CzmwWPJVNYHQ==
+X-Received: by 2002:a65:685a:: with SMTP id q26mr284721pgt.29.1583887009162;
+        Tue, 10 Mar 2020 17:36:49 -0700 (PDT)
+Received: from google.com ([2620:15c:211:1:3e01:2939:5992:52da])
+        by smtp.gmail.com with ESMTPSA id m26sm2440274pgc.77.2020.03.10.17.36.47
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 10 Mar 2020 17:36:48 -0700 (PDT)
+Date:   Tue, 10 Mar 2020 17:36:46 -0700
+From:   Minchan Kim <minchan@kernel.org>
+To:     Vlastimil Babka <vbabka@suse.cz>
+Cc:     Andrew Morton <akpm@linux-foundation.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-mm <linux-mm@kvack.org>, linux-api@vger.kernel.org,
+        oleksandr@redhat.com, Suren Baghdasaryan <surenb@google.com>,
+        Tim Murray <timmurray@google.com>,
+        Daniel Colascione <dancol@google.com>,
+        Sandeep Patil <sspatil@google.com>,
+        Sonny Rao <sonnyrao@google.com>,
+        Brian Geffon <bgeffon@google.com>,
+        Michal Hocko <mhocko@suse.com>,
+        Johannes Weiner <hannes@cmpxchg.org>,
         Shakeel Butt <shakeelb@google.com>,
-        Jason Gunthorpe <jgg@ziepe.ca>,
-        Christian Kellner <christian@kellner.me>,
-        Andrea Arcangeli <aarcange@redhat.com>,
-        Aleksa Sarai <cyphar@cyphar.com>,
-        "Dmitry V. Levin" <ldv@altlinux.org>,
-        "linux-doc\@vger.kernel.org" <linux-doc@vger.kernel.org>,
-        "linux-kernel\@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-fsdevel\@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-        "linux-mm\@kvack.org" <linux-mm@kvack.org>,
-        "stable\@vger.kernel.org" <stable@vger.kernel.org>,
-        "linux-api\@vger.kernel.org" <linux-api@vger.kernel.org>
-References: <AM6PR03MB5170EB4427BF5C67EE98FF09E4E60@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <875zfmloir.fsf@x220.int.ebiederm.org>
-        <AM6PR03MB51707ABF20B6CBBECC34865FE4E70@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <87v9nmjulm.fsf@x220.int.ebiederm.org>
-        <AM6PR03MB5170B976E6387FDDAD59A118E4E70@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <202003021531.C77EF10@keescook>
-        <20200303085802.eqn6jbhwxtmz4j2x@wittgenstein>
-        <AM6PR03MB5170285B336790D3450E2644E4E40@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <87v9nlii0b.fsf@x220.int.ebiederm.org>
-        <AM6PR03MB5170609D44967E044FD1BE40E4E40@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <87a74xi4kz.fsf@x220.int.ebiederm.org>
-        <AM6PR03MB51705AA3009B4986BB6EF92FE4E50@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <87r1y8dqqz.fsf@x220.int.ebiederm.org>
-        <AM6PR03MB517053AED7DC89F7C0704B7DE4E50@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <AM6PR03MB51703B44170EAB4626C9B2CAE4E20@AM6PR03MB5170.eurprd03.prod.outlook.com>
-        <87tv32cxmf.fsf_-_@x220.int.ebiederm.org>
-        <87v9ne5y4y.fsf_-_@x220.int.ebiederm.org>
-        <87zhcq4jdj.fsf_-_@x220.int.ebiederm.org>
-        <CAG48ez13XXWNRLrPFRHRsvPKSwSK1-6k+1F7QujWOJtVuk0QHg@mail.gmail.com>
-        <87wo7roq2c.fsf@x220.int.ebiederm.org>
-        <CAG48ez1j2=pdj0nc1syHkh6X4d=aHuCH1srzA6hT7+32QD+6Gg@mail.gmail.com>
-Date:   Tue, 10 Mar 2020 19:15:12 -0500
-In-Reply-To: <CAG48ez1j2=pdj0nc1syHkh6X4d=aHuCH1srzA6hT7+32QD+6Gg@mail.gmail.com>
-        (Jann Horn's message of "Wed, 11 Mar 2020 00:21:49 +0100")
-Message-ID: <87k13roigf.fsf@x220.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
+        John Dias <joaodias@google.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Jann Horn <jannh@google.com>,
+        alexander.h.duyck@linux.intel.com, sj38.park@gmail.com
+Subject: Re: [PATCH v7 2/7] mm: introduce external memory hinting API
+Message-ID: <20200311003646.GA87930@google.com>
+References: <20200302193630.68771-1-minchan@kernel.org>
+ <20200302193630.68771-3-minchan@kernel.org>
+ <bc3f6bd5-f032-bcf5-a09f-556ab785c587@suse.cz>
+ <20200310222008.GB72963@google.com>
 MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1jBp3y-0000VK-Vy;;;mid=<87k13roigf.fsf@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX191GcjSpm9Har/C6Rc/ejl26zceokkfPxs=
-X-SA-Exim-Connect-IP: 68.227.160.95
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: Re: [PATCH v2 5/5] exec: Add a exec_update_mutex to replace cred_guard_mutex
-X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20200310222008.GB72963@google.com>
+User-Agent: Mutt/1.12.2 (2019-09-21)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Jann Horn <jannh@google.com> writes:
+On Tue, Mar 10, 2020 at 03:20:08PM -0700, Minchan Kim wrote:
+> On Thu, Mar 05, 2020 at 07:15:10PM +0100, Vlastimil Babka wrote:
+> > On 3/2/20 8:36 PM, Minchan Kim wrote:
+> > > There is usecase that System Management Software(SMS) want to give
+> > > a memory hint like MADV_[COLD|PAGEEOUT] to other processes and
+> > > in the case of Android, it is the ActivityManagerService.
+> > > 
+> > > It's similar in spirit to madvise(MADV_WONTNEED), but the information
+> > 
+> > You mean MADV_DONTNEED?
+> 
+> Mean to DONT_NEED's future version.
+> 
+> > 
+> > > required to make the reclaim decision is not known to the app.
+> > 
+> > This seems to be mixing up the differences between MADV_DONTNEED and
+> > COLD/PAGEOUT and self-imposed vs external memory hints?
+> 
+> Sorry, I don't understand what you want here.
+> 
+> > 
+> > > Instead,
+> > > it is known to the centralized userspace daemon(ActivityManagerService),
+> > > and that daemon must be able to initiate reclaim on its own without
+> > > any app involvement.
+> > > 
+> > > To solve the issue, this patch introduces a new syscall process_madvise(2).
+> > > It uses pidfd of an external process to give the hint.
+> > > 
+> > >  int process_madvise(int pidfd, void *addr, size_t length, int advise,
+> > > 			unsigned long flag);
+> > 
+> > It's more common to call the argument 'flags' not 'flag'? The code seems to call
+> > it flags. Also in line with madvise(2), the 'advise' argument should rather be
+> > 'advice'. This is more important for the manpage, but let's be consistent.
+> 
+> Yub, I will send the patch along with your comment in previous patch.
 
-> On Tue, Mar 10, 2020 at 10:33 PM Eric W. Biederman
-> <ebiederm@xmission.com> wrote:
->> Jann Horn <jannh@google.com> writes:
->> > On Sun, Mar 8, 2020 at 10:41 PM Eric W. Biederman <ebiederm@xmission.com> wrote:
->> >> The cred_guard_mutex is problematic.  The cred_guard_mutex is held
->> >> over the userspace accesses as the arguments from userspace are read.
->> >> The cred_guard_mutex is held of PTRACE_EVENT_EXIT as the the other
->> >> threads are killed.  The cred_guard_mutex is held over
->> >> "put_user(0, tsk->clear_child_tid)" in exit_mm().
->> >>
->> >> Any of those can result in deadlock, as the cred_guard_mutex is held
->> >> over a possible indefinite userspace waits for userspace.
->> >>
->> >> Add exec_update_mutex that is only held over exec updating process
->> >> with the new contents of exec, so that code that needs not to be
->> >> confused by exec changing the mm and the cred in ways that can not
->> >> happen during ordinary execution of a process.
->> >>
->> >> The plan is to switch the users of cred_guard_mutex to
->> >> exec_udpate_mutex one by one.  This lets us move forward while still
->> >> being careful and not introducing any regressions.
->> > [...]
->> >> @@ -1034,6 +1035,11 @@ static int exec_mmap(struct mm_struct *mm)
->> >>                         return -EINTR;
->> >>                 }
->> >>         }
->> >> +
->> >> +       ret = mutex_lock_killable(&tsk->signal->exec_update_mutex);
->> >> +       if (ret)
->> >> +               return ret;
->> >
->> > We're already holding the old mmap_sem, and now nest the
->> > exec_update_mutex inside it; but then while still holding the
->> > exec_update_mutex, we do mmput(), which can e.g. end up in ksm_exit(),
->> > which can do down_write(&mm->mmap_sem) from __ksm_exit(). So I think
->> > at least lockdep will be unhappy, and I'm not sure whether it's an
->> > actual problem or not.
->>
->> Good point.  I should double check the lock ordering here with mmap_sem.
->> It doesn't look like mmput takes mmap_sem
->
-> You sure about that? mmput() -> __mmput() -> ksm_exit() ->
-> __ksm_exit() -> down_write(&mm->mmap_sem)
->
-> Or also: mmput() -> __mmput() -> khugepaged_exit() ->
-> __khugepaged_exit() -> down_write(&mm->mmap_sem)
->
-> Or is there a reason why those paths can't happen?
-
-Clearly I didn't look far enough. 
-
-I will adjust this so that exec_update_mutex is taken before mmap_sem.
-Anything else is just asking for trouble.
-
-Eric
+Only place to use *advice* in kernel is comment in madvise_willneed.
+Al other places use advise in kernel so I wanted to be more consistent
+with other kernel sources. For man page, we could use the term "advice",
+no problem.
