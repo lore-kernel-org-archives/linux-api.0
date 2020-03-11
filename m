@@ -2,170 +2,129 @@ Return-Path: <SRS0=wisl=44=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.4 required=3.0 tests=DKIMWL_WL_MED,DKIM_SIGNED,
+X-Spam-Status: No, score=-0.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,USER_IN_DEF_DKIM_WL autolearn=no autolearn_force=no
-	version=3.4.0
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C192EC10F29
-	for <linux-api@archiver.kernel.org>; Wed, 11 Mar 2020 14:56:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3388FC2BB1D
+	for <linux-api@archiver.kernel.org>; Wed, 11 Mar 2020 18:00:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 8728B2072F
-	for <linux-api@archiver.kernel.org>; Wed, 11 Mar 2020 14:56:34 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="Xc7KTwBm"
+	by mail.kernel.org (Postfix) with ESMTP id BBA27206E9
+	for <linux-api@archiver.kernel.org>; Wed, 11 Mar 2020 18:00:14 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1583949614;
+	bh=LkZT0BmK1tbF9N6Lr5DM7GiObqeCU2DGSZcsJF+15Yc=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:List-ID:From;
+	b=hmBFghiuy05mKPaNzg4cww5i2hVjbT3OqJ1Pvz5i3MBYSF9qXV+cFsbiq45qC8lOr
+	 PtagEyXL9Bl59aaLXmNqqq6euljCu3Dp5Kk5HyDPb5HLV6yc9y7wZ6ao7HRM48AOxR
+	 7RImrb+eoO7caKwY9Qbl6jyB+Ty+bM09Gg8spLyo=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729916AbgCKO4f (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 11 Mar 2020 10:56:35 -0400
-Received: from mail-ot1-f67.google.com ([209.85.210.67]:39303 "EHLO
-        mail-ot1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729100AbgCKO4e (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 11 Mar 2020 10:56:34 -0400
-Received: by mail-ot1-f67.google.com with SMTP id a9so2247363otl.6
-        for <linux-api@vger.kernel.org>; Wed, 11 Mar 2020 07:56:34 -0700 (PDT)
+        id S1730752AbgCKSAM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 11 Mar 2020 14:00:12 -0400
+Received: from mail-lj1-f196.google.com ([209.85.208.196]:41713 "EHLO
+        mail-lj1-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1730628AbgCKSAL (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 11 Mar 2020 14:00:11 -0400
+Received: by mail-lj1-f196.google.com with SMTP id o10so3351763ljc.8
+        for <linux-api@vger.kernel.org>; Wed, 11 Mar 2020 11:00:10 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20161025;
+        d=linux-foundation.org; s=google;
         h=mime-version:references:in-reply-to:from:date:message-id:subject:to
          :cc;
-        bh=ouxKLWRXOtqbKDl0q+UmOju78v5owF0LnUPYL3Cn3Kg=;
-        b=Xc7KTwBmSvnyR04w7xAsoM4QolF0XcaryYGGSqywW6r0XlqYx9XvikGX4w7bLlxxLJ
-         7Q9AwD+7i/TJ2mStAI9eb2ob9VCt6KgwBw+LR3gAYpgM3S9uQWoNLD+xlKhWnCsJiDsd
-         gQ/4BkYOpVHRSRCowJu6XRQFruet41lwL6gwC6z3ZSErV3n8O+X2f+eZSuo5E01C3UV8
-         tyeHf9B1wPr69eyCIlYMAQR5+WIsB75Z+R5FBKu1iRw02ws17iiqnH3dVPNo9lJU7J88
-         tpacvkSbf6Ri5ZPR6z68IF56hdGSxpTT8rbI4/vpexPf/ozipoU+b1l6PAcyKYZfa7Y6
-         rVAg==
+        bh=dpqDD1Wo+HKU40oDoKA/BJI8LsaHpPP8z3qrK9mKasM=;
+        b=ckkZBdQmXywHGIbczwxKoXJtM5bn1Q4zF8980dmDzUAerY42Vnt79h0/hrgko+maFY
+         g6W5qtOcDU0FR7TReGj9YV2UAWuNcF/lAEUT03GfvSsuEW22s7MzLhczmTz71ew7VoeG
+         9tipLpaaHNIEBXH+b/EPSFlrBcI9QWo4iyKEg=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:mime-version:references:in-reply-to:from:date
          :message-id:subject:to:cc;
-        bh=ouxKLWRXOtqbKDl0q+UmOju78v5owF0LnUPYL3Cn3Kg=;
-        b=ru5OqrX8ow2wFs/LWFZilvxCuLLtm2S9cAX0ycpUnx6dZThm4XJ3ukv1/5cwpmoArS
-         xSQGTUhuWy5aezeuL3FqjSVbp7H4y2jgN7pmoNr6Mf6KVbPrIt3ZY6hlKGRdyiSQQq0p
-         E7VjOq/PGFqe4V3d+SSTL8wc6c2gMQ2fLcaWOw1SIo9ijyB7ll7rDHQDJXDE5vt4P1mZ
-         tJvl7ABlZibZDHuhy0wZ33i5EoFHpKKBBu9qpPYJUXU+MBiFuLYEsJfxIaRV7JGb09o5
-         HqxldE64n+Qt/+fPVFDD8jPTySemLd0iztprmUg5ix1yjC4Ga7hR+XmduJUnQKuR6S1y
-         oiGQ==
-X-Gm-Message-State: ANhLgQ3VScnEBc9HwPBeiwK39uBAI68Ab8vl4MFCjd0tgeSPDTILKUbu
-        zUNswwl5F/d8K7cD9JWcyHRyKzJPIA3oiIy7Hl2xJw==
-X-Google-Smtp-Source: ADFU+vsoVPEYUzYAEvw3qgsbNcHFvKCUWY2EnYgxb3/1wEn7Xj5CByupWPUTgv6N0jalxR0NpVo1qN7c0CgaHTbYtAA=
-X-Received: by 2002:a4a:a8c6:: with SMTP id r6mr553536oom.21.1583938593523;
- Wed, 11 Mar 2020 07:56:33 -0700 (PDT)
+        bh=dpqDD1Wo+HKU40oDoKA/BJI8LsaHpPP8z3qrK9mKasM=;
+        b=EEdDJJlJtRsHsMYZFBWs5CWCiYtpC70OdbHqe5w3YSULPc84+IWMWLFczE8LUtg6+K
+         ACvP0U7Sr5hcYxKwCMwlM9MWEiSdAb6rPjm31YL4Tpz+7GFHmX6MtppB1FyjZOoxLMtz
+         HRu1QZjAkwmKmX3x5RvnOKbesASuLlxyG6mQ/9HP3jEi2YqWp6EwFZqoZ1Md5LH9Zn7y
+         MZdkUxBy0dKYbl6nRqrqjWbMv5pYpDmGJq07ArBR6TeSmWa3WYf7GMUxubQzp0leEupe
+         fVbOLkP4LFEtNL2K7h5gJcTeCgTWpqhTHmTMzhbON7PJl8jKR4gxX3uoLHkLA26nyC7n
+         KbzA==
+X-Gm-Message-State: ANhLgQ1vUk8QIiM9dH2pOoLoazNBiK/QRzapB916u9zuVDXOj5sEe1yz
+        IXoZ+K41VItwHpApFCqJvhse9J4aF1I=
+X-Google-Smtp-Source: ADFU+vsr8CteEkWlolPTlsNUmpQFdgAmvYUHJQhvJkeal0qRiPPlAgEavVi//ObQn/cVp4iX1yxnxg==
+X-Received: by 2002:a2e:151e:: with SMTP id s30mr2813395ljd.92.1583949609227;
+        Wed, 11 Mar 2020 11:00:09 -0700 (PDT)
+Received: from mail-lj1-f172.google.com (mail-lj1-f172.google.com. [209.85.208.172])
+        by smtp.gmail.com with ESMTPSA id y78sm2276927lfa.2.2020.03.11.11.00.07
+        for <linux-api@vger.kernel.org>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 11 Mar 2020 11:00:07 -0700 (PDT)
+Received: by mail-lj1-f172.google.com with SMTP id e18so3339315ljn.12
+        for <linux-api@vger.kernel.org>; Wed, 11 Mar 2020 11:00:07 -0700 (PDT)
+X-Received: by 2002:a2e:5850:: with SMTP id x16mr2622296ljd.209.1583949607115;
+ Wed, 11 Mar 2020 11:00:07 -0700 (PDT)
 MIME-Version: 1.0
-References: <87r1y8dqqz.fsf@x220.int.ebiederm.org> <AM6PR03MB517053AED7DC89F7C0704B7DE4E50@AM6PR03MB5170.eurprd03.prod.outlook.com>
- <AM6PR03MB51703B44170EAB4626C9B2CAE4E20@AM6PR03MB5170.eurprd03.prod.outlook.com>
- <87tv32cxmf.fsf_-_@x220.int.ebiederm.org> <87v9ne5y4y.fsf_-_@x220.int.ebiederm.org>
- <87eeu25y14.fsf_-_@x220.int.ebiederm.org> <20200309195909.h2lv5uawce5wgryx@wittgenstein>
- <877dztz415.fsf@x220.int.ebiederm.org> <20200309201729.yk5sd26v4bz4gtou@wittgenstein>
- <87k13txnig.fsf@x220.int.ebiederm.org> <20200310085540.pztaty2mj62xt2nm@wittgenstein>
- <87wo7svy96.fsf_-_@x220.int.ebiederm.org> <CAG48ez2cUZMVOAXfHPNjKjYsMSaWkjUjOCHo0KYZ+oXQUW4viA@mail.gmail.com>
- <87k13sui1p.fsf@x220.int.ebiederm.org> <CAG48ez2vRgaEVJ=Rs8gn6HkGO6syL8MpSOUq7BNN+OUE1uYxCA@mail.gmail.com>
- <CAG48ez1LjW1xAGe-5tNtstCWxG2bkiHaQUMOcJNjx=z-2Wc2Jw@mail.gmail.com>
- <AM6PR03MB5170AF454A8A9C37891B12B2E4FF0@AM6PR03MB5170.eurprd03.prod.outlook.com>
- <5a8b2794-b498-af33-1327-ff2861cff83f@hotmail.de>
-In-Reply-To: <5a8b2794-b498-af33-1327-ff2861cff83f@hotmail.de>
-From:   Jann Horn <jannh@google.com>
-Date:   Wed, 11 Mar 2020 15:56:07 +0100
-Message-ID: <CAG48ez33hx0NavmLub1QjzTw_DJuyRtkB71Mm35Hmp1x+DjmFA@mail.gmail.com>
-Subject: Re: [PATCH] pidfd: Stop taking cred_guard_mutex
-To:     Bernd Edlinger <bernd.edlinger@hotmail.de>
-Cc:     "Eric W. Biederman" <ebiederm@xmission.com>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        Kees Cook <keescook@chromium.org>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        "adobriyan@gmail.com" <adobriyan@gmail.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Oleg Nesterov <oleg@redhat.com>,
-        Frederic Weisbecker <frederic@kernel.org>,
-        "avagin@gmail.com" <avagin@gmail.com>,
-        Ingo Molnar <mingo@kernel.org>,
-        "Peter Zijlstra (Intel)" <peterz@infradead.org>,
-        "duyuyang@gmail.com" <duyuyang@gmail.com>,
-        David Hildenbrand <david@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Anshuman Khandual <anshuman.khandual@arm.com>,
-        David Howells <dhowells@redhat.com>,
-        James Morris <jamorris@linux.microsoft.com>,
-        "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>,
-        Shakeel Butt <shakeelb@google.com>,
-        Jason Gunthorpe <jgg@ziepe.ca>,
-        "christian@kellner.me" <christian@kellner.me>,
-        Andrea Arcangeli <aarcange@redhat.com>,
-        Aleksa Sarai <cyphar@cyphar.com>,
-        "Dmitry V. Levin" <ldv@altlinux.org>,
-        "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-        "linux-mm@kvack.org" <linux-mm@kvack.org>,
-        "stable@vger.kernel.org" <stable@vger.kernel.org>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>,
-        "sargun@sargun.me" <sargun@sargun.me>
+References: <158376244589.344135.12925590041630631412.stgit@warthog.procyon.org.uk>
+ <158376245699.344135.7522994074747336376.stgit@warthog.procyon.org.uk>
+ <20200310005549.adrn3yf4mbljc5f6@yavin> <CAHk-=wiEBNFJ0_riJnpuUXTO7+_HByVo-R3pGoB_84qv3LzHxA@mail.gmail.com>
+ <580352.1583825105@warthog.procyon.org.uk>
+In-Reply-To: <580352.1583825105@warthog.procyon.org.uk>
+From:   Linus Torvalds <torvalds@linux-foundation.org>
+Date:   Wed, 11 Mar 2020 10:59:51 -0700
+X-Gmail-Original-Message-ID: <CAHk-=wiaL6zznNtCHKg6+MJuCqDxO=yVfms3qR9A0czjKuSSiA@mail.gmail.com>
+Message-ID: <CAHk-=wiaL6zznNtCHKg6+MJuCqDxO=yVfms3qR9A0czjKuSSiA@mail.gmail.com>
+Subject: Re: [PATCH 01/14] VFS: Add additional RESOLVE_* flags [ver #18]
+To:     David Howells <dhowells@redhat.com>
+Cc:     Aleksa Sarai <cyphar@cyphar.com>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Stefan Metzmacher <metze@samba.org>,
+        Ian Kent <raven@themaw.net>,
+        Miklos Szeredi <mszeredi@redhat.com>,
+        Christian Brauner <christian@brauner.io>,
+        Jann Horn <jannh@google.com>,
+        "Darrick J. Wong" <darrick.wong@oracle.com>,
+        Karel Zak <kzak@redhat.com>, jlayton@redhat.com,
+        Linux API <linux-api@vger.kernel.org>,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        LSM List <linux-security-module@vger.kernel.org>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Mar 11, 2020 at 7:12 AM Bernd Edlinger
-<bernd.edlinger@hotmail.de> wrote:
-> On 3/10/20 9:22 PM, Bernd Edlinger wrote:
-> > On 3/10/20 9:10 PM, Jann Horn wrote:
-> >> On Tue, Mar 10, 2020 at 9:00 PM Jann Horn <jannh@google.com> wrote:
-> >>> On Tue, Mar 10, 2020 at 8:29 PM Eric W. Biederman <ebiederm@xmission.com> wrote:
-> >>>> Jann Horn <jannh@google.com> writes:
-> >>>>> On Tue, Mar 10, 2020 at 7:54 PM Eric W. Biederman <ebiederm@xmission.com> wrote:
-> >>>>>> During exec some file descriptors are closed and the files struct is
-> >>>>>> unshared.  But all of that can happen at other times and it has the
-> >>>>>> same protections during exec as at ordinary times.  So stop taking the
-> >>>>>> cred_guard_mutex as it is useless.
-> >>>>>>
-> >>>>>> Furthermore he cred_guard_mutex is a bad idea because it is deadlock
-> >>>>>> prone, as it is held in serveral while waiting possibly indefinitely
-> >>>>>> for userspace to do something.
-> >> [...]
-> >>>>> If you make this change, then if this races with execution of a setuid
-> >>>>> program that afterwards e.g. opens a unix domain socket, an attacker
-> >>>>> will be able to steal that socket and inject messages into
-> >>>>> communication with things like DBus. procfs currently has the same
-> >>>>> race, and that still needs to be fixed, but at least procfs doesn't
-> >>>>> let you open things like sockets because they don't have a working
-> >>>>> ->open handler, and it enforces the normal permission check for
-> >>>>> opening files.
-> >>>>
-> >>>> It isn't only exec that can change credentials.  Do we need a lock for
-> >>>> changing credentials?
-> >> [...]
-> >>>> If we need a lock around credential change let's design and build that.
-> >>>> Having a mismatch between what a lock is designed to do, and what
-> >>>> people use it for can only result in other bugs as people get confused.
-> >>>
-> >>> Hmm... what benefits do we get from making it a separate lock? I guess
-> >>> it would allow us to make it a per-task lock instead of a
-> >>> signal_struct-wide one? That might be helpful...
-> >>
-> >> But actually, isn't the core purpose of the cred_guard_mutex to guard
-> >> against concurrent credential changes anyway? That's what almost
-> >> everyone uses it for, and it's in the name...
-> >>
-> >
-> > The main reason d'etre of exec_update_mutex is to get a consitent
-> > view of task->mm and task credentials.
-> > > The reason why you want the cred_guard_mutex, is that some action
-> > is changing the resulting credentials that the execve is about
-> > to install, and that is the data flow in the opposite direction.
-> >
->
-> So in other words, you need the exec_update_mutex when you
-> access another thread's credentials and possibly the mmap at the
-> same time.
+On Tue, Mar 10, 2020 at 12:25 AM David Howells <dhowells@redhat.com> wrote:
+?
+> Okay.  So what's the equivalent of AT_SYMLINK_NOFOLLOW in RESOLVE_* flag
+> terms?
 
-Or the file descriptor table, or register state, ...
+Nothing.
 
-> You need no mutex at all when you are just accessing or
-> even changing the credentials of the current thread.  (If another
-> thread is doing execve, your task will be killed, and wether
-> or not the credentials were changed does not matter any more)
+openat2() takes two sets of flags. We'll never get rid of
+AT_SYMLINK_NOFOLLOW / O_NOFOLLOW, and we've added RESOLVE_NO_SYMLINKS
+to the new set of flags. It's just a separate namespace.
 
-Only if the only access checks you care about are those related to mm access.
+We will _not_ be adding a RESOLVE_XYZ flag for O_NOFOLLOW or
+AT_SYMLINK_NOFOLLOW. At least not visible to user space - because as
+people already figured out, that just causes problems with consistency
+issues.
+
+And yes, the fact that we then have three different user-visible
+namespaces (O_xyz flags for open(), AT_xyz flags for linkat(), and now
+RESOLVE_xyz flags for openat2()) is sad and messy. But it's an
+inherent messiness from just how the world works. We can't get rid of
+it.
+
+If we need linkat2() and friends, so be it. Do we?
+
+Could we have a _fourth_ set of flags that are simply for internal use
+that is a superset of them all? Sure. But no, it's almost certainly
+not worth it. Four is not better than three.
+
+Now, some type-safety in the kernel to make sure that we can't mix
+AT_xyz with O_xyz or RESOLVE_xyz - that might be worth it. Although
+judging by past experience, not enough people run sparse for it to
+really be worth it.
+
+               Linus
+
+PS. Yeah, we also have that LOOKUP_xyz namespace, and the access mode
+namespace, so we already have those internal format versions too.
