@@ -2,44 +2,40 @@ Return-Path: <SRS0=xGzz=5D=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4E166C10F29
-	for <linux-api@archiver.kernel.org>; Wed, 18 Mar 2020 18:57:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 87C70C5ACD7
+	for <linux-api@archiver.kernel.org>; Wed, 18 Mar 2020 19:04:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 345F420724
-	for <linux-api@archiver.kernel.org>; Wed, 18 Mar 2020 18:57:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6753220754
+	for <linux-api@archiver.kernel.org>; Wed, 18 Mar 2020 19:04:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726817AbgCRS5y (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 18 Mar 2020 14:57:54 -0400
-Received: from namei.org ([65.99.196.166]:42030 "EHLO namei.org"
+        id S1726994AbgCRTE1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 18 Mar 2020 15:04:27 -0400
+Received: from namei.org ([65.99.196.166]:42052 "EHLO namei.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726663AbgCRS5y (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 18 Mar 2020 14:57:54 -0400
+        id S1726506AbgCRTE1 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 18 Mar 2020 15:04:27 -0400
 Received: from localhost (localhost [127.0.0.1])
-        by namei.org (8.14.4/8.14.4) with ESMTP id 02IIvYvj029893;
-        Wed, 18 Mar 2020 18:57:34 GMT
-Date:   Thu, 19 Mar 2020 05:57:34 +1100 (AEDT)
+        by namei.org (8.14.4/8.14.4) with ESMTP id 02IJ47Ki030160;
+        Wed, 18 Mar 2020 19:04:07 GMT
+Date:   Thu, 19 Mar 2020 06:04:07 +1100 (AEDT)
 From:   James Morris <jmorris@namei.org>
 To:     David Howells <dhowells@redhat.com>
 cc:     torvalds@linux-foundation.org, viro@zeniv.linux.org.uk,
-        Casey Schaufler <casey@schaufler-ca.com>,
-        Stephen Smalley <sds@tycho.nsa.gov>,
-        linux-security-module@vger.kernel.org,
-        Casey Schaufler <casey@schaufler-ca.com>,
-        Stephen Smalley <sds@tycho.nsa.gov>, nicolas.dichtel@6wind.com,
-        raven@themaw.net, christian@brauner.io, andres@anarazel.de,
-        jlayton@redhat.com, dray@redhat.com, kzak@redhat.com,
-        keyrings@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org,
+        casey@schaufler-ca.com, sds@tycho.nsa.gov,
+        nicolas.dichtel@6wind.com, raven@themaw.net, christian@brauner.io,
+        andres@anarazel.de, jlayton@redhat.com, dray@redhat.com,
+        kzak@redhat.com, keyrings@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
         linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 03/17] security: Add a hook for the point of notification
- insertion [ver #5]
-In-Reply-To: <158454382138.2863966.4611034029343321389.stgit@warthog.procyon.org.uk>
-Message-ID: <alpine.LRH.2.21.2003190557200.29708@namei.org>
-References: <158454378820.2863966.10496767254293183123.stgit@warthog.procyon.org.uk> <158454382138.2863966.4611034029343321389.stgit@warthog.procyon.org.uk>
+Subject: Re: [PATCH 06/17] watch_queue: Add a key/keyring notification facility
+ [ver #5]
+In-Reply-To: <158454384808.2863966.9318850402218181933.stgit@warthog.procyon.org.uk>
+Message-ID: <alpine.LRH.2.21.2003190558240.29708@namei.org>
+References: <158454378820.2863966.10496767254293183123.stgit@warthog.procyon.org.uk> <158454384808.2863966.9318850402218181933.stgit@warthog.procyon.org.uk>
 User-Agent: Alpine 2.21 (LRH 202 2017-01-01)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
@@ -50,31 +46,20 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 On Wed, 18 Mar 2020, David Howells wrote:
 
-> Add a security hook that allows an LSM to rule on whether a notification
-> message is allowed to be inserted into a particular watch queue.
-> 
-> The hook is given the following information:
-> 
->  (1) The credentials of the triggerer (which may be init_cred for a system
->      notification, eg. a hardware error).
-> 
->  (2) The credentials of the whoever set the watch.
-> 
->  (3) The notification message.
-> 
-> Signed-off-by: David Howells <dhowells@redhat.com>
-> cc: Casey Schaufler <casey@schaufler-ca.com>
-> cc: Stephen Smalley <sds@tycho.nsa.gov>
-> cc: linux-security-module@vger.kernel.org
-> ---
-> 
->  include/linux/lsm_hooks.h |   14 ++++++++++++++
->  include/linux/security.h  |   14 ++++++++++++++
->  security/security.c       |    9 +++++++++
->  3 files changed, 37 insertions(+)
+> +++ b/Documentation/security/keys/core.rst
+> @@ -833,6 +833,7 @@ The keyctl syscall functions are:
+>       A process must have search permission on the key for this function to be
+>       successful.
+>  
+> +
+>    *  Compute a Diffie-Hellman shared secret or public key::
+>  
+>  	long keyctl(KEYCTL_DH_COMPUTE, struct keyctl_dh_params *params,
+
+Extraneous newline.
 
 
-Acked-by: James Morris <jamorris@linux.microsoft.com>
+Reviewed-by: James Morris <jamorris@linux.microsoft.com>
 
 
 -- 
