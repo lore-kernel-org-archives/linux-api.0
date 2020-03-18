@@ -4,191 +4,190 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-6.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2645AC10DCE
-	for <linux-api@archiver.kernel.org>; Wed, 18 Mar 2020 15:05:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D0C72C5ACD9
+	for <linux-api@archiver.kernel.org>; Wed, 18 Mar 2020 15:05:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id E2CCE20770
-	for <linux-api@archiver.kernel.org>; Wed, 18 Mar 2020 15:05:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A93BB20770
+	for <linux-api@archiver.kernel.org>; Wed, 18 Mar 2020 15:05:31 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="GiGEN9Uk"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ln9NMrDy"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726857AbgCRPFP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 18 Mar 2020 11:05:15 -0400
-Received: from us-smtp-delivery-74.mimecast.com ([63.128.21.74]:58395 "EHLO
+        id S1727368AbgCRPFb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 18 Mar 2020 11:05:31 -0400
+Received: from us-smtp-delivery-74.mimecast.com ([216.205.24.74]:26215 "EHLO
         us-smtp-delivery-74.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1727326AbgCRPFN (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 18 Mar 2020 11:05:13 -0400
+        by vger.kernel.org with ESMTP id S1726988AbgCRPFa (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 18 Mar 2020 11:05:30 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1584543911;
+        s=mimecast20190719; t=1584543929;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=yfA5n8Z+aIk+kyYGrURBEqzc1iGCmKy1Em7iNUliKXo=;
-        b=GiGEN9Ukfr3xtfYxgAQ47pcNxPPHD1MK894UV5ELuMyH/UqGaCdF2llvm6ScNS1nAIJCSS
-        vykh5OGPrl/QhZPKtUPyT2fSJhpNIt4V08RpBU/Byw3QRnhU3lmIG+oxIAHy8wLPUH+VaD
-        7WCnEEtrxiYOUaDhHpyTcrF2SYhxzIQ=
+        bh=dI8IlWBYCaNWXpDkzgWnEx2eTwMg9g0MUeU/TkEB0Zk=;
+        b=Ln9NMrDydwTzAaRR3Lxr9pqXMX0xVRlKCJhyjY8mqTgWqeJXN3PZfKjRoeBCN8BwWuvbh3
+        t9DRon0TvD5YHDsw/BGlvDGoYcRaAiGoPtT+mBhEIL71PPdKXwNMyyXh+vYe+FetWZ1UF+
+        X3ZgrUjuLtWm/8YYYI4Gtl8wTQ3LW4Q=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-382-wW7I9fuTPGiKlign-fCkrg-1; Wed, 18 Mar 2020 11:05:09 -0400
-X-MC-Unique: wW7I9fuTPGiKlign-fCkrg-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-249-LjYnuJUpO5G4_Wy66GHzsQ-1; Wed, 18 Mar 2020 11:05:28 -0400
+X-MC-Unique: LjYnuJUpO5G4_Wy66GHzsQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CC3F0107ACCD;
-        Wed, 18 Mar 2020 15:05:07 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id EF8538010D9;
+        Wed, 18 Mar 2020 15:05:25 +0000 (UTC)
 Received: from warthog.procyon.org.uk (ovpn-113-126.rdu2.redhat.com [10.10.113.126])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id C29555C1A1;
-        Wed, 18 Mar 2020 15:05:04 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 244591001B07;
+        Wed, 18 Mar 2020 15:05:22 +0000 (UTC)
 Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
         Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
         Kingdom.
         Registered in England and Wales under Company Registration No. 3798903
-Subject: [PATCH 12/17] watch_queue: Add security hooks to rule on setting
- mount and sb watches [ver #5]
+Subject: [PATCH 14/17] watch_queue: sample: Display mount tree change
+ notifications [ver #5]
 From:   David Howells <dhowells@redhat.com>
 To:     torvalds@linux-foundation.org, viro@zeniv.linux.org.uk
-Cc:     Casey Schaufler <casey@schaufler-ca.com>,
-        Stephen Smalley <sds@tycho.nsa.gov>,
-        linux-security-module@vger.kernel.org, dhowells@redhat.com,
-        casey@schaufler-ca.com, sds@tycho.nsa.gov,
+Cc:     dhowells@redhat.com, casey@schaufler-ca.com, sds@tycho.nsa.gov,
         nicolas.dichtel@6wind.com, raven@themaw.net, christian@brauner.io,
         andres@anarazel.de, jlayton@redhat.com, dray@redhat.com,
         kzak@redhat.com, keyrings@vger.kernel.org,
         linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
         linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
-Date:   Wed, 18 Mar 2020 15:05:03 +0000
-Message-ID: <158454390389.2863966.16459187265972715098.stgit@warthog.procyon.org.uk>
+Date:   Wed, 18 Mar 2020 15:05:22 +0000
+Message-ID: <158454392238.2863966.16418724162547711363.stgit@warthog.procyon.org.uk>
 In-Reply-To: <158454378820.2863966.10496767254293183123.stgit@warthog.procyon.org.uk>
 References: <158454378820.2863966.10496767254293183123.stgit@warthog.procyon.org.uk>
 User-Agent: StGit/0.21
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add security hooks that will allow an LSM to rule on whether or not a watch
-may be set on a mount or on a superblock.  More than one hook is required
-as the watches watch different types of object.
+This is run like:
+
+	./watch_test
+
+and watches "/" for changes to the mount topology and the attributes of
+individual mount objects.
+
+	# mount -t tmpfs none /mnt
+	# mount -o remount,ro /mnt
+	# mount -o remount,rw /mnt
+
+producing:
+
+	# ./watch_test
+	read() = 16
+	NOTIFY[000]: ty=000002 sy=00 i=02000010
+	MOUNT 00000060 change=0[new_mount] aux=416
+	read() = 16
+	NOTIFY[000]: ty=000002 sy=04 i=02010010
+	MOUNT 000001a0 change=4[setattr] aux=0
+	read() = 16
+	NOTIFY[000]: ty=000002 sy=04 i=02010010
+	MOUNT 000001a0 change=4[setattr] aux=0
 
 Signed-off-by: David Howells <dhowells@redhat.com>
-cc: Casey Schaufler <casey@schaufler-ca.com>
-cc: Stephen Smalley <sds@tycho.nsa.gov>
-cc: linux-security-module@vger.kernel.org
 ---
 
- include/linux/lsm_hooks.h |   24 ++++++++++++++++++++++++
- include/linux/security.h  |   16 ++++++++++++++++
- security/security.c       |   14 ++++++++++++++
- 3 files changed, 54 insertions(+)
+ samples/watch_queue/watch_test.c |   44 +++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 43 insertions(+), 1 deletion(-)
 
-diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
-index 16530255dc11..c4451ac197ae 100644
---- a/include/linux/lsm_hooks.h
-+++ b/include/linux/lsm_hooks.h
-@@ -1427,6 +1427,18 @@
-  *	Check to see if a process is allowed to watch for event notifications
-  *	from devices (as a global set).
-  *
-+ * @watch_mount:
-+ *	Check to see if a process is allowed to watch for mount topology change
-+ *	notifications on a mount subtree.
-+ *	@watch: The watch object
-+ *	@path: The root of the subtree to watch.
-+ *
-+ * @watch_sb:
-+ *	Check to see if a process is allowed to watch for event notifications
-+ *	from a superblock.
-+ *	@watch: The watch object
-+ *	@sb: The superblock to watch.
-+ *
-  * @post_notification:
-  *	Check to see if a watch notification can be posted to a particular
-  *	queue.
-@@ -1722,6 +1734,12 @@ union security_list_options {
- #ifdef CONFIG_DEVICE_NOTIFICATIONS
- 	int (*watch_devices)(void);
+diff --git a/samples/watch_queue/watch_test.c b/samples/watch_queue/watch_test.c
+index 46e618a897fe..36caaea5261f 100644
+--- a/samples/watch_queue/watch_test.c
++++ b/samples/watch_queue/watch_test.c
+@@ -26,6 +26,9 @@
+ #ifndef __NR_keyctl
+ #define __NR_keyctl -1
  #endif
-+#ifdef CONFIG_MOUNT_NOTIFICATIONS
-+	int (*watch_mount)(struct watch *watch, struct path *path);
++#ifndef __NR_watch_mount
++#define __NR_watch_mount -1
 +#endif
-+#ifdef CONFIG_SB_NOTIFICATIONS
-+	int (*watch_sb)(struct watch *watch, struct super_block *sb);
-+#endif
- #ifdef CONFIG_WATCH_QUEUE
- 	int (*post_notification)(const struct cred *w_cred,
- 				 const struct cred *cred,
-@@ -2020,6 +2038,12 @@ struct security_hook_heads {
- #ifdef CONFIG_DEVICE_NOTIFICATIONS
- 	struct hlist_head watch_devices;
- #endif
-+#ifdef CONFIG_MOUNT_NOTIFICATIONS
-+	struct hlist_head watch_mount;
-+#endif
-+#ifdef CONFIG_SB_NOTIFICATIONS
-+	struct hlist_head watch_sb;
-+#endif
- #ifdef CONFIG_WATCH_QUEUE
- 	struct hlist_head post_notification;
- #endif /* CONFIG_WATCH_QUEUE */
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 910a1efa9a79..2ca2569bc12c 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -1306,6 +1306,22 @@ static inline int security_post_notification(const struct cred *w_cred,
- 	return 0;
+ 
+ #define BUF_SIZE 256
+ 
+@@ -58,6 +61,32 @@ static void saw_key_change(struct watch_notification *n, size_t len)
+ 	       k->key_id, n->subtype, key_subtypes[n->subtype], k->aux);
  }
- #endif
-+#if defined(CONFIG_SECURITY) && defined(CONFIG_MOUNT_NOTIFICATIONS)
-+int security_watch_mount(struct watch *watch, struct path *path);
-+#else
-+static inline int security_watch_mount(struct watch *watch, struct path *path)
-+{
-+	return 0;
-+}
-+#endif
-+#if defined(CONFIG_SECURITY) && defined(CONFIG_SB_NOTIFICATIONS)
-+int security_watch_sb(struct watch *watch, struct super_block *sb);
-+#else
-+static inline int security_watch_sb(struct watch *watch, struct super_block *sb)
-+{
-+	return 0;
-+}
-+#endif
  
- #ifdef CONFIG_SECURITY_NETWORK
++static const char *mount_subtypes[256] = {
++	[NOTIFY_MOUNT_NEW_MOUNT]	= "new_mount",
++	[NOTIFY_MOUNT_UNMOUNT]		= "unmount",
++	[NOTIFY_MOUNT_EXPIRY]		= "expiry",
++	[NOTIFY_MOUNT_READONLY]		= "readonly",
++	[NOTIFY_MOUNT_SETATTR]		= "setattr",
++	[NOTIFY_MOUNT_MOVE_FROM]	= "move_from",
++	[NOTIFY_MOUNT_MOVE_TO]		= "move_to",
++};
++
++static void saw_mount_change(struct watch_notification *n, size_t len)
++{
++	struct mount_notification *m = (struct mount_notification *)n;
++
++	if (len != sizeof(struct mount_notification))
++		return;
++
++	printf("MOUNT %08x change=%u[%s] aux=%u ctr=%x,%x actr=%x\n",
++	       m->triggered_on, n->subtype, mount_subtypes[n->subtype],
++	       m->auxiliary_mount,
++	       m->topology_changes,
++	       m->attr_changes,
++	       m->aux_topology_changes);
++
++}
++
+ /*
+  * Consume and display events.
+  */
+@@ -134,6 +163,9 @@ static void consumer(int fd)
+ 			default:
+ 				printf("other type\n");
+ 				break;
++			case WATCH_TYPE_MOUNT_NOTIFY:
++				saw_mount_change(&n.n, len);
++				break;
+ 			}
  
-diff --git a/security/security.c b/security/security.c
-index db7b574c9c70..5c0463444a90 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -2004,6 +2004,20 @@ int security_watch_key(struct key *key)
+ 			p += len;
+@@ -142,12 +174,17 @@ static void consumer(int fd)
  }
- #endif
  
-+#ifdef CONFIG_MOUNT_NOTIFICATIONS
-+int security_watch_mount(struct watch *watch, struct path *path)
-+{
-+	return call_int_hook(watch_mount, 0, watch, path);
-+}
-+#endif
+ static struct watch_notification_filter filter = {
+-	.nr_filters	= 1,
++	.nr_filters	= 2,
+ 	.filters = {
+ 		[0]	= {
+ 			.type			= WATCH_TYPE_KEY_NOTIFY,
+ 			.subtype_filter[0]	= UINT_MAX,
+ 		},
++		[1] = {
++			.type			= WATCH_TYPE_MOUNT_NOTIFY,
++			// Reject move-from notifications
++			.subtype_filter[0]	= UINT_MAX & ~(1 << NOTIFY_MOUNT_MOVE_FROM),
++		},
+ 	},
+ };
+ 
+@@ -181,6 +218,11 @@ int main(int argc, char **argv)
+ 		exit(1);
+ 	}
+ 
++	if (syscall(__NR_watch_mount, AT_FDCWD, "/", 0, fd, 0x02) == -1) {
++		perror("watch_mount");
++		exit(1);
++	}
 +
-+#ifdef CONFIG_SB_NOTIFICATIONS
-+int security_watch_sb(struct watch *watch, struct super_block *sb)
-+{
-+	return call_int_hook(watch_sb, 0, watch, sb);
-+}
-+#endif
-+
- #ifdef CONFIG_DEVICE_NOTIFICATIONS
- int security_watch_devices(void)
- {
+ 	consumer(fd);
+ 	exit(0);
+ }
 
 
