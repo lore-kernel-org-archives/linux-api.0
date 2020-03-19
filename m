@@ -2,180 +2,176 @@ Return-Path: <SRS0=vYuY=5E=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1B1F5C4332D
-	for <linux-api@archiver.kernel.org>; Thu, 19 Mar 2020 12:37:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D9117C4332B
+	for <linux-api@archiver.kernel.org>; Thu, 19 Mar 2020 14:41:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id DA7BC2071C
-	for <linux-api@archiver.kernel.org>; Thu, 19 Mar 2020 12:37:16 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B10A3214D8
+	for <linux-api@archiver.kernel.org>; Thu, 19 Mar 2020 14:41:41 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="key not found in DNS" (0-bit key) header.d=szeredi.hu header.i=@szeredi.hu header.b="cMtY3qUc"
+	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="JOkB4aeC"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727162AbgCSMhN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 19 Mar 2020 08:37:13 -0400
-Received: from mail-il1-f194.google.com ([209.85.166.194]:43060 "EHLO
-        mail-il1-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726975AbgCSMhK (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Mar 2020 08:37:10 -0400
-Received: by mail-il1-f194.google.com with SMTP id d14so2020037ilq.10
-        for <linux-api@vger.kernel.org>; Thu, 19 Mar 2020 05:37:10 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=szeredi.hu; s=google;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=2tuVxH0JdqTpL/q4Mhu8Jwtx1AVVUn0AWeX5OBSt298=;
-        b=cMtY3qUcEmiCWPAEeCd5lhB7x3Biy4/6Het2lKK01B7wcpZG2RZMmWE3LV0gVxGIei
-         UuMBMRql9WM+pRx9p4acPSg0mo4kZ7BHmdSm48TJO0cwwlRT82C+TUnt1Ixfd5tAZfQB
-         qGlXYFxfI9xkqU5Rq8m22vi2BvEMfsNiNnE2E=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=2tuVxH0JdqTpL/q4Mhu8Jwtx1AVVUn0AWeX5OBSt298=;
-        b=WXeASLqN8CrMW8SKXwr10k4J4cp09+z6JErqPeEVpoE3aWYY/GR7UBdYH+QSP9n9KC
-         3Mp2SMKcdJiwboWmfqoRdq6PQYZSJHFAum/GdgzwbTlaG6AlYY4jAbVywYjl5gcz2Ljh
-         BOZxAE+fdGK/B18UWZrBcyhLwpZCUYEaNIVFTGF1rt58qBkVfOwOwZ6LU9NuJ5I0msPY
-         HaJ+uMW3PBxjUqUqQbYSAaxUH/7WMYRU3bjgs5aG6kiSbMsGwWBSYXfZWcwjTqWhBX5c
-         dA9MTQtZl5J0pqgKGw2ZpYcxRO14Z+kE4s1kexmGxDkMptQkuSDBT+X3x+An3q5rBaEH
-         vJrw==
-X-Gm-Message-State: ANhLgQ3eObX8Rp2vDkFSsd+gM7cLCL7Bpf+haZVJIIYWlMvIicSTwXAv
-        g9aBxaXydNjpbuwNNxEfxs3bjLtUY9HA7+M2lzlZtQ==
-X-Google-Smtp-Source: ADFU+vsTsJqo2m1ETEsSuJlFNylEmftzB1ulJzyZd8sss8uJZS7aWDqz3pxVA9Gv6H7ICK0JOZMAndoK/X55keC9JJI=
-X-Received: by 2002:a92:3b8c:: with SMTP id n12mr2899150ilh.186.1584621429946;
- Thu, 19 Mar 2020 05:37:09 -0700 (PDT)
-MIME-Version: 1.0
-References: <158454408854.2864823.5910520544515668590.stgit@warthog.procyon.org.uk>
- <CAJfpeguaiicjS2StY5m=8H7BCjq6PLxMsWE3Mx_jYR1foDWVTg@mail.gmail.com> <3085880.1584614257@warthog.procyon.org.uk>
-In-Reply-To: <3085880.1584614257@warthog.procyon.org.uk>
-From:   Miklos Szeredi <miklos@szeredi.hu>
-Date:   Thu, 19 Mar 2020 13:36:58 +0100
-Message-ID: <CAJfpegv-_ai1LiW6=D+AnkozzmmXbB8=g8QDCS15bh==Wn3yoA@mail.gmail.com>
-Subject: Re: [PATCH 00/13] VFS: Filesystem information [ver #19]
-To:     David Howells <dhowells@redhat.com>
-Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Linux NFS list <linux-nfs@vger.kernel.org>,
-        Andreas Dilger <adilger.kernel@dilger.ca>,
-        Anna Schumaker <anna.schumaker@netapp.com>,
-        "Theodore Ts'o" <tytso@mit.edu>,
-        Linux API <linux-api@vger.kernel.org>,
-        linux-ext4@vger.kernel.org,
-        Trond Myklebust <trond.myklebust@hammerspace.com>,
-        Ian Kent <raven@themaw.net>,
-        Miklos Szeredi <mszeredi@redhat.com>,
-        Christian Brauner <christian@brauner.io>,
-        Jann Horn <jannh@google.com>,
-        "Darrick J. Wong" <darrick.wong@oracle.com>,
-        Karel Zak <kzak@redhat.com>, Jeff Layton <jlayton@redhat.com>,
-        linux-fsdevel@vger.kernel.org,
-        LSM <linux-security-module@vger.kernel.org>,
-        linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+        id S1727347AbgCSOli (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 19 Mar 2020 10:41:38 -0400
+Received: from mail.efficios.com ([167.114.26.124]:49484 "EHLO
+        mail.efficios.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726943AbgCSOli (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Mar 2020 10:41:38 -0400
+Received: from localhost (localhost [127.0.0.1])
+        by mail.efficios.com (Postfix) with ESMTP id E89D6278991;
+        Thu, 19 Mar 2020 10:41:36 -0400 (EDT)
+Received: from mail.efficios.com ([127.0.0.1])
+        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
+        with ESMTP id x3_a2Z6t1NfD; Thu, 19 Mar 2020 10:41:36 -0400 (EDT)
+Received: from localhost (localhost [127.0.0.1])
+        by mail.efficios.com (Postfix) with ESMTP id 3A86B278794;
+        Thu, 19 Mar 2020 10:41:34 -0400 (EDT)
+DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 3A86B278794
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
+        s=default; t=1584628894;
+        bh=EMfzhlvZC/X0FJrA8FQQCW92f+IcPiYb223TffJD4Uc=;
+        h=From:To:Date:Message-Id;
+        b=JOkB4aeCgSqInS/izSi48gltvJrjFIEUz7Bf6zMGRrGTh5xEvm9tlXVLmNjmKYI16
+         kuTj8iTcbV7R4hF4Q9m2VTWQjS0pbo2dgU1JpOB2/n4EAKYZJBkmxDAZkDQYP5jfEU
+         sMb1cQBa7YqAZP0e99p0XUVMsaFZPhiNOQuLxAjBo6k9Jo7z47mtT9OLIa8GlZSDcu
+         4Vx0ySb9mSqH/PE50RwWmKmTIXI3QfaH5brUuAvcYG0bcFFzn0lwv2PkXKvsCUXm2o
+         GzUM7RFJEb5fN49j1/JUjAYpI4ZbCGJM2aiTIz4EFhWssb+gPUNV35dhQgGnJRaaBF
+         1Q1gfQb/dUWwA==
+X-Virus-Scanned: amavisd-new at efficios.com
+Received: from mail.efficios.com ([127.0.0.1])
+        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
+        with ESMTP id WRcl7AV7mKVK; Thu, 19 Mar 2020 10:41:34 -0400 (EDT)
+Received: from localhost.localdomain (192-222-181-218.qc.cable.ebox.net [192.222.181.218])
+        by mail.efficios.com (Postfix) with ESMTPSA id DCC2C27864C;
+        Thu, 19 Mar 2020 10:41:29 -0400 (EDT)
+From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To:     Carlos O'Donell <carlos@redhat.com>
+Cc:     Florian Weimer <fweimer@redhat.com>,
+        Joseph Myers <joseph@codesourcery.com>,
+        Szabolcs Nagy <szabolcs.nagy@arm.com>,
+        libc-alpha@sourceware.org,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ben Maurer <bmaurer@fb.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        Will Deacon <will.deacon@arm.com>,
+        Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>,
+        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Subject: [RFC PATCH glibc 5/8] glibc: sched_getcpu(): use rseq cpu_id TLS on Linux (v6)
+Date:   Thu, 19 Mar 2020 10:41:07 -0400
+Message-Id: <20200319144110.3733-6-mathieu.desnoyers@efficios.com>
+X-Mailer: git-send-email 2.17.1
+In-Reply-To: <20200319144110.3733-1-mathieu.desnoyers@efficios.com>
+References: <20200319144110.3733-1-mathieu.desnoyers@efficios.com>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Mar 19, 2020 at 11:37 AM David Howells <dhowells@redhat.com> wrote:
->
-> Miklos Szeredi <miklos@szeredi.hu> wrote:
->
-> > >  (2) It's more efficient as we can return specific binary data rather than
-> > >      making huge text dumps.  Granted, sysfs and procfs could present the
-> > >      same data, though as lots of little files which have to be
-> > >      individually opened, read, closed and parsed.
-> >
-> > Asked this a number of times, but you haven't answered yet:  what
-> > application would require such a high efficiency?
->
-> Low efficiency means more time doing this when that time could be spent doing
-> other things - or even putting the CPU in a powersaving state.  Using an
-> open/read/close render-to-text-and-parse interface *will* be slower and less
-> efficient as there are more things you have to do to use it.
->
-> Then consider doing a walk over all the mounts in the case where there are
-> 10000 of them - we have issues with /proc/mounts for such.  fsinfo() will end
-> up doing a lot less work.
+When available, use the cpu_id field from __rseq_abi on Linux to
+implement sched_getcpu(). Fall-back on the vgetcpu vDSO if unavailable.
 
-Current /proc/mounts problems arise from the fact that mount info can
-only be queried for the whole namespace, and hence changes related to
-a single mount will require rescanning the complete mount list.  If
-mount info can be queried for individual mounts, then the need to scan
-the complete list will be rare.  That's *the* point of this change.
+Benchmarks:
 
-> > >  (3) We wouldn't have the overhead of open and close (even adding a
-> > >      self-contained readfile() syscall has to do that internally
-> >
-> > Busted: add f_op->readfile() and be done with all that.   For example
-> > DEFINE_SHOW_ATTRIBUTE() could be trivially moved to that interface.
->
-> Look at your example.  "f_op->".  That's "file->f_op->" I presume.
->
-> You would have to make it "i_op->" to avoid the open and the close - and for
-> things like procfs and sysfs, that's probably entirely reasonable - but bear
-> in mind that you still have to apply all the LSM file security controls, just
-> in case the backing filesystem is, say, ext4 rather than procfs.
->
-> > We could optimize existing proc, sys, etc. interfaces, but it's not
-> > been an issue, apparently.
->
-> You can't get rid of or change many of the existing interfaces.  A lot of them
-> are effectively indirect system calls and are, as such, part of the fixed
-> UAPI.  You'd have to add a parallel optimised set.
+x86-64: Intel E5-2630 v3@2.40GHz, 16-core, hyperthreading
 
-Sure.
+glibc sched_getcpu():                     13.7 ns (baseline)
+glibc sched_getcpu() using rseq:           2.5 ns (speedup:  5.5x)
+inline load cpuid from __rseq_abi TLS:     0.8 ns (speedup: 17.1x)
 
-We already have the single_open() internal API that is basically a
-->readfile() wrapper.   Moving this up to the f_op level (no, it's not
-an i_op, and yes, we do need struct file, but it can be simply
-allocated on the stack) is a trivial optimization that would let a
-readfile(2) syscall access that level.  No new complexity in that
-case.    Same generally goes for seq_file: seq_readfile() is trivial
-to implement without messing with current implementation or any
-existing APIs.
+	* sysdeps/unix/sysv/linux/sched_getcpu.c: use rseq cpu_id TLS on
+	Linux.
 
->
-> > >  (6) Don't have to create/delete a bunch of sysfs/procfs nodes each time a
-> > >      mount happens or is removed - and since systemd makes much use of
-> > >      mount namespaces and mount propagation, this will create a lot of
-> > >      nodes.
-> >
-> > Not true.
->
-> This may not be true if you roll your own special filesystem.  It *is* true if
-> you do it in procfs or sysfs.  The files don't exist if you don't create nodes
-> or attribute tables for them.
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Carlos O'Donell <carlos@redhat.com>
+CC: Florian Weimer <fweimer@redhat.com>
+CC: Joseph Myers <joseph@codesourcery.com>
+CC: Szabolcs Nagy <szabolcs.nagy@arm.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Paul Turner <pjt@google.com>
+CC: libc-alpha@sourceware.org
+CC: linux-kernel@vger.kernel.org
+CC: linux-api@vger.kernel.org
+---
+Changes since v1:
+- rseq is only used if both __NR_rseq and RSEQ_SIG are defined.
 
-That's one of the reasons why I opted to roll my own.  But the ideas
-therein could be applied to kernfs, if found to be generally useful.
-Nothing magic about that.
+Changes since v2:
+- remove duplicated __rseq_abi extern declaration.
 
->
-> > > The argument for doing this through procfs/sysfs/somemagicfs is that
-> > > someone using a shell can just query the magic files using ordinary text
-> > > tools, such as cat - and that has merit - but it doesn't solve the
-> > > query-by-pathname problem.
-> > >
-> > > The suggested way around the query-by-pathname problem is to open the
-> > > target file O_PATH and then look in a magic directory under procfs
-> > > corresponding to the fd number to see a set of attribute files[*] laid out.
-> > > Bash, however, can't open by O_PATH or O_NOFOLLOW as things stand...
-> >
-> > Bash doesn't have fsinfo(2) either, so that's not really a good argument.
->
-> I never claimed that fsinfo() could be accessed directly from the shell.  For
-> you proposal, you claimed "immediately usable from all programming languages,
-> including scripts".
+Changes since v3:
+- update ChangeLog.
 
-You are right.  Note however: only special files need the O_PATH
-handling, regular files are directories can be opened by the shell
-without side effects.
+Changes since v4:
+- Use atomic_load_relaxed to load the __rseq_abi.cpu_id field, a
+  consequence of the fact that __rseq_abi is not volatile anymore.
+- Include atomic.h which provides atomic_load_relaxed.
 
-In any case, I think neither of us can be convinced of the other's
-right, so I guess It's up to Al and Linus to make a decision.
+Changes since v5:
+- Use __ASSUME_RSEQ to detect rseq availability.
+---
+ sysdeps/unix/sysv/linux/sched_getcpu.c | 30 ++++++++++++++++++++++++--
+ 1 file changed, 28 insertions(+), 2 deletions(-)
 
-Thanks,
-Miklos
+diff --git a/sysdeps/unix/sysv/linux/sched_getcpu.c b/sysdeps/unix/sysv/linux/sched_getcpu.c
+index c019cfb3cf..4f2c5c4b1a 100644
+--- a/sysdeps/unix/sysv/linux/sched_getcpu.c
++++ b/sysdeps/unix/sysv/linux/sched_getcpu.c
+@@ -18,10 +18,16 @@
+ #include <errno.h>
+ #include <sched.h>
+ #include <sysdep.h>
++#include <atomic.h>
+ #include <sysdep-vdso.h>
++#include <kernel-features.h>
+ 
+-int
+-sched_getcpu (void)
++#ifdef HAVE_GETCPU_VSYSCALL
++# define HAVE_VSYSCALL
++#endif
++
++static int
++vsyscall_sched_getcpu (void)
+ {
+   unsigned int cpu;
+   int r = -1;
+@@ -32,3 +38,23 @@ sched_getcpu (void)
+ #endif
+   return r == -1 ? r : cpu;
+ }
++
++#ifdef __ASSUME_RSEQ
++#include <sys/rseq.h>
++#endif
++
++#if defined __ASSUME_RSEQ && defined RSEQ_SIG
++int
++sched_getcpu (void)
++{
++  int cpu_id = atomic_load_relaxed (&__rseq_abi.cpu_id);
++
++  return cpu_id >= 0 ? cpu_id : vsyscall_sched_getcpu ();
++}
++#else
++int
++sched_getcpu (void)
++{
++  return vsyscall_sched_getcpu ();
++}
++#endif
+-- 
+2.17.1
+
