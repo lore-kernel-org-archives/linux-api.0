@@ -5,25 +5,25 @@ X-Spam-Level:
 X-Spam-Status: No, score=-9.7 required=3.0 tests=DKIM_ADSP_CUSTOM_MED,
 	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2503CC43331
-	for <linux-api@archiver.kernel.org>; Tue, 24 Mar 2020 20:46:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 91655C54EEB
+	for <linux-api@archiver.kernel.org>; Tue, 24 Mar 2020 20:46:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 01CC3205ED
-	for <linux-api@archiver.kernel.org>; Tue, 24 Mar 2020 20:46:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 67DCA2074D
+	for <linux-api@archiver.kernel.org>; Tue, 24 Mar 2020 20:46:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727781AbgCXUqN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 24 Mar 2020 16:46:13 -0400
-Received: from monster.unsafe.ru ([5.9.28.80]:38462 "EHLO mail.unsafe.ru"
+        id S1728319AbgCXUqV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 24 Mar 2020 16:46:21 -0400
+Received: from monster.unsafe.ru ([5.9.28.80]:38716 "EHLO mail.unsafe.ru"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727040AbgCXUqN (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 24 Mar 2020 16:46:13 -0400
+        id S1728268AbgCXUqT (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 24 Mar 2020 16:46:19 -0400
 Received: from comp-core-i7-2640m-0182e6.redhat.com (ip-89-102-33-211.net.upcbroadband.cz [89.102.33.211])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.unsafe.ru (Postfix) with ESMTPSA id 2C671C61B1A;
-        Tue, 24 Mar 2020 20:46:10 +0000 (UTC)
+        by mail.unsafe.ru (Postfix) with ESMTPSA id EB028C61B2D;
+        Tue, 24 Mar 2020 20:46:14 +0000 (UTC)
 From:   Alexey Gladkov <gladkov.alexey@gmail.com>
 To:     LKML <linux-kernel@vger.kernel.org>,
         Kernel Hardening <kernel-hardening@lists.openwall.com>,
@@ -48,9 +48,9 @@ Cc:     Akinobu Mita <akinobu.mita@gmail.com>,
         Kees Cook <keescook@chromium.org>,
         Linus Torvalds <torvalds@linux-foundation.org>,
         Oleg Nesterov <oleg@redhat.com>
-Subject: [PATCH RESEND v9 1/8] proc: rename struct proc_fs_info to proc_fs_opts
-Date:   Tue, 24 Mar 2020 21:44:42 +0100
-Message-Id: <20200324204449.7263-2-gladkov.alexey@gmail.com>
+Subject: [PATCH RESEND v9 8/8] proc: use human-readable values for hidehid
+Date:   Tue, 24 Mar 2020 21:44:49 +0100
+Message-Id: <20200324204449.7263-9-gladkov.alexey@gmail.com>
 X-Mailer: git-send-email 2.25.2
 In-Reply-To: <20200324204449.7263-1-gladkov.alexey@gmail.com>
 References: <20200324204449.7263-1-gladkov.alexey@gmail.com>
@@ -61,64 +61,178 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+The hidepid parameter values are becoming more and more and it becomes
+difficult to remember what each new magic number means.
+
+Suggested-by: Andy Lutomirski <luto@kernel.org>
 Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
 ---
- fs/proc_namespace.c | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ Documentation/filesystems/proc.txt | 52 +++++++++++++++---------------
+ fs/proc/inode.c                    | 13 +++++++-
+ fs/proc/root.c                     | 36 +++++++++++++++++++--
+ 3 files changed, 71 insertions(+), 30 deletions(-)
 
-diff --git a/fs/proc_namespace.c b/fs/proc_namespace.c
-index 273ee82d8aa9..9a8b624bc3db 100644
---- a/fs/proc_namespace.c
-+++ b/fs/proc_namespace.c
-@@ -37,23 +37,23 @@ static __poll_t mounts_poll(struct file *file, poll_table *wait)
- 	return res;
+diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
+index 4741fd092f36..27830a93464b 100644
+--- a/Documentation/filesystems/proc.txt
++++ b/Documentation/filesystems/proc.txt
+@@ -2025,28 +2025,28 @@ The following mount options are supported:
+ 	gid=		Set the group authorized to learn processes information.
+ 	subset=		Show only the specified subset of procfs.
+ 
+-hidepid=0 means classic mode - everybody may access all /proc/<pid>/ directories
+-(default).
+-
+-hidepid=1 means users may not access any /proc/<pid>/ directories but their
+-own.  Sensitive files like cmdline, sched*, status are now protected against
+-other users.  This makes it impossible to learn whether any user runs
+-specific program (given the program doesn't reveal itself by its behaviour).
+-As an additional bonus, as /proc/<pid>/cmdline is unaccessible for other users,
+-poorly written programs passing sensitive information via program arguments are
+-now protected against local eavesdroppers.
+-
+-hidepid=2 means hidepid=1 plus all /proc/<pid>/ will be fully invisible to other
+-users.  It doesn't mean that it hides a fact whether a process with a specific
+-pid value exists (it can be learned by other means, e.g. by "kill -0 $PID"),
+-but it hides process' uid and gid, which may be learned by stat()'ing
+-/proc/<pid>/ otherwise.  It greatly complicates an intruder's task of gathering
+-information about running processes, whether some daemon runs with elevated
+-privileges, whether other user runs some sensitive program, whether other users
+-run any program at all, etc.
+-
+-hidepid=4 means that procfs should only contain /proc/<pid>/ directories
+-that the caller can ptrace.
++hidepid=off or hidepid=0 means classic mode - everybody may access all
++/proc/<pid>/ directories (default).
++
++hidepid=noaccess or hidepid=1 means users may not access any /proc/<pid>/
++directories but their own.  Sensitive files like cmdline, sched*, status are now
++protected against other users.  This makes it impossible to learn whether any
++user runs specific program (given the program doesn't reveal itself by its
++behaviour).  As an additional bonus, as /proc/<pid>/cmdline is unaccessible for
++other users, poorly written programs passing sensitive information via program
++arguments are now protected against local eavesdroppers.
++
++hidepid=invisible or hidepid=2 means hidepid=noaccess plus all /proc/<pid>/ will
++be fully invisible to other users.  It doesn't mean that it hides a fact whether
++a process with a specific pid value exists (it can be learned by other means,
++e.g. by "kill -0 $PID"), but it hides process' uid and gid, which may be learned
++by stat()'ing /proc/<pid>/ otherwise.  It greatly complicates an intruder's task
++of gathering information about running processes, whether some daemon runs with
++elevated privileges, whether other user runs some sensitive program, whether
++other users run any program at all, etc.
++
++hidepid=ptraceable or hidepid=4 means that procfs should only contain
++/proc/<pid>/ directories that the caller can ptrace.
+ 
+ gid= defines a group authorized to learn processes information otherwise
+ prohibited by hidepid=.  If you use some daemon like identd which needs to learn
+@@ -2093,8 +2093,8 @@ creates a new procfs instance. Mount options affect own procfs instance.
+ It means that it became possible to have several procfs instances
+ displaying tasks with different filtering options in one pid namespace.
+ 
+-# mount -o hidepid=2 -t proc proc /proc
+-# mount -o hidepid=1 -t proc proc /tmp/proc
++# mount -o hidepid=invisible -t proc proc /proc
++# mount -o hidepid=noaccess -t proc proc /tmp/proc
+ # grep ^proc /proc/mounts
+-proc /proc proc rw,relatime,hidepid=2 0 0
+-proc /tmp/proc proc rw,relatime,hidepid=1 0 0
++proc /proc proc rw,relatime,hidepid=invisible 0 0
++proc /tmp/proc proc rw,relatime,hidepid=noaccess 0 0
+diff --git a/fs/proc/inode.c b/fs/proc/inode.c
+index c1dbcf2b96db..a462fd111719 100644
+--- a/fs/proc/inode.c
++++ b/fs/proc/inode.c
+@@ -165,6 +165,17 @@ void proc_invalidate_siblings_dcache(struct hlist_head *inodes, spinlock_t *lock
+ 		deactivate_super(old_sb);
  }
  
--struct proc_fs_info {
-+struct proc_fs_opts {
- 	int flag;
- 	const char *str;
++static inline const char *hidepid2str(int v)
++{
++	switch (v) {
++		case HIDEPID_OFF: return "off";
++		case HIDEPID_NO_ACCESS: return "noaccess";
++		case HIDEPID_INVISIBLE: return "invisible";
++		case HIDEPID_NOT_PTRACEABLE: return "ptraceable";
++	}
++	BUG();
++}
++
+ static int proc_show_options(struct seq_file *seq, struct dentry *root)
+ {
+ 	struct proc_fs_info *fs_info = proc_sb_info(root->d_sb);
+@@ -172,7 +183,7 @@ static int proc_show_options(struct seq_file *seq, struct dentry *root)
+ 	if (!gid_eq(fs_info->pid_gid, GLOBAL_ROOT_GID))
+ 		seq_printf(seq, ",gid=%u", from_kgid_munged(&init_user_ns, fs_info->pid_gid));
+ 	if (fs_info->hide_pid != HIDEPID_OFF)
+-		seq_printf(seq, ",hidepid=%u", fs_info->hide_pid);
++		seq_printf(seq, ",hidepid=%s", hidepid2str(fs_info->hide_pid));
+ 	if (fs_info->pidonly != PROC_PIDONLY_OFF)
+ 		seq_printf(seq, ",subset=pidfs");
+ 
+diff --git a/fs/proc/root.c b/fs/proc/root.c
+index 07c309529628..42f3ee05c584 100644
+--- a/fs/proc/root.c
++++ b/fs/proc/root.c
+@@ -45,7 +45,7 @@ enum proc_param {
+ 
+ static const struct fs_parameter_spec proc_fs_parameters[] = {
+ 	fsparam_u32("gid",	Opt_gid),
+-	fsparam_u32("hidepid",	Opt_hidepid),
++	fsparam_string("hidepid",	Opt_hidepid),
+ 	fsparam_string("subset",	Opt_subset),
+ 	{}
  };
+@@ -58,6 +58,35 @@ static inline int valid_hidepid(unsigned int value)
+ 		value == HIDEPID_NOT_PTRACEABLE);
+ }
  
- static int show_sb_opts(struct seq_file *m, struct super_block *sb)
++static int proc_parse_hidepid_param(struct fs_context *fc, struct fs_parameter *param)
++{
++	struct proc_fs_context *ctx = fc->fs_private;
++	struct fs_parameter_spec hidepid_u32_spec = fsparam_u32("hidepid", Opt_hidepid);
++	struct fs_parse_result result;
++	int base = (unsigned long)hidepid_u32_spec.data;
++
++	if (param->type != fs_value_is_string)
++		return invalf(fc, "proc: unexpected type of hidepid value\n");
++
++	if (!kstrtouint(param->string, base, &result.uint_32)) {
++		ctx->hidepid = result.uint_32;
++		return 0;
++	}
++
++	if (!strcmp(param->string, "off"))
++		ctx->hidepid = HIDEPID_OFF;
++	else if (!strcmp(param->string, "noaccess"))
++		ctx->hidepid = HIDEPID_NO_ACCESS;
++	else if (!strcmp(param->string, "invisible"))
++		ctx->hidepid = HIDEPID_INVISIBLE;
++	else if (!strcmp(param->string, "ptraceable"))
++		ctx->hidepid = HIDEPID_NOT_PTRACEABLE;
++	else
++		return invalf(fc, "proc: unknown value of hidepid - %s\n", param->string);
++
++	return 0;
++}
++
+ static int proc_parse_subset_param(struct fs_context *fc, char *value)
  {
--	static const struct proc_fs_info fs_info[] = {
-+	static const struct proc_fs_opts fs_opts[] = {
- 		{ SB_SYNCHRONOUS, ",sync" },
- 		{ SB_DIRSYNC, ",dirsync" },
- 		{ SB_MANDLOCK, ",mand" },
- 		{ SB_LAZYTIME, ",lazytime" },
- 		{ 0, NULL }
- 	};
--	const struct proc_fs_info *fs_infop;
-+	const struct proc_fs_opts *fs_infop;
+ 	struct proc_fs_context *ctx = fc->fs_private;
+@@ -97,9 +126,10 @@ static int proc_parse_param(struct fs_context *fc, struct fs_parameter *param)
+ 		break;
  
--	for (fs_infop = fs_info; fs_infop->flag; fs_infop++) {
-+	for (fs_infop = fs_opts; fs_infop->flag; fs_infop++) {
- 		if (sb->s_flags & fs_infop->flag)
- 			seq_puts(m, fs_infop->str);
- 	}
-@@ -63,7 +63,7 @@ static int show_sb_opts(struct seq_file *m, struct super_block *sb)
+ 	case Opt_hidepid:
+-		if (!valid_hidepid(result.uint_32))
++		if (proc_parse_hidepid_param(fc, param))
++			return -EINVAL;
++		if (!valid_hidepid(ctx->hidepid))
+ 			return invalf(fc, "proc: unknown value of hidepid.\n");
+-		ctx->hidepid = result.uint_32;
+ 		break;
  
- static void show_mnt_opts(struct seq_file *m, struct vfsmount *mnt)
- {
--	static const struct proc_fs_info mnt_info[] = {
-+	static const struct proc_fs_opts mnt_opts[] = {
- 		{ MNT_NOSUID, ",nosuid" },
- 		{ MNT_NODEV, ",nodev" },
- 		{ MNT_NOEXEC, ",noexec" },
-@@ -72,9 +72,9 @@ static void show_mnt_opts(struct seq_file *m, struct vfsmount *mnt)
- 		{ MNT_RELATIME, ",relatime" },
- 		{ 0, NULL }
- 	};
--	const struct proc_fs_info *fs_infop;
-+	const struct proc_fs_opts *fs_infop;
- 
--	for (fs_infop = mnt_info; fs_infop->flag; fs_infop++) {
-+	for (fs_infop = mnt_opts; fs_infop->flag; fs_infop++) {
- 		if (mnt->mnt_flags & fs_infop->flag)
- 			seq_puts(m, fs_infop->str);
- 	}
+ 	case Opt_subset:
 -- 
 2.25.2
 
