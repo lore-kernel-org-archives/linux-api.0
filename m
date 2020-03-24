@@ -2,104 +2,123 @@ Return-Path: <SRS0=Q4be=5J=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.9 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.7 required=3.0 tests=DKIM_ADSP_CUSTOM_MED,
+	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7C038C4332B
-	for <linux-api@archiver.kernel.org>; Tue, 24 Mar 2020 19:45:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2503CC43331
+	for <linux-api@archiver.kernel.org>; Tue, 24 Mar 2020 20:46:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 4E6A7206F6
-	for <linux-api@archiver.kernel.org>; Tue, 24 Mar 2020 19:45:00 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="QsZKNsAI"
+	by mail.kernel.org (Postfix) with ESMTP id 01CC3205ED
+	for <linux-api@archiver.kernel.org>; Tue, 24 Mar 2020 20:46:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1725953AbgCXTo7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 24 Mar 2020 15:44:59 -0400
-Received: from mail.efficios.com ([167.114.26.124]:35206 "EHLO
-        mail.efficios.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725877AbgCXTo7 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 24 Mar 2020 15:44:59 -0400
-Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id A178426CC74;
-        Tue, 24 Mar 2020 15:44:58 -0400 (EDT)
-Received: from mail.efficios.com ([127.0.0.1])
-        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
-        with ESMTP id KlUo0PFuqzlt; Tue, 24 Mar 2020 15:44:58 -0400 (EDT)
-Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id 3AB3D26CF80;
-        Tue, 24 Mar 2020 15:44:58 -0400 (EDT)
-DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 3AB3D26CF80
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
-        s=default; t=1585079098;
-        bh=EOvwRt//tfRS27woHCwYV1oIOJw5868xS1N0BbJF0Ps=;
-        h=Date:From:To:Message-ID:MIME-Version;
-        b=QsZKNsAIov7+AFWzhh+erOXHeondRgv6BlcGVXFsb/ihUEf5Ao7z5VFLLKMOfpVCu
-         VSmNCBYuzCk+v7bPx8we/D2baRC401klafVcIRgj0M+275YKB0niqWVsTR0+iP3fgD
-         Q4tAM8rg9G8k9qab5jvICjxzydJFaJCojV6oMb+/QjdvwuCutbwu1C1Sd3/bJSKM7Q
-         S5UUQ2b38w5l3F8EtM9CPSFZORRKDZ5fkkU1ww1e5vpPIEMTw1RhMaNrajZUj7+iOo
-         /lIL19Vi2+sgIQZqtdZ/WV9yxE8olNwdMSPjw9/jDCO1ZAxAkaM8LCnZTuzdY8PdTD
-         wTvymo56FB9Qg==
-X-Virus-Scanned: amavisd-new at efficios.com
-Received: from mail.efficios.com ([127.0.0.1])
-        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
-        with ESMTP id nMPC8AM_o8PR; Tue, 24 Mar 2020 15:44:58 -0400 (EDT)
-Received: from mail03.efficios.com (mail03.efficios.com [167.114.26.124])
-        by mail.efficios.com (Postfix) with ESMTP id 27BBA26CE27;
-        Tue, 24 Mar 2020 15:44:58 -0400 (EDT)
-Date:   Tue, 24 Mar 2020 15:44:58 -0400 (EDT)
-From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-To:     Joseph Myers <joseph@codesourcery.com>
-Cc:     Rich Felker <dalias@libc.org>,
-        libc-alpha <libc-alpha@sourceware.org>,
-        linux-api <linux-api@vger.kernel.org>,
-        Boqun Feng <boqun.feng@gmail.com>,
-        Will Deacon <will.deacon@arm.com>,
-        linux-kernel <linux-kernel@vger.kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Ben Maurer <bmaurer@fb.com>, Dave Watson <davejwatson@fb.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Paul <paulmck@linux.vnet.ibm.com>, Paul Turner <pjt@google.com>
-Message-ID: <1094187167.10225.1585079098074.JavaMail.zimbra@efficios.com>
-In-Reply-To: <alpine.DEB.2.21.2003241857350.8310@digraph.polyomino.org.uk>
-References: <20200323131607.15185-1-mathieu.desnoyers@efficios.com> <20200323131607.15185-5-mathieu.desnoyers@efficios.com> <alpine.DEB.2.21.2003232159310.13609@digraph.polyomino.org.uk> <1873939476.8349.1585055299958.JavaMail.zimbra@efficios.com> <alpine.DEB.2.21.2003241857350.8310@digraph.polyomino.org.uk>
-Subject: Re: [RFC PATCH glibc 4/8] glibc: Perform rseq(2) registration at C
- startup and thread creation (v16)
+        id S1727781AbgCXUqN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 24 Mar 2020 16:46:13 -0400
+Received: from monster.unsafe.ru ([5.9.28.80]:38462 "EHLO mail.unsafe.ru"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727040AbgCXUqN (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 24 Mar 2020 16:46:13 -0400
+Received: from comp-core-i7-2640m-0182e6.redhat.com (ip-89-102-33-211.net.upcbroadband.cz [89.102.33.211])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        (No client certificate requested)
+        by mail.unsafe.ru (Postfix) with ESMTPSA id 2C671C61B1A;
+        Tue, 24 Mar 2020 20:46:10 +0000 (UTC)
+From:   Alexey Gladkov <gladkov.alexey@gmail.com>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        Kernel Hardening <kernel-hardening@lists.openwall.com>,
+        Linux API <linux-api@vger.kernel.org>,
+        Linux FS Devel <linux-fsdevel@vger.kernel.org>,
+        Linux Security Module <linux-security-module@vger.kernel.org>
+Cc:     Akinobu Mita <akinobu.mita@gmail.com>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        Alexey Dobriyan <adobriyan@gmail.com>,
+        Alexey Gladkov <legion@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Daniel Micay <danielmicay@gmail.com>,
+        Djalal Harouni <tixxdz@gmail.com>,
+        "Dmitry V . Levin" <ldv@altlinux.org>,
+        "Eric W . Biederman" <ebiederm@xmission.com>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Jeff Layton <jlayton@poochiereds.net>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Oleg Nesterov <oleg@redhat.com>
+Subject: [PATCH RESEND v9 1/8] proc: rename struct proc_fs_info to proc_fs_opts
+Date:   Tue, 24 Mar 2020 21:44:42 +0100
+Message-Id: <20200324204449.7263-2-gladkov.alexey@gmail.com>
+X-Mailer: git-send-email 2.25.2
+In-Reply-To: <20200324204449.7263-1-gladkov.alexey@gmail.com>
+References: <20200324204449.7263-1-gladkov.alexey@gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-X-Originating-IP: [167.114.26.124]
-X-Mailer: Zimbra 8.8.15_GA_3918 (ZimbraWebClient - FF74 (Linux)/8.8.15_GA_3895)
-Thread-Topic: glibc: Perform rseq(2) registration at C startup and thread creation (v16)
-Thread-Index: JDnp6/Oado3vQ4/sidiioZ9DbRGBfQ==
+Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
------ On Mar 24, 2020, at 2:58 PM, Joseph Myers joseph@codesourcery.com wrote:
+Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
+---
+ fs/proc_namespace.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
-> On Tue, 24 Mar 2020, Mathieu Desnoyers via Libc-alpha wrote:
-> 
->> ----- On Mar 23, 2020, at 6:01 PM, Joseph Myers joseph@codesourcery.com wrote:
->> 
->> > Note that we no longer use manually-written ChangeLog-format logs.
->> 
->> Do you mean the part at the end of the commit message ?
-> 
-> I mean the
-> 
->	* filename: Changes to this file.
->	* other/file: Likewise.
-> 
-> part.
-
-Thanks for the clarification! Now done in preparation for next round.
-
-Mathieu
-
-
+diff --git a/fs/proc_namespace.c b/fs/proc_namespace.c
+index 273ee82d8aa9..9a8b624bc3db 100644
+--- a/fs/proc_namespace.c
++++ b/fs/proc_namespace.c
+@@ -37,23 +37,23 @@ static __poll_t mounts_poll(struct file *file, poll_table *wait)
+ 	return res;
+ }
+ 
+-struct proc_fs_info {
++struct proc_fs_opts {
+ 	int flag;
+ 	const char *str;
+ };
+ 
+ static int show_sb_opts(struct seq_file *m, struct super_block *sb)
+ {
+-	static const struct proc_fs_info fs_info[] = {
++	static const struct proc_fs_opts fs_opts[] = {
+ 		{ SB_SYNCHRONOUS, ",sync" },
+ 		{ SB_DIRSYNC, ",dirsync" },
+ 		{ SB_MANDLOCK, ",mand" },
+ 		{ SB_LAZYTIME, ",lazytime" },
+ 		{ 0, NULL }
+ 	};
+-	const struct proc_fs_info *fs_infop;
++	const struct proc_fs_opts *fs_infop;
+ 
+-	for (fs_infop = fs_info; fs_infop->flag; fs_infop++) {
++	for (fs_infop = fs_opts; fs_infop->flag; fs_infop++) {
+ 		if (sb->s_flags & fs_infop->flag)
+ 			seq_puts(m, fs_infop->str);
+ 	}
+@@ -63,7 +63,7 @@ static int show_sb_opts(struct seq_file *m, struct super_block *sb)
+ 
+ static void show_mnt_opts(struct seq_file *m, struct vfsmount *mnt)
+ {
+-	static const struct proc_fs_info mnt_info[] = {
++	static const struct proc_fs_opts mnt_opts[] = {
+ 		{ MNT_NOSUID, ",nosuid" },
+ 		{ MNT_NODEV, ",nodev" },
+ 		{ MNT_NOEXEC, ",noexec" },
+@@ -72,9 +72,9 @@ static void show_mnt_opts(struct seq_file *m, struct vfsmount *mnt)
+ 		{ MNT_RELATIME, ",relatime" },
+ 		{ 0, NULL }
+ 	};
+-	const struct proc_fs_info *fs_infop;
++	const struct proc_fs_opts *fs_infop;
+ 
+-	for (fs_infop = mnt_info; fs_infop->flag; fs_infop++) {
++	for (fs_infop = mnt_opts; fs_infop->flag; fs_infop++) {
+ 		if (mnt->mnt_flags & fs_infop->flag)
+ 			seq_puts(m, fs_infop->str);
+ 	}
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+2.25.2
+
