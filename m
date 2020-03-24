@@ -2,397 +2,128 @@ Return-Path: <SRS0=Q4be=5J=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.7 required=3.0 tests=DKIM_ADSP_CUSTOM_MED,
-	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.4 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DEC8CC54FCF
-	for <linux-api@archiver.kernel.org>; Tue, 24 Mar 2020 20:46:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 10723C54FCF
+	for <linux-api@archiver.kernel.org>; Tue, 24 Mar 2020 21:02:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id B70A4205ED
-	for <linux-api@archiver.kernel.org>; Tue, 24 Mar 2020 20:46:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D831C20714
+	for <linux-api@archiver.kernel.org>; Tue, 24 Mar 2020 21:02:15 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JAa65Qbt"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728380AbgCXUqs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 24 Mar 2020 16:46:48 -0400
-Received: from monster.unsafe.ru ([5.9.28.80]:38498 "EHLO mail.unsafe.ru"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727088AbgCXUqP (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 24 Mar 2020 16:46:15 -0400
-Received: from comp-core-i7-2640m-0182e6.redhat.com (ip-89-102-33-211.net.upcbroadband.cz [89.102.33.211])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        id S1727088AbgCXVCP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 24 Mar 2020 17:02:15 -0400
+Received: from us-smtp-delivery-74.mimecast.com ([216.205.24.74]:22180 "EHLO
+        us-smtp-delivery-74.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1727664AbgCXVCP (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 24 Mar 2020 17:02:15 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1585083734;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=ezORt9tWKqavsqost0+8jwF+irEVoobXTNyqmEmYnCY=;
+        b=JAa65QbtlGo9vHlvtafvPopAQ6x4otyEMGJ/ycLmejJmBnypEpWR/49ss1qjKojiAl/tgw
+        vHYgMR1u3Up/ncRo3Y0TEaLxZ/1cbjXZ9VwuPr96tpeVpeIUsnmuIaZhMKnvJUzmA2lKV5
+        uUaLdEWZJP+sKD7L/1r4oQH4RbZ9aKI=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-289-qKNTB0YPNMSuZYrUnbJeZQ-1; Tue, 24 Mar 2020 17:02:10 -0400
+X-MC-Unique: qKNTB0YPNMSuZYrUnbJeZQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mail.unsafe.ru (Postfix) with ESMTPSA id D450FC61B26;
-        Tue, 24 Mar 2020 20:46:10 +0000 (UTC)
-From:   Alexey Gladkov <gladkov.alexey@gmail.com>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        Kernel Hardening <kernel-hardening@lists.openwall.com>,
-        Linux API <linux-api@vger.kernel.org>,
-        Linux FS Devel <linux-fsdevel@vger.kernel.org>,
-        Linux Security Module <linux-security-module@vger.kernel.org>
-Cc:     Akinobu Mita <akinobu.mita@gmail.com>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        Alexey Dobriyan <adobriyan@gmail.com>,
-        Alexey Gladkov <legion@kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Daniel Micay <danielmicay@gmail.com>,
-        Djalal Harouni <tixxdz@gmail.com>,
-        "Dmitry V . Levin" <ldv@altlinux.org>,
-        "Eric W . Biederman" <ebiederm@xmission.com>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        "J . Bruce Fields" <bfields@fieldses.org>,
-        Jeff Layton <jlayton@poochiereds.net>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Oleg Nesterov <oleg@redhat.com>
-Subject: [PATCH RESEND v9 2/8] proc: allow to mount many instances of proc in one pid namespace
-Date:   Tue, 24 Mar 2020 21:44:43 +0100
-Message-Id: <20200324204449.7263-3-gladkov.alexey@gmail.com>
-X-Mailer: git-send-email 2.25.2
-In-Reply-To: <20200324204449.7263-1-gladkov.alexey@gmail.com>
-References: <20200324204449.7263-1-gladkov.alexey@gmail.com>
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CEFF8189D6C0;
+        Tue, 24 Mar 2020 21:02:08 +0000 (UTC)
+Received: from madcap2.tricolour.ca (unknown [10.10.110.11])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 4FADC19925;
+        Tue, 24 Mar 2020 21:01:54 +0000 (UTC)
+Date:   Tue, 24 Mar 2020 17:01:52 -0400
+From:   Richard Guy Briggs <rgb@redhat.com>
+To:     Paul Moore <paul@paul-moore.com>
+Cc:     nhorman@tuxdriver.com, linux-api@vger.kernel.org,
+        containers@lists.linux-foundation.org,
+        LKML <linux-kernel@vger.kernel.org>, dhowells@redhat.com,
+        linux-audit@redhat.com, netfilter-devel@vger.kernel.org,
+        ebiederm@xmission.com, simo@redhat.com, netdev@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>,
+        mpatel@redhat.com, Serge Hallyn <serge@hallyn.com>
+Subject: Re: [PATCH ghak90 V8 07/16] audit: add contid support for signalling
+ the audit daemon
+Message-ID: <20200324210152.5uydf3zqi3dwshfu@madcap2.tricolour.ca>
+References: <20200312193037.2tb5f53yeisfq4ta@madcap2.tricolour.ca>
+ <CAHC9VhQoVOzy_b9W6h+kmizKr1rPkC4cy5aYoKT2i0ZgsceNDg@mail.gmail.com>
+ <20200313185900.y44yvrfm4zxa5lfk@madcap2.tricolour.ca>
+ <CAHC9VhR2zCCE5bjH75rSwfLC7TJGFj4RBnrtcOoUiqVp9q5TaA@mail.gmail.com>
+ <20200318212630.mw2geg4ykhnbtr3k@madcap2.tricolour.ca>
+ <CAHC9VhRYvGAru3aOMwWKCCWDktS+2pGr+=vV4SjHW_0yewD98A@mail.gmail.com>
+ <20200318215550.es4stkjwnefrfen2@madcap2.tricolour.ca>
+ <CAHC9VhSdDDP7Ec-w61NhGxZG5ZiekmrBCAg=Y=VJvEZcgQh46g@mail.gmail.com>
+ <20200319220249.jyr6xmwvflya5mks@madcap2.tricolour.ca>
+ <CAHC9VhR84aN72yNB_j61zZgrQV1y6yvrBLNY7jp7BqQiEDL+cw@mail.gmail.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CAHC9VhR84aN72yNB_j61zZgrQV1y6yvrBLNY7jp7BqQiEDL+cw@mail.gmail.com>
+User-Agent: NeoMutt/20180716
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This patch allows to have multiple procfs instances inside the
-same pid namespace. The aim here is lightweight sandboxes, and to allow
-that we have to modernize procfs internals.
+On 2020-03-23 20:16, Paul Moore wrote:
+> On Thu, Mar 19, 2020 at 6:03 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > On 2020-03-18 18:06, Paul Moore wrote:
+> 
+> ...
+> 
+> > > I hope we can do better than string manipulations in the kernel.  I'd
+> > > much rather defer generating the ACID list (if possible), than
+> > > generating a list only to keep copying and editing it as the record is
+> > > sent.
+> >
+> > At the moment we are stuck with a string-only format.
+> 
+> Yes, we are.  That is another topic, and another set of changes I've
+> been deferring so as to not disrupt the audit container ID work.
+> 
+> I was thinking of what we do inside the kernel between when the record
+> triggering event happens and when we actually emit the record to
+> userspace.  Perhaps we collect the ACID information while the event is
+> occurring, but we defer generating the record until later when we have
+> a better understanding of what should be included in the ACID list.
+> It is somewhat similar (but obviously different) to what we do for
+> PATH records (we collect the pathname info when the path is being
+> resolved).
 
-1) The main aim of this work is to have on embedded systems one
-supervisor for apps. Right now we have some lightweight sandbox support,
-however if we create pid namespacess we have to manages all the
-processes inside too, where our goal is to be able to run a bunch of
-apps each one inside its own mount namespace without being able to
-notice each other. We only want to use mount namespaces, and we want
-procfs to behave more like a real mount point.
+Ok, now I understand your concern.
 
-2) Linux Security Modules have multiple ptrace paths inside some
-subsystems, however inside procfs, the implementation does not guarantee
-that the ptrace() check which triggers the security_ptrace_check() hook
-will always run. We have the 'hidepid' mount option that can be used to
-force the ptrace_may_access() check inside has_pid_permissions() to run.
-The problem is that 'hidepid' is per pid namespace and not attached to
-the mount point, any remount or modification of 'hidepid' will propagate
-to all other procfs mounts.
+In the case of NETFILTER_PKT records, the CONTAINER_ID record is the
+only other possible record and they are generated at the same time with
+a local context.
 
-This also does not allow to support Yama LSM easily in desktop and user
-sessions. Yama ptrace scope which restricts ptrace and some other
-syscalls to be allowed only on inferiors, can be updated to have a
-per-task context, where the context will be inherited during fork(),
-clone() and preserved across execve(). If we support multiple private
-procfs instances, then we may force the ptrace_may_access() on
-/proc/<pids>/ to always run inside that new procfs instances. This will
-allow to specifiy on user sessions if we should populate procfs with
-pids that the user can ptrace or not.
+In the case of any event involving a syscall, that CONTAINER_ID record
+is generated at the time of the rest of the event record generation at
+syscall exit.
 
-By using Yama ptrace scope, some restricted users will only be able to see
-inferiors inside /proc, they won't even be able to see their other
-processes. Some software like Chromium, Firefox's crash handler, Wine
-and others are already using Yama to restrict which processes can be
-ptracable. With this change this will give the possibility to restrict
-/proc/<pids>/ but more importantly this will give desktop users a
-generic and usuable way to specifiy which users should see all processes
-and which users can not.
+The others are only generated when needed, such as the sig2 reply.
 
-Side notes:
-* This covers the lack of seccomp where it is not able to parse
-arguments, it is easy to install a seccomp filter on direct syscalls
-that operate on pids, however /proc/<pid>/ is a Linux ABI using
-filesystem syscalls. With this change LSMs should be able to analyze
-open/read/write/close...
+We generally just store the contobj pointer until we actually generate
+the CONTAINER_ID (or CONTAINER_OP) record.
 
-In the new patchset version I removed the 'newinstance' option
-as suggested by Eric W. Biederman.
+> paul moore
 
-Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
----
- fs/proc/base.c          | 13 +++++++++----
- fs/proc/inode.c         |  4 ++--
- fs/proc/root.c          | 42 +++++++++++++++++++++++++----------------
- fs/proc/self.c          |  6 +++---
- fs/proc/thread_self.c   |  6 +++---
- include/linux/proc_fs.h | 12 ++++++++++++
- 6 files changed, 55 insertions(+), 28 deletions(-)
+- RGB
 
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index e7efe9d6f3d6..9d2e425338c8 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -3301,6 +3301,7 @@ struct dentry *proc_pid_lookup(struct dentry *dentry, unsigned int flags)
- {
- 	struct task_struct *task;
- 	unsigned tgid;
-+	struct proc_fs_info *fs_info;
- 	struct pid_namespace *ns;
- 	struct dentry *result = ERR_PTR(-ENOENT);
- 
-@@ -3308,7 +3309,8 @@ struct dentry *proc_pid_lookup(struct dentry *dentry, unsigned int flags)
- 	if (tgid == ~0U)
- 		goto out;
- 
--	ns = dentry->d_sb->s_fs_info;
-+	fs_info = proc_sb_info(dentry->d_sb);
-+	ns = fs_info->pid_ns;
- 	rcu_read_lock();
- 	task = find_task_by_pid_ns(tgid, ns);
- 	if (task)
-@@ -3372,6 +3374,7 @@ static struct tgid_iter next_tgid(struct pid_namespace *ns, struct tgid_iter ite
- int proc_pid_readdir(struct file *file, struct dir_context *ctx)
- {
- 	struct tgid_iter iter;
-+	struct proc_fs_info *fs_info = proc_sb_info(file_inode(file)->i_sb);
- 	struct pid_namespace *ns = proc_pid_ns(file_inode(file));
- 	loff_t pos = ctx->pos;
- 
-@@ -3379,13 +3382,13 @@ int proc_pid_readdir(struct file *file, struct dir_context *ctx)
- 		return 0;
- 
- 	if (pos == TGID_OFFSET - 2) {
--		struct inode *inode = d_inode(ns->proc_self);
-+		struct inode *inode = d_inode(fs_info->proc_self);
- 		if (!dir_emit(ctx, "self", 4, inode->i_ino, DT_LNK))
- 			return 0;
- 		ctx->pos = pos = pos + 1;
- 	}
- 	if (pos == TGID_OFFSET - 1) {
--		struct inode *inode = d_inode(ns->proc_thread_self);
-+		struct inode *inode = d_inode(fs_info->proc_thread_self);
- 		if (!dir_emit(ctx, "thread-self", 11, inode->i_ino, DT_LNK))
- 			return 0;
- 		ctx->pos = pos = pos + 1;
-@@ -3599,6 +3602,7 @@ static struct dentry *proc_task_lookup(struct inode *dir, struct dentry * dentry
- 	struct task_struct *task;
- 	struct task_struct *leader = get_proc_task(dir);
- 	unsigned tid;
-+	struct proc_fs_info *fs_info;
- 	struct pid_namespace *ns;
- 	struct dentry *result = ERR_PTR(-ENOENT);
- 
-@@ -3609,7 +3613,8 @@ static struct dentry *proc_task_lookup(struct inode *dir, struct dentry * dentry
- 	if (tid == ~0U)
- 		goto out;
- 
--	ns = dentry->d_sb->s_fs_info;
-+	fs_info = proc_sb_info(dentry->d_sb);
-+	ns = fs_info->pid_ns;
- 	rcu_read_lock();
- 	task = find_task_by_pid_ns(tid, ns);
- 	if (task)
-diff --git a/fs/proc/inode.c b/fs/proc/inode.c
-index 1e730ea1dcd6..6e4c6728338b 100644
---- a/fs/proc/inode.c
-+++ b/fs/proc/inode.c
-@@ -167,8 +167,8 @@ void proc_invalidate_siblings_dcache(struct hlist_head *inodes, spinlock_t *lock
- 
- static int proc_show_options(struct seq_file *seq, struct dentry *root)
- {
--	struct super_block *sb = root->d_sb;
--	struct pid_namespace *pid = sb->s_fs_info;
-+	struct proc_fs_info *fs_info = proc_sb_info(root->d_sb);
-+	struct pid_namespace *pid = fs_info->pid_ns;
- 
- 	if (!gid_eq(pid->pid_gid, GLOBAL_ROOT_GID))
- 		seq_printf(seq, ",gid=%u", from_kgid_munged(&init_user_ns, pid->pid_gid));
-diff --git a/fs/proc/root.c b/fs/proc/root.c
-index 2633f10446c3..b28adbb0b937 100644
---- a/fs/proc/root.c
-+++ b/fs/proc/root.c
-@@ -30,7 +30,7 @@
- #include "internal.h"
- 
- struct proc_fs_context {
--	struct pid_namespace	*pid_ns;
-+	struct proc_fs_info	*fs_info;
- 	unsigned int		mask;
- 	int			hidepid;
- 	int			gid;
-@@ -92,7 +92,8 @@ static void proc_apply_options(struct super_block *s,
- 
- static int proc_fill_super(struct super_block *s, struct fs_context *fc)
- {
--	struct pid_namespace *pid_ns = get_pid_ns(s->s_fs_info);
-+	struct proc_fs_context *ctx = fc->fs_private;
-+	struct pid_namespace *pid_ns = get_pid_ns(ctx->fs_info->pid_ns);
- 	struct inode *root_inode;
- 	int ret;
- 
-@@ -106,6 +107,7 @@ static int proc_fill_super(struct super_block *s, struct fs_context *fc)
- 	s->s_magic = PROC_SUPER_MAGIC;
- 	s->s_op = &proc_sops;
- 	s->s_time_gran = 1;
-+	s->s_fs_info = ctx->fs_info;
- 
- 	/*
- 	 * procfs isn't actually a stacking filesystem; however, there is
-@@ -113,7 +115,7 @@ static int proc_fill_super(struct super_block *s, struct fs_context *fc)
- 	 * top of it
- 	 */
- 	s->s_stack_depth = FILESYSTEM_MAX_STACK_DEPTH;
--	
-+
- 	/* procfs dentries and inodes don't require IO to create */
- 	s->s_shrink.seeks = 0;
- 
-@@ -140,7 +142,8 @@ static int proc_fill_super(struct super_block *s, struct fs_context *fc)
- static int proc_reconfigure(struct fs_context *fc)
- {
- 	struct super_block *sb = fc->root->d_sb;
--	struct pid_namespace *pid = sb->s_fs_info;
-+	struct proc_fs_info *fs_info = proc_sb_info(sb);
-+	struct pid_namespace *pid = fs_info->pid_ns;
- 
- 	sync_filesystem(sb);
- 
-@@ -150,16 +153,14 @@ static int proc_reconfigure(struct fs_context *fc)
- 
- static int proc_get_tree(struct fs_context *fc)
- {
--	struct proc_fs_context *ctx = fc->fs_private;
--
--	return get_tree_keyed(fc, proc_fill_super, ctx->pid_ns);
-+	return get_tree_nodev(fc, proc_fill_super);
- }
- 
- static void proc_fs_context_free(struct fs_context *fc)
- {
- 	struct proc_fs_context *ctx = fc->fs_private;
- 
--	put_pid_ns(ctx->pid_ns);
-+	put_pid_ns(ctx->fs_info->pid_ns);
- 	kfree(ctx);
- }
- 
-@@ -178,9 +179,15 @@ static int proc_init_fs_context(struct fs_context *fc)
- 	if (!ctx)
- 		return -ENOMEM;
- 
--	ctx->pid_ns = get_pid_ns(task_active_pid_ns(current));
-+	ctx->fs_info = kzalloc(sizeof(struct proc_fs_info), GFP_KERNEL);
-+	if (!ctx->fs_info) {
-+		kfree(ctx);
-+		return -ENOMEM;
-+	}
-+
-+	ctx->fs_info->pid_ns = get_pid_ns(task_active_pid_ns(current));
- 	put_user_ns(fc->user_ns);
--	fc->user_ns = get_user_ns(ctx->pid_ns->user_ns);
-+	fc->user_ns = get_user_ns(ctx->fs_info->pid_ns->user_ns);
- 	fc->fs_private = ctx;
- 	fc->ops = &proc_fs_context_ops;
- 	return 0;
-@@ -188,15 +195,18 @@ static int proc_init_fs_context(struct fs_context *fc)
- 
- static void proc_kill_sb(struct super_block *sb)
- {
--	struct pid_namespace *ns;
-+	struct proc_fs_info *fs_info = proc_sb_info(sb);
-+	struct pid_namespace *ns = fs_info->pid_ns;
-+
-+	if (fs_info->proc_self)
-+		dput(fs_info->proc_self);
-+
-+	if (fs_info->proc_thread_self)
-+		dput(fs_info->proc_thread_self);
- 
--	ns = (struct pid_namespace *)sb->s_fs_info;
--	if (ns->proc_self)
--		dput(ns->proc_self);
--	if (ns->proc_thread_self)
--		dput(ns->proc_thread_self);
- 	kill_anon_super(sb);
- 	put_pid_ns(ns);
-+	kfree(fs_info);
- }
- 
- static struct file_system_type proc_fs_type = {
-diff --git a/fs/proc/self.c b/fs/proc/self.c
-index 57c0a1047250..309301ac0136 100644
---- a/fs/proc/self.c
-+++ b/fs/proc/self.c
-@@ -36,10 +36,10 @@ static unsigned self_inum __ro_after_init;
- int proc_setup_self(struct super_block *s)
- {
- 	struct inode *root_inode = d_inode(s->s_root);
--	struct pid_namespace *ns = proc_pid_ns(root_inode);
-+	struct proc_fs_info *fs_info = proc_sb_info(s);
- 	struct dentry *self;
- 	int ret = -ENOMEM;
--	
-+
- 	inode_lock(root_inode);
- 	self = d_alloc_name(s->s_root, "self");
- 	if (self) {
-@@ -62,7 +62,7 @@ int proc_setup_self(struct super_block *s)
- 	if (ret)
- 		pr_err("proc_fill_super: can't allocate /proc/self\n");
- 	else
--		ns->proc_self = self;
-+		fs_info->proc_self = self;
- 
- 	return ret;
- }
-diff --git a/fs/proc/thread_self.c b/fs/proc/thread_self.c
-index f61ae53533f5..2493cbbdfa6f 100644
---- a/fs/proc/thread_self.c
-+++ b/fs/proc/thread_self.c
-@@ -36,7 +36,7 @@ static unsigned thread_self_inum __ro_after_init;
- int proc_setup_thread_self(struct super_block *s)
- {
- 	struct inode *root_inode = d_inode(s->s_root);
--	struct pid_namespace *ns = proc_pid_ns(root_inode);
-+	struct proc_fs_info *fs_info = proc_sb_info(s);
- 	struct dentry *thread_self;
- 	int ret = -ENOMEM;
- 
-@@ -60,9 +60,9 @@ int proc_setup_thread_self(struct super_block *s)
- 	inode_unlock(root_inode);
- 
- 	if (ret)
--		pr_err("proc_fill_super: can't allocate /proc/thread_self\n");
-+		pr_err("proc_fill_super: can't allocate /proc/thread-self\n");
- 	else
--		ns->proc_thread_self = thread_self;
-+		fs_info->proc_thread_self = thread_self;
- 
- 	return ret;
- }
-diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
-index 40a7982b7285..5920a4ecd71b 100644
---- a/include/linux/proc_fs.h
-+++ b/include/linux/proc_fs.h
-@@ -27,6 +27,17 @@ struct proc_ops {
- 	unsigned long (*proc_get_unmapped_area)(struct file *, unsigned long, unsigned long, unsigned long, unsigned long);
- };
- 
-+struct proc_fs_info {
-+	struct pid_namespace *pid_ns;
-+	struct dentry *proc_self;        /* For /proc/self */
-+	struct dentry *proc_thread_self; /* For /proc/thread-self */
-+};
-+
-+static inline struct proc_fs_info *proc_sb_info(struct super_block *sb)
-+{
-+	return sb->s_fs_info;
-+}
-+
- #ifdef CONFIG_PROC_FS
- 
- typedef int (*proc_write_t)(struct file *, char *, size_t);
-@@ -161,6 +172,7 @@ int open_related_ns(struct ns_common *ns,
- /* get the associated pid namespace for a file in procfs */
- static inline struct pid_namespace *proc_pid_ns(const struct inode *inode)
- {
-+	return proc_sb_info(inode->i_sb)->pid_ns;
- 	return inode->i_sb->s_fs_info;
- }
- 
--- 
-2.25.2
+--
+Richard Guy Briggs <rgb@redhat.com>
+Sr. S/W Engineer, Kernel Security, Base Operating Systems
+Remote, Ottawa, Red Hat Canada
+IRC: rgb, SunRaycer
+Voice: +1.647.777.2635, Internal: (81) 32635
 
