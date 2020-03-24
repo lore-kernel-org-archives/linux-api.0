@@ -2,28 +2,28 @@ Return-Path: <SRS0=Q4be=5J=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.7 required=3.0 tests=DKIM_ADSP_CUSTOM_MED,
+X-Spam-Status: No, score=-9.7 required=3.0 tests=DKIM_ADSP_CUSTOM_MED,
 	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 33AF7C54FD2
-	for <linux-api@archiver.kernel.org>; Tue, 24 Mar 2020 20:46:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DEC8CC54FCF
+	for <linux-api@archiver.kernel.org>; Tue, 24 Mar 2020 20:46:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 13AD1208CA
-	for <linux-api@archiver.kernel.org>; Tue, 24 Mar 2020 20:46:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B70A4205ED
+	for <linux-api@archiver.kernel.org>; Tue, 24 Mar 2020 20:46:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728206AbgCXUqP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 24 Mar 2020 16:46:15 -0400
-Received: from monster.unsafe.ru ([5.9.28.80]:38408 "EHLO mail.unsafe.ru"
+        id S1728380AbgCXUqs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 24 Mar 2020 16:46:48 -0400
+Received: from monster.unsafe.ru ([5.9.28.80]:38498 "EHLO mail.unsafe.ru"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725941AbgCXUqO (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 24 Mar 2020 16:46:14 -0400
+        id S1727088AbgCXUqP (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 24 Mar 2020 16:46:15 -0400
 Received: from comp-core-i7-2640m-0182e6.redhat.com (ip-89-102-33-211.net.upcbroadband.cz [89.102.33.211])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.unsafe.ru (Postfix) with ESMTPSA id B5E57C61AE0;
-        Tue, 24 Mar 2020 20:46:08 +0000 (UTC)
+        by mail.unsafe.ru (Postfix) with ESMTPSA id D450FC61B26;
+        Tue, 24 Mar 2020 20:46:10 +0000 (UTC)
 From:   Alexey Gladkov <gladkov.alexey@gmail.com>
 To:     LKML <linux-kernel@vger.kernel.org>,
         Kernel Hardening <kernel-hardening@lists.openwall.com>,
@@ -48,10 +48,12 @@ Cc:     Akinobu Mita <akinobu.mita@gmail.com>,
         Kees Cook <keescook@chromium.org>,
         Linus Torvalds <torvalds@linux-foundation.org>,
         Oleg Nesterov <oleg@redhat.com>
-Subject: [PATCH RESEND v9 0/8] proc: modernize proc to support multiple private instances
-Date:   Tue, 24 Mar 2020 21:44:41 +0100
-Message-Id: <20200324204449.7263-1-gladkov.alexey@gmail.com>
+Subject: [PATCH RESEND v9 2/8] proc: allow to mount many instances of proc in one pid namespace
+Date:   Tue, 24 Mar 2020 21:44:43 +0100
+Message-Id: <20200324204449.7263-3-gladkov.alexey@gmail.com>
 X-Mailer: git-send-email 2.25.2
+In-Reply-To: <20200324204449.7263-1-gladkov.alexey@gmail.com>
+References: <20200324204449.7263-1-gladkov.alexey@gmail.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
@@ -59,87 +61,19 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Greetings!
+This patch allows to have multiple procfs instances inside the
+same pid namespace. The aim here is lightweight sandboxes, and to allow
+that we have to modernize procfs internals.
 
-Preface:
---------
-This is patchset v9 to modernize procfs and make it able to support multiple
-private instances per the same pid namespace.
+1) The main aim of this work is to have on embedded systems one
+supervisor for apps. Right now we have some lightweight sandbox support,
+however if we create pid namespacess we have to manages all the
+processes inside too, where our goal is to be able to run a bunch of
+apps each one inside its own mount namespace without being able to
+notice each other. We only want to use mount namespaces, and we want
+procfs to behave more like a real mount point.
 
-This patchset can be applied on top of:
-
-git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git 58a45d79571a
-
-
-Procfs modernization:
----------------------
-Historically procfs was always tied to pid namespaces, during pid
-namespace creation we internally create a procfs mount for it. However,
-this has the effect that all new procfs mounts are just a mirror of the
-internal one, any change, any mount option update, any new future
-introduction will propagate to all other procfs mounts that are in the
-same pid namespace.
-
-This may have solved several use cases in that time. However today we
-face new requirements, and making procfs able to support new private
-instances inside same pid namespace seems a major point. If we want to
-to introduce new features and security mechanisms we have to make sure
-first that we do not break existing usecases. Supporting private procfs
-instances will allow to support new features and behaviour without
-propagating it to all other procfs mounts.
-
-Today procfs is more of a burden especially to some Embedded, IoT,
-sandbox, container use cases. In user space we are over-mounting null
-or inaccessible files on top to hide files and information. If we want
-to hide pids we have to create PID namespaces otherwise mount options
-propagate to all other proc mounts, changing a mount option value in one
-mount will propagate to all other proc mounts. If we want to introduce
-new features, then they will propagate to all other mounts too, resulting
-either maybe new useful functionality or maybe breaking stuff. We have
-also to note that userspace should not workaround procfs, the kernel
-should just provide a sane simple interface.
-
-In this regard several developers and maintainers pointed out that
-there are problems with procfs and it has to be modernized:
-
-"Here's another one: split up and modernize /proc." by Andy Lutomirski [1]
-
-Discussion about kernel pointer leaks:
-
-"And yes, as Kees and Daniel mentioned, it's definitely not just dmesg.
-In fact, the primary things tend to be /proc and /sys, not dmesg
-itself." By Linus Torvalds [2]
-
-Lot of other areas in the kernel and filesystems have been updated to be
-able to support private instances, devpts is one major example [3].
-
-Which will be used for:
-
-1) Embedded systems and IoT: usually we have one supervisor for
-apps, we have some lightweight sandbox support, however if we create
-pid namespaces we have to manage all the processes inside too,
-where our goal is to be able to run a bunch of apps each one inside
-its own mount namespace, maybe use network namespaces for vlans
-setups, but right now we only want mount namespaces, without all the
-other complexity. We want procfs to behave more like a real file system,
-and block access to inodes that belong to other users. The 'hidepid=' will
-not work since it is a shared mount option.
-
-2) Containers, sandboxes and Private instances of file systems - devpts case
-Historically, lot of file systems inside Linux kernel view when instantiated
-were just a mirror of an already created and mounted filesystem. This was the
-case of devpts filesystem, it seems at that time the requirements were to
-optimize things and reuse the same memory, etc. This design used to work but not
-anymore with today's containers, IoT, hostile environments and all the privacy
-challenges that Linux faces.
-
-In that regards, devpts was updated so that each new mounts is a total
-independent file system by the following patches:
-
-"devpts: Make each mount of devpts an independent filesystem" by
-Eric W. Biederman [3] [4]
-
-3) Linux Security Modules have multiple ptrace paths inside some
+2) Linux Security Modules have multiple ptrace paths inside some
 subsystems, however inside procfs, the implementation does not guarantee
 that the ptrace() check which triggers the security_ptrace_check() hook
 will always run. We have the 'hidepid' mount option that can be used to
@@ -165,154 +99,300 @@ and others are already using Yama to restrict which processes can be
 ptracable. With this change this will give the possibility to restrict
 /proc/<pids>/ but more importantly this will give desktop users a
 generic and usuable way to specifiy which users should see all processes
-and which user can not.
+and which users can not.
 
 Side notes:
-
 * This covers the lack of seccomp where it is not able to parse
 arguments, it is easy to install a seccomp filter on direct syscalls
 that operate on pids, however /proc/<pid>/ is a Linux ABI using
-filesystem syscalls. With this change all LSMs should be able to analyze
-open/read/write/close... on /proc/<pid>/
+filesystem syscalls. With this change LSMs should be able to analyze
+open/read/write/close...
 
-4) This will allow to implement new features either in kernel or
-userspace without having to worry about procfs.
-In containers, sandboxes, etc we have workarounds to hide some /proc
-inodes, this should be supported natively without doing extra complex
-work, the kernel should be able to support sane options that work with
-today and future Linux use cases.
+In the new patchset version I removed the 'newinstance' option
+as suggested by Eric W. Biederman.
 
-5) Creation of new superblock with all procfs options for each procfs
-mount will fix the ignoring of mount options. The problem is that the
-second mount of procfs in the same pid namespace ignores the mount
-options. The mount options are ignored without error until procfs is
-remounted.
+Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
+---
+ fs/proc/base.c          | 13 +++++++++----
+ fs/proc/inode.c         |  4 ++--
+ fs/proc/root.c          | 42 +++++++++++++++++++++++++----------------
+ fs/proc/self.c          |  6 +++---
+ fs/proc/thread_self.c   |  6 +++---
+ include/linux/proc_fs.h | 12 ++++++++++++
+ 6 files changed, 55 insertions(+), 28 deletions(-)
 
-Before:
-
-# grep ^proc /proc/mounts
-proc /proc proc rw,relatime,hidepid=2 0 0
-
-# strace -e mount mount -o hidepid=1 -t proc proc /tmp/proc
-mount("proc", "/tmp/proc", "proc", 0, "hidepid=1") = 0
-+++ exited with 0 +++
-
-# grep ^proc /proc/mounts
-proc /proc proc rw,relatime,hidepid=2 0 0
-proc /tmp/proc proc rw,relatime,hidepid=2 0 0
-
-# mount -o remount,hidepid=1 -t proc proc /tmp/proc
-
-# grep ^proc /proc/mounts
-proc /proc proc rw,relatime,hidepid=1 0 0
-proc /tmp/proc proc rw,relatime,hidepid=1 0 0
-
-After:
-
-# grep ^proc /proc/mounts
-proc /proc proc rw,relatime,hidepid=ptraceable 0 0
-
-# mount -o hidepid=invisible -t proc proc /tmp/proc
-
-# grep ^proc /proc/mounts
-proc /proc proc rw,relatime,hidepid=ptraceable 0 0
-proc /tmp/proc proc rw,relatime,hidepid=invisible 0 0
-
-
-Introduced changes:
--------------------
-Each mount of procfs creates a separate procfs instance with its own
-mount options.
-
-This series adds few new mount options:
-
-* New 'hidepid=ptraceable' or 'hidepid=4' mount option to show only ptraceable
-processes in the procfs. This allows to support lightweight sandboxes in
-Embedded Linux, also solves the case for LSM where now with this mount option,
-we make sure that they have a ptrace path in procfs.
-
-* 'subset=pidfs' that allows to hide non-pid inodes from procfs. It can be used
-in containers and sandboxes, as these are already trying to hide and block
-access to procfs inodes anyway.
-
-
-ChangeLog:
-----------
-# v9:
-* Rebase on top of Eric W. Biederman's procfs changes.
-* Add human readable values of 'hidepid' as suggested by Andy Lutomirski.
-
-# v8:
-* Started using RCU lock to clean dcache entries as suggested by Linus Torvalds.
-
-# v7:
-* 'pidonly=1' renamed to 'subset=pidfs' as suggested by Alexey Dobriyan.
-* HIDEPID_* moved to uapi/ as they are user interface to mount().
-  Suggested-by Alexey Dobriyan <adobriyan@gmail.com>
-
-# v6:
-* 'hidepid=' and 'gid=' mount options are moved from pid namespace to superblock.
-* 'newinstance' mount option removed as suggested by Eric W. Biederman.
-   Mount of procfs always creates a new instance.
-* 'limit_pids' renamed to 'hidepid=3'.
-* I took into account the comment of Linus Torvalds [7].
-* Documentation added.
-
-# v5:
-* Fixed a bug that caused a problem with the Fedora boot.
-* The 'pidonly' option is visible among the mount options.
-
-# v2:
-* Renamed mount options to 'newinstance' and 'pids='
-   Suggested-by: Andy Lutomirski <luto@kernel.org>
-* Fixed order of commit, Suggested-by: Andy Lutomirski <luto@kernel.org>
-* Many bug fixes.
-
-# v1:
-* Removed 'unshared' mount option and replaced it with 'limit_pids'
-   which is attached to the current procfs mount.
-   Suggested-by Andy Lutomirski <luto@kernel.org>
-* Do not fill dcache with pid entries that we can not ptrace.
-* Many bug fixes.
-
-
-References:
------------
-[1] https://lists.linuxfoundation.org/pipermail/ksummit-discuss/2017-January/004215.html
-[2] http://www.openwall.com/lists/kernel-hardening/2017/10/05/5
-[3] https://lwn.net/Articles/689539/
-[4] http://lxr.free-electrons.com/source/Documentation/filesystems/devpts.txt?v=3.14
-[5] https://lkml.org/lkml/2017/5/2/407
-[6] https://lkml.org/lkml/2017/5/3/357
-[7] https://lkml.org/lkml/2018/5/11/505
-
-
-Alexey Gladkov (8):
-  proc: rename struct proc_fs_info to proc_fs_opts
-  proc: allow to mount many instances of proc in one pid namespace
-  proc: move hide_pid, pid_gid from pid_namespace to proc_fs_info
-  proc: instantiate only pids that we can ptrace on 'hidepid=4' mount
-    option
-  proc: add option to mount only a pids subset
-  docs: proc: add documentation for "hidepid=4" and "subset=pidfs"
-    options and new mount behavior
-  proc: move hidepid values to uapi as they are user interface to mount
-  proc: use human-readable values for hidehid
-
- Documentation/filesystems/proc.txt |  93 ++++++++++++++++-----
- fs/proc/base.c                     |  46 ++++++++---
- fs/proc/generic.c                  |   9 +++
- fs/proc/inode.c                    |  28 +++++--
- fs/proc/root.c                     | 126 +++++++++++++++++++++++------
- fs/proc/self.c                     |   6 +-
- fs/proc/thread_self.c              |   6 +-
- fs/proc_namespace.c                |  14 ++--
- include/linux/pid_namespace.h      |   8 --
- include/linux/proc_fs.h            |  22 +++++
- include/uapi/linux/proc_fs.h       |  13 +++
- 11 files changed, 288 insertions(+), 83 deletions(-)
- create mode 100644 include/uapi/linux/proc_fs.h
-
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index e7efe9d6f3d6..9d2e425338c8 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -3301,6 +3301,7 @@ struct dentry *proc_pid_lookup(struct dentry *dentry, unsigned int flags)
+ {
+ 	struct task_struct *task;
+ 	unsigned tgid;
++	struct proc_fs_info *fs_info;
+ 	struct pid_namespace *ns;
+ 	struct dentry *result = ERR_PTR(-ENOENT);
+ 
+@@ -3308,7 +3309,8 @@ struct dentry *proc_pid_lookup(struct dentry *dentry, unsigned int flags)
+ 	if (tgid == ~0U)
+ 		goto out;
+ 
+-	ns = dentry->d_sb->s_fs_info;
++	fs_info = proc_sb_info(dentry->d_sb);
++	ns = fs_info->pid_ns;
+ 	rcu_read_lock();
+ 	task = find_task_by_pid_ns(tgid, ns);
+ 	if (task)
+@@ -3372,6 +3374,7 @@ static struct tgid_iter next_tgid(struct pid_namespace *ns, struct tgid_iter ite
+ int proc_pid_readdir(struct file *file, struct dir_context *ctx)
+ {
+ 	struct tgid_iter iter;
++	struct proc_fs_info *fs_info = proc_sb_info(file_inode(file)->i_sb);
+ 	struct pid_namespace *ns = proc_pid_ns(file_inode(file));
+ 	loff_t pos = ctx->pos;
+ 
+@@ -3379,13 +3382,13 @@ int proc_pid_readdir(struct file *file, struct dir_context *ctx)
+ 		return 0;
+ 
+ 	if (pos == TGID_OFFSET - 2) {
+-		struct inode *inode = d_inode(ns->proc_self);
++		struct inode *inode = d_inode(fs_info->proc_self);
+ 		if (!dir_emit(ctx, "self", 4, inode->i_ino, DT_LNK))
+ 			return 0;
+ 		ctx->pos = pos = pos + 1;
+ 	}
+ 	if (pos == TGID_OFFSET - 1) {
+-		struct inode *inode = d_inode(ns->proc_thread_self);
++		struct inode *inode = d_inode(fs_info->proc_thread_self);
+ 		if (!dir_emit(ctx, "thread-self", 11, inode->i_ino, DT_LNK))
+ 			return 0;
+ 		ctx->pos = pos = pos + 1;
+@@ -3599,6 +3602,7 @@ static struct dentry *proc_task_lookup(struct inode *dir, struct dentry * dentry
+ 	struct task_struct *task;
+ 	struct task_struct *leader = get_proc_task(dir);
+ 	unsigned tid;
++	struct proc_fs_info *fs_info;
+ 	struct pid_namespace *ns;
+ 	struct dentry *result = ERR_PTR(-ENOENT);
+ 
+@@ -3609,7 +3613,8 @@ static struct dentry *proc_task_lookup(struct inode *dir, struct dentry * dentry
+ 	if (tid == ~0U)
+ 		goto out;
+ 
+-	ns = dentry->d_sb->s_fs_info;
++	fs_info = proc_sb_info(dentry->d_sb);
++	ns = fs_info->pid_ns;
+ 	rcu_read_lock();
+ 	task = find_task_by_pid_ns(tid, ns);
+ 	if (task)
+diff --git a/fs/proc/inode.c b/fs/proc/inode.c
+index 1e730ea1dcd6..6e4c6728338b 100644
+--- a/fs/proc/inode.c
++++ b/fs/proc/inode.c
+@@ -167,8 +167,8 @@ void proc_invalidate_siblings_dcache(struct hlist_head *inodes, spinlock_t *lock
+ 
+ static int proc_show_options(struct seq_file *seq, struct dentry *root)
+ {
+-	struct super_block *sb = root->d_sb;
+-	struct pid_namespace *pid = sb->s_fs_info;
++	struct proc_fs_info *fs_info = proc_sb_info(root->d_sb);
++	struct pid_namespace *pid = fs_info->pid_ns;
+ 
+ 	if (!gid_eq(pid->pid_gid, GLOBAL_ROOT_GID))
+ 		seq_printf(seq, ",gid=%u", from_kgid_munged(&init_user_ns, pid->pid_gid));
+diff --git a/fs/proc/root.c b/fs/proc/root.c
+index 2633f10446c3..b28adbb0b937 100644
+--- a/fs/proc/root.c
++++ b/fs/proc/root.c
+@@ -30,7 +30,7 @@
+ #include "internal.h"
+ 
+ struct proc_fs_context {
+-	struct pid_namespace	*pid_ns;
++	struct proc_fs_info	*fs_info;
+ 	unsigned int		mask;
+ 	int			hidepid;
+ 	int			gid;
+@@ -92,7 +92,8 @@ static void proc_apply_options(struct super_block *s,
+ 
+ static int proc_fill_super(struct super_block *s, struct fs_context *fc)
+ {
+-	struct pid_namespace *pid_ns = get_pid_ns(s->s_fs_info);
++	struct proc_fs_context *ctx = fc->fs_private;
++	struct pid_namespace *pid_ns = get_pid_ns(ctx->fs_info->pid_ns);
+ 	struct inode *root_inode;
+ 	int ret;
+ 
+@@ -106,6 +107,7 @@ static int proc_fill_super(struct super_block *s, struct fs_context *fc)
+ 	s->s_magic = PROC_SUPER_MAGIC;
+ 	s->s_op = &proc_sops;
+ 	s->s_time_gran = 1;
++	s->s_fs_info = ctx->fs_info;
+ 
+ 	/*
+ 	 * procfs isn't actually a stacking filesystem; however, there is
+@@ -113,7 +115,7 @@ static int proc_fill_super(struct super_block *s, struct fs_context *fc)
+ 	 * top of it
+ 	 */
+ 	s->s_stack_depth = FILESYSTEM_MAX_STACK_DEPTH;
+-	
++
+ 	/* procfs dentries and inodes don't require IO to create */
+ 	s->s_shrink.seeks = 0;
+ 
+@@ -140,7 +142,8 @@ static int proc_fill_super(struct super_block *s, struct fs_context *fc)
+ static int proc_reconfigure(struct fs_context *fc)
+ {
+ 	struct super_block *sb = fc->root->d_sb;
+-	struct pid_namespace *pid = sb->s_fs_info;
++	struct proc_fs_info *fs_info = proc_sb_info(sb);
++	struct pid_namespace *pid = fs_info->pid_ns;
+ 
+ 	sync_filesystem(sb);
+ 
+@@ -150,16 +153,14 @@ static int proc_reconfigure(struct fs_context *fc)
+ 
+ static int proc_get_tree(struct fs_context *fc)
+ {
+-	struct proc_fs_context *ctx = fc->fs_private;
+-
+-	return get_tree_keyed(fc, proc_fill_super, ctx->pid_ns);
++	return get_tree_nodev(fc, proc_fill_super);
+ }
+ 
+ static void proc_fs_context_free(struct fs_context *fc)
+ {
+ 	struct proc_fs_context *ctx = fc->fs_private;
+ 
+-	put_pid_ns(ctx->pid_ns);
++	put_pid_ns(ctx->fs_info->pid_ns);
+ 	kfree(ctx);
+ }
+ 
+@@ -178,9 +179,15 @@ static int proc_init_fs_context(struct fs_context *fc)
+ 	if (!ctx)
+ 		return -ENOMEM;
+ 
+-	ctx->pid_ns = get_pid_ns(task_active_pid_ns(current));
++	ctx->fs_info = kzalloc(sizeof(struct proc_fs_info), GFP_KERNEL);
++	if (!ctx->fs_info) {
++		kfree(ctx);
++		return -ENOMEM;
++	}
++
++	ctx->fs_info->pid_ns = get_pid_ns(task_active_pid_ns(current));
+ 	put_user_ns(fc->user_ns);
+-	fc->user_ns = get_user_ns(ctx->pid_ns->user_ns);
++	fc->user_ns = get_user_ns(ctx->fs_info->pid_ns->user_ns);
+ 	fc->fs_private = ctx;
+ 	fc->ops = &proc_fs_context_ops;
+ 	return 0;
+@@ -188,15 +195,18 @@ static int proc_init_fs_context(struct fs_context *fc)
+ 
+ static void proc_kill_sb(struct super_block *sb)
+ {
+-	struct pid_namespace *ns;
++	struct proc_fs_info *fs_info = proc_sb_info(sb);
++	struct pid_namespace *ns = fs_info->pid_ns;
++
++	if (fs_info->proc_self)
++		dput(fs_info->proc_self);
++
++	if (fs_info->proc_thread_self)
++		dput(fs_info->proc_thread_self);
+ 
+-	ns = (struct pid_namespace *)sb->s_fs_info;
+-	if (ns->proc_self)
+-		dput(ns->proc_self);
+-	if (ns->proc_thread_self)
+-		dput(ns->proc_thread_self);
+ 	kill_anon_super(sb);
+ 	put_pid_ns(ns);
++	kfree(fs_info);
+ }
+ 
+ static struct file_system_type proc_fs_type = {
+diff --git a/fs/proc/self.c b/fs/proc/self.c
+index 57c0a1047250..309301ac0136 100644
+--- a/fs/proc/self.c
++++ b/fs/proc/self.c
+@@ -36,10 +36,10 @@ static unsigned self_inum __ro_after_init;
+ int proc_setup_self(struct super_block *s)
+ {
+ 	struct inode *root_inode = d_inode(s->s_root);
+-	struct pid_namespace *ns = proc_pid_ns(root_inode);
++	struct proc_fs_info *fs_info = proc_sb_info(s);
+ 	struct dentry *self;
+ 	int ret = -ENOMEM;
+-	
++
+ 	inode_lock(root_inode);
+ 	self = d_alloc_name(s->s_root, "self");
+ 	if (self) {
+@@ -62,7 +62,7 @@ int proc_setup_self(struct super_block *s)
+ 	if (ret)
+ 		pr_err("proc_fill_super: can't allocate /proc/self\n");
+ 	else
+-		ns->proc_self = self;
++		fs_info->proc_self = self;
+ 
+ 	return ret;
+ }
+diff --git a/fs/proc/thread_self.c b/fs/proc/thread_self.c
+index f61ae53533f5..2493cbbdfa6f 100644
+--- a/fs/proc/thread_self.c
++++ b/fs/proc/thread_self.c
+@@ -36,7 +36,7 @@ static unsigned thread_self_inum __ro_after_init;
+ int proc_setup_thread_self(struct super_block *s)
+ {
+ 	struct inode *root_inode = d_inode(s->s_root);
+-	struct pid_namespace *ns = proc_pid_ns(root_inode);
++	struct proc_fs_info *fs_info = proc_sb_info(s);
+ 	struct dentry *thread_self;
+ 	int ret = -ENOMEM;
+ 
+@@ -60,9 +60,9 @@ int proc_setup_thread_self(struct super_block *s)
+ 	inode_unlock(root_inode);
+ 
+ 	if (ret)
+-		pr_err("proc_fill_super: can't allocate /proc/thread_self\n");
++		pr_err("proc_fill_super: can't allocate /proc/thread-self\n");
+ 	else
+-		ns->proc_thread_self = thread_self;
++		fs_info->proc_thread_self = thread_self;
+ 
+ 	return ret;
+ }
+diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
+index 40a7982b7285..5920a4ecd71b 100644
+--- a/include/linux/proc_fs.h
++++ b/include/linux/proc_fs.h
+@@ -27,6 +27,17 @@ struct proc_ops {
+ 	unsigned long (*proc_get_unmapped_area)(struct file *, unsigned long, unsigned long, unsigned long, unsigned long);
+ };
+ 
++struct proc_fs_info {
++	struct pid_namespace *pid_ns;
++	struct dentry *proc_self;        /* For /proc/self */
++	struct dentry *proc_thread_self; /* For /proc/thread-self */
++};
++
++static inline struct proc_fs_info *proc_sb_info(struct super_block *sb)
++{
++	return sb->s_fs_info;
++}
++
+ #ifdef CONFIG_PROC_FS
+ 
+ typedef int (*proc_write_t)(struct file *, char *, size_t);
+@@ -161,6 +172,7 @@ int open_related_ns(struct ns_common *ns,
+ /* get the associated pid namespace for a file in procfs */
+ static inline struct pid_namespace *proc_pid_ns(const struct inode *inode)
+ {
++	return proc_sb_info(inode->i_sb)->pid_ns;
+ 	return inode->i_sb->s_fs_info;
+ }
+ 
 -- 
 2.25.2
 
