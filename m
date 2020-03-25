@@ -2,162 +2,88 @@ Return-Path: <SRS0=7VMH=5K=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6F25EC54FD5
-	for <linux-api@archiver.kernel.org>; Wed, 25 Mar 2020 14:30:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 826CAC43331
+	for <linux-api@archiver.kernel.org>; Wed, 25 Mar 2020 14:36:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 4F25A2070A
-	for <linux-api@archiver.kernel.org>; Wed, 25 Mar 2020 14:30:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4EE9320777
+	for <linux-api@archiver.kernel.org>; Wed, 25 Mar 2020 14:36:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727580AbgCYOaI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 25 Mar 2020 10:30:08 -0400
-Received: from out03.mta.xmission.com ([166.70.13.233]:58982 "EHLO
-        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727538AbgCYOaI (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 25 Mar 2020 10:30:08 -0400
-Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out03.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.90_1)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1jH72b-0002ea-CW; Wed, 25 Mar 2020 08:29:57 -0600
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
-        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        (Exim 4.87)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1jH72Z-0002AT-33; Wed, 25 Mar 2020 08:29:56 -0600
-From:   ebiederm@xmission.com (Eric W. Biederman)
-To:     Bernd Edlinger <bernd.edlinger@hotmail.de>
-Cc:     "gregkh\@linuxfoundation.org" <gregkh@linuxfoundation.org>,
-        Kirill Tkhai <ktkhai@virtuozzo.com>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
+        id S1727593AbgCYOg0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 25 Mar 2020 10:36:26 -0400
+Received: from mx2.suse.de ([195.135.220.15]:36610 "EHLO mx2.suse.de"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727695AbgCYOg0 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 25 Mar 2020 10:36:26 -0400
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.220.254])
+        by mx2.suse.de (Postfix) with ESMTP id 38A0DAC50;
+        Wed, 25 Mar 2020 14:36:24 +0000 (UTC)
+Subject: Re: [RFC v2 2/2] kernel/sysctl: support handling command line aliases
+To:     Michal Hocko <mhocko@kernel.org>
+Cc:     Luis Chamberlain <mcgrof@kernel.org>,
         Kees Cook <keescook@chromium.org>,
-        "jannh\@google.com" <jannh@google.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        "adobriyan\@gmail.com" <adobriyan@gmail.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Oleg Nesterov <oleg@redhat.com>,
-        Frederic Weisbecker <frederic@kernel.org>,
-        "avagin\@gmail.com" <avagin@gmail.com>,
-        Ingo Molnar <mingo@kernel.org>,
-        "Peter Zijlstra \(Intel\)" <peterz@infradead.org>,
-        "duyuyang\@gmail.com" <duyuyang@gmail.com>,
-        David Hildenbrand <david@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Anshuman Khandual <anshuman.khandual@arm.com>,
-        David Howells <dhowells@redhat.com>,
-        James Morris <jamorris@linux.microsoft.com>,
-        Shakeel Butt <shakeelb@google.com>,
-        Jason Gunthorpe <jgg@ziepe.ca>,
-        "christian\@kellner.me" <christian@kellner.me>,
-        Andrea Arcangeli <aarcange@redhat.com>,
-        Aleksa Sarai <cyphar@cyphar.com>,
-        "Dmitry V. Levin" <ldv@altlinux.org>,
-        "linux-doc\@vger.kernel.org" <linux-doc@vger.kernel.org>,
-        "linux-kernel\@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-fsdevel\@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-        "linux-mm\@kvack.org" <linux-mm@kvack.org>,
-        "stable\@vger.kernel.org" <stable@vger.kernel.org>,
-        "linux-api\@vger.kernel.org" <linux-api@vger.kernel.org>
-References: <077b63b7-6f5e-aa8e-bf96-a586b481cc46@hotmail.de>
-        <b6537ae6-31b1-5c50-f32b-8b8332ace882@hotmail.de>
-Date:   Wed, 25 Mar 2020 09:27:18 -0500
-In-Reply-To: <b6537ae6-31b1-5c50-f32b-8b8332ace882@hotmail.de> (Bernd
-        Edlinger's message of "Sat, 21 Mar 2020 02:46:39 +0000")
-Message-ID: <87a7448q7t.fsf@x220.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
+        Iurii Zaikin <yzaikin@google.com>,
+        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-mm@kvack.org, Ivan Teterevkov <ivan.teterevkov@nutanix.com>,
+        David Rientjes <rientjes@google.com>,
+        Matthew Wilcox <willy@infradead.org>,
+        "Eric W . Biederman" <ebiederm@xmission.com>,
+        "Guilherme G . Piccoli" <gpiccoli@canonical.com>
+References: <20200325120345.12946-1-vbabka@suse.cz>
+ <20200325120345.12946-2-vbabka@suse.cz>
+ <20200325142936.GC19542@dhcp22.suse.cz>
+From:   Vlastimil Babka <vbabka@suse.cz>
+Message-ID: <52faea3b-6442-3b1b-9404-6a018d1d1c44@suse.cz>
+Date:   Wed, 25 Mar 2020 15:36:23 +0100
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.5.0
 MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1jH72Z-0002AT-33;;;mid=<87a7448q7t.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1//grV9RcExZss0OZxt5aCJ/pLvokQjxgE=
-X-SA-Exim-Connect-IP: 68.227.160.95
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: Re: [PATCH v6 15/16] exec: Fix dead-lock in de_thread with ptrace_attach
-X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
+In-Reply-To: <20200325142936.GC19542@dhcp22.suse.cz>
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Bernd Edlinger <bernd.edlinger@hotmail.de> writes:
+On 3/25/20 3:29 PM, Michal Hocko wrote:
+> Both patches look really great to me. I haven't really checked all the
+> details but from a quick glance they both seem ok.
 
-> This removes the last users of cred_guard_mutex
-> and replaces it with a new mutex exec_guard_mutex,
-> and a boolean unsafe_execve_in_progress.
->
-> This addresses the case when at least one of the
-> sibling threads is traced, and therefore the trace
-> process may dead-lock in ptrace_attach, but de_thread
-> will need to wait for the tracer to continue execution.
->
-> The solution is to detect this situation and make
-> ptrace_attach and similar functions return -EAGAIN,
-> but only in a situation where a dead-lock is imminent.
->
-> This means this is an API change, but only when the
-> process is traced while execve happens in a
-> multi-threaded application.
->
-> See tools/testing/selftests/ptrace/vmaccess.c
-> for a test case that gets fixed by this change.
+Thanks.
 
-Hmm.  The logic with unsafe_execve_in_progress is interesting.
-I think I see what you are aiming for.
+> I would just add a small clarification here. Unless I am mistaken
+> early_param is called earlier than it would be now. But that shouldn't
+> cause any problems because the underlying implementation is just a noop
+> for backward compatibility.
 
-So far as you have hit what you are aiming for I think this is
-a safe change as the only cases that will change are the cases
-that would deadlock today.
+Yeah, indeed worth noting somewhere explicitly. The conversion can't be done
+blindly, one has to consider whether the delay compared to early_param can be a
+disadvantage or not. For example the nmi_watchdog parameter is probably best
+left as it is?
 
-At a minimum the code is subtle and I don't see big fat
-warning comments that subtle code needs to keep people
-from using it wrong.
+> Thanks a lot this looks like a very nice improvement.
+> 
+> On Wed 25-03-20 13:03:45, Vlastimil Babka wrote:
+> [...]
+>> -static __init int setup_numa_zonelist_order(char *s)
+>> -{
+>> -	if (!s)
+>> -		return 0;
+>> -
+>> -	return __parse_numa_zonelist_order(s);
+>> -}
+>> -early_param("numa_zonelist_order", setup_numa_zonelist_order);
+>> -
+>>  char numa_zonelist_order[] = "Node";
+>>  
+>>  /*
+>> -- 
+>> 2.25.1
+> 
 
-Further while the change below to proc_pid_attr_write looks
-like it is being treated the same as ptrace_attach.  When in
-fact proc_pid_attr_write needs the no_new_privs and ptrace_attach
-protection the same as exec.  As the updated cred won't be used in an
-ongoing exec, exec does not need protection from proc_pid_attr_write,
-other than deadlock protection.
-
-Having the relevant lock be per task_struct lock would probably be a
-better way to avoid deadlock with a concurrent proc_pid_attr_write.
-
-
-So I am going to pass on these last two patches for now, and apply the
-rest and get them into linux-next.
-
-Eric
-
-
-> diff --git a/fs/proc/base.c b/fs/proc/base.c
-> index 6b13fc4..a428536 100644
-> --- a/fs/proc/base.c
-> +++ b/fs/proc/base.c
-> @@ -2680,14 +2680,17 @@ static ssize_t proc_pid_attr_write(struct file * file, const char __user * buf,
->  	}
->  
->  	/* Guard against adverse ptrace interaction */
-> -	rv = mutex_lock_interruptible(&current->signal->cred_guard_mutex);
-> +	rv = mutex_lock_interruptible(&current->signal->exec_guard_mutex);
->  	if (rv < 0)
->  		goto out_free;
->  
-> -	rv = security_setprocattr(PROC_I(inode)->op.lsm,
-> -				  file->f_path.dentry->d_name.name, page,
-> -				  count);
-> -	mutex_unlock(&current->signal->cred_guard_mutex);
-> +	if (unlikely(current->signal->unsafe_execve_in_progress))
-> +		rv = -EAGAIN;
-> +	else
-> +		rv = security_setprocattr(PROC_I(inode)->op.lsm,
-> +					  file->f_path.dentry->d_name.name,
-> +					  page, count);
-> +	mutex_unlock(&current->signal->exec_guard_mutex);
->  out_free:
->  	kfree(page);
->  out:
