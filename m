@@ -2,242 +2,194 @@ Return-Path: <SRS0=7VMH=5K=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
+X-Spam-Status: No, score=-2.4 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 380A3C54FD6
-	for <linux-api@archiver.kernel.org>; Wed, 25 Mar 2020 12:04:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4251BC54FD0
+	for <linux-api@archiver.kernel.org>; Wed, 25 Mar 2020 12:29:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 11AE720772
-	for <linux-api@archiver.kernel.org>; Wed, 25 Mar 2020 12:04:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0FB462076A
+	for <linux-api@archiver.kernel.org>; Wed, 25 Mar 2020 12:29:25 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NkOXrs/g"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727129AbgCYMD5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 25 Mar 2020 08:03:57 -0400
-Received: from mx2.suse.de ([195.135.220.15]:50392 "EHLO mx2.suse.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727389AbgCYMD5 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 25 Mar 2020 08:03:57 -0400
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.220.254])
-        by mx2.suse.de (Postfix) with ESMTP id 55705AC1D;
-        Wed, 25 Mar 2020 12:03:54 +0000 (UTC)
-From:   Vlastimil Babka <vbabka@suse.cz>
-To:     Luis Chamberlain <mcgrof@kernel.org>,
-        Kees Cook <keescook@chromium.org>,
-        Iurii Zaikin <yzaikin@google.com>
-Cc:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-mm@kvack.org, Ivan Teterevkov <ivan.teterevkov@nutanix.com>,
-        Michal Hocko <mhocko@kernel.org>,
-        David Rientjes <rientjes@google.com>,
-        Matthew Wilcox <willy@infradead.org>,
-        "Eric W . Biederman" <ebiederm@xmission.com>,
-        "Guilherme G . Piccoli" <gpiccoli@canonical.com>,
-        Vlastimil Babka <vbabka@suse.cz>
-Subject: [RFC v2 1/2] kernel/sysctl: support setting sysctl parameters from kernel command line
-Date:   Wed, 25 Mar 2020 13:03:44 +0100
-Message-Id: <20200325120345.12946-1-vbabka@suse.cz>
-X-Mailer: git-send-email 2.25.1
+        id S1727451AbgCYM3Y (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 25 Mar 2020 08:29:24 -0400
+Received: from us-smtp-delivery-74.mimecast.com ([63.128.21.74]:22125 "EHLO
+        us-smtp-delivery-74.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1727320AbgCYM3X (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 25 Mar 2020 08:29:23 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1585139362;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=900raWR46tgHDOfPc5pVs6kpLXnkZj9aN4sQMIHjlas=;
+        b=NkOXrs/gxEoOqq/B5ffwpfC3Mes+7UNj4VkPtaOpbP1LXBw/Kym2XXuRxblqhnIA91zDR0
+        IMswW6BH62UOdFiannZQlWU7Lo66SpuWiC4dU2poPkLz3UAcdTKyAZ/kTFhB8gHdME8iWV
+        gGcmG69VsO4VM3O59s2bx0KYk83Z1Xo=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-298-3SWSe-XBO72xPJI1ZEIDOA-1; Wed, 25 Mar 2020 08:29:20 -0400
+X-MC-Unique: 3SWSe-XBO72xPJI1ZEIDOA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 607A7149C0;
+        Wed, 25 Mar 2020 12:29:18 +0000 (UTC)
+Received: from madcap2.tricolour.ca (unknown [10.10.110.11])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 189C192F80;
+        Wed, 25 Mar 2020 12:29:05 +0000 (UTC)
+Date:   Wed, 25 Mar 2020 08:29:03 -0400
+From:   Richard Guy Briggs <rgb@redhat.com>
+To:     Paul Moore <paul@paul-moore.com>
+Cc:     Steve Grubb <sgrubb@redhat.com>, linux-audit@redhat.com,
+        nhorman@tuxdriver.com, linux-api@vger.kernel.org,
+        containers@lists.linux-foundation.org,
+        LKML <linux-kernel@vger.kernel.org>, dhowells@redhat.com,
+        netfilter-devel@vger.kernel.org, ebiederm@xmission.com,
+        simo@redhat.com, netdev@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>,
+        mpatel@redhat.com, Serge Hallyn <serge@hallyn.com>
+Subject: Re: [PATCH ghak90 V8 07/16] audit: add contid support for signalling
+ the audit daemon
+Message-ID: <20200325122903.obkpyog7fjabzrpf@madcap2.tricolour.ca>
+References: <3142237.YMNxv0uec1@x2>
+ <CAHC9VhTiCHQbp2SwK0Xb1QgpUZxOQ26JKKPsVGT0ZvMqx28oPQ@mail.gmail.com>
+ <20200312202733.7kli64zsnqc4mrd2@madcap2.tricolour.ca>
+ <CAHC9VhS9DtxJ4gvOfMRnzoo6ccGJVKL+uZYe6qqH+SPqD8r01Q@mail.gmail.com>
+ <20200313192306.wxey3wn2h4htpccm@madcap2.tricolour.ca>
+ <CAHC9VhQKOpVWxDg-tWuCWV22QRu8P_NpFKme==0Ot1RQKa_DWA@mail.gmail.com>
+ <20200318214154.ycxy5dl4pxno6fvi@madcap2.tricolour.ca>
+ <CAHC9VhSuMnd3-ci2Bx-xJ0yscQ=X8ZqFAcNPKpbh_ZWN3FJcuQ@mail.gmail.com>
+ <20200319214759.qgxt2sfkmd6srdol@madcap2.tricolour.ca>
+ <CAHC9VhTp25OAaTO5UMft0OzUZ=oQpZFjebkjjQP0-NrPp0bNAg@mail.gmail.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CAHC9VhTp25OAaTO5UMft0OzUZ=oQpZFjebkjjQP0-NrPp0bNAg@mail.gmail.com>
+User-Agent: NeoMutt/20180716
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-A recently proposed patch to add vm_swappiness command line parameter in
-addition to existing sysctl [1] made me wonder why we don't have a general
-support for passing sysctl parameters via command line. Googling found only
-somebody else wondering the same [2], but I haven't found any prior discussion
-with reasons why not to do this.
+On 2020-03-20 17:56, Paul Moore wrote:
+> On Thu, Mar 19, 2020 at 5:48 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > On 2020-03-18 17:47, Paul Moore wrote:
+> > > On Wed, Mar 18, 2020 at 5:42 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > > > On 2020-03-18 17:01, Paul Moore wrote:
+> > > > > On Fri, Mar 13, 2020 at 3:23 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > > > > > On 2020-03-13 12:42, Paul Moore wrote:
+> > > > >
+> > > > > ...
+> > > > >
+> > > > > > > The thread has had a lot of starts/stops, so I may be repeating a
+> > > > > > > previous suggestion, but one idea would be to still emit a "death
+> > > > > > > record" when the final task in the audit container ID does die, but
+> > > > > > > block the particular audit container ID from reuse until it the
+> > > > > > > SIGNAL2 info has been reported.  This gives us the timely ACID death
+> > > > > > > notification while still preventing confusion and ambiguity caused by
+> > > > > > > potentially reusing the ACID before the SIGNAL2 record has been sent;
+> > > > > > > there is a small nit about the ACID being present in the SIGNAL2
+> > > > > > > *after* its death, but I think that can be easily explained and
+> > > > > > > understood by admins.
+> > > > > >
+> > > > > > Thinking quickly about possible technical solutions to this, maybe it
+> > > > > > makes sense to have two counters on a contobj so that we know when the
+> > > > > > last process in that container exits and can issue the death
+> > > > > > certificate, but we still block reuse of it until all further references
+> > > > > > to it have been resolved.  This will likely also make it possible to
+> > > > > > report the full contid chain in SIGNAL2 records.  This will eliminate
+> > > > > > some of the issues we are discussing with regards to passing a contobj
+> > > > > > vs a contid to the audit_log_contid function, but won't eliminate them
+> > > > > > all because there are still some contids that won't have an object
+> > > > > > associated with them to make it impossible to look them up in the
+> > > > > > contobj lists.
+> > > > >
+> > > > > I'm not sure you need a full second counter, I imagine a simple flag
+> > > > > would be okay.  I think you just something to indicate that this ACID
+> > > > > object is marked as "dead" but it still being held for sanity reasons
+> > > > > and should not be reused.
+> > > >
+> > > > Ok, I see your point.  This refcount can be changed to a flag easily
+> > > > enough without change to the api if we can be sure that more than one
+> > > > signal can't be delivered to the audit daemon *and* collected by sig2.
+> > > > I'll have a more careful look at the audit daemon code to see if I can
+> > > > determine this.
+> > >
+> > > Maybe I'm not understanding your concern, but this isn't really
+> > > different than any of the other things we track for the auditd signal
+> > > sender, right?  If we are worried about multiple signals being sent
+> > > then it applies to everything, not just the audit container ID.
+> >
+> > Yes, you are right.  In all other cases the information is simply
+> > overwritten.  In the case of the audit container identifier any
+> > previous value is put before a new one is referenced, so only the last
+> > signal is kept.  So, we only need a flag.  Does a flag implemented with
+> > a rcu-protected refcount sound reasonable to you?
+> 
+> Well, if I recall correctly you still need to fix the locking in this
+> patchset so until we see what that looks like it is hard to say for
+> certain.  Just make sure that the flag is somehow protected from
+> races; it is probably a lot like the "valid" flags you sometimes see
+> with RCU protected lists.
 
-Settings the vm_swappiness issue aside (the underlying issue might be solved in
-a different way), quick search of kernel-parameters.txt shows there are already
-some that exist as both sysctl and kernel parameter - hung_task_panic,
-nmi_watchdog, numa_zonelist_order, traceoff_on_warning. A general mechanism
-would remove the need to add more of those one-offs and might be handy in
-situations where configuration by e.g. /etc/sysctl.d/ is impractical.
-Also after 61a47c1ad3a4 ("sysctl: Remove the sysctl system call") the only way
-to set sysctl is via procfs, so this would eventually allow small systems to be
-built without CONFIG_PROC_SYSCTL and still be able to change sysctl parameters.
+This is like looking for a needle in a haystack.  Can you point me to
+some code that does "valid" flags with RCU protected lists.
 
-Hence, this patch adds a new parse_args() pass that looks for parameters
-prefixed by 'sysctl.' and searches for them in the sysctl ctl_tables. When
-found, the respective proc handler is invoked. The search is just a naive
-linear one, to avoid using the whole procfs layer. It should be acceptable,
-as the cost depends on number of sysctl. parameters passed.
+> > > > Another question occurs to me is that what if the audit daemon is sent a
+> > > > signal and it cannot or will not collect the sig2 information from the
+> > > > kernel (SIGKILL?)?  Does that audit container identifier remain dead
+> > > > until reboot, or do we institute some other form of reaping, possibly
+> > > > time-based?
+> > >
+> > > In order to preserve the integrity of the audit log that ACID value
+> > > would need to remain unavailable until the ACID which contains the
+> > > associated auditd is "dead" (no one can request the signal sender's
+> > > info if that container is dead).
+> >
+> > I don't understand why it would be associated with the contid of the
+> > audit daemon process rather than with the audit daemon process itself.
+> > How does the signal collection somehow get transferred or delegated to
+> > another member of that audit daemon's container?
+> 
+> Presumably once we support multiple audit daemons we will need a
+> struct to contain the associated connection state, with at most one
+> struct (and one auditd) allowed for a given ACID.  I would expect that
+> the signal sender info would be part of that state included in that
+> struct.  If a task sent a signal to it's associated auditd, and no one
+> ever queried the signal information stored in the per-ACID state
+> struct, I would expect that the refcount/flag/whatever would remain
+> held for the signal sender's ACID until the auditd state's ACID died
+> (the struct would be reaped as part of the ACID death).  In cases
+> where the container orchestrator blocks sending signals across ACID
+> boundaries this really isn't an issue as it will all be the same ACID,
+> but since we don't want to impose any restrictions on what a container
+> *could* be it is important to make sure we handle the case where the
+> signal sender's ACID may be different from the associated auditd's
+> ACID.
+> 
+> > Thinking aloud here, the audit daemon's exit when it calls audit_free()
+> > needs to ..._put_sig and cancel that audit_sig_cid (which in the future
+> > will be allocated per auditd rather than the global it is now since
+> > there is only one audit daemon).
+> >
+> > > paul moore
+> >
+> > - RGB
+> 
+> paul moore
 
-The main limitation of avoiding the procfs layer is however that sysctls
-dynamically registered by register_sysctl_table() or register_sysctl_paths()
-cannot currently be set by this method.
+- RGB
 
-The processing is hooked right before the init process is loaded, as some
-handlers might be more complicated than simple setters and might need some
-subsystems to be initialized. At the moment the init process can be started and
-eventually execute a process writing to /proc/sys/ then it should be also fine
-to do that from the kernel.
-
-[1] https://lore.kernel.org/linux-doc/BL0PR02MB560167492CA4094C91589930E9FC0@BL0PR02MB5601.namprd02.prod.outlook.com/
-[2] https://unix.stackexchange.com/questions/558802/how-to-set-sysctl-using-kernel-command-line-parameter
-
-Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
----
-v2: - handle any nesting level of parameter name
- - add Documentation/admin-guide/kernel-parameters.txt blurb
- - alias support for legacy one-off parameters, with first conversion (patch 2)
- - still no support for dynamically registed sysctls
-
- .../admin-guide/kernel-parameters.txt         |  9 +++
- include/linux/sysctl.h                        |  1 +
- init/main.c                                   | 21 +++++++
- kernel/sysctl.c                               | 62 +++++++++++++++++++
- 4 files changed, 93 insertions(+)
-
-diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index c07815d230bc..5076e288f93f 100644
---- a/Documentation/admin-guide/kernel-parameters.txt
-+++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -4793,6 +4793,15 @@
- 
- 	switches=	[HW,M68k]
- 
-+	sysctl.*=	[KNL]
-+			Set a sysctl parameter right before loading the init
-+			process, as if the value was written to the respective
-+			/proc/sys/... file. Currently a subset of sysctl
-+			parameters is supported that is not registered
-+			dynamically. Unrecognized parameters and invalid values
-+			are reported in the kernel log.
-+			Example: sysctl.vm.swappiness=40
-+
- 	sysfs.deprecated=0|1 [KNL]
- 			Enable/disable old style sysfs layout for old udev
- 			on older distributions. When this option is enabled
-diff --git a/include/linux/sysctl.h b/include/linux/sysctl.h
-index 02fa84493f23..62ae963a5c0c 100644
---- a/include/linux/sysctl.h
-+++ b/include/linux/sysctl.h
-@@ -206,6 +206,7 @@ struct ctl_table_header *register_sysctl_paths(const struct ctl_path *path,
- void unregister_sysctl_table(struct ctl_table_header * table);
- 
- extern int sysctl_init(void);
-+int process_sysctl_arg(char *param, char *val, const char *unused, void *arg);
- 
- extern struct ctl_table sysctl_mount_point[];
- 
-diff --git a/init/main.c b/init/main.c
-index ee4947af823f..74a094c6b8b9 100644
---- a/init/main.c
-+++ b/init/main.c
-@@ -1345,6 +1345,25 @@ void __weak free_initmem(void)
- 	free_initmem_default(POISON_FREE_INITMEM);
- }
- 
-+static void do_sysctl_args(void)
-+{
-+#ifdef CONFIG_SYSCTL
-+	size_t len = strlen(saved_command_line) + 1;
-+	char *command_line;
-+
-+	command_line = kzalloc(len, GFP_KERNEL);
-+	if (!command_line)
-+		panic("%s: Failed to allocate %zu bytes\n", __func__, len);
-+
-+	strcpy(command_line, saved_command_line);
-+
-+	parse_args("Setting sysctl args", command_line,
-+		   NULL, 0, -1, -1, NULL, process_sysctl_arg);
-+
-+	kfree(command_line);
-+#endif
-+}
-+
- static int __ref kernel_init(void *unused)
- {
- 	int ret;
-@@ -1367,6 +1386,8 @@ static int __ref kernel_init(void *unused)
- 
- 	rcu_end_inkernel_boot();
- 
-+	do_sysctl_args();
-+
- 	if (ramdisk_execute_command) {
- 		ret = run_init_process(ramdisk_execute_command);
- 		if (!ret)
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index ad5b88a53c5a..18c7f5606d55 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -1980,6 +1980,68 @@ int __init sysctl_init(void)
- 	return 0;
- }
- 
-+/* Set sysctl value passed on kernel command line. */
-+int process_sysctl_arg(char *param, char *val,
-+			       const char *unused, void *arg)
-+{
-+	size_t count;
-+	char *remaining;
-+	int err;
-+	loff_t ppos = 0;
-+	struct ctl_table *ctl, *found = NULL;
-+
-+	if (strncmp(param, "sysctl.", sizeof("sysctl.") - 1))
-+		return 0;
-+
-+	param += sizeof("sysctl.") - 1;
-+
-+	remaining = param;
-+	ctl = &sysctl_base_table[0];
-+
-+	while(ctl->procname != 0) {
-+		int len = strlen(ctl->procname);
-+		if (strncmp(remaining, ctl->procname, len)) {
-+			ctl++;
-+			continue;
-+		}
-+		if (ctl->child) {
-+			if (remaining[len] == '.') {
-+				remaining += len + 1;
-+				ctl = ctl->child;
-+				continue;
-+			}
-+		} else {
-+			if (remaining[len] == '\0') {
-+				found = ctl;
-+				break;
-+			}
-+		}
-+		ctl++;
-+	}
-+
-+	if (!found) {
-+		pr_warn("Unknown sysctl param '%s' on command line", param);
-+		return 0;
-+	}
-+
-+	if (!(found->mode & 0200)) {
-+		pr_warn("Cannot set sysctl '%s=%s' from command line - not writable",
-+			param, val);
-+		return 0;
-+	}
-+
-+	count = strlen(val);
-+	err = found->proc_handler(found, 1, val, &count, &ppos);
-+
-+	if (err)
-+		pr_warn("Error %d setting sysctl '%s=%s' from command line",
-+			err, param, val);
-+
-+	pr_debug("Set sysctl '%s=%s' from command line", param, val);
-+
-+	return 0;
-+}
-+
- #endif /* CONFIG_SYSCTL */
- 
- /*
--- 
-2.25.1
+--
+Richard Guy Briggs <rgb@redhat.com>
+Sr. S/W Engineer, Kernel Security, Base Operating Systems
+Remote, Ottawa, Red Hat Canada
+IRC: rgb, SunRaycer
+Voice: +1.647.777.2635, Internal: (81) 32635
 
