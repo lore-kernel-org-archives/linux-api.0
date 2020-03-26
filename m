@@ -2,105 +2,172 @@ Return-Path: <SRS0=DXPd=5L=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B7B7EC43331
-	for <linux-api@archiver.kernel.org>; Thu, 26 Mar 2020 13:39:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BD37FC43331
+	for <linux-api@archiver.kernel.org>; Thu, 26 Mar 2020 15:57:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 89DB02076A
-	for <linux-api@archiver.kernel.org>; Thu, 26 Mar 2020 13:39:20 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1585229960;
-	bh=jea/qgHJAyGW6iWFXmvupsFjst79mZBXkmaFhSc/Y5Y=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:List-ID:From;
-	b=Fm3OAwp+xHqU+cLDoCT6RCsEjjOFmOrUBMr6RlvdSsloqUOzSMODlN2gMWXcOrpCa
-	 yliUsQeShc6jzYttslUA7XVqRrQtrMo20sBqLYPpVqNcgWdEDBJjVAaWyGZ3ek7/DI
-	 jfFUFtK4RBDg+hspj2ty/FU9xaU5FV1bJqGlbTYU=
+	by mail.kernel.org (Postfix) with ESMTP id 7504E20737
+	for <linux-api@archiver.kernel.org>; Thu, 26 Mar 2020 15:57:07 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="PjdXKZGA"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727647AbgCZNjU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 26 Mar 2020 09:39:20 -0400
-Received: from mail-wr1-f68.google.com ([209.85.221.68]:39313 "EHLO
-        mail-wr1-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725994AbgCZNjU (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 26 Mar 2020 09:39:20 -0400
-Received: by mail-wr1-f68.google.com with SMTP id p10so7832473wrt.6;
-        Thu, 26 Mar 2020 06:39:18 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=19Pztl4eD0UX0aRRYwPGEQuItPKM8kfOdpcItRtfgXE=;
-        b=hRlHoyGy8kDiWVnPBKxURkaL2L6SV+ZOF7aFTlt6HAMDc4lpmQBa+Vb3s9p+CaVDJJ
-         mTmkh/i+ZJKTMKxLxqQqUxLPxQ3YOtOt12C4E3nYIuDq8dxDcwkLYVP/y4QzNkQdGQ7V
-         birRYr/08BDowOUnKTfBlrfZISo2lHnGVCwifT2fw+ATX2AlFEGqaeA9+VarjYIhgmG4
-         3d8Z7dzk5N6hl+bHXJ2tkfmUJFccEIClwFGv8JllbAC1ndAtuiTdGJsK4fpM6T1/JMBC
-         kf1xyJ2Ujr/A7g3R4xzHdF7CoY8skKzdux23/pymFUWrPb5gSLjtOBsW0addwPRWhEnh
-         721w==
-X-Gm-Message-State: ANhLgQ0PLxRlofV487m4oD+F0sZa5gTTgwck316e/ObuZXydLBurdyL3
-        XB2aMZOHiqR2yjxD/MDZBjQ=
-X-Google-Smtp-Source: ADFU+vtk9zmWZvzCHwkqppRQIVeYZ6TTx2b4k3bygVqfm3s1Ky3k2UREkOWABI0nEj77sewyC1P8pw==
-X-Received: by 2002:a05:6000:100f:: with SMTP id a15mr9083191wrx.382.1585229958157;
-        Thu, 26 Mar 2020 06:39:18 -0700 (PDT)
-Received: from localhost (ip-37-188-135-150.eurotel.cz. [37.188.135.150])
-        by smtp.gmail.com with ESMTPSA id 195sm3660380wmb.8.2020.03.26.06.39.16
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 26 Mar 2020 06:39:17 -0700 (PDT)
-Date:   Thu, 26 Mar 2020 14:39:15 +0100
-From:   Michal Hocko <mhocko@kernel.org>
-To:     Christian Brauner <christian.brauner@ubuntu.com>
-Cc:     "Eric W. Biederman" <ebiederm@xmission.com>,
-        Vlastimil Babka <vbabka@suse.cz>,
-        Luis Chamberlain <mcgrof@kernel.org>,
-        Kees Cook <keescook@chromium.org>,
-        Iurii Zaikin <yzaikin@google.com>,
-        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-mm@kvack.org, Ivan Teterevkov <ivan.teterevkov@nutanix.com>,
-        David Rientjes <rientjes@google.com>,
-        Matthew Wilcox <willy@infradead.org>,
-        "Guilherme G . Piccoli" <gpiccoli@canonical.com>
-Subject: Re: [RFC v2 1/2] kernel/sysctl: support setting sysctl parameters
- from kernel command line
-Message-ID: <20200326133915.GQ27965@dhcp22.suse.cz>
-References: <20200325120345.12946-1-vbabka@suse.cz>
- <874kuc5b5z.fsf@x220.int.ebiederm.org>
- <20200326065829.GC27965@dhcp22.suse.cz>
- <20200326133041.a3zit3gzdqmphane@wittgenstein>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20200326133041.a3zit3gzdqmphane@wittgenstein>
+        id S1727792AbgCZP5H (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 26 Mar 2020 11:57:07 -0400
+Received: from mail.efficios.com ([167.114.26.124]:47408 "EHLO
+        mail.efficios.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727345AbgCZP5G (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 26 Mar 2020 11:57:06 -0400
+Received: from localhost (localhost [127.0.0.1])
+        by mail.efficios.com (Postfix) with ESMTP id 4C00D277EB7;
+        Thu, 26 Mar 2020 11:57:05 -0400 (EDT)
+Received: from mail.efficios.com ([127.0.0.1])
+        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
+        with ESMTP id Ii5h1qGZ6RL3; Thu, 26 Mar 2020 11:57:05 -0400 (EDT)
+Received: from localhost (localhost [127.0.0.1])
+        by mail.efficios.com (Postfix) with ESMTP id 7FD412772CF;
+        Thu, 26 Mar 2020 11:57:00 -0400 (EDT)
+DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 7FD412772CF
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
+        s=default; t=1585238220;
+        bh=MPN/nh2eqVGSbCWW3l0JbpXjFSWm7qUcdtF1gO28mMI=;
+        h=From:To:Date:Message-Id;
+        b=PjdXKZGAoCtHn7Ent2hrASug0GK23cqHmwHKVjpmNtbMqPebA3qJj0ta5FGJDWJsP
+         sjXX1IcZ16FIDnV8l9FPYiT/ny/d6mwYD8TQoGNb4l4Ug2/TEH01lb/nJ2Ag+cWjd9
+         jn/3AWuW/Lv3ojvI0LbQaPx3HC1iQ+a0rG1jeD30YHXKay7IQG9h9xbUq7qKJIDhRf
+         MUuU7IA5lny9x4J8QqShNm8h0GgYYYH8Hmy96VRLjXNge0/OonVK4FP3KfpNtY3HG8
+         5AuM7MIGrVGpwXGpCIRPCT1IYh6rqkAIBydRLGEJUpY027ZMYg8+2iAHHzPTHuktCQ
+         WMw7ZBJ7gOZvA==
+X-Virus-Scanned: amavisd-new at efficios.com
+Received: from mail.efficios.com ([127.0.0.1])
+        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
+        with ESMTP id P1cMScfDNFqm; Thu, 26 Mar 2020 11:57:00 -0400 (EDT)
+Received: from localhost.localdomain (192-222-181-218.qc.cable.ebox.net [192.222.181.218])
+        by mail.efficios.com (Postfix) with ESMTPSA id 06F282777E1;
+        Thu, 26 Mar 2020 11:56:58 -0400 (EDT)
+From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To:     Carlos O'Donell <carlos@redhat.com>
+Cc:     Florian Weimer <fweimer@redhat.com>,
+        Joseph Myers <joseph@codesourcery.com>,
+        Szabolcs Nagy <szabolcs.nagy@arm.com>,
+        libc-alpha@sourceware.org,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ben Maurer <bmaurer@fb.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        Will Deacon <will.deacon@arm.com>,
+        Paul Turner <pjt@google.com>, linux-kernel@vger.kernel.org,
+        linux-api@vger.kernel.org
+Subject: [PATCH glibc 6/9] glibc: sched_getcpu(): use rseq cpu_id TLS on Linux (v7)
+Date:   Thu, 26 Mar 2020 11:56:30 -0400
+Message-Id: <20200326155633.18236-7-mathieu.desnoyers@efficios.com>
+X-Mailer: git-send-email 2.17.1
+In-Reply-To: <20200326155633.18236-1-mathieu.desnoyers@efficios.com>
+References: <20200326155633.18236-1-mathieu.desnoyers@efficios.com>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu 26-03-20 14:30:41, Christian Brauner wrote:
-> On Thu, Mar 26, 2020 at 07:58:29AM +0100, Michal Hocko wrote:
-> > On Wed 25-03-20 17:20:40, Eric W. Biederman wrote:
-> > > Vlastimil Babka <vbabka@suse.cz> writes:
-> > [...]
-> > > > +	if (strncmp(param, "sysctl.", sizeof("sysctl.") - 1))
-> > > > +		return 0;
-> > > 
-> > > Is there any way we can use a slash separated path.  I know
-> > > in practice there are not any sysctl names that don't have
-> > > a '.' in them but why should we artifically limit ourselves?
-> > 
-> > Because this is the normal userspace interface? Why should it be any
-> > different from calling sysctl?
-> > [...]
-> 
-> Imho, we should use ".". Kernel developers aren't the ones setting
-> these options, admins are and if I think back to the times doing that as
-> a job at uni I'd be very confused if I learned that I get to set sysctl
-> options through the kernel command but need to use yet another format
-> than what I usually do to set those from the shell. Consistency is most
-> of the times to be preferred imho.
+When available, use the cpu_id field from __rseq_abi on Linux to
+implement sched_getcpu(). Fall-back on the vgetcpu vDSO if unavailable.
 
-Absolutely agreed! Even if sysctl can consume / instead of ., which was a
-news to me btw, the majority of the usage is with `.'
+Benchmarks:
+
+x86-64: Intel E5-2630 v3@2.40GHz, 16-core, hyperthreading
+
+glibc sched_getcpu():                     13.7 ns (baseline)
+glibc sched_getcpu() using rseq:           2.5 ns (speedup:  5.5x)
+inline load cpuid from __rseq_abi TLS:     0.8 ns (speedup: 17.1x)
+
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Carlos O'Donell <carlos@redhat.com>
+CC: Florian Weimer <fweimer@redhat.com>
+CC: Joseph Myers <joseph@codesourcery.com>
+CC: Szabolcs Nagy <szabolcs.nagy@arm.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Paul Turner <pjt@google.com>
+CC: libc-alpha@sourceware.org
+CC: linux-kernel@vger.kernel.org
+CC: linux-api@vger.kernel.org
+---
+Changes since v1:
+- rseq is only used if both __NR_rseq and RSEQ_SIG are defined.
+
+Changes since v2:
+- remove duplicated __rseq_abi extern declaration.
+
+Changes since v3:
+- update ChangeLog.
+
+Changes since v4:
+- Use atomic_load_relaxed to load the __rseq_abi.cpu_id field, a
+  consequence of the fact that __rseq_abi is not volatile anymore.
+- Include atomic.h which provides atomic_load_relaxed.
+
+Changes since v5:
+- Use __ASSUME_RSEQ to detect rseq availability.
+
+Changes since v6:
+- Remove use of __ASSUME_RSEQ.
+---
+ sysdeps/unix/sysv/linux/sched_getcpu.c | 27 ++++++++++++++++++++++++--
+ 1 file changed, 25 insertions(+), 2 deletions(-)
+
+diff --git a/sysdeps/unix/sysv/linux/sched_getcpu.c b/sysdeps/unix/sysv/linux/sched_getcpu.c
+index c019cfb3cf..2269c4f2bd 100644
+--- a/sysdeps/unix/sysv/linux/sched_getcpu.c
++++ b/sysdeps/unix/sysv/linux/sched_getcpu.c
+@@ -18,10 +18,15 @@
+ #include <errno.h>
+ #include <sched.h>
+ #include <sysdep.h>
++#include <atomic.h>
+ #include <sysdep-vdso.h>
+ 
+-int
+-sched_getcpu (void)
++#ifdef HAVE_GETCPU_VSYSCALL
++# define HAVE_VSYSCALL
++#endif
++
++static int
++vsyscall_sched_getcpu (void)
+ {
+   unsigned int cpu;
+   int r = -1;
+@@ -32,3 +37,21 @@ sched_getcpu (void)
+ #endif
+   return r == -1 ? r : cpu;
+ }
++
++#include <sys/rseq.h>
++
++#ifdef RSEQ_SIG
++int
++sched_getcpu (void)
++{
++  int cpu_id = atomic_load_relaxed (&__rseq_abi.cpu_id);
++
++  return cpu_id >= 0 ? cpu_id : vsyscall_sched_getcpu ();
++}
++#else
++int
++sched_getcpu (void)
++{
++  return vsyscall_sched_getcpu ();
++}
++#endif
 -- 
-Michal Hocko
-SUSE Labs
+2.17.1
+
