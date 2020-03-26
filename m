@@ -2,368 +2,808 @@ Return-Path: <SRS0=DXPd=5L=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-14.8 required=3.0
+	tests=HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 99B8DC2D0E5
-	for <linux-api@archiver.kernel.org>; Thu, 26 Mar 2020 20:24:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C8EBAC43331
+	for <linux-api@archiver.kernel.org>; Thu, 26 Mar 2020 20:27:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 5E3BE20714
-	for <linux-api@archiver.kernel.org>; Thu, 26 Mar 2020 20:24:28 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="hF44TNvR"
+	by mail.kernel.org (Postfix) with ESMTP id 9002B2076A
+	for <linux-api@archiver.kernel.org>; Thu, 26 Mar 2020 20:27:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727541AbgCZUY1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 26 Mar 2020 16:24:27 -0400
-Received: from mail-pf1-f196.google.com ([209.85.210.196]:46984 "EHLO
-        mail-pf1-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727446AbgCZUY1 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 26 Mar 2020 16:24:27 -0400
-Received: by mail-pf1-f196.google.com with SMTP id q3so3339595pff.13
-        for <linux-api@vger.kernel.org>; Thu, 26 Mar 2020 13:24:24 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=zBgzqhTqK1mBdkfW2kfeNGpuWAOmIlYkjSer/QpmXaY=;
-        b=hF44TNvRZS6fP/TBLQ+eTUo65LcFLunCU56NfImQ9qkk/KI1S64ZjFJSV50o8oFjHP
-         4PBkXGevimND9FPv2cJfP75rxrLTvh+CrIpjNYOVCRga33pXkPBdAYg71WGGmp0AINsY
-         J1gYrtnzja8jNB2exIZLkNLJW/rbvxpuJ3mhs=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=zBgzqhTqK1mBdkfW2kfeNGpuWAOmIlYkjSer/QpmXaY=;
-        b=Ga34AnIvIJ/AV1SYZ68gDDKwQIvnZmSY65frjaMvL2dz8R2cUvi2E0m+se8mBbPwCv
-         GO2+OYAuIlxCmYw51UfuiQh+UEdwIPFU218nLRo0DpwOp99yf9dsce9VmDJNrl5VSip3
-         sv93cO7753nbL/4JB69FmRIWwIuXvg0i8INphEUKcanpCARefwfzKQuWJs8nAQvkm+Rg
-         Tj25AOEUWKyFeJN63aN37dQcAC9tF4JB27gTeIzgkbmIxaP/1klI8WbNuqr/1hC2zGcM
-         Wqo12azIuPHYU5oDT6hyJc3XEaD6tnEUTeaWFR6sYrnBHh/xY0vmhwcpxJaqQF4Tkzu0
-         vwkQ==
-X-Gm-Message-State: ANhLgQ2GW91iIwuGSRPAps9ORvpHE9Q7wRtd0l1tH7U1bsOG7Hf+svvd
-        SCnkrlGYrlV3IsZAHc+bVcCTsA==
-X-Google-Smtp-Source: ADFU+vutXGwaXmeKf8yD5wYFArutZREIVw5lpPEfxULQO9/7LswEhDltNx5M2vIOpo+19JNWKYCvVQ==
-X-Received: by 2002:a62:7c15:: with SMTP id x21mr11286758pfc.132.1585254263685;
-        Thu, 26 Mar 2020 13:24:23 -0700 (PDT)
-Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id y22sm2377221pfr.68.2020.03.26.13.24.21
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 26 Mar 2020 13:24:21 -0700 (PDT)
-Date:   Thu, 26 Mar 2020 13:24:20 -0700
-From:   Kees Cook <keescook@chromium.org>
-To:     Vlastimil Babka <vbabka@suse.cz>
-Cc:     Luis Chamberlain <mcgrof@kernel.org>,
-        Iurii Zaikin <yzaikin@google.com>,
-        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-mm@kvack.org, Ivan Teterevkov <ivan.teterevkov@nutanix.com>,
-        Michal Hocko <mhocko@kernel.org>,
-        David Rientjes <rientjes@google.com>,
-        Matthew Wilcox <willy@infradead.org>,
-        "Eric W . Biederman" <ebiederm@xmission.com>,
-        "Guilherme G . Piccoli" <gpiccoli@canonical.com>
-Subject: Re: [RFC v3 1/2] kernel/sysctl: support setting sysctl parameters
- from kernel command line
-Message-ID: <202003261256.950F1E5@keescook>
-References: <20200326181606.7027-1-vbabka@suse.cz>
+        id S1728744AbgCZU1p (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 26 Mar 2020 16:27:45 -0400
+Received: from smtp-190c.mail.infomaniak.ch ([185.125.25.12]:35775 "EHLO
+        smtp-190c.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1727611AbgCZU1p (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 26 Mar 2020 16:27:45 -0400
+Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
+        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 48pGkk44HtzljC1p;
+        Thu, 26 Mar 2020 21:27:42 +0100 (CET)
+Received: from localhost (unknown [94.23.54.103])
+        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 48pGkk129bzlk4Vp;
+        Thu, 26 Mar 2020 21:27:42 +0100 (CET)
+From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
+To:     linux-kernel@vger.kernel.org
+Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Andy Lutomirski <luto@amacapital.net>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Casey Schaufler <casey@schaufler-ca.com>,
+        James Morris <jmorris@namei.org>, Jann Horn <jann@thejh.net>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Michael Kerrisk <mtk.manpages@gmail.com>,
+        =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>,
+        "Serge E . Hallyn" <serge@hallyn.com>,
+        Shuah Khan <shuah@kernel.org>,
+        Vincent Dagonneau <vincent.dagonneau@ssi.gouv.fr>,
+        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
+        linux-arch@vger.kernel.org, linux-doc@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org, linux-kselftest@vger.kernel.org,
+        linux-security-module@vger.kernel.org, x86@kernel.org
+Subject: [PATCH v15 02/10] landlock: Add ruleset and domain management
+Date:   Thu, 26 Mar 2020 21:27:23 +0100
+Message-Id: <20200326202731.693608-3-mic@digikod.net>
+X-Mailer: git-send-email 2.26.0.rc2
+In-Reply-To: <20200326202731.693608-1-mic@digikod.net>
+References: <20200326202731.693608-1-mic@digikod.net>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20200326181606.7027-1-vbabka@suse.cz>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+X-Antivirus: Dr.Web (R) for Unix mail servers drweb plugin ver.6.0.2.8
+X-Antivirus-Code: 0x100000
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Mar 26, 2020 at 07:16:05PM +0100, Vlastimil Babka wrote:
-> A recently proposed patch to add vm_swappiness command line parameter in
-> addition to existing sysctl [1] made me wonder why we don't have a general
-> support for passing sysctl parameters via command line. Googling found only
-> somebody else wondering the same [2], but I haven't found any prior discussion
-> with reasons why not to do this.
-> 
-> Settings the vm_swappiness issue aside (the underlying issue might be solved in
-> a different way), quick search of kernel-parameters.txt shows there are already
-> some that exist as both sysctl and kernel parameter - hung_task_panic,
-> nmi_watchdog, numa_zonelist_order, traceoff_on_warning. A general mechanism
-> would remove the need to add more of those one-offs and might be handy in
-> situations where configuration by e.g. /etc/sysctl.d/ is impractical.
-> 
-> Hence, this patch adds a new parse_args() pass that looks for parameters
-> prefixed by 'sysctl.' and tries to interpret them as writes to the
-> corresponding sys/ files using an temporary in-kernel procfs mount. This
-> mechanism was suggested by Eric W. Biederman [3], as it handles all dynamically
-> registered sysctl tables. Errors due to e.g. invalid parameter name or value
-> are reported in the kernel log.
-> 
-> The processing is hooked right before the init process is loaded, as some
-> handlers might be more complicated than simple setters and might need some
-> subsystems to be initialized. At the moment the init process can be started and
-> eventually execute a process writing to /proc/sys/ then it should be also fine
-> to do that from the kernel.
-> 
-> Sysctls registered later on module load time are not set by this mechanism -
-> it's expected that in such scenarios, setting sysctl values from userspace is
-> practical enough.
-> 
-> [1] https://lore.kernel.org/r/BL0PR02MB560167492CA4094C91589930E9FC0@BL0PR02MB5601.namprd02.prod.outlook.com/
-> [2] https://unix.stackexchange.com/questions/558802/how-to-set-sysctl-using-kernel-command-line-parameter
-> [3] https://lore.kernel.org/r/87bloj2skm.fsf@x220.int.ebiederm.org/
-> 
-> Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
-> ---
-> Changes in v3:
-> - use temporary procfs mount as Eric suggested. Seems to be the better option
->   after all. Naming wise it simply converts all . to / - according to strace the
->   sysctl tool seems to be doing the same.
-> 
-> Since the major change, I'm sending another RFC. If this approach is ok, then
-> it probably needs just some tweaks to the various error prints, and then
-> converting the rest of existing on-off aliases (if I come up with an idea how
-> to find them all). Thanks for all the feedback so far.
+A Landlock ruleset is mainly a red-black tree with Landlock rules as
+nodes.  This enables quick update and lookup to match a requested access
+e.g., to a file.  A ruleset is usable through a dedicated file
+descriptor (cf. following commit implementing the syscall) which enables
+a process to create and populate a ruleset with new rules.
 
-Yeah, I think you can drop "RFC" from this in the next version -- you're
-well into getting this finalized IMO.
+A domain is a ruleset tied to a set of processes.  This group of rules
+define the security policy enforced on these processes and their future
+children.  A domain can transition to a new domain which is the
+intersection of all its constraints and those of a ruleset provided by
+the current process.  This modification only impact the current process.
+This means that a process can only gain more constraints (i.e. lose
+accesses) over time.
 
-> 
->  .../admin-guide/kernel-parameters.txt         |  9 ++
->  fs/proc/proc_sysctl.c                         | 90 +++++++++++++++++++
->  include/linux/sysctl.h                        |  4 +
->  init/main.c                                   |  2 +
->  4 files changed, 105 insertions(+)
-> 
-> diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-> index c07815d230bc..0c7e032e7c2e 100644
-> --- a/Documentation/admin-guide/kernel-parameters.txt
-> +++ b/Documentation/admin-guide/kernel-parameters.txt
-> @@ -4793,6 +4793,15 @@
->  
->  	switches=	[HW,M68k]
->  
-> +	sysctl.*=	[KNL]
-> +			Set a sysctl parameter, right before loading the init
-> +			process, as if the value was written to the respective
-> +			/proc/sys/... file. Unrecognized parameters and invalid
-> +			values are reported in the kernel log. Sysctls
-> +			registered later by a loaded module cannot be set this
-> +			way.
+Signed-off-by: Mickaël Salaün <mic@digikod.net>
+Cc: Andy Lutomirski <luto@amacapital.net>
+Cc: James Morris <jmorris@namei.org>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Serge E. Hallyn <serge@hallyn.com>
+---
 
-Maybe add: "Both '.' and '/' are recognized as separators."
+Changes since v14:
+* Simplify the object, rule and ruleset management at the expense of a
+  less aggressive memory freeing (contributed by Jann Horn, with
+  additional modifications):
+  - Make a domain immutable (remove the opportunistic cleaning).
+  - Remove RCU pointers.
+  - Merge struct landlock_ref and struct landlock_ruleset_elem into
+    landlock_rule: get ride of rule's RCU.
+  - Adjust union.
+  - Remove the landlock_insert_rule() check about a new object with the
+    same address as a previously disabled one, because it is not
+    possible to disable a rule anymore.
+  Cf. https://lore.kernel.org/lkml/CAG48ez21bEn0wL1bbmTiiu8j9jP5iEWtHOwz4tURUJ+ki0ydYw@mail.gmail.com/
+* Fix nested domains by implementing a notion of layer level and depth:
+  - Update landlock_insert_rule() to manage such layers.
+  - Add an inherit_ruleset() helper to properly create a new domain.
+  - Rename landlock_find_access() to landlock_find_rule() and return a
+    full rule reference.
+  - Add a layer_level and a layer_depth fields to struct landlock_rule.
+  - Add a top_layer_level field to struct landlock_ruleset.
+* Remove access rights that may be required for FD-only requests:
+  truncate, getattr, lock, chmod, chown, chgrp, ioctl.  This will be
+  handle in a future evolution of Landlock, but right now the goal is to
+  lighten the code to ease review.
+* Remove LANDLOCK_ACCESS_FS_OPEN and rename
+  LANDLOCK_ACCESS_FS_{READ,WRITE} with a FILE suffix.
+* Rename LANDLOCK_ACCESS_FS_READDIR to match the *_FILE pattern.
+* Remove LANDLOCK_ACCESS_FS_MAP which was useless.
+* Fix memory leak in put_hierarchy() (reported by Jann Horn).
+* Fix user-after-free and rename free_ruleset() (reported by Jann Horn).
+* Replace the for loops with rbtree_postorder_for_each_entry_safe().
+* Constify variables.
+* Only use refcount_inc() through getter helpers.
+* Change Landlock_insert_ruleset_access() to
+  Landlock_insert_ruleset_rule().
+* Rename landlock_put_ruleset_enqueue() to landlock_put_ruleset_deferred().
+* Improve kernel documentation and add a warning about the unhandled
+  access/syscall families.
+* Move ABI check to syscall.c .
 
-> +			Example: sysctl.vm.swappiness=40
-> +
->  	sysfs.deprecated=0|1 [KNL]
->  			Enable/disable old style sysfs layout for old udev
->  			on older distributions. When this option is enabled
-> diff --git a/fs/proc/proc_sysctl.c b/fs/proc/proc_sysctl.c
-> index c75bb4632ed1..8ee3273e4540 100644
-> --- a/fs/proc/proc_sysctl.c
-> +++ b/fs/proc/proc_sysctl.c
-> @@ -14,6 +14,7 @@
->  #include <linux/mm.h>
->  #include <linux/module.h>
->  #include <linux/bpf-cgroup.h>
-> +#include <linux/mount.h>
->  #include "internal.h"
->  
->  static const struct dentry_operations proc_sys_dentry_operations;
-> @@ -1725,3 +1726,92 @@ int __init proc_sys_init(void)
->  
->  	return sysctl_init();
->  }
-> +
-> +struct vfsmount *proc_mnt = NULL;
+Changes since v13:
+* New implementation, inspired by the previous inode eBPF map, but
+  agnostic to the underlying kernel object.
 
-Er, I had a bunch of comments about how this should be declared static
-etc, but decided on a different suggestion entirely. See below...
+Previous version:
+https://lore.kernel.org/lkml/20190721213116.23476-7-mic@digikod.net/
+---
+ MAINTAINERS                   |   1 +
+ include/uapi/linux/landlock.h |  93 +++++++++
+ security/landlock/Makefile    |   2 +-
+ security/landlock/ruleset.c   | 352 ++++++++++++++++++++++++++++++++++
+ security/landlock/ruleset.h   | 182 ++++++++++++++++++
+ 5 files changed, 629 insertions(+), 1 deletion(-)
+ create mode 100644 include/uapi/linux/landlock.h
+ create mode 100644 security/landlock/ruleset.c
+ create mode 100644 security/landlock/ruleset.h
 
-> +
-> +/* Set sysctl value passed on kernel command line. */
-> +static int process_sysctl_arg(char *param, char *val,
-> +			       const char *unused, void *arg)
-> +{
-> +	char *path;
-> +	struct file_system_type *proc_fs_type;
-> +	struct file *file;
-> +	int len;
-> +	int err;
-> +	loff_t pos = 0;
-> +	ssize_t wret;
-> +
-> +	if (strncmp(param, "sysctl", sizeof("sysctl") - 1))
-> +		return 0;
-> +
-> +	param += sizeof("sysctl") - 1;
-> +
-> +	if (param[0] != '/' && param[0] != '.')
-> +		return 0;
-> +
-> +	param++;
-> +
-> +	if (!proc_mnt) {
-> +		proc_fs_type = get_fs_type("proc");
-> +		if (!proc_fs_type) {
-> +			pr_err("Failed to mount procfs to set sysctl from command line");
-> +			return 0;
-> +		}
-> +		proc_mnt = kern_mount(proc_fs_type);
-> +		put_filesystem(proc_fs_type);
-> +		if (IS_ERR(proc_mnt)) {
-> +			pr_err("Failed to mount procfs to set sysctl from command line");
-> +			proc_mnt = NULL;
-> +			return 0;
-> +		}
-> +	}
-> +
-> +	len = 4 + strlen(param) + 1;
-> +	path = kmalloc(len, GFP_KERNEL);
-> +	if (!path)
-> +		panic("%s: Failed to allocate %d bytes t\n", __func__, len);
-> +
-> +	strcpy(path, "sys/");
-> +	strcat(path, param);
-> +	strreplace(path, '.', '/');
-
-You can do the replacement against the param directly, and also avoid
-all the open-coded string manipulations:
-
-	strreplace(param, '.', '/');
-	path = kasprintf(GFP_KERNEL, "sys/%s", param);
-	if (!path)
-		panic("%s: Failed to allocate path for %s\n", __func__, param);
-
-> +
-> +	file = file_open_root(proc_mnt->mnt_root, proc_mnt, path, O_WRONLY, 0);
-> +	if (IS_ERR(file)) {
-> +		err = PTR_ERR(file);
-> +		pr_err("Error %d opening proc file %s to set sysctl parameter '%s=%s'",
-> +			err, path, param, val);
-> +		goto out;
-> +	}
-> +	len = strlen(val);
-> +	wret = kernel_write(file, val, len, &pos);
-> +	if (wret < 0) {
-> +		err = wret;
-> +		pr_err("Error %d writing to proc file %s to set sysctl parameter '%s=%s'",
-> +			err, path, param, val);
-> +	} else if (wret != len) {
-> +		pr_err("Wrote only %ld bytes of %d  writing to proc file %s to set sysctl parameter '%s=%s'",
-> +			wret, len, path, param, val);
-> +	}
-> +
-> +	filp_close(file, NULL);
-
-Please check the return value of filp_close() and treat that as an error
-for this function too.
-
-> +out:
-> +	kfree(path);
-> +	return 0;
-> +}
-> +
-> +void do_sysctl_args(void)
-> +{
-> +	char *command_line;
-> +
-> +	command_line = kstrdup(saved_command_line, GFP_KERNEL);
-> +	if (!command_line)
-> +		panic("%s: Failed to allocate copy of command line\n", __func__);
-> +
-> +	parse_args("Setting sysctl args", command_line,
-> +		   NULL, 0, -1, -1, NULL, process_sysctl_arg);
-> +
-> +	if (proc_mnt)
-> +		kern_unmount(proc_mnt);
-
-I don't recommend sharing allocation lifetimes between two functions
-(process_sysctl_arg() allocs proc_mnt, and do_sysctl_args() frees it).
-And since you have a scoped lifetime, why allocate it or have it as a
-global at all? It can be stack-allocated and passed to the handler:
-
-void do_sysctl_args(void)
-{
-	struct file_system_type *proc_fs_type;
-	struct vfsmount *proc_mnt;
-	char *command_line;
-
-	proc_fs_type = get_fs_type("proc");
-	if (!proc_fs_type) {
-		pr_err("Failed to mount procfs to set sysctl from command line");
-		return;
-	}
-	proc_mnt = kern_mount(proc_fs_type);
-	put_filesystem(proc_fs_type);
-	if (IS_ERR(proc_mnt)) {
-		pr_err("Failed to mount procfs to set sysctl from command line");
-		return;
-	}
-
-	command_line = kstrdup(saved_command_line, GFP_KERNEL);
-	if (!command_line)
-		panic("%s: Failed to allocate copy of command line\n",
-			__func__);
-
-	parse_args("Setting sysctl args", command_line,
-		   NULL, 0, -1, -1, proc_mnt, process_sysctl_arg);
-
-	kfree(command_line);
-	kern_unmount(proc_mnt);
-}
-
-And then pull the mount from (the hilariously overloaded name) "arg":
-
-static int process_sysctl_arg(char *param, char *val,
-			       const char *unused, void *arg)
-{
-	struct vfsmount *proc_mnt = (struct vfsmount *)arg;
-	char *path;
-
-	if (!arg)
-		...fread out...
-
-	etc
-
-> diff --git a/include/linux/sysctl.h b/include/linux/sysctl.h
-> index 02fa84493f23..5f3f2a00d75f 100644
-> --- a/include/linux/sysctl.h
-> +++ b/include/linux/sysctl.h
-> @@ -206,6 +206,7 @@ struct ctl_table_header *register_sysctl_paths(const struct ctl_path *path,
->  void unregister_sysctl_table(struct ctl_table_header * table);
->  
->  extern int sysctl_init(void);
-> +void do_sysctl_args(void);
->  
->  extern struct ctl_table sysctl_mount_point[];
->  
-> @@ -236,6 +237,9 @@ static inline void setup_sysctl_set(struct ctl_table_set *p,
->  {
->  }
->  
-> +void do_sysctl_args(void)
-> +{
-> +}
->  #endif /* CONFIG_SYSCTL */
->  
->  int sysctl_max_threads(struct ctl_table *table, int write,
-> diff --git a/init/main.c b/init/main.c
-> index ee4947af823f..a91ea166a731 100644
-> --- a/init/main.c
-> +++ b/init/main.c
-> @@ -1367,6 +1367,8 @@ static int __ref kernel_init(void *unused)
->  
->  	rcu_end_inkernel_boot();
->  
-> +	do_sysctl_args();
-> +
->  	if (ramdisk_execute_command) {
->  		ret = run_init_process(ramdisk_execute_command);
->  		if (!ret)
-> -- 
-> 2.25.1
-> 
-
-Looking good! I'm excited to see the next version. :)
-
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 440750cf4fbc..f8fa29e0f550 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -9364,6 +9364,7 @@ L:	linux-security-module@vger.kernel.org
+ W:	https://landlock.io
+ T:	git https://github.com/landlock-lsm/linux.git
+ S:	Supported
++F:	include/uapi/linux/landlock.h
+ F:	security/landlock/
+ K:	landlock
+ K:	LANDLOCK
+diff --git a/include/uapi/linux/landlock.h b/include/uapi/linux/landlock.h
+new file mode 100644
+index 000000000000..32003e8b845a
+--- /dev/null
++++ b/include/uapi/linux/landlock.h
+@@ -0,0 +1,93 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++/*
++ * Landlock - UAPI headers
++ *
++ * Copyright © 2017-2020 Mickaël Salaün <mic@digikod.net>
++ * Copyright © 2018-2020 ANSSI
++ */
++
++#ifndef _UAPI__LINUX_LANDLOCK_H__
++#define _UAPI__LINUX_LANDLOCK_H__
++
++/**
++ * DOC: fs_access
++ *
++ * A set of actions on kernel objects may be defined by an attribute (e.g.
++ * &struct landlock_attr_path_beneath) and a bitmask of access.
++ *
++ * Filesystem flags
++ * ~~~~~~~~~~~~~~~~
++ *
++ * These flags enable to restrict a sandbox process to a set of of actions on
++ * files and directories.  Files or directories opened before the sandboxing
++ * are not subject to these restrictions.
++ *
++ * - %LANDLOCK_ACCESS_FS_EXECUTE: Execute a file.
++ * - %LANDLOCK_ACCESS_FS_WRITE_FILE: Write to a file.
++ * - %LANDLOCK_ACCESS_FS_READ_FILE: Open a file with read access.
++ * - %LANDLOCK_ACCESS_FS_READ_DIR: Open a directory or list its content.
++ * - %LANDLOCK_ACCESS_FS_LINK_TO: Link a file into a directory.
++ * - %LANDLOCK_ACCESS_FS_RENAME_FROM: Rename a file or a directory.
++ * - %LANDLOCK_ACCESS_FS_RENAME_TO: Rename a file or a directory.
++ * - %LANDLOCK_ACCESS_FS_RMDIR: Remove an empty directory.
++ * - %LANDLOCK_ACCESS_FS_UNLINK: Remove a file.
++ * - %LANDLOCK_ACCESS_FS_MAKE_CHAR: Create a character device.
++ * - %LANDLOCK_ACCESS_FS_MAKE_DIR: Create a directory.
++ * - %LANDLOCK_ACCESS_FS_MAKE_REG: Create a regular file.
++ * - %LANDLOCK_ACCESS_FS_MAKE_SOCK: Create a UNIX domain socket.
++ * - %LANDLOCK_ACCESS_FS_MAKE_FIFO: Create a named pipe.
++ * - %LANDLOCK_ACCESS_FS_MAKE_BLOCK: Create a block device.
++ * - %LANDLOCK_ACCESS_FS_MAKE_SYM: Create a symbolic link.
++ * - %LANDLOCK_ACCESS_FS_CHROOT: Change the root directory of the current
++ *   process.
++ *
++ * .. warning::
++ *
++ *   It is currently not possible to restrict some file-related actions
++ *   accessible through these syscall families: :manpage:`chdir(2)`,
++ *   :manpage:`truncate(2)`, :manpage:`stat(2)`, :manpage:`flock(2)`,
++ *   :manpage:`chmod(2)`, :manpage:`chown(2)`, :manpage:`setxattr(2)`,
++ *   :manpage:`ioctl(2)`, :manpage:`fcntl(2)`.
++ *   Future evolutions of Landlock will make possible to restrict them.
++ */
++#define LANDLOCK_ACCESS_FS_EXECUTE		(1ULL << 0)
++#define LANDLOCK_ACCESS_FS_WRITE_FILE		(1ULL << 1)
++#define LANDLOCK_ACCESS_FS_READ_FILE		(1ULL << 2)
++#define LANDLOCK_ACCESS_FS_READ_DIR		(1ULL << 3)
++#define LANDLOCK_ACCESS_FS_LINK_TO		(1ULL << 4)
++#define LANDLOCK_ACCESS_FS_RENAME_FROM		(1ULL << 5)
++#define LANDLOCK_ACCESS_FS_RENAME_TO		(1ULL << 6)
++#define LANDLOCK_ACCESS_FS_RMDIR		(1ULL << 7)
++#define LANDLOCK_ACCESS_FS_UNLINK		(1ULL << 8)
++#define LANDLOCK_ACCESS_FS_MAKE_CHAR		(1ULL << 9)
++#define LANDLOCK_ACCESS_FS_MAKE_DIR		(1ULL << 10)
++#define LANDLOCK_ACCESS_FS_MAKE_REG		(1ULL << 11)
++#define LANDLOCK_ACCESS_FS_MAKE_SOCK		(1ULL << 12)
++#define LANDLOCK_ACCESS_FS_MAKE_FIFO		(1ULL << 13)
++#define LANDLOCK_ACCESS_FS_MAKE_BLOCK		(1ULL << 14)
++#define LANDLOCK_ACCESS_FS_MAKE_SYM		(1ULL << 15)
++#define LANDLOCK_ACCESS_FS_CHROOT		(1ULL << 16)
++
++/*
++ * Potential future access:
++ * - %LANDLOCK_ACCESS_FS_OPEN (for O_PATH)
++ * - %LANDLOCK_ACCESS_FS_GETATTR
++ * - %LANDLOCK_ACCESS_FS_SETATTR
++ * - %LANDLOCK_ACCESS_FS_LOCK
++ * - %LANDLOCK_ACCESS_FS_CHMOD
++ * - %LANDLOCK_ACCESS_FS_CHOWN
++ * - %LANDLOCK_ACCESS_FS_CHGRP
++ * - %LANDLOCK_ACCESS_FS_APPEND
++ * - %LANDLOCK_ACCESS_FS_TRUNCATE
++ * - %LANDLOCK_ACCESS_FS_LINK_FROM
++ * - %LANDLOCK_ACCESS_FS_MOUNT_FROM
++ * - %LANDLOCK_ACCESS_FS_MOUNT_TO
++ * - %LANDLOCK_ACCESS_FS_UNMOUNT
++ * - %LANDLOCK_ACCESS_FS_TRANSFER
++ * - %LANDLOCK_ACCESS_FS_RECEIVE
++ * - %LANDLOCK_ACCESS_FS_CHDIR
++ * - %LANDLOCK_ACCESS_FS_FCNTL
++ * - %LANDLOCK_ACCESS_FS_IOCTL
++ */
++
++#endif /* _UAPI__LINUX_LANDLOCK_H__ */
+diff --git a/security/landlock/Makefile b/security/landlock/Makefile
+index cb6deefbf4c0..d846eba445bb 100644
+--- a/security/landlock/Makefile
++++ b/security/landlock/Makefile
+@@ -1,3 +1,3 @@
+ obj-$(CONFIG_SECURITY_LANDLOCK) := landlock.o
+ 
+-landlock-y := object.o
++landlock-y := object.o ruleset.o
+diff --git a/security/landlock/ruleset.c b/security/landlock/ruleset.c
+new file mode 100644
+index 000000000000..505c6d435a55
+--- /dev/null
++++ b/security/landlock/ruleset.c
+@@ -0,0 +1,352 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Landlock LSM - Ruleset management
++ *
++ * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
++ * Copyright © 2018-2020 ANSSI
++ */
++
++#include <linux/bug.h>
++#include <linux/compiler_types.h>
++#include <linux/err.h>
++#include <linux/errno.h>
++#include <linux/kernel.h>
++#include <linux/limits.h>
++#include <linux/rbtree.h>
++#include <linux/refcount.h>
++#include <linux/slab.h>
++#include <linux/spinlock.h>
++#include <linux/workqueue.h>
++
++#include "object.h"
++#include "ruleset.h"
++
++static struct landlock_ruleset *create_ruleset(void)
++{
++	struct landlock_ruleset *ruleset;
++
++	ruleset = kzalloc(sizeof(*ruleset), GFP_KERNEL);
++	if (!ruleset)
++		return ERR_PTR(-ENOMEM);
++	refcount_set(&ruleset->usage, 1);
++	mutex_init(&ruleset->lock);
++	/*
++	 * root = RB_ROOT
++	 * hierarchy = NULL
++	 * top_layer_level = 0
++	 * nb_rules = 0
++	 * fs_access_mask = 0
++	 */
++	return ruleset;
++}
++
++struct landlock_ruleset *landlock_create_ruleset(const u32 fs_access_mask)
++{
++	struct landlock_ruleset *ruleset;
++
++	/* Informs about useless ruleset. */
++	if (!fs_access_mask)
++		return ERR_PTR(-ENOMSG);
++	ruleset = create_ruleset();
++	if (!IS_ERR(ruleset))
++		ruleset->fs_access_mask = fs_access_mask;
++	return ruleset;
++}
++
++static struct landlock_rule *duplicate_rule(struct landlock_rule *const src)
++{
++	struct landlock_rule *new_rule;
++
++	new_rule = kzalloc(sizeof(*new_rule), GFP_KERNEL);
++	if (!new_rule)
++		return ERR_PTR(-ENOMEM);
++	RB_CLEAR_NODE(&new_rule->node);
++	landlock_get_object(src->object);
++	new_rule->object = src->object;
++	new_rule->layer_level = src->layer_level;
++	new_rule->layer_depth = src->layer_depth;
++	new_rule->access = src->access;
++	return new_rule;
++}
++
++static void put_rule(struct landlock_rule *const rule)
++{
++	might_sleep();
++	if (!rule)
++		return;
++	landlock_put_object(rule->object);
++	kfree(rule);
++}
++
++/*
++ * Assumptions:
++ * - An inserted rule can not be removed.
++ * - The underlying kernel object must be held by the caller.
++ *
++ * @rule: Read-only payload to be inserted (not own by this function).
++ * @is_merge: If true, intersects access rights and updates the rule's layer
++ * (e.g. merge two rulesets), else do a union of access rights and keep the
++ * rule's layer (e.g. extend a ruleset)
++ */
++int landlock_insert_rule(struct landlock_ruleset *const ruleset,
++		struct landlock_rule *const rule, const bool is_merge)
++{
++	struct rb_node **walker_node;
++	struct rb_node *parent_node = NULL;
++	struct landlock_rule *new_rule;
++
++	might_sleep();
++	lockdep_assert_held(&ruleset->lock);
++	walker_node = &(ruleset->root.rb_node);
++	while (*walker_node) {
++		struct landlock_rule *this = rb_entry(*walker_node,
++				struct landlock_rule, node);
++		uintptr_t this_object;
++
++		this_object = (uintptr_t)this->object;
++		if (this_object != (uintptr_t)rule->object) {
++			parent_node = *walker_node;
++			if (this_object < (uintptr_t)rule->object)
++				walker_node = &((*walker_node)->rb_right);
++			else
++				walker_node = &((*walker_node)->rb_left);
++			continue;
++		}
++
++		/* If there is a matching rule, updates it. */
++		if (is_merge) {
++			/* Intersects access rights. */
++			this->access.self &= rule->access.self;
++			this->access.beneath &= rule->access.beneath;
++
++			/* Updates the rule layer. */
++			if (this->layer_level + 1 == ruleset->top_layer_level)
++				/* Extend the contiguous underlying level. */
++				this->layer_depth++;
++			else
++				/*
++				 * Creates a new separated layer.  The previous
++				 * level may still have other rules referring
++				 * to it.  In any case, this new layer is a
++				 * subset of the previous access rights.
++				 */
++				this->layer_depth = 1;
++			this->layer_level = ruleset->top_layer_level;
++		} else {
++			/* Extends access rights. */
++			this->access.self |= rule->access.self;
++			this->access.beneath |= rule->access.beneath;
++		}
++		return 0;
++	}
++
++	/* There is no match for @rule->object. */
++	new_rule = duplicate_rule(rule);
++	if (IS_ERR(new_rule))
++		return PTR_ERR(new_rule);
++	if (is_merge) {
++		new_rule->layer_depth = 1;
++		new_rule->layer_level = ruleset->top_layer_level;
++	}
++	rb_link_node(&new_rule->node, parent_node, walker_node);
++	rb_insert_color(&new_rule->node, &ruleset->root);
++	atomic_inc(&ruleset->nb_rules);
++	return 0;
++}
++
++static inline void get_hierarchy(struct landlock_hierarchy *const hierarchy)
++{
++	if (hierarchy)
++		refcount_inc(&hierarchy->usage);
++}
++
++static void put_hierarchy(struct landlock_hierarchy *hierarchy)
++{
++	while (hierarchy && refcount_dec_and_test(&hierarchy->usage)) {
++		const struct landlock_hierarchy *const freeme = hierarchy;
++
++		hierarchy = hierarchy->parent;
++		kfree(freeme);
++	}
++}
++
++static int merge_ruleset(struct landlock_ruleset *const dst,
++		struct landlock_ruleset *const src)
++{
++	struct landlock_rule *walker_rule, *next_rule;
++	int err = 0;
++
++	might_sleep();
++	if (!src)
++		return 0;
++	/* Only merge into a domain. */
++	if (WARN_ON_ONCE(!dst || !dst->hierarchy))
++		return -EFAULT;
++
++	mutex_lock(&dst->lock);
++	mutex_lock_nested(&src->lock, 1);
++	dst->fs_access_mask |= src->fs_access_mask;
++
++	/* Merges the @src tree. */
++	rbtree_postorder_for_each_entry_safe(walker_rule, next_rule,
++			&src->root, node) {
++		err = landlock_insert_rule(dst, walker_rule, true);
++		if (err)
++			goto out_unlock;
++	}
++
++out_unlock:
++	mutex_unlock(&src->lock);
++	mutex_unlock(&dst->lock);
++	return err;
++}
++
++static struct landlock_ruleset *inherit_ruleset(
++		struct landlock_ruleset *const parent)
++{
++	struct landlock_rule *walker_rule, *next_rule;
++	struct landlock_ruleset *new_ruleset;
++	int err = 0;
++
++	might_sleep();
++	new_ruleset = create_ruleset();
++	if (IS_ERR(new_ruleset))
++		return new_ruleset;
++
++	new_ruleset->hierarchy = kzalloc(sizeof(*new_ruleset->hierarchy),
++			GFP_KERNEL);
++	if (!new_ruleset->hierarchy) {
++		err = -ENOMEM;
++		goto out_put_ruleset;
++	}
++	refcount_set(&new_ruleset->hierarchy->usage, 1);
++	if (!parent) {
++		/* Makes an initial layer. */
++		new_ruleset->top_layer_level = 1;
++		return new_ruleset;
++	}
++
++	mutex_lock(&new_ruleset->lock);
++	mutex_lock_nested(&parent->lock, 1);
++	/* Makes a new layer. */
++	if (parent->top_layer_level == U32_MAX) {
++		err = -E2BIG;
++		goto out_unlock;
++	}
++	new_ruleset->top_layer_level = parent->top_layer_level + 1;
++	new_ruleset->fs_access_mask = parent->fs_access_mask;
++	WARN_ON_ONCE(!parent->hierarchy);
++	get_hierarchy(parent->hierarchy);
++	new_ruleset->hierarchy->parent = parent->hierarchy;
++
++	/* Copies the @parent tree. */
++	rbtree_postorder_for_each_entry_safe(walker_rule, next_rule,
++			&parent->root, node) {
++		err = landlock_insert_rule(new_ruleset, walker_rule, false);
++		if (err)
++			goto out_unlock;
++	}
++	mutex_unlock(&parent->lock);
++	mutex_unlock(&new_ruleset->lock);
++	return new_ruleset;
++
++out_unlock:
++	mutex_unlock(&parent->lock);
++	mutex_unlock(&new_ruleset->lock);
++
++out_put_ruleset:
++	landlock_put_ruleset(new_ruleset);
++	return ERR_PTR(err);
++}
++
++static void free_ruleset(struct landlock_ruleset *const ruleset)
++{
++	struct landlock_rule *freeme, *next;
++
++	might_sleep();
++	rbtree_postorder_for_each_entry_safe(freeme, next, &ruleset->root,
++			node)
++		put_rule(freeme);
++	put_hierarchy(ruleset->hierarchy);
++	kfree(ruleset);
++}
++
++void landlock_put_ruleset(struct landlock_ruleset *const ruleset)
++{
++	might_sleep();
++	if (ruleset && refcount_dec_and_test(&ruleset->usage))
++		free_ruleset(ruleset);
++}
++
++static void free_ruleset_work(struct work_struct *const work)
++{
++	struct landlock_ruleset *ruleset;
++
++	ruleset = container_of(work, struct landlock_ruleset, work_free);
++	free_ruleset(ruleset);
++}
++
++void landlock_put_ruleset_deferred(struct landlock_ruleset *const ruleset)
++{
++	if (ruleset && refcount_dec_and_test(&ruleset->usage)) {
++		INIT_WORK(&ruleset->work_free, free_ruleset_work);
++		schedule_work(&ruleset->work_free);
++	}
++}
++
++/*
++ * Creates a new transition domain, intersection of @parent and @ruleset, or
++ * return @parent if @ruleset is empty.  If @parent is empty, returns a
++ * duplicate of @ruleset.
++ */
++struct landlock_ruleset *landlock_merge_ruleset(
++		struct landlock_ruleset *const parent,
++		struct landlock_ruleset *const ruleset)
++{
++	struct landlock_ruleset *new_dom;
++	int err;
++
++	might_sleep();
++	if (!ruleset || atomic_read(&ruleset->nb_rules) == 0 ||
++			parent == ruleset) {
++		landlock_get_ruleset(parent);
++		return parent;
++	}
++
++	new_dom = inherit_ruleset(parent);
++	if (IS_ERR(new_dom))
++		return new_dom;
++
++	err = merge_ruleset(new_dom, ruleset);
++	if (err) {
++		landlock_put_ruleset(new_dom);
++		return ERR_PTR(err);
++	}
++	return new_dom;
++}
++
++/*
++ * The returned access has the same lifetime as @ruleset.
++ */
++const struct landlock_rule *landlock_find_rule(
++		const struct landlock_ruleset *const ruleset,
++		const struct landlock_object *const object)
++{
++	const struct rb_node *node;
++
++	if (!object)
++		return NULL;
++	node = ruleset->root.rb_node;
++	while (node) {
++		struct landlock_rule *this = rb_entry(node,
++				struct landlock_rule, node);
++
++		if (this->object == object)
++			return this;
++		if (this->object < object)
++			node = node->rb_right;
++		else
++			node = node->rb_left;
++	}
++	return NULL;
++}
+diff --git a/security/landlock/ruleset.h b/security/landlock/ruleset.h
+new file mode 100644
+index 000000000000..1bbd8d842c01
+--- /dev/null
++++ b/security/landlock/ruleset.h
+@@ -0,0 +1,182 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Landlock LSM - Ruleset management
++ *
++ * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
++ * Copyright © 2018-2020 ANSSI
++ */
++
++#ifndef _SECURITY_LANDLOCK_RULESET_H
++#define _SECURITY_LANDLOCK_RULESET_H
++
++#include <linux/mutex.h>
++#include <linux/rbtree.h>
++#include <linux/refcount.h>
++#include <linux/workqueue.h>
++#include <uapi/linux/landlock.h>
++
++#include "object.h"
++
++#define _LANDLOCK_ACCESS_FS_LAST	LANDLOCK_ACCESS_FS_CHROOT
++#define _LANDLOCK_ACCESS_FS_MASK	((_LANDLOCK_ACCESS_FS_LAST << 1) - 1)
++
++/**
++ * struct landlock_access - Set of access rights
++ */
++struct landlock_access {
++	/**
++	 * @self: Bitfield of allowed actions on the kernel object.  They are
++	 * relative to the object type (e.g. %LANDLOCK_ACTION_FS_READ).
++	 */
++	u32 self;
++	/**
++	 * @beneath: Same as @self, but for the child objects (e.g. a file in a
++	 * directory).
++	 */
++	u32 beneath;
++};
++
++/**
++ * struct landlock_rule - Access rights tied to an object
++ *
++ * When enforcing a ruleset (i.e. merging a ruleset into the current domain),
++ * the layer level of a new rule is the incremented top layer level (cf.
++ * &struct landlock_ruleset).  If there is no rule (from this domain) tied to
++ * the same object, then the depth of the new rule is 1. However, if there is
++ * already a rule tied to the same object and if this rule's layer level is the
++ * previous top layer level, then the depth and the layer level are both
++ * incremented and the rule is updated with the new access rights (boolean
++ * AND).
++ */
++struct landlock_rule {
++	/**
++	 * @node: Node in the red-black tree.
++	 */
++	struct rb_node node;
++	/**
++	 * @object: Pointer to identify a kernel object (e.g. an inode).  This
++	 * is used as a key for this ruleset element.  This pointer is set once
++	 * and never modified.  It always point to an allocated object because
++	 * each rule increment the refcount of there object.
++	 */
++	struct landlock_object *object;
++	/**
++	 * @layer_level: Identifies the layer level of the ruleset from which
++	 * the rule come from.
++	 */
++	u32 layer_level;
++	/**
++	 * @layer_depth: Number of rules from different consecutive merged
++	 * layers from which this rule is the result.
++	 */
++	u32 layer_depth;
++	/**
++	 * @access: Access rights for the object.  This may be the result of
++	 * the merged access rights (boolean AND) from multiple layers
++	 * referring to the same object.
++	 */
++	struct landlock_access access;
++};
++
++/**
++ * struct landlock_hierarchy - Node in a ruleset hierarchy
++ */
++struct landlock_hierarchy {
++	/**
++	 * @parent: Pointer to the parent node, or NULL if it is a root Lanlock
++	 * domain.
++	 */
++	struct landlock_hierarchy *parent;
++	/**
++	 * @usage: Number of potential children domains plus their parent
++	 * domain.
++	 */
++	refcount_t usage;
++};
++
++/**
++ * struct landlock_ruleset - Landlock ruleset
++ *
++ * This data structure must contains unique entries, be updatable, and quick to
++ * match an object.
++ */
++struct landlock_ruleset {
++	/**
++	 * @root: Root of a red-black tree containing &struct landlock_rule
++	 * nodes.
++	 */
++	struct rb_root root;
++	/**
++	 * @hierarchy: Enables hierarchy identification even when a parent
++	 * domain vanishes.  This is needed for the ptrace protection.
++	 */
++	struct landlock_hierarchy *hierarchy;
++	union {
++		/**
++		 * @work_free: Enables to free a ruleset within a lockless
++		 * section.  This is only used by
++		 * landlock_put_ruleset_deferred() when @usage reaches zero.
++		 * The fields @usage, @lock, @top_layer_level, @nb_rules and
++		 * @fs_access_mask are then unused.
++		 */
++		struct work_struct work_free;
++		struct {
++			/**
++			 * @usage: Number of processes (i.e. domains) or file
++			 * descriptors referencing this ruleset.
++			 */
++			refcount_t usage;
++			/**
++			 * @lock: Guards against concurrent modifications of
++			 * @root, if @usage is greater than zero.
++			 */
++			struct mutex lock;
++			/**
++			 * @top_layer_level: Stores the last merged layer
++			 * level.  This enables to set the layer level of the
++			 * new rules imported from a ruleset, and to check that
++			 * all the layers allow an access request.  The first
++			 * layer level is 1.  A value of 0 identify a
++			 * non-merged ruleset (i.e. not a domain).
++			 */
++			u32 top_layer_level;
++			/**
++			 * @nb_rules: Number of rules in this ruleset.
++			 */
++			atomic_t nb_rules;
++			/**
++			 * @fs_access_mask: Contains the subset of filesystem
++			 * actions which are restricted by a ruleset.  This is
++			 * used when merging rulesets and for userspace
++			 * backward compatibility (i.e. future-proof).  Set
++			 * once and never changed for the lifetime of the
++			 * ruleset.
++			 */
++			u32 fs_access_mask;
++		};
++	};
++};
++
++struct landlock_ruleset *landlock_create_ruleset(const u32 fs_access_mask);
++
++void landlock_put_ruleset(struct landlock_ruleset *const ruleset);
++void landlock_put_ruleset_deferred(struct landlock_ruleset *const ruleset);
++
++int landlock_insert_rule(struct landlock_ruleset *const ruleset,
++		struct landlock_rule *const rule, const bool is_merge);
++
++struct landlock_ruleset *landlock_merge_ruleset(
++		struct landlock_ruleset *const parent,
++		struct landlock_ruleset *const ruleset);
++
++const struct landlock_rule *landlock_find_rule(
++		const struct landlock_ruleset *const ruleset,
++		const struct landlock_object *const object);
++
++static inline void landlock_get_ruleset(struct landlock_ruleset *const ruleset)
++{
++	if (ruleset)
++		refcount_inc(&ruleset->usage);
++}
++
++#endif /* _SECURITY_LANDLOCK_RULESET_H */
 -- 
-Kees Cook
+2.26.0.rc2
+
