@@ -2,59 +2,32 @@ Return-Path: <SRS0=DXPd=5L=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.7 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	WEIRD_QUOTING autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 165D6C43331
-	for <linux-api@archiver.kernel.org>; Thu, 26 Mar 2020 20:34:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 186EEC43331
+	for <linux-api@archiver.kernel.org>; Thu, 26 Mar 2020 21:29:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id DAEEF20722
-	for <linux-api@archiver.kernel.org>; Thu, 26 Mar 2020 20:34:12 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="IRl4RWYn"
+	by mail.kernel.org (Postfix) with ESMTP id E6E8E2070A
+	for <linux-api@archiver.kernel.org>; Thu, 26 Mar 2020 21:29:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726291AbgCZUeM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 26 Mar 2020 16:34:12 -0400
-Received: from mail-pg1-f194.google.com ([209.85.215.194]:41047 "EHLO
-        mail-pg1-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726281AbgCZUeM (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 26 Mar 2020 16:34:12 -0400
-Received: by mail-pg1-f194.google.com with SMTP id b1so3473859pgm.8
-        for <linux-api@vger.kernel.org>; Thu, 26 Mar 2020 13:34:11 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=Le7doV1aD2nnDIjljTT6TRoqwG4Kk2Xg5cqe+Y2QeE8=;
-        b=IRl4RWYnFi1S/4ylGpDj2CLK3Ia0Xfv+YRQBn3BpWZOs7UKH6YZo8+zxLGWahTKYuZ
-         M/tNUA95U4+1GTULWdX+4rxNECrKnt/UOjrhOmD5k3nKqeauDBg0WkYbDFmCbgqodyGb
-         N0hlBrV9t60fDGH88FD7DUnHKF0D8Q11RzoCg=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=Le7doV1aD2nnDIjljTT6TRoqwG4Kk2Xg5cqe+Y2QeE8=;
-        b=ozY46K8cBOc03mPnzq1JEy+JOFZdQ6AuXiEQQnU820ErRwaFAWidVDPqq6GlM3ezSF
-         keHtYGAocbkZfRngDyAaKGcM9DadsOndL3kQphUn/LRTySF3R/nA9XepmT+HIhEFkNLS
-         svXlRnja/FEM4LvDe4IZQZzMSuYWcVwdziHPWTcLv6eLatnWgrDFlpCckq3AieOTEnw9
-         zEPqzds2hrHZ7M/EB1qH1D+QEth1EK6Iv1kZp32sKjMce6nFkMFG1OGFXnlOuFLE7+23
-         JKlQsPRbmJNTYM7HX/auRqFchTuGHVcH22peJe2LRNJzfUony5iqV/UbSlSEiZ0QAzQR
-         Nyow==
-X-Gm-Message-State: ANhLgQ0pfjNUB/4ng3V9xKG03Yty0BXgHulkdIXnvz/vSRmNcMtcC16b
-        N9e+ylaezTwK6DEMcqo/3Nesqg==
-X-Google-Smtp-Source: ADFU+vvJTCE0NaoY9hAAFAj5SygbDrAri2BStTDh6/CdBA2TgHqaM/8tkrZcR45y2gjrmFw6MHuIHw==
-X-Received: by 2002:a62:342:: with SMTP id 63mr11323648pfd.19.1585254850791;
-        Thu, 26 Mar 2020 13:34:10 -0700 (PDT)
-Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id l11sm2222672pjy.44.2020.03.26.13.34.09
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 26 Mar 2020 13:34:09 -0700 (PDT)
-Date:   Thu, 26 Mar 2020 13:34:08 -0700
-From:   Kees Cook <keescook@chromium.org>
-To:     Vlastimil Babka <vbabka@suse.cz>
-Cc:     Luis Chamberlain <mcgrof@kernel.org>,
+        id S1726359AbgCZV3O (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 26 Mar 2020 17:29:14 -0400
+Received: from youngberry.canonical.com ([91.189.89.112]:57001 "EHLO
+        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726067AbgCZV3O (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 26 Mar 2020 17:29:14 -0400
+Received: from ip5f5bf7ec.dynamic.kabel-deutschland.de ([95.91.247.236] helo=wittgenstein)
+        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.86_2)
+        (envelope-from <christian.brauner@ubuntu.com>)
+        id 1jHa3m-0005bi-TH; Thu, 26 Mar 2020 21:29:07 +0000
+Date:   Thu, 26 Mar 2020 22:29:06 +0100
+From:   Christian Brauner <christian.brauner@ubuntu.com>
+To:     Kees Cook <keescook@chromium.org>
+Cc:     Vlastimil Babka <vbabka@suse.cz>,
+        Luis Chamberlain <mcgrof@kernel.org>,
         Iurii Zaikin <yzaikin@google.com>,
         linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
         linux-mm@kvack.org, Ivan Teterevkov <ivan.teterevkov@nutanix.com>,
@@ -64,134 +37,98 @@ Cc:     Luis Chamberlain <mcgrof@kernel.org>,
         "Eric W . Biederman" <ebiederm@xmission.com>,
         "Guilherme G . Piccoli" <gpiccoli@canonical.com>
 Subject: Re: [RFC v3 2/2] kernel/sysctl: support handling command line aliases
-Message-ID: <202003261329.AAFEE9C@keescook>
+Message-ID: <20200326212906.muutd636zfoytcgh@wittgenstein>
 References: <20200326181606.7027-1-vbabka@suse.cz>
  <20200326181606.7027-2-vbabka@suse.cz>
+ <202003261329.AAFEE9C@keescook>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20200326181606.7027-2-vbabka@suse.cz>
+In-Reply-To: <202003261329.AAFEE9C@keescook>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Mar 26, 2020 at 07:16:06PM +0100, Vlastimil Babka wrote:
-> We can now handle sysctl parameters on kernel command line, but historically
-> some parameters introduced their own command line equivalent, which we don't
-> want to remove for compatibility reasons. We can however convert them to the
-> generic infrastructure with a table translating the legacy command line
-> parameters to their sysctl names, and removing the one-off param handlers.
+On Thu, Mar 26, 2020 at 01:34:08PM -0700, Kees Cook wrote:
+> On Thu, Mar 26, 2020 at 07:16:06PM +0100, Vlastimil Babka wrote:
+> > We can now handle sysctl parameters on kernel command line, but historically
+> > some parameters introduced their own command line equivalent, which we don't
+> > want to remove for compatibility reasons. We can however convert them to the
+> > generic infrastructure with a table translating the legacy command line
+> > parameters to their sysctl names, and removing the one-off param handlers.
+> > 
+> > This patch adds the support and makes the first conversion to demonstrate it,
+> > on the (deprecated) numa_zonelist_order parameter.
+> > 
+> > Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
+> > ---
+> > Changes in v3:
+> > - constify some things according to Kees
+> > - expand the comment of sysctl_aliases to note on different timings
+> > 
+> >  fs/proc/proc_sysctl.c | 48 ++++++++++++++++++++++++++++++++++++-------
+> >  mm/page_alloc.c       |  9 --------
+> >  2 files changed, 41 insertions(+), 16 deletions(-)
+> > 
+> > diff --git a/fs/proc/proc_sysctl.c b/fs/proc/proc_sysctl.c
+> > index 8ee3273e4540..3a861e0a7c7e 100644
+> > --- a/fs/proc/proc_sysctl.c
+> > +++ b/fs/proc/proc_sysctl.c
+> > @@ -1729,6 +1729,37 @@ int __init proc_sys_init(void)
+> >  
+> >  struct vfsmount *proc_mnt = NULL;
+> >  
+> > +struct sysctl_alias {
+> > +	const char *kernel_param;
+> > +	const char *sysctl_param;
+> > +};
+> > +
+> > +/*
+> > + * Historically some settings had both sysctl and a command line parameter.
+> > + * With the generic sysctl. parameter support, we can handle them at a single
+> > + * place and only keep the historical name for compatibility. This is not meant
+> > + * to add brand new aliases. When adding existing aliases, consider whether
+> > + * the possibly different moment of changing the value (e.g. from early_param
+> > + * to the moment do_sysctl_args() is called) is an issue for the specific
+> > + * parameter.
+> > + */
+> > +static const struct sysctl_alias sysctl_aliases[] = {
+> > +	{"numa_zonelist_order",		"vm.numa_zonelist_order" },
+> > +	{ }
+> > +};
+> > +
+> > +const char *sysctl_find_alias(char *param)
 > 
-> This patch adds the support and makes the first conversion to demonstrate it,
-> on the (deprecated) numa_zonelist_order parameter.
+> This should be "static" too.
 > 
-> Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
-> ---
-> Changes in v3:
-> - constify some things according to Kees
-> - expand the comment of sysctl_aliases to note on different timings
-> 
->  fs/proc/proc_sysctl.c | 48 ++++++++++++++++++++++++++++++++++++-------
->  mm/page_alloc.c       |  9 --------
->  2 files changed, 41 insertions(+), 16 deletions(-)
-> 
-> diff --git a/fs/proc/proc_sysctl.c b/fs/proc/proc_sysctl.c
-> index 8ee3273e4540..3a861e0a7c7e 100644
-> --- a/fs/proc/proc_sysctl.c
-> +++ b/fs/proc/proc_sysctl.c
-> @@ -1729,6 +1729,37 @@ int __init proc_sys_init(void)
->  
->  struct vfsmount *proc_mnt = NULL;
->  
-> +struct sysctl_alias {
-> +	const char *kernel_param;
-> +	const char *sysctl_param;
-> +};
-> +
-> +/*
-> + * Historically some settings had both sysctl and a command line parameter.
-> + * With the generic sysctl. parameter support, we can handle them at a single
-> + * place and only keep the historical name for compatibility. This is not meant
-> + * to add brand new aliases. When adding existing aliases, consider whether
-> + * the possibly different moment of changing the value (e.g. from early_param
-> + * to the moment do_sysctl_args() is called) is an issue for the specific
-> + * parameter.
-> + */
-> +static const struct sysctl_alias sysctl_aliases[] = {
-> +	{"numa_zonelist_order",		"vm.numa_zonelist_order" },
-> +	{ }
-> +};
-> +
-> +const char *sysctl_find_alias(char *param)
+> > +{
+> > +	const struct sysctl_alias *alias;
+> > +
+> > +	for (alias = &sysctl_aliases[0]; alias->kernel_param != NULL; alias++) {
+> > +		if (strcmp(alias->kernel_param, param) == 0)
+> > +			return alias->sysctl_param;
+> > +	}
+> > +
+> > +	return NULL;
+> > +}
+> > +
+> >  /* Set sysctl value passed on kernel command line. */
+> >  static int process_sysctl_arg(char *param, char *val,
+> >  			       const char *unused, void *arg)
+> > @@ -1741,15 +1772,18 @@ static int process_sysctl_arg(char *param, char *val,
+> >  	loff_t pos = 0;
+> >  	ssize_t wret;
+> >  
+> > -	if (strncmp(param, "sysctl", sizeof("sysctl") - 1))
 
-This should be "static" too.
+Somewhat off-topic but in some projects I use macro-helpers to make that
+more transparent. So this would become a constant expression:
 
-> +{
-> +	const struct sysctl_alias *alias;
-> +
-> +	for (alias = &sysctl_aliases[0]; alias->kernel_param != NULL; alias++) {
-> +		if (strcmp(alias->kernel_param, param) == 0)
-> +			return alias->sysctl_param;
-> +	}
-> +
-> +	return NULL;
-> +}
-> +
->  /* Set sysctl value passed on kernel command line. */
->  static int process_sysctl_arg(char *param, char *val,
->  			       const char *unused, void *arg)
-> @@ -1741,15 +1772,18 @@ static int process_sysctl_arg(char *param, char *val,
->  	loff_t pos = 0;
->  	ssize_t wret;
->  
-> -	if (strncmp(param, "sysctl", sizeof("sysctl") - 1))
-> -		return 0;
-> -
-> -	param += sizeof("sysctl") - 1;
-> +	if (strncmp(param, "sysctl", sizeof("sysctl") - 1) == 0) {
-> +		param += sizeof("sysctl") - 1;
->  
-> -	if (param[0] != '/' && param[0] != '.')
-> -		return 0;
-> +		if (param[0] != '/' && param[0] != '.')
-> +			return 0;
->  
-> -	param++;
-> +		param++;
-> +	} else {
-> +		param = (char *) sysctl_find_alias(param);
-> +		if (!param)
-> +			return 0;
-> +	}
->  
->  	if (!proc_mnt) {
->  		proc_fs_type = get_fs_type("proc");
-> diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-> index 3c4eb750a199..de7a134b1b8a 100644
-> --- a/mm/page_alloc.c
-> +++ b/mm/page_alloc.c
-> @@ -5460,15 +5460,6 @@ static int __parse_numa_zonelist_order(char *s)
->  	return 0;
->  }
->  
-> -static __init int setup_numa_zonelist_order(char *s)
-> -{
-> -	if (!s)
-> -		return 0;
-> -
-> -	return __parse_numa_zonelist_order(s);
-> -}
-> -early_param("numa_zonelist_order", setup_numa_zonelist_order);
-> -
->  char numa_zonelist_order[] = "Node";
->  
->  /*
-> -- 
-> 2.25.1
-> 
+#define STRLITERALLEN(x) (sizeof(""x"") - 1)
+or
+#define STRLEN(x) (sizeof(""x"") - 1)
 
-Otherwise, yay, I love it! :)
+But I guess that's a matter of style/taste.
 
--- 
-Kees Cook
+Christian
