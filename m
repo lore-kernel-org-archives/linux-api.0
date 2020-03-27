@@ -2,98 +2,121 @@ Return-Path: <SRS0=qZDt=5M=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.7 required=3.0 tests=DKIM_ADSP_CUSTOM_MED,
+	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 69D5EC2D0EF
-	for <linux-api@archiver.kernel.org>; Fri, 27 Mar 2020 14:59:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 64574C2D0EF
+	for <linux-api@archiver.kernel.org>; Fri, 27 Mar 2020 17:31:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 39968206F6
-	for <linux-api@archiver.kernel.org>; Fri, 27 Mar 2020 14:59:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 460A82072F
+	for <linux-api@archiver.kernel.org>; Fri, 27 Mar 2020 17:31:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727322AbgC0O7S (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 27 Mar 2020 10:59:18 -0400
-Received: from smtp-42a8.mail.infomaniak.ch ([84.16.66.168]:34621 "EHLO
-        smtp-42a8.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1727263AbgC0O7S (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 27 Mar 2020 10:59:18 -0400
-Received: from smtp-3-0000.mail.infomaniak.ch (unknown [10.4.36.107])
-        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 48plPH759QzljC1w;
-        Fri, 27 Mar 2020 15:59:15 +0100 (CET)
-Received: from ns3096276.ip-94-23-54.eu (unknown [94.23.54.103])
-        by smtp-3-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 48plPD42s4zln3X2;
-        Fri, 27 Mar 2020 15:59:12 +0100 (CET)
-Subject: Re: [PATCH v15 09/10] samples/landlock: Add a sandbox manager example
-To:     Randy Dunlap <rdunlap@infradead.org>, linux-kernel@vger.kernel.org
-Cc:     Al Viro <viro@zeniv.linux.org.uk>,
-        Andy Lutomirski <luto@amacapital.net>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Casey Schaufler <casey@schaufler-ca.com>,
-        James Morris <jmorris@namei.org>, Jann Horn <jann@thejh.net>,
+        id S1727799AbgC0Rbt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 27 Mar 2020 13:31:49 -0400
+Received: from raptor.unsafe.ru ([5.9.43.93]:38850 "EHLO raptor.unsafe.ru"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727770AbgC0Rbs (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 27 Mar 2020 13:31:48 -0400
+Received: from comp-core-i7-2640m-0182e6.redhat.com (ip-89-102-33-211.net.upcbroadband.cz [89.102.33.211])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits))
+        (No client certificate requested)
+        by raptor.unsafe.ru (Postfix) with ESMTPSA id A172520AB4;
+        Fri, 27 Mar 2020 17:24:00 +0000 (UTC)
+From:   Alexey Gladkov <gladkov.alexey@gmail.com>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        Kernel Hardening <kernel-hardening@lists.openwall.com>,
+        Linux API <linux-api@vger.kernel.org>,
+        Linux FS Devel <linux-fsdevel@vger.kernel.org>,
+        Linux Security Module <linux-security-module@vger.kernel.org>
+Cc:     Akinobu Mita <akinobu.mita@gmail.com>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        Alexey Dobriyan <adobriyan@gmail.com>,
+        Alexey Gladkov <legion@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Daniel Micay <danielmicay@gmail.com>,
+        Djalal Harouni <tixxdz@gmail.com>,
+        "Dmitry V . Levin" <ldv@altlinux.org>,
+        "Eric W . Biederman" <ebiederm@xmission.com>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Jeff Layton <jlayton@poochiereds.net>,
         Jonathan Corbet <corbet@lwn.net>,
         Kees Cook <keescook@chromium.org>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mickael.salaun@ssi.gouv.fr>,
-        "Serge E . Hallyn" <serge@hallyn.com>,
-        Shuah Khan <shuah@kernel.org>,
-        Vincent Dagonneau <vincent.dagonneau@ssi.gouv.fr>,
-        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
-        linux-arch@vger.kernel.org, linux-doc@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org, linux-kselftest@vger.kernel.org,
-        linux-security-module@vger.kernel.org, x86@kernel.org
-References: <20200326202731.693608-1-mic@digikod.net>
- <20200326202731.693608-10-mic@digikod.net>
- <11634607-2fdb-1868-03d0-94096763766f@infradead.org>
-From:   =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Message-ID: <4285db52-e7ce-6a0f-3791-fd39c892489e@digikod.net>
-Date:   Fri, 27 Mar 2020 15:59:00 +0100
-User-Agent: 
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Oleg Nesterov <oleg@redhat.com>
+Subject: [PATCH v10 7/9] proc: move hidepid values to uapi as they are user interface to mount
+Date:   Fri, 27 Mar 2020 18:23:29 +0100
+Message-Id: <20200327172331.418878-8-gladkov.alexey@gmail.com>
+X-Mailer: git-send-email 2.25.2
+In-Reply-To: <20200327172331.418878-1-gladkov.alexey@gmail.com>
+References: <20200327172331.418878-1-gladkov.alexey@gmail.com>
 MIME-Version: 1.0
-In-Reply-To: <11634607-2fdb-1868-03d0-94096763766f@infradead.org>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
 Content-Transfer-Encoding: 8bit
-X-Antivirus: Dr.Web (R) for Unix mail servers drweb plugin ver.6.0.2.8
-X-Antivirus-Code: 0x100000
+X-Greylist: Sender succeeded SMTP AUTH, not delayed by milter-greylist-4.6.1 (raptor.unsafe.ru [5.9.43.93]); Fri, 27 Mar 2020 17:24:01 +0000 (UTC)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+Suggested-by: Alexey Dobriyan <adobriyan@gmail.com>
+Reviewed-by: Alexey Dobriyan <adobriyan@gmail.com>
+Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
+---
+ include/linux/proc_fs.h      |  9 +--------
+ include/uapi/linux/proc_fs.h | 13 +++++++++++++
+ 2 files changed, 14 insertions(+), 8 deletions(-)
+ create mode 100644 include/uapi/linux/proc_fs.h
 
-On 27/03/2020 00:54, Randy Dunlap wrote:
-> Hi,
-> 
-> On 3/26/20 1:27 PM, Mickaël Salaün wrote:
->> diff --git a/samples/Kconfig b/samples/Kconfig
->> index 9d236c346de5..b54408c5bd86 100644
->> --- a/samples/Kconfig
->> +++ b/samples/Kconfig
->> @@ -120,6 +120,13 @@ config SAMPLE_HIDRAW
->>  	bool "hidraw sample"
->>  	depends on HEADERS_INSTALL
->>  
->> +config SAMPLE_LANDLOCK
->> +	bool "Build Landlock sample code"
->> +	select HEADERS_INSTALL
-> 
-> I think that this should be like all of the other users of HEADERS_INSTALL
-> and depend on that instead of select-ing it.
+diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
+index afd38cae2339..d259817ec913 100644
+--- a/include/linux/proc_fs.h
++++ b/include/linux/proc_fs.h
+@@ -7,6 +7,7 @@
+ 
+ #include <linux/types.h>
+ #include <linux/fs.h>
++#include <uapi/linux/proc_fs.h>
+ 
+ struct proc_dir_entry;
+ struct seq_file;
+@@ -27,14 +28,6 @@ struct proc_ops {
+ 	unsigned long (*proc_get_unmapped_area)(struct file *, unsigned long, unsigned long, unsigned long, unsigned long);
+ };
+ 
+-/* definitions for hide_pid field */
+-enum {
+-	HIDEPID_OFF	  = 0,
+-	HIDEPID_NO_ACCESS = 1,
+-	HIDEPID_INVISIBLE = 2,
+-	HIDEPID_NOT_PTRACEABLE = 4, /* Limit pids to only ptraceable pids */
+-};
+-
+ /* definitions for proc mount option pidonly */
+ enum {
+ 	PROC_PIDONLY_OFF = 0,
+diff --git a/include/uapi/linux/proc_fs.h b/include/uapi/linux/proc_fs.h
+new file mode 100644
+index 000000000000..dc6d717aa6ec
+--- /dev/null
++++ b/include/uapi/linux/proc_fs.h
+@@ -0,0 +1,13 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++#ifndef _UAPI_PROC_FS_H
++#define _UAPI_PROC_FS_H
++
++/* definitions for hide_pid field */
++enum {
++	HIDEPID_OFF            = 0,
++	HIDEPID_NO_ACCESS      = 1,
++	HIDEPID_INVISIBLE      = 2,
++	HIDEPID_NOT_PTRACEABLE = 4,
++};
++
++#endif
+-- 
+2.25.2
 
-Ok, I though it made sense to select it automatically, but I'll get back
-the "depends on".
-
-Thanks.
-
-> 
->> +	help
->> +	  Build a simple Landlock sandbox manager able to launch a process
->> +	  restricted by a user-defined filesystem access-control security policy.
->> +
->>  config SAMPLE_PIDFD
->>  	bool "pidfd sample"
->>  	depends on HEADERS_INSTALL
-> 
-> thanks.
-> 
