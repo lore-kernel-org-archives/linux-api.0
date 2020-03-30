@@ -2,247 +2,116 @@ Return-Path: <SRS0=XNhD=5P=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.5 required=3.0 tests=DKIM_ADSP_CUSTOM_MED,
-	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
+X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1B450C2D0EE
-	for <linux-api@archiver.kernel.org>; Mon, 30 Mar 2020 11:12:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C04BC43331
+	for <linux-api@archiver.kernel.org>; Mon, 30 Mar 2020 11:55:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id F0F1D20784
-	for <linux-api@archiver.kernel.org>; Mon, 30 Mar 2020 11:12:58 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 793B320774
+	for <linux-api@archiver.kernel.org>; Mon, 30 Mar 2020 11:55:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729621AbgC3LMz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 30 Mar 2020 07:12:55 -0400
-Received: from raptor.unsafe.ru ([5.9.43.93]:42996 "EHLO raptor.unsafe.ru"
+        id S1729977AbgC3Lzz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 30 Mar 2020 07:55:55 -0400
+Received: from mx2.suse.de ([195.135.220.15]:51548 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729263AbgC3LMy (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 30 Mar 2020 07:12:54 -0400
-Received: from comp-core-i7-2640m-0182e6.redhat.com (ip-89-102-33-211.net.upcbroadband.cz [89.102.33.211])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits))
-        (No client certificate requested)
-        by raptor.unsafe.ru (Postfix) with ESMTPSA id 7F525208C1;
-        Mon, 30 Mar 2020 11:12:48 +0000 (UTC)
-From:   Alexey Gladkov <gladkov.alexey@gmail.com>
-To:     LKML <linux-kernel@vger.kernel.org>
-Cc:     Kernel Hardening <kernel-hardening@lists.openwall.com>,
-        Linux API <linux-api@vger.kernel.org>,
-        Linux FS Devel <linux-fsdevel@vger.kernel.org>,
-        Linux Security Module <linux-security-module@vger.kernel.org>,
-        Akinobu Mita <akinobu.mita@gmail.com>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        Alexey Dobriyan <adobriyan@gmail.com>,
-        Alexey Gladkov <legion@kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Daniel Micay <danielmicay@gmail.com>,
-        Djalal Harouni <tixxdz@gmail.com>,
-        "Dmitry V . Levin" <ldv@altlinux.org>,
-        "Eric W . Biederman" <ebiederm@xmission.com>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        "J . Bruce Fields" <bfields@fieldses.org>,
-        Jeff Layton <jlayton@poochiereds.net>,
-        Jonathan Corbet <corbet@lwn.net>,
+        id S1730051AbgC3Lzz (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 30 Mar 2020 07:55:55 -0400
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.220.254])
+        by mx2.suse.de (Postfix) with ESMTP id A8C12ACC2;
+        Mon, 30 Mar 2020 11:55:52 +0000 (UTC)
+From:   Vlastimil Babka <vbabka@suse.cz>
+To:     Luis Chamberlain <mcgrof@kernel.org>,
         Kees Cook <keescook@chromium.org>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Oleg Nesterov <oleg@redhat.com>
-Subject: [PATCH v11 8/9] proc: use human-readable values for hidehid
-Date:   Mon, 30 Mar 2020 13:12:35 +0200
-Message-Id: <20200330111235.154182-1-gladkov.alexey@gmail.com>
-X-Mailer: git-send-email 2.25.2
-In-Reply-To: <20200327172331.418878-9-gladkov.alexey@gmail.com>
-References: <20200327172331.418878-9-gladkov.alexey@gmail.com>
+        Iurii Zaikin <yzaikin@google.com>
+Cc:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-mm@kvack.org, Ivan Teterevkov <ivan.teterevkov@nutanix.com>,
+        Michal Hocko <mhocko@kernel.org>,
+        David Rientjes <rientjes@google.com>,
+        Matthew Wilcox <willy@infradead.org>,
+        "Eric W . Biederman" <ebiederm@xmission.com>,
+        "Guilherme G . Piccoli" <gpiccoli@canonical.com>,
+        Alexey Dobriyan <adobriyan@gmail.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Vlastimil Babka <vbabka@suse.cz>
+Subject: [PATCH 3/3] kernel/hung_task convert hung_task_panic boot parameter to sysctl
+Date:   Mon, 30 Mar 2020 13:55:35 +0200
+Message-Id: <20200330115535.3215-4-vbabka@suse.cz>
+X-Mailer: git-send-email 2.25.1
+In-Reply-To: <20200330115535.3215-1-vbabka@suse.cz>
+References: <20200330115535.3215-1-vbabka@suse.cz>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Greylist: Sender succeeded SMTP AUTH, not delayed by milter-greylist-4.6.1 (raptor.unsafe.ru [5.9.43.93]); Mon, 30 Mar 2020 11:12:50 +0000 (UTC)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The hidepid parameter values are becoming more and more and it becomes
-difficult to remember what each new magic number means.
+We can now handle sysctl parameters on kernel command line and have
+infrastructure to convert legacy command line options that duplicate sysctl
+to become a sysctl alias.
 
-Suggested-by: Andy Lutomirski <luto@kernel.org>
-Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
+This patch converts the hung_task_panic parameter. Note that the sysctl handler
+is more strict and allows only 0 and 1, while the legacy parameter allowed
+any non-zero value. But there is little reason anyone would not be using 1.
+
+Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
 ---
- Documentation/filesystems/proc.txt | 52 +++++++++++++++---------------
- fs/proc/inode.c                    | 15 ++++++++-
- fs/proc/root.c                     | 36 +++++++++++++++++++--
- 3 files changed, 73 insertions(+), 30 deletions(-)
+ Documentation/admin-guide/kernel-parameters.txt |  2 +-
+ fs/proc/proc_sysctl.c                           |  1 +
+ kernel/hung_task.c                              | 10 ----------
+ 3 files changed, 2 insertions(+), 11 deletions(-)
 
-diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
-index bd0e0ab85048..af47672cb2cb 100644
---- a/Documentation/filesystems/proc.txt
-+++ b/Documentation/filesystems/proc.txt
-@@ -2025,28 +2025,28 @@ The following mount options are supported:
- 	gid=		Set the group authorized to learn processes information.
- 	subset=		Show only the specified subset of procfs.
+diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
+index 81ff626fc700..e0b8840404a1 100644
+--- a/Documentation/admin-guide/kernel-parameters.txt
++++ b/Documentation/admin-guide/kernel-parameters.txt
+@@ -1457,7 +1457,7 @@
+ 			[KNL] Should the hung task detector generate panics.
+ 			Format: <integer>
  
--hidepid=0 means classic mode - everybody may access all /proc/<pid>/ directories
--(default).
--
--hidepid=1 means users may not access any /proc/<pid>/ directories but their
--own.  Sensitive files like cmdline, sched*, status are now protected against
--other users.  This makes it impossible to learn whether any user runs
--specific program (given the program doesn't reveal itself by its behaviour).
--As an additional bonus, as /proc/<pid>/cmdline is unaccessible for other users,
--poorly written programs passing sensitive information via program arguments are
--now protected against local eavesdroppers.
--
--hidepid=2 means hidepid=1 plus all /proc/<pid>/ will be fully invisible to other
--users.  It doesn't mean that it hides a fact whether a process with a specific
--pid value exists (it can be learned by other means, e.g. by "kill -0 $PID"),
--but it hides process' uid and gid, which may be learned by stat()'ing
--/proc/<pid>/ otherwise.  It greatly complicates an intruder's task of gathering
--information about running processes, whether some daemon runs with elevated
--privileges, whether other user runs some sensitive program, whether other users
--run any program at all, etc.
--
--hidepid=4 means that procfs should only contain /proc/<pid>/ directories
--that the caller can ptrace.
-+hidepid=off or hidepid=0 means classic mode - everybody may access all
-+/proc/<pid>/ directories (default).
-+
-+hidepid=noaccess or hidepid=1 means users may not access any /proc/<pid>/
-+directories but their own.  Sensitive files like cmdline, sched*, status are now
-+protected against other users.  This makes it impossible to learn whether any
-+user runs specific program (given the program doesn't reveal itself by its
-+behaviour).  As an additional bonus, as /proc/<pid>/cmdline is unaccessible for
-+other users, poorly written programs passing sensitive information via program
-+arguments are now protected against local eavesdroppers.
-+
-+hidepid=invisible or hidepid=2 means hidepid=noaccess plus all /proc/<pid>/ will
-+be fully invisible to other users.  It doesn't mean that it hides a fact whether
-+a process with a specific pid value exists (it can be learned by other means,
-+e.g. by "kill -0 $PID"), but it hides process' uid and gid, which may be learned
-+by stat()'ing /proc/<pid>/ otherwise.  It greatly complicates an intruder's task
-+of gathering information about running processes, whether some daemon runs with
-+elevated privileges, whether other user runs some sensitive program, whether
-+other users run any program at all, etc.
-+
-+hidepid=ptraceable or hidepid=4 means that procfs should only contain
-+/proc/<pid>/ directories that the caller can ptrace.
- 
- gid= defines a group authorized to learn processes information otherwise
- prohibited by hidepid=.  If you use some daemon like identd which needs to learn
-@@ -2093,8 +2093,8 @@ creates a new procfs instance. Mount options affect own procfs instance.
- It means that it became possible to have several procfs instances
- displaying tasks with different filtering options in one pid namespace.
- 
--# mount -o hidepid=2 -t proc proc /proc
--# mount -o hidepid=1 -t proc proc /tmp/proc
-+# mount -o hidepid=invisible -t proc proc /proc
-+# mount -o hidepid=noaccess -t proc proc /tmp/proc
- # grep ^proc /proc/mounts
--proc /proc proc rw,relatime,hidepid=2 0 0
--proc /tmp/proc proc rw,relatime,hidepid=1 0 0
-+proc /proc proc rw,relatime,hidepid=invisible 0 0
-+proc /tmp/proc proc rw,relatime,hidepid=noaccess 0 0
-diff --git a/fs/proc/inode.c b/fs/proc/inode.c
-index e6577ce6027b..d38a9e592352 100644
---- a/fs/proc/inode.c
-+++ b/fs/proc/inode.c
-@@ -24,6 +24,7 @@
- #include <linux/seq_file.h>
- #include <linux/slab.h>
- #include <linux/mount.h>
-+#include <linux/bug.h>
- 
- #include <linux/uaccess.h>
- 
-@@ -165,6 +166,18 @@ void proc_invalidate_siblings_dcache(struct hlist_head *inodes, spinlock_t *lock
- 		deactivate_super(old_sb);
- }
- 
-+static inline const char *hidepid2str(int v)
-+{
-+	switch (v) {
-+		case HIDEPID_OFF: return "off";
-+		case HIDEPID_NO_ACCESS: return "noaccess";
-+		case HIDEPID_INVISIBLE: return "invisible";
-+		case HIDEPID_NOT_PTRACEABLE: return "ptraceable";
-+	}
-+	WARN_ONCE(1, "bad hide_pid value: %d\n", v);
-+	return "unknown";
-+}
-+
- static int proc_show_options(struct seq_file *seq, struct dentry *root)
- {
- 	struct proc_fs_info *fs_info = proc_sb_info(root->d_sb);
-@@ -172,7 +185,7 @@ static int proc_show_options(struct seq_file *seq, struct dentry *root)
- 	if (!gid_eq(fs_info->pid_gid, GLOBAL_ROOT_GID))
- 		seq_printf(seq, ",gid=%u", from_kgid_munged(&init_user_ns, fs_info->pid_gid));
- 	if (fs_info->hide_pid != HIDEPID_OFF)
--		seq_printf(seq, ",hidepid=%u", fs_info->hide_pid);
-+		seq_printf(seq, ",hidepid=%s", hidepid2str(fs_info->hide_pid));
- 	if (fs_info->pidonly != PROC_PIDONLY_OFF)
- 		seq_printf(seq, ",subset=pid");
- 
-diff --git a/fs/proc/root.c b/fs/proc/root.c
-index dbcd96f07c7a..ba782d6e6197 100644
---- a/fs/proc/root.c
-+++ b/fs/proc/root.c
-@@ -45,7 +45,7 @@ enum proc_param {
- 
- static const struct fs_parameter_spec proc_fs_parameters[] = {
- 	fsparam_u32("gid",	Opt_gid),
--	fsparam_u32("hidepid",	Opt_hidepid),
-+	fsparam_string("hidepid",	Opt_hidepid),
- 	fsparam_string("subset",	Opt_subset),
- 	{}
+-			A nonzero value instructs the kernel to panic when a
++			A value of 1 instructs the kernel to panic when a
+ 			hung task is detected. The default value is controlled
+ 			by the CONFIG_BOOTPARAM_HUNG_TASK_PANIC build-time
+ 			option. The value selected by this boot parameter can
+diff --git a/fs/proc/proc_sysctl.c b/fs/proc/proc_sysctl.c
+index 97eb0b552bf8..77b1b844b02b 100644
+--- a/fs/proc/proc_sysctl.c
++++ b/fs/proc/proc_sysctl.c
+@@ -1743,6 +1743,7 @@ struct sysctl_alias {
+  */
+ static const struct sysctl_alias sysctl_aliases[] = {
+ 	{"numa_zonelist_order",		"vm.numa_zonelist_order" },
++	{"hung_task_panic",		"kernel.hung_task_panic" },
+ 	{ }
  };
-@@ -58,6 +58,35 @@ static inline int valid_hidepid(unsigned int value)
- 		value == HIDEPID_NOT_PTRACEABLE);
- }
  
-+static int proc_parse_hidepid_param(struct fs_context *fc, struct fs_parameter *param)
-+{
-+	struct proc_fs_context *ctx = fc->fs_private;
-+	struct fs_parameter_spec hidepid_u32_spec = fsparam_u32("hidepid", Opt_hidepid);
-+	struct fs_parse_result result;
-+	int base = (unsigned long)hidepid_u32_spec.data;
-+
-+	if (param->type != fs_value_is_string)
-+		return invalf(fc, "proc: unexpected type of hidepid value\n");
-+
-+	if (!kstrtouint(param->string, base, &result.uint_32)) {
-+		ctx->hidepid = result.uint_32;
-+		return 0;
-+	}
-+
-+	if (!strcmp(param->string, "off"))
-+		ctx->hidepid = HIDEPID_OFF;
-+	else if (!strcmp(param->string, "noaccess"))
-+		ctx->hidepid = HIDEPID_NO_ACCESS;
-+	else if (!strcmp(param->string, "invisible"))
-+		ctx->hidepid = HIDEPID_INVISIBLE;
-+	else if (!strcmp(param->string, "ptraceable"))
-+		ctx->hidepid = HIDEPID_NOT_PTRACEABLE;
-+	else
-+		return invalf(fc, "proc: unknown value of hidepid - %s\n", param->string);
-+
-+	return 0;
-+}
-+
- static int proc_parse_subset_param(struct fs_context *fc, char *value)
+diff --git a/kernel/hung_task.c b/kernel/hung_task.c
+index 14a625c16cb3..b22b5eeab3cb 100644
+--- a/kernel/hung_task.c
++++ b/kernel/hung_task.c
+@@ -63,16 +63,6 @@ static struct task_struct *watchdog_task;
+ unsigned int __read_mostly sysctl_hung_task_panic =
+ 				CONFIG_BOOTPARAM_HUNG_TASK_PANIC_VALUE;
+ 
+-static int __init hung_task_panic_setup(char *str)
+-{
+-	int rc = kstrtouint(str, 0, &sysctl_hung_task_panic);
+-
+-	if (rc)
+-		return rc;
+-	return 1;
+-}
+-__setup("hung_task_panic=", hung_task_panic_setup);
+-
+ static int
+ hung_task_panic(struct notifier_block *this, unsigned long event, void *ptr)
  {
- 	struct proc_fs_context *ctx = fc->fs_private;
-@@ -97,9 +126,10 @@ static int proc_parse_param(struct fs_context *fc, struct fs_parameter *param)
- 		break;
- 
- 	case Opt_hidepid:
--		if (!valid_hidepid(result.uint_32))
-+		if (proc_parse_hidepid_param(fc, param))
-+			return -EINVAL;
-+		if (!valid_hidepid(ctx->hidepid))
- 			return invalf(fc, "proc: unknown value of hidepid.\n");
--		ctx->hidepid = result.uint_32;
- 		break;
- 
- 	case Opt_subset:
 -- 
-2.25.2
+2.25.1
 
