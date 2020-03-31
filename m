@@ -2,289 +2,103 @@ Return-Path: <SRS0=WOJf=5Q=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.2 required=3.0 tests=DATE_IN_PAST_12_24,
-	DKIMWL_WL_HIGH,DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.8 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9717EC18E5B
-	for <linux-api@archiver.kernel.org>; Tue, 31 Mar 2020 14:30:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 51311C43331
+	for <linux-api@archiver.kernel.org>; Tue, 31 Mar 2020 14:31:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 53CA220784
-	for <linux-api@archiver.kernel.org>; Tue, 31 Mar 2020 14:30:28 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="J+OlEOjL"
+	by mail.kernel.org (Postfix) with ESMTP id 2212A2071A
+	for <linux-api@archiver.kernel.org>; Tue, 31 Mar 2020 14:31:41 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1585665101;
+	bh=GbwCITgX7+ViF0nZ/SYsVFgrvblVn2yk006z/KmssC4=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:List-ID:From;
+	b=ViAWxR0eKnis01oJ+CP/a81cMK21ZlImx51kF44HcbVGlCe/HfUYCKJGcGWJl7T5l
+	 G3H+979Jz3Md9hSyzv7NGw+MyqAfF7wdpadILPT5+CEvZTnEAFcSnXHVmNJUurKhhP
+	 UtWEMY/ili0iPJv522zWI8TVzwE8PFFREHg6zbUk=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731221AbgCaOa0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 31 Mar 2020 10:30:26 -0400
-Received: from mail-pg1-f193.google.com ([209.85.215.193]:34996 "EHLO
-        mail-pg1-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1731210AbgCaOaY (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 31 Mar 2020 10:30:24 -0400
-Received: by mail-pg1-f193.google.com with SMTP id k5so8204431pga.2
-        for <linux-api@vger.kernel.org>; Tue, 31 Mar 2020 07:30:23 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=/n+qve4SniWFSRmYvckAN/LnaECN5T+Gq4nGnMGTL00=;
-        b=J+OlEOjLVC4lBj0sou5m5X2IO/NKqdZmwZ51wZbZpqZw2IpJoCYRcNwcGPuVA4+UwM
-         eQs6b/bniTGUEtYNapEXmg2/5hP8DPiKEBtT6mHeK5Mc8Vpm7DCOpnvAzJV0KBQpglMY
-         uwVPoIreOmzGNRN47ivmfUpToqhSAAVOTO9XQ=
+        id S1730703AbgCaObk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 31 Mar 2020 10:31:40 -0400
+Received: from mail-pf1-f196.google.com ([209.85.210.196]:42322 "EHLO
+        mail-pf1-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1730810AbgCaObk (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 31 Mar 2020 10:31:40 -0400
+Received: by mail-pf1-f196.google.com with SMTP id 22so10398519pfa.9;
+        Tue, 31 Mar 2020 07:31:39 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=/n+qve4SniWFSRmYvckAN/LnaECN5T+Gq4nGnMGTL00=;
-        b=iB6WQZ4x+dsAQWgxo+yDZeluEENwg/3ffV7l/4pezf9n7Z9FiT3L6ahEzcMY+/nd5W
-         JYLaxtcbZXgzxukgHGSNa6v11fiYiXPj9RiUTi9fSr6zdcCn+gbQqS8lPooLbKUqKl9T
-         6ECgDM/UgSnzt331dlDFAmukbDg7DHE5UbRbOGtEa8cRP0D9JnENd7xLpLqHySouFa5d
-         lerm5M+82gejK8Ih+cHNdR1XW7CJR9Mi5QnzR+8m1fzjBD8uKe/FEDseev1jvPgz0pgp
-         Jo9MjW0/bjjuGQcZHwUBBOR2e0GxLwoR4if7poMmNxq6sJZCTCAqHT2/oJDLpeCv4QFj
-         sT5g==
-X-Gm-Message-State: ANhLgQ24hIN9LE/gHUvwNE2eWexUkUAGor3hzQlFT4hR5ReHLsOWxzIM
-        3HvxM0AIrvHlkIj0tnGF49seQA==
-X-Google-Smtp-Source: ADFU+vvUMI1TPg8uRAgz/rPaz4QjTNZEjCs+2nSpTpVAyZt0xOSR0S9kmKitT5jYL5dMOM3JW/bvaw==
-X-Received: by 2002:a62:4e57:: with SMTP id c84mr19582064pfb.156.1585665022300;
-        Tue, 31 Mar 2020 07:30:22 -0700 (PDT)
-Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id f8sm12699568pfq.178.2020.03.31.07.30.20
+         :mime-version:content-disposition:in-reply-to:user-agent;
+        bh=ZV1KfwgGLtoEiy3TkAg/zZ6KIB+b40AZeOP0Q0XHWHU=;
+        b=V/ckHBGkUv+faIurBZm6aWkZw8kSgZv/W32v4KnRdHa3ae4XdBHYzRPzrKlm7N82wq
+         6tazVl/vkU+thJE5va34cOiRLqXI+R3LequulATdCwnwje5A/mPVtrJnOyq4p3pf+N9S
+         6uWJsnj/KTpQ1pK/7N4Q+NxBYqFyKHZkQdcOF0mhY4JoKZyZWXFW2Ndgx2WFDfwdP7BJ
+         MWVTD+PhVu28Po06FEONOF8zzI2Aj4+b5+JgzeW01tA5XH5tqXtmeLUAUSeVh5znX8tv
+         nuwpsyj7NAZxrbSl1bRHfMPNFXEo8WFUJSSR/58GUmp2BhDV82HXg3nLf+31df9865qf
+         SKrg==
+X-Gm-Message-State: ANhLgQ32zP88vMIDbn+syR3TVqKLMyTETGr3z6aXJ7+BTrJztNOUYEjX
+        VrYUXRNssY1JKm3NBQ5+tmA=
+X-Google-Smtp-Source: ADFU+vv9QG+JNLAPq5Hse2+XL1fqy/ETctrMBCrfQRW4WYOaoKGlkutwe7Dhv7pKCEUfjkAs3IExyg==
+X-Received: by 2002:a63:7e10:: with SMTP id z16mr18195431pgc.412.1585665098929;
+        Tue, 31 Mar 2020 07:31:38 -0700 (PDT)
+Received: from 42.do-not-panic.com (42.do-not-panic.com. [157.230.128.187])
+        by smtp.gmail.com with ESMTPSA id 184sm469375pge.71.2020.03.31.07.31.35
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 31 Mar 2020 07:30:21 -0700 (PDT)
-Date:   Mon, 30 Mar 2020 11:33:49 -0700
-From:   Kees Cook <keescook@chromium.org>
-To:     Alexey Gladkov <gladkov.alexey@gmail.com>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        Kernel Hardening <kernel-hardening@lists.openwall.com>,
-        Linux API <linux-api@vger.kernel.org>,
-        Linux FS Devel <linux-fsdevel@vger.kernel.org>,
-        Linux Security Module <linux-security-module@vger.kernel.org>,
-        Akinobu Mita <akinobu.mita@gmail.com>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        Alexey Dobriyan <adobriyan@gmail.com>,
-        Alexey Gladkov <legion@kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Daniel Micay <danielmicay@gmail.com>,
-        Djalal Harouni <tixxdz@gmail.com>,
-        "Dmitry V . Levin" <ldv@altlinux.org>,
+        Tue, 31 Mar 2020 07:31:35 -0700 (PDT)
+Received: by 42.do-not-panic.com (Postfix, from userid 1000)
+        id 0DA0940277; Tue, 31 Mar 2020 14:31:35 +0000 (UTC)
+Date:   Tue, 31 Mar 2020 14:31:35 +0000
+From:   Luis Chamberlain <mcgrof@kernel.org>
+To:     Vlastimil Babka <vbabka@suse.cz>
+Cc:     Kees Cook <keescook@chromium.org>,
+        Iurii Zaikin <yzaikin@google.com>,
+        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-mm@kvack.org, Ivan Teterevkov <ivan.teterevkov@nutanix.com>,
+        Michal Hocko <mhocko@kernel.org>,
+        David Rientjes <rientjes@google.com>,
+        Matthew Wilcox <willy@infradead.org>,
         "Eric W . Biederman" <ebiederm@xmission.com>,
+        "Guilherme G . Piccoli" <gpiccoli@canonical.com>,
+        Alexey Dobriyan <adobriyan@gmail.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
         Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        "J . Bruce Fields" <bfields@fieldses.org>,
-        Jeff Layton <jlayton@poochiereds.net>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH v11 8/9] proc: use human-readable values for hidehid
-Message-ID: <202003301132.EDD8329@keescook>
-References: <20200327172331.418878-9-gladkov.alexey@gmail.com>
- <20200330111235.154182-1-gladkov.alexey@gmail.com>
+        Christian Brauner <christian.brauner@ubuntu.com>
+Subject: Re: [PATCH 1/3] kernel/sysctl: support setting sysctl parameters
+ from kernel command line
+Message-ID: <20200331143134.GY11244@42.do-not-panic.com>
+References: <20200330115535.3215-1-vbabka@suse.cz>
+ <20200330115535.3215-2-vbabka@suse.cz>
+ <20200330224422.GX11244@42.do-not-panic.com>
+ <8146e3d0-89c3-7f79-f786-084c58282c85@suse.cz>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20200330111235.154182-1-gladkov.alexey@gmail.com>
+In-Reply-To: <8146e3d0-89c3-7f79-f786-084c58282c85@suse.cz>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Mar 30, 2020 at 01:12:35PM +0200, Alexey Gladkov wrote:
-> The hidepid parameter values are becoming more and more and it becomes
-> difficult to remember what each new magic number means.
+On Tue, Mar 31, 2020 at 09:42:46AM +0200, Vlastimil Babka wrote:
+> On 3/31/20 12:44 AM, Luis Chamberlain wrote:
+> > 
+> > This is wonderful when we think about existing sysctls which have
+> > corresponding silly boot params that do the same thing. However, shoving
+> > a boot param capability down every possible built-in sysctl brings
+> > forward support considerations we should take serious, as this would
+> > add a new user interface and we'll have to support it.
 > 
-> Suggested-by: Andy Lutomirski <luto@kernel.org>
-> Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
-> ---
->  Documentation/filesystems/proc.txt | 52 +++++++++++++++---------------
->  fs/proc/inode.c                    | 15 ++++++++-
->  fs/proc/root.c                     | 36 +++++++++++++++++++--
->  3 files changed, 73 insertions(+), 30 deletions(-)
-> 
-> diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
-> index bd0e0ab85048..af47672cb2cb 100644
-> --- a/Documentation/filesystems/proc.txt
-> +++ b/Documentation/filesystems/proc.txt
-> @@ -2025,28 +2025,28 @@ The following mount options are supported:
->  	gid=		Set the group authorized to learn processes information.
->  	subset=		Show only the specified subset of procfs.
->  
-> -hidepid=0 means classic mode - everybody may access all /proc/<pid>/ directories
-> -(default).
-> -
-> -hidepid=1 means users may not access any /proc/<pid>/ directories but their
-> -own.  Sensitive files like cmdline, sched*, status are now protected against
-> -other users.  This makes it impossible to learn whether any user runs
-> -specific program (given the program doesn't reveal itself by its behaviour).
-> -As an additional bonus, as /proc/<pid>/cmdline is unaccessible for other users,
-> -poorly written programs passing sensitive information via program arguments are
-> -now protected against local eavesdroppers.
-> -
-> -hidepid=2 means hidepid=1 plus all /proc/<pid>/ will be fully invisible to other
-> -users.  It doesn't mean that it hides a fact whether a process with a specific
-> -pid value exists (it can be learned by other means, e.g. by "kill -0 $PID"),
-> -but it hides process' uid and gid, which may be learned by stat()'ing
-> -/proc/<pid>/ otherwise.  It greatly complicates an intruder's task of gathering
-> -information about running processes, whether some daemon runs with elevated
-> -privileges, whether other user runs some sensitive program, whether other users
-> -run any program at all, etc.
-> -
-> -hidepid=4 means that procfs should only contain /proc/<pid>/ directories
-> -that the caller can ptrace.
-> +hidepid=off or hidepid=0 means classic mode - everybody may access all
-> +/proc/<pid>/ directories (default).
-> +
-> +hidepid=noaccess or hidepid=1 means users may not access any /proc/<pid>/
-> +directories but their own.  Sensitive files like cmdline, sched*, status are now
-> +protected against other users.  This makes it impossible to learn whether any
-> +user runs specific program (given the program doesn't reveal itself by its
-> +behaviour).  As an additional bonus, as /proc/<pid>/cmdline is unaccessible for
-> +other users, poorly written programs passing sensitive information via program
-> +arguments are now protected against local eavesdroppers.
-> +
-> +hidepid=invisible or hidepid=2 means hidepid=noaccess plus all /proc/<pid>/ will
-> +be fully invisible to other users.  It doesn't mean that it hides a fact whether
-> +a process with a specific pid value exists (it can be learned by other means,
-> +e.g. by "kill -0 $PID"), but it hides process' uid and gid, which may be learned
-> +by stat()'ing /proc/<pid>/ otherwise.  It greatly complicates an intruder's task
-> +of gathering information about running processes, whether some daemon runs with
-> +elevated privileges, whether other user runs some sensitive program, whether
-> +other users run any program at all, etc.
-> +
-> +hidepid=ptraceable or hidepid=4 means that procfs should only contain
-> +/proc/<pid>/ directories that the caller can ptrace.
->  
->  gid= defines a group authorized to learn processes information otherwise
->  prohibited by hidepid=.  If you use some daemon like identd which needs to learn
-> @@ -2093,8 +2093,8 @@ creates a new procfs instance. Mount options affect own procfs instance.
->  It means that it became possible to have several procfs instances
->  displaying tasks with different filtering options in one pid namespace.
->  
-> -# mount -o hidepid=2 -t proc proc /proc
-> -# mount -o hidepid=1 -t proc proc /tmp/proc
-> +# mount -o hidepid=invisible -t proc proc /proc
-> +# mount -o hidepid=noaccess -t proc proc /tmp/proc
->  # grep ^proc /proc/mounts
-> -proc /proc proc rw,relatime,hidepid=2 0 0
-> -proc /tmp/proc proc rw,relatime,hidepid=1 0 0
-> +proc /proc proc rw,relatime,hidepid=invisible 0 0
-> +proc /tmp/proc proc rw,relatime,hidepid=noaccess 0 0
-> diff --git a/fs/proc/inode.c b/fs/proc/inode.c
-> index e6577ce6027b..d38a9e592352 100644
-> --- a/fs/proc/inode.c
-> +++ b/fs/proc/inode.c
-> @@ -24,6 +24,7 @@
->  #include <linux/seq_file.h>
->  #include <linux/slab.h>
->  #include <linux/mount.h>
-> +#include <linux/bug.h>
->  
->  #include <linux/uaccess.h>
->  
-> @@ -165,6 +166,18 @@ void proc_invalidate_siblings_dcache(struct hlist_head *inodes, spinlock_t *lock
->  		deactivate_super(old_sb);
->  }
->  
-> +static inline const char *hidepid2str(int v)
-> +{
-> +	switch (v) {
-> +		case HIDEPID_OFF: return "off";
-> +		case HIDEPID_NO_ACCESS: return "noaccess";
-> +		case HIDEPID_INVISIBLE: return "invisible";
-> +		case HIDEPID_NOT_PTRACEABLE: return "ptraceable";
-> +	}
-> +	WARN_ONCE(1, "bad hide_pid value: %d\n", v);
-> +	return "unknown";
-> +}
-> +
->  static int proc_show_options(struct seq_file *seq, struct dentry *root)
->  {
->  	struct proc_fs_info *fs_info = proc_sb_info(root->d_sb);
-> @@ -172,7 +185,7 @@ static int proc_show_options(struct seq_file *seq, struct dentry *root)
->  	if (!gid_eq(fs_info->pid_gid, GLOBAL_ROOT_GID))
->  		seq_printf(seq, ",gid=%u", from_kgid_munged(&init_user_ns, fs_info->pid_gid));
->  	if (fs_info->hide_pid != HIDEPID_OFF)
-> -		seq_printf(seq, ",hidepid=%u", fs_info->hide_pid);
-> +		seq_printf(seq, ",hidepid=%s", hidepid2str(fs_info->hide_pid));
->  	if (fs_info->pidonly != PROC_PIDONLY_OFF)
->  		seq_printf(seq, ",subset=pid");
->  
-> diff --git a/fs/proc/root.c b/fs/proc/root.c
-> index dbcd96f07c7a..ba782d6e6197 100644
-> --- a/fs/proc/root.c
-> +++ b/fs/proc/root.c
-> @@ -45,7 +45,7 @@ enum proc_param {
->  
->  static const struct fs_parameter_spec proc_fs_parameters[] = {
->  	fsparam_u32("gid",	Opt_gid),
-> -	fsparam_u32("hidepid",	Opt_hidepid),
-> +	fsparam_string("hidepid",	Opt_hidepid),
->  	fsparam_string("subset",	Opt_subset),
->  	{}
->  };
-> @@ -58,6 +58,35 @@ static inline int valid_hidepid(unsigned int value)
->  		value == HIDEPID_NOT_PTRACEABLE);
->  }
->  
-> +static int proc_parse_hidepid_param(struct fs_context *fc, struct fs_parameter *param)
-> +{
-> +	struct proc_fs_context *ctx = fc->fs_private;
-> +	struct fs_parameter_spec hidepid_u32_spec = fsparam_u32("hidepid", Opt_hidepid);
-> +	struct fs_parse_result result;
-> +	int base = (unsigned long)hidepid_u32_spec.data;
-> +
-> +	if (param->type != fs_value_is_string)
-> +		return invalf(fc, "proc: unexpected type of hidepid value\n");
-> +
-> +	if (!kstrtouint(param->string, base, &result.uint_32)) {
-> +		ctx->hidepid = result.uint_32;
+> Hmm, if I boot with an initramfs with init process that does mount /proc and set
+> some sysctl there as the very first thing, then this will be almost the same
+> moment as my patch does it. There is no further kernel initialization in
+> between. So with your logic we already do support all non-modular sysctls to be
+> set so early.
 
-If it were me, I'd put this valid_hidepid() test inside here, then the
-parsing really is entirely done by this function. Otherwise, the
-validation is spread into proc_parse_param() which seems weird.
+Yes, true. Then by all means:
 
-But either way:
+Reviewed-by: Luis Chamberlain <mcgrof@kernel.org>
 
-Reviewed-by: Kees Cook <keescook@chromium.org>
-
--Kees
-
-> +		return 0;
-> +	}
-> +
-> +	if (!strcmp(param->string, "off"))
-> +		ctx->hidepid = HIDEPID_OFF;
-> +	else if (!strcmp(param->string, "noaccess"))
-> +		ctx->hidepid = HIDEPID_NO_ACCESS;
-> +	else if (!strcmp(param->string, "invisible"))
-> +		ctx->hidepid = HIDEPID_INVISIBLE;
-> +	else if (!strcmp(param->string, "ptraceable"))
-> +		ctx->hidepid = HIDEPID_NOT_PTRACEABLE;
-> +	else
-> +		return invalf(fc, "proc: unknown value of hidepid - %s\n", param->string);
-> +
-> +	return 0;
-> +}
-> +
->  static int proc_parse_subset_param(struct fs_context *fc, char *value)
->  {
->  	struct proc_fs_context *ctx = fc->fs_private;
-> @@ -97,9 +126,10 @@ static int proc_parse_param(struct fs_context *fc, struct fs_parameter *param)
->  		break;
->  
->  	case Opt_hidepid:
-> -		if (!valid_hidepid(result.uint_32))
-> +		if (proc_parse_hidepid_param(fc, param))
-> +			return -EINVAL;
-> +		if (!valid_hidepid(ctx->hidepid))
->  			return invalf(fc, "proc: unknown value of hidepid.\n");
-> -		ctx->hidepid = result.uint_32;
->  		break;
->  
->  	case Opt_subset:
-> -- 
-> 2.25.2
-> 
-
--- 
-Kees Cook
+  Luis
