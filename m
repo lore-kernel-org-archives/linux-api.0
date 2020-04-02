@@ -2,33 +2,61 @@ Return-Path: <SRS0=TDPh=5S=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.4 required=3.0 tests=DKIMWL_WL_MED,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,USER_IN_DEF_DKIM_WL autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AEFF3C2BA12
-	for <linux-api@archiver.kernel.org>; Thu,  2 Apr 2020 16:08:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C075BC2BA12
+	for <linux-api@archiver.kernel.org>; Thu,  2 Apr 2020 16:11:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 8FDE52063A
-	for <linux-api@archiver.kernel.org>; Thu,  2 Apr 2020 16:08:27 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 97DE620719
+	for <linux-api@archiver.kernel.org>; Thu,  2 Apr 2020 16:11:54 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="cRMdri6V"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2389723AbgDBQIX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 2 Apr 2020 12:08:23 -0400
-Received: from out03.mta.xmission.com ([166.70.13.233]:35208 "EHLO
-        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2389392AbgDBQIW (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 2 Apr 2020 12:08:22 -0400
-Received: from in02.mta.xmission.com ([166.70.13.52])
-        by out03.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.90_1)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1jK2OD-0007Me-0v; Thu, 02 Apr 2020 10:08:21 -0600
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
-        by in02.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        (Exim 4.87)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1jK2Nx-00044C-IX; Thu, 02 Apr 2020 10:08:20 -0600
-From:   ebiederm@xmission.com (Eric W. Biederman)
+        id S2389718AbgDBQLu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 2 Apr 2020 12:11:50 -0400
+Received: from mail-lf1-f67.google.com ([209.85.167.67]:41523 "EHLO
+        mail-lf1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2389041AbgDBQLu (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 2 Apr 2020 12:11:50 -0400
+Received: by mail-lf1-f67.google.com with SMTP id z23so3205632lfh.8
+        for <linux-api@vger.kernel.org>; Thu, 02 Apr 2020 09:11:49 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=yt6zWERiKTCjDwTG56J7PYbCEtxdXxHidONUlaX/0Js=;
+        b=cRMdri6VXL1PrIKwuy81gkl35L7PPDq29lpPSc9oxeCIc5SGIiqZg8pZqrkDDLnVb9
+         ATIfA6ph4AX+mgQJ2g4xFtlTed8dXG9kFXpWDDmRmc9iZRJ/VvaCXIYwKdNcvGxYya9T
+         JrvodRpKIVTZYh5OZgKCQvDiX1x+OBqYoVfSEje9Sjp+wrWHzZu7VuCxoB8n27O7DS7K
+         m2VuRbXpPfA/c2K3BAp3HojSyhNMlssuF//ntu3Mv5fMltgcizzbIz2Hwvm4Rl5RrTh7
+         db1ESdeqzHZCuVNlj451tRQJnKHTM+fat+l1dFjPYun9ATeoy3nvp7eWR1J38Wv435Ab
+         BUYQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=yt6zWERiKTCjDwTG56J7PYbCEtxdXxHidONUlaX/0Js=;
+        b=THbm/r2LtyCna7Z4twgZLaYcxJoR2066KNH4tcS4CKDG0ea6ZuxQSKxqvvygVHH1KN
+         sWLF5QxOykZ832Z9CFQUaY6jLcQJYexH7wmiuT/A8vYcHLW8FpXnQ0TQnxBsHdvgPM58
+         V37HvrEcJ1AhaDtCY3vI625xGI6Yy0lUEtd3Pqqh9xvTGL42BknoUyIiZN6zJiNWdZJW
+         VzTlMNRj8IMr8Jy9YbjBaKIWVrMEfe7TQbrJcm6rfs7uWgGPJ5hYpDWwuyBg0cGN+Rtj
+         yvz5xpkkwtPMKKFygqiOCpXGO7/Xls/ZGsKX+byraHrZYFuMznmRYVkJ/Vf9gIb5fsmo
+         EABA==
+X-Gm-Message-State: AGi0Pub6V1+hcT/cghFnIT/mFiMlYsd2uBrbB77v7dEsRD6T8QwDqZx+
+        gKB5wRqvl/FEzkksLLeMoTFXeSpQmeXg2qHdMUtMEkuWBw0=
+X-Google-Smtp-Source: APiQypIY+3gHVfOON959mT3BWUZJaXvVOSvN8K0EQOmiQuny69JdN42ugLz+DORki8l/0FvOcEvx2X4tgIn4sOhB9vA=
+X-Received: by 2002:a19:700a:: with SMTP id h10mr2752575lfc.184.1585843907063;
+ Thu, 02 Apr 2020 09:11:47 -0700 (PDT)
+MIME-Version: 1.0
+References: <20200327172331.418878-9-gladkov.alexey@gmail.com> <20200330111235.154182-1-gladkov.alexey@gmail.com>
+In-Reply-To: <20200330111235.154182-1-gladkov.alexey@gmail.com>
+From:   Jann Horn <jannh@google.com>
+Date:   Thu, 2 Apr 2020 18:11:20 +0200
+Message-ID: <CAG48ez2L__TODzwQW0MjYim6rh=WjkU__xvAoi2CtBCkNP2=Fg@mail.gmail.com>
+Subject: Re: [PATCH v11 8/9] proc: use human-readable values for hidehid
 To:     Alexey Gladkov <gladkov.alexey@gmail.com>
 Cc:     LKML <linux-kernel@vger.kernel.org>,
         Kernel Hardening <kernel-hardening@lists.openwall.com>,
@@ -44,6 +72,7 @@ Cc:     LKML <linux-kernel@vger.kernel.org>,
         Daniel Micay <danielmicay@gmail.com>,
         Djalal Harouni <tixxdz@gmail.com>,
         "Dmitry V . Levin" <ldv@altlinux.org>,
+        "Eric W . Biederman" <ebiederm@xmission.com>,
         Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         Ingo Molnar <mingo@kernel.org>,
         "J . Bruce Fields" <bfields@fieldses.org>,
@@ -51,62 +80,15 @@ Cc:     LKML <linux-kernel@vger.kernel.org>,
         Jonathan Corbet <corbet@lwn.net>,
         Kees Cook <keescook@chromium.org>,
         Linus Torvalds <torvalds@linux-foundation.org>,
-        Oleg Nesterov <oleg@redhat.com>,
-        David Howells <dhowells@redhat.com>
-References: <20200327172331.418878-1-gladkov.alexey@gmail.com>
-        <20200327172331.418878-9-gladkov.alexey@gmail.com>
-Date:   Thu, 02 Apr 2020 11:05:21 -0500
-In-Reply-To: <20200327172331.418878-9-gladkov.alexey@gmail.com> (Alexey
-        Gladkov's message of "Fri, 27 Mar 2020 18:23:30 +0100")
-Message-ID: <87d08pkh4u.fsf@x220.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
-MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1jK2Nx-00044C-IX;;;mid=<87d08pkh4u.fsf@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX19Wu6fmQHfDofF39L0DBA9uLm55GXDDZi0=
-X-SA-Exim-Connect-IP: 68.227.160.95
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: Re: [PATCH v10 8/9] proc: use human-readable values for hidehid
-X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
+        Oleg Nesterov <oleg@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Alexey Gladkov <gladkov.alexey@gmail.com> writes:
-
+On Mon, Mar 30, 2020 at 1:13 PM Alexey Gladkov <gladkov.alexey@gmail.com> wrote:
 > The hidepid parameter values are becoming more and more and it becomes
 > difficult to remember what each new magic number means.
 
-In principle I like this change.  In practice I think you have just
-broken ABI compatiblity with the new mount ABI.
-
-In particular the following line seems broken.
-
-> diff --git a/fs/proc/root.c b/fs/proc/root.c
-> index dbcd96f07c7a..ba782d6e6197 100644
-> --- a/fs/proc/root.c
-> +++ b/fs/proc/root.c
-> @@ -45,7 +45,7 @@ enum proc_param {
->  
->  static const struct fs_parameter_spec proc_fs_parameters[] = {
->  	fsparam_u32("gid",	Opt_gid),
-> -	fsparam_u32("hidepid",	Opt_hidepid),
-> +	fsparam_string("hidepid",	Opt_hidepid),
->  	fsparam_string("subset",	Opt_subset),
->  	{}
->  };
-
-As I read fs_parser.c fs_param_is_u32 handles string inputs and turns them
-into numbers, and it handles binary numbers.  However fs_param_is_string
-appears to only handle strings.  It appears to have not capacity to turn
-raw binary numbers into strings.
-
-So I think we probably need to fix fs_param_is_string to raw binary
-numbers before we can safely make this change to fs/proc/root.c
-
-David am I reading the fs_parser.c code correctly?  If I am are you ok
-with a change like the above?
-
-Eric
+nit: subject line says "hidehid"
