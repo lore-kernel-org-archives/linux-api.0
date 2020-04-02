@@ -2,31 +2,34 @@ Return-Path: <SRS0=TDPh=5S=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.5 required=3.0 tests=DKIM_ADSP_CUSTOM_MED,
-	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 18E93C43331
-	for <linux-api@archiver.kernel.org>; Thu,  2 Apr 2020 16:52:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 809D9C43331
+	for <linux-api@archiver.kernel.org>; Thu,  2 Apr 2020 17:01:17 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id E88BF20737
-	for <linux-api@archiver.kernel.org>; Thu,  2 Apr 2020 16:52:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 221A7206F6
+	for <linux-api@archiver.kernel.org>; Thu,  2 Apr 2020 17:01:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2388438AbgDBQwG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 2 Apr 2020 12:52:06 -0400
-Received: from raptor.unsafe.ru ([5.9.43.93]:48690 "EHLO raptor.unsafe.ru"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727412AbgDBQwG (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 2 Apr 2020 12:52:06 -0400
-Received: from comp-core-i7-2640m-0182e6 (ip-89-102-33-211.net.upcbroadband.cz [89.102.33.211])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits))
-        (No client certificate requested)
-        by raptor.unsafe.ru (Postfix) with ESMTPSA id 066E52052E;
-        Thu,  2 Apr 2020 16:52:00 +0000 (UTC)
-Date:   Thu, 2 Apr 2020 18:51:56 +0200
-From:   Alexey Gladkov <gladkov.alexey@gmail.com>
-To:     "Eric W. Biederman" <ebiederm@xmission.com>
+        id S2389948AbgDBRBQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 2 Apr 2020 13:01:16 -0400
+Received: from out01.mta.xmission.com ([166.70.13.231]:52874 "EHLO
+        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2389711AbgDBRBQ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 2 Apr 2020 13:01:16 -0400
+Received: from in01.mta.xmission.com ([166.70.13.51])
+        by out01.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.90_1)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1jK3DO-0008Jh-Ms; Thu, 02 Apr 2020 11:01:14 -0600
+Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
+        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
+        (Exim 4.87)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1jK3DN-0008NS-8i; Thu, 02 Apr 2020 11:01:14 -0600
+From:   ebiederm@xmission.com (Eric W. Biederman)
+To:     Alexey Gladkov <gladkov.alexey@gmail.com>
 Cc:     LKML <linux-kernel@vger.kernel.org>,
         Kernel Hardening <kernel-hardening@lists.openwall.com>,
         Linux API <linux-api@vger.kernel.org>,
@@ -35,6 +38,7 @@ Cc:     LKML <linux-kernel@vger.kernel.org>,
         Akinobu Mita <akinobu.mita@gmail.com>,
         Alexander Viro <viro@zeniv.linux.org.uk>,
         Alexey Dobriyan <adobriyan@gmail.com>,
+        Alexey Gladkov <legion@kernel.org>,
         Andrew Morton <akpm@linux-foundation.org>,
         Andy Lutomirski <luto@kernel.org>,
         Daniel Micay <danielmicay@gmail.com>,
@@ -47,68 +51,102 @@ Cc:     LKML <linux-kernel@vger.kernel.org>,
         Jonathan Corbet <corbet@lwn.net>,
         Kees Cook <keescook@chromium.org>,
         Linus Torvalds <torvalds@linux-foundation.org>,
-        Oleg Nesterov <oleg@redhat.com>,
-        David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH v10 8/9] proc: use human-readable values for hidehid
-Message-ID: <20200402165156.4mzenof4upvtd3lv@comp-core-i7-2640m-0182e6>
+        Oleg Nesterov <oleg@redhat.com>
 References: <20200327172331.418878-1-gladkov.alexey@gmail.com>
- <20200327172331.418878-9-gladkov.alexey@gmail.com>
- <87d08pkh4u.fsf@x220.int.ebiederm.org>
+        <20200327172331.418878-8-gladkov.alexey@gmail.com>
+Date:   Thu, 02 Apr 2020 11:58:28 -0500
+In-Reply-To: <20200327172331.418878-8-gladkov.alexey@gmail.com> (Alexey
+        Gladkov's message of "Fri, 27 Mar 2020 18:23:29 +0100")
+Message-ID: <875zehkeob.fsf@x220.int.ebiederm.org>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <87d08pkh4u.fsf@x220.int.ebiederm.org>
-X-Greylist: Sender succeeded SMTP AUTH, not delayed by milter-greylist-4.6.1 (raptor.unsafe.ru [5.9.43.93]); Thu, 02 Apr 2020 16:52:02 +0000 (UTC)
+Content-Type: text/plain
+X-XM-SPF: eid=1jK3DN-0008NS-8i;;;mid=<875zehkeob.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1+Ru1GXxpvu1H/HwnkkVQs5oho2OLsbxwc=
+X-SA-Exim-Connect-IP: 68.227.160.95
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: Re: [PATCH v10 7/9] proc: move hidepid values to uapi as they are user interface to mount
+X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
+X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Apr 02, 2020 at 11:05:21AM -0500, Eric W. Biederman wrote:
-> Alexey Gladkov <gladkov.alexey@gmail.com> writes:
-> 
-> > The hidepid parameter values are becoming more and more and it becomes
-> > difficult to remember what each new magic number means.
-> 
-> In principle I like this change.  In practice I think you have just
-> broken ABI compatiblity with the new mount ABI.
-> 
-> In particular the following line seems broken.
-> 
-> > diff --git a/fs/proc/root.c b/fs/proc/root.c
-> > index dbcd96f07c7a..ba782d6e6197 100644
-> > --- a/fs/proc/root.c
-> > +++ b/fs/proc/root.c
-> > @@ -45,7 +45,7 @@ enum proc_param {
-> >  
-> >  static const struct fs_parameter_spec proc_fs_parameters[] = {
-> >  	fsparam_u32("gid",	Opt_gid),
-> > -	fsparam_u32("hidepid",	Opt_hidepid),
-> > +	fsparam_string("hidepid",	Opt_hidepid),
-> >  	fsparam_string("subset",	Opt_subset),
-> >  	{}
-> >  };
-> 
-> As I read fs_parser.c fs_param_is_u32 handles string inputs and turns them
-> into numbers, and it handles binary numbers.  However fs_param_is_string
-> appears to only handle strings.  It appears to have not capacity to turn
-> raw binary numbers into strings.
 
-I use result only with hidepid_u32_spec and nobody modifies param->string.
-I do not use internal functions here.
+I will just say that I do not understand exporting this to the uapi
+headers.  Why do we want to export the enumeration names?
 
-I don’t follow how a raw number can get here ?
+I understand that the values are uapi.  This looks like it will make it
+difficult to make changes that rename enumeration values to make
+the code more readable.
 
-> So I think we probably need to fix fs_param_is_string to raw binary
-> numbers before we can safely make this change to fs/proc/root.c
-> 
-> David am I reading the fs_parser.c code correctly?  If I am are you ok
-> with a change like the above?
-> 
-> Eric
-> 
+Given that this patchset goes immediately to using string enumerated
+values, I also don't understand the point of exporting
+HIDEPID_NOT_PTRACEABLE.  I don't think we need to ever let
+people use the numeric value.
 
--- 
-Rgrds, legion
+My sense is that if we are switching to string values we should
+just leave the existing numeric values as backwards compatiblity
+and not do anything to make them easier to use.
 
+Eric
+
+
+Alexey Gladkov <gladkov.alexey@gmail.com> writes:
+
+> Suggested-by: Alexey Dobriyan <adobriyan@gmail.com>
+> Reviewed-by: Alexey Dobriyan <adobriyan@gmail.com>
+> Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
+> ---
+>  include/linux/proc_fs.h      |  9 +--------
+>  include/uapi/linux/proc_fs.h | 13 +++++++++++++
+>  2 files changed, 14 insertions(+), 8 deletions(-)
+>  create mode 100644 include/uapi/linux/proc_fs.h
+>
+> diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
+> index afd38cae2339..d259817ec913 100644
+> --- a/include/linux/proc_fs.h
+> +++ b/include/linux/proc_fs.h
+> @@ -7,6 +7,7 @@
+>  
+>  #include <linux/types.h>
+>  #include <linux/fs.h>
+> +#include <uapi/linux/proc_fs.h>
+>  
+>  struct proc_dir_entry;
+>  struct seq_file;
+> @@ -27,14 +28,6 @@ struct proc_ops {
+>  	unsigned long (*proc_get_unmapped_area)(struct file *, unsigned long, unsigned long, unsigned long, unsigned long);
+>  };
+>  
+> -/* definitions for hide_pid field */
+> -enum {
+> -	HIDEPID_OFF	  = 0,
+> -	HIDEPID_NO_ACCESS = 1,
+> -	HIDEPID_INVISIBLE = 2,
+> -	HIDEPID_NOT_PTRACEABLE = 4, /* Limit pids to only ptraceable pids */
+> -};
+> -
+>  /* definitions for proc mount option pidonly */
+>  enum {
+>  	PROC_PIDONLY_OFF = 0,
+> diff --git a/include/uapi/linux/proc_fs.h b/include/uapi/linux/proc_fs.h
+> new file mode 100644
+> index 000000000000..dc6d717aa6ec
+> --- /dev/null
+> +++ b/include/uapi/linux/proc_fs.h
+> @@ -0,0 +1,13 @@
+> +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+> +#ifndef _UAPI_PROC_FS_H
+> +#define _UAPI_PROC_FS_H
+> +
+> +/* definitions for hide_pid field */
+> +enum {
+> +	HIDEPID_OFF            = 0,
+> +	HIDEPID_NO_ACCESS      = 1,
+> +	HIDEPID_INVISIBLE      = 2,
+> +	HIDEPID_NOT_PTRACEABLE = 4,
+> +};
+> +
+> +#endif
