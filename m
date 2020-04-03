@@ -8,23 +8,23 @@ X-Spam-Status: No, score=-9.5 required=3.0 tests=DKIM_ADSP_CUSTOM_MED,
 	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 621ECC2BA1B
-	for <linux-api@archiver.kernel.org>; Fri,  3 Apr 2020 18:07:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AEBBBC43331
+	for <linux-api@archiver.kernel.org>; Fri,  3 Apr 2020 18:07:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 41DDB2077D
-	for <linux-api@archiver.kernel.org>; Fri,  3 Apr 2020 18:07:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 838DA2077D
+	for <linux-api@archiver.kernel.org>; Fri,  3 Apr 2020 18:07:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2404535AbgDCSHh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 3 Apr 2020 14:07:37 -0400
-Received: from raptor.unsafe.ru ([5.9.43.93]:38090 "EHLO raptor.unsafe.ru"
+        id S2404514AbgDCSHd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 3 Apr 2020 14:07:33 -0400
+Received: from raptor.unsafe.ru ([5.9.43.93]:38054 "EHLO raptor.unsafe.ru"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2404439AbgDCSHf (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 3 Apr 2020 14:07:35 -0400
+        id S2404450AbgDCSHd (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 3 Apr 2020 14:07:33 -0400
 Received: from comp-core-i7-2640m-0182e6.redhat.com (ip-89-102-33-211.net.upcbroadband.cz [89.102.33.211])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits))
         (No client certificate requested)
-        by raptor.unsafe.ru (Postfix) with ESMTPSA id 9B8F6209DC;
-        Fri,  3 Apr 2020 18:07:30 +0000 (UTC)
+        by raptor.unsafe.ru (Postfix) with ESMTPSA id E78C8209D9;
+        Fri,  3 Apr 2020 18:07:27 +0000 (UTC)
 From:   Alexey Gladkov <gladkov.alexey@gmail.com>
 To:     LKML <linux-kernel@vger.kernel.org>
 Cc:     Kernel Hardening <kernel-hardening@lists.openwall.com>,
@@ -50,102 +50,186 @@ Cc:     Kernel Hardening <kernel-hardening@lists.openwall.com>,
         Linus Torvalds <torvalds@linux-foundation.org>,
         Oleg Nesterov <oleg@redhat.com>,
         David Howells <dhowells@redhat.com>
-Subject: [PATCH v11 8/8] proc: use named enums for better readability
-Date:   Fri,  3 Apr 2020 20:06:48 +0200
-Message-Id: <20200403180648.721362-9-gladkov.alexey@gmail.com>
+Subject: [PATCH v11 5/8] proc: add option to mount only a pids subset
+Date:   Fri,  3 Apr 2020 20:06:45 +0200
+Message-Id: <20200403180648.721362-6-gladkov.alexey@gmail.com>
 X-Mailer: git-send-email 2.25.2
 In-Reply-To: <20200403180648.721362-1-gladkov.alexey@gmail.com>
 References: <20200403180648.721362-1-gladkov.alexey@gmail.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Greylist: Sender succeeded SMTP AUTH, not delayed by milter-greylist-4.6.1 (raptor.unsafe.ru [5.9.43.93]); Fri, 03 Apr 2020 18:07:31 +0000 (UTC)
+X-Greylist: Sender succeeded SMTP AUTH, not delayed by milter-greylist-4.6.1 (raptor.unsafe.ru [5.9.43.93]); Fri, 03 Apr 2020 18:07:28 +0000 (UTC)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+This allows to hide all files and directories in the procfs that are not
+related to tasks.
+
 Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
 Reviewed-by: Alexey Dobriyan <adobriyan@gmail.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
- fs/proc/base.c          | 2 +-
- fs/proc/inode.c         | 2 +-
- fs/proc/root.c          | 4 ++--
- include/linux/proc_fs.h | 8 ++++----
- 4 files changed, 8 insertions(+), 8 deletions(-)
+ fs/proc/generic.c       |  9 +++++++++
+ fs/proc/inode.c         |  6 ++++++
+ fs/proc/root.c          | 33 +++++++++++++++++++++++++++++++++
+ include/linux/proc_fs.h |  7 +++++++
+ 4 files changed, 55 insertions(+)
 
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 1ebe9eba48ea..2f2f7b36c947 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -699,7 +699,7 @@ int proc_setattr(struct dentry *dentry, struct iattr *attr)
-  */
- static bool has_pid_permissions(struct proc_fs_info *fs_info,
- 				 struct task_struct *task,
--				 int hide_pid_min)
-+				 enum proc_hidepid hide_pid_min)
+diff --git a/fs/proc/generic.c b/fs/proc/generic.c
+index 3faed94e4b65..ee5b6482009c 100644
+--- a/fs/proc/generic.c
++++ b/fs/proc/generic.c
+@@ -269,6 +269,11 @@ struct dentry *proc_lookup_de(struct inode *dir, struct dentry *dentry,
+ struct dentry *proc_lookup(struct inode *dir, struct dentry *dentry,
+ 		unsigned int flags)
  {
- 	/*
- 	 * If 'hidpid' mount option is set force a ptrace check,
-diff --git a/fs/proc/inode.c b/fs/proc/inode.c
-index d38a9e592352..8f3681723108 100644
---- a/fs/proc/inode.c
-+++ b/fs/proc/inode.c
-@@ -166,7 +166,7 @@ void proc_invalidate_siblings_dcache(struct hlist_head *inodes, spinlock_t *lock
- 		deactivate_super(old_sb);
++	struct proc_fs_info *fs_info = proc_sb_info(dir->i_sb);
++
++	if (fs_info->pidonly == PROC_PIDONLY_ON)
++		return ERR_PTR(-ENOENT);
++
+ 	return proc_lookup_de(dir, dentry, PDE(dir));
  }
  
--static inline const char *hidepid2str(int v)
-+static inline const char *hidepid2str(enum proc_hidepid v)
+@@ -325,6 +330,10 @@ int proc_readdir_de(struct file *file, struct dir_context *ctx,
+ int proc_readdir(struct file *file, struct dir_context *ctx)
  {
- 	switch (v) {
- 		case HIDEPID_OFF: return "off";
+ 	struct inode *inode = file_inode(file);
++	struct proc_fs_info *fs_info = proc_sb_info(inode->i_sb);
++
++	if (fs_info->pidonly == PROC_PIDONLY_ON)
++		return 1;
+ 
+ 	return proc_readdir_de(file, ctx, PDE(inode));
+ }
+diff --git a/fs/proc/inode.c b/fs/proc/inode.c
+index 91fe4896fa85..e6577ce6027b 100644
+--- a/fs/proc/inode.c
++++ b/fs/proc/inode.c
+@@ -173,6 +173,8 @@ static int proc_show_options(struct seq_file *seq, struct dentry *root)
+ 		seq_printf(seq, ",gid=%u", from_kgid_munged(&init_user_ns, fs_info->pid_gid));
+ 	if (fs_info->hide_pid != HIDEPID_OFF)
+ 		seq_printf(seq, ",hidepid=%u", fs_info->hide_pid);
++	if (fs_info->pidonly != PROC_PIDONLY_OFF)
++		seq_printf(seq, ",subset=pid");
+ 
+ 	return 0;
+ }
+@@ -393,12 +395,16 @@ proc_reg_get_unmapped_area(struct file *file, unsigned long orig_addr,
+ 
+ static int proc_reg_open(struct inode *inode, struct file *file)
+ {
++	struct proc_fs_info *fs_info = proc_sb_info(inode->i_sb);
+ 	struct proc_dir_entry *pde = PDE(inode);
+ 	int rv = 0;
+ 	typeof_member(struct proc_ops, proc_open) open;
+ 	typeof_member(struct proc_ops, proc_release) release;
+ 	struct pde_opener *pdeo;
+ 
++	if (fs_info->pidonly == PROC_PIDONLY_ON)
++		return -ENOENT;
++
+ 	/*
+ 	 * Ensure that
+ 	 * 1) PDE's ->release hook will be called no matter what
 diff --git a/fs/proc/root.c b/fs/proc/root.c
-index c6caae9e4308..9d6ce3710f4f 100644
+index 62eae22403d2..dbcd96f07c7a 100644
 --- a/fs/proc/root.c
 +++ b/fs/proc/root.c
-@@ -32,9 +32,9 @@
- struct proc_fs_context {
- 	struct proc_fs_info	*fs_info;
+@@ -34,16 +34,19 @@ struct proc_fs_context {
  	unsigned int		mask;
--	int			hidepid;
-+	enum proc_hidepid	hidepid;
+ 	int			hidepid;
  	int			gid;
--	int			pidonly;
-+	enum proc_pidonly	pidonly;
++	int			pidonly;
  };
  
  enum proc_param {
+ 	Opt_gid,
+ 	Opt_hidepid,
++	Opt_subset,
+ };
+ 
+ static const struct fs_parameter_spec proc_fs_parameters[] = {
+ 	fsparam_u32("gid",	Opt_gid),
+ 	fsparam_u32("hidepid",	Opt_hidepid),
++	fsparam_string("subset",	Opt_subset),
+ 	{}
+ };
+ 
+@@ -55,6 +58,29 @@ static inline int valid_hidepid(unsigned int value)
+ 		value == HIDEPID_NOT_PTRACEABLE);
+ }
+ 
++static int proc_parse_subset_param(struct fs_context *fc, char *value)
++{
++	struct proc_fs_context *ctx = fc->fs_private;
++
++	while (value) {
++		char *ptr = strchr(value, ',');
++
++		if (ptr != NULL)
++			*ptr++ = '\0';
++
++		if (*value != '\0') {
++			if (!strcmp(value, "pid")) {
++				ctx->pidonly = PROC_PIDONLY_ON;
++			} else {
++				return invalf(fc, "proc: unsupported subset option - %s\n", value);
++			}
++		}
++		value = ptr;
++	}
++
++	return 0;
++}
++
+ static int proc_parse_param(struct fs_context *fc, struct fs_parameter *param)
+ {
+ 	struct proc_fs_context *ctx = fc->fs_private;
+@@ -76,6 +102,11 @@ static int proc_parse_param(struct fs_context *fc, struct fs_parameter *param)
+ 		ctx->hidepid = result.uint_32;
+ 		break;
+ 
++	case Opt_subset:
++		if (proc_parse_subset_param(fc, param->string) < 0)
++			return -EINVAL;
++		break;
++
+ 	default:
+ 		return -EINVAL;
+ 	}
+@@ -95,6 +126,8 @@ static void proc_apply_options(struct super_block *s,
+ 		ctx->fs_info->pid_gid = make_kgid(user_ns, ctx->gid);
+ 	if (ctx->mask & (1 << Opt_hidepid))
+ 		ctx->fs_info->hide_pid = ctx->hidepid;
++	if (ctx->mask & (1 << Opt_subset))
++		ctx->fs_info->pidonly = ctx->pidonly;
+ }
+ 
+ static int proc_fill_super(struct super_block *s, struct fs_context *fc)
 diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
-index afd38cae2339..3701f49eb299 100644
+index 21d19353fdc7..afd38cae2339 100644
 --- a/include/linux/proc_fs.h
 +++ b/include/linux/proc_fs.h
-@@ -28,7 +28,7 @@ struct proc_ops {
+@@ -35,12 +35,19 @@ enum {
+ 	HIDEPID_NOT_PTRACEABLE = 4, /* Limit pids to only ptraceable pids */
  };
  
- /* definitions for hide_pid field */
--enum {
-+enum proc_hidepid {
- 	HIDEPID_OFF	  = 0,
- 	HIDEPID_NO_ACCESS = 1,
- 	HIDEPID_INVISIBLE = 2,
-@@ -36,7 +36,7 @@ enum {
- };
- 
- /* definitions for proc mount option pidonly */
--enum {
-+enum proc_pidonly {
- 	PROC_PIDONLY_OFF = 0,
- 	PROC_PIDONLY_ON  = 1,
- };
-@@ -46,8 +46,8 @@ struct proc_fs_info {
++/* definitions for proc mount option pidonly */
++enum {
++	PROC_PIDONLY_OFF = 0,
++	PROC_PIDONLY_ON  = 1,
++};
++
+ struct proc_fs_info {
+ 	struct pid_namespace *pid_ns;
  	struct dentry *proc_self;        /* For /proc/self */
  	struct dentry *proc_thread_self; /* For /proc/thread-self */
  	kgid_t pid_gid;
--	int hide_pid;
--	int pidonly;
-+	enum proc_hidepid hide_pid;
-+	enum proc_pidonly pidonly;
+ 	int hide_pid;
++	int pidonly;
  };
  
  static inline struct proc_fs_info *proc_sb_info(struct super_block *sb)
