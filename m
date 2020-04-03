@@ -2,86 +2,153 @@ Return-Path: <SRS0=V9bJ=5T=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.5 required=3.0 tests=DKIM_ADSP_CUSTOM_MED,
+	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 20348C2BA16
-	for <linux-api@archiver.kernel.org>; Fri,  3 Apr 2020 16:43:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 82135C2BA16
+	for <linux-api@archiver.kernel.org>; Fri,  3 Apr 2020 18:07:48 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D8E1F206F8
-	for <linux-api@archiver.kernel.org>; Fri,  3 Apr 2020 16:43:09 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="DFdFQtFD"
+	by mail.kernel.org (Postfix) with ESMTP id 605A3206F5
+	for <linux-api@archiver.kernel.org>; Fri,  3 Apr 2020 18:07:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728352AbgDCQnJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 3 Apr 2020 12:43:09 -0400
-Received: from mail-oi1-f194.google.com ([209.85.167.194]:34140 "EHLO
-        mail-oi1-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2404111AbgDCQnJ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 3 Apr 2020 12:43:09 -0400
-Received: by mail-oi1-f194.google.com with SMTP id d3so6688940oic.1;
-        Fri, 03 Apr 2020 09:43:08 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=SVVl9R8FYEud+/akr6L98oF7IK5MhLMqkoMHdc9p548=;
-        b=DFdFQtFD7QVW4P2Mf0M1+1zU5UL9wKQSm6qLGed5MyDKHVet5exCtltsiwjH5JPimD
-         3EvKvUVu+Ymt8a085qHWHpo6X2L7m1JPf5CrhSIdQ8OrJ3z2ZSfO7F44QUmqe/MF2kjq
-         4RZNEN/AasdhK//yr1F1Uyirq71suZMmkzLhXppTJkkuYSkoMQkKaDQcdwMq4xdf1unB
-         LcfGheihyFmi1tcrlEue19sITVGrF3KrWYg8V44WweVii0nIExjSl5uD6l+MQz6K14pS
-         RD8A7Drf5ic9OhuChBh7xYfV+mv6Uosa7RhW36lN90CkbB1dRiICaaifsa09ffy7wovg
-         dSxg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=SVVl9R8FYEud+/akr6L98oF7IK5MhLMqkoMHdc9p548=;
-        b=ZI96+0zuxLZHoecotxXtmJFxozeu+5TjhEBaE/wxGnM2tIDTSZdvpUsbU3hSK9t6ba
-         1Auf6n+Goq2X1YEEfn7+JdvmDJmJF1O5TU3s8lPYo4ZOPRuijAD/eklYVOxjY3cCBiz3
-         zulBOSUQJ7XachgJf/u7dj8PM5sq16SnkNm7SHETHdoSQYsOmAJiy3GuUt48FRjUyGrq
-         be8jM1gAhbGGNUjqqkLE+k3QpIg4dwdzAdRF2zpC+y+lbL6dJLQl5G1/dsHlvck2ApL/
-         12LIM6yGec0MV1dJzxsrOTvXLzMnSf6PaR9X3tpi+ZY9qMyVS3SaZbJla2NUaTqVxtGl
-         GL4g==
-X-Gm-Message-State: AGi0PubUM6RHNrktTnN3r0EJC0grD2Hj4vM/qJjOz1uVRbV3seSTLEZn
-        eOx/8i91fL3FCKd1OEkEKdKaaoJnYrslO0qoHoGU6gF0kc4=
-X-Google-Smtp-Source: APiQypIlv/zPSg2WNnoHU8Yt2rkFV72BQv7rJnb3qrsC7WQMiyQXI9QXoG1nJ3jgX2kvRGgqjPro34uK/nmsivpbswk=
-X-Received: by 2002:aca:3b85:: with SMTP id i127mr3523346oia.123.1585932188037;
- Fri, 03 Apr 2020 09:43:08 -0700 (PDT)
+        id S2404553AbgDCSHh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 3 Apr 2020 14:07:37 -0400
+Received: from raptor.unsafe.ru ([5.9.43.93]:38060 "EHLO raptor.unsafe.ru"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S2404463AbgDCSHd (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 3 Apr 2020 14:07:33 -0400
+Received: from comp-core-i7-2640m-0182e6.redhat.com (ip-89-102-33-211.net.upcbroadband.cz [89.102.33.211])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits))
+        (No client certificate requested)
+        by raptor.unsafe.ru (Postfix) with ESMTPSA id CAFFB209DA;
+        Fri,  3 Apr 2020 18:07:28 +0000 (UTC)
+From:   Alexey Gladkov <gladkov.alexey@gmail.com>
+To:     LKML <linux-kernel@vger.kernel.org>
+Cc:     Kernel Hardening <kernel-hardening@lists.openwall.com>,
+        Linux API <linux-api@vger.kernel.org>,
+        Linux FS Devel <linux-fsdevel@vger.kernel.org>,
+        Linux Security Module <linux-security-module@vger.kernel.org>,
+        Akinobu Mita <akinobu.mita@gmail.com>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        Alexey Dobriyan <adobriyan@gmail.com>,
+        Alexey Gladkov <legion@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Daniel Micay <danielmicay@gmail.com>,
+        Djalal Harouni <tixxdz@gmail.com>,
+        "Dmitry V . Levin" <ldv@altlinux.org>,
+        "Eric W . Biederman" <ebiederm@xmission.com>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Jeff Layton <jlayton@poochiereds.net>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Oleg Nesterov <oleg@redhat.com>,
+        David Howells <dhowells@redhat.com>
+Subject: [PATCH v11 6/8] docs: proc: add documentation for "hidepid=4" and "subset=pid" options and new mount behavior
+Date:   Fri,  3 Apr 2020 20:06:46 +0200
+Message-Id: <20200403180648.721362-7-gladkov.alexey@gmail.com>
+X-Mailer: git-send-email 2.25.2
+In-Reply-To: <20200403180648.721362-1-gladkov.alexey@gmail.com>
+References: <20200403180648.721362-1-gladkov.alexey@gmail.com>
 MIME-Version: 1.0
-References: <CAKgNAkiTYY3mrdsWypX22WCczVK9GDsOO-Vq58go_b2=719=FA@mail.gmail.com>
- <ce049b034919c4a09629c2e7bec574af133fb064.1585837173.git.e@nanocritical.com>
- <CA+zRj8XYLpa_gep+VxUfQuqeKu+=thMit-jNv1soC8Mh5H43Ug@mail.gmail.com>
- <CAKgNAkipcX47quv23SACeorSexO00nUAJR3QSTA3bFNMresE4Q@mail.gmail.com>
- <CA+zRj8XzqV19Z9KcyO+_V2Nkt4fgwK7QbP01GE5EL=g_xHf8Xw@mail.gmail.com> <cb4c685b-6c5d-9c16-aade-0c95e57de4b9@gmail.com>
-In-Reply-To: <cb4c685b-6c5d-9c16-aade-0c95e57de4b9@gmail.com>
-From:   Eric Rannaud <eric.rannaud@gmail.com>
-Date:   Fri, 3 Apr 2020 09:42:57 -0700
-Message-ID: <CA+zRj8UcOyHSWhrWSHr3eDQ-4mbze9fuZTSGf7zBfi2L57WuMw@mail.gmail.com>
-Subject: Re: [PATCH 1/1] clock_getres.2: dynamic POSIX clock devices can
- return other errors
-To:     "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc:     Eric Rannaud <e@nanocritical.com>,
-        linux-man <linux-man@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+X-Greylist: Sender succeeded SMTP AUTH, not delayed by milter-greylist-4.6.1 (raptor.unsafe.ru [5.9.43.93]); Fri, 03 Apr 2020 18:07:29 +0000 (UTC)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Apr 3, 2020 at 12:02 AM Michael Kerrisk (man-pages)
-<mtk.manpages@gmail.com> wrote:
-> Actually, there are 0 mentions of ENOTSUP in the kernel
-> (other than in tools and samples). The constant that appears
-> in the kernel is one called ENOTSUPP (2 P's) defined as 524
-> in include/linux/errno.h !! Yikes! What a mess!
+Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
+Reviewed-by: Alexey Dobriyan <adobriyan@gmail.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+---
+ Documentation/filesystems/proc.txt | 53 ++++++++++++++++++++++++++++++
+ 1 file changed, 53 insertions(+)
 
-> ...
+diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
+index 99ca040e3f90..bd0e0ab85048 100644
+--- a/Documentation/filesystems/proc.txt
++++ b/Documentation/filesystems/proc.txt
+@@ -50,6 +50,8 @@ Table of Contents
+   4	Configuring procfs
+   4.1	Mount options
+ 
++  5	Filesystem behavior
++
+ ------------------------------------------------------------------------------
+ Preface
+ ------------------------------------------------------------------------------
+@@ -2021,6 +2023,7 @@ The following mount options are supported:
+ 
+ 	hidepid=	Set /proc/<pid>/ access mode.
+ 	gid=		Set the group authorized to learn processes information.
++	subset=		Show only the specified subset of procfs.
+ 
+ hidepid=0 means classic mode - everybody may access all /proc/<pid>/ directories
+ (default).
+@@ -2042,6 +2045,56 @@ information about running processes, whether some daemon runs with elevated
+ privileges, whether other user runs some sensitive program, whether other users
+ run any program at all, etc.
+ 
++hidepid=4 means that procfs should only contain /proc/<pid>/ directories
++that the caller can ptrace.
++
+ gid= defines a group authorized to learn processes information otherwise
+ prohibited by hidepid=.  If you use some daemon like identd which needs to learn
+ information about processes information, just add identd to this group.
++
++subset=pid hides all top level files and directories in the procfs that
++are not related to tasks.
++
++------------------------------------------------------------------------------
++5 Filesystem behavior
++------------------------------------------------------------------------------
++
++Originally, before the advent of pid namepsace, procfs was a global file
++system. It means that there was only one procfs instance in the system.
++
++When pid namespace was added, a separate procfs instance was mounted in
++each pid namespace. So, procfs mount options are global among all
++mountpoints within the same namespace.
++
++# grep ^proc /proc/mounts
++proc /proc proc rw,relatime,hidepid=2 0 0
++
++# strace -e mount mount -o hidepid=1 -t proc proc /tmp/proc
++mount("proc", "/tmp/proc", "proc", 0, "hidepid=1") = 0
+++++ exited with 0 +++
++
++# grep ^proc /proc/mounts
++proc /proc proc rw,relatime,hidepid=2 0 0
++proc /tmp/proc proc rw,relatime,hidepid=2 0 0
++
++and only after remounting procfs mount options will change at all
++mountpoints.
++
++# mount -o remount,hidepid=1 -t proc proc /tmp/proc
++
++# grep ^proc /proc/mounts
++proc /proc proc rw,relatime,hidepid=1 0 0
++proc /tmp/proc proc rw,relatime,hidepid=1 0 0
++
++This behavior is different from the behavior of other filesystems.
++
++The new procfs behavior is more like other filesystems. Each procfs mount
++creates a new procfs instance. Mount options affect own procfs instance.
++It means that it became possible to have several procfs instances
++displaying tasks with different filtering options in one pid namespace.
++
++# mount -o hidepid=2 -t proc proc /proc
++# mount -o hidepid=1 -t proc proc /tmp/proc
++# grep ^proc /proc/mounts
++proc /proc proc rw,relatime,hidepid=2 0 0
++proc /tmp/proc proc rw,relatime,hidepid=1 0 0
+-- 
+2.25.2
 
-Fair enough! I didn't even see the extra P in ENOTSUPP when I was
-looking at the kernel code. Thanks for the detailed analysis.
-
-Eric
