@@ -2,108 +2,119 @@ Return-Path: <SRS0=lCv2=5X=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,FSL_HELO_FAKE,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D3BEBC2BA19
-	for <linux-api@archiver.kernel.org>; Tue,  7 Apr 2020 03:33:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 62010C2BA1B
+	for <linux-api@archiver.kernel.org>; Tue,  7 Apr 2020 08:23:01 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id A457020748
-	for <linux-api@archiver.kernel.org>; Tue,  7 Apr 2020 03:33:41 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2DE87206F5
+	for <linux-api@archiver.kernel.org>; Tue,  7 Apr 2020 08:23:01 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="X/zRB9Wh"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="bicuuoX8"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726420AbgDGDdl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 6 Apr 2020 23:33:41 -0400
-Received: from mail-pj1-f67.google.com ([209.85.216.67]:35914 "EHLO
-        mail-pj1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726329AbgDGDdl (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 6 Apr 2020 23:33:41 -0400
-Received: by mail-pj1-f67.google.com with SMTP id nu11so170448pjb.1;
-        Mon, 06 Apr 2020 20:33:40 -0700 (PDT)
+        id S1727192AbgDGIW7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 7 Apr 2020 04:22:59 -0400
+Received: from mail-ed1-f66.google.com ([209.85.208.66]:43675 "EHLO
+        mail-ed1-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726353AbgDGIW6 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 7 Apr 2020 04:22:58 -0400
+Received: by mail-ed1-f66.google.com with SMTP id bd14so2919770edb.10;
+        Tue, 07 Apr 2020 01:22:56 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=i/Z+1EhzPKH/+gfsWTS8RfxVvrjmpU0UXINubSAXsU4=;
-        b=X/zRB9WhYvcfUKxGIE5qtnjlusjCpiEokIO2jk8OX71FC9c0apvw+FTHWDkekRGt01
-         V/okEsXmgjLwNaevfOAqS8dV0Jji+ykoU2gVNgtzHxlEJ7peVucFhOAj0EV53Nd4DvKr
-         7ZL5SScqMLPqUXpIQunZ2YmpU0+/Gy+ukoRbt2zTwCS5a161ygE2cby2/+bT52hQ/xT3
-         xTRCop7JoA0oS22vy1XwAkaQvlKPhko4UxpXIsGTI41L624in70wPAzCLWTThShdr356
-         LnTBsUHZL58BCMW+gUW73jjgf6gsob8OhkJLC2QoVyXvxhBZTrXUBz0mwHF2xH6vylYe
-         q6oA==
+        h=mime-version:references:in-reply-to:reply-to:from:date:message-id
+         :subject:to:cc;
+        bh=ejAayTcXYcOvuq76wvJxUyJSQiYoHi/FdRj1wkyhmmE=;
+        b=bicuuoX8EsqEhTkv2MDMYFT4t3rRbo86omOXZJ8OPWCrG1PhsPSvrgIgKsD9bfuHPO
+         gJtv4BhJL3TdDs+E6FVHeIU7PXRIJV9hBuk+38G3KozPyIkCZiIMGlrNdcNW/tgNVqjU
+         oOZldAatdRQJxLuAvHXlC+e31E+SJOUIe0aXHZSor0RvbzM2AUEjR4RrLB8bGHdZ4r2k
+         nt5cJORkY98XOBLkeuERwBRoiVjzyEx4HyUQM0Lr+vO/c9UD46WJCCG89HMAZk6g9s/g
+         B/d6vbRonWx4X5LuGqfkCYSjwX8HsquBvfH7/fvjrBPBLThw7mZlsQKoAv4OVHmPT0X5
+         GwfA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=i/Z+1EhzPKH/+gfsWTS8RfxVvrjmpU0UXINubSAXsU4=;
-        b=AlH1c/T0wvl83trtQJvjRgv0R97d6AUUKFhRAalEEDS7T+9+K+9wToadC89852319k
-         DDRt66mdd2oywPjtGfmMjLQXKvnLMZqv+rVLNU2DsKq31fAGSiLD35UOJ/zFL4SF1imP
-         b7dDpU0+JMf5J5h3nLfaW03zTr/uNwyr3NxgAKcpffzEcSnggy3iuDX79p68bQyFzmE+
-         /ivQGB7kpA0IEpPwt1kksVbCry0MVqP7qwEL3bc3aJmuNq9rM7NIXODUCsP4lrWCQMXA
-         EeM1+anwhPpHmBmo+4IYqyF0SOTeDMbS753Znqf1hwTzGWSiSqXtM3b25jYpVZaih1Mx
-         fRoA==
-X-Gm-Message-State: AGi0Pua2JXsOIsfWw8js5kkL3Cq5jb/3x8Wv34xCas6uOOuXfzCc0eDB
-        z0dhcvj8suf++m6O2mLxUJQ=
-X-Google-Smtp-Source: APiQypIrfQvZJT2LwyUWRkkFYRDnJFheak81MJ0TQxqjm4du4jwr6HHNoKxehU7mesYXzZ7gdesZmw==
-X-Received: by 2002:a17:902:9892:: with SMTP id s18mr490734plp.321.1586230419618;
-        Mon, 06 Apr 2020 20:33:39 -0700 (PDT)
-Received: from gmail.com ([2601:600:817f:a132:df3e:521d:99d5:710d])
-        by smtp.gmail.com with ESMTPSA id q71sm12941277pfc.92.2020.04.06.20.33.38
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 06 Apr 2020 20:33:38 -0700 (PDT)
-Date:   Mon, 6 Apr 2020 20:33:34 -0700
-From:   Andrei Vagin <avagin@gmail.com>
-To:     "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc:     Dmitry Safonov <dima@arista.com>, Andrei Vagin <avagin@openvz.or>,
-        Adrian Reber <adrian@lisas.de>,
-        "Eric W. Biederman" <ebiederm@xmission.com>,
-        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        Dmitry Safonov <0x7f454c46@gmail.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Vincenzo Frascino <vincenzo.frascino@arm.com>,
-        Andy Lutomirski <luto@kernel.org>,
-        Cyrill Gorcunov <gorcunov@gmail.com>,
-        Containers <containers@lists.linux-foundation.org>
-Subject: Re: [PATCH] ns: Fix time_for_children symlink
-Message-ID: <20200407033334.GC494464@gmail.com>
-References: <a2418c48-ed80-3afe-116e-6611cb799557@gmail.com>
+        h=x-gm-message-state:mime-version:references:in-reply-to:reply-to
+         :from:date:message-id:subject:to:cc;
+        bh=ejAayTcXYcOvuq76wvJxUyJSQiYoHi/FdRj1wkyhmmE=;
+        b=YWsfIkdxw8uXEDJFCI7trcFkBgJvUawMK+rKJurhOZsCgH6f5PqVNry1cIkYV7YABX
+         tgya98fM5wx3/YEQUxda6zygV0OfVWgY4DxOIs30gAF+c4J+2sm9WbN94V9bf5aQsA3t
+         vE1rmA9meJjD6QL5exfp7iofJPwkeMo1JlesPYZurh/L7pZXX1MR95jq5JIJFBCpk5nH
+         +qngA7319+J3GVNCSGaIrOBJiM2GWybhzCBpaHr8sOMs6xSwJjo/YQ9SaO6jLZNLRDn4
+         W1VnvbdYZNU0e9sX9U7XDjiFyCG2e/eo2smRn7SGGw8Jv5RPRCtXfiFkHlajpsibugvA
+         peXw==
+X-Gm-Message-State: AGi0PuZ8WoJ/Z0bOihlEwqCizyEEoZt02ivvQ2IXE2KoxwIy+VkG7tGv
+        hkdDpP1WUatnOrPCK6snrtqD9iKvL5T+l+RQe8c=
+X-Google-Smtp-Source: APiQypLiWqCoYibx4qvBpJO+la1+IzbhqslVPhv6xA2Nple7IIy7a1xAWP3YLNaFncuGajImOP6UeqL1KNSrtFY5O/g=
+X-Received: by 2002:a17:906:1188:: with SMTP id n8mr938773eja.150.1586247775888;
+ Tue, 07 Apr 2020 01:22:55 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=koi8-r
-Content-Disposition: inline
-In-Reply-To: <a2418c48-ed80-3afe-116e-6611cb799557@gmail.com>
+References: <20200406171342.128733-1-dima@arista.com> <20200407033148.GB494464@gmail.com>
+In-Reply-To: <20200407033148.GB494464@gmail.com>
+Reply-To: mtk.manpages@gmail.com
+From:   "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Date:   Tue, 7 Apr 2020 10:22:45 +0200
+Message-ID: <CAKgNAkgTdND5m60Adb2O+SnogcUcho15F9cF5sZt_yrDF0REYg@mail.gmail.com>
+Subject: Re: [PATCH] kernel/time: Add max_time_namespaces ucount
+To:     Andrei Vagin <avagin@gmail.com>
+Cc:     Dmitry Safonov via Containers 
+        <containers@lists.linux-foundation.org>,
+        lkml <linux-kernel@vger.kernel.org>,
+        "Eric W. Biederman" <ebiederm@xmission.com>,
+        Andrey Vagin <avagin@openvz.org>,
+        Dmitry Safonov <dima@arista.com>,
+        Linux API <linux-api@vger.kernel.org>,
+        Dmitry Safonov <0x7f454c46@gmail.com>, stable@kernel.org,
+        Ingo Molnar <mingo@redhat.com>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Adrian Reber <adrian@lisas.de>
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Apr 03, 2020 at 02:11:39PM +0200, Michael Kerrisk (man-pages) wrote:
-> Dmitry, Andrei,
-> 
-> Looking at the contents of the /proc/PID/ns/time_for_children
-> symlink shows an anomaly:
-> 
-> $ ls -l /proc/self/ns/* |awk '{print $9, $10, $11}'
-> ...
-> /proc/self/ns/pid -> pid:[4026531836]
-> /proc/self/ns/pid_for_children -> pid:[4026531836]
-> /proc/self/ns/time -> time:[4026531834]
-> /proc/self/ns/time_for_children -> time_for_children:[4026531834]
-> /proc/self/ns/user -> user:[4026531837]
-> ...
-> 
-> The reference for 'time_for_children' should be a 'time' namespace,
-> just as the reference for 'pid_for_children' is a 'pid' namespace.
-> In other words, I think the above time_for_children link should read:
-> 
-> /proc/self/ns/time_for_children -> time:[4026531834]
-> 
-> If you agree with this patch, then it should be marked for
-> stable@vger.kernel.org.
+On Tue, 7 Apr 2020 at 05:31, Andrei Vagin <avagin@gmail.com> wrote:
 >
+> On Mon, Apr 06, 2020 at 06:13:42PM +0100, Dmitry Safonov via Containers wrote:
+> > Introduce missing time namespaces limit per-userns.
+> > Michael noticed that userns limit for number of time namespaces is
+> > missing.
+> >
+> > Furthermore, time namespace introduced UCOUNT_TIME_NAMESPACES, but
+> > didn't introduce an array member in user_table[]. It would make array's
+> > initialisation OOB write, but by luck the user_table array has
+> > an excessive empty member (all accesses to the array are limited with
+> > UCOUNT_COUNTS - so it silently reuses the last free member.
+> >
+> > Fixes user-visible regression: max_inotify_instances by reason of the
+> > missing UCOUNT_ENTRY() has limited max number of namespaces instead of
+> > the number of inotify instances.
+> >
+> > Fixes: 769071ac9f20 ("ns: Introduce Time Namespace")
+> > Cc: Adrian Reber <adrian@lisas.de>
+> > Cc: Andrey Vagin <avagin@openvz.org>
+> > Cc: Christian Brauner <christian.brauner@ubuntu.com>
+> > Cc: Eric W. Biederman <ebiederm@xmission.com>
+> > Cc: Ingo Molnar <mingo@redhat.com>
+> > Cc: Thomas Gleixner <tglx@linutronix.de>
+> > Cc: Vincenzo Frascino <vincenzo.frascino@arm.com>
+> > Cc: Containers <containers@lists.linux-foundation.org>
+> > Cc: Linux API <linux-api@vger.kernel.org>
+> > Cc: stable@kernel.org # v5.6+
+> > Reported-by: Michael Kerrisk (man-pages) <mtk.manpages@gmail.com>
+>
+> Acked-by: Andrei Vagin <avagin@gmail.com>
 
-Acked-by: Andrei Vagin <avagin@gmail.com>
- 
-> Signed-off-by: Michael Kerrisk <mtk.manpages@gmail.com>
+Acked-by: Michael Kerrisk <mtk.manpages@gmail.com>
+
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
