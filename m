@@ -2,36 +2,70 @@ Return-Path: <SRS0=02Hz=5Y=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.4 required=3.0 tests=DKIMWL_WL_MED,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,USER_IN_DEF_DKIM_WL autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D5D27C2BB85
-	for <linux-api@archiver.kernel.org>; Wed,  8 Apr 2020 15:23:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 59476C2BA1A
+	for <linux-api@archiver.kernel.org>; Wed,  8 Apr 2020 16:24:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id B77AC206C0
-	for <linux-api@archiver.kernel.org>; Wed,  8 Apr 2020 15:23:30 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3182620787
+	for <linux-api@archiver.kernel.org>; Wed,  8 Apr 2020 16:24:49 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="DsqtBI6q"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729048AbgDHPWj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 8 Apr 2020 11:22:39 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:39079 "EHLO
-        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728772AbgDHPWi (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 8 Apr 2020 11:22:38 -0400
-Received: from ip5f5bd698.dynamic.kabel-deutschland.de ([95.91.214.152] helo=wittgenstein.fritz.box)
-        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.86_2)
-        (envelope-from <christian.brauner@ubuntu.com>)
-        id 1jMCXC-0001BO-7U; Wed, 08 Apr 2020 15:22:34 +0000
-From:   Christian Brauner <christian.brauner@ubuntu.com>
-To:     Jens Axboe <axboe@kernel.dk>,
+        id S1727933AbgDHQYr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 8 Apr 2020 12:24:47 -0400
+Received: from mail-lj1-f193.google.com ([209.85.208.193]:45917 "EHLO
+        mail-lj1-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1729939AbgDHQYq (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 8 Apr 2020 12:24:46 -0400
+Received: by mail-lj1-f193.google.com with SMTP id t17so8239484ljc.12
+        for <linux-api@vger.kernel.org>; Wed, 08 Apr 2020 09:24:44 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=s5aiANvhgix2N64LwK7RWDgOwJhQeHsVBzrYi29ys94=;
+        b=DsqtBI6qRFjNpPkePJmA4uX3kNk0ar1H6f+mDa9WCWCogbW1T44w59UgWS3voTEzVK
+         genV1UO4Or0H2X/qb8IDbOA88OBquO3BkpRlNYz06H9TiREZObOBBJUBZTq+Ufv9WsE4
+         +7C0iZS1MYYzD1pJn+M2c6GEdXyXvNHvkqSWB4XXDBcfiYWq+U6RNTMgvedFjt69dE17
+         14nDpSBj3rkurQYjwNYAGpRsn6UJpZ2eN0cavWpSULcVrBGXx1iDEO77FjTZcDVdSRvX
+         QkJmuqfyrMbk+hWYW2pBub6BYirXJ+pM+Mp0JbV/YyhrzUF5+jieHm0nw0AYVfNnXrxV
+         gdfQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=s5aiANvhgix2N64LwK7RWDgOwJhQeHsVBzrYi29ys94=;
+        b=PmC7st8Fp0A5DjoyZgERnlvaTkA86GTgRsXdeKgpcqVGuNqPu5C/GHO5Hqe0Z76i2c
+         36bnQCrtEojFbRIjEMMnTQUnOm+Y6EzZTb3nONuPXjXPW/iMn87m/HP5KDMD/XwNl49Q
+         111iL6d5BPsUSFlEB9VIlfWhmgzURTGyLpFjiX6XrqDrol1xPjTaHcpVIAT+UkIgCQVt
+         F7iflO21saZSEwzlT0/gYz8wuEEppj7FFbN7PjbIySvgKqaBnyjRvO7Ue4vDbFlt5K+F
+         9WPI26fEDsfJV+m4t8aMVWqz5Ql3ww4qW+RVhlrMxd1WANUXXZXVHmAQhqoCcP9MQM1M
+         tsmA==
+X-Gm-Message-State: AGi0PuaiAj6EmIxJ2XyY2ZCi5YHYEfpG8L+nPFt1w7Gv40ftU9ACZgqI
+        0IY/dN1mWwtW9k6wjk6BdHSaQxTrLDyjuRIn4DD4MsQu4vw=
+X-Google-Smtp-Source: APiQypJwZtEyXK5GJK6816AgkQZ1Cx5TsDhHg1RPi2SPIJaChvEwYWQCWwAp1ip6qeVHQ0/Dbzy1kvzvsVWhJz83qlI=
+X-Received: by 2002:a05:651c:287:: with SMTP id b7mr400146ljo.73.1586363083460;
+ Wed, 08 Apr 2020 09:24:43 -0700 (PDT)
+MIME-Version: 1.0
+References: <20200408152151.5780-1-christian.brauner@ubuntu.com>
+In-Reply-To: <20200408152151.5780-1-christian.brauner@ubuntu.com>
+From:   Jann Horn <jannh@google.com>
+Date:   Wed, 8 Apr 2020 18:24:16 +0200
+Message-ID: <CAG48ez0KWgLMOp1d3X1AcRNc4-eF1YiCw=PgWiGjtM6PqQqawg@mail.gmail.com>
+Subject: Re: [PATCH 0/8] loopfs
+To:     Christian Brauner <christian.brauner@ubuntu.com>
+Cc:     Jens Axboe <axboe@kernel.dk>,
         Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
-        linux-api@vger.kernel.org
-Cc:     Jonathan Corbet <corbet@lwn.net>, Serge Hallyn <serge@hallyn.com>,
+        kernel list <linux-kernel@vger.kernel.org>,
+        linux-block@vger.kernel.org, Linux API <linux-api@vger.kernel.org>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Serge Hallyn <serge@hallyn.com>,
         "Rafael J. Wysocki" <rafael@kernel.org>, Tejun Heo <tj@kernel.org>,
         "David S. Miller" <davem@davemloft.net>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
         Saravana Kannan <saravanak@google.com>,
         Jan Kara <jack@suse.cz>, David Howells <dhowells@redhat.com>,
         Seth Forshee <seth.forshee@canonical.com>,
@@ -39,135 +73,59 @@ Cc:     Jonathan Corbet <corbet@lwn.net>, Serge Hallyn <serge@hallyn.com>,
         Tom Gundersen <teg@jklm.no>,
         Christian Kellner <ckellner@redhat.com>,
         Dmitry Vyukov <dvyukov@google.com>,
-        =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
-        linux-doc@vger.kernel.org, netdev@vger.kernel.org
-Subject: [PATCH 1/8] kobject_uevent: remove unneeded netlink_ns check
-Date:   Wed,  8 Apr 2020 17:21:44 +0200
-Message-Id: <20200408152151.5780-2-christian.brauner@ubuntu.com>
-X-Mailer: git-send-email 2.26.0
-In-Reply-To: <20200408152151.5780-1-christian.brauner@ubuntu.com>
-References: <20200408152151.5780-1-christian.brauner@ubuntu.com>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+        =?UTF-8?Q?St=C3=A9phane_Graber?= <stgraber@ubuntu.com>,
+        linux-doc@vger.kernel.org,
+        Network Development <netdev@vger.kernel.org>,
+        Matthew Garrett <mjg59@google.com>,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Back when I rewrote large chunks of uevent sending I should have removed
-the .netlink_ns method completely after having removed it's last user in
-[1]. Let's remove it now and also remove the helper associated with it
-that is unused too.
+On Wed, Apr 8, 2020 at 5:23 PM Christian Brauner
+<christian.brauner@ubuntu.com> wrote:
+> One of the use-cases for loopfs is to allow to dynamically allocate loop
+> devices in sandboxed workloads without exposing /dev or
+> /dev/loop-control to the workload in question and without having to
+> implement a complex and also racy protocol to send around file
+> descriptors for loop devices. With loopfs each mount is a new instance,
+> i.e. loop devices created in one loopfs instance are independent of any
+> loop devices created in another loopfs instance. This allows
+> sufficiently privileged tools to have their own private stash of loop
+> device instances. Dmitry has expressed his desire to use this for
+> syzkaller in a private discussion. And various parties that want to use
+> it are Cced here too.
+>
+> In addition, the loopfs filesystem can be mounted by user namespace root
+> and is thus suitable for use in containers. Combined with syscall
+> interception this makes it possible to securely delegate mounting of
+> images on loop devices, i.e. when a user calls mount -o loop <image>
+> <mountpoint> it will be possible to completely setup the loop device.
+> The final mount syscall to actually perform the mount will be handled
+> through syscall interception and be performed by a sufficiently
+> privileged process. Syscall interception is already supported through a
+> new seccomp feature we implemented in [1] and extended in [2] and is
+> actively used in production workloads. The additional loopfs work will
+> be used there and in various other workloads too. You'll find a short
+> illustration how this works with syscall interception below in [4].
 
-Fixes: a3498436b3a0 ("netns: restrict uevents") /* No backport needed. */
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: "David S. Miller" <davem@davemloft.net>
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
----
- Documentation/filesystems/sysfs-tagging.txt |  1 -
- include/linux/kobject_ns.h                  |  3 ---
- lib/kobject.c                               | 13 -------------
- lib/kobject_uevent.c                        |  2 +-
- net/core/net-sysfs.c                        |  6 ------
- 5 files changed, 1 insertion(+), 24 deletions(-)
+Would that privileged process then allow you to mount your filesystem
+images with things like ext4? As far as I know, the filesystem
+maintainers don't generally consider "untrusted filesystem image" to
+be a strongly enforced security boundary; and worse, if an attacker
+has access to a loop device from which something like ext4 is mounted,
+things like "struct ext4_dir_entry_2" will effectively be in shared
+memory, and an attacker can trivially bypass e.g.
+ext4_check_dir_entry(). At the moment, that's not a huge problem (for
+anything other than kernel lockdown) because only root normally has
+access to loop devices.
 
-diff --git a/Documentation/filesystems/sysfs-tagging.txt b/Documentation/filesystems/sysfs-tagging.txt
-index c7c8e6438958..51d28dd8b84f 100644
---- a/Documentation/filesystems/sysfs-tagging.txt
-+++ b/Documentation/filesystems/sysfs-tagging.txt
-@@ -37,6 +37,5 @@ Users of this interface:
- - define a type in the kobj_ns_type enumeration.
- - call kobj_ns_type_register() with its kobj_ns_type_operations which has
-   - current_ns() which returns current's namespace
--  - netlink_ns() which returns a socket's namespace
-   - initial_ns() which returns the initial namesapce
- - call kobj_ns_exit() when an individual tag is no longer valid
-diff --git a/include/linux/kobject_ns.h b/include/linux/kobject_ns.h
-index 069aa2ebef90..991a9286bcea 100644
---- a/include/linux/kobject_ns.h
-+++ b/include/linux/kobject_ns.h
-@@ -32,7 +32,6 @@ enum kobj_ns_type {
- /*
-  * Callbacks so sysfs can determine namespaces
-  *   @grab_current_ns: return a new reference to calling task's namespace
-- *   @netlink_ns: return namespace to which a sock belongs (right?)
-  *   @initial_ns: return the initial namespace (i.e. init_net_ns)
-  *   @drop_ns: drops a reference to namespace
-  */
-@@ -40,7 +39,6 @@ struct kobj_ns_type_operations {
- 	enum kobj_ns_type type;
- 	bool (*current_may_mount)(void);
- 	void *(*grab_current_ns)(void);
--	const void *(*netlink_ns)(struct sock *sk);
- 	const void *(*initial_ns)(void);
- 	void (*drop_ns)(void *);
- };
-@@ -52,7 +50,6 @@ const struct kobj_ns_type_operations *kobj_ns_ops(struct kobject *kobj);
- 
- bool kobj_ns_current_may_mount(enum kobj_ns_type type);
- void *kobj_ns_grab_current(enum kobj_ns_type type);
--const void *kobj_ns_netlink(enum kobj_ns_type type, struct sock *sk);
- const void *kobj_ns_initial(enum kobj_ns_type type);
- void kobj_ns_drop(enum kobj_ns_type type, void *ns);
- 
-diff --git a/lib/kobject.c b/lib/kobject.c
-index 83198cb37d8d..6f07083cc111 100644
---- a/lib/kobject.c
-+++ b/lib/kobject.c
-@@ -1092,19 +1092,6 @@ void *kobj_ns_grab_current(enum kobj_ns_type type)
- }
- EXPORT_SYMBOL_GPL(kobj_ns_grab_current);
- 
--const void *kobj_ns_netlink(enum kobj_ns_type type, struct sock *sk)
--{
--	const void *ns = NULL;
--
--	spin_lock(&kobj_ns_type_lock);
--	if ((type > KOBJ_NS_TYPE_NONE) && (type < KOBJ_NS_TYPES) &&
--	    kobj_ns_ops_tbl[type])
--		ns = kobj_ns_ops_tbl[type]->netlink_ns(sk);
--	spin_unlock(&kobj_ns_type_lock);
--
--	return ns;
--}
--
- const void *kobj_ns_initial(enum kobj_ns_type type)
- {
- 	const void *ns = NULL;
-diff --git a/lib/kobject_uevent.c b/lib/kobject_uevent.c
-index 7998affa45d4..a45b3eeaa2b9 100644
---- a/lib/kobject_uevent.c
-+++ b/lib/kobject_uevent.c
-@@ -400,7 +400,7 @@ static int kobject_uevent_net_broadcast(struct kobject *kobj,
- 	 * are the only tag relevant here since we want to decide which
- 	 * network namespaces to broadcast the uevent into.
- 	 */
--	if (ops && ops->netlink_ns && kobj->ktype->namespace)
-+	if (ops && kobj->ktype->namespace)
- 		if (ops->type == KOBJ_NS_TYPE_NET)
- 			net = kobj->ktype->namespace(kobj);
- 
-diff --git a/net/core/net-sysfs.c b/net/core/net-sysfs.c
-index 4c826b8bf9b1..5d05e13a96cc 100644
---- a/net/core/net-sysfs.c
-+++ b/net/core/net-sysfs.c
-@@ -1592,16 +1592,10 @@ static const void *net_initial_ns(void)
- 	return &init_net;
- }
- 
--static const void *net_netlink_ns(struct sock *sk)
--{
--	return sock_net(sk);
--}
--
- const struct kobj_ns_type_operations net_ns_type_operations = {
- 	.type = KOBJ_NS_TYPE_NET,
- 	.current_may_mount = net_current_may_mount,
- 	.grab_current_ns = net_grab_current_ns,
--	.netlink_ns = net_netlink_ns,
- 	.initial_ns = net_initial_ns,
- 	.drop_ns = net_drop_ns,
- };
--- 
-2.26.0
+Ubuntu carries an out-of-tree patch that afaik blocks the shared
+memory thing: <https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/eoan/commit?id=4bc428fdf5500b7366313f166b7c9c50ee43f2c4>
 
+But even with that patch, I'm not super excited about exposing
+filesystem image parsing attack surface to containers unless you run
+the filesystem in a sandboxed environment (at which point you don't
+need a loop device anymore either).
