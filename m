@@ -2,27 +2,28 @@ Return-Path: <SRS0=02Hz=5Y=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+X-Spam-Status: No, score=-7.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+	UNWANTED_LANGUAGE_BODY,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 231AFC2BA16
-	for <linux-api@archiver.kernel.org>; Wed,  8 Apr 2020 15:23:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 249A0C2BB55
+	for <linux-api@archiver.kernel.org>; Wed,  8 Apr 2020 15:23:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 056FE20730
+	by mail.kernel.org (Postfix) with ESMTP id ECAE02078E
 	for <linux-api@archiver.kernel.org>; Wed,  8 Apr 2020 15:23:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729573AbgDHPWz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 8 Apr 2020 11:22:55 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:39125 "EHLO
+        id S1729533AbgDHPWp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 8 Apr 2020 11:22:45 -0400
+Received: from youngberry.canonical.com ([91.189.89.112]:39112 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729529AbgDHPWq (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 8 Apr 2020 11:22:46 -0400
+        with ESMTP id S1729508AbgDHPWo (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 8 Apr 2020 11:22:44 -0400
 Received: from ip5f5bd698.dynamic.kabel-deutschland.de ([95.91.214.152] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1jMCXL-0001BO-JW; Wed, 08 Apr 2020 15:22:43 +0000
+        id 1jMCXF-0001BO-9W; Wed, 08 Apr 2020 15:22:37 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Jens Axboe <axboe@kernel.dk>,
         Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -41,9 +42,9 @@ Cc:     Jonathan Corbet <corbet@lwn.net>, Serge Hallyn <serge@hallyn.com>,
         Dmitry Vyukov <dvyukov@google.com>,
         =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
         linux-doc@vger.kernel.org, netdev@vger.kernel.org
-Subject: [PATCH 7/8] loopfs: start attaching correct namespace during loop_add()
-Date:   Wed,  8 Apr 2020 17:21:50 +0200
-Message-Id: <20200408152151.5780-8-christian.brauner@ubuntu.com>
+Subject: [PATCH 3/8] loop: use ns_capable for some loop operations
+Date:   Wed,  8 Apr 2020 17:21:46 +0200
+Message-Id: <20200408152151.5780-4-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.26.0
 In-Reply-To: <20200408152151.5780-1-christian.brauner@ubuntu.com>
 References: <20200408152151.5780-1-christian.brauner@ubuntu.com>
@@ -54,72 +55,100 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Now that kernfs and the block_class optionally support setting user
-namespace tags we can start tagging loop devices with the namespace the
-loopfs instance was mounted in. This has the consequence that loopfs
-devices carry the correct sysfs permissions for all their core files.
-All other classes will continue to be correctly owned by the initial
-namespaces. Here is sample output:
-
-root@b1:~# mount -t loop loop /mnt
-root@b1:~# ln -sf /mnt/loop-control /dev/loop-control
-root@b1:~# losetup -f
-/dev/loop8
-root@b1:~# ln -sf /mnt/loop8 /dev/loop8
-root@b1:~# ls -al /sys/class/block/loop8
-lrwxrwxrwx 1 root root 0 Apr  7 13:06 /sys/class/block/loop8 -> ../../devices/virtual/block/loop8
-root@b1:~# ls -al /sys/class/block/loop8/
-total 0
-drwxr-xr-x  9 root   root       0 Apr  7 13:06 .
-drwxr-xr-x 18 nobody nogroup    0 Apr  7 13:07 ..
--r--r--r--  1 root   root    4096 Apr  7 13:06 alignment_offset
-lrwxrwxrwx  1 nobody nogroup    0 Apr  7 13:07 bdi -> ../../bdi/7:8
--r--r--r--  1 root   root    4096 Apr  7 13:06 capability
--r--r--r--  1 root   root    4096 Apr  7 13:06 dev
--r--r--r--  1 root   root    4096 Apr  7 13:06 discard_alignment
--r--r--r--  1 root   root    4096 Apr  7 13:06 events
--r--r--r--  1 root   root    4096 Apr  7 13:06 events_async
--rw-r--r--  1 root   root    4096 Apr  7 13:06 events_poll_msecs
--r--r--r--  1 root   root    4096 Apr  7 13:06 ext_range
--r--r--r--  1 root   root    4096 Apr  7 13:06 hidden
-drwxr-xr-x  2 nobody nogroup    0 Apr  7 13:07 holders
--r--r--r--  1 root   root    4096 Apr  7 13:06 inflight
-drwxr-xr-x  2 nobody nogroup    0 Apr  7 13:07 integrity
-drwxr-xr-x  3 nobody nogroup    0 Apr  7 13:07 mq
-drwxr-xr-x  2 root   root       0 Apr  7 13:06 power
-drwxr-xr-x  3 nobody nogroup    0 Apr  7 13:07 queue
--r--r--r--  1 root   root    4096 Apr  7 13:06 range
--r--r--r--  1 root   root    4096 Apr  7 13:06 removable
--r--r--r--  1 root   root    4096 Apr  7 13:06 ro
--r--r--r--  1 root   root    4096 Apr  7 13:06 size
-drwxr-xr-x  2 nobody nogroup    0 Apr  7 13:07 slaves
--r--r--r--  1 root   root    4096 Apr  7 13:06 stat
-lrwxrwxrwx  1 nobody nogroup    0 Apr  7 13:07 subsystem -> ../../../../class/block
-drwxr-xr-x  2 root   root       0 Apr  7 13:06 trace
--rw-r--r--  1 root   root    4096 Apr  7 13:06 uevent
-root@b1:~#
+The following  LOOP_GET_STATUS, LOOP_SET_STATUS, and LOOP_SET_BLOCK_SIZE
+operations are now allowed in non-initial namespaces. Most other
+operations were already possible before.
 
 Cc: Jens Axboe <axboe@kernel.dk>
+Cc: Seth Forshee <seth.forshee@canonical.com>
+Cc: Tom Gundersen <teg@jklm.no>
+Cc: Tejun Heo <tj@kernel.org>
+Cc: Christian Kellner <ckellner@redhat.com>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: "David S. Miller" <davem@davemloft.net>
+Cc: David Rheinsberg <david.rheinsberg@gmail.com>
+Cc: Dmitry Vyukov <dvyukov@google.com>
+Cc: "Rafael J. Wysocki" <rafael@kernel.org>
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
- drivers/block/loop.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ drivers/block/loop.c | 29 ++++++++++++++++++++++++-----
+ 1 file changed, 24 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index b1c3436d6e38..7a14fd3e4329 100644
+index a7eda14be639..b1c3436d6e38 100644
 --- a/drivers/block/loop.c
 +++ b/drivers/block/loop.c
-@@ -2154,6 +2154,10 @@ static int loop_add(struct loop_device **l, int i, struct inode *inode)
- 	disk->private_data	= lo;
- 	disk->queue		= lo->lo_queue;
- 	sprintf(disk->disk_name, "loop%d", i);
-+#ifdef CONFIG_BLK_DEV_LOOPFS
-+	if (loopfs_i_sb(inode))
-+		disk->user_ns = loopfs_i_sb(inode)->s_user_ns;
-+#endif
+@@ -1294,6 +1294,25 @@ void loopfs_remove_locked(struct loop_device *lo)
+ 	loop_remove(lo);
+ 	mutex_unlock(&loop_ctl_mutex);
+ }
++
++static bool loop_capable(const struct loop_device *lo, int cap)
++{
++	struct super_block *sb;
++	struct user_namespace *ns;
++
++	sb = loopfs_i_sb(lo->lo_loopfs_i);
++	if (sb)
++		ns = sb->s_user_ns;
++	else
++		ns = &init_user_ns;
++
++	return ns_capable(ns, cap);
++}
++#else /* !CONFIG_BLK_DEV_LOOPFS */
++static inline bool loop_capable(const struct loop_device *lo, int cap)
++{
++	return capable(cap);
++}
+ #endif /* CONFIG_BLK_DEV_LOOPFS */
  
- 	add_disk(disk);
- 
+ static int
+@@ -1310,7 +1329,7 @@ loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
+ 		return err;
+ 	if (lo->lo_encrypt_key_size &&
+ 	    !uid_eq(lo->lo_key_owner, uid) &&
+-	    !capable(CAP_SYS_ADMIN)) {
++	    !loop_capable(lo, CAP_SYS_ADMIN)) {
+ 		err = -EPERM;
+ 		goto out_unlock;
+ 	}
+@@ -1441,7 +1460,7 @@ loop_get_status(struct loop_device *lo, struct loop_info64 *info)
+ 	memcpy(info->lo_crypt_name, lo->lo_crypt_name, LO_NAME_SIZE);
+ 	info->lo_encrypt_type =
+ 		lo->lo_encryption ? lo->lo_encryption->number : 0;
+-	if (lo->lo_encrypt_key_size && capable(CAP_SYS_ADMIN)) {
++	if (lo->lo_encrypt_key_size && loop_capable(lo, CAP_SYS_ADMIN)) {
+ 		info->lo_encrypt_key_size = lo->lo_encrypt_key_size;
+ 		memcpy(info->lo_encrypt_key, lo->lo_encrypt_key,
+ 		       lo->lo_encrypt_key_size);
+@@ -1665,7 +1684,7 @@ static int lo_ioctl(struct block_device *bdev, fmode_t mode,
+ 		return loop_clr_fd(lo);
+ 	case LOOP_SET_STATUS:
+ 		err = -EPERM;
+-		if ((mode & FMODE_WRITE) || capable(CAP_SYS_ADMIN)) {
++		if ((mode & FMODE_WRITE) || loop_capable(lo, CAP_SYS_ADMIN)) {
+ 			err = loop_set_status_old(lo,
+ 					(struct loop_info __user *)arg);
+ 		}
+@@ -1674,7 +1693,7 @@ static int lo_ioctl(struct block_device *bdev, fmode_t mode,
+ 		return loop_get_status_old(lo, (struct loop_info __user *) arg);
+ 	case LOOP_SET_STATUS64:
+ 		err = -EPERM;
+-		if ((mode & FMODE_WRITE) || capable(CAP_SYS_ADMIN)) {
++		if ((mode & FMODE_WRITE) || loop_capable(lo, CAP_SYS_ADMIN)) {
+ 			err = loop_set_status64(lo,
+ 					(struct loop_info64 __user *) arg);
+ 		}
+@@ -1684,7 +1703,7 @@ static int lo_ioctl(struct block_device *bdev, fmode_t mode,
+ 	case LOOP_SET_CAPACITY:
+ 	case LOOP_SET_DIRECT_IO:
+ 	case LOOP_SET_BLOCK_SIZE:
+-		if (!(mode & FMODE_WRITE) && !capable(CAP_SYS_ADMIN))
++		if (!(mode & FMODE_WRITE) && !loop_capable(lo, CAP_SYS_ADMIN))
+ 			return -EPERM;
+ 		/* Fall through */
+ 	default:
 -- 
 2.26.0
 
