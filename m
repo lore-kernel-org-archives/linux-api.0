@@ -2,27 +2,27 @@ Return-Path: <SRS0=02Hz=5Y=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 40D79C2BA2B
-	for <linux-api@archiver.kernel.org>; Wed,  8 Apr 2020 15:23:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 69EBAC2D0EA
+	for <linux-api@archiver.kernel.org>; Wed,  8 Apr 2020 15:23:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 081212072A
-	for <linux-api@archiver.kernel.org>; Wed,  8 Apr 2020 15:23:19 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 43A9620747
+	for <linux-api@archiver.kernel.org>; Wed,  8 Apr 2020 15:23:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729608AbgDHPXN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 8 Apr 2020 11:23:13 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:39096 "EHLO
+        id S1729272AbgDHPWk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 8 Apr 2020 11:22:40 -0400
+Received: from youngberry.canonical.com ([91.189.89.112]:39080 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728772AbgDHPWl (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 8 Apr 2020 11:22:41 -0400
+        with ESMTP id S1728733AbgDHPWk (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 8 Apr 2020 11:22:40 -0400
 Received: from ip5f5bd698.dynamic.kabel-deutschland.de ([95.91.214.152] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1jMCXG-0001BO-L1; Wed, 08 Apr 2020 15:22:38 +0000
+        id 1jMCXA-0001BO-NU; Wed, 08 Apr 2020 15:22:32 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Jens Axboe <axboe@kernel.dk>,
         Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -41,328 +41,169 @@ Cc:     Jonathan Corbet <corbet@lwn.net>, Serge Hallyn <serge@hallyn.com>,
         Dmitry Vyukov <dvyukov@google.com>,
         =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
         linux-doc@vger.kernel.org, netdev@vger.kernel.org
-Subject: [PATCH 4/8] kernfs: handle multiple namespace tags
-Date:   Wed,  8 Apr 2020 17:21:47 +0200
-Message-Id: <20200408152151.5780-5-christian.brauner@ubuntu.com>
+Subject: [PATCH 0/8] loopfs
+Date:   Wed,  8 Apr 2020 17:21:43 +0200
+Message-Id: <20200408152151.5780-1-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.26.0
-In-Reply-To: <20200408152151.5780-1-christian.brauner@ubuntu.com>
-References: <20200408152151.5780-1-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Since [1] kernfs supports namespace tags. This feature is essential to
-enable sysfs to present different views of on various parts depending on
-the namespace tag. For example, the /sys/class/net/ directory will only
-show network devices that belong to the network namespace that sysfs was
-mounted in. This is achieved by stashing a reference to the network
-namespace of the task mounting sysfs in the super block. And when a
-lookup operation is performed on e.g. /sys/class/net/ kernfs will
-compare the network namespace tag of the kernfs_node associated with the
-device and kobject of the network device to the network namespace of the
-network device. This ensures that only network devices owned by the
-network namespace sysfs was mounted in are shown, a feature which is
-essential to containers.
-For loopfs to show correct permissions in sysfs just as with network
-devices we need to be able to tag kernfs_super_info with additional
-namespaces. This extension was even already mentioned in a comment to
-struct kernfs_super_info:
-  /*
-   * Each sb is associated with one namespace tag, currently the
-   * network namespace of the task which mounted this kernfs
-   * instance.  If multiple tags become necessary, make the following
-   * an array and compare kernfs_node tag against every entry.
-   */
-This patch extends the kernfs_super_info and kernfs_fs_context ns
-pointers to fixed-size arrays of namespace tags. The size is taken from
-the namespaces currently supported by kobjects, i.e. we don't extend it
-to cover all namespace but only the ones kernfs needs to support.
-In addition, the kernfs_node struct gains an additional member that
-indicates the type of namespace this kernfs_node was tagged with. This
-allows us to simply retrieve the correct namespace tag from the
-kernfs_fs_context and kernfs_super_info ns array with a simple indexing
-operation. This has the advantage that we can just keep passing down the
-correct namespace instead of passing down the array.
+Hey everyone,
 
-[1]: 608b4b9548de ("netns: Teach network device kobjects which namespace they are in.")
-Cc: Tejun Heo <tj@kernel.org>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
----
- fs/kernfs/dir.c             |  6 +++---
- fs/kernfs/kernfs-internal.h |  9 ++++-----
- fs/kernfs/mount.c           | 11 +++++++----
- fs/sysfs/mount.c            | 10 +++++-----
- include/linux/kernfs.h      | 22 ++++++++++++++--------
- include/linux/sysfs.h       |  8 +++++---
- lib/kobject.c               |  2 +-
- 7 files changed, 39 insertions(+), 29 deletions(-)
+After having been pinged about this by various people recently here's loopfs.
 
-diff --git a/fs/kernfs/dir.c b/fs/kernfs/dir.c
-index 9aec80b9d7c6..1f2d894ae454 100644
---- a/fs/kernfs/dir.c
-+++ b/fs/kernfs/dir.c
-@@ -576,7 +576,7 @@ static int kernfs_dop_revalidate(struct dentry *dentry, unsigned int flags)
- 
- 	/* The kernfs node has been moved to a different namespace */
- 	if (kn->parent && kernfs_ns_enabled(kn->parent) &&
--	    kernfs_info(dentry->d_sb)->ns != kn->ns)
-+	    kernfs_info(dentry->d_sb)->ns[kn->ns_type] != kn->ns)
- 		goto out_bad;
- 
- 	mutex_unlock(&kernfs_mutex);
-@@ -1087,7 +1087,7 @@ static struct dentry *kernfs_iop_lookup(struct inode *dir,
- 	mutex_lock(&kernfs_mutex);
- 
- 	if (kernfs_ns_enabled(parent))
--		ns = kernfs_info(dir->i_sb)->ns;
-+		ns = kernfs_info(dir->i_sb)->ns[parent->ns_type];
- 
- 	kn = kernfs_find_ns(parent, dentry->d_name.name, ns);
- 
-@@ -1673,7 +1673,7 @@ static int kernfs_fop_readdir(struct file *file, struct dir_context *ctx)
- 	mutex_lock(&kernfs_mutex);
- 
- 	if (kernfs_ns_enabled(parent))
--		ns = kernfs_info(dentry->d_sb)->ns;
-+		ns = kernfs_info(dentry->d_sb)->ns[parent->ns_type];
- 
- 	for (pos = kernfs_dir_pos(ns, parent, ctx->pos, pos);
- 	     pos;
-diff --git a/fs/kernfs/kernfs-internal.h b/fs/kernfs/kernfs-internal.h
-index 2f3c51d55261..6c375eb59460 100644
---- a/fs/kernfs/kernfs-internal.h
-+++ b/fs/kernfs/kernfs-internal.h
-@@ -16,6 +16,7 @@
- #include <linux/xattr.h>
- 
- #include <linux/kernfs.h>
-+#include <linux/kobject_ns.h>
- #include <linux/fs_context.h>
- 
- struct kernfs_iattrs {
-@@ -60,12 +61,10 @@ struct kernfs_super_info {
- 	struct kernfs_root	*root;
- 
- 	/*
--	 * Each sb is associated with one namespace tag, currently the
--	 * network namespace of the task which mounted this kernfs
--	 * instance.  If multiple tags become necessary, make the following
--	 * an array and compare kernfs_node tag against every entry.
-+	 * Each sb can be associated with namespace tags. They will be used
-+	 * to compare kernfs_node tags against relevant entries.
- 	 */
--	const void		*ns;
-+	const void		*ns[KOBJ_NS_TYPES];
- 
- 	/* anchored at kernfs_root->supers, protected by kernfs_mutex */
- 	struct list_head	node;
-diff --git a/fs/kernfs/mount.c b/fs/kernfs/mount.c
-index 9dc7e7a64e10..dc4ee0f0a597 100644
---- a/fs/kernfs/mount.c
-+++ b/fs/kernfs/mount.c
-@@ -279,14 +279,15 @@ static int kernfs_test_super(struct super_block *sb, struct fs_context *fc)
- 	struct kernfs_super_info *sb_info = kernfs_info(sb);
- 	struct kernfs_super_info *info = fc->s_fs_info;
- 
--	return sb_info->root == info->root && sb_info->ns == info->ns;
-+	return sb_info->root == info->root &&
-+	       memcmp(sb_info->ns, info->ns, sizeof(sb_info->ns)) == 0;
- }
- 
- static int kernfs_set_super(struct super_block *sb, struct fs_context *fc)
- {
- 	struct kernfs_fs_context *kfc = fc->fs_private;
- 
--	kfc->ns_tag = NULL;
-+	memset(kfc->ns_tag, 0, sizeof(kfc->ns_tag));
- 	return set_anon_super_fc(sb, fc);
- }
- 
-@@ -296,7 +297,7 @@ static int kernfs_set_super(struct super_block *sb, struct fs_context *fc)
-  *
-  * Return the namespace tag associated with kernfs super_block @sb.
-  */
--const void *kernfs_super_ns(struct super_block *sb)
-+const void **kernfs_super_ns(struct super_block *sb)
- {
- 	struct kernfs_super_info *info = kernfs_info(sb);
- 
-@@ -324,7 +325,9 @@ int kernfs_get_tree(struct fs_context *fc)
- 		return -ENOMEM;
- 
- 	info->root = kfc->root;
--	info->ns = kfc->ns_tag;
-+	BUILD_BUG_ON(sizeof(info->ns) != sizeof(kfc->ns_tag));
-+	memcpy(info->ns, kfc->ns_tag, sizeof(info->ns));
-+
- 	INIT_LIST_HEAD(&info->node);
- 
- 	fc->s_fs_info = info;
-diff --git a/fs/sysfs/mount.c b/fs/sysfs/mount.c
-index db81cfbab9d6..5e2ec88a709e 100644
---- a/fs/sysfs/mount.c
-+++ b/fs/sysfs/mount.c
-@@ -41,8 +41,8 @@ static void sysfs_fs_context_free(struct fs_context *fc)
- {
- 	struct kernfs_fs_context *kfc = fc->fs_private;
- 
--	if (kfc->ns_tag)
--		kobj_ns_drop(KOBJ_NS_TYPE_NET, kfc->ns_tag);
-+	if (kfc->ns_tag[KOBJ_NS_TYPE_NET])
-+		kobj_ns_drop(KOBJ_NS_TYPE_NET, kfc->ns_tag[KOBJ_NS_TYPE_NET]);
- 	kernfs_free_fs_context(fc);
- 	kfree(kfc);
- }
-@@ -66,7 +66,7 @@ static int sysfs_init_fs_context(struct fs_context *fc)
- 	if (!kfc)
- 		return -ENOMEM;
- 
--	kfc->ns_tag = netns = kobj_ns_grab_current(KOBJ_NS_TYPE_NET);
-+	kfc->ns_tag[KOBJ_NS_TYPE_NET] = netns = kobj_ns_grab_current(KOBJ_NS_TYPE_NET);
- 	kfc->root = sysfs_root;
- 	kfc->magic = SYSFS_MAGIC;
- 	fc->fs_private = kfc;
-@@ -81,10 +81,10 @@ static int sysfs_init_fs_context(struct fs_context *fc)
- 
- static void sysfs_kill_sb(struct super_block *sb)
- {
--	void *ns = (void *)kernfs_super_ns(sb);
-+	void **ns = (void **)kernfs_super_ns(sb);
- 
- 	kernfs_kill_sb(sb);
--	kobj_ns_drop(KOBJ_NS_TYPE_NET, ns);
-+	kobj_ns_drop(KOBJ_NS_TYPE_NET, ns[KOBJ_NS_TYPE_NET]);
- }
- 
- static struct file_system_type sysfs_fs_type = {
-diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
-index dded2e5a9f42..0e4414bd7007 100644
---- a/include/linux/kernfs.h
-+++ b/include/linux/kernfs.h
-@@ -16,6 +16,7 @@
- #include <linux/atomic.h>
- #include <linux/uidgid.h>
- #include <linux/wait.h>
-+#include <linux/kobject_ns.h>
- 
- struct file;
- struct dentry;
-@@ -130,8 +131,9 @@ struct kernfs_node {
- 
- 	struct rb_node		rb;
- 
--	const void		*ns;	/* namespace tag */
--	unsigned int		hash;	/* ns + name hash */
-+	const void		*ns;		/* namespace tag */
-+	enum kobj_ns_type	ns_type;	/* type of namespace tag */
-+	unsigned int		hash;		/* ns + name hash */
- 	union {
- 		struct kernfs_elem_dir		dir;
- 		struct kernfs_elem_symlink	symlink;
-@@ -268,7 +270,7 @@ struct kernfs_ops {
-  */
- struct kernfs_fs_context {
- 	struct kernfs_root	*root;		/* Root of the hierarchy being mounted */
--	void			*ns_tag;	/* Namespace tag of the mount (or NULL) */
-+	void			*ns_tag[KOBJ_NS_TYPES]; /* Namespace tags of the mount (or empty) */
- 	unsigned long		magic;		/* File system specific magic number */
- 
- 	/* The following are set/used by kernfs_mount() */
-@@ -312,17 +314,20 @@ static inline ino_t kernfs_gen(struct kernfs_node *kn)
- 
- /**
-  * kernfs_enable_ns - enable namespace under a directory
-- * @kn: directory of interest, should be empty
-+ * @kn:		directory of interest, should be empty
-+ * @ns_type:	type of namespace that should be enabled for this directory
-  *
-  * This is to be called right after @kn is created to enable namespace
-  * under it.  All children of @kn must have non-NULL namespace tags and
-  * only the ones which match the super_block's tag will be visible.
-  */
--static inline void kernfs_enable_ns(struct kernfs_node *kn)
-+static inline void kernfs_enable_ns(struct kernfs_node *kn,
-+				    enum kobj_ns_type ns_type)
- {
- 	WARN_ON_ONCE(kernfs_type(kn) != KERNFS_DIR);
- 	WARN_ON_ONCE(!RB_EMPTY_ROOT(&kn->dir.children));
- 	kn->flags |= KERNFS_NS;
-+	kn->ns_type = ns_type;
- }
- 
- /**
-@@ -394,7 +399,7 @@ int kernfs_xattr_get(struct kernfs_node *kn, const char *name,
- int kernfs_xattr_set(struct kernfs_node *kn, const char *name,
- 		     const void *value, size_t size, int flags);
- 
--const void *kernfs_super_ns(struct super_block *sb);
-+const void **kernfs_super_ns(struct super_block *sb);
- int kernfs_get_tree(struct fs_context *fc);
- void kernfs_free_fs_context(struct fs_context *fc);
- void kernfs_kill_sb(struct super_block *sb);
-@@ -408,7 +413,8 @@ struct kernfs_node *kernfs_find_and_get_node_by_id(struct kernfs_root *root,
- static inline enum kernfs_node_type kernfs_type(struct kernfs_node *kn)
- { return 0; }	/* whatever */
- 
--static inline void kernfs_enable_ns(struct kernfs_node *kn) { }
-+static inline void kernfs_enable_ns(struct kernfs_node *kn,
-+				    enum kobj_ns_type ns_type) { }
- 
- static inline bool kernfs_ns_enabled(struct kernfs_node *kn)
- { return false; }
-@@ -504,7 +510,7 @@ static inline int kernfs_xattr_set(struct kernfs_node *kn, const char *name,
- 				   const void *value, size_t size, int flags)
- { return -ENOSYS; }
- 
--static inline const void *kernfs_super_ns(struct super_block *sb)
-+static inline const void **kernfs_super_ns(struct super_block *sb)
- { return NULL; }
- 
- static inline int kernfs_get_tree(struct fs_context *fc)
-diff --git a/include/linux/sysfs.h b/include/linux/sysfs.h
-index fa7ee503fb76..52eda7159f09 100644
---- a/include/linux/sysfs.h
-+++ b/include/linux/sysfs.h
-@@ -305,9 +305,10 @@ void sysfs_notify(struct kobject *kobj, const char *dir, const char *attr);
- 
- int __must_check sysfs_init(void);
- 
--static inline void sysfs_enable_ns(struct kernfs_node *kn)
-+static inline void sysfs_enable_ns(struct kernfs_node *kn,
-+				   enum kobj_ns_type ns_type)
- {
--	return kernfs_enable_ns(kn);
-+	return kernfs_enable_ns(kn, ns_type);
- }
- 
- #else /* CONFIG_SYSFS */
-@@ -518,7 +519,8 @@ static inline int __must_check sysfs_init(void)
- 	return 0;
- }
- 
--static inline void sysfs_enable_ns(struct kernfs_node *kn)
-+static inline void sysfs_enable_ns(struct kernfs_node *kn,
-+				   enum kobj_ns_type ns_type)
- {
- }
- 
-diff --git a/lib/kobject.c b/lib/kobject.c
-index 6f07083cc111..c58c62d49a10 100644
---- a/lib/kobject.c
-+++ b/lib/kobject.c
-@@ -120,7 +120,7 @@ static int create_dir(struct kobject *kobj)
- 		BUG_ON(ops->type >= KOBJ_NS_TYPES);
- 		BUG_ON(!kobj_ns_type_registered(ops->type));
- 
--		sysfs_enable_ns(kobj->sd);
-+		sysfs_enable_ns(kobj->sd, ops->type);
- 	}
- 
- 	return 0;
+This implements loopfs, a loop device filesystem. It takes inspiration
+from the binderfs filesystem I implemented about two years ago and with
+which we had overall good experiences so far. Parts of it are also
+based on [3] but it's mostly a new, imho cleaner and more complete
+approach.
+
+To experiment, the patchset can be found in the following locations:
+https://git.kernel.org/pub/scm/linux/kernel/git/brauner/linux.git/log/?h=loopfs
+https://gitlab.com/brauner/linux/-/commits/loopfs
+https://github.com/brauner/linux/tree/loopfs
+
+One of the use-cases for loopfs is to allow to dynamically allocate loop
+devices in sandboxed workloads without exposing /dev or
+/dev/loop-control to the workload in question and without having to
+implement a complex and also racy protocol to send around file
+descriptors for loop devices. With loopfs each mount is a new instance,
+i.e. loop devices created in one loopfs instance are independent of any
+loop devices created in another loopfs instance. This allows
+sufficiently privileged tools to have their own private stash of loop
+device instances. Dmitry has expressed his desire to use this for
+syzkaller in a private discussion. And various parties that want to use
+it are Cced here too.
+
+In addition, the loopfs filesystem can be mounted by user namespace root
+and is thus suitable for use in containers. Combined with syscall
+interception this makes it possible to securely delegate mounting of
+images on loop devices, i.e. when a user calls mount -o loop <image>
+<mountpoint> it will be possible to completely setup the loop device.
+The final mount syscall to actually perform the mount will be handled
+through syscall interception and be performed by a sufficiently
+privileged process. Syscall interception is already supported through a
+new seccomp feature we implemented in [1] and extended in [2] and is
+actively used in production workloads. The additional loopfs work will
+be used there and in various other workloads too. You'll find a short
+illustration how this works with syscall interception below in [4].
+
+The number of loop devices available to a loopfs instance can be limited
+by setting the "max" mount option to a positive integer. This e.g.
+allows sufficiently privileged processes to dynamically enforce a limit
+on the number of devices. This limit is dynamic in contrast to the
+max_loop module option in that a sufficiently privileged process can
+update it with a simple remount operation.
+
+The loopfs filesystem is placed under a new config option and special
+care has been taken to not introduce any new code when users do not
+select this config option.
+
+Thanks!
+Christian
+
+[1]: 6a21cc50f0c7 ("seccomp: add a return code to trap to userspace")
+[2]: fb3c5386b382 ("seccomp: add SECCOMP_USER_NOTIF_FLAG_CONTINUE")
+[3]: https://lore.kernel.org/lkml/1401227936-15698-1-git-send-email-seth.forshee@canonical.com
+[4]:
+     root@f1:~# cat /proc/self/uid_map
+              0     100000 1000000000
+     root@f1:~# cat /proc/self/gid_map
+              0     100000 1000000000
+     root@f1:~# mkdir /dev/loopfs
+     root@f1:~# mount -t loop loop /dev/loopfs/
+     root@f1:~# ln -sf /dev/loopfs/loop-control /dev/loop-control
+     root@f1:~# losetup -f
+     /dev/loop9
+     root@f1:~# ln -sf /dev/loopfs/loop9 /dev/loop9
+     root@f1:~# ls -al /sys/class/block/loop9
+     lrwxrwxrwx 1 root root 0 Apr  8 14:53 /sys/class/block/loop9 -> ../../devices/virtual/block/loop9
+     root@f1:~# ls -al /sys/class/block/loop9/
+     total 0
+     drwxr-xr-x  9 root   root       0 Apr  8 14:53 .
+     drwxr-xr-x 13 nobody nogroup    0 Apr  8 14:53 ..
+     -r--r--r--  1 root   root    4096 Apr  8 14:53 alignment_offset
+     lrwxrwxrwx  1 nobody nogroup    0 Apr  8 14:53 bdi -> ../../bdi/7:9
+     -r--r--r--  1 root   root    4096 Apr  8 14:53 capability
+     -r--r--r--  1 root   root    4096 Apr  8 14:53 dev
+     -r--r--r--  1 root   root    4096 Apr  8 14:53 discard_alignment
+     -r--r--r--  1 root   root    4096 Apr  8 14:53 events
+     -r--r--r--  1 root   root    4096 Apr  8 14:53 events_async
+     -rw-r--r--  1 root   root    4096 Apr  8 14:53 events_poll_msecs
+     -r--r--r--  1 root   root    4096 Apr  8 14:53 ext_range
+     -r--r--r--  1 root   root    4096 Apr  8 14:53 hidden
+     drwxr-xr-x  2 nobody nogroup    0 Apr  8 14:53 holders
+     -r--r--r--  1 root   root    4096 Apr  8 14:53 inflight
+     drwxr-xr-x  2 nobody nogroup    0 Apr  8 14:53 integrity
+     drwxr-xr-x  3 nobody nogroup    0 Apr  8 14:53 mq
+     drwxr-xr-x  2 root   root       0 Apr  8 14:53 power
+     drwxr-xr-x  3 nobody nogroup    0 Apr  8 14:53 queue
+     -r--r--r--  1 root   root    4096 Apr  8 14:53 range
+     -r--r--r--  1 root   root    4096 Apr  8 14:53 removable
+     -r--r--r--  1 root   root    4096 Apr  8 14:53 ro
+     -r--r--r--  1 root   root    4096 Apr  8 14:53 size
+     drwxr-xr-x  2 nobody nogroup    0 Apr  8 14:53 slaves
+     -r--r--r--  1 root   root    4096 Apr  8 14:53 stat
+     lrwxrwxrwx  1 nobody nogroup    0 Apr  8 14:53 subsystem -> ../../../../class/block
+     drwxr-xr-x  2 root   root       0 Apr  8 14:53 trace
+     -rw-r--r--  1 root   root    4096 Apr  8 14:53 uevent
+     root@f1:~#  
+     root@f1:~# stat --file-system /bla.img
+       File: "/bla.img"
+         ID: 4396dc4f5f3ffe1b Namelen: 255     Type: btrfs
+     Block size: 4096       Fundamental block size: 4096
+     Blocks: Total: 11230468   Free: 10851929   Available: 10738585
+     Inodes: Total: 0          Free: 0
+     root@f1:~# mount -o loop /bla.img /opt
+     root@f1:~# findmnt | grep opt
+     └─/opt                                /dev/loop9                            btrfs       rw,relatime,ssd,space_cache,subvolid=5,subvol=/
+
+Christian Brauner (8):
+  kobject_uevent: remove unneeded netlink_ns check
+  loopfs: implement loopfs
+  loop: use ns_capable for some loop operations
+  kernfs: handle multiple namespace tags
+  kernfs: let objects opt-in to propagating from the initial namespace
+  genhd: add minimal namespace infrastructure
+  loopfs: start attaching correct namespace during loop_add()
+  loopfs: only show devices in their correct instance
+
+ Documentation/filesystems/sysfs-tagging.txt |   1 -
+ MAINTAINERS                                 |   5 +
+ block/genhd.c                               |  79 ++++
+ drivers/base/devtmpfs.c                     |   4 +-
+ drivers/block/Kconfig                       |   4 +
+ drivers/block/Makefile                      |   1 +
+ drivers/block/loop.c                        | 186 +++++++--
+ drivers/block/loop.h                        |   8 +-
+ drivers/block/loopfs/Makefile               |   3 +
+ drivers/block/loopfs/loopfs.c               | 429 ++++++++++++++++++++
+ drivers/block/loopfs/loopfs.h               |  35 ++
+ fs/kernfs/dir.c                             |  38 +-
+ fs/kernfs/kernfs-internal.h                 |  26 +-
+ fs/kernfs/mount.c                           |  11 +-
+ fs/sysfs/mount.c                            |  14 +-
+ include/linux/device.h                      |   3 +
+ include/linux/genhd.h                       |   3 +
+ include/linux/kernfs.h                      |  44 +-
+ include/linux/kobject_ns.h                  |   7 +-
+ include/linux/sysfs.h                       |   8 +-
+ include/uapi/linux/magic.h                  |   1 +
+ lib/kobject.c                               |  17 +-
+ lib/kobject_uevent.c                        |   2 +-
+ net/core/net-sysfs.c                        |   6 -
+ 24 files changed, 834 insertions(+), 101 deletions(-)
+ create mode 100644 drivers/block/loopfs/Makefile
+ create mode 100644 drivers/block/loopfs/loopfs.c
+ create mode 100644 drivers/block/loopfs/loopfs.h
+
+
+base-commit: 7111951b8d4973bda27ff663f2cf18b663d15b48
 -- 
 2.26.0
 
