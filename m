@@ -2,82 +2,130 @@ Return-Path: <SRS0=02Hz=5Y=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EAC75C2BA1A
-	for <linux-api@archiver.kernel.org>; Wed,  8 Apr 2020 11:12:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F065DC2BA16
+	for <linux-api@archiver.kernel.org>; Wed,  8 Apr 2020 15:22:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id B2E6E2076D
-	for <linux-api@archiver.kernel.org>; Wed,  8 Apr 2020 11:12:19 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VC5psAUs"
+	by mail.kernel.org (Postfix) with ESMTP id D091F20730
+	for <linux-api@archiver.kernel.org>; Wed,  8 Apr 2020 15:22:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728207AbgDHLMQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 8 Apr 2020 07:12:16 -0400
-Received: from mail-ed1-f67.google.com ([209.85.208.67]:44834 "EHLO
-        mail-ed1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728100AbgDHLMQ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 8 Apr 2020 07:12:16 -0400
-Received: by mail-ed1-f67.google.com with SMTP id i16so8046953edy.11;
-        Wed, 08 Apr 2020 04:12:13 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:reply-to:from:date:message-id:subject:to:cc;
-        bh=y6GvbrxPWO38NZY2qniHG/bjP2NH5oiIBjc+DHthlNY=;
-        b=VC5psAUsa1U2CjvoshCFasg2IK8FzsljYRvZ/5QS60xwoyvFBFXQqmt8BkfUpV3HhM
-         wkeRFEaLVqKQIOoZDyHNzLICNc4pgkurJGaKqWSZfacFmPdK86yd+dxBZVQCpzJjJOcA
-         nPceEZnTYX6NJHBHq5pJAT/x9+LSQWopr7Q1En9TwCbD3g2D35OpQY+2TajCjUF+FN1e
-         1nx+MN0TVjZJqCRqNbYlmm5rP8MdMkc4y6G74Frt5V7HwMBNMWLyd3BYzC8p66tFBOa3
-         x+m/N/xyM5Zel3thnTh3qMXI0vUG6+MDW4TbGn4BkVcNFBi01WQ7mnKcOKPmwSSniwZC
-         8YFw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:reply-to:from:date:message-id
-         :subject:to:cc;
-        bh=y6GvbrxPWO38NZY2qniHG/bjP2NH5oiIBjc+DHthlNY=;
-        b=KATwr8QcNWNVC17uOY0M097ufa1HW4BjNA/CHKemVGQ+B+B+QlCxpnEuI8oTsvM1sI
-         akkq+HccgM/gIK+0ceqsMikHRXbZsSBfEu6zhJED1nVa8BZ5cmkOqQlFsLFgC6p3VL1t
-         EN9t87EpXPYq1VLJkrcNMWLgSENaszTCZkODgDgP8pNvL0AeHrIGrIgeQJC97JB7wxx7
-         2yJV/b8pLVmIZxokEXdlRcEt0KJwOVssNbI6rUjfph8GBI2WtFgurP0+Iqygzc6cFVcr
-         1yP5CCHZ4FKYJlKDBEMs6IzJZW+BfAyzX9oRC5fTYWs2lz+jJaqbrn28igtS1A+EKvft
-         eAdA==
-X-Gm-Message-State: AGi0PuatYKpvWs2X0cbR1FJHA2ZSwgn35gQ0EbGMuFaCCYjJr2I33nzm
-        hCtTECG8UwX8vtJ/UnUzso9vRZEpwgHDERFmT90=
-X-Google-Smtp-Source: APiQypLakffEooTTK/wIZhPA1UXmX6ePrOgYPFpT6bdDI4nYEdoKNBKYdrg7FinZZVq0sJNuwRcasB3azLK159CjdFg=
-X-Received: by 2002:a05:6402:504:: with SMTP id m4mr6031207edv.367.1586344332475;
- Wed, 08 Apr 2020 04:12:12 -0700 (PDT)
+        id S1729558AbgDHPWt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 8 Apr 2020 11:22:49 -0400
+Received: from youngberry.canonical.com ([91.189.89.112]:39143 "EHLO
+        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1729540AbgDHPWs (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 8 Apr 2020 11:22:48 -0400
+Received: from ip5f5bd698.dynamic.kabel-deutschland.de ([95.91.214.152] helo=wittgenstein.fritz.box)
+        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.86_2)
+        (envelope-from <christian.brauner@ubuntu.com>)
+        id 1jMCXM-0001BO-Rr; Wed, 08 Apr 2020 15:22:44 +0000
+From:   Christian Brauner <christian.brauner@ubuntu.com>
+To:     Jens Axboe <axboe@kernel.dk>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
+        linux-api@vger.kernel.org
+Cc:     Jonathan Corbet <corbet@lwn.net>, Serge Hallyn <serge@hallyn.com>,
+        "Rafael J. Wysocki" <rafael@kernel.org>, Tejun Heo <tj@kernel.org>,
+        "David S. Miller" <davem@davemloft.net>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Saravana Kannan <saravanak@google.com>,
+        Jan Kara <jack@suse.cz>, David Howells <dhowells@redhat.com>,
+        Seth Forshee <seth.forshee@canonical.com>,
+        David Rheinsberg <david.rheinsberg@gmail.com>,
+        Tom Gundersen <teg@jklm.no>,
+        Christian Kellner <ckellner@redhat.com>,
+        Dmitry Vyukov <dvyukov@google.com>,
+        =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
+        linux-doc@vger.kernel.org, netdev@vger.kernel.org
+Subject: [PATCH 8/8] loopfs: only show devices in their correct instance
+Date:   Wed,  8 Apr 2020 17:21:51 +0200
+Message-Id: <20200408152151.5780-9-christian.brauner@ubuntu.com>
+X-Mailer: git-send-email 2.26.0
+In-Reply-To: <20200408152151.5780-1-christian.brauner@ubuntu.com>
+References: <20200408152151.5780-1-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
-Reply-To: mtk.manpages@gmail.com
-From:   "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Date:   Wed, 8 Apr 2020 13:12:01 +0200
-Message-ID: <CAKgNAkhL0zCj11LS9vfae872YVeRsxdz20sZWuXdi+UjH21=0g@mail.gmail.com>
-Subject: CLONE_INTO_CGROUP documentation?
-To:     Christian Brauner <christian.brauner@ubuntu.com>
-Cc:     Oleg Nesterov <oleg@redhat.com>,
-        Linux API <linux-api@vger.kernel.org>,
-        linux-man <linux-man@vger.kernel.org>,
-        lkml <linux-kernel@vger.kernel.org>, Tejun Heo <tj@kernel.org>,
-        "open list:CONTROL GROUP (CGROUP)" <cgroups@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi Christian,
+Since loopfs devices belong to a loopfs instance they have no business
+polluting the host's devtmpfs mount and should not propagate out of the
+namespace they belong to.
 
-I see that CLONE_INTO_CGROUP has been merged? WOuld you be able to
-send a man-pages patch documenting this please?
+Cc: Jens Axboe <axboe@kernel.dk>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+---
+ drivers/base/devtmpfs.c | 4 ++--
+ drivers/block/loop.c    | 4 +++-
+ include/linux/device.h  | 3 +++
+ 3 files changed, 8 insertions(+), 3 deletions(-)
 
-Thanks,
+diff --git a/drivers/base/devtmpfs.c b/drivers/base/devtmpfs.c
+index c9017e0584c0..77371ceb88fa 100644
+--- a/drivers/base/devtmpfs.c
++++ b/drivers/base/devtmpfs.c
+@@ -111,7 +111,7 @@ int devtmpfs_create_node(struct device *dev)
+ 	const char *tmp = NULL;
+ 	struct req req;
+ 
+-	if (!thread)
++	if (!thread || dev->no_devnode)
+ 		return 0;
+ 
+ 	req.mode = 0;
+@@ -138,7 +138,7 @@ int devtmpfs_delete_node(struct device *dev)
+ 	const char *tmp = NULL;
+ 	struct req req;
+ 
+-	if (!thread)
++	if (!thread || dev->no_devnode)
+ 		return 0;
+ 
+ 	req.name = device_get_devnode(dev, NULL, NULL, NULL, &tmp);
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index 7a14fd3e4329..df75ca4ac040 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -2155,8 +2155,10 @@ static int loop_add(struct loop_device **l, int i, struct inode *inode)
+ 	disk->queue		= lo->lo_queue;
+ 	sprintf(disk->disk_name, "loop%d", i);
+ #ifdef CONFIG_BLK_DEV_LOOPFS
+-	if (loopfs_i_sb(inode))
++	if (loopfs_i_sb(inode)) {
+ 		disk->user_ns = loopfs_i_sb(inode)->s_user_ns;
++		disk_to_dev(disk)->no_devnode = true;
++	}
+ #endif
+ 
+ 	add_disk(disk);
+diff --git a/include/linux/device.h b/include/linux/device.h
+index fa04dfd22bbc..9fa438e3e4ca 100644
+--- a/include/linux/device.h
++++ b/include/linux/device.h
+@@ -525,6 +525,8 @@ struct dev_links_info {
+  *		  sync_state() callback.
+  * @dma_coherent: this particular device is dma coherent, even if the
+  *		architecture supports non-coherent devices.
++ * @no_devnode: whether device nodes associated with this device are kept out
++ *		of devtmpfs (e.g. due to separate filesystem)
+  *
+  * At the lowest level, every device in a Linux system is represented by an
+  * instance of struct device. The device structure contains the information
+@@ -625,6 +627,7 @@ struct device {
+     defined(CONFIG_ARCH_HAS_SYNC_DMA_FOR_CPU_ALL)
+ 	bool			dma_coherent:1;
+ #endif
++	bool			no_devnode:1;
+ };
+ 
+ static inline struct device *kobj_to_dev(struct kobject *kobj)
+-- 
+2.26.0
 
-Michael
-
-
---
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
