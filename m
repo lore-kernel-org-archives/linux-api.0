@@ -2,25 +2,25 @@ Return-Path: <SRS0=M+tC=56=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3B5BDC2BBC7
-	for <linux-api@archiver.kernel.org>; Tue, 14 Apr 2020 11:32:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0E0C2C3815B
+	for <linux-api@archiver.kernel.org>; Tue, 14 Apr 2020 11:32:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 20B7B206D5
-	for <linux-api@archiver.kernel.org>; Tue, 14 Apr 2020 11:32:32 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EB36B2075E
+	for <linux-api@archiver.kernel.org>; Tue, 14 Apr 2020 11:32:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2439266AbgDNLcb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 14 Apr 2020 07:32:31 -0400
-Received: from mx2.suse.de ([195.135.220.15]:46546 "EHLO mx2.suse.de"
+        id S2439272AbgDNLcc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 14 Apr 2020 07:32:32 -0400
+Received: from mx2.suse.de ([195.135.220.15]:46608 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2438988AbgDNLca (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 14 Apr 2020 07:32:30 -0400
+        id S2439264AbgDNLcb (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 14 Apr 2020 07:32:31 -0400
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.220.254])
-        by mx2.suse.de (Postfix) with ESMTP id 0FBFBADB5;
+        by mx2.suse.de (Postfix) with ESMTP id 36D2DAE9A;
         Tue, 14 Apr 2020 11:32:27 +0000 (UTC)
 From:   Vlastimil Babka <vbabka@suse.cz>
 To:     Andrew Morton <akpm@linux-foundation.org>,
@@ -40,10 +40,12 @@ Cc:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Masami Hiramatsu <mhiramat@kernel.org>,
         Vlastimil Babka <vbabka@suse.cz>
-Subject: [PATCH v2 0/3] support setting sysctl parameters from kernel command line
-Date:   Tue, 14 Apr 2020 13:32:19 +0200
-Message-Id: <20200414113222.16959-1-vbabka@suse.cz>
+Subject: [PATCH v2 2/3] kernel/sysctl: support handling command line aliases
+Date:   Tue, 14 Apr 2020 13:32:21 +0200
+Message-Id: <20200414113222.16959-3-vbabka@suse.cz>
 X-Mailer: git-send-email 2.26.0
+In-Reply-To: <20200414113222.16959-1-vbabka@suse.cz>
+References: <20200414113222.16959-1-vbabka@suse.cz>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
@@ -51,53 +53,111 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This series adds support for something that seems like many people always
-wanted but nobody added it yet, so here's the ability to set sysctl parameters
-via kernel command line options in the form of sysctl.vm.something=1
+We can now handle sysctl parameters on kernel command line, but historically
+some parameters introduced their own command line equivalent, which we don't
+want to remove for compatibility reasons. We can however convert them to the
+generic infrastructure with a table translating the legacy command line
+parameters to their sysctl names, and removing the one-off param handlers.
 
-The important part is Patch 1. The second, not so important part is an attempt
-to clean up legacy one-off parameters that do the same thing as a sysctl.
-I don't want to remove them completely for compatibility reasons, but with
-generic sysctl support the idea is to remove the one-off param handlers and
-treat the parameters as aliases for the sysctl variants.
+This patch adds the support and makes the first conversion to demonstrate it,
+on the (deprecated) numa_zonelist_order parameter.
 
-I have identified several parameters that mention sysctl counterparts in
-Documentation/admin-guide/kernel-parameters.txt but there might be more. The
-conversion also has varying level of success:
+Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
+Acked-by: Kees Cook <keescook@chromium.org>
+Reviewed-by: Luis Chamberlain <mcgrof@kernel.org>
+---
+ fs/proc/proc_sysctl.c | 48 ++++++++++++++++++++++++++++++++++++-------
+ mm/page_alloc.c       |  9 --------
+ 2 files changed, 41 insertions(+), 16 deletions(-)
 
-- numa_zonelist_order is converted in Patch 2 together with adding the
-  necessary infrastructure. It's easy as it doesn't really do anything but warn
-  on deprecated value these days.
-- hung_task_panic is converted in Patch 3, but there's a downside that now it
-  only accepts 0 and 1, while previously it was any integer value
-- nmi_watchdog maps to two sysctls nmi_watchdog and hardlockup_panic, so
-  there's no straighforward conversion possible
-- traceoff_on_warning is a flag without value and it would be required to
-  handle that somehow in the conversion infractructure, which seems pointless
-  for a single flag
-
-Vlastimil Babka (3):
-  kernel/sysctl: support setting sysctl parameters from kernel command
-    line
-  kernel/sysctl: support handling command line aliases
-  kernel/hung_task convert hung_task_panic boot parameter to sysctl
-
-Changes since v1:
-- add missing newlines on printk's
-- more adjustments to proc mount param passing (Kees)
-- rebase to 5.7-rc1
-- add acks/reviews
-- test driver (how to pass a testing boot parameter without bootloader specific
-  steps) still under discussion - new Kconfig? bootconfig?
-
- .../admin-guide/kernel-parameters.txt         |  11 +-
- fs/proc/proc_sysctl.c                         | 142 ++++++++++++++++++
- include/linux/sysctl.h                        |   4 +
- init/main.c                                   |   2 +
- kernel/hung_task.c                            |  10 --
- mm/page_alloc.c                               |   9 --
- 6 files changed, 158 insertions(+), 20 deletions(-)
-
+diff --git a/fs/proc/proc_sysctl.c b/fs/proc/proc_sysctl.c
+index 7804da5f5be0..209ad03e1b82 100644
+--- a/fs/proc/proc_sysctl.c
++++ b/fs/proc/proc_sysctl.c
+@@ -1694,6 +1694,37 @@ int __init proc_sys_init(void)
+ 	return sysctl_init();
+ }
+ 
++struct sysctl_alias {
++	const char *kernel_param;
++	const char *sysctl_param;
++};
++
++/*
++ * Historically some settings had both sysctl and a command line parameter.
++ * With the generic sysctl. parameter support, we can handle them at a single
++ * place and only keep the historical name for compatibility. This is not meant
++ * to add brand new aliases. When adding existing aliases, consider whether
++ * the possibly different moment of changing the value (e.g. from early_param
++ * to the moment do_sysctl_args() is called) is an issue for the specific
++ * parameter.
++ */
++static const struct sysctl_alias sysctl_aliases[] = {
++	{"numa_zonelist_order",		"vm.numa_zonelist_order" },
++	{ }
++};
++
++static const char *sysctl_find_alias(char *param)
++{
++	const struct sysctl_alias *alias;
++
++	for (alias = &sysctl_aliases[0]; alias->kernel_param != NULL; alias++) {
++		if (strcmp(alias->kernel_param, param) == 0)
++			return alias->sysctl_param;
++	}
++
++	return NULL;
++}
++
+ /* Set sysctl value passed on kernel command line. */
+ static int process_sysctl_arg(char *param, char *val,
+ 			       const char *unused, void *arg)
+@@ -1707,15 +1738,18 @@ static int process_sysctl_arg(char *param, char *val,
+ 	loff_t pos = 0;
+ 	ssize_t wret;
+ 
+-	if (strncmp(param, "sysctl", sizeof("sysctl") - 1))
+-		return 0;
+-
+-	param += sizeof("sysctl") - 1;
++	if (strncmp(param, "sysctl", sizeof("sysctl") - 1) == 0) {
++		param += sizeof("sysctl") - 1;
+ 
+-	if (param[0] != '/' && param[0] != '.')
+-		return 0;
++		if (param[0] != '/' && param[0] != '.')
++			return 0;
+ 
+-	param++;
++		param++;
++	} else {
++		param = (char *) sysctl_find_alias(param);
++		if (!param)
++			return 0;
++	}
+ 
+ 	/*
+ 	 * To set sysctl options, we use a temporary mount of proc, look up the
+diff --git a/mm/page_alloc.c b/mm/page_alloc.c
+index 69827d4fa052..80b2788711c9 100644
+--- a/mm/page_alloc.c
++++ b/mm/page_alloc.c
+@@ -5531,15 +5531,6 @@ static int __parse_numa_zonelist_order(char *s)
+ 	return 0;
+ }
+ 
+-static __init int setup_numa_zonelist_order(char *s)
+-{
+-	if (!s)
+-		return 0;
+-
+-	return __parse_numa_zonelist_order(s);
+-}
+-early_param("numa_zonelist_order", setup_numa_zonelist_order);
+-
+ char numa_zonelist_order[] = "Node";
+ 
+ /*
 -- 
 2.26.0
 
