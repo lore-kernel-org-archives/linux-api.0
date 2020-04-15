@@ -2,448 +2,229 @@ Return-Path: <SRS0=xe8E=57=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.5 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 79D94C2BB55
-	for <linux-api@archiver.kernel.org>; Wed, 15 Apr 2020 10:43:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6B463C2BA19
+	for <linux-api@archiver.kernel.org>; Wed, 15 Apr 2020 12:13:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5014320737
-	for <linux-api@archiver.kernel.org>; Wed, 15 Apr 2020 10:43:29 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=chronox.de header.i=@chronox.de header.b="GL2ETJs5"
+	by mail.kernel.org (Postfix) with ESMTP id 41ACC206F9
+	for <linux-api@archiver.kernel.org>; Wed, 15 Apr 2020 12:13:18 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1586952798;
+	bh=LNWj9wDcXQ6iD/C2ADh+aNOYEGak6DBi/YB8YeGejXU=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
+	b=xcwc2EghCNEvzkVp8QerihAwJQ95vMjY/dT8numvvG4U1+LvP95rc/JA6iH5lb540
+	 LCbN+bIeuLkksT2Sj5PlEjaqbi+7MTyWRVMd/bI5sYxrb1+TJ3c/6dWqPspcCHci1S
+	 qCS+j6wczeNaIQUc7lmacShZYvPmSgoOvuM1oFBM=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2896514AbgDOKnV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 15 Apr 2020 06:43:21 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57146 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-FAIL-OK-FAIL)
-        by vger.kernel.org with ESMTP id S2896479AbgDOKXi (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 15 Apr 2020 06:23:38 -0400
-Received: from mo6-p02-ob.smtp.rzone.de (mo6-p02-ob.smtp.rzone.de [IPv6:2a01:238:20a:202:5302::6])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A2745C03C1AA;
-        Wed, 15 Apr 2020 03:22:52 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; t=1586946170;
-        s=strato-dkim-0002; d=chronox.de;
-        h=References:In-Reply-To:Message-ID:Date:Subject:Cc:To:From:
-        X-RZG-CLASS-ID:X-RZG-AUTH:From:Subject:Sender;
-        bh=hwS+x/N5sydmJA2FCwk6A+EN+suF8ZGXBUS8yhutk64=;
-        b=GL2ETJs5cI6/lzkYaFA383WdxmnDNqDkpAKRyfZNZAUNcpBW9sLCd2IypAIlfQLHVv
-        NQlWkOhQfebDu5pvDOQDkb8O1mmn6RZs/a+iygQMQBdG9Li0sbdPw/YtuiC32UAC+sAp
-        5G5/PzcN8wVvEH8AukvoyJAg4B+PVKh0+dd9jHFoKhOAngK8OQIZKtcYUO1QRgKh7Mon
-        ZOO+/2augkM39wCTOB6En8QghL9VJiIP1ke4SBvgwJSFD92Xx1sr12GzNDcuDm1VKb4i
-        vePmFEFyIgzocxY5/kiQLrGTB3kH84/t/MVdABV6TsnA85g+c70nFaPb20flnRRIdov3
-        eOEQ==
-X-RZG-AUTH: ":P2ERcEykfu11Y98lp/T7+hdri+uKZK8TKWEqNyiHySGSa9k9xmwdNnzGHXPZIvSaiyU="
-X-RZG-CLASS-ID: mo00
-Received: from positron.chronox.de
-        by smtp.strato.de (RZmta 46.4.0 DYNA|AUTH)
-        with ESMTPSA id 404ef0w3FAJj11z
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256 bits))
-        (Client did not present a certificate);
-        Wed, 15 Apr 2020 12:19:45 +0200 (CEST)
-From:   Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
-To:     Arnd Bergmann <arnd@arndb.de>
-Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>,
-        linux-api@vger.kernel.org,
-        "Eric W. Biederman" <ebiederm@xmission.com>,
-        "Alexander E. Patrakov" <patrakov@gmail.com>,
-        "Ahmed S. Darwish" <darwish.07@gmail.com>,
-        "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>,
-        Matthew Garrett <mjg59@srcf.ucam.org>,
-        Vito Caputo <vcaputo@pengaru.com>,
-        Andreas Dilger <adilger.kernel@dilger.ca>,
-        Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>,
-        William Jon McCann <mccann@jhu.edu>,
-        zhangjs <zachary@baishancloud.com>,
-        Andy Lutomirski <luto@kernel.org>,
-        Florian Weimer <fweimer@redhat.com>,
-        Lennart Poettering <mzxreary@0pointer.de>,
-        Nicolai Stange <nstange@suse.de>,
-        "Peter, Matthias" <matthias.peter@bsi.bund.de>,
-        Marcelo Henrique Cerri <marcelo.cerri@canonical.com>,
-        Roman Drahtmueller <draht@schaltsekun.de>,
-        Neil Horman <nhorman@redhat.com>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        Julia Lawall <julia.lawall@inria.fr>,
-        Dan Carpenter <dan.carpenter@oracle.com>
-Subject: [PATCH v30 11/12] LRNG - add interface for gathering of raw entropy
-Date:   Wed, 15 Apr 2020 12:14:49 +0200
-Message-ID: <4946330.IVaNDfpqxB@positron.chronox.de>
-In-Reply-To: <11836144.hkEK2qVKZC@positron.chronox.de>
-References: <11836144.hkEK2qVKZC@positron.chronox.de>
+        id S368627AbgDOMNO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 15 Apr 2020 08:13:14 -0400
+Received: from mail.kernel.org ([198.145.29.99]:59488 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S2898111AbgDOMNE (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 15 Apr 2020 08:13:04 -0400
+Received: from tleilax.com (68-20-15-154.lightspeed.rlghnc.sbcglobal.net [68.20.15.154])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id B550F2076C;
+        Wed, 15 Apr 2020 12:13:02 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1586952783;
+        bh=LNWj9wDcXQ6iD/C2ADh+aNOYEGak6DBi/YB8YeGejXU=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+        b=eP8x2ynt2dsZpxEWWWVjAgU3NHPYAoWmR++xSWjZ0TkfxVCNESaywGjMP7DBjHwiq
+         xYt8N4pDz7Z2nXsapZQsIv/StT03DCH4H+AbdyfH9CLegITcMhWeiK7g2KCY0p3W6D
+         GelKbnRBjnNTIq97URqMkE3golCiE/0Y39x5hnM0=
+From:   Jeff Layton <jlayton@kernel.org>
+To:     viro@zeniv.linux.org.uk
+Cc:     linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-api@vger.kernel.org, andres@anarazel.de, willy@infradead.org,
+        dhowells@redhat.com, hch@infradead.org, jack@suse.cz,
+        akpm@linux-foundation.org, david@fromorbit.com
+Subject: [PATCH v5 1/2] vfs: track per-sb writeback errors and report them to syncfs
+Date:   Wed, 15 Apr 2020 08:12:59 -0400
+Message-Id: <20200415121300.228017-2-jlayton@kernel.org>
+X-Mailer: git-send-email 2.25.2
+In-Reply-To: <20200415121300.228017-1-jlayton@kernel.org>
+References: <20200415121300.228017-1-jlayton@kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The test interface allows a privileged process to capture the raw
-unconditioned noise that is collected by the LRNG for statistical
-analysis. Such testing allows the analysis how much entropy
-the interrupt noise source provides on a given platform.
-Extracted noise data is not used to seed the LRNG. This
-is a test interface and not appropriate for production systems.
-Yet, the interface is considered to be sufficiently secured for
-production systems.
+From: Jeff Layton <jlayton@redhat.com>
 
-Access to the data is given through the lrng_raw debugfs file. The
-data buffer should be multiples of sizeof(u32) to fill the entire
-buffer. Using the option lrng_testing.boot_test=3D1 the raw noise of
-the first 1000 entropy events since boot can be sampled.
+Usually we suggest that applications call fsync when they want to
+ensure that all data written to the file has made it to the backing
+store, but that can be inefficient when there are a lot of open
+files.
 
-This test interface allows generating the data required for
-analysis whether the LRNG is in compliance with SP800-90B
-sections 3.1.3 and 3.1.4.
+Calling syncfs on the filesystem can be more efficient in some
+situations, but the error reporting doesn't currently work the way most
+people expect. If a single inode on a filesystem reports a writeback
+error, syncfs won't necessarily return an error. syncfs only returns an
+error if __sync_blockdev fails, and on some filesystems that's a no-op.
 
-CC: "Eric W. Biederman" <ebiederm@xmission.com>
-CC: "Alexander E. Patrakov" <patrakov@gmail.com>
-CC: "Ahmed S. Darwish" <darwish.07@gmail.com>
-CC: "Theodore Y. Ts'o" <tytso@mit.edu>
-CC: Willy Tarreau <w@1wt.eu>
-CC: Matthew Garrett <mjg59@srcf.ucam.org>
-CC: Vito Caputo <vcaputo@pengaru.com>
-CC: Andreas Dilger <adilger.kernel@dilger.ca>
-CC: Jan Kara <jack@suse.cz>
-CC: Ray Strode <rstrode@redhat.com>
-CC: William Jon McCann <mccann@jhu.edu>
-CC: zhangjs <zachary@baishancloud.com>
-CC: Andy Lutomirski <luto@kernel.org>
-CC: Florian Weimer <fweimer@redhat.com>
-CC: Lennart Poettering <mzxreary@0pointer.de>
-CC: Nicolai Stange <nstange@suse.de>
-Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
-Tested-by: Roman Drahtm=FCller <draht@schaltsekun.de>
-Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
-Tested-by: Neil Horman <nhorman@redhat.com>
-Signed-off-by: Stephan Mueller <smueller@chronox.de>
-=2D--
- drivers/char/lrng/Kconfig        |  16 ++
- drivers/char/lrng/Makefile       |   1 +
- drivers/char/lrng/lrng_testing.c | 269 +++++++++++++++++++++++++++++++
- 3 files changed, 286 insertions(+)
- create mode 100644 drivers/char/lrng/lrng_testing.c
+It would be better if syncfs reported an error if there were any writeback
+failures. Then applications could call syncfs to see if there are any
+errors on any open files, and could then call fsync on all of the other
+descriptors to figure out which one failed.
 
-diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 323c657f7005..014ee82df79a 100644
-=2D-- a/drivers/char/lrng/Kconfig
-+++ b/drivers/char/lrng/Kconfig
-@@ -162,4 +162,20 @@ config LRNG_APT_CUTOFF
- 	default 325 if !LRNG_APT_BROKEN
- 	default 32 if LRNG_APT_BROKEN
-=20
-+config LRNG_TESTING
-+	bool "Enable entropy test interface to LRNG noise source"
-+	depends on DEBUG_FS
-+	help
-+	  The test interface allows a privileged process to capture
-+	  the raw unconditioned noise that is collected by the LRNG
-+	  for statistical analysis. Extracted noise data is not used
-+	  to seed the LRNG.
+This patch adds a new errseq_t to struct super_block, and has
+mapping_set_error also record writeback errors there.
+
+To report those errors, we also need to keep an errseq_t in struct
+file to act as a cursor. This patch adds a dedicated field for that
+purpose, which slots nicely into 4 bytes of padding at the end of
+struct file on x86_64.
+
+An earlier version of this patch used an O_PATH file descriptor to cue
+the kernel that the open file should track the superblock error and not
+the inode's writeback error.
+
+I think that API is just too weird though. This is simpler and should
+make syncfs error reporting "just work" even if someone is multiplexing
+fsync and syncfs on the same fds.
+
+Cc: Andres Freund <andres@anarazel.de>
+Cc: Matthew Wilcox <willy@infradead.org>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Jeff Layton <jlayton@kernel.org>
+---
+ drivers/dax/device.c    |  1 +
+ fs/file_table.c         |  1 +
+ fs/open.c               |  3 +--
+ fs/sync.c               |  6 ++++--
+ include/linux/fs.h      | 16 ++++++++++++++++
+ include/linux/pagemap.h |  5 ++++-
+ 6 files changed, 27 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/dax/device.c b/drivers/dax/device.c
+index 1af823b2fe6b..4c0af2eb7e19 100644
+--- a/drivers/dax/device.c
++++ b/drivers/dax/device.c
+@@ -377,6 +377,7 @@ static int dax_open(struct inode *inode, struct file *filp)
+ 	inode->i_mapping->a_ops = &dev_dax_aops;
+ 	filp->f_mapping = inode->i_mapping;
+ 	filp->f_wb_err = filemap_sample_wb_err(filp->f_mapping);
++	filp->f_sb_err = file_sample_sb_err(filp);
+ 	filp->private_data = dev_dax;
+ 	inode->i_flags = S_DAX;
+ 
+diff --git a/fs/file_table.c b/fs/file_table.c
+index 30d55c9a1744..676e620948d2 100644
+--- a/fs/file_table.c
++++ b/fs/file_table.c
+@@ -198,6 +198,7 @@ static struct file *alloc_file(const struct path *path, int flags,
+ 	file->f_inode = path->dentry->d_inode;
+ 	file->f_mapping = path->dentry->d_inode->i_mapping;
+ 	file->f_wb_err = filemap_sample_wb_err(file->f_mapping);
++	file->f_sb_err = file_sample_sb_err(file);
+ 	if ((file->f_mode & FMODE_READ) &&
+ 	     likely(fop->read || fop->read_iter))
+ 		file->f_mode |= FMODE_CAN_READ;
+diff --git a/fs/open.c b/fs/open.c
+index 719b320ede52..d9467a8a7f6a 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -743,9 +743,8 @@ static int do_dentry_open(struct file *f,
+ 	path_get(&f->f_path);
+ 	f->f_inode = inode;
+ 	f->f_mapping = inode->i_mapping;
+-
+-	/* Ensure that we skip any errors that predate opening of the file */
+ 	f->f_wb_err = filemap_sample_wb_err(f->f_mapping);
++	f->f_sb_err = file_sample_sb_err(f);
+ 
+ 	if (unlikely(f->f_flags & O_PATH)) {
+ 		f->f_mode = FMODE_PATH | FMODE_OPENED;
+diff --git a/fs/sync.c b/fs/sync.c
+index 4d1ff010bc5a..c6f6f5be5682 100644
+--- a/fs/sync.c
++++ b/fs/sync.c
+@@ -161,7 +161,7 @@ SYSCALL_DEFINE1(syncfs, int, fd)
+ {
+ 	struct fd f = fdget(fd);
+ 	struct super_block *sb;
+-	int ret;
++	int ret, ret2;
+ 
+ 	if (!f.file)
+ 		return -EBADF;
+@@ -171,8 +171,10 @@ SYSCALL_DEFINE1(syncfs, int, fd)
+ 	ret = sync_filesystem(sb);
+ 	up_read(&sb->s_umount);
+ 
++	ret2 = errseq_check_and_advance(&sb->s_wb_err, &f.file->f_sb_err);
 +
-+	  The raw noise data can be obtained using the lrng_raw
-+	  debugfs file. Using the option lrng_testing.boot_test=3D1
-+	  the raw noise of the first 1000 entropy events since boot
-+	  can be sampled.
+ 	fdput(f);
+-	return ret;
++	return ret ? ret : ret2;
+ }
+ 
+ /**
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 4f6f59b4f22a..5ad13cd6441c 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -976,6 +976,7 @@ struct file {
+ #endif /* #ifdef CONFIG_EPOLL */
+ 	struct address_space	*f_mapping;
+ 	errseq_t		f_wb_err;
++	errseq_t		f_sb_err; /* for syncfs */
+ } __randomize_layout
+   __attribute__((aligned(4)));	/* lest something weird decides that 2 is OK */
+ 
+@@ -1520,6 +1521,9 @@ struct super_block {
+ 	/* Being remounted read-only */
+ 	int s_readonly_remount;
+ 
++	/* per-sb errseq_t for reporting writeback errors via syncfs */
++	errseq_t s_wb_err;
 +
-+	  If unsure, say N.
-+
- endif # LRNG
-diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index c3008763dd14..b2ce1979dc4b 100644
-=2D-- a/drivers/char/lrng/Makefile
-+++ b/drivers/char/lrng/Makefile
-@@ -15,3 +15,4 @@ obj-$(CONFIG_LRNG_DRBG)		+=3D lrng_drbg.o
- obj-$(CONFIG_LRNG_KCAPI)	+=3D lrng_kcapi.o
- obj-$(CONFIG_LRNG_JENT)		+=3D lrng_jent.o
- obj-$(CONFIG_LRNG_HEALTH_TESTS)	+=3D lrng_health.o
-+obj-$(CONFIG_LRNG_TESTING)	+=3D lrng_testing.o
-diff --git a/drivers/char/lrng/lrng_testing.c b/drivers/char/lrng/lrng_test=
-ing.c
-new file mode 100644
-index 000000000000..996fc665a0a0
-=2D-- /dev/null
-+++ b/drivers/char/lrng/lrng_testing.c
-@@ -0,0 +1,269 @@
-+// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
-+/*
-+ * Linux Random Number Generator (LRNG) Raw entropy collection tool
+ 	/* AIO completions deferred from interrupt context */
+ 	struct workqueue_struct *s_dio_done_wq;
+ 	struct hlist_head s_pins;
+@@ -2827,6 +2831,18 @@ static inline errseq_t filemap_sample_wb_err(struct address_space *mapping)
+ 	return errseq_sample(&mapping->wb_err);
+ }
+ 
++/**
++ * file_sample_sb_err - sample the current errseq_t to test for later errors
++ * @mapping: mapping to be sampled
 + *
-+ * Copyright (C) 2019 - 2020, Stephan Mueller <smueller@chronox.de>
++ * Grab the most current superblock-level errseq_t value for the given
++ * struct file.
 + */
-+
-+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-+
-+#include <linux/atomic.h>
-+#include <linux/bug.h>
-+#include <linux/debugfs.h>
-+#include <linux/module.h>
-+#include <linux/sched.h>
-+#include <linux/sched/signal.h>
-+#include <linux/slab.h>
-+#include <linux/string.h>
-+#include <linux/types.h>
-+#include <linux/uaccess.h>
-+#include <linux/workqueue.h>
-+#include <asm/errno.h>
-+
-+#include "lrng_internal.h"
-+
-+#define LRNG_TESTING_RINGBUFFER_SIZE	1024
-+#define LRNG_TESTING_RINGBUFFER_MASK	(LRNG_TESTING_RINGBUFFER_SIZE - 1)
-+
-+static u32 lrng_testing_rb[LRNG_TESTING_RINGBUFFER_SIZE];
-+static u32 lrng_rb_reader =3D 0;
-+static u32 lrng_rb_writer =3D 0;
-+static atomic_t lrng_testing_enabled =3D ATOMIC_INIT(0);
-+
-+static DECLARE_WAIT_QUEUE_HEAD(lrng_raw_read_wait);
-+static DEFINE_SPINLOCK(lrng_raw_lock);
-+
-+/*
-+ * 0 =3D=3D> No boot test, gathering of runtime data allowed
-+ * 1 =3D=3D> Boot test enabled and ready for collecting data, gathering ru=
-ntime
-+ *	 data is disabled
-+ * 2 =3D=3D> Boot test completed and disabled, gathering of runtime data is
-+ *	 disabled
-+ */
-+static u32 boot_test =3D 0;
-+module_param(boot_test, uint, 0644);
-+MODULE_PARM_DESC(boot_test, "Enable gathering boot time entropy of the fir=
-st entropy events");
-+
-+static inline void lrng_raw_entropy_reset(void)
++static inline errseq_t file_sample_sb_err(struct file *file)
 +{
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&lrng_raw_lock, flags);
-+	lrng_rb_reader =3D 0;
-+	lrng_rb_writer =3D 0;
-+	spin_unlock_irqrestore(&lrng_raw_lock, flags);
++	return errseq_sample(&file->f_path.dentry->d_sb->s_wb_err);
 +}
 +
-+static void lrng_raw_entropy_init(void)
-+{
-+	/*
-+	 * The boot time testing implies we have a running test. If the
-+	 * caller wants to clear it, he has to unset the boot_test flag
-+	 * at runtime via sysfs to enable regular runtime testing
-+	 */
-+	if (boot_test)
-+		return;
+ static inline int filemap_nr_thps(struct address_space *mapping)
+ {
+ #ifdef CONFIG_READ_ONLY_THP_FOR_FS
+diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
+index a8f7bd8ea1c6..d4409b13747e 100644
+--- a/include/linux/pagemap.h
++++ b/include/linux/pagemap.h
+@@ -51,7 +51,10 @@ static inline void mapping_set_error(struct address_space *mapping, int error)
+ 		return;
+ 
+ 	/* Record in wb_err for checkers using errseq_t based tracking */
+-	filemap_set_wb_err(mapping, error);
++	__filemap_set_wb_err(mapping, error);
 +
-+	lrng_raw_entropy_reset();
-+	atomic_set(&lrng_testing_enabled, 1);
-+	pr_warn("Enabling raw entropy collection\n");
-+}
-+
-+static void lrng_raw_entropy_fini(void)
-+{
-+	if (boot_test)
-+		return;
-+
-+	atomic_set(&lrng_testing_enabled, 0);
-+	lrng_raw_entropy_reset();
-+	pr_warn("Disabling raw entropy collection\n");
-+}
-+
-+bool lrng_raw_entropy_store(u32 value)
-+{
-+	unsigned long flags;
-+
-+	if (!atomic_read(&lrng_testing_enabled) && (boot_test !=3D 1))
-+		return false;
-+
-+	spin_lock_irqsave(&lrng_raw_lock, flags);
-+
-+	/*
-+	 * Disable entropy testing for boot time testing after ring buffer
-+	 * is filled.
-+	 */
-+	if (boot_test) {
-+		if (lrng_rb_writer > LRNG_TESTING_RINGBUFFER_SIZE) {
-+			boot_test =3D 2;
-+			pr_warn_once("Boot time entropy collection test disabled\n");
-+			spin_unlock_irqrestore(&lrng_raw_lock, flags);
-+			return false;
-+		}
-+
-+		if (lrng_rb_writer =3D=3D 1)
-+			pr_warn("Boot time entropy collection test enabled\n");
-+	}
-+
-+	lrng_testing_rb[lrng_rb_writer & LRNG_TESTING_RINGBUFFER_MASK] =3D value;
-+	lrng_rb_writer++;
-+
-+	spin_unlock_irqrestore(&lrng_raw_lock, flags);
-+
-+	if (wq_has_sleeper(&lrng_raw_read_wait))
-+		wake_up_interruptible(&lrng_raw_read_wait);
-+
-+	return true;
-+}
-+
-+static inline bool lrng_raw_have_data(void)
-+{
-+	return ((lrng_rb_writer & LRNG_TESTING_RINGBUFFER_MASK) !=3D
-+		 (lrng_rb_reader & LRNG_TESTING_RINGBUFFER_MASK));
-+}
-+
-+static int lrng_raw_entropy_reader(u8 *outbuf, u32 outbuflen)
-+{
-+	unsigned long flags;
-+	int collected_data =3D 0;
-+
-+	lrng_raw_entropy_init();
-+
-+	while (outbuflen) {
-+		spin_lock_irqsave(&lrng_raw_lock, flags);
-+
-+		/* We have no data or reached the writer. */
-+		if (!lrng_rb_writer || (lrng_rb_writer =3D=3D lrng_rb_reader)) {
-+
-+			spin_unlock_irqrestore(&lrng_raw_lock, flags);
-+
-+			/*
-+			 * Now we gathered all boot data, enable regular data
-+			 * collection.
-+			 */
-+			if (boot_test) {
-+				boot_test =3D 0;
-+				goto out;
-+			}
-+
-+			wait_event_interruptible(lrng_raw_read_wait,
-+						 lrng_raw_have_data());
-+			if (signal_pending(current)) {
-+				collected_data =3D -ERESTARTSYS;
-+				goto out;
-+			}
-+
-+			continue;
-+		}
-+
-+		/* We copy out word-wise */
-+		if (outbuflen < sizeof(u32)) {
-+			spin_unlock_irqrestore(&lrng_raw_lock, flags);
-+			goto out;
-+		}
-+
-+		memcpy(outbuf, &lrng_testing_rb[lrng_rb_reader], sizeof(u32));
-+		lrng_rb_reader++;
-+
-+		spin_unlock_irqrestore(&lrng_raw_lock, flags);
-+
-+		outbuf +=3D sizeof(u32);
-+		outbuflen -=3D sizeof(u32);
-+		collected_data +=3D sizeof(u32);
-+	}
-+
-+out:
-+	lrng_raw_entropy_fini();
-+	return collected_data;
-+}
-+
-+/**************************************************************************
-+ * Debugfs interface
-+ *************************************************************************=
-*/
-+static int lrng_raw_extract_user(char __user *buf, size_t nbytes)
-+{
-+	u8 *tmp, *tmp_aligned;
-+	int ret =3D 0, large_request =3D (nbytes > 256);
-+
-+	/*
-+	 * The intention of this interface is for collecting at least
-+	 * 1000 samples due to the SP800-90B requirements. So, we make no
-+	 * effort in avoiding allocating more memory that actually needed
-+	 * by the user. Hence, we allocate sufficient memory to always hold
-+	 * that amount of data.
-+	 */
-+	tmp =3D kmalloc(LRNG_TESTING_RINGBUFFER_SIZE + sizeof(u32), GFP_KERNEL);
-+	if (!tmp)
-+		return -ENOMEM;
-+
-+	tmp_aligned =3D PTR_ALIGN(tmp, sizeof(u32));
-+
-+	while (nbytes) {
-+		int i;
-+
-+		if (large_request && need_resched()) {
-+			if (signal_pending(current)) {
-+				if (ret =3D=3D 0)
-+					ret =3D -ERESTARTSYS;
-+				break;
-+			}
-+			schedule();
-+		}
-+
-+		i =3D min_t(int, nbytes, LRNG_TESTING_RINGBUFFER_SIZE);
-+		i =3D lrng_raw_entropy_reader(tmp_aligned, i);
-+		if (i <=3D 0) {
-+			if (i < 0)
-+				ret =3D i;
-+			break;
-+		}
-+		if (copy_to_user(buf, tmp_aligned, i)) {
-+			ret =3D -EFAULT;
-+			break;
-+		}
-+
-+		nbytes -=3D i;
-+		buf +=3D i;
-+		ret +=3D i;
-+	}
-+
-+	kzfree(tmp);
-+	return ret;
-+}
-+
-+/* DebugFS operations and definition of the debugfs files */
-+static ssize_t lrng_raw_read(struct file *file, char __user *to,
-+			     size_t count, loff_t *ppos)
-+{
-+	loff_t pos =3D *ppos;
-+	int ret;
-+
-+	if (!count)
-+		return 0;
-+
-+	ret =3D lrng_raw_extract_user(to, count);
-+	if (ret < 0)
-+		return ret;
-+
-+	count -=3D ret;
-+	*ppos =3D pos + count;
-+
-+	return ret;
-+}
-+
-+static const struct file_operations lrng_raw_name_fops =3D {
-+	.owner =3D THIS_MODULE,
-+	.read =3D lrng_raw_read,
-+};
-+
-+static int __init lrng_raw_init(void)
-+{
-+	struct dentry *lrng_raw_debugfs_root;
-+
-+	lrng_raw_debugfs_root =3D debugfs_create_dir(KBUILD_MODNAME, NULL);
-+	debugfs_create_file_unsafe("lrng_raw", 0400, lrng_raw_debugfs_root,
-+				   NULL, &lrng_raw_name_fops);
-+
-+	return 0;
-+}
-+
-+module_init(lrng_raw_init);
-=2D-=20
++	/* Record it in superblock */
++	errseq_set(&mapping->host->i_sb->s_wb_err, error);
+ 
+ 	/* Record it in flags for now, for legacy callers */
+ 	if (error == -ENOSPC)
+-- 
 2.25.2
-
-
-
 
