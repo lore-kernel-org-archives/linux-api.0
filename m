@@ -2,51 +2,54 @@ Return-Path: <SRS0=rv4v=6A=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E5120C2BB55
-	for <linux-api@archiver.kernel.org>; Thu, 16 Apr 2020 11:35:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F01C4C2BB85
+	for <linux-api@archiver.kernel.org>; Thu, 16 Apr 2020 11:35:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C14C121D7F
-	for <linux-api@archiver.kernel.org>; Thu, 16 Apr 2020 11:35:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C483721D94
+	for <linux-api@archiver.kernel.org>; Thu, 16 Apr 2020 11:35:05 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1587036900;
-	bh=TMMfR8jMQehfnp/7rpYl0nN/kHBVXZuS884Eb6S1ra0=;
-	h=From:To:Cc:Subject:Date:List-ID:From;
-	b=Ex654HTMVqLw1Emkc+gcB4BPedcbPda0VqizgCFBsKJ4sgA1Dxxv5b7dUKqMrqBvp
-	 xy9IFl9Wju5m9Q2gNOGSLSa4aFQcHgTSIcO5AWh9O25UUiGQCO9TaKnLB46L8Rz7Jk
-	 IdlpnaxWDUeuO4hy+el5kWz3v0C6gxP6yh2+oQF0=
+	s=default; t=1587036905;
+	bh=TOVJ0nXqZ/Pw1D/4pr94s3NTk35dtTlrnCsUWfrJyFU=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
+	b=hGQPjB4JIXFulHxGh/0OeMHK8N8cIxS/VlbxaE1OnY7KscTxqplMsqFLAyqv8K7oP
+	 5JwqklrtAw3Y5rcd8KnN/0YuY9ZF+T94iz2JOHPGNnNiqxqeJKovUItHQT1mpyT6cq
+	 JZ2x3ApsuimuQMlg62YaVbag7MHF6y3q2/5z0Wpk=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2633746AbgDPLe5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 16 Apr 2020 07:34:57 -0400
-Received: from mail.kernel.org ([198.145.29.99]:35606 "EHLO mail.kernel.org"
+        id S2506037AbgDPLfD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 16 Apr 2020 07:35:03 -0400
+Received: from mail.kernel.org ([198.145.29.99]:35698 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2506364AbgDPLez (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 16 Apr 2020 07:34:55 -0400
+        id S2633747AbgDPLe5 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 16 Apr 2020 07:34:57 -0400
 Received: from tleilax.poochiereds.net (68-20-15-154.lightspeed.rlghnc.sbcglobal.net [68.20.15.154])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 3897621D7F;
-        Thu, 16 Apr 2020 11:34:54 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 895BC221E8;
+        Thu, 16 Apr 2020 11:34:56 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1587036895;
-        bh=TMMfR8jMQehfnp/7rpYl0nN/kHBVXZuS884Eb6S1ra0=;
-        h=From:To:Cc:Subject:Date:From;
-        b=b5ykmFcsbQ8fI1oYE/loZdT7usuZpFJH39y8yBp80iyEjSpXZaaf94MzDXvRDSVbz
-         Y0fDUo3giLXBWWoshTb3x2ou1LV6G7CJAnLnhE8K7cLuQ3d+d8o63hqHCa+uS506j/
-         RwUDMDd7HGyxBlfgaMJ/LqXn9dnZE5te6iPQdHxI=
+        s=default; t=1587036897;
+        bh=TOVJ0nXqZ/Pw1D/4pr94s3NTk35dtTlrnCsUWfrJyFU=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+        b=Fvzk6TndU70YshFsjL8E9BNXcIPGbyLDwgBTD+hi8Ai4uA5LnQcn9wYHazQZvB4qJ
+         4sOdw7ZNGwKkJ15cXifcBKA6zKfQrHBPWGRYdiYUIIaYFeUuFCKaZIfIs54hOYWfGu
+         I7iJH08mqdkOOkweqO91/WpWrfHJKJBCUOVM9eYM=
 From:   Jeff Layton <jlayton@kernel.org>
 To:     viro@zeniv.linux.org.uk
 Cc:     linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
         linux-api@vger.kernel.org, andres@anarazel.de, willy@infradead.org,
         dhowells@redhat.com, hch@infradead.org, jack@suse.cz,
         akpm@linux-foundation.org, david@fromorbit.com
-Subject: [PATCH v6 0/2] vfs: have syncfs() return error when there are writeback errors
-Date:   Thu, 16 Apr 2020 07:34:51 -0400
-Message-Id: <20200416113453.227229-1-jlayton@kernel.org>
+Subject: [PATCH v6 2/2] buffer: record blockdev write errors in super_block that it backs
+Date:   Thu, 16 Apr 2020 07:34:53 -0400
+Message-Id: <20200416113453.227229-3-jlayton@kernel.org>
 X-Mailer: git-send-email 2.25.2
+In-Reply-To: <20200416113453.227229-1-jlayton@kernel.org>
+References: <20200416113453.227229-1-jlayton@kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
@@ -54,26 +57,49 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-v6:
-- use READ_ONCE to ensure that compiler doesn't optimize away local var
+From: Jeff Layton <jlayton@redhat.com>
 
-The only difference from v5 is the change to use READ_ONCE to fetch the
-bd_super pointer, to ensure that the compiler doesn't refetch it
-afterward. Many thanks to Jan K. for the explanation!
+When syncing out a block device (a'la __sync_blockdev), any error
+encountered will only be recorded in the bd_inode's mapping. When the
+blockdev contains a filesystem however, we'd like to also record the
+error in the super_block that's stored there.
 
-Jeff Layton (2):
-  vfs: track per-sb writeback errors and report them to syncfs
-  buffer: record blockdev write errors in super_block that it backs
+Make mark_buffer_write_io_error also record the error in the
+corresponding super_block when a writeback error occurs and the block
+device contains a mounted superblock.
 
- drivers/dax/device.c    |  1 +
- fs/buffer.c             |  7 +++++++
- fs/file_table.c         |  1 +
- fs/open.c               |  3 +--
- fs/sync.c               |  6 ++++--
- include/linux/fs.h      | 16 ++++++++++++++++
- include/linux/pagemap.h |  5 ++++-
- 7 files changed, 34 insertions(+), 5 deletions(-)
+Since superblocks are RCU freed, hold the rcu_read_lock to ensure
+that the superblock doesn't go away while we're marking it.
 
+Signed-off-by: Jeff Layton <jlayton@kernel.org>
+---
+ fs/buffer.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/fs/buffer.c b/fs/buffer.c
+index f73276d746bb..71be7e6cabca 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -1154,12 +1154,19 @@ EXPORT_SYMBOL(mark_buffer_dirty);
+ 
+ void mark_buffer_write_io_error(struct buffer_head *bh)
+ {
++	struct super_block *sb;
++
+ 	set_buffer_write_io_error(bh);
+ 	/* FIXME: do we need to set this in both places? */
+ 	if (bh->b_page && bh->b_page->mapping)
+ 		mapping_set_error(bh->b_page->mapping, -EIO);
+ 	if (bh->b_assoc_map)
+ 		mapping_set_error(bh->b_assoc_map, -EIO);
++	rcu_read_lock();
++	sb = READ_ONCE(bh->b_bdev->bd_super);
++	if (sb)
++		errseq_set(&sb->s_wb_err, -EIO);
++	rcu_read_unlock();
+ }
+ EXPORT_SYMBOL(mark_buffer_write_io_error);
+ 
 -- 
 2.25.2
 
