@@ -2,229 +2,166 @@ Return-Path: <SRS0=rv4v=6A=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
+X-Spam-Status: No, score=-8.1 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D4B2EC2BB55
-	for <linux-api@archiver.kernel.org>; Thu, 16 Apr 2020 11:35:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4A13DC2BB55
+	for <linux-api@archiver.kernel.org>; Thu, 16 Apr 2020 11:36:09 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id AFF9120656
-	for <linux-api@archiver.kernel.org>; Thu, 16 Apr 2020 11:35:22 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1587036922;
-	bh=LNWj9wDcXQ6iD/C2ADh+aNOYEGak6DBi/YB8YeGejXU=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
-	b=LpTSVydiFcS5qseeGG0e22uxVGZ/InXdaDzWGQgHpFF5ag5jonkLsTS80E5nmBlq0
-	 PilrBMkjQeMxYbduvtizhmWOglTjhWyCz9S8NtJ+rivu900bPVBp6W4tIA0ANs//bx
-	 2+qS5Pv4uCxtGkei17/El7pSjyg4KIVgockvz15w=
+	by mail.kernel.org (Postfix) with ESMTP id 21E6A20656
+	for <linux-api@archiver.kernel.org>; Thu, 16 Apr 2020 11:36:09 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Xfj9q5ps"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2633769AbgDPLfC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 16 Apr 2020 07:35:02 -0400
-Received: from mail.kernel.org ([198.145.29.99]:35628 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2633665AbgDPLe5 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 16 Apr 2020 07:34:57 -0400
-Received: from tleilax.poochiereds.net (68-20-15-154.lightspeed.rlghnc.sbcglobal.net [68.20.15.154])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 60AA021D95;
-        Thu, 16 Apr 2020 11:34:55 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1587036896;
-        bh=LNWj9wDcXQ6iD/C2ADh+aNOYEGak6DBi/YB8YeGejXU=;
-        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=udUUdNUZQcxGAfpo5xUdRqviEekLzKllJEUusPomajw2WXYQYyoDAl6/xXBylsWjC
-         txykbYq5KYBe2KV975h49UugfIp0z6RlBitz6X2nQ6Mvv42RglcCAWMBe+MOoTFrSm
-         c2uXNHoEU2FQ/G3FkR60hklkYpwO8EMUExiMHw1E=
-From:   Jeff Layton <jlayton@kernel.org>
-To:     viro@zeniv.linux.org.uk
-Cc:     linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-api@vger.kernel.org, andres@anarazel.de, willy@infradead.org,
-        dhowells@redhat.com, hch@infradead.org, jack@suse.cz,
-        akpm@linux-foundation.org, david@fromorbit.com
-Subject: [PATCH v6 1/2] vfs: track per-sb writeback errors and report them to syncfs
-Date:   Thu, 16 Apr 2020 07:34:52 -0400
-Message-Id: <20200416113453.227229-2-jlayton@kernel.org>
-X-Mailer: git-send-email 2.25.2
-In-Reply-To: <20200416113453.227229-1-jlayton@kernel.org>
-References: <20200416113453.227229-1-jlayton@kernel.org>
+        id S2633747AbgDPLgG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 16 Apr 2020 07:36:06 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38242 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2505994AbgDPLfz (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 16 Apr 2020 07:35:55 -0400
+Received: from mail-wr1-x443.google.com (mail-wr1-x443.google.com [IPv6:2a00:1450:4864:20::443])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8C1A8C061A0C;
+        Thu, 16 Apr 2020 04:35:54 -0700 (PDT)
+Received: by mail-wr1-x443.google.com with SMTP id f13so4354328wrm.13;
+        Thu, 16 Apr 2020 04:35:54 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=cc:subject:to:references:from:message-id:date:user-agent
+         :mime-version:in-reply-to:content-language:content-transfer-encoding;
+        bh=a4ieNNuZ6tLA+4dVx4dh3yTVKKcJr6C5Xg+XaxMx+Wg=;
+        b=Xfj9q5psuqNGyruPOiyZQ5NsusUUXpygmybW5Hv5TZdygCMy8/o/ki8bANCMygOLGT
+         iXgeNYCK8Cvy4d4GgZUoTOoLHNAsNjiI7Dq/rHmZOFdz2ln/q5YjfbeXNwG98/D5tSuI
+         4Y9r4cgLtNoG7erSuacGmi2YfbrilgXp6mopSQGHDHoOD0NjsidIFrqUiMy5MslD/qhv
+         k+5+fk5Lp5AhOYOqq/HXAwjxw7U6iy9z6JflCDB0rTp37D81rdyhO89YUSK2/kwnM1lk
+         VdZJ55PJZm3pTX7rxtSPn2SKeUYjuDlcPWxF8ftDQIugFYgvRPUxcHYou+KHlS6I367c
+         8kmw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:cc:subject:to:references:from:message-id:date
+         :user-agent:mime-version:in-reply-to:content-language
+         :content-transfer-encoding;
+        bh=a4ieNNuZ6tLA+4dVx4dh3yTVKKcJr6C5Xg+XaxMx+Wg=;
+        b=AxT4Xztsy+ir7zgpP2vLXQ1DrghLhkPv13zw7eiQxH1r6S4X/ccKwAXNbw4h4uch77
+         8B5KvbTk+iwPUAm+t2Rzs4BxYs+/+VsyCkEAVrkczxf90kROLzZH1+IdTKYDxf+cVRS9
+         N19w67upx7H6qiNIg6ihSi7/ts+HWyJxtBNrHROsNvHKnWxPWkJpNRKwfuiUwUMrH9gg
+         gj77+G3wivR1E3WdEcmOrOq3xxKjqyQvzbkg5lKa2KQrFM1tsFj2NuZbfYuyJdDIhFbj
+         25I7WqSQ3FVNDahCiDbyehZoHF/DAdvPSupKGZOJEtvktPUu2/eOD68kMTKy0/r8uVgx
+         qTnQ==
+X-Gm-Message-State: AGi0PuZBznUMkOZdE0j4i7jlrevU4yVFJodxCeyRClkHkjtv9SVFLQjp
+        C7+LLgXdbLD5M30AwsooBMivdAfn
+X-Google-Smtp-Source: APiQypIacuw32clGX4yFy7n896znzlZ0b59ACM2KJOOVsycKPEDJ92FJ+0tV1dNTDMjtldFw1Nkl4g==
+X-Received: by 2002:adf:e791:: with SMTP id n17mr27110600wrm.217.1587036953145;
+        Thu, 16 Apr 2020 04:35:53 -0700 (PDT)
+Received: from ?IPv6:2001:a61:2482:101:3351:6160:8173:cc31? ([2001:a61:2482:101:3351:6160:8173:cc31])
+        by smtp.gmail.com with ESMTPSA id t20sm3391884wmi.2.2020.04.16.04.35.52
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 16 Apr 2020 04:35:52 -0700 (PDT)
+Cc:     mtk.manpages@gmail.com, linux-man@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-mm@kvack.org,
+        linux-kernel@vger.kernel.org
+Subject: Re: [v3 PATCH] move_pages.2: Returning positive value is a new error
+ case
+To:     Yang Shi <yang.shi@linux.alibaba.com>, mhocko@suse.com,
+        david@redhat.com, akpm@linux-foundation.org
+References: <1580757507-120233-1-git-send-email-yang.shi@linux.alibaba.com>
+From:   "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Message-ID: <033ce46c-74c6-7e9f-d89c-cd184a891e1c@gmail.com>
+Date:   Thu, 16 Apr 2020 13:35:51 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.6.0
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <1580757507-120233-1-git-send-email-yang.shi@linux.alibaba.com>
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Jeff Layton <jlayton@redhat.com>
+Hello Yang Shi,
 
-Usually we suggest that applications call fsync when they want to
-ensure that all data written to the file has made it to the backing
-store, but that can be inefficient when there are a lot of open
-files.
+On 2/3/20 8:18 PM, Yang Shi wrote:
+> Since commit a49bd4d71637 ("mm, numa: rework do_pages_move"),
+> the semantic of move_pages() has changed to return the number of
+> non-migrated pages if they were result of a non-fatal reasons (usually a
+> busy page).  This was an unintentional change that hasn't been noticed
+> except for LTP tests which checked for the documented behavior.
+> 
+> There are two ways to go around this change.  We can even get back to the
+> original behavior and return -EAGAIN whenever migrate_pages is not able
+> to migrate pages due to non-fatal reasons.  Another option would be to
+> simply continue with the changed semantic and extend move_pages
+> documentation to clarify that -errno is returned on an invalid input or
+> when migration simply cannot succeed (e.g. -ENOMEM, -EBUSY) or the
+> number of pages that couldn't have been migrated due to ephemeral
+> reasons (e.g. page is pinned or locked for other reasons).
+> 
+> We decided to keep the second option in kernel because this behavior is in
+> place for some time without anybody complaining and possibly new users
+> depending on it.  Also it allows to have a slightly easier error handling
+> as the caller knows that it is worth to retry when err > 0.
+> 
+> Update man pages to reflect the new semantic.
 
-Calling syncfs on the filesystem can be more efficient in some
-situations, but the error reporting doesn't currently work the way most
-people expect. If a single inode on a filesystem reports a writeback
-error, syncfs won't necessarily return an error. syncfs only returns an
-error if __sync_blockdev fails, and on some filesystems that's a no-op.
+Thanks for the patch. I've applied it.
 
-It would be better if syncfs reported an error if there were any writeback
-failures. Then applications could call syncfs to see if there are any
-errors on any open files, and could then call fsync on all of the other
-descriptors to figure out which one failed.
+@Michal: thanks for the Ack.
 
-This patch adds a new errseq_t to struct super_block, and has
-mapping_set_error also record writeback errors there.
+Cheers,
 
-To report those errors, we also need to keep an errseq_t in struct
-file to act as a cursor. This patch adds a dedicated field for that
-purpose, which slots nicely into 4 bytes of padding at the end of
-struct file on x86_64.
+Michael
 
-An earlier version of this patch used an O_PATH file descriptor to cue
-the kernel that the open file should track the superblock error and not
-the inode's writeback error.
+> 
+> Cc: Michal Hocko <mhocko@suse.com>
+> Cc: Michael Kerrisk <mtk.manpages@gmail.com>
+> Signed-off-by: Yang Shi <yang.shi@linux.alibaba.com>
+> ---
+> v3: * Fixed the comments from David Hildenbrand.
+>     * Fixed the inaccuracy about pre-initialized status array values.
+> v2: * Added notes about status array per Michal.
+>     * Added Michal's Acked-by.
+> 
+>  man2/move_pages.2 | 10 ++++++++--
+>  1 file changed, 8 insertions(+), 2 deletions(-)
+> 
+> diff --git a/man2/move_pages.2 b/man2/move_pages.2
+> index 1bf1053..50c83a4 100644
+> --- a/man2/move_pages.2
+> +++ b/man2/move_pages.2
+> @@ -104,7 +104,9 @@ pages that need to be moved.
+>  is an array of integers that return the status of each page.
+>  The array contains valid values only if
+>  .BR move_pages ()
+> -did not return an error.
+> +did not return an error.  Pre-initialization of the array to the value
+> +which cannot represent a real numa node or valid error of status array
+> +could help to identify pages that have been migrated
+>  .PP
+>  .I flags
+>  specify what types of pages to move.
+> @@ -164,9 +166,13 @@ returns zero.
+>  .\" do the right thing?
+>  On error, it returns \-1, and sets
+>  .I errno
+> -to indicate the error.
+> +to indicate the error. If positive value is returned, it is the number of
+> +non-migrated pages.
+>  .SH ERRORS
+>  .TP
+> +.B Positive value
+> +The number of non-migrated pages if they were the result of non-fatal
+> +reasons (since version 4.17).
+>  .B E2BIG
+>  Too many pages to move.
+>  Since Linux 2.6.29,
+> 
 
-I think that API is just too weird though. This is simpler and should
-make syncfs error reporting "just work" even if someone is multiplexing
-fsync and syncfs on the same fds.
 
-Cc: Andres Freund <andres@anarazel.de>
-Cc: Matthew Wilcox <willy@infradead.org>
-Reviewed-by: Jan Kara <jack@suse.cz>
-Signed-off-by: Jeff Layton <jlayton@kernel.org>
----
- drivers/dax/device.c    |  1 +
- fs/file_table.c         |  1 +
- fs/open.c               |  3 +--
- fs/sync.c               |  6 ++++--
- include/linux/fs.h      | 16 ++++++++++++++++
- include/linux/pagemap.h |  5 ++++-
- 6 files changed, 27 insertions(+), 5 deletions(-)
-
-diff --git a/drivers/dax/device.c b/drivers/dax/device.c
-index 1af823b2fe6b..4c0af2eb7e19 100644
---- a/drivers/dax/device.c
-+++ b/drivers/dax/device.c
-@@ -377,6 +377,7 @@ static int dax_open(struct inode *inode, struct file *filp)
- 	inode->i_mapping->a_ops = &dev_dax_aops;
- 	filp->f_mapping = inode->i_mapping;
- 	filp->f_wb_err = filemap_sample_wb_err(filp->f_mapping);
-+	filp->f_sb_err = file_sample_sb_err(filp);
- 	filp->private_data = dev_dax;
- 	inode->i_flags = S_DAX;
- 
-diff --git a/fs/file_table.c b/fs/file_table.c
-index 30d55c9a1744..676e620948d2 100644
---- a/fs/file_table.c
-+++ b/fs/file_table.c
-@@ -198,6 +198,7 @@ static struct file *alloc_file(const struct path *path, int flags,
- 	file->f_inode = path->dentry->d_inode;
- 	file->f_mapping = path->dentry->d_inode->i_mapping;
- 	file->f_wb_err = filemap_sample_wb_err(file->f_mapping);
-+	file->f_sb_err = file_sample_sb_err(file);
- 	if ((file->f_mode & FMODE_READ) &&
- 	     likely(fop->read || fop->read_iter))
- 		file->f_mode |= FMODE_CAN_READ;
-diff --git a/fs/open.c b/fs/open.c
-index 719b320ede52..d9467a8a7f6a 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -743,9 +743,8 @@ static int do_dentry_open(struct file *f,
- 	path_get(&f->f_path);
- 	f->f_inode = inode;
- 	f->f_mapping = inode->i_mapping;
--
--	/* Ensure that we skip any errors that predate opening of the file */
- 	f->f_wb_err = filemap_sample_wb_err(f->f_mapping);
-+	f->f_sb_err = file_sample_sb_err(f);
- 
- 	if (unlikely(f->f_flags & O_PATH)) {
- 		f->f_mode = FMODE_PATH | FMODE_OPENED;
-diff --git a/fs/sync.c b/fs/sync.c
-index 4d1ff010bc5a..c6f6f5be5682 100644
---- a/fs/sync.c
-+++ b/fs/sync.c
-@@ -161,7 +161,7 @@ SYSCALL_DEFINE1(syncfs, int, fd)
- {
- 	struct fd f = fdget(fd);
- 	struct super_block *sb;
--	int ret;
-+	int ret, ret2;
- 
- 	if (!f.file)
- 		return -EBADF;
-@@ -171,8 +171,10 @@ SYSCALL_DEFINE1(syncfs, int, fd)
- 	ret = sync_filesystem(sb);
- 	up_read(&sb->s_umount);
- 
-+	ret2 = errseq_check_and_advance(&sb->s_wb_err, &f.file->f_sb_err);
-+
- 	fdput(f);
--	return ret;
-+	return ret ? ret : ret2;
- }
- 
- /**
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 4f6f59b4f22a..5ad13cd6441c 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -976,6 +976,7 @@ struct file {
- #endif /* #ifdef CONFIG_EPOLL */
- 	struct address_space	*f_mapping;
- 	errseq_t		f_wb_err;
-+	errseq_t		f_sb_err; /* for syncfs */
- } __randomize_layout
-   __attribute__((aligned(4)));	/* lest something weird decides that 2 is OK */
- 
-@@ -1520,6 +1521,9 @@ struct super_block {
- 	/* Being remounted read-only */
- 	int s_readonly_remount;
- 
-+	/* per-sb errseq_t for reporting writeback errors via syncfs */
-+	errseq_t s_wb_err;
-+
- 	/* AIO completions deferred from interrupt context */
- 	struct workqueue_struct *s_dio_done_wq;
- 	struct hlist_head s_pins;
-@@ -2827,6 +2831,18 @@ static inline errseq_t filemap_sample_wb_err(struct address_space *mapping)
- 	return errseq_sample(&mapping->wb_err);
- }
- 
-+/**
-+ * file_sample_sb_err - sample the current errseq_t to test for later errors
-+ * @mapping: mapping to be sampled
-+ *
-+ * Grab the most current superblock-level errseq_t value for the given
-+ * struct file.
-+ */
-+static inline errseq_t file_sample_sb_err(struct file *file)
-+{
-+	return errseq_sample(&file->f_path.dentry->d_sb->s_wb_err);
-+}
-+
- static inline int filemap_nr_thps(struct address_space *mapping)
- {
- #ifdef CONFIG_READ_ONLY_THP_FOR_FS
-diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index a8f7bd8ea1c6..d4409b13747e 100644
---- a/include/linux/pagemap.h
-+++ b/include/linux/pagemap.h
-@@ -51,7 +51,10 @@ static inline void mapping_set_error(struct address_space *mapping, int error)
- 		return;
- 
- 	/* Record in wb_err for checkers using errseq_t based tracking */
--	filemap_set_wb_err(mapping, error);
-+	__filemap_set_wb_err(mapping, error);
-+
-+	/* Record it in superblock */
-+	errseq_set(&mapping->host->i_sb->s_wb_err, error);
- 
- 	/* Record it in flags for now, for legacy callers */
- 	if (error == -ENOSPC)
 -- 
-2.25.2
-
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
