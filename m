@@ -1,163 +1,104 @@
-Return-Path: <SRS0=rv4v=6A=vger.kernel.org=linux-api-owner@kernel.org>
+Return-Path: <SRS0=XBkQ=6B=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0FF8EC38A2C
-	for <linux-api@archiver.kernel.org>; Thu, 16 Apr 2020 21:53:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9EC8BC2BB1D
+	for <linux-api@archiver.kernel.org>; Fri, 17 Apr 2020 06:01:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E08E4218AC
-	for <linux-api@archiver.kernel.org>; Thu, 16 Apr 2020 21:53:41 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=paul-moore-com.20150623.gappssmtp.com header.i=@paul-moore-com.20150623.gappssmtp.com header.b="H/3328u8"
+	by mail.kernel.org (Postfix) with ESMTP id 83CFF21973
+	for <linux-api@archiver.kernel.org>; Fri, 17 Apr 2020 06:01:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728112AbgDPVxj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 16 Apr 2020 17:53:39 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49988 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-FAIL-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1727943AbgDPVxi (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 16 Apr 2020 17:53:38 -0400
-Received: from mail-ej1-x642.google.com (mail-ej1-x642.google.com [IPv6:2a00:1450:4864:20::642])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B4E24C0610D5
-        for <linux-api@vger.kernel.org>; Thu, 16 Apr 2020 14:53:36 -0700 (PDT)
-Received: by mail-ej1-x642.google.com with SMTP id n17so3401ejh.7
-        for <linux-api@vger.kernel.org>; Thu, 16 Apr 2020 14:53:36 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=paul-moore-com.20150623.gappssmtp.com; s=20150623;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=eUNGgddkQnrL1o2hsZswaMALGVl9JsvHDg1XmEFxRXs=;
-        b=H/3328u8uHV5B3ZeA1mdyZ9xPFs8kyLs8IUIWPozDW9OfdnPF3NpugbioymI6/8jbX
-         tPmBnafFrVmmeM5qCkJe6iYYWMQGGNCaCIBTu9iKoTjKEnoqIk+PcKTpHZgE+/FY0MuQ
-         PeDR0uxOgSOnRc2hQRaU3VDAQAdfVv5922uyfk2kB4XocRvJL9WrovJY8zVDxj8AifvK
-         dQjxlq17MhIeFeAwrQ2ALcslyU4J+63Hv+v7D9gJECfbybcc7t3dDiczFn2juNoagtw4
-         M58yJrok07SL36Kqx67wdtwLyNUDDujZWYGVj6Cp7ofvKM+0LD9BpoiJx/Nn0LZhuM1V
-         WUOQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=eUNGgddkQnrL1o2hsZswaMALGVl9JsvHDg1XmEFxRXs=;
-        b=XYDLhURwH3Gymvq4T9FEHIgy6O9pb6aHagxq18yJCKdT67maHRfO6siD2HUfSm0xU/
-         2wsGzPwasObBkg06tf8HL/fMaSHsBwHcfXNNYqX8/7vk5CRf1Ovpw+mxKD5pf82zBZ+S
-         3DZd+ETf2brGzBW2p6a6GNMsdrEzrO0yWpkxwQ2fcI1aMEBVxAJCuYmtWp8EbovSKRJ2
-         qhxrOHAsgZJEPSCTNFG0NwAMCaJZxZYOpFg7SDZdZz4lAu2MCI+moYyv2rIjQjcMBAKO
-         YBE580aVZd1HyB13BDeEsJNSr+kZ4aVMYOhHCp0GCZoLowj0N89dgSQQkCbCo71s/z0t
-         I2TQ==
-X-Gm-Message-State: AGi0PuakF8MSraq8ON545Nk7jJOWK7UuJ83oKqxIknMAqbcLxcANfCsY
-        xOxJQA4jbgmcywO1y1z5Bf0vCRZsyuRnpWglhVeL
-X-Google-Smtp-Source: APiQypL+BE3uA1SW0Bujmyp0BjjA9VEPrFMXVzQljtvXfQzPxFQdYF4edXGWSKCfJiLORwzoe3+Py9YdpYXjI/hRt+E=
-X-Received: by 2002:a17:906:d7a2:: with SMTP id pk2mr118612ejb.272.1587074015141;
- Thu, 16 Apr 2020 14:53:35 -0700 (PDT)
-MIME-Version: 1.0
-References: <20200318215550.es4stkjwnefrfen2@madcap2.tricolour.ca>
- <CAHC9VhSdDDP7Ec-w61NhGxZG5ZiekmrBCAg=Y=VJvEZcgQh46g@mail.gmail.com>
- <20200319220249.jyr6xmwvflya5mks@madcap2.tricolour.ca> <CAHC9VhR84aN72yNB_j61zZgrQV1y6yvrBLNY7jp7BqQiEDL+cw@mail.gmail.com>
- <20200324210152.5uydf3zqi3dwshfu@madcap2.tricolour.ca> <CAHC9VhTQUnVhoN3JXTAQ7ti+nNLfGNVXhT6D-GYJRSpJHCwDRg@mail.gmail.com>
- <20200330134705.jlrkoiqpgjh3rvoh@madcap2.tricolour.ca> <CAHC9VhQTsEMcYAF1CSHrrVn07DR450W9j6sFVfKAQZ0VpheOfw@mail.gmail.com>
- <20200330162156.mzh2tsnovngudlx2@madcap2.tricolour.ca> <CAHC9VhTRzZXJ6yUFL+xZWHNWZFTyiizBK12ntrcSwmgmySbkWw@mail.gmail.com>
- <20200330174937.xalrsiev7q3yxsx2@madcap2.tricolour.ca> <CAHC9VhR_bKSHDn2WAUgkquu+COwZUanc0RV3GRjMDvpoJ5krjQ@mail.gmail.com>
- <871ronf9x2.fsf@x220.int.ebiederm.org>
-In-Reply-To: <871ronf9x2.fsf@x220.int.ebiederm.org>
-From:   Paul Moore <paul@paul-moore.com>
-Date:   Thu, 16 Apr 2020 17:53:23 -0400
-Message-ID: <CAHC9VhR3gbmj5+5MY-whLtStKqDEHgvMRigU9hW0X1kpxF91ag@mail.gmail.com>
-Subject: Re: [PATCH ghak90 V8 07/16] audit: add contid support for signalling
- the audit daemon
-To:     "Eric W. Biederman" <ebiederm@xmission.com>
-Cc:     Richard Guy Briggs <rgb@redhat.com>, nhorman@tuxdriver.com,
-        linux-api@vger.kernel.org, containers@lists.linux-foundation.org,
-        LKML <linux-kernel@vger.kernel.org>, dhowells@redhat.com,
-        linux-audit@redhat.com, netfilter-devel@vger.kernel.org,
-        simo@redhat.com, netdev@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>,
-        mpatel@redhat.com, Serge Hallyn <serge@hallyn.com>
-Content-Type: text/plain; charset="UTF-8"
+        id S1726488AbgDQGBw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 17 Apr 2020 02:01:52 -0400
+Received: from mga01.intel.com ([192.55.52.88]:54126 "EHLO mga01.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726065AbgDQGBv (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 17 Apr 2020 02:01:51 -0400
+IronPort-SDR: YXBbX3P8Exyf17PXjrDl0/WT6gneLcwTB7i51FP1Zw9F5p74CCqqwZYOj6Caw4O0W1K3GIYRzK
+ 1LWBY35TWbrQ==
+X-Amp-Result: SKIPPED(no attachment in message)
+X-Amp-File-Uploaded: False
+Received: from orsmga002.jf.intel.com ([10.7.209.21])
+  by fmsmga101.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Apr 2020 23:01:51 -0700
+IronPort-SDR: qs/5JrKYhI5fjKMKNid/BnUiMqTRYtpN7CI4cWdzotGHs1aG5KkPVKMMBIatdivZOOVpGG0uHk
+ S8pw/ojxwjKA==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.72,393,1580803200"; 
+   d="scan'208";a="272318270"
+Received: from hao-dev.bj.intel.com ([10.238.157.65])
+  by orsmga002.jf.intel.com with ESMTP; 16 Apr 2020 23:01:48 -0700
+From:   Wu Hao <hao.wu@intel.com>
+To:     will@kernel.org, mdf@kernel.org, mark.rutland@arm.com,
+        gregkh@linuxfoundation.org, linux-fpga@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+Cc:     linux-api@vger.kernel.org, atull@kernel.org, yilun.xu@intel.com,
+        trix@redhat.com, bhu@redhat.com, Wu Hao <hao.wu@intel.com>
+Subject: [PATCH v9 0/2] add performance reporting support to FPGA DFL drivers
+Date:   Fri, 17 Apr 2020 13:39:58 +0800
+Message-Id: <1587102000-18262-1-git-send-email-hao.wu@intel.com>
+X-Mailer: git-send-email 2.7.4
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Apr 16, 2020 at 4:36 PM Eric W. Biederman <ebiederm@xmission.com> wrote:
-> Paul Moore <paul@paul-moore.com> writes:
-> > On Mon, Mar 30, 2020 at 1:49 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> >> On 2020-03-30 13:34, Paul Moore wrote:
-> >> > On Mon, Mar 30, 2020 at 12:22 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> >> > > On 2020-03-30 10:26, Paul Moore wrote:
-> >> > > > On Mon, Mar 30, 2020 at 9:47 AM Richard Guy Briggs <rgb@redhat.com> wrote:
-> >> > > > > On 2020-03-28 23:11, Paul Moore wrote:
-> >> > > > > > On Tue, Mar 24, 2020 at 5:02 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> >> > > > > > > On 2020-03-23 20:16, Paul Moore wrote:
-> >> > > > > > > > On Thu, Mar 19, 2020 at 6:03 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> >> > > > > > > > > On 2020-03-18 18:06, Paul Moore wrote:
-> >
-> > ...
-> >
-> >> > > Well, every time a record gets generated, *any* record gets generated,
-> >> > > we'll need to check for which audit daemons this record is in scope and
-> >> > > generate a different one for each depending on the content and whether
-> >> > > or not the content is influenced by the scope.
-> >> >
-> >> > That's the problem right there - we don't want to have to generate a
-> >> > unique record for *each* auditd on *every* record.  That is a recipe
-> >> > for disaster.
-> >> >
-> >> > Solving this for all of the known audit records is not something we
-> >> > need to worry about in depth at the moment (although giving it some
-> >> > casual thought is not a bad thing), but solving this for the audit
-> >> > container ID information *is* something we need to worry about right
-> >> > now.
-> >>
-> >> If you think that a different nested contid value string per daemon is
-> >> not acceptable, then we are back to issuing a record that has only *one*
-> >> contid listed without any nesting information.  This brings us back to
-> >> the original problem of keeping *all* audit log history since the boot
-> >> of the machine to be able to track the nesting of any particular contid.
-> >
-> > I'm not ruling anything out, except for the "let's just completely
-> > regenerate every record for each auditd instance".
->
-> Paul I am a bit confused about what you are referring to when you say
-> regenerate every record.
->
-> Are you saying that you don't want to repeat the sequence:
->         audit_log_start(...);
->         audit_log_format(...);
->         audit_log_end(...);
-> for every nested audit daemon?
+Hi all,
 
-If it can be avoided yes.  Audit performance is already not-awesome,
-this would make it even worse.
+This patchset adds performance reporting support for FPGA DFL drivers. It
+introduces one pmu to expose userspace interfaces via standard perf API.
+User could use standard perf tool to access perf events exposed via pmu.
 
-> Or are you saying that you would like to literraly want to send the same
-> skb to each of the nested audit daemons?
+This patchset is generated based on 5.7-rc1.
 
-Ideally we would reuse the generated audit messages as much as
-possible.  Less work is better.  That's really my main concern here,
-let's make sure we aren't going to totally tank performance when we
-have a bunch of nested audit daemons.
+Main changes from v8:
+ - rebase against 5.7-rc1.
 
-> Or are you thinking of something else?
+Main changes from v7:
+ - rename pmu name from "fme%d" to "dfl_fme%d".
+ - monitor cpu hotplug for cpumask sysfs and update cpumask sysfs doc.
+ - add extra read for 64bit counter registers to avoid 2-32bit readl issue.
 
-As mentioned above, I'm not thinking of anything specific, other than
-let's please not have to regenerate *all* of the audit record strings
-for each instance of an audit daemon, that's going to be a killer.
+Main changes from v6:
+ - add a new ABI/testing/ sysfs documentation in patch #2.
+ - fix a warning reported by kbuild in patch #2.
 
-Maybe we have to regenerate some, if we do, what would that look like
-in code?  How do we handle the regeneration aspect?  I worry that is
-going to be really ugly.
+Main changes from v5:
+ - use dev_ext_attribute instead of fme_perf_event_attr.
+ - use is_visible function to decide which events to expose per
+   hardware capability, and add event_init checking for all events.
 
-Maybe we finally burn down the audit_log_format(...) function and pass
-structs/TLVs to the audit subsystem and the audit subsystem generates
-the strings in the auditd connection thread.  Some of the record
-strings could likely be shared, others would need to be ACID/auditd
-dependent.
+Main changes from v4:
+ - rebase and clean up.
+ - update Kconfig for PERF_EVENTS dependency.
 
-I'm open to any ideas people may have.  We have a problem, let's solve it.
+Main changes from v3:
+ - add more descriptions in doc, including how to use perf tool for these
+   hardware counters. (patch #1)
+ - use standard perf API instead of sysfs entries. (patch #2)
+
+Wu Hao (1):
+  fpga: dfl: fme: add performance reporting support
+
+Xu Yilun (1):
+  Documentation: fpga: dfl: add description for performance reporting
+    support
+
+ .../testing/sysfs-bus-event_source-devices-dfl_fme |  104 ++
+ Documentation/fpga/dfl.rst                         |   84 ++
+ drivers/fpga/Kconfig                               |    2 +-
+ drivers/fpga/Makefile                              |    1 +
+ drivers/fpga/dfl-fme-main.c                        |    4 +
+ drivers/fpga/dfl-fme-perf.c                        | 1020 ++++++++++++++++++++
+ drivers/fpga/dfl-fme.h                             |    2 +
+ drivers/fpga/dfl.h                                 |    2 +
+ 8 files changed, 1218 insertions(+), 1 deletion(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-bus-event_source-devices-dfl_fme
+ create mode 100644 drivers/fpga/dfl-fme-perf.c
 
 -- 
-paul moore
-www.paul-moore.com
+1.8.3.1
+
