@@ -2,44 +2,44 @@ Return-Path: <SRS0=k4eU=6D=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.5 required=3.0 tests=DKIM_ADSP_CUSTOM_MED,
+X-Spam-Status: No, score=-0.5 required=3.0 tests=DKIM_ADSP_CUSTOM_MED,
 	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BAF65C54FC9
-	for <linux-api@archiver.kernel.org>; Sun, 19 Apr 2020 14:12:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BBBFDC38A30
+	for <linux-api@archiver.kernel.org>; Sun, 19 Apr 2020 14:17:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A41D621841
-	for <linux-api@archiver.kernel.org>; Sun, 19 Apr 2020 14:12:21 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A01F1214AF
+	for <linux-api@archiver.kernel.org>; Sun, 19 Apr 2020 14:17:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726061AbgDSOLm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 19 Apr 2020 10:11:42 -0400
-Received: from raptor.unsafe.ru ([5.9.43.93]:45414 "EHLO raptor.unsafe.ru"
+        id S1725949AbgDSORg (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 19 Apr 2020 10:17:36 -0400
+Received: from raptor.unsafe.ru ([5.9.43.93]:55922 "EHLO raptor.unsafe.ru"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725905AbgDSOLm (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Sun, 19 Apr 2020 10:11:42 -0400
-Received: from comp-core-i7-2640m-0182e6.redhat.com (ip-89-102-33-211.net.upcbroadband.cz [89.102.33.211])
+        id S1725905AbgDSORg (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sun, 19 Apr 2020 10:17:36 -0400
+Received: from comp-core-i7-2640m-0182e6 (ip-89-102-33-211.net.upcbroadband.cz [89.102.33.211])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits))
         (No client certificate requested)
-        by raptor.unsafe.ru (Postfix) with ESMTPSA id BFC74209FB;
-        Sun, 19 Apr 2020 14:11:39 +0000 (UTC)
+        by raptor.unsafe.ru (Postfix) with ESMTPSA id 2AD14209FA;
+        Sun, 19 Apr 2020 14:17:32 +0000 (UTC)
+Date:   Sun, 19 Apr 2020 16:17:27 +0200
 From:   Alexey Gladkov <gladkov.alexey@gmail.com>
-To:     LKML <linux-kernel@vger.kernel.org>
-Cc:     Kernel Hardening <kernel-hardening@lists.openwall.com>,
+To:     "Eric W. Biederman" <ebiederm@xmission.com>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        Kernel Hardening <kernel-hardening@lists.openwall.com>,
         Linux API <linux-api@vger.kernel.org>,
         Linux FS Devel <linux-fsdevel@vger.kernel.org>,
         Linux Security Module <linux-security-module@vger.kernel.org>,
         Akinobu Mita <akinobu.mita@gmail.com>,
         Alexander Viro <viro@zeniv.linux.org.uk>,
         Alexey Dobriyan <adobriyan@gmail.com>,
-        Alexey Gladkov <legion@kernel.org>,
         Andrew Morton <akpm@linux-foundation.org>,
         Andy Lutomirski <luto@kernel.org>,
         Daniel Micay <danielmicay@gmail.com>,
         Djalal Harouni <tixxdz@gmail.com>,
         "Dmitry V . Levin" <ldv@altlinux.org>,
-        "Eric W . Biederman" <ebiederm@xmission.com>,
         Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         Ingo Molnar <mingo@kernel.org>,
         "J . Bruce Fields" <bfields@fieldses.org>,
@@ -49,80 +49,107 @@ Cc:     Kernel Hardening <kernel-hardening@lists.openwall.com>,
         Linus Torvalds <torvalds@linux-foundation.org>,
         Oleg Nesterov <oleg@redhat.com>,
         David Howells <dhowells@redhat.com>
-Subject: [PATCH v12 1/7] proc: rename struct proc_fs_info to proc_fs_opts
-Date:   Sun, 19 Apr 2020 16:10:51 +0200
-Message-Id: <20200419141057.621356-2-gladkov.alexey@gmail.com>
-X-Mailer: git-send-email 2.25.3
-In-Reply-To: <20200419141057.621356-1-gladkov.alexey@gmail.com>
-References: <20200419141057.621356-1-gladkov.alexey@gmail.com>
+Subject: Re: [PATCH RESEND v11 2/8] proc: allow to mount many instances of
+ proc in one pid namespace
+Message-ID: <20200419141727.zjstym5kbp5efoz6@comp-core-i7-2640m-0182e6>
+References: <20200409123752.1070597-1-gladkov.alexey@gmail.com>
+ <20200409123752.1070597-3-gladkov.alexey@gmail.com>
+ <87tv1iaqnq.fsf@x220.int.ebiederm.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-X-Greylist: Sender succeeded SMTP AUTH, not delayed by milter-greylist-4.6.1 (raptor.unsafe.ru [5.9.43.93]); Sun, 19 Apr 2020 14:11:40 +0000 (UTC)
+In-Reply-To: <87tv1iaqnq.fsf@x220.int.ebiederm.org>
+X-Greylist: Sender succeeded SMTP AUTH, not delayed by milter-greylist-4.6.1 (raptor.unsafe.ru [5.9.43.93]); Sun, 19 Apr 2020 14:17:32 +0000 (UTC)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
-Reviewed-by: Alexey Dobriyan <adobriyan@gmail.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
----
- fs/proc_namespace.c | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+On Fri, Apr 17, 2020 at 01:55:05PM -0500, Eric W. Biederman wrote:
+> Alexey Gladkov <gladkov.alexey@gmail.com> writes:
+> 
+> > This patch allows to have multiple procfs instances inside the
+> > same pid namespace. The aim here is lightweight sandboxes, and to allow
+> > that we have to modernize procfs internals.
+> >
+> > 1) The main aim of this work is to have on embedded systems one
+> > supervisor for apps. Right now we have some lightweight sandbox support,
+> > however if we create pid namespacess we have to manages all the
+> > processes inside too, where our goal is to be able to run a bunch of
+> > apps each one inside its own mount namespace without being able to
+> > notice each other. We only want to use mount namespaces, and we want
+> > procfs to behave more like a real mount point.
+> >
+> > 2) Linux Security Modules have multiple ptrace paths inside some
+> > subsystems, however inside procfs, the implementation does not guarantee
+> > that the ptrace() check which triggers the security_ptrace_check() hook
+> > will always run. We have the 'hidepid' mount option that can be used to
+> > force the ptrace_may_access() check inside has_pid_permissions() to run.
+> > The problem is that 'hidepid' is per pid namespace and not attached to
+> > the mount point, any remount or modification of 'hidepid' will propagate
+> > to all other procfs mounts.
+> >
+> > This also does not allow to support Yama LSM easily in desktop and user
+> > sessions. Yama ptrace scope which restricts ptrace and some other
+> > syscalls to be allowed only on inferiors, can be updated to have a
+> > per-task context, where the context will be inherited during fork(),
+> > clone() and preserved across execve(). If we support multiple private
+> > procfs instances, then we may force the ptrace_may_access() on
+> > /proc/<pids>/ to always run inside that new procfs instances. This will
+> > allow to specifiy on user sessions if we should populate procfs with
+> > pids that the user can ptrace or not.
+> >
+> > By using Yama ptrace scope, some restricted users will only be able to see
+> > inferiors inside /proc, they won't even be able to see their other
+> > processes. Some software like Chromium, Firefox's crash handler, Wine
+> > and others are already using Yama to restrict which processes can be
+> > ptracable. With this change this will give the possibility to restrict
+> > /proc/<pids>/ but more importantly this will give desktop users a
+> > generic and usuable way to specifiy which users should see all processes
+> > and which users can not.
+> >
+> > Side notes:
+> > * This covers the lack of seccomp where it is not able to parse
+> > arguments, it is easy to install a seccomp filter on direct syscalls
+> > that operate on pids, however /proc/<pid>/ is a Linux ABI using
+> > filesystem syscalls. With this change LSMs should be able to analyze
+> > open/read/write/close...
+> >
+> > In the new patchset version I removed the 'newinstance' option
+> > as suggested by Eric W. Biederman.
+> 
+> Some very small requests.
+> 
+> 1) Can you please not place fs_info in fs_context, and instead allocate
+>    fs_info in fill_super?  Unless I have misread introduced a resource
+>    leak if proc is not mounted or if proc is simply reconfigured.
 
-diff --git a/fs/proc_namespace.c b/fs/proc_namespace.c
-index 273ee82d8aa9..9a8b624bc3db 100644
---- a/fs/proc_namespace.c
-+++ b/fs/proc_namespace.c
-@@ -37,23 +37,23 @@ static __poll_t mounts_poll(struct file *file, poll_table *wait)
- 	return res;
- }
- 
--struct proc_fs_info {
-+struct proc_fs_opts {
- 	int flag;
- 	const char *str;
- };
- 
- static int show_sb_opts(struct seq_file *m, struct super_block *sb)
- {
--	static const struct proc_fs_info fs_info[] = {
-+	static const struct proc_fs_opts fs_opts[] = {
- 		{ SB_SYNCHRONOUS, ",sync" },
- 		{ SB_DIRSYNC, ",dirsync" },
- 		{ SB_MANDLOCK, ",mand" },
- 		{ SB_LAZYTIME, ",lazytime" },
- 		{ 0, NULL }
- 	};
--	const struct proc_fs_info *fs_infop;
-+	const struct proc_fs_opts *fs_infop;
- 
--	for (fs_infop = fs_info; fs_infop->flag; fs_infop++) {
-+	for (fs_infop = fs_opts; fs_infop->flag; fs_infop++) {
- 		if (sb->s_flags & fs_infop->flag)
- 			seq_puts(m, fs_infop->str);
- 	}
-@@ -63,7 +63,7 @@ static int show_sb_opts(struct seq_file *m, struct super_block *sb)
- 
- static void show_mnt_opts(struct seq_file *m, struct vfsmount *mnt)
- {
--	static const struct proc_fs_info mnt_info[] = {
-+	static const struct proc_fs_opts mnt_opts[] = {
- 		{ MNT_NOSUID, ",nosuid" },
- 		{ MNT_NODEV, ",nodev" },
- 		{ MNT_NOEXEC, ",noexec" },
-@@ -72,9 +72,9 @@ static void show_mnt_opts(struct seq_file *m, struct vfsmount *mnt)
- 		{ MNT_RELATIME, ",relatime" },
- 		{ 0, NULL }
- 	};
--	const struct proc_fs_info *fs_infop;
-+	const struct proc_fs_opts *fs_infop;
- 
--	for (fs_infop = mnt_info; fs_infop->flag; fs_infop++) {
-+	for (fs_infop = mnt_opts; fs_infop->flag; fs_infop++) {
- 		if (mnt->mnt_flags & fs_infop->flag)
- 			seq_puts(m, fs_infop->str);
- 	}
+Hm ... it seems you're right.
+
+> 2) Can you please move hide_pid and pid_gid into fs_info in this patch?
+>    As was shown by my recent bug fix 
+
+OK. I’ll do it in the next version.
+
+> 3) Can you please rebase on on v5.7-rc1 or v5.7-rc2 and repost these
+>    patches please?  I thought I could do it safely but between my bug
+>    fixes, and Alexey Dobriyan's parallel changes to proc these patches
+>    do not apply cleanly.
+> 
+>    Plus there is a resource leak in this patch.
+
+On my way.
+
+> >  struct proc_fs_context {
+> > -	struct pid_namespace	*pid_ns;
+> > +	struct proc_fs_info	*fs_info;
+>         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> Please don't do this. As best as I can tell that introduces a memory
+> leak of proc is not mounted.  Please allocate fs_info in 
+
+OK.
+
 -- 
-2.25.3
+Rgrds, legion
 
