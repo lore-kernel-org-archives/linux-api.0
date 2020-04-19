@@ -2,100 +2,153 @@ Return-Path: <SRS0=k4eU=6D=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-9.5 required=3.0 tests=DKIM_ADSP_CUSTOM_MED,
+	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 76D17C38A30
-	for <linux-api@archiver.kernel.org>; Sun, 19 Apr 2020 09:57:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B81E7C3A5A0
+	for <linux-api@archiver.kernel.org>; Sun, 19 Apr 2020 14:11:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5864821473
-	for <linux-api@archiver.kernel.org>; Sun, 19 Apr 2020 09:57:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A095321841
+	for <linux-api@archiver.kernel.org>; Sun, 19 Apr 2020 14:11:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1725914AbgDSJ5L (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 19 Apr 2020 05:57:11 -0400
-Received: from mout-p-201.mailbox.org ([80.241.56.171]:43820 "EHLO
-        mout-p-201.mailbox.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725905AbgDSJ5L (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 19 Apr 2020 05:57:11 -0400
-Received: from smtp1.mailbox.org (smtp1.mailbox.org [80.241.60.240])
-        (using TLSv1.2 with cipher ECDHE-RSA-CHACHA20-POLY1305 (256/256 bits))
+        id S1726377AbgDSOLt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 19 Apr 2020 10:11:49 -0400
+Received: from raptor.unsafe.ru ([5.9.43.93]:45564 "EHLO raptor.unsafe.ru"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726157AbgDSOLr (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sun, 19 Apr 2020 10:11:47 -0400
+Received: from comp-core-i7-2640m-0182e6.redhat.com (ip-89-102-33-211.net.upcbroadband.cz [89.102.33.211])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits))
         (No client certificate requested)
-        by mout-p-201.mailbox.org (Postfix) with ESMTPS id 494lc13wsszQkJn;
-        Sun, 19 Apr 2020 11:57:05 +0200 (CEST)
-X-Virus-Scanned: amavisd-new at heinlein-support.de
-Received: from smtp1.mailbox.org ([80.241.60.240])
-        by spamfilter04.heinlein-hosting.de (spamfilter04.heinlein-hosting.de [80.241.56.122]) (amavisd-new, port 10030)
-        with ESMTP id NEBcbWR4rXqI; Sun, 19 Apr 2020 11:57:01 +0200 (CEST)
-Date:   Sun, 19 Apr 2020 19:56:51 +1000
-From:   Aleksa Sarai <cyphar@cyphar.com>
-To:     Stefan Metzmacher <metze@samba.org>
-Cc:     Miklos Szeredi <mszeredi@redhat.com>,
-        Al Viro <viro@ZenIV.linux.org.uk>,
-        linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        linux-api@vger.kernel.org, Eric Sandeen <sandeen@sandeen.net>
-Subject: Re: [PATCH] vfs: add faccessat2 syscall
-Message-ID: <20200419095651.djee6mgneyf3qi3v@yavin.dot.cyphar.com>
-References: <20200416143532.11743-1-mszeredi@redhat.com>
- <c47459a5-3323-121e-ec66-4a8eb2a8afca@samba.org>
+        by raptor.unsafe.ru (Postfix) with ESMTPSA id ED324209FF;
+        Sun, 19 Apr 2020 14:11:42 +0000 (UTC)
+From:   Alexey Gladkov <gladkov.alexey@gmail.com>
+To:     LKML <linux-kernel@vger.kernel.org>
+Cc:     Kernel Hardening <kernel-hardening@lists.openwall.com>,
+        Linux API <linux-api@vger.kernel.org>,
+        Linux FS Devel <linux-fsdevel@vger.kernel.org>,
+        Linux Security Module <linux-security-module@vger.kernel.org>,
+        Akinobu Mita <akinobu.mita@gmail.com>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        Alexey Dobriyan <adobriyan@gmail.com>,
+        Alexey Gladkov <legion@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Daniel Micay <danielmicay@gmail.com>,
+        Djalal Harouni <tixxdz@gmail.com>,
+        "Dmitry V . Levin" <ldv@altlinux.org>,
+        "Eric W . Biederman" <ebiederm@xmission.com>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Jeff Layton <jlayton@poochiereds.net>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Oleg Nesterov <oleg@redhat.com>,
+        David Howells <dhowells@redhat.com>
+Subject: [PATCH v12 5/7] docs: proc: add documentation for "hidepid=4" and "subset=pid" options and new mount behavior
+Date:   Sun, 19 Apr 2020 16:10:55 +0200
+Message-Id: <20200419141057.621356-6-gladkov.alexey@gmail.com>
+X-Mailer: git-send-email 2.25.3
+In-Reply-To: <20200419141057.621356-1-gladkov.alexey@gmail.com>
+References: <20200419141057.621356-1-gladkov.alexey@gmail.com>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="lmda2lbevichqywo"
-Content-Disposition: inline
-In-Reply-To: <c47459a5-3323-121e-ec66-4a8eb2a8afca@samba.org>
-X-Rspamd-Queue-Id: 37BD217EF
-X-Rspamd-Score: -9.29 / 15.00 / 15.00
+Content-Transfer-Encoding: 8bit
+X-Greylist: Sender succeeded SMTP AUTH, not delayed by milter-greylist-4.6.1 (raptor.unsafe.ru [5.9.43.93]); Sun, 19 Apr 2020 14:11:43 +0000 (UTC)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
+Reviewed-by: Alexey Dobriyan <adobriyan@gmail.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+---
+ Documentation/filesystems/proc.rst | 54 ++++++++++++++++++++++++++++++
+ 1 file changed, 54 insertions(+)
 
---lmda2lbevichqywo
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+diff --git a/Documentation/filesystems/proc.rst b/Documentation/filesystems/proc.rst
+index 38b606991065..360486c7a992 100644
+--- a/Documentation/filesystems/proc.rst
++++ b/Documentation/filesystems/proc.rst
+@@ -51,6 +51,8 @@ fixes/update part 1.1  Stefani Seibold <stefani@seibold.net>    June 9 2009
+   4	Configuring procfs
+   4.1	Mount options
+ 
++  5	Filesystem behavior
++
+ Preface
+ =======
+ 
+@@ -2142,6 +2144,7 @@ The following mount options are supported:
+ 	=========	========================================================
+ 	hidepid=	Set /proc/<pid>/ access mode.
+ 	gid=		Set the group authorized to learn processes information.
++	subset=		Show only the specified subset of procfs.
+ 	=========	========================================================
+ 
+ hidepid=0 means classic mode - everybody may access all /proc/<pid>/ directories
+@@ -2164,6 +2167,57 @@ information about running processes, whether some daemon runs with elevated
+ privileges, whether other user runs some sensitive program, whether other users
+ run any program at all, etc.
+ 
++hidepid=4 means that procfs should only contain /proc/<pid>/ directories
++that the caller can ptrace.
++
+ gid= defines a group authorized to learn processes information otherwise
+ prohibited by hidepid=.  If you use some daemon like identd which needs to learn
+ information about processes information, just add identd to this group.
++
++subset=pid hides all top level files and directories in the procfs that
++are not related to tasks.
++
++5	Filesystem behavior
++----------------------------
++
++Originally, before the advent of pid namepsace, procfs was a global file
++system. It means that there was only one procfs instance in the system.
++
++When pid namespace was added, a separate procfs instance was mounted in
++each pid namespace. So, procfs mount options are global among all
++mountpoints within the same namespace.
++
++::
++
++# grep ^proc /proc/mounts
++proc /proc proc rw,relatime,hidepid=2 0 0
++
++# strace -e mount mount -o hidepid=1 -t proc proc /tmp/proc
++mount("proc", "/tmp/proc", "proc", 0, "hidepid=1") = 0
+++++ exited with 0 +++
++
++# grep ^proc /proc/mounts
++proc /proc proc rw,relatime,hidepid=2 0 0
++proc /tmp/proc proc rw,relatime,hidepid=2 0 0
++
++and only after remounting procfs mount options will change at all
++mountpoints.
++
++# mount -o remount,hidepid=1 -t proc proc /tmp/proc
++
++# grep ^proc /proc/mounts
++proc /proc proc rw,relatime,hidepid=1 0 0
++proc /tmp/proc proc rw,relatime,hidepid=1 0 0
++
++This behavior is different from the behavior of other filesystems.
++
++The new procfs behavior is more like other filesystems. Each procfs mount
++creates a new procfs instance. Mount options affect own procfs instance.
++It means that it became possible to have several procfs instances
++displaying tasks with different filtering options in one pid namespace.
++
++# mount -o hidepid=2 -t proc proc /proc
++# mount -o hidepid=1 -t proc proc /tmp/proc
++# grep ^proc /proc/mounts
++proc /proc proc rw,relatime,hidepid=2 0 0
++proc /tmp/proc proc rw,relatime,hidepid=1 0 0
+-- 
+2.25.3
 
-On 2020-04-18, Stefan Metzmacher <metze@samba.org> wrote:
-> > POSIX defines faccessat() as having a fourth "flags" argument, while the
-> > linux syscall doesn't have it.  Glibc tries to emulate AT_EACCESS and
-> > AT_SYMLINK_NOFOLLOW, but AT_EACCESS emulation is broken.
-> >=20
-> > Add a new faccessat(2) syscall with the added flags argument and implem=
-ent
-> > both flags.
-> >=20
-> > The value of AT_EACCESS is defined in glibc headers to be the same as
-> > AT_REMOVEDIR.  Use this value for the kernel interface as well, together
-> > with the explanatory comment.
->=20
-> It would be nice if resolv_flags would also be passed in addition to the
-> at flags.
-> See:https://lore.kernel.org/linux-api/CAHk-=3DwiaL6zznNtCHKg6+MJuCqDxO=3D=
-yVfms3qR9A0czjKuSSiA@mail.gmail.com/
->=20
-> We should avoid expecting yet another syscall in near future.
-
-If faccessat2() supported AT_EMPTY_PATH (which I'd be in favour of),
-there's no need to add resolve flags because you could open the file as
-O_PATH with whatever resolve flags you want, and then check it with
-faccessat2().
-
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
-
---lmda2lbevichqywo
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXpwgYAAKCRCdlLljIbnQ
-ElqnAQDppWaDa1Cc9a8o5EOeojrE4ZHo8+PiXfVr3y9Ee7V75AD/d35WYD5+LhFD
-cVKGSxPjCXAcAalrnfXQI8yCl/6iFAs=
-=mf5A
------END PGP SIGNATURE-----
-
---lmda2lbevichqywo--
