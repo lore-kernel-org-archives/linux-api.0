@@ -2,28 +2,27 @@ Return-Path: <SRS0=ZeM4=6G=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.7 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
-	version=3.4.0
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 12B2DC54FCB
-	for <linux-api@archiver.kernel.org>; Wed, 22 Apr 2020 14:55:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D7D95C55185
+	for <linux-api@archiver.kernel.org>; Wed, 22 Apr 2020 14:55:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id EBC422098B
-	for <linux-api@archiver.kernel.org>; Wed, 22 Apr 2020 14:55:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B74212082E
+	for <linux-api@archiver.kernel.org>; Wed, 22 Apr 2020 14:55:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728038AbgDVOzX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S1728035AbgDVOzX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Wed, 22 Apr 2020 10:55:23 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:49646 "EHLO
+Received: from youngberry.canonical.com ([91.189.89.112]:49626 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727920AbgDVOzT (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 22 Apr 2020 10:55:19 -0400
+        with ESMTP id S1727787AbgDVOzQ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 22 Apr 2020 10:55:16 -0400
 Received: from ip5f5af183.dynamic.kabel-deutschland.de ([95.90.241.131] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1jRGmR-0006CM-Oh; Wed, 22 Apr 2020 14:55:15 +0000
+        id 1jRGmN-0006CM-Ve; Wed, 22 Apr 2020 14:55:12 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Jens Axboe <axboe@kernel.dk>,
         Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -48,9 +47,9 @@ Cc:     Jonathan Corbet <corbet@lwn.net>, Serge Hallyn <serge@hallyn.com>,
         Kees Cook <keescook@chromium.org>,
         Benjamin Elder <bentheelder@google.com>,
         Akihiro Suda <suda.kyoto@gmail.com>
-Subject: [PATCH v2 7/7] loopfs: only show devices in their correct instance
-Date:   Wed, 22 Apr 2020 16:54:37 +0200
-Message-Id: <20200422145437.176057-8-christian.brauner@ubuntu.com>
+Subject: [PATCH v2 4/7] kernfs: handle multiple namespace tags
+Date:   Wed, 22 Apr 2020 16:54:34 +0200
+Message-Id: <20200422145437.176057-5-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.26.1
 In-Reply-To: <20200422145437.176057-1-christian.brauner@ubuntu.com>
 References: <20200422145437.176057-1-christian.brauner@ubuntu.com>
@@ -61,81 +60,318 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Since loopfs devices belong to a loopfs instance they have no business
-polluting the host's devtmpfs mount and should not propagate out of the
-namespace they belong to.
+Since [1] kernfs supports namespace tags. This feature is essential to
+enable sysfs to present different views of on various parts depending on
+the namespace tag. For example, the /sys/class/net/ directory will only
+show network devices that belong to the network namespace that sysfs was
+mounted in. This is achieved by stashing a reference to the network
+namespace of the task mounting sysfs in the super block. And when a
+lookup operation is performed on e.g. /sys/class/net/ kernfs will
+compare the network namespace tag of the kernfs_node associated with the
+device and kobject of the network device to the network namespace of the
+network device. This ensures that only network devices owned by the
+network namespace sysfs was mounted in are shown, a feature which is
+essential to containers.
+For loopfs to show correct permissions in sysfs just as with network
+devices we need to be able to tag kernfs_super_info with additional
+namespaces. This extension was even already mentioned in a comment to
+struct kernfs_super_info:
+  /*
+   * Each sb is associated with one namespace tag, currently the
+   * network namespace of the task which mounted this kernfs
+   * instance.  If multiple tags become necessary, make the following
+   * an array and compare kernfs_node tag against every entry.
+   */
+This patch extends the kernfs_super_info and kernfs_fs_context ns
+pointers to fixed-size arrays of namespace tags. The size is taken from
+the namespaces currently supported by kobjects, i.e. we don't extend it
+to cover all namespace but only the ones kernfs needs to support.
+In addition, the kernfs_node struct gains an additional member that
+indicates the type of namespace this kernfs_node was tagged with. This
+allows us to simply retrieve the correct namespace tag from the
+kernfs_fs_context and kernfs_super_info ns array with a simple indexing
+operation. This has the advantage that we can just keep passing down the
+correct namespace instead of passing down the array.
 
-Cc: Jens Axboe <axboe@kernel.dk>
+[1]: 608b4b9548de ("netns: Teach network device kobjects which namespace they are in.")
 Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Acked-by: Tejun Heo <tj@kernel.org>
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
 unchanged
 ---
- drivers/base/devtmpfs.c | 4 ++--
- drivers/block/loop.c    | 4 +++-
- include/linux/device.h  | 3 +++
- 3 files changed, 8 insertions(+), 3 deletions(-)
+ fs/kernfs/dir.c             |  6 +++---
+ fs/kernfs/kernfs-internal.h |  9 ++++-----
+ fs/kernfs/mount.c           | 11 +++++++----
+ fs/sysfs/mount.c            | 10 +++++-----
+ include/linux/kernfs.h      | 22 ++++++++++++++--------
+ include/linux/sysfs.h       |  8 +++++---
+ lib/kobject.c               |  2 +-
+ 7 files changed, 39 insertions(+), 29 deletions(-)
 
-diff --git a/drivers/base/devtmpfs.c b/drivers/base/devtmpfs.c
-index c9017e0584c0..77371ceb88fa 100644
---- a/drivers/base/devtmpfs.c
-+++ b/drivers/base/devtmpfs.c
-@@ -111,7 +111,7 @@ int devtmpfs_create_node(struct device *dev)
- 	const char *tmp = NULL;
- 	struct req req;
+diff --git a/fs/kernfs/dir.c b/fs/kernfs/dir.c
+index 9aec80b9d7c6..1f2d894ae454 100644
+--- a/fs/kernfs/dir.c
++++ b/fs/kernfs/dir.c
+@@ -576,7 +576,7 @@ static int kernfs_dop_revalidate(struct dentry *dentry, unsigned int flags)
  
--	if (!thread)
-+	if (!thread || dev->no_devnode)
- 		return 0;
+ 	/* The kernfs node has been moved to a different namespace */
+ 	if (kn->parent && kernfs_ns_enabled(kn->parent) &&
+-	    kernfs_info(dentry->d_sb)->ns != kn->ns)
++	    kernfs_info(dentry->d_sb)->ns[kn->ns_type] != kn->ns)
+ 		goto out_bad;
  
- 	req.mode = 0;
-@@ -138,7 +138,7 @@ int devtmpfs_delete_node(struct device *dev)
- 	const char *tmp = NULL;
- 	struct req req;
+ 	mutex_unlock(&kernfs_mutex);
+@@ -1087,7 +1087,7 @@ static struct dentry *kernfs_iop_lookup(struct inode *dir,
+ 	mutex_lock(&kernfs_mutex);
  
--	if (!thread)
-+	if (!thread || dev->no_devnode)
- 		return 0;
+ 	if (kernfs_ns_enabled(parent))
+-		ns = kernfs_info(dir->i_sb)->ns;
++		ns = kernfs_info(dir->i_sb)->ns[parent->ns_type];
  
- 	req.name = device_get_devnode(dev, NULL, NULL, NULL, &tmp);
-diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index 2dc53bad4b48..5548151b9f11 100644
---- a/drivers/block/loop.c
-+++ b/drivers/block/loop.c
-@@ -2213,8 +2213,10 @@ static int loop_add(struct loop_device **l, int i, struct inode *inode)
- 	disk->queue		= lo->lo_queue;
- 	sprintf(disk->disk_name, "loop%d", i);
- #ifdef CONFIG_BLK_DEV_LOOPFS
--	if (loopfs_i_sb(inode))
-+	if (loopfs_i_sb(inode)) {
- 		disk->user_ns = loopfs_i_sb(inode)->s_user_ns;
-+		disk_to_dev(disk)->no_devnode = true;
-+	}
- #endif
+ 	kn = kernfs_find_ns(parent, dentry->d_name.name, ns);
  
- 	add_disk(disk);
-diff --git a/include/linux/device.h b/include/linux/device.h
-index ac8e37cd716a..c69ef1c5a0ef 100644
---- a/include/linux/device.h
-+++ b/include/linux/device.h
-@@ -523,6 +523,8 @@ struct dev_links_info {
-  *		  sync_state() callback.
-  * @dma_coherent: this particular device is dma coherent, even if the
-  *		architecture supports non-coherent devices.
-+ * @no_devnode: whether device nodes associated with this device are kept out
-+ *		of devtmpfs (e.g. due to separate filesystem)
+@@ -1673,7 +1673,7 @@ static int kernfs_fop_readdir(struct file *file, struct dir_context *ctx)
+ 	mutex_lock(&kernfs_mutex);
+ 
+ 	if (kernfs_ns_enabled(parent))
+-		ns = kernfs_info(dentry->d_sb)->ns;
++		ns = kernfs_info(dentry->d_sb)->ns[parent->ns_type];
+ 
+ 	for (pos = kernfs_dir_pos(ns, parent, ctx->pos, pos);
+ 	     pos;
+diff --git a/fs/kernfs/kernfs-internal.h b/fs/kernfs/kernfs-internal.h
+index 7ee97ef59184..7c972c00f84a 100644
+--- a/fs/kernfs/kernfs-internal.h
++++ b/fs/kernfs/kernfs-internal.h
+@@ -16,6 +16,7 @@
+ #include <linux/xattr.h>
+ 
+ #include <linux/kernfs.h>
++#include <linux/kobject_ns.h>
+ #include <linux/fs_context.h>
+ 
+ struct kernfs_iattrs {
+@@ -62,12 +63,10 @@ struct kernfs_super_info {
+ 	struct kernfs_root	*root;
+ 
+ 	/*
+-	 * Each sb is associated with one namespace tag, currently the
+-	 * network namespace of the task which mounted this kernfs
+-	 * instance.  If multiple tags become necessary, make the following
+-	 * an array and compare kernfs_node tag against every entry.
++	 * Each sb can be associated with namespace tags. They will be used
++	 * to compare kernfs_node tags against relevant entries.
+ 	 */
+-	const void		*ns;
++	const void		*ns[KOBJ_NS_TYPES];
+ 
+ 	/* anchored at kernfs_root->supers, protected by kernfs_mutex */
+ 	struct list_head	node;
+diff --git a/fs/kernfs/mount.c b/fs/kernfs/mount.c
+index 9dc7e7a64e10..dc4ee0f0a597 100644
+--- a/fs/kernfs/mount.c
++++ b/fs/kernfs/mount.c
+@@ -279,14 +279,15 @@ static int kernfs_test_super(struct super_block *sb, struct fs_context *fc)
+ 	struct kernfs_super_info *sb_info = kernfs_info(sb);
+ 	struct kernfs_super_info *info = fc->s_fs_info;
+ 
+-	return sb_info->root == info->root && sb_info->ns == info->ns;
++	return sb_info->root == info->root &&
++	       memcmp(sb_info->ns, info->ns, sizeof(sb_info->ns)) == 0;
+ }
+ 
+ static int kernfs_set_super(struct super_block *sb, struct fs_context *fc)
+ {
+ 	struct kernfs_fs_context *kfc = fc->fs_private;
+ 
+-	kfc->ns_tag = NULL;
++	memset(kfc->ns_tag, 0, sizeof(kfc->ns_tag));
+ 	return set_anon_super_fc(sb, fc);
+ }
+ 
+@@ -296,7 +297,7 @@ static int kernfs_set_super(struct super_block *sb, struct fs_context *fc)
   *
-  * At the lowest level, every device in a Linux system is represented by an
-  * instance of struct device. The device structure contains the information
-@@ -622,6 +624,7 @@ struct device {
-     defined(CONFIG_ARCH_HAS_SYNC_DMA_FOR_CPU_ALL)
- 	bool			dma_coherent:1;
- #endif
-+	bool			no_devnode:1;
- };
+  * Return the namespace tag associated with kernfs super_block @sb.
+  */
+-const void *kernfs_super_ns(struct super_block *sb)
++const void **kernfs_super_ns(struct super_block *sb)
+ {
+ 	struct kernfs_super_info *info = kernfs_info(sb);
  
- static inline struct device *kobj_to_dev(struct kobject *kobj)
+@@ -324,7 +325,9 @@ int kernfs_get_tree(struct fs_context *fc)
+ 		return -ENOMEM;
+ 
+ 	info->root = kfc->root;
+-	info->ns = kfc->ns_tag;
++	BUILD_BUG_ON(sizeof(info->ns) != sizeof(kfc->ns_tag));
++	memcpy(info->ns, kfc->ns_tag, sizeof(info->ns));
++
+ 	INIT_LIST_HEAD(&info->node);
+ 
+ 	fc->s_fs_info = info;
+diff --git a/fs/sysfs/mount.c b/fs/sysfs/mount.c
+index db81cfbab9d6..5e2ec88a709e 100644
+--- a/fs/sysfs/mount.c
++++ b/fs/sysfs/mount.c
+@@ -41,8 +41,8 @@ static void sysfs_fs_context_free(struct fs_context *fc)
+ {
+ 	struct kernfs_fs_context *kfc = fc->fs_private;
+ 
+-	if (kfc->ns_tag)
+-		kobj_ns_drop(KOBJ_NS_TYPE_NET, kfc->ns_tag);
++	if (kfc->ns_tag[KOBJ_NS_TYPE_NET])
++		kobj_ns_drop(KOBJ_NS_TYPE_NET, kfc->ns_tag[KOBJ_NS_TYPE_NET]);
+ 	kernfs_free_fs_context(fc);
+ 	kfree(kfc);
+ }
+@@ -66,7 +66,7 @@ static int sysfs_init_fs_context(struct fs_context *fc)
+ 	if (!kfc)
+ 		return -ENOMEM;
+ 
+-	kfc->ns_tag = netns = kobj_ns_grab_current(KOBJ_NS_TYPE_NET);
++	kfc->ns_tag[KOBJ_NS_TYPE_NET] = netns = kobj_ns_grab_current(KOBJ_NS_TYPE_NET);
+ 	kfc->root = sysfs_root;
+ 	kfc->magic = SYSFS_MAGIC;
+ 	fc->fs_private = kfc;
+@@ -81,10 +81,10 @@ static int sysfs_init_fs_context(struct fs_context *fc)
+ 
+ static void sysfs_kill_sb(struct super_block *sb)
+ {
+-	void *ns = (void *)kernfs_super_ns(sb);
++	void **ns = (void **)kernfs_super_ns(sb);
+ 
+ 	kernfs_kill_sb(sb);
+-	kobj_ns_drop(KOBJ_NS_TYPE_NET, ns);
++	kobj_ns_drop(KOBJ_NS_TYPE_NET, ns[KOBJ_NS_TYPE_NET]);
+ }
+ 
+ static struct file_system_type sysfs_fs_type = {
+diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
+index 89f6a4214a70..d0544f2e0c99 100644
+--- a/include/linux/kernfs.h
++++ b/include/linux/kernfs.h
+@@ -16,6 +16,7 @@
+ #include <linux/atomic.h>
+ #include <linux/uidgid.h>
+ #include <linux/wait.h>
++#include <linux/kobject_ns.h>
+ 
+ struct file;
+ struct dentry;
+@@ -137,8 +138,9 @@ struct kernfs_node {
+ 
+ 	struct rb_node		rb;
+ 
+-	const void		*ns;	/* namespace tag */
+-	unsigned int		hash;	/* ns + name hash */
++	const void		*ns;		/* namespace tag */
++	enum kobj_ns_type	ns_type;	/* type of namespace tag */
++	unsigned int		hash;		/* ns + name hash */
+ 	union {
+ 		struct kernfs_elem_dir		dir;
+ 		struct kernfs_elem_symlink	symlink;
+@@ -275,7 +277,7 @@ struct kernfs_ops {
+  */
+ struct kernfs_fs_context {
+ 	struct kernfs_root	*root;		/* Root of the hierarchy being mounted */
+-	void			*ns_tag;	/* Namespace tag of the mount (or NULL) */
++	void			*ns_tag[KOBJ_NS_TYPES]; /* Namespace tags of the mount (or empty) */
+ 	unsigned long		magic;		/* File system specific magic number */
+ 
+ 	/* The following are set/used by kernfs_mount() */
+@@ -319,17 +321,20 @@ static inline ino_t kernfs_gen(struct kernfs_node *kn)
+ 
+ /**
+  * kernfs_enable_ns - enable namespace under a directory
+- * @kn: directory of interest, should be empty
++ * @kn:		directory of interest, should be empty
++ * @ns_type:	type of namespace that should be enabled for this directory
+  *
+  * This is to be called right after @kn is created to enable namespace
+  * under it.  All children of @kn must have non-NULL namespace tags and
+  * only the ones which match the super_block's tag will be visible.
+  */
+-static inline void kernfs_enable_ns(struct kernfs_node *kn)
++static inline void kernfs_enable_ns(struct kernfs_node *kn,
++				    enum kobj_ns_type ns_type)
+ {
+ 	WARN_ON_ONCE(kernfs_type(kn) != KERNFS_DIR);
+ 	WARN_ON_ONCE(!RB_EMPTY_ROOT(&kn->dir.children));
+ 	kn->flags |= KERNFS_NS;
++	kn->ns_type = ns_type;
+ }
+ 
+ /**
+@@ -401,7 +406,7 @@ int kernfs_xattr_get(struct kernfs_node *kn, const char *name,
+ int kernfs_xattr_set(struct kernfs_node *kn, const char *name,
+ 		     const void *value, size_t size, int flags);
+ 
+-const void *kernfs_super_ns(struct super_block *sb);
++const void **kernfs_super_ns(struct super_block *sb);
+ int kernfs_get_tree(struct fs_context *fc);
+ void kernfs_free_fs_context(struct fs_context *fc);
+ void kernfs_kill_sb(struct super_block *sb);
+@@ -415,7 +420,8 @@ struct kernfs_node *kernfs_find_and_get_node_by_id(struct kernfs_root *root,
+ static inline enum kernfs_node_type kernfs_type(struct kernfs_node *kn)
+ { return 0; }	/* whatever */
+ 
+-static inline void kernfs_enable_ns(struct kernfs_node *kn) { }
++static inline void kernfs_enable_ns(struct kernfs_node *kn,
++				    enum kobj_ns_type ns_type) { }
+ 
+ static inline bool kernfs_ns_enabled(struct kernfs_node *kn)
+ { return false; }
+@@ -511,7 +517,7 @@ static inline int kernfs_xattr_set(struct kernfs_node *kn, const char *name,
+ 				   const void *value, size_t size, int flags)
+ { return -ENOSYS; }
+ 
+-static inline const void *kernfs_super_ns(struct super_block *sb)
++static inline const void **kernfs_super_ns(struct super_block *sb)
+ { return NULL; }
+ 
+ static inline int kernfs_get_tree(struct fs_context *fc)
+diff --git a/include/linux/sysfs.h b/include/linux/sysfs.h
+index 80bb865b3a33..d127b3487abc 100644
+--- a/include/linux/sysfs.h
++++ b/include/linux/sysfs.h
+@@ -306,9 +306,10 @@ void sysfs_notify(struct kobject *kobj, const char *dir, const char *attr);
+ 
+ int __must_check sysfs_init(void);
+ 
+-static inline void sysfs_enable_ns(struct kernfs_node *kn)
++static inline void sysfs_enable_ns(struct kernfs_node *kn,
++				   enum kobj_ns_type ns_type)
+ {
+-	return kernfs_enable_ns(kn);
++	return kernfs_enable_ns(kn, ns_type);
+ }
+ 
+ int sysfs_file_change_owner(struct kobject *kobj, const char *name, kuid_t kuid,
+@@ -531,7 +532,8 @@ static inline int __must_check sysfs_init(void)
+ 	return 0;
+ }
+ 
+-static inline void sysfs_enable_ns(struct kernfs_node *kn)
++static inline void sysfs_enable_ns(struct kernfs_node *kn,
++				   enum kobj_ns_type ns_type)
+ {
+ }
+ 
+diff --git a/lib/kobject.c b/lib/kobject.c
+index 6f07083cc111..c58c62d49a10 100644
+--- a/lib/kobject.c
++++ b/lib/kobject.c
+@@ -120,7 +120,7 @@ static int create_dir(struct kobject *kobj)
+ 		BUG_ON(ops->type >= KOBJ_NS_TYPES);
+ 		BUG_ON(!kobj_ns_type_registered(ops->type));
+ 
+-		sysfs_enable_ns(kobj->sd);
++		sysfs_enable_ns(kobj->sd, ops->type);
+ 	}
+ 
+ 	return 0;
 -- 
 2.26.1
 
