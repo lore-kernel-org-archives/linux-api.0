@@ -2,180 +2,191 @@ Return-Path: <SRS0=mAf3=6H=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-3.5 required=3.0 tests=DKIM_ADSP_CUSTOM_MED,
+	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E5157C55191
-	for <linux-api@archiver.kernel.org>; Thu, 23 Apr 2020 16:29:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 89841C55191
+	for <linux-api@archiver.kernel.org>; Thu, 23 Apr 2020 20:02:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CDE5B20857
-	for <linux-api@archiver.kernel.org>; Thu, 23 Apr 2020 16:29:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6E31620767
+	for <linux-api@archiver.kernel.org>; Thu, 23 Apr 2020 20:02:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729514AbgDWQ3o (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 23 Apr 2020 12:29:44 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:46184 "EHLO
-        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729419AbgDWQ3n (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 23 Apr 2020 12:29:43 -0400
-Received: from ip5f5af183.dynamic.kabel-deutschland.de ([95.90.241.131] helo=wittgenstein)
-        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.86_2)
-        (envelope-from <christian.brauner@ubuntu.com>)
-        id 1jRejK-0000ME-Gj; Thu, 23 Apr 2020 16:29:38 +0000
-Date:   Thu, 23 Apr 2020 18:29:37 +0200
-From:   Christian Brauner <christian.brauner@ubuntu.com>
-To:     "Serge E. Hallyn" <serge@hallyn.com>
-Cc:     Jens Axboe <axboe@kernel.dk>,
+        id S1725934AbgDWUCT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 23 Apr 2020 16:02:19 -0400
+Received: from raptor.unsafe.ru ([5.9.43.93]:47380 "EHLO raptor.unsafe.ru"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726380AbgDWUCS (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 23 Apr 2020 16:02:18 -0400
+Received: from comp-core-i7-2640m-0182e6 (ip-89-102-33-211.net.upcbroadband.cz [89.102.33.211])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits))
+        (No client certificate requested)
+        by raptor.unsafe.ru (Postfix) with ESMTPSA id 3A8DC20459;
+        Thu, 23 Apr 2020 20:01:42 +0000 (UTC)
+Date:   Thu, 23 Apr 2020 22:01:36 +0200
+From:   Alexey Gladkov <gladkov.alexey@gmail.com>
+To:     "Eric W. Biederman" <ebiederm@xmission.com>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        Kernel Hardening <kernel-hardening@lists.openwall.com>,
+        Linux API <linux-api@vger.kernel.org>,
+        Linux FS Devel <linux-fsdevel@vger.kernel.org>,
+        Linux Security Module <linux-security-module@vger.kernel.org>,
+        Akinobu Mita <akinobu.mita@gmail.com>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        Alexey Dobriyan <adobriyan@gmail.com>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Daniel Micay <danielmicay@gmail.com>,
+        Djalal Harouni <tixxdz@gmail.com>,
+        "Dmitry V . Levin" <ldv@altlinux.org>,
         Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
-        linux-api@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>,
-        "Rafael J. Wysocki" <rafael@kernel.org>, Tejun Heo <tj@kernel.org>,
-        "David S. Miller" <davem@davemloft.net>,
-        Saravana Kannan <saravanak@google.com>,
-        Jan Kara <jack@suse.cz>, David Howells <dhowells@redhat.com>,
-        Seth Forshee <seth.forshee@canonical.com>,
-        David Rheinsberg <david.rheinsberg@gmail.com>,
-        Tom Gundersen <teg@jklm.no>,
-        Christian Kellner <ckellner@redhat.com>,
-        Dmitry Vyukov <dvyukov@google.com>,
-        =?utf-8?B?U3TDqXBoYW5l?= Graber <stgraber@ubuntu.com>,
-        linux-doc@vger.kernel.org, netdev@vger.kernel.org,
-        Steve Barber <smbarber@google.com>,
-        Dylan Reid <dgreid@google.com>,
-        Filipe Brandenburger <filbranden@gmail.com>,
+        Ingo Molnar <mingo@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Jeff Layton <jlayton@poochiereds.net>,
+        Jonathan Corbet <corbet@lwn.net>,
         Kees Cook <keescook@chromium.org>,
-        Benjamin Elder <bentheelder@google.com>,
-        Akihiro Suda <suda.kyoto@gmail.com>
-Subject: Re: [PATCH v2 2/7] loopfs: implement loopfs
-Message-ID: <20200423162937.qvald26s7fqpqnjv@wittgenstein>
-References: <20200422145437.176057-1-christian.brauner@ubuntu.com>
- <20200422145437.176057-3-christian.brauner@ubuntu.com>
- <20200422215213.GB31944@mail.hallyn.com>
- <20200423112401.ipzmsyicabwajpn2@wittgenstein>
- <20200423161717.GB12201@mail.hallyn.com>
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Oleg Nesterov <oleg@redhat.com>,
+        David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH v13 2/7] proc: allow to mount many instances of proc in
+ one pid namespace
+Message-ID: <20200423200136.zrjzv6d6zghnvvrx@comp-core-i7-2640m-0182e6>
+References: <20200419141057.621356-3-gladkov.alexey@gmail.com>
+ <20200423112858.95820-1-gladkov.alexey@gmail.com>
+ <87lfmmz9bs.fsf@x220.int.ebiederm.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20200423161717.GB12201@mail.hallyn.com>
+In-Reply-To: <87lfmmz9bs.fsf@x220.int.ebiederm.org>
+X-Greylist: Sender succeeded SMTP AUTH, not delayed by milter-greylist-4.6.1 (raptor.unsafe.ru [5.9.43.93]); Thu, 23 Apr 2020 20:02:13 +0000 (UTC)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Apr 23, 2020 at 11:17:17AM -0500, Serge Hallyn wrote:
-> On Thu, Apr 23, 2020 at 01:24:01PM +0200, Christian Brauner wrote:
-> > On Wed, Apr 22, 2020 at 04:52:13PM -0500, Serge Hallyn wrote:
-> > > On Wed, Apr 22, 2020 at 04:54:32PM +0200, Christian Brauner wrote:
-> > > > This implements loopfs, a loop device filesystem. It takes inspiration
-> > > > from the binderfs filesystem I implemented about two years ago and with
-> > > > which we had overall good experiences so far. Parts of it are also
-> > > > based on [3] but it's mostly a new, imho cleaner approach.
-> > > > 
-> > > > Loopfs allows to create private loop devices instances to applications
-> > > > for various use-cases. It covers the use-case that was expressed on-list
-> > > > and in-person to get programmatic access to private loop devices for
-> > > > image building in sandboxes. An illustration for this is provided in
-> > > > [4].
-> > > > 
-> > > > Also loopfs is intended to provide loop devices to privileged and
-> > > > unprivileged containers which has been a frequent request from various
-> > > > major tools (Chromium, Kubernetes, LXD, Moby/Docker, systemd). I'm
-> > > > providing a non-exhaustive list of issues and requests (cf. [5]) around
-> > > > this feature mainly to illustrate that I'm not making the use-cases up.
-> > > > Currently none of this can be done safely since handing a loop device
-> > > > from the host into a container means that the container can see anything
-> > > > that the host is doing with that loop device and what other containers
-> > > > are doing with that device too. And (bind-)mounting devtmpfs inside of
-> > > > containers is not secure at all so also not an option (though sometimes
-> > > > done out of despair apparently).
-> > > > 
-> > > > The workloads people run in containers are supposed to be indiscernible
-> > > > from workloads run on the host and the tools inside of the container are
-> > > > supposed to not be required to be aware that they are running inside a
-> > > > container apart from containerization tools themselves. This is
-> > > > especially true when running older distros in containers that did exist
-> > > > before containers were as ubiquitous as they are today. With loopfs user
-> > > > can call mount -o loop and in a correctly setup container things work
-> > > > the same way they would on the host. The filesystem representation
-> > > > allows us to do this in a very simple way. At container setup, a
-> > > > container manager can mount a private instance of loopfs somehwere, e.g.
-> > > > at /dev/loopfs and then bind-mount or symlink /dev/loopfs/loop-control
-> > > > to /dev/loop-control, pre allocate and symlink the number of standard
-> > > > devices into their standard location and have a service file or rules in
-> > > > place that symlink additionally allocated loop devices through losetup
-> > > > into place as well.
-> > > > With the new syscall interception logic this is also possible for
-> > > > unprivileged containers. In these cases when a user calls mount -o loop
-> > > > <image> <mountpoint> it will be possible to completely setup the loop
-> > > > device in the container. The final mount syscall is handled through
-> > > > syscall interception which we already implemented and released in
-> > > > earlier kernels (see [1] and [2]) and is actively used in production
-> > > > workloads. The mount is often rewritten to a fuse binary to provide safe
-> > > > access for unprivileged containers.
-> > > > 
-> > > > Loopfs also allows the creation of hidden/detached dynamic loop devices
-> > > > and associated mounts which also was a often issued request. With the
-> > > > old mount api this can be achieved by creating a temporary loopfs and
-> > > > stashing a file descriptor to the mount point and the loop-control
-> > > > device and immediately unmounting the loopfs instance.  With the new
-> > > > mount api a detached mount can be created directly (i.e. a mount not
-> > > > visible anywhere in the filesystem). New loop devices can then be
-> > > > allocated and configured. They can be mounted through
-> > > > /proc/self/<fd>/<nr> with the old mount api or by using the fd directly
-> > > > with the new mount api. Combined with a mount namespace this allows for
-> > > > fully auto-cleaned up loop devices on program crash. This ties back to
-> > > > various use-cases and is illustrated in [4].
-> > > > 
-> > > > The filesystem representation requires the standard boilerplate
-> > > > filesystem code we know from other tiny filesystems. And all of
-> > > > the loopfs code is hidden under a config option that defaults to false.
-> > > > This specifically means, that none of the code even exists when users do
-> > > > not have any use-case for loopfs.
-> > > > In addition, the loopfs code does not alter how loop devices behave at
-> > > > all, i.e. there are no changes to any existing workloads and I've taken
-> > > > care to ifdef all loopfs specific things out.
-> > > > 
-> > > > Each loopfs mount is a separate instance. As such loop devices created
-> > > > in one instance are independent of loop devices created in another
-> > > > instance. This specifically entails that loop devices are only visible
-> > > > in the loopfs instance they belong to.
-> > > > 
-> > > > The number of loop devices available in loopfs instances are
-> > > > hierarchically limited through /proc/sys/user/max_loop_devices via the
-> > > > ucount infrastructure (Thanks to David Rheinsberg for pointing out that
-> > > > missing piece.). An administrator could e.g. set
-> > > > echo 3 > /proc/sys/user/max_loop_devices at which point any loopfs
-> > > > instance mounted by uid x can only create 3 loop devices no matter how
-> > > > many loopfs instances they mount. This limit applies hierarchically to
-> > > > all user namespaces.
-> > > 
-> > > Hm, info->device_count is per loopfs mount, though, right?  I don't
-> > > see where this gets incremented for all of a user's loopfs mounts
-> > > when one adds a loopdev?
-> > > 
-> > > I'm sure I'm missing something obvious...
-> > 
-> > Hm, I think you might be mixing up the two limits? device_count
-> > corresponds to the "max" mount option and is not involved in enforcing
-> > hierarchical limits. The global restriction is enforced through
-> > inc_ucount() which tracks by the uid of the mounter of the superblock.
-> > If the same user mounts multiple loopfs instances in the same namespace
-> > the ucount infra will enforce his quota across all loopfs instances.
+On Thu, Apr 23, 2020 at 07:16:07AM -0500, Eric W. Biederman wrote:
 > 
-> Well I'm trying to understand what the point of the max mount option
-> is :)  I can just do N mounts to get N*max mounts to work around it?
-> But meanwhile if I have a daemon mounting isos over loopdevs to extract
-> some files (bc I never heard of bsdtar :), I risk more spurious failures
-> due to hitting max?
+> I took a quick look and there is at least one other use in security/tomoyo/realpath.c:
 > 
-> If you think we need it, that's fine - it just has the odor of something
-> more trouble than it's worth.
+> static char *tomoyo_get_local_path(struct dentry *dentry, char * const buffer,
+> 				   const int buflen)
+> {
+> 	struct super_block *sb = dentry->d_sb;
+> 	char *pos = tomoyo_get_dentry_path(dentry, buffer, buflen);
+> 
+> 	if (IS_ERR(pos))
+> 		return pos;
+> 	/* Convert from $PID to self if $PID is current thread. */
+> 	if (sb->s_magic == PROC_SUPER_MAGIC && *pos == '/') {
+> 		char *ep;
+> 		const pid_t pid = (pid_t) simple_strtoul(pos + 1, &ep, 10);
+> 
+> 		if (*ep == '/' && pid && pid ==
+> 		    task_tgid_nr_ns(current, sb->s_fs_info)) {
+> 			pos = ep - 5;
+> 			if (pos < buffer)
+> 				goto out;
+> 			memmove(pos, "/self", 5);
+> 		}
+> 		goto prepend_filesystem_name;
+> 	}
 
-Maybe I'm making too much of this and you're right. My use-case was
-sharing the same loopfs superblock with locked down parties. But I guess
-that we can handle that case with the ucount infra too. And since I'm
-the only one who thinks it might be useful I'll drop it from this
-patchset. If we have a need for it we can readd it later. Sound ok?
+Ooops. I missed this one. I thought I found all such cases.
 
-Christian
+> Can you make the fixes to locks.c and tomoyo a couple of standalone
+> fixes that should be inserted before your patch?
+
+Sure.
+
+> On the odd chance there is a typo they will bisect better, as well
+> as just keeping this patch and it's description from expanding in size.
+> So that things are small enough for people to really look at and review.
+> 
+> The fix itself looks fine.
+> 
+> Thank you,
+> Eric
+> 
+> 
+> Alexey Gladkov <gladkov.alexey@gmail.com> writes:
+> 
+> > Fixed getting proc_pidns in the lock_get_status() and locks_show() directly from
+> > the superblock, which caused a crash:
+> >
+> > === arm64 ===
+> > [12140.366814] LTP: starting proc01 (proc01 -m 128)
+> > [12149.580943] ==================================================================
+> > [12149.589521] BUG: KASAN: out-of-bounds in pid_nr_ns+0x2c/0x90 pid_nr_ns at kernel/pid.c:456
+> > [12149.595939] Read of size 4 at addr 1bff000bfa8c0388 by task = proc01/50298
+> > [12149.603392] Pointer tag: [1b], memory tag: [fe]
+> >
+> > [12149.610906] CPU: 69 PID: 50298 Comm: proc01 Tainted: G L 5.7.0-rc2-next-20200422 #6
+> > [12149.620585] Hardware name: HPE Apollo 70 /C01_APACHE_MB , BIOS L50_5.13_1.11 06/18/2019
+> > [12149.631074] Call trace:
+> > [12149.634304]  dump_backtrace+0x0/0x22c
+> > [12149.638745]  show_stack+0x28/0x34
+> > [12149.642839]  dump_stack+0x104/0x194
+> > [12149.647110]  print_address_description+0x70/0x3a4
+> > [12149.652576]  __kasan_report+0x188/0x238
+> > [12149.657169]  kasan_report+0x3c/0x58
+> > [12149.661430]  check_memory_region+0x98/0xa0
+> > [12149.666303]  __hwasan_load4_noabort+0x18/0x20
+> > [12149.671431]  pid_nr_ns+0x2c/0x90
+> > [12149.675446]  locks_translate_pid+0xf4/0x1a0
+> > [12149.680382]  locks_show+0x68/0x110
+> > [12149.684536]  seq_read+0x380/0x930
+> > [12149.688604]  pde_read+0x5c/0x78
+> > [12149.692498]  proc_reg_read+0x74/0xc0
+> > [12149.696813]  __vfs_read+0x84/0x1d0
+> > [12149.700939]  vfs_read+0xec/0x124
+> > [12149.704889]  ksys_read+0xb0/0x120
+> > [12149.708927]  __arm64_sys_read+0x54/0x88
+> > [12149.713485]  do_el0_svc+0x128/0x1dc
+> > [12149.717697]  el0_sync_handler+0x150/0x250
+> > [12149.722428]  el0_sync+0x164/0x180
+> >
+> > [12149.728672] Allocated by task 1:
+> > [12149.732624]  __kasan_kmalloc+0x124/0x188
+> > [12149.737269]  kasan_kmalloc+0x10/0x18
+> > [12149.741568]  kmem_cache_alloc_trace+0x2e4/0x3d4
+> > [12149.746820]  proc_fill_super+0x48/0x1fc
+> > [12149.751377]  vfs_get_super+0xcc/0x170
+> > [12149.755760]  get_tree_nodev+0x28/0x34
+> > [12149.760143]  proc_get_tree+0x24/0x30
+> > [12149.764439]  vfs_get_tree+0x54/0x158
+> > [12149.768736]  do_mount+0x80c/0xaf0
+> > [12149.772774]  __arm64_sys_mount+0xe0/0x18c
+> > [12149.777504]  do_el0_svc+0x128/0x1dc
+> > [12149.781715]  el0_sync_handler+0x150/0x250
+> > [12149.786445]  el0_sync+0x164/0x180
+> 
+> > diff --git a/fs/locks.c b/fs/locks.c
+> > index b8a31c1c4fff..399c5dbb72c4 100644
+> > --- a/fs/locks.c
+> > +++ b/fs/locks.c
+> > @@ -2823,7 +2823,7 @@ static void lock_get_status(struct seq_file *f, struct file_lock *fl,
+> >  {
+> >  	struct inode *inode = NULL;
+> >  	unsigned int fl_pid;
+> > -	struct pid_namespace *proc_pidns = file_inode(f->file)->i_sb->s_fs_info;
+> > +	struct pid_namespace *proc_pidns = proc_pid_ns(file_inode(f->file));
+> >  
+> >  	fl_pid = locks_translate_pid(fl, proc_pidns);
+> >  	/*
+> > @@ -2901,7 +2901,7 @@ static int locks_show(struct seq_file *f, void *v)
+> >  {
+> >  	struct locks_iterator *iter = f->private;
+> >  	struct file_lock *fl, *bfl;
+> > -	struct pid_namespace *proc_pidns = file_inode(f->file)->i_sb->s_fs_info;
+> > +	struct pid_namespace *proc_pidns = proc_pid_ns(file_inode(f->file));
+> >  
+> >  	fl = hlist_entry(v, struct file_lock, fl_link);
+> >  
+> 
+> Eric
+> 
+
+-- 
+Rgrds, legion
+
