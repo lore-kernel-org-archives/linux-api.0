@@ -6,23 +6,23 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F3A9BC55186
-	for <linux-api@archiver.kernel.org>; Fri, 24 Apr 2020 16:22:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0BACDC54FCB
+	for <linux-api@archiver.kernel.org>; Fri, 24 Apr 2020 16:22:32 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D08E320700
-	for <linux-api@archiver.kernel.org>; Fri, 24 Apr 2020 16:22:30 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EBB1F2071E
+	for <linux-api@archiver.kernel.org>; Fri, 24 Apr 2020 16:22:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728632AbgDXQWN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 24 Apr 2020 12:22:13 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:58638 "EHLO
+        id S1728119AbgDXQWM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 24 Apr 2020 12:22:12 -0400
+Received: from youngberry.canonical.com ([91.189.89.112]:58670 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728132AbgDXQWG (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 24 Apr 2020 12:22:06 -0400
+        with ESMTP id S1728561AbgDXQWH (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 24 Apr 2020 12:22:07 -0400
 Received: from ip5f5af183.dynamic.kabel-deutschland.de ([95.90.241.131] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1jS15V-0004dV-8B; Fri, 24 Apr 2020 16:22:01 +0000
+        id 1jS15Y-0004dV-8F; Fri, 24 Apr 2020 16:22:04 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Jens Axboe <axboe@kernel.dk>,
         Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -47,9 +47,9 @@ Cc:     Jonathan Corbet <corbet@lwn.net>, Serge Hallyn <serge@hallyn.com>,
         Kees Cook <keescook@chromium.org>,
         Benjamin Elder <bentheelder@google.com>,
         Akihiro Suda <suda.kyoto@gmail.com>
-Subject: [PATCH v3 5/7] loop: preserve sysfs backwards compatibility
-Date:   Fri, 24 Apr 2020 18:20:50 +0200
-Message-Id: <20200424162052.441452-6-christian.brauner@ubuntu.com>
+Subject: [PATCH v3 7/7] loopfs: only show devices in their correct instance
+Date:   Fri, 24 Apr 2020 18:20:52 +0200
+Message-Id: <20200424162052.441452-8-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.26.2
 In-Reply-To: <20200424162052.441452-1-christian.brauner@ubuntu.com>
 References: <20200424162052.441452-1-christian.brauner@ubuntu.com>
@@ -60,415 +60,98 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-For sysfs the initial namespace is special. All devices currently
-propagate into all non-initial namespaces. For example, sysfs is usually
-mounted in a privileged or unprivileged container and all devices are
-visible to the container but are owned by global root. Even though none
-of the propagated files can be used there are still a lot of read-only
-values that are accessed or read by tools running in non-initial
-namespaces. Some devices though, which can be moved or created in
-another namespace, will only show up in the corresponding namespace.
-This currently includes network and loop devices but no other ones.
-Since all current workloads depend on devices from the inital namespace
-being visible this behavior cannot be simply changed. This patch just
-makes sure to keep propagating devices that share the same device class
-with loop devices from the initial namespaces into all non-initial
-namespaces as before. In short, nothing changes only loopfs loop devices
-will be shown in their correct namespace.
+Since loopfs devices belong to a loopfs instance they have no business
+polluting the host's devtmpfs mount and should not propagate out of the
+namespace they belong to.
 
 Cc: Jens Axboe <axboe@kernel.dk>
-Cc: Tejun Heo <tj@kernel.org>
 Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Reviewed-by: Serge Hallyn <serge@hallyn.com>
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
-- Christian Brauner <christian.brauner@ubuntu.com>:
-  - Protect init_net with a CONFIG_NET ifdef in case it is set to "n".
-  - As Tejun pointed out there is argument to be made that a new mount
-    option for sysfs could be added that would change how devices are
-    propagated. This patch does not prevent this but it is an orthogonal
-    problem.
+unchanged
 
 /* v3 */
-- Christian Brauner <christian.brauner@ubuntu.com>:
-  - Readd missing callback that accidently got removed in the last
-    version.
+unchanged
 ---
- block/genhd.c               | 85 +++++++++++++++++++++++++++++++++++++
- fs/kernfs/dir.c             | 34 ++++++++++++---
- fs/kernfs/kernfs-internal.h | 24 +++++++++++
- fs/sysfs/mount.c            |  4 ++
- include/linux/genhd.h       |  3 ++
- include/linux/kernfs.h      | 22 ++++++++++
- include/linux/kobject_ns.h  |  4 ++
- lib/kobject.c               |  2 +
- 8 files changed, 173 insertions(+), 5 deletions(-)
+ block/partitions/core.c       | 1 +
+ drivers/base/devtmpfs.c       | 4 ++--
+ drivers/block/loopfs/loopfs.c | 4 +++-
+ include/linux/device.h        | 3 +++
+ 4 files changed, 9 insertions(+), 3 deletions(-)
 
-diff --git a/block/genhd.c b/block/genhd.c
-index 06b642b23a07..c79a7c97f458 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -1198,11 +1198,87 @@ static struct kobject *base_probe(dev_t devt, int *partno, void *data)
- 	return NULL;
- }
+diff --git a/block/partitions/core.c b/block/partitions/core.c
+index bc1ded1331b1..5761f5c38588 100644
+--- a/block/partitions/core.c
++++ b/block/partitions/core.c
+@@ -416,6 +416,7 @@ struct hd_struct *add_partition(struct gendisk *disk, int partno,
+ 	pdev->class = &block_class;
+ 	pdev->type = &part_type;
+ 	pdev->parent = ddev;
++	pdev->no_devnode = ddev->no_devnode;
  
-+#ifdef CONFIG_BLK_DEV_LOOPFS
-+static void *user_grab_current_ns(void)
-+{
-+	struct user_namespace *ns = current_user_ns();
-+	return get_user_ns(ns);
-+}
-+
-+static const void *user_initial_ns(void)
-+{
-+	return &init_user_ns;
-+}
-+
-+static void user_put_ns(void *p)
-+{
-+	struct user_namespace *ns = p;
-+	put_user_ns(ns);
-+}
-+
-+static bool user_current_may_mount(void)
-+{
-+	return ns_capable(current_user_ns(), CAP_SYS_ADMIN);
-+}
-+
-+static bool user_initial_ns_propagates(void)
-+{
-+	return true;
-+}
-+
-+const struct kobj_ns_type_operations user_ns_type_operations = {
-+	.type			= KOBJ_NS_TYPE_USER,
-+	.current_may_mount	= user_current_may_mount,
-+	.grab_current_ns	= user_grab_current_ns,
-+	.initial_ns		= user_initial_ns,
-+	.drop_ns		= user_put_ns,
-+	.initial_ns_propagates	= user_initial_ns_propagates,
-+};
-+
-+static const void *block_class_user_namespace(struct device *dev)
-+{
-+	struct gendisk *disk;
-+
-+	if (dev->type == &part_type)
-+		disk = part_to_disk(dev_to_part(dev));
-+	else
-+		disk = dev_to_disk(dev);
-+
-+	return disk->user_ns;
-+}
-+
-+static void block_class_get_ownership(struct device *dev, kuid_t *uid, kgid_t *gid)
-+{
-+	struct gendisk *disk;
-+	struct user_namespace *ns;
-+
-+	if (dev->type == &part_type)
-+		disk = part_to_disk(dev_to_part(dev));
-+	else
-+		disk = dev_to_disk(dev);
-+
-+	ns = disk->user_ns;
-+	if (ns && ns != &init_user_ns) {
-+		kuid_t ns_root_uid = make_kuid(ns, 0);
-+		kgid_t ns_root_gid = make_kgid(ns, 0);
-+
-+		if (uid_valid(ns_root_uid))
-+			*uid = ns_root_uid;
-+
-+		if (gid_valid(ns_root_gid))
-+			*gid = ns_root_gid;
-+	}
-+}
-+#endif /* CONFIG_BLK_DEV_LOOPFS */
-+
- static int __init genhd_device_init(void)
+ 	err = blk_alloc_devt(p, &devt);
+ 	if (err)
+diff --git a/drivers/base/devtmpfs.c b/drivers/base/devtmpfs.c
+index c9017e0584c0..77371ceb88fa 100644
+--- a/drivers/base/devtmpfs.c
++++ b/drivers/base/devtmpfs.c
+@@ -111,7 +111,7 @@ int devtmpfs_create_node(struct device *dev)
+ 	const char *tmp = NULL;
+ 	struct req req;
+ 
+-	if (!thread)
++	if (!thread || dev->no_devnode)
+ 		return 0;
+ 
+ 	req.mode = 0;
+@@ -138,7 +138,7 @@ int devtmpfs_delete_node(struct device *dev)
+ 	const char *tmp = NULL;
+ 	struct req req;
+ 
+-	if (!thread)
++	if (!thread || dev->no_devnode)
+ 		return 0;
+ 
+ 	req.name = device_get_devnode(dev, NULL, NULL, NULL, &tmp);
+diff --git a/drivers/block/loopfs/loopfs.c b/drivers/block/loopfs/loopfs.c
+index 9fa60c1bcc05..1bcb0b44c910 100644
+--- a/drivers/block/loopfs/loopfs.c
++++ b/drivers/block/loopfs/loopfs.c
+@@ -76,8 +76,10 @@ bool loopfs_wants_remove(const struct loop_device *lo)
+ 
+ void loopfs_init(struct gendisk *disk, struct inode *inode)
  {
- 	int error;
- 
- 	block_class.dev_kobj = sysfs_dev_block_kobj;
-+#ifdef CONFIG_BLK_DEV_LOOPFS
-+	kobj_ns_type_register(&user_ns_type_operations);
-+#endif
- 	error = class_register(&block_class);
- 	if (unlikely(error))
- 		return error;
-@@ -1524,8 +1600,14 @@ static void disk_release(struct device *dev)
- 		blk_put_queue(disk->queue);
- 	kfree(disk);
- }
-+
- struct class block_class = {
- 	.name		= "block",
-+#ifdef CONFIG_BLK_DEV_LOOPFS
-+	.ns_type	= &user_ns_type_operations,
-+	.namespace	= block_class_user_namespace,
-+	.get_ownership	= block_class_get_ownership,
-+#endif
- };
- 
- static char *block_devnode(struct device *dev, umode_t *mode,
-@@ -1715,6 +1797,9 @@ struct gendisk *__alloc_disk_node(int minors, int node_id)
- 		disk_to_dev(disk)->class = &block_class;
- 		disk_to_dev(disk)->type = &disk_type;
- 		device_initialize(disk_to_dev(disk));
-+#ifdef CONFIG_BLK_DEV_LOOPFS
-+		disk->user_ns = &init_user_ns;
-+#endif
- 	}
- 	return disk;
- }
-diff --git a/fs/kernfs/dir.c b/fs/kernfs/dir.c
-index 1f2d894ae454..02796ba6521a 100644
---- a/fs/kernfs/dir.c
-+++ b/fs/kernfs/dir.c
-@@ -575,10 +575,15 @@ static int kernfs_dop_revalidate(struct dentry *dentry, unsigned int flags)
- 		goto out_bad;
- 
- 	/* The kernfs node has been moved to a different namespace */
--	if (kn->parent && kernfs_ns_enabled(kn->parent) &&
--	    kernfs_info(dentry->d_sb)->ns[kn->ns_type] != kn->ns)
--		goto out_bad;
-+	if (kn->parent && kernfs_ns_enabled(kn->parent)) {
-+		if (kernfs_init_ns_propagates(kn->parent) &&
-+		    kn->ns == kernfs_init_ns(kn->parent->ns_type))
-+			goto out_good;
-+		if (kernfs_info(dentry->d_sb)->ns[kn->parent->ns_type] != kn->ns)
-+			goto out_bad;
+-	if (loopfs_i_sb(inode))
++	if (loopfs_i_sb(inode)) {
+ 		disk->user_ns = loopfs_i_sb(inode)->s_user_ns;
++		disk_to_dev(disk)->no_devnode = true;
 +	}
- 
-+out_good:
- 	mutex_unlock(&kernfs_mutex);
- 	return 1;
- out_bad:
-@@ -1090,6 +1095,10 @@ static struct dentry *kernfs_iop_lookup(struct inode *dir,
- 		ns = kernfs_info(dir->i_sb)->ns[parent->ns_type];
- 
- 	kn = kernfs_find_ns(parent, dentry->d_name.name, ns);
-+	if (!kn && kernfs_init_ns_propagates(parent)) {
-+		ns = kernfs_init_ns(parent->ns_type);
-+		kn = kernfs_find_ns(parent, dentry->d_name.name, ns);
-+	}
- 
- 	/* no such entry */
- 	if (!kn || !kernfs_active(kn)) {
-@@ -1614,6 +1623,8 @@ static int kernfs_dir_fop_release(struct inode *inode, struct file *filp)
- static struct kernfs_node *kernfs_dir_pos(const void *ns,
- 	struct kernfs_node *parent, loff_t hash, struct kernfs_node *pos)
- {
-+	const void *init_ns;
-+
- 	if (pos) {
- 		int valid = kernfs_active(pos) &&
- 			pos->parent == parent && hash == pos->hash;
-@@ -1621,6 +1632,12 @@ static struct kernfs_node *kernfs_dir_pos(const void *ns,
- 		if (!valid)
- 			pos = NULL;
- 	}
-+
-+	if (kernfs_init_ns_propagates(parent))
-+		init_ns = kernfs_init_ns(parent->ns_type);
-+	else
-+		init_ns = NULL;
-+
- 	if (!pos && (hash > 1) && (hash < INT_MAX)) {
- 		struct rb_node *node = parent->dir.children.rb_node;
- 		while (node) {
-@@ -1635,7 +1652,7 @@ static struct kernfs_node *kernfs_dir_pos(const void *ns,
- 		}
- 	}
- 	/* Skip over entries which are dying/dead or in the wrong namespace */
--	while (pos && (!kernfs_active(pos) || pos->ns != ns)) {
-+	while (pos && (!kernfs_active(pos) || (pos->ns != ns && pos->ns != init_ns))) {
- 		struct rb_node *node = rb_next(&pos->rb);
- 		if (!node)
- 			pos = NULL;
-@@ -1650,13 +1667,20 @@ static struct kernfs_node *kernfs_dir_next_pos(const void *ns,
- {
- 	pos = kernfs_dir_pos(ns, parent, ino, pos);
- 	if (pos) {
-+		const void *init_ns;
-+		if (kernfs_init_ns_propagates(parent))
-+			init_ns = kernfs_init_ns(parent->ns_type);
-+		else
-+			init_ns = NULL;
-+
- 		do {
- 			struct rb_node *node = rb_next(&pos->rb);
- 			if (!node)
- 				pos = NULL;
- 			else
- 				pos = rb_to_kn(node);
--		} while (pos && (!kernfs_active(pos) || pos->ns != ns));
-+		} while (pos && (!kernfs_active(pos) ||
-+				 (pos->ns != ns && pos->ns != init_ns)));
- 	}
- 	return pos;
- }
-diff --git a/fs/kernfs/kernfs-internal.h b/fs/kernfs/kernfs-internal.h
-index 7c972c00f84a..74eb6c447361 100644
---- a/fs/kernfs/kernfs-internal.h
-+++ b/fs/kernfs/kernfs-internal.h
-@@ -80,6 +80,30 @@ static inline struct kernfs_node *kernfs_dentry_node(struct dentry *dentry)
- 	return d_inode(dentry)->i_private;
  }
  
-+#ifdef CONFIG_NET
-+extern struct net init_net;
-+#endif
-+
-+extern struct user_namespace init_user_ns;
-+
-+static inline const void *kernfs_init_ns(enum kobj_ns_type ns_type)
-+{
-+	switch (ns_type) {
-+	case KOBJ_NS_TYPE_NET:
-+#ifdef CONFIG_NET
-+		return &init_net;
-+#else
-+		break;
-+#endif
-+	case KOBJ_NS_TYPE_USER:
-+		return &init_user_ns;
-+	default:
-+		pr_debug("Unsupported namespace type %d for kernfs\n", ns_type);
-+	}
-+
-+	return NULL;
-+}
-+
- extern const struct super_operations kernfs_sops;
- extern struct kmem_cache *kernfs_node_cache, *kernfs_iattrs_cache;
- 
-diff --git a/fs/sysfs/mount.c b/fs/sysfs/mount.c
-index 711844a97b4c..dc02fde0e60c 100644
---- a/fs/sysfs/mount.c
-+++ b/fs/sysfs/mount.c
-@@ -43,6 +43,8 @@ static void sysfs_fs_context_free(struct fs_context *fc)
- 
- 	if (kfc->ns_tag[KOBJ_NS_TYPE_NET])
- 		kobj_ns_drop(KOBJ_NS_TYPE_NET, kfc->ns_tag[KOBJ_NS_TYPE_NET]);
-+	if (kfc->ns_tag[KOBJ_NS_TYPE_USER])
-+		kobj_ns_drop(KOBJ_NS_TYPE_USER, kfc->ns_tag[KOBJ_NS_TYPE_USER]);
- 	kernfs_free_fs_context(fc);
- 	kfree(kfc);
- }
-@@ -67,6 +69,7 @@ static int sysfs_init_fs_context(struct fs_context *fc)
- 		return -ENOMEM;
- 
- 	kfc->ns_tag[KOBJ_NS_TYPE_NET] = netns = kobj_ns_grab_current(KOBJ_NS_TYPE_NET);
-+	kfc->ns_tag[KOBJ_NS_TYPE_USER] = kobj_ns_grab_current(KOBJ_NS_TYPE_USER);
- 	kfc->root = sysfs_root;
- 	kfc->magic = SYSFS_MAGIC;
- 	fc->fs_private = kfc;
-@@ -84,6 +87,7 @@ static void sysfs_kill_sb(struct super_block *sb)
- 	void **ns = (void **)kernfs_super_ns(sb);
- 
- 	kobj_ns_drop(KOBJ_NS_TYPE_NET, ns[KOBJ_NS_TYPE_NET]);
-+	kobj_ns_drop(KOBJ_NS_TYPE_USER, ns[KOBJ_NS_TYPE_USER]);
- 	kernfs_kill_sb(sb);
- }
- 
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 9b3fffdf4011..4edf8a82e815 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -220,6 +220,9 @@ struct gendisk {
- 	int node_id;
- 	struct badblocks *bb;
- 	struct lockdep_map lockdep_map;
-+#ifdef CONFIG_BLK_DEV_LOOPFS
-+	struct user_namespace *user_ns;
-+#endif
- };
- 
- static inline struct gendisk *part_to_disk(struct hd_struct *part)
-diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
-index d0544f2e0c99..7809584a7c8e 100644
---- a/include/linux/kernfs.h
-+++ b/include/linux/kernfs.h
-@@ -53,6 +53,7 @@ enum kernfs_node_flag {
- 	KERNFS_SUICIDED		= 0x0800,
- 	KERNFS_EMPTY_DIR	= 0x1000,
- 	KERNFS_HAS_RELEASE	= 0x2000,
-+	KERNFS_NS_PROPAGATE	= 0x4000,
- };
- 
- /* @flags for kernfs_create_root() */
-@@ -337,6 +338,27 @@ static inline void kernfs_enable_ns(struct kernfs_node *kn,
- 	kn->ns_type = ns_type;
- }
- 
-+static inline void kernfs_enable_init_ns_propagates(struct kernfs_node *kn)
-+{
-+	WARN_ON_ONCE(kernfs_type(kn) != KERNFS_DIR);
-+	WARN_ON_ONCE(!RB_EMPTY_ROOT(&kn->dir.children));
-+	WARN_ON_ONCE(!(kn->flags & KERNFS_NS));
-+	kn->flags |= KERNFS_NS_PROPAGATE;
-+}
-+
-+/**
-+ * kernfs_init_ns_propagates - test whether init ns propagates
-+ * @kn: the node to test
-+ *
-+ * Test whether kernfs entries created in the init namespace propagate into
-+ * other namespaces.
-+ */
-+static inline bool kernfs_init_ns_propagates(const struct kernfs_node *kn)
-+{
-+	return ((kn->flags & (KERNFS_NS | KERNFS_NS_PROPAGATE)) ==
-+		(KERNFS_NS | KERNFS_NS_PROPAGATE));
-+}
-+
  /**
-  * kernfs_ns_enabled - test whether namespace is enabled
-  * @kn: the node to test
-diff --git a/include/linux/kobject_ns.h b/include/linux/kobject_ns.h
-index 991a9286bcea..a9c45bcce235 100644
---- a/include/linux/kobject_ns.h
-+++ b/include/linux/kobject_ns.h
-@@ -26,6 +26,7 @@ struct kobject;
- enum kobj_ns_type {
- 	KOBJ_NS_TYPE_NONE = 0,
- 	KOBJ_NS_TYPE_NET,
-+	KOBJ_NS_TYPE_USER,
- 	KOBJ_NS_TYPES
+diff --git a/include/linux/device.h b/include/linux/device.h
+index ac8e37cd716a..c69ef1c5a0ef 100644
+--- a/include/linux/device.h
++++ b/include/linux/device.h
+@@ -523,6 +523,8 @@ struct dev_links_info {
+  *		  sync_state() callback.
+  * @dma_coherent: this particular device is dma coherent, even if the
+  *		architecture supports non-coherent devices.
++ * @no_devnode: whether device nodes associated with this device are kept out
++ *		of devtmpfs (e.g. due to separate filesystem)
+  *
+  * At the lowest level, every device in a Linux system is represented by an
+  * instance of struct device. The device structure contains the information
+@@ -622,6 +624,7 @@ struct device {
+     defined(CONFIG_ARCH_HAS_SYNC_DMA_FOR_CPU_ALL)
+ 	bool			dma_coherent:1;
+ #endif
++	bool			no_devnode:1;
  };
  
-@@ -34,6 +35,8 @@ enum kobj_ns_type {
-  *   @grab_current_ns: return a new reference to calling task's namespace
-  *   @initial_ns: return the initial namespace (i.e. init_net_ns)
-  *   @drop_ns: drops a reference to namespace
-+ *   @initial_ns_propagates: whether devices in the initial namespace propagate
-+ *			to all other namespaces
-  */
- struct kobj_ns_type_operations {
- 	enum kobj_ns_type type;
-@@ -41,6 +44,7 @@ struct kobj_ns_type_operations {
- 	void *(*grab_current_ns)(void);
- 	const void *(*initial_ns)(void);
- 	void (*drop_ns)(void *);
-+	bool (*initial_ns_propagates)(void);
- };
- 
- int kobj_ns_type_register(const struct kobj_ns_type_operations *ops);
-diff --git a/lib/kobject.c b/lib/kobject.c
-index c58c62d49a10..96bb8c732d1c 100644
---- a/lib/kobject.c
-+++ b/lib/kobject.c
-@@ -121,6 +121,8 @@ static int create_dir(struct kobject *kobj)
- 		BUG_ON(!kobj_ns_type_registered(ops->type));
- 
- 		sysfs_enable_ns(kobj->sd, ops->type);
-+		if (ops->initial_ns_propagates && ops->initial_ns_propagates())
-+			kernfs_enable_init_ns_propagates(kobj->sd);
- 	}
- 
- 	return 0;
+ static inline struct device *kobj_to_dev(struct kobject *kobj)
 -- 
 2.26.2
 
