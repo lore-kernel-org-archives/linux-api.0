@@ -2,276 +2,380 @@ Return-Path: <SRS0=9CD4=6I=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 07803C2BA1A
-	for <linux-api@archiver.kernel.org>; Fri, 24 Apr 2020 05:55:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 53BADC55186
+	for <linux-api@archiver.kernel.org>; Fri, 24 Apr 2020 16:22:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DCB3820700
-	for <linux-api@archiver.kernel.org>; Fri, 24 Apr 2020 05:55:17 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 295EB2071E
+	for <linux-api@archiver.kernel.org>; Fri, 24 Apr 2020 16:22:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1725852AbgDXFzR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 24 Apr 2020 01:55:17 -0400
-Received: from mga12.intel.com ([192.55.52.136]:40659 "EHLO mga12.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725554AbgDXFzR (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 24 Apr 2020 01:55:17 -0400
-IronPort-SDR: OTsL7GHDmk4IOlFPJ83MIa4CqvJUssd29nxNnaLHN5pwCaz41pHukT3NYNIvfQr0iLnnQfstY4
- zBT+w+zgJHtw==
-X-Amp-Result: SKIPPED(no attachment in message)
-X-Amp-File-Uploaded: False
-Received: from fmsmga004.fm.intel.com ([10.253.24.48])
-  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 23 Apr 2020 22:55:17 -0700
-IronPort-SDR: Wu2Yjz+iBs/lqXxpfWg5oqiMgwsxTdBMbyVV3M3en0Zx/O1+ymKy3bS2I+DKabJzGQWxyckY3f
- R9LOgGSUyKjA==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.73,310,1583222400"; 
-   d="scan'208";a="280698972"
-Received: from iweiny-desk2.sc.intel.com ([10.3.52.147])
-  by fmsmga004.fm.intel.com with ESMTP; 23 Apr 2020 22:55:17 -0700
-Date:   Thu, 23 Apr 2020 22:55:16 -0700
-From:   Ira Weiny <ira.weiny@intel.com>
-To:     Dave Chinner <david@fromorbit.com>
-Cc:     linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org,
-        "Darrick J. Wong" <darrick.wong@oracle.com>,
-        Jan Kara <jack@suse.cz>, Al Viro <viro@zeniv.linux.org.uk>,
-        Dan Williams <dan.j.williams@intel.com>,
-        Christoph Hellwig <hch@lst.de>,
-        "Theodore Y. Ts'o" <tytso@mit.edu>, Jeff Moyer <jmoyer@redhat.com>,
-        linux-ext4@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+        id S1728568AbgDXQWF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 24 Apr 2020 12:22:05 -0400
+Received: from youngberry.canonical.com ([91.189.89.112]:58624 "EHLO
+        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728414AbgDXQWE (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 24 Apr 2020 12:22:04 -0400
+Received: from ip5f5af183.dynamic.kabel-deutschland.de ([95.90.241.131] helo=wittgenstein.fritz.box)
+        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.86_2)
+        (envelope-from <christian.brauner@ubuntu.com>)
+        id 1jS15T-0004dV-GQ; Fri, 24 Apr 2020 16:21:59 +0000
+From:   Christian Brauner <christian.brauner@ubuntu.com>
+To:     Jens Axboe <axboe@kernel.dk>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
         linux-api@vger.kernel.org
-Subject: Re: [PATCH V10 04/11] Documentation/dax: Update Usage section
-Message-ID: <20200424055516.GD4088835@iweiny-DESK2.sc.intel.com>
-References: <20200422212102.3757660-1-ira.weiny@intel.com>
- <20200422212102.3757660-5-ira.weiny@intel.com>
- <20200423222720.GS27860@dread.disaster.area>
- <20200423232548.GA4088835@iweiny-DESK2.sc.intel.com>
- <20200424021516.GB2040@dread.disaster.area>
+Cc:     Jonathan Corbet <corbet@lwn.net>, Serge Hallyn <serge@hallyn.com>,
+        "Rafael J. Wysocki" <rafael@kernel.org>, Tejun Heo <tj@kernel.org>,
+        "David S. Miller" <davem@davemloft.net>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Saravana Kannan <saravanak@google.com>,
+        Jan Kara <jack@suse.cz>, David Howells <dhowells@redhat.com>,
+        Seth Forshee <seth.forshee@canonical.com>,
+        David Rheinsberg <david.rheinsberg@gmail.com>,
+        Tom Gundersen <teg@jklm.no>,
+        Christian Kellner <ckellner@redhat.com>,
+        Dmitry Vyukov <dvyukov@google.com>,
+        =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
+        linux-doc@vger.kernel.org, netdev@vger.kernel.org,
+        Steve Barber <smbarber@google.com>,
+        Dylan Reid <dgreid@google.com>,
+        Filipe Brandenburger <filbranden@gmail.com>,
+        Kees Cook <keescook@chromium.org>,
+        Benjamin Elder <bentheelder@google.com>,
+        Akihiro Suda <suda.kyoto@gmail.com>
+Subject: [PATCH v3 4/7] kernfs: handle multiple namespace tags
+Date:   Fri, 24 Apr 2020 18:20:49 +0200
+Message-Id: <20200424162052.441452-5-christian.brauner@ubuntu.com>
+X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20200424162052.441452-1-christian.brauner@ubuntu.com>
+References: <20200424162052.441452-1-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20200424021516.GB2040@dread.disaster.area>
-User-Agent: Mutt/1.11.1 (2018-12-01)
+Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Apr 24, 2020 at 12:15:16PM +1000, Dave Chinner wrote:
-> On Thu, Apr 23, 2020 at 04:25:48PM -0700, Ira Weiny wrote:
+Since [1] kernfs supports namespace tags. This feature is essential to
+enable sysfs to present different views of on various parts depending on
+the namespace tag. For example, the /sys/class/net/ directory will only
+show network devices that belong to the network namespace that sysfs was
+mounted in. This is achieved by stashing a reference to the network
+namespace of the task mounting sysfs in the super block. And when a
+lookup operation is performed on e.g. /sys/class/net/ kernfs will
+compare the network namespace tag of the kernfs_node associated with the
+device and kobject of the network device to the network namespace of the
+network device. This ensures that only network devices owned by the
+network namespace sysfs was mounted in are shown, a feature which is
+essential to containers.
+For loopfs to show correct permissions in sysfs just as with network
+devices we need to be able to tag kernfs_super_info with additional
+namespaces. This extension was even already mentioned in a comment to
+struct kernfs_super_info:
+  /*
+   * Each sb is associated with one namespace tag, currently the
+   * network namespace of the task which mounted this kernfs
+   * instance.  If multiple tags become necessary, make the following
+   * an array and compare kernfs_node tag against every entry.
+   */
+This patch extends the kernfs_super_info and kernfs_fs_context ns
+pointers to fixed-size arrays of namespace tags. The size is taken from
+the namespaces currently supported by kobjects, i.e. we don't extend it
+to cover all namespace but only the ones kernfs needs to support.
+In addition, the kernfs_node struct gains an additional member that
+indicates the type of namespace this kernfs_node was tagged with. This
+allows us to simply retrieve the correct namespace tag from the
+kernfs_fs_context and kernfs_super_info ns array with a simple indexing
+operation. This has the advantage that we can just keep passing down the
+correct namespace instead of passing down the array.
 
-[snap]
+[1]: 608b4b9548de ("netns: Teach network device kobjects which namespace they are in.")
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Reviewed-by: Serge Hallyn <serge@hallyn.com>
+Acked-by: Tejun Heo <tj@kernel.org>
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+---
+/* v2 */
+unchanged
 
-> > > > +        ii> If the file still does not have the desired S_DAX access
-> > > > +            mode, either unmount and remount the filesystem, or close
-> > > > +            the file and use drop_caches.
-> > > 
-> > > .... don't have permissions to do either of these things...
-> > > 
-> > > Essentially, you may as well say "reboot the machine" at this point,
-> > > because it's effectively the same thing from a production workload
-> > > point of view...
-> > > 
-> > > Realistically, I'm not sure we should even say "programs must cause
-> > > eviction", because that's something they cannot do directly without
-> > > admin privileges nor is it something we want to occur randomly on
-> > > production machines during production. i.e. this is something that
-> > > should only be done in scheduled downtime by an administrator, not
-> > > attempted by applications because DAX isn't immediately available.
-> > > The admin is in charge here, not the "program".
-> > 
-> > I agree with everything you say.
-> > 
-> > But I feel a bit stuck here.  Without some type of documentation we are not
-> > allowing FS_XFLAG_DAX to be changed on a file by the user.  Which is what we
-> > were proposing before and we all disliked.
-> 
-> For production systems, the admin is the "user" we are taking about.
-> The program itself shouldn't be choosing the method of file data
-> access; that's up to the administrator in charge of the system to
-> set the policy how they want it to be set.
-> 
-> i.e. there's a difference between the user/admin taking action to
-> change a data access policy, and the application taking actions to
-> override the policy that the admin has set.
-> 
-> What I'm trying to say is that setting/clearing the DAX flags is an
-> -admin operation-, and part of the consideration of that admin
-> operation is when the change should take effect.
-> 
-> i.e. refering to "programs" as if they control the access mode is
-> entirely the wrong way to be looking at persistent inode flags. They
-> are an administration policy mechanism that belongs to the data set,
-> not the application (or "program"). Managing data set storage and
-> access policy is something administrators do, not the application...
+/* v3 */
+unchanged
+---
+ fs/kernfs/dir.c             |  6 +++---
+ fs/kernfs/kernfs-internal.h |  9 ++++-----
+ fs/kernfs/mount.c           | 11 +++++++----
+ fs/sysfs/mount.c            | 10 +++++-----
+ include/linux/kernfs.h      | 22 ++++++++++++++--------
+ include/linux/sysfs.h       |  8 +++++---
+ lib/kobject.c               |  2 +-
+ 7 files changed, 39 insertions(+), 29 deletions(-)
 
-Ok.
+diff --git a/fs/kernfs/dir.c b/fs/kernfs/dir.c
+index 9aec80b9d7c6..1f2d894ae454 100644
+--- a/fs/kernfs/dir.c
++++ b/fs/kernfs/dir.c
+@@ -576,7 +576,7 @@ static int kernfs_dop_revalidate(struct dentry *dentry, unsigned int flags)
+ 
+ 	/* The kernfs node has been moved to a different namespace */
+ 	if (kn->parent && kernfs_ns_enabled(kn->parent) &&
+-	    kernfs_info(dentry->d_sb)->ns != kn->ns)
++	    kernfs_info(dentry->d_sb)->ns[kn->ns_type] != kn->ns)
+ 		goto out_bad;
+ 
+ 	mutex_unlock(&kernfs_mutex);
+@@ -1087,7 +1087,7 @@ static struct dentry *kernfs_iop_lookup(struct inode *dir,
+ 	mutex_lock(&kernfs_mutex);
+ 
+ 	if (kernfs_ns_enabled(parent))
+-		ns = kernfs_info(dir->i_sb)->ns;
++		ns = kernfs_info(dir->i_sb)->ns[parent->ns_type];
+ 
+ 	kn = kernfs_find_ns(parent, dentry->d_name.name, ns);
+ 
+@@ -1673,7 +1673,7 @@ static int kernfs_fop_readdir(struct file *file, struct dir_context *ctx)
+ 	mutex_lock(&kernfs_mutex);
+ 
+ 	if (kernfs_ns_enabled(parent))
+-		ns = kernfs_info(dentry->d_sb)->ns;
++		ns = kernfs_info(dentry->d_sb)->ns[parent->ns_type];
+ 
+ 	for (pos = kernfs_dir_pos(ns, parent, ctx->pos, pos);
+ 	     pos;
+diff --git a/fs/kernfs/kernfs-internal.h b/fs/kernfs/kernfs-internal.h
+index 7ee97ef59184..7c972c00f84a 100644
+--- a/fs/kernfs/kernfs-internal.h
++++ b/fs/kernfs/kernfs-internal.h
+@@ -16,6 +16,7 @@
+ #include <linux/xattr.h>
+ 
+ #include <linux/kernfs.h>
++#include <linux/kobject_ns.h>
+ #include <linux/fs_context.h>
+ 
+ struct kernfs_iattrs {
+@@ -62,12 +63,10 @@ struct kernfs_super_info {
+ 	struct kernfs_root	*root;
+ 
+ 	/*
+-	 * Each sb is associated with one namespace tag, currently the
+-	 * network namespace of the task which mounted this kernfs
+-	 * instance.  If multiple tags become necessary, make the following
+-	 * an array and compare kernfs_node tag against every entry.
++	 * Each sb can be associated with namespace tags. They will be used
++	 * to compare kernfs_node tags against relevant entries.
+ 	 */
+-	const void		*ns;
++	const void		*ns[KOBJ_NS_TYPES];
+ 
+ 	/* anchored at kernfs_root->supers, protected by kernfs_mutex */
+ 	struct list_head	node;
+diff --git a/fs/kernfs/mount.c b/fs/kernfs/mount.c
+index 9dc7e7a64e10..dc4ee0f0a597 100644
+--- a/fs/kernfs/mount.c
++++ b/fs/kernfs/mount.c
+@@ -279,14 +279,15 @@ static int kernfs_test_super(struct super_block *sb, struct fs_context *fc)
+ 	struct kernfs_super_info *sb_info = kernfs_info(sb);
+ 	struct kernfs_super_info *info = fc->s_fs_info;
+ 
+-	return sb_info->root == info->root && sb_info->ns == info->ns;
++	return sb_info->root == info->root &&
++	       memcmp(sb_info->ns, info->ns, sizeof(sb_info->ns)) == 0;
+ }
+ 
+ static int kernfs_set_super(struct super_block *sb, struct fs_context *fc)
+ {
+ 	struct kernfs_fs_context *kfc = fc->fs_private;
+ 
+-	kfc->ns_tag = NULL;
++	memset(kfc->ns_tag, 0, sizeof(kfc->ns_tag));
+ 	return set_anon_super_fc(sb, fc);
+ }
+ 
+@@ -296,7 +297,7 @@ static int kernfs_set_super(struct super_block *sb, struct fs_context *fc)
+  *
+  * Return the namespace tag associated with kernfs super_block @sb.
+  */
+-const void *kernfs_super_ns(struct super_block *sb)
++const void **kernfs_super_ns(struct super_block *sb)
+ {
+ 	struct kernfs_super_info *info = kernfs_info(sb);
+ 
+@@ -324,7 +325,9 @@ int kernfs_get_tree(struct fs_context *fc)
+ 		return -ENOMEM;
+ 
+ 	info->root = kfc->root;
+-	info->ns = kfc->ns_tag;
++	BUILD_BUG_ON(sizeof(info->ns) != sizeof(kfc->ns_tag));
++	memcpy(info->ns, kfc->ns_tag, sizeof(info->ns));
++
+ 	INIT_LIST_HEAD(&info->node);
+ 
+ 	fc->s_fs_info = info;
+diff --git a/fs/sysfs/mount.c b/fs/sysfs/mount.c
+index db81cfbab9d6..711844a97b4c 100644
+--- a/fs/sysfs/mount.c
++++ b/fs/sysfs/mount.c
+@@ -41,8 +41,8 @@ static void sysfs_fs_context_free(struct fs_context *fc)
+ {
+ 	struct kernfs_fs_context *kfc = fc->fs_private;
+ 
+-	if (kfc->ns_tag)
+-		kobj_ns_drop(KOBJ_NS_TYPE_NET, kfc->ns_tag);
++	if (kfc->ns_tag[KOBJ_NS_TYPE_NET])
++		kobj_ns_drop(KOBJ_NS_TYPE_NET, kfc->ns_tag[KOBJ_NS_TYPE_NET]);
+ 	kernfs_free_fs_context(fc);
+ 	kfree(kfc);
+ }
+@@ -66,7 +66,7 @@ static int sysfs_init_fs_context(struct fs_context *fc)
+ 	if (!kfc)
+ 		return -ENOMEM;
+ 
+-	kfc->ns_tag = netns = kobj_ns_grab_current(KOBJ_NS_TYPE_NET);
++	kfc->ns_tag[KOBJ_NS_TYPE_NET] = netns = kobj_ns_grab_current(KOBJ_NS_TYPE_NET);
+ 	kfc->root = sysfs_root;
+ 	kfc->magic = SYSFS_MAGIC;
+ 	fc->fs_private = kfc;
+@@ -81,10 +81,10 @@ static int sysfs_init_fs_context(struct fs_context *fc)
+ 
+ static void sysfs_kill_sb(struct super_block *sb)
+ {
+-	void *ns = (void *)kernfs_super_ns(sb);
++	void **ns = (void **)kernfs_super_ns(sb);
+ 
++	kobj_ns_drop(KOBJ_NS_TYPE_NET, ns[KOBJ_NS_TYPE_NET]);
+ 	kernfs_kill_sb(sb);
+-	kobj_ns_drop(KOBJ_NS_TYPE_NET, ns);
+ }
+ 
+ static struct file_system_type sysfs_fs_type = {
+diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
+index 89f6a4214a70..d0544f2e0c99 100644
+--- a/include/linux/kernfs.h
++++ b/include/linux/kernfs.h
+@@ -16,6 +16,7 @@
+ #include <linux/atomic.h>
+ #include <linux/uidgid.h>
+ #include <linux/wait.h>
++#include <linux/kobject_ns.h>
+ 
+ struct file;
+ struct dentry;
+@@ -137,8 +138,9 @@ struct kernfs_node {
+ 
+ 	struct rb_node		rb;
+ 
+-	const void		*ns;	/* namespace tag */
+-	unsigned int		hash;	/* ns + name hash */
++	const void		*ns;		/* namespace tag */
++	enum kobj_ns_type	ns_type;	/* type of namespace tag */
++	unsigned int		hash;		/* ns + name hash */
+ 	union {
+ 		struct kernfs_elem_dir		dir;
+ 		struct kernfs_elem_symlink	symlink;
+@@ -275,7 +277,7 @@ struct kernfs_ops {
+  */
+ struct kernfs_fs_context {
+ 	struct kernfs_root	*root;		/* Root of the hierarchy being mounted */
+-	void			*ns_tag;	/* Namespace tag of the mount (or NULL) */
++	void			*ns_tag[KOBJ_NS_TYPES]; /* Namespace tags of the mount (or empty) */
+ 	unsigned long		magic;		/* File system specific magic number */
+ 
+ 	/* The following are set/used by kernfs_mount() */
+@@ -319,17 +321,20 @@ static inline ino_t kernfs_gen(struct kernfs_node *kn)
+ 
+ /**
+  * kernfs_enable_ns - enable namespace under a directory
+- * @kn: directory of interest, should be empty
++ * @kn:		directory of interest, should be empty
++ * @ns_type:	type of namespace that should be enabled for this directory
+  *
+  * This is to be called right after @kn is created to enable namespace
+  * under it.  All children of @kn must have non-NULL namespace tags and
+  * only the ones which match the super_block's tag will be visible.
+  */
+-static inline void kernfs_enable_ns(struct kernfs_node *kn)
++static inline void kernfs_enable_ns(struct kernfs_node *kn,
++				    enum kobj_ns_type ns_type)
+ {
+ 	WARN_ON_ONCE(kernfs_type(kn) != KERNFS_DIR);
+ 	WARN_ON_ONCE(!RB_EMPTY_ROOT(&kn->dir.children));
+ 	kn->flags |= KERNFS_NS;
++	kn->ns_type = ns_type;
+ }
+ 
+ /**
+@@ -401,7 +406,7 @@ int kernfs_xattr_get(struct kernfs_node *kn, const char *name,
+ int kernfs_xattr_set(struct kernfs_node *kn, const char *name,
+ 		     const void *value, size_t size, int flags);
+ 
+-const void *kernfs_super_ns(struct super_block *sb);
++const void **kernfs_super_ns(struct super_block *sb);
+ int kernfs_get_tree(struct fs_context *fc);
+ void kernfs_free_fs_context(struct fs_context *fc);
+ void kernfs_kill_sb(struct super_block *sb);
+@@ -415,7 +420,8 @@ struct kernfs_node *kernfs_find_and_get_node_by_id(struct kernfs_root *root,
+ static inline enum kernfs_node_type kernfs_type(struct kernfs_node *kn)
+ { return 0; }	/* whatever */
+ 
+-static inline void kernfs_enable_ns(struct kernfs_node *kn) { }
++static inline void kernfs_enable_ns(struct kernfs_node *kn,
++				    enum kobj_ns_type ns_type) { }
+ 
+ static inline bool kernfs_ns_enabled(struct kernfs_node *kn)
+ { return false; }
+@@ -511,7 +517,7 @@ static inline int kernfs_xattr_set(struct kernfs_node *kn, const char *name,
+ 				   const void *value, size_t size, int flags)
+ { return -ENOSYS; }
+ 
+-static inline const void *kernfs_super_ns(struct super_block *sb)
++static inline const void **kernfs_super_ns(struct super_block *sb)
+ { return NULL; }
+ 
+ static inline int kernfs_get_tree(struct fs_context *fc)
+diff --git a/include/linux/sysfs.h b/include/linux/sysfs.h
+index 80bb865b3a33..d127b3487abc 100644
+--- a/include/linux/sysfs.h
++++ b/include/linux/sysfs.h
+@@ -306,9 +306,10 @@ void sysfs_notify(struct kobject *kobj, const char *dir, const char *attr);
+ 
+ int __must_check sysfs_init(void);
+ 
+-static inline void sysfs_enable_ns(struct kernfs_node *kn)
++static inline void sysfs_enable_ns(struct kernfs_node *kn,
++				   enum kobj_ns_type ns_type)
+ {
+-	return kernfs_enable_ns(kn);
++	return kernfs_enable_ns(kn, ns_type);
+ }
+ 
+ int sysfs_file_change_owner(struct kobject *kobj, const char *name, kuid_t kuid,
+@@ -531,7 +532,8 @@ static inline int __must_check sysfs_init(void)
+ 	return 0;
+ }
+ 
+-static inline void sysfs_enable_ns(struct kernfs_node *kn)
++static inline void sysfs_enable_ns(struct kernfs_node *kn,
++				   enum kobj_ns_type ns_type)
+ {
+ }
+ 
+diff --git a/lib/kobject.c b/lib/kobject.c
+index 6f07083cc111..c58c62d49a10 100644
+--- a/lib/kobject.c
++++ b/lib/kobject.c
+@@ -120,7 +120,7 @@ static int create_dir(struct kobject *kobj)
+ 		BUG_ON(ops->type >= KOBJ_NS_TYPES);
+ 		BUG_ON(!kobj_ns_type_registered(ops->type));
+ 
+-		sysfs_enable_ns(kobj->sd);
++		sysfs_enable_ns(kobj->sd, ops->type);
+ 	}
+ 
+ 	return 0;
+-- 
+2.26.2
 
-> 
-> > So I feel like we need to say something about getting the inodes evicted.
-> > perhaps by a 'drop cache' even requested of the admin???
-> > 
-> > Maybe this?
-> > 
-> > 
-> >  4. Programs that require a specific file access mode (DAX or not DAX)
-> >     can do one of the following:
-> > 
-> >     (a) Set the parent directory FS_XFLAG_DAX as needed before file are
-> >         created; or
-> > 
-> >     (b) Have the administrator set the desired behaviour via mount option; or
-> > 
-> >     (c) Set or clear the file's FS_XFLAG_DAX flag as needed and wait for the
-> >         inode to be evicted from memory.
-> > 
-> >         i> the only effective way of ensuring this is to request the admin drop
-> >            the file system caches.
-> 
-> 4. The DAX policy can be changed via:
-> 
-> 	a) Set the parent directory FS_XFLAG_DAX as needed before
-> 	   files are created
-> 
-> 	b) Set the appropriate dax="foo" mount option
-> 
-> 	c) Change the FS_XFLAG_DAX on existing regular files and
-> 	   directories. This has runtime constraints and limitations
-> 	   that are described in 5) below.
-> 
-> 5. When changing the DAX policy via toggling the persistent
-> FS_XFLAG_DAX flag, the change in behaviour for existing regular
-> files may not occur immediately. If the change must take effect
-> immediately, the administrator needs to:
-> 
-> 	1. stop the application so there are no active references to
-> 	   the data set the policy change will affect
-> 	2. evict the data set from kernel caches so it will be
-> 	   re-instantiated when the application is restarted. This can
-> 	   be acheived by:
-> 		a. drop-caches
-> 		b. a filesystem unmount and mount cycle
-> 		c. a system reboot
-> 
-> Hence if DAX access policy changes are required to take immediate
-> effect, scheduled system-wide downtime will be required to guarantee
-> the new policy change takes effect when the application is
-> restarted.
-> 
-> 
-> > <quote>
-> > Enabling DAX on xfs
-> > -------------------
-> > 
-> > Summary
-> > -------
-> > 
-> >  1. There exists an in-kernel file access mode flag S_DAX that corresponds to
-> >     the statx flag STATX_ATTR_DAX.  See the manpage for statx(2) for details
-> >     about this access mode.
-> > 
-> >  2. There exists a regular file and directory inode flag FS_XFLAG_DAX.  It is
-> >     inherited from the parent directory FS_XFLAG_DAX inode flag at creation
-> >     time.  This advisory flag can be set or cleared at any time, but doing so
-> >     does not immediately affect the S_DAX state.
-> 
-> 2. There exists a persistent flag FS_XFLAG_DAX that can be applied to
-> regular files and directories. This advisory flag can be set or
-> cleared at any time, but doing so does not immediately affect the
-> S_DAX state.
-
-Done.
-
-> 
-> 3. If the persistent FS_XFLAG_DAX flag is set on a directory, this
-> flag will be inherited by all regular files and sub directories that
-> are subsequently created in this directory. Files and subdirectories
-> that exist at the time this flag is set or cleared on the parent
-> directory are not modified by this modification of the parent
-> directory.
-> 
-
-Done.
-
-> 
-> > 
-> >  3. There exists dax mount options which can override FS_XFLAG_DAX in the
-> >     setting of the S_DAX flag.  Given underlying storage which supports DAX the
-> >     following hold.
-> > 
-> >     "-o dax=inode"  means "follow FS_XFLAG_DAX" and is the default.
-> > 
-> >     "-o dax=never"  means "never set S_DAX, ignore FS_XFLAG_DAX."
-> > 
-> >     "-o dax=always" means "always set S_DAX ignore FS_XFLAG_DAX."
-> > 
-> >     "-o dax"        is a legacy option which is an alias for "dax=always".
-> >     		    This may be removed in the future so "-o dax=always" is
-> > 		    the preferred method for specifying this behavior.
-> > 
-> >     NOTE: Setting and inheritance affect FS_XFLAG_DAX at all times even when
-> >     the file system is mounted with a dax option.  However, in-core inode
-> >     state (S_DAX) will continue to be overridden until the file system is
-> 
-> s/continue to//
-
-Done.
-
-> 
-> >     remounted with dax=inode and the inode is evicted.
-> 
-> evicted from kernel memory.
-
-Done.
-
-> 
-> > 
-> >  4. Programs that require a specific file access mode (DAX or not DAX)
-> >     can do one of the following:
-> > 
-> >     (a) Set the parent directory FS_XFLAG_DAX as needed before file are
-> >         created; or
-> > 
-> >     (b) Have the administrator set the desired behaviour via mount option; or
-> > 
-> >     (c) Set or clear the file's FS_XFLAG_DAX flag as needed and wait for the
-> >         inode to be evicted from memory.
-> > 
-> > 	i> the only effective way of ensuring this is to request the admin drop
-> > 	   the file system caches.
-> 
-> See my comments above.
-
-Done. thanks!
-
-> 
-> > 
-> > 
-> > Details
-> > -------
-> > 
-> > There are 2 per-file dax flags.  One is a persistent inode setting (FS_XFLAG_DAX)
-> > and the other is a volatile flag indicating the active state of the feature
-> > (S_DAX).
-> > 
-> > FS_XFLAG_DAX is preserved within the file system.  This persistent config
-> > setting can be set, cleared and/or queried using the FS_IOC_FS[GS]ETXATTR ioctl
-> > (see ioctl_xfs_fsgetxattr(2)) or an utility such as 'xfs_io'.
-> > 'chattr [-+]x'".
-> 
-> Stray line.
-
-Thanks for the review!  V11 should be out soon.
-
-Ira
-
-> 
-> Cheers,
-> 
-> Dave.
-> 
-> -- 
-> Dave Chinner
-> david@fromorbit.com
