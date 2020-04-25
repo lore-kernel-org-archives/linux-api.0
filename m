@@ -1,185 +1,164 @@
-Return-Path: <SRS0=9CD4=6I=vger.kernel.org=linux-api-owner@kernel.org>
+Return-Path: <SRS0=ckVa=6J=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 16824C54FCB
-	for <linux-api@archiver.kernel.org>; Fri, 24 Apr 2020 16:22:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 457BFC55191
+	for <linux-api@archiver.kernel.org>; Sat, 25 Apr 2020 19:12:29 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id F2DD020700
-	for <linux-api@archiver.kernel.org>; Fri, 24 Apr 2020 16:22:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 26AEC2076C
+	for <linux-api@archiver.kernel.org>; Sat, 25 Apr 2020 19:12:29 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="owcl22kb"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728319AbgDXQV6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 24 Apr 2020 12:21:58 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:58598 "EHLO
-        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726908AbgDXQV6 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 24 Apr 2020 12:21:58 -0400
-Received: from ip5f5af183.dynamic.kabel-deutschland.de ([95.90.241.131] helo=wittgenstein.fritz.box)
-        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.86_2)
-        (envelope-from <christian.brauner@ubuntu.com>)
-        id 1jS15O-0004dV-97; Fri, 24 Apr 2020 16:21:54 +0000
-From:   Christian Brauner <christian.brauner@ubuntu.com>
-To:     Jens Axboe <axboe@kernel.dk>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
-        linux-api@vger.kernel.org
-Cc:     Jonathan Corbet <corbet@lwn.net>, Serge Hallyn <serge@hallyn.com>,
-        "Rafael J. Wysocki" <rafael@kernel.org>, Tejun Heo <tj@kernel.org>,
-        "David S. Miller" <davem@davemloft.net>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        Saravana Kannan <saravanak@google.com>,
-        Jan Kara <jack@suse.cz>, David Howells <dhowells@redhat.com>,
-        Seth Forshee <seth.forshee@canonical.com>,
-        David Rheinsberg <david.rheinsberg@gmail.com>,
-        Tom Gundersen <teg@jklm.no>,
-        Christian Kellner <ckellner@redhat.com>,
-        Dmitry Vyukov <dvyukov@google.com>,
-        =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
-        linux-doc@vger.kernel.org, netdev@vger.kernel.org,
-        Steve Barber <smbarber@google.com>,
-        Dylan Reid <dgreid@google.com>,
-        Filipe Brandenburger <filbranden@gmail.com>,
-        Kees Cook <keescook@chromium.org>,
-        Benjamin Elder <bentheelder@google.com>,
-        Akihiro Suda <suda.kyoto@gmail.com>
-Subject: [PATCH v3 1/7] kobject_uevent: remove unneeded netlink_ns check
-Date:   Fri, 24 Apr 2020 18:20:46 +0200
-Message-Id: <20200424162052.441452-2-christian.brauner@ubuntu.com>
-X-Mailer: git-send-email 2.26.2
-In-Reply-To: <20200424162052.441452-1-christian.brauner@ubuntu.com>
-References: <20200424162052.441452-1-christian.brauner@ubuntu.com>
+        id S1726361AbgDYTM2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 25 Apr 2020 15:12:28 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56302 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726192AbgDYTM2 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 25 Apr 2020 15:12:28 -0400
+Received: from mail-ej1-x644.google.com (mail-ej1-x644.google.com [IPv6:2a00:1450:4864:20::644])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id ED395C09B04D;
+        Sat, 25 Apr 2020 12:12:27 -0700 (PDT)
+Received: by mail-ej1-x644.google.com with SMTP id n17so10374841ejh.7;
+        Sat, 25 Apr 2020 12:12:27 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:references:in-reply-to:reply-to:from:date:message-id
+         :subject:to:cc;
+        bh=AvkTm+mzyMVnfea52ydtpICgabBlh0drjq1+bCYJ/0E=;
+        b=owcl22kbPn701gTg+yz5fH4eADn9UPJ8LvqPgSsO//5pO5nQwCpMCPDuJ1Z0zEIjov
+         JDLVjNvjiTacXVj5ZPcON8jy8rtBgWTBT0Nk6RzGo+blUwDf6J1QPfwVs6YmfM+992m3
+         Z2l8B/Khn+FlsU0VmlFWwvcyNbGMK0lpCsH85HsSec+988C4vCXKgzzBM1z4uCfH/6Ob
+         iZfD30qFau+ypGebisZTV/1tZ839Dz7aKJyHx3CyeWsrDaYDIUcI8S1dMta5aG0lb+da
+         S1a61+C8LXQwF3BwcSm8HssCaW/CkxpZ72h9ZMNg4jTRGrw698xR/7gn9kgO/LkEGm34
+         Z/zA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:reply-to
+         :from:date:message-id:subject:to:cc;
+        bh=AvkTm+mzyMVnfea52ydtpICgabBlh0drjq1+bCYJ/0E=;
+        b=rn1O9YqqqEu83/XCZrt/+f8uI6x3CCENohdqVU3o4InVyPkVjAJPjjsi9lV+9D6A3B
+         hyGcHNfzKie/DSaruD8isvvfM0ynDM3km1mLQjLyVTLeRTKRyC201qzDU4jbAw4F1l6O
+         T2uI/189Ocu1tzh1Vz3HjU8tzp8ghm75xU5+XEXOH/y7p3Zzxdyn7Lv9KJzP1vWhh7jb
+         DisVES/VrteEl502xdeidZyVJIAa/QhlMQAycwfWL/7Din2/krZrzFUTwo53CK1STXjX
+         uVOXux2P062JwchJQAjpWu6wyXw8niu7WHpteN8+nB7b++RPJjNyQ2kP0cfvuf1Lj/Ra
+         dsqQ==
+X-Gm-Message-State: AGi0PuZe+vJzOQZGnIkra11hAVSse4hNxnXhWKDmpLd0YlUB/88oOGh5
+        6GSS3U6oQCEFb2hiGqoaCF9WQZtMA9Xe6bGIhzw=
+X-Google-Smtp-Source: APiQypIB4qwMx+YzraThqWvM/ROoqpHMd0pA8h8UYyusPpy0T9i5WYMdcs6pk91daKm+dz1FjXBYiWBtPVhtzTLdrqE=
+X-Received: by 2002:a17:906:2488:: with SMTP id e8mr12844760ejb.157.1587841946564;
+ Sat, 25 Apr 2020 12:12:26 -0700 (PDT)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20191128120140.20367-1-cyphar@cyphar.com> <20191128130840.GA3719@calabresa>
+ <20191128135506.yo7432egjsg5ha5a@yavin.dot.cyphar.com>
+In-Reply-To: <20191128135506.yo7432egjsg5ha5a@yavin.dot.cyphar.com>
+Reply-To: mtk.manpages@gmail.com
+From:   "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Date:   Sat, 25 Apr 2020 21:12:15 +0200
+Message-ID: <CAKgNAkj9W7ay+YuQv1ct+LXE8tj1R+hzDDgGZo3KvWhWD0k2ug@mail.gmail.com>
+Subject: Re: [PATCH] sched_getattr.2: update to include changed size semantics
+To:     Aleksa Sarai <cyphar@cyphar.com>
+Cc:     Thadeu Lima de Souza Cascardo <cascardo@canonical.com>,
+        linux-man <linux-man@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        Arnaldo Carvalho de Melo <acme@infradead.org>,
+        Jiri Olsa <jolsa@redhat.com>,
+        Patrick Bellasi <patrick.bellasi@arm.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Michael Kerrisk <mtk.manpages@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Back when I rewrote large chunks of uevent sending I should have removed
-the .netlink_ns method completely after having removed it's last user in
-[1]. Let's remove it now and also remove the helper associated with it
-that is unused too.
+Hi Aleksa,
 
-Fixes: a3498436b3a0 ("netns: restrict uevents") /* No backport needed. */
-Cc: "David S. Miller" <davem@davemloft.net>
-Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
----
-/* v2 */
-unchanged
+I don't think there was ever a follow-up to this patch. Would you be
+willing to send one?
 
-/* v3 */
-unchanged
----
- Documentation/filesystems/sysfs-tagging.txt |  1 -
- include/linux/kobject_ns.h                  |  3 ---
- lib/kobject.c                               | 13 -------------
- lib/kobject_uevent.c                        |  2 +-
- net/core/net-sysfs.c                        |  6 ------
- 5 files changed, 1 insertion(+), 24 deletions(-)
+Thanks,
 
-diff --git a/Documentation/filesystems/sysfs-tagging.txt b/Documentation/filesystems/sysfs-tagging.txt
-index c7c8e6438958..51d28dd8b84f 100644
---- a/Documentation/filesystems/sysfs-tagging.txt
-+++ b/Documentation/filesystems/sysfs-tagging.txt
-@@ -37,6 +37,5 @@ Users of this interface:
- - define a type in the kobj_ns_type enumeration.
- - call kobj_ns_type_register() with its kobj_ns_type_operations which has
-   - current_ns() which returns current's namespace
--  - netlink_ns() which returns a socket's namespace
-   - initial_ns() which returns the initial namesapce
- - call kobj_ns_exit() when an individual tag is no longer valid
-diff --git a/include/linux/kobject_ns.h b/include/linux/kobject_ns.h
-index 069aa2ebef90..991a9286bcea 100644
---- a/include/linux/kobject_ns.h
-+++ b/include/linux/kobject_ns.h
-@@ -32,7 +32,6 @@ enum kobj_ns_type {
- /*
-  * Callbacks so sysfs can determine namespaces
-  *   @grab_current_ns: return a new reference to calling task's namespace
-- *   @netlink_ns: return namespace to which a sock belongs (right?)
-  *   @initial_ns: return the initial namespace (i.e. init_net_ns)
-  *   @drop_ns: drops a reference to namespace
-  */
-@@ -40,7 +39,6 @@ struct kobj_ns_type_operations {
- 	enum kobj_ns_type type;
- 	bool (*current_may_mount)(void);
- 	void *(*grab_current_ns)(void);
--	const void *(*netlink_ns)(struct sock *sk);
- 	const void *(*initial_ns)(void);
- 	void (*drop_ns)(void *);
- };
-@@ -52,7 +50,6 @@ const struct kobj_ns_type_operations *kobj_ns_ops(struct kobject *kobj);
- 
- bool kobj_ns_current_may_mount(enum kobj_ns_type type);
- void *kobj_ns_grab_current(enum kobj_ns_type type);
--const void *kobj_ns_netlink(enum kobj_ns_type type, struct sock *sk);
- const void *kobj_ns_initial(enum kobj_ns_type type);
- void kobj_ns_drop(enum kobj_ns_type type, void *ns);
- 
-diff --git a/lib/kobject.c b/lib/kobject.c
-index 83198cb37d8d..6f07083cc111 100644
---- a/lib/kobject.c
-+++ b/lib/kobject.c
-@@ -1092,19 +1092,6 @@ void *kobj_ns_grab_current(enum kobj_ns_type type)
- }
- EXPORT_SYMBOL_GPL(kobj_ns_grab_current);
- 
--const void *kobj_ns_netlink(enum kobj_ns_type type, struct sock *sk)
--{
--	const void *ns = NULL;
--
--	spin_lock(&kobj_ns_type_lock);
--	if ((type > KOBJ_NS_TYPE_NONE) && (type < KOBJ_NS_TYPES) &&
--	    kobj_ns_ops_tbl[type])
--		ns = kobj_ns_ops_tbl[type]->netlink_ns(sk);
--	spin_unlock(&kobj_ns_type_lock);
--
--	return ns;
--}
--
- const void *kobj_ns_initial(enum kobj_ns_type type)
- {
- 	const void *ns = NULL;
-diff --git a/lib/kobject_uevent.c b/lib/kobject_uevent.c
-index 7998affa45d4..a45b3eeaa2b9 100644
---- a/lib/kobject_uevent.c
-+++ b/lib/kobject_uevent.c
-@@ -400,7 +400,7 @@ static int kobject_uevent_net_broadcast(struct kobject *kobj,
- 	 * are the only tag relevant here since we want to decide which
- 	 * network namespaces to broadcast the uevent into.
- 	 */
--	if (ops && ops->netlink_ns && kobj->ktype->namespace)
-+	if (ops && kobj->ktype->namespace)
- 		if (ops->type == KOBJ_NS_TYPE_NET)
- 			net = kobj->ktype->namespace(kobj);
- 
-diff --git a/net/core/net-sysfs.c b/net/core/net-sysfs.c
-index 4773ad6ec111..3fa35a3c843a 100644
---- a/net/core/net-sysfs.c
-+++ b/net/core/net-sysfs.c
-@@ -1694,16 +1694,10 @@ static const void *net_initial_ns(void)
- 	return &init_net;
- }
- 
--static const void *net_netlink_ns(struct sock *sk)
--{
--	return sock_net(sk);
--}
--
- const struct kobj_ns_type_operations net_ns_type_operations = {
- 	.type = KOBJ_NS_TYPE_NET,
- 	.current_may_mount = net_current_may_mount,
- 	.grab_current_ns = net_grab_current_ns,
--	.netlink_ns = net_netlink_ns,
- 	.initial_ns = net_initial_ns,
- 	.drop_ns = net_drop_ns,
- };
+Michael
+
+On Thu, 28 Nov 2019 at 14:55, Aleksa Sarai <cyphar@cyphar.com> wrote:
+>
+> On 2019-11-28, Thadeu Lima de Souza Cascardo <cascardo@canonical.com> wrote:
+> > On Thu, Nov 28, 2019 at 11:01:40PM +1100, Aleksa Sarai wrote:
+> > > Due to a userspace breakage, commit 1251201c0d34 ("sched/core: Fix
+> > > uclamp ABI bug, clean up and robustify sched_read_attr() ABI logic and
+> > > code") changed the semantics of sched_getattr(2) when the userspace
+> > > struct is smaller than the kernel struct. Now, any trailing non-zero
+> > > data in the kernel structure is ignored when copying to userspace.
+> > >
+> > > Ref: 1251201c0d34 ("sched/core: Fix uclamp ABI bug, clean up and
+> > >                     robustify sched_read_attr() ABI logic and code")
+> > > Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
+> > > ---
+> > >  man2/sched_setattr.2 | 6 ++----
+> > >  1 file changed, 2 insertions(+), 4 deletions(-)
+> > >
+> > > diff --git a/man2/sched_setattr.2 b/man2/sched_setattr.2
+> > > index 76ffa14eba85..fbb67b8eb98b 100644
+> > > --- a/man2/sched_setattr.2
+> > > +++ b/man2/sched_setattr.2
+> > > @@ -284,10 +284,8 @@ structure,
+> > >  the additional bytes in the user-space structure are not touched.
+> > >  If the caller-provided structure is smaller than the kernel
+> > >  .I sched_attr
+> > > -structure and the kernel needs to return values outside the provided space,
+> > > -.BR sched_getattr ()
+> > > -fails with the error
+> > > -.BR E2BIG .
+> > > +structure, the kernel will silently not return any values which would be stored
+> > > +outside the provided space.
+> > >  As with
+> > >  .BR sched_setattr (),
+> > >  these semantics allow for future extensibility of the interface.
+> > > --
+> > > 2.24.0
+> > >
+> >
+> > I was thinking about documenting the difference in behavior of older kernels,
+> > before uclamp support.
+> >
+> > However, in practice, for sched_getattr, the kernel never returned E2BIG (the
+> > code uses EFBIG incorrectly, in fact). It does, however, return EINVAL for
+> > sizes smaller than SCHED_ATTR_SIZE_VER0.
+>
+> I've been told the EFBIG was actually a typo and it was always meant to
+> be E2BIG. But yes, the precise problem with the old semantics was that
+> they weren't tested "in the wild" with a proper struct upgrade -- hence
+> all of the headaches.
+>
+> If we ever do implement a copy_struct_to_user() we are almost certainly
+> going to implement it with the new sched_getattr() semantics. To be
+> honest, I'm not sure I can imagine a case where an old userspace program
+> would benefit from being given an error saying that the kernel has some
+> properties that it doesn't understand. (sched_getattr() is also weird
+> for other reasons, such as the fact it takes a separate size argument.)
+>
+> > However, E2BIG is still mentioned below as a possible return value for
+> > sched_getattr. Can you remove that too?
+>
+> Will do.
+>
+> --
+> Aleksa Sarai
+> Senior Software Engineer (Containers)
+> SUSE Linux GmbH
+> <https://www.cyphar.com/>
+
+
+
 -- 
-2.26.2
-
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
