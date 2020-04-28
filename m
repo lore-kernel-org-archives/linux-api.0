@@ -2,177 +2,229 @@ Return-Path: <SRS0=IXk3=6M=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 65A4BC83000
-	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 13:04:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7BA6EC83001
+	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 13:52:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4DAF22072A
-	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 13:04:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4FD30206F0
+	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 13:52:05 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1588081925;
+	bh=Pwh8/LK+cj8iRRzr9G8muwyxeGOxjcMcdUHQG0NXQHs=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
+	b=c9tdnAhuWDLL7GCp8IpswV2c+1Is+pJmIPXGvZbUpMp9aH1Ao5ai3sl0+ZmEzfQBX
+	 FtA51/kOf5Zb06fYu6g7MVuiPyKKhg1B5UKptRKwRcKpYoZym28DSrQJxFjnsYn5wp
+	 DGqMbXvilE4j+Xl/wUz1lrYkWen1jgeYcaZFVmfc=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726862AbgD1NEj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 28 Apr 2020 09:04:39 -0400
-Received: from mx2.suse.de ([195.135.220.15]:56196 "EHLO mx2.suse.de"
+        id S1727853AbgD1NwB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 28 Apr 2020 09:52:01 -0400
+Received: from mail.kernel.org ([198.145.29.99]:40704 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726746AbgD1NEi (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 28 Apr 2020 09:04:38 -0400
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.220.254])
-        by mx2.suse.de (Postfix) with ESMTP id 0B96AAC5F;
-        Tue, 28 Apr 2020 13:04:36 +0000 (UTC)
-Received: by quack2.suse.cz (Postfix, from userid 1000)
-        id EB7251E1294; Tue, 28 Apr 2020 15:04:35 +0200 (CEST)
-Date:   Tue, 28 Apr 2020 15:04:35 +0200
-From:   Jan Kara <jack@suse.cz>
-To:     ira.weiny@intel.com
-Cc:     linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org,
-        "Darrick J. Wong" <darrick.wong@oracle.com>,
-        Al Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>,
-        Dan Williams <dan.j.williams@intel.com>,
-        Dave Chinner <david@fromorbit.com>,
-        Christoph Hellwig <hch@lst.de>,
-        "Theodore Y. Ts'o" <tytso@mit.edu>, Jeff Moyer <jmoyer@redhat.com>,
-        linux-ext4@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        linux-api@vger.kernel.org
-Subject: Re: [PATCH V11 10/11] fs: Introduce DCACHE_DONTCACHE
-Message-ID: <20200428130435.GA6426@quack2.suse.cz>
-References: <20200428002142.404144-1-ira.weiny@intel.com>
- <20200428002142.404144-11-ira.weiny@intel.com>
+        id S1726949AbgD1NwA (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 28 Apr 2020 09:52:00 -0400
+Received: from tleilax.com (68-20-15-154.lightspeed.rlghnc.sbcglobal.net [68.20.15.154])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 9A85F206D9;
+        Tue, 28 Apr 2020 13:51:58 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1588081919;
+        bh=Pwh8/LK+cj8iRRzr9G8muwyxeGOxjcMcdUHQG0NXQHs=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+        b=tftuYN65spdiBa+18e757/RFqiBQ/c+/Y2X30oSlbeTInTLSRK0TO2sboC+TkqTNn
+         F5VcnQkDwumMaEtIRRajl+O3iARUQx7EjlZMUQi+1C5ZLKmzKO6rk4qJ45g69nBkHO
+         mwppDG6j6D55RP7XfQ1VJPRIqZDLuzhGzBr5znMM=
+From:   Jeff Layton <jlayton@kernel.org>
+To:     viro@zeniv.linux.org.uk, akpm@linux-foundation.org
+Cc:     linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-api@vger.kernel.org, andres@anarazel.de, willy@infradead.org,
+        dhowells@redhat.com, hch@infradead.org, jack@suse.cz,
+        david@fromorbit.com
+Subject: [PATCH v6 RESEND 1/2] vfs: track per-sb writeback errors and report them to syncfs
+Date:   Tue, 28 Apr 2020 09:51:54 -0400
+Message-Id: <20200428135155.19223-2-jlayton@kernel.org>
+X-Mailer: git-send-email 2.26.1
+In-Reply-To: <20200428135155.19223-1-jlayton@kernel.org>
+References: <20200428135155.19223-1-jlayton@kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20200428002142.404144-11-ira.weiny@intel.com>
-User-Agent: Mutt/1.10.1 (2018-07-13)
+Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon 27-04-20 17:21:41, ira.weiny@intel.com wrote:
-> From: Ira Weiny <ira.weiny@intel.com>
-> 
-> DCACHE_DONTCACHE indicates a dentry should not be cached on final
-> dput().
-> 
-> Also add a helper function to mark DCACHE_DONTCACHE on all dentries
-> pointing to a specific inode when that inode is being set I_DONTCACHE.
-> 
-> This facilitates dropping dentry references to inodes sooner which
-> require eviction to swap S_DAX mode.
-> 
-> Cc: Al Viro <viro@zeniv.linux.org.uk>
-> Signed-off-by: Ira Weiny <ira.weiny@intel.com>
+From: Jeff Layton <jlayton@redhat.com>
 
-The patch looks good to me. You can add:
+Usually we suggest that applications call fsync when they want to
+ensure that all data written to the file has made it to the backing
+store, but that can be inefficient when there are a lot of open
+files.
 
+Calling syncfs on the filesystem can be more efficient in some
+situations, but the error reporting doesn't currently work the way most
+people expect. If a single inode on a filesystem reports a writeback
+error, syncfs won't necessarily return an error. syncfs only returns an
+error if __sync_blockdev fails, and on some filesystems that's a no-op.
+
+It would be better if syncfs reported an error if there were any writeback
+failures. Then applications could call syncfs to see if there are any
+errors on any open files, and could then call fsync on all of the other
+descriptors to figure out which one failed.
+
+This patch adds a new errseq_t to struct super_block, and has
+mapping_set_error also record writeback errors there.
+
+To report those errors, we also need to keep an errseq_t in struct
+file to act as a cursor. This patch adds a dedicated field for that
+purpose, which slots nicely into 4 bytes of padding at the end of
+struct file on x86_64.
+
+An earlier version of this patch used an O_PATH file descriptor to cue
+the kernel that the open file should track the superblock error and not
+the inode's writeback error.
+
+I think that API is just too weird though. This is simpler and should
+make syncfs error reporting "just work" even if someone is multiplexing
+fsync and syncfs on the same fds.
+
+Cc: Andres Freund <andres@anarazel.de>
+Cc: Matthew Wilcox <willy@infradead.org>
 Reviewed-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Jeff Layton <jlayton@kernel.org>
+---
+ drivers/dax/device.c    |  1 +
+ fs/file_table.c         |  1 +
+ fs/open.c               |  3 +--
+ fs/sync.c               |  6 ++++--
+ include/linux/fs.h      | 16 ++++++++++++++++
+ include/linux/pagemap.h |  5 ++++-
+ 6 files changed, 27 insertions(+), 5 deletions(-)
 
-								Honza
-
-> 
-> ---
-> Changes from V10:
-> 	rename to d_mark_dontcache()
-> 	Move function to fs/dcache.c
-> 
-> Changes from V9:
-> 	modify i_state under i_lock
-> 	Update comment
-> 		"Purge from memory on final dput()"
-> 
-> Changes from V8:
-> 	Update commit message
-> 	Use mark_inode_dontcache in XFS
-> 	Fix locking...  can't use rcu here.
-> 	Change name to mark_inode_dontcache
-> ---
->  fs/dcache.c            | 19 +++++++++++++++++++
->  fs/xfs/xfs_icache.c    |  2 +-
->  include/linux/dcache.h |  2 ++
->  include/linux/fs.h     |  1 +
->  4 files changed, 23 insertions(+), 1 deletion(-)
-> 
-> diff --git a/fs/dcache.c b/fs/dcache.c
-> index b280e07e162b..0d07fb335b78 100644
-> --- a/fs/dcache.c
-> +++ b/fs/dcache.c
-> @@ -647,6 +647,10 @@ static inline bool retain_dentry(struct dentry *dentry)
->  		if (dentry->d_op->d_delete(dentry))
->  			return false;
->  	}
-> +
-> +	if (unlikely(dentry->d_flags & DCACHE_DONTCACHE))
-> +		return false;
-> +
->  	/* retain; LRU fodder */
->  	dentry->d_lockref.count--;
->  	if (unlikely(!(dentry->d_flags & DCACHE_LRU_LIST)))
-> @@ -656,6 +660,21 @@ static inline bool retain_dentry(struct dentry *dentry)
->  	return true;
->  }
->  
-> +void d_mark_dontcache(struct inode *inode)
-> +{
-> +	struct dentry *de;
-> +
-> +	spin_lock(&inode->i_lock);
-> +	hlist_for_each_entry(de, &inode->i_dentry, d_u.d_alias) {
-> +		spin_lock(&de->d_lock);
-> +		de->d_flags |= DCACHE_DONTCACHE;
-> +		spin_unlock(&de->d_lock);
-> +	}
-> +	inode->i_state |= I_DONTCACHE;
-> +	spin_unlock(&inode->i_lock);
-> +}
-> +EXPORT_SYMBOL(d_mark_dontcache);
-> +
->  /*
->   * Finish off a dentry we've decided to kill.
->   * dentry->d_lock must be held, returns with it unlocked.
-> diff --git a/fs/xfs/xfs_icache.c b/fs/xfs/xfs_icache.c
-> index de76f7f60695..888646d74d7d 100644
-> --- a/fs/xfs/xfs_icache.c
-> +++ b/fs/xfs/xfs_icache.c
-> @@ -559,7 +559,7 @@ xfs_iget_cache_miss(
->  	 */
->  	iflags = XFS_INEW;
->  	if (flags & XFS_IGET_DONTCACHE)
-> -		VFS_I(ip)->i_state |= I_DONTCACHE;
-> +		d_mark_dontcache(VFS_I(ip));
->  	ip->i_udquot = NULL;
->  	ip->i_gdquot = NULL;
->  	ip->i_pdquot = NULL;
-> diff --git a/include/linux/dcache.h b/include/linux/dcache.h
-> index c1488cc84fd9..a81f0c3cf352 100644
-> --- a/include/linux/dcache.h
-> +++ b/include/linux/dcache.h
-> @@ -177,6 +177,8 @@ struct dentry_operations {
->  
->  #define DCACHE_REFERENCED		0x00000040 /* Recently used, don't discard. */
->  
-> +#define DCACHE_DONTCACHE		0x00000080 /* Purge from memory on final dput() */
-> +
->  #define DCACHE_CANT_MOUNT		0x00000100
->  #define DCACHE_GENOCIDE			0x00000200
->  #define DCACHE_SHRINK_LIST		0x00000400
-> diff --git a/include/linux/fs.h b/include/linux/fs.h
-> index 44bd45af760f..7c3e8c0306e0 100644
-> --- a/include/linux/fs.h
-> +++ b/include/linux/fs.h
-> @@ -3055,6 +3055,7 @@ static inline int generic_drop_inode(struct inode *inode)
->  	return !inode->i_nlink || inode_unhashed(inode) ||
->  		(inode->i_state & I_DONTCACHE);
->  }
-> +extern void d_mark_dontcache(struct inode *inode);
->  
->  extern struct inode *ilookup5_nowait(struct super_block *sb,
->  		unsigned long hashval, int (*test)(struct inode *, void *),
-> -- 
-> 2.25.1
-> 
+diff --git a/drivers/dax/device.c b/drivers/dax/device.c
+index 1af823b2fe6b..4c0af2eb7e19 100644
+--- a/drivers/dax/device.c
++++ b/drivers/dax/device.c
+@@ -377,6 +377,7 @@ static int dax_open(struct inode *inode, struct file *filp)
+ 	inode->i_mapping->a_ops = &dev_dax_aops;
+ 	filp->f_mapping = inode->i_mapping;
+ 	filp->f_wb_err = filemap_sample_wb_err(filp->f_mapping);
++	filp->f_sb_err = file_sample_sb_err(filp);
+ 	filp->private_data = dev_dax;
+ 	inode->i_flags = S_DAX;
+ 
+diff --git a/fs/file_table.c b/fs/file_table.c
+index 30d55c9a1744..676e620948d2 100644
+--- a/fs/file_table.c
++++ b/fs/file_table.c
+@@ -198,6 +198,7 @@ static struct file *alloc_file(const struct path *path, int flags,
+ 	file->f_inode = path->dentry->d_inode;
+ 	file->f_mapping = path->dentry->d_inode->i_mapping;
+ 	file->f_wb_err = filemap_sample_wb_err(file->f_mapping);
++	file->f_sb_err = file_sample_sb_err(file);
+ 	if ((file->f_mode & FMODE_READ) &&
+ 	     likely(fop->read || fop->read_iter))
+ 		file->f_mode |= FMODE_CAN_READ;
+diff --git a/fs/open.c b/fs/open.c
+index 719b320ede52..d9467a8a7f6a 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -743,9 +743,8 @@ static int do_dentry_open(struct file *f,
+ 	path_get(&f->f_path);
+ 	f->f_inode = inode;
+ 	f->f_mapping = inode->i_mapping;
+-
+-	/* Ensure that we skip any errors that predate opening of the file */
+ 	f->f_wb_err = filemap_sample_wb_err(f->f_mapping);
++	f->f_sb_err = file_sample_sb_err(f);
+ 
+ 	if (unlikely(f->f_flags & O_PATH)) {
+ 		f->f_mode = FMODE_PATH | FMODE_OPENED;
+diff --git a/fs/sync.c b/fs/sync.c
+index 4d1ff010bc5a..c6f6f5be5682 100644
+--- a/fs/sync.c
++++ b/fs/sync.c
+@@ -161,7 +161,7 @@ SYSCALL_DEFINE1(syncfs, int, fd)
+ {
+ 	struct fd f = fdget(fd);
+ 	struct super_block *sb;
+-	int ret;
++	int ret, ret2;
+ 
+ 	if (!f.file)
+ 		return -EBADF;
+@@ -171,8 +171,10 @@ SYSCALL_DEFINE1(syncfs, int, fd)
+ 	ret = sync_filesystem(sb);
+ 	up_read(&sb->s_umount);
+ 
++	ret2 = errseq_check_and_advance(&sb->s_wb_err, &f.file->f_sb_err);
++
+ 	fdput(f);
+-	return ret;
++	return ret ? ret : ret2;
+ }
+ 
+ /**
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 4f6f59b4f22a..5ad13cd6441c 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -976,6 +976,7 @@ struct file {
+ #endif /* #ifdef CONFIG_EPOLL */
+ 	struct address_space	*f_mapping;
+ 	errseq_t		f_wb_err;
++	errseq_t		f_sb_err; /* for syncfs */
+ } __randomize_layout
+   __attribute__((aligned(4)));	/* lest something weird decides that 2 is OK */
+ 
+@@ -1520,6 +1521,9 @@ struct super_block {
+ 	/* Being remounted read-only */
+ 	int s_readonly_remount;
+ 
++	/* per-sb errseq_t for reporting writeback errors via syncfs */
++	errseq_t s_wb_err;
++
+ 	/* AIO completions deferred from interrupt context */
+ 	struct workqueue_struct *s_dio_done_wq;
+ 	struct hlist_head s_pins;
+@@ -2827,6 +2831,18 @@ static inline errseq_t filemap_sample_wb_err(struct address_space *mapping)
+ 	return errseq_sample(&mapping->wb_err);
+ }
+ 
++/**
++ * file_sample_sb_err - sample the current errseq_t to test for later errors
++ * @mapping: mapping to be sampled
++ *
++ * Grab the most current superblock-level errseq_t value for the given
++ * struct file.
++ */
++static inline errseq_t file_sample_sb_err(struct file *file)
++{
++	return errseq_sample(&file->f_path.dentry->d_sb->s_wb_err);
++}
++
+ static inline int filemap_nr_thps(struct address_space *mapping)
+ {
+ #ifdef CONFIG_READ_ONLY_THP_FOR_FS
+diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
+index a8f7bd8ea1c6..d4409b13747e 100644
+--- a/include/linux/pagemap.h
++++ b/include/linux/pagemap.h
+@@ -51,7 +51,10 @@ static inline void mapping_set_error(struct address_space *mapping, int error)
+ 		return;
+ 
+ 	/* Record in wb_err for checkers using errseq_t based tracking */
+-	filemap_set_wb_err(mapping, error);
++	__filemap_set_wb_err(mapping, error);
++
++	/* Record it in superblock */
++	errseq_set(&mapping->host->i_sb->s_wb_err, error);
+ 
+ 	/* Record it in flags for now, for legacy callers */
+ 	if (error == -ENOSPC)
 -- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+2.26.1
+
