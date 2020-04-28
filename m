@@ -2,140 +2,135 @@ Return-Path: <SRS0=IXk3=6M=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BE2D7C8300A
-	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 00:22:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 49DC6C83002
+	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 00:46:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A2B172087E
-	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 00:22:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2FEB4205C9
+	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 00:46:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726263AbgD1AWj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 27 Apr 2020 20:22:39 -0400
-Received: from mga18.intel.com ([134.134.136.126]:16476 "EHLO mga18.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726424AbgD1AVt (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 27 Apr 2020 20:21:49 -0400
-IronPort-SDR: otWHwsYP7gJC3Nedz6AbXqXhkUeVc5uPDXCHZ+L0kQVVteh2pfSR7lMCPyRP+Bveh/tYzgz0i9
- BLJquHBI3eig==
-X-Amp-Result: SKIPPED(no attachment in message)
-X-Amp-File-Uploaded: False
-Received: from orsmga002.jf.intel.com ([10.7.209.21])
-  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Apr 2020 17:21:48 -0700
-IronPort-SDR: CzElres2me3QpcebS4hq61xayp3+MnEtKbHg/B4tNmZEW4TkWo5aykndJ3RyIAZQsROOEfosir
- v8KDoWQIoJgg==
-X-IronPort-AV: E=Sophos;i="5.73,325,1583222400"; 
-   d="scan'208";a="275659926"
-Received: from iweiny-desk2.sc.intel.com (HELO localhost) ([10.3.52.147])
-  by orsmga002-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Apr 2020 17:21:47 -0700
-From:   ira.weiny@intel.com
-To:     linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org,
-        "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc:     Ira Weiny <ira.weiny@intel.com>,
-        Dave Chinner <dchinner@redhat.com>, Jan Kara <jack@suse.cz>,
-        Christoph Hellwig <hch@lst.de>,
+        id S1726257AbgD1AqQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 27 Apr 2020 20:46:16 -0400
+Received: from mout-p-102.mailbox.org ([80.241.56.152]:11350 "EHLO
+        mout-p-102.mailbox.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726337AbgD1AqQ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 27 Apr 2020 20:46:16 -0400
+Received: from smtp2.mailbox.org (smtp2.mailbox.org [80.241.60.241])
+        (using TLSv1.2 with cipher ECDHE-RSA-CHACHA20-POLY1305 (256/256 bits))
+        (No client certificate requested)
+        by mout-p-102.mailbox.org (Postfix) with ESMTPS id 49B2yB31ClzKmbp;
+        Tue, 28 Apr 2020 02:46:10 +0200 (CEST)
+X-Virus-Scanned: amavisd-new at heinlein-support.de
+Received: from smtp2.mailbox.org ([80.241.60.241])
+        by spamfilter06.heinlein-hosting.de (spamfilter06.heinlein-hosting.de [80.241.56.125]) (amavisd-new, port 10030)
+        with ESMTP id Hb0F5KawT22P; Tue, 28 Apr 2020 02:46:05 +0200 (CEST)
+Date:   Tue, 28 Apr 2020 10:45:46 +1000
+From:   Aleksa Sarai <cyphar@cyphar.com>
+To:     Christian Brauner <christian.brauner@ubuntu.com>
+Cc:     Arnd Bergmann <arnd@arndb.de>, Hagen Paul Pfeifer <hagen@jauu.net>,
+        "Eric W. Biederman" <ebiederm@xmission.com>,
+        Jann Horn <jannh@google.com>,
+        kernel list <linux-kernel@vger.kernel.org>,
+        Florian Weimer <fweimer@redhat.com>,
         Al Viro <viro@zeniv.linux.org.uk>,
-        Dan Williams <dan.j.williams@intel.com>,
-        Dave Chinner <david@fromorbit.com>,
-        "Theodore Y. Ts'o" <tytso@mit.edu>, Jeff Moyer <jmoyer@redhat.com>,
-        linux-ext4@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        linux-api@vger.kernel.org
-Subject: [PATCH V11 02/11] fs: Remove unneeded IS_DAX() check in io_is_direct()
-Date:   Mon, 27 Apr 2020 17:21:33 -0700
-Message-Id: <20200428002142.404144-3-ira.weiny@intel.com>
-X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20200428002142.404144-1-ira.weiny@intel.com>
-References: <20200428002142.404144-1-ira.weiny@intel.com>
+        Christian Brauner <christian@brauner.io>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        "H. Peter Anvin" <hpa@zytor.com>, Brian Gerst <brgerst@gmail.com>,
+        Sami Tolvanen <samitolvanen@google.com>,
+        David Howells <dhowells@redhat.com>,
+        Andy Lutomirski <luto@kernel.org>,
+        Oleg Nesterov <oleg@redhat.com>,
+        Arnaldo Carvalho de Melo <acme@redhat.com>,
+        Sargun Dhillon <sargun@sargun.me>,
+        Linux API <linux-api@vger.kernel.org>,
+        linux-arch <linux-arch@vger.kernel.org>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: [RFC v2] ptrace, pidfd: add pidfd_ptrace syscall
+Message-ID: <20200428004546.mlpwixgms2ekpfdm@yavin.dot.cyphar.com>
+References: <20200426130100.306246-1-hagen@jauu.net>
+ <20200426163430.22743-1-hagen@jauu.net>
+ <20200427170826.mdklazcrn4xaeafm@wittgenstein>
+ <CAG48ez0hskhN7OkxwHX-Bo5HGboJaVEk8udFukkTgiC=43ixcw@mail.gmail.com>
+ <87zhawdc6w.fsf@x220.int.ebiederm.org>
+ <20200427185929.GA1768@laniakea>
+ <CAK8P3a2Ux1pDZEBjgRSPMJXvwUAvbPastX2ynVVC2iPTTDK_ow@mail.gmail.com>
+ <20200427201303.tbiipopeapxofn6h@wittgenstein>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="3oqbxiocwy4jimao"
+Content-Disposition: inline
+In-Reply-To: <20200427201303.tbiipopeapxofn6h@wittgenstein>
+X-Rspamd-Queue-Id: 43C7D1693
+X-Rspamd-Score: -4.76 / 15.00 / 15.00
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Ira Weiny <ira.weiny@intel.com>
 
-Remove the check because DAX now has it's own read/write methods and
-file systems which support DAX check IS_DAX() prior to IOCB_DIRECT on
-their own.  Therefore, it does not matter if the file state is DAX when
-the iocb flags are created.
+--3oqbxiocwy4jimao
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Also remove io_is_direct() as it is just a simple flag check.
+On 2020-04-27, Christian Brauner <christian.brauner@ubuntu.com> wrote:
+> On Mon, Apr 27, 2020 at 10:08:03PM +0200, Arnd Bergmann wrote:
+> > The way I understood Jann was that instead of a new syscall that duplic=
+ates
+> > everything in ptrace(), there would only need to be a new ptrace request
+> > such as PTRACE_ATTACH_PIDFD that behaves like PTRACE_ATTACH
+> > but takes a pidfd as the second argument, perhaps setting the return va=
+lue
+> > to the pid on success. Same for PTRACE_SEIZE.
+>=20
+> That was my initial suggestion, yes. Any enum that identifies a target
+> by a pid will get a new _PIDFD version and the pidfd is passed as pid_t
+> argument. That should work and is similar to what I did for waitid()
+> P_PIDFD. Realistically, there shouldn't be any system where pid_t is
+> smaller than an int that we care about.
+>=20
+> > In effect this is not much different from your a), just a variation on =
+the
+> > calling conventions. The main upside is that it avoids adding another
+> > ugly interface, the flip side is that it makes the existing one slightl=
+y worse
+> > by adding complexity.
+>=20
+> Basically, if a new syscall than please a proper re-design with real
+> benefits.
+>=20
+> In the meantime we could make due with the _PIDFD variant. And then if
+> someone wants to do the nitty gritty work of adding a ptrace variant
+> purely based on pidfds and with a better api and features that e.g. Jann
+> pointed out then by all means, please do so. I'm sure we would all
+> welcome this as well.
 
-Reviewed-by: Dave Chinner <dchinner@redhat.com>
-Reviewed-by: Jan Kara <jack@suse.cz>
-Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
-Signed-off-by: Ira Weiny <ira.weiny@intel.com>
+I agree. It would be a shame to add a new ptrace syscall and not take
+the opportunity to fix the multitude of problems with the existing API.
+But that's a Pandora's box which we shouldn't open unless we want to
+wait a long time to get an API everyone is okay with -- a pretty high
+price to just get pidfds support in ptrace.
 
----
-Changes from v8:
-	Rebase to latest Linus tree
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
 
-Changes from v6:
-	remove io_is_direct() as well.
-	Remove Reviews since this is quite a bit different.
+--3oqbxiocwy4jimao
+Content-Type: application/pgp-signature; name="signature.asc"
 
-Changes from v3:
-	Reword commit message.
-	Reordered to be a 'pre-cleanup' patch
----
- drivers/block/loop.c | 6 +++---
- include/linux/fs.h   | 7 +------
- 2 files changed, 4 insertions(+), 9 deletions(-)
+-----BEGIN PGP SIGNATURE-----
 
-diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index da693e6a834e..14372df0f354 100644
---- a/drivers/block/loop.c
-+++ b/drivers/block/loop.c
-@@ -634,8 +634,8 @@ static int do_req_filebacked(struct loop_device *lo, struct request *rq)
- 
- static inline void loop_update_dio(struct loop_device *lo)
- {
--	__loop_update_dio(lo, io_is_direct(lo->lo_backing_file) |
--			lo->use_dio);
-+	__loop_update_dio(lo, (lo->lo_backing_file->f_flags & O_DIRECT) |
-+				lo->use_dio);
- }
- 
- static void loop_reread_partitions(struct loop_device *lo,
-@@ -1028,7 +1028,7 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
- 	if (!(lo_flags & LO_FLAGS_READ_ONLY) && file->f_op->fsync)
- 		blk_queue_write_cache(lo->lo_queue, true, false);
- 
--	if (io_is_direct(lo->lo_backing_file) && inode->i_sb->s_bdev) {
-+	if ((lo->lo_backing_file->f_flags & O_DIRECT) && inode->i_sb->s_bdev) {
- 		/* In case of direct I/O, match underlying block size */
- 		unsigned short bsize = bdev_logical_block_size(
- 			inode->i_sb->s_bdev);
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 4f6f59b4f22a..a87cc5845a02 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -3394,11 +3394,6 @@ extern void setattr_copy(struct inode *inode, const struct iattr *attr);
- 
- extern int file_update_time(struct file *file);
- 
--static inline bool io_is_direct(struct file *filp)
--{
--	return (filp->f_flags & O_DIRECT) || IS_DAX(filp->f_mapping->host);
--}
--
- static inline bool vma_is_dax(const struct vm_area_struct *vma)
- {
- 	return vma->vm_file && IS_DAX(vma->vm_file->f_mapping->host);
-@@ -3423,7 +3418,7 @@ static inline int iocb_flags(struct file *file)
- 	int res = 0;
- 	if (file->f_flags & O_APPEND)
- 		res |= IOCB_APPEND;
--	if (io_is_direct(file))
-+	if (file->f_flags & O_DIRECT)
- 		res |= IOCB_DIRECT;
- 	if ((file->f_flags & O_DSYNC) || IS_SYNC(file->f_mapping->host))
- 		res |= IOCB_DSYNC;
--- 
-2.25.1
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXqd8tgAKCRCdlLljIbnQ
+EgHUAP0eXsMeBvX6165xj8TEMgh4rB2Aum2qA+WKvKBlmmoq6AD/UQdz5i+S0aA6
+FmHhKfcX0nKnO3Qpss//v+w7UiJH/AQ=
+=FQhY
+-----END PGP SIGNATURE-----
 
+--3oqbxiocwy4jimao--
