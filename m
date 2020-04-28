@@ -2,29 +2,29 @@ Return-Path: <SRS0=IXk3=6M=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-14.8 required=3.0
+	tests=HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 91E7CC8300A
-	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 17:51:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5B221C83009
+	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 17:51:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7D76820757
-	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 17:51:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 44A5E20B1F
+	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 17:51:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728420AbgD1Rvp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 28 Apr 2020 13:51:45 -0400
-Received: from smtp-bc0b.mail.infomaniak.ch ([45.157.188.11]:48997 "EHLO
-        smtp-bc0b.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1728346AbgD1Rvo (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 28 Apr 2020 13:51:44 -0400
+        id S1728626AbgD1Rvy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 28 Apr 2020 13:51:54 -0400
+Received: from smtp-42ad.mail.infomaniak.ch ([84.16.66.173]:34927 "EHLO
+        smtp-42ad.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1728618AbgD1Rvx (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 28 Apr 2020 13:51:53 -0400
 Received: from smtp-2-0001.mail.infomaniak.ch (unknown [10.5.36.108])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 49BTjV5Jgqzlhg3W;
-        Tue, 28 Apr 2020 19:51:42 +0200 (CEST)
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 49BTjg0nNrzlh9H6;
+        Tue, 28 Apr 2020 19:51:51 +0200 (CEST)
 Received: from localhost (unknown [94.23.54.103])
-        by smtp-2-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 49BTjV2609zmCTtP;
-        Tue, 28 Apr 2020 19:51:42 +0200 (CEST)
+        by smtp-2-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 49BTjf4fKVzmCTtP;
+        Tue, 28 Apr 2020 19:51:50 +0200 (CEST)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     linux-kernel@vger.kernel.org
 Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
@@ -57,9 +57,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
         linux-security-module@vger.kernel.org,
         linux-fsdevel@vger.kernel.org
-Subject: [PATCH v3 2/5] fs: Add a MAY_EXECMOUNT flag to infer the noexec mount property
-Date:   Tue, 28 Apr 2020 19:51:26 +0200
-Message-Id: <20200428175129.634352-3-mic@digikod.net>
+Subject: [PATCH v3 5/5] doc: Add documentation for the fs.open_mayexec_enforce sysctl
+Date:   Tue, 28 Apr 2020 19:51:29 +0200
+Message-Id: <20200428175129.634352-6-mic@digikod.net>
 X-Mailer: git-send-email 2.26.2
 In-Reply-To: <20200428175129.634352-1-mic@digikod.net>
 References: <20200428175129.634352-1-mic@digikod.net>
@@ -73,53 +73,85 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-An LSM doesn't get path information related to an access request to open
-an inode.  This new (internal) MAY_EXECMOUNT flag enables an LSM to
-check if the underlying mount point of an inode is marked as executable.
-This is useful to implement a security policy taking advantage of the
-noexec mount option.
-
-This flag is set according to path_noexec(), which checks if a mount
-point is mounted with MNT_NOEXEC or if the underlying superblock is
-SB_I_NOEXEC.
-
 Signed-off-by: Mickaël Salaün <mic@digikod.net>
-Reviewed-by: Philippe Trébuchet <philippe.trebuchet@ssi.gouv.fr>
 Reviewed-by: Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
 Cc: Aleksa Sarai <cyphar@cyphar.com>
 Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Jonathan Corbet <corbet@lwn.net>
 Cc: Kees Cook <keescook@chromium.org>
 ---
- fs/namei.c         | 2 ++
- include/linux/fs.h | 2 ++
- 2 files changed, 4 insertions(+)
 
-diff --git a/fs/namei.c b/fs/namei.c
-index a320371899cf..33b6d372e74a 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -2849,6 +2849,8 @@ static int may_open(const struct path *path, int acc_mode, int flag)
- 		break;
- 	}
+Changes since v2:
+* Update documentation with the new RESOLVE_MAYEXEC.
+* Improve explanations, including concerns about LD_PRELOAD.
+
+Changes since v1:
+* Move from LSM/Yama to sysctl/fs .
+---
+ Documentation/admin-guide/sysctl/fs.rst | 43 +++++++++++++++++++++++++
+ 1 file changed, 43 insertions(+)
+
+diff --git a/Documentation/admin-guide/sysctl/fs.rst b/Documentation/admin-guide/sysctl/fs.rst
+index 2a45119e3331..1ed65a38d5fb 100644
+--- a/Documentation/admin-guide/sysctl/fs.rst
++++ b/Documentation/admin-guide/sysctl/fs.rst
+@@ -37,6 +37,7 @@ Currently, these files are in /proc/sys/fs:
+ - inode-nr
+ - inode-state
+ - nr_open
++- open_mayexec_enforce
+ - overflowuid
+ - overflowgid
+ - pipe-user-pages-hard
+@@ -165,6 +166,48 @@ system needs to prune the inode list instead of allocating
+ more.
  
-+	/* Pass the mount point executability. */
-+	acc_mode |= path_noexec(path) ? 0 : MAY_EXECMOUNT;
- 	error = inode_permission(inode, MAY_OPEN | acc_mode);
- 	if (error)
- 		return error;
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index f5be4be7c01d..9213147d8636 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -103,6 +103,8 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
- #define MAY_NOT_BLOCK		0x00000080
- /* the inode is opened with RESOLVE_MAYEXEC */
- #define MAY_OPENEXEC		0x00000100
-+/* the mount point is marked as executable */
-+#define MAY_EXECMOUNT		0x00000200
  
- /*
-  * flags in file.f_mode.  Note that FMODE_READ and FMODE_WRITE must correspond
++open_mayexec_enforce
++--------------------
++
++The ``RESOLVE_MAYEXEC`` flag can be passed to :manpage:`openat2(2)` to only
++open regular files that are expected to be executable.  If the file is not
++identified as executable, then the syscall returns -EACCES.  This may allow a
++script interpreter to check executable permission before reading commands from
++a file.  One interesting use case is to enforce a "write xor execute" policy
++through interpreters.
++
++The ability to restrict code execution must be thought as a system-wide policy,
++which first starts by restricting mount points with the ``noexec`` option.
++This option is also automatically applied to special filesystems such as /proc
++.  This prevents files on such mount points to be directly executed by the
++kernel or mapped as executable memory (e.g. libraries).  With script
++interpreters using the ``RESOLVE_MAYEXEC`` flag, the executable permission can
++then be checked before reading commands from files. This makes it possible to
++enforce the ``noexec`` at the interpreter level, and thus propagates this
++security policy to scripts.  To be fully effective, these interpreters also
++need to handle the other ways to execute code: command line parameters (e.g.,
++option ``-e`` for Perl), module loading (e.g., option ``-m`` for Python),
++stdin, file sourcing, environment variables, configuration files, etc.
++According to the threat model, it may be acceptable to allow some script
++interpreters (e.g. Bash) to interpret commands from stdin, may it be a TTY or a
++pipe, because it may not be enough to (directly) perform syscalls.
++
++There are two complementary security policies: enforce the ``noexec`` mount
++option, and enforce executable file permission.  These policies are handled by
++the ``fs.open_mayexec_enforce`` sysctl (writable only with ``CAP_MAC_ADMIN``)
++as a bitmask:
++
++1 - Mount restriction: checks that the mount options for the underlying VFS
++    mount do not prevent execution.
++
++2 - File permission restriction: checks that the to-be-opened file is marked as
++    executable for the current process (e.g., POSIX permissions).
++
++Code samples can be found in tools/testing/selftests/openat2/omayexec_test.c
++and (with the original ``O_MAYEXEC``) at
++https://github.com/clipos-archive/clipos4_portage-overlay/search?q=O_MAYEXEC .
++
++
+ overflowgid & overflowuid
+ -------------------------
+ 
 -- 
 2.26.2
 
