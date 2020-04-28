@@ -2,84 +2,180 @@ Return-Path: <SRS0=IXk3=6M=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E8C9EC83001
-	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 13:52:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8E7D1C83009
+	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 14:58:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BC655206B9
-	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 13:52:11 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1588081931;
-	bh=X2ol4rocPF2ZJBHHLlHiFYeAjC6ioYlP2NnvBhXo7o0=;
-	h=From:To:Cc:Subject:Date:List-ID:From;
-	b=geOkIrY1Ok7dx6TbfiaaK2QwSaTZ9BC+JN1yYdFuQz3NV7nAowxys8DpgW7JPMxqG
-	 7IkSbTsTkcVV/+ak09+Tpi68riRf4C0bUtciySqIejhbkbinJQASaqho+PAB7UMK8t
-	 DmiGxHx1GoU7oqsB6ThllB8fgezdMWlW5wDOlRCM=
+	by mail.kernel.org (Postfix) with ESMTP id 6B94D206C0
+	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 14:58:22 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="WKMti1ql"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727058AbgD1Nv6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 28 Apr 2020 09:51:58 -0400
-Received: from mail.kernel.org ([198.145.29.99]:40690 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726949AbgD1Nv6 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 28 Apr 2020 09:51:58 -0400
-Received: from tleilax.com (68-20-15-154.lightspeed.rlghnc.sbcglobal.net [68.20.15.154])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 71BDA206B9;
-        Tue, 28 Apr 2020 13:51:57 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1588081918;
-        bh=X2ol4rocPF2ZJBHHLlHiFYeAjC6ioYlP2NnvBhXo7o0=;
-        h=From:To:Cc:Subject:Date:From;
-        b=VhOq+pLLHaMiH/1tzmZo19CBTqQgxNeUYjA1sxNGSdJRmAl6Nlx1O/Jau1FpYdsJF
-         5BX/NmSwvU4Yt+553IGnq+5WriTvZG+PchU1YVwpCPgRd9na9Zya+LbltarsMoBtEV
-         OELKOWhNJjmA655Tt7ERhr2ZFjpqXV2USGrp/B4I=
-From:   Jeff Layton <jlayton@kernel.org>
-To:     viro@zeniv.linux.org.uk, akpm@linux-foundation.org
-Cc:     linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-api@vger.kernel.org, andres@anarazel.de, willy@infradead.org,
-        dhowells@redhat.com, hch@infradead.org, jack@suse.cz,
-        david@fromorbit.com
-Subject: [PATCH v6 RESEND 0/2] vfs: have syncfs() return error when there are writeback errors
-Date:   Tue, 28 Apr 2020 09:51:53 -0400
-Message-Id: <20200428135155.19223-1-jlayton@kernel.org>
-X-Mailer: git-send-email 2.26.1
+        id S1728112AbgD1O6V (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 28 Apr 2020 10:58:21 -0400
+Received: from mail.efficios.com ([167.114.26.124]:35546 "EHLO
+        mail.efficios.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727108AbgD1O6V (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 28 Apr 2020 10:58:21 -0400
+Received: from localhost (localhost [127.0.0.1])
+        by mail.efficios.com (Postfix) with ESMTP id 00FE927D8A1;
+        Tue, 28 Apr 2020 10:58:20 -0400 (EDT)
+Received: from mail.efficios.com ([127.0.0.1])
+        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
+        with ESMTP id qyS4QE5KyFE6; Tue, 28 Apr 2020 10:58:19 -0400 (EDT)
+Received: from localhost (localhost [127.0.0.1])
+        by mail.efficios.com (Postfix) with ESMTP id 8AD9627D8A0;
+        Tue, 28 Apr 2020 10:58:19 -0400 (EDT)
+DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 8AD9627D8A0
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
+        s=default; t=1588085899;
+        bh=C19Y7Q0zQ58ch1DAMA7Z2tNyypEx+FfZlqejx6D0qFc=;
+        h=Date:From:To:Message-ID:MIME-Version;
+        b=WKMti1qlpDedWfwpWf8tT+yqjC1KtMkJ84KO1DLvz5R71ROSA9EI69dMxFpyy5aG0
+         cbmZp45DtkwMJYRjHXqq4ZK2qB90alYMOQdGkwRELT0Kr5vD4RtyeE5cZ3PuQOEo4w
+         Rcll+HM9PVkMAF5F7jAGagwznMxCi43fgoc/mQBuJFZsivC1hgc7RHan2iURMui+k6
+         N7pcYNU+AjCDsw3aAZRZaORjT6xZQPWgs7oeSQDZXX5vsoFDX04AUBcHo63Fhr9xlM
+         ltf6wzFQNfhhMssoCnqgGW45Nc0wP6/GFbUEVhh5uBDIQMhkbHfWPKpsAgBsr1uZcQ
+         FxT+VSZGalHag==
+X-Virus-Scanned: amavisd-new at efficios.com
+Received: from mail.efficios.com ([127.0.0.1])
+        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
+        with ESMTP id uHieuJrZs_Il; Tue, 28 Apr 2020 10:58:19 -0400 (EDT)
+Received: from mail03.efficios.com (mail03.efficios.com [167.114.26.124])
+        by mail.efficios.com (Postfix) with ESMTP id 73AC527DB03;
+        Tue, 28 Apr 2020 10:58:19 -0400 (EDT)
+Date:   Tue, 28 Apr 2020 10:58:19 -0400 (EDT)
+From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To:     Florian Weimer <fw@deneb.enyo.de>
+Cc:     Michael Kerrisk <mtk.manpages@gmail.com>,
+        libc-alpha <libc-alpha@sourceware.org>,
+        carlos <carlos@redhat.com>, Rich Felker <dalias@libc.org>,
+        linux-api <linux-api@vger.kernel.org>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        Will Deacon <will.deacon@arm.com>,
+        linux-kernel <linux-kernel@vger.kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Ben Maurer <bmaurer@fb.com>, Dave Watson <davejwatson@fb.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Paul <paulmck@linux.vnet.ibm.com>, Paul Turner <pjt@google.com>,
+        Joseph Myers <joseph@codesourcery.com>,
+        Szabolcs Nagy <szabolcs.nagy@arm.com>
+Message-ID: <437249723.72685.1588085899422.JavaMail.zimbra@efficios.com>
+In-Reply-To: <87tv13py8j.fsf@mid.deneb.enyo.de>
+References: <20200326155633.18236-1-mathieu.desnoyers@efficios.com> <87zhawvphv.fsf@mid.deneb.enyo.de> <2102127737.70791.1588008377292.JavaMail.zimbra@efficios.com> <87ftcnrf7d.fsf@mid.deneb.enyo.de> <1080028389.72414.1588077193438.JavaMail.zimbra@efficios.com> <878sifrdo0.fsf@mid.deneb.enyo.de> <190402462.72430.1588077816717.JavaMail.zimbra@efficios.com> <87tv13py8j.fsf@mid.deneb.enyo.de>
+Subject: Re: [PATCH glibc 5/9] glibc: Perform rseq(2) registration at C
+ startup and thread creation (v17)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+X-Originating-IP: [167.114.26.124]
+X-Mailer: Zimbra 8.8.15_GA_3918 (ZimbraWebClient - FF75 (Linux)/8.8.15_GA_3895)
+Thread-Topic: glibc: Perform rseq(2) registration at C startup and thread creation (v17)
+Thread-Index: kRSloVX/dc1bhqo8Fu56s9W7NvdZew==
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Just a resend since this hasn't been picked up yet. No real changes
-from the last set (other than adding Jan's Reviewed-bys). Latest
-cover letter follows:
+----- On Apr 28, 2020, at 8:54 AM, Florian Weimer fw@deneb.enyo.de wrote:
 
---------------------------8<----------------------------
+> * Mathieu Desnoyers:
+> 
+>> ----- On Apr 28, 2020, at 8:35 AM, Florian Weimer fw@deneb.enyo.de wrote:
+>>
+>>> * Mathieu Desnoyers:
+>>> 
+>>>> One issue I'm currently facing when running "make check": because
+>>>> nptl/tst-rseq-nptl.c uses pthread_cancel(), I run into an Abort
+>>>> with:
+>>>>
+>>>> libgcc_s.so.1 must be installed for pthread_cancel to work
+>>>> Didn't expect signal from child: got `Aborted'
+>>> 
+>>> This is really unusual.  Is the affected test statically linked?
+>>
+>> I built glibc without specifying anything particular, and ran
+>> "make check". It indeed seems to be dynamically linked to libc:
+>>
+>> ldd tst-rseq-nptl
+>> ./tst-rseq-nptl: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.32' not found
+>> (required by ./tst-rseq-nptl)
+>> linux-vdso.so.1 (0x00007ffd3a2f3000)
+>> libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007f0527560000)
+>> libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f052716f000)
+>> /home/efficios/glibc-test5/lib/ld-linux-x86-64.so.2 =>
+>> /lib64/ld-linux-x86-64.so.2 (0x00007f0527986000)
+> 
+> That's expected if the installed glibc is older than the built glibc.
+> 
+>> After make check I have:
+>>
+>> cat tst-rseq-nptl.test-result
+>> FAIL: nptl/tst-rseq-nptl
+>> original exit status 134
+> 
+> What's in the tst-rseq-nptl.out file?
 
-v6:
-- use READ_ONCE to ensure that compiler doesn't optimize away local var
+It contains:
 
-The only difference from v5 is the change to use READ_ONCE to fetch the
-bd_super pointer, to ensure that the compiler doesn't refetch it
-afterward. Many thanks to Jan K. for the explanation!
+Didn't expect signal from child: got `Aborted'
 
-Jeff Layton (2):
-  vfs: track per-sb writeback errors and report them to syncfs
-  buffer: record blockdev write errors in super_block that it backs
+>> And if I run
+>>
+>> ./tst-rseq-nptl
+>>
+>> Then I get
+>>
+>> libgcc_s.so.1 must be installed for pthread_cancel to work
+>> Didn't expect signal from child: got `Aborted'
+>> libgcc_s.so.1 must be installed for pthread_cancel to work
+>> Aborted (core dumped)
+> 
+> I'm puzzled why you don't get a GLIBC_2.32 version error in this case.
+> Do you build with --enable-hardcoded-path-in-tests?
 
- drivers/dax/device.c    |  1 +
- fs/buffer.c             |  7 +++++++
- fs/file_table.c         |  1 +
- fs/open.c               |  3 +--
- fs/sync.c               |  6 ++++--
- include/linux/fs.h      | 16 ++++++++++++++++
- include/linux/pagemap.h |  5 ++++-
- 7 files changed, 34 insertions(+), 5 deletions(-)
+Just tried with this, and it fails the same way. However, the output
+of ldd nptl/tst-rseq-nptl changes:
+
+linux-vdso.so.1 (0x00007ffc235c9000)
+libpthread.so.0 => /home/efficios/git/glibc-build/nptl/libpthread.so.0 (0x00007fd308278000)
+libc.so.6 => /home/efficios/git/glibc-build/libc.so.6 (0x00007fd307ebc000)
+/home/efficios/git/glibc-build/elf/ld.so => /lib64/ld-linux-x86-64.so.2 (0x00007fd30869e000)
+
+
+>> Same result if I do ./testrun.sh nptl/tst-rseq-nptl
+> 
+> That one definitely should work.
+> 
+> I expect you might see this if libgcc_s.so.1 is installed into a
+> multiarch subdirectory that upstream glibc does not search.  (The
+> Debian patches are unfortunately not upstream.)
+
+My test environment is a Ubuntu 18.04.1 LTS.
+
+> 
+> I think on my system, the built glibc can find the system libgcc_s via
+> /etc/ld.so.cache, so I haven't seen this issue yet.
+
+On my system, libgcc_s is provided here:
+
+/lib/x86_64-linux-gnu/libgcc_s.so.1
+
+by this package:
+
+Package: libgcc1
+Architecture: amd64
+Version: 1:8.4.0-1ubuntu1~18.04
+
+Thanks,
+
+Mathieu
+
 
 -- 
-2.26.1
-
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
