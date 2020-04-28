@@ -2,31 +2,32 @@ Return-Path: <SRS0=IXk3=6M=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 83C6BC83009
-	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 17:51:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 93939C83008
+	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 17:51:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 708F5208FE
-	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 17:51:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 770F420757
+	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 17:51:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728620AbgD1Rvr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 28 Apr 2020 13:51:47 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37624 "EHLO
+        id S1728629AbgD1Rvu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 28 Apr 2020 13:51:50 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37640 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728616AbgD1Rvq (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 28 Apr 2020 13:51:46 -0400
-Received: from smtp-bc09.mail.infomaniak.ch (smtp-bc09.mail.infomaniak.ch [IPv6:2001:1600:3:17::bc09])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3671DC03C1AC
-        for <linux-api@vger.kernel.org>; Tue, 28 Apr 2020 10:51:46 -0700 (PDT)
-Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 49BTjS0sy2zlh9G9;
-        Tue, 28 Apr 2020 19:51:40 +0200 (CEST)
+        with ESMTP id S1728616AbgD1Rvu (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 28 Apr 2020 13:51:50 -0400
+Received: from smtp-42ad.mail.infomaniak.ch (smtp-42ad.mail.infomaniak.ch [IPv6:2001:1600:3:17::42ad])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BCF86C03C1AB
+        for <linux-api@vger.kernel.org>; Tue, 28 Apr 2020 10:51:49 -0700 (PDT)
+Received: from smtp-3-0000.mail.infomaniak.ch (unknown [10.4.36.107])
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 49BTjc4C21zlhGW9;
+        Tue, 28 Apr 2020 19:51:48 +0200 (CEST)
 Received: from localhost (unknown [94.23.54.103])
-        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 49BTjP5dXczmVZjD;
-        Tue, 28 Apr 2020 19:51:37 +0200 (CEST)
+        by smtp-3-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 49BTjW491bzm6dy1;
+        Tue, 28 Apr 2020 19:51:43 +0200 (CEST)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     linux-kernel@vger.kernel.org
 Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
@@ -59,10 +60,12 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
         linux-security-module@vger.kernel.org,
         linux-fsdevel@vger.kernel.org
-Subject: [PATCH v3 0/5] Add support for RESOLVE_MAYEXEC
-Date:   Tue, 28 Apr 2020 19:51:24 +0200
-Message-Id: <20200428175129.634352-1-mic@digikod.net>
+Subject: [PATCH v3 3/5] fs: Enable to enforce noexec mounts or file exec through RESOLVE_MAYEXEC
+Date:   Tue, 28 Apr 2020 19:51:27 +0200
+Message-Id: <20200428175129.634352-4-mic@digikod.net>
 X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20200428175129.634352-1-mic@digikod.net>
+References: <20200428175129.634352-1-mic@digikod.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -73,93 +76,199 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi,
+Enable to either propagate the mount options from the underlying VFS
+mount to prevent execution, or to propagate the file execute permission.
+This may allow a script interpreter to check execution permissions
+before reading commands from a file.
 
-The goal of this patch series is to enable to control script execution
-with interpreters help.  A new RESOLVE_MAYEXEC flag, usable through
-openat2(2), is added to enable userspace script interpreter to delegate
-to the kernel (and thus the system security policy) the permission to
-interpret/execute scripts or other files containing what can be seen as
-commands.
+The main goal is to be able to protect the kernel by restricting
+arbitrary syscalls that an attacker could perform with a crafted binary
+or certain script languages.  It also improves multilevel isolation
+by reducing the ability of an attacker to use side channels with
+specific code.  These restrictions can natively be enforced for ELF
+binaries (with the noexec mount option) but require this kernel
+extension to properly handle scripts (e.g., Python, Perl).
 
-This third patch series mainly differ from the previous one by relying
-on the new openat2(2) system call to get rid of the undefined behavior
-of the open(2) flags.  Thus, the previous O_MAYEXEC flag is now replaced
-with the new RESOLVE_MAYEXEC flag and benefits from the openat2(2)
-strict check of this kind of flags.
+Add a new sysctl fs.open_mayexec_enforce to control this behavior.
+Indeed, because of compatibility with installed systems, only the system
+administrator is able to check that this new enforcement is in line with
+the system mount points and file permissions.  A following patch adds
+documentation.
 
-A simple system-wide security policy can be enforced by the system
-administrator through a sysctl configuration consistent with the mount
-points or the file access rights.  The documentation patch explains the
-prerequisites.
+Signed-off-by: Mickaël Salaün <mic@digikod.net>
+Reviewed-by: Philippe Trébuchet <philippe.trebuchet@ssi.gouv.fr>
+Reviewed-by: Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
+Cc: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Kees Cook <keescook@chromium.org>
+---
 
-Furthermore, the security policy can also be delegated to an LSM, either
-a MAC system or an integrity system.  For instance, the new kernel
-MAY_OPENEXEC flag closes a major IMA measurement/appraisal interpreter
-integrity gap by bringing the ability to check the use of scripts [1].
-Other uses are expected, such as for openat2(2) [2], SGX integration
-[3], bpffs [4] or IPE [5].
+Changes since v2:
+* Cosmetic changes.
 
-Userspace needs to adapt to take advantage of this new feature.  For
-example, the PEP 578 [6] (Runtime Audit Hooks) enables Python 3.8 to be
-extended with policy enforcement points related to code interpretation,
-which can be used to align with the PowerShell audit features.
-Additional Python security improvements (e.g. a limited interpreter
-withou -c, stdin piping of code) are on their way.
+Changes since v1:
+* Move code from Yama to the FS subsystem (suggested by Kees Cook).
+* Make omayexec_inode_permission() static (suggested by Jann Horn).
+* Use mode 0600 for the sysctl.
+* Only match regular files (not directories nor other types), which
+  follows the same semantic as commit 73601ea5b7b1 ("fs/open.c: allow
+  opening only regular files during execve()").
+---
+ fs/namei.c         | 72 +++++++++++++++++++++++++++++++++++++++++++++-
+ include/linux/fs.h |  3 ++
+ kernel/sysctl.c    |  7 +++++
+ 3 files changed, 81 insertions(+), 1 deletion(-)
 
-The initial idea come from CLIP OS 4 and the original implementation has
-been used for more than 11 years:
-https://github.com/clipos-archive/clipos4_doc
-
-An introduction to O_MAYEXEC (original name of RESOLVE_MAYEXEC) was
-given at the Linux Security Summit Europe 2018 - Linux Kernel Security
-Contributions by ANSSI:
-https://www.youtube.com/watch?v=chNjCRtPKQY&t=17m15s
-The "write xor execute" principle was explained at Kernel Recipes 2018 -
-CLIP OS: a defense-in-depth OS:
-https://www.youtube.com/watch?v=PjRE0uBtkHU&t=11m14s
-
-This patch series can be applied on top of v5.7-rc3.  This can be tested
-with CONFIG_SYSCTL.  I would really appreciate constructive comments on
-this patch series.
-
-Previous version:
-https://lore.kernel.org/lkml/20190906152455.22757-1-mic@digikod.net/
-
-
-[1] https://lore.kernel.org/lkml/1544647356.4028.105.camel@linux.ibm.com/
-[2] https://lore.kernel.org/lkml/20190904201933.10736-6-cyphar@cyphar.com/
-[3] https://lore.kernel.org/lkml/CALCETrVovr8XNZSroey7pHF46O=kj_c5D9K8h=z2T_cNrpvMig@mail.gmail.com/
-[4] https://lore.kernel.org/lkml/CALCETrVeZ0eufFXwfhtaG_j+AdvbzEWE0M3wjXMWVEO7pj+xkw@mail.gmail.com/
-[5] https://lore.kernel.org/lkml/20200406221439.1469862-12-deven.desai@linux.microsoft.com/
-[6] https://www.python.org/dev/peps/pep-0578/
-
-Regards,
-
-Mickaël Salaün (5):
-  fs: Add support for a RESOLVE_MAYEXEC flag on openat2(2)
-  fs: Add a MAY_EXECMOUNT flag to infer the noexec mount property
-  fs: Enable to enforce noexec mounts or file exec through
-    RESOLVE_MAYEXEC
-  selftest/openat2: Add tests for RESOLVE_MAYEXEC enforcing
-  doc: Add documentation for the fs.open_mayexec_enforce sysctl
-
- Documentation/admin-guide/sysctl/fs.rst       |  43 +++
- fs/namei.c                                    |  74 +++-
- fs/open.c                                     |   6 +
- include/linux/fcntl.h                         |   2 +-
- include/linux/fs.h                            |   7 +
- include/uapi/linux/openat2.h                  |   6 +
- kernel/sysctl.c                               |   7 +
- tools/testing/selftests/kselftest_harness.h   |   3 +
- tools/testing/selftests/openat2/Makefile      |   3 +-
- tools/testing/selftests/openat2/config        |   1 +
- tools/testing/selftests/openat2/helpers.h     |   3 +
- .../testing/selftests/openat2/omayexec_test.c | 315 ++++++++++++++++++
- 12 files changed, 467 insertions(+), 3 deletions(-)
- create mode 100644 tools/testing/selftests/openat2/config
- create mode 100644 tools/testing/selftests/openat2/omayexec_test.c
-
+diff --git a/fs/namei.c b/fs/namei.c
+index 33b6d372e74a..dbf56de1fbe8 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -39,6 +39,7 @@
+ #include <linux/bitops.h>
+ #include <linux/init_task.h>
+ #include <linux/uaccess.h>
++#include <linux/sysctl.h>
+ 
+ #include "internal.h"
+ #include "mount.h"
+@@ -411,10 +412,40 @@ static int sb_permission(struct super_block *sb, struct inode *inode, int mask)
+ 	return 0;
+ }
+ 
++#define OMAYEXEC_ENFORCE_NONE	0
++#define OMAYEXEC_ENFORCE_MOUNT	(1 << 0)
++#define OMAYEXEC_ENFORCE_FILE	(1 << 1)
++#define _OMAYEXEC_LAST		OMAYEXEC_ENFORCE_FILE
++#define _OMAYEXEC_MASK		((_OMAYEXEC_LAST << 1) - 1)
++
++/**
++ * omayexec_inode_permission - Check RESOLVE_MAYEXEC before accessing an inode
++ *
++ * @inode: Inode to check permission on
++ * @mask: Right to check for (%MAY_OPENEXEC, %MAY_EXECMOUNT, %MAY_EXEC)
++ *
++ * Returns 0 if access is permitted, -EACCES otherwise.
++ */
++static inline int omayexec_inode_permission(struct inode *inode, int mask)
++{
++	if (!(mask & MAY_OPENEXEC))
++		return 0;
++
++	if ((sysctl_omayexec_enforce & OMAYEXEC_ENFORCE_MOUNT) &&
++			!(mask & MAY_EXECMOUNT))
++		return -EACCES;
++
++	if (sysctl_omayexec_enforce & OMAYEXEC_ENFORCE_FILE)
++		return generic_permission(inode, MAY_EXEC);
++
++	return 0;
++}
++
+ /**
+  * inode_permission - Check for access rights to a given inode
+  * @inode: Inode to check permission on
+- * @mask: Right to check for (%MAY_READ, %MAY_WRITE, %MAY_EXEC)
++ * @mask: Right to check for (%MAY_READ, %MAY_WRITE, %MAY_EXEC, %MAY_OPENEXEC,
++ *        %MAY_EXECMOUNT)
+  *
+  * Check for read/write/execute permissions on an inode.  We use fs[ug]id for
+  * this, letting us set arbitrary permissions for filesystem access without
+@@ -454,10 +485,48 @@ int inode_permission(struct inode *inode, int mask)
+ 	if (retval)
+ 		return retval;
+ 
++	retval = omayexec_inode_permission(inode, mask);
++	if (retval)
++		return retval;
++
+ 	return security_inode_permission(inode, mask);
+ }
+ EXPORT_SYMBOL(inode_permission);
+ 
++/*
++ * Handle open_mayexec_enforce sysctl
++ */
++#ifdef CONFIG_SYSCTL
++int proc_omayexec(struct ctl_table *table, int write, void __user *buffer,
++		size_t *lenp, loff_t *ppos)
++{
++	int error;
++
++	if (write) {
++		struct ctl_table table_copy;
++		int tmp_mayexec_enforce;
++
++		if (!capable(CAP_MAC_ADMIN))
++			return -EPERM;
++		tmp_mayexec_enforce = *((int *)table->data);
++		table_copy = *table;
++		/* Do not erase sysctl_omayexec_enforce. */
++		table_copy.data = &tmp_mayexec_enforce;
++		error = proc_dointvec(&table_copy, write, buffer, lenp, ppos);
++		if (error)
++			return error;
++		if ((tmp_mayexec_enforce | _OMAYEXEC_MASK) != _OMAYEXEC_MASK)
++			return -EINVAL;
++		*((int *)table->data) = tmp_mayexec_enforce;
++	} else {
++		error = proc_dointvec(table, write, buffer, lenp, ppos);
++		if (error)
++			return error;
++	}
++	return 0;
++}
++#endif
++
+ /**
+  * path_get - get a reference to a path
+  * @path: path to get the reference to
+@@ -922,6 +991,7 @@ int sysctl_protected_symlinks __read_mostly = 0;
+ int sysctl_protected_hardlinks __read_mostly = 0;
+ int sysctl_protected_fifos __read_mostly;
+ int sysctl_protected_regular __read_mostly;
++int sysctl_omayexec_enforce __read_mostly = OMAYEXEC_ENFORCE_NONE;
+ 
+ /**
+  * may_follow_link - Check symlink following for unsafe situations
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 9213147d8636..850c98276b6e 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -83,6 +83,7 @@ extern int sysctl_protected_symlinks;
+ extern int sysctl_protected_hardlinks;
+ extern int sysctl_protected_fifos;
+ extern int sysctl_protected_regular;
++extern int sysctl_omayexec_enforce;
+ 
+ typedef __kernel_rwf_t rwf_t;
+ 
+@@ -3545,6 +3546,8 @@ int proc_nr_dentry(struct ctl_table *table, int write,
+ 		  void __user *buffer, size_t *lenp, loff_t *ppos);
+ int proc_nr_inodes(struct ctl_table *table, int write,
+ 		   void __user *buffer, size_t *lenp, loff_t *ppos);
++int proc_omayexec(struct ctl_table *table, int write, void __user *buffer,
++		size_t *lenp, loff_t *ppos);
+ int __init get_filesystem_list(char *buf);
+ 
+ #define __FMODE_EXEC		((__force int) FMODE_EXEC)
+diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+index 8a176d8727a3..911afa69f84c 100644
+--- a/kernel/sysctl.c
++++ b/kernel/sysctl.c
+@@ -1892,6 +1892,13 @@ static struct ctl_table fs_table[] = {
+ 		.extra1		= SYSCTL_ZERO,
+ 		.extra2		= &two,
+ 	},
++	{
++		.procname       = "open_mayexec_enforce",
++		.data           = &sysctl_omayexec_enforce,
++		.maxlen         = sizeof(int),
++		.mode           = 0600,
++		.proc_handler   = proc_omayexec,
++	},
+ #if defined(CONFIG_BINFMT_MISC) || defined(CONFIG_BINFMT_MISC_MODULE)
+ 	{
+ 		.procname	= "binfmt_misc",
 -- 
 2.26.2
 
