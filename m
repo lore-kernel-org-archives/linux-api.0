@@ -4,33 +4,32 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
-	version=3.4.0
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C1060C8300C
-	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 00:22:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 161BAC83001
+	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 00:22:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A3C772072A
+	by mail.kernel.org (Postfix) with ESMTP id EC7DB2072A
 	for <linux-api@archiver.kernel.org>; Tue, 28 Apr 2020 00:22:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726448AbgD1AVu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 27 Apr 2020 20:21:50 -0400
-Received: from mga05.intel.com ([192.55.52.43]:40690 "EHLO mga05.intel.com"
+        id S1726457AbgD1AWc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 27 Apr 2020 20:22:32 -0400
+Received: from mga07.intel.com ([134.134.136.100]:14273 "EHLO mga07.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726233AbgD1AVr (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 27 Apr 2020 20:21:47 -0400
-IronPort-SDR: 5I+h9wpec3M5t/LMY/OXixjbjJtBTqUjRccg5xbFg7dHXqXgiyN8yWc/foGvKhJ4wQnMV7GCYQ
- WCHchg5bIKgQ==
+        id S1726445AbgD1AVu (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 27 Apr 2020 20:21:50 -0400
+IronPort-SDR: WFcsoeW+/SRl9aJuWp/wa8wyClPdyq7ssM83Ga7So71n80Q0fDVtgtrKJjMLfXE6bl11Pcxg5a
+ NlrQXm0ivCbQ==
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
-Received: from orsmga007.jf.intel.com ([10.7.209.58])
-  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Apr 2020 17:21:47 -0700
-IronPort-SDR: 8HXR028P2Jqh6f3cFIkVcptTXE6rTaUHplYnb/zxCMhtfdmToUdOJ4YjVd7Jj2eEaswyGCq75m
- azAYa/ZGxVqQ==
+Received: from orsmga008.jf.intel.com ([10.7.209.65])
+  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Apr 2020 17:21:49 -0700
+IronPort-SDR: ySxclc5LPntrD/UYO3RA9c4+mRIp+UX0a6VZj1NJ0MB+dkx//xiUT0e7aIjHanFL+9RNzzk6JH
+ c39CmUDTasiw==
 X-IronPort-AV: E=Sophos;i="5.73,325,1583222400"; 
-   d="scan'208";a="246331329"
+   d="scan'208";a="293703521"
 Received: from iweiny-desk2.sc.intel.com (HELO localhost) ([10.3.52.147])
-  by orsmga007-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Apr 2020 17:21:46 -0700
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Apr 2020 17:21:48 -0700
 From:   ira.weiny@intel.com
 To:     linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org,
         "Darrick J. Wong" <darrick.wong@oracle.com>
@@ -43,9 +42,9 @@ Cc:     Ira Weiny <ira.weiny@intel.com>,
         "Theodore Y. Ts'o" <tytso@mit.edu>, Jeff Moyer <jmoyer@redhat.com>,
         linux-ext4@vger.kernel.org, linux-fsdevel@vger.kernel.org,
         linux-api@vger.kernel.org
-Subject: [PATCH V11 01/11] fs/xfs: Remove unnecessary initialization of i_rwsem
-Date:   Mon, 27 Apr 2020 17:21:32 -0700
-Message-Id: <20200428002142.404144-2-ira.weiny@intel.com>
+Subject: [PATCH V11 05/11] fs/xfs: Change XFS_MOUNT_DAX to XFS_MOUNT_DAX_ALWAYS
+Date:   Mon, 27 Apr 2020 17:21:36 -0700
+Message-Id: <20200428002142.404144-6-ira.weiny@intel.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20200428002142.404144-1-ira.weiny@intel.com>
 References: <20200428002142.404144-1-ira.weiny@intel.com>
@@ -58,51 +57,89 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Ira Weiny <ira.weiny@intel.com>
 
-An earlier call of xfs_reinit_inode() from xfs_iget_cache_hit() already
-handles initialization of i_rwsem.
+In prep for the new tri-state mount option which then introduces
+XFS_MOUNT_DAX_NEVER.
 
-Doing so again is unneeded.
-
-Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
 Reviewed-by: Dave Chinner <dchinner@redhat.com>
+Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
 Signed-off-by: Ira Weiny <ira.weiny@intel.com>
 
 ---
-Changes from V4:
-	Update commit message to make it clear the xfs_iget_cache_hit()
-	is actually doing the initialization via xfs_reinit_inode()
-
-New for V4:
-
-NOTE: This was found while ensuring the new i_aops_sem was properly
-handled.  It seems like this is a layering violation so I think it is
-worth cleaning up so as to not confuse others.
+Changes from v8
+	Move bit to 26
 ---
- fs/xfs/xfs_icache.c | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
+ fs/xfs/xfs_iops.c  | 2 +-
+ fs/xfs/xfs_mount.h | 3 +--
+ fs/xfs/xfs_super.c | 8 ++++----
+ 3 files changed, 6 insertions(+), 7 deletions(-)
 
-diff --git a/fs/xfs/xfs_icache.c b/fs/xfs/xfs_icache.c
-index 8bf1d15be3f6..17a0b86fe701 100644
---- a/fs/xfs/xfs_icache.c
-+++ b/fs/xfs/xfs_icache.c
-@@ -423,6 +423,7 @@ xfs_iget_cache_hit(
- 		spin_unlock(&ip->i_flags_lock);
- 		rcu_read_unlock();
+diff --git a/fs/xfs/xfs_iops.c b/fs/xfs/xfs_iops.c
+index f7a99b3bbcf7..462f89af479a 100644
+--- a/fs/xfs/xfs_iops.c
++++ b/fs/xfs/xfs_iops.c
+@@ -1248,7 +1248,7 @@ xfs_inode_supports_dax(
+ 		return false;
  
-+		ASSERT(!rwsem_is_locked(&inode->i_rwsem));
- 		error = xfs_reinit_inode(mp, inode);
- 		if (error) {
- 			bool wake;
-@@ -456,9 +457,6 @@ xfs_iget_cache_hit(
- 		ip->i_sick = 0;
- 		ip->i_checked = 0;
+ 	/* DAX mount option or DAX iflag must be set. */
+-	if (!(mp->m_flags & XFS_MOUNT_DAX) &&
++	if (!(mp->m_flags & XFS_MOUNT_DAX_ALWAYS) &&
+ 	    !(ip->i_d.di_flags2 & XFS_DIFLAG2_DAX))
+ 		return false;
  
--		ASSERT(!rwsem_is_locked(&inode->i_rwsem));
--		init_rwsem(&inode->i_rwsem);
+diff --git a/fs/xfs/xfs_mount.h b/fs/xfs/xfs_mount.h
+index b2e4598fdf7d..f6123fb0113c 100644
+--- a/fs/xfs/xfs_mount.h
++++ b/fs/xfs/xfs_mount.h
+@@ -237,8 +237,7 @@ typedef struct xfs_mount {
+ #define XFS_MOUNT_FILESTREAMS	(1ULL << 24)	/* enable the filestreams
+ 						   allocator */
+ #define XFS_MOUNT_NOATTR2	(1ULL << 25)	/* disable use of attr2 format */
 -
- 		spin_unlock(&ip->i_flags_lock);
- 		spin_unlock(&pag->pag_ici_lock);
- 	} else {
+-#define XFS_MOUNT_DAX		(1ULL << 62)	/* TEST ONLY! */
++#define XFS_MOUNT_DAX_ALWAYS	(1ULL << 26)
+ 
+ /*
+  * Max and min values for mount-option defined I/O
+diff --git a/fs/xfs/xfs_super.c b/fs/xfs/xfs_super.c
+index 424bb9a2d532..ce169d1c7474 100644
+--- a/fs/xfs/xfs_super.c
++++ b/fs/xfs/xfs_super.c
+@@ -129,7 +129,7 @@ xfs_fs_show_options(
+ 		{ XFS_MOUNT_GRPID,		",grpid" },
+ 		{ XFS_MOUNT_DISCARD,		",discard" },
+ 		{ XFS_MOUNT_LARGEIO,		",largeio" },
+-		{ XFS_MOUNT_DAX,		",dax" },
++		{ XFS_MOUNT_DAX_ALWAYS,		",dax" },
+ 		{ 0, NULL }
+ 	};
+ 	struct xfs_mount	*mp = XFS_M(root->d_sb);
+@@ -1261,7 +1261,7 @@ xfs_fc_parse_param(
+ 		return 0;
+ #ifdef CONFIG_FS_DAX
+ 	case Opt_dax:
+-		mp->m_flags |= XFS_MOUNT_DAX;
++		mp->m_flags |= XFS_MOUNT_DAX_ALWAYS;
+ 		return 0;
+ #endif
+ 	default:
+@@ -1454,7 +1454,7 @@ xfs_fc_fill_super(
+ 	if (XFS_SB_VERSION_NUM(&mp->m_sb) == XFS_SB_VERSION_5)
+ 		sb->s_flags |= SB_I_VERSION;
+ 
+-	if (mp->m_flags & XFS_MOUNT_DAX) {
++	if (mp->m_flags & XFS_MOUNT_DAX_ALWAYS) {
+ 		bool rtdev_is_dax = false, datadev_is_dax;
+ 
+ 		xfs_warn(mp,
+@@ -1468,7 +1468,7 @@ xfs_fc_fill_super(
+ 		if (!rtdev_is_dax && !datadev_is_dax) {
+ 			xfs_alert(mp,
+ 			"DAX unsupported by block device. Turning off DAX.");
+-			mp->m_flags &= ~XFS_MOUNT_DAX;
++			mp->m_flags &= ~XFS_MOUNT_DAX_ALWAYS;
+ 		}
+ 		if (xfs_sb_version_hasreflink(&mp->m_sb)) {
+ 			xfs_alert(mp,
 -- 
 2.25.1
 
