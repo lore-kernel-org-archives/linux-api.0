@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1BDB5C83016
-	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:09:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7FFF3C83019
+	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:09:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id F0DE221BE5
-	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:09:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6700721D7A
+	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:09:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728094AbgD2WJB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 29 Apr 2020 18:09:01 -0400
+        id S1728082AbgD2WJA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 29 Apr 2020 18:09:00 -0400
 Received: from mga09.intel.com ([134.134.136.24]:61306 "EHLO mga09.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727085AbgD2WI7 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 29 Apr 2020 18:08:59 -0400
-IronPort-SDR: dHFCcmu8co/ufUWlVlI8NAR12KVXEfM66fNGRMdzER75LqV7PNdbcUCKmSvQJs0A7+sDCAamYY
- HgPNJ1j6WiUw==
+        id S1728064AbgD2WI6 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 29 Apr 2020 18:08:58 -0400
+IronPort-SDR: 2H9FZd+1ngEaY+f7021506Brjb1PKuoD+VveXcaC74jBboFbxH98YMBln3ERDmMFdnSY0XMTcb
+ nzLDnVHn7B1g==
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga002.jf.intel.com ([10.7.209.21])
-  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Apr 2020 15:08:56 -0700
-IronPort-SDR: uLifCKL/hIIieGg3MZVyvjYueoOMMBb/D7dhKJ1nB7ry6OWDrd9WzlqOHBwWZSHHAoAAOo7i8T
- ZlRt35UzFMwQ==
+  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Apr 2020 15:08:54 -0700
+IronPort-SDR: 9j1+4qYBMzc2L9aY/UoxwygXzrHMaOIyykJVoAXHFi+cdrMzPDzxCWL0mi7HlRCFpTh8Sy8fgb
+ ZorXVBzA4izQ==
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="5.73,333,1583222400"; 
-   d="scan'208";a="276308944"
+   d="scan'208";a="276308934"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga002.jf.intel.com with ESMTP; 29 Apr 2020 15:08:55 -0700
+  by orsmga002.jf.intel.com with ESMTP; 29 Apr 2020 15:08:53 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -59,9 +59,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v10 26/26] x86/cet/shstk: Add arch_prctl functions for shadow stack
-Date:   Wed, 29 Apr 2020 15:07:32 -0700
-Message-Id: <20200429220732.31602-27-yu-cheng.yu@intel.com>
+Subject: [PATCH v10 23/26] ELF: Introduce arch_setup_elf_property()
+Date:   Wed, 29 Apr 2020 15:07:29 -0700
+Message-Id: <20200429220732.31602-24-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20200429220732.31602-1-yu-cheng.yu@intel.com>
 References: <20200429220732.31602-1-yu-cheng.yu@intel.com>
@@ -72,245 +72,52 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-arch_prctl(ARCH_X86_CET_STATUS, u64 *args)
-    Get CET feature status.
-
-    The parameter 'args' is a pointer to a user buffer.  The kernel returns
-    the following information:
-
-    *args = shadow stack/IBT status
-    *(args + 1) = shadow stack base address
-    *(args + 2) = shadow stack size
-
-arch_prctl(ARCH_X86_CET_DISABLE, u64 features)
-    Disable CET features specified in 'features'.  Return -EPERM if CET is
-    locked.
-
-arch_prctl(ARCH_X86_CET_LOCK)
-    Lock in CET features.
-
-arch_prctl(ARCH_X86_CET_ALLOC_SHSTK, u64 *args)
-    Allocate a new shadow stack.
-
-    The parameter 'args' is a pointer to a user buffer containing the
-    desired size to allocate.  The kernel returns the allocated shadow
-    stack address in *args.
+An ELF file's .note.gnu.property indicates architecture features of the
+file.  These features are extracted earlier and stored in the struct
+'arch_elf_state'.  Introduce arch_setup_elf_property() to setup and enable
+these features.  The first use-case of this function is shadow stack.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
-v10:
-- Verify CET is enabled before handling arch_prctl.
-- Change input parameters from unsigned long to u64, to make it clear they
-  are 64-bit.
+ fs/binfmt_elf.c     | 4 ++++
+ include/linux/elf.h | 6 ++++++
+ 2 files changed, 10 insertions(+)
 
- arch/x86/include/asm/cet.h        |  4 ++
- arch/x86/include/uapi/asm/prctl.h |  5 ++
- arch/x86/kernel/Makefile          |  2 +-
- arch/x86/kernel/cet.c             | 29 +++++++++++
- arch/x86/kernel/cet_prctl.c       | 87 +++++++++++++++++++++++++++++++
- arch/x86/kernel/process.c         |  4 +-
- 6 files changed, 128 insertions(+), 3 deletions(-)
- create mode 100644 arch/x86/kernel/cet_prctl.c
-
-diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index 71dc92acd2f2..99e6e741d28c 100644
---- a/arch/x86/include/asm/cet.h
-+++ b/arch/x86/include/asm/cet.h
-@@ -14,16 +14,20 @@ struct sc_ext;
- struct cet_status {
- 	unsigned long	shstk_base;
- 	unsigned long	shstk_size;
-+	unsigned int	locked:1;
- };
+diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
+index 327a995ff743..d7a4c0a1245e 100644
+--- a/fs/binfmt_elf.c
++++ b/fs/binfmt_elf.c
+@@ -1216,6 +1216,10 @@ static int load_elf_binary(struct linux_binprm *bprm)
  
- #ifdef CONFIG_X86_INTEL_CET
-+int prctl_cet(int option, u64 arg2);
- int cet_setup_shstk(void);
- int cet_setup_thread_shstk(struct task_struct *p);
-+int cet_alloc_shstk(unsigned long *arg);
- void cet_disable_free_shstk(struct task_struct *p);
- int cet_verify_rstor_token(bool ia32, unsigned long ssp, unsigned long *new_ssp);
- void cet_restore_signal(struct sc_ext *sc);
- int cet_setup_signal(bool ia32, unsigned long rstor, struct sc_ext *sc);
- #else
-+static inline int prctl_cet(int option, u64 arg2) { return -EINVAL; }
- static inline int cet_setup_thread_shstk(struct task_struct *p) { return 0; }
- static inline void cet_disable_free_shstk(struct task_struct *p) {}
- static inline void cet_restore_signal(struct sc_ext *sc) { return; }
-diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
-index 5a6aac9fa41f..d962f0ec9ccf 100644
---- a/arch/x86/include/uapi/asm/prctl.h
-+++ b/arch/x86/include/uapi/asm/prctl.h
-@@ -14,4 +14,9 @@
- #define ARCH_MAP_VDSO_32	0x2002
- #define ARCH_MAP_VDSO_64	0x2003
+ 	set_binfmt(&elf_format);
  
-+#define ARCH_X86_CET_STATUS		0x3001
-+#define ARCH_X86_CET_DISABLE		0x3002
-+#define ARCH_X86_CET_LOCK		0x3003
-+#define ARCH_X86_CET_ALLOC_SHSTK	0x3004
++	retval = arch_setup_elf_property(&arch_state);
++	if (retval < 0)
++		goto out;
 +
- #endif /* _ASM_X86_PRCTL_H */
-diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
-index e9cc2551573b..0b621e2afbdc 100644
---- a/arch/x86/kernel/Makefile
-+++ b/arch/x86/kernel/Makefile
-@@ -144,7 +144,7 @@ obj-$(CONFIG_UNWINDER_ORC)		+= unwind_orc.o
- obj-$(CONFIG_UNWINDER_FRAME_POINTER)	+= unwind_frame.o
- obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
- 
--obj-$(CONFIG_X86_INTEL_CET)		+= cet.o
-+obj-$(CONFIG_X86_INTEL_CET)		+= cet.o cet_prctl.o
- 
- ###
- # 64 bit specific files
-diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
-index 121552047b86..c1b9b540c03e 100644
---- a/arch/x86/kernel/cet.c
-+++ b/arch/x86/kernel/cet.c
-@@ -145,6 +145,35 @@ static int create_rstor_token(bool ia32, unsigned long ssp,
+ #ifdef ARCH_HAS_SETUP_ADDITIONAL_PAGES
+ 	retval = arch_setup_additional_pages(bprm, !!interpreter);
+ 	if (retval < 0)
+diff --git a/include/linux/elf.h b/include/linux/elf.h
+index 7bdc6da160c7..81f2161fa4a8 100644
+--- a/include/linux/elf.h
++++ b/include/linux/elf.h
+@@ -78,9 +78,15 @@ static inline int arch_parse_elf_property(u32 type, const void *data,
+ {
  	return 0;
  }
++
++static inline int arch_setup_elf_property(struct arch_elf_state *arch)
++{
++	return 0;
++}
+ #else
+ extern int arch_parse_elf_property(u32 type, const void *data, size_t datasz,
+ 				   bool compat, struct arch_elf_state *arch);
++extern int arch_setup_elf_property(struct arch_elf_state *arch);
+ #endif
  
-+int cet_alloc_shstk(unsigned long *arg)
-+{
-+	unsigned long len = *arg;
-+	unsigned long addr;
-+	unsigned long token;
-+	unsigned long ssp;
-+
-+	addr = alloc_shstk(round_up(len, PAGE_SIZE));
-+
-+	if (IS_ERR((void *)addr))
-+		return PTR_ERR((void *)addr);
-+
-+	/* Restore token is 8 bytes and aligned to 8 bytes */
-+	ssp = addr + len;
-+	token = ssp;
-+
-+	if (!in_ia32_syscall())
-+		token |= TOKEN_MODE_64;
-+	ssp -= 8;
-+
-+	if (write_user_shstk_64(ssp, token)) {
-+		vm_munmap(addr, len);
-+		return -EINVAL;
-+	}
-+
-+	*arg = addr;
-+	return 0;
-+}
-+
- int cet_setup_shstk(void)
- {
- 	unsigned long addr, size;
-diff --git a/arch/x86/kernel/cet_prctl.c b/arch/x86/kernel/cet_prctl.c
-new file mode 100644
-index 000000000000..0139c48f2215
---- /dev/null
-+++ b/arch/x86/kernel/cet_prctl.c
-@@ -0,0 +1,87 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+
-+#include <linux/errno.h>
-+#include <linux/uaccess.h>
-+#include <linux/prctl.h>
-+#include <linux/compat.h>
-+#include <linux/mman.h>
-+#include <linux/elfcore.h>
-+#include <asm/processor.h>
-+#include <asm/prctl.h>
-+#include <asm/cet.h>
-+
-+/* See Documentation/x86/intel_cet.rst. */
-+
-+static int handle_get_status(u64 arg2)
-+{
-+	struct cet_status *cet = &current->thread.cet;
-+	u64 buf[3] = {0, 0, 0};
-+
-+	if (cet->shstk_size) {
-+		buf[0] |= GNU_PROPERTY_X86_FEATURE_1_SHSTK;
-+		buf[1] = (u64)cet->shstk_base;
-+		buf[2] = (u64)cet->shstk_size;
-+	}
-+
-+	return copy_to_user((u64 __user *)arg2, buf, sizeof(buf));
-+}
-+
-+static int handle_alloc_shstk(u64 arg2)
-+{
-+	int err = 0;
-+	unsigned long arg;
-+	unsigned long addr = 0;
-+	unsigned long size = 0;
-+
-+	if (get_user(arg, (unsigned long __user *)arg2))
-+		return -EFAULT;
-+
-+	size = arg;
-+	err = cet_alloc_shstk(&arg);
-+	if (err)
-+		return err;
-+
-+	addr = arg;
-+	if (put_user((u64)addr, (u64 __user *)arg2)) {
-+		vm_munmap(addr, size);
-+		return -EFAULT;
-+	}
-+
-+	return 0;
-+}
-+
-+int prctl_cet(int option, u64 arg2)
-+{
-+	struct cet_status *cet;
-+
-+	if (!IS_ENABLED(CONFIG_X86_INTEL_CET))
-+		return -EINVAL;
-+
-+	if (option == ARCH_X86_CET_STATUS)
-+		return handle_get_status(arg2);
-+
-+	if (!static_cpu_has(X86_FEATURE_SHSTK))
-+		return -EINVAL;
-+
-+	cet = &current->thread.cet;
-+
-+	switch (option) {
-+	case ARCH_X86_CET_DISABLE:
-+		if (cet->locked)
-+			return -EPERM;
-+		if (arg2 & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
-+			cet_disable_free_shstk(current);
-+
-+		return 0;
-+
-+	case ARCH_X86_CET_LOCK:
-+		cet->locked = 1;
-+		return 0;
-+
-+	case ARCH_X86_CET_ALLOC_SHSTK:
-+		return handle_alloc_shstk(arg2);
-+
-+	default:
-+		return -EINVAL;
-+	}
-+}
-diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
-index ef1c2b8086a2..de6773dd6a16 100644
---- a/arch/x86/kernel/process.c
-+++ b/arch/x86/kernel/process.c
-@@ -996,7 +996,7 @@ long do_arch_prctl_common(struct task_struct *task, int option,
- 		return get_cpuid_mode();
- 	case ARCH_SET_CPUID:
- 		return set_cpuid_mode(task, cpuid_enabled);
-+	default:
-+		return prctl_cet(option, cpuid_enabled);
- 	}
--
--	return -EINVAL;
- }
+ #endif /* _LINUX_ELF_H */
 -- 
 2.21.0
 
