@@ -4,33 +4,34 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B355DC8300E
-	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:09:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7D938C83012
+	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:09:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9563C2137B
-	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:09:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 643A8214AF
+	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:09:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727085AbgD2WJr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 29 Apr 2020 18:09:47 -0400
-Received: from mga09.intel.com ([134.134.136.24]:61308 "EHLO mga09.intel.com"
+        id S1727087AbgD2WIt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 29 Apr 2020 18:08:49 -0400
+Received: from mga09.intel.com ([134.134.136.24]:61304 "EHLO mga09.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727961AbgD2WIv (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 29 Apr 2020 18:08:51 -0400
-IronPort-SDR: XCmkXFXzVWUmkNJRRf0wBESQzsmYH44P0LBIa9ULutLMPljIZu1i7q1NDuy3b9mfwu+BkATcmu
- vdU4oH76aK2w==
+        id S1727899AbgD2WIs (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 29 Apr 2020 18:08:48 -0400
+IronPort-SDR: ptjlQfRhHAza6nTYZFyJqGKn9mXwfzRYamZ+GIHvCDdWkYJ4LI8TPBp4ICslRytIXIKDF+FhgE
+ QZm2x7/oF5Pw==
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga002.jf.intel.com ([10.7.209.21])
-  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Apr 2020 15:08:50 -0700
-IronPort-SDR: wHiZvt4QeK+1g8UwKX+7tHC1VH92phIoYfNMA55H6uojHwMG3eXRdnqDDBJ8Mm+gl53kjXn4eE
- 8xXE0tBgskhQ==
+  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Apr 2020 15:08:47 -0700
+IronPort-SDR: p9cb/Q7S4xMy86CCEwnBcUwsVAc9j+7g/RmTBGqUUnl02LUmjD+QYT5MjQ5SwiptTEaO4qAsJC
+ 62CDfEDdvf8g==
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="5.73,333,1583222400"; 
-   d="scan'208";a="276308915"
+   d="scan'208";a="276308893"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga002.jf.intel.com with ESMTP; 29 Apr 2020 15:08:49 -0700
+  by orsmga002.jf.intel.com with ESMTP; 29 Apr 2020 15:08:46 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -58,9 +59,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v10 18/26] mm: Update can_follow_write_pte() for shadow stack
-Date:   Wed, 29 Apr 2020 15:07:24 -0700
-Message-Id: <20200429220732.31602-19-yu-cheng.yu@intel.com>
+Subject: [PATCH v10 13/26] x86/mm: Shadow Stack page fault error checking
+Date:   Wed, 29 Apr 2020 15:07:19 -0700
+Message-Id: <20200429220732.31602-14-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20200429220732.31602-1-yu-cheng.yu@intel.com>
 References: <20200429220732.31602-1-yu-cheng.yu@intel.com>
@@ -71,80 +72,94 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Can_follow_write_pte() ensures a read-only page is COWed by checking the
-FOLL_COW flag, and uses pte_dirty() to validate the flag is still valid.
+Shadow stack accesses are those that are performed by the CPU where it
+expects to encounter a shadow stack mapping.  These accesses are performed
+implicitly by CALL/RET at the site of the shadow stack pointer.  These
+accesses are made explicitly by shadow stack management instructions like
+WRUSSQ.
 
-Like a writable data page, a shadow stack page is writable, and becomes
-read-only during copy-on-write, but it is always dirty.  Thus, in the
-can_follow_write_pte() check, it belongs to the writable page case and
-should be excluded from the read-only page pte_dirty() check.  Apply
-the same changes to can_follow_write_pmd().
+Shadow stacks accesses to shadow-stack mapping can see faults in normal,
+valid operation just like regular accesses to regular mappings.  Shadow
+stacks need some of the same features like delayed allocation, swap and
+copy-on-write.
+
+Shadow stack accesses can also result in errors, such as when a shadow
+stack overflows, or if a shadow stack access occurs to a non-shadow-stack
+mapping.
+
+In handling a shadow stack page fault, verify it occurs within a shadow
+stack mapping.  It is always an error otherwise.  For valid shadow stack
+accesses, set FAULT_FLAG_WRITE to effect copy-on-write.  Because clearing
+_PAGE_DIRTY_HW (vs. _PAGE_RW) is used to trigger the fault, shadow stack
+read fault and shadow stack write fault are not differentiated and both are
+handled as a write access.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
 v10:
-- Reverse name changes to can_follow_write_*().
+-Revise commit log.
 
- mm/gup.c         | 8 +++++---
- mm/huge_memory.c | 8 +++++---
- 2 files changed, 10 insertions(+), 6 deletions(-)
+ arch/x86/include/asm/traps.h |  2 ++
+ arch/x86/mm/fault.c          | 19 +++++++++++++++++++
+ 2 files changed, 21 insertions(+)
 
-diff --git a/mm/gup.c b/mm/gup.c
-index 50681f0286de..c737782403ee 100644
---- a/mm/gup.c
-+++ b/mm/gup.c
-@@ -385,10 +385,12 @@ static int follow_pfn_pte(struct vm_area_struct *vma, unsigned long address,
-  * FOLL_FORCE can write to even unwritable pte's, but only
-  * after we've gone through a COW cycle and they are dirty.
+diff --git a/arch/x86/include/asm/traps.h b/arch/x86/include/asm/traps.h
+index 9bf804709ee6..b4f4c725a350 100644
+--- a/arch/x86/include/asm/traps.h
++++ b/arch/x86/include/asm/traps.h
+@@ -168,6 +168,7 @@ enum {
+  *   bit 3 ==				1: use of reserved bit detected
+  *   bit 4 ==				1: fault was an instruction fetch
+  *   bit 5 ==				1: protection keys block access
++ *   bit 6 ==				1: shadow stack access fault
   */
--static inline bool can_follow_write_pte(pte_t pte, unsigned int flags)
-+static inline bool can_follow_write_pte(pte_t pte, unsigned int flags,
-+					struct vm_area_struct *vma)
- {
- 	return pte_write(pte) ||
--		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte));
-+		((flags & FOLL_FORCE) && (flags & FOLL_COW) &&
-+		 !arch_shadow_stack_mapping(vma->vm_flags) && pte_dirty(pte));
- }
+ enum x86_pf_error_code {
+ 	X86_PF_PROT	=		1 << 0,
+@@ -176,5 +177,6 @@ enum x86_pf_error_code {
+ 	X86_PF_RSVD	=		1 << 3,
+ 	X86_PF_INSTR	=		1 << 4,
+ 	X86_PF_PK	=		1 << 5,
++	X86_PF_SHSTK	=		1 << 6,
+ };
+ #endif /* _ASM_X86_TRAPS_H */
+diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
+index a51df516b87b..a4a3c8f016f0 100644
+--- a/arch/x86/mm/fault.c
++++ b/arch/x86/mm/fault.c
+@@ -1210,6 +1210,17 @@ access_error(unsigned long error_code, struct vm_area_struct *vma)
+ 				       (error_code & X86_PF_INSTR), foreign))
+ 		return 1;
  
- static struct page *follow_page_pte(struct vm_area_struct *vma,
-@@ -431,7 +433,7 @@ static struct page *follow_page_pte(struct vm_area_struct *vma,
- 	}
- 	if ((flags & FOLL_NUMA) && pte_protnone(pte))
- 		goto no_page;
--	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags)) {
-+	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags, vma)) {
- 		pte_unmap_unlock(ptep, ptl);
- 		return NULL;
- 	}
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 608746bb9d19..cb1b0cb4b4eb 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1520,10 +1520,12 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
-  * FOLL_FORCE can write to even unwritable pmd's, but only
-  * after we've gone through a COW cycle and they are dirty.
-  */
--static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags)
-+static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags,
-+					struct vm_area_struct *vma)
- {
- 	return pmd_write(pmd) ||
--	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) && pmd_dirty(pmd));
-+	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) &&
-+		!arch_shadow_stack_mapping(vma->vm_flags) && pmd_dirty(pmd));
- }
++	/*
++	 * Verify a shadow stack access is within a shadow stack VMA.
++	 * It is always an error otherwise.  Normal data access to a
++	 * shadow stack area is checked in the case followed.
++	 */
++	if (error_code & X86_PF_SHSTK) {
++		if (!(vma->vm_flags & VM_SHSTK))
++			return 1;
++		return 0;
++	}
++
+ 	if (error_code & X86_PF_WRITE) {
+ 		/* write, present and write, not present: */
+ 		if (unlikely(!(vma->vm_flags & VM_WRITE)))
+@@ -1367,6 +1378,14 @@ void do_user_addr_fault(struct pt_regs *regs,
  
- struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
-@@ -1536,7 +1538,7 @@ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
+ 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
  
- 	assert_spin_locked(pmd_lockptr(mm, pmd));
- 
--	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags))
-+	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags, vma))
- 		goto out;
- 
- 	/* Avoid dumping huge zero page */
++	/*
++	 * Clearing _PAGE_DIRTY_HW is used to detect shadow stack access.
++	 * This method cannot distinguish shadow stack read vs. write.
++	 * For valid shadow stack accesses, set FAULT_FLAG_WRITE to effect
++	 * copy-on-write.
++	 */
++	if (hw_error_code & X86_PF_SHSTK)
++		flags |= FAULT_FLAG_WRITE;
+ 	if (hw_error_code & X86_PF_WRITE)
+ 		flags |= FAULT_FLAG_WRITE;
+ 	if (hw_error_code & X86_PF_INSTR)
 -- 
 2.21.0
 
