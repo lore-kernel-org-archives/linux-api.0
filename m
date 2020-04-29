@@ -4,34 +4,33 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
-	version=3.4.0
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BB272C83004
-	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:10:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 861BAC8300B
+	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:10:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A045D2137B
-	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:10:29 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6C4DE2076B
+	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:10:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727094AbgD2WKZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 29 Apr 2020 18:10:25 -0400
-Received: from mga09.intel.com ([134.134.136.24]:61300 "EHLO mga09.intel.com"
+        id S1727028AbgD2WKa (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 29 Apr 2020 18:10:30 -0400
+Received: from mga09.intel.com ([134.134.136.24]:61292 "EHLO mga09.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727857AbgD2WIn (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 29 Apr 2020 18:08:43 -0400
-IronPort-SDR: ooRKz/M5i/wD0zoUA76PonvrgkrlC89YlgrKQMiPk2FcpxHrUraN9c9DzeIri7Oz9wyJdWA5zI
- DT9WdBl1z3IA==
+        id S1727830AbgD2WIm (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 29 Apr 2020 18:08:42 -0400
+IronPort-SDR: 0K+ydWruisOHemTRClejmqu5W3mw9FdKTTDtufQ2hz112oFVkSH74KpRnBANpl2vH9L/ciKqv2
+ I+HfjPw6e4Bw==
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga002.jf.intel.com ([10.7.209.21])
-  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Apr 2020 15:08:43 -0700
-IronPort-SDR: NlYnfBlQ5psdLBR6iqozVLAVCQMzWAljpX+34eRUFI+/jP34SmNcB+YT1hYKkUuX24TiMsWy7W
- f+dCLMw55hZw==
+  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Apr 2020 15:08:42 -0700
+IronPort-SDR: rkCyd4MEbRBcVRLk9asgG/r/BHUdH6pFX5SaolLMaG4cC/bBBEq2dq4lza1tP+mjdFUUotFfrD
+ 4cfGOnyZcUDA==
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="5.73,333,1583222400"; 
-   d="scan'208";a="276308870"
+   d="scan'208";a="276308861"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga002.jf.intel.com with ESMTP; 29 Apr 2020 15:08:42 -0700
+  by orsmga002.jf.intel.com with ESMTP; 29 Apr 2020 15:08:41 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -59,9 +58,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v10 07/26] x86/mm: Remove _PAGE_DIRTY_HW from kernel RO pages
-Date:   Wed, 29 Apr 2020 15:07:13 -0700
-Message-Id: <20200429220732.31602-8-yu-cheng.yu@intel.com>
+Subject: [PATCH v10 05/26] x86/cet/shstk: Add Kconfig option for user-mode Shadow Stack
+Date:   Wed, 29 Apr 2020 15:07:11 -0700
+Message-Id: <20200429220732.31602-6-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20200429220732.31602-1-yu-cheng.yu@intel.com>
 References: <20200429220732.31602-1-yu-cheng.yu@intel.com>
@@ -72,54 +71,76 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Kernel read-only PTEs are setup as _PAGE_DIRTY_HW.  Since these become
-shadow stack PTEs, remove the dirty bit.
+Shadow Stack provides protection against function return address
+corruption.  It is active when the processor supports it, the kernel has
+CONFIG_X86_INTEL_SHADOW_STACK_USER, and the application is built for the
+feature.  This is only implemented for the 64-bit kernel.  When it is
+enabled, legacy non-shadow stack applications continue to work, but without
+protection.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: "H. Peter Anvin" <hpa@zytor.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Borislav Petkov <bp@alien8.de>
-Cc: Peter Zijlstra <peterz@infradead.org>
 ---
- arch/x86/include/asm/pgtable_types.h | 6 +++---
- arch/x86/mm/pat/set_memory.c         | 2 +-
- 2 files changed, 4 insertions(+), 4 deletions(-)
+v10:
+- Change SHSTK to shadow stack in the help text.
+- Change build-time check to config-time check.
+- Change ARCH_HAS_SHSTK to ARCH_HAS_SHADOW_STACK.
 
-diff --git a/arch/x86/include/asm/pgtable_types.h b/arch/x86/include/asm/pgtable_types.h
-index b82e0f167879..522b80b952f4 100644
---- a/arch/x86/include/asm/pgtable_types.h
-+++ b/arch/x86/include/asm/pgtable_types.h
-@@ -193,10 +193,10 @@ enum page_cache_mode {
- #define _KERNPG_TABLE		 (__PP|__RW|   0|___A|   0|___D|   0|   0| _ENC)
- #define _PAGE_TABLE_NOENC	 (__PP|__RW|_USR|___A|   0|___D|   0|   0)
- #define _PAGE_TABLE		 (__PP|__RW|_USR|___A|   0|___D|   0|   0| _ENC)
--#define __PAGE_KERNEL_RO	 (__PP|   0|   0|___A|__NX|___D|   0|___G)
--#define __PAGE_KERNEL_RX	 (__PP|   0|   0|___A|   0|___D|   0|___G)
-+#define __PAGE_KERNEL_RO	 (__PP|   0|   0|___A|__NX|   0|   0|___G)
-+#define __PAGE_KERNEL_RX	 (__PP|   0|   0|___A|   0|   0|___G)
- #define __PAGE_KERNEL_NOCACHE	 (__PP|__RW|   0|___A|__NX|___D|   0|___G| __NC)
--#define __PAGE_KERNEL_VVAR	 (__PP|   0|_USR|___A|__NX|___D|   0|___G)
-+#define __PAGE_KERNEL_VVAR	 (__PP|   0|_USR|___A|__NX|   0|   0|___G)
- #define __PAGE_KERNEL_LARGE	 (__PP|__RW|   0|___A|__NX|___D|_PSE|___G)
- #define __PAGE_KERNEL_LARGE_EXEC (__PP|__RW|   0|___A|   0|___D|_PSE|___G)
- #define __PAGE_KERNEL_WP	 (__PP|__RW|   0|___A|__NX|___D|   0|___G| __WP)
-diff --git a/arch/x86/mm/pat/set_memory.c b/arch/x86/mm/pat/set_memory.c
-index 59eca6a94ce7..87751b7e2131 100644
---- a/arch/x86/mm/pat/set_memory.c
-+++ b/arch/x86/mm/pat/set_memory.c
-@@ -1923,7 +1923,7 @@ int set_memory_nx(unsigned long addr, int numpages)
+ arch/x86/Kconfig                      | 30 +++++++++++++++++++++++++++
+ scripts/as-x86_64-has-shadow-stack.sh |  4 ++++
+ 2 files changed, 34 insertions(+)
+ create mode 100755 scripts/as-x86_64-has-shadow-stack.sh
+
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 1197b5596d5a..c98f82fffe85 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1947,6 +1947,36 @@ config X86_INTEL_TSX_MODE_AUTO
+ 	  side channel attacks- equals the tsx=auto command line parameter.
+ endchoice
  
- int set_memory_ro(unsigned long addr, int numpages)
- {
--	return change_page_attr_clear(&addr, numpages, __pgprot(_PAGE_RW), 0);
-+	return change_page_attr_clear(&addr, numpages, __pgprot(_PAGE_RW | _PAGE_DIRTY_HW), 0);
- }
- 
- int set_memory_rw(unsigned long addr, int numpages)
++config AS_HAS_SHADOW_STACK
++	def_bool $(success,$(srctree)/scripts/as-x86_64-has-shadow-stack.sh $(CC))
++	help
++	  Test the assembler for shadow stack instructions.
++
++config X86_INTEL_CET
++	def_bool n
++
++config ARCH_HAS_SHADOW_STACK
++	def_bool n
++
++config X86_INTEL_SHADOW_STACK_USER
++	prompt "Intel Shadow Stacks for user-mode"
++	def_bool n
++	depends on CPU_SUP_INTEL && X86_64
++	depends on AS_HAS_SHADOW_STACK
++	select ARCH_USES_HIGH_VMA_FLAGS
++	select X86_INTEL_CET
++	select ARCH_HAS_SHADOW_STACK
++	help
++	  Shadow Stacks provides protection against program stack
++	  corruption.  It's a hardware feature.  This only matters
++	  if you have the right hardware.  It's a security hardening
++	  feature and apps must be enabled to use it.  You get no
++	  protection "for free" on old userspace.  The hardware can
++	  support user and kernel, but this option is for user space
++	  only.
++
++	  If unsure, say y.
++
+ config EFI
+ 	bool "EFI runtime service support"
+ 	depends on ACPI
+diff --git a/scripts/as-x86_64-has-shadow-stack.sh b/scripts/as-x86_64-has-shadow-stack.sh
+new file mode 100755
+index 000000000000..fac1d363a1b8
+--- /dev/null
++++ b/scripts/as-x86_64-has-shadow-stack.sh
+@@ -0,0 +1,4 @@
++#!/bin/sh
++# SPDX-License-Identifier: GPL-2.0
++
++echo "wrussq %rax, (%rbx)" | $* -x assembler -c -
 -- 
 2.21.0
 
