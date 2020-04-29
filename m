@@ -6,31 +6,31 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BD7B9C83004
-	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:10:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6B052C8300B
+	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:10:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9DD5E2076B
-	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:10:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4B048214AF
+	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:10:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728269AbgD2WJx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 29 Apr 2020 18:09:53 -0400
-Received: from mga09.intel.com ([134.134.136.24]:61306 "EHLO mga09.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727933AbgD2WIt (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        id S1727924AbgD2WIt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Wed, 29 Apr 2020 18:08:49 -0400
-IronPort-SDR: QAZBZQ+Nojq1cmQyD28yxiVHeb5E3jIv+PHy9CTGyVEjR7yInj26Aw4F1Ao2BDn/NkOBPBq3pF
- uxqrfFQ6QSNA==
+Received: from mga09.intel.com ([134.134.136.24]:61300 "EHLO mga09.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727895AbgD2WIr (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 29 Apr 2020 18:08:47 -0400
+IronPort-SDR: yE4E7PT1KM54djDX+prWENxlNv/zAkkNKAUdN/ykFytFfttxMG7D5psmliGn9bwEMiXDeA1IUo
+ b+RGD4evGE2w==
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga002.jf.intel.com ([10.7.209.21])
-  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Apr 2020 15:08:48 -0700
-IronPort-SDR: wUPVS6TcPPbWAbooMO8NjtL8Z4wUCmoBJDKvJwh8pI0Ugdlvf7Cmbj8k5QRjSmB+Y+2bKrQAYs
- h3mXof4ZmPLw==
+  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Apr 2020 15:08:45 -0700
+IronPort-SDR: CaqjPX1qzs7BbH8+SLFhLcHm0AhHj/rcZS5oJa0YWPuOWPnXZzL3ZCEFKUhjJ1irn2OZDCAQ9V
+ WmPjC6K/5SqQ==
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="5.73,333,1583222400"; 
-   d="scan'208";a="276308906"
+   d="scan'208";a="276308886"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga002.jf.intel.com with ESMTP; 29 Apr 2020 15:08:48 -0700
+  by orsmga002.jf.intel.com with ESMTP; 29 Apr 2020 15:08:45 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -58,9 +58,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v10 16/26] mm: Add guard pages around a shadow stack.
-Date:   Wed, 29 Apr 2020 15:07:22 -0700
-Message-Id: <20200429220732.31602-17-yu-cheng.yu@intel.com>
+Subject: [PATCH v10 11/26] x86/mm: Update ptep_set_wrprotect() and pmdp_set_wrprotect() for transition from _PAGE_DIRTY_HW to _PAGE_COW
+Date:   Wed, 29 Apr 2020 15:07:17 -0700
+Message-Id: <20200429220732.31602-12-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20200429220732.31602-1-yu-cheng.yu@intel.com>
 References: <20200429220732.31602-1-yu-cheng.yu@intel.com>
@@ -71,96 +71,114 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-INCSSP(Q/D) increments shadow stack pointer and 'pops and discards' the
-first and the last elements in the range, effectively touches those memory
-areas.
+When shadow stack is introduced, [R/O + _PAGE_DIRTY_HW] PTE is reserved
+for shadow stack.  Copy-on-write PTEs have [R/O + _PAGE_COW].
 
-The maximum moving distance by INCSSPQ is 255 * 8 = 2040 bytes and
-255 * 4 = 1020 bytes by INCSSPD.  Both ranges are far from PAGE_SIZE.
-Thus, putting a gap page on both ends of a shadow stack prevents INCSSP,
-CALL, and RET from going beyond.
+When a PTE goes from [R/W + _PAGE_DIRTY_HW] to [R/O + _PAGE_COW], it could
+become a transient shadow stack PTE in two cases:
+
+The first case is that some processors can start a write but end up seeing
+a read-only PTE by the time they get to the Dirty bit, creating a transient
+shadow stack PTE.  However, this will not occur on processors supporting
+shadow stack, therefore we don't need a TLB flush here.
+
+The second case is that when the software, without atomic, tests & replaces
+_PAGE_DIRTY_HW with _PAGE_COW, a transient shadow stack PTE can exist.
+This is prevented with cmpxchg.
+
+Dave Hansen, Jann Horn, Andy Lutomirski, and Peter Zijlstra provided many
+insights to the issue.  Jann Horn provided the cmpxchg solution.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
 v10:
-- Define ARCH_SHADOW_STACK_GUARD_GAP.
+- Replace bit shift with pte_wrprotect()/pmd_wrprotect(), which use bit
+  test & shift.
+- Move READ_ONCE of old_pte into try_cmpxchg() loop.
+- Change static_cpu_has() to cpu_feature_enabled().
 
- arch/x86/include/asm/processor.h | 10 ++++++++++
- include/linux/mm.h               | 24 ++++++++++++++++++++----
- 2 files changed, 30 insertions(+), 4 deletions(-)
+v9:
+- Change compile-time conditionals to runtime checks.
+- Fix parameters of try_cmpxchg(): change pte_t/pmd_t to
+  pte_t.pte/pmd_t.pmd.
 
-diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
-index 3bcf27caf6c9..eb9536f803f9 100644
---- a/arch/x86/include/asm/processor.h
-+++ b/arch/x86/include/asm/processor.h
-@@ -907,6 +907,16 @@ static inline void spin_lock_prefetch(const void *x)
- #define STACK_TOP		TASK_SIZE_LOW
- #define STACK_TOP_MAX		TASK_SIZE_MAX
- 
-+/*
-+ * Shadow stack pointer is moved by CALL, JMP, and INCSSP(Q/D).  INCSSPQ
-+ * moves shadow stack pointer up to 255 * 8 = ~2 KB (~1KB for INCSSPD) and
-+ * touches the first and the last element in the range, which triggers a
-+ * page fault if the range is not in a shadow stack.  Because of this,
-+ * creating 4-KB guard pages around a shadow stack prevents these
-+ * instructions from going beyond.
-+ */
-+#define ARCH_SHADOW_STACK_GUARD_GAP PAGE_SIZE
+v4:
+- Implement try_cmpxchg().
+
+ arch/x86/include/asm/pgtable.h | 52 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 52 insertions(+)
+
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index f4870cd040de..eaa38adb1038 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -1316,6 +1316,32 @@ static inline pte_t ptep_get_and_clear_full(struct mm_struct *mm,
+ static inline void ptep_set_wrprotect(struct mm_struct *mm,
+ 				      unsigned long addr, pte_t *ptep)
+ {
++	/*
++	 * Some processors can start a write, but end up seeing a read-only
++	 * PTE by the time they get to the Dirty bit.  In this case, they
++	 * will set the Dirty bit, leaving a read-only, Dirty PTE which
++	 * looks like a shadow stack PTE.
++	 *
++	 * However, this behavior has been improved and will not occur on
++	 * processors supporting shadow stack.  Without this guarantee, a
++	 * transition to a non-present PTE and flush the TLB would be
++	 * needed.
++	 *
++	 * When changing a writable PTE to read-only and if the PTE has
++	 * _PAGE_DIRTY_HW set, move that bit to _PAGE_COW so that the
++	 * PTE is not a shadow stack PTE.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		pte_t old_pte, new_pte;
 +
- #define INIT_THREAD  {						\
- 	.addr_limit		= KERNEL_DS,			\
++		do {
++			old_pte = READ_ONCE(*ptep);
++			new_pte = pte_wrprotect(old_pte);
++
++		} while (!try_cmpxchg(&ptep->pte, &old_pte.pte, new_pte.pte));
++
++		return;
++	}
+ 	clear_bit(_PAGE_BIT_RW, (unsigned long *)&ptep->pte);
  }
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index f0669e3cdd37..68eadf2c466d 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -2630,6 +2630,10 @@ void page_cache_async_readahead(struct address_space *mapping,
- 				pgoff_t offset,
- 				unsigned long size);
  
-+#ifndef ARCH_SHADOW_STACK_GUARD_GAP
-+#define ARCH_SHADOW_STACK_GUARD_GAP 0
-+#endif
-+
- extern unsigned long stack_guard_gap;
- /* Generic expand stack which grows the stack according to GROWS{UP,DOWN} */
- extern int expand_stack(struct vm_area_struct *vma, unsigned long address);
-@@ -2662,9 +2666,15 @@ static inline struct vm_area_struct * find_vma_intersection(struct mm_struct * m
- static inline unsigned long vm_start_gap(struct vm_area_struct *vma)
+@@ -1372,6 +1398,32 @@ static inline pud_t pudp_huge_get_and_clear(struct mm_struct *mm,
+ static inline void pmdp_set_wrprotect(struct mm_struct *mm,
+ 				      unsigned long addr, pmd_t *pmdp)
  {
- 	unsigned long vm_start = vma->vm_start;
-+	unsigned long gap = 0;
- 
--	if (vma->vm_flags & VM_GROWSDOWN) {
--		vm_start -= stack_guard_gap;
-+	if (vma->vm_flags & VM_GROWSDOWN)
-+		gap = stack_guard_gap;
-+	else if (vma->vm_flags & VM_SHSTK)
-+		gap = ARCH_SHADOW_STACK_GUARD_GAP;
++	/*
++	 * Some processors can start a write, but end up seeing a read-only
++	 * PMD by the time they get to the Dirty bit.  In this case, they
++	 * will set the Dirty bit, leaving a read-only, Dirty PMD which
++	 * looks like a Shadow Stack PMD.
++	 *
++	 * However, this behavior has been improved and will not occur on
++	 * processors supporting Shadow Stack.  Without this guarantee, a
++	 * transition to a non-present PMD and flush the TLB would be
++	 * needed.
++	 *
++	 * When changing a writable PMD to read-only and if the PMD has
++	 * _PAGE_DIRTY_HW set, we move that bit to _PAGE_COW so that the
++	 * PMD is not a shadow stack PMD.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		pmd_t old_pmd, new_pmd;
 +
-+	if (gap != 0) {
-+		vm_start -= gap;
- 		if (vm_start > vma->vm_start)
- 			vm_start = 0;
- 	}
-@@ -2674,9 +2684,15 @@ static inline unsigned long vm_start_gap(struct vm_area_struct *vma)
- static inline unsigned long vm_end_gap(struct vm_area_struct *vma)
- {
- 	unsigned long vm_end = vma->vm_end;
-+	unsigned long gap = 0;
++		do {
++			old_pmd = READ_ONCE(*pmdp);
++			new_pmd = pmd_wrprotect(old_pmd);
 +
-+	if (vma->vm_flags & VM_GROWSUP)
-+		gap = stack_guard_gap;
-+	else if (vma->vm_flags & VM_SHSTK)
-+		gap = ARCH_SHADOW_STACK_GUARD_GAP;
++		} while (!try_cmpxchg((pmdval_t *)pmdp, (pmdval_t *)&old_pmd, pmd_val(new_pmd)));
++
++		return;
++	}
+ 	clear_bit(_PAGE_BIT_RW, (unsigned long *)pmdp);
+ }
  
--	if (vma->vm_flags & VM_GROWSUP) {
--		vm_end += stack_guard_gap;
-+	if (gap != 0) {
-+		vm_end += gap;
- 		if (vm_end < vma->vm_end)
- 			vm_end = -PAGE_SIZE;
- 	}
 -- 
 2.21.0
 
