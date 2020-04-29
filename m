@@ -4,34 +4,33 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
-	version=3.4.0
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CC731C8300D
-	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:08:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 71CF8C8300F
+	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:08:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id AEBB421D80
-	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:08:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5245E20757
+	for <linux-api@archiver.kernel.org>; Wed, 29 Apr 2020 22:08:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727842AbgD2WIm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 29 Apr 2020 18:08:42 -0400
-Received: from mga09.intel.com ([134.134.136.24]:61292 "EHLO mga09.intel.com"
+        id S1727943AbgD2WIt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 29 Apr 2020 18:08:49 -0400
+Received: from mga09.intel.com ([134.134.136.24]:61300 "EHLO mga09.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726481AbgD2WIl (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 29 Apr 2020 18:08:41 -0400
-IronPort-SDR: w6fYvC6L5pQpjp94xywDKQcb+7fYUMEY5eGwhcXor1mOlQsCuT6U0Olut9b8EAS5RbQH3GJ7Qt
- 71XnGrDBJ8sQ==
+        id S1727902AbgD2WIs (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 29 Apr 2020 18:08:48 -0400
+IronPort-SDR: oERkZSV9ZKl4T7fUE8BIONAVJgnX5eYJOpbkzUARN1EecU/v29L3qioVPDNLT9WP4kV2oxqE0t
+ oK40V984P/BA==
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga002.jf.intel.com ([10.7.209.21])
-  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Apr 2020 15:08:39 -0700
-IronPort-SDR: ChfrdpQWrpU8X+qfaUKe8IadfYQhMwaRia8og3fqG0CbWVjLD3TQk2aTNMU+XYxYAF53C21LX8
- vTvB6mzKsd+g==
+  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Apr 2020 15:08:47 -0700
+IronPort-SDR: XU4NwPgbAUKwazsJKsT+P3Fvj3g5DIPMlFu1yCYH0i0l2dUAIabR5Spz97g7gAf47YyVeC4aNz
+ P3RX8y6QtUYA==
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="5.73,333,1583222400"; 
-   d="scan'208";a="276308838"
+   d="scan'208";a="276308898"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga002.jf.intel.com with ESMTP; 29 Apr 2020 15:08:38 -0700
+  by orsmga002.jf.intel.com with ESMTP; 29 Apr 2020 15:08:47 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -59,9 +58,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v10 01/26] Documentation/x86: Add CET description
-Date:   Wed, 29 Apr 2020 15:07:07 -0700
-Message-Id: <20200429220732.31602-2-yu-cheng.yu@intel.com>
+Subject: [PATCH v10 14/26] x86/mm: Update maybe_mkwrite() for shadow stack
+Date:   Wed, 29 Apr 2020 15:07:20 -0700
+Message-Id: <20200429220732.31602-15-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20200429220732.31602-1-yu-cheng.yu@intel.com>
 References: <20200429220732.31602-1-yu-cheng.yu@intel.com>
@@ -72,192 +71,130 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Explain no_user_shstk/no_user_ibt kernel parameters, and introduce a new
-document on Control-flow Enforcement Technology (CET).
+Shadow stack memory is writable, but its VMA has VM_SHSTK instead of
+VM_WRITE.  Update maybe_mkwrite() to include the shadow stack.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
-v10:
-- Change no_cet_shstk and no_cet_ibt to no_user_shstk and no_user_ibt.
-- Remove the opcode section, as it is already in the Intel SDM.
-- Remove sections related to GLIBC implementation.
-- Remove shadow stack memory management section, as it is already in the
-  code comments.
-- Remove legacy bitmap related information, as it is not supported now.
-- Fix arch_ioctl() related text.
-- Change SHSTK, IBT to plain English.
+ arch/x86/Kconfig              |  4 ++++
+ arch/x86/mm/pgtable.c         | 18 ++++++++++++++++++
+ include/asm-generic/pgtable.h | 24 ++++++++++++++++++++++++
+ include/linux/mm.h            |  2 ++
+ mm/huge_memory.c              |  2 ++
+ 5 files changed, 50 insertions(+)
 
- .../admin-guide/kernel-parameters.txt         |   6 +
- Documentation/x86/index.rst                   |   1 +
- Documentation/x86/intel_cet.rst               | 129 ++++++++++++++++++
- 3 files changed, 136 insertions(+)
- create mode 100644 Documentation/x86/intel_cet.rst
-
-diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index 7bc83f3d9bdf..be715675df6d 100644
---- a/Documentation/admin-guide/kernel-parameters.txt
-+++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -3093,6 +3093,12 @@
- 			noexec=on: enable non-executable mappings (default)
- 			noexec=off: disable non-executable mappings
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index c98f82fffe85..ac07e1f6a2bc 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1955,6 +1955,9 @@ config AS_HAS_SHADOW_STACK
+ config X86_INTEL_CET
+ 	def_bool n
  
-+	no_user_shstk	[X86-64] Disable Shadow Stack for user-mode
-+			applications
++config ARCH_MAYBE_MKWRITE
++	def_bool n
 +
-+	no_user_ibt	[X86-64] Disable Indirect Branch Tracking for user-mode
-+			applications
+ config ARCH_HAS_SHADOW_STACK
+ 	def_bool n
+ 
+@@ -1965,6 +1968,7 @@ config X86_INTEL_SHADOW_STACK_USER
+ 	depends on AS_HAS_SHADOW_STACK
+ 	select ARCH_USES_HIGH_VMA_FLAGS
+ 	select X86_INTEL_CET
++	select ARCH_MAYBE_MKWRITE
+ 	select ARCH_HAS_SHADOW_STACK
+ 	help
+ 	  Shadow Stacks provides protection against program stack
+diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
+index 7bd2c3a52297..aa4d396ff98d 100644
+--- a/arch/x86/mm/pgtable.c
++++ b/arch/x86/mm/pgtable.c
+@@ -603,6 +603,24 @@ int pmdp_clear_flush_young(struct vm_area_struct *vma,
+ }
+ #endif
+ 
++#ifdef CONFIG_ARCH_MAYBE_MKWRITE
++pte_t arch_maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
++{
++	if (likely(vma->vm_flags & VM_SHSTK))
++		pte = pte_mkwrite_shstk(pte);
++	return pte;
++}
 +
- 	nosmap		[X86,PPC]
- 			Disable SMAP (Supervisor Mode Access Prevention)
- 			even if it is supported by processor.
-diff --git a/Documentation/x86/index.rst b/Documentation/x86/index.rst
-index 265d9e9a093b..2aef972a868d 100644
---- a/Documentation/x86/index.rst
-+++ b/Documentation/x86/index.rst
-@@ -19,6 +19,7 @@ x86-specific Documentation
-    tlb
-    mtrr
-    pat
-+   intel_cet
-    intel-iommu
-    intel_txt
-    amd-memory-encryption
-diff --git a/Documentation/x86/intel_cet.rst b/Documentation/x86/intel_cet.rst
-new file mode 100644
-index 000000000000..746eda8c82f3
---- /dev/null
-+++ b/Documentation/x86/intel_cet.rst
-@@ -0,0 +1,129 @@
-+.. SPDX-License-Identifier: GPL-2.0
++#ifdef CONFIG_TRANSPARENT_HUGEPAGE
++pmd_t arch_maybe_pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma)
++{
++	if (likely(vma->vm_flags & VM_SHSTK))
++		pmd = pmd_mkwrite_shstk(pmd);
++	return pmd;
++}
++#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
++#endif /* CONFIG_ARCH_MAYBE_MKWRITE */
 +
-+=========================================
-+Control-flow Enforcement Technology (CET)
-+=========================================
+ /**
+  * reserve_top_address - reserves a hole in the top of kernel address space
+  * @reserve - size of hole to reserve
+diff --git a/include/asm-generic/pgtable.h b/include/asm-generic/pgtable.h
+index 329b8c8ca703..2c3875724809 100644
+--- a/include/asm-generic/pgtable.h
++++ b/include/asm-generic/pgtable.h
+@@ -1191,6 +1191,30 @@ static inline bool arch_has_pfn_modify_check(void)
+ }
+ #endif /* !_HAVE_ARCH_PFN_MODIFY_ALLOWED */
+ 
++#ifdef CONFIG_MMU
++#ifdef CONFIG_ARCH_MAYBE_MKWRITE
++pte_t arch_maybe_mkwrite(pte_t pte, struct vm_area_struct *vma);
 +
-+[1] Overview
-+============
++#ifdef CONFIG_TRANSPARENT_HUGEPAGE
++pmd_t arch_maybe_pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma);
++#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
 +
-+Control-flow Enforcement Technology (CET) is an Intel processor feature
-+that provides protection against return/jump-oriented programming (ROP)
-+attacks.  It can be set up to protect both applications and the kernel.
-+Only user-mode protection is implemented in the 64-bit kernel, including
-+support for running legacy 32-bit applications.
++#else /* !CONFIG_ARCH_MAYBE_MKWRITE */
++static inline pte_t arch_maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
++{
++	return pte;
++}
 +
-+CET introduces Shadow Stack and Indirect Branch Tracking.  Shadow stack is
-+a secondary stack allocated from memory and cannot be directly modified by
-+applications.  When executing a CALL, the processor pushes the return
-+address to both the normal stack and the shadow stack.  Upon function
-+return, the processor pops the shadow stack copy and compares it to the
-+normal stack copy.  If the two differ, the processor raises a control-
-+protection fault.  Indirect branch tracking verifies indirect CALL/JMP
-+targets are intended as marked by the compiler with 'ENDBR' opcodes.
++#ifdef CONFIG_TRANSPARENT_HUGEPAGE
++static inline pmd_t arch_maybe_pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma)
++{
++	return pmd;
++}
++#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
 +
-+There are two kernel configuration options:
++#endif /* CONFIG_ARCH_MAYBE_MKWRITE */
++#endif /* CONFIG_MMU */
 +
-+    X86_INTEL_SHADOW_STACK_USER, and
-+    X86_INTEL_BRANCH_TRACKING_USER.
-+
-+These need to be enabled to build a CET-enabled kernel, and Binutils v2.31
-+and GCC v8.1 or later are required to build a CET kernel.  To build a CET-
-+enabled application, GLIBC v2.28 or later is also required.
-+
-+There are two command-line options for disabling CET features::
-+
-+    no_user_shstk - disables user shadow stack, and
-+    no_user_ibt   - disables user indirect branch tracking.
-+
-+At run time, /proc/cpuinfo shows CET features if the processor supports
-+CET.
-+
-+[2] Application Enabling
-+========================
-+
-+An application's CET capability is marked in its ELF header and can be
-+verified from the following command output, in the NT_GNU_PROPERTY_TYPE_0
-+field:
-+
-+    readelf -n <application>
-+
-+If an application supports CET and is statically linked, it will run with
-+CET protection.  If the application needs any shared libraries, the loader
-+checks all dependencies and enables CET when all requirements are met.
-+
-+[3] CET arch_prctl()'s
-+======================
-+
-+Several arch_prctl()'s have been added for CET:
-+
-+arch_prctl(ARCH_X86_CET_STATUS, u64 *addr)
-+    Return CET feature status.
-+
-+    The parameter 'addr' is a pointer to a user buffer.
-+    On returning to the caller, the kernel fills the following
-+    information::
-+
-+        *addr       = shadow stack/indirect branch tracking status
-+        *(addr + 1) = shadow stack base address
-+        *(addr + 2) = shadow stack size
-+
-+arch_prctl(ARCH_X86_CET_DISABLE, u64 features)
-+    Disable shadow stack and/or indirect branch tracking as specified in
-+    'features'.  Return -EPERM if CET is locked.
-+
-+arch_prctl(ARCH_X86_CET_LOCK)
-+    Lock in all CET features.  They cannot be turned off afterwards.
-+
-+arch_prctl(ARCH_X86_CET_ALLOC_SHSTK, u64 *addr)
-+    Allocate a new shadow stack and put a restore token at top.
-+
-+    The parameter 'addr' is a pointer to a user buffer and indicates the
-+    shadow stack size to allocate.  On returning to the caller, the kernel
-+    fills '*addr' with the base address of the new shadow stack.
-+
-+    User-level threads that need a new stack are expected to allocate a
-+    new shadow stack.
-+
-+Note:
-+  There is no CET-enabling arch_prctl function.  By design, CET is enabled
-+  automatically if the binary and the system can support it.
-+
-+[4] The implementation of the Shadow Stack
-+==========================================
-+
-+Shadow Stack size
-+-----------------
-+
-+A task's shadow stack is allocated from memory to a fixed size of
-+MIN(RLIMIT_STACK, 4 GB).  In other words, the shadow stack is allocated to
-+the maximum size of the normal stack, but capped to 4 GB.  However,
-+a compat-mode application's address space is smaller, each of its thread's
-+shadow stack size is MIN(1/4 RLIMIT_STACK, 4 GB).
-+
-+Signal
-+------
-+
-+The main program and its signal handlers use the same shadow stack.
-+Because the shadow stack stores only return addresses, a large shadow
-+stack covers the condition that both the program stack and the signal
-+alternate stack run out.
-+
-+The kernel creates a restore token for the shadow stack restoring address
-+and verifies that token when restoring from the signal handler.
-+
-+Fork
-+----
-+
-+The shadow stack's vma has VM_SHSTK flag set; its PTEs are required to be
-+read-only and dirty.  When a shadow stack PTE is not RO and dirty, a
-+shadow access triggers a page fault with the shadow stack access bit set
-+in the page fault error code.
-+
-+When a task forks a child, its shadow stack PTEs are copied and both the
-+parent's and the child's shadow stack PTEs are cleared of the dirty bit.
-+Upon the next shadow stack access, the resulting shadow stack page fault
-+is handled by page copy/re-use.
-+
-+When a pthread child is created, the kernel allocates a new shadow stack
-+for the new thread.
+ /*
+  * Architecture PAGE_KERNEL_* fallbacks
+  *
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 54bb4cd9fee8..f0669e3cdd37 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -944,6 +944,8 @@ static inline pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
+ {
+ 	if (likely(vma->vm_flags & VM_WRITE))
+ 		pte = pte_mkwrite(pte);
++	else
++		pte = arch_maybe_mkwrite(pte, vma);
+ 	return pte;
+ }
+ 
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 6ecd1045113b..608746bb9d19 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -485,6 +485,8 @@ pmd_t maybe_pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma)
+ {
+ 	if (likely(vma->vm_flags & VM_WRITE))
+ 		pmd = pmd_mkwrite(pmd);
++	else
++		pmd = arch_maybe_pmd_mkwrite(pmd, vma);
+ 	return pmd;
+ }
+ 
 -- 
 2.21.0
 
