@@ -7,48 +7,48 @@ X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D4957C28CBC
-	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 14:05:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 22964C47247
+	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 14:09:58 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id AC4B2206D9
-	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 14:05:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id F11D8206D9
+	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 14:09:57 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1588255506;
-	bh=4omsvwzjvrAXfjmYJeWPqUxUMXmyScBvf237aFKph34=;
+	s=default; t=1588255798;
+	bh=KUN+6WfYGZkb2XeMCziFwGaIqhaHITpeud5J6xzJ29U=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
-	b=zyqcJlNNWou4s9RA1t5ZW+otatfcNDiySizAKmeO2zxaqrWmRsjBmsq2rWi7eFHkz
-	 vjiivx1FtaeasZ29RxPkNxL7ii5BvnSqtBnZ+LB94ZT7lctr0zoxB64zWos1WNXyms
-	 aqxcH7q6iI0pDv60Dcue3NO6rbamWSbdHLUlyqPY=
+	b=AgQkjH3Le/2rXMtMe3w24DOMh6wyKA5344PVlp8/p4g1O0xTAqKDJAgfdGrgf6VSR
+	 PoLw5FdVrrKUUiyCqqnPpqRUdMjiFNoeX12z0T5GcyJxAH+Qp/cGh8G7vC0/X1Cr4y
+	 SRsm5oWzvioxDhsv91REJgrVzqHezDSz+2WfgbLg=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728602AbgD3NxD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 30 Apr 2020 09:53:03 -0400
-Received: from mail.kernel.org ([198.145.29.99]:34526 "EHLO mail.kernel.org"
+        id S1728466AbgD3OJw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 30 Apr 2020 10:09:52 -0400
+Received: from mail.kernel.org ([198.145.29.99]:60318 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728594AbgD3NxC (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 30 Apr 2020 09:53:02 -0400
+        id S1728166AbgD3Nvo (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 30 Apr 2020 09:51:44 -0400
 Received: from sasha-vm.mshome.net (c-73-47-72-35.hsd1.nh.comcast.net [73.47.72.35])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 481CD2137B;
-        Thu, 30 Apr 2020 13:53:01 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id A99DD24959;
+        Thu, 30 Apr 2020 13:51:42 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1588254782;
-        bh=4omsvwzjvrAXfjmYJeWPqUxUMXmyScBvf237aFKph34=;
+        s=default; t=1588254703;
+        bh=KUN+6WfYGZkb2XeMCziFwGaIqhaHITpeud5J6xzJ29U=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=nGpeRi08Es88G+ZtpcmiirGKFnuRU8Vs5r670ipWNSKO2IR97PccGc7fIcUoE/Y88
-         mEul3lQerTva/7WJuH1XaP4q71QNgQLYNoMbv3B25pHJgIaYjgSpKLnbKmK8Adyah0
-         QEk9YlolX1KkM6ejRqdcRykNRs8dHtu9WwSpuIFQ=
+        b=NBiA5r6iHpP3Cso8quIIzUjeI5gy2J8aG+69K3A9l+c+AAl4oAmDVZCi87wX/4nSM
+         cwlhaF/0uKTX53VA0AkkkW86e/r0eTeHJJtNvwJ4Eyur5H1ugnxZnQmgyWt9Xodmc2
+         eQoiiCOstQKKB+uwohDFhtdh4xNG18l1vJZgWOs0=
 From:   Sasha Levin <sashal@kernel.org>
 To:     linux-kernel@vger.kernel.org, stable@vger.kernel.org
 Cc:     Jann Horn <jannh@google.com>, Alexei Starovoitov <ast@kernel.org>,
         Sasha Levin <sashal@kernel.org>, netdev@vger.kernel.org,
         linux-api@vger.kernel.org
-Subject: [PATCH AUTOSEL 5.4 38/57] bpf: Forbid XADD on spilled pointers for unprivileged users
-Date:   Thu, 30 Apr 2020 09:51:59 -0400
-Message-Id: <20200430135218.20372-38-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 5.6 52/79] bpf: Forbid XADD on spilled pointers for unprivileged users
+Date:   Thu, 30 Apr 2020 09:50:16 -0400
+Message-Id: <20200430135043.19851-52-sashal@kernel.org>
 X-Mailer: git-send-email 2.20.1
-In-Reply-To: <20200430135218.20372-1-sashal@kernel.org>
-References: <20200430135218.20372-1-sashal@kernel.org>
+In-Reply-To: <20200430135043.19851-1-sashal@kernel.org>
+References: <20200430135043.19851-1-sashal@kernel.org>
 MIME-Version: 1.0
 X-stable: review
 X-Patchwork-Hint: Ignore
@@ -131,10 +131,10 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  2 files changed, 20 insertions(+), 9 deletions(-)
 
 diff --git a/kernel/bpf/verifier.c b/kernel/bpf/verifier.c
-index e1a65303cfd7f..ae27dd77a73cb 100644
+index e5d12c54b552c..e4357a301fb8f 100644
 --- a/kernel/bpf/verifier.c
 +++ b/kernel/bpf/verifier.c
-@@ -1866,6 +1866,15 @@ static bool register_is_const(struct bpf_reg_state *reg)
+@@ -1918,6 +1918,15 @@ static bool register_is_const(struct bpf_reg_state *reg)
  	return reg->type == SCALAR_VALUE && tnum_is_const(reg->var_off);
  }
  
@@ -150,7 +150,7 @@ index e1a65303cfd7f..ae27dd77a73cb 100644
  static void save_register_state(struct bpf_func_state *state,
  				int spi, struct bpf_reg_state *reg)
  {
-@@ -2056,6 +2065,16 @@ static int check_stack_read(struct bpf_verifier_env *env,
+@@ -2108,6 +2117,16 @@ static int check_stack_read(struct bpf_verifier_env *env,
  			 * which resets stack/reg liveness for state transitions
  			 */
  			state->regs[value_regno].live |= REG_LIVE_WRITTEN;
@@ -167,7 +167,7 @@ index e1a65303cfd7f..ae27dd77a73cb 100644
  		}
  		mark_reg_read(env, reg, reg->parent, REG_LIVE_READ64);
  	} else {
-@@ -2416,15 +2435,6 @@ static int check_sock_access(struct bpf_verifier_env *env, int insn_idx,
+@@ -2473,15 +2492,6 @@ static int check_sock_access(struct bpf_verifier_env *env, int insn_idx,
  	return -EACCES;
  }
  
