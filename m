@@ -4,51 +4,51 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
-	autolearn_force=no version=3.4.0
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C0225C4724C
-	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 13:52:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 158D9C47247
+	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 13:54:11 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 909E124957
-	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 13:52:33 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E04F820774
+	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 13:54:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1588254753;
-	bh=/pCLZHYr2OmVi2mS3ZUGZ80/NyMpK1+qw2ThEw/BWPI=;
+	s=default; t=1588254851;
+	bh=JhaoRj9jZk39lYShkuqJ2n3OdDYo4lbMd/G3DAoAJHY=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
-	b=xx9fE3IORLDVh5ScDTH/KWkOgPlhlIzx6g5hugqglLmDMycV4buXe4Az0J9Qi3jew
-	 8uOIgVMKWUA1nHB+9xkD1vIt0elasbLwq0+/mJHKXvwV521wV0aq1J2QvpuDlw63BA
-	 348JMQfkK+woEw5GVcpywDe/blpOJ8BwjhJ8X/bk=
+	b=m1vzh0y+SoeGsag2xvM66OuBWDCNyYgKxfAIXRd7w7RXMYkk/dE4a0abi09HohrKH
+	 JSGlAT2PzCWJeNC20HTwpfks1TpwJNRip2w89cU33KajCs218qAi1jbZblA8C6Z5OL
+	 lhFIRzXgHCOAPshrdk/KNInxnGQwkid9zq9ntQJ0=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728422AbgD3Nwb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 30 Apr 2020 09:52:31 -0400
-Received: from mail.kernel.org ([198.145.29.99]:33616 "EHLO mail.kernel.org"
+        id S1728898AbgD3NyJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 30 Apr 2020 09:54:09 -0400
+Received: from mail.kernel.org ([198.145.29.99]:36306 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728413AbgD3Nwa (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 30 Apr 2020 09:52:30 -0400
+        id S1728894AbgD3NyI (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 30 Apr 2020 09:54:08 -0400
 Received: from sasha-vm.mshome.net (c-73-47-72-35.hsd1.nh.comcast.net [73.47.72.35])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 562A220870;
-        Thu, 30 Apr 2020 13:52:29 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id DE8A0208D5;
+        Thu, 30 Apr 2020 13:54:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1588254750;
-        bh=/pCLZHYr2OmVi2mS3ZUGZ80/NyMpK1+qw2ThEw/BWPI=;
+        s=default; t=1588254848;
+        bh=JhaoRj9jZk39lYShkuqJ2n3OdDYo4lbMd/G3DAoAJHY=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=S2qOmiAfF3VSRcp5kx3imh3IDyQbnS80tq/U1sKk1cTkuv75yhYeMdqyEF/mpKSIy
-         tC9VHop6TruWVvHXhl4KMxECEHTYLYKctL52LK9FiS9Jj697TZZVlYJBGOBJXQRRng
-         6cp5imhMWAPR5LcaeWei4QnZDFcO/y2oWCZ2+C5E=
+        b=ryUw709zvMp6EiZJj5euqpDcMNadYCceMJE7uIQwdeghKh9EfGFhM42GEC7FiFScn
+         53FM0f1v92u8e9zDMNNEmpWnoh06UxtV/EdTxuKBTp8GQLynZ9VALTFcHpWvt2gYvY
+         NMoSunFiSeF++dnCxxNroplWYG05Dmys/UfD3Q10=
 From:   Sasha Levin <sashal@kernel.org>
 To:     linux-kernel@vger.kernel.org, stable@vger.kernel.org
 Cc:     Tyler Hicks <tyhicks@linux.microsoft.com>,
         Shuah Khan <skhan@linuxfoundation.org>,
         Sasha Levin <sashal@kernel.org>, linux-api@vger.kernel.org
-Subject: [PATCH AUTOSEL 5.4 09/57] selftests/ipc: Fix test failure seen after initial test run
-Date:   Thu, 30 Apr 2020 09:51:30 -0400
-Message-Id: <20200430135218.20372-9-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 4.14 05/27] selftests/ipc: Fix test failure seen after initial test run
+Date:   Thu, 30 Apr 2020 09:53:40 -0400
+Message-Id: <20200430135402.20994-5-sashal@kernel.org>
 X-Mailer: git-send-email 2.20.1
-In-Reply-To: <20200430135218.20372-1-sashal@kernel.org>
-References: <20200430135218.20372-1-sashal@kernel.org>
+In-Reply-To: <20200430135402.20994-1-sashal@kernel.org>
+References: <20200430135402.20994-1-sashal@kernel.org>
 MIME-Version: 1.0
 X-stable: review
 X-Patchwork-Hint: Ignore
@@ -99,7 +99,7 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/tools/testing/selftests/ipc/msgque.c b/tools/testing/selftests/ipc/msgque.c
-index 4c156aeab6b80..5ec4d9e18806c 100644
+index c5587844fbb8c..ad723a5d0f831 100644
 --- a/tools/testing/selftests/ipc/msgque.c
 +++ b/tools/testing/selftests/ipc/msgque.c
 @@ -137,7 +137,7 @@ int dump_queue(struct msgque_data *msgque)
