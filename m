@@ -2,99 +2,152 @@ Return-Path: <SRS0=/LmR=6O=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.7 required=3.0
-	tests=HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.4 required=3.0 tests=DKIM_ADSP_ALL,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8AB30C83002
-	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 07:14:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4C3D9C83009
+	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 07:16:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6746520784
-	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 07:14:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1D3272192A
+	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 07:16:46 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=cs.msu.ru header.i=@cs.msu.ru header.b="jK/eik5o"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726463AbgD3HOr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 30 Apr 2020 03:14:47 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:35988 "EHLO
-        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726337AbgD3HOq (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 30 Apr 2020 03:14:46 -0400
-Received: from ip5f5af183.dynamic.kabel-deutschland.de ([95.90.241.131] helo=wittgenstein)
-        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.86_2)
-        (envelope-from <christian.brauner@ubuntu.com>)
-        id 1jU3P3-0004ek-SK; Thu, 30 Apr 2020 07:14:37 +0000
-Date:   Thu, 30 Apr 2020 09:14:37 +0200
-From:   Christian Brauner <christian.brauner@ubuntu.com>
-To:     Jiri Slaby <jslaby@suse.cz>
-Cc:     Arseny Maslennikov <ar@cs.msu.ru>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        linux-serial@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Rob Landley <rob@landley.net>,
+        id S1726745AbgD3HQp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 30 Apr 2020 03:16:45 -0400
+Received: from mail.cs.msu.ru ([188.44.42.39]:50463 "EHLO mail.cs.msu.ru"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726412AbgD3HQo (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 30 Apr 2020 03:16:44 -0400
+X-Greylist: delayed 1989 seconds by postgrey-1.27 at vger.kernel.org; Thu, 30 Apr 2020 03:16:42 EDT
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=cs.msu.ru;
+         s=dkim; h=Subject:Content-Transfer-Encoding:Content-Type:MIME-Version:
+        References:In-Reply-To:Message-Id:Date:Cc:To:From:Sender:Reply-To:Content-ID:
+        Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+        :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+        List-Post:List-Owner:List-Archive;
+        bh=MCF4uYzz7F8p7ezZgMR/XpDxwDlhjV1t3xDjOnjcv0g=; b=jK/eik5oO4DUBeovMYOGZQDeET
+        +6RSThmOVSvh1cJXdCq2stRPQYcRSWUU+FoZGiNOjPee+4ndh54dFCbWc+8wie9XNZtPY0FOb+p5X
+        GJL69YgWKZhx2e/l0uQJd3ls4AqfiFJny/Atg5CgMElvFtpIxCZGypbpHdKxL7T5v1/IOKM279gB/
+        TqEXLFUikP0VYfi003El6Avh/FuVZ/oLBOHy7cPFyPIVnvz1vBmPM975nFZUhAMQ5IrunOImkxoJs
+        b9quQUZr6SkZYu6X0HPFXZuxfxqcYKcnO/N6xmVzUyxnO9NJFyWfMLoIwDocFLCIBoVz3YyyeOCjI
+        uZxPUYew==;
+Received: from [37.204.119.143] (port=42272 helo=localhost.localdomain)
+        by mail.cs.msu.ru with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        (Exim 4.93.0.4 (FreeBSD))
+        (envelope-from <ar@cs.msu.ru>)
+        id 1jU2uv-000B4I-4v; Thu, 30 Apr 2020 09:43:29 +0300
+From:   Arseny Maslennikov <ar@cs.msu.ru>
+To:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Jiri Slaby <jslaby@suse.com>, linux-serial@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+Cc:     Arseny Maslennikov <ar@cs.msu.ru>, Rob Landley <rob@landley.net>,
         "Eric W. Biederman" <ebiederm@xmission.com>,
         Pavel Machek <pavel@ucw.cz>, linux-api@vger.kernel.org,
         "Vladimir D. Seleznev" <vseleznv@altlinux.org>
-Subject: Re: [PATCH v3 4/7] linux/signal.h: Ignore SIGINFO by default in new
- tasks
-Message-ID: <20200430071437.x3ilwkh3lyf4iq6u@wittgenstein>
+Date:   Thu, 30 Apr 2020 09:42:57 +0300
+Message-Id: <20200430064301.1099452-4-ar@cs.msu.ru>
+X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20200430064301.1099452-1-ar@cs.msu.ru>
 References: <20200430064301.1099452-1-ar@cs.msu.ru>
- <20200430064301.1099452-5-ar@cs.msu.ru>
- <780cb05e-a749-77a0-dabc-bd09982aa028@suse.cz>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <780cb05e-a749-77a0-dabc-bd09982aa028@suse.cz>
+X-SA-Exim-Connect-IP: 37.204.119.143
+X-SA-Exim-Mail-From: ar@cs.msu.ru
+Subject: [PATCH v3 3/7] n_tty: Send SIGINFO to fg pgrp on status request character
+X-SA-Exim-Version: 4.2.1
+X-SA-Exim-Scanned: Yes (on mail.cs.msu.ru)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Apr 30, 2020 at 08:53:56AM +0200, Jiri Slaby wrote:
-> On 30. 04. 20, 8:42, Arseny Maslennikov wrote:
-> > This matches the behaviour of other Unix-like systems that have SIGINFO
-> > and causes less harm to processes that do not install handlers for this
-> > signal, making the keyboard status character non-fatal for them.
-> > 
-> > This is implemented with the assumption that SIGINFO is defined
-> > to be equivalent to SIGPWR; still, there is no reason for PWR to
-> > result in termination of the signal recipient anyway — it does not
-> > indicate there is a fatal problem with the recipient's execution
-> > context (like e.g. FPE/ILL do), and we have TERM/KILL for explicit
-> > termination requests.
-> > 
-> > To put it another way:
-> > The only scenario where system behaviour actually changes is when the
-> > signal recipient has default disposition for SIGPWR. If a process
-> > chose to interpret a SIGPWR as an incentive to cleanly terminate, it
-> > would supply its own handler — and this commit does not affect processes
-> > with non-default handlers.
-> > 
-> > Signed-off-by: Arseny Maslennikov <ar@cs.msu.ru>
-> > ---
-> >  include/linux/signal.h | 5 +++--
-> >  1 file changed, 3 insertions(+), 2 deletions(-)
-> > 
-> > diff --git a/include/linux/signal.h b/include/linux/signal.h
-> > index 05bacd2ab..dc31da8fc 100644
-> > --- a/include/linux/signal.h
-> > +++ b/include/linux/signal.h
-> > @@ -369,7 +369,7 @@ extern bool unhandled_signal(struct task_struct *tsk, int sig);
-> >   *	|  SIGSYS/SIGUNUSED  |	coredump 	|
-> >   *	|  SIGSTKFLT         |	terminate	|
-> >   *	|  SIGWINCH          |	ignore   	|
-> > - *	|  SIGPWR            |	terminate	|
-> > + *	|  SIGPWR            |	ignore   	|
-> 
-> You need to update signal.7 too:
-> https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/tree/man7/signal.7#n285
+No kerninfo line is printed yet.
 
-(I fail this whole thread via b4 and it appears that a bunch of messages
-are missing on lore. Might just be delay though.)
+No existing implementation of this on any Unix-like system echoes
+the status character; no existing implementation discards or flushes
+pending input on VSTATUS receipt. Thus we do neither.
 
-How this is this not going to break userspace?
-Just for a start, SIGPWR (for better or worse) was used for a long time
-by some sandboxing/container runtimes to shutdown a process and still
-is.
+There are existing popular TUI applications (e. g. mutt) that only
+turn off icanon and not iexten, but still do not expect any special
+treatment of the status request character — so we require all three:
+isig, icanon and iexten to trigger this.
 
-Christian
+Signed-off-by: Arseny Maslennikov <ar@cs.msu.ru>
+---
+ drivers/tty/n_tty.c | 15 +++++++++++++--
+ include/linux/tty.h |  1 +
+ 2 files changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/tty/n_tty.c b/drivers/tty/n_tty.c
+index 1794d84e7..10d6b60a5 100644
+--- a/drivers/tty/n_tty.c
++++ b/drivers/tty/n_tty.c
+@@ -79,6 +79,10 @@
+ #define ECHO_BLOCK		256
+ #define ECHO_DISCARD_WATERMARK	N_TTY_BUF_SIZE - (ECHO_BLOCK + 32)
+ 
++#define SIG_FLUSHING_MASK ( \
++	rt_sigmask(SIGINT) | rt_sigmask(SIGQUIT) | \
++	rt_sigmask(SIGTSTP)			 )
++#define SIG_FLUSHING(sig) ((1 << sig) & SIG_FLUSHING_MASK)
+ 
+ #undef N_TTY_TRACE
+ #ifdef N_TTY_TRACE
+@@ -1122,7 +1126,7 @@ static void isig(int sig, struct tty_struct *tty)
+ {
+ 	struct n_tty_data *ldata = tty->disc_data;
+ 
+-	if (L_NOFLSH(tty)) {
++	if (L_NOFLSH(tty) || (!SIG_FLUSHING(sig))) {
+ 		/* signal only */
+ 		__isig(sig, tty);
+ 
+@@ -1244,7 +1248,8 @@ n_tty_receive_signal_char(struct tty_struct *tty, int signal, unsigned char c)
+ 	if (I_IXON(tty))
+ 		start_tty(tty);
+ 	if (L_ECHO(tty)) {
+-		echo_char(c, tty);
++		if (c != STATUS_CHAR(tty))
++			echo_char(c, tty);
+ 		commit_echoes(tty);
+ 	} else
+ 		process_echoes(tty);
+@@ -1294,6 +1299,9 @@ n_tty_receive_char_special(struct tty_struct *tty, unsigned char c)
+ 		} else if (c == SUSP_CHAR(tty)) {
+ 			n_tty_receive_signal_char(tty, SIGTSTP, c);
+ 			return 0;
++		} else if (c == STATUS_CHAR(tty)) {
++			n_tty_receive_signal_char(tty, SIGINFO, c);
++			return 0;
+ 		}
+ 	}
+ 
+@@ -1848,6 +1856,9 @@ static void n_tty_set_termios(struct tty_struct *tty, struct ktermios *old)
+ 			set_bit(INTR_CHAR(tty), ldata->char_map);
+ 			set_bit(QUIT_CHAR(tty), ldata->char_map);
+ 			set_bit(SUSP_CHAR(tty), ldata->char_map);
++			if (L_ICANON(tty) && L_IEXTEN(tty)) {
++				set_bit(STATUS_CHAR(tty), ldata->char_map);
++			}
+ 		}
+ 		clear_bit(__DISABLED_CHAR, ldata->char_map);
+ 		ldata->raw = 0;
+diff --git a/include/linux/tty.h b/include/linux/tty.h
+index bd5fe0e90..8411fd18d 100644
+--- a/include/linux/tty.h
++++ b/include/linux/tty.h
+@@ -120,6 +120,7 @@ struct tty_bufhead {
+ #define WERASE_CHAR(tty) ((tty)->termios.c_cc[VWERASE])
+ #define LNEXT_CHAR(tty)	((tty)->termios.c_cc[VLNEXT])
+ #define EOL2_CHAR(tty) ((tty)->termios.c_cc[VEOL2])
++#define STATUS_CHAR(tty) ((tty)->termios.c_cc[VSTATUS])
+ 
+ #define _I_FLAG(tty, f)	((tty)->termios.c_iflag & (f))
+ #define _O_FLAG(tty, f)	((tty)->termios.c_oflag & (f))
+-- 
+2.26.2
+
