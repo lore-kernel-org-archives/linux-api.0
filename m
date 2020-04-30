@@ -7,48 +7,48 @@ X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C18B9C47253
-	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 13:58:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3A3F8C4724C
+	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 14:03:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 972CC206D9
-	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 13:58:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 10F0C208D5
+	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 14:03:20 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1588255124;
-	bh=iKLOjbISfSmx+ATUFlxMQc5jsMELnFldoSD6Jp2nEvM=;
+	s=default; t=1588255400;
+	bh=/pCLZHYr2OmVi2mS3ZUGZ80/NyMpK1+qw2ThEw/BWPI=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
-	b=0Yx2oAlISzSyrQ4gOYEpfo7CebSStoW5GzvQn/BTvcPPWUWZqnWoTfAA2oUAXBSmy
-	 wKCwGHW57UQ/+f/U2DA7M2VjLLZwyLqeRONLCr0LVqqHnC+1W2nDU0CVO3caScGgG5
-	 ezcb4935lZT9+bw0va43mAlznjkgW+sdIJoCLf50=
+	b=J1zgEoar5x8fsVkEWroY2569RbkrNNzYHGNMJxjjbNJsIYzba7oD7wHArRiivT9hO
+	 teUIs0+dcFXC4aERRxKoDIfOAWH3wrqM9M6A7pwu8OO8eGvQBPY8eMmxwwq/lU4HfY
+	 bTTewA+RNnXiYw1D4x7KlegogtDpQB/5qIG5rd2g=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729020AbgD3Nyj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 30 Apr 2020 09:54:39 -0400
-Received: from mail.kernel.org ([198.145.29.99]:37212 "EHLO mail.kernel.org"
+        id S1729051AbgD3ODS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 30 Apr 2020 10:03:18 -0400
+Received: from mail.kernel.org ([198.145.29.99]:35310 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729015AbgD3Nyi (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 30 Apr 2020 09:54:38 -0400
+        id S1728723AbgD3Nxb (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 30 Apr 2020 09:53:31 -0400
 Received: from sasha-vm.mshome.net (c-73-47-72-35.hsd1.nh.comcast.net [73.47.72.35])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 2E2D224964;
-        Thu, 30 Apr 2020 13:54:37 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 5154B208CA;
+        Thu, 30 Apr 2020 13:53:30 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1588254877;
-        bh=iKLOjbISfSmx+ATUFlxMQc5jsMELnFldoSD6Jp2nEvM=;
+        s=default; t=1588254811;
+        bh=/pCLZHYr2OmVi2mS3ZUGZ80/NyMpK1+qw2ThEw/BWPI=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=Qf7DptpWAODbzvgR8l1ytDk6AjcNWQWWEdueKHJTuPVfwLC3ZBOkul8jlFBnsjPEc
-         LGssX/PocdYfORRWYnYrNsqMhO2gF8GG6MyAZL6vryauT5agbaU0ZRlwFXp9HpkYZG
-         aCWemsSlWcb2aH8yVrEYJk0n7SmbbrqefkYCywAg=
+        b=HTmQUJbjyslEJ7lfsQnv8Cp+ndzTycPwmDPk2v9ZS4vEMGwRjlLm/c3qpnoc6RFTf
+         kHP3EKyJZ1yn5ZK0fHvXj7uwyNiVPfRcG6kneMg0Cs0ofeWTpRxuihvrimTjv0wjIg
+         vPQqzCWAv4NRIlKIpVgLIB6vXrHVXLHV5tsbXSv8=
 From:   Sasha Levin <sashal@kernel.org>
 To:     linux-kernel@vger.kernel.org, stable@vger.kernel.org
 Cc:     Tyler Hicks <tyhicks@linux.microsoft.com>,
         Shuah Khan <skhan@linuxfoundation.org>,
         Sasha Levin <sashal@kernel.org>, linux-api@vger.kernel.org
-Subject: [PATCH AUTOSEL 4.9 03/17] selftests/ipc: Fix test failure seen after initial test run
-Date:   Thu, 30 Apr 2020 09:54:19 -0400
-Message-Id: <20200430135433.21204-3-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 4.19 04/30] selftests/ipc: Fix test failure seen after initial test run
+Date:   Thu, 30 Apr 2020 09:52:59 -0400
+Message-Id: <20200430135325.20762-4-sashal@kernel.org>
 X-Mailer: git-send-email 2.20.1
-In-Reply-To: <20200430135433.21204-1-sashal@kernel.org>
-References: <20200430135433.21204-1-sashal@kernel.org>
+In-Reply-To: <20200430135325.20762-1-sashal@kernel.org>
+References: <20200430135325.20762-1-sashal@kernel.org>
 MIME-Version: 1.0
 X-stable: review
 X-Patchwork-Hint: Ignore
@@ -99,10 +99,10 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/tools/testing/selftests/ipc/msgque.c b/tools/testing/selftests/ipc/msgque.c
-index 1b2ce334bb3f0..47c074d73e610 100644
+index 4c156aeab6b80..5ec4d9e18806c 100644
 --- a/tools/testing/selftests/ipc/msgque.c
 +++ b/tools/testing/selftests/ipc/msgque.c
-@@ -135,7 +135,7 @@ int dump_queue(struct msgque_data *msgque)
+@@ -137,7 +137,7 @@ int dump_queue(struct msgque_data *msgque)
  	for (kern_id = 0; kern_id < 256; kern_id++) {
  		ret = msgctl(kern_id, MSG_STAT, &ds);
  		if (ret < 0) {
