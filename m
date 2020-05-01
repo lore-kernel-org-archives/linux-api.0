@@ -1,175 +1,172 @@
-Return-Path: <SRS0=/LmR=6O=vger.kernel.org=linux-api-owner@kernel.org>
+Return-Path: <SRS0=/J/S=6P=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.7 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 77AF7C47253
-	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 18:12:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 03F8EC4724C
+	for <linux-api@archiver.kernel.org>; Fri,  1 May 2020 02:14:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 66BAC2073E
-	for <linux-api@archiver.kernel.org>; Thu, 30 Apr 2020 18:12:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A64432074A
+	for <linux-api@archiver.kernel.org>; Fri,  1 May 2020 02:14:53 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="uiYrwNaL"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726672AbgD3SMw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 30 Apr 2020 14:12:52 -0400
-Received: from out02.mta.xmission.com ([166.70.13.232]:35986 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726355AbgD3SMv (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 30 Apr 2020 14:12:51 -0400
-Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out02.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.90_1)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1jUDg0-0000n9-R9; Thu, 30 Apr 2020 12:12:48 -0600
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
-        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        (Exim 4.87)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1jUDfz-0005Zd-NS; Thu, 30 Apr 2020 12:12:48 -0600
-From:   ebiederm@xmission.com (Eric W. Biederman)
-To:     Christian Brauner <christian.brauner@ubuntu.com>
-Cc:     linux-kernel@vger.kernel.org,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        =?utf-8?Q?St=C3=A9phane?= Graber <stgraber@ubuntu.com>,
-        Linux Containers <containers@lists.linux-foundation.org>,
-        Serge Hallyn <serge@hallyn.com>, Jann Horn <jannh@google.com>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Aleksa Sarai <cyphar@cyphar.com>, linux-api@vger.kernel.org
-References: <20200430165717.1001605-1-christian.brauner@ubuntu.com>
-Date:   Thu, 30 Apr 2020 13:09:30 -0500
-In-Reply-To: <20200430165717.1001605-1-christian.brauner@ubuntu.com>
-        (Christian Brauner's message of "Thu, 30 Apr 2020 18:57:14 +0200")
-Message-ID: <87y2qczvz9.fsf@x220.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
-MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1jUDfz-0005Zd-NS;;;mid=<87y2qczvz9.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1/2u92/HUnzulG8cj3qAG1mxVp6CYsuNXk=
-X-SA-Exim-Connect-IP: 68.227.160.95
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: Re: [PATCH v2 1/4] capability: add ns_capable_cred()
-X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
+        id S1728032AbgEACOx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 30 Apr 2020 22:14:53 -0400
+Received: from mail.efficios.com ([167.114.26.124]:37534 "EHLO
+        mail.efficios.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728029AbgEACOx (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 30 Apr 2020 22:14:53 -0400
+Received: from localhost (localhost [127.0.0.1])
+        by mail.efficios.com (Postfix) with ESMTP id A11D0294168;
+        Thu, 30 Apr 2020 22:14:51 -0400 (EDT)
+Received: from mail.efficios.com ([127.0.0.1])
+        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
+        with ESMTP id pfpxW8W8kRsn; Thu, 30 Apr 2020 22:14:51 -0400 (EDT)
+Received: from localhost (localhost [127.0.0.1])
+        by mail.efficios.com (Postfix) with ESMTP id 3D69A294595;
+        Thu, 30 Apr 2020 22:14:51 -0400 (EDT)
+DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 3D69A294595
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
+        s=default; t=1588299291;
+        bh=0smAkb6cp0p+RuLi71ihxVXx+NcGlOLwapAddILSwQ4=;
+        h=From:To:Date:Message-Id;
+        b=uiYrwNaLaQSi0yvBcpghTE8u0RKlmi9zj2hl+AbLfNKVr3ROEErLC4GvCmY6yd/YP
+         0RHkDQKgl5PKy3TFakb0sn0FTUhTQ5lzwVeE19PW2Zc3Hyhe0SzvFiyJwkkIiNPxME
+         GT1NSygDlfIEASsCZi0bvXmFh2A2ZIFi74onh/XN+JGc4pZgroKE47mIpGsiVO+cca
+         K46lOKJ2r5JyHK00794VOEJ8RJ1eSwim5ixHZ4sqslzSHD5RPkr7cY42jxJCsjLadq
+         AVXMdh0uCMTxyaxlwydthovF8KDGrAX0zC9Zf2TgJdtxXr/wf0FGa7K6rJd15Sxpor
+         N9iXBolxuPRpQ==
+X-Virus-Scanned: amavisd-new at efficios.com
+Received: from mail.efficios.com ([127.0.0.1])
+        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
+        with ESMTP id DGHr5DzkxDIs; Thu, 30 Apr 2020 22:14:51 -0400 (EDT)
+Received: from localhost.localdomain (192-222-181-218.qc.cable.ebox.net [192.222.181.218])
+        by mail.efficios.com (Postfix) with ESMTPSA id F0D44294518;
+        Thu, 30 Apr 2020 22:14:50 -0400 (EDT)
+From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To:     Florian Weimer <fweimer@redhat.com>
+Cc:     Carlos O'Donell <carlos@redhat.com>,
+        Joseph Myers <joseph@codesourcery.com>,
+        Szabolcs Nagy <szabolcs.nagy@arm.com>,
+        libc-alpha@sourceware.org,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ben Maurer <bmaurer@fb.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        Will Deacon <will.deacon@arm.com>,
+        Paul Turner <pjt@google.com>, linux-kernel@vger.kernel.org,
+        linux-api@vger.kernel.org
+Subject: [PATCH glibc 2/3] glibc: sched_getcpu(): use rseq cpu_id TLS on Linux (v7)
+Date:   Thu, 30 Apr 2020 22:14:38 -0400
+Message-Id: <20200501021439.2456-3-mathieu.desnoyers@efficios.com>
+X-Mailer: git-send-email 2.17.1
+In-Reply-To: <20200501021439.2456-1-mathieu.desnoyers@efficios.com>
+References: <20200501021439.2456-1-mathieu.desnoyers@efficios.com>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Christian Brauner <christian.brauner@ubuntu.com> writes:
+When available, use the cpu_id field from __rseq_abi on Linux to
+implement sched_getcpu().  Fall-back on the vgetcpu vDSO if unavailable.
 
-> Add a simple capability helper which makes it possible to determine
-> whether a set of creds is ns capable wrt to the passed in credentials.
-> This is not something exciting it's just a more pleasant wrapper around
-> security_capable() by allowing ns_capable_common() to ake a const struct
-> cred argument. In ptrace_has_cap() for example, we're using
-> security_capable() directly. ns_capable_cred() will be used in the next
-> patch to check against the target credentials the caller is going to
-> switch to.
+Benchmarks:
 
-Given that this is to suppot setns.  I don't understand the
-justification for this.
+x86-64: Intel E5-2630 v3@2.40GHz, 16-core, hyperthreading
 
-Is it your intention to use the reduced permissions that you get
-when you install a user namespace?
+glibc sched_getcpu():                     13.7 ns (baseline)
+glibc sched_getcpu() using rseq:           2.5 ns (speedup:  5.5x)
+inline load cpuid from __rseq_abi TLS:     0.8 ns (speedup: 17.1x)
 
-Why do you want to use the reduced permissions when installing multiple
-namespaces at once?
+CC: Carlos O'Donell <carlos@redhat.com>
+CC: Florian Weimer <fweimer@redhat.com>
+CC: Joseph Myers <joseph@codesourcery.com>
+CC: Szabolcs Nagy <szabolcs.nagy@arm.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Paul Turner <pjt@google.com>
+CC: libc-alpha@sourceware.org
+CC: linux-kernel@vger.kernel.org
+CC: linux-api@vger.kernel.org
+---
+Changes since v1:
+- rseq is only used if both __NR_rseq and RSEQ_SIG are defined.
 
-Eric
+Changes since v2:
+- remove duplicated __rseq_abi extern declaration.
 
+Changes since v3:
+- update ChangeLog.
 
-> Cc: Eric W. Biederman <ebiederm@xmission.com>
-> Cc: Serge Hallyn <serge@hallyn.com>
-> Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
-> ---
-> /* v2 */
-> patch introduced
-> ---
->  include/linux/capability.h |  3 +++
->  kernel/capability.c        | 17 +++++++++++------
->  2 files changed, 14 insertions(+), 6 deletions(-)
->
-> diff --git a/include/linux/capability.h b/include/linux/capability.h
-> index ecce0f43c73a..743a08d936fb 100644
-> --- a/include/linux/capability.h
-> +++ b/include/linux/capability.h
-> @@ -40,6 +40,7 @@ struct cpu_vfs_cap_data {
->  struct file;
->  struct inode;
->  struct dentry;
-> +struct cred;
->  struct task_struct;
->  struct user_namespace;
->  
-> @@ -209,6 +210,8 @@ extern bool has_ns_capability_noaudit(struct task_struct *t,
->  				      struct user_namespace *ns, int cap);
->  extern bool capable(int cap);
->  extern bool ns_capable(struct user_namespace *ns, int cap);
-> +extern bool ns_capable_cred(const struct cred *cred,
-> +			    struct user_namespace *ns, int cap);
->  extern bool ns_capable_noaudit(struct user_namespace *ns, int cap);
->  extern bool ns_capable_setid(struct user_namespace *ns, int cap);
->  #else
-> diff --git a/kernel/capability.c b/kernel/capability.c
-> index 1444f3954d75..84425781917e 100644
-> --- a/kernel/capability.c
-> +++ b/kernel/capability.c
-> @@ -361,8 +361,8 @@ bool has_capability_noaudit(struct task_struct *t, int cap)
->  	return has_ns_capability_noaudit(t, &init_user_ns, cap);
->  }
->  
-> -static bool ns_capable_common(struct user_namespace *ns,
-> -			      int cap,
-> +static bool ns_capable_common(const struct cred *cred,
-> +			      struct user_namespace *ns, int cap,
->  			      unsigned int opts)
->  {
->  	int capable;
-> @@ -372,7 +372,7 @@ static bool ns_capable_common(struct user_namespace *ns,
->  		BUG();
->  	}
->  
-> -	capable = security_capable(current_cred(), ns, cap, opts);
-> +	capable = security_capable(cred, ns, cap, opts);
->  	if (capable == 0) {
->  		current->flags |= PF_SUPERPRIV;
->  		return true;
-> @@ -393,10 +393,15 @@ static bool ns_capable_common(struct user_namespace *ns,
->   */
->  bool ns_capable(struct user_namespace *ns, int cap)
->  {
-> -	return ns_capable_common(ns, cap, CAP_OPT_NONE);
-> +	return ns_capable_common(current_cred(), ns, cap, CAP_OPT_NONE);
->  }
->  EXPORT_SYMBOL(ns_capable);
->  
-> +bool ns_capable_cred(const struct cred *cred, struct user_namespace *ns, int cap)
-> +{
-> +	return ns_capable_common(cred, ns, cap, CAP_OPT_NONE);
-> +}
-> +
->  /**
->   * ns_capable_noaudit - Determine if the current task has a superior capability
->   * (unaudited) in effect
-> @@ -411,7 +416,7 @@ EXPORT_SYMBOL(ns_capable);
->   */
->  bool ns_capable_noaudit(struct user_namespace *ns, int cap)
->  {
-> -	return ns_capable_common(ns, cap, CAP_OPT_NOAUDIT);
-> +	return ns_capable_common(current_cred(), ns, cap, CAP_OPT_NOAUDIT);
->  }
->  EXPORT_SYMBOL(ns_capable_noaudit);
->  
-> @@ -430,7 +435,7 @@ EXPORT_SYMBOL(ns_capable_noaudit);
->   */
->  bool ns_capable_setid(struct user_namespace *ns, int cap)
->  {
-> -	return ns_capable_common(ns, cap, CAP_OPT_INSETID);
-> +	return ns_capable_common(current_cred(), ns, cap, CAP_OPT_INSETID);
->  }
->  EXPORT_SYMBOL(ns_capable_setid);
->  
->
-> base-commit: ae83d0b416db002fe95601e7f97f64b59514d936
+Changes since v4:
+- Use atomic_load_relaxed to load the __rseq_abi.cpu_id field, a
+  consequence of the fact that __rseq_abi is not volatile anymore.
+- Include atomic.h which provides atomic_load_relaxed.
+
+Changes since v5:
+- Use __ASSUME_RSEQ to detect rseq availability.
+
+Changes since v6:
+- Remove use of __ASSUME_RSEQ.
+---
+ sysdeps/unix/sysv/linux/sched_getcpu.c | 27 ++++++++++++++++++++++++--
+ 1 file changed, 25 insertions(+), 2 deletions(-)
+
+diff --git a/sysdeps/unix/sysv/linux/sched_getcpu.c b/sysdeps/unix/sysv/linux/sched_getcpu.c
+index c019cfb3cf..2269c4f2bd 100644
+--- a/sysdeps/unix/sysv/linux/sched_getcpu.c
++++ b/sysdeps/unix/sysv/linux/sched_getcpu.c
+@@ -18,10 +18,15 @@
+ #include <errno.h>
+ #include <sched.h>
+ #include <sysdep.h>
++#include <atomic.h>
+ #include <sysdep-vdso.h>
+ 
+-int
+-sched_getcpu (void)
++#ifdef HAVE_GETCPU_VSYSCALL
++# define HAVE_VSYSCALL
++#endif
++
++static int
++vsyscall_sched_getcpu (void)
+ {
+   unsigned int cpu;
+   int r = -1;
+@@ -32,3 +37,21 @@ sched_getcpu (void)
+ #endif
+   return r == -1 ? r : cpu;
+ }
++
++#include <sys/rseq.h>
++
++#ifdef RSEQ_SIG
++int
++sched_getcpu (void)
++{
++  int cpu_id = atomic_load_relaxed (&__rseq_abi.cpu_id);
++
++  return cpu_id >= 0 ? cpu_id : vsyscall_sched_getcpu ();
++}
++#else
++int
++sched_getcpu (void)
++{
++  return vsyscall_sched_getcpu ();
++}
++#endif
+-- 
+2.17.1
+
