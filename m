@@ -4,26 +4,25 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
-	version=3.4.0
+	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 36C86C3A5A9
-	for <linux-api@archiver.kernel.org>; Mon,  4 May 2020 14:41:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0F04BC4725A
+	for <linux-api@archiver.kernel.org>; Mon,  4 May 2020 14:42:01 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 097E32078E
-	for <linux-api@archiver.kernel.org>; Mon,  4 May 2020 14:41:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DD9A12075B
+	for <linux-api@archiver.kernel.org>; Mon,  4 May 2020 14:42:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729128AbgEDOlz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 4 May 2020 10:41:55 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:40356 "EHLO
+        id S1729175AbgEDOmA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 4 May 2020 10:42:00 -0400
+Received: from youngberry.canonical.com ([91.189.89.112]:40368 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728187AbgEDOlz (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 4 May 2020 10:41:55 -0400
+        with ESMTP id S1728187AbgEDOl7 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 4 May 2020 10:41:59 -0400
 Received: from ip5f5af183.dynamic.kabel-deutschland.de ([95.90.241.131] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1jVcI2-0008Gv-9V; Mon, 04 May 2020 14:41:50 +0000
+        id 1jVcI7-0008Gv-Ls; Mon, 04 May 2020 14:41:55 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     linux-kernel@vger.kernel.org
 Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
@@ -34,9 +33,9 @@ Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Michael Kerrisk <mtk.manpages@gmail.com>,
         Aleksa Sarai <cyphar@cyphar.com>, linux-api@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v3 1/3] nsproxy: add struct nsset
-Date:   Mon,  4 May 2020 16:41:39 +0200
-Message-Id: <20200504144141.3605533-2-christian.brauner@ubuntu.com>
+Subject: [PATCH v3 3/3] selftests/pidfd: add pidfd setns tests
+Date:   Mon,  4 May 2020 16:41:41 +0200
+Message-Id: <20200504144141.3605533-4-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.26.2
 In-Reply-To: <20200504144141.3605533-1-christian.brauner@ubuntu.com>
 References: <20200504144141.3605533-1-christian.brauner@ubuntu.com>
@@ -47,429 +46,548 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add a simple struct nsset. It holds all necessary pieces to switch to a new
-set of namespaces without leaving a task in a half-switched state which we
-will make use of in the next patch. This patch simply switches the existing
-setns logic over without causing a change in setns() behavior. This brings
-setns() closer to how unshare() works(). The prepare_ns() function is
-responsible to prepare all necessary information. This has two reasons.
-First it minimizes dependencies between individual namespaces, i.e. all
-install handler can expect that all fields are properly initialized
-independent in what order they are called in. Second, this makes the code
-easier to maintain and easier to follow if it needs to be changed.
+This is basically a test-suite for setns() and as of now contains:
+- test that we can't pass garbage flags
+- test that we can't attach to the namespaces of  task that has already exited
+- test that we can incrementally setns into all namespaces of a target task
+  using a pidfd
+- test that we can setns atomically into all namespaces of a target task
+- test that we can't cross setns into a user namespace outside of our user
+  namespace hierarchy
+- test that we can't setns into namespaces owned by user namespaces over which
+  we are not privileged
 
-Cc: Eric W. Biederman <ebiederm@xmission.com>
-Cc: Serge Hallyn <serge@hallyn.com>
-Cc: Jann Horn <jannh@google.com>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: Aleksa Sarai <cyphar@cyphar.com>
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
 patch introduced
 
 /* v3 */
-- Eric W. Biederman <ebiederm@xmission.com>:
-  - Remove the prior ns_capable_cred() patch and simplify the permission
-    check from ns_capable_cred(nsset, nsset->cred->user_ns, CAP_SYS_ADMIN))
-    to from ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN)).
-patch introduced
+- Christian Brauner <christian.brauner@ubuntu.com>:
+  - Minor tweaks in variable naming and a few tiny fixes.
 ---
- fs/namespace.c                | 10 ++--
- include/linux/mnt_namespace.h |  1 +
- include/linux/nsproxy.h       | 24 +++++++++
- include/linux/proc_ns.h       |  4 +-
- ipc/namespace.c               |  7 ++-
- kernel/cgroup/namespace.c     |  5 +-
- kernel/nsproxy.c              | 94 ++++++++++++++++++++++++++++++-----
- kernel/pid_namespace.c        |  5 +-
- kernel/time/namespace.c       |  5 +-
- kernel/user_namespace.c       |  8 +--
- kernel/utsname.c              |  5 +-
- net/core/net_namespace.c      |  5 +-
- 12 files changed, 137 insertions(+), 36 deletions(-)
+ tools/testing/selftests/pidfd/.gitignore      |   1 +
+ tools/testing/selftests/pidfd/Makefile        |   3 +-
+ tools/testing/selftests/pidfd/config          |   6 +
+ .../selftests/pidfd/pidfd_setns_test.c        | 473 ++++++++++++++++++
+ 4 files changed, 482 insertions(+), 1 deletion(-)
+ create mode 100644 tools/testing/selftests/pidfd/config
+ create mode 100644 tools/testing/selftests/pidfd/pidfd_setns_test.c
 
-diff --git a/fs/namespace.c b/fs/namespace.c
-index a28e4db075ed..62899fad4a04 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -3954,16 +3954,18 @@ static void mntns_put(struct ns_common *ns)
- 	put_mnt_ns(to_mnt_ns(ns));
- }
+diff --git a/tools/testing/selftests/pidfd/.gitignore b/tools/testing/selftests/pidfd/.gitignore
+index 2d4db5afb142..973198a3ec3d 100644
+--- a/tools/testing/selftests/pidfd/.gitignore
++++ b/tools/testing/selftests/pidfd/.gitignore
+@@ -5,3 +5,4 @@ pidfd_test
+ pidfd_wait
+ pidfd_fdinfo_test
+ pidfd_getfd_test
++pidfd_setns_test
+diff --git a/tools/testing/selftests/pidfd/Makefile b/tools/testing/selftests/pidfd/Makefile
+index 75a545861375..f4a2f28f926b 100644
+--- a/tools/testing/selftests/pidfd/Makefile
++++ b/tools/testing/selftests/pidfd/Makefile
+@@ -1,7 +1,8 @@
+ # SPDX-License-Identifier: GPL-2.0-only
+ CFLAGS += -g -I../../../../usr/include/ -pthread
  
--static int mntns_install(struct nsproxy *nsproxy, struct ns_common *ns)
-+static int mntns_install(struct nsset *nsset, struct ns_common *ns)
- {
--	struct fs_struct *fs = current->fs;
-+	struct nsproxy *nsproxy = nsset->nsproxy;
-+	struct fs_struct *fs = nsset->fs;
- 	struct mnt_namespace *mnt_ns = to_mnt_ns(ns), *old_mnt_ns;
-+	struct user_namespace *user_ns = nsset->cred->user_ns;
- 	struct path root;
- 	int err;
+-TEST_GEN_PROGS := pidfd_test pidfd_fdinfo_test pidfd_open_test pidfd_poll_test pidfd_wait pidfd_getfd_test
++TEST_GEN_PROGS := pidfd_test pidfd_fdinfo_test pidfd_open_test \
++	pidfd_poll_test pidfd_wait pidfd_getfd_test pidfd_setns_test
  
- 	if (!ns_capable(mnt_ns->user_ns, CAP_SYS_ADMIN) ||
--	    !ns_capable(current_user_ns(), CAP_SYS_CHROOT) ||
--	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
-+	    !ns_capable(user_ns, CAP_SYS_CHROOT) ||
-+	    !ns_capable(user_ns, CAP_SYS_ADMIN))
- 		return -EPERM;
+ include ../lib.mk
  
- 	if (is_anon_ns(mnt_ns))
-diff --git a/include/linux/mnt_namespace.h b/include/linux/mnt_namespace.h
-index 35942084cd40..007cfa52efb2 100644
---- a/include/linux/mnt_namespace.h
-+++ b/include/linux/mnt_namespace.h
-@@ -6,6 +6,7 @@
- struct mnt_namespace;
- struct fs_struct;
- struct user_namespace;
-+struct ns_common;
- 
- extern struct mnt_namespace *copy_mnt_ns(unsigned long, struct mnt_namespace *,
- 		struct user_namespace *, struct fs_struct *);
-diff --git a/include/linux/nsproxy.h b/include/linux/nsproxy.h
-index 074f395b9ad2..cdb171efc7cb 100644
---- a/include/linux/nsproxy.h
-+++ b/include/linux/nsproxy.h
-@@ -41,6 +41,30 @@ struct nsproxy {
- };
- extern struct nsproxy init_nsproxy;
- 
-+/*
-+ * A structure to encompass all bits needed to install
-+ * a partial or complete new set of namespaces.
-+ *
-+ * If a new user namespace is requested cred will
-+ * point to a modifiable set of credentials. If a pointer
-+ * to a modifiable set is needed nsset_cred() must be
-+ * used and tested.
-+ */
-+struct nsset {
-+	unsigned flags;
-+	struct nsproxy *nsproxy;
-+	struct fs_struct *fs;
-+	const struct cred *cred;
+diff --git a/tools/testing/selftests/pidfd/config b/tools/testing/selftests/pidfd/config
+new file mode 100644
+index 000000000000..bb11de90c0c9
+--- /dev/null
++++ b/tools/testing/selftests/pidfd/config
+@@ -0,0 +1,6 @@
++CONFIG_UTS_NS=y
++CONFIG_IPC_NS=y
++CONFIG_USER_NS=y
++CONFIG_PID_NS=y
++CONFIG_NET_NS=y
++CONFIG_CGROUPS=y
+diff --git a/tools/testing/selftests/pidfd/pidfd_setns_test.c b/tools/testing/selftests/pidfd/pidfd_setns_test.c
+new file mode 100644
+index 000000000000..133ec5b6cda8
+--- /dev/null
++++ b/tools/testing/selftests/pidfd/pidfd_setns_test.c
+@@ -0,0 +1,473 @@
++// SPDX-License-Identifier: GPL-2.0
++
++#define _GNU_SOURCE
++#include <errno.h>
++#include <fcntl.h>
++#include <limits.h>
++#include <linux/types.h>
++#include <sched.h>
++#include <signal.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <syscall.h>
++#include <sys/prctl.h>
++#include <sys/wait.h>
++#include <unistd.h>
++#include <sys/socket.h>
++#include <sys/stat.h>
++#include <linux/kcmp.h>
++
++#include "pidfd.h"
++#include "../clone3/clone3_selftests.h"
++#include "../kselftest.h"
++#include "../kselftest_harness.h"
++
++enum {
++	PIDFD_NS_USER,
++	PIDFD_NS_MNT,
++	PIDFD_NS_PID,
++	PIDFD_NS_UTS,
++	PIDFD_NS_IPC,
++	PIDFD_NS_NET,
++	PIDFD_NS_CGROUP,
++	PIDFD_NS_PIDCLD,
++	PIDFD_NS_MAX
 +};
 +
-+static inline struct cred *nsset_cred(struct nsset *set)
-+{
-+	if (set->flags & CLONE_NEWUSER)
-+		return (struct cred *)set->cred;
++const struct ns_info {
++	const char *name;
++	int flag;
++} ns_info[] = {
++	[PIDFD_NS_USER]   = { "user",             CLONE_NEWUSER,   },
++	[PIDFD_NS_MNT]    = { "mnt",              CLONE_NEWNS,     },
++	[PIDFD_NS_PID]    = { "pid",              CLONE_NEWPID,    },
++	[PIDFD_NS_UTS]    = { "uts",              CLONE_NEWUTS,    },
++	[PIDFD_NS_IPC]    = { "ipc",              CLONE_NEWIPC,    },
++	[PIDFD_NS_NET]    = { "net",              CLONE_NEWNET,    },
++	[PIDFD_NS_CGROUP] = { "cgroup",           CLONE_NEWCGROUP, },
++	[PIDFD_NS_PIDCLD] = { "pid_for_children", 0,               },
++};
 +
-+	return NULL;
++FIXTURE(current_nsset)
++{
++	pid_t pid;
++	int pidfd;
++	int nsfds[PIDFD_NS_MAX];
++
++	pid_t child_pid_exited;
++	int child_pidfd_exited;
++
++	pid_t child_pid1;
++	int child_pidfd1;
++	int child_nsfds1[PIDFD_NS_MAX];
++
++	pid_t child_pid2;
++	int child_pidfd2;
++	int child_nsfds2[PIDFD_NS_MAX];
++};
++
++static int sys_waitid(int which, pid_t pid, int options)
++{
++	return syscall(__NR_waitid, which, pid, NULL, options, NULL);
 +}
 +
- /*
-  * the namespaces access rules are:
-  *
-diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
-index 6abe85c34681..75807ecef880 100644
---- a/include/linux/proc_ns.h
-+++ b/include/linux/proc_ns.h
-@@ -8,7 +8,7 @@
- #include <linux/ns_common.h>
- 
- struct pid_namespace;
--struct nsproxy;
-+struct nsset;
- struct path;
- struct task_struct;
- struct inode;
-@@ -19,7 +19,7 @@ struct proc_ns_operations {
- 	int type;
- 	struct ns_common *(*get)(struct task_struct *task);
- 	void (*put)(struct ns_common *ns);
--	int (*install)(struct nsproxy *nsproxy, struct ns_common *ns);
-+	int (*install)(struct nsset *nsset, struct ns_common *ns);
- 	struct user_namespace *(*owner)(struct ns_common *ns);
- 	struct ns_common *(*get_parent)(struct ns_common *ns);
- } __randomize_layout;
-diff --git a/ipc/namespace.c b/ipc/namespace.c
-index b3ca1476ca51..fdc3b5f3f53a 100644
---- a/ipc/namespace.c
-+++ b/ipc/namespace.c
-@@ -177,15 +177,14 @@ static void ipcns_put(struct ns_common *ns)
- 	return put_ipc_ns(to_ipc_ns(ns));
- }
- 
--static int ipcns_install(struct nsproxy *nsproxy, struct ns_common *new)
-+static int ipcns_install(struct nsset *nsset, struct ns_common *new)
- {
-+	struct nsproxy *nsproxy = nsset->nsproxy;
- 	struct ipc_namespace *ns = to_ipc_ns(new);
- 	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
--	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
-+	    !ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN))
- 		return -EPERM;
- 
--	/* Ditch state from the old ipc namespace */
--	exit_sem(current);
- 	put_ipc_ns(nsproxy->ipc_ns);
- 	nsproxy->ipc_ns = get_ipc_ns(ns);
- 	return 0;
-diff --git a/kernel/cgroup/namespace.c b/kernel/cgroup/namespace.c
-index b05f1dd58a62..812a61afd538 100644
---- a/kernel/cgroup/namespace.c
-+++ b/kernel/cgroup/namespace.c
-@@ -95,11 +95,12 @@ static inline struct cgroup_namespace *to_cg_ns(struct ns_common *ns)
- 	return container_of(ns, struct cgroup_namespace, ns);
- }
- 
--static int cgroupns_install(struct nsproxy *nsproxy, struct ns_common *ns)
-+static int cgroupns_install(struct nsset *nsset, struct ns_common *ns)
- {
-+	struct nsproxy *nsproxy = nsset->nsproxy;
- 	struct cgroup_namespace *cgroup_ns = to_cg_ns(ns);
- 
--	if (!ns_capable(current_user_ns(), CAP_SYS_ADMIN) ||
-+	if (!ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN) ||
- 	    !ns_capable(cgroup_ns->user_ns, CAP_SYS_ADMIN))
- 		return -EPERM;
- 
-diff --git a/kernel/nsproxy.c b/kernel/nsproxy.c
-index ed9882108cd2..2da463bab58a 100644
---- a/kernel/nsproxy.c
-+++ b/kernel/nsproxy.c
-@@ -19,6 +19,7 @@
- #include <net/net_namespace.h>
- #include <linux/ipc_namespace.h>
- #include <linux/time_namespace.h>
-+#include <linux/fs_struct.h>
- #include <linux/proc_ns.h>
- #include <linux/file.h>
- #include <linux/syscalls.h>
-@@ -257,12 +258,85 @@ void exit_task_namespaces(struct task_struct *p)
- 	switch_task_namespaces(p, NULL);
- }
- 
-+static void put_nsset(struct nsset *nsset)
++pid_t create_child(int *pidfd, unsigned flags)
 +{
-+	unsigned flags = nsset->flags;
++	struct clone_args args = {
++		.flags		= CLONE_PIDFD | flags,
++		.exit_signal	= SIGCHLD,
++		.pidfd		= ptr_to_u64(pidfd),
++	};
 +
-+	if (flags & CLONE_NEWUSER)
-+		put_cred(nsset_cred(nsset));
-+	if (nsset->nsproxy)
-+		free_nsproxy(nsset->nsproxy);
++	return sys_clone3(&args, sizeof(struct clone_args));
 +}
 +
-+static int prepare_nsset(unsigned flags, struct nsset *nsset)
++FIXTURE_SETUP(current_nsset)
 +{
-+	struct task_struct *me = current;
++	int i, proc_fd, ret;
 +
-+	nsset->nsproxy = create_new_namespaces(0, me, current_user_ns(), me->fs);
-+	if (IS_ERR(nsset->nsproxy))
-+		return PTR_ERR(nsset->nsproxy);
-+
-+	if (flags & CLONE_NEWUSER)
-+		nsset->cred = prepare_creds();
-+	else
-+		nsset->cred = current_cred();
-+	if (!nsset->cred)
-+		goto out;
-+
-+	if (flags & CLONE_NEWNS)
-+		nsset->fs = me->fs;
-+
-+	nsset->flags = flags;
-+	return 0;
-+
-+out:
-+	put_nsset(nsset);
-+	return -ENOMEM;
-+}
-+
-+/*
-+ * This is the point of no return. There are just a few namespaces
-+ * that do some actual work here and it's sufficiently minimal that
-+ * a separate ns_common operation seems unnecessary for now.
-+ * Unshare is doing the same thing. If we'll end up needing to do
-+ * more in a given namespace or a helper here is ultimately not
-+ * exported anymore a simple commit handler for each namespace
-+ * should be added to ns_common.
-+ */
-+static void commit_nsset(struct nsset *nsset)
-+{
-+	unsigned flags = nsset->flags;
-+	struct task_struct *me = current;
-+
-+#ifdef CONFIG_USER_NS
-+	if (flags & CLONE_NEWUSER) {
-+		/* transfer ownership */
-+		commit_creds(nsset_cred(nsset));
-+		nsset->cred = NULL;
++	for (i = 0; i < PIDFD_NS_MAX; i++) {
++		self->nsfds[i]		= -EBADF;
++		self->child_nsfds1[i]	= -EBADF;
++		self->child_nsfds2[i]	= -EBADF;
 +	}
-+#endif
 +
-+#ifdef CONFIG_IPC_NS
-+	if (flags & CLONE_NEWIPC)
-+		exit_sem(me);
-+#endif
++	proc_fd = open("/proc/self/ns", O_DIRECTORY | O_CLOEXEC);
++	ASSERT_GE(proc_fd, 0) {
++		TH_LOG("%m - Failed to open /proc/self/ns");
++	}
 +
-+	/* transfer ownership */
-+	switch_task_namespaces(me, nsset->nsproxy);
-+	nsset->nsproxy = NULL;
++	self->pid = getpid();
++	for (i = 0; i < PIDFD_NS_MAX; i++) {
++		const struct ns_info *info = &ns_info[i];
++		self->nsfds[i] = openat(proc_fd, info->name, O_RDONLY | O_CLOEXEC);
++		if (self->nsfds[i] < 0) {
++			EXPECT_EQ(errno, ENOENT) {
++				TH_LOG("%m - Failed to open %s namespace for process %d",
++				       info->name, self->pid);
++			}
++		}
++	}
++
++	self->pidfd = sys_pidfd_open(self->pid, 0);
++	EXPECT_GT(self->pidfd, 0) {
++		TH_LOG("%m - Failed to open pidfd for process %d", self->pid);
++	}
++
++	/* Create task that exits right away. */
++	self->child_pid_exited = create_child(&self->child_pidfd_exited,
++					      CLONE_NEWUSER | CLONE_NEWNET);
++	EXPECT_GT(self->child_pid_exited, 0);
++
++	if (self->child_pid_exited == 0)
++		_exit(EXIT_SUCCESS);
++
++	ASSERT_EQ(sys_waitid(P_PID, self->child_pid_exited, WEXITED | WNOWAIT), 0);
++
++	self->pidfd = sys_pidfd_open(self->pid, 0);
++	EXPECT_GE(self->pidfd, 0) {
++		TH_LOG("%m - Failed to open pidfd for process %d", self->pid);
++	}
++
++	/* Create tasks that will be stopped. */
++	self->child_pid1 = create_child(&self->child_pidfd1,
++					CLONE_NEWUSER | CLONE_NEWNS |
++					CLONE_NEWCGROUP | CLONE_NEWIPC |
++					CLONE_NEWUTS | CLONE_NEWPID |
++					CLONE_NEWNET);
++	EXPECT_GE(self->child_pid1, 0);
++
++	if (self->child_pid1 == 0) {
++		pause();
++		_exit(EXIT_SUCCESS);
++	}
++
++	self->child_pid2 = create_child(&self->child_pidfd2,
++					CLONE_NEWUSER | CLONE_NEWNS |
++					CLONE_NEWCGROUP | CLONE_NEWIPC |
++					CLONE_NEWUTS | CLONE_NEWPID |
++					CLONE_NEWNET);
++	EXPECT_GE(self->child_pid2, 0);
++
++	if (self->child_pid2 == 0) {
++		pause();
++		_exit(EXIT_SUCCESS);
++	}
++
++	for (i = 0; i < PIDFD_NS_MAX; i++) {
++		char p[100];
++
++		const struct ns_info *info = &ns_info[i];
++
++		self->nsfds[i] = openat(proc_fd, info->name, O_RDONLY | O_CLOEXEC);
++		if (self->nsfds[i] < 0) {
++			EXPECT_EQ(errno, ENOENT) {
++				TH_LOG("%m - Failed to open %s namespace for process %d",
++				       info->name, self->pid);
++			}
++		}
++
++		ret = snprintf(p, sizeof(p), "/proc/%d/ns/%s",
++			       self->child_pid1, info->name);
++		EXPECT_GT(ret, 0);
++		EXPECT_LT(ret, sizeof(p));
++
++		self->child_nsfds1[i] = open(p, O_RDONLY | O_CLOEXEC);
++		if (self->child_nsfds1[i] < 0) {
++			EXPECT_EQ(errno, ENOENT) {
++				TH_LOG("%m - Failed to open %s namespace for process %d",
++				       info->name, self->child_pid1);
++			}
++		}
++
++		ret = snprintf(p, sizeof(p), "/proc/%d/ns/%s",
++			       self->child_pid2, info->name);
++		EXPECT_GT(ret, 0);
++		EXPECT_LT(ret, sizeof(p));
++
++		self->child_nsfds2[i] = open(p, O_RDONLY | O_CLOEXEC);
++		if (self->child_nsfds2[i] < 0) {
++			EXPECT_EQ(errno, ENOENT) {
++				TH_LOG("%m - Failed to open %s namespace for process %d",
++				       info->name, self->child_pid1);
++			}
++		}
++	}
++
++	close(proc_fd);
 +}
 +
-+static inline int validate_ns(struct nsset *nsset, struct ns_common *ns)
++FIXTURE_TEARDOWN(current_nsset)
 +{
-+	return ns->ops->install(nsset, ns);
++	int i;
++
++	ASSERT_EQ(sys_pidfd_send_signal(self->child_pidfd1,
++					SIGKILL, NULL, 0), 0);
++	ASSERT_EQ(sys_pidfd_send_signal(self->child_pidfd2,
++					SIGKILL, NULL, 0), 0);
++
++	for (i = 0; i < PIDFD_NS_MAX; i++) {
++		if (self->nsfds[i] >= 0)
++			close(self->nsfds[i]);
++		if (self->child_nsfds1[i] >= 0)
++			close(self->child_nsfds1[i]);
++		if (self->child_nsfds2[i] >= 0)
++			close(self->child_nsfds2[i]);
++	}
++
++	if (self->child_pidfd1 >= 0)
++		EXPECT_EQ(0, close(self->child_pidfd1));
++	if (self->child_pidfd2 >= 0)
++		EXPECT_EQ(0, close(self->child_pidfd2));
++	ASSERT_EQ(sys_waitid(P_PID, self->child_pid_exited, WEXITED), 0);
++	ASSERT_EQ(sys_waitid(P_PID, self->child_pid1, WEXITED), 0);
++	ASSERT_EQ(sys_waitid(P_PID, self->child_pid2, WEXITED), 0);
 +}
 +
- SYSCALL_DEFINE2(setns, int, fd, int, nstype)
- {
- 	struct task_struct *tsk = current;
--	struct nsproxy *new_nsproxy;
- 	struct file *file;
- 	struct ns_common *ns;
-+	struct nsset nsset = {};
- 	int err;
- 
- 	file = proc_ns_fget(fd);
-@@ -274,20 +348,16 @@ SYSCALL_DEFINE2(setns, int, fd, int, nstype)
- 	if (nstype && (ns->ops->type != nstype))
- 		goto out;
- 
--	new_nsproxy = create_new_namespaces(0, tsk, current_user_ns(), tsk->fs);
--	if (IS_ERR(new_nsproxy)) {
--		err = PTR_ERR(new_nsproxy);
-+	err = prepare_nsset(nstype, &nsset);
-+	if (err)
- 		goto out;
--	}
- 
--	err = ns->ops->install(new_nsproxy, ns);
--	if (err) {
--		free_nsproxy(new_nsproxy);
--		goto out;
-+	err = validate_ns(&nsset, ns);
-+	if (!err) {
-+		commit_nsset(&nsset);
-+		perf_event_namespaces(tsk);
- 	}
--	switch_task_namespaces(tsk, new_nsproxy);
--
--	perf_event_namespaces(tsk);
-+	put_nsset(&nsset);
- out:
- 	fput(file);
- 	return err;
-diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-index 01f8ba32cc0c..11db2bdbb41e 100644
---- a/kernel/pid_namespace.c
-+++ b/kernel/pid_namespace.c
-@@ -378,13 +378,14 @@ static void pidns_put(struct ns_common *ns)
- 	put_pid_ns(to_pid_ns(ns));
- }
- 
--static int pidns_install(struct nsproxy *nsproxy, struct ns_common *ns)
-+static int pidns_install(struct nsset *nsset, struct ns_common *ns)
- {
-+	struct nsproxy *nsproxy = nsset->nsproxy;
- 	struct pid_namespace *active = task_active_pid_ns(current);
- 	struct pid_namespace *ancestor, *new = to_pid_ns(ns);
- 
- 	if (!ns_capable(new->user_ns, CAP_SYS_ADMIN) ||
--	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
-+	    !ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN))
- 		return -EPERM;
- 
- 	/*
-diff --git a/kernel/time/namespace.c b/kernel/time/namespace.c
-index 53bce347cd50..5d9fc22d836a 100644
---- a/kernel/time/namespace.c
-+++ b/kernel/time/namespace.c
-@@ -280,8 +280,9 @@ static void timens_put(struct ns_common *ns)
- 	put_time_ns(to_time_ns(ns));
- }
- 
--static int timens_install(struct nsproxy *nsproxy, struct ns_common *new)
-+static int timens_install(struct nsset *nsset, struct ns_common *new)
- {
-+	struct nsproxy *nsproxy = nsset->nsproxy;
- 	struct time_namespace *ns = to_time_ns(new);
- 	int err;
- 
-@@ -289,7 +290,7 @@ static int timens_install(struct nsproxy *nsproxy, struct ns_common *new)
- 		return -EUSERS;
- 
- 	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
--	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
-+	    !ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN))
- 		return -EPERM;
- 
- 	timens_set_vvar_page(current, ns);
-diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index 8eadadc478f9..87804e0371fe 100644
---- a/kernel/user_namespace.c
-+++ b/kernel/user_namespace.c
-@@ -1253,7 +1253,7 @@ static void userns_put(struct ns_common *ns)
- 	put_user_ns(to_user_ns(ns));
- }
- 
--static int userns_install(struct nsproxy *nsproxy, struct ns_common *ns)
-+static int userns_install(struct nsset *nsset, struct ns_common *ns)
- {
- 	struct user_namespace *user_ns = to_user_ns(ns);
- 	struct cred *cred;
-@@ -1274,14 +1274,14 @@ static int userns_install(struct nsproxy *nsproxy, struct ns_common *ns)
- 	if (!ns_capable(user_ns, CAP_SYS_ADMIN))
- 		return -EPERM;
- 
--	cred = prepare_creds();
-+	cred = nsset_cred(nsset);
- 	if (!cred)
--		return -ENOMEM;
-+		return -EINVAL;
- 
- 	put_user_ns(cred->user_ns);
- 	set_cred_user_ns(cred, get_user_ns(user_ns));
- 
--	return commit_creds(cred);
++static int preserve_ns(const int pid, const char *ns)
++{
++	int ret;
++	char path[50];
++
++	ret = snprintf(path, sizeof(path), "/proc/%d/ns/%s", pid, ns);
++	if (ret < 0 || (size_t)ret >= sizeof(path))
++		return -EIO;
++
++	return open(path, O_RDONLY | O_CLOEXEC);
++}
++
++static int in_same_namespace(int ns_fd1, pid_t pid2, const char *ns)
++{
++	int ns_fd2 = -EBADF;
++	int ret = -1;
++	struct stat ns_st1, ns_st2;
++
++	ret = fstat(ns_fd1, &ns_st1);
++	if (ret < 0)
++		return -1;
++
++	ns_fd2 = preserve_ns(pid2, ns);
++	if (ns_fd2 < 0)
++		return -1;
++
++	ret = fstat(ns_fd2, &ns_st2);
++	close(ns_fd2);
++	if (ret < 0)
++		return -1;
++
++	/* processes are in the same namespace */
++	if ((ns_st1.st_dev == ns_st2.st_dev) &&
++	    (ns_st1.st_ino == ns_st2.st_ino))
++		return 1;
++
++	/* processes are in different namespaces */
 +	return 0;
- }
- 
- struct ns_common *ns_get_owner(struct ns_common *ns)
-diff --git a/kernel/utsname.c b/kernel/utsname.c
-index f0e491193009..e488d0e2ab45 100644
---- a/kernel/utsname.c
-+++ b/kernel/utsname.c
-@@ -140,12 +140,13 @@ static void utsns_put(struct ns_common *ns)
- 	put_uts_ns(to_uts_ns(ns));
- }
- 
--static int utsns_install(struct nsproxy *nsproxy, struct ns_common *new)
-+static int utsns_install(struct nsset *nsset, struct ns_common *new)
- {
-+	struct nsproxy *nsproxy = nsset->nsproxy;
- 	struct uts_namespace *ns = to_uts_ns(new);
- 
- 	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
--	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
-+	    !ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN))
- 		return -EPERM;
- 
- 	get_uts_ns(ns);
-diff --git a/net/core/net_namespace.c b/net/core/net_namespace.c
-index 190ca66a383b..dcd61aca343e 100644
---- a/net/core/net_namespace.c
-+++ b/net/core/net_namespace.c
-@@ -1353,12 +1353,13 @@ static void netns_put(struct ns_common *ns)
- 	put_net(to_net_ns(ns));
- }
- 
--static int netns_install(struct nsproxy *nsproxy, struct ns_common *ns)
-+static int netns_install(struct nsset *nsset, struct ns_common *ns)
- {
-+	struct nsproxy *nsproxy = nsset->nsproxy;
- 	struct net *net = to_net_ns(ns);
- 
- 	if (!ns_capable(net->user_ns, CAP_SYS_ADMIN) ||
--	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
-+	    !ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN))
- 		return -EPERM;
- 
- 	put_net(nsproxy->net_ns);
++}
++
++/* Test that we can't pass garbage to the kernel. */
++TEST_F(current_nsset, invalid_flags)
++{
++	ASSERT_NE(setns(self->pidfd, 0), 0);
++	EXPECT_EQ(errno, EINVAL);
++
++	ASSERT_NE(setns(self->pidfd, -1), 0);
++	EXPECT_EQ(errno, EINVAL);
++
++	ASSERT_NE(setns(self->pidfd, CLONE_VM), 0);
++	EXPECT_EQ(errno, EINVAL);
++
++	ASSERT_NE(setns(self->pidfd, CLONE_NEWUSER | CLONE_VM), 0);
++	EXPECT_EQ(errno, EINVAL);
++}
++
++/* Test that we can't attach to a task that has already exited. */
++TEST_F(current_nsset, pidfd_exited_child)
++{
++	int i;
++	pid_t pid;
++
++	ASSERT_NE(setns(self->child_pidfd_exited, CLONE_NEWUSER | CLONE_NEWNET),
++		  0);
++	EXPECT_EQ(errno, ESRCH);
++
++	pid = getpid();
++	for (i = 0; i < PIDFD_NS_MAX; i++) {
++		const struct ns_info *info = &ns_info[i];
++		/* Verify that we haven't changed any namespaces. */
++		if (self->nsfds[i] >= 0)
++			ASSERT_EQ(in_same_namespace(self->nsfds[i], pid, info->name), 1);
++	}
++}
++
++TEST_F(current_nsset, pidfd_incremental_setns)
++{
++	int i;
++	pid_t pid;
++
++	pid = getpid();
++	for (i = 0; i < PIDFD_NS_MAX; i++) {
++		const struct ns_info *info = &ns_info[i];
++		int nsfd;
++
++		if (self->child_nsfds1[i] < 0)
++			continue;
++
++		if (info->flag) {
++			ASSERT_EQ(setns(self->child_pidfd1, info->flag), 0) {
++				TH_LOG("%m - Failed to setns to %s namespace of %d via pidfd %d",
++				       info->name, self->child_pid1,
++				       self->child_pidfd1);
++			}
++		}
++
++		/* Verify that we have changed to the correct namespaces. */
++		if (info->flag == CLONE_NEWPID)
++			nsfd = self->nsfds[i];
++		else
++			nsfd = self->child_nsfds1[i];
++		ASSERT_EQ(in_same_namespace(nsfd, pid, info->name), 1) {
++			TH_LOG("setns failed to place us correctly into %s namespace of %d via pidfd %d",
++			       info->name, self->child_pid1,
++			       self->child_pidfd1);
++		}
++		TH_LOG("Managed to correctly setns to %s namespace of %d via pidfd %d",
++		       info->name, self->child_pid1, self->child_pidfd1);
++	}
++}
++
++TEST_F(current_nsset, nsfd_incremental_setns)
++{
++	int i;
++	pid_t pid;
++
++	pid = getpid();
++	for (i = 0; i < PIDFD_NS_MAX; i++) {
++		const struct ns_info *info = &ns_info[i];
++		int nsfd;
++
++		if (self->child_nsfds1[i] < 0)
++			continue;
++
++		if (info->flag) {
++			ASSERT_EQ(setns(self->child_nsfds1[i], info->flag), 0) {
++				TH_LOG("%m - Failed to setns to %s namespace of %d via nsfd %d",
++				       info->name, self->child_pid1,
++				       self->child_nsfds1[i]);
++			}
++		}
++
++		/* Verify that we have changed to the correct namespaces. */
++		if (info->flag == CLONE_NEWPID)
++			nsfd = self->nsfds[i];
++		else
++			nsfd = self->child_nsfds1[i];
++		ASSERT_EQ(in_same_namespace(nsfd, pid, info->name), 1) {
++			TH_LOG("setns failed to place us correctly into %s namespace of %d via nsfd %d",
++			       info->name, self->child_pid1,
++			       self->child_nsfds1[i]);
++		}
++		TH_LOG("Managed to correctly setns to %s namespace of %d via nsfd %d",
++		       info->name, self->child_pid1, self->child_nsfds1[i]);
++	}
++}
++
++TEST_F(current_nsset, pidfd_one_shot_setns)
++{
++	unsigned flags = 0;
++	int i;
++	pid_t pid;
++
++	for (i = 0; i < PIDFD_NS_MAX; i++) {
++		const struct ns_info *info = &ns_info[i];
++
++		if (self->child_nsfds1[i] < 0)
++			continue;
++
++		flags |= info->flag;
++		TH_LOG("Adding %s namespace of %d to list of namespaces to attach to",
++		       info->name, self->child_pid1);
++	}
++
++	ASSERT_EQ(setns(self->child_pidfd1, flags), 0) {
++		TH_LOG("%m - Failed to setns to namespaces of %d",
++		       self->child_pid1);
++	}
++
++	pid = getpid();
++	for (i = 0; i < PIDFD_NS_MAX; i++) {
++		const struct ns_info *info = &ns_info[i];
++		int nsfd;
++
++		if (self->child_nsfds1[i] < 0)
++			continue;
++
++		/* Verify that we have changed to the correct namespaces. */
++		if (info->flag == CLONE_NEWPID)
++			nsfd = self->nsfds[i];
++		else
++			nsfd = self->child_nsfds1[i];
++		ASSERT_EQ(in_same_namespace(nsfd, pid, info->name), 1) {
++			TH_LOG("setns failed to place us correctly into %s namespace of %d",
++			       info->name, self->child_pid1);
++		}
++		TH_LOG("Managed to correctly setns to %s namespace of %d",
++		       info->name, self->child_pid1);
++	}
++}
++
++TEST_F(current_nsset, no_foul_play)
++{
++	unsigned flags = 0;
++	int i;
++
++	for (i = 0; i < PIDFD_NS_MAX; i++) {
++		const struct ns_info *info = &ns_info[i];
++
++		if (self->child_nsfds1[i] < 0)
++			continue;
++
++		flags |= info->flag;
++		if (info->flag) /* No use logging pid_for_children. */
++			TH_LOG("Adding %s namespace of %d to list of namespaces to attach to",
++			       info->name, self->child_pid1);
++	}
++
++	ASSERT_EQ(setns(self->child_pidfd1, flags), 0) {
++		TH_LOG("%m - Failed to setns to namespaces of %d vid pidfd %d",
++		       self->child_pid1, self->child_pidfd1);
++	}
++
++	/*
++	 * Can't setns to a user namespace outside of our hierarchy since we
++	 * don't have caps in there and didn't create it. That means that under
++	 * no circumstances should we be able to setns to any of the other
++	 * ones since they aren't owned by our user namespace.
++	 */
++	for (i = 0; i < PIDFD_NS_MAX; i++) {
++		const struct ns_info *info = &ns_info[i];
++
++		if (self->child_nsfds2[i] < 0 || !info->flag)
++			continue;
++
++		ASSERT_NE(setns(self->child_pidfd2, info->flag), 0) {
++			TH_LOG("Managed to setns to %s namespace of %d via pidfd %d",
++			       info->name, self->child_pid2,
++			       self->child_pidfd2);
++		}
++		TH_LOG("%m - Correctly failed to setns to %s namespace of %d via pidfd %d",
++		       info->name, self->child_pid2,
++		       self->child_pidfd2);
++
++		ASSERT_NE(setns(self->child_nsfds2[i], info->flag), 0) {
++			TH_LOG("Managed to setns to %s namespace of %d via nsfd %d",
++			       info->name, self->child_pid2,
++			       self->child_nsfds2[i]);
++		}
++		TH_LOG("%m - Correctly failed to setns to %s namespace of %d via nsfd %d",
++		       info->name, self->child_pid2,
++		       self->child_nsfds2[i]);
++	}
++}
++
++TEST_HARNESS_MAIN
 -- 
 2.26.2
 
