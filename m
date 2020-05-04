@@ -6,66 +6,67 @@ X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 58E98C3A5A9
-	for <linux-api@archiver.kernel.org>; Mon,  4 May 2020 16:28:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A035FC3A5A9
+	for <linux-api@archiver.kernel.org>; Mon,  4 May 2020 16:39:11 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2B8D120705
-	for <linux-api@archiver.kernel.org>; Mon,  4 May 2020 16:28:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6C08420705
+	for <linux-api@archiver.kernel.org>; Mon,  4 May 2020 16:39:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729360AbgEDQ2n (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 4 May 2020 12:28:43 -0400
-Received: from out03.mta.xmission.com ([166.70.13.233]:33518 "EHLO
-        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728158AbgEDQ2n (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 4 May 2020 12:28:43 -0400
-Received: from in02.mta.xmission.com ([166.70.13.52])
-        by out03.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.90_1)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1jVdxR-0002Ya-MZ; Mon, 04 May 2020 10:28:41 -0600
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
-        by in02.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        (Exim 4.87)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1jVdxF-0002fk-2W; Mon, 04 May 2020 10:28:41 -0600
-From:   ebiederm@xmission.com (Eric W. Biederman)
-To:     Christian Brauner <christian.brauner@ubuntu.com>
+        id S1729725AbgEDQjL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 4 May 2020 12:39:11 -0400
+Received: from youngberry.canonical.com ([91.189.89.112]:44285 "EHLO
+        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1729664AbgEDQjK (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 4 May 2020 12:39:10 -0400
+Received: from ip5f5af183.dynamic.kabel-deutschland.de ([95.90.241.131] helo=wittgenstein)
+        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.86_2)
+        (envelope-from <christian.brauner@ubuntu.com>)
+        id 1jVe7Y-00037e-KN; Mon, 04 May 2020 16:39:08 +0000
+Date:   Mon, 4 May 2020 18:39:07 +0200
+From:   Christian Brauner <christian.brauner@ubuntu.com>
+To:     "Eric W. Biederman" <ebiederm@xmission.com>
 Cc:     linux-kernel@vger.kernel.org,
         Alexander Viro <viro@zeniv.linux.org.uk>,
-        =?utf-8?Q?St=C3=A9phane?= Graber <stgraber@ubuntu.com>,
+        =?utf-8?B?U3TDqXBoYW5l?= Graber <stgraber@ubuntu.com>,
         Linux Containers <containers@lists.linux-foundation.org>,
         Serge Hallyn <serge@hallyn.com>, Jann Horn <jannh@google.com>,
         Michael Kerrisk <mtk.manpages@gmail.com>,
         Aleksa Sarai <cyphar@cyphar.com>, linux-api@vger.kernel.org
-References: <20200504144141.3605533-1-christian.brauner@ubuntu.com>
-        <20200504144141.3605533-3-christian.brauner@ubuntu.com>
-Date:   Mon, 04 May 2020 11:25:07 -0500
-In-Reply-To: <20200504144141.3605533-3-christian.brauner@ubuntu.com>
-        (Christian Brauner's message of "Mon, 4 May 2020 16:41:40 +0200")
-Message-ID: <87h7wvoefw.fsf@x220.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
-MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1jVdxF-0002fk-2W;;;mid=<87h7wvoefw.fsf@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX19fC77YDZ/s6OgFRdJGwh3qJWiJoBgKLuI=
-X-SA-Exim-Connect-IP: 68.227.160.95
-X-SA-Exim-Mail-From: ebiederm@xmission.com
 Subject: Re: [PATCH v3 2/3] nsproxy: attach to namespaces via pidfds
-X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
+Message-ID: <20200504163907.jjgqe7qnnjpw4uwo@wittgenstein>
+References: <20200504144141.3605533-1-christian.brauner@ubuntu.com>
+ <20200504144141.3605533-3-christian.brauner@ubuntu.com>
+ <87h7wvoefw.fsf@x220.int.ebiederm.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <87h7wvoefw.fsf@x220.int.ebiederm.org>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+On Mon, May 04, 2020 at 11:25:07AM -0500, Eric W. Biederman wrote:
+> 
+> I am not thrilled about treating nstype as a flags fields when it is not
+> currently.  It was my hope when I designed the interface that not
+> treating nstype as a flags field would save us from the problem of bits
+> running out.
 
-I am not thrilled about treating nstype as a flags fields when it is not
-currently.  It was my hope when I designed the interface that not
-treating nstype as a flags field would save us from the problem of bits
-running out.
+Hm, I researched the setns() syscall history before that and I didn't
+see that reasoning anywhere. The "nstype" arg was originally advertised
+on the list as "having a flags field is useful in general".
 
-That aside.  It would be very good if the default version of setting
-everything from a pidfd would set the root directory from the process it
-is copying everything else from.
+> 
+> That aside.  It would be very good if the default version of setting
+> everything from a pidfd would set the root directory from the process it
+> is copying everything else from.
 
-Eric
+I'm not sure I follow completely. If you specify CLONE_NEWNS then we do
+set the root directory with set_fs_root() in commit_nsset(). Or are you
+saying we should always do that independent of whether or not
+CLONE_NEWNS is specified? And if so could you explain why we'd want
+that? I'm sure I'm missing something!
+
+Christian
