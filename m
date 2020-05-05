@@ -2,28 +2,31 @@ Return-Path: <SRS0=15JI=6T=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.7 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.7 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AFCC0C47254
-	for <linux-api@archiver.kernel.org>; Tue,  5 May 2020 15:32:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 414E5C4725F
+	for <linux-api@archiver.kernel.org>; Tue,  5 May 2020 15:32:45 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 85AC4206B9
-	for <linux-api@archiver.kernel.org>; Tue,  5 May 2020 15:32:29 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 21646206B9
+	for <linux-api@archiver.kernel.org>; Tue,  5 May 2020 15:32:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730112AbgEEPc3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 5 May 2020 11:32:29 -0400
-Received: from smtp-190b.mail.infomaniak.ch ([185.125.25.11]:45561 "EHLO
-        smtp-190b.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1730060AbgEEPc1 (ORCPT
+        id S1730052AbgEEPc2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 5 May 2020 11:32:28 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:32910 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-FAIL-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1730092AbgEEPc1 (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Tue, 5 May 2020 11:32:27 -0400
-Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 49GkHW71RXzlhVHW;
-        Tue,  5 May 2020 17:32:23 +0200 (CEST)
+Received: from smtp-42a9.mail.infomaniak.ch (smtp-42a9.mail.infomaniak.ch [IPv6:2001:1600:3:17::42a9])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 28989C061A10
+        for <linux-api@vger.kernel.org>; Tue,  5 May 2020 08:32:27 -0700 (PDT)
+Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 49GkHQ3pJnzlhWgZ;
+        Tue,  5 May 2020 17:32:18 +0200 (CEST)
 Received: from localhost (unknown [94.23.54.103])
-        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 49GkHW4Bb2zlsV51;
-        Tue,  5 May 2020 17:32:23 +0200 (CEST)
+        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 49GkHP3cXJzlq4Rd;
+        Tue,  5 May 2020 17:32:17 +0200 (CEST)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     linux-kernel@vger.kernel.org
 Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
@@ -58,12 +61,10 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         linux-integrity@vger.kernel.org,
         linux-security-module@vger.kernel.org,
         linux-fsdevel@vger.kernel.org
-Subject: [PATCH v5 4/6] selftest/openat2: Add tests for O_MAYEXEC enforcing
-Date:   Tue,  5 May 2020 17:31:54 +0200
-Message-Id: <20200505153156.925111-5-mic@digikod.net>
+Subject: [PATCH v5 0/6] Add support for O_MAYEXEC
+Date:   Tue,  5 May 2020 17:31:50 +0200
+Message-Id: <20200505153156.925111-1-mic@digikod.net>
 X-Mailer: git-send-email 2.26.2
-In-Reply-To: <20200505153156.925111-1-mic@digikod.net>
-References: <20200505153156.925111-1-mic@digikod.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -74,432 +75,98 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Test propagation of noexec mount points or file executability through
-files open with or without O_MAYEXEC, thanks to the
-fs.open_mayexec_enforce sysctl.
+Hi,
 
-Signed-off-by: Mickaël Salaün <mic@digikod.net>
-Reviewed-by: Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
-Cc: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Shuah Khan <shuah@kernel.org>
----
+This fifth patch series add new kernel configurations (OMAYEXEC_STATIC,
+OMAYEXEC_ENFORCE_MOUNT, and OMAYEXEC_ENFORCE_FILE) to enable to
+configure the security policy at kernel build time.  As requested by
+Mimi Zohar, I completed the series with one of her patches for IMA.
 
-Changes since v3:
-* Replace RESOLVE_MAYEXEC with O_MAYEXEC.
-* Add tests to check that O_MAYEXEC is ignored by open(2) and openat(2).
+The goal of this patch series is to enable to control script execution
+with interpreters help.  A new O_MAYEXEC flag, usable through
+openat2(2), is added to enable userspace script interpreter to delegate
+to the kernel (and thus the system security policy) the permission to
+interpret/execute scripts or other files containing what can be seen as
+commands.
 
-Changes since v2:
-* Move tests from exec/ to openat2/ .
-* Replace O_MAYEXEC with RESOLVE_MAYEXEC from openat2(2).
-* Cleanup tests.
+A simple system-wide security policy can be enforced by the system
+administrator through a sysctl configuration consistent with the mount
+points or the file access rights.  The documentation patch explains the
+prerequisites.
 
-Changes since v1:
-* Move tests from yama/ to exec/ .
-* Fix _GNU_SOURCE in kselftest_harness.h .
-* Add a new test sysctl_access_write to check if CAP_MAC_ADMIN is taken
-  into account.
-* Test directory execution which is always forbidden since commit
-  73601ea5b7b1 ("fs/open.c: allow opening only regular files during
-  execve()"), and also check that even the root user can not bypass file
-  execution checks.
-* Make sure delete_workspace() always as enough right to succeed.
-* Cosmetic cleanup.
----
+Furthermore, the security policy can also be delegated to an LSM, either
+a MAC system or an integrity system.  For instance, the new kernel
+MAY_OPENEXEC flag closes a major IMA measurement/appraisal interpreter
+integrity gap by bringing the ability to check the use of scripts [1].
+Other uses are expected, such as for openat2(2) [2], SGX integration
+[3], bpffs [4] or IPE [5].
+
+Userspace needs to adapt to take advantage of this new feature.  For
+example, the PEP 578 [6] (Runtime Audit Hooks) enables Python 3.8 to be
+extended with policy enforcement points related to code interpretation,
+which can be used to align with the PowerShell audit features.
+Additional Python security improvements (e.g. a limited interpreter
+withou -c, stdin piping of code) are on their way.
+
+The initial idea come from CLIP OS 4 and the original implementation has
+been used for more than 12 years:
+https://github.com/clipos-archive/clipos4_doc
+
+An introduction to O_MAYEXEC was given at the Linux Security Summit
+Europe 2018 - Linux Kernel Security Contributions by ANSSI:
+https://www.youtube.com/watch?v=chNjCRtPKQY&t=17m15s
+The "write xor execute" principle was explained at Kernel Recipes 2018 -
+CLIP OS: a defense-in-depth OS:
+https://www.youtube.com/watch?v=PjRE0uBtkHU&t=11m14s
+
+This patch series can be applied on top of v5.7-rc4.  This can be tested
+with CONFIG_SYSCTL.  I would really appreciate constructive comments on
+this patch series.
+
+Previous version:
+https://lore.kernel.org/lkml/20200428175129.634352-1-mic@digikod.net/
+
+
+[1] https://lore.kernel.org/lkml/1544647356.4028.105.camel@linux.ibm.com/
+[2] https://lore.kernel.org/lkml/20190904201933.10736-6-cyphar@cyphar.com/
+[3] https://lore.kernel.org/lkml/CALCETrVovr8XNZSroey7pHF46O=kj_c5D9K8h=z2T_cNrpvMig@mail.gmail.com/
+[4] https://lore.kernel.org/lkml/CALCETrVeZ0eufFXwfhtaG_j+AdvbzEWE0M3wjXMWVEO7pj+xkw@mail.gmail.com/
+[5] https://lore.kernel.org/lkml/20200406221439.1469862-12-deven.desai@linux.microsoft.com/
+[6] https://www.python.org/dev/peps/pep-0578/
+
+Regards,
+
+Mickaël Salaün (5):
+  fs: Add support for an O_MAYEXEC flag on openat2(2)
+  fs: Add a MAY_EXECMOUNT flag to infer the noexec mount property
+  fs: Enable to enforce noexec mounts or file exec through O_MAYEXEC
+  selftest/openat2: Add tests for O_MAYEXEC enforcing
+  doc: Add documentation for the fs.open_mayexec_enforce sysctl
+
+Mimi Zohar (1):
+  ima: add policy support for the new file open MAY_OPENEXEC flag
+
+ Documentation/ABI/testing/ima_policy          |   2 +-
+ Documentation/admin-guide/sysctl/fs.rst       |  44 +++
+ fs/fcntl.c                                    |   2 +-
+ fs/namei.c                                    |  89 ++++-
+ fs/open.c                                     |   8 +
+ include/linux/fcntl.h                         |   2 +-
+ include/linux/fs.h                            |   9 +
+ include/uapi/asm-generic/fcntl.h              |   7 +
+ kernel/sysctl.c                               |   9 +
+ security/Kconfig                              |  26 ++
+ security/integrity/ima/ima_main.c             |   3 +-
+ security/integrity/ima/ima_policy.c           |  15 +-
  tools/testing/selftests/kselftest_harness.h   |   3 +
  tools/testing/selftests/openat2/Makefile      |   3 +-
  tools/testing/selftests/openat2/config        |   1 +
  tools/testing/selftests/openat2/helpers.h     |   1 +
  .../testing/selftests/openat2/omayexec_test.c | 330 ++++++++++++++++++
- 5 files changed, 337 insertions(+), 1 deletion(-)
+ 17 files changed, 544 insertions(+), 10 deletions(-)
  create mode 100644 tools/testing/selftests/openat2/config
  create mode 100644 tools/testing/selftests/openat2/omayexec_test.c
 
-diff --git a/tools/testing/selftests/kselftest_harness.h b/tools/testing/selftests/kselftest_harness.h
-index 2bb8c81fc0b4..f6e056ba4a13 100644
---- a/tools/testing/selftests/kselftest_harness.h
-+++ b/tools/testing/selftests/kselftest_harness.h
-@@ -50,7 +50,10 @@
- #ifndef __KSELFTEST_HARNESS_H
- #define __KSELFTEST_HARNESS_H
- 
-+#ifndef _GNU_SOURCE
- #define _GNU_SOURCE
-+#endif
-+
- #include <asm/types.h>
- #include <errno.h>
- #include <stdbool.h>
-diff --git a/tools/testing/selftests/openat2/Makefile b/tools/testing/selftests/openat2/Makefile
-index 4b93b1417b86..cb98bdb4d5b1 100644
---- a/tools/testing/selftests/openat2/Makefile
-+++ b/tools/testing/selftests/openat2/Makefile
-@@ -1,7 +1,8 @@
- # SPDX-License-Identifier: GPL-2.0-or-later
- 
- CFLAGS += -Wall -O2 -g -fsanitize=address -fsanitize=undefined
--TEST_GEN_PROGS := openat2_test resolve_test rename_attack_test
-+LDLIBS += -lcap
-+TEST_GEN_PROGS := openat2_test resolve_test rename_attack_test omayexec_test
- 
- include ../lib.mk
- 
-diff --git a/tools/testing/selftests/openat2/config b/tools/testing/selftests/openat2/config
-new file mode 100644
-index 000000000000..dd53c266bf52
---- /dev/null
-+++ b/tools/testing/selftests/openat2/config
-@@ -0,0 +1 @@
-+CONFIG_SYSCTL=y
-diff --git a/tools/testing/selftests/openat2/helpers.h b/tools/testing/selftests/openat2/helpers.h
-index a6ea27344db2..1dcd3e1e2f38 100644
---- a/tools/testing/selftests/openat2/helpers.h
-+++ b/tools/testing/selftests/openat2/helpers.h
-@@ -9,6 +9,7 @@
- 
- #define _GNU_SOURCE
- #include <stdint.h>
-+#include <stdbool.h>
- #include <errno.h>
- #include <linux/types.h>
- #include "../kselftest.h"
-diff --git a/tools/testing/selftests/openat2/omayexec_test.c b/tools/testing/selftests/openat2/omayexec_test.c
-new file mode 100644
-index 000000000000..7052c852daf8
---- /dev/null
-+++ b/tools/testing/selftests/openat2/omayexec_test.c
-@@ -0,0 +1,330 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Test O_MAYEXEC
-+ *
-+ * Copyright © 2018-2020 ANSSI
-+ *
-+ * Author: Mickaël Salaün <mic@digikod.net>
-+ */
-+
-+#include <errno.h>
-+#include <fcntl.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <sys/capability.h>
-+#include <sys/mount.h>
-+#include <sys/stat.h>
-+#include <unistd.h>
-+
-+#include "helpers.h"
-+#include "../kselftest_harness.h"
-+
-+#ifndef O_MAYEXEC
-+#define O_MAYEXEC		040000000
-+#endif
-+
-+#define SYSCTL_MAYEXEC	"/proc/sys/fs/open_mayexec_enforce"
-+
-+#define BIN_DIR		"./test-mount"
-+#define BIN_PATH	BIN_DIR "/file"
-+#define DIR_PATH	BIN_DIR "/directory"
-+
-+#define ALLOWED		1
-+#define DENIED		0
-+
-+static void ignore_dac(struct __test_metadata *_metadata, int override)
-+{
-+	cap_t caps;
-+	const cap_value_t cap_val[2] = {
-+		CAP_DAC_OVERRIDE,
-+		CAP_DAC_READ_SEARCH,
-+	};
-+
-+	caps = cap_get_proc();
-+	ASSERT_NE(NULL, caps);
-+	ASSERT_EQ(0, cap_set_flag(caps, CAP_EFFECTIVE, 2, cap_val,
-+				override ? CAP_SET : CAP_CLEAR));
-+	ASSERT_EQ(0, cap_set_proc(caps));
-+	EXPECT_EQ(0, cap_free(caps));
-+}
-+
-+static void ignore_mac(struct __test_metadata *_metadata, int override)
-+{
-+	cap_t caps;
-+	const cap_value_t cap_val[1] = {
-+		CAP_MAC_ADMIN,
-+	};
-+
-+	caps = cap_get_proc();
-+	ASSERT_NE(NULL, caps);
-+	ASSERT_EQ(0, cap_set_flag(caps, CAP_EFFECTIVE, 1, cap_val,
-+				override ? CAP_SET : CAP_CLEAR));
-+	ASSERT_EQ(0, cap_set_proc(caps));
-+	EXPECT_EQ(0, cap_free(caps));
-+}
-+
-+static void test_omx(struct __test_metadata *_metadata,
-+		const char *const path, const int exec_allowed)
-+{
-+	struct open_how how = {
-+		.flags = O_RDONLY | O_CLOEXEC,
-+	};
-+	int fd;
-+
-+	/* Opens without O_MAYEXEC. */
-+	fd = sys_openat2(AT_FDCWD, path, &how);
-+	ASSERT_LE(0, fd);
-+	EXPECT_EQ(0, close(fd));
-+
-+	how.flags |= O_MAYEXEC;
-+
-+	/* Checks that O_MAYEXEC is ignored with open(2). */
-+	fd = open(path, how.flags);
-+	ASSERT_LE(0, fd);
-+	EXPECT_EQ(0, close(fd));
-+
-+	/* Checks that O_MAYEXEC is ignored with openat(2). */
-+	fd = openat(AT_FDCWD, path, how.flags);
-+	ASSERT_LE(0, fd);
-+	EXPECT_EQ(0, close(fd));
-+
-+	/* Opens with O_MAYEXEC. */
-+	fd = sys_openat2(AT_FDCWD, path, &how);
-+	if (exec_allowed) {
-+		ASSERT_LE(0, fd);
-+		EXPECT_EQ(0, close(fd));
-+	} else {
-+		ASSERT_EQ(-EACCES, fd);
-+	}
-+}
-+
-+static void test_omx_dir_file(struct __test_metadata *_metadata,
-+		const char *const dir_path, const char *const file_path,
-+		const int exec_allowed)
-+{
-+	/*
-+	 * Directory execution is always denied since commit 73601ea5b7b1
-+	 * ("fs/open.c: allow opening only regular files during execve()").
-+	 */
-+	test_omx(_metadata, dir_path, DENIED);
-+	test_omx(_metadata, file_path, exec_allowed);
-+}
-+
-+static void test_dir_file(struct __test_metadata *_metadata,
-+		const char *const dir_path, const char *const file_path,
-+		const int exec_allowed)
-+{
-+	/* Tests as root. */
-+	ignore_dac(_metadata, 1);
-+	test_omx_dir_file(_metadata, dir_path, file_path, exec_allowed);
-+
-+	/* Tests without bypass. */
-+	ignore_dac(_metadata, 0);
-+	test_omx_dir_file(_metadata, dir_path, file_path, exec_allowed);
-+}
-+
-+static void sysctl_write(struct __test_metadata *_metadata,
-+		const char *path, const char *value)
-+{
-+	int fd;
-+	size_t len_value;
-+	ssize_t len_wrote;
-+
-+	fd = open(path, O_WRONLY | O_CLOEXEC);
-+	ASSERT_LE(0, fd);
-+	len_value = strlen(value);
-+	len_wrote = write(fd, value, len_value);
-+	ASSERT_EQ(len_wrote, len_value);
-+	EXPECT_EQ(0, close(fd));
-+}
-+
-+static void create_workspace(struct __test_metadata *_metadata,
-+		int mount_exec, int file_exec)
-+{
-+	int fd;
-+
-+	/*
-+	 * Cleans previous workspace if any error previously happened (don't
-+	 * check errors).
-+	 */
-+	umount(BIN_DIR);
-+	rmdir(BIN_DIR);
-+
-+	/* Creates a clean mount point. */
-+	ASSERT_EQ(0, mkdir(BIN_DIR, 00700));
-+	ASSERT_EQ(0, mount("test", BIN_DIR, "tmpfs",
-+				MS_MGC_VAL | (mount_exec ? 0 : MS_NOEXEC),
-+				"mode=0700,size=4k"));
-+
-+	/* Creates a test file. */
-+	fd = open(BIN_PATH, O_CREAT | O_RDONLY | O_CLOEXEC,
-+			file_exec ? 00500 : 00400);
-+	ASSERT_LE(0, fd);
-+	EXPECT_EQ(0, close(fd));
-+
-+	/* Creates a test directory. */
-+	ASSERT_EQ(0, mkdir(DIR_PATH, file_exec ? 00500 : 00400));
-+}
-+
-+static void delete_workspace(struct __test_metadata *_metadata)
-+{
-+	ignore_mac(_metadata, 1);
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "0");
-+
-+	/* There is no need to unlink BIN_PATH nor DIR_PATH. */
-+	ASSERT_EQ(0, umount(BIN_DIR));
-+	ASSERT_EQ(0, rmdir(BIN_DIR));
-+}
-+
-+FIXTURE_DATA(mount_exec_file_exec) { };
-+
-+FIXTURE_SETUP(mount_exec_file_exec)
-+{
-+	create_workspace(_metadata, 1, 1);
-+}
-+
-+FIXTURE_TEARDOWN(mount_exec_file_exec)
-+{
-+	delete_workspace(_metadata);
-+}
-+
-+TEST_F(mount_exec_file_exec, mount)
-+{
-+	/* Enforces mount exec check. */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "1");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, ALLOWED);
-+}
-+
-+TEST_F(mount_exec_file_exec, file)
-+{
-+	/* Enforces file exec check. */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "2");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, ALLOWED);
-+}
-+
-+TEST_F(mount_exec_file_exec, mount_file)
-+{
-+	/* Enforces mount and file exec check. */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "3");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, ALLOWED);
-+}
-+
-+FIXTURE_DATA(mount_exec_file_noexec) { };
-+
-+FIXTURE_SETUP(mount_exec_file_noexec)
-+{
-+	create_workspace(_metadata, 1, 0);
-+}
-+
-+FIXTURE_TEARDOWN(mount_exec_file_noexec)
-+{
-+	delete_workspace(_metadata);
-+}
-+
-+TEST_F(mount_exec_file_noexec, mount)
-+{
-+	/* Enforces mount exec check. */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "1");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, ALLOWED);
-+}
-+
-+TEST_F(mount_exec_file_noexec, file)
-+{
-+	/* Enforces file exec check. */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "2");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, DENIED);
-+}
-+
-+TEST_F(mount_exec_file_noexec, mount_file)
-+{
-+	/* Enforces mount and file exec check. */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "3");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, DENIED);
-+}
-+
-+FIXTURE_DATA(mount_noexec_file_exec) { };
-+
-+FIXTURE_SETUP(mount_noexec_file_exec)
-+{
-+	create_workspace(_metadata, 0, 1);
-+}
-+
-+FIXTURE_TEARDOWN(mount_noexec_file_exec)
-+{
-+	delete_workspace(_metadata);
-+}
-+
-+TEST_F(mount_noexec_file_exec, mount)
-+{
-+	/* Enforces mount exec check. */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "1");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, DENIED);
-+}
-+
-+TEST_F(mount_noexec_file_exec, file)
-+{
-+	/* Enforces file exec check. */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "2");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, ALLOWED);
-+}
-+
-+TEST_F(mount_noexec_file_exec, mount_file)
-+{
-+	/* Enforces mount and file exec check. */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "3");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, DENIED);
-+}
-+
-+FIXTURE_DATA(mount_noexec_file_noexec) { };
-+
-+FIXTURE_SETUP(mount_noexec_file_noexec)
-+{
-+	create_workspace(_metadata, 0, 0);
-+}
-+
-+FIXTURE_TEARDOWN(mount_noexec_file_noexec)
-+{
-+	delete_workspace(_metadata);
-+}
-+
-+TEST_F(mount_noexec_file_noexec, mount)
-+{
-+	/* Enforces mount exec check. */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "1");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, DENIED);
-+}
-+
-+TEST_F(mount_noexec_file_noexec, file)
-+{
-+	/* Enforces file exec check. */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "2");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, DENIED);
-+}
-+
-+TEST_F(mount_noexec_file_noexec, mount_file)
-+{
-+	/* Enforces mount and file exec check. */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "3");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, DENIED);
-+}
-+
-+TEST(sysctl_access_write)
-+{
-+	int fd;
-+	ssize_t len_wrote;
-+
-+	ignore_mac(_metadata, 1);
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "0");
-+
-+	ignore_mac(_metadata, 0);
-+	fd = open(SYSCTL_MAYEXEC, O_WRONLY | O_CLOEXEC);
-+	ASSERT_LE(0, fd);
-+	len_wrote = write(fd, "0", 1);
-+	ASSERT_EQ(len_wrote, -1);
-+	EXPECT_EQ(0, close(fd));
-+
-+	ignore_mac(_metadata, 1);
-+}
-+
-+TEST_HARNESS_MAIN
 -- 
 2.26.2
 
