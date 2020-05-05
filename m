@@ -2,102 +2,136 @@ Return-Path: <SRS0=15JI=6T=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
+X-Spam-Status: No, score=-5.7 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 63B50C47259
-	for <linux-api@archiver.kernel.org>; Tue,  5 May 2020 14:05:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5D28CC47257
+	for <linux-api@archiver.kernel.org>; Tue,  5 May 2020 14:58:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4594420735
-	for <linux-api@archiver.kernel.org>; Tue,  5 May 2020 14:05:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 46E22206B9
+	for <linux-api@archiver.kernel.org>; Tue,  5 May 2020 14:58:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729504AbgEEOEv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 5 May 2020 10:04:51 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:55460 "EHLO
-        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729040AbgEEOEv (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 5 May 2020 10:04:51 -0400
-Received: from ip5f5af183.dynamic.kabel-deutschland.de ([95.90.241.131] helo=wittgenstein.fritz.box)
-        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.86_2)
-        (envelope-from <christian.brauner@ubuntu.com>)
-        id 1jVyBj-0000y6-Mk; Tue, 05 May 2020 14:04:47 +0000
-From:   Christian Brauner <christian.brauner@ubuntu.com>
-To:     linux-kernel@vger.kernel.org
-Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
-        =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
-        Linux Containers <containers@lists.linux-foundation.org>,
-        "Eric W . Biederman" <ebiederm@xmission.com>,
-        Serge Hallyn <serge@hallyn.com>, Jann Horn <jannh@google.com>,
+        id S1729418AbgEEO6M (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 5 May 2020 10:58:12 -0400
+Received: from smtp-190c.mail.infomaniak.ch ([185.125.25.12]:43793 "EHLO
+        smtp-190c.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1729088AbgEEO6M (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 5 May 2020 10:58:12 -0400
+Received: from smtp-2-0001.mail.infomaniak.ch (unknown [10.5.36.108])
+        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 49GjWS0PVPzlhDCG;
+        Tue,  5 May 2020 16:57:40 +0200 (CEST)
+Received: from ns3096276.ip-94-23-54.eu (unknown [94.23.54.103])
+        by smtp-2-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 49GjWP0npnzlvfC7;
+        Tue,  5 May 2020 16:57:37 +0200 (CEST)
+Subject: Re: [PATCH v3 0/5] Add support for RESOLVE_MAYEXEC
+To:     Christian Heimes <christian@python.org>,
+        Jann Horn <jannh@google.com>, Florian Weimer <fw@deneb.enyo.de>
+Cc:     kernel list <linux-kernel@vger.kernel.org>,
+        Aleksa Sarai <cyphar@cyphar.com>,
+        Alexei Starovoitov <ast@kernel.org>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Andy Lutomirski <luto@kernel.org>,
+        Daniel Borkmann <daniel@iogearbox.net>,
+        Deven Bowers <deven.desai@linux.microsoft.com>,
+        Eric Chiang <ericchiang@google.com>,
+        James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Matthew Garrett <mjg59@google.com>,
+        Matthew Wilcox <willy@infradead.org>,
         Michael Kerrisk <mtk.manpages@gmail.com>,
-        Aleksa Sarai <cyphar@cyphar.com>, linux-api@vger.kernel.org,
-        Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v4 0/3] nsproxy: attach to multiple namespaces
-Date:   Tue,  5 May 2020 16:04:29 +0200
-Message-Id: <20200505140432.181565-1-christian.brauner@ubuntu.com>
-X-Mailer: git-send-email 2.26.2
+        =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mickael.salaun@ssi.gouv.fr>,
+        Mimi Zohar <zohar@linux.ibm.com>,
+        =?UTF-8?Q?Philippe_Tr=c3=a9buchet?= 
+        <philippe.trebuchet@ssi.gouv.fr>,
+        Scott Shell <scottsh@microsoft.com>,
+        Sean Christopherson <sean.j.christopherson@intel.com>,
+        Shuah Khan <shuah@kernel.org>,
+        Steve Dower <steve.dower@python.org>,
+        Steve Grubb <sgrubb@redhat.com>,
+        Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>,
+        Vincent Strubel <vincent.strubel@ssi.gouv.fr>,
+        Kernel Hardening <kernel-hardening@lists.openwall.com>,
+        Linux API <linux-api@vger.kernel.org>,
+        linux-security-module <linux-security-module@vger.kernel.org>,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>
+References: <20200428175129.634352-1-mic@digikod.net>
+ <CAG48ez1bKzh1YvbD_Lcg0AbMCH_cdZmrRRumU7UCJL=qPwNFpQ@mail.gmail.com>
+ <87blnb48a3.fsf@mid.deneb.enyo.de>
+ <CAG48ez2TphTj-VdDaSjvnr0Q8BhNmT3n86xYz4bF3wRJmAMsMw@mail.gmail.com>
+ <b78d2d0d-04cf-c0a9-bd88-20c6ec6705fd@python.org>
+From:   =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+Message-ID: <8d47dfe6-1ff7-e5fe-d4d0-c2493db3fd63@digikod.net>
+Date:   Tue, 5 May 2020 16:57:36 +0200
+User-Agent: 
 MIME-Version: 1.0
+In-Reply-To: <b78d2d0d-04cf-c0a9-bd88-20c6ec6705fd@python.org>
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
 Content-Transfer-Encoding: 8bit
+X-Antivirus: Dr.Web (R) for Unix mail servers drweb plugin ver.6.0.2.8
+X-Antivirus-Code: 0x100000
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This is v4.
 
-/* v4 */
-There are no major changes. There's a fix for the nstype == 0 case Eric
-spotted when porting setns() to struct nsset in the first patch.
-I've also added a few lines to the second patch that we want the ability
-to attach to subsets of namespaces with pidfds. I also mentioned the
-possible future extension that Eric pointed at which amounts to assuming
-even more of the callers context. But let's wait for users with that
-one.
+On 01/05/2020 13:47, Christian Heimes wrote:
+> On 29/04/2020 00.01, Jann Horn wrote:
+>> On Tue, Apr 28, 2020 at 11:21 PM Florian Weimer <fw@deneb.enyo.de> wrote:
+>>> * Jann Horn:
+>>>
+>>>> Just as a comment: You'd probably also have to use RESOLVE_MAYEXEC in
+>>>> the dynamic linker.
+>>>
+>>> Absolutely.  In typical configurations, the kernel does not enforce
+>>> that executable mappings must be backed by files which are executable.
+>>> It's most obvious with using an explicit loader invocation to run
+>>> executables on noexec mounts.  RESOLVE_MAYEXEC is much more useful
+>>> than trying to reimplement the kernel permission checks (or what some
+>>> believe they should be) in userspace.
+>>
+>> Oh, good point.
+>>
+>> That actually seems like something Mickaël could add to his series? If
+>> someone turns on that knob for "When an interpreter wants to execute
+>> something, enforce that we have execute access to it", they probably
+>> also don't want it to be possible to just map files as executable? So
+>> perhaps when that flag is on, the kernel should either refuse to map
+>> anything as executable if it wasn't opened with RESOLVE_MAYEXEC or
+>> (less strict) if RESOLVE_MAYEXEC wasn't used, print a warning, then
+>> check whether the file is executable and bail out if not?
+>>
+>> A configuration where interpreters verify that scripts are executable,
+>> but other things can just mmap executable pages, seems kinda
+>> inconsistent...
+> 
+> +1
+> 
+> I worked with Steve Downer on Python PEP 578 [1] that added audit hooks
+> and PyFile_OpenCode() to CPython. A PyFile_OpenCode() implementation
+> with RESOLVE_MAYEXEC will hep to secure loading of Python code. But
+> Python also includes a wrapper of libffi. ctypes or cffi can load native
+> code from either shared libraries with dlopen() or execute native code
+> from mmap() regions. For example SnakeEater [2] is a clever attack that
+> abused memfd_create syscall and proc filesystem to execute code.
+> 
+> A consistent security policy must also ensure that mmap() PROT_EXEC
+> enforces the same restrictions as RESOLVE_MAYEXEC. The restriction
+> doesn't have be part of this patch, though.
+> 
+> Christian
+> 
+> [1] https://www.python.org/dev/peps/pep-0578/
+> [2] https://github.com/nullbites/SnakeEater/blob/master/SnakeEater2.py
 
-/* v3 */
-The permission bits have already seen some vetting which has been
-helpful and allowed us to drop the ns_capable_cred() patch. That's the
-only major change.
+To be consistent, a "noexec" policy must indeed also restricts features
+such as mprotect(2) and mmap(2) which may enable to set arbitrary memory
+as executable. This can be restricted with SELinux (i.e. execmem,
+execmod,execheap and execstack permissions), PaX MPROTECT [1] or SARA [2].
 
-All selftests pass. People interested in playing with this can get it
-from three locations as usual (it's not yet in my for-next):
-https://git.kernel.org/pub/scm/linux/kernel/git/brauner/linux.git/log/?h=setns_pidfd
-https://gitlab.com/brauner/linux/-/commits/setns_pidfd
-https://github.com/brauner/linux/tree/setns_pidfd
-                                                                  
-Thanks!
-Christian
-
-Christian Brauner (3):
-  nsproxy: add struct nsset
-  nsproxy: attach to namespaces via pidfds
-  selftests/pidfd: add pidfd setns tests
-
- fs/namespace.c                                |  15 +-
- fs/nsfs.c                                     |   5 +
- include/linux/mnt_namespace.h                 |   2 +
- include/linux/nsproxy.h                       |  24 +
- include/linux/proc_fs.h                       |   6 +
- include/linux/proc_ns.h                       |   4 +-
- ipc/namespace.c                               |   7 +-
- kernel/cgroup/namespace.c                     |   5 +-
- kernel/nsproxy.c                              | 305 ++++++++++-
- kernel/pid_namespace.c                        |   5 +-
- kernel/time/namespace.c                       |   5 +-
- kernel/user_namespace.c                       |   8 +-
- kernel/utsname.c                              |   5 +-
- net/core/net_namespace.c                      |   5 +-
- tools/testing/selftests/pidfd/.gitignore      |   1 +
- tools/testing/selftests/pidfd/Makefile        |   3 +-
- tools/testing/selftests/pidfd/config          |   6 +
- .../selftests/pidfd/pidfd_setns_test.c        | 473 ++++++++++++++++++
- 18 files changed, 837 insertions(+), 47 deletions(-)
- create mode 100644 tools/testing/selftests/pidfd/config
- create mode 100644 tools/testing/selftests/pidfd/pidfd_setns_test.c
-
-
-base-commit: ae83d0b416db002fe95601e7f97f64b59514d936
--- 
-2.26.2
-
+[1] https://pax.grsecurity.net/docs/mprotect.txt
+[2]
+https://lore.kernel.org/lkml/1562410493-8661-1-git-send-email-s.mesoraca16@gmail.com/
