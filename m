@@ -2,57 +2,58 @@ Return-Path: <SRS0=auF4=6U=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+X-Spam-Status: No, score=-7.0 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	UNWANTED_LANGUAGE_BODY,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D5FA5C4724C
-	for <linux-api@archiver.kernel.org>; Wed,  6 May 2020 16:32:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 672ECC47256
+	for <linux-api@archiver.kernel.org>; Wed,  6 May 2020 16:32:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A719020708
-	for <linux-api@archiver.kernel.org>; Wed,  6 May 2020 16:32:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3AF8B20708
+	for <linux-api@archiver.kernel.org>; Wed,  6 May 2020 16:32:07 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=ti.com header.i=@ti.com header.b="pPnCnFv8"
+	dkim=pass (1024-bit key) header.d=ti.com header.i=@ti.com header.b="CNc/Yjfr"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729984AbgEFQbz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S1729477AbgEFQbz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Wed, 6 May 2020 12:31:55 -0400
-Received: from lelv0142.ext.ti.com ([198.47.23.249]:42222 "EHLO
-        lelv0142.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729747AbgEFQal (ORCPT
+Received: from fllv0016.ext.ti.com ([198.47.19.142]:46338 "EHLO
+        fllv0016.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1730043AbgEFQal (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Wed, 6 May 2020 12:30:41 -0400
-Received: from fllv0034.itg.ti.com ([10.64.40.246])
-        by lelv0142.ext.ti.com (8.15.2/8.15.2) with ESMTP id 046GUZjG085528;
-        Wed, 6 May 2020 11:30:35 -0500
+Received: from lelv0265.itg.ti.com ([10.180.67.224])
+        by fllv0016.ext.ti.com (8.15.2/8.15.2) with ESMTP id 046GUaaw025570;
+        Wed, 6 May 2020 11:30:36 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ti.com;
-        s=ti-com-17Q1; t=1588782635;
-        bh=Cai31ZHxQi4/NU0CFxQdN7+fQQ232w1peH7dU6BgXjI=;
+        s=ti-com-17Q1; t=1588782636;
+        bh=6d4JNAt994JYzQJRkFmtlsGnhRr/B6NpUoAkvom6ldY=;
         h=From:To:Subject:Date:In-Reply-To:References;
-        b=pPnCnFv8gH/arunhGMzsTty3UahGNwcbnd1MhojUXU0hgPQ9Q0Q+nRPCFtwop4zqt
-         ujvF2sVuOgKC2hoYHnmETMDZrdW9ug6+OWHWU+sS3rpaknUKmsT7AHsECUuUgRqHXU
-         V8jpTfCclkAaV2yQxRNsQaR3B1oVAiGbZEuiELYU=
-Received: from DLEE108.ent.ti.com (dlee108.ent.ti.com [157.170.170.38])
-        by fllv0034.itg.ti.com (8.15.2/8.15.2) with ESMTPS id 046GUZpY081674
+        b=CNc/YjfrGESpqiUyzUGFEG5QayBOJYD4VTgewQoGUOUPHwxy3xfk5IXwWhvLuUKMB
+         FDa4h/cxO0sTSzfRrwigNp5GykSZ9J9Sllo4dN0HuiViuKA29oGxCJ+jhnh75hyavG
+         2ekJ4k9uRYfSATKW6SbBNDiEsEzjTjPlWqouIcko=
+Received: from DLEE111.ent.ti.com (dlee111.ent.ti.com [157.170.170.22])
+        by lelv0265.itg.ti.com (8.15.2/8.15.2) with ESMTPS id 046GUaJZ063273
         (version=TLSv1.2 cipher=AES256-GCM-SHA384 bits=256 verify=FAIL);
-        Wed, 6 May 2020 11:30:35 -0500
-Received: from DLEE101.ent.ti.com (157.170.170.31) by DLEE108.ent.ti.com
- (157.170.170.38) with Microsoft SMTP Server (version=TLS1_2,
+        Wed, 6 May 2020 11:30:36 -0500
+Received: from DLEE114.ent.ti.com (157.170.170.25) by DLEE111.ent.ti.com
+ (157.170.170.22) with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1979.3; Wed, 6 May
- 2020 11:30:35 -0500
-Received: from fllv0039.itg.ti.com (10.64.41.19) by DLEE101.ent.ti.com
- (157.170.170.31) with Microsoft SMTP Server (version=TLS1_2,
+ 2020 11:30:36 -0500
+Received: from fllv0039.itg.ti.com (10.64.41.19) by DLEE114.ent.ti.com
+ (157.170.170.25) with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1979.3 via
- Frontend Transport; Wed, 6 May 2020 11:30:35 -0500
+ Frontend Transport; Wed, 6 May 2020 11:30:36 -0500
 Received: from uda0868495.fios-router.home (ileax41-snat.itg.ti.com [10.172.224.153])
-        by fllv0039.itg.ti.com (8.15.2/8.15.2) with ESMTP id 046GUXDg119719;
-        Wed, 6 May 2020 11:30:35 -0500
+        by fllv0039.itg.ti.com (8.15.2/8.15.2) with ESMTP id 046GUXDi119719;
+        Wed, 6 May 2020 11:30:36 -0500
 From:   Murali Karicheri <m-karicheri2@ti.com>
 To:     <davem@davemloft.net>, <kuba@kernel.org>, <netdev@vger.kernel.org>,
         <linux-kernel@vger.kernel.org>, <linux-api@vger.kernel.org>,
         <nsekhar@ti.com>, <grygorii.strashko@ti.com>
-Subject: [net-next RFC PATCH 03/13] net: hsr: rename files to introduce PRP support
-Date:   Wed, 6 May 2020 12:30:23 -0400
-Message-ID: <20200506163033.3843-4-m-karicheri2@ti.com>
+Subject: [net-next RFC PATCH 05/13] net: hsr: rename hsr_port_get_hsr() to hsr_prp_get_port()
+Date:   Wed, 6 May 2020 12:30:25 -0400
+Message-ID: <20200506163033.3843-6-m-karicheri2@ti.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20200506163033.3843-1-m-karicheri2@ti.com>
 References: <20200506163033.3843-1-m-karicheri2@ti.com>
@@ -64,284 +65,278 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-As PRP implementation expect to re-use code from HSR driver, rename
-the existing files that can be re-used with a hsr_prp prefix.
+hsr_port_get_hsr() actually gets port struct ptr from the priv. So
+rename it to reflect the same. hsr_prp prefix is chosen as this
+can be re-used for PRP driver as well.
 
 Signed-off-by: Murali Karicheri <m-karicheri2@ti.com>
 ---
- net/hsr-prp/Makefile                               | 11 ++++++-----
- net/hsr-prp/hsr_netlink.c                          |  6 +++---
- net/hsr-prp/{hsr_debugfs.c => hsr_prp_debugfs.c}   |  6 +++---
- net/hsr-prp/{hsr_device.c => hsr_prp_device.c}     | 10 +++++-----
- net/hsr-prp/{hsr_device.h => hsr_prp_device.h}     |  2 +-
- net/hsr-prp/{hsr_forward.c => hsr_prp_forward.c}   |  6 +++---
- net/hsr-prp/{hsr_forward.h => hsr_prp_forward.h}   |  2 +-
- net/hsr-prp/{hsr_framereg.c => hsr_prp_framereg.c} |  4 ++--
- net/hsr-prp/{hsr_framereg.h => hsr_prp_framereg.h} |  2 +-
- net/hsr-prp/{hsr_main.c => hsr_prp_main.c}         |  8 ++++----
- net/hsr-prp/{hsr_main.h => hsr_prp_main.h}         |  0
- net/hsr-prp/{hsr_slave.c => hsr_prp_slave.c}       | 10 +++++-----
- net/hsr-prp/{hsr_slave.h => hsr_prp_slave.h}       |  2 +-
- 13 files changed, 35 insertions(+), 34 deletions(-)
- rename net/hsr-prp/{hsr_debugfs.c => hsr_prp_debugfs.c} (97%)
- rename net/hsr-prp/{hsr_device.c => hsr_prp_device.c} (98%)
- rename net/hsr-prp/{hsr_device.h => hsr_prp_device.h} (96%)
- rename net/hsr-prp/{hsr_forward.c => hsr_prp_forward.c} (99%)
- rename net/hsr-prp/{hsr_forward.h => hsr_prp_forward.h} (92%)
- rename net/hsr-prp/{hsr_framereg.c => hsr_prp_framereg.c} (99%)
- rename net/hsr-prp/{hsr_framereg.h => hsr_prp_framereg.h} (98%)
- rename net/hsr-prp/{hsr_main.c => hsr_prp_main.c} (96%)
- rename net/hsr-prp/{hsr_main.h => hsr_prp_main.h} (100%)
- rename net/hsr-prp/{hsr_slave.c => hsr_prp_slave.c} (96%)
- rename net/hsr-prp/{hsr_slave.h => hsr_prp_slave.h} (97%)
+ net/hsr-prp/hsr_netlink.c      | 12 ++++++------
+ net/hsr-prp/hsr_prp_device.c   | 14 +++++++-------
+ net/hsr-prp/hsr_prp_framereg.c | 10 +++++-----
+ net/hsr-prp/hsr_prp_main.c     | 12 ++++++------
+ net/hsr-prp/hsr_prp_main.h     |  2 +-
+ net/hsr-prp/hsr_prp_slave.c    |  8 ++++----
+ 6 files changed, 29 insertions(+), 29 deletions(-)
 
-diff --git a/net/hsr-prp/Makefile b/net/hsr-prp/Makefile
-index fd207c1a0854..608045f088a4 100644
---- a/net/hsr-prp/Makefile
-+++ b/net/hsr-prp/Makefile
-@@ -1,10 +1,11 @@
- # SPDX-License-Identifier: GPL-2.0-only
- #
--# Makefile for HSR
-+# Makefile for HSR & PRP
- #
- 
--obj-$(CONFIG_HSR_PRP)	+= hsr.o
-+obj-$(CONFIG_HSR_PRP)	+= hsr-prp.o
- 
--hsr-y			:= hsr_main.o hsr_framereg.o hsr_device.o \
--			   hsr_netlink.o hsr_slave.o hsr_forward.o
--hsr-$(CONFIG_DEBUG_FS) += hsr_debugfs.o
-+hsr-prp-y		:= hsr_prp_main.o hsr_prp_framereg.o \
-+			   hsr_prp_device.o hsr_netlink.o hsr_prp_slave.o \
-+			   hsr_prp_forward.o
-+hsr-prp-$(CONFIG_DEBUG_FS) += hsr_prp_debugfs.o
 diff --git a/net/hsr-prp/hsr_netlink.c b/net/hsr-prp/hsr_netlink.c
-index 1decb25f6764..9791d4d89aef 100644
+index 9e3f6eda69f5..727b5dc9f31b 100644
 --- a/net/hsr-prp/hsr_netlink.c
 +++ b/net/hsr-prp/hsr_netlink.c
-@@ -11,9 +11,9 @@
- #include <linux/kernel.h>
- #include <net/rtnetlink.h>
- #include <net/genetlink.h>
--#include "hsr_main.h"
--#include "hsr_device.h"
--#include "hsr_framereg.h"
-+#include "hsr_prp_main.h"
-+#include "hsr_prp_device.h"
-+#include "hsr_prp_framereg.h"
+@@ -88,13 +88,13 @@ static int hsr_fill_info(struct sk_buff *skb, const struct net_device *dev)
+ 	struct hsr_priv *priv = netdev_priv(dev);
+ 	struct hsr_port *port;
  
- static const struct nla_policy hsr_policy[IFLA_HSR_MAX + 1] = {
- 	[IFLA_HSR_SLAVE1]		= { .type = NLA_U32 },
-diff --git a/net/hsr-prp/hsr_debugfs.c b/net/hsr-prp/hsr_prp_debugfs.c
-similarity index 97%
-rename from net/hsr-prp/hsr_debugfs.c
-rename to net/hsr-prp/hsr_prp_debugfs.c
-index 9787ef11ca71..d37b44082e92 100644
---- a/net/hsr-prp/hsr_debugfs.c
-+++ b/net/hsr-prp/hsr_prp_debugfs.c
-@@ -1,5 +1,5 @@
- /*
-- * hsr_debugfs code
-+ * hsr_prp_debugfs code
-  * Copyright (C) 2019 Texas Instruments Incorporated
-  *
-  * Author(s):
-@@ -17,8 +17,8 @@
- #include <linux/module.h>
- #include <linux/errno.h>
- #include <linux/debugfs.h>
--#include "hsr_main.h"
--#include "hsr_framereg.h"
-+#include "hsr_prp_main.h"
-+#include "hsr_prp_framereg.h"
+-	port = hsr_port_get_hsr(priv, HSR_PT_SLAVE_A);
++	port = hsr_prp_get_port(priv, HSR_PT_SLAVE_A);
+ 	if (port) {
+ 		if (nla_put_u32(skb, IFLA_HSR_SLAVE1, port->dev->ifindex))
+ 			goto nla_put_failure;
+ 	}
  
- static struct dentry *hsr_debugfs_root_dir;
+-	port = hsr_port_get_hsr(priv, HSR_PT_SLAVE_B);
++	port = hsr_prp_get_port(priv, HSR_PT_SLAVE_B);
+ 	if (port) {
+ 		if (nla_put_u32(skb, IFLA_HSR_SLAVE2, port->dev->ifindex))
+ 			goto nla_put_failure;
+@@ -177,7 +177,7 @@ void hsr_nl_ringerror(struct hsr_priv *priv, unsigned char addr[ETH_ALEN],
  
-diff --git a/net/hsr-prp/hsr_device.c b/net/hsr-prp/hsr_prp_device.c
-similarity index 98%
-rename from net/hsr-prp/hsr_device.c
-rename to net/hsr-prp/hsr_prp_device.c
-index cd99f548e440..ed50022849cb 100644
---- a/net/hsr-prp/hsr_device.c
+ fail:
+ 	rcu_read_lock();
+-	master = hsr_port_get_hsr(priv, HSR_PT_MASTER);
++	master = hsr_prp_get_port(priv, HSR_PT_MASTER);
+ 	netdev_warn(master->dev, "Could not send HSR ring error message\n");
+ 	rcu_read_unlock();
+ }
+@@ -214,7 +214,7 @@ void hsr_nl_nodedown(struct hsr_priv *priv, unsigned char addr[ETH_ALEN])
+ 
+ fail:
+ 	rcu_read_lock();
+-	master = hsr_port_get_hsr(priv, HSR_PT_MASTER);
++	master = hsr_prp_get_port(priv, HSR_PT_MASTER);
+ 	netdev_warn(master->dev, "Could not send HSR node down\n");
+ 	rcu_read_unlock();
+ }
+@@ -319,7 +319,7 @@ static int hsr_get_node_status(struct sk_buff *skb_in, struct genl_info *info)
+ 	res = nla_put_u16(skb_out, HSR_A_IF1_SEQ, hsr_node_if1_seq);
+ 	if (res < 0)
+ 		goto nla_put_failure;
+-	port = hsr_port_get_hsr(priv, HSR_PT_SLAVE_A);
++	port = hsr_prp_get_port(priv, HSR_PT_SLAVE_A);
+ 	if (port)
+ 		res = nla_put_u32(skb_out, HSR_A_IF1_IFINDEX,
+ 				  port->dev->ifindex);
+@@ -332,7 +332,7 @@ static int hsr_get_node_status(struct sk_buff *skb_in, struct genl_info *info)
+ 	res = nla_put_u16(skb_out, HSR_A_IF2_SEQ, hsr_node_if2_seq);
+ 	if (res < 0)
+ 		goto nla_put_failure;
+-	port = hsr_port_get_hsr(priv, HSR_PT_SLAVE_B);
++	port = hsr_prp_get_port(priv, HSR_PT_SLAVE_B);
+ 	if (port)
+ 		res = nla_put_u32(skb_out, HSR_A_IF2_IFINDEX,
+ 				  port->dev->ifindex);
+diff --git a/net/hsr-prp/hsr_prp_device.c b/net/hsr-prp/hsr_prp_device.c
+index df85b8f7f007..d8bc9a48b6f2 100644
+--- a/net/hsr-prp/hsr_prp_device.c
 +++ b/net/hsr-prp/hsr_prp_device.c
-@@ -13,11 +13,11 @@
- #include <linux/etherdevice.h>
- #include <linux/rtnetlink.h>
- #include <linux/pkt_sched.h>
--#include "hsr_device.h"
--#include "hsr_slave.h"
--#include "hsr_framereg.h"
--#include "hsr_main.h"
--#include "hsr_forward.h"
-+#include "hsr_prp_device.h"
-+#include "hsr_prp_slave.h"
-+#include "hsr_prp_framereg.h"
-+#include "hsr_prp_main.h"
-+#include "hsr_prp_forward.h"
+@@ -97,7 +97,7 @@ void hsr_check_carrier_and_operstate(struct hsr_priv *priv)
+ 	unsigned char old_operstate;
+ 	bool has_carrier;
  
- static bool is_admin_up(struct net_device *dev)
+-	master = hsr_port_get_hsr(priv, HSR_PT_MASTER);
++	master = hsr_prp_get_port(priv, HSR_PT_MASTER);
+ 	/* netif_stacked_transfer_operstate() cannot be used here since
+ 	 * it doesn't set IF_OPER_LOWERLAYERDOWN (?)
+ 	 */
+@@ -215,7 +215,7 @@ static int hsr_dev_xmit(struct sk_buff *skb, struct net_device *dev)
+ 	struct hsr_priv *priv = netdev_priv(dev);
+ 	struct hsr_port *master;
+ 
+-	master = hsr_port_get_hsr(priv, HSR_PT_MASTER);
++	master = hsr_prp_get_port(priv, HSR_PT_MASTER);
+ 	if (master) {
+ 		skb->dev = master->dev;
+ 		hsr_forward_skb(skb, master);
+@@ -318,7 +318,7 @@ static void hsr_announce(struct timer_list *t)
+ 	priv = from_timer(priv, t, announce_timer);
+ 
+ 	rcu_read_lock();
+-	master = hsr_port_get_hsr(priv, HSR_PT_MASTER);
++	master = hsr_prp_get_port(priv, HSR_PT_MASTER);
+ 
+ 	if (priv->announce_count < 3 && priv->prot_version == 0) {
+ 		send_hsr_supervision_frame(master, HSR_TLV_ANNOUNCE,
+@@ -343,22 +343,22 @@ static void hsr_del_ports(struct hsr_priv *priv)
  {
-diff --git a/net/hsr-prp/hsr_device.h b/net/hsr-prp/hsr_prp_device.h
-similarity index 96%
-rename from net/hsr-prp/hsr_device.h
-rename to net/hsr-prp/hsr_prp_device.h
-index a099d7de7e79..4cf3db603174 100644
---- a/net/hsr-prp/hsr_device.h
-+++ b/net/hsr-prp/hsr_prp_device.h
-@@ -9,7 +9,7 @@
- #define __HSR_DEVICE_H
+ 	struct hsr_port *port;
  
- #include <linux/netdevice.h>
--#include "hsr_main.h"
-+#include "hsr_prp_main.h"
+-	port = hsr_port_get_hsr(priv, HSR_PT_SLAVE_A);
++	port = hsr_prp_get_port(priv, HSR_PT_SLAVE_A);
+ 	if (port)
+ 		hsr_del_port(port);
  
- void hsr_dev_setup(struct net_device *dev);
- int hsr_dev_finalize(struct net_device *hsr_dev, struct net_device *slave[2],
-diff --git a/net/hsr-prp/hsr_forward.c b/net/hsr-prp/hsr_prp_forward.c
-similarity index 99%
-rename from net/hsr-prp/hsr_forward.c
-rename to net/hsr-prp/hsr_prp_forward.c
-index ddd9605bad04..5ff0efba5db5 100644
---- a/net/hsr-prp/hsr_forward.c
-+++ b/net/hsr-prp/hsr_prp_forward.c
-@@ -5,13 +5,13 @@
-  *	2011-2014 Arvid Brodin, arvid.brodin@alten.se
+-	port = hsr_port_get_hsr(priv, HSR_PT_SLAVE_B);
++	port = hsr_prp_get_port(priv, HSR_PT_SLAVE_B);
+ 	if (port)
+ 		hsr_del_port(port);
+ 
+-	port = hsr_port_get_hsr(priv, HSR_PT_MASTER);
++	port = hsr_prp_get_port(priv, HSR_PT_MASTER);
+ 	if (port)
+ 		hsr_del_port(port);
+ }
+ 
+ /* This has to be called after all the readers are gone.
+  * Otherwise we would have to check the return value of
+- * hsr_port_get_hsr().
++ * hsr_prp_get_port().
   */
- 
--#include "hsr_forward.h"
-+#include "hsr_prp_forward.h"
- #include <linux/types.h>
- #include <linux/skbuff.h>
- #include <linux/etherdevice.h>
- #include <linux/if_vlan.h>
--#include "hsr_main.h"
--#include "hsr_framereg.h"
-+#include "hsr_prp_main.h"
-+#include "hsr_prp_framereg.h"
- 
- struct hsr_node;
- 
-diff --git a/net/hsr-prp/hsr_forward.h b/net/hsr-prp/hsr_prp_forward.h
-similarity index 92%
-rename from net/hsr-prp/hsr_forward.h
-rename to net/hsr-prp/hsr_prp_forward.h
-index 51a69295566c..cbc0704cc14a 100644
---- a/net/hsr-prp/hsr_forward.h
-+++ b/net/hsr-prp/hsr_prp_forward.h
-@@ -9,7 +9,7 @@
- #define __HSR_FORWARD_H
- 
- #include <linux/netdevice.h>
--#include "hsr_main.h"
-+#include "hsr_prp_main.h"
- 
- void hsr_forward_skb(struct sk_buff *skb, struct hsr_port *port);
- 
-diff --git a/net/hsr-prp/hsr_framereg.c b/net/hsr-prp/hsr_prp_framereg.c
-similarity index 99%
-rename from net/hsr-prp/hsr_framereg.c
-rename to net/hsr-prp/hsr_prp_framereg.c
-index 03b891904314..b02a2a0ca0ff 100644
---- a/net/hsr-prp/hsr_framereg.c
+ static void hsr_dev_destroy(struct net_device *hsr_dev)
+ {
+diff --git a/net/hsr-prp/hsr_prp_framereg.c b/net/hsr-prp/hsr_prp_framereg.c
+index 854338352e93..102b0a85f440 100644
+--- a/net/hsr-prp/hsr_prp_framereg.c
 +++ b/net/hsr-prp/hsr_prp_framereg.c
-@@ -14,8 +14,8 @@
- #include <linux/etherdevice.h>
- #include <linux/slab.h>
- #include <linux/rculist.h>
--#include "hsr_main.h"
--#include "hsr_framereg.h"
-+#include "hsr_prp_main.h"
-+#include "hsr_prp_framereg.h"
- #include "hsr_netlink.h"
+@@ -364,18 +364,18 @@ static struct hsr_port *get_late_port(struct hsr_priv *priv,
+ 				      struct hsr_node *node)
+ {
+ 	if (node->time_in_stale[HSR_PT_SLAVE_A])
+-		return hsr_port_get_hsr(priv, HSR_PT_SLAVE_A);
++		return hsr_prp_get_port(priv, HSR_PT_SLAVE_A);
+ 	if (node->time_in_stale[HSR_PT_SLAVE_B])
+-		return hsr_port_get_hsr(priv, HSR_PT_SLAVE_B);
++		return hsr_prp_get_port(priv, HSR_PT_SLAVE_B);
  
- /*	TODO: use hash lists for mac addresses (linux/jhash.h)?    */
-diff --git a/net/hsr-prp/hsr_framereg.h b/net/hsr-prp/hsr_prp_framereg.h
-similarity index 98%
-rename from net/hsr-prp/hsr_framereg.h
-rename to net/hsr-prp/hsr_prp_framereg.h
-index 0f0fa12b4329..c7a2a975aca0 100644
---- a/net/hsr-prp/hsr_framereg.h
-+++ b/net/hsr-prp/hsr_prp_framereg.h
-@@ -8,7 +8,7 @@
- #ifndef __HSR_FRAMEREG_H
- #define __HSR_FRAMEREG_H
+ 	if (time_after(node->time_in[HSR_PT_SLAVE_B],
+ 		       node->time_in[HSR_PT_SLAVE_A] +
+ 					msecs_to_jiffies(MAX_SLAVE_DIFF)))
+-		return hsr_port_get_hsr(priv, HSR_PT_SLAVE_A);
++		return hsr_prp_get_port(priv, HSR_PT_SLAVE_A);
+ 	if (time_after(node->time_in[HSR_PT_SLAVE_A],
+ 		       node->time_in[HSR_PT_SLAVE_B] +
+ 					msecs_to_jiffies(MAX_SLAVE_DIFF)))
+-		return hsr_port_get_hsr(priv, HSR_PT_SLAVE_B);
++		return hsr_prp_get_port(priv, HSR_PT_SLAVE_B);
  
--#include "hsr_main.h"
-+#include "hsr_prp_main.h"
+ 	return NULL;
+ }
+@@ -515,7 +515,7 @@ int hsr_get_node_data(struct hsr_priv *priv,
+ 	*if2_seq = node->seq_out[HSR_PT_SLAVE_A];
  
- struct hsr_node;
- 
-diff --git a/net/hsr-prp/hsr_main.c b/net/hsr-prp/hsr_prp_main.c
-similarity index 96%
-rename from net/hsr-prp/hsr_main.c
-rename to net/hsr-prp/hsr_prp_main.c
-index e2564de67603..d0b7117bf5f9 100644
---- a/net/hsr-prp/hsr_main.c
+ 	if (node->addr_B_port != HSR_PT_NONE) {
+-		port = hsr_port_get_hsr(priv, node->addr_B_port);
++		port = hsr_prp_get_port(priv, node->addr_B_port);
+ 		*addr_b_ifindex = port->dev->ifindex;
+ 	} else {
+ 		*addr_b_ifindex = -1;
+diff --git a/net/hsr-prp/hsr_prp_main.c b/net/hsr-prp/hsr_prp_main.c
+index caa544d0af42..de85f42be6ee 100644
+--- a/net/hsr-prp/hsr_prp_main.c
 +++ b/net/hsr-prp/hsr_prp_main.c
-@@ -9,11 +9,11 @@
- #include <linux/rculist.h>
- #include <linux/timer.h>
- #include <linux/etherdevice.h>
--#include "hsr_main.h"
--#include "hsr_device.h"
-+#include "hsr_prp_main.h"
-+#include "hsr_prp_device.h"
- #include "hsr_netlink.h"
--#include "hsr_framereg.h"
--#include "hsr_slave.h"
-+#include "hsr_prp_framereg.h"
-+#include "hsr_prp_slave.h"
+@@ -41,7 +41,7 @@ static int hsr_netdev_notify(struct notifier_block *nb, unsigned long event,
+ 		if (!is_hsr_master(dev))
+ 			return NOTIFY_DONE;	/* Not an HSR device */
+ 		priv = netdev_priv(dev);
+-		port = hsr_port_get_hsr(priv, HSR_PT_MASTER);
++		port = hsr_prp_get_port(priv, HSR_PT_MASTER);
+ 		if (!port) {
+ 			/* Resend of notification concerning removed device? */
+ 			return NOTIFY_DONE;
+@@ -69,7 +69,7 @@ static int hsr_netdev_notify(struct notifier_block *nb, unsigned long event,
+ 			break;
+ 		}
  
- static bool hsr_slave_empty(struct hsr_priv *hsr)
+-		master = hsr_port_get_hsr(priv, HSR_PT_MASTER);
++		master = hsr_prp_get_port(priv, HSR_PT_MASTER);
+ 
+ 		if (port->type == HSR_PT_SLAVE_A) {
+ 			ether_addr_copy(master->dev->dev_addr, dev->dev_addr);
+@@ -78,7 +78,7 @@ static int hsr_netdev_notify(struct notifier_block *nb, unsigned long event,
+ 		}
+ 
+ 		/* Make sure we recognize frames from ourselves in hsr_rcv() */
+-		port = hsr_port_get_hsr(priv, HSR_PT_SLAVE_B);
++		port = hsr_prp_get_port(priv, HSR_PT_SLAVE_B);
+ 		res = hsr_create_self_node(priv,
+ 					   master->dev->dev_addr,
+ 					   port ?
+@@ -92,12 +92,12 @@ static int hsr_netdev_notify(struct notifier_block *nb, unsigned long event,
+ 		if (port->type == HSR_PT_MASTER)
+ 			break; /* Handled in ndo_change_mtu() */
+ 		mtu_max = hsr_get_max_mtu(port->priv);
+-		master = hsr_port_get_hsr(port->priv, HSR_PT_MASTER);
++		master = hsr_prp_get_port(port->priv, HSR_PT_MASTER);
+ 		master->dev->mtu = mtu_max;
+ 		break;
+ 	case NETDEV_UNREGISTER:
+ 		if (!is_hsr_master(dev)) {
+-			master = hsr_port_get_hsr(port->priv, HSR_PT_MASTER);
++			master = hsr_prp_get_port(port->priv, HSR_PT_MASTER);
+ 			hsr_del_port(port);
+ 			if (hsr_slave_empty(master->priv)) {
+ 				unregister_netdevice_queue(master->dev,
+@@ -116,7 +116,7 @@ static int hsr_netdev_notify(struct notifier_block *nb, unsigned long event,
+ 	return NOTIFY_DONE;
+ }
+ 
+-struct hsr_port *hsr_port_get_hsr(struct hsr_priv *priv, enum hsr_port_type pt)
++struct hsr_port *hsr_prp_get_port(struct hsr_priv *priv, enum hsr_port_type pt)
  {
-diff --git a/net/hsr-prp/hsr_main.h b/net/hsr-prp/hsr_prp_main.h
-similarity index 100%
-rename from net/hsr-prp/hsr_main.h
-rename to net/hsr-prp/hsr_prp_main.h
-diff --git a/net/hsr-prp/hsr_slave.c b/net/hsr-prp/hsr_prp_slave.c
-similarity index 96%
-rename from net/hsr-prp/hsr_slave.c
-rename to net/hsr-prp/hsr_prp_slave.c
-index 25b6ffba26cd..fad8fef783cc 100644
---- a/net/hsr-prp/hsr_slave.c
+ 	struct hsr_port *port;
+ 
+diff --git a/net/hsr-prp/hsr_prp_main.h b/net/hsr-prp/hsr_prp_main.h
+index d11a9f0b696f..5a99d0b12c66 100644
+--- a/net/hsr-prp/hsr_prp_main.h
++++ b/net/hsr-prp/hsr_prp_main.h
+@@ -153,7 +153,7 @@ struct hsr_priv {
+ #define hsr_for_each_port(priv, port) \
+ 	list_for_each_entry_rcu((port), &(priv)->ports, port_list)
+ 
+-struct hsr_port *hsr_port_get_hsr(struct hsr_priv *priv, enum hsr_port_type pt);
++struct hsr_port *hsr_prp_get_port(struct hsr_priv *priv, enum hsr_port_type pt);
+ 
+ /* Caller must ensure skb is a valid HSR frame */
+ static inline u16 hsr_get_skb_sequence_nr(struct sk_buff *skb)
+diff --git a/net/hsr-prp/hsr_prp_slave.c b/net/hsr-prp/hsr_prp_slave.c
+index 96de8d15db00..2c8832bf7a5f 100644
+--- a/net/hsr-prp/hsr_prp_slave.c
 +++ b/net/hsr-prp/hsr_prp_slave.c
-@@ -5,14 +5,14 @@
-  *	2011-2014 Arvid Brodin, arvid.brodin@alten.se
-  */
+@@ -110,7 +110,7 @@ static int hsr_portdev_setup(struct hsr_priv *priv, struct net_device *dev,
+ 	if (res)
+ 		return res;
  
--#include "hsr_slave.h"
-+#include "hsr_prp_slave.h"
- #include <linux/etherdevice.h>
- #include <linux/if_arp.h>
- #include <linux/if_vlan.h>
--#include "hsr_main.h"
--#include "hsr_device.h"
--#include "hsr_forward.h"
--#include "hsr_framereg.h"
-+#include "hsr_prp_main.h"
-+#include "hsr_prp_device.h"
-+#include "hsr_prp_forward.h"
-+#include "hsr_prp_framereg.h"
+-	master = hsr_port_get_hsr(priv, HSR_PT_MASTER);
++	master = hsr_prp_get_port(priv, HSR_PT_MASTER);
+ 	hsr_dev = master->dev;
  
- static rx_handler_result_t hsr_handle_frame(struct sk_buff **pskb)
- {
-diff --git a/net/hsr-prp/hsr_slave.h b/net/hsr-prp/hsr_prp_slave.h
-similarity index 97%
-rename from net/hsr-prp/hsr_slave.h
-rename to net/hsr-prp/hsr_prp_slave.h
-index 8953ea279ce9..c0360b111151 100644
---- a/net/hsr-prp/hsr_slave.h
-+++ b/net/hsr-prp/hsr_prp_slave.h
-@@ -10,7 +10,7 @@
- #include <linux/skbuff.h>
- #include <linux/netdevice.h>
- #include <linux/rtnetlink.h>
--#include "hsr_main.h"
-+#include "hsr_prp_main.h"
+ 	res = netdev_upper_dev_link(dev, hsr_dev, extack);
+@@ -143,7 +143,7 @@ int hsr_add_port(struct hsr_priv *priv, struct net_device *dev,
+ 			return res;
+ 	}
  
- int hsr_add_port(struct hsr_priv *hsr, struct net_device *dev,
- 		 enum hsr_port_type pt, struct netlink_ext_ack *extack);
+-	port = hsr_port_get_hsr(priv, type);
++	port = hsr_prp_get_port(priv, type);
+ 	if (port)
+ 		return -EBUSY;	/* This port already exists */
+ 
+@@ -164,7 +164,7 @@ int hsr_add_port(struct hsr_priv *priv, struct net_device *dev,
+ 	list_add_tail_rcu(&port->port_list, &priv->ports);
+ 	synchronize_rcu();
+ 
+-	master = hsr_port_get_hsr(priv, HSR_PT_MASTER);
++	master = hsr_prp_get_port(priv, HSR_PT_MASTER);
+ 	netdev_update_features(master->dev);
+ 	dev_set_mtu(master->dev, hsr_get_max_mtu(priv));
+ 
+@@ -181,7 +181,7 @@ void hsr_del_port(struct hsr_port *port)
+ 	struct hsr_port *master;
+ 
+ 	priv = port->priv;
+-	master = hsr_port_get_hsr(priv, HSR_PT_MASTER);
++	master = hsr_prp_get_port(priv, HSR_PT_MASTER);
+ 	list_del_rcu(&port->port_list);
+ 
+ 	if (port != master) {
 -- 
 2.17.1
 
