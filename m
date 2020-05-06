@@ -2,58 +2,60 @@ Return-Path: <SRS0=auF4=6U=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 18E99C47256
-	for <linux-api@archiver.kernel.org>; Wed,  6 May 2020 16:30:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A98D2C4725A
+	for <linux-api@archiver.kernel.org>; Wed,  6 May 2020 16:30:45 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DDF7B214D8
-	for <linux-api@archiver.kernel.org>; Wed,  6 May 2020 16:30:41 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 882EF215A4
+	for <linux-api@archiver.kernel.org>; Wed,  6 May 2020 16:30:45 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=ti.com header.i=@ti.com header.b="MIik0TpF"
+	dkim=pass (1024-bit key) header.d=ti.com header.i=@ti.com header.b="O9rlmIQs"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730059AbgEFQak (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 6 May 2020 12:30:40 -0400
-Received: from fllv0016.ext.ti.com ([198.47.19.142]:46332 "EHLO
-        fllv0016.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729931AbgEFQaj (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 6 May 2020 12:30:39 -0400
-Received: from fllv0034.itg.ti.com ([10.64.40.246])
-        by fllv0016.ext.ti.com (8.15.2/8.15.2) with ESMTP id 046GUYlD025560;
-        Wed, 6 May 2020 11:30:34 -0500
+        id S1730143AbgEFQao (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 6 May 2020 12:30:44 -0400
+Received: from lelv0143.ext.ti.com ([198.47.23.248]:58220 "EHLO
+        lelv0143.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1730109AbgEFQan (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 6 May 2020 12:30:43 -0400
+Received: from lelv0266.itg.ti.com ([10.180.67.225])
+        by lelv0143.ext.ti.com (8.15.2/8.15.2) with ESMTP id 046GUdk6116961;
+        Wed, 6 May 2020 11:30:39 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ti.com;
-        s=ti-com-17Q1; t=1588782634;
-        bh=0vKGbcS1eQ/RZrp2SRu3b+qWoDcq4HYFU0TiXlFfmAA=;
-        h=From:To:Subject:Date;
-        b=MIik0TpF7ao6q/qDV1YOvXhl+obANZBpnK4c06Y6XFI9c4sHKqJRckOu0gIokT8dv
-         VPupIVXNAIUVnNvZE3AA/ee37SE95GQ75oh42eybTkTpd7r5219bP8I4lSa+xp7WuY
-         wOz8/z7lONQP78Tb3EGbUeWXCgStVCmr6QbU2/Jo=
+        s=ti-com-17Q1; t=1588782639;
+        bh=pegbbcJY02iFMTjJs0ok2VCawQmW8YotLvjpgj1tQkA=;
+        h=From:To:Subject:Date:In-Reply-To:References;
+        b=O9rlmIQsesDEbfborhl+GcmkY9Ek2VCrZZx/IPPZCGfVaH5Yve+Vf32dD5DN9omfX
+         6UQtVNey/nQXy6gYvDmw8KKNvyCnoCU+TPH4yJkDPZFJg/k8MONNx+TJeQLw6v69NY
+         kuOsd4XkIiXqRVWTotlCwUG3biCju2npxmfi3ETo=
 Received: from DLEE108.ent.ti.com (dlee108.ent.ti.com [157.170.170.38])
-        by fllv0034.itg.ti.com (8.15.2/8.15.2) with ESMTPS id 046GUY0Y081627
+        by lelv0266.itg.ti.com (8.15.2/8.15.2) with ESMTPS id 046GUcHh022034
         (version=TLSv1.2 cipher=AES256-GCM-SHA384 bits=256 verify=FAIL);
-        Wed, 6 May 2020 11:30:34 -0500
-Received: from DLEE105.ent.ti.com (157.170.170.35) by DLEE108.ent.ti.com
+        Wed, 6 May 2020 11:30:38 -0500
+Received: from DLEE113.ent.ti.com (157.170.170.24) by DLEE108.ent.ti.com
  (157.170.170.38) with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1979.3; Wed, 6 May
- 2020 11:30:33 -0500
-Received: from fllv0039.itg.ti.com (10.64.41.19) by DLEE105.ent.ti.com
- (157.170.170.35) with Microsoft SMTP Server (version=TLS1_2,
+ 2020 11:30:38 -0500
+Received: from fllv0039.itg.ti.com (10.64.41.19) by DLEE113.ent.ti.com
+ (157.170.170.24) with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1979.3 via
- Frontend Transport; Wed, 6 May 2020 11:30:33 -0500
+ Frontend Transport; Wed, 6 May 2020 11:30:38 -0500
 Received: from uda0868495.fios-router.home (ileax41-snat.itg.ti.com [10.172.224.153])
-        by fllv0039.itg.ti.com (8.15.2/8.15.2) with ESMTP id 046GUXDd119719;
-        Wed, 6 May 2020 11:30:33 -0500
+        by fllv0039.itg.ti.com (8.15.2/8.15.2) with ESMTP id 046GUXDm119719;
+        Wed, 6 May 2020 11:30:38 -0500
 From:   Murali Karicheri <m-karicheri2@ti.com>
 To:     <davem@davemloft.net>, <kuba@kernel.org>, <netdev@vger.kernel.org>,
         <linux-kernel@vger.kernel.org>, <linux-api@vger.kernel.org>,
         <nsekhar@ti.com>, <grygorii.strashko@ti.com>
-Subject: [net-next RFC PATCH 00/13] net: hsr: Add PRP driver
-Date:   Wed, 6 May 2020 12:30:20 -0400
-Message-ID: <20200506163033.3843-1-m-karicheri2@ti.com>
+Subject: [net-next RFC PATCH 09/13] net: hsr: move re-usable code for PRP to hsr_prp_netlink.c
+Date:   Wed, 6 May 2020 12:30:29 -0400
+Message-ID: <20200506163033.3843-10-m-karicheri2@ti.com>
 X-Mailer: git-send-email 2.17.1
+In-Reply-To: <20200506163033.3843-1-m-karicheri2@ti.com>
+References: <20200506163033.3843-1-m-karicheri2@ti.com>
 MIME-Version: 1.0
 Content-Type: text/plain
 X-EXCLAIMER-MD-CONFIG: e1e8a2fd-e40a-4ac6-ac9b-f7e9cc9ee180
@@ -62,219 +64,819 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This RFC series add support for Parallel Redundancy Protocol (PRP)
-as defined in IEC-62439-3 in the kernel networking subsystem. PRP 
-Uses a Redundancy Control Trailer (RCT) the format of which is
-similar to HSR Tag. This is used for implementing redundancy.
-RCT consists of 6 bytes similar to HSR tag and contain following
-fields:-
+Before introducing PRP netlink code, move the re-usable code to a
+common hsr_prp_netlink.c.
 
-- 16-bit sequence number (SeqNr);
-- 4-bit LAN identifier (LanId);
-- 12 bit frame size (LSDUsize);
-- 16-bit suffix (PRPsuffix). 
-
-The PRPsuffix identifies PRP frames and distinguishes PRP frames
-from other protocols that also append a trailer to their useful
-data. The LSDUsize field allows the receiver to distinguish PRP
-frames from random, nonredundant frames as an additional check.
-LSDUsize is the size of the Ethernet payload inclusive of the
-RCT. Sequence number along with LanId is used for duplicate
-detection and discard.
-
-PRP node is also known as Dual Attached Node (DAN-P) since it
-is typically attached to two different LAN for redundancy.
-DAN-P duplicates each of L2 frames and send it over the two
-Ethernet links. Each outgoing frame is appended with RCT.
-Unlike HSR, these are added to the end of L2 frame and may be
-treated as padding by bridges and therefore would be work with
-traditional bridges or switches, where as HSR wouldn't as Tag
-is prefixed to the Ethenet frame. At the remote end, these are
-received and the duplicate frame is discarded before the stripped
-frame is send up the networking stack. Like HSR, PRP also sends
-periodic Supervision frames to the network. These frames are
-received and MAC address from the SV frames are populated in a
-database called Node Table. The above functions are grouped into
-a block called Link Redundancy Entity (LRE) in the IEC spec.
-
-As there are many similarities between HSR and PRP protocols,
-this patch re-use the code from HSR driver to implement PRP
-driver. As many part of the code can be re-used, this patch
-introduces a new common API definitions for both protocols and
-propose to obsolete the existing HSR defines in
-include/uapi/linux/if_link.h. New definitions are prefixed 
-with a HSR_PRP prefix. Similarly include/uapi/linux/hsr_netlink.h
-is proposed to be replaced with include/uapi/linux/hsr_prp_netlink.h
-which also uses the HSR_PRP prefix. The netlink socket interface
-code is migrated (as well as the iproute2 being sent as a follow up
-patch) to use the new API definitions. To re-use the code,
-following are done as a preparatory patch before adding the PRP
-functionality:-
-
-  - prefix all common code with hsr_prp
-  - net/hsr -> renamed to net/hsr-prp
-  - All common struct types, constants, functions renamed with
-    hsr{HSR}_prp{PRP} prefix.
-
-Please review this and provide me feedback so that I can work to
-incorporate them and send a formal patch series for this. As this
-series impacts user space, I am not sure if this is the right
-approach to introduce a new definitions and obsolete the old
-API definitions for HSR. The current approach is choosen
-to avoid redundant code in iproute2 and in the netlink driver
-code (hsr_netlink.c). Other approach we discussed internally was
-to Keep the HSR prefix in the user space and kernel code, but
-live with the redundant code in the iproute2 and hsr netlink
-code. Would like to hear from you what is the best way to add
-this feature to networking core. If there is any other
-alternative approach possible, I would like to hear about the
-same.
-
-The patch was tested using two TI AM57x IDK boards which are
-connected back to back over two CPSW ports. 
-
-Script used for creating the hsr/prp interface is given below
-and uses the ip link command. Also provided logs from the tests
-I have executed for your reference. 
-
-iproute2 related patches will follow soon....
-
-Murali Karicheri
-Texas Instruments
-
-============ setup.sh =================================================
-#!/bin/sh
-if [ $# -lt 4 ]
-then
-       echo "setup-cpsw.sh <hsr/prp> <MAC-Address of slave-A>"
-       echo "  <ip address for hsr/prp interface>"
-       echo "  <if_name of hsr/prp interface>"
-       exit
-fi
-
-if [ "$1" != "hsr" ] && [ "$1" != "prp" ]
-then
-       echo "use hsr or prp as first argument"
-       exit
-fi
-
-if_a=eth2
-if_b=eth3
-if_name=$4
-
-ifconfig $if_a down
-ifconfig $if_b down
-ifconfig $if_a hw ether $2
-ifconfig $if_b hw ether $2
-ifconfig $if_a up
-ifconfig $if_b up
-
-echo "Setting up $if_name with MAC address $2 for slaves and IP address $3"
-echo "          using $if_a and $if_b"
-
-if [ "$1" = "hsr" ]; then
-       options="version 1"
-else
-       options=""
-fi
-
-ip link add name $if_name type $1 slave1 $if_a slave2 $if_b supervision 0 $options
-ifconfig $if_name $3 up
-==================================================================================
-PRP Logs:
-
-DUT-1 : https://pastebin.ubuntu.com/p/hhsRjTQpcr/
-DUT-2 : https://pastebin.ubuntu.com/p/snPFKhnpk4/
-
-HSR Logs:
-
-DUT-1 : https://pastebin.ubuntu.com/p/FZPNc6Nwdm/
-DUT-2 : https://pastebin.ubuntu.com/p/CtV4ZVS3Yd/
-
-Murali Karicheri (13):
-  net: hsr: Re-use Kconfig option to support PRP
-  net: hsr: rename hsr directory to hsr-prp to introduce PRP
-  net: hsr: rename files to introduce PRP support
-  net: hsr: rename hsr variable inside struct hsr_port to priv
-  net: hsr: rename hsr_port_get_hsr() to hsr_prp_get_port()
-  net: hsr: some renaming to introduce PRP driver support
-  net: hsr: introduce common uapi include/definitions for HSR and PRP
-  net: hsr: migrate HSR netlink socket code to use new common API
-  net: hsr: move re-usable code for PRP to hsr_prp_netlink.c
-  net: hsr: add netlink socket interface for PRP
-  net: prp: add supervision frame generation and handling support
-  net: prp: add packet handling support
-  net: prp: enhance debugfs to display PRP specific info in node table
-
- MAINTAINERS                                   |   2 +-
- include/uapi/linux/hsr_netlink.h              |   3 +
- include/uapi/linux/hsr_prp_netlink.h          |  50 ++
- include/uapi/linux/if_link.h                  |  19 +
- net/Kconfig                                   |   2 +-
- net/Makefile                                  |   2 +-
- net/hsr-prp/Kconfig                           |  37 ++
- net/hsr-prp/Makefile                          |  11 +
- net/hsr-prp/hsr_netlink.c                     | 202 +++++++
- net/{hsr => hsr-prp}/hsr_netlink.h            |  15 +-
- .../hsr_prp_debugfs.c}                        |  82 +--
- net/hsr-prp/hsr_prp_device.c                  | 562 ++++++++++++++++++
- net/hsr-prp/hsr_prp_device.h                  |  23 +
- net/hsr-prp/hsr_prp_forward.c                 | 558 +++++++++++++++++
- .../hsr_prp_forward.h}                        |  10 +-
- .../hsr_prp_framereg.c}                       | 323 +++++-----
- net/hsr-prp/hsr_prp_framereg.h                |  68 +++
- net/hsr-prp/hsr_prp_main.c                    | 194 ++++++
- net/hsr-prp/hsr_prp_main.h                    | 289 +++++++++
- net/hsr-prp/hsr_prp_netlink.c                 | 365 ++++++++++++
- net/hsr-prp/hsr_prp_netlink.h                 |  28 +
- net/hsr-prp/hsr_prp_slave.c                   | 222 +++++++
- net/hsr-prp/hsr_prp_slave.h                   |  37 ++
- net/hsr-prp/prp_netlink.c                     | 141 +++++
- net/hsr-prp/prp_netlink.h                     |  27 +
- net/hsr/Kconfig                               |  29 -
- net/hsr/Makefile                              |  10 -
- net/hsr/hsr_device.c                          | 509 ----------------
- net/hsr/hsr_device.h                          |  22 -
- net/hsr/hsr_forward.c                         | 379 ------------
- net/hsr/hsr_framereg.h                        |  62 --
- net/hsr/hsr_main.c                            | 154 -----
- net/hsr/hsr_main.h                            | 188 ------
- net/hsr/hsr_netlink.c                         | 514 ----------------
- net/hsr/hsr_slave.c                           | 198 ------
- net/hsr/hsr_slave.h                           |  33 -
- 36 files changed, 3084 insertions(+), 2286 deletions(-)
- create mode 100644 include/uapi/linux/hsr_prp_netlink.h
- create mode 100644 net/hsr-prp/Kconfig
- create mode 100644 net/hsr-prp/Makefile
- create mode 100644 net/hsr-prp/hsr_netlink.c
- rename net/{hsr => hsr-prp}/hsr_netlink.h (58%)
- rename net/{hsr/hsr_debugfs.c => hsr-prp/hsr_prp_debugfs.c} (52%)
- create mode 100644 net/hsr-prp/hsr_prp_device.c
- create mode 100644 net/hsr-prp/hsr_prp_device.h
- create mode 100644 net/hsr-prp/hsr_prp_forward.c
- rename net/{hsr/hsr_forward.h => hsr-prp/hsr_prp_forward.h} (50%)
- rename net/{hsr/hsr_framereg.c => hsr-prp/hsr_prp_framereg.c} (56%)
- create mode 100644 net/hsr-prp/hsr_prp_framereg.h
- create mode 100644 net/hsr-prp/hsr_prp_main.c
- create mode 100644 net/hsr-prp/hsr_prp_main.h
+Signed-off-by: Murali Karicheri <m-karicheri2@ti.com>
+---
+ net/hsr-prp/Makefile          |   2 +-
+ net/hsr-prp/hsr_netlink.c     | 337 +------------------------------
+ net/hsr-prp/hsr_prp_netlink.c | 367 ++++++++++++++++++++++++++++++++++
+ net/hsr-prp/hsr_prp_netlink.h |  27 +++
+ 4 files changed, 402 insertions(+), 331 deletions(-)
  create mode 100644 net/hsr-prp/hsr_prp_netlink.c
  create mode 100644 net/hsr-prp/hsr_prp_netlink.h
- create mode 100644 net/hsr-prp/hsr_prp_slave.c
- create mode 100644 net/hsr-prp/hsr_prp_slave.h
- create mode 100644 net/hsr-prp/prp_netlink.c
- create mode 100644 net/hsr-prp/prp_netlink.h
- delete mode 100644 net/hsr/Kconfig
- delete mode 100644 net/hsr/Makefile
- delete mode 100644 net/hsr/hsr_device.c
- delete mode 100644 net/hsr/hsr_device.h
- delete mode 100644 net/hsr/hsr_forward.c
- delete mode 100644 net/hsr/hsr_framereg.h
- delete mode 100644 net/hsr/hsr_main.c
- delete mode 100644 net/hsr/hsr_main.h
- delete mode 100644 net/hsr/hsr_netlink.c
- delete mode 100644 net/hsr/hsr_slave.c
- delete mode 100644 net/hsr/hsr_slave.h
 
+diff --git a/net/hsr-prp/Makefile b/net/hsr-prp/Makefile
+index 608045f088a4..76f266cd1976 100644
+--- a/net/hsr-prp/Makefile
++++ b/net/hsr-prp/Makefile
+@@ -7,5 +7,5 @@ obj-$(CONFIG_HSR_PRP)	+= hsr-prp.o
+ 
+ hsr-prp-y		:= hsr_prp_main.o hsr_prp_framereg.o \
+ 			   hsr_prp_device.o hsr_netlink.o hsr_prp_slave.o \
+-			   hsr_prp_forward.o
++			   hsr_prp_forward.o hsr_prp_netlink.o
+ hsr-prp-$(CONFIG_DEBUG_FS) += hsr_prp_debugfs.o
+diff --git a/net/hsr-prp/hsr_netlink.c b/net/hsr-prp/hsr_netlink.c
+index 1f7c3be8d96e..6bdb369ced36 100644
+--- a/net/hsr-prp/hsr_netlink.c
++++ b/net/hsr-prp/hsr_netlink.c
+@@ -11,6 +11,7 @@
+ #include <linux/kernel.h>
+ #include <net/rtnetlink.h>
+ #include <net/genetlink.h>
++#include "hsr_prp_netlink.h"
+ #include "hsr_prp_main.h"
+ #include "hsr_prp_device.h"
+ #include "hsr_prp_framereg.h"
+@@ -31,85 +32,7 @@ static int hsr_newlink(struct net *src_net, struct net_device *dev,
+ 		       struct nlattr *tb[], struct nlattr *data[],
+ 		       struct netlink_ext_ack *extack)
+ {
+-	struct net_device *link[2];
+-	unsigned char multicast_spec, hsr_version;
+-
+-	if (!data) {
+-		NL_SET_ERR_MSG_MOD(extack, "No slave devices specified");
+-		return -EINVAL;
+-	}
+-	if (!data[IFLA_HSR_PRP_SLAVE1]) {
+-		NL_SET_ERR_MSG_MOD(extack, "Slave1 device not specified");
+-		return -EINVAL;
+-	}
+-	link[0] = __dev_get_by_index(src_net,
+-				     nla_get_u32(data[IFLA_HSR_PRP_SLAVE1]));
+-	if (!link[0]) {
+-		NL_SET_ERR_MSG_MOD(extack, "Slave1 does not exist");
+-		return -EINVAL;
+-	}
+-	if (!data[IFLA_HSR_PRP_SLAVE2]) {
+-		NL_SET_ERR_MSG_MOD(extack, "Slave2 device not specified");
+-		return -EINVAL;
+-	}
+-	link[1] = __dev_get_by_index(src_net,
+-				     nla_get_u32(data[IFLA_HSR_PRP_SLAVE2]));
+-	if (!link[1]) {
+-		NL_SET_ERR_MSG_MOD(extack, "Slave2 does not exist");
+-		return -EINVAL;
+-	}
+-
+-	if (link[0] == link[1]) {
+-		NL_SET_ERR_MSG_MOD(extack, "Slave1 and Slave2 are same");
+-		return -EINVAL;
+-	}
+-
+-	if (!data[IFLA_HSR_PRP_SF_MC_ADDR_LSB])
+-		multicast_spec = 0;
+-	else
+-		multicast_spec = nla_get_u8(data[IFLA_HSR_PRP_SF_MC_ADDR_LSB]);
+-
+-	if (!data[IFLA_HSR_PRP_VERSION]) {
+-		hsr_version = 0;
+-	} else {
+-		hsr_version = nla_get_u8(data[IFLA_HSR_PRP_VERSION]);
+-		if (hsr_version > 1) {
+-			NL_SET_ERR_MSG_MOD(extack,
+-					   "Only versions 0..1 are supported");
+-			return -EINVAL;
+-		}
+-	}
+-
+-	return hsr_prp_dev_finalize(dev, link, multicast_spec, hsr_version,
+-				    extack);
+-}
+-
+-static int hsr_fill_info(struct sk_buff *skb, const struct net_device *dev)
+-{
+-	struct hsr_prp_priv *priv = netdev_priv(dev);
+-	struct hsr_prp_port *port;
+-
+-	port = hsr_prp_get_port(priv, HSR_PRP_PT_SLAVE_A);
+-	if (port) {
+-		if (nla_put_u32(skb, IFLA_HSR_PRP_SLAVE1, port->dev->ifindex))
+-			goto nla_put_failure;
+-	}
+-
+-	port = hsr_prp_get_port(priv, HSR_PRP_PT_SLAVE_B);
+-	if (port) {
+-		if (nla_put_u32(skb, IFLA_HSR_PRP_SLAVE2, port->dev->ifindex))
+-			goto nla_put_failure;
+-	}
+-
+-	if (nla_put(skb, IFLA_HSR_PRP_SF_MC_ADDR, ETH_ALEN,
+-		    priv->sup_multicast_addr) ||
+-	    nla_put_u16(skb, IFLA_HSR_PRP_SEQ_NR, priv->sequence_nr))
+-		goto nla_put_failure;
+-
+-	return 0;
+-
+-nla_put_failure:
+-	return -EMSGSIZE;
++	return hsr_prp_newlink(src_net, dev, tb, data, extack);
+ }
+ 
+ static struct rtnl_link_ops hsr_link_ops __read_mostly = {
+@@ -119,7 +42,7 @@ static struct rtnl_link_ops hsr_link_ops __read_mostly = {
+ 	.priv_size	= sizeof(struct hsr_prp_priv),
+ 	.setup		= hsr_prp_dev_setup,
+ 	.newlink	= hsr_newlink,
+-	.fill_info	= hsr_fill_info,
++	.fill_info	= hsr_prp_fill_info,
+ };
+ 
+ /* attribute policy */
+@@ -187,40 +110,9 @@ void hsr_nl_ringerror(struct hsr_prp_priv *priv,
+ /* This is called when we haven't heard from the node with MAC address addr for
+  * some time (just before the node is removed from the node table/list).
+  */
+-void hsr_nl_nodedown(struct hsr_prp_priv *priv,
+-		     unsigned char addr[ETH_ALEN])
++void hsr_nl_nodedown(struct hsr_prp_priv *priv, unsigned char addr[ETH_ALEN])
+ {
+-	struct sk_buff *skb;
+-	void *msg_head;
+-	struct hsr_prp_port *master;
+-	int res;
+-
+-	skb = genlmsg_new(NLMSG_GOODSIZE, GFP_ATOMIC);
+-	if (!skb)
+-		goto fail;
+-
+-	msg_head = genlmsg_put(skb, 0, 0, &hsr_genl_family, 0,
+-			       HSR_PRP_C_NODE_DOWN);
+-	if (!msg_head)
+-		goto nla_put_failure;
+-
+-	res = nla_put(skb, HSR_PRP_A_NODE_ADDR, ETH_ALEN, addr);
+-	if (res < 0)
+-		goto nla_put_failure;
+-
+-	genlmsg_end(skb, msg_head);
+-	genlmsg_multicast(&hsr_genl_family, skb, 0, 0, GFP_ATOMIC);
+-
+-	return;
+-
+-nla_put_failure:
+-	kfree_skb(skb);
+-
+-fail:
+-	rcu_read_lock();
+-	master = hsr_prp_get_port(priv, HSR_PRP_PT_MASTER);
+-	netdev_warn(master->dev, "Could not send HSR node down\n");
+-	rcu_read_unlock();
++	hsr_prp_nl_nodedown(priv, &hsr_genl_family, addr);
+ }
+ 
+ /* HSR_PRP_C_GET_NODE_STATUS lets userspace query the internal HSR node table
+@@ -233,229 +125,14 @@ void hsr_nl_nodedown(struct hsr_prp_priv *priv,
+  */
+ static int hsr_get_node_status(struct sk_buff *skb_in, struct genl_info *info)
+ {
+-	/* For receiving */
+-	struct nlattr *na;
+-	struct net_device *hsr_dev;
+-
+-	/* For sending */
+-	struct sk_buff *skb_out;
+-	void *msg_head;
+-	struct hsr_prp_priv *priv;
+-	struct hsr_prp_port *port;
+-	unsigned char node_addr_b[ETH_ALEN];
+-	int hsr_node_if1_age;
+-	u16 hsr_node_if1_seq;
+-	int hsr_node_if2_age;
+-	u16 hsr_node_if2_seq;
+-	int addr_b_ifindex;
+-	int res;
+-
+-	if (!info)
+-		goto invalid;
+-
+-	na = info->attrs[HSR_PRP_A_IFINDEX];
+-	if (!na)
+-		goto invalid;
+-	na = info->attrs[HSR_PRP_A_NODE_ADDR];
+-	if (!na)
+-		goto invalid;
+-
+-	rcu_read_lock();
+-	hsr_dev =
+-	dev_get_by_index_rcu(genl_info_net(info),
+-			     nla_get_u32(info->attrs[HSR_PRP_A_IFINDEX]));
+-	if (!hsr_dev)
+-		goto rcu_unlock;
+-	if (!is_hsr_prp_master(hsr_dev))
+-		goto rcu_unlock;
+-
+-	/* Send reply */
+-	skb_out = genlmsg_new(NLMSG_GOODSIZE, GFP_ATOMIC);
+-	if (!skb_out) {
+-		res = -ENOMEM;
+-		goto fail;
+-	}
+-
+-	msg_head = genlmsg_put(skb_out, NETLINK_CB(skb_in).portid,
+-			       info->snd_seq, &hsr_genl_family, 0,
+-			       HSR_PRP_C_SET_NODE_STATUS);
+-	if (!msg_head) {
+-		res = -ENOMEM;
+-		goto nla_put_failure;
+-	}
+-
+-	res = nla_put_u32(skb_out, HSR_PRP_A_IFINDEX, hsr_dev->ifindex);
+-	if (res < 0)
+-		goto nla_put_failure;
+-
+-	priv = netdev_priv(hsr_dev);
+-	res = hsr_prp_get_node_data(priv,
+-				    (unsigned char *)
+-				    nla_data(info->attrs[HSR_PRP_A_NODE_ADDR]),
+-					     node_addr_b,
+-					     &addr_b_ifindex,
+-					     &hsr_node_if1_age,
+-					     &hsr_node_if1_seq,
+-					     &hsr_node_if2_age,
+-					     &hsr_node_if2_seq);
+-	if (res < 0)
+-		goto nla_put_failure;
+-
+-	res = nla_put(skb_out, HSR_PRP_A_NODE_ADDR, ETH_ALEN,
+-		      nla_data(info->attrs[HSR_PRP_A_NODE_ADDR]));
+-	if (res < 0)
+-		goto nla_put_failure;
+-
+-	if (addr_b_ifindex > -1) {
+-		res = nla_put(skb_out, HSR_PRP_A_NODE_ADDR_B, ETH_ALEN,
+-			      node_addr_b);
+-		if (res < 0)
+-			goto nla_put_failure;
+-
+-		res = nla_put_u32(skb_out, HSR_PRP_A_ADDR_B_IFINDEX,
+-				  addr_b_ifindex);
+-		if (res < 0)
+-			goto nla_put_failure;
+-	}
+-
+-	res = nla_put_u32(skb_out, HSR_PRP_A_IF1_AGE, hsr_node_if1_age);
+-	if (res < 0)
+-		goto nla_put_failure;
+-	res = nla_put_u16(skb_out, HSR_PRP_A_IF1_SEQ, hsr_node_if1_seq);
+-	if (res < 0)
+-		goto nla_put_failure;
+-	port = hsr_prp_get_port(priv, HSR_PRP_PT_SLAVE_A);
+-	if (port)
+-		res = nla_put_u32(skb_out, HSR_PRP_A_IF1_IFINDEX,
+-				  port->dev->ifindex);
+-	if (res < 0)
+-		goto nla_put_failure;
+-
+-	res = nla_put_u32(skb_out, HSR_PRP_A_IF2_AGE, hsr_node_if2_age);
+-	if (res < 0)
+-		goto nla_put_failure;
+-	res = nla_put_u16(skb_out, HSR_PRP_A_IF2_SEQ, hsr_node_if2_seq);
+-	if (res < 0)
+-		goto nla_put_failure;
+-	port = hsr_prp_get_port(priv, HSR_PRP_PT_SLAVE_B);
+-	if (port)
+-		res = nla_put_u32(skb_out, HSR_PRP_A_IF2_IFINDEX,
+-				  port->dev->ifindex);
+-	if (res < 0)
+-		goto nla_put_failure;
+-
+-	rcu_read_unlock();
+-
+-	genlmsg_end(skb_out, msg_head);
+-	genlmsg_unicast(genl_info_net(info), skb_out, info->snd_portid);
+-
+-	return 0;
+-
+-rcu_unlock:
+-	rcu_read_unlock();
+-invalid:
+-	netlink_ack(skb_in, nlmsg_hdr(skb_in), -EINVAL, NULL);
+-	return 0;
+-
+-nla_put_failure:
+-	kfree_skb(skb_out);
+-	/* Fall through */
+-
+-fail:
+-	rcu_read_unlock();
+-	return res;
++	return hsr_prp_get_node_status(&hsr_genl_family, skb_in, info);
+ }
+ 
+ /* Get a list of MacAddressA of all nodes known to this node (including self).
+  */
+ static int hsr_get_node_list(struct sk_buff *skb_in, struct genl_info *info)
+ {
+-	unsigned char addr[ETH_ALEN];
+-	struct net_device *hsr_dev;
+-	struct hsr_prp_priv *priv;
+-	struct sk_buff *skb_out;
+-	bool restart = false;
+-	struct nlattr *na;
+-	void *pos = NULL;
+-	void *msg_head;
+-	int res;
+-
+-	if (!info)
+-		goto invalid;
+-
+-	na = info->attrs[HSR_PRP_A_IFINDEX];
+-	if (!na)
+-		goto invalid;
+-
+-	rcu_read_lock();
+-	hsr_dev =
+-	dev_get_by_index_rcu(genl_info_net(info),
+-			     nla_get_u32(info->attrs[HSR_PRP_A_IFINDEX]));
+-	if (!hsr_dev)
+-		goto rcu_unlock;
+-	if (!is_hsr_prp_master(hsr_dev))
+-		goto rcu_unlock;
+-
+-restart:
+-	/* Send reply */
+-	skb_out = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_ATOMIC);
+-	if (!skb_out) {
+-		res = -ENOMEM;
+-		goto fail;
+-	}
+-
+-	msg_head = genlmsg_put(skb_out, NETLINK_CB(skb_in).portid,
+-			       info->snd_seq, &hsr_genl_family, 0,
+-			       HSR_PRP_C_SET_NODE_LIST);
+-	if (!msg_head) {
+-		res = -ENOMEM;
+-		goto nla_put_failure;
+-	}
+-
+-	if (!restart) {
+-		res = nla_put_u32(skb_out, HSR_PRP_A_IFINDEX, hsr_dev->ifindex);
+-		if (res < 0)
+-			goto nla_put_failure;
+-	}
+-
+-	priv = netdev_priv(hsr_dev);
+-
+-	if (!pos)
+-		pos = hsr_prp_get_next_node(priv, NULL, addr);
+-	while (pos) {
+-		res = nla_put(skb_out, HSR_PRP_A_NODE_ADDR, ETH_ALEN, addr);
+-		if (res < 0) {
+-			if (res == -EMSGSIZE) {
+-				genlmsg_end(skb_out, msg_head);
+-				genlmsg_unicast(genl_info_net(info), skb_out,
+-						info->snd_portid);
+-				restart = true;
+-				goto restart;
+-			}
+-			goto nla_put_failure;
+-		}
+-		pos = hsr_prp_get_next_node(priv, pos, addr);
+-	}
+-	rcu_read_unlock();
+-
+-	genlmsg_end(skb_out, msg_head);
+-	genlmsg_unicast(genl_info_net(info), skb_out, info->snd_portid);
+-
+-	return 0;
+-
+-rcu_unlock:
+-	rcu_read_unlock();
+-invalid:
+-	netlink_ack(skb_in, nlmsg_hdr(skb_in), -EINVAL, NULL);
+-	return 0;
+-
+-nla_put_failure:
+-	nlmsg_free(skb_out);
+-	/* Fall through */
+-
+-fail:
+-	rcu_read_unlock();
+-	return res;
++	return hsr_prp_get_node_list(&hsr_genl_family, skb_in, info);
+ }
+ 
+ static const struct genl_ops hsr_ops[] = {
+diff --git a/net/hsr-prp/hsr_prp_netlink.c b/net/hsr-prp/hsr_prp_netlink.c
+new file mode 100644
+index 000000000000..04d51cd97496
+--- /dev/null
++++ b/net/hsr-prp/hsr_prp_netlink.c
+@@ -0,0 +1,367 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Copyright 2011-2014 Autronica Fire and Security AS
++ * Copyright (C) 2013 Texas Instruments Incorporated - http://www.ti.com
++ *
++ * Based on Code by Arvid Brodin, arvid.brodin@alten.se
++ *
++ * Common routines for handling Netlink messages for HSR and PRP
++ */
++
++#include "hsr_prp_netlink.h"
++#include "hsr_prp_main.h"
++#include "hsr_prp_device.h"
++#include "hsr_prp_framereg.h"
++
++int hsr_prp_newlink(struct net *src_net, struct net_device *dev,
++		    struct nlattr *tb[], struct nlattr *data[],
++		    struct netlink_ext_ack *extack)
++{
++	struct net_device *link[2];
++	unsigned char multicast_spec, hsr_version;
++
++	if (!data) {
++		NL_SET_ERR_MSG_MOD(extack, "No slave devices specified");
++		return -EINVAL;
++	}
++	if (!data[IFLA_HSR_PRP_SLAVE1]) {
++		NL_SET_ERR_MSG_MOD(extack, "Slave1 device not specified");
++		return -EINVAL;
++	}
++	link[0] = __dev_get_by_index(src_net,
++				     nla_get_u32(data[IFLA_HSR_PRP_SLAVE1]));
++	if (!link[0]) {
++		NL_SET_ERR_MSG_MOD(extack, "Slave1 does not exist");
++		return -EINVAL;
++	}
++	if (!data[IFLA_HSR_PRP_SLAVE2]) {
++		NL_SET_ERR_MSG_MOD(extack, "Slave2 device not specified");
++		return -EINVAL;
++	}
++	link[1] = __dev_get_by_index(src_net,
++				     nla_get_u32(data[IFLA_HSR_PRP_SLAVE2]));
++	if (!link[1]) {
++		NL_SET_ERR_MSG_MOD(extack, "Slave2 does not exist");
++		return -EINVAL;
++	}
++
++	if (link[0] == link[1]) {
++		NL_SET_ERR_MSG_MOD(extack, "Slave1 and Slave2 are same");
++		return -EINVAL;
++	}
++
++	if (!data[IFLA_HSR_PRP_SF_MC_ADDR_LSB])
++		multicast_spec = 0;
++	else
++		multicast_spec = nla_get_u8(data[IFLA_HSR_PRP_SF_MC_ADDR_LSB]);
++
++	if (!data[IFLA_HSR_PRP_VERSION]) {
++		hsr_version = 0;
++	} else {
++		hsr_version = nla_get_u8(data[IFLA_HSR_PRP_VERSION]);
++		if (hsr_version > 1) {
++			NL_SET_ERR_MSG_MOD(extack,
++					   "Only versions 0..1 are supported");
++			return -EINVAL;
++		}
++	}
++
++	return hsr_prp_dev_finalize(dev, link, multicast_spec, hsr_version,
++				    extack);
++}
++
++int hsr_prp_fill_info(struct sk_buff *skb, const struct net_device *dev)
++{
++	struct hsr_prp_priv *priv = netdev_priv(dev);
++	struct hsr_prp_port *port;
++
++	port = hsr_prp_get_port(priv, HSR_PRP_PT_SLAVE_A);
++	if (port) {
++		if (nla_put_u32(skb, IFLA_HSR_PRP_SLAVE1, port->dev->ifindex))
++			goto nla_put_failure;
++	}
++
++	port = hsr_prp_get_port(priv, HSR_PRP_PT_SLAVE_B);
++	if (port) {
++		if (nla_put_u32(skb, IFLA_HSR_PRP_SLAVE2, port->dev->ifindex))
++			goto nla_put_failure;
++	}
++
++	if (nla_put(skb, IFLA_HSR_PRP_SF_MC_ADDR, ETH_ALEN,
++		    priv->sup_multicast_addr) ||
++	    nla_put_u16(skb, IFLA_HSR_PRP_SEQ_NR, priv->sequence_nr))
++		goto nla_put_failure;
++
++	return 0;
++
++nla_put_failure:
++	return -EMSGSIZE;
++}
++
++/* This is called when we haven't heard from the node with MAC address addr for
++ * some time (just before the node is removed from the node table/list).
++ */
++void hsr_prp_nl_nodedown(struct hsr_prp_priv *priv,
++			 struct genl_family *genl_family,
++			 unsigned char addr[ETH_ALEN])
++{
++	struct sk_buff *skb;
++	void *msg_head;
++	struct hsr_prp_port *master;
++	int res;
++
++	skb = genlmsg_new(NLMSG_GOODSIZE, GFP_ATOMIC);
++	if (!skb)
++		goto fail;
++
++	msg_head = genlmsg_put(skb, 0, 0, genl_family, 0,
++			       HSR_PRP_C_NODE_DOWN);
++	if (!msg_head)
++		goto nla_put_failure;
++
++	res = nla_put(skb, HSR_PRP_A_NODE_ADDR, ETH_ALEN, addr);
++	if (res < 0)
++		goto nla_put_failure;
++
++	genlmsg_end(skb, msg_head);
++	genlmsg_multicast(genl_family, skb, 0, 0, GFP_ATOMIC);
++
++	return;
++
++nla_put_failure:
++	kfree_skb(skb);
++
++fail:
++	rcu_read_lock();
++	master = hsr_prp_get_port(priv, HSR_PRP_PT_MASTER);
++	netdev_warn(master->dev, "Could not send HSR node down\n");
++	rcu_read_unlock();
++}
++
++int hsr_prp_get_node_status(struct genl_family *genl_family,
++			    struct sk_buff *skb_in, struct genl_info *info)
++{
++	/* For receiving */
++	struct nlattr *na;
++	struct net_device *hsr_dev;
++
++	/* For sending */
++	struct sk_buff *skb_out;
++	void *msg_head;
++	struct hsr_prp_priv *priv;
++	struct hsr_prp_port *port;
++	unsigned char node_addr_b[ETH_ALEN];
++	int hsr_node_if1_age;
++	u16 hsr_node_if1_seq;
++	int hsr_node_if2_age;
++	u16 hsr_node_if2_seq;
++	int addr_b_ifindex;
++	int res;
++
++	if (!info)
++		goto invalid;
++
++	na = info->attrs[HSR_PRP_A_IFINDEX];
++	if (!na)
++		goto invalid;
++	na = info->attrs[HSR_PRP_A_NODE_ADDR];
++	if (!na)
++		goto invalid;
++
++	rcu_read_lock();
++	hsr_dev =
++	dev_get_by_index_rcu(genl_info_net(info),
++			     nla_get_u32(info->attrs[HSR_PRP_A_IFINDEX]));
++	if (!hsr_dev)
++		goto rcu_unlock;
++	if (!is_hsr_prp_master(hsr_dev))
++		goto rcu_unlock;
++
++	/* Send reply */
++	skb_out = genlmsg_new(NLMSG_GOODSIZE, GFP_ATOMIC);
++	if (!skb_out) {
++		res = -ENOMEM;
++		goto fail;
++	}
++
++	msg_head = genlmsg_put(skb_out, NETLINK_CB(skb_in).portid,
++			       info->snd_seq, genl_family, 0,
++			       HSR_PRP_C_SET_NODE_STATUS);
++	if (!msg_head) {
++		res = -ENOMEM;
++		goto nla_put_failure;
++	}
++
++	res = nla_put_u32(skb_out, HSR_PRP_A_IFINDEX, hsr_dev->ifindex);
++	if (res < 0)
++		goto nla_put_failure;
++
++	priv = netdev_priv(hsr_dev);
++	res = hsr_prp_get_node_data(priv,
++				    (unsigned char *)
++				    nla_data(info->attrs[HSR_PRP_A_NODE_ADDR]),
++					     node_addr_b,
++					     &addr_b_ifindex,
++					     &hsr_node_if1_age,
++					     &hsr_node_if1_seq,
++					     &hsr_node_if2_age,
++					     &hsr_node_if2_seq);
++	if (res < 0)
++		goto nla_put_failure;
++
++	res = nla_put(skb_out, HSR_PRP_A_NODE_ADDR, ETH_ALEN,
++		      nla_data(info->attrs[HSR_PRP_A_NODE_ADDR]));
++	if (res < 0)
++		goto nla_put_failure;
++
++	if (addr_b_ifindex > -1) {
++		res = nla_put(skb_out, HSR_PRP_A_NODE_ADDR_B, ETH_ALEN,
++			      node_addr_b);
++		if (res < 0)
++			goto nla_put_failure;
++
++		res = nla_put_u32(skb_out, HSR_PRP_A_ADDR_B_IFINDEX,
++				  addr_b_ifindex);
++		if (res < 0)
++			goto nla_put_failure;
++	}
++
++	res = nla_put_u32(skb_out, HSR_PRP_A_IF1_AGE, hsr_node_if1_age);
++	if (res < 0)
++		goto nla_put_failure;
++	res = nla_put_u16(skb_out, HSR_PRP_A_IF1_SEQ, hsr_node_if1_seq);
++	if (res < 0)
++		goto nla_put_failure;
++	port = hsr_prp_get_port(priv, HSR_PRP_PT_SLAVE_A);
++	if (port)
++		res = nla_put_u32(skb_out, HSR_PRP_A_IF1_IFINDEX,
++				  port->dev->ifindex);
++	if (res < 0)
++		goto nla_put_failure;
++
++	res = nla_put_u32(skb_out, HSR_PRP_A_IF2_AGE, hsr_node_if2_age);
++	if (res < 0)
++		goto nla_put_failure;
++	res = nla_put_u16(skb_out, HSR_PRP_A_IF2_SEQ, hsr_node_if2_seq);
++	if (res < 0)
++		goto nla_put_failure;
++	port = hsr_prp_get_port(priv, HSR_PRP_PT_SLAVE_B);
++	if (port)
++		res = nla_put_u32(skb_out, HSR_PRP_A_IF2_IFINDEX,
++				  port->dev->ifindex);
++	if (res < 0)
++		goto nla_put_failure;
++
++	rcu_read_unlock();
++
++	genlmsg_end(skb_out, msg_head);
++	genlmsg_unicast(genl_info_net(info), skb_out, info->snd_portid);
++
++	return 0;
++
++rcu_unlock:
++	rcu_read_unlock();
++invalid:
++	netlink_ack(skb_in, nlmsg_hdr(skb_in), -EINVAL, NULL);
++	return 0;
++
++nla_put_failure:
++	kfree_skb(skb_out);
++	/* Fall through */
++
++fail:
++	rcu_read_unlock();
++	return res;
++}
++
++/* Get a list of MacAddressA of all nodes known to this node (including self).
++ */
++int hsr_prp_get_node_list(struct genl_family *genl_family,
++			  struct sk_buff *skb_in, struct genl_info *info)
++{
++	unsigned char addr[ETH_ALEN];
++	struct net_device *hsr_dev;
++	struct hsr_prp_priv *priv;
++	struct sk_buff *skb_out;
++	bool restart = false;
++	struct nlattr *na;
++	void *pos = NULL;
++	void *msg_head;
++	int res;
++
++	if (!info)
++		goto invalid;
++
++	na = info->attrs[HSR_PRP_A_IFINDEX];
++	if (!na)
++		goto invalid;
++
++	rcu_read_lock();
++	hsr_dev =
++	dev_get_by_index_rcu(genl_info_net(info),
++			     nla_get_u32(info->attrs[HSR_PRP_A_IFINDEX]));
++	if (!hsr_dev)
++		goto rcu_unlock;
++	if (!is_hsr_prp_master(hsr_dev))
++		goto rcu_unlock;
++
++restart:
++	/* Send reply */
++	skb_out = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_ATOMIC);
++	if (!skb_out) {
++		res = -ENOMEM;
++		goto fail;
++	}
++
++	msg_head = genlmsg_put(skb_out, NETLINK_CB(skb_in).portid,
++			       info->snd_seq, genl_family, 0,
++			       HSR_PRP_C_SET_NODE_LIST);
++	if (!msg_head) {
++		res = -ENOMEM;
++		goto nla_put_failure;
++	}
++
++	if (!restart) {
++		res = nla_put_u32(skb_out, HSR_PRP_A_IFINDEX, hsr_dev->ifindex);
++		if (res < 0)
++			goto nla_put_failure;
++	}
++
++	priv = netdev_priv(hsr_dev);
++
++	if (!pos)
++		pos = hsr_prp_get_next_node(priv, NULL, addr);
++	while (pos) {
++		res = nla_put(skb_out, HSR_PRP_A_NODE_ADDR, ETH_ALEN, addr);
++		if (res < 0) {
++			if (res == -EMSGSIZE) {
++				genlmsg_end(skb_out, msg_head);
++				genlmsg_unicast(genl_info_net(info), skb_out,
++						info->snd_portid);
++				restart = true;
++				goto restart;
++			}
++			goto nla_put_failure;
++		}
++		pos = hsr_prp_get_next_node(priv, pos, addr);
++	}
++	rcu_read_unlock();
++
++	genlmsg_end(skb_out, msg_head);
++	genlmsg_unicast(genl_info_net(info), skb_out, info->snd_portid);
++
++	return 0;
++
++rcu_unlock:
++	rcu_read_unlock();
++invalid:
++	netlink_ack(skb_in, nlmsg_hdr(skb_in), -EINVAL, NULL);
++	return 0;
++
++nla_put_failure:
++	nlmsg_free(skb_out);
++	/* Fall through */
++
++fail:
++	rcu_read_unlock();
++	return res;
++}
+diff --git a/net/hsr-prp/hsr_prp_netlink.h b/net/hsr-prp/hsr_prp_netlink.h
+new file mode 100644
+index 000000000000..a3a4e6252e45
+--- /dev/null
++++ b/net/hsr-prp/hsr_prp_netlink.h
+@@ -0,0 +1,27 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/* Copyright 2011-2014 Autronica Fire and Security AS
++ *
++ * Author(s):
++ *	2011-2014 Arvid Brodin, arvid.brodin@alten.se
++ */
++
++#ifndef __HSR_PRP_NETLINK_H
++#define __HSR_PRP_NETLINK_H
++
++#include <uapi/linux/hsr_prp_netlink.h>
++#include <net/genetlink.h>
++
++#include "hsr_prp_main.h"
++
++int hsr_prp_newlink(struct net *src_net, struct net_device *dev,
++		    struct nlattr *tb[], struct nlattr *data[],
++		    struct netlink_ext_ack *extack);
++int hsr_prp_fill_info(struct sk_buff *skb, const struct net_device *dev);
++void hsr_prp_nl_nodedown(struct hsr_prp_priv *priv,
++			 struct genl_family *genl_family,
++			 unsigned char addr[ETH_ALEN]);
++int hsr_prp_get_node_status(struct genl_family *genl_family,
++			    struct sk_buff *skb_in, struct genl_info *info);
++int hsr_prp_get_node_list(struct genl_family *genl_family,
++			  struct sk_buff *skb_in, struct genl_info *info);
++#endif /* __HSR_PRP_NETLINK_H */
 -- 
 2.17.1
 
