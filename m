@@ -2,28 +2,29 @@ Return-Path: <SRS0=IT/Z=6Z=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.7 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-14.7 required=3.0
+	tests=HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8D6A7C54E8F
-	for <linux-api@archiver.kernel.org>; Mon, 11 May 2020 19:22:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 35757C54E93
+	for <linux-api@archiver.kernel.org>; Mon, 11 May 2020 19:22:32 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6C9E62078E
-	for <linux-api@archiver.kernel.org>; Mon, 11 May 2020 19:22:21 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1E9C72078E
+	for <linux-api@archiver.kernel.org>; Mon, 11 May 2020 19:22:32 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731449AbgEKTWU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 11 May 2020 15:22:20 -0400
-Received: from smtp-42ac.mail.infomaniak.ch ([84.16.66.172]:36407 "EHLO
-        smtp-42ac.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1731407AbgEKTWU (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 11 May 2020 15:22:20 -0400
+        id S1731475AbgEKTWb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 11 May 2020 15:22:31 -0400
+Received: from smtp-8fad.mail.infomaniak.ch ([83.166.143.173]:53193 "EHLO
+        smtp-8fad.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1731430AbgEKTWW (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 11 May 2020 15:22:22 -0400
 Received: from smtp-3-0000.mail.infomaniak.ch (unknown [10.4.36.107])
-        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 49LW5y0yr1zlhTQg;
-        Mon, 11 May 2020 21:22:14 +0200 (CEST)
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 49LW616VlQzlhHQB;
+        Mon, 11 May 2020 21:22:17 +0200 (CEST)
 Received: from localhost (unknown [94.23.54.103])
-        by smtp-3-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 49LW5x5m3SzlhHR1;
-        Mon, 11 May 2020 21:22:13 +0200 (CEST)
+        by smtp-3-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 49LW613S17zlhHR1;
+        Mon, 11 May 2020 21:22:17 +0200 (CEST)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     linux-kernel@vger.kernel.org
 Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
@@ -43,9 +44,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         linux-arch@vger.kernel.org, linux-doc@vger.kernel.org,
         linux-fsdevel@vger.kernel.org, linux-kselftest@vger.kernel.org,
         linux-security-module@vger.kernel.org, x86@kernel.org
-Subject: [PATCH v17 07/10] arch: Wire up landlock() syscall
-Date:   Mon, 11 May 2020 21:21:53 +0200
-Message-Id: <20200511192156.1618284-8-mic@digikod.net>
+Subject: [PATCH v17 10/10] landlock: Add user and kernel documentation
+Date:   Mon, 11 May 2020 21:21:56 +0200
+Message-Id: <20200511192156.1618284-11-mic@digikod.net>
 X-Mailer: git-send-email 2.26.2
 In-Reply-To: <20200511192156.1618284-1-mic@digikod.net>
 References: <20200511192156.1618284-1-mic@digikod.net>
@@ -59,233 +60,425 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Wire up the landlock() system call for all architectures.
+This documentation can be built with the Sphinx framework.
 
 Signed-off-by: Mickaël Salaün <mic@digikod.net>
-Cc: Arnd Bergmann <arnd@arndb.de>
+Reviewed-by: Vincent Dagonneau <vincent.dagonneau@ssi.gouv.fr>
 Cc: James Morris <jmorris@namei.org>
 Cc: Jann Horn <jannh@google.com>
 Cc: Kees Cook <keescook@chromium.org>
 Cc: Serge E. Hallyn <serge@hallyn.com>
 ---
 
+Changes since v15:
+* Add current limitations.
+
 Changes since v14:
-* Add all architectures.
+* Fix spelling (contributed by Randy Dunlap).
+* Extend documentation about inheritance and explain layer levels.
+* Remove the use of now-removed access rights.
+* Use GitHub links.
+* Improve kernel documentation.
+* Add section for tests.
+* Update example.
 
 Changes since v13:
-* New implementation.
----
- arch/alpha/kernel/syscalls/syscall.tbl      | 1 +
- arch/arm/tools/syscall.tbl                  | 1 +
- arch/arm64/include/asm/unistd.h             | 2 +-
- arch/arm64/include/asm/unistd32.h           | 2 ++
- arch/ia64/kernel/syscalls/syscall.tbl       | 1 +
- arch/m68k/kernel/syscalls/syscall.tbl       | 1 +
- arch/microblaze/kernel/syscalls/syscall.tbl | 1 +
- arch/mips/kernel/syscalls/syscall_n32.tbl   | 1 +
- arch/mips/kernel/syscalls/syscall_n64.tbl   | 1 +
- arch/mips/kernel/syscalls/syscall_o32.tbl   | 1 +
- arch/parisc/kernel/syscalls/syscall.tbl     | 1 +
- arch/powerpc/kernel/syscalls/syscall.tbl    | 1 +
- arch/s390/kernel/syscalls/syscall.tbl       | 1 +
- arch/sh/kernel/syscalls/syscall.tbl         | 1 +
- arch/sparc/kernel/syscalls/syscall.tbl      | 1 +
- arch/x86/entry/syscalls/syscall_32.tbl      | 1 +
- arch/x86/entry/syscalls/syscall_64.tbl      | 1 +
- arch/xtensa/kernel/syscalls/syscall.tbl     | 1 +
- include/uapi/asm-generic/unistd.h           | 4 +++-
- 19 files changed, 22 insertions(+), 2 deletions(-)
+* Rewrote the documentation according to the major revamp.
 
-diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
-index 36d42da7466a..424f1f7f4ea8 100644
---- a/arch/alpha/kernel/syscalls/syscall.tbl
-+++ b/arch/alpha/kernel/syscalls/syscall.tbl
-@@ -477,3 +477,4 @@
- # 545 reserved for clone3
- 547	common	openat2				sys_openat2
- 548	common	pidfd_getfd			sys_pidfd_getfd
-+549	common	landlock			sys_landlock
-diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
-index 4d1cf74a2caa..46b49724da4a 100644
---- a/arch/arm/tools/syscall.tbl
-+++ b/arch/arm/tools/syscall.tbl
-@@ -451,3 +451,4 @@
- 435	common	clone3				sys_clone3
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	landlock			sys_landlock
-diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
-index 803039d504de..3b859596840d 100644
---- a/arch/arm64/include/asm/unistd.h
-+++ b/arch/arm64/include/asm/unistd.h
-@@ -38,7 +38,7 @@
- #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE + 5)
- #define __ARM_NR_COMPAT_END		(__ARM_NR_COMPAT_BASE + 0x800)
- 
--#define __NR_compat_syscalls		439
-+#define __NR_compat_syscalls		440
- #endif
- 
- #define __ARCH_WANT_SYS_CLONE
-diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
-index c1c61635f89c..a24fe33f7c0d 100644
---- a/arch/arm64/include/asm/unistd32.h
-+++ b/arch/arm64/include/asm/unistd32.h
-@@ -883,6 +883,8 @@ __SYSCALL(__NR_clone3, sys_clone3)
- __SYSCALL(__NR_openat2, sys_openat2)
- #define __NR_pidfd_getfd 438
- __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
-+#define __NR_landlock 439
-+__SYSCALL(__NR_landlock, sys_landlock)
- 
- /*
-  * Please add new compat syscalls above this comment and update
-diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
-index 042911e670b8..c311696e0f5f 100644
---- a/arch/ia64/kernel/syscalls/syscall.tbl
-+++ b/arch/ia64/kernel/syscalls/syscall.tbl
-@@ -358,3 +358,4 @@
- # 435 reserved for clone3
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	landlock			sys_landlock
-diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
-index f4f49fcb76d0..d73a43d235d3 100644
---- a/arch/m68k/kernel/syscalls/syscall.tbl
-+++ b/arch/m68k/kernel/syscalls/syscall.tbl
-@@ -437,3 +437,4 @@
- 435	common	clone3				__sys_clone3
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	landlock			sys_landlock
-diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
-index 4c67b11f9c9e..f3927af7716f 100644
---- a/arch/microblaze/kernel/syscalls/syscall.tbl
-+++ b/arch/microblaze/kernel/syscalls/syscall.tbl
-@@ -443,3 +443,4 @@
- 435	common	clone3				sys_clone3
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	landlock			sys_landlock
-diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
-index 1f9e8ad636cc..e467033ec474 100644
---- a/arch/mips/kernel/syscalls/syscall_n32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
-@@ -376,3 +376,4 @@
- 435	n32	clone3				__sys_clone3
- 437	n32	openat2				sys_openat2
- 438	n32	pidfd_getfd			sys_pidfd_getfd
-+439	n32	landlock			sys_landlock
-diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
-index c0b9d802dbf6..1930ba6c75b7 100644
---- a/arch/mips/kernel/syscalls/syscall_n64.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
-@@ -352,3 +352,4 @@
- 435	n64	clone3				__sys_clone3
- 437	n64	openat2				sys_openat2
- 438	n64	pidfd_getfd			sys_pidfd_getfd
-+439	n64	landlock			sys_landlock
-diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
-index ac586774c980..0a66f190ae3d 100644
---- a/arch/mips/kernel/syscalls/syscall_o32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
-@@ -425,3 +425,4 @@
- 435	o32	clone3				__sys_clone3
- 437	o32	openat2				sys_openat2
- 438	o32	pidfd_getfd			sys_pidfd_getfd
-+439	o32	landlock			sys_landlock
-diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
-index 52a15f5cd130..93ddc36a660e 100644
---- a/arch/parisc/kernel/syscalls/syscall.tbl
-+++ b/arch/parisc/kernel/syscalls/syscall.tbl
-@@ -435,3 +435,4 @@
- 435	common	clone3				sys_clone3_wrapper
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	landlock			sys_landlock
-diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
-index 220ae11555f2..34ca2cd82d4e 100644
---- a/arch/powerpc/kernel/syscalls/syscall.tbl
-+++ b/arch/powerpc/kernel/syscalls/syscall.tbl
-@@ -527,3 +527,4 @@
- 435	spu	clone3				sys_ni_syscall
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	landlock			sys_landlock
-diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
-index bd7bd3581a0f..b4233c9c7421 100644
---- a/arch/s390/kernel/syscalls/syscall.tbl
-+++ b/arch/s390/kernel/syscalls/syscall.tbl
-@@ -440,3 +440,4 @@
- 435  common	clone3			sys_clone3			sys_clone3
- 437  common	openat2			sys_openat2			sys_openat2
- 438  common	pidfd_getfd		sys_pidfd_getfd			sys_pidfd_getfd
-+439  common	landlock		sys_landlock			sys_landlock
-diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
-index c7a30fcd135f..49fd37c18528 100644
---- a/arch/sh/kernel/syscalls/syscall.tbl
-+++ b/arch/sh/kernel/syscalls/syscall.tbl
-@@ -440,3 +440,4 @@
- # 435 reserved for clone3
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	landlock			sys_landlock
-diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
-index f13615ecdecc..33e2a9d55bdd 100644
---- a/arch/sparc/kernel/syscalls/syscall.tbl
-+++ b/arch/sparc/kernel/syscalls/syscall.tbl
-@@ -483,3 +483,4 @@
- # 435 reserved for clone3
- 437	common	openat2			sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	landlock			sys_landlock
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 54581ac671b4..b350580405b3 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -442,3 +442,4 @@
- 435	i386	clone3			sys_clone3
- 437	i386	openat2			sys_openat2
- 438	i386	pidfd_getfd		sys_pidfd_getfd
-+439	i386	landlock		sys_landlock
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 37b844f839bc..b6efdd813978 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -359,6 +359,7 @@
- 435	common	clone3			sys_clone3
- 437	common	openat2			sys_openat2
- 438	common	pidfd_getfd		sys_pidfd_getfd
-+439	common	landlock		sys_landlock
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
-index 85a9ab1bc04d..84fc6db485ef 100644
---- a/arch/xtensa/kernel/syscalls/syscall.tbl
-+++ b/arch/xtensa/kernel/syscalls/syscall.tbl
-@@ -408,3 +408,4 @@
- 435	common	clone3				sys_clone3
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
-+439	common	landlock			sys_landlock
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 3a3201e4618e..31d5814ddb13 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -855,9 +855,11 @@ __SYSCALL(__NR_clone3, sys_clone3)
- __SYSCALL(__NR_openat2, sys_openat2)
- #define __NR_pidfd_getfd 438
- __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
-+#define __NR_landlock 439
-+__SYSCALL(__NR_landlock, sys_landlock)
- 
- #undef __NR_syscalls
--#define __NR_syscalls 439
-+#define __NR_syscalls 440
- 
- /*
-  * 32 bit systems traditionally used different
+Previous changes:
+https://lore.kernel.org/lkml/20191104172146.30797-8-mic@digikod.net/
+---
+ Documentation/security/index.rst           |   1 +
+ Documentation/security/landlock/index.rst  |  18 ++
+ Documentation/security/landlock/kernel.rst |  69 ++++++
+ Documentation/security/landlock/user.rst   | 268 +++++++++++++++++++++
+ 4 files changed, 356 insertions(+)
+ create mode 100644 Documentation/security/landlock/index.rst
+ create mode 100644 Documentation/security/landlock/kernel.rst
+ create mode 100644 Documentation/security/landlock/user.rst
+
+diff --git a/Documentation/security/index.rst b/Documentation/security/index.rst
+index fc503dd689a7..4d213e76ddf4 100644
+--- a/Documentation/security/index.rst
++++ b/Documentation/security/index.rst
+@@ -15,3 +15,4 @@ Security Documentation
+    self-protection
+    siphash
+    tpm/index
++   landlock/index
+diff --git a/Documentation/security/landlock/index.rst b/Documentation/security/landlock/index.rst
+new file mode 100644
+index 000000000000..2520f8f33f5e
+--- /dev/null
++++ b/Documentation/security/landlock/index.rst
+@@ -0,0 +1,18 @@
++=========================================
++Landlock LSM: unprivileged access control
++=========================================
++
++:Author: Mickaël Salaün
++
++The goal of Landlock is to enable to restrict ambient rights (e.g.  global
++filesystem access) for a set of processes.  Because Landlock is a stackable
++LSM, it makes possible to create safe security sandboxes as new security layers
++in addition to the existing system-wide access-controls. This kind of sandbox
++is expected to help mitigate the security impact of bugs or
++unexpected/malicious behaviors in user-space applications. Landlock empowers
++any process, including unprivileged ones, to securely restrict themselves.
++
++.. toctree::
++
++    user
++    kernel
+diff --git a/Documentation/security/landlock/kernel.rst b/Documentation/security/landlock/kernel.rst
+new file mode 100644
+index 000000000000..bfe5b6192943
+--- /dev/null
++++ b/Documentation/security/landlock/kernel.rst
+@@ -0,0 +1,69 @@
++==============================
++Landlock: kernel documentation
++==============================
++
++Landlock's goal is to create scoped access-control (i.e. sandboxing).  To
++harden a whole system, this feature should be available to any process,
++including unprivileged ones.  Because such process may be compromised or
++backdoored (i.e. untrusted), Landlock's features must be safe to use from the
++kernel and other processes point of view.  Landlock's interface must therefore
++expose a minimal attack surface.
++
++Landlock is designed to be usable by unprivileged processes while following the
++system security policy enforced by other access control mechanisms (e.g. DAC,
++LSM).  Indeed, a Landlock rule shall not interfere with other access-controls
++enforced on the system, only add more restrictions.
++
++Any user can enforce Landlock rulesets on their processes.  They are merged and
++evaluated according to the inherited ones in a way that ensures that only more
++constraints can be added.
++
++Guiding principles for safe access controls
++===========================================
++
++* A Landlock rule shall be focused on access control on kernel objects instead
++  of syscall filtering (i.e. syscall arguments), which is the purpose of
++  seccomp-bpf.
++* To avoid multiple kinds of side-channel attacks (e.g. leak of security
++  policies, CPU-based attacks), Landlock rules shall not be able to
++  programmatically communicate with user space.
++* Kernel access check shall not slow down access request from unsandboxed
++  processes.
++* Computation related to Landlock operations (e.g. enforce a ruleset) shall
++  only impact the processes requesting them.
++
++Tests
++=====
++
++Userspace tests for backward compatibility, ptrace restrictions and filesystem
++support can be found here: `tools/testing/selftests/landlock/`_.
++
++Kernel structures
++=================
++
++Object
++------
++
++.. kernel-doc:: security/landlock/object.h
++    :identifiers:
++
++Ruleset and domain
++------------------
++
++A domain is a read-only ruleset tied to a set of subjects (i.e. tasks'
++credentials).  Each time a ruleset is enforced on a task, the current domain is
++duplicated and the ruleset is imported as a new layer of rules in the new
++domain.  Indeed, once in a domain, each rule is tied to a layer level.  To
++grant access to an object, at least one rule of each layer must allow the
++requested action on the object.  A task can then only transit to a new domain
++which is the intersection of the constraints from the current domain and those
++of a ruleset provided by the task.
++
++The definition of a subject is implicit for a task sandboxing itself, which
++makes the reasoning much easier and helps avoid pitfalls.
++
++.. kernel-doc:: security/landlock/ruleset.h
++    :identifiers:
++
++.. Links
++.. _tools/testing/selftests/landlock/: https://github.com/landlock-lsm/linux/tree/landlock-v17/tools/testing/selftests/landlock/
+diff --git a/Documentation/security/landlock/user.rst b/Documentation/security/landlock/user.rst
+new file mode 100644
+index 000000000000..1efd082fa234
+--- /dev/null
++++ b/Documentation/security/landlock/user.rst
+@@ -0,0 +1,268 @@
++=================================
++Landlock: userspace documentation
++=================================
++
++Landlock rules
++==============
++
++A Landlock rule enables to describe an action on an object.  An object is
++currently a file hierarchy, and the related filesystem actions are defined in
++`Access rights`_.  A set of rules is aggregated in a ruleset, which can then
++restrict the thread enforcing it, and its future children.
++
++Defining and enforcing a security policy
++----------------------------------------
++
++Before defining a security policy, an application should first probe for the
++features supported by the running kernel, which is important to be compatible
++with older kernels.  This can be done thanks to the `landlock` syscall (cf.
++:ref:`syscall`).
++
++.. code-block:: c
++
++    struct landlock_attr_features attr_features;
++
++    if (landlock(LANDLOCK_CMD_GET_FEATURES, LANDLOCK_OPT_GET_FEATURES,
++            sizeof(attr_features), &attr_features)) {
++        perror("Failed to probe the Landlock supported features");
++        return 1;
++    }
++
++Then, we need to create the ruleset that will contain our rules.  For this
++example, the ruleset will contain rules which only allow read actions, but
++write actions will be denied.  The ruleset then needs to handle both of these
++kind of actions.  To have a backward compatibility, these actions should be
++ANDed with the supported ones.
++
++.. code-block:: c
++
++    int ruleset_fd;
++    struct landlock_attr_ruleset ruleset = {
++        .handled_access_fs =
++            LANDLOCK_ACCESS_FS_EXECUTE |
++            LANDLOCK_ACCESS_FS_WRITE_FILE |
++            LANDLOCK_ACCESS_FS_READ_FILE |
++            LANDLOCK_ACCESS_FS_READ_DIR |
++            LANDLOCK_ACCESS_FS_REMOVE_DIR |
++            LANDLOCK_ACCESS_FS_REMOVE_FILE |
++            LANDLOCK_ACCESS_FS_MAKE_CHAR |
++            LANDLOCK_ACCESS_FS_MAKE_DIR |
++            LANDLOCK_ACCESS_FS_MAKE_REG |
++            LANDLOCK_ACCESS_FS_MAKE_SOCK |
++            LANDLOCK_ACCESS_FS_MAKE_FIFO |
++            LANDLOCK_ACCESS_FS_MAKE_BLOCK |
++            LANDLOCK_ACCESS_FS_MAKE_SYM,
++    };
++
++    ruleset.handled_access_fs &= attr_features.access_fs;
++    ruleset_fd = landlock(LANDLOCK_CMD_CREATE_RULESET,
++                    LANDLOCK_OPT_CREATE_RULESET, sizeof(ruleset), &ruleset);
++    if (ruleset_fd < 0) {
++        perror("Failed to create a ruleset");
++        return 1;
++    }
++
++We can now add a new rule to this ruleset thanks to the returned file
++descriptor referring to this ruleset.  The rule will only enable to read the
++file hierarchy ``/usr``.  Without another rule, write actions would then be
++denied by the ruleset.  To add ``/usr`` to the ruleset, we open it with the
++``O_PATH`` flag and fill the &struct landlock_attr_path_beneath with this file
++descriptor.
++
++.. code-block:: c
++
++    int err;
++    struct landlock_attr_path_beneath path_beneath = {
++        .ruleset_fd = ruleset_fd,
++        .allowed_access =
++            LANDLOCK_ACCESS_FS_EXECUTE |
++            LANDLOCK_ACCESS_FS_READ_FILE |
++            LANDLOCK_ACCESS_FS_READ_DIR,
++    };
++
++    path_beneath.allowed_access &= attr_features.access_fs;
++    path_beneath.parent_fd = open("/usr", O_PATH | O_CLOEXEC);
++    if (path_beneath.parent_fd < 0) {
++        perror("Failed to open file");
++        close(ruleset_fd);
++        return 1;
++    }
++    err = landlock(LANDLOCK_CMD_ADD_RULE, LANDLOCK_OPT_ADD_RULE_PATH_BENEATH,
++            sizeof(path_beneath), &path_beneath);
++    close(path_beneath.parent_fd);
++    if (err) {
++        perror("Failed to update ruleset");
++        close(ruleset_fd);
++        return 1;
++    }
++
++We now have a ruleset with one rule allowing read access to ``/usr`` while
++denying all accesses featured in ``attr_features.access_fs`` to everything else
++on the filesystem.  The next step is to restrict the current thread from
++gaining more privileges (e.g. thanks to a SUID binary).
++
++.. code-block:: c
++
++    if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) {
++        perror("Failed to restrict privileges");
++        close(ruleset_fd);
++        return 1;
++    }
++
++The current thread is now ready to sandbox itself with the ruleset.
++
++.. code-block:: c
++
++    struct landlock_attr_enforce attr_enforce = {
++        .ruleset_fd = ruleset_fd,
++    };
++
++    if (landlock(LANDLOCK_CMD_ENFORCE_RULESET, LANDLOCK_OPT_ENFORCE_RULESET,
++            sizeof(attr_enforce), &attr_enforce)) {
++        perror("Failed to enforce ruleset");
++        close(ruleset_fd);
++        return 1;
++    }
++    close(ruleset_fd);
++
++If the last `landlock` system call succeeds, the current thread is now
++restricted and this policy will be enforced on all its subsequently created
++children as well.  Once a thread is landlocked, there is no way to remove its
++security policy; only adding more restrictions is allowed.  These threads are
++now in a new Landlock domain, merge of their parent one (if any) with the new
++ruleset.
++
++Full working code can be found in `samples/landlock/sandboxer.c`_.
++
++Inheritance
++-----------
++
++Every new thread resulting from a :manpage:`clone(2)` inherits Landlock domain
++restrictions from its parent.  This is similar to the seccomp inheritance (cf.
++:doc:`/userspace-api/seccomp_filter`) or any other LSM dealing with task's
++:manpage:`credentials(7)`.  For instance, one process's thread may apply
++Landlock rules to itself, but they will not be automatically applied to other
++sibling threads (unlike POSIX thread credential changes, cf.
++:manpage:`nptl(7)`).
++
++When a thread sandbox itself, we have the grantee that the related security
++policy will stay enforced on all this thread's descendants.  This enables to
++create standalone and modular security policies per application, which will
++automatically be composed between themselves according to their runtime parent
++policies.
++
++Ptrace restrictions
++-------------------
++
++A sandboxed process has less privileges than a non-sandboxed process and must
++then be subject to additional restrictions when manipulating another process.
++To be allowed to use :manpage:`ptrace(2)` and related syscalls on a target
++process, a sandboxed process should have a subset of the target process rules,
++which means the tracee must be in a sub-domain of the tracer.
++
++.. _syscall:
++
++The `landlock` syscall and its arguments
++========================================
++
++.. kernel-doc:: security/landlock/syscall.c
++    :identifiers: sys_landlock
++
++Commands
++--------
++
++.. kernel-doc:: include/uapi/linux/landlock.h
++    :identifiers: landlock_cmd
++
++Options
++-------
++
++.. kernel-doc:: include/uapi/linux/landlock.h
++    :identifiers: options_intro
++                  options_get_features options_create_ruleset
++                  options_add_rule options_enforce_ruleset
++
++Attributes
++----------
++
++.. kernel-doc:: include/uapi/linux/landlock.h
++    :identifiers: landlock_attr_features landlock_attr_ruleset
++                  landlock_attr_path_beneath landlock_attr_enforce
++
++Access rights
++-------------
++
++.. kernel-doc:: include/uapi/linux/landlock.h
++    :identifiers: fs_access
++
++Current limitations
++===================
++
++File renaming and linking
++-------------------------
++
++Because Landlock targets unprivileged access controls, it is needed to properly
++handle composition of rules.  Such property also implies rules nesting.
++Properly handling multiple layers of ruleset, each one of them able to restrict
++access to files, also imply to inherit the ruleset restrictions from a parent
++to its hierarchy.  Because files are identified and restricted by their
++hierarchy, moving or linking a file from one directory to another imply to
++propagate the hierarchy constraints.  To protect against privilege escalations
++through renaming or linking, and for the sack of simplicity, Landlock currently
++limits linking and renaming to the same directory.  Future Landlock evolutions
++will enable more flexibility for renaming and linking, with dedicated ruleset
++options.
++
++OverlayFS
++---------
++
++An OverlayFS mount point consists of upper and lower layers.  It is currently
++not possible to reliably infer which underlying file hierarchy matches an
++OverlayFS path composed of such layers.  It is then not currently possible to
++track the source of an indirect access-request, and then not possible to
++properly identify and allow an unified OverlayFS hierarchy.  Restricting files
++in an OverlayFS mount point works, but files allowed in one layer may not be
++allowed in a related OverlayFS mount point.  A future Landlock evolution will
++make possible to properly work with OverlayFS, according to a dedicated ruleset
++option.
++
++
++Special filesystems
++-------------------
++
++Access to regular files and directories can be restricted by Landlock,
++according to the handled accesses of a ruleset.  However, files which do not
++come from a user-visible filesystem (e.g. pipe, socket), but can still be
++accessed through /proc/self/fd/, cannot currently be restricted.  Likewise,
++some special kernel filesystems such as nsfs which can be accessed through
++/proc/self/ns/, cannot currently be restricted.  For now, these kind of special
++paths are then always allowed.  Future Landlock evolutions will enable to
++restrict such paths, with dedicated ruleset options.
++
++Questions and answers
++=====================
++
++What about user space sandbox managers?
++---------------------------------------
++
++Using user space process to enforce restrictions on kernel resources can lead
++to race conditions or inconsistent evaluations (i.e. `Incorrect mirroring of
++the OS code and state
++<https://www.ndss-symposium.org/ndss2003/traps-and-pitfalls-practical-problems-system-call-interposition-based-security-tools/>`_).
++
++What about namespaces and containers?
++-------------------------------------
++
++Namespaces can help create sandboxes but they are not designed for
++access-control and then miss useful features for such use case (e.g. no
++fine-grained restrictions).  Moreover, their complexity can lead to security
++issues, especially when untrusted processes can manipulate them (cf.
++`Controlling access to user namespaces <https://lwn.net/Articles/673597/>`_).
++
++Additional documentation
++========================
++
++See https://landlock.io
++
++.. Links
++.. _samples/landlock/sandboxer.c: https://github.com/landlock-lsm/linux/tree/landlock-v17/samples/landlock/sandboxer.c
 -- 
 2.26.2
 
