@@ -6,24 +6,24 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 17839C54E92
-	for <linux-api@archiver.kernel.org>; Mon, 11 May 2020 19:22:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8D6A7C54E8F
+	for <linux-api@archiver.kernel.org>; Mon, 11 May 2020 19:22:21 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id ED70320752
-	for <linux-api@archiver.kernel.org>; Mon, 11 May 2020 19:22:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6C9E62078E
+	for <linux-api@archiver.kernel.org>; Mon, 11 May 2020 19:22:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731384AbgEKTWN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 11 May 2020 15:22:13 -0400
-Received: from smtp-8fac.mail.infomaniak.ch ([83.166.143.172]:37131 "EHLO
-        smtp-8fac.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1731401AbgEKTWN (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 11 May 2020 15:22:13 -0400
-Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
-        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 49LW5t34YjzlhSCf;
-        Mon, 11 May 2020 21:22:10 +0200 (CEST)
+        id S1731449AbgEKTWU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 11 May 2020 15:22:20 -0400
+Received: from smtp-42ac.mail.infomaniak.ch ([84.16.66.172]:36407 "EHLO
+        smtp-42ac.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1731407AbgEKTWU (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 11 May 2020 15:22:20 -0400
+Received: from smtp-3-0000.mail.infomaniak.ch (unknown [10.4.36.107])
+        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 49LW5y0yr1zlhTQg;
+        Mon, 11 May 2020 21:22:14 +0200 (CEST)
 Received: from localhost (unknown [94.23.54.103])
-        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 49LW5t036RzlhGR9;
-        Mon, 11 May 2020 21:22:10 +0200 (CEST)
+        by smtp-3-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 49LW5x5m3SzlhHR1;
+        Mon, 11 May 2020 21:22:13 +0200 (CEST)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     linux-kernel@vger.kernel.org
 Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
@@ -43,9 +43,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         linux-arch@vger.kernel.org, linux-doc@vger.kernel.org,
         linux-fsdevel@vger.kernel.org, linux-kselftest@vger.kernel.org,
         linux-security-module@vger.kernel.org, x86@kernel.org
-Subject: [PATCH v17 04/10] landlock: Add ptrace restrictions
-Date:   Mon, 11 May 2020 21:21:50 +0200
-Message-Id: <20200511192156.1618284-5-mic@digikod.net>
+Subject: [PATCH v17 07/10] arch: Wire up landlock() syscall
+Date:   Mon, 11 May 2020 21:21:53 +0200
+Message-Id: <20200511192156.1618284-8-mic@digikod.net>
 X-Mailer: git-send-email 2.26.2
 In-Reply-To: <20200511192156.1618284-1-mic@digikod.net>
 References: <20200511192156.1618284-1-mic@digikod.net>
@@ -59,19 +59,10 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Using ptrace(2) and related debug features on a target process can lead
-to a privilege escalation.  Indeed, ptrace(2) can be used by an attacker
-to impersonate another task and to remain undetected while performing
-malicious activities.  Thanks to  ptrace_may_access(), various part of
-the kernel can check if a tracer is more privileged than a tracee.
-
-A landlocked process has fewer privileges than a non-landlocked process
-and must then be subject to additional restrictions when manipulating
-processes. To be allowed to use ptrace(2) and related syscalls on a
-target process, a landlocked process must have a subset of the target
-process' rules (i.e. the tracee must be in a sub-domain of the tracer).
+Wire up the landlock() system call for all architectures.
 
 Signed-off-by: Mickaël Salaün <mic@digikod.net>
+Cc: Arnd Bergmann <arnd@arndb.de>
 Cc: James Morris <jmorris@namei.org>
 Cc: Jann Horn <jannh@google.com>
 Cc: Kees Cook <keescook@chromium.org>
@@ -79,199 +70,222 @@ Cc: Serge E. Hallyn <serge@hallyn.com>
 ---
 
 Changes since v14:
-* Constify variables.
+* Add all architectures.
 
 Changes since v13:
-* Make the ptrace restriction mandatory, like in the v10.
-* Remove the eBPF dependency.
-
-Previous changes:
-https://lore.kernel.org/lkml/20191104172146.30797-5-mic@digikod.net/
+* New implementation.
 ---
- security/landlock/Makefile |   2 +-
- security/landlock/ptrace.c | 120 +++++++++++++++++++++++++++++++++++++
- security/landlock/ptrace.h |  14 +++++
- security/landlock/setup.c  |   2 +
- 4 files changed, 137 insertions(+), 1 deletion(-)
- create mode 100644 security/landlock/ptrace.c
- create mode 100644 security/landlock/ptrace.h
+ arch/alpha/kernel/syscalls/syscall.tbl      | 1 +
+ arch/arm/tools/syscall.tbl                  | 1 +
+ arch/arm64/include/asm/unistd.h             | 2 +-
+ arch/arm64/include/asm/unistd32.h           | 2 ++
+ arch/ia64/kernel/syscalls/syscall.tbl       | 1 +
+ arch/m68k/kernel/syscalls/syscall.tbl       | 1 +
+ arch/microblaze/kernel/syscalls/syscall.tbl | 1 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl   | 1 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl   | 1 +
+ arch/mips/kernel/syscalls/syscall_o32.tbl   | 1 +
+ arch/parisc/kernel/syscalls/syscall.tbl     | 1 +
+ arch/powerpc/kernel/syscalls/syscall.tbl    | 1 +
+ arch/s390/kernel/syscalls/syscall.tbl       | 1 +
+ arch/sh/kernel/syscalls/syscall.tbl         | 1 +
+ arch/sparc/kernel/syscalls/syscall.tbl      | 1 +
+ arch/x86/entry/syscalls/syscall_32.tbl      | 1 +
+ arch/x86/entry/syscalls/syscall_64.tbl      | 1 +
+ arch/xtensa/kernel/syscalls/syscall.tbl     | 1 +
+ include/uapi/asm-generic/unistd.h           | 4 +++-
+ 19 files changed, 22 insertions(+), 2 deletions(-)
 
-diff --git a/security/landlock/Makefile b/security/landlock/Makefile
-index 041ea242e627..f1d1eb72fa76 100644
---- a/security/landlock/Makefile
-+++ b/security/landlock/Makefile
-@@ -1,4 +1,4 @@
- obj-$(CONFIG_SECURITY_LANDLOCK) := landlock.o
+diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
+index 36d42da7466a..424f1f7f4ea8 100644
+--- a/arch/alpha/kernel/syscalls/syscall.tbl
++++ b/arch/alpha/kernel/syscalls/syscall.tbl
+@@ -477,3 +477,4 @@
+ # 545 reserved for clone3
+ 547	common	openat2				sys_openat2
+ 548	common	pidfd_getfd			sys_pidfd_getfd
++549	common	landlock			sys_landlock
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index 4d1cf74a2caa..46b49724da4a 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -451,3 +451,4 @@
+ 435	common	clone3				sys_clone3
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	landlock			sys_landlock
+diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
+index 803039d504de..3b859596840d 100644
+--- a/arch/arm64/include/asm/unistd.h
++++ b/arch/arm64/include/asm/unistd.h
+@@ -38,7 +38,7 @@
+ #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE + 5)
+ #define __ARM_NR_COMPAT_END		(__ARM_NR_COMPAT_BASE + 0x800)
  
- landlock-y := setup.o object.o ruleset.o \
--	cred.o
-+	cred.o ptrace.o
-diff --git a/security/landlock/ptrace.c b/security/landlock/ptrace.c
-new file mode 100644
-index 000000000000..61df38b13f5c
---- /dev/null
-+++ b/security/landlock/ptrace.c
-@@ -0,0 +1,120 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Landlock LSM - Ptrace hooks
-+ *
-+ * Copyright © 2017-2020 Mickaël Salaün <mic@digikod.net>
-+ * Copyright © 2020 ANSSI
-+ */
-+
-+#include <asm/current.h>
-+#include <linux/cred.h>
-+#include <linux/errno.h>
-+#include <linux/kernel.h>
-+#include <linux/lsm_hooks.h>
-+#include <linux/rcupdate.h>
-+#include <linux/sched.h>
-+
-+#include "common.h"
-+#include "cred.h"
-+#include "ptrace.h"
-+#include "ruleset.h"
-+#include "setup.h"
-+
-+/**
-+ * domain_scope_le - Checks domain ordering for scoped ptrace
-+ *
-+ * @parent: Parent domain.
-+ * @child: Potential child of @parent.
-+ *
-+ * Checks if the @parent domain is less or equal to (i.e. an ancestor, which
-+ * means a subset of) the @child domain.
-+ */
-+static bool domain_scope_le(const struct landlock_ruleset *const parent,
-+		const struct landlock_ruleset *const child)
-+{
-+	const struct landlock_hierarchy *walker;
-+
-+	if (!parent)
-+		return true;
-+	if (!child)
-+		return false;
-+	for (walker = child->hierarchy; walker; walker = walker->parent) {
-+		if (walker == parent->hierarchy)
-+			/* @parent is in the scoped hierarchy of @child. */
-+			return true;
-+	}
-+	/* There is no relationship between @parent and @child. */
-+	return false;
-+}
-+
-+static bool task_is_scoped(const struct task_struct *const parent,
-+		const struct task_struct *const child)
-+{
-+	bool is_scoped;
-+	const struct landlock_ruleset *dom_parent, *dom_child;
-+
-+	rcu_read_lock();
-+	dom_parent = landlock_get_task_domain(parent);
-+	dom_child = landlock_get_task_domain(child);
-+	is_scoped = domain_scope_le(dom_parent, dom_child);
-+	rcu_read_unlock();
-+	return is_scoped;
-+}
-+
-+static int task_ptrace(const struct task_struct *const parent,
-+		const struct task_struct *const child)
-+{
-+	/* Quick return for non-landlocked tasks. */
-+	if (!landlocked(parent))
-+		return 0;
-+	if (task_is_scoped(parent, child))
-+		return 0;
-+	return -EPERM;
-+}
-+
-+/**
-+ * hook_ptrace_access_check - Determines whether the current process may access
-+ *			      another
-+ *
-+ * @child: Process to be accessed.
-+ * @mode: Mode of attachment.
-+ *
-+ * If the current task has Landlock rules, then the child must have at least
-+ * the same rules.  Else denied.
-+ *
-+ * Determines whether a process may access another, returning 0 if permission
-+ * granted, -errno if denied.
-+ */
-+static int hook_ptrace_access_check(struct task_struct *const child,
-+		const unsigned int mode)
-+{
-+	return task_ptrace(current, child);
-+}
-+
-+/**
-+ * hook_ptrace_traceme - Determines whether another process may trace the
-+ *			 current one
-+ *
-+ * @parent: Task proposed to be the tracer.
-+ *
-+ * If the parent has Landlock rules, then the current task must have the same
-+ * or more rules.  Else denied.
-+ *
-+ * Determines whether the nominated task is permitted to trace the current
-+ * process, returning 0 if permission is granted, -errno if denied.
-+ */
-+static int hook_ptrace_traceme(struct task_struct *const parent)
-+{
-+	return task_ptrace(parent, current);
-+}
-+
-+static struct security_hook_list landlock_hooks[] __lsm_ro_after_init = {
-+	LSM_HOOK_INIT(ptrace_access_check, hook_ptrace_access_check),
-+	LSM_HOOK_INIT(ptrace_traceme, hook_ptrace_traceme),
-+};
-+
-+__init void landlock_add_hooks_ptrace(void)
-+{
-+	security_add_hooks(landlock_hooks, ARRAY_SIZE(landlock_hooks),
-+			LANDLOCK_NAME);
-+}
-diff --git a/security/landlock/ptrace.h b/security/landlock/ptrace.h
-new file mode 100644
-index 000000000000..6740c6a723de
---- /dev/null
-+++ b/security/landlock/ptrace.h
-@@ -0,0 +1,14 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Landlock LSM - Ptrace hooks
-+ *
-+ * Copyright © 2017-2019 Mickaël Salaün <mic@digikod.net>
-+ * Copyright © 2019 ANSSI
-+ */
-+
-+#ifndef _SECURITY_LANDLOCK_PTRACE_H
-+#define _SECURITY_LANDLOCK_PTRACE_H
-+
-+__init void landlock_add_hooks_ptrace(void);
-+
-+#endif /* _SECURITY_LANDLOCK_PTRACE_H */
-diff --git a/security/landlock/setup.c b/security/landlock/setup.c
-index 39ee1766f175..5e7540fdeefa 100644
---- a/security/landlock/setup.c
-+++ b/security/landlock/setup.c
-@@ -11,6 +11,7 @@
+-#define __NR_compat_syscalls		439
++#define __NR_compat_syscalls		440
+ #endif
  
- #include "common.h"
- #include "cred.h"
-+#include "ptrace.h"
- #include "setup.h"
+ #define __ARCH_WANT_SYS_CLONE
+diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
+index c1c61635f89c..a24fe33f7c0d 100644
+--- a/arch/arm64/include/asm/unistd32.h
++++ b/arch/arm64/include/asm/unistd32.h
+@@ -883,6 +883,8 @@ __SYSCALL(__NR_clone3, sys_clone3)
+ __SYSCALL(__NR_openat2, sys_openat2)
+ #define __NR_pidfd_getfd 438
+ __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
++#define __NR_landlock 439
++__SYSCALL(__NR_landlock, sys_landlock)
  
- struct lsm_blob_sizes landlock_blob_sizes __lsm_ro_after_init = {
-@@ -20,6 +21,7 @@ struct lsm_blob_sizes landlock_blob_sizes __lsm_ro_after_init = {
- static int __init landlock_init(void)
- {
- 	landlock_add_hooks_cred();
-+	landlock_add_hooks_ptrace();
- 	pr_info("Up and running.\n");
- 	return 0;
- }
+ /*
+  * Please add new compat syscalls above this comment and update
+diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
+index 042911e670b8..c311696e0f5f 100644
+--- a/arch/ia64/kernel/syscalls/syscall.tbl
++++ b/arch/ia64/kernel/syscalls/syscall.tbl
+@@ -358,3 +358,4 @@
+ # 435 reserved for clone3
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	landlock			sys_landlock
+diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
+index f4f49fcb76d0..d73a43d235d3 100644
+--- a/arch/m68k/kernel/syscalls/syscall.tbl
++++ b/arch/m68k/kernel/syscalls/syscall.tbl
+@@ -437,3 +437,4 @@
+ 435	common	clone3				__sys_clone3
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	landlock			sys_landlock
+diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
+index 4c67b11f9c9e..f3927af7716f 100644
+--- a/arch/microblaze/kernel/syscalls/syscall.tbl
++++ b/arch/microblaze/kernel/syscalls/syscall.tbl
+@@ -443,3 +443,4 @@
+ 435	common	clone3				sys_clone3
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	landlock			sys_landlock
+diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
+index 1f9e8ad636cc..e467033ec474 100644
+--- a/arch/mips/kernel/syscalls/syscall_n32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
+@@ -376,3 +376,4 @@
+ 435	n32	clone3				__sys_clone3
+ 437	n32	openat2				sys_openat2
+ 438	n32	pidfd_getfd			sys_pidfd_getfd
++439	n32	landlock			sys_landlock
+diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
+index c0b9d802dbf6..1930ba6c75b7 100644
+--- a/arch/mips/kernel/syscalls/syscall_n64.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
+@@ -352,3 +352,4 @@
+ 435	n64	clone3				__sys_clone3
+ 437	n64	openat2				sys_openat2
+ 438	n64	pidfd_getfd			sys_pidfd_getfd
++439	n64	landlock			sys_landlock
+diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
+index ac586774c980..0a66f190ae3d 100644
+--- a/arch/mips/kernel/syscalls/syscall_o32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
+@@ -425,3 +425,4 @@
+ 435	o32	clone3				__sys_clone3
+ 437	o32	openat2				sys_openat2
+ 438	o32	pidfd_getfd			sys_pidfd_getfd
++439	o32	landlock			sys_landlock
+diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
+index 52a15f5cd130..93ddc36a660e 100644
+--- a/arch/parisc/kernel/syscalls/syscall.tbl
++++ b/arch/parisc/kernel/syscalls/syscall.tbl
+@@ -435,3 +435,4 @@
+ 435	common	clone3				sys_clone3_wrapper
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	landlock			sys_landlock
+diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
+index 220ae11555f2..34ca2cd82d4e 100644
+--- a/arch/powerpc/kernel/syscalls/syscall.tbl
++++ b/arch/powerpc/kernel/syscalls/syscall.tbl
+@@ -527,3 +527,4 @@
+ 435	spu	clone3				sys_ni_syscall
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	landlock			sys_landlock
+diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
+index bd7bd3581a0f..b4233c9c7421 100644
+--- a/arch/s390/kernel/syscalls/syscall.tbl
++++ b/arch/s390/kernel/syscalls/syscall.tbl
+@@ -440,3 +440,4 @@
+ 435  common	clone3			sys_clone3			sys_clone3
+ 437  common	openat2			sys_openat2			sys_openat2
+ 438  common	pidfd_getfd		sys_pidfd_getfd			sys_pidfd_getfd
++439  common	landlock		sys_landlock			sys_landlock
+diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
+index c7a30fcd135f..49fd37c18528 100644
+--- a/arch/sh/kernel/syscalls/syscall.tbl
++++ b/arch/sh/kernel/syscalls/syscall.tbl
+@@ -440,3 +440,4 @@
+ # 435 reserved for clone3
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	landlock			sys_landlock
+diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
+index f13615ecdecc..33e2a9d55bdd 100644
+--- a/arch/sparc/kernel/syscalls/syscall.tbl
++++ b/arch/sparc/kernel/syscalls/syscall.tbl
+@@ -483,3 +483,4 @@
+ # 435 reserved for clone3
+ 437	common	openat2			sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	landlock			sys_landlock
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 54581ac671b4..b350580405b3 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -442,3 +442,4 @@
+ 435	i386	clone3			sys_clone3
+ 437	i386	openat2			sys_openat2
+ 438	i386	pidfd_getfd		sys_pidfd_getfd
++439	i386	landlock		sys_landlock
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 37b844f839bc..b6efdd813978 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -359,6 +359,7 @@
+ 435	common	clone3			sys_clone3
+ 437	common	openat2			sys_openat2
+ 438	common	pidfd_getfd		sys_pidfd_getfd
++439	common	landlock		sys_landlock
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
+index 85a9ab1bc04d..84fc6db485ef 100644
+--- a/arch/xtensa/kernel/syscalls/syscall.tbl
++++ b/arch/xtensa/kernel/syscalls/syscall.tbl
+@@ -408,3 +408,4 @@
+ 435	common	clone3				sys_clone3
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
++439	common	landlock			sys_landlock
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 3a3201e4618e..31d5814ddb13 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -855,9 +855,11 @@ __SYSCALL(__NR_clone3, sys_clone3)
+ __SYSCALL(__NR_openat2, sys_openat2)
+ #define __NR_pidfd_getfd 438
+ __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
++#define __NR_landlock 439
++__SYSCALL(__NR_landlock, sys_landlock)
+ 
+ #undef __NR_syscalls
+-#define __NR_syscalls 439
++#define __NR_syscalls 440
+ 
+ /*
+  * 32 bit systems traditionally used different
 -- 
 2.26.2
 
