@@ -2,149 +2,120 @@ Return-Path: <SRS0=Nix3=7A=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 75039C433E0
-	for <linux-api@archiver.kernel.org>; Mon, 18 May 2020 09:40:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 634DFC433E0
+	for <linux-api@archiver.kernel.org>; Mon, 18 May 2020 12:05:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4E4F920709
-	for <linux-api@archiver.kernel.org>; Mon, 18 May 2020 09:40:38 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="s2IUKdbY"
+	by mail.kernel.org (Postfix) with ESMTP id 414A82067D
+	for <linux-api@archiver.kernel.org>; Mon, 18 May 2020 12:05:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726130AbgERJki (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 18 May 2020 05:40:38 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40702 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726040AbgERJkh (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 18 May 2020 05:40:37 -0400
-Received: from mail-il1-x144.google.com (mail-il1-x144.google.com [IPv6:2607:f8b0:4864:20::144])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 94CC6C061A0C;
-        Mon, 18 May 2020 02:40:37 -0700 (PDT)
-Received: by mail-il1-x144.google.com with SMTP id w18so9136051ilm.13;
-        Mon, 18 May 2020 02:40:37 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=pdms6kI1V+FygiJbqs2W9+OWW1Eb6sNR1jWF1nmy7jI=;
-        b=s2IUKdbY3enMQmG1dX2eyNAXUxWkhxcjtIOASGmTWs5lo4cTy3LOBI6XuqCI4YewSG
-         i5i+JsDBd4ABTFkMB9jBUuHqLtKn9+j/xBvCpJixXRo59tMDud/DQ/McDu1glkWq8Io8
-         6bXJXwj0/lqCHc1S0rf2DKr/ldfzWZoroabktl6SLP0T7OsKjOiawzO8cn53dIVSIx2L
-         fjleVT2mcjvwry5lvvRyZrMw3TXb5uOTxdNwOsHdL4gRCqpKo8VugF2O2ehbTQNfJyns
-         CvmQ1zdUD/bx9o5NUcxoPFXVgzLem8GsociSdXyrZT/ymZwT4W+HSD9A7qgnQIdilLjb
-         sM0g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=pdms6kI1V+FygiJbqs2W9+OWW1Eb6sNR1jWF1nmy7jI=;
-        b=i5egenXkPxq7E/HJUYV+bzduC8VlxnTuyJDZTGSbJX82pdoowKwSiAc9vpLQqqTIr/
-         JyePIkZJiJlzOe2jzeoXwnNqQB9CLqYDw0HXn3COV5zdOQR0A2KwoSQWwVDdCEWqB7uf
-         EeubL42yj1pjcyTf6VirecMv3ToMy/d5r12YzEPxdkIe7SfVt0oHnUhyEE/lK4mFQxJc
-         yW5qlYXFGac2d9bnvMNPLiGd8rud/ADXW1VQ1UJibcQtQHkwv32bJph/QrzB5D2V2uHp
-         xUCyp8BQQslZq93ARHl7YvIBN5eETaHQF2zDjabaYq46SRdoXGz1rFVR+dBOfTDgBlgB
-         QLfg==
-X-Gm-Message-State: AOAM5300x5JNA5Hv8fRtrg0nyZDjdXcJtCLLpHtwqfFGRnlsD9h3wUrZ
-        tmY1lJJWQG+wkc5K2JwVZz+ajWl++PqqmfsbHY4=
-X-Google-Smtp-Source: ABdhPJxgg7rmKLZhAoede28E3JcidgqEy/oebAmR/EeZK7KjnvrIRBSTRAbaCZr7oZACwVn1jBpjjgcz7O/uuqaMRAg=
-X-Received: by 2002:a92:b69b:: with SMTP id m27mr15494381ill.250.1589794836888;
- Mon, 18 May 2020 02:40:36 -0700 (PDT)
+        id S1726526AbgERMFt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 18 May 2020 08:05:49 -0400
+Received: from youngberry.canonical.com ([91.189.89.112]:58287 "EHLO
+        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726448AbgERMFt (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 18 May 2020 08:05:49 -0400
+Received: from ip5f5af183.dynamic.kabel-deutschland.de ([95.90.241.131] helo=wittgenstein)
+        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.86_2)
+        (envelope-from <christian.brauner@ubuntu.com>)
+        id 1jaeWg-0001cL-9J; Mon, 18 May 2020 12:05:46 +0000
+Date:   Mon, 18 May 2020 14:05:45 +0200
+From:   Christian Brauner <christian.brauner@ubuntu.com>
+To:     Kees Cook <keescook@chromium.org>
+Cc:     Tycho Andersen <tycho@tycho.ws>, Aleksa Sarai <asarai@suse.de>,
+        linux-api@vger.kernel.org, containers@lists.linux-foundation.org,
+        linux-kernel@vger.kernel.org
+Subject: Re: [PATCH] seccomp: Add group_leader pid to seccomp_notif
+Message-ID: <20200518120545.w7fgyq56gwzzcdrf@wittgenstein>
+References: <20200515234005.32370-1-sargun@sargun.me>
+ <202005162344.74A02C2D@keescook>
+ <20200517104701.bbn2d2rqaplwchdw@wittgenstein>
+ <20200517112156.cphs2h33hx2wfcs4@yavin.dot.cyphar.com>
+ <20200517142316.GA1996744@cisco>
+ <20200517143311.fmxaf3pnopuaezl4@wittgenstein>
+ <20200517144603.GD1996744@cisco>
+ <20200517150215.GE1996744@cisco>
+ <202005171428.68F30AA0@keescook>
 MIME-Version: 1.0
-References: <20200505162014.10352-1-amir73il@gmail.com>
-In-Reply-To: <20200505162014.10352-1-amir73il@gmail.com>
-From:   Amir Goldstein <amir73il@gmail.com>
-Date:   Mon, 18 May 2020 12:40:25 +0300
-Message-ID: <CAOQ4uxjAz5ytbyJMJGvwitpepVnnAKEiQV8QEkzc9yeRyXZoKA@mail.gmail.com>
-Subject: Re: [PATCH v3 0/7] fanotify events on child with name info
-To:     Jan Kara <jack@suse.cz>
-Cc:     Matthew Bobrowski <mbobrowski@mbobrowski.org>,
-        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <202005171428.68F30AA0@keescook>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, May 5, 2020 at 7:20 PM Amir Goldstein <amir73il@gmail.com> wrote:
->
-> Jan,
->
-> In the v3 posting of the name info patches [1] I dropped the
-> FAN_REPORT_NAME patches as agreed to defer them to next cycle.
->
-> Following is remainder of the series to complement the FAN_DIR_MODIFY
-> patches that were merged to v5.7-rc1.
->
-> The v3 patches are available on my github branch fanotify_name [2].
-> Same branch names for LTP tests [3], man page draft [4] and a demo [5].
->
-> Patches 1-4 are cleanup and minor re-factoring in prep for the name
-> info patches.
->
-> Patch 5 adds the FAN_REPORT_NAME flag and the new event reporting format
-> combined of FAN_EVENT_INFO_TYPE_DFID_NAME and FAN_EVENT_INFO_TYPE_FID
-> info records, but provides not much added value beyond inotify.
->
-> Patches 6-7 add the new capability of filesystem/mount watch with events
-> including name info.
->
-> I have made an API decision that stems from consolidating the
-> implementation with fsnotify_parent() that requires your approval -
-> A filesystem/mount mark with FAN_REPORT_NAME behaves as if all the
-> directories and inodes are marked.  This results in user getting all
-> relevant events in two flavors - one with both info records and one with just
-> FAN_EVENT_INFO_TYPE_FID.  I have tries several approaches to work around this
-> bizarrity, but in the end I decided that would be the lesser evil and that
-> bizarre behavior is at least easy to document.
->
+On Sun, May 17, 2020 at 02:30:57PM -0700, Kees Cook wrote:
+> On Sun, May 17, 2020 at 09:02:15AM -0600, Tycho Andersen wrote:
+> > On Sun, May 17, 2020 at 08:46:03AM -0600, Tycho Andersen wrote:
+> > > On Sun, May 17, 2020 at 04:33:11PM +0200, Christian Brauner wrote:
+> > > > struct seccomp_notif2 {
+> > > > 	__u32 notif_size;
+> > > > 	__u64 id;
+> > > > 	__u32 pid;
+> > > > 	__u32 flags;
+> > > > 	struct seccomp_data data;
+> > > > 	__u32 data_size;
+> > > > };
+> > > 
+> > > I guess you need to put data_size before data, otherwise old userspace
+> > > with a smaller struct seccomp_data will look in the wrong place.
+> > > 
+> > > But yes, that'll work if you put two sizes in, which is probably
+> > > reasonable since we're talking about two structs.
+> > 
+> > Well, no, it doesn't either. Suppose we add a new field first to
+> > struct seccomp_notif2:
+> > 
+> > struct seccomp_notif2 {
+> >     __u32 notif_size;
+> >     __u64 id;
+> >     __u32 pid;
+> >     __u32 flags;
+> >     struct seccomp_data data;
+> >     __u32 data_size;
+> >     __u32 new_field;
+> > };
+> > 
+> > And next we add a new field to struct secccomp_data. When a userspace
+> > compiled with just the new seccomp_notif2 field does:
+> > 
+> > seccomp_notif2.new_field = ...;
+> > 
+> > the compiler will put it in the wrong place for the kernel with the
+> > new seccomp_data field too.
+> > 
+> > Sort of feels like we should do:
+> > 
+> > struct seccomp_notif2 {
+> >     struct seccomp_notif *notif;
+> >     struct seccomp_data *data;
+> > };
+> 
+> I'm going read this thread more carefully tomorrow, but I just wanted to
+> mention that I'd *like* to extend seccomp_data for doing deep argument
+> inspection of the new syscalls. I think it's the least bad of many
+> designs, and I'll write that up in more detail. (I would *really* like
+> to avoid extending seccomp's BPF language, and instead allow probing
+> into the struct copied from userspace, etc.)
 
-Hi Jan,
+It's great to hear that you're on this. I haven't had time to work on
+this since our kernel summit session. :/
+And so far, I really like what I hear. I had the same general thought
+that not extending seccomp's bpf is what we want. And to stress this
+again before the mails come flooding in: we really need this in seccomp
+itself not in any current or future LSM. :)
 
-Were you able to give some thought to the API question above?
+> 
+> Anyway, it's very related to this, so, yeah, probably we need a v2 of the
+> notif API, but I'll try to get all the ideas here collected in one place.
 
-I would really like to be able to finalize the design of the API, so
-that I will be able to continue working on the man page patches.
+Cool, I was kinda worried that people would think that's a crazy idea
+but I really think we're better off with a redesign. And I think that's
+totally ok and cleaner than hacking around it.
 
-Re-phrasing the API question that needs addressing:
-
-With FAN_REPORT_NAME, filesystem/mount watches get -
-1. ONLY events with name (no events on root and no SELF events)
-2. Each event in one flavor (with name info when available)
-3. ALL events in both flavors (where name info is available)
-4. Something else?
-
-The current v3 patches implement API choice #3, which is derived
-from the implementation choice to emit two events via fsnotify_parent().
-
-My v2 patches implemented API choice #2, which was the reason
-for duplicating name snapshot code inside handle_event().
-I considered implementing merge of event with and without name,
-but it seemed too ugly to live.
-
-We could also go for an API that allows any combination of
-FAN_REPORT_NAME and FAN_REPORT_FID:
-FAN_REPORT_FID - current upstream behavior
-FAN_REPORT_FID_NAME - choice #3 above as implemented in v3
-FAN_REPORT_NAME - choice #1 above
-
-At one point, I also considered that user needs to opt-in
-for named events per filesystem/mount mark with
-FAN_EVENT_ON_CHILD. This flag is implied in v3 for
-all filesystem/mount marks by FAN_REPORT_NAME, while
-for directory marks it is opt-in as it has always been.
-
-At the moment I went with choice #3 in v3 because I felt it
-would be the simplest of all choices to document.
-
-I didn't want to invest time in documenting behavior if you find it
-unacceptable. If you are swaying between more than one option,
-then I am willing to try documenting more than one option, so we
-can see what the result looks like.
-
-Thanks,
-Amir.
+Christian
