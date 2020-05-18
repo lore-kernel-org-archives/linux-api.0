@@ -2,98 +2,92 @@ Return-Path: <SRS0=Nix3=7A=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7A913C433DF
-	for <linux-api@archiver.kernel.org>; Mon, 18 May 2020 23:06:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 35DE4C433DF
+	for <linux-api@archiver.kernel.org>; Mon, 18 May 2020 23:11:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4B1012081A
-	for <linux-api@archiver.kernel.org>; Mon, 18 May 2020 23:06:59 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1589843219;
-	bh=PK1V3Ku0yGM4DEfZQJfpSkYoFD5xqA30biO82kKQTyg=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References:List-ID:From;
-	b=wmIg6BTImHu3NiQbUJ4Wubman18xWghIXMqlj6H1w5TiRCpyWFro00LhhlmyP7hTd
-	 TugcIuGHzRJJZ5GPYWXRZpVrnYR0ws5m1F14K+2KyMiTw0J3SKHh3ZMfR4p7OmSI8I
-	 mAkO9u2iaoy/eqUVR0QZmameJQXHz1ZCAFoe0uMM=
+	by mail.kernel.org (Postfix) with ESMTP id 181C42067D
+	for <linux-api@archiver.kernel.org>; Mon, 18 May 2020 23:11:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727917AbgERXG6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 18 May 2020 19:06:58 -0400
-Received: from mail.kernel.org ([198.145.29.99]:52002 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726490AbgERXG6 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 18 May 2020 19:06:58 -0400
-Received: from localhost.localdomain (c-73-231-172-41.hsd1.ca.comcast.net [73.231.172.41])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id E43932067D;
-        Mon, 18 May 2020 23:06:56 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1589843217;
-        bh=PK1V3Ku0yGM4DEfZQJfpSkYoFD5xqA30biO82kKQTyg=;
-        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-        b=H3Y3A6nQEoHkOSbZz1IrzxA67bJtW3EK2PrUX2dvj+WcPFfXeeeFLSiDIsjqFM2+6
-         AoDFaDumm3o0hqXzWlR6moqQ94rO4UInBdKG+B6B2IL0f+9vqeGfN3n21meA/awxfW
-         5c6b+85KxidUgz4birZgOy7bjh/654owYJ42QtPE=
-Date:   Mon, 18 May 2020 16:06:56 -0700
-From:   Andrew Morton <akpm@linux-foundation.org>
-To:     Minchan Kim <minchan@kernel.org>
-Cc:     Suren Baghdasaryan <surenb@google.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        linux-mm <linux-mm@kvack.org>, linux-api@vger.kernel.org,
-        Oleksandr Natalenko <oleksandr@redhat.com>,
-        Tim Murray <timmurray@google.com>,
-        Daniel Colascione <dancol@google.com>,
-        Sandeep Patil <sspatil@google.com>,
-        Sonny Rao <sonnyrao@google.com>,
-        Brian Geffon <bgeffon@google.com>,
-        Michal Hocko <mhocko@suse.com>,
-        Johannes Weiner <hannes@cmpxchg.org>,
-        Shakeel Butt <shakeelb@google.com>,
-        John Dias <joaodias@google.com>,
-        Joel Fernandes <joel@joelfernandes.org>,
-        Jann Horn <jannh@google.com>,
-        alexander.h.duyck@linux.intel.com,
-        SeongJae Park <sjpark@amazon.com>,
-        David Rientjes <rientjes@google.com>,
-        Arjun Roy <arjunroy@google.com>,
-        Kirill Tkhai <ktkhai@virtuozzo.com>
-Subject: Re: [PATCH] mm: use only pidfd for process_madvise syscall
-Message-Id: <20200518160656.b9651ef7393db8e0614a1175@linux-foundation.org>
-In-Reply-To: <20200518211350.GA50295@google.com>
-References: <20200516012055.126205-1-minchan@kernel.org>
-        <CAJuCfpGbPUpWLDgwt5ZP4Uf8fp6ht_6eqUypMVYYh3btJdz_8Q@mail.gmail.com>
-        <20200518211350.GA50295@google.com>
-X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.31; x86_64-pc-linux-gnu)
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+        id S1726970AbgERXL6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 18 May 2020 19:11:58 -0400
+Received: from out01.mta.xmission.com ([166.70.13.231]:50656 "EHLO
+        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726481AbgERXL6 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 18 May 2020 19:11:58 -0400
+Received: from in02.mta.xmission.com ([166.70.13.52])
+        by out01.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.90_1)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1jaovK-0002rl-SN; Mon, 18 May 2020 17:11:54 -0600
+Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
+        by in02.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
+        (Exim 4.87)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1jaovG-0003jx-Ae; Mon, 18 May 2020 17:11:54 -0600
+From:   ebiederm@xmission.com (Eric W. Biederman)
+To:     Sargun Dhillon <sargun@sargun.me>
+Cc:     linux-kernel@vger.kernel.org,
+        containers@lists.linux-foundation.org, linux-api@vger.kernel.org,
+        christian.brauner@ubuntu.com, tycho@tycho.ws,
+        keescook@chromium.org, cyphar@cyphar.com
+References: <20200515234005.32370-1-sargun@sargun.me>
+Date:   Mon, 18 May 2020 18:08:11 -0500
+In-Reply-To: <20200515234005.32370-1-sargun@sargun.me> (Sargun Dhillon's
+        message of "Fri, 15 May 2020 16:40:05 -0700")
+Message-ID: <87h7wc4zac.fsf@x220.int.ebiederm.org>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
+MIME-Version: 1.0
+Content-Type: text/plain
+X-XM-SPF: eid=1jaovG-0003jx-Ae;;;mid=<87h7wc4zac.fsf@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX18PaDb13dtx9TkkbNG4DzN0+x9R61gVrp0=
+X-SA-Exim-Connect-IP: 68.227.160.95
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: Re: [PATCH] seccomp: Add group_leader pid to seccomp_notif
+X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
+X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, 18 May 2020 14:13:50 -0700 Minchan Kim <minchan@kernel.org> wrote:
+Sargun Dhillon <sargun@sargun.me> writes:
 
-> Andrew, I sent this patch without folding into previous syscall introducing
-> patches because it could be arguable. If you want to fold it into each
-> patchset(i.e., introdcuing process_madvise syscall and introducing
-> compat_syscall), let me know it. I will send partial diff to each
-> patchset.
+> This includes the thread group leader ID in the seccomp_notif. This is
+> immediately useful for opening up a pidfd for the group leader, as
+> pidfds only work on group leaders.
 
-It doesn't seem necessary - I believe we'll get a clean result if I
-squish all of these:
+The code looks fine (except for the name of the test), but can you
+please talk and think about this as something other than the
+group leader?
 
-mm-support-vector-address-ranges-for-process_madvise-fix.patch
-mm-support-vector-address-ranges-for-process_madvise-fix-fix.patch
-mm-support-vector-address-ranges-for-process_madvise-fix-fix-fix.patch
-mm-support-vector-address-ranges-for-process_madvise-fix-fix-fix-fix.patch
-mm-support-vector-address-ranges-for-process_madvise-fix-fix-fix-fix-fix.patch
-mm-use-only-pidfd-for-process_madvise-syscall.patch
+The initial thread in a thread group can die, and the tgid is still
+valid for the entire group.  Because the initial thread of a
+process/thread group can die (but rarely does) that tends to result in
+kernel code that fails when thread_group_leader dies.
 
-into mm-support-vector-address-ranges-for-process_madvise.patch and
-make the appropriate changelog adjustments?
+To remove that class of bugs I am slowy working to remove the
+thread_group_leader from the kernel entirely.
 
+Looking at the names of the fields in the structure it looks like
+there is another class of bugs to be removed by renaming PIDTYPE_PID
+to PIDTYPE_TID in the kernel as well.  Just skimming the example code
+it looks very simple to get confused.
+
+Is there any chance some can modify struct seccomp_notify to do
+{
+	...
+        union {
+		__u32 pid;
+                __u32 tid;
+	};
+        ...
+}
+
+Just to reduce the chance of confusion between the userspace pid and the
+in kernel pid names?
+
+Eric
