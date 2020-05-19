@@ -2,35 +2,31 @@ Return-Path: <SRS0=YSuu=7B=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BD770C433E1
-	for <linux-api@archiver.kernel.org>; Tue, 19 May 2020 12:32:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 43AC4C433E1
+	for <linux-api@archiver.kernel.org>; Tue, 19 May 2020 13:14:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A6D2620825
-	for <linux-api@archiver.kernel.org>; Tue, 19 May 2020 12:32:32 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 23842206C3
+	for <linux-api@archiver.kernel.org>; Tue, 19 May 2020 13:14:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728612AbgESMc2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 19 May 2020 08:32:28 -0400
-Received: from out01.mta.xmission.com ([166.70.13.231]:53264 "EHLO
-        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726196AbgESMc2 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 19 May 2020 08:32:28 -0400
-Received: from in02.mta.xmission.com ([166.70.13.52])
-        by out01.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.90_1)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1jb1Q2-0000vi-W0; Tue, 19 May 2020 06:32:27 -0600
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
-        by in02.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        (Exim 4.87)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1jb1Q2-0007fz-6K; Tue, 19 May 2020 06:32:26 -0600
-From:   ebiederm@xmission.com (Eric W. Biederman)
-To:     Andreas Schwab <schwab@linux-m68k.org>
-Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
+        id S1728052AbgESNOE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 19 May 2020 09:14:04 -0400
+Received: from youngberry.canonical.com ([91.189.89.112]:47297 "EHLO
+        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727057AbgESNOE (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 19 May 2020 09:14:04 -0400
+Received: from ip5f5af183.dynamic.kabel-deutschland.de ([95.90.241.131] helo=wittgenstein)
+        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.86_2)
+        (envelope-from <christian.brauner@ubuntu.com>)
+        id 1jb23z-0000nn-1Y; Tue, 19 May 2020 13:13:43 +0000
+Date:   Tue, 19 May 2020 15:13:41 +0200
+From:   Christian Brauner <christian.brauner@ubuntu.com>
+To:     "Eric W. Biederman" <ebiederm@xmission.com>
+Cc:     Andreas Schwab <schwab@linux-m68k.org>,
         Jann Horn <jannh@google.com>,
         Kees Cook <keescook@chromium.org>,
         Al Viro <viro@zeniv.linux.org.uk>,
@@ -42,59 +38,48 @@ Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
         linux-security-module <linux-security-module@vger.kernel.org>,
         Linux API <linux-api@vger.kernel.org>,
         kernel list <linux-kernel@vger.kernel.org>
-References: <20200518055457.12302-1-keescook@chromium.org>
-        <20200518055457.12302-2-keescook@chromium.org>
-        <20200518130251.zih2s32q2rxhxg6f@wittgenstein>
-        <CAG48ez1FspvvypJSO6badG7Vb84KtudqjRk1D7VyHRm06AiEbQ@mail.gmail.com>
-        <20200518144627.sv5nesysvtgxwkp7@wittgenstein>
-        <87blmk3ig4.fsf@x220.int.ebiederm.org> <87mu64uxq1.fsf@igel.home>
-        <87sgfwuoi3.fsf@x220.int.ebiederm.org> <87eergunqs.fsf@igel.home>
-Date:   Tue, 19 May 2020 07:28:46 -0500
-In-Reply-To: <87eergunqs.fsf@igel.home> (Andreas Schwab's message of "Tue, 19
-        May 2020 14:12:59 +0200")
-Message-ID: <87ftbwun0h.fsf@x220.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
-MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1jb1Q2-0007fz-6K;;;mid=<87ftbwun0h.fsf@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1/TJHeqM7kG/mxWux7jgYWK9a5y1fosOwQ=
-X-SA-Exim-Connect-IP: 68.227.160.95
-X-SA-Exim-Mail-From: ebiederm@xmission.com
 Subject: Re: [PATCH 1/4] exec: Change uselib(2) IS_SREG() failure to EACCES
-X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
+Message-ID: <20200519131341.qiysndpmj75zfjtz@wittgenstein>
+References: <20200518055457.12302-1-keescook@chromium.org>
+ <20200518055457.12302-2-keescook@chromium.org>
+ <20200518130251.zih2s32q2rxhxg6f@wittgenstein>
+ <CAG48ez1FspvvypJSO6badG7Vb84KtudqjRk1D7VyHRm06AiEbQ@mail.gmail.com>
+ <20200518144627.sv5nesysvtgxwkp7@wittgenstein>
+ <87blmk3ig4.fsf@x220.int.ebiederm.org>
+ <87mu64uxq1.fsf@igel.home>
+ <87sgfwuoi3.fsf@x220.int.ebiederm.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <87sgfwuoi3.fsf@x220.int.ebiederm.org>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Andreas Schwab <schwab@linux-m68k.org> writes:
+On Tue, May 19, 2020 at 06:56:36AM -0500, Eric W. Biederman wrote:
+> Andreas Schwab <schwab@linux-m68k.org> writes:
+> 
+> > On Mai 18 2020, Eric W. Biederman wrote:
+> >
+> >> If it was only libc4 and libc5 that used the uselib system call then it
+> >> can probably be removed after enough time.
+> >
+> > Only libc4 used it, libc5 was already ELF.
+> 
+> binfmt_elf.c supports uselib.  In a very a.out ish way.  Do you know if
+> that support was ever used?
+> 
+> If we are truly talking a.out only we should be able to make uselib
+> conditional on a.out support in the kernel which is strongly mostly
+> disabled at this point.
 
-> On Mai 19 2020, Eric W. Biederman wrote:
->
->> I am wondering if there are source trees for libc4 or libc5 around
->> anywhere that we can look at to see how usage of uselib evolved.
->
-> libc5 is available from archive.debian.org.
->
-> http://archive.debian.org/debian-archive/debian/pool/main/libc/libc/libc_5.4.46.orig.tar.gz
+The only ones that even allow setting AOUT:
 
-Interesting.
+arch/alpha/Kconfig:     select HAVE_AOUT
+arch/m68k/Kconfig:      select HAVE_AOUT if MMU
 
-It appears that the old a.out code to make use of uselib remained in
-the libc5 sources but it was all conditional on the being compiled not
-to use ELF.
+and x86 deprecated it March 2019:
+https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=eac616557050737a8d6ef6fe0322d0980ff0ffde
 
-libc5 did provide a wrapper for the uselib system call.
-
-It appears glibc also provides a wrapper for the uselib system call
-named: uselib@GLIBC_2.2.5.
-
-I don't see a glibc header file that provides a declaration for uselib
-though.
-
-So the question becomes did anyone use those glibc wrappers.
-
-Eric
-
-
+Christian
