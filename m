@@ -6,38 +6,30 @@ X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 06954C433DF
-	for <linux-api@archiver.kernel.org>; Tue, 19 May 2020 12:13:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BD770C433E1
+	for <linux-api@archiver.kernel.org>; Tue, 19 May 2020 12:32:32 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DC2D5207D8
-	for <linux-api@archiver.kernel.org>; Tue, 19 May 2020 12:13:25 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A6D2620825
+	for <linux-api@archiver.kernel.org>; Tue, 19 May 2020 12:32:32 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728647AbgESMNY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 19 May 2020 08:13:24 -0400
-Received: from mail-out.m-online.net ([212.18.0.10]:60043 "EHLO
-        mail-out.m-online.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727057AbgESMNX (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 19 May 2020 08:13:23 -0400
-Received: from frontend01.mail.m-online.net (unknown [192.168.8.182])
-        by mail-out.m-online.net (Postfix) with ESMTP id 49RFCK6Rfkz1rtjY;
-        Tue, 19 May 2020 14:13:17 +0200 (CEST)
-Received: from localhost (dynscan1.mnet-online.de [192.168.6.70])
-        by mail.m-online.net (Postfix) with ESMTP id 49RFCK50Dsz1qtwF;
-        Tue, 19 May 2020 14:13:17 +0200 (CEST)
-X-Virus-Scanned: amavisd-new at mnet-online.de
-Received: from mail.mnet-online.de ([192.168.8.182])
-        by localhost (dynscan1.mail.m-online.net [192.168.6.70]) (amavisd-new, port 10024)
-        with ESMTP id ElnYnYpihtKs; Tue, 19 May 2020 14:13:15 +0200 (CEST)
-X-Auth-Info: BdzxRw3MNxoi9lJoK1v0SRv148N2LL0c3F0NDN4KiaTBfn48ivwksZx6pZAVP+Kr
-Received: from igel.home (ppp-46-244-171-2.dynamic.mnet-online.de [46.244.171.2])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.mnet-online.de (Postfix) with ESMTPSA;
-        Tue, 19 May 2020 14:13:15 +0200 (CEST)
-Received: by igel.home (Postfix, from userid 1000)
-        id CC0142C0C39; Tue, 19 May 2020 14:12:59 +0200 (CEST)
-From:   Andreas Schwab <schwab@linux-m68k.org>
-To:     ebiederm@xmission.com (Eric W. Biederman)
+        id S1728612AbgESMc2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 19 May 2020 08:32:28 -0400
+Received: from out01.mta.xmission.com ([166.70.13.231]:53264 "EHLO
+        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726196AbgESMc2 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 19 May 2020 08:32:28 -0400
+Received: from in02.mta.xmission.com ([166.70.13.52])
+        by out01.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.90_1)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1jb1Q2-0000vi-W0; Tue, 19 May 2020 06:32:27 -0600
+Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
+        by in02.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
+        (Exim 4.87)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1jb1Q2-0007fz-6K; Tue, 19 May 2020 06:32:26 -0600
+From:   ebiederm@xmission.com (Eric W. Biederman)
+To:     Andreas Schwab <schwab@linux-m68k.org>
 Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
         Jann Horn <jannh@google.com>,
         Kees Cook <keescook@chromium.org>,
@@ -50,39 +42,59 @@ Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
         linux-security-module <linux-security-module@vger.kernel.org>,
         Linux API <linux-api@vger.kernel.org>,
         kernel list <linux-kernel@vger.kernel.org>
-Subject: Re: [PATCH 1/4] exec: Change uselib(2) IS_SREG() failure to EACCES
 References: <20200518055457.12302-1-keescook@chromium.org>
         <20200518055457.12302-2-keescook@chromium.org>
         <20200518130251.zih2s32q2rxhxg6f@wittgenstein>
         <CAG48ez1FspvvypJSO6badG7Vb84KtudqjRk1D7VyHRm06AiEbQ@mail.gmail.com>
         <20200518144627.sv5nesysvtgxwkp7@wittgenstein>
         <87blmk3ig4.fsf@x220.int.ebiederm.org> <87mu64uxq1.fsf@igel.home>
-        <87sgfwuoi3.fsf@x220.int.ebiederm.org>
-X-Yow:  HOW could a GLASS be YELLING??
-Date:   Tue, 19 May 2020 14:12:59 +0200
-In-Reply-To: <87sgfwuoi3.fsf@x220.int.ebiederm.org> (Eric W. Biederman's
-        message of "Tue, 19 May 2020 06:56:36 -0500")
-Message-ID: <87eergunqs.fsf@igel.home>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.0.91 (gnu/linux)
+        <87sgfwuoi3.fsf@x220.int.ebiederm.org> <87eergunqs.fsf@igel.home>
+Date:   Tue, 19 May 2020 07:28:46 -0500
+In-Reply-To: <87eergunqs.fsf@igel.home> (Andreas Schwab's message of "Tue, 19
+        May 2020 14:12:59 +0200")
+Message-ID: <87ftbwun0h.fsf@x220.int.ebiederm.org>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
+X-XM-SPF: eid=1jb1Q2-0007fz-6K;;;mid=<87ftbwun0h.fsf@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1/TJHeqM7kG/mxWux7jgYWK9a5y1fosOwQ=
+X-SA-Exim-Connect-IP: 68.227.160.95
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: Re: [PATCH 1/4] exec: Change uselib(2) IS_SREG() failure to EACCES
+X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
+X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mai 19 2020, Eric W. Biederman wrote:
+Andreas Schwab <schwab@linux-m68k.org> writes:
 
-> I am wondering if there are source trees for libc4 or libc5 around
-> anywhere that we can look at to see how usage of uselib evolved.
+> On Mai 19 2020, Eric W. Biederman wrote:
+>
+>> I am wondering if there are source trees for libc4 or libc5 around
+>> anywhere that we can look at to see how usage of uselib evolved.
+>
+> libc5 is available from archive.debian.org.
+>
+> http://archive.debian.org/debian-archive/debian/pool/main/libc/libc/libc_5.4.46.orig.tar.gz
 
-libc5 is available from archive.debian.org.
+Interesting.
 
-http://archive.debian.org/debian-archive/debian/pool/main/libc/libc/libc_5.4.46.orig.tar.gz
+It appears that the old a.out code to make use of uselib remained in
+the libc5 sources but it was all conditional on the being compiled not
+to use ELF.
 
-Andreas.
+libc5 did provide a wrapper for the uselib system call.
 
--- 
-Andreas Schwab, schwab@linux-m68k.org
-GPG Key fingerprint = 7578 EB47 D4E5 4D69 2510  2552 DF73 E780 A9DA AEC1
-"And now for something completely different."
+It appears glibc also provides a wrapper for the uselib system call
+named: uselib@GLIBC_2.2.5.
+
+I don't see a glibc header file that provides a declaration for uselib
+though.
+
+So the question becomes did anyone use those glibc wrappers.
+
+Eric
+
+
