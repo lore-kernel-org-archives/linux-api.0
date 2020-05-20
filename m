@@ -2,202 +2,268 @@ Return-Path: <SRS0=MtbT=7C=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 71A05C433E1
-	for <linux-api@archiver.kernel.org>; Wed, 20 May 2020 01:04:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5FB8EC433E0
+	for <linux-api@archiver.kernel.org>; Wed, 20 May 2020 01:20:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4D70D20835
-	for <linux-api@archiver.kernel.org>; Wed, 20 May 2020 01:04:30 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1589936670;
-	bh=PXXxP8uhFGUWNSwJ6Vc/qmk12yFcTacQV1nb6Sn0O9M=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:List-ID:From;
-	b=i3sc1DvFRViZMjCbgs7m3c6rPESquzUPpU8taKzXANLAX2H77nj2Paaa4zgEJbtth
-	 H/SGsjKvnjaxT79khFNa/xovNd9msU6DTGusujfIfwfmNna9hov6ZWmP5pWucoBBlj
-	 8A4VbSEQ/m3eGpFqCMm5rQLfQIDwiRyxi49XSZlc=
+	by mail.kernel.org (Postfix) with ESMTP id 45DE52083E
+	for <linux-api@archiver.kernel.org>; Wed, 20 May 2020 01:20:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726318AbgETBE0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 19 May 2020 21:04:26 -0400
-Received: from mail.kernel.org ([198.145.29.99]:59436 "EHLO mail.kernel.org"
+        id S1726432AbgETBU6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 19 May 2020 21:20:58 -0400
+Received: from mx2.suse.de ([195.135.220.15]:42042 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728285AbgETBEZ (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 19 May 2020 21:04:25 -0400
-Received: from mail-wm1-f46.google.com (mail-wm1-f46.google.com [209.85.128.46])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id DBDED20890
-        for <linux-api@vger.kernel.org>; Wed, 20 May 2020 01:04:24 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1589936665;
-        bh=PXXxP8uhFGUWNSwJ6Vc/qmk12yFcTacQV1nb6Sn0O9M=;
-        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-        b=HEVOP/LCjo3d2AutI7sFJgWyNVejy9Uif8ss+JK94CYrJxteTKIyrlaeaaqumfv2A
-         mk2hEnz5XtBap1jm9Tdq6jB5vh9i179lQ8J3CsbA4V7/XfqWU/6z/m0p9DPRZ0Qjpz
-         yn9iEsdpEHP+5BvKfP/cKCZQX8KEETNthacRFe10=
-Received: by mail-wm1-f46.google.com with SMTP id m185so1157576wme.3
-        for <linux-api@vger.kernel.org>; Tue, 19 May 2020 18:04:24 -0700 (PDT)
-X-Gm-Message-State: AOAM531mV8aHaaBnLPkPgxwngozlb5rDgH0993mLbutnKpu8IDU3hULU
-        fEdEDzNH76EaRVqR6aU0LybYkXYLE0F05gzr/qvK3A==
-X-Google-Smtp-Source: ABdhPJxRzLaRgKpPFo9hQLyxTV5/YLigR1ZRrqC8GQsn5VFgWv551/4M7QbnOdI+nhoskIp5Pe8gQBm7X9gB2HZu4wg=
-X-Received: by 2002:a05:600c:2299:: with SMTP id 25mr2086671wmf.138.1589936663161;
- Tue, 19 May 2020 18:04:23 -0700 (PDT)
-MIME-Version: 1.0
-References: <2eb98637-bd2d-dda6-7729-f06ea84256ca@intel.com> <58319765-891D-44B9-AF18-64492B01FF36@amacapital.net>
-In-Reply-To: <58319765-891D-44B9-AF18-64492B01FF36@amacapital.net>
-From:   Andy Lutomirski <luto@kernel.org>
-Date:   Tue, 19 May 2020 18:04:11 -0700
-X-Gmail-Original-Message-ID: <CALCETrWavh1_Atk=VPQbOoB5tY=zGWGukW8qjF51msKTJSJgQQ@mail.gmail.com>
-Message-ID: <CALCETrWavh1_Atk=VPQbOoB5tY=zGWGukW8qjF51msKTJSJgQQ@mail.gmail.com>
-Subject: Re: [PATCH v10 01/26] Documentation/x86: Add CET description
-To:     Dave Hansen <dave.hansen@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>, X86 ML <x86@kernel.org>,
-        "H. Peter Anvin" <hpa@zytor.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
-        Linux-MM <linux-mm@kvack.org>,
-        linux-arch <linux-arch@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Andy Lutomirski <luto@kernel.org>,
-        Balbir Singh <bsingharora@gmail.com>,
-        Borislav Petkov <bp@alien8.de>,
-        Cyrill Gorcunov <gorcunov@gmail.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Eugene Syromiatnikov <esyr@redhat.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
-        Jonathan Corbet <corbet@lwn.net>,
+        id S1726318AbgETBU6 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 19 May 2020 21:20:58 -0400
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.220.254])
+        by mx2.suse.de (Postfix) with ESMTP id 3CF23B1AA;
+        Wed, 20 May 2020 01:20:59 +0000 (UTC)
+Date:   Wed, 20 May 2020 11:20:45 +1000
+From:   Aleksa Sarai <asarai@suse.de>
+To:     Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Cc:     Aleksa Sarai <cyphar@cyphar.com>,
+        Daniel Borkmann <daniel@iogearbox.net>,
         Kees Cook <keescook@chromium.org>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Nadav Amit <nadav.amit@gmail.com>,
-        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
-        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
-        Dave Martin <Dave.Martin@arm.com>,
-        Weijiang Yang <weijiang.yang@intel.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+        Chris Palmer <palmer@google.com>, Jann Horn <jannh@google.com>,
+        Jeffrey Vander Stoep <jeffv@google.com>,
+        Linux Containers <containers@lists.linux-foundation.org>,
+        kernel list <linux-kernel@vger.kernel.org>,
+        Matt Denton <mpdenton@google.com>,
+        Linux API <linux-api@vger.kernel.org>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        bpf <bpf@vger.kernel.org>
+Subject: Re: seccomp feature development
+Message-ID: <20200520012045.5yqejh6kic3gbkyw@yavin.dot.cyphar.com>
+References: <202005181120.971232B7B@keescook>
+ <CAG48ez1LrQvR2RHD5-ZCEihL4YT1tVgoAJfGYo+M3QukumX=OQ@mail.gmail.com>
+ <20200519024846.b6dr5cjojnuetuyb@yavin.dot.cyphar.com>
+ <CAADnVQKRCCHRQrNy=V7ue38skb8nKCczScpph2WFv7U_jsS3KQ@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="a5ec4uayovknuc3g"
+Content-Disposition: inline
+In-Reply-To: <CAADnVQKRCCHRQrNy=V7ue38skb8nKCczScpph2WFv7U_jsS3KQ@mail.gmail.com>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, May 18, 2020 at 6:35 PM Andy Lutomirski <luto@amacapital.net> wrote=
-:
->
->
->
-> > On May 18, 2020, at 5:38 PM, Dave Hansen <dave.hansen@intel.com> wrote:
+
+--a5ec4uayovknuc3g
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On 2020-05-19, Alexei Starovoitov <alexei.starovoitov@gmail.com> wrote:
+> On Mon, May 18, 2020 at 7:53 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
 > >
-> > =EF=BB=BFOn 5/18/20 4:47 PM, Yu-cheng Yu wrote:
-> >>> On Fri, 2020-05-15 at 19:53 -0700, Yu-cheng Yu wrote:
-> >>> On Fri, 2020-05-15 at 16:56 -0700, Dave Hansen wrote:
-> >>>> On 5/15/20 4:29 PM, Yu-cheng Yu wrote:
-> >>>>> [...]
-> >>>>> I have run them with CET enabled.  All of them pass, except for the=
- following:
-> >>>>> Sigreturn from 64-bit to 32-bit fails, because shadow stack is at a=
- 64-bit
-> >>>>> address.  This is understandable.
-> >>>> [...]
-> >>>> One a separate topic: You ran the selftests and one failed.  This is=
- a
-> >>>> *MASSIVE* warning sign.  It should minimally be described in your co=
-ver
-> >>>> letter, and accompanied by a fix to the test case.  It is absolutely
-> >>>> unacceptable to introduce a kernel feature that causes a test to fai=
-l.
-> >>>> You must either fix your kernel feature or you fix the test.
-> >>>>
-> >>>> This code can not be accepted until this selftests issue is rectifie=
-d.
-> >> The x86/sigreturn test constructs 32-bit ldt entries, and does sigretu=
-rn from
-> >> 64-bit to 32-bit context.  We do not have a way to construct a static =
-32-bit
-> >> shadow stack.
+> > On 2020-05-19, Jann Horn <jannh@google.com> wrote:
+> > > On Mon, May 18, 2020 at 11:05 PM Kees Cook <keescook@chromium.org> wr=
+ote:
+> > > > ## deep argument inspection
+> > > >
+> > > > Background: seccomp users would like to write filters that traverse
+> > > > the user pointers passed into many syscalls, but seccomp can't do t=
+his
+> > > > dereference for a variety of reasons (mostly involving race conditi=
+ons and
+> > > > rearchitecting the entire kernel syscall and copy_from_user() code =
+flows).
+> > >
+> > > Also, other than for syscall entry, it might be worth thinking about
+> > > whether we want to have a special hook into seccomp for io_uring.
+> > > io_uring is growing support for more and more syscalls, including
+> > > things like openat2, connect, sendmsg, splice and so on, and that list
+> > > is probably just going to grow in the future. If people start wanting
+> > > to use io_uring in software with seccomp filters, it might be
+> > > necessary to come up with some mechanism to prevent io_uring from
+> > > permitting access to almost everything else...
+> > >
+> > > Probably not a big priority for now, but something to keep in mind for
+> > > the future.
 > >
-> > Why? What's the limiting factor?  Hardware architecture?  Something in
-> > the kernel?
+> > Indeed. Quite a few people have raised concerns about io_uring and its
+> > debug-ability, but I agree that another less-commonly-mentioned concern
+> > should be how you restrict io_uring(2) from doing operations you've
+> > disallowed through seccomp. Though obviously user_notif shouldn't be
+> > allowed. :D
 > >
-> >> Why do we want that?  I think we can simply run the test with CET
-> >> disabled.
+> > > > The argument caching bit is, I think, rather mechanical in nature s=
+ince
+> > > > it's all "just" internal to the kernel: seccomp can likely adjust h=
+ow it
+> > > > allocates seccomp_data (maybe going so far as to have it split acro=
+ss two
+> > > > pages with the syscall argument struct always starting on the 2nd p=
+age
+> > > > boundary), and copying the EA struct into that page, which will be =
+both
+> > > > used by the filter and by the syscall.
+> > >
+> > > We could also do the same kind of thing the eBPF verifier does in
+> > > convert_ctx_accesses(), and rewrite the context accesses to actually
+> > > go through two different pointers depending on the (constant) offset
+> > > into seccomp_data.
 > >
-> > The sadistic parts of selftests/x86 come from real bugs.  Either bugs
-> > where the kernel fell over, or where behavior changed that broke apps.
-> > I'd suggest doing some research on where that particular test case came
-> > from.  Find the author of the test, look at the changelogs.
+> > My main worry with this is that we'll need to figure out what kind of
+> > offset mathematics are necessary to deal with pointers inside the
+> > extensible struct. As a very ugly proposal, you could make it so that
+> > you multiply the offset by PAGE_SIZE each time you want to dereference
+> > the pointer at that offset (unless we want to add new opcodes to cBPF to
+> > allow us to represent this).
+>=20
+> Please don't. cbpf is frozen.
+
+I have an alternative proposal in another mail[1].
+
+> > This might even be needed for seccomp user_notif -- given one of the
+> > recent proposals was basically to just add two (extensible) struct
+> > pointers inside the main user_notif struct.
 > >
-> > If this is something that a real app does, this is a problem.  If it's =
-a
-> > sadistic test that Andy L added because it was an attack vector against
-> > the entry code, it's a different story.
->
-> There are quite a few tests that do these horrible things in there. IN my=
- personal opinion, sigreturn.c is one of the most important tests we have =
-=E2=80=94 it does every horrible thing to the entry code that I thought of =
-and that I could come up with a way of doing.  We have been saved from regr=
-essing many times by these tests.  CET, and especially the CPL0 version of =
-CET, is its own set of entry horror, and we need to keep these tests workin=
-g.
->
-> I assume the basic issue is that we call raise(), the context magically c=
-hanges to 32-bit, but SSP has a 64-bit value, and horrors happen.  So I thi=
-nk two things need to happen:
->
-> 1. Someone needs to document what happens when IRET tries to put a 64-bit=
- value into SSP but CS is compat. Because Intel has plenty of history of do=
-ing colossally broken things here. IOW you could easily be hitting a hardwa=
-re design problem, not a software issue per se.
->
-> 2. The test needs to work. Assuming the hardware doesn=E2=80=99t do somet=
-hing utterly broken, either the 32-bit code needs to be adjusted to avoid a=
-ny CALL
-> or RET, or you need to write a little raise_on_32bit_shstk() func that sw=
-itches to an SSP that fits in 32 bits, calls raise(), and switches back.  F=
-rom memory, I didn=E2=80=99t think there was a CALl or RET, so I=E2=80=99m =
-guessing that SSP is getting truncated when we round trip through CPL3 comp=
-at mode and the result is that the kernel invoked the signal handler with t=
-he wrong SSP.  Whoops.
->
+> > > > I imagine state tracking ("is
+> > > > there a cached EA?", "what is the address of seccomp_data?", "what =
+is
+> > > > the address of the EA?") can be associated with the thread struct.
+> > >
+> > > You probably mean the task struct?
+> > >
+> > > > The growing size of the EA struct will need some API design. For fi=
+lters
+> > > > to operate on the contiguous seccomp_data+EA struct, the filter will
+> > > > need to know how large seccomp_data is (more on this later), and how
+> > > > large the EA struct is. When the filter is written in userspace, it=
+ can
+> > > > do the math, point into the expected offsets, and get what it needs=
+=2E For
+> > > > this to work correctly in the kernel, though, the seccomp BPF verif=
+ier
+> > > > needs to know the size of the EA struct as well, so it can correctly
+> > > > perform the offset checking (as it currently does for just the
+> > > > seccomp_data struct size).
+> > > >
+> > > > Since there is not really any caller-based "seccomp state" associat=
+ed
+> > > > across seccomp(2) calls, I don't think we can add a new command to =
+tell
+> > > > the kernel "I'm expecting the EA struct size to be $foo bytes", sin=
+ce
+> > > > the kernel doesn't track who "I" is besides just being "current", w=
+hich
+> > > > doesn't take into account the thread lifetime -- if a process launc=
+her
+> > > > knows about one size and the child knows about another, things will=
+ get
+> > > > confused. The sizes really are just associated with individual filt=
+ers,
+> > > > based on the syscalls they're examining. So, I have thoughts on pos=
+sible
+> > > > solutions:
+> > > >
+> > > > - create a new seccomp command SECCOMP_SET_MODE_FILTER2 which uses =
+the
+> > > >   EA style so we can pass in more than a filter and include also an
+> > > >   array of syscall to size mappings. (I don't like this...)
+> > > > - create a new filter flag, SECCOMP_FILTER_FLAG_EXTENSIBLE, which c=
+hanges
+> > > >   the meaning of the uarg from "filter" to a EA-style structure with
+> > > >   sizes and pointers to the filter and an array of syscall to size
+> > > >   mappings. (I like this slightly better, but I still don't like it=
+=2E)
+> > > > - leverage the EA design and just accept anything <=3D PAGE_SIZE, r=
+ecord
+> > > >   the "max offset" value seen during filter verification, and zero-=
+fill
+> > > >   the EA struct with zeros to that size when constructing the
+> > > >   seccomp_data + EA struct that the filter will examine. Then the s=
+eccomp
+> > > >   filter doesn't care what any of the sizes are, and userspace does=
+n't
+> > > >   care what any of the sizes are. (I like this as it makes the prob=
+lems
+> > > >   to solve contained entirely by the seccomp infrastructure and doe=
+s not
+> > > >   touch user API, but I worry I'm missing some gotcha I haven't
+> > > >   considered.)
+> > >
+> > > We don't need to actually zero-fill memory for this beyond what the
+> > > kernel supports - AFAIK the existing APIs already say that passing a
+> > > short length is equivalent to passing zeroes, so we can just replace
+> > > all out-of-bounds loads with zeroing registers in the filter.
+> > > The tricky case is what should happen if the userspace program passes
+> > > in fields that the filter doesn't know about. The filter can see the
+> > > length field passed in by userspace, and then just reject anything
+> > > where the length field is bigger than the structure size the filter
+> > > knows about. But maybe it'd be slightly nicer if there was an
+> > > operation for "tell me whether everything starting at offset X is
+> > > zeroes", so that if someone compiles with newer kernel headers where
+> > > the struct is bigger, and leaves the new fields zeroed, the syscalls
+> > > still go through an outdated filter properly.
+> >
+> > I think the best way of handling this (without breaking programs
+> > senselessly) is to have filters essentially emulate
+> > copy_struct_from_user() semantics -- which is along the lines of what
+> > you've suggested.
+>=20
+> and cpbf load instruction will become copy_from_user() underneath? I
+> don't see how that can work. Have you considered implications to jits,
+> register usage, etc ?
+>=20
+> ebpf will become sleepable soon. It will be able to do copy_from_user()
+> and examine any level of user pointer dereference.
+> toctou is still going to be a concern though,
+> but such ebpf+copy_from_user analysis and syscall sandboxing
+> will not need to change kernel code base around syscalls at all.
+> No need to invent E-syscalls and all the rest I've seen in this thread.
 
-Following up here, I think this needs attention from the H/W architects.
+No it won't become copy_from_user(), nor will there be a TOCTOU race.
 
-From the SDM:
+The idea is that seccomp will proactively copy the struct (and
+recursively any of the struct pointers inside) before the syscall runs
+-- as this is done by seccomp it doesn't require any copy_from_user()
+primitives in cBPF. We then run the cBPF filter on the copied struct,
+just like how cBPF programs currently operate on seccomp_data (how this
+would be exposed to the cBPF program as part of the seccomp ABI is the
+topic of discussion here).
 
-SYSRET and SYSEXIT:
+Then, when the actual syscall code runs, the struct will have already
+been copied and the syscall won't copy it again.
 
-IF ShadowStackEnabled(CPL)
-SSP =E2=86=90 IA32_PL3_SSP;
-FI;
+eBPF being able to do copy_from_user() isn't really relevant to this
+discussion because we need seccomp to be sure that the structure being
+filtered by the program is the same structure that the syscall ends up
+using. As you mentioned, there's a fundamental TOCTOU there.
 
-IRET:
+[1]: https://lore.kernel.org/lkml/20200519134244.37bhucyram4n6sjk@yavin.dot=
+=2Ecyphar.com/
 
-IF ShadowStackEnabled(CPL)
-IF CPL =3D 3
-THEN tempSSP =E2=86=90 IA32_PL3_SSP; FI;
-IF ((EFER.LMA AND CS.L) =3D 0 AND tempSSP[63:32] !=3D 0)
-THEN #GP(0); FI;
-SSP =E2=86=90 tempSSP
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
 
-The semantics of actually executing in compat mode with SSP >=3D 2^32
-are unclear.  If nothing else, VM exit will save the full SSP and a
-subsequent VM entry will fail.
+--a5ec4uayovknuc3g
+Content-Type: application/pgp-signature; name="signature.asc"
 
-I don't know what the actual effect of operand-size-32 SYSRET or
-SYSEXIT with too big a PL3_SSP will be, but I think it needs to be
-documented.  Ideally it will not put the CPU in an invalid state.
-Ideally it will also not fault, because SYSRET faults in particular
-are fatal unless the vector uses IST, and please please please don't
-force more ISTs on anyone.
+-----BEGIN PGP SIGNATURE-----
 
-So I think we may need to put this entire series on hold until we get
-some answers, because I suspect we're going to have a nice little root
-hole otherwise.
+iQIzBAABCAAdFiEEXzbGxhtUYBJKdfWmnhiqJn3bjbQFAl7EheoACgkQnhiqJn3b
+jbQhIhAApHiGc5C+Mfz0GnrGdL0OIvNWCbcyI68AY6L7VJKzF8cgN1PwbFG8kysE
+CTApVBTE8CmsfTL9MfLxB81Q8k30Xxgih1NFbwobypzSxJ1RR3t0rTqP/6wBpPE7
+Fr4sdGEKQi41sj7w1Wqon4S23dCdx8U+NyuYW2EFDX0J7/p+xPsULg1SlxTdX/x8
+Eddj0eq82UJQ00u5ON8UxmJ4NDiSKgyNC+4Wa4zOwlVw3QVp2MubD2shaJIxhIY7
+/io7NKBvz/b0bHmZi3OnCqD1y2liqeYpjgJtjXyNNXwgafVadVz1rkRaL4t+Ah4j
+1dwKeiwdBe/MDyU0uZZD9PlOlvWUDCUzwCwlcuJU5cpf23+VKMXPJTqXjCQj8/+K
+dNmAhWmx+mRpG/GyoyVAMEa5PdU2pHaPoznkplzSaaDBpsMlTfZiD+GaooNY9Hhe
+7yoFGZAK0Z3rb5Bmun139wPihlqRhUK3B+sbV3BcYe70T1iFmI6P+ZVriZh6OzNy
+MxUVjXPhQ+WNjqmUqb/GN26FH45NQXVbK+8Ax+np/vpbxLDPMWIW4oCXI1PFjEvh
+/ZeBo4biaoE28bNHorS6lPpzRkc2km1VAheJlNxa2Bw4QAeqnkPEzI/QdfyIHFvr
+sFuPvqOls44GJVdiqsFF6tz5+QTkfuRkEEJsB3LgK3QB2YGlk2g=
+=fXKj
+-----END PGP SIGNATURE-----
+
+--a5ec4uayovknuc3g--
