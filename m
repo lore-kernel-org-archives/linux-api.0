@@ -2,112 +2,123 @@ Return-Path: <SRS0=KzJT=7E=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4ED12C433E2
-	for <linux-api@archiver.kernel.org>; Fri, 22 May 2020 17:36:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 44989C433DF
+	for <linux-api@archiver.kernel.org>; Fri, 22 May 2020 17:55:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2FAD020738
-	for <linux-api@archiver.kernel.org>; Fri, 22 May 2020 17:36:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 137CF206B6
+	for <linux-api@archiver.kernel.org>; Fri, 22 May 2020 17:55:34 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="KCChTIHc"
+	dkim=pass (1024-bit key) header.d=sargun.me header.i=@sargun.me header.b="RM1/oCRX"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730808AbgEVRgF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 22 May 2020 13:36:05 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54832 "EHLO
+        id S1730809AbgEVRzd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 22 May 2020 13:55:33 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57850 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730600AbgEVRgE (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 22 May 2020 13:36:04 -0400
-Received: from mail-pj1-x1041.google.com (mail-pj1-x1041.google.com [IPv6:2607:f8b0:4864:20::1041])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0F3AAC05BD43
-        for <linux-api@vger.kernel.org>; Fri, 22 May 2020 10:36:03 -0700 (PDT)
-Received: by mail-pj1-x1041.google.com with SMTP id l73so2402826pjb.1
-        for <linux-api@vger.kernel.org>; Fri, 22 May 2020 10:36:03 -0700 (PDT)
+        with ESMTP id S1730635AbgEVRzd (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 22 May 2020 13:55:33 -0400
+Received: from mail-ej1-x643.google.com (mail-ej1-x643.google.com [IPv6:2a00:1450:4864:20::643])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A8A70C061A0E
+        for <linux-api@vger.kernel.org>; Fri, 22 May 2020 10:55:32 -0700 (PDT)
+Received: by mail-ej1-x643.google.com with SMTP id h21so13981045ejq.5
+        for <linux-api@vger.kernel.org>; Fri, 22 May 2020 10:55:32 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=d2JbpNQ5BB8THZLFRZdUsN5zyBBBg1g/qGCRRq9W1mM=;
-        b=KCChTIHcglv8zga3a5aOx2ivsb/AjYh4uFhKYSzdjk8Zy7lmmEqJJ6I41tdc7Qxcel
-         SKXsc6lA7boxff1mWCeR6Hym/HbT/Y8JCY54dDB2dKV7LUqpig3/sEfxfj3YlbMjxk78
-         cf4xmQWG34WMeCDIKi5DinQN2V4caGJiIsSXQ=
+        d=sargun.me; s=google;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=g7+ZinecQk+vU2tx3USRyzTX9hWXqwnrfU8Z0ao5NFs=;
+        b=RM1/oCRXDo9ryPT24QfNPtGbMQpFbyhAtGPByRCCCkRsAIqdrbBXgtD+Xp5SO5xHVD
+         Y5nW0iZ21Q903SnBry33l1LxeDFngn3uirbmpxBPPre74pAl3PQlkFV/9PLuVlTtF12n
+         59lPUphICio+7TuzrBBJrxD5HeyV9gmylFGU8=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=d2JbpNQ5BB8THZLFRZdUsN5zyBBBg1g/qGCRRq9W1mM=;
-        b=gm+QvQu+WyrqI11BB0+88yyDIUe5InS6YfQwW3K0bbXUiKrH618xRn4jNpSXqivW8U
-         hvTPAAZ1p0nLrpjv2OLOJZZVMx0B8xc+FzKhe1ZFgNg1/Op8OqbIm7Y0KhAjuUJfZzpR
-         +qIpgbG3BWcvIMYlgKsPtIkReigOee8oAwywuRpkCGRXwoK+Q7UzrsGPd0i3UPYYlxlX
-         6pKy64peiFuxYR9b49+XgHDJHt3QdD6NbQtcB41FrKtNsXTNh9NvpBuzAEqm6s4/5CGv
-         f/il8qNguXs4zecGoUawfzZtxK5qPzMJ9q2/4WgecMkn4fUr8FSUkEwivv9S0F9bISFm
-         67Vw==
-X-Gm-Message-State: AOAM533V//OEROYI6MmyLL7p9POjaczRsn8AaPx6LBF5uBlwF2R9kZnV
-        dAy3+WNCB/nThY2eqZRInvjS/A==
-X-Google-Smtp-Source: ABdhPJy3bKJ2cO/LbOCqUoRt6uBWzveUTeVTjmUCNI6pxDVh8fOHpftgmCyiWGsqex2F3Yb7IJd/Xw==
-X-Received: by 2002:a17:902:82c9:: with SMTP id u9mr15646877plz.179.1590168962631;
-        Fri, 22 May 2020 10:36:02 -0700 (PDT)
-Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id q3sm6224293pgp.69.2020.05.22.10.36.00
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 22 May 2020 10:36:01 -0700 (PDT)
-Date:   Fri, 22 May 2020 10:36:00 -0700
-From:   Kees Cook <keescook@chromium.org>
-To:     Peter Zijlstra <peterz@infradead.org>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org,
-        "H. Peter Anvin" <hpa@zytor.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-doc@vger.kernel.org, linux-mm@kvack.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
-        Arnd Bergmann <arnd@arndb.de>,
-        Andy Lutomirski <luto@kernel.org>,
-        Balbir Singh <bsingharora@gmail.com>,
-        Borislav Petkov <bp@alien8.de>,
-        Cyrill Gorcunov <gorcunov@gmail.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Eugene Syromiatnikov <esyr@redhat.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Nadav Amit <nadav.amit@gmail.com>,
-        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
-        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
-        Dave Martin <Dave.Martin@arm.com>,
-        Weijiang Yang <weijiang.yang@intel.com>
-Subject: Re: [RFC PATCH 5/5] selftest/x86: Add CET quick test
-Message-ID: <202005221034.59F5DF75@keescook>
-References: <20200521211720.20236-1-yu-cheng.yu@intel.com>
- <20200521211720.20236-6-yu-cheng.yu@intel.com>
- <20200522092848.GJ325280@hirez.programming.kicks-ass.net>
- <202005221020.B578B8C6@keescook>
- <20200522172711.GA317569@hirez.programming.kicks-ass.net>
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=g7+ZinecQk+vU2tx3USRyzTX9hWXqwnrfU8Z0ao5NFs=;
+        b=Y3bCyRCG5oM7n4Ym6TB55W4dOziIeXldICTF7wLZ5xzBEl9AyZY+f6QEcxu96qfobr
+         cIEPJujYHjsdD2x4ueoCpY2t4YC82cbj97rmrkUmoJPDMK/6OQxMLex4VNuLuVMQ297S
+         vmm3Eh62v+xlIP1Xb3p30QpzjyJs/dcKJEolaqoOUOUpQ5Gf57YfYVERLpQLSfvhK/S6
+         Cv+FAYfxOHmu6lgkbgiC3+6sQ0l5nYcFfi0JQrcoAk56mqLZLiDmg8VY5g9641Ml15lk
+         dCoqDrKMlA4/MYkxqh3kFYpGITi674jBGrALhbJNKOVcCodui4IxHizdEOa5TpyUOIpt
+         3fNQ==
+X-Gm-Message-State: AOAM5321dQ3PuUcPtlLfC8dxzFFnWukV7YXDLX1BKDGAZaA0WNKGvudh
+        UKWL+wbOCKJwZ1xdHrMdi4eu2bGVT/18kXfZK/lW6w==
+X-Google-Smtp-Source: ABdhPJz/m46fpJfBvIY7sjEMmScn7M1dEiRH6YRxpET3JjeVNzQT8FxrHABIFR2TSp9Tpc7jFZXMsMl+UXhXNGe1F4U=
+X-Received: by 2002:a17:906:9404:: with SMTP id q4mr9055108ejx.138.1590170131063;
+ Fri, 22 May 2020 10:55:31 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20200522172711.GA317569@hirez.programming.kicks-ass.net>
+References: <20200515234005.32370-1-sargun@sargun.me> <87h7wc4zac.fsf@x220.int.ebiederm.org>
+In-Reply-To: <87h7wc4zac.fsf@x220.int.ebiederm.org>
+From:   Sargun Dhillon <sargun@sargun.me>
+Date:   Fri, 22 May 2020 10:54:55 -0700
+Message-ID: <CAMp4zn_v-D=gyzdWO7D2KrdZ_vct87dV_0pM5HVNE_3zDG7k8Q@mail.gmail.com>
+Subject: Re: [PATCH] seccomp: Add group_leader pid to seccomp_notif
+To:     "Eric W. Biederman" <ebiederm@xmission.com>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        Linux Containers <containers@lists.linux-foundation.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Tycho Andersen <tycho@tycho.ws>,
+        Kees Cook <keescook@chromium.org>,
+        Aleksa Sarai <cyphar@cyphar.com>
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, May 22, 2020 at 07:27:11PM +0200, Peter Zijlstra wrote:
-> On Fri, May 22, 2020 at 10:22:51AM -0700, Kees Cook wrote:
-> 
-> > But yes, I think getting a copy of asm.h would be nice here. I don't
-> > think the WRITE_ONCE() is needed in this particular case. Hmm.
-> 
-> Paranoia on my end because I had no clue wth he wanted with his -O0
-> magic gunk.
+On Mon, May 18, 2020 at 4:11 PM Eric W. Biederman <ebiederm@xmission.com> wrote:
+>
+> Sargun Dhillon <sargun@sargun.me> writes:
+>
+> > This includes the thread group leader ID in the seccomp_notif. This is
+> > immediately useful for opening up a pidfd for the group leader, as
+> > pidfds only work on group leaders.
+>
+> The code looks fine (except for the name of the test), but can you
+> please talk and think about this as something other than the
+> group leader?
+>
+> The initial thread in a thread group can die, and the tgid is still
+> valid for the entire group.  Because the initial thread of a
+> process/thread group can die (but rarely does) that tends to result in
+> kernel code that fails when thread_group_leader dies.
+>
+> To remove that class of bugs I am slowy working to remove the
+> thread_group_leader from the kernel entirely.
+>
+> Looking at the names of the fields in the structure it looks like
+> there is another class of bugs to be removed by renaming PIDTYPE_PID
+> to PIDTYPE_TID in the kernel as well.  Just skimming the example code
+> it looks very simple to get confused.
+>
+> Is there any chance some can modify struct seccomp_notify to do
+> {
+>         ...
+>         union {
+>                 __u32 pid;
+>                 __u32 tid;
+>         };
+>         ...
+> }
+>
+> Just to reduce the chance of confusion between the userspace pid and the
+> in kernel pid names?
+>
+> Eric
+Our use cases would be unaffected by this. I think this would be a wonderful
+way to move forward, but I don't know if it could break userspace.
 
-Heh, yes, which is why I asked for many more comments. ;) I *think* it
-was entirely to control the stack (and ssp) behavior (i.e. don't inline,
-don't elide unused stack variables, etc).
+I believe Christian's team is the biggest user of this feature in OSS right now,
+so he might know.
 
--- 
-Kees Cook
+In addition, I'm not sure where you would want the thread's ID versus the
+process's ID, unless you wanted to do something like SIGSTOP, and freeze
+the thread to prevent it from making more progress, or being interrupted
+while you go do notifier work.
+
+Christian & Kees,
+Thoughts?
