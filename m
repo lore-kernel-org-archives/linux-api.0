@@ -1,107 +1,137 @@
-Return-Path: <SRS0=KzJT=7E=vger.kernel.org=linux-api-owner@kernel.org>
+Return-Path: <SRS0=YkIs=7G=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.4 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+X-Spam-Status: No, score=-3.9 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
 	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+	SPF_PASS,USER_AGENT_GIT autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 33A7CC433E1
-	for <linux-api@archiver.kernel.org>; Fri, 22 May 2020 20:09:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 02B75C433E0
+	for <linux-api@archiver.kernel.org>; Sun, 24 May 2020 23:39:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 155DB207CB
-	for <linux-api@archiver.kernel.org>; Fri, 22 May 2020 20:09:29 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C24A62076C
+	for <linux-api@archiver.kernel.org>; Sun, 24 May 2020 23:39:47 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=sargun.me header.i=@sargun.me header.b="BzuSYVIp"
+	dkim=pass (1024-bit key) header.d=sargun.me header.i=@sargun.me header.b="GCKHxVz/"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730953AbgEVUJ0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 22 May 2020 16:09:26 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50384 "EHLO
+        id S2388412AbgEXXjr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 24 May 2020 19:39:47 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48598 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730931AbgEVUJZ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 22 May 2020 16:09:25 -0400
-Received: from mail-io1-xd35.google.com (mail-io1-xd35.google.com [IPv6:2607:f8b0:4864:20::d35])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5372AC05BD43
-        for <linux-api@vger.kernel.org>; Fri, 22 May 2020 13:09:25 -0700 (PDT)
-Received: by mail-io1-xd35.google.com with SMTP id q8so11276034iow.7
-        for <linux-api@vger.kernel.org>; Fri, 22 May 2020 13:09:25 -0700 (PDT)
+        with ESMTP id S2388335AbgEXXjq (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 24 May 2020 19:39:46 -0400
+Received: from mail-pl1-x641.google.com (mail-pl1-x641.google.com [IPv6:2607:f8b0:4864:20::641])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C6963C061A0E
+        for <linux-api@vger.kernel.org>; Sun, 24 May 2020 16:39:46 -0700 (PDT)
+Received: by mail-pl1-x641.google.com with SMTP id a13so6826488pls.8
+        for <linux-api@vger.kernel.org>; Sun, 24 May 2020 16:39:46 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=sargun.me; s=google;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to:user-agent;
-        bh=kuxuFImJXS+zMVZOoAVroX3dwfGV7HwfDMWssbC5C1A=;
-        b=BzuSYVIpXA7rbNJiFsgqADe+GidjdLuozlif6nBYsRt6MchS6kYsgk18V3kI5F15Dx
-         7VNYp9f9kKkWxdE9juayukb2eICEmxERuBAcGpn8aX1Q1jvanglLeWKvsSVhpJGj1C1i
-         eFAXZDT+sRebaynrWit+kYbtLiiUZNaTpxeZs=
+        h=from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=dECFMl9BmmZ3+aYimNGMaHnjr31NSpcMrgo0hG57jSE=;
+        b=GCKHxVz/fL3BhDuGXbcUgVZYy3X+rDbmzbLHsW3C2IIIU7jKp9zs7WtQyBn9oXgltU
+         oHAedSy3n2UqH1/xJkuE9Xxumx8S/hQzW1Yq12yF1MHOD3sW5o2uqgYtoxqTe7wSX61+
+         wVj/v/yR/Dho4fLFJnHRiX62/H9onLke6YIWA=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to:user-agent;
-        bh=kuxuFImJXS+zMVZOoAVroX3dwfGV7HwfDMWssbC5C1A=;
-        b=AOKb9dKwFNAKlunEGdrAW8P1gYlqLFqdHKPF7JTIgk3wT/H3YGA6qdkDqxHmZFcYeR
-         8BaAgPezpTsfCCQmGDS2O3Ctu4y2SkWZZftMHnLOS0coBwz1HNhRs0ptTLF5Uv0rdbyx
-         vEEOQgQiLDNNsH+qlx/UOUB8W7/FOY2N+0ckeA67YOwEvfT0TYxjskI3oqNZc7T8/VBa
-         vEfLvxE0pMMmm9wEoY6TbwuivquwB7cxQdmAJQJhEz7PZEb9xp3wvw1dybigYvmsa1I3
-         ri3pZynuPynLpe17sFmzmtiTiAu6b3MGPG+PT3s6Ipazw3qjzEHh7VDR3WbDTEI2RUgJ
-         +Nog==
-X-Gm-Message-State: AOAM531sAe+6ErMGwX2RFxfDm7q+sBH6sFQgdnfIo+Sg1/Ilie94jeca
-        FDtUmbfX/OGPlzPnlffS+2CK/Q==
-X-Google-Smtp-Source: ABdhPJzYYCoJX6l85G6846PNwAdJcv17n8+gt3PxXcY9YhA2VI1NbvUsdUKizD6X1uCV3XLQWunh3w==
-X-Received: by 2002:a02:942a:: with SMTP id a39mr9629370jai.50.1590178164366;
-        Fri, 22 May 2020 13:09:24 -0700 (PDT)
-Received: from ircssh-2.c.rugged-nimbus-611.internal (80.60.198.104.bc.googleusercontent.com. [104.198.60.80])
-        by smtp.gmail.com with ESMTPSA id t22sm4064358iom.49.2020.05.22.13.09.23
-        (version=TLS1_2 cipher=ECDHE-ECDSA-CHACHA20-POLY1305 bits=256/256);
-        Fri, 22 May 2020 13:09:23 -0700 (PDT)
-Date:   Fri, 22 May 2020 20:09:22 +0000
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=dECFMl9BmmZ3+aYimNGMaHnjr31NSpcMrgo0hG57jSE=;
+        b=OdA+NqlhT4hoJvfpSkj24U9WbsJD3Po0ZOsXk4Ombj7DkXeRvFybXednxPiLFb+uc+
+         6zICrQANgZxlNQpq9YX3ntaRWjlMRwHpROU+6fWJ4I8z8h59VrPW+JXqfHrUL90iTTzI
+         /An63HBYayL9Vzr3XDK4QflO+UM4DDk1gVj9f1vYbBm0CVymrRdxjJgbPoes6h/qe9Qx
+         Anx1iXn6kVOeiZTDXgaStAn8V8Phhpq1lfE0rEHsIfqfBl7ER2gdfC2oeU4Gq73KWTZc
+         7R0ZN+WTDA3tGgOvX3ZN/HN1W/kfdpyFAWEAEpv0DOin6waqFe0nI+92E5PjFh7C930O
+         sGfg==
+X-Gm-Message-State: AOAM533/w6L+L7O8kxaTZW07XD0CmcbPjH5cUiy6lPnN1ALO0i2Zitwo
+        Q5Tr5QDitl01UyV8yVuqqoJ1tA==
+X-Google-Smtp-Source: ABdhPJw5FNIgchuHVTYQM5hwt4Kd+TtTpK1LkOXfqM8KGDJ9jbvBYAllkAWh1t+0VqQBHZxp31QU/A==
+X-Received: by 2002:a17:90a:690f:: with SMTP id r15mr18203328pjj.65.1590363585776;
+        Sun, 24 May 2020 16:39:45 -0700 (PDT)
+Received: from ubuntu.netflix.com (203.20.25.136.in-addr.arpa. [136.25.20.203])
+        by smtp.gmail.com with ESMTPSA id b16sm11633177pfi.74.2020.05.24.16.39.44
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sun, 24 May 2020 16:39:45 -0700 (PDT)
 From:   Sargun Dhillon <sargun@sargun.me>
-To:     Kees Cook <keescook@chromium.org>
-Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
-        Tycho Andersen <tycho@tycho.ws>,
-        Matt Denton <mpdenton@google.com>,
-        Chris Palmer <palmer@google.com>,
-        Jeffrey Vander Stoep <jeffv@google.com>,
-        containers@lists.linux-foundation.org, linux-api@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-Subject: Re: seccomp feature development
-Message-ID: <20200522200921.GB25319@ircssh-2.c.rugged-nimbus-611.internal>
-References: <202005181120.971232B7B@keescook>
+To:     linux-kernel@vger.kernel.org,
+        containers@lists.linux-foundation.org, linux-api@vger.kernel.org
+Cc:     Sargun Dhillon <sargun@sargun.me>, christian.brauner@ubuntu.com,
+        tycho@tycho.ws, keescook@chromium.org, cyphar@cyphar.com,
+        Jeffrey Vander Stoep <jeffv@google.com>, jannh@google.com,
+        rsesek@google.com, palmer@google.com
+Subject: [PATCH 0/5] Add seccomp notifier ioctl that enables adding fds
+Date:   Sun, 24 May 2020 16:39:37 -0700
+Message-Id: <20200524233942.8702-1-sargun@sargun.me>
+X-Mailer: git-send-email 2.25.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <202005181120.971232B7B@keescook>
-User-Agent: Mutt/1.9.4 (2018-02-28)
+Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, May 18, 2020 at 02:04:57PM -0700, Kees Cook wrote:
-> Hi!
-> 
-> This is my attempt at a brain-dump on my plans for nearish-term seccomp
-> features. Welcome to my TED talk... ;)
-> 
-> These are the things I've been thinking about:
-> 
-> - fd passing
-> - deep argument inspection
-> - changing structure sizes
-> - syscall bitmasks
-> 
-What's your take on enabling multiple filters with listeners being attached,
-so that different seccomp interceptors can operate together. I'm wondering
-how this would work.
+This adds the capability for seccomp notifier listeners to add file
+descriptors in response to a seccomp notification. This is useful for
+syscalls in which the previous capabilities were not sufficient. The
+current mechanism works well for syscalls that either have side effects
+that are system / namespace wide (mount), or that operate on a specific
+set of registers (reboot, mknod), and don't require dereferencing pointers.
+The problem with derefencing pointers in a supervisor is that it leaves
+us vulnerable to TOC-TOU [1] style attacks. For syscalls that had a direct
+effect on file descriptors pidfd_getfd was added, allowing for those file
+descriptors to be directly operated upon by the supervisor [2].
 
-One idea that I had is adding a new flag to the seccomp filter
-installation -- something like NEXT_FILTER_COMPATIBLE. When a filter is
-installed with a listener, it will check if all previous filters were
-instaled with NEXT_FILTER_COMPATIBLE.
+Unfortunately, this leaves system calls which return file descriptors
+out of the picture. These are fairly common syscalls, such as openat,
+socket, and perf_event_open that return file descriptors, and have
+arguments that are pointers. These require that the supervisor is able to
+verify the arguments, make the call on behalf of the process on hand,
+and pass back the resulting file descriptor. This is where addfd comes
+into play.
 
-If the call is intercepted by a listener, and the return is overriden,
-then it short-circuits, and the subsequent filters are not evaluated.
+There is an additional flag that allows you to "set" an FD, rather than
+add it with an arbitrary number. This has dup2 style semantics, and
+installs the new file at that file descriptor, and atomically closes
+the old one if it existed. This is useful for a particular use case
+that we have, in which we want to swap out AF_INET sockets for AF_UNIX,
+AF_INET6, and sockets in another namespace when doing "upconversion".
 
-On the other hand, if the continue response is send, then the
-subsequent filters are called.
+My specific usecase at Netflix is to enable our IPv4-IPv6 transition
+mechanism, in which we our namespaces have no real IPv4 reachability,
+and when it comes time to do a connect(2), we get a socket from a
+namespace with global IPv4 reachability.
 
-What do you think?
+In addition, we intend to use it for our servicemesh, and where our
+service mesh needs to intercept traffic ingress traffic, the addfd
+capability will act as a mechanism to do socket activation.
+
+Addfd is not implemented as a separate syscall, a la pidfd_getfd, as
+VFS makes some optimizations in regards to the fdtable, and assumes
+that they are not modified by external processes. Although a mechanism
+that scheduled something in the context of the task could work, it is
+somewhat simpler to do it in the context of the ioctl as we control
+the task while in kernel.
+
+There is an additional flag (move) that was added to enable cgroup
+v1 controllers (netprio, classid), and moving sockets, as a socket
+can only be associated with one cgroup at a time.
+
+[1]: https://lore.kernel.org/lkml/20190918084833.9369-2-christian.brauner@ubuntu.com/
+[2]: https://lore.kernel.org/lkml/20200107175927.4558-1-sargun@sargun.me/
+
+Sargun Dhillon (5):
+  seccomp: Add find_notification helper
+  seccomp: Introduce addfd ioctl to seccomp user notifier
+  selftests/seccomp: Test SECCOMP_IOCTL_NOTIF_ADDFD
+  seccomp: Add SECCOMP_ADDFD_FLAG_MOVE flag to add fd ioctl
+  selftests/seccomp: Add test for addfd move semantics
+
+ include/uapi/linux/seccomp.h                  |  33 +++
+ kernel/seccomp.c                              | 228 +++++++++++++++--
+ tools/testing/selftests/seccomp/seccomp_bpf.c | 235 ++++++++++++++++++
+ 3 files changed, 479 insertions(+), 17 deletions(-)
+
+-- 
+2.25.1
+
