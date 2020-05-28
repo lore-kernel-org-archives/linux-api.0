@@ -7,53 +7,53 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3C726C433DF
-	for <linux-api@archiver.kernel.org>; Thu, 28 May 2020 11:09:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9231FC433E1
+	for <linux-api@archiver.kernel.org>; Thu, 28 May 2020 11:09:37 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1B7B22088E
-	for <linux-api@archiver.kernel.org>; Thu, 28 May 2020 11:09:28 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6E6BA2088E
+	for <linux-api@archiver.kernel.org>; Thu, 28 May 2020 11:09:37 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=sargun.me header.i=@sargun.me header.b="K/pq77Jv"
+	dkim=pass (1024-bit key) header.d=sargun.me header.i=@sargun.me header.b="QPdC0yzH"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2388079AbgE1LJ1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 28 May 2020 07:09:27 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39088 "EHLO
+        id S2388200AbgE1LJd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 28 May 2020 07:09:33 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39110 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2388067AbgE1LJY (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 28 May 2020 07:09:24 -0400
+        with ESMTP id S2388182AbgE1LJ3 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 28 May 2020 07:09:29 -0400
 Received: from mail-pj1-x1042.google.com (mail-pj1-x1042.google.com [IPv6:2607:f8b0:4864:20::1042])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C5674C05BD1E
-        for <linux-api@vger.kernel.org>; Thu, 28 May 2020 04:09:24 -0700 (PDT)
-Received: by mail-pj1-x1042.google.com with SMTP id t8so2979498pju.3
-        for <linux-api@vger.kernel.org>; Thu, 28 May 2020 04:09:24 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 54BCEC08C5C5
+        for <linux-api@vger.kernel.org>; Thu, 28 May 2020 04:09:29 -0700 (PDT)
+Received: by mail-pj1-x1042.google.com with SMTP id q9so2982753pjm.2
+        for <linux-api@vger.kernel.org>; Thu, 28 May 2020 04:09:29 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=sargun.me; s=google;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=BQVnG714Kn4j7kGsUMAy9Ya/MWVCVOEAKJXkZw2BpyE=;
-        b=K/pq77Jvp7GPjybsFJjhftJfXp6Vy4i0MOjKAb7BXQP8k4eWloz5D2uq7aMoUCnB74
-         Esm2Q4yy/m4zB9nQ1BrVLqLEGjE7MS3mBXqJnCbRZ/3AVRhjiEjmLFhA4CNAJlW0NLGX
-         HqR9XTswsQ72zmQ/mgbNn4FhO4SWKRP0nOPPM=
+        bh=mKwxzcojHN10iEPqL5iX/7JIXAHxE1GUfvHxVpXUU0I=;
+        b=QPdC0yzHn6KGN5j8I0pnAgQmuavpeXhIEr7mNUYyK8KBCqpTj+qFhcejl1cyubvgOb
+         o68D1mtT/qZ05fYNTqEFInQA3yDp2u3bcwnAPz7JSUo+T40KO81M0C9ZTZL6yJemt/Jr
+         aVafAjdgHG5uVFNfFzi1ALCdmhn1lzCpYl8Bk=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=BQVnG714Kn4j7kGsUMAy9Ya/MWVCVOEAKJXkZw2BpyE=;
-        b=Y9FDLm/0P+cGuE5O+MJ9IdNynN+oSCQovZlixiebLWFGRZD8S3Ld/3fgUhoMSHez5m
-         ophXQNizXhOG1pI3Sn6d/zg0Y+TIyI3JUHTk+c2IFFQ0WlIdWmUCNAszx4bbgUlnPlDD
-         WhiOwxD1hBKxUq4yhLNT5jaaIeY9PVt7R1vsFSmqMF17ShKXv7Mjxfb7lsz+oWDOERtP
-         nT1t3BeGdXxKBLzXWT+AEbMWEsQHh2idatCajHe743U4JtWD+EN3vtanqySw1Kz3iF+D
-         Q03M90R4p+TAxVt8NlQaTkohNkrBNpeIvIHcXREzsbiDrOu6isuZWyspZgR6T8/AP8WC
-         yIkA==
-X-Gm-Message-State: AOAM530BUl6ooos7NkKzAwRF4btL5ztoB7odv0ZHgD9Ag3L46nWrnUtx
-        0FuWywooGFoZE5aAByYAaF8vHQ==
-X-Google-Smtp-Source: ABdhPJwvd+KUD4/bdIO+gFQvdQ+DmhDI+JXnViWKDFnoFyqSaXcgEp81OuYcxXKQTfSBB/eIqPsbdw==
-X-Received: by 2002:a17:902:d711:: with SMTP id w17mr3092593ply.122.1590664164095;
-        Thu, 28 May 2020 04:09:24 -0700 (PDT)
+        bh=mKwxzcojHN10iEPqL5iX/7JIXAHxE1GUfvHxVpXUU0I=;
+        b=inYloXgipJ+8t+E0Ybh/jlDzKNurclROTt5LntcotlNZ25rHY9PX19kuE+qECZEZ+X
+         PqtHlVZlrOc7BGGfSXjI7l9i0jmdXdTE7+3yPKeTuz9KUBuFzJ68rxJFwpe+KTtrugDk
+         djODQPSr1+J7O1RMFqyeK+nqzVEz389G8z7EFFELPBRgjhYDKCLCwKNniI+S1flBrq1z
+         2T3UmqG7Sbt54AE7j2jBdDMk4xoJAjf2GOv2J1NlGvVH+ZMTJb26RWCReyG/cBP5R362
+         caVyRwmWhcScQkd1crykxTBy+9QWMajahbTmmZ9OairPkYuHOT4SJV5EqVBWo840+L3N
+         T84g==
+X-Gm-Message-State: AOAM533Y/E21MLACDL5J3MJwOMvF6T5GMRE2fSsUedLEITdVQBLdAN1t
+        ZhKX4rz7FyJn0hN9cTGb53elwQ==
+X-Google-Smtp-Source: ABdhPJyB6Cev99SUe5qE/phXvYRWc/snaHBfzCPMyjlBS/vaNQdkT4LS4atn5fwNJ4EvWW5F6lEm1w==
+X-Received: by 2002:a17:90a:dd44:: with SMTP id u4mr3014800pjv.132.1590664168483;
+        Thu, 28 May 2020 04:09:28 -0700 (PDT)
 Received: from ubuntu.netflix.com (203.20.25.136.in-addr.arpa. [136.25.20.203])
-        by smtp.gmail.com with ESMTPSA id j26sm4565759pfr.215.2020.05.28.04.09.22
+        by smtp.gmail.com with ESMTPSA id j26sm4565759pfr.215.2020.05.28.04.09.26
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 28 May 2020 04:09:23 -0700 (PDT)
+        Thu, 28 May 2020 04:09:27 -0700 (PDT)
 From:   Sargun Dhillon <sargun@sargun.me>
 To:     keescook@chromium.org
 Cc:     Sargun Dhillon <sargun@sargun.me>, christian.brauner@ubuntu.com,
@@ -62,9 +62,9 @@ Cc:     Sargun Dhillon <sargun@sargun.me>, christian.brauner@ubuntu.com,
         linux-kernel@vger.kernel.org, palmer@google.com, rsesek@google.com,
         tycho@tycho.ws, Matt Denton <mpdenton@google.com>,
         Kees Cook <keescook@google.com>
-Subject: [PATCH v2 1/3] seccomp: Add find_notification helper
-Date:   Thu, 28 May 2020 04:08:56 -0700
-Message-Id: <20200528110858.3265-2-sargun@sargun.me>
+Subject: [PATCH v2 3/3] selftests/seccomp: Test SECCOMP_IOCTL_NOTIF_ADDFD
+Date:   Thu, 28 May 2020 04:08:58 -0700
+Message-Id: <20200528110858.3265-4-sargun@sargun.me>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20200528110858.3265-1-sargun@sargun.me>
 References: <20200528110858.3265-1-sargun@sargun.me>
@@ -75,9 +75,11 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This adds a helper which can iterate through a seccomp_filter to
-find a notification matching an ID. It removes several replicated
-chunks of code.
+Test whether we can add file descriptors in response to notifications.
+This injects the file descriptors via notifications, and then uses
+kcmp to determine whether or not it has been successful.
+
+It also includes some basic sanity checking for arguments.
 
 Signed-off-by: Sargun Dhillon <sargun@sargun.me>
 Cc: Matt Denton <mpdenton@google.com>
@@ -88,111 +90,221 @@ Cc: Chris Palmer <palmer@google.com>
 Cc: Christian Brauner <christian.brauner@ubuntu.com>
 Cc: Tycho Andersen <tycho@tycho.ws>
 ---
- kernel/seccomp.c | 51 ++++++++++++++++++++++++------------------------
- 1 file changed, 25 insertions(+), 26 deletions(-)
+ tools/testing/selftests/seccomp/seccomp_bpf.c | 180 ++++++++++++++++++
+ 1 file changed, 180 insertions(+)
 
-diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index 55a6184f5990..94ae4c7502cc 100644
---- a/kernel/seccomp.c
-+++ b/kernel/seccomp.c
-@@ -1021,10 +1021,25 @@ static int seccomp_notify_release(struct inode *inode, struct file *file)
- 	return 0;
+diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
+index c0aa46ce14f6..05516c185d78 100644
+--- a/tools/testing/selftests/seccomp/seccomp_bpf.c
++++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
+@@ -45,6 +45,7 @@
+ #include <sys/socket.h>
+ #include <sys/ioctl.h>
+ #include <linux/kcmp.h>
++#include <sys/resource.h>
+ 
+ #include <unistd.h>
+ #include <sys/syscall.h>
+@@ -181,6 +182,12 @@ struct seccomp_metadata {
+ #define SECCOMP_IOCTL_NOTIF_SEND	SECCOMP_IOWR(1,	\
+ 						struct seccomp_notif_resp)
+ #define SECCOMP_IOCTL_NOTIF_ID_VALID	SECCOMP_IOR(2, __u64)
++/* On success, the return value is the remote process's added fd number */
++#define SECCOMP_IOCTL_NOTIF_ADDFD	SECCOMP_IOR(3,	\
++						struct seccomp_notif_addfd)
++
++/* valid flags for seccomp_notif_addfd */
++#define SECCOMP_ADDFD_FLAG_SETFD	(1UL << 0) /* Specify remote fd */
+ 
+ struct seccomp_notif {
+ 	__u64 id;
+@@ -201,6 +208,15 @@ struct seccomp_notif_sizes {
+ 	__u16 seccomp_notif_resp;
+ 	__u16 seccomp_data;
+ };
++
++struct seccomp_notif_addfd {
++	__u64 size;
++	__u64 id;
++	__u64 flags;
++	__u32 srcfd;
++	__u32 newfd;
++	__u32 newfd_flags;
++};
+ #endif
+ 
+ #ifndef PTRACE_EVENTMSG_SYSCALL_ENTRY
+@@ -3686,6 +3702,170 @@ TEST(user_notification_continue)
+ 	}
  }
  
-+/* must be called with notif_lock held */
-+static inline struct seccomp_knotif *
-+find_notification(struct seccomp_filter *filter, u64 id)
++TEST(user_notification_sendfd)
 +{
-+	struct seccomp_knotif *cur;
++	pid_t pid;
++	long ret;
++	int status, listener, memfd;
++	struct seccomp_notif_addfd addfd = {};
++	struct seccomp_notif req = {};
++	struct seccomp_notif_resp resp = {};
++	__u64 nextid;
 +
-+	list_for_each_entry(cur, &filter->notif->notifications, list) {
-+		if (cur->id == id)
-+			return cur;
++	memfd = memfd_create("test", 0);
++	ASSERT_GE(memfd, 0);
++
++	ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
++	ASSERT_EQ(0, ret) {
++		TH_LOG("Kernel does not support PR_SET_NO_NEW_PRIVS!");
 +	}
 +
-+	return NULL;
++	/* Check that the basic notification machinery works */
++	listener = user_trap_syscall(__NR_getppid,
++				     SECCOMP_FILTER_FLAG_NEW_LISTENER);
++	ASSERT_GE(listener, 0);
++
++	pid = fork();
++	ASSERT_GE(pid, 0);
++
++	if (pid == 0) {
++		if (syscall(__NR_getppid) != USER_NOTIF_MAGIC)
++			exit(1);
++		exit(syscall(__NR_getppid) != USER_NOTIF_MAGIC);
++	}
++
++	ASSERT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_RECV, &req), 0);
++
++	addfd.size = sizeof(addfd);
++	addfd.srcfd = memfd;
++	addfd.newfd_flags = O_CLOEXEC;
++	addfd.newfd = 0;
++	addfd.id = req.id;
++	addfd.flags = 0xff;
++
++	/* Verify bad flags cannot be set */
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd), -1);
++	EXPECT_EQ(errno, EINVAL);
++
++	/* Verify that remote_fd cannot be set without setting flags */
++	addfd.flags = 0;
++	addfd.newfd = 1;
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd), -1);
++	EXPECT_EQ(errno, EINVAL);
++
++	/* Verify we can set an arbitrary remote fd */
++	addfd.newfd = 0;
++
++	ret = ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd);
++	EXPECT_GE(ret, 0);
++	EXPECT_EQ(filecmp(getpid(), pid, memfd, ret), 0);
++
++	/* Verify we can set a specific remote fd */
++	addfd.newfd = 42;
++	addfd.flags = SECCOMP_ADDFD_FLAG_SETFD;
++
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd), 42);
++	EXPECT_EQ(filecmp(getpid(), pid, memfd, 42), 0);
++
++	resp.id = req.id;
++	resp.error = 0;
++	resp.val = USER_NOTIF_MAGIC;
++
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_SEND, &resp), 0);
++
++	nextid = req.id + 1;
++
++	/* Wait for getppid to be called for the second time */
++	sleep(1);
++
++	addfd.id = nextid;
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd), -1);
++	EXPECT_EQ(errno, EINPROGRESS);
++
++	memset(&req, 0, sizeof(req));
++	ASSERT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_RECV, &req), 0);
++	ASSERT_EQ(nextid, req.id);
++
++	resp.id = req.id;
++	resp.error = 0;
++	resp.val = USER_NOTIF_MAGIC;
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_SEND, &resp), 0);
++
++
++	EXPECT_EQ(waitpid(pid, &status, 0), pid);
++	EXPECT_EQ(true, WIFEXITED(status));
++	EXPECT_EQ(0, WEXITSTATUS(status));
++
++	close(memfd);
 +}
 +
++TEST(user_notification_sendfd_rlimit)
++{
++	pid_t pid;
++	long ret;
++	int status, listener, memfd;
++	struct seccomp_notif_addfd addfd = {};
++	struct seccomp_notif req = {};
++	struct seccomp_notif_resp resp = {};
++	const struct rlimit lim = {
++		.rlim_cur	= 0,
++		.rlim_max	= 0,
++	};
 +
- static long seccomp_notify_recv(struct seccomp_filter *filter,
- 				void __user *buf)
- {
--	struct seccomp_knotif *knotif = NULL, *cur;
-+	struct seccomp_knotif *knotif, *cur;
- 	struct seccomp_notif unotif;
- 	ssize_t ret;
- 
-@@ -1078,14 +1093,8 @@ static long seccomp_notify_recv(struct seccomp_filter *filter,
- 		 * may have died when we released the lock, so we need to make
- 		 * sure it's still around.
- 		 */
--		knotif = NULL;
- 		mutex_lock(&filter->notify_lock);
--		list_for_each_entry(cur, &filter->notif->notifications, list) {
--			if (cur->id == unotif.id) {
--				knotif = cur;
--				break;
--			}
--		}
-+		knotif = find_notification(filter, unotif.id);
- 
- 		if (knotif) {
- 			knotif->state = SECCOMP_NOTIFY_INIT;
-@@ -1101,7 +1110,7 @@ static long seccomp_notify_send(struct seccomp_filter *filter,
- 				void __user *buf)
- {
- 	struct seccomp_notif_resp resp = {};
--	struct seccomp_knotif *knotif = NULL, *cur;
-+	struct seccomp_knotif *knotif;
- 	long ret;
- 
- 	if (copy_from_user(&resp, buf, sizeof(resp)))
-@@ -1118,13 +1127,7 @@ static long seccomp_notify_send(struct seccomp_filter *filter,
- 	if (ret < 0)
- 		return ret;
- 
--	list_for_each_entry(cur, &filter->notif->notifications, list) {
--		if (cur->id == resp.id) {
--			knotif = cur;
--			break;
--		}
--	}
--
-+	knotif = find_notification(filter, resp.id);
- 	if (!knotif) {
- 		ret = -ENOENT;
- 		goto out;
-@@ -1150,7 +1153,7 @@ static long seccomp_notify_send(struct seccomp_filter *filter,
- static long seccomp_notify_id_valid(struct seccomp_filter *filter,
- 				    void __user *buf)
- {
--	struct seccomp_knotif *knotif = NULL;
-+	struct seccomp_knotif *knotif;
- 	u64 id;
- 	long ret;
- 
-@@ -1161,16 +1164,12 @@ static long seccomp_notify_id_valid(struct seccomp_filter *filter,
- 	if (ret < 0)
- 		return ret;
- 
--	ret = -ENOENT;
--	list_for_each_entry(knotif, &filter->notif->notifications, list) {
--		if (knotif->id == id) {
--			if (knotif->state == SECCOMP_NOTIFY_SENT)
--				ret = 0;
--			goto out;
--		}
--	}
-+	knotif = find_notification(filter, id);
-+	if (knotif && knotif->state == SECCOMP_NOTIFY_SENT)
-+		ret = 0;
-+	else
-+		ret = -ENOENT;
- 
--out:
- 	mutex_unlock(&filter->notify_lock);
- 	return ret;
- }
++	memfd = memfd_create("test", 0);
++	ASSERT_GE(memfd, 0);
++
++	ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
++	ASSERT_EQ(0, ret) {
++		TH_LOG("Kernel does not support PR_SET_NO_NEW_PRIVS!");
++	}
++
++	/* Check that the basic notification machinery works */
++	listener = user_trap_syscall(__NR_getppid,
++				     SECCOMP_FILTER_FLAG_NEW_LISTENER);
++	ASSERT_GE(listener, 0);
++
++	pid = fork();
++	ASSERT_GE(pid, 0);
++
++	if (pid == 0)
++		exit(syscall(__NR_getppid) != USER_NOTIF_MAGIC);
++
++
++	ASSERT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_RECV, &req), 0);
++
++	ASSERT_EQ(prlimit(pid, RLIMIT_NOFILE, &lim, NULL), 0);
++
++	addfd.size = sizeof(addfd);
++	addfd.srcfd = memfd;
++	addfd.newfd_flags = O_CLOEXEC;
++	addfd.newfd = 0;
++	addfd.id = req.id;
++	addfd.flags = 0;
++
++	/* Should probably spot check /proc/sys/fs/file-nr */
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd), -1);
++	EXPECT_EQ(errno, EMFILE);
++
++	addfd.newfd = 100;
++	addfd.flags = SECCOMP_ADDFD_FLAG_SETFD;
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd), -1);
++	EXPECT_EQ(errno, EBADF);
++
++	resp.id = req.id;
++	resp.error = 0;
++	resp.val = USER_NOTIF_MAGIC;
++
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_SEND, &resp), 0);
++
++
++	EXPECT_EQ(waitpid(pid, &status, 0), pid);
++	EXPECT_EQ(true, WIFEXITED(status));
++	EXPECT_EQ(0, WEXITSTATUS(status));
++
++	close(memfd);
++}
++
+ /*
+  * TODO:
+  * - add microbenchmarks
 -- 
 2.25.1
 
