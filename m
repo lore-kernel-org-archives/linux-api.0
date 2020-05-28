@@ -2,53 +2,54 @@ Return-Path: <SRS0=nnyE=7K=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 15B52C433E1
-	for <linux-api@archiver.kernel.org>; Thu, 28 May 2020 11:56:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D779AC433E1
+	for <linux-api@archiver.kernel.org>; Thu, 28 May 2020 12:04:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E21B72074B
-	for <linux-api@archiver.kernel.org>; Thu, 28 May 2020 11:56:30 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AEED021655
+	for <linux-api@archiver.kernel.org>; Thu, 28 May 2020 12:04:31 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1590666990;
-	bh=93U4NeV0j3o7YcuUCIuCRbRZcRPgqv//uz/oCsfli08=;
+	s=default; t=1590667471;
+	bh=gs9/lY+1QDQ5E52V460MMXznwqxNumfuWvVTDb9U+uo=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
-	b=Hcx27G5EueMZErWYRfaDXoEAl+Uyfd/R4z3a062WDxqldNlE2deHhIR0t9zbOazRs
-	 Xntlsjirf9nbD0DBsXs6EcoVwisR7WMHokkG+8cCZSaXQ6qxt8qRIo1/6IC6pyCBDy
-	 FU3oDmcWoI7P+JYaPZfIA6JbzH0vGBzHZmDsi+BM=
+	b=AQvrMEn1WMHFMA8z7ahHVuGLd9LI12zsyrWIC5r1mr7+mDWyz3LsRqvIvHEtV5WjF
+	 2Erej7XiDdSaALZNguUGA+tLQr0h/NzgF5DBKzx/K0GQqJB3LqxikXlN+HP6hn7bC2
+	 RiYIj4vF04qaBeGUClCobut/Hh+5TAel1aFgv2jA=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2388743AbgE1L43 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 28 May 2020 07:56:29 -0400
-Received: from mail.kernel.org ([198.145.29.99]:48540 "EHLO mail.kernel.org"
+        id S2389250AbgE1MEb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 28 May 2020 08:04:31 -0400
+Received: from mail.kernel.org ([198.145.29.99]:49684 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2388735AbgE1L41 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 28 May 2020 07:56:27 -0400
+        id S2388954AbgE1L5O (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 28 May 2020 07:57:14 -0400
 Received: from sasha-vm.mshome.net (c-73-47-72-35.hsd1.nh.comcast.net [73.47.72.35])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 6E7FD214F1;
-        Thu, 28 May 2020 11:56:26 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 030D1215A4;
+        Thu, 28 May 2020 11:57:12 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1590666987;
-        bh=93U4NeV0j3o7YcuUCIuCRbRZcRPgqv//uz/oCsfli08=;
+        s=default; t=1590667033;
+        bh=gs9/lY+1QDQ5E52V460MMXznwqxNumfuWvVTDb9U+uo=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=GvjpE1QGtl7hKF86Eom+8YwiBPfRdHBvZ+y1xmvYni/pYYtrAwAjZB5e71NlOgQad
-         +/+8nUH63MaNbshiMtji6wAbOL05HpfJf179YyhFC5I9tFOFov5pjeJTFNFMc6BFc7
-         chVAupi5hUzqGgPMtQxFBmA1rtwlyJnQMNjyq5uc=
+        b=oFezxgOHRdv6SFiiALe9+yfN8Q2KDzVwq3Q35c2vAE68QWfbckrqtk/FckEl98ath
+         mLZK8UxCYMfQuStWTJkIeIT6lb6nnyF1lh/1sV0oJ1kcKazRuNGtpqsgHV4ktLqP1p
+         u8JIfRA6HvQXG1TNbjyp/S9JViQpokK+G/PhGKn8=
 From:   Sasha Levin <sashal@kernel.org>
 To:     linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc:     "Jason A. Donenfeld" <Jason@zx2c4.com>,
+Cc:     Amit Cohen <amitc@mellanox.com>, Petr Machata <petrm@mellanox.com>,
+        Ido Schimmel <idosch@mellanox.com>,
         "David S . Miller" <davem@davemloft.net>,
         Sasha Levin <sashal@kernel.org>, linux-api@vger.kernel.org
-Subject: [PATCH AUTOSEL 5.6 23/47] wireguard: selftests: use newer iproute2 for gcc-10
-Date:   Thu, 28 May 2020 07:55:36 -0400
-Message-Id: <20200528115600.1405808-23-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 5.4 17/26] selftests: mlxsw: qos_mc_aware: Specify arping timeout as an integer
+Date:   Thu, 28 May 2020 07:56:45 -0400
+Message-Id: <20200528115654.1406165-17-sashal@kernel.org>
 X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20200528115600.1405808-1-sashal@kernel.org>
-References: <20200528115600.1405808-1-sashal@kernel.org>
+In-Reply-To: <20200528115654.1406165-1-sashal@kernel.org>
+References: <20200528115654.1406165-1-sashal@kernel.org>
 MIME-Version: 1.0
 X-stable: review
 X-Patchwork-Hint: Ignore
@@ -58,36 +59,43 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: "Jason A. Donenfeld" <Jason@zx2c4.com>
+From: Amit Cohen <amitc@mellanox.com>
 
-[ Upstream commit ee3c1aa3f34b7842c1557cfe5d8c3f7b8c692de8 ]
+[ Upstream commit 46ca11177ed593f39d534f8d2c74ec5344e90c11 ]
 
-gcc-10 switched to defaulting to -fno-common, which broke iproute2-5.4.
-This was fixed in iproute-5.6, so switch to that. Because we're after a
-stable testing surface, we generally don't like to bump these
-unnecessarily, but in this case, being able to actually build is a basic
-necessity.
+Starting from iputils s20190709 (used in Fedora 31), arping does not
+support timeout being specified as a decimal:
 
-Signed-off-by: Jason A. Donenfeld <Jason@zx2c4.com>
+$ arping -c 1 -I swp1 -b 192.0.2.66 -q -w 0.1
+arping: invalid argument: '0.1'
+
+Previously, such timeouts were rounded to an integer.
+
+Fix this by specifying the timeout as an integer.
+
+Fixes: a5ee171d087e ("selftests: mlxsw: qos_mc_aware: Add a test for UC awareness")
+Signed-off-by: Amit Cohen <amitc@mellanox.com>
+Reviewed-by: Petr Machata <petrm@mellanox.com>
+Signed-off-by: Ido Schimmel <idosch@mellanox.com>
 Signed-off-by: David S. Miller <davem@davemloft.net>
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- tools/testing/selftests/wireguard/qemu/Makefile | 2 +-
+ tools/testing/selftests/drivers/net/mlxsw/qos_mc_aware.sh | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/tools/testing/selftests/wireguard/qemu/Makefile b/tools/testing/selftests/wireguard/qemu/Makefile
-index 90598a425c18..4bdd6c1a19d3 100644
---- a/tools/testing/selftests/wireguard/qemu/Makefile
-+++ b/tools/testing/selftests/wireguard/qemu/Makefile
-@@ -44,7 +44,7 @@ endef
- $(eval $(call tar_download,MUSL,musl,1.2.0,.tar.gz,https://musl.libc.org/releases/,c6de7b191139142d3f9a7b5b702c9cae1b5ee6e7f57e582da9328629408fd4e8))
- $(eval $(call tar_download,IPERF,iperf,3.7,.tar.gz,https://downloads.es.net/pub/iperf/,d846040224317caf2f75c843d309a950a7db23f9b44b94688ccbe557d6d1710c))
- $(eval $(call tar_download,BASH,bash,5.0,.tar.gz,https://ftp.gnu.org/gnu/bash/,b4a80f2ac66170b2913efbfb9f2594f1f76c7b1afd11f799e22035d63077fb4d))
--$(eval $(call tar_download,IPROUTE2,iproute2,5.4.0,.tar.xz,https://www.kernel.org/pub/linux/utils/net/iproute2/,fe97aa60a0d4c5ac830be18937e18dc3400ca713a33a89ad896ff1e3d46086ae))
-+$(eval $(call tar_download,IPROUTE2,iproute2,5.6.0,.tar.xz,https://www.kernel.org/pub/linux/utils/net/iproute2/,1b5b0e25ce6e23da7526ea1da044e814ad85ba761b10dd29c2b027c056b04692))
- $(eval $(call tar_download,IPTABLES,iptables,1.8.4,.tar.bz2,https://www.netfilter.org/projects/iptables/files/,993a3a5490a544c2cbf2ef15cf7e7ed21af1845baf228318d5c36ef8827e157c))
- $(eval $(call tar_download,NMAP,nmap,7.80,.tar.bz2,https://nmap.org/dist/,fcfa5a0e42099e12e4bf7a68ebe6fde05553383a682e816a7ec9256ab4773faa))
- $(eval $(call tar_download,IPUTILS,iputils,s20190709,.tar.gz,https://github.com/iputils/iputils/archive/s20190709.tar.gz/#,a15720dd741d7538dd2645f9f516d193636ae4300ff7dbc8bfca757bf166490a))
+diff --git a/tools/testing/selftests/drivers/net/mlxsw/qos_mc_aware.sh b/tools/testing/selftests/drivers/net/mlxsw/qos_mc_aware.sh
+index 24dd8ed48580..b025daea062d 100755
+--- a/tools/testing/selftests/drivers/net/mlxsw/qos_mc_aware.sh
++++ b/tools/testing/selftests/drivers/net/mlxsw/qos_mc_aware.sh
+@@ -300,7 +300,7 @@ test_uc_aware()
+ 	local i
+ 
+ 	for ((i = 0; i < attempts; ++i)); do
+-		if $ARPING -c 1 -I $h1 -b 192.0.2.66 -q -w 0.1; then
++		if $ARPING -c 1 -I $h1 -b 192.0.2.66 -q -w 1; then
+ 			((passes++))
+ 		fi
+ 
 -- 
 2.25.1
 
