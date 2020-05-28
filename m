@@ -4,52 +4,52 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D779AC433E1
-	for <linux-api@archiver.kernel.org>; Thu, 28 May 2020 12:04:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A675EC433DF
+	for <linux-api@archiver.kernel.org>; Thu, 28 May 2020 12:08:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id AEED021655
-	for <linux-api@archiver.kernel.org>; Thu, 28 May 2020 12:04:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8725B216C4
+	for <linux-api@archiver.kernel.org>; Thu, 28 May 2020 12:08:06 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1590667471;
+	s=default; t=1590667686;
 	bh=gs9/lY+1QDQ5E52V460MMXznwqxNumfuWvVTDb9U+uo=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
-	b=AQvrMEn1WMHFMA8z7ahHVuGLd9LI12zsyrWIC5r1mr7+mDWyz3LsRqvIvHEtV5WjF
-	 2Erej7XiDdSaALZNguUGA+tLQr0h/NzgF5DBKzx/K0GQqJB3LqxikXlN+HP6hn7bC2
-	 RiYIj4vF04qaBeGUClCobut/Hh+5TAel1aFgv2jA=
+	b=TmdMUBMhHS61veRetB7f0kFJnbu37H8b5GJIiQikcFeLbbgGECFV2DIEqTDrYbS+5
+	 9kdOgIFjr1DAlZ68bpfeBDw4MHcGB933B26f7pVV4NXK5bxFN4F5IXlJ48cwQ2bY8t
+	 HpW4pEgCqvXrNVMlgqCc6g3XYEInnI3r3rtj1Ddk=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2389250AbgE1MEb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 28 May 2020 08:04:31 -0400
-Received: from mail.kernel.org ([198.145.29.99]:49684 "EHLO mail.kernel.org"
+        id S2389238AbgE1MHt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 28 May 2020 08:07:49 -0400
+Received: from mail.kernel.org ([198.145.29.99]:48824 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2388954AbgE1L5O (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 28 May 2020 07:57:14 -0400
+        id S2388789AbgE1L4i (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 28 May 2020 07:56:38 -0400
 Received: from sasha-vm.mshome.net (c-73-47-72-35.hsd1.nh.comcast.net [73.47.72.35])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 030D1215A4;
-        Thu, 28 May 2020 11:57:12 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 7078621582;
+        Thu, 28 May 2020 11:56:37 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1590667033;
+        s=default; t=1590666998;
         bh=gs9/lY+1QDQ5E52V460MMXznwqxNumfuWvVTDb9U+uo=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=oFezxgOHRdv6SFiiALe9+yfN8Q2KDzVwq3Q35c2vAE68QWfbckrqtk/FckEl98ath
-         mLZK8UxCYMfQuStWTJkIeIT6lb6nnyF1lh/1sV0oJ1kcKazRuNGtpqsgHV4ktLqP1p
-         u8JIfRA6HvQXG1TNbjyp/S9JViQpokK+G/PhGKn8=
+        b=Cwk5HNVY5oKqBcAhYEPgfSIbrcNNxBkhooEL1G/bdOQj1iga9xsD6vRtaEmgBuscI
+         UfKgQmDHlp/aI1jnxJ/eMFmYrVTDr6PFrNjyKYrfYRN+h8z92KXZDhCoLtn2GmNirz
+         490/g8amptJLw/hkQe9vp7xkRb8u2ibiXyzpWSrk=
 From:   Sasha Levin <sashal@kernel.org>
 To:     linux-kernel@vger.kernel.org, stable@vger.kernel.org
 Cc:     Amit Cohen <amitc@mellanox.com>, Petr Machata <petrm@mellanox.com>,
         Ido Schimmel <idosch@mellanox.com>,
         "David S . Miller" <davem@davemloft.net>,
         Sasha Levin <sashal@kernel.org>, linux-api@vger.kernel.org
-Subject: [PATCH AUTOSEL 5.4 17/26] selftests: mlxsw: qos_mc_aware: Specify arping timeout as an integer
-Date:   Thu, 28 May 2020 07:56:45 -0400
-Message-Id: <20200528115654.1406165-17-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 5.6 33/47] selftests: mlxsw: qos_mc_aware: Specify arping timeout as an integer
+Date:   Thu, 28 May 2020 07:55:46 -0400
+Message-Id: <20200528115600.1405808-33-sashal@kernel.org>
 X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20200528115654.1406165-1-sashal@kernel.org>
-References: <20200528115654.1406165-1-sashal@kernel.org>
+In-Reply-To: <20200528115600.1405808-1-sashal@kernel.org>
+References: <20200528115600.1405808-1-sashal@kernel.org>
 MIME-Version: 1.0
 X-stable: review
 X-Patchwork-Hint: Ignore
