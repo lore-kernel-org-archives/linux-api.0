@@ -2,246 +2,387 @@ Return-Path: <SRS0=iV4/=7Q=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7C6BEC433E2
-	for <linux-api@archiver.kernel.org>; Wed,  3 Jun 2020 19:09:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 86CEFC433E2
+	for <linux-api@archiver.kernel.org>; Wed,  3 Jun 2020 23:24:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5C52420872
-	for <linux-api@archiver.kernel.org>; Wed,  3 Jun 2020 19:09:50 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="ZTkVR2x8"
+	by mail.kernel.org (Postfix) with ESMTP id 6771D20734
+	for <linux-api@archiver.kernel.org>; Wed,  3 Jun 2020 23:24:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726034AbgFCTJs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 3 Jun 2020 15:09:48 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43410 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725821AbgFCTJs (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Jun 2020 15:09:48 -0400
-Received: from mail-pg1-x541.google.com (mail-pg1-x541.google.com [IPv6:2607:f8b0:4864:20::541])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EF5D8C08C5C0
-        for <linux-api@vger.kernel.org>; Wed,  3 Jun 2020 12:09:46 -0700 (PDT)
-Received: by mail-pg1-x541.google.com with SMTP id u5so2391083pgn.5
-        for <linux-api@vger.kernel.org>; Wed, 03 Jun 2020 12:09:46 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=b9J/QiNIqpGtAFKkXggLRfzQjqDQ5mfigXOY5FAlXiM=;
-        b=ZTkVR2x8kUrn+0mo5IyL7Bxo4O7mmo1f3P4NPtAmiiLd1EjAwxJfirJDUPcMpGZ/jU
-         VJS8VVcWOdLakx+zAOBYDRVJ4hmnGlPvzAOTjH/Au5XMfMbqOJR6fBeJSpHImlA8kWWj
-         MBTYVbdEvtStupaj5eSzvSMkFb07Aoeuj9t9E=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=b9J/QiNIqpGtAFKkXggLRfzQjqDQ5mfigXOY5FAlXiM=;
-        b=HKPTuENlseZo+2PTgq3qrcPmA8zu7N1in5npqxcnOxx8wUld4Q4nenxM54TmqPxebz
-         kjJtZ07mBAsWubLHttla9FhiQ8qNlEJFXmIlaRUWUNzE1+10dSrVM3uXBW9sfKISxzRe
-         e7bu//+inka2iLphreYEbPJI40qlDZnaY9KcqxBgA40REI51PsLpM1y1lkM5j0uGIWqZ
-         M7bhGo02u+2X7LgocbqiYxWbxE8SlpD8uFV6WBOwnVxoEB3Jr4lB6eJijhB3qmWjfjok
-         5kHFmWbhomMVXvuDl+zqCej/JIXKuwFGYxW6xr9z5rvcqlHRN9BCMth0rY8+pD1ItbzF
-         a/DA==
-X-Gm-Message-State: AOAM533x5A5wsN5feFeIKHzhkHd+Own1cLsHTa8WzeRobHuiCuFs7rL0
-        eZf21b7fSkyj/c78yNSeViHg1g==
-X-Google-Smtp-Source: ABdhPJw34TkFUaPPCiTDSQTGWE4UdRAQj+6e0F2fDqqbUTEhn0buXYNqap8uLXUdL5nWeSyNWZfY7Q==
-X-Received: by 2002:a63:df48:: with SMTP id h8mr95867pgj.411.1591211386235;
-        Wed, 03 Jun 2020 12:09:46 -0700 (PDT)
-Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id n189sm418318pfn.108.2020.06.03.12.09.44
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 03 Jun 2020 12:09:45 -0700 (PDT)
-Date:   Wed, 3 Jun 2020 12:09:44 -0700
-From:   Kees Cook <keescook@chromium.org>
-To:     Jann Horn <jannh@google.com>
-Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
-        Tycho Andersen <tycho@tycho.ws>,
-        Sargun Dhillon <sargun@sargun.me>,
-        Matt Denton <mpdenton@google.com>,
-        Chris Palmer <palmer@google.com>,
-        Jeffrey Vander Stoep <jeffv@google.com>,
-        Linux Containers <containers@lists.linux-foundation.org>,
+        id S1726011AbgFCXYR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 3 Jun 2020 19:24:17 -0400
+Received: from youngberry.canonical.com ([91.189.89.112]:40577 "EHLO
+        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725876AbgFCXYQ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Jun 2020 19:24:16 -0400
+Received: from ip5f5af183.dynamic.kabel-deutschland.de ([95.90.241.131] helo=wittgenstein)
+        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.86_2)
+        (envelope-from <christian.brauner@ubuntu.com>)
+        id 1jgcjz-00009i-BX; Wed, 03 Jun 2020 23:24:11 +0000
+Date:   Thu, 4 Jun 2020 01:24:10 +0200
+From:   Christian Brauner <christian.brauner@ubuntu.com>
+To:     Linus Torvalds <torvalds@linux-foundation.org>
+Cc:     Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        Kyle Evans <self@kyle-evans.net>,
+        Victor Stinner <victor.stinner@gmail.com>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
         Linux API <linux-api@vger.kernel.org>,
-        kernel list <linux-kernel@vger.kernel.org>
-Subject: Re: seccomp feature development
-Message-ID: <202005181630.60E58CA0C5@keescook>
-References: <202005181120.971232B7B@keescook>
- <CAG48ez1LrQvR2RHD5-ZCEihL4YT1tVgoAJfGYo+M3QukumX=OQ@mail.gmail.com>
+        Florian Weimer <fweimer@redhat.com>,
+        Jann Horn <jannh@google.com>, Oleg Nesterov <oleg@redhat.com>,
+        Arnd Bergmann <arnd@arndb.de>, Shuah Khan <shuah@kernel.org>,
+        David Howells <dhowells@redhat.com>,
+        "Dmitry V. Levin" <ldv@altlinux.org>
+Subject: Re: [PATCH v5 0/3] close_range()
+Message-ID: <20200603232410.i3opsbmepv5ktsjq@wittgenstein>
+References: <20200602204219.186620-1-christian.brauner@ubuntu.com>
+ <CAHk-=wjy234P7tvpQb6bnd1rhO78Uc+B0g1CPg9VOhJNTxmtWw@mail.gmail.com>
+ <20200602233355.zdwcfow3ff4o2dol@wittgenstein>
+ <CAHk-=wimp3tNuMcix2Z3uCF0sFfQt5GhVku=yhJAmSALucYGjg@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <CAG48ez1LrQvR2RHD5-ZCEihL4YT1tVgoAJfGYo+M3QukumX=OQ@mail.gmail.com>
+In-Reply-To: <CAHk-=wimp3tNuMcix2Z3uCF0sFfQt5GhVku=yhJAmSALucYGjg@mail.gmail.com>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-[trying to get back to this thread -- I've been distracted]
-
-On Tue, May 19, 2020 at 12:39:39AM +0200, Jann Horn wrote:
-> On Mon, May 18, 2020 at 11:05 PM Kees Cook <keescook@chromium.org> wrote:
-> > ## deep argument inspection
+On Tue, Jun 02, 2020 at 05:08:22PM -0700, Linus Torvalds wrote:
+> On Tue, Jun 2, 2020 at 4:33 PM Christian Brauner
+> <christian.brauner@ubuntu.com> wrote:
+> > >
+> > > And maybe this _did_ get mentioned last time, and I just don't find
+> > > it. I also don't see anything like that in the patches, although the
+> > > flags argument is there.
 > >
-> > Background: seccomp users would like to write filters that traverse
-> > the user pointers passed into many syscalls, but seccomp can't do this
-> > dereference for a variety of reasons (mostly involving race conditions and
-> > rearchitecting the entire kernel syscall and copy_from_user() code flows).
+> > I spent some good time digging and I couldn't find this mentioned
+> > anywhere so maybe it just never got sent to the list?
 > 
-> Also, other than for syscall entry, it might be worth thinking about
-> whether we want to have a special hook into seccomp for io_uring.
-> io_uring is growing support for more and more syscalls, including
-> things like openat2, connect, sendmsg, splice and so on, and that list
-> is probably just going to grow in the future. If people start wanting
-> to use io_uring in software with seccomp filters, it might be
-> necessary to come up with some mechanism to prevent io_uring from
-> permitting access to almost everything else...
-
-/me perks up. Oh my, I hadn't been paying attention -- I thought this
-was strictly for I/O ... like it's named. I will go read up.
-
-> [...]
-> > The argument caching bit is, I think, rather mechanical in nature since
-> > it's all "just" internal to the kernel: seccomp can likely adjust how it
-> > allocates seccomp_data (maybe going so far as to have it split across two
-> > pages with the syscall argument struct always starting on the 2nd page
-> > boundary), and copying the EA struct into that page, which will be both
-> > used by the filter and by the syscall.
+> It's entirely possible that it was just a private musing, and you
+> re-opening this issue just resurrected the thought.
 > 
-> We could also do the same kind of thing the eBPF verifier does in
-> convert_ctx_accesses(), and rewrite the context accesses to actually
-> go through two different pointers depending on the (constant) offset
-> into seccomp_data.
-
-Ah, as in "for seccomp_data accesses, add offset $foo and for EA struct
-add offset $bar"? Yeah, though my preference is to avoid rewriting the
-filters as much as possible. But yes, that's a good point about not
-requiring them be strictly contiguous.
-
-> > I imagine state tracking ("is
-> > there a cached EA?", "what is the address of seccomp_data?", "what is
-> > the address of the EA?") can be associated with the thread struct.
+> I'm not sure how simple it would be to implement, but looking at it it
+> shouldn't be problematic to add a "max_fd" argument to unshare_fd()
+> and dup_fd().
 > 
-> You probably mean the task struct?
-
-Yup; think-o.
-
-> > ## syscall bitmasks
+> Although the range for unsharing is obviously reversed, so I'd suggest
+> not trying to make "dup_fd()" take the exact range into account.
 > 
-> YES PLEASE
-
-I've got a working PoC for this now. It's sneaky.
-
-> Other options:
->  - add a "load from read-only memory" opcode and permit specifying the
-> data that should be in that memory when loading the filter
-
-I think you've mentioned something like this before to me, but can you
-remind me the details? If you mean RO userspace memory, don't we still
-run the risk of racing mprotect, etc?
-
->  - make the seccomp API take an array of (syscall-number,
-> instruction-offset) tuples, and start evaluation of the filter at an
-> offset if it's one of those syscalls
-
-To avoid making cBPF changes, yeah, perhaps have a way to add per-syscall
-filters.
-
-> One more thing that would be really nice: Is there a way we can have
-> 64-bit registers in our seccomp filters? At the moment, every
-> comparison has to turn into three ALU ops, which is pretty messy;
-> libseccomp got that wrong (<https://crbug.com/project-zero/1769>), and
-> it contributes to the horrific code Chrome's BPF generator creates.
-> Here's some pseudocode from my hacky BPF disassembler, which shows
-> pretty much just the filter code for filtering getpriority() and
-> setpriority() in a Chrome renderer, with tons of useless dead code:
+> More like just making __close_range() do basically something like
 > 
-> 0139         if args[0].high == 0x00000000: [true +3, false +0]
-> 013e           if args[0].low != 0x00000000: [true +157, false +0] -> ret TRAP
-> 0140           if args[1].high == 0x00000000: [true +3, false +0]
-> 0145             if args[1].low == 0x00000000: [true +149, false +0]
-> -> ret ALLOW (syscalls: getpriority, setpriority)
-> 0147             if args[1].high == 0x00000000: [true +3, false +0]
-> 014c               if args[1].low == 0x00000001: [true +142, false
-> +141] -> ret ALLOW (syscalls: getpriority, setpriority)
-> 01da               ret ERRNO
-> 0148             if args[1].high != 0xffffffff: [true +142, false +0]
-> -> ret TRAP
-> 014a             if args[1].low NO-COMMON-BITS 0x80000000: [true +140,
-> false +0] -> ret TRAP
-> 014c             if args[1].low == 0x00000001: [true +142, false +141]
-> -> ret ALLOW (syscalls: getpriority, setpriority)
-> 01da             ret ERRNO
-> 0141           if args[1].high != 0xffffffff: [true +149, false +0] -> ret TRAP
-> 0143           if args[1].low NO-COMMON-BITS 0x80000000: [true +147,
-> false +0] -> ret TRAP
-> 0145           if args[1].low == 0x00000000: [true +149, false +0] ->
-> ret ALLOW (syscalls: getpriority, setpriority)
-> 0147           if args[1].high == 0x00000000: [true +3, false +0]
-> 014c             if args[1].low == 0x00000001: [true +142, false +141]
-> -> ret ALLOW (syscalls: getpriority, setpriority)
-> 01da             ret ERRNO
-> 0148           if args[1].high != 0xffffffff: [true +142, false +0] -> ret TRAP
-> 014a           if args[1].low NO-COMMON-BITS 0x80000000: [true +140,
-> false +0] -> ret TRAP
-> 014c           if args[1].low == 0x00000001: [true +142, false +141]
-> -> ret ALLOW (syscalls: getpriority, setpriority)
-> 01da           ret ERRNO
-> 013a         if args[0].high != 0xffffffff: [true +156, false +0] -> ret TRAP
-> 013c         if args[0].low NO-COMMON-BITS 0x80000000: [true +154,
-> false +0] -> ret TRAP
-> 013e         if args[0].low != 0x00000000: [true +157, false +0] -> ret TRAP
-> 0140         if args[1].high == 0x00000000: [true +3, false +0]
-> 0145           if args[1].low == 0x00000000: [true +149, false +0] ->
-> ret ALLOW (syscalls: getpriority, setpriority)
-> 0147           if args[1].high == 0x00000000: [true +3, false +0]
-> 014c             if args[1].low == 0x00000001: [true +142, false +141]
-> -> ret ALLOW (syscalls: getpriority, setpriority)
-> 01da             ret ERRNO
-> 0148           if args[1].high != 0xffffffff: [true +142, false +0] -> ret TRAP
-> 014a           if args[1].low NO-COMMON-BITS 0x80000000: [true +140,
-> false +0] -> ret TRAP
-> 014c           if args[1].low == 0x00000001: [true +142, false +141]
-> -> ret ALLOW (syscalls: getpriority, setpriority)
-> 01da           ret ERRNO
-> 0141         if args[1].high != 0xffffffff: [true +149, false +0] -> ret TRAP
-> 0143         if args[1].low NO-COMMON-BITS 0x80000000: [true +147,
-> false +0] -> ret TRAP
-> 0145         if args[1].low == 0x00000000: [true +149, false +0] ->
-> ret ALLOW (syscalls: getpriority, setpriority)
-> 0147         if args[1].high == 0x00000000: [true +3, false +0]
-> 014c           if args[1].low == 0x00000001: [true +142, false +141]
-> -> ret ALLOW (syscalls: getpriority, setpriority)
-> 01da           ret ERRNO
-> 0148         if args[1].high != 0xffffffff: [true +142, false +0] -> ret TRAP
-> 014a         if args[1].low NO-COMMON-BITS 0x80000000: [true +140,
-> false +0] -> ret TRAP
-> 014c         if args[1].low == 0x00000001: [true +142, false +141] ->
-> ret ALLOW (syscalls: getpriority, setpriority)
-> 01da         ret ERRNO
+>         rcu_read_lock();
+>         cur_max = files_fdtable(files)->max_fds;
+>         rcu_read_unlock();
 > 
-> which is generated by this little snippet of C++ code:
+>         if (flags & CLOSE_RANGE_UNSHARE) {
+>                 unsigned int max_unshare_fd = ~0u;
+>                 if (cur_max >= max_fd)
+>                         max_unshare_fd = fd;
+>                 unshare_fd(max_unsgare_fd);
+>         }
 > 
-> ResultExpr RestrictGetSetpriority(pid_t target_pid) {
->   const Arg<int> which(0);
->   const Arg<int> who(1);
->   return If(which == PRIO_PROCESS,
->             Switch(who).CASES((0, target_pid), Allow()).Default(Error(EPERM)))
->       .Else(CrashSIGSYS());
-> }
+>         .. do the rest of __close_range() here ..
+> 
+> and all that "max_unsgare_fd" would do would be to limit the top end
+> of the file descriptor table unsharing: we'd still do the exact range
+> handling in __close_range() itself.
+> 
+> Because teaching unshare_fd() and dup_fd() about anything more complex
+> than the above doesn't sound worth it, but adding a way to just avoid
+> the unnecessary copy of any high file descriptors sounds simple
+> enough.
 
-What would this look like in eBPF?
+Ok, here's what I have. (I think in your example above cur_max and
+max_fd are switched or I might have missed your point completely.) I was
+a little in doubt whether capping dup_fd() between NR_OPEN_DEFAULT and
+open_files was a sane thing to do but I think it is. Torture testing
+this with a proper test-suite and with all debugging options enabled
+didn't yet find any obvious issues. Does the below look somewhat sane?:
 
-> On anything other than 32-bit MIPS, 32-bit powerpc and 32-bit sparc,
-> we're actually already using the eBPF backend infrastructure... so
-> maybe it would be an option to keep enforcing basically the same rules
-> that we currently have for cBPF, but use the eBPF instruction format?
+From 4ee3fdac02f3cd70e31669e35d3f494913f3fd3f Mon Sep 17 00:00:00 2001
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Date: Wed, 3 Jun 2020 21:48:55 +0200
+Subject: [PATCH 1/2] close_range: add CLOSE_RANGE_UNSHARE
 
-Yeah, I think this might be a good idea just for the reduction in
-complexity for these things. The "unpriv BPF" problem needs to be solved
-for this still, though, yes?
+One of the use-cases of close_range() is to drop file descriptors just before
+execve(). This would usually be expressed in the sequence:
 
+unshare(CLONE_FILES);
+close_range(3, ~0U);
+
+as pointed out by Linus it might be desirable to have this be a part of
+close_range() itself under a new flag CLOSE_RANGE_UNSHARE.
+
+This expands {dup,unshare)_fd() to take a max_fds argument that indicates the
+maximum number of file descriptors to copy from the old struct files. When the
+user requests that all file descriptors are supposed to be closed via
+close_range(min, max) then we can cap via unshare_fd(min) and hence don't need
+to do any of the heavy fput() work for everything above min.
+
+The patch makes it so that if CLOSE_RANGE_UNSHARE is requested and we do in
+fact currently share our file descriptor table we create a new private copy.
+We then close all fds in the requested range and finally after we're done we
+install the new fd table.
+
+Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+---
+ fs/file.c                        | 65 ++++++++++++++++++++++++++++----
+ fs/open.c                        |  5 +--
+ include/linux/fdtable.h          |  8 ++--
+ include/uapi/linux/close_range.h |  9 +++++
+ kernel/fork.c                    | 11 +++---
+ 5 files changed, 79 insertions(+), 19 deletions(-)
+ create mode 100644 include/uapi/linux/close_range.h
+
+diff --git a/fs/file.c b/fs/file.c
+index e260bfe687d1..718356ed6682 100644
+--- a/fs/file.c
++++ b/fs/file.c
+@@ -19,6 +19,7 @@
+ #include <linux/bitops.h>
+ #include <linux/spinlock.h>
+ #include <linux/rcupdate.h>
++#include <linux/close_range.h>
+ 
+ unsigned int sysctl_nr_open __read_mostly = 1024*1024;
+ unsigned int sysctl_nr_open_min = BITS_PER_LONG;
+@@ -265,12 +266,22 @@ static unsigned int count_open_files(struct fdtable *fdt)
+ 	return i;
+ }
+ 
++static unsigned int sane_fdtable_size(struct fdtable *fdt, unsigned int max_fds)
++{
++	unsigned int count;
++
++	count = count_open_files(fdt);
++	if (max_fds < NR_OPEN_DEFAULT)
++		max_fds = NR_OPEN_DEFAULT;
++	return min(count, max_fds);
++}
++
+ /*
+  * Allocate a new files structure and copy contents from the
+  * passed in files structure.
+  * errorp will be valid only when the returned files_struct is NULL.
+  */
+-struct files_struct *dup_fd(struct files_struct *oldf, int *errorp)
++struct files_struct *dup_fd(struct files_struct *oldf, unsigned int max_fds, int *errorp)
+ {
+ 	struct files_struct *newf;
+ 	struct file **old_fds, **new_fds;
+@@ -297,7 +308,7 @@ struct files_struct *dup_fd(struct files_struct *oldf, int *errorp)
+ 
+ 	spin_lock(&oldf->file_lock);
+ 	old_fdt = files_fdtable(oldf);
+-	open_files = count_open_files(old_fdt);
++	open_files = sane_fdtable_size(old_fdt, max_fds);
+ 
+ 	/*
+ 	 * Check whether we need to allocate a larger fd array and fd set.
+@@ -328,7 +339,7 @@ struct files_struct *dup_fd(struct files_struct *oldf, int *errorp)
+ 		 */
+ 		spin_lock(&oldf->file_lock);
+ 		old_fdt = files_fdtable(oldf);
+-		open_files = count_open_files(old_fdt);
++		open_files = sane_fdtable_size(old_fdt, max_fds);
+ 	}
+ 
+ 	copy_fd_bitmaps(new_fdt, old_fdt, open_files);
+@@ -665,30 +676,70 @@ EXPORT_SYMBOL(__close_fd); /* for ksys_close() */
+  * This closes a range of file descriptors. All file descriptors
+  * from @fd up to and including @max_fd are closed.
+  */
+-int __close_range(struct files_struct *files, unsigned fd, unsigned max_fd)
++int __close_range(unsigned fd, unsigned max_fd, unsigned int flags)
+ {
+ 	unsigned int cur_max;
++	struct task_struct *me = current;
++	struct files_struct *cur_fds = me->files, *fds = NULL;
++
++	if (flags & ~CLOSE_RANGE_UNSHARE)
++		return -EINVAL;
+ 
+ 	if (fd > max_fd)
+ 		return -EINVAL;
+ 
+ 	rcu_read_lock();
+-	cur_max = files_fdtable(files)->max_fds;
++	cur_max = files_fdtable(cur_fds)->max_fds;
+ 	rcu_read_unlock();
+ 
++	if (flags & CLOSE_RANGE_UNSHARE) {
++		int ret;
++		unsigned int max_unshare_fds = NR_OPEN_MAX;
++
++		/*
++		 * If the requested range is greater than the current maximum,
++		 * we're closing everything so only copy all file descriptors
++		 * beneath the lowest file descriptor.
++		 */
++		if ((max_fd + 1) >= cur_max)
++			max_unshare_fds = fd;
++
++		ret = unshare_fd(CLONE_FILES, max_unshare_fds, &fds);
++		if (ret)
++			return ret;
++
++		/*
++		 * We used to share our file descriptor table, and have now
++		 * created a private one, make sure we're using it below.
++		 */
++		if (fds)
++			swap(cur_fds, fds);
++	}
++
+ 	/* cap to last valid index into fdtable */
+ 	max_fd = min(max_fd, (cur_max - 1));
+ 	while (fd <= max_fd) {
+ 		struct file *file;
+ 
+-		file = pick_file(files, fd++);
++		file = pick_file(cur_fds, fd++);
+ 		if (!file)
+ 			continue;
+ 
+-		filp_close(file, files);
++		filp_close(file, cur_fds);
+ 		cond_resched();
+ 	}
+ 
++	if (fds) {
++		/*
++		 * We're done closing the files we were supposed to. Time to install
++		 * the new file descriptor table and drop the old one.
++		 */
++		task_lock(me);
++		me->files = cur_fds;
++		task_unlock(me);
++		put_files_struct(fds);
++	}
++
+ 	return 0;
+ }
+ 
+diff --git a/fs/open.c b/fs/open.c
+index 87e076e9e127..28c561734ece 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -1293,10 +1293,7 @@ SYSCALL_DEFINE1(close, unsigned int, fd)
+ SYSCALL_DEFINE3(close_range, unsigned int, fd, unsigned int, max_fd,
+ 		unsigned int, flags)
+ {
+-	if (flags)
+-		return -EINVAL;
+-
+-	return __close_range(current->files, fd, max_fd);
++	return __close_range(fd, max_fd, flags);
+ }
+ 
+ /*
+diff --git a/include/linux/fdtable.h b/include/linux/fdtable.h
+index fcd07181a365..a32bf47c593e 100644
+--- a/include/linux/fdtable.h
++++ b/include/linux/fdtable.h
+@@ -22,6 +22,7 @@
+  * as this is the granularity returned by copy_fdset().
+  */
+ #define NR_OPEN_DEFAULT BITS_PER_LONG
++#define NR_OPEN_MAX ~0U
+ 
+ struct fdtable {
+ 	unsigned int max_fds;
+@@ -109,7 +110,7 @@ struct files_struct *get_files_struct(struct task_struct *);
+ void put_files_struct(struct files_struct *fs);
+ void reset_files_struct(struct files_struct *);
+ int unshare_files(struct files_struct **);
+-struct files_struct *dup_fd(struct files_struct *, int *) __latent_entropy;
++struct files_struct *dup_fd(struct files_struct *, unsigned, int *) __latent_entropy;
+ void do_close_on_exec(struct files_struct *);
+ int iterate_fd(struct files_struct *, unsigned,
+ 		int (*)(const void *, struct file *, unsigned),
+@@ -121,9 +122,10 @@ extern void __fd_install(struct files_struct *files,
+ 		      unsigned int fd, struct file *file);
+ extern int __close_fd(struct files_struct *files,
+ 		      unsigned int fd);
+-extern int __close_range(struct files_struct *files, unsigned int fd,
+-			 unsigned int max_fd);
++extern int __close_range(unsigned int fd, unsigned int max_fd, unsigned int flags);
+ extern int __close_fd_get_file(unsigned int fd, struct file **res);
++extern int unshare_fd(unsigned long unshare_flags, unsigned int max_fds,
++		      struct files_struct **new_fdp);
+ 
+ extern struct kmem_cache *files_cachep;
+ 
+diff --git a/include/uapi/linux/close_range.h b/include/uapi/linux/close_range.h
+new file mode 100644
+index 000000000000..6928a9fdee3c
+--- /dev/null
++++ b/include/uapi/linux/close_range.h
+@@ -0,0 +1,9 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++#ifndef _UAPI_LINUX_CLOSE_RANGE_H
++#define _UAPI_LINUX_CLOSE_RANGE_H
++
++/* Unshare the file descriptor table before closing file descriptors. */
++#define CLOSE_RANGE_UNSHARE	(1U << 1)
++
++#endif /* _UAPI_LINUX_CLOSE_RANGE_H */
++
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 48ed22774efa..836976aa7ab9 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1466,7 +1466,7 @@ static int copy_files(unsigned long clone_flags, struct task_struct *tsk)
+ 		goto out;
+ 	}
+ 
+-	newf = dup_fd(oldf, &error);
++	newf = dup_fd(oldf, NR_OPEN_MAX, &error);
+ 	if (!newf)
+ 		goto out;
+ 
+@@ -2894,14 +2894,15 @@ static int unshare_fs(unsigned long unshare_flags, struct fs_struct **new_fsp)
+ /*
+  * Unshare file descriptor table if it is being shared
+  */
+-static int unshare_fd(unsigned long unshare_flags, struct files_struct **new_fdp)
++int unshare_fd(unsigned long unshare_flags, unsigned int max_fds,
++	       struct files_struct **new_fdp)
+ {
+ 	struct files_struct *fd = current->files;
+ 	int error = 0;
+ 
+ 	if ((unshare_flags & CLONE_FILES) &&
+ 	    (fd && atomic_read(&fd->count) > 1)) {
+-		*new_fdp = dup_fd(fd, &error);
++		*new_fdp = dup_fd(fd, max_fds, &error);
+ 		if (!*new_fdp)
+ 			return error;
+ 	}
+@@ -2961,7 +2962,7 @@ int ksys_unshare(unsigned long unshare_flags)
+ 	err = unshare_fs(unshare_flags, &new_fs);
+ 	if (err)
+ 		goto bad_unshare_out;
+-	err = unshare_fd(unshare_flags, &new_fd);
++	err = unshare_fd(unshare_flags, NR_OPEN_MAX, &new_fd);
+ 	if (err)
+ 		goto bad_unshare_cleanup_fs;
+ 	err = unshare_userns(unshare_flags, &new_cred);
+@@ -3050,7 +3051,7 @@ int unshare_files(struct files_struct **displaced)
+ 	struct files_struct *copy = NULL;
+ 	int error;
+ 
+-	error = unshare_fd(CLONE_FILES, &copy);
++	error = unshare_fd(CLONE_FILES, NR_OPEN_MAX, &copy);
+ 	if (error || !copy) {
+ 		*displaced = NULL;
+ 		return error;
 -- 
-Kees Cook
+2.27.0
+
