@@ -2,215 +2,133 @@ Return-Path: <SRS0=Az9I=7S=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4F7E2C433E1
-	for <linux-api@archiver.kernel.org>; Fri,  5 Jun 2020 02:57:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F3B0BC433DF
+	for <linux-api@archiver.kernel.org>; Fri,  5 Jun 2020 14:55:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2150920738
-	for <linux-api@archiver.kernel.org>; Fri,  5 Jun 2020 02:57:31 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="SgPDRouY"
+	by mail.kernel.org (Postfix) with ESMTP id D8B9C20663
+	for <linux-api@archiver.kernel.org>; Fri,  5 Jun 2020 14:55:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726076AbgFEC5a (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 4 Jun 2020 22:57:30 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56074 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725954AbgFEC53 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 4 Jun 2020 22:57:29 -0400
-Received: from mail-pj1-x1044.google.com (mail-pj1-x1044.google.com [IPv6:2607:f8b0:4864:20::1044])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3D32EC08C5C1
-        for <linux-api@vger.kernel.org>; Thu,  4 Jun 2020 19:57:26 -0700 (PDT)
-Received: by mail-pj1-x1044.google.com with SMTP id fs4so1983372pjb.5
-        for <linux-api@vger.kernel.org>; Thu, 04 Jun 2020 19:57:26 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=M6PVatvjkL7a6G4MGddno9KRoekuNJtQ7P4X7N6VgLs=;
-        b=SgPDRouYyABJao/ElZNxU2CQu52ywW3AcyEHdC73jFg9bXVwlnLIPc+qjQ1b8MEGSP
-         An0XvIZ7g+iBWiBEA+sC4IjT9kbhoSfvkEeGc1Ir+U+CIcyg4xku8rxRqB+mpB84FooX
-         ntEenJkjqE6o7O8gFeVY9SWf9Hxt82ScDjTjU=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=M6PVatvjkL7a6G4MGddno9KRoekuNJtQ7P4X7N6VgLs=;
-        b=NWyCM8XJGaCDvVT8rPLxRZ+8tridw/0z/uo4+UeUL0aq4jglElcA9mOaQ/R9uhZJPr
-         4cOQY/o6EkpEE+GsVVDO76AbSanK8bZc0kyORpj1GHtszasejeJ+gUslKiOQq6UYglWU
-         jq8aD5V6uHGiCcZfzG56WLDgFGHf1iSFvc+hiIVWWKcZBbx0632trV1SYaqrBprLHwHj
-         4P8Su68xl0Z3giu6b5aBausvECofMkU3hJKf3IgOKuzQkR7MV/YjqfHQItiIWSZ/5tJ/
-         SMrPWV1OeatqKveUSffXi3Hya+9C6z/XZY6tjoWbWVTpTmh4siwHs4rgP+fiNSY3NE38
-         gp9w==
-X-Gm-Message-State: AOAM531lP3JhUtjLRmint/fW3/xFUfcmDLX/63k204OSlHs0hUt2ro00
-        vi67ggBx2uT7bj+Jo2xXXeeLwg==
-X-Google-Smtp-Source: ABdhPJy0qMxESQBukihzzGPV2cie3mmiE0CISaHFY+TLH/IcWrnRnBDv5cy6nkyJxmFy0ptWApJV/w==
-X-Received: by 2002:a17:90a:c17:: with SMTP id 23mr520400pjs.160.1591325845626;
-        Thu, 04 Jun 2020 19:57:25 -0700 (PDT)
-Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id g29sm5957851pfr.47.2020.06.04.19.57.23
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 04 Jun 2020 19:57:24 -0700 (PDT)
-Date:   Thu, 4 Jun 2020 19:57:23 -0700
-From:   Kees Cook <keescook@chromium.org>
-To:     Andrew Morton <akpm@linux-foundation.org>
-Cc:     Al Viro <viro@zeniv.linux.org.uk>,
-        Aleksa Sarai <cyphar@cyphar.com>,
-        Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>,
-        kernel test robot <rong.a.chen@intel.com>,
-        Eric Biggers <ebiggers3@gmail.com>,
-        Dmitry Vyukov <dvyukov@google.com>,
-        linux-fsdevel@vger.kernel.org,
-        linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-kernel@vger.kernel.org, lkp@lists.01.org, ltp@lists.linux.it
-Subject: Re: [exec] 166d03c9ec: ltp.execveat02.fail
-Message-ID: <202006041910.9EF0C602@keescook>
-References: <20200518055457.12302-3-keescook@chromium.org>
- <20200525091420.GI12456@shao2-debian>
+        id S1727941AbgFEOzx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 5 Jun 2020 10:55:53 -0400
+Received: from port70.net ([81.7.13.123]:60410 "EHLO port70.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727114AbgFEOzx (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 5 Jun 2020 10:55:53 -0400
+Received: by port70.net (Postfix, from userid 1002)
+        id 66D71ABEC0C2; Fri,  5 Jun 2020 16:55:50 +0200 (CEST)
+Date:   Fri, 5 Jun 2020 16:55:49 +0200
+From:   Szabolcs Nagy <nsz@port70.net>
+To:     Christian Brauner <christian.brauner@ubuntu.com>
+Cc:     torvalds@linux-foundation.org, linux-kernel@vger.kernel.org,
+        Kyle Evans <self@kyle-evans.net>,
+        Victor Stinner <victor.stinner@gmail.com>,
+        viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org,
+        linux-api@vger.kernel.org, fweimer@redhat.com, jannh@google.com,
+        oleg@redhat.com, arnd@arndb.de, shuah@kernel.org,
+        dhowells@redhat.com, ldv@altlinux.org
+Subject: Re: [PATCH v5 1/3] open: add close_range()
+Message-ID: <20200605145549.GC673948@port70.net>
+References: <20200602204219.186620-1-christian.brauner@ubuntu.com>
+ <20200602204219.186620-2-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20200525091420.GI12456@shao2-debian>
+In-Reply-To: <20200602204219.186620-2-christian.brauner@ubuntu.com>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, May 25, 2020 at 05:14:20PM +0800, kernel test robot wrote:
-> execveat02.c:64: PASS: execveat() fails as expected: EBADF (9)
-> execveat02.c:64: PASS: execveat() fails as expected: EINVAL (22)
-> execveat02.c:61: FAIL: execveat() fails unexpectedly, expected: ELOOP: EACCES (13)
-> execveat02.c:64: PASS: execveat() fails as expected: ENOTDIR (20)
+* Christian Brauner <christian.brauner@ubuntu.com> [2020-06-02 22:42:17 +0200]:
+> This adds the close_range() syscall. It allows to efficiently close a range
+> of file descriptors up to all file descriptors of a calling task.
+> 
+> I've also coordinated with some FreeBSD developers who got in touch with
+> me (Cced below). FreeBSD intends to add the same syscall once we merged it.
+> Quite a bunch of projects in userspace are waiting on this syscall
+> including Python and systemd.
+> 
+> The syscall came up in a recent discussion around the new mount API and
+> making new file descriptor types cloexec by default. During this
+> discussion, Al suggested the close_range() syscall (cf. [1]). Note, a
+> syscall in this manner has been requested by various people over time.
+> 
+> First, it helps to close all file descriptors of an exec()ing task. This
+> can be done safely via (quoting Al's example from [1] verbatim):
+> 
+>         /* that exec is sensitive */
+>         unshare(CLONE_FILES);
+>         /* we don't want anything past stderr here */
+>         close_range(3, ~0U);
+>         execve(....);
 
-tl;dr: I think this test is correct, and I think I see a way to improve
-the offending patch series to do the right thing.
+this api needs a documentation patch if there isn't yet.
 
+currently there is no libc interface contract in place that
+says which calls may use libc internal fds e.g. i've seen
 
-Okay, the LTP is checking for ELOOP on trying to exec a symlink:
+  openlog(...) // opens libc internal syslog fd
+  ...
+  fork()
+  closefrom(...) // close syslog fd
+  open(...) // something that reuses the closed fd
+  syslog(...) // unsafe: uses the wrong fd
+  execve(...)
 
-...
- *    3) execveat() fails and returns ELOOP if the file identified by dirfd and
- *       pathname is a symbolic link and flag includes AT_SYMLINK_NOFOLLOW.
-...
-#define TESTDIR "testdir"
-#define TEST_APP "execveat_errno"
-...
-#define TEST_SYMLINK "execveat_symlink"
-...
-#define TEST_ERL_SYMLINK TESTDIR"/"TEST_SYMLINK
-...
-        sprintf(app_sym_path, "%s/%s", cur_dir_path, TEST_ERL_SYMLINK);
-...
-        SAFE_SYMLINK(TEST_REL_APP, TEST_ERL_SYMLINK);
+syslog uses a libc internal fd that the user trampled on and
+this can go bad in many ways depending on what libc apis are
+used between closefrom (or equivalent) and exec.
 
-        fd = SAFE_OPEN(TEST_REL_APP, O_PATH);
-...
-static struct tcase {
-        int *fd;
-        char *pathname;
-        int flag;
-        int exp_err;
-} tcases[] = {
-...
-        {&fd, app_sym_path, AT_SYMLINK_NOFOLLOW, ELOOP},
-...
-};
-...
-                TEST(execveat(*tc->fd, tc->pathname, argv, environ, tc->flag));
+> The code snippet above is one way of working around the problem that file
+> descriptors are not cloexec by default. This is aggravated by the fact that
+> we can't just switch them over without massively regressing userspace. For
 
-This is testing the exec _of_ a symlink under AT_SYMLINK_NOFOLLOW.
+why is a switch_to_cloexec_range worse than close_range?
+the former seems safer to me. (and allows libc calls
+to be made between such switch and exec: libc internal
+fds have to be cloexec anyway)
 
-The execve(2) manpage says:
+> a whole class of programs having an in-kernel method of closing all file
+> descriptors is very helpful (e.g. demons, service managers, programming
+> language standard libraries, container managers etc.).
+> (Please note, unshare(CLONE_FILES) should only be needed if the calling
+> task is multi-threaded and shares the file descriptor table with another
+> thread in which case two threads could race with one thread allocating file
+> descriptors and the other one closing them via close_range(). For the
+> general case close_range() before the execve() is sufficient.)
+> 
+> Second, it allows userspace to avoid implementing closing all file
+> descriptors by parsing through /proc/<pid>/fd/* and calling close() on each
+> file descriptor. From looking at various large(ish) userspace code bases
+> this or similar patterns are very common in:
+> - service managers (cf. [4])
+> - libcs (cf. [6])
+> - container runtimes (cf. [5])
+> - programming language runtimes/standard libraries
+>   - Python (cf. [2])
+>   - Rust (cf. [7], [8])
+> As Dmitry pointed out there's even a long-standing glibc bug about missing
+> kernel support for this task (cf. [3]).
+> In addition, the syscall will also work for tasks that do not have procfs
+> mounted and on kernels that do not have procfs support compiled in. In such
+> situations the only way to make sure that all file descriptors are closed
+> is to call close() on each file descriptor up to UINT_MAX or RLIMIT_NOFILE,
+> OPEN_MAX trickery (cf. comment [8] on Rust).
 
-       ELOOP  Too many symbolic links were encountered in resolving
-              pathname or  the  name  of  a script or ELF interpreter.
+close_range still seems like a bad operation to expose.
 
-       ELOOP  The maximum recursion limit was reached during recursive
-	      script interpretation (see "Interpreter scripts", above).
-	      Before Linux 3.8, the error produced for this case was ENOEXEC.
+if users really want closing behaviour (instead of marking
+fds cloexec) then they likely need coordination with libc
+and other libraries.
 
-Which actually doesn't mention this case. open(2) says:
+e.g. this usage does not work:
 
-       ELOOP  Too many symbolic links were encountered in resolving pathname.
+  maxfd = findmaxfd();
+  call_that_may_leak_fds();
+  close_range(maxfd,~0U);
 
-       ELOOP  pathname was a symbolic link, and flags specified O_NOFOLLOW
-	      but not O_PATH.
-
-(but O_NOFOLLOW is limited to file creation. linkat(2) lists the AT_*
-flags, and applied to openat, this seems to track: attempting to
-execat where the final element is a symlink should fail with ELOOP,
-though the manpage does warn that this makes it indistinguishable from
-symlink loops -- the first item listed in the execve manpage for
-ELOOP...)
-
-Regardless, this does seem to be the "correct" result, as opening for
-exec or opening just normally should really get the same error code.
-
-The call path for execve looks like this:
-
-    do_open_execat()
-        struct open_flags open_exec_flags = {
-            .open_flag = O_LARGEFILE | O_RDONLY | __FMODE_EXEC,
-	    .acc_mode = MAY_READ | MAY_EXEC,
-	    ...
-        do_filp_open(dfd, filename, open_flags)
-            path_openat(nameidata, open_flags, flags)
-                file = alloc_empty_file(open_flags, current_cred());
-		open_last_lookups(nd, file, open_flags)
-		    step_into(nd, ...)
-		        /* stop on symlink without LOOKUP_FOLLOW */
-                do_open(nameidata, file, open_flags)
-                    /* new location of FMODE_EXEC vs S_ISREG() test */
-                    may_open(path, acc_mode, open_flag)
-			/* test for S_IFLNK */
-                        inode_permission(inode, MAY_OPEN | acc_mode)
-                            security_inode_permission(inode, acc_mode)
-                    vfs_open(path, file)
-                        do_dentry_open(file, path->dentry->d_inode, open)
-                            /* old location of FMODE_EXEC vs S_ISREG() test */
-                            security_file_open(f)
-                            open()
-
-The step_into() is what kicks back out without LOOKUP_FOLLOW, so we're
-left holding a symlink (S_IFMT inode). In do_open(), there is a set of
-checks via may_open() which checks for S_IFMT and rejects it:
-
-        switch (inode->i_mode & S_IFMT) {
-        case S_IFLNK:
-                return -ELOOP;
-
-So that's the case LTP was testing for.
-
-The patch in -next ("exec: relocate S_ISREG() check")[1], moves the regular
-file requirement up before may_open(), for all the reasons mentioned in
-the commit log (and the next patch[2]).
-
-When I was originally trying to determine the best place for where the
-checks should live, may_open() really did seem like the right place, but I
-recognized that it was examining path characteristics (which was good) but
-it didn't have the file, and that seemed to be an intentional separation.
-
-What is needed in may_open() would be the "how was this file opened?"
-piece of information: file->f_mode & FMODE_EXEC. However, in looking at
-this again now, I wonder if it might be possible to use the MAY_EXEC
-from the acc_mode? It seems the old check (in do_dentry_open() had no
-access to the acc_mode, so it was forced to use the FMODE_EXEC signal
-instead.
-
-(I actually think this remains a bit of a design problem: path-based LSMs,
-which see the opened file in security_file_open(), also don't have access
-to acc_mode and must depend on the FMODE_* flags...)
-
-I will respin the series to use acc_mode and move the tests into
-may_open().
-
--Kees
-
-[1] https://git.kernel.org/pub/scm/linux/kernel/git/kees/linux.git/commit/?h=vfs/fmode_exec/v1&id=36aaecef88b472ad5e0a408ffdb5b2e46f1478f6
-[2] https://git.kernel.org/pub/scm/linux/kernel/git/kees/linux.git/commit/?h=vfs/fmode_exec/v1&id=a2f303b9f24ae2ecdc57f3db93e49b2b869893aa
-
--- 
-Kees Cook
+as far as i can tell only the close right before exec works.
