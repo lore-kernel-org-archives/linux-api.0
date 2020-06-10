@@ -2,118 +2,113 @@ Return-Path: <SRS0=GCPP=7X=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CD189C433DF
-	for <linux-api@archiver.kernel.org>; Wed, 10 Jun 2020 05:54:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 674CAC433E0
+	for <linux-api@archiver.kernel.org>; Wed, 10 Jun 2020 16:13:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id AE82020801
-	for <linux-api@archiver.kernel.org>; Wed, 10 Jun 2020 05:54:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 43EBD2063A
+	for <linux-api@archiver.kernel.org>; Wed, 10 Jun 2020 16:13:02 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="LSfZZnld"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726121AbgFJFyA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 10 Jun 2020 01:54:00 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40218 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726068AbgFJFyA (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 10 Jun 2020 01:54:00 -0400
-Received: from mout-p-101.mailbox.org (mout-p-101.mailbox.org [IPv6:2001:67c:2050::465:101])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E49DEC05BD1E;
-        Tue,  9 Jun 2020 22:53:59 -0700 (PDT)
-Received: from smtp2.mailbox.org (smtp2.mailbox.org [IPv6:2001:67c:2050:105:465:1:2:0])
-        (using TLSv1.2 with cipher ECDHE-RSA-CHACHA20-POLY1305 (256/256 bits))
+        id S1728115AbgFJQNA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 10 Jun 2020 12:13:00 -0400
+Received: from us-smtp-2.mimecast.com ([207.211.31.81]:33338 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1728078AbgFJQNA (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 10 Jun 2020 12:13:00 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1591805579;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:in-reply-to:in-reply-to:references:references;
+        bh=kexTF+bb21B8QATwOuG1QvcMoAkYdNsoySmbLQ5tWFE=;
+        b=LSfZZnlda1NlBXZ5pfz/7MTjfEH6+Qwc/5LxePjLTLrsQPvy/NW30vIZpFSgkmK5qL3fw1
+        mWLYPri9OgNVchpB7/7hEBTvztKUb0q7o0nufSaTESCJBteaz4fedYjG6exeIxlDZ4+sYw
+        32yZqXjqSBujPrq35pkbxkjE4DHimwQ=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-457-3KDz_bx7Ob2K6akTQorBiQ-1; Wed, 10 Jun 2020 12:12:56 -0400
+X-MC-Unique: 3KDz_bx7Ob2K6akTQorBiQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mout-p-101.mailbox.org (Postfix) with ESMTPS id 49hblR2dW9zKmrq;
-        Wed, 10 Jun 2020 07:53:55 +0200 (CEST)
-X-Virus-Scanned: amavisd-new at heinlein-support.de
-Received: from smtp2.mailbox.org ([80.241.60.241])
-        by spamfilter05.heinlein-hosting.de (spamfilter05.heinlein-hosting.de [80.241.56.123]) (amavisd-new, port 10030)
-        with ESMTP id UoN5h8M60M3c; Wed, 10 Jun 2020 07:53:52 +0200 (CEST)
-From:   Aleksa Sarai <cyphar@cyphar.com>
-To:     mtk.manpages@gmail.com
-Cc:     linux-man@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
-        viro@zeniv.linux.org.uk, christian@brauner.io,
-        Aleksa Sarai <cyphar@cyphar.com>
-Subject: [PATCH] symlink.7: document magic-links more completely
-Date:   Wed, 10 Jun 2020 15:53:19 +1000
-Message-Id: <20200610055319.26374-1-cyphar@cyphar.com>
-In-Reply-To: <20200414103524.wjhyfobzpjk236o7@yavin.dot.cyphar.com>
-References: <20200414103524.wjhyfobzpjk236o7@yavin.dot.cyphar.com>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Rspamd-Queue-Id: 3F5A41750
-X-Rspamd-Score: 2.16 / 15.00 / 15.00
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 25681A0BD8;
+        Wed, 10 Jun 2020 16:12:55 +0000 (UTC)
+Received: from virtlab423.virt.lab.eng.bos.redhat.com (virtlab423.virt.lab.eng.bos.redhat.com [10.19.152.154])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id BC362512FE;
+        Wed, 10 Jun 2020 16:12:53 +0000 (UTC)
+From:   Nitesh Narayan Lal <nitesh@redhat.com>
+To:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        frederic@kernel.org, mtosatti@redhat.com, juri.lelli@redhat.com,
+        abelits@marvell.com, bhelgaas@google.com,
+        linux-pci@vger.kernel.org, rostedt@goodmis.org, mingo@kernel.org,
+        peterz@infradead.org, tglx@linutronix.de
+Subject: [Patch v1 3/3] net: restrict queuing of receive packets to housekeeping CPUs
+Date:   Wed, 10 Jun 2020 12:12:26 -0400
+Message-Id: <20200610161226.424337-4-nitesh@redhat.com>
+In-Reply-To: <20200610161226.424337-1-nitesh@redhat.com>
+References: <20200610161226.424337-1-nitesh@redhat.com>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi Michael,
+From: Alex Belits <abelits@marvell.com>
 
-Sorry for the delay and here is the patch I promised in this thread.
+With the existing implementation of store_rps_map() packets are
+queued in the receive path on the backlog queues of other
+CPUs irrespective of whether they are isolated or not. This could
+add a latency overhead to any RT workload that is running on
+the same CPU.
+This patch ensures that store_rps_map() only uses available
+housekeeping CPUs for storing the rps_map.
 
---8<---------------------------------------------------------------------8<--
-
-Traditionally, magic-links have not been a well-understood topic in
-Linux. This helps clarify some of the terminology used in openat2.2.
-
-Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
+Signed-off-by: Alex Belits <abelits@marvell.com>
+Signed-off-by: Nitesh Narayan Lal <nitesh@redhat.com>
 ---
- man7/symlink.7 | 31 ++++++++++++++++++++++---------
- 1 file changed, 22 insertions(+), 9 deletions(-)
+ net/core/net-sysfs.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
 
-diff --git a/man7/symlink.7 b/man7/symlink.7
-index 07b1db3a3764..ed99bc4236f1 100644
---- a/man7/symlink.7
-+++ b/man7/symlink.7
-@@ -84,6 +84,21 @@ as they are implemented on Linux and other systems,
- are outlined here.
- It is important that site-local applications also conform to these rules,
- so that the user interface can be as consistent as possible.
-+.SS Magic-links
-+There is a special class of symlink-like objects known as "magic-links" which
-+can be found in certain pseudo-filesystems such as
-+.BR proc (5)
-+(examples include
-+.IR /proc/[pid]/exe " and " /proc/[pid]/fd/* .)
-+Unlike normal symlinks, magic-links are not resolved through
-+pathname-expansion, but instead act as direct references to the kernel's own
-+representation of a file handle. As such, these magic-links allow users to
-+access files which cannot be referenced with normal paths (such as unlinked
-+files still referenced by a running program.)
-+.PP
-+Because they can bypass ordinary
-+.BR mount_namespaces (7)-based
-+restrictions, magic-links have been used as attack vectors in various exploits.
- .SS Symbolic link ownership, permissions, and timestamps
- The owner and group of an existing symbolic link can be changed
- using
-@@ -99,16 +114,14 @@ of a symbolic link can be changed using
- or
- .BR lutimes (3).
- .PP
--On Linux, the permissions of a symbolic link are not used
--in any operations; the permissions are always
--0777 (read, write, and execute for all user categories),
- .\" Linux does not currently implement an lchmod(2).
--and can't be changed.
--(Note that there are some "magic" symbolic links in the
--.I /proc
--directory tree\(emfor example, the
--.IR /proc/[pid]/fd/*
--files\(emthat have different permissions.)
-+On Linux, the permissions of an ordinary symbolic link are not used in any
-+operations; the permissions are always 0777 (read, write, and execute for all
-+user categories), and can't be changed.
-+.PP
-+However, magic-links do not follow this rule. They can have a non-0777 mode,
-+though this mode is not currently used in any permission checks.
+diff --git a/net/core/net-sysfs.c b/net/core/net-sysfs.c
+index e353b822bb15..16e433287191 100644
+--- a/net/core/net-sysfs.c
++++ b/net/core/net-sysfs.c
+@@ -11,6 +11,7 @@
+ #include <linux/if_arp.h>
+ #include <linux/slab.h>
+ #include <linux/sched/signal.h>
++#include <linux/sched/isolation.h>
+ #include <linux/nsproxy.h>
+ #include <net/sock.h>
+ #include <net/net_namespace.h>
+@@ -741,7 +742,7 @@ static ssize_t store_rps_map(struct netdev_rx_queue *queue,
+ {
+ 	struct rps_map *old_map, *map;
+ 	cpumask_var_t mask;
+-	int err, cpu, i;
++	int err, cpu, i, hk_flags;
+ 	static DEFINE_MUTEX(rps_map_mutex);
+ 
+ 	if (!capable(CAP_NET_ADMIN))
+@@ -756,6 +757,13 @@ static ssize_t store_rps_map(struct netdev_rx_queue *queue,
+ 		return err;
+ 	}
+ 
++	hk_flags = HK_FLAG_DOMAIN | HK_FLAG_WQ;
++	cpumask_and(mask, mask, housekeeping_cpumask(hk_flags));
++	if (cpumask_weight(mask) == 0) {
++		free_cpumask_var(mask);
++		return -EINVAL;
++	}
 +
- .\"
- .\" The
- .\" 4.4BSD
+ 	map = kzalloc(max_t(unsigned int,
+ 			    RPS_MAP_SIZE(cpumask_weight(mask)), L1_CACHE_BYTES),
+ 		      GFP_KERNEL);
 -- 
-2.26.2
+2.18.4
 
