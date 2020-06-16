@@ -1,87 +1,274 @@
-Return-Path: <SRS0=Bi5P=74=vger.kernel.org=linux-api-owner@kernel.org>
+Return-Path: <SRS0=Vgf0=75=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0936CC433E0
-	for <linux-api@archiver.kernel.org>; Mon, 15 Jun 2020 18:26:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6F7B8C433E3
+	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 03:25:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C45652071A
-	for <linux-api@archiver.kernel.org>; Mon, 15 Jun 2020 18:26:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4410A20756
+	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 03:25:33 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="d4tyeDMo"
+	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="PIBeP28Q"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729842AbgFOS0r (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 15 Jun 2020 14:26:47 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46506 "EHLO
+        id S1726770AbgFPDZb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 15 Jun 2020 23:25:31 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44644 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729124AbgFOS0r (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 15 Jun 2020 14:26:47 -0400
-Received: from mail-pg1-x541.google.com (mail-pg1-x541.google.com [IPv6:2607:f8b0:4864:20::541])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 15352C061A0E
-        for <linux-api@vger.kernel.org>; Mon, 15 Jun 2020 11:26:47 -0700 (PDT)
-Received: by mail-pg1-x541.google.com with SMTP id e9so7930888pgo.9
-        for <linux-api@vger.kernel.org>; Mon, 15 Jun 2020 11:26:47 -0700 (PDT)
+        with ESMTP id S1726091AbgFPDZa (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 15 Jun 2020 23:25:30 -0400
+Received: from mail-pg1-x544.google.com (mail-pg1-x544.google.com [IPv6:2607:f8b0:4864:20::544])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2B4EEC08C5C4
+        for <linux-api@vger.kernel.org>; Mon, 15 Jun 2020 20:25:30 -0700 (PDT)
+Received: by mail-pg1-x544.google.com with SMTP id r18so8582769pgk.11
+        for <linux-api@vger.kernel.org>; Mon, 15 Jun 2020 20:25:30 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=chromium.org; s=google;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=P1CWugv8At4hoVY78lLsRp7X7dhFYtlRoortuxpcFCw=;
-        b=d4tyeDMohBRQ95CjvrZa6a3+G5shGbMCWFcuSB+duOdfRy9Pt43tofQfuONPluWDzq
-         Y52t3/oDUaKP4VApXovO52uKEQn8ft7lABCeu60XYLM/dmrKckMGbgAwvuCza81Q5AuW
-         amgFl5xx7Xe+oWtAuFd128UTX9Wpe+rpowOi8=
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=0u5RwpdHP0W7Xlp8ThKh0o2tWC+AL641STHEfKkDVtc=;
+        b=PIBeP28Qi996NpOXEmjqyu8KFo/EizP6EF5S74TuPVtry1BT7hFhCNMNo16tt/rAWq
+         bFtbUl4aEjuf9b7nSQKTWM2Uv7CwlV1rZmHxS46H6z8KgphCOHYvKBrC44wDyuAwu+YL
+         bWD9IGNuYG7gTraFEkUA309RRxh5x7K1kLdw8=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=P1CWugv8At4hoVY78lLsRp7X7dhFYtlRoortuxpcFCw=;
-        b=CeuXq/Umtx84QrCeYE7xy25dEJqb7BDcmx4vQ9da4nIv+nv3jOvwzQWfvjP8O74ao/
-         y1jjxfx0VlV0Jn8PP1o2kqPNs758DBRH63pc9obLIdX3YMuAs/UJLWbmifCayIItzmIN
-         GqFlqiD1xYzI+gNL+hEkeR0rFZbnrpjwrhXL9yNVNSzy6tIkfBwajfbSwV7vWGGm6Zjx
-         IXiOgpHT9QfFkQqoFlrJjmxShzKuewFpKgOTlYqQuy278RlJRuA2LtfQWRY2B9YiKtje
-         KJ41F6VPc40Fc/+3kFJPUGgHEYkQbuuVKZRU/ns0A25ew6HM3o5DvyVjiHuAqvm/rXi2
-         HzJA==
-X-Gm-Message-State: AOAM533Ygy2Yh3Z/O+jgA8MuIESt9b/otKKBmXIb/2QBAo+cdIDAhYOU
-        /PgEq7GxPqprWJYQFpKbbjQzZw==
-X-Google-Smtp-Source: ABdhPJymNtZha2b6DlF+o2cuid6oldIXzcsTAHGSwyobWdMly7LM/sU6qxJmnQfd1hAfaOhf4OjK4Q==
-X-Received: by 2002:a62:3806:: with SMTP id f6mr24228613pfa.102.1592245606547;
-        Mon, 15 Jun 2020 11:26:46 -0700 (PDT)
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=0u5RwpdHP0W7Xlp8ThKh0o2tWC+AL641STHEfKkDVtc=;
+        b=cAAYcQ81gR8v/Gcz/V2DfaUG+gCqnNt9wJDZ6HT7rLhH7LTRV7jN97LjhAI8GT3JHv
+         J5oMFMUSi9APj6xfbHTnmRO7/yrl83EQ0Mtif/GMC6ZH6LAVzs5nCV6Hr9UUVhjFC+Dq
+         CYbXT55X3AbxynPr7QOokK8BA6MfeVtnqn2nzVn2AkcNocSYYFV4j2hvTP25s43F1GUm
+         W+JUHDOD3dfJNLcB2PS/MZbDo3Za89EdfziPUv4RtozxDaLSf60cs/GMUjGeND7ExWcZ
+         fL2wHm/MxmQRX6WOQfzDZ8+eXf+S46Y8FZHjN9J9UavwmF6x94jlsWvBLfBkrzPuNInP
+         nFDw==
+X-Gm-Message-State: AOAM531Ey/OmHICz0SRHp3dOowvxVtsmhx/Ms09kFaJWzFp+qx/1I8r7
+        VKDLvj3/APoGleZyvNiCY11FSA==
+X-Google-Smtp-Source: ABdhPJzUa9JhwNcHMDvXVrfHKbgAjcAYa6z4ac/1sqGloTKRah21aXS2igvGroXKeWgdwRpBEbd7Sw==
+X-Received: by 2002:aa7:972b:: with SMTP id k11mr259824pfg.299.1592277929332;
+        Mon, 15 Jun 2020 20:25:29 -0700 (PDT)
 Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id q13sm15158205pfk.8.2020.06.15.11.26.45
+        by smtp.gmail.com with ESMTPSA id m14sm12922278pgn.83.2020.06.15.20.25.28
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 15 Jun 2020 11:26:45 -0700 (PDT)
-Date:   Mon, 15 Jun 2020 11:26:44 -0700
+        Mon, 15 Jun 2020 20:25:28 -0700 (PDT)
 From:   Kees Cook <keescook@chromium.org>
-To:     Sargun Dhillon <sargun@sargun.me>
-Cc:     linux-kernel@vger.kernel.org, Tycho Andersen <tycho@tycho.ws>,
+To:     linux-kernel@vger.kernel.org
+Cc:     Kees Cook <keescook@chromium.org>,
+        Sargun Dhillon <sargun@sargun.me>,
+        Christian Brauner <christian@brauner.io>,
+        "David S. Miller" <davem@davemloft.net>,
+        Christoph Hellwig <hch@lst.de>,
+        Tycho Andersen <tycho@tycho.ws>,
+        Jakub Kicinski <kuba@kernel.org>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
         Aleksa Sarai <cyphar@cyphar.com>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        containers@lists.linux-foundation.org, linux-api@vger.kernel.org
-Subject: Re: [RFC PATCH] seccomp: Add extensibility mechanism to read
- notifications
-Message-ID: <202006151125.5FAE400D0@keescook>
-References: <20200613072609.5919-1-sargun@sargun.me>
+        Matt Denton <mpdenton@google.com>,
+        Jann Horn <jannh@google.com>, Chris Palmer <palmer@google.com>,
+        Robert Sesek <rsesek@google.com>,
+        Giuseppe Scrivano <gscrivan@redhat.com>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Andy Lutomirski <luto@amacapital.net>,
+        Will Drewry <wad@chromium.org>, Shuah Khan <shuah@kernel.org>,
+        netdev@vger.kernel.org, containers@lists.linux-foundation.org,
+        linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+        linux-kselftest@vger.kernel.org
+Subject: [PATCH v4 02/11] fs: Move __scm_install_fd() to __fd_install_received()
+Date:   Mon, 15 Jun 2020 20:25:15 -0700
+Message-Id: <20200616032524.460144-3-keescook@chromium.org>
+X-Mailer: git-send-email 2.25.1
+In-Reply-To: <20200616032524.460144-1-keescook@chromium.org>
+References: <20200616032524.460144-1-keescook@chromium.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20200613072609.5919-1-sargun@sargun.me>
+Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Sat, Jun 13, 2020 at 12:26:09AM -0700, Sargun Dhillon wrote:
-> This introduces an extensibility mechanism to receive seccomp
-> notifications. It uses read(2), as opposed to using an ioctl. The listener
-> must be first configured to write the notification via the
-> SECCOMP_IOCTL_NOTIF_CONFIG ioctl with the fields that the user is
-> interested in.
+In preparation for users of the "install a received file" logic outside
+of net/ (pidfd and seccomp), relocate and rename __scm_install_fd() from
+net/core/scm.c to __fd_install_received() in fs/file.c, and provide a
+wrapper named fd_install_received_user(), as future patches will change
+the interface to __fd_install_received().
 
-FYI: I'm not ignoring this, but I'm trying to get the other series
-nailed down first. I'll cycle back around to this soon.
+Signed-off-by: Kees Cook <keescook@chromium.org>
+---
+ fs/file.c            | 47 ++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/file.h |  8 ++++++++
+ include/net/scm.h    |  1 -
+ net/compat.c         |  2 +-
+ net/core/scm.c       | 32 +-----------------------------
+ 5 files changed, 57 insertions(+), 33 deletions(-)
 
+diff --git a/fs/file.c b/fs/file.c
+index abb8b7081d7a..fcfddae0d252 100644
+--- a/fs/file.c
++++ b/fs/file.c
+@@ -11,6 +11,7 @@
+ #include <linux/export.h>
+ #include <linux/fs.h>
+ #include <linux/mm.h>
++#include <linux/net.h>
+ #include <linux/sched/signal.h>
+ #include <linux/slab.h>
+ #include <linux/file.h>
+@@ -18,6 +19,8 @@
+ #include <linux/bitops.h>
+ #include <linux/spinlock.h>
+ #include <linux/rcupdate.h>
++#include <net/cls_cgroup.h>
++#include <net/netprio_cgroup.h>
+ 
+ unsigned int sysctl_nr_open __read_mostly = 1024*1024;
+ unsigned int sysctl_nr_open_min = BITS_PER_LONG;
+@@ -931,6 +934,50 @@ int replace_fd(unsigned fd, struct file *file, unsigned flags)
+ 	return err;
+ }
+ 
++/**
++ * __fd_install_received() - Install received file into file descriptor table
++ *
++ * @fd: fd to install into (if negative, a new fd will be allocated)
++ * @file: struct file that was received from another process
++ * @ufd_required: true to use @ufd for writing fd number to userspace
++ * @ufd: __user pointer to write new fd number to
++ * @o_flags: the O_* flags to apply to the new fd entry
++ *
++ * Installs a received file into the file descriptor table, with appropriate
++ * checks and count updates. Optionally writes the fd number to userspace.
++ *
++ * Returns -ve on error.
++ */
++int __fd_install_received(struct file *file, int __user *ufd, unsigned int o_flags)
++{
++	struct socket *sock;
++	int new_fd;
++	int error;
++
++	error = security_file_receive(file);
++	if (error)
++		return error;
++
++	new_fd = get_unused_fd_flags(o_flags);
++	if (new_fd < 0)
++		return new_fd;
++
++	error = put_user(new_fd, ufd);
++	if (error) {
++		put_unused_fd(new_fd);
++		return error;
++	}
++
++	/* Bump the usage count and install the file. */
++	sock = sock_from_file(file, &error);
++	if (sock) {
++		sock_update_netprioidx(&sock->sk->sk_cgrp_data);
++		sock_update_classid(&sock->sk->sk_cgrp_data);
++	}
++	fd_install(new_fd, get_file(file));
++	return 0;
++}
++
+ static int ksys_dup3(unsigned int oldfd, unsigned int newfd, int flags)
+ {
+ 	int err = -EBADF;
+diff --git a/include/linux/file.h b/include/linux/file.h
+index 122f80084a3e..fe18a1a0d555 100644
+--- a/include/linux/file.h
++++ b/include/linux/file.h
+@@ -91,6 +91,14 @@ extern void put_unused_fd(unsigned int fd);
+ 
+ extern void fd_install(unsigned int fd, struct file *file);
+ 
++extern int __fd_install_received(struct file *file, int __user *ufd,
++				 unsigned int o_flags);
++static inline int fd_install_received_user(struct file *file, int __user *ufd,
++					   unsigned int o_flags)
++{
++	return __fd_install_received(file, ufd, o_flags);
++}
++
+ extern void flush_delayed_fput(void);
+ extern void __fput_sync(struct file *);
+ 
+diff --git a/include/net/scm.h b/include/net/scm.h
+index 581a94d6c613..1ce365f4c256 100644
+--- a/include/net/scm.h
++++ b/include/net/scm.h
+@@ -37,7 +37,6 @@ struct scm_cookie {
+ #endif
+ };
+ 
+-int __scm_install_fd(struct file *file, int __user *ufd, unsigned int o_flags);
+ void scm_detach_fds(struct msghdr *msg, struct scm_cookie *scm);
+ void scm_detach_fds_compat(struct msghdr *msg, struct scm_cookie *scm);
+ int __scm_send(struct socket *sock, struct msghdr *msg, struct scm_cookie *scm);
+diff --git a/net/compat.c b/net/compat.c
+index 27d477fdcaa0..94f288e8dac5 100644
+--- a/net/compat.c
++++ b/net/compat.c
+@@ -298,7 +298,7 @@ void scm_detach_fds_compat(struct msghdr *msg, struct scm_cookie *scm)
+ 	int err = 0, i;
+ 
+ 	for (i = 0; i < fdmax; i++) {
+-		err = __scm_install_fd(scm->fp->fp[i], cmsg_data + i, o_flags);
++		err = fd_install_received_user(scm->fp->fp[i], cmsg_data + i, o_flags);
+ 		if (err)
+ 			break;
+ 	}
+diff --git a/net/core/scm.c b/net/core/scm.c
+index 6151678c73ed..df190f1fdd28 100644
+--- a/net/core/scm.c
++++ b/net/core/scm.c
+@@ -280,36 +280,6 @@ void put_cmsg_scm_timestamping(struct msghdr *msg, struct scm_timestamping_inter
+ }
+ EXPORT_SYMBOL(put_cmsg_scm_timestamping);
+ 
+-int __scm_install_fd(struct file *file, int __user *ufd, unsigned int o_flags)
+-{
+-	struct socket *sock;
+-	int new_fd;
+-	int error;
+-
+-	error = security_file_receive(file);
+-	if (error)
+-		return error;
+-
+-	new_fd = get_unused_fd_flags(o_flags);
+-	if (new_fd < 0)
+-		return new_fd;
+-
+-	error = put_user(new_fd, ufd);
+-	if (error) {
+-		put_unused_fd(new_fd);
+-		return error;
+-	}
+-
+-	/* Bump the usage count and install the file. */
+-	sock = sock_from_file(file, &error);
+-	if (sock) {
+-		sock_update_netprioidx(&sock->sk->sk_cgrp_data);
+-		sock_update_classid(&sock->sk->sk_cgrp_data);
+-	}
+-	fd_install(new_fd, get_file(file));
+-	return 0;
+-}
+-
+ static int scm_max_fds(struct msghdr *msg)
+ {
+ 	if (msg->msg_controllen <= sizeof(struct cmsghdr))
+@@ -336,7 +306,7 @@ void scm_detach_fds(struct msghdr *msg, struct scm_cookie *scm)
+ 	}
+ 
+ 	for (i = 0; i < fdmax; i++) {
+-		err = __scm_install_fd(scm->fp->fp[i], cmsg_data + i, o_flags);
++		err = fd_install_received_user(scm->fp->fp[i], cmsg_data + i, o_flags);
+ 		if (err)
+ 			break;
+ 	}
 -- 
-Kees Cook
+2.25.1
+
