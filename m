@@ -2,58 +2,58 @@ Return-Path: <SRS0=Vgf0=75=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-9.8 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 50C5FC433DF
-	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 07:49:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A2DD5C433E3
+	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 07:50:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2AD0B207BC
-	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 07:49:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 827FE2074D
+	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 07:50:02 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="Ezoce9rO"
+	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="mBMsu/H3"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726630AbgFPHts (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 16 Jun 2020 03:49:48 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56986 "EHLO
+        id S1726755AbgFPHuA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 16 Jun 2020 03:50:00 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57040 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726467AbgFPHtq (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 16 Jun 2020 03:49:46 -0400
+        with ESMTP id S1726879AbgFPHt5 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 16 Jun 2020 03:49:57 -0400
 Received: from mail-pf1-x443.google.com (mail-pf1-x443.google.com [IPv6:2607:f8b0:4864:20::443])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3A341C08C5C2
-        for <linux-api@vger.kernel.org>; Tue, 16 Jun 2020 00:49:44 -0700 (PDT)
-Received: by mail-pf1-x443.google.com with SMTP id b5so9093963pfp.9
-        for <linux-api@vger.kernel.org>; Tue, 16 Jun 2020 00:49:44 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AD0C1C008600
+        for <linux-api@vger.kernel.org>; Tue, 16 Jun 2020 00:49:48 -0700 (PDT)
+Received: by mail-pf1-x443.google.com with SMTP id z63so8174272pfb.1
+        for <linux-api@vger.kernel.org>; Tue, 16 Jun 2020 00:49:48 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=chromium.org; s=google;
-        h=from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=SckuiE/B7lu+6jQS16TWP9mI8faQuosMWgoWexlj1hQ=;
-        b=Ezoce9rOyDbyfb2m0aOrEEf25Ar+VgtfGVGX7Wb43LprRiiKs8JpB/E1A8WjnNBYVM
-         4B/2J1SbeOl4KRTIVJGuoIJrcfaelSeF1ydg45cZRS2zNkqfDndwR9ABRkm6uBr1dsE/
-         zx03AhgjZ//VcaKbc8oBMMuTMxxXHOHe46e3U=
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=LpGj0LlWhL2sX6NdVIScVPST1vvxv4HP5Xz6PQqXsUs=;
+        b=mBMsu/H37l5/82lF78S3TFrEkOg5oaDeSPvONr2tsAmEU8cRaPFfhq+CvSo+fcCXID
+         IaaYZg3VqQimghB/9or2O9e8aLGitYBJVNAhSN6fjjNL8HkLB1nz+Zgd5nThB33PKaA+
+         TdE8nGpBIfY9arDLD7VJCBRTPkHDuKf0fytoA=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=SckuiE/B7lu+6jQS16TWP9mI8faQuosMWgoWexlj1hQ=;
-        b=Ps52BPG0iiSpp8duqGUvXnrota4TZ0esvWzuZ1xWY+j5D0CvCiK8qjIxUsSM9L4Gpc
-         9xgI57g8sBU6x2sxvHAdSfL5ieu8ROx5IF6YA5RyRd84fx9KdHF389L9LaiIIG6SlJab
-         meYFSXa5pxOs64Uln8FlAgVBfQ80JrXUl/IvisPLoJOJ/4Gl5RHJHsSVUQAdOyMMFGQv
-         HvKNFlqA7G6JjUtgKzTKhca0mnm784qXc5M1Os2jYdw3WKPBFTwLwemjVEYgkKydAYo7
-         PGtOz11dGC7M73Wch7wddiOkEeAEeDEHtzcAF+kNAxqw/xOL+OpwU41OZoBZokXTHgie
-         Dzsw==
-X-Gm-Message-State: AOAM5301j1LArt7Y/tRTkgwy8v1vIVlpHHaK6zSs5Pgxt21XoA9bnf5u
-        a2ALTgszAj46jzxYxUiytxLPOA==
-X-Google-Smtp-Source: ABdhPJxlBlHeeNWH2iV7QDmG8pcWwANr2ZY0ns37yCawd/LXFvUhug3zZethxpMjrE7ictMsq4oubQ==
-X-Received: by 2002:aa7:8490:: with SMTP id u16mr943050pfn.259.1592293784291;
-        Tue, 16 Jun 2020 00:49:44 -0700 (PDT)
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=LpGj0LlWhL2sX6NdVIScVPST1vvxv4HP5Xz6PQqXsUs=;
+        b=OQCy6uaSd2B1yrcrgOrRmSKiR2dlGtaxpPtgtirjNu6GktTT0epzJY3R002TPkgKxc
+         2NTh2MpYIOqQhzwzMs1lwl22BiDp8Bsd1B5MzIWCtP6vHUDF0+JYnT9wAtqToIoJMMNt
+         2qnxEvBKB3Ey6+iEWwuPbf6rp8zHFk/s7uZC9xPeexnz+6Gg+ffnSriReDoD7hHKCAV5
+         D5EZ/gjmcaWru9tkb+7SNsRce+3whjXnmUUqVfod9x11lLBq2X82aUYp8/1GDhJT9H6b
+         ZtIo9VYFD8LtM+xdpF13F9S/tJw7l2s86UbLi0Hn9nyYG1IpaRCSRL3uua+NUesG/oMx
+         ruAw==
+X-Gm-Message-State: AOAM5305ls37RegUzxa/SslaYg+AMOGhHp9tyapm9oV/NNahMNFnGDac
+        l/R861O3xql/pJDBQHjeiVpXGA==
+X-Google-Smtp-Source: ABdhPJySFd7sCS5BogiTiTKCUdeWwjE8zpkNMModdzfibmP1Pshjj5uSx9ng6G7MEky9Ar+74tfsDQ==
+X-Received: by 2002:a62:1bc5:: with SMTP id b188mr970686pfb.119.1592293788235;
+        Tue, 16 Jun 2020 00:49:48 -0700 (PDT)
 Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id s36sm13764762pgl.35.2020.06.16.00.49.42
+        by smtp.gmail.com with ESMTPSA id l23sm13485938pgc.55.2020.06.16.00.49.44
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 16 Jun 2020 00:49:42 -0700 (PDT)
+        Tue, 16 Jun 2020 00:49:46 -0700 (PDT)
 From:   Kees Cook <keescook@chromium.org>
 To:     linux-kernel@vger.kernel.org
 Cc:     Kees Cook <keescook@chromium.org>,
@@ -72,135 +72,67 @@ Cc:     Kees Cook <keescook@chromium.org>,
         Hehuazhen <hehuazhen@huawei.com>, x86@kernel.org,
         Linux Containers <containers@lists.linux-foundation.org>,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org
-Subject: [RFC][PATCH 0/8] seccomp: Implement constant action bitmaps
-Date:   Tue, 16 Jun 2020 00:49:26 -0700
-Message-Id: <20200616074934.1600036-1-keescook@chromium.org>
+Subject: [PATCH 7/8] x86: Enable seccomp constant action bitmaps
+Date:   Tue, 16 Jun 2020 00:49:33 -0700
+Message-Id: <20200616074934.1600036-8-keescook@chromium.org>
 X-Mailer: git-send-email 2.25.1
+In-Reply-To: <20200616074934.1600036-1-keescook@chromium.org>
+References: <20200616074934.1600036-1-keescook@chromium.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi,
+Now that CPU-local kernel TLB flushes are available to seccomp, define
+the specific architectures seccomp should be expected to reason about,
+so that constant action bitmaps can be enabled for x86.
 
-This is my initial stab at making constant-time seccomp bitmaps that
-are automatically generated from filters as they are added. This version
-is x86 only (and not x86_x32), but it should be easy to expand this to
-other architectures. I'd like to get arm64 working, but it has some
-NR_syscalls shenanigans I haven't sorted out yet.
+TODO: handle x32 via a "synthetic architecture" check, like done in
+syscall entry.
 
-The first two patches are small clean-ups that I intend to land in
-for-next/seccomp unless there are objections. Patch 3 is another
-experimental feature to perform architecture-pinning. Patch 4 is the
-bulk of the bitmap code. Patch 5 is benchmark updates. Patches 6 and
-7 perform the x86 enablement. Patch 8 is just a debugging example,
-in case anyone wants to play with this and would find it helpful.
+Signed-off-by: Kees Cook <keescook@chromium.org>
+---
+ arch/x86/Kconfig               | 1 +
+ arch/x86/include/asm/syscall.h | 5 +++++
+ 2 files changed, 6 insertions(+)
 
-Repeating the commit log from patch 4:
-
-
-One of the most common pain points with seccomp filters has been dealing
-with the overhead of processing the filters, especially for "always allow"
-or "always reject" cases. While BPF is extremely fast[1], it will always
-have overhead associated with it. Additionally, due to seccomp's design,
-filters are layered, which means processing time goes up as the number
-of filters attached goes up.
-
-In the past, efforts have been focused on making filter execution complete
-in a shorter amount of time. For example, filters were rewritten from
-using linear if/then/else syscall search to using balanced binary trees,
-or moving tests for syscalls common to the process's workload to the
-front of the filter. However, there are limits to this, especially when
-some processes are dealing with tens of filters[2], or when some
-architectures have a less efficient BPF engine[3].
-
-The most common use of seccomp, constructing syscall block/allow-lists,
-where syscalls that are always allowed or always rejected (without regard
-to any arguments), also tends to produce the most pathological runtime
-problems, in that a large number of syscall checks in the filter need
-to be performed to come to a determination.
-
-In order to optimize these cases from O(n) to O(1), seccomp can
-use bitmaps to immediately determine the desired action. A critical
-observation in the prior paragraph bears repeating: the common case for
-syscall tests do not check arguments. For any given filter, there is a
-constant mapping from the combination of architecture and syscall to the
-seccomp action result. (For kernels/architectures without CONFIG_COMPAT,
-there is a single architecture.). As such, it is possible to construct
-a mapping of arch/syscall to action, which can be updated as new filters
-are attached to a process.
-
-In order to build this mapping at filter attach time, each filter is
-executed for every syscall (under each possible architecture), and
-checked for any accesses of struct seccomp_data that are not the "arch"
-nor "nr" (syscall) members. If only "arch" and "nr" are examined, then
-there is a constant mapping for that syscall, and bitmaps can be updated
-accordingly. If any accesses happen outside of those struct members,
-seccomp must not bypass filter execution for that syscall, since program
-state will be used to determine filter action result.
-
-During syscall action probing, in order to determine whether other members
-of struct seccomp_data are being accessed during a filter execution,
-the struct is placed across a page boundary with the "arch" and "nr"
-members in the first page, and everything else in the second page. The
-"page accessed" flag is cleared in the second page's PTE, and the filter
-is run. If the "page accessed" flag appears as set after running the
-filter, we can determine that the filter looked beyond the "arch" and
-"nr" members, and exclude that syscall from the constant action bitmaps.
-
-For architectures to support this optimization, they must declare
-their architectures for seccomp to see (via SECCOMP_ARCH and
-SECCOMP_ARCH_COMPAT macros), and provide a way to perform efficient
-CPU-local kernel TLB flushes (via local_flush_tlb_kernel_range()),
-and then set HAVE_ARCH_SECCOMP_BITMAP in their Kconfig.
-
-Areas needing more attention:
-
-On x86, this currently adds 168 bytes (or 336 bytes under CONFIG_COMPAT)
-to the size of task_struct. Allocating these on demand may be a better
-use of memory, but may not result in good cache locality.
-
-For architectures with "synthetic" architectures, like x86_x32,
-additional work is needed. It should be possible to define a simple
-mechanism based on the masking done in the x86 syscall entry path to
-create another set of bitmaps for seccomp to key off of. I am, however,
-considering just leaving HAVE_ARCH_SECCOMP_BITMAP depend on !X86_X32.
-
-[1] https://lore.kernel.org/bpf/20200531171915.wsxvdjeetmhpsdv2@ast-mbp.dhcp.thefacebook.com/
-[2] https://lore.kernel.org/bpf/20200601101137.GA121847@gardel-login/
-[3] https://lore.kernel.org/bpf/717a06e7f35740ccb4c70470ec70fb2f@huawei.com/
-
-
-
-Thanks!
-
--Kees
-
-Kees Cook (8):
-  selftests/seccomp: Improve calibration loop
-  seccomp: Use pr_fmt
-  seccomp: Introduce SECCOMP_PIN_ARCHITECTURE
-  seccomp: Implement constant action bitmaps
-  selftests/seccomp: Compare bitmap vs filter overhead
-  x86: Provide API for local kernel TLB flushing
-  x86: Enable seccomp constant action bitmaps
-  [DEBUG] seccomp: Report bitmap coverage ranges
-
- arch/Kconfig                                  |   7 +
- arch/x86/Kconfig                              |   1 +
- arch/x86/include/asm/syscall.h                |   5 +
- arch/x86/include/asm/tlbflush.h               |   2 +
- arch/x86/mm/tlb.c                             |  12 +-
- include/linux/seccomp.h                       |  18 +
- include/uapi/linux/seccomp.h                  |   1 +
- kernel/seccomp.c                              | 374 +++++++++++++++++-
- .../selftests/seccomp/seccomp_benchmark.c     | 197 +++++++--
- tools/testing/selftests/seccomp/settings      |   2 +-
- 10 files changed, 571 insertions(+), 48 deletions(-)
-
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 6a0cc524882d..0f7a0abab88f 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -149,6 +149,7 @@ config X86
+ 	select HAVE_ARCH_COMPAT_MMAP_BASES	if MMU && COMPAT
+ 	select HAVE_ARCH_PREL32_RELOCATIONS
+ 	select HAVE_ARCH_SECCOMP_FILTER
++	select HAVE_ARCH_SECCOMP_BITMAP		if !X86_X32
+ 	select HAVE_ARCH_THREAD_STRUCT_WHITELIST
+ 	select HAVE_ARCH_STACKLEAK
+ 	select HAVE_ARCH_TRACEHOOK
+diff --git a/arch/x86/include/asm/syscall.h b/arch/x86/include/asm/syscall.h
+index 7cbf733d11af..b89e86f4c061 100644
+--- a/arch/x86/include/asm/syscall.h
++++ b/arch/x86/include/asm/syscall.h
+@@ -97,6 +97,7 @@ static inline void syscall_set_arguments(struct task_struct *task,
+ 	memcpy(&regs->bx + i, args, n * sizeof(args[0]));
+ }
+ 
++#define SECCOMP_ARCH		AUDIT_ARCH_I386
+ static inline int syscall_get_arch(struct task_struct *task)
+ {
+ 	return AUDIT_ARCH_I386;
+@@ -152,6 +153,10 @@ static inline void syscall_set_arguments(struct task_struct *task,
+ 	}
+ }
+ 
++#define SECCOMP_ARCH		AUDIT_ARCH_X86_64
++#ifdef CONFIG_COMPAT
++#define SECCOMP_ARCH_COMPAT	AUDIT_ARCH_I386
++#endif
+ static inline int syscall_get_arch(struct task_struct *task)
+ {
+ 	/* x32 tasks should be considered AUDIT_ARCH_X86_64. */
 -- 
 2.25.1
 
