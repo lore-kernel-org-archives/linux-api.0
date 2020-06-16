@@ -7,56 +7,58 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
 	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1858DC433DF
-	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 07:50:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3AF20C433E1
+	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 07:50:21 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id EC6D12074D
-	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 07:50:08 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1812F20663
+	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 07:50:21 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="iqIaqckV"
+	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="IcgNnBPc"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727054AbgFPHuI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S1726868AbgFPHuI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Tue, 16 Jun 2020 03:50:08 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57046 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57010 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726939AbgFPHt5 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 16 Jun 2020 03:49:57 -0400
-Received: from mail-pl1-x643.google.com (mail-pl1-x643.google.com [IPv6:2607:f8b0:4864:20::643])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D52A2C00862D
-        for <linux-api@vger.kernel.org>; Tue, 16 Jun 2020 00:49:49 -0700 (PDT)
-Received: by mail-pl1-x643.google.com with SMTP id d8so8013521plo.12
-        for <linux-api@vger.kernel.org>; Tue, 16 Jun 2020 00:49:49 -0700 (PDT)
+        with ESMTP id S1726671AbgFPHts (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 16 Jun 2020 03:49:48 -0400
+Received: from mail-pl1-x633.google.com (mail-pl1-x633.google.com [IPv6:2607:f8b0:4864:20::633])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 03613C05BD43
+        for <linux-api@vger.kernel.org>; Tue, 16 Jun 2020 00:49:47 -0700 (PDT)
+Received: by mail-pl1-x633.google.com with SMTP id k6so3062233pll.9
+        for <linux-api@vger.kernel.org>; Tue, 16 Jun 2020 00:49:47 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=chromium.org; s=google;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=ZajOneOdlQKQYlo8Wv9k+OekhqsO1R3/YXgaBEECIjE=;
-        b=iqIaqckVAQUEvZtp4+/qsmQGE37BQNoO7PPWo/5IR2umOLzuafxrc36ojsqisBA3bi
-         4zDJkmA8POCcTYB6xD7jmfglS/ATrJpAhXrtlCt2PRv4l86gJXFiKqXPxzD8cJrtBfyx
-         OCYp+xbwpnhRS2dDLpCWXdlx5v5ovlS/TJnjk=
+        bh=CiCnefOEfqSi7wYDZ0Ly9qFUXTY1JQW6i7HQc69RyoQ=;
+        b=IcgNnBPcUI4XxaHRZv+68h1umX7cyvIMCP36Q7y+O5a5sA6ytY5XtslKRv21o3+cf9
+         X+FMmnNEztj2FpFUzVzclsbAf//w6fXPH21coPI4d9FweeYzdb0yM25T7mcIhl6EITHx
+         x7tTwGEQtIjtktlXFsLdB31FXf9xbkZG5U6Uk=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=ZajOneOdlQKQYlo8Wv9k+OekhqsO1R3/YXgaBEECIjE=;
-        b=ACIXQR5VHYG6zAC7vjc6zHmjA5BMgjainPRD1uq1UC3tWE0ycoIMAZl10YBibo+bIe
-         dO/8sq8Nuccq5MxMbJEnuX94VWYATEqh3c/ruh/OBZSpqaHktvSxtv0cokpnxQW5M1lb
-         f6NhOP81quOl6Isv/nZZRBeeKks+I83hu1G/mrvpbw94O6qC8SLjQaW1dxYRWt2TGcJZ
-         Hyc/YDjuuXNfNLOifKHs009vjEKsj1cXWsUk2vbykBqV6u7CU318TsegnaAHhKx6/ePJ
-         3vhb2RCgK/fqvfhAX0SWEc1zw2BUL0519AQ79Ik6MxbquwFsq3oTFN/oSFWuvyPMztu+
-         VWTg==
-X-Gm-Message-State: AOAM532T0QiqiKX1+2ETzr25jA5GHIESf0l+PXeFjHKQ64vJLwrwnk8w
-        v3e5KCLBT2tw3jP7m+hCe9eu6g==
-X-Google-Smtp-Source: ABdhPJzFGf3zdAH2lmOL+oV+0KAfuNbBFFTLvoCLw3Vpzi0gDjZEe/FxPo59Sd/M81CmJjESIzVUVw==
-X-Received: by 2002:a17:90a:f508:: with SMTP id cs8mr1719058pjb.16.1592293789402;
-        Tue, 16 Jun 2020 00:49:49 -0700 (PDT)
+        bh=CiCnefOEfqSi7wYDZ0Ly9qFUXTY1JQW6i7HQc69RyoQ=;
+        b=Nnd+r6fJ9A/MwBpwrEUKbOytdMBDpxETrHHtQqSzeEUWt+Jp5avVH1yBqQnBJp/R+c
+         uQol46mAiYwQA9FvIs/NVx4nkY9yvvS5/dc9ekYgL5r6ax44OGimXelWIjAv6nf5IauK
+         emq2WsRPMY2cEw4N6gIObx8BEnvtSkdMrEamxuemyRaVU0fccwnAJYsk4z84hk8Gy81G
+         FcWcM24E+9Tkv5pgIf8waOxsVLvMgiXRkJkr/1DhP0ef0q2qhfQKoiKVq2lve6yTtAgw
+         ANgzohF00UoIcoKubNOKmDz2p5R6+kL2Y9+OiIR35S+M9BTCM/vrosAWHpbJvNI6p+1h
+         5J3w==
+X-Gm-Message-State: AOAM532KW8ikceBBWkomKdbwTBxl9uKYaDd9MzXPMh2mK5BaH8ud6DN5
+        MtrV/HgyZq5AA79L3zSZco265A==
+X-Google-Smtp-Source: ABdhPJxhW3y6afh5FWceB3QtLHRl8svdq02t3gc51fHES1LTZe4hExYi0JoBBUl7YmojYiOSd5noTw==
+X-Received: by 2002:a17:90a:4d4e:: with SMTP id l14mr1619537pjh.10.1592293784832;
+        Tue, 16 Jun 2020 00:49:44 -0700 (PDT)
 Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id m22sm17139899pfk.216.2020.06.16.00.49.44
+        by smtp.gmail.com with ESMTPSA id z1sm1612258pjz.10.2020.06.16.00.49.42
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 16 Jun 2020 00:49:46 -0700 (PDT)
+        Tue, 16 Jun 2020 00:49:42 -0700 (PDT)
 From:   Kees Cook <keescook@chromium.org>
 To:     linux-kernel@vger.kernel.org
 Cc:     Kees Cook <keescook@chromium.org>,
+        Andy Lutomirski <luto@amacapital.net>,
+        Will Drewry <wad@chromium.org>,
         Christian Brauner <christian@brauner.io>,
         Sargun Dhillon <sargun@sargun.me>,
         Tycho Andersen <tycho@tycho.ws>, Jann Horn <jannh@google.com>,
@@ -64,7 +66,7 @@ Cc:     Kees Cook <keescook@chromium.org>,
         Dave Hansen <dave.hansen@linux.intel.com>,
         Matthew Wilcox <willy@infradead.org>,
         Andy Lutomirski <luto@kernel.org>,
-        Will Drewry <wad@chromium.org>, Shuah Khan <shuah@kernel.org>,
+        Shuah Khan <shuah@kernel.org>,
         Matt Denton <mpdenton@google.com>,
         Chris Palmer <palmer@google.com>,
         Jeffrey Vander Stoep <jeffv@google.com>,
@@ -72,9 +74,9 @@ Cc:     Kees Cook <keescook@chromium.org>,
         Hehuazhen <hehuazhen@huawei.com>, x86@kernel.org,
         Linux Containers <containers@lists.linux-foundation.org>,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org
-Subject: [PATCH 6/8] x86: Provide API for local kernel TLB flushing
-Date:   Tue, 16 Jun 2020 00:49:32 -0700
-Message-Id: <20200616074934.1600036-7-keescook@chromium.org>
+Subject: [PATCH 3/8] seccomp: Introduce SECCOMP_PIN_ARCHITECTURE
+Date:   Tue, 16 Jun 2020 00:49:29 -0700
+Message-Id: <20200616074934.1600036-4-keescook@chromium.org>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20200616074934.1600036-1-keescook@chromium.org>
 References: <20200616074934.1600036-1-keescook@chromium.org>
@@ -85,60 +87,117 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The seccomp constant action bitmap filter evaluation routine depends
-on being able to quickly clear the PTE "accessed" bit for a temporary
-allocation. Provide access to the existing CPU-local kernel memory TLB
-flushing routines.
+For systems that provide multiple syscall maps based on architectures
+(e.g. AUDIT_ARCH_X86_64 and AUDIT_ARCH_I386 via CONFIG_COMPAT), allow
+a fast way to pin the process to a specific syscall mapping, instead of
+needing to generate all filters with an architecture check as the first
+filter action.
 
+Cc: Andy Lutomirski <luto@amacapital.net>
+Cc: Will Drewry <wad@chromium.org>
 Signed-off-by: Kees Cook <keescook@chromium.org>
 ---
- arch/x86/include/asm/tlbflush.h |  2 ++
- arch/x86/mm/tlb.c               | 12 +++++++++---
- 2 files changed, 11 insertions(+), 3 deletions(-)
+ include/linux/seccomp.h      |  3 +++
+ include/uapi/linux/seccomp.h |  1 +
+ kernel/seccomp.c             | 37 ++++++++++++++++++++++++++++++++++--
+ 3 files changed, 39 insertions(+), 2 deletions(-)
 
-diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
-index 8c87a2e0b660..ae853e77d6bc 100644
---- a/arch/x86/include/asm/tlbflush.h
-+++ b/arch/x86/include/asm/tlbflush.h
-@@ -228,6 +228,8 @@ extern void flush_tlb_all(void);
- extern void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
- 				unsigned long end, unsigned int stride_shift,
- 				bool freed_tables);
-+extern void local_flush_tlb_kernel_range(unsigned long start,
-+					 unsigned long end);
- extern void flush_tlb_kernel_range(unsigned long start, unsigned long end);
+diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+index babcd6c02d09..6525ddec177a 100644
+--- a/include/linux/seccomp.h
++++ b/include/linux/seccomp.h
+@@ -30,6 +30,9 @@ struct seccomp_filter;
+  */
+ struct seccomp {
+ 	int mode;
++#ifdef CONFIG_COMPAT
++	u32 arch;
++#endif
+ 	atomic_t filter_count;
+ 	struct seccomp_filter *filter;
+ };
+diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
+index c1735455bc53..84e89bb201ae 100644
+--- a/include/uapi/linux/seccomp.h
++++ b/include/uapi/linux/seccomp.h
+@@ -16,6 +16,7 @@
+ #define SECCOMP_SET_MODE_FILTER		1
+ #define SECCOMP_GET_ACTION_AVAIL	2
+ #define SECCOMP_GET_NOTIF_SIZES		3
++#define SECCOMP_PIN_ARCHITECTURE	4
  
- static inline void flush_tlb_page(struct vm_area_struct *vma, unsigned long a)
-diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index 1a3569b43aa5..ffcf2bd0ce1c 100644
---- a/arch/x86/mm/tlb.c
-+++ b/arch/x86/mm/tlb.c
-@@ -959,16 +959,22 @@ void flush_tlb_all(void)
- 	on_each_cpu(do_flush_tlb_all, NULL, 1);
- }
- 
--static void do_kernel_range_flush(void *info)
-+void local_flush_tlb_kernel_range(unsigned long start, unsigned long end)
+ /* Valid flags for SECCOMP_SET_MODE_FILTER */
+ #define SECCOMP_FILTER_FLAG_TSYNC		(1UL << 0)
+diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+index a319700c04c4..43edf53c2d84 100644
+--- a/kernel/seccomp.c
++++ b/kernel/seccomp.c
+@@ -268,9 +268,16 @@ static u32 seccomp_run_filters(const struct seccomp_data *sd,
+ 			       struct seccomp_filter **match)
  {
--	struct flush_tlb_info *f = info;
- 	unsigned long addr;
+ 	u32 ret = SECCOMP_RET_ALLOW;
++	struct seccomp_filter *f;
++
++#ifdef CONFIG_COMPAT
++	/* Block mismatched architectures. */
++	if (current->seccomp.arch && current->seccomp.arch != sd->arch)
++		return SECCOMP_RET_KILL_PROCESS;
++#endif
++
+ 	/* Make sure cross-thread synced filter points somewhere sane. */
+-	struct seccomp_filter *f =
+-			READ_ONCE(current->seccomp.filter);
++	f = READ_ONCE(current->seccomp.filter);
  
- 	/* flush range by one by one 'invlpg' */
--	for (addr = f->start; addr < f->end; addr += PAGE_SIZE)
-+	for (addr = start; addr < end; addr += PAGE_SIZE)
- 		flush_tlb_one_kernel(addr);
+ 	/* Ensure unexpected behavior doesn't result in failing open. */
+ 	if (WARN_ON(f == NULL))
+@@ -478,6 +485,11 @@ static inline void seccomp_sync_threads(unsigned long flags)
+ 		if (task_no_new_privs(caller))
+ 			task_set_no_new_privs(thread);
+ 
++#ifdef CONFIG_COMPAT
++		/* Copy any pinned architecture. */
++		thread->seccomp.arch = caller->seccomp.arch;
++#endif
++
+ 		/*
+ 		 * Opt the other thread into seccomp if needed.
+ 		 * As threads are considered to be trust-realm
+@@ -1456,6 +1468,20 @@ static long seccomp_get_notif_sizes(void __user *usizes)
+ 	return 0;
  }
  
-+static void do_kernel_range_flush(void *info)
++static long seccomp_pin_architecture(void)
 +{
-+	struct flush_tlb_info *f = info;
++#ifdef CONFIG_COMPAT
++	u32 arch = syscall_get_arch(current);
 +
-+	local_flush_tlb_kernel_range(f->start, f->end);
++	/* How did you even get here? */
++	if (current->seccomp.arch && current->seccomp.arch != arch)
++		return -EBUSY;
++
++	current->seccomp.arch = arch;
++#endif
++	return 0;
 +}
 +
- void flush_tlb_kernel_range(unsigned long start, unsigned long end)
- {
- 	/* Balance as user space task's flush, a bit conservative */
+ /* Common entry point for both prctl and syscall. */
+ static long do_seccomp(unsigned int op, unsigned int flags,
+ 		       void __user *uargs)
+@@ -1477,6 +1503,13 @@ static long do_seccomp(unsigned int op, unsigned int flags,
+ 			return -EINVAL;
+ 
+ 		return seccomp_get_notif_sizes(uargs);
++	case SECCOMP_PIN_ARCHITECTURE:
++		if (flags != 0)
++			return -EINVAL;
++		if (uargs != NULL)
++			return -EINVAL;
++
++		return seccomp_pin_architecture();
+ 	default:
+ 		return -EINVAL;
+ 	}
 -- 
 2.25.1
 
