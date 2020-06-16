@@ -2,132 +2,137 @@ Return-Path: <SRS0=Vgf0=75=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=no autolearn_force=no
+X-Spam-Status: No, score=-2.3 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 698ADC433E0
-	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 03:26:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 23454C433E0
+	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 05:12:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 489DC20776
-	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 03:26:59 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D356720707
+	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 05:12:23 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="FRqFvjr6"
+	dkim=pass (1024-bit key) header.d=sargun.me header.i=@sargun.me header.b="r60eMOPa"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726864AbgFPD06 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 15 Jun 2020 23:26:58 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44674 "EHLO
+        id S1726579AbgFPFMW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 16 Jun 2020 01:12:22 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:32770 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726851AbgFPDZe (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 15 Jun 2020 23:25:34 -0400
-Received: from mail-pl1-x642.google.com (mail-pl1-x642.google.com [IPv6:2607:f8b0:4864:20::642])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A7BFBC061A0E
-        for <linux-api@vger.kernel.org>; Mon, 15 Jun 2020 20:25:32 -0700 (PDT)
-Received: by mail-pl1-x642.google.com with SMTP id k6so2805383pll.9
-        for <linux-api@vger.kernel.org>; Mon, 15 Jun 2020 20:25:32 -0700 (PDT)
+        with ESMTP id S1725928AbgFPFMW (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 16 Jun 2020 01:12:22 -0400
+Received: from mail-io1-xd42.google.com (mail-io1-xd42.google.com [IPv6:2607:f8b0:4864:20::d42])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D2045C03E96A
+        for <linux-api@vger.kernel.org>; Mon, 15 Jun 2020 22:12:21 -0700 (PDT)
+Received: by mail-io1-xd42.google.com with SMTP id i25so209635iog.0
+        for <linux-api@vger.kernel.org>; Mon, 15 Jun 2020 22:12:21 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google;
-        h=from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=OccJNbyy0FfcO+NA6C7yQdujZ1D/AqAjCekMSJ8aj8A=;
-        b=FRqFvjr6OjkLiohv0sT5U1oo9bD6Ib4bxSZIX8h+h7+J/bnqygBr6USH7j+phNr76Q
-         F4vUdJeQo9YhtpUAiEDXiUENq7bOLk4RWEw145LTOX3+UBjOPc7vT4BUJ2rMVm0HCN/S
-         zrrQ03Wg1ub1uXhOt1dsf8fWKv7xBwMTu70O8=
+        d=sargun.me; s=google;
+        h=date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to:user-agent;
+        bh=sF7E9M9M9C8VAOujo4g/NOIFcAYsVHIwoR+spYFBtyE=;
+        b=r60eMOPa5JB9902ysCKrNI7ac62L21elL4+EL4uCwjaD4sNq4K2Uj4sAazXNameAaj
+         ID7NonJoToO0gD7lKV7rnDuXQWpgG/ojoNJ25M22j+5SoDKF8nW37UZmqNjzebQuuSI9
+         a4q1wXzmYQi111XLXBOiZFN9WW7Q13nyp6jzU=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=OccJNbyy0FfcO+NA6C7yQdujZ1D/AqAjCekMSJ8aj8A=;
-        b=DjVt9q/YMp13bpoclqZSnkG2G/Gx/SZKQclui2R12KyEtYWY8GF5xNzPJoop4kDYIY
-         sDnfgaw/LkKssCrKkV/d9kAXCdO9pHFY3AeLT2DsoumzNsOE9XqnId89HImqHuzYqbY9
-         xvjg8EDfHBdHBIbn1+X5s8WjZndMYXenWXfpDhkixxwtvtn41p+8FzdAR0vx17VsXFbg
-         YBlpzOE5hEMOQY6S4AZKjeUlz0NsW1OukKwsyejF2kdN+A4HQQKzvJmGZIx9IUMWR1dr
-         XKpsBcMgmZhgiewmqCjSXewqX+OouIxWVbqVFiUzez2NwNb1HSRGHyQXgY2/UfuZg0Qz
-         EA0g==
-X-Gm-Message-State: AOAM532K75s+AfFJqgjABneDP23kLvllwbj1sNiVXD01FjZeD4TtV5rq
-        Kh3Upphs4ybsyZtoozetPSPmWA==
-X-Google-Smtp-Source: ABdhPJxgcK/l6xCXdtSwCQ40JJUAiVgLKoo4hOU48ZEP4FhEZChYl9Se2TmOgyhEb/6Mbtv9TOME9g==
-X-Received: by 2002:a17:90a:1617:: with SMTP id n23mr730023pja.80.1592277932181;
-        Mon, 15 Jun 2020 20:25:32 -0700 (PDT)
-Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id n2sm15740871pfd.125.2020.06.15.20.25.28
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 15 Jun 2020 20:25:28 -0700 (PDT)
-From:   Kees Cook <keescook@chromium.org>
-To:     linux-kernel@vger.kernel.org
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to:user-agent;
+        bh=sF7E9M9M9C8VAOujo4g/NOIFcAYsVHIwoR+spYFBtyE=;
+        b=GirLoOc8RMAlASoPV6shLa7ElnoYN/JNk58ULYdYDxc+qwciKHwALmm1Un5lqZ7bEA
+         RCkTISUswmzKZC3tjYulsIbefv0oy54xpZUY4QHb3aDGCrV6V3Kpa+dDXeoUkU7Cyg/K
+         DSuOhb4wpHtmuho59DmQ7UzIuwqsZHE1jVzENd491/kTdhFMNthu/sCdWTNn7XiV6hu8
+         gW7JkfrgSbTLJW3t5r9WtjzQvpudjvJvD12dYIC44rXg6CTmr0lQaaB4I95mYhrm/Med
+         /2w1QjBJ9vmBs6RezpJdDGf4VFLBsGgOl5YxvlX2r+HNltB+M8L7tXpRhaFW8i1MYnvc
+         1PuA==
+X-Gm-Message-State: AOAM530IqygSpIcJbxmb57LgF9bwjDg0WVE6N9fHavgsndOMOK+Z2bte
+        RLVohFTQsYUDaKUVSI9ctbfX7w==
+X-Google-Smtp-Source: ABdhPJyVhQLX2fk4FkYMix9csXU1HQWEE674dB4w2Xqfii5o7Hwo1KMua7Zm/FBZcNGEURfmX7PTdg==
+X-Received: by 2002:a6b:5c01:: with SMTP id z1mr915362ioh.177.1592284340936;
+        Mon, 15 Jun 2020 22:12:20 -0700 (PDT)
+Received: from ircssh-2.c.rugged-nimbus-611.internal (80.60.198.104.bc.googleusercontent.com. [104.198.60.80])
+        by smtp.gmail.com with ESMTPSA id l26sm9347068ild.59.2020.06.15.22.12.20
+        (version=TLS1_2 cipher=ECDHE-ECDSA-CHACHA20-POLY1305 bits=256/256);
+        Mon, 15 Jun 2020 22:12:20 -0700 (PDT)
+Date:   Tue, 16 Jun 2020 05:12:19 +0000
+From:   Sargun Dhillon <sargun@sargun.me>
+To:     Jann Horn <jannh@google.com>
 Cc:     Kees Cook <keescook@chromium.org>,
-        Sargun Dhillon <sargun@sargun.me>,
-        Christian Brauner <christian@brauner.io>,
-        "David S. Miller" <davem@davemloft.net>,
-        Christoph Hellwig <hch@lst.de>,
+        kernel list <linux-kernel@vger.kernel.org>,
         Tycho Andersen <tycho@tycho.ws>,
-        Jakub Kicinski <kuba@kernel.org>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
         Aleksa Sarai <cyphar@cyphar.com>,
-        Matt Denton <mpdenton@google.com>,
-        Jann Horn <jannh@google.com>, Chris Palmer <palmer@google.com>,
-        Robert Sesek <rsesek@google.com>,
-        Giuseppe Scrivano <gscrivan@redhat.com>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Andy Lutomirski <luto@amacapital.net>,
-        Will Drewry <wad@chromium.org>, Shuah Khan <shuah@kernel.org>,
-        netdev@vger.kernel.org, containers@lists.linux-foundation.org,
-        linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        linux-kselftest@vger.kernel.org
-Subject: [PATCH v4 00/11] Add seccomp notifier ioctl that enables adding fds
-Date:   Mon, 15 Jun 2020 20:25:13 -0700
-Message-Id: <20200616032524.460144-1-keescook@chromium.org>
-X-Mailer: git-send-email 2.25.1
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Linux Containers <containers@lists.linux-foundation.org>,
+        Linux API <linux-api@vger.kernel.org>
+Subject: Re: [RFC PATCH] seccomp: Add extensibility mechanism to read
+ notifications
+Message-ID: <20200616051218.GA16032@ircssh-2.c.rugged-nimbus-611.internal>
+References: <20200613072609.5919-1-sargun@sargun.me>
+ <CAG48ez2ZyYkHhbuwLYehR5fx2_d9yoVg4tBmyqvVqpy-oZ-0cA@mail.gmail.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CAG48ez2ZyYkHhbuwLYehR5fx2_d9yoVg4tBmyqvVqpy-oZ-0cA@mail.gmail.com>
+User-Agent: Mutt/1.9.4 (2018-02-28)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hello!
+On Mon, Jun 15, 2020 at 11:36:22AM +0200, Jann Horn wrote:
+> On Sat, Jun 13, 2020 at 9:26 AM Sargun Dhillon <sargun@sargun.me> wrote:
+> > This introduces an extensibility mechanism to receive seccomp
+> > notifications. It uses read(2), as opposed to using an ioctl. The listener
+> > must be first configured to write the notification via the
+> > SECCOMP_IOCTL_NOTIF_CONFIG ioctl with the fields that the user is
+> > interested in.
+> >
+> > This is different than the old SECCOMP_IOCTL_NOTIF_RECV method as it allows
+> > for more flexibility. It allows the user to opt into certain fields, and
+> > not others. This is nice for users who want to opt into some fields like
+> > thread group leader. In the future, this mechanism can be used to expose
+> > file descriptors to users,
+> 
+> Please don't touch the caller's file descriptor table from read/write
+> handlers, only from ioctl handlers. A process should always be able to
+> read from files supplied by an untrusted user without having to worry
+> about new entries mysteriously popping up in its fd table.
+> 
+Acknowledged.
 
-This is a bit of thread-merge between [1] and [2]. tl;dr: add a way for
-a seccomp user_notif process manager to inject files into the managed
-process in order to handle emulation of various fd-returning syscalls
-across security boundaries. Containers folks and Chrome are in need
-of the feature, and investigating this solution uncovered (and fixed)
-implementation issues with existing file sending routines.
+Is something like:
+ioctl(listener, SECCOMP_GET_MEMORY, notification_id);
 
-I intend to carry this in the seccomp tree, unless someone has objections.
-:) Please review and test!
+reasonable in your opinion?
 
--Kees
+> > such as a representation of the process's
+> > memory. It also has good forwards and backwards compatibility guarantees.
+> > Users with programs compiled against newer headers will work fine on older
+> > kernels as long as they don't opt into any sizes, or optional fields that
+> > are only available on newer kernels.
+> >
+> > The ioctl method relies on an extensible struct[1]. This extensible struct
+> > is slightly misleading[2] as the ioctl number changes when we extend it.
+> > This breaks backwards compatibility with older kernels even if we're not
+> > asking for any fields that we do not need. In order to deal with this, the
+> > ioctl number would need to be dynamic, or the user would need to pass the
+> > size they're expecting, and we would need to implemented "extended syscall"
+> > semantics in ioctl. This potentially causes issue to future work of
+> > kernel-assisted copying for ioctl user buffers.
+> 
+> I don't see the issue. Can't you replace "switch (cmd)" with "switch
+> (cmd & ~IOCSIZE_MASK)" and then check the size separately?
+It depends:
+1. If we rely purely on definitions in ioctl.h, and the user they've pulled
+   in a newer header file, on an older kernel, it will fail. This is because
+   the size is bigger, and we don't actually know if they're interested in
+   those new values
+2. We can define new seccomp IOCTL versions, and expose these to the user.
+   This has some niceness to it, in that there's a simple backwards compatibiity
+   story. This is a little unorthodox though.
+3. We do something like embed the version / size that someone is interested
+   in in the struct, and the ioctl reads it in order to determine which version
+   of the fields to populate. This is effectively what the read approach does
+   with more steps.
 
-[1] https://lore.kernel.org/lkml/20200603011044.7972-1-sargun@sargun.me/
-[2] https://lore.kernel.org/lkml/20200610045214.1175600-1-keescook@chromium.org/
-
-Kees Cook (9):
-  net/scm: Regularize compat handling of scm_detach_fds()
-  fs: Move __scm_install_fd() to __fd_install_received()
-  fs: Add fd_install_received() wrapper for __fd_install_received()
-  pidfd: Replace open-coded partial fd_install_received()
-  fs: Expand __fd_install_received() to accept fd
-  selftests/seccomp: Make kcmp() less required
-  selftests/seccomp: Rename user_trap_syscall() to user_notif_syscall()
-  seccomp: Switch addfd to Extensible Argument ioctl
-  seccomp: Fix ioctl number for SECCOMP_IOCTL_NOTIF_ID_VALID
-
-Sargun Dhillon (2):
-  seccomp: Introduce addfd ioctl to seccomp user notifier
-  selftests/seccomp: Test SECCOMP_IOCTL_NOTIF_ADDFD
-
- fs/file.c                                     |  65 ++++
- include/linux/file.h                          |  16 +
- include/uapi/linux/seccomp.h                  |  25 +-
- kernel/pid.c                                  |  11 +-
- kernel/seccomp.c                              | 181 ++++++++-
- net/compat.c                                  |  55 ++-
- net/core/scm.c                                |  50 +--
- tools/testing/selftests/seccomp/seccomp_bpf.c | 350 +++++++++++++++---
- 8 files changed, 618 insertions(+), 135 deletions(-)
-
--- 
-2.25.1
-
+There's no reason we can't do #3. Just a complexity tradeoff.
