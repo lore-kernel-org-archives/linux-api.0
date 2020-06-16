@@ -7,51 +7,51 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
 	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E0152C433E0
-	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 03:26:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 586D4C433DF
+	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 03:26:38 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B3540207D3
-	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 03:26:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 32E43207D3
+	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 03:26:38 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="V3XA0nHM"
+	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="be9HSNva"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727062AbgFPD0g (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S1726025AbgFPD0g (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Mon, 15 Jun 2020 23:26:36 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44668 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44690 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726952AbgFPDZj (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 15 Jun 2020 23:25:39 -0400
-Received: from mail-pl1-x643.google.com (mail-pl1-x643.google.com [IPv6:2607:f8b0:4864:20::643])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2C276C08C5C7
-        for <linux-api@vger.kernel.org>; Mon, 15 Jun 2020 20:25:36 -0700 (PDT)
-Received: by mail-pl1-x643.google.com with SMTP id k6so2805426pll.9
-        for <linux-api@vger.kernel.org>; Mon, 15 Jun 2020 20:25:36 -0700 (PDT)
+        with ESMTP id S1726910AbgFPDZg (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 15 Jun 2020 23:25:36 -0400
+Received: from mail-pl1-x644.google.com (mail-pl1-x644.google.com [IPv6:2607:f8b0:4864:20::644])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A68C5C08C5C5
+        for <linux-api@vger.kernel.org>; Mon, 15 Jun 2020 20:25:34 -0700 (PDT)
+Received: by mail-pl1-x644.google.com with SMTP id j4so4510287plk.3
+        for <linux-api@vger.kernel.org>; Mon, 15 Jun 2020 20:25:34 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=chromium.org; s=google;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=rE3Y2iFwUUd87kC4LPkJ/n5Ro7lODcTLpnlUXVeVqP4=;
-        b=V3XA0nHMmtCHiAAjYJ+ZyCD0LYHJYFVci/dawxxSgdePAiA4xV8RysbhxpPr+L3zVP
-         34KqKhpQ2oyvvwl6p1Hw7IgxnST9JWeyZLSe5rxdOOI4bbcYAgkCRIRj4tk0JM60C9JZ
-         M+G42YS35Vm30gy42rDJy0fo0E5XO0KuRrgn0=
+        bh=aWh5lElW/7ccftZHL3bZeOP7ElRbbCS5z6Iyk301O4M=;
+        b=be9HSNvaCEr3M8WffUkDBl3zphEnJZZbkYJodEsZj3DQ29d3u0+zWo2/SzVQch8Clg
+         xYvfYEg9K8XrLCZgFUN1cgNWX8c+skTOKifRq+N8U7wD7h+t+I/+dMLA1w8WwhV8hoRm
+         DhBkRMAFxZewoWgjfQuedvEonO/umyVkInOuI=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=rE3Y2iFwUUd87kC4LPkJ/n5Ro7lODcTLpnlUXVeVqP4=;
-        b=A2o2LDtm18yBvIP/BS5njuJiY70KJl2AqlukEcSCGAibMutXhUxMWxlD2MuJcJB997
-         uQjXydCTceZTLISrDIklxmOYT/Bl5TPXX/jXCW/iljYTQYd1vV+4Hcnj+j5ugBsCWzoX
-         UvNmehhMz4s800JS5NYdf7M/fQVOq7vUWdd8F48lGQgKqCW4cgeoDL5FBhKMEHInZKyg
-         +hYpLman/1wQWyL29g5MJbaFxt0SYx/gLJXvGvj8rHScf5pP0QyshtzJp1H18cV11zLh
-         NcuuU+rZ8RjuVuDv3dYtL5rzyXWE1yK9bArKaYS4wpvuLXBt+07hxTDw81tKhPJUpL9p
-         ZX4w==
-X-Gm-Message-State: AOAM530+4OUBKs4lbE9i1unpG3PPAW5LBeUxrNgmf85Kkzf/GQomXKpg
-        5U4XHgJfpevvERlWnwJLGcxWRA==
-X-Google-Smtp-Source: ABdhPJxCZqVuV3kzeXed/HFT/JXAbaWaHZ3nnHfrJBQ1uX2cvtIopqK121014OWTVMCuzhtnGpPz3A==
-X-Received: by 2002:a17:90b:234c:: with SMTP id ms12mr836787pjb.164.1592277935719;
-        Mon, 15 Jun 2020 20:25:35 -0700 (PDT)
+        bh=aWh5lElW/7ccftZHL3bZeOP7ElRbbCS5z6Iyk301O4M=;
+        b=tyFbDHynStZwzGvyE/sZ5Ce9F9cVCiGpQmoVYrWWnxn8u7ZgWR0YmrqGXz41JqK3ko
+         YVUcICipPI1OhxqUfluftwklHTxyj1UagCFYzTLa3gHK6nqt0M9J8n0Uwf6unqyOUCv4
+         BPLd17mkYEWzsscH7pY1Sqiyc7lQtTa4JG4GylUvOi730lm1ZCTVwDCVCiCn2r62h44p
+         R8xmW9tN1xQUy62Mi/lfcnvBn9ab3kL5tGxbBLVPrnZpH5C6sYvLZhD5y1PcrW6I+8A+
+         y4FteRqavE0Yf/dK15O80KmRFWGWi4IDIXGCLPeZdc0s36hPoMkK+F+u8LeV1CT5MlVH
+         vYyg==
+X-Gm-Message-State: AOAM531EG3BSo5JiMk6Ib1eIZF7uTvDSkY4+QFw3wzxjptWJCm2xYli5
+        gTQFU9UBTNiyJa69WPTAW3gloQ==
+X-Google-Smtp-Source: ABdhPJxt49m1w44D+xHPvHZHatkz/S2ffGer11Fx7PrHDm4CiS7xyBuAAA93jBOTXmjz0LnDbZun2g==
+X-Received: by 2002:a17:902:6a83:: with SMTP id n3mr351980plk.42.1592277934197;
+        Mon, 15 Jun 2020 20:25:34 -0700 (PDT)
 Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id ds11sm785227pjb.0.2020.06.15.20.25.31
+        by smtp.gmail.com with ESMTPSA id u6sm5432357pfc.83.2020.06.15.20.25.30
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Mon, 15 Jun 2020 20:25:32 -0700 (PDT)
 From:   Kees Cook <keescook@chromium.org>
@@ -75,9 +75,9 @@ Cc:     Kees Cook <keescook@chromium.org>,
         netdev@vger.kernel.org, containers@lists.linux-foundation.org,
         linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
         linux-kselftest@vger.kernel.org
-Subject: [PATCH v4 09/11] selftests/seccomp: Rename user_trap_syscall() to user_notif_syscall()
-Date:   Mon, 15 Jun 2020 20:25:22 -0700
-Message-Id: <20200616032524.460144-10-keescook@chromium.org>
+Subject: [PATCH v4 07/11] selftests/seccomp: Test SECCOMP_IOCTL_NOTIF_ADDFD
+Date:   Mon, 15 Jun 2020 20:25:20 -0700
+Message-Id: <20200616032524.460144-8-keescook@chromium.org>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20200616032524.460144-1-keescook@chromium.org>
 References: <20200616032524.460144-1-keescook@chromium.org>
@@ -88,200 +88,242 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The user_trap_syscall() helper creates a filter with
-SECCOMP_RET_USER_NOTIF. To avoid confusion with SECCOMP_RET_TRAP, rename
-the helper to user_notif_syscall().
+From: Sargun Dhillon <sargun@sargun.me>
 
-Additionally fix a redundant "return" after XFAIL.
+Test whether we can add file descriptors in response to notifications.
+This injects the file descriptors via notifications, and then uses
+kcmp to determine whether or not it has been successful.
 
+It also includes some basic sanity checking for arguments.
+
+Signed-off-by: Sargun Dhillon <sargun@sargun.me>
+Link: https://lore.kernel.org/r/20200603011044.7972-5-sargun@sargun.me
 Signed-off-by: Kees Cook <keescook@chromium.org>
 ---
- tools/testing/selftests/seccomp/seccomp_bpf.c | 60 +++++++++----------
- 1 file changed, 29 insertions(+), 31 deletions(-)
+ tools/testing/selftests/seccomp/seccomp_bpf.c | 188 ++++++++++++++++++
+ 1 file changed, 188 insertions(+)
 
 diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
-index 40ed846744e4..95b134933831 100644
+index 402ccb3a4e52..c4e264b37c30 100644
 --- a/tools/testing/selftests/seccomp/seccomp_bpf.c
 +++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
-@@ -3110,10 +3110,8 @@ TEST(get_metadata)
- 	long ret;
+@@ -45,6 +45,7 @@
+ #include <sys/socket.h>
+ #include <sys/ioctl.h>
+ #include <linux/kcmp.h>
++#include <sys/resource.h>
  
- 	/* Only real root can get metadata. */
--	if (geteuid()) {
--		XFAIL(return, "get_metadata requires real root");
--		return;
--	}
-+	if (geteuid())
-+		XFAIL(return, "get_metadata test requires real root");
+ #include <unistd.h>
+ #include <sys/syscall.h>
+@@ -168,7 +169,9 @@ struct seccomp_metadata {
  
- 	ASSERT_EQ(0, pipe(pipefd));
+ #ifndef SECCOMP_FILTER_FLAG_NEW_LISTENER
+ #define SECCOMP_FILTER_FLAG_NEW_LISTENER	(1UL << 3)
++#endif
  
-@@ -3170,7 +3168,7 @@ TEST(get_metadata)
- 	ASSERT_EQ(0, kill(pid, SIGKILL));
++#ifndef SECCOMP_RET_USER_NOTIF
+ #define SECCOMP_RET_USER_NOTIF 0x7fc00000U
+ 
+ #define SECCOMP_IOC_MAGIC		'!'
+@@ -204,6 +207,24 @@ struct seccomp_notif_sizes {
+ };
+ #endif
+ 
++#ifndef SECCOMP_IOCTL_NOTIF_ADDFD
++/* On success, the return value is the remote process's added fd number */
++#define SECCOMP_IOCTL_NOTIF_ADDFD	SECCOMP_IOW(3,	\
++						struct seccomp_notif_addfd)
++
++/* valid flags for seccomp_notif_addfd */
++#define SECCOMP_ADDFD_FLAG_SETFD	(1UL << 0) /* Specify remote fd */
++
++struct seccomp_notif_addfd {
++	__u64 size;
++	__u64 id;
++	__u32 flags;
++	__u32 srcfd;
++	__u32 newfd;
++	__u32 newfd_flags;
++};
++#endif
++
+ #ifndef PTRACE_EVENTMSG_SYSCALL_ENTRY
+ #define PTRACE_EVENTMSG_SYSCALL_ENTRY	1
+ #define PTRACE_EVENTMSG_SYSCALL_EXIT	2
+@@ -3822,6 +3843,173 @@ TEST(user_notification_filter_empty_threaded)
+ 	EXPECT_GT((pollfd.revents & POLLHUP) ?: 0, 0);
  }
  
--static int user_trap_syscall(int nr, unsigned int flags)
-+static int user_notif_syscall(int nr, unsigned int flags)
- {
- 	struct sock_filter filter[] = {
- 		BPF_STMT(BPF_LD+BPF_W+BPF_ABS,
-@@ -3216,7 +3214,7 @@ TEST(user_notification_basic)
- 
- 	/* Check that we get -ENOSYS with no listener attached */
- 	if (pid == 0) {
--		if (user_trap_syscall(__NR_getppid, 0) < 0)
-+		if (user_notif_syscall(__NR_getppid, 0) < 0)
- 			exit(1);
- 		ret = syscall(__NR_getppid);
- 		exit(ret >= 0 || errno != ENOSYS);
-@@ -3233,13 +3231,13 @@ TEST(user_notification_basic)
- 	EXPECT_EQ(seccomp(SECCOMP_SET_MODE_FILTER, 0, &prog), 0);
- 
- 	/* Check that the basic notification machinery works */
--	listener = user_trap_syscall(__NR_getppid,
--				     SECCOMP_FILTER_FLAG_NEW_LISTENER);
-+	listener = user_notif_syscall(__NR_getppid,
-+				      SECCOMP_FILTER_FLAG_NEW_LISTENER);
- 	ASSERT_GE(listener, 0);
- 
- 	/* Installing a second listener in the chain should EBUSY */
--	EXPECT_EQ(user_trap_syscall(__NR_getppid,
--				    SECCOMP_FILTER_FLAG_NEW_LISTENER),
-+	EXPECT_EQ(user_notif_syscall(__NR_getppid,
-+				     SECCOMP_FILTER_FLAG_NEW_LISTENER),
- 		  -1);
- 	EXPECT_EQ(errno, EBUSY);
- 
-@@ -3303,12 +3301,12 @@ TEST(user_notification_with_tsync)
- 	/* these were exclusive */
- 	flags = SECCOMP_FILTER_FLAG_NEW_LISTENER |
- 		SECCOMP_FILTER_FLAG_TSYNC;
--	ASSERT_EQ(-1, user_trap_syscall(__NR_getppid, flags));
-+	ASSERT_EQ(-1, user_notif_syscall(__NR_getppid, flags));
- 	ASSERT_EQ(EINVAL, errno);
- 
- 	/* but now they're not */
- 	flags |= SECCOMP_FILTER_FLAG_TSYNC_ESRCH;
--	ret = user_trap_syscall(__NR_getppid, flags);
-+	ret = user_notif_syscall(__NR_getppid, flags);
- 	close(ret);
- 	ASSERT_LE(0, ret);
- }
-@@ -3326,8 +3324,8 @@ TEST(user_notification_kill_in_middle)
- 		TH_LOG("Kernel does not support PR_SET_NO_NEW_PRIVS!");
- 	}
- 
--	listener = user_trap_syscall(__NR_getppid,
--				     SECCOMP_FILTER_FLAG_NEW_LISTENER);
-+	listener = user_notif_syscall(__NR_getppid,
-+				      SECCOMP_FILTER_FLAG_NEW_LISTENER);
- 	ASSERT_GE(listener, 0);
- 
- 	/*
-@@ -3380,8 +3378,8 @@ TEST(user_notification_signal)
- 
- 	ASSERT_EQ(socketpair(PF_LOCAL, SOCK_SEQPACKET, 0, sk_pair), 0);
- 
--	listener = user_trap_syscall(__NR_gettid,
--				     SECCOMP_FILTER_FLAG_NEW_LISTENER);
-+	listener = user_notif_syscall(__NR_gettid,
-+				      SECCOMP_FILTER_FLAG_NEW_LISTENER);
- 	ASSERT_GE(listener, 0);
- 
- 	pid = fork();
-@@ -3450,8 +3448,8 @@ TEST(user_notification_closed_listener)
- 		TH_LOG("Kernel does not support PR_SET_NO_NEW_PRIVS!");
- 	}
- 
--	listener = user_trap_syscall(__NR_getppid,
--				     SECCOMP_FILTER_FLAG_NEW_LISTENER);
-+	listener = user_notif_syscall(__NR_getppid,
-+				      SECCOMP_FILTER_FLAG_NEW_LISTENER);
- 	ASSERT_GE(listener, 0);
- 
- 	/*
-@@ -3484,8 +3482,8 @@ TEST(user_notification_child_pid_ns)
- 
- 	ASSERT_EQ(unshare(CLONE_NEWUSER | CLONE_NEWPID), 0);
- 
--	listener = user_trap_syscall(__NR_getppid,
--				     SECCOMP_FILTER_FLAG_NEW_LISTENER);
-+	listener = user_notif_syscall(__NR_getppid,
-+				      SECCOMP_FILTER_FLAG_NEW_LISTENER);
- 	ASSERT_GE(listener, 0);
- 
- 	pid = fork();
-@@ -3524,8 +3522,8 @@ TEST(user_notification_sibling_pid_ns)
- 		TH_LOG("Kernel does not support PR_SET_NO_NEW_PRIVS!");
- 	}
- 
--	listener = user_trap_syscall(__NR_getppid,
--				     SECCOMP_FILTER_FLAG_NEW_LISTENER);
-+	listener = user_notif_syscall(__NR_getppid,
-+				      SECCOMP_FILTER_FLAG_NEW_LISTENER);
- 	ASSERT_GE(listener, 0);
- 
- 	pid = fork();
-@@ -3589,8 +3587,8 @@ TEST(user_notification_fault_recv)
- 
- 	ASSERT_EQ(unshare(CLONE_NEWUSER), 0);
- 
--	listener = user_trap_syscall(__NR_getppid,
--				     SECCOMP_FILTER_FLAG_NEW_LISTENER);
-+	listener = user_notif_syscall(__NR_getppid,
-+				      SECCOMP_FILTER_FLAG_NEW_LISTENER);
- 	ASSERT_GE(listener, 0);
- 
- 	pid = fork();
-@@ -3641,7 +3639,7 @@ TEST(user_notification_continue)
- 		TH_LOG("Kernel does not support PR_SET_NO_NEW_PRIVS!");
- 	}
- 
--	listener = user_trap_syscall(__NR_dup, SECCOMP_FILTER_FLAG_NEW_LISTENER);
-+	listener = user_notif_syscall(__NR_dup, SECCOMP_FILTER_FLAG_NEW_LISTENER);
- 	ASSERT_GE(listener, 0);
- 
- 	pid = fork();
-@@ -3736,7 +3734,7 @@ TEST(user_notification_filter_empty)
- 	if (pid == 0) {
- 		int listener;
- 
--		listener = user_trap_syscall(__NR_mknod, SECCOMP_FILTER_FLAG_NEW_LISTENER);
-+		listener = user_notif_syscall(__NR_mknod, SECCOMP_FILTER_FLAG_NEW_LISTENER);
- 		if (listener < 0)
- 			_exit(EXIT_FAILURE);
- 
-@@ -3792,7 +3790,7 @@ TEST(user_notification_filter_empty_threaded)
- 		int listener, status;
- 		pthread_t thread;
- 
--		listener = user_trap_syscall(__NR_dup, SECCOMP_FILTER_FLAG_NEW_LISTENER);
-+		listener = user_notif_syscall(__NR_dup, SECCOMP_FILTER_FLAG_NEW_LISTENER);
- 		if (listener < 0)
- 			_exit(EXIT_FAILURE);
- 
-@@ -3869,8 +3867,8 @@ TEST(user_notification_sendfd)
- 	}
- 
- 	/* Check that the basic notification machinery works */
--	listener = user_trap_syscall(__NR_getppid,
--				     SECCOMP_FILTER_FLAG_NEW_LISTENER);
-+	listener = user_notif_syscall(__NR_getppid,
-+				      SECCOMP_FILTER_FLAG_NEW_LISTENER);
- 	ASSERT_GE(listener, 0);
- 
- 	pid = fork();
-@@ -3993,8 +3991,8 @@ TEST(user_notification_sendfd_rlimit)
- 	}
- 
- 	/* Check that the basic notification machinery works */
--	listener = user_trap_syscall(__NR_getppid,
--				     SECCOMP_FILTER_FLAG_NEW_LISTENER);
-+	listener = user_notif_syscall(__NR_getppid,
-+				      SECCOMP_FILTER_FLAG_NEW_LISTENER);
- 	ASSERT_GE(listener, 0);
- 
- 	pid = fork();
++TEST(user_notification_sendfd)
++{
++	pid_t pid;
++	long ret;
++	int status, listener, memfd;
++	struct seccomp_notif_addfd addfd = {};
++	struct seccomp_notif req = {};
++	struct seccomp_notif_resp resp = {};
++	/* 100 ms */
++	struct timespec delay = { .tv_nsec = 100000000 };
++
++	memfd = memfd_create("test", 0);
++	ASSERT_GE(memfd, 0);
++
++	ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
++	ASSERT_EQ(0, ret) {
++		TH_LOG("Kernel does not support PR_SET_NO_NEW_PRIVS!");
++	}
++
++	/* Check that the basic notification machinery works */
++	listener = user_trap_syscall(__NR_getppid,
++				     SECCOMP_FILTER_FLAG_NEW_LISTENER);
++	ASSERT_GE(listener, 0);
++
++	pid = fork();
++	ASSERT_GE(pid, 0);
++
++	if (pid == 0) {
++		if (syscall(__NR_getppid) != USER_NOTIF_MAGIC)
++			exit(1);
++		exit(syscall(__NR_getppid) != USER_NOTIF_MAGIC);
++	}
++
++	ASSERT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_RECV, &req), 0);
++
++	addfd.size = sizeof(addfd);
++	addfd.srcfd = memfd;
++	addfd.newfd_flags = O_CLOEXEC;
++	addfd.newfd = 0;
++	addfd.id = req.id;
++	addfd.flags = 0xff;
++
++	/* Verify bad flags cannot be set */
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd), -1);
++	EXPECT_EQ(errno, EINVAL);
++
++	/* Verify that remote_fd cannot be set without setting flags */
++	addfd.flags = 0;
++	addfd.newfd = 1;
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd), -1);
++	EXPECT_EQ(errno, EINVAL);
++
++	/* Verify we can set an arbitrary remote fd */
++	addfd.newfd = 0;
++
++	ret = ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd);
++	EXPECT_GE(ret, 0);
++	EXPECT_EQ(filecmp(getpid(), pid, memfd, ret), 0);
++
++	/* Verify we can set a specific remote fd */
++	addfd.newfd = 42;
++	addfd.flags = SECCOMP_ADDFD_FLAG_SETFD;
++
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd), 42);
++	EXPECT_EQ(filecmp(getpid(), pid, memfd, 42), 0);
++
++	resp.id = req.id;
++	resp.error = 0;
++	resp.val = USER_NOTIF_MAGIC;
++
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_SEND, &resp), 0);
++
++	/*
++	 * This sets the ID of the ADD FD to the last request plus 1. The
++	 * notification ID increments 1 per notification.
++	 */
++	addfd.id = req.id + 1;
++
++	/* This spins until the underlying notification is generated */
++	while (ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd) != -1 &&
++	       errno != -EINPROGRESS)
++		nanosleep(&delay, NULL);
++
++	memset(&req, 0, sizeof(req));
++	ASSERT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_RECV, &req), 0);
++	ASSERT_EQ(addfd.id, req.id);
++
++	resp.id = req.id;
++	resp.error = 0;
++	resp.val = USER_NOTIF_MAGIC;
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_SEND, &resp), 0);
++
++
++	EXPECT_EQ(waitpid(pid, &status, 0), pid);
++	EXPECT_EQ(true, WIFEXITED(status));
++	EXPECT_EQ(0, WEXITSTATUS(status));
++
++	close(memfd);
++}
++
++TEST(user_notification_sendfd_rlimit)
++{
++	pid_t pid;
++	long ret;
++	int status, listener, memfd;
++	struct seccomp_notif_addfd addfd = {};
++	struct seccomp_notif req = {};
++	struct seccomp_notif_resp resp = {};
++	const struct rlimit lim = {
++		.rlim_cur	= 0,
++		.rlim_max	= 0,
++	};
++
++	memfd = memfd_create("test", 0);
++	ASSERT_GE(memfd, 0);
++
++	ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
++	ASSERT_EQ(0, ret) {
++		TH_LOG("Kernel does not support PR_SET_NO_NEW_PRIVS!");
++	}
++
++	/* Check that the basic notification machinery works */
++	listener = user_trap_syscall(__NR_getppid,
++				     SECCOMP_FILTER_FLAG_NEW_LISTENER);
++	ASSERT_GE(listener, 0);
++
++	pid = fork();
++	ASSERT_GE(pid, 0);
++
++	if (pid == 0)
++		exit(syscall(__NR_getppid) != USER_NOTIF_MAGIC);
++
++
++	ASSERT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_RECV, &req), 0);
++
++	ASSERT_EQ(prlimit(pid, RLIMIT_NOFILE, &lim, NULL), 0);
++
++	addfd.size = sizeof(addfd);
++	addfd.srcfd = memfd;
++	addfd.newfd_flags = O_CLOEXEC;
++	addfd.newfd = 0;
++	addfd.id = req.id;
++	addfd.flags = 0;
++
++	/* Should probably spot check /proc/sys/fs/file-nr */
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd), -1);
++	EXPECT_EQ(errno, EMFILE);
++
++	addfd.newfd = 100;
++	addfd.flags = SECCOMP_ADDFD_FLAG_SETFD;
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd), -1);
++	EXPECT_EQ(errno, EBADF);
++
++	resp.id = req.id;
++	resp.error = 0;
++	resp.val = USER_NOTIF_MAGIC;
++
++	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_SEND, &resp), 0);
++
++
++	EXPECT_EQ(waitpid(pid, &status, 0), pid);
++	EXPECT_EQ(true, WIFEXITED(status));
++	EXPECT_EQ(0, WEXITSTATUS(status));
++
++	close(memfd);
++}
++
+ /*
+  * TODO:
+  * - expand NNP testing
 -- 
 2.25.1
 
