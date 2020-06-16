@@ -2,212 +2,134 @@ Return-Path: <SRS0=Vgf0=75=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AC98FC433DF
-	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 16:05:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DE6E5C433E1
+	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 16:05:44 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7D5D8208D5
-	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 16:05:19 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BCE1A208D5
+	for <linux-api@archiver.kernel.org>; Tue, 16 Jun 2020 16:05:44 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="RMe1EOF/"
+	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="U+rVcwzv"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1732465AbgFPPtA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 16 Jun 2020 11:49:00 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46650 "EHLO
+        id S1732824AbgFPQFg (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 16 Jun 2020 12:05:36 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49274 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1731450AbgFPPs7 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 16 Jun 2020 11:48:59 -0400
-Received: from mail-pf1-x444.google.com (mail-pf1-x444.google.com [IPv6:2607:f8b0:4864:20::444])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 41272C061573
-        for <linux-api@vger.kernel.org>; Tue, 16 Jun 2020 08:48:59 -0700 (PDT)
-Received: by mail-pf1-x444.google.com with SMTP id 64so9689500pfv.11
-        for <linux-api@vger.kernel.org>; Tue, 16 Jun 2020 08:48:59 -0700 (PDT)
+        with ESMTP id S1732965AbgFPQFc (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 16 Jun 2020 12:05:32 -0400
+Received: from mail-pg1-x543.google.com (mail-pg1-x543.google.com [IPv6:2607:f8b0:4864:20::543])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 331F9C06174E
+        for <linux-api@vger.kernel.org>; Tue, 16 Jun 2020 09:05:32 -0700 (PDT)
+Received: by mail-pg1-x543.google.com with SMTP id l24so846294pgb.5
+        for <linux-api@vger.kernel.org>; Tue, 16 Jun 2020 09:05:32 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=chromium.org; s=google;
         h=date:from:to:cc:subject:message-id:references:mime-version
          :content-disposition:in-reply-to;
-        bh=aH/epTbtusDwdVV/kmnk+gLwl4nwhM0mg4o9WDdCqyA=;
-        b=RMe1EOF/QbamaW1pKPoBlac6ekdFsLU6mz3tWml5zqb7Z7Uujg9yC1sk7chzVhvyVA
-         sLDAvg0ARkYWCLwsNMrtTTAD8UMmfyaR/ZMzpg8PIYbdq5v157fkg2dRK2ZbWmeIjWFQ
-         S3gviQeWP5HFbvl3bpwsFl/6aB6LZ4cW2zpAI=
+        bh=GsZMacKtpesOxP+a2myMr99YbAG58BqzpuI3p66lyWE=;
+        b=U+rVcwzvOxiugEYzwFEOsUTyIYC0zrD9L//KqbY3KLh6kAWaKOVLW6S2PEBZNkUzZB
+         Va/ID/Lx0jY7fHPp5zQPHHxv/Ln+/ZqNNagq0jWU0rfjSlk7wKKfPbUbnKanRNPb4MXv
+         BPQ+ZtNfKAAI/vlY8WCybDSIj/et0xHDCOIHg=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:date:from:to:cc:subject:message-id:references
          :mime-version:content-disposition:in-reply-to;
-        bh=aH/epTbtusDwdVV/kmnk+gLwl4nwhM0mg4o9WDdCqyA=;
-        b=W6JXktco3eBFwuyxeRrZeuE8FXBDZHEklfdo2XS8nM5ZWD4So8DPRJWz207r5CzbPS
-         Furrl+e32NGb7OREh82wQS0rirpNfGfYZkSxTMclX44wrpl/dkPoD59I1ZD2UXORToue
-         S4VrcB83jCY9NaYEkXUmyxvLBKQerXWmsRtAtLOUxPUO2ptsuZezULNlv/QcV8WJR9wn
-         5d/i/Q4zGf01TzzSNNUp8YFz6jLVHRPTdc+8NQKiOd5LGmSqfdUsrU0fJ1/IOtvK1rea
-         VNtktRrfFAqBRb3rMJQwh72Haw9U89uNI8d9Whawz6hbWZhXIRln65ry/dntcc92H4Lh
-         060A==
-X-Gm-Message-State: AOAM532LeFok8LkT9JldxPHw5ExMEYuxHHXBpTw2pRtMDLFWgDbgSjDP
-        ytZajpFvdOnygfmY0q5rqtCixA==
-X-Google-Smtp-Source: ABdhPJwiF2EGmCauQgmbrFK+BPdWWaiX4E7rH2Evt8OuhdmgMlvqfRGFBs5IfXJQ2kBCqUyaSrpS7w==
-X-Received: by 2002:a63:690:: with SMTP id 138mr1514366pgg.122.1592322538740;
-        Tue, 16 Jun 2020 08:48:58 -0700 (PDT)
+        bh=GsZMacKtpesOxP+a2myMr99YbAG58BqzpuI3p66lyWE=;
+        b=iRe5SpkiBObS4TXZ7/5aRssSrvoUePfTmyl1RMlyXLeeRmJxWsE8qeKZYvxkVyJUGb
+         1VChEboeLm0BSopWtS9KD6SS2Tdavs6jKfBQNk5Jacxn0BYjaZMmtakYzLfyYIaoLd2M
+         d1hsvJGpihqsLU92XANQuOvEHMGOca1w7PvWPnvl1ZQVK8t4w+K7Omu77GelMH3bXhCw
+         SJ+mektT1eiKgDxNXErMmxrevHENZqDH0LdHqu0EtXXPyF2dyaMa43c0bhOg4S5D7/Fk
+         vJntAjx7izY4AWIGmP9hf690hio/nZ20G/Nt6D5xIDUclL5Br6J38fstCa2P9Sws3Uoq
+         WUjQ==
+X-Gm-Message-State: AOAM533nDJHHqicd3kK27ZvuNbgEyOWTYUAjadVhE2dmhpb91THSx3NX
+        /8UlptMOQVNogsneVOTh/ZtNzA==
+X-Google-Smtp-Source: ABdhPJzdfPhLjN6zvps8V8jiQcD/fOqJIIccHadakXun+WI/1mta+SFES2gZ8pnzJRsPG2WOBzf7GA==
+X-Received: by 2002:a63:1b4b:: with SMTP id b11mr2541719pgm.243.1592323531730;
+        Tue, 16 Jun 2020 09:05:31 -0700 (PDT)
 Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id w24sm17371351pfn.11.2020.06.16.08.48.57
+        by smtp.gmail.com with ESMTPSA id 140sm17823314pfz.154.2020.06.16.09.05.30
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 16 Jun 2020 08:48:57 -0700 (PDT)
-Date:   Tue, 16 Jun 2020 08:48:56 -0700
+        Tue, 16 Jun 2020 09:05:30 -0700 (PDT)
+Date:   Tue, 16 Jun 2020 09:05:29 -0700
 From:   Kees Cook <keescook@chromium.org>
-To:     Jann Horn <jannh@google.com>
-Cc:     kernel list <linux-kernel@vger.kernel.org>,
+To:     Tycho Andersen <tycho@tycho.ws>
+Cc:     linux-kernel@vger.kernel.org, Sargun Dhillon <sargun@sargun.me>,
         Christian Brauner <christian@brauner.io>,
-        Sargun Dhillon <sargun@sargun.me>,
-        Tycho Andersen <tycho@tycho.ws>,
-        "zhujianwei (C)" <zhujianwei7@huawei.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Matthew Wilcox <willy@infradead.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Will Drewry <wad@chromium.org>, Shuah Khan <shuah@kernel.org>,
-        Matt Denton <mpdenton@google.com>,
-        Chris Palmer <palmer@google.com>,
-        Jeffrey Vander Stoep <jeffv@google.com>,
+        "David S. Miller" <davem@davemloft.net>,
+        Christoph Hellwig <hch@lst.de>,
+        Jakub Kicinski <kuba@kernel.org>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
         Aleksa Sarai <cyphar@cyphar.com>,
-        Hehuazhen <hehuazhen@huawei.com>,
-        the arch/x86 maintainers <x86@kernel.org>,
-        Linux Containers <containers@lists.linux-foundation.org>,
-        linux-security-module <linux-security-module@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>
-Subject: Re: [PATCH 4/8] seccomp: Implement constant action bitmaps
-Message-ID: <202006160757.99FD9B785@keescook>
-References: <20200616074934.1600036-1-keescook@chromium.org>
- <20200616074934.1600036-5-keescook@chromium.org>
- <CAG48ez1p=dR_2ikKq=xVxkoGg0fYpTBpkhJSv1w-6BG=76PAvw@mail.gmail.com>
+        Matt Denton <mpdenton@google.com>,
+        Jann Horn <jannh@google.com>, Chris Palmer <palmer@google.com>,
+        Robert Sesek <rsesek@google.com>,
+        Giuseppe Scrivano <gscrivan@redhat.com>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Andy Lutomirski <luto@amacapital.net>,
+        Will Drewry <wad@chromium.org>, Shuah Khan <shuah@kernel.org>,
+        netdev@vger.kernel.org, containers@lists.linux-foundation.org,
+        linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+        linux-kselftest@vger.kernel.org
+Subject: Re: [PATCH v4 10/11] seccomp: Switch addfd to Extensible Argument
+ ioctl
+Message-ID: <202006160904.A30F2C5B9E@keescook>
+References: <20200616032524.460144-1-keescook@chromium.org>
+ <20200616032524.460144-11-keescook@chromium.org>
+ <20200616145546.GH2893648@cisco>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <CAG48ez1p=dR_2ikKq=xVxkoGg0fYpTBpkhJSv1w-6BG=76PAvw@mail.gmail.com>
+In-Reply-To: <20200616145546.GH2893648@cisco>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Jun 16, 2020 at 02:14:47PM +0200, Jann Horn wrote:
-> Wouldn't it be simpler to use a function that can run a subset of
-> seccomp cBPF and bails out on anything that indicates that a syscall's
-> handling is complex or on instructions it doesn't understand? For
-> syscalls that have a fixed policy, a typical seccomp filter doesn't
-> even use any of the BPF_ALU ops, the scratch space, or the X register;
-> it just uses something like the following set of operations, which is
-> easy to emulate without much code:
+On Tue, Jun 16, 2020 at 08:55:46AM -0600, Tycho Andersen wrote:
+> On Mon, Jun 15, 2020 at 08:25:23PM -0700, Kees Cook wrote:
+> > This patch is based on discussions[1] with Sargun Dhillon, Christian
+> > Brauner, and David Laight. Instead of building size into the addfd
+> > structure, make it a function of the ioctl command (which is how sizes are
+> > normally passed to ioctls). To support forward and backward compatibility,
+> > just mask out the direction and size, and match everything. The size (and
+> > any future direction) checks are done along with copy_struct_from_user()
+> > logic. Also update the selftests to check size bounds.
+> > 
+> > [1] https://lore.kernel.org/lkml/20200612104629.GA15814@ircssh-2.c.rugged-nimbus-611.internal
+> > 
+> > Signed-off-by: Kees Cook <keescook@chromium.org>
+> > ---
+> >  include/uapi/linux/seccomp.h                  |  2 -
+> >  kernel/seccomp.c                              | 21 ++++++----
+> >  tools/testing/selftests/seccomp/seccomp_bpf.c | 40 ++++++++++++++++---
+> >  3 files changed, 49 insertions(+), 14 deletions(-)
+> > 
+> > diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
+> > index c347160378e5..473a61695ac3 100644
+> > --- a/include/uapi/linux/seccomp.h
+> > +++ b/include/uapi/linux/seccomp.h
+> > @@ -118,7 +118,6 @@ struct seccomp_notif_resp {
+> >  
+> >  /**
+> >   * struct seccomp_notif_addfd
+> > - * @size: The size of the seccomp_notif_addfd structure
+> >   * @id: The ID of the seccomp notification
+> >   * @flags: SECCOMP_ADDFD_FLAG_*
+> >   * @srcfd: The local fd number
+> > @@ -126,7 +125,6 @@ struct seccomp_notif_resp {
+> >   * @newfd_flags: The O_* flags the remote FD should have applied
+> >   */
+> >  struct seccomp_notif_addfd {
+> > -	__u64 size;
 > 
-> BPF_LD | BPF_W | BPF_ABS
-> BPF_JMP | BPF_JEQ | BPF_K
-> BPF_JMP | BPF_JGE | BPF_K
-> BPF_JMP | BPF_JGT | BPF_K
-> BPF_JMP | BPF_JA
-> BPF_RET | BPF_K
+> Huh? Won't this break builds?
 
-Initially, I started down this path. It needed a bit of plumbing into
-BPF to better control the lifetime of the cBPF "saved original filter"
-(normally used by CHECKPOINT_RESTORE uses), and then I needed to keep
-making exceptions (same list you have: ALU, X register, scratch, etc)
-in the name of avoiding too much complexity in the emulator. I decided
-I'd rather reuse the existing infrastructure to actually execute the
-filter (no cBPF copy needed to be saved, no separate code, and full
-instruction coverage).
-
-> 
-> Something like (completely untested):
-> 
-> /*
->  * Try to statically determine whether @filter will always return a fixed result
->  * when run for syscall @nr under architecture @arch.
->  * Returns true if the result could be determined; if so, the result will be
->  * stored in @action.
->  */
-> static bool seccomp_check_syscall(struct sock_filter *filter, unsigned int arch,
->                                   unsigned int nr, unsigned int *action)
-> {
->   int pc;
->   unsigned int reg_value = 0;
-> 
->   for (pc = 0; 1; pc++) {
->     struct sock_filter *insn = &filter[pc];
->     u16 code = insn->code;
->     u32 k = insn->k;
-> 
->     switch (code) {
->     case BPF_LD | BPF_W | BPF_ABS:
->       if (k == offsetof(struct seccomp_data, nr)) {
->         reg_value = nr;
->       } else if (k == offsetof(struct seccomp_data, arch)) {
->         reg_value = arch;
->       } else {
->         return false; /* can't optimize (non-constant value load) */
->       }
->       break;
->     case BPF_RET | BPF_K:
->       *action = insn->k;
->       return true; /* success: reached return with constant values only */
->     case BPF_JMP | BPF_JA:
->       pc += insn->k;
->       break;
->     case BPF_JMP | BPF_JEQ | BPF_K:
->     case BPF_JMP | BPF_JGE | BPF_K:
->     case BPF_JMP | BPF_JGT | BPF_K:
->     default:
->       if (BPF_CLASS(code) == BPF_JMP && BPF_SRC(code) == BPF_K) {
->         u16 op = BPF_OP(code);
->         bool op_res;
-> 
->         switch (op) {
->         case BPF_JEQ:
->           op_res = reg_value == k;
->           break;
->         case BPF_JGE:
->           op_res = reg_value >= k;
->           break;
->         case BPF_JGT:
->           op_res = reg_value > k;
->           break;
->         default:
->           return false; /* can't optimize (unknown insn) */
->         }
-> 
->         pc += op_res ? insn->jt : insn->jf;
->         break;
->       }
->       return false; /* can't optimize (unknown insn) */
->     }
->   }
-> }
-
-I didn't actually finish going down the emulator path (I stopped right
-around the time I verified that libseccomp does use BPF_ALU -- though
-only BPF_AND), so I didn't actually evaluate the filter contents for other
-filter builders (i.e. Chrome).
-
-But, if BPF_ALU | BPF_AND were added to your code above, it would cover
-everything libseccomp generates (which covers a lot of the seccomp
-filters, e.g. systemd, docker). I just felt funny about an "incomplete"
-emulator.
-
-Though now you've got me looking. It seems this is the core
-of Chrome's BPF instruction generation:
-https://github.com/chromium/chromium/blob/master/sandbox/linux/bpf_dsl/policy_compiler.cc
-It also uses ALU|AND, but adds JMP|JSET.
-
-So... that's only 2 more instructions to cover what I think are likely
-the two largest seccomp instruction generators.
-
-> That way, you won't need any of this complicated architecture-specific stuff.
-
-There are two arch-specific needs, and using a cBPF-subset emulator
-just gets rid of the local TLB flush. The other part is distinguishing
-the archs. Neither requirement is onerous (TLB flush usually just
-needs little more than an extern, arch is already documented in the
-per-arch syscall_get_arch()). The awkward part I ran into for arm64
-was a header include loop for compat due to how unistd is handled for
-getting NR_syscalls for the bitmap sizing (which I'm sure is solvable,
-but I just wanted to get the x86 RFC posted first).
+Only if they use addfd without this patch? :) Are you saying I should
+collapse this patch into the main addfd and test patches?
 
 -- 
 Kees Cook
