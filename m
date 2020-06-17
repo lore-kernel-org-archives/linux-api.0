@@ -7,53 +7,53 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
 	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 55A46C433E3
-	for <linux-api@archiver.kernel.org>; Wed, 17 Jun 2020 22:04:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AF1F2C433DF
+	for <linux-api@archiver.kernel.org>; Wed, 17 Jun 2020 22:04:17 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2CBE921548
-	for <linux-api@archiver.kernel.org>; Wed, 17 Jun 2020 22:04:07 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8EC162082F
+	for <linux-api@archiver.kernel.org>; Wed, 17 Jun 2020 22:04:17 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="THJBRTFw"
+	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="khHJTxzO"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726950AbgFQWEG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 17 Jun 2020 18:04:06 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44944 "EHLO
+        id S1726965AbgFQWEP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 17 Jun 2020 18:04:15 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44916 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727086AbgFQWDg (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 17 Jun 2020 18:03:36 -0400
-Received: from mail-pf1-x442.google.com (mail-pf1-x442.google.com [IPv6:2607:f8b0:4864:20::442])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5C62EC06179B
-        for <linux-api@vger.kernel.org>; Wed, 17 Jun 2020 15:03:36 -0700 (PDT)
-Received: by mail-pf1-x442.google.com with SMTP id x207so1808279pfc.5
-        for <linux-api@vger.kernel.org>; Wed, 17 Jun 2020 15:03:36 -0700 (PDT)
+        with ESMTP id S1727102AbgFQWDf (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 17 Jun 2020 18:03:35 -0400
+Received: from mail-pg1-x544.google.com (mail-pg1-x544.google.com [IPv6:2607:f8b0:4864:20::544])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5C4A4C0613F0
+        for <linux-api@vger.kernel.org>; Wed, 17 Jun 2020 15:03:33 -0700 (PDT)
+Received: by mail-pg1-x544.google.com with SMTP id e9so1932683pgo.9
+        for <linux-api@vger.kernel.org>; Wed, 17 Jun 2020 15:03:33 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=chromium.org; s=google;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=s6nxy7AwZGtoql+LbUkBHllnwgWYj58mW1sDysdJ1vg=;
-        b=THJBRTFwPqKrgTynwdqc6tP63XYizHMXDJ/tpFigmCgXKT9ywN0gTaISfScTuCIoXX
-         ELo2H8FGafq7E4i3aK7qj7GodIAF0JTxZI1VuLgPj8LasDHq26PRD5qXlgn9cfw3XycB
-         bTYPGsFKBTK0Nfzl/tNhQLb7qAEbwTILjsSUk=
+        bh=eJ8w8RlGTgKwSve8kq67XCo8awUqV+HYghFRfD7mOnw=;
+        b=khHJTxzOcpg3WW5hLAFpnEq6H4kaSxxC0QdAupbyEi/SkYZXIQpq4Sx73NWNUwfQR+
+         CTqRAET0tfT3MoL8TzGYvwdrDxJ2aCWf+oE63mVvjr8urvd89xQ/N378XJsE04oMtIMi
+         Z2ZYnkIEBKX39kTeCgm+TQ/it/TFwFS4bbTV0=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=s6nxy7AwZGtoql+LbUkBHllnwgWYj58mW1sDysdJ1vg=;
-        b=YQ/hemRJphFevtopv7qlARZ0rnQ7oIlmEvecHaq+249bDO0+4thlZ/LqoCJQ4kHpUF
-         BtJaoMRxPkDJjwemJRLMyqFHVxGwcUuwcK5h7xGVDvr3N4Gjq06fjmtxMc1dqiQfRy2s
-         45xLETSmereecPBDAJUwVzDyZc5BEm2AcpyTBImz7SQEikP4Kqo9wEfr/uNuQI1T1VyT
-         j0oNzcO3IOofX2vUYzqyrDKYK1Bmgvgpnp5QX5Eu0cTbm0poWFcQVphWYivK7FwsNwif
-         zpSy1YEFHOKrC3pvzV1UTMVKfoUWk/LWqwxQfQMqVS2lrT38nnOTUmZpjvwhCR/W4Rsj
-         LMeA==
-X-Gm-Message-State: AOAM532u/4BwADWrcFExPA2hFBqwGt76iPeH1X3nSFIP46P5aoJ+wSh3
-        phIUlzVE8cOh9nCC6u5IiwQSJQ==
-X-Google-Smtp-Source: ABdhPJxS49EBdf4oJlb/sifNaCdN+lj0qN/PquPppLJoOyakXqU7DF9KsQu4IE6nNJB5iuBJQB4ZyQ==
-X-Received: by 2002:a63:205b:: with SMTP id r27mr770691pgm.326.1592431415799;
-        Wed, 17 Jun 2020 15:03:35 -0700 (PDT)
+        bh=eJ8w8RlGTgKwSve8kq67XCo8awUqV+HYghFRfD7mOnw=;
+        b=ovZQn0IcJ2NrqZ3gKdmYmP/Ggf7/DeiNtcQhsOypFQsNOJxfrDZEBV9fg/SGNV5uT1
+         uVcSpgU1nJo7CwNHBTy6dnINqdkSpenI5s8MdLt02BOl5g4pFTjLeyr8ddYRWAw/yPtC
+         e9jda0MLtO31UnfpPfS8uDiE+lI3Lam13vxvr2IymKJwomJAoCbrtuApX0Qi29zAqVQM
+         +25BgC2OyiaYATPcnbGjlBerGTwNyJUT6GdLYdYQ3EJizeD59EOjKPkUpT8Lbq4x3GaT
+         Ag2SEp2s2PQRH56QzjhG3S5SqTjR8WQI3WQx4NB1YHvhMg4gaRe4I0ccY6rb80T9ZrLY
+         QHiQ==
+X-Gm-Message-State: AOAM532UXw2/yuh6b7X5AK6YQWUU6kHzPWBkEdTC+1ZeHsw6+Xfw/7q1
+        SQynGGI0mim5qLuaKrOFPipIqQ==
+X-Google-Smtp-Source: ABdhPJzfVk7O7EvLgEU3fkwifOsBFdREevvolrDbGInAARblPmWxv5XpCBmdblaIrL4B0RjyWF9I0g==
+X-Received: by 2002:a65:6916:: with SMTP id s22mr816271pgq.128.1592431412861;
+        Wed, 17 Jun 2020 15:03:32 -0700 (PDT)
 Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id d22sm682059pgh.64.2020.06.17.15.03.32
+        by smtp.gmail.com with ESMTPSA id 9sm759447pfu.181.2020.06.17.15.03.30
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 17 Jun 2020 15:03:34 -0700 (PDT)
+        Wed, 17 Jun 2020 15:03:30 -0700 (PDT)
 From:   Kees Cook <keescook@chromium.org>
 To:     linux-kernel@vger.kernel.org
 Cc:     Kees Cook <keescook@chromium.org>,
@@ -76,9 +76,9 @@ Cc:     Kees Cook <keescook@chromium.org>,
         netdev@vger.kernel.org, containers@lists.linux-foundation.org,
         linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
         linux-kselftest@vger.kernel.org
-Subject: [PATCH v5 7/7] selftests/seccomp: Test SECCOMP_IOCTL_NOTIF_ADDFD
-Date:   Wed, 17 Jun 2020 15:03:27 -0700
-Message-Id: <20200617220327.3731559-8-keescook@chromium.org>
+Subject: [PATCH v5 2/7] fs: Move __scm_install_fd() to __fd_install_received()
+Date:   Wed, 17 Jun 2020 15:03:22 -0700
+Message-Id: <20200617220327.3731559-3-keescook@chromium.org>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20200617220327.3731559-1-keescook@chromium.org>
 References: <20200617220327.3731559-1-keescook@chromium.org>
@@ -89,284 +89,185 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Sargun Dhillon <sargun@sargun.me>
+In preparation for users of the "install a received file" logic outside
+of net/ (pidfd and seccomp), relocate and rename __scm_install_fd() from
+net/core/scm.c to __fd_install_received() in fs/file.c, and provide a
+wrapper named fd_install_received_user(), as future patches will change
+the interface to __fd_install_received().
 
-Test whether we can add file descriptors in response to notifications.
-This injects the file descriptors via notifications, and then uses kcmp
-to determine whether or not it has been successful.
-
-It also includes some basic sanity checking for arguments.
-
-Signed-off-by: Sargun Dhillon <sargun@sargun.me>
-Link: https://lore.kernel.org/r/20200603011044.7972-5-sargun@sargun.me
-Co-developed-by: Kees Cook <keescook@chromium.org>
 Signed-off-by: Kees Cook <keescook@chromium.org>
 ---
- tools/testing/selftests/seccomp/seccomp_bpf.c | 229 ++++++++++++++++++
- 1 file changed, 229 insertions(+)
+ fs/file.c            | 45 ++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/file.h |  8 ++++++++
+ include/net/scm.h    |  1 -
+ net/compat.c         |  2 +-
+ net/core/scm.c       | 32 +------------------------------
+ 5 files changed, 55 insertions(+), 33 deletions(-)
 
-diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
-index 4e1891f8a0cd..143eafdc4fdc 100644
---- a/tools/testing/selftests/seccomp/seccomp_bpf.c
-+++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
-@@ -45,6 +45,7 @@
- #include <sys/socket.h>
- #include <sys/ioctl.h>
- #include <linux/kcmp.h>
-+#include <sys/resource.h>
+diff --git a/fs/file.c b/fs/file.c
+index abb8b7081d7a..f2167d6feec6 100644
+--- a/fs/file.c
++++ b/fs/file.c
+@@ -11,6 +11,7 @@
+ #include <linux/export.h>
+ #include <linux/fs.h>
+ #include <linux/mm.h>
++#include <linux/net.h>
+ #include <linux/sched/signal.h>
+ #include <linux/slab.h>
+ #include <linux/file.h>
+@@ -18,6 +19,8 @@
+ #include <linux/bitops.h>
+ #include <linux/spinlock.h>
+ #include <linux/rcupdate.h>
++#include <net/cls_cgroup.h>
++#include <net/netprio_cgroup.h>
  
- #include <unistd.h>
- #include <sys/syscall.h>
-@@ -168,7 +169,9 @@ struct seccomp_metadata {
- 
- #ifndef SECCOMP_FILTER_FLAG_NEW_LISTENER
- #define SECCOMP_FILTER_FLAG_NEW_LISTENER	(1UL << 3)
-+#endif
- 
-+#ifndef SECCOMP_RET_USER_NOTIF
- #define SECCOMP_RET_USER_NOTIF 0x7fc00000U
- 
- #define SECCOMP_IOC_MAGIC		'!'
-@@ -204,6 +207,39 @@ struct seccomp_notif_sizes {
- };
- #endif
- 
-+#ifndef SECCOMP_IOCTL_NOTIF_ADDFD
-+/* On success, the return value is the remote process's added fd number */
-+#define SECCOMP_IOCTL_NOTIF_ADDFD	SECCOMP_IOW(3,	\
-+						struct seccomp_notif_addfd)
-+
-+/* valid flags for seccomp_notif_addfd */
-+#define SECCOMP_ADDFD_FLAG_SETFD	(1UL << 0) /* Specify remote fd */
-+
-+struct seccomp_notif_addfd {
-+	__u64 id;
-+	__u32 flags;
-+	__u32 srcfd;
-+	__u32 newfd;
-+	__u32 newfd_flags;
-+};
-+#endif
-+
-+struct seccomp_notif_addfd_small {
-+	__u64 id;
-+	char weird[4];
-+};
-+#define SECCOMP_IOCTL_NOTIF_ADDFD_SMALL	\
-+	SECCOMP_IOW(3, struct seccomp_notif_addfd_small)
-+
-+struct seccomp_notif_addfd_big {
-+	union {
-+		struct seccomp_notif_addfd addfd;
-+		char buf[sizeof(struct seccomp_notif_addfd) + 8];
-+	};
-+};
-+#define SECCOMP_IOCTL_NOTIF_ADDFD_BIG	\
-+	SECCOMP_IOWR(3, struct seccomp_notif_addfd_big)
-+
- #ifndef PTRACE_EVENTMSG_SYSCALL_ENTRY
- #define PTRACE_EVENTMSG_SYSCALL_ENTRY	1
- #define PTRACE_EVENTMSG_SYSCALL_EXIT	2
-@@ -3833,6 +3869,199 @@ TEST(user_notification_filter_empty_threaded)
- 	EXPECT_GT((pollfd.revents & POLLHUP) ?: 0, 0);
+ unsigned int sysctl_nr_open __read_mostly = 1024*1024;
+ unsigned int sysctl_nr_open_min = BITS_PER_LONG;
+@@ -931,6 +934,48 @@ int replace_fd(unsigned fd, struct file *file, unsigned flags)
+ 	return err;
  }
  
-+TEST(user_notification_addfd)
++/**
++ * __fd_install_received() - Install received file into file descriptor table
++ *
++ * @file: struct file that was received from another process
++ * @ufd: __user pointer to write new fd number to
++ * @o_flags: the O_* flags to apply to the new fd entry
++ *
++ * Installs a received file into the file descriptor table, with appropriate
++ * checks and count updates. Writes the fd number to userspace.
++ *
++ * Returns -ve on error.
++ */
++int __fd_install_received(struct file *file, int __user *ufd, unsigned int o_flags)
 +{
-+	pid_t pid;
-+	long ret;
-+	int status, listener, memfd, fd;
-+	struct seccomp_notif_addfd addfd = {};
-+	struct seccomp_notif_addfd_small small = {};
-+	struct seccomp_notif_addfd_big big = {};
-+	struct seccomp_notif req = {};
-+	struct seccomp_notif_resp resp = {};
-+	/* 100 ms */
-+	struct timespec delay = { .tv_nsec = 100000000 };
++	struct socket *sock;
++	int new_fd;
++	int error;
 +
-+	memfd = memfd_create("test", 0);
-+	ASSERT_GE(memfd, 0);
++	error = security_file_receive(file);
++	if (error)
++		return error;
 +
-+	ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
-+	ASSERT_EQ(0, ret) {
-+		TH_LOG("Kernel does not support PR_SET_NO_NEW_PRIVS!");
++	new_fd = get_unused_fd_flags(o_flags);
++	if (new_fd < 0)
++		return new_fd;
++
++	error = put_user(new_fd, ufd);
++	if (error) {
++		put_unused_fd(new_fd);
++		return error;
 +	}
 +
-+	/* Check that the basic notification machinery works */
-+	listener = user_notif_syscall(__NR_getppid,
-+				      SECCOMP_FILTER_FLAG_NEW_LISTENER);
-+	ASSERT_GE(listener, 0);
-+
-+	pid = fork();
-+	ASSERT_GE(pid, 0);
-+
-+	if (pid == 0) {
-+		if (syscall(__NR_getppid) != USER_NOTIF_MAGIC)
-+			exit(1);
-+		exit(syscall(__NR_getppid) != USER_NOTIF_MAGIC);
++	/* Bump the usage count and install the file. */
++	sock = sock_from_file(file, &error);
++	if (sock) {
++		sock_update_netprioidx(&sock->sk->sk_cgrp_data);
++		sock_update_classid(&sock->sk->sk_cgrp_data);
 +	}
-+
-+	ASSERT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_RECV, &req), 0);
-+
-+	addfd.srcfd = memfd;
-+	addfd.newfd = 0;
-+	addfd.id = req.id;
-+	addfd.flags = 0x0;
-+
-+	/* Verify bad newfd_flags cannot be set */
-+	addfd.newfd_flags = ~O_CLOEXEC;
-+	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd), -1);
-+	EXPECT_EQ(errno, EINVAL);
-+	addfd.newfd_flags = O_CLOEXEC;
-+
-+	/* Verify bad flags cannot be set */
-+	addfd.flags = 0xff;
-+	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd), -1);
-+	EXPECT_EQ(errno, EINVAL);
-+	addfd.flags = 0;
-+
-+	/* Verify that remote_fd cannot be set without setting flags */
-+	addfd.newfd = 1;
-+	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd), -1);
-+	EXPECT_EQ(errno, EINVAL);
-+	addfd.newfd = 0;
-+
-+	/* Verify small size cannot be set */
-+	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD_SMALL, &small), -1);
-+	EXPECT_EQ(errno, EINVAL);
-+
-+	/* Verify we can't send bits filled in unknown buffer area */
-+	memset(&big, 0xAA, sizeof(big));
-+	big.addfd = addfd;
-+	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD_BIG, &big), -1);
-+	EXPECT_EQ(errno, E2BIG);
-+
-+
-+	/* Verify we can set an arbitrary remote fd */
-+	fd = ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd);
-+	/*
-+	 * The child has fds 0(stdin), 1(stdout), 2(stderr), 3(memfd),
-+	 * 4(listener), so the newly allocated fd should be 5.
-+	 */
-+	EXPECT_EQ(fd, 5);
-+	EXPECT_EQ(filecmp(getpid(), pid, memfd, fd), 0);
-+
-+	/* Verify we can set an arbitrary remote fd with large size */
-+	memset(&big, 0x0, sizeof(big));
-+	big.addfd = addfd;
-+	fd = ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD_BIG, &big);
-+	EXPECT_EQ(fd, 6);
-+
-+	/* Verify we can set a specific remote fd */
-+	addfd.newfd = 42;
-+	addfd.flags = SECCOMP_ADDFD_FLAG_SETFD;
-+	fd = ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd);
-+	EXPECT_EQ(fd, 42);
-+	EXPECT_EQ(filecmp(getpid(), pid, memfd, fd), 0);
-+
-+	/* Resume syscall */
-+	resp.id = req.id;
-+	resp.error = 0;
-+	resp.val = USER_NOTIF_MAGIC;
-+	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_SEND, &resp), 0);
-+
-+	/*
-+	 * This sets the ID of the ADD FD to the last request plus 1. The
-+	 * notification ID increments 1 per notification.
-+	 */
-+	addfd.id = req.id + 1;
-+
-+	/* This spins until the underlying notification is generated */
-+	while (ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd) != -1 &&
-+	       errno != -EINPROGRESS)
-+		nanosleep(&delay, NULL);
-+
-+	memset(&req, 0, sizeof(req));
-+	ASSERT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_RECV, &req), 0);
-+	ASSERT_EQ(addfd.id, req.id);
-+
-+	resp.id = req.id;
-+	resp.error = 0;
-+	resp.val = USER_NOTIF_MAGIC;
-+	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_SEND, &resp), 0);
-+
-+	/* Wait for child to finish. */
-+	EXPECT_EQ(waitpid(pid, &status, 0), pid);
-+	EXPECT_EQ(true, WIFEXITED(status));
-+	EXPECT_EQ(0, WEXITSTATUS(status));
-+
-+	close(memfd);
++	fd_install(new_fd, get_file(file));
++	return 0;
 +}
 +
-+TEST(user_notification_addfd_rlimit)
+ static int ksys_dup3(unsigned int oldfd, unsigned int newfd, int flags)
+ {
+ 	int err = -EBADF;
+diff --git a/include/linux/file.h b/include/linux/file.h
+index 122f80084a3e..fe18a1a0d555 100644
+--- a/include/linux/file.h
++++ b/include/linux/file.h
+@@ -91,6 +91,14 @@ extern void put_unused_fd(unsigned int fd);
+ 
+ extern void fd_install(unsigned int fd, struct file *file);
+ 
++extern int __fd_install_received(struct file *file, int __user *ufd,
++				 unsigned int o_flags);
++static inline int fd_install_received_user(struct file *file, int __user *ufd,
++					   unsigned int o_flags)
 +{
-+	pid_t pid;
-+	long ret;
-+	int status, listener, memfd;
-+	struct seccomp_notif_addfd addfd = {};
-+	struct seccomp_notif req = {};
-+	struct seccomp_notif_resp resp = {};
-+	const struct rlimit lim = {
-+		.rlim_cur	= 0,
-+		.rlim_max	= 0,
-+	};
-+
-+	memfd = memfd_create("test", 0);
-+	ASSERT_GE(memfd, 0);
-+
-+	ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
-+	ASSERT_EQ(0, ret) {
-+		TH_LOG("Kernel does not support PR_SET_NO_NEW_PRIVS!");
-+	}
-+
-+	/* Check that the basic notification machinery works */
-+	listener = user_notif_syscall(__NR_getppid,
-+				      SECCOMP_FILTER_FLAG_NEW_LISTENER);
-+	ASSERT_GE(listener, 0);
-+
-+	pid = fork();
-+	ASSERT_GE(pid, 0);
-+
-+	if (pid == 0)
-+		exit(syscall(__NR_getppid) != USER_NOTIF_MAGIC);
-+
-+
-+	ASSERT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_RECV, &req), 0);
-+
-+	ASSERT_EQ(prlimit(pid, RLIMIT_NOFILE, &lim, NULL), 0);
-+
-+	addfd.srcfd = memfd;
-+	addfd.newfd_flags = O_CLOEXEC;
-+	addfd.newfd = 0;
-+	addfd.id = req.id;
-+	addfd.flags = 0;
-+
-+	/* Should probably spot check /proc/sys/fs/file-nr */
-+	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd), -1);
-+	EXPECT_EQ(errno, EMFILE);
-+
-+	addfd.newfd = 100;
-+	addfd.flags = SECCOMP_ADDFD_FLAG_SETFD;
-+	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_ADDFD, &addfd), -1);
-+	EXPECT_EQ(errno, EBADF);
-+
-+	resp.id = req.id;
-+	resp.error = 0;
-+	resp.val = USER_NOTIF_MAGIC;
-+
-+	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_SEND, &resp), 0);
-+
-+	/* Wait for child to finish. */
-+	EXPECT_EQ(waitpid(pid, &status, 0), pid);
-+	EXPECT_EQ(true, WIFEXITED(status));
-+	EXPECT_EQ(0, WEXITSTATUS(status));
-+
-+	close(memfd);
++	return __fd_install_received(file, ufd, o_flags);
 +}
 +
- /*
-  * TODO:
-  * - expand NNP testing
+ extern void flush_delayed_fput(void);
+ extern void __fput_sync(struct file *);
+ 
+diff --git a/include/net/scm.h b/include/net/scm.h
+index 581a94d6c613..1ce365f4c256 100644
+--- a/include/net/scm.h
++++ b/include/net/scm.h
+@@ -37,7 +37,6 @@ struct scm_cookie {
+ #endif
+ };
+ 
+-int __scm_install_fd(struct file *file, int __user *ufd, unsigned int o_flags);
+ void scm_detach_fds(struct msghdr *msg, struct scm_cookie *scm);
+ void scm_detach_fds_compat(struct msghdr *msg, struct scm_cookie *scm);
+ int __scm_send(struct socket *sock, struct msghdr *msg, struct scm_cookie *scm);
+diff --git a/net/compat.c b/net/compat.c
+index 27d477fdcaa0..94f288e8dac5 100644
+--- a/net/compat.c
++++ b/net/compat.c
+@@ -298,7 +298,7 @@ void scm_detach_fds_compat(struct msghdr *msg, struct scm_cookie *scm)
+ 	int err = 0, i;
+ 
+ 	for (i = 0; i < fdmax; i++) {
+-		err = __scm_install_fd(scm->fp->fp[i], cmsg_data + i, o_flags);
++		err = fd_install_received_user(scm->fp->fp[i], cmsg_data + i, o_flags);
+ 		if (err)
+ 			break;
+ 	}
+diff --git a/net/core/scm.c b/net/core/scm.c
+index 6151678c73ed..df190f1fdd28 100644
+--- a/net/core/scm.c
++++ b/net/core/scm.c
+@@ -280,36 +280,6 @@ void put_cmsg_scm_timestamping(struct msghdr *msg, struct scm_timestamping_inter
+ }
+ EXPORT_SYMBOL(put_cmsg_scm_timestamping);
+ 
+-int __scm_install_fd(struct file *file, int __user *ufd, unsigned int o_flags)
+-{
+-	struct socket *sock;
+-	int new_fd;
+-	int error;
+-
+-	error = security_file_receive(file);
+-	if (error)
+-		return error;
+-
+-	new_fd = get_unused_fd_flags(o_flags);
+-	if (new_fd < 0)
+-		return new_fd;
+-
+-	error = put_user(new_fd, ufd);
+-	if (error) {
+-		put_unused_fd(new_fd);
+-		return error;
+-	}
+-
+-	/* Bump the usage count and install the file. */
+-	sock = sock_from_file(file, &error);
+-	if (sock) {
+-		sock_update_netprioidx(&sock->sk->sk_cgrp_data);
+-		sock_update_classid(&sock->sk->sk_cgrp_data);
+-	}
+-	fd_install(new_fd, get_file(file));
+-	return 0;
+-}
+-
+ static int scm_max_fds(struct msghdr *msg)
+ {
+ 	if (msg->msg_controllen <= sizeof(struct cmsghdr))
+@@ -336,7 +306,7 @@ void scm_detach_fds(struct msghdr *msg, struct scm_cookie *scm)
+ 	}
+ 
+ 	for (i = 0; i < fdmax; i++) {
+-		err = __scm_install_fd(scm->fp->fp[i], cmsg_data + i, o_flags);
++		err = fd_install_received_user(scm->fp->fp[i], cmsg_data + i, o_flags);
+ 		if (err)
+ 			break;
+ 	}
 -- 
 2.25.1
 
