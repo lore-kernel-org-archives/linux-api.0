@@ -2,44 +2,45 @@ Return-Path: <SRS0=j+hs=AD=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-7.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 120EBC433E0
-	for <linux-api@archiver.kernel.org>; Mon, 22 Jun 2020 23:46:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C4F6EC433E0
+	for <linux-api@archiver.kernel.org>; Mon, 22 Jun 2020 23:47:12 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E20B620720
-	for <linux-api@archiver.kernel.org>; Mon, 22 Jun 2020 23:46:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9F6502075A
+	for <linux-api@archiver.kernel.org>; Mon, 22 Jun 2020 23:47:12 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ha6n7e80"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="N8nYIkfQ"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730946AbgFVXqI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 22 Jun 2020 19:46:08 -0400
-Received: from us-smtp-delivery-1.mimecast.com ([205.139.110.120]:42045 "EHLO
+        id S1731479AbgFVXrM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 22 Jun 2020 19:47:12 -0400
+Received: from us-smtp-delivery-1.mimecast.com ([205.139.110.120]:27082 "EHLO
         us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1730632AbgFVXqH (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 22 Jun 2020 19:46:07 -0400
+        with ESMTP id S1730843AbgFVXqI (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 22 Jun 2020 19:46:08 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1592869565;
+        s=mimecast20190719; t=1592869566;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc; bh=A3Sr9mNHVM8s9WUTsyWY81eoKGneWkQuZ36cxKIntEs=;
-        b=ha6n7e80e/OQ1ytN6q73MH3JJDWxWmNCmZUS+ayxwlsTVAdvQ0ij2tIkHLlNbWdAhF7vc5
-        HSMuUOlrbFBiU5cr7FVQ2elOaZ2AnXnR19tDN9N6NG7pX91Bzy0gE1usez3OtDJjA1REGI
-        Xg3i9jdWqBAn6IgyocwoyZsdVXmq/3E=
+         to:to:cc:in-reply-to:in-reply-to:references:references;
+        bh=iVIcd3LbDjZaO4XgTYyXw6k60oAbIn90LRL9W8RewGA=;
+        b=N8nYIkfQ7fQuNn2wVwgkY6gxHMaukLExLNUS1Qv2LGZDtJ3HQd0AAU3zy1ZSMlxpii18bU
+        4PQWAkLFaV4skk7OnG1yBu8bv8U1+1E9RBmS1TajojcsdKm8/AmScZDSwiuVRx5xpCYl9T
+        lVByW/REVskHE/QIBDQU2Cw9uxXscZc=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-12-LXVPb2CoMgOtLk5LQrxHpw-1; Mon, 22 Jun 2020 19:45:54 -0400
-X-MC-Unique: LXVPb2CoMgOtLk5LQrxHpw-1
+ us-mta-70-papsVCsWPwW1MD1oUFl9tg-1; Mon, 22 Jun 2020 19:45:59 -0400
+X-MC-Unique: papsVCsWPwW1MD1oUFl9tg-1
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 45101107ACCA;
-        Mon, 22 Jun 2020 23:45:51 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E33B218585A1;
+        Mon, 22 Jun 2020 23:45:56 +0000 (UTC)
 Received: from virtlab423.virt.lab.eng.bos.redhat.com (virtlab423.virt.lab.eng.bos.redhat.com [10.19.152.154])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 3812D5C583;
-        Mon, 22 Jun 2020 23:45:46 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 1FF655C290;
+        Mon, 22 Jun 2020 23:45:55 +0000 (UTC)
 From:   Nitesh Narayan Lal <nitesh@redhat.com>
 To:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
         frederic@kernel.org, mtosatti@redhat.com, juri.lelli@redhat.com,
@@ -48,54 +49,68 @@ To:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
         peterz@infradead.org, tglx@linutronix.de, davem@davemloft.net,
         akpm@linux-foundation.org, sfr@canb.auug.org.au,
         stephen@networkplumber.org, rppt@linux.vnet.ibm.com
-Subject: [PATCH v2 0/3] Preventing job distribution to isolated CPUs        
-Date:   Mon, 22 Jun 2020 19:45:07 -0400
-Message-Id: <20200622234510.240834-1-nitesh@redhat.com>
+Subject: [Patch v2 3/3] net: Restrict receive packets queuing to housekeeping CPUs
+Date:   Mon, 22 Jun 2020 19:45:10 -0400
+Message-Id: <20200622234510.240834-4-nitesh@redhat.com>
+In-Reply-To: <20200622234510.240834-1-nitesh@redhat.com>
+References: <20200622234510.240834-1-nitesh@redhat.com>
 X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-                                                                           
-Testing                                                                    
-=======                                                                    
-* Patch 1:                                                                 
-  Fix for cpumask_local_spread() is tested by creating VFs, loading        
-  iavf module and by adding a tracepoint to confirm that only housekeeping 
-  CPUs are picked when an appropriate profile is set up and all remaining  
-  CPUs when no CPU isolation is configured.                                
-                                                                           
-* Patch 2:                                                                 
-  To test the PCI fix, I hotplugged a virtio-net-pci from qemu console     
-  and forced its addition to a specific node to trigger the code path that 
-  includes the proposed fix and verified that only housekeeping CPUs       
-  are included via tracepoint.                                             
-                                                                           
-* Patch 3:                                                                 
-  To test the fix in store_rps_map(), I tried configuring an isolated      
-  CPU by writing to /sys/class/net/en*/queues/rx*/rps_cpus which           
-  resulted in 'write error: Invalid argument' error. For the case          
-  where a non-isolated CPU is writing in rps_cpus the above operation      
-  succeeded without any error.                                             
-                                                                           
-                                                                           
-Changes from v1:                                                           
-===============                                                            
-- Included the suggestions made by Bjorn Helgaas in the commit messages.    
-- Included the 'Reviewed-by' and 'Acked-by' received for Patch-2.          
-                                                                           
-[1] https://patchwork.ozlabs.org/project/netdev/patch/51102eebe62336c6a4e584c7a503553b9f90e01c.camel@marvell.com/
-                                                                           
-Alex Belits (3):                                                           
-  lib: Restrict cpumask_local_spread to houskeeping CPUs                   
-  PCI: Restrict probe functions to housekeeping CPUs                       
-  net: Restrict receive packets queuing to housekeeping CPUs               
-                                                                           
- drivers/pci/pci-driver.c |  5 ++++-                                       
- lib/cpumask.c            | 43 +++++++++++++++++++++++-----------------    
- net/core/net-sysfs.c     | 10 +++++++++-                                  
- 3 files changed, 38 insertions(+), 20 deletions(-)                        
-                                                                           
---
+From: Alex Belits <abelits@marvell.com>
+
+With the existing implementation of store_rps_map(), packets are queued
+in the receive path on the backlog queues of other CPUs irrespective of
+whether they are isolated or not. This could add a latency overhead to
+any RT workload that is running on the same CPU.
+
+Ensure that store_rps_map() only uses available housekeeping CPUs for
+storing the rps_map.
+
+Signed-off-by: Alex Belits <abelits@marvell.com>
+Signed-off-by: Nitesh Narayan Lal <nitesh@redhat.com>
+---
+ net/core/net-sysfs.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/net/core/net-sysfs.c b/net/core/net-sysfs.c
+index e353b822bb15..16e433287191 100644
+--- a/net/core/net-sysfs.c
++++ b/net/core/net-sysfs.c
+@@ -11,6 +11,7 @@
+ #include <linux/if_arp.h>
+ #include <linux/slab.h>
+ #include <linux/sched/signal.h>
++#include <linux/sched/isolation.h>
+ #include <linux/nsproxy.h>
+ #include <net/sock.h>
+ #include <net/net_namespace.h>
+@@ -741,7 +742,7 @@ static ssize_t store_rps_map(struct netdev_rx_queue *queue,
+ {
+ 	struct rps_map *old_map, *map;
+ 	cpumask_var_t mask;
+-	int err, cpu, i;
++	int err, cpu, i, hk_flags;
+ 	static DEFINE_MUTEX(rps_map_mutex);
+ 
+ 	if (!capable(CAP_NET_ADMIN))
+@@ -756,6 +757,13 @@ static ssize_t store_rps_map(struct netdev_rx_queue *queue,
+ 		return err;
+ 	}
+ 
++	hk_flags = HK_FLAG_DOMAIN | HK_FLAG_WQ;
++	cpumask_and(mask, mask, housekeeping_cpumask(hk_flags));
++	if (cpumask_weight(mask) == 0) {
++		free_cpumask_var(mask);
++		return -EINVAL;
++	}
++
+ 	map = kzalloc(max_t(unsigned int,
+ 			    RPS_MAP_SIZE(cpumask_weight(mask)), L1_CACHE_BYTES),
+ 		      GFP_KERNEL);
+-- 
+2.18.4
 
