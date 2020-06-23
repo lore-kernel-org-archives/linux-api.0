@@ -2,48 +2,48 @@ Return-Path: <SRS0=X7Ev=AE=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-8.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0E2A8C433DF
-	for <linux-api@archiver.kernel.org>; Tue, 23 Jun 2020 11:42:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1D0FDC433E0
+	for <linux-api@archiver.kernel.org>; Tue, 23 Jun 2020 13:19:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D648220724
-	for <linux-api@archiver.kernel.org>; Tue, 23 Jun 2020 11:42:30 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E51AE20723
+	for <linux-api@archiver.kernel.org>; Tue, 23 Jun 2020 13:19:02 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eG0n9Jqx"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="SNlInERf"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1732487AbgFWLma (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 23 Jun 2020 07:42:30 -0400
-Received: from us-smtp-1.mimecast.com ([207.211.31.81]:44728 "EHLO
-        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1732461AbgFWLm3 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 23 Jun 2020 07:42:29 -0400
+        id S1732608AbgFWNTC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 23 Jun 2020 09:19:02 -0400
+Received: from us-smtp-delivery-1.mimecast.com ([207.211.31.120]:36427 "EHLO
+        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+        with ESMTP id S1732580AbgFWNTC (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 23 Jun 2020 09:19:02 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1592912547;
+        s=mimecast20190719; t=1592918340;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-        bh=mVDdDzj31CvPBNhZUfDPeljm/u7xus+LZ3Kd5RIBbeg=;
-        b=eG0n9JqxAVS2uutqP2XF8hO8VXexPzsoEAeGXgRWgw6ACkvb4ckau+Ii6r/1XvLQqPZBvy
-        nj5RPFHKyz3tGY0WnJZjF93M7CZ3jeb9HChxQ0NQBF8F2X/6Uvbtl6QoMmSugNPoYnIkm4
-        YnltM/QdR+59q6UBC9MSwKFcD1IWxlo=
+        bh=Wm7934vy90ysEQUEwWEJMP2bPmnPH5zr0UpywfuvKWA=;
+        b=SNlInERfAtv2RXkJErXx4h2g3ju4LQXdUUu0BDNPVYGKvp2iC8QLx+r9dmFR5v9JbAm/Jc
+        VxUrqTnapCx2UlbY20X2UdTdgyg47mFRJl1Fnzzf2siQZR4Y1zm1CpZ5NNAuLnyDyLYrmN
+        6szMaDDySM4AxesTQVL/h+XWF+e4je0=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-207-o8d97G4YOZGFA1GDzZsiUQ-1; Tue, 23 Jun 2020 07:42:23 -0400
-X-MC-Unique: o8d97G4YOZGFA1GDzZsiUQ-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-365--v0K_m57M4ubZSdoCoXFqQ-1; Tue, 23 Jun 2020 09:18:58 -0400
+X-MC-Unique: -v0K_m57M4ubZSdoCoXFqQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 00B798031C2;
-        Tue, 23 Jun 2020 11:42:21 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A29F1192297A;
+        Tue, 23 Jun 2020 13:18:53 +0000 (UTC)
 Received: from [10.10.112.224] (ovpn-112-224.rdu2.redhat.com [10.10.112.224])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id 09B6B5C290;
-        Tue, 23 Jun 2020 11:42:08 +0000 (UTC)
-Subject: Re: [Patch v2 3/3] net: Restrict receive packets queuing to
- housekeeping CPUs
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 8D72890324;
+        Tue, 23 Jun 2020 13:18:41 +0000 (UTC)
+Subject: Re: [Patch v2 1/3] lib: Restrict cpumask_local_spread to houskeeping
+ CPUs
 To:     Peter Zijlstra <peterz@infradead.org>
 Cc:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
         frederic@kernel.org, mtosatti@redhat.com, juri.lelli@redhat.com,
@@ -53,8 +53,8 @@ Cc:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
         sfr@canb.auug.org.au, stephen@networkplumber.org,
         rppt@linux.vnet.ibm.com
 References: <20200622234510.240834-1-nitesh@redhat.com>
- <20200622234510.240834-4-nitesh@redhat.com>
- <20200623092312.GC4781@hirez.programming.kicks-ass.net>
+ <20200622234510.240834-2-nitesh@redhat.com>
+ <20200623092139.GB4781@hirez.programming.kicks-ass.net>
 From:   Nitesh Narayan Lal <nitesh@redhat.com>
 Autocrypt: addr=nitesh@redhat.com; prefer-encrypt=mutual; keydata=
  mQINBFl4pQoBEADT/nXR2JOfsCjDgYmE2qonSGjkM1g8S6p9UWD+bf7YEAYYYzZsLtbilFTe
@@ -100,88 +100,157 @@ Autocrypt: addr=nitesh@redhat.com; prefer-encrypt=mutual; keydata=
  NK9ZhT0+qkiN7npFLtNtbzwqaqceq3XhafmCiw8xrtzCnlB/C4SiBr/93Ip4kihXJ0EuHSLn
  VujM7c/b4pps
 Organization: Red Hat Inc,
-Message-ID: <f67187a8-be5f-ea15-77b4-165dab2b51af@redhat.com>
-Date:   Tue, 23 Jun 2020 07:42:05 -0400
+Message-ID: <9b499cd8-e311-db5b-4261-0b3f355c8c89@redhat.com>
+Date:   Tue, 23 Jun 2020 09:18:37 -0400
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
  Thunderbird/68.5.0
 MIME-Version: 1.0
-In-Reply-To: <20200623092312.GC4781@hirez.programming.kicks-ass.net>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+In-Reply-To: <20200623092139.GB4781@hirez.programming.kicks-ass.net>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: multipart/signed; micalg=pgp-sha256;
  protocol="application/pgp-signature";
- boundary="QmeVdi3u4bWeeqhM0VYP020GtIwgEgOXk"
+ boundary="KxFdHc4nNsmoEb5Z4JeJrTYFF0IbAnbWV"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
 This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---QmeVdi3u4bWeeqhM0VYP020GtIwgEgOXk
-Content-Type: multipart/mixed; boundary="6Vj1QAOw4bDqnRbT2GEr6u2jYNR4T1P00"
+--KxFdHc4nNsmoEb5Z4JeJrTYFF0IbAnbWV
+Content-Type: multipart/mixed; boundary="N3pPay3VTB8ZxfMV0HMF98bVzXhPUIWGC"
 
---6Vj1QAOw4bDqnRbT2GEr6u2jYNR4T1P00
+--N3pPay3VTB8ZxfMV0HMF98bVzXhPUIWGC
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 Content-Language: en-US
 
 
-On 6/23/20 5:23 AM, Peter Zijlstra wrote:
-> On Mon, Jun 22, 2020 at 07:45:10PM -0400, Nitesh Narayan Lal wrote:
->> @@ -756,6 +757,13 @@ static ssize_t store_rps_map(struct netdev_rx_queue=
- *queue,
->>  =09=09return err;
->>  =09}
+On 6/23/20 5:21 AM, Peter Zijlstra wrote:
+> On Mon, Jun 22, 2020 at 07:45:08PM -0400, Nitesh Narayan Lal wrote:
+>> From: Alex Belits <abelits@marvell.com>
+>>
+>> The current implementation of cpumask_local_spread() does not respect th=
+e
+>> isolated CPUs, i.e., even if a CPU has been isolated for Real-Time task,
+>> it will return it to the caller for pinning of its IRQ threads. Having
+>> these unwanted IRQ threads on an isolated CPU adds up to a latency
+>> overhead.
+>>
+>> Restrict the CPUs that are returned for spreading IRQs only to the
+>> available housekeeping CPUs.
+>>
+>> Signed-off-by: Alex Belits <abelits@marvell.com>
+>> Signed-off-by: Nitesh Narayan Lal <nitesh@redhat.com>
+>> ---
+>>  lib/cpumask.c | 43 +++++++++++++++++++++++++------------------
+>>  1 file changed, 25 insertions(+), 18 deletions(-)
+>>
+>> diff --git a/lib/cpumask.c b/lib/cpumask.c
+>> index fb22fb266f93..cc4311a8c079 100644
+>> --- a/lib/cpumask.c
+>> +++ b/lib/cpumask.c
+>> @@ -6,6 +6,7 @@
+>>  #include <linux/export.h>
+>>  #include <linux/memblock.h>
+>>  #include <linux/numa.h>
+>> +#include <linux/sched/isolation.h>
+>> =20
+>>  /**
+>>   * cpumask_next - get the next cpu in a cpumask
+>> @@ -205,28 +206,34 @@ void __init free_bootmem_cpumask_var(cpumask_var_t=
+ mask)
+>>   */
+>>  unsigned int cpumask_local_spread(unsigned int i, int node)
+>>  {
+>> -=09int cpu;
+>> +=09int cpu, m, n, hk_flags;
+>> +=09const struct cpumask *mask;
 >> =20
 >> +=09hk_flags =3D HK_FLAG_DOMAIN | HK_FLAG_WQ;
->> +=09cpumask_and(mask, mask, housekeeping_cpumask(hk_flags));
->> +=09if (cpumask_weight(mask) =3D=3D 0) {
-> We have cpumask_empty() for that, which is a much more efficient way of
-> testing the same.
+>> +=09mask =3D housekeeping_cpumask(hk_flags);
+>> +=09m =3D cpumask_weight(mask);
+>>  =09/* Wrap: we always want a cpu. */
+>> -=09i %=3D num_online_cpus();
+>> +=09n =3D i % m;
+>> +=09while (m-- > 0) {
+> I are confuzled. What do we need this outer loop for?
+>
+> Why isn't something like:
+>
+> =09i %=3D cpumask_weight(mask);
+>
+> good enough? That voids having to touch the test.
 
-Yes, right.
-I will make this change.
+Makes sense.
+Thanks
+
+> Still when you're there, at the very least you can fix the horrible
+> style:
+
+Sure.
 
 >
->> +=09=09free_cpumask_var(mask);
->> +=09=09return -EINVAL;
->> +=09}
->> +
->>  =09map =3D kzalloc(max_t(unsigned int,
->>  =09=09=09    RPS_MAP_SIZE(cpumask_weight(mask)), L1_CACHE_BYTES),
->>  =09=09      GFP_KERNEL);
+>
+>> +=09=09if (node =3D=3D NUMA_NO_NODE) {
+>> +=09=09=09for_each_cpu(cpu, mask)
+>> +=09=09=09=09if (n-- =3D=3D 0)
+>> +=09=09=09=09=09return cpu;
+> { }
+>
+>> +=09=09} else {
+>> +=09=09=09/* NUMA first. */
+>> +=09=09=09for_each_cpu_and(cpu, cpumask_of_node(node), mask)
+>> +=09=09=09=09if (n-- =3D=3D 0)
+>> +=09=09=09=09=09return cpu;
+> { }
+>
+>> =20
+>> +=09=09=09for_each_cpu(cpu, mask) {
+>> +=09=09=09=09/* Skip NUMA nodes, done above. */
+>> +=09=09=09=09if (cpumask_test_cpu(cpu,
+>> +=09=09=09=09=09=09     cpumask_of_node(node)))
+>> +=09=09=09=09=09continue;
+> No linebreak please.
+>
+>> =20
+>> +=09=09=09=09if (n-- =3D=3D 0)
+>> +=09=09=09=09=09return cpu;
+>> +=09=09=09}
+>>  =09=09}
+>>  =09}
+>>  =09BUG();
 >> --=20
 >> 2.18.4
 >>
 --=20
-Thanks
 Nitesh
 
 
---6Vj1QAOw4bDqnRbT2GEr6u2jYNR4T1P00--
+--N3pPay3VTB8ZxfMV0HMF98bVzXhPUIWGC--
 
---QmeVdi3u4bWeeqhM0VYP020GtIwgEgOXk
+--KxFdHc4nNsmoEb5Z4JeJrTYFF0IbAnbWV
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: OpenPGP digital signature
 Content-Disposition: attachment; filename="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQIzBAEBCAAdFiEEkXcoRVGaqvbHPuAGo4ZA3AYyozkFAl7x6o0ACgkQo4ZA3AYy
-ozlCpRAAhk5YK0kFNJO35HoAS9sTo+p39qmZ8uhxx7XOGzbIq2+dJKzNtyHT3uQA
-mDVkhhc2YmZ7inNJ6f4NMa6AFPSPefz2AGdjLOLLnxpQscVt1MlFMykCS2Oq2rTp
-imOdpmOqF0ZOUVTpSgxRQ+ek7BDqQUHunm/YcWOqWggp8yEumj0Ne9m4/yxwn1TB
-k0RI+3DsPl4Id/qfzXO3paCyBngXyRpfEVwsp4wqlscDhCxRnE9Ou4Fcs7jiGzZ+
-Ct4W7RJZNQEgsm/rDC0+1ruSnC0QN0yw03R7mD7ZVSC5wcU3R4Cq25KmHk7cP2/x
-ivHJl/+kpA0qonzd1eSbqrXOOc854PQxH/9xOS8eYoAap13kDg4VO4rErvVKINz8
-idFKuWWztE/JHr5ws/+/ZNbrV+AUDod3KwgyQeQB0KlYe7Q7blZnWkUOwv4f1ckG
-UyNiXlS1chVDBl8sUruTIb2adI6i3u/siDnNi0uOhJcaCQCi7pUUfUkhBNGOUwT1
-vZnGnABeouO+RHCBiaFtj0y/HnhyFYj8pPNfA+af45m4sEpYcBFDPbIVoJO17yDv
-ykTBI2s46CoFmBlnfTy6PuKyhnTdYGbvCBwSQpfm3KQFWu5O10O0rDu+zxy0jtnO
-h3pM8nhooarIdrN2rnyVvvscChUqnJx+ORIKxmlTLfc1yws5uYI=
-=VJ/U
+iQIzBAEBCAAdFiEEkXcoRVGaqvbHPuAGo4ZA3AYyozkFAl7yAS0ACgkQo4ZA3AYy
+ozm9TxAA03qyAclOLwN/ogLAtS/TkuXdENI8mJXEgyHAzUM7UH7eToCmwP5UYQ2t
+YF3+hLB2b3PZYZptdnXUkDIrAPO9Em++YLTBNYdglNsI3jGZ6vPKvRh1tOmpIlk6
+gano9vSHSyRqq0RqsnYRrweENT0JPXTGC7tDrXT4RIFLA7tbG677b7WUNCChpSpu
+93Bf1upf4WVVoRbiPVt/a/TdPiKv6gLQz2GHfqHNfJ1OMfbBrdDEKssP3MXpV0Bq
+QEvZXtUTzp+O16L3mVjai+sx2U0PxQAuyrD+bnAIRzsI8Xz8isBc3YoQ/RvQM5og
+iIaUofFgNhJ8LpJxUJnWkFHz9dwFnhuy7c57RstPM2KZqdMrc9b0lGi10dOqUQRA
+nyktu1w8NYtfaOSk+QMBcdJky7scRBiJ5orjpt43eM3Rb9T9k6krYirhZj+WeIpG
+ZiBOPo7llQpv2T4g9KgtEPSdLaTapW74GiRq5OiAjj3SpqAhT+eut7XelwlFIjTo
+NAf1Gl50A+pYPZWEIjb1OSrsrFN3eXPqvLmf7B8w5F2yIz1c7rn5Q5LEts6JtWJd
+4taXA/9eWy/vq/inBVveWYyqvg47YKGqbohKTsUi4kUpLx5TFYbNSgUydUsKxeH3
+zVdxV/l68gRxy/c/cN7Cu3VH9NwZXQ3rkOeKsuV15OVk8GuBMws=
+=Cu5B
 -----END PGP SIGNATURE-----
 
---QmeVdi3u4bWeeqhM0VYP020GtIwgEgOXk--
+--KxFdHc4nNsmoEb5Z4JeJrTYFF0IbAnbWV--
 
