@@ -1,155 +1,131 @@
-Return-Path: <SRS0=X7Ev=AE=vger.kernel.org=linux-api-owner@kernel.org>
+Return-Path: <SRS0=EYlt=AF=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-6.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SPF_HELO_NONE,SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EDCA7C433E1
-	for <linux-api@archiver.kernel.org>; Tue, 23 Jun 2020 19:24:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 27A11C433E0
+	for <linux-api@archiver.kernel.org>; Wed, 24 Jun 2020 01:31:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CF4C820C09
-	for <linux-api@archiver.kernel.org>; Tue, 23 Jun 2020 19:24:52 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VZqRpRRG"
+	by mail.kernel.org (Postfix) with ESMTP id 06C8D2078E
+	for <linux-api@archiver.kernel.org>; Wed, 24 Jun 2020 01:31:31 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1592962291;
+	bh=G4AXnWU2fiGkIDEdz6OJbeqN7xJRtpQUSd5VhzK8J+I=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:List-ID:From;
+	b=h9yBSOHwdTMW6jMa7xr+fxjxNIWTSQbGSvJvATyXQnCc5+k29COkQiist5PK/hpJj
+	 QkmirfY3yPKw0tdAdTQYTEyArHTdUOd/EjjjRESq1z450hG8DnFfh0jsx2JUSZpvrK
+	 DaCmQzBKfJK5NKRvGkZubfmTizdlCCsfOY3valM0=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2387507AbgFWTYt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 23 Jun 2020 15:24:49 -0400
-Received: from us-smtp-1.mimecast.com ([205.139.110.61]:32765 "EHLO
-        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S2387502AbgFWTYs (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 23 Jun 2020 15:24:48 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1592940286;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc; bh=6Plzu49CQyNDpryqfdib60Q5OShlIBOAwfSCIIwIMw8=;
-        b=VZqRpRRGZqTXkwfILivjQNmxNJirvK3oePF3AN2yLWqC6r3p1z3YCzztiQwoGFZCnqmH/m
-        DChEGS7pjl4Qa1iP5kcrthCx4MdwdjEYAEaK60I3Qd9aaWinrN3IgBR3qk6xTLdBloyN28
-        KtmNtczWVoOF8D2gWEWHd5VOV0ZBA6o=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-288-56b5VRPTPtCA2vWSHQFSbw-1; Tue, 23 Jun 2020 15:24:24 -0400
-X-MC-Unique: 56b5VRPTPtCA2vWSHQFSbw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 26B8A8005AD;
-        Tue, 23 Jun 2020 19:24:22 +0000 (UTC)
-Received: from virtlab423.virt.lab.eng.bos.redhat.com (virtlab423.virt.lab.eng.bos.redhat.com [10.19.152.154])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 22FDC610F3;
-        Tue, 23 Jun 2020 19:24:17 +0000 (UTC)
-From:   Nitesh Narayan Lal <nitesh@redhat.com>
-To:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        frederic@kernel.org, mtosatti@redhat.com, juri.lelli@redhat.com,
-        abelits@marvell.com, bhelgaas@google.com,
-        linux-pci@vger.kernel.org, rostedt@goodmis.org, mingo@kernel.org,
-        peterz@infradead.org, tglx@linutronix.de, davem@davemloft.net,
-        akpm@linux-foundation.org, sfr@canb.auug.org.au,
-        stephen@networkplumber.org, rppt@linux.vnet.ibm.com
-Subject: [PATCH v3 0/3] Preventing job distribution to isolated CPUs
-Date:   Tue, 23 Jun 2020 15:23:28 -0400
-Message-Id: <20200623192331.215557-1-nitesh@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+        id S2388273AbgFXBb2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 23 Jun 2020 21:31:28 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43910 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2387921AbgFXBb1 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 23 Jun 2020 21:31:27 -0400
+Received: from mail-pl1-x641.google.com (mail-pl1-x641.google.com [IPv6:2607:f8b0:4864:20::641])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8234AC061573;
+        Tue, 23 Jun 2020 18:31:26 -0700 (PDT)
+Received: by mail-pl1-x641.google.com with SMTP id g12so303711pll.10;
+        Tue, 23 Jun 2020 18:31:26 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to;
+        bh=STvVE6RZ3Y0xoSbwRDvBmVixkdJOr1NShciDYz9YwAM=;
+        b=W0vTKcKu1k4LZL/79tI9ZWaSgDRT8dAnFbEzoztsZnuxsAdCwsWzGStWBp+QyRecCD
+         CUpj6vHksbhJgjnx02F34EzU9VSZkoU+w0V/55gsApx6Jpw5WusaCp9GSfjQGbLUIjmN
+         dhnNMzgXGSuy1Bl5Lsh2JdeS0x9Kc+IttH5obXsz2tQ6BHUdRYOP1aSTYrleoPNbXxHL
+         Vil+Zf21VuwEdfSVf/OirWzjruOs1ePNLO44R4wC6m426c5cTRulwDPOyti+Oh0Q16Eg
+         atT7+QCFMnsJy3yxnvWZ2NOKyqgbq6B3oBd86RRKLsITNob8O+MKM6eY768wVMLumQta
+         /5Hg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:date:from:to:cc:subject:message-id
+         :references:mime-version:content-disposition:in-reply-to;
+        bh=STvVE6RZ3Y0xoSbwRDvBmVixkdJOr1NShciDYz9YwAM=;
+        b=M+WaptIZeMC0tRcLJHtWdHffPtt6Ob49sJHncmq44fTVTVNQwzqBuUmt/39xEZvma7
+         6VekuBYVXzOciyJjGq09deI+/fVPYwp7bqAYLxMMHRHl1eZBuwOYpIA1olsn5EKZeS7O
+         coQ37EuFUl0mrSljY10V8YUng5QpsYf3EViTD9ynuQZ5RVp3BUuRYzWtUMzl+tIQSrTf
+         Tjmk2MdSIDvuCs5mE78JWtD6UKjjfzMMTq2ZCn+mnEsqpfTrKKsSFScVBIY3MFzMnJ8x
+         88OvxF+5a32yUnrGBAd+EqiXIBQpQLJOjjVRHOzkeswHEh1W1nFAtNPFq6M7Tpn4dHmt
+         W82g==
+X-Gm-Message-State: AOAM530rS3LR/NP54vv8g7FrkL1CugqUSqGKLGuo+JSf36w7VFlzBLe+
+        2uGji0wGmZvoRQ0zS55BKm4=
+X-Google-Smtp-Source: ABdhPJyysnl8A9zV1eAdaECih+/1cO9iPnaZNXWpwZYi4TkGIOLdr794d0QrNa/rQMjmDGDb7OxyBA==
+X-Received: by 2002:a17:902:7208:: with SMTP id ba8mr26976478plb.217.1592962285863;
+        Tue, 23 Jun 2020 18:31:25 -0700 (PDT)
+Received: from google.com ([2620:15c:211:1:3e01:2939:5992:52da])
+        by smtp.gmail.com with ESMTPSA id m20sm19512857pfk.52.2020.06.23.18.31.23
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 23 Jun 2020 18:31:24 -0700 (PDT)
+Date:   Tue, 23 Jun 2020 18:31:22 -0700
+From:   Minchan Kim <minchan@kernel.org>
+To:     Oleksandr Natalenko <oleksandr@redhat.com>
+Cc:     Andrew Morton <akpm@linux-foundation.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        linux-mm <linux-mm@kvack.org>, linux-api@vger.kernel.org,
+        Suren Baghdasaryan <surenb@google.com>,
+        Tim Murray <timmurray@google.com>,
+        Sandeep Patil <sspatil@google.com>,
+        Sonny Rao <sonnyrao@google.com>,
+        Brian Geffon <bgeffon@google.com>,
+        Michal Hocko <mhocko@suse.com>,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Shakeel Butt <shakeelb@google.com>,
+        John Dias <joaodias@google.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Jann Horn <jannh@google.com>,
+        alexander.h.duyck@linux.intel.com, sj38.park@gmail.com,
+        David Rientjes <rientjes@google.com>,
+        Arjun Roy <arjunroy@google.com>
+Subject: Re: [PATCH v8 0/4]  introduce memory hinting API for external process
+Message-ID: <20200624013122.GA9502@google.com>
+References: <20200622192900.22757-1-minchan@kernel.org>
+ <20200623090721.5owt4cxjji6isqe3@butterfly.localdomain>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20200623090721.5owt4cxjji6isqe3@butterfly.localdomain>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This patch-set is originated from one of the patches that have been
-posted earlier as a part of "Task_isolation" mode [1] patch series
-by Alex Belits <abelits@marvell.com>. There are only a couple of
-changes that I am proposing in this patch-set compared to what Alex
-has posted earlier.
- 
- 
-Context
-=======
-On a broad level, all three patches that are included in this patch
-set are meant to improve the driver/library to respect isolated
-CPUs by not pinning any job on it. Not doing so could impact
-the latency values in RT use-cases.
+Hi Oleksandr,
 
+On Tue, Jun 23, 2020 at 11:07:21AM +0200, Oleksandr Natalenko wrote:
+> On Mon, Jun 22, 2020 at 12:28:56PM -0700, Minchan Kim wrote:
+> > Now, we have MADV_PAGEOUT and MADV_COLD as madvise hinting API. With that,
+> > application could give hints to kernel what memory range are preferred to be
+> > reclaimed. However, in some platform(e.g., Android), the information
+> > required to make the hinting decision is not known to the app.
+> > Instead, it is known to a centralized userspace daemon(e.g., ActivityManagerService),
+> > and that daemon must be able to initiate reclaim on its own without any app
+> > involvement.
+> > 
+> > To solve the concern, this patch introduces new syscall - process_madvise(2).
+> > Bascially, it's same with madvise(2) syscall but it has some differences.
+> > 
+> > 1. It needs pidfd of target process to provide the hint
+> > 2. It supports only MADV_{COLD|PAGEOUT} at this moment.
+> >    Other hints in madvise will be opened when there are explicit requests from
+> >    community to prevent unexpected bugs we couldn't support.
+> > 3. Only privileged processes can do something for other process's address
+> >    space.
+> > 
+> > For more detail of the new API, please see "mm: introduce external memory hinting API"
+> > description in this patchset.
+> > 
+> > * from v7 -  http://lore.kernel.org/r/20200302193630.68771-1-minchan@kernel.org
+> >   * dropping pid support from new syscall and fold releated patches into syscall patch
+> >   * dropping KSM patch by discussion - Oleksandr, I lost the discussion.
+> >     Please resend the single patch against of the patchset if you resolves the discussion.
+> >     https://lore.kernel.org/linux-api/20200302193630.68771-8-minchan@kernel.org/
+> 
+> What "next" tag this (v8) submission is based on please?
 
-Patches
-=======
-* Patch1:
-  The first patch is meant to make cpumask_local_spread()
-  aware of the isolated CPUs. It ensures that the CPUs that
-  are returned by this API only includes housekeeping CPUs.
-
-* Patch2:
-  This patch ensures that a probe function that is called
-  using work_on_cpu() doesn't run any task on an isolated CPU.
-
-* Patch3:
-  This patch makes store_rps_map() aware of the isolated
-  CPUs so that rps don't queue any jobs on an isolated CPU. 
-
-
-Proposed Changes
-================
-To fix the above-mentioned issues Alex has used housekeeping_cpumask().
-The only changes that I am proposing here are:
-- Removing the dependency on CONFIG_TASK_ISOLATION that was proposed by
-  Alex. As it should be safe to rely on housekeeping_cpumask()
-  even when we don't have any isolated CPUs and we want
-  to fall back to using all available CPUs in any of the above scenarios.
-- Using both HK_FLAG_DOMAIN and HK_FLAG_WQ in all three patches, this is
-  because we would want the above fixes not only when we have isolcpus but
-  also with something like systemd's CPU affinity.
-
-
-Testing
-=======
-* Patch 1:
-  Fix for cpumask_local_spread() is tested by creating VFs, loading
-  iavf module and by adding a tracepoint to confirm that only housekeeping
-  CPUs are picked when an appropriate profile is set up and all remaining
-  CPUs when no CPU isolation is configured.
-
-* Patch 2:
-  To test the PCI fix, I hotplugged a virtio-net-pci from qemu console
-  and forced its addition to a specific node to trigger the code path that
-  includes the proposed fix and verified that only housekeeping CPUs
-  are included via tracepoint.
-
-* Patch 3:
-  To test the fix in store_rps_map(), I tried configuring an isolated
-  CPU by writing to /sys/class/net/en*/queues/rx*/rps_cpus which
-  resulted in 'write error: Invalid argument' error. For the case
-  where a non-isolated CPU is writing in rps_cpus the above operation
-  succeeded without any error.
-
-
-Changes from v2[2]:
-==================
-- Patch1: Removed the extra while loop from cpumask_local_spread and fixed
-  the code styling issues.
-- Patch3: Change to use cpumask_empty() for verifying that the requested
-  CPUs are available in the housekeeping CPUs.
-
-Changes from v1[3]:
-==================
-- Included the suggestions made by Bjorn Helgaas in the commit message.
-- Included the 'Reviewed-by' and 'Acked-by' received for Patch-2.
-
-
-[1] https://patchwork.ozlabs.org/project/netdev/patch/51102eebe62336c6a4e584c7a503553b9f90e01c.camel@marvell.com/
-[2] https://patchwork.ozlabs.org/project/linux-pci/cover/20200622234510.240834-1-nitesh@redhat.com/
-[3] https://patchwork.ozlabs.org/project/linux-pci/cover/20200610161226.424337-1-nitesh@redhat.com/
-
-
-Alex Belits (3):
-  lib: Restrict cpumask_local_spread to houskeeping CPUs
-  PCI: Restrict probe functions to housekeeping CPUs
-  net: Restrict receive packets queuing to housekeeping CPUs
-
- drivers/pci/pci-driver.c |  5 ++++-
- lib/cpumask.c            | 16 +++++++++++-----
- net/core/net-sysfs.c     | 10 +++++++++-
- 3 files changed, 24 insertions(+), 7 deletions(-)
-
--- 
-
+It's against on v5.8-rc1-mmots-2020-06-20-21-44 from mmotm - https://github.com/hnaz/linux-mm.git
