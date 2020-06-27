@@ -4,44 +4,44 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-7.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E9451C433DF
-	for <linux-api@archiver.kernel.org>; Sat, 27 Jun 2020 13:22:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E8C12C433DF
+	for <linux-api@archiver.kernel.org>; Sat, 27 Jun 2020 13:22:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C8BC6208B6
-	for <linux-api@archiver.kernel.org>; Sat, 27 Jun 2020 13:22:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B832820885
+	for <linux-api@archiver.kernel.org>; Sat, 27 Jun 2020 13:22:59 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BVyBXNhc"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Y4+OTmH8"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726749AbgF0NWW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 27 Jun 2020 09:22:22 -0400
-Received: from us-smtp-delivery-1.mimecast.com ([205.139.110.120]:21095 "EHLO
+        id S1726838AbgF0NW4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 27 Jun 2020 09:22:56 -0400
+Received: from us-smtp-delivery-1.mimecast.com ([207.211.31.120]:58756 "EHLO
         us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1726695AbgF0NWW (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 27 Jun 2020 09:22:22 -0400
+        with ESMTP id S1726818AbgF0NWw (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 27 Jun 2020 09:22:52 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1593264140;
+        s=mimecast20190719; t=1593264170;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:in-reply-to:in-reply-to:in-reply-to:
          references:references:references;
-        bh=5daVVav2vz0gUbxpNuM5DjXpFZAkaJD7gM4Gto+ga3s=;
-        b=BVyBXNhcnP35zDXKprkkUTGNqfXwucm4JcBx2AUFVIMk9VgQmIRpu107qV6pAr1cX36Xs5
-        58CIlI5BSLdScEG0in928cvqcP4W5OmLkQEpCaOtMF34pGUGLIveMwOmMiGA7V+Hit1492
-        Aqfk7iJ0OHiYnrSxqmfA2OrsxpQep7o=
+        bh=Quiow2zvKmWErePkj6tgsO+t5+qVfVy/KDI+jkuHA2o=;
+        b=Y4+OTmH8fWPSVHYkPsz5Ezg9DJcUjLp4Bj4kgSXt+qL/+jz2uy+lNeXmW9EdI1P2adZAkp
+        Lq17Qx4L3cmkSu/vG/1EXasnfIlKw3kAck70HR+/+4P1ZUYtHXHQTN3JfkolyfKexHJMn8
+        RNKJzT9CwjuVP+BIRtuaJBD33TaUHOE=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-370-8o6uA2f7NH-45B6dJFcCKA-1; Sat, 27 Jun 2020 09:22:14 -0400
-X-MC-Unique: 8o6uA2f7NH-45B6dJFcCKA-1
+ us-mta-359-3LdOcm5CMjaDh3VGTtGERg-1; Sat, 27 Jun 2020 09:22:46 -0400
+X-MC-Unique: 3LdOcm5CMjaDh3VGTtGERg-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1F10D8015FD;
-        Sat, 27 Jun 2020 13:22:13 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D93C1107ACCA;
+        Sat, 27 Jun 2020 13:22:44 +0000 (UTC)
 Received: from madcap2.tricolour.ca (unknown [10.10.110.28])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 7FAC57932A;
-        Sat, 27 Jun 2020 13:22:08 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 3AC5C71662;
+        Sat, 27 Jun 2020 13:22:32 +0000 (UTC)
 From:   Richard Guy Briggs <rgb@redhat.com>
 To:     containers@lists.linux-foundation.org, linux-api@vger.kernel.org,
         Linux-Audit Mailing List <linux-audit@redhat.com>,
@@ -52,9 +52,9 @@ Cc:     Paul Moore <paul@paul-moore.com>, sgrubb@redhat.com,
         eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com,
         nhorman@tuxdriver.com, dwalsh@redhat.com, mpatel@redhat.com,
         Richard Guy Briggs <rgb@redhat.com>
-Subject: [PATCH ghak90 V9 04/13] audit: log drop of contid on exit of last task
-Date:   Sat, 27 Jun 2020 09:20:37 -0400
-Message-Id: <e9310d6d9d909f4ac7ef1b688fbb0263711f9a24.1593198710.git.rgb@redhat.com>
+Subject: [PATCH ghak90 V9 07/13] audit: add support for non-syscall auxiliary records
+Date:   Sat, 27 Jun 2020 09:20:40 -0400
+Message-Id: <21e6c4e1ac179c8dcf35803e603899ccfc69300a.1593198710.git.rgb@redhat.com>
 In-Reply-To: <cover.1593198710.git.rgb@redhat.com>
 References: <cover.1593198710.git.rgb@redhat.com>
 In-Reply-To: <cover.1593198710.git.rgb@redhat.com>
@@ -65,75 +65,137 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Since we are tracking the life of each audit container indentifier, we
-can match the creation event with the destruction event.  Log the
-destruction of the audit container identifier when the last process in
-that container exits.
+Standalone audit records have the timestamp and serial number generated
+on the fly and as such are unique, making them standalone.  This new
+function audit_alloc_local() generates a local audit context that will
+be used only for a standalone record and its auxiliary record(s).  The
+context is discarded immediately after the local associated records are
+produced.
 
 Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+Acked-by: Serge Hallyn <serge@hallyn.com>
+Acked-by: Neil Horman <nhorman@tuxdriver.com>
+Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
 ---
- kernel/audit.c   | 20 ++++++++++++++++++++
- kernel/audit.h   |  2 ++
- kernel/auditsc.c |  2 ++
- 3 files changed, 24 insertions(+)
+ include/linux/audit.h |  8 ++++++++
+ kernel/audit.h        |  1 +
+ kernel/auditsc.c      | 33 ++++++++++++++++++++++++++++-----
+ 3 files changed, 37 insertions(+), 5 deletions(-)
 
-diff --git a/kernel/audit.c b/kernel/audit.c
-index 6d387793f702..9e0b38ce1ead 100644
---- a/kernel/audit.c
-+++ b/kernel/audit.c
-@@ -2558,6 +2558,26 @@ int audit_set_contid(struct task_struct *task, u64 contid)
- 	return rc;
- }
+diff --git a/include/linux/audit.h b/include/linux/audit.h
+index 89cf7c66abe6..15d0defc5193 100644
+--- a/include/linux/audit.h
++++ b/include/linux/audit.h
+@@ -330,6 +330,8 @@ static inline int audit_signal_info(int sig, struct task_struct *t)
  
-+void audit_log_container_drop(void)
+ /* These are defined in auditsc.c */
+ 				/* Public API */
++extern struct audit_context *audit_alloc_local(gfp_t gfpflags);
++extern void audit_free_context(struct audit_context *context);
+ extern void __audit_syscall_entry(int major, unsigned long a0, unsigned long a1,
+ 				  unsigned long a2, unsigned long a3);
+ extern void __audit_syscall_exit(int ret_success, long ret_value);
+@@ -592,6 +594,12 @@ static inline void audit_log_nfcfg(const char *name, u8 af,
+ extern int audit_n_rules;
+ extern int audit_signals;
+ #else /* CONFIG_AUDITSYSCALL */
++static inline struct audit_context *audit_alloc_local(gfp_t gfpflags)
 +{
-+	struct audit_buffer *ab;
-+	struct audit_contobj *cont;
-+
-+	rcu_read_lock();
-+	cont = _audit_contobj_get(current);
-+	_audit_contobj_put(cont);
-+	if (!cont || refcount_read(&cont->refcount) > 1)
-+		goto out;
-+	ab = audit_log_start(audit_context(), GFP_KERNEL, AUDIT_CONTAINER_OP);
-+	if (!ab)
-+		goto out;
-+	audit_log_format(ab, "op=drop opid=%d contid=%llu old-contid=%llu",
-+			 task_tgid_nr(current), cont->id, cont->id);
-+	audit_log_end(ab);
-+out:
-+	rcu_read_unlock();
++	return NULL;
 +}
-+
- /**
-  * audit_log_end - end one audit record
-  * @ab: the audit_buffer
++static inline void audit_free_context(struct audit_context *context)
++{ }
+ static inline void audit_syscall_entry(int major, unsigned long a0,
+ 				       unsigned long a1, unsigned long a2,
+ 				       unsigned long a3)
 diff --git a/kernel/audit.h b/kernel/audit.h
-index 182fc76ea276..d07093903008 100644
+index 0c9446f8d52c..a7f88d76163f 100644
 --- a/kernel/audit.h
 +++ b/kernel/audit.h
-@@ -254,6 +254,8 @@ extern void audit_log_d_path_exe(struct audit_buffer *ab,
- extern struct tty_struct *audit_get_tty(void);
- extern void audit_put_tty(struct tty_struct *tty);
- 
-+extern void audit_log_container_drop(void);
-+
- /* audit watch/mark/tree functions */
- #ifdef CONFIG_AUDITSYSCALL
- extern unsigned int audit_serial(void);
+@@ -98,6 +98,7 @@ struct audit_proctitle {
+ struct audit_context {
+ 	int		    dummy;	/* must be the first element */
+ 	int		    in_syscall;	/* 1 if task is in a syscall */
++	bool		    local;	/* local context needed */
+ 	enum audit_state    state, current_state;
+ 	unsigned int	    serial;     /* serial number for record */
+ 	int		    major;      /* syscall number */
 diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-index f00c1da587ea..f03d3eb0752c 100644
+index 9e79645e5c0e..935eb3d2cde9 100644
 --- a/kernel/auditsc.c
 +++ b/kernel/auditsc.c
-@@ -1575,6 +1575,8 @@ static void audit_log_exit(void)
+@@ -908,11 +908,13 @@ static inline void audit_free_aux(struct audit_context *context)
+ 	}
+ }
  
- 	audit_log_proctitle();
+-static inline struct audit_context *audit_alloc_context(enum audit_state state)
++static inline struct audit_context *audit_alloc_context(enum audit_state state,
++							gfp_t gfpflags)
+ {
+ 	struct audit_context *context;
  
-+	audit_log_container_drop();
+-	context = kzalloc(sizeof(*context), GFP_KERNEL);
++	/* We can be called in atomic context via audit_tg() */
++	context = kzalloc(sizeof(*context), gfpflags);
+ 	if (!context)
+ 		return NULL;
+ 	context->state = state;
+@@ -948,7 +950,8 @@ int audit_alloc_syscall(struct task_struct *tsk)
+ 		return 0;
+ 	}
+ 
+-	if (!(context = audit_alloc_context(state))) {
++	context = audit_alloc_context(state, GFP_KERNEL);
++	if (!context) {
+ 		kfree(key);
+ 		audit_log_lost("out of memory in audit_alloc_syscall");
+ 		return -ENOMEM;
+@@ -960,8 +963,27 @@ int audit_alloc_syscall(struct task_struct *tsk)
+ 	return 0;
+ }
+ 
+-static inline void audit_free_context(struct audit_context *context)
++struct audit_context *audit_alloc_local(gfp_t gfpflags)
+ {
++	struct audit_context *context = NULL;
 +
- 	/* Send end of event record to help user space know we are finished */
- 	ab = audit_log_start(context, GFP_KERNEL, AUDIT_EOE);
- 	if (ab)
++	context = audit_alloc_context(AUDIT_RECORD_CONTEXT, gfpflags);
++	if (!context) {
++		audit_log_lost("out of memory in audit_alloc_local");
++		goto out;
++	}
++	context->serial = audit_serial();
++	ktime_get_coarse_real_ts64(&context->ctime);
++	context->local = true;
++out:
++	return context;
++}
++EXPORT_SYMBOL(audit_alloc_local);
++
++void audit_free_context(struct audit_context *context)
++{
++	if (!context)
++		return;
+ 	audit_free_module(context);
+ 	audit_free_names(context);
+ 	unroll_tree_refs(context, NULL, 0);
+@@ -972,6 +994,7 @@ static inline void audit_free_context(struct audit_context *context)
+ 	audit_proctitle_free(context);
+ 	kfree(context);
+ }
++EXPORT_SYMBOL(audit_free_context);
+ 
+ static int audit_log_pid_context(struct audit_context *context, pid_t pid,
+ 				 kuid_t auid, kuid_t uid, unsigned int sessionid,
+@@ -2204,7 +2227,7 @@ void __audit_inode_child(struct inode *parent,
+ int auditsc_get_stamp(struct audit_context *ctx,
+ 		       struct timespec64 *t, unsigned int *serial)
+ {
+-	if (!ctx->in_syscall)
++	if (!ctx->in_syscall && !ctx->local)
+ 		return 0;
+ 	if (!ctx->serial)
+ 		ctx->serial = audit_serial();
 -- 
 1.8.3.1
 
