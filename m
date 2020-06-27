@@ -2,46 +2,46 @@ Return-Path: <SRS0=B4G1=AI=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+X-Spam-Status: No, score=-7.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 589EAC433E1
-	for <linux-api@archiver.kernel.org>; Sat, 27 Jun 2020 13:23:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7548AC433E0
+	for <linux-api@archiver.kernel.org>; Sat, 27 Jun 2020 13:23:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 30E5C208B6
-	for <linux-api@archiver.kernel.org>; Sat, 27 Jun 2020 13:23:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4CF9120885
+	for <linux-api@archiver.kernel.org>; Sat, 27 Jun 2020 13:23:59 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DklGnS0h"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TLsCk28d"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726906AbgF0NXc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 27 Jun 2020 09:23:32 -0400
-Received: from us-smtp-delivery-1.mimecast.com ([207.211.31.120]:41704 "EHLO
-        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1726891AbgF0NX0 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 27 Jun 2020 09:23:26 -0400
+        id S1726962AbgF0NX5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 27 Jun 2020 09:23:57 -0400
+Received: from us-smtp-1.mimecast.com ([205.139.110.61]:21786 "EHLO
+        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726940AbgF0NXv (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 27 Jun 2020 09:23:51 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1593264203;
+        s=mimecast20190719; t=1593264228;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:in-reply-to:in-reply-to:in-reply-to:
          references:references:references;
-        bh=CPP8DwxyP2nxU5T7VlnBBLby4pxWG218P+Lbpwd6l5M=;
-        b=DklGnS0hWvcsehLrLM5noYE8R7SxoDUVYYHkRFq7ofBNr/HUipBZtjhxu7hox3bU2CxtGD
-        huDDsp5Qz1mE/m6nkwMnericc2c2UdGII9WdkZgw4XQn3EbiNzc1h8JDqiqY/a5iedBdzO
-        W+2gNa7vzruHmy9YfCM90fKxsEni/MU=
+        bh=xHQ23E0ubwuEGdr08pTjn1ZZAxTi7f5b6ScMm0bJY4c=;
+        b=TLsCk28duDn3AFMJvsWKWieMBYpkArjGl/PDOT3ul9VJGNnbxy0oAtDjL/XB2lC38IEwUF
+        7Pyyk+JJCb7LzvS01wczaHYIZto42JFAUZIwarCoOUOzeEtNEkWpk6URosRc9T35zJ1kpo
+        +sQgki6KZak/6bEUKanCpF7c4YeUSmE=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-109-Az1n9d3oNUGv4uftFmg6og-1; Sat, 27 Jun 2020 09:23:21 -0400
-X-MC-Unique: Az1n9d3oNUGv4uftFmg6og-1
+ us-mta-18-UOKJWxGZPmy5N6uVApuoTQ-1; Sat, 27 Jun 2020 09:23:44 -0400
+X-MC-Unique: UOKJWxGZPmy5N6uVApuoTQ-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2A05A804003;
-        Sat, 27 Jun 2020 13:23:19 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DFCF2800C60;
+        Sat, 27 Jun 2020 13:23:42 +0000 (UTC)
 Received: from madcap2.tricolour.ca (unknown [10.10.110.28])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 8A09D71662;
-        Sat, 27 Jun 2020 13:23:14 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 0901871662;
+        Sat, 27 Jun 2020 13:23:29 +0000 (UTC)
 From:   Richard Guy Briggs <rgb@redhat.com>
 To:     containers@lists.linux-foundation.org, linux-api@vger.kernel.org,
         Linux-Audit Mailing List <linux-audit@redhat.com>,
@@ -52,9 +52,9 @@ Cc:     Paul Moore <paul@paul-moore.com>, sgrubb@redhat.com,
         eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com,
         nhorman@tuxdriver.com, dwalsh@redhat.com, mpatel@redhat.com,
         Richard Guy Briggs <rgb@redhat.com>
-Subject: [PATCH ghak90 V9 10/13] audit: add support for containerid to network namespaces
-Date:   Sat, 27 Jun 2020 09:20:43 -0400
-Message-Id: <e9c1216a361c38ebc9cb4089922c259e2cfd5013.1593198710.git.rgb@redhat.com>
+Subject: [PATCH ghak90 V9 12/13] audit: track container nesting
+Date:   Sat, 27 Jun 2020 09:20:45 -0400
+Message-Id: <1d793e2fc60650de4bbc9f4bde3c736c94efe9a1.1593198710.git.rgb@redhat.com>
 In-Reply-To: <cover.1593198710.git.rgb@redhat.com>
 References: <cover.1593198710.git.rgb@redhat.com>
 In-Reply-To: <cover.1593198710.git.rgb@redhat.com>
@@ -65,417 +65,248 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This also adds support to qualify NETFILTER_PKT records.
+Track the parent container of a container to be able to filter and
+report nesting.
 
-Audit events could happen in a network namespace outside of a task
-context due to packets received from the net that trigger an auditing
-rule prior to being associated with a running task.  The network
-namespace could be in use by multiple containers by association to the
-tasks in that network namespace.  We still want a way to attribute
-these events to any potential containers.  Keep a list per network
-namespace to track these audit container identifiiers.
+Now that we have a way to track and check the parent container of a
+container, modify the contid field format to be able to report that
+nesting using a carrat ("^") modifier to indicate nesting.  The
+original field format was "contid=<contid>" for task-associated records
+and "contid=<contid>[,<contid>[...]]" for network-namespace-associated
+records.  The new field format is
+"contid=<contid>[,^<contid>[...]][,<contid>[...]]".
 
-Add/increment the audit container identifier on:
-- initial setting of the audit container identifier via /proc
-- clone/fork call that inherits an audit container identifier
-- unshare call that inherits an audit container identifier
-- setns call that inherits an audit container identifier
-Delete/decrement the audit container identifier on:
-- an inherited audit container identifier dropped when child set
-- process exit
-- unshare call that drops a net namespace
-- setns call that drops a net namespace
-
-Add audit container identifier auxiliary record(s) to NETFILTER_PKT
-event standalone records.  Iterate through all potential audit container
-identifiers associated with a network namespace.
-
-Please see the github audit kernel issue for contid net support:
-  https://github.com/linux-audit/audit-kernel/issues/92
-Please see the github audit testsuiite issue for the test case:
-  https://github.com/linux-audit/audit-testsuite/issues/64
-Please see the github audit wiki for the feature overview:
-  https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
 Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-Acked-by: Neil Horman <nhorman@tuxdriver.com>
-Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
 ---
- include/linux/audit.h    |  20 ++++++
- kernel/audit.c           | 156 ++++++++++++++++++++++++++++++++++++++++++++++-
- kernel/nsproxy.c         |   4 ++
- net/netfilter/nft_log.c  |  11 +++-
- net/netfilter/xt_AUDIT.c |  11 +++-
- 5 files changed, 195 insertions(+), 7 deletions(-)
+ include/linux/audit.h |  1 +
+ kernel/audit.c        | 60 ++++++++++++++++++++++++++++++++++++++++++---------
+ kernel/audit.h        |  2 ++
+ kernel/auditfilter.c  | 17 ++++++++++++++-
+ kernel/auditsc.c      |  2 +-
+ 5 files changed, 70 insertions(+), 12 deletions(-)
 
 diff --git a/include/linux/audit.h b/include/linux/audit.h
-index c4a755ae0d61..304fbb7c3c5b 100644
+index 304fbb7c3c5b..025b52ae8422 100644
 --- a/include/linux/audit.h
 +++ b/include/linux/audit.h
-@@ -128,6 +128,13 @@ struct audit_task_info {
- 
- extern struct audit_task_info init_struct_audit;
- 
-+struct audit_contobj_netns {
-+	struct list_head	list;
-+	struct audit_contobj	*obj;
-+	int			count;
-+	struct rcu_head		rcu;
-+};
-+
- extern int is_audit_feature_set(int which);
- 
- extern int __init audit_register_class(int class, unsigned *list);
-@@ -233,6 +240,11 @@ static inline u64 audit_get_contid(struct task_struct *tsk)
- 
- extern void audit_log_container_id(struct audit_context *context,
- 				   struct audit_contobj *cont);
-+extern void audit_copy_namespaces(struct net *net, struct task_struct *tsk);
-+extern void audit_switch_task_namespaces(struct nsproxy *ns,
-+					 struct task_struct *p);
-+extern void audit_log_netns_contid_list(struct net *net,
-+					struct audit_context *context);
- 
- extern u32 audit_enabled;
- 
-@@ -306,6 +318,14 @@ static inline u64 audit_get_contid(struct task_struct *tsk)
- static inline void audit_log_container_id(struct audit_context *context,
- 					  struct audit_contobj *cont)
- { }
-+static inline void audit_copy_namespaces(struct net *net, struct task_struct *tsk)
-+{ }
-+static inline void audit_switch_task_namespaces(struct nsproxy *ns,
-+						struct task_struct *p)
-+{ }
-+static inline void audit_log_netns_contid_list(struct net *net,
-+					       struct audit_context *context)
-+{ }
- 
- #define audit_enabled AUDIT_OFF
- 
-diff --git a/kernel/audit.c b/kernel/audit.c
-index 997c34178ee8..a862721dfd9b 100644
---- a/kernel/audit.c
-+++ b/kernel/audit.c
-@@ -59,6 +59,7 @@
- #include <linux/freezer.h>
- #include <linux/pid_namespace.h>
- #include <net/netns/generic.h>
-+#include <net/net_namespace.h>
- 
- #include "audit.h"
- 
-@@ -86,9 +87,13 @@
- /**
-  * struct audit_net - audit private network namespace data
-  * @sk: communication socket
-+ * @contobj_list: audit container identifier list
-+ * @contobj_list_lock audit container identifier list lock
-  */
- struct audit_net {
- 	struct sock *sk;
-+	struct list_head contobj_list;
-+	spinlock_t contobj_list_lock;
+@@ -115,6 +115,7 @@ struct audit_contobj {
+ 	refcount_t		refcount;
+ 	refcount_t		sigflag;
+ 	struct rcu_head         rcu;
++	struct audit_contobj	*parent;
  };
  
- /**
-@@ -214,6 +219,9 @@ struct audit_reply {
+ struct audit_task_info {
+diff --git a/kernel/audit.c b/kernel/audit.c
+index efa65ec01239..aaf74702e993 100644
+--- a/kernel/audit.c
++++ b/kernel/audit.c
+@@ -221,6 +221,7 @@ struct audit_reply {
  
- static struct kmem_cache *audit_task_cache;
+ void audit_netns_contid_add(struct net *net, struct audit_contobj *cont);
+ void audit_netns_contid_del(struct net *net, struct audit_contobj *cont);
++void audit_log_contid(struct audit_buffer *ab, struct audit_contobj *cont);
  
-+void audit_netns_contid_add(struct net *net, struct audit_contobj *cont);
-+void audit_netns_contid_del(struct net *net, struct audit_contobj *cont);
-+
  void __init audit_task_init(void)
  {
- 	audit_task_cache = kmem_cache_create("audit_task",
-@@ -326,10 +334,17 @@ struct audit_task_info init_struct_audit = {
- void audit_free(struct task_struct *tsk)
- {
- 	struct audit_task_info *info = tsk->audit;
-+	struct nsproxy *ns = tsk->nsproxy;
-+	struct audit_contobj *cont;
- 
- 	audit_free_syscall(tsk);
- 	rcu_read_lock();
--	_audit_contobj_put(tsk->audit->cont);
-+	cont = _audit_contobj_get(tsk);
-+	if (ns) {
-+		audit_netns_contid_del(ns->net_ns, cont);
-+		_audit_contobj_put(cont);
-+	}
-+	_audit_contobj_put(cont);
- 	rcu_read_unlock();
- 	/* Freeing the audit_task_info struct must be performed after
- 	 * audit_log_exit() due to need for loginuid and sessionid.
-@@ -437,6 +452,136 @@ static struct sock *audit_get_sk(const struct net *net)
- 	return aunet->sk;
- }
- 
-+void audit_netns_contid_add(struct net *net, struct audit_contobj *cont)
-+{
-+	struct audit_net *aunet;
-+	struct list_head *contobj_list;
-+	struct audit_contobj_netns *contns;
-+
-+	if (!net)
-+		return;
-+	if (!cont)
-+		return;
-+	aunet = net_generic(net, audit_net_id);
-+	if (!aunet)
-+		return;
-+	contobj_list = &aunet->contobj_list;
-+	rcu_read_lock();
-+	spin_lock(&aunet->contobj_list_lock);
-+	list_for_each_entry_rcu(contns, contobj_list, list)
-+		if (contns->obj == cont) {
-+			contns->count++;
-+			goto out;
-+		}
-+	contns = kmalloc(sizeof(*contns), GFP_ATOMIC);
-+	if (contns) {
-+		INIT_LIST_HEAD(&contns->list);
-+		contns->obj = cont;
-+		contns->count = 1;
-+		list_add_rcu(&contns->list, contobj_list);
-+	}
-+out:
-+	spin_unlock(&aunet->contobj_list_lock);
-+	rcu_read_unlock();
-+}
-+
-+void audit_netns_contid_del(struct net *net, struct audit_contobj *cont)
-+{
-+	struct audit_net *aunet;
-+	struct list_head *contobj_list;
-+	struct audit_contobj_netns *contns = NULL;
-+
-+	if (!net)
-+		return;
-+	if (!cont)
-+		return;
-+	aunet = net_generic(net, audit_net_id);
-+	if (!aunet)
-+		return;
-+	contobj_list = &aunet->contobj_list;
-+	rcu_read_lock();
-+	spin_lock(&aunet->contobj_list_lock);
-+	list_for_each_entry_rcu(contns, contobj_list, list)
-+		if (contns->obj == cont) {
-+			contns->count--;
-+			if (contns->count < 1) {
-+				list_del_rcu(&contns->list);
-+				kfree_rcu(contns, rcu);
-+			}
-+			break;
-+		}
-+	spin_unlock(&aunet->contobj_list_lock);
-+	rcu_read_unlock();
-+}
-+
-+void audit_copy_namespaces(struct net *net, struct task_struct *tsk)
-+{
-+	struct audit_contobj *cont;
-+
-+	rcu_read_lock();
-+	cont = _audit_contobj_get(tsk);
-+	audit_netns_contid_add(net, cont);
-+	rcu_read_unlock();
-+}
-+
-+void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p)
-+{
-+	struct audit_contobj *cont;
-+	struct nsproxy *new = p->nsproxy;
-+
-+	rcu_read_lock();
-+	cont = _audit_contobj_get(p);
-+	if (!cont)
-+		goto out;
-+	audit_netns_contid_del(ns->net_ns, cont);
-+	if (new)
-+		audit_netns_contid_add(new->net_ns, cont);
-+	else
-+		_audit_contobj_put(cont);
-+	_audit_contobj_put(cont);
-+out:
-+	rcu_read_unlock();
-+}
-+
-+/**
-+ * audit_log_netns_contid_list - List contids for the given network namespace
-+ * @net: the network namespace of interest
-+ * @context: the audit context to use
-+ *
-+ * Description:
-+ * Issues a CONTAINER_ID record with a CSV list of contids associated
-+ * with a network namespace to accompany a NETFILTER_PKT record.
-+ */
-+void audit_log_netns_contid_list(struct net *net, struct audit_context *context)
-+{
-+	struct audit_buffer *ab = NULL;
-+	struct audit_contobj_netns *cont;
-+	struct audit_net *aunet;
-+
-+	/* Generate AUDIT_CONTAINER_ID record with container ID CSV list */
-+	rcu_read_lock();
-+	aunet = net_generic(net, audit_net_id);
-+	if (!aunet)
-+		goto out;
-+	list_for_each_entry_rcu(cont, &aunet->contobj_list, list) {
-+		if (!ab) {
-+			ab = audit_log_start(context, GFP_ATOMIC,
-+					     AUDIT_CONTAINER_ID);
-+			if (!ab) {
-+				audit_log_lost("out of memory in audit_log_netns_contid_list");
-+				goto out;
-+			}
-+			audit_log_format(ab, "contid=");
-+		} else
-+			audit_log_format(ab, ",");
-+		audit_log_format(ab, "%llu", cont->obj->id);
-+	}
-+	audit_log_end(ab);
-+out:
-+	rcu_read_unlock();
-+}
-+EXPORT_SYMBOL(audit_log_netns_contid_list);
-+
- void audit_panic(const char *message)
- {
- 	switch (audit_failure) {
-@@ -1786,7 +1931,6 @@ static int __net_init audit_net_init(struct net *net)
- 		.flags	= NL_CFG_F_NONROOT_RECV,
- 		.groups	= AUDIT_NLGRP_MAX,
- 	};
--
- 	struct audit_net *aunet = net_generic(net, audit_net_id);
- 
- 	aunet->sk = netlink_kernel_create(net, NETLINK_AUDIT, &cfg);
-@@ -1795,7 +1939,8 @@ static int __net_init audit_net_init(struct net *net)
- 		return -ENOMEM;
+@@ -277,6 +278,7 @@ static void _audit_contobj_put_sig(struct audit_contobj *cont)
+ 	refcount_set(&cont->sigflag, 0);
+ 	if (!refcount_read(&cont->refcount)) {
+ 		put_task_struct(cont->owner);
++		_audit_contobj_put(cont->parent);
+ 		list_del_rcu(&cont->list);
+ 		kfree_rcu(cont, rcu);
  	}
- 	aunet->sk->sk_sndtimeo = MAX_SCHEDULE_TIMEOUT;
--
-+	INIT_LIST_HEAD(&aunet->contobj_list);
-+	spin_lock_init(&aunet->contobj_list_lock);
- 	return 0;
+@@ -574,7 +576,7 @@ void audit_log_netns_contid_list(struct net *net, struct audit_context *context)
+ 			audit_log_format(ab, "contid=");
+ 		} else
+ 			audit_log_format(ab, ",");
+-		audit_log_format(ab, "%llu", cont->obj->id);
++		audit_log_contid(ab, cont->obj);
+ 	}
+ 	audit_log_end(ab);
+ out:
+@@ -1747,7 +1749,9 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
+ 		kfree(sig_data);
+ 		break;
+ 	case AUDIT_SIGNAL_INFO2: {
++		char *contidstr = NULL;
+ 		unsigned int contidstrlen = 0;
++		struct audit_contobj *cont = audit_sig_cid;
+ 
+ 		len = 0;
+ 		if (audit_sig_sid) {
+@@ -1757,13 +1761,27 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
+ 				return err;
+ 		}
+ 		if (audit_sig_cid) {
+-			contidstr = kmalloc(21, GFP_KERNEL);
++			contidstr = kmalloc(AUDIT_MESSAGE_TEXT_MAX, GFP_KERNEL);
+ 			if (!contidstr) {
+ 				if (audit_sig_sid)
+ 					security_release_secctx(ctx, len);
+ 				return -ENOMEM;
+ 			}
+-			contidstrlen = scnprintf(contidstr, 20, "%llu", audit_sig_cid->id);
++			rcu_read_lock();
++			while (cont) {
++				if (cont->parent)
++					contidstrlen += scnprintf(contidstr,
++								  AUDIT_MESSAGE_TEXT_MAX -
++								  contidstrlen,
++								  "%llu,^", cont->id);
++				else
++					contidstrlen += scnprintf(contidstr,
++								  AUDIT_MESSAGE_TEXT_MAX -
++								  contidstrlen,
++								  "%llu", cont->id);
++				cont = cont->parent;
++			}
++			rcu_read_unlock();
+ 		}
+ 		sig_data2 = kmalloc(sizeof(*sig_data2) + contidstrlen + len, GFP_KERNEL);
+ 		if (!sig_data2) {
+@@ -2444,6 +2462,23 @@ void audit_log_session_info(struct audit_buffer *ab)
+ 	audit_log_format(ab, "auid=%u ses=%u", auid, sessionid);
  }
  
-@@ -2585,6 +2730,7 @@ int audit_set_contid(struct task_struct *task, u64 contid)
- 	int rc = 0;
- 	struct audit_buffer *ab;
- 	struct audit_contobj *oldcont = NULL;
-+	struct net *net = task->nsproxy->net_ns;
- 
- 	task_lock(task);
- 	/* Can't set if audit disabled */
-@@ -2657,6 +2803,10 @@ int audit_set_contid(struct task_struct *task, u64 contid)
- 		spin_unlock(&audit_contobj_list_lock);
- 		task->audit->cont = newcont;
- 		_audit_contobj_put(oldcont);
-+		audit_netns_contid_del(net, oldcont);
-+		_audit_contobj_put(oldcont);
-+		_audit_contobj_hold(newcont);
-+		audit_netns_contid_add(net, newcont);
++void audit_log_contid(struct audit_buffer *ab, struct audit_contobj *cont)
++{
++	if (!cont) {
++		audit_log_format(ab, "-1");
++		return;
++	}
++	rcu_read_lock();
++	while (cont) {
++		if (cont->parent)
++			audit_log_format(ab, "%llu,^", cont->id);
++		else
++			audit_log_format(ab, "%llu", cont->id);
++		cont = cont->parent;
++	}
++	rcu_read_unlock();
++}
++
+ /*
+  * audit_log_container_id - report container info
+  * @context: task or local context for record
+@@ -2460,7 +2495,8 @@ void audit_log_container_id(struct audit_context *context,
+ 	ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONTAINER_ID);
+ 	if (!ab)
+ 		return;
+-	audit_log_format(ab, "contid=%llu", contid);
++	audit_log_format(ab, "contid=");
++	audit_log_contid(ab, cont);
+ 	audit_log_end(ab);
+ }
+ EXPORT_SYMBOL(audit_log_container_id);
+@@ -2810,6 +2846,7 @@ int audit_set_contid(struct task_struct *task, u64 contid)
+ 				INIT_LIST_HEAD(&newcont->list);
+ 				newcont->id = contid;
+ 				newcont->owner = get_task_struct(current);
++				newcont->parent = _audit_contobj_get(newcont->owner);
+ 				refcount_set(&newcont->refcount, 1);
+ 				list_add_rcu(&newcont->list,
+ 					     &audit_contid_hash[h]);
+@@ -2828,6 +2865,7 @@ int audit_set_contid(struct task_struct *task, u64 contid)
+ 		audit_netns_contid_add(net, newcont);
  	}
  conterror:
++	rcu_read_unlock();
  	task_unlock(task);
-diff --git a/kernel/nsproxy.c b/kernel/nsproxy.c
-index b03df67621d0..5eddb3377049 100644
---- a/kernel/nsproxy.c
-+++ b/kernel/nsproxy.c
-@@ -26,6 +26,7 @@
- #include <linux/syscalls.h>
- #include <linux/cgroup.h>
- #include <linux/perf_event.h>
-+#include <linux/audit.h>
- 
- static struct kmem_cache *nsproxy_cachep;
- 
-@@ -187,6 +188,8 @@ int copy_namespaces(unsigned long flags, struct task_struct *tsk)
- 	}
- 
- 	tsk->nsproxy = new_ns;
-+	if (flags & CLONE_NEWNET)
-+		audit_copy_namespaces(new_ns->net_ns, tsk);
- 	return 0;
- }
- 
-@@ -249,6 +252,7 @@ void switch_task_namespaces(struct task_struct *p, struct nsproxy *new)
- 	ns = p->nsproxy;
- 	p->nsproxy = new;
- 	task_unlock(p);
-+	audit_switch_task_namespaces(ns, p);
- 
- 	if (ns && atomic_dec_and_test(&ns->count))
- 		free_nsproxy(ns);
-diff --git a/net/netfilter/nft_log.c b/net/netfilter/nft_log.c
-index fe4831f2258f..98d1e7e1a83c 100644
---- a/net/netfilter/nft_log.c
-+++ b/net/netfilter/nft_log.c
-@@ -66,13 +66,16 @@ static void nft_log_eval_audit(const struct nft_pktinfo *pkt)
- 	struct sk_buff *skb = pkt->skb;
- 	struct audit_buffer *ab;
- 	int fam = -1;
-+	struct audit_context *context;
-+	struct net *net;
  
  	if (!audit_enabled)
- 		return;
- 
--	ab = audit_log_start(NULL, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
-+	context = audit_alloc_local(GFP_ATOMIC);
-+	ab = audit_log_start(context, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
+@@ -2837,12 +2875,13 @@ int audit_set_contid(struct task_struct *task, u64 contid)
  	if (!ab)
--		return;
-+		goto errout;
+ 		return rc;
  
- 	audit_log_format(ab, "mark=%#x", skb->mark);
- 
-@@ -99,6 +102,10 @@ static void nft_log_eval_audit(const struct nft_pktinfo *pkt)
- 		audit_log_format(ab, " saddr=? daddr=? proto=-1");
- 
- 	audit_log_end(ab);
-+	net = xt_net(&pkt->xt);
-+	audit_log_netns_contid_list(net, context);
-+errout:
-+	audit_free_context(context);
+-	audit_log_format(ab,
+-			 "op=set opid=%d contid=%llu old-contid=%llu",
+-			 task_tgid_nr(task), contid, oldcont ? oldcont->id : -1);
++	audit_log_format(ab, "op=set opid=%d contid=%llu old-contid=",
++			 task_tgid_nr(task), contid);
++	audit_log_contid(ab, oldcont);
++	audit_log_end(ab);
++	rcu_read_lock();
+ 	_audit_contobj_put(oldcont);
+ 	rcu_read_unlock();
+-	audit_log_end(ab);
+ 	return rc;
  }
  
- static void nft_log_eval(const struct nft_expr *expr,
-diff --git a/net/netfilter/xt_AUDIT.c b/net/netfilter/xt_AUDIT.c
-index 9cdc16b0d0d8..ecf868a1abde 100644
---- a/net/netfilter/xt_AUDIT.c
-+++ b/net/netfilter/xt_AUDIT.c
-@@ -68,10 +68,13 @@ static bool audit_ip6(struct audit_buffer *ab, struct sk_buff *skb)
- {
- 	struct audit_buffer *ab;
- 	int fam = -1;
-+	struct audit_context *context;
-+	struct net *net;
- 
- 	if (audit_enabled == AUDIT_OFF)
--		goto errout;
--	ab = audit_log_start(NULL, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
-+		goto out;
-+	context = audit_alloc_local(GFP_ATOMIC);
-+	ab = audit_log_start(context, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
- 	if (ab == NULL)
- 		goto errout;
- 
-@@ -101,7 +104,11 @@ static bool audit_ip6(struct audit_buffer *ab, struct sk_buff *skb)
- 
+@@ -2859,8 +2898,9 @@ void audit_log_container_drop(void)
+ 	ab = audit_log_start(audit_context(), GFP_KERNEL, AUDIT_CONTAINER_OP);
+ 	if (!ab)
+ 		goto out;
+-	audit_log_format(ab, "op=drop opid=%d contid=%llu old-contid=%llu",
+-			 task_tgid_nr(current), cont->id, cont->id);
++	audit_log_format(ab, "op=drop opid=%d contid=%llu old-contid=",
++			 task_tgid_nr(current), AUDIT_CID_UNSET);
++	audit_log_contid(ab, cont);
  	audit_log_end(ab);
- 
-+	net = xt_net(par);
-+	audit_log_netns_contid_list(net, context);
- errout:
-+	audit_free_context(context);
-+out:
- 	return XT_CONTINUE;
+ out:
+ 	rcu_read_unlock();
+diff --git a/kernel/audit.h b/kernel/audit.h
+index 34d8ec4bc6ef..7bea5b51124b 100644
+--- a/kernel/audit.h
++++ b/kernel/audit.h
+@@ -229,6 +229,8 @@ static inline int audit_hash_contid(u64 contid)
+ extern int audit_match_class(int class, unsigned syscall);
+ extern int audit_comparator(const u32 left, const u32 op, const u32 right);
+ extern int audit_comparator64(const u64 left, const u32 op, const u64 right);
++extern int audit_contid_comparator(const u64 left, const u32 op,
++				   const u64 right);
+ extern int audit_uid_comparator(kuid_t left, u32 op, kuid_t right);
+ extern int audit_gid_comparator(kgid_t left, u32 op, kgid_t right);
+ extern int parent_len(const char *path);
+diff --git a/kernel/auditfilter.c b/kernel/auditfilter.c
+index d812698efc1d..981c72a8b863 100644
+--- a/kernel/auditfilter.c
++++ b/kernel/auditfilter.c
+@@ -1302,6 +1302,21 @@ int audit_gid_comparator(kgid_t left, u32 op, kgid_t right)
+ 	}
  }
  
++int audit_contid_comparator(u64 left, u32 op, u64 right)
++{
++	struct audit_contobj *cont = NULL;
++	int h;
++	int result = 0;
++
++	h = audit_hash_contid(left);
++	list_for_each_entry_rcu(cont, &audit_contid_hash[h], list) {
++		result = audit_comparator64(cont->id, op, right);
++		if (result)
++			break;
++	}
++	return result;
++}
++
+ /**
+  * parent_len - find the length of the parent portion of a pathname
+  * @path: pathname of which to determine length
+@@ -1393,7 +1408,7 @@ int audit_filter(int msgtype, unsigned int listtype)
+ 							  f->op, f->val);
+ 				break;
+ 			case AUDIT_CONTID:
+-				result = audit_comparator64(audit_get_contid(current),
++				result = audit_contid_comparator(audit_get_contid(current),
+ 							    f->op, f->val64);
+ 				break;
+ 			case AUDIT_MSGTYPE:
+diff --git a/kernel/auditsc.c b/kernel/auditsc.c
+index baa5709590b4..9198857ac721 100644
+--- a/kernel/auditsc.c
++++ b/kernel/auditsc.c
+@@ -641,7 +641,7 @@ static int audit_filter_rules(struct task_struct *tsk,
+ 							  f->op, f->val);
+ 			break;
+ 		case AUDIT_CONTID:
+-			result = audit_comparator64(audit_get_contid(tsk),
++			result = audit_contid_comparator(audit_get_contid(tsk),
+ 						    f->op, f->val64);
+ 			break;
+ 		case AUDIT_SUBJ_USER:
 -- 
 1.8.3.1
 
