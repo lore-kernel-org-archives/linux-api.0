@@ -1,261 +1,175 @@
-Return-Path: <SRS0=B4G1=AI=vger.kernel.org=linux-api-owner@kernel.org>
+Return-Path: <SRS0=AR3n=AK=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.3 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	UNWANTED_LANGUAGE_BODY,URIBL_BLOCKED autolearn=unavailable autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-7.1 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AFE9FC433DF
-	for <linux-api@archiver.kernel.org>; Sat, 27 Jun 2020 13:24:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AB25AC433DF
+	for <linux-api@archiver.kernel.org>; Mon, 29 Jun 2020 19:00:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 83A9A20885
-	for <linux-api@archiver.kernel.org>; Sat, 27 Jun 2020 13:24:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5CE652053B
+	for <linux-api@archiver.kernel.org>; Mon, 29 Jun 2020 19:00:47 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DlOrdI2D"
+	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="LfGlIR78"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726897AbgF0NXc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 27 Jun 2020 09:23:32 -0400
-Received: from us-smtp-delivery-1.mimecast.com ([205.139.110.120]:40759 "EHLO
-        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1726759AbgF0NXV (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 27 Jun 2020 09:23:21 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1593264198;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:in-reply-to:in-reply-to:in-reply-to:
-         references:references:references;
-        bh=TabxwYO5FJzN2Y5mg+1gJx1Jhp2y0LmF7+qh/iqVe0E=;
-        b=DlOrdI2DCC0gbb2GXrR62FdpBRWPFFKftb0dBziydQodBD/hTNTLftGFKHRIrbjwvGZQqY
-        c6oXEd34AhjSXACxlTS4NP2luOnIF2+pVkmCn2P4a1F0pgQqrlWdwbwBNjfC/14WkmtoPF
-        As2+j7Jd/TyOQVmFXgoHoTFEj9Zzl0o=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-262-QqYNox7hMZ2Y1NPdZsHkvg-1; Sat, 27 Jun 2020 09:23:15 -0400
-X-MC-Unique: QqYNox7hMZ2Y1NPdZsHkvg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2A14B10059A4;
-        Sat, 27 Jun 2020 13:23:14 +0000 (UTC)
-Received: from madcap2.tricolour.ca (unknown [10.10.110.28])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 0456971662;
-        Sat, 27 Jun 2020 13:22:56 +0000 (UTC)
-From:   Richard Guy Briggs <rgb@redhat.com>
-To:     containers@lists.linux-foundation.org, linux-api@vger.kernel.org,
-        Linux-Audit Mailing List <linux-audit@redhat.com>,
-        linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>,
-        netdev@vger.kernel.org, netfilter-devel@vger.kernel.org
-Cc:     Paul Moore <paul@paul-moore.com>, sgrubb@redhat.com,
-        omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com,
-        eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com,
-        nhorman@tuxdriver.com, dwalsh@redhat.com, mpatel@redhat.com,
-        Richard Guy Briggs <rgb@redhat.com>
-Subject: [PATCH ghak90 V9 09/13] audit: add containerid filtering
-Date:   Sat, 27 Jun 2020 09:20:42 -0400
-Message-Id: <6355038dbfc0b3fb41ba0f3ff9f34b044128f959.1593198710.git.rgb@redhat.com>
-In-Reply-To: <cover.1593198710.git.rgb@redhat.com>
-References: <cover.1593198710.git.rgb@redhat.com>
-In-Reply-To: <cover.1593198710.git.rgb@redhat.com>
-References: <cover.1593198710.git.rgb@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+        id S1729373AbgF2TAq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 29 Jun 2020 15:00:46 -0400
+Received: from mail.efficios.com ([167.114.26.124]:48098 "EHLO
+        mail.efficios.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725983AbgF2TAo (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 29 Jun 2020 15:00:44 -0400
+Received: from localhost (localhost [127.0.0.1])
+        by mail.efficios.com (Postfix) with ESMTP id 2B8F926B41C;
+        Mon, 29 Jun 2020 15:00:43 -0400 (EDT)
+Received: from mail.efficios.com ([127.0.0.1])
+        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
+        with ESMTP id nUImhvXRtgxZ; Mon, 29 Jun 2020 15:00:42 -0400 (EDT)
+Received: from localhost (localhost [127.0.0.1])
+        by mail.efficios.com (Postfix) with ESMTP id DD78326B41B;
+        Mon, 29 Jun 2020 15:00:42 -0400 (EDT)
+DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com DD78326B41B
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
+        s=default; t=1593457242;
+        bh=yRiGtquXYPCKnEyIARANnhxrsJ53NZMKmbMlMj8D3uI=;
+        h=From:To:Date:Message-Id;
+        b=LfGlIR78By8/8roQib/qqkAK6+yO2iNQnY5d2StV4LtIkEIZpT+Nhs31qOt5kI+GS
+         lnkr4B7x/iU+2WBed+9UIb3q4RsR5SoedDOGm0bvdTwTMLMFWXfY0LUNh1DmTUNtea
+         k5d2/GnBiQlBeWOqsR4y5JhhVKANFh7tuC3Cm5QQfqB2fTgBLjB2jcVI+g0siEoyBp
+         D3XJQnp1XsO46qm6rml0sqtVf3EyRvZU2AJiWeztafJdk4p63iVy5Xz/gbMBSNrBDJ
+         VzGv5fywOyAO4mFSXbruv9K98GYzFCL8g71QGy9yqYfIjLuODVVSF1pF2gs6nsTs9J
+         tTrmL3K7NIjNw==
+X-Virus-Scanned: amavisd-new at efficios.com
+Received: from mail.efficios.com ([127.0.0.1])
+        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
+        with ESMTP id o4in7l92-71t; Mon, 29 Jun 2020 15:00:42 -0400 (EDT)
+Received: from localhost.localdomain (192-222-181-218.qc.cable.ebox.net [192.222.181.218])
+        by mail.efficios.com (Postfix) with ESMTPSA id 553DC26B4AC;
+        Mon, 29 Jun 2020 15:00:42 -0400 (EDT)
+From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To:     Florian Weimer <fweimer@redhat.com>
+Cc:     Carlos O'Donell <carlos@redhat.com>,
+        Joseph Myers <joseph@codesourcery.com>,
+        Szabolcs Nagy <szabolcs.nagy@arm.com>,
+        libc-alpha@sourceware.org,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ben Maurer <bmaurer@fb.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        Will Deacon <will.deacon@arm.com>,
+        Paul Turner <pjt@google.com>, linux-kernel@vger.kernel.org,
+        linux-api@vger.kernel.org
+Subject: [PATCH 2/3] Linux: Use rseq in sched_getcpu if available (v9)
+Date:   Mon, 29 Jun 2020 15:00:35 -0400
+Message-Id: <20200629190036.26982-3-mathieu.desnoyers@efficios.com>
+X-Mailer: git-send-email 2.17.1
+In-Reply-To: <20200629190036.26982-1-mathieu.desnoyers@efficios.com>
+References: <20200629190036.26982-1-mathieu.desnoyers@efficios.com>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Implement audit container identifier filtering using the AUDIT_CONTID
-field name to send an 8-character string representing a u64 since the
-value field is only u32.
+When available, use the cpu_id field from __rseq_abi on Linux to
+implement sched_getcpu().  Fall-back on the vgetcpu vDSO if unavailable.
 
-Sending it as two u32 was considered, but gathering and comparing two
-fields was more complex.
+Benchmarks:
 
-The feature indicator is AUDIT_FEATURE_BITMAP_CONTAINERID.
+x86-64: Intel E5-2630 v3@2.40GHz, 16-core, hyperthreading
 
-Please see the github audit kernel issue for the contid filter feature:
-  https://github.com/linux-audit/audit-kernel/issues/91
-Please see the github audit userspace issue for filter additions:
-  https://github.com/linux-audit/audit-userspace/issues/40
-Please see the github audit testsuiite issue for the test case:
-  https://github.com/linux-audit/audit-testsuite/issues/64
-Please see the github audit wiki for the feature overview:
-  https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
-Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-Acked-by: Serge Hallyn <serge@hallyn.com>
-Acked-by: Neil Horman <nhorman@tuxdriver.com>
-Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
+glibc sched_getcpu():                     13.7 ns (baseline)
+glibc sched_getcpu() using rseq:           2.5 ns (speedup:  5.5x)
+inline load cpuid from __rseq_abi TLS:     0.8 ns (speedup: 17.1x)
+
+CC: Carlos O'Donell <carlos@redhat.com>
+CC: Florian Weimer <fweimer@redhat.com>
+CC: Joseph Myers <joseph@codesourcery.com>
+CC: Szabolcs Nagy <szabolcs.nagy@arm.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Paul Turner <pjt@google.com>
+CC: libc-alpha@sourceware.org
+CC: linux-kernel@vger.kernel.org
+CC: linux-api@vger.kernel.org
 ---
- include/linux/audit.h      |  1 +
- include/uapi/linux/audit.h |  5 ++++-
- kernel/audit.h             |  1 +
- kernel/auditfilter.c       | 46 ++++++++++++++++++++++++++++++++++++++++++++++
- kernel/auditsc.c           |  4 ++++
- 5 files changed, 56 insertions(+), 1 deletion(-)
+Changes since v1:
+- rseq is only used if both __NR_rseq and RSEQ_SIG are defined.
 
-diff --git a/include/linux/audit.h b/include/linux/audit.h
-index 15d0defc5193..c4a755ae0d61 100644
---- a/include/linux/audit.h
-+++ b/include/linux/audit.h
-@@ -68,6 +68,7 @@ struct audit_field {
- 	u32				type;
- 	union {
- 		u32			val;
-+		u64			val64;
- 		kuid_t			uid;
- 		kgid_t			gid;
- 		struct {
-diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
-index a56ad77069b9..831c12bdd235 100644
---- a/include/uapi/linux/audit.h
-+++ b/include/uapi/linux/audit.h
-@@ -271,6 +271,7 @@
- #define AUDIT_LOGINUID_SET	24
- #define AUDIT_SESSIONID	25	/* Session ID */
- #define AUDIT_FSTYPE	26	/* FileSystem Type */
-+#define AUDIT_CONTID	27	/* Container ID */
+Changes since v2:
+- remove duplicated __rseq_abi extern declaration.
+
+Changes since v3:
+- update ChangeLog.
+
+Changes since v4:
+- Use atomic_load_relaxed to load the __rseq_abi.cpu_id field, a
+  consequence of the fact that __rseq_abi is not volatile anymore.
+- Include atomic.h which provides atomic_load_relaxed.
+
+Changes since v5:
+- Use __ASSUME_RSEQ to detect rseq availability.
+
+Changes since v6:
+- Remove use of __ASSUME_RSEQ.
+
+Changes since v7:
+- Fix incorrect merge with commit d0def09ff6 ("linux: Fix vDSO macros
+  build with time64 interfaces")
+
+Changes since v8:
+- Update patch title.
+- Add /* RSEQ_SIG */ for #else and #endif.
+---
+ sysdeps/unix/sysv/linux/sched_getcpu.c | 22 ++++++++++++++++++++--
+ 1 file changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/sysdeps/unix/sysv/linux/sched_getcpu.c b/sysdeps/unix/sysv/linux/sched_getcpu.c
+index c019cfb3cf..c0f992e056 100644
+--- a/sysdeps/unix/sysv/linux/sched_getcpu.c
++++ b/sysdeps/unix/sysv/linux/sched_getcpu.c
+@@ -18,10 +18,12 @@
+ #include <errno.h>
+ #include <sched.h>
+ #include <sysdep.h>
++#include <atomic.h>
+ #include <sysdep-vdso.h>
++#include <sys/rseq.h>
  
- 				/* These are ONLY useful when checking
- 				 * at syscall exit time (AUDIT_AT_EXIT). */
-@@ -352,6 +353,7 @@ enum {
- #define AUDIT_FEATURE_BITMAP_SESSIONID_FILTER	0x00000010
- #define AUDIT_FEATURE_BITMAP_LOST_RESET		0x00000020
- #define AUDIT_FEATURE_BITMAP_FILTER_FS		0x00000040
-+#define AUDIT_FEATURE_BITMAP_CONTAINERID	0x00000080
- 
- #define AUDIT_FEATURE_BITMAP_ALL (AUDIT_FEATURE_BITMAP_BACKLOG_LIMIT | \
- 				  AUDIT_FEATURE_BITMAP_BACKLOG_WAIT_TIME | \
-@@ -359,7 +361,8 @@ enum {
- 				  AUDIT_FEATURE_BITMAP_EXCLUDE_EXTEND | \
- 				  AUDIT_FEATURE_BITMAP_SESSIONID_FILTER | \
- 				  AUDIT_FEATURE_BITMAP_LOST_RESET | \
--				  AUDIT_FEATURE_BITMAP_FILTER_FS)
-+				  AUDIT_FEATURE_BITMAP_FILTER_FS | \
-+				  AUDIT_FEATURE_BITMAP_CONTAINERID)
- 
- /* deprecated: AUDIT_VERSION_* */
- #define AUDIT_VERSION_LATEST 		AUDIT_FEATURE_BITMAP_ALL
-diff --git a/kernel/audit.h b/kernel/audit.h
-index a7f88d76163f..34d8ec4bc6ef 100644
---- a/kernel/audit.h
-+++ b/kernel/audit.h
-@@ -228,6 +228,7 @@ static inline int audit_hash_contid(u64 contid)
- 
- extern int audit_match_class(int class, unsigned syscall);
- extern int audit_comparator(const u32 left, const u32 op, const u32 right);
-+extern int audit_comparator64(const u64 left, const u32 op, const u64 right);
- extern int audit_uid_comparator(kuid_t left, u32 op, kuid_t right);
- extern int audit_gid_comparator(kgid_t left, u32 op, kgid_t right);
- extern int parent_len(const char *path);
-diff --git a/kernel/auditfilter.c b/kernel/auditfilter.c
-index a10e2997aa6c..d812698efc1d 100644
---- a/kernel/auditfilter.c
-+++ b/kernel/auditfilter.c
-@@ -399,6 +399,7 @@ static int audit_field_valid(struct audit_entry *entry, struct audit_field *f)
- 	case AUDIT_FILETYPE:
- 	case AUDIT_FIELD_COMPARE:
- 	case AUDIT_EXE:
-+	case AUDIT_CONTID:
- 		/* only equal and not equal valid ops */
- 		if (f->op != Audit_not_equal && f->op != Audit_equal)
- 			return -EINVAL;
-@@ -590,6 +591,14 @@ static struct audit_entry *audit_data_to_entry(struct audit_rule_data *data,
- 			entry->rule.buflen += f_val;
- 			entry->rule.exe = audit_mark;
- 			break;
-+		case AUDIT_CONTID:
-+			if (f_val != sizeof(u64))
-+				goto exit_free;
-+			str = audit_unpack_string(&bufp, &remain, f_val);
-+			if (IS_ERR(str))
-+				goto exit_free;
-+			f->val64 = ((u64 *)str)[0];
-+			break;
- 		default:
- 			f->val = f_val;
- 			break;
-@@ -675,6 +684,11 @@ static struct audit_rule_data *audit_krule_to_data(struct audit_krule *krule)
- 			data->buflen += data->values[i] =
- 				audit_pack_string(&bufp, audit_mark_path(krule->exe));
- 			break;
-+		case AUDIT_CONTID:
-+			data->buflen += data->values[i] = sizeof(u64);
-+			memcpy(bufp, &f->val64, sizeof(u64));
-+			bufp += sizeof(u64);
-+			break;
- 		case AUDIT_LOGINUID_SET:
- 			if (krule->pflags & AUDIT_LOGINUID_LEGACY && !f->val) {
- 				data->fields[i] = AUDIT_LOGINUID;
-@@ -761,6 +775,10 @@ static int audit_compare_rule(struct audit_krule *a, struct audit_krule *b)
- 			if (!gid_eq(a->fields[i].gid, b->fields[i].gid))
- 				return 1;
- 			break;
-+		case AUDIT_CONTID:
-+			if (a->fields[i].val64 != b->fields[i].val64)
-+				return 1;
-+			break;
- 		default:
- 			if (a->fields[i].val != b->fields[i].val)
- 				return 1;
-@@ -1216,6 +1234,30 @@ int audit_comparator(u32 left, u32 op, u32 right)
- 	}
- }
- 
-+int audit_comparator64(u64 left, u32 op, u64 right)
-+{
-+	switch (op) {
-+	case Audit_equal:
-+		return (left == right);
-+	case Audit_not_equal:
-+		return (left != right);
-+	case Audit_lt:
-+		return (left < right);
-+	case Audit_le:
-+		return (left <= right);
-+	case Audit_gt:
-+		return (left > right);
-+	case Audit_ge:
-+		return (left >= right);
-+	case Audit_bitmask:
-+		return (left & right);
-+	case Audit_bittest:
-+		return ((left & right) == right);
-+	default:
-+		return 0;
-+	}
-+}
-+
- int audit_uid_comparator(kuid_t left, u32 op, kuid_t right)
+-int
+-sched_getcpu (void)
++static int
++vsyscall_sched_getcpu (void)
  {
- 	switch (op) {
-@@ -1350,6 +1392,10 @@ int audit_filter(int msgtype, unsigned int listtype)
- 				result = audit_comparator(audit_loginuid_set(current),
- 							  f->op, f->val);
- 				break;
-+			case AUDIT_CONTID:
-+				result = audit_comparator64(audit_get_contid(current),
-+							    f->op, f->val64);
-+				break;
- 			case AUDIT_MSGTYPE:
- 				result = audit_comparator(msgtype, f->op, f->val);
- 				break;
-diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-index 935eb3d2cde9..baa5709590b4 100644
---- a/kernel/auditsc.c
-+++ b/kernel/auditsc.c
-@@ -640,6 +640,10 @@ static int audit_filter_rules(struct task_struct *tsk,
- 				result = audit_comparator(ctx->sockaddr->ss_family,
- 							  f->op, f->val);
- 			break;
-+		case AUDIT_CONTID:
-+			result = audit_comparator64(audit_get_contid(tsk),
-+						    f->op, f->val64);
-+			break;
- 		case AUDIT_SUBJ_USER:
- 		case AUDIT_SUBJ_ROLE:
- 		case AUDIT_SUBJ_TYPE:
+   unsigned int cpu;
+   int r = -1;
+@@ -32,3 +34,19 @@ sched_getcpu (void)
+ #endif
+   return r == -1 ? r : cpu;
+ }
++
++#ifdef RSEQ_SIG
++int
++sched_getcpu (void)
++{
++  int cpu_id = atomic_load_relaxed (&__rseq_abi.cpu_id);
++
++  return cpu_id >= 0 ? cpu_id : vsyscall_sched_getcpu ();
++}
++#else /* RSEQ_SIG */
++int
++sched_getcpu (void)
++{
++  return vsyscall_sched_getcpu ();
++}
++#endif /* RSEQ_SIG */
 -- 
-1.8.3.1
+2.17.1
 
