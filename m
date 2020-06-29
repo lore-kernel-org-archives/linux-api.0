@@ -2,234 +2,175 @@ Return-Path: <SRS0=AR3n=AK=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A7210C433E2
-	for <linux-api@archiver.kernel.org>; Mon, 29 Jun 2020 19:12:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B64ABC433DF
+	for <linux-api@archiver.kernel.org>; Mon, 29 Jun 2020 20:38:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8700320720
-	for <linux-api@archiver.kernel.org>; Mon, 29 Jun 2020 19:12:29 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XvIz5/m2"
+	by mail.kernel.org (Postfix) with ESMTP id 90CD6206C0
+	for <linux-api@archiver.kernel.org>; Mon, 29 Jun 2020 20:38:53 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1593463133;
+	bh=OPdYoUh5mMbOAJSx2OzhSRyW9xs3RwB3gIEABcHzF9k=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:List-ID:From;
+	b=JDfeAwDKqyqmuCDiB477AdJUSTuUsKNcDqFUJfWYFDA4oy9ua7MRa8OeNc2l7aSXS
+	 92bDCVq795ShLNoAobHGLuXqTZnuXHNzz8kDhBs4TtCCxsHgCQASEB35lD8BMgluaj
+	 MVMMbY2vTz8Wf4PTEWbmgzPWrZ1RlKW/EiiYe1tw=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730838AbgF2TMY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 29 Jun 2020 15:12:24 -0400
-Received: from us-smtp-delivery-1.mimecast.com ([207.211.31.120]:21311 "EHLO
-        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1730742AbgF2TMU (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 29 Jun 2020 15:12:20 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1593457939;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-        bh=2I8i4906CXXg1A/o4TrQNEB3h9t71guIcAqgVgTX6sI=;
-        b=XvIz5/m2ZkO0bJdnMI2vFmOgm+mXzp57tLJ2fKzl6twaPZOZ5soa1qRaA5iG2vfey/H2uU
-        H4n4QVZB5kt/rbfRl9PoLi5B0CYUhgg04uqXtXL1y1R5c8zcAMqEeeRlRr9mvPLUNrphKT
-        D62carbgwhkqMnW0VGk54WxJ6HhgUb4=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-250-CsF-sNg8Mpqy4vHHowxOYA-1; Mon, 29 Jun 2020 12:11:35 -0400
-X-MC-Unique: CsF-sNg8Mpqy4vHHowxOYA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 41856107ACCD;
-        Mon, 29 Jun 2020 16:11:33 +0000 (UTC)
-Received: from [10.10.115.36] (ovpn-115-36.rdu2.redhat.com [10.10.115.36])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id D36F370915;
-        Mon, 29 Jun 2020 16:11:26 +0000 (UTC)
-Subject: Re: [Patch v4 1/3] lib: Restrict cpumask_local_spread to houskeeping
- CPUs
-From:   Nitesh Narayan Lal <nitesh@redhat.com>
-To:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        peterz@infradead.org
-References: <20200625223443.2684-1-nitesh@redhat.com>
- <20200625223443.2684-2-nitesh@redhat.com>
-Cc:     frederic@kernel.org, mtosatti@redhat.com, juri.lelli@redhat.com,
-        abelits@marvell.com, bhelgaas@google.com,
-        linux-pci@vger.kernel.org, rostedt@goodmis.org, mingo@kernel.org,
-        tglx@linutronix.de, davem@davemloft.net, akpm@linux-foundation.org,
-        sfr@canb.auug.org.au, stephen@networkplumber.org,
-        rppt@linux.vnet.ibm.com, jinyuqi@huawei.com,
-        zhangshaokun@hisilicon.com
-Autocrypt: addr=nitesh@redhat.com; prefer-encrypt=mutual; keydata=
- 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
- VujM7c/b4pps
-Organization: Red Hat Inc,
-Message-ID: <8054aff1-544d-80de-456f-c3e244233419@redhat.com>
-Date:   Mon, 29 Jun 2020 12:11:25 -0400
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.5.0
+        id S1732476AbgF2Uio (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 29 Jun 2020 16:38:44 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43360 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1731651AbgF2TOS (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 29 Jun 2020 15:14:18 -0400
+Received: from mail-ed1-x541.google.com (mail-ed1-x541.google.com [IPv6:2a00:1450:4864:20::541])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B42E7C008604
+        for <linux-api@vger.kernel.org>; Mon, 29 Jun 2020 03:16:55 -0700 (PDT)
+Received: by mail-ed1-x541.google.com with SMTP id h28so12362462edz.0
+        for <linux-api@vger.kernel.org>; Mon, 29 Jun 2020 03:16:55 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=O73s0LOtJXu7Fh+11xaWdZVxJaYAQpIuzZzQZGghGk0=;
+        b=nKGLsHJbcOr6cONtglKbhMAZY5BTh5y2sRqE0qy6wT351ETYGRrOdSGP9YAe52BG4c
+         u+ILiWUkl0ptJfMXegRQ0w3dVmV+RRMlzbm+g1fMPwawyH7KWqrY5jAIdFJrhNk853Hg
+         uh1CMuSy44AMnfSKH1FkQ82eg4Nn93zjur38DFPAeVPFPWVP1GnZeenZxNaOxkCV4k8d
+         KuDnKjQkJYLH8e4jOg/RTffX5mSsTXR/pRl3uyFzeJ3fcYWQ+r+QrDeASeWNonyxfA1z
+         7Me5NPlrpl6WsTLJAl+s3vOr33nYEzg01EgUYEG16rQ2eaLZTPr0glZi72n+qkh0OtSZ
+         nXvg==
+X-Gm-Message-State: AOAM530/ONAHfqDPlIjV6OR7P0xaE+gV9YxxzNvP33H+vy18A0tjRuex
+        Gw+RWkSplQNdJQikTo+Civ0=
+X-Google-Smtp-Source: ABdhPJwKpj6ektay4WJQs/diddThZei9xqnQ8ZJlw/eJT+/nM4ohuXXxflgHSMBy0/BRNxXDlzNBjg==
+X-Received: by 2002:aa7:d6cf:: with SMTP id x15mr16384517edr.164.1593425814345;
+        Mon, 29 Jun 2020 03:16:54 -0700 (PDT)
+Received: from localhost (ip-37-188-168-3.eurotel.cz. [37.188.168.3])
+        by smtp.gmail.com with ESMTPSA id a1sm18079226ejk.125.2020.06.29.03.16.52
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 29 Jun 2020 03:16:53 -0700 (PDT)
+Date:   Mon, 29 Jun 2020 12:16:52 +0200
+From:   Michal Hocko <mhocko@kernel.org>
+To:     Ben Widawsky <ben.widawsky@intel.com>
+Cc:     linux-mm <linux-mm@kvack.org>, Andi Kleen <ak@linux.intel.com>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Christoph Lameter <cl@linux.com>,
+        Dan Williams <dan.j.williams@intel.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        David Hildenbrand <david@redhat.com>,
+        David Rientjes <rientjes@google.com>,
+        Jason Gunthorpe <jgg@ziepe.ca>,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kuppuswamy Sathyanarayanan 
+        <sathyanarayanan.kuppuswamy@linux.intel.com>,
+        Lee Schermerhorn <lee.schermerhorn@hp.com>,
+        Li Xinhai <lixinhai.lxh@gmail.com>,
+        Mel Gorman <mgorman@techsingularity.net>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Mina Almasry <almasrymina@google.com>,
+        Tejun Heo <tj@kernel.org>, Vlastimil Babka <vbabka@suse.cz>,
+        linux-api@vger.kernel.org
+Subject: Re: [PATCH 00/18] multiple preferred nodes
+Message-ID: <20200629101652.GG32461@dhcp22.suse.cz>
+References: <20200619162425.1052382-1-ben.widawsky@intel.com>
+ <20200622070957.GB31426@dhcp22.suse.cz>
+ <20200623112048.GR31426@dhcp22.suse.cz>
+ <20200623161211.qjup5km5eiisy5wy@intel.com>
+ <20200624075216.GC1320@dhcp22.suse.cz>
+ <20200626213905.dpu2rgevazmisvhj@intel.com>
 MIME-Version: 1.0
-In-Reply-To: <20200625223443.2684-2-nitesh@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature";
- boundary="xlmtqOwRCb4MdvNC2mYBAmRR0u6DBPGGO"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20200626213905.dpu2rgevazmisvhj@intel.com>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---xlmtqOwRCb4MdvNC2mYBAmRR0u6DBPGGO
-Content-Type: multipart/mixed; boundary="wxBsS927gl5basYQvvUQMAtiupkOEYS0K"
+On Fri 26-06-20 14:39:05, Ben Widawsky wrote:
+> On 20-06-24 09:52:16, Michal Hocko wrote:
+> > On Tue 23-06-20 09:12:11, Ben Widawsky wrote:
+> > > On 20-06-23 13:20:48, Michal Hocko wrote:
+> > [...]
+> > > > It would be also great to provide a high level semantic description
+> > > > here. I have very quickly glanced through patches and they are not
+> > > > really trivial to follow with many incremental steps so the higher level
+> > > > intention is lost easily.
+> > > > 
+> > > > Do I get it right that the default semantic is essentially
+> > > > 	- allocate page from the given nodemask (with __GFP_RETRY_MAYFAIL
+> > > > 	  semantic)
+> > > > 	- fallback to numa unrestricted allocation with the default
+> > > > 	  numa policy on the failure
+> > > > 
+> > > > Or are there any usecases to modify how hard to keep the preference over
+> > > > the fallback?
+> > > 
+> > > tl;dr is: yes, and no usecases.
+> > 
+> > OK, then I am wondering why the change has to be so involved. Except for
+> > syscall plumbing the only real change to the allocator path would be
+> > something like
+> > 
+> > static nodemask_t *policy_nodemask(gfp_t gfp, struct mempolicy *policy)
+> > {
+> > 	/* Lower zones don't get a nodemask applied for MPOL_BIND */
+> > 	if (unlikely(policy->mode == MPOL_BIND || 
+> > 	   	     policy->mode == MPOL_PREFERED_MANY) &&
+> > 			apply_policy_zone(policy, gfp_zone(gfp)) &&
+> > 			cpuset_nodemask_valid_mems_allowed(&policy->v.nodes))
+> > 		return &policy->v.nodes;
+> > 
+> > 	return NULL;
+> > }
+> > 
+> > alloc_pages_current
+> > 
+> > 	if (pol->mode == MPOL_INTERLEAVE)
+> > 		page = alloc_page_interleave(gfp, order, interleave_nodes(pol));
+> > 	else {
+> > 		gfp_t gfp_attempt = gfp;
+> > 
+> > 		/*
+> > 		 * Make sure the first allocation attempt will try hard
+> > 		 * but eventually fail without OOM killer or other
+> > 		 * disruption before falling back to the full nodemask
+> > 		 */
+> > 		if (pol->mode == MPOL_PREFERED_MANY)
+> > 			gfp_attempt |= __GFP_RETRY_MAYFAIL;	
+> > 
+> > 		page = __alloc_pages_nodemask(gfp_attempt, order,
+> > 				policy_node(gfp, pol, numa_node_id()),
+> > 				policy_nodemask(gfp, pol));
+> > 		if (!page && pol->mode == MPOL_PREFERED_MANY)
+> > 			page = __alloc_pages_nodemask(gfp, order,
+> > 				numa_node_id(), NULL);
+> > 	}
+> > 
+> > 	return page;
+> > 
+> > similar (well slightly more hairy) in alloc_pages_vma
+> > 
+> > Or do I miss something that really requires more involved approach like
+> > building custom zonelists and other larger changes to the allocator?
+> 
+> Hi Michal,
+> 
+> I'm mostly done implementing this change. It looks good, and so far I think it's
+> functionally equivalent. One thing though, above you use NULL for the fallback.
+> That actually should not be NULL because of the logic in policy_node to restrict
+> zones, and obey cpusets. I've implemented it as such, but I was hoping someone
+> with a deeper understanding, and more experience can confirm that was the
+> correct thing to do.
 
---wxBsS927gl5basYQvvUQMAtiupkOEYS0K
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Content-Language: en-US
+Cpusets are just plumbed into the allocator directly. Have a look at
+__cpuset_zone_allowed call inside get_page_from_freelist. Anyway
+functionally what you are looking for here is that the fallback
+allocation should be exactly as if there was no mempolicy in place. And
+that is expressed by NULL nodemask. The rest is done automagically...
 
-
-On 6/25/20 6:34 PM, Nitesh Narayan Lal wrote:
-> From: Alex Belits <abelits@marvell.com>
->
-> The current implementation of cpumask_local_spread() does not respect the
-> isolated CPUs, i.e., even if a CPU has been isolated for Real-Time task,
-> it will return it to the caller for pinning of its IRQ threads. Having
-> these unwanted IRQ threads on an isolated CPU adds up to a latency
-> overhead.
->
-> Restrict the CPUs that are returned for spreading IRQs only to the
-> available housekeeping CPUs.
->
-> Signed-off-by: Alex Belits <abelits@marvell.com>
-> Signed-off-by: Nitesh Narayan Lal <nitesh@redhat.com>
-
-Hi Peter,
-
-I just realized that Yuqi jin's patch [1] that modifies cpumask_local_sprea=
-d is
-lying in linux-next.
-Should I do a re-post by re-basing the patches on the top of linux-next?
-
-[1]
-https://lore.kernel.org/lkml/1582768688-2314-1-git-send-email-zhangshaokun@=
-hisilicon.com/
-
-> ---
->  lib/cpumask.c | 16 +++++++++++-----
->  1 file changed, 11 insertions(+), 5 deletions(-)
->
-> diff --git a/lib/cpumask.c b/lib/cpumask.c
-> index fb22fb266f93..85da6ab4fbb5 100644
-> --- a/lib/cpumask.c
-> +++ b/lib/cpumask.c
-> @@ -6,6 +6,7 @@
->  #include <linux/export.h>
->  #include <linux/memblock.h>
->  #include <linux/numa.h>
-> +#include <linux/sched/isolation.h>
-> =20
->  /**
->   * cpumask_next - get the next cpu in a cpumask
-> @@ -205,22 +206,27 @@ void __init free_bootmem_cpumask_var(cpumask_var_t =
-mask)
->   */
->  unsigned int cpumask_local_spread(unsigned int i, int node)
->  {
-> -=09int cpu;
-> +=09int cpu, hk_flags;
-> +=09const struct cpumask *mask;
-> =20
-> +=09hk_flags =3D HK_FLAG_DOMAIN | HK_FLAG_MANAGED_IRQ;
-> +=09mask =3D housekeeping_cpumask(hk_flags);
->  =09/* Wrap: we always want a cpu. */
-> -=09i %=3D num_online_cpus();
-> +=09i %=3D cpumask_weight(mask);
-> =20
->  =09if (node =3D=3D NUMA_NO_NODE) {
-> -=09=09for_each_cpu(cpu, cpu_online_mask)
-> +=09=09for_each_cpu(cpu, mask) {
->  =09=09=09if (i-- =3D=3D 0)
->  =09=09=09=09return cpu;
-> +=09=09}
->  =09} else {
->  =09=09/* NUMA first. */
-> -=09=09for_each_cpu_and(cpu, cpumask_of_node(node), cpu_online_mask)
-> +=09=09for_each_cpu_and(cpu, cpumask_of_node(node), mask) {
->  =09=09=09if (i-- =3D=3D 0)
->  =09=09=09=09return cpu;
-> +=09=09}
-> =20
-> -=09=09for_each_cpu(cpu, cpu_online_mask) {
-> +=09=09for_each_cpu(cpu, mask) {
->  =09=09=09/* Skip NUMA nodes, done above. */
->  =09=09=09if (cpumask_test_cpu(cpu, cpumask_of_node(node)))
->  =09=09=09=09continue;
---=20
-Nitesh
-
-
---wxBsS927gl5basYQvvUQMAtiupkOEYS0K--
-
---xlmtqOwRCb4MdvNC2mYBAmRR0u6DBPGGO
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCAAdFiEEkXcoRVGaqvbHPuAGo4ZA3AYyozkFAl76Eq0ACgkQo4ZA3AYy
-ozlGrxAAwtBCOD016SDyWpkyw3cQv9ppTmQbals77UoxptOQxhMEyKvPfNwpkwFy
-BsxSXE8oNvmaVYqLVUgR1+oE/U0rfDS0SapaXDfFu6hhvOrjCZDGNu+biYhmliXe
-1mTg0KMSMhSY5WovN6WebXLb3fePlycXc5/lajpIH43z2SinMcZrFtNsyt+zvQ8A
-Jy7yJ+5N6yHXu5XfL9/kJU+WNOH8cygGKajtGMjeHvSpKFBLa6bI1QAl5OzfVYcQ
-9Py7U0XSwkXCgyDrbJ6xz5UeRkPd8MMp68Nb7h3WQLgSPo3rqhNtGIPcT6O0rZ80
-pJc2idbuNSmKC+gQ0vqslXDi5Btj7jP+0S6+96MPsaFlGCbGSbaY9hSM1D3r4+5a
-wygMxSZeeH0I7QJWKxWNIaBFBWZAz/oc7ApBZK+PKQEQM0OuAf+Rjfp8ww/OGYhP
-MvMb/67y+H62Rc/CvVxjmOb7eInCfmN4EXCcKxGfWxXGZCy0l06Ab7SegNG+/Zjj
-Z4AwWLE2DSItXaQQs9veUkwY0Ylh0kWIAdL30aG38xQAqWciIZRWFqHhud5e1rcY
-8ftRKMz0LRy6JlON/WQ+CBYAnH5lw4UrQR8gSkIur+na18G3cKItIjQZzxjNUCzU
-LWwQIBNZLNeLjnOWa31UmDOXseXs24L+ulc/Ayj+jepu+Z4aUSc=
-=U5vU
------END PGP SIGNATURE-----
-
---xlmtqOwRCb4MdvNC2mYBAmRR0u6DBPGGO--
-
+-- 
+Michal Hocko
+SUSE Labs
