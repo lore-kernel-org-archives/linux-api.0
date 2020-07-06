@@ -4,50 +4,50 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-9.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
 	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CE4B2C433E2
-	for <linux-api@archiver.kernel.org>; Mon,  6 Jul 2020 20:49:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D156DC433E1
+	for <linux-api@archiver.kernel.org>; Mon,  6 Jul 2020 20:49:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A70E920663
-	for <linux-api@archiver.kernel.org>; Mon,  6 Jul 2020 20:49:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AAEB320663
+	for <linux-api@archiver.kernel.org>; Mon,  6 Jul 2020 20:49:56 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="efnws94p"
+	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="rnnFS127"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726779AbgGFUtp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 6 Jul 2020 16:49:45 -0400
-Received: from mail.efficios.com ([167.114.26.124]:57052 "EHLO
+        id S1726900AbgGFUto (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 6 Jul 2020 16:49:44 -0400
+Received: from mail.efficios.com ([167.114.26.124]:56996 "EHLO
         mail.efficios.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726939AbgGFUtp (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 6 Jul 2020 16:49:45 -0400
+        with ESMTP id S1726779AbgGFUto (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 6 Jul 2020 16:49:44 -0400
 Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id B6C5C2DCBC2;
-        Mon,  6 Jul 2020 16:49:44 -0400 (EDT)
+        by mail.efficios.com (Postfix) with ESMTP id 296022DCDAB;
+        Mon,  6 Jul 2020 16:49:43 -0400 (EDT)
 Received: from mail.efficios.com ([127.0.0.1])
         by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
-        with ESMTP id ZWQUH0zUNbht; Mon,  6 Jul 2020 16:49:44 -0400 (EDT)
+        with ESMTP id LAB-r-SSw6q0; Mon,  6 Jul 2020 16:49:42 -0400 (EDT)
 Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id 35EAC2DCCBF;
-        Mon,  6 Jul 2020 16:49:44 -0400 (EDT)
-DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 35EAC2DCCBF
+        by mail.efficios.com (Postfix) with ESMTP id AFAEB2DCC52;
+        Mon,  6 Jul 2020 16:49:42 -0400 (EDT)
+DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com AFAEB2DCC52
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
-        s=default; t=1594068584;
-        bh=mnMMKvJaOAN7AlfDW7S7IlXwHCI9soK/a0/c/Zir58M=;
+        s=default; t=1594068582;
+        bh=CJAD5RnNyYUd/l27WZZ2oB80+Gg+2mREgkdjG0cNpBs=;
         h=From:To:Date:Message-Id;
-        b=efnws94pwSMtS/IAS5Ys121F4Iq0KkCiCQgYcjiDsebUjlu6LXkPm9zpyge1fMqPv
-         9nQd/m9xFhZdjfHt09PE4YdZFXpRUysulFSKGtxJiFGQt0WJvoAAyA5kpzyrcTXF49
-         7sBqxwZT49TCWK+pYyRF3XbxL9x1ATX+FoViBCvI0MRSyrTai+lJf7HOyB8+FCASkF
-         T+MPqNjCmWJNJ+hprRVDdzAWKUc3EVs1h65dEysJLOiFRsOXnK4xgxnGLg+xT52nJz
-         XEWqPNi6KMWbw7cM2ah1xYQJcMM0Pbqx1leWRmlLRMEQoI1tF5hCte7ygzCBjCdbFs
-         SdYo2KTPeLw4w==
+        b=rnnFS127qZ28sQaXb/1/SvbfzBXq5w5JFNxdAwM6zryF0sB20cyIbefZqCZ85Vahj
+         W2sgETdv/GPMnCm/q5RWI5ofKHkyth2JAG8ZBAeROr3Ta0tekIg3CHPpFz330Q44tn
+         J98z4QD5RhKGxkY77D58HMgHdRyWkIUqP3y4iireYQJjSlRNil1zu8aH5ETpcYVv1N
+         UXiMGbBsATnWq4z6vgpmJ20bXF5YYFNKZrajjnGg0MukLn1SZ5TBFi3XA2fr7/siGB
+         YBb+Jb8VVEeAEzR3hLwtQE9VZT16KvBnDZ7UaPZ0VJ6ez5Otg+uwVAVyT7kisg9MXS
+         NDg0cl75enizQ==
 X-Virus-Scanned: amavisd-new at efficios.com
 Received: from mail.efficios.com ([127.0.0.1])
         by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
-        with ESMTP id wTGn1GJVJk5q; Mon,  6 Jul 2020 16:49:44 -0400 (EDT)
+        with ESMTP id 2d6TKKdaLeys; Mon,  6 Jul 2020 16:49:42 -0400 (EDT)
 Received: from localhost.localdomain (192-222-181-218.qc.cable.ebox.net [192.222.181.218])
-        by mail.efficios.com (Postfix) with ESMTPSA id BD4512DCDA9;
-        Mon,  6 Jul 2020 16:49:42 -0400 (EDT)
+        by mail.efficios.com (Postfix) with ESMTPSA id B7D712DCE20;
+        Mon,  6 Jul 2020 16:49:41 -0400 (EDT)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Thomas Gleixner <tglx@linutronix.de>
 Cc:     linux-kernel@vger.kernel.org,
@@ -57,13 +57,11 @@ Cc:     linux-kernel@vger.kernel.org,
         "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>,
         linux-api@vger.kernel.org, Florian Weimer <fw@deneb.enyo.de>,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        Shuah Khan <skhan@linuxfoundation.org>,
         Dmitry Vyukov <dvyukov@google.com>,
-        Neel Natu <neelnatu@google.com>,
-        linux-kselftest@vger.kernel.org
-Subject: [RFC PATCH for 5.8 4/4] rseq: selftests: Expect reliable cpu_id field
-Date:   Mon,  6 Jul 2020 16:49:13 -0400
-Message-Id: <20200706204913.20347-5-mathieu.desnoyers@efficios.com>
+        Neel Natu <neelnatu@google.com>
+Subject: [RFC PATCH for 5.8 2/4] rseq: Introduce RSEQ_FLAG_REGISTER
+Date:   Mon,  6 Jul 2020 16:49:11 -0400
+Message-Id: <20200706204913.20347-3-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20200706204913.20347-1-mathieu.desnoyers@efficios.com>
 References: <20200706204913.20347-1-mathieu.desnoyers@efficios.com>
@@ -72,12 +70,17 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The rseq selftests should discover whether the kernel implements the
-RSEQ_FLAG_RELIABLE_CPU_ID flag, which indicates that the
-__rseq_abi.cpu_id field is reliable.
+Introduce RSEQ_FLAG_REGISTER with the same behavior as the flag value
+"0". The main advantage of introducing this flag as a non-zero (1 << 1)
+value is that it can be combined with other flags to register and check
+for features with a single system call. Considering that this system
+call needs to be performed for each new thread in glibc, minimize the
+amount of overhead required.
+
+This is needed for introducing a new RSEQ_FLAG_RELIABLE_CPU_ID flag in a
+later change.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Shuah Khan <skhan@linuxfoundation.org>
 Cc: Peter Zijlstra (Intel) <peterz@infradead.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>
 Cc: Florian Weimer <fw@deneb.enyo.de>
@@ -88,46 +91,133 @@ Cc: Paul Turner <pjt@google.com>
 Cc: Dmitry Vyukov <dvyukov@google.com>
 Cc: Neel Natu <neelnatu@google.com>
 Cc: linux-api@vger.kernel.org
-Cc: linux-kselftest@vger.kernel.org
 ---
- tools/testing/selftests/rseq/rseq.c | 10 +++++++++-
- 1 file changed, 9 insertions(+), 1 deletion(-)
+ include/uapi/linux/rseq.h | 10 ++++-
+ kernel/rseq.c             | 77 +++++++++++++++++++++------------------
+ 2 files changed, 51 insertions(+), 36 deletions(-)
 
-diff --git a/tools/testing/selftests/rseq/rseq.c b/tools/testing/selftests/rseq/rseq.c
-index 7159eb777fd3..55f1edb0649c 100644
---- a/tools/testing/selftests/rseq/rseq.c
-+++ b/tools/testing/selftests/rseq/rseq.c
-@@ -73,6 +73,11 @@ static int sys_rseq(volatile struct rseq *rseq_abi, uint32_t rseq_len,
- 	return syscall(__NR_rseq, rseq_abi, rseq_len, flags, sig);
- }
+diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
+index 9a402fdb60e9..3b5fba25461a 100644
+--- a/include/uapi/linux/rseq.h
++++ b/include/uapi/linux/rseq.h
+@@ -18,8 +18,16 @@ enum rseq_cpu_id_state {
+ 	RSEQ_CPU_ID_REGISTRATION_FAILED		= -2,
+ };
  
-+static bool rseq_reliable_cpu_id(void)
-+{
-+	return sys_rseq(NULL, 0, RSEQ_FLAG_RELIABLE_CPU_ID, 0) == 0;
-+}
-+
- int rseq_register_current_thread(void)
++/*
++ * RSEQ_FLAG_UNREGISTER:       Unregister rseq ABI for caller thread.
++ * RSEQ_FLAG_REGISTER:         Register rseq ABI for caller thread.
++ *
++ * Flag value 0 has the same behavior as RSEQ_FLAG_REGISTER, but cannot be
++ * combined with other flags. This behavior is kept for backward compatibility.
++ */
+ enum rseq_flags {
+-	RSEQ_FLAG_UNREGISTER = (1 << 0),
++	RSEQ_FLAG_UNREGISTER			= (1 << 0),
++	RSEQ_FLAG_REGISTER			= (1 << 1),
+ };
+ 
+ enum rseq_cs_flags_bit {
+diff --git a/kernel/rseq.c b/kernel/rseq.c
+index a4f86a9d6937..47ce221cd6f9 100644
+--- a/kernel/rseq.c
++++ b/kernel/rseq.c
+@@ -309,9 +309,16 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
  {
- 	int rc, ret = 0;
-@@ -87,7 +92,8 @@ int rseq_register_current_thread(void)
- 	}
- 	if (__rseq_refcount++)
- 		goto end;
--	rc = sys_rseq(&__rseq_abi, sizeof(struct rseq), 0, RSEQ_SIG);
-+	rc = sys_rseq(&__rseq_abi, sizeof(struct rseq),
-+		      RSEQ_FLAG_REGISTER | RSEQ_FLAG_RELIABLE_CPU_ID, RSEQ_SIG);
- 	if (!rc) {
- 		assert(rseq_current_cpu_raw() >= 0);
- 		goto end;
-@@ -96,6 +102,8 @@ int rseq_register_current_thread(void)
- 		__rseq_abi.cpu_id = RSEQ_CPU_ID_REGISTRATION_FAILED;
- 	ret = -1;
- 	__rseq_refcount--;
-+	if (errno == EINVAL && !rseq_reliable_cpu_id())
-+		fprintf(stderr, "Error: rseq does not provide a reliable cpu_id field.\n");
- end:
- 	signal_restore(oldset);
- 	return ret;
+ 	int ret;
+ 
+-	if (flags & RSEQ_FLAG_UNREGISTER) {
+-		if (flags & ~RSEQ_FLAG_UNREGISTER)
+-			return -EINVAL;
++	/*
++	 * Flag value 0 has the same behavior as RSEQ_FLAG_REGISTER, but cannot
++	 * be combined with other flags. This behavior is kept for backward
++	 * compatibility.
++	 */
++	if (!flags)
++		flags = RSEQ_FLAG_REGISTER;
++
++	switch (flags) {
++	case RSEQ_FLAG_UNREGISTER:
+ 		/* Unregister rseq for current thread. */
+ 		if (current->rseq != rseq || !current->rseq)
+ 			return -EINVAL;
+@@ -324,43 +331,43 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
+ 			return ret;
+ 		current->rseq = NULL;
+ 		current->rseq_sig = 0;
+-		return 0;
+-	}
+-
+-	if (unlikely(flags))
+-		return -EINVAL;
++		break;
++	case RSEQ_FLAG_REGISTER:
++		if (current->rseq) {
++			/*
++			 * If rseq is already registered, check whether
++			 * the provided address differs from the prior
++			 * one.
++			 */
++			if (current->rseq != rseq || rseq_len != sizeof(*rseq))
++				return -EINVAL;
++			if (current->rseq_sig != sig)
++				return -EPERM;
++			/* Already registered. */
++			return -EBUSY;
++		}
+ 
+-	if (current->rseq) {
+ 		/*
+-		 * If rseq is already registered, check whether
+-		 * the provided address differs from the prior
+-		 * one.
++		 * If there was no rseq previously registered,
++		 * ensure the provided rseq is properly aligned and valid.
+ 		 */
+-		if (current->rseq != rseq || rseq_len != sizeof(*rseq))
++		if (!IS_ALIGNED((unsigned long)rseq, __alignof__(*rseq)) ||
++		    rseq_len != sizeof(*rseq))
+ 			return -EINVAL;
+-		if (current->rseq_sig != sig)
+-			return -EPERM;
+-		/* Already registered. */
+-		return -EBUSY;
+-	}
+-
+-	/*
+-	 * If there was no rseq previously registered,
+-	 * ensure the provided rseq is properly aligned and valid.
+-	 */
+-	if (!IS_ALIGNED((unsigned long)rseq, __alignof__(*rseq)) ||
+-	    rseq_len != sizeof(*rseq))
++		if (!access_ok(rseq, rseq_len))
++			return -EFAULT;
++		current->rseq = rseq;
++		current->rseq_sig = sig;
++		/*
++		 * If rseq was previously inactive, and has just been
++		 * registered, ensure the cpu_id_start and cpu_id fields
++		 * are updated before returning to user-space.
++		 */
++		rseq_set_notify_resume(current);
++		break;
++	default:
+ 		return -EINVAL;
+-	if (!access_ok(rseq, rseq_len))
+-		return -EFAULT;
+-	current->rseq = rseq;
+-	current->rseq_sig = sig;
+-	/*
+-	 * If rseq was previously inactive, and has just been
+-	 * registered, ensure the cpu_id_start and cpu_id fields
+-	 * are updated before returning to user-space.
+-	 */
+-	rseq_set_notify_resume(current);
++	}
+ 
+ 	return 0;
+ }
 -- 
 2.17.1
 
