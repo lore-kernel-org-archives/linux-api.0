@@ -2,144 +2,114 @@ Return-Path: <SRS0=0a4d=AU=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-11.3 required=3.0 tests=DKIMWL_WL_MED,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_IN_DEF_DKIM_WL
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BB4ABC433DF
-	for <linux-api@archiver.kernel.org>; Thu,  9 Jul 2020 18:28:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 52581C433E0
+	for <linux-api@archiver.kernel.org>; Thu,  9 Jul 2020 20:01:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9665A207D0
-	for <linux-api@archiver.kernel.org>; Thu,  9 Jul 2020 18:28:04 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 294A0207DA
+	for <linux-api@archiver.kernel.org>; Thu,  9 Jul 2020 20:01:13 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="LLdYWtX2"
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="gpjQZRBf"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726456AbgGIS0u (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 9 Jul 2020 14:26:50 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55288 "EHLO
+        id S1726324AbgGIUBM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 9 Jul 2020 16:01:12 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41914 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726262AbgGIS0t (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 9 Jul 2020 14:26:49 -0400
-Received: from mail-pg1-x542.google.com (mail-pg1-x542.google.com [IPv6:2607:f8b0:4864:20::542])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8A52AC08C5CE
-        for <linux-api@vger.kernel.org>; Thu,  9 Jul 2020 11:26:49 -0700 (PDT)
-Received: by mail-pg1-x542.google.com with SMTP id l63so1314202pge.12
-        for <linux-api@vger.kernel.org>; Thu, 09 Jul 2020 11:26:49 -0700 (PDT)
+        with ESMTP id S1726361AbgGIUBL (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 9 Jul 2020 16:01:11 -0400
+Received: from mail-lf1-x141.google.com (mail-lf1-x141.google.com [IPv6:2a00:1450:4864:20::141])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4EAD5C08E6DC
+        for <linux-api@vger.kernel.org>; Thu,  9 Jul 2020 13:01:11 -0700 (PDT)
+Received: by mail-lf1-x141.google.com with SMTP id d21so1887475lfb.6
+        for <linux-api@vger.kernel.org>; Thu, 09 Jul 2020 13:01:11 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google;
-        h=from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=Ah/xwyUwLDcO5c6QVFl6V0itB29Y6z2+QXTTe1nwKSY=;
-        b=LLdYWtX2Ocxzeqrp4lxxrExn+xcyO48LOp5c6ZDWdc234/u9a5SODz90KAgrKxCN8W
-         aNWPR4t1ijUoVqeoqb3RQCycFkimFWJYaV/kEuNOn2ZjD0QBAa0ao6eHZCm5TmkfcCgS
-         w6JMIfWsigDUAVICaYgQjKNjyQ0WJHCeBLKpA=
+        d=google.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=lTuFFx+LM7FvItVugeQGGweyAvmIIEb57TLVDjlPY0c=;
+        b=gpjQZRBfgknPgToKf4jJopWuArBbfyzEqorYF86kvD65J4xt9C2k1qEZRGU/p+ZG5B
+         Ixm+TqJgPxYDtzo7Tork0MgD4E+oSyD9y45vQMzxY2Gl01j5Rw1fKEkdy8Kx7xKkNa7P
+         deM6rEIaRNzGbiTs8yY/ICU7aV11OnW8+vyLE94Wq5coWQTixDsVyBy5A49X19sDUr5B
+         KnRW/U8xrlHgtu63PEPZyeniB8GhjxqRZ5zQnM4HZb6/4pRwOzrLu7qYyysUqedtnhPp
+         vA9UVik+kgCkAKY+6meGwOLcvS5a9RZAKbd69JOjp9GVXoB4hdAI1odoNyp5sqtac8am
+         ZBbg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=Ah/xwyUwLDcO5c6QVFl6V0itB29Y6z2+QXTTe1nwKSY=;
-        b=ojKoiPsqvusGCfPJKX+5/d+QJP0B+07ouGCn35rcjwPe9SntORrLLRoOW/Fsxdn3K1
-         Bdwrz5nWI/zAHIT+AmPvCeBhybbfKgi67+j2bL581LHmSa+luJ3+IXWx6xpRgrXamZaE
-         IFgbN+x1ukxNT4pVa5y/mYw9xz7XkUG75UNv6Uz0ca/C9sQ4rxuS8j/TPNaBJAy+nE/h
-         dpnWdMFdEd2cl6xZ0vWkPaHUizyEg2Ery6ABpOiO94J1Tb6YIMZIiUiH4hYcXaD8gMRD
-         2ajIK8VjfHQZ3uMTUX6Xn53ZGarmTXgCxQNgC8SY0Kyq510wGNlKYeCffdBz310T4EMB
-         BsRQ==
-X-Gm-Message-State: AOAM533APGXlx9Z0YcM5D3XE1XKoYtl6PkqqsgaWRLx2GhA99/9ubjSN
-        cy/LXbtnJjiPlvSbvLbeFi33ZA==
-X-Google-Smtp-Source: ABdhPJyj3kXdp3Y89vB25U3RAgnxdfxtaz0Z4xZpDPqeUGcsCQaO8cgdoenYnidhHgf9LaZ0+/Sm6A==
-X-Received: by 2002:a65:6089:: with SMTP id t9mr56104275pgu.236.1594319209137;
-        Thu, 09 Jul 2020 11:26:49 -0700 (PDT)
-Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id n25sm3462318pff.51.2020.07.09.11.26.47
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 09 Jul 2020 11:26:47 -0700 (PDT)
-From:   Kees Cook <keescook@chromium.org>
-To:     linux-kernel@vger.kernel.org
-Cc:     Kees Cook <keescook@chromium.org>,
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=lTuFFx+LM7FvItVugeQGGweyAvmIIEb57TLVDjlPY0c=;
+        b=gUhdk/ol8DOBGwYQJrvXziCwzO1og2MqKjKN3A+P2A76yd9KvhuJaJHj4S9SncpFtc
+         UKln7zZqjVJIVnzeG73aO+D78j0xkFmBh4TG2RsweBKTO2gOGsPr/SDN/au0raB3Xarh
+         vzriBF18fLdGrgIJMwG1UF/t6hbb2pJkOteDOW3ipnJC46IBvHQvPoUVKD+ZbwMLiByx
+         sseSMetQeRdcJwOB958R5R0CtGipP4TY9wNJS+5BqIdGM/LIXXZ8d93Nvx70AyGxuJy6
+         X2GAkqo79axCaZsbN6H11JimJKTkk9B3gniwGmrChApjlEt3DSDmqsc0C79a//Y/PS6o
+         QOXA==
+X-Gm-Message-State: AOAM530SdxBSNqR52m4h1rX+zKPCwRpncUgmfUJv3jLc1i2GvvIFqSEC
+        3eRhFm/a1BNk2dFmXoLFgokWtWCWW9qcDbbLWeVh0g==
+X-Google-Smtp-Source: ABdhPJzMEObKGztP4FkJdtpJ/jsigQq5atbT70AaZs8psKw5IErg+CIW340AK74bJ/ktHqLM57A7CacQhNPzzfvbILs=
+X-Received: by 2002:a05:6512:3107:: with SMTP id n7mr42006913lfb.63.1594324868930;
+ Thu, 09 Jul 2020 13:01:08 -0700 (PDT)
+MIME-Version: 1.0
+References: <20200709182642.1773477-1-keescook@chromium.org> <20200709182642.1773477-3-keescook@chromium.org>
+In-Reply-To: <20200709182642.1773477-3-keescook@chromium.org>
+From:   Jann Horn <jannh@google.com>
+Date:   Thu, 9 Jul 2020 22:00:42 +0200
+Message-ID: <CAG48ez1gz3mtAO5QdvGEMt5KnRBq7hhWJMGS6piGDrcGNEdSrQ@mail.gmail.com>
+Subject: Re: [PATCH v7 2/9] pidfd: Add missing sock updates for pidfd_getfd()
+To:     Kees Cook <keescook@chromium.org>
+Cc:     kernel list <linux-kernel@vger.kernel.org>,
+        stable <stable@vger.kernel.org>,
         Sargun Dhillon <sargun@sargun.me>,
         Christian Brauner <christian@brauner.io>,
         Tycho Andersen <tycho@tycho.ws>,
-        David Laight <David.Laight@ACULAB.COM>,
+        David Laight <David.Laight@aculab.com>,
         Christoph Hellwig <hch@lst.de>,
         "David S. Miller" <davem@davemloft.net>,
         Jakub Kicinski <kuba@kernel.org>,
         Alexander Viro <viro@zeniv.linux.org.uk>,
         Aleksa Sarai <cyphar@cyphar.com>,
         Matt Denton <mpdenton@google.com>,
-        Jann Horn <jannh@google.com>, Chris Palmer <palmer@google.com>,
+        Chris Palmer <palmer@google.com>,
         Robert Sesek <rsesek@google.com>,
         Giuseppe Scrivano <gscrivan@redhat.com>,
         Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         Andy Lutomirski <luto@amacapital.net>,
         Will Drewry <wad@chromium.org>, Shuah Khan <shuah@kernel.org>,
-        netdev@vger.kernel.org, containers@lists.linux-foundation.org,
-        linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        linux-kselftest@vger.kernel.org
-Subject: [PATCH v7 0/9] Add seccomp notifier ioctl that enables adding fds
-Date:   Thu,  9 Jul 2020 11:26:33 -0700
-Message-Id: <20200709182642.1773477-1-keescook@chromium.org>
-X-Mailer: git-send-email 2.25.1
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+        Network Development <netdev@vger.kernel.org>,
+        Linux Containers <containers@lists.linux-foundation.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        "open list:KERNEL SELFTEST FRAMEWORK" 
+        <linux-kselftest@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hello!
+On Thu, Jul 9, 2020 at 8:26 PM Kees Cook <keescook@chromium.org> wrote:
+> The sock counting (sock_update_netprioidx() and sock_update_classid())
+> was missing from pidfd's implementation of received fd installation. Add
+> a call to the new __receive_sock() helper.
+[...]
+> diff --git a/kernel/pid.c b/kernel/pid.c
+[...]
+> @@ -642,10 +643,12 @@ static int pidfd_getfd(struct pid *pid, int fd)
+>         }
+>
+>         ret = get_unused_fd_flags(O_CLOEXEC);
+> -       if (ret < 0)
+> +       if (ret < 0) {
+>                 fput(file);
+> -       else
+> +       } else {
+>                 fd_install(ret, file);
+> +               __receive_sock(file);
+> +       }
 
-v7:
-- break out sock usage counting fixes into more cleanly backportable pieces
-- code style cleanups (christian)
-- clarify addfd commit log (christian)
-- add ..._SIZE_{VER0,LATEST} and BUILD_BUG_ON()s (christian)
-- remove undef (christian)
-- fix addfd embedded URL reference numbers
-v6: https://lore.kernel.org/lkml/20200706201720.3482959-1-keescook@chromium.org/
-
-This continues the thread-merge between [1] and [2]. tl;dr: add a way for
-a seccomp user_notif process manager to inject files into the managed
-process in order to handle emulation of various fd-returning syscalls
-across security boundaries. Containers folks and Chrome are in need
-of the feature, and investigating this solution uncovered (and fixed)
-implementation issues with existing file sending routines.
-
-I intend to carry this in the for-next/seccomp tree, unless someone
-has objections. :) Please review and test!
-
--Kees
-
-[1] https://lore.kernel.org/lkml/20200603011044.7972-1-sargun@sargun.me/
-[2] https://lore.kernel.org/lkml/20200610045214.1175600-1-keescook@chromium.org/
-
-
-Kees Cook (7):
-  net/compat: Add missing sock updates for SCM_RIGHTS
-  pidfd: Add missing sock updates for pidfd_getfd()
-  net/scm: Regularize compat handling of scm_detach_fds()
-  fs: Move __scm_install_fd() to __receive_fd()
-  fs: Add receive_fd() wrapper for __receive_fd()
-  pidfd: Replace open-coded receive_fd()
-  fs: Expand __receive_fd() to accept existing fd
-
-Sargun Dhillon (2):
-  seccomp: Introduce addfd ioctl to seccomp user notifier
-  selftests/seccomp: Test SECCOMP_IOCTL_NOTIF_ADDFD
-
- fs/file.c                                     |  57 +++++
- include/linux/file.h                          |  19 ++
- include/linux/seccomp.h                       |   4 +
- include/net/sock.h                            |   4 +
- include/uapi/linux/seccomp.h                  |  22 ++
- kernel/pid.c                                  |  14 +-
- kernel/seccomp.c                              | 173 ++++++++++++-
- net/compat.c                                  |  55 ++---
- net/core/scm.c                                |  50 +---
- net/core/sock.c                               |  21 ++
- tools/testing/selftests/seccomp/seccomp_bpf.c | 229 ++++++++++++++++++
- 11 files changed, 566 insertions(+), 82 deletions(-)
-
--- 
-2.25.1
-
+__receive_sock() has to be before fd_install(), otherwise `file` can
+be a dangling pointer.
