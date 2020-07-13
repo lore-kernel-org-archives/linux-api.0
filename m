@@ -7,39 +7,39 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 28F7FC433E4
-	for <linux-api@archiver.kernel.org>; Mon, 13 Jul 2020 06:49:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F17BAC433E8
+	for <linux-api@archiver.kernel.org>; Mon, 13 Jul 2020 06:50:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id ED44420720
-	for <linux-api@archiver.kernel.org>; Mon, 13 Jul 2020 06:49:56 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CB36220791
+	for <linux-api@archiver.kernel.org>; Mon, 13 Jul 2020 06:50:04 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=chronox.de header.i=@chronox.de header.b="tmx8GKkL"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=chronox.de header.i=@chronox.de header.b="DW3EJ0XV"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728738AbgGMGt4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 13 Jul 2020 02:49:56 -0400
-Received: from mo4-p03-ob.smtp.rzone.de ([85.215.255.100]:18553 "EHLO
-        mo4-p03-ob.smtp.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725804AbgGMGt4 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 13 Jul 2020 02:49:56 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; t=1594622992;
+        id S1726867AbgGMGuE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 13 Jul 2020 02:50:04 -0400
+Received: from mo4-p04-ob.smtp.rzone.de ([85.215.255.121]:23275 "EHLO
+        mo4-p04-ob.smtp.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728974AbgGMGuD (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 13 Jul 2020 02:50:03 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; t=1594623001;
         s=strato-dkim-0002; d=chronox.de;
         h=References:In-Reply-To:Message-ID:Date:Subject:Cc:To:From:
         X-RZG-CLASS-ID:X-RZG-AUTH:From:Subject:Sender;
-        bh=mAXtXJcSmteCGDTK+H4Zq9zuCh4az3t8WNeV8UehO/s=;
-        b=tmx8GKkL6keObIVPKNibp5Ffa/yr3HskfhZHCeiErGCrV2kBcGQCWosLWkDiEFnMuJ
-        a7G1+ebMBsTBwmObNly3+8nX74hieCAGdUIVa+6EozJy14rZrCpiSlVeYCnGRcS+9Ina
-        lzWlEANdwa/OafXcefAv5U0uYbpgjFYzPHTCwRw+LNsZSKsXxSxQ839/vzk7fNC9fOqC
-        9pR4JpEwpjCYN8NxllIihcjKxoNwja/rMgHJjX+dmhV6j5yKw3PJFxbCArl6y/wHNnpi
-        f9Nj4Jp8I7cZSrF40222jJ5IVldxR0eF7i30ke3WdSLNyU8eYSgKN/eJFuRonm62GAU0
-        AYVQ==
+        bh=ZM/sjiYrlyEHK3fnv56cIratc8PKWfKkgCAXtFD9GIE=;
+        b=DW3EJ0XVxUFxDOnaHLcnO7NURjofkEM3e8tyEjTbqFwqiRYjFLf+d8j27wJat1SPdM
+        vpMt9Ut6gAv+Sf6LM1c7xRuwQYNdzADu+jIMuC5cO9b/O4OyrqgfO1RJFyRzxqv9yFiZ
+        +1Vzon2jRI+HACxnhNioq6hkqb2FUew4cZ9Dr/wntv2CTTEnqsD17+JwKWUBN519YaVk
+        IarbB6kExRGJjfOrxxBdqthtKBoHUeBDtXbkskM+twO66r6k9o74Xesus75e82c0ihoY
+        8FY4Mkwtz4t3jjdXzhqioT8ugrwcZ2jy/cnkbq2EGX267pN+0EVym0L9OBZ7sGr15+HC
+        R0cA==
 X-RZG-AUTH: ":P2ERcEykfu11Y98lp/T7+hdri+uKZK8TKWEqNyiHySGSa9k9xmwdNnzGHXPaIvSfHReW"
 X-RZG-CLASS-ID: mo00
 Received: from positron.chronox.de
         by smtp.strato.de (RZmta 46.10.5 DYNA|AUTH)
-        with ESMTPSA id y0546bw6D6bnk2I
+        with ESMTPSA id y0546bw6D6buk2O
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256 bits))
         (Client did not present a certificate);
-        Mon, 13 Jul 2020 08:37:49 +0200 (CEST)
+        Mon, 13 Jul 2020 08:37:56 +0200 (CEST)
 From:   Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
 To:     Arnd Bergmann <arnd@arndb.de>
 Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -66,9 +66,9 @@ Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         Randy Dunlap <rdunlap@infradead.org>,
         Julia Lawall <julia.lawall@inria.fr>,
         Dan Carpenter <dan.carpenter@oracle.com>
-Subject: [PATCH v31 09/12] LRNG - add Jitter RNG fast noise source
-Date:   Mon, 13 Jul 2020 08:21:06 +0200
-Message-ID: <2504507.BddDVKsqQX@positron.chronox.de>
+Subject: [PATCH v31 03/12] LRNG - sysctls and /proc interface
+Date:   Mon, 13 Jul 2020 08:18:44 +0200
+Message-ID: <2053352.Icojqenx9y@positron.chronox.de>
 In-Reply-To: <2050754.Mh6RI2rZIc@positron.chronox.de>
 References: <2050754.Mh6RI2rZIc@positron.chronox.de>
 MIME-Version: 1.0
@@ -79,9 +79,36 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The Jitter RNG fast noise source implemented as part of the kernel
-crypto API is queried for 256 bits of entropy at the time the seed
-buffer managed by the LRNG is about to be filled.
+The LRNG sysctl interface provides the same controls as the existing
+/dev/random implementation. These sysctls behave identically and are
+implemented identically. The goal is to allow a possible merge of the
+existing /dev/random implementation with this implementation which
+implies that this patch tries have a very close similarity. Yet, all
+sysctls are documented at [1].
+
+In addition, it provides the file lrng_type which provides details about
+the LRNG:
+
+=2D the name of the DRNG that produces the random numbers for /dev/random,
+/dev/urandom, getrandom(2)
+
+=2D the hash used to produce random numbers from the entropy pool
+
+=2D the number of secondary DRNG instances
+
+=2D indicator whether the LRNG operates SP800-90B compliant
+
+=2D indicator whether a high-resolution timer is identified - only with a
+high-resolution timer the interrupt noise source will deliver sufficient
+entropy
+
+=2D indicator whether the LRNG has been minimally seeded (i.e. is the
+secondary DRNG seeded with at least 128 bits of of entropy)
+
+=2D indicator whether the LRNG has been fully seeded (i.e. is the
+secondary DRNG seeded with at least 256 bits of entropy)
+
+[1] https://www.chronox.de/lrng.html
 
 CC: "Eric W. Biederman" <ebiederm@xmission.com>
 CC: "Alexander E. Patrakov" <patrakov@gmail.com>
@@ -106,138 +133,225 @@ Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 =2D--
- drivers/char/lrng/Kconfig     | 12 +++++
- drivers/char/lrng/Makefile    |  1 +
- drivers/char/lrng/lrng_jent.c | 88 +++++++++++++++++++++++++++++++++++
- 3 files changed, 101 insertions(+)
- create mode 100644 drivers/char/lrng/lrng_jent.c
+ drivers/char/lrng/Makefile          |   1 +
+ drivers/char/lrng/lrng_interfaces.c |   1 -
+ drivers/char/lrng/lrng_internal.h   |   4 +
+ drivers/char/lrng/lrng_proc.c       | 163 ++++++++++++++++++++++++++++
+ 4 files changed, 168 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/char/lrng/lrng_proc.c
 
-diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 7afc965a4d52..4684e838f011 100644
-=2D-- a/drivers/char/lrng/Kconfig
-+++ b/drivers/char/lrng/Kconfig
-@@ -94,4 +94,16 @@ config LRNG_KCAPI
- 	  provided by the selected kernel crypto API RNG.
- endif # LRNG_DRNG_SWITCH
-=20
-+config LRNG_JENT
-+	bool "Enable Jitter RNG as LRNG Seed Source"
-+	depends on CRYPTO
-+	select CRYPTO_JITTERENTROPY
-+	help
-+	  The Linux RNG may use the Jitter RNG as noise source. Enabling
-+	  this option enables the use of the Jitter RNG. Its default
-+	  entropy level is 16 bits of entropy per 256 data bits delivered
-+	  by the Jitter RNG. This entropy level can be changed at boot
-+	  time or at runtime with the lrng_base.jitterrng configuration
-+	  variable.
-+
- endif # LRNG
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index 94b2dfb2dfdb..4f5b6f38f0c4 100644
+index 0a32f22c2c1a..e69c176f0161 100644
 =2D-- a/drivers/char/lrng/Makefile
 +++ b/drivers/char/lrng/Makefile
-@@ -13,3 +13,4 @@ obj-$(CONFIG_SYSCTL)		+=3D lrng_proc.o
- obj-$(CONFIG_LRNG_DRNG_SWITCH)	+=3D lrng_switch.o
- obj-$(CONFIG_LRNG_DRBG)		+=3D lrng_drbg.o
- obj-$(CONFIG_LRNG_KCAPI)	+=3D lrng_kcapi.o
-+obj-$(CONFIG_LRNG_JENT)		+=3D lrng_jent.o
-diff --git a/drivers/char/lrng/lrng_jent.c b/drivers/char/lrng/lrng_jent.c
+@@ -9,3 +9,4 @@ obj-y				+=3D lrng_pool.o lrng_aux.o \
+ 				   lrng_interfaces.o \
+=20
+ obj-$(CONFIG_NUMA)		+=3D lrng_numa.o
++obj-$(CONFIG_SYSCTL)		+=3D lrng_proc.o
+diff --git a/drivers/char/lrng/lrng_interfaces.c b/drivers/char/lrng/lrng_i=
+nterfaces.c
+index 57e9a68e69bd..79a502517ccd 100644
+=2D-- a/drivers/char/lrng/lrng_interfaces.c
++++ b/drivers/char/lrng/lrng_interfaces.c
+@@ -34,7 +34,6 @@ static DECLARE_WAIT_QUEUE_HEAD(lrng_write_wait);
+ static DECLARE_WAIT_QUEUE_HEAD(lrng_init_wait);
+ static struct fasync_struct *fasync;
+=20
+=2Dstruct ctl_table random_table[];
+ /********************************** Helper *******************************=
+****/
+=20
+ /* Is the DRNG seed level too low? */
+diff --git a/drivers/char/lrng/lrng_internal.h b/drivers/char/lrng/lrng_int=
+ernal.h
+index e82a60a5336d..b49e1fad9094 100644
+=2D-- a/drivers/char/lrng/lrng_internal.h
++++ b/drivers/char/lrng/lrng_internal.h
+@@ -117,7 +117,11 @@ void lrng_cc20_init_state_boot(struct chacha20_state *=
+state);
+=20
+ /********************************** /proc ********************************=
+*****/
+=20
++#ifdef CONFIG_SYSCTL
++void lrng_pool_inc_numa_node(void);
++#else
+ static inline void lrng_pool_inc_numa_node(void) { }
++#endif
+=20
+ /****************************** LRNG interfaces **************************=
+*****/
+=20
+diff --git a/drivers/char/lrng/lrng_proc.c b/drivers/char/lrng/lrng_proc.c
 new file mode 100644
-index 000000000000..225505271fcb
+index 000000000000..f4ee01f61925
 =2D-- /dev/null
-+++ b/drivers/char/lrng/lrng_jent.c
-@@ -0,0 +1,88 @@
++++ b/drivers/char/lrng/lrng_proc.c
+@@ -0,0 +1,163 @@
 +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
 +/*
-+ * LRNG Fast Noise Source: Jitter RNG
++ * LRNG proc and sysctl interfaces
 + *
 + * Copyright (C) 2016 - 2020, Stephan Mueller <smueller@chronox.de>
 + */
 +
-+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-+
-+#include <linux/types.h>
-+#include <crypto/internal/jitterentropy.h>
++#include <linux/lrng.h>
++#include <linux/proc_fs.h>
++#include <linux/seq_file.h>
++#include <linux/sysctl.h>
++#include <linux/uuid.h>
 +
 +#include "lrng_internal.h"
 +
 +/*
-+ * Estimated entropy of data is a 16th of LRNG_DRNG_SECURITY_STRENGTH_BITS.
-+ * Albeit a full entropy assessment is provided for the noise source indic=
-ating
-+ * that it provides high entropy rates and considering that it deactivates
-+ * when it detects insufficient hardware, the chosen under estimation of
-+ * entropy is considered to be acceptable to all reviewers.
-+ */
-+static u32 jitterrng =3D LRNG_DRNG_SECURITY_STRENGTH_BITS>>4;
-+module_param(jitterrng, uint, 0644);
-+MODULE_PARM_DESC(jitterrng, "Entropy in bits of 256 data bits from Jitter =
-RNG noise source");
-+
-+/**
-+ * lrng_get_jent() - Get Jitter RNG entropy
++ * This function is used to return both the bootid UUID, and random
++ * UUID.  The difference is in whether table->data is NULL; if it is,
++ * then a new UUID is generated and returned to the user.
 + *
-+ * @outbuf: buffer to store entropy
-+ * @outbuflen: length of buffer
-+ *
-+ * Return:
-+ * * > 0 on success where value provides the added entropy in bits
-+ * * 0 if no fast source was available
++ * If the user accesses this via the proc interface, the UUID will be
++ * returned as an ASCII string in the standard UUID format; if via the
++ * sysctl system call, as 16 bytes of binary data.
 + */
-+static struct rand_data *lrng_jent_state;
-+
-+u32 lrng_get_jent(u8 *outbuf, unsigned int outbuflen)
++static int lrng_proc_do_uuid(struct ctl_table *table, int write,
++			     void __user *buffer, size_t *lenp, loff_t *ppos)
 +{
-+	int ret;
-+	u32 ent_bits =3D jitterrng;
-+	unsigned long flags;
-+	static DEFINE_SPINLOCK(lrng_jent_lock);
-+	static int lrng_jent_initialized =3D 0;
++	struct ctl_table fake_table;
++	unsigned char buf[64], tmp_uuid[16], *uuid;
 +
-+	spin_lock_irqsave(&lrng_jent_lock, flags);
++	uuid =3D table->data;
++	if (!uuid) {
++		uuid =3D tmp_uuid;
++		generate_random_uuid(uuid);
++	} else {
++		static DEFINE_SPINLOCK(bootid_spinlock);
 +
-+	if (!ent_bits || (lrng_jent_initialized =3D=3D -1)) {
-+		spin_unlock_irqrestore(&lrng_jent_lock, flags);
-+		return 0;
++		spin_lock(&bootid_spinlock);
++		if (!uuid[8])
++			generate_random_uuid(uuid);
++		spin_unlock(&bootid_spinlock);
 +	}
 +
-+	if (!lrng_jent_initialized) {
-+		lrng_jent_state =3D jent_lrng_entropy_collector();
-+		if (!lrng_jent_state) {
-+			jitterrng =3D 0;
-+			lrng_jent_initialized =3D -1;
-+			spin_unlock_irqrestore(&lrng_jent_lock, flags);
-+			pr_info("Jitter RNG unusable on current system\n");
-+			return 0;
-+		}
-+		lrng_jent_initialized =3D 1;
-+		pr_debug("Jitter RNG working on current system\n");
-+	}
-+	ret =3D jent_read_entropy(lrng_jent_state, outbuf, outbuflen);
-+	spin_unlock_irqrestore(&lrng_jent_lock, flags);
++	sprintf(buf, "%pU", uuid);
 +
-+	if (ret) {
-+		pr_debug("Jitter RNG failed with %d\n", ret);
-+		return 0;
-+	}
++	fake_table.data =3D buf;
++	fake_table.maxlen =3D sizeof(buf);
 +
-+	/* Obtain entropy statement */
-+	if (outbuflen !=3D LRNG_DRNG_SECURITY_STRENGTH_BYTES)
-+		ent_bits =3D (ent_bits * outbuflen<<3) /
-+			   LRNG_DRNG_SECURITY_STRENGTH_BITS;
-+	/* Cap entropy to buffer size in bits */
-+	ent_bits =3D min_t(u32, ent_bits, outbuflen<<3);
-+	pr_debug("obtained %u bits of entropy from Jitter RNG noise source\n",
-+		 ent_bits);
-+
-+	return ent_bits;
++	return proc_dostring(&fake_table, write, buffer, lenp, ppos);
 +}
 +
-+u32 lrng_jent_entropylevel(void)
++static int lrng_proc_do_entropy(struct ctl_table *table, int write,
++				void __user *buffer, size_t *lenp, loff_t *ppos)
 +{
-+	return min_t(u32, jitterrng, LRNG_DRNG_SECURITY_STRENGTH_BITS);
++	struct ctl_table fake_table;
++	int entropy_count;
++
++	entropy_count =3D lrng_avail_entropy();
++
++	fake_table.data =3D &entropy_count;
++	fake_table.maxlen =3D sizeof(entropy_count);
++
++	return proc_dointvec(&fake_table, write, buffer, lenp, ppos);
 +}
++
++static int lrng_sysctl_poolsize =3D LRNG_POOL_SIZE_BITS;
++static int lrng_min_write_thresh;
++static int lrng_max_write_thresh =3D LRNG_POOL_SIZE_BITS;
++static char lrng_sysctl_bootid[16];
++static int lrng_drng_reseed_max_min;
++
++struct ctl_table random_table[] =3D {
++	{
++		.procname	=3D "poolsize",
++		.data		=3D &lrng_sysctl_poolsize,
++		.maxlen		=3D sizeof(int),
++		.mode		=3D 0444,
++		.proc_handler	=3D proc_dointvec,
++	},
++	{
++		.procname	=3D "entropy_avail",
++		.maxlen		=3D sizeof(int),
++		.mode		=3D 0444,
++		.proc_handler	=3D lrng_proc_do_entropy,
++	},
++	{
++		.procname	=3D "write_wakeup_threshold",
++		.data		=3D &lrng_write_wakeup_bits,
++		.maxlen		=3D sizeof(int),
++		.mode		=3D 0644,
++		.proc_handler	=3D proc_dointvec_minmax,
++		.extra1		=3D &lrng_min_write_thresh,
++		.extra2		=3D &lrng_max_write_thresh,
++	},
++	{
++		.procname	=3D "boot_id",
++		.data		=3D &lrng_sysctl_bootid,
++		.maxlen		=3D 16,
++		.mode		=3D 0444,
++		.proc_handler	=3D lrng_proc_do_uuid,
++	},
++	{
++		.procname	=3D "uuid",
++		.maxlen		=3D 16,
++		.mode		=3D 0444,
++		.proc_handler	=3D lrng_proc_do_uuid,
++	},
++	{
++		.procname       =3D "urandom_min_reseed_secs",
++		.data           =3D &lrng_drng_reseed_max_time,
++		.maxlen         =3D sizeof(int),
++		.mode           =3D 0644,
++		.proc_handler   =3D proc_dointvec,
++		.extra1		=3D &lrng_drng_reseed_max_min,
++	},
++	{ }
++};
++
++/* Number of online DRNGs */
++static u32 numa_drngs =3D 1;
++
++void lrng_pool_inc_numa_node(void)
++{
++	numa_drngs++;
++}
++
++static int lrng_proc_type_show(struct seq_file *m, void *v)
++{
++	struct lrng_drng *lrng_drng_init =3D lrng_drng_init_instance();
++	unsigned long flags =3D 0;
++	unsigned char buf[300];
++
++	lrng_drng_lock(lrng_drng_init, &flags);
++	snprintf(buf, sizeof(buf),
++		 "DRNG name: %s\n"
++		 "Hash for reading entropy pool: %s\n"
++		 "DRNG security strength: %d bits\n"
++		 "number of DRNG instances: %u\n"
++		 "SP800-90B compliance: %s\n"
++		 "High-resolution timer: %s\n"
++		 "LRNG minimally seeded: %s\n"
++		 "LRNG fully seeded: %s\n",
++		 lrng_drng_init->crypto_cb->lrng_drng_name(),
++		 lrng_drng_init->crypto_cb->lrng_hash_name(),
++		 LRNG_DRNG_SECURITY_STRENGTH_BITS, numa_drngs,
++		 lrng_sp80090b_compliant() ? "true" : "false",
++		 lrng_pool_highres_timer() ? "true" : "false",
++		 lrng_state_min_seeded() ? "true" : "false",
++		 lrng_state_fully_seeded() ? "true" : "false");
++	lrng_drng_unlock(lrng_drng_init, &flags);
++
++	seq_write(m, buf, strlen(buf));
++
++	return 0;
++}
++
++static int __init lrng_proc_type_init(void)
++{
++	proc_create_single("lrng_type", 0444, NULL, &lrng_proc_type_show);
++	return 0;
++}
++
++module_init(lrng_proc_type_init);
 =2D-=20
 2.26.2
 
