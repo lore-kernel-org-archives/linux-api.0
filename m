@@ -2,257 +2,141 @@ Return-Path: <SRS0=8Qj6=AZ=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-18.0 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CDD5DC43463
-	for <linux-api@archiver.kernel.org>; Tue, 14 Jul 2020 18:17:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A38CFC433E5
+	for <linux-api@archiver.kernel.org>; Tue, 14 Jul 2020 18:20:32 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B51B1229EF
-	for <linux-api@archiver.kernel.org>; Tue, 14 Jul 2020 18:17:30 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 77D1E22202
+	for <linux-api@archiver.kernel.org>; Tue, 14 Jul 2020 18:20:32 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="JB+J/nyt"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729260AbgGNSR3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 14 Jul 2020 14:17:29 -0400
-Received: from smtp-bc0e.mail.infomaniak.ch ([45.157.188.14]:39203 "EHLO
-        smtp-bc0e.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1729259AbgGNSR2 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 14 Jul 2020 14:17:28 -0400
-Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
-        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4B5pd22pjWzlhBfk;
-        Tue, 14 Jul 2020 20:16:54 +0200 (CEST)
-Received: from localhost (unknown [94.23.54.103])
-        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4B5pd16Yg6zlh8TC;
-        Tue, 14 Jul 2020 20:16:53 +0200 (CEST)
-From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
-To:     linux-kernel@vger.kernel.org
-Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
-        Aleksa Sarai <cyphar@cyphar.com>,
-        Alexei Starovoitov <ast@kernel.org>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        Christian Heimes <christian@python.org>,
-        Daniel Borkmann <daniel@iogearbox.net>,
-        Deven Bowers <deven.desai@linux.microsoft.com>,
-        Dmitry Vyukov <dvyukov@google.com>,
-        Eric Biggers <ebiggers@kernel.org>,
-        Eric Chiang <ericchiang@google.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>,
-        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Lakshmi Ramasubramanian <nramas@linux.microsoft.com>,
-        Matthew Garrett <mjg59@google.com>,
-        Matthew Wilcox <willy@infradead.org>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>,
-        Mimi Zohar <zohar@linux.ibm.com>,
-        =?UTF-8?q?Philippe=20Tr=C3=A9buchet?= 
-        <philippe.trebuchet@ssi.gouv.fr>,
-        Scott Shell <scottsh@microsoft.com>,
-        Sean Christopherson <sean.j.christopherson@intel.com>,
-        Shuah Khan <shuah@kernel.org>,
-        Steve Dower <steve.dower@python.org>,
-        Steve Grubb <sgrubb@redhat.com>,
-        Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>,
-        Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>,
-        Vincent Strubel <vincent.strubel@ssi.gouv.fr>,
-        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
-        linux-integrity@vger.kernel.org,
-        linux-security-module@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org
-Subject: [PATCH v6 4/7] fs: Introduce O_MAYEXEC flag for openat2(2)
-Date:   Tue, 14 Jul 2020 20:16:35 +0200
-Message-Id: <20200714181638.45751-5-mic@digikod.net>
-X-Mailer: git-send-email 2.27.0
-In-Reply-To: <20200714181638.45751-1-mic@digikod.net>
-References: <20200714181638.45751-1-mic@digikod.net>
+        id S1729088AbgGNSUZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 14 Jul 2020 14:20:25 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34268 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1729010AbgGNSUX (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 14 Jul 2020 14:20:23 -0400
+Received: from mail-wr1-x441.google.com (mail-wr1-x441.google.com [IPv6:2a00:1450:4864:20::441])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id ABFF6C061794
+        for <linux-api@vger.kernel.org>; Tue, 14 Jul 2020 11:20:22 -0700 (PDT)
+Received: by mail-wr1-x441.google.com with SMTP id f18so23846064wrs.0
+        for <linux-api@vger.kernel.org>; Tue, 14 Jul 2020 11:20:22 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=chromium.org; s=google;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=HPlGFdGBPdOOnjWNIrp7n7fX2f6c5N2cri07SgmWmTg=;
+        b=JB+J/nyt6TfGmfP1FNHzDlP0adDJxkUGVFw5/aitKXAyBNMl8DYy62MiTBc8Rk1QD+
+         rm4HViH+6fsIyde6WYByrD91wRfXvfHvxs/vnOJ8wI0lqj0DgxgzvyrBe4aTsR1yCrzx
+         47P82a7vcihTMuj/258naogm0mSiGnyx4C/10=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=HPlGFdGBPdOOnjWNIrp7n7fX2f6c5N2cri07SgmWmTg=;
+        b=V1szb9gCd9QWKLHTqBbQOR8d6lQJngWv9PMJept+FeQvCuy33uzxUlIwuv0lyM9p+Y
+         iUqbk+eedj4X3NMlX/UFzGyJFyYgAoAnIRZmNkbnKD2duwhE7rKObmFveFqnR+qiaiox
+         KIDYi/gKrrWCCRp4Iu7niu413ztVUgXQiT1E/R83J64imVWXBKxBU+qCYo9isOCwDWZa
+         8asEC8xbuU/6iZFUQGZL1NMgB8/2CeHAZcs6ved2OP7ypFbxs1B+xPqJwWPWtkjpIo9+
+         bpTYnhzxJQSkJbl+O6mgSVEooP8reemhmzvNwpOEzAYA0+7oy504AhhpQSK8kLveAejj
+         HmhA==
+X-Gm-Message-State: AOAM531uVUNwfnq9YjE8jPTT5CQG25eL7k8uiFZFkikBXqMWroAZSBl1
+        aGZBBBYf6MQBAnxvAweUhLOJmg7hpQzzLnPEZL2Qmw==
+X-Google-Smtp-Source: ABdhPJzTRetuwJgvNgpbAVJcEpxdMAupdArwCBSPE038dmzCtxo8SQiUfeNuFojjgzmNMeBkMFoGBcaYJM2tZf4UVL4=
+X-Received: by 2002:a5d:4a45:: with SMTP id v5mr7440248wrs.228.1594750821121;
+ Tue, 14 Jul 2020 11:20:21 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-X-Antivirus: Dr.Web (R) for Unix mail servers drweb plugin ver.6.0.2.8
-X-Antivirus-Code: 0x100000
+References: <20200709182642.1773477-1-keescook@chromium.org> <20200709182642.1773477-9-keescook@chromium.org>
+In-Reply-To: <20200709182642.1773477-9-keescook@chromium.org>
+From:   Will Drewry <wad@chromium.org>
+Date:   Tue, 14 Jul 2020 13:20:08 -0500
+Message-ID: <CAAFS_9Gx1=ytAqTPE3ygh6euJqDObcdg70-gzUuq3eHeWHR2HQ@mail.gmail.com>
+Subject: Re: [PATCH v7 8/9] seccomp: Introduce addfd ioctl to seccomp user notifier
+To:     Kees Cook <keescook@chromium.org>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        Sargun Dhillon <sargun@sargun.me>,
+        Matt Denton <mpdenton@google.com>,
+        Christian Brauner <christian@brauner.io>,
+        Tycho Andersen <tycho@tycho.ws>,
+        David Laight <David.Laight@aculab.com>,
+        Christoph Hellwig <hch@lst.de>,
+        "David S. Miller" <davem@davemloft.net>,
+        Jakub Kicinski <kuba@kernel.org>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        Aleksa Sarai <cyphar@cyphar.com>, Jann Horn <jannh@google.com>,
+        Chris Palmer <palmer@google.com>,
+        Robert Sesek <rsesek@google.com>,
+        Giuseppe Scrivano <gscrivan@redhat.com>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Andy Lutomirski <luto@amacapital.net>,
+        Shuah Khan <shuah@kernel.org>, netdev@vger.kernel.org,
+        containers@lists.linux-foundation.org, linux-api@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org, linux-kselftest@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-When the O_MAYEXEC flag is passed, openat2(2) may be subject to
-additional restrictions depending on a security policy managed by the
-kernel through a sysctl or implemented by an LSM thanks to the
-inode_permission hook.  This new flag is ignored by open(2) and
-openat(2) because of their unspecified flags handling.
+On Thu, Jul 9, 2020 at 1:26 PM Kees Cook <keescook@chromium.org> wrote:
+>
+> From: Sargun Dhillon <sargun@sargun.me>
+>
+> The current SECCOMP_RET_USER_NOTIF API allows for syscall supervision over
+> an fd. It is often used in settings where a supervising task emulates
+> syscalls on behalf of a supervised task in userspace, either to further
+> restrict the supervisee's syscall abilities or to circumvent kernel
+> enforced restrictions the supervisor deems safe to lift (e.g. actually
+> performing a mount(2) for an unprivileged container).
+>
+> While SECCOMP_RET_USER_NOTIF allows for the interception of any syscall,
+> only a certain subset of syscalls could be correctly emulated. Over the
+> last few development cycles, the set of syscalls which can't be emulated
+> has been reduced due to the addition of pidfd_getfd(2). With this we are
+> now able to, for example, intercept syscalls that require the supervisor
+> to operate on file descriptors of the supervisee such as connect(2).
+>
+> However, syscalls that cause new file descriptors to be installed can not
+> currently be correctly emulated since there is no way for the supervisor
+> to inject file descriptors into the supervisee. This patch adds a
+> new addfd ioctl to remove this restriction by allowing the supervisor to
+> install file descriptors into the intercepted task. By implementing this
+> feature via seccomp the supervisor effectively instructs the supervisee
+> to install a set of file descriptors into its own file descriptor table
+> during the intercepted syscall. This way it is possible to intercept
+> syscalls such as open() or accept(), and install (or replace, like
+> dup2(2)) the supervisor's resulting fd into the supervisee. One
+> replacement use-case would be to redirect the stdout and stderr of a
+> supervisee into log file descriptors opened by the supervisor.
+>
+> The ioctl handling is based on the discussions[1] of how Extensible
+> Arguments should interact with ioctls. Instead of building size into
+> the addfd structure, make it a function of the ioctl command (which
+> is how sizes are normally passed to ioctls). To support forward and
+> backward compatibility, just mask out the direction and size, and match
+> everything. The size (and any future direction) checks are done along
+> with copy_struct_from_user() logic.
+>
+> As a note, the seccomp_notif_addfd structure is laid out based on 8-byte
+> alignment without requiring packing as there have been packing issues
+> with uapi highlighted before[2][3]. Although we could overload the
+> newfd field and use -1 to indicate that it is not to be used, doing
+> so requires changing the size of the fd field, and introduces struct
+> packing complexity.
+>
+> [1]: https://lore.kernel.org/lkml/87o8w9bcaf.fsf@mid.deneb.enyo.de/
+> [2]: https://lore.kernel.org/lkml/a328b91d-fd8f-4f27-b3c2-91a9c45f18c0@rasmusvillemoes.dk/
+> [3]: https://lore.kernel.org/lkml/20200612104629.GA15814@ircssh-2.c.rugged-nimbus-611.internal
+>
+> Suggested-by: Matt Denton <mpdenton@google.com>
+> Link: https://lore.kernel.org/r/20200603011044.7972-4-sargun@sargun.me
+> Signed-off-by: Sargun Dhillon <sargun@sargun.me>
+> Co-developed-by: Kees Cook <keescook@chromium.org>
+> Signed-off-by: Kees Cook <keescook@chromium.org>
 
-The underlying idea is to be able to restrict scripts interpretation
-according to a policy defined by the system administrator.  For this to
-be possible, script interpreters must use the O_MAYEXEC flag
-appropriately.  To be fully effective, these interpreters also need to
-handle the other ways to execute code: command line parameters (e.g.,
-option -e for Perl), module loading (e.g., option -m for Python), stdin,
-file sourcing, environment variables, configuration files, etc.
-According to the threat model, it may be acceptable to allow some script
-interpreters (e.g. Bash) to interpret commands from stdin, may it be a
-TTY or a pipe, because it may not be enough to (directly) perform
-syscalls.  Further documentation can be found in a following patch.
-
-Even without enforced security policy, userland interpreters can set it
-to enforce the system policy at their level, knowing that it will not
-break anything on running systems which do not care about this feature.
-However, on systems which want this feature enforced, there will be
-knowledgeable people (i.e. sysadmins who enforced O_MAYEXEC
-deliberately) to manage it.  A simple security policy implementation,
-configured through a dedicated sysctl, is available in a following
-patch.
-
-O_MAYEXEC should not be confused with the O_EXEC flag which is intended
-for execute-only, which obviously doesn't work for scripts.  However, a
-similar behavior could be implemented in userland with O_PATH:
-https://lore.kernel.org/lkml/1e2f6913-42f2-3578-28ed-567f6a4bdda1@digikod.net/
-
-The implementation of O_MAYEXEC almost duplicates what execve(2) and
-uselib(2) are already doing: setting MAY_OPENEXEC in acc_mode (which can
-then be checked as MAY_EXEC, if enforced), and propagating FMODE_EXEC to
-_fmode via __FMODE_EXEC flag (which can then trigger a
-fanotify/FAN_OPEN_EXEC event).
-
-This is an updated subset of the patch initially written by Vincent
-Strubel for CLIP OS 4:
-https://github.com/clipos-archive/src_platform_clip-patches/blob/f5cb330d6b684752e403b4e41b39f7004d88e561/1901_open_mayexec.patch
-This patch has been used for more than 12 years with customized script
-interpreters.  Some examples (with the original name O_MAYEXEC) can be
-found here:
-https://github.com/clipos-archive/clipos4_portage-overlay/search?q=O_MAYEXEC
-
-Co-developed-by: Vincent Strubel <vincent.strubel@ssi.gouv.fr>
-Signed-off-by: Vincent Strubel <vincent.strubel@ssi.gouv.fr>
-Co-developed-by: Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
-Signed-off-by: Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
-Signed-off-by: Mickaël Salaün <mic@digikod.net>
-Reviewed-by: Deven Bowers <deven.desai@linux.microsoft.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
-Cc: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
----
-
-Changes since v5:
-* Update commit message.
-
-Changes since v3:
-* Switch back to O_MAYEXEC, but only handle it with openat2(2) which
-  checks unknown flags (suggested by Aleksa Sarai). Cf.
-  https://lore.kernel.org/lkml/20200430015429.wuob7m5ofdewubui@yavin.dot.cyphar.com/
-
-Changes since v2:
-* Replace O_MAYEXEC with RESOLVE_MAYEXEC from openat2(2).  This change
-  enables to not break existing application using bogus O_* flags that
-  may be ignored by current kernels by using a new dedicated flag, only
-  usable through openat2(2) (suggested by Jeff Layton).  Using this flag
-  will results in an error if the running kernel does not support it.
-  User space needs to manage this case, as with other RESOLVE_* flags.
-  The best effort approach to security (for most common distros) will
-  simply consists of ignoring such an error and retry without
-  RESOLVE_MAYEXEC.  However, a fully controlled system may which to
-  error out if such an inconsistency is detected.
-
-Changes since v1:
-* Set __FMODE_EXEC when using O_MAYEXEC to make this information
-  available through the new fanotify/FAN_OPEN_EXEC event (suggested by
-  Jan Kara and Matthew Bobrowski):
-  https://lore.kernel.org/lkml/20181213094658.GA996@lithium.mbobrowski.org/
----
- fs/fcntl.c                       | 2 +-
- fs/open.c                        | 8 ++++++++
- include/linux/fcntl.h            | 2 +-
- include/linux/fs.h               | 2 ++
- include/uapi/asm-generic/fcntl.h | 7 +++++++
- 5 files changed, 19 insertions(+), 2 deletions(-)
-
-diff --git a/fs/fcntl.c b/fs/fcntl.c
-index 2e4c0fa2074b..0357ad667563 100644
---- a/fs/fcntl.c
-+++ b/fs/fcntl.c
-@@ -1033,7 +1033,7 @@ static int __init fcntl_init(void)
- 	 * Exceptions: O_NONBLOCK is a two bit define on parisc; O_NDELAY
- 	 * is defined as O_NONBLOCK on some platforms and not on others.
- 	 */
--	BUILD_BUG_ON(21 - 1 /* for O_RDONLY being 0 */ !=
-+	BUILD_BUG_ON(22 - 1 /* for O_RDONLY being 0 */ !=
- 		HWEIGHT32(
- 			(VALID_OPEN_FLAGS & ~(O_NONBLOCK | O_NDELAY)) |
- 			__FMODE_EXEC | __FMODE_NONOTIFY));
-diff --git a/fs/open.c b/fs/open.c
-index 623b7506a6db..38e434bdbbb6 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -987,6 +987,8 @@ inline struct open_how build_open_how(int flags, umode_t mode)
- 		.mode = mode & S_IALLUGO,
- 	};
- 
-+	/* O_MAYEXEC is ignored by syscalls relying on build_open_how(). */
-+	how.flags &= ~O_MAYEXEC;
- 	/* O_PATH beats everything else. */
- 	if (how.flags & O_PATH)
- 		how.flags &= O_PATH_FLAGS;
-@@ -1054,6 +1056,12 @@ inline int build_open_flags(const struct open_how *how, struct open_flags *op)
- 	if (flags & __O_SYNC)
- 		flags |= O_DSYNC;
- 
-+	/* Checks execution permissions on open. */
-+	if (flags & O_MAYEXEC) {
-+		acc_mode |= MAY_OPENEXEC;
-+		flags |= __FMODE_EXEC;
-+	}
-+
- 	op->open_flag = flags;
- 
- 	/* O_TRUNC implies we need access checks for write permissions */
-diff --git a/include/linux/fcntl.h b/include/linux/fcntl.h
-index 7bcdcf4f6ab2..e188a360fa5f 100644
---- a/include/linux/fcntl.h
-+++ b/include/linux/fcntl.h
-@@ -10,7 +10,7 @@
- 	(O_RDONLY | O_WRONLY | O_RDWR | O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC | \
- 	 O_APPEND | O_NDELAY | O_NONBLOCK | O_NDELAY | __O_SYNC | O_DSYNC | \
- 	 FASYNC	| O_DIRECT | O_LARGEFILE | O_DIRECTORY | O_NOFOLLOW | \
--	 O_NOATIME | O_CLOEXEC | O_PATH | __O_TMPFILE)
-+	 O_NOATIME | O_CLOEXEC | O_PATH | __O_TMPFILE | O_MAYEXEC)
- 
- /* List of all valid flags for the how->upgrade_mask argument: */
- #define VALID_UPGRADE_FLAGS \
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index f5abba86107d..56f835c9a87a 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -101,6 +101,8 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
- #define MAY_CHDIR		0x00000040
- /* called from RCU mode, don't block */
- #define MAY_NOT_BLOCK		0x00000080
-+/* the inode is opened with O_MAYEXEC */
-+#define MAY_OPENEXEC		0x00000100
- 
- /*
-  * flags in file.f_mode.  Note that FMODE_READ and FMODE_WRITE must correspond
-diff --git a/include/uapi/asm-generic/fcntl.h b/include/uapi/asm-generic/fcntl.h
-index 9dc0bf0c5a6e..bca90620119f 100644
---- a/include/uapi/asm-generic/fcntl.h
-+++ b/include/uapi/asm-generic/fcntl.h
-@@ -97,6 +97,13 @@
- #define O_NDELAY	O_NONBLOCK
- #endif
- 
-+/*
-+ * Code execution from file is intended, checks such permission.  A simple
-+ * policy can be enforced system-wide as explained in
-+ * Documentation/admin-guide/sysctl/fs.rst .
-+ */
-+#define O_MAYEXEC	040000000
-+
- #define F_DUPFD		0	/* dup */
- #define F_GETFD		1	/* get close_on_exec */
- #define F_SETFD		2	/* set/clear close_on_exec */
--- 
-2.27.0
-
+Reviewed-by: Will Drewry <wad@chromium.org>
