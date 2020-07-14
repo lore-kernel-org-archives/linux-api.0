@@ -2,29 +2,32 @@ Return-Path: <SRS0=8Qj6=AZ=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.0 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 89665C433E1
-	for <linux-api@archiver.kernel.org>; Tue, 14 Jul 2020 18:16:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F3080C43446
+	for <linux-api@archiver.kernel.org>; Tue, 14 Jul 2020 18:17:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6AAF32242B
-	for <linux-api@archiver.kernel.org>; Tue, 14 Jul 2020 18:16:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DCF5922838
+	for <linux-api@archiver.kernel.org>; Tue, 14 Jul 2020 18:17:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728312AbgGNSQu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 14 Jul 2020 14:16:50 -0400
-Received: from smtp-42a8.mail.infomaniak.ch ([84.16.66.168]:50989 "EHLO
-        smtp-42a8.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1729007AbgGNSQt (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 14 Jul 2020 14:16:49 -0400
+        id S1729191AbgGNSRG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 14 Jul 2020 14:17:06 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33726 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1729218AbgGNSQ7 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 14 Jul 2020 14:16:59 -0400
+Received: from smtp-190b.mail.infomaniak.ch (smtp-190b.mail.infomaniak.ch [IPv6:2001:1600:3:17::190b])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 443D7C08C5DD
+        for <linux-api@vger.kernel.org>; Tue, 14 Jul 2020 11:16:59 -0700 (PDT)
 Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
-        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4B5pct40bVzlhYQ4;
-        Tue, 14 Jul 2020 20:16:46 +0200 (CEST)
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4B5pcz4h40zlhGky;
+        Tue, 14 Jul 2020 20:16:51 +0200 (CEST)
 Received: from localhost (unknown [94.23.54.103])
-        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4B5pcp2QS6zlh8TC;
-        Tue, 14 Jul 2020 20:16:42 +0200 (CEST)
+        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4B5pcz1YDGzlh8TC;
+        Tue, 14 Jul 2020 20:16:51 +0200 (CEST)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     linux-kernel@vger.kernel.org
 Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
@@ -64,10 +67,12 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         linux-integrity@vger.kernel.org,
         linux-security-module@vger.kernel.org,
         linux-fsdevel@vger.kernel.org
-Subject: [PATCH v6 0/7] Add support for O_MAYEXEC
-Date:   Tue, 14 Jul 2020 20:16:31 +0200
-Message-Id: <20200714181638.45751-1-mic@digikod.net>
+Subject: [PATCH v6 2/7] exec: Move S_ISREG() check earlier
+Date:   Tue, 14 Jul 2020 20:16:33 +0200
+Message-Id: <20200714181638.45751-3-mic@digikod.net>
 X-Mailer: git-send-email 2.27.0
+In-Reply-To: <20200714181638.45751-1-mic@digikod.net>
+References: <20200714181638.45751-1-mic@digikod.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -78,133 +83,132 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi,
+From: Kees Cook <keescook@chromium.org>
 
-This sixth patch series mainly adds Kees Cook's file permission check
-relocations which help to simplify and generalize the previous series.
-I removed the MAY_EXECMOUNT flag patch which is not useful anymore with
-this refactoring.  I also removed the static enforcement configuration
-through Kconfig to make this series simpler and because it works in pair
-with mount configurations (i.e. requires the same capability:
-CAP_SYS_ADMIN).
+The execve(2)/uselib(2) syscalls have always rejected non-regular
+files. Recently, it was noticed that a deadlock was introduced when trying
+to execute pipes, as the S_ISREG() test was happening too late. This was
+fixed in commit 73601ea5b7b1 ("fs/open.c: allow opening only regular files
+during execve()"), but it was added after inode_permission() had already
+run, which meant LSMs could see bogus attempts to execute non-regular
+files.
 
-As requested by Mimi Zohar, I completed the series with one of her
-patches for IMA.  I also picked Kees Cook's patches to consolidate exec
-permission checking into do_filp_open()'s flow:
-https://lore.kernel.org/lkml/20200605160013.3954297-1-keescook@chromium.org/
+Move the test into the other inode type checks (which already look
+for other pathological conditions[1]). Since there is no need to use
+FMODE_EXEC while we still have access to "acc_mode", also switch the
+test to MAY_EXEC.
 
+Also include a comment with the redundant S_ISREG() checks at the end of
+execve(2)/uselib(2) to note that they are present to avoid any mistakes.
 
-# Goal of O_MAYEXEC
+My notes on the call path, and related arguments, checks, etc:
 
-The goal of this patch series is to enable to control script execution
-with interpreters help.  A new O_MAYEXEC flag, usable through
-openat2(2), is added to enable userspace script interpreters to delegate
-to the kernel (and thus the system security policy) the permission to
-interpret/execute scripts or other files containing what can be seen as
-commands.
+do_open_execat()
+    struct open_flags open_exec_flags = {
+        .open_flag = O_LARGEFILE | O_RDONLY | __FMODE_EXEC,
+        .acc_mode = MAY_EXEC,
+        ...
+    do_filp_open(dfd, filename, open_flags)
+        path_openat(nameidata, open_flags, flags)
+            file = alloc_empty_file(open_flags, current_cred());
+            do_open(nameidata, file, open_flags)
+                may_open(path, acc_mode, open_flag)
+		    /* new location of MAY_EXEC vs S_ISREG() test */
+                    inode_permission(inode, MAY_OPEN | acc_mode)
+                        security_inode_permission(inode, acc_mode)
+                vfs_open(path, file)
+                    do_dentry_open(file, path->dentry->d_inode, open)
+                        /* old location of FMODE_EXEC vs S_ISREG() test */
+                        security_file_open(f)
+                        open()
 
-A simple system-wide security policy can be enforced by the system
-administrator through a sysctl configuration consistent with the mount
-points or the file access rights.  The documentation patch explains the
-prerequisites.
+[1] https://lore.kernel.org/lkml/202006041910.9EF0C602@keescook/
 
-Furthermore, the security policy can also be delegated to an LSM, either
-a MAC system or an integrity system.  For instance, the new kernel
-MAY_OPENEXEC flag closes a major IMA measurement/appraisal interpreter
-integrity gap by bringing the ability to check the use of scripts [1].
-Other uses are expected, such as for magic-links [2], SGX integration
-[3], bpffs [4] or IPE [5].
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Acked-by: Mickaël Salaün <mic@digikod.net>
+Link: https://lore.kernel.org/r/20200605160013.3954297-3-keescook@chromium.org
+---
+ fs/exec.c  | 14 ++++++++++++--
+ fs/namei.c |  6 ++++--
+ fs/open.c  |  6 ------
+ 3 files changed, 16 insertions(+), 10 deletions(-)
 
-
-# Prerequisite of its use
-
-Userspace needs to adapt to take advantage of this new feature.  For
-example, the PEP 578 [6] (Runtime Audit Hooks) enables Python 3.8 to be
-extended with policy enforcement points related to code interpretation,
-which can be used to align with the PowerShell audit features.
-Additional Python security improvements (e.g. a limited interpreter
-withou -c, stdin piping of code) are on their way [7].
-
-
-# Examples
-
-The initial idea comes from CLIP OS 4 and the original implementation
-has been used for more than 12 years:
-https://github.com/clipos-archive/clipos4_doc
-Chrome OS has a similar approach:
-https://chromium.googlesource.com/chromiumos/docs/+/master/security/noexec_shell_scripts.md
-
-Userland patches can be found here:
-https://github.com/clipos-archive/clipos4_portage-overlay/search?q=O_MAYEXEC
-Actually, there is more than the O_MAYEXEC changes (which matches this search)
-e.g., to prevent Python interactive execution. There are patches for
-Bash, Wine, Java (Icedtea), Busybox's ash, Perl and Python. There are
-also some related patches which do not directly rely on O_MAYEXEC but
-which restrict the use of browser plugins and extensions, which may be
-seen as scripts too:
-https://github.com/clipos-archive/clipos4_portage-overlay/tree/master/www-client
-
-An introduction to O_MAYEXEC was given at the Linux Security Summit
-Europe 2018 - Linux Kernel Security Contributions by ANSSI:
-https://www.youtube.com/watch?v=chNjCRtPKQY&t=17m15s
-The "write xor execute" principle was explained at Kernel Recipes 2018 -
-CLIP OS: a defense-in-depth OS:
-https://www.youtube.com/watch?v=PjRE0uBtkHU&t=11m14s
-See also an overview article: https://lwn.net/Articles/820000/
-
-
-This patch series can be applied on top of v5.8-rc5 .  This can be tested
-with CONFIG_SYSCTL.  I would really appreciate constructive comments on
-this patch series.
-
-Previous version:
-https://lore.kernel.org/lkml/20200505153156.925111-1-mic@digikod.net/
-
-
-[1] https://lore.kernel.org/lkml/1544647356.4028.105.camel@linux.ibm.com/
-[2] https://lore.kernel.org/lkml/20190904201933.10736-6-cyphar@cyphar.com/
-[3] https://lore.kernel.org/lkml/CALCETrVovr8XNZSroey7pHF46O=kj_c5D9K8h=z2T_cNrpvMig@mail.gmail.com/
-[4] https://lore.kernel.org/lkml/CALCETrVeZ0eufFXwfhtaG_j+AdvbzEWE0M3wjXMWVEO7pj+xkw@mail.gmail.com/
-[5] https://lore.kernel.org/lkml/20200406221439.1469862-12-deven.desai@linux.microsoft.com/
-[6] https://www.python.org/dev/peps/pep-0578/
-[7] https://lore.kernel.org/lkml/0c70debd-e79e-d514-06c6-4cd1e021fa8b@python.org/
-
-Regards,
-
-Kees Cook (3):
-  exec: Change uselib(2) IS_SREG() failure to EACCES
-  exec: Move S_ISREG() check earlier
-  exec: Move path_noexec() check earlier
-
-Mickaël Salaün (3):
-  fs: Introduce O_MAYEXEC flag for openat2(2)
-  fs,doc: Enable to enforce noexec mounts or file exec through O_MAYEXEC
-  selftest/openat2: Add tests for O_MAYEXEC enforcing
-
-Mimi Zohar (1):
-  ima: add policy support for the new file open MAY_OPENEXEC flag
-
- Documentation/ABI/testing/ima_policy          |   2 +-
- Documentation/admin-guide/sysctl/fs.rst       |  45 +++
- fs/exec.c                                     |  23 +-
- fs/fcntl.c                                    |   2 +-
- fs/namei.c                                    |  31 ++-
- fs/open.c                                     |  14 +-
- include/linux/fcntl.h                         |   2 +-
- include/linux/fs.h                            |   3 +
- include/uapi/asm-generic/fcntl.h              |   7 +
- kernel/sysctl.c                               |  12 +-
- security/integrity/ima/ima_main.c             |   3 +-
- security/integrity/ima/ima_policy.c           |  15 +-
- tools/testing/selftests/kselftest_harness.h   |   3 +
- tools/testing/selftests/openat2/Makefile      |   3 +-
- tools/testing/selftests/openat2/config        |   1 +
- tools/testing/selftests/openat2/helpers.h     |   1 +
- .../testing/selftests/openat2/omayexec_test.c | 262 ++++++++++++++++++
- 17 files changed, 400 insertions(+), 29 deletions(-)
- create mode 100644 tools/testing/selftests/openat2/config
- create mode 100644 tools/testing/selftests/openat2/omayexec_test.c
-
+diff --git a/fs/exec.c b/fs/exec.c
+index d7c937044d10..bdc6a6eb5dce 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -141,8 +141,13 @@ SYSCALL_DEFINE1(uselib, const char __user *, library)
+ 	if (IS_ERR(file))
+ 		goto out;
+ 
++	/*
++	 * may_open() has already checked for this, so it should be
++	 * impossible to trip now. But we need to be extra cautious
++	 * and check again at the very end too.
++	 */
+ 	error = -EACCES;
+-	if (!S_ISREG(file_inode(file)->i_mode))
++	if (WARN_ON_ONCE(!S_ISREG(file_inode(file)->i_mode)))
+ 		goto exit;
+ 
+ 	if (path_noexec(&file->f_path))
+@@ -886,8 +891,13 @@ static struct file *do_open_execat(int fd, struct filename *name, int flags)
+ 	if (IS_ERR(file))
+ 		goto out;
+ 
++	/*
++	 * may_open() has already checked for this, so it should be
++	 * impossible to trip now. But we need to be extra cautious
++	 * and check again at the very end too.
++	 */
+ 	err = -EACCES;
+-	if (!S_ISREG(file_inode(file)->i_mode))
++	if (WARN_ON_ONCE(!S_ISREG(file_inode(file)->i_mode)))
+ 		goto exit;
+ 
+ 	if (path_noexec(&file->f_path))
+diff --git a/fs/namei.c b/fs/namei.c
+index 72d4219c93ac..a559ad943970 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -2849,16 +2849,18 @@ static int may_open(const struct path *path, int acc_mode, int flag)
+ 	case S_IFLNK:
+ 		return -ELOOP;
+ 	case S_IFDIR:
+-		if (acc_mode & MAY_WRITE)
++		if (acc_mode & (MAY_WRITE | MAY_EXEC))
+ 			return -EISDIR;
+ 		break;
+ 	case S_IFBLK:
+ 	case S_IFCHR:
+ 		if (!may_open_dev(path))
+ 			return -EACCES;
+-		/*FALLTHRU*/
++		fallthrough;
+ 	case S_IFIFO:
+ 	case S_IFSOCK:
++		if (acc_mode & MAY_EXEC)
++			return -EACCES;
+ 		flag &= ~O_TRUNC;
+ 		break;
+ 	}
+diff --git a/fs/open.c b/fs/open.c
+index 6cd48a61cda3..623b7506a6db 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -784,12 +784,6 @@ static int do_dentry_open(struct file *f,
+ 		return 0;
+ 	}
+ 
+-	/* Any file opened for execve()/uselib() has to be a regular file. */
+-	if (unlikely(f->f_flags & FMODE_EXEC && !S_ISREG(inode->i_mode))) {
+-		error = -EACCES;
+-		goto cleanup_file;
+-	}
+-
+ 	if (f->f_mode & FMODE_WRITE && !special_file(inode->i_mode)) {
+ 		error = get_write_access(inode);
+ 		if (unlikely(error))
 -- 
 2.27.0
 
