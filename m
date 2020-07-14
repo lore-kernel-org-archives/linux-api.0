@@ -2,95 +2,86 @@ Return-Path: <SRS0=8Qj6=AZ=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-5.5 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 68652C433E0
-	for <linux-api@archiver.kernel.org>; Tue, 14 Jul 2020 03:03:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 26677C433E6
+	for <linux-api@archiver.kernel.org>; Tue, 14 Jul 2020 06:51:17 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3412B21974
-	for <linux-api@archiver.kernel.org>; Tue, 14 Jul 2020 03:03:57 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="Wfty55aW"
+	by mail.kernel.org (Postfix) with ESMTP id 03E48221F2
+	for <linux-api@archiver.kernel.org>; Tue, 14 Jul 2020 06:51:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726456AbgGNDD4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 13 Jul 2020 23:03:56 -0400
-Received: from mail.efficios.com ([167.114.26.124]:46160 "EHLO
-        mail.efficios.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726150AbgGNDD4 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 13 Jul 2020 23:03:56 -0400
-Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id 81CDA2B8641;
-        Mon, 13 Jul 2020 23:03:55 -0400 (EDT)
-Received: from mail.efficios.com ([127.0.0.1])
-        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
-        with ESMTP id c7g69rhorLiH; Mon, 13 Jul 2020 23:03:55 -0400 (EDT)
-Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id 2E14F2B84C5;
-        Mon, 13 Jul 2020 23:03:55 -0400 (EDT)
-DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 2E14F2B84C5
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
-        s=default; t=1594695835;
-        bh=i0IKhP8FYjVj9PU2ZwfUV53aZ9hjgamCtIU+kee/py8=;
-        h=From:To:Date:Message-Id;
-        b=Wfty55aWgQavXhCrAE4Emzg17kW+mRORyLaWTEpm7Z0y/TltVeOjk+aKGSuArEV24
-         Cr3ycvDPCn/4576UbDV0JqdMrpq1wre2XwJji9839/2Htk9dzo2BkXdYgfTd/twm5a
-         JSZd5ncoWkS+vLIE6342d93gs6LStpS3g6lu/M3pfTj+P6U+btMSCiV6fUZp/ONUiX
-         N0jy5dwd73NTtmvDsrxoENQsNkAzeHCiwvyCaNAWvFVbyavqVQW10sEut0tDWTu8I4
-         Gqj6/8tGDrfpknqAUyhCoLBAGXl4Iefai2RI9is3nCR+ggLN+VGHowQ9stD36wSCkH
-         QBL8iILyDwJOQ==
-X-Virus-Scanned: amavisd-new at efficios.com
-Received: from mail.efficios.com ([127.0.0.1])
-        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
-        with ESMTP id RAbGfGtBseht; Mon, 13 Jul 2020 23:03:55 -0400 (EDT)
-Received: from localhost.localdomain (192-222-181-218.qc.cable.ebox.net [192.222.181.218])
-        by mail.efficios.com (Postfix) with ESMTPSA id D4BF82B84C4;
-        Mon, 13 Jul 2020 23:03:54 -0400 (EDT)
-From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-To:     Peter Zijlstra <peterz@infradead.org>
-Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-        "Paul E . McKenney" <paulmck@linux.ibm.com>,
-        Boqun Feng <boqun.feng@gmail.com>,
-        "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>,
-        linux-api@vger.kernel.org,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        Florian Weimer <fw@deneb.enyo.de>, carlos@redhat.com,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH 0/4] rseq: Introduce extensible struct rseq
-Date:   Mon, 13 Jul 2020 23:03:44 -0400
-Message-Id: <20200714030348.6214-1-mathieu.desnoyers@efficios.com>
-X-Mailer: git-send-email 2.17.1
+        id S1726782AbgGNGvO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 14 Jul 2020 02:51:14 -0400
+Received: from jabberwock.ucw.cz ([46.255.230.98]:56354 "EHLO
+        jabberwock.ucw.cz" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725853AbgGNGvO (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 14 Jul 2020 02:51:14 -0400
+Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
+        id DC2511C0BE2; Tue, 14 Jul 2020 08:51:10 +0200 (CEST)
+Date:   Tue, 14 Jul 2020 08:51:10 +0200
+From:   Pavel Machek <pavel@denx.de>
+To:     Greg KH <gregkh@linuxfoundation.org>
+Cc:     Jan Ziak <0xe2.0x9a.0x9b@gmail.com>, linux-api@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-kselftest@vger.kernel.org, linux-man@vger.kernel.org,
+        mtk.manpages@gmail.com, shuah@kernel.org, viro@zeniv.linux.org.uk
+Subject: Re: [PATCH 0/3] readfile(2): a new syscall to make open/read/close
+ faster
+Message-ID: <20200714065110.GA8047@amd>
+References: <CAODFU0q6CrUB_LkSdrbp5TQ4Jm6Sw=ZepZwD-B7-aFudsOvsig@mail.gmail.com>
+ <20200705115021.GA1227929@kroah.com>
+MIME-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="EeQfGwPcQSOJBaQU"
+Content-Disposition: inline
+In-Reply-To: <20200705115021.GA1227929@kroah.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Recent discussion led to a solution for extending struct rseq. This is
-an implementation of the proposed solution.
 
-Now is a good time to agree on this scheme before the release of glibc
-2.32, just in case there are small details to fix on the user-space
-side in order to allow extending struct rseq.
+--EeQfGwPcQSOJBaQU
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Thanks,
+Hi!
 
-Mathieu
+> > At first, I thought that the proposed system call is capable of
+> > reading *multiple* small files using a single system call - which
+> > would help increase HDD/SSD queue utilization and increase IOPS (I/O
+> > operations per second) - but that isn't the case and the proposed
+> > system call can read just a single file.
+>=20
+> If you want to do this for multple files, use io_ring, that's what it
+> was designed for.  I think Jens was going to be adding support for the
+> open/read/close pattern to it as well, after some other more pressing
+> features/fixes were finished.
 
-Mathieu Desnoyers (4):
-  selftests: rseq: Use fixed value as rseq_len parameter
-  rseq: Allow extending struct rseq
-  selftests: rseq: define __rseq_abi with extensible size
-  selftests: rseq: print rseq extensible size in basic test
+What about... just using io_uring for single file, too? I'm pretty
+sure it can be wrapped in a library that is simple to use, avoiding
+need for new syscall.
+							Pavel
+						=09
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
- include/linux/sched.h                     |  4 +++
- include/uapi/linux/rseq.h                 | 42 ++++++++++++++++++++--
- kernel/rseq.c                             | 44 +++++++++++++++++++----
- tools/testing/selftests/rseq/basic_test.c | 15 ++++++++
- tools/testing/selftests/rseq/rseq.c       |  8 +++--
- 5 files changed, 101 insertions(+), 12 deletions(-)
+--EeQfGwPcQSOJBaQU
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
--- 
-2.17.1
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
 
+iEYEARECAAYFAl8NVd4ACgkQMOfwapXb+vL5bQCgufDkd33qQk4uXDkH3RR5GPmL
+zNYAn03OZe2uS3B1ptb/sq4bdkcbtv1l
+=CLsu
+-----END PGP SIGNATURE-----
+
+--EeQfGwPcQSOJBaQU--
