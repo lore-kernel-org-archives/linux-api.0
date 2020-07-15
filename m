@@ -2,95 +2,106 @@ Return-Path: <SRS0=+CiM=A2=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5A2C0C433E3
-	for <linux-api@archiver.kernel.org>; Wed, 15 Jul 2020 16:41:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2CF21C433E4
+	for <linux-api@archiver.kernel.org>; Wed, 15 Jul 2020 17:11:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 370DF20672
-	for <linux-api@archiver.kernel.org>; Wed, 15 Jul 2020 16:41:41 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0E8582065F
+	for <linux-api@archiver.kernel.org>; Wed, 15 Jul 2020 17:11:46 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=ti.com header.i=@ti.com header.b="pOYUydWs"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="MAVaNZA+"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726811AbgGOQkW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 15 Jul 2020 12:40:22 -0400
-Received: from lelv0143.ext.ti.com ([198.47.23.248]:42638 "EHLO
-        lelv0143.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725832AbgGOQkV (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 15 Jul 2020 12:40:21 -0400
-Received: from lelv0265.itg.ti.com ([10.180.67.224])
-        by lelv0143.ext.ti.com (8.15.2/8.15.2) with ESMTP id 06FGeG9i003829;
-        Wed, 15 Jul 2020 11:40:16 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ti.com;
-        s=ti-com-17Q1; t=1594831216;
-        bh=l9F2o1gesIVnYJhZiValfLiNSoAwf9JeCCag42kCIhw=;
-        h=From:To:Subject:Date:In-Reply-To:References;
-        b=pOYUydWsjV15MttD6f3f7N0GbW76lJoenLILsfkvQ+uKDLqOxmkVAjElsnykej79v
-         hEn5IQSar6BmIP4WlhFqen/9ZMVTwXxmjKjCSSxTTGRZmeHQZWJ/M4wTh0jL5E9OJd
-         pmL0pcmGNV86wqmKWENA7WUjxJE39TrrJQLiZgS0=
-Received: from DLEE109.ent.ti.com (dlee109.ent.ti.com [157.170.170.41])
-        by lelv0265.itg.ti.com (8.15.2/8.15.2) with ESMTPS id 06FGeGI4102665
-        (version=TLSv1.2 cipher=AES256-GCM-SHA384 bits=256 verify=FAIL);
-        Wed, 15 Jul 2020 11:40:16 -0500
-Received: from DLEE106.ent.ti.com (157.170.170.36) by DLEE109.ent.ti.com
- (157.170.170.41) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1979.3; Wed, 15
- Jul 2020 11:40:15 -0500
-Received: from fllv0040.itg.ti.com (10.64.41.20) by DLEE106.ent.ti.com
- (157.170.170.36) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1979.3 via
- Frontend Transport; Wed, 15 Jul 2020 11:40:15 -0500
-Received: from uda0868495.fios-router.home (ileax41-snat.itg.ti.com [10.172.224.153])
-        by fllv0040.itg.ti.com (8.15.2/8.15.2) with ESMTP id 06FGeCvZ081717;
-        Wed, 15 Jul 2020 11:40:14 -0500
-From:   Murali Karicheri <m-karicheri2@ti.com>
-To:     <davem@davemloft.net>, <kuba@kernel.org>, <netdev@vger.kernel.org>,
-        <linux-kernel@vger.kernel.org>, <linux-api@vger.kernel.org>,
-        <nsekhar@ti.com>, <grygorii.strashko@ti.com>,
-        <vinicius.gomes@intel.com>
-Subject: [net-next PATCH v2 1/9] net: hsr: fix incorrect lsdu size in the tag of HSR frames for small frames
-Date:   Wed, 15 Jul 2020 12:40:02 -0400
-Message-ID: <20200715164012.1222-2-m-karicheri2@ti.com>
-X-Mailer: git-send-email 2.17.1
-In-Reply-To: <20200715164012.1222-1-m-karicheri2@ti.com>
-References: <20200715164012.1222-1-m-karicheri2@ti.com>
+        id S1725866AbgGORLl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 15 Jul 2020 13:11:41 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48402 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725770AbgGORLk (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 15 Jul 2020 13:11:40 -0400
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B4394C061755;
+        Wed, 15 Jul 2020 10:11:40 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Transfer-Encoding:
+        Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:
+        Sender:Reply-To:Content-ID:Content-Description;
+        bh=/3C71ZT3/i2h5AJy/cEm92ILo4xf+uGspmUX8gIFfeA=; b=MAVaNZA+4wpy8N4a8DV7/Ey1CO
+        GcBUwEULIN7wwZiVhAlrDdIJFQD9VpE3iPyjIIGRbhVdrbIZuUM38ANGXN5h7cYqbCSfuiKOa/nqA
+        fmwc29uOkslNoqgBO46J36qQjj44j+13NO7DbCzSI+GnahliapIMXgNYoHkZ6MM7Jw1O9gwKlyqna
+        TfloKaHI+Mqvj+ASJdKE89s34OEQ0qPFsHatLjeKnZoULJs77ihoOz1LmVhGvxpsEotOUlx/CCC2I
+        X3mBTnliBCoyp9ymhP+9TSGaUc+j+L2wOHjgrvaoMPJmMFy7xGA1TUlTtz3X8DpGZT2lNo5ZWdUGD
+        uLnap6ng==;
+Received: from willy by casper.infradead.org with local (Exim 4.92.3 #3 (Red Hat Linux))
+        id 1jvkwM-00022G-Uq; Wed, 15 Jul 2020 17:11:31 +0000
+Date:   Wed, 15 Jul 2020 18:11:30 +0100
+From:   Matthew Wilcox <willy@infradead.org>
+To:     Andy Lutomirski <luto@amacapital.net>
+Cc:     Stefano Garzarella <sgarzare@redhat.com>,
+        Miklos Szeredi <miklos@szeredi.hu>,
+        Kees Cook <keescook@chromium.org>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        strace-devel@lists.strace.io, io-uring@vger.kernel.org,
+        Pavel Begunkov <asml.silence@gmail.com>,
+        Linux API <linux-api@vger.kernel.org>,
+        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: strace of io_uring events?
+Message-ID: <20200715171130.GG12769@casper.infradead.org>
+References: <CAJfpegu3EwbBFTSJiPhm7eMyTK2MzijLUp1gcboOo3meMF_+Qg@mail.gmail.com>
+ <D9FAB37B-D059-4137-A115-616237D78640@amacapital.net>
 MIME-Version: 1.0
-Content-Type: text/plain
-X-EXCLAIMER-MD-CONFIG: e1e8a2fd-e40a-4ac6-ac9b-f7e9cc9ee180
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <D9FAB37B-D059-4137-A115-616237D78640@amacapital.net>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-For small Ethernet frames with size less than minimum size 66 for HSR
-vs 60 for regular Ethernet frames, hsr driver currently doesn't pad the
-frame to make it minimum size. This results in incorrect LSDU size being
-populated in the HSR tag for these frames. Fix this by padding the frame
-to the minimum size applicable for HSR.
+On Wed, Jul 15, 2020 at 07:35:50AM -0700, Andy Lutomirski wrote:
+> > On Jul 15, 2020, at 4:12 AM, Miklos Szeredi <miklos@szeredi.hu> wrote:
+> > 
+> > <feff>Hi,
 
-Signed-off-by: Murali Karicheri <m-karicheri2@ti.com>
-Reviewed-by: Grygorii Strashko <grygorii.strashko@ti.com>
----
- net/hsr/hsr_forward.c | 3 +++
- 1 file changed, 3 insertions(+)
+feff?  Are we doing WTF-16 in email now?  ;-)
 
-diff --git a/net/hsr/hsr_forward.c b/net/hsr/hsr_forward.c
-index ed13760463de..e42fd356f073 100644
---- a/net/hsr/hsr_forward.c
-+++ b/net/hsr/hsr_forward.c
-@@ -127,6 +127,9 @@ static void hsr_fill_tag(struct sk_buff *skb, struct hsr_frame_info *frame,
- 	int lane_id;
- 	int lsdu_size;
- 
-+	/* pad to minimum packet size which is 60 + 6 (HSR tag) */
-+	skb_put_padto(skb, ETH_ZLEN + HSR_HLEN);
-+
- 	if (port->type == HSR_PT_SLAVE_A)
- 		lane_id = 0;
- 	else
--- 
-2.17.1
+> > 
+> > This thread is to discuss the possibility of stracing requests
+> > submitted through io_uring.   I'm not directly involved in io_uring
+> > development, so I'm posting this out of  interest in using strace on
+> > processes utilizing io_uring.
+> > 
+> > io_uring gives the developer a way to bypass the syscall interface,
+> > which results in loss of information when tracing.  This is a strace
+> > fragment on  "io_uring-cp" from liburing:
+> > 
+> > io_uring_enter(5, 40, 0, 0, NULL, 8)    = 40
+> > io_uring_enter(5, 1, 0, 0, NULL, 8)     = 1
+> > io_uring_enter(5, 1, 0, 0, NULL, 8)     = 1
+> > ...
+> > 
+> > What really happens are read + write requests.  Without that
+> > information the strace output is mostly useless.
+> > 
+> > This loss of information is not new, e.g. calls through the vdso or
+> > futext fast paths are also invisible to strace.  But losing filesystem
+> > I/O calls are a major blow, imo.
+> > 
+> > What do people think?
+> > 
+> > From what I can tell, listing the submitted requests on
+> > io_uring_enter() would not be hard.  Request completion is
+> > asynchronous, however, and may not require  io_uring_enter() syscall.
+> > Am I correct?
+> > 
+> > Is there some existing tracing infrastructure that strace could use to
+> > get async completion events?  Should we be introducing one?
+> > 
+> > 
+> 
+> Let’s add some seccomp folks. We probably also want to be able to run seccomp-like filters on io_uring requests. So maybe io_uring should call into seccomp-and-tracing code for each action.
 
+Adding Stefano since he had a complementary proposal for iouring
+restrictions that weren't exactly seccomp.
