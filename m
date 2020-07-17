@@ -2,140 +2,160 @@ Return-Path: <SRS0=6reB=A4=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.5 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7D0E1C433E3
-	for <linux-api@archiver.kernel.org>; Fri, 17 Jul 2020 14:44:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E2AA4C433E1
+	for <linux-api@archiver.kernel.org>; Fri, 17 Jul 2020 15:15:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 66BDB22B4D
-	for <linux-api@archiver.kernel.org>; Fri, 17 Jul 2020 14:44:29 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C0716208DB
+	for <linux-api@archiver.kernel.org>; Fri, 17 Jul 2020 15:15:18 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=ti.com header.i=@ti.com header.b="ZsaJoTfP"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726210AbgGQOo0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 17 Jul 2020 10:44:26 -0400
-Received: from mx0b-001b2d01.pphosted.com ([148.163.158.5]:22688 "EHLO
-        mx0a-001b2d01.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1726198AbgGQOo0 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 17 Jul 2020 10:44:26 -0400
-Received: from pps.filterd (m0098416.ppops.net [127.0.0.1])
-        by mx0b-001b2d01.pphosted.com (8.16.0.42/8.16.0.42) with SMTP id 06HEUmGP056868;
-        Fri, 17 Jul 2020 10:43:59 -0400
-Received: from ppma02dal.us.ibm.com (a.bd.3ea9.ip4.static.sl-reverse.com [169.62.189.10])
-        by mx0b-001b2d01.pphosted.com with ESMTP id 32b61k6jhm-1
-        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-        Fri, 17 Jul 2020 10:43:58 -0400
-Received: from pps.filterd (ppma02dal.us.ibm.com [127.0.0.1])
-        by ppma02dal.us.ibm.com (8.16.0.42/8.16.0.42) with SMTP id 06HEeAsW001138;
-        Fri, 17 Jul 2020 14:43:58 GMT
-Received: from b03cxnp08025.gho.boulder.ibm.com (b03cxnp08025.gho.boulder.ibm.com [9.17.130.17])
-        by ppma02dal.us.ibm.com with ESMTP id 32752a5vre-1
-        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-        Fri, 17 Jul 2020 14:43:58 +0000
-Received: from b03ledav004.gho.boulder.ibm.com (b03ledav004.gho.boulder.ibm.com [9.17.130.235])
-        by b03cxnp08025.gho.boulder.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 06HEhsdp2425390
-        (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-        Fri, 17 Jul 2020 14:43:55 GMT
-Received: from b03ledav004.gho.boulder.ibm.com (unknown [127.0.0.1])
-        by IMSVA (Postfix) with ESMTP id 878AB78060;
-        Fri, 17 Jul 2020 14:43:56 +0000 (GMT)
-Received: from b03ledav004.gho.boulder.ibm.com (unknown [127.0.0.1])
-        by IMSVA (Postfix) with ESMTP id B9E9D78067;
-        Fri, 17 Jul 2020 14:43:53 +0000 (GMT)
-Received: from [153.66.254.194] (unknown [9.85.141.100])
-        by b03ledav004.gho.boulder.ibm.com (Postfix) with ESMTP;
-        Fri, 17 Jul 2020 14:43:53 +0000 (GMT)
-Message-ID: <1594997031.3344.27.camel@linux.ibm.com>
-Subject: Re: [RFC PATCH v2 0/5] mm: extend memfd with ability to create
- "secret" memory areas
-From:   James Bottomley <jejb@linux.ibm.com>
-Reply-To: jejb@linux.ibm.com
-To:     Pavel Machek <pavel@ucw.cz>, Mike Rapoport <rppt@kernel.org>
-Cc:     linux-kernel@vger.kernel.org, Alan Cox <alan@linux.intel.com>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Christopher Lameter <cl@linux.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Idan Yaniv <idan.yaniv@ibm.com>,
-        "Kirill A. Shutemov" <kirill@shutemov.name>,
-        Matthew Wilcox <willy@infradead.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        "Reshetova, Elena" <elena.reshetova@intel.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Tycho Andersen <tycho@tycho.ws>, linux-api@vger.kernel.org,
-        linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>
-Date:   Fri, 17 Jul 2020 07:43:51 -0700
-In-Reply-To: <20200717083601.GB1027@bug>
-References: <20200706172051.19465-1-rppt@kernel.org>
-         <20200717083601.GB1027@bug>
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.26.6 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-X-TM-AS-GCONF: 00
-X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.235,18.0.687
- definitions=2020-07-17_06:2020-07-17,2020-07-17 signatures=0
-X-Proofpoint-Spam-Details: rule=outbound_spam_definite policy=outbound score=100 lowpriorityscore=0
- spamscore=100 clxscore=1011 bulkscore=0 mlxlogscore=-1000 adultscore=0
- phishscore=0 priorityscore=1501 impostorscore=0 suspectscore=0
- mlxscore=100 malwarescore=0 classifier=spam adjust=0 reason=mlx
- scancount=1 engine=8.12.0-2006250000 definitions=main-2007170103
+        id S1726546AbgGQPPS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 17 Jul 2020 11:15:18 -0400
+Received: from lelv0142.ext.ti.com ([198.47.23.249]:35788 "EHLO
+        lelv0142.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726071AbgGQPPS (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 17 Jul 2020 11:15:18 -0400
+Received: from lelv0265.itg.ti.com ([10.180.67.224])
+        by lelv0142.ext.ti.com (8.15.2/8.15.2) with ESMTP id 06HFFDLc013298;
+        Fri, 17 Jul 2020 10:15:13 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ti.com;
+        s=ti-com-17Q1; t=1594998913;
+        bh=22xCI2rLwzkGNrjRKKsT/ANJsxuoRQPnQp7a0zUc31c=;
+        h=From:To:Subject:Date:In-Reply-To:References;
+        b=ZsaJoTfPWBDhvjqESgPXwTuN0Rk20+scACbMVnTwsHJHx9/792Cyj5IsYqpvIr9BP
+         2B7hFFZFJfx2dnvwml3ccAjiw3vxE673ioxcGS97GTYY5AKROZ+vBQ10y+Xcg0DXH8
+         letPTy5cL5oauUqhUMngRIOUpDWDo4XWYbdadXzk=
+Received: from DLEE114.ent.ti.com (dlee114.ent.ti.com [157.170.170.25])
+        by lelv0265.itg.ti.com (8.15.2/8.15.2) with ESMTPS id 06HFFDVx111735
+        (version=TLSv1.2 cipher=AES256-GCM-SHA384 bits=256 verify=FAIL);
+        Fri, 17 Jul 2020 10:15:13 -0500
+Received: from DLEE103.ent.ti.com (157.170.170.33) by DLEE114.ent.ti.com
+ (157.170.170.25) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1979.3; Fri, 17
+ Jul 2020 10:15:13 -0500
+Received: from lelv0327.itg.ti.com (10.180.67.183) by DLEE103.ent.ti.com
+ (157.170.170.33) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1979.3 via
+ Frontend Transport; Fri, 17 Jul 2020 10:15:12 -0500
+Received: from uda0868495.fios-router.home (ileax41-snat.itg.ti.com [10.172.224.153])
+        by lelv0327.itg.ti.com (8.15.2/8.15.2) with ESMTP id 06HFFBme010522;
+        Fri, 17 Jul 2020 10:15:12 -0500
+From:   Murali Karicheri <m-karicheri2@ti.com>
+To:     <davem@davemloft.net>, <kuba@kernel.org>, <netdev@vger.kernel.org>,
+        <linux-kernel@vger.kernel.org>, <linux-api@vger.kernel.org>,
+        <nsekhar@ti.com>, <grygorii.strashko@ti.com>,
+        <vinicius.gomes@intel.com>
+Subject: [net-next PATCH v3 2/7] net: hsr: introduce common code for skb initialization
+Date:   Fri, 17 Jul 2020 11:15:06 -0400
+Message-ID: <20200717151511.329-3-m-karicheri2@ti.com>
+X-Mailer: git-send-email 2.17.1
+In-Reply-To: <20200717151511.329-1-m-karicheri2@ti.com>
+References: <20200717151511.329-1-m-karicheri2@ti.com>
+MIME-Version: 1.0
+Content-Type: text/plain
+X-EXCLAIMER-MD-CONFIG: e1e8a2fd-e40a-4ac6-ac9b-f7e9cc9ee180
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, 2020-07-17 at 10:36 +0200, Pavel Machek wrote:
-> Hi!
-> 
-> > This is a second version of "secret" mappings implementation backed
-> > by a file descriptor. 
-> > 
-> > The file descriptor is created using memfd_create() syscall with a
-> > new MFD_SECRET flag. The file descriptor should be configured using
-> > ioctl() to define the desired protection and then mmap() of the fd
-> > will create a "secret" memory mapping. The pages in that mapping
-> > will be marked as not present in the direct map and will have
-> > desired protection bits set in the user page table. For instance,
-> > current implementation allows uncached mappings.
-> > 
-> > Hiding secret memory mappings behind an anonymous file allows
-> > (ab)use of the page cache for tracking pages allocated for the
-> > "secret" mappings as well as using address_space_operations for
-> > e.g. page migration callbacks.
-> > 
-> > The anonymous file may be also used implicitly, like hugetlb files,
-> > to implement mmap(MAP_SECRET) and use the secret memory areas with
-> > "native" mm ABIs.
-> 
-> I believe unix userspace normally requires mappings to be... well...
-> protected from other users. How is this "secret" thing different? How
-> do you explain the difference to userland programmers?
+As a preparatory patch to introduce PRP protocol support in the
+driver, refactor the skb init code to a separate function.
 
-That's true in the normal case, but for the container cloud the threat
-model we're considering is a hostile other tenant trying to trick the
-kernel into giving them access to your mappings.  In the FOSDEM talk we
-did about this:
+Signed-off-by: Murali Karicheri <m-karicheri2@ti.com>
+---
+ net/hsr/hsr_device.c | 41 ++++++++++++++++++++++++++++-------------
+ 1 file changed, 28 insertions(+), 13 deletions(-)
 
-https://fosdem.org/2020/schedule/event/kernel_address_space_isolation/
-
-We demonstrated the case where the hostile tenant obtained host root
-and then tried to get access via ptrace.  The point being that pushing
-the pages out of the direct map means that even root can't get access
-to the secret by any means the OS provides.  If you want to play with
-this yourself, we have a userspace library:
-
-https://git.kernel.org/pub/scm/linux/kernel/git/jejb/secret-memory-preloader.git/
-
-It does two things: the first is act as a preloader for openssl to
-redirect all the OPENSSL_malloc calls to secret memory meaning any
-secret keys get automatically protected this way and the other thing it
-does is expose the API to the user who needs it.  I anticipate that a
-lot of the use cases would be like the openssl one: many toolkits that
-deal with secret keys already have special handling for the memory to
-try to give them greater protection, so this would simply be pluggable
-into the toolkits without any need for user application modification.
-
-James
+diff --git a/net/hsr/hsr_device.c b/net/hsr/hsr_device.c
+index 40ac45123a62..600b9da4a44e 100644
+--- a/net/hsr/hsr_device.c
++++ b/net/hsr/hsr_device.c
+@@ -230,15 +230,11 @@ static const struct header_ops hsr_header_ops = {
+ 	.parse	 = eth_header_parse,
+ };
+ 
+-static void send_hsr_supervision_frame(struct hsr_port *master,
+-				       u8 type, u8 hsr_ver)
++static struct sk_buff *hsr_init_skb(struct hsr_port *master, u8 hsr_ver)
+ {
++	struct hsr_priv *hsr = master->hsr;
+ 	struct sk_buff *skb;
+ 	int hlen, tlen;
+-	struct hsr_tag *hsr_tag;
+-	struct hsr_sup_tag *hsr_stag;
+-	struct hsr_sup_payload *hsr_sp;
+-	unsigned long irqflags;
+ 
+ 	hlen = LL_RESERVED_SPACE(master->dev);
+ 	tlen = master->dev->needed_tailroom;
+@@ -247,22 +243,44 @@ static void send_hsr_supervision_frame(struct hsr_port *master,
+ 			    sizeof(struct hsr_sup_payload) + hlen + tlen);
+ 
+ 	if (!skb)
+-		return;
++		return skb;
+ 
+ 	skb_reserve(skb, hlen);
+-
+ 	skb->dev = master->dev;
+ 	skb->protocol = htons(hsr_ver ? ETH_P_HSR : ETH_P_PRP);
+ 	skb->priority = TC_PRIO_CONTROL;
+ 
+ 	if (dev_hard_header(skb, skb->dev, (hsr_ver ? ETH_P_HSR : ETH_P_PRP),
+-			    master->hsr->sup_multicast_addr,
++			    hsr->sup_multicast_addr,
+ 			    skb->dev->dev_addr, skb->len) <= 0)
+ 		goto out;
++
+ 	skb_reset_mac_header(skb);
+ 	skb_reset_network_header(skb);
+ 	skb_reset_transport_header(skb);
+ 
++	return skb;
++out:
++	kfree_skb(skb);
++
++	return NULL;
++}
++
++static void send_hsr_supervision_frame(struct hsr_port *master,
++				       u8 type, u8 hsr_ver)
++{
++	struct sk_buff *skb;
++	struct hsr_tag *hsr_tag;
++	struct hsr_sup_tag *hsr_stag;
++	struct hsr_sup_payload *hsr_sp;
++	unsigned long irqflags;
++
++	skb = hsr_init_skb(master, hsr_ver);
++	if (!skb) {
++		WARN_ONCE(1, "HSR: Could not send supervision frame\n");
++		return;
++	}
++
+ 	if (hsr_ver > 0) {
+ 		hsr_tag = skb_put(skb, sizeof(struct hsr_tag));
+ 		hsr_tag->encap_proto = htons(ETH_P_PRP);
+@@ -299,11 +317,8 @@ static void send_hsr_supervision_frame(struct hsr_port *master,
+ 		return;
+ 
+ 	hsr_forward_skb(skb, master);
+-	return;
+ 
+-out:
+-	WARN_ONCE(1, "HSR: Could not send supervision frame\n");
+-	kfree_skb(skb);
++	return;
+ }
+ 
+ /* Announce (supervision frame) timer function
+-- 
+2.17.1
 
