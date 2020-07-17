@@ -2,82 +2,92 @@ Return-Path: <SRS0=6reB=A4=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.5 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 00586C433E4
-	for <linux-api@archiver.kernel.org>; Fri, 17 Jul 2020 08:36:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C6902C433E6
+	for <linux-api@archiver.kernel.org>; Fri, 17 Jul 2020 10:45:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CF70320578
-	for <linux-api@archiver.kernel.org>; Fri, 17 Jul 2020 08:36:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 980DA20672
+	for <linux-api@archiver.kernel.org>; Fri, 17 Jul 2020 10:45:31 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="R1v6iycf"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726071AbgGQIgH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 17 Jul 2020 04:36:07 -0400
-Received: from jabberwock.ucw.cz ([46.255.230.98]:56568 "EHLO
-        jabberwock.ucw.cz" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725864AbgGQIgF (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 17 Jul 2020 04:36:05 -0400
-Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
-        id D8FF61C0BDF; Fri, 17 Jul 2020 10:36:02 +0200 (CEST)
-Date:   Fri, 17 Jul 2020 10:36:02 +0200
-From:   Pavel Machek <pavel@ucw.cz>
-To:     Mike Rapoport <rppt@kernel.org>
-Cc:     linux-kernel@vger.kernel.org, Alan Cox <alan@linux.intel.com>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Christopher Lameter <cl@linux.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Idan Yaniv <idan.yaniv@ibm.com>,
-        James Bottomley <jejb@linux.ibm.com>,
-        "Kirill A. Shutemov" <kirill@shutemov.name>,
-        Matthew Wilcox <willy@infradead.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        "Reshetova, Elena" <elena.reshetova@intel.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Tycho Andersen <tycho@tycho.ws>, linux-api@vger.kernel.org,
-        linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>
-Subject: Re: [RFC PATCH v2 0/5] mm: extend memfd with ability to create
- "secret" memory areas
-Message-ID: <20200717083601.GB1027@bug>
-References: <20200706172051.19465-1-rppt@kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20200706172051.19465-1-rppt@kernel.org>
-User-Agent: Mutt/1.5.23 (2014-03-12)
+        id S1726201AbgGQKpb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 17 Jul 2020 06:45:31 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37712 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725912AbgGQKpa (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 17 Jul 2020 06:45:30 -0400
+Received: from mail-pl1-x644.google.com (mail-pl1-x644.google.com [IPv6:2607:f8b0:4864:20::644])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 47178C061755
+        for <linux-api@vger.kernel.org>; Fri, 17 Jul 2020 03:45:30 -0700 (PDT)
+Received: by mail-pl1-x644.google.com with SMTP id b9so5287440plx.6
+        for <linux-api@vger.kernel.org>; Fri, 17 Jul 2020 03:45:30 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=from:to:cc:subject:date:message-id;
+        bh=IQS3+7tVa82GntLXDjGZyy3vSgsIExx3PjuBUx7YRNM=;
+        b=R1v6iycfuan0KkKpAu+ZcuDemPbFfPC0nRwrn3/UnIb/iO6wDHoDrGNNNOat42KBSM
+         dst1lbOHUCTdwjPqhlG9D0pXJDnQ2nftPrPm7X33+5pyd9Mhdwnzk2OPN3YHFUw3x4kR
+         OUONtVbDwgcN6dGBQwAuJ8NNwEq9L6NQ7DX4asMab9kSUjlwEbiDmOyGPLPhZzZ8/y5s
+         UHwvNt3M46vHZ2lgSIXfiGOYYmk243WE0VwuOaOGELRX8apKibJq1brk5rp8YESCHFFV
+         zdP0c4KmvPDRl21Q8IrMBDw5MvxoVPnJ0mNwV1xFDlpMNOpm6wJNV+YPAElJp3/hG105
+         B0sQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id;
+        bh=IQS3+7tVa82GntLXDjGZyy3vSgsIExx3PjuBUx7YRNM=;
+        b=Nq07NUGjBJurasMN6XtB/DhbXwjUtlWDZOjS88E2Oyr6pWxMWrWIDC6yLMDZQrxzqD
+         eBrT/VOwbYzRiT5XS5+vnEyf96moSHV40Oyk8JQQ5do87zzRZ6xAW1M/LE3bsdXlj1B4
+         h/F4wQRpj2ApeTXA23uJe8vVaBxOn01oP1RN+3PqJbZ3rhXJQR/2T6IXlRQ+j7CqPlcr
+         CSLz9Uva2mvT3Fi1GwkqoSoTFXhDkPVvoYBnMKuliW4JuuZgHrwdjyCbm1CVdKc7STfZ
+         VnxmuWbEGNYRpu0SYTe/fhjgYfTo0GcVvrXCX2XKx5BYupxYilDvpeRBr6O7ovhUdh7u
+         +CLw==
+X-Gm-Message-State: AOAM532LsEv00isSH6Cw2TVuXq3vBZcnyHyXnhnA/4+TCjuqAw4fyeQo
+        U4yJ08RIDRf5rdfsBz+J8Qo=
+X-Google-Smtp-Source: ABdhPJwE75ry8ope1xHqVfP41wDD7OvNdd+C/TJJht8LSp2+iSZN1iAzw+rwvXMQjmUNL+3rII8+7Q==
+X-Received: by 2002:a17:90a:ba86:: with SMTP id t6mr9670056pjr.10.1594982729806;
+        Fri, 17 Jul 2020 03:45:29 -0700 (PDT)
+Received: from linux-kernel-source.asia-southeast1-b.c.hardy-notch-265411.internal (3.136.240.35.bc.googleusercontent.com. [35.240.136.3])
+        by smtp.gmail.com with ESMTPSA id h194sm7452970pfe.201.2020.07.17.03.45.28
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 17 Jul 2020 03:45:29 -0700 (PDT)
+From:   Bui Quang Minh <minhquangbui99@gmail.com>
+To:     minhquangbui99@gmail.com, trivial@kernel.org
+Cc:     linux-api@vger.kernel.org
+Subject: [PATCH] syscall.h: fix comment
+Date:   Fri, 17 Jul 2020 10:45:17 +0000
+Message-Id: <20200717104517.2275-1-minhquangbui99@gmail.com>
+X-Mailer: git-send-email 2.17.1
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi!
+The comment shows wrong file name that contains the syscalls' definition
 
-> This is a second version of "secret" mappings implementation backed by a
-> file descriptor. 
-> 
-> The file descriptor is created using memfd_create() syscall with a new
-> MFD_SECRET flag. The file descriptor should be configured using ioctl() to
-> define the desired protection and then mmap() of the fd will create a
-> "secret" memory mapping. The pages in that mapping will be marked as not
-> present in the direct map and will have desired protection bits set in the
-> user page table. For instance, current implementation allows uncached
-> mappings.
-> 
-> Hiding secret memory mappings behind an anonymous file allows (ab)use of
-> the page cache for tracking pages allocated for the "secret" mappings as
-> well as using address_space_operations for e.g. page migration callbacks.
-> 
-> The anonymous file may be also used implicitly, like hugetlb files, to
-> implement mmap(MAP_SECRET) and use the secret memory areas with "native" mm
-> ABIs.
+Signed-off-by: Bui Quang Minh <minhquangbui99@gmail.com>
+---
+ include/linux/syscalls.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-I believe unix userspace normally requires mappings to be... well... protected from
-other users. How is this "secret" thing different? How do you explain the difference
-to userland programmers?
-
-Best regards,
-									Pavel
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 1815065d52f3..a3d053f715e2 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -741,7 +741,7 @@ asmlinkage long sys_settimeofday(struct __kernel_old_timeval __user *tv,
+ asmlinkage long sys_adjtimex(struct __kernel_timex __user *txc_p);
+ asmlinkage long sys_adjtimex_time32(struct old_timex32 __user *txc_p);
+ 
+-/* kernel/timer.c */
++/* kernel/sys.c */
+ asmlinkage long sys_getpid(void);
+ asmlinkage long sys_getppid(void);
+ asmlinkage long sys_getuid(void);
 -- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+2.17.1
+
