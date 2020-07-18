@@ -8,75 +8,77 @@ X-Spam-Status: No, score=-13.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 41E42C433DF
-	for <linux-api@archiver.kernel.org>; Sat, 18 Jul 2020 15:10:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 25B70C433DF
+	for <linux-api@archiver.kernel.org>; Sat, 18 Jul 2020 15:23:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0CF542067D
-	for <linux-api@archiver.kernel.org>; Sat, 18 Jul 2020 15:10:04 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E74FF2080D
+	for <linux-api@archiver.kernel.org>; Sat, 18 Jul 2020 15:23:48 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="caY+Il4u"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QbL0M6X6"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726959AbgGRPKD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 18 Jul 2020 11:10:03 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45172 "EHLO
+        id S1726551AbgGRPXs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 18 Jul 2020 11:23:48 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47290 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726344AbgGRPKC (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 18 Jul 2020 11:10:02 -0400
-Received: from mail-pj1-x1029.google.com (mail-pj1-x1029.google.com [IPv6:2607:f8b0:4864:20::1029])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A6D91C0619D2
-        for <linux-api@vger.kernel.org>; Sat, 18 Jul 2020 08:10:02 -0700 (PDT)
-Received: by mail-pj1-x1029.google.com with SMTP id b92so7754906pjc.4
-        for <linux-api@vger.kernel.org>; Sat, 18 Jul 2020 08:10:02 -0700 (PDT)
+        with ESMTP id S1726155AbgGRPXs (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 18 Jul 2020 11:23:48 -0400
+Received: from mail-pg1-x531.google.com (mail-pg1-x531.google.com [IPv6:2607:f8b0:4864:20::531])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 34554C0619D2
+        for <linux-api@vger.kernel.org>; Sat, 18 Jul 2020 08:23:48 -0700 (PDT)
+Received: by mail-pg1-x531.google.com with SMTP id l63so8131811pge.12
+        for <linux-api@vger.kernel.org>; Sat, 18 Jul 2020 08:23:48 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=ihnNbhesuY2Hu1gxT5eoEpf7MyBeE8kUb/cli4NE2Ps=;
-        b=caY+Il4uDucTo/9s5bhdS+VgJFu55uTnvOJZ8PPrlZouW1R8e41Fyy3MZ62JUELy5z
-         QRP/8iVDVSppkyJ8776rgSWCRkFwi7jwfJelmBYA9VrW67pQfoMVAJpsbGn7WQAkJGBU
-         OocrnyD6CFznuqc3hO2FFPEC6ncFzF9otffPbohU3BGoX6oJFEo6C+q0JfTI88o8gVaG
-         rkFSBSQGo27CTu6HvgxVZ0eToaDKv5bKYwVOSZSwUnKGaSN7H8ymqhpqlxeT+Erl8S16
-         0EvrRjv/4ZGAPDDNTmNpE2FInuRezzggMVZOO2VAljEVrjt/f2ggV7Z9DvjC1uR3JzAx
-         R+fg==
+        bh=U+ONhxBTblwPBJIwiwhiRVXmV2h7O7tyLU69EhakOJc=;
+        b=QbL0M6X69D0IPDSkwVfjt5Rzffv1SGnKub0O9Os0P5jtz94+7SIpzjFSRo38JVsHS9
+         Z3uJ7NL/Vd1RovYiFQUuQkS7fPi2RkPwYjTPabcYMYTQE3CIimYDFp0H8AYc2G9CYcIP
+         1bGmOR78vwweZCwl5MChggqvO+3XbJPPdOqEx3Fx7UWMPEiwfy2gpvZSVet9anGiMoZX
+         gMQ916bF/nGrgMCFtIcvOnnFc5UaENOmegKfSvSa4gemcPbxi6G6ffJZZn6PpEpx3qSX
+         hm4sVynIMPLh2E9h1yoZTSp3gzZFe0W1LVMNhIQnZsIlpuJOpCU9F3q659tw6oku8fyO
+         oM1g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references;
-        bh=ihnNbhesuY2Hu1gxT5eoEpf7MyBeE8kUb/cli4NE2Ps=;
-        b=izZMOCzSj9yVwzL+hQVMN8/eWtgzIZidAFscknTgJrCxGNk296rkZHRwZUbeewTTsm
-         bWKkD97TPe4rFPM8aQNHnmec7RPEiIjhEZDmh7vVdDLWfwAQjRqGWzyHYXV2TtkeiP9Z
-         cT2FzReMVtsJX3uUOYdZGVHeEoBlqV3HI6XEhsdAejH5N23LB499m1WD1VzXs60y5m+Y
-         QlvItGDP3D9vd/b4YBLXIik8aMcjuBgA8y0h6V8rVkJPJ5e/vf24mnEi9KErW4u9PIp+
-         UjBiyLbHM7P8Oy/qKZfP66t461GqZlhve65PUJ3snHOBma11Ys/N5fYFJJpAPPvGDAVV
-         A3eA==
-X-Gm-Message-State: AOAM530ve0l1s31JDE3ryVv2gfru2DXkb604u7azhNvnoe4ZKre3GuY4
-        uu6xbZOPXs61BT32C2G1rVI=
-X-Google-Smtp-Source: ABdhPJzihwrpjTBctO+Y/+N7v6KBetjjUMEb9HVUkf/p72w8KOBkDfUlkh53F/mep0CaDmcP5U2dEA==
-X-Received: by 2002:a17:90a:7487:: with SMTP id p7mr14918675pjk.233.1595085001310;
-        Sat, 18 Jul 2020 08:10:01 -0700 (PDT)
+        bh=U+ONhxBTblwPBJIwiwhiRVXmV2h7O7tyLU69EhakOJc=;
+        b=iFmWhPGdcXpMjQdRphWUNFlc58yTqcLkVIlohqmes9uyPQANMgmoPT8Gjg3F2vw+zW
+         Cj3Ttxkmxjpj8Igi8mW4jgvfajzMbsv7HHuf2AM2eLQD+MBL0IqANVX8Z7JGyYq+99Cb
+         6VL5Qi2qs406aZiSKohg7OPK6ihJ3yXIsFHpoDn2qDQwDyqhKiOBu1WmXIYTwqGVFDVe
+         BwgFhwoUehN+G78MD1rjTAgTkzBa5lhnVxLcP8PGjwq0uUPqRXt/deZp1QAVSkh3iCIx
+         ABVkKOzuCMOJIgBWYFO+Yi+ruQb4PykIkCjcI1XOokU7cung4XHR8mengd85flUodyo0
+         PaUw==
+X-Gm-Message-State: AOAM533gPbEce9BwpphQrbIiVj6508nOOQ2E0vV2ch28RzbqxmR3sqq2
+        pjDjoxu1Lj5yts03qz3ORXU=
+X-Google-Smtp-Source: ABdhPJzYKCzZ5HwW059dHnLR5pVMbdoq6UzVxemAWbbg+RQyxymC8o7R5iytbAN4oGqImaJHaxxc4g==
+X-Received: by 2002:aa7:9117:: with SMTP id 23mr12354011pfh.264.1595085827568;
+        Sat, 18 Jul 2020 08:23:47 -0700 (PDT)
 Received: from linux-kernel-source.asia-southeast1-b.c.hardy-notch-265411.internal (3.136.240.35.bc.googleusercontent.com. [35.240.136.3])
-        by smtp.gmail.com with ESMTPSA id b22sm5577777pju.26.2020.07.18.08.09.59
+        by smtp.gmail.com with ESMTPSA id h15sm11067808pfo.192.2020.07.18.08.23.45
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 18 Jul 2020 08:10:00 -0700 (PDT)
+        Sat, 18 Jul 2020 08:23:47 -0700 (PDT)
 From:   Bui Quang Minh <minhquangbui99@gmail.com>
 To:     tglx@linutronix.de, trivial@kernel.org
 Cc:     linux-api@vger.kernel.org,
         Bui Quang Minh <minhquangbui99@gmail.com>
 Subject: [PATCH] syscalls.h: Remove all file references in comments
-Date:   Sat, 18 Jul 2020 15:08:47 +0000
-Message-Id: <20200718150847.4052-2-minhquangbui99@gmail.com>
+Date:   Sat, 18 Jul 2020 15:23:22 +0000
+Message-Id: <20200718152322.4429-2-minhquangbui99@gmail.com>
 X-Mailer: git-send-email 2.17.1
-In-Reply-To: <878sfhp7ru.fsf@nanos.tec.linutronix.de>
-References: <878sfhp7ru.fsf@nanos.tec.linutronix.de>
+In-Reply-To: <20200718152322.4429-1-minhquangbui99@gmail.com>
+References: <20200718150847.4052-2-minhquangbui99@gmail.com>
+ <20200718152322.4429-1-minhquangbui99@gmail.com>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
 File references may be incorrect when things change.
-So remove them completely.wq
+So remove them completely.
 
 Signed-off-by: Bui Quang Minh <minhquangbui99@gmail.com>
 ---
+AAAAA
  include/linux/syscalls.h | 134 ++++-----------------------------------
  1 file changed, 14 insertions(+), 120 deletions(-)
 
