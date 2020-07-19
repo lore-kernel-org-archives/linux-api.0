@@ -6,70 +6,82 @@ X-Spam-Status: No, score=-4.0 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 58A70C433E0
-	for <linux-api@archiver.kernel.org>; Sun, 19 Jul 2020 17:55:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5AAF6C433DF
+	for <linux-api@archiver.kernel.org>; Sun, 19 Jul 2020 18:13:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3906A208DB
-	for <linux-api@archiver.kernel.org>; Sun, 19 Jul 2020 17:55:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 45B7821744
+	for <linux-api@archiver.kernel.org>; Sun, 19 Jul 2020 18:13:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726009AbgGSRzN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 19 Jul 2020 13:55:13 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:38660 "EHLO
-        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725783AbgGSRzN (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 19 Jul 2020 13:55:13 -0400
-Received: from ip5f5af08c.dynamic.kabel-deutschland.de ([95.90.240.140] helo=wittgenstein)
-        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.86_2)
-        (envelope-from <christian.brauner@ubuntu.com>)
-        id 1jxDWl-0001P4-0X; Sun, 19 Jul 2020 17:55:07 +0000
-Date:   Sun, 19 Jul 2020 19:55:06 +0200
-From:   Christian Brauner <christian.brauner@ubuntu.com>
-To:     Al Viro <viro@zeniv.linux.org.uk>
-Cc:     David Howells <dhowells@redhat.com>, linux-fsdevel@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        Michael Kerrisk <mtk.manpages@gmail.com>
-Subject: Re: [PATCH 0/4] fs: add mount_setattr()
-Message-ID: <20200719175506.fwxsb6r6pfrdhvxb@wittgenstein>
-References: <20200714161415.3886463-1-christian.brauner@ubuntu.com>
- <20200719171054.GK2786714@ZenIV.linux.org.uk>
+        id S1726301AbgGSSND (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 19 Jul 2020 14:13:03 -0400
+Received: from out02.mta.xmission.com ([166.70.13.232]:52428 "EHLO
+        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726009AbgGSSND (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 19 Jul 2020 14:13:03 -0400
+Received: from in01.mta.xmission.com ([166.70.13.51])
+        by out02.mta.xmission.com with esmtps (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.90_1)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1jxDo4-0006mh-Ph; Sun, 19 Jul 2020 12:13:00 -0600
+Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
+        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
+        (Exim 4.87)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1jxDo3-0004e5-LR; Sun, 19 Jul 2020 12:13:00 -0600
+From:   ebiederm@xmission.com (Eric W. Biederman)
+To:     David Howells <dhowells@redhat.com>
+Cc:     Stephen Smalley <stephen.smalley.work@gmail.com>,
+        Casey Schaufler <casey@schaufler-ca.com>,
+        keyrings@vger.kernel.org,
+        Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>,
+        Paul Moore <paul@paul-moore.com>, selinux@vger.kernel.org,
+        jlayton@redhat.com, christian@brauner.io,
+        linux-afs@lists.infradead.org, linux-nfs@vger.kernel.org,
+        linux-cifs@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org,
+        linux-security-module@vger.kernel.org,
+        linux-kernel@vger.kernel.org,
+        containers@lists.linux-foundation.org,
+        Linus Torvalds <torvalds@linux-foundation.org>
+References: <159493167778.3249370.8145886688150701997.stgit@warthog.procyon.org.uk>
+Date:   Sun, 19 Jul 2020 13:10:04 -0500
+In-Reply-To: <159493167778.3249370.8145886688150701997.stgit@warthog.procyon.org.uk>
+        (David Howells's message of "Thu, 16 Jul 2020 21:34:37 +0100")
+Message-ID: <87tuy3nzpf.fsf@x220.int.ebiederm.org>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20200719171054.GK2786714@ZenIV.linux.org.uk>
+Content-Type: text/plain
+X-XM-SPF: eid=1jxDo3-0004e5-LR;;;mid=<87tuy3nzpf.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX18n0FB3g8mviWS9DVa7xa6vqYpzduK73Jk=
+X-SA-Exim-Connect-IP: 68.227.160.95
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: Re: [RFC PATCH 0/5] keys: Security changes, ACLs and Container keyring
+X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
+X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Sun, Jul 19, 2020 at 06:10:54PM +0100, Al Viro wrote:
-> On Tue, Jul 14, 2020 at 06:14:11PM +0200, Christian Brauner wrote:
-> 
-> > mount_setattr() can be expected to grow over time and is designed with
-> > extensibility in mind. It follows the extensible syscall pattern we have
-> > used with other syscalls such as openat2(), clone3(),
-> > sched_{set,get}attr(), and others.
-> 
-> I.e. it's a likely crap insertion vector; any patches around that thing
-> will require the same level of review as addition of a brand new syscall.
+David Howells <dhowells@redhat.com> writes:
 
-Which is just how we should and hopefully treat any meaningful
-extension, yes. Otherwise let's just never add a flag argument to any
-syscall and only have dup()- and accept()-like syscalls.
+> Here are some patches to provide some security changes and some container
+> support:
 
-> And they will be harder to spot - consider the likely subjects for such
-> patches and compare to open addition of a new syscall...
+Nacked-by: "Eric W. Biederman" <ebiederm@xmission.com>
 
-In the new revision I have dropped the atime argument because David
-already plumbed setting atime into fsmount() via flags and making
-userspace jump through more hoops by adding more constants seems
-pointless. So the additional arguments can be moved up because we're
-below the 6 syscall args limit.
+There remain unfixed security issues in the new mount api.   Those need
+to get fixed before it is even worth anyones time reviewing new code.
 
-Though I really want to stress that while I see the worry it is less a
-technial argument but one for our review process where we should treat
-extensions to syscalls as strict as syscall additions. Which yes, very
-much so.
+Those issues came up in the review.  I successfully demonstrated how to
+address the security issues in the new mount api before the code was
+merged.  Yet the code was merged with the security issues present,
+and I have not seem those issues addressed.
 
-Thanks!
-Christian
+So far I have had to rewrite two filesystems because of bugs in the
+mount API.
+
+Enough is enough.  Let's get the what has already been merged sorted
+out before we had more.
+
+Eric
