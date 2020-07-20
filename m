@@ -7,37 +7,37 @@ X-Spam-Status: No, score=-13.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E2F23C433E4
-	for <linux-api@archiver.kernel.org>; Mon, 20 Jul 2020 09:25:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 78656C433F4
+	for <linux-api@archiver.kernel.org>; Mon, 20 Jul 2020 09:25:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C2D0B20684
-	for <linux-api@archiver.kernel.org>; Mon, 20 Jul 2020 09:25:20 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5871121775
+	for <linux-api@archiver.kernel.org>; Mon, 20 Jul 2020 09:25:28 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1595237120;
-	bh=hdVX0IsUo7eSkaqkoaF98FlrWWgQtbf1bZ3UXG9vp9E=;
+	s=default; t=1595237128;
+	bh=vyyX1LP4325hfnYgliYCjSjLjNxzM/CYe+v7FBLTqDc=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
-	b=oh2f2JvuaOI0SV0JhqcqkxIM6Fw+nx3cFSUwxQOV99iSvdH/u+aPxx6kfX9JpKS4K
-	 awZr299X/ZOVAFgKJc3ehAB2RbtriwxCMObjXLcYSEBruqnTPbzwj6v9OBglaf4nUn
-	 zVeyQZdjfOvd7N/qymXUe876r4c2VLTxmA2RU67I=
+	b=1e4ErKK4nZ52P1LFnku+Do/1kT3UtX3IyeG4mUDryj+1tOkLn/BCisYXUaz0580p8
+	 YYkSMXuOxd6npJtGvv6Aoph81E61ItYy+UqsiXJUVoln3RLAqQpYcx+TI2Bki1D39Q
+	 vX/bTOfnWwyqS1BZDyzF8Ug3D8XXJvxUw2/a7Kmo=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727912AbgGTJZU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 20 Jul 2020 05:25:20 -0400
-Received: from mail.kernel.org ([198.145.29.99]:38680 "EHLO mail.kernel.org"
+        id S1728264AbgGTJZ2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 20 Jul 2020 05:25:28 -0400
+Received: from mail.kernel.org ([198.145.29.99]:38964 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726520AbgGTJZT (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 20 Jul 2020 05:25:19 -0400
+        id S1727769AbgGTJZ1 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 20 Jul 2020 05:25:27 -0400
 Received: from aquarius.haifa.ibm.com (nesher1.haifa.il.ibm.com [195.110.40.7])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 3425921775;
-        Mon, 20 Jul 2020 09:25:10 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 738D922482;
+        Mon, 20 Jul 2020 09:25:19 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1595237118;
-        bh=hdVX0IsUo7eSkaqkoaF98FlrWWgQtbf1bZ3UXG9vp9E=;
+        s=default; t=1595237127;
+        bh=vyyX1LP4325hfnYgliYCjSjLjNxzM/CYe+v7FBLTqDc=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=aAapEE0p74NATUUVPXGp3NVqZWe0Odu+heF2bzFKM4D5o65DTfBQlPgNDp8AOF/IR
-         cb4dsV5gr8z+qi4NQe4F+mjwYCMNHlz8tjtqiAAt2PfiU9HMWzI91Vn3jmtmU+kVse
-         wSTYl6Q7+f/fP/UqEgEVOF0otXZadeHcIHitULkU=
+        b=g5qTGQIOWj1V9NU4yK00jz5UQP5Nt5v+OLzEYnJ2fYYF2s2RpuPHOjWCkAadxsvBt
+         KfGvj5cZa5KE3IDq7FgOMY35cboLHnI1EYroJXHTtzwIE4rD8KANUXvfFp/YUVmUzZ
+         gfaX0xMnS7xqZREdic3XBeaF92Yg2TjKzwFszmFw=
 From:   Mike Rapoport <rppt@kernel.org>
 To:     linux-kernel@vger.kernel.org
 Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
@@ -66,9 +66,9 @@ Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
         linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
         linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
         x86@kernel.org
-Subject: [PATCH 1/6] mm: add definition of PMD_PAGE_ORDER
-Date:   Mon, 20 Jul 2020 12:24:30 +0300
-Message-Id: <20200720092435.17469-2-rppt@kernel.org>
+Subject: [PATCH 2/6] mmap: make mlock_future_check() global
+Date:   Mon, 20 Jul 2020 12:24:31 +0300
+Message-Id: <20200720092435.17469-3-rppt@kernel.org>
 X-Mailer: git-send-email 2.26.2
 In-Reply-To: <20200720092435.17469-1-rppt@kernel.org>
 References: <20200720092435.17469-1-rppt@kernel.org>
@@ -81,83 +81,44 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Mike Rapoport <rppt@linux.ibm.com>
 
-The definition of PMD_PAGE_ORDER denoting the number of base pages in the
-second-level leaf page is already used by DAX and maybe handy in other
-cases as well.
-
-Several architectures already have definition of PMD_ORDER as the size of
-second level page table, so to avoid conflict with these definitions use
-PMD_PAGE_ORDER name and update DAX respectively.
+It will be used by the upcoming secret memory implementation.
 
 Signed-off-by: Mike Rapoport <rppt@linux.ibm.com>
 ---
- fs/dax.c                | 10 +++++-----
- include/linux/pgtable.h |  3 +++
- 2 files changed, 8 insertions(+), 5 deletions(-)
+ mm/internal.h | 3 +++
+ mm/mmap.c     | 5 ++---
+ 2 files changed, 5 insertions(+), 3 deletions(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index 11b16729b86f..b91d8c8dda45 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -50,7 +50,7 @@ static inline unsigned int pe_order(enum page_entry_size pe_size)
- #define PG_PMD_NR	(PMD_SIZE >> PAGE_SHIFT)
+diff --git a/mm/internal.h b/mm/internal.h
+index 9886db20d94f..af0a92f8f6bc 100644
+--- a/mm/internal.h
++++ b/mm/internal.h
+@@ -349,6 +349,9 @@ static inline void munlock_vma_pages_all(struct vm_area_struct *vma)
+ extern void mlock_vma_page(struct page *page);
+ extern unsigned int munlock_vma_page(struct page *page);
  
- /* The order of a PMD entry */
--#define PMD_ORDER	(PMD_SHIFT - PAGE_SHIFT)
-+#define PMD_PAGE_ORDER	(PMD_SHIFT - PAGE_SHIFT)
- 
- static wait_queue_head_t wait_table[DAX_WAIT_TABLE_ENTRIES];
- 
-@@ -98,7 +98,7 @@ static bool dax_is_locked(void *entry)
- static unsigned int dax_entry_order(void *entry)
- {
- 	if (xa_to_value(entry) & DAX_PMD)
--		return PMD_ORDER;
-+		return PMD_PAGE_ORDER;
- 	return 0;
- }
- 
-@@ -1456,7 +1456,7 @@ static vm_fault_t dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
- {
- 	struct vm_area_struct *vma = vmf->vma;
- 	struct address_space *mapping = vma->vm_file->f_mapping;
--	XA_STATE_ORDER(xas, &mapping->i_pages, vmf->pgoff, PMD_ORDER);
-+	XA_STATE_ORDER(xas, &mapping->i_pages, vmf->pgoff, PMD_PAGE_ORDER);
- 	unsigned long pmd_addr = vmf->address & PMD_MASK;
- 	bool write = vmf->flags & FAULT_FLAG_WRITE;
- 	bool sync;
-@@ -1515,7 +1515,7 @@ static vm_fault_t dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 	 * entry is already in the array, for instance), it will return
- 	 * VM_FAULT_FALLBACK.
- 	 */
--	entry = grab_mapping_entry(&xas, mapping, PMD_ORDER);
-+	entry = grab_mapping_entry(&xas, mapping, PMD_PAGE_ORDER);
- 	if (xa_is_internal(entry)) {
- 		result = xa_to_internal(entry);
- 		goto fallback;
-@@ -1681,7 +1681,7 @@ dax_insert_pfn_mkwrite(struct vm_fault *vmf, pfn_t pfn, unsigned int order)
- 	if (order == 0)
- 		ret = vmf_insert_mixed_mkwrite(vmf->vma, vmf->address, pfn);
- #ifdef CONFIG_FS_DAX_PMD
--	else if (order == PMD_ORDER)
-+	else if (order == PMD_PAGE_ORDER)
- 		ret = vmf_insert_pfn_pmd(vmf, pfn, FAULT_FLAG_WRITE);
- #endif
- 	else
-diff --git a/include/linux/pgtable.h b/include/linux/pgtable.h
-index 56c1e8eb7bb0..79f8443609e7 100644
---- a/include/linux/pgtable.h
-+++ b/include/linux/pgtable.h
-@@ -28,6 +28,9 @@
- #define USER_PGTABLES_CEILING	0UL
- #endif
- 
-+/* Number of base pages in a second level leaf page */
-+#define PMD_PAGE_ORDER	(PMD_SHIFT - PAGE_SHIFT)
++extern int mlock_future_check(struct mm_struct *mm, unsigned long flags,
++			      unsigned long len);
 +
  /*
-  * A page table page can be thought of an array like this: pXd_t[PTRS_PER_PxD]
-  *
+  * Clear the page's PageMlocked().  This can be useful in a situation where
+  * we want to unconditionally remove a page from the pagecache -- e.g.,
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 59a4682ebf3f..4dd40a4fedfb 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1310,9 +1310,8 @@ static inline unsigned long round_hint_to_min(unsigned long hint)
+ 	return hint;
+ }
+ 
+-static inline int mlock_future_check(struct mm_struct *mm,
+-				     unsigned long flags,
+-				     unsigned long len)
++int mlock_future_check(struct mm_struct *mm, unsigned long flags,
++		       unsigned long len)
+ {
+ 	unsigned long locked, lock_limit;
+ 
 -- 
 2.26.2
 
