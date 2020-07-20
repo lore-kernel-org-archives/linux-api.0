@@ -2,98 +2,259 @@ Return-Path: <SRS0=cHN1=A7=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.0 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C7E36C433E5
-	for <linux-api@archiver.kernel.org>; Mon, 20 Jul 2020 16:58:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 94EE7C433E6
+	for <linux-api@archiver.kernel.org>; Mon, 20 Jul 2020 16:58:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9DC48206E9
-	for <linux-api@archiver.kernel.org>; Mon, 20 Jul 2020 16:58:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 69CEB206E9
+	for <linux-api@archiver.kernel.org>; Mon, 20 Jul 2020 16:58:52 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=amacapital-net.20150623.gappssmtp.com header.i=@amacapital-net.20150623.gappssmtp.com header.b="sc9jlE/K"
+	dkim=pass (1024-bit key) header.d=ti.com header.i=@ti.com header.b="WvEpvntU"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2389044AbgGTQ6p (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 20 Jul 2020 12:58:45 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51158 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2389033AbgGTQ6n (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 20 Jul 2020 12:58:43 -0400
-Received: from mail-pg1-x531.google.com (mail-pg1-x531.google.com [IPv6:2607:f8b0:4864:20::531])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4EC71C0619D2
-        for <linux-api@vger.kernel.org>; Mon, 20 Jul 2020 09:58:43 -0700 (PDT)
-Received: by mail-pg1-x531.google.com with SMTP id w2so10536606pgg.10
-        for <linux-api@vger.kernel.org>; Mon, 20 Jul 2020 09:58:43 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=amacapital-net.20150623.gappssmtp.com; s=20150623;
-        h=content-transfer-encoding:from:mime-version:subject:date:message-id
-         :references:cc:in-reply-to:to;
-        bh=43I7clNDsReFiDnQ/eG8o/xxDWM5jfx4yXluLFGgUPg=;
-        b=sc9jlE/K1DrDneIJnR6n5x32DQheHojWvPTx4A7npjm875HZtsCBR0i9U4673qY+A8
-         3WHkGIO7hvQpDhn8xnJXg6rIYv4iccpNk98bO9LmT8plqMZeN1NMCtxnPXHfu4kQM6lh
-         VWdL6N7aXyJ28oOxAHpfRyI2VDi+9eBLPLiFmqckrwIohpK4ofXbR+gAJ5sLhz3Tk46E
-         uBfxUgHScO/Gwq07Mku6yJKFfkGiRiDSfFqRTkku9ZHj3rzhUd+OKtX1daAWLdF7b0YB
-         RgViOZKZuBEi0A8SR46Q3J+6zgQj/bsKZ9U1WaODjM2qrqOUw83UZuc7Y0Fd4b1bGoCz
-         m9DA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:content-transfer-encoding:from:mime-version
-         :subject:date:message-id:references:cc:in-reply-to:to;
-        bh=43I7clNDsReFiDnQ/eG8o/xxDWM5jfx4yXluLFGgUPg=;
-        b=n7+rHwxgKbqQHjbiiMYfZSk0RNTxOc1R5eQqGfWQExPAhioWMAD18hu+ZOr3fZt5o6
-         IUPG7bWnLzMHuYKlVv4PU1xUgVi99aamnxu3rPL3VI3C+7ocRzRg+EN26HZYCU98Ihr6
-         8Ra22ri9IAHv/wGMaAzexrc0cOg3TNMFbAQO02pBtZ9yztJl/xllAJ/MgGpUalMfrzNV
-         mrwbWTspDfIdjbYDybbvhzTOt1RE5ZdCxKWy4Z/I7+t4b21wNs+XO9BDiVGvVrcYfQzd
-         v8uXRWLz9DG6YKfO4f5SVQJr6QCaTp3RQf8BypqUCHm7uUTlJpkyHJJaHuaJ+geZNDjn
-         Spyw==
-X-Gm-Message-State: AOAM532oGrHzS7tAveIf1eSG6bq16cVCaeupLleM2iF9OAqHTCSq1Q/D
-        yrjLA+bF+j+dvomIUbrpyB3bhg==
-X-Google-Smtp-Source: ABdhPJwqbJwpMW1IhTYxfzLesmIFawwVTSzbWgxylzmrSdVa8Tk5mPHoVns2ROD6CM8Hjhjhno57fQ==
-X-Received: by 2002:a62:1c13:: with SMTP id c19mr19584029pfc.52.1595264322829;
-        Mon, 20 Jul 2020 09:58:42 -0700 (PDT)
-Received: from ?IPv6:2601:646:c200:1ef2:600f:2f5b:3d86:4df5? ([2601:646:c200:1ef2:600f:2f5b:3d86:4df5])
-        by smtp.gmail.com with ESMTPSA id mg17sm95384pjb.55.2020.07.20.09.58.41
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 20 Jul 2020 09:58:42 -0700 (PDT)
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-From:   Andy Lutomirski <luto@amacapital.net>
-Mime-Version: 1.0 (1.0)
-Subject: Re: io_uring vs in_compat_syscall()
-Date:   Mon, 20 Jul 2020 09:58:37 -0700
-Message-Id: <BACE670C-6A65-4D86-BC5F-A7EA267C3140@amacapital.net>
-References: <ceb21006-26d0-b216-84a9-5da0b89b5fbf@kernel.dk>
-Cc:     Christoph Hellwig <hch@lst.de>, linux-arch@vger.kernel.org,
-        linux-api@vger.kernel.org, linux-kernel@vger.kernel.org,
-        io-uring@vger.kernel.org
-In-Reply-To: <ceb21006-26d0-b216-84a9-5da0b89b5fbf@kernel.dk>
-To:     Jens Axboe <axboe@kernel.dk>
-X-Mailer: iPhone Mail (17F80)
+        id S1729171AbgGTQ6j (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 20 Jul 2020 12:58:39 -0400
+Received: from lelv0143.ext.ti.com ([198.47.23.248]:46870 "EHLO
+        lelv0143.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1729409AbgGTQ6M (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 20 Jul 2020 12:58:12 -0400
+Received: from lelv0266.itg.ti.com ([10.180.67.225])
+        by lelv0143.ext.ti.com (8.15.2/8.15.2) with ESMTP id 06KGw7b3079977;
+        Mon, 20 Jul 2020 11:58:07 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ti.com;
+        s=ti-com-17Q1; t=1595264287;
+        bh=5fEyct4bCIyHNwiiEhkBkQS5KfDCbF4fgpj3W9PBO88=;
+        h=From:To:Subject:Date:In-Reply-To:References;
+        b=WvEpvntUbrFx5azYOYMhmO/86ZZQNUk7/qJME16yrOg4+Xlbmkz1m1W9rhHeIno17
+         gloF7n155wh30Y0CRMLG2RCt8NUYrEf4YPEWJg8SkO+x4n7WWSjFcWljOxLptepqM9
+         St//jzSuz57C3sQOL3FAZM+E/7qMfr31FhIMxQM8=
+Received: from DFLE115.ent.ti.com (dfle115.ent.ti.com [10.64.6.36])
+        by lelv0266.itg.ti.com (8.15.2/8.15.2) with ESMTPS id 06KGw7IZ128637
+        (version=TLSv1.2 cipher=AES256-GCM-SHA384 bits=256 verify=FAIL);
+        Mon, 20 Jul 2020 11:58:07 -0500
+Received: from DFLE106.ent.ti.com (10.64.6.27) by DFLE115.ent.ti.com
+ (10.64.6.36) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1979.3; Mon, 20
+ Jul 2020 11:58:06 -0500
+Received: from fllv0039.itg.ti.com (10.64.41.19) by DFLE106.ent.ti.com
+ (10.64.6.27) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1979.3 via
+ Frontend Transport; Mon, 20 Jul 2020 11:58:06 -0500
+Received: from uda0868495.fios-router.home (ileax41-snat.itg.ti.com [10.172.224.153])
+        by fllv0039.itg.ti.com (8.15.2/8.15.2) with ESMTP id 06KGw3B8041101;
+        Mon, 20 Jul 2020 11:58:06 -0500
+From:   Murali Karicheri <m-karicheri2@ti.com>
+To:     <davem@davemloft.net>, <kuba@kernel.org>, <netdev@vger.kernel.org>,
+        <linux-kernel@vger.kernel.org>, <linux-api@vger.kernel.org>,
+        <nsekhar@ti.com>, <grygorii.strashko@ti.com>,
+        <vinicius.gomes@intel.com>
+Subject: [net-next v4 PATCH 5/7] net: hsr: define and use proto_ops ptrs to handle hsr specific frames
+Date:   Mon, 20 Jul 2020 12:58:01 -0400
+Message-ID: <20200720165803.17793-6-m-karicheri2@ti.com>
+X-Mailer: git-send-email 2.17.1
+In-Reply-To: <20200720165803.17793-1-m-karicheri2@ti.com>
+References: <20200720165803.17793-1-m-karicheri2@ti.com>
+MIME-Version: 1.0
+Content-Type: text/plain
+X-EXCLAIMER-MD-CONFIG: e1e8a2fd-e40a-4ac6-ac9b-f7e9cc9ee180
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+As a preparatory patch to introduce PRP, refactor the code specific to
+handling HSR frames into separate functions and call them through
+proto_ops function pointers.
 
-> On Jul 20, 2020, at 9:37 AM, Jens Axboe <axboe@kernel.dk> wrote:
->=20
-> =EF=BB=BFOn 7/20/20 12:10 AM, Christoph Hellwig wrote:
->> Hi Jens,
->>=20
->> I just found a (so far theoretical) issue with the io_uring submission
->> offloading to workqueues or threads.  We have lots of places using
->> in_compat_syscall() to check if a syscall needs compat treatmenet.
->> While the biggest users is iocttl(), we also have a fair amount of
->> places using in_compat_task() in read and write methods, and these
->> will not do the wrong thing when used with io_uring under certain
->> conditions.  I'm not sure how to best fix this, except for making sure
->> in_compat_syscall() returns true one way or another for these cases.
->=20
-> We can probably propagate this information in the io_kiocb via a flag,
-> and have the io-wq worker set TS_COMPAT if that's the case.
->=20
+Signed-off-by: Murali Karicheri <m-karicheri2@ti.com>
+---
+ net/hsr/hsr_device.c  |  5 +++-
+ net/hsr/hsr_forward.c | 63 +++++++++++++++++++++++++------------------
+ net/hsr/hsr_forward.h |  7 ++++-
+ net/hsr/hsr_main.h    |  8 ++++++
+ 4 files changed, 55 insertions(+), 28 deletions(-)
 
-Is TS_COMPAT actually a cross-arch concept for which this is safe?  Having a=
- real arch helper for =E2=80=9Cset the current syscall arch for the current k=
-ernel thread=E2=80=9D seems more sensible to me.=20=
+diff --git a/net/hsr/hsr_device.c b/net/hsr/hsr_device.c
+index 74eaf28743a4..022393bed40a 100644
+--- a/net/hsr/hsr_device.c
++++ b/net/hsr/hsr_device.c
+@@ -440,9 +440,12 @@ static struct device_type hsr_type = {
+ 
+ static struct hsr_proto_ops hsr_ops = {
+ 	.send_sv_frame = send_hsr_supervision_frame,
++	.create_tagged_frame = hsr_create_tagged_frame,
++	.get_untagged_frame = hsr_get_untagged_frame,
++	.fill_frame_info = hsr_fill_frame_info,
+ };
+ 
+-struct hsr_proto_ops prp_ops = {
++static struct hsr_proto_ops prp_ops = {
+ 	.send_sv_frame = send_prp_supervision_frame,
+ };
+ 
+diff --git a/net/hsr/hsr_forward.c b/net/hsr/hsr_forward.c
+index 7ce5fc8e4a5e..9772aa61b9e6 100644
+--- a/net/hsr/hsr_forward.c
++++ b/net/hsr/hsr_forward.c
+@@ -116,8 +116,8 @@ static struct sk_buff *create_stripped_skb(struct sk_buff *skb_in,
+ 	return skb;
+ }
+ 
+-static struct sk_buff *frame_get_stripped_skb(struct hsr_frame_info *frame,
+-					      struct hsr_port *port)
++struct sk_buff *hsr_get_untagged_frame(struct hsr_frame_info *frame,
++				       struct hsr_port *port)
+ {
+ 	if (!frame->skb_std)
+ 		frame->skb_std = create_stripped_skb(frame->skb_hsr, frame);
+@@ -192,8 +192,8 @@ static struct sk_buff *create_tagged_skb(struct sk_buff *skb_o,
+ /* If the original frame was an HSR tagged frame, just clone it to be sent
+  * unchanged. Otherwise, create a private frame especially tagged for 'port'.
+  */
+-static struct sk_buff *frame_get_tagged_skb(struct hsr_frame_info *frame,
+-					    struct hsr_port *port)
++struct sk_buff *hsr_create_tagged_frame(struct hsr_frame_info *frame,
++					struct hsr_port *port)
+ {
+ 	if (frame->skb_hsr)
+ 		return skb_clone(frame->skb_hsr, GFP_ATOMIC);
+@@ -257,6 +257,7 @@ static void hsr_forward_do(struct hsr_frame_info *frame)
+ 	struct sk_buff *skb;
+ 
+ 	hsr_for_each_port(frame->port_rcv->hsr, port) {
++		struct hsr_priv *hsr = port->hsr;
+ 		/* Don't send frame back the way it came */
+ 		if (port == frame->port_rcv)
+ 			continue;
+@@ -282,9 +283,10 @@ static void hsr_forward_do(struct hsr_frame_info *frame)
+ 		}
+ 
+ 		if (port->type != HSR_PT_MASTER)
+-			skb = frame_get_tagged_skb(frame, port);
++			skb = hsr->proto_ops->create_tagged_frame(frame, port);
+ 		else
+-			skb = frame_get_stripped_skb(frame, port);
++			skb = hsr->proto_ops->get_untagged_frame(frame, port);
++
+ 		if (!skb) {
+ 			/* FIXME: Record the dropped frame? */
+ 			continue;
+@@ -317,12 +319,34 @@ static void check_local_dest(struct hsr_priv *hsr, struct sk_buff *skb,
+ 	}
+ }
+ 
+-static int hsr_fill_frame_info(struct hsr_frame_info *frame,
+-			       struct sk_buff *skb, struct hsr_port *port)
++void hsr_fill_frame_info(__be16 proto, struct sk_buff *skb,
++			 struct hsr_frame_info *frame)
+ {
+-	struct ethhdr *ethhdr;
++	struct hsr_priv *hsr = frame->port_rcv->hsr;
+ 	unsigned long irqflags;
+ 
++	if (proto == htons(ETH_P_PRP) || proto == htons(ETH_P_HSR)) {
++		frame->skb_std = NULL;
++		frame->skb_hsr = skb;
++		frame->sequence_nr = hsr_get_skb_sequence_nr(skb);
++	} else {
++		frame->skb_std = skb;
++		frame->skb_hsr = NULL;
++		/* Sequence nr for the master node */
++		spin_lock_irqsave(&hsr->seqnr_lock, irqflags);
++		frame->sequence_nr = hsr->sequence_nr;
++		hsr->sequence_nr++;
++		spin_unlock_irqrestore(&hsr->seqnr_lock, irqflags);
++	}
++}
++
++static int fill_frame_info(struct hsr_frame_info *frame,
++			   struct sk_buff *skb, struct hsr_port *port)
++{
++	struct hsr_priv *hsr = port->hsr;
++	struct ethhdr *ethhdr;
++	__be16 proto;
++
+ 	frame->is_supervision = is_supervision_frame(port->hsr, skb);
+ 	frame->node_src = hsr_get_node(port, skb, frame->is_supervision);
+ 	if (!frame->node_src)
+@@ -335,23 +359,10 @@ static int hsr_fill_frame_info(struct hsr_frame_info *frame,
+ 		/* FIXME: */
+ 		netdev_warn_once(skb->dev, "VLAN not yet supported");
+ 	}
+-	if (ethhdr->h_proto == htons(ETH_P_PRP) ||
+-	    ethhdr->h_proto == htons(ETH_P_HSR)) {
+-		frame->skb_std = NULL;
+-		frame->skb_hsr = skb;
+-		frame->sequence_nr = hsr_get_skb_sequence_nr(skb);
+-	} else {
+-		frame->skb_std = skb;
+-		frame->skb_hsr = NULL;
+-		/* Sequence nr for the master node */
+-		spin_lock_irqsave(&port->hsr->seqnr_lock, irqflags);
+-		frame->sequence_nr = port->hsr->sequence_nr;
+-		port->hsr->sequence_nr++;
+-		spin_unlock_irqrestore(&port->hsr->seqnr_lock, irqflags);
+-	}
+-
++	proto = ethhdr->h_proto;
+ 	frame->port_rcv = port;
+-	check_local_dest(port->hsr, skb, frame);
++	hsr->proto_ops->fill_frame_info(proto, skb, frame);
++	check_local_dest(hsr, skb, frame);
+ 
+ 	return 0;
+ }
+@@ -367,7 +378,7 @@ void hsr_forward_skb(struct sk_buff *skb, struct hsr_port *port)
+ 		goto out_drop;
+ 	}
+ 
+-	if (hsr_fill_frame_info(&frame, skb, port) < 0)
++	if (fill_frame_info(&frame, skb, port) < 0)
+ 		goto out_drop;
+ 	hsr_register_frame_in(frame.node_src, port, frame.sequence_nr);
+ 	hsr_forward_do(&frame);
+diff --git a/net/hsr/hsr_forward.h b/net/hsr/hsr_forward.h
+index b2a6fa319d94..893207792d56 100644
+--- a/net/hsr/hsr_forward.h
++++ b/net/hsr/hsr_forward.h
+@@ -14,5 +14,10 @@
+ #include "hsr_main.h"
+ 
+ void hsr_forward_skb(struct sk_buff *skb, struct hsr_port *port);
+-
++struct sk_buff *hsr_create_tagged_frame(struct hsr_frame_info *frame,
++					struct hsr_port *port);
++struct sk_buff *hsr_get_untagged_frame(struct hsr_frame_info *frame,
++				       struct hsr_port *port);
++void hsr_fill_frame_info(__be16 proto, struct sk_buff *skb,
++			 struct hsr_frame_info *frame);
+ #endif /* __HSR_FORWARD_H */
+diff --git a/net/hsr/hsr_main.h b/net/hsr/hsr_main.h
+index 58e1ad21b66f..14f442c57a84 100644
+--- a/net/hsr/hsr_main.h
++++ b/net/hsr/hsr_main.h
+@@ -162,9 +162,17 @@ enum hsr_version {
+ 	PRP_V1,
+ };
+ 
++struct hsr_frame_info;
++
+ struct hsr_proto_ops {
+ 	/* format and send supervision frame */
+ 	void (*send_sv_frame)(struct hsr_port *port, unsigned long *interval);
++	struct sk_buff * (*get_untagged_frame)(struct hsr_frame_info *frame,
++					       struct hsr_port *port);
++	struct sk_buff * (*create_tagged_frame)(struct hsr_frame_info *frame,
++						struct hsr_port *port);
++	void (*fill_frame_info)(__be16 proto, struct sk_buff *skb,
++				struct hsr_frame_info *frame);
+ };
+ 
+ struct hsr_priv {
+-- 
+2.17.1
+
