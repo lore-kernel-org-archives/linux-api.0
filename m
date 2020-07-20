@@ -2,197 +2,176 @@ Return-Path: <SRS0=cHN1=A7=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.5 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_2 autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A5E6FC433ED
-	for <linux-api@archiver.kernel.org>; Mon, 20 Jul 2020 16:29:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 55812C43445
+	for <linux-api@archiver.kernel.org>; Mon, 20 Jul 2020 16:36:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 827D3206E9
-	for <linux-api@archiver.kernel.org>; Mon, 20 Jul 2020 16:29:59 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="SUGwTGF8"
+	by mail.kernel.org (Postfix) with ESMTP id 3F64B20734
+	for <linux-api@archiver.kernel.org>; Mon, 20 Jul 2020 16:36:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731974AbgGTQ3n (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 20 Jul 2020 12:29:43 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41978 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1731850AbgGTP7L (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 20 Jul 2020 11:59:11 -0400
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BFF7DC061794;
-        Mon, 20 Jul 2020 08:59:10 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
-        References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
-        Content-Type:Content-ID:Content-Description;
-        bh=YknGFmw1HdnT1qStqOT9wnRgOHrqfYkyqpqGeX9Gd5g=; b=SUGwTGF87+Bvn4/tsKZJsW65zw
-        fmZtDW/2RCy6fXfMqQcTWNFpaZSYQGDdqENP66n9PGzgZbCLrZtjNmFGqCizXYlbVd/+xRN1Y+xnD
-        lROPbgblyoVZu5icjsZ5LUMYTyYBHSf8ZfFIEuSi2FP95MBSdRF1w6mhfucFrQ5dqSqV81WtlilGw
-        IcWO6eP7Hc3qoiuyBrgiOSYEkM97zA4Y+wnaMulONkuwC1ahJIgvlOmLFhhpnPqmig4eQES3TkB74
-        5ssCdnBJyB+do5/mCWVjnVsOtBZoTV49fxrXlJ4gnIpR0uNGOcCAaJRfeJZNjXS1JpN3UP+/TP3xl
-        ZJEOa2HA==;
-Received: from [2001:4bb8:105:4a81:db56:edb1:dbf2:5cc3] (helo=localhost)
-        by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1jxYC3-0007n1-N9; Mon, 20 Jul 2020 15:59:08 +0000
-From:   Christoph Hellwig <hch@lst.de>
-To:     Al Viro <viro@zeniv.linux.org.uk>,
-        Linus Torvalds <torvalds@linux-foundation.org>
-Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        "Rafael J. Wysocki" <rafael@kernel.org>,
-        linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: [PATCH 03/24] fs: add a kern_umount helper
-Date:   Mon, 20 Jul 2020 17:58:41 +0200
-Message-Id: <20200720155902.181712-4-hch@lst.de>
-X-Mailer: git-send-email 2.27.0
-In-Reply-To: <20200720155902.181712-1-hch@lst.de>
-References: <20200720155902.181712-1-hch@lst.de>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
+        id S1731413AbgGTPwu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 20 Jul 2020 11:52:50 -0400
+Received: from mx0a-001b2d01.pphosted.com ([148.163.156.1]:25962 "EHLO
+        mx0a-001b2d01.pphosted.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1731115AbgGTPwt (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 20 Jul 2020 11:52:49 -0400
+Received: from pps.filterd (m0098409.ppops.net [127.0.0.1])
+        by mx0a-001b2d01.pphosted.com (8.16.0.42/8.16.0.42) with SMTP id 06KFZClQ100188;
+        Mon, 20 Jul 2020 11:51:58 -0400
+Received: from pps.reinject (localhost [127.0.0.1])
+        by mx0a-001b2d01.pphosted.com with ESMTP id 32d5h7sk2a-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+        Mon, 20 Jul 2020 11:51:57 -0400
+Received: from m0098409.ppops.net (m0098409.ppops.net [127.0.0.1])
+        by pps.reinject (8.16.0.36/8.16.0.36) with SMTP id 06KFaXMR110773;
+        Mon, 20 Jul 2020 11:51:57 -0400
+Received: from ppma02wdc.us.ibm.com (aa.5b.37a9.ip4.static.sl-reverse.com [169.55.91.170])
+        by mx0a-001b2d01.pphosted.com with ESMTP id 32d5h7sk1c-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+        Mon, 20 Jul 2020 11:51:57 -0400
+Received: from pps.filterd (ppma02wdc.us.ibm.com [127.0.0.1])
+        by ppma02wdc.us.ibm.com (8.16.0.42/8.16.0.42) with SMTP id 06KFYvFQ012130;
+        Mon, 20 Jul 2020 15:51:55 GMT
+Received: from b03cxnp07029.gho.boulder.ibm.com (b03cxnp07029.gho.boulder.ibm.com [9.17.130.16])
+        by ppma02wdc.us.ibm.com with ESMTP id 32brq8tb75-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+        Mon, 20 Jul 2020 15:51:55 +0000
+Received: from b03ledav004.gho.boulder.ibm.com (b03ledav004.gho.boulder.ibm.com [9.17.130.235])
+        by b03cxnp07029.gho.boulder.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 06KFps6657934112
+        (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+        Mon, 20 Jul 2020 15:51:54 GMT
+Received: from b03ledav004.gho.boulder.ibm.com (unknown [127.0.0.1])
+        by IMSVA (Postfix) with ESMTP id 5A87178060;
+        Mon, 20 Jul 2020 15:51:54 +0000 (GMT)
+Received: from b03ledav004.gho.boulder.ibm.com (unknown [127.0.0.1])
+        by IMSVA (Postfix) with ESMTP id ED0747805E;
+        Mon, 20 Jul 2020 15:51:46 +0000 (GMT)
+Received: from [153.66.254.194] (unknown [9.85.132.116])
+        by b03ledav004.gho.boulder.ibm.com (Postfix) with ESMTP;
+        Mon, 20 Jul 2020 15:51:46 +0000 (GMT)
+Message-ID: <1595260305.4554.9.camel@linux.ibm.com>
+Subject: Re: [PATCH 3/6] mm: introduce secretmemfd system call to create
+ "secret" memory areas
+From:   James Bottomley <jejb@linux.ibm.com>
+Reply-To: jejb@linux.ibm.com
+To:     Arnd Bergmann <arnd@arndb.de>, Mike Rapoport <rppt@kernel.org>
+Cc:     "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Borislav Petkov <bp@alien8.de>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Christopher Lameter <cl@linux.com>,
+        Dan Williams <dan.j.williams@intel.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Elena Reshetova <elena.reshetova@intel.com>,
+        "H. Peter Anvin" <hpa@zytor.com>, Idan Yaniv <idan.yaniv@ibm.com>,
+        Ingo Molnar <mingo@redhat.com>,
+        "Kirill A. Shutemov" <kirill@shutemov.name>,
+        Matthew Wilcox <willy@infradead.org>,
+        Mike Rapoport <rppt@linux.ibm.com>,
+        Palmer Dabbelt <palmer@dabbelt.com>,
+        Paul Walmsley <paul.walmsley@sifive.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        linux-arch <linux-arch@vger.kernel.org>,
+        Linux ARM <linux-arm-kernel@lists.infradead.org>,
+        Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>,
+        Linux-MM <linux-mm@kvack.org>, linux-nvdimm@lists.01.org,
+        linux-riscv <linux-riscv@lists.infradead.org>,
+        the arch/x86 maintainers <x86@kernel.org>,
+        linaro-mm-sig@lists.linaro.org,
+        Sumit Semwal <sumit.semwal@linaro.org>
+Date:   Mon, 20 Jul 2020 08:51:45 -0700
+In-Reply-To: <CAK8P3a0NyvRMqH7X0YNO5E6DGtvZXD5ZcD6Y6n7AkocufkMnHA@mail.gmail.com>
+References: <20200720092435.17469-1-rppt@kernel.org>
+         <20200720092435.17469-4-rppt@kernel.org>
+         <CAK8P3a0NyvRMqH7X0YNO5E6DGtvZXD5ZcD6Y6n7AkocufkMnHA@mail.gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+X-Mailer: Evolution 3.26.6 
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-TM-AS-GCONF: 00
+X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.235,18.0.687
+ definitions=2020-07-20_09:2020-07-20,2020-07-20 signatures=0
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 malwarescore=0 phishscore=0
+ mlxlogscore=999 spamscore=0 adultscore=0 clxscore=1011 mlxscore=0
+ priorityscore=1501 bulkscore=0 impostorscore=0 suspectscore=0
+ lowpriorityscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.12.0-2006250000 definitions=main-2007200106
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Like ksys_umount, but takes a kernel pointer for the destination path.
-Switch over the umount in the init code to it, which just happens to work
-due to the implicit set_fs(KERNEL_DS) during early init right now.
+On Mon, 2020-07-20 at 13:30 +0200, Arnd Bergmann wrote:
+> On Mon, Jul 20, 2020 at 11:25 AM Mike Rapoport <rppt@kernel.org>
+> wrote:
+> > 
+> > From: Mike Rapoport <rppt@linux.ibm.com>
+> > 
+> > Introduce "secretmemfd" system call with the ability to create
+> > memory areas visible only in the context of the owning process and
+> > not mapped not only to other processes but in the kernel page
+> > tables as well.
+> > 
+> > The user will create a file descriptor using the secretmemfd system
+> > call where flags supplied as a parameter to this system call will
+> > define the desired protection mode for the memory associated with
+> > that file descriptor. Currently there are two protection modes:
+> > 
+> > * exclusive - the memory area is unmapped from the kernel direct
+> > map and it
+> >               is present only in the page tables of the owning mm.
+> > * uncached  - the memory area is present only in the page tables of
+> > the
+> >               owning mm and it is mapped there as uncached.
+> > 
+> > For instance, the following example will create an uncached mapping
+> > (error handling is omitted):
+> > 
+> >         fd = secretmemfd(SECRETMEM_UNCACHED);
+> >         ftruncate(fd, MAP_SIZE);
+> >         ptr = mmap(NULL, MAP_SIZE, PROT_READ | PROT_WRITE,
+> > MAP_SHARED,
+> >                    fd, 0);
+> > 
+> > Signed-off-by: Mike Rapoport <rppt@linux.ibm.com>
+> 
+> I wonder if this should be more closely related to dmabuf file
+> descriptors, which are already used for a similar purpose: sharing
+> access to secret memory areas that are not visible to the OS but can
+> be shared with hardware through device drivers that can import a
+> dmabuf file descriptor.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- fs/namespace.c           | 53 ++++++++++++++++++++++++----------------
- include/linux/fs.h       |  1 +
- include/linux/syscalls.h |  1 -
- init/do_mounts_initrd.c  |  2 +-
- 4 files changed, 34 insertions(+), 23 deletions(-)
+I'll assume you mean the dmabuf userspace API?  Because the kernel API
+is completely device exchange specific and wholly inappropriate for
+this use case.
 
-diff --git a/fs/namespace.c b/fs/namespace.c
-index d208a389aac3c0..cfcee6a1bd5dd2 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -1706,36 +1706,26 @@ static inline bool may_mandlock(void)
- }
- #endif
- 
--/*
-- * Now umount can handle mount points as well as block devices.
-- * This is important for filesystems which use unnamed block devices.
-- *
-- * We now support a flag for forced unmount like the other 'big iron'
-- * unixes. Our API is identical to OSF/1 to avoid making a mess of AMD
-- */
-+static int umount_lookup_flags(int flags)
-+{
-+	if (flags & UMOUNT_NOFOLLOW)
-+		return LOOKUP_MOUNTPOINT;
-+	return LOOKUP_MOUNTPOINT | LOOKUP_FOLLOW;
-+}
- 
--int ksys_umount(char __user *name, int flags)
-+static int path_umount(struct path *path, int flags)
- {
--	struct path path;
- 	struct mount *mnt;
- 	int retval;
--	int lookup_flags = LOOKUP_MOUNTPOINT;
- 
- 	if (flags & ~(MNT_FORCE | MNT_DETACH | MNT_EXPIRE | UMOUNT_NOFOLLOW))
- 		return -EINVAL;
--
- 	if (!may_mount())
- 		return -EPERM;
- 
--	if (!(flags & UMOUNT_NOFOLLOW))
--		lookup_flags |= LOOKUP_FOLLOW;
--
--	retval = user_path_at(AT_FDCWD, name, lookup_flags, &path);
--	if (retval)
--		goto out;
--	mnt = real_mount(path.mnt);
-+	mnt = real_mount(path->mnt);
- 	retval = -EINVAL;
--	if (path.dentry != path.mnt->mnt_root)
-+	if (path->dentry != path->mnt->mnt_root)
- 		goto dput_and_out;
- 	if (!check_mnt(mnt))
- 		goto dput_and_out;
-@@ -1748,12 +1738,33 @@ int ksys_umount(char __user *name, int flags)
- 	retval = do_umount(mnt, flags);
- dput_and_out:
- 	/* we mustn't call path_put() as that would clear mnt_expiry_mark */
--	dput(path.dentry);
-+	dput(path->dentry);
- 	mntput_no_expire(mnt);
--out:
- 	return retval;
- }
- 
-+static int ksys_umount(char __user *name, int flags)
-+{
-+	struct path path;
-+	int ret;
-+
-+	ret = user_path_at(AT_FDCWD, name, umount_lookup_flags(flags), &path);
-+	if (ret)
-+		return ret;
-+	return path_umount(&path, flags);
-+}
-+
-+int __init kern_umount(char *name, int flags)
-+{
-+	struct path path;
-+	int ret;
-+
-+	ret = kern_path(name, umount_lookup_flags(flags), &path);
-+	if (ret)
-+		return ret;
-+	return path_umount(&path, flags);
-+}
-+
- SYSCALL_DEFINE2(umount, char __user *, name, int, flags)
- {
- 	return ksys_umount(name, flags);
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 8f628f9868711d..fbeadaa1a185fb 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -2339,6 +2339,7 @@ extern long do_mount(const char *, const char __user *,
- 		     const char *, unsigned long, void *);
- int do_kern_mount(const char *dev_name, const char *dir_name,
- 		const char *type_page, unsigned long flags, void *data_page);
-+int __init kern_umount(char *name, int flags);
- extern struct vfsmount *collect_mounts(const struct path *);
- extern void drop_collected_mounts(struct vfsmount *);
- extern int iterate_mounts(int (*)(struct vfsmount *, void *), void *,
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 5b0f1fca4cfb9d..3b1b8ebcda1d8c 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -1236,7 +1236,6 @@ asmlinkage long sys_ni_syscall(void);
-  * the ksys_xyzyyz() functions prototyped below.
-  */
- 
--int ksys_umount(char __user *name, int flags);
- int ksys_chroot(const char __user *filename);
- ssize_t ksys_write(unsigned int fd, const char __user *buf, size_t count);
- int ksys_chdir(const char __user *filename);
-diff --git a/init/do_mounts_initrd.c b/init/do_mounts_initrd.c
-index 604ce78af9acfa..d3858620707893 100644
---- a/init/do_mounts_initrd.c
-+++ b/init/do_mounts_initrd.c
-@@ -122,7 +122,7 @@ static void __init handle_initrd(void)
- 		else
- 			printk("failed\n");
- 		printk(KERN_NOTICE "Unmounting old root\n");
--		ksys_umount("/old", MNT_DETACH);
-+		kern_umount("/old", MNT_DETACH);
- 	}
- }
- 
--- 
-2.27.0
+The user space API of dmabuf uses a pseudo-filesystem.  So you mount
+the dmabuf file type (and by "you" I mean root because an ordinary user
+doesn't have sufficient privilege).  This is basically because every
+dmabuf is usable by any user who has permissions.  This really isn't
+the initial interface we want for secret memory because secret regions
+are supposed to be per process and not shared (at least we don't want
+other tenants to see who's using what).
+
+Once you have the fd, you can seek to find the size, mmap, poll and
+ioctl it.  The ioctls are all to do with memory synchronization (as
+you'd expect from a device backed region) and the mmap is handled by
+the dma_buf_ops, which is device specific.  Sizing is missing because
+that's reported by the device not settable by the user.
+
+What we want is the ability to get an fd, set the properties and the
+size and mmap it.  This is pretty much a 100% overlap with the memfd
+API and not much overlap with the dmabuf one, which is why I don't
+think the interface is very well suited.
+
+James
 
