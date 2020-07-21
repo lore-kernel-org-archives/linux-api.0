@@ -4,39 +4,39 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
 	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5F4BEC4346D
-	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 16:29:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E1644C433EA
+	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 16:30:10 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3974B207CD
-	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 16:29:54 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B5D0C20771
+	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 16:30:10 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="L3d4Lo4+"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="tZwucmBu"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730411AbgGUQ2l (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 21 Jul 2020 12:28:41 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44690 "EHLO
+        id S1729534AbgGUQaE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 21 Jul 2020 12:30:04 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44676 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730393AbgGUQ2i (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 21 Jul 2020 12:28:38 -0400
+        with ESMTP id S1728432AbgGUQ2e (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 21 Jul 2020 12:28:34 -0400
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4C712C061794;
-        Tue, 21 Jul 2020 09:28:38 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3461CC061794;
+        Tue, 21 Jul 2020 09:28:34 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
         References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
         Content-Type:Content-ID:Content-Description;
-        bh=p+1vAloQdss4MLN/qmNhhv4t2otUx0WTO85WGrKJM3w=; b=L3d4Lo4+pGFoml2TQ7oRoP0whw
-        zQ4KP/RMuM0UNOWgHwHeQrY3/Bxfrsww9dFMR5KlVCow6oaYNuppbVrgn47OQNVcSxdgy/NWruxr6
-        MZ66QIr7qEbYGlV08d9f8SGxnVbrsvfL1UcymyND8z7JbYriiJSik87a1Tv1eaLgg6XzDWTfG/ixJ
-        +dy1DonJyzQueSgcGcWmFmEm+WL7YMy7mUlRohRhaT5PrGX1ZuljrgoH11iXW9/NKKLseYR8si99V
-        4u+CRxW8Y2nozzmvbFpAy2napMjW/PeJC5hAfYa++kF7z1TIAJ7wqPgch4HnokefBW76ZDJF0dESn
-        /wy4MHxA==;
+        bh=TZGFhBS1vSa3KHC8kTIcxm+uFEJ0ZiELC7/lIthiJQQ=; b=tZwucmBupqJ+czU2GmfRNHMqYb
+        iOT/K6KhStl9ONJIZTRDe/8R4z7KMhtUFRuy6AbneK0WaKlRFCWrwy+EB8GHcn2u1YTd+Elf4KRj6
+        svhIPY5FkLxVndqvIvM4MIruB/PNMoE8qM5lqteKHufzsHyNuv6z6rywWo62BawYwDWki9/2/viXr
+        6Da8k0Y3zdos/hJWVmPTvTQBxr1B1INQA2Q1oi4tIpuZS/IN2hy9DGY/SdmVlmZMxsz5UMRsq2oSu
+        x+wvHMUUUJ0fwLeccN7Pq6dtVMxfZknWH7T12/FCBDkt9qouOy1lTmdZ71zv+7H317GjspgJ+Mb2h
+        tBAuMsWg==;
 Received: from [2001:4bb8:18c:2acc:5b1c:6483:bd6d:e406] (helo=localhost)
         by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1jxv86-0007TH-1Z; Tue, 21 Jul 2020 16:28:35 +0000
+        id 1jxv82-0007Sg-LS; Tue, 21 Jul 2020 16:28:31 +0000
 From:   Christoph Hellwig <hch@lst.de>
 To:     Al Viro <viro@zeniv.linux.org.uk>,
         Linus Torvalds <torvalds@linux-foundation.org>
@@ -44,9 +44,9 @@ Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         "Rafael J. Wysocki" <rafael@kernel.org>,
         linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
         linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: [PATCH 10/24] init: open code ksys_umount in handle_initrd
-Date:   Tue, 21 Jul 2020 18:28:04 +0200
-Message-Id: <20200721162818.197315-11-hch@lst.de>
+Subject: [PATCH 08/24] init: move the prepare_namespace prototype to init/do_mounts.h
+Date:   Tue, 21 Jul 2020 18:28:02 +0200
+Message-Id: <20200721162818.197315-9-hch@lst.de>
 X-Mailer: git-send-email 2.27.0
 In-Reply-To: <20200721162818.197315-1-hch@lst.de>
 References: <20200721162818.197315-1-hch@lst.de>
@@ -58,91 +58,52 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Replace ksys_umount with an open coded version that takes the proper
-kernel pointer instead of relying on the implicit set_fs(KERNEL_DS)
-during early init.
+No need to have this prototype in a global header included by
+every driver.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/namespace.c           | 4 ++--
- include/linux/mount.h    | 1 +
- include/linux/syscalls.h | 1 -
- init/do_mounts_initrd.c  | 6 +++++-
- 4 files changed, 8 insertions(+), 4 deletions(-)
+ include/linux/init.h | 1 -
+ init/do_mounts.h     | 1 +
+ init/main.c          | 2 ++
+ 3 files changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/fs/namespace.c b/fs/namespace.c
-index 2c4d7592097485..a7301790abb211 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -1706,7 +1706,7 @@ static inline bool may_mandlock(void)
- }
- #endif
+diff --git a/include/linux/init.h b/include/linux/init.h
+index 212fc9e2f691a1..7de54fcad39431 100644
+--- a/include/linux/init.h
++++ b/include/linux/init.h
+@@ -147,7 +147,6 @@ extern unsigned int reset_devices;
  
--static int path_umount(struct path *path, int flags)
-+int path_umount(struct path *path, int flags)
- {
- 	struct mount *mnt;
- 	int retval;
-@@ -1736,7 +1736,7 @@ static int path_umount(struct path *path, int flags)
- 	return retval;
- }
+ /* used by init/main.c */
+ void setup_arch(char **);
+-void prepare_namespace(void);
+ void __init init_rootfs(void);
+ extern struct file_system_type rootfs_fs_type;
  
--int ksys_umount(char __user *name, int flags)
-+static int ksys_umount(char __user *name, int flags)
- {
- 	int lookup_flags = LOOKUP_MOUNTPOINT;
- 	struct path path;
-diff --git a/include/linux/mount.h b/include/linux/mount.h
-index bf9896f86a48f4..e868b1ac7af90c 100644
---- a/include/linux/mount.h
-+++ b/include/linux/mount.h
-@@ -115,5 +115,6 @@ extern void kern_unmount_array(struct vfsmount *mnt[], unsigned int num);
+diff --git a/init/do_mounts.h b/init/do_mounts.h
+index c855b3f0e06d19..853da3cc4a3586 100644
+--- a/init/do_mounts.h
++++ b/init/do_mounts.h
+@@ -11,6 +11,7 @@
  
- int path_mount(const char *dev_name, struct path *path, const char *type_page,
- 		unsigned long flags, void *data_page);
-+int path_umount(struct path *path, int flags);
+ void  mount_block_root(char *name, int flags);
+ void  mount_root(void);
++void prepare_namespace(void);
+ extern int root_mountflags;
  
- #endif /* _LINUX_MOUNT_H */
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index e43816198e6001..1a4f5d8ee7044b 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -1236,7 +1236,6 @@ asmlinkage long sys_ni_syscall(void);
-  * the ksys_xyzyyz() functions prototyped below.
-  */
+ static inline int create_dev(char *name, dev_t dev)
+diff --git a/init/main.c b/init/main.c
+index c2c9143db96795..b952e4cd685af4 100644
+--- a/init/main.c
++++ b/init/main.c
+@@ -103,6 +103,8 @@
+ #include <asm/sections.h>
+ #include <asm/cacheflush.h>
  
--int ksys_umount(char __user *name, int flags);
- int ksys_chroot(const char __user *filename);
- ssize_t ksys_write(unsigned int fd, const char __user *buf, size_t count);
- int ksys_chdir(const char __user *filename);
-diff --git a/init/do_mounts_initrd.c b/init/do_mounts_initrd.c
-index e08669187d63be..3fabbc82513506 100644
---- a/init/do_mounts_initrd.c
-+++ b/init/do_mounts_initrd.c
-@@ -9,6 +9,7 @@
- #include <linux/freezer.h>
- #include <linux/kmod.h>
- #include <uapi/linux/mount.h>
-+#include <linux/namei.h>
- 
- #include "do_mounts.h"
- 
-@@ -117,12 +118,15 @@ static void __init handle_initrd(void)
- 	if (!error)
- 		printk("okay\n");
- 	else {
-+		struct path path;
++#include "do_mounts.h"
 +
- 		if (error == -ENOENT)
- 			printk("/initrd does not exist. Ignored.\n");
- 		else
- 			printk("failed\n");
- 		printk(KERN_NOTICE "Unmounting old root\n");
--		ksys_umount("/old", MNT_DETACH);
-+		if (!kern_path("/old", LOOKUP_MOUNTPOINT, &path))
-+			path_umount(&path, MNT_DETACH);
- 	}
- }
+ #define CREATE_TRACE_POINTS
+ #include <trace/events/initcall.h>
  
 -- 
 2.27.0
