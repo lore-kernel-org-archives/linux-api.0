@@ -2,175 +2,119 @@ Return-Path: <SRS0=QVgP=BA=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 80FADC433ED
-	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 16:30:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2497EC433E1
+	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 16:49:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5FD6B20729
-	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 16:30:39 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="Mdh/cnjx"
+	by mail.kernel.org (Postfix) with ESMTP id F15EB20720
+	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 16:49:39 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1595350180;
+	bh=cNxlSKmjygBarBhg16tpRebArXf2XdV2e7RUdeUHPj8=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:List-ID:From;
+	b=zaFiiMa6jHnuAVoxiLWhrnlyZ5QetlSbRoxzPB5J4CSMuwYTy6NHXghDqTmFONDBC
+	 +yY7LQE9uo6XG4iNc32JQbwsUdJFJdM4hAJOIIsabbkjMXEZOgCz0hq4AFqjqScvnz
+	 NWnqpdaCzuIp8B3UEGHEBlZBPwYzPKT4dH7/QhFA=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727903AbgGUQad (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 21 Jul 2020 12:30:33 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44638 "EHLO
+        id S1730263AbgGUQtj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 21 Jul 2020 12:49:39 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48120 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728956AbgGUQ2Y (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 21 Jul 2020 12:28:24 -0400
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5FB6CC0619DA;
-        Tue, 21 Jul 2020 09:28:24 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
-        References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
-        Content-Type:Content-ID:Content-Description;
-        bh=CAvAtIIkzm3fHK0HKBHFJbCbWuSjjmsX8Z35+03m94I=; b=Mdh/cnjxeP+90d07hvT42e5OTb
-        SJehNGJ6lRo0gUibMHZui+5L4KxWRhiKXXeDSyxnxjvjtgJufGqVpmwF0hNJKJok0txYSSY5zeSja
-        BzPgZVL5goWPwRRBMneQx+hrpJ+CCcnOxv0/sXtzo7mQ5uqYsMVenTzEgVjOTPJtj1yKQvsE9nPh0
-        ok9L2Qtf4ECGPe/KQwS+jHFFMPx/Ni6A4bg+7mflmvmRE4yotLpgKiQqgFviHL/Pmz8VoD7WnMMKm
-        wFimCYe9PpiuQvCJmkTRLeNFihucuLCpP4RYde/WBuuDoJOa5C0BAcnHewgqtYVPDSxrIcBiR/fOH
-        1nRQArcw==;
-Received: from [2001:4bb8:18c:2acc:5b1c:6483:bd6d:e406] (helo=localhost)
-        by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1jxv7s-0007Qw-FT; Tue, 21 Jul 2020 16:28:21 +0000
-From:   Christoph Hellwig <hch@lst.de>
-To:     Al Viro <viro@zeniv.linux.org.uk>,
-        Linus Torvalds <torvalds@linux-foundation.org>
-Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        "Rafael J. Wysocki" <rafael@kernel.org>,
-        linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: [PATCH 01/24] fs: refactor do_mount
-Date:   Tue, 21 Jul 2020 18:27:55 +0200
-Message-Id: <20200721162818.197315-2-hch@lst.de>
-X-Mailer: git-send-email 2.27.0
-In-Reply-To: <20200721162818.197315-1-hch@lst.de>
-References: <20200721162818.197315-1-hch@lst.de>
+        with ESMTP id S1728268AbgGUQth (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 21 Jul 2020 12:49:37 -0400
+Received: from mail-lj1-x244.google.com (mail-lj1-x244.google.com [IPv6:2a00:1450:4864:20::244])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3E80FC061794
+        for <linux-api@vger.kernel.org>; Tue, 21 Jul 2020 09:49:37 -0700 (PDT)
+Received: by mail-lj1-x244.google.com with SMTP id r19so24736608ljn.12
+        for <linux-api@vger.kernel.org>; Tue, 21 Jul 2020 09:49:37 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linux-foundation.org; s=google;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=cfw0I9KLEinugvOkAIz5pYOKJ30/9U2i4w2l/E0VlLI=;
+        b=PjZtpMWcBcYWc/PE2aBDgylpCarGxoRxa+Aq0zab6N7GaIbKRzPu2GNf3RxtSC05dA
+         0K7/GHfK0uf/8tRqEMTILPd7F3g3dNdNNYY6ahsv+8BW0iD5iZnwvyqTPsbIeqjdBP3p
+         khN1GHy7kDI63rJCnCaLHtNH6mG1r6HGYxAjk=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=cfw0I9KLEinugvOkAIz5pYOKJ30/9U2i4w2l/E0VlLI=;
+        b=EeR7iT6jGJxj+7QWgbWLJxCR4PlnKZ1xqKN8LR+KG2nj7prBxmLMjQXL6wk2Cmozdu
+         bzRYgKAOrS4h+TnEGNQIyCq+8dcPUKb88ChUUY5bZa3d5gvcR0x6vKn8D0oXOqqqv61z
+         qWmUQ3EubkR2W27I0DNYRui3aTdatAgQUPpXEcVNFWE3bkNVYNhOxaONyCNQrV29eZvP
+         1RfMlqKcxvd1dHJQQg0KPw/kv/cZEkk8d/dDe6C9PBfBeTfI7qFB2jlj13LkDJKK3w6l
+         VFRUMUPS0+9eNiFvVJwjNhZxDbvSN67b9Ya7IaIx8dvv4DEX4pT1CtVlj3rZx/aM0zgb
+         Xmew==
+X-Gm-Message-State: AOAM530BcPycOV1N6CO1uxy3jHSsqfOTGuCLbIek/PWYdlaZorMXnmgq
+        DMM5erCFDROMIRiqTXZw0X7p9sHxK+g=
+X-Google-Smtp-Source: ABdhPJxx5Bi08DnTmMQhe0zG3HO5Ivj5DQvzIEJv1YqjETt0kI3qCSY9ISCELocP5Yr7gN+o4lmlAA==
+X-Received: by 2002:a2e:8786:: with SMTP id n6mr13871032lji.428.1595350175286;
+        Tue, 21 Jul 2020 09:49:35 -0700 (PDT)
+Received: from mail-lj1-f169.google.com (mail-lj1-f169.google.com. [209.85.208.169])
+        by smtp.gmail.com with ESMTPSA id r15sm4701979ljd.130.2020.07.21.09.49.33
+        for <linux-api@vger.kernel.org>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 21 Jul 2020 09:49:34 -0700 (PDT)
+Received: by mail-lj1-f169.google.com with SMTP id e8so24849610ljb.0
+        for <linux-api@vger.kernel.org>; Tue, 21 Jul 2020 09:49:33 -0700 (PDT)
+X-Received: by 2002:a2e:760b:: with SMTP id r11mr13904367ljc.285.1595350173585;
+ Tue, 21 Jul 2020 09:49:33 -0700 (PDT)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
+References: <20200721162818.197315-1-hch@lst.de> <20200721162818.197315-6-hch@lst.de>
+In-Reply-To: <20200721162818.197315-6-hch@lst.de>
+From:   Linus Torvalds <torvalds@linux-foundation.org>
+Date:   Tue, 21 Jul 2020 09:49:17 -0700
+X-Gmail-Original-Message-ID: <CAHk-=wi0GQqAq6VSY=O2iWnPuuS54TkyRBH5B9Ca0Kg5A9d2aA@mail.gmail.com>
+Message-ID: <CAHk-=wi0GQqAq6VSY=O2iWnPuuS54TkyRBH5B9Ca0Kg5A9d2aA@mail.gmail.com>
+Subject: Re: [PATCH 05/24] devtmpfs: open code ksys_chdir and ksys_chroot
+To:     Christoph Hellwig <hch@lst.de>
+Cc:     Al Viro <viro@zeniv.linux.org.uk>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        "Rafael J. Wysocki" <rafael@kernel.org>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        linux-raid@vger.kernel.org,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Factor out a path_mount helper that takes a struct path * instead of the
-actual file name.  This will allow to convert the init and devtmpfs code
-to properly mount based on a kernel pointer instead of relying on the
-implicit set_fs(KERNEL_DS) during early init.
+On Tue, Jul 21, 2020 at 9:28 AM Christoph Hellwig <hch@lst.de> wrote:
+>
+> +
+> +       /* traverse into overmounted root and then chroot to it */
+> +       if (!kern_path("/..", LOOKUP_FOLLOW | LOOKUP_DIRECTORY, &path) &&
+> +           !inode_permission(path.dentry->d_inode, MAY_EXEC | MAY_CHDIR) &&
+> +           ns_capable(current_user_ns(), CAP_SYS_CHROOT) &&
+> +           !security_path_chroot(&path)) {
+> +               set_fs_pwd(current->fs, &path);
+> +               set_fs_root(current->fs, &path);
+> +       }
+> +       path_put(&path);
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- fs/namespace.c | 67 ++++++++++++++++++++++++++------------------------
- 1 file changed, 35 insertions(+), 32 deletions(-)
+This looks wrong.
 
-diff --git a/fs/namespace.c b/fs/namespace.c
-index f30ed401cc6d7a..6f8234f74bed90 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -3115,12 +3115,11 @@ char *copy_mount_string(const void __user *data)
-  * Therefore, if this magic number is present, it carries no information
-  * and must be discarded.
-  */
--long do_mount(const char *dev_name, const char __user *dir_name,
-+static int path_mount(const char *dev_name, struct path *path,
- 		const char *type_page, unsigned long flags, void *data_page)
- {
--	struct path path;
- 	unsigned int mnt_flags = 0, sb_flags;
--	int retval = 0;
-+	int ret;
- 
- 	/* Discard magic */
- 	if ((flags & MS_MGC_MSK) == MS_MGC_VAL)
-@@ -3133,19 +3132,13 @@ long do_mount(const char *dev_name, const char __user *dir_name,
- 	if (flags & MS_NOUSER)
- 		return -EINVAL;
- 
--	/* ... and get the mountpoint */
--	retval = user_path_at(AT_FDCWD, dir_name, LOOKUP_FOLLOW, &path);
--	if (retval)
--		return retval;
--
--	retval = security_sb_mount(dev_name, &path,
--				   type_page, flags, data_page);
--	if (!retval && !may_mount())
--		retval = -EPERM;
--	if (!retval && (flags & SB_MANDLOCK) && !may_mandlock())
--		retval = -EPERM;
--	if (retval)
--		goto dput_out;
-+	ret = security_sb_mount(dev_name, path, type_page, flags, data_page);
-+	if (ret)
-+		return ret;
-+	if (!may_mount())
-+		return -EPERM;
-+	if ((flags & SB_MANDLOCK) && !may_mandlock())
-+		return -EPERM;
- 
- 	/* Default to relatime unless overriden */
- 	if (!(flags & MS_NOATIME))
-@@ -3172,7 +3165,7 @@ long do_mount(const char *dev_name, const char __user *dir_name,
- 	    ((flags & (MS_NOATIME | MS_NODIRATIME | MS_RELATIME |
- 		       MS_STRICTATIME)) == 0)) {
- 		mnt_flags &= ~MNT_ATIME_MASK;
--		mnt_flags |= path.mnt->mnt_flags & MNT_ATIME_MASK;
-+		mnt_flags |= path->mnt->mnt_flags & MNT_ATIME_MASK;
- 	}
- 
- 	sb_flags = flags & (SB_RDONLY |
-@@ -3185,22 +3178,32 @@ long do_mount(const char *dev_name, const char __user *dir_name,
- 			    SB_I_VERSION);
- 
- 	if ((flags & (MS_REMOUNT | MS_BIND)) == (MS_REMOUNT | MS_BIND))
--		retval = do_reconfigure_mnt(&path, mnt_flags);
--	else if (flags & MS_REMOUNT)
--		retval = do_remount(&path, flags, sb_flags, mnt_flags,
--				    data_page);
--	else if (flags & MS_BIND)
--		retval = do_loopback(&path, dev_name, flags & MS_REC);
--	else if (flags & (MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE))
--		retval = do_change_type(&path, flags);
--	else if (flags & MS_MOVE)
--		retval = do_move_mount_old(&path, dev_name);
--	else
--		retval = do_new_mount(&path, type_page, sb_flags, mnt_flags,
--				      dev_name, data_page);
--dput_out:
-+		return do_reconfigure_mnt(path, mnt_flags);
-+	if (flags & MS_REMOUNT)
-+		return do_remount(path, flags, sb_flags, mnt_flags, data_page);
-+	if (flags & MS_BIND)
-+		return do_loopback(path, dev_name, flags & MS_REC);
-+	if (flags & (MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE))
-+		return do_change_type(path, flags);
-+	if (flags & MS_MOVE)
-+		return do_move_mount_old(path, dev_name);
-+
-+	return do_new_mount(path, type_page, sb_flags, mnt_flags, dev_name,
-+			    data_page);
-+}
-+
-+long do_mount(const char *dev_name, const char __user *dir_name,
-+		const char *type_page, unsigned long flags, void *data_page)
-+{
-+	struct path path;
-+	int ret;
-+
-+	ret = user_path_at(AT_FDCWD, dir_name, LOOKUP_FOLLOW, &path);
-+	if (ret)
-+		return ret;
-+	ret = path_mount(dev_name, &path, type_page, flags, data_page);
- 	path_put(&path);
--	return retval;
-+	return ret;
- }
- 
- static struct ucounts *inc_mnt_namespaces(struct user_namespace *ns)
--- 
-2.27.0
+You're doing "path_put()" even if kern_path() didn't succeed.
 
+As far as I can tell, that will either put some uninitialized garbage
+and cause an oops, or put something that has already been released by
+the failure path.
+
+Maybe that doesn't happen in practice in this case, but it's still
+very very wrong.
+
+Plus you shouldn't have those kinds of insanely complex if-statements
+in the first place. That was what caused the bug - trying to be
+clever, instead of writing clear code.
+
+I'm not liking how I'm finding fundamental mistakes in patches that
+_should_ be trivial conversions with no semantic changes.
+
+               Linus
