@@ -6,24 +6,24 @@ X-Spam-Status: No, score=-4.0 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EDCC0C433FE
-	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 17:03:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C435CC433E6
+	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 17:03:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D769B22BF5
-	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 17:03:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AB036207DD
+	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 17:03:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729778AbgGURDc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 21 Jul 2020 13:03:32 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49912 "EHLO
+        id S1730747AbgGURDs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 21 Jul 2020 13:03:48 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49498 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730259AbgGURBB (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 21 Jul 2020 13:01:01 -0400
+        with ESMTP id S1730410AbgGUQ7u (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 21 Jul 2020 12:59:50 -0400
 Received: from ZenIV.linux.org.uk (zeniv.linux.org.uk [IPv6:2002:c35c:fd02::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8E770C061794;
-        Tue, 21 Jul 2020 10:01:01 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 48B4AC061794;
+        Tue, 21 Jul 2020 09:58:27 -0700 (PDT)
 Received: from viro by ZenIV.linux.org.uk with local (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1jxvdO-00HJt3-0L; Tue, 21 Jul 2020 17:00:54 +0000
-Date:   Tue, 21 Jul 2020 18:00:53 +0100
+        id 1jxvay-00HJp8-7j; Tue, 21 Jul 2020 16:58:24 +0000
+Date:   Tue, 21 Jul 2020 17:58:24 +0100
 From:   Al Viro <viro@zeniv.linux.org.uk>
 To:     Christoph Hellwig <hch@lst.de>
 Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
@@ -31,46 +31,25 @@ Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
         "Rafael J. Wysocki" <rafael@kernel.org>,
         linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
         linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: Re: [PATCH 21/24] init: add an init_symlink helper
-Message-ID: <20200721170053.GV2786714@ZenIV.linux.org.uk>
+Subject: Re: [PATCH 12/24] init: add an init_mount helper
+Message-ID: <20200721165824.GU2786714@ZenIV.linux.org.uk>
 References: <20200721162818.197315-1-hch@lst.de>
- <20200721162818.197315-22-hch@lst.de>
+ <20200721162818.197315-13-hch@lst.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20200721162818.197315-22-hch@lst.de>
+In-Reply-To: <20200721162818.197315-13-hch@lst.de>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Jul 21, 2020 at 06:28:15PM +0200, Christoph Hellwig wrote:
-> Add a simple helper to symlink with a kernel space file name and switch
-> the early init code over to it.  Remove the now unused ksys_symlink.
+On Tue, Jul 21, 2020 at 06:28:06PM +0200, Christoph Hellwig wrote:
+> Like do_mount, but takes a kernel pointer for the destination path.
+> Switch over the mounts in the init code and devtmpfs to it, which
+> just happen to work due to the implicit set_fs(KERNEL_DS) during early
+> init right now.
 
-> +int __init init_symlink(const char *oldname, const char *newname)
-> +{
-> +	struct filename *from = getname_kernel(oldname);
+>  init/fs.c               | 20 ++++++++++++++++++++
 
-What the hell for?  You are only using from ->name later.
-
-> +	struct dentry *dentry;
-> +	struct path path;
-> +	int error;
-> +
-> +	if (IS_ERR(from))
-> +		return PTR_ERR(from);
-> +	dentry = kern_path_create(AT_FDCWD, newname, &path, 0);
-> +	error = PTR_ERR(dentry);
-> +	if (IS_ERR(dentry))
-> +		goto out_putname;
-> +	error = security_path_symlink(&path, dentry, from->name);
-> +	if (!error)
-> +		error = vfs_symlink(path.dentry->d_inode, dentry, from->name);
-> +	done_path_create(&path, dentry);
-> +out_putname:
-> +	putname(from);
-> +	return error;
-> +}
-
-And again, the same comment regarding the location of file.
+fs/for_init.c, please.
