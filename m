@@ -4,39 +4,39 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
 	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8A72EC43478
-	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 16:29:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 985ABC43617
+	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 16:30:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6950E207BB
-	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 16:29:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 76C2620771
+	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 16:30:16 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="Pv8FLyKd"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="GH0NkMz6"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730625AbgGUQ34 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 21 Jul 2020 12:29:56 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44700 "EHLO
+        id S1730644AbgGUQaL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 21 Jul 2020 12:30:11 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44674 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730406AbgGUQ2l (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 21 Jul 2020 12:28:41 -0400
+        with ESMTP id S1730363AbgGUQ2d (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 21 Jul 2020 12:28:33 -0400
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 06646C061794;
-        Tue, 21 Jul 2020 09:28:41 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 73CBFC061794;
+        Tue, 21 Jul 2020 09:28:33 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
         References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
         Content-Type:Content-ID:Content-Description;
-        bh=FwUgcI/aJTCiAPeGMUcitua+NYPcU9BQfr/VbJVK/P8=; b=Pv8FLyKdMY/Nei43B5H6l1PVkL
-        e5vlTZHBuEM6XDRSMFEjU2wqgo3rUOIdqnxGgaQuQ2rUh1qjhiiZP2WyNmKMXazzcs19p92gP0O/h
-        hoTC1xBkNfd50uS95P4SdIaYVzG7z3XKUXmiIBvd+n6W9iXLL8xYwF3d36S+4E+A38zw5zQtIyN/p
-        TbjXL7tqnKthIioRAik/OoYV/kNTppTAi2hROCKCOJ5VGymWT+LKWip3Th6ALEnZjA1bON+qS252q
-        A0JG89rdeMg0NCykB6Srvc3P2xU265ZMiGSawAsXRTiyloG3G+/JDAVFz1ugl0AY7cObmnO1pc0cS
-        AaboryBQ==;
+        bh=wH1km2ojPC19iQ5ljU6mKThZqRhQ0p6SNiSca9bvcb4=; b=GH0NkMz6ei8q6l4DlcO+HNjt9a
+        OcjPPmJh+ItgP2J9NNWWNz1DuJ6ilDSas+AjjbddkiFPT4UJOnECc4Qd4B2HOOfqVcPm0BOxE1dgu
+        aDrvxKYP3y9QOK18394SopKeCB9DTODNAIjiYIPduFgTBBAds5CuCk0PKKNhhBLETwCEPg2bq+I8L
+        fiFL4QIRZmj09L+jWE1KefMdErF8G2jorTsKoZKku0C8tWPX0mABDUubgM/3QDc1zVDpCDMuXb7Gy
+        eJ2tEHaQ/U0sAmaaNLi03V8VNAidrt24L1Rya9H48wp75oxWg97cEhJ3vCnIZf08j9Ekga/qjx+S+
+        cXJO9Aug==;
 Received: from [2001:4bb8:18c:2acc:5b1c:6483:bd6d:e406] (helo=localhost)
         by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1jxv89-0007Tt-Tk; Tue, 21 Jul 2020 16:28:38 +0000
+        id 1jxv80-0007SH-Pj; Tue, 21 Jul 2020 16:28:29 +0000
 From:   Christoph Hellwig <hch@lst.de>
 To:     Al Viro <viro@zeniv.linux.org.uk>,
         Linus Torvalds <torvalds@linux-foundation.org>
@@ -44,9 +44,9 @@ Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         "Rafael J. Wysocki" <rafael@kernel.org>,
         linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
         linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: [PATCH 12/24] init: add an init_mount helper
-Date:   Tue, 21 Jul 2020 18:28:06 +0200
-Message-Id: <20200721162818.197315-13-hch@lst.de>
+Subject: [PATCH 07/24] init: initialize ramdisk_execute_command at compile time
+Date:   Tue, 21 Jul 2020 18:28:01 +0200
+Message-Id: <20200721162818.197315-8-hch@lst.de>
 X-Mailer: git-send-email 2.27.0
 In-Reply-To: <20200721162818.197315-1-hch@lst.de>
 References: <20200721162818.197315-1-hch@lst.de>
@@ -58,138 +58,39 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Like do_mount, but takes a kernel pointer for the destination path.
-Switch over the mounts in the init code and devtmpfs to it, which
-just happen to work due to the implicit set_fs(KERNEL_DS) during early
-init right now.
+Set ramdisk_execute_command to "/init" at compile time.  The command
+line can still override it, but this saves a few instructions and
+removes a NULL check.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- init/Makefile           |  2 +-
- init/do_mounts.c        |  8 ++++----
- init/do_mounts.h        |  3 +++
- init/do_mounts_initrd.c |  6 +++---
- init/fs.c               | 20 ++++++++++++++++++++
- 5 files changed, 31 insertions(+), 8 deletions(-)
- create mode 100644 init/fs.c
+ init/main.c | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
 
-diff --git a/init/Makefile b/init/Makefile
-index 6bc37f64b3617c..7d4b57d3cf7eac 100644
---- a/init/Makefile
-+++ b/init/Makefile
-@@ -5,7 +5,7 @@
+diff --git a/init/main.c b/init/main.c
+index db0621dfbb0468..c2c9143db96795 100644
+--- a/init/main.c
++++ b/init/main.c
+@@ -154,7 +154,7 @@ static bool initargs_found;
+ #endif
  
- ccflags-y := -fno-function-sections -fno-data-sections
+ static char *execute_command;
+-static char *ramdisk_execute_command;
++static char *ramdisk_execute_command = "/init";
  
--obj-y                          := main.o version.o mounts.o
-+obj-y                          := main.o version.o fs.o mounts.o
- ifneq ($(CONFIG_BLK_DEV_INITRD),y)
- obj-y                          += noinitramfs.o
- else
-diff --git a/init/do_mounts.c b/init/do_mounts.c
-index 4f4ceb35805503..4812e21d149cab 100644
---- a/init/do_mounts.c
-+++ b/init/do_mounts.c
-@@ -395,16 +395,16 @@ static int __init do_mount_root(const char *name, const char *fs,
- 	int ret;
- 
- 	if (data) {
--		/* do_mount() requires a full page as fifth argument */
-+		/* init_mount() requires a full page as fifth argument */
- 		p = alloc_page(GFP_KERNEL);
- 		if (!p)
- 			return -ENOMEM;
- 		data_page = page_address(p);
--		/* zero-pad. do_mount() will make sure it's terminated */
-+		/* zero-pad. init_mount() will make sure it's terminated */
- 		strncpy(data_page, data, PAGE_SIZE);
- 	}
- 
--	ret = do_mount(name, "/root", fs, flags, data_page);
-+	ret = init_mount(name, "/root", fs, flags, data_page);
- 	if (ret)
- 		goto out;
- 
-@@ -628,7 +628,7 @@ void __init prepare_namespace(void)
- 	mount_root();
- out:
- 	devtmpfs_mount();
--	do_mount(".", "/", NULL, MS_MOVE, NULL);
-+	init_mount(".", "/", NULL, MS_MOVE, NULL);
- 	ksys_chroot(".");
- }
- 
-diff --git a/init/do_mounts.h b/init/do_mounts.h
-index 15d256658a3093..ce4f95fff6bc16 100644
---- a/init/do_mounts.h
-+++ b/init/do_mounts.h
-@@ -9,6 +9,9 @@
- #include <linux/major.h>
- #include <linux/root_dev.h>
- 
-+int __init init_mount(const char *dev_name, const char *dir_name,
-+		const char *type_page, unsigned long flags, void *data_page);
-+
- void  mount_block_root(char *name, int flags);
- void  mount_root(void);
- void prepare_namespace(void);
-diff --git a/init/do_mounts_initrd.c b/init/do_mounts_initrd.c
-index 3fabbc82513506..63a3eebd36e76b 100644
---- a/init/do_mounts_initrd.c
-+++ b/init/do_mounts_initrd.c
-@@ -63,7 +63,7 @@ static int __init init_linuxrc(struct subprocess_info *info, struct cred *new)
- 	console_on_rootfs();
- 	/* move initrd over / and chdir/chroot in initrd root */
- 	ksys_chdir("/root");
--	do_mount(".", "/", NULL, MS_MOVE, NULL);
-+	init_mount(".", "/", NULL, MS_MOVE, NULL);
- 	ksys_chroot(".");
- 	ksys_setsid();
- 	return 0;
-@@ -100,7 +100,7 @@ static void __init handle_initrd(void)
- 	current->flags &= ~PF_FREEZER_SKIP;
- 
- 	/* move initrd to rootfs' /old */
--	do_mount("..", ".", NULL, MS_MOVE, NULL);
-+	init_mount("..", ".", NULL, MS_MOVE, NULL);
- 	/* switch root and cwd back to / of rootfs */
- 	ksys_chroot("..");
- 
-@@ -114,7 +114,7 @@ static void __init handle_initrd(void)
- 	mount_root();
- 
- 	printk(KERN_NOTICE "Trying to move old root to /initrd ... ");
--	error = do_mount("/old", "/root/initrd", NULL, MS_MOVE, NULL);
-+	error = init_mount("/old", "/root/initrd", NULL, MS_MOVE, NULL);
- 	if (!error)
- 		printk("okay\n");
- 	else {
-diff --git a/init/fs.c b/init/fs.c
-new file mode 100644
-index 00000000000000..73423f5461f934
---- /dev/null
-+++ b/init/fs.c
-@@ -0,0 +1,20 @@
-+// SPDX-License-Identifier: GPL-2.0
-+#include <linux/init.h>
-+#include <linux/mount.h>
-+#include <linux/namei.h>
-+#include <linux/fs.h>
-+#include "do_mounts.h"
-+
-+int __init init_mount(const char *dev_name, const char *dir_name,
-+		const char *type_page, unsigned long flags, void *data_page)
-+{
-+	struct path path;
-+	int ret;
-+
-+	ret = kern_path(dir_name, LOOKUP_FOLLOW, &path);
-+	if (ret)
-+		return ret;
-+	ret = path_mount(dev_name, &path, type_page, flags, data_page);
-+	path_put(&path);
-+	return ret;
-+}
+ /*
+  * Used to generate warnings if static_key manipulation functions are used
+@@ -1514,10 +1514,6 @@ static noinline void __init kernel_init_freeable(void)
+ 	 * check if there is an early userspace init.  If yes, let it do all
+ 	 * the work
+ 	 */
+-
+-	if (!ramdisk_execute_command)
+-		ramdisk_execute_command = "/init";
+-
+ 	if (ksys_access((const char __user *)
+ 			ramdisk_execute_command, 0) != 0) {
+ 		ramdisk_execute_command = NULL;
 -- 
 2.27.0
 
