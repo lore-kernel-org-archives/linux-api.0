@@ -2,177 +2,200 @@ Return-Path: <SRS0=QVgP=BA=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C43B5C433E3
-	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 15:59:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 16275C433F8
+	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 16:29:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9F7672077D
-	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 15:59:07 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E53C6207CD
+	for <linux-api@archiver.kernel.org>; Tue, 21 Jul 2020 16:29:04 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cy/CtUEZ"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="MtzFfkvT"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726890AbgGUP7E (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 21 Jul 2020 11:59:04 -0400
-Received: from us-smtp-delivery-1.mimecast.com ([207.211.31.120]:54226 "EHLO
-        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1727058AbgGUP7D (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 21 Jul 2020 11:59:03 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1595347141;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=dgPUhH0r+sKpeUc9BKumgQDPz2ogAxxmhche9Bz8CLg=;
-        b=cy/CtUEZ479MMrDC2RrEHxk0Bqasvq+bsA4KNHktokhvaOeW9phYETPWa0fYRGcPKhuyAL
-        Us9Syvf4Gz5syuBK0hDlQlP8fksxEeDXXfLceS44HjHLXPdRJrjWjMhXDPJ2hkS4qI2ola
-        ZHxDu+mNNOcmn9cXzGABywMJjSBBF0Y=
-Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
- [209.85.128.69]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-451-EXmy8qvnOc6KuCrinetdbw-1; Tue, 21 Jul 2020 11:58:59 -0400
-X-MC-Unique: EXmy8qvnOc6KuCrinetdbw-1
-Received: by mail-wm1-f69.google.com with SMTP id b13so1396996wme.9
-        for <linux-api@vger.kernel.org>; Tue, 21 Jul 2020 08:58:59 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=dgPUhH0r+sKpeUc9BKumgQDPz2ogAxxmhche9Bz8CLg=;
-        b=P3u+jnq3m36FXQUTsYIQntCEJtCewu3FkGtzLVOJ5+3aDPIJdEadTDSQOvox28Vwu5
-         SFae6S5FCPKJXv0bmkdSD96iMoc4kELOEJuV6xHu03PmLIMO2deZQ6zANH74qUeZtsBf
-         w5tyfS1pPOMYK1oShaRBXMPfjM5dD1ZWcZ7LbCnS0B9NtazdS49OuGU2Czj5PhfUDXRe
-         JxG46M5zOj+5dWx197R0et0lJZifHrarjiKMFvjeMVo1qYFUMKF5g89KrjCr4WS1G3er
-         y45eF/S6gb6JPXoviB82DTdSOQRJo/Z6TFI8ZJIdVoaNE620xlRgDjr6cKOBoZb6sYtS
-         mwJQ==
-X-Gm-Message-State: AOAM532V8t+5gSmex9fM00xpP8F+bAxCUl8naEg2v4xwkXfjP85s8dCD
-        nocsiEgmbtDEJPxEr4Muv4WnkVmTCk4quHOFriuAef5Q7bP79FaGSvpor2vyudSPJuQZSBw3Q1A
-        mF+92Y3KVDigMM31gWRrd
-X-Received: by 2002:a1c:bc8a:: with SMTP id m132mr4446945wmf.1.1595347138039;
-        Tue, 21 Jul 2020 08:58:58 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJzwyau1D8Vflmll5c/lpT+mSNiQWL/z4fvqThThRxPJq+0YehBisCCUrYwQJ2sj2QZLWN0sYg==
-X-Received: by 2002:a1c:bc8a:: with SMTP id m132mr4446919wmf.1.1595347137664;
-        Tue, 21 Jul 2020 08:58:57 -0700 (PDT)
-Received: from steredhat ([5.180.207.22])
-        by smtp.gmail.com with ESMTPSA id u2sm3741424wml.16.2020.07.21.08.58.52
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 21 Jul 2020 08:58:56 -0700 (PDT)
-Date:   Tue, 21 Jul 2020 17:58:48 +0200
-From:   Stefano Garzarella <sgarzare@redhat.com>
-To:     Andy Lutomirski <luto@kernel.org>
-Cc:     Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@lst.de>,
-        Kees Cook <keescook@chromium.org>,
-        Pavel Begunkov <asml.silence@gmail.com>,
-        Miklos Szeredi <miklos@szeredi.hu>,
-        Matthew Wilcox <willy@infradead.org>,
-        Jann Horn <jannh@google.com>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        strace-devel@lists.strace.io, io-uring@vger.kernel.org,
-        Linux API <linux-api@vger.kernel.org>,
-        Linux FS Devel <linux-fsdevel@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Stefan Hajnoczi <stefanha@redhat.com>
-Subject: Re: strace of io_uring events?
-Message-ID: <20200721155848.32xtze5ntvcmjv63@steredhat>
-References: <D9FAB37B-D059-4137-A115-616237D78640@amacapital.net>
- <20200715171130.GG12769@casper.infradead.org>
- <7c09f6af-653f-db3f-2378-02dca2bc07f7@gmail.com>
- <CAJfpegt9=p4uo5U2GXqc-rwqOESzZCWAkGMRTY1r8H6fuXx96g@mail.gmail.com>
- <48cc7eea-5b28-a584-a66c-4eed3fac5e76@gmail.com>
- <202007151511.2AA7718@keescook>
- <20200716131404.bnzsaarooumrp3kx@steredhat>
- <202007160751.ED56C55@keescook>
- <20200717080157.ezxapv7pscbqykhl@steredhat.lan>
- <CALCETrXSPdiVCgh3h=q7w9RyiKnp-=8jOHoFHX=an0cWqK7bzQ@mail.gmail.com>
+        id S1730508AbgGUQ3E (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 21 Jul 2020 12:29:04 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44756 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1730481AbgGUQ25 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 21 Jul 2020 12:28:57 -0400
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1D4C6C0619DA;
+        Tue, 21 Jul 2020 09:28:57 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
+        References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
+        Content-Type:Content-ID:Content-Description;
+        bh=4CQtdawBFPCp4dIcmnuJlWfUriaLZ1ns8fesifVn1jA=; b=MtzFfkvT6TFuRTucMyiBBhH3ng
+        0sqYmiMyIsZzVz/E1Eo9nRzX7NNkdUc5PKFVyl9oUSmqUJmZ/BsZNqFqQqKrZsSEEYN8TooV2c4qP
+        pevYIkAdt7IkA7YNOeE4AF7JQyg8jHHvAGIt45/JKhnmZ5SqMIma31GlbKrKXuN0KLYnFPuXx/CK2
+        iZEMJWmqgv+g5v+iHzGtOx1X4C1dtdjzWL+yqPSUS8ExPmZaZF3USO+6HJQn10PAWUSXptFPgIftu
+        hIZ4+2FKKew2kKH0uPAjdbMRUvLCIYH8uOs5E8nCltNxPMiuxlCTIUUDLbhCy5JH+dLN/xHf0MO+6
+        4Wm/wD2g==;
+Received: from [2001:4bb8:18c:2acc:5b1c:6483:bd6d:e406] (helo=localhost)
+        by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
+        id 1jxv8N-0007Wy-Kp; Tue, 21 Jul 2020 16:28:52 +0000
+From:   Christoph Hellwig <hch@lst.de>
+To:     Al Viro <viro@zeniv.linux.org.uk>,
+        Linus Torvalds <torvalds@linux-foundation.org>
+Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        "Rafael J. Wysocki" <rafael@kernel.org>,
+        linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
+Subject: [PATCH 20/24] init: add an init_link helper
+Date:   Tue, 21 Jul 2020 18:28:14 +0200
+Message-Id: <20200721162818.197315-21-hch@lst.de>
+X-Mailer: git-send-email 2.27.0
+In-Reply-To: <20200721162818.197315-1-hch@lst.de>
+References: <20200721162818.197315-1-hch@lst.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <CALCETrXSPdiVCgh3h=q7w9RyiKnp-=8jOHoFHX=an0cWqK7bzQ@mail.gmail.com>
+Content-Transfer-Encoding: 8bit
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Jul 21, 2020 at 08:27:34AM -0700, Andy Lutomirski wrote:
-> On Fri, Jul 17, 2020 at 1:02 AM Stefano Garzarella <sgarzare@redhat.com> wrote:
-> >
-> > On Thu, Jul 16, 2020 at 08:12:35AM -0700, Kees Cook wrote:
-> > > On Thu, Jul 16, 2020 at 03:14:04PM +0200, Stefano Garzarella wrote:
-> 
-> > > access (IIUC) is possible without actually calling any of the io_uring
-> > > syscalls. Is that correct? A process would receive an fd (via SCM_RIGHTS,
-> > > pidfd_getfd, or soon seccomp addfd), and then call mmap() on it to gain
-> > > access to the SQ and CQ, and off it goes? (The only glitch I see is
-> > > waking up the worker thread?)
-> >
-> > It is true only if the io_uring istance is created with SQPOLL flag (not the
-> > default behaviour and it requires CAP_SYS_ADMIN). In this case the
-> > kthread is created and you can also set an higher idle time for it, so
-> > also the waking up syscall can be avoided.
-> 
-> I stared at the io_uring code for a while, and I'm wondering if we're
-> approaching this the wrong way. It seems to me that most of the
-> complications here come from the fact that io_uring SQEs don't clearly
-> belong to any particular security principle.  (We have struct creds,
-> but we don't really have a task or mm.)  But I'm also not convinced
-> that io_uring actually supports cross-mm submission except by accident
-> -- as it stands, unless a user is very careful to only submit SQEs
-> that don't use user pointers, the results will be unpredictable.
-> Perhaps we can get away with this:
-> 
-> diff --git a/fs/io_uring.c b/fs/io_uring.c
-> index 74bc4a04befa..92266f869174 100644
-> --- a/fs/io_uring.c
-> +++ b/fs/io_uring.c
-> @@ -7660,6 +7660,20 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int,
-> fd, u32, to_submit,
->      if (!percpu_ref_tryget(&ctx->refs))
->          goto out_fput;
-> 
-> +    if (unlikely(current->mm != ctx->sqo_mm)) {
-> +        /*
-> +         * The mm used to process SQEs will be current->mm or
-> +         * ctx->sqo_mm depending on which submission path is used.
-> +         * It's also unclear who is responsible for an SQE submitted
-> +         * out-of-process from a security and auditing perspective.
-> +         *
-> +         * Until a real usecase emerges and there are clear semantics
-> +         * for out-of-process submission, disallow it.
-> +         */
-> +        ret = -EACCES;
-> +        goto out;
-> +    }
-> +
->      /*
->       * For SQ polling, the thread will do all submissions and completions.
->       * Just return the requested submit count, and wake the thread if
-> 
-> If we can do that, then we could bind seccomp-like io_uring filters to
-> an mm, and we get obvious semantics that ought to cover most of the
-> bases.
-> 
-> Jens, Christoph?
-> 
-> Stefano, what's your intended usecase for your restriction patchset?
-> 
+Add a simple helper to link with a kernel space file name and switch
+the early init code over to it.  Remove the now unused ksys_link.
 
-Hi Andy,
-my use case concerns virtualization. The idea, that I described in the
-proposal of io-uring restrictions [1], is to share io_uring CQ and SQ queues
-with a guest VM for block operations.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ fs/internal.h            |  3 +--
+ fs/namei.c               |  4 ++--
+ include/linux/syscalls.h |  9 ---------
+ init/do_mounts.h         |  1 +
+ init/fs.c                | 33 +++++++++++++++++++++++++++++++++
+ init/initramfs.c         |  2 +-
+ 6 files changed, 38 insertions(+), 14 deletions(-)
 
-In the PoC that I realized, there is a block device driver in the guest that
-uses io_uring queues coming from the host to submit block requests.
-
-Since the guest is not trusted, we need restrictions to allow only
-a subset of syscalls on a subset of file descriptors and memory.
-
-
-Cheers,
-Stefano
-
-[1] https://lore.kernel.org/io-uring/20200609142406.upuwpfmgqjeji4lc@steredhat/
+diff --git a/fs/internal.h b/fs/internal.h
+index 585968c0286cf7..9a1e937e484647 100644
+--- a/fs/internal.h
++++ b/fs/internal.h
+@@ -69,8 +69,7 @@ long do_rmdir(int dfd, struct filename *name);
+ long do_unlinkat(int dfd, struct filename *name);
+ long do_symlinkat(const char __user *oldname, int newdfd,
+ 		  const char __user *newname);
+-int do_linkat(int olddfd, const char __user *oldname, int newdfd,
+-	      const char __user *newname, int flags);
++int may_linkat(struct path *link);
+ 
+ /*
+  * namespace.c
+diff --git a/fs/namei.c b/fs/namei.c
+index d75a6039ae3966..13de64c6be7640 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -1024,7 +1024,7 @@ static bool safe_hardlink_source(struct inode *inode)
+  *
+  * Returns 0 if successful, -ve on error.
+  */
+-static int may_linkat(struct path *link)
++int may_linkat(struct path *link)
+ {
+ 	struct inode *inode = link->dentry->d_inode;
+ 
+@@ -4086,7 +4086,7 @@ EXPORT_SYMBOL(vfs_link);
+  * with linux 2.0, and to avoid hard-linking to directories
+  * and other special files.  --ADM
+  */
+-int do_linkat(int olddfd, const char __user *oldname, int newdfd,
++static int do_linkat(int olddfd, const char __user *oldname, int newdfd,
+ 	      const char __user *newname, int flags)
+ {
+ 	struct dentry *new_dentry;
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index a2779638e41445..4b18b91ce46573 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -1295,15 +1295,6 @@ static inline long ksys_mknod(const char __user *filename, umode_t mode,
+ 	return do_mknodat(AT_FDCWD, filename, mode, dev);
+ }
+ 
+-extern int do_linkat(int olddfd, const char __user *oldname, int newdfd,
+-		     const char __user *newname, int flags);
+-
+-static inline long ksys_link(const char __user *oldname,
+-			     const char __user *newname)
+-{
+-	return do_linkat(AT_FDCWD, oldname, AT_FDCWD, newname, 0);
+-}
+-
+ extern int do_fchownat(int dfd, const char __user *filename, uid_t user,
+ 		       gid_t group, int flag);
+ 
+diff --git a/init/do_mounts.h b/init/do_mounts.h
+index b886aaa0d09716..c80105e47a8e66 100644
+--- a/init/do_mounts.h
++++ b/init/do_mounts.h
+@@ -16,6 +16,7 @@ int __init init_chroot(const char *filename);
+ int __init init_chown(const char *filename, uid_t user, gid_t group, int flags);
+ int __init init_chmod(const char *filename, umode_t mode);
+ int __init init_eaccess(const char *filename);
++int __init init_link(const char *oldname, const char *newname);
+ int __init init_unlink(const char *pathname);
+ int __init init_rmdir(const char *pathname);
+ 
+diff --git a/init/fs.c b/init/fs.c
+index 9929cdd19affbe..fb5fb7aa498485 100644
+--- a/init/fs.c
++++ b/init/fs.c
+@@ -103,6 +103,39 @@ int __init init_eaccess(const char *filename)
+ 	return error;
+ }
+ 
++int __init init_link(const char *oldname, const char *newname)
++{
++	struct dentry *new_dentry;
++	struct path old_path, new_path;
++	int error;
++
++	error = kern_path(oldname, 0, &old_path);
++	if (error)
++		return error;
++
++	new_dentry = kern_path_create(AT_FDCWD, newname, &new_path, 0);
++	error = PTR_ERR(new_dentry);
++	if (IS_ERR(new_dentry))
++		goto out;
++
++	error = -EXDEV;
++	if (old_path.mnt != new_path.mnt)
++		goto out_dput;
++	error = may_linkat(&old_path);
++	if (unlikely(error))
++		goto out_dput;
++	error = security_path_link(old_path.dentry, &new_path, new_dentry);
++	if (error)
++		goto out_dput;
++	error = vfs_link(old_path.dentry, new_path.dentry->d_inode, new_dentry,
++			 NULL);
++out_dput:
++	done_path_create(&new_path, new_dentry);
++out:
++	path_put(&old_path);
++	return error;
++}
++
+ int __init init_unlink(const char *pathname)
+ {
+ 	return do_unlinkat(AT_FDCWD, getname_kernel(pathname));
+diff --git a/init/initramfs.c b/init/initramfs.c
+index 771da27e87afa1..bdc3c0ec5a6c31 100644
+--- a/init/initramfs.c
++++ b/init/initramfs.c
+@@ -318,7 +318,7 @@ static int __init maybe_link(void)
+ 		char *old = find_link(major, minor, ino, mode, collected);
+ 		if (old) {
+ 			clean_path(collected, 0);
+-			return (ksys_link(old, collected) < 0) ? -1 : 1;
++			return (init_link(old, collected) < 0) ? -1 : 1;
+ 		}
+ 	}
+ 	return 0;
+-- 
+2.27.0
 
