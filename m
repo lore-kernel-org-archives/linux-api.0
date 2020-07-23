@@ -2,29 +2,32 @@ Return-Path: <SRS0=H9yV=BC=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-18.0 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0ABFEC433F8
-	for <linux-api@archiver.kernel.org>; Thu, 23 Jul 2020 17:13:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 74E04C4346A
+	for <linux-api@archiver.kernel.org>; Thu, 23 Jul 2020 17:13:21 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DC21D22BF3
-	for <linux-api@archiver.kernel.org>; Thu, 23 Jul 2020 17:13:19 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5DFFD22B47
+	for <linux-api@archiver.kernel.org>; Thu, 23 Jul 2020 17:13:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730247AbgGWRNG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S1726666AbgGWRNG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Thu, 23 Jul 2020 13:13:06 -0400
-Received: from smtp-8fa9.mail.infomaniak.ch ([83.166.143.169]:51929 "EHLO
-        smtp-8fa9.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1730224AbgGWRMp (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 23 Jul 2020 13:12:45 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46372 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1730247AbgGWRMr (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 23 Jul 2020 13:12:47 -0400
+Received: from smtp-bc0f.mail.infomaniak.ch (smtp-bc0f.mail.infomaniak.ch [IPv6:2001:1600:3:17::bc0f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A4608C0619E4
+        for <linux-api@vger.kernel.org>; Thu, 23 Jul 2020 10:12:46 -0700 (PDT)
 Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4BCJmp2KKyzlhBv9;
-        Thu, 23 Jul 2020 19:12:42 +0200 (CEST)
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4BCJms3QbTzlhN1y;
+        Thu, 23 Jul 2020 19:12:45 +0200 (CEST)
 Received: from localhost (unknown [94.23.54.103])
-        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4BCJmn5GZ9zlh8T5;
-        Thu, 23 Jul 2020 19:12:41 +0200 (CEST)
+        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4BCJmr6v6jzlh8T5;
+        Thu, 23 Jul 2020 19:12:44 +0200 (CEST)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     linux-kernel@vger.kernel.org
 Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
@@ -62,12 +65,10 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
         linux-integrity@vger.kernel.org,
         linux-security-module@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org,
-        Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>,
-        Randy Dunlap <rdunlap@infradead.org>
-Subject: [PATCH v7 5/7] fs,doc: Enable to enforce noexec mounts or file exec through O_MAYEXEC
-Date:   Thu, 23 Jul 2020 19:12:25 +0200
-Message-Id: <20200723171227.446711-6-mic@digikod.net>
+        linux-fsdevel@vger.kernel.org
+Subject: [PATCH v7 7/7] ima: add policy support for the new file open MAY_OPENEXEC flag
+Date:   Thu, 23 Jul 2020 19:12:27 +0200
+Message-Id: <20200723171227.446711-8-mic@digikod.net>
 X-Mailer: git-send-email 2.28.0.rc1
 In-Reply-To: <20200723171227.446711-1-mic@digikod.net>
 References: <20200723171227.446711-1-mic@digikod.net>
@@ -81,285 +82,116 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Allow for the enforcement of the O_MAYEXEC openat2(2) flag.  Thanks to
-the noexec option from the underlying VFS mount, or to the file execute
-permission, userspace can enforce these execution policies.  This may
-allow script interpreters to check execution permission before reading
-commands from a file, or dynamic linkers to allow shared object loading.
+From: Mimi Zohar <zohar@linux.ibm.com>
 
-Add a new sysctl fs.open_mayexec_enforce to enable system administrators
-to enforce two complementary security policies according to the
-installed system: enforce the noexec mount option, and enforce
-executable file permission.  Indeed, because of compatibility with
-installed systems, only system administrators are able to check that
-this new enforcement is in line with the system mount points and file
-permissions.  A following patch adds documentation.
+The kernel has no way of differentiating between a file containing data
+or code being opened by an interpreter.  The proposed O_MAYEXEC
+openat2(2) flag bridges this gap by defining and enabling the
+MAY_OPENEXEC flag.
 
-Being able to restrict execution also enables to protect the kernel by
-restricting arbitrary syscalls that an attacker could perform with a
-crafted binary or certain script languages.  It also improves multilevel
-isolation by reducing the ability of an attacker to use side channels
-with specific code.  These restrictions can natively be enforced for ELF
-binaries (with the noexec mount option) but require this kernel
-extension to properly handle scripts (e.g., Python, Perl).  To get a
-consistent execution policy, additional memory restrictions should also
-be enforced (e.g. thanks to SELinux).
+This patch adds IMA policy support for the new MAY_OPENEXEC flag.
 
-Because the O_MAYEXEC flag is a meant to enforce a system-wide security
-policy (but not application-centric policies), it does not make sense
-for userland to check the sysctl value.  Indeed, this new flag only
-enables to extend the system ability to enforce a policy thanks to (some
-trusted) userland collaboration.  Moreover, additional security policies
-could be managed by LSMs.  This is a best-effort approach from the
-application developer point of view:
-https://lore.kernel.org/lkml/1477d3d7-4b36-afad-7077-a38f42322238@digikod.net/
+Example:
+measure func=FILE_CHECK mask=^MAY_OPENEXEC
+appraise func=FILE_CHECK appraise_type=imasig mask=^MAY_OPENEXEC
 
 Signed-off-by: Mickaël Salaün <mic@digikod.net>
-Reviewed-by: Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
-Cc: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Jonathan Corbet <corbet@lwn.net>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Randy Dunlap <rdunlap@infradead.org>
+Signed-off-by: Mimi Zohar <zohar@linux.ibm.com>
+Reviewed-by: Lakshmi Ramasubramanian <nramas@linux.microsoft.com>
+Link: https://lore.kernel.org/r/1588167523-7866-3-git-send-email-zohar@linux.ibm.com
 ---
+ Documentation/ABI/testing/ima_policy |  2 +-
+ security/integrity/ima/ima_main.c    |  3 ++-
+ security/integrity/ima/ima_policy.c  | 15 +++++++++++----
+ 3 files changed, 14 insertions(+), 6 deletions(-)
 
-Changes since v6:
-* Allow opening pipes, block devices and character devices with
-  O_MAYEXEC when there is no enforced policy, but forbid any non-regular
-  file opened with O_MAYEXEC otherwise (i.e. for any enforced policy).
-* Add a paragraph about the non-regular files policy.
-* Move path_noexec() calls out of the fast-path (suggested by Kees
-  Cook).
-
-Changes since v5:
-* Remove the static enforcement configuration through Kconfig because it
-  makes the code more simple like this, and because the current sysctl
-  configuration can only be set with CAP_SYS_ADMIN, the same way mount
-  options (i.e. noexec) can be set.  If an harden distro wants to
-  enforce a configuration, it should restrict capabilities or sysctl
-  configuration.  Furthermore, an LSM can easily leverage O_MAYEXEC to
-  fit its need.
-* Move checks from inode_permission() to may_open() and make the error
-  codes more consistent according to file types (in line with a previous
-  commit): opening a directory with O_MAYEXEC returns EISDIR and other
-  non-regular file types may return EACCES.
-* In may_open(), when OMAYEXEC_ENFORCE_FILE is set, replace explicit
-  call to generic_permission() with an artificial MAY_EXEC to avoid
-  double calls.  This makes sense especially when an LSM policy forbids
-  execution of a file.
-* Replace the custom proc_omayexec() with
-  proc_dointvec_minmax_sysadmin(), and then replace the CAP_MAC_ADMIN
-  check with a CAP_SYS_ADMIN one (suggested by Kees Cook and Stephen
-  Smalley).
-* Use BIT() (suggested by Kees Cook).
-* Rename variables (suggested by Kees Cook).
-* Reword the kconfig help.
-* Import the documentation patch (suggested by Kees Cook):
-  https://lore.kernel.org/lkml/20200505153156.925111-6-mic@digikod.net/
-* Update documentation and add LWN.net article.
-
-Changes since v4:
-* Add kernel configuration options to enforce O_MAYEXEC at build time,
-  and disable the sysctl in such case (requested by James Morris).
-* Reword commit message.
-
-Changes since v3:
-* Update comment with O_MAYEXEC.
-
-Changes since v2:
-* Cosmetic changes.
-
-Changes since v1:
-* Move code from Yama to the FS subsystem (suggested by Kees Cook).
-* Make omayexec_inode_permission() static (suggested by Jann Horn).
-* Use mode 0600 for the sysctl.
-* Only match regular files (not directories nor other types), which
-  follows the same semantic as commit 73601ea5b7b1 ("fs/open.c: allow
-  opening only regular files during execve()").
----
- Documentation/admin-guide/sysctl/fs.rst | 49 +++++++++++++++++++++++++
- fs/namei.c                              | 24 ++++++++++++
- include/linux/fs.h                      |  1 +
- kernel/sysctl.c                         | 12 +++++-
- 4 files changed, 84 insertions(+), 2 deletions(-)
-
-diff --git a/Documentation/admin-guide/sysctl/fs.rst b/Documentation/admin-guide/sysctl/fs.rst
-index 2a45119e3331..ce6e2081d3a9 100644
---- a/Documentation/admin-guide/sysctl/fs.rst
-+++ b/Documentation/admin-guide/sysctl/fs.rst
-@@ -37,6 +37,7 @@ Currently, these files are in /proc/sys/fs:
- - inode-nr
- - inode-state
- - nr_open
-+- open_mayexec_enforce
- - overflowuid
- - overflowgid
- - pipe-user-pages-hard
-@@ -165,6 +166,54 @@ system needs to prune the inode list instead of allocating
- more.
+diff --git a/Documentation/ABI/testing/ima_policy b/Documentation/ABI/testing/ima_policy
+index cd572912c593..caca46125fe0 100644
+--- a/Documentation/ABI/testing/ima_policy
++++ b/Documentation/ABI/testing/ima_policy
+@@ -31,7 +31,7 @@ Description:
+ 				[KEXEC_KERNEL_CHECK] [KEXEC_INITRAMFS_CHECK]
+ 				[KEXEC_CMDLINE] [KEY_CHECK]
+ 			mask:= [[^]MAY_READ] [[^]MAY_WRITE] [[^]MAY_APPEND]
+-			       [[^]MAY_EXEC]
++			       [[^]MAY_EXEC] [[^]MAY_OPENEXEC]
+ 			fsmagic:= hex value
+ 			fsuuid:= file system UUID (e.g 8bcbe394-4f13-4144-be8e-5aa9ea2ce2f6)
+ 			uid:= decimal value
+diff --git a/security/integrity/ima/ima_main.c b/security/integrity/ima/ima_main.c
+index c1583d98c5e5..59fd1658a203 100644
+--- a/security/integrity/ima/ima_main.c
++++ b/security/integrity/ima/ima_main.c
+@@ -490,7 +490,8 @@ int ima_file_check(struct file *file, int mask)
  
- 
-+open_mayexec_enforce
-+--------------------
-+
-+While being ignored by :manpage:`open(2)` and :manpage:`openat(2)`, the
-+``O_MAYEXEC`` flag can be passed to :manpage:`openat2(2)` to only open regular
-+files that are expected to be executable.  If the file is not identified as
-+executable, then the syscall returns -EACCES.  This may allow a script
-+interpreter to check executable permission before reading commands from a file,
-+or a dynamic linker to only load executable shared objects.  One interesting
-+use case is to enforce a "write xor execute" policy through interpreters.
-+
-+The ability to restrict code execution must be thought as a system-wide policy,
-+which first starts by restricting mount points with the ``noexec`` option.
-+This option is also automatically applied to special filesystems such as /proc .
-+This prevents files on such mount points to be directly executed by the kernel
-+or mapped as executable memory (e.g. libraries).  With script interpreters
-+using the ``O_MAYEXEC`` flag, the executable permission can then be checked
-+before reading commands from files. This makes it possible to enforce the
-+``noexec`` at the interpreter level, and thus propagates this security policy
-+to scripts.  To be fully effective, these interpreters also need to handle the
-+other ways to execute code: command line parameters (e.g., option ``-e`` for
-+Perl), module loading (e.g., option ``-m`` for Python), stdin, file sourcing,
-+environment variables, configuration files, etc.  According to the threat
-+model, it may be acceptable to allow some script interpreters (e.g. Bash) to
-+interpret commands from stdin, may it be a TTY or a pipe, because it may not be
-+enough to (directly) perform syscalls.
-+
-+There are two complementary security policies: enforce the ``noexec`` mount
-+option, and enforce executable file permission.  These policies are handled by
-+the ``fs.open_mayexec_enforce`` sysctl (writable only with ``CAP_SYS_ADMIN``)
-+as a bitmask:
-+
-+1 - Mount restriction: checks that the mount options for the underlying VFS
-+    mount do not prevent execution.
-+
-+2 - File permission restriction: checks that the to-be-opened file is marked as
-+    executable for the current process (e.g., POSIX permissions).
-+
-+Note that as long as a policy is enforced, opening any non-regular file with
-+``O_MAYEXEC`` is denied (e.g. TTYs, pipe), even when such a file is marked as
-+executable or is on an executable mount point.
-+
-+Code samples can be found in tools/testing/selftests/openat2/omayexec_test.c
-+and interpreter patches (for the original O_MAYEXEC version) may be found at
-+https://github.com/clipos-archive/clipos4_portage-overlay/search?q=O_MAYEXEC .
-+See also an overview article: https://lwn.net/Articles/820000/ .
-+
-+
- overflowgid & overflowuid
- -------------------------
- 
-diff --git a/fs/namei.c b/fs/namei.c
-index 3f074ec77390..8ec13c7fd403 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -39,6 +39,7 @@
- #include <linux/bitops.h>
- #include <linux/init_task.h>
- #include <linux/uaccess.h>
-+#include <linux/sysctl.h>
- 
- #include "internal.h"
- #include "mount.h"
-@@ -425,6 +426,11 @@ static int sb_permission(struct super_block *sb, struct inode *inode, int mask)
- 	return 0;
+ 	security_task_getsecid(current, &secid);
+ 	return process_measurement(file, current_cred(), secid, NULL, 0,
+-				   mask & (MAY_READ | MAY_WRITE | MAY_EXEC |
++				   mask & (MAY_READ | MAY_WRITE |
++					   MAY_EXEC | MAY_OPENEXEC |
+ 					   MAY_APPEND), FILE_CHECK);
  }
+ EXPORT_SYMBOL_GPL(ima_file_check);
+diff --git a/security/integrity/ima/ima_policy.c b/security/integrity/ima/ima_policy.c
+index e493063a3c34..6487f0b2afdd 100644
+--- a/security/integrity/ima/ima_policy.c
++++ b/security/integrity/ima/ima_policy.c
+@@ -406,7 +406,8 @@ static bool ima_match_keyring(struct ima_rule_entry *rule,
+  * @cred: a pointer to a credentials structure for user validation
+  * @secid: the secid of the task to be validated
+  * @func: LIM hook identifier
+- * @mask: requested action (MAY_READ | MAY_WRITE | MAY_APPEND | MAY_EXEC)
++ * @mask: requested action (MAY_READ | MAY_WRITE | MAY_APPEND | MAY_EXEC |
++ *			    MAY_OPENEXEC)
+  * @keyring: keyring name to check in policy for KEY_CHECK func
+  *
+  * Returns true on rule match, false on failure.
+@@ -527,7 +528,8 @@ static int get_subaction(struct ima_rule_entry *rule, enum ima_hooks func)
+  *        being made
+  * @secid: LSM secid of the task to be validated
+  * @func: IMA hook identifier
+- * @mask: requested action (MAY_READ | MAY_WRITE | MAY_APPEND | MAY_EXEC)
++ * @mask: requested action (MAY_READ | MAY_WRITE | MAY_APPEND | MAY_EXEC |
++ *			    MAY_OPENEXEC)
+  * @pcr: set the pcr to extend
+  * @template_desc: the template that should be used for this rule
+  * @keyring: the keyring name, if given, to be used to check in the policy.
+@@ -1091,6 +1093,8 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
+ 				entry->mask = MAY_READ;
+ 			else if (strcmp(from, "MAY_APPEND") == 0)
+ 				entry->mask = MAY_APPEND;
++			else if (strcmp(from, "MAY_OPENEXEC") == 0)
++				entry->mask = MAY_OPENEXEC;
+ 			else
+ 				result = -EINVAL;
+ 			if (!result)
+@@ -1422,14 +1426,15 @@ const char *const func_tokens[] = {
  
-+#define OPEN_MAYEXEC_ENFORCE_MOUNT	BIT(0)
-+#define OPEN_MAYEXEC_ENFORCE_FILE	BIT(1)
-+
-+int sysctl_open_mayexec_enforce __read_mostly;
-+
- /**
-  * inode_permission - Check for access rights to a given inode
-  * @inode: Inode to check permission on
-@@ -2861,11 +2867,29 @@ static int may_open(const struct path *path, int acc_mode, int flag)
- 	case S_IFSOCK:
- 		if (acc_mode & MAY_EXEC)
- 			return -EACCES;
-+		/*
-+		 * Opening devices (e.g. TTYs) or pipes with O_MAYEXEC may be
-+		 * legitimate when there is no enforced policy.
-+		 */
-+		if ((acc_mode & MAY_OPENEXEC) && sysctl_open_mayexec_enforce)
-+			return -EACCES;
- 		flag &= ~O_TRUNC;
- 		break;
- 	case S_IFREG:
- 		if ((acc_mode & MAY_EXEC) && path_noexec(path))
- 			return -EACCES;
-+		if (acc_mode & MAY_OPENEXEC) {
-+			if ((sysctl_open_mayexec_enforce & OPEN_MAYEXEC_ENFORCE_MOUNT)
-+					&& path_noexec(path))
-+				return -EACCES;
-+			if (sysctl_open_mayexec_enforce & OPEN_MAYEXEC_ENFORCE_FILE)
-+				/*
-+				 * Because acc_mode may change here, the next and only
-+				 * use of acc_mode should then be by the following call
-+				 * to inode_permission().
-+				 */
-+				acc_mode |= MAY_EXEC;
-+		}
- 		break;
+ #ifdef	CONFIG_IMA_READ_POLICY
+ enum {
+-	mask_exec = 0, mask_write, mask_read, mask_append
++	mask_exec = 0, mask_write, mask_read, mask_append, mask_openexec
+ };
+ 
+ static const char *const mask_tokens[] = {
+ 	"^MAY_EXEC",
+ 	"^MAY_WRITE",
+ 	"^MAY_READ",
+-	"^MAY_APPEND"
++	"^MAY_APPEND",
++	"^MAY_OPENEXEC"
+ };
+ 
+ void *ima_policy_start(struct seq_file *m, loff_t *pos)
+@@ -1518,6 +1523,8 @@ int ima_policy_show(struct seq_file *m, void *v)
+ 			seq_printf(m, pt(Opt_mask), mt(mask_read) + offset);
+ 		if (entry->mask & MAY_APPEND)
+ 			seq_printf(m, pt(Opt_mask), mt(mask_append) + offset);
++		if (entry->mask & MAY_OPENEXEC)
++			seq_printf(m, pt(Opt_mask), mt(mask_openexec) + offset);
+ 		seq_puts(m, " ");
  	}
  
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 56f835c9a87a..071f37707ccc 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -83,6 +83,7 @@ extern int sysctl_protected_symlinks;
- extern int sysctl_protected_hardlinks;
- extern int sysctl_protected_fifos;
- extern int sysctl_protected_regular;
-+extern int sysctl_open_mayexec_enforce;
- 
- typedef __kernel_rwf_t rwf_t;
- 
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index db1ce7af2563..5008a2566e79 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -113,6 +113,7 @@ static int sixty = 60;
- 
- static int __maybe_unused neg_one = -1;
- static int __maybe_unused two = 2;
-+static int __maybe_unused three = 3;
- static int __maybe_unused four = 4;
- static unsigned long zero_ul;
- static unsigned long one_ul = 1;
-@@ -888,7 +889,6 @@ static int proc_taint(struct ctl_table *table, int write,
- 	return err;
- }
- 
--#ifdef CONFIG_PRINTK
- static int proc_dointvec_minmax_sysadmin(struct ctl_table *table, int write,
- 				void *buffer, size_t *lenp, loff_t *ppos)
- {
-@@ -897,7 +897,6 @@ static int proc_dointvec_minmax_sysadmin(struct ctl_table *table, int write,
- 
- 	return proc_dointvec_minmax(table, write, buffer, lenp, ppos);
- }
--#endif
- 
- /**
-  * struct do_proc_dointvec_minmax_conv_param - proc_dointvec_minmax() range checking structure
-@@ -3264,6 +3263,15 @@ static struct ctl_table fs_table[] = {
- 		.extra1		= SYSCTL_ZERO,
- 		.extra2		= &two,
- 	},
-+	{
-+		.procname       = "open_mayexec_enforce",
-+		.data           = &sysctl_open_mayexec_enforce,
-+		.maxlen         = sizeof(int),
-+		.mode           = 0600,
-+		.proc_handler	= proc_dointvec_minmax_sysadmin,
-+		.extra1		= SYSCTL_ZERO,
-+		.extra2		= &three,
-+	},
- #if defined(CONFIG_BINFMT_MISC) || defined(CONFIG_BINFMT_MISC_MODULE)
- 	{
- 		.procname	= "binfmt_misc",
 -- 
 2.27.0
 
