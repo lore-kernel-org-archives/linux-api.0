@@ -4,30 +4,27 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 74E04C4346A
-	for <linux-api@archiver.kernel.org>; Thu, 23 Jul 2020 17:13:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 651DCC433E5
+	for <linux-api@archiver.kernel.org>; Thu, 23 Jul 2020 17:13:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5DFFD22B47
-	for <linux-api@archiver.kernel.org>; Thu, 23 Jul 2020 17:13:21 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4E56A22B47
+	for <linux-api@archiver.kernel.org>; Thu, 23 Jul 2020 17:13:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726666AbgGWRNG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 23 Jul 2020 13:13:06 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46372 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730247AbgGWRMr (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 23 Jul 2020 13:12:47 -0400
-Received: from smtp-bc0f.mail.infomaniak.ch (smtp-bc0f.mail.infomaniak.ch [IPv6:2001:1600:3:17::bc0f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A4608C0619E4
-        for <linux-api@vger.kernel.org>; Thu, 23 Jul 2020 10:12:46 -0700 (PDT)
-Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4BCJms3QbTzlhN1y;
-        Thu, 23 Jul 2020 19:12:45 +0200 (CEST)
+        id S1730194AbgGWRMk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 23 Jul 2020 13:12:40 -0400
+Received: from smtp-8fae.mail.infomaniak.ch ([83.166.143.174]:42551 "EHLO
+        smtp-8fae.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1730184AbgGWRMj (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 23 Jul 2020 13:12:39 -0400
+Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
+        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4BCJmj2Cl5zlhZMw;
+        Thu, 23 Jul 2020 19:12:37 +0200 (CEST)
 Received: from localhost (unknown [94.23.54.103])
-        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4BCJmr6v6jzlh8T5;
-        Thu, 23 Jul 2020 19:12:44 +0200 (CEST)
+        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4BCJmh5yFczlh8TQ;
+        Thu, 23 Jul 2020 19:12:36 +0200 (CEST)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     linux-kernel@vger.kernel.org
 Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
@@ -66,9 +63,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         linux-integrity@vger.kernel.org,
         linux-security-module@vger.kernel.org,
         linux-fsdevel@vger.kernel.org
-Subject: [PATCH v7 7/7] ima: add policy support for the new file open MAY_OPENEXEC flag
-Date:   Thu, 23 Jul 2020 19:12:27 +0200
-Message-Id: <20200723171227.446711-8-mic@digikod.net>
+Subject: [PATCH v7 2/7] exec: Move S_ISREG() check earlier
+Date:   Thu, 23 Jul 2020 19:12:22 +0200
+Message-Id: <20200723171227.446711-3-mic@digikod.net>
 X-Mailer: git-send-email 2.28.0.rc1
 In-Reply-To: <20200723171227.446711-1-mic@digikod.net>
 References: <20200723171227.446711-1-mic@digikod.net>
@@ -82,116 +79,132 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Mimi Zohar <zohar@linux.ibm.com>
+From: Kees Cook <keescook@chromium.org>
 
-The kernel has no way of differentiating between a file containing data
-or code being opened by an interpreter.  The proposed O_MAYEXEC
-openat2(2) flag bridges this gap by defining and enabling the
-MAY_OPENEXEC flag.
+The execve(2)/uselib(2) syscalls have always rejected non-regular
+files. Recently, it was noticed that a deadlock was introduced when trying
+to execute pipes, as the S_ISREG() test was happening too late. This was
+fixed in commit 73601ea5b7b1 ("fs/open.c: allow opening only regular files
+during execve()"), but it was added after inode_permission() had already
+run, which meant LSMs could see bogus attempts to execute non-regular
+files.
 
-This patch adds IMA policy support for the new MAY_OPENEXEC flag.
+Move the test into the other inode type checks (which already look
+for other pathological conditions[1]). Since there is no need to use
+FMODE_EXEC while we still have access to "acc_mode", also switch the
+test to MAY_EXEC.
 
-Example:
-measure func=FILE_CHECK mask=^MAY_OPENEXEC
-appraise func=FILE_CHECK appraise_type=imasig mask=^MAY_OPENEXEC
+Also include a comment with the redundant S_ISREG() checks at the end of
+execve(2)/uselib(2) to note that they are present to avoid any mistakes.
+
+My notes on the call path, and related arguments, checks, etc:
+
+do_open_execat()
+    struct open_flags open_exec_flags = {
+        .open_flag = O_LARGEFILE | O_RDONLY | __FMODE_EXEC,
+        .acc_mode = MAY_EXEC,
+        ...
+    do_filp_open(dfd, filename, open_flags)
+        path_openat(nameidata, open_flags, flags)
+            file = alloc_empty_file(open_flags, current_cred());
+            do_open(nameidata, file, open_flags)
+                may_open(path, acc_mode, open_flag)
+		    /* new location of MAY_EXEC vs S_ISREG() test */
+                    inode_permission(inode, MAY_OPEN | acc_mode)
+                        security_inode_permission(inode, acc_mode)
+                vfs_open(path, file)
+                    do_dentry_open(file, path->dentry->d_inode, open)
+                        /* old location of FMODE_EXEC vs S_ISREG() test */
+                        security_file_open(f)
+                        open()
+
+[1] https://lore.kernel.org/lkml/202006041910.9EF0C602@keescook/
 
 Signed-off-by: Mickaël Salaün <mic@digikod.net>
-Signed-off-by: Mimi Zohar <zohar@linux.ibm.com>
-Reviewed-by: Lakshmi Ramasubramanian <nramas@linux.microsoft.com>
-Link: https://lore.kernel.org/r/1588167523-7866-3-git-send-email-zohar@linux.ibm.com
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Link: https://lore.kernel.org/r/20200605160013.3954297-3-keescook@chromium.org
 ---
- Documentation/ABI/testing/ima_policy |  2 +-
- security/integrity/ima/ima_main.c    |  3 ++-
- security/integrity/ima/ima_policy.c  | 15 +++++++++++----
- 3 files changed, 14 insertions(+), 6 deletions(-)
+ fs/exec.c  | 14 ++++++++++++--
+ fs/namei.c |  6 ++++--
+ fs/open.c  |  6 ------
+ 3 files changed, 16 insertions(+), 10 deletions(-)
 
-diff --git a/Documentation/ABI/testing/ima_policy b/Documentation/ABI/testing/ima_policy
-index cd572912c593..caca46125fe0 100644
---- a/Documentation/ABI/testing/ima_policy
-+++ b/Documentation/ABI/testing/ima_policy
-@@ -31,7 +31,7 @@ Description:
- 				[KEXEC_KERNEL_CHECK] [KEXEC_INITRAMFS_CHECK]
- 				[KEXEC_CMDLINE] [KEY_CHECK]
- 			mask:= [[^]MAY_READ] [[^]MAY_WRITE] [[^]MAY_APPEND]
--			       [[^]MAY_EXEC]
-+			       [[^]MAY_EXEC] [[^]MAY_OPENEXEC]
- 			fsmagic:= hex value
- 			fsuuid:= file system UUID (e.g 8bcbe394-4f13-4144-be8e-5aa9ea2ce2f6)
- 			uid:= decimal value
-diff --git a/security/integrity/ima/ima_main.c b/security/integrity/ima/ima_main.c
-index c1583d98c5e5..59fd1658a203 100644
---- a/security/integrity/ima/ima_main.c
-+++ b/security/integrity/ima/ima_main.c
-@@ -490,7 +490,8 @@ int ima_file_check(struct file *file, int mask)
+diff --git a/fs/exec.c b/fs/exec.c
+index d7c937044d10..bdc6a6eb5dce 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -141,8 +141,13 @@ SYSCALL_DEFINE1(uselib, const char __user *, library)
+ 	if (IS_ERR(file))
+ 		goto out;
  
- 	security_task_getsecid(current, &secid);
- 	return process_measurement(file, current_cred(), secid, NULL, 0,
--				   mask & (MAY_READ | MAY_WRITE | MAY_EXEC |
-+				   mask & (MAY_READ | MAY_WRITE |
-+					   MAY_EXEC | MAY_OPENEXEC |
- 					   MAY_APPEND), FILE_CHECK);
- }
- EXPORT_SYMBOL_GPL(ima_file_check);
-diff --git a/security/integrity/ima/ima_policy.c b/security/integrity/ima/ima_policy.c
-index e493063a3c34..6487f0b2afdd 100644
---- a/security/integrity/ima/ima_policy.c
-+++ b/security/integrity/ima/ima_policy.c
-@@ -406,7 +406,8 @@ static bool ima_match_keyring(struct ima_rule_entry *rule,
-  * @cred: a pointer to a credentials structure for user validation
-  * @secid: the secid of the task to be validated
-  * @func: LIM hook identifier
-- * @mask: requested action (MAY_READ | MAY_WRITE | MAY_APPEND | MAY_EXEC)
-+ * @mask: requested action (MAY_READ | MAY_WRITE | MAY_APPEND | MAY_EXEC |
-+ *			    MAY_OPENEXEC)
-  * @keyring: keyring name to check in policy for KEY_CHECK func
-  *
-  * Returns true on rule match, false on failure.
-@@ -527,7 +528,8 @@ static int get_subaction(struct ima_rule_entry *rule, enum ima_hooks func)
-  *        being made
-  * @secid: LSM secid of the task to be validated
-  * @func: IMA hook identifier
-- * @mask: requested action (MAY_READ | MAY_WRITE | MAY_APPEND | MAY_EXEC)
-+ * @mask: requested action (MAY_READ | MAY_WRITE | MAY_APPEND | MAY_EXEC |
-+ *			    MAY_OPENEXEC)
-  * @pcr: set the pcr to extend
-  * @template_desc: the template that should be used for this rule
-  * @keyring: the keyring name, if given, to be used to check in the policy.
-@@ -1091,6 +1093,8 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
- 				entry->mask = MAY_READ;
- 			else if (strcmp(from, "MAY_APPEND") == 0)
- 				entry->mask = MAY_APPEND;
-+			else if (strcmp(from, "MAY_OPENEXEC") == 0)
-+				entry->mask = MAY_OPENEXEC;
- 			else
- 				result = -EINVAL;
- 			if (!result)
-@@ -1422,14 +1426,15 @@ const char *const func_tokens[] = {
++	/*
++	 * may_open() has already checked for this, so it should be
++	 * impossible to trip now. But we need to be extra cautious
++	 * and check again at the very end too.
++	 */
+ 	error = -EACCES;
+-	if (!S_ISREG(file_inode(file)->i_mode))
++	if (WARN_ON_ONCE(!S_ISREG(file_inode(file)->i_mode)))
+ 		goto exit;
  
- #ifdef	CONFIG_IMA_READ_POLICY
- enum {
--	mask_exec = 0, mask_write, mask_read, mask_append
-+	mask_exec = 0, mask_write, mask_read, mask_append, mask_openexec
- };
+ 	if (path_noexec(&file->f_path))
+@@ -886,8 +891,13 @@ static struct file *do_open_execat(int fd, struct filename *name, int flags)
+ 	if (IS_ERR(file))
+ 		goto out;
  
- static const char *const mask_tokens[] = {
- 	"^MAY_EXEC",
- 	"^MAY_WRITE",
- 	"^MAY_READ",
--	"^MAY_APPEND"
-+	"^MAY_APPEND",
-+	"^MAY_OPENEXEC"
- };
++	/*
++	 * may_open() has already checked for this, so it should be
++	 * impossible to trip now. But we need to be extra cautious
++	 * and check again at the very end too.
++	 */
+ 	err = -EACCES;
+-	if (!S_ISREG(file_inode(file)->i_mode))
++	if (WARN_ON_ONCE(!S_ISREG(file_inode(file)->i_mode)))
+ 		goto exit;
  
- void *ima_policy_start(struct seq_file *m, loff_t *pos)
-@@ -1518,6 +1523,8 @@ int ima_policy_show(struct seq_file *m, void *v)
- 			seq_printf(m, pt(Opt_mask), mt(mask_read) + offset);
- 		if (entry->mask & MAY_APPEND)
- 			seq_printf(m, pt(Opt_mask), mt(mask_append) + offset);
-+		if (entry->mask & MAY_OPENEXEC)
-+			seq_printf(m, pt(Opt_mask), mt(mask_openexec) + offset);
- 		seq_puts(m, " ");
+ 	if (path_noexec(&file->f_path))
+diff --git a/fs/namei.c b/fs/namei.c
+index 72d4219c93ac..a559ad943970 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -2849,16 +2849,18 @@ static int may_open(const struct path *path, int acc_mode, int flag)
+ 	case S_IFLNK:
+ 		return -ELOOP;
+ 	case S_IFDIR:
+-		if (acc_mode & MAY_WRITE)
++		if (acc_mode & (MAY_WRITE | MAY_EXEC))
+ 			return -EISDIR;
+ 		break;
+ 	case S_IFBLK:
+ 	case S_IFCHR:
+ 		if (!may_open_dev(path))
+ 			return -EACCES;
+-		/*FALLTHRU*/
++		fallthrough;
+ 	case S_IFIFO:
+ 	case S_IFSOCK:
++		if (acc_mode & MAY_EXEC)
++			return -EACCES;
+ 		flag &= ~O_TRUNC;
+ 		break;
+ 	}
+diff --git a/fs/open.c b/fs/open.c
+index 6cd48a61cda3..623b7506a6db 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -784,12 +784,6 @@ static int do_dentry_open(struct file *f,
+ 		return 0;
  	}
  
+-	/* Any file opened for execve()/uselib() has to be a regular file. */
+-	if (unlikely(f->f_flags & FMODE_EXEC && !S_ISREG(inode->i_mode))) {
+-		error = -EACCES;
+-		goto cleanup_file;
+-	}
+-
+ 	if (f->f_mode & FMODE_WRITE && !special_file(inode->i_mode)) {
+ 		error = get_write_access(inode);
+ 		if (unlikely(error))
 -- 
 2.27.0
 
