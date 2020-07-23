@@ -2,113 +2,113 @@ Return-Path: <SRS0=H9yV=BC=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.0 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.5 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7675FC433DF
-	for <linux-api@archiver.kernel.org>; Thu, 23 Jul 2020 16:47:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 65CEDC433ED
+	for <linux-api@archiver.kernel.org>; Thu, 23 Jul 2020 16:56:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4882620714
-	for <linux-api@archiver.kernel.org>; Thu, 23 Jul 2020 16:47:02 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 49B6420771
+	for <linux-api@archiver.kernel.org>; Thu, 23 Jul 2020 16:56:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726761AbgGWQrC convert rfc822-to-8bit (ORCPT
-        <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 23 Jul 2020 12:47:02 -0400
-Received: from pegase1.c-s.fr ([93.17.236.30]:57399 "EHLO pegase1.c-s.fr"
+        id S1729961AbgGWQ4u (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 23 Jul 2020 12:56:50 -0400
+Received: from mga11.intel.com ([192.55.52.93]:29441 "EHLO mga11.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726621AbgGWQrB (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 23 Jul 2020 12:47:01 -0400
-Received: from localhost (mailhub1-int [192.168.12.234])
-        by localhost (Postfix) with ESMTP id 4BCJC36yTGzB09bR;
-        Thu, 23 Jul 2020 18:46:55 +0200 (CEST)
-X-Virus-Scanned: Debian amavisd-new at c-s.fr
-Received: from pegase1.c-s.fr ([192.168.12.234])
-        by localhost (pegase1.c-s.fr [192.168.12.234]) (amavisd-new, port 10024)
-        with ESMTP id Jaygyj04Nb8u; Thu, 23 Jul 2020 18:46:55 +0200 (CEST)
-Received: from vm-hermes.si.c-s.fr (vm-hermes.si.c-s.fr [192.168.25.253])
-        by pegase1.c-s.fr (Postfix) with ESMTP id 4BCJC33NBqzB09bN;
-        Thu, 23 Jul 2020 18:46:55 +0200 (CEST)
-Received: by vm-hermes.si.c-s.fr (Postfix, from userid 33)
-        id 3746D72B; Thu, 23 Jul 2020 18:48:14 +0200 (CEST)
-Received: from 37-172-34-2.coucou-networks.fr
- (37-172-34-2.coucou-networks.fr [37.172.34.2]) by messagerie.si.c-s.fr
- (Horde Framework) with HTTP; Thu, 23 Jul 2020 18:48:14 +0200
-Date:   Thu, 23 Jul 2020 18:48:14 +0200
-Message-ID: <20200723184814.Horde.pk5BO9iFqyGX5D4TW5wqmg1@messagerie.si.c-s.fr>
-From:   Christophe Leroy <christophe.leroy@csgroup.eu>
-To:     Michael Ellerman <mpe@ellerman.id.au>
-Cc:     linux-api@vger.kernel.org, musl@lists.openwall.com,
-        libc-dev@lists.llvm.org, linuxppc-dev@lists.ozlabs.org,
-        Nicholas Piggin <npiggin@gmail.com>
-Subject: Re: [PATCH 2/2] powerpc/64s: system call support for scv/rfscv
- instructions
-References: <20200611081203.995112-1-npiggin@gmail.com>
- <20200611081203.995112-3-npiggin@gmail.com>
- <871rl2ralk.fsf@mpe.ellerman.id.au>
-In-Reply-To: <871rl2ralk.fsf@mpe.ellerman.id.au>
-User-Agent: Internet Messaging Program (IMP) H5 (6.2.3)
-Content-Type: text/plain; charset=UTF-8; format=flowed; DelSp=Yes
+        id S1726621AbgGWQ4u (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 23 Jul 2020 12:56:50 -0400
+IronPort-SDR: 6ngY6kwxquf10seVEM1Dr3129Yr6MR7tDTC2zNDQXLnuts63EI0XSD8mLkOjyKA2wOdwZPZqaY
+ SsK3IYcZZdsg==
+X-IronPort-AV: E=McAfee;i="6000,8403,9691"; a="148505366"
+X-IronPort-AV: E=Sophos;i="5.75,387,1589266800"; 
+   d="scan'208";a="148505366"
+X-Amp-Result: SKIPPED(no attachment in message)
+X-Amp-File-Uploaded: False
+Received: from orsmga006.jf.intel.com ([10.7.209.51])
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 23 Jul 2020 09:56:49 -0700
+IronPort-SDR: bJkHNGZQ1Hw3s5PdfbxZHNQOHZvHasSr4ggVzJ7OtBVpzlwhX06x7G1RkGsRivKVd1QUPc7qbj
+ t8mvhax6Z8pQ==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.75,387,1589266800"; 
+   d="scan'208";a="288710474"
+Received: from sjchrist-coffee.jf.intel.com (HELO linux.intel.com) ([10.54.74.152])
+  by orsmga006.jf.intel.com with ESMTP; 23 Jul 2020 09:56:49 -0700
+Date:   Thu, 23 Jul 2020 09:56:49 -0700
+From:   Sean Christopherson <sean.j.christopherson@intel.com>
+To:     Dave Hansen <dave.hansen@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org,
+        "H. Peter Anvin" <hpa@zytor.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-doc@vger.kernel.org, linux-mm@kvack.org,
+        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andy Lutomirski <luto@kernel.org>,
+        Balbir Singh <bsingharora@gmail.com>,
+        Borislav Petkov <bp@alien8.de>,
+        Cyrill Gorcunov <gorcunov@gmail.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Eugene Syromiatnikov <esyr@redhat.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Nadav Amit <nadav.amit@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
+        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Weijiang Yang <weijiang.yang@intel.com>
+Subject: Re: [PATCH v10 00/26] Control-flow Enforcement: Shadow Stack
+Message-ID: <20200723165649.GG21891@linux.intel.com>
+References: <20200429220732.31602-1-yu-cheng.yu@intel.com>
+ <20200723162531.GF21891@linux.intel.com>
+ <2e9806a3-7485-a0d0-b63d-f112fcff954c@intel.com>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8BIT
+In-Reply-To: <2e9806a3-7485-a0d0-b63d-f112fcff954c@intel.com>
+User-Agent: Mutt/1.5.24 (2015-08-30)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Michael Ellerman <mpe@ellerman.id.au> a écrit :
+On Thu, Jul 23, 2020 at 09:41:37AM -0700, Dave Hansen wrote:
+> On 7/23/20 9:25 AM, Sean Christopherson wrote:
+> > How would people feel about taking the above two patches (02 and 03 in the
+> > series) through the KVM tree to enable KVM virtualization of CET before the
+> > kernel itself gains CET support?  I.e. add the MSR and feature bits, along
+> > with the XSAVES context switching.  The feature definitons could use "" to
+> > suppress displaying them in /proc/cpuinfo to avoid falsely advertising CET
+> > to userspace.
+> > 
+> > AIUI, there are ABI issues that need to be sorted out, and that is likely
+> > going to drag on for some time. 
+> > 
+> > Is this a "hell no" sort of idea, or something that would be feasible if we
+> > can show that there are no negative impacts to the kernel?
+> 
+> Negative impacts like bloating every task->fpu with XSAVE state that
+> will never get used? ;)
 
-> Nicholas Piggin <npiggin@gmail.com> writes:
->> diff --git a/arch/powerpc/include/asm/ppc-opcode.h  
->> b/arch/powerpc/include/asm/ppc-opcode.h
->> index 2a39c716c343..b2bdc4de1292 100644
->> --- a/arch/powerpc/include/asm/ppc-opcode.h
->> +++ b/arch/powerpc/include/asm/ppc-opcode.h
->> @@ -257,6 +257,7 @@
->>  #define PPC_INST_MFVSRD			0x7c000066
->>  #define PPC_INST_MTVSRD			0x7c000166
->>  #define PPC_INST_SC			0x44000002
->> +#define PPC_INST_SCV			0x44000001
-> ...
->> @@ -411,6 +412,7 @@
-> ...
->> +#define __PPC_LEV(l)	(((l) & 0x7f) << 5)
->
-> These conflicted and didn't seem to be used so I dropped them.
->
->> diff --git a/arch/powerpc/lib/sstep.c b/arch/powerpc/lib/sstep.c
->> index 5abe98216dc2..161bfccbc309 100644
->> --- a/arch/powerpc/lib/sstep.c
->> +++ b/arch/powerpc/lib/sstep.c
->> @@ -3378,6 +3382,16 @@ int emulate_step(struct pt_regs *regs,  
->> struct ppc_inst instr)
->>  		regs->msr = MSR_KERNEL;
->>  		return 1;
->>
->> +	case SYSCALL_VECTORED_0:	/* scv 0 */
->> +		regs->gpr[9] = regs->gpr[13];
->> +		regs->gpr[10] = MSR_KERNEL;
->> +		regs->gpr[11] = regs->nip + 4;
->> +		regs->gpr[12] = regs->msr & MSR_MASK;
->> +		regs->gpr[13] = (unsigned long) get_paca();
->> +		regs->nip = (unsigned long) &system_call_vectored_emulate;
->> +		regs->msr = MSR_KERNEL;
->> +		return 1;
->> +
->
-> This broke the ppc64e build:
->
->   ld: arch/powerpc/lib/sstep.o:(.toc+0x0): undefined reference to  
-> `system_call_vectored_emulate'
->   make[1]: *** [/home/michael/linux/Makefile:1139: vmlinux] Error 1
->
-> I wrapped it in #ifdef CONFIG_PPC64_BOOK3S.
+Gah, should have qualified that with "meaningful or measurable negative
+impacts".  E.g. the extra 40 bytes for CET XSAVE state seems like it would
+be acceptable overhead, but noticeably increasing the latency of XSAVES
+and/or XRSTORS would not be acceptable.
 
-You mean CONFIG_PPC_BOOK3S_64 ?
+> I thought KVM had its own vcpu->arch.guest_fpu buffers which mirrored
+> the size and format of task->fpu.  Can we have KVM support today without
+> task->fpu support?  I see some XSS munging in the KVM code so I think
+> this might be *possible*, but I don't see all of the plumbing that would
+> make it actually work.
 
-Christophe
->
-> cheers
-
-
+It'd be possible, but long term I don't think it's a good idea for KVM to
+diverge from the kernel's FPU support, i.e. fully converting KVM to it's own
+implementation will likely lead to pain and maintenance problems.  Without
+fully converting KVM to a custom implementation, adding one off support for
+CET would be a massive hack job.
