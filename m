@@ -2,116 +2,150 @@ Return-Path: <SRS0=bPfJ=BD=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 33C65C433E5
-	for <linux-api@archiver.kernel.org>; Fri, 24 Jul 2020 16:34:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2DD99C433ED
+	for <linux-api@archiver.kernel.org>; Fri, 24 Jul 2020 19:03:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 12168206D8
-	for <linux-api@archiver.kernel.org>; Fri, 24 Jul 2020 16:34:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0D2AB206D8
+	for <linux-api@archiver.kernel.org>; Fri, 24 Jul 2020 19:03:27 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20150623.gappssmtp.com header.i=@kernel-dk.20150623.gappssmtp.com header.b="K7XpyhQv"
+	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="HWLOLY2m"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726711AbgGXQee (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 24 Jul 2020 12:34:34 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38618 "EHLO
+        id S1726742AbgGXTDY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 24 Jul 2020 15:03:24 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33712 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726719AbgGXQee (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 24 Jul 2020 12:34:34 -0400
-Received: from mail-pf1-x444.google.com (mail-pf1-x444.google.com [IPv6:2607:f8b0:4864:20::444])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E48CBC0619E6
-        for <linux-api@vger.kernel.org>; Fri, 24 Jul 2020 09:34:33 -0700 (PDT)
-Received: by mail-pf1-x444.google.com with SMTP id w126so5289512pfw.8
-        for <linux-api@vger.kernel.org>; Fri, 24 Jul 2020 09:34:33 -0700 (PDT)
+        with ESMTP id S1726717AbgGXTDX (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 24 Jul 2020 15:03:23 -0400
+Received: from mail-pl1-x643.google.com (mail-pl1-x643.google.com [IPv6:2607:f8b0:4864:20::643])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5A8FBC0619E7
+        for <linux-api@vger.kernel.org>; Fri, 24 Jul 2020 12:03:23 -0700 (PDT)
+Received: by mail-pl1-x643.google.com with SMTP id q17so5007101pls.9
+        for <linux-api@vger.kernel.org>; Fri, 24 Jul 2020 12:03:23 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
-        h=subject:to:cc:references:from:message-id:date:user-agent
-         :mime-version:in-reply-to:content-language:content-transfer-encoding;
-        bh=KxUVJu2tVsXuL6ozXtsDLOIo+4JxBbyht8pFne+rsMU=;
-        b=K7XpyhQvrenGn2Xu15vi76JcRUT9sC1liRgYcCIGd9iGI1u0NGrLkxgPuwufFBfvx0
-         I/C3wBLb9TCtHH5QjgJVmj4daBGbHavWk+DVx/3IjdtnfdkCBBhocCDJT5Rxnu8BvzeN
-         mCqzqbB59MjQsoiZzBtZ15Q/yIgmPozIOIx1SlN02Pg/DvEWOqWCyl5hsjbzqBE6K5Db
-         Fa6O+23rfJS3D1mMkhzPo+FLntzB0TbISxoiWU2HQcOpkERblpEAgh2EsVdLGDpvvtLV
-         JkZBYmpwFdV+YU9UiXZtLLkqDrlg4J1mnyx8QF6UgHCGszO1D6Kjxn3qln+FBsCEJ+pl
-         LyxA==
+        d=chromium.org; s=google;
+        h=date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:content-transfer-encoding:in-reply-to;
+        bh=f0lKwdFa2tE754eWyXOOIFz3gWD2EzuwPTrCttQ++tE=;
+        b=HWLOLY2m7CMUOQYAp0GqUyHeBr+slwYCrPxK4fmOYzQKeY1Sqn9NsstNWgyO0gYfZz
+         TUCLaYuoK1a5vP1C228zV0xEZgcjSBAnqzIr+6yAndPlXzf8D3bRRlqtGTaJ8eamUTu0
+         m/nF3ewNlRWYDQ/wxxQHLPQatyOp/cmIjNB+w=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-language
-         :content-transfer-encoding;
-        bh=KxUVJu2tVsXuL6ozXtsDLOIo+4JxBbyht8pFne+rsMU=;
-        b=IqJhePkIKdOBSShIIQ4LrXhl0WK2KX1XbQ0NQEdB9qgGvBjGHKTu2JzkSTkMacLAMg
-         juVvWCSoBjy+gFP3f24nrutnroqsP5q+Zjv48TmV4P0Hvta5f8DLgJ0JnxifG9+fWpFd
-         QcyCLvMmIpFy9G9DfryPIyY9sUmZoEaZTWN1L/8yIRVdDjAaQsK330qSu9f0sPJ7dm8s
-         e4gLwE1w/2UTdhrs4TpTuF1Ga71zWrNZ2gtRFgajR90xAdLTuZ6IgvVKwHz1aCFpI2Z9
-         6g2eAFjoECJSnjRx4YfsljhqRJiDRpWybN55HMnW9kHEpkehz92Rs+qk/tFStv44sJZ6
-         fsuA==
-X-Gm-Message-State: AOAM532HOAYvhUziWGwl6YJXi1aJX6Dl+ySC8r2bE2DIPVbA8FgLx5GG
-        iNtjm9YNluc7FhhvijJc5H1+ZA==
-X-Google-Smtp-Source: ABdhPJy4sWKBDhVsVVTB4Rz+Di1yRjyZBmXNP884n02aTr/meZ8zL6S9UB8hgZlBhiOPmt1234c8iw==
-X-Received: by 2002:aa7:970a:: with SMTP id a10mr10129338pfg.319.1595608473248;
-        Fri, 24 Jul 2020 09:34:33 -0700 (PDT)
-Received: from [192.168.1.182] ([66.219.217.173])
-        by smtp.gmail.com with ESMTPSA id y6sm6486959pji.2.2020.07.24.09.34.31
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 24 Jul 2020 09:34:32 -0700 (PDT)
-Subject: Re: [PATCH v4 1/6] fs: introduce FMODE_ZONE_APPEND and
- IOCB_ZONE_APPEND
-To:     Kanchan Joshi <joshi.k@samsung.com>, viro@zeniv.linux.org.uk,
-        bcrl@kvack.org
-Cc:     willy@infradead.org, hch@infradead.org, Damien.LeMoal@wdc.com,
-        asml.silence@gmail.com, linux-fsdevel@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-aio@kvack.org,
-        io-uring@vger.kernel.org, linux-block@vger.kernel.org,
-        linux-api@vger.kernel.org, Selvakumar S <selvakuma.s1@samsung.com>,
-        Nitesh Shetty <nj.shetty@samsung.com>,
-        Javier Gonzalez <javier.gonz@samsung.com>
-References: <1595605762-17010-1-git-send-email-joshi.k@samsung.com>
- <CGME20200724155258epcas5p1a75b926950a18cd1e6c8e7a047e6c589@epcas5p1.samsung.com>
- <1595605762-17010-2-git-send-email-joshi.k@samsung.com>
-From:   Jens Axboe <axboe@kernel.dk>
-Message-ID: <733bb8bb-cd4f-bee7-516d-359c565d11d3@kernel.dk>
-Date:   Fri, 24 Jul 2020 10:34:30 -0600
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.10.0
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:content-transfer-encoding
+         :in-reply-to;
+        bh=f0lKwdFa2tE754eWyXOOIFz3gWD2EzuwPTrCttQ++tE=;
+        b=FmOftYF3FqjdkYLhvR6MfTYZpJM03yYmhCvgaKlxGWWNLRC6HdXjvBm7nIi6Pjpj4g
+         WDFP6I6UBwt24sSt/1WrzhgDcjh7ybuefbfbrDqmj2/tDiX6Rg58Nt6bEd82QPABMqgg
+         EHgoN9gaV50NG8BJnqPRRo86/m8CRTSHnMMjVBc8kPF6XYpwRR1Jm1/BZ+Wzhe8b/bDZ
+         dSsuA+AXDdA+HLulyUtsuJ08dSwnkh2kA83V2XAa8FyPPlwY4GHs3LuHSEDvy579LIba
+         2xHiALOx9H0Y/WRq55YFrSGjyYIrkfEibpY9Ud4kDRvfItYerVnPkfF/6H3hRlsmwO6f
+         Pe3A==
+X-Gm-Message-State: AOAM531aDxG3jYm0ktzDQwL60QEUAzHj+v3WGCv4p4Meko02zzNShmK8
+        tg0+7qHu9VVR4YpEAF6PCOrNXA==
+X-Google-Smtp-Source: ABdhPJyQSqTNd3BVzP4VWxiWnp6p6oQzAmDBIOJnaoSdP+OBPVoNfaPuvwcTsPgk9o7oKdilefLQ/Q==
+X-Received: by 2002:a17:902:c252:: with SMTP id 18mr9772518plg.39.1595617402829;
+        Fri, 24 Jul 2020 12:03:22 -0700 (PDT)
+Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
+        by smtp.gmail.com with ESMTPSA id z11sm7283037pfj.104.2020.07.24.12.03.21
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 24 Jul 2020 12:03:22 -0700 (PDT)
+Date:   Fri, 24 Jul 2020 12:03:21 -0700
+From:   Kees Cook <keescook@chromium.org>
+To:     =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+Cc:     linux-kernel@vger.kernel.org, Aleksa Sarai <cyphar@cyphar.com>,
+        Alexei Starovoitov <ast@kernel.org>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Christian Heimes <christian@python.org>,
+        Daniel Borkmann <daniel@iogearbox.net>,
+        Deven Bowers <deven.desai@linux.microsoft.com>,
+        Dmitry Vyukov <dvyukov@google.com>,
+        Eric Biggers <ebiggers@kernel.org>,
+        Eric Chiang <ericchiang@google.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>,
+        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
+        Lakshmi Ramasubramanian <nramas@linux.microsoft.com>,
+        Matthew Garrett <mjg59@google.com>,
+        Matthew Wilcox <willy@infradead.org>,
+        Michael Kerrisk <mtk.manpages@gmail.com>,
+        Mimi Zohar <zohar@linux.ibm.com>,
+        Philippe =?iso-8859-1?Q?Tr=E9buchet?= 
+        <philippe.trebuchet@ssi.gouv.fr>,
+        Scott Shell <scottsh@microsoft.com>,
+        Sean Christopherson <sean.j.christopherson@intel.com>,
+        Shuah Khan <shuah@kernel.org>,
+        Steve Dower <steve.dower@python.org>,
+        Steve Grubb <sgrubb@redhat.com>,
+        Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>,
+        Thibaut Sautereau <thibaut.sautereau@clip-os.org>,
+        Vincent Strubel <vincent.strubel@ssi.gouv.fr>,
+        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
+        linux-integrity@vger.kernel.org,
+        linux-security-module@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org,
+        Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>,
+        Randy Dunlap <rdunlap@infradead.org>
+Subject: Re: [PATCH v7 5/7] fs,doc: Enable to enforce noexec mounts or file
+ exec through O_MAYEXEC
+Message-ID: <202007241203.0C596BB36@keescook>
+References: <20200723171227.446711-1-mic@digikod.net>
+ <20200723171227.446711-6-mic@digikod.net>
 MIME-Version: 1.0
-In-Reply-To: <1595605762-17010-2-git-send-email-joshi.k@samsung.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <20200723171227.446711-6-mic@digikod.net>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 7/24/20 9:49 AM, Kanchan Joshi wrote:
-> diff --git a/include/linux/fs.h b/include/linux/fs.h
-> index 6c4ab4d..ef13df4 100644
-> --- a/include/linux/fs.h
-> +++ b/include/linux/fs.h
-> @@ -175,6 +175,9 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
->  /* File does not contribute to nr_files count */
->  #define FMODE_NOACCOUNT		((__force fmode_t)0x20000000)
->  
-> +/* File can support zone-append */
-> +#define FMODE_ZONE_APPEND	((__force fmode_t)0x40000000)
+On Thu, Jul 23, 2020 at 07:12:25PM +0200, Mickaël Salaün wrote:
+> Allow for the enforcement of the O_MAYEXEC openat2(2) flag.  Thanks to
+> the noexec option from the underlying VFS mount, or to the file execute
+> permission, userspace can enforce these execution policies.  This may
+> allow script interpreters to check execution permission before reading
+> commands from a file, or dynamic linkers to allow shared object loading.
+> 
+> Add a new sysctl fs.open_mayexec_enforce to enable system administrators
+> to enforce two complementary security policies according to the
+> installed system: enforce the noexec mount option, and enforce
+> executable file permission.  Indeed, because of compatibility with
+> installed systems, only system administrators are able to check that
+> this new enforcement is in line with the system mount points and file
+> permissions.  A following patch adds documentation.
+> 
+> Being able to restrict execution also enables to protect the kernel by
+> restricting arbitrary syscalls that an attacker could perform with a
+> crafted binary or certain script languages.  It also improves multilevel
+> isolation by reducing the ability of an attacker to use side channels
+> with specific code.  These restrictions can natively be enforced for ELF
+> binaries (with the noexec mount option) but require this kernel
+> extension to properly handle scripts (e.g., Python, Perl).  To get a
+> consistent execution policy, additional memory restrictions should also
+> be enforced (e.g. thanks to SELinux).
+> 
+> Because the O_MAYEXEC flag is a meant to enforce a system-wide security
+> policy (but not application-centric policies), it does not make sense
+> for userland to check the sysctl value.  Indeed, this new flag only
+> enables to extend the system ability to enforce a policy thanks to (some
+> trusted) userland collaboration.  Moreover, additional security policies
+> could be managed by LSMs.  This is a best-effort approach from the
+> application developer point of view:
+> https://lore.kernel.org/lkml/1477d3d7-4b36-afad-7077-a38f42322238@digikod.net/
+> 
+> Signed-off-by: Mickaël Salaün <mic@digikod.net>
 
-This conflicts with the async buffered read support in linux-next that
-has been queued up for a long time.
-
-> @@ -315,6 +318,7 @@ enum rw_hint {
->  #define IOCB_SYNC		(1 << 5)
->  #define IOCB_WRITE		(1 << 6)
->  #define IOCB_NOWAIT		(1 << 7)
-> +#define IOCB_ZONE_APPEND	(1 << 8)
-
-Ditto this one, and that also clashes with mainline. The next available
-bit would be 10, IOCB_WAITQ and IOCB_NOIO are 8 and 9.
-
+Acked-by: Kees Cook <keescook@chromium.org>
 
 -- 
-Jens Axboe
-
+Kees Cook
