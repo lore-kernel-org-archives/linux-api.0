@@ -2,60 +2,60 @@ Return-Path: <SRS0=bPfJ=BD=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-7.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C23B5C433E4
-	for <linux-api@archiver.kernel.org>; Fri, 24 Jul 2020 19:03:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EF77AC433F8
+	for <linux-api@archiver.kernel.org>; Fri, 24 Jul 2020 19:03:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A05F4206D8
-	for <linux-api@archiver.kernel.org>; Fri, 24 Jul 2020 19:03:08 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D353F20768
+	for <linux-api@archiver.kernel.org>; Fri, 24 Jul 2020 19:03:57 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="epxr0OVX"
+	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="U21XHuTN"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726676AbgGXTDE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 24 Jul 2020 15:03:04 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33636 "EHLO
+        id S1726763AbgGXTDy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 24 Jul 2020 15:03:54 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33824 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726639AbgGXTDD (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 24 Jul 2020 15:03:03 -0400
-Received: from mail-pg1-x541.google.com (mail-pg1-x541.google.com [IPv6:2607:f8b0:4864:20::541])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C0900C0619E7
-        for <linux-api@vger.kernel.org>; Fri, 24 Jul 2020 12:03:03 -0700 (PDT)
-Received: by mail-pg1-x541.google.com with SMTP id n5so5830420pgf.7
-        for <linux-api@vger.kernel.org>; Fri, 24 Jul 2020 12:03:03 -0700 (PDT)
+        with ESMTP id S1726636AbgGXTDx (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 24 Jul 2020 15:03:53 -0400
+Received: from mail-pf1-x444.google.com (mail-pf1-x444.google.com [IPv6:2607:f8b0:4864:20::444])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 89DAFC0619E4
+        for <linux-api@vger.kernel.org>; Fri, 24 Jul 2020 12:03:53 -0700 (PDT)
+Received: by mail-pf1-x444.google.com with SMTP id a14so5737289pfi.2
+        for <linux-api@vger.kernel.org>; Fri, 24 Jul 2020 12:03:53 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=chromium.org; s=google;
         h=date:from:to:cc:subject:message-id:references:mime-version
          :content-disposition:content-transfer-encoding:in-reply-to;
-        bh=LYsHHvmbnOnKOT161wgYJ0QUn66UfJfCSOHkGeru+cM=;
-        b=epxr0OVXttEVlXmK9gG8sngCnRWPyA1Tl8s5eFiDuptGA3XfZ7D42jzmy8C+dHex+z
-         O4t0er5aVcVIeElSNW4xKoTusneqHOYH3qTX0imlgipraUmww8ZAz/FAdRhZ2XYidyPD
-         DxcDODdQ821AGi0c+CClL91b4u9fYF+8edV0o=
+        bh=sdXgEvqGYHlymvqSceJ6jkKcKZE63vnTThrEFoJfoJI=;
+        b=U21XHuTNZcd9Xi31/xCf87Rkodq7UIatsvvV/UwKN/JzlFCu0PB6GXerCOvF6wBSK+
+         SC2WOUDhPlu1q875fotSfx1rUNIyJCPwLsBy0JiUGot5W6Q50r/BPrfciAdVtp7Uwlle
+         rtPo4Tole4s/1hOtfMBeGT54AFN8aogMq5g4g=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:date:from:to:cc:subject:message-id:references
          :mime-version:content-disposition:content-transfer-encoding
          :in-reply-to;
-        bh=LYsHHvmbnOnKOT161wgYJ0QUn66UfJfCSOHkGeru+cM=;
-        b=erIMYas5EevqvznliU4K90zueqy8Js+lAVVG021McBf8RnIZhUSuisc2Zq+nmhkiNf
-         wVg/NYqHxUiS+eDAj9taQD0aq09OC9lu+XN2rpavYtQb9bIlXJqHz0nDh/QVIyBpHTq5
-         +pOhBrULeZaE4N7c8ivLPp40rMyJRMDGtQ9eCm0zc7Z4grvEGxPITxD80ky5WVKEX9Yj
-         sdNszLJiq/oHI20fF4rGR1k61PG7a6F2cNxWeTY9ipVs2w9CtGUd9ECl2lvTmhB9CmPp
-         BNl7GBQRVc+A87jwaIOFayCQMS44pGwCG8MsMPaWQUCKwylI3uEiAup1aLWpMRn+Q1Q0
-         52lA==
-X-Gm-Message-State: AOAM531i5QfKZ5edkjqVsN+WmAzPhLJAVfrsP1iQor0F7/CyuFL2fAWt
-        x8+8k+XlXDtdac7BvnsCqL4qbA==
-X-Google-Smtp-Source: ABdhPJxe287CjvKc1vXBSsqo1vqhqr3H+/qMCmeOy+LCVrrgE2glpryiF3Hn9YFdOosrNz2I96GIrw==
-X-Received: by 2002:a62:2bd0:: with SMTP id r199mr9978051pfr.160.1595617383058;
-        Fri, 24 Jul 2020 12:03:03 -0700 (PDT)
+        bh=sdXgEvqGYHlymvqSceJ6jkKcKZE63vnTThrEFoJfoJI=;
+        b=ItxOh5VF3E3S1w/Q5jY057BPGRW16xUbI76QUj6Pochu4O6eFm4H+pruHT5iYt9GVh
+         363/ILCX4ezFVb6mo7SNo2hT4cD6FYr6afh1SFeSBcSwzSPqlBePacQZ/lzzTIsIUlrG
+         2uVEg/0Iccvg4yZHI2phWOSWB2/snlj7EYJVJ5aYAnM0GUzO1iP35lS0DetI7q7kCWor
+         A5jqJ5OjcRsDidWqVHnQ93uJvCsxzTGE8QV7JWTCQPjrY6FUGc+DZuiyCQPvawZVS2gZ
+         HTADkwAH9nZpnx7XozMNDHo4+IiiZJLHAgu6VwMuPvz44ON/7oJ+h24pmZbmp8q0AVUp
+         stAw==
+X-Gm-Message-State: AOAM533Bjz7QGNy92a+7ZeRuRg9CWhRJs3nh1+qQzNCLYgunFNBas3tz
+        1kyPNpfYdo/NhZ4EOfsbg3ASIg==
+X-Google-Smtp-Source: ABdhPJxz4vuqoUWyBigx8RahhArmNJ84Nut7BOOCsUQANkvjswnwvqIw0Juf0zWwzmKl2+qs8JH6nQ==
+X-Received: by 2002:a63:140f:: with SMTP id u15mr9259752pgl.94.1595617432993;
+        Fri, 24 Jul 2020 12:03:52 -0700 (PDT)
 Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id s89sm6440672pjj.28.2020.07.24.12.03.01
+        by smtp.gmail.com with ESMTPSA id 66sm7436424pfa.92.2020.07.24.12.03.51
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 24 Jul 2020 12:03:02 -0700 (PDT)
-Date:   Fri, 24 Jul 2020 12:03:01 -0700
+        Fri, 24 Jul 2020 12:03:52 -0700 (PDT)
+Date:   Fri, 24 Jul 2020 12:03:51 -0700
 From:   Kees Cook <keescook@chromium.org>
 To:     =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
 Cc:     linux-kernel@vger.kernel.org, Aleksa Sarai <cyphar@cyphar.com>,
@@ -93,70 +93,29 @@ Cc:     linux-kernel@vger.kernel.org, Aleksa Sarai <cyphar@cyphar.com>,
         linux-security-module@vger.kernel.org,
         linux-fsdevel@vger.kernel.org,
         Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
-Subject: Re: [PATCH v7 4/7] fs: Introduce O_MAYEXEC flag for openat2(2)
-Message-ID: <202007241202.8D07E1F276@keescook>
+Subject: Re: [PATCH v7 6/7] selftest/openat2: Add tests for O_MAYEXEC
+ enforcing
+Message-ID: <202007241203.E4A515733@keescook>
 References: <20200723171227.446711-1-mic@digikod.net>
- <20200723171227.446711-5-mic@digikod.net>
+ <20200723171227.446711-7-mic@digikod.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-1
 Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <20200723171227.446711-5-mic@digikod.net>
+In-Reply-To: <20200723171227.446711-7-mic@digikod.net>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Jul 23, 2020 at 07:12:24PM +0200, Mickaël Salaün wrote:
-> When the O_MAYEXEC flag is passed, openat2(2) may be subject to
-> additional restrictions depending on a security policy managed by the
-> kernel through a sysctl or implemented by an LSM thanks to the
-> inode_permission hook.  This new flag is ignored by open(2) and
-> openat(2) because of their unspecified flags handling.  When used with
-> openat2(2), the default behavior is only to forbid to open a directory.
+On Thu, Jul 23, 2020 at 07:12:26PM +0200, Mickaël Salaün wrote:
+> Test propagation of noexec mount points or file executability through
+> files open with or without O_MAYEXEC, thanks to the
+> fs.open_mayexec_enforce sysctl.
 > 
-> The underlying idea is to be able to restrict scripts interpretation
-> according to a policy defined by the system administrator.  For this to
-> be possible, script interpreters must use the O_MAYEXEC flag
-> appropriately.  To be fully effective, these interpreters also need to
-> handle the other ways to execute code: command line parameters (e.g.,
-> option -e for Perl), module loading (e.g., option -m for Python), stdin,
-> file sourcing, environment variables, configuration files, etc.
-> According to the threat model, it may be acceptable to allow some script
-> interpreters (e.g. Bash) to interpret commands from stdin, may it be a
-> TTY or a pipe, because it may not be enough to (directly) perform
-> syscalls.  Further documentation can be found in a following patch.
-> 
-> Even without enforced security policy, userland interpreters can set it
-> to enforce the system policy at their level, knowing that it will not
-> break anything on running systems which do not care about this feature.
-> However, on systems which want this feature enforced, there will be
-> knowledgeable people (i.e. sysadmins who enforced O_MAYEXEC
-> deliberately) to manage it.  A simple security policy implementation,
-> configured through a dedicated sysctl, is available in a following
-> patch.
-> 
-> O_MAYEXEC should not be confused with the O_EXEC flag which is intended
-> for execute-only, which obviously doesn't work for scripts.  However, a
-> similar behavior could be implemented in userland with O_PATH:
-> https://lore.kernel.org/lkml/1e2f6913-42f2-3578-28ed-567f6a4bdda1@digikod.net/
-> 
-> The implementation of O_MAYEXEC almost duplicates what execve(2) and
-> uselib(2) are already doing: setting MAY_OPENEXEC in acc_mode (which can
-> then be checked as MAY_EXEC, if enforced).
-> 
-> This is an updated subset of the patch initially written by Vincent
-> Strubel for CLIP OS 4:
-> https://github.com/clipos-archive/src_platform_clip-patches/blob/f5cb330d6b684752e403b4e41b39f7004d88e561/1901_open_mayexec.patch
-> This patch has been used for more than 12 years with customized script
-> interpreters.  Some examples (with the original O_MAYEXEC) can be found
-> here:
-> https://github.com/clipos-archive/clipos4_portage-overlay/search?q=O_MAYEXEC
-> 
-> Co-developed-by: Vincent Strubel <vincent.strubel@ssi.gouv.fr>
-> Signed-off-by: Vincent Strubel <vincent.strubel@ssi.gouv.fr>
+> Signed-off-by: Mickaël Salaün <mic@digikod.net>
 
-Acked-by: Kees Cook <keescook@chromium.org>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 
 -- 
 Kees Cook
