@@ -2,56 +2,69 @@ Return-Path: <SRS0=pxsc=BF=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0DE0FC433DF
-	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 08:21:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 74FB5C433DF
+	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 15:18:21 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DFDE2206F6
-	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 08:21:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 41A8F2065F
+	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 15:18:21 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="um7wejtO"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726674AbgGZIVW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 26 Jul 2020 04:21:22 -0400
-Received: from verein.lst.de ([213.95.11.211]:39929 "EHLO verein.lst.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725810AbgGZIVW (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Sun, 26 Jul 2020 04:21:22 -0400
-Received: by verein.lst.de (Postfix, from userid 2407)
-        id DD91168B05; Sun, 26 Jul 2020 10:21:18 +0200 (CEST)
-Date:   Sun, 26 Jul 2020 10:21:18 +0200
-From:   Christoph Hellwig <hch@lst.de>
-To:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc:     Christoph Hellwig <hch@lst.de>, Al Viro <viro@zeniv.linux.org.uk>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        "Rafael J. Wysocki" <rafael@kernel.org>,
-        linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: Re: [PATCH 04/21] devtmpfs: refactor devtmpfsd()
-Message-ID: <20200726082118.GA17726@lst.de>
-References: <20200726071356.287160-1-hch@lst.de> <20200726071356.287160-5-hch@lst.de> <20200726074306.GA444745@kroah.com>
+        id S1726121AbgGZPSU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 26 Jul 2020 11:18:20 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49592 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725982AbgGZPSU (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 26 Jul 2020 11:18:20 -0400
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8598BC0619D2;
+        Sun, 26 Jul 2020 08:18:20 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=cYcLOt9xMtmqE1IKx7EJ1yVFnTZAqfZV+W0fuS8FqWc=; b=um7wejtOBrnxldoh/n2UwYzdJD
+        D9kN+dcL/MsT/0uG9sGqD8xfLD9J1OZl36V8NSMrE09UsBqvu5cey9jY62V9FZ+l0rfWlK2XivUQ5
+        IvH8MMhKTIuHmlxZTP2YzPDzfb5cybiixpKPU2L9yzQiyshm67sAIyAYZaS1u71ZYizWOSQI2tkmZ
+        xodRaLGMMyE5//vKS2Hmbd9saln6jEn3qGiPpEk7V7s8dupqyhTmcTeO0EMJ46MGFeeOVY9yWVlOK
+        5sIRSUu6VFjVOx2zaDKoQcIzXsKhsm/LzpkqVbNsWq0dmTLKOFGVKdOx0MexfeDq26NjNefxjkUDA
+        2+7zsW2w==;
+Received: from hch by casper.infradead.org with local (Exim 4.92.3 #3 (Red Hat Linux))
+        id 1jziPi-0006ej-M1; Sun, 26 Jul 2020 15:18:10 +0000
+Date:   Sun, 26 Jul 2020 16:18:10 +0100
+From:   Christoph Hellwig <hch@infradead.org>
+To:     Kanchan Joshi <joshi.k@samsung.com>
+Cc:     axboe@kernel.dk, viro@zeniv.linux.org.uk, bcrl@kvack.org,
+        willy@infradead.org, hch@infradead.org, Damien.LeMoal@wdc.com,
+        asml.silence@gmail.com, linux-fsdevel@vger.kernel.org,
+        linux-kernel@vger.kernel.org, linux-aio@kvack.org,
+        io-uring@vger.kernel.org, linux-block@vger.kernel.org,
+        linux-api@vger.kernel.org, Selvakumar S <selvakuma.s1@samsung.com>,
+        Nitesh Shetty <nj.shetty@samsung.com>,
+        Javier Gonzalez <javier.gonz@samsung.com>
+Subject: Re: [PATCH v4 1/6] fs: introduce FMODE_ZONE_APPEND and
+ IOCB_ZONE_APPEND
+Message-ID: <20200726151810.GA25328@infradead.org>
+References: <1595605762-17010-1-git-send-email-joshi.k@samsung.com>
+ <CGME20200724155258epcas5p1a75b926950a18cd1e6c8e7a047e6c589@epcas5p1.samsung.com>
+ <1595605762-17010-2-git-send-email-joshi.k@samsung.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20200726074306.GA444745@kroah.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+In-Reply-To: <1595605762-17010-2-git-send-email-joshi.k@samsung.com>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Sun, Jul 26, 2020 at 09:43:06AM +0200, Greg Kroah-Hartman wrote:
-> On Sun, Jul 26, 2020 at 09:13:39AM +0200, Christoph Hellwig wrote:
-> > Split the main worker loop into a separate function.  This allows
-> > devtmpfsd itself and devtmpfsd_setup to be marked __init, which will
-> > allows us to call __init routines for the setup work.
-> > 
-> > Signed-off-by: Christoph Hellwig <hch@lst.de>
-> > ---
-> >  drivers/base/devtmpfs.c | 47 +++++++++++++++++++++++------------------
-> >  1 file changed, 26 insertions(+), 21 deletions(-)
-> 
-> Nice cleanup, thanks for doing this:
-
-This was actualy Als idea, I should have probably mentioned that.
+Zone append is a protocol context that ha not business showing up
+in a file system interface.  The right interface is a generic way
+to report the written offset for an append write for any kind of file.
+So we should pick a better name like FMODE_REPORT_APPEND_OFFSET
+(not that I particularly like that name, but it is the best I could
+quickly come up with).
