@@ -7,36 +7,36 @@ X-Spam-Status: No, score=-12.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3404BC433E5
-	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 07:14:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 032E0C433F1
+	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 07:14:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 131FC20714
-	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 07:14:07 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D9D5C20714
+	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 07:14:24 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="qhpb79ik"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="tImblYUz"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726862AbgGZHOG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 26 Jul 2020 03:14:06 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59824 "EHLO
+        id S1727055AbgGZHOY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 26 Jul 2020 03:14:24 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59882 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725829AbgGZHOF (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 26 Jul 2020 03:14:05 -0400
+        with ESMTP id S1727047AbgGZHOW (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 26 Jul 2020 03:14:22 -0400
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 23C0DC0619D2;
-        Sun, 26 Jul 2020 00:14:05 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 269CBC0619D4;
+        Sun, 26 Jul 2020 00:14:22 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
         References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
         Content-Type:Content-ID:Content-Description;
-        bh=ePYrotlytJXvI0CdCW3tl0P3sQHCqpS3OjHeAMmpEaE=; b=qhpb79ikcfqYXKIUvFaII+c4jE
-        kFA6/rYf9K2KerRp8S8DPRZ4jsb0arAox4VSp48BN3v734pB+utYB7wiidXdtUOgvqjCzSokE1Mym
-        KO7QQpUHHQlnZEi9+Y6wiqUkjzos9Qxh7c0Mqf1bWECXL68dV2bS6DMkth6tSbcrJfhlK37NFG8mT
-        6dx31hIPSeOnqzZu9lP3X07CH+LY7Xh1eSC3kzedqJv/QiJsRLeUGFhNmkQAaQGLWt9vGiQh/yE31
-        SCBdEO7Ibbku2HVgw48bDpAYhK0j3K/C2cuR38oeMeVnscxUWVrnrVcSRwGrR/j9+Kqld9AVmUTrS
-        +AwK6RcQ==;
+        bh=39AuOUL6zwjspkwl/PRDKjl79kcQGSOoP/IHahBwaUc=; b=tImblYUzqe06uYK9f034Ew2RMn
+        SbV2QjqiyvEu0Fy/m3GN/c0W/VCCCcT9f4Xl4S6dGQ80RLzBENMjOZPrsIvOPB/Z36xuUUJf0Y+Sw
+        aK+7LdoaWP2UOJbiEm86/pzjSKvbPSdQK5S6rPLGro3oeHEOpNQkQ88pYEZp1iUgnhzPlF1KvGLqg
+        ubHRMJJuAnAULQU8I8MG20xkFiFa/WtOsuh9p3RhuSJDZEe4QOeIDYyLos+QCmODVuZaT+REZdjMr
+        GmCG196EBdEmeUnA9GrqHWNbaaJ/pQTs359VKTLvfGzOQPtfzkp/Qtg7J/7jYD11PId6JD7sv6vLs
+        6cwMOUow==;
 Received: from [2001:4bb8:18c:2acc:5ff1:d0b0:8643:670e] (helo=localhost)
         by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1jzarC-0002O6-0K; Sun, 26 Jul 2020 07:14:02 +0000
+        id 1jzarR-0002SE-DT; Sun, 26 Jul 2020 07:14:19 +0000
 From:   Christoph Hellwig <hch@lst.de>
 To:     Al Viro <viro@zeniv.linux.org.uk>,
         Linus Torvalds <torvalds@linux-foundation.org>
@@ -44,9 +44,9 @@ Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         "Rafael J. Wysocki" <rafael@kernel.org>,
         linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
         linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: [PATCH 02/21] fs: refactor ksys_umount
-Date:   Sun, 26 Jul 2020 09:13:37 +0200
-Message-Id: <20200726071356.287160-3-hch@lst.de>
+Subject: [PATCH 09/21] init: add an init_unlink helper
+Date:   Sun, 26 Jul 2020 09:13:44 +0200
+Message-Id: <20200726071356.287160-10-hch@lst.de>
 X-Mailer: git-send-email 2.27.0
 In-Reply-To: <20200726071356.287160-1-hch@lst.de>
 References: <20200726071356.287160-1-hch@lst.de>
@@ -58,88 +58,125 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Factor out a path_umount helper that takes a struct path * instead of the
-actual file name.  This will allow to convert the init and devtmpfs code
-to properly mount based on a kernel pointer instead of relying on the
-implicit set_fs(KERNEL_DS) during early init.
+Add a simple helper to unlink with a kernel space file name and switch
+the early init code over to it.  Remove the now unused ksys_unlink.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/namespace.c | 40 ++++++++++++++++++----------------------
- 1 file changed, 18 insertions(+), 22 deletions(-)
+ fs/for_init.c                 | 5 +++++
+ include/linux/init_syscalls.h | 1 +
+ include/linux/syscalls.h      | 7 -------
+ init/do_mounts.h              | 2 +-
+ init/do_mounts_initrd.c       | 4 ++--
+ init/do_mounts_rd.c           | 2 +-
+ init/initramfs.c              | 3 ++-
+ 7 files changed, 12 insertions(+), 12 deletions(-)
 
-diff --git a/fs/namespace.c b/fs/namespace.c
-index 6f8234f74bed90..43834b59eff6c3 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -1706,36 +1706,19 @@ static inline bool may_mandlock(void)
+diff --git a/fs/for_init.c b/fs/for_init.c
+index 7a039b6d107c92..32472206d64136 100644
+--- a/fs/for_init.c
++++ b/fs/for_init.c
+@@ -33,3 +33,8 @@ int __init init_umount(const char *name, int flags)
+ 		return ret;
+ 	return path_umount(&path, flags);
  }
- #endif
- 
--/*
-- * Now umount can handle mount points as well as block devices.
-- * This is important for filesystems which use unnamed block devices.
-- *
-- * We now support a flag for forced unmount like the other 'big iron'
-- * unixes. Our API is identical to OSF/1 to avoid making a mess of AMD
-- */
--
--int ksys_umount(char __user *name, int flags)
-+static int path_umount(struct path *path, int flags)
- {
--	struct path path;
- 	struct mount *mnt;
- 	int retval;
--	int lookup_flags = LOOKUP_MOUNTPOINT;
- 
- 	if (flags & ~(MNT_FORCE | MNT_DETACH | MNT_EXPIRE | UMOUNT_NOFOLLOW))
- 		return -EINVAL;
--
- 	if (!may_mount())
- 		return -EPERM;
- 
--	if (!(flags & UMOUNT_NOFOLLOW))
--		lookup_flags |= LOOKUP_FOLLOW;
--
--	retval = user_path_at(AT_FDCWD, name, lookup_flags, &path);
--	if (retval)
--		goto out;
--	mnt = real_mount(path.mnt);
-+	mnt = real_mount(path->mnt);
- 	retval = -EINVAL;
--	if (path.dentry != path.mnt->mnt_root)
-+	if (path->dentry != path->mnt->mnt_root)
- 		goto dput_and_out;
- 	if (!check_mnt(mnt))
- 		goto dput_and_out;
-@@ -1748,12 +1731,25 @@ int ksys_umount(char __user *name, int flags)
- 	retval = do_umount(mnt, flags);
- dput_and_out:
- 	/* we mustn't call path_put() as that would clear mnt_expiry_mark */
--	dput(path.dentry);
-+	dput(path->dentry);
- 	mntput_no_expire(mnt);
--out:
- 	return retval;
- }
- 
-+int ksys_umount(char __user *name, int flags)
++
++int __init init_unlink(const char *pathname)
 +{
-+	int lookup_flags = LOOKUP_MOUNTPOINT;
-+	struct path path;
-+	int ret;
-+
-+	if (!(flags & UMOUNT_NOFOLLOW))
-+		lookup_flags |= LOOKUP_FOLLOW;
-+	ret = user_path_at(AT_FDCWD, name, lookup_flags, &path);
-+	if (ret)
-+		return ret;
-+	return path_umount(&path, flags);
++	return do_unlinkat(AT_FDCWD, getname_kernel(pathname));
 +}
-+
- SYSCALL_DEFINE2(umount, char __user *, name, int, flags)
+diff --git a/include/linux/init_syscalls.h b/include/linux/init_syscalls.h
+index a5a2e7f1991691..00d597249549ee 100644
+--- a/include/linux/init_syscalls.h
++++ b/include/linux/init_syscalls.h
+@@ -3,3 +3,4 @@
+ int __init init_mount(const char *dev_name, const char *dir_name,
+ 		const char *type_page, unsigned long flags, void *data_page);
+ int __init init_umount(const char *name, int flags);
++int __init init_unlink(const char *pathname);
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 1a4f5d8ee7044b..26f9738e5ab861 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -1273,13 +1273,6 @@ int compat_ksys_ipc(u32 call, int first, int second,
+  * The following kernel syscall equivalents are just wrappers to fs-internal
+  * functions. Therefore, provide stubs to be inlined at the callsites.
+  */
+-extern long do_unlinkat(int dfd, struct filename *name);
+-
+-static inline long ksys_unlink(const char __user *pathname)
+-{
+-	return do_unlinkat(AT_FDCWD, getname(pathname));
+-}
+-
+ long do_rmdir(int dfd, struct filename *name);
+ 
+ static inline long ksys_rmdir(const char __user *pathname)
+diff --git a/init/do_mounts.h b/init/do_mounts.h
+index 20e7fec8cb499e..104d8431725aeb 100644
+--- a/init/do_mounts.h
++++ b/init/do_mounts.h
+@@ -16,7 +16,7 @@ extern int root_mountflags;
+ 
+ static inline __init int create_dev(char *name, dev_t dev)
  {
- 	return ksys_umount(name, flags);
+-	ksys_unlink(name);
++	init_unlink(name);
+ 	return ksys_mknod(name, S_IFBLK|0600, new_encode_dev(dev));
+ }
+ 
+diff --git a/init/do_mounts_initrd.c b/init/do_mounts_initrd.c
+index 6b020a06990251..8b44dd017842a8 100644
+--- a/init/do_mounts_initrd.c
++++ b/init/do_mounts_initrd.c
+@@ -137,11 +137,11 @@ bool __init initrd_load(void)
+ 		 * mounted in the normal path.
+ 		 */
+ 		if (rd_load_image("/initrd.image") && ROOT_DEV != Root_RAM0) {
+-			ksys_unlink("/initrd.image");
++			init_unlink("/initrd.image");
+ 			handle_initrd();
+ 			return true;
+ 		}
+ 	}
+-	ksys_unlink("/initrd.image");
++	init_unlink("/initrd.image");
+ 	return false;
+ }
+diff --git a/init/do_mounts_rd.c b/init/do_mounts_rd.c
+index 7b64390c075043..b062f8b028ce7c 100644
+--- a/init/do_mounts_rd.c
++++ b/init/do_mounts_rd.c
+@@ -271,7 +271,7 @@ int __init rd_load_image(char *from)
+ 	fput(out_file);
+ out:
+ 	kfree(buf);
+-	ksys_unlink("/dev/ram");
++	init_unlink("/dev/ram");
+ 	return res;
+ }
+ 
+diff --git a/init/initramfs.c b/init/initramfs.c
+index 3823d15e5d2619..574ab3755203da 100644
+--- a/init/initramfs.c
++++ b/init/initramfs.c
+@@ -12,6 +12,7 @@
+ #include <linux/file.h>
+ #include <linux/memblock.h>
+ #include <linux/namei.h>
++#include <linux/init_syscalls.h>
+ 
+ static ssize_t __init xwrite(struct file *file, const char *p, size_t count)
+ {
+@@ -300,7 +301,7 @@ static void __init clean_path(char *path, umode_t fmode)
+ 		if (S_ISDIR(st.mode))
+ 			ksys_rmdir(path);
+ 		else
+-			ksys_unlink(path);
++			init_unlink(path);
+ 	}
+ }
+ 
 -- 
 2.27.0
 
