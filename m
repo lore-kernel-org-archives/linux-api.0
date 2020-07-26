@@ -7,36 +7,36 @@ X-Spam-Status: No, score=-12.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 276D5C433EB
-	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 07:14:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3404BC433E5
+	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 07:14:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0884D20658
-	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 07:14:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 131FC20714
+	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 07:14:07 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="V7CADSOR"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="qhpb79ik"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726967AbgGZHOL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 26 Jul 2020 03:14:11 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59842 "EHLO
+        id S1726862AbgGZHOG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 26 Jul 2020 03:14:06 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59824 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726946AbgGZHOK (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 26 Jul 2020 03:14:10 -0400
+        with ESMTP id S1725829AbgGZHOF (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 26 Jul 2020 03:14:05 -0400
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F3C40C0619D2;
-        Sun, 26 Jul 2020 00:14:09 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 23C0DC0619D2;
+        Sun, 26 Jul 2020 00:14:05 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
         References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
         Content-Type:Content-ID:Content-Description;
-        bh=yblbXsy32g8hzD+BR7Pi2OP6YCbDPlnhYl7Ly/sIpoI=; b=V7CADSORo5/RGmLvbRmuzOk7oL
-        W2m8TkGO47Mi1Tf1/YxUu927Ykra7PjRPzeneidvWHx9cBTy1jhPxOIIkTPKs0KkLKMN7TllA8wRL
-        7eIteiP9Atp6yRaczp55M0OOnCzXnEKSNjQnRSrQsv0wv6VBnQ1cnBnWl2YHxc/M3vh3EJRRT4ZYH
-        FenNBIK1miDjRUdnoFMcKO1R90JsO010oC9WQZF5UJW4PnrOd49+0uoniXX47JwhTn/vjH0DilH71
-        AVrsw3VQU61Gxd4TdVxsw3R1zk8s+U3jh9onsmWgGUPXd4C+ZVTZ6nXXLM7NYO2VzJfwAN1Ed3tcI
-        xkrmAHSQ==;
+        bh=ePYrotlytJXvI0CdCW3tl0P3sQHCqpS3OjHeAMmpEaE=; b=qhpb79ikcfqYXKIUvFaII+c4jE
+        kFA6/rYf9K2KerRp8S8DPRZ4jsb0arAox4VSp48BN3v734pB+utYB7wiidXdtUOgvqjCzSokE1Mym
+        KO7QQpUHHQlnZEi9+Y6wiqUkjzos9Qxh7c0Mqf1bWECXL68dV2bS6DMkth6tSbcrJfhlK37NFG8mT
+        6dx31hIPSeOnqzZu9lP3X07CH+LY7Xh1eSC3kzedqJv/QiJsRLeUGFhNmkQAaQGLWt9vGiQh/yE31
+        SCBdEO7Ibbku2HVgw48bDpAYhK0j3K/C2cuR38oeMeVnscxUWVrnrVcSRwGrR/j9+Kqld9AVmUTrS
+        +AwK6RcQ==;
 Received: from [2001:4bb8:18c:2acc:5ff1:d0b0:8643:670e] (helo=localhost)
         by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1jzarF-0002OY-6g; Sun, 26 Jul 2020 07:14:06 +0000
+        id 1jzarC-0002O6-0K; Sun, 26 Jul 2020 07:14:02 +0000
 From:   Christoph Hellwig <hch@lst.de>
 To:     Al Viro <viro@zeniv.linux.org.uk>,
         Linus Torvalds <torvalds@linux-foundation.org>
@@ -44,9 +44,9 @@ Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         "Rafael J. Wysocki" <rafael@kernel.org>,
         linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
         linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: [PATCH 04/21] devtmpfs: refactor devtmpfsd()
-Date:   Sun, 26 Jul 2020 09:13:39 +0200
-Message-Id: <20200726071356.287160-5-hch@lst.de>
+Subject: [PATCH 02/21] fs: refactor ksys_umount
+Date:   Sun, 26 Jul 2020 09:13:37 +0200
+Message-Id: <20200726071356.287160-3-hch@lst.de>
 X-Mailer: git-send-email 2.27.0
 In-Reply-To: <20200726071356.287160-1-hch@lst.de>
 References: <20200726071356.287160-1-hch@lst.de>
@@ -58,85 +58,88 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Split the main worker loop into a separate function.  This allows
-devtmpfsd itself and devtmpfsd_setup to be marked __init, which will
-allows us to call __init routines for the setup work.
+Factor out a path_umount helper that takes a struct path * instead of the
+actual file name.  This will allow to convert the init and devtmpfs code
+to properly mount based on a kernel pointer instead of relying on the
+implicit set_fs(KERNEL_DS) during early init.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/base/devtmpfs.c | 47 +++++++++++++++++++++++------------------
- 1 file changed, 26 insertions(+), 21 deletions(-)
+ fs/namespace.c | 40 ++++++++++++++++++----------------------
+ 1 file changed, 18 insertions(+), 22 deletions(-)
 
-diff --git a/drivers/base/devtmpfs.c b/drivers/base/devtmpfs.c
-index c9017e0584c003..a103ee7e229930 100644
---- a/drivers/base/devtmpfs.c
-+++ b/drivers/base/devtmpfs.c
-@@ -378,7 +378,30 @@ static int handle(const char *name, umode_t mode, kuid_t uid, kgid_t gid,
- 		return handle_remove(name, dev);
+diff --git a/fs/namespace.c b/fs/namespace.c
+index 6f8234f74bed90..43834b59eff6c3 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -1706,36 +1706,19 @@ static inline bool may_mandlock(void)
+ }
+ #endif
+ 
+-/*
+- * Now umount can handle mount points as well as block devices.
+- * This is important for filesystems which use unnamed block devices.
+- *
+- * We now support a flag for forced unmount like the other 'big iron'
+- * unixes. Our API is identical to OSF/1 to avoid making a mess of AMD
+- */
+-
+-int ksys_umount(char __user *name, int flags)
++static int path_umount(struct path *path, int flags)
+ {
+-	struct path path;
+ 	struct mount *mnt;
+ 	int retval;
+-	int lookup_flags = LOOKUP_MOUNTPOINT;
+ 
+ 	if (flags & ~(MNT_FORCE | MNT_DETACH | MNT_EXPIRE | UMOUNT_NOFOLLOW))
+ 		return -EINVAL;
+-
+ 	if (!may_mount())
+ 		return -EPERM;
+ 
+-	if (!(flags & UMOUNT_NOFOLLOW))
+-		lookup_flags |= LOOKUP_FOLLOW;
+-
+-	retval = user_path_at(AT_FDCWD, name, lookup_flags, &path);
+-	if (retval)
+-		goto out;
+-	mnt = real_mount(path.mnt);
++	mnt = real_mount(path->mnt);
+ 	retval = -EINVAL;
+-	if (path.dentry != path.mnt->mnt_root)
++	if (path->dentry != path->mnt->mnt_root)
+ 		goto dput_and_out;
+ 	if (!check_mnt(mnt))
+ 		goto dput_and_out;
+@@ -1748,12 +1731,25 @@ int ksys_umount(char __user *name, int flags)
+ 	retval = do_umount(mnt, flags);
+ dput_and_out:
+ 	/* we mustn't call path_put() as that would clear mnt_expiry_mark */
+-	dput(path.dentry);
++	dput(path->dentry);
+ 	mntput_no_expire(mnt);
+-out:
+ 	return retval;
  }
  
--static int devtmpfs_setup(void *p)
-+static void __noreturn devtmpfs_work_loop(void)
++int ksys_umount(char __user *name, int flags)
 +{
-+	while (1) {
-+		spin_lock(&req_lock);
-+		while (requests) {
-+			struct req *req = requests;
-+			requests = NULL;
-+			spin_unlock(&req_lock);
-+			while (req) {
-+				struct req *next = req->next;
-+				req->err = handle(req->name, req->mode,
-+						  req->uid, req->gid, req->dev);
-+				complete(&req->done);
-+				req = next;
-+			}
-+			spin_lock(&req_lock);
-+		}
-+		__set_current_state(TASK_INTERRUPTIBLE);
-+		spin_unlock(&req_lock);
-+		schedule();
-+	}
++	int lookup_flags = LOOKUP_MOUNTPOINT;
++	struct path path;
++	int ret;
++
++	if (!(flags & UMOUNT_NOFOLLOW))
++		lookup_flags |= LOOKUP_FOLLOW;
++	ret = user_path_at(AT_FDCWD, name, lookup_flags, &path);
++	if (ret)
++		return ret;
++	return path_umount(&path, flags);
 +}
 +
-+static int __init devtmpfs_setup(void *p)
+ SYSCALL_DEFINE2(umount, char __user *, name, int, flags)
  {
- 	int err;
- 
-@@ -396,31 +419,13 @@ static int devtmpfs_setup(void *p)
- 	return err;
- }
- 
--static int devtmpfsd(void *p)
-+static int __init devtmpfsd(void *p)
- {
- 	int err = devtmpfs_setup(p);
- 
- 	if (err)
- 		return err;
--	while (1) {
--		spin_lock(&req_lock);
--		while (requests) {
--			struct req *req = requests;
--			requests = NULL;
--			spin_unlock(&req_lock);
--			while (req) {
--				struct req *next = req->next;
--				req->err = handle(req->name, req->mode,
--						  req->uid, req->gid, req->dev);
--				complete(&req->done);
--				req = next;
--			}
--			spin_lock(&req_lock);
--		}
--		__set_current_state(TASK_INTERRUPTIBLE);
--		spin_unlock(&req_lock);
--		schedule();
--	}
-+	devtmpfs_work_loop();
- 	return 0;
- }
- 
+ 	return ksys_umount(name, flags);
 -- 
 2.27.0
 
