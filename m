@@ -2,41 +2,41 @@ Return-Path: <SRS0=pxsc=BF=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-12.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 139FDC433DF
-	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 07:14:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 276D5C433EB
+	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 07:14:12 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E51C12070B
-	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 07:14:02 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0884D20658
+	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 07:14:12 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="Qsa8OvuK"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="V7CADSOR"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726082AbgGZHOC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 26 Jul 2020 03:14:02 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59814 "EHLO
+        id S1726967AbgGZHOL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 26 Jul 2020 03:14:11 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59842 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725829AbgGZHOC (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 26 Jul 2020 03:14:02 -0400
+        with ESMTP id S1726946AbgGZHOK (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 26 Jul 2020 03:14:10 -0400
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2BAEDC0619D2;
-        Sun, 26 Jul 2020 00:14:02 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F3C40C0619D2;
+        Sun, 26 Jul 2020 00:14:09 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
-        Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
-        Content-Description:In-Reply-To:References;
-        bh=fGf+qSjLbZzodelUPagTscOoGuAaHiLzBDim0f5g4Ow=; b=Qsa8OvuKB3jr+n70HNOY96eEeD
-        fismT6fWrOOgNIqz/mVybBthRGeVzcYM4YH+nrai3LiCOZVV+5lol3nhzoGWSCrEHcwjHQzYGhJh6
-        FfawKunah9bsJb+W+kNMsd2IC1c0KcEo0l1/AvvnHRbrgX22UbpPh+qUEGSqsjdMrifGJGuV07BUy
-        3LtuwFAqCyroV05Exkxd2TaxJ1C6i0sh/Pg+Ok2k3QRu+ljAV9SnoziLPVi3jpyanDeDU0kfLiM1e
-        PoxhQ+hSAdUvYu054wRlIVUeoGsZuWKTdVlw4wZnw0pkDvMjbAwpFlPdXQozpA5vHN1ElqOun28SO
-        oeAgopug==;
+        References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
+        Content-Type:Content-ID:Content-Description;
+        bh=yblbXsy32g8hzD+BR7Pi2OP6YCbDPlnhYl7Ly/sIpoI=; b=V7CADSORo5/RGmLvbRmuzOk7oL
+        W2m8TkGO47Mi1Tf1/YxUu927Ykra7PjRPzeneidvWHx9cBTy1jhPxOIIkTPKs0KkLKMN7TllA8wRL
+        7eIteiP9Atp6yRaczp55M0OOnCzXnEKSNjQnRSrQsv0wv6VBnQ1cnBnWl2YHxc/M3vh3EJRRT4ZYH
+        FenNBIK1miDjRUdnoFMcKO1R90JsO010oC9WQZF5UJW4PnrOd49+0uoniXX47JwhTn/vjH0DilH71
+        AVrsw3VQU61Gxd4TdVxsw3R1zk8s+U3jh9onsmWgGUPXd4C+ZVTZ6nXXLM7NYO2VzJfwAN1Ed3tcI
+        xkrmAHSQ==;
 Received: from [2001:4bb8:18c:2acc:5ff1:d0b0:8643:670e] (helo=localhost)
         by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1jzar7-0002Nr-MG; Sun, 26 Jul 2020 07:13:59 +0000
+        id 1jzarF-0002OY-6g; Sun, 26 Jul 2020 07:14:06 +0000
 From:   Christoph Hellwig <hch@lst.de>
 To:     Al Viro <viro@zeniv.linux.org.uk>,
         Linus Torvalds <torvalds@linux-foundation.org>
@@ -44,10 +44,12 @@ Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         "Rafael J. Wysocki" <rafael@kernel.org>,
         linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
         linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: add file system helpers that take kernel pointers for the init code v3
-Date:   Sun, 26 Jul 2020 09:13:35 +0200
-Message-Id: <20200726071356.287160-1-hch@lst.de>
+Subject: [PATCH 04/21] devtmpfs: refactor devtmpfsd()
+Date:   Sun, 26 Jul 2020 09:13:39 +0200
+Message-Id: <20200726071356.287160-5-hch@lst.de>
 X-Mailer: git-send-email 2.27.0
+In-Reply-To: <20200726071356.287160-1-hch@lst.de>
+References: <20200726071356.287160-1-hch@lst.de>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
@@ -56,60 +58,85 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi Al and Linus,
+Split the main worker loop into a separate function.  This allows
+devtmpfsd itself and devtmpfsd_setup to be marked __init, which will
+allows us to call __init routines for the setup work.
 
-currently a lot of the file system calls in the early in code (and the
-devtmpfs kthread) rely on the implicit set_fs(KERNEL_DS) during boot.
-This is one of the few last remaining places we need to deal with to kill
-off set_fs entirely, so this series adds new helpers that take kernel
-pointers.  These helpers are in init/ and marked __init and thus will
-be discarded after bootup.  A few also need to be duplicated in devtmpfs,
-though unfortunately.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ drivers/base/devtmpfs.c | 47 +++++++++++++++++++++++------------------
+ 1 file changed, 26 insertions(+), 21 deletions(-)
 
-The series sits on top of my previous
+diff --git a/drivers/base/devtmpfs.c b/drivers/base/devtmpfs.c
+index c9017e0584c003..a103ee7e229930 100644
+--- a/drivers/base/devtmpfs.c
++++ b/drivers/base/devtmpfs.c
+@@ -378,7 +378,30 @@ static int handle(const char *name, umode_t mode, kuid_t uid, kgid_t gid,
+ 		return handle_remove(name, dev);
+ }
+ 
+-static int devtmpfs_setup(void *p)
++static void __noreturn devtmpfs_work_loop(void)
++{
++	while (1) {
++		spin_lock(&req_lock);
++		while (requests) {
++			struct req *req = requests;
++			requests = NULL;
++			spin_unlock(&req_lock);
++			while (req) {
++				struct req *next = req->next;
++				req->err = handle(req->name, req->mode,
++						  req->uid, req->gid, req->dev);
++				complete(&req->done);
++				req = next;
++			}
++			spin_lock(&req_lock);
++		}
++		__set_current_state(TASK_INTERRUPTIBLE);
++		spin_unlock(&req_lock);
++		schedule();
++	}
++}
++
++static int __init devtmpfs_setup(void *p)
+ {
+ 	int err;
+ 
+@@ -396,31 +419,13 @@ static int devtmpfs_setup(void *p)
+ 	return err;
+ }
+ 
+-static int devtmpfsd(void *p)
++static int __init devtmpfsd(void *p)
+ {
+ 	int err = devtmpfs_setup(p);
+ 
+ 	if (err)
+ 		return err;
+-	while (1) {
+-		spin_lock(&req_lock);
+-		while (requests) {
+-			struct req *req = requests;
+-			requests = NULL;
+-			spin_unlock(&req_lock);
+-			while (req) {
+-				struct req *next = req->next;
+-				req->err = handle(req->name, req->mode,
+-						  req->uid, req->gid, req->dev);
+-				complete(&req->done);
+-				req = next;
+-			}
+-			spin_lock(&req_lock);
+-		}
+-		__set_current_state(TASK_INTERRUPTIBLE);
+-		spin_unlock(&req_lock);
+-		schedule();
+-	}
++	devtmpfs_work_loop();
+ 	return 0;
+ }
+ 
+-- 
+2.27.0
 
-  "decruft the early init / initrd / initramfs code v2"
-
-series.
-
-
-Git tree:
-
-    git://git.infradead.org/users/hch/misc.git init_path
-
-Gitweb:
-
-    http://git.infradead.org/users/hch/misc.git/shortlog/refs/heads/init_path
-
-
-Changes since v2:
- - move to fs/for-init.c
- - reuse the init routines in devtmpfs after refactoring devtmpfsd
-   (and thus the broken error handling in the previous version)
- - actually use kern_path in a place where user_path_at sneaked back in
-
-Changes since v1:
- - avoid most core VFS changes
- - renamed the functions and move them to init/ and devtmpfs
- - drop a bunch of cleanups that can be submitted independently now
-
-
-Diffstat:
- drivers/base/devtmpfs.c       |   54 +++++----
- drivers/md/md-autodetect.c    |    3 
- fs/Makefile                   |    2 
- fs/for_init.c                 |  249 ++++++++++++++++++++++++++++++++++++++++++
- fs/internal.h                 |   19 +--
- fs/namei.c                    |   20 +--
- fs/namespace.c                |  107 ++++++++----------
- fs/open.c                     |   22 +--
- include/linux/init_syscalls.h |   18 +++
- include/linux/syscalls.h      |   66 -----------
- init/do_mounts.c              |   12 +-
- init/do_mounts.h              |    7 -
- init/do_mounts_initrd.c       |   26 ++--
- init/do_mounts_rd.c           |    2 
- init/initramfs.c              |   29 ++--
- init/main.c                   |   10 -
- init/noinitramfs.c            |    8 -
- 17 files changed, 423 insertions(+), 231 deletions(-)
