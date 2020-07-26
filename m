@@ -2,108 +2,79 @@ Return-Path: <SRS0=pxsc=BF=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 152BBC433F8
-	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 16:04:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6E48AC433E5
+	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 16:21:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DFD782076A
-	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 16:04:28 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="BK0Lolwr"
+	by mail.kernel.org (Postfix) with ESMTP id 57C2C206D7
+	for <linux-api@archiver.kernel.org>; Sun, 26 Jul 2020 16:21:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727771AbgGZQEK (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 26 Jul 2020 12:04:10 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56654 "EHLO
+        id S1726663AbgGZQVW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 26 Jul 2020 12:21:22 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59336 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726998AbgGZQEK (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 26 Jul 2020 12:04:10 -0400
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2A447C0619D2;
-        Sun, 26 Jul 2020 09:04:10 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
-        References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
-        Content-Type:Content-ID:Content-Description;
-        bh=IQmgLN+siDw4xLbsM2TTfog5zbp64pb+O9vGfX9FNWk=; b=BK0Lolwr5nIbxuWVDb6/qrVCb5
-        25vqTL6qobU3dMsborvPYTnXbm35qce3kMPa12DmYZdamPIlr8+AuCicemOxLxH8ywagLsLNwKw/x
-        xzOHwVf2CFnQFOHy4UeUnAzNyrctD5T29XiGJdO+KwJM88lM0KyoDlkw0KKrk2W2IIxXNMEi5MF6P
-        bVy+coo8m2T1Ml45M+pAog0kgFqbIYvHHxJPysOY3c+aP85TWkW9NC+S0FsxhYExVxSd91+IaSBk8
-        k+MGToUR5VuBl930hhw1a0IJYeeOUPHXIph200S6qZQ0MMefK4lOUnfdIggfmqech4HpgZohOl/8y
-        UXSwqjbg==;
-Received: from [2001:4bb8:18c:2acc:2375:88ff:9f84:118d] (helo=localhost)
-        by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1jzj88-0000Yn-RM; Sun, 26 Jul 2020 16:04:05 +0000
-From:   Christoph Hellwig <hch@lst.de>
-To:     x86@kernel.org, Jan Kara <jack@suse.com>
-Cc:     linux-arm-kernel@lists.infradead.org,
-        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-api@vger.kernel.org, linux-arch@vger.kernel.org
-Subject: [PATCH 1/4] arm64: stop using <asm/compat.h> directly
-Date:   Sun, 26 Jul 2020 18:03:58 +0200
-Message-Id: <20200726160401.311569-2-hch@lst.de>
-X-Mailer: git-send-email 2.27.0
-In-Reply-To: <20200726160401.311569-1-hch@lst.de>
-References: <20200726160401.311569-1-hch@lst.de>
+        with ESMTP id S1726044AbgGZQVW (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 26 Jul 2020 12:21:22 -0400
+Received: from ZenIV.linux.org.uk (zeniv.linux.org.uk [IPv6:2002:c35c:fd02::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 14D4BC0619D2;
+        Sun, 26 Jul 2020 09:21:22 -0700 (PDT)
+Received: from viro by ZenIV.linux.org.uk with local (Exim 4.92.3 #3 (Red Hat Linux))
+        id 1jzjOk-0035cA-0j; Sun, 26 Jul 2020 16:21:14 +0000
+Date:   Sun, 26 Jul 2020 17:21:13 +0100
+From:   Al Viro <viro@zeniv.linux.org.uk>
+To:     Christoph Hellwig <hch@lst.de>
+Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        "Rafael J. Wysocki" <rafael@kernel.org>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        linux-raid@vger.kernel.org,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>
+Subject: Re: add file system helpers that take kernel pointers for the init
+ code v3
+Message-ID: <20200726162113.GR2786714@ZenIV.linux.org.uk>
+References: <20200726071356.287160-1-hch@lst.de>
+ <CAHk-=wgq8evViJD9Hnjugq=V0eUAn7K6ZjOP7P7qki-nOTx_jg@mail.gmail.com>
+ <20200726155204.GA24103@lst.de>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20200726155204.GA24103@lst.de>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Always use <linux/compat.h> so that we can move more declarations to
-common code.  In two of the three cases the asm include was in addition
-to an existing one for <linux/compat.h> anyway.
+On Sun, Jul 26, 2020 at 05:52:04PM +0200, Christoph Hellwig wrote:
+> On Sun, Jul 26, 2020 at 08:49:28AM -0700, Linus Torvalds wrote:
+> > On Sun, Jul 26, 2020 at 12:14 AM Christoph Hellwig <hch@lst.de> wrote:
+> > >
+> > > Hi Al and Linus,
+> > >
+> > > currently a lot of the file system calls in the early in code (and the
+> > > devtmpfs kthread) rely on the implicit set_fs(KERNEL_DS) during boot.
+> > > This is one of the few last remaining places we need to deal with to kill
+> > > off set_fs entirely, so this series adds new helpers that take kernel
+> > > pointers.  These helpers are in init/ and marked __init and thus will
+> > > be discarded after bootup.  A few also need to be duplicated in devtmpfs,
+> > > though unfortunately.
+> > 
+> > I see nothing objectionable here.
+> > 
+> > The only bikeshed comment I have is that I think the "for_init.c" name
+> > is ugly and pointless - I think you could just call it "fs/init.c" and
+> > it's both simpler and more straightforward. It _is_ init code, it's
+> > not "for" init.
+> 
+> That was Al's suggestion.  I personally don't care, so if between the
+> two of you, you can come up with a preferred choice I'll switch to it.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- arch/arm64/include/asm/stat.h | 2 +-
- arch/arm64/kernel/process.c   | 1 -
- arch/arm64/kernel/ptrace.c    | 1 -
- 3 files changed, 1 insertion(+), 3 deletions(-)
+I can live with either variant; the only problem with fs/init.c is that
+such name would imply the init code _of_ VFS, rather than VFS helpers for
+init.
 
-diff --git a/arch/arm64/include/asm/stat.h b/arch/arm64/include/asm/stat.h
-index 3b4a62f5aeb0c3..1b5ac1ef5d04cc 100644
---- a/arch/arm64/include/asm/stat.h
-+++ b/arch/arm64/include/asm/stat.h
-@@ -10,7 +10,7 @@
- #ifdef CONFIG_COMPAT
- 
- #include <linux/time.h>
--#include <asm/compat.h>
-+#include <linux/compat.h>
- 
- /*
-  * struct stat64 is needed for compat tasks only. Its definition is different
-diff --git a/arch/arm64/kernel/process.c b/arch/arm64/kernel/process.c
-index 6089638c7d43f4..70381900ef9b8a 100644
---- a/arch/arm64/kernel/process.c
-+++ b/arch/arm64/kernel/process.c
-@@ -46,7 +46,6 @@
- 
- #include <asm/alternative.h>
- #include <asm/arch_gicv3.h>
--#include <asm/compat.h>
- #include <asm/cpufeature.h>
- #include <asm/cacheflush.h>
- #include <asm/exec.h>
-diff --git a/arch/arm64/kernel/ptrace.c b/arch/arm64/kernel/ptrace.c
-index 1e02e98e68dd37..0497aaea782451 100644
---- a/arch/arm64/kernel/ptrace.c
-+++ b/arch/arm64/kernel/ptrace.c
-@@ -30,7 +30,6 @@
- #include <linux/tracehook.h>
- #include <linux/elf.h>
- 
--#include <asm/compat.h>
- #include <asm/cpufeature.h>
- #include <asm/debug-monitors.h>
- #include <asm/fpsimd.h>
--- 
-2.27.0
-
+Anyway, the series looks generally sane; if no other objections are raised,
+I'm adding it to vfs.git#for-next
