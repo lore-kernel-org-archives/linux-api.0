@@ -2,41 +2,41 @@ Return-Path: <SRS0=rFbF=BH=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 454A4C433EA
-	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 16:36:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C2253C433E5
+	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 16:36:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 260592053B
-	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 16:36:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 969552053B
+	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 16:36:41 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="sfXNdNHS"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="mspBTjUW"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731568AbgG1Qe0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 28 Jul 2020 12:34:26 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54964 "EHLO
+        id S1731897AbgG1Qgb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 28 Jul 2020 12:36:31 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54962 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1731422AbgG1QeZ (ORCPT
+        with ESMTP id S1731429AbgG1QeZ (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Tue, 28 Jul 2020 12:34:25 -0400
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 657C4C0619D2;
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5D09AC061794;
         Tue, 28 Jul 2020 09:34:25 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
-        References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
-        Content-Type:Content-ID:Content-Description;
-        bh=ePYrotlytJXvI0CdCW3tl0P3sQHCqpS3OjHeAMmpEaE=; b=sfXNdNHSuFEovpB8yATS1Pqah4
-        x2Kk41ftYlNLkrHzw7PiWtbrGa+zcWImnOvwWyXxUMSWcA/Zb4/rNH/9pTzll/I3W03bndgiwaUze
-        FveyJlPXap1sAoKiPpFlCQNXRX5To6jbfYKDOi2tRn6PCvHjLyEy/nOiUVDmW2vKFhp7kr9cLrsG0
-        /ZGFqwgwprfvCtZHtY1r/dSt7gQxOxiJ8zYDlGLExKx20oDdAg8QurXK9mjgv/BMozSANc05IaeIA
-        ROoyXC38ydo1+nrU070jHdjYH4u1t2OuVVHh8voYYe2cavufBgERY/9a9b9ZuqgrrJ3uKEEFVPfeQ
-        FMhmOoUg==;
+        Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
+        Content-Description:In-Reply-To:References;
+        bh=kVQtb0EC5zPxTA2ayYfBJx4HY/CNxKUjYbbIch9w8To=; b=mspBTjUWtgpPb4qLvI5PjYWwOM
+        4xZNHTabFfBvssqH7c/39Sc1ekp+M5+SqBDUYBkt2ucniLwNBWaq94zkkYOoIAPj/UaRMf4mtx3YK
+        W0L5iZg+7xHA9TiFXC8u5fc6fYHDe6CT6b15J8Oesifa05gXH7hnFa0iYkc8g+AcyI/0rNI4O8Ox0
+        obSdlxKChKraUYqMq1yyafpl/in4CI0Hav66IYrJPtqDtGUSPZR2/x9DBfWbuLTlo8NYaOgCPZqJD
+        OvUuAnCvA43Twt/6GA+RD8XxJ33FRrI6T32fxA0LxAHyvgCch5i6HSuh9FxyNeJUH2sjVKeCH7mvP
+        Ev8vTchw==;
 Received: from [2001:4bb8:180:6102:fd04:50d8:4827:5508] (helo=localhost)
         by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1k0SYY-0006wz-6q; Tue, 28 Jul 2020 16:34:22 +0000
+        id 1k0SYV-0006wk-6T; Tue, 28 Jul 2020 16:34:19 +0000
 From:   Christoph Hellwig <hch@lst.de>
 To:     Al Viro <viro@zeniv.linux.org.uk>,
         Linus Torvalds <torvalds@linux-foundation.org>
@@ -44,12 +44,10 @@ Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         "Rafael J. Wysocki" <rafael@kernel.org>,
         linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
         linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: [PATCH 02/23] fs: refactor ksys_umount
-Date:   Tue, 28 Jul 2020 18:33:55 +0200
-Message-Id: <20200728163416.556521-3-hch@lst.de>
+Subject: add file system helpers that take kernel pointers for the init code v4
+Date:   Tue, 28 Jul 2020 18:33:53 +0200
+Message-Id: <20200728163416.556521-1-hch@lst.de>
 X-Mailer: git-send-email 2.27.0
-In-Reply-To: <20200728163416.556521-1-hch@lst.de>
-References: <20200728163416.556521-1-hch@lst.de>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
@@ -58,88 +56,51 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Factor out a path_umount helper that takes a struct path * instead of the
-actual file name.  This will allow to convert the init and devtmpfs code
-to properly mount based on a kernel pointer instead of relying on the
-implicit set_fs(KERNEL_DS) during early init.
+Hi Al and Linus,
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- fs/namespace.c | 40 ++++++++++++++++++----------------------
- 1 file changed, 18 insertions(+), 22 deletions(-)
+currently a lot of the file system calls in the early in code (and the
+devtmpfs kthread) rely on the implicit set_fs(KERNEL_DS) during boot.
+This is one of the few last remaining places we need to deal with to kill
+off set_fs entirely, so this series adds new helpers that take kernel
+pointers.  These helpers are in init/ and marked __init and thus will
+be discarded after bootup.  A few also need to be duplicated in devtmpfs,
+though unfortunately.
 
-diff --git a/fs/namespace.c b/fs/namespace.c
-index 6f8234f74bed90..43834b59eff6c3 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -1706,36 +1706,19 @@ static inline bool may_mandlock(void)
- }
- #endif
- 
--/*
-- * Now umount can handle mount points as well as block devices.
-- * This is important for filesystems which use unnamed block devices.
-- *
-- * We now support a flag for forced unmount like the other 'big iron'
-- * unixes. Our API is identical to OSF/1 to avoid making a mess of AMD
-- */
--
--int ksys_umount(char __user *name, int flags)
-+static int path_umount(struct path *path, int flags)
- {
--	struct path path;
- 	struct mount *mnt;
- 	int retval;
--	int lookup_flags = LOOKUP_MOUNTPOINT;
- 
- 	if (flags & ~(MNT_FORCE | MNT_DETACH | MNT_EXPIRE | UMOUNT_NOFOLLOW))
- 		return -EINVAL;
--
- 	if (!may_mount())
- 		return -EPERM;
- 
--	if (!(flags & UMOUNT_NOFOLLOW))
--		lookup_flags |= LOOKUP_FOLLOW;
--
--	retval = user_path_at(AT_FDCWD, name, lookup_flags, &path);
--	if (retval)
--		goto out;
--	mnt = real_mount(path.mnt);
-+	mnt = real_mount(path->mnt);
- 	retval = -EINVAL;
--	if (path.dentry != path.mnt->mnt_root)
-+	if (path->dentry != path->mnt->mnt_root)
- 		goto dput_and_out;
- 	if (!check_mnt(mnt))
- 		goto dput_and_out;
-@@ -1748,12 +1731,25 @@ int ksys_umount(char __user *name, int flags)
- 	retval = do_umount(mnt, flags);
- dput_and_out:
- 	/* we mustn't call path_put() as that would clear mnt_expiry_mark */
--	dput(path.dentry);
-+	dput(path->dentry);
- 	mntput_no_expire(mnt);
--out:
- 	return retval;
- }
- 
-+int ksys_umount(char __user *name, int flags)
-+{
-+	int lookup_flags = LOOKUP_MOUNTPOINT;
-+	struct path path;
-+	int ret;
-+
-+	if (!(flags & UMOUNT_NOFOLLOW))
-+		lookup_flags |= LOOKUP_FOLLOW;
-+	ret = user_path_at(AT_FDCWD, name, lookup_flags, &path);
-+	if (ret)
-+		return ret;
-+	return path_umount(&path, flags);
-+}
-+
- SYSCALL_DEFINE2(umount, char __user *, name, int, flags)
- {
- 	return ksys_umount(name, flags);
--- 
-2.27.0
+The series sits on top of my previous
 
+  "decruft the early init / initrd / initramfs code v2"
+
+series.
+
+
+Git tree:
+
+    git://git.infradead.org/users/hch/misc.git init_path
+
+Gitweb:
+
+    http://git.infradead.org/users/hch/misc.git/shortlog/refs/heads/init_path
+
+
+Changes since v3:
+ - rename fs/for_init.c to fs/init.c
+ - document the purpose of the routines in fs/init.c with a comment
+ - don't mark devtmpfs __init as that will cause it to get overwritten
+   by initmem poisoning
+ - add an init_dup helper to make Al more happy than with the version
+   commit to the "decruft the early init / initrd / initramfs code v2"
+   series
+
+Changes since v2:
+ - move to fs/for_init.c
+ - reuse the init routines in devtmpfs after refactoring devtmpfsd
+   (and thus the broken error handling in the previous version)
+ - actually use kern_path in a place where user_path_at sneaked back in
+
+Changes since v1:
+ - avoid most core VFS changes
+ - renamed the functions and move them to init/ and devtmpfs
+ - drop a bunch of cleanups that can be submitted independently now
+
+
+Diffstat:
