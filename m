@@ -7,36 +7,36 @@ X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 82D67C4345C
-	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 16:35:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 79345C433E4
+	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 16:35:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 61091207FC
-	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 16:35:45 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5820F207FC
+	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 16:35:47 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="tM77BT9O"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="jNuHn6EW"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731466AbgG1Qfg (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 28 Jul 2020 12:35:36 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55072 "EHLO
+        id S1731715AbgG1Qew (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 28 Jul 2020 12:34:52 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55052 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1731709AbgG1Qe4 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 28 Jul 2020 12:34:56 -0400
+        with ESMTP id S1731709AbgG1Qeu (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 28 Jul 2020 12:34:50 -0400
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E7E65C0619D2;
-        Tue, 28 Jul 2020 09:34:55 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1753DC061794;
+        Tue, 28 Jul 2020 09:34:50 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
         References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
         Content-Type:Content-ID:Content-Description;
-        bh=XAM8KFVx8UAvc3gjhBR7LEFJRe2Y8sHMq8EAn7NG/L0=; b=tM77BT9O1WKEqTdZTYwUosEf4/
-        K/Q4v3xzghD2uDRF8qMj8VoXK8FaOfU7q+BClF9gdh7OBw1/0/xGT9hj96Tj4cGVEqKu7MdX25Mq6
-        K+GN2k59wLb38jb0hGR0f+F7tEDBnhbHYPC0Ahv4SzQ+384UMO7FeIF7sAVMghh+xOkaUhmG/K9ku
-        9lXDV8T2ciYLmL/EI0PeK5AxITguJvtdn0qwNappKrGGjWsvrg6j6bnAZPRypr6w3VxKtgaDGirh9
-        2gZ6lOqmC2Gt2JSsFhZJmbgLia9YPaMzL7gEK571jzGo2EzzTiruYF4zD3lSsZdqTXVYks7Lx6uEP
-        mMkQodxQ==;
+        bh=U6/jNKrxAUIjzQ18kwUZySI+bueeC5+chL9pO9InTCg=; b=jNuHn6EW67qenzbx2RviE1Lh+R
+        w369i05ZeMR5zgBppkJJuPGHwLtd1wmqu/UUkvm3HvpuPKXqb5oVyuO/lO19VSxI5s2FH3LlpZFz4
+        JdK6wffIbRHJILl2fWrVKGoiS9Pf0WRJ8auweugKcgXPel1kj39QlPWSh6xY0H5gfrZHqZh0CityY
+        tgqkd/cPG+5tuugTkOqjm4m2I5hUTZfYi8cqNT/EEuQHqzHlsn4u7zbCNZUxD4ZH7A0kIOt0Afpmn
+        ddO/m8q9I31AjNGFsyJ/8q28gPT16W9jpUvCwsyK8DC9W4SI2XfbFtejyAtRt3CN00iBeB7zrmUUb
+        iz+nI5cw==;
 Received: from [2001:4bb8:180:6102:fd04:50d8:4827:5508] (helo=localhost)
         by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1k0SZ1-00072f-N2; Tue, 28 Jul 2020 16:34:52 +0000
+        id 1k0SYu-00071A-1t; Tue, 28 Jul 2020 16:34:44 +0000
 From:   Christoph Hellwig <hch@lst.de>
 To:     Al Viro <viro@zeniv.linux.org.uk>,
         Linus Torvalds <torvalds@linux-foundation.org>
@@ -44,9 +44,9 @@ Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         "Rafael J. Wysocki" <rafael@kernel.org>,
         linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
         linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: [PATCH 17/23] init: add an init_link helper
-Date:   Tue, 28 Jul 2020 18:34:10 +0200
-Message-Id: <20200728163416.556521-18-hch@lst.de>
+Subject: [PATCH 14/23] init: add an init_chown helper
+Date:   Tue, 28 Jul 2020 18:34:07 +0200
+Message-Id: <20200728163416.556521-15-hch@lst.de>
 X-Mailer: git-send-email 2.27.0
 In-Reply-To: <20200728163416.556521-1-hch@lst.de>
 References: <20200728163416.556521-1-hch@lst.de>
@@ -58,57 +58,41 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add a simple helper to link with a kernel space file name and switch
-the early init code over to it.  Remove the now unused ksys_link.
+Add a simple helper to chown with a kernel space file name and switch
+the early init code over to it.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/init.c                     | 33 +++++++++++++++++++++++++++++++++
- fs/internal.h                 |  3 +--
- fs/namei.c                    |  4 ++--
+ fs/init.c                     | 18 ++++++++++++++++++
+ fs/internal.h                 |  2 +-
+ fs/open.c                     |  2 +-
  include/linux/init_syscalls.h |  1 +
- include/linux/syscalls.h      |  9 ---------
- init/initramfs.c              |  2 +-
- 6 files changed, 38 insertions(+), 14 deletions(-)
+ init/initramfs.c              |  6 +++---
+ 5 files changed, 24 insertions(+), 5 deletions(-)
 
 diff --git a/fs/init.c b/fs/init.c
-index 6d9af40d2897b1..5db9d9f74868e1 100644
+index 2c78f24814dde4..edd0244655956e 100644
 --- a/fs/init.c
 +++ b/fs/init.c
-@@ -122,6 +122,39 @@ int __init init_eaccess(const char *filename)
+@@ -78,6 +78,24 @@ int __init init_chroot(const char *filename)
  	return error;
  }
  
-+int __init init_link(const char *oldname, const char *newname)
++int __init init_chown(const char *filename, uid_t user, gid_t group, int flags)
 +{
-+	struct dentry *new_dentry;
-+	struct path old_path, new_path;
++	int lookup_flags = (flags & AT_SYMLINK_NOFOLLOW) ? 0 : LOOKUP_FOLLOW;
++	struct path path;
 +	int error;
 +
-+	error = kern_path(oldname, 0, &old_path);
++	error = kern_path(filename, lookup_flags, &path);
 +	if (error)
 +		return error;
-+
-+	new_dentry = kern_path_create(AT_FDCWD, newname, &new_path, 0);
-+	error = PTR_ERR(new_dentry);
-+	if (IS_ERR(new_dentry))
-+		goto out;
-+
-+	error = -EXDEV;
-+	if (old_path.mnt != new_path.mnt)
-+		goto out_dput;
-+	error = may_linkat(&old_path);
-+	if (unlikely(error))
-+		goto out_dput;
-+	error = security_path_link(old_path.dentry, &new_path, new_dentry);
-+	if (error)
-+		goto out_dput;
-+	error = vfs_link(old_path.dentry, new_path.dentry->d_inode, new_dentry,
-+			 NULL);
-+out_dput:
-+	done_path_create(&new_path, new_dentry);
-+out:
-+	path_put(&old_path);
++	error = mnt_want_write(path.mnt);
++	if (!error) {
++		error = chown_common(&path, user, group);
++		mnt_drop_write(path.mnt);
++	}
++	path_put(&path);
 +	return error;
 +}
 +
@@ -116,85 +100,72 @@ index 6d9af40d2897b1..5db9d9f74868e1 100644
  {
  	return do_unlinkat(AT_FDCWD, getname_kernel(pathname));
 diff --git a/fs/internal.h b/fs/internal.h
-index 6d82681c7d8372..58451b033d2698 100644
+index 491d1e63809b37..e81b9e23c3ea3f 100644
 --- a/fs/internal.h
 +++ b/fs/internal.h
-@@ -69,8 +69,7 @@ long do_rmdir(int dfd, struct filename *name);
- long do_unlinkat(int dfd, struct filename *name);
- long do_symlinkat(const char __user *oldname, int newdfd,
- 		  const char __user *newname);
--int do_linkat(int olddfd, const char __user *oldname, int newdfd,
--	      const char __user *newname, int flags);
-+int may_linkat(struct path *link);
+@@ -134,7 +134,7 @@ long do_sys_ftruncate(unsigned int fd, loff_t length, int small);
+ int do_fchmodat(int dfd, const char __user *filename, umode_t mode);
+ int do_fchownat(int dfd, const char __user *filename, uid_t user, gid_t group,
+ 		int flag);
+-
++int chown_common(const struct path *path, uid_t user, gid_t group);
+ extern int vfs_open(const struct path *, struct file *);
  
  /*
-  * namespace.c
-diff --git a/fs/namei.c b/fs/namei.c
-index d75a6039ae3966..13de64c6be7640 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -1024,7 +1024,7 @@ static bool safe_hardlink_source(struct inode *inode)
-  *
-  * Returns 0 if successful, -ve on error.
-  */
--static int may_linkat(struct path *link)
-+int may_linkat(struct path *link)
- {
- 	struct inode *inode = link->dentry->d_inode;
- 
-@@ -4086,7 +4086,7 @@ EXPORT_SYMBOL(vfs_link);
-  * with linux 2.0, and to avoid hard-linking to directories
-  * and other special files.  --ADM
-  */
--int do_linkat(int olddfd, const char __user *oldname, int newdfd,
-+static int do_linkat(int olddfd, const char __user *oldname, int newdfd,
- 	      const char __user *newname, int flags)
- {
- 	struct dentry *new_dentry;
-diff --git a/include/linux/init_syscalls.h b/include/linux/init_syscalls.h
-index 7031c0934bee9f..5ca15a5b55b7d7 100644
---- a/include/linux/init_syscalls.h
-+++ b/include/linux/init_syscalls.h
-@@ -8,5 +8,6 @@ int __init init_chroot(const char *filename);
- int __init init_chown(const char *filename, uid_t user, gid_t group, int flags);
- int __init init_chmod(const char *filename, umode_t mode);
- int __init init_eaccess(const char *filename);
-+int __init init_link(const char *oldname, const char *newname);
- int __init init_unlink(const char *pathname);
- int __init init_rmdir(const char *pathname);
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index a2779638e41445..4b18b91ce46573 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -1295,15 +1295,6 @@ static inline long ksys_mknod(const char __user *filename, umode_t mode,
- 	return do_mknodat(AT_FDCWD, filename, mode, dev);
+diff --git a/fs/open.c b/fs/open.c
+index f62f4752bb436d..49960a1248f14b 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -639,7 +639,7 @@ SYSCALL_DEFINE2(chmod, const char __user *, filename, umode_t, mode)
+ 	return do_fchmodat(AT_FDCWD, filename, mode);
  }
  
--extern int do_linkat(int olddfd, const char __user *oldname, int newdfd,
--		     const char __user *newname, int flags);
--
--static inline long ksys_link(const char __user *oldname,
--			     const char __user *newname)
--{
--	return do_linkat(AT_FDCWD, oldname, AT_FDCWD, newname, 0);
--}
--
- extern int do_fchownat(int dfd, const char __user *filename, uid_t user,
- 		       gid_t group, int flag);
- 
+-static int chown_common(const struct path *path, uid_t user, gid_t group)
++int chown_common(const struct path *path, uid_t user, gid_t group)
+ {
+ 	struct inode *inode = path->dentry->d_inode;
+ 	struct inode *delegated_inode = NULL;
+diff --git a/include/linux/init_syscalls.h b/include/linux/init_syscalls.h
+index e07099a14b91db..0da59d76133e17 100644
+--- a/include/linux/init_syscalls.h
++++ b/include/linux/init_syscalls.h
+@@ -5,5 +5,6 @@ int __init init_mount(const char *dev_name, const char *dir_name,
+ int __init init_umount(const char *name, int flags);
+ int __init init_chdir(const char *filename);
+ int __init init_chroot(const char *filename);
++int __init init_chown(const char *filename, uid_t user, gid_t group, int flags);
+ int __init init_unlink(const char *pathname);
+ int __init init_rmdir(const char *pathname);
 diff --git a/init/initramfs.c b/init/initramfs.c
-index 21a75f6ca893a9..a3d29318cc351d 100644
+index fb7210731d9e5d..24a8dcc6734064 100644
 --- a/init/initramfs.c
 +++ b/init/initramfs.c
-@@ -312,7 +312,7 @@ static int __init maybe_link(void)
- 		char *old = find_link(major, minor, ino, mode, collected);
- 		if (old) {
- 			clean_path(collected, 0);
--			return (ksys_link(old, collected) < 0) ? -1 : 1;
-+			return (init_link(old, collected) < 0) ? -1 : 1;
+@@ -349,14 +349,14 @@ static int __init do_name(void)
  		}
- 	}
- 	return 0;
+ 	} else if (S_ISDIR(mode)) {
+ 		ksys_mkdir(collected, mode);
+-		ksys_chown(collected, uid, gid);
++		init_chown(collected, uid, gid, 0);
+ 		ksys_chmod(collected, mode);
+ 		dir_add(collected, mtime);
+ 	} else if (S_ISBLK(mode) || S_ISCHR(mode) ||
+ 		   S_ISFIFO(mode) || S_ISSOCK(mode)) {
+ 		if (maybe_link() == 0) {
+ 			ksys_mknod(collected, mode, rdev);
+-			ksys_chown(collected, uid, gid);
++			init_chown(collected, uid, gid, 0);
+ 			ksys_chmod(collected, mode);
+ 			do_utime(collected, mtime);
+ 		}
+@@ -394,7 +394,7 @@ static int __init do_symlink(void)
+ 	collected[N_ALIGN(name_len) + body_len] = '\0';
+ 	clean_path(collected, 0);
+ 	ksys_symlink(collected + N_ALIGN(name_len), collected);
+-	ksys_lchown(collected, uid, gid);
++	init_chown(collected, uid, gid, AT_SYMLINK_NOFOLLOW);
+ 	do_utime(collected, mtime);
+ 	state = SkipIt;
+ 	next_state = Reset;
 -- 
 2.27.0
 
