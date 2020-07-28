@@ -2,36 +2,36 @@ Return-Path: <SRS0=rFbF=BH=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.6 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT,USER_IN_DEF_DKIM_WL
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-20.6 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT,
+	USER_IN_DEF_DKIM_WL autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 51484C433DF
-	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 13:11:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1BC1BC433ED
+	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 13:11:09 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 249AB20786
-	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 13:11:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E237E206D4
+	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 13:11:08 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="M2qxzdaA"
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="bbIPUm/u"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729984AbgG1NLC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 28 Jul 2020 09:11:02 -0400
-Received: from linux.microsoft.com ([13.77.154.182]:37728 "EHLO
+        id S1730014AbgG1NLH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 28 Jul 2020 09:11:07 -0400
+Received: from linux.microsoft.com ([13.77.154.182]:37808 "EHLO
         linux.microsoft.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729126AbgG1NLB (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 28 Jul 2020 09:11:01 -0400
+        with ESMTP id S1729993AbgG1NLF (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 28 Jul 2020 09:11:05 -0400
 Received: from localhost.localdomain (unknown [47.187.206.220])
-        by linux.microsoft.com (Postfix) with ESMTPSA id A29B720B4908;
-        Tue, 28 Jul 2020 06:10:59 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com A29B720B4908
+        by linux.microsoft.com (Postfix) with ESMTPSA id 0DFED20B490D;
+        Tue, 28 Jul 2020 06:11:03 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 0DFED20B490D
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
-        s=default; t=1595941860;
-        bh=TEbBd3dwynuJqoEQDPf6eZrKN4dXXk6jfZRblZdyl7M=;
+        s=default; t=1595941863;
+        bh=13WUf+vFpSs1y88gZGDgG7+CzTTQoGQm+q9JUkDCSOE=;
         h=From:To:Subject:Date:In-Reply-To:References:From;
-        b=M2qxzdaAALQKdV/om2/Ss9mGCaO4W0ppuDXrBtLb6Y8mbGvVbtWAy1s5VGkD53ThO
-         d1eyxgoQJxXGNbJ5ZxCXSiP558gHVj/zhREamaaI8TJ9YXL0ZoE5pFHy6MyLPf3y8M
-         l3N+n7G2BmuR/nGU0VVfrwEd9s8xbzsBZKHFhaMw=
+        b=bbIPUm/uLvpqe3t3Tf9S0PC6sBFZYRseudQhdj0zWfh9UFhjeA3f5v1vtTbJknmnE
+         vC+9xAiSB5k2bQnOl/iHhPvLrBV1I5NyB8fgu21tv1quHoTn+ez0O5xM5W8ZVaa8U6
+         2Bpg2W2/j8pUMh2052OAGTVnCE6cifMP27GIxgaY=
 From:   madvenka@linux.microsoft.com
 To:     kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
         linux-arm-kernel@lists.infradead.org,
@@ -39,12 +39,13 @@ To:     kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
         linux-kernel@vger.kernel.org,
         linux-security-module@vger.kernel.org, oleg@redhat.com,
         x86@kernel.org, madvenka@linux.microsoft.com
-Subject: [PATCH v1 0/4] [RFC] Implement Trampoline File Descriptor
-Date:   Tue, 28 Jul 2020 08:10:46 -0500
-Message-Id: <20200728131050.24443-1-madvenka@linux.microsoft.com>
+Subject: [PATCH v1 4/4] [RFC] arm/trampfd: Provide support for the trampoline file descriptor
+Date:   Tue, 28 Jul 2020 08:10:50 -0500
+Message-Id: <20200728131050.24443-5-madvenka@linux.microsoft.com>
 X-Mailer: git-send-email 2.17.1
-In-Reply-To: <aefc85852ea518982e74b233e11e16d2e707bc32>
+In-Reply-To: <20200728131050.24443-1-madvenka@linux.microsoft.com>
 References: <aefc85852ea518982e74b233e11e16d2e707bc32>
+ <20200728131050.24443-1-madvenka@linux.microsoft.com>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
@@ -52,280 +53,338 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: "Madhavan T. Venkataraman" <madvenka@linux.microsoft.com>
 
-Introduction
-------------
+Implement 32-bit ARM support for the trampoline file descriptor.
 
-Trampolines are used in many different user applications. Trampoline
-code is often generated at runtime. Trampoline code can also just be a
-pre-defined sequence of machine instructions in a data buffer.
+	- Define architecture specific register names
+	- Handle the trampoline invocation page fault
+	- Setup the user register context on trampoline invocation
+	- Setup the user stack context on trampoline invocation
 
-Trampoline code is placed either in a data page or in a stack page. In
-order to execute a trampoline, the page it resides in needs to be mapped
-with execute permissions. Writable pages with execute permissions provide
-an attack surface for hackers. Attackers can use this to inject malicious
-code, modify existing code or do other harm.
-
-To mitigate this, LSMs such as SELinux may not allow pages to have both
-write and execute permissions. This prevents trampolines from executing
-and blocks applications that use trampolines. To allow genuine applications
-to run, exceptions have to be made for them (by setting execmem, etc).
-In this case, the attack surface is just the pages of such applications.
-
-An application that is not allowed to have writable executable pages
-may try to load trampoline code into a file and map the file with execute
-permissions. In this case, the attack surface is just the buffer that
-contains trampoline code. However, a successful exploit may provide the
-hacker with means to load his own code in a file, map it and execute it.
-
-LSMs (such as the IPE proposal [1]) may allow only properly signed object
-files to be mapped with execute permissions. This will prevent trampoline
-files from being mapped. Again, exceptions have to be made for genuine
-applications.
-
-We need a way to execute trampolines without making security exceptions
-where possible and to reduce the attack surface even further.
-
-Examples of trampolines
------------------------
-
-libffi (A Portable Foreign Function Interface Library):
-
-libffi allows a user to define functions with an arbitrary list of
-arguments and return value through a feature called "Closures".
-Closures use trampolines to jump to ABI handlers that handle calling
-conventions and call a target function. libffi is used by a lot
-of different applications. To name a few:
-
-	- Python
-	- Java
-	- Javascript
-	- Ruby FFI
-	- Lisp
-	- Objective C
-
-GCC nested functions:
-
-GCC has traditionally used trampolines for implementing nested
-functions. The trampoline is placed on the user stack. So, the stack
-needs to be executable.
-
-Currently available solution
-----------------------------
-
-One solution that has been proposed to allow trampolines to be executed
-without making security exceptions is Trampoline Emulation. See:
-
-https://pax.grsecurity.net/docs/emutramp.txt
-
-In this solution, the kernel recognizes certain sequences of instructions
-as "well-known" trampolines. When such a trampoline is executed, a page
-fault happens because the trampoline page does not have execute permission.
-The kernel recognizes the trampoline and emulates it. Basically, the
-kernel does the work of the trampoline on behalf of the application.
-
-Here, the attack surface is the buffer that contains the trampoline.
-The attack surface is narrower than before. A hacker may still be able to
-modify what gets loaded in the registers or modify the target PC to point
-to arbitrary locations.
-
-Currently, the emulated trampolines are the ones used in libffi and GCC
-nested functions. To my knowledge, only X86 is supported at this time.
-
-As noted in emutramp.txt, this is not a generic solution. For every new
-trampoline that needs to be supported, new instruction sequences need to
-be recognized by the kernel and emulated. And this has to be done for
-every architecture that needs to be supported.
-
-emutramp.txt notes the following:
-
-"... the real solution is not in emulation but by designing a kernel API
-for runtime code generation and modifying userland to make use of it."
-
-Trampoline File Descriptor (trampfd)
---------------------------
-
-I am proposing a kernel API using anonymous file descriptors that
-can be used to create and execute trampolines with the help of the
-kernel. In this solution also, the kernel does the work of the trampoline.
-The API is described in patch 1/4 of this patchset. I provide a
-summary here:
-
-Trampolines commonly execute the following sequence:
-
-	- Load some values in some registers and/or
-	- Push some values on the stack
-	- Jump to a target PC
-
-libffi and GCC nested function trampolines fit into this model.
-
-Using the kernel API, applications and libraries can:
-
-	- Create a trampoline object
-	- Associate a register context with the trampoline (including
-	  a target PC)
-	- Associate a stack context with the trampoline
-	- Map the trampoline into a process address space
-	- Execute the trampoline by executing at the trampoline address
-
-The kernel creates the trampoline mapping without any permissions. When
-the trampoline is executed by user code, a page fault happens and the
-kernel gets control. The kernel recognizes that this is a trampoline
-invocation. It sets up the user registers based on the specified
-register context, and/or pushes values on the user stack based on the
-specified stack context, and sets the user PC to the requested target
-PC. When the kernel returns, execution continues at the target PC.
-So, the kernel does the work of the trampoline on behalf of the
-application.
-
-In this case, the attack surface is the context buffer. A hacker may
-attack an application with a vulnerability and may be able to modify the
-context buffer. So, when the register or stack context is set for
-a trampoline, the values may have been tampered with. From an attack
-surface perspective, this is similar to Trampoline Emulation. But
-with trampfd, user code can retrieve a trampoline's context from the
-kernel and add defensive checks to see if the context has been
-tampered with.
-
-As for the target PC, trampfd implements a measure called the
-"Allowed PCs" context (see Advantages) to prevent a hacker from making
-the target PC point to arbitrary locations. So, the attack surface is
-narrower than Trampoline Emulation.
-
-Advantages of the Trampoline File Descriptor approach
------------------------------------------------------
-
-- trampfd is customizable. The user can specify any combination of
-  allowed register name-value pairs in the register context and the kernel
-  will set it up accordingly. This allows different user trampolines to be
-  converted to use trampfd.
-
-- trampfd allows a stack context to be set up so that trampolines that
-  need to push values on the user stack can do that.
-
-- The initial work is targeted for X86 and ARM. But the implementation
-  leverages small portions of existing signal delivery code. Specifically,
-  it uses pt_regs for setting up user registers and copy_to_user()
-  to push values on the stack. So, this can be very easily ported to other
-  architectures.
-
-- trampfd provides a basic framework. In the future, new trampoline types
-  can be implemented, new contexts can be defined, and additional rules
-  can be implemented for security purposes.
-
-- For instance, trampfd defines an "Allowed PCs" context in this initial
-  work. As an example, libffi can create a read-only array of all ABI
-  handlers for an architecture at build time. This array can be used to
-  set the list of allowed PCs for a trampoline. This will mean that a hacker
-  cannot hack the PC part of the register context and make it point to
-  arbitrary locations.
-
-- An SELinux setting called "exectramp" can be implemented along the
-  lines of "execmem", "execstack" and "execheap" to selectively allow the
-  use of trampolines on a per application basis.
-
-- User code can add defensive checks in the code before invoking a
-  trampoline to make sure that a hacker has not modified the context data.
-  It can do this by getting the trampoline context from the kernel and
-  double checking it.
-
-- In the future, if the kernel can be enhanced to use a safe code
-  generation component, that code can be placed in the trampoline mapping
-  pages. Then, the trampoline invocation does not have to incur a trip
-  into the kernel.
-
-- Also, if the kernel can be enhanced to use a safe code generation
-  component, other forms of dynamic code such as JIT code can be
-  addressed by the trampfd framework.
-
-- Trampolines can be shared across processes which can give rise to
-  interesting uses in the future.
-
-- Trampfd can be used for other purposes to extend the kernel's
-  functionality.
-
-libffi
-------
-
-I have implemented my solution for libffi and provided the changes for
-X86 and ARM, 32-bit and 64-bit. Here is the reference patch:
-
-http://linux.microsoft.com/~madvenka/libffi/libffi.txt
-
-If the trampfd patchset gets accepted, I will send the libffi changes
-to the maintainers for a review. BTW, I have also successfully executed
-the libffi self tests.
-
-Work that is pending
---------------------
-
-- I am working on implementing an SELinux setting called "exectramp"
-  similar to "execmem" to allow the use of trampfd on a per application
-  basis.
-
-- I have a comprehensive test program to test the kernel API. I am
-  working on adding it to selftests.
-
-References
-----------
-
-[1] https://microsoft.github.io/ipe/
+Signed-off-by: Madhavan T. Venkataraman <madvenka@linux.microsoft.com>
 ---
-Madhavan T. Venkataraman (4):
-  fs/trampfd: Implement the trampoline file descriptor API
-  x86/trampfd: Support for the trampoline file descriptor
-  arm64/trampfd: Support for the trampoline file descriptor
-  arm/trampfd: Support for the trampoline file descriptor
-
- arch/arm/include/uapi/asm/ptrace.h     |  20 ++
- arch/arm/kernel/Makefile               |   1 +
- arch/arm/kernel/trampfd.c              | 214 +++++++++++++++++
- arch/arm/mm/fault.c                    |  12 +-
- arch/arm/tools/syscall.tbl             |   1 +
- arch/arm64/include/asm/ptrace.h        |   9 +
- arch/arm64/include/asm/unistd.h        |   2 +-
- arch/arm64/include/asm/unistd32.h      |   2 +
- arch/arm64/include/uapi/asm/ptrace.h   |  57 +++++
- arch/arm64/kernel/Makefile             |   2 +
- arch/arm64/kernel/trampfd.c            | 278 ++++++++++++++++++++++
- arch/arm64/mm/fault.c                  |  15 +-
- arch/x86/entry/syscalls/syscall_32.tbl |   1 +
- arch/x86/entry/syscalls/syscall_64.tbl |   1 +
- arch/x86/include/uapi/asm/ptrace.h     |  38 +++
- arch/x86/kernel/Makefile               |   2 +
- arch/x86/kernel/trampfd.c              | 313 +++++++++++++++++++++++++
- arch/x86/mm/fault.c                    |  11 +
- fs/Makefile                            |   1 +
- fs/trampfd/Makefile                    |   6 +
- fs/trampfd/trampfd_data.c              |  43 ++++
- fs/trampfd/trampfd_fops.c              | 131 +++++++++++
- fs/trampfd/trampfd_map.c               |  78 ++++++
- fs/trampfd/trampfd_pcs.c               |  95 ++++++++
- fs/trampfd/trampfd_regs.c              | 137 +++++++++++
- fs/trampfd/trampfd_stack.c             | 131 +++++++++++
- fs/trampfd/trampfd_stubs.c             |  41 ++++
- fs/trampfd/trampfd_syscall.c           |  92 ++++++++
- include/linux/syscalls.h               |   3 +
- include/linux/trampfd.h                |  82 +++++++
- include/uapi/asm-generic/unistd.h      |   4 +-
- include/uapi/linux/trampfd.h           | 171 ++++++++++++++
- init/Kconfig                           |   8 +
- kernel/sys_ni.c                        |   3 +
- 34 files changed, 1998 insertions(+), 7 deletions(-)
+ arch/arm/include/uapi/asm/ptrace.h |  20 +++
+ arch/arm/kernel/Makefile           |   1 +
+ arch/arm/kernel/trampfd.c          | 214 +++++++++++++++++++++++++++++
+ arch/arm/mm/fault.c                |  12 +-
+ arch/arm/tools/syscall.tbl         |   1 +
+ 5 files changed, 246 insertions(+), 2 deletions(-)
  create mode 100644 arch/arm/kernel/trampfd.c
- create mode 100644 arch/arm64/kernel/trampfd.c
- create mode 100644 arch/x86/kernel/trampfd.c
- create mode 100644 fs/trampfd/Makefile
- create mode 100644 fs/trampfd/trampfd_data.c
- create mode 100644 fs/trampfd/trampfd_fops.c
- create mode 100644 fs/trampfd/trampfd_map.c
- create mode 100644 fs/trampfd/trampfd_pcs.c
- create mode 100644 fs/trampfd/trampfd_regs.c
- create mode 100644 fs/trampfd/trampfd_stack.c
- create mode 100644 fs/trampfd/trampfd_stubs.c
- create mode 100644 fs/trampfd/trampfd_syscall.c
- create mode 100644 include/linux/trampfd.h
- create mode 100644 include/uapi/linux/trampfd.h
 
+diff --git a/arch/arm/include/uapi/asm/ptrace.h b/arch/arm/include/uapi/asm/ptrace.h
+index e61c65b4018d..47b1c5e2f32c 100644
+--- a/arch/arm/include/uapi/asm/ptrace.h
++++ b/arch/arm/include/uapi/asm/ptrace.h
+@@ -151,6 +151,26 @@ struct pt_regs {
+ #define ARM_r0		uregs[0]
+ #define ARM_ORIG_r0	uregs[17]
+ 
++/*
++ * These register names are to be used by 32-bit applications.
++ */
++enum reg_32_name {
++	arm_r0,
++	arm_r1,
++	arm_r2,
++	arm_r3,
++	arm_r4,
++	arm_r5,
++	arm_r6,
++	arm_r7,
++	arm_r8,
++	arm_r9,
++	arm_r10,
++	arm_ip,
++	arm_pc,
++	arm_max,
++};
++
+ /*
+  * The size of the user-visible VFP state as seen by PTRACE_GET/SETVFPREGS
+  * and core dumps.
+diff --git a/arch/arm/kernel/Makefile b/arch/arm/kernel/Makefile
+index 89e5d864e923..652c54c2f19a 100644
+--- a/arch/arm/kernel/Makefile
++++ b/arch/arm/kernel/Makefile
+@@ -105,5 +105,6 @@ obj-$(CONFIG_SMP)		+= psci_smp.o
+ endif
+ 
+ obj-$(CONFIG_HAVE_ARM_SMCCC)	+= smccc-call.o
++obj-$(CONFIG_TRAMPFD)		+= trampfd.o
+ 
+ extra-y := $(head-y) vmlinux.lds
+diff --git a/arch/arm/kernel/trampfd.c b/arch/arm/kernel/trampfd.c
+new file mode 100644
+index 000000000000..50fc5706e85b
+--- /dev/null
++++ b/arch/arm/kernel/trampfd.c
+@@ -0,0 +1,214 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Trampoline File Descriptor - ARM support.
++ *
++ * Author: Madhavan T. Venkataraman (madvenka@linux.microsoft.com)
++ *
++ * Copyright (c) 2020, Microsoft Corporation.
++ */
++
++#include <linux/trampfd.h>
++#include <linux/mm_types.h>
++#include <linux/uaccess.h>
++
++/* ---------------------------- Register Context ---------------------------- */
++
++static void set_reg(long *uregs, u32 name, u64 value)
++{
++	switch (name) {
++	case arm_r0:
++	case arm_r1:
++	case arm_r2:
++	case arm_r3:
++	case arm_r4:
++	case arm_r5:
++	case arm_r6:
++	case arm_r7:
++	case arm_r8:
++	case arm_r9:
++	case arm_r10:
++		uregs[name] = (__u64)value;
++		break;
++	case arm_ip:
++		ARM_ip = (__u64)value;
++		break;
++	case arm_pc:
++		ARM_pc = (__u64)value;
++		break;
++	default:
++		WARN(1, "%s: Illegal register name %d\n", __func__, name);
++		break;
++	}
++}
++
++static void set_regs(long *uregs, struct trampfd_regs *tregs)
++{
++	struct trampfd_reg	*reg = tregs->regs;
++	struct trampfd_reg	*reg_end = reg + tregs->nregs;
++
++	for (; reg < reg_end; reg++)
++		set_reg(uregs, reg->name, reg->value);
++}
++
++/*
++ * Check if the register names are valid. Check if the user PC has been set.
++ */
++bool trampfd_valid_regs(struct trampfd_regs *tregs)
++{
++	struct trampfd_reg	*reg = tregs->regs;
++	struct trampfd_reg	*reg_end = reg + tregs->nregs;
++	bool			pc_set = false;
++
++	for (; reg < reg_end; reg++) {
++		if (reg->name >= arm_max || reg->reserved)
++			return false;
++		if (reg->name == arm_pc && reg->value)
++			pc_set = true;
++	}
++	return pc_set;
++}
++EXPORT_SYMBOL_GPL(trampfd_valid_regs);
++
++/*
++ * Check if the PC specified in a register context is allowed.
++ */
++bool trampfd_allowed_pc(struct trampfd *trampfd, struct trampfd_regs *tregs)
++{
++	struct trampfd_reg	*reg = tregs->regs;
++	struct trampfd_reg	*reg_end = reg + tregs->nregs;
++	struct trampfd_values	*allowed_pcs = trampfd->allowed_pcs;
++	u64			*allowed_values, pc_value = 0;
++	u32			nvalues, pc_name;
++	int			i;
++
++	if (!allowed_pcs)
++		return true;
++
++	pc_name = arm_pc;
++
++	/*
++	 * Find the PC register and its value. If the PC register has been
++	 * specified multiple times, only the last one counts.
++	 */
++	for (; reg < reg_end; reg++) {
++		if (reg->name == pc_name)
++			pc_value = reg->value;
++	}
++
++	allowed_values = allowed_pcs->values;
++	nvalues = allowed_pcs->nvalues;
++
++	for (i = 0; i < nvalues; i++) {
++		if (pc_value == allowed_values[i])
++			return true;
++	}
++	return false;
++}
++EXPORT_SYMBOL_GPL(trampfd_allowed_pc);
++
++/* ---------------------------- Stack Context ---------------------------- */
++
++static int push_data(long *uregs, struct trampfd_stack *tstack)
++{
++	unsigned long	sp;
++
++	sp = ARM_sp - tstack->size - tstack->offset;
++	if (tstack->flags & TRAMPFD_SET_SP)
++		sp &= ~7;
++
++	if (!access_ok(sp, ARM_sp - sp))
++		return -EFAULT;
++
++	if (copy_to_user(USERPTR(sp), tstack->data, tstack->size))
++		return -EFAULT;
++
++	if (tstack->flags & TRAMPFD_SET_SP)
++		ARM_sp = sp;
++	return 0;
++}
++
++/* ---------------------------- Fault Handlers ---------------------------- */
++
++static int trampfd_user_fault(struct trampfd *trampfd,
++			      struct vm_area_struct *vma,
++			      long *uregs)
++{
++	char			buf[TRAMPFD_MAX_STACK_SIZE];
++	struct trampfd_regs	*tregs;
++	struct trampfd_stack	*tstack = NULL;
++	unsigned long		addr;
++	size_t			size;
++	int			rc;
++
++	mutex_lock(&trampfd->lock);
++
++	/*
++	 * Execution of the trampoline must start at the offset specfied by
++	 * the kernel.
++	 */
++	addr = vma->vm_start + trampfd->map.ioffset;
++	if (addr != ARM_pc) {
++		rc = -EINVAL;
++		goto unlock;
++	}
++
++	/*
++	 * At a minimum, the user PC register must be specified for a
++	 * user trampoline.
++	 */
++	tregs = trampfd->regs;
++	if (!tregs) {
++		rc = -EINVAL;
++		goto unlock;
++	}
++
++	/*
++	 * Set the register context for the trampoline.
++	 */
++	set_regs(uregs, tregs);
++
++	if (trampfd->stack) {
++		/*
++		 * Copy the stack context into a local buffer and push stack
++		 * data after dropping the lock.
++		 */
++		size = sizeof(*trampfd->stack) + trampfd->stack->size;
++		tstack = (struct trampfd_stack *) buf;
++		memcpy(tstack, trampfd->stack, size);
++	}
++unlock:
++	mutex_unlock(&trampfd->lock);
++
++	if (!rc && tstack) {
++		mmap_read_unlock(vma->vm_mm);
++		rc = push_data(uregs, tstack);
++		mmap_read_lock(vma->vm_mm);
++	}
++	return rc;
++}
++
++/*
++ * Handle it if it is a trampoline fault.
++ */
++bool trampfd_fault(struct vm_area_struct *vma, struct pt_regs *pt_regs)
++{
++	struct trampfd		*trampfd;
++	unsigned long		*uregs = pt_regs->uregs;
++
++	if (!is_trampfd_vma(vma))
++		return false;
++	trampfd = vma->vm_private_data;
++
++	if (trampfd->type == TRAMPFD_USER)
++		return !trampfd_user_fault(trampfd, vma, uregs);
++	return false;
++}
++EXPORT_SYMBOL_GPL(trampfd_fault);
++
++/* ---------------------------- Miscellaneous ---------------------------- */
++
++int trampfd_check_arch(struct trampfd *trampfd)
++{
++	return 0;
++}
++EXPORT_SYMBOL_GPL(trampfd_check_arch);
+diff --git a/arch/arm/mm/fault.c b/arch/arm/mm/fault.c
+index c6550eddfce1..21a81d19336b 100644
+--- a/arch/arm/mm/fault.c
++++ b/arch/arm/mm/fault.c
+@@ -17,6 +17,7 @@
+ #include <linux/sched/debug.h>
+ #include <linux/highmem.h>
+ #include <linux/perf_event.h>
++#include <linux/trampfd.h>
+ 
+ #include <asm/system_misc.h>
+ #include <asm/system_info.h>
+@@ -202,7 +203,8 @@ static inline bool access_error(unsigned int fsr, struct vm_area_struct *vma)
+ 
+ static vm_fault_t __kprobes
+ __do_page_fault(struct mm_struct *mm, unsigned long addr, unsigned int fsr,
+-		unsigned int flags, struct task_struct *tsk)
++		unsigned int flags, struct task_struct *tsk,
++		struct pt_regs *regs)
+ {
+ 	struct vm_area_struct *vma;
+ 	vm_fault_t fault;
+@@ -220,6 +222,12 @@ __do_page_fault(struct mm_struct *mm, unsigned long addr, unsigned int fsr,
+ 	 */
+ good_area:
+ 	if (access_error(fsr, vma)) {
++		/*
++		 * If it is an execute fault, it could be a trampoline
++		 * invocation.
++		 */
++		if ((fsr & FSR_LNX_PF) && trampfd_fault(vma, regs))
++			return 0;
+ 		fault = VM_FAULT_BADACCESS;
+ 		goto out;
+ 	}
+@@ -290,7 +298,7 @@ do_page_fault(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
+ #endif
+ 	}
+ 
+-	fault = __do_page_fault(mm, addr, fsr, flags, tsk);
++	fault = __do_page_fault(mm, addr, fsr, flags, tsk, regs);
+ 
+ 	/* If we need to retry but a fatal signal is pending, handle the
+ 	 * signal first. We do not need to release the mmap_lock because
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index d5cae5ffede0..88cf4c45069a 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -452,3 +452,4 @@
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
++440	common	trampfd_create			sys_trampfd_create
 -- 
 2.17.1
 
