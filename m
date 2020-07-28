@@ -2,105 +2,102 @@ Return-Path: <SRS0=rFbF=BH=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1,USER_IN_DEF_DKIM_WL
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C2253C433E5
-	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 16:36:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B5961C433E4
+	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 16:49:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 969552053B
-	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 16:36:41 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8A53C20809
+	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 16:49:16 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="mspBTjUW"
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="WcBQe+fl"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731897AbgG1Qgb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 28 Jul 2020 12:36:31 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54962 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1731429AbgG1QeZ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 28 Jul 2020 12:34:25 -0400
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5D09AC061794;
-        Tue, 28 Jul 2020 09:34:25 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
-        Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
-        Content-Description:In-Reply-To:References;
-        bh=kVQtb0EC5zPxTA2ayYfBJx4HY/CNxKUjYbbIch9w8To=; b=mspBTjUWtgpPb4qLvI5PjYWwOM
-        4xZNHTabFfBvssqH7c/39Sc1ekp+M5+SqBDUYBkt2ucniLwNBWaq94zkkYOoIAPj/UaRMf4mtx3YK
-        W0L5iZg+7xHA9TiFXC8u5fc6fYHDe6CT6b15J8Oesifa05gXH7hnFa0iYkc8g+AcyI/0rNI4O8Ox0
-        obSdlxKChKraUYqMq1yyafpl/in4CI0Hav66IYrJPtqDtGUSPZR2/x9DBfWbuLTlo8NYaOgCPZqJD
-        OvUuAnCvA43Twt/6GA+RD8XxJ33FRrI6T32fxA0LxAHyvgCch5i6HSuh9FxyNeJUH2sjVKeCH7mvP
-        Ev8vTchw==;
-Received: from [2001:4bb8:180:6102:fd04:50d8:4827:5508] (helo=localhost)
-        by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1k0SYV-0006wk-6T; Tue, 28 Jul 2020 16:34:19 +0000
-From:   Christoph Hellwig <hch@lst.de>
-To:     Al Viro <viro@zeniv.linux.org.uk>,
-        Linus Torvalds <torvalds@linux-foundation.org>
-Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        "Rafael J. Wysocki" <rafael@kernel.org>,
-        linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: add file system helpers that take kernel pointers for the init code v4
-Date:   Tue, 28 Jul 2020 18:33:53 +0200
-Message-Id: <20200728163416.556521-1-hch@lst.de>
-X-Mailer: git-send-email 2.27.0
+        id S1731581AbgG1QtM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 28 Jul 2020 12:49:12 -0400
+Received: from linux.microsoft.com ([13.77.154.182]:38868 "EHLO
+        linux.microsoft.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1731474AbgG1QtM (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 28 Jul 2020 12:49:12 -0400
+Received: from [192.168.254.32] (unknown [47.187.206.220])
+        by linux.microsoft.com (Postfix) with ESMTPSA id 00A5820B4908;
+        Tue, 28 Jul 2020 09:49:10 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 00A5820B4908
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
+        s=default; t=1595954951;
+        bh=Wp9lMVW/v/maF95Uhld2YeppHP7BkSsiQSbIpc2iGG8=;
+        h=Subject:To:References:From:Date:In-Reply-To:From;
+        b=WcBQe+flSDX55q/ewMf9Af18CEdGVpPWvr4lx2WIFz5MF35ysP3AWSLhovuuIPJcA
+         R3zbmGw3qgHmAG6CF4LvqSk2K2IKdZOIS5Qx4ZwAsGDJLulERBJPTE+dh47a06ZwIC
+         G6ZCs/L/b81Zc5VW94CZcASUxH6PlX38Z+nqyTKc=
+Subject: Re: [PATCH v1 0/4] [RFC] Implement Trampoline File Descriptor
+To:     Casey Schaufler <casey@schaufler-ca.com>,
+        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
+        linux-arm-kernel@lists.infradead.org,
+        linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org,
+        linux-kernel@vger.kernel.org,
+        linux-security-module@vger.kernel.org, oleg@redhat.com,
+        x86@kernel.org
+References: <aefc85852ea518982e74b233e11e16d2e707bc32>
+ <20200728131050.24443-1-madvenka@linux.microsoft.com>
+ <3fd22f92-7f45-1b0f-e4fe-857f3bceedd0@schaufler-ca.com>
+From:   "Madhavan T. Venkataraman" <madvenka@linux.microsoft.com>
+Message-ID: <80dd0421-062b-bfaa-395a-e52b169acea4@linux.microsoft.com>
+Date:   Tue, 28 Jul 2020 11:49:10 -0500
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.10.0
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
+In-Reply-To: <3fd22f92-7f45-1b0f-e4fe-857f3bceedd0@schaufler-ca.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Content-Language: en-US
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi Al and Linus,
+Thanks.
 
-currently a lot of the file system calls in the early in code (and the
-devtmpfs kthread) rely on the implicit set_fs(KERNEL_DS) during boot.
-This is one of the few last remaining places we need to deal with to kill
-off set_fs entirely, so this series adds new helpers that take kernel
-pointers.  These helpers are in init/ and marked __init and thus will
-be discarded after bootup.  A few also need to be duplicated in devtmpfs,
-though unfortunately.
+On 7/28/20 11:05 AM, Casey Schaufler wrote:
+>> In this solution, the kernel recognizes certain sequences of instructions
+>> as "well-known" trampolines. When such a trampoline is executed, a page
+>> fault happens because the trampoline page does not have execute permission.
+>> The kernel recognizes the trampoline and emulates it. Basically, the
+>> kernel does the work of the trampoline on behalf of the application.
+> What prevents a malicious process from using the "well-known" trampoline
+> to its own purposes? I expect it is obvious, but I'm not seeing it. Old
+> eyes, I suppose.
 
-The series sits on top of my previous
+You are quite right. As I note below, the attack surface is the
+buffer that contains the trampoline code. Since the kernel does
+check the instruction sequence, the sequence cannot be
+changed by a hacker. But the hacker can presumably change
+the register values and redirect the PC to his desired location.
 
-  "decruft the early init / initrd / initramfs code v2"
+The assumption with trampoline emulation is that the
+system will have security settings that will prevent pages from
+having both write and execute permissions. So, a hacker
+cannot load his own code in a page and redirect the PC to
+it and execute his own code. But he can probably set the
+PC to point to arbitrary locations. For instance, jump to
+the middle of a C library function.
+>
+>> Here, the attack surface is the buffer that contains the trampoline.
+>> The attack surface is narrower than before. A hacker may still be able to
+>> modify what gets loaded in the registers or modify the target PC to point
+>> to arbitrary locations.
+...
+>> Work that is pending
+>> --------------------
+>>
+>> - I am working on implementing an SELinux setting called "exectramp"
+>>   similar to "execmem" to allow the use of trampfd on a per application
+>>   basis.
+> You could make a separate LSM to do these checks instead of limiting
+> it to SELinux. Your use case, your call, of course.
 
-series.
+OK. I will research this.
 
-
-Git tree:
-
-    git://git.infradead.org/users/hch/misc.git init_path
-
-Gitweb:
-
-    http://git.infradead.org/users/hch/misc.git/shortlog/refs/heads/init_path
-
-
-Changes since v3:
- - rename fs/for_init.c to fs/init.c
- - document the purpose of the routines in fs/init.c with a comment
- - don't mark devtmpfs __init as that will cause it to get overwritten
-   by initmem poisoning
- - add an init_dup helper to make Al more happy than with the version
-   commit to the "decruft the early init / initrd / initramfs code v2"
-   series
-
-Changes since v2:
- - move to fs/for_init.c
- - reuse the init routines in devtmpfs after refactoring devtmpfsd
-   (and thus the broken error handling in the previous version)
- - actually use kern_path in a place where user_path_at sneaked back in
-
-Changes since v1:
- - avoid most core VFS changes
- - renamed the functions and move them to init/ and devtmpfs
- - drop a bunch of cleanups that can be submitted independently now
-
-
-Diffstat:
+Madhavan
