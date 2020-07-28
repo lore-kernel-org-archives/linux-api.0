@@ -2,149 +2,82 @@ Return-Path: <SRS0=rFbF=BH=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1,USER_IN_DEF_DKIM_WL
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A238FC433E0
-	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 16:32:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3A5BAC433EA
+	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 16:34:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 82CA9207F5
-	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 16:32:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 098D020825
+	for <linux-api@archiver.kernel.org>; Tue, 28 Jul 2020 16:34:34 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="NGYC9tEd"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="S99vk2en"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731395AbgG1Qcf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 28 Jul 2020 12:32:35 -0400
-Received: from linux.microsoft.com ([13.77.154.182]:36752 "EHLO
-        linux.microsoft.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1731286AbgG1Qce (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 28 Jul 2020 12:32:34 -0400
-Received: from [192.168.254.32] (unknown [47.187.206.220])
-        by linux.microsoft.com (Postfix) with ESMTPSA id 46AA720B4908;
-        Tue, 28 Jul 2020 09:32:33 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 46AA720B4908
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
-        s=default; t=1595953953;
-        bh=Rb0cIoD+PBZ6iPo4SV0GEZ6L0o4DvfLkYqFF52aPh2A=;
-        h=Subject:To:References:From:Date:In-Reply-To:From;
-        b=NGYC9tEdPV6xnCVOdwIeqZvN2dKm0x9MAjUMmotn+8mMWAF3jwAU9jFcfsdT1zLtI
-         b7kaqYuzPMht/pDkpeohuuGK2OeqJMq4r2wVIMvJUufeWS2YydUzzEWfndiFPJ2qGr
-         mIHtInG/DXexeidbSrB3P9fJodqZv03UsuUKNwbM=
-Subject: Re: [PATCH v1 0/4] [RFC] Implement Trampoline File Descriptor
-To:     David Laight <David.Laight@ACULAB.COM>,
-        "kernel-hardening@lists.openwall.com" 
-        <kernel-hardening@lists.openwall.com>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        "linux-arm-kernel@lists.infradead.org" 
-        <linux-arm-kernel@lists.infradead.org>,
-        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-        "linux-integrity@vger.kernel.org" <linux-integrity@vger.kernel.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-security-module@vger.kernel.org" 
-        <linux-security-module@vger.kernel.org>,
-        "oleg@redhat.com" <oleg@redhat.com>,
-        "x86@kernel.org" <x86@kernel.org>
-References: <aefc85852ea518982e74b233e11e16d2e707bc32>
- <20200728131050.24443-1-madvenka@linux.microsoft.com>
- <c23de6ec47614f489943e1a89a21dfa3@AcuMS.aculab.com>
-From:   "Madhavan T. Venkataraman" <madvenka@linux.microsoft.com>
-Message-ID: <f5cfd11b-04fe-9db7-9d67-7ee898636edb@linux.microsoft.com>
-Date:   Tue, 28 Jul 2020 11:32:32 -0500
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.10.0
+        id S1731598AbgG1Qed (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 28 Jul 2020 12:34:33 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54992 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1731626AbgG1Qec (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 28 Jul 2020 12:34:32 -0400
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 323E0C061794;
+        Tue, 28 Jul 2020 09:34:32 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
+        References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
+        Content-Type:Content-ID:Content-Description;
+        bh=C9uygSCQ/rhfYPUOQwsS3gpepCXYbyGMeQJLdWnmoPA=; b=S99vk2en/1NgMc9UBq6uz1M0mu
+        aB/vUiT81vmLZG4Xy/5tNzG+1kAzonFbPzbjD4W+QSbL8Sx4OapvUFfkwKk15ZDlNAOlioyqkhtZx
+        9yvDZAztFmrw5ralKtj0nHEJpsopjZOwm4Zpnwlxf+G1rYyaBvznWPZf6YcFi4y4P+Ut8xHb4neF/
+        U9Y5d7TVEzILtdbeH/OTefMFVXx/eWPLt/onUBMnnJvKlJ49SDoApdMDAreI6k8QjCo7uYONru67u
+        TD5MuxPO4uI2ohXzLuigEBHe60MR6rITMI41oC+Or7bez2v92XznxKYLgAkdCz5fMjt9v3G04Ksv4
+        ncqRibFw==;
+Received: from [2001:4bb8:180:6102:fd04:50d8:4827:5508] (helo=localhost)
+        by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
+        id 1k0SYd-0006xW-75; Tue, 28 Jul 2020 16:34:27 +0000
+From:   Christoph Hellwig <hch@lst.de>
+To:     Al Viro <viro@zeniv.linux.org.uk>,
+        Linus Torvalds <torvalds@linux-foundation.org>
+Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        "Rafael J. Wysocki" <rafael@kernel.org>,
+        linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
+Subject: [PATCH 06/23] init: mark console_on_rootfs as __init
+Date:   Tue, 28 Jul 2020 18:33:59 +0200
+Message-Id: <20200728163416.556521-7-hch@lst.de>
+X-Mailer: git-send-email 2.27.0
+In-Reply-To: <20200728163416.556521-1-hch@lst.de>
+References: <20200728163416.556521-1-hch@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <c23de6ec47614f489943e1a89a21dfa3@AcuMS.aculab.com>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Content-Language: en-US
+Content-Transfer-Encoding: 8bit
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Thanks. See inline..
+This helper is only used for the early init code.
 
-On 7/28/20 10:13 AM, David Laight wrote:
-> From:  madvenka@linux.microsoft.com
->> Sent: 28 July 2020 14:11
-> ...
->> The kernel creates the trampoline mapping without any permissions. When
->> the trampoline is executed by user code, a page fault happens and the
->> kernel gets control. The kernel recognizes that this is a trampoline
->> invocation. It sets up the user registers based on the specified
->> register context, and/or pushes values on the user stack based on the
->> specified stack context, and sets the user PC to the requested target
->> PC. When the kernel returns, execution continues at the target PC.
->> So, the kernel does the work of the trampoline on behalf of the
->> application.
-> Isn't the performance of this going to be horrid?
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ init/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-It takes about the same amount of time as getpid(). So, it is
-one quick trip into the kernel. I expect that applications will
-typically not care about this extra overhead as long as
-they are able to run.
-
-But I agree that if there is an application that cannot tolerate
-this extra overhead, then it is an issue. See below for further
-discussion.
-
-In the libffi changes I have included in the cover letter, I have
-done it in such a way that trampfd is chosen when current
-security settings don't allow other methods such as
-loading trampoline code into a file and mapping it. In this
-case, the application can at least run with trampfd.
-
->
-> If you don't care that much about performance the fixup can
-> all be done in userspace within the fault signal handler.
-
-I do care about performance.
-
-This is a framework to address trampolines. In this initial
-work, I want to establish one basic way for things to work.
-In the future, trampfd can be enhanced for performance.
-For instance, it is easy for an architecture to generate
-the exact instructions required to load specified registers,
-push specified values on the stack and jump to a target
-PC. The kernel can map a page with the generated code
-with execute permissions. In this case, the performance
-issue goes away.
-> Since whatever you do needs the application changed why
-> not change the implementation of nested functions to not
-> need on-stack executable trampolines.
-
-I kinda agree with your suggestion.
-
-But it is up to the GCC folks to change its implementation.
-I am trying to provide a way for their existing implementation
-to work in a more secure way.
-> I can think of other alternatives that don't need much more
-> than an array of 'push constant; jump trampoline' instructions
-> be created (all jump to the same place).
->
-> You might want something to create an executable page of such
-> instructions.
-
-Agreed. And that can be done within this framework as
-I have mentioned above.
-
-But it is not just this trampoline type that I have implemented
-in this patchset. In the future, other types can be implemented
-and other contexts can be defined. Basically, the approach is
-for the user to supply a recipe to the kernel and leave it up to
-the kernel to do it in the best way possible. I am hoping that
-other forms of dynamic code can be addressed in the future
-using the same framework.
-
-*Purely as a hypothetical example*, a user can supply
-instructions in a language such as BPF that the kernel
-understands and have the kernel arrange for that to
-be executed in user context.
-
-Madhavan
-
-> Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT, UK
-> Registration No: 1397386 (Wales)
+diff --git a/init/main.c b/init/main.c
+index c2c9143db96795..47698427b15f62 100644
+--- a/init/main.c
++++ b/init/main.c
+@@ -1458,7 +1458,7 @@ static int __ref kernel_init(void *unused)
+ }
+ 
+ /* Open /dev/console, for stdin/stdout/stderr, this should never fail */
+-void console_on_rootfs(void)
++void __init console_on_rootfs(void)
+ {
+ 	struct file *file = filp_open("/dev/console", O_RDWR, 0);
+ 
+-- 
+2.27.0
 
