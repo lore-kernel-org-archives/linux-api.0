@@ -2,285 +2,431 @@ Return-Path: <SRS0=7G6g=BK=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.0 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6A0A9C433DF
-	for <linux-api@archiver.kernel.org>; Fri, 31 Jul 2020 10:17:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F059DC433E0
+	for <linux-api@archiver.kernel.org>; Fri, 31 Jul 2020 12:22:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 35224208E4
-	for <linux-api@archiver.kernel.org>; Fri, 31 Jul 2020 10:17:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B8A7521744
+	for <linux-api@archiver.kernel.org>; Fri, 31 Jul 2020 12:22:31 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b="jmzvhFRO";
-	dkim=pass (1024-bit key) header.d=sharedspace.onmicrosoft.com header.i=@sharedspace.onmicrosoft.com header.b="bION3SPX"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="moaquv5i"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1732249AbgGaKQy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 31 Jul 2020 06:16:54 -0400
-Received: from esa4.hgst.iphmx.com ([216.71.154.42]:46887 "EHLO
-        esa4.hgst.iphmx.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725903AbgGaKQx (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 31 Jul 2020 06:16:53 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
-  d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
-  t=1596190612; x=1627726612;
-  h=from:to:cc:subject:date:message-id:references:
-   content-transfer-encoding:mime-version;
-  bh=Nmd3tStm8IGLNMencPLDxyjOyeYYiabulntSB2azMpE=;
-  b=jmzvhFROVkutNLIt7Yn6ZoYYrhBueIFHVN6C54Jd8wYuvZibFrZjeb2m
-   NrwL+4QMm1JdsGXIWQrIANasUezukvugqj5wS6x6eK1GJ4mYIKA4kyhFK
-   RznfG+UXMiqe4859VBRVLY3X1KebRGjJLwFCtwFx1R4Z7ktsMl4Le04wH
-   TebTMnO2d9+40E2oiZ7EwhT2bDjAMRvmYfDhH/iePOfhxPMCELBIczWEY
-   haGwsW4/UxtmQ4703gkns1tHF5lOxdvAoDZeWmsWPVSBLJxXOxCySUPs1
-   2hwCSsoYnMDPqn3wr7sTW8UPjvQHnrOUB15q1DTRnv7YTOWZHiwL7g1GF
-   g==;
-IronPort-SDR: XUtWyBJNY3Qbg80WUIO7J60qRjjlTJhqACzG3qvGYVlQXZ7LEsbenmHqh/63lL8BKVlJF1gSn7
- CM5qUkrQthOOBmd+cYVi21mr4Q0liZIEzkvb0P84/wZ7bfARRmdF/XdEp2fNWnuPMHge3iNWLA
- v5phXqPCkIqEXeRFLVnZCpM3OI2PpGyjh5pjZgmyXYGLm9xfgo7zd15pOCoJAjlOM597mzKCun
- 4pzJ12hRMMz899LXJhMhTiWyrwJb55EqIYqJeS1sWOs/TrAlyg3O3ypre9uC4r1Nl8UH4iGJzW
- USs=
-X-IronPort-AV: E=Sophos;i="5.75,418,1589212800"; 
-   d="scan'208";a="143830479"
-Received: from mail-co1nam11lp2173.outbound.protection.outlook.com (HELO NAM11-CO1-obe.outbound.protection.outlook.com) ([104.47.56.173])
-  by ob1.hgst.iphmx.com with ESMTP; 31 Jul 2020 18:16:51 +0800
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=WgP7XC8IE8xePVBpdxZbXIJkOT4cp1KiGt2/U/LnySnbk4T0TCBxQ0o4UfIeK7suVVhgHP21IjetvwJEiNVSObubVkUimUml8Jc+e8Smpkx2gH4xeU8Zvb98Ca3JPHZScRybXEgSSeJ5QkDvCVF2GluEdv54HLp1nKMEvxPExXjpfsaj/FbPwn7Uxt8gjJUuJ4PQH7OZh4od14CM2vnZ+3Illu6F/9qDO9ualx7Y6sUEIlIP1krx16av7br4qAlhannO8ljQTrgLdHbu4gzLAsvPL7TNZGpiWipA7vYL+ZsI9RC5cF5Hc9/77JpgqPu057pSUFIT5/KydmmRScC4YA==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=GEJH4uRAKYW2mBJH4miH2eq7mG/QevBdd7N6GjmMOXI=;
- b=K8XaXocsEbGswajKUA7u1Aie/UgjeQRSV5vCZ1vl4LniClAwDM7BbMHNpifQwheNlG/R8AsLNJGd9O/j7JRYV+90W/dIUH1Jn8bUcwGJjWBJIeukQECB04gJWL7jwgX2EUGPxMKck/0ox0/0s/njPh1/AvtT+zqtypS8YOlHJGIoUEvgMQNBNPBzj6ZEPhpdplECGJjbku2zCIQb/lDvRGQlEXy8rmZbz26x+WAw05LrwydtIvtoNRuqfzvlxX3e5LnjdR2Omzl4GSjcFeOAUo1rzUA2wkQ0UefX2hN1mD51H4bx4RKjvJOHfp1wUf9KqDVYYlMslR4tnx1h/gNBrA==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=wdc.com; dmarc=pass action=none header.from=wdc.com; dkim=pass
- header.d=wdc.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=sharedspace.onmicrosoft.com; s=selector2-sharedspace-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=GEJH4uRAKYW2mBJH4miH2eq7mG/QevBdd7N6GjmMOXI=;
- b=bION3SPXfAIzEPxWPx6DxJxJKXlwUYFUAqCQ/nViGC4j7sg4AB3/zCnTZhR+UZgLpde/DL0qpxqtrwGcs80T2XnyHAas7BgDORppbhdSYmMOp0FSlleZw+fudbD2T0zTXxqPto5+B+Dfo/kSOAfTzxvf9HMYXSVVyE+3WaM6Fh4=
-Received: from MWHPR04MB3758.namprd04.prod.outlook.com (2603:10b6:300:fb::8)
- by MWHPR04MB1039.namprd04.prod.outlook.com (2603:10b6:301:45::28) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3239.16; Fri, 31 Jul
- 2020 10:16:49 +0000
-Received: from MWHPR04MB3758.namprd04.prod.outlook.com
- ([fe80::718a:d477:a4f1:c137]) by MWHPR04MB3758.namprd04.prod.outlook.com
- ([fe80::718a:d477:a4f1:c137%7]) with mapi id 15.20.3239.017; Fri, 31 Jul 2020
- 10:16:49 +0000
-From:   Damien Le Moal <Damien.LeMoal@wdc.com>
-To:     "hch@infradead.org" <hch@infradead.org>
-CC:     Kanchan Joshi <joshiiitr@gmail.com>, Jens Axboe <axboe@kernel.dk>,
-        Pavel Begunkov <asml.silence@gmail.com>,
-        Kanchan Joshi <joshi.k@samsung.com>,
-        "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>,
-        "bcrl@kvack.org" <bcrl@kvack.org>,
-        Matthew Wilcox <willy@infradead.org>,
-        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-aio@kvack.org" <linux-aio@kvack.org>,
-        "io-uring@vger.kernel.org" <io-uring@vger.kernel.org>,
-        "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        SelvaKumar S <selvakuma.s1@samsung.com>,
-        Nitesh Shetty <nj.shetty@samsung.com>,
-        Javier Gonzalez <javier.gonz@samsung.com>,
-        Johannes Thumshirn <Johannes.Thumshirn@wdc.com>,
-        Naohiro Aota <Naohiro.Aota@wdc.com>
-Subject: Re: [PATCH v4 6/6] io_uring: add support for zone-append
-Thread-Topic: [PATCH v4 6/6] io_uring: add support for zone-append
-Thread-Index: AQHWYdbcc0q15qREKECGO7brHi6zEg==
-Date:   Fri, 31 Jul 2020 10:16:49 +0000
-Message-ID: <MWHPR04MB3758A4B2967DB1FABAAD9265E74E0@MWHPR04MB3758.namprd04.prod.outlook.com>
-References: <CA+1E3rJ3SoLU9aYcugAQgJnSPnJtcCwjZdMREXS3FTmXgy3yow@mail.gmail.com>
- <f030a338-cd52-2e83-e1da-bdbca910d49e@kernel.dk>
- <CA+1E3rKxZk2CatTuPcQq5d14vXL9_9LVb2_+AfR2m9xn2WTZdg@mail.gmail.com>
- <MWHPR04MB3758DC08EA17780E498E9EC0E74E0@MWHPR04MB3758.namprd04.prod.outlook.com>
- <20200731064526.GA25674@infradead.org>
- <MWHPR04MB37581344328A42EA7F5ED13EE74E0@MWHPR04MB3758.namprd04.prod.outlook.com>
- <CA+1E3rLM4G4SwzD6RWsK6Ssp7NmhiPedZDjrqN3kORQr9fxCtw@mail.gmail.com>
- <MWHPR04MB375863C20C1EF2CB27E62703E74E0@MWHPR04MB3758.namprd04.prod.outlook.com>
- <20200731091416.GA29634@infradead.org>
- <MWHPR04MB37586D39CA389296CE0252A4E74E0@MWHPR04MB3758.namprd04.prod.outlook.com>
- <20200731094135.GA4104@infradead.org>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-authentication-results: infradead.org; dkim=none (message not signed)
- header.d=none;infradead.org; dmarc=none action=none header.from=wdc.com;
-x-originating-ip: [129.253.182.57]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-ht: Tenant
-x-ms-office365-filtering-correlation-id: 5410a628-1376-45fc-5312-08d8353ad6a2
-x-ms-traffictypediagnostic: MWHPR04MB1039:
-x-ld-processed: b61c8803-16f3-4c35-9b17-6f65f441df86,ExtAddr
-x-ms-exchange-transport-forked: True
-x-microsoft-antispam-prvs: <MWHPR04MB1039C98E3E5DE342D904ED45E74E0@MWHPR04MB1039.namprd04.prod.outlook.com>
-wdcipoutbound: EOP-TRUE
-x-ms-oob-tlc-oobclassifiers: OLM:7219;
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0;
-x-microsoft-antispam-message-info: fsug4IDMfZEc83iPSaHW5vCnoF0PX0k4aOM0z0WMdExQOH3Oqpz5NBr27gA//GLHLcHrtZqiDkXjsF4tN0XqQiiaVsyCfIhII9TJlA6JZgYOJt4XEkvLQ2JaobL4i7qOTWdzbYTjtvFVLT73tTwUtFbuTGESL3xeSuJ0Owe6s1L5u/fOaVJF0j15Uh6qfzAyY9qcS4c9KHhdKFTxr1+1ACjBQOuvwuUeuiqF/nsN5d0RqshY07zKAUxEMBktfFxSFlgj+T/I/aOURtS1ydEdGHhaNSnR1t6lZFcZ8z2mz/GDou+i3ibqi/5Vw4XhOwjjsDrl2xg1XQyh06Q3EiTbgw==
-x-forefront-antispam-report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:MWHPR04MB3758.namprd04.prod.outlook.com;PTR:;CAT:NONE;SFTY:;SFS:(4636009)(39860400002)(346002)(366004)(136003)(396003)(376002)(4326008)(52536014)(9686003)(5660300002)(53546011)(55016002)(7696005)(26005)(186003)(478600001)(6506007)(33656002)(71200400001)(54906003)(316002)(6916009)(8936002)(66946007)(66476007)(66556008)(64756008)(66446008)(2906002)(83380400001)(91956017)(76116006)(8676002)(7416002)(86362001);DIR:OUT;SFP:1102;
-x-ms-exchange-antispam-messagedata: 6kp861OrOsXHmoxRfbSRWad0GW5yTY7jqoHS9XlvDdAO2ru1obTahliKMqKHxdiy4cFWW4BJrqSACEAu4DALt2yA1RAAFkapakfmEGJqVvDE13nZU5K8sKDcmaMnT2K8FWqbJYy1WZi6iTyF57u6f8Wetznic8t9V8USygTTOExvTaDtLXaxJ2oTy8NOUNc8qohFeq7ICg1J7xXm58XBq+9Cg9++a1bTzJWkvqW95SPYEkDP4Y/nnEGbRRdW0RfqhsD56esaByeDorR5d81VQWzbgO5Ci7fR/gGEVPhXUxduK2OQZRmwq3zeN6jjXeTIHOuy9idMVabJLVlhZnK+WeWd0E2ps3ovN8I1jSpjfxJzae8X0WFfO8GV85sbDUqvFOPvktMOer9edpNx1aarPOH/DNf79XS9mGKc6AdEKqa9SeBx2bkn555wuIMkCeAKy5N7jMeiqnqwck+u7k96cfCWE3g9gki4GOQMSOMvRacOg85KNG1j23xy0wJtwdxwpYucvaZTomVi353Jg+0UnSyCzgzzB099woOzXxZFrBWm0jRREC4To14eO5hwsfMQFaNWD/oy6+645rgQXhG3GUK/TK8vEmO60DmlDnEGhq8UFcXAfCCW5abhp0jityIcUAJaq2LsxjIW5yt2tQCffA==
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+        id S2387430AbgGaMW1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 31 Jul 2020 08:22:27 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59312 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1733296AbgGaMWP (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 31 Jul 2020 08:22:15 -0400
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3C4D2C061574;
+        Fri, 31 Jul 2020 05:22:15 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
+        References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
+        Content-Type:Content-ID:Content-Description;
+        bh=xABHaGccHyeMiOAO3PmSx6x4b+NSs8y5Q9sXTcSjN2c=; b=moaquv5iHzVmRq5IbxFGXS1D6/
+        q90RHvkyG/m9AfAQ2Iw++XQyFaeesY9nZtzz2Lt1oRbqqmVBBtrNRLaKTRkQWos86KUNsHY40XgAw
+        KcBRV6RQLFAel0M61uBJZfjso6lBliWcMwX2m6j/FS5H0uKHbwLKzVH/L4GwhccLehUIXMgQlTOWh
+        Zk1NzZstMp2mi3ZWc3GFPgGmnyRR0v5S3erpYsSG8lAefVxZDsmyB2vOK8CGejjXaMMumig87fgA0
+        CdAQ+Bs5LXy9p/PvrB2RRjm/ReWpvMtnIxxtpXmzVhfoQ5COWF7i+QjH+xSVdFmQ7LRaCKWk72+Jj
+        4jvjufkA==;
+Received: from 138.57.168.109.cust.ip.kpnqwest.it ([109.168.57.138] helo=localhost)
+        by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
+        id 1k1U38-00026U-H3; Fri, 31 Jul 2020 12:22:11 +0000
+From:   Christoph Hellwig <hch@lst.de>
+To:     x86@kernel.org, Jan Kara <jack@suse.com>
+Cc:     linux-arm-kernel@lists.infradead.org,
+        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
+        Jan Kara <jack@suse.cz>
+Subject: [PATCH 3/3] quota: simplify the quotactl compat handling
+Date:   Fri, 31 Jul 2020 14:22:02 +0200
+Message-Id: <20200731122202.213333-4-hch@lst.de>
+X-Mailer: git-send-email 2.27.0
+In-Reply-To: <20200731122202.213333-1-hch@lst.de>
+References: <20200731122202.213333-1-hch@lst.de>
 MIME-Version: 1.0
-X-OriginatorOrg: wdc.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: MWHPR04MB3758.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 5410a628-1376-45fc-5312-08d8353ad6a2
-X-MS-Exchange-CrossTenant-originalarrivaltime: 31 Jul 2020 10:16:49.7513
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: v8el+wJ+IbVLJ5V57YDRZXxWa5pGm8yEdr+IHhNaQ8LxKpRKPwEl01npf3WKj3t/eE7ItufmvZzwFvJGy2oGuw==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: MWHPR04MB1039
+Content-Transfer-Encoding: 8bit
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 2020/07/31 18:41, hch@infradead.org wrote:=0A=
-> On Fri, Jul 31, 2020 at 09:34:50AM +0000, Damien Le Moal wrote:=0A=
->> Sync writes are done under the inode lock, so there cannot be other writ=
-ers at=0A=
->> the same time. And for the sync case, since the actual written offset is=
-=0A=
->> necessarily equal to the file size before the write, there is no need to=
- report=0A=
->> it (there is no system call that can report that anyway). For this sync =
-case,=0A=
->> the only change that the use of zone append introduces compared to regul=
-ar=0A=
->> writes is the potential for more short writes.=0A=
->>=0A=
->> Adding a flag for "report the actual offset for appending writes" is fin=
-e with=0A=
->> me, but do you also mean to use this flag for driving zone append write =
-vs=0A=
->> regular writes in zonefs ?=0A=
-> =0A=
-> Let's keep semantics and implementation separate.  For the case=0A=
-> where we report the actual offset we need a size imitation and no=0A=
-> short writes.=0A=
-=0A=
-OK. So the name of the flag confused me. The flag name should reflect "Do z=
-one=0A=
-append and report written offset", right ?=0A=
-=0A=
-Just to clarify, here was my thinking for zonefs:=0A=
-1) file open with O_APPEND/aio has RWF_APPEND: then it is OK to assume that=
- the=0A=
-application did not set the aio offset since APPEND means offset=3D=3Dfile =
-size. In=0A=
-that case, do zone append and report back the written offset.=0A=
-2) file open without O_APPEND/aio does not have RWF_APPEND: the application=
-=0A=
-specified an aio offset and we must respect it, write it that exact same or=
-der,=0A=
-so use regular writes.=0A=
-=0A=
-For regular file systems, with case (1) condition, the FS use whatever it w=
-ants=0A=
-for the implementation, and report back the written offset, which  will alw=
-ays=0A=
-be the file size at the time the aio was issued.=0A=
-=0A=
-Your method with a new flag to switch between (1) and (2) is OK with me, bu=
-t the=0A=
-"no short writes" may be difficult to achieve in a regular FS, no ? I do no=
-t=0A=
-think current FSes have such guarantees... Especially in the case of buffer=
-ed=0A=
-async writes I think.=0A=
-=0A=
-> Anything with those semantics can be implemented using Zone Append=0A=
-> trivially in zonefs, and we don't even need the exclusive lock in that=0A=
-> case.  But even without that flag anything that has an exclusive lock can=
-=0A=
-> at least in theory be implemented using Zone Append, it just need=0A=
-> support for submitting another request from the I/O completion handler=0A=
-> of the first.  I just don't think it is worth it - with the exclusive=0A=
-> lock we do have access to the zone serialied so a normal write works=0A=
-> just fine.  Both for the sync and async case.=0A=
-=0A=
-We did switch to have zonefs do append writes in the sync case, always. Hmm=
-m...=0A=
-Not sure anymore it was such a good idea.=0A=
-=0A=
-> =0A=
->> The fcntl or ioctl for getting the max atomic write size would be fine t=
-oo.=0A=
->> Given that zonefs is very close to the underlying zoned drive, I was ass=
-uming=0A=
->> that the application can simply consult the device sysfs zone_append_max=
-_bytes=0A=
->> queue attribute.=0A=
-> =0A=
-> For zonefs we can, yes.  But in many ways that is a lot more cumbersome=
-=0A=
-> that having an API that works on the fd you want to write on.=0A=
-=0A=
-Got it. Makes sense.=0A=
-=0A=
->> For regular file systems, this value would be used internally=0A=
->> only. I do not really see how it can be useful to applications. Furtherm=
-ore, the=0A=
->> file system may have a hard time giving that information to the applicat=
-ion=0A=
->> depending on its underlying storage configuration (e.g. erasure=0A=
->> coding/declustered RAID).=0A=
-> =0A=
-> File systems might have all kinds of limits of their own (e.g. extent=0A=
-> sizes).  And a good API that just works everywhere and is properly=0A=
-> documented is much better than heaps of cargo culted crap all over=0A=
-> applications.=0A=
-=0A=
-OK. Makes sense. That said, taking Naohiro's work on btrfs as an example, z=
-one=0A=
-append is used for every data write, no matter if it is O_APPEND/RWF_APPEND=
- or=0A=
-not. The size limitation for zone append writes is not needed at all by=0A=
-applications. Maximum extent size is aligned to the max append write size=
-=0A=
-internally, and if the application issued a larger write, it loops over mul=
-tiple=0A=
-extents, similarly to any regular write may do (if there is overwrite etc..=
-.).=0A=
-=0A=
-For the regular FS case, my thinking on the semantic really was: if asked t=
-o do=0A=
-so, return the written offset for a RWF_APPEND aios. And I think that=0A=
-implementing that does not depend in any way on what the FS does internally=
-.=0A=
-=0A=
-But I think I am starting to see the picture you are drawing here:=0A=
-1) Introduce a fcntl() to get "maximum size for atomic append writes"=0A=
-2) Introduce an aio flag specifying "Do atomic append write and report writ=
-ten=0A=
-offset"=0A=
-3) For an aio specifying "Do atomic append write and report written offset"=
-, if=0A=
-the aio is larger than "maximum size for atomic append writes", fail it on=
-=0A=
-submission, no short writes.=0A=
-4) For any other aio, it is business as usual, aio is processed as they are=
- now.=0A=
-=0A=
-And the implementation is actually completely free to use zone append write=
-s or=0A=
-regular writes regardless of the "Do atomic append write and report written=
-=0A=
-offset" being used or not.=0A=
-=0A=
-Is it your thinking ? That would work for me. That actually end up complete=
-ly=0A=
-unifying the interface behavior for zonefs and regular FS. Same semantic.=
-=0A=
-=0A=
-=0A=
--- =0A=
-Damien Le Moal=0A=
-Western Digital Research=0A=
+Fold the misaligned u64 workarounds into the main quotactl flow instead
+of implementing a separate compat syscall handler.
+
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Jan Kara <jack@suse.cz>
+---
+ arch/x86/entry/syscalls/syscall_32.tbl |   2 +-
+ fs/quota/Kconfig                       |   5 --
+ fs/quota/Makefile                      |   1 -
+ fs/quota/compat.c                      | 120 -------------------------
+ fs/quota/compat.h                      |  34 +++++++
+ fs/quota/quota.c                       |  73 ++++++++++++---
+ include/linux/quotaops.h               |   3 -
+ kernel/sys_ni.c                        |   1 -
+ 8 files changed, 94 insertions(+), 145 deletions(-)
+ delete mode 100644 fs/quota/compat.c
+ create mode 100644 fs/quota/compat.h
+
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index d8f8a1a69ed11f..41d442d7c2db67 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -142,7 +142,7 @@
+ 128	i386	init_module		sys_init_module
+ 129	i386	delete_module		sys_delete_module
+ 130	i386	get_kernel_syms
+-131	i386	quotactl		sys_quotactl			compat_sys_quotactl32
++131	i386	quotactl		sys_quotactl
+ 132	i386	getpgid			sys_getpgid
+ 133	i386	fchdir			sys_fchdir
+ 134	i386	bdflush			sys_bdflush
+diff --git a/fs/quota/Kconfig b/fs/quota/Kconfig
+index 7218314ca13f00..4f5bb85099a904 100644
+--- a/fs/quota/Kconfig
++++ b/fs/quota/Kconfig
+@@ -70,8 +70,3 @@ config QFMT_V2
+ config QUOTACTL
+ 	bool
+ 	default n
+-
+-config QUOTACTL_COMPAT
+-	bool
+-	depends on QUOTACTL && COMPAT_FOR_U64_ALIGNMENT
+-	default y
+diff --git a/fs/quota/Makefile b/fs/quota/Makefile
+index f2b49d0f0287c9..9160639daffa75 100644
+--- a/fs/quota/Makefile
++++ b/fs/quota/Makefile
+@@ -4,5 +4,4 @@ obj-$(CONFIG_QFMT_V1)		+= quota_v1.o
+ obj-$(CONFIG_QFMT_V2)		+= quota_v2.o
+ obj-$(CONFIG_QUOTA_TREE)	+= quota_tree.o
+ obj-$(CONFIG_QUOTACTL)		+= quota.o kqid.o
+-obj-$(CONFIG_QUOTACTL_COMPAT)	+= compat.o
+ obj-$(CONFIG_QUOTA_NETLINK_INTERFACE)	+= netlink.o
+diff --git a/fs/quota/compat.c b/fs/quota/compat.c
+deleted file mode 100644
+index c305728576193d..00000000000000
+--- a/fs/quota/compat.c
++++ /dev/null
+@@ -1,120 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0
+-
+-#include <linux/syscalls.h>
+-#include <linux/compat.h>
+-#include <linux/quotaops.h>
+-
+-/*
+- * This code works only for 32 bit quota tools over 64 bit OS (x86_64, ia64)
+- * and is necessary due to alignment problems.
+- */
+-struct compat_if_dqblk {
+-	compat_u64 dqb_bhardlimit;
+-	compat_u64 dqb_bsoftlimit;
+-	compat_u64 dqb_curspace;
+-	compat_u64 dqb_ihardlimit;
+-	compat_u64 dqb_isoftlimit;
+-	compat_u64 dqb_curinodes;
+-	compat_u64 dqb_btime;
+-	compat_u64 dqb_itime;
+-	compat_uint_t dqb_valid;
+-};
+-
+-/* XFS structures */
+-struct compat_fs_qfilestat {
+-	compat_u64 dqb_bhardlimit;
+-	compat_u64 qfs_nblks;
+-	compat_uint_t qfs_nextents;
+-};
+-
+-struct compat_fs_quota_stat {
+-	__s8		qs_version;
+-	__u16		qs_flags;
+-	__s8		qs_pad;
+-	struct compat_fs_qfilestat	qs_uquota;
+-	struct compat_fs_qfilestat	qs_gquota;
+-	compat_uint_t	qs_incoredqs;
+-	compat_int_t	qs_btimelimit;
+-	compat_int_t	qs_itimelimit;
+-	compat_int_t	qs_rtbtimelimit;
+-	__u16		qs_bwarnlimit;
+-	__u16		qs_iwarnlimit;
+-};
+-
+-COMPAT_SYSCALL_DEFINE4(quotactl32, unsigned int, cmd,
+-		       const char __user *, special, qid_t, id,
+-		       void __user *, addr)
+-{
+-	unsigned int cmds;
+-	struct if_dqblk __user *dqblk;
+-	struct compat_if_dqblk __user *compat_dqblk;
+-	struct fs_quota_stat __user *fsqstat;
+-	struct compat_fs_quota_stat __user *compat_fsqstat;
+-	compat_uint_t data;
+-	u16 xdata;
+-	long ret;
+-
+-	cmds = cmd >> SUBCMDSHIFT;
+-
+-	switch (cmds) {
+-	case Q_GETQUOTA:
+-		dqblk = compat_alloc_user_space(sizeof(struct if_dqblk));
+-		compat_dqblk = addr;
+-		ret = kernel_quotactl(cmd, special, id, dqblk);
+-		if (ret)
+-			break;
+-		if (copy_in_user(compat_dqblk, dqblk, sizeof(*compat_dqblk)) ||
+-			get_user(data, &dqblk->dqb_valid) ||
+-			put_user(data, &compat_dqblk->dqb_valid))
+-			ret = -EFAULT;
+-		break;
+-	case Q_SETQUOTA:
+-		dqblk = compat_alloc_user_space(sizeof(struct if_dqblk));
+-		compat_dqblk = addr;
+-		ret = -EFAULT;
+-		if (copy_in_user(dqblk, compat_dqblk, sizeof(*compat_dqblk)) ||
+-			get_user(data, &compat_dqblk->dqb_valid) ||
+-			put_user(data, &dqblk->dqb_valid))
+-			break;
+-		ret = kernel_quotactl(cmd, special, id, dqblk);
+-		break;
+-	case Q_XGETQSTAT:
+-		fsqstat = compat_alloc_user_space(sizeof(struct fs_quota_stat));
+-		compat_fsqstat = addr;
+-		ret = kernel_quotactl(cmd, special, id, fsqstat);
+-		if (ret)
+-			break;
+-		ret = -EFAULT;
+-		/* Copying qs_version, qs_flags, qs_pad */
+-		if (copy_in_user(compat_fsqstat, fsqstat,
+-			offsetof(struct compat_fs_quota_stat, qs_uquota)))
+-			break;
+-		/* Copying qs_uquota */
+-		if (copy_in_user(&compat_fsqstat->qs_uquota,
+-			&fsqstat->qs_uquota,
+-			sizeof(compat_fsqstat->qs_uquota)) ||
+-			get_user(data, &fsqstat->qs_uquota.qfs_nextents) ||
+-			put_user(data, &compat_fsqstat->qs_uquota.qfs_nextents))
+-			break;
+-		/* Copying qs_gquota */
+-		if (copy_in_user(&compat_fsqstat->qs_gquota,
+-			&fsqstat->qs_gquota,
+-			sizeof(compat_fsqstat->qs_gquota)) ||
+-			get_user(data, &fsqstat->qs_gquota.qfs_nextents) ||
+-			put_user(data, &compat_fsqstat->qs_gquota.qfs_nextents))
+-			break;
+-		/* Copying the rest */
+-		if (copy_in_user(&compat_fsqstat->qs_incoredqs,
+-			&fsqstat->qs_incoredqs,
+-			sizeof(struct compat_fs_quota_stat) -
+-			offsetof(struct compat_fs_quota_stat, qs_incoredqs)) ||
+-			get_user(xdata, &fsqstat->qs_iwarnlimit) ||
+-			put_user(xdata, &compat_fsqstat->qs_iwarnlimit))
+-			break;
+-		ret = 0;
+-		break;
+-	default:
+-		ret = kernel_quotactl(cmd, special, id, addr);
+-	}
+-	return ret;
+-}
+diff --git a/fs/quota/compat.h b/fs/quota/compat.h
+new file mode 100644
+index 00000000000000..ef7d1e12d650b3
+--- /dev/null
++++ b/fs/quota/compat.h
+@@ -0,0 +1,34 @@
++// SPDX-License-Identifier: GPL-2.0
++#include <linux/compat.h>
++
++struct compat_if_dqblk {
++	compat_u64			dqb_bhardlimit;
++	compat_u64			dqb_bsoftlimit;
++	compat_u64			dqb_curspace;
++	compat_u64			dqb_ihardlimit;
++	compat_u64			dqb_isoftlimit;
++	compat_u64			dqb_curinodes;
++	compat_u64			dqb_btime;
++	compat_u64			dqb_itime;
++	compat_uint_t			dqb_valid;
++};
++
++struct compat_fs_qfilestat {
++	compat_u64			dqb_bhardlimit;
++	compat_u64			qfs_nblks;
++	compat_uint_t			qfs_nextents;
++};
++
++struct compat_fs_quota_stat {
++	__s8				qs_version;
++	__u16				qs_flags;
++	__s8				qs_pad;
++	struct compat_fs_qfilestat	qs_uquota;
++	struct compat_fs_qfilestat	qs_gquota;
++	compat_uint_t			qs_incoredqs;
++	compat_int_t			qs_btimelimit;
++	compat_int_t			qs_itimelimit;
++	compat_int_t			qs_rtbtimelimit;
++	__u16				qs_bwarnlimit;
++	__u16				qs_iwarnlimit;
++};
+diff --git a/fs/quota/quota.c b/fs/quota/quota.c
+index 5444d3c4d93f37..e1e9d05a14c3e4 100644
+--- a/fs/quota/quota.c
++++ b/fs/quota/quota.c
+@@ -19,6 +19,7 @@
+ #include <linux/types.h>
+ #include <linux/writeback.h>
+ #include <linux/nospec.h>
++#include "compat.h"
+ 
+ static int check_quotactl_permission(struct super_block *sb, int type, int cmd,
+ 				     qid_t id)
+@@ -211,8 +212,18 @@ static int quota_getquota(struct super_block *sb, int type, qid_t id,
+ 	if (ret)
+ 		return ret;
+ 	copy_to_if_dqblk(&idq, &fdq);
+-	if (copy_to_user(addr, &idq, sizeof(idq)))
+-		return -EFAULT;
++
++	if (compat_need_64bit_alignment_fixup()) {
++		struct compat_if_dqblk __user *compat_dqblk = addr;
++
++		if (copy_to_user(compat_dqblk, &idq, sizeof(*compat_dqblk)))
++			return -EFAULT;
++		if (put_user(idq.dqb_valid, &compat_dqblk->dqb_valid))
++			return -EFAULT;
++	} else {
++		if (copy_to_user(addr, &idq, sizeof(idq)))
++			return -EFAULT;
++	}
+ 	return 0;
+ }
+ 
+@@ -277,8 +288,16 @@ static int quota_setquota(struct super_block *sb, int type, qid_t id,
+ 	struct if_dqblk idq;
+ 	struct kqid qid;
+ 
+-	if (copy_from_user(&idq, addr, sizeof(idq)))
+-		return -EFAULT;
++	if (compat_need_64bit_alignment_fixup()) {
++		struct compat_if_dqblk __user *compat_dqblk = addr;
++
++		if (copy_from_user(&idq, compat_dqblk, sizeof(*compat_dqblk)) ||
++		    get_user(idq.dqb_valid, &compat_dqblk->dqb_valid))
++			return -EFAULT;
++	} else {
++		if (copy_from_user(&idq, addr, sizeof(idq)))
++			return -EFAULT;
++	}
+ 	if (!sb->s_qcop->set_dqblk)
+ 		return -ENOSYS;
+ 	qid = make_kqid(current_user_ns(), type, id);
+@@ -382,6 +401,33 @@ static int quota_getstate(struct super_block *sb, int type,
+ 	return 0;
+ }
+ 
++static int compat_copy_fs_qfilestat(struct compat_fs_qfilestat __user *to,
++		struct fs_qfilestat *from)
++{
++	if (copy_to_user(to, from, sizeof(*to)) ||
++	    put_user(from->qfs_nextents, &to->qfs_nextents))
++		return -EFAULT;
++	return 0;
++}
++
++static int compat_copy_fs_quota_stat(struct compat_fs_quota_stat __user *to,
++		struct fs_quota_stat *from)
++{
++	if (put_user(from->qs_version, &to->qs_version) ||
++	    put_user(from->qs_flags, &to->qs_flags) ||
++	    put_user(from->qs_pad, &to->qs_pad) ||
++	    compat_copy_fs_qfilestat(&to->qs_uquota, &from->qs_uquota) ||
++	    compat_copy_fs_qfilestat(&to->qs_gquota, &from->qs_gquota) ||
++	    put_user(from->qs_incoredqs, &to->qs_incoredqs) ||
++	    put_user(from->qs_btimelimit, &to->qs_btimelimit) ||
++	    put_user(from->qs_itimelimit, &to->qs_itimelimit) ||
++	    put_user(from->qs_rtbtimelimit, &to->qs_rtbtimelimit) ||
++	    put_user(from->qs_bwarnlimit, &to->qs_bwarnlimit) ||
++	    put_user(from->qs_iwarnlimit, &to->qs_iwarnlimit))
++		return -EFAULT;
++	return 0;
++}
++
+ static int quota_getxstate(struct super_block *sb, int type, void __user *addr)
+ {
+ 	struct fs_quota_stat fqs;
+@@ -390,9 +436,14 @@ static int quota_getxstate(struct super_block *sb, int type, void __user *addr)
+ 	if (!sb->s_qcop->get_state)
+ 		return -ENOSYS;
+ 	ret = quota_getstate(sb, type, &fqs);
+-	if (!ret && copy_to_user(addr, &fqs, sizeof(fqs)))
++	if (ret)
++		return ret;
++
++	if (compat_need_64bit_alignment_fixup())
++		return compat_copy_fs_quota_stat(addr, &fqs);
++	if (copy_to_user(addr, &fqs, sizeof(fqs)))
+ 		return -EFAULT;
+-	return ret;
++	return 0;
+ }
+ 
+ static int quota_getstatev(struct super_block *sb, int type,
+@@ -816,8 +867,8 @@ static struct super_block *quotactl_block(const char __user *special, int cmd)
+  * calls. Maybe we need to add the process quotas etc. in the future,
+  * but we probably should use rlimits for that.
+  */
+-int kernel_quotactl(unsigned int cmd, const char __user *special,
+-		    qid_t id, void __user *addr)
++SYSCALL_DEFINE4(quotactl, unsigned int, cmd, const char __user *, special,
++		qid_t, id, void __user *, addr)
+ {
+ 	uint cmds, type;
+ 	struct super_block *sb = NULL;
+@@ -871,9 +922,3 @@ int kernel_quotactl(unsigned int cmd, const char __user *special,
+ 		path_put(pathp);
+ 	return ret;
+ }
+-
+-SYSCALL_DEFINE4(quotactl, unsigned int, cmd, const char __user *, special,
+-		qid_t, id, void __user *, addr)
+-{
+-	return kernel_quotactl(cmd, special, id, addr);
+-}
+diff --git a/include/linux/quotaops.h b/include/linux/quotaops.h
+index 9cf0cd3dc88c68..a0f6668924d3ef 100644
+--- a/include/linux/quotaops.h
++++ b/include/linux/quotaops.h
+@@ -27,9 +27,6 @@ static inline bool is_quota_modification(struct inode *inode, struct iattr *ia)
+ 		(ia->ia_valid & ATTR_GID && !gid_eq(ia->ia_gid, inode->i_gid));
+ }
+ 
+-int kernel_quotactl(unsigned int cmd, const char __user *special,
+-		    qid_t id, void __user *addr);
+-
+ #if defined(CONFIG_QUOTA)
+ 
+ #define quota_error(sb, fmt, args...) \
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index 3b69a560a7ac56..f01b91cc57fa00 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -370,7 +370,6 @@ COND_SYSCALL_COMPAT(fanotify_mark);
+ /* x86 */
+ COND_SYSCALL(vm86old);
+ COND_SYSCALL(modify_ldt);
+-COND_SYSCALL_COMPAT(quotactl32);
+ COND_SYSCALL(vm86);
+ COND_SYSCALL(kexec_file_load);
+ 
+-- 
+2.27.0
+
