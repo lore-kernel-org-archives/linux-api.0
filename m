@@ -2,49 +2,52 @@ Return-Path: <SRS0=7G6g=BK=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_GIT autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 351A6C433DF
-	for <linux-api@archiver.kernel.org>; Fri, 31 Jul 2020 12:22:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 87CBBC433E0
+	for <linux-api@archiver.kernel.org>; Fri, 31 Jul 2020 12:22:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0BB852177B
-	for <linux-api@archiver.kernel.org>; Fri, 31 Jul 2020 12:22:34 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5EDA32087C
+	for <linux-api@archiver.kernel.org>; Fri, 31 Jul 2020 12:22:35 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="HVR60Foe"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="V3I6U4u4"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1733294AbgGaMWP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S1733290AbgGaMWP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Fri, 31 Jul 2020 08:22:15 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59296 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59300 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1733283AbgGaMWM (ORCPT
+        with ESMTP id S1733285AbgGaMWM (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Fri, 31 Jul 2020 08:22:12 -0400
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6CBFAC061574;
-        Fri, 31 Jul 2020 05:22:11 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7F4F1C06174A;
+        Fri, 31 Jul 2020 05:22:12 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
-        Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
-        Content-Description:In-Reply-To:References;
-        bh=9uobcNq4xnks0xuZFqsb4L1vX6lu2ZzJrjBZkoGvKIg=; b=HVR60Foe6Jwbbk3eyWFKnqiWUJ
-        kRHzd5fEOlD2Ra24dhIxR21iHdOAgywXsD9oeRf5cXQ6L9JaMN6j9lS+JZPbxpoXaBeLu2kJ0AOwj
-        dJW2otfOm9g7GA22FWO97ZJzmKMTh1hmzSHq0WLvU/0QaNMJqOrKGvi2dBYw8yI9tE1W/Af/zZzdC
-        /np8onjsYtFwryiFxMVAPNKraBbqEfblPmuwL43IM/dR11tXO2xqlTDUULxFw+T1djBjS2GK59Nlb
-        j0UCvqB8pb2qi34ymIs+S/dq+3uvdusgtUWkptaB+v3Yhfnjsj/YDbkzB5a53Zm7y+qpkIR5eNKrw
-        DaDGIlpA==;
+        References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
+        Content-Type:Content-ID:Content-Description;
+        bh=XJVkNSbm3rNjn+7yYFiPCzhlPnNgnxohOidDxm683oU=; b=V3I6U4u4zECJMCSr8grbvFcJW0
+        aINEZxdcBI9e7BwM0h4uMMjXa+LOmh/up37cfjbD7lt7ha3RNhBay4PTAXSZqF/WqwnIIYuVr2L0l
+        lOftc3sWjQ6xHTJkcF/BeJt6wZ+wA/CvquyoxxaTj5orCMU7NMeeHDWTuHQno0nTfy2jM9RaXrqHN
+        PirBX1OuYkgji2N3NuMSPBK8w7MUuRSgZeuf5rnI+tYB1gmKIIlXTlimivbRY2Em67o1sOwbHumtw
+        Shr3vd9WOEG4+5byb2wNJwqPzImknwD0aY8ZhRpmGXWt7g9Nt0oyE48qn2443p41PSH0+70Nn8THf
+        b7gYCGlQ==;
 Received: from 138.57.168.109.cust.ip.kpnqwest.it ([109.168.57.138] helo=localhost)
         by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1k1U31-000256-PI; Fri, 31 Jul 2020 12:22:06 +0000
+        id 1k1U37-000269-7W; Fri, 31 Jul 2020 12:22:09 +0000
 From:   Christoph Hellwig <hch@lst.de>
 To:     x86@kernel.org, Jan Kara <jack@suse.com>
 Cc:     linux-arm-kernel@lists.infradead.org,
         linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
         linux-api@vger.kernel.org, linux-arch@vger.kernel.org
-Subject: improve compat handling for the i386 u64 alignment quirk v2
-Date:   Fri, 31 Jul 2020 14:21:59 +0200
-Message-Id: <20200731122202.213333-1-hch@lst.de>
+Subject: [PATCH 2/3] compat: add a compat_need_64bit_alignment_fixup() helper
+Date:   Fri, 31 Jul 2020 14:22:01 +0200
+Message-Id: <20200731122202.213333-3-hch@lst.de>
 X-Mailer: git-send-email 2.27.0
+In-Reply-To: <20200731122202.213333-1-hch@lst.de>
+References: <20200731122202.213333-1-hch@lst.de>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
@@ -53,38 +56,48 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi all,
+Add a helper to check if the calling syscall needs a fixup for
+non-natural 64-bit type alignment in the compat ABI.  This will only
+return true for i386 syscalls on x86_64.
 
-the i386 ABI is a little special in that it uses less than natural
-alignment for 64-bit integer types (u64 and s64), and a significant
-amount of our compat handlers deals with just that.  Unfortunately
-there is no good way to check for this specific quirk at runtime,
-similar how in_compat_syscall() checks for a compat syscall.  This
-series adds such a check, and then uses the quota code as an example
-of how this improves the compat handling.  I have a few other places
-in mind where this will also be useful going forward.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ arch/x86/include/asm/compat.h | 1 +
+ include/linux/compat.h        | 9 +++++++++
+ 2 files changed, 10 insertions(+)
 
-Changes since v1:
- - use asm-generic/compat.h instead of linux/compat.h for
-   compat_u64 and compat_s64
- - fix a typo
+diff --git a/arch/x86/include/asm/compat.h b/arch/x86/include/asm/compat.h
+index bf547701f41f87..0e327a01f50fbb 100644
+--- a/arch/x86/include/asm/compat.h
++++ b/arch/x86/include/asm/compat.h
+@@ -209,6 +209,7 @@ static inline bool in_compat_syscall(void)
+ 	return in_32bit_syscall();
+ }
+ #define in_compat_syscall in_compat_syscall	/* override the generic impl */
++#define compat_need_64bit_alignment_fixup in_ia32_syscall
+ #endif
+ 
+ struct compat_siginfo;
+diff --git a/include/linux/compat.h b/include/linux/compat.h
+index e90100c0de72e4..a195f90f156cf6 100644
+--- a/include/linux/compat.h
++++ b/include/linux/compat.h
+@@ -937,6 +937,15 @@ static inline bool in_compat_syscall(void) { return false; }
+ 
+ #endif /* CONFIG_COMPAT */
+ 
++/*
++ * Some legacy ABIs like the i386 one use less than natural alignment for 64-bit
++ * types, and will need special compat treatment for that.  Most architectures
++ * don't need that special handling even for compat syscalls.
++ */
++#ifndef compat_need_64bit_alignment_fixup
++#define compat_need_64bit_alignment_fixup()		false
++#endif
++
+ /*
+  * A pointer passed in from user mode. This should not
+  * be used for syscall parameters, just declare them
+-- 
+2.27.0
 
-Diffstat:
- b/arch/arm64/include/asm/compat.h        |    2 
- b/arch/mips/include/asm/compat.h         |    2 
- b/arch/parisc/include/asm/compat.h       |    2 
- b/arch/powerpc/include/asm/compat.h      |    2 
- b/arch/s390/include/asm/compat.h         |    2 
- b/arch/sparc/include/asm/compat.h        |    3 
- b/arch/x86/entry/syscalls/syscall_32.tbl |    2 
- b/arch/x86/include/asm/compat.h          |    3 
- b/fs/quota/Kconfig                       |    5 -
- b/fs/quota/Makefile                      |    1 
- b/fs/quota/compat.h                      |   34 ++++++++
- b/fs/quota/quota.c                       |   73 +++++++++++++++---
- b/include/asm-generic/compat.h           |    8 ++
- b/include/linux/compat.h                 |    9 ++
- b/include/linux/quotaops.h               |    3 
- b/kernel/sys_ni.c                        |    1 
- fs/quota/compat.c                        |  120 -------------------------------
- 17 files changed, 113 insertions(+), 159 deletions(-)
