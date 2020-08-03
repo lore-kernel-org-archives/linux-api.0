@@ -2,152 +2,138 @@ Return-Path: <SRS0=wpUv=BN=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 49D91C433DF
-	for <linux-api@archiver.kernel.org>; Mon,  3 Aug 2020 13:39:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CA64CC433E0
+	for <linux-api@archiver.kernel.org>; Mon,  3 Aug 2020 14:30:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 25DA220738
-	for <linux-api@archiver.kernel.org>; Mon,  3 Aug 2020 13:39:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9FE7720578
+	for <linux-api@archiver.kernel.org>; Mon,  3 Aug 2020 14:30:40 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hzK8ycTm"
+	dkim=pass (2048-bit key) header.d=themaw.net header.i=@themaw.net header.b="eMfuj2cA";
+	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="koW4Adc0"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728335AbgHCNjt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 3 Aug 2020 09:39:49 -0400
-Received: from us-smtp-delivery-1.mimecast.com ([205.139.110.120]:41797 "EHLO
-        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1728406AbgHCNjs (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 3 Aug 2020 09:39:48 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1596461986;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=5DZxLRDT3DbjNA1BkBmmaWmJP0JxdK6fFFyOL238OtQ=;
-        b=hzK8ycTmtTXLURWS3hYBkLcDFxIADaKwoco/EjtsJ+7c6bqDqOm0WYg2xhEnflM1pjgZIw
-        4qYZm5iSuZ8eJx3Y80ljkdD3ersgmdl88UZsSu7HYoa2iIke91Imj3C4b70f5USoKAAstT
-        5VjNdX3JnTkHvbSQqGJIrR35ejml/X8=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-212-7ZNbRZbaOveIyGV-6b-phg-1; Mon, 03 Aug 2020 09:39:40 -0400
-X-MC-Unique: 7ZNbRZbaOveIyGV-6b-phg-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 811C1803025;
-        Mon,  3 Aug 2020 13:39:05 +0000 (UTC)
-Received: from warthog.procyon.org.uk (ovpn-112-32.rdu2.redhat.com [10.10.112.32])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id BE2D560FC2;
-        Mon,  3 Aug 2020 13:38:55 +0000 (UTC)
-Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
-        Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
-        Kingdom.
-        Registered in England and Wales under Company Registration No. 3798903
-Subject: [PATCH 17/18] vfs: allow fsinfo to fetch the current state of
- s_wb_err [ver #21]
-From:   David Howells <dhowells@redhat.com>
-To:     viro@zeniv.linux.org.uk
-Cc:     Jeff Layton <jlayton@kernel.org>, dhowells@redhat.com,
-        torvalds@linux-foundation.org, raven@themaw.net,
-        mszeredi@redhat.com, christian@brauner.io, jannh@google.com,
-        darrick.wong@oracle.com, kzak@redhat.com, jlayton@redhat.com,
-        linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
-Date:   Mon, 03 Aug 2020 14:38:54 +0100
-Message-ID: <159646193490.1784947.15753060107959291101.stgit@warthog.procyon.org.uk>
-In-Reply-To: <159646178122.1784947.11705396571718464082.stgit@warthog.procyon.org.uk>
-References: <159646178122.1784947.11705396571718464082.stgit@warthog.procyon.org.uk>
-User-Agent: StGit/0.23
+        id S1726865AbgHCOal (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 3 Aug 2020 10:30:41 -0400
+Received: from wnew3-smtp.messagingengine.com ([64.147.123.17]:40355 "EHLO
+        wnew3-smtp.messagingengine.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1726358AbgHCOak (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 3 Aug 2020 10:30:40 -0400
+Received: from compute2.internal (compute2.nyi.internal [10.202.2.42])
+        by mailnew.west.internal (Postfix) with ESMTP id 7BBDB10D1;
+        Mon,  3 Aug 2020 10:30:38 -0400 (EDT)
+Received: from mailfrontend1 ([10.202.2.162])
+  by compute2.internal (MEProxy); Mon, 03 Aug 2020 10:30:39 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=themaw.net; h=
+        message-id:subject:from:to:cc:date:in-reply-to:references
+        :content-type:mime-version:content-transfer-encoding; s=fm3; bh=
+        6ek7rotfn8yHr2SVRzyFzJOuazfE8xSPG939AHlpXcs=; b=eMfuj2cAVKP+mJQT
+        biNupJQwLHqaYhHLFPuUZQyX6CGdZVry0cLxvTO0phcdbXXnC+pMPkI29PiaDNuG
+        aus0TI6+71rhFFJ6BuivmuUCNYH+sJkr9LS0qGEhf58g6Kq5foxI8EqS5PQ4BNtR
+        m2Hdlp6p41lZC7lp1a58aYOyyx6HUKRh+y49rCGvH3/At3UhVpzU/LLsFFbPog+Q
+        o+YatBlPIgnd5sSWDoODyp/+5qt4iIs/KHw+Wt+p37JNiEMwKJQSodCj8DAIHgqt
+        92SGbDsncSpk0NxE6QhXTLUk7L+zUbWsu/4R0Yvsu1HaAUw9aPmQK8Z3tV+EcTxW
+        XObDxQ==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
+        messagingengine.com; h=cc:content-transfer-encoding:content-type
+        :date:from:in-reply-to:message-id:mime-version:references
+        :subject:to:x-me-proxy:x-me-proxy:x-me-sender:x-me-sender
+        :x-sasl-enc; s=fm3; bh=6ek7rotfn8yHr2SVRzyFzJOuazfE8xSPG939AHlpX
+        cs=; b=koW4Adc0qWAHAZh5OZze593zLQ5jC/97529jgi5ZrIO85WbZaTvEqIQYr
+        FzDW3RVPNUW5x4HnrPnHyRr6XmXm9VP8iHULgGRKn+X1jvbZ6z9ptyApoH5WSadi
+        H6wQAGmPvBQ4QiQWgzvSdwzx6x0ev37TRK7ZDLqk2H9gAmJeOH4fV/UIissEABEd
+        XpLESd5lLaS64CIhyrHxFsftbia3cayePjctHkOuTYP6ZBHCYy2iaZ9Ze725oW/D
+        fNGMN5ICfcWD3u4HYrxir3Sp56lt/TXEKJNl9Bg1yJWqZp3OgM88ok7OhlCLQ3Kd
+        CIIiZfqW8kk15A5jO9EULcEaGWWYw==
+X-ME-Sender: <xms:jB8oX9DYMRIhNCgzRhkgmRWYIqvLOsYXnTdrp5z4cl9pF3Zup2mUyw>
+X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgeduiedrjeeggdejjecutefuodetggdotefrodftvf
+    curfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfghnecu
+    uegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmdenuc
+    fjughrpefkuffhvfffjghftggfggfgsehtjeertddtreejnecuhfhrohhmpefkrghnucfm
+    vghnthcuoehrrghvvghnsehthhgvmhgrfidrnhgvtheqnecuggftrfgrthhtvghrnhepfe
+    efteetvdeguddvveefveeftedtffduudehueeihfeuvefgveehffeludeggfejnecukfhp
+    peehkedrjedrvdehtddrudekheenucevlhhushhtvghrufhiiigvpedtnecurfgrrhgrmh
+    epmhgrihhlfhhrohhmpehrrghvvghnsehthhgvmhgrfidrnhgvth
+X-ME-Proxy: <xmx:jB8oX7hMug9NSJyrBx-_hsaMghqA8sU1pT1QNwHXC8iZ-PoSEBXb8A>
+    <xmx:jB8oX4lSQFRztQdi_y97W_W-WMfF73BDlC4jB3L_cbtLHrSDvH_uzw>
+    <xmx:jB8oX3ymudJ9OvqndBdAuE8iQpa_i2PpNRXb7Io4TRefSNVLy68EDw>
+    <xmx:jh8oX5JfCwhU_CdTBs5mjIgpfDFvki_ar5qP-6ciQt1_eoT-iTdbyo6YQfc>
+Received: from mickey.themaw.net (58-7-250-185.dyn.iinet.net.au [58.7.250.185])
+        by mail.messagingengine.com (Postfix) with ESMTPA id 01829328005D;
+        Mon,  3 Aug 2020 10:30:30 -0400 (EDT)
+Message-ID: <bfba8e858885b8c507b8816d5296f7ab7f949e78.camel@themaw.net>
+Subject: Re: [PATCH 13/17] watch_queue: Implement mount topology and
+ attribute change notifications [ver #5]
+From:   Ian Kent <raven@themaw.net>
+To:     David Howells <dhowells@redhat.com>
+Cc:     Miklos Szeredi <miklos@szeredi.hu>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Casey Schaufler <casey@schaufler-ca.com>,
+        Stephen Smalley <sds@tycho.nsa.gov>,
+        Nicolas Dichtel <nicolas.dichtel@6wind.com>,
+        Christian Brauner <christian@brauner.io>, andres@anarazel.de,
+        Jeff Layton <jlayton@redhat.com>, dray@redhat.com,
+        Karel Zak <kzak@redhat.com>, keyrings@vger.kernel.org,
+        Linux API <linux-api@vger.kernel.org>,
+        linux-fsdevel@vger.kernel.org,
+        LSM <linux-security-module@vger.kernel.org>,
+        linux-kernel@vger.kernel.org
+Date:   Mon, 03 Aug 2020 22:30:26 +0800
+In-Reply-To: <1692826.1596457912@warthog.procyon.org.uk>
+References: <303106be4785135446e56cb606138a6e94885887.camel@themaw.net>
+         <CAJfpeguO8Qwkzx9zfGVT7W+pT5p6fgj-_8oJqJbXX_KQBpLLEQ@mail.gmail.com>
+         <1293241.1595501326@warthog.procyon.org.uk>
+         <CAJfpegspWA6oUtdcYvYF=3fij=Bnq03b8VMbU9RNMKc+zzjbag@mail.gmail.com>
+         <158454378820.2863966.10496767254293183123.stgit@warthog.procyon.org.uk>
+         <158454391302.2863966.1884682840541676280.stgit@warthog.procyon.org.uk>
+         <2003787.1595585999@warthog.procyon.org.uk>
+         <865566fb800a014868a9a7e36a00a14430efb11e.camel@themaw.net>
+         <2023286.1595590563@warthog.procyon.org.uk>
+         <CAJfpegsT_3YqHPWCZGX7Lr+sE0NVmczWz5L6cN8CzsVz4YKLCQ@mail.gmail.com>
+         <1283475.1596449889@warthog.procyon.org.uk>
+         <1576646.1596455376@warthog.procyon.org.uk>
+         <1692826.1596457912@warthog.procyon.org.uk>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.34.4 (3.34.4-1.fc31) 
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Jeff Layton <jlayton@kernel.org>
+On Mon, 2020-08-03 at 13:31 +0100, David Howells wrote:
+> Ian Kent <raven@themaw.net> wrote:
+> 
+> > > I'm changing it so that the fields are 64-bit, but initialised
+> > > with the
+> > > existing mount ID in the notifications set.  The fsinfo set
+> > > changes that
+> > > to a unique ID.  I'm tempted to make the unique IDs start at
+> > > UINT_MAX+1 to
+> > > disambiguate them.
+> > 
+> > Mmm ... so what would I use as a mount id that's not used, like
+> > NULL
+> > for strings?
+> 
+> Zero is skipped, so you could use that.
+> 
+> > I'm using -1 now but changing this will mean I need something
+> > different.
+> 
+> It's 64-bits, so you're not likely to see it reach -1, even if it
+> does start
+> at UINT_MAX+1.
 
-Add a new "error_state" struct to fsinfo, and teach the kernel to fill
-that out from sb->s_wb_err. There are two fields:
+Ha, either or, I don't think it will be a problem, there's
+bound to be a few changes so the components using this will
+need to change a bit before it's finalized, shouldn't be a
+big deal I think. At least not for me and shouldn't be much
+for libmount either I think.
 
-wb_error_last: the most recently recorded errno for the filesystem
-
-wb_error_cookie: this value will change vs. the previously fetched
-                 value if a new error was recorded since it was last
-		 checked. Callers should treat this as an opaque value
-		 that can be compared to earlier fetched values.
-
-Signed-off-by: Jeff Layton <jlayton@kernel.org>
-Signed-off-by: David Howells <dhowells@redhat.com>
----
-
- fs/fsinfo.c                 |   11 +++++++++++
- include/uapi/linux/fsinfo.h |   13 +++++++++++++
- 2 files changed, 24 insertions(+)
-
-diff --git a/fs/fsinfo.c b/fs/fsinfo.c
-index f230124ffdf5..ea9d9821d76b 100644
---- a/fs/fsinfo.c
-+++ b/fs/fsinfo.c
-@@ -274,6 +274,16 @@ static int fsinfo_generic_seq_read(struct path *path, struct fsinfo_context *ctx
- 	return m.count + 1;
- }
- 
-+static int fsinfo_generic_error_state(struct path *path,
-+				      struct fsinfo_context *ctx)
-+{
-+	struct fsinfo_error_state *es = ctx->buffer;
-+
-+	es->wb_error_cookie = errseq_scrape(&path->dentry->d_sb->s_wb_err);
-+	es->wb_error_last = es->wb_error_cookie & MAX_ERRNO;
-+	return sizeof(*es);
-+}
-+
- static const struct fsinfo_attribute fsinfo_common_attributes[] = {
- 	FSINFO_VSTRUCT	(FSINFO_ATTR_STATFS,		fsinfo_generic_statfs),
- 	FSINFO_VSTRUCT	(FSINFO_ATTR_IDS,		fsinfo_generic_ids),
-@@ -286,6 +296,7 @@ static const struct fsinfo_attribute fsinfo_common_attributes[] = {
- 	FSINFO_STRING	(FSINFO_ATTR_SOURCE,		fsinfo_generic_mount_source),
- 	FSINFO_STRING	(FSINFO_ATTR_CONFIGURATION,	fsinfo_generic_seq_read),
- 	FSINFO_STRING	(FSINFO_ATTR_FS_STATISTICS,	fsinfo_generic_seq_read),
-+	FSINFO_VSTRUCT	(FSINFO_ATTR_ERROR_STATE,	fsinfo_generic_error_state),
- 
- 	FSINFO_LIST	(FSINFO_ATTR_FSINFO_ATTRIBUTES,	(void *)123UL),
- 	FSINFO_VSTRUCT_N(FSINFO_ATTR_FSINFO_ATTRIBUTE_INFO, (void *)123UL),
-diff --git a/include/uapi/linux/fsinfo.h b/include/uapi/linux/fsinfo.h
-index e40192d98648..dcd764771a7d 100644
---- a/include/uapi/linux/fsinfo.h
-+++ b/include/uapi/linux/fsinfo.h
-@@ -27,6 +27,7 @@
- #define FSINFO_ATTR_SOURCE		0x09	/* Superblock source/device name (string) */
- #define FSINFO_ATTR_CONFIGURATION	0x0a	/* Superblock configuration/options (string) */
- #define FSINFO_ATTR_FS_STATISTICS	0x0b	/* Superblock filesystem statistics (string) */
-+#define FSINFO_ATTR_ERROR_STATE		0x0c	/* Superblock writeback error state */
- 
- #define FSINFO_ATTR_FSINFO_ATTRIBUTE_INFO 0x100	/* Information about attr N (for path) */
- #define FSINFO_ATTR_FSINFO_ATTRIBUTES	0x101	/* List of supported attrs (for path) */
-@@ -328,4 +329,16 @@ struct fsinfo_afs_server_address {
- 
- #define FSINFO_ATTR_AFS_SERVER_ADDRESSES__STRUCT struct fsinfo_afs_server_address
- 
-+/*
-+ * Information struct for fsinfo(FSINFO_ATTR_ERROR_STATE).
-+ *
-+ * Retrieve the error state for a filesystem.
-+ */
-+struct fsinfo_error_state {
-+	__u32		wb_error_cookie;	/* writeback error cookie */
-+	__u32		wb_error_last;		/* latest writeback error */
-+};
-+
-+#define FSINFO_ATTR_ERROR_STATE__STRUCT struct fsinfo_error_state
-+
- #endif /* _UAPI_LINUX_FSINFO_H */
-
+Ian
 
