@@ -2,107 +2,88 @@ Return-Path: <SRS0=q9GQ=BP=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 55268C433E0
-	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 19:51:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F28F2C433E0
+	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 19:56:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3475520842
-	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 19:51:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D34A920842
+	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 19:56:33 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="key not found in DNS" (0-bit key) header.d=szeredi.hu header.i=@szeredi.hu header.b="fHDQmOPF"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cZHcYmzE"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728175AbgHETvw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 5 Aug 2020 15:51:52 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47400 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728155AbgHEQwO (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 5 Aug 2020 12:52:14 -0400
-Received: from mail-ej1-x644.google.com (mail-ej1-x644.google.com [IPv6:2a00:1450:4864:20::644])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5D2EEC034609
-        for <linux-api@vger.kernel.org>; Wed,  5 Aug 2020 04:56:15 -0700 (PDT)
-Received: by mail-ej1-x644.google.com with SMTP id d6so32242085ejr.5
-        for <linux-api@vger.kernel.org>; Wed, 05 Aug 2020 04:56:15 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=szeredi.hu; s=google;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=EFzCfSOy2IvutgdDhPs5RnGz6j56czFjRkJZIjDwC5E=;
-        b=fHDQmOPFaJvbXbvEliSuXqTAPHK8v552b9np6X9cWK6tTGWtQJ8LY3S0vJn2HS00rJ
-         gVpdofbnaxr9+tJ+Mqj1cFGgRzfxwqq+vkUzACPs5rGvCTBqKNfOo+qeWAS+wlxzEwx6
-         SKI85B2YDPDIN9J5DECiCM+0m7oOnfVCzXQdk=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=EFzCfSOy2IvutgdDhPs5RnGz6j56czFjRkJZIjDwC5E=;
-        b=CVytCGN6Qk2SZWpnJY50eu+pZkcHKPY2Iw4WeywKEY680nRnSvxWA9Pjpw7qfejzkX
-         o5M2MVv8Q1YP9AeW2JCeM4ffLm9MqkvYmTKvbpdzpGywJ9iQdRVPd0Z10S+MnDG7v6JC
-         N3z0AITSbYkhO0tHKd/CAgxpLKZFAIi/9vj3IYdhWJPvziC1qdLepOAejcVAI7mfzoL5
-         s/3u6BEi2Ow7rt5MISGUM2IV1HyzdjF+Tbgf4CcWAzSn6LW0SbRYCdmbYbZbHuCvufFl
-         TtwvjTffaV83KXwVzNfrHhLNjwbYTbZ142CWIg07tni61TdzEramjUqsVkwJoLy0Kof9
-         WU0Q==
-X-Gm-Message-State: AOAM530/YTOigLyBRNCWT/xIWVkQFCm1h2OVNXKth3GeX3OxJ//l1N5Y
-        7lPxTYC+8bOvZFt93K0qu/VmgXNfKLO8g4FnTO+q0w==
-X-Google-Smtp-Source: ABdhPJwmuCMEiB1hUFa5v+mcjhs87JwPL8sH9pgCYuW0w9XS34zg5ONW/347iIy+Lf6dRHfU4LRWES4+b7uEih/9ov0=
-X-Received: by 2002:a17:906:22c1:: with SMTP id q1mr2735858eja.443.1596628572819;
- Wed, 05 Aug 2020 04:56:12 -0700 (PDT)
+        id S1728484AbgHET4W (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 5 Aug 2020 15:56:22 -0400
+Received: from us-smtp-2.mimecast.com ([207.211.31.81]:38483 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1727921AbgHEQoW (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 5 Aug 2020 12:44:22 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1596645859;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=ymSp4PIW1iklpKRZ7s5LPng5aoYV9shgptoEdnu23SM=;
+        b=cZHcYmzE9r/tv3b5wNvyxrcDtlq/aaTlJVxzu1IOxFW+CWRiWP3lAopcjTEGuEPhkCUQLW
+        LQsgFnpqaOdu+AsTu1x+NSNfFbM5+XTmb5ovbZJr2efWifiYnl+6ev1S8ei01jLcQJsGSA
+        dlOjULjDpMp2wwb8Bh4H4BWtdphvFzs=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-471-4W7hKjd4NCeORz2QHj-HnQ-1; Wed, 05 Aug 2020 12:44:17 -0400
+X-MC-Unique: 4W7hKjd4NCeORz2QHj-HnQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4333957;
+        Wed,  5 Aug 2020 16:44:15 +0000 (UTC)
+Received: from warthog.procyon.org.uk (ovpn-112-32.rdu2.redhat.com [10.10.112.32])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id CDCF65F202;
+        Wed,  5 Aug 2020 16:44:12 +0000 (UTC)
+Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
+        Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
+        Kingdom.
+        Registered in England and Wales under Company Registration No. 3798903
+From:   David Howells <dhowells@redhat.com>
+In-Reply-To: <20200804140558.GF32719@miu.piliscsaba.redhat.com>
+References: <20200804140558.GF32719@miu.piliscsaba.redhat.com> <159646178122.1784947.11705396571718464082.stgit@warthog.procyon.org.uk> <159646191446.1784947.11228235431863356055.stgit@warthog.procyon.org.uk>
+To:     Miklos Szeredi <miklos@szeredi.hu>
+Cc:     dhowells@redhat.com, viro@zeniv.linux.org.uk,
+        torvalds@linux-foundation.org, raven@themaw.net,
+        mszeredi@redhat.com, christian@brauner.io, jannh@google.com,
+        darrick.wong@oracle.com, kzak@redhat.com, jlayton@redhat.com,
+        linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+        linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 15/18] fsinfo: Add an attribute that lists all the visible mounts in a namespace [ver #21]
 MIME-Version: 1.0
-References: <158454378820.2863966.10496767254293183123.stgit@warthog.procyon.org.uk>
- <158454391302.2863966.1884682840541676280.stgit@warthog.procyon.org.uk>
- <CAJfpegspWA6oUtdcYvYF=3fij=Bnq03b8VMbU9RNMKc+zzjbag@mail.gmail.com>
- <1293241.1595501326@warthog.procyon.org.uk> <CAJfpeguvLMCw1H8+DPsfZE_k0sEiRtA17pD9HjnceSsAvqqAZw@mail.gmail.com>
- <43c061d26ddef2aa3ca1ac726da7db9ab461e7be.camel@themaw.net>
- <CAJfpeguFkDDhz7+70pSUv_j=xY5L08ESpaE+jER9vE5p+ZmfFw@mail.gmail.com>
- <c558fc4af785f62a2751be3b297d1ccbbfcfa969.camel@themaw.net>
- <CAJfpegvxKTy+4Zk6banvxQ83PeFV7Xnt2Qv=kkOg57rxFKqVEg@mail.gmail.com> <013e9bb3cb1536c73a5b58c5ff000b3b00629561.camel@themaw.net>
-In-Reply-To: <013e9bb3cb1536c73a5b58c5ff000b3b00629561.camel@themaw.net>
-From:   Miklos Szeredi <miklos@szeredi.hu>
-Date:   Wed, 5 Aug 2020 13:56:01 +0200
-Message-ID: <CAJfpegvT-UznTC5CT1kjVF=Gr+DfTJXKj5CEkP67G9zFhjLMEg@mail.gmail.com>
-Subject: Re: [PATCH 13/17] watch_queue: Implement mount topology and attribute
- change notifications [ver #5]
-To:     Ian Kent <raven@themaw.net>
-Cc:     David Howells <dhowells@redhat.com>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Casey Schaufler <casey@schaufler-ca.com>,
-        Stephen Smalley <sds@tycho.nsa.gov>,
-        Nicolas Dichtel <nicolas.dichtel@6wind.com>,
-        Christian Brauner <christian@brauner.io>, andres@anarazel.de,
-        Jeff Layton <jlayton@redhat.com>, dray@redhat.com,
-        Karel Zak <kzak@redhat.com>, keyrings@vger.kernel.org,
-        Linux API <linux-api@vger.kernel.org>,
-        linux-fsdevel@vger.kernel.org,
-        LSM <linux-security-module@vger.kernel.org>,
-        linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
+Content-ID: <2325154.1596645852.1@warthog.procyon.org.uk>
+Date:   Wed, 05 Aug 2020 17:44:12 +0100
+Message-ID: <2325155.1596645852@warthog.procyon.org.uk>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Aug 5, 2020 at 1:36 PM Ian Kent <raven@themaw.net> wrote:
->
+Miklos Szeredi <miklos@szeredi.hu> wrote:
 
-> I can see in the kernel code that an error is returned if the message
-> buffer is full when trying to add a message, I just can't see where
-> to get it in the libmount code.
->
-> That's not really a communication protocol problem.
->
-> Still I need to work out how to detect it, maybe it is seen by
-> the code in libmount already and I simply can't see what I need
-> to do to recognise it ...
->
-> So I'm stuck wanting to verify I have got everything that was
-> sent and am having trouble moving on from that.
+> > where each element contains a once-in-a-system-lifetime unique ID, the
+> > mount ID (which may get reused), the parent mount ID and sums of the
+> > notification/change counters for the mount and its superblock.
+> 
+> The change counters are currently conditional on CONFIG_MOUNT_NOTIFICATIONS.
+> Is this is intentional?
 
-This is the commit that should add the overrun detection capability:
+Yeah - the counters aren't driven unless CONFIG_MOUNT_NOTIFICATIONS=y.
 
-e7d553d69cf6 ("pipe: Add notification lossage handling")
+I could perhaps make it so they're driven in both cases, but driving the
+in-subtree counter is somewhat tied up in the notification posting.
 
-Thanks,
-Miklos
+This is something that can be fixed after this patchset is taken - if it is
+taken since that doesn't change the UAPI.
+
+David
+
