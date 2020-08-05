@@ -1,172 +1,317 @@
-Return-Path: <SRS0=egfy=BO=vger.kernel.org=linux-api-owner@kernel.org>
+Return-Path: <SRS0=q9GQ=BP=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-10.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5E9E1C433E1
-	for <linux-api@archiver.kernel.org>; Tue,  4 Aug 2020 20:04:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4596AC433E3
+	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 00:59:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4820E20842
-	for <linux-api@archiver.kernel.org>; Tue,  4 Aug 2020 20:04:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2899B22CB1
+	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 00:59:52 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="COTRw/30"
+	dkim=pass (2048-bit key) header.d=themaw.net header.i=@themaw.net header.b="sORHxIGz";
+	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="VBkJmeYw"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726967AbgHDUEW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 4 Aug 2020 16:04:22 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52470 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726644AbgHDUEV (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 4 Aug 2020 16:04:21 -0400
-Received: from mail-wm1-x341.google.com (mail-wm1-x341.google.com [IPv6:2a00:1450:4864:20::341])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 59350C06174A;
-        Tue,  4 Aug 2020 13:04:21 -0700 (PDT)
-Received: by mail-wm1-x341.google.com with SMTP id g8so3780820wmk.3;
-        Tue, 04 Aug 2020 13:04:21 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=cc:subject:to:references:from:message-id:date:user-agent
-         :mime-version:in-reply-to:content-language:content-transfer-encoding;
-        bh=Z2vR9mbW2WGuKToLgembDnAlnOKrvrY4I1IvKrW5yHM=;
-        b=COTRw/30XcvY8dsrfNO1B5k9TMGZAXxjXnP6rKByR6NyxhKyjir5K2tqrwDSOXz8OD
-         Q3cpvnuzC/tWfxcGcA4xdcgKX+7OmqKW28S2wF9+z3rYxdFPsqSRjPJX/wn21pokbNWM
-         kqlJiNXMVy8rZ4OEVU45EJkLvsD5Ekyr0dzKr7Sapo8fcezhuqjIOaasgqZj4xnbwDUx
-         CrFfdvQ9h+WMg230sy0/kQx8XutVZGzr7s3ux4vgE+HFcDyUwrPhzJ1Y5muGIiQ4cfIO
-         aglZWEFK3ZgStGf12qSfqPkYo+plflmGZ1/xlcHKyPb0fbOGfMNrVXkt3OGS7KBQa0fq
-         OtTA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:cc:subject:to:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-language
-         :content-transfer-encoding;
-        bh=Z2vR9mbW2WGuKToLgembDnAlnOKrvrY4I1IvKrW5yHM=;
-        b=qqCHIsci6aYPPLBXDAi858ocpCMrVgaDDaTxMw/nJRxhwHYhhp6mjIJmuJ/CMb5R7Y
-         yQhjnLTdc6S6u7vi3U7iWXtepKqJEnIIN5tbiR724xE4jEK/lZAAZviv9C9q04dpvCRy
-         g9+2JkGZ4qEoLtk1w555Qw4NrA9JAHnoY02matq0w0lyh54ZW5CH+lAHWHJwSSEN2P9B
-         SsHf9kwPNxLTJCWKB5ZKwfFzNuhptgllmJjBk8U2CWOW9I3K9xvqmXl9oUhmqV5QVTSM
-         4qprtdpoHAMUJ7Tq7YPCy+ENtryZTZLFdxOb8M93pYpVDxzrf/b3coBAZQ03WAV/o1TF
-         d9iQ==
-X-Gm-Message-State: AOAM532qHr2pZT+DkAk7aWb1cmvau41oGd4CHlyo2Y3QW4k3YF5KNZ1s
-        V/mBkep0+ZZKsIO/lqGh9G2G0mu9
-X-Google-Smtp-Source: ABdhPJyLdMViH8MP8NG3KIsM1Pc/5pyaenMXCzGx0UU2Bfe3AoReMhSidx8tYImOMt6VhV6EbKer6A==
-X-Received: by 2002:a1c:5581:: with SMTP id j123mr83550wmb.75.1596571459680;
-        Tue, 04 Aug 2020 13:04:19 -0700 (PDT)
-Received: from ?IPv6:2001:a61:241a:1101:8c63:f991:aa91:da82? ([2001:a61:241a:1101:8c63:f991:aa91:da82])
-        by smtp.gmail.com with ESMTPSA id p8sm33783277wrq.9.2020.08.04.13.04.18
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 04 Aug 2020 13:04:18 -0700 (PDT)
-Cc:     mtk.manpages@gmail.com, Carlos O'Donell <carlos@redhat.com>,
-        "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>,
-        linux-man <linux-man@vger.kernel.org>,
-        Zack Weinberg <zackw@panix.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        Paul Eggert <eggert@cs.ucla.edu>,
-        Joseph Myers <joseph@codesourcery.com>,
-        Linux API <linux-api@vger.kernel.org>
-Subject: Re: [RFC PATCH] Replacing "master-slave" terminology for
- pseudoterminals
-To:     enh <enh@google.com>
-References: <b3b4cf95-5eaa-0b4e-34cc-1a855e7148b6@gmail.com>
- <88273c2f-ce21-db54-688d-5bebd4a81ecd@redhat.com>
- <cbf7666c-440e-b4bd-0ff6-712123845fae@gmail.com>
- <c690ad2f-5f3c-5a8b-7b4c-ad29976aeab0@redhat.com>
- <CAJgzZoqR4Vh0phZjrDB9dgxNPzH0a35YjC1CwKb3mREOFn5Kbg@mail.gmail.com>
- <c756202e-7af8-c1b4-e99f-d77f3eae8c09@gmail.com>
- <CAJgzZoqFvn649xG5XSNBmUutgGQ8b16ELhVsdf0XD0QwFrRtZw@mail.gmail.com>
-From:   "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Message-ID: <bf5bf287-c44a-dec5-211d-772d1a70b5b3@gmail.com>
-Date:   Tue, 4 Aug 2020 22:04:17 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.10.0
+        id S1726831AbgHEA7r (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 4 Aug 2020 20:59:47 -0400
+Received: from wnew1-smtp.messagingengine.com ([64.147.123.26]:42591 "EHLO
+        wnew1-smtp.messagingengine.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1726584AbgHEA7r (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 4 Aug 2020 20:59:47 -0400
+Received: from compute2.internal (compute2.nyi.internal [10.202.2.42])
+        by mailnew.west.internal (Postfix) with ESMTP id BAFECD72;
+        Tue,  4 Aug 2020 20:59:44 -0400 (EDT)
+Received: from mailfrontend2 ([10.202.2.163])
+  by compute2.internal (MEProxy); Tue, 04 Aug 2020 20:59:45 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=themaw.net; h=
+        message-id:subject:from:to:cc:date:in-reply-to:references
+        :content-type:mime-version:content-transfer-encoding; s=fm3; bh=
+        UbMq8vhUFQ5WNbhixsusY27gtC0XOuRLZBvROi8eeUA=; b=sORHxIGzLipepjw5
+        AzKlZt7mBM44z5Hm+vh1XXNUOFfcGHs9ZxDBK5kHBjEh3Wh56nzViRKHUXSqfoX3
+        cUXreERGWIgZp8pKfObf3WxNuPaWiv9oavpfoJVQwUpBdy7ni+f8b2zjVTm4pyB5
+        IbtZpL/uT4TbmStgVqjR6hpNnRFFC42hf4JGJ0Xl6i24pGH+P80yoLTZ+EufaDUG
+        aR8lhmukVqZ92DjPFQyGBl7ZGO711hGsEmTUPoUmDuOkjHj9LsTonFLMuYmEqrY7
+        vNR9hbAP2DEROpYyvOLKW5H2CbetumRUCGWq+kt5K0E43bVCWkjC9DCPVatmP9A1
+        j7XK5w==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
+        messagingengine.com; h=cc:content-transfer-encoding:content-type
+        :date:from:in-reply-to:message-id:mime-version:references
+        :subject:to:x-me-proxy:x-me-proxy:x-me-sender:x-me-sender
+        :x-sasl-enc; s=fm3; bh=UbMq8vhUFQ5WNbhixsusY27gtC0XOuRLZBvROi8ee
+        UA=; b=VBkJmeYwtIp9OHqhwRl2Ftl9NkbyGtx0c1bQJ7u1QF5d+ROn/o+3JHPrL
+        6H+q2D13LdVHLYDadT9wA5jMTdvgVlxHv0Ll06yfjNo7HYHlWJUW9bTf26xvST0b
+        Hj7ZBaijyEwd9QVQ0KhWa6I37Owau1JJFKkhLSe945+Bfhihld+wuRY7RLGL+8hz
+        FN1N9mdbOeTJiejuaXxb9to9KLceZ1Nbr69chQHEwtyV3y1KtvrFcOXa7CD8XS5H
+        3mvEGjqm6Y4DdLZ/KUPAeeUsVJqt1GI6lxkHN2j2oMJ/BuDFtXxzZutgCkAWBGU9
+        np+wfLoCwuZjJJGuRVHQBYiox4/vA==
+X-ME-Sender: <xms:fwQqX-YL-jeE8MWGhjQzKayDUKpSyVntwXV-ztZ9gkodQWHnoI--Bg>
+X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgeduiedrjeejgdegvdcutefuodetggdotefrodftvf
+    curfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfghnecu
+    uegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmdenuc
+    fjughrpefkuffhvfffjghftggfggfgsehtjeertddtreejnecuhfhrohhmpefkrghnucfm
+    vghnthcuoehrrghvvghnsehthhgvmhgrfidrnhgvtheqnecuggftrfgrthhtvghrnhepfe
+    efteetvdeguddvveefveeftedtffduudehueeihfeuvefgveehffeludeggfejnecukfhp
+    peehkedrjedrvdehhedrvddvtdenucevlhhushhtvghrufhiiigvpedtnecurfgrrhgrmh
+    epmhgrihhlfhhrohhmpehrrghvvghnsehthhgvmhgrfidrnhgvth
+X-ME-Proxy: <xmx:fwQqXxbRJTCx4PdbWuzpYfogTZCiZ83ahMC0mMhfUE5emi1g_bF24Q>
+    <xmx:fwQqX48inEUx0R3fvUlkmWfDKkHLzbWc-iLN28OZZY_MTKz1CAOIFw>
+    <xmx:fwQqXwqdPg014DvVnGdiCMOKWomogNfEpw16E5ZxcHfvlO2KfV8LrA>
+    <xmx:gAQqX00Uvd97n4wSmAEc_3xmOA_O6gI2xuL6oeJOkiG25xVMAOQQThsU0yg>
+Received: from mickey.themaw.net (58-7-255-220.dyn.iinet.net.au [58.7.255.220])
+        by mail.messagingengine.com (Postfix) with ESMTPA id 16D4530600A3;
+        Tue,  4 Aug 2020 20:59:38 -0400 (EDT)
+Message-ID: <730ad205e3aafd5b983b331077bbcc581aa4df78.camel@themaw.net>
+Subject: Re: [PATCH 15/18] fsinfo: Add an attribute that lists all the
+ visible mounts in a namespace [ver #21]
+From:   Ian Kent <raven@themaw.net>
+To:     Miklos Szeredi <miklos@szeredi.hu>,
+        David Howells <dhowells@redhat.com>
+Cc:     viro@zeniv.linux.org.uk, torvalds@linux-foundation.org,
+        mszeredi@redhat.com, christian@brauner.io, jannh@google.com,
+        darrick.wong@oracle.com, kzak@redhat.com, jlayton@redhat.com,
+        linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+        linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
+Date:   Wed, 05 Aug 2020 08:59:34 +0800
+In-Reply-To: <20200804140558.GF32719@miu.piliscsaba.redhat.com>
+References: <159646178122.1784947.11705396571718464082.stgit@warthog.procyon.org.uk>
+         <159646191446.1784947.11228235431863356055.stgit@warthog.procyon.org.uk>
+         <20200804140558.GF32719@miu.piliscsaba.redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.34.4 (3.34.4-1.fc31) 
 MIME-Version: 1.0
-In-Reply-To: <CAJgzZoqFvn649xG5XSNBmUutgGQ8b16ELhVsdf0XD0QwFrRtZw@mail.gmail.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
 Content-Transfer-Encoding: 7bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 8/4/20 7:25 PM, enh wrote:
-> On Fri, Jul 31, 2020 at 12:48 AM Michael Kerrisk (man-pages)
-> <mtk.manpages@gmail.com> wrote:
->>
->> Hi Elliot,
->>
->> On 7/30/20 10:35 PM, enh wrote:
->>> On Thu, Jul 30, 2020 at 4:38 AM Carlos O'Donell <carlos@redhat.com> wrote:
->>>>
->>>> On 7/30/20 5:16 AM, Michael Kerrisk (man-pages) wrote:
->>>>> I know what you mean. One reason for that verbosity is the need to
->>>>> clearly distinguish "pseudoterminal device/end" from "pseudoterminal
->>>>> device pair". It's hard to avoid being wordy there.
->>>>
->>>> The perfect is the enemy of the good. My feeling is that as others
->>>> write this text in emails or discussions, we'll eventually all settle
->>>> on some other short form we find agreeable and then later we can adjust
->>>> the man pages to use that.
->>>
->>> based on my own brief experience, i'm expecting that _code_ will
->>> settle on pty and tty. but if you're reading the man pages to
->>> understand the concepts -- which are inherently quite confusing -- i
->>> think spelling things out in longhand might remain useful in that
->>> context.
->>>
->>>> Until then taking the lead to change this
->>>> language is the correct way forward.
->>>
->>> yeah, definitely.
->>>
->>> i'd prefer for michael to go first -- since the bionic documentation
->>> is basically just a link to man7.org, and even without that he's the
->>> canonical source -- but i'm happy to go first and submit my change
->>> first if it helps us make progress :-)
->>
->> I'd prefer to take this a little slowly. I don't plan to merge the
->> changes just yet. I'm interested to get a bit more feedback first,
->> including from Zack. (I'm guessing Zack is on holiday or so, which
->> is why we've not heard from him.) Also, if we have rough consensus
->> on this change, I would like to raise it with the POSIX folk; it
->> would of course be great if there was a corresponding change in the
->> standard, so that we all (all UNIX) have a common set of reference
->> terms.
+On Tue, 2020-08-04 at 16:05 +0200, Miklos Szeredi wrote:
+> On Mon, Aug 03, 2020 at 02:38:34PM +0100, David Howells wrote:
+> > Add a filesystem attribute that exports a list of all the visible
+> > mounts in
+> > a namespace, given the caller's chroot setting.  The returned list
+> > is an
+> > array of:
+> > 
+> > 	struct fsinfo_mount_child {
+> > 		__u64	mnt_unique_id;
+> > 		__u32	mnt_id;
+> > 		__u32	parent_id;
+> > 		__u32	mnt_notify_sum;
+> > 		__u32	sb_notify_sum;
+> > 	};
+> > 
+> > where each element contains a once-in-a-system-lifetime unique ID,
+> > the
+> > mount ID (which may get reused), the parent mount ID and sums of
+> > the
+> > notification/change counters for the mount and its superblock.
 > 
-> the good news is that it came up at this week's austin group meeting...
-
-Yes, I (also) noticed in the Austin group minutes.
-
-> the bad news is that (afaik) none of us were there.
+> The change counters are currently conditional on
+> CONFIG_MOUNT_NOTIFICATIONS.
+> Is this is intentional?
 > 
-> i had been planning to suggest we try to join next week anyway, to
-> avoid having this stall again.
+> > This works with a read lock on the namespace_sem, but ideally would
+> > do it
+> > under the RCU read lock only.
+> > 
+> > Signed-off-by: David Howells <dhowells@redhat.com>
+> > ---
+> > 
+> >  fs/fsinfo.c                 |    1 +
+> >  fs/internal.h               |    1 +
+> >  fs/namespace.c              |   37
+> > +++++++++++++++++++++++++++++++++++++
+> >  include/uapi/linux/fsinfo.h |    4 ++++
+> >  samples/vfs/test-fsinfo.c   |   22 ++++++++++++++++++++++
+> >  5 files changed, 65 insertions(+)
+> > 
+> > diff --git a/fs/fsinfo.c b/fs/fsinfo.c
+> > index 0540cce89555..f230124ffdf5 100644
+> > --- a/fs/fsinfo.c
+> > +++ b/fs/fsinfo.c
+> > @@ -296,6 +296,7 @@ static const struct fsinfo_attribute
+> > fsinfo_common_attributes[] = {
+> >  	FSINFO_STRING	(FSINFO_ATTR_MOUNT_POINT,	fsinfo_gene
+> > ric_mount_point),
+> >  	FSINFO_STRING	(FSINFO_ATTR_MOUNT_POINT_FULL,	fsinfo_gene
+> > ric_mount_point_full),
+> >  	FSINFO_LIST	(FSINFO_ATTR_MOUNT_CHILDREN,	fsinfo_generic_moun
+> > t_children),
+> > +	FSINFO_LIST	(FSINFO_ATTR_MOUNT_ALL,		fsinfo_generic_moun
+> > t_all),
+> >  	{}
+> >  };
+> >  
+> > diff --git a/fs/internal.h b/fs/internal.h
+> > index cb5edcc7125a..267b4aaf0271 100644
+> > --- a/fs/internal.h
+> > +++ b/fs/internal.h
+> > @@ -102,6 +102,7 @@ extern int fsinfo_generic_mount_topology(struct
+> > path *, struct fsinfo_context *)
+> >  extern int fsinfo_generic_mount_point(struct path *, struct
+> > fsinfo_context *);
+> >  extern int fsinfo_generic_mount_point_full(struct path *, struct
+> > fsinfo_context *);
+> >  extern int fsinfo_generic_mount_children(struct path *, struct
+> > fsinfo_context *);
+> > +extern int fsinfo_generic_mount_all(struct path *, struct
+> > fsinfo_context *);
+> >  
+> >  /*
+> >   * fs_struct.c
+> > diff --git a/fs/namespace.c b/fs/namespace.c
+> > index 122c12f9512b..1f2e06507244 100644
+> > --- a/fs/namespace.c
+> > +++ b/fs/namespace.c
+> > @@ -4494,4 +4494,41 @@ int fsinfo_generic_mount_children(struct
+> > path *path, struct fsinfo_context *ctx)
+> >  	return ctx->usage;
+> >  }
+> >  
+> > +/*
+> > + * Return information about all the mounts in the namespace
+> > referenced by the
+> > + * path.
+> > + */
+> > +int fsinfo_generic_mount_all(struct path *path, struct
+> > fsinfo_context *ctx)
+> > +{
+> > +	struct mnt_namespace *ns;
+> > +	struct mount *m, *p;
+> > +	struct path chroot;
+> > +	bool allow;
+> > +
+> > +	m = real_mount(path->mnt);
+> > +	ns = m->mnt_ns;
+> > +
+> > +	get_fs_root(current->fs, &chroot);
+> > +	rcu_read_lock();
+> > +	allow = are_paths_connected(&chroot, path) ||
+> > capable(CAP_SYS_ADMIN);
+> > +	rcu_read_unlock();
+> > +	path_put(&chroot);
+> > +	if (!allow)
+> > +		return -EPERM;
+> > +
+> > +	down_read(&namespace_sem);
+> > +
+> > +	list_for_each_entry(p, &ns->list, mnt_list) {
+> 
+> This is missing locking and check added by commit 9f6c61f96f2d
+> ("proc/mounts:
+> add cursor").
 
-I suggest that we lay the groundwork with an email. I've started
-crafting a mail to the POSIX folk that will CC all of the parties
-to the discussion we have already been having, and pointing at the
-current proposal. I'll send it out tomorrow morning. 
+That's a good catch Miklos.
 
-One complication in trying to have this discussion on mailing lists
-is that the Austin list can only be  posted to by subscribers :-(.)
-If you want to participate in the discussion, it may be best to join
-the Austin Group mailing list (which essentially means joining the
-Austin Group), if you are not already a member. I think you can 
-find the steps to do so here:
+Yes, the extra lock and the cursor check that's now needed.
 
-https://www.opengroup.org/austin/lists.html
+> 
+> > +		struct path mnt_root;
+> > +
+> > +		mnt_root.mnt	= &p->mnt;
+> > +		mnt_root.dentry	= p->mnt.mnt_root;
+> > +		if (are_paths_connected(path, &mnt_root))
+> > +			fsinfo_store_mount(ctx, p, p == m);
+> > +	}
+> > +
+> > +	up_read(&namespace_sem);
+> > +	return ctx->usage;
+> > +}
+> > +
+> >  #endif /* CONFIG_FSINFO */
+> > diff --git a/include/uapi/linux/fsinfo.h
+> > b/include/uapi/linux/fsinfo.h
+> > index 81329de6905e..e40192d98648 100644
+> > --- a/include/uapi/linux/fsinfo.h
+> > +++ b/include/uapi/linux/fsinfo.h
+> > @@ -37,6 +37,7 @@
+> >  #define FSINFO_ATTR_MOUNT_POINT_FULL	0x203	/* Absolute
+> > path of mount (string) */
+> >  #define FSINFO_ATTR_MOUNT_TOPOLOGY	0x204	/* Mount object
+> > topology */
+> >  #define FSINFO_ATTR_MOUNT_CHILDREN	0x205	/* Children of this
+> > mount (list) */
+> > +#define FSINFO_ATTR_MOUNT_ALL		0x206	/* List all
+> > mounts in a namespace (list) */
+> >  
+> >  #define FSINFO_ATTR_AFS_CELL_NAME	0x300	/* AFS cell name
+> > (string) */
+> >  #define FSINFO_ATTR_AFS_SERVER_NAME	0x301	/* Name of
+> > the Nth server (string) */
+> > @@ -128,6 +129,8 @@ struct fsinfo_mount_topology {
+> >  /*
+> >   * Information struct element for
+> > fsinfo(FSINFO_ATTR_MOUNT_CHILDREN).
+> >   * - An extra element is placed on the end representing the parent
+> > mount.
+> > + *
+> > + * Information struct element for fsinfo(FSINFO_ATTR_MOUNT_ALL).
+> >   */
+> >  struct fsinfo_mount_child {
+> >  	__u64	mnt_unique_id;		/* Kernel-lifetime unique
+> > mount ID */
+> > @@ -139,6 +142,7 @@ struct fsinfo_mount_child {
+> >  };
+> >  
+> >  #define FSINFO_ATTR_MOUNT_CHILDREN__STRUCT struct
+> > fsinfo_mount_child
+> > +#define FSINFO_ATTR_MOUNT_ALL__STRUCT struct fsinfo_mount_child
+> >  
+> >  /*
+> >   * Information struct for fsinfo(FSINFO_ATTR_STATFS).
+> > diff --git a/samples/vfs/test-fsinfo.c b/samples/vfs/test-fsinfo.c
+> > index 374825ab85b0..596fa5e71762 100644
+> > --- a/samples/vfs/test-fsinfo.c
+> > +++ b/samples/vfs/test-fsinfo.c
+> > @@ -365,6 +365,27 @@ static void
+> > dump_fsinfo_generic_mount_children(void *reply, unsigned int size)
+> >  	       (unsigned long long)r->mnt_notify_sum, mp);
+> >  }
+> >  
+> > +static void dump_fsinfo_generic_mount_all(void *reply, unsigned
+> > int size)
+> > +{
+> > +	struct fsinfo_mount_child *r = reply;
+> > +	ssize_t mplen;
+> > +	char path[32], *mp;
+> > +
+> > +	struct fsinfo_params params = {
+> > +		.flags		= FSINFO_FLAGS_QUERY_MOUNT,
+> > +		.request	= FSINFO_ATTR_MOUNT_POINT_FULL,
+> > +	};
+> > +
+> > +	sprintf(path, "%u", r->mnt_id);
+> > +	mplen = get_fsinfo(path, "FSINFO_ATTR_MOUNT_POINT_FULL",
+> > &params, (void **)&mp);
+> > +	if (mplen < 0)
+> > +		mp = "-";
+> > +
+> > +	printf("%5x %5x %12llx %10llu %s\n",
+> > +	       r->mnt_id, r->parent_id, (unsigned long long)r-
+> > >mnt_unique_id,
+> > +	       r->mnt_notify_sum, mp);
+> > +}
+> > +
+> >  static void dump_afs_fsinfo_server_address(void *reply, unsigned
+> > int size)
+> >  {
+> >  	struct fsinfo_afs_server_address *f = reply;
+> > @@ -492,6 +513,7 @@ static const struct fsinfo_attribute
+> > fsinfo_attributes[] = {
+> >  	FSINFO_STRING_N	(FSINFO_ATTR_MOUNT_POINT,	string),
+> >  	FSINFO_STRING_N	(FSINFO_ATTR_MOUNT_POINT_FULL,	string),
+> >  	FSINFO_LIST	(FSINFO_ATTR_MOUNT_CHILDREN,	fsinfo_generic_moun
+> > t_children),
+> > +	FSINFO_LIST	(FSINFO_ATTR_MOUNT_ALL,		fsinfo_generic_moun
+> > t_all),
+> >  
+> >  	FSINFO_STRING	(FSINFO_ATTR_AFS_CELL_NAME,	string),
+> >  	FSINFO_STRING	(FSINFO_ATTR_AFS_SERVER_NAME,	string),
+> > 
+> > 
 
-If you don't do this, your mails to the austin-group-l@opengroup.org
-list will be rejected.
-
-Cheers,
-
-Michael
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
