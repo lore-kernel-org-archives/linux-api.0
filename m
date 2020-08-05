@@ -2,88 +2,107 @@ Return-Path: <SRS0=q9GQ=BP=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
+X-Spam-Status: No, score=-8.3 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F28F2C433E0
-	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 19:56:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 52BF7C433DF
+	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 19:57:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D34A920842
-	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 19:56:33 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 289DE20842
+	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 19:57:03 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cZHcYmzE"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="HWXVkRHw"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728484AbgHET4W (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 5 Aug 2020 15:56:22 -0400
-Received: from us-smtp-2.mimecast.com ([207.211.31.81]:38483 "EHLO
-        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1727921AbgHEQoW (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 5 Aug 2020 12:44:22 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1596645859;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=ymSp4PIW1iklpKRZ7s5LPng5aoYV9shgptoEdnu23SM=;
-        b=cZHcYmzE9r/tv3b5wNvyxrcDtlq/aaTlJVxzu1IOxFW+CWRiWP3lAopcjTEGuEPhkCUQLW
-        LQsgFnpqaOdu+AsTu1x+NSNfFbM5+XTmb5ovbZJr2efWifiYnl+6ev1S8ei01jLcQJsGSA
-        dlOjULjDpMp2wwb8Bh4H4BWtdphvFzs=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-471-4W7hKjd4NCeORz2QHj-HnQ-1; Wed, 05 Aug 2020 12:44:17 -0400
-X-MC-Unique: 4W7hKjd4NCeORz2QHj-HnQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4333957;
-        Wed,  5 Aug 2020 16:44:15 +0000 (UTC)
-Received: from warthog.procyon.org.uk (ovpn-112-32.rdu2.redhat.com [10.10.112.32])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id CDCF65F202;
-        Wed,  5 Aug 2020 16:44:12 +0000 (UTC)
-Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
-        Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
-        Kingdom.
-        Registered in England and Wales under Company Registration No. 3798903
-From:   David Howells <dhowells@redhat.com>
-In-Reply-To: <20200804140558.GF32719@miu.piliscsaba.redhat.com>
-References: <20200804140558.GF32719@miu.piliscsaba.redhat.com> <159646178122.1784947.11705396571718464082.stgit@warthog.procyon.org.uk> <159646191446.1784947.11228235431863356055.stgit@warthog.procyon.org.uk>
-To:     Miklos Szeredi <miklos@szeredi.hu>
-Cc:     dhowells@redhat.com, viro@zeniv.linux.org.uk,
-        torvalds@linux-foundation.org, raven@themaw.net,
-        mszeredi@redhat.com, christian@brauner.io, jannh@google.com,
-        darrick.wong@oracle.com, kzak@redhat.com, jlayton@redhat.com,
-        linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 15/18] fsinfo: Add an attribute that lists all the visible mounts in a namespace [ver #21]
+        id S1728753AbgHET5A (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 5 Aug 2020 15:57:00 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45408 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727999AbgHEQoM (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 5 Aug 2020 12:44:12 -0400
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CE2B5C034625;
+        Wed,  5 Aug 2020 06:05:43 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:Content-Type:
+        In-Reply-To:MIME-Version:Date:Message-ID:From:References:Cc:To:Subject:Sender
+        :Reply-To:Content-ID:Content-Description;
+        bh=da1gRr0zZ2t7B4lRqNuRkoPDQjMi6ltCJuE8Al1tVCE=; b=HWXVkRHwN832dRG05UXHB0oBIw
+        bVIHmST3idcP9ekdGW3zfjwF0Pw9NtKHZriMtDEWG2IfLDr6OCBzltDSMhOl6UaR4VB+MKj5TLP04
+        D+y2OfSJNRXduO2wurxCTyIhNrEbjOfxiC3fQ9kowloxLDsXYz+qNZBWskWkV4r67YJb5rni6tnxu
+        zEaPdgkZf+diFOhUAogaiUm5PlxPfMHj+JY1pUqMrnKYwv3swkoiKxzB+3OAJw82jZfkAD5C/RvSG
+        ZSbD7oGskSaQ/+z+rKi6n9bG70XhVIbZNtZ+0+ODNHwM6cKpRLNKr0S7UXSrAbxLcx/udZsOs7w26
+        cmMvbHww==;
+Received: from [2601:1c0:6280:3f0::19c2]
+        by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
+        id 1k3J6n-0003pL-49; Wed, 05 Aug 2020 13:05:31 +0000
+Subject: Re: [PATCH v3 3/6] mm: introduce memfd_secret system call to create
+ "secret" memory areas
+To:     Mike Rapoport <rppt@kernel.org>, linux-kernel@vger.kernel.org
+Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Christopher Lameter <cl@linux.com>,
+        Dan Williams <dan.j.williams@intel.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Elena Reshetova <elena.reshetova@intel.com>,
+        "H. Peter Anvin" <hpa@zytor.com>, Idan Yaniv <idan.yaniv@ibm.com>,
+        Ingo Molnar <mingo@redhat.com>,
+        James Bottomley <jejb@linux.ibm.com>,
+        "Kirill A. Shutemov" <kirill@shutemov.name>,
+        Matthew Wilcox <willy@infradead.org>,
+        Mark Rutland <mark.rutland@arm.com>,
+        Mike Rapoport <rppt@linux.ibm.com>,
+        Michael Kerrisk <mtk.manpages@gmail.com>,
+        Palmer Dabbelt <palmer@dabbelt.com>,
+        Paul Walmsley <paul.walmsley@sifive.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
+        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
+        linux-arm-kernel@lists.infradead.org,
+        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
+        linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
+        x86@kernel.org
+References: <20200804095035.18778-1-rppt@kernel.org>
+ <20200804095035.18778-4-rppt@kernel.org>
+From:   Randy Dunlap <rdunlap@infradead.org>
+Message-ID: <1f52d43e-29e4-b175-73d5-0aa3c3e79f23@infradead.org>
+Date:   Wed, 5 Aug 2020 06:05:18 -0700
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.10.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-ID: <2325154.1596645852.1@warthog.procyon.org.uk>
-Date:   Wed, 05 Aug 2020 17:44:12 +0100
-Message-ID: <2325155.1596645852@warthog.procyon.org.uk>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+In-Reply-To: <20200804095035.18778-4-rppt@kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Miklos Szeredi <miklos@szeredi.hu> wrote:
+On 8/4/20 2:50 AM, Mike Rapoport wrote:
+> diff --git a/mm/Kconfig b/mm/Kconfig
+> index f2104cc0d35c..8378175e72a4 100644
+> --- a/mm/Kconfig
+> +++ b/mm/Kconfig
+> @@ -872,4 +872,8 @@ config ARCH_HAS_HUGEPD
+>  config MAPPING_DIRTY_HELPERS
+>          bool
+>  
+> +config SECRETMEM
+> +        def_bool ARCH_HAS_SET_DIRECT_MAP && !EMBEDDED
 
-> > where each element contains a once-in-a-system-lifetime unique ID, the
-> > mount ID (which may get reused), the parent mount ID and sums of the
-> > notification/change counters for the mount and its superblock.
-> 
-> The change counters are currently conditional on CONFIG_MOUNT_NOTIFICATIONS.
-> Is this is intentional?
+use tab above, not spaces.
 
-Yeah - the counters aren't driven unless CONFIG_MOUNT_NOTIFICATIONS=y.
+> +	select GENERIC_ALLOCATOR
+> +
+>  endmenu
 
-I could perhaps make it so they're driven in both cases, but driving the
-in-subtree counter is somewhat tied up in the notification posting.
 
-This is something that can be fixed after this patchset is taken - if it is
-taken since that doesn't change the UAPI.
-
-David
+-- 
+~Randy
 
