@@ -2,107 +2,133 @@ Return-Path: <SRS0=q9GQ=BP=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.3 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 52BF7C433DF
-	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 19:57:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C51C8C433DF
+	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 20:01:32 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 289DE20842
-	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 19:57:03 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 877B02076E
+	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 20:01:32 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="HWXVkRHw"
+	dkim=pass (2048-bit key) header.d=themaw.net header.i=@themaw.net header.b="k+tuYhnI";
+	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="UlVjy0fz"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728753AbgHET5A (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 5 Aug 2020 15:57:00 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45408 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727999AbgHEQoM (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 5 Aug 2020 12:44:12 -0400
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CE2B5C034625;
-        Wed,  5 Aug 2020 06:05:43 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:Content-Type:
-        In-Reply-To:MIME-Version:Date:Message-ID:From:References:Cc:To:Subject:Sender
-        :Reply-To:Content-ID:Content-Description;
-        bh=da1gRr0zZ2t7B4lRqNuRkoPDQjMi6ltCJuE8Al1tVCE=; b=HWXVkRHwN832dRG05UXHB0oBIw
-        bVIHmST3idcP9ekdGW3zfjwF0Pw9NtKHZriMtDEWG2IfLDr6OCBzltDSMhOl6UaR4VB+MKj5TLP04
-        D+y2OfSJNRXduO2wurxCTyIhNrEbjOfxiC3fQ9kowloxLDsXYz+qNZBWskWkV4r67YJb5rni6tnxu
-        zEaPdgkZf+diFOhUAogaiUm5PlxPfMHj+JY1pUqMrnKYwv3swkoiKxzB+3OAJw82jZfkAD5C/RvSG
-        ZSbD7oGskSaQ/+z+rKi6n9bG70XhVIbZNtZ+0+ODNHwM6cKpRLNKr0S7UXSrAbxLcx/udZsOs7w26
-        cmMvbHww==;
-Received: from [2601:1c0:6280:3f0::19c2]
-        by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1k3J6n-0003pL-49; Wed, 05 Aug 2020 13:05:31 +0000
-Subject: Re: [PATCH v3 3/6] mm: introduce memfd_secret system call to create
- "secret" memory areas
-To:     Mike Rapoport <rppt@kernel.org>, linux-kernel@vger.kernel.org
-Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Christopher Lameter <cl@linux.com>,
-        Dan Williams <dan.j.williams@intel.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Elena Reshetova <elena.reshetova@intel.com>,
-        "H. Peter Anvin" <hpa@zytor.com>, Idan Yaniv <idan.yaniv@ibm.com>,
-        Ingo Molnar <mingo@redhat.com>,
-        James Bottomley <jejb@linux.ibm.com>,
-        "Kirill A. Shutemov" <kirill@shutemov.name>,
-        Matthew Wilcox <willy@infradead.org>,
-        Mark Rutland <mark.rutland@arm.com>,
-        Mike Rapoport <rppt@linux.ibm.com>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Palmer Dabbelt <palmer@dabbelt.com>,
-        Paul Walmsley <paul.walmsley@sifive.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
-        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
-        linux-arm-kernel@lists.infradead.org,
-        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
-        linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
-        x86@kernel.org
-References: <20200804095035.18778-1-rppt@kernel.org>
- <20200804095035.18778-4-rppt@kernel.org>
-From:   Randy Dunlap <rdunlap@infradead.org>
-Message-ID: <1f52d43e-29e4-b175-73d5-0aa3c3e79f23@infradead.org>
-Date:   Wed, 5 Aug 2020 06:05:18 -0700
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.10.0
+        id S1729826AbgHET77 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 5 Aug 2020 15:59:59 -0400
+Received: from wnew3-smtp.messagingengine.com ([64.147.123.17]:48895 "EHLO
+        wnew3-smtp.messagingengine.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1727899AbgHEQl3 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 5 Aug 2020 12:41:29 -0400
+Received: from compute2.internal (compute2.nyi.internal [10.202.2.42])
+        by mailnew.west.internal (Postfix) with ESMTP id E931D95C;
+        Wed,  5 Aug 2020 07:23:18 -0400 (EDT)
+Received: from mailfrontend2 ([10.202.2.163])
+  by compute2.internal (MEProxy); Wed, 05 Aug 2020 07:23:19 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=themaw.net; h=
+        message-id:subject:from:to:cc:date:in-reply-to:references
+        :content-type:mime-version:content-transfer-encoding; s=fm3; bh=
+        26J/RpIA9Dzs/j/8HMkMSuIzptW47JbejMg/q+iS3MA=; b=k+tuYhnIwwJqPC4a
+        ARmLeCMtIylGfe41ZB2xKZDmYvrKjpecqduRXwP+9BBuVWQgIaFmKGJTo3YJYXAx
+        Ypn3UJy81+Nvgtt39qeUW24jGFuqamg9GKZuaAL46pkTIrKEv0spYSGUItue51qM
+        BMEYBbtZSz2Afm8rvLkRPQLA3UQu5OFEeZcXaBtC28KAaWyED2HYsD1gD22fjByH
+        XaKZUEkNIEy+8yie9mVabtLESGXmRThqMwg8kT3n8Zks1mkufq0xGuTjVWrBZKJy
+        t+U0BtxJPwxVTRyKfTgopI4oCy+E+f9Q/YEOlFvgNxyDd/r3mZ38tXZoMCCaxSe8
+        BzA7cQ==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
+        messagingengine.com; h=cc:content-transfer-encoding:content-type
+        :date:from:in-reply-to:message-id:mime-version:references
+        :subject:to:x-me-proxy:x-me-proxy:x-me-sender:x-me-sender
+        :x-sasl-enc; s=fm3; bh=26J/RpIA9Dzs/j/8HMkMSuIzptW47JbejMg/q+iS3
+        MA=; b=UlVjy0fzxkWVFYnPUQXHQ3/SyandLHZI25k0hCWN2r2/1tUCxtdEGSYjm
+        GXKGrXAJ+D4IS9BdU05Xkvg4CRigWZWia+z/Rs8q9s8R/stmJ+fTTsh3K5yKFOem
+        sQyOz2u1x9OepQCiE0ydYQhN55yHJPMCnEtdrWPUXDOEOUk4FPLvn0WPOC9D0Sxy
+        93Xdzz7yWniafh0KlABxeImu8+TU6nNiOg1rz2EELtjJ21wVjypuFoLPPVVFFNQz
+        hTD2PklgWGLzAxRJZAnJYy8D5VV2qhj/k7v9pPO6mIPWTh7vUkxwxSWcVeSGgrKc
+        UmXy8Xn804pK0z1jYUQdrELOQxWwg==
+X-ME-Sender: <xms:pZYqXyxcpqQd8fkTI6CfOrrv8tj2qzF8np8tJRa1_efpe0JMgQiGkw>
+X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgeduiedrjeekgdegudcutefuodetggdotefrodftvf
+    curfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfghnecu
+    uegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmdenuc
+    fjughrpefkuffhvfffjghftggfggfgsehtjeertddtreejnecuhfhrohhmpefkrghnucfm
+    vghnthcuoehrrghvvghnsehthhgvmhgrfidrnhgvtheqnecuggftrfgrthhtvghrnhepfe
+    efteetvdeguddvveefveeftedtffduudehueeihfeuvefgveehffeludeggfejnecukfhp
+    peehkedrjedrvdehhedrvddvtdenucevlhhushhtvghrufhiiigvpedtnecurfgrrhgrmh
+    epmhgrihhlfhhrohhmpehrrghvvghnsehthhgvmhgrfidrnhgvth
+X-ME-Proxy: <xmx:pZYqX-TiKvrEJ-MB-FbK2Btrf7kE1Tw3EkDuTNy2v6yvzsOy2SlEgw>
+    <xmx:pZYqX0XLq-Ut0c4cHHkycDFeDRjTfcKY2AARmx6vEU009KfSrHB6bQ>
+    <xmx:pZYqX4j2RKFEQXdNPE9IPUWmO_fQ8BMKzSb1-ncgv31k1b-0y7ht3A>
+    <xmx:ppYqX0vJJE9yQ9CN4XXM-SnCkV-X0bG9y8hV4wWuiBbvkYky1I3se41MUu4>
+Received: from mickey.themaw.net (58-7-255-220.dyn.iinet.net.au [58.7.255.220])
+        by mail.messagingengine.com (Postfix) with ESMTPA id 40FB530600B4;
+        Wed,  5 Aug 2020 07:23:12 -0400 (EDT)
+Message-ID: <e1caad2bff5faf9b24b59fe4ee51df255412cc56.camel@themaw.net>
+Subject: Re: [PATCH 10/18] fsinfo: Provide notification overrun handling
+ support [ver #21]
+From:   Ian Kent <raven@themaw.net>
+To:     Miklos Szeredi <miklos@szeredi.hu>
+Cc:     David Howells <dhowells@redhat.com>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Miklos Szeredi <mszeredi@redhat.com>,
+        Christian Brauner <christian@brauner.io>,
+        Jann Horn <jannh@google.com>,
+        "Darrick J. Wong" <darrick.wong@oracle.com>,
+        Karel Zak <kzak@redhat.com>, Jeff Layton <jlayton@redhat.com>,
+        Linux API <linux-api@vger.kernel.org>,
+        linux-fsdevel@vger.kernel.org,
+        LSM <linux-security-module@vger.kernel.org>,
+        linux-kernel@vger.kernel.org
+Date:   Wed, 05 Aug 2020 19:23:07 +0800
+In-Reply-To: <CAJfpegs1NLaamFA12f=EJRN4B3_iC+Uzi2NQKTV-fBSypcufLQ@mail.gmail.com>
+References: <159646178122.1784947.11705396571718464082.stgit@warthog.procyon.org.uk>
+         <159646187082.1784947.4293611877413578847.stgit@warthog.procyon.org.uk>
+         <20200804135641.GE32719@miu.piliscsaba.redhat.com>
+         <94bba6f200bb2bbf83f4945faa2ccb83fd947540.camel@themaw.net>
+         <5078554c6028e29c91d815c63e2af1ffac2ecbbb.camel@themaw.net>
+         <CAJfpegs1NLaamFA12f=EJRN4B3_iC+Uzi2NQKTV-fBSypcufLQ@mail.gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.34.4 (3.34.4-1.fc31) 
 MIME-Version: 1.0
-In-Reply-To: <20200804095035.18778-4-rppt@kernel.org>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
 Content-Transfer-Encoding: 7bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 8/4/20 2:50 AM, Mike Rapoport wrote:
-> diff --git a/mm/Kconfig b/mm/Kconfig
-> index f2104cc0d35c..8378175e72a4 100644
-> --- a/mm/Kconfig
-> +++ b/mm/Kconfig
-> @@ -872,4 +872,8 @@ config ARCH_HAS_HUGEPD
->  config MAPPING_DIRTY_HELPERS
->          bool
->  
-> +config SECRETMEM
-> +        def_bool ARCH_HAS_SET_DIRECT_MAP && !EMBEDDED
+On Wed, 2020-08-05 at 09:45 +0200, Miklos Szeredi wrote:
+> On Wed, Aug 5, 2020 at 4:46 AM Ian Kent <raven@themaw.net> wrote:
+> > Coming back to an actual use case.
+> > 
+> > What I said above is one aspect but, since I'm looking at this
+> > right
+> > now with systemd, and I do have the legacy code to fall back to,
+> > the
+> > "just reset everything" suggestion does make sense.
+> > 
+> > But I'm struggling to see how I can identify notification buffer
+> > overrun in libmount, and overrun is just one possibility for lost
+> > notifications, so I like the idea that, as a library user, I can
+> > work out that I need to take action based on what I have in the
+> > notifications themselves.
+> 
+> Hmm, what's the other possibility for lost notifications?
 
-use tab above, not spaces.
+In user space that is:
 
-> +	select GENERIC_ALLOCATOR
-> +
->  endmenu
+Multi-threaded application races, single threaded applications and
+signal processing races, other bugs ...
 
+For example systemd has it's own event handling sub-system and handles
+half a dozen or so event types of which the mount changes are one. It's
+fairly complex so I find myself wondering if I can trust it and
+wondering if there are undiscovered bugs in it. The answer to the
+former is probably yes but the answer to the later is also probably
+yes.
 
--- 
-~Randy
+Maybe I just paranoid!
+Ian
+
 
