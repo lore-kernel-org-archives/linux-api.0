@@ -2,122 +2,116 @@ Return-Path: <SRS0=q9GQ=BP=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 99BFCC433DF
-	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 19:23:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 610FDC433E0
+	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 19:25:10 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 587DB2075D
-	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 19:23:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 27837206D4
+	for <linux-api@archiver.kernel.org>; Wed,  5 Aug 2020 19:25:10 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eI7VMI+I"
+	dkim=fail reason="key not found in DNS" (0-bit key) header.d=szeredi.hu header.i=@szeredi.hu header.b="H+qsmC3Z"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728880AbgHETXU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 5 Aug 2020 15:23:20 -0400
-Received: from us-smtp-2.mimecast.com ([205.139.110.61]:27121 "EHLO
-        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1728835AbgHERbX (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 5 Aug 2020 13:31:23 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1596648682;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=e2gumUE5A/5ojzMFKs9UdfuL6+IZWqdj2OsZcZsTEkI=;
-        b=eI7VMI+Ic8nifMSLQzQsI5duOrcCcqDS9M2fITOl4U+oVELqIG28XSA202IlbRXWPbEcHJ
-        cNDMuguvFcY2NVb04+PzG1L1QcCxsRAVsMRqPUJJw6HL6gJB3jHQGKTdLPLMd7CZtrL+Lt
-        i+4OqzvCJrXJLy0Ewsz/DjeKrKq8DC0=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-12-8_Z_ROD0MgGQYCnHoTmj4w-1; Wed, 05 Aug 2020 10:14:03 -0400
-X-MC-Unique: 8_Z_ROD0MgGQYCnHoTmj4w-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2EC371DF7;
-        Wed,  5 Aug 2020 14:13:54 +0000 (UTC)
-Received: from warthog.procyon.org.uk (ovpn-112-32.rdu2.redhat.com [10.10.112.32])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id DE65D5C1BD;
-        Wed,  5 Aug 2020 14:13:48 +0000 (UTC)
-Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
-        Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
-        Kingdom.
-        Registered in England and Wales under Company Registration No. 3798903
-From:   David Howells <dhowells@redhat.com>
-In-Reply-To: <20200804104108.GC32719@miu.piliscsaba.redhat.com>
-References: <20200804104108.GC32719@miu.piliscsaba.redhat.com> <159646178122.1784947.11705396571718464082.stgit@warthog.procyon.org.uk> <159646183662.1784947.5709738540440380373.stgit@warthog.procyon.org.uk>
-To:     Miklos Szeredi <miklos@szeredi.hu>
-Cc:     dhowells@redhat.com, viro@zeniv.linux.org.uk,
-        torvalds@linux-foundation.org, raven@themaw.net,
-        mszeredi@redhat.com, christian@brauner.io, jannh@google.com,
-        darrick.wong@oracle.com, kzak@redhat.com, jlayton@redhat.com,
-        linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 06/18] fsinfo: Add a uniquifier ID to struct mount [ver #21]
+        id S1728274AbgHER0i (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 5 Aug 2020 13:26:38 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53030 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728842AbgHER0T (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 5 Aug 2020 13:26:19 -0400
+Received: from mail-ej1-x641.google.com (mail-ej1-x641.google.com [IPv6:2a00:1450:4864:20::641])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 06588C061757
+        for <linux-api@vger.kernel.org>; Wed,  5 Aug 2020 10:26:18 -0700 (PDT)
+Received: by mail-ej1-x641.google.com with SMTP id m19so6744300ejd.8
+        for <linux-api@vger.kernel.org>; Wed, 05 Aug 2020 10:26:18 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=szeredi.hu; s=google;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=PfhfFAEDblzsRQWrMzcI0diRWe/CNXK92mcngQaYd7Q=;
+        b=H+qsmC3Z3MgedQ/Jm+u3qVYeVXWyqQH33iCIHKK2tbGxBQbr38frgchQxuf3EzgvmP
+         MNh03Ji3AV40eKkq2AvkoWr7v+NFfyOdrJJ5S474gQ999/lCCin015tia0j+ezaTWqZV
+         /DOijvZvYoY+sBt3AM+Ygy+/Povj5zubYWXtk=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=PfhfFAEDblzsRQWrMzcI0diRWe/CNXK92mcngQaYd7Q=;
+        b=fbHVOJrnMr1SZAsW+vXrEBx/hXUWrj8iWuBsUr1Orrw5uEniS183+82oNIcvu0zn1k
+         7pNcuo22E331I9iVoiE4hSF5GtK6weo3npLHPpE2MMwmLWz+aVT8meaCzFsorgncPuW8
+         daPnSdGksL9I4iEiTILvBFCskDmHhiNjHxRnW51bzjeEs3OmaVe+SHyIR+BU+ZNF2RMF
+         oHCqPhJvmAAftvBkp17SpAqWh0DnAFmrHNHWyW6OJ/sEmEshR40Hk+2yo4jHOY5iyhHH
+         P/VZChlvK+mbPUEYgg3zXs6XS0ZzvkUqIPOZbhDc6kfVtNNZ1EhCamkQJIzNi1jSwDo1
+         2ENA==
+X-Gm-Message-State: AOAM530VAO+EToaauUotrw/UM0kCc+/w6bu5qDJJvVT0sS0KdlGn0cb8
+        r82JqvXHlJ+FZphUYK9Xn7+fBZq1PKK7O/gaxDeDog==
+X-Google-Smtp-Source: ABdhPJzdEHOuUAQwwJud++YQFGRBiDh0v606aODVa0hZTrCfoTE6lVJhbEjcB37S7JrGgIPTV8fOte9EbRFoUEgvB4o=
+X-Received: by 2002:a17:906:4c46:: with SMTP id d6mr379886ejw.14.1596648377290;
+ Wed, 05 Aug 2020 10:26:17 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-ID: <2306028.1596636828.1@warthog.procyon.org.uk>
-Content-Transfer-Encoding: quoted-printable
-Date:   Wed, 05 Aug 2020 15:13:48 +0100
-Message-ID: <2306029.1596636828@warthog.procyon.org.uk>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+References: <159646178122.1784947.11705396571718464082.stgit@warthog.procyon.org.uk>
+ <159646187082.1784947.4293611877413578847.stgit@warthog.procyon.org.uk>
+ <20200804135641.GE32719@miu.piliscsaba.redhat.com> <2320582.1596643618@warthog.procyon.org.uk>
+In-Reply-To: <2320582.1596643618@warthog.procyon.org.uk>
+From:   Miklos Szeredi <miklos@szeredi.hu>
+Date:   Wed, 5 Aug 2020 19:26:06 +0200
+Message-ID: <CAJfpegvpjjk3JNgTfY1yOGToPLF1mXG5+UkUZqVOGDkvzEr5HQ@mail.gmail.com>
+Subject: Re: [PATCH 10/18] fsinfo: Provide notification overrun handling
+ support [ver #21]
+To:     David Howells <dhowells@redhat.com>
+Cc:     Al Viro <viro@zeniv.linux.org.uk>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Ian Kent <raven@themaw.net>,
+        Miklos Szeredi <mszeredi@redhat.com>,
+        Christian Brauner <christian@brauner.io>,
+        Jann Horn <jannh@google.com>,
+        "Darrick J. Wong" <darrick.wong@oracle.com>,
+        Karel Zak <kzak@redhat.com>, Jeff Layton <jlayton@redhat.com>,
+        Linux API <linux-api@vger.kernel.org>,
+        linux-fsdevel@vger.kernel.org,
+        LSM <linux-security-module@vger.kernel.org>,
+        linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Miklos Szeredi <miklos@szeredi.hu> wrote:
-
-> > +#ifdef CONFIG_FSINFO
-> > +	u64	mnt_unique_id;		/* ID unique over lifetime of kernel */
-> > +#endif
+On Wed, Aug 5, 2020 at 6:07 PM David Howells <dhowells@redhat.com> wrote:
 >
-> Not sure if it's worth making conditional.
-
-You can't get at it without CONFIG_FSINFO=3Dy as it stands, but making it
-unconditional might be reasonable.
-
-> > -		n.auxiliary_mount	=3D aux->mnt_id;
-> > +		n.auxiliary_mount =3D aux->mnt_unique_id;
+> Miklos Szeredi <miklos@szeredi.hu> wrote:
 >
-> Hmm, so we now have two ID's:
+> > Shoun't we just make sure that the likelyhood of overruns is low
 >
->  - one can be used to look up the mount
->  - one is guaranteed to be unique
+> That's not necessarily easy.  To avoid overruns you need a bigger buffer.  The
+> buffer is preallocated from unswappable kernel space.  Yes, you can increase
+> the size of the buffer, but it eats out of your pipe bufferage limit.
 >
-> With this change the mount cannot be looked up with FSINFO_FLAGS_QUERY_M=
-OUNT,
-> right?
+> Further, it's a *general* notifications queue, not just for a specific
+> purpose, but that means it might get connected to multiple sources, and doing
+> something like tearing down a container might generate enough notifications to
+> overrun the queue.
 >
-> Should we be merging the two ID's into a single one which has both prope=
-rties?
+> > and if it happens, just reinitialize everthing from scratch (shouldn't be
+> > *that* expensive).
+>
+> If you then spend time reinitialising everything, you're increasing the
+> likelihood of racing with further events.  Further, there multiple expenses:
+> firstly, you have to tear down and discard all the data that you've spent time
+> setting up; secondly, it takes time doing all this; thirdly, it takes cpu
+> cycles away from applications.
+>
+> The reason I put the event counters in there and made it so that fsinfo()
+> could read all the mounts in a subtree and their event counters in one go is
+> to make it faster for the user to find out what changed in the event that a
+> notification is lost.
 
-Ideally, yes... but...  The 31-bit mnt_id is currently exposed to userspac=
-e in
-various places, e.g. /proc, sys_name_to_handle_at().  So we have to keep t=
-hat
-as is and we can't expand it.
+That's just overdesigning it, IMO.
 
-For fsinfo(), however, it might make sense to only use the 64-bit uniquifi=
-er
-as the identifier to use for direct look up.
+If the protocol is extensible (as you state) then the counters can be
+added as needed.  And unless the above CPU cycle wastage is actually
+observed in practice, the whole thing is unnecessary.
 
-However, looking up that identifier requires some sort of structure for do=
-ing
-this and it's kind of worst case for the IDR tree as the keys are graduall=
-y
-going to spread out, causing it to eat more memory.  It may be a tradeoff
-worth making, and the memory consumption might not be that bad - or we cou=
-ld
-use some other data structure such as an rbtree.
-
-That's why I was going for the 31-bit identifier + uniquifier so that you =
-can at
-least tell if the identifier got recycled reasonably quickly.
-
-David
-
+Thanks,
+Miklos
