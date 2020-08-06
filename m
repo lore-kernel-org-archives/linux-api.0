@@ -2,90 +2,139 @@ Return-Path: <SRS0=bke1=BQ=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-13.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=no autolearn_force=no version=3.4.0
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E3867C433E0
-	for <linux-api@archiver.kernel.org>; Thu,  6 Aug 2020 20:20:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 75A90C433DF
+	for <linux-api@archiver.kernel.org>; Thu,  6 Aug 2020 20:37:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CB81B206C3
-	for <linux-api@archiver.kernel.org>; Thu,  6 Aug 2020 20:20:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6DD0720855
+	for <linux-api@archiver.kernel.org>; Thu,  6 Aug 2020 20:37:46 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=ti.com header.i=@ti.com header.b="FcxToDvS"
+	dkim=pass (1024-bit key) header.d=ti.com header.i=@ti.com header.b="cwu9s6a6"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726448AbgHFUUW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 6 Aug 2020 16:20:22 -0400
-Received: from lelv0142.ext.ti.com ([198.47.23.249]:36526 "EHLO
-        lelv0142.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726382AbgHFUUW (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 6 Aug 2020 16:20:22 -0400
+        id S1725817AbgHFUhl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 6 Aug 2020 16:37:41 -0400
+Received: from lelv0143.ext.ti.com ([198.47.23.248]:40068 "EHLO
+        lelv0143.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725272AbgHFUhl (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 6 Aug 2020 16:37:41 -0400
 Received: from fllv0034.itg.ti.com ([10.64.40.246])
-        by lelv0142.ext.ti.com (8.15.2/8.15.2) with ESMTP id 076KJqPn085323;
-        Thu, 6 Aug 2020 15:19:52 -0500
+        by lelv0143.ext.ti.com (8.15.2/8.15.2) with ESMTP id 076KbEDn073880;
+        Thu, 6 Aug 2020 15:37:14 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ti.com;
-        s=ti-com-17Q1; t=1596745192;
-        bh=ZUrVIV9a/HB6pdfYWlnxoyCs4L1mTouSCTB1BHdWEwE=;
-        h=Subject:To:References:From:Date:In-Reply-To;
-        b=FcxToDvSFg82La4qIiBDrzEoU622ni3NoRCndwjCBW7eMDK/jLFosVY08NMlWChAY
-         t/Mjryolm2Zgto/ZxVb2pvO99xXlnUxJDYJ40QGj7vH9r2G3kYSBf43fyG/Ozik9mv
-         /anuIAGHUyfaBiqhqL0sHAL63mkYk57/8FIzgdq8=
-Received: from DFLE113.ent.ti.com (dfle113.ent.ti.com [10.64.6.34])
-        by fllv0034.itg.ti.com (8.15.2/8.15.2) with ESMTPS id 076KJqsr020504
+        s=ti-com-17Q1; t=1596746234;
+        bh=TyyBmEg+oDtkNBxbb3CoGvlfAFNE8UNFA/P2Wsl2LMM=;
+        h=From:To:Subject:Date:In-Reply-To:References;
+        b=cwu9s6a61+ZCK48D0Hx9xq5V0ZeOJqeUKFYNLXDfgVlB/D8zjafzgXC5SQb7PxKTi
+         NyLjWa3Jt3nMF2iytcKiTbWkPPXFSJt5rdnFuhvTG+ub85GgbCEBEDfN79hMWz99a/
+         zQ7cfOiXzX+Oh+smZzq0l3jtfgU7hkO3SU0eXxk8=
+Received: from DLEE113.ent.ti.com (dlee113.ent.ti.com [157.170.170.24])
+        by fllv0034.itg.ti.com (8.15.2/8.15.2) with ESMTPS id 076KbEap046259
         (version=TLSv1.2 cipher=AES256-GCM-SHA384 bits=256 verify=FAIL);
-        Thu, 6 Aug 2020 15:19:52 -0500
-Received: from DFLE101.ent.ti.com (10.64.6.22) by DFLE113.ent.ti.com
- (10.64.6.34) with Microsoft SMTP Server (version=TLS1_2,
+        Thu, 6 Aug 2020 15:37:14 -0500
+Received: from DLEE104.ent.ti.com (157.170.170.34) by DLEE113.ent.ti.com
+ (157.170.170.24) with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1979.3; Thu, 6 Aug
- 2020 15:19:52 -0500
-Received: from fllv0040.itg.ti.com (10.64.41.20) by DFLE101.ent.ti.com
- (10.64.6.22) with Microsoft SMTP Server (version=TLS1_2,
+ 2020 15:37:13 -0500
+Received: from fllv0039.itg.ti.com (10.64.41.19) by DLEE104.ent.ti.com
+ (157.170.170.34) with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1979.3 via
- Frontend Transport; Thu, 6 Aug 2020 15:19:51 -0500
-Received: from [10.250.53.226] (ileax41-snat.itg.ti.com [10.172.224.153])
-        by fllv0040.itg.ti.com (8.15.2/8.15.2) with ESMTP id 076KJp1M112395;
-        Thu, 6 Aug 2020 15:19:51 -0500
-Subject: Re: [net-next iproute2 PATCH v3 1/2] iplink: hsr: add support for
- creating PRP device similar to HSR
-To:     David Ahern <dsahern@gmail.com>, <davem@davemloft.net>,
-        <kuba@kernel.org>, <netdev@vger.kernel.org>,
-        <linux-kernel@vger.kernel.org>, <linux-api@vger.kernel.org>,
-        <nsekhar@ti.com>, <grygorii.strashko@ti.com>,
-        <vinicius.gomes@intel.com>, <stephen@networkplumber.org>,
-        <kuznet@ms2.inr.ac.ru>
-References: <20200717152205.826-1-m-karicheri2@ti.com>
- <e6ac459e-b81c-48ee-d82c-36a533e2aa29@ti.com>
- <6632128c-1c4b-4538-81a9-48dd752c8ab3@gmail.com>
+ Frontend Transport; Thu, 6 Aug 2020 15:37:13 -0500
+Received: from uda0868495.fios-router.home (ileax41-snat.itg.ti.com [10.172.224.153])
+        by fllv0039.itg.ti.com (8.15.2/8.15.2) with ESMTP id 076KbCei075449;
+        Thu, 6 Aug 2020 15:37:13 -0500
 From:   Murali Karicheri <m-karicheri2@ti.com>
-Message-ID: <9bc91459-73f1-df6e-176a-b078a7cc309f@ti.com>
-Date:   Thu, 6 Aug 2020 16:19:46 -0400
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.10.0
+To:     <davem@davemloft.net>, <kuba@kernel.org>, <netdev@vger.kernel.org>,
+        <linux-kernel@vger.kernel.org>, <linux-api@vger.kernel.org>,
+        <nsekhar@ti.com>, <vinicius.gomes@intel.com>,
+        <stephen@networkplumber.org>, <kuznet@ms2.inr.ac.ru>
+Subject: [net-next iproute2 PATCH v4 1/2] iplink: hsr: add support for creating PRP device similar to HSR
+Date:   Thu, 6 Aug 2020 16:37:11 -0400
+Message-ID: <20200806203712.2712-2-m-karicheri2@ti.com>
+X-Mailer: git-send-email 2.17.1
+In-Reply-To: <20200806203712.2712-1-m-karicheri2@ti.com>
+References: <20200806203712.2712-1-m-karicheri2@ti.com>
 MIME-Version: 1.0
-In-Reply-To: <6632128c-1c4b-4538-81a9-48dd752c8ab3@gmail.com>
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 X-EXCLAIMER-MD-CONFIG: e1e8a2fd-e40a-4ac6-ac9b-f7e9cc9ee180
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+This patch enhances the iplink command to add a proto parameters to
+create PRP device/interface similar to HSR. Both protocols are
+quite similar and requires a pair of Ethernet interfaces. So re-use
+the existing HSR iplink command to create PRP device/interface as
+well. Use proto parameter to differentiate the two protocols.
 
+Signed-off-by: Murali Karicheri <m-karicheri2@ti.com>
+---
+ ip/iplink_hsr.c | 19 +++++++++++++++++--
+ 1 file changed, 17 insertions(+), 2 deletions(-)
 
-On 8/6/20 1:12 PM, David Ahern wrote:
-> On 8/6/20 10:04 AM, Murali Karicheri wrote:
->> that the maintainers are different than the netdev maintainers. My bad.
->> The PRP driver support in kernel is merged by Dave to net-next and this
->> iproute2 change has to go with it. So please review and apply this if it
->> looks good. The kernel part merged is at
-> 
-> there was a long delay between iproute2 and commit to net-next. You need
-> to re-send the iproute2 patches.
-> 
-OK. Will do. Thanks
+diff --git a/ip/iplink_hsr.c b/ip/iplink_hsr.c
+index 7d9167d4e6a3..6ea138a23cbc 100644
+--- a/ip/iplink_hsr.c
++++ b/ip/iplink_hsr.c
+@@ -25,7 +25,7 @@ static void print_usage(FILE *f)
+ {
+ 	fprintf(f,
+ 		"Usage:\tip link add name NAME type hsr slave1 SLAVE1-IF slave2 SLAVE2-IF\n"
+-		"\t[ supervision ADDR-BYTE ] [version VERSION]\n"
++		"\t[ supervision ADDR-BYTE ] [version VERSION] [proto PROTOCOL]\n"
+ 		"\n"
+ 		"NAME\n"
+ 		"	name of new hsr device (e.g. hsr0)\n"
+@@ -35,7 +35,9 @@ static void print_usage(FILE *f)
+ 		"	0-255; the last byte of the multicast address used for HSR supervision\n"
+ 		"	frames (default = 0)\n"
+ 		"VERSION\n"
+-		"	0,1; the protocol version to be used. (default = 0)\n");
++		"	0,1; the protocol version to be used. (default = 0)\n"
++		"PROTOCOL\n"
++		"	0 - HSR, 1 - PRP. (default = 0 - HSR)\n");
+ }
+ 
+ static void usage(void)
+@@ -49,6 +51,7 @@ static int hsr_parse_opt(struct link_util *lu, int argc, char **argv,
+ 	int ifindex;
+ 	unsigned char multicast_spec;
+ 	unsigned char protocol_version;
++	unsigned char protocol = HSR_PROTOCOL_HSR;
+ 
+ 	while (argc > 0) {
+ 		if (matches(*argv, "supervision") == 0) {
+@@ -64,6 +67,13 @@ static int hsr_parse_opt(struct link_util *lu, int argc, char **argv,
+ 				invarg("version is invalid", *argv);
+ 			addattr_l(n, 1024, IFLA_HSR_VERSION,
+ 				  &protocol_version, 1);
++		} else if (matches(*argv, "proto") == 0) {
++			NEXT_ARG();
++			if (!(get_u8(&protocol, *argv, 0) == HSR_PROTOCOL_HSR ||
++			      get_u8(&protocol, *argv, 0) == HSR_PROTOCOL_PRP))
++				invarg("protocol is invalid", *argv);
++			addattr_l(n, 1024, IFLA_HSR_PROTOCOL,
++				  &protocol, 1);
+ 		} else if (matches(*argv, "slave1") == 0) {
+ 			NEXT_ARG();
+ 			ifindex = ll_name_to_index(*argv);
+@@ -140,6 +150,11 @@ static void hsr_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
+ 					 RTA_PAYLOAD(tb[IFLA_HSR_SUPERVISION_ADDR]),
+ 					 ARPHRD_VOID,
+ 					 b1, sizeof(b1)));
++	if (tb[IFLA_HSR_PROTOCOL])
++		print_int(PRINT_ANY,
++			  "proto",
++			  "proto %d ",
++			  rta_getattr_u8(tb[IFLA_HSR_PROTOCOL]));
+ }
+ 
+ static void hsr_print_help(struct link_util *lu, int argc, char **argv,
 -- 
-Murali Karicheri
-Texas Instruments
+2.17.1
+
