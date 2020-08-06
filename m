@@ -2,128 +2,161 @@ Return-Path: <SRS0=bke1=BQ=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.0 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5AB9FC433E0
-	for <linux-api@archiver.kernel.org>; Thu,  6 Aug 2020 17:27:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2BDE0C433E0
+	for <linux-api@archiver.kernel.org>; Thu,  6 Aug 2020 17:47:39 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BAEE822DCC
-	for <linux-api@archiver.kernel.org>; Thu,  6 Aug 2020 17:27:19 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1596734839;
-	bh=rG6YravFTKqffBTxWyAmkaV605CSK2gQ7u+8+ReQXPI=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:List-ID:From;
-	b=buGBn01E+0rUPRKbuLkmcboU7l3i0dHMRJmcONrT/Y/bfL1g5gmXz2OvhjXUDLVWw
-	 2Uer7P4ARlbZFurVn0Q0bfqGXlTxEdV3vce5YVjmX3jAwDy/q15gTjzdaOJF8ZE3vG
-	 XGTtV/sXhu+YFtXDNFDTE/4PAc2JctVABAOGXGMk=
+	by mail.kernel.org (Postfix) with ESMTP id 8EC2F206B2
+	for <linux-api@archiver.kernel.org>; Thu,  6 Aug 2020 17:47:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728878AbgHFR1I (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 6 Aug 2020 13:27:08 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44986 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729685AbgHFRBx (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 6 Aug 2020 13:01:53 -0400
-Received: from mail-ed1-x544.google.com (mail-ed1-x544.google.com [IPv6:2a00:1450:4864:20::544])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 23B9AC0698CD;
-        Thu,  6 Aug 2020 06:50:41 -0700 (PDT)
-Received: by mail-ed1-x544.google.com with SMTP id c2so29333088edx.8;
-        Thu, 06 Aug 2020 06:50:41 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=pYOAU4zyTtJPYkEQfnQ4aWaYGVh8/wQuqp7IpTtJ6do=;
-        b=LvlvYpq9JUMWnC9/yFSS4wQkoMzm46piNKWyoQ5DuTwW/jjZl7ANZ4j592Uyj1yy3Y
-         31H9pN3pbfyxBlVjBg64O+j4LwbZFScsNLIjvF/xJffyXB6z4b1w/YA+UINKPohJPaKM
-         DhL8lwL+cYEe5vSJyl7gu1SCgZsX7iilU2sURy2UrTJgoEa0KrNbaU6eVmOsX1Dtp1Vs
-         A040v/hmZTFY4JNauiwROduRvAeiJehMUPswUJA9yeARYk+30rTwtZkzc7LQhJPv/sEt
-         kSF0maMNyYzQhF8UsZAf9VAKcQmDJRyt8GUPaEH5dTUt+t8xVfWwudrXhnv/OhxEJC80
-         KuwQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:from:to:cc:subject:message-id
-         :references:mime-version:content-disposition:in-reply-to;
-        bh=pYOAU4zyTtJPYkEQfnQ4aWaYGVh8/wQuqp7IpTtJ6do=;
-        b=YR5fT+QSuZ/dBEwGSsK5mYJhzW5ArBsUUbmkhC2vO9ujgh28/V39u3+fYVINmBhtPa
-         VzC3j7Pk5FyqHRdOTHGnlahNraAcGs+h/zjzwQwYmatyOSSUjy02EgrhDf3cxdSRmu84
-         WyWmD8/v3U8oWvcw4Sapmd//IPbXaqZcVmuIpo2kBzMNbHMFK2SAmgAuh773KjV+Hytk
-         0o2UlcGFts9eAQe/WnqPSLjeh/8+L5gGfdk2bfgzsPKckEliazNJ4Rey/jyu0h4K+Epr
-         PN5gPZZRJWhORszPSQqsBulo3xw4+mHny527WiQ7OsfBMxQK205LVUKr/5nXt08GoRIm
-         BxmA==
-X-Gm-Message-State: AOAM5313a4W/raGmtwtZunkPZFZMPgMCw3CtdHFOILHjACLXUZfm19nC
-        SaFhMSomLM8OaA6qV8euLvs=
-X-Google-Smtp-Source: ABdhPJzYxh9mNb/BHUYWWWsOHgNjPXvNZwBtPKO84YZdhn5EUVlGhMh8pj2PSHlZ0cZ/+d3acTJDPQ==
-X-Received: by 2002:a05:6402:13d9:: with SMTP id a25mr4192009edx.141.1596721839522;
-        Thu, 06 Aug 2020 06:50:39 -0700 (PDT)
-Received: from gmail.com (54033286.catv.pool.telekom.hu. [84.3.50.134])
-        by smtp.gmail.com with ESMTPSA id c7sm3614732edf.1.2020.08.06.06.50.37
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 06 Aug 2020 06:50:38 -0700 (PDT)
-Date:   Thu, 6 Aug 2020 15:50:36 +0200
-From:   Ingo Molnar <mingo@kernel.org>
-To:     Christoph Hellwig <hch@lst.de>
-Cc:     x86@kernel.org, Jan Kara <jack@suse.com>,
+        id S1728112AbgHFRrh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 6 Aug 2020 13:47:37 -0400
+Received: from mx0b-001b2d01.pphosted.com ([148.163.158.5]:43984 "EHLO
+        mx0b-001b2d01.pphosted.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1729046AbgHFQg6 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 6 Aug 2020 12:36:58 -0400
+Received: from pps.filterd (m0098417.ppops.net [127.0.0.1])
+        by mx0a-001b2d01.pphosted.com (8.16.0.42/8.16.0.42) with SMTP id 076AX2Zk023945;
+        Thu, 6 Aug 2020 07:10:47 -0400
+Received: from pps.reinject (localhost [127.0.0.1])
+        by mx0a-001b2d01.pphosted.com with ESMTP id 32rdt2n6mc-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+        Thu, 06 Aug 2020 07:10:47 -0400
+Received: from m0098417.ppops.net (m0098417.ppops.net [127.0.0.1])
+        by pps.reinject (8.16.0.36/8.16.0.36) with SMTP id 076AeeeC049571;
+        Thu, 6 Aug 2020 07:10:46 -0400
+Received: from ppma06ams.nl.ibm.com (66.31.33a9.ip4.static.sl-reverse.com [169.51.49.102])
+        by mx0a-001b2d01.pphosted.com with ESMTP id 32rdt2n6ht-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+        Thu, 06 Aug 2020 07:10:46 -0400
+Received: from pps.filterd (ppma06ams.nl.ibm.com [127.0.0.1])
+        by ppma06ams.nl.ibm.com (8.16.0.42/8.16.0.42) with SMTP id 076B7Jv2015021;
+        Thu, 6 Aug 2020 11:10:44 GMT
+Received: from b06cxnps4074.portsmouth.uk.ibm.com (d06relay11.portsmouth.uk.ibm.com [9.149.109.196])
+        by ppma06ams.nl.ibm.com with ESMTP id 32mynh5cuj-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+        Thu, 06 Aug 2020 11:10:44 +0000
+Received: from d06av26.portsmouth.uk.ibm.com (d06av26.portsmouth.uk.ibm.com [9.149.105.62])
+        by b06cxnps4074.portsmouth.uk.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 076BAf3t30736750
+        (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+        Thu, 6 Aug 2020 11:10:41 GMT
+Received: from d06av26.portsmouth.uk.ibm.com (unknown [127.0.0.1])
+        by IMSVA (Postfix) with ESMTP id C2F7CAE05A;
+        Thu,  6 Aug 2020 11:10:41 +0000 (GMT)
+Received: from d06av26.portsmouth.uk.ibm.com (unknown [127.0.0.1])
+        by IMSVA (Postfix) with ESMTP id 7CDD7AE063;
+        Thu,  6 Aug 2020 11:10:38 +0000 (GMT)
+Received: from linux.ibm.com (unknown [9.145.24.39])
+        by d06av26.portsmouth.uk.ibm.com (Postfix) with ESMTPS;
+        Thu,  6 Aug 2020 11:10:38 +0000 (GMT)
+Date:   Thu, 6 Aug 2020 14:10:36 +0300
+From:   Mike Rapoport <rppt@linux.ibm.com>
+To:     "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc:     Mike Rapoport <rppt@kernel.org>, linux-kernel@vger.kernel.org,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Christopher Lameter <cl@linux.com>,
+        Dan Williams <dan.j.williams@intel.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Elena Reshetova <elena.reshetova@intel.com>,
+        "H. Peter Anvin" <hpa@zytor.com>, Idan Yaniv <idan.yaniv@ibm.com>,
+        Ingo Molnar <mingo@redhat.com>,
+        James Bottomley <jejb@linux.ibm.com>,
+        Matthew Wilcox <willy@infradead.org>,
+        Mark Rutland <mark.rutland@arm.com>,
+        Michael Kerrisk <mtk.manpages@gmail.com>,
+        Palmer Dabbelt <palmer@dabbelt.com>,
+        Paul Walmsley <paul.walmsley@sifive.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
+        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
         linux-arm-kernel@lists.infradead.org,
-        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-api@vger.kernel.org, linux-arch@vger.kernel.org
-Subject: Re: improve compat handling for the i386 u64 alignment quirk v2
-Message-ID: <20200806135036.GA2077896@gmail.com>
-References: <20200731122202.213333-1-hch@lst.de>
+        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
+        linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
+        x86@kernel.org
+Subject: Re: [PATCH v3 1/6] mm: add definition of PMD_PAGE_ORDER
+Message-ID: <20200806111036.GJ163101@linux.ibm.com>
+References: <20200804095035.18778-1-rppt@kernel.org>
+ <20200804095035.18778-2-rppt@kernel.org>
+ <20200806101112.bjw4mxu2odpsg2hh@box>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20200731122202.213333-1-hch@lst.de>
+In-Reply-To: <20200806101112.bjw4mxu2odpsg2hh@box>
+X-TM-AS-GCONF: 00
+X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.235,18.0.687
+ definitions=2020-08-06_06:2020-08-06,2020-08-06 signatures=0
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 bulkscore=0 mlxscore=0
+ lowpriorityscore=0 priorityscore=1501 malwarescore=0 adultscore=0
+ mlxlogscore=997 clxscore=1011 suspectscore=1 spamscore=0 phishscore=0
+ impostorscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.12.0-2006250000 definitions=main-2008060075
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-
-* Christoph Hellwig <hch@lst.de> wrote:
-
-> Hi all,
+On Thu, Aug 06, 2020 at 01:11:12PM +0300, Kirill A. Shutemov wrote:
+> On Tue, Aug 04, 2020 at 12:50:30PM +0300, Mike Rapoport wrote:
+> > From: Mike Rapoport <rppt@linux.ibm.com>
+> > 
+> > The definition of PMD_PAGE_ORDER denoting the number of base pages in the
+> > second-level leaf page is already used by DAX and maybe handy in other
+> > cases as well.
+> > 
+> > Several architectures already have definition of PMD_ORDER as the size of
+> > second level page table, so to avoid conflict with these definitions use
+> > PMD_PAGE_ORDER name and update DAX respectively.
+> > 
+> > Signed-off-by: Mike Rapoport <rppt@linux.ibm.com>
+> > ---
+> >  fs/dax.c                | 10 +++++-----
+> >  include/linux/pgtable.h |  3 +++
+> >  2 files changed, 8 insertions(+), 5 deletions(-)
+> > 
+> > diff --git a/fs/dax.c b/fs/dax.c
+> > index 11b16729b86f..b91d8c8dda45 100644
+> > --- a/fs/dax.c
+> > +++ b/fs/dax.c
+> > @@ -50,7 +50,7 @@ static inline unsigned int pe_order(enum page_entry_size pe_size)
+> >  #define PG_PMD_NR	(PMD_SIZE >> PAGE_SHIFT)
+> >  
+> >  /* The order of a PMD entry */
+> > -#define PMD_ORDER	(PMD_SHIFT - PAGE_SHIFT)
+> > +#define PMD_PAGE_ORDER	(PMD_SHIFT - PAGE_SHIFT)
 > 
-> the i386 ABI is a little special in that it uses less than natural
-> alignment for 64-bit integer types (u64 and s64), and a significant
-> amount of our compat handlers deals with just that.  Unfortunately
-> there is no good way to check for this specific quirk at runtime,
-> similar how in_compat_syscall() checks for a compat syscall.  This
-> series adds such a check, and then uses the quota code as an example
-> of how this improves the compat handling.  I have a few other places
-> in mind where this will also be useful going forward.
+> Hm. Wouldn't it conflict with definition in pgtable.h? Or should we
+> include it instead?
+
+Actually I meant to remove it here and keep only the definition in
+pgtable.h.
+Will fix.
+
+> > diff --git a/include/linux/pgtable.h b/include/linux/pgtable.h
+> > index 56c1e8eb7bb0..79f8443609e7 100644
+> > --- a/include/linux/pgtable.h
+> > +++ b/include/linux/pgtable.h
+> > @@ -28,6 +28,9 @@
+> >  #define USER_PGTABLES_CEILING	0UL
+> >  #endif
+> >  
+> > +/* Number of base pages in a second level leaf page */
+> > +#define PMD_PAGE_ORDER	(PMD_SHIFT - PAGE_SHIFT)
+> > +
+> >  /*
+> >   * A page table page can be thought of an array like this: pXd_t[PTRS_PER_PxD]
+> >   *
 > 
-> Changes since v1:
->  - use asm-generic/compat.h instead of linux/compat.h for
->    compat_u64 and compat_s64
->  - fix a typo
-> 
-> Diffstat:
->  b/arch/arm64/include/asm/compat.h        |    2 
->  b/arch/mips/include/asm/compat.h         |    2 
->  b/arch/parisc/include/asm/compat.h       |    2 
->  b/arch/powerpc/include/asm/compat.h      |    2 
->  b/arch/s390/include/asm/compat.h         |    2 
->  b/arch/sparc/include/asm/compat.h        |    3 
->  b/arch/x86/entry/syscalls/syscall_32.tbl |    2 
->  b/arch/x86/include/asm/compat.h          |    3 
->  b/fs/quota/Kconfig                       |    5 -
->  b/fs/quota/Makefile                      |    1 
->  b/fs/quota/compat.h                      |   34 ++++++++
->  b/fs/quota/quota.c                       |   73 +++++++++++++++---
->  b/include/asm-generic/compat.h           |    8 ++
->  b/include/linux/compat.h                 |    9 ++
->  b/include/linux/quotaops.h               |    3 
->  b/kernel/sys_ni.c                        |    1 
->  fs/quota/compat.c                        |  120 -------------------------------
->  17 files changed, 113 insertions(+), 159 deletions(-)
+> -- 
+>  Kirill A. Shutemov
 
-If nobody objects to this being done at runtime, and if it's 100% ABI 
-compatible, then the x86 impact looks good to me:
-
-Acked-by: Ingo Molnar <mingo@kernel.org>
-
-Thanks,
-
-	Ingo
+-- 
+Sincerely yours,
+Mike.
