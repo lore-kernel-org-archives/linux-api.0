@@ -2,91 +2,93 @@ Return-Path: <SRS0=bke1=BQ=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.0 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1CC7CC433DF
-	for <linux-api@archiver.kernel.org>; Thu,  6 Aug 2020 17:14:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A63A7C433DF
+	for <linux-api@archiver.kernel.org>; Thu,  6 Aug 2020 17:22:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7555523119
-	for <linux-api@archiver.kernel.org>; Thu,  6 Aug 2020 17:14:23 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 04A6C2311A
+	for <linux-api@archiver.kernel.org>; Thu,  6 Aug 2020 17:23:00 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="pxKukvBc"
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="FZytDxuw"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730422AbgHFRNC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 6 Aug 2020 13:13:02 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46916 "EHLO
+        id S1729797AbgHFRWv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 6 Aug 2020 13:22:51 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44924 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730415AbgHFRMw (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 6 Aug 2020 13:12:52 -0400
-Received: from mail-qk1-x743.google.com (mail-qk1-x743.google.com [IPv6:2607:f8b0:4864:20::743])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B1D67C061574;
-        Thu,  6 Aug 2020 10:12:52 -0700 (PDT)
-Received: by mail-qk1-x743.google.com with SMTP id x69so45670873qkb.1;
-        Thu, 06 Aug 2020 10:12:52 -0700 (PDT)
+        with ESMTP id S1729602AbgHFRFS (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 6 Aug 2020 13:05:18 -0400
+Received: from mail-lf1-x143.google.com (mail-lf1-x143.google.com [IPv6:2a00:1450:4864:20::143])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5302FC061757
+        for <linux-api@vger.kernel.org>; Thu,  6 Aug 2020 03:48:03 -0700 (PDT)
+Received: by mail-lf1-x143.google.com with SMTP id 140so25862480lfi.5
+        for <linux-api@vger.kernel.org>; Thu, 06 Aug 2020 03:48:03 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=subject:to:references:from:message-id:date:user-agent:mime-version
-         :in-reply-to:content-language:content-transfer-encoding;
-        bh=bv/T+Cc8SWIHSFomrcPUqj51gKlivyi5zXcjJ51jfYA=;
-        b=pxKukvBcJy0IGR5wO9U1XkvqCnEllThCx+g8batpLHQ/djdPKxh4X+5AKn+msb+IaD
-         aLZJvehC2RwKRlhb+8fKHRc9QNS3xTIvsHx4D/BcHjYTQ66ssGt8KsbFNOFeA6wB14n3
-         PV+UFd0ru5449KkKohwF1x/QBulhwxkNCRCJhRu+arGtAH6skh8SThI7DnKFY6vUcmRh
-         vn7aT5Vsne8bhSThJFf0OE9vCkEL87adD8liGuEm2nk4sRnqdyKjklWaQ/G1bt5bLQsP
-         3XBs0gfv8EW6tM/iN/sBiEvB7N9mT2RNHEZeFCOEmyw+wuvgkpA1XA19+JfT4e5SN2NI
-         3JJQ==
+        d=linaro.org; s=google;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=+F2bvw4279AFpRAqqHr9VWj7UEazWN4PYw+oY2vMYa8=;
+        b=FZytDxuwtIQKZP3iyMnkL/T5/O6IjGWF8fDMueWvMixfJVT0mifTHd743Bj5ndEbvF
+         Ry3pSxktKyczlATkt3Yt3ovkS/7xygecOfGuZjdmwzIF1ipy2NB6pzZh7ao+//ZmTBdi
+         CNueY6UNDJK95eeClCokRBbkY+gs/dvS4CmGuViCqjkLaaAk6CHbcDPe2G0ACzGAQgJk
+         e2j0KobbMTFzhGr0tX49nsTraHwHmcfyZkGr3JFEYz5IDfkFrtxpTM5/yJ2kbliylX1/
+         6CdNnBknNmq8X/aEHsaa3VyymRzrCUR2fqPcatDBEnKFlg1Ox34Pspo9XJ0SqdLbbNBm
+         6rHw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:subject:to:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-language
-         :content-transfer-encoding;
-        bh=bv/T+Cc8SWIHSFomrcPUqj51gKlivyi5zXcjJ51jfYA=;
-        b=F5OejOp/MvnHPJX2Gna/K+HTOpAkobwRjher5IRKK19ZwlEZkI67d4sJk2cbh6XbAW
-         K8AUWQ3LPpwjrN3RIv6H7sBg4IOxtKroebb4h/GfaHQ8bQTLkAs+oZpaFTPprV+AbkQI
-         KvJ+qBhcbSkr9ObdSoqB1cJFpS5nA+Zcztm9jPv4FZ2T29UXb4K0ah5IYHg4Lq3ku//9
-         kscyBFdhcDKNF76J5kaihhonShN9b32erCX1xezC/qD8AnmlX1VrHkCb1ZSu4BFYXrJf
-         0kyznfageg2seF6y9ga+ot0bzFyuErBRsIDOBAF+acMyG+oj2ti6h8pwEUHPLZfnY7x+
-         I86Q==
-X-Gm-Message-State: AOAM531T6FM6r66RrHKHdCRuYsXCleRyxxzIRLclTYmbKbNScAXxDESm
-        biWaz3b1o7rT6qQ4kijErwc=
-X-Google-Smtp-Source: ABdhPJxbCmMDgw2zfE8Um4DHcNr0p+bdIQnDOUq/x/Xj3+mqto87NHzUvR0Xsl9fq0sqV7eNkIjqoQ==
-X-Received: by 2002:a37:9b15:: with SMTP id d21mr9933406qke.9.1596733967564;
-        Thu, 06 Aug 2020 10:12:47 -0700 (PDT)
-Received: from ?IPv6:2601:282:803:7700:7c83:3cd:b611:a456? ([2601:282:803:7700:7c83:3cd:b611:a456])
-        by smtp.googlemail.com with ESMTPSA id x3sm4586312qkx.3.2020.08.06.10.12.45
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 06 Aug 2020 10:12:46 -0700 (PDT)
-Subject: Re: [net-next iproute2 PATCH v3 1/2] iplink: hsr: add support for
- creating PRP device similar to HSR
-To:     Murali Karicheri <m-karicheri2@ti.com>, davem@davemloft.net,
-        kuba@kernel.org, netdev@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        nsekhar@ti.com, grygorii.strashko@ti.com, vinicius.gomes@intel.com,
-        stephen@networkplumber.org, kuznet@ms2.inr.ac.ru
-References: <20200717152205.826-1-m-karicheri2@ti.com>
- <e6ac459e-b81c-48ee-d82c-36a533e2aa29@ti.com>
-From:   David Ahern <dsahern@gmail.com>
-Message-ID: <6632128c-1c4b-4538-81a9-48dd752c8ab3@gmail.com>
-Date:   Thu, 6 Aug 2020 11:12:44 -0600
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:68.0)
- Gecko/20100101 Thunderbird/68.11.0
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=+F2bvw4279AFpRAqqHr9VWj7UEazWN4PYw+oY2vMYa8=;
+        b=CeBWX3hTP2d2bzJSRb5PWVfSMCsueaaIBxnHg5yEjQya6KTDfFWX8Qvwd4CARcNAWz
+         OQE6brX2VhPu4/zlo8eQfTGQax4Oj4Nq/jaFch/gxuW1yJZ6VbHpkrKLwuoKP7oDxNYt
+         IJNgFDAf1LTNRRtTEwjkaJSDFlWnZHFnzjfAVJ5ZVfdf+48QdFeYrYI7gTVTeN06I5Vs
+         zAbpghXDvcqHGPCRBR0S+T3D0xUCo2/0YOkRjXOHcmDqEOrdTnl7+q0s9oXCb0ZC8dkw
+         0agVyy9h/6g94zhzSp3USi/BZloNHqMIHvjz0cBSGaBAz+9WIpp5ujNq4ccqOrcH7NSF
+         vogg==
+X-Gm-Message-State: AOAM532UZ2ncrhU3mit32k9OcSZLQtXoLa9SMp/rR9bVsMvXaiSKilAM
+        jm+YYmJWzEvLLo8Zi5XNseNw9kbA4+CkrvpqWSj6hQ==
+X-Google-Smtp-Source: ABdhPJw3YRS5JPfc1W80PkQQEw6/Xj8PLvezRr9eMiA5H0m5fq09Fro360+A1GEpHIZKK8g2u9ca4vq/md8Y6ToCaw0=
+X-Received: by 2002:ac2:5e26:: with SMTP id o6mr3576663lfg.194.1596710881135;
+ Thu, 06 Aug 2020 03:48:01 -0700 (PDT)
 MIME-Version: 1.0
-In-Reply-To: <e6ac459e-b81c-48ee-d82c-36a533e2aa29@ti.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+References: <20200529072017.2906-1-linus.walleij@linaro.org>
+ <CAFEAcA-x0y6ufRXebckRdGSLOBzbdBsk=uw+foK4p+HDeVrA9A@mail.gmail.com>
+ <CACRpkdZk-Pv49PyhtrW7ZQo+iebOapVb7L2T_cxh0SpYtcv5Xw@mail.gmail.com> <CACRpkdbOiL7=KUNa0==P+H-3SynhMt1=JweCY8ihbEZLK=b78w@mail.gmail.com>
+In-Reply-To: <CACRpkdbOiL7=KUNa0==P+H-3SynhMt1=JweCY8ihbEZLK=b78w@mail.gmail.com>
+From:   Linus Walleij <linus.walleij@linaro.org>
+Date:   Thu, 6 Aug 2020 12:47:49 +0200
+Message-ID: <CACRpkdY-w7TD89eRMJQSvhrPC7gxSPYPmMhPO2FUOxtzYRcRsg@mail.gmail.com>
+Subject: Re: [PATCH v2] fcntl: Add 32bit filesystem mode
+To:     "Theodore Ts'o" <tytso@mit.edu>
+Cc:     Andreas Dilger <adilger.kernel@dilger.ca>,
+        Ext4 Developers List <linux-ext4@vger.kernel.org>,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        QEMU Developers <qemu-devel@nongnu.org>,
+        Florian Weimer <fw@deneb.enyo.de>,
+        Andy Lutomirski <luto@kernel.org>,
+        Peter Maydell <peter.maydell@linaro.org>
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 8/6/20 10:04 AM, Murali Karicheri wrote:
-> that the maintainers are different than the netdev maintainers. My bad.
-> The PRP driver support in kernel is merged by Dave to net-next and this
-> iproute2 change has to go with it. So please review and apply this if it
-> looks good. The kernel part merged is at
+On Sun, Jul 19, 2020 at 2:34 PM Linus Walleij <linus.walleij@linaro.org> wrote:
+> On Mon, Jul 6, 2020 at 10:54 AM Linus Walleij <linus.walleij@linaro.org> wrote:
+>
+> > Ted, can you merge this patch?
+> >
+> > It seems QEMU is happy and AFICT it uses the approach you want :)
+>
+> Gentle ping!
 
-there was a long delay between iproute2 and commit to net-next. You need
-to re-send the iproute2 patches.
+Special merge-window ping.
+
+Shall I resend the patch?
+
+Yours,
+Linus Walleij
