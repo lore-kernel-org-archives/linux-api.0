@@ -2,133 +2,83 @@ Return-Path: <SRS0=ifQd=BR=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A2AC0C433DF
-	for <linux-api@archiver.kernel.org>; Fri,  7 Aug 2020 16:08:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0BB9DC433E3
+	for <linux-api@archiver.kernel.org>; Fri,  7 Aug 2020 16:27:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 82DCC22CA1
-	for <linux-api@archiver.kernel.org>; Fri,  7 Aug 2020 16:08:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DB7892075D
+	for <linux-api@archiver.kernel.org>; Fri,  7 Aug 2020 16:27:53 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=bfs.de header.i=@bfs.de header.b="xQtvHB6S"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PAK+d1GN"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1725872AbgHGQIq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 7 Aug 2020 12:08:46 -0400
-Received: from mx01-sz.bfs.de ([194.94.69.67]:63522 "EHLO mx01-sz.bfs.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725815AbgHGQIq (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 7 Aug 2020 12:08:46 -0400
-X-Greylist: delayed 594 seconds by postgrey-1.27 at vger.kernel.org; Fri, 07 Aug 2020 12:08:44 EDT
-Received: from SRVEX01-MUC.bfs.intern (unknown [10.161.90.31])
-        by mx01-sz.bfs.de (Postfix) with ESMTPS id 5DC312044F;
-        Fri,  7 Aug 2020 17:58:49 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=bfs.de; s=dkim201901;
-        t=1596815929;
+        id S1725900AbgHGQ1x (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 7 Aug 2020 12:27:53 -0400
+Received: from us-smtp-2.mimecast.com ([205.139.110.61]:43525 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1726013AbgHGQ1n (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 7 Aug 2020 12:27:43 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1596817661;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=as4a5sTv+OirA4HP3Wd1Bplg57ogAEiNOBZxXPaklv4=;
-        b=xQtvHB6SURA8NysVioy5AVeXExEompe9z01r9p24W2PR03Hsubv/sf3Ogq8czQUB2OYSMR
-        cEOEBRO4mm5KdYusOwj2mFB30EsZ+NRcNXZja1k2Y5DV/yw/X+XkZy7stClF6NaEY4UhNX
-        pz0uKpeNBVJhCkyGdxTnULrU64r9DW7bX14YcZ/zsjCX6OPJ+9neG9bzvGRdVF7RCBZFaF
-        iP4osP0DIbSxdkI5ylNXvJ+M1fLn3iEJWuixeByPcgwk1EGKrTMu+OJGwTZf55k5pz2j2+
-        khbh/gfTuDh+2HD16u3/Xv7n0r1csOHV+cNusgiPp80xw966rHsQehXTtItLtw==
-Received: from SRVEX01-MUC.bfs.intern (10.161.90.31) by SRVEX01-MUC.bfs.intern
- (10.161.90.31) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.1.2044.4; Fri, 7 Aug 2020
- 17:58:48 +0200
-Received: from SRVEX01-MUC.bfs.intern ([fe80::5d64:49:5476:e21f]) by
- SRVEX01-MUC.bfs.intern ([fe80::5d64:49:5476:e21f%4]) with mapi id
- 15.01.2044.004; Fri, 7 Aug 2020 17:58:48 +0200
-From:   Walter Harms <wharms@bfs.de>
-To:     David Howells <dhowells@redhat.com>,
-        "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>
-CC:     "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+        bh=pv6qNlWxgjgBBXp8H46A8UMNxHtp1mGMJlZDBfM4nf4=;
+        b=PAK+d1GNuXulAnFzzaRUuZwgrR8onN47F6gvuUnDFvUjPWDIwK+w5x7Hi/MlQshO5fL+zB
+        uY1/sO/rNc5mIMD4CAU7Um0jqhQmPIIIcABdnP9zuN32DKRFzELm2yp9embf9arMs4dlNj
+        a8acxEmFrxWwfExHJSPdN/qyvhbPzEY=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-510-tNMRgF-cObOzMwR-mWlVqg-1; Fri, 07 Aug 2020 12:27:38 -0400
+X-MC-Unique: tNMRgF-cObOzMwR-mWlVqg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0E4E5801E6A;
+        Fri,  7 Aug 2020 16:27:37 +0000 (UTC)
+Received: from warthog.procyon.org.uk (ovpn-113-69.rdu2.redhat.com [10.10.113.69])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 62AD5610F3;
+        Fri,  7 Aug 2020 16:27:35 +0000 (UTC)
+Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
+        Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
+        Kingdom.
+        Registered in England and Wales under Company Registration No. 3798903
+From:   David Howells <dhowells@redhat.com>
+In-Reply-To: <a2fe568438aa45e9a63a3a7d9d64a73f@bfs.de>
+References: <a2fe568438aa45e9a63a3a7d9d64a73f@bfs.de> <159680892602.29015.6551860260436544999.stgit@warthog.procyon.org.uk>,<159680897140.29015.15318866561972877762.stgit@warthog.procyon.org.uk>
+To:     Walter Harms <wharms@bfs.de>
+Cc:     dhowells@redhat.com,
+        "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>,
+        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
         "christian.brauner@ubuntu.com" <christian.brauner@ubuntu.com>,
         "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>,
         "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
         "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-Subject: AW: [PATCH 5/5] Add manpage for fsconfig(2)
-Thread-Topic: [PATCH 5/5] Add manpage for fsconfig(2)
-Thread-Index: AQHWbMQ0XBZ8wH0Poku30knI5+vNu6kszUyO
-Date:   Fri, 7 Aug 2020 15:58:48 +0000
-Message-ID: <a2fe568438aa45e9a63a3a7d9d64a73f@bfs.de>
-References: <159680892602.29015.6551860260436544999.stgit@warthog.procyon.org.uk>,<159680897140.29015.15318866561972877762.stgit@warthog.procyon.org.uk>
-In-Reply-To: <159680897140.29015.15318866561972877762.stgit@warthog.procyon.org.uk>
-Accept-Language: de-DE, en-US
-Content-Language: de-DE
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-originating-ip: [10.137.16.40]
-x-tm-as-product-ver: SMEX-14.0.0.3031-8.6.1012-25590.000
-x-tm-as-result: No-10--4.703800-5.000000
-x-tmase-matchedrid: WWTMasqpueHRubRCcrbc5pzEHTUOuMX33dCmvEa6IiHgYNP0+4v1ntnf
-        JrUSEbFDek1qkjXpN8Ke6V/Q38YAYGcV4sYfqMYe9u1rQ4BgXPLgt7TT//RoatI0b1xCCWEs6f0
-        gaty5G7F4FTWzKCjc1QRWs9urnAvn0KaUpJQo+cKrm7DrUlmNkF+24nCsUSFNjaPj0W1qn0TKay
-        T/BQTiGkq2k3whZ8xxvVJAfGcGfeOlvZnjL+42kEbYU3IgrRYpI6QS6h22s/KaQOZk1X5dlPjVg
-        cODqhdYucvAmOOZZmqPxfJezaaFzHXUTYbpXgymcCmyZvDwQy2t5ahRvDIGLa2t1VXHehFe6qFM
-        gJg4Un8=
-x-tm-as-user-approved-sender: No
-x-tm-as-user-blocked-sender: No
-x-tmase-result: 10--4.703800-5.000000
-x-tmase-version: SMEX-14.0.0.3031-8.6.1012-25590.000
-x-tm-snts-smtp: 2289D2C892B8C694DF00C263AB61F0F5F41A33377B31D172F20F64C9B603E6272000:9
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Subject: Re: AW: [PATCH 5/5] Add manpage for fsconfig(2)
 MIME-Version: 1.0
-Authentication-Results: mx01-sz.bfs.de;
-        none
-X-Spamd-Result: default: False [1.45 / 7.00];
-         ARC_NA(0.00)[];
-         TO_DN_EQ_ADDR_SOME(0.00)[];
-         HAS_XOIP(0.00)[];
-         FROM_HAS_DN(0.00)[];
-         TO_DN_SOME(0.00)[];
-         FREEMAIL_ENVRCPT(0.00)[gmail.com];
-         TO_MATCH_ENVRCPT_ALL(0.00)[];
-         TAGGED_RCPT(0.00)[];
-         MIME_GOOD(-0.10)[text/plain];
-         BAYES_HAM(-0.05)[59.33%];
-         DKIM_SIGNED(0.00)[];
-         RCPT_COUNT_SEVEN(0.00)[7];
-         NEURAL_HAM(-0.00)[-0.996];
-         FREEMAIL_TO(0.00)[redhat.com,gmail.com];
-         RCVD_NO_TLS_LAST(0.10)[];
-         FROM_EQ_ENVFROM(0.00)[];
-         MIME_TRACE(0.00)[0:+];
-         RCVD_COUNT_TWO(0.00)[2];
-         MID_RHS_MATCH_FROM(0.00)[];
-         SUSPICIOUS_RECIPS(1.50)[]
+Content-Type: text/plain; charset="us-ascii"
+Content-ID: <45106.1596817654.1@warthog.procyon.org.uk>
+Date:   Fri, 07 Aug 2020 17:27:34 +0100
+Message-ID: <45107.1596817654@warthog.procyon.org.uk>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-hi,
-thx for you efford,
-maybe it is obvious but i did not see it ..
-starting with what kernel version are these features available ?
+Walter Harms <wharms@bfs.de> wrote:
 
-re,
- wh
-________________________________________
-Von: linux-man-owner@vger.kernel.org [linux-man-owner@vger.kernel.org] im A=
-uftrag von David Howells [dhowells@redhat.com]
-Gesendet: Freitag, 7. August 2020 16:02
-An: mtk.manpages@gmail.com; viro@zeniv.linux.org.uk
-Cc: dhowells@redhat.com; linux-fsdevel@vger.kernel.org; christian.brauner@u=
-buntu.com; linux-man@vger.kernel.org; linux-api@vger.kernel.org; linux-kern=
-el@vger.kernel.org
-Betreff: [PATCH 5/5] Add manpage for fsconfig(2)
+> maybe it is obvious but i did not see it ..
+> starting with what kernel version are these features available ?
 
-Add a manual page to document the fsconfig() system call.
+See:
 
-Signed-off-by: David Howells <dhowells@redhat.com>
----
+	+.SH VERSIONS
+	+.BR fsconfig ()
+	+was added to Linux in kernel 5.1.
 
-
+David
 
