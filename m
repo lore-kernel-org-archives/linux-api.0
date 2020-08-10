@@ -4,34 +4,34 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6BBDDC433E0
-	for <linux-api@archiver.kernel.org>; Mon, 10 Aug 2020 23:27:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 00778C433E1
+	for <linux-api@archiver.kernel.org>; Mon, 10 Aug 2020 23:27:11 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 449E6206E9
+	by mail.kernel.org (Postfix) with ESMTP id DAE06206C3
 	for <linux-api@archiver.kernel.org>; Mon, 10 Aug 2020 23:27:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727949AbgHJX1F (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 10 Aug 2020 19:27:05 -0400
-Received: from bhuna.collabora.co.uk ([46.235.227.227]:51396 "EHLO
+        id S1726990AbgHJX06 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 10 Aug 2020 19:26:58 -0400
+Received: from bhuna.collabora.co.uk ([46.235.227.227]:51384 "EHLO
         bhuna.collabora.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726634AbgHJX1F (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 10 Aug 2020 19:27:05 -0400
+        with ESMTP id S1726634AbgHJX05 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 10 Aug 2020 19:26:57 -0400
 Received: from [127.0.0.1] (localhost [127.0.0.1])
         (Authenticated sender: krisman)
-        with ESMTPSA id B7810294816
+        with ESMTPSA id D80E128DB7F
 From:   Gabriel Krisman Bertazi <krisman@collabora.com>
 To:     luto@kernel.org, tglx@linutronix.de
 Cc:     keescook@chromium.org, x86@kernel.org,
         linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
         willy@infradead.org, linux-kselftest@vger.kernel.org,
         shuah@kernel.org, Gabriel Krisman Bertazi <krisman@collabora.com>,
-        kernel@collabora.com, Paul Gofman <gofmanp@gmail.com>
-Subject: [PATCH v5 5/9] kernel: Implement selective syscall userspace redirection
-Date:   Mon, 10 Aug 2020 19:26:32 -0400
-Message-Id: <20200810232636.1415588-6-krisman@collabora.com>
+        kernel@collabora.com, Andy Lutomirski <luto@amacapital.net>
+Subject: [PATCH v5 3/9] x86: vdso: Expose sigreturn address on vdso to the kernel
+Date:   Mon, 10 Aug 2020 19:26:30 -0400
+Message-Id: <20200810232636.1415588-4-krisman@collabora.com>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <20200810232636.1415588-1-krisman@collabora.com>
 References: <20200810232636.1415588-1-krisman@collabora.com>
@@ -42,410 +42,106 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Introduce a mechanism to quickly disable/enable syscall handling for a
-specific process and redirect to userspace via SIGSYS.  This is useful
-for processes with parts that require syscall redirection and parts that
-don't, but who need to perform this boundary crossing really fast,
-without paying the cost of a system call to reconfigure syscall handling
-on each boundary transition.  This is particularly important for Windows
-games running over Wine.
+Syscall user redirection requires the signal trampoline code to not be
+captured, in order to support returning with a locked selector while
+avoiding recursion back into the signal handler.  For ia-32, which has
+the trampoline in the vDSO, expose the entry points to the kernel, such
+that it can avoid dispatching syscalls from that region to userspace.
 
-The proposed interface looks like this:
-
-  prctl(PR_SET_SYSCALL_USER_DISPATCH, <op>, <start_addr>, <end_addr>, [selector])
-
-The range [<start_addr>,<end_addr>] is a part of the process memory map
-that is allowed to by-pass the redirection code and dispatch syscalls
-directly, such that in fast paths a process doesn't need to disable the
-trap nor the kernel has to check the selector.  This is essential to
-return from SIGSYS to a blocked area without triggering another SIGSYS
-from rt_sigreturn.
-
-selector is an optional pointer to a char-sized userspace memory region
-that has a key switch for the mechanism. This key switch is set to
-either PR_SYS_DISPATCH_ON, PR_SYS_DISPATCH_OFF to enable and disable the
-redirection without calling the kernel.
-
-The feature is meant to be set per-thread and it is disabled on
-fork/clone/execv.
-
-Internally, this doesn't add overhead to the syscall hot path, and it
-requires very little per-architecture support.  I avoided using seccomp,
-even though it duplicates some functionality, due to previous feedback
-that maybe it shouldn't mix with seccomp since it is not a security
-mechanism.  And obviously, this should never be considered a security
-mechanism, since any part of the program can by-pass it by using the
-syscall dispatcher.
-
-For the sysinfo benchmark, which measures the overhead added to
-executing a native syscall that doesn't require interception, the
-overhead using only the direct dispatcher region to issue syscalls is
-pretty much irrelevant.  The overhead of using the selector goes around
-40ns for a native (unredirected) syscall in my system, and it is (as
-expected) dominated by the supervisor-mode user-address access.  In
-fact, with SMAP off, the overhead is consistently less than 5ns on my
-test box.
-
-An example code using this interface can be found at:
-  https://gitlab.collabora.com/krisman/syscall-disable-personality
-
-Changes since v4:
-  (Andy Lutomirski)
-  - Allow sigreturn coming from vDSO
-  - Exit with SIGSYS instead of SIGSEGV on bad selector
-  (Thomas Gleixner)
-  - Use sizeof selector in access_ok
-  - Document usage of __get_user
-  - Use constant for state value
-  - Split out x86 parts
-  - Rebase on top of Gleixner's common entry code
-  - Don't expose do_syscall_user_dispatch
-
-Changes since v3:
-  - NTR.
-
-Changes since v2:
-  (Matthew Wilcox suggestions)
-  - Drop __user on non-ptr type.
-  - Move #define closer to similar defs
-  - Allow a memory region that can dispatch directly
-  (Kees Cook suggestions)
-  - Improve kconfig summary line
-  - Move flag cleanup on execve to begin_new_exec
-  - Hint branch predictor in the syscall path
-  (Me)
-  - Convert selector to char
-
-Changes since RFC:
-  (Kees Cook suggestions)
-  - Don't mention personality while explaining the feature
-  - Use syscall_get_nr
-  - Remove header guard on several places
-  - Convert WARN_ON to WARN_ON_ONCE
-  - Explicit check for state values
-  - Rename to syscall user dispatcher
-
-Cc: Matthew Wilcox <willy@infradead.org>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Paul Gofman <gofmanp@gmail.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: linux-api@vger.kernel.org
+Suggested-by: Andy Lutomirski <luto@amacapital.net>
 Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
 ---
- arch/Kconfig                          |  21 ++++++
- fs/exec.c                             |   8 ++
- include/linux/sched.h                 |   2 +
- include/linux/syscall_intercept.h     |   1 +
- include/linux/syscall_user_dispatch.h |  29 ++++++++
- include/uapi/linux/prctl.h            |   5 ++
- kernel/entry/Makefile                 |   1 +
- kernel/entry/common.h                 |  15 ++++
- kernel/entry/syscall_user_dispatch.c  | 101 ++++++++++++++++++++++++++
- kernel/sys.c                          |   5 ++
- 10 files changed, 188 insertions(+)
- create mode 100644 include/linux/syscall_user_dispatch.h
- create mode 100644 kernel/entry/common.h
- create mode 100644 kernel/entry/syscall_user_dispatch.c
+ arch/x86/entry/vdso/vdso2c.c           |  2 ++
+ arch/x86/entry/vdso/vdso32/sigreturn.S |  2 ++
+ arch/x86/entry/vdso/vma.c              | 15 +++++++++++++++
+ arch/x86/include/asm/elf.h             |  1 +
+ arch/x86/include/asm/vdso.h            |  2 ++
+ 5 files changed, 22 insertions(+)
 
-diff --git a/arch/Kconfig b/arch/Kconfig
-index a1124481d910..76d8ccedaead 100644
---- a/arch/Kconfig
-+++ b/arch/Kconfig
-@@ -468,6 +468,27 @@ config SECCOMP_FILTER
+diff --git a/arch/x86/entry/vdso/vdso2c.c b/arch/x86/entry/vdso/vdso2c.c
+index 7380908045c7..2d0f3d8bcc25 100644
+--- a/arch/x86/entry/vdso/vdso2c.c
++++ b/arch/x86/entry/vdso/vdso2c.c
+@@ -101,6 +101,8 @@ struct vdso_sym required_syms[] = {
+ 	{"__kernel_sigreturn", true},
+ 	{"__kernel_rt_sigreturn", true},
+ 	{"int80_landing_pad", true},
++	{"vdso32_rt_sigreturn_landing_pad", true},
++	{"vdso32_sigreturn_landing_pad", true},
+ };
  
- 	  See Documentation/userspace-api/seccomp_filter.rst for details.
+ __attribute__((format(printf, 1, 2))) __attribute__((noreturn))
+diff --git a/arch/x86/entry/vdso/vdso32/sigreturn.S b/arch/x86/entry/vdso/vdso32/sigreturn.S
+index c3233ee98a6b..1bd068f72d4c 100644
+--- a/arch/x86/entry/vdso/vdso32/sigreturn.S
++++ b/arch/x86/entry/vdso/vdso32/sigreturn.S
+@@ -18,6 +18,7 @@ __kernel_sigreturn:
+ 	movl $__NR_sigreturn, %eax
+ 	SYSCALL_ENTER_KERNEL
+ .LEND_sigreturn:
++SYM_INNER_LABEL(vdso32_sigreturn_landing_pad, SYM_L_GLOBAL)
+ 	nop
+ 	.size __kernel_sigreturn,.-.LSTART_sigreturn
  
-+config HAVE_ARCH_SYSCALL_USER_DISPATCH
-+	bool
-+	help
-+	  An arch should select this symbol if it provides all of these things:
-+	  - TIF_SYSCALL_INTERCEPT
-+	  - syscall_get_arch
-+	  - syscall_rollback
-+	  - syscall_get_nr
-+	  - SIGSYS siginfo_t support
-+	  - arch_syscall_is_vdso_sigreturn
-+
-+config SYSCALL_USER_DISPATCH
-+	bool "Support syscall redirection to userspace dispatcher"
-+	depends on HAVE_ARCH_SYSCALL_USER_DISPATCH
-+	help
-+	  Enable tasks to ask the kernel to redirect syscalls not
-+	  issued from a predefined dispatcher back to userspace,
-+	  depending on a userspace memory selector.
-+
-+	  This option is useful to optimize games running over Wine.
-+
- config HAVE_ARCH_STACKLEAK
- 	bool
- 	help
-diff --git a/fs/exec.c b/fs/exec.c
-index 3698252719a3..57ca30dd0623 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -62,6 +62,7 @@
- #include <linux/oom.h>
- #include <linux/compat.h>
- #include <linux/vmalloc.h>
-+#include <linux/syscall_intercept.h>
+@@ -29,6 +30,7 @@ __kernel_rt_sigreturn:
+ 	movl $__NR_rt_sigreturn, %eax
+ 	SYSCALL_ENTER_KERNEL
+ .LEND_rt_sigreturn:
++SYM_INNER_LABEL(vdso32_rt_sigreturn_landing_pad, SYM_L_GLOBAL)
+ 	nop
+ 	.size __kernel_rt_sigreturn,.-.LSTART_rt_sigreturn
+ 	.previous
+diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
+index 9185cb1d13b9..1828ed2f4a5f 100644
+--- a/arch/x86/entry/vdso/vma.c
++++ b/arch/x86/entry/vdso/vma.c
+@@ -436,6 +436,21 @@ int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
+ }
+ #endif
  
- #include <linux/uaccess.h>
- #include <asm/mmu_context.h>
-@@ -1408,6 +1409,13 @@ int begin_new_exec(struct linux_binprm * bprm)
- 	flush_thread();
- 	me->personality &= ~bprm->per_clear;
- 
-+	/*
-+	 * Prevent Syscall User Dispatch from crossing application
-+	 * boundaries.  sighand is already unshared, so it is safe to
-+	 * use the unlocked version here.
-+	 */
-+	__clear_tsk_syscall_intercept(me, SYSINT_USER_DISPATCH);
-+
- 	/*
- 	 * We have to apply CLOEXEC before we change whether the process is
- 	 * dumpable (in setup_new_exec) to avoid a race with a process in userspace
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 23b3e155ccab..b4ee5206ff37 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -33,6 +33,7 @@
- #include <linux/posix-timers.h>
- #include <linux/rseq.h>
- #include <linux/kcsan.h>
-+#include <linux/syscall_user_dispatch.h>
- 
- /* task_struct member predeclarations (sorted alphabetically): */
- struct audit_context;
-@@ -958,6 +959,7 @@ struct task_struct {
- 	struct {
- 		unsigned int			syscall_intercept;
- 		struct seccomp			seccomp;
-+		struct syscall_user_dispatch	syscall_dispatch;
- 	};
- 
- 	/* Thread group tracking: */
-diff --git a/include/linux/syscall_intercept.h b/include/linux/syscall_intercept.h
-index 725d157699da..21bc2eb668f3 100644
---- a/include/linux/syscall_intercept.h
-+++ b/include/linux/syscall_intercept.h
-@@ -10,6 +10,7 @@
- #include <linux/thread_info.h>
- 
- #define SYSINT_SECCOMP		0x1
-+#define SYSINT_USER_DISPATCH	0x2
- 
- #ifdef TIF_SYSCALL_INTERCEPT
- 
-diff --git a/include/linux/syscall_user_dispatch.h b/include/linux/syscall_user_dispatch.h
-new file mode 100644
-index 000000000000..f831358bfaab
---- /dev/null
-+++ b/include/linux/syscall_user_dispatch.h
-@@ -0,0 +1,29 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (C) 2020 Collabora Ltd.
-+ */
-+#ifndef _SYSCALL_USER_DISPATCH_H
-+#define _SYSCALL_USER_DISPATCH_H
-+
-+#ifdef CONFIG_SYSCALL_USER_DISPATCH
-+struct syscall_user_dispatch {
-+	char __user *selector;
-+	unsigned long dispatcher_start;
-+	unsigned long dispatcher_end;
-+};
-+
-+int set_syscall_user_dispatch(int mode, unsigned long dispatcher_start,
-+			      unsigned long dispatcher_end,
-+			      char __user *selector);
-+#else
-+struct syscall_user_dispatch {};
-+
-+static inline int set_syscall_user_dispatch(int mode, unsigned long dispatcher_start,
-+					    unsigned long dispatcher_end,
-+					    char __user *selector)
++int arch_syscall_is_vdso_sigreturn(struct pt_regs *regs)
 +{
-+	return -EINVAL;
-+}
-+#endif /* CONFIG_SYSCALL_USER_DISPATCH */
++#if defined(CONFIG_X86_32) || defined(CONFIG_IA32_EMULATION)
++	const struct vdso_image *image = current->mm->context.vdso_image;
++	unsigned long vdso = (unsigned long) current->mm->context.vdso;
 +
-+#endif /* _SYSCALL_USER_DISPATCH_H */
-diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
-index 07b4f8131e36..96265246383d 100644
---- a/include/uapi/linux/prctl.h
-+++ b/include/uapi/linux/prctl.h
-@@ -238,4 +238,9 @@ struct prctl_mm_map {
- #define PR_SET_IO_FLUSHER		57
- #define PR_GET_IO_FLUSHER		58
- 
-+/* Dispatch syscalls to a userspace handler */
-+#define PR_SET_SYSCALL_USER_DISPATCH	59
-+# define PR_SYS_DISPATCH_OFF		0
-+# define PR_SYS_DISPATCH_ON		1
-+
- #endif /* _LINUX_PRCTL_H */
-diff --git a/kernel/entry/Makefile b/kernel/entry/Makefile
-index 34c8a3f1c735..81182ab5a40c 100644
---- a/kernel/entry/Makefile
-+++ b/kernel/entry/Makefile
-@@ -11,3 +11,4 @@ CFLAGS_common.o		+= -fno-stack-protector
- 
- obj-$(CONFIG_GENERIC_ENTRY) 		+= common.o
- obj-$(CONFIG_KVM_XFER_TO_GUEST_WORK)	+= kvm.o
-+obj-$(CONFIG_SYSCALL_USER_DISPATCH)	+= syscall_user_dispatch.o
-diff --git a/kernel/entry/common.h b/kernel/entry/common.h
-new file mode 100644
-index 000000000000..557ecaa3fb31
---- /dev/null
-+++ b/kernel/entry/common.h
-@@ -0,0 +1,15 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+#ifndef _COMMON_H
-+#define _COMMON_H
-+
-+#ifdef CONFIG_SYSCALL_USER_DISPATCH
-+int do_syscall_user_dispatch(struct pt_regs *regs);
-+#else
-+static inline int do_syscall_user_dispatch(struct pt_regs *regs)
-+{
-+	WARN_ON_ONCE(1);
-+	return 0;
-+}
-+#endif /* CONFIG_SYSCALL_USER_DISPATCH */
-+
++	if (in_ia32_syscall() && image == &vdso_image_32) {
++		if (regs->ip == vdso + image->sym_vdso32_sigreturn_landing_pad ||
++		    regs->ip == vdso + image->sym_vdso32_rt_sigreturn_landing_pad)
++			return 1;
++	}
 +#endif
-diff --git a/kernel/entry/syscall_user_dispatch.c b/kernel/entry/syscall_user_dispatch.c
-new file mode 100644
-index 000000000000..12ea01711dc7
---- /dev/null
-+++ b/kernel/entry/syscall_user_dispatch.c
-@@ -0,0 +1,101 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (C) 2020 Collabora Ltd.
-+ */
-+#include <linux/sched.h>
-+#include <linux/prctl.h>
-+#include <linux/syscall_intercept.h>
-+#include <linux/syscall_user_dispatch.h>
-+#include <linux/uaccess.h>
-+#include <linux/signal.h>
-+#include <linux/elf.h>
-+
-+#include <asm/syscall.h>
-+
-+#include <linux/sched/signal.h>
-+#include <linux/sched/task_stack.h>
-+
-+static void trigger_sigsys(struct pt_regs *regs)
-+{
-+	struct kernel_siginfo info;
-+
-+	clear_siginfo(&info);
-+	info.si_signo = SIGSYS;
-+	info.si_code = SYS_USER_DISPATCH;
-+	info.si_call_addr = (void __user *)KSTK_EIP(current);
-+	info.si_errno = 0;
-+	info.si_arch = syscall_get_arch(current);
-+	info.si_syscall = syscall_get_nr(current, regs);
-+
-+	force_sig_info(&info);
-+}
-+
-+int do_syscall_user_dispatch(struct pt_regs *regs)
-+{
-+	struct syscall_user_dispatch *sd = &current->syscall_dispatch;
-+	unsigned long ip = instruction_pointer(regs);
-+	char state;
-+
-+	if (likely(ip >= sd->dispatcher_start && ip <= sd->dispatcher_end))
-+		return 0;
-+
-+	if (unlikely(arch_syscall_is_vdso_sigreturn(regs)))
-+		return 0;
-+
-+	if (likely(sd->selector)) {
-+		/*
-+		 * access_ok() is performed once, at prctl time, when
-+		 * the selector is loaded by userspace.
-+		 */
-+		if (unlikely(__get_user(state, sd->selector)))
-+			do_exit(SIGSEGV);
-+
-+		if (likely(state == PR_SYS_DISPATCH_OFF))
-+			return 0;
-+
-+		if (state != PR_SYS_DISPATCH_ON)
-+			do_exit(SIGSYS);
-+	}
-+
-+	syscall_rollback(current, regs);
-+	trigger_sigsys(regs);
-+
-+	return 1;
-+}
-+
-+int set_syscall_user_dispatch(int mode, unsigned long dispatcher_start,
-+			      unsigned long dispatcher_end, char __user *selector)
-+{
-+	switch (mode) {
-+	case PR_SYS_DISPATCH_OFF:
-+		if (dispatcher_start || dispatcher_end || selector)
-+			return -EINVAL;
-+		break;
-+	case PR_SYS_DISPATCH_ON:
-+		/*
-+		 * Validate the direct dispatcher region just for basic
-+		 * sanity.  If the user is able to submit a syscall from
-+		 * an address, that address is obviously valid.
-+		 */
-+		if (dispatcher_end < dispatcher_start)
-+			return -EINVAL;
-+
-+		if (selector && !access_ok(selector, sizeof(*selector)))
-+			return -EFAULT;
-+
-+		break;
-+	default:
-+		return -EINVAL;
-+	}
-+
-+	current->syscall_dispatch.selector = selector;
-+	current->syscall_dispatch.dispatcher_start = dispatcher_start;
-+	current->syscall_dispatch.dispatcher_end = dispatcher_end;
-+
-+	if (mode == PR_SYS_DISPATCH_ON)
-+		set_tsk_syscall_intercept(current, SYSINT_USER_DISPATCH);
-+	else
-+		clear_tsk_syscall_intercept(current, SYSINT_USER_DISPATCH);
-+
 +	return 0;
 +}
-diff --git a/kernel/sys.c b/kernel/sys.c
-index ca11af9d815d..f7ed56177f07 100644
---- a/kernel/sys.c
-+++ b/kernel/sys.c
-@@ -42,6 +42,7 @@
- #include <linux/syscore_ops.h>
- #include <linux/version.h>
- #include <linux/ctype.h>
-+#include <linux/syscall_user_dispatch.h>
++
+ #ifdef CONFIG_X86_64
+ static __init int vdso_setup(char *s)
+ {
+diff --git a/arch/x86/include/asm/elf.h b/arch/x86/include/asm/elf.h
+index 452beed7892b..b8fd74f7207d 100644
+--- a/arch/x86/include/asm/elf.h
++++ b/arch/x86/include/asm/elf.h
+@@ -385,6 +385,7 @@ extern int arch_setup_additional_pages(struct linux_binprm *bprm,
+ 				       int uses_interp);
+ extern int compat_arch_setup_additional_pages(struct linux_binprm *bprm,
+ 					      int uses_interp);
++extern int arch_syscall_is_vdso_sigreturn(struct pt_regs *regs);
+ #define compat_arch_setup_additional_pages compat_arch_setup_additional_pages
  
- #include <linux/compat.h>
- #include <linux/syscalls.h>
-@@ -2530,6 +2531,10 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ /* Do not change the values. See get_align_mask() */
+diff --git a/arch/x86/include/asm/vdso.h b/arch/x86/include/asm/vdso.h
+index bbcdc7b8f963..589f489dd375 100644
+--- a/arch/x86/include/asm/vdso.h
++++ b/arch/x86/include/asm/vdso.h
+@@ -27,6 +27,8 @@ struct vdso_image {
+ 	long sym___kernel_rt_sigreturn;
+ 	long sym___kernel_vsyscall;
+ 	long sym_int80_landing_pad;
++	long sym_vdso32_sigreturn_landing_pad;
++	long sym_vdso32_rt_sigreturn_landing_pad;
+ };
  
- 		error = (current->flags & PR_IO_FLUSHER) == PR_IO_FLUSHER;
- 		break;
-+	case PR_SET_SYSCALL_USER_DISPATCH:
-+		error = set_syscall_user_dispatch((int) arg2, arg3, arg4,
-+						  (char __user *) arg5);
-+		break;
- 	default:
- 		error = -EINVAL;
- 		break;
+ #ifdef CONFIG_X86_64
 -- 
 2.28.0
 
