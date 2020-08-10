@@ -4,34 +4,37 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+	SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 00778C433E1
-	for <linux-api@archiver.kernel.org>; Mon, 10 Aug 2020 23:27:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D8D83C433DF
+	for <linux-api@archiver.kernel.org>; Mon, 10 Aug 2020 23:27:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DAE06206C3
-	for <linux-api@archiver.kernel.org>; Mon, 10 Aug 2020 23:27:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BB5AE206E9
+	for <linux-api@archiver.kernel.org>; Mon, 10 Aug 2020 23:27:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726990AbgHJX06 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 10 Aug 2020 19:26:58 -0400
-Received: from bhuna.collabora.co.uk ([46.235.227.227]:51384 "EHLO
-        bhuna.collabora.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726634AbgHJX05 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 10 Aug 2020 19:26:57 -0400
+        id S1726859AbgHJX1T (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 10 Aug 2020 19:27:19 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53444 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728018AbgHJX1S (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 10 Aug 2020 19:27:18 -0400
+Received: from bhuna.collabora.co.uk (bhuna.collabora.co.uk [IPv6:2a00:1098:0:82:1000:25:2eeb:e3e3])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 72A92C06174A;
+        Mon, 10 Aug 2020 16:27:18 -0700 (PDT)
 Received: from [127.0.0.1] (localhost [127.0.0.1])
         (Authenticated sender: krisman)
-        with ESMTPSA id D80E128DB7F
+        with ESMTPSA id 2E52A2948A6
 From:   Gabriel Krisman Bertazi <krisman@collabora.com>
 To:     luto@kernel.org, tglx@linutronix.de
 Cc:     keescook@chromium.org, x86@kernel.org,
         linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
         willy@infradead.org, linux-kselftest@vger.kernel.org,
         shuah@kernel.org, Gabriel Krisman Bertazi <krisman@collabora.com>,
-        kernel@collabora.com, Andy Lutomirski <luto@amacapital.net>
-Subject: [PATCH v5 3/9] x86: vdso: Expose sigreturn address on vdso to the kernel
-Date:   Mon, 10 Aug 2020 19:26:30 -0400
-Message-Id: <20200810232636.1415588-4-krisman@collabora.com>
+        kernel@collabora.com
+Subject: [PATCH v5 9/9] doc: Document Syscall User Dispatch
+Date:   Mon, 10 Aug 2020 19:26:36 -0400
+Message-Id: <20200810232636.1415588-10-krisman@collabora.com>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <20200810232636.1415588-1-krisman@collabora.com>
 References: <20200810232636.1415588-1-krisman@collabora.com>
@@ -42,106 +45,107 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Syscall user redirection requires the signal trampoline code to not be
-captured, in order to support returning with a locked selector while
-avoiding recursion back into the signal handler.  For ia-32, which has
-the trampoline in the vDSO, expose the entry points to the kernel, such
-that it can avoid dispatching syscalls from that region to userspace.
+Explain the interface, provide some background and security notes.
 
-Suggested-by: Andy Lutomirski <luto@amacapital.net>
 Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
 ---
- arch/x86/entry/vdso/vdso2c.c           |  2 ++
- arch/x86/entry/vdso/vdso32/sigreturn.S |  2 ++
- arch/x86/entry/vdso/vma.c              | 15 +++++++++++++++
- arch/x86/include/asm/elf.h             |  1 +
- arch/x86/include/asm/vdso.h            |  2 ++
- 5 files changed, 22 insertions(+)
+ .../admin-guide/syscall-user-dispatch.rst     | 87 +++++++++++++++++++
+ 1 file changed, 87 insertions(+)
+ create mode 100644 Documentation/admin-guide/syscall-user-dispatch.rst
 
-diff --git a/arch/x86/entry/vdso/vdso2c.c b/arch/x86/entry/vdso/vdso2c.c
-index 7380908045c7..2d0f3d8bcc25 100644
---- a/arch/x86/entry/vdso/vdso2c.c
-+++ b/arch/x86/entry/vdso/vdso2c.c
-@@ -101,6 +101,8 @@ struct vdso_sym required_syms[] = {
- 	{"__kernel_sigreturn", true},
- 	{"__kernel_rt_sigreturn", true},
- 	{"int80_landing_pad", true},
-+	{"vdso32_rt_sigreturn_landing_pad", true},
-+	{"vdso32_sigreturn_landing_pad", true},
- };
- 
- __attribute__((format(printf, 1, 2))) __attribute__((noreturn))
-diff --git a/arch/x86/entry/vdso/vdso32/sigreturn.S b/arch/x86/entry/vdso/vdso32/sigreturn.S
-index c3233ee98a6b..1bd068f72d4c 100644
---- a/arch/x86/entry/vdso/vdso32/sigreturn.S
-+++ b/arch/x86/entry/vdso/vdso32/sigreturn.S
-@@ -18,6 +18,7 @@ __kernel_sigreturn:
- 	movl $__NR_sigreturn, %eax
- 	SYSCALL_ENTER_KERNEL
- .LEND_sigreturn:
-+SYM_INNER_LABEL(vdso32_sigreturn_landing_pad, SYM_L_GLOBAL)
- 	nop
- 	.size __kernel_sigreturn,.-.LSTART_sigreturn
- 
-@@ -29,6 +30,7 @@ __kernel_rt_sigreturn:
- 	movl $__NR_rt_sigreturn, %eax
- 	SYSCALL_ENTER_KERNEL
- .LEND_rt_sigreturn:
-+SYM_INNER_LABEL(vdso32_rt_sigreturn_landing_pad, SYM_L_GLOBAL)
- 	nop
- 	.size __kernel_rt_sigreturn,.-.LSTART_rt_sigreturn
- 	.previous
-diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
-index 9185cb1d13b9..1828ed2f4a5f 100644
---- a/arch/x86/entry/vdso/vma.c
-+++ b/arch/x86/entry/vdso/vma.c
-@@ -436,6 +436,21 @@ int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
- }
- #endif
- 
-+int arch_syscall_is_vdso_sigreturn(struct pt_regs *regs)
-+{
-+#if defined(CONFIG_X86_32) || defined(CONFIG_IA32_EMULATION)
-+	const struct vdso_image *image = current->mm->context.vdso_image;
-+	unsigned long vdso = (unsigned long) current->mm->context.vdso;
+diff --git a/Documentation/admin-guide/syscall-user-dispatch.rst b/Documentation/admin-guide/syscall-user-dispatch.rst
+new file mode 100644
+index 000000000000..96616660fded
+--- /dev/null
++++ b/Documentation/admin-guide/syscall-user-dispatch.rst
+@@ -0,0 +1,87 @@
++.. SPDX-License-Identifier: GPL-2.0
 +
-+	if (in_ia32_syscall() && image == &vdso_image_32) {
-+		if (regs->ip == vdso + image->sym_vdso32_sigreturn_landing_pad ||
-+		    regs->ip == vdso + image->sym_vdso32_rt_sigreturn_landing_pad)
-+			return 1;
-+	}
-+#endif
-+	return 0;
-+}
++=====================
++Syscall User Dispatch
++=====================
 +
- #ifdef CONFIG_X86_64
- static __init int vdso_setup(char *s)
- {
-diff --git a/arch/x86/include/asm/elf.h b/arch/x86/include/asm/elf.h
-index 452beed7892b..b8fd74f7207d 100644
---- a/arch/x86/include/asm/elf.h
-+++ b/arch/x86/include/asm/elf.h
-@@ -385,6 +385,7 @@ extern int arch_setup_additional_pages(struct linux_binprm *bprm,
- 				       int uses_interp);
- extern int compat_arch_setup_additional_pages(struct linux_binprm *bprm,
- 					      int uses_interp);
-+extern int arch_syscall_is_vdso_sigreturn(struct pt_regs *regs);
- #define compat_arch_setup_additional_pages compat_arch_setup_additional_pages
- 
- /* Do not change the values. See get_align_mask() */
-diff --git a/arch/x86/include/asm/vdso.h b/arch/x86/include/asm/vdso.h
-index bbcdc7b8f963..589f489dd375 100644
---- a/arch/x86/include/asm/vdso.h
-+++ b/arch/x86/include/asm/vdso.h
-@@ -27,6 +27,8 @@ struct vdso_image {
- 	long sym___kernel_rt_sigreturn;
- 	long sym___kernel_vsyscall;
- 	long sym_int80_landing_pad;
-+	long sym_vdso32_sigreturn_landing_pad;
-+	long sym_vdso32_rt_sigreturn_landing_pad;
- };
- 
- #ifdef CONFIG_X86_64
++Background
++----------
++
++Compatibility layers like Wine need a way to efficiently emulate system
++calls of only a part of their process - the part that has the
++incompatible code - while being able to execute native syscalls without
++a high performance penalty on the native part of the process.  Seccomp
++falls short on this task, since it has limited support to efficiently
++filter syscalls based on memory regions, and it doesn't support removing
++filters.  Therefore a new mechanism is necessary.
++
++Syscall User Dispatch brings the filtering of the syscall dispatcher
++address back to userspace.  The application is in control of a flip
++switch, indicating the current personality of the process.  A
++multiple-personality application can then flip the switch without
++invoking the kernel, when crossing the compatibility layer API
++boundaries, to enable/disable the syscall redirection and execute
++syscalls directly (disabled) or send them to be emulated in userspace
++through a SIGSYS.
++
++The goal of this design is to provide very quick compatibility layer
++boundary crosses, which is achieved by not executing a syscall to change
++personality every time the compatibility layer executes.  Instead, a
++userspace memory region exposed to the kernel indicates the current
++personality, and the application simply modifies that variable to
++configure the mechanism.
++
++There is a relatively high cost associated with handling signals on most
++architectures, like x86, but at least for Wine, syscalls issued by
++native Windows code are currently not known to be a performance problem,
++since they are quite rare, at least for modern gaming applications.
++
++Since this mechanism is designed to capture syscalls issued by
++non-native applications, it must function on syscalls whose invocation
++ABI is completely unexpected to Linux.  Syscall User Dispatch, therefore
++doesn't rely on any of the syscall ABI to make the filtering.  It uses
++only the syscall dispatcher address and the userspace key.
++
++Interface
++---------
++
++A process can setup this mechanism on supported kernels
++CONFIG_SYSCALL_USER_DISPATCH) by executing the following prctl:
++
++   prctl(PR_SET_SYSCALL_USER_DISPATCH, <op>, <start_addr>, <end_addr>, [selector])
++
++<op> is either PR_SYS_DISPATCH_ON or PR_SYS_DISPATCH_OFF, to enable and
++disable the mechanism globally for that thread.  When
++PR_SYS_DISPATCH_OFF is used, the other fields must be zero.
++
++<start_addr> and <end_addr> delimit a closed memory region interval from
++which syscalls are always executed directly, regardless of the userspace
++selector.  This provides a fast path for the C library, which includes
++the most common syscall dispatchers in the native code applications, and
++also provides a way for the signal handler to return without triggering
++a nested SIGSYS on (rt_)sigreturn.  Users of this interface should make
++sure that at least the signal trampoline code is included in this
++region. In addition, for syscalls that implement the trampoline code on
++the vDSO, that trampoline is never intercepted.
++
++[selector] is a pointer to a char-sized region in the process memory
++region, that provides a quick way to enable disable syscall redirection
++thread-wide, without the need to invoke the kernel directly.  selector
++can be set to PR_SYS_DISPATCH_ON or PR_SYS_DISPATCH_OFF.  Any other
++value should terminate the program with a SIGSYS.
++
++Security Notes
++--------------
++
++Syscall User Dispatch provides functionality for compatibility layers to
++quickly capture system calls issued by a non-native part of the
++application, while not impacting the Linux native regions of the
++process.  It is not a mechanism for sandboxing system calls, and it
++should not be seen as a security mechanism, since it is trivial for a
++malicious application to subvert the mechanism by jumping to an allowed
++dispatcher region prior to executing the syscall, or to discover the
++address and modify the selector value.  If the use case requires any
++kind of security sandboxing, Seccomp should be used instead.
++
++Any fork or exec of the existing process resets the mechanism to
++PR_SYS_DISPATCH_OFF.
 -- 
 2.28.0
 
