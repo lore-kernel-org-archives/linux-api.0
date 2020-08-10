@@ -5,26 +5,23 @@ X-Spam-Level:
 X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
 	SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3025DC433DF
-	for <linux-api@archiver.kernel.org>; Mon, 10 Aug 2020 23:26:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EE8ECC433DF
+	for <linux-api@archiver.kernel.org>; Mon, 10 Aug 2020 23:27:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1A43C206E9
-	for <linux-api@archiver.kernel.org>; Mon, 10 Aug 2020 23:26:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D7F20206C3
+	for <linux-api@archiver.kernel.org>; Mon, 10 Aug 2020 23:27:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727867AbgHJX0y (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 10 Aug 2020 19:26:54 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53376 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726634AbgHJX0x (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 10 Aug 2020 19:26:53 -0400
-Received: from bhuna.collabora.co.uk (bhuna.collabora.co.uk [IPv6:2a00:1098:0:82:1000:25:2eeb:e3e3])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id ED99AC06174A;
-        Mon, 10 Aug 2020 16:26:52 -0700 (PDT)
+        id S1727918AbgHJX1C (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 10 Aug 2020 19:27:02 -0400
+Received: from bhuna.collabora.co.uk ([46.235.227.227]:51386 "EHLO
+        bhuna.collabora.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726634AbgHJX1A (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 10 Aug 2020 19:27:00 -0400
 Received: from [127.0.0.1] (localhost [127.0.0.1])
         (Authenticated sender: krisman)
-        with ESMTPSA id A9BAD294816
+        with ESMTPSA id 2908F29480F
 From:   Gabriel Krisman Bertazi <krisman@collabora.com>
 To:     luto@kernel.org, tglx@linutronix.de
 Cc:     keescook@chromium.org, x86@kernel.org,
@@ -32,9 +29,9 @@ Cc:     keescook@chromium.org, x86@kernel.org,
         willy@infradead.org, linux-kselftest@vger.kernel.org,
         shuah@kernel.org, Gabriel Krisman Bertazi <krisman@collabora.com>,
         kernel@collabora.com
-Subject: [PATCH v5 2/9] kernel: entry: Support TIF_SYSCAL_INTERCEPT on common entry code
-Date:   Mon, 10 Aug 2020 19:26:29 -0400
-Message-Id: <20200810232636.1415588-3-krisman@collabora.com>
+Subject: [PATCH v5 4/9] signal: Expose SYS_USER_DISPATCH si_code type
+Date:   Mon, 10 Aug 2020 19:26:31 -0400
+Message-Id: <20200810232636.1415588-5-krisman@collabora.com>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <20200810232636.1415588-1-krisman@collabora.com>
 References: <20200810232636.1415588-1-krisman@collabora.com>
@@ -45,113 +42,43 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Syscalls that use common entry code (x86 at the moment of this writing)
-need to have their defines updated inside this commit.  This added a
-measureable overhead of 1ns to seccomp_benchmark selftests on a
-bare-metal AMD system.
+SYS_USER_DISPATCH will be triggered when a syscall is sent to userspace
+by the Syscall User Dispatch mechanism.  This adjusts eventual
+BUILD_BUG_ON around the tree.
 
 Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
 ---
- arch/x86/include/asm/thread_info.h |  4 ++--
- include/linux/entry-common.h       |  6 +-----
- kernel/entry/common.c              | 24 +++++++++++++++++++++---
- 3 files changed, 24 insertions(+), 10 deletions(-)
+ arch/x86/kernel/signal_compat.c    | 2 +-
+ include/uapi/asm-generic/siginfo.h | 3 ++-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/arch/x86/include/asm/thread_info.h b/arch/x86/include/asm/thread_info.h
-index 267701ae3d86..cf723181e1f2 100644
---- a/arch/x86/include/asm/thread_info.h
-+++ b/arch/x86/include/asm/thread_info.h
-@@ -82,7 +82,7 @@ struct thread_info {
- #define TIF_SSBD		5	/* Speculative store bypass disable */
- #define TIF_SYSCALL_EMU		6	/* syscall emulation active */
- #define TIF_SYSCALL_AUDIT	7	/* syscall auditing active */
--#define TIF_SECCOMP		8	/* secure computing */
-+#define TIF_SYSCALL_INTERCEPT	8	/* Intercept system call */
- #define TIF_SPEC_IB		9	/* Indirect branch speculation mitigation */
- #define TIF_SPEC_FORCE_UPDATE	10	/* Force speculation MSR update in context switch */
- #define TIF_USER_RETURN_NOTIFY	11	/* notify kernel of userspace return */
-@@ -112,7 +112,7 @@ struct thread_info {
- #define _TIF_SSBD		(1 << TIF_SSBD)
- #define _TIF_SYSCALL_EMU	(1 << TIF_SYSCALL_EMU)
- #define _TIF_SYSCALL_AUDIT	(1 << TIF_SYSCALL_AUDIT)
--#define _TIF_SECCOMP		(1 << TIF_SECCOMP)
-+#define _TIF_SYSCALL_INTERCEPT	(1 << TIF_SYSCALL_INTERCEPT)
- #define _TIF_SPEC_IB		(1 << TIF_SPEC_IB)
- #define _TIF_SPEC_FORCE_UPDATE	(1 << TIF_SPEC_FORCE_UPDATE)
- #define _TIF_USER_RETURN_NOTIFY	(1 << TIF_USER_RETURN_NOTIFY)
-diff --git a/include/linux/entry-common.h b/include/linux/entry-common.h
-index efebbffcd5cc..72ce9ca860c6 100644
---- a/include/linux/entry-common.h
-+++ b/include/linux/entry-common.h
-@@ -21,10 +21,6 @@
- # define _TIF_SYSCALL_TRACEPOINT	(0)
- #endif
+diff --git a/arch/x86/kernel/signal_compat.c b/arch/x86/kernel/signal_compat.c
+index 9ccbf0576cd0..210aecc6eab9 100644
+--- a/arch/x86/kernel/signal_compat.c
++++ b/arch/x86/kernel/signal_compat.c
+@@ -31,7 +31,7 @@ static inline void signal_compat_build_tests(void)
+ 	BUILD_BUG_ON(NSIGBUS  != 5);
+ 	BUILD_BUG_ON(NSIGTRAP != 5);
+ 	BUILD_BUG_ON(NSIGCHLD != 6);
+-	BUILD_BUG_ON(NSIGSYS  != 1);
++	BUILD_BUG_ON(NSIGSYS  != 2);
  
--#ifndef _TIF_SECCOMP
--# define _TIF_SECCOMP			(0)
--#endif
--
- #ifndef _TIF_SYSCALL_AUDIT
- # define _TIF_SYSCALL_AUDIT		(0)
- #endif
-@@ -45,7 +41,7 @@
- #endif
+ 	/* This is part of the ABI and can never change in size: */
+ 	BUILD_BUG_ON(sizeof(compat_siginfo_t) != 128);
+diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
+index cb3d6c267181..37741908b846 100644
+--- a/include/uapi/asm-generic/siginfo.h
++++ b/include/uapi/asm-generic/siginfo.h
+@@ -284,7 +284,8 @@ typedef struct siginfo {
+  * SIGSYS si_codes
+  */
+ #define SYS_SECCOMP	1	/* seccomp triggered */
+-#define NSIGSYS		1
++#define SYS_USER_DISPATCH 2	/* syscall user dispatch triggered */
++#define NSIGSYS		2
  
- #define SYSCALL_ENTER_WORK						\
--	(_TIF_SYSCALL_TRACE | _TIF_SYSCALL_AUDIT | _TIF_SECCOMP |	\
-+	(_TIF_SYSCALL_TRACE | _TIF_SYSCALL_AUDIT | _TIF_SYSCALL_INTERCEPT | \
- 	 _TIF_SYSCALL_TRACEPOINT | _TIF_SYSCALL_EMU |			\
- 	 ARCH_SYSCALL_ENTER_WORK)
- 
-diff --git a/kernel/entry/common.c b/kernel/entry/common.c
-index 9852e0d62d95..80db3f146462 100644
---- a/kernel/entry/common.c
-+++ b/kernel/entry/common.c
-@@ -4,6 +4,7 @@
- #include <linux/entry-common.h>
- #include <linux/livepatch.h>
- #include <linux/audit.h>
-+#include <linux/syscall_intercept.h>
- 
- #define CREATE_TRACE_POINTS
- #include <trace/events/syscalls.h>
-@@ -41,6 +42,20 @@ static inline void syscall_enter_audit(struct pt_regs *regs, long syscall)
- 	}
- }
- 
-+static inline long do_syscall_intercept(struct pt_regs *regs)
-+{
-+	int sysint_work = READ_ONCE(current->syscall_intercept);
-+	int ret;
-+
-+	if (sysint_work & SYSINT_SECCOMP) {
-+		ret = __secure_computing(NULL);
-+		if (ret == -1L)
-+			return ret;
-+	}
-+
-+	return 0;
-+}
-+
- static long syscall_trace_enter(struct pt_regs *regs, long syscall,
- 				unsigned long ti_work)
- {
-@@ -53,9 +68,12 @@ static long syscall_trace_enter(struct pt_regs *regs, long syscall,
- 			return -1L;
- 	}
- 
--	/* Do seccomp after ptrace, to catch any tracer changes. */
--	if (ti_work & _TIF_SECCOMP) {
--		ret = __secure_computing(NULL);
-+	/*
-+	 * Do syscall interception like seccomp after ptrace, to catch
-+	 * any tracer changes.
-+	 */
-+	if (ti_work & _TIF_SYSCALL_INTERCEPT) {
-+		ret = do_syscall_intercept(regs);
- 		if (ret == -1L)
- 			return ret;
- 	}
+ /*
+  * SIGEMT si_codes
 -- 
 2.28.0
 
