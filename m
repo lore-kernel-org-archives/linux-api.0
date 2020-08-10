@@ -7,21 +7,21 @@ X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CC325C433DF
-	for <linux-api@archiver.kernel.org>; Mon, 10 Aug 2020 23:27:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D2C1BC433E1
+	for <linux-api@archiver.kernel.org>; Mon, 10 Aug 2020 23:27:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B2989206C3
-	for <linux-api@archiver.kernel.org>; Mon, 10 Aug 2020 23:27:27 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B4E7F206C3
+	for <linux-api@archiver.kernel.org>; Mon, 10 Aug 2020 23:27:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727976AbgHJX1M (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S1727106AbgHJX1M (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Mon, 10 Aug 2020 19:27:12 -0400
-Received: from bhuna.collabora.co.uk ([46.235.227.227]:51418 "EHLO
+Received: from bhuna.collabora.co.uk ([46.235.227.227]:51412 "EHLO
         bhuna.collabora.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727028AbgHJX1L (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 10 Aug 2020 19:27:11 -0400
+        with ESMTP id S1726634AbgHJX1H (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 10 Aug 2020 19:27:07 -0400
 Received: from [127.0.0.1] (localhost [127.0.0.1])
         (Authenticated sender: krisman)
-        with ESMTPSA id 20A042948EB
+        with ESMTPSA id B004628DB7F
 From:   Gabriel Krisman Bertazi <krisman@collabora.com>
 To:     luto@kernel.org, tglx@linutronix.de
 Cc:     keescook@chromium.org, x86@kernel.org,
@@ -29,9 +29,9 @@ Cc:     keescook@chromium.org, x86@kernel.org,
         willy@infradead.org, linux-kselftest@vger.kernel.org,
         shuah@kernel.org, Gabriel Krisman Bertazi <krisman@collabora.com>,
         kernel@collabora.com
-Subject: [PATCH v5 7/9] x86: Enable Syscall User Dispatch
-Date:   Mon, 10 Aug 2020 19:26:34 -0400
-Message-Id: <20200810232636.1415588-8-krisman@collabora.com>
+Subject: [PATCH v5 6/9] kernel: entry: Support Syscall User Dispatch for common syscall entry
+Date:   Mon, 10 Aug 2020 19:26:33 -0400
+Message-Id: <20200810232636.1415588-7-krisman@collabora.com>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <20200810232636.1415588-1-krisman@collabora.com>
 References: <20200810232636.1415588-1-krisman@collabora.com>
@@ -42,27 +42,50 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Syscall User Dispatch requirements are fully supported in x86. This
-patch flips the switch, marking it as supported.  This was tested
-against Syscall User Dispatch selftest.
+Syscall User Dispatch (SUD) must take precedence over seccomp, since the
+use case is emulation (it can be invoked with a different ABI) such that
+seccomp filtering by syscall number doesn't make sense in the first
+place.  In addition, either the syscall is dispatched back to userspace,
+in which case there is no resource for seccomp to protect, or the
+syscall will be executed, and seccomp will execute next.
+
+Regarding ptrace, I experimented with before and after, and while the
+same ABI argument applies, I felt it was easier to debug if I let ptrace
+happen for syscalls that are dispatched back to userspace.  In addition,
+doing it after ptrace makes the code in syscall_exit_work slightly
+simpler, since it doesn't require special handling for this feature.
 
 Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
 ---
- arch/x86/Kconfig | 1 +
- 1 file changed, 1 insertion(+)
+ kernel/entry/common.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 9a2849527dd7..431440566888 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -150,6 +150,7 @@ config X86
- 	select HAVE_ARCH_COMPAT_MMAP_BASES	if MMU && COMPAT
- 	select HAVE_ARCH_PREL32_RELOCATIONS
- 	select HAVE_ARCH_SECCOMP_FILTER
-+	select HAVE_ARCH_SYSCALL_USER_DISPATCH
- 	select HAVE_ARCH_THREAD_STRUCT_WHITELIST
- 	select HAVE_ARCH_STACKLEAK
- 	select HAVE_ARCH_TRACEHOOK
+diff --git a/kernel/entry/common.c b/kernel/entry/common.c
+index 80db3f146462..f05a4ee094a1 100644
+--- a/kernel/entry/common.c
++++ b/kernel/entry/common.c
+@@ -6,6 +6,8 @@
+ #include <linux/audit.h>
+ #include <linux/syscall_intercept.h>
+ 
++#include "common.h"
++
+ #define CREATE_TRACE_POINTS
+ #include <trace/events/syscalls.h>
+ 
+@@ -47,6 +49,12 @@ static inline long do_syscall_intercept(struct pt_regs *regs)
+ 	int sysint_work = READ_ONCE(current->syscall_intercept);
+ 	int ret;
+ 
++	if (sysint_work & SYSINT_USER_DISPATCH) {
++		ret = do_syscall_user_dispatch(regs);
++		if (ret == -1L)
++			return ret;
++	}
++
+ 	if (sysint_work & SYSINT_SECCOMP) {
+ 		ret = __secure_computing(NULL);
+ 		if (ret == -1L)
 -- 
 2.28.0
 
