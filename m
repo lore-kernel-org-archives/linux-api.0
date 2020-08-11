@@ -2,34 +2,33 @@ Return-Path: <SRS0=pyuL=BV=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.0 required=3.0 tests=BAD_ENC_HEADER,BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-4.0 required=3.0 tests=BAD_ENC_HEADER,BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EE5C6C433E3
-	for <linux-api@archiver.kernel.org>; Tue, 11 Aug 2020 19:03:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C1AA8C433E0
+	for <linux-api@archiver.kernel.org>; Tue, 11 Aug 2020 19:18:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BC2A0206DA
-	for <linux-api@archiver.kernel.org>; Tue, 11 Aug 2020 19:03:33 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9ADCB2076B
+	for <linux-api@archiver.kernel.org>; Tue, 11 Aug 2020 19:18:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726255AbgHKTD1 convert rfc822-to-8bit (ORCPT
+        id S1726164AbgHKTSW convert rfc822-to-8bit (ORCPT
         <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 11 Aug 2020 15:03:27 -0400
-Received: from out02.mta.xmission.com ([166.70.13.232]:49030 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725889AbgHKTDZ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 11 Aug 2020 15:03:25 -0400
-Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out02.mta.xmission.com with esmtps  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        Tue, 11 Aug 2020 15:18:22 -0400
+Received: from out01.mta.xmission.com ([166.70.13.231]:50036 "EHLO
+        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726115AbgHKTSV (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 11 Aug 2020 15:18:21 -0400
+Received: from in02.mta.xmission.com ([166.70.13.52])
+        by out01.mta.xmission.com with esmtps  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1k5ZYK-006qgE-65; Tue, 11 Aug 2020 13:03:16 -0600
+        id 1k5Zmk-009h5q-P1; Tue, 11 Aug 2020 13:18:10 -0600
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
-        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
+        by in02.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
         (Exim 4.87)
         (envelope-from <ebiederm@xmission.com>)
-        id 1k5ZYJ-0006gu-5w; Tue, 11 Aug 2020 13:03:15 -0600
+        id 1k5Zmj-0008Qv-TU; Tue, 11 Aug 2020 13:18:10 -0600
 From:   ebiederm@xmission.com (Eric W. Biederman)
 To:     =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>
 Cc:     linux-kernel@vger.kernel.org, Aleksa Sarai <cyphar@cyphar.com>,
@@ -69,78 +68,62 @@ Cc:     linux-kernel@vger.kernel.org, Aleksa Sarai <cyphar@cyphar.com>,
         linux-fsdevel@vger.kernel.org
 References: <20200723171227.446711-1-mic@digikod.net>
         <20200723171227.446711-2-mic@digikod.net>
-Date:   Tue, 11 Aug 2020 13:59:48 -0500
-In-Reply-To: <20200723171227.446711-2-mic@digikod.net> (=?utf-8?Q?=22Micka?=
- =?utf-8?Q?=C3=ABl_Sala=C3=BCn=22's?=
-        message of "Thu, 23 Jul 2020 19:12:21 +0200")
-Message-ID: <87eeodnh3v.fsf@x220.int.ebiederm.org>
+        <87eeodnh3v.fsf@x220.int.ebiederm.org>
+Date:   Tue, 11 Aug 2020 14:14:43 -0500
+In-Reply-To: <87eeodnh3v.fsf@x220.int.ebiederm.org> (Eric W. Biederman's
+        message of "Tue, 11 Aug 2020 13:59:48 -0500")
+Message-ID: <874kp9ngf0.fsf@x220.int.ebiederm.org>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8BIT
-X-XM-SPF: eid=1k5ZYJ-0006gu-5w;;;mid=<87eeodnh3v.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX19Ak6/vsLtopnFYs9ZfaNrZr8Zt2Ow/qiA=
+X-XM-SPF: eid=1k5Zmj-0008Qv-TU;;;mid=<874kp9ngf0.fsf@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX19nTKA3mnL/oyWdDp6PD6Bdr/fgnKMbcEc=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
 Subject: Re: [PATCH v7 1/7] exec: Change uselib(2) IS_SREG() failure to EACCES
 X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
+X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Mickaël Salaün <mic@digikod.net> writes:
+ebiederm@xmission.com (Eric W. Biederman) writes:
 
-> From: Kees Cook <keescook@chromium.org>
+> Mickaël Salaün <mic@digikod.net> writes:
 >
-> Change uselib(2)' S_ISREG() error return to EACCES instead of EINVAL so
-> the behavior matches execve(2), and the seemingly documented value.
-> The "not a regular file" failure mode of execve(2) is explicitly
-> documented[1], but it is not mentioned in uselib(2)[2] which does,
-> however, say that open(2) and mmap(2) errors may apply. The documentation
-> for open(2) does not include a "not a regular file" error[3], but mmap(2)
-> does[4], and it is EACCES.
+>> From: Kees Cook <keescook@chromium.org>
+>>
+>> Change uselib(2)' S_ISREG() error return to EACCES instead of EINVAL so
+>> the behavior matches execve(2), and the seemingly documented value.
+>> The "not a regular file" failure mode of execve(2) is explicitly
+>> documented[1], but it is not mentioned in uselib(2)[2] which does,
+>> however, say that open(2) and mmap(2) errors may apply. The documentation
+>> for open(2) does not include a "not a regular file" error[3], but mmap(2)
+>> does[4], and it is EACCES.
+>
+> Do you have enough visibility into uselib to be certain this will change
+> will not cause regressions?
+>
+> My sense of uselib is that it would be easier to remove the system call
+> entirely (I think it's last use was in libc5) than to validate that a
+> change like this won't cause problems for the users of uselib.
+>
+> For the kernel what is important are real world users and the manpages
+> are only important as far as they suggest what the real world users
+> do.
 
-Do you have enough visibility into uselib to be certain this will change
-will not cause regressions?
+Hmm.
 
-My sense of uselib is that it would be easier to remove the system call
-entirely (I think it's last use was in libc5) than to validate that a
-change like this won't cause problems for the users of uselib.
+My apologies. After reading the next patch I see that what really makes
+this safe is: 73601ea5b7b1 ("fs/open.c: allow opening only regular files
+during execve()").
 
-For the kernel what is important are real world users and the manpages
-are only important as far as they suggest what the real world users do.
+As in practice this change has already been made and uselib simply
+can not reach the !S_ISREG test.
+
+It might make sense to drop this patch or include that reference
+in the next posting of this patch.
 
 Eric
-
-
-> [1] http://man7.org/linux/man-pages/man2/execve.2.html#ERRORS
-> [2] http://man7.org/linux/man-pages/man2/uselib.2.html#ERRORS
-> [3] http://man7.org/linux/man-pages/man2/open.2.html#ERRORS
-> [4] http://man7.org/linux/man-pages/man2/mmap.2.html#ERRORS
->
-> Signed-off-by: Mickaël Salaün <mic@digikod.net>
-> Signed-off-by: Kees Cook <keescook@chromium.org>
-> Acked-by: Christian Brauner <christian.brauner@ubuntu.com>
-> Link: https://lore.kernel.org/r/20200605160013.3954297-2-keescook@chromium.org
-> ---
->  fs/exec.c | 3 +--
->  1 file changed, 1 insertion(+), 2 deletions(-)
->
-> diff --git a/fs/exec.c b/fs/exec.c
-> index e6e8a9a70327..d7c937044d10 100644
-> --- a/fs/exec.c
-> +++ b/fs/exec.c
-> @@ -141,11 +141,10 @@ SYSCALL_DEFINE1(uselib, const char __user *, library)
->  	if (IS_ERR(file))
->  		goto out;
->  
-> -	error = -EINVAL;
-> +	error = -EACCES;
->  	if (!S_ISREG(file_inode(file)->i_mode))
->  		goto exit;
->  
-> -	error = -EACCES;
->  	if (path_noexec(&file->f_path))
->  		goto exit;
