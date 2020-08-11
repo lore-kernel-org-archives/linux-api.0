@@ -2,85 +2,145 @@ Return-Path: <SRS0=pyuL=BV=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.0 required=3.0 tests=BAD_ENC_HEADER,BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9108EC433DF
-	for <linux-api@archiver.kernel.org>; Tue, 11 Aug 2020 18:50:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EE5C6C433E3
+	for <linux-api@archiver.kernel.org>; Tue, 11 Aug 2020 19:03:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4E14420774
-	for <linux-api@archiver.kernel.org>; Tue, 11 Aug 2020 18:50:38 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1597171838;
-	bh=bHJDMU0rLbfo8cYDMgt+G2+hN4y5s20JWP641OKcUdI=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:List-ID:From;
-	b=x2mzGfBhr9fBtcNP1X0N8iJf8OPG7dvQBPxKECXoLs/h4P095fEQSUDjjPXAvvKUZ
-	 dQwLHUeDKf5RzVFivDSIxeGTsaSiQoOsIAvT9CfTA8fWnc4Ddcwu3hs37X/5k7rRyt
-	 D7WQjtv5lF7m4CRWiV2M010/kqiAHw9TETFMB7j4=
+	by mail.kernel.org (Postfix) with ESMTP id BC2A0206DA
+	for <linux-api@archiver.kernel.org>; Tue, 11 Aug 2020 19:03:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726469AbgHKSuh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 11 Aug 2020 14:50:37 -0400
-Received: from mail.kernel.org ([198.145.29.99]:60810 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726428AbgHKSuh (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 11 Aug 2020 14:50:37 -0400
-Received: from mail-wr1-f48.google.com (mail-wr1-f48.google.com [209.85.221.48])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id CD23320786
-        for <linux-api@vger.kernel.org>; Tue, 11 Aug 2020 18:50:36 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1597171837;
-        bh=bHJDMU0rLbfo8cYDMgt+G2+hN4y5s20JWP641OKcUdI=;
-        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-        b=eqgXAg3tJSKfnyBd2azKFYti0md97OdpjiDAp6m1SLfpdiNDp4gsaZtNfR4WutaPA
-         UQIibY8ed8CeJtkADBqhr10runJYokKrwP0ysFS4/5dBEePH3tHiiSc+xazgZ7r8qb
-         JLZ8z00DI0Gadljn18O8MIr4Mk/A1N0jlQVAQUN0=
-Received: by mail-wr1-f48.google.com with SMTP id f1so12445337wro.2
-        for <linux-api@vger.kernel.org>; Tue, 11 Aug 2020 11:50:36 -0700 (PDT)
-X-Gm-Message-State: AOAM5317+/qTUntoxacPHHSgslCk5a4Jf8fy86MPOJzcMd8kEM/7uSZb
-        YFvn8+6dAbGFMQJZgjfxJz4iiks/ViiuCYhxdZ9RBA==
-X-Google-Smtp-Source: ABdhPJy/pZfOOeh9Xxs01sqtbOcHGxwDvVIBnnDSBxJyAXZ/5Sv+YCslqmHw/me/SfQdLJ7oARyUCNXa9f+53WFTGx0=
-X-Received: by 2002:a5d:400e:: with SMTP id n14mr7069333wrp.75.1597171835374;
- Tue, 11 Aug 2020 11:50:35 -0700 (PDT)
-MIME-Version: 1.0
-References: <20200810232636.1415588-1-krisman@collabora.com> <20200810232636.1415588-4-krisman@collabora.com>
-In-Reply-To: <20200810232636.1415588-4-krisman@collabora.com>
-From:   Andy Lutomirski <luto@kernel.org>
-Date:   Tue, 11 Aug 2020 11:50:23 -0700
-X-Gmail-Original-Message-ID: <CALCETrVOW+L-SuLrb8KwxWS=ZeDdt5qPv8dALHh6Rmcp1KxU0Q@mail.gmail.com>
-Message-ID: <CALCETrVOW+L-SuLrb8KwxWS=ZeDdt5qPv8dALHh6Rmcp1KxU0Q@mail.gmail.com>
-Subject: Re: [PATCH v5 3/9] x86: vdso: Expose sigreturn address on vdso to the kernel
-To:     Gabriel Krisman Bertazi <krisman@collabora.com>
-Cc:     Andrew Lutomirski <luto@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Kees Cook <keescook@chromium.org>, X86 ML <x86@kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
+        id S1726255AbgHKTD1 convert rfc822-to-8bit (ORCPT
+        <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 11 Aug 2020 15:03:27 -0400
+Received: from out02.mta.xmission.com ([166.70.13.232]:49030 "EHLO
+        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725889AbgHKTDZ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 11 Aug 2020 15:03:25 -0400
+Received: from in01.mta.xmission.com ([166.70.13.51])
+        by out02.mta.xmission.com with esmtps  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1k5ZYK-006qgE-65; Tue, 11 Aug 2020 13:03:16 -0600
+Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
+        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
+        (Exim 4.87)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1k5ZYJ-0006gu-5w; Tue, 11 Aug 2020 13:03:15 -0600
+From:   ebiederm@xmission.com (Eric W. Biederman)
+To:     =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>
+Cc:     linux-kernel@vger.kernel.org, Aleksa Sarai <cyphar@cyphar.com>,
+        Alexei Starovoitov <ast@kernel.org>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Christian Heimes <christian@python.org>,
+        Daniel Borkmann <daniel@iogearbox.net>,
+        Deven Bowers <deven.desai@linux.microsoft.com>,
+        Dmitry Vyukov <dvyukov@google.com>,
+        Eric Biggers <ebiggers@kernel.org>,
+        Eric Chiang <ericchiang@google.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>,
+        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Lakshmi Ramasubramanian <nramas@linux.microsoft.com>,
+        Matthew Garrett <mjg59@google.com>,
         Matthew Wilcox <willy@infradead.org>,
-        "open list:KERNEL SELFTEST FRAMEWORK" 
-        <linux-kselftest@vger.kernel.org>, Shuah Khan <shuah@kernel.org>,
-        kernel@collabora.com
-Content-Type: text/plain; charset="UTF-8"
+        Michael Kerrisk <mtk.manpages@gmail.com>,
+        Mimi Zohar <zohar@linux.ibm.com>,
+        Philippe =?utf-8?Q?Tr=C3=A9buchet?= 
+        <philippe.trebuchet@ssi.gouv.fr>,
+        Scott Shell <scottsh@microsoft.com>,
+        Sean Christopherson <sean.j.christopherson@intel.com>,
+        Shuah Khan <shuah@kernel.org>,
+        Steve Dower <steve.dower@python.org>,
+        Steve Grubb <sgrubb@redhat.com>,
+        Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>,
+        Thibaut Sautereau <thibaut.sautereau@clip-os.org>,
+        Vincent Strubel <vincent.strubel@ssi.gouv.fr>,
+        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
+        linux-integrity@vger.kernel.org,
+        linux-security-module@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org
+References: <20200723171227.446711-1-mic@digikod.net>
+        <20200723171227.446711-2-mic@digikod.net>
+Date:   Tue, 11 Aug 2020 13:59:48 -0500
+In-Reply-To: <20200723171227.446711-2-mic@digikod.net> (=?utf-8?Q?=22Micka?=
+ =?utf-8?Q?=C3=ABl_Sala=C3=BCn=22's?=
+        message of "Thu, 23 Jul 2020 19:12:21 +0200")
+Message-ID: <87eeodnh3v.fsf@x220.int.ebiederm.org>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+X-XM-SPF: eid=1k5ZYJ-0006gu-5w;;;mid=<87eeodnh3v.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX19Ak6/vsLtopnFYs9ZfaNrZr8Zt2Ow/qiA=
+X-SA-Exim-Connect-IP: 68.227.160.95
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: Re: [PATCH v7 1/7] exec: Change uselib(2) IS_SREG() failure to EACCES
+X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
+X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Aug 10, 2020 at 4:26 PM Gabriel Krisman Bertazi
-<krisman@collabora.com> wrote:
+Mickaël Salaün <mic@digikod.net> writes:
+
+> From: Kees Cook <keescook@chromium.org>
 >
-> Syscall user redirection requires the signal trampoline code to not be
-> captured, in order to support returning with a locked selector while
-> avoiding recursion back into the signal handler.  For ia-32, which has
-> the trampoline in the vDSO, expose the entry points to the kernel, such
-> that it can avoid dispatching syscalls from that region to userspace.
+> Change uselib(2)' S_ISREG() error return to EACCES instead of EINVAL so
+> the behavior matches execve(2), and the seemingly documented value.
+> The "not a regular file" failure mode of execve(2) is explicitly
+> documented[1], but it is not mentioned in uselib(2)[2] which does,
+> however, say that open(2) and mmap(2) errors may apply. The documentation
+> for open(2) does not include a "not a regular file" error[3], but mmap(2)
+> does[4], and it is EACCES.
 
-Almost looks good.
+Do you have enough visibility into uselib to be certain this will change
+will not cause regressions?
 
-> +int arch_syscall_is_vdso_sigreturn(struct pt_regs *regs)
+My sense of uselib is that it would be easier to remove the system call
+entirely (I think it's last use was in libc5) than to validate that a
+change like this won't cause problems for the users of uselib.
 
-If you make that bool instead of int, feel free to add:
+For the kernel what is important are real world users and the manpages
+are only important as far as they suggest what the real world users do.
 
-Acked-by: Andy Lutomirski <luto@kernel.org>
+Eric
+
+
+> [1] http://man7.org/linux/man-pages/man2/execve.2.html#ERRORS
+> [2] http://man7.org/linux/man-pages/man2/uselib.2.html#ERRORS
+> [3] http://man7.org/linux/man-pages/man2/open.2.html#ERRORS
+> [4] http://man7.org/linux/man-pages/man2/mmap.2.html#ERRORS
+>
+> Signed-off-by: Mickaël Salaün <mic@digikod.net>
+> Signed-off-by: Kees Cook <keescook@chromium.org>
+> Acked-by: Christian Brauner <christian.brauner@ubuntu.com>
+> Link: https://lore.kernel.org/r/20200605160013.3954297-2-keescook@chromium.org
+> ---
+>  fs/exec.c | 3 +--
+>  1 file changed, 1 insertion(+), 2 deletions(-)
+>
+> diff --git a/fs/exec.c b/fs/exec.c
+> index e6e8a9a70327..d7c937044d10 100644
+> --- a/fs/exec.c
+> +++ b/fs/exec.c
+> @@ -141,11 +141,10 @@ SYSCALL_DEFINE1(uselib, const char __user *, library)
+>  	if (IS_ERR(file))
+>  		goto out;
+>  
+> -	error = -EINVAL;
+> +	error = -EACCES;
+>  	if (!S_ISREG(file_inode(file)->i_mode))
+>  		goto exit;
+>  
+> -	error = -EACCES;
+>  	if (path_noexec(&file->f_path))
+>  		goto exit;
