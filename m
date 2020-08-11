@@ -3,30 +3,34 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-4.0 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BE6E9C433E3
-	for <linux-api@archiver.kernel.org>; Tue, 11 Aug 2020 19:39:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DCE69C433DF
+	for <linux-api@archiver.kernel.org>; Tue, 11 Aug 2020 19:40:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9F92120774
-	for <linux-api@archiver.kernel.org>; Tue, 11 Aug 2020 19:39:25 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C03DD206B2
+	for <linux-api@archiver.kernel.org>; Tue, 11 Aug 2020 19:40:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726578AbgHKTjV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 11 Aug 2020 15:39:21 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:53672 "EHLO
-        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726274AbgHKTjU (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 11 Aug 2020 15:39:20 -0400
-Received: from ip5f5af08c.dynamic.kabel-deutschland.de ([95.90.240.140] helo=wittgenstein)
-        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.86_2)
-        (envelope-from <christian.brauner@ubuntu.com>)
-        id 1k5a7A-0001Ts-UI; Tue, 11 Aug 2020 19:39:17 +0000
-Date:   Tue, 11 Aug 2020 21:39:16 +0200
-From:   Christian Brauner <christian.brauner@ubuntu.com>
-To:     Linus Torvalds <torvalds@linux-foundation.org>
-Cc:     Miklos Szeredi <miklos@szeredi.hu>,
+        id S1726637AbgHKTkV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 11 Aug 2020 15:40:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42362 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726068AbgHKTkT (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 11 Aug 2020 15:40:19 -0400
+X-Greylist: delayed 547 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Tue, 11 Aug 2020 12:40:19 PDT
+Received: from gardel.0pointer.net (gardel.0pointer.net [IPv6:2a01:238:43ed:c300:10c3:bcf3:3266:da74])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C5679C06174A;
+        Tue, 11 Aug 2020 12:40:19 -0700 (PDT)
+Received: from gardel-login.0pointer.net (gardel.0pointer.net [85.214.157.71])
+        by gardel.0pointer.net (Postfix) with ESMTP id D6BA2E814E3;
+        Tue, 11 Aug 2020 21:31:06 +0200 (CEST)
+Received: by gardel-login.0pointer.net (Postfix, from userid 1000)
+        id 3596D16081D; Tue, 11 Aug 2020 21:31:06 +0200 (CEST)
+Date:   Tue, 11 Aug 2020 21:31:05 +0200
+From:   Lennart Poettering <mzxreary@0pointer.de>
+To:     Miklos Szeredi <miklos@szeredi.hu>
+Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
         linux-fsdevel <linux-fsdevel@vger.kernel.org>,
         David Howells <dhowells@redhat.com>,
         Al Viro <viro@zeniv.linux.org.uk>, Karel Zak <kzak@redhat.com>,
@@ -34,15 +38,13 @@ Cc:     Miklos Szeredi <miklos@szeredi.hu>,
         Miklos Szeredi <mszeredi@redhat.com>,
         Nicolas Dichtel <nicolas.dichtel@6wind.com>,
         Christian Brauner <christian@brauner.io>,
-        Lennart Poettering <lennart@poettering.net>,
         Linux API <linux-api@vger.kernel.org>,
         Ian Kent <raven@themaw.net>,
         LSM <linux-security-module@vger.kernel.org>,
         Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 Subject: Re: file metadata via fs API (was: [GIT PULL] Filesystem Information)
-Message-ID: <20200811193916.zcwebstmbyvushau@wittgenstein>
-References: <1842689.1596468469@warthog.procyon.org.uk>
- <1845353.1596469795@warthog.procyon.org.uk>
+Message-ID: <20200811193105.GA228302@gardel-login>
+References: <1845353.1596469795@warthog.procyon.org.uk>
  <CAJfpegunY3fuxh486x9ysKtXbhTE0745ZCVHcaqs9Gww9RV2CQ@mail.gmail.com>
  <ac1f5e3406abc0af4cd08d818fe920a202a67586.camel@themaw.net>
  <CAJfpegu8omNZ613tLgUY7ukLV131tt7owR+JJ346Kombt79N0A@mail.gmail.com>
@@ -51,87 +53,51 @@ References: <1842689.1596468469@warthog.procyon.org.uk>
  <CAHk-=wjzLmMRf=QG-n+1HnxWCx4KTQn9+OhVvUSJ=ZCQd6Y1WA@mail.gmail.com>
  <CAJfpegtWai+5Tzxi1_G+R2wEZz0q66uaOFndNE0YEQSDjq0f_A@mail.gmail.com>
  <CAHk-=wg_bfVf5eazwH2uXTG-auCYZUpq-xb1kDeNjY7yaXS7bw@mail.gmail.com>
+ <CAJfpeguo5nAWcmduX4frknQGiRJeaj9Rdj018xUBrwqOJhVufw@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <CAHk-=wg_bfVf5eazwH2uXTG-auCYZUpq-xb1kDeNjY7yaXS7bw@mail.gmail.com>
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <CAJfpeguo5nAWcmduX4frknQGiRJeaj9Rdj018xUBrwqOJhVufw@mail.gmail.com>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Aug 11, 2020 at 09:05:22AM -0700, Linus Torvalds wrote:
-> On Tue, Aug 11, 2020 at 8:30 AM Miklos Szeredi <miklos@szeredi.hu> wrote:
-> >
-> > What's the disadvantage of doing it with a single lookup WITH an enabling flag?
-> >
-> > It's definitely not going to break anything, so no backward
-> > compatibility issues whatsoever.
-> 
-> No backwards compatibility issues for existing programs, no.
-> 
-> But your suggestion is fundamentally ambiguous, and you most
-> definitely *can* hit that if people start using this in new programs.
-> 
-> Where does that "unified" pathname come from? It will be generated
-> from "base filename + metadata name" in user space, and
-> 
->  (a) the base filename might have double or triple slashes in it for
-> whatever reasons.
-> 
-> This is not some "made-up gotcha" thing - I see double slashes *all*
-> the time when we have things like Makefiles doing
-> 
->     srctree=../../src/
-> 
-> and then people do "$(srctree)/". If you haven't seen that kind of
-> pattern where the pathname has two (or sometimes more!) slashes in the
-> middle, you've led a very sheltered life.
-> 
->  (b) even if the new user space were to think about that, and remove
-> those (hah! when have you ever seen user space do that?), as Al
-> mentioned, the user *filesystem* might have pathnames with double
-> slashes as part of symlinks.
-> 
-> So now we'd have to make sure that when we traverse symlinks, that
-> O_ALT gets cleared. Which means that it's not a unified namespace
-> after all, because you can't make symlinks point to metadata.
-> 
-> Or we'd retroactively change the semantics of a symlink, and that _is_
-> a backwards compatibility issue. Not with old software, no, but it
-> changes the meaning of old symlinks!
-> 
-> So no, I don't think a unified namespace ends up working.
-> 
-> And I say that as somebody who actually loves the concept. Ask Al: I
-> have a few times pushed for "let's allow directory behavior on regular
-> files", so that you could do things like a tar-filesystem, and access
-> the contents of a tar-file by just doing
-> 
->     cat my-file.tar/inside/the/archive.c
-> 
-> or similar.
-> 
-> Al has convinced me it's a horrible idea (and there you have a
-> non-ambiguous marker: the slash at the end of a pathname that
-> otherwise looks and acts as a non-directory)
-> 
+On Di, 11.08.20 20:49, Miklos Szeredi (miklos@szeredi.hu) wrote:
 
-Putting my kernel hat down, putting my userspace hat on.
+> On Tue, Aug 11, 2020 at 6:05 PM Linus Torvalds
+> <torvalds@linux-foundation.org> wrote:
+>
+> > and then people do "$(srctree)/". If you haven't seen that kind of
+> > pattern where the pathname has two (or sometimes more!) slashes in the
+> > middle, you've led a very sheltered life.
+>
+> Oh, I have.   That's why I opted for triple slashes, since that should
+> work most of the time even in those concatenated cases.  And yes, I
+> know, most is not always, and this might just be hiding bugs, etc...
+> I think the pragmatic approach would be to try this and see how many
+> triple slash hits a normal workload gets and if it's reasonably low,
+> then hopefully that together with warnings for O_ALT would be enough.
 
-I'm looking at this from a potential user of this interface.
-I'm not a huge fan of the metadata fd approach I'd much rather have a
-dedicated system call rather than opening a side-channel metadata fd
-that I can read binary data from. Maybe I'm alone in this but I was
-under the impression that other users including Ian, Lennart, and Karel
-have said on-list in some form that they would prefer this approach.
-There are even patches for systemd and libmount, I thought?
+There's no point. Userspace relies on the current meaning of triple
+slashes. It really does.
 
-But if we want to go down a completely different route then I'd prefer
-if this metadata fd with "special semantics" did not in any way alter
-the meaning of regular paths. This has the potential to cause a lot of
-churn for userspace. I think having to play concatenation games in
-shared libraries for mount information is a bad plan in addition to all
-the issues you raised here.
+I know many places in systemd where we might end up with a triple
+slash. Here's a real-life example: some code wants to access the
+cgroup attribute 'cgroup.controllers' of the root cgroup. It thus
+generates the right path in the fs for it, which is the concatenation of
+"/sys/fs/cgroup/" (because that's where cgroupfs is mounted), of "/"
+(i.e. for the root cgroup) and of "/cgroup.controllers" (as that's the
+file the attribute is exposed under).
 
-Christian
+And there you go:
+
+   "/sys/fs/cgroup/" + "/" + "/cgroup.controllers" → "/sys/fs/cgroup///cgroup.controllers"
+
+This is a real-life thing. Don't break this please.
+
+Lennart
+
+--
+Lennart Poettering, Berlin
