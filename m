@@ -2,240 +2,136 @@ Return-Path: <SRS0=pyuL=BV=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.0 required=3.0 tests=BAD_ENC_HEADER,BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-4.0 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6E5D8C433DF
-	for <linux-api@archiver.kernel.org>; Tue, 11 Aug 2020 19:31:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BE6E9C433E3
+	for <linux-api@archiver.kernel.org>; Tue, 11 Aug 2020 19:39:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 348A920771
-	for <linux-api@archiver.kernel.org>; Tue, 11 Aug 2020 19:31:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9F92120774
+	for <linux-api@archiver.kernel.org>; Tue, 11 Aug 2020 19:39:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726405AbgHKTbh convert rfc822-to-8bit (ORCPT
-        <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 11 Aug 2020 15:31:37 -0400
-Received: from out02.mta.xmission.com ([166.70.13.232]:56630 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726068AbgHKTbh (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 11 Aug 2020 15:31:37 -0400
-Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out02.mta.xmission.com with esmtps  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        (Exim 4.93)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1k5ZzW-006toT-91; Tue, 11 Aug 2020 13:31:22 -0600
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
-        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        (Exim 4.87)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1k5ZzU-00036t-PY; Tue, 11 Aug 2020 13:31:21 -0600
-From:   ebiederm@xmission.com (Eric W. Biederman)
-To:     =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>
-Cc:     linux-kernel@vger.kernel.org, Aleksa Sarai <cyphar@cyphar.com>,
-        Alexei Starovoitov <ast@kernel.org>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        Christian Heimes <christian@python.org>,
-        Daniel Borkmann <daniel@iogearbox.net>,
-        Deven Bowers <deven.desai@linux.microsoft.com>,
-        Dmitry Vyukov <dvyukov@google.com>,
-        Eric Biggers <ebiggers@kernel.org>,
-        Eric Chiang <ericchiang@google.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>,
-        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Lakshmi Ramasubramanian <nramas@linux.microsoft.com>,
-        Matthew Garrett <mjg59@google.com>,
-        Matthew Wilcox <willy@infradead.org>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Mimi Zohar <zohar@linux.ibm.com>,
-        Philippe =?utf-8?Q?Tr=C3=A9buchet?= 
-        <philippe.trebuchet@ssi.gouv.fr>,
-        Scott Shell <scottsh@microsoft.com>,
-        Sean Christopherson <sean.j.christopherson@intel.com>,
-        Shuah Khan <shuah@kernel.org>,
-        Steve Dower <steve.dower@python.org>,
-        Steve Grubb <sgrubb@redhat.com>,
-        Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>,
-        Thibaut Sautereau <thibaut.sautereau@clip-os.org>,
-        Vincent Strubel <vincent.strubel@ssi.gouv.fr>,
-        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
-        linux-integrity@vger.kernel.org,
-        linux-security-module@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org
-References: <20200723171227.446711-1-mic@digikod.net>
-        <20200723171227.446711-3-mic@digikod.net>
-Date:   Tue, 11 Aug 2020 14:27:54 -0500
-In-Reply-To: <20200723171227.446711-3-mic@digikod.net> (=?utf-8?Q?=22Micka?=
- =?utf-8?Q?=C3=ABl_Sala=C3=BCn=22's?=
-        message of "Thu, 23 Jul 2020 19:12:22 +0200")
-Message-ID: <87o8nhm18l.fsf@x220.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
+        id S1726578AbgHKTjV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 11 Aug 2020 15:39:21 -0400
+Received: from youngberry.canonical.com ([91.189.89.112]:53672 "EHLO
+        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726274AbgHKTjU (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 11 Aug 2020 15:39:20 -0400
+Received: from ip5f5af08c.dynamic.kabel-deutschland.de ([95.90.240.140] helo=wittgenstein)
+        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.86_2)
+        (envelope-from <christian.brauner@ubuntu.com>)
+        id 1k5a7A-0001Ts-UI; Tue, 11 Aug 2020 19:39:17 +0000
+Date:   Tue, 11 Aug 2020 21:39:16 +0200
+From:   Christian Brauner <christian.brauner@ubuntu.com>
+To:     Linus Torvalds <torvalds@linux-foundation.org>
+Cc:     Miklos Szeredi <miklos@szeredi.hu>,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        David Howells <dhowells@redhat.com>,
+        Al Viro <viro@zeniv.linux.org.uk>, Karel Zak <kzak@redhat.com>,
+        Jeff Layton <jlayton@redhat.com>,
+        Miklos Szeredi <mszeredi@redhat.com>,
+        Nicolas Dichtel <nicolas.dichtel@6wind.com>,
+        Christian Brauner <christian@brauner.io>,
+        Lennart Poettering <lennart@poettering.net>,
+        Linux API <linux-api@vger.kernel.org>,
+        Ian Kent <raven@themaw.net>,
+        LSM <linux-security-module@vger.kernel.org>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Subject: Re: file metadata via fs API (was: [GIT PULL] Filesystem Information)
+Message-ID: <20200811193916.zcwebstmbyvushau@wittgenstein>
+References: <1842689.1596468469@warthog.procyon.org.uk>
+ <1845353.1596469795@warthog.procyon.org.uk>
+ <CAJfpegunY3fuxh486x9ysKtXbhTE0745ZCVHcaqs9Gww9RV2CQ@mail.gmail.com>
+ <ac1f5e3406abc0af4cd08d818fe920a202a67586.camel@themaw.net>
+ <CAJfpegu8omNZ613tLgUY7ukLV131tt7owR+JJ346Kombt79N0A@mail.gmail.com>
+ <CAJfpegtNP8rQSS4Z14Ja4x-TOnejdhDRTsmmDD-Cccy2pkfVVw@mail.gmail.com>
+ <20200811135419.GA1263716@miu.piliscsaba.redhat.com>
+ <CAHk-=wjzLmMRf=QG-n+1HnxWCx4KTQn9+OhVvUSJ=ZCQd6Y1WA@mail.gmail.com>
+ <CAJfpegtWai+5Tzxi1_G+R2wEZz0q66uaOFndNE0YEQSDjq0f_A@mail.gmail.com>
+ <CAHk-=wg_bfVf5eazwH2uXTG-auCYZUpq-xb1kDeNjY7yaXS7bw@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-X-XM-SPF: eid=1k5ZzU-00036t-PY;;;mid=<87o8nhm18l.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX19o313fM1rdJpFj27lRA/GiywQHoqdRBk0=
-X-SA-Exim-Connect-IP: 68.227.160.95
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: Re: [PATCH v7 2/7] exec: Move S_ISREG() check earlier
-X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
+Content-Disposition: inline
+In-Reply-To: <CAHk-=wg_bfVf5eazwH2uXTG-auCYZUpq-xb1kDeNjY7yaXS7bw@mail.gmail.com>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Mickaël Salaün <mic@digikod.net> writes:
+On Tue, Aug 11, 2020 at 09:05:22AM -0700, Linus Torvalds wrote:
+> On Tue, Aug 11, 2020 at 8:30 AM Miklos Szeredi <miklos@szeredi.hu> wrote:
+> >
+> > What's the disadvantage of doing it with a single lookup WITH an enabling flag?
+> >
+> > It's definitely not going to break anything, so no backward
+> > compatibility issues whatsoever.
+> 
+> No backwards compatibility issues for existing programs, no.
+> 
+> But your suggestion is fundamentally ambiguous, and you most
+> definitely *can* hit that if people start using this in new programs.
+> 
+> Where does that "unified" pathname come from? It will be generated
+> from "base filename + metadata name" in user space, and
+> 
+>  (a) the base filename might have double or triple slashes in it for
+> whatever reasons.
+> 
+> This is not some "made-up gotcha" thing - I see double slashes *all*
+> the time when we have things like Makefiles doing
+> 
+>     srctree=../../src/
+> 
+> and then people do "$(srctree)/". If you haven't seen that kind of
+> pattern where the pathname has two (or sometimes more!) slashes in the
+> middle, you've led a very sheltered life.
+> 
+>  (b) even if the new user space were to think about that, and remove
+> those (hah! when have you ever seen user space do that?), as Al
+> mentioned, the user *filesystem* might have pathnames with double
+> slashes as part of symlinks.
+> 
+> So now we'd have to make sure that when we traverse symlinks, that
+> O_ALT gets cleared. Which means that it's not a unified namespace
+> after all, because you can't make symlinks point to metadata.
+> 
+> Or we'd retroactively change the semantics of a symlink, and that _is_
+> a backwards compatibility issue. Not with old software, no, but it
+> changes the meaning of old symlinks!
+> 
+> So no, I don't think a unified namespace ends up working.
+> 
+> And I say that as somebody who actually loves the concept. Ask Al: I
+> have a few times pushed for "let's allow directory behavior on regular
+> files", so that you could do things like a tar-filesystem, and access
+> the contents of a tar-file by just doing
+> 
+>     cat my-file.tar/inside/the/archive.c
+> 
+> or similar.
+> 
+> Al has convinced me it's a horrible idea (and there you have a
+> non-ambiguous marker: the slash at the end of a pathname that
+> otherwise looks and acts as a non-directory)
+> 
 
-> From: Kees Cook <keescook@chromium.org>
->
-> The execve(2)/uselib(2) syscalls have always rejected non-regular
-> files. Recently, it was noticed that a deadlock was introduced when trying
-> to execute pipes, as the S_ISREG() test was happening too late. This was
-> fixed in commit 73601ea5b7b1 ("fs/open.c: allow opening only regular files
-> during execve()"), but it was added after inode_permission() had already
-> run, which meant LSMs could see bogus attempts to execute non-regular
-> files.
->
-> Move the test into the other inode type checks (which already look
-> for other pathological conditions[1]). Since there is no need to use
-> FMODE_EXEC while we still have access to "acc_mode", also switch the
-> test to MAY_EXEC.
->
-> Also include a comment with the redundant S_ISREG() checks at the end of
-> execve(2)/uselib(2) to note that they are present to avoid any mistakes.
+Putting my kernel hat down, putting my userspace hat on.
 
-The comment is:
-> +	/*
-> +	 * may_open() has already checked for this, so it should be
-> +	 * impossible to trip now. But we need to be extra cautious
-> +	 * and check again at the very end too.
-> +	 */
-Those comments scare me.  Why do you need to be extra cautious?
-How can the file type possibly change between may_open and anywhere?
-The type of a file is immutable after it's creation.
+I'm looking at this from a potential user of this interface.
+I'm not a huge fan of the metadata fd approach I'd much rather have a
+dedicated system call rather than opening a side-channel metadata fd
+that I can read binary data from. Maybe I'm alone in this but I was
+under the impression that other users including Ian, Lennart, and Karel
+have said on-list in some form that they would prefer this approach.
+There are even patches for systemd and libmount, I thought?
 
-If the comment said check just in case something went wrong with
-code maintenance I could understand but that isn't what the comment
-says.
+But if we want to go down a completely different route then I'd prefer
+if this metadata fd with "special semantics" did not in any way alter
+the meaning of regular paths. This has the potential to cause a lot of
+churn for userspace. I think having to play concatenation games in
+shared libraries for mount information is a bad plan in addition to all
+the issues you raised here.
 
-Also the fallthrough change below really should be broken out into
-it's own change.
-
-
-> My notes on the call path, and related arguments, checks, etc:
->
-> do_open_execat()
->     struct open_flags open_exec_flags = {
->         .open_flag = O_LARGEFILE | O_RDONLY | __FMODE_EXEC,
->         .acc_mode = MAY_EXEC,
->         ...
->     do_filp_open(dfd, filename, open_flags)
->         path_openat(nameidata, open_flags, flags)
->             file = alloc_empty_file(open_flags, current_cred());
->             do_open(nameidata, file, open_flags)
->                 may_open(path, acc_mode, open_flag)
-> 		    /* new location of MAY_EXEC vs S_ISREG() test */
->                     inode_permission(inode, MAY_OPEN | acc_mode)
->                         security_inode_permission(inode, acc_mode)
->                 vfs_open(path, file)
->                     do_dentry_open(file, path->dentry->d_inode, open)
->                         /* old location of FMODE_EXEC vs S_ISREG() test */
->                         security_file_open(f)
->                         open()
->
-> [1] https://lore.kernel.org/lkml/202006041910.9EF0C602@keescook/
->
-> Signed-off-by: Mickaël Salaün <mic@digikod.net>
-> Signed-off-by: Kees Cook <keescook@chromium.org>
-> Link: https://lore.kernel.org/r/20200605160013.3954297-3-keescook@chromium.org
-> ---
->  fs/exec.c  | 14 ++++++++++++--
->  fs/namei.c |  6 ++++--
->  fs/open.c  |  6 ------
->  3 files changed, 16 insertions(+), 10 deletions(-)
->
-> diff --git a/fs/exec.c b/fs/exec.c
-> index d7c937044d10..bdc6a6eb5dce 100644
-> --- a/fs/exec.c
-> +++ b/fs/exec.c
-> @@ -141,8 +141,13 @@ SYSCALL_DEFINE1(uselib, const char __user *, library)
->  	if (IS_ERR(file))
->  		goto out;
->  
-> +	/*
-> +	 * may_open() has already checked for this, so it should be
-> +	 * impossible to trip now. But we need to be extra cautious
-> +	 * and check again at the very end too.
-> +	 */
->  	error = -EACCES;
-> -	if (!S_ISREG(file_inode(file)->i_mode))
-> +	if (WARN_ON_ONCE(!S_ISREG(file_inode(file)->i_mode)))
->  		goto exit;
->  
->  	if (path_noexec(&file->f_path))
-> @@ -886,8 +891,13 @@ static struct file *do_open_execat(int fd, struct filename *name, int flags)
->  	if (IS_ERR(file))
->  		goto out;
->  
-> +	/*
-> +	 * may_open() has already checked for this, so it should be
-> +	 * impossible to trip now. But we need to be extra cautious
-> +	 * and check again at the very end too.
-> +	 */
->  	err = -EACCES;
-> -	if (!S_ISREG(file_inode(file)->i_mode))
-> +	if (WARN_ON_ONCE(!S_ISREG(file_inode(file)->i_mode)))
->  		goto exit;
->
->  	if (path_noexec(&file->f_path))
-> diff --git a/fs/namei.c b/fs/namei.c
-> index 72d4219c93ac..a559ad943970 100644
-> --- a/fs/namei.c
-> +++ b/fs/namei.c
-> @@ -2849,16 +2849,18 @@ static int may_open(const struct path *path, int acc_mode, int flag)
->  	case S_IFLNK:
->  		return -ELOOP;
->  	case S_IFDIR:
-> -		if (acc_mode & MAY_WRITE)
-> +		if (acc_mode & (MAY_WRITE | MAY_EXEC))
->  			return -EISDIR;
->  		break;
->  	case S_IFBLK:
->  	case S_IFCHR:
->  		if (!may_open_dev(path))
->  			return -EACCES;
-> -		/*FALLTHRU*/
-> +		fallthrough;
-                ^^^^^^^^^^^
-That is an unrelated change and should be sent separately.
-
->  	case S_IFIFO:
->  	case S_IFSOCK:
-> +		if (acc_mode & MAY_EXEC)
-> +			return -EACCES;
->  		flag &= ~O_TRUNC;
->  		break;
->  	}
-> diff --git a/fs/open.c b/fs/open.c
-> index 6cd48a61cda3..623b7506a6db 100644
-> --- a/fs/open.c
-> +++ b/fs/open.c
-> @@ -784,12 +784,6 @@ static int do_dentry_open(struct file *f,
->  		return 0;
->  	}
->  
-> -	/* Any file opened for execve()/uselib() has to be a regular file. */
-> -	if (unlikely(f->f_flags & FMODE_EXEC && !S_ISREG(inode->i_mode))) {
-> -		error = -EACCES;
-> -		goto cleanup_file;
-> -	}
-> -
->  	if (f->f_mode & FMODE_WRITE && !special_file(inode->i_mode)) {
->  		error = get_write_access(inode);
->  		if (unlikely(error))
+Christian
