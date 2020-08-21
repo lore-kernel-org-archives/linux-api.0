@@ -2,61 +2,61 @@ Return-Path: <SRS0=BQ3u=B7=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-9.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,URIBL_BLOCKED,
+	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DBCF6C433E1
-	for <linux-api@archiver.kernel.org>; Fri, 21 Aug 2020 07:39:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5CAB8C433DF
+	for <linux-api@archiver.kernel.org>; Fri, 21 Aug 2020 07:39:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B79962078D
-	for <linux-api@archiver.kernel.org>; Fri, 21 Aug 2020 07:39:27 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 278222078D
+	for <linux-api@archiver.kernel.org>; Fri, 21 Aug 2020 07:39:35 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=osandov-com.20150623.gappssmtp.com header.i=@osandov-com.20150623.gappssmtp.com header.b="t3PlAiOQ"
+	dkim=pass (2048-bit key) header.d=osandov-com.20150623.gappssmtp.com header.i=@osandov-com.20150623.gappssmtp.com header.b="JEJATJnT"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726332AbgHUHj0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 21 Aug 2020 03:39:26 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36960 "EHLO
+        id S1728177AbgHUHja (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 21 Aug 2020 03:39:30 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36940 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728135AbgHUHjB (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 21 Aug 2020 03:39:01 -0400
-Received: from mail-pl1-x644.google.com (mail-pl1-x644.google.com [IPv6:2607:f8b0:4864:20::644])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E2E1FC061345
-        for <linux-api@vger.kernel.org>; Fri, 21 Aug 2020 00:39:00 -0700 (PDT)
-Received: by mail-pl1-x644.google.com with SMTP id bh1so502501plb.12
-        for <linux-api@vger.kernel.org>; Fri, 21 Aug 2020 00:39:00 -0700 (PDT)
+        with ESMTP id S1727986AbgHUHjJ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 21 Aug 2020 03:39:09 -0400
+Received: from mail-pj1-x1042.google.com (mail-pj1-x1042.google.com [IPv6:2607:f8b0:4864:20::1042])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C3677C061349
+        for <linux-api@vger.kernel.org>; Fri, 21 Aug 2020 00:39:05 -0700 (PDT)
+Received: by mail-pj1-x1042.google.com with SMTP id t6so471492pjr.0
+        for <linux-api@vger.kernel.org>; Fri, 21 Aug 2020 00:39:05 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=osandov-com.20150623.gappssmtp.com; s=20150623;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=qXisnxwmeoeObWMPR3mFNC4S4siYwhBR12pikg1nHJw=;
-        b=t3PlAiOQmshc7a03MNXk5DSrA1ePUHGJUbsggq/VtCTRy/j3KzDbvw7ii815XMnr2N
-         VDeWLsqV9U/6DqyRnjb10yzmerpezZXJ1TGrDM3Q+EcRikM+YvyatBl1iGf+5qeIsStJ
-         nwi9LxsmC95pZIkURiNSuOX0900wBa0M1Dx/eyydKrI0pCZBz24nd2BUQ9fApR77YrQ1
-         ZAHk82UXIsJ7tWZKE2eTPnf5oIDc+UbcgKIWdMCznpj7gNuEKidNvGbQDP2s3FWz2a8E
-         ruLO6gFOMHbY9hfNqHhAfWtjAYi2y2IkMhHCCsG61/RWCMNeHT/qlnrON+qxpeV4UNwo
-         EvOw==
+        bh=reb1cFIlvC8AHbYRUQvz0dOYFqG+X8Ib/9wa8g4PRW0=;
+        b=JEJATJnTis8ttC7gmMyPmDRS9ihTtYCc69cq2xwc2M6H05AvUjid1ENsnzAhjl2CVL
+         19wL1cPXNl0nsvMfiWwwFTjwbYxdyuBUEt/2Ypmrp7BCgLrEnXQYEf3G0WEiEGICkvVg
+         FpMKYtT5QWiLymZS3zpiOXW8I73JoGXtFpNvghr/727HmeRsLp/wizve4NVsRP68bus8
+         DOkQFqndEZn/eHbqGxu9kMeXm9tNgbMXp4+dD7Uc7ug3mIEAWTyJFH/oDAVPIhP+ndTP
+         SjTIBjVIzWbwuB1068E5Kvg73FvKpVChypPJ4CwNZglBgxz8Kt3/WJ4J3Zs+V+3LgV/a
+         rh9Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=qXisnxwmeoeObWMPR3mFNC4S4siYwhBR12pikg1nHJw=;
-        b=rTKlS+JfQzWiIO2wamm2yA1jNyuhc5TLFZdLdMEoxeGvvp9lhB43bq4Fau1rh7GQJq
-         rxK4Bb3uhCufr1yMD1+OO95H5ke0DXMk0NcfeieBP8PhNDVqtWJg+aBXyAB2KWpQz4S0
-         XtwFgGR4uAVPIpmW1HGiUQ6bG8V/4g2jpaQk5pmZhESzSkku58hi9LjdVAHymKyajmqt
-         vM6WYHggFSRc3cB80x6+wKRgWZC5kb0zavD90tTEhG2WiGSLQgaDHu6EaNNhhOK2Sb7P
-         fE12gQsLyGrHh/3aRzR16MAnqpkadVoaxYP5kakUhpkX4v8aQSLHcWmoMjZrepYMCSL3
-         0/JA==
-X-Gm-Message-State: AOAM532WK1pQOQjKef8l2N+eCL459F1NrnQdeq9ZsuOAAVXEZf90X1vN
-        8bvjO2gq5hnR3672LC7Kzq5gYw==
-X-Google-Smtp-Source: ABdhPJwVILao6rR4zT7AnI9ql7lDhQJxxNwBKPtlI4d4Gkr7/iewsNfEM/3e8ijIEx+iPSeLFIw5kg==
-X-Received: by 2002:a17:902:123:: with SMTP id 32mr1309399plb.143.1597995540347;
-        Fri, 21 Aug 2020 00:39:00 -0700 (PDT)
+        bh=reb1cFIlvC8AHbYRUQvz0dOYFqG+X8Ib/9wa8g4PRW0=;
+        b=XEKoME6CCuKW74PioHuLo61V+a6Wje0MP3Fdzs8WdXhaCQiXkB4AtLtESRmq3Disi+
+         atxbOAZm9fFVBIFMSy8dxqQ+3/j4QMxOV1gXsak0oNuyF+s2xEsZG1m9TgVGTBJzbPXQ
+         9Ji8+XTg1PiUKJ8zAzsOvw4FbKtVyJ1eLIwWeSqfd1fQoJWzTD7x44mTVhzSmEmptWH4
+         ohwHwXTOqe/oB8yr3d2nZu/LL7omAXNNxcsv5AV+HVtsY2b+y7GBUcQPJHNtX74lHVOm
+         H5TiuKBa93r7gJrtC86147jn2/sl0pz84kyZf4GsbMxqtW+wudTZfPYUMcTH5g0uQe7n
+         dxfw==
+X-Gm-Message-State: AOAM532bQ2U9fDIk7+cESv0Mk6VOQGkZHhVKHyiWNws/yvR4IbABhbSx
+        Iqahzd4kayXC9UHKmTe/dkkrxA==
+X-Google-Smtp-Source: ABdhPJzdV2Py/H7JSvdHazVL/eGihjwSD+jTaymC/W1d8DuR7oj3DAhHcBNru4j9j07dHU1Ndzf83A==
+X-Received: by 2002:a17:902:fe0d:: with SMTP id g13mr1343458plj.287.1597995545240;
+        Fri, 21 Aug 2020 00:39:05 -0700 (PDT)
 Received: from exodia.tfbnw.net ([2620:10d:c090:400::5:f2a4])
-        by smtp.gmail.com with ESMTPSA id t10sm1220867pgp.15.2020.08.21.00.38.58
+        by smtp.gmail.com with ESMTPSA id t10sm1220867pgp.15.2020.08.21.00.39.03
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 21 Aug 2020 00:38:59 -0700 (PDT)
+        Fri, 21 Aug 2020 00:39:04 -0700 (PDT)
 From:   Omar Sandoval <osandov@osandov.com>
 To:     linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org,
         Al Viro <viro@zeniv.linux.org.uk>,
@@ -65,9 +65,9 @@ Cc:     Dave Chinner <david@fromorbit.com>, Jann Horn <jannh@google.com>,
         Amir Goldstein <amir73il@gmail.com>,
         Aleksa Sarai <cyphar@cyphar.com>, linux-api@vger.kernel.org,
         kernel-team@fb.com
-Subject: [PATCH v5 4/9] btrfs: don't advance offset for compressed bios in btrfs_csum_one_bio()
-Date:   Fri, 21 Aug 2020 00:38:35 -0700
-Message-Id: <27758a7a731919591194696ddc651623481b9691.1597993855.git.osandov@osandov.com>
+Subject: [PATCH v5 6/9] btrfs: support different disk extent size for delalloc
+Date:   Fri, 21 Aug 2020 00:38:37 -0700
+Message-Id: <61dd1001b124fc1b09e43e27b804c5f8d597640a.1597993855.git.osandov@osandov.com>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <cover.1597993855.git.osandov@osandov.com>
 References: <cover.1597993855.git.osandov@osandov.com>
@@ -80,197 +80,147 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-btrfs_csum_one_bio() loops over each filesystem block in the bio while
-keeping a cursor of its current logical position in the file in order to
-look up the ordered extent to add the checksums to. However, this
-doesn't make much sense for compressed extents, as a sector on disk does
-not correspond to a sector of decompressed file data. It happens to work
-because 1) the compressed bio always covers one ordered extent and 2)
-the size of the bio is always less than the size of the ordered extent.
-However, the second point will not always be true for encoded writes.
+Currently, we always reserve the same extent size in the file and extent
+size on disk for delalloc because the former is the worst case for the
+latter. For RWF_ENCODED writes, we know the exact size of the extent on
+disk, which may be less than or greater than (for bookends) the size in
+the file. Add a disk_num_bytes parameter to
+btrfs_delalloc_reserve_metadata() so that we can reserve the correct
+amount of csum bytes. No functional change.
 
-Let's add a boolean parameter to btrfs_csum_one_bio() to indicate that
-it can assume that the bio only covers one ordered extent. Since we're
-already changing the signature, let's get rid of the contig parameter
-and make it implied by the offset parameter, similar to the change we
-recently made to btrfs_lookup_bio_sums(). Additionally, let's rename
-nr_sectors to blockcount to make it clear that it's the number of
-filesystem blocks, not the number of 512-byte sectors.
-
+Reviewed-by: Nikolay Borisov <nborisov@suse.com>
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- fs/btrfs/compression.c |  5 +++--
- fs/btrfs/ctree.h       |  2 +-
- fs/btrfs/file-item.c   | 35 ++++++++++++++++-------------------
- fs/btrfs/inode.c       |  8 ++++----
- 4 files changed, 24 insertions(+), 26 deletions(-)
+ fs/btrfs/ctree.h          |  3 ++-
+ fs/btrfs/delalloc-space.c | 18 ++++++++++--------
+ fs/btrfs/file.c           |  3 ++-
+ fs/btrfs/inode.c          |  3 ++-
+ fs/btrfs/relocation.c     |  4 ++--
+ 5 files changed, 18 insertions(+), 13 deletions(-)
 
-diff --git a/fs/btrfs/compression.c b/fs/btrfs/compression.c
-index eeface30facd..aa292d285550 100644
---- a/fs/btrfs/compression.c
-+++ b/fs/btrfs/compression.c
-@@ -438,7 +438,8 @@ blk_status_t btrfs_submit_compressed_write(struct btrfs_inode *inode, u64 start,
- 			BUG_ON(ret); /* -ENOMEM */
- 
- 			if (!skip_sum) {
--				ret = btrfs_csum_one_bio(inode, bio, start, 1);
-+				ret = btrfs_csum_one_bio(inode, bio, start,
-+							 true);
- 				BUG_ON(ret); /* -ENOMEM */
- 			}
- 
-@@ -470,7 +471,7 @@ blk_status_t btrfs_submit_compressed_write(struct btrfs_inode *inode, u64 start,
- 	BUG_ON(ret); /* -ENOMEM */
- 
- 	if (!skip_sum) {
--		ret = btrfs_csum_one_bio(inode, bio, start, 1);
-+		ret = btrfs_csum_one_bio(inode, bio, start, true);
- 		BUG_ON(ret); /* -ENOMEM */
- 	}
- 
 diff --git a/fs/btrfs/ctree.h b/fs/btrfs/ctree.h
-index a3b110ffbc93..cbbfaedd6e3c 100644
+index cbbfaedd6e3c..47581706a132 100644
 --- a/fs/btrfs/ctree.h
 +++ b/fs/btrfs/ctree.h
-@@ -2917,7 +2917,7 @@ int btrfs_csum_file_blocks(struct btrfs_trans_handle *trans,
- 			   struct btrfs_root *root,
- 			   struct btrfs_ordered_sum *sums);
- blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
--				u64 file_start, int contig);
-+				u64 offset, bool one_ordered);
- int btrfs_lookup_csums_range(struct btrfs_root *root, u64 start, u64 end,
- 			     struct list_head *list, int search_commit);
- void btrfs_extent_item_to_extent_map(struct btrfs_inode *inode,
-diff --git a/fs/btrfs/file-item.c b/fs/btrfs/file-item.c
-index 7d5ec71615b8..96026ba5c58d 100644
---- a/fs/btrfs/file-item.c
-+++ b/fs/btrfs/file-item.c
-@@ -516,28 +516,28 @@ int btrfs_lookup_csums_range(struct btrfs_root *root, u64 start, u64 end,
-  * btrfs_csum_one_bio - Calculates checksums of the data contained inside a bio
-  * @inode:	 Owner of the data inside the bio
-  * @bio:	 Contains the data to be checksummed
-- * @file_start:  offset in file this bio begins to describe
-- * @contig:	 Boolean. If true/1 means all bio vecs in this bio are
-- *		 contiguous and they begin at @file_start in the file. False/0
-- *		 means this bio can contains potentially discontigous bio vecs
-- *		 so the logical offset of each should be calculated separately.
-+ * @offset:      If (u64)-1, @bio may contain discontiguous bio vecs, so the
-+ *               file offsets are determined from the page offsets in the bio.
-+ *               Otherwise, this is the starting file offset of the bio vecs in
-+ *               @bio, which must be contiguous.
-+ * @one_ordered: If true, @bio only refers to one ordered extent.
-  */
- blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
--		       u64 file_start, int contig)
-+				u64 offset, bool one_ordered)
+@@ -2626,7 +2626,8 @@ void btrfs_subvolume_release_metadata(struct btrfs_fs_info *fs_info,
+ 				      struct btrfs_block_rsv *rsv);
+ void btrfs_delalloc_release_extents(struct btrfs_inode *inode, u64 num_bytes);
+ 
+-int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes);
++int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes,
++				    u64 disk_num_bytes);
+ u64 btrfs_account_ro_block_groups_free_space(struct btrfs_space_info *sinfo);
+ int btrfs_error_unpin_extent_range(struct btrfs_fs_info *fs_info,
+ 				   u64 start, u64 end);
+diff --git a/fs/btrfs/delalloc-space.c b/fs/btrfs/delalloc-space.c
+index bacee09b7bfd..948b78f03f63 100644
+--- a/fs/btrfs/delalloc-space.c
++++ b/fs/btrfs/delalloc-space.c
+@@ -265,11 +265,11 @@ static void btrfs_calculate_inode_block_rsv_size(struct btrfs_fs_info *fs_info,
+ }
+ 
+ static void calc_inode_reservations(struct btrfs_fs_info *fs_info,
+-				    u64 num_bytes, u64 *meta_reserve,
+-				    u64 *qgroup_reserve)
++				    u64 num_bytes, u64 disk_num_bytes,
++				    u64 *meta_reserve, u64 *qgroup_reserve)
  {
- 	struct btrfs_fs_info *fs_info = inode->root->fs_info;
- 	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
- 	struct btrfs_ordered_sum *sums;
- 	struct btrfs_ordered_extent *ordered = NULL;
-+	const bool page_offsets = (offset == (u64)-1);
- 	char *data;
- 	struct bvec_iter iter;
- 	struct bio_vec bvec;
- 	int index;
--	int nr_sectors;
-+	int blockcount;
- 	unsigned long total_bytes = 0;
- 	unsigned long this_sum_bytes = 0;
- 	int i;
--	u64 offset;
- 	unsigned nofs_flag;
- 	const u16 csum_size = btrfs_super_csum_size(fs_info->super_copy);
+ 	u64 nr_extents = count_max_extents(num_bytes);
+-	u64 csum_leaves = btrfs_csum_bytes_to_leaves(fs_info, num_bytes);
++	u64 csum_leaves = btrfs_csum_bytes_to_leaves(fs_info, disk_num_bytes);
+ 	u64 inode_update = btrfs_calc_metadata_size(fs_info, 1);
  
-@@ -552,18 +552,13 @@ blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
- 	sums->len = bio->bi_iter.bi_size;
- 	INIT_LIST_HEAD(&sums->list);
+ 	*meta_reserve = btrfs_calc_insert_metadata_size(fs_info,
+@@ -283,7 +283,8 @@ static void calc_inode_reservations(struct btrfs_fs_info *fs_info,
+ 	*qgroup_reserve = nr_extents * fs_info->nodesize;
+ }
  
--	if (contig)
--		offset = file_start;
--	else
--		offset = 0; /* shut up gcc */
--
- 	sums->bytenr = (u64)bio->bi_iter.bi_sector << 9;
- 	index = 0;
+-int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes)
++int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes,
++				    u64 disk_num_bytes)
+ {
+ 	struct btrfs_root *root = inode->root;
+ 	struct btrfs_fs_info *fs_info = root->fs_info;
+@@ -313,6 +314,7 @@ int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes)
+ 	}
  
- 	shash->tfm = fs_info->csum_shash;
+ 	num_bytes = ALIGN(num_bytes, fs_info->sectorsize);
++	disk_num_bytes = ALIGN(disk_num_bytes, fs_info->sectorsize);
  
- 	bio_for_each_segment(bvec, bio, iter) {
--		if (!contig)
-+		if (page_offsets)
- 			offset = page_offset(bvec.bv_page) + bvec.bv_offset;
+ 	/*
+ 	 * We always want to do it this way, every other way is wrong and ends
+@@ -324,8 +326,8 @@ int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes)
+ 	 * everything out and try again, which is bad.  This way we just
+ 	 * over-reserve slightly, and clean up the mess when we are done.
+ 	 */
+-	calc_inode_reservations(fs_info, num_bytes, &meta_reserve,
+-				&qgroup_reserve);
++	calc_inode_reservations(fs_info, num_bytes, disk_num_bytes,
++				&meta_reserve, &qgroup_reserve);
+ 	ret = btrfs_qgroup_reserve_meta_prealloc(root, qgroup_reserve, true);
+ 	if (ret)
+ 		return ret;
+@@ -344,7 +346,7 @@ int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes)
+ 	spin_lock(&inode->lock);
+ 	nr_extents = count_max_extents(num_bytes);
+ 	btrfs_mod_outstanding_extents(inode, nr_extents);
+-	inode->csum_bytes += num_bytes;
++	inode->csum_bytes += disk_num_bytes;
+ 	btrfs_calculate_inode_block_rsv_size(fs_info, inode);
+ 	spin_unlock(&inode->lock);
  
- 		if (!ordered) {
-@@ -571,13 +566,14 @@ blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
- 			BUG_ON(!ordered); /* Logic error */
- 		}
+@@ -448,7 +450,7 @@ int btrfs_delalloc_reserve_space(struct btrfs_inode *inode,
+ 	ret = btrfs_check_data_free_space(inode, reserved, start, len);
+ 	if (ret < 0)
+ 		return ret;
+-	ret = btrfs_delalloc_reserve_metadata(inode, len);
++	ret = btrfs_delalloc_reserve_metadata(inode, len, len);
+ 	if (ret < 0)
+ 		btrfs_free_reserved_data_space(inode, *reserved, start, len);
+ 	return ret;
+diff --git a/fs/btrfs/file.c b/fs/btrfs/file.c
+index 5a818ebcb01f..ed236cbe8adb 100644
+--- a/fs/btrfs/file.c
++++ b/fs/btrfs/file.c
+@@ -1706,7 +1706,8 @@ static noinline ssize_t btrfs_buffered_write(struct kiocb *iocb,
  
--		nr_sectors = BTRFS_BYTES_TO_BLKS(fs_info,
-+		blockcount = BTRFS_BYTES_TO_BLKS(fs_info,
- 						 bvec.bv_len + fs_info->sectorsize
- 						 - 1);
- 
--		for (i = 0; i < nr_sectors; i++) {
--			if (offset >= ordered->file_offset + ordered->num_bytes ||
--			    offset < ordered->file_offset) {
-+		for (i = 0; i < blockcount; i++) {
-+			if (!one_ordered &&
-+			    (offset >= ordered->file_offset + ordered->num_bytes ||
-+			     offset < ordered->file_offset)) {
- 				unsigned long bytes_left;
- 
- 				sums->len = this_sum_bytes;
-@@ -608,7 +604,8 @@ blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
- 					    sums->sums + index);
- 			kunmap_atomic(data);
- 			index += csum_size;
--			offset += fs_info->sectorsize;
-+			if (!one_ordered)
-+				offset += fs_info->sectorsize;
- 			this_sum_bytes += fs_info->sectorsize;
- 			total_bytes += fs_info->sectorsize;
- 		}
+ 		WARN_ON(reserve_bytes == 0);
+ 		ret = btrfs_delalloc_reserve_metadata(BTRFS_I(inode),
+-				reserve_bytes);
++						      reserve_bytes,
++						      reserve_bytes);
+ 		if (ret) {
+ 			if (!only_release_metadata)
+ 				btrfs_free_reserved_data_space(BTRFS_I(inode),
 diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
-index 144b9bd79cfb..847b92c93a7f 100644
+index e71fb848838d..e607c6a14faf 100644
 --- a/fs/btrfs/inode.c
 +++ b/fs/btrfs/inode.c
-@@ -2162,7 +2162,7 @@ static blk_status_t btrfs_submit_bio_start(void *private_data, struct bio *bio,
- {
- 	struct inode *inode = private_data;
- 
--	return btrfs_csum_one_bio(BTRFS_I(inode), bio, 0, 0);
-+	return btrfs_csum_one_bio(BTRFS_I(inode), bio, (u64)-1, false);
- }
- 
- /*
-@@ -2225,7 +2225,7 @@ static blk_status_t btrfs_submit_bio_hook(struct inode *inode, struct bio *bio,
- 					  0, inode, btrfs_submit_bio_start);
- 		goto out;
- 	} else if (!skip_sum) {
--		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, 0, 0);
-+		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, (u64)-1, false);
+@@ -4546,7 +4546,8 @@ int btrfs_truncate_block(struct inode *inode, loff_t from, loff_t len,
+ 			goto out;
+ 		}
+ 	}
+-	ret = btrfs_delalloc_reserve_metadata(BTRFS_I(inode), blocksize);
++	ret = btrfs_delalloc_reserve_metadata(BTRFS_I(inode), blocksize,
++					      blocksize);
+ 	if (ret < 0) {
+ 		if (!only_release_metadata)
+ 			btrfs_free_reserved_data_space(BTRFS_I(inode),
+diff --git a/fs/btrfs/relocation.c b/fs/btrfs/relocation.c
+index 4ba1ab9cc76d..d8e922469721 100644
+--- a/fs/btrfs/relocation.c
++++ b/fs/btrfs/relocation.c
+@@ -2705,8 +2705,8 @@ static int relocate_file_extent_cluster(struct inode *inode,
+ 	index = (cluster->start - offset) >> PAGE_SHIFT;
+ 	last_index = (cluster->end - offset) >> PAGE_SHIFT;
+ 	while (index <= last_index) {
+-		ret = btrfs_delalloc_reserve_metadata(BTRFS_I(inode),
+-				PAGE_SIZE);
++		ret = btrfs_delalloc_reserve_metadata(BTRFS_I(inode), PAGE_SIZE,
++						      PAGE_SIZE);
  		if (ret)
  			goto out;
- 	}
-@@ -7609,7 +7609,7 @@ static blk_status_t btrfs_submit_bio_start_direct_io(void *private_data,
- {
- 	struct inode *inode = private_data;
  
--	return btrfs_csum_one_bio(BTRFS_I(inode), bio, offset, 1);
-+	return btrfs_csum_one_bio(BTRFS_I(inode), bio, offset, false);
- }
- 
- static void btrfs_end_dio_bio(struct bio *bio)
-@@ -7668,7 +7668,7 @@ static inline blk_status_t btrfs_submit_dio_bio(struct bio *bio,
- 		 * If we aren't doing async submit, calculate the csum of the
- 		 * bio now.
- 		 */
--		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, file_offset, 1);
-+		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, file_offset, false);
- 		if (ret)
- 			goto err;
- 	} else {
 -- 
 2.28.0
 
