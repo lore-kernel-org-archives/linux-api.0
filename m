@@ -1,137 +1,201 @@
-Return-Path: <SRS0=qcTw=B6=vger.kernel.org=linux-api-owner@kernel.org>
+Return-Path: <SRS0=BQ3u=B7=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+X-Spam-Status: No, score=-9.5 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7D77BC433E1
-	for <linux-api@archiver.kernel.org>; Thu, 20 Aug 2020 22:24:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5303EC433E1
+	for <linux-api@archiver.kernel.org>; Fri, 21 Aug 2020 06:02:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5A9A5207DF
-	for <linux-api@archiver.kernel.org>; Thu, 20 Aug 2020 22:24:42 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1597962282;
-	bh=EzkGTo7PwVoBMRVxTVmD/ln0ndYMvqUfYa99G7EdZrI=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:List-ID:From;
-	b=zg+RtkO/1j6XKXqyJH7LNCrNai8vIFxZjA8X/pyZIoz7WRje6Pw2rYRaKp+APciZq
-	 A0jb5cGBNPvpOR8Hy1OjdlWwin9Bzrd80zI+bjiTFI6cpgZGzdD6es7kB9NvdNMO0y
-	 09rjKpEdWgNpWFeddU8oJ0bg8aRiCB2fkjPUzvJY=
+	by mail.kernel.org (Postfix) with ESMTP id 3330D207DA
+	for <linux-api@archiver.kernel.org>; Fri, 21 Aug 2020 06:02:16 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=chronox.de header.i=@chronox.de header.b="Gex9B71Y"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727807AbgHTWYh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 20 Aug 2020 18:24:37 -0400
-Received: from mail.kernel.org ([198.145.29.99]:40226 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726919AbgHTWYg (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 20 Aug 2020 18:24:36 -0400
-Received: from localhost (104.sub-72-107-126.myvzw.com [72.107.126.104])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 3233A2087D;
-        Thu, 20 Aug 2020 22:24:35 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1597962275;
-        bh=EzkGTo7PwVoBMRVxTVmD/ln0ndYMvqUfYa99G7EdZrI=;
-        h=Date:From:To:Cc:Subject:In-Reply-To:From;
-        b=eUI2xM5SYs5TOUjrABWD24q3qjsn1Z30MLU4mm5N+ZC+qbbocobQE2Dcl6rsjc/KE
-         mMc95BUGA7Eh5g8nUomJh2XAUbuqWwCbgx9nHq1KgS4wu6PqyC/kbHfaHCevgLMf2B
-         FCXP45ZKQS/nj7xCn3Vq7R5bxmxqlkpUsek+HeXs=
-Date:   Thu, 20 Aug 2020 17:24:33 -0500
-From:   Bjorn Helgaas <helgaas@kernel.org>
-To:     Jonathan Cameron <Jonathan.Cameron@huawei.com>
-Cc:     linux-mm@kvack.org, linux-acpi@vger.kernel.org,
-        linux-arm-kernel@lists.infradead.org, x86@kernel.org,
-        Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>,
-        Bjorn Helgaas <bhelgaas@google.com>, rafael@kernel.org,
-        linux-kernel@vger.kernel.org, Ingo Molnar <mingo@redhat.com>,
-        Thomas Gleixner <tglx@linutronix.de>, linuxarm@huawei.com,
-        Dan Williams <dan.j.williams@intel.com>,
-        Brice Goglin <Brice.Goglin@inria.fr>,
-        Sean V Kelley <sean.v.kelley@linux.intel.com>,
-        linux-api@vger.kernel.org
-Subject: Re: [PATCH v9 2/6] x86: Support Generic Initiator only proximity
- domains
-Message-ID: <20200820222433.GA1571517@bjorn-Precision-5520>
+        id S1727779AbgHUGCP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 21 Aug 2020 02:02:15 -0400
+Received: from mo4-p03-ob.smtp.rzone.de ([81.169.146.174]:10372 "EHLO
+        mo4-p03-ob.smtp.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725268AbgHUGCP (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 21 Aug 2020 02:02:15 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; t=1597989724;
+        s=strato-dkim-0002; d=chronox.de;
+        h=References:In-Reply-To:Message-ID:Date:Subject:Cc:To:From:
+        X-RZG-CLASS-ID:X-RZG-AUTH:From:Subject:Sender;
+        bh=Es9pGKLx4z5oIgmChL28JnLmrOhua6NbH8JPKO7vMAs=;
+        b=Gex9B71YMr3MWO1MhU2tQ45CqFxZ+yLaQaQkq682GlaZaB5rljo2B319j9eeDJBPWL
+        UFRK+ngqMxBHAACPy/gLlfRHqIefFJXCgTH+hLVsoSx+mg+YtanmLBh1ZTpJo4x5hlBk
+        LueV+p6YsUF/wm3v4H6+pKovDCC/+lHtuZlfLw0fC6Unjk5rPdntC/8ZITigCrz3lYHQ
+        GULTp74H3UBtbvmxyT4Q8DgUOGvaJWi2CxFXM6GdTOV3dXFXQL3WA5Pm5c5aTeq1kTeO
+        cE7hnURxWAYESOTffPFPgBjaa11977kb7ASRgejEmPC4bjBvAIICRbMrv9NYO012zBAj
+        hsdQ==
+X-RZG-AUTH: ":P2ERcEykfu11Y98lp/T7+hdri+uKZK8TKWEqNyiHySGSa9k9xm0dNS3IdRAZAL+p6A=="
+X-RZG-CLASS-ID: mo00
+Received: from positron.chronox.de
+        by smtp.strato.de (RZmta 46.10.7 DYNA|AUTH)
+        with ESMTPSA id 002e9aw7L60qGKv
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256 bits))
+        (Client did not present a certificate);
+        Fri, 21 Aug 2020 08:00:52 +0200 (CEST)
+From:   Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
+To:     Arnd Bergmann <arnd@arndb.de>
+Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>,
+        linux-api@vger.kernel.org,
+        "Eric W. Biederman" <ebiederm@xmission.com>,
+        "Alexander E. Patrakov" <patrakov@gmail.com>,
+        "Ahmed S. Darwish" <darwish.07@gmail.com>,
+        "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>,
+        Matthew Garrett <mjg59@srcf.ucam.org>,
+        Vito Caputo <vcaputo@pengaru.com>,
+        Andreas Dilger <adilger.kernel@dilger.ca>,
+        Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>,
+        William Jon McCann <mccann@jhu.edu>,
+        zhangjs <zachary@baishancloud.com>,
+        Andy Lutomirski <luto@kernel.org>,
+        Florian Weimer <fweimer@redhat.com>,
+        Lennart Poettering <mzxreary@0pointer.de>,
+        Nicolai Stange <nstange@suse.de>,
+        "Peter, Matthias" <matthias.peter@bsi.bund.de>,
+        Marcelo Henrique Cerri <marcelo.cerri@canonical.com>,
+        Roman Drahtmueller <draht@schaltsekun.de>,
+        Neil Horman <nhorman@redhat.com>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        Julia Lawall <julia.lawall@inria.fr>,
+        Dan Carpenter <dan.carpenter@oracle.com>
+Subject: [PATCH v33 08/12] crypto: provide access to a static Jitter RNG state
+Date:   Fri, 21 Aug 2020 07:42:28 +0200
+Message-ID: <2292257.jE0xQCEvom@positron.chronox.de>
+In-Reply-To: <5532247.MhkbZ0Pkbq@positron.chronox.de>
+References: <2544450.mvXUDI8C0e@positron.chronox.de> <5532247.MhkbZ0Pkbq@positron.chronox.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20200819145111.1715026-3-Jonathan.Cameron@huawei.com>
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="iso-8859-1"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Aug 19, 2020 at 10:51:07PM +0800, Jonathan Cameron wrote:
-> In common with memoryless domains we only register GI domains
-> if the proximity node is not online. If a domain is already
-> a memory containing domain, or a memoryless domain there is
-> nothing to do just because it also contains a Generic Initiator.
-> 
-> Signed-off-by: Jonathan Cameron <Jonathan.Cameron@huawei.com>
-> ---
->  arch/x86/include/asm/numa.h |  2 ++
->  arch/x86/kernel/setup.c     |  1 +
->  arch/x86/mm/numa.c          | 14 ++++++++++++++
->  3 files changed, 17 insertions(+)
-> 
-> diff --git a/arch/x86/include/asm/numa.h b/arch/x86/include/asm/numa.h
-> index bbfde3d2662f..f631467272a3 100644
-> --- a/arch/x86/include/asm/numa.h
-> +++ b/arch/x86/include/asm/numa.h
-> @@ -62,12 +62,14 @@ extern void numa_clear_node(int cpu);
->  extern void __init init_cpu_to_node(void);
->  extern void numa_add_cpu(int cpu);
->  extern void numa_remove_cpu(int cpu);
-> +extern void init_gi_nodes(void);
->  #else	/* CONFIG_NUMA */
->  static inline void numa_set_node(int cpu, int node)	{ }
->  static inline void numa_clear_node(int cpu)		{ }
->  static inline void init_cpu_to_node(void)		{ }
->  static inline void numa_add_cpu(int cpu)		{ }
->  static inline void numa_remove_cpu(int cpu)		{ }
-> +static inline void init_gi_nodes(void)			{ }
->  #endif	/* CONFIG_NUMA */
->  
->  #ifdef CONFIG_DEBUG_PER_CPU_MAPS
-> diff --git a/arch/x86/kernel/setup.c b/arch/x86/kernel/setup.c
-> index 3511736fbc74..9062c146f03a 100644
-> --- a/arch/x86/kernel/setup.c
-> +++ b/arch/x86/kernel/setup.c
-> @@ -1218,6 +1218,7 @@ void __init setup_arch(char **cmdline_p)
->  	prefill_possible_map();
->  
->  	init_cpu_to_node();
-> +	init_gi_nodes();
->  
->  	io_apic_init_mappings();
->  
-> diff --git a/arch/x86/mm/numa.c b/arch/x86/mm/numa.c
-> index aa76ec2d359b..fc630dc6764e 100644
-> --- a/arch/x86/mm/numa.c
-> +++ b/arch/x86/mm/numa.c
-> @@ -747,6 +747,20 @@ static void __init init_memory_less_node(int nid)
->  	 */
->  }
->  
-> +/*
-> + * Generic Initiator Nodes may have neither CPU nor Memory.
-> + * At this stage if either of the others were present we would
-> + * already be online.
-> + */
-> +void __init init_gi_nodes(void)
-> +{
-> +	int nid;
-> +
-> +	for_each_node_state(nid, N_GENERIC_INITIATOR)
-> +		if (!node_online(nid))
-> +			init_memory_less_node(nid);
-> +}
+To support the LRNG operation which uses the Jitter RNG separately
+from the kernel crypto API, at a time where potentially the regular
+memory management is not yet initialized, the Jitter RNG needs to
+provide a state whose memory is defined at compile time. As only once
+instance will ever be needed by the LRNG, define once static memory
+block which is solely to be used by the LRNG.
 
-This doesn't *look* very x86-specific, and apparently you don't need
-any arm64-specific changes?  Too bad this can't be unified a little
-bit to remove the arch #ifdefs completely.
+CC: "Eric W. Biederman" <ebiederm@xmission.com>
+CC: "Alexander E. Patrakov" <patrakov@gmail.com>
+CC: "Ahmed S. Darwish" <darwish.07@gmail.com>
+CC: "Theodore Y. Ts'o" <tytso@mit.edu>
+CC: Willy Tarreau <w@1wt.eu>
+CC: Matthew Garrett <mjg59@srcf.ucam.org>
+CC: Vito Caputo <vcaputo@pengaru.com>
+CC: Andreas Dilger <adilger.kernel@dilger.ca>
+CC: Jan Kara <jack@suse.cz>
+CC: Ray Strode <rstrode@redhat.com>
+CC: William Jon McCann <mccann@jhu.edu>
+CC: zhangjs <zachary@baishancloud.com>
+CC: Andy Lutomirski <luto@kernel.org>
+CC: Florian Weimer <fweimer@redhat.com>
+CC: Lennart Poettering <mzxreary@0pointer.de>
+CC: Nicolai Stange <nstange@suse.de>
+Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
+Tested-by: Roman Drahtm=FCller <draht@schaltsekun.de>
+Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
+Tested-by: Neil Horman <nhorman@redhat.com>
+Signed-off-by: Stephan Mueller <smueller@chronox.de>
+=2D--
+ crypto/jitterentropy-kcapi.c                  |  3 +-
+ crypto/jitterentropy.c                        | 31 ++++++++++++++++++-
+ .../crypto/internal}/jitterentropy.h          |  3 ++
+ 3 files changed, 34 insertions(+), 3 deletions(-)
+ rename {crypto =3D> include/crypto/internal}/jitterentropy.h (84%)
 
-I do see that init_memory_less_node() is only implemented on x86, but
-it just seems like all this might not be inherently be arch-specific.
+diff --git a/crypto/jitterentropy-kcapi.c b/crypto/jitterentropy-kcapi.c
+index eb7d1dd506bf..25a192f5984e 100644
+=2D-- a/crypto/jitterentropy-kcapi.c
++++ b/crypto/jitterentropy-kcapi.c
+@@ -43,8 +43,7 @@
+ #include <linux/time.h>
+ #include <linux/crypto.h>
+ #include <crypto/internal/rng.h>
+=2D
+=2D#include "jitterentropy.h"
++#include <crypto/internal/jitterentropy.h>
+=20
+ /*************************************************************************=
+**
+  * Helper function
+diff --git a/crypto/jitterentropy.c b/crypto/jitterentropy.c
+index 6e147c43fc18..fa1459f09b01 100644
+=2D-- a/crypto/jitterentropy.c
++++ b/crypto/jitterentropy.c
+@@ -117,7 +117,7 @@ struct rand_data {
+ #define JENT_EHEALTH		9 /* Health test failed during initialization */
+ #define JENT_ERCT		10 /* RCT failed during initialization */
+=20
+=2D#include "jitterentropy.h"
++#include <crypto/internal/jitterentropy.h>
+=20
+ /*************************************************************************=
+**
+  * Adaptive Proportion Test
+@@ -854,3 +854,32 @@ int jent_entropy_init(void)
+=20
+ 	return 0;
+ }
++
++struct rand_data *jent_lrng_entropy_collector(void)
++{
++	static unsigned char lrng_jent_mem[JENT_MEMORY_SIZE];
++	static struct rand_data lrng_jent_state =3D {
++		.data		=3D 0,
++		.old_data	=3D 0,
++		.prev_time	=3D 0,
++		.last_delta	=3D 0,
++		.last_delta2	=3D 0,
++		.osr		=3D 1,
++		.mem		=3D lrng_jent_mem,
++		.memlocation	=3D 0,
++		.memblocks	=3D JENT_MEMORY_BLOCKSIZE,
++		.memblocksize	=3D JENT_MEMORY_BLOCKS,
++		.memaccessloops	=3D JENT_MEMORY_ACCESSLOOPS,
++		.rct_count	=3D 0,
++		.apt_observations =3D 0,
++		.apt_count	=3D 0,
++		.apt_base	=3D 0,
++		.apt_base_set	=3D 0,
++		.health_failure =3D 0
++	};
++
++	if (jent_entropy_init())
++		return NULL;
++
++	return &lrng_jent_state;
++}
+diff --git a/crypto/jitterentropy.h b/include/crypto/internal/jitterentropy=
+=2Eh
+similarity index 84%
+rename from crypto/jitterentropy.h
+rename to include/crypto/internal/jitterentropy.h
+index c83fff32d130..6e07d86eac82 100644
+=2D-- a/crypto/jitterentropy.h
++++ b/include/crypto/internal/jitterentropy.h
+@@ -15,3 +15,6 @@ extern int jent_read_entropy(struct rand_data *ec, unsign=
+ed char *data,
+ extern struct rand_data *jent_entropy_collector_alloc(unsigned int osr,
+ 						      unsigned int flags);
+ extern void jent_entropy_collector_free(struct rand_data *entropy_collecto=
+r);
++
++/* Access to statically allocated Jitter RNG instance */
++extern struct rand_data *jent_lrng_entropy_collector(void);
+=2D-=20
+2.26.2
+
+
+
+
