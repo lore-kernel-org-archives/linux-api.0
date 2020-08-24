@@ -2,331 +2,218 @@ Return-Path: <SRS0=1sFT=CC=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-4.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 05E34C433DF
-	for <linux-api@archiver.kernel.org>; Mon, 24 Aug 2020 12:26:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 03EDCC433E1
+	for <linux-api@archiver.kernel.org>; Mon, 24 Aug 2020 15:28:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D131C2074D
-	for <linux-api@archiver.kernel.org>; Mon, 24 Aug 2020 12:26:20 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D087C2074D
+	for <linux-api@archiver.kernel.org>; Mon, 24 Aug 2020 15:28:05 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="h+bSioct"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gaTgkDFq"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726739AbgHXMYw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 24 Aug 2020 08:24:52 -0400
-Received: from us-smtp-delivery-1.mimecast.com ([207.211.31.120]:56992 "EHLO
-        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1726356AbgHXMYv (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 24 Aug 2020 08:24:51 -0400
+        id S1726912AbgHXP2C (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 24 Aug 2020 11:28:02 -0400
+Received: from us-smtp-1.mimecast.com ([205.139.110.61]:59020 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1727024AbgHXP1p (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 24 Aug 2020 11:27:45 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1598271888;
+        s=mimecast20190719; t=1598282863;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding;
-        bh=0ezayPHJbCOH4Sek4r/KNUEKU/MLNOPoHBQLgHtZxKo=;
-        b=h+bSioctpiEDyr5XqVe2IdwHguIdUX6dviZzpKi9B8uPwvPo2lby18qBTAYFLzc2uMWivp
-        MwaOThwN3LCQYR5Qt43aCYWztXqpRtTSCTIjxeH7yxgmqqqMMn13BcxVPUse3YGzUUymWx
-        zfCfzk7Tn/0fLEzdvhekvsq1tVA5Qmo=
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=Pi1uzJfERgfFWmgM6UYAK6ASgLDYuQWOOL3VyRC2LTU=;
+        b=gaTgkDFqE4P3WhxSTOihWPbvPKkvB7ylw3Ocj1ibyOqnWUHkfcLld2NabTPU+dLmKiGBvt
+        l1mzOvc9NFkzo4iFm8tx1GRP5rnFn4kvVCNquxXbrgP+pZvG/mH6G1fkNFKaTS2UhzQM7U
+        yMImu48qCJT9Bdlibg8t5Hs0oQ0z4wE=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-165-fiy4duNVMBGzw8eSnoevFA-1; Mon, 24 Aug 2020 08:24:46 -0400
-X-MC-Unique: fiy4duNVMBGzw8eSnoevFA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-330-zNVOyuFhNP-iiZLLTEszfQ-1; Mon, 24 Aug 2020 11:27:41 -0400
+X-MC-Unique: zNVOyuFhNP-iiZLLTEszfQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 034B680734E;
-        Mon, 24 Aug 2020 12:24:45 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AB26D18BFEF8;
+        Mon, 24 Aug 2020 15:27:34 +0000 (UTC)
 Received: from warthog.procyon.org.uk (ovpn-120-127.rdu2.redhat.com [10.10.120.127])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 82957197E5;
-        Mon, 24 Aug 2020 12:24:43 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 0139E5F206;
+        Mon, 24 Aug 2020 15:27:32 +0000 (UTC)
 Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
         Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
         Kingdom.
         Registered in England and Wales under Company Registration No. 3798903
-Subject: [PATCH 1/5] Add manpage for open_tree(2)
 From:   David Howells <dhowells@redhat.com>
-To:     mtk.manpages@gmail.com, viro@zeniv.linux.org.uk
-Cc:     dhowells@redhat.com, linux-fsdevel@vger.kernel.org,
-        linux-man@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-Date:   Mon, 24 Aug 2020 13:24:42 +0100
-Message-ID: <159827188271.306468.16962617119460123110.stgit@warthog.procyon.org.uk>
-User-Agent: StGit/0.23
+In-Reply-To: <20200807160531.GA1345000@erythro.dev.benboeckel.internal>
+References: <20200807160531.GA1345000@erythro.dev.benboeckel.internal> <159681277616.35436.11229310534842613599.stgit@warthog.procyon.org.uk>
+To:     me@benboeckel.net
+Cc:     dhowells@redhat.com, mtk.manpages@gmail.com,
+        torvalds@linux-foundation.org, keyrings@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org, linux-man@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 1/2] Add a manpage for watch_queue(7)
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+Content-Type: text/plain; charset="us-ascii"
+Content-ID: <329585.1598282852.1@warthog.procyon.org.uk>
+Content-Transfer-Encoding: quoted-printable
+Date:   Mon, 24 Aug 2020 16:27:32 +0100
+Message-ID: <329586.1598282852@warthog.procyon.org.uk>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add a manual page to document the open_tree() system call.
+Ben Boeckel <me@benboeckel.net> wrote:
 
-Signed-off-by: David Howells <dhowells@redhat.com>
----
+> > +In the case of message loss,
+> > +.BR read (2)
+> > +will fabricate a loss message and pass that to userspace immediately =
+after the
+> > +point at which the loss occurred.
+> =
 
- man2/open_tree.2 |  249 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 249 insertions(+)
- create mode 100644 man2/open_tree.2
+> If multiple messages are dropped in a row, is there one loss message per
+> loss message or per loss event?
 
-diff --git a/man2/open_tree.2 b/man2/open_tree.2
-new file mode 100644
-index 000000000..d480bd82f
---- /dev/null
-+++ b/man2/open_tree.2
-@@ -0,0 +1,249 @@
-+'\" t
-+.\" Copyright (c) 2020 David Howells <dhowells@redhat.com>
-+.\"
-+.\" %%%LICENSE_START(VERBATIM)
-+.\" Permission is granted to make and distribute verbatim copies of this
-+.\" manual provided the copyright notice and this permission notice are
-+.\" preserved on all copies.
-+.\"
-+.\" Permission is granted to copy and distribute modified versions of this
-+.\" manual under the conditions for verbatim copying, provided that the
-+.\" entire resulting derived work is distributed under the terms of a
-+.\" permission notice identical to this one.
-+.\"
-+.\" Since the Linux kernel and libraries are constantly changing, this
-+.\" manual page may be incorrect or out-of-date.  The author(s) assume no
-+.\" responsibility for errors or omissions, or for damages resulting from
-+.\" the use of the information contained herein.  The author(s) may not
-+.\" have taken the same level of care in the production of this manual,
-+.\" which is licensed free of charge, as they might when working
-+.\" professionally.
-+.\"
-+.\" Formatted or processed versions of this manual, if unaccompanied by
-+.\" the source, must acknowledge the copyright and authors of this work.
-+.\" %%%LICENSE_END
-+.\"
-+.TH OPEN_TREE 2 2020-08-24 "Linux" "Linux Programmer's Manual"
-+.SH NAME
-+open_tree \- Pick or clone mount object and attach to fd
-+.SH SYNOPSIS
-+.nf
-+.B #include <sys/types.h>
-+.B #include <sys/mount.h>
-+.B #include <unistd.h>
-+.BR "#include <fcntl.h>           " "/* Definition of AT_* constants */"
-+.PP
-+.BI "int open_tree(int " dirfd ", const char *" pathname ", unsigned int " flags );
-+.fi
-+.PP
-+.IR Note :
-+There are no glibc wrappers for these system calls.
-+.SH DESCRIPTION
-+.BR open_tree ()
-+picks the mount object specified by the pathname and attaches it to a new file
-+descriptor or clones it and attaches the clone to the file descriptor.  The
-+resultant file descriptor is indistinguishable from one produced by
-+.BR open "(2) with " O_PATH .
-+.PP
-+In the case that the mount object is cloned, the clone will be "unmounted" and
-+destroyed when the file descriptor is closed if it is not otherwise mounted
-+somewhere by calling
-+.BR move_mount (2).
-+.PP
-+To select a mount object, no permissions are required on the object referred
-+to by the path, but execute (search) permission is required on all of the
-+directories in
-+.I pathname
-+that lead to the object.
-+.PP
-+Appropriate privilege (Linux: the
-+.B CAP_SYS_ADMIN
-+capability) is required to clone mount objects.
-+.PP
-+.BR open_tree ()
-+uses
-+.IR pathname ", " dirfd " and " flags
-+to locate the target object in one of a variety of ways:
-+.TP
-+[*] By absolute path.
-+.I pathname
-+points to an absolute path and
-+.I dirfd
-+is ignored.  The object is looked up by name, starting from the root of the
-+filesystem as seen by the calling process.
-+.TP
-+[*] By cwd-relative path.
-+.I pathname
-+points to a relative path and
-+.IR dirfd " is " AT_FDCWD .
-+The object is looked up by name, starting from the current working directory.
-+.TP
-+[*] By dir-relative path.
-+.I pathname
-+points to relative path and
-+.I dirfd
-+indicates a file descriptor pointing to a directory.  The object is looked up
-+by name, starting from the directory specified by
-+.IR dirfd .
-+.TP
-+[*] By file descriptor.
-+.I pathname
-+is "",
-+.I dirfd
-+indicates a file descriptor and
-+.B AT_EMPTY_PATH
-+is set in
-+.IR flags .
-+The mount attached to the file descriptor is queried directly.  The file
-+descriptor may point to any type of file, not just a directory.
-+.PP
-+.I flags
-+can be used to control the operation of the function and to influence a
-+path-based lookup.  A value for
-+.I flags
-+is constructed by OR'ing together zero or more of the following constants:
-+.TP
-+.BR AT_EMPTY_PATH
-+.\" commit 65cfc6722361570bfe255698d9cd4dccaf47570d
-+If
-+.I pathname
-+is an empty string, operate on the file referred to by
-+.IR dirfd
-+(which may have been obtained from
-+.BR open "(2) with"
-+.BR O_PATH ", from " fsmount (2)
-+or from another
-+.BR open_tree ()).
-+If
-+.I dirfd
-+is
-+.BR AT_FDCWD ,
-+the call operates on the current working directory.
-+In this case,
-+.I dirfd
-+can refer to any type of file, not just a directory.
-+This flag is Linux-specific; define
-+.B _GNU_SOURCE
-+.\" Before glibc 2.16, defining _ATFILE_SOURCE sufficed
-+to obtain its definition.
-+.TP
-+.BR AT_NO_AUTOMOUNT
-+Don't automount the final ("basename") component of
-+.I pathname
-+if it is a directory that is an automount point.  This flag allows the
-+automount point itself to be picked up or a mount cloned that is rooted on the
-+automount point.  The
-+.B AT_NO_AUTOMOUNT
-+flag has no effect if the mount point has already been mounted over.
-+This flag is Linux-specific; define
-+.B _GNU_SOURCE
-+.\" Before glibc 2.16, defining _ATFILE_SOURCE sufficed
-+to obtain its definition.
-+.TP
-+.B AT_SYMLINK_NOFOLLOW
-+If
-+.I pathname
-+is a symbolic link, do not dereference it: instead pick up or clone a mount
-+rooted on the link itself.
-+.TP
-+.B OPEN_TREE_CLOEXEC
-+Set the close-on-exec flag for the new file descriptor.  This will cause the
-+file descriptor to be closed automatically when a process exec's.
-+.TP
-+.B OPEN_TREE_CLONE
-+Rather than directly attaching the selected object to the file descriptor,
-+clone the object, set the root of the new mount object to that point and
-+attach the clone to the file descriptor.
-+.TP
-+.B AT_RECURSIVE
-+This is only permitted in conjunction with OPEN_TREE_CLONE.  It causes the
-+entire mount subtree rooted at the selected spot to be cloned rather than just
-+that one mount object.
-+.SH RETURN VALUE
-+On success, the new file descriptor is returned.  On error, \-1 is returned,
-+and
-+.I errno
-+is set appropriately.
-+.SH ERRORS
-+.TP
-+.B EACCES
-+Search permission is denied for one of the directories
-+in the path prefix of
-+.IR pathname .
-+(See also
-+.BR path_resolution (7).)
-+.TP
-+.B EBADF
-+.I dirfd
-+is not a valid open file descriptor.
-+.TP
-+.B EFAULT
-+.I pathname
-+is NULL or
-+.IR pathname
-+point to a location outside the process's accessible address space.
-+.TP
-+.B EINVAL
-+Reserved flag specified in
-+.IR flags .
-+.TP
-+.B ELOOP
-+Too many symbolic links encountered while traversing the pathname.
-+.TP
-+.B ENAMETOOLONG
-+.I pathname
-+is too long.
-+.TP
-+.B ENOENT
-+A component of
-+.I pathname
-+does not exist, or
-+.I pathname
-+is an empty string and
-+.B AT_EMPTY_PATH
-+was not specified in
-+.IR flags .
-+.TP
-+.B ENOMEM
-+Out of memory (i.e., kernel memory).
-+.TP
-+.B ENOTDIR
-+A component of the path prefix of
-+.I pathname
-+is not a directory or
-+.I pathname
-+is relative and
-+.I dirfd
-+is a file descriptor referring to a file other than a directory.
-+.SH VERSIONS
-+.BR open_tree ()
-+was added to Linux in kernel 5.2.
-+.SH CONFORMING TO
-+.BR open_tree ()
-+is Linux-specific.
-+.SH NOTES
-+Glibc does not (yet) provide a wrapper for the
-+.BR open_tree ()
-+system call; call it using
-+.BR syscall (2).
-+.SH EXAMPLE
-+The
-+.BR open_tree ()
-+function can be used like the following:
-+.PP
-+.RS
-+.nf
-+fd1 = open_tree(AT_FDCWD, "/mnt", 0);
-+fd2 = open_tree(fd1, "",
-+                AT_EMPTY_PATH | OPEN_TREE_CLONE | AT_RECURSIVE);
-+move_mount(fd2, "", AT_FDCWD, "/mnt2", MOVE_MOUNT_F_EMPTY_PATH);
-+.fi
-+.RE
-+.PP
-+This would attach the path point for "/mnt" to fd1, then it would copy the
-+entire subtree at the point referred to by fd1 and attach that to fd2; lastly,
-+it would attach the clone to "/mnt2".
-+.SH SEE ALSO
-+.BR fsmount (2),
-+.BR move_mount (2),
-+.BR open (2)
+One loss message.  I set a flag on the last slot in the pipe ring to say t=
+hat
+message loss occurred, but there's insufficient space to store a counter
+without making the slot larger (and I really don't want to do that).
 
+Note that every slot in the pipe ring has such a flag, so you could,
+theoretically, get a loss message after every normal message that you read
+out.
+
+> > +A notification pipe allocates a certain amount of locked kernel memor=
+y (so that
+> > +the kernel can write a notification into it from contexts where alloc=
+ation is
+> > +restricted), and so is subject to pipe resource limit restrictions.
+> =
+
+> A reference to the relevant manpage for resource limitations would be
+> nice here. I'd assume `setrlimit(2)`, but I don't see anything
+> pipe-specific there.
+
+I can change that to:
+
+	... and so is subject to pipe resource limit restrictions - see
+	.BR pipe (7),
+	in the section on
+	.BR "/proc files" .
+
+> > +of interest to the watcher, a filter can be set on a queue to determi=
+ne whether
+> =
+
+> "a filter can be set"? If multiple filters are allowed, "filters can be
+> added" might work better here to indicate that multiple filters are
+> allowed. Otherwise, "a single filter" would make it clearer that only
+> one is supported.
+
+How about:
+
+	Because a source can produce a lot of different events, not all of
+	which may be of interest to the watcher, a single set of filters can
+	be set on a queue to determine whether a particular event will get
+	inserted in a queue at the point of posting inside the kernel.
+
+> Are there macros for extracting these fields available?
+
+WATCH_INFO_LENGTH, WATCH_INFO_ID and WATCH_INFO_TYPE_INFO are masks.  Ther=
+e
+are also shift macros (you add __SHIFT to the mask macro name).  I'm not s=
+ure
+how best to do this in troff.
+
+> Why not also have bitfields for these?
+
+It makes it a lot simpler to filter.
+
+> Or is there some ABI issues with
+> non-power-of-2 bitfield sizes? For clarity, which bit is bit 0? Low addr=
+ess
+> or LSB? Is this documented in some other manpage?
+
+bit 0 is 2^0 in this case.  I'm not sure how better to describe it.
+
+> Also, bit 7 is unused (for alignment I assume)? Is it always 0, 1, or
+> indeterminate?
+
+It's reserved and should always be 0 - but that's solely at the kernel's
+discretion (ie. userspace doesn't gets to set it).
+
+> > +This is used to set filters on the notifications that get written int=
+o the
+> =
+
+> "set" -> "add"? If I call this multiple times, is only the last call
+> effective or do I need to keep a list of all filters myself so I can
+> append in the future (since I see no analogous GET_FILTER call)?
+
+"Set".  You cannot add filters, you can only set/replace/remove the whole =
+set.
+
+Also, I didn't provide a GET_FILTER, assuming that you could probably keep
+track of them yourself.
+
+> Does this have implications for criu restoring a process?
+
+Maybe?
+
+> > +	unsigned char buf[128];
+> =
+
+> Is 128 the maximum message size?
+
+127 actually.  This is specified earlier in the manual page.
+
+> Do we have a macro for this? If it isn't, shouldn't there be code for
+> detecting ENOBUFS and using a bigger buffer? Or at least not rolling wit=
+h a
+> busted buffer.
+
+WATCH_INFO_LENGTH can be used for this.  I'll make the example say:
+
+	unsigned char buf[WATCH_INFO_LENGTH];
+
+> > +	case WATCH_TYPE_META:
+> =
+
+> From above, if a filter is added, all messages not matching a filter are
+> dropped. Are WATCH_TYPE_META messages special in this case?
+
+Yes.  They only do two things at the moment: Tell you that something you w=
+ere
+watching went away and tell you that messages were lost.  I've amended the
+filter section to note that this cannot be filtered.
+
+> The Rust developer in me wants to see:
+
+I don't touch Rust ;-)
+
+> 	default:
+> 		/* Subtypes may be added in future kernel versions. */
+> 		printf("unrecognized meta subtype: %d\n", n->subtype);
+> 		break;
+> =
+
+> unless we're guaranteeing that no other subtypes exist for this type
+> (updating the docs with new types doesn't help those who copy/paste from
+> here as a seed).
+
+I'm trying to keep the example small.  It's pseudo-code rather than real c=
+ode.
+I *could* expand it to a fully working program, but that would make it a l=
+ot
+bigger and harder to read.  As you pointed out, I haven't bothered with th=
+e
+error checking, for example.
+
+David
 
