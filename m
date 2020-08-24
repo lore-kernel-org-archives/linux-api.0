@@ -7,81 +7,81 @@ X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B971EC433E1
-	for <linux-api@archiver.kernel.org>; Mon, 24 Aug 2020 12:25:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DBA78C433DF
+	for <linux-api@archiver.kernel.org>; Mon, 24 Aug 2020 12:25:32 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8587920838
-	for <linux-api@archiver.kernel.org>; Mon, 24 Aug 2020 12:25:02 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B69202074D
+	for <linux-api@archiver.kernel.org>; Mon, 24 Aug 2020 12:25:32 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MMagacSV"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cVxiidc/"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726953AbgHXMZA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 24 Aug 2020 08:25:00 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:43841 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1726818AbgHXMY6 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 24 Aug 2020 08:24:58 -0400
+        id S1727042AbgHXMZ3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 24 Aug 2020 08:25:29 -0400
+Received: from us-smtp-delivery-1.mimecast.com ([205.139.110.120]:34468 "EHLO
+        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+        with ESMTP id S1727015AbgHXMZW (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 24 Aug 2020 08:25:22 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1598271896;
+        s=mimecast20190719; t=1598271917;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=+d95Pyxxs3w7EuizFdEpLYSASJLAlQyWQNxxnlomYro=;
-        b=MMagacSVTGwZGzCgXqc1WTnhrm32FGVxVxZqJe9HN2d28KqOjrC7kZtxVyeqO073DEn5q8
-        /Dt5f+IySIBh4LDm7lZ4kkqX5DEdFjLrn/dJV0A+bxQ6SxZCk5SOk8BIibJy7INteCBAvF
-        Prfv/UAIonkofsL/lfyxRt3R6JtxsYc=
+        bh=YIrUagrIHqVugLe9LDIcRiclQwViyPRhpo0ZeXWbh6s=;
+        b=cVxiidc/ZTFldY8wazzvc3ZbWJm/j0NUpePha6UErGAyVBC/f2ybDaKmYeiekTrubJE4MU
+        J5gIXimJM2R8x03JGkwI/syUpao4T5H4Pbop02efE/+NMSWOoXZOiKrfX1Wl+wIk4/ChbX
+        uHIZyi07kORlP360hB81hgBaJnRzOb8=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-328-2iQFX1_IPnuZkCEVfhg__Q-1; Mon, 24 Aug 2020 08:24:54 -0400
-X-MC-Unique: 2iQFX1_IPnuZkCEVfhg__Q-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-80-wtioiY04O42CHdMewKloVA-1; Mon, 24 Aug 2020 08:25:15 -0400
+X-MC-Unique: wtioiY04O42CHdMewKloVA-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6C3991084C89;
-        Mon, 24 Aug 2020 12:24:52 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A0D3764085;
+        Mon, 24 Aug 2020 12:25:14 +0000 (UTC)
 Received: from warthog.procyon.org.uk (ovpn-120-127.rdu2.redhat.com [10.10.120.127])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 0B06D10098AE;
-        Mon, 24 Aug 2020 12:24:50 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 3EC3F60BF1;
+        Mon, 24 Aug 2020 12:25:13 +0000 (UTC)
 Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
         Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
         Kingdom.
         Registered in England and Wales under Company Registration No. 3798903
-Subject: [PATCH 2/5] Add manpages for move_mount(2)
+Subject: [PATCH 5/5] Add manpage for fsconfig(2)
 From:   David Howells <dhowells@redhat.com>
 To:     mtk.manpages@gmail.com, viro@zeniv.linux.org.uk
 Cc:     dhowells@redhat.com, linux-fsdevel@vger.kernel.org,
         linux-man@vger.kernel.org, linux-api@vger.kernel.org,
         linux-kernel@vger.kernel.org
-Date:   Mon, 24 Aug 2020 13:24:50 +0100
-Message-ID: <159827189025.306468.4916341547843731338.stgit@warthog.procyon.org.uk>
+Date:   Mon, 24 Aug 2020 13:25:12 +0100
+Message-ID: <159827191245.306468.4903071494263813779.stgit@warthog.procyon.org.uk>
 In-Reply-To: <159827188271.306468.16962617119460123110.stgit@warthog.procyon.org.uk>
 References: <159827188271.306468.16962617119460123110.stgit@warthog.procyon.org.uk>
 User-Agent: StGit/0.23
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add manual pages to document the move_mount() system call.
+Add a manual page to document the fsconfig() system call.
 
 Signed-off-by: David Howells <dhowells@redhat.com>
 ---
 
- man2/move_mount.2 |  267 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 267 insertions(+)
- create mode 100644 man2/move_mount.2
+ man2/fsconfig.2 |  277 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 277 insertions(+)
+ create mode 100644 man2/fsconfig.2
 
-diff --git a/man2/move_mount.2 b/man2/move_mount.2
+diff --git a/man2/fsconfig.2 b/man2/fsconfig.2
 new file mode 100644
-index 000000000..2ceb775d9
+index 000000000..da53d2fcb
 --- /dev/null
-+++ b/man2/move_mount.2
-@@ -0,0 +1,267 @@
++++ b/man2/fsconfig.2
+@@ -0,0 +1,277 @@
 +'\" t
 +.\" Copyright (c) 2020 David Howells <dhowells@redhat.com>
 +.\"
@@ -107,247 +107,257 @@ index 000000000..2ceb775d9
 +.\" the source, must acknowledge the copyright and authors of this work.
 +.\" %%%LICENSE_END
 +.\"
-+.TH MOVE_MOUNT 2 2020-08-24 "Linux" "Linux Programmer's Manual"
++.TH FSCONFIG 2 2020-08-24 "Linux" "Linux Programmer's Manual"
 +.SH NAME
-+move_mount \- Move mount objects around the filesystem topology
++fsconfig \- Filesystem parameterisation
 +.SH SYNOPSIS
 +.nf
 +.B #include <sys/types.h>
 +.B #include <sys/mount.h>
 +.B #include <unistd.h>
-+.BR "#include <fcntl.h>           " "/* Definition of AT_* constants */"
++.B #include <sys/mount.h>
 +.PP
-+.BI "int move_mount(int " from_dirfd ", const char *" from_pathname ","
-+.BI "               int " to_dirfd ", const char *" to_pathname ","
-+.BI "               unsigned int " flags );
++.BI "int fsconfig(int *" fd ", unsigned int " cmd ", const char *" key ,
++.br
++.BI "             const void __user *" value ", int " aux ");"
++.br
++.BI
 +.fi
 +.PP
 +.IR Note :
 +There is no glibc wrapper for this system call.
 +.SH DESCRIPTION
++.PP
++.BR fsconfig ()
++is used to supply parameters to and issue commands against a filesystem
++configuration context as set up by
++.BR fsopen (2)
++or
++.BR fspick (2).
++The context is supplied attached to the file descriptor specified by
++.I fd
++argument.
++.PP
 +The
-+.BR move_mount ()
-+call moves a mount from one place to another; it can also be used to attach an
-+unattached mount that was created by
-+.BR fsmount "() or " open_tree "() with " OPEN_TREE_CLONE .
++.I cmd
++argument indicates the command to be issued, where some of the commands simply
++supply parameters to the context.  The meaning of
++.IR key ", " value " and " aux
++are command-dependent; unless required for the command, these should be set to
++NULL or 0.
 +.PP
-+If
-+.BR move_mount ()
-+is called repeatedly with a file descriptor that refers to a mount object,
-+then the object will be attached/moved the first time and then moved
-+repeatedly, detaching it from the previous mountpoint each time.
++The available commands are:
++.TP
++.B FSCONFIG_SET_FLAG
++Set the parameter named by
++.IR key
++to true.  This may fail with error
++.B EINVAL
++if the parameter requires an argument.
++.TP
++.B FSCONFIG_SET_STRING
++Set the parameter named by
++.I key
++to a string.  This may fail with error
++.B EINVAL
++if the parser doesn't want a parameter here, wants a non-string or the string
++cannot be interpreted appropriately.
++.I value
++points to a NUL-terminated string.
++.TP
++.B FSCONFIG_SET_BINARY
++Set the parameter named by
++.I key
++to be a binary blob argument.  This may cause
++.B EINVAL
++to be returned if the filesystem parser isn't expecting a binary blob and it
++can't be converted to something usable.
++.I value
++points to the data and
++.I aux
++indicates the size of the data.
++.TP
++.B FSCONFIG_SET_PATH
++Set the parameter named by
++.I key
++to the object at the provided path.
++.I value
++should point to a NUL-terminated pathname string and aux may indicate
++.B AT_FDCWD
++or a file descriptor indicating a directory from which to begin a relative
++path resolution.  This may fail with error
++.B EINVAL
++if the parameter isn't expecting a path; it may also fail if the path cannot
++be resolved with the typcal errors for that
++.RB "(" ENOENT ", " ENOTDIR ", " EPERM ", " EACCES ", etc.)."
++.IP
++Note that FSCONFIG_SET_STRING can be used instead, implying AT_FDCWD.
++.TP
++.B FSCONFIG_SET_PATH_EMPTY
++As FSCONFIG_SET_PATH, but with
++.B AT_EMPTY_PATH
++applied to the pathwalk.
++.TP
++.B FSCONFIG_SET_FD
++Set the parameter named by
++.I key
++to the file descriptor specified by
++.IR aux .
++This will fail with
++.B EINVAL
++if the parameter doesn't expect a file descriptor or
++.B EBADF
++if the file descriptor is invalid.
++.IP
++Note that FSCONFIG_SET_STRING can be used instead with the file descriptor
++passed as a decimal string.
++.TP
++.B FSCONFIG_CMD_CREATE
++This command triggers the filesystem to take the parameters set in the context
++and to try to create filesystem representation in the kernel.  If an existing
++representation can be shared, the filesystem may do that instead if the
++parameters permit.  This is intended for use with
++.BR fsopen (2).
++.TP
++.B FSCONFIG_CMD_RECONFIGURE
++This command causes the driver to alter the parameters of an already live
++filesystem instance according to the parameters stored in the context.  This
++is intended for use with
++.BR fspick (2),
++but may also by used against the context created by
++.BR fsopen()
++after
++.BR fsmount (2)
++has been called on it.
++
++.\"________________________________________________________
++.SH EXAMPLES
 +.PP
-+To access the source mount object or the destination mountpoint, no
-+permissions are required on the object itself, but if either pathname is
-+supplied, execute (search) permission is required on all of the directories
-+specified in
-+.IR from_pathname " or " to_pathname .
++.in +4n
++.nf
++fsconfig(sfd, FSCONFIG_SET_FLAG, "ro", NULL, 0);
++
++fsconfig(sfd, FSCONFIG_SET_STRING, "user_xattr", "false", 0);
++
++fsconfig(sfd, FSCONFIG_SET_BINARY, "ms_pac", pac_buffer, pac_size);
++
++fsconfig(sfd, FSCONFIG_SET_PATH, "journal", "/dev/sdd4", AT_FDCWD);
++
++dirfd = open("/dev/", O_PATH);
++fsconfig(sfd, FSCONFIG_SET_PATH, "journal", "sdd4", dirfd);
++
++fd = open("/overlays/mine/", O_PATH);
++fsconfig(sfd, FSCONFIG_SET_PATH_EMPTY, "lower_dir", "", fd);
++
++pipe(pipefds);
++fsconfig(sfd, FSCONFIG_SET_FD, "fd", NULL, pipefds[1]);
++.fi
++.in
 +.PP
-+The caller does, however, require the appropriate privilege (Linux: the
-+.B CAP_SYS_ADMIN
-+capability) to move or attach mounts.
-+.PP
-+.BR move_mount ()
-+uses
-+.IR from_pathname ", " from_dirfd " and part of " flags
-+to locate the mount object to be moved and
-+.IR to_pathname ", " to_dirfd " and another part of " flags
-+to locate the destination mountpoint.  Each lookup can be done in one of a
-+variety of ways:
-+.TP
-+[*] By absolute path.
-+The pathname points to an absolute path and the dirfd is ignored.  The file is
-+looked up by name, starting from the root of the filesystem as seen by the
-+calling process.
-+.TP
-+[*] By cwd-relative path.
-+The pathname points to a relative path and the dirfd is
-+.IR AT_FDCWD .
-+The file is looked up by name, starting from the current working directory.
-+.TP
-+[*] By dir-relative path.
-+The pathname points to relative path and the dirfd indicates a file descriptor
-+pointing to a directory.  The file is looked up by name, starting from the
-+directory specified by
-+.IR dirfd .
-+.TP
-+[*] By file descriptor.  The pathname is an empty string (""), the dirfd
-+points directly to the mount object to move or the destination mount point and
-+the appropriate
-+.B *_EMPTY_PATH
-+flag is set.
-+.PP
-+.I flags
-+can be used to influence a path-based lookup.  The value for
-+.I flags
-+is constructed by OR'ing together zero or more of the following constants:
-+.TP
-+.BR MOVE_MOUNT_F_EMPTY_PATH
-+.\" commit 65cfc6722361570bfe255698d9cd4dccaf47570d
-+If
-+.I from_pathname
-+is an empty string, operate on the file referred to by
-+.IR from_dirfd
-+(which may have been obtained using the
-+.BR open (2)
-+.B O_PATH
-+flag or
-+.BR open_tree ())
-+If
-+.I from_dirfd
-+is
-+.BR AT_FDCWD ,
-+the call operates on the current working directory.
-+In this case,
-+.I from_dirfd
-+can refer to any type of file, not just a directory.
-+This flag is Linux-specific; define
-+.B _GNU_SOURCE
-+.\" Before glibc 2.16, defining _ATFILE_SOURCE sufficed
-+to obtain its definition.
-+.TP
-+.B MOVE_MOUNT_T_EMPTY_PATH
-+As above, but operating on
-+.IR to_pathname " and " to_dirfd .
-+.TP
-+.B MOVE_MOUNT_F_AUTOMOUNTS
-+Don't automount the terminal ("basename") component of
-+.I from_pathname
-+if it is a directory that is an automount point.  This allows a mount object
-+that has an automount point at its root to be moved and prevents unintended
-+triggering of an automount point.
-+The
-+.B MOVE_MOUNT_F_AUTOMOUNTS
-+flag has no effect if the automount point has already been mounted over.  This
-+flag is Linux-specific; define
-+.B _GNU_SOURCE
-+.\" Before glibc 2.16, defining _ATFILE_SOURCE sufficed
-+to obtain its definition.
-+.TP
-+.B MOVE_MOUNT_T_AUTOMOUNTS
-+As above, but operating on
-+.IR to_pathname " and " to_dirfd .
-+This allows an automount point to be manually mounted over.
-+.TP
-+.B MOVE_MOUNT_F_SYMLINKS
-+If
-+.I from_pathname
-+is a symbolic link, then dereference it.  The default for
-+.BR move_mount ()
-+is to not follow symlinks.
-+.TP
-+.B MOVE_MOUNT_T_SYMLINKS
-+As above, but operating on
-+.IR to_pathname " and " to_dirfd .
 +.SH RETURN VALUE
-+On success, 0 is returned.  On error, \-1 is returned, and
++On success, the function returns 0.  On error, \-1 is returned, and
 +.I errno
 +is set appropriately.
 +.SH ERRORS
++The error values given below result from filesystem type independent
++errors.
++Each filesystem type may have its own special errors and its
++own special behavior.
++See the Linux kernel source code for details.
 +.TP
 +.B EACCES
-+Search permission is denied for one of the directories
-+in the path prefix of
-+.IR pathname .
++A component of a path was not searchable.
 +(See also
 +.BR path_resolution (7).)
 +.TP
++.B EACCES
++Mounting a read-only filesystem was attempted without specifying the
++.RB ' ro '
++parameter.
++.TP
++.B EACCES
++A specified block device is located on a filesystem mounted with the
++.B MS_NODEV
++option.
++.\" mtk: Probably: write permission is required for MS_BIND, with
++.\" the error EPERM if not present; CAP_DAC_OVERRIDE is required.
++.TP
 +.B EBADF
-+.IR from_dirfd " or " to_dirfd
-+is not a valid open file descriptor.
++The file descriptor given by
++.I fd
++or possibly by
++.I aux
++(depending on the command) is invalid.
++.TP
++.B EBUSY
++The context attached to
++.I fd
++is in the wrong state for the given command.
++.TP
++.B EBUSY
++The filesystem representation cannot be reconfigured read-only because it still
++holds files open for writing.
 +.TP
 +.B EFAULT
-+.IR from_pathname " or " to_pathname
-+is NULL or either one point to a location outside the process's accessible
-+address space.
++One of the pointer arguments points outside the accessible address space.
 +.TP
 +.B EINVAL
-+Reserved flag specified in
-+.IR flags .
++.I fd
++does not refer to a filesystem configuration context.
++.TP
++.B EINVAL
++One of the source parameters referred to an invalid superblock.
 +.TP
 +.B ELOOP
-+Too many symbolic links encountered while traversing the pathname.
++Too many links encountered during pathname resolution.
 +.TP
 +.B ENAMETOOLONG
-+.IR from_pathname " or " to_pathname
-+is too long.
++A path name was longer than
++.BR MAXPATHLEN .
 +.TP
 +.B ENOENT
-+A component of
-+.IR from_pathname " or " to_pathname
-+does not exist, or one is an empty string and the appropriate
-+.B *_EMPTY_PATH
-+was not specified in
-+.IR flags .
++A pathname was empty or had a nonexistent component.
 +.TP
 +.B ENOMEM
-+Out of memory (i.e., kernel memory).
++The kernel could not allocate sufficient memory to complete the call.
++.TP
++.B ENOTBLK
++Once of the parameters does not refer to a block device (and a device was
++required).
 +.TP
 +.B ENOTDIR
-+A component of the path prefix of
-+.IR from_pathname " or " to_pathname
-+is not a directory or one or the other is relative and the appropriate
-+.I *_dirfd
-+is a file descriptor referring to a file other than a directory.
-+.SH VERSIONS
-+.BR move_mount ()
-+was added to Linux in kernel 5.2.
++.IR pathname ,
++or a prefix of
++.IR source ,
++is not a directory.
++.TP
++.B EOPNOTSUPP
++The command given by
++.I cmd
++was not valid.
++.TP
++.B ENXIO
++The major number of a block device parameter is out of range.
++.TP
++.B EPERM
++The caller does not have the required privileges.
 +.SH CONFORMING TO
-+.BR move_mount ()
-+is Linux-specific.
++These functions are Linux-specific and should not be used in programs intended
++to be portable.
++.SH VERSIONS
++.BR fsconfig ()
++was added to Linux in kernel 5.2.
 +.SH NOTES
 +Glibc does not (yet) provide a wrapper for the
-+.BR move_mount ()
++.BR fsconfig ()
 +system call; call it using
 +.BR syscall (2).
-+.SH EXAMPLES
-+The
-+.BR move_mount ()
-+function can be used like the following:
-+.PP
-+.RS
-+.nf
-+move_mount(AT_FDCWD, "/a", AT_FDCWD, "/b", 0);
-+.fi
-+.RE
-+.PP
-+This would move the object mounted on "/a" to "/b".  It can also be used in
-+conjunction with
-+.BR open_tree "(2) or " open "(2) with " O_PATH :
-+.PP
-+.RS
-+.nf
-+fd = open_tree(AT_FDCWD, "/mnt", 0);
-+move_mount(fd, "", AT_FDCWD, "/mnt2", MOVE_MOUNT_F_EMPTY_PATH);
-+move_mount(fd, "", AT_FDCWD, "/mnt3", MOVE_MOUNT_F_EMPTY_PATH);
-+move_mount(fd, "", AT_FDCWD, "/mnt4", MOVE_MOUNT_F_EMPTY_PATH);
-+.fi
-+.RE
-+.PP
-+This would attach the path point for "/mnt" to fd, then it would move the
-+mount to "/mnt2", then move it to "/mnt3" and finally to "/mnt4".
-+.PP
-+It can also be used to attach new mounts:
-+.PP
-+.RS
-+.nf
-+sfd = fsopen("ext4", FSOPEN_CLOEXEC);
-+fsconfig(sfd, FSCONFIG_SET_STRING, "source", "/dev/sda1", 0);
-+fsconfig(sfd, FSCONFIG_SET_FLAG, "user_xattr", NULL, 0);
-+fsconfig(sfd, FSCONFIG_CMD_CREATE, NULL, NULL, 0);
-+mfd = fsmount(sfd, FSMOUNT_CLOEXEC, MOUNT_ATTR_NODEV);
-+move_mount(mfd, "", AT_FDCWD, "/home", MOVE_MOUNT_F_EMPTY_PATH);
-+.fi
-+.RE
-+.PP
-+Which would open the Ext4 filesystem mounted on "/dev/sda1", turn on user
-+extended attribute support and create a mount object for it.  Finally, the new
-+mount object would be attached with
-+.BR move_mount ()
-+to "/home".
 +.SH SEE ALSO
++.BR mountpoint (1),
 +.BR fsmount (2),
 +.BR fsopen (2),
-+.BR open_tree (2)
++.BR fspick (2),
++.BR mount_namespaces (7),
++.BR path_resolution (7)
 
 
