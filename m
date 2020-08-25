@@ -4,36 +4,36 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8B30DC433F8
-	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 00:29:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 97918C433F7
+	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 00:29:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 75A49214F1
-	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 00:29:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 80EFF20838
+	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 00:29:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728364AbgHYA3w (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 24 Aug 2020 20:29:52 -0400
-Received: from mga17.intel.com ([192.55.52.151]:12300 "EHLO mga17.intel.com"
+        id S1728385AbgHYA36 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 24 Aug 2020 20:29:58 -0400
+Received: from mga17.intel.com ([192.55.52.151]:12299 "EHLO mga17.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728329AbgHYA3v (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 24 Aug 2020 20:29:51 -0400
-IronPort-SDR: gCnklKllKy1gpKNzY2HGcLmjVLJCQu285ESHVp9Ck55JUbQjdCbaZPfLt+eBcG3r6kY432DM3j
- ZBPjvLgBISvw==
-X-IronPort-AV: E=McAfee;i="6000,8403,9723"; a="136075311"
+        id S1728312AbgHYA35 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 24 Aug 2020 20:29:57 -0400
+IronPort-SDR: Q8UYXSmbQF9xREpyFcWjs+DxG95NJj642gvOGPQhalOINdLBJrS2EP4Eu7wJFfkxAZwY/RFNlX
+ fnGTLg+dTiIQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9723"; a="136075325"
 X-IronPort-AV: E=Sophos;i="5.76,350,1592895600"; 
-   d="scan'208";a="136075311"
+   d="scan'208";a="136075325"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 24 Aug 2020 17:29:41 -0700
-IronPort-SDR: kH2cVytrlj9cXOXm1Le/m0Vr7A92tHqUFvJZcpuOkik6KpnkyoRh6aourZy3nqyGd7iloRFg72
- ZiU1iVgxFGOw==
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 24 Aug 2020 17:29:44 -0700
+IronPort-SDR: nqn/oHxYk+W8TwVi7hu91ZrST/KUFbw43UdK/LoFf3WVMGZWQYSt+Akcvc9rTUBtDYR3DR8XX9
+ N1d4Oi4cqtng==
 X-IronPort-AV: E=Sophos;i="5.76,350,1592895600"; 
-   d="scan'208";a="474135009"
+   d="scan'208";a="474135031"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 24 Aug 2020 17:29:40 -0700
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 24 Aug 2020 17:29:43 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,9 +61,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v11 18/25] mm: Update can_follow_write_pte() for shadow stack
-Date:   Mon, 24 Aug 2020 17:25:33 -0700
-Message-Id: <20200825002540.3351-19-yu-cheng.yu@intel.com>
+Subject: [PATCH v11 22/25] binfmt_elf: Define GNU_PROPERTY_X86_FEATURE_1_AND properties
+Date:   Mon, 24 Aug 2020 17:25:37 -0700
+Message-Id: <20200825002540.3351-23-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20200825002540.3351-1-yu-cheng.yu@intel.com>
 References: <20200825002540.3351-1-yu-cheng.yu@intel.com>
@@ -74,78 +74,33 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Can_follow_write_pte() ensures a read-only page is COWed by checking the
-FOLL_COW flag, and uses pte_dirty() to validate the flag is still valid.
-
-Like a writable data page, a shadow stack page is writable, and becomes
-read-only during copy-on-write, but it is always dirty.  Thus, in the
-can_follow_write_pte() check, it belongs to the writable page case and
-should be excluded from the read-only page pte_dirty() check.  Apply
-the same changes to can_follow_write_pmd().
+An ELF file's .note.gnu.property indicates architecture features of the
+file.. Introduce feature definitions for Shadow Stack and Indirect Branch
+Tracking.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
-v10:
-- Reverse name changes to can_follow_write_*().
+ include/uapi/linux/elf.h | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
- mm/gup.c         | 8 +++++---
- mm/huge_memory.c | 8 +++++---
- 2 files changed, 10 insertions(+), 6 deletions(-)
-
-diff --git a/mm/gup.c b/mm/gup.c
-index ae096ea7583f..f6a640f2ad57 100644
---- a/mm/gup.c
-+++ b/mm/gup.c
-@@ -384,9 +384,11 @@ static int follow_pfn_pte(struct vm_area_struct *vma, unsigned long address,
-  * FOLL_FORCE or a forced COW break can write even to unwritable pte's,
-  * but only after we've gone through a COW cycle and they are dirty.
-  */
--static inline bool can_follow_write_pte(pte_t pte, unsigned int flags)
-+static inline bool can_follow_write_pte(pte_t pte, unsigned int flags,
-+					struct vm_area_struct *vma)
- {
--	return pte_write(pte) || ((flags & FOLL_COW) && pte_dirty(pte));
-+	return pte_write(pte) || ((flags & FOLL_COW) && pte_dirty(pte) &&
-+				  !arch_shadow_stack_mapping(vma->vm_flags));
- }
+diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
+index 22220945a5fd..ca5875f384f6 100644
+--- a/include/uapi/linux/elf.h
++++ b/include/uapi/linux/elf.h
+@@ -454,4 +454,13 @@ typedef struct elf64_note {
+ /* Bits for GNU_PROPERTY_AARCH64_FEATURE_1_BTI */
+ #define GNU_PROPERTY_AARCH64_FEATURE_1_BTI	(1U << 0)
  
- /*
-@@ -439,7 +441,7 @@ static struct page *follow_page_pte(struct vm_area_struct *vma,
- 	}
- 	if ((flags & FOLL_NUMA) && pte_protnone(pte))
- 		goto no_page;
--	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags)) {
-+	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags, vma)) {
- 		pte_unmap_unlock(ptep, ptl);
- 		return NULL;
- 	}
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index a580b5fb6e1a..0f4ed61a77f1 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1296,9 +1296,11 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
-  * FOLL_FORCE or a forced COW break can write even to unwritable pmd's,
-  * but only after we've gone through a COW cycle and they are dirty.
-  */
--static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags)
-+static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags,
-+					struct vm_area_struct *vma)
- {
--	return pmd_write(pmd) || ((flags & FOLL_COW) && pmd_dirty(pmd));
-+	return pmd_write(pmd) || ((flags & FOLL_COW) && pmd_dirty(pmd) &&
-+				  !arch_shadow_stack_mapping(vma->vm_flags));
- }
- 
- struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
-@@ -1311,7 +1313,7 @@ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
- 
- 	assert_spin_locked(pmd_lockptr(mm, pmd));
- 
--	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags))
-+	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags, vma))
- 		goto out;
- 
- 	/* Avoid dumping huge zero page */
++/* .note.gnu.property types for x86: */
++#define GNU_PROPERTY_X86_FEATURE_1_AND		0xc0000002
++
++/* Bits for GNU_PROPERTY_X86_FEATURE_1_AND */
++#define GNU_PROPERTY_X86_FEATURE_1_IBT		0x00000001
++#define GNU_PROPERTY_X86_FEATURE_1_SHSTK	0x00000002
++#define GNU_PROPERTY_X86_FEATURE_1_INVAL ~(GNU_PROPERTY_X86_FEATURE_1_IBT | \
++					    GNU_PROPERTY_X86_FEATURE_1_SHSTK)
++
+ #endif /* _UAPI_LINUX_ELF_H */
 -- 
 2.21.0
 
