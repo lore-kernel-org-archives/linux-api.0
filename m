@@ -2,44 +2,66 @@ Return-Path: <SRS0=p814=CD=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6D3B4C433DF
-	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 00:34:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 093B8C433E1
+	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 00:36:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5610B206EB
-	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 00:34:21 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DC01720767
+	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 00:36:17 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1598315777;
+	bh=rGvi9MthtY3Zm6e8LjprXXopxA9y4zSlrOEw0NKum+4=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:List-ID:From;
+	b=V4R0iZyoN8s5C4oWktVm9mL816U5GlBy7QHI+ZSYCRQhmv5ulzATuIgMvHyh2Ru8K
+	 02S6SFaeudH1PqOcjU3PoxRuDprhcJM2X84iTj2jwcA73DrcEqYmg6LG/thYQs9n5y
+	 hd9UgC1rUwAi+sH36pV/9A+MgPLMmoeX4rBCxYV4=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728605AbgHYAeS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 24 Aug 2020 20:34:18 -0400
-Received: from mga17.intel.com ([192.55.52.151]:12289 "EHLO mga17.intel.com"
+        id S1727913AbgHYAgQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 24 Aug 2020 20:36:16 -0400
+Received: from mail.kernel.org ([198.145.29.99]:47774 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727846AbgHYA3b (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 24 Aug 2020 20:29:31 -0400
-IronPort-SDR: eLwTuVtz7y/LuDB+F/BzePe+u1V7O0o6hxgLwJKASJVVwLQov8q8ba1sfrPJoAUmkCTgodJ+nU
- hKlSM7PYcf6A==
-X-IronPort-AV: E=McAfee;i="6000,8403,9723"; a="136075254"
-X-IronPort-AV: E=Sophos;i="5.76,350,1592895600"; 
-   d="scan'208";a="136075254"
-X-Amp-Result: SKIPPED(no attachment in message)
-X-Amp-File-Uploaded: False
-Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 24 Aug 2020 17:29:30 -0700
-IronPort-SDR: 5VW3PtJHi+h4dD6QQK1lytJjAZr4EPFzbKFAWOQKRuGQ3MEuyGmQURdNBzyM7wL4oglw0rXnrE
- JKI0qUqOZgeg==
-X-IronPort-AV: E=Sophos;i="5.76,350,1592895600"; 
-   d="scan'208";a="474134930"
-Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 24 Aug 2020 17:29:29 -0700
-From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
-To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
+        id S1728069AbgHYAgO (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 24 Aug 2020 20:36:14 -0400
+Received: from mail-wr1-f43.google.com (mail-wr1-f43.google.com [209.85.221.43])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 3C19E22B49
+        for <linux-api@vger.kernel.org>; Tue, 25 Aug 2020 00:36:13 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1598315773;
+        bh=rGvi9MthtY3Zm6e8LjprXXopxA9y4zSlrOEw0NKum+4=;
+        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+        b=B6Wx3Ta6WhVMQKKzGweK4EThUhgXM6QWLkS94KXmCxlmle+2iB0Dv09wyhNA8aRbN
+         dsQ53FpEURe72/ch7xsfDwPS91aaJSasia0EbG688D9gOu1Hx5x7lX3qZHeTOZW6D8
+         4wSVwPTFbnEboYBj+ztOR0WlttNyXQD1wqIUFjiw=
+Received: by mail-wr1-f43.google.com with SMTP id b18so291360wrs.7
+        for <linux-api@vger.kernel.org>; Mon, 24 Aug 2020 17:36:13 -0700 (PDT)
+X-Gm-Message-State: AOAM53271wRU1SH3g8MoaFfbYlJRQYBHz+b1/tbYjiRfepsH5M/CIpG1
+        kDA5L7sr7I6rQw39NjKRRD/9lj2uQG4FZXWk2oEW3w==
+X-Google-Smtp-Source: ABdhPJycfFTryYvqMmogFZ4f07fwtEQYtW9RheeU7iIaKlRW/yfrBCrffVk+TftqJezyfeIoiX/ikLMCzBNMBUeOh9k=
+X-Received: by 2002:adf:9283:: with SMTP id 3mr7902213wrn.70.1598315771751;
+ Mon, 24 Aug 2020 17:36:11 -0700 (PDT)
+MIME-Version: 1.0
+References: <20200825002540.3351-1-yu-cheng.yu@intel.com> <20200825002540.3351-26-yu-cheng.yu@intel.com>
+In-Reply-To: <20200825002540.3351-26-yu-cheng.yu@intel.com>
+From:   Andy Lutomirski <luto@kernel.org>
+Date:   Mon, 24 Aug 2020 17:36:00 -0700
+X-Gmail-Original-Message-ID: <CALCETrVpLnZGfWWLpJO+aZ9aBbx5KGaCskejXiCXF1GtsFFoPg@mail.gmail.com>
+Message-ID: <CALCETrVpLnZGfWWLpJO+aZ9aBbx5KGaCskejXiCXF1GtsFFoPg@mail.gmail.com>
+Subject: Re: [PATCH v11 25/25] x86/cet/shstk: Add arch_prctl functions for
+ shadow stack
+To:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc:     X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-doc@vger.kernel.org, linux-mm@kvack.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        Ingo Molnar <mingo@redhat.com>,
+        LKML <linux-kernel@vger.kernel.org>,
+        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
+        Linux-MM <linux-mm@kvack.org>,
+        linux-arch <linux-arch@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
         Arnd Bergmann <arnd@arndb.de>,
         Andy Lutomirski <luto@kernel.org>,
         Balbir Singh <bsingharora@gmail.com>,
@@ -60,66 +82,24 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>, Borislav Petkov <bp@suse.de>
-Subject: [PATCH v11 02/25] x86/cpufeatures: Add CET CPU feature flags for Control-flow Enforcement Technology (CET)
-Date:   Mon, 24 Aug 2020 17:25:17 -0700
-Message-Id: <20200825002540.3351-3-yu-cheng.yu@intel.com>
-X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20200825002540.3351-1-yu-cheng.yu@intel.com>
-References: <20200825002540.3351-1-yu-cheng.yu@intel.com>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add CPU feature flags for Control-flow Enforcement Technology (CET).
+On Mon, Aug 24, 2020 at 5:30 PM Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
 
-CPUID.(EAX=7,ECX=0):ECX[bit 7] Shadow stack
-CPUID.(EAX=7,ECX=0):EDX[bit 20] Indirect Branch Tracking
+> arch_prctl(ARCH_X86_CET_MMAP_SHSTK, u64 *args)
+>     Allocate a new shadow stack.
+>
+>     The parameter 'args' is a pointer to a user buffer.
+>
+>     *args = desired size
+>     *(args + 1) = MAP_32BIT or MAP_POPULATE
+>
+>     On returning, *args is the allocated shadow stack address.
 
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Borislav Petkov <bp@suse.de>
-Reviewed-by: Kees Cook <keescook@chromium.org>
----
- arch/x86/include/asm/cpufeatures.h | 2 ++
- arch/x86/kernel/cpu/cpuid-deps.c   | 2 ++
- 2 files changed, 4 insertions(+)
+This is hideous.  Would this be better as a new syscall?
 
-diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
-index 2901d5df4366..c794e18e8a14 100644
---- a/arch/x86/include/asm/cpufeatures.h
-+++ b/arch/x86/include/asm/cpufeatures.h
-@@ -341,6 +341,7 @@
- #define X86_FEATURE_OSPKE		(16*32+ 4) /* OS Protection Keys Enable */
- #define X86_FEATURE_WAITPKG		(16*32+ 5) /* UMONITOR/UMWAIT/TPAUSE Instructions */
- #define X86_FEATURE_AVX512_VBMI2	(16*32+ 6) /* Additional AVX512 Vector Bit Manipulation Instructions */
-+#define X86_FEATURE_SHSTK		(16*32+ 7) /* Shadow Stack */
- #define X86_FEATURE_GFNI		(16*32+ 8) /* Galois Field New Instructions */
- #define X86_FEATURE_VAES		(16*32+ 9) /* Vector AES */
- #define X86_FEATURE_VPCLMULQDQ		(16*32+10) /* Carry-Less Multiplication Double Quadword */
-@@ -370,6 +371,7 @@
- #define X86_FEATURE_SERIALIZE		(18*32+14) /* SERIALIZE instruction */
- #define X86_FEATURE_PCONFIG		(18*32+18) /* Intel PCONFIG */
- #define X86_FEATURE_ARCH_LBR		(18*32+19) /* Intel ARCH LBR */
-+#define X86_FEATURE_IBT			(18*32+20) /* Indirect Branch Tracking */
- #define X86_FEATURE_SPEC_CTRL		(18*32+26) /* "" Speculation Control (IBRS + IBPB) */
- #define X86_FEATURE_INTEL_STIBP		(18*32+27) /* "" Single Thread Indirect Branch Predictors */
- #define X86_FEATURE_FLUSH_L1D		(18*32+28) /* Flush L1D cache */
-diff --git a/arch/x86/kernel/cpu/cpuid-deps.c b/arch/x86/kernel/cpu/cpuid-deps.c
-index 3cbe24ca80ab..fec83cc74b9e 100644
---- a/arch/x86/kernel/cpu/cpuid-deps.c
-+++ b/arch/x86/kernel/cpu/cpuid-deps.c
-@@ -69,6 +69,8 @@ static const struct cpuid_dep cpuid_deps[] = {
- 	{ X86_FEATURE_CQM_MBM_TOTAL,		X86_FEATURE_CQM_LLC   },
- 	{ X86_FEATURE_CQM_MBM_LOCAL,		X86_FEATURE_CQM_LLC   },
- 	{ X86_FEATURE_AVX512_BF16,		X86_FEATURE_AVX512VL  },
-+	{ X86_FEATURE_SHSTK,			X86_FEATURE_XSAVES    },
-+	{ X86_FEATURE_IBT,			X86_FEATURE_XSAVES    },
- 	{}
- };
- 
--- 
-2.21.0
-
+--Andy
