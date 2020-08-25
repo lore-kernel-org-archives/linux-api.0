@@ -2,201 +2,232 @@ Return-Path: <SRS0=p814=CD=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.6 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B9CDAC433DF
-	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 07:38:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BB47BC433DF
+	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 08:25:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7616D204FD
-	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 07:38:25 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 89E652071E
+	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 08:25:24 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=chronox.de header.i=@chronox.de header.b="e4I5mqmf"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="hvQBJRIH"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729647AbgHYHiF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 25 Aug 2020 03:38:05 -0400
-Received: from mo4-p03-ob.smtp.rzone.de ([85.215.255.103]:36316 "EHLO
-        mo4-p03-ob.smtp.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729522AbgHYHge (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 25 Aug 2020 03:36:34 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; t=1598340988;
-        s=strato-dkim-0002; d=chronox.de;
-        h=References:In-Reply-To:Message-ID:Date:Subject:Cc:To:From:
-        X-RZG-CLASS-ID:X-RZG-AUTH:From:Subject:Sender;
-        bh=Es9pGKLx4z5oIgmChL28JnLmrOhua6NbH8JPKO7vMAs=;
-        b=e4I5mqmfnm1DWjo4fHrE36LAD04vYUE4xX4LkHrZLHfClvSsvucOtEZj6tp3cKvTQ/
-        GHRln+OuAFHgt00Tw3o3hndnzgQ7u7d/hqpQMJlYJbF4z5BM7PhOTsNn2A4lhjZ0wzav
-        OJ0BgY23h9RcWC1C/3ghPQJgaec3MSm/ZIPX+zz4FPiO1b2VGy3iF2YTmmuhUNCKaeP/
-        2EotqecGO49cQ+5bV7akdNeK/j3to4jQIqlDzediWitLmAuPPTkamnG0Ro6KB2mO88hz
-        mrTE5RMocK12mK+tt94GlnyYghgtTf9e1nxVv+kNqtSvkrsUPDCKr70rneJofnXnDoVc
-        kX/Q==
-X-RZG-AUTH: ":P2ERcEykfu11Y98lp/T7+hdri+uKZK8TKWEqNyiHySGSa9k9xmwdNnzHHXDaIvSXRbo="
-X-RZG-CLASS-ID: mo00
-Received: from positron.chronox.de
-        by smtp.strato.de (RZmta 46.10.7 DYNA|AUTH)
-        with ESMTPSA id 002e9aw7P7ZGZGO
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256 bits))
-        (Client did not present a certificate);
-        Tue, 25 Aug 2020 09:35:16 +0200 (CEST)
-From:   Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
-To:     Arnd Bergmann <arnd@arndb.de>
-Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>,
-        linux-api@vger.kernel.org,
-        "Eric W. Biederman" <ebiederm@xmission.com>,
-        "Alexander E. Patrakov" <patrakov@gmail.com>,
-        "Ahmed S. Darwish" <darwish.07@gmail.com>,
-        "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>,
-        Matthew Garrett <mjg59@srcf.ucam.org>,
-        Vito Caputo <vcaputo@pengaru.com>,
-        Andreas Dilger <adilger.kernel@dilger.ca>,
-        Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>,
-        William Jon McCann <mccann@jhu.edu>,
-        zhangjs <zachary@baishancloud.com>,
-        Andy Lutomirski <luto@kernel.org>,
-        Florian Weimer <fweimer@redhat.com>,
-        Lennart Poettering <mzxreary@0pointer.de>,
-        Nicolai Stange <nstange@suse.de>,
-        "Peter, Matthias" <matthias.peter@bsi.bund.de>,
-        Marcelo Henrique Cerri <marcelo.cerri@canonical.com>,
-        Roman Drahtmueller <draht@schaltsekun.de>,
-        Neil Horman <nhorman@redhat.com>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        Julia Lawall <julia.lawall@inria.fr>,
-        Dan Carpenter <dan.carpenter@oracle.com>,
-        Andy Lavr <andy.lavr@gmail.com>
-Subject: [PATCH v34 08/12] crypto: provide access to a static Jitter RNG state
-Date:   Tue, 25 Aug 2020 09:26:04 +0200
-Message-ID: <1896203.PYKUYFuaPT@positron.chronox.de>
-In-Reply-To: <11649613.O9o76ZdvQC@positron.chronox.de>
-References: <2544450.mvXUDI8C0e@positron.chronox.de> <5532247.MhkbZ0Pkbq@positron.chronox.de> <11649613.O9o76ZdvQC@positron.chronox.de>
+        id S1728543AbgHYIZU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 25 Aug 2020 04:25:20 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60354 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728093AbgHYIZT (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 25 Aug 2020 04:25:19 -0400
+Received: from mail-io1-xd44.google.com (mail-io1-xd44.google.com [IPv6:2607:f8b0:4864:20::d44])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AE4EBC061574;
+        Tue, 25 Aug 2020 01:25:19 -0700 (PDT)
+Received: by mail-io1-xd44.google.com with SMTP id d18so2269719iop.13;
+        Tue, 25 Aug 2020 01:25:19 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=PJ/LR4qMx00hGSLfoeaJRDPWjskXNla6H/yFj2rArUM=;
+        b=hvQBJRIHHRWicS4maCvOJT+dS0XPa/SgUHCTy5k1iO3EDYu1e3v8eEkLoZIFK0GGrq
+         1uBQZL/HTbPW5o97QMkIoz7Ut3nppenZM362H7vJBHHpCwfnR1bR5mRlfWKll8tXjLtD
+         N56KBOQHGuPAaJAhmTyJZbhzhJinxi+WMvXafNBh2L0klkuumLHnKGwAXp0xHDZUD+DX
+         dhWgt0DO44OlpI3XnQQd4IDJHEpQsmIUHG5vRPSuCNAcjPF51O5C8tO3JPAFJCcrb2Xc
+         /HbxN2p/gv7GfaAddoxbI6yLmyiwPDDim0Qxqp4I1V3HDWyfxTMrZtRiHJkjbN4NKnCX
+         i5wA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=PJ/LR4qMx00hGSLfoeaJRDPWjskXNla6H/yFj2rArUM=;
+        b=XI5jfUNdzpn4uA8Flm9BxoBSgn91gzyiYpho1zdUYmvqOQROLLIptu6vW0b8nIycmD
+         fSDt3mVQs7q/5F/Am2vw5QlTU+gPCJpt25b+Gtoyof9pYN95iNvvzI9cRDGpTwya1y/T
+         5nKWvOLAGVLG/ClW+0kZL1iG7pDg3oSW89QZeqiuc6rfzO7XRD3ZUYNUsXzpGdlOhzWi
+         uwBQ2cXLjGhWhdLwty/bD3zEPSBWv6v3+Ez4kMrNn3frXCc/tLGLsottZ1rEn4MPIixy
+         8Zb+7wd6bsrWEYwspl8q2z3JOFRNJFHGT7ETcO0+NZH/cRdBME0/RG6jZvYv7K4zmd5L
+         +smw==
+X-Gm-Message-State: AOAM532YoYQ9WLa/Ona4HwftYR7iaEBmSaQaRtEnXGdjMK4YHIYRReOt
+        /agcyfExGbK2knWnGFEKckqzd6NAgCS2GX8G0To=
+X-Google-Smtp-Source: ABdhPJzZnWiYV7v06E1+iBPLvYsLAKTDeVRUxo/cuk1EqnX4itnv70NikJmR4Z9vjRNFI+99vwaDOJ/Lvx89TntDuDA=
+X-Received: by 2002:a02:3f2d:: with SMTP id d45mr827548jaa.120.1598343916762;
+ Tue, 25 Aug 2020 01:25:16 -0700 (PDT)
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain; charset="iso-8859-1"
+References: <cover.1597993855.git.osandov@osandov.com> <9020a583581b644ae86b7c05de6a39fd5204f06d.1597993855.git.osandov@osandov.com>
+ <CAOQ4uxi=QcV-Rg=bSpYGid24Qp4zOgjKuOH2E5QA+OMrA-EsLQ@mail.gmail.com> <20200824234903.GA202819@exodia.localdomain>
+In-Reply-To: <20200824234903.GA202819@exodia.localdomain>
+From:   Amir Goldstein <amir73il@gmail.com>
+Date:   Tue, 25 Aug 2020 11:25:05 +0300
+Message-ID: <CAOQ4uxgXUvDSV_4V8R6ivbbSOdh8J4GhvrHqys77E_PgHtAoWg@mail.gmail.com>
+Subject: Re: [PATCH v5 3/9] fs: add RWF_ENCODED for reading/writing compressed data
+To:     Omar Sandoval <osandov@osandov.com>
+Cc:     linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        Linux Btrfs <linux-btrfs@vger.kernel.org>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Christoph Hellwig <hch@infradead.org>,
+        Dave Chinner <david@fromorbit.com>,
+        Jann Horn <jannh@google.com>, Aleksa Sarai <cyphar@cyphar.com>,
+        Linux API <linux-api@vger.kernel.org>, kernel-team@fb.com
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-To support the LRNG operation which uses the Jitter RNG separately
-from the kernel crypto API, at a time where potentially the regular
-memory management is not yet initialized, the Jitter RNG needs to
-provide a state whose memory is defined at compile time. As only once
-instance will ever be needed by the LRNG, define once static memory
-block which is solely to be used by the LRNG.
+On Tue, Aug 25, 2020 at 2:49 AM Omar Sandoval <osandov@osandov.com> wrote:
+>
+> On Fri, Aug 21, 2020 at 11:47:54AM +0300, Amir Goldstein wrote:
+> > On Fri, Aug 21, 2020 at 10:38 AM Omar Sandoval <osandov@osandov.com> wrote:
+> > >
+> > > From: Omar Sandoval <osandov@fb.com>
+> > >
+> > > Btrfs supports transparent compression: data written by the user can be
+> > > compressed when written to disk and decompressed when read back.
+> > > However, we'd like to add an interface to write pre-compressed data
+> > > directly to the filesystem, and the matching interface to read
+> > > compressed data without decompressing it. This adds support for
+> > > so-called "encoded I/O" via preadv2() and pwritev2().
+> > >
+> > > A new RWF_ENCODED flags indicates that a read or write is "encoded". If
+> > > this flag is set, iov[0].iov_base points to a struct encoded_iov which
+> > > is used for metadata: namely, the compression algorithm, unencoded
+> > > (i.e., decompressed) length, and what subrange of the unencoded data
+> > > should be used (needed for truncated or hole-punched extents and when
+> > > reading in the middle of an extent). For reads, the filesystem returns
+> > > this information; for writes, the caller provides it to the filesystem.
+> > > iov[0].iov_len must be set to sizeof(struct encoded_iov), which can be
+> > > used to extend the interface in the future a la copy_struct_from_user().
+> > > The remaining iovecs contain the encoded extent.
+> > >
+> > > This adds the VFS helpers for supporting encoded I/O and documentation
+> > > for filesystem support.
+> > >
+> > > Signed-off-by: Omar Sandoval <osandov@fb.com>
+> > > ---
+> > >  Documentation/filesystems/encoded_io.rst |  74 ++++++++++
+> > >  Documentation/filesystems/index.rst      |   1 +
+> > >  include/linux/fs.h                       |  16 +++
+> > >  include/uapi/linux/fs.h                  |  33 ++++-
+> > >  mm/filemap.c                             | 166 +++++++++++++++++++++--
+> > >  5 files changed, 276 insertions(+), 14 deletions(-)
+> > >  create mode 100644 Documentation/filesystems/encoded_io.rst
+> > >
+> > > diff --git a/Documentation/filesystems/encoded_io.rst b/Documentation/filesystems/encoded_io.rst
+> > > new file mode 100644
+> > > index 000000000000..50405276d866
+> > > --- /dev/null
+> > > +++ b/Documentation/filesystems/encoded_io.rst
+> > > @@ -0,0 +1,74 @@
+> > > +===========
+> > > +Encoded I/O
+> > > +===========
+> > > +
+> > > +Encoded I/O is a mechanism for reading and writing encoded (e.g., compressed
+> > > +and/or encrypted) data directly from/to the filesystem. The userspace interface
+> > > +is thoroughly described in the :manpage:`encoded_io(7)` man page; this document
+> > > +describes the requirements for filesystem support.
+> > > +
+> > > +First of all, a filesystem supporting encoded I/O must indicate this by setting
+> > > +the ``FMODE_ENCODED_IO`` flag in its ``file_open`` file operation::
+> > > +
+> > > +    static int foo_file_open(struct inode *inode, struct file *filp)
+> > > +    {
+> > > +            ...
+> > > +            filep->f_mode |= FMODE_ENCODED_IO;
+> > > +            ...
+> > > +    }
+> > > +
+> > > +Encoded I/O goes through ``read_iter`` and ``write_iter``, designated by the
+> > > +``IOCB_ENCODED`` flag in ``kiocb->ki_flags``.
+> > > +
+> > > +Reads
+> > > +=====
+> > > +
+> > > +Encoded ``read_iter`` should:
+> > > +
+> > > +1. Call ``generic_encoded_read_checks()`` to validate the file and buffers
+> > > +   provided by userspace.
+> > > +2. Initialize the ``encoded_iov`` appropriately.
+> > > +3. Copy it to the user with ``copy_encoded_iov_to_iter()``.
+> > > +4. Copy the encoded data to the user.
+> > > +5. Advance ``kiocb->ki_pos`` by ``encoded_iov->len``.
+> > > +6. Return the size of the encoded data read, not including the ``encoded_iov``.
+> > > +
+> > > +There are a few details to be aware of:
+> > > +
+> > > +* Encoded ``read_iter`` should support reading unencoded data if the extent is
+> > > +  not encoded.
+> > > +* If the buffers provided by the user are not large enough to contain an entire
+> > > +  encoded extent, then ``read_iter`` should return ``-ENOBUFS``. This is to
+> > > +  avoid confusing userspace with truncated data that cannot be properly
+> > > +  decoded.
+> > > +* Reads in the middle of an encoded extent can be returned by setting
+> > > +  ``encoded_iov->unencoded_offset`` to non-zero.
+> > > +* Truncated unencoded data (e.g., because the file does not end on a block
+> > > +  boundary) may be returned by setting ``encoded_iov->len`` to a value smaller
+> > > +  value than ``encoded_iov->unencoded_len - encoded_iov->unencoded_offset``.
+> > > +
+> > > +Writes
+> > > +======
+> > > +
+> > > +Encoded ``write_iter`` should (in addition to the usual accounting/checks done
+> > > +by ``write_iter``):
+> > > +
+> > > +1. Call ``copy_encoded_iov_from_iter()`` to get and validate the
+> > > +   ``encoded_iov``.
+> > > +2. Call ``generic_encoded_write_checks()`` instead of
+> > > +   ``generic_write_checks()``.
+> > > +3. Check that the provided encoding in ``encoded_iov`` is supported.
+> > > +4. Advance ``kiocb->ki_pos`` by ``encoded_iov->len``.
+> > > +5. Return the size of the encoded data written.
+> > > +
+> > > +Again, there are a few details:
+> > > +
+> > > +* Encoded ``write_iter`` doesn't need to support writing unencoded data.
+> > > +* ``write_iter`` should either write all of the encoded data or none of it; it
+> > > +  must not do partial writes.
+> > > +* ``write_iter`` doesn't need to validate the encoded data; a subsequent read
+> > > +  may return, e.g., ``-EIO`` if the data is not valid.
+> > > +* The user may lie about the unencoded size of the data; a subsequent read
+> > > +  should truncate or zero-extend the unencoded data rather than returning an
+> > > +  error.
+> > > +* Be careful of page cache coherency.
+> >
+> > Haha that rings in my head like the "Smoking kills!" warnings...
+> >
+> > I find it a bit odd that you mix page cache at all when reading
+> > unencoded extents.
+> > Feels like a file with FMODE_ENCODED_IO should stick to direct IO in all cases.
+> > I don't know how btrfs deals with mixing direct IO and page cache IO normally,
+> > but surely the rules could be made even stricter for an inode accessed with this
+> > new API?
+> >
+> > Is there something I am misunderstanding?
+> >
+> > Thanks,
+> > Amir.
+>
+> I'm not completely following here, are you suggesting that if a file is
+> open with O_ALLOW_ENCODED, buffered I/O to that file should return an
+> error?
 
-CC: "Eric W. Biederman" <ebiederm@xmission.com>
-CC: "Alexander E. Patrakov" <patrakov@gmail.com>
-CC: "Ahmed S. Darwish" <darwish.07@gmail.com>
-CC: "Theodore Y. Ts'o" <tytso@mit.edu>
-CC: Willy Tarreau <w@1wt.eu>
-CC: Matthew Garrett <mjg59@srcf.ucam.org>
-CC: Vito Caputo <vcaputo@pengaru.com>
-CC: Andreas Dilger <adilger.kernel@dilger.ca>
-CC: Jan Kara <jack@suse.cz>
-CC: Ray Strode <rstrode@redhat.com>
-CC: William Jon McCann <mccann@jhu.edu>
-CC: zhangjs <zachary@baishancloud.com>
-CC: Andy Lutomirski <luto@kernel.org>
-CC: Florian Weimer <fweimer@redhat.com>
-CC: Lennart Poettering <mzxreary@0pointer.de>
-CC: Nicolai Stange <nstange@suse.de>
-Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
-Tested-by: Roman Drahtm=FCller <draht@schaltsekun.de>
-Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
-Tested-by: Neil Horman <nhorman@redhat.com>
-Signed-off-by: Stephan Mueller <smueller@chronox.de>
-=2D--
- crypto/jitterentropy-kcapi.c                  |  3 +-
- crypto/jitterentropy.c                        | 31 ++++++++++++++++++-
- .../crypto/internal}/jitterentropy.h          |  3 ++
- 3 files changed, 34 insertions(+), 3 deletions(-)
- rename {crypto =3D> include/crypto/internal}/jitterentropy.h (84%)
+No. I don't.
 
-diff --git a/crypto/jitterentropy-kcapi.c b/crypto/jitterentropy-kcapi.c
-index eb7d1dd506bf..25a192f5984e 100644
-=2D-- a/crypto/jitterentropy-kcapi.c
-+++ b/crypto/jitterentropy-kcapi.c
-@@ -43,8 +43,7 @@
- #include <linux/time.h>
- #include <linux/crypto.h>
- #include <crypto/internal/rng.h>
-=2D
-=2D#include "jitterentropy.h"
-+#include <crypto/internal/jitterentropy.h>
-=20
- /*************************************************************************=
-**
-  * Helper function
-diff --git a/crypto/jitterentropy.c b/crypto/jitterentropy.c
-index 6e147c43fc18..fa1459f09b01 100644
-=2D-- a/crypto/jitterentropy.c
-+++ b/crypto/jitterentropy.c
-@@ -117,7 +117,7 @@ struct rand_data {
- #define JENT_EHEALTH		9 /* Health test failed during initialization */
- #define JENT_ERCT		10 /* RCT failed during initialization */
-=20
-=2D#include "jitterentropy.h"
-+#include <crypto/internal/jitterentropy.h>
-=20
- /*************************************************************************=
-**
-  * Adaptive Proportion Test
-@@ -854,3 +854,32 @@ int jent_entropy_init(void)
-=20
- 	return 0;
- }
-+
-+struct rand_data *jent_lrng_entropy_collector(void)
-+{
-+	static unsigned char lrng_jent_mem[JENT_MEMORY_SIZE];
-+	static struct rand_data lrng_jent_state =3D {
-+		.data		=3D 0,
-+		.old_data	=3D 0,
-+		.prev_time	=3D 0,
-+		.last_delta	=3D 0,
-+		.last_delta2	=3D 0,
-+		.osr		=3D 1,
-+		.mem		=3D lrng_jent_mem,
-+		.memlocation	=3D 0,
-+		.memblocks	=3D JENT_MEMORY_BLOCKSIZE,
-+		.memblocksize	=3D JENT_MEMORY_BLOCKS,
-+		.memaccessloops	=3D JENT_MEMORY_ACCESSLOOPS,
-+		.rct_count	=3D 0,
-+		.apt_observations =3D 0,
-+		.apt_count	=3D 0,
-+		.apt_base	=3D 0,
-+		.apt_base_set	=3D 0,
-+		.health_failure =3D 0
-+	};
-+
-+	if (jent_entropy_init())
-+		return NULL;
-+
-+	return &lrng_jent_state;
-+}
-diff --git a/crypto/jitterentropy.h b/include/crypto/internal/jitterentropy=
-=2Eh
-similarity index 84%
-rename from crypto/jitterentropy.h
-rename to include/crypto/internal/jitterentropy.h
-index c83fff32d130..6e07d86eac82 100644
-=2D-- a/crypto/jitterentropy.h
-+++ b/include/crypto/internal/jitterentropy.h
-@@ -15,3 +15,6 @@ extern int jent_read_entropy(struct rand_data *ec, unsign=
-ed char *data,
- extern struct rand_data *jent_entropy_collector_alloc(unsigned int osr,
- 						      unsigned int flags);
- extern void jent_entropy_collector_free(struct rand_data *entropy_collecto=
-r);
-+
-+/* Access to statically allocated Jitter RNG instance */
-+extern struct rand_data *jent_lrng_entropy_collector(void);
-=2D-=20
-2.26.2
+> Btrfs at least does the necessary range locking and page cache
+> invalidation to ensure that direct I/O gets along with buffered I/O (and
+> now encoded I/O).
 
+That's a good start :-)
 
+I saw btrfs_encoded_read_regular_fill_pages() and concluded that even
+in FMODE_ENCODED_IO, when reading an unencoded extent, you fill
+page cache with the unencoded data.
 
+Is that correct? or did I miss read the code?
+If correct, does it serve any purpose?
+Seems more sensible to me to read/write FMODE_ENCODED_IO only in direct io
+regardless if the extent is encoded or not (for simpler code if nothing else).
 
+Thanks,
+Amir.
