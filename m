@@ -2,44 +2,65 @@ Return-Path: <SRS0=p814=CD=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E65A0C433E1
-	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 00:32:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 909B2C433E4
+	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 00:32:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CE2BB2074D
-	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 00:32:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 704CA2074D
+	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 00:32:52 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1598315572;
+	bh=HzNRSUeUL6OriNoi411G8DjwqUuqi7JFl1V+hmvfPWg=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:List-ID:From;
+	b=YhcyjGGiJEpgKGUjdHfniETEH6dgHTjhzBKq+wz9212gQ+/v/xq+Gkg5Dft+XP5uH
+	 RbZ7dJKIwAVArL3G0+QNYJKV8K+Dbk2NKBrVhPmEcqgh62o/JguET0jZ2nxWqnQU7T
+	 PcdOBymR4NYrWCCjCep2nvvGwHfoSvID1tomiVBE=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728401AbgHYAcr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 24 Aug 2020 20:32:47 -0400
-Received: from mga17.intel.com ([192.55.52.151]:12299 "EHLO mga17.intel.com"
+        id S1728261AbgHYAcv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 24 Aug 2020 20:32:51 -0400
+Received: from mail.kernel.org ([198.145.29.99]:41524 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728251AbgHYA3i (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 24 Aug 2020 20:29:38 -0400
-IronPort-SDR: bCgCbKSry4kXLsweysKeMuaGbRHqPayQIMy18NZXIsZlNI78t1iIW7O26waKTeB4UU+oyrNLTW
- SoYudvGvTCTg==
-X-IronPort-AV: E=McAfee;i="6000,8403,9723"; a="136075287"
-X-IronPort-AV: E=Sophos;i="5.76,350,1592895600"; 
-   d="scan'208";a="136075287"
-X-Amp-Result: SKIPPED(no attachment in message)
-X-Amp-File-Uploaded: False
-Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 24 Aug 2020 17:29:36 -0700
-IronPort-SDR: KPIzFsb0zuWPPZY90PJXbLA/AJeM/792ake0CEuQMgRw2TA1CNGRELRobu4+D1A/xEW+IX5I6u
- +Q4nBiehXRQQ==
-X-IronPort-AV: E=Sophos;i="5.76,350,1592895600"; 
-   d="scan'208";a="474134979"
-Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 24 Aug 2020 17:29:36 -0700
-From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
-To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
+        id S1728437AbgHYAct (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 24 Aug 2020 20:32:49 -0400
+Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id DB8602177B
+        for <linux-api@vger.kernel.org>; Tue, 25 Aug 2020 00:32:48 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1598315569;
+        bh=HzNRSUeUL6OriNoi411G8DjwqUuqi7JFl1V+hmvfPWg=;
+        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+        b=uRWu1h/pRTe38+cnhWVoUjMTGyUxj4FX6LHXPmQOHohc0UiMAuVFXRFfGvQuUXiFU
+         x0m9GY1EjwLb2Vn/RymkjG2w7e8cfbzAb7e02+yOOlT1W3LXR000Pr7kw4RnV+6ZXj
+         WrQB1im2A7usG0ceNRnrso4/XUttJEJC2aZHtYTM=
+Received: by mail-wm1-f41.google.com with SMTP id c19so579267wmd.1
+        for <linux-api@vger.kernel.org>; Mon, 24 Aug 2020 17:32:48 -0700 (PDT)
+X-Gm-Message-State: AOAM53156OPMtvObyD5jLTEqXJStIuW2cvGsa31Ry4lGSs/BX+U5vL1s
+        4+oqY9wdGJrfNsNV7daIS1JbwADXn9xmOzJXDKHtMg==
+X-Google-Smtp-Source: ABdhPJyauPayFdftcuPZnq0MJTSphzvI2x0UgLNn081J3B9GZfktgEGZliAmuQJq8JPRJLx6kwBNbrs1VoFPRwDiqF4=
+X-Received: by 2002:a7b:ca48:: with SMTP id m8mr1581098wml.36.1598315567552;
+ Mon, 24 Aug 2020 17:32:47 -0700 (PDT)
+MIME-Version: 1.0
+References: <20200825002645.3658-1-yu-cheng.yu@intel.com> <20200825002645.3658-10-yu-cheng.yu@intel.com>
+In-Reply-To: <20200825002645.3658-10-yu-cheng.yu@intel.com>
+From:   Andy Lutomirski <luto@kernel.org>
+Date:   Mon, 24 Aug 2020 17:32:35 -0700
+X-Gmail-Original-Message-ID: <CALCETrVXwUDu2m-XEd-_J03L=sricM4cMxQYVkdGRWZDjmMB2g@mail.gmail.com>
+Message-ID: <CALCETrVXwUDu2m-XEd-_J03L=sricM4cMxQYVkdGRWZDjmMB2g@mail.gmail.com>
+Subject: Re: [PATCH v11 9/9] x86: Disallow vsyscall emulation when CET is enabled
+To:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc:     X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-doc@vger.kernel.org, linux-mm@kvack.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        Ingo Molnar <mingo@redhat.com>,
+        LKML <linux-kernel@vger.kernel.org>,
+        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
+        Linux-MM <linux-mm@kvack.org>,
+        linux-arch <linux-arch@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
         Arnd Bergmann <arnd@arndb.de>,
         Andy Lutomirski <luto@kernel.org>,
         Balbir Singh <bsingharora@gmail.com>,
@@ -60,128 +81,25 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v11 11/25] x86/mm: Update ptep_set_wrprotect() and pmdp_set_wrprotect() for transition from _PAGE_DIRTY_HW to _PAGE_COW
-Date:   Mon, 24 Aug 2020 17:25:26 -0700
-Message-Id: <20200825002540.3351-12-yu-cheng.yu@intel.com>
-X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20200825002540.3351-1-yu-cheng.yu@intel.com>
-References: <20200825002540.3351-1-yu-cheng.yu@intel.com>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-When shadow stack is introduced, [R/O + _PAGE_DIRTY_HW] PTE is reserved
-for shadow stack.  Copy-on-write PTEs have [R/O + _PAGE_COW].
+On Mon, Aug 24, 2020 at 5:30 PM Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+>
+> From: "H.J. Lu" <hjl.tools@gmail.com>
+>
+> Emulation of the legacy vsyscall page is required by some programs built
+> before 2013.  Newer programs after 2013 don't use it.  Disallow vsyscall
+> emulation when Control-flow Enforcement (CET) is enabled to enhance
+> security.
 
-When a PTE goes from [R/W + _PAGE_DIRTY_HW] to [R/O + _PAGE_COW], it could
-become a transient shadow stack PTE in two cases:
+NAK.
 
-The first case is that some processors can start a write but end up seeing
-a read-only PTE by the time they get to the Dirty bit, creating a transient
-shadow stack PTE.  However, this will not occur on processors supporting
-shadow stack, therefore we don't need a TLB flush here.
-
-The second case is that when the software, without atomic, tests & replaces
-_PAGE_DIRTY_HW with _PAGE_COW, a transient shadow stack PTE can exist.
-This is prevented with cmpxchg.
-
-Dave Hansen, Jann Horn, Andy Lutomirski, and Peter Zijlstra provided many
-insights to the issue.  Jann Horn provided the cmpxchg solution.
-
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
----
-v10:
-- Replace bit shift with pte_wrprotect()/pmd_wrprotect(), which use bit
-  test & shift.
-- Move READ_ONCE of old_pte into try_cmpxchg() loop.
-- Change static_cpu_has() to cpu_feature_enabled().
-
-v9:
-- Change compile-time conditionals to runtime checks.
-- Fix parameters of try_cmpxchg(): change pte_t/pmd_t to
-  pte_t.pte/pmd_t.pmd.
-
-v4:
-- Implement try_cmpxchg().
-
- arch/x86/include/asm/pgtable.h | 52 ++++++++++++++++++++++++++++++++++
- 1 file changed, 52 insertions(+)
-
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index 3bdb192a904b..a00d55fda5a2 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -1230,6 +1230,32 @@ static inline pte_t ptep_get_and_clear_full(struct mm_struct *mm,
- static inline void ptep_set_wrprotect(struct mm_struct *mm,
- 				      unsigned long addr, pte_t *ptep)
- {
-+	/*
-+	 * Some processors can start a write, but end up seeing a read-only
-+	 * PTE by the time they get to the Dirty bit.  In this case, they
-+	 * will set the Dirty bit, leaving a read-only, Dirty PTE which
-+	 * looks like a shadow stack PTE.
-+	 *
-+	 * However, this behavior has been improved and will not occur on
-+	 * processors supporting shadow stack.  Without this guarantee, a
-+	 * transition to a non-present PTE and flush the TLB would be
-+	 * needed.
-+	 *
-+	 * When changing a writable PTE to read-only and if the PTE has
-+	 * _PAGE_DIRTY_HW set, move that bit to _PAGE_COW so that the
-+	 * PTE is not a shadow stack PTE.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		pte_t old_pte, new_pte;
-+
-+		do {
-+			old_pte = READ_ONCE(*ptep);
-+			new_pte = pte_wrprotect(old_pte);
-+
-+		} while (!try_cmpxchg(&ptep->pte, &old_pte.pte, new_pte.pte));
-+
-+		return;
-+	}
- 	clear_bit(_PAGE_BIT_RW, (unsigned long *)&ptep->pte);
- }
- 
-@@ -1286,6 +1312,32 @@ static inline pud_t pudp_huge_get_and_clear(struct mm_struct *mm,
- static inline void pmdp_set_wrprotect(struct mm_struct *mm,
- 				      unsigned long addr, pmd_t *pmdp)
- {
-+	/*
-+	 * Some processors can start a write, but end up seeing a read-only
-+	 * PMD by the time they get to the Dirty bit.  In this case, they
-+	 * will set the Dirty bit, leaving a read-only, Dirty PMD which
-+	 * looks like a Shadow Stack PMD.
-+	 *
-+	 * However, this behavior has been improved and will not occur on
-+	 * processors supporting Shadow Stack.  Without this guarantee, a
-+	 * transition to a non-present PMD and flush the TLB would be
-+	 * needed.
-+	 *
-+	 * When changing a writable PMD to read-only and if the PMD has
-+	 * _PAGE_DIRTY_HW set, we move that bit to _PAGE_COW so that the
-+	 * PMD is not a shadow stack PMD.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		pmd_t old_pmd, new_pmd;
-+
-+		do {
-+			old_pmd = READ_ONCE(*pmdp);
-+			new_pmd = pmd_wrprotect(old_pmd);
-+
-+		} while (!try_cmpxchg((pmdval_t *)pmdp, (pmdval_t *)&old_pmd, pmd_val(new_pmd)));
-+
-+		return;
-+	}
- 	clear_bit(_PAGE_BIT_RW, (unsigned long *)pmdp);
- }
- 
--- 
-2.21.0
-
+By all means disable execute emulation if CET-IBT is enabled at the
+time emulation is attempted, and maybe even disable the vsyscall page
+entirely if you can magically tell that CET-IBT will be enabled when a
+process starts, but you don't get to just disable it outright on a
+CET-enabled kernel.
