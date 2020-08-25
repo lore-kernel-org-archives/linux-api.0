@@ -2,84 +2,112 @@ Return-Path: <SRS0=p814=CD=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.9 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C2D8AC433E3
-	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 11:52:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 18ADFC433E1
+	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 15:08:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 969782075B
-	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 11:52:17 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=chronox.de header.i=@chronox.de header.b="sJXEBJai"
+	by mail.kernel.org (Postfix) with ESMTP id EF6012075F
+	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 15:08:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729885AbgHYLwP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 25 Aug 2020 07:52:15 -0400
-Received: from mo4-p01-ob.smtp.rzone.de ([85.215.255.50]:33681 "EHLO
-        mo4-p01-ob.smtp.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725893AbgHYLwM (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 25 Aug 2020 07:52:12 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; t=1598356325;
-        s=strato-dkim-0002; d=chronox.de;
-        h=References:In-Reply-To:Message-ID:Date:Subject:Cc:To:From:
-        X-RZG-CLASS-ID:X-RZG-AUTH:From:Subject:Sender;
-        bh=D2qqsSA5sHWxkwGYpXIctTVmxWLQwISn1aS53FcUiHw=;
-        b=sJXEBJaiRrHx8Ivj6PCqR+pcomDUO/Z+qeeRx5lKpv2HBVNgflv5cYeyhMUnNMiSi6
-        jyk0abqOyC7GK0/TAmPLJuy8PcwQmNKAQWwAmNxxYhIwS2zJ+TWRYVBtFCmQPbYprzde
-        dd2cWAB5WY2dVKmyq6Z68vQP31ZnRWLaH/v0i+2TMSorKevT+FqYaXmz/XrXtGKsOVJ2
-        iGU9eq0R+wBsDAUhBU4iSFJAituTnDbeSqmjBnJf5cbVI/D+fRnn/iiiTwxYgYRydpx6
-        IfFjokgZDjNtuQti1/vIMK31jEOVADZRWiBZIY3OWKGCsOM8NJ8aVjlQT9Ijm7AAo+Bk
-        nWqQ==
-X-RZG-AUTH: ":P2ERcEykfu11Y98lp/T7+hdri+uKZK8TKWEqNyiHySGSa9k9xmwdNnzHHXDaIvSXRbo="
-X-RZG-CLASS-ID: mo00
-Received: from tauon.chronox.de
-        by smtp.strato.de (RZmta 46.10.7 DYNA|AUTH)
-        with ESMTPSA id 002e9aw7PBpJb3K
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256 bits))
-        (Client did not present a certificate);
-        Tue, 25 Aug 2020 13:51:19 +0200 (CEST)
-From:   Stephan Mueller <smueller@chronox.de>
-To:     Arnd Bergmann <arnd@arndb.de>, kernel test robot <lkp@intel.com>
-Cc:     kbuild-all@lists.01.org,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>,
-        linux-api@vger.kernel.org,
-        "Eric W. Biederman" <ebiederm@xmission.com>,
-        "Alexander E. Patrakov" <patrakov@gmail.com>,
-        "Ahmed S. Darwish" <darwish.07@gmail.com>,
-        "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>
-Subject: Re: [PATCH v34 01/12] Linux Random Number Generator
-Date:   Tue, 25 Aug 2020 13:51:19 +0200
-Message-ID: <6658249.kC03pvyZki@tauon.chronox.de>
-In-Reply-To: <202008251912.50LKcRvL%lkp@intel.com>
-References: <5695397.lOV4Wx5bFT@positron.chronox.de> <202008251912.50LKcRvL%lkp@intel.com>
+        id S1726483AbgHYPIt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 25 Aug 2020 11:08:49 -0400
+Received: from mga02.intel.com ([134.134.136.20]:37665 "EHLO mga02.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726191AbgHYPIs (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 25 Aug 2020 11:08:48 -0400
+IronPort-SDR: guzVyx3idWPZHQ5VBZqRCfFTGV/WD2RCbcdrkUFbBahs9vWSyxsXP2agiKOpdascBntNeOd7b6
+ zSFQNeTnnzEA==
+X-IronPort-AV: E=McAfee;i="6000,8403,9723"; a="143902232"
+X-IronPort-AV: E=Sophos;i="5.76,353,1592895600"; 
+   d="scan'208";a="143902232"
+X-Amp-Result: SKIPPED(no attachment in message)
+X-Amp-File-Uploaded: False
+Received: from fmsmga004.fm.intel.com ([10.253.24.48])
+  by orsmga101.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Aug 2020 08:08:47 -0700
+IronPort-SDR: KSfTDtD6zIFJ3yrXC9mxYXKt6FSoJ4/pJ7BjhBsF4uQzI1x1YuiipAjh3Izwl0Vjlot+R7UVxg
+ keo6AcrqrJ7g==
+X-IronPort-AV: E=Sophos;i="5.76,353,1592895600"; 
+   d="scan'208";a="322791026"
+Received: from yyu32-mobl1.amr.corp.intel.com (HELO [10.213.162.112]) ([10.213.162.112])
+  by fmsmga004-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Aug 2020 08:08:46 -0700
+Subject: Re: [PATCH v11 9/9] x86: Disallow vsyscall emulation when CET is
+ enabled
+To:     Florian Weimer <fweimer@redhat.com>,
+        Andy Lutomirski <luto@kernel.org>
+Cc:     X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>,
+        LKML <linux-kernel@vger.kernel.org>,
+        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
+        Linux-MM <linux-mm@kvack.org>,
+        linux-arch <linux-arch@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Balbir Singh <bsingharora@gmail.com>,
+        Borislav Petkov <bp@alien8.de>,
+        Cyrill Gorcunov <gorcunov@gmail.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Eugene Syromiatnikov <esyr@redhat.com>,
+        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Nadav Amit <nadav.amit@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
+        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Weijiang Yang <weijiang.yang@intel.com>
+References: <20200825002645.3658-1-yu-cheng.yu@intel.com>
+ <20200825002645.3658-10-yu-cheng.yu@intel.com>
+ <CALCETrVXwUDu2m-XEd-_J03L=sricM4cMxQYVkdGRWZDjmMB2g@mail.gmail.com>
+ <87pn7f9jeq.fsf@oldenburg2.str.redhat.com>
+From:   "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
+Message-ID: <0e378792-7ac0-6c52-5607-e73de856d820@intel.com>
+Date:   Tue, 25 Aug 2020 08:08:45 -0700
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101
+ Thunderbird/68.11.0
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="us-ascii"
+In-Reply-To: <87pn7f9jeq.fsf@oldenburg2.str.redhat.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Am Dienstag, 25. August 2020, 13:28:53 CEST schrieb kernel test robot:
-
-Hi,
-
-> All warnings (new ones prefixed by >>):
-> >> drivers/char/lrng/lrng_drng.c:381:6: warning: no previous prototype for
-> >> 'lrng_reset' [-Wmissing-prototypes]
->      381 | void lrng_reset(void)
+On 8/25/2020 2:14 AM, Florian Weimer wrote:
+> * Andy Lutomirski:
 > 
->          |      ^~~~~~~~~~
+>> On Mon, Aug 24, 2020 at 5:30 PM Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+>>>
+>>> From: "H.J. Lu" <hjl.tools@gmail.com>
+>>>
+>>> Emulation of the legacy vsyscall page is required by some programs built
+>>> before 2013.  Newer programs after 2013 don't use it.  Disallow vsyscall
+>>> emulation when Control-flow Enforcement (CET) is enabled to enhance
+>>> security.
+>>
+>> NAK.
+>>
+>> By all means disable execute emulation if CET-IBT is enabled at the
+>> time emulation is attempted, and maybe even disable the vsyscall page
+>> entirely if you can magically tell that CET-IBT will be enabled when a
+>> process starts, but you don't get to just disable it outright on a
+>> CET-enabled kernel.
+> 
+> Yeah, we definitely would have to revert/avoid this downstream.  People
+> definitely want to run glibc-2.12-era workloads on current kernels.
+> Thanks for catching it.
+> 
 
-The prototype is covered in an ifdef in lrng_internal.h as it is only needed 
-for a specific configuration. I have moved the prototype out of that 
-configuration conditional now.
+That makes sense.  I will update the patch.
 
-Thanks.
-
-Ciao
-Stephan
-
-
+Thanks,
+Yu-cheng
