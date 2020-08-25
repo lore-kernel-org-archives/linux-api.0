@@ -2,65 +2,44 @@ Return-Path: <SRS0=p814=CD=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 909B2C433E4
-	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 00:32:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C1045C433E1
+	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 00:33:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 704CA2074D
-	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 00:32:52 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1598315572;
-	bh=HzNRSUeUL6OriNoi411G8DjwqUuqi7JFl1V+hmvfPWg=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:List-ID:From;
-	b=YhcyjGGiJEpgKGUjdHfniETEH6dgHTjhzBKq+wz9212gQ+/v/xq+Gkg5Dft+XP5uH
-	 RbZ7dJKIwAVArL3G0+QNYJKV8K+Dbk2NKBrVhPmEcqgh62o/JguET0jZ2nxWqnQU7T
-	 PcdOBymR4NYrWCCjCep2nvvGwHfoSvID1tomiVBE=
+	by mail.kernel.org (Postfix) with ESMTP id A6706206EB
+	for <linux-api@archiver.kernel.org>; Tue, 25 Aug 2020 00:33:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728261AbgHYAcv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 24 Aug 2020 20:32:51 -0400
-Received: from mail.kernel.org ([198.145.29.99]:41524 "EHLO mail.kernel.org"
+        id S1728708AbgHYAdI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 24 Aug 2020 20:33:08 -0400
+Received: from mga17.intel.com ([192.55.52.151]:12294 "EHLO mga17.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728437AbgHYAct (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 24 Aug 2020 20:32:49 -0400
-Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id DB8602177B
-        for <linux-api@vger.kernel.org>; Tue, 25 Aug 2020 00:32:48 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1598315569;
-        bh=HzNRSUeUL6OriNoi411G8DjwqUuqi7JFl1V+hmvfPWg=;
-        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-        b=uRWu1h/pRTe38+cnhWVoUjMTGyUxj4FX6LHXPmQOHohc0UiMAuVFXRFfGvQuUXiFU
-         x0m9GY1EjwLb2Vn/RymkjG2w7e8cfbzAb7e02+yOOlT1W3LXR000Pr7kw4RnV+6ZXj
-         WrQB1im2A7usG0ceNRnrso4/XUttJEJC2aZHtYTM=
-Received: by mail-wm1-f41.google.com with SMTP id c19so579267wmd.1
-        for <linux-api@vger.kernel.org>; Mon, 24 Aug 2020 17:32:48 -0700 (PDT)
-X-Gm-Message-State: AOAM53156OPMtvObyD5jLTEqXJStIuW2cvGsa31Ry4lGSs/BX+U5vL1s
-        4+oqY9wdGJrfNsNV7daIS1JbwADXn9xmOzJXDKHtMg==
-X-Google-Smtp-Source: ABdhPJyauPayFdftcuPZnq0MJTSphzvI2x0UgLNn081J3B9GZfktgEGZliAmuQJq8JPRJLx6kwBNbrs1VoFPRwDiqF4=
-X-Received: by 2002:a7b:ca48:: with SMTP id m8mr1581098wml.36.1598315567552;
- Mon, 24 Aug 2020 17:32:47 -0700 (PDT)
-MIME-Version: 1.0
-References: <20200825002645.3658-1-yu-cheng.yu@intel.com> <20200825002645.3658-10-yu-cheng.yu@intel.com>
-In-Reply-To: <20200825002645.3658-10-yu-cheng.yu@intel.com>
-From:   Andy Lutomirski <luto@kernel.org>
-Date:   Mon, 24 Aug 2020 17:32:35 -0700
-X-Gmail-Original-Message-ID: <CALCETrVXwUDu2m-XEd-_J03L=sricM4cMxQYVkdGRWZDjmMB2g@mail.gmail.com>
-Message-ID: <CALCETrVXwUDu2m-XEd-_J03L=sricM4cMxQYVkdGRWZDjmMB2g@mail.gmail.com>
-Subject: Re: [PATCH v11 9/9] x86: Disallow vsyscall emulation when CET is enabled
-To:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc:     X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>,
+        id S1728196AbgHYA3f (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 24 Aug 2020 20:29:35 -0400
+IronPort-SDR: hVccX+iDM2QD/DM2Ud/mlHJldXGEOFRomO3MYbYlVwynGHyr0w15EwhYSn1UkXI9PlW5mrdQgh
+ 8fZSy0Y5aqyA==
+X-IronPort-AV: E=McAfee;i="6000,8403,9723"; a="136075280"
+X-IronPort-AV: E=Sophos;i="5.76,350,1592895600"; 
+   d="scan'208";a="136075280"
+X-Amp-Result: SKIPPED(no attachment in message)
+X-Amp-File-Uploaded: False
+Received: from orsmga005.jf.intel.com ([10.7.209.41])
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 24 Aug 2020 17:29:35 -0700
+IronPort-SDR: t/f0Fy8XKSj8Tdpvkh/FWYuRZOS2AZNlWGcFsgCZ90WgclJzmKC4FVplytaqWqn9m/VhoxDeVw
+ 06O1b+ZRfWNQ==
+X-IronPort-AV: E=Sophos;i="5.76,350,1592895600"; 
+   d="scan'208";a="474134968"
+Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 24 Aug 2020 17:29:34 -0700
+From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
+To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
-        Linux-MM <linux-mm@kvack.org>,
-        linux-arch <linux-arch@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
+        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-doc@vger.kernel.org, linux-mm@kvack.org,
+        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
         Arnd Bergmann <arnd@arndb.de>,
         Andy Lutomirski <luto@kernel.org>,
         Balbir Singh <bsingharora@gmail.com>,
@@ -81,25 +60,56 @@ Cc:     X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>,
         Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>
-Content-Type: text/plain; charset="UTF-8"
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
+        David Airlie <airlied@linux.ie>,
+        Joonas Lahtinen <joonas.lahtinen@linux.intel.com>,
+        Jani Nikula <jani.nikula@linux.intel.com>,
+        Daniel Vetter <daniel@ffwll.ch>,
+        Rodrigo Vivi <rodrigo.vivi@intel.com>,
+        Zhenyu Wang <zhenyuw@linux.intel.com>,
+        Zhi Wang <zhi.a.wang@intel.com>
+Subject: [PATCH v11 09/25] drm/i915/gvt: Change _PAGE_DIRTY to _PAGE_DIRTY_BITS
+Date:   Mon, 24 Aug 2020 17:25:24 -0700
+Message-Id: <20200825002540.3351-10-yu-cheng.yu@intel.com>
+X-Mailer: git-send-email 2.21.0
+In-Reply-To: <20200825002540.3351-1-yu-cheng.yu@intel.com>
+References: <20200825002540.3351-1-yu-cheng.yu@intel.com>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Aug 24, 2020 at 5:30 PM Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
->
-> From: "H.J. Lu" <hjl.tools@gmail.com>
->
-> Emulation of the legacy vsyscall page is required by some programs built
-> before 2013.  Newer programs after 2013 don't use it.  Disallow vsyscall
-> emulation when Control-flow Enforcement (CET) is enabled to enhance
-> security.
+After the introduction of _PAGE_COW, a modified page's PTE can have either
+_PAGE_DIRTY_HW or _PAGE_COW.  Change _PAGE_DIRTY to _PAGE_DIRTY_BITS.
 
-NAK.
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: David Airlie <airlied@linux.ie>
+Cc: Joonas Lahtinen <joonas.lahtinen@linux.intel.com>
+Cc: Jani Nikula <jani.nikula@linux.intel.com>
+Cc: Daniel Vetter <daniel@ffwll.ch>
+Cc: Rodrigo Vivi <rodrigo.vivi@intel.com>
+Cc: Zhenyu Wang <zhenyuw@linux.intel.com>
+Cc: Zhi Wang <zhi.a.wang@intel.com>
+---
+ drivers/gpu/drm/i915/gvt/gtt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-By all means disable execute emulation if CET-IBT is enabled at the
-time emulation is attempted, and maybe even disable the vsyscall page
-entirely if you can magically tell that CET-IBT will be enabled when a
-process starts, but you don't get to just disable it outright on a
-CET-enabled kernel.
+diff --git a/drivers/gpu/drm/i915/gvt/gtt.c b/drivers/gpu/drm/i915/gvt/gtt.c
+index 210016192ce7..c01f4880c794 100644
+--- a/drivers/gpu/drm/i915/gvt/gtt.c
++++ b/drivers/gpu/drm/i915/gvt/gtt.c
+@@ -1207,7 +1207,7 @@ static int split_2MB_gtt_entry(struct intel_vgpu *vgpu,
+ 	}
+ 
+ 	/* Clear dirty field. */
+-	se->val64 &= ~_PAGE_DIRTY;
++	se->val64 &= ~_PAGE_DIRTY_BITS;
+ 
+ 	ops->clear_pse(se);
+ 	ops->clear_ips(se);
+-- 
+2.21.0
+
