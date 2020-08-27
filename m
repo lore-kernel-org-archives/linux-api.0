@@ -2,136 +2,432 @@ Return-Path: <SRS0=VhFk=CF=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.6 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-12.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,NICE_REPLY_A,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A19E7C433DF
-	for <linux-api@archiver.kernel.org>; Thu, 27 Aug 2020 14:51:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 75955C433E4
+	for <linux-api@archiver.kernel.org>; Thu, 27 Aug 2020 15:10:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8113322B4B
-	for <linux-api@archiver.kernel.org>; Thu, 27 Aug 2020 14:51:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 54BE92073A
+	for <linux-api@archiver.kernel.org>; Thu, 27 Aug 2020 15:10:55 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="sDuPAMwy"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="bcFGAOIY"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728120AbgH0OvX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 27 Aug 2020 10:51:23 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48182 "EHLO
+        id S1728893AbgH0Lqx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 27 Aug 2020 07:46:53 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60704 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727954AbgH0N1e (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 27 Aug 2020 09:27:34 -0400
-Received: from mail-io1-xd44.google.com (mail-io1-xd44.google.com [IPv6:2607:f8b0:4864:20::d44])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 682BEC061232;
-        Thu, 27 Aug 2020 06:26:50 -0700 (PDT)
-Received: by mail-io1-xd44.google.com with SMTP id h10so1282146ioq.6;
-        Thu, 27 Aug 2020 06:26:50 -0700 (PDT)
+        with ESMTP id S1728833AbgH0Lqg (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 27 Aug 2020 07:46:36 -0400
+Received: from mail-ej1-x62c.google.com (mail-ej1-x62c.google.com [IPv6:2a00:1450:4864:20::62c])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 50863C06123B;
+        Thu, 27 Aug 2020 04:07:38 -0700 (PDT)
+Received: by mail-ej1-x62c.google.com with SMTP id e23so6314675ejb.4;
+        Thu, 27 Aug 2020 04:07:38 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=Z3rM/s09CyTTr9lsRuYlr+CDTRnp96lIqmXrR7O4ris=;
-        b=sDuPAMwyq2iaWGTIoS5gCuxEF7/8dQebiq2GQBQW3Ea8W+S5M4BxfTu8rNxQRsT2OE
-         qivotQ/CsKAGuQXSMZJALTIdsrJcmPAmtbxjl/afnsHDpUI2P7q1ujOsMGm4m1DBkQMm
-         o6MNSz4O+tSKLztWAovSUrtlbObut08eODM4+byTdb6EQdawaTGuyc+dbgMlxYkT7QlU
-         uE2pa4zzkiedG1liIbX434R3WSH/G+20TTjrooRvrv2GNXnYy1KS6b0jYQrksbv6nbXi
-         FDvt98BgQMeP9DrUtZEAmZ6SP/0Cfb2GSYl3BztAkv0kzjNEbg0BV0cM3rYXaxK6iMsZ
-         mtzQ==
+        h=cc:subject:to:references:from:message-id:date:user-agent
+         :mime-version:in-reply-to:content-language:content-transfer-encoding;
+        bh=zU4FrI+Vt0q4ZIfI3neU7juoeszoQlRoZHrRORmmAiY=;
+        b=bcFGAOIY0PA9yEz5optZo1DSd/8VixxnGGte+kgKoaQ7M5kTYw1we/PXCzUSTfhNzD
+         GLT7ALEjw0uyiHXWOaYkBBJU49xaCtWvzYkpC+XXFmSoS+7VPka3z5YHfGQjTvPe9bf8
+         kkBxfCtqngr7N3SZnbT62fG5e1/4T2Xe2z4ceEwKc86EgAxw65+vVSjseEaxEFnYPbLZ
+         VMm894viweqrPSZPrCGqCdDHWpqa8A0wBbvmQomiTI4hdwBX5WdL7zOlD0WkLgyGqrKu
+         e53EnhA+83GyV8QV9nRKZWtG+LEEBUA/M8WhigMv43kG+w9LjT/tn9cSIpY2ATKJLwv0
+         A34Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=Z3rM/s09CyTTr9lsRuYlr+CDTRnp96lIqmXrR7O4ris=;
-        b=oqYyBei6vR4B45WTvUOiYT0/3kZKoV8+77p2KvV7r3vrMejkQkDcRyMADW4Gdn7FJT
-         AzB/UrN0t0K4/lK8hTMc+3z6oWNyeNBVI7h5RGgbqUdmSTb219Z0E3pk2bV26NYHPv9z
-         fH3Ti75dIOShMKpHVZpShQLYh5so0un7S/iC2lY7mQE2he55cJwqn9UbrIx76cj/RJjD
-         fJiQ5v5+vaTqYYFYuESHMz5bgb82214gspNnFpRNfN0WxFPjF8O83aFTHcvshj+WoGjx
-         lFZnPRRjO5z5FRXixD8Iou1ttdIegRGVwlk1T6HCbTV4oTcm/TdleksD4XR0ztfKVgH1
-         SbPw==
-X-Gm-Message-State: AOAM531hjE9uztfEQR/41GEzqaji1itqVAmMr0nnwIQUo04c2ym000zW
-        W0EGfQyv2PPJXPJKpYGVzDszMKEDaaqc4bAfxZw=
-X-Google-Smtp-Source: ABdhPJyB3BGNlYSy6idrDHa0529fu+S4aI1rBmtXPi+OyTmClxS6ugobiVojUBykK3d7ZiXNOZaWep4R8pAyBk5UKR4=
-X-Received: by 2002:a05:6638:1690:: with SMTP id f16mr19670170jat.91.1598534807749;
- Thu, 27 Aug 2020 06:26:47 -0700 (PDT)
+        h=x-gm-message-state:cc:subject:to:references:from:message-id:date
+         :user-agent:mime-version:in-reply-to:content-language
+         :content-transfer-encoding;
+        bh=zU4FrI+Vt0q4ZIfI3neU7juoeszoQlRoZHrRORmmAiY=;
+        b=DLeudYSvY9fBMw9Q4nF6/FW21tBPTPnOJUb2BH1UffLcWIXJdEmtk0e5qSpIq54Ls4
+         jC/3cy6+P8RQbBl+XfH1xwRz2rGxZKawv07AdT+ghjRrUqGNLzcGrU23ff6qASVf1301
+         2hf2FCAw0yHM9CREXWZ2lg2md26vhG37IWWULtcSusOYwoBUfnPfKvgyDbOPbzG8sNMu
+         DhrrTCT6s7YNjCMIPSK2ZQh2PwjL0OA3FLevg8xvqEKprg6XUnEcduGjLqFZsxwnzGfN
+         HSPqCXQt8WuW6sVdEUiajzv8/MV2eEzAT/NAdWTgzYpFP52iela0wyGDZt04L9P+hgNb
+         KS0w==
+X-Gm-Message-State: AOAM531gUso2ZOoNie6pIpvHxYkxPY9UpWqhyDo1AnR/EKxCbCt6Timb
+        CstF8KRCrewuWGbAOqv7fT1naDceOkU=
+X-Google-Smtp-Source: ABdhPJwT6p4KhAQ5MJW8SB7wFk8kzQQcWNVaGdSoGx1XHA1zFrepRsElrQsCU9H28chCMDFhHNxrwg==
+X-Received: by 2002:a17:906:6415:: with SMTP id d21mr7967668ejm.550.1598526455654;
+        Thu, 27 Aug 2020 04:07:35 -0700 (PDT)
+Received: from ?IPv6:2001:a61:253c:4c01:2cf1:7133:9da2:66a9? ([2001:a61:253c:4c01:2cf1:7133:9da2:66a9])
+        by smtp.gmail.com with ESMTPSA id x21sm1596064ejy.97.2020.08.27.04.07.34
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 27 Aug 2020 04:07:35 -0700 (PDT)
+Cc:     mtk.manpages@gmail.com, linux-fsdevel@vger.kernel.org,
+        linux-man@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 4/5] Add manpage for fsopen(2) and fsmount(2)
+To:     David Howells <dhowells@redhat.com>, viro@zeniv.linux.org.uk
+References: <159827188271.306468.16962617119460123110.stgit@warthog.procyon.org.uk>
+ <159827190508.306468.12755090833140558156.stgit@warthog.procyon.org.uk>
+From:   "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Message-ID: <335e623c-9676-4af9-4a0a-082bb7fc750f@gmail.com>
+Date:   Thu, 27 Aug 2020 13:07:33 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.10.0
 MIME-Version: 1.0
-References: <20200825002540.3351-1-yu-cheng.yu@intel.com> <20200825002540.3351-26-yu-cheng.yu@intel.com>
- <CALCETrVpLnZGfWWLpJO+aZ9aBbx5KGaCskejXiCXF1GtsFFoPg@mail.gmail.com>
- <2d253891-9393-44d0-35e0-4b9a2da23cec@intel.com> <086c73d8-9b06-f074-e315-9964eb666db9@intel.com>
- <73c2211f-8811-2d9f-1930-1c5035e6129c@intel.com> <af258a0e-56e9-3747-f765-dfe45ce76bba@intel.com>
- <ef7f9e24-f952-d78c-373e-85435f742688@intel.com> <20200826164604.GW6642@arm.com>
- <87ft892vvf.fsf@oldenburg2.str.redhat.com> <CALCETrVeNA0Kt2rW0CRCVo1JE0CKaBxu9KrJiyqUA8LPraY=7g@mail.gmail.com>
- <0e9996bc-4c1b-cc99-9616-c721b546f857@intel.com> <4f2dfefc-b55e-bf73-f254-7d95f9c67e5c@intel.com>
-In-Reply-To: <4f2dfefc-b55e-bf73-f254-7d95f9c67e5c@intel.com>
-From:   "H.J. Lu" <hjl.tools@gmail.com>
-Date:   Thu, 27 Aug 2020 06:26:11 -0700
-Message-ID: <CAMe9rOqt9kbqERC8U1+K-LiDyNYuuuz3TX++DChrRJwr5ajt6Q@mail.gmail.com>
-Subject: Re: [PATCH v11 25/25] x86/cet/shstk: Add arch_prctl functions for
- shadow stack
-To:     Dave Hansen <dave.hansen@intel.com>
-Cc:     "Yu, Yu-cheng" <yu-cheng.yu@intel.com>,
-        Andy Lutomirski <luto@kernel.org>,
-        Florian Weimer <fweimer@redhat.com>,
-        Dave Martin <Dave.Martin@arm.com>, X86 ML <x86@kernel.org>,
-        "H. Peter Anvin" <hpa@zytor.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
-        Linux-MM <linux-mm@kvack.org>,
-        linux-arch <linux-arch@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Balbir Singh <bsingharora@gmail.com>,
-        Borislav Petkov <bp@alien8.de>,
-        Cyrill Gorcunov <gorcunov@gmail.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Eugene Syromiatnikov <esyr@redhat.com>,
-        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Nadav Amit <nadav.amit@gmail.com>,
-        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
-        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
-        Weijiang Yang <weijiang.yang@intel.com>
-Content-Type: text/plain; charset="UTF-8"
+In-Reply-To: <159827190508.306468.12755090833140558156.stgit@warthog.procyon.org.uk>
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Aug 26, 2020 at 12:57 PM Dave Hansen <dave.hansen@intel.com> wrote:
->
-> On 8/26/20 11:49 AM, Yu, Yu-cheng wrote:
-> >> I would expect things like Go and various JITs to call it directly.
-> >>
-> >> If we wanted to be fancy and add a potentially more widely useful
-> >> syscall, how about:
-> >>
-> >> mmap_special(void *addr, size_t length, int prot, int flags, int type);
-> >>
-> >> Where type is something like MMAP_SPECIAL_X86_SHSTK.  Fundamentally,
-> >> this is really just mmap() except that we want to map something a bit
-> >> magical, and we don't want to require opening a device node to do it.
-> >
-> > One benefit of MMAP_SPECIAL_* is there are more free bits than MAP_*.
-> > Does ARM have similar needs for memory mapping, Dave?
->
-> No idea.
->
-> But, mmap_special() is *basically* mmap2() with extra-big flags space.
-> I suspect it will grow some more uses on top of shadow stacks.  It could
-> have, for instance, been used to allocate MPX bounds tables.
+Hello David,
 
-There is no reason we can't use
+On 8/24/20 2:25 PM, David Howells wrote:
+> Add a manual page to document the fsopen() and fsmount() system calls.
+> 
+> Signed-off-by: David Howells <dhowells@redhat.com>
+> ---
+> 
+>  man2/fsmount.2 |    1 
+>  man2/fsopen.2  |  245 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  2 files changed, 246 insertions(+)
+>  create mode 100644 man2/fsmount.2
+>  create mode 100644 man2/fsopen.2
+> 
+> diff --git a/man2/fsmount.2 b/man2/fsmount.2
+> new file mode 100644
+> index 000000000..2bf59fc3e
+> --- /dev/null
+> +++ b/man2/fsmount.2
+> @@ -0,0 +1 @@
+> +.so man2/fsopen.2
+> diff --git a/man2/fsopen.2 b/man2/fsopen.2
+> new file mode 100644
+> index 000000000..1d1bba238
+> --- /dev/null
+> +++ b/man2/fsopen.2
+> @@ -0,0 +1,245 @@
+> +'\" t
+> +.\" Copyright (c) 2020 David Howells <dhowells@redhat.com>
+> +.\"
+> +.\" %%%LICENSE_START(VERBATIM)
+> +.\" Permission is granted to make and distribute verbatim copies of this
+> +.\" manual provided the copyright notice and this permission notice are
+> +.\" preserved on all copies.
+> +.\"
+> +.\" Permission is granted to copy and distribute modified versions of this
+> +.\" manual under the conditions for verbatim copying, provided that the
+> +.\" entire resulting derived work is distributed under the terms of a
+> +.\" permission notice identical to this one.
+> +.\"
+> +.\" Since the Linux kernel and libraries are constantly changing, this
+> +.\" manual page may be incorrect or out-of-date.  The author(s) assume no
+> +.\" responsibility for errors or omissions, or for damages resulting from
+> +.\" the use of the information contained herein.  The author(s) may not
+> +.\" have taken the same level of care in the production of this manual,
+> +.\" which is licensed free of charge, as they might when working
+> +.\" professionally.
+> +.\"
+> +.\" Formatted or processed versions of this manual, if unaccompanied by
+> +.\" the source, must acknowledge the copyright and authors of this work.
+> +.\" %%%LICENSE_END
+> +.\"
+> +.TH FSOPEN 2 2020-08-07 "Linux" "Linux Programmer's Manual"
+> +.SH NAME
+> +fsopen, fsmount \- Filesystem parameterisation and mount creation
+> +.SH SYNOPSIS
+> +.nf
+> +.B #include <sys/types.h>
+> +.B #include <sys/mount.h>
+> +.B #include <unistd.h>
+> +.BR "#include <fcntl.h>           " "/* Definition of AT_* constants */"
+> +.PP
+> +.BI "int fsopen(const char *" fsname ", unsigned int " flags );
+> +.PP
+> +.BI "int fsmount(int " fd ", unsigned int " flags ", unsigned int " mount_attrs );
+> +.fi
+> +.PP
+> +.IR Note :
+> +There are no glibc wrappers for these system calls.
+> +.SH DESCRIPTION
+> +.PP
+> +.BR fsopen ()
+> +creates a blank filesystem configuration context within the kernel for the
+> +filesystem named in the
+> +.I fsname
+> +parameter, puts it into creation mode and attaches it to a file descriptor,
+> +which it then returns.  
 
-long arch_prctl (int, unsigned long, unsigned long, unsigned long, ..);
+In the preceding sentence, "it" is used three times, with two *different* 
+referents. That's quite hard on the reader.
 
-for ARCH_X86_CET_MMAP_SHSTK.   We just need to use
+How about:
 
-syscall (SYS_arch_prctl, ARCH_X86_CET_MMAP_SHSTK, ...);
+[[
+.BR fsopen ()
+creates a blank filesystem configuration context within the kernel for the
+filesystem named in the
+.I fsname
+parameter, puts the context into creation mode and 
+attaches it to a file descriptor;
+.BR fsopen ()
+returns the file descriptor as the function result.  
+]]
+
+> The file descriptor can be marked close-on-exec by
+> +setting
+> +.B FSOPEN_CLOEXEC
+> +in
+> +.IR flags .
+> +.PP
+> +After calling fsopen(), the file descriptor should be passed to the
+> +.BR fsconfig (2)
+> +system call, using that to specify the desired filesystem and security
+> +parameters.
+> +.PP
+> +When the parameters are all set, the
+> +.BR fsconfig ()
+> +system call should then be called again with
+> +.B FSCONFIG_CMD_CREATE
+> +as the command argument to effect the creation.
+> +.RS
+> +.PP
+> +.BR "[!]\ NOTE" :
+> +Depending on the filesystem type and parameters, this may rather share an
+
+Please replace "this" with a noun (phrase), since it is a little
+unclear what "this" refers to.
+
+> +existing in-kernel filesystem representation instead of creating a new one.
+> +In such a case, the parameters specified may be discarded or may overwrite the
+> +parameters set by a previous mount - at the filesystem's discretion.
+> +.RE
+> +.PP
+> +The file descriptor also serves as a channel by which more comprehensive error,
+> +warning and information messages may be retrieved from the kernel using
+> +.BR read (2).
+> +.PP
+> +Once the creation command has been successfully run on a context, the context
+> +will not accept further configuration.  At
+> +this point,
+> +.BR fsmount ()
+> +should be called to create a mount object.
+> +.PP
+> +.BR fsmount ()
+> +takes the file descriptor returned by
+> +.BR fsopen ()
+> +and creates a mount object for the filesystem root specified there.  The
+> +attributes of the mount object are set from the
+> +.I mount_attrs
+> +parameter.  The attributes specify the propagation and mount restrictions to
+> +be applied to accesses through this mount.
+
+Can we please have a list of the available attributes here, with a 
+description of each attribute.
+
+> +.PP
+> +The mount object is then attached to a new file descriptor that looks like one
+> +created by
+> +.BR open "(2) with " O_PATH " or " open_tree (2).
+> +This can be passed to
+> +.BR move_mount (2)
+> +to attach the mount object to a mountpoint, thereby completing the process.
+
+s/mountpoint/mount point/
+
+In the preceding paragraph, the description is a bit unclear. (Again, 
+overuse of pronouns ("this) does not help. I think it
+would be better to say something like:
+
+[[
+.BR fsmount()
+attaches the mount object to a new file descriptor that looks like one
+created by
+.BR open "(2) with " O_PATH " or " open_tree (2).
+This file descriptor can be passed to
+.BR move_mount (2)
+to attach the mount object to a mount point, thereby completing the process.
+]]
+
+But, please also replace "the process" with a more meaningful phrase.
+
+> +.PP
+> +The file descriptor returned by fsmount() is marked close-on-exec if
+> +FSMOUNT_CLOEXEC is specified in
+> +.IR flags .
+> +.PP
+> +After fsmount() has completed, the context created by fsopen() is reset and
+> +moved to reconfiguration state, allowing the new superblock to be
+> +reconfigured.  See
+> +.BR fspick (2)
+> +for details.
+> +.PP
+> +To use either of these calls, the caller requires the appropriate privilege
+> +(Linux: the
+
+s/Linux: //
+(this is after all a Linux-specific system call)
+
+> +.B CAP_SYS_ADMIN
+> +capability).
+> +.PP
+> +.SS Message Retrieval Interface
+> +The context file descriptor may be queried for message strings at any time by
+
+s/The context file descriptor/
+  The context file descriptor returned by fsopen()/
+
+> +calling
+> +.BR read (2)
+> +on the file descriptor.  This will return formatted messages that are prefixed
+> +to indicate their class:
+> +.TP
+> +\fB"e <message>"\fP
+> +An error message string was logged.
+> +.TP
+> +\fB"i <message>"\fP
+> +An informational message string was logged.
+> +.TP
+> +\fB"w <message>"\fP
+> +An warning message string was logged.
+> +.PP
+> +Messages are removed from the queue as they're read.
+
+What if there are no pending error messages to retrieve? What does
+read() do in that case? Please add an explanation here.
+
+> +.SH RETURN VALUE
+> +On success, both functions return a file descriptor.  On error, \-1 is
+> +returned, and
+> +.I errno
+> +is set appropriately> +.SH ERRORS
+> +The error values given below result from filesystem type independent
+> +errors.
+> +Each filesystem type may have its own special errors and its
+> +own special behavior.
+> +See the Linux kernel source code for details.
+> +.TP
+> +.B EBUSY
+> +The context referred to by
+> +.I fd
+> +is not in the right state to be used by
+> +.BR fsmount ().
+> +.TP
+> +.B EFAULT
+> +One of the pointer arguments points outside the user address space.
+> +.TP
+> +.B EINVAL
+> +.I flags
+> +had an invalid flag set.
+> +.TP
+> +.B EINVAL
+> +.I mount_attrs,
+> +includes invalid
+> +.BR MOUNT_ATTR_*
+> +flags.
+> +.TP
+> +.B EMFILE
+> +The system has too many open files to create more.
+> +.TP
+> +.B ENFILE
+> +The process has too many open files to create more.
+> +.TP
+> +.B ENODEV
+> +The filesystem
+> +.I fsname
+> +is not available in the kernel.
+> +.TP
+> +.B ENOMEM
+> +The kernel could not allocate sufficient memory to complete the call.
+> +.TP
+> +.B EPERM
+> +The caller does not have the required privileges.
+
+Please name the required capability.
+
+> +.SH CONFORMING TO
+> +These functions are Linux-specific and should not be used in programs intended
+> +to be portable.
+> +.SH VERSIONS
+> +.BR fsopen "(), and " fsmount ()
+> +were added to Linux in kernel 5.2.
+> +.SH NOTES
+> +Glibc does not (yet) provide a wrapper for the
+> +.BR fsopen "() or " fsmount "()"
+> +system calls; call them using
+> +.BR syscall (2).
+> +.SH EXAMPLES
+> +To illustrate the process, here's an example whereby this can be used to mount
+
+Please replace "this" by a noun (phrase).
+
+> +an ext4 filesystem on /dev/sdb1 onto /mnt.
+> +.PP
+> +.in +4n
+> +.nf
+> +sfd = fsopen("ext4", FSOPEN_CLOEXEC);
+> +fsconfig(sfd, FSCONFIG_SET_FLAG, "ro", NULL, 0);
+> +fsconfig(sfd, FSCONFIG_SET_STRING, "source", "/dev/sdb1", 0);
+> +fsconfig(sfd, FSCONFIG_SET_FLAG, "noatime", NULL, 0);
+> +fsconfig(sfd, FSCONFIG_SET_FLAG, "acl", NULL, 0);
+> +fsconfig(sfd, FSCONFIG_SET_FLAG, "user_attr", NULL, 0);
+> +fsconfig(sfd, FSCONFIG_SET_FLAG, "iversion", NULL, 0);
+> +fsconfig(sfd, FSCONFIG_CMD_CREATE, NULL, NULL, 0);
+> +mfd = fsmount(sfd, FSMOUNT_CLOEXEC, MS_RELATIME);
+> +move_mount(mfd, "", AT_FDCWD, "/mnt", MOVE_MOUNT_F_EMPTY_PATH);
+> +.fi
+> +.in
+> +.PP
+> +Here, an ext4 context is created first and attached to sfd.  The context is
+> +then told where its source will be, given a bunch of options and a superblock
+> +record object is then created.  Then fsmount() is called to create a mount
+> +object and
+> +.BR move_mount (2)
+> +is called to attach it to its intended mountpoint.
+
+s/mountpoint/mount point/
+
+> +.PP
+> +And here's an example of mounting from an NFS server and setting a Smack
+> +security module label on it too:
+
+Please replace "it" with a noun (phrase).
+
+> +.PP
+> +.in +4n
+> +.nf
+> +sfd = fsopen("nfs", 0);
+> +fsconfig(sfd, FSCONFIG_SET_STRING, "source", "example.com:/pub", 0);
+> +fsconfig(sfd, FSCONFIG_SET_STRING, "nfsvers", "3", 0);
+> +fsconfig(sfd, FSCONFIG_SET_STRING, "rsize", "65536", 0);
+> +fsconfig(sfd, FSCONFIG_SET_STRING, "wsize", "65536", 0);
+> +fsconfig(sfd, FSCONFIG_SET_STRING, "smackfsdef", "foolabel", 0);
+> +fsconfig(sfd, FSCONFIG_SET_FLAG, "rdma", NULL, 0);
+> +fsconfig(sfd, FSCONFIG_CMD_CREATE, NULL, NULL, 0);
+> +mfd = fsmount(sfd, 0, MS_NODEV);
+> +move_mount(mfd, "", AT_FDCWD, "/mnt", MOVE_MOUNT_F_EMPTY_PATH);
+> +.fi
+> +.in
+> +.PP
+> +.SH SEE ALSO
+> +.BR mountpoint (1),
+> +.BR fsconfig (2),
+> +.BR fspick (2),
+> +.BR move_mount (2),
+> +.BR open_tree (2),
+> +.BR umount (2),
+> +.BR mount_namespaces (7),
+> +.BR path_resolution (7),
+> +.BR mount (8),
+> +.BR umount (8)
+
+Thanks,
+
+Michael
+
 
 -- 
-H.J.
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
