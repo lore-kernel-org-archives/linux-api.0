@@ -7,44 +7,45 @@ X-Spam-Status: No, score=-4.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9100AC433E1
-	for <linux-api@archiver.kernel.org>; Thu, 27 Aug 2020 13:19:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 90FEAC433DF
+	for <linux-api@archiver.kernel.org>; Thu, 27 Aug 2020 13:37:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6A4062177B
-	for <linux-api@archiver.kernel.org>; Thu, 27 Aug 2020 13:19:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6AEA022B40
+	for <linux-api@archiver.kernel.org>; Thu, 27 Aug 2020 13:37:34 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FdvbYUkk"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gulb3h7T"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727835AbgH0NTV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 27 Aug 2020 09:19:21 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:31232 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1727866AbgH0NTL (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 27 Aug 2020 09:19:11 -0400
+        id S1728009AbgH0NhB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 27 Aug 2020 09:37:01 -0400
+Received: from us-smtp-2.mimecast.com ([205.139.110.61]:40804 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1728052AbgH0Ngz (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 27 Aug 2020 09:36:55 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1598534341;
+        s=mimecast20190719; t=1598535410;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=BnfuzY1Orxo7bXipPlzF8Clju2SuIQM+XAiS/9TLc4c=;
-        b=FdvbYUkkjrnSmznpBwm5NTeaEav2/sr08YN+z4WfzAZm+mtvC0WIhmqAVVSB52MKag8f5w
-        8bIfv7oTblr+N9sylPpZ6vlrvo1I9Vi1v+S8Iv8gdF2Ix0pMMPcPflspHHKKh+RAXJ5od+
-        uCgX8YyTa3muEFLlpATEcTppcAnzfac=
+        bh=oOvhPuNTJiPMVazrJGWO9y/T8cFLqtvdk4KglF4pjDM=;
+        b=gulb3h7THnCZMPo1zYnwXg7sOaNmVUVeJZYA8bWYO8kQlql7xB85j1ro7iH/q1y6NcCZUQ
+        p16xgB6ah8WWRpIhpmZr4yuneYNKuLdx+dnVAN/+YdMkzgIvzJu1/CIzOCyUH65CNeOZMe
+        uAYuJRO41Ub7VSrpbjlP5ddk0YrlgQ0=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-215-G8iNeAfnO7-2I6RDlA4A7Q-1; Thu, 27 Aug 2020 09:18:55 -0400
-X-MC-Unique: G8iNeAfnO7-2I6RDlA4A7Q-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-540-54a-fpiGNQuki1Zwqscbjg-1; Thu, 27 Aug 2020 09:36:46 -0400
+X-MC-Unique: 54a-fpiGNQuki1Zwqscbjg-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 25ED657050;
-        Thu, 27 Aug 2020 13:18:52 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0F10E185FD8E;
+        Thu, 27 Aug 2020 13:36:42 +0000 (UTC)
 Received: from oldenburg2.str.redhat.com (ovpn-112-37.ams2.redhat.com [10.36.112.37])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id C26375D9E8;
-        Thu, 27 Aug 2020 13:18:40 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 953DD10013D0;
+        Thu, 27 Aug 2020 13:36:30 +0000 (UTC)
 From:   Florian Weimer <fweimer@redhat.com>
-To:     Dave Martin <Dave.Martin@arm.com>
-Cc:     "Yu\, Yu-cheng" <yu-cheng.yu@intel.com>,
+To:     "H.J. Lu" <hjl.tools@gmail.com>
+Cc:     Dave Martin <Dave.Martin@arm.com>,
+        "Yu\, Yu-cheng" <yu-cheng.yu@intel.com>,
         Dave Hansen <dave.hansen@intel.com>,
         Andy Lutomirski <luto@kernel.org>, X86 ML <x86@kernel.org>,
         "H. Peter Anvin" <hpa@zytor.com>,
@@ -61,8 +62,7 @@ Cc:     "Yu\, Yu-cheng" <yu-cheng.yu@intel.com>,
         Cyrill Gorcunov <gorcunov@gmail.com>,
         Dave Hansen <dave.hansen@linux.intel.com>,
         Eugene Syromiatnikov <esyr@redhat.com>,
-        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
-        Jonathan Corbet <corbet@lwn.net>,
+        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
         Kees Cook <keescook@chromium.org>,
         Mike Kravetz <mike.kravetz@oracle.com>,
         Nadav Amit <nadav.amit@gmail.com>,
@@ -84,29 +84,41 @@ References: <20200825002540.3351-1-yu-cheng.yu@intel.com>
         <20200826164604.GW6642@arm.com>
         <87ft892vvf.fsf@oldenburg2.str.redhat.com>
         <20200826170841.GX6642@arm.com>
-Date:   Thu, 27 Aug 2020 15:18:39 +0200
-In-Reply-To: <20200826170841.GX6642@arm.com> (Dave Martin's message of "Wed,
-        26 Aug 2020 18:08:42 +0100")
-Message-ID: <87tuwow7kg.fsf@oldenburg2.str.redhat.com>
+        <87tuwow7kg.fsf@oldenburg2.str.redhat.com>
+        <CAMe9rOrhjLSaMNABnzd=Kp5UeVot1Qkx0_PnMng=sT+wd9Xubw@mail.gmail.com>
+Date:   Thu, 27 Aug 2020 15:36:28 +0200
+In-Reply-To: <CAMe9rOrhjLSaMNABnzd=Kp5UeVot1Qkx0_PnMng=sT+wd9Xubw@mail.gmail.com>
+        (H. J. Lu's message of "Thu, 27 Aug 2020 06:28:56 -0700")
+Message-ID: <873648w6qr.fsf@oldenburg2.str.redhat.com>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.3 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-* Dave Martin:
+* H. J. Lu:
 
-> You're right that this has implications: for i386, libc probably pulls
-> more arguments off the stack than are really there in some situations.
-> This isn't a new problem though.  There are already generic prctls with
-> fewer than 4 args that are used on x86.
+> On Thu, Aug 27, 2020 at 6:19 AM Florian Weimer <fweimer@redhat.com> wrote:
+>>
+>> * Dave Martin:
+>>
+>> > You're right that this has implications: for i386, libc probably pulls
+>> > more arguments off the stack than are really there in some situations.
+>> > This isn't a new problem though.  There are already generic prctls with
+>> > fewer than 4 args that are used on x86.
+>>
+>> As originally posted, glibc prctl would have to know that it has to pull
+>> an u64 argument off the argument list for ARCH_X86_CET_DISABLE.  But
+>> then the u64 argument is a problem for arch_prctl as well.
+>>
+>
+> Argument of ARCH_X86_CET_DISABLE is int and passed in register.
 
-As originally posted, glibc prctl would have to know that it has to pull
-an u64 argument off the argument list for ARCH_X86_CET_DISABLE.  But
-then the u64 argument is a problem for arch_prctl as well.
+The commit message and the C source say otherwise, I think (not sure
+about the C source, not a kernel hacker).
 
 Thanks,
 Florian
