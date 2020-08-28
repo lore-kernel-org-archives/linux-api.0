@@ -2,77 +2,57 @@ Return-Path: <SRS0=UWCd=CG=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.6 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-4.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6228FC433E7
-	for <linux-api@archiver.kernel.org>; Fri, 28 Aug 2020 01:45:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4DCADC43461
+	for <linux-api@archiver.kernel.org>; Fri, 28 Aug 2020 06:24:21 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4122B20BED
-	for <linux-api@archiver.kernel.org>; Fri, 28 Aug 2020 01:45:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2C27021473
+	for <linux-api@archiver.kernel.org>; Fri, 28 Aug 2020 06:24:21 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Cg3EujFI"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="aM1pukEv"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726197AbgH1BpF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 27 Aug 2020 21:45:05 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50328 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727124AbgH1BpE (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 27 Aug 2020 21:45:04 -0400
-Received: from mail-io1-xd41.google.com (mail-io1-xd41.google.com [IPv6:2607:f8b0:4864:20::d41])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 54847C061264;
-        Thu, 27 Aug 2020 18:45:04 -0700 (PDT)
-Received: by mail-io1-xd41.google.com with SMTP id d18so7912111iop.13;
-        Thu, 27 Aug 2020 18:45:04 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc:content-transfer-encoding;
-        bh=38INnuUjTFHLtUA45Nn3FEw2KFZHxnh4HKLBgG7stGo=;
-        b=Cg3EujFIDQ7ni52SCf2uI5ywuinZ3kzuBBLKeWuvvsmlZi+nZW1GacVnRYRb82OETG
-         fAFnbFLKVyW3S6tF3iWOKuTB6rjSoD4H+uG/d2K7frnQqskLDbVaOnYklfrNG+JCxRhR
-         qU0ISgTQnbP+wfH65ANjq8NeHHXYA8bCIAZW8QcOjfrFW3K13/0sjaISbirCG1/NdTDr
-         PTp9Ywpq7A9lqlMr2sigSv1JbSYcmrKRzepRgYIrhXL4g8rPD7MQUxShSf8ZotBMVaL0
-         o2ubilfeETvKGvhGGp8/Nxy/e/NmNrYplbtL3YuL+aIrBe0G22q45/RRwVjr6txCEc9E
-         vjQQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc:content-transfer-encoding;
-        bh=38INnuUjTFHLtUA45Nn3FEw2KFZHxnh4HKLBgG7stGo=;
-        b=EFZvZSZ8xVtufZ4vftnJFFnxxMEk4soapZ2wbShUWw7c/5sUW6DGNXnR4gtvk/76zG
-         icxvN25S+TD7Q3+n6cRXJ5idaalz0Ymhj4n6o8HP/hPadv5U9STY1e8EjE9chg+MmqE3
-         Fgvcmkq0OgjuSUD5hppD2H3R31uKgyhjsWCcxiHZ0ZmYxDGmJ5qRt2nZKgiGdcInkAzl
-         LZhc2gHMIu+pHMfLgSGNQKuG56lcQNRLOgqKXweIHG7vi89yFz+GsR+blJXUo9Rci1k6
-         kumbvvViauIhAStIi12VwQLR2Qe0v6c2PTCazTI6uMe55jLwmSVKSD8zeZ1RZrt4ZM10
-         Rb4Q==
-X-Gm-Message-State: AOAM533S0d/nOHiJeQ4MWATF8TVocRv84c1GnLGiblBViaJ26E4rF94T
-        prP+s3ZQFHfQE18COqDXNak+Z3TzAxe/FB47v8w=
-X-Google-Smtp-Source: ABdhPJypT+VAuP9IPpwXd6IBj34UiFng/du++myhAan6wmw240QaNF6nuqWJYF2cBL3zLW/ReOrrwwPSW69WMOa+FIA=
-X-Received: by 2002:a5d:924c:: with SMTP id e12mr19523575iol.28.1598579103322;
- Thu, 27 Aug 2020 18:45:03 -0700 (PDT)
-MIME-Version: 1.0
-References: <a770d45d-b147-a8c5-b7f8-30d668cbed84@intel.com>
- <4BDFD364-798C-4537-A88E-F94F101F524B@amacapital.net> <CAMe9rOoTjSwRSPuqP6RKkDzPA_VPh5gVYRVFJ-ezAD4Et-FUng@mail.gmail.com>
- <CALCETrW=-ahC7GUCCyX7nPjCHfG3tiyDespud2Z7UbB6yWWWAA@mail.gmail.com>
-In-Reply-To: <CALCETrW=-ahC7GUCCyX7nPjCHfG3tiyDespud2Z7UbB6yWWWAA@mail.gmail.com>
-From:   "H.J. Lu" <hjl.tools@gmail.com>
-Date:   Thu, 27 Aug 2020 18:44:27 -0700
-Message-ID: <CAMe9rOrt5hz6qsNAxPgdKCOhRcKKESv-D3rxdSfraeJ-LFHM4w@mail.gmail.com>
-Subject: Re: [PATCH v11 25/25] x86/cet/shstk: Add arch_prctl functions for
- shadow stack
-To:     Andy Lutomirski <luto@kernel.org>
-Cc:     "Yu, Yu-cheng" <yu-cheng.yu@intel.com>,
-        Florian Weimer <fweimer@redhat.com>,
+        id S1726791AbgH1GYT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 28 Aug 2020 02:24:19 -0400
+Received: from us-smtp-delivery-1.mimecast.com ([207.211.31.120]:51251 "EHLO
+        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+        with ESMTP id S1726644AbgH1GYS (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 28 Aug 2020 02:24:18 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1598595857;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=TZgOlmN9m49e++aSj4JPimMgy9NjdrTL35m0T++hZyQ=;
+        b=aM1pukEv+frLqm1sbyFKzeg1EoWbysRX8S/zmBAWwJk66sGw/kBgFd5oc8lKQWCMNBgYfC
+        lKRRMdrLR+/e2IH33VRqKiJk/mQP9SwcBVq/HSYyKzifAg71m3WSY60+71wR5EXmdHRnwU
+        ncWWn1k5/RxU4+sgqXd6DzOL5ayINro=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-443-M3H7_1grNueY-FhKFkSSmQ-1; Fri, 28 Aug 2020 02:24:12 -0400
+X-MC-Unique: M3H7_1grNueY-FhKFkSSmQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 501DC1DDFF;
+        Fri, 28 Aug 2020 06:24:08 +0000 (UTC)
+Received: from oldenburg2.str.redhat.com (ovpn-112-37.ams2.redhat.com [10.36.112.37])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 4A6655D9F1;
+        Fri, 28 Aug 2020 06:23:55 +0000 (UTC)
+From:   Florian Weimer <fweimer@redhat.com>
+To:     "H.J. Lu" <hjl.tools@gmail.com>
+Cc:     Andy Lutomirski <luto@kernel.org>,
+        "Yu\, Yu-cheng" <yu-cheng.yu@intel.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Dave Hansen <dave.hansen@intel.com>, X86 ML <x86@kernel.org>,
         "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
         Ingo Molnar <mingo@redhat.com>,
         LKML <linux-kernel@vger.kernel.org>,
-        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
+        "open list\:DOCUMENTATION" <linux-doc@vger.kernel.org>,
         Linux-MM <linux-mm@kvack.org>,
         linux-arch <linux-arch@vger.kernel.org>,
         Linux API <linux-api@vger.kernel.org>,
@@ -92,87 +72,34 @@ Cc:     "Yu, Yu-cheng" <yu-cheng.yu@intel.com>,
         "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
         Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
         Weijiang Yang <weijiang.yang@intel.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Subject: Re: [PATCH v11 25/25] x86/cet/shstk: Add arch_prctl functions for shadow stack
+References: <a770d45d-b147-a8c5-b7f8-30d668cbed84@intel.com>
+        <4BDFD364-798C-4537-A88E-F94F101F524B@amacapital.net>
+        <CAMe9rOoTjSwRSPuqP6RKkDzPA_VPh5gVYRVFJ-ezAD4Et-FUng@mail.gmail.com>
+        <CALCETrW=-ahC7GUCCyX7nPjCHfG3tiyDespud2Z7UbB6yWWWAA@mail.gmail.com>
+        <CAMe9rOrt5hz6qsNAxPgdKCOhRcKKESv-D3rxdSfraeJ-LFHM4w@mail.gmail.com>
+Date:   Fri, 28 Aug 2020 08:23:54 +0200
+In-Reply-To: <CAMe9rOrt5hz6qsNAxPgdKCOhRcKKESv-D3rxdSfraeJ-LFHM4w@mail.gmail.com>
+        (H. J. Lu's message of "Thu, 27 Aug 2020 18:44:27 -0700")
+Message-ID: <87v9h3thj9.fsf@oldenburg2.str.redhat.com>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.3 (gnu/linux)
+MIME-Version: 1.0
+Content-Type: text/plain
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Aug 27, 2020 at 6:35 PM Andy Lutomirski <luto@kernel.org> wrote:
->
-> On Thu, Aug 27, 2020 at 12:38 PM H.J. Lu <hjl.tools@gmail.com> wrote:
-> >
-> > On Thu, Aug 27, 2020 at 11:56 AM Andy Lutomirski <luto@amacapital.net> =
-wrote:
-> > >
-> > >
-> > >
-> > > > On Aug 27, 2020, at 11:13 AM, Yu, Yu-cheng <yu-cheng.yu@intel.com> =
-wrote:
-> > > >
-> > > > =EF=BB=BFOn 8/27/2020 6:36 AM, Florian Weimer wrote:
-> > > >> * H. J. Lu:
-> > > >>>> On Thu, Aug 27, 2020 at 6:19 AM Florian Weimer <fweimer@redhat.c=
-om> wrote:
-> > > >>>>>
-> > > >>>>> * Dave Martin:
-> > > >>>>>
-> > > >>>>>> You're right that this has implications: for i386, libc probab=
-ly pulls
-> > > >>>>>> more arguments off the stack than are really there in some sit=
-uations.
-> > > >>>>>> This isn't a new problem though.  There are already generic pr=
-ctls with
-> > > >>>>>> fewer than 4 args that are used on x86.
-> > > >>>>>
-> > > >>>>> As originally posted, glibc prctl would have to know that it ha=
-s to pull
-> > > >>>>> an u64 argument off the argument list for ARCH_X86_CET_DISABLE.=
-  But
-> > > >>>>> then the u64 argument is a problem for arch_prctl as well.
-> > > >>>>>
-> > > >>>
-> > > >>> Argument of ARCH_X86_CET_DISABLE is int and passed in register.
-> > > >> The commit message and the C source say otherwise, I think (not su=
-re
-> > > >> about the C source, not a kernel hacker).
-> > > >
-> > > > H.J. Lu suggested that we fix x86 arch_prctl() to take four argumen=
-ts, and then keep MMAP_SHSTK as an arch_prctl().  Because now the map flags=
- and size are all in registers, this also solves problems being pointed out=
- earlier.  Without a wrapper, the shadow stack mmap call (from user space) =
-will be:
-> > > >
-> > > > syscall(_NR_arch_prctl, ARCH_X86_CET_MMAP_SHSTK, size, MAP_32BIT).
-> > >
-> > > I admit I don=E2=80=99t see a show stopping technical reason we can=
-=E2=80=99t add arguments to an existing syscall, but I=E2=80=99m pretty sur=
-e it=E2=80=99s unprecedented, and it doesn=E2=80=99t seem like a good idea.
-> >
-> > prctl prototype is:
-> >
-> > extern int prctl (int __option, ...)
-> >
-> > and implemented in kernel as:
-> >
-> >       int prctl(int option, unsigned long arg2, unsigned long arg3,
-> >                  unsigned long arg4, unsigned long arg5);
-> >
-> > Not all prctl operations take all 5 arguments.   It also applies
-> > to arch_prctl.  It is quite normal for different operations of
-> > arch_prctl to take different numbers of arguments.
->
-> If by "quite normal" you mean "does not happen", then I agree.
->
-> In any event, I will not have anything to do with a patch that changes
-> an existing syscall signature unless Linus personally acks it.  So if
-> you want to email him and linux-abi, be my guest.
+* H. J. Lu:
 
-Can you think of ANY issues of passing more arguments to arch_prctl?
-syscall () provided by glibc always passes 6 arguments to the kernel.
-Arguments are already in the registers.  What kind of problems do
-you see?
+> Can you think of ANY issues of passing more arguments to arch_prctl?
 
---=20
-H.J.
+On x32, the glibc arch_prctl system call wrapper only passes two
+arguments to the kernel, and applications have no way of detecting that.
+musl only passes two arguments on all architectures.  It happens to work
+anyway with default compiler flags, but that's an accident.
+
+Thanks,
+Florian
+
