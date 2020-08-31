@@ -2,199 +2,119 @@ Return-Path: <SRS0=6Jig=CJ=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-18.0 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.5 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 02B4AC43461
-	for <linux-api@archiver.kernel.org>; Mon, 31 Aug 2020 13:48:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8915DC433E6
+	for <linux-api@archiver.kernel.org>; Mon, 31 Aug 2020 15:32:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DCA942098B
-	for <linux-api@archiver.kernel.org>; Mon, 31 Aug 2020 13:48:30 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6E52F214D8
+	for <linux-api@archiver.kernel.org>; Mon, 31 Aug 2020 15:32:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727786AbgHaNs3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 31 Aug 2020 09:48:29 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:43637 "EHLO
-        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727066AbgHaNr2 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 31 Aug 2020 09:47:28 -0400
-Received: from ip5f5af70b.dynamic.kabel-deutschland.de ([95.90.247.11] helo=wittgenstein.fritz.box)
-        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.86_2)
-        (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kCk8z-00062w-Hy; Mon, 31 Aug 2020 13:46:45 +0000
-From:   Christian Brauner <christian.brauner@ubuntu.com>
-To:     linux-kernel@vger.kernel.org
-Cc:     Christian Brauner <christian@brauner.io>,
-        "Peter Zijlstra (Intel)" <peterz@infradead.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Oleg Nesterov <oleg@redhat.com>,
-        "Eric W. Biederman" <ebiederm@xmission.com>,
-        Kees Cook <keescook@chromium.org>,
-        Sargun Dhillon <sargun@sargun.me>,
-        Aleksa Sarai <cyphar@cyphar.com>,
-        linux-kselftest@vger.kernel.org,
-        Josh Triplett <josh@joshtriplett.org>,
-        Jens Axboe <axboe@kernel.dk>, linux-api@vger.kernel.org,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        Jann Horn <jannh@google.com>
-Subject: [PATCH 2/4] exit: support non-blocking pidfds
-Date:   Mon, 31 Aug 2020 15:45:49 +0200
-Message-Id: <20200831134551.1599689-3-christian.brauner@ubuntu.com>
-X-Mailer: git-send-email 2.28.0
-In-Reply-To: <20200831134551.1599689-1-christian.brauner@ubuntu.com>
-References: <20200831134551.1599689-1-christian.brauner@ubuntu.com>
+        id S1729093AbgHaPcP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 31 Aug 2020 11:32:15 -0400
+Received: from brightrain.aerifal.cx ([216.12.86.13]:48524 "EHLO
+        brightrain.aerifal.cx" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1729029AbgHaPcM (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 31 Aug 2020 11:32:12 -0400
+Date:   Mon, 31 Aug 2020 11:32:08 -0400
+From:   Rich Felker <dalias@libc.org>
+To:     Jann Horn <jannh@google.com>
+Cc:     linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        kernel list <linux-kernel@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        Pavel Begunkov <asml.silence@gmail.com>
+Subject: [PATCH v2] vfs: add RWF_NOAPPEND flag for pwritev2
+Message-ID: <20200831153207.GO3265@brightrain.aerifal.cx>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.5.21 (2010-09-15)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Passing a non-blocking pidfd to waitid() currently has no effect, i.e.
-is not supported. There are users which would like to use waitid() on
-pidfds that are O_NONBLOCK and mix it with pidfds that are blocking and
-both pass them to waitid().
-The expected behavior is to have waitid() return -EAGAIN for
-non-blocking pidfds and to block for blocking pidfds without needing to
-perform any additional checks for flags set on the pidfd before passing
-it to waitid().
-Non-blocking pidfds will return EAGAIN from waitid() when no child
-process is ready yet. Returning -EAGAIN for non-blocking pidfds makes it
-easier for event loops that handle EAGAIN specially.
+The pwrite function, originally defined by POSIX (thus the "p"), is
+defined to ignore O_APPEND and write at the offset passed as its
+argument. However, historically Linux honored O_APPEND if set and
+ignored the offset. This cannot be changed due to stability policy,
+but is documented in the man page as a bug.
 
-It also makes the API more consistent and uniform. In essence, waitid()
-is treated like a read on a non-blocking pidfd or a recvmsg() on a
-non-blocking socket.
-With the addition of support for non-blocking pidfds we support the same
-functionality that sockets do. For sockets() recvmsg() supports
-MSG_DONTWAIT for pidfds waitid() supports WNOHANG. Both flags are
-per-call options. In contrast non-blocking pidfds and non-blocking
-sockets are a setting on an open file description affecting all threads
-in the calling process as well as other processes that hold file
-descriptors referring to the same open file description. Both behaviors,
-per call and per open file description, have genuine use-cases.
+Now that there's a pwritev2 syscall providing a superset of the pwrite
+functionality that has a flags argument, the conforming behavior can
+be offered to userspace via a new flag. Since pwritev2 checks flag
+validity (in kiocb_set_rw_flags) and reports unknown ones with
+EOPNOTSUPP, callers will not get wrong behavior on old kernels that
+don't support the new flag; the error is reported and the caller can
+decide how to handle it.
 
-The implementation should be straightforward, we simply raise the
-WNOHANG flag when a non-blocking pidfd is passed and introduce a
-eagain_error member in struct wait_opts similar to the notask_error
-member. The former is set to -EAGAIN for non-blocking pidfds and to zero
-for all other cases. If no child process exists non-blocking pidfd users
-will continue to see ECHILD but if child processes exist but have not
-yet exited users will see EAGAIN.
-
-A concrete use-case that was brought on-list was Josh's async pidfd
-library. Ever since the introduction of pidfds and more advanced async
-io various programming languages such as Rust have grown support for
-async event libraries. These libraries are created to help build
-epoll-based event loops around file descriptors. A common pattern is to
-automatically make all file descriptors they manage to O_NONBLOCK.
-
-For such libraries the EAGAIN error code is treated specially. When a
-function is called that returns EAGAIN the function isn't called again
-until the event loop indicates the the file descriptor is ready.
-Supporting EAGAIN when waiting on pidfds makes such libraries just work
-with little effort.
-
-Link: https://lore.kernel.org/lkml/20200811181236.GA18763@localhost/
-Link: https://github.com/joshtriplett/async-pidfd
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Sargun Dhillon <sargun@sargun.me>
-Cc: Jann Horn <jannh@google.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Ingo Molnar <mingo@kernel.org>
-Cc: Oleg Nesterov <oleg@redhat.com>
-Cc: "Peter Zijlstra (Intel)" <peterz@infradead.org>
-Suggested-by: Josh Triplett <josh@joshtriplett.org>
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+Signed-off-by: Rich Felker <dalias@libc.org>
 ---
- kernel/exit.c | 19 ++++++++++++++++---
- 1 file changed, 16 insertions(+), 3 deletions(-)
 
-diff --git a/kernel/exit.c b/kernel/exit.c
-index 733e80f334e7..598f2fefd721 100644
---- a/kernel/exit.c
-+++ b/kernel/exit.c
-@@ -934,6 +934,7 @@ struct wait_opts {
+Changes in v2: I've added a check to ensure that RWF_NOAPPEND does not
+override O_APPEND for S_APPEND (chattr +a) inodes, and fixed conflicts
+with 1752f0adea98ef85, which optimized kiocb_set_rw_flags to work with
+a local copy of flags. Unfortunately the same optimization does not
+work for RWF_NOAPPEND since it needs to remove flags from the original
+set at function entry.
+
+If desired, I could further change this so that kiocb_flags is
+initialized to ki->ki_flags, with assignment-back in place of |= at
+the end of the function. This would allow the same local variable
+pattern in the RWF_NOAPPEND code path, which might be more elegant,
+but I'm not sure if the emitted code would improve or get worse.
+
+
+ include/linux/fs.h      | 7 +++++++
+ include/uapi/linux/fs.h | 5 ++++-
+ 2 files changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 7519ae003a08..924e17ac8e7e 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -3321,6 +3321,8 @@ static inline int kiocb_set_rw_flags(struct kiocb *ki, rwf_t flags)
+ 		return 0;
+ 	if (unlikely(flags & ~RWF_SUPPORTED))
+ 		return -EOPNOTSUPP;
++	if (unlikely((flags & RWF_APPEND) && (flags & RWF_NOAPPEND)))
++		return -EINVAL;
  
- 	wait_queue_entry_t		child_wait;
- 	int			notask_error;
-+	int			eagain_error;
- };
- 
- static int eligible_pid(struct wait_opts *wo, struct task_struct *p)
-@@ -1461,6 +1462,8 @@ static long do_wait(struct wait_opts *wo)
- 
- notask:
- 	retval = wo->notask_error;
-+	if (!retval)
-+		retval = wo->eagain_error;
- 	if (!retval && !(wo->wo_flags & WNOHANG)) {
- 		retval = -ERESTARTSYS;
- 		if (!signal_pending(current)) {
-@@ -1474,7 +1477,7 @@ static long do_wait(struct wait_opts *wo)
- 	return retval;
- }
- 
--static struct pid *pidfd_get_pid(unsigned int fd)
-+static struct pid *pidfd_get_pid(unsigned int fd, unsigned int *flags)
- {
- 	struct fd f;
- 	struct pid *pid;
-@@ -1484,8 +1487,10 @@ static struct pid *pidfd_get_pid(unsigned int fd)
- 		return ERR_PTR(-EBADF);
- 
- 	pid = pidfd_pid(f.file);
--	if (!IS_ERR(pid))
-+	if (!IS_ERR(pid)) {
- 		get_pid(pid);
-+		*flags = f.file->f_flags;
+ 	if (flags & RWF_NOWAIT) {
+ 		if (!(ki->ki_filp->f_mode & FMODE_NOWAIT))
+@@ -3335,6 +3337,11 @@ static inline int kiocb_set_rw_flags(struct kiocb *ki, rwf_t flags)
+ 		kiocb_flags |= (IOCB_DSYNC | IOCB_SYNC);
+ 	if (flags & RWF_APPEND)
+ 		kiocb_flags |= IOCB_APPEND;
++	if ((flags & RWF_NOAPPEND) && (ki->ki_flags & IOCB_APPEND)) {
++		if (IS_APPEND(file_inode(ki->ki_filp)))
++			return -EPERM;
++		ki->ki_flags &= ~IOCB_APPEND;
 +	}
  
- 	fdput(f);
- 	return pid;
-@@ -1498,6 +1503,7 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
- 	struct pid *pid = NULL;
- 	enum pid_type type;
- 	long ret;
-+	unsigned int f_flags = 0;
+ 	ki->ki_flags |= kiocb_flags;
+ 	return 0;
+diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+index f44eb0a04afd..d5e54e0742cf 100644
+--- a/include/uapi/linux/fs.h
++++ b/include/uapi/linux/fs.h
+@@ -300,8 +300,11 @@ typedef int __bitwise __kernel_rwf_t;
+ /* per-IO O_APPEND */
+ #define RWF_APPEND	((__force __kernel_rwf_t)0x00000010)
  
- 	if (options & ~(WNOHANG|WNOWAIT|WEXITED|WSTOPPED|WCONTINUED|
- 			__WNOTHREAD|__WCLONE|__WALL))
-@@ -1531,9 +1537,10 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
- 		if (upid < 0)
- 			return -EINVAL;
- 
--		pid = pidfd_get_pid(upid);
-+		pid = pidfd_get_pid(upid, &f_flags);
- 		if (IS_ERR(pid))
- 			return PTR_ERR(pid);
++/* per-IO negation of O_APPEND */
++#define RWF_NOAPPEND	((__force __kernel_rwf_t)0x00000020)
 +
- 		break;
- 	default:
- 		return -EINVAL;
-@@ -1544,6 +1551,11 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
- 	wo.wo_flags	= options;
- 	wo.wo_info	= infop;
- 	wo.wo_rusage	= ru;
-+	wo.eagain_error = 0;
-+	if (f_flags & O_NONBLOCK) {
-+		wo.wo_flags	|= WNOHANG;
-+		wo.eagain_error	= -EAGAIN;
-+	}
- 	ret = do_wait(&wo);
+ /* mask of flags supported by the kernel */
+ #define RWF_SUPPORTED	(RWF_HIPRI | RWF_DSYNC | RWF_SYNC | RWF_NOWAIT |\
+-			 RWF_APPEND)
++			 RWF_APPEND | RWF_NOAPPEND)
  
- 	put_pid(pid);
-@@ -1618,6 +1630,7 @@ long kernel_wait4(pid_t upid, int __user *stat_addr, int options,
- 	wo.wo_info	= NULL;
- 	wo.wo_stat	= 0;
- 	wo.wo_rusage	= ru;
-+	wo.eagain_error	= 0;
- 	ret = do_wait(&wo);
- 	put_pid(pid);
- 	if (ret > 0 && stat_addr && put_user(wo.wo_stat, stat_addr))
+ #endif /* _UAPI_LINUX_FS_H */
 -- 
-2.28.0
+2.21.0
 
