@@ -2,28 +2,27 @@ Return-Path: <SRS0=6Jig=CJ=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-7.0 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DBD02C43461
-	for <linux-api@archiver.kernel.org>; Mon, 31 Aug 2020 13:48:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B7BA4C2BB4D
+	for <linux-api@archiver.kernel.org>; Mon, 31 Aug 2020 13:48:10 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C47AC20936
-	for <linux-api@archiver.kernel.org>; Mon, 31 Aug 2020 13:48:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9EC06214D8
+	for <linux-api@archiver.kernel.org>; Mon, 31 Aug 2020 13:48:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727931AbgHaNsI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 31 Aug 2020 09:48:08 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:43643 "EHLO
+        id S1727937AbgHaNsJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 31 Aug 2020 09:48:09 -0400
+Received: from youngberry.canonical.com ([91.189.89.112]:43638 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727815AbgHaNr3 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 31 Aug 2020 09:47:29 -0400
+        with ESMTP id S1727103AbgHaNr2 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 31 Aug 2020 09:47:28 -0400
 Received: from ip5f5af70b.dynamic.kabel-deutschland.de ([95.90.247.11] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kCk90-00062w-W7; Mon, 31 Aug 2020 13:46:47 +0000
+        id 1kCk8x-00062w-Ua; Mon, 31 Aug 2020 13:46:44 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     linux-kernel@vger.kernel.org
 Cc:     Christian Brauner <christian@brauner.io>,
@@ -38,14 +37,11 @@ Cc:     Christian Brauner <christian@brauner.io>,
         linux-kselftest@vger.kernel.org,
         Josh Triplett <josh@joshtriplett.org>,
         Jens Axboe <axboe@kernel.dk>, linux-api@vger.kernel.org,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        Shuah Khan <shuah@kernel.org>
-Subject: [PATCH 4/4] tests: add waitid() tests for non-blocking pidfds
-Date:   Mon, 31 Aug 2020 15:45:51 +0200
-Message-Id: <20200831134551.1599689-5-christian.brauner@ubuntu.com>
+        Christian Brauner <christian.brauner@ubuntu.com>
+Subject: [PATCH 0/4] Support non-blocking pidfds
+Date:   Mon, 31 Aug 2020 15:45:47 +0200
+Message-Id: <20200831134551.1599689-1-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.28.0
-In-Reply-To: <20200831134551.1599689-1-christian.brauner@ubuntu.com>
-References: <20200831134551.1599689-1-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
@@ -53,153 +49,66 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Verify that the PIDFD_NONBLOCK flag works with pidfd_open() and that
-waitid() with a non-blocking pidfd returns EAGAIN:
+Hi,
 
-	TAP version 13
-	1..3
-	# Starting 3 tests from 1 test cases.
-	#  RUN           global.wait_simple ...
-	#            OK  global.wait_simple
-	ok 1 global.wait_simple
-	#  RUN           global.wait_states ...
-	#            OK  global.wait_states
-	ok 2 global.wait_states
-	#  RUN           global.wait_nonblock ...
-	#            OK  global.wait_nonblock
-	ok 3 global.wait_nonblock
-	# PASSED: 3 / 3 tests passed.
-	# Totals: pass:3 fail:0 xfail:0 xpass:0 skip:0 error:0
+Passing a non-blocking pidfd to waitid() currently has no effect, i.e.
+is not supported. There are users which would like to use waitid() on
+pidfds that are O_NONBLOCK and mix it with pidfds that are blocking and
+both pass them to waitid().
+The expected behavior is to have waitid() return -EAGAIN for
+non-blocking pidfds and to block for blocking pidfds without needing to
+perform any additional checks for flags set on the pidfd before passing
+it to waitid().
+Non-blocking pidfds will return EAGAIN from waitid() when no child
+process is ready yet. Returning -EAGAIN for non-blocking pidfds makes it
+easier for event loops that handle EAGAIN specially.
 
-Cc: Shuah Khan <shuah@kernel.org>
-Cc: linux-kselftest@vger.kernel.org
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
----
- tools/testing/selftests/pidfd/pidfd.h      |  4 ++
- tools/testing/selftests/pidfd/pidfd_wait.c | 83 +++++++++++++++++++++-
- 2 files changed, 86 insertions(+), 1 deletion(-)
+It also makes the API more consistent and uniform. In essence, waitid()
+is treated like a read on a non-blocking pidfd or a recvmsg() on a
+non-blocking socket.
+With the addition of support for non-blocking pidfds we support the same
+functionality that sockets do. For sockets() recvmsg() supports
+MSG_DONTWAIT for pidfds waitid() supports WNOHANG. Both flags are
+per-call options. In contrast non-blocking pidfds and non-blocking
+sockets are a setting on an open file description affecting all threads
+in the calling process as well as other processes that hold file
+descriptors referring to the same open file description. Both behaviors,
+per call and per open file description, have genuine use-cases.
 
-diff --git a/tools/testing/selftests/pidfd/pidfd.h b/tools/testing/selftests/pidfd/pidfd.h
-index a2c80914e3dc..01f8d3c0cf2c 100644
---- a/tools/testing/selftests/pidfd/pidfd.h
-+++ b/tools/testing/selftests/pidfd/pidfd.h
-@@ -46,6 +46,10 @@
- #define __NR_pidfd_getfd -1
- #endif
- 
-+#ifndef PIDFD_NONBLOCK
-+#define PIDFD_NONBLOCK O_NONBLOCK
-+#endif
-+
- /*
-  * The kernel reserves 300 pids via RESERVED_PIDS in kernel/pid.c
-  * That means, when it wraps around any pid < 300 will be skipped.
-diff --git a/tools/testing/selftests/pidfd/pidfd_wait.c b/tools/testing/selftests/pidfd/pidfd_wait.c
-index 075c716f6fb8..cefce4d3d2f6 100644
---- a/tools/testing/selftests/pidfd/pidfd_wait.c
-+++ b/tools/testing/selftests/pidfd/pidfd_wait.c
-@@ -21,6 +21,11 @@
- 
- #define ptr_to_u64(ptr) ((__u64)((uintptr_t)(ptr)))
- 
-+/* Attempt to de-conflict with the selftests tree. */
-+#ifndef SKIP
-+#define SKIP(s, ...)	XFAIL(s, ##__VA_ARGS__)
-+#endif
-+
- static pid_t sys_clone3(struct clone_args *args)
- {
- 	return syscall(__NR_clone3, args, sizeof(struct clone_args));
-@@ -65,7 +70,7 @@ TEST(wait_simple)
- 	pidfd = -1;
- 
- 	pid = sys_clone3(&args);
--	ASSERT_GE(pid, 1);
-+	ASSERT_GE(pid, 0);
- 
- 	if (pid == 0)
- 		exit(EXIT_SUCCESS);
-@@ -133,4 +138,80 @@ TEST(wait_states)
- 	EXPECT_EQ(close(pidfd), 0);
- }
- 
-+TEST(wait_nonblock)
-+{
-+	int pidfd, status = 0;
-+	unsigned int flags = 0;
-+	pid_t parent_tid = -1;
-+	struct clone_args args = {
-+		.parent_tid = ptr_to_u64(&parent_tid),
-+		.flags = CLONE_PARENT_SETTID,
-+		.exit_signal = SIGCHLD,
-+	};
-+	int ret;
-+	pid_t pid;
-+	siginfo_t info = {
-+		.si_signo = 0,
-+	};
-+
-+	/*
-+	 * Callers need to see ECHILD with non-blocking pidfds when no child
-+	 * processes exists.
-+	 */
-+	pidfd = sys_pidfd_open(getpid(), PIDFD_NONBLOCK);
-+	EXPECT_GE(pidfd, 0) {
-+		/* pidfd_open() doesn't support PIDFD_NONBLOCK. */
-+		ASSERT_EQ(errno, EINVAL);
-+		SKIP(return, "Skipping PIDFD_NONBLOCK test");
-+	}
-+
-+	pid = sys_waitid(P_PIDFD, pidfd, &info, WEXITED, NULL);
-+	ASSERT_LT(pid, 0);
-+	ASSERT_EQ(errno, ECHILD);
-+	EXPECT_EQ(close(pidfd), 0);
-+
-+	pid = sys_clone3(&args);
-+	ASSERT_GE(pid, 0);
-+
-+	if (pid == 0) {
-+		kill(getpid(), SIGSTOP);
-+		exit(EXIT_SUCCESS);
-+	}
-+
-+	pidfd = sys_pidfd_open(pid, PIDFD_NONBLOCK);
-+	EXPECT_GE(pidfd, 0) {
-+		/* pidfd_open() doesn't support PIDFD_NONBLOCK. */
-+		ASSERT_EQ(errno, EINVAL);
-+		SKIP(return, "Skipping PIDFD_NONBLOCK test");
-+	}
-+
-+	flags = fcntl(pidfd, F_GETFL, 0);
-+	ASSERT_GT(flags, 0);
-+	ASSERT_GT((flags & O_NONBLOCK), 0);
-+
-+	/*
-+	 * Callers need to see EAGAIN/EWOULDBLOCK with non-blocking pidfd when
-+	 * child processes exist but none have exited.
-+	 */
-+	pid = sys_waitid(P_PIDFD, pidfd, &info, WEXITED, NULL);
-+	ASSERT_LT(pid, 0);
-+	ASSERT_EQ(errno, EAGAIN);
-+
-+	ASSERT_EQ(sys_waitid(P_PIDFD, pidfd, &info, WSTOPPED, NULL), 0);
-+	ASSERT_EQ(info.si_signo, SIGCHLD);
-+	ASSERT_EQ(info.si_code, CLD_STOPPED);
-+	ASSERT_EQ(info.si_pid, parent_tid);
-+
-+	ASSERT_EQ(sys_pidfd_send_signal(pidfd, SIGCONT, NULL, 0), 0);
-+
-+	ASSERT_EQ(fcntl(pidfd, F_SETFL, (flags & ~O_NONBLOCK)), 0);
-+
-+	ASSERT_EQ(sys_waitid(P_PIDFD, pidfd, &info, WEXITED, NULL), 0);
-+	ASSERT_EQ(info.si_signo, SIGCHLD);
-+	ASSERT_EQ(info.si_code, CLD_EXITED);
-+	ASSERT_EQ(info.si_pid, parent_tid);
-+
-+	EXPECT_EQ(close(pidfd), 0);
-+}
-+
- TEST_HARNESS_MAIN
+A concrete use-case that was brought on-list (see [1]) was Josh's async
+pidfd library. Ever since the introduction of pidfds and more advanced
+async io various programming languages such as Rust have grown support
+for async event libraries. These libraries are created to help build
+epoll-based event loops around file descriptors. A common pattern is to
+automatically make all file descriptors they manage to O_NONBLOCK.
+
+For such libraries the EAGAIN error code is treated specially. When a
+function is called that returns EAGAIN the function isn't called again
+until the event loop indicates the the file descriptor is ready.
+Supporting EAGAIN when waiting on pidfds makes such libraries just work
+with little effort.
+
+Thanks!
+Christian
+
+[1]: https://lore.kernel.org/lkml/20200811181236.GA18763@localhost/
+
+Christian Brauner (4):
+  pidfd: support PIDFD_NONBLOCK in pidfd_open()
+  exit: support non-blocking pidfds
+  tests: port pidfd_wait to kselftest harness
+  tests: add waitid() tests for non-blocking pidfds
+
+ include/uapi/linux/pidfd.h                 |  12 +
+ kernel/exit.c                              |  19 +-
+ kernel/pid.c                               |  12 +-
+ tools/testing/selftests/pidfd/pidfd.h      |   4 +
+ tools/testing/selftests/pidfd/pidfd_wait.c | 298 +++++++++------------
+ 5 files changed, 161 insertions(+), 184 deletions(-)
+ create mode 100644 include/uapi/linux/pidfd.h
+
+
+base-commit: d012a7190fc1fd72ed48911e77ca97ba4521bccd
 -- 
 2.28.0
 
