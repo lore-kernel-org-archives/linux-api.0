@@ -2,347 +2,137 @@ Return-Path: <SRS0=0KNl=CL=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.5 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7152AC433E7
-	for <linux-api@archiver.kernel.org>; Wed,  2 Sep 2020 10:23:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 65B6AC433E2
+	for <linux-api@archiver.kernel.org>; Wed,  2 Sep 2020 14:00:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5126F20829
-	for <linux-api@archiver.kernel.org>; Wed,  2 Sep 2020 10:23:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 49F2F2078E
+	for <linux-api@archiver.kernel.org>; Wed,  2 Sep 2020 14:00:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726426AbgIBKXZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 2 Sep 2020 06:23:25 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:49497 "EHLO
-        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726226AbgIBKXX (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 2 Sep 2020 06:23:23 -0400
-Received: from ip5f5af70b.dynamic.kabel-deutschland.de ([95.90.247.11] helo=wittgenstein.fritz.box)
-        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.86_2)
-        (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kDPvD-00069F-Kh; Wed, 02 Sep 2020 10:23:19 +0000
-From:   Christian Brauner <christian.brauner@ubuntu.com>
-To:     linux-kernel@vger.kernel.org
-Cc:     Christian Brauner <christian@brauner.io>,
-        "Peter Zijlstra (Intel)" <peterz@infradead.org>,
-        Ingo Molnar <mingo@kernel.org>,
+        id S1726853AbgIBOAE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 2 Sep 2020 10:00:04 -0400
+Received: from foss.arm.com ([217.140.110.172]:38552 "EHLO foss.arm.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727025AbgIBN6l (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 2 Sep 2020 09:58:41 -0400
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id D830231B;
+        Wed,  2 Sep 2020 06:58:40 -0700 (PDT)
+Received: from arm.com (usa-sjc-imap-foss1.foss.arm.com [10.121.207.14])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 24EBA3F71F;
+        Wed,  2 Sep 2020 06:58:37 -0700 (PDT)
+Date:   Wed, 2 Sep 2020 14:58:35 +0100
+From:   Dave Martin <Dave.Martin@arm.com>
+To:     Dave Hansen <dave.hansen@intel.com>
+Cc:     Andy Lutomirski <luto@kernel.org>,
+        "Yu, Yu-cheng" <yu-cheng.yu@intel.com>,
+        "H.J. Lu" <hjl.tools@gmail.com>,
+        Florian Weimer <fweimer@redhat.com>, X86 ML <x86@kernel.org>,
+        "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Oleg Nesterov <oleg@redhat.com>,
-        "Eric W. Biederman" <ebiederm@xmission.com>,
+        Ingo Molnar <mingo@redhat.com>,
+        LKML <linux-kernel@vger.kernel.org>,
+        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
+        Linux-MM <linux-mm@kvack.org>,
+        linux-arch <linux-arch@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Balbir Singh <bsingharora@gmail.com>,
+        Borislav Petkov <bp@alien8.de>,
+        Cyrill Gorcunov <gorcunov@gmail.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Eugene Syromiatnikov <esyr@redhat.com>,
+        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
         Kees Cook <keescook@chromium.org>,
-        Sargun Dhillon <sargun@sargun.me>,
-        Aleksa Sarai <cyphar@cyphar.com>,
-        linux-kselftest@vger.kernel.org,
-        Josh Triplett <josh@joshtriplett.org>,
-        Jens Axboe <axboe@kernel.dk>, linux-api@vger.kernel.org,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        Shuah Khan <shuah@kernel.org>
-Subject: [PATCH v2 3/4] tests: port pidfd_wait to kselftest harness
-Date:   Wed,  2 Sep 2020 12:21:29 +0200
-Message-Id: <20200902102130.147672-4-christian.brauner@ubuntu.com>
-X-Mailer: git-send-email 2.28.0
-In-Reply-To: <20200902102130.147672-1-christian.brauner@ubuntu.com>
-References: <20200902102130.147672-1-christian.brauner@ubuntu.com>
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Nadav Amit <nadav.amit@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
+        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
+        Weijiang Yang <weijiang.yang@intel.com>
+Subject: Re: [PATCH v11 25/25] x86/cet/shstk: Add arch_prctl functions for
+ shadow stack
+Message-ID: <20200902135832.GD6642@arm.com>
+References: <20200826164604.GW6642@arm.com>
+ <87ft892vvf.fsf@oldenburg2.str.redhat.com>
+ <CALCETrVeNA0Kt2rW0CRCVo1JE0CKaBxu9KrJiyqUA8LPraY=7g@mail.gmail.com>
+ <0e9996bc-4c1b-cc99-9616-c721b546f857@intel.com>
+ <4f2dfefc-b55e-bf73-f254-7d95f9c67e5c@intel.com>
+ <CAMe9rOqt9kbqERC8U1+K-LiDyNYuuuz3TX++DChrRJwr5ajt6Q@mail.gmail.com>
+ <20200901102758.GY6642@arm.com>
+ <c91bbad8-9e45-724b-4526-fe3674310c57@intel.com>
+ <CALCETrWJQgtO_tP1pEaDYYsFgkZ=fOxhyTRE50THcxYoHyTTwg@mail.gmail.com>
+ <32005d57-e51a-7c7f-4e86-612c2ff067f3@intel.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <32005d57-e51a-7c7f-4e86-612c2ff067f3@intel.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-All of the new pidfd selftests already use the new kselftest harness
-infrastructure. It makes for clearer output, makes the code easier to
-understand, and makes adding new tests way simpler.
+On Tue, Sep 01, 2020 at 11:11:37AM -0700, Dave Hansen wrote:
+> On 9/1/20 10:45 AM, Andy Lutomirski wrote:
+> >>> For arm64 (and sparc etc.) we continue to use the regular mmap/mprotect
+> >>> family of calls.  One or two additional arch-specific mmap flags are
+> >>> sufficient for now.
+> >>>
+> >>> Is x86 definitely not going to fit within those calls?
+> >> That can work for x86.  Andy, what if we create PROT_SHSTK, which can
+> >> been seen only from the user.  Once in kernel, it is translated to
+> >> VM_SHSTK.  One question for mremap/mprotect is, do we allow a normal
+> >> data area to become shadow stack?
+> > I'm unconvinced that we want to use a somewhat precious PROT_ or VM_
+> > bit for this.  Using a flag bit makes sense if we expect anyone to
+> > ever map an fd or similar as a shadow stack, but that seems a bit odd
+> > in the first place.  To me, it seems more logical for a shadow stack
+> > to be a special sort of mapping with a special vm_ops, not a normal
+> > mapping with a special flag set.  Although I realize that we want
+> > shadow stacks to work like anonymous memory with respect to fork().
+> > Dave?
+> 
+> I actually don't like the idea of *creating* mappings much.
+> 
+> I think the pkey model has worked out pretty well where we separate
+> creating the mapping from doing something *to* it, like changing
+> protections.  For instance, it would be nice if we could preserve things
+> like using hugetlbfs or heck even doing KSM for shadow stacks.
+> 
+> If we're *creating* mappings, we've pretty much ruled out things like
+> hugetlbfs.
+> 
+> Something like mprotect_shstk() would allow an implementation today that
+> only works on anonymous memory *and* sets up a special vm_ops.  But, the
+> same exact ABI could do wonky stuff in the future if we decided we
+> wanted to do shadow stacks on DAX or hugetlbfs or whatever.
+> 
+> I don't really like the idea of PROT_SHSTK those are plumbed into a
+> bunch of interfaces.  But, I also can't deny that it seems to be working
+> fine for the arm64 folks.
 
-Cc: Shuah Khan <shuah@kernel.org>
-Cc: linux-kselftest@vger.kernel.org
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
----
-/* v2 */
-unchanged
----
- tools/testing/selftests/pidfd/pidfd_wait.c | 213 ++++-----------------
- 1 file changed, 39 insertions(+), 174 deletions(-)
+Note, there are some rough edges, such as what happens when someone
+calls mprotect() on memory marked with PROT_BTI.  Unless the caller
+knows whether PROT_BTI should be set for that page, the flag may get
+unintentionally cleared.  Since the flag only applies to text pages
+though, it's not _that_ much of a concern.  Software that deals with
+writable text pages is also usually involved in generating the code and
+so will know about PROT_BTI.  That's was the theory anyway.
 
-diff --git a/tools/testing/selftests/pidfd/pidfd_wait.c b/tools/testing/selftests/pidfd/pidfd_wait.c
-index 7079f8eef792..075c716f6fb8 100644
---- a/tools/testing/selftests/pidfd/pidfd_wait.c
-+++ b/tools/testing/selftests/pidfd/pidfd_wait.c
-@@ -17,7 +17,7 @@
- #include <unistd.h>
- 
- #include "pidfd.h"
--#include "../kselftest.h"
-+#include "../kselftest_harness.h"
- 
- #define ptr_to_u64(ptr) ((__u64)((uintptr_t)(ptr)))
- 
-@@ -32,9 +32,8 @@ static int sys_waitid(int which, pid_t pid, siginfo_t *info, int options,
- 	return syscall(__NR_waitid, which, pid, info, options, ru);
- }
- 
--static int test_pidfd_wait_simple(void)
-+TEST(wait_simple)
- {
--	const char *test_name = "pidfd wait simple";
- 	int pidfd = -1, status = 0;
- 	pid_t parent_tid = -1;
- 	struct clone_args args = {
-@@ -50,76 +49,40 @@ static int test_pidfd_wait_simple(void)
- 	};
- 
- 	pidfd = open("/proc/self", O_DIRECTORY | O_RDONLY | O_CLOEXEC);
--	if (pidfd < 0)
--		ksft_exit_fail_msg("%s test: failed to open /proc/self %s\n",
--				   test_name, strerror(errno));
-+	ASSERT_GE(pidfd, 0);
- 
- 	pid = sys_waitid(P_PIDFD, pidfd, &info, WEXITED, NULL);
--	if (pid == 0)
--		ksft_exit_fail_msg(
--			"%s test: succeeded to wait on invalid pidfd %s\n",
--			test_name, strerror(errno));
--	close(pidfd);
-+	ASSERT_NE(pid, 0);
-+	EXPECT_EQ(close(pidfd), 0);
- 	pidfd = -1;
- 
- 	pidfd = open("/dev/null", O_RDONLY | O_CLOEXEC);
--	if (pidfd == 0)
--		ksft_exit_fail_msg("%s test: failed to open /dev/null %s\n",
--				   test_name, strerror(errno));
-+	ASSERT_GE(pidfd, 0);
- 
- 	pid = sys_waitid(P_PIDFD, pidfd, &info, WEXITED, NULL);
--	if (pid == 0)
--		ksft_exit_fail_msg(
--			"%s test: succeeded to wait on invalid pidfd %s\n",
--			test_name, strerror(errno));
--	close(pidfd);
-+	ASSERT_NE(pid, 0);
-+	EXPECT_EQ(close(pidfd), 0);
- 	pidfd = -1;
- 
- 	pid = sys_clone3(&args);
--	if (pid < 0)
--		ksft_exit_fail_msg("%s test: failed to create new process %s\n",
--				   test_name, strerror(errno));
-+	ASSERT_GE(pid, 1);
- 
- 	if (pid == 0)
- 		exit(EXIT_SUCCESS);
- 
- 	pid = sys_waitid(P_PIDFD, pidfd, &info, WEXITED, NULL);
--	if (pid < 0)
--		ksft_exit_fail_msg(
--			"%s test: failed to wait on process with pid %d and pidfd %d: %s\n",
--			test_name, parent_tid, pidfd, strerror(errno));
--
--	if (!WIFEXITED(info.si_status) || WEXITSTATUS(info.si_status))
--		ksft_exit_fail_msg(
--			"%s test: unexpected status received after waiting on process with pid %d and pidfd %d: %s\n",
--			test_name, parent_tid, pidfd, strerror(errno));
--	close(pidfd);
--
--	if (info.si_signo != SIGCHLD)
--		ksft_exit_fail_msg(
--			"%s test: unexpected si_signo value %d received after waiting on process with pid %d and pidfd %d: %s\n",
--			test_name, info.si_signo, parent_tid, pidfd,
--			strerror(errno));
--
--	if (info.si_code != CLD_EXITED)
--		ksft_exit_fail_msg(
--			"%s test: unexpected si_code value %d received after waiting on process with pid %d and pidfd %d: %s\n",
--			test_name, info.si_code, parent_tid, pidfd,
--			strerror(errno));
--
--	if (info.si_pid != parent_tid)
--		ksft_exit_fail_msg(
--			"%s test: unexpected si_pid value %d received after waiting on process with pid %d and pidfd %d: %s\n",
--			test_name, info.si_pid, parent_tid, pidfd,
--			strerror(errno));
--
--	ksft_test_result_pass("%s test: Passed\n", test_name);
--	return 0;
-+	ASSERT_GE(pid, 0);
-+	ASSERT_EQ(WIFEXITED(info.si_status), true);
-+	ASSERT_EQ(WEXITSTATUS(info.si_status), 0);
-+	EXPECT_EQ(close(pidfd), 0);
-+
-+	ASSERT_EQ(info.si_signo, SIGCHLD);
-+	ASSERT_EQ(info.si_code, CLD_EXITED);
-+	ASSERT_EQ(info.si_pid, parent_tid);
- }
- 
--static int test_pidfd_wait_states(void)
-+TEST(wait_states)
- {
--	const char *test_name = "pidfd wait states";
- 	int pidfd = -1, status = 0;
- 	pid_t parent_tid = -1;
- 	struct clone_args args = {
-@@ -135,9 +98,7 @@ static int test_pidfd_wait_states(void)
- 	};
- 
- 	pid = sys_clone3(&args);
--	if (pid < 0)
--		ksft_exit_fail_msg("%s test: failed to create new process %s\n",
--				   test_name, strerror(errno));
-+	ASSERT_GE(pid, 0);
- 
- 	if (pid == 0) {
- 		kill(getpid(), SIGSTOP);
-@@ -145,127 +106,31 @@ static int test_pidfd_wait_states(void)
- 		exit(EXIT_SUCCESS);
- 	}
- 
--	ret = sys_waitid(P_PIDFD, pidfd, &info, WSTOPPED, NULL);
--	if (ret < 0)
--		ksft_exit_fail_msg(
--			"%s test: failed to wait on WSTOPPED process with pid %d and pidfd %d: %s\n",
--			test_name, parent_tid, pidfd, strerror(errno));
--
--	if (info.si_signo != SIGCHLD)
--		ksft_exit_fail_msg(
--			"%s test: unexpected si_signo value %d received after waiting on process with pid %d and pidfd %d: %s\n",
--			test_name, info.si_signo, parent_tid, pidfd,
--			strerror(errno));
--
--	if (info.si_code != CLD_STOPPED)
--		ksft_exit_fail_msg(
--			"%s test: unexpected si_code value %d received after waiting on process with pid %d and pidfd %d: %s\n",
--			test_name, info.si_code, parent_tid, pidfd,
--			strerror(errno));
--
--	if (info.si_pid != parent_tid)
--		ksft_exit_fail_msg(
--			"%s test: unexpected si_pid value %d received after waiting on process with pid %d and pidfd %d: %s\n",
--			test_name, info.si_pid, parent_tid, pidfd,
--			strerror(errno));
--
--	ret = sys_pidfd_send_signal(pidfd, SIGCONT, NULL, 0);
--	if (ret < 0)
--		ksft_exit_fail_msg(
--			"%s test: failed to send signal to process with pid %d and pidfd %d: %s\n",
--			test_name, parent_tid, pidfd, strerror(errno));
--
--	ret = sys_waitid(P_PIDFD, pidfd, &info, WCONTINUED, NULL);
--	if (ret < 0)
--		ksft_exit_fail_msg(
--			"%s test: failed to wait WCONTINUED on process with pid %d and pidfd %d: %s\n",
--			test_name, parent_tid, pidfd, strerror(errno));
-+	ASSERT_EQ(sys_waitid(P_PIDFD, pidfd, &info, WSTOPPED, NULL), 0);
-+	ASSERT_EQ(info.si_signo, SIGCHLD);
-+	ASSERT_EQ(info.si_code, CLD_STOPPED);
-+	ASSERT_EQ(info.si_pid, parent_tid);
- 
--	if (info.si_signo != SIGCHLD)
--		ksft_exit_fail_msg(
--			"%s test: unexpected si_signo value %d received after waiting on process with pid %d and pidfd %d: %s\n",
--			test_name, info.si_signo, parent_tid, pidfd,
--			strerror(errno));
-+	ASSERT_EQ(sys_pidfd_send_signal(pidfd, SIGCONT, NULL, 0), 0);
- 
--	if (info.si_code != CLD_CONTINUED)
--		ksft_exit_fail_msg(
--			"%s test: unexpected si_code value %d received after waiting on process with pid %d and pidfd %d: %s\n",
--			test_name, info.si_code, parent_tid, pidfd,
--			strerror(errno));
-+	ASSERT_EQ(sys_waitid(P_PIDFD, pidfd, &info, WCONTINUED, NULL), 0);
-+	ASSERT_EQ(info.si_signo, SIGCHLD);
-+	ASSERT_EQ(info.si_code, CLD_CONTINUED);
-+	ASSERT_EQ(info.si_pid, parent_tid);
- 
--	if (info.si_pid != parent_tid)
--		ksft_exit_fail_msg(
--			"%s test: unexpected si_pid value %d received after waiting on process with pid %d and pidfd %d: %s\n",
--			test_name, info.si_pid, parent_tid, pidfd,
--			strerror(errno));
-+	ASSERT_EQ(sys_waitid(P_PIDFD, pidfd, &info, WUNTRACED, NULL), 0);
-+	ASSERT_EQ(info.si_signo, SIGCHLD);
-+	ASSERT_EQ(info.si_code, CLD_STOPPED);
-+	ASSERT_EQ(info.si_pid, parent_tid);
- 
--	ret = sys_waitid(P_PIDFD, pidfd, &info, WUNTRACED, NULL);
--	if (ret < 0)
--		ksft_exit_fail_msg(
--			"%s test: failed to wait on WUNTRACED process with pid %d and pidfd %d: %s\n",
--			test_name, parent_tid, pidfd, strerror(errno));
-+	ASSERT_EQ(sys_pidfd_send_signal(pidfd, SIGKILL, NULL, 0), 0);
- 
--	if (info.si_signo != SIGCHLD)
--		ksft_exit_fail_msg(
--			"%s test: unexpected si_signo value %d received after waiting on process with pid %d and pidfd %d: %s\n",
--			test_name, info.si_signo, parent_tid, pidfd,
--			strerror(errno));
-+	ASSERT_EQ(sys_waitid(P_PIDFD, pidfd, &info, WEXITED, NULL), 0);
-+	ASSERT_EQ(info.si_signo, SIGCHLD);
-+	ASSERT_EQ(info.si_code, CLD_KILLED);
-+	ASSERT_EQ(info.si_pid, parent_tid);
- 
--	if (info.si_code != CLD_STOPPED)
--		ksft_exit_fail_msg(
--			"%s test: unexpected si_code value %d received after waiting on process with pid %d and pidfd %d: %s\n",
--			test_name, info.si_code, parent_tid, pidfd,
--			strerror(errno));
--
--	if (info.si_pid != parent_tid)
--		ksft_exit_fail_msg(
--			"%s test: unexpected si_pid value %d received after waiting on process with pid %d and pidfd %d: %s\n",
--			test_name, info.si_pid, parent_tid, pidfd,
--			strerror(errno));
--
--	ret = sys_pidfd_send_signal(pidfd, SIGKILL, NULL, 0);
--	if (ret < 0)
--		ksft_exit_fail_msg(
--			"%s test: failed to send SIGKILL to process with pid %d and pidfd %d: %s\n",
--			test_name, parent_tid, pidfd, strerror(errno));
--
--	ret = sys_waitid(P_PIDFD, pidfd, &info, WEXITED, NULL);
--	if (ret < 0)
--		ksft_exit_fail_msg(
--			"%s test: failed to wait on WEXITED process with pid %d and pidfd %d: %s\n",
--			test_name, parent_tid, pidfd, strerror(errno));
--
--	if (info.si_signo != SIGCHLD)
--		ksft_exit_fail_msg(
--			"%s test: unexpected si_signo value %d received after waiting on process with pid %d and pidfd %d: %s\n",
--			test_name, info.si_signo, parent_tid, pidfd,
--			strerror(errno));
--
--	if (info.si_code != CLD_KILLED)
--		ksft_exit_fail_msg(
--			"%s test: unexpected si_code value %d received after waiting on process with pid %d and pidfd %d: %s\n",
--			test_name, info.si_code, parent_tid, pidfd,
--			strerror(errno));
--
--	if (info.si_pid != parent_tid)
--		ksft_exit_fail_msg(
--			"%s test: unexpected si_pid value %d received after waiting on process with pid %d and pidfd %d: %s\n",
--			test_name, info.si_pid, parent_tid, pidfd,
--			strerror(errno));
--
--	close(pidfd);
--
--	ksft_test_result_pass("%s test: Passed\n", test_name);
--	return 0;
-+	EXPECT_EQ(close(pidfd), 0);
- }
- 
--int main(int argc, char **argv)
--{
--	ksft_print_header();
--	ksft_set_plan(2);
--
--	test_pidfd_wait_simple();
--	test_pidfd_wait_states();
--
--	return ksft_exit_pass();
--}
-+TEST_HARNESS_MAIN
--- 
-2.28.0
+In the longer term, it might be preferable to have a mprotect2() that
+can leave some flags unmodified, and that doesn't silently ignore
+unknown flags (at least one of mmap or mprotect does; I don't recall
+which).  We attempt didn't go this far, for now.
 
+For arm64 it seemed fairly natural for the BTI flag to be a PROT_ flag,
+but I don't know enough detail about x86 shstk to know whether it's a
+natural fit there.
+
+Cheers
+---Dave
