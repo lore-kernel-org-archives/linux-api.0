@@ -2,68 +2,63 @@ Return-Path: <SRS0=qdCL=CM=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.0 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
 	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 524CDC433E9
-	for <linux-api@archiver.kernel.org>; Thu,  3 Sep 2020 16:26:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 42A48C433E2
+	for <linux-api@archiver.kernel.org>; Thu,  3 Sep 2020 16:32:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 32A45208B3
-	for <linux-api@archiver.kernel.org>; Thu,  3 Sep 2020 16:26:15 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=amacapital-net.20150623.gappssmtp.com header.i=@amacapital-net.20150623.gappssmtp.com header.b="oDD0Gux3"
+	by mail.kernel.org (Postfix) with ESMTP id 1DD8920775
+	for <linux-api@archiver.kernel.org>; Thu,  3 Sep 2020 16:32:56 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1599150776;
+	bh=ccAhlXDIqzUfCS53Ih6BJ5ZMtmY6cQaap0Ayu6dveG0=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:List-ID:From;
+	b=JomSreMUMZJAzQbO3t4Fx7ujou1lwJ97phWF2UeyBOG6ZKgPiyUTq72IW1kSemnOP
+	 1o/rW1Xfz96XgsJl/AcLbMuHIHWKrBvjNiIbG8TjkA6j32BIF0/JfCSvvEcn8V/hqz
+	 3j9kzuAJQfjG8jq45Q9c4I5swPMsXM8MQmgA7fAk=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728709AbgICQ0L (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 3 Sep 2020 12:26:11 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54146 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728618AbgICQ0G (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 3 Sep 2020 12:26:06 -0400
-Received: from mail-wr1-x442.google.com (mail-wr1-x442.google.com [IPv6:2a00:1450:4864:20::442])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 84BD9C061245
-        for <linux-api@vger.kernel.org>; Thu,  3 Sep 2020 09:26:05 -0700 (PDT)
-Received: by mail-wr1-x442.google.com with SMTP id c18so3874745wrm.9
-        for <linux-api@vger.kernel.org>; Thu, 03 Sep 2020 09:26:05 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=amacapital-net.20150623.gappssmtp.com; s=20150623;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=SX2M8ZjNOBomakJPHx/eAoRjiYE0E7vCrIP8X7wqwrE=;
-        b=oDD0Gux34thJnmZ1p9GU8/6kkTWx5e4QqShXwMd2NzdUka1D68oV585mq/L3jRJuu0
-         w0CSzkCCoemSUbbJ8xwFmr5CuDop+bx66FGABsb7OMciJYlYF598/kVCyzUOgEKZ6zl1
-         dJhzpIT78obpMOtyOQjJjAaeqiAJQhE1/6HIKz05PonttlZTZ2femjibqz5sE61+jsRU
-         I3UGgJtnMU/bozY9Bs4Qa/anS5uwD/JAZSk1k65nv9i0c1yBndXHbXDLXLR2zmwsvmp8
-         C9np4SMmG6PqdfSrCNaiH9JEU2oOeHPRfT0tNA1yVhssHn+9/w/tSyzAnqTgqKR+Lf01
-         Zyxg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=SX2M8ZjNOBomakJPHx/eAoRjiYE0E7vCrIP8X7wqwrE=;
-        b=DKWq6aB+9vU86Ei4JgQ80gkY29KI2ol4UJJhHSWVrqbVEOPY+Ih4IAugPfG71sm/QW
-         gdNTSSbRgU/JggcsjWkPxRAkzMc8EeD8nkseYZZhT4Q8doi8v/ZvYYVqQx/yNh7n70mo
-         PS2nLm9rPEH6/+wl5Mxa1bAHh5n+Odpzhjyg/kxHxaWiMmKSyNxeSsOqwxt2nRGR2GSq
-         5SmD9rH6wA2fgm54KPBcQMJYw1fb0AgjBiv7QAGfIwIN4VcT3TdcelfYxwNKVfekFo+m
-         6gPQmhhBh8pYtL/iwtU7lj7C6hjtbUrkeKwtwHRj1YzCiP0KhdE7tuLljRSlwfSy/iY5
-         +9aA==
-X-Gm-Message-State: AOAM531csn6kTiLw9Zj/lCk3WTTKU3Jm2KtIy1cbjsyNE16BTFGIR5fg
-        NtGFTyb/og342iec7Juic3taewIVF8Q5ZXo9gWXFag==
-X-Google-Smtp-Source: ABdhPJxcnMUlkP3dZ2TKybhF8a+O8Sm1srU3BtKK/jrCHsVYh3QnJ0h434G4rO8gv9hbnVUhv5ZzuuQkLwxiCBqscSc=
-X-Received: by 2002:a5d:6a47:: with SMTP id t7mr3256984wrw.75.1599150364012;
- Thu, 03 Sep 2020 09:26:04 -0700 (PDT)
+        id S1728850AbgICQcw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 3 Sep 2020 12:32:52 -0400
+Received: from mail.kernel.org ([198.145.29.99]:52106 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1728555AbgICQcu (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 3 Sep 2020 12:32:50 -0400
+Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com [209.85.221.47])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 98D78208C7
+        for <linux-api@vger.kernel.org>; Thu,  3 Sep 2020 16:32:49 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1599150769;
+        bh=ccAhlXDIqzUfCS53Ih6BJ5ZMtmY6cQaap0Ayu6dveG0=;
+        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+        b=Az/MpPSlsSfqamSllDS7ZNWPhfS4KgkXOA3gryVz+eAyhYeE+aMjmDr7ofkeHByrx
+         zuMUDT2GigowU+B95JFfh5cfn4WwTn8bqgEtfkHWHr/NPVjktIUvZ966hfd2QwKrgW
+         PuuvmJSICVCp9UZCLkw74xyp4iJIeGS5prLzJ+O0=
+Received: by mail-wr1-f47.google.com with SMTP id z1so3951618wrt.3
+        for <linux-api@vger.kernel.org>; Thu, 03 Sep 2020 09:32:49 -0700 (PDT)
+X-Gm-Message-State: AOAM53087TU4wR9ACIcF8EYJ0++YGXlXb7w87LEPXEYOByk97WZJ8fzC
+        baClS7/4UqXEJ2dImR3IOO+xGitQ84hQb8jCpqYz9A==
+X-Google-Smtp-Source: ABdhPJwexd+tr/hjHpRJA3we13WyoCWohcGyKWMy9veXqwsBVx3FM7oAvkjCkAPLwTEoGEPDPidQEf6bR2x3xEpbm7E=
+X-Received: by 2002:a05:6000:11c5:: with SMTP id i5mr3428679wrx.18.1599150768256;
+ Thu, 03 Sep 2020 09:32:48 -0700 (PDT)
 MIME-Version: 1.0
 References: <46e42e5e-0bca-5f3f-efc9-5ab15827cc0b@intel.com>
  <40BC093A-F430-4DCC-8DC0-2BA90A6FC3FA@amacapital.net> <b3809dd7-8566-0517-2389-8089475135b7@intel.com>
  <88261152-2de1-fe8d-7ab0-acb108e97e04@intel.com> <1b51d89c-c7de-2032-df23-e138d1369ffa@intel.com>
- <3967f126-f7ea-36fd-bec0-dfbbc46ef221@intel.com>
-In-Reply-To: <3967f126-f7ea-36fd-bec0-dfbbc46ef221@intel.com>
-From:   Andy Lutomirski <luto@amacapital.net>
-Date:   Thu, 3 Sep 2020 09:25:51 -0700
-Message-ID: <CALCETrXnzOwLSHWOtKTLuybCTZ=w+cBVMhs2uCzd+LSdbijQ3g@mail.gmail.com>
+ <CALCETrUq3xiHV2xOZV-FD_de_P_TL-Bs91XT+F+79psBfigCSg@mail.gmail.com> <21491d05-6306-0a6f-58a7-8bf29feae8c7@intel.com>
+In-Reply-To: <21491d05-6306-0a6f-58a7-8bf29feae8c7@intel.com>
+From:   Andy Lutomirski <luto@kernel.org>
+Date:   Thu, 3 Sep 2020 09:32:36 -0700
+X-Gmail-Original-Message-ID: <CALCETrXJkXXDF=tdu3KBHgzDO+E-HhqMk9Ttixgk4WX_PLPDJw@mail.gmail.com>
+Message-ID: <CALCETrXJkXXDF=tdu3KBHgzDO+E-HhqMk9Ttixgk4WX_PLPDJw@mail.gmail.com>
 Subject: Re: [PATCH v11 6/9] x86/cet: Add PTRACE interface for CET
-To:     "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
-Cc:     Dave Hansen <dave.hansen@intel.com>, Jann Horn <jannh@google.com>,
+To:     Dave Hansen <dave.hansen@intel.com>
+Cc:     Andy Lutomirski <luto@kernel.org>,
+        "Yu, Yu-cheng" <yu-cheng.yu@intel.com>,
+        Jann Horn <jannh@google.com>,
         "the arch/x86 maintainers" <x86@kernel.org>,
         "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -74,7 +69,6 @@ Cc:     Dave Hansen <dave.hansen@intel.com>, Jann Horn <jannh@google.com>,
         linux-arch <linux-arch@vger.kernel.org>,
         Linux API <linux-api@vger.kernel.org>,
         Arnd Bergmann <arnd@arndb.de>,
-        Andy Lutomirski <luto@kernel.org>,
         Balbir Singh <bsingharora@gmail.com>,
         Borislav Petkov <bp@alien8.de>,
         Cyrill Gorcunov <gorcunov@gmail.com>,
@@ -98,27 +92,33 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Sep 3, 2020 at 9:21 AM Yu, Yu-cheng <yu-cheng.yu@intel.com> wrote:
+On Thu, Sep 3, 2020 at 9:25 AM Dave Hansen <dave.hansen@intel.com> wrote:
 >
-> On 9/3/2020 9:11 AM, Dave Hansen wrote:
-> > On 9/3/20 9:09 AM, Yu, Yu-cheng wrote:
-> >> If the debugger is going to write an MSR, only in the third case would
-> >> this make a slight sense.  For example, if the system has CET enabled,
-> >> but the task does not have CET enabled, and GDB is writing to a CET MSR.
-> >>   But still, this is strange to me.
+> On 9/3/20 9:15 AM, Andy Lutomirski wrote:
+> > On Thu, Sep 3, 2020 at 9:12 AM Dave Hansen <dave.hansen@intel.com> wrote:
+> >>
+> >> On 9/3/20 9:09 AM, Yu, Yu-cheng wrote:
+> >>> If the debugger is going to write an MSR, only in the third case would
+> >>> this make a slight sense.  For example, if the system has CET enabled,
+> >>> but the task does not have CET enabled, and GDB is writing to a CET MSR.
+> >>>  But still, this is strange to me.
+> >>
+> >> If this is strange, then why do we even _implement_ writes?
 > >
-> > If this is strange, then why do we even _implement_ writes?
-> >
+> > Well, if gdb wants to force a tracee to return early from a function,
+> > wouldn't it want the ability to modify SSP?
 >
-> For example, if the task has CET enabled, and it is in a control
-> protection fault, the debugger can clear the task's IBT state, or unwind
-> the shadow stack, etc.  But if the task does not have CET enabled (its
-> CET MSRs are in INIT state), it would make sense for the PTRACE call to
-> return failure than doing something else, right?
+> That's true.
+>
+> Yu-cheng, can you take a look through and see for the other setregs
+> users what they do for logically crazy, strange things?  Is there
+> precedent for refusing a write which is possible but illogical or
+> strange?  If so, which error code do they use?
+>
+> Taking the config register out of the init state is illogical, as is
+> writing to SSP while the config register is in its init state.
 
-What do you mean "something else"?  I assume that, if GDB tells
-ptrace() to write some value to the CET MSR, then it should get that
-value.  If GDB writes to it on a task that is not currently using CET,
-I don't see why it should fail.
-
---Andy
+What's so special about the INIT state?  It's optimized by XSAVES, but
+it's just a number, right?  So taking the register out of the INIT
+state is kind of like saying "gdb wanted to set xmm0 to (0,0,0,1), but
+it was in the INIT state to begin with", right?
