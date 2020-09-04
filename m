@@ -2,117 +2,281 @@ Return-Path: <SRS0=+ro9=CN=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CC22FC2BB84
-	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 20:18:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C8295C2BB84
+	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 20:32:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8CEC02087C
-	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 20:18:26 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FlgYTkMG"
+	by mail.kernel.org (Postfix) with ESMTP id 91C6720C56
+	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 20:32:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728045AbgIDUSZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 4 Sep 2020 16:18:25 -0400
-Received: from us-smtp-delivery-1.mimecast.com ([207.211.31.120]:31233 "EHLO
-        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1726441AbgIDUSY (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 4 Sep 2020 16:18:24 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1599250702;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=4ur9HpmZf28TON8CHWc9+9TwgcC5lgzfKgaHYfzgcxs=;
-        b=FlgYTkMGOL2hkq/k2smX5e/X+/EVY2vdO6YzVp9lJOGVv9qZTSMgGLQV8GfmYBCLvAk/5Z
-        SYhxjj/kGAcU4kmHpLSK8a+QnxyKRx6QlKbfD/yNl0/Ps31BYb++J+3IIZa4ONYLmL0vXH
-        8dCJPu10LNGWjKNsyWVvdDyntKXWbWw=
-Received: from mail-ed1-f69.google.com (mail-ed1-f69.google.com
- [209.85.208.69]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-573-TPIY3L6AMdS5WV-eCFSpaA-1; Fri, 04 Sep 2020 16:18:20 -0400
-X-MC-Unique: TPIY3L6AMdS5WV-eCFSpaA-1
-Received: by mail-ed1-f69.google.com with SMTP id b12so3133198edw.15
-        for <linux-api@vger.kernel.org>; Fri, 04 Sep 2020 13:18:20 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-language
-         :content-transfer-encoding;
-        bh=4ur9HpmZf28TON8CHWc9+9TwgcC5lgzfKgaHYfzgcxs=;
-        b=pDZBx62Ma1BmEUPW9Oq+uSda32ftrn+xp0Gm99AE49d7mHYreHT9Sz0F/Uh/IzFScP
-         6RiaTqN9lBteRsrXKCKg6Cocl3hyksreht3SIeB+cPq+EB09pao2q6JZ9c08RPjDtwcg
-         7ZOH1FStu8yZ7WBgCY/xoCn9tWrMfJqfNCBPEjUZATymvAe80V+gAL3VCIB/WR2GVRHV
-         ehj2SB8g9ovxuO+nvqoYWCXQtSj8PHapyjhgGo+RvFtlgXajn1b8rZtvqhAD1ln8bsQw
-         398C4qOAfvuHk4YttBga1fKAVpEULl8Z9I11zbaQ/bLmHoj11UpiRdFvXrhS4zjaySRe
-         jKCA==
-X-Gm-Message-State: AOAM5304XLE/bG94D1C6MwEzqH0ye5Hv+bgM6n/mjbmhpgpotXSkNFlZ
-        MkblGkSMtmK5T/Me/CfVgu0gO2vkI0yExolWk3zlWi1t8uumm8xcFeOuN4Z0jRKK8ckEDNDvR/F
-        2XmwSQPjy52Ml374D5TOR
-X-Received: by 2002:a17:906:b154:: with SMTP id bt20mr9625634ejb.272.1599250699549;
-        Fri, 04 Sep 2020 13:18:19 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJw8Ggiccs73r/w622i0UNJHJe4gtmawevHQ5W9SQCuqBXAXICrfKwM/er78OQ+xfgsFYnvaOA==
-X-Received: by 2002:a17:906:b154:: with SMTP id bt20mr9625611ejb.272.1599250699359;
-        Fri, 04 Sep 2020 13:18:19 -0700 (PDT)
-Received: from ?IPv6:2001:b07:6468:f312:6276:52ed:96d5:c094? ([2001:b07:6468:f312:6276:52ed:96d5:c094])
-        by smtp.gmail.com with ESMTPSA id ci27sm7276701ejc.23.2020.09.04.13.18.18
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 04 Sep 2020 13:18:18 -0700 (PDT)
-Subject: Re: [RESEND RFC PATCH 0/5] Remote mapping
-To:     Florian Weimer <fw@deneb.enyo.de>,
-        =?UTF-8?Q?Adalbert_Laz=c4=83r?= <alazar@bitdefender.com>
-Cc:     linux-mm@kvack.org, linux-api@vger.kernel.org,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Alexander Graf <graf@amazon.com>,
-        Stefan Hajnoczi <stefanha@redhat.com>,
-        Jerome Glisse <jglisse@redhat.com>,
-        =?UTF-8?Q?Mihai_Don=c8=9bu?= <mdontu@bitdefender.com>,
-        Mircea Cirjaliu <mcirjaliu@bitdefender.com>,
-        Andy Lutomirski <luto@kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Sargun Dhillon <sargun@sargun.me>,
-        Aleksa Sarai <cyphar@cyphar.com>,
-        Oleg Nesterov <oleg@redhat.com>, Jann Horn <jannh@google.com>,
-        Kees Cook <keescook@chromium.org>,
-        Matthew Wilcox <willy@infradead.org>,
-        Christian Brauner <christian.brauner@ubuntu.com>
-References: <20200904113116.20648-1-alazar@bitdefender.com>
- <87pn71gxi8.fsf@mid.deneb.enyo.de>
-From:   Paolo Bonzini <pbonzini@redhat.com>
-Message-ID: <5447a405-4e4f-8034-eb86-ec2f6ddf45f0@redhat.com>
-Date:   Fri, 4 Sep 2020 22:18:17 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.11.0
+        id S1726791AbgIDUcA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 4 Sep 2020 16:32:00 -0400
+Received: from bhuna.collabora.co.uk ([46.235.227.227]:42056 "EHLO
+        bhuna.collabora.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726621AbgIDUb7 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 4 Sep 2020 16:31:59 -0400
+Received: from [127.0.0.1] (localhost [127.0.0.1])
+        (Authenticated sender: krisman)
+        with ESMTPSA id 0060329B035
+From:   Gabriel Krisman Bertazi <krisman@collabora.com>
+To:     luto@kernel.org, tglx@linutronix.de, keescook@chromium.org
+Cc:     x86@kernel.org, linux-kernel@vger.kernel.org,
+        linux-api@vger.kernel.org, willy@infradead.org,
+        linux-kselftest@vger.kernel.org, shuah@kernel.org,
+        Gabriel Krisman Bertazi <krisman@collabora.com>,
+        kernel@collabora.com
+Subject: [PATCH v6 1/9] kernel: Support TIF_SYSCALL_INTERCEPT flag
+Date:   Fri,  4 Sep 2020 16:31:39 -0400
+Message-Id: <20200904203147.2908430-2-krisman@collabora.com>
+X-Mailer: git-send-email 2.28.0
+In-Reply-To: <20200904203147.2908430-1-krisman@collabora.com>
+References: <20200904203147.2908430-1-krisman@collabora.com>
 MIME-Version: 1.0
-In-Reply-To: <87pn71gxi8.fsf@mid.deneb.enyo.de>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 04/09/20 21:19, Florian Weimer wrote:
-> I'm not sure what the advantage is of returning separate file
-> descriptors, and nit operating directly on the pidfd.
+Convert TIF_SECCOMP into a generic TI flag for any syscall interception
+work being done by the kernel.  The actual type of work is exposed by a
+new flag field outside of thread_info.  This ensures that the
+syscall_intercept field is only accessed if struct seccomp has to be
+accessed already, such that it doesn't incur in a much higher cost to
+the seccomp path.
 
-For privilege separation.  So far, the common case of pidfd operations
-has been that whoever possesses a pidfd has "power" over the target
-process.  Here however we also want to cover the case where one
-privileged process wants to set up and manage a memory range for
-multiple children.  The privilege process can do so by passing the
-access file descriptor via SCM_RIGHTS.
+In order to avoid modifying every architecture at once, this patch has a
+transition mechanism, such that architectures that define TIF_SECCOMP
+continue to work by ignoring the syscall_intercept flag, as long as they
+don't support other syscall interception mechanisms like the future
+syscall user dispatch.  When migrating TIF_SECCOMP to
+TIF_SYSCALL_INTERCEPT, they should adopt the semantics of checking the
+syscall_intercept flag, like it is done in the common entry syscall
+code, or even better, migrate to the common syscall entry code.
 
-We also want different children to have visibility over different
-ranges, which is why there are multiple control fds rather than using
-the pidfd itself as control fd.  You could have the map/unmap/lock ioctl
-on the pidfd itself and the access fd as an argument of the ioctl, but
-it seems cleaner to represent the pidfd-mem control capability as its
-own file descriptor.
+This was tested by running the selftests for seccomp.  No regressions
+were observed, and all tests passed (with and without this patch).
 
-Paolo
+Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
+---
+ include/linux/sched.h             |  6 ++-
+ include/linux/seccomp.h           | 20 ++++++++-
+ include/linux/syscall_intercept.h | 70 +++++++++++++++++++++++++++++++
+ kernel/fork.c                     | 10 ++++-
+ kernel/seccomp.c                  |  7 ++--
+ 5 files changed, 106 insertions(+), 7 deletions(-)
+ create mode 100644 include/linux/syscall_intercept.h
+
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index afe01e232935..3511c98a7849 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -959,7 +959,11 @@ struct task_struct {
+ 	kuid_t				loginuid;
+ 	unsigned int			sessionid;
+ #endif
+-	struct seccomp			seccomp;
++
++	struct {
++		unsigned int			syscall_intercept;
++		struct seccomp			seccomp;
++	};
+ 
+ 	/* Thread group tracking: */
+ 	u64				parent_exec_id;
+diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+index 02aef2844c38..027dc462cea9 100644
+--- a/include/linux/seccomp.h
++++ b/include/linux/seccomp.h
+@@ -20,6 +20,24 @@
+ #include <linux/atomic.h>
+ #include <asm/seccomp.h>
+ 
++/*
++ * Some transitional defines to avoid migrating every architecture code
++ * at once.
++ */
++
++#if defined(TIF_SECCOMP) && defined(TIF_SYSCALL_INTERCEPT)
++# error "TIF_SYSCALL_INTERCEPT and TIF_SECCOMP can't be defined at the same time"
++#endif
++
++/*
++ * If the arch has not transitioned to TIF_SYSCALL_INTERCEPT, this let
++ * seccomp work with these architectures, as long as no other syscall
++ * intercept features are meant to be supported.
++ */
++#ifdef TIF_SECCOMP
++# define TIF_SYSCALL_INTERCEPT TIF_SECCOMP
++#endif
++
+ struct seccomp_filter;
+ /**
+  * struct seccomp - the state of a seccomp'ed process
+@@ -42,7 +60,7 @@ struct seccomp {
+ extern int __secure_computing(const struct seccomp_data *sd);
+ static inline int secure_computing(void)
+ {
+-	if (unlikely(test_thread_flag(TIF_SECCOMP)))
++	if (unlikely(test_thread_flag(TIF_SYSCALL_INTERCEPT)))
+ 		return  __secure_computing(NULL);
+ 	return 0;
+ }
+diff --git a/include/linux/syscall_intercept.h b/include/linux/syscall_intercept.h
+new file mode 100644
+index 000000000000..725d157699da
+--- /dev/null
++++ b/include/linux/syscall_intercept.h
+@@ -0,0 +1,70 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (C) 2020 Collabora Ltd.
++ */
++#ifndef _SYSCALL_INTERCEPT_H
++#define _SYSCALL_INTERCEPT_H
++
++#include <linux/sched.h>
++#include <linux/sched/signal.h>
++#include <linux/thread_info.h>
++
++#define SYSINT_SECCOMP		0x1
++
++#ifdef TIF_SYSCALL_INTERCEPT
++
++/* seccomp (at least) can modify TIF_SYSCALL_INTERCEPT from a different
++ * thread, which means it can race with itself or with
++ * syscall_user_dispatch. Therefore, TIF_SYSCALL_INTERCEPT and
++ * syscall_intercept are synchronized by tsk->sighand->siglock.
++ */
++
++static inline void __set_tsk_syscall_intercept(struct task_struct *tsk,
++					   unsigned int type)
++{
++	tsk->syscall_intercept |= type;
++
++	if (tsk->syscall_intercept)
++		set_tsk_thread_flag(tsk, TIF_SYSCALL_INTERCEPT);
++}
++
++static inline void __clear_tsk_syscall_intercept(struct task_struct *tsk,
++					     unsigned int type)
++{
++	tsk->syscall_intercept &= ~type;
++
++	if (tsk->syscall_intercept == 0)
++		clear_tsk_thread_flag(tsk, TIF_SYSCALL_INTERCEPT);
++}
++
++static inline void set_tsk_syscall_intercept(struct task_struct *tsk, unsigned int type)
++{
++	spin_lock_irq(&tsk->sighand->siglock);
++	__set_tsk_syscall_intercept(tsk, type);
++	spin_unlock_irq(&tsk->sighand->siglock);
++}
++
++static inline void clear_tsk_syscall_intercept(struct task_struct *tsk, unsigned int type)
++{
++	spin_lock_irq(&tsk->sighand->siglock);
++	__clear_tsk_syscall_intercept(tsk, type);
++	spin_unlock_irq(&tsk->sighand->siglock);
++}
++
++#else
++static inline void __set_tsk_syscall_intercept(struct task_struct *tsk, unsigned int type)
++{
++}
++static inline void set_tsk_syscall_intercept(struct task_struct *tsk, unsigned int type)
++{
++}
++static inline void __clear_tsk_syscall_intercept(struct task_struct *tsk, unsigned int type)
++{
++}
++static inline void clear_tsk_syscall_intercept(struct task_struct *tsk, unsigned int type)
++{
++}
++#endif
++
++#endif
++
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 4d32190861bd..a39177bed8ea 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -49,7 +49,7 @@
+ #include <linux/cgroup.h>
+ #include <linux/security.h>
+ #include <linux/hugetlb.h>
+-#include <linux/seccomp.h>
++#include <linux/syscall_intercept.h>
+ #include <linux/swap.h>
+ #include <linux/syscalls.h>
+ #include <linux/jiffies.h>
+@@ -898,6 +898,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
+ 	 * the usage counts on the error path calling free_task.
+ 	 */
+ 	tsk->seccomp.filter = NULL;
++	tsk->syscall_intercept = 0;
+ #endif
+ 
+ 	setup_thread_stack(tsk, orig);
+@@ -1620,9 +1621,14 @@ static void copy_seccomp(struct task_struct *p)
+ 	 * If the parent gained a seccomp mode after copying thread
+ 	 * flags and between before we held the sighand lock, we have
+ 	 * to manually enable the seccomp thread flag here.
++	 *
++	 * In addition current sighand lock is asserted, so it is safe
++	 * to use the unlocked version of set_tsk_syscall_intercept.
+ 	 */
+ 	if (p->seccomp.mode != SECCOMP_MODE_DISABLED)
+-		set_tsk_thread_flag(p, TIF_SECCOMP);
++		__set_tsk_syscall_intercept(p, SYSINT_SECCOMP);
++	else
++		__clear_tsk_syscall_intercept(p, SYSINT_SECCOMP);
+ #endif
+ }
+ 
+diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+index 3ee59ce0a323..d0643b500f2e 100644
+--- a/kernel/seccomp.c
++++ b/kernel/seccomp.c
+@@ -28,6 +28,7 @@
+ #include <linux/slab.h>
+ #include <linux/syscalls.h>
+ #include <linux/sysctl.h>
++#include <linux/syscall_intercept.h>
+ 
+ #ifdef CONFIG_HAVE_ARCH_SECCOMP_FILTER
+ #include <asm/syscall.h>
+@@ -352,14 +353,14 @@ static inline void seccomp_assign_mode(struct task_struct *task,
+ 
+ 	task->seccomp.mode = seccomp_mode;
+ 	/*
+-	 * Make sure TIF_SECCOMP cannot be set before the mode (and
++	 * Make sure SYSINT_SECCOMP cannot be set before the mode (and
+ 	 * filter) is set.
+ 	 */
+ 	smp_mb__before_atomic();
+ 	/* Assume default seccomp processes want spec flaw mitigation. */
+ 	if ((flags & SECCOMP_FILTER_FLAG_SPEC_ALLOW) == 0)
+ 		arch_seccomp_spec_mitigate(task);
+-	set_tsk_thread_flag(task, TIF_SECCOMP);
++	__set_tsk_syscall_intercept(task, SYSINT_SECCOMP);
+ }
+ 
+ #ifdef CONFIG_SECCOMP_FILTER
+@@ -925,7 +926,7 @@ static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
+ 
+ 	/*
+ 	 * Make sure that any changes to mode from another thread have
+-	 * been seen after TIF_SECCOMP was seen.
++	 * been seen after SYSINT_SECCOMP was seen.
+ 	 */
+ 	rmb();
+ 
+-- 
+2.28.0
 
