@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ED2A7C2D0A8
-	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 20:32:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1C25EC43461
+	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 20:32:45 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C0C262087C
-	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 20:32:36 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E76D3208C7
+	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 20:32:44 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728061AbgIDUcf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 4 Sep 2020 16:32:35 -0400
-Received: from bhuna.collabora.co.uk ([46.235.227.227]:42122 "EHLO
+        id S1728152AbgIDUcP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 4 Sep 2020 16:32:15 -0400
+Received: from bhuna.collabora.co.uk ([46.235.227.227]:42092 "EHLO
         bhuna.collabora.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727020AbgIDUc0 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 4 Sep 2020 16:32:26 -0400
+        with ESMTP id S1726621AbgIDUcP (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 4 Sep 2020 16:32:15 -0400
 Received: from [127.0.0.1] (localhost [127.0.0.1])
         (Authenticated sender: krisman)
-        with ESMTPSA id DEEB929B031
+        with ESMTPSA id EB2C029B035
 From:   Gabriel Krisman Bertazi <krisman@collabora.com>
 To:     luto@kernel.org, tglx@linutronix.de, keescook@chromium.org
 Cc:     x86@kernel.org, linux-kernel@vger.kernel.org,
         linux-api@vger.kernel.org, willy@infradead.org,
         linux-kselftest@vger.kernel.org, shuah@kernel.org,
         Gabriel Krisman Bertazi <krisman@collabora.com>,
-        kernel@collabora.com
-Subject: [PATCH v6 8/9] selftests: Add kselftest for syscall user dispatch
-Date:   Fri,  4 Sep 2020 16:31:46 -0400
-Message-Id: <20200904203147.2908430-9-krisman@collabora.com>
+        kernel@collabora.com, Paul Gofman <gofmanp@gmail.com>
+Subject: [PATCH v6 5/9] kernel: Implement selective syscall userspace redirection
+Date:   Fri,  4 Sep 2020 16:31:43 -0400
+Message-Id: <20200904203147.2908430-6-krisman@collabora.com>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <20200904203147.2908430-1-krisman@collabora.com>
 References: <20200904203147.2908430-1-krisman@collabora.com>
@@ -42,371 +42,410 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Implement functionality tests for syscall user dispatch.  In order to
-make the test portable, refrain from open coding syscall dispatchers and
-calculating glibc memory ranges.
+Introduce a mechanism to quickly disable/enable syscall handling for a
+specific process and redirect to userspace via SIGSYS.  This is useful
+for processes with parts that require syscall redirection and parts that
+don't, but who need to perform this boundary crossing really fast,
+without paying the cost of a system call to reconfigure syscall handling
+on each boundary transition.  This is particularly important for Windows
+games running over Wine.
+
+The proposed interface looks like this:
+
+  prctl(PR_SET_SYSCALL_USER_DISPATCH, <op>, <start_addr>, <end_addr>, [selector])
+
+The range [<start_addr>,<end_addr>] is a part of the process memory map
+that is allowed to by-pass the redirection code and dispatch syscalls
+directly, such that in fast paths a process doesn't need to disable the
+trap nor the kernel has to check the selector.  This is essential to
+return from SIGSYS to a blocked area without triggering another SIGSYS
+from rt_sigreturn.
+
+selector is an optional pointer to a char-sized userspace memory region
+that has a key switch for the mechanism. This key switch is set to
+either PR_SYS_DISPATCH_ON, PR_SYS_DISPATCH_OFF to enable and disable the
+redirection without calling the kernel.
+
+The feature is meant to be set per-thread and it is disabled on
+fork/clone/execv.
+
+Internally, this doesn't add overhead to the syscall hot path, and it
+requires very little per-architecture support.  I avoided using seccomp,
+even though it duplicates some functionality, due to previous feedback
+that maybe it shouldn't mix with seccomp since it is not a security
+mechanism.  And obviously, this should never be considered a security
+mechanism, since any part of the program can by-pass it by using the
+syscall dispatcher.
+
+For the sysinfo benchmark, which measures the overhead added to
+executing a native syscall that doesn't require interception, the
+overhead using only the direct dispatcher region to issue syscalls is
+pretty much irrelevant.  The overhead of using the selector goes around
+40ns for a native (unredirected) syscall in my system, and it is (as
+expected) dominated by the supervisor-mode user-address access.  In
+fact, with SMAP off, the overhead is consistently less than 5ns on my
+test box.
+
+An example code using this interface can be found at:
+  https://gitlab.collabora.com/krisman/syscall-disable-personality
 
 Changes since v4:
-  - Update bad selector test to reflect change in API
+  (Andy Lutomirski)
+  - Allow sigreturn coming from vDSO
+  - Exit with SIGSYS instead of SIGSEGV on bad selector
+  (Thomas Gleixner)
+  - Use sizeof selector in access_ok
+  - Document usage of __get_user
+  - Use constant for state value
+  - Split out x86 parts
+  - Rebase on top of Gleixner's common entry code
+  - Don't expose do_syscall_user_dispatch
 
 Changes since v3:
-  - Sort entry in Makefile
-  - Add SPDX header
-  - Use __NR_syscalls if available
+  - NTR.
 
+Changes since v2:
+  (Matthew Wilcox suggestions)
+  - Drop __user on non-ptr type.
+  - Move #define closer to similar defs
+  - Allow a memory region that can dispatch directly
+  (Kees Cook suggestions)
+  - Improve kconfig summary line
+  - Move flag cleanup on execve to begin_new_exec
+  - Hint branch predictor in the syscall path
+  (Me)
+  - Convert selector to char
+
+Changes since RFC:
+  (Kees Cook suggestions)
+  - Don't mention personality while explaining the feature
+  - Use syscall_get_nr
+  - Remove header guard on several places
+  - Convert WARN_ON to WARN_ON_ONCE
+  - Explicit check for state values
+  - Rename to syscall user dispatcher
+
+Cc: Matthew Wilcox <willy@infradead.org>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Paul Gofman <gofmanp@gmail.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: linux-api@vger.kernel.org
 Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
 ---
- tools/testing/selftests/Makefile              |   1 +
- .../syscall_user_dispatch/.gitignore          |   2 +
- .../selftests/syscall_user_dispatch/Makefile  |   9 +
- .../selftests/syscall_user_dispatch/config    |   1 +
- .../syscall_user_dispatch.c                   | 292 ++++++++++++++++++
- 5 files changed, 305 insertions(+)
- create mode 100644 tools/testing/selftests/syscall_user_dispatch/.gitignore
- create mode 100644 tools/testing/selftests/syscall_user_dispatch/Makefile
- create mode 100644 tools/testing/selftests/syscall_user_dispatch/config
- create mode 100644 tools/testing/selftests/syscall_user_dispatch/syscall_user_dispatch.c
+ arch/Kconfig                          |  21 ++++++
+ fs/exec.c                             |   8 ++
+ include/linux/sched.h                 |   2 +
+ include/linux/syscall_intercept.h     |   1 +
+ include/linux/syscall_user_dispatch.h |  29 ++++++++
+ include/uapi/linux/prctl.h            |   5 ++
+ kernel/entry/Makefile                 |   1 +
+ kernel/entry/common.h                 |  15 ++++
+ kernel/entry/syscall_user_dispatch.c  | 101 ++++++++++++++++++++++++++
+ kernel/sys.c                          |   5 ++
+ 10 files changed, 188 insertions(+)
+ create mode 100644 include/linux/syscall_user_dispatch.h
+ create mode 100644 kernel/entry/common.h
+ create mode 100644 kernel/entry/syscall_user_dispatch.c
 
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index 9018f45d631d..34ab8579e22f 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -56,6 +56,7 @@ TARGETS += sparc64
- TARGETS += splice
- TARGETS += static_keys
- TARGETS += sync
-+TARGETS += syscall_user_dispatch
- TARGETS += sysctl
- TARGETS += tc-testing
- TARGETS += timens
-diff --git a/tools/testing/selftests/syscall_user_dispatch/.gitignore b/tools/testing/selftests/syscall_user_dispatch/.gitignore
-new file mode 100644
-index 000000000000..637f08107add
---- /dev/null
-+++ b/tools/testing/selftests/syscall_user_dispatch/.gitignore
-@@ -0,0 +1,2 @@
-+# SPDX-License-Identifier: GPL-2.0-only
-+syscall_user_dispatch
-diff --git a/tools/testing/selftests/syscall_user_dispatch/Makefile b/tools/testing/selftests/syscall_user_dispatch/Makefile
-new file mode 100644
-index 000000000000..eeb07a791057
---- /dev/null
-+++ b/tools/testing/selftests/syscall_user_dispatch/Makefile
-@@ -0,0 +1,9 @@
-+# SPDX-License-Identifier: GPL-2.0
-+top_srcdir = ../../../..
-+INSTALL_HDR_PATH = $(top_srcdir)/usr
-+LINUX_HDR_PATH = $(INSTALL_HDR_PATH)/include/
+diff --git a/arch/Kconfig b/arch/Kconfig
+index af14a567b493..6e022c5de020 100644
+--- a/arch/Kconfig
++++ b/arch/Kconfig
+@@ -468,6 +468,27 @@ config SECCOMP_FILTER
+ 
+ 	  See Documentation/userspace-api/seccomp_filter.rst for details.
+ 
++config HAVE_ARCH_SYSCALL_USER_DISPATCH
++	bool
++	help
++	  An arch should select this symbol if it provides all of these things:
++	  - TIF_SYSCALL_INTERCEPT
++	  - syscall_get_arch
++	  - syscall_rollback
++	  - syscall_get_nr
++	  - SIGSYS siginfo_t support
++	  - arch_syscall_is_vdso_sigreturn
 +
-+CFLAGS += -Wall -I$(LINUX_HDR_PATH)
++config SYSCALL_USER_DISPATCH
++	bool "Support syscall redirection to userspace dispatcher"
++	depends on HAVE_ARCH_SYSCALL_USER_DISPATCH
++	help
++	  Enable tasks to ask the kernel to redirect syscalls not
++	  issued from a predefined dispatcher back to userspace,
++	  depending on a userspace memory selector.
 +
-+TEST_GEN_PROGS := syscall_user_dispatch
-+include ../lib.mk
-diff --git a/tools/testing/selftests/syscall_user_dispatch/config b/tools/testing/selftests/syscall_user_dispatch/config
-new file mode 100644
-index 000000000000..22c4dfe167ca
---- /dev/null
-+++ b/tools/testing/selftests/syscall_user_dispatch/config
-@@ -0,0 +1 @@
-+CONFIG_SYSCALL_USER_DISPATCH=y
-diff --git a/tools/testing/selftests/syscall_user_dispatch/syscall_user_dispatch.c b/tools/testing/selftests/syscall_user_dispatch/syscall_user_dispatch.c
-new file mode 100644
-index 000000000000..885b5125bd90
---- /dev/null
-+++ b/tools/testing/selftests/syscall_user_dispatch/syscall_user_dispatch.c
-@@ -0,0 +1,292 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright (c) 2020 Collabora Ltd.
-+ *
-+ * Test code for syscall user dispatch
-+ */
++	  This option is useful to optimize games running over Wine.
 +
-+#define _GNU_SOURCE
-+#include <sys/prctl.h>
-+#include <sys/sysinfo.h>
-+#include <sys/syscall.h>
-+#include <signal.h>
-+
-+#include <asm/unistd.h>
-+#include "../kselftest_harness.h"
-+
-+#ifndef PR_SET_SYSCALL_USER_DISPATCH
-+# define PR_SET_SYSCALL_USER_DISPATCH	59
-+# define PR_SYS_DISPATCH_OFF	0
-+# define PR_SYS_DISPATCH_ON	1
-+#endif
-+
-+#ifndef SYS_USER_DISPATCH
-+# define SYS_USER_DISPATCH	2
-+#endif
-+
-+#ifdef __NR_syscalls
-+# define MAGIC_SYSCALL_1 (__NR_syscalls + 1) /* Bad Linux syscall number */
-+#else
-+# define MAGIC_SYSCALL_1 (0xff00)  /* Bad Linux syscall number */
-+#endif
-+
-+#define SYSCALL_DISPATCH_ON(x) ((x) = 1)
-+#define SYSCALL_DISPATCH_OFF(x) ((x) = 0)
-+
-+/* Test Summary:
-+ *
-+ * - dispatch_trigger_sigsys: Verify if PR_SET_SYSCALL_USER_DISPATCH is
-+ *   able to trigger SIGSYS on a syscall.
-+ *
-+ * - bad_selector: Test that a bad selector value triggers SIGSYS with
-+ *   si_errno EINVAL.
-+ *
-+ * - bad_prctl_param: Test that the API correctly rejects invalid
-+ *   parameters on prctl
-+ *
-+ * - dispatch_and_return: Test that a syscall is selectively dispatched
-+ *   to userspace depending on the value of selector.
-+ *
-+ * - disable_dispatch: Test that the PR_SYS_DISPATCH_OFF correctly
-+ *   disables the dispatcher
-+ *
-+ * - direct_dispatch_range: Test that a syscall within the allowed range
-+ *   can bypass the dispatcher.
-+ */
-+
-+TEST_SIGNAL(dispatch_trigger_sigsys, SIGSYS)
-+{
-+	char sel = 0;
-+	struct sysinfo info;
-+	int ret;
-+
-+	ret = sysinfo(&info);
-+	ASSERT_EQ(0, ret);
-+
-+	ret = prctl(PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_ON, 0, 0, &sel);
-+	ASSERT_EQ(0, ret) {
-+		TH_LOG("Kernel does not support CONFIG_SYSCALL_USER_DISPATCH");
-+	}
-+
-+	SYSCALL_DISPATCH_ON(sel);
-+
-+	sysinfo(&info);
-+
-+	EXPECT_FALSE(true) {
-+		TH_LOG("Unreachable!");
-+	}
-+}
-+
-+TEST(bad_prctl_param)
-+{
-+	char sel = 0;
-+	int op;
-+
-+	/* Invalid op */
-+	op = -1;
-+	prctl(PR_SET_SYSCALL_USER_DISPATCH, op, 0, 0, &sel);
-+	ASSERT_EQ(EINVAL, errno);
-+
-+	/* PR_SYS_DISPATCH_OFF */
-+	op = PR_SYS_DISPATCH_OFF;
-+
-+	/* start_addr != 0 */
-+	prctl(PR_SET_SYSCALL_USER_DISPATCH, op, 0x1, 0xff, 0);
-+	EXPECT_EQ(EINVAL, errno);
-+
-+	/* end_addr != 0 */
-+	prctl(PR_SET_SYSCALL_USER_DISPATCH, op, 0x0, 0xff, 0);
-+	EXPECT_EQ(EINVAL, errno);
-+
-+	/* sel != NULL */
-+	prctl(PR_SET_SYSCALL_USER_DISPATCH, op, 0x0, 0x0, &sel);
-+	EXPECT_EQ(EINVAL, errno);
-+
-+	/* Valid parameter */
-+	errno = 0;
-+	prctl(PR_SET_SYSCALL_USER_DISPATCH, op, 0x0, 0x0, 0x0);
-+	EXPECT_EQ(0, errno);
-+
-+	/* PR_SYS_DISPATCH_ON */
-+	op = PR_SYS_DISPATCH_ON;
-+
-+	/* start_addr > end_addr */
-+	prctl(PR_SET_SYSCALL_USER_DISPATCH, op, 0x1, 0x0, &sel);
-+	EXPECT_EQ(EINVAL, errno);
-+
-+	/* Invalid selector */
-+	prctl(PR_SET_SYSCALL_USER_DISPATCH, op, 0x0, 0x1, (void *) -1);
-+	ASSERT_EQ(EFAULT, errno);
-+}
-+
-+/*
-+ * Use global selector for handle_sigsys tests, to avoid passing
-+ * selector to signal handler
-+ */
-+char glob_sel;
-+int nr_syscalls_emulated;
-+int si_code;
-+int si_errno;
-+
-+static void handle_sigsys(int sig, siginfo_t *info, void *ucontext)
-+{
-+	si_code = info->si_code;
-+	si_errno = info->si_errno;
-+
-+	if (info->si_syscall == MAGIC_SYSCALL_1)
-+		nr_syscalls_emulated++;
-+
-+	/* In preparation for sigreturn. */
-+	SYSCALL_DISPATCH_OFF(glob_sel);
-+}
-+
-+TEST(dispatch_and_return)
-+{
-+	long ret;
-+	struct sigaction act;
-+	sigset_t mask;
-+
-+	glob_sel = 0;
-+	nr_syscalls_emulated = 0;
-+	si_code = 0;
-+	si_errno = 0;
-+
-+	memset(&act, 0, sizeof(act));
-+	sigemptyset(&mask);
-+
-+	act.sa_sigaction = handle_sigsys;
-+	act.sa_flags = SA_SIGINFO;
-+	act.sa_mask = mask;
-+
-+	ret = sigaction(SIGSYS, &act, NULL);
-+	ASSERT_EQ(0, ret);
-+
-+	/* Make sure selector is good prior to prctl. */
-+	SYSCALL_DISPATCH_OFF(glob_sel);
-+
-+	ret = prctl(PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_ON, 0, 0, &glob_sel);
-+	ASSERT_EQ(0, ret) {
-+		TH_LOG("Kernel does not support CONFIG_SYSCALL_USER_DISPATCH");
-+	}
-+
-+	/* MAGIC_SYSCALL_1 doesn't exist. */
-+	SYSCALL_DISPATCH_OFF(glob_sel);
-+	ret = syscall(MAGIC_SYSCALL_1);
-+	EXPECT_EQ(-1, ret) {
-+		TH_LOG("Dispatch triggered unexpectedly");
-+	}
-+
-+	/* MAGIC_SYSCALL_1 should be emulated. */
-+	nr_syscalls_emulated = 0;
-+	SYSCALL_DISPATCH_ON(glob_sel);
-+
-+	ret = syscall(MAGIC_SYSCALL_1);
-+	EXPECT_EQ(MAGIC_SYSCALL_1, ret) {
-+		TH_LOG("Failed to intercept syscall");
-+	}
-+	EXPECT_EQ(1, nr_syscalls_emulated) {
-+		TH_LOG("Failed to emulate syscall");
-+	}
-+	ASSERT_EQ(SYS_USER_DISPATCH, si_code) {
-+		TH_LOG("Bad si_code in SIGSYS");
-+	}
-+	ASSERT_EQ(0, si_errno) {
-+		TH_LOG("Bad si_errno in SIGSYS");
-+	}
-+}
-+
-+TEST_SIGNAL(bad_selector, SIGSYS)
-+{
-+	long ret;
-+	struct sigaction act;
-+	sigset_t mask;
-+	struct sysinfo info;
-+
-+	glob_sel = 0;
-+	nr_syscalls_emulated = 0;
-+	si_code = 0;
-+	si_errno = 0;
-+
-+	memset(&act, 0, sizeof(act));
-+	sigemptyset(&mask);
-+
-+	act.sa_sigaction = handle_sigsys;
-+	act.sa_flags = SA_SIGINFO;
-+	act.sa_mask = mask;
-+
-+	ret = sigaction(SIGSYS, &act, NULL);
-+	ASSERT_EQ(0, ret);
-+
-+	/* Make sure selector is good prior to prctl. */
-+	SYSCALL_DISPATCH_OFF(glob_sel);
-+
-+	ret = prctl(PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_ON, 0, 0, &glob_sel);
-+	ASSERT_EQ(0, ret) {
-+		TH_LOG("Kernel does not support CONFIG_SYSCALL_USER_DISPATCH");
-+	}
-+
-+	glob_sel = -1;
-+
-+	sysinfo(&info);
-+
-+	/* Even though it is ready to catch SIGSYS, the signal is
-+	 * supposed to be uncatchable.
-+	 */
-+
-+	EXPECT_FALSE(true) {
-+		TH_LOG("Unreachable!");
-+	}
-+}
-+
-+TEST(disable_dispatch)
-+{
-+	int ret;
-+	struct sysinfo info;
-+	char sel = 0;
-+
-+	ret = prctl(PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_ON, 0, 0, &sel);
-+	ASSERT_EQ(0, ret) {
-+		TH_LOG("Kernel does not support CONFIG_SYSCALL_USER_DISPATCH");
-+	}
-+
-+	/* MAGIC_SYSCALL_1 doesn't exist. */
-+	SYSCALL_DISPATCH_OFF(glob_sel);
-+
-+	ret = prctl(PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_OFF, 0, 0, 0);
-+	EXPECT_EQ(0, ret) {
-+		TH_LOG("Failed to unset syscall user dispatch");
-+	}
-+
-+	/* Shouldn't have any effect... */
-+	SYSCALL_DISPATCH_ON(glob_sel);
-+
-+	ret = syscall(__NR_sysinfo, &info);
-+	EXPECT_EQ(0, ret) {
-+		TH_LOG("Dispatch triggered unexpectedly");
-+	}
-+}
-+
-+TEST(direct_dispatch_range)
-+{
-+	int ret = 0;
-+	struct sysinfo info;
-+	char sel = 0;
-+
+ config HAVE_ARCH_STACKLEAK
+ 	bool
+ 	help
+diff --git a/fs/exec.c b/fs/exec.c
+index a91003e28eaa..9cdf827151c4 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -62,6 +62,7 @@
+ #include <linux/oom.h>
+ #include <linux/compat.h>
+ #include <linux/vmalloc.h>
++#include <linux/syscall_intercept.h>
+ 
+ #include <linux/uaccess.h>
+ #include <asm/mmu_context.h>
+@@ -1418,6 +1419,13 @@ int begin_new_exec(struct linux_binprm * bprm)
+ 	flush_thread();
+ 	me->personality &= ~bprm->per_clear;
+ 
 +	/*
-+	 * Instead of calculating libc addresses; allow the entire
-+	 * memory map and lock the selector.
++	 * Prevent Syscall User Dispatch from crossing application
++	 * boundaries.  sighand is already unshared, so it is safe to
++	 * use the unlocked version here.
 +	 */
-+	ret = prctl(PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_ON, 0, -1L, &sel);
-+	ASSERT_EQ(0, ret) {
-+		TH_LOG("Kernel does not support CONFIG_SYSCALL_USER_DISPATCH");
-+	}
++	__clear_tsk_syscall_intercept(me, SYSINT_USER_DISPATCH);
 +
-+	SYSCALL_DISPATCH_ON(sel);
+ 	/*
+ 	 * We have to apply CLOEXEC before we change whether the process is
+ 	 * dumpable (in setup_new_exec) to avoid a race with a process in userspace
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 3511c98a7849..47ce09589072 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -34,6 +34,7 @@
+ #include <linux/rseq.h>
+ #include <linux/seqlock.h>
+ #include <linux/kcsan.h>
++#include <linux/syscall_user_dispatch.h>
+ 
+ /* task_struct member predeclarations (sorted alphabetically): */
+ struct audit_context;
+@@ -963,6 +964,7 @@ struct task_struct {
+ 	struct {
+ 		unsigned int			syscall_intercept;
+ 		struct seccomp			seccomp;
++		struct syscall_user_dispatch	syscall_dispatch;
+ 	};
+ 
+ 	/* Thread group tracking: */
+diff --git a/include/linux/syscall_intercept.h b/include/linux/syscall_intercept.h
+index 725d157699da..21bc2eb668f3 100644
+--- a/include/linux/syscall_intercept.h
++++ b/include/linux/syscall_intercept.h
+@@ -10,6 +10,7 @@
+ #include <linux/thread_info.h>
+ 
+ #define SYSINT_SECCOMP		0x1
++#define SYSINT_USER_DISPATCH	0x2
+ 
+ #ifdef TIF_SYSCALL_INTERCEPT
+ 
+diff --git a/include/linux/syscall_user_dispatch.h b/include/linux/syscall_user_dispatch.h
+new file mode 100644
+index 000000000000..f831358bfaab
+--- /dev/null
++++ b/include/linux/syscall_user_dispatch.h
+@@ -0,0 +1,29 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (C) 2020 Collabora Ltd.
++ */
++#ifndef _SYSCALL_USER_DISPATCH_H
++#define _SYSCALL_USER_DISPATCH_H
 +
-+	ret = sysinfo(&info);
-+	ASSERT_EQ(0, ret) {
-+		TH_LOG("Dispatch triggered unexpectedly");
-+	}
++#ifdef CONFIG_SYSCALL_USER_DISPATCH
++struct syscall_user_dispatch {
++	char __user *selector;
++	unsigned long dispatcher_start;
++	unsigned long dispatcher_end;
++};
++
++int set_syscall_user_dispatch(int mode, unsigned long dispatcher_start,
++			      unsigned long dispatcher_end,
++			      char __user *selector);
++#else
++struct syscall_user_dispatch {};
++
++static inline int set_syscall_user_dispatch(int mode, unsigned long dispatcher_start,
++					    unsigned long dispatcher_end,
++					    char __user *selector)
++{
++	return -EINVAL;
++}
++#endif /* CONFIG_SYSCALL_USER_DISPATCH */
++
++#endif /* _SYSCALL_USER_DISPATCH_H */
+diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
+index 07b4f8131e36..96265246383d 100644
+--- a/include/uapi/linux/prctl.h
++++ b/include/uapi/linux/prctl.h
+@@ -238,4 +238,9 @@ struct prctl_mm_map {
+ #define PR_SET_IO_FLUSHER		57
+ #define PR_GET_IO_FLUSHER		58
+ 
++/* Dispatch syscalls to a userspace handler */
++#define PR_SET_SYSCALL_USER_DISPATCH	59
++# define PR_SYS_DISPATCH_OFF		0
++# define PR_SYS_DISPATCH_ON		1
++
+ #endif /* _LINUX_PRCTL_H */
+diff --git a/kernel/entry/Makefile b/kernel/entry/Makefile
+index 34c8a3f1c735..81182ab5a40c 100644
+--- a/kernel/entry/Makefile
++++ b/kernel/entry/Makefile
+@@ -11,3 +11,4 @@ CFLAGS_common.o		+= -fno-stack-protector
+ 
+ obj-$(CONFIG_GENERIC_ENTRY) 		+= common.o
+ obj-$(CONFIG_KVM_XFER_TO_GUEST_WORK)	+= kvm.o
++obj-$(CONFIG_SYSCALL_USER_DISPATCH)	+= syscall_user_dispatch.o
+diff --git a/kernel/entry/common.h b/kernel/entry/common.h
+new file mode 100644
+index 000000000000..557ecaa3fb31
+--- /dev/null
++++ b/kernel/entry/common.h
+@@ -0,0 +1,15 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _COMMON_H
++#define _COMMON_H
++
++#ifdef CONFIG_SYSCALL_USER_DISPATCH
++int do_syscall_user_dispatch(struct pt_regs *regs);
++#else
++static inline int do_syscall_user_dispatch(struct pt_regs *regs)
++{
++	WARN_ON_ONCE(1);
++	return 0;
++}
++#endif /* CONFIG_SYSCALL_USER_DISPATCH */
++
++#endif
+diff --git a/kernel/entry/syscall_user_dispatch.c b/kernel/entry/syscall_user_dispatch.c
+new file mode 100644
+index 000000000000..12ea01711dc7
+--- /dev/null
++++ b/kernel/entry/syscall_user_dispatch.c
+@@ -0,0 +1,101 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (C) 2020 Collabora Ltd.
++ */
++#include <linux/sched.h>
++#include <linux/prctl.h>
++#include <linux/syscall_intercept.h>
++#include <linux/syscall_user_dispatch.h>
++#include <linux/uaccess.h>
++#include <linux/signal.h>
++#include <linux/elf.h>
++
++#include <asm/syscall.h>
++
++#include <linux/sched/signal.h>
++#include <linux/sched/task_stack.h>
++
++static void trigger_sigsys(struct pt_regs *regs)
++{
++	struct kernel_siginfo info;
++
++	clear_siginfo(&info);
++	info.si_signo = SIGSYS;
++	info.si_code = SYS_USER_DISPATCH;
++	info.si_call_addr = (void __user *)KSTK_EIP(current);
++	info.si_errno = 0;
++	info.si_arch = syscall_get_arch(current);
++	info.si_syscall = syscall_get_nr(current, regs);
++
++	force_sig_info(&info);
 +}
 +
-+TEST_HARNESS_MAIN
++int do_syscall_user_dispatch(struct pt_regs *regs)
++{
++	struct syscall_user_dispatch *sd = &current->syscall_dispatch;
++	unsigned long ip = instruction_pointer(regs);
++	char state;
++
++	if (likely(ip >= sd->dispatcher_start && ip <= sd->dispatcher_end))
++		return 0;
++
++	if (unlikely(arch_syscall_is_vdso_sigreturn(regs)))
++		return 0;
++
++	if (likely(sd->selector)) {
++		/*
++		 * access_ok() is performed once, at prctl time, when
++		 * the selector is loaded by userspace.
++		 */
++		if (unlikely(__get_user(state, sd->selector)))
++			do_exit(SIGSEGV);
++
++		if (likely(state == PR_SYS_DISPATCH_OFF))
++			return 0;
++
++		if (state != PR_SYS_DISPATCH_ON)
++			do_exit(SIGSYS);
++	}
++
++	syscall_rollback(current, regs);
++	trigger_sigsys(regs);
++
++	return 1;
++}
++
++int set_syscall_user_dispatch(int mode, unsigned long dispatcher_start,
++			      unsigned long dispatcher_end, char __user *selector)
++{
++	switch (mode) {
++	case PR_SYS_DISPATCH_OFF:
++		if (dispatcher_start || dispatcher_end || selector)
++			return -EINVAL;
++		break;
++	case PR_SYS_DISPATCH_ON:
++		/*
++		 * Validate the direct dispatcher region just for basic
++		 * sanity.  If the user is able to submit a syscall from
++		 * an address, that address is obviously valid.
++		 */
++		if (dispatcher_end < dispatcher_start)
++			return -EINVAL;
++
++		if (selector && !access_ok(selector, sizeof(*selector)))
++			return -EFAULT;
++
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	current->syscall_dispatch.selector = selector;
++	current->syscall_dispatch.dispatcher_start = dispatcher_start;
++	current->syscall_dispatch.dispatcher_end = dispatcher_end;
++
++	if (mode == PR_SYS_DISPATCH_ON)
++		set_tsk_syscall_intercept(current, SYSINT_USER_DISPATCH);
++	else
++		clear_tsk_syscall_intercept(current, SYSINT_USER_DISPATCH);
++
++	return 0;
++}
+diff --git a/kernel/sys.c b/kernel/sys.c
+index ab6c409b1159..2786dca862b9 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -42,6 +42,7 @@
+ #include <linux/syscore_ops.h>
+ #include <linux/version.h>
+ #include <linux/ctype.h>
++#include <linux/syscall_user_dispatch.h>
+ 
+ #include <linux/compat.h>
+ #include <linux/syscalls.h>
+@@ -2530,6 +2531,10 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 
+ 		error = (current->flags & PR_IO_FLUSHER) == PR_IO_FLUSHER;
+ 		break;
++	case PR_SET_SYSCALL_USER_DISPATCH:
++		error = set_syscall_user_dispatch((int) arg2, arg3, arg4,
++						  (char __user *) arg5);
++		break;
+ 	default:
+ 		error = -EINVAL;
+ 		break;
 -- 
 2.28.0
 
