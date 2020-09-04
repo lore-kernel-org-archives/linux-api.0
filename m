@@ -2,29 +2,29 @@ Return-Path: <SRS0=+ro9=CN=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.0 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	UNPARSEABLE_RELAY,URIBL_BLOCKED,USER_AGENT_GIT autolearn=no
+X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 39D52C2BB84
-	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 20:32:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A171BC433E2
+	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 20:32:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 094542087C
-	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 20:32:07 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7372E208FE
+	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 20:32:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728072AbgIDUcD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 4 Sep 2020 16:32:03 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59746 "EHLO
+        id S1728173AbgIDUcS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 4 Sep 2020 16:32:18 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59788 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726621AbgIDUcB (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 4 Sep 2020 16:32:01 -0400
+        with ESMTP id S1726621AbgIDUcR (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 4 Sep 2020 16:32:17 -0400
 Received: from bhuna.collabora.co.uk (bhuna.collabora.co.uk [IPv6:2a00:1098:0:82:1000:25:2eeb:e3e3])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EE51CC061244;
-        Fri,  4 Sep 2020 13:32:00 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BABD6C061244;
+        Fri,  4 Sep 2020 13:32:16 -0700 (PDT)
 Received: from [127.0.0.1] (localhost [127.0.0.1])
         (Authenticated sender: krisman)
-        with ESMTPSA id D3A1129B031
+        with ESMTPSA id 6224429B031
 From:   Gabriel Krisman Bertazi <krisman@collabora.com>
 To:     luto@kernel.org, tglx@linutronix.de, keescook@chromium.org
 Cc:     x86@kernel.org, linux-kernel@vger.kernel.org,
@@ -32,10 +32,12 @@ Cc:     x86@kernel.org, linux-kernel@vger.kernel.org,
         linux-kselftest@vger.kernel.org, shuah@kernel.org,
         Gabriel Krisman Bertazi <krisman@collabora.com>,
         kernel@collabora.com
-Subject: [PATCH v6 0/9] Syscall User Dispatch
-Date:   Fri,  4 Sep 2020 16:31:38 -0400
-Message-Id: <20200904203147.2908430-1-krisman@collabora.com>
+Subject: [PATCH v6 6/9] kernel: entry: Support Syscall User Dispatch for common syscall entry
+Date:   Fri,  4 Sep 2020 16:31:44 -0400
+Message-Id: <20200904203147.2908430-7-krisman@collabora.com>
 X-Mailer: git-send-email 2.28.0
+In-Reply-To: <20200904203147.2908430-1-krisman@collabora.com>
+References: <20200904203147.2908430-1-krisman@collabora.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
@@ -43,106 +45,50 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi,
+Syscall User Dispatch (SUD) must take precedence over seccomp, since the
+use case is emulation (it can be invoked with a different ABI) such that
+seccomp filtering by syscall number doesn't make sense in the first
+place.  In addition, either the syscall is dispatched back to userspace,
+in which case there is no resource for seccomp to protect, or the
+syscall will be executed, and seccomp will execute next.
 
-The v6 of this patch series include only the type change requested by
-Andy on the vdso patch, but since v5 included some bigger changes, I'm
-documenting them in this cover letter as well.
+Regarding ptrace, I experimented with before and after, and while the
+same ABI argument applies, I felt it was easier to debug if I let ptrace
+happen for syscalls that are dispatched back to userspace.  In addition,
+doing it after ptrace makes the code in syscall_exit_work slightly
+simpler, since it doesn't require special handling for this feature.
 
-Please note this applies on top of Linus tree, and it succeeds seccomp
-and syscall user dispatch selftests.
+Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
+---
+ kernel/entry/common.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-v5 cover letter
---------------
-
-This is v5 of Syscall User Dispatch.  It has some big changes in
-comparison to v4.
-
-First of all, it allows the vdso trampoline code for architectures that
-support it.  This is exposed through an arch hook.  It also addresses
-the concern about what happens when a bad selector is provided, instead
-of SIGSEGV, we fail with SIGSYS, which is more debug-able.
-
-Another major change is that it is now based on top of Gleixner's common
-syscall entry work, and is supposed to only be used by that code.
-Therefore, the entry symbol is not exported outside of kernel/entry/ code.
-
-The biggest change in this version is the attempt to avoid using one of
-the final TIF flags on x86 32 bit, without increasing the size of that
-variable to 64 bit.  My expectation is that, with this work, plus the
-removal of TIF_IA32, TIF_X32 and TIF_FORCE_TF, we might be able to avoid
-changing this field to 64 bits at all.  Instead, this follows the
-suggestion by Andy to have a generic TIF flag for SECCOMP and this
-mechanism, and use another field to decide which one is enabled.  The
-code for this is not complex, so it seems like a viable approach.
-
-Finally, this version adds some documentation to the feature.
-
-Kees, I dropped your reviewed-by on patch 5, given the amount of
-changes.
-
-Thanks,
-
-Previous submissions are archived at:
-
-RFC/v1: https://lkml.org/lkml/2020/7/8/96
-v2: https://lkml.org/lkml/2020/7/9/17
-v3: https://lkml.org/lkml/2020/7/12/4
-v4: https://www.spinics.net/lists/linux-kselftest/msg16377.html
-v5: https://lkml.org/lkml/2020/8/10/1320
-
-Gabriel Krisman Bertazi (9):
-  kernel: Support TIF_SYSCALL_INTERCEPT flag
-  kernel: entry: Support TIF_SYSCAL_INTERCEPT on common entry code
-  x86: vdso: Expose sigreturn address on vdso to the kernel
-  signal: Expose SYS_USER_DISPATCH si_code type
-  kernel: Implement selective syscall userspace redirection
-  kernel: entry: Support Syscall User Dispatch for common syscall entry
-  x86: Enable Syscall User Dispatch
-  selftests: Add kselftest for syscall user dispatch
-  doc: Document Syscall User Dispatch
-
- .../admin-guide/syscall-user-dispatch.rst     |  87 ++++++
- arch/Kconfig                                  |  21 ++
- arch/x86/Kconfig                              |   1 +
- arch/x86/entry/vdso/vdso2c.c                  |   2 +
- arch/x86/entry/vdso/vdso32/sigreturn.S        |   2 +
- arch/x86/entry/vdso/vma.c                     |  15 +
- arch/x86/include/asm/elf.h                    |   1 +
- arch/x86/include/asm/thread_info.h            |   4 +-
- arch/x86/include/asm/vdso.h                   |   2 +
- arch/x86/kernel/signal_compat.c               |   2 +-
- fs/exec.c                                     |   8 +
- include/linux/entry-common.h                  |   6 +-
- include/linux/sched.h                         |   8 +-
- include/linux/seccomp.h                       |  20 +-
- include/linux/syscall_intercept.h             |  71 +++++
- include/linux/syscall_user_dispatch.h         |  29 ++
- include/uapi/asm-generic/siginfo.h            |   3 +-
- include/uapi/linux/prctl.h                    |   5 +
- kernel/entry/Makefile                         |   1 +
- kernel/entry/common.c                         |  32 +-
- kernel/entry/common.h                         |  15 +
- kernel/entry/syscall_user_dispatch.c          | 101 ++++++
- kernel/fork.c                                 |  10 +-
- kernel/seccomp.c                              |   7 +-
- kernel/sys.c                                  |   5 +
- tools/testing/selftests/Makefile              |   1 +
- .../syscall_user_dispatch/.gitignore          |   2 +
- .../selftests/syscall_user_dispatch/Makefile  |   9 +
- .../selftests/syscall_user_dispatch/config    |   1 +
- .../syscall_user_dispatch.c                   | 292 ++++++++++++++++++
- 30 files changed, 744 insertions(+), 19 deletions(-)
- create mode 100644 Documentation/admin-guide/syscall-user-dispatch.rst
- create mode 100644 include/linux/syscall_intercept.h
- create mode 100644 include/linux/syscall_user_dispatch.h
- create mode 100644 kernel/entry/common.h
- create mode 100644 kernel/entry/syscall_user_dispatch.c
- create mode 100644 tools/testing/selftests/syscall_user_dispatch/.gitignore
- create mode 100644 tools/testing/selftests/syscall_user_dispatch/Makefile
- create mode 100644 tools/testing/selftests/syscall_user_dispatch/config
- create mode 100644 tools/testing/selftests/syscall_user_dispatch/syscall_user_dispatch.c
-
+diff --git a/kernel/entry/common.c b/kernel/entry/common.c
+index 44fd089d59da..fdb0c543539d 100644
+--- a/kernel/entry/common.c
++++ b/kernel/entry/common.c
+@@ -6,6 +6,8 @@
+ #include <linux/audit.h>
+ #include <linux/syscall_intercept.h>
+ 
++#include "common.h"
++
+ #define CREATE_TRACE_POINTS
+ #include <trace/events/syscalls.h>
+ 
+@@ -47,6 +49,12 @@ static inline long do_syscall_intercept(struct pt_regs *regs)
+ 	int sysint_work = READ_ONCE(current->syscall_intercept);
+ 	int ret;
+ 
++	if (sysint_work & SYSINT_USER_DISPATCH) {
++		ret = do_syscall_user_dispatch(regs);
++		if (ret == -1L)
++			return ret;
++	}
++
+ 	if (sysint_work & SYSINT_SECCOMP) {
+ 		ret = __secure_computing(NULL);
+ 		if (ret == -1L)
 -- 
 2.28.0
 
