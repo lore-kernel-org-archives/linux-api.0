@@ -2,28 +2,29 @@ Return-Path: <SRS0=+ro9=CN=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.0 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.0 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 58267C433E2
-	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 11:41:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 02254C28E83
+	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 11:41:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3751D20709
-	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 11:41:33 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D3D002074D
+	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 11:41:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729765AbgIDLlb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 4 Sep 2020 07:41:31 -0400
-Received: from mx01.bbu.dsd.mx.bitdefender.com ([91.199.104.161]:49564 "EHLO
+        id S1729582AbgIDLlc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 4 Sep 2020 07:41:32 -0400
+Received: from mx01.bbu.dsd.mx.bitdefender.com ([91.199.104.161]:49556 "EHLO
         mx01.bbu.dsd.mx.bitdefender.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1730018AbgIDLlW (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 4 Sep 2020 07:41:22 -0400
+        by vger.kernel.org with ESMTP id S1729797AbgIDLlV (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 4 Sep 2020 07:41:21 -0400
 Received: from smtp.bitdefender.com (smtp01.buh.bitdefender.com [10.17.80.75])
-        by mx01.bbu.dsd.mx.bitdefender.com (Postfix) with ESMTPS id 217D530747C4;
-        Fri,  4 Sep 2020 14:31:05 +0300 (EEST)
+        by mx01.bbu.dsd.mx.bitdefender.com (Postfix) with ESMTPS id 9B813307C934;
+        Fri,  4 Sep 2020 14:31:07 +0300 (EEST)
 Received: from localhost.localdomain (unknown [195.189.155.252])
-        by smtp.bitdefender.com (Postfix) with ESMTPSA id 2B7513072785;
-        Fri,  4 Sep 2020 14:31:04 +0300 (EEST)
+        by smtp.bitdefender.com (Postfix) with ESMTPSA id D31BB3072785;
+        Fri,  4 Sep 2020 14:31:06 +0300 (EEST)
 From:   =?UTF-8?q?Adalbert=20Laz=C4=83r?= <alazar@bitdefender.com>
 To:     linux-mm@kvack.org
 Cc:     linux-api@vger.kernel.org,
@@ -43,141 +44,122 @@ Cc:     linux-api@vger.kernel.org,
         Matthew Wilcox <willy@infradead.org>,
         Christian Brauner <christian.brauner@ubuntu.com>,
         =?UTF-8?q?Adalbert=20Laz=C4=83r?= <alazar@bitdefender.com>
-Subject: [RESEND RFC PATCH 0/5] Remote mapping
-Date:   Fri,  4 Sep 2020 14:31:11 +0300
-Message-Id: <20200904113116.20648-1-alazar@bitdefender.com>
+Subject: [RESEND RFC PATCH 3/5] mm/mmu_notifier: remove lockdep map, allow mmu notifier to be used in nested scenarios
+Date:   Fri,  4 Sep 2020 14:31:14 +0300
+Message-Id: <20200904113116.20648-4-alazar@bitdefender.com>
+In-Reply-To: <20200904113116.20648-1-alazar@bitdefender.com>
+References: <20200904113116.20648-1-alazar@bitdefender.com>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This patchset adds support for the remote mapping feature.
-Remote mapping, as its name suggests, is a means for transparent and
-zero-copy access of a remote process' address space.
-access of a remote process' address space.
+From: Mircea Cirjaliu <mcirjaliu@bitdefender.com>
 
-The feature was designed according to a specification suggested by
-Paolo Bonzini:
->> The proposed API is a new pidfd system call, through which the parent
->> can map portions of its virtual address space into a file descriptor
->> and then pass that file descriptor to a child.
->>
->> This should be:
->>
->> - upstreamable, pidfd is the new cool thing and we could sell it as a
->> better way to do PTRACE_{PEEK,POKE}DATA
->>
->> - relatively easy to do based on the bitdefender remote process
->> mapping patches at.
->>
->> - pidfd_mem() takes a pidfd and some flags (which are 0) and returns
->> two file descriptors for respectively the control plane and the memory access.
->>
->> - the control plane accepts three ioctls
->>
->> PIDFD_MEM_MAP takes a struct like
->>
->>     struct pidfd_mem_map {
->>          uint64_t address;
->>          off_t offset;
->>          off_t size;
->>          int flags;
->>          int padding[7];
->>     }
->>
->> After this is done, the memory access fd can be mmap-ed at range
->> [offset,
->> offset+size), and it will read memory from range [address,
->> address+size) of the target descriptor.
->>
->> PIDFD_MEM_UNMAP takes a struct like
->>
->>     struct pidfd_mem_unmap {
->>          off_t offset;
->>          off_t size;
->>     }
->>
->> and unmaps the corresponding range of course.
->>
->> Finally PIDFD_MEM_LOCK forbids subsequent PIDFD_MEM_MAP or
->> PIDFD_MEM_UNMAP.  For now I think it should just check that the
->> argument is zero, bells and whistles can be added later.
->>
->> - the memory access fd can be mmap-ed as in the bitdefender patches
->> but also accessed with read/write/pread/pwrite/...  As in the
->> BitDefender patches, MMU notifiers can be used to adjust any mmap-ed
->> regions when the source address space changes.  In this case,
->> PIDFD_MEM_UNMAP could also cause a pre-existing mmap to "disappear".
-(it currently doesn't support read/write/pread/pwrite/...)
+The combination of remote mapping + KVM causes nested range invalidations,
+which reports lockdep warnings.
 
-The main remote mapping patch also contains the legacy implementation which
-creates a region the size of the whole process address space by means of the
-REMOTE_PROC_MAP ioctl. The user is then free to mmap() any region of the
-address space it wishes.
+Signed-off-by: Mircea Cirjaliu <mcirjaliu@bitdefender.com>
+Signed-off-by: Adalbert Lazăr <alazar@bitdefender.com>
+---
+ include/linux/mmu_notifier.h |  5 +----
+ mm/mmu_notifier.c            | 19 -------------------
+ 2 files changed, 1 insertion(+), 23 deletions(-)
 
-VMAs obtained by mmap()ing memory access fds mirror the contents of the remote
-process address space within the specified range. Pages are installed in the
-current process page tables at fault time and removed by the mmu_interval_notifier
-invalidate callbck. No further memory management is involved.
-On attempts to access a hole, or if a mapping was removed by PIDFD_MEM_UNMAP,
-or if the remote process address space was reaped by OOM, the remote mapping
-fault handler returns VM_FAULT_SIGBUS.
-
-At Bitdefender we are using remote mapping for virtual machine introspection:
-- the QEMU running the introspected machine creates the pair of file descriptors,
-passes the access fd to the introspector QEMU, and uses the control fd to allow
-access to the memslots it creates for its machine
-- the QEMU running the introspector machine receives the access fd and mmap()s
-the regions made available, then hotplugs the obtained memory in its machine
-Having this setup creates nested invalidate_range_start/end MMU notifier calls.
-
-Patch organization:
-- patch 1 allows unmap_page_range() to run without rescheduling
-  Needed for remote mapping to zap current process page tables when OOM calls
-  mmu_notifier_invalidate_range_start_nonblock(&range)
-
-- patch 2 creates VMA-specific zapping behavior
-  A remote mapping VMA does not own the pages it maps, so all it has to do is
-  clear the PTEs.
-
-- patch 3 removed MMU notifier lockdep map
-  It was just incompatible with our use case.
-
-- patch 4 is the remote mapping implementation
-
-- patch 5 adds suggested pidfd_mem system call
-
-Mircea Cirjaliu (5):
-  mm: add atomic capability to zap_details
-  mm: let the VMA decide how zap_pte_range() acts on mapped pages
-  mm/mmu_notifier: remove lockdep map, allow mmu notifier to be used in
-    nested scenarios
-  mm/remote_mapping: use a pidfd to access memory belonging to unrelated
-    process
-  pidfd_mem: implemented remote memory mapping system call
-
- arch/x86/entry/syscalls/syscall_32.tbl |    1 +
- arch/x86/entry/syscalls/syscall_64.tbl |    1 +
- include/linux/mm.h                     |   22 +
- include/linux/mmu_notifier.h           |    5 +-
- include/linux/pid.h                    |    1 +
- include/linux/remote_mapping.h         |   22 +
- include/linux/syscalls.h               |    1 +
- include/uapi/asm-generic/unistd.h      |    2 +
- include/uapi/linux/remote_mapping.h    |   36 +
- kernel/exit.c                          |    2 +-
- kernel/pid.c                           |   55 +
- mm/Kconfig                             |   11 +
- mm/Makefile                            |    1 +
- mm/memory.c                            |  193 ++--
- mm/mmu_notifier.c                      |   19 -
- mm/remote_mapping.c                    | 1273 ++++++++++++++++++++++++
- 16 files changed, 1535 insertions(+), 110 deletions(-)
- create mode 100644 include/linux/remote_mapping.h
- create mode 100644 include/uapi/linux/remote_mapping.h
- create mode 100644 mm/remote_mapping.c
-
-
-base-commit: ae83d0b416db002fe95601e7f97f64b59514d936
+diff --git a/include/linux/mmu_notifier.h b/include/linux/mmu_notifier.h
+index 736f6918335e..81ea457d41be 100644
+--- a/include/linux/mmu_notifier.h
++++ b/include/linux/mmu_notifier.h
+@@ -440,12 +440,10 @@ mmu_notifier_invalidate_range_start(struct mmu_notifier_range *range)
+ {
+ 	might_sleep();
+ 
+-	lock_map_acquire(&__mmu_notifier_invalidate_range_start_map);
+ 	if (mm_has_notifiers(range->mm)) {
+ 		range->flags |= MMU_NOTIFIER_RANGE_BLOCKABLE;
+ 		__mmu_notifier_invalidate_range_start(range);
+ 	}
+-	lock_map_release(&__mmu_notifier_invalidate_range_start_map);
+ }
+ 
+ static inline int
+@@ -453,12 +451,11 @@ mmu_notifier_invalidate_range_start_nonblock(struct mmu_notifier_range *range)
+ {
+ 	int ret = 0;
+ 
+-	lock_map_acquire(&__mmu_notifier_invalidate_range_start_map);
+ 	if (mm_has_notifiers(range->mm)) {
+ 		range->flags &= ~MMU_NOTIFIER_RANGE_BLOCKABLE;
+ 		ret = __mmu_notifier_invalidate_range_start(range);
+ 	}
+-	lock_map_release(&__mmu_notifier_invalidate_range_start_map);
++
+ 	return ret;
+ }
+ 
+diff --git a/mm/mmu_notifier.c b/mm/mmu_notifier.c
+index 06852b896fa6..928751bd8630 100644
+--- a/mm/mmu_notifier.c
++++ b/mm/mmu_notifier.c
+@@ -22,12 +22,6 @@
+ /* global SRCU for all MMs */
+ DEFINE_STATIC_SRCU(srcu);
+ 
+-#ifdef CONFIG_LOCKDEP
+-struct lockdep_map __mmu_notifier_invalidate_range_start_map = {
+-	.name = "mmu_notifier_invalidate_range_start"
+-};
+-#endif
+-
+ /*
+  * The mmu_notifier_subscriptions structure is allocated and installed in
+  * mm->notifier_subscriptions inside the mm_take_all_locks() protected
+@@ -242,8 +236,6 @@ mmu_interval_read_begin(struct mmu_interval_notifier *interval_sub)
+ 	 * will always clear the below sleep in some reasonable time as
+ 	 * subscriptions->invalidate_seq is even in the idle state.
+ 	 */
+-	lock_map_acquire(&__mmu_notifier_invalidate_range_start_map);
+-	lock_map_release(&__mmu_notifier_invalidate_range_start_map);
+ 	if (is_invalidating)
+ 		wait_event(subscriptions->wq,
+ 			   READ_ONCE(subscriptions->invalidate_seq) != seq);
+@@ -572,13 +564,11 @@ void __mmu_notifier_invalidate_range_end(struct mmu_notifier_range *range,
+ 	struct mmu_notifier_subscriptions *subscriptions =
+ 		range->mm->notifier_subscriptions;
+ 
+-	lock_map_acquire(&__mmu_notifier_invalidate_range_start_map);
+ 	if (subscriptions->has_itree)
+ 		mn_itree_inv_end(subscriptions);
+ 
+ 	if (!hlist_empty(&subscriptions->list))
+ 		mn_hlist_invalidate_end(subscriptions, range, only_end);
+-	lock_map_release(&__mmu_notifier_invalidate_range_start_map);
+ }
+ 
+ void __mmu_notifier_invalidate_range(struct mm_struct *mm,
+@@ -612,13 +602,6 @@ int __mmu_notifier_register(struct mmu_notifier *subscription,
+ 	lockdep_assert_held_write(&mm->mmap_sem);
+ 	BUG_ON(atomic_read(&mm->mm_users) <= 0);
+ 
+-	if (IS_ENABLED(CONFIG_LOCKDEP)) {
+-		fs_reclaim_acquire(GFP_KERNEL);
+-		lock_map_acquire(&__mmu_notifier_invalidate_range_start_map);
+-		lock_map_release(&__mmu_notifier_invalidate_range_start_map);
+-		fs_reclaim_release(GFP_KERNEL);
+-	}
+-
+ 	if (!mm->notifier_subscriptions) {
+ 		/*
+ 		 * kmalloc cannot be called under mm_take_all_locks(), but we
+@@ -1062,8 +1045,6 @@ void mmu_interval_notifier_remove(struct mmu_interval_notifier *interval_sub)
+ 	 * The possible sleep on progress in the invalidation requires the
+ 	 * caller not hold any locks held by invalidation callbacks.
+ 	 */
+-	lock_map_acquire(&__mmu_notifier_invalidate_range_start_map);
+-	lock_map_release(&__mmu_notifier_invalidate_range_start_map);
+ 	if (seq)
+ 		wait_event(subscriptions->wq,
+ 			   READ_ONCE(subscriptions->invalidate_seq) != seq);
