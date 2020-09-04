@@ -2,29 +2,28 @@ Return-Path: <SRS0=+ro9=CN=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.0 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-4.0 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E0538C43461
-	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 11:41:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 58267C433E2
+	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 11:41:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BC11F20709
-	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 11:41:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3751D20709
+	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 11:41:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729930AbgIDLlb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S1729765AbgIDLlb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Fri, 4 Sep 2020 07:41:31 -0400
-Received: from mx01.bbu.dsd.mx.bitdefender.com ([91.199.104.161]:49548 "EHLO
+Received: from mx01.bbu.dsd.mx.bitdefender.com ([91.199.104.161]:49564 "EHLO
         mx01.bbu.dsd.mx.bitdefender.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1729765AbgIDLlU (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 4 Sep 2020 07:41:20 -0400
+        by vger.kernel.org with ESMTP id S1730018AbgIDLlW (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 4 Sep 2020 07:41:22 -0400
 Received: from smtp.bitdefender.com (smtp01.buh.bitdefender.com [10.17.80.75])
-        by mx01.bbu.dsd.mx.bitdefender.com (Postfix) with ESMTPS id 6C750307C93F;
-        Fri,  4 Sep 2020 14:31:09 +0300 (EEST)
+        by mx01.bbu.dsd.mx.bitdefender.com (Postfix) with ESMTPS id 217D530747C4;
+        Fri,  4 Sep 2020 14:31:05 +0300 (EEST)
 Received: from localhost.localdomain (unknown [195.189.155.252])
-        by smtp.bitdefender.com (Postfix) with ESMTPSA id 8B3FA3072785;
-        Fri,  4 Sep 2020 14:31:08 +0300 (EEST)
+        by smtp.bitdefender.com (Postfix) with ESMTPSA id 2B7513072785;
+        Fri,  4 Sep 2020 14:31:04 +0300 (EEST)
 From:   =?UTF-8?q?Adalbert=20Laz=C4=83r?= <alazar@bitdefender.com>
 To:     linux-mm@kvack.org
 Cc:     linux-api@vger.kernel.org,
@@ -43,183 +42,142 @@ Cc:     linux-api@vger.kernel.org,
         Kees Cook <keescook@chromium.org>,
         Matthew Wilcox <willy@infradead.org>,
         Christian Brauner <christian.brauner@ubuntu.com>,
-        Christian Brauner <christian@brauner.io>,
         =?UTF-8?q?Adalbert=20Laz=C4=83r?= <alazar@bitdefender.com>
-Subject: [RESEND RFC PATCH 5/5] pidfd_mem: implemented remote memory mapping system call
-Date:   Fri,  4 Sep 2020 14:31:16 +0300
-Message-Id: <20200904113116.20648-6-alazar@bitdefender.com>
-In-Reply-To: <20200904113116.20648-1-alazar@bitdefender.com>
-References: <20200904113116.20648-1-alazar@bitdefender.com>
+Subject: [RESEND RFC PATCH 0/5] Remote mapping
+Date:   Fri,  4 Sep 2020 14:31:11 +0300
+Message-Id: <20200904113116.20648-1-alazar@bitdefender.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Mircea Cirjaliu <mcirjaliu@bitdefender.com>
+This patchset adds support for the remote mapping feature.
+Remote mapping, as its name suggests, is a means for transparent and
+zero-copy access of a remote process' address space.
+access of a remote process' address space.
 
-This system call returns 2 fds for inspecting the address space of a
-remote process: one for control and one for access. Use according to
-remote mapping specifications.
+The feature was designed according to a specification suggested by
+Paolo Bonzini:
+>> The proposed API is a new pidfd system call, through which the parent
+>> can map portions of its virtual address space into a file descriptor
+>> and then pass that file descriptor to a child.
+>>
+>> This should be:
+>>
+>> - upstreamable, pidfd is the new cool thing and we could sell it as a
+>> better way to do PTRACE_{PEEK,POKE}DATA
+>>
+>> - relatively easy to do based on the bitdefender remote process
+>> mapping patches at.
+>>
+>> - pidfd_mem() takes a pidfd and some flags (which are 0) and returns
+>> two file descriptors for respectively the control plane and the memory access.
+>>
+>> - the control plane accepts three ioctls
+>>
+>> PIDFD_MEM_MAP takes a struct like
+>>
+>>     struct pidfd_mem_map {
+>>          uint64_t address;
+>>          off_t offset;
+>>          off_t size;
+>>          int flags;
+>>          int padding[7];
+>>     }
+>>
+>> After this is done, the memory access fd can be mmap-ed at range
+>> [offset,
+>> offset+size), and it will read memory from range [address,
+>> address+size) of the target descriptor.
+>>
+>> PIDFD_MEM_UNMAP takes a struct like
+>>
+>>     struct pidfd_mem_unmap {
+>>          off_t offset;
+>>          off_t size;
+>>     }
+>>
+>> and unmaps the corresponding range of course.
+>>
+>> Finally PIDFD_MEM_LOCK forbids subsequent PIDFD_MEM_MAP or
+>> PIDFD_MEM_UNMAP.  For now I think it should just check that the
+>> argument is zero, bells and whistles can be added later.
+>>
+>> - the memory access fd can be mmap-ed as in the bitdefender patches
+>> but also accessed with read/write/pread/pwrite/...  As in the
+>> BitDefender patches, MMU notifiers can be used to adjust any mmap-ed
+>> regions when the source address space changes.  In this case,
+>> PIDFD_MEM_UNMAP could also cause a pre-existing mmap to "disappear".
+(it currently doesn't support read/write/pread/pwrite/...)
 
-Cc: Christian Brauner <christian@brauner.io>
-Signed-off-by: Mircea Cirjaliu <mcirjaliu@bitdefender.com>
-Signed-off-by: Adalbert Lazăr <alazar@bitdefender.com>
----
- arch/x86/entry/syscalls/syscall_32.tbl |  1 +
- arch/x86/entry/syscalls/syscall_64.tbl |  1 +
- include/linux/pid.h                    |  1 +
- include/linux/syscalls.h               |  1 +
- include/uapi/asm-generic/unistd.h      |  2 +
- kernel/exit.c                          |  2 +-
- kernel/pid.c                           | 55 ++++++++++++++++++++++++++
- 7 files changed, 62 insertions(+), 1 deletion(-)
+The main remote mapping patch also contains the legacy implementation which
+creates a region the size of the whole process address space by means of the
+REMOTE_PROC_MAP ioctl. The user is then free to mmap() any region of the
+address space it wishes.
 
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 54581ac671b4..ca1b5a32dbc5 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -440,5 +440,6 @@
- 433	i386	fspick			sys_fspick
- 434	i386	pidfd_open		sys_pidfd_open
- 435	i386	clone3			sys_clone3
-+436     i386    pidfd_mem               sys_pidfd_mem
- 437	i386	openat2			sys_openat2
- 438	i386	pidfd_getfd		sys_pidfd_getfd
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 37b844f839bc..6138d3d023f8 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -357,6 +357,7 @@
- 433	common	fspick			sys_fspick
- 434	common	pidfd_open		sys_pidfd_open
- 435	common	clone3			sys_clone3
-+436     common  pidfd_mem               sys_pidfd_mem
- 437	common	openat2			sys_openat2
- 438	common	pidfd_getfd		sys_pidfd_getfd
- 
-diff --git a/include/linux/pid.h b/include/linux/pid.h
-index cc896f0fc4e3..9ec23ab23fd4 100644
---- a/include/linux/pid.h
-+++ b/include/linux/pid.h
-@@ -76,6 +76,7 @@ extern const struct file_operations pidfd_fops;
- 
- struct file;
- 
-+extern struct pid *pidfd_get_pid(unsigned int fd);
- extern struct pid *pidfd_pid(const struct file *file);
- 
- static inline struct pid *get_pid(struct pid *pid)
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 1815065d52f3..621f3d52ed4e 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -934,6 +934,7 @@ asmlinkage long sys_clock_adjtime32(clockid_t which_clock,
- asmlinkage long sys_syncfs(int fd);
- asmlinkage long sys_setns(int fd, int nstype);
- asmlinkage long sys_pidfd_open(pid_t pid, unsigned int flags);
-+asmlinkage long sys_pidfd_mem(int pidfd, int __user *fds, unsigned int flags);
- asmlinkage long sys_sendmmsg(int fd, struct mmsghdr __user *msg,
- 			     unsigned int vlen, unsigned flags);
- asmlinkage long sys_process_vm_readv(pid_t pid,
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 3a3201e4618e..2663afc03c86 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -850,6 +850,8 @@ __SYSCALL(__NR_pidfd_open, sys_pidfd_open)
- #define __NR_clone3 435
- __SYSCALL(__NR_clone3, sys_clone3)
- #endif
-+#define __NR_pidfd_mem 436
-+__SYSCALL(__NR_pidfd_mem, sys_pidfd_mem)
- 
- #define __NR_openat2 437
- __SYSCALL(__NR_openat2, sys_openat2)
-diff --git a/kernel/exit.c b/kernel/exit.c
-index 389a88cb3081..37cd8949e606 100644
---- a/kernel/exit.c
-+++ b/kernel/exit.c
-@@ -1464,7 +1464,7 @@ static long do_wait(struct wait_opts *wo)
- 	return retval;
- }
- 
--static struct pid *pidfd_get_pid(unsigned int fd)
-+struct pid *pidfd_get_pid(unsigned int fd)
- {
- 	struct fd f;
- 	struct pid *pid;
-diff --git a/kernel/pid.c b/kernel/pid.c
-index c835b844aca7..c9c49edf4a8a 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -42,6 +42,7 @@
- #include <linux/sched/signal.h>
- #include <linux/sched/task.h>
- #include <linux/idr.h>
-+#include <linux/remote_mapping.h>
- 
- struct pid init_struct_pid = {
- 	.count		= REFCOUNT_INIT(1),
-@@ -565,6 +566,60 @@ SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
- 	return fd;
- }
- 
-+/**
-+ * pidfd_mem() - Allow access to process address space.
-+ *
-+ * @pidfd: pid file descriptor for the target process
-+ * @fds:   array where the control and access file descriptors are returned
-+ * @flags: flags to pass
-+ *
-+ * This creates a pair of file descriptors used to gain access to the
-+ * target process memory. The control fd is used to establish a linear
-+ * mapping between an offset range and a userspace address range.
-+ * The access fd is used to mmap(offset range) on the client side.
-+ *
-+ * Return: On success, 0 is returned.
-+ *         On error, a negative errno number will be returned.
-+ */
-+SYSCALL_DEFINE3(pidfd_mem, int, pidfd, int __user *, fds, unsigned int, flags)
-+{
-+	struct pid *pid;
-+	struct task_struct *task;
-+	int ret_fds[2];
-+	int ret;
-+
-+	if (pidfd < 0)
-+		return -EINVAL;
-+	if (!fds)
-+		return -EINVAL;
-+	if (flags)
-+		return -EINVAL;
-+
-+	pid = pidfd_get_pid(pidfd);
-+	if (IS_ERR(pid))
-+		return PTR_ERR(pid);
-+
-+	task = get_pid_task(pid, PIDTYPE_PID);
-+	put_pid(pid);
-+	if (IS_ERR(task))
-+		return PTR_ERR(task);
-+
-+	ret = -EPERM;
-+	if (unlikely(task == current) || capable(CAP_SYS_PTRACE))
-+		ret = task_remote_map(task, ret_fds);
-+	put_task_struct(task);
-+	if (IS_ERR_VALUE((long)ret))
-+		return ret;
-+
-+	if (copy_to_user(fds, ret_fds, sizeof(ret_fds))) {
-+		put_unused_fd(ret_fds[0]);
-+		put_unused_fd(ret_fds[1]);
-+		return -EFAULT;
-+	}
-+
-+	return 0;
-+}
-+
- void __init pid_idr_init(void)
- {
- 	/* Verify no one has done anything silly: */
+VMAs obtained by mmap()ing memory access fds mirror the contents of the remote
+process address space within the specified range. Pages are installed in the
+current process page tables at fault time and removed by the mmu_interval_notifier
+invalidate callbck. No further memory management is involved.
+On attempts to access a hole, or if a mapping was removed by PIDFD_MEM_UNMAP,
+or if the remote process address space was reaped by OOM, the remote mapping
+fault handler returns VM_FAULT_SIGBUS.
+
+At Bitdefender we are using remote mapping for virtual machine introspection:
+- the QEMU running the introspected machine creates the pair of file descriptors,
+passes the access fd to the introspector QEMU, and uses the control fd to allow
+access to the memslots it creates for its machine
+- the QEMU running the introspector machine receives the access fd and mmap()s
+the regions made available, then hotplugs the obtained memory in its machine
+Having this setup creates nested invalidate_range_start/end MMU notifier calls.
+
+Patch organization:
+- patch 1 allows unmap_page_range() to run without rescheduling
+  Needed for remote mapping to zap current process page tables when OOM calls
+  mmu_notifier_invalidate_range_start_nonblock(&range)
+
+- patch 2 creates VMA-specific zapping behavior
+  A remote mapping VMA does not own the pages it maps, so all it has to do is
+  clear the PTEs.
+
+- patch 3 removed MMU notifier lockdep map
+  It was just incompatible with our use case.
+
+- patch 4 is the remote mapping implementation
+
+- patch 5 adds suggested pidfd_mem system call
+
+Mircea Cirjaliu (5):
+  mm: add atomic capability to zap_details
+  mm: let the VMA decide how zap_pte_range() acts on mapped pages
+  mm/mmu_notifier: remove lockdep map, allow mmu notifier to be used in
+    nested scenarios
+  mm/remote_mapping: use a pidfd to access memory belonging to unrelated
+    process
+  pidfd_mem: implemented remote memory mapping system call
+
+ arch/x86/entry/syscalls/syscall_32.tbl |    1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |    1 +
+ include/linux/mm.h                     |   22 +
+ include/linux/mmu_notifier.h           |    5 +-
+ include/linux/pid.h                    |    1 +
+ include/linux/remote_mapping.h         |   22 +
+ include/linux/syscalls.h               |    1 +
+ include/uapi/asm-generic/unistd.h      |    2 +
+ include/uapi/linux/remote_mapping.h    |   36 +
+ kernel/exit.c                          |    2 +-
+ kernel/pid.c                           |   55 +
+ mm/Kconfig                             |   11 +
+ mm/Makefile                            |    1 +
+ mm/memory.c                            |  193 ++--
+ mm/mmu_notifier.c                      |   19 -
+ mm/remote_mapping.c                    | 1273 ++++++++++++++++++++++++
+ 16 files changed, 1535 insertions(+), 110 deletions(-)
+ create mode 100644 include/linux/remote_mapping.h
+ create mode 100644 include/uapi/linux/remote_mapping.h
+ create mode 100644 mm/remote_mapping.c
+
+
+base-commit: ae83d0b416db002fe95601e7f97f64b59514d936
