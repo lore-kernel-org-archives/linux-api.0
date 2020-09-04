@@ -2,153 +2,122 @@ Return-Path: <SRS0=+ro9=CN=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-4.0 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 48798C2BC11
-	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 20:32:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DAADCC43461
+	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 20:34:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1B692208C7
-	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 20:32:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 94362208C7
+	for <linux-api@archiver.kernel.org>; Fri,  4 Sep 2020 20:34:16 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=amacapital-net.20150623.gappssmtp.com header.i=@amacapital-net.20150623.gappssmtp.com header.b="1N7M5pHR"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728103AbgIDUcH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 4 Sep 2020 16:32:07 -0400
-Received: from bhuna.collabora.co.uk ([46.235.227.227]:42066 "EHLO
-        bhuna.collabora.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727923AbgIDUcD (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 4 Sep 2020 16:32:03 -0400
-Received: from [127.0.0.1] (localhost [127.0.0.1])
-        (Authenticated sender: krisman)
-        with ESMTPSA id F401129B03B
-From:   Gabriel Krisman Bertazi <krisman@collabora.com>
-To:     luto@kernel.org, tglx@linutronix.de, keescook@chromium.org
-Cc:     x86@kernel.org, linux-kernel@vger.kernel.org,
-        linux-api@vger.kernel.org, willy@infradead.org,
-        linux-kselftest@vger.kernel.org, shuah@kernel.org,
-        Gabriel Krisman Bertazi <krisman@collabora.com>,
-        kernel@collabora.com
-Subject: [PATCH v6 2/9] kernel: entry: Support TIF_SYSCAL_INTERCEPT on common entry code
-Date:   Fri,  4 Sep 2020 16:31:40 -0400
-Message-Id: <20200904203147.2908430-3-krisman@collabora.com>
-X-Mailer: git-send-email 2.28.0
-In-Reply-To: <20200904203147.2908430-1-krisman@collabora.com>
-References: <20200904203147.2908430-1-krisman@collabora.com>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+        id S1726842AbgIDUeQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 4 Sep 2020 16:34:16 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60086 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726791AbgIDUeO (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 4 Sep 2020 16:34:14 -0400
+Received: from mail-pf1-x441.google.com (mail-pf1-x441.google.com [IPv6:2607:f8b0:4864:20::441])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BF03CC061244
+        for <linux-api@vger.kernel.org>; Fri,  4 Sep 2020 13:34:14 -0700 (PDT)
+Received: by mail-pf1-x441.google.com with SMTP id m8so5239663pfh.3
+        for <linux-api@vger.kernel.org>; Fri, 04 Sep 2020 13:34:14 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=amacapital-net.20150623.gappssmtp.com; s=20150623;
+        h=content-transfer-encoding:mime-version:subject:from:in-reply-to:cc
+         :date:message-id:references:to;
+        bh=kqY1zbvJIdcS3k1CRT2WeBjod3BmevNfAT/msz2WAyw=;
+        b=1N7M5pHRondOJ1rVX5cHyTUEza0iy8R/V7/N5f3eUIcTSjl/oX6t0HcFrbp+KvjzgP
+         wxs40SnVXgc3yypZlOTO8bKnzPV2NQyEY9obVObQezshwodz13tcEkpEiMCebjxJ0Qdh
+         eDKJa+LHvC+E1YUs/Et0CNDPuB8/90E0qXDQsAWojm+Tb9ZHEQEPUctu0HFdFgifXL8T
+         JjM6RQijruFfhA+929Cjz8QOQH/KyueoJSU2bOONkS6jYCqp7ztJmomCaz8snaiyahtn
+         IsdN3/BHx+qtJDflG0dtZIHcz3SDrUCBnyE9SgYVXnklJ+7nZmeKhkzUf/0bRCUL7ynF
+         9EJA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:content-transfer-encoding:mime-version:subject
+         :from:in-reply-to:cc:date:message-id:references:to;
+        bh=kqY1zbvJIdcS3k1CRT2WeBjod3BmevNfAT/msz2WAyw=;
+        b=An0oy3kwrHZf8ajYFOHjMT8edPBK0VlV6s/wuxCrnMUm9TuHlx1G60OoPRPFfI5b78
+         BQt/Sy+A/reOQDcOjhNcPhtxf8ymY0wRlBIPKP2Jn8OsaCmsPP7ehVS8El5oet1UI/Sb
+         F9TNQHVGGr5casP6xFps054ma414rcbZEgMA9nZXaFr1eztTyr4PAKvrrvG2UqmEQqrj
+         FqsuK3NG8LHYhIc41OZAo1mLPo14qFQWqEYgNahWklMBBq36kFNS7McLBv8UOmfFJ7mO
+         kSTEQx9FKZuAeql4Y7J6ai0BjA4VEpHH2ox74TQeD+OWnw6nNA6XLtH2YO9TarPMBi31
+         xqcQ==
+X-Gm-Message-State: AOAM5309ntfD6NKctAqhSkZjD21msPPiMkr1+/acm7iBvCw6yV4gqHR0
+        Cu6+h1wMLR9lVj8GJUIwynF0wQ==
+X-Google-Smtp-Source: ABdhPJxw9SbgEx6xa6sj3S0oRThNURxowXBBpD0rSQoVTxoc+yhppxHHQ5NAwGlpNRWE7etTN3m5Vw==
+X-Received: by 2002:a63:2f02:: with SMTP id v2mr8483422pgv.369.1599251654135;
+        Fri, 04 Sep 2020 13:34:14 -0700 (PDT)
+Received: from ?IPv6:2600:1010:b003:ad53:ddbf:74c3:7dc7:4b93? ([2600:1010:b003:ad53:ddbf:74c3:7dc7:4b93])
+        by smtp.gmail.com with ESMTPSA id j9sm7434354pfe.170.2020.09.04.13.34.13
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 04 Sep 2020 13:34:13 -0700 (PDT)
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Mime-Version: 1.0 (1.0)
+Subject: Re: [RESEND RFC PATCH 0/5] Remote mapping
+From:   Andy Lutomirski <luto@amacapital.net>
+In-Reply-To: <d22e1e08-e2c1-510e-5ae7-accbf69731bf@redhat.com>
+Cc:     Andy Lutomirski <luto@kernel.org>,
+        =?utf-8?Q?Adalbert_Laz=C4=83r?= <alazar@bitdefender.com>,
+        Linux-MM <linux-mm@kvack.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Alexander Graf <graf@amazon.com>,
+        Stefan Hajnoczi <stefanha@redhat.com>,
+        Jerome Glisse <jglisse@redhat.com>,
+        =?utf-8?Q?Mihai_Don=C8=9Bu?= <mdontu@bitdefender.com>,
+        Mircea Cirjaliu <mcirjaliu@bitdefender.com>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Sargun Dhillon <sargun@sargun.me>,
+        Aleksa Sarai <cyphar@cyphar.com>,
+        Oleg Nesterov <oleg@redhat.com>, Jann Horn <jannh@google.com>,
+        Kees Cook <keescook@chromium.org>,
+        Matthew Wilcox <willy@infradead.org>,
+        Christian Brauner <christian.brauner@ubuntu.com>
+Date:   Fri, 4 Sep 2020 13:34:11 -0700
+Message-Id: <70D23368-A24D-4A15-8FC7-FA728D102475@amacapital.net>
+References: <d22e1e08-e2c1-510e-5ae7-accbf69731bf@redhat.com>
+To:     Paolo Bonzini <pbonzini@redhat.com>
+X-Mailer: iPhone Mail (17G80)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Syscalls that use common entry code (x86 at the moment of this writing)
-need to have their defines updated inside this commit.  This added a
-measureable overhead of 1ns to seccomp_benchmark selftests on a
-bare-metal AMD system.
 
-Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
----
- arch/x86/include/asm/thread_info.h |  4 ++--
- include/linux/entry-common.h       |  6 +-----
- kernel/entry/common.c              | 24 +++++++++++++++++++++---
- 3 files changed, 24 insertions(+), 10 deletions(-)
+>> On Sep 4, 2020, at 1:09 PM, Paolo Bonzini <pbonzini@redhat.com> wrote:
+>>=20
+>> =EF=BB=BFOn 04/09/20 21:39, Andy Lutomirski wrote:
+>> I'm a little concerned that it's actually too clever and that maybe a
+>> more straightforward solution should be investigated.  I personally
+>> rather dislike the KVM model in which the guest address space mirrors
+>> the host (QEMU) address space rather than being its own thing.  In
+>> particular, the current model means that extra-special-strange
+>> mappings like SEV-encrypted memory are required to be present in the
+>> QEMU page tables in order for the guest to see them.
+>> (If I had noticed that last bit before it went upstream, I would have
+>> NAKked it.  I would still like to see it deprecated and ideally
+>> eventually removed from the kernel.  We have absolutely no business
+>> creating incoherent mappings like this.)
+>=20
+> NACK first and ask second, right Andy?  I see that nothing has changed
+> since Alan Cox left Linux.
 
-diff --git a/arch/x86/include/asm/thread_info.h b/arch/x86/include/asm/thread_info.h
-index 267701ae3d86..cf723181e1f2 100644
---- a/arch/x86/include/asm/thread_info.h
-+++ b/arch/x86/include/asm/thread_info.h
-@@ -82,7 +82,7 @@ struct thread_info {
- #define TIF_SSBD		5	/* Speculative store bypass disable */
- #define TIF_SYSCALL_EMU		6	/* syscall emulation active */
- #define TIF_SYSCALL_AUDIT	7	/* syscall auditing active */
--#define TIF_SECCOMP		8	/* secure computing */
-+#define TIF_SYSCALL_INTERCEPT	8	/* Intercept system call */
- #define TIF_SPEC_IB		9	/* Indirect branch speculation mitigation */
- #define TIF_SPEC_FORCE_UPDATE	10	/* Force speculation MSR update in context switch */
- #define TIF_USER_RETURN_NOTIFY	11	/* notify kernel of userspace return */
-@@ -112,7 +112,7 @@ struct thread_info {
- #define _TIF_SSBD		(1 << TIF_SSBD)
- #define _TIF_SYSCALL_EMU	(1 << TIF_SYSCALL_EMU)
- #define _TIF_SYSCALL_AUDIT	(1 << TIF_SYSCALL_AUDIT)
--#define _TIF_SECCOMP		(1 << TIF_SECCOMP)
-+#define _TIF_SYSCALL_INTERCEPT	(1 << TIF_SYSCALL_INTERCEPT)
- #define _TIF_SPEC_IB		(1 << TIF_SPEC_IB)
- #define _TIF_SPEC_FORCE_UPDATE	(1 << TIF_SPEC_FORCE_UPDATE)
- #define _TIF_USER_RETURN_NOTIFY	(1 << TIF_USER_RETURN_NOTIFY)
-diff --git a/include/linux/entry-common.h b/include/linux/entry-common.h
-index efebbffcd5cc..72ce9ca860c6 100644
---- a/include/linux/entry-common.h
-+++ b/include/linux/entry-common.h
-@@ -21,10 +21,6 @@
- # define _TIF_SYSCALL_TRACEPOINT	(0)
- #endif
- 
--#ifndef _TIF_SECCOMP
--# define _TIF_SECCOMP			(0)
--#endif
--
- #ifndef _TIF_SYSCALL_AUDIT
- # define _TIF_SYSCALL_AUDIT		(0)
- #endif
-@@ -45,7 +41,7 @@
- #endif
- 
- #define SYSCALL_ENTER_WORK						\
--	(_TIF_SYSCALL_TRACE | _TIF_SYSCALL_AUDIT | _TIF_SECCOMP |	\
-+	(_TIF_SYSCALL_TRACE | _TIF_SYSCALL_AUDIT | _TIF_SYSCALL_INTERCEPT | \
- 	 _TIF_SYSCALL_TRACEPOINT | _TIF_SYSCALL_EMU |			\
- 	 ARCH_SYSCALL_ENTER_WORK)
- 
-diff --git a/kernel/entry/common.c b/kernel/entry/common.c
-index fcae019158ca..44fd089d59da 100644
---- a/kernel/entry/common.c
-+++ b/kernel/entry/common.c
-@@ -4,6 +4,7 @@
- #include <linux/entry-common.h>
- #include <linux/livepatch.h>
- #include <linux/audit.h>
-+#include <linux/syscall_intercept.h>
- 
- #define CREATE_TRACE_POINTS
- #include <trace/events/syscalls.h>
-@@ -41,6 +42,20 @@ static inline void syscall_enter_audit(struct pt_regs *regs, long syscall)
- 	}
- }
- 
-+static inline long do_syscall_intercept(struct pt_regs *regs)
-+{
-+	int sysint_work = READ_ONCE(current->syscall_intercept);
-+	int ret;
-+
-+	if (sysint_work & SYSINT_SECCOMP) {
-+		ret = __secure_computing(NULL);
-+		if (ret == -1L)
-+			return ret;
-+	}
-+
-+	return 0;
-+}
-+
- static long syscall_trace_enter(struct pt_regs *regs, long syscall,
- 				unsigned long ti_work)
- {
-@@ -53,9 +68,12 @@ static long syscall_trace_enter(struct pt_regs *regs, long syscall,
- 			return -1L;
- 	}
- 
--	/* Do seccomp after ptrace, to catch any tracer changes. */
--	if (ti_work & _TIF_SECCOMP) {
--		ret = __secure_computing(NULL);
-+	/*
-+	 * Do syscall interception like seccomp after ptrace, to catch
-+	 * any tracer changes.
-+	 */
-+	if (ti_work & _TIF_SYSCALL_INTERCEPT) {
-+		ret = do_syscall_intercept(regs);
- 		if (ret == -1L)
- 			return ret;
- 	}
--- 
-2.28.0
+NACKs are negotiable.  And maybe someone can convince me that the SEV mappin=
+g scheme is reasonable, but I would be surprised.
 
+Regardless, you seem to be suggesting that you want to have enclave VMs in w=
+hich the enclave can see some memory that the parent VM can=E2=80=99t see. H=
+ow does this fit into the KVM mapping model?  How does this remote mapping m=
+echanism help?  Do you want QEMU to have that memory mapped in its own paget=
+ables?
+
+As it stands, the way that KVM memory mappings are created seems to be conve=
+nient, but it also seems to be resulting in increasing bizarre userspace map=
+pings.  At what point is the right solution to decouple KVM=E2=80=99s mappin=
+gs from QEMU=E2=80=99s?=
