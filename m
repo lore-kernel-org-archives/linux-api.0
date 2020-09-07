@@ -2,169 +2,142 @@ Return-Path: <SRS0=WheX=CQ=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-4.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7161BC433E2
-	for <linux-api@archiver.kernel.org>; Mon,  7 Sep 2020 17:49:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 59C71C43461
+	for <linux-api@archiver.kernel.org>; Mon,  7 Sep 2020 20:20:43 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 279C72137B
-	for <linux-api@archiver.kernel.org>; Mon,  7 Sep 2020 17:49:08 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=bitdefender.onmicrosoft.com header.i=@bitdefender.onmicrosoft.com header.b="eRrfKlQy"
+	by mail.kernel.org (Postfix) with ESMTP id 1E39F21789
+	for <linux-api@archiver.kernel.org>; Mon,  7 Sep 2020 20:20:43 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1599510043;
+	bh=uluieRHjASDijcIFo7gCF077dVcN0frnZrCkAriLSJ8=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:List-ID:From;
+	b=EEqj5VxRA88qi6SNpyJ4oX3Wy2kW8K8MIiDhUJ8M4ageJJ7kPwM8t+eU6S+lGV+Rz
+	 HzIlSgATJG/refuI/W7d2IGvOJ3CqDW4Vq/s2vVS/IoMhPIzdbDsI+esu16Zlqfxmb
+	 z2E3qr4/sk884krPiTfQY7Tbt7zS+amyGGnqRFI8=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729413AbgIGRsu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 7 Sep 2020 13:48:50 -0400
-Received: from mail-eopbgr60126.outbound.protection.outlook.com ([40.107.6.126]:34115
-        "EHLO EUR04-DB3-obe.outbound.protection.outlook.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1729171AbgIGMlW (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 7 Sep 2020 08:41:22 -0400
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=Q33PJJaQvdsVDTohrG2G9BE53FmQhDf/g5PcU925LK+0Fb12mH9+nv1dr/Ev9Dzgp936qe5AUgcheRcJCefQaGVckq1bvVR+bi3kWJam1V+1zqWKYo5+DTQDyTkLmaf4p8uBX4SRRZIO/7zgzYmt+V25qHTlRtwWKYdfcw655mDwe1H9y2gVJ91ERKE9tptOvYK+D+a4yGHM+mMwvlR+YOvgzFh5n2jGjRYxbihVZzBEZufRyKHPAFU1O1LiHlLW1+vh0J+rzdFyzitThlIExjzAi8Rj49UiOaDLf0jpGqvCxjEUnW6wdcnl99HZe70AjMmzvwn8BOEmBaRaFKO/6A==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=8f+11I25Kq4475KbbqkSK1BWQE/jv5FMbjSnAkBFm/c=;
- b=R4G5npaG7Vc4TajDJFhU/buM5U70Ow1QFUWKPaoKH4qrVIvCSKiKJ4yo/WsqADBtW1WfkR4hg05G+UbwXt1thqseCeYg4934Rl2B5PjULeoi28ZiR2Ib1fMosqVmKgffo7QnRC3GGYK2cR+UEFjlZZB7mMofS1fHIT0pnK/cMpglcX/sbyves9L3fi89x1xbdNucvARrbSe7rMXZo7BMPgdrTrWBv7x1WqW424nH9+4Y2ge6wLvBY23J6fsEr6aZTlYqp8OB6yUtmHmmvfGUEfgkydGsP6SYUVRiwNfap8p65hhW9LJKD7jhh4oP2u7rIVx7XERnfkoaVK7SUyXkWA==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=bitdefender.com; dmarc=pass action=none
- header.from=bitdefender.com; dkim=pass header.d=bitdefender.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=bitdefender.onmicrosoft.com; s=selector2-bitdefender-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=8f+11I25Kq4475KbbqkSK1BWQE/jv5FMbjSnAkBFm/c=;
- b=eRrfKlQylq7nd3vlodXUgQ0OVBjccvRE4Vw9qJQYeo9uJ+2jgSjNx2VwtAIy68uqHfXMFPEpgoWUU4Ds6j5tCENBQDTLED0jBKITBjXJ3uxOT53uLJ5B18rKkpDg+IpJtybdvN+e+E1h+w11aFtkeG9sWRN7XKxzkl6eZFzVFuQ=
-Received: from AM7PR02MB6082.eurprd02.prod.outlook.com (2603:10a6:20b:1af::16)
- by AM7PR02MB6049.eurprd02.prod.outlook.com (2603:10a6:20b:1ac::13) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3348.15; Mon, 7 Sep
- 2020 12:41:11 +0000
-Received: from AM7PR02MB6082.eurprd02.prod.outlook.com
- ([fe80::9dcc:d3cc:dbe:5b33]) by AM7PR02MB6082.eurprd02.prod.outlook.com
- ([fe80::9dcc:d3cc:dbe:5b33%8]) with mapi id 15.20.3348.019; Mon, 7 Sep 2020
- 12:41:11 +0000
-From:   Mircea CIRJALIU - MELIU <mcirjaliu@bitdefender.com>
-To:     Andy Lutomirski <luto@kernel.org>,
-        Paolo Bonzini <pbonzini@redhat.com>
-CC:     =?utf-8?B?QWRhbGJlcnQgTGF6xINy?= <alazar@bitdefender.com>,
-        Linux-MM <linux-mm@kvack.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Alexander Graf <graf@amazon.com>,
-        Stefan Hajnoczi <stefanha@redhat.com>,
-        Jerome Glisse <jglisse@redhat.com>,
-        =?utf-8?B?TWloYWkgRG9uyJt1?= <mdontu@bitdefender.com>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Sargun Dhillon <sargun@sargun.me>,
-        Aleksa Sarai <cyphar@cyphar.com>,
-        Oleg Nesterov <oleg@redhat.com>, Jann Horn <jannh@google.com>,
-        Kees Cook <keescook@chromium.org>,
-        Matthew Wilcox <willy@infradead.org>,
-        Christian Brauner <christian.brauner@ubuntu.com>
-Subject: RE: [RESEND RFC PATCH 0/5] Remote mapping
-Thread-Topic: [RESEND RFC PATCH 0/5] Remote mapping
-Thread-Index: AQHWgq7sJAwNYCdpy0yn8gtG4wotq6lY4MAAgAAIYgCAAAb9gIAAF6+AgAAV2QCAA+RPkA==
-Date:   Mon, 7 Sep 2020 12:41:11 +0000
-Message-ID: <AM7PR02MB608288CF5CCBA9383BBD7C8ABB280@AM7PR02MB6082.eurprd02.prod.outlook.com>
-References: <d22e1e08-e2c1-510e-5ae7-accbf69731bf@redhat.com>
- <70D23368-A24D-4A15-8FC7-FA728D102475@amacapital.net>
- <836cff86-e670-8c69-6cbd-b22c5b5538df@redhat.com>
- <CALCETrUcxFJzN_Vz7qe+79eg8033+uUKOAAMEVj-cB1Gp6pouw@mail.gmail.com>
-In-Reply-To: <CALCETrUcxFJzN_Vz7qe+79eg8033+uUKOAAMEVj-cB1Gp6pouw@mail.gmail.com>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-authentication-results: kernel.org; dkim=none (message not signed)
- header.d=none;kernel.org; dmarc=none action=none header.from=bitdefender.com;
-x-originating-ip: [31.5.46.39]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: ec86077b-8d70-4266-e45b-08d8532b4d4d
-x-ms-traffictypediagnostic: AM7PR02MB6049:
-x-ms-exchange-transport-forked: True
-x-microsoft-antispam-prvs: <AM7PR02MB60495F4E1A37CFD45695704EBB280@AM7PR02MB6049.eurprd02.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:10000;
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0;
-x-microsoft-antispam-message-info: B0YF+dtJ5LGvxNggSXeBjvYpshlt6SfphcYxbXjq8Wicr/CXb8MMqrMh+a8IxGPmTXZ+eTgD4GuwGH/qVgE2Z5MvnNWWpfD/tPqon0iLdwlls43vn4S52E4IFQfQR4hkqBurtbhyXEGpzwPZMprT7XNiaJ+PTR6ZM7ESZgZPFFhjKMIzpkZuNHUav9v+tFkzYL5cjg8cWiaCU/JyF+3TXNNtGGW4/U3mCD745UKWImtnSJntzJZiZz+s7bKBs2J4l4YcM6dginkYdUDYkM9sxDHFk3uFXiaprGev/116thD9PVS1AopTiBeo8JsXwWwfOdzK1fAMJ6ABv1qzZo3F9w==
-x-forefront-antispam-report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AM7PR02MB6082.eurprd02.prod.outlook.com;PTR:;CAT:NONE;SFS:(396003)(39850400004)(346002)(376002)(136003)(366004)(66476007)(8676002)(186003)(71200400001)(66556008)(64756008)(66446008)(2906002)(76116006)(478600001)(7696005)(54906003)(110136005)(8936002)(9686003)(86362001)(4326008)(6506007)(316002)(26005)(33656002)(66946007)(83380400001)(52536014)(5660300002)(7416002)(55016002);DIR:OUT;SFP:1102;
-x-ms-exchange-antispam-messagedata: s8Egv3CBTBMNfunYQCmpydIHTWqH+/6argD4vDS5Haik7GLvRSZr1YAHkxlXWNbdYAuNxYWcXLfK1X5zCpG4qu1NZV0kO9bg8L9OMAJ5AS9Io0NR2L38XsR/cYHBH1r53qTkqKOOYtGCUILfxL+b50mbUyQgBR4G4BgPI+EKrT7yiTMHG5Fttf1OqMlA8JVpGhq+ksKPH2CAMcXINRFBgcnTdj/Dw5JN2oyHmvsadOuNugleYPRHXF2i6LT92jNFuLTfuf/uUR9nPWrLlqlQOAB4kVp6IWQSmizzJVORwPurP7hEWRbZnM0m+OfF0aeqlcWGFqksHN9erpYpWW5ey+w3M1SkV5SwCIp4wRBTb7HnidDYH0HU+eGbmTKuCmoMqEwCb5qqRFE7DERStGdzDpkV+ZRjWtY1Vo3u7mPveO2fMjVClL831Ie/wpSZn7gaGYhSKZ/0CCAKD0pSh0cPdwSoviv4tvMMzKihyczlpKq0xrGEhfgptKqUhMLZnA51oEaa683C8hID10dJrL61AI2a1LXFqTqr9Sfhv3icrMPtsEBnRZMueHEYYrDcPPmEqFuRj2cPN787jX3uKIT5rlOMIKkm7dY7J1iXWrsHOCFxI9f37kX0rWVSa0AUGOYDbwCDddig6sXCKBIZHLKRrw==
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+        id S1729311AbgIGUUm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 7 Sep 2020 16:20:42 -0400
+Received: from mail.kernel.org ([198.145.29.99]:39672 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1729231AbgIGUUh (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 7 Sep 2020 16:20:37 -0400
+Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com [209.85.221.51])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id B81D121582
+        for <linux-api@vger.kernel.org>; Mon,  7 Sep 2020 20:20:36 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1599510037;
+        bh=uluieRHjASDijcIFo7gCF077dVcN0frnZrCkAriLSJ8=;
+        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+        b=GJi1QjE/YfZNlkfZqazyPBchYHM89L/Ib8IKW/Eia/680VU0lYlG8ekUz/yktHgPk
+         cu72Ky/O8tcJD9o6KawiqA0EVgH1KZECifj9Csvsh6KqFLhUTeo6fkIg7zyOIfxIhx
+         AbYxFH1xbqJFjwkQBHg2Go2Razg0mEfL5JgDn6dI=
+Received: by mail-wr1-f51.google.com with SMTP id m6so16934310wrn.0
+        for <linux-api@vger.kernel.org>; Mon, 07 Sep 2020 13:20:36 -0700 (PDT)
+X-Gm-Message-State: AOAM531oCXiMmhrpAPDBhuk/TSf4qdK0P4KQVqCHGd/+PjPdK88isj1i
+        yVwxODD/Yv5XJdwkzVVJDPEBmfZsQa8ieOsDpz2s6w==
+X-Google-Smtp-Source: ABdhPJzhGTkslezk1jKgM4Z8egHoJMRpDSYgL+Hvr6rrEgC/Tq2OEQ3SAkb2T4jpoLviDEx/3tlo2KLQdnQeaVjVbwA=
+X-Received: by 2002:adf:db88:: with SMTP id u8mr23050764wri.184.1599510035328;
+ Mon, 07 Sep 2020 13:20:35 -0700 (PDT)
 MIME-Version: 1.0
-X-OriginatorOrg: bitdefender.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: AM7PR02MB6082.eurprd02.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: ec86077b-8d70-4266-e45b-08d8532b4d4d
-X-MS-Exchange-CrossTenant-originalarrivaltime: 07 Sep 2020 12:41:11.7051
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 487baf29-f1da-469a-9221-243f830c36f3
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: BL0HcDT5Pn8GVAHgqW/5pP+GetJRl53QCxAuxg4U64EaWaHyvq5rlFSTNd6BRBUEA6hNoma6jpoRkHsn1VFnyzRQ/Y5UkDVujorCdbq7ve0=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM7PR02MB6049
+References: <20200907101522.zo6qzgp4qfzkz7cs@wittgenstein> <0639209E-B6C6-4F86-84F4-04B91E1CC8AA@amacapital.net>
+ <20200907142510.klojh2urwyui23ox@wittgenstein>
+In-Reply-To: <20200907142510.klojh2urwyui23ox@wittgenstein>
+From:   Andy Lutomirski <luto@kernel.org>
+Date:   Mon, 7 Sep 2020 13:20:23 -0700
+X-Gmail-Original-Message-ID: <CALCETrUaAy7uU9jjneC9+ft-TtS+SuyWXxMCCE5dmcth3N4rHw@mail.gmail.com>
+Message-ID: <CALCETrUaAy7uU9jjneC9+ft-TtS+SuyWXxMCCE5dmcth3N4rHw@mail.gmail.com>
+Subject: Re: [PATCH v6 6/9] kernel: entry: Support Syscall User Dispatch for
+ common syscall entry
+To:     Christian Brauner <christian.brauner@ubuntu.com>
+Cc:     Gabriel Krisman Bertazi <krisman@collabora.com>,
+        Andrew Lutomirski <luto@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Kees Cook <keescook@chromium.org>, X86 ML <x86@kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        Matthew Wilcox <willy@infradead.org>,
+        "open list:KERNEL SELFTEST FRAMEWORK" 
+        <linux-kselftest@vger.kernel.org>, Shuah Khan <shuah@kernel.org>,
+        kernel@collabora.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-PiBGcm9tOiBBbmR5IEx1dG9taXJza2kgPGx1dG9Aa2VybmVsLm9yZz4NCj4gPiA+IEFzIGl0IHN0
-YW5kcywgdGhlIHdheSB0aGF0IEtWTSBtZW1vcnkgbWFwcGluZ3MgYXJlIGNyZWF0ZWQgc2VlbXMg
-dG8NCj4gPiA+IGJlIGNvbnZlbmllbnQsIGJ1dCBpdCBhbHNvIHNlZW1zIHRvIGJlIHJlc3VsdGlu
-ZyBpbiBpbmNyZWFzaW5nDQo+ID4gPiBiaXphcnJlIHVzZXJzcGFjZSBtYXBwaW5ncy4gIEF0IHdo
-YXQgcG9pbnQgaXMgdGhlIHJpZ2h0IHNvbHV0aW9uIHRvDQo+ID4gPiBkZWNvdXBsZSBLVk3igJlz
-IG1hcHBpbmdzIGZyb20gUUVNVeKAmXM/DQoNCkNvbnZlbmllbmNlIGlzIG9uZSBvZiB0aGUgZHJp
-dmVycyBvZiBjb2RlIHJldXNlLg0KDQo+ID4gU28gd2hhdCB5b3UgYXJlIHN1Z2dlc3RpbmcgaXMg
-dGhhdCBLVk0gbWFuYWdlcyBpdHMgb3duIGFkZHJlc3Mgc3BhY2UNCj4gPiBpbnN0ZWFkIG9mIGhv
-c3QgdmlydHVhbCBhZGRyZXNzZXMgKGFuZCB3aXRoIG5vIHJlbGF0aW9uc2hpcCB0byBob3N0DQo+
-ID4gdmlydHVhbCBhZGRyZXNzZXMsIGl0IHdvdWxkIGJlIGp1c3QgYSAiY29va2llIik/ICBJdCB3
-b3VsZCB0aGVuIG5lZWQgYQ0KPiA+IGNvdXBsZSBpb2N0bHMgdG8gbW1hcC9tdW5tYXAgKGNyZWF0
-aW5nIGFuZCBkZWxldGluZyBWTUFzKSBpbnRvIHRoZQ0KPiA+IGFkZHJlc3Mgc3BhY2UsIGFuZCB0
-aG9zZSBjb29raWVzIHdvdWxkIGJlIHBhc3NlZCB0bw0KPiA+IEtWTV9TRVRfVVNFUl9NRU1PUllf
-UkVHSU9OLiAgUUVNVSB3b3VsZCBzdGlsbCBuZWVkIGFjY2VzcyB0bw0KPiB0aGVzZQ0KPiA+IFZN
-QXMsIHdvdWxkIGl0IG1tYXAgYSBmaWxlIGRlc2NyaXB0b3IgcHJvdmlkZWQgYnkgS1ZNPyAgQWxs
-IGluIGFsbCB0aGUNCj4gPiBpbXBsZW1lbnRhdGlvbiBzZWVtcyBxdWl0ZSBjb21wbGV4LCBhbmQg
-SSBkb24ndCB1bmRlcnN0YW5kIHdoeSBpdA0KPiA+IHdvdWxkIGF2b2lkIGluY29oZXJlbnQgU0VW
-IG1hcHBpbmdzOyB3aGF0IGFtIEkgbWlzc2luZz8NCj4gDQo+IEl0IG1pZ2h0IG5vdCBhdm9pZCBp
-bmNvaGVyZW50IFNFViBtYXBwaW5ncyBpbiBwYXJ0aWN1bGFyLCBidXQgaXQgd291bGQNCj4gY2Vy
-dGFpbmx5IGVuYWJsZSBvdGhlciwgc29tZXdoYXQgcmVsYXRlZCB1c2VjYXNlcy4gIEZvciBleGFt
-cGxlLCBRRU1VDQo+IGNvdWxkIGhhdmUgS1ZNIG1hcCBhIG1lbWZkIHdpdGhvdXQgaXRzZWxmIG1h
-cHBpbmcgdGhhdCBtZW1mZCwgd2hpY2gNCj4gd291bGQgcmVkdWNlIHRoZSBleHRlbnQgdG8gd2hp
-Y2ggdGhlIG1lbW9yeSB3b3VsZCBiZSBleHBvc2VkIHRvIGFuDQo+IGF0dGFja2VyIHdobyBjYW4g
-cmVhZCBRRU1VIG1lbW9yeS4NCg0KSXNuJ3QgdGhpcyBzZWN1cml0eSB0aHJvdWdoIG9ic2N1cml0
-eT8NCg0KPiBGb3IgdGhpcyBwaWRmZC1tZW0gc2NoZW1lIGluIHBhcnRpY3VsYXIsIGl0IG1pZ2h0
-IGF2b2lkIHRoZSBuYXN0eSBjb3JuZXIgY2FzZQ0KPiBJIG1lbnRpb25lZC4gIFdpdGggcGlkZmQt
-bWVtIGFzIGluIHRoaXMgcGF0Y2hzZXQsIEknbSBjb25jZXJuZWQgYWJvdXQgd2hhdA0KPiBoYXBw
-ZW5zIHdoZW4gcHJvY2VzcyBBIG1hcHMgc29tZSBwcm9jZXNzIEIgbWVtb3J5LCBwcm9jZXNzIEIg
-bWFwcw0KPiBzb21lIG9mIHByb2Nlc3MgQSdzIG1lbW9yeSwgYW5kIHRoZXJlJ3MgYSByZWN1cnNp
-dmUgbWFwcGluZyB0aGF0IHJlc3VsdHMuDQo+IE9yIHdoZW4gYSBwcm9jZXNzIG1hcHMgaXRzIG93
-biBtZW1vcnksIGZvciB0aGF0IG1hdHRlci4gIElmIEtWTSBjb3VsZCBtYXANCj4gZmQncyBkaXJl
-Y3RseSwgdGhlbiB0aGVyZSBjb3VsZCBiZSBhIHBhcmFsbGVsIG1lY2hhbmlzbSBmb3IgS1ZNIHRv
-IGltcG9ydA0KPiBwb3J0aW9ucyBvZiBtb3JlIHRoYW4gb25lIHByb2Nlc3MncyBhZGRyZXNzIHNw
-YWNlLCBhbmQgdGhpcyBwYXJ0aWN1bGFyDQo+IHByb2JsZW0gd291bGQgYmUgYXZvaWRlZC4gIFNv
-IGEgcHJvY2VzcyB3b3VsZCBjcmVhdGUgcGlkZmQtbWVtLWxpa2UNCj4gb2JqZWN0IGFuZCBwYXNz
-IHRoYXQgdG8gS1ZNICh2aWEgYW4gaW50ZXJtZWRpYXJ5IHByb2Nlc3Mgb3IgZGlyZWN0bHkpIGFu
-ZA0KPiBLVk0gY291bGQgbWFwIHRoYXQsIGJ1dCBubyBub3JtYWwgcHJvY2VzcyB3b3VsZCBiZSBh
-bGxvd2VkIHRvIG1hcCBpdC4gIFRoaXMNCj4gYXZvaWRzIHRoZSByZWN1cnNpb24gcHJvYmxlbXMu
-DQo+IA0KPiBPciBtZW1mZCBjb3VsZCBnZXQgZmFuY2llciB3aXRoIG9wZXJhdGlvbnMgdG8gc3Bs
-aXQgbWVtZmRzLCByZW1vdmUgcGFnZXMNCj4gZnJvbSBtZW1mZHMsIGV0Yy4gIE1heWJlIHRoYXQn
-cyBvdmVya2lsbC4NCj4gDQo+IChPciBhIGZhbmN5IHJlY3Vyc2lvbiBkZXRlY3RvciBjb3VsZCBi
-ZSBidWlsdCwgYnV0IHRoaXMgaGFzIGJlZW4gYSBwYWluIHBvaW50IGluDQo+IEFGX1VOSVgsIGVw
-b2xsLCBldGMgaW4gdGhlIHBhc3QuICBJdCBtYXkgYmUgc29sdmFibGUsIGJ1dCBpdCB3b24ndCBi
-ZSBwcmV0dHkuKQ0KPiANCj4gSSBhZG1pdCB0aGF0IGFsbG93aW5nIEtWTSB0byBtYXAgZmQncyBk
-aXJlY3RseSB3aXRob3V0IHNvbWUgc3BlY2lmaWMNCj4gdm1fb3BlcmF0aW9ucyBzdXBwb3J0IGZv
-ciB0aGlzIGNvdWxkIGJlIGNoYWxsZW5naW5nLCBidXQgSVNUTSBrdm0gY291bGQNCj4gcGxhdXNp
-Ymx5IG93biBhbiBtbV9zdHJ1Y3QgYW5kIHBhZ2V0YWJsZXMgYXQgdGhlIGNvc3Qgb2Ygc29tZSB3
-YXN0ZWQNCj4gbWVtb3J5LiAgVGhlIHJlc3VsdCB3b3VsZCwgdW5kZXIgdGhlIGhvb2QsIHdvcmsg
-bW9yZSBvciBsZXNzIGxpa2UgdGhlDQo+IGN1cnJlbnQgaW1wbGVtZW50YXRpb24sIGJ1dCB0aGUg
-QVBJIHdvdWxkIGJlIHF1aXRlIGRpZmZlcmVudC4NCg0KVGhpcyBsb29rcyBsaWtlIGFuIGF0dGVt
-cHQgdG8gcGFzcyBtZW1vcnkgcmVsYXRlZCBjb25jZXJucyB0byBLVk0gZGV2ZWxvcGVycy4NClRo
-ZSB1c2Vyc3BhY2UgbWFwcGluZyBtZWNoYW5pc20gaXMgZ29vZCBhcyBpdCBpcy4gUHJvYmFibHkg
-bm90IHBlcmZlY3QsIGp1c3QgDQpnb29kLiBUaGUgcHJvYmxlbSBpcyB0aGF0IGl0J3Mgc3R1Y2sg
-dG8gYSBmZXcgVk1BIG1vZGVscyBhbmQgbmVlZHMgdG8gZXZvbHZlDQp0b3dhcmRzIG1vcmUgYml6
-YXJyZS9za2V0Y2h5L3dlaXJkL2ZyYWdpbGUgcGF0dGVybnMuDQoNCkFsc28gdGhlIG1lbW9yeSBj
-b2RlIGlzIG9uZSBvZiB0aGUgbW9zdCB0aWdodGx5IGNvdXBsZWQgY29kZSBJIGhhdmUgc2Vlbi4N
-ClByb2JhYmx5IGV4cGxhaW5zIHRoZSBmZWFyIG9mIHRoZSBtYWludGFpbmVycyB0byB0cnkgc29t
-ZXRoaW5nIG5ldy4NCg0KTWlyY2VhDQoNCg==
+On Mon, Sep 7, 2020 at 7:25 AM Christian Brauner
+<christian.brauner@ubuntu.com> wrote:
+>
+> On Mon, Sep 07, 2020 at 07:15:52AM -0700, Andy Lutomirski wrote:
+> >
+> >
+> > > On Sep 7, 2020, at 3:15 AM, Christian Brauner <christian.brauner@ubun=
+tu.com> wrote:
+> > >
+> > > =EF=BB=BFOn Fri, Sep 04, 2020 at 04:31:44PM -0400, Gabriel Krisman Be=
+rtazi wrote:
+> > >> Syscall User Dispatch (SUD) must take precedence over seccomp, since=
+ the
+> > >> use case is emulation (it can be invoked with a different ABI) such =
+that
+> > >> seccomp filtering by syscall number doesn't make sense in the first
+> > >> place.  In addition, either the syscall is dispatched back to usersp=
+ace,
+> > >> in which case there is no resource for seccomp to protect, or the
+> > >
+> > > Tbh, I'm torn here. I'm not a super clever attacker but it feels to m=
+e
+> > > that this is still at least a clever way to circumvent a seccomp
+> > > sandbox.
+> > > If I'd be confined by a seccomp profile that would cause me to be
+> > > SIGKILLed when I try do open() I could prctl() myself to do user
+> > > dispatch to prevent that from happening, no?
+> > >
+> >
+> > Not really, I think. The idea is that you didn=E2=80=99t actually do op=
+en().
+> > You did a SYSCALL instruction which meant something else, and the
+> > syscall dispatch correctly prevented the kernel from misinterpreting
+> > it as open().
+>
+> Right, for the case where you're e.g. emulating windows syscalls that's
+> true. I was thinking when you're running natively on Linux: couldn't I
+> first load a seccomp profile "kill me if someone does an open()", then
+> I exec() the target binary and that binary is setup to do
+> prctl(USER_DISPATCH) first thing. I guess, it's ok because as far as I
+> had time to read it this is a nothing or all mechanism, i.e. _all_
+> system calls are re-routed in contrast to e.g. seccomp where I could do
+> this per-syscall. So for user-dispatch it wouldn't make sense to use it
+> on Linux per se. Still makes me a little uneasy. :)
+
+There's an escape hatch, so processes using this can still make syscalls.
+
+Maybe think about it another way: a process using user dispatch should
+definitely *not* trigger seccomp user notifiers, errno returns, or
+ptrace events, since they'll all do the wrong thing.  IMO RET_KILL is
+the same.
+
+Barring some very severe defect, there's no way a program can use user
+dispatch to escape seccomp -- a program could use user dispatch to
+allow them to do:
+
+mov $__NR_open, %rax
+syscall
+
+without dying despite the presence of a filter that would kill the
+process if it tried to do open(), but this doesn't bypass the filter
+at all.  The process could just as easily have done:
+
+mov $__NR_open
+jmp magic_stub(%rip)
+
+without tripping the filter, since no system call actually happens here.
+
+--Andy
