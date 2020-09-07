@@ -2,126 +2,78 @@ Return-Path: <SRS0=WheX=CQ=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AB565C43461
-	for <linux-api@archiver.kernel.org>; Mon,  7 Sep 2020 17:15:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B531CC43461
+	for <linux-api@archiver.kernel.org>; Mon,  7 Sep 2020 17:25:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 81965208C7
-	for <linux-api@archiver.kernel.org>; Mon,  7 Sep 2020 17:15:58 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 840CB208C7
+	for <linux-api@archiver.kernel.org>; Mon,  7 Sep 2020 17:25:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730640AbgIGRPj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 7 Sep 2020 13:15:39 -0400
-Received: from szxga06-in.huawei.com ([45.249.212.32]:59240 "EHLO huawei.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1729763AbgIGOFq (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 7 Sep 2020 10:05:46 -0400
-Received: from DGGEMS408-HUB.china.huawei.com (unknown [172.30.72.58])
-        by Forcepoint Email with ESMTP id 1646D9B65E56938C9A4D;
-        Mon,  7 Sep 2020 22:05:38 +0800 (CST)
-Received: from lhrphicprd00229.huawei.com (10.123.41.22) by
- DGGEMS408-HUB.china.huawei.com (10.3.19.208) with Microsoft SMTP Server id
- 14.3.487.0; Mon, 7 Sep 2020 22:05:28 +0800
-From:   Jonathan Cameron <Jonathan.Cameron@huawei.com>
-To:     <linux-mm@kvack.org>, <linux-acpi@vger.kernel.org>,
-        <linux-arm-kernel@lists.infradead.org>, <x86@kernel.org>,
-        Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>,
-        <rafael@kernel.org>, Ingo Molnar <mingo@redhat.com>
-CC:     Bjorn Helgaas <bhelgaas@google.com>,
-        <linux-kernel@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>, <linuxarm@huawei.com>,
-        Dan Williams <dan.j.williams@intel.com>,
-        Brice Goglin <Brice.Goglin@inria.fr>,
-        "Sean V Kelley" <sean.v.kelley@linux.intel.com>,
-        <linux-api@vger.kernel.org>, "Hanjun Guo" <guohanjun@huawei.com>,
-        Jonathan Cameron <Jonathan.Cameron@huawei.com>
-Subject: [PATCH v10 2/6] x86: Support Generic Initiator only proximity domains
-Date:   Mon, 7 Sep 2020 22:03:03 +0800
-Message-ID: <20200907140307.571932-3-Jonathan.Cameron@huawei.com>
-X-Mailer: git-send-email 2.19.1
-In-Reply-To: <20200907140307.571932-1-Jonathan.Cameron@huawei.com>
-References: <20200907140307.571932-1-Jonathan.Cameron@huawei.com>
+        id S1730662AbgIGRZd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 7 Sep 2020 13:25:33 -0400
+Received: from mga09.intel.com ([134.134.136.24]:30382 "EHLO mga09.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1729584AbgIGNWe (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 7 Sep 2020 09:22:34 -0400
+IronPort-SDR: YIOtZ0RxVqdkrHDTEjCzi+XcivZdQOD2rPuYTotW4IfzKYc1USIz1HAPVyDN/bB+8HvtrXtGx/
+ UKkICNmCighA==
+X-IronPort-AV: E=McAfee;i="6000,8403,9736"; a="158980954"
+X-IronPort-AV: E=Sophos;i="5.76,401,1592895600"; 
+   d="scan'208";a="158980954"
+X-Amp-Result: SKIPPED(no attachment in message)
+X-Amp-File-Uploaded: False
+Received: from fmsmga003.fm.intel.com ([10.253.24.29])
+  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 07 Sep 2020 06:21:20 -0700
+IronPort-SDR: 67TxInViyyuhJoZuo28N/lVFwOX50sFNCTYi0WHYNPg3iPooMt+1vCVrtKlOnEdJPsbvf6+Dc6
+ XPbNR3qIY8Wg==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.76,401,1592895600"; 
+   d="scan'208";a="340839872"
+Received: from noezdal-mobl5.ger.corp.intel.com (HELO localhost) ([10.252.57.15])
+  by FMSMGA003.fm.intel.com with ESMTP; 07 Sep 2020 06:21:18 -0700
+Date:   Mon, 7 Sep 2020 16:21:21 +0300
+From:   Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+To:     James Bottomley <James.Bottomley@HansenPartnership.com>
+Cc:     linux-integrity@vger.kernel.org, Mimi Zohar <zohar@linux.ibm.com>,
+        linux-api@vger.kernel.org, Jason Gunthorpe <jgg@ziepe.ca>
+Subject: Re: [PATCH RESEND v4 1/1] tpm: add sysfs exports for all banks of
+ PCR registers
+Message-ID: <20200907132121.GA106839@linux.intel.com>
+References: <20200906203245.18429-1-James.Bottomley@HansenPartnership.com>
+ <20200906203245.18429-2-James.Bottomley@HansenPartnership.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7BIT
-Content-Type:   text/plain; charset=US-ASCII
-X-Originating-IP: [10.123.41.22]
-X-CFilter-Loop: Reflected
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20200906203245.18429-2-James.Bottomley@HansenPartnership.com>
+Organization: Intel Finland Oy - BIC 0357606-4 - Westendinkatu 7, 02160 Espoo
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-In common with memoryless domains we only register GI domains
-if the proximity node is not online. If a domain is already
-a memory containing domain, or a memoryless domain there is
-nothing to do just because it also contains a Generic Initiator.
+On Sun, Sep 06, 2020 at 01:32:45PM -0700, James Bottomley wrote:
+> Create sysfs per hash groups with 24 PCR files in them one group,
+> named pcr-<hash>, for each agile hash of the TPM.  The files are
+> plugged in to a PCR read function which is TPM version agnostic, so
+> this works also for TPM 1.2 but the hash is only sha1 in that case.
+> 
+> Note: the macros used to create the hashes emit spurious checkpatch
+> warnings.  Do not try to "fix" them as checkpatch recommends, otherwise
+> they'll break.
+> 
+> Signed-off-by: James Bottomley <James.Bottomley@HansenPartnership.com>
+> Reviewed-by: Jerry Snitselaar <jsnitsel@redhat.com>
+> Tested-by: Thiago Jung Bauermann <bauerman@linux.ibm.com>
 
-Signed-off-by: Jonathan Cameron <Jonathan.Cameron@huawei.com>
----
- arch/x86/include/asm/numa.h |  2 ++
- arch/x86/kernel/setup.c     |  1 +
- arch/x86/mm/numa.c          | 14 ++++++++++++++
- 3 files changed, 17 insertions(+)
+I'm not sure why this should be in sysfs when event log is in
+securityfs.
 
-diff --git a/arch/x86/include/asm/numa.h b/arch/x86/include/asm/numa.h
-index bbfde3d2662f..f631467272a3 100644
---- a/arch/x86/include/asm/numa.h
-+++ b/arch/x86/include/asm/numa.h
-@@ -62,12 +62,14 @@ extern void numa_clear_node(int cpu);
- extern void __init init_cpu_to_node(void);
- extern void numa_add_cpu(int cpu);
- extern void numa_remove_cpu(int cpu);
-+extern void init_gi_nodes(void);
- #else	/* CONFIG_NUMA */
- static inline void numa_set_node(int cpu, int node)	{ }
- static inline void numa_clear_node(int cpu)		{ }
- static inline void init_cpu_to_node(void)		{ }
- static inline void numa_add_cpu(int cpu)		{ }
- static inline void numa_remove_cpu(int cpu)		{ }
-+static inline void init_gi_nodes(void)			{ }
- #endif	/* CONFIG_NUMA */
- 
- #ifdef CONFIG_DEBUG_PER_CPU_MAPS
-diff --git a/arch/x86/kernel/setup.c b/arch/x86/kernel/setup.c
-index 3511736fbc74..9062c146f03a 100644
---- a/arch/x86/kernel/setup.c
-+++ b/arch/x86/kernel/setup.c
-@@ -1218,6 +1218,7 @@ void __init setup_arch(char **cmdline_p)
- 	prefill_possible_map();
- 
- 	init_cpu_to_node();
-+	init_gi_nodes();
- 
- 	io_apic_init_mappings();
- 
-diff --git a/arch/x86/mm/numa.c b/arch/x86/mm/numa.c
-index aa76ec2d359b..fc630dc6764e 100644
---- a/arch/x86/mm/numa.c
-+++ b/arch/x86/mm/numa.c
-@@ -747,6 +747,20 @@ static void __init init_memory_less_node(int nid)
- 	 */
- }
- 
-+/*
-+ * Generic Initiator Nodes may have neither CPU nor Memory.
-+ * At this stage if either of the others were present we would
-+ * already be online.
-+ */
-+void __init init_gi_nodes(void)
-+{
-+	int nid;
-+
-+	for_each_node_state(nid, N_GENERIC_INITIATOR)
-+		if (!node_online(nid))
-+			init_memory_less_node(nid);
-+}
-+
- /*
-  * Setup early cpu_to_node.
-  *
--- 
-2.19.1
+Also, securityfs does not have to follow sysfs requirements,
+which gives ability to dump all PCRs in a single binary file.
 
+Using ASCII for this is inefficient.
+
+/Jarkko
