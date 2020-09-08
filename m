@@ -2,29 +2,29 @@ Return-Path: <SRS0=LZ8l=CR=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-17.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ABB50C433E2
-	for <linux-api@archiver.kernel.org>; Tue,  8 Sep 2020 08:00:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BB4FBC43461
+	for <linux-api@archiver.kernel.org>; Tue,  8 Sep 2020 08:00:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 85CC42177B
-	for <linux-api@archiver.kernel.org>; Tue,  8 Sep 2020 08:00:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8EA5E2067C
+	for <linux-api@archiver.kernel.org>; Tue,  8 Sep 2020 08:00:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729605AbgIHIAq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 8 Sep 2020 04:00:46 -0400
-Received: from smtp-8fad.mail.infomaniak.ch ([83.166.143.173]:38347 "EHLO
-        smtp-8fad.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1729789AbgIHIAo (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 8 Sep 2020 04:00:44 -0400
-Received: from smtp-3-0000.mail.infomaniak.ch (unknown [10.4.36.107])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4BlyHN0cCBzlhR8K;
-        Tue,  8 Sep 2020 10:00:00 +0200 (CEST)
+        id S1729747AbgIHIAs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 8 Sep 2020 04:00:48 -0400
+Received: from smtp-42ab.mail.infomaniak.ch ([84.16.66.171]:39969 "EHLO
+        smtp-42ab.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1729873AbgIHIAp (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 8 Sep 2020 04:00:45 -0400
+Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4BlyHV5v0DzlhYvB;
+        Tue,  8 Sep 2020 10:00:06 +0200 (CEST)
 Received: from localhost (unknown [94.23.54.103])
-        by smtp-3-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4BlyHK4Ph5zlh8T9;
-        Tue,  8 Sep 2020 09:59:57 +0200 (CEST)
+        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4BlyHT6BDPzlh8TV;
+        Tue,  8 Sep 2020 10:00:05 +0200 (CEST)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     linux-kernel@vger.kernel.org
 Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
@@ -63,11 +63,15 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
         linux-integrity@vger.kernel.org,
         linux-security-module@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org
-Subject: [RFC PATCH v8 0/3] Add support for AT_INTERPRETED (was O_MAYEXEC)
-Date:   Tue,  8 Sep 2020 09:59:53 +0200
-Message-Id: <20200908075956.1069018-1-mic@digikod.net>
+        linux-fsdevel@vger.kernel.org,
+        =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@linux.microsoft.com>,
+        Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
+Subject: [RFC PATCH v8 2/3] fs,doc: Enable to configure exec checks for AT_INTERPRETED
+Date:   Tue,  8 Sep 2020 09:59:55 +0200
+Message-Id: <20200908075956.1069018-3-mic@digikod.net>
 X-Mailer: git-send-email 2.28.0
+In-Reply-To: <20200908075956.1069018-1-mic@digikod.net>
+References: <20200908075956.1069018-1-mic@digikod.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -76,135 +80,319 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi,
+From: Mickaël Salaün <mic@linux.microsoft.com>
 
-This height patch series rework the previous O_MAYEXEC series by not
-adding a new flag to openat2(2) but to faccessat2(2) instead.  As
-suggested, this enables to perform the access check on a file descriptor
-instead of on a file path (while opening it).  This may require two
-checks (one on open and then with faccessat2) but it is a more generic
-approach [8].
+This enables to configure a policy for executable scripts which can be
+queried with faccessat2(2) and the AT_INTERPRETED flag.  This may allow
+script interpreters to check execution permission before reading
+commands from a file, or dynamic linkers to allow shared object loading.
+This may be seen as a way for a trusted task (e.g. interpreter) to check
+the trustworthiness of files (e.g. scripts) before extending its control
+flow graph with new ones originating from these files.
 
-The IMA patch is removed for now because the only LSM hook triggered by
-faccessat2(2) is inode_permission() which takes a struct inode as
-argument.  However, struct path and then struct file are still available
-in this syscall, which enables to add a new hook to fit the needs of IMA
-and other path-based LSMs.
+Add a new sysctl fs.interpreted_access to enable system administrators
+to enforce two complementary security policies according to the
+installed system: enforce the noexec mount option, and enforce
+executable file permission.  Indeed, because of compatibility with
+installed systems, only system administrators are able to check that
+this new enforcement is in line with the system mount points and file
+permissions.
 
-We also removed the three patches from Kees Cook which are no longer
-required for this new implementation.
+Being able to restrict execution also enables to protect the kernel by
+restricting arbitrary syscalls that an attacker could perform with a
+crafted binary or certain script languages.  It also improves multilevel
+isolation by reducing the ability of an attacker to use side channels
+with specific code.  These restrictions can natively be enforced for ELF
+binaries (with the noexec mount option) but require this kernel
+extension to properly handle scripts (e.g. Python, Perl).  To get a
+consistent execution policy, additional memory restrictions should also
+be enforced (e.g. thanks to SELinux).
 
-Goal of AT_INTERPRETED
-======================
+Because the AT_INTERPRETED flag combined with X_OK mode is a mean to
+enforce a system-wide security policy (but not application-centric
+policies), it does not make sense for user space to check the sysctl
+value.  Indeed, this new flag only enables to extend the system ability
+to enforce a policy thanks to (some trusted) user space collaboration.
+Moreover, additional security policies could be managed by LSMs.  This
+is a best-effort approach from the application developer point of view:
+https://lore.kernel.org/lkml/1477d3d7-4b36-afad-7077-a38f42322238@digikod.net/
 
-The goal of this patch series is to enable to control script execution
-with interpreters help.  A new AT_INTERPRETED flag, usable through
-faccessat2(2), is added to enable userspace script interpreters to
-delegate to the kernel (and thus the system security policy) the
-permission to interpret/execute scripts or other files containing what
-can be seen as commands.
+Signed-off-by: Mickaël Salaün <mic@linux.microsoft.com>
+Reviewed-by: Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Jann Horn <jannh@google.com>
+Cc: Jonathan Corbet <corbet@lwn.net>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Miklos Szeredi <mszeredi@redhat.com>
+---
 
-A simple system-wide security policy can be enforced by the system
-administrator through a sysctl configuration consistent with the mount
-points or the file access rights.  The documentation patch explains the
-prerequisites.
+Changes since v7:
+* Handle special file descriptors.
+* Add a compatibility mode for execute/read check.
+* Move the sysctl policy from fs/namei.c to fs/open.c for the new
+  faccessat2/AT_INTERPRETED.
+* Rename the sysctl from fs.open_mayexec_enforce to
+  fs.interpreted_access .
+* Update documentation accordingly.
 
-Furthermore, the security policy can also be delegated to an LSM, either
-a MAC system or an integrity system.  For instance, the new kernel
-MAY_INTERPRETED_EXEC flag is required to close a major IMA
-measurement/appraisal interpreter integrity gap by bringing the ability
-to check the use of scripts [1].  Other uses are expected, such as for
-magic-links [2], SGX integration [3], bpffs [4] or IPE [5].
+Changes since v6:
+* Allow opening pipes, block devices and character devices with
+  O_MAYEXEC when there is no enforced policy, but forbid any non-regular
+  file opened with O_MAYEXEC otherwise (i.e. for any enforced policy).
+* Add a paragraph about the non-regular files policy.
+* Move path_noexec() calls out of the fast-path (suggested by Kees
+  Cook).
 
-Possible extended usage
-=======================
+Changes since v5:
+* Remove the static enforcement configuration through Kconfig because it
+  makes the code more simple like this, and because the current sysctl
+  configuration can only be set with CAP_SYS_ADMIN, the same way mount
+  options (i.e. noexec) can be set.  If an harden distro wants to
+  enforce a configuration, it should restrict capabilities or sysctl
+  configuration.  Furthermore, an LSM can easily leverage O_MAYEXEC to
+  fit its need.
+* Move checks from inode_permission() to may_open() and make the error
+  codes more consistent according to file types (in line with a previous
+  commit): opening a directory with O_MAYEXEC returns EISDIR and other
+  non-regular file types may return EACCES.
+* In may_open(), when OMAYEXEC_ENFORCE_FILE is set, replace explicit
+  call to generic_permission() with an artificial MAY_EXEC to avoid
+  double calls.  This makes sense especially when an LSM policy forbids
+  execution of a file.
+* Replace the custom proc_omayexec() with
+  proc_dointvec_minmax_sysadmin(), and then replace the CAP_MAC_ADMIN
+  check with a CAP_SYS_ADMIN one (suggested by Kees Cook and Stephen
+  Smalley).
+* Use BIT() (suggested by Kees Cook).
+* Rename variables (suggested by Kees Cook).
+* Reword the kconfig help.
+* Import the documentation patch (suggested by Kees Cook):
+  https://lore.kernel.org/lkml/20200505153156.925111-6-mic@digikod.net/
+* Update documentation and add LWN.net article.
 
-For now, only the X_OK mode is compatible with the AT_INTERPRETED flag.
-This enables to restrict the addition of new control flows in a process.
-Using R_OK or W_OK with AT_INTERPRETED returns -EINVAL.
+Changes since v4:
+* Add kernel configuration options to enforce O_MAYEXEC at build time,
+  and disable the sysctl in such case (requested by James Morris).
+* Reword commit message.
 
-Possible future use-cases for R_OK with AT_INTERPRETED may be to check
-configuration files that may impact the behavior of applications (i.e.
-influence critical part of the current control flow).  Those should then
-be trusted as well.  The W_OK with AT_INTERPRETED could be used to check
-that a file descriptor is allowed to receive sensitive data such as
-debug logs.
+Changes since v3:
+* Update comment with O_MAYEXEC.
 
-Prerequisite of its use
-=======================
+Changes since v2:
+* Cosmetic changes.
 
-Userspace needs to adapt to take advantage of this new feature.  For
-example, the PEP 578 [6] (Runtime Audit Hooks) enables Python 3.8 to be
-extended with policy enforcement points related to code interpretation,
-which can be used to align with the PowerShell audit features.
-Additional Python security improvements (e.g. a limited interpreter
-without -c, stdin piping of code) are on their way [7].
+Changes since v1:
+* Move code from Yama to the FS subsystem (suggested by Kees Cook).
+* Make omayexec_inode_permission() static (suggested by Jann Horn).
+* Use mode 0600 for the sysctl.
+* Only match regular files (not directories nor other types), which
+  follows the same semantic as commit 73601ea5b7b1 ("fs/open.c: allow
+  opening only regular files during execve()").
+---
+ Documentation/admin-guide/sysctl/fs.rst | 54 +++++++++++++++++++++++++
+ fs/open.c                               | 38 ++++++++++++++++-
+ include/linux/fs.h                      |  1 +
+ kernel/sysctl.c                         | 12 +++++-
+ 4 files changed, 102 insertions(+), 3 deletions(-)
 
-Examples
-========
-
-The initial idea comes from CLIP OS 4 and the original implementation
-has been used for more than 12 years:
-https://github.com/clipos-archive/clipos4_doc
-Chrome OS has a similar approach:
-https://chromium.googlesource.com/chromiumos/docs/+/master/security/noexec_shell_scripts.md
-
-Userland patches can be found here:
-https://github.com/clipos-archive/clipos4_portage-overlay/search?q=O_MAYEXEC
-Actually, there is more than the O_MAYEXEC changes (which matches this search)
-e.g., to prevent Python interactive execution. There are patches for
-Bash, Wine, Java (Icedtea), Busybox's ash, Perl and Python. There are
-also some related patches which do not directly rely on O_MAYEXEC but
-which restrict the use of browser plugins and extensions, which may be
-seen as scripts too:
-https://github.com/clipos-archive/clipos4_portage-overlay/tree/master/www-client
-
-An introduction to O_MAYEXEC was given at the Linux Security Summit
-Europe 2018 - Linux Kernel Security Contributions by ANSSI:
-https://www.youtube.com/watch?v=chNjCRtPKQY&t=17m15s
-The "write xor execute" principle was explained at Kernel Recipes 2018 -
-CLIP OS: a defense-in-depth OS:
-https://www.youtube.com/watch?v=PjRE0uBtkHU&t=11m14s
-See also an overview article: https://lwn.net/Articles/820000/
-
-This patch series can be applied on top of v5.9-rc4 .  This can be tested
-with CONFIG_SYSCTL.  I would really appreciate constructive comments on
-this patch series.
-
-Previous version:
-https://lore.kernel.org/lkml/20200723171227.446711-1-mic@digikod.net/
-
-[1] https://lore.kernel.org/lkml/1544647356.4028.105.camel@linux.ibm.com/
-[2] https://lore.kernel.org/lkml/20190904201933.10736-6-cyphar@cyphar.com/
-[3] https://lore.kernel.org/lkml/CALCETrVovr8XNZSroey7pHF46O=kj_c5D9K8h=z2T_cNrpvMig@mail.gmail.com/
-[4] https://lore.kernel.org/lkml/CALCETrVeZ0eufFXwfhtaG_j+AdvbzEWE0M3wjXMWVEO7pj+xkw@mail.gmail.com/
-[5] https://lore.kernel.org/lkml/20200406221439.1469862-12-deven.desai@linux.microsoft.com/
-[6] https://www.python.org/dev/peps/pep-0578/
-[7] https://lore.kernel.org/lkml/0c70debd-e79e-d514-06c6-4cd1e021fa8b@python.org/
-[8] https://lore.kernel.org/lkml/e7c1f99d7cdf706ca0867e5fb76ae4cb38bc83f5.camel@linux.ibm.com/
-
-Regards,
-
-Mickaël Salaün (3):
-  fs: Introduce AT_INTERPRETED flag for faccessat2(2)
-  fs,doc: Enable to configure exec checks for AT_INTERPRETED
-  selftest/interpreter: Add tests for AT_INTERPRETED enforcing
-
- Documentation/admin-guide/sysctl/fs.rst       |  54 +++
- fs/open.c                                     |  67 ++-
- include/linux/fs.h                            |   3 +
- include/uapi/linux/fcntl.h                    |  12 +-
- kernel/sysctl.c                               |  12 +-
- .../testing/selftests/interpreter/.gitignore  |   2 +
- tools/testing/selftests/interpreter/Makefile  |  18 +
- tools/testing/selftests/interpreter/config    |   1 +
- .../interpreter/interpreted_access_test.c     | 384 ++++++++++++++++++
- 9 files changed, 548 insertions(+), 5 deletions(-)
- create mode 100644 tools/testing/selftests/interpreter/.gitignore
- create mode 100644 tools/testing/selftests/interpreter/Makefile
- create mode 100644 tools/testing/selftests/interpreter/config
- create mode 100644 tools/testing/selftests/interpreter/interpreted_access_test.c
-
+diff --git a/Documentation/admin-guide/sysctl/fs.rst b/Documentation/admin-guide/sysctl/fs.rst
+index f48277a0a850..66d1c1bd67a5 100644
+--- a/Documentation/admin-guide/sysctl/fs.rst
++++ b/Documentation/admin-guide/sysctl/fs.rst
+@@ -36,6 +36,7 @@ Currently, these files are in /proc/sys/fs:
+ - inode-max
+ - inode-nr
+ - inode-state
++- interpreted_access
+ - nr_open
+ - overflowuid
+ - overflowgid
+@@ -165,6 +166,59 @@ system needs to prune the inode list instead of allocating
+ more.
+ 
+ 
++interpreted_access
++------------------
++
++The ``AT_INTERPRETED`` flag with an ``X_OK`` mode can be passed to
++:manpage:`faccessat2(2)` by an interpreter to check that regular files are
++expected to be executable.  If the file is not identified as executable, then
++the syscall returns -EACCES.  This may allow a script interpreter to check
++executable permission before reading commands from a file, or a dynamic linker
++to only load executable shared objects.  One interesting use case is to enforce
++a "write xor execute" policy through interpreters.
++
++To avoid race-conditions, it is highly recommended to first open the file and
++then do the check on the new file descriptor thanks to the ``AT_EMPTY_PATH``
++flag.
++
++The ability to restrict code execution must be thought as a system-wide policy,
++which first starts by restricting mount points with the ``noexec`` option.
++This option is also automatically applied to special filesystems such as /proc .
++This prevents files on such mount points to be directly executed by the kernel
++or mapped as executable memory (e.g. libraries).  With script interpreters
++using :manpage:`faccessat2(2)` and ``AT_INTERPRETED``, the executable
++permission can then be checked before reading commands from files.  This makes
++it possible to enforce the ``noexec`` at the interpreter level, and thus
++propagates this security policy to scripts.  To be fully effective, these
++interpreters also need to handle the other ways to execute code: command line
++parameters (e.g., option ``-e`` for Perl), module loading (e.g., option ``-m``
++for Python), stdin, file sourcing, environment variables, configuration files,
++etc.  According to the threat model, it may be acceptable to allow some script
++interpreters (e.g. Bash) to interpret commands from stdin, may it be a TTY or a
++pipe, because it may not be enough to (directly) perform syscalls.
++
++There are two complementary security policies: enforce the ``noexec`` mount
++option, and enforce executable file permission.  These policies are handled by
++the ``fs.interpreted_access`` sysctl (writable only with ``CAP_SYS_ADMIN``)
++as a bitmask:
++
++1 - Mount restriction: checks that the mount options for the underlying VFS
++    mount do not prevent execution.
++
++2 - File permission restriction: checks that the file is marked as
++    executable for the current process (e.g., POSIX permissions, ACLs).
++
++Note that as long as a policy is enforced, checking any non-regular file with
++``AT_INTERPRETED`` returns -EINVAL (e.g. TTYs, pipe), even when such a file is
++marked as executable or is on an executable mount point.
++
++Code samples can be found in
++tools/testing/selftests/interpreter/interpreted_access_test.c and interpreter
++patches (for the original O_MAYEXEC) are available at
++https://github.com/clipos-archive/clipos4_portage-overlay/search?q=O_MAYEXEC .
++See also an overview article: https://lwn.net/Articles/820000/ .
++
++
+ overflowgid & overflowuid
+ -------------------------
+ 
+diff --git a/fs/open.c b/fs/open.c
+index 879bdfbdc6fa..ef01ab35449d 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -32,6 +32,7 @@
+ #include <linux/ima.h>
+ #include <linux/dnotify.h>
+ #include <linux/compat.h>
++#include <linux/sysctl.h>
+ 
+ #include "internal.h"
+ 
+@@ -394,6 +395,11 @@ static const struct cred *access_override_creds(void)
+ 	return old_cred;
+ }
+ 
++#define INTERPRETED_EXEC_MOUNT		BIT(0)
++#define INTERPRETED_EXEC_FILE		BIT(1)
++
++int sysctl_interpreted_access __read_mostly;
++
+ static long do_faccessat(int dfd, const char __user *filename, int mode, int flags)
+ {
+ 	struct path path;
+@@ -443,13 +449,43 @@ static long do_faccessat(int dfd, const char __user *filename, int mode, int fla
+ 		 */
+ 		if ((mode & MAY_EXEC)) {
+ 			mode |= MAY_INTERPRETED_EXEC;
++			res = -EACCES;
++			/*
++			 * If there is a system-wide execute policy enforced,
++			 * then forbids access to non-regular files and special
++			 * superblocks.
++			 */
++			if ((sysctl_interpreted_access & (INTERPRETED_EXEC_MOUNT |
++							INTERPRETED_EXEC_FILE))) {
++				if (!S_ISREG(inode->i_mode))
++					goto out_path_release;
++				/*
++				 * Denies access to pseudo filesystems that
++				 * will never be mountable (e.g. sockfs,
++				 * pipefs) but can still be reachable through
++				 * /proc/self/fd, or memfd-like file
++				 * descriptors, or nsfs-like files.
++				 *
++				 * According to the tests, SB_NOEXEC seems to
++				 * be only used by proc and nsfs filesystems.
++				 * Is it correct?
++				 */
++				if ((path.dentry->d_sb->s_flags &
++							(SB_NOUSER | SB_KERNMOUNT | SB_NOEXEC)))
++					goto out_path_release;
++			}
++
++			if ((sysctl_interpreted_access & INTERPRETED_EXEC_MOUNT) &&
++					path_noexec(&path))
++				goto out_path_release;
+ 			/*
+ 			 * For compatibility reasons, if the system-wide policy
+ 			 * doesn't enforce file permission checks, then
+ 			 * replaces the execute permission request with a read
+ 			 * permission request.
+ 			 */
+-			mode &= ~MAY_EXEC;
++			if (!(sysctl_interpreted_access & INTERPRETED_EXEC_FILE))
++				mode &= ~MAY_EXEC;
+ 			/* To be executed *by* user space, files must be readable. */
+ 			mode |= MAY_READ;
+ 		}
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 03f1b2da6a87..ef39550f2464 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -83,6 +83,7 @@ extern int sysctl_protected_symlinks;
+ extern int sysctl_protected_hardlinks;
+ extern int sysctl_protected_fifos;
+ extern int sysctl_protected_regular;
++extern int sysctl_interpreted_access;
+ 
+ typedef __kernel_rwf_t rwf_t;
+ 
+diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+index 09e70ee2332e..899fa52b4ee8 100644
+--- a/kernel/sysctl.c
++++ b/kernel/sysctl.c
+@@ -113,6 +113,7 @@ static int sixty = 60;
+ 
+ static int __maybe_unused neg_one = -1;
+ static int __maybe_unused two = 2;
++static int __maybe_unused three = 3;
+ static int __maybe_unused four = 4;
+ static unsigned long zero_ul;
+ static unsigned long one_ul = 1;
+@@ -887,7 +888,6 @@ static int proc_taint(struct ctl_table *table, int write,
+ 	return err;
+ }
+ 
+-#ifdef CONFIG_PRINTK
+ static int proc_dointvec_minmax_sysadmin(struct ctl_table *table, int write,
+ 				void *buffer, size_t *lenp, loff_t *ppos)
+ {
+@@ -896,7 +896,6 @@ static int proc_dointvec_minmax_sysadmin(struct ctl_table *table, int write,
+ 
+ 	return proc_dointvec_minmax(table, write, buffer, lenp, ppos);
+ }
+-#endif
+ 
+ /**
+  * struct do_proc_dointvec_minmax_conv_param - proc_dointvec_minmax() range checking structure
+@@ -3293,6 +3292,15 @@ static struct ctl_table fs_table[] = {
+ 		.extra1		= SYSCTL_ZERO,
+ 		.extra2		= &two,
+ 	},
++	{
++		.procname       = "interpreted_access",
++		.data           = &sysctl_interpreted_access,
++		.maxlen         = sizeof(int),
++		.mode           = 0600,
++		.proc_handler	= proc_dointvec_minmax_sysadmin,
++		.extra1		= SYSCTL_ZERO,
++		.extra2		= &three,
++	},
+ #if defined(CONFIG_BINFMT_MISC) || defined(CONFIG_BINFMT_MISC_MODULE)
+ 	{
+ 		.procname	= "binfmt_misc",
 -- 
 2.28.0
 
