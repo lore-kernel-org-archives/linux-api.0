@@ -2,211 +2,200 @@ Return-Path: <SRS0=LZ8l=CR=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
+X-Spam-Status: No, score=-6.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
 	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CAD86C43461
-	for <linux-api@archiver.kernel.org>; Tue,  8 Sep 2020 16:57:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5BB01C43461
+	for <linux-api@archiver.kernel.org>; Tue,  8 Sep 2020 17:23:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 936DF2080C
-	for <linux-api@archiver.kernel.org>; Tue,  8 Sep 2020 16:57:37 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1599584257;
-	bh=E4o1TDNMgXR3ltqTwm9aXT1R3QWQWrh1SreqKE+iRdk=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:List-ID:From;
-	b=IyM/QsHakVvoCxo9ecTh1sjsn54CBfmO0B3IVz6AmbTsL9hXeP+Kows/N5rPYFn93
-	 fkdDHInR4Um9WoUv8YU/XFoMfIXr8tAgoqByWzhzSlB7Ltug0JmH4WRP6/YpgbdNMA
-	 syLLrsFQxWppRM1RvPr4NqVQHbsobXfIV8EqQP3Q=
+	by mail.kernel.org (Postfix) with ESMTP id 365992087D
+	for <linux-api@archiver.kernel.org>; Tue,  8 Sep 2020 17:23:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731887AbgIHQ5e (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 8 Sep 2020 12:57:34 -0400
-Received: from mail.kernel.org ([198.145.29.99]:58438 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1731847AbgIHQUW (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 8 Sep 2020 12:20:22 -0400
-Received: from kernel.org (unknown [87.71.73.56])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id E9CE821D93;
-        Tue,  8 Sep 2020 12:31:54 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1599568323;
-        bh=E4o1TDNMgXR3ltqTwm9aXT1R3QWQWrh1SreqKE+iRdk=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=SyEwTcWeWaj5fnJOWcZkA4g1K/6G3dZ9eGWpWoOs8wFLveiNeFY/HN9Ys3hddw4Ix
-         Hda12jT7gq0vHLbLYRlYfMUWaeSI3gTzRMim2LXupXZs1Vve7Fui8jwLq6j5cAimFf
-         5f9ZDd5aFctsg+vQXtTjJfOj10UunsKMmHI5oNQc=
-Date:   Tue, 8 Sep 2020 15:31:50 +0300
-From:   Mike Rapoport <rppt@kernel.org>
-To:     David Hildenbrand <david@redhat.com>
-Cc:     Andrew Morton <akpm@linux-foundation.org>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
+        id S1726925AbgIHRWx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 8 Sep 2020 13:22:53 -0400
+Received: from smtp-190c.mail.infomaniak.ch ([185.125.25.12]:54063 "EHLO
+        smtp-190c.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1731844AbgIHRWu (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 8 Sep 2020 13:22:50 -0400
+Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
+        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4BmBlp0Cw5zlhkC5;
+        Tue,  8 Sep 2020 19:21:58 +0200 (CEST)
+Received: from ns3096276.ip-94-23-54.eu (unknown [94.23.54.103])
+        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4BmBll36Gbzlh8T4;
+        Tue,  8 Sep 2020 19:21:55 +0200 (CEST)
+Subject: Re: [RFC PATCH v8 1/3] fs: Introduce AT_INTERPRETED flag for
+ faccessat2(2)
+To:     Mimi Zohar <zohar@linux.ibm.com>, linux-kernel@vger.kernel.org
+Cc:     Aleksa Sarai <cyphar@cyphar.com>,
+        Alexei Starovoitov <ast@kernel.org>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Andrew Morton <akpm@linux-foundation.org>,
         Andy Lutomirski <luto@kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Christopher Lameter <cl@linux.com>,
-        Dan Williams <dan.j.williams@intel.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Elena Reshetova <elena.reshetova@intel.com>,
-        "H. Peter Anvin" <hpa@zytor.com>, Idan Yaniv <idan.yaniv@ibm.com>,
-        Ingo Molnar <mingo@redhat.com>,
-        James Bottomley <jejb@linux.ibm.com>,
-        "Kirill A. Shutemov" <kirill@shutemov.name>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Christian Heimes <christian@python.org>,
+        Daniel Borkmann <daniel@iogearbox.net>,
+        Deven Bowers <deven.desai@linux.microsoft.com>,
+        Dmitry Vyukov <dvyukov@google.com>,
+        Eric Biggers <ebiggers@kernel.org>,
+        Eric Chiang <ericchiang@google.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>,
+        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Lakshmi Ramasubramanian <nramas@linux.microsoft.com>,
+        Matthew Garrett <mjg59@google.com>,
         Matthew Wilcox <willy@infradead.org>,
-        Mark Rutland <mark.rutland@arm.com>,
-        Mike Rapoport <rppt@linux.ibm.com>,
         Michael Kerrisk <mtk.manpages@gmail.com>,
-        Palmer Dabbelt <palmer@dabbelt.com>,
-        Paul Walmsley <paul.walmsley@sifive.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
-        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
-        linux-arm-kernel@lists.infradead.org,
-        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
-        linux-kernel@vger.kernel.org, linux-nvdimm@lists.01.org,
-        linux-riscv@lists.infradead.org, x86@kernel.org
-Subject: Re: [PATCH v4 6/6] mm: secretmem: add ability to reserve memory at
- boot
-Message-ID: <20200908123150.GF1976319@kernel.org>
-References: <20200818141554.13945-1-rppt@kernel.org>
- <20200818141554.13945-7-rppt@kernel.org>
- <03ec586d-c00c-c57e-3118-7186acb7b823@redhat.com>
- <20200819115335.GU752365@kernel.org>
- <10bf57a9-c3c2-e13c-ca50-e872b7a2db0c@redhat.com>
- <20200819173347.GW752365@kernel.org>
- <6c8b30fb-1b6c-d446-0b09-255b79468f7c@redhat.com>
- <20200820155228.GZ752365@kernel.org>
- <fdda6ba7-9418-2b52-eee8-ce5e9bfdb6ad@redhat.com>
+        Miklos Szeredi <mszeredi@redhat.com>,
+        =?UTF-8?Q?Philippe_Tr=c3=a9buchet?= 
+        <philippe.trebuchet@ssi.gouv.fr>,
+        Scott Shell <scottsh@microsoft.com>,
+        Sean Christopherson <sean.j.christopherson@intel.com>,
+        Shuah Khan <shuah@kernel.org>,
+        Steve Dower <steve.dower@python.org>,
+        Steve Grubb <sgrubb@redhat.com>,
+        Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>,
+        Thibaut Sautereau <thibaut.sautereau@clip-os.org>,
+        Vincent Strubel <vincent.strubel@ssi.gouv.fr>,
+        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
+        linux-integrity@vger.kernel.org,
+        linux-security-module@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org,
+        Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>,
+        =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@linux.microsoft.com>,
+        Stephen Smalley <stephen.smalley.work@gmail.com>,
+        John Johansen <john.johansen@canonical.com>
+References: <20200908075956.1069018-1-mic@digikod.net>
+ <20200908075956.1069018-2-mic@digikod.net>
+ <d216615b48c093ebe9349a9dab3830b646575391.camel@linux.ibm.com>
+ <75451684-58f3-b946-dca4-4760fa0d7440@digikod.net>
+ <01c23b2607a7dbf734722399931473c053d9b362.camel@linux.ibm.com>
+ <ed832b7f-dc47-fe54-468b-41de3b64fd83@digikod.net>
+ <fd635b544ba4f409a76047a4620656ad67738db1.camel@linux.ibm.com>
+From:   =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+Message-ID: <c2cfb75d-d166-9b97-a559-109c44363fe7@digikod.net>
+Date:   Tue, 8 Sep 2020 19:21:54 +0200
+User-Agent: 
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <fdda6ba7-9418-2b52-eee8-ce5e9bfdb6ad@redhat.com>
+In-Reply-To: <fd635b544ba4f409a76047a4620656ad67738db1.camel@linux.ibm.com>
+Content-Type: text/plain; charset=iso-8859-15
+Content-Language: en-US
+Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi David,
 
-On Tue, Sep 08, 2020 at 11:09:19AM +0200, David Hildenbrand wrote:
-> On 20.08.20 17:52, Mike Rapoport wrote:
-> > On Wed, Aug 19, 2020 at 07:45:29PM +0200, David Hildenbrand wrote:
-> >> On 19.08.20 19:33, Mike Rapoport wrote:
-> >>> On Wed, Aug 19, 2020 at 02:10:43PM +0200, David Hildenbrand wrote:
-> >>>> On 19.08.20 13:53, Mike Rapoport wrote:
-> >>>>> On Wed, Aug 19, 2020 at 12:49:05PM +0200, David Hildenbrand wrote:
-> >>>>>> On 18.08.20 16:15, Mike Rapoport wrote:
-> >>>>>>> From: Mike Rapoport <rppt@linux.ibm.com>
-> >>>>>>>
-> >>>>>>> Taking pages out from the direct map and bringing them back may create
-> >>>>>>> undesired fragmentation and usage of the smaller pages in the direct
-> >>>>>>> mapping of the physical memory.
-> >>>>>>>
-> >>>>>>> This can be avoided if a significantly large area of the physical memory
-> >>>>>>> would be reserved for secretmem purposes at boot time.
-> >>>>>>>
-> >>>>>>> Add ability to reserve physical memory for secretmem at boot time using
-> >>>>>>> "secretmem" kernel parameter and then use that reserved memory as a global
-> >>>>>>> pool for secret memory needs.
-> >>>>>>
-> >>>>>> Wouldn't something like CMA be the better fit? Just wondering. Then, the
-> >>>>>> memory can actually be reused for something else while not needed.
-> >>>>>
-> >>>>> The memory allocated as secret is removed from the direct map and the
-> >>>>> boot time reservation is intended to reduce direct map fragmentatioan
-> >>>>> and to avoid splitting 1G pages there. So with CMA I'd still need to
-> >>>>> allocate 1G chunks for this and once 1G page is dropped from the direct
-> >>>>> map it still cannot be reused for anything else until it is freed.
-> >>>>>
-> >>>>> I could use CMA to do the boot time reservation, but doing the
-> >>>>> reservesion directly seemed simpler and more explicit to me.
-> >>>>
-> >>>> Well, using CMA would give you the possibility to let the memory be used
-> >>>> for other purposes until you decide it's the right time to take it +
-> >>>> remove the direct mapping etc.
-> >>>
-> >>> I still can't say I follow you here. If I reseve a CMA area as a pool
-> >>> for secret memory 1G pages, it is still reserved and it still cannot be
-> >>> used for other purposes, right?
-> >>
-> >> So, AFAIK, if you create a CMA pool it can be used for any MOVABLE
-> >> allocations (similar to ZONE_MOVABLE) until you actually allocate CMA
-> >> memory from that region. Other allocations on that are will then be
-> >> migrated away (using alloc_contig_range()).
-> >>
-> >> For example, if you have a 1~GiB CMA area, you could allocate 4~MB pages
-> >> from that CMA area on demand (removing the direct mapping, etc ..), and
-> >> free when no longer needed (instantiating the direct mapping). The free
-> >> memory in that area could used for MOVABLE allocations.
-> > 
-> > The boot time resrvation is intended to avoid splitting 1G pages in the
-> > direct map. Without the boot time reservation, we maintain a pool of 2M
-> > pages so the 1G pages are split and 2M pages remain unsplit.
-> > 
-> > If I scale your example to match the requirement to avoid splitting 1G
-> > pages in the direct map, that would mean creating a CMA area of several
-> > tens of gigabytes and then doing cma_alloc() of 1G each time we need to
-> > refill the secretmem pool. 
-> > 
-> > It is quite probable that we won't be able to get 1G from CMA after the
-> > system worked for some time.
+On 08/09/2020 18:44, Mimi Zohar wrote:
+> On Tue, 2020-09-08 at 17:44 +0200, Mickaël Salaün wrote:
+>> On 08/09/2020 17:24, Mimi Zohar wrote:
+>>> On Tue, 2020-09-08 at 14:43 +0200, Mickaël Salaün wrote:
+>>>> On 08/09/2020 14:28, Mimi Zohar wrote:
+>>>>> Hi Mickael,
+>>>>>
+>>>>> On Tue, 2020-09-08 at 09:59 +0200, Mickaël Salaün wrote:
+>>>>>> diff --git a/fs/open.c b/fs/open.c
+>>>>>> index 9af548fb841b..879bdfbdc6fa 100644
+>>>>>> --- a/fs/open.c
+>>>>>> +++ b/fs/open.c
+>>>>>> @@ -405,9 +405,13 @@ static long do_faccessat(int dfd, const char __user *filename, int mode, int fla
+>>>>>>  	if (mode & ~S_IRWXO)	/* where's F_OK, X_OK, W_OK, R_OK? */
+>>>>>>  		return -EINVAL;
+>>>>>>  
+>>>>>> -	if (flags & ~(AT_EACCESS | AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH))
+>>>>>> +	if (flags & ~(AT_EACCESS | AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH |
+>>>>>> +				AT_INTERPRETED))
+>>>>>>  		return -EINVAL;
+>>>>>>  
+>>>>>> +	/* Only allows X_OK with AT_INTERPRETED for now. */
+>>>>>> +	if ((flags & AT_INTERPRETED) && !(mode & S_IXOTH))
+>>>>>> +		return -EINVAL;
+>>>>>>  	if (flags & AT_SYMLINK_NOFOLLOW)
+>>>>>>  		lookup_flags &= ~LOOKUP_FOLLOW;
+>>>>>>  	if (flags & AT_EMPTY_PATH)
+>>>>>> @@ -426,7 +430,30 @@ static long do_faccessat(int dfd, const char __user *filename, int mode, int fla
+>>>>>>  
+>>>>>>  	inode = d_backing_inode(path.dentry);
+>>>>>>  
+>>>>>> -	if ((mode & MAY_EXEC) && S_ISREG(inode->i_mode)) {
+>>>>>> +	if ((flags & AT_INTERPRETED)) {
+>>>>>> +		/*
+>>>>>> +		 * For compatibility reasons, without a defined security policy
+>>>>>> +		 * (via sysctl or LSM), using AT_INTERPRETED must map the
+>>>>>> +		 * execute permission to the read permission.  Indeed, from
+>>>>>> +		 * user space point of view, being able to execute data (e.g.
+>>>>>> +		 * scripts) implies to be able to read this data.
+>>>>>> +		 *
+>>>>>> +		 * The MAY_INTERPRETED_EXEC bit is set to enable LSMs to add
+>>>>>> +		 * custom checks, while being compatible with current policies.
+>>>>>> +		 */
+>>>>>> +		if ((mode & MAY_EXEC)) {
+>>>>>
+>>>>> Why is the ISREG() test being dropped?   Without dropping it, there
+>>>>> would be no reason for making the existing test an "else" clause.
+>>>>
+>>>> The ISREG() is not dropped, it is just moved below with the rest of the
+>>>> original code. The corresponding code (with the path_noexec call) for
+>>>> AT_INTERPRETED is added with the next commit, and it relies on the
+>>>> sysctl configuration for compatibility reasons.
+>>>
+>>> Dropping the S_ISREG() check here without an explanation is wrong and
+>>> probably unsafe, as it is only re-added in the subsequent patch and
+>>> only for the "sysctl_interpreted_access" case.  Adding this new test
+>>> after the existing test is probably safer.  If the original test fails,
+>>> it returns the same value as this test -EACCES.
+>>
+>> The original S_ISREG() is ANDed with a MAY_EXEC check and with
+>> path_noexec(). The goal of this patch is indeed to have a different
+>> behavior than the original faccessat2(2) thanks to the AT_INTERPRETED
+>> flag. This can't work if we add the sysctl check after the current
+>> path_noexec() check. Moreover, in this patch an exec check is translated
+>> to a read check. This new behavior is harmless because using
+>> AT_INTERPRETED with the current faccessat2(2) would return -EINVAL. The
+>> current vanilla behavior is then unchanged.
 > 
-> Why? It should only contain movable pages, and if that is not the case,
-> it's a bug we have to fix. It should behave just as ZONE_MOVABLE.
-> (although I agree that in corner cases, alloc_contig_pages() might
-> temporarily fail on some chunks - e.g., with long/short-term page
-> pinnings - in contrast to memory offlining, it won't retry forever)
- 
-The use-case I had in mind for the boot time reservation in secretmem is
-a machine that runs VMs and there is a desire to have the VM memory
-protected from the host. In a way this should be similar to booting a
-host with mem=X where most of the machine memory never gets to be used
-by the host kernel.
+> Don't get me wrong.  I'm very interested in having this support and
+> appreciate all the work you're doing on getting it upstreamed.  With
+> the change in this patch, I see the MAY_EXEC being changed to MAY_READ,
+> but I don't see -EINVAL being returned.  It sounds like this change is
+> dependent on the faccessat2 version for -EINVAL to be returned.
 
-For such use case, boot time reservation controlled by the command
-line parameter seems to me simpler than using CMA. I agree that there is
-no way to use the reserved memory for other purpose, but then we won't
-need to create physically contiguous chunk of several gigs every time a
-VM is created.
+No worries, unfortunately the patch format doesn't ease this review. :)
+access(2) and faccessat(2) have a flag value of 0. Only faccessat2(2)
+takes a flag from userspace. The -EINVAL is currently returned (by
+faccessat2) if there is an unknown flag provided by userspace. With this
+patch, only a mode equal to X_OK is allowed for the AT_INTERPRETED flag
+(cf. second hunk in this patch). As described in the cover letter, we
+could handle the other modes in the future though.
 
-> > With boot time reservation we won't need physcally contiguous 1G to
-> > satisfy smaller allocation requests for secretmem because we don't need
-> > to maintain 1G mappings in the secretmem pool.
 > 
-> You can allocate within your CMA area however you want - doesn't need to
-> be whole gigabytes in case there is no need for it.
-
-The whole point of boot time reservation is to prevent splitting 1G
-pages in the direct map. Allocating smaller chunks will still cause
-fragmentation of the direct map.
-
-> Again, the big benefit of CMA is that the reserved memory can be reused
-> for other purpose while nobody is actually making use of it.
-
-Right, but I think if a user explicitly asked to use X gigabytes for the
-secretmem we can allow that.
-
-> > 
-> > That said, I believe the addition of the boot time reservation, either
-> > direct or with CMA, can be added as an incrememntal patch after the
-> > "core" functionality is merged.
+>>
+>> The whole point of this patch series is to have a policy which do not
+>> break current systems and is easy to configure by the sysadmin through
+>> sysctl. This patch series also enable LSMs to take advantage of it
+>> without the current faccess* limitations. For instance, it is then
+>> possible for an LSM to implement more complex policies which may allow
+>> execution of data from pipes or sockets, while verifying the source of
+>> this data. Enforcing S_ISREG() in this patch would forbid such policies
+>> to be implemented. In the case of IMA, you may want to add the same
+>> S_ISREG() check.
 > 
-> I am not convinced that we want to let random processes to do
-> alloc_pages() in the range of tens of gigabytes. It's not just mlocked
-> memory. I prefer either using CMA or relying on the boot time
-> reservations. But let's see if there are other opinions and people just
-> don't care.
+>>>
+>>>>
+>>>>>
+>>>>>> +			mode |= MAY_INTERPRETED_EXEC;
+>>>>>> +			/*
+>>>>>> +			 * For compatibility reasons, if the system-wide policy
+>>>>>> +			 * doesn't enforce file permission checks, then
+>>>>>> +			 * replaces the execute permission request with a read
+>>>>>> +			 * permission request.
+>>>>>> +			 */
+>>>>>> +			mode &= ~MAY_EXEC;
+>>>>>> +			/* To be executed *by* user space, files must be readable. */
+>>>>>> +			mode |= MAY_READ;
+>>>
+>>>
 > 
-> Having that said, I have no further comments.
 > 
-> -- 
-> Thanks,
-> 
-> David / dhildenb
-> 
-
--- 
-Sincerely yours,
-Mike.
