@@ -4,36 +4,35 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no
-	version=3.4.0
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C4170C2D0A8
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AD38EC2D0E1
 	for <linux-api@archiver.kernel.org>; Thu, 10 Sep 2020 02:24:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9B87F221E7
+	by mail.kernel.org (Postfix) with ESMTP id 84EE121D7F
 	for <linux-api@archiver.kernel.org>; Thu, 10 Sep 2020 02:24:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730068AbgIJCXO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 9 Sep 2020 22:23:14 -0400
-Received: from mga06.intel.com ([134.134.136.31]:15314 "EHLO mga06.intel.com"
+        id S1729455AbgIJCXM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 9 Sep 2020 22:23:12 -0400
+Received: from mga03.intel.com ([134.134.136.65]:52209 "EHLO mga03.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1730474AbgIJCUp (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 9 Sep 2020 22:20:45 -0400
-IronPort-SDR: HEKUlnnV9/n89oqLkpUUuex/6sr58wWQ1Z0d4rVxV1RIFu7YsuJSzOCDP4d2MNgDlzbLVvYb9o
- bnGZe/wZN60Q==
-X-IronPort-AV: E=McAfee;i="6000,8403,9739"; a="219993016"
+        id S1729993AbgIJCUq (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 9 Sep 2020 22:20:46 -0400
+IronPort-SDR: 5ySx/9LPGsQnDq6vHQUrurDcs9Pn1Rx7Gd/1aAPqMmrtjpupV661NFjNbGdOylWReiSzcFc+rE
+ cYOG5Bza+v8A==
+X-IronPort-AV: E=McAfee;i="6000,8403,9739"; a="158471144"
 X-IronPort-AV: E=Sophos;i="5.76,410,1592895600"; 
-   d="scan'208";a="219993016"
+   d="scan'208";a="158471144"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga006.jf.intel.com ([10.7.209.51])
-  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Sep 2020 16:11:14 -0700
-IronPort-SDR: fzHpDfMRCDWEtqxV0VCjjY+Wk9RyNgD94xJSzjQ6FGpVAX8dNRL3MRzPEF/7ta749lWnSmuYNB
- lqb2Ab5IAiPg==
+  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Sep 2020 16:29:55 -0700
+IronPort-SDR: URKeYjk5zRXN3NFuf/Gc1p/WC5orb20QqlfmbScaNhnDqy51Q2xqBwTflishSOOI+CExQ9WZs5
+ BsF9iCFhwL9A==
 X-IronPort-AV: E=Sophos;i="5.76,410,1592895600"; 
-   d="scan'208";a="304673436"
+   d="scan'208";a="304677213"
 Received: from pbhangod-mobl.amr.corp.intel.com (HELO [10.213.170.146]) ([10.213.170.146])
-  by orsmga006-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Sep 2020 16:11:12 -0700
+  by orsmga006-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Sep 2020 16:29:53 -0700
 Subject: Re: [PATCH v11 25/25] x86/cet/shstk: Add arch_prctl functions for
  shadow stack
 To:     "Yu, Yu-cheng" <yu-cheng.yu@intel.com>,
@@ -65,8 +64,6 @@ Cc:     Dave Martin <Dave.Martin@arm.com>, "H.J. Lu" <hjl.tools@gmail.com>,
         Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
         Weijiang Yang <weijiang.yang@intel.com>
 References: <086c73d8-9b06-f074-e315-9964eb666db9@intel.com>
- <af258a0e-56e9-3747-f765-dfe45ce76bba@intel.com>
- <ef7f9e24-f952-d78c-373e-85435f742688@intel.com>
  <20200826164604.GW6642@arm.com> <87ft892vvf.fsf@oldenburg2.str.redhat.com>
  <CALCETrVeNA0Kt2rW0CRCVo1JE0CKaBxu9KrJiyqUA8LPraY=7g@mail.gmail.com>
  <0e9996bc-4c1b-cc99-9616-c721b546f857@intel.com>
@@ -82,6 +79,8 @@ References: <086c73d8-9b06-f074-e315-9964eb666db9@intel.com>
  <5979c58d-a6e3-d14d-df92-72cdeb97298d@intel.com>
  <ab1a3344-60f4-9b9d-81d4-e6538fdcafcf@intel.com>
  <08c91835-8486-9da5-a7d1-75e716fc5d36@intel.com>
+ <a881837d-c844-30e8-a614-8b92be814ef6@intel.com>
+ <cbec8861-8722-ec31-2c02-1cfed20255eb@intel.com>
 From:   Dave Hansen <dave.hansen@intel.com>
 Autocrypt: addr=dave.hansen@intel.com; keydata=
  xsFNBE6HMP0BEADIMA3XYkQfF3dwHlj58Yjsc4E5y5G67cfbt8dvaUq2fx1lR0K9h1bOI6fC
@@ -126,12 +125,12 @@ Autocrypt: addr=dave.hansen@intel.com; keydata=
  OPsw5tV/LmQ5GXH0JQ/TZXWygyRFyyI2FqNTx4WHqUn3yFj8rwTAU1tluRUYyeLy0ayUlKBH
  ybj0N71vWO936MqP6haFERzuPAIpxj2ezwu0xb1GjTk4ynna6h5GjnKgdfOWoRtoWndMZxbA
  z5cecg==
-Message-ID: <a881837d-c844-30e8-a614-8b92be814ef6@intel.com>
-Date:   Wed, 9 Sep 2020 16:11:11 -0700
+Message-ID: <b3379d26-d8a7-deb7-59f1-c994bb297dcb@intel.com>
+Date:   Wed, 9 Sep 2020 16:29:53 -0700
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
  Thunderbird/68.10.0
 MIME-Version: 1.0
-In-Reply-To: <08c91835-8486-9da5-a7d1-75e716fc5d36@intel.com>
+In-Reply-To: <cbec8861-8722-ec31-2c02-1cfed20255eb@intel.com>
 Content-Type: text/plain; charset=utf-8
 Content-Language: en-US
 Content-Transfer-Encoding: 8bit
@@ -140,12 +139,27 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 9/9/20 4:07 PM, Yu, Yu-cheng wrote:
-> What if a writable mapping is passed to madvise(MADV_SHSTK)?  Should
-> that be rejected?
+On 9/9/20 4:25 PM, Yu, Yu-cheng wrote:
+> On 9/9/2020 4:11 PM, Dave Hansen wrote:
+>> On 9/9/20 4:07 PM, Yu, Yu-cheng wrote:
+>>> What if a writable mapping is passed to madvise(MADV_SHSTK)?  Should
+>>> that be rejected?
+>>
+>> It doesn't matter to me.  Even if it's readable, it _stops_ being even
+>> directly readable after it's a shadow stack, right?  I don't think
+>> writes are special in any way.  If anything, we *want* it to be writable
+>> because that indicates that it can be written to, and we will want to
+>> write to it soon.
+>>
+> But in a PROT_WRITE mapping, all the pte's have _PAGE_BIT_RW set.  To
+> change them to shadow stack, we need to clear that bit from the pte's.
+> That will be like mprotect_fixup()/change_protection_range().
 
-It doesn't matter to me.  Even if it's readable, it _stops_ being even
-directly readable after it's a shadow stack, right?  I don't think
-writes are special in any way.  If anything, we *want* it to be writable
-because that indicates that it can be written to, and we will want to
-write to it soon.
+The page table hardware bits don't matter.  The user-visible protection
+effects matter.
+
+For instance, we have PROT_EXEC, which *CLEARS* a hardware NX PTE bit.
+The PROT_ permissions are independent of the hardware.
+
+I don't think the interface should be influenced at *all* by what whacko
+PTE bit combinations we have to set to get the behavior.
