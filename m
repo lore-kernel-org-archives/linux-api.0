@@ -4,38 +4,39 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0AA48C43461
-	for <linux-api@archiver.kernel.org>; Thu, 10 Sep 2020 02:17:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 74108C433E2
+	for <linux-api@archiver.kernel.org>; Thu, 10 Sep 2020 02:19:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BA43221D40
-	for <linux-api@archiver.kernel.org>; Thu, 10 Sep 2020 02:17:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4A95A20BED
+	for <linux-api@archiver.kernel.org>; Thu, 10 Sep 2020 02:19:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730555AbgIJCRb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 9 Sep 2020 22:17:31 -0400
-Received: from mga04.intel.com ([192.55.52.120]:22379 "EHLO mga04.intel.com"
+        id S1730522AbgIJCRu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 9 Sep 2020 22:17:50 -0400
+Received: from mga04.intel.com ([192.55.52.120]:22269 "EHLO mga04.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1730170AbgIJCOk (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 9 Sep 2020 22:14:40 -0400
-IronPort-SDR: uE6UyTtjPlOTBHpRRpnnfsLptG/Wlg1QLfAeK2lBlBLqo4Bs4Toy5o7wJ9do7Mc3XUgu38dm8l
- G2GD1PGR4L0g==
-X-IronPort-AV: E=McAfee;i="6000,8403,9739"; a="155830825"
+        id S1730412AbgIJCNa (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 9 Sep 2020 22:13:30 -0400
+IronPort-SDR: tg7JqTb3yYaey4qBcGFO8DDf2wpoAnFGcY6tCHl65BqL3AGXEmQSTGSLvipg33+DQGiAafOpet
+ uad7GWg0mXsw==
+X-IronPort-AV: E=McAfee;i="6000,8403,9739"; a="155833449"
 X-IronPort-AV: E=Sophos;i="5.76,410,1592895600"; 
-   d="scan'208";a="155830825"
+   d="scan'208";a="155833449"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
-Received: from orsmga006.jf.intel.com ([10.7.209.51])
-  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Sep 2020 15:59:30 -0700
-IronPort-SDR: XtF3ZCQI1jGEeDh1Sr0MERUVxn9OShpOumA+mYvfBRdvTH4fu8xlHlf8EXWt/8kOayqGjNLSoM
- OWC99aDoyUlw==
+Received: from fmsmga004.fm.intel.com ([10.253.24.48])
+  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Sep 2020 16:25:20 -0700
+IronPort-SDR: 97ngTUD1zf87z1J3aBsa0H7mLbs6F9XUx1PagpQMhF0Zgnk57KKBy1hAnm4cgbBt1RMBPolWPy
+ 18nZ0L9a9LoQ==
 X-IronPort-AV: E=Sophos;i="5.76,410,1592895600"; 
-   d="scan'208";a="304670729"
-Received: from pbhangod-mobl.amr.corp.intel.com (HELO [10.213.170.146]) ([10.213.170.146])
-  by orsmga006-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Sep 2020 15:59:28 -0700
+   d="scan'208";a="329101836"
+Received: from yyu32-mobl1.amr.corp.intel.com (HELO [10.212.243.130]) ([10.212.243.130])
+  by fmsmga004-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Sep 2020 16:25:18 -0700
 Subject: Re: [PATCH v11 25/25] x86/cet/shstk: Add arch_prctl functions for
  shadow stack
-To:     "Yu, Yu-cheng" <yu-cheng.yu@intel.com>,
+To:     Dave Hansen <dave.hansen@intel.com>,
         Andy Lutomirski <luto@kernel.org>
 Cc:     Dave Martin <Dave.Martin@arm.com>, "H.J. Lu" <hjl.tools@gmail.com>,
         Florian Weimer <fweimer@redhat.com>, X86 ML <x86@kernel.org>,
@@ -64,8 +65,6 @@ Cc:     Dave Martin <Dave.Martin@arm.com>, "H.J. Lu" <hjl.tools@gmail.com>,
         Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
         Weijiang Yang <weijiang.yang@intel.com>
 References: <086c73d8-9b06-f074-e315-9964eb666db9@intel.com>
- <73c2211f-8811-2d9f-1930-1c5035e6129c@intel.com>
- <af258a0e-56e9-3747-f765-dfe45ce76bba@intel.com>
  <ef7f9e24-f952-d78c-373e-85435f742688@intel.com>
  <20200826164604.GW6642@arm.com> <87ft892vvf.fsf@oldenburg2.str.redhat.com>
  <CALCETrVeNA0Kt2rW0CRCVo1JE0CKaBxu9KrJiyqUA8LPraY=7g@mail.gmail.com>
@@ -80,57 +79,17 @@ References: <086c73d8-9b06-f074-e315-9964eb666db9@intel.com>
  <ed929729-4677-3d3b-6bfd-b379af9272b8@intel.com>
  <6e1e22a5-1b7f-2783-351e-c8ed2d4893b8@intel.com>
  <5979c58d-a6e3-d14d-df92-72cdeb97298d@intel.com>
-From:   Dave Hansen <dave.hansen@intel.com>
-Autocrypt: addr=dave.hansen@intel.com; keydata=
- xsFNBE6HMP0BEADIMA3XYkQfF3dwHlj58Yjsc4E5y5G67cfbt8dvaUq2fx1lR0K9h1bOI6fC
- oAiUXvGAOxPDsB/P6UEOISPpLl5IuYsSwAeZGkdQ5g6m1xq7AlDJQZddhr/1DC/nMVa/2BoY
- 2UnKuZuSBu7lgOE193+7Uks3416N2hTkyKUSNkduyoZ9F5twiBhxPJwPtn/wnch6n5RsoXsb
- ygOEDxLEsSk/7eyFycjE+btUtAWZtx+HseyaGfqkZK0Z9bT1lsaHecmB203xShwCPT49Blxz
- VOab8668QpaEOdLGhtvrVYVK7x4skyT3nGWcgDCl5/Vp3TWA4K+IofwvXzX2ON/Mj7aQwf5W
- iC+3nWC7q0uxKwwsddJ0Nu+dpA/UORQWa1NiAftEoSpk5+nUUi0WE+5DRm0H+TXKBWMGNCFn
- c6+EKg5zQaa8KqymHcOrSXNPmzJuXvDQ8uj2J8XuzCZfK4uy1+YdIr0yyEMI7mdh4KX50LO1
- pmowEqDh7dLShTOif/7UtQYrzYq9cPnjU2ZW4qd5Qz2joSGTG9eCXLz5PRe5SqHxv6ljk8mb
- ApNuY7bOXO/A7T2j5RwXIlcmssqIjBcxsRRoIbpCwWWGjkYjzYCjgsNFL6rt4OL11OUF37wL
- QcTl7fbCGv53KfKPdYD5hcbguLKi/aCccJK18ZwNjFhqr4MliQARAQABzShEYXZpZCBDaHJp
- c3RvcGhlciBIYW5zZW4gPGRhdmVAc3I3MS5uZXQ+wsF7BBMBAgAlAhsDBgsJCAcDAgYVCAIJ
- CgsEFgIDAQIeAQIXgAUCTo3k0QIZAQAKCRBoNZUwcMmSsMO2D/421Xg8pimb9mPzM5N7khT0
- 2MCnaGssU1T59YPE25kYdx2HntwdO0JA27Wn9xx5zYijOe6B21ufrvsyv42auCO85+oFJWfE
- K2R/IpLle09GDx5tcEmMAHX6KSxpHmGuJmUPibHVbfep2aCh9lKaDqQR07gXXWK5/yU1Dx0r
- VVFRaHTasp9fZ9AmY4K9/BSA3VkQ8v3OrxNty3OdsrmTTzO91YszpdbjjEFZK53zXy6tUD2d
- e1i0kBBS6NLAAsqEtneplz88T/v7MpLmpY30N9gQU3QyRC50jJ7LU9RazMjUQY1WohVsR56d
- ORqFxS8ChhyJs7BI34vQusYHDTp6PnZHUppb9WIzjeWlC7Jc8lSBDlEWodmqQQgp5+6AfhTD
- kDv1a+W5+ncq+Uo63WHRiCPuyt4di4/0zo28RVcjtzlGBZtmz2EIC3vUfmoZbO/Gn6EKbYAn
- rzz3iU/JWV8DwQ+sZSGu0HmvYMt6t5SmqWQo/hyHtA7uF5Wxtu1lCgolSQw4t49ZuOyOnQi5
- f8R3nE7lpVCSF1TT+h8kMvFPv3VG7KunyjHr3sEptYxQs4VRxqeirSuyBv1TyxT+LdTm6j4a
- mulOWf+YtFRAgIYyyN5YOepDEBv4LUM8Tz98lZiNMlFyRMNrsLV6Pv6SxhrMxbT6TNVS5D+6
- UorTLotDZKp5+M7BTQRUY85qARAAsgMW71BIXRgxjYNCYQ3Xs8k3TfAvQRbHccky50h99TUY
- sqdULbsb3KhmY29raw1bgmyM0a4DGS1YKN7qazCDsdQlxIJp9t2YYdBKXVRzPCCsfWe1dK/q
- 66UVhRPP8EGZ4CmFYuPTxqGY+dGRInxCeap/xzbKdvmPm01Iw3YFjAE4PQ4hTMr/H76KoDbD
- cq62U50oKC83ca/PRRh2QqEqACvIH4BR7jueAZSPEDnzwxvVgzyeuhwqHY05QRK/wsKuhq7s
- UuYtmN92Fasbxbw2tbVLZfoidklikvZAmotg0dwcFTjSRGEg0Gr3p/xBzJWNavFZZ95Rj7Et
- db0lCt0HDSY5q4GMR+SrFbH+jzUY/ZqfGdZCBqo0cdPPp58krVgtIGR+ja2Mkva6ah94/oQN
- lnCOw3udS+Eb/aRcM6detZr7XOngvxsWolBrhwTQFT9D2NH6ryAuvKd6yyAFt3/e7r+HHtkU
- kOy27D7IpjngqP+b4EumELI/NxPgIqT69PQmo9IZaI/oRaKorYnDaZrMXViqDrFdD37XELwQ
- gmLoSm2VfbOYY7fap/AhPOgOYOSqg3/Nxcapv71yoBzRRxOc4FxmZ65mn+q3rEM27yRztBW9
- AnCKIc66T2i92HqXCw6AgoBJRjBkI3QnEkPgohQkZdAb8o9WGVKpfmZKbYBo4pEAEQEAAcLB
- XwQYAQIACQUCVGPOagIbDAAKCRBoNZUwcMmSsJeCEACCh7P/aaOLKWQxcnw47p4phIVR6pVL
- e4IEdR7Jf7ZL00s3vKSNT+nRqdl1ugJx9Ymsp8kXKMk9GSfmZpuMQB9c6io1qZc6nW/3TtvK
- pNGz7KPPtaDzvKA4S5tfrWPnDr7n15AU5vsIZvgMjU42gkbemkjJwP0B1RkifIK60yQqAAlT
- YZ14P0dIPdIPIlfEPiAWcg5BtLQU4Wg3cNQdpWrCJ1E3m/RIlXy/2Y3YOVVohfSy+4kvvYU3
- lXUdPb04UPw4VWwjcVZPg7cgR7Izion61bGHqVqURgSALt2yvHl7cr68NYoFkzbNsGsye9ft
- M9ozM23JSgMkRylPSXTeh5JIK9pz2+etco3AfLCKtaRVysjvpysukmWMTrx8QnI5Nn5MOlJj
- 1Ov4/50JY9pXzgIDVSrgy6LYSMc4vKZ3QfCY7ipLRORyalFDF3j5AGCMRENJjHPD6O7bl3Xo
- 4DzMID+8eucbXxKiNEbs21IqBZbbKdY1GkcEGTE7AnkA3Y6YB7I/j9mQ3hCgm5muJuhM/2Fr
- OPsw5tV/LmQ5GXH0JQ/TZXWygyRFyyI2FqNTx4WHqUn3yFj8rwTAU1tluRUYyeLy0ayUlKBH
- ybj0N71vWO936MqP6haFERzuPAIpxj2ezwu0xb1GjTk4ynna6h5GjnKgdfOWoRtoWndMZxbA
- z5cecg==
-Message-ID: <ab1a3344-60f4-9b9d-81d4-e6538fdcafcf@intel.com>
-Date:   Wed, 9 Sep 2020 15:59:27 -0700
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.10.0
+ <ab1a3344-60f4-9b9d-81d4-e6538fdcafcf@intel.com>
+ <08c91835-8486-9da5-a7d1-75e716fc5d36@intel.com>
+ <a881837d-c844-30e8-a614-8b92be814ef6@intel.com>
+From:   "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
+Message-ID: <cbec8861-8722-ec31-2c02-1cfed20255eb@intel.com>
+Date:   Wed, 9 Sep 2020 16:25:16 -0700
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101
+ Thunderbird/68.12.0
 MIME-Version: 1.0
-In-Reply-To: <5979c58d-a6e3-d14d-df92-72cdeb97298d@intel.com>
-Content-Type: text/plain; charset=utf-8
+In-Reply-To: <a881837d-c844-30e8-a614-8b92be814ef6@intel.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Language: en-US
 Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
@@ -138,28 +97,18 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 9/9/20 3:08 PM, Yu, Yu-cheng wrote:
-> After looking at this more, I found the changes are more similar to
-> mprotect() than madvise().  We are going to change an anonymous mapping
-> to a read-only mapping, and add the VM_SHSTK flag to it.  Would an
-> x86-specific mprotect(PROT_SHSTK) make more sense?
+On 9/9/2020 4:11 PM, Dave Hansen wrote:
+> On 9/9/20 4:07 PM, Yu, Yu-cheng wrote:
+>> What if a writable mapping is passed to madvise(MADV_SHSTK)?  Should
+>> that be rejected?
 > 
-> One alternative would be requiring a read-only mapping for
-> madvise(MADV_SHSTK).  But that is inconvenient for the application.
+> It doesn't matter to me.  Even if it's readable, it _stops_ being even
+> directly readable after it's a shadow stack, right?  I don't think
+> writes are special in any way.  If anything, we *want* it to be writable
+> because that indicates that it can be written to, and we will want to
+> write to it soon.
+> 
+But in a PROT_WRITE mapping, all the pte's have _PAGE_BIT_RW set.  To 
+change them to shadow stack, we need to clear that bit from the pte's.
+That will be like mprotect_fixup()/change_protection_range().
 
-Why?  It's just:
-
-	mmap()/malloc();
-	mprotect(PROT_READ);
-	madvise(MADV_SHSTK);
-
-vs.
-
-	mmap()/malloc();
-	mprotect(PROT_SHSTK);
-
-I'm not sure a single syscall counts as inconvenient.
-
-I don't quite think we should use a PROT_ bit for this.  It seems like
-the kind of thing that could be fragile and break existing expectations.
- I don't care _that_ strongly though.
