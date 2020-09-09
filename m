@@ -1,198 +1,135 @@
-Return-Path: <SRS0=LZ8l=CR=vger.kernel.org=linux-api-owner@kernel.org>
+Return-Path: <SRS0=pa61=CS=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.3 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 73261C43461
-	for <linux-api@archiver.kernel.org>; Tue,  8 Sep 2020 19:42:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4EDF7C433E2
+	for <linux-api@archiver.kernel.org>; Wed,  9 Sep 2020 07:07:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 33CB220658
-	for <linux-api@archiver.kernel.org>; Tue,  8 Sep 2020 19:42:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D72CE21532
+	for <linux-api@archiver.kernel.org>; Wed,  9 Sep 2020 07:07:23 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="V9k77lhW"
+	dkim=pass (2048-bit key) header.d=kroah.com header.i=@kroah.com header.b="E+bYY3r6";
+	dkim=temperror (0-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="q9zKpoqq"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731753AbgIHTlq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 8 Sep 2020 15:41:46 -0400
-Received: from mx0b-001b2d01.pphosted.com ([148.163.158.5]:7666 "EHLO
-        mx0a-001b2d01.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1730871AbgIHPxk (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 8 Sep 2020 11:53:40 -0400
-Received: from pps.filterd (m0098413.ppops.net [127.0.0.1])
-        by mx0b-001b2d01.pphosted.com (8.16.0.42/8.16.0.42) with SMTP id 088C1Q9K046161;
-        Tue, 8 Sep 2020 08:28:30 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=message-id : subject :
- from : to : cc : date : in-reply-to : references : content-type :
- mime-version : content-transfer-encoding; s=pp1;
- bh=b2FT1Yp+l4dJYunaB80AnvbJt6l0uG5k65Skbsx6Sy8=;
- b=V9k77lhW3sb6csdZNpxIl9910mTpoiRoDp3MkEyld/e3fD02yY3g7sxiHE6/gzqLADC+
- Si+yZmClFZwJQqQNCKq8JAMFBokvbdMnISuehKADurb/l9JjG94mxWNvh0lDzzMq8fW+
- JLi4sbfAZz2qrDBW5U6Gclc/S0gRO4fiMBzMnLwsvMlMmo2G1vnFQcvUsTZse81XFv5O
- 6eE0LjwIorjL7Zh62uo3d1btbdUld6I9gjsYhoYG3YI30Hwh49T8NUm5rJ0XmZLmUBuz
- 5o7sB+/BBWEkHSJckKhWArL2nAqAnhKE6eLI9vE+A18yXbXhYeJp7sLz3ZdKQZCyZTyR Ag== 
-Received: from pps.reinject (localhost [127.0.0.1])
-        by mx0b-001b2d01.pphosted.com with ESMTP id 33e949j58w-1
-        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-        Tue, 08 Sep 2020 08:28:30 -0400
-Received: from m0098413.ppops.net (m0098413.ppops.net [127.0.0.1])
-        by pps.reinject (8.16.0.36/8.16.0.36) with SMTP id 088C1aYK046936;
-        Tue, 8 Sep 2020 08:28:30 -0400
-Received: from ppma06fra.de.ibm.com (48.49.7a9f.ip4.static.sl-reverse.com [159.122.73.72])
-        by mx0b-001b2d01.pphosted.com with ESMTP id 33e949j57e-1
-        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-        Tue, 08 Sep 2020 08:28:29 -0400
-Received: from pps.filterd (ppma06fra.de.ibm.com [127.0.0.1])
-        by ppma06fra.de.ibm.com (8.16.0.42/8.16.0.42) with SMTP id 088CM7eI018243;
-        Tue, 8 Sep 2020 12:28:27 GMT
-Received: from b06cxnps4074.portsmouth.uk.ibm.com (d06relay11.portsmouth.uk.ibm.com [9.149.109.196])
-        by ppma06fra.de.ibm.com with ESMTP id 33e5gmr5e5-1
-        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-        Tue, 08 Sep 2020 12:28:27 +0000
-Received: from d06av24.portsmouth.uk.ibm.com (mk.ibm.com [9.149.105.60])
-        by b06cxnps4074.portsmouth.uk.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 088CSPYM20709662
-        (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-        Tue, 8 Sep 2020 12:28:25 GMT
-Received: from d06av24.portsmouth.uk.ibm.com (unknown [127.0.0.1])
-        by IMSVA (Postfix) with ESMTP id 3D4D74203F;
-        Tue,  8 Sep 2020 12:28:25 +0000 (GMT)
-Received: from d06av24.portsmouth.uk.ibm.com (unknown [127.0.0.1])
-        by IMSVA (Postfix) with ESMTP id 9D98B42042;
-        Tue,  8 Sep 2020 12:28:16 +0000 (GMT)
-Received: from li-f45666cc-3089-11b2-a85c-c57d1a57929f.ibm.com (unknown [9.160.24.202])
-        by d06av24.portsmouth.uk.ibm.com (Postfix) with ESMTP;
-        Tue,  8 Sep 2020 12:28:16 +0000 (GMT)
-Message-ID: <d216615b48c093ebe9349a9dab3830b646575391.camel@linux.ibm.com>
-Subject: Re: [RFC PATCH v8 1/3] fs: Introduce AT_INTERPRETED flag for
- faccessat2(2)
-From:   Mimi Zohar <zohar@linux.ibm.com>
-To:     =?ISO-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>,
-        linux-kernel@vger.kernel.org
-Cc:     Aleksa Sarai <cyphar@cyphar.com>,
-        Alexei Starovoitov <ast@kernel.org>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        Christian Heimes <christian@python.org>,
-        Daniel Borkmann <daniel@iogearbox.net>,
-        Deven Bowers <deven.desai@linux.microsoft.com>,
-        Dmitry Vyukov <dvyukov@google.com>,
-        Eric Biggers <ebiggers@kernel.org>,
-        Eric Chiang <ericchiang@google.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>,
-        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Lakshmi Ramasubramanian <nramas@linux.microsoft.com>,
-        Matthew Garrett <mjg59@google.com>,
-        Matthew Wilcox <willy@infradead.org>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Miklos Szeredi <mszeredi@redhat.com>,
-        Philippe =?ISO-8859-1?Q?Tr=E9buchet?= 
-        <philippe.trebuchet@ssi.gouv.fr>,
-        Scott Shell <scottsh@microsoft.com>,
-        Sean Christopherson <sean.j.christopherson@intel.com>,
-        Shuah Khan <shuah@kernel.org>,
-        Steve Dower <steve.dower@python.org>,
-        Steve Grubb <sgrubb@redhat.com>,
-        Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>,
-        Thibaut Sautereau <thibaut.sautereau@clip-os.org>,
-        Vincent Strubel <vincent.strubel@ssi.gouv.fr>,
-        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
-        linux-integrity@vger.kernel.org,
-        linux-security-module@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org,
-        Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>,
-        =?ISO-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@linux.microsoft.com>,
-        Stephen Smalley <stephen.smalley.work@gmail.com>,
-        John Johansen <john.johansen@canonical.com>
-Date:   Tue, 08 Sep 2020 08:28:15 -0400
-In-Reply-To: <20200908075956.1069018-2-mic@digikod.net>
-References: <20200908075956.1069018-1-mic@digikod.net>
-         <20200908075956.1069018-2-mic@digikod.net>
-Content-Type: text/plain; charset="ISO-8859-15"
-X-Mailer: Evolution 3.28.5 (3.28.5-12.el8) 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-TM-AS-GCONF: 00
-X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.235,18.0.687
- definitions=2020-09-08_06:2020-09-08,2020-09-08 signatures=0
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 bulkscore=0 mlxscore=0
- adultscore=0 priorityscore=1501 suspectscore=0 clxscore=1011
- impostorscore=0 malwarescore=0 phishscore=0 mlxlogscore=725
- lowpriorityscore=0 spamscore=0 classifier=spam adjust=0 reason=mlx
- scancount=1 engine=8.12.0-2006250000 definitions=main-2009080108
+        id S1725826AbgIIHHX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 9 Sep 2020 03:07:23 -0400
+Received: from wout3-smtp.messagingengine.com ([64.147.123.19]:34915 "EHLO
+        wout3-smtp.messagingengine.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1725863AbgIIHHX (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 9 Sep 2020 03:07:23 -0400
+Received: from compute1.internal (compute1.nyi.internal [10.202.2.41])
+        by mailout.west.internal (Postfix) with ESMTP id DF22C9C4;
+        Wed,  9 Sep 2020 03:07:21 -0400 (EDT)
+Received: from mailfrontend2 ([10.202.2.163])
+  by compute1.internal (MEProxy); Wed, 09 Sep 2020 03:07:22 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kroah.com; h=
+        date:from:to:cc:subject:message-id:references:mime-version
+        :content-type:in-reply-to; s=fm1; bh=D+K42dGY4mJ+XfwGsoIiELdV9Ku
+        H2LhoUP8m42K12q0=; b=E+bYY3r6QX+yb9I01hy8EHSqQsNxxNurRCRw2pF+Pn7
+        1goELCV6t8+ZnQtaXd3c6c/7Ho1pO8GQAS8Bcq8HkAccnujEcZLlNxEIftJThy1e
+        L5akYi5QqWCq6evphzDHMcGEhNNohWmMo5qHO3z3IpJK1q7KzPjICoBgTjEmoRrE
+        xX/8ZDo4sLANTekydSjMpYosptkHiHYENo8hM7SXs+/AbwJq7/zI3hp4KPcf2XMO
+        X/SOenUaS0m/iHWGV73jdKNNdEGhZ0BuoTEx3M74TS75j474gVboW0OvOUkm0bEm
+        r9+WJFJbMIctFt1eMPIo8f6z3JhVN84xTeYj1mZGQ8Q==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
+        messagingengine.com; h=cc:content-type:date:from:in-reply-to
+        :message-id:mime-version:references:subject:to:x-me-proxy
+        :x-me-proxy:x-me-sender:x-me-sender:x-sasl-enc; s=fm3; bh=D+K42d
+        GY4mJ+XfwGsoIiELdV9KuH2LhoUP8m42K12q0=; b=q9zKpoqqCkKO+6vrfnhXxn
+        tMvRal581RPBIGTMqKsGBdugxmIxt6DOkxhr0MYr9S7P0/o2yrDfQxqYK4GWIvU8
+        FCK2f/vXuv/ip3mEQEy4qvMiz3g98cv5LtTk9Exp9yWP94dwwPIlmjv8fUKXHhRi
+        yyDB0WHyuqSgkTiWGQ4o8hsefnO9fM0lff0N0B1g2OZzfllb+0BX/B6WXRn6KE3A
+        OvYJ7D87UdzXlFE4+EalFBlY4q6uzweMYyMI8UHg3x4f72PmoQenhDnLlQfiaM/R
+        OmBA0mrx0RrDLFaCRu3mMlUMjKS9L7k8qNU0wxEzat4BA/Uc0vS5rdajEPoCFZ1A
+        ==
+X-ME-Sender: <xms:KX9YX2MYaH64L6_I46jAJxPXHP2OctzHsMRr1KiRwIXB-7GnkJ8FBw>
+    <xme:KX9YX09wdfXwrwM1GDmnurhdtQ10C4pXpe_5kNSqB910SDdQt4b2WQnG5Ur9ZqvrP
+    4X9LsJM0bd5Jw>
+X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgeduiedrudehgedguddulecutefuodetggdotefrod
+    ftvfcurfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfgh
+    necuuegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmd
+    enucfjughrpeffhffvuffkfhggtggujgesthdtredttddtvdenucfhrhhomhepifhrvghg
+    ucfmjfcuoehgrhgvgheskhhrohgrhhdrtghomheqnecuggftrfgrthhtvghrnhepveeuhe
+    ejgfffgfeivddukedvkedtleelleeghfeljeeiueeggeevueduudekvdetnecukfhppeek
+    fedrkeeirdejgedrieegnecuvehluhhsthgvrhfuihiivgeptdenucfrrghrrghmpehmrg
+    hilhhfrhhomhepghhrvghgsehkrhhorghhrdgtohhm
+X-ME-Proxy: <xmx:KX9YX9QjHAjx0DU5nqo7p4KJTMNwETZS2JioMrpqPd6y6t_A4HkyzA>
+    <xmx:KX9YX2slf-DzUYQJkBXxmSp17zsJw4hSj_rxw1edVTHqMWFTChSmuw>
+    <xmx:KX9YX-fUqFa4vlajHOY0H8qXu1L2VpCf7ZHSsbVD6Tm6yTl886tjiQ>
+    <xmx:KX9YX_r3LAM9pJSjhyQhnNPCZqXLyDua7q4RooYZhenSRWAYrgHlXQ>
+Received: from localhost (83-86-74-64.cable.dynamic.v4.ziggo.nl [83.86.74.64])
+        by mail.messagingengine.com (Postfix) with ESMTPA id AE40F3064882;
+        Wed,  9 Sep 2020 03:07:20 -0400 (EDT)
+Date:   Wed, 9 Sep 2020 09:07:29 +0200
+From:   Greg KH <greg@kroah.com>
+To:     James Bottomley <James.Bottomley@hansenpartnership.com>
+Cc:     Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>,
+        linux-integrity@vger.kernel.org, Mimi Zohar <zohar@linux.ibm.com>,
+        linux-api@vger.kernel.org
+Subject: Re: [PATCH RESEND v4 0/1] add sysfs exports for TPM 2 PCR registers
+Message-ID: <20200909070729.GD311356@kroah.com>
+References: <20200906203245.18429-1-James.Bottomley@HansenPartnership.com>
+ <20200907053824.GA279469@kroah.com>
+ <20200907132322.GB106839@linux.intel.com>
+ <1599515528.4232.55.camel@HansenPartnership.com>
+ <20200908054552.GB303404@kroah.com>
+ <20200908180513.GB5390@linux.intel.com>
+ <1599588851.10803.29.camel@HansenPartnership.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <1599588851.10803.29.camel@HansenPartnership.com>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi Mickael,
+On Tue, Sep 08, 2020 at 11:14:11AM -0700, James Bottomley wrote:
+> On Tue, 2020-09-08 at 21:05 +0300, Jarkko Sakkinen wrote:
+> > On Tue, Sep 08, 2020 at 07:45:52AM +0200, Greg KH wrote:
+> > > On Mon, Sep 07, 2020 at 02:52:08PM -0700, James Bottomley wrote:
+> [...]
+> > > > I've got to say I think binary attributes are actively evil.  I
+> > > > can see
+> > > > they're a necessity when there's no good way to represent the
+> > > > data they
+> > > > contain, like the bios measurement log or firmware code or a raw
+> > > > interface like we do for the SMP frame code in libsas.  But when
+> > > > there's a well understood and easy to produce user friendly non-
+> > > > binary
+> > > > representation, I think dumping binary is inimical to being a
+> > > > good API.
+> > > 
+> > > Agreed.
+> > > 
+> > > thanks,
+> > > 
+> > > greg k-h
+> > 
+> > Looking at the patch, something like <device>/pcrs/<hash>/<index>
+> > would be a bit cleaner representation than the current <device>/pcrs-
+> > <hash>/<index>.
+> 
+> That's actually a technical limitation of using the current attribute
+> groups API: It's designed to support single level directories in sysfs
+> (or no directory at all).  That's not to say we can't do multi-level
+> ones, but if we do we have to roll our own machinery for managing the
+> files rather than relying on the groups API.
 
-On Tue, 2020-09-08 at 09:59 +0200, Mickaël Salaün wrote:
-> diff --git a/fs/open.c b/fs/open.c
-> index 9af548fb841b..879bdfbdc6fa 100644
-> --- a/fs/open.c
-> +++ b/fs/open.c
-> @@ -405,9 +405,13 @@ static long do_faccessat(int dfd, const char __user *filename, int mode, int fla
->  	if (mode & ~S_IRWXO)	/* where's F_OK, X_OK, W_OK, R_OK? */
->  		return -EINVAL;
->  
-> -	if (flags & ~(AT_EACCESS | AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH))
-> +	if (flags & ~(AT_EACCESS | AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH |
-> +				AT_INTERPRETED))
->  		return -EINVAL;
->  
-> +	/* Only allows X_OK with AT_INTERPRETED for now. */
-> +	if ((flags & AT_INTERPRETED) && !(mode & S_IXOTH))
-> +		return -EINVAL;
->  	if (flags & AT_SYMLINK_NOFOLLOW)
->  		lookup_flags &= ~LOOKUP_FOLLOW;
->  	if (flags & AT_EMPTY_PATH)
-> @@ -426,7 +430,30 @@ static long do_faccessat(int dfd, const char __user *filename, int mode, int fla
->  
->  	inode = d_backing_inode(path.dentry);
->  
-> -	if ((mode & MAY_EXEC) && S_ISREG(inode->i_mode)) {
-> +	if ((flags & AT_INTERPRETED)) {
-> +		/*
-> +		 * For compatibility reasons, without a defined security policy
-> +		 * (via sysctl or LSM), using AT_INTERPRETED must map the
-> +		 * execute permission to the read permission.  Indeed, from
-> +		 * user space point of view, being able to execute data (e.g.
-> +		 * scripts) implies to be able to read this data.
-> +		 *
-> +		 * The MAY_INTERPRETED_EXEC bit is set to enable LSMs to add
-> +		 * custom checks, while being compatible with current policies.
-> +		 */
-> +		if ((mode & MAY_EXEC)) {
+Agreed, do NOT do multi-level attribute groups please, userspace tools
+will not handle them well, if at all.
 
-Why is the ISREG() test being dropped?   Without dropping it, there
-would be no reason for making the existing test an "else" clause.
+> Given that the current groups API does all the nasty lifetime
+> management that I'd otherwise have to do in the patch, I have a strong
+> incentive for keeping it, which is why the single <device>/pcrs-
+> <hash>/<index> format.
 
-> +			mode |= MAY_INTERPRETED_EXEC;
-> +			/*
-> +			 * For compatibility reasons, if the system-wide policy
-> +			 * doesn't enforce file permission checks, then
-> +			 * replaces the execute permission request with a read
-> +			 * permission request.
-> +			 */
-> +			mode &= ~MAY_EXEC;
-> +			/* To be executed *by* user space, files must be readable. */
-> +			mode |= MAY_READ;
+Agreed.
 
-After this change, I'm wondering if it makes sense to add a call to
-security_file_permission().  IMA doesn't currently define it, but
-could.
+thanks,
 
-Mimi
-
-> +		}
-> +	} else if ((mode & MAY_EXEC) && S_ISREG(inode->i_mode)) {
->  		/*
->  		 * MAY_EXEC on regular files is denied if the fs is mounted
->  		 * with the "noexec" flag.
-
+greg k-h
