@@ -2,101 +2,119 @@ Return-Path: <SRS0=9Ueg=CT=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.5 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 868CEC433E2
-	for <linux-api@archiver.kernel.org>; Thu, 10 Sep 2020 18:43:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AFCCEC43461
+	for <linux-api@archiver.kernel.org>; Thu, 10 Sep 2020 19:47:23 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3B7D821D7E
-	for <linux-api@archiver.kernel.org>; Thu, 10 Sep 2020 18:43:11 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="nuYXudjI"
+	by mail.kernel.org (Postfix) with ESMTP id 77F3421D91
+	for <linux-api@archiver.kernel.org>; Thu, 10 Sep 2020 19:47:23 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727089AbgIJSlO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 10 Sep 2020 14:41:14 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39074 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726755AbgIJSkq (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 10 Sep 2020 14:40:46 -0400
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CD032C061573;
-        Thu, 10 Sep 2020 11:40:45 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Transfer-Encoding:
-        Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:
-        Sender:Reply-To:Content-ID:Content-Description;
-        bh=SVMzvLSxHR4YQ7P25QME/n/EPljnU8bFV5nCGi/Qx44=; b=nuYXudjIOEKrlWaHHeZyFkpQS2
-        wwcSZk0K6RlZlYBKUfyyPTDC6keEIXtAj5sR8cW6zZPcdJenYgtUpeSbsI/A6IqqzX7UwTm3cLU54
-        7NZMZ6oZ/ZnahlBszJVIHI9ljDrIk4+VtqAzRV0N6OKnwAuaXO690x5NJgJOP3DQUNmKZAKgzJFs3
-        oOAuecoKw+/7+aDwFjfO1p5WdkwiGcJj2QfkXDILLlWhYQbcDm5GVAFw3XMqEGiWENVP58kACpBub
-        AqdkMeObcGfzgvZvocq6uoEzPznHnpjFWZBJFcgewoWlHp6VxFSUUTNnxJtmcgtpnGt38QNE919lg
-        kgp2qS6Q==;
-Received: from willy by casper.infradead.org with local (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1kGRUn-0005ky-72; Thu, 10 Sep 2020 18:40:33 +0000
-Date:   Thu, 10 Sep 2020 19:40:33 +0100
-From:   Matthew Wilcox <willy@infradead.org>
-To:     =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
-Cc:     Mimi Zohar <zohar@linux.ibm.com>, linux-kernel@vger.kernel.org,
-        Aleksa Sarai <cyphar@cyphar.com>,
-        Alexei Starovoitov <ast@kernel.org>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Casey Schaufler <casey@schaufler-ca.com>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        Christian Heimes <christian@python.org>,
-        Daniel Borkmann <daniel@iogearbox.net>,
-        Deven Bowers <deven.desai@linux.microsoft.com>,
-        Dmitry Vyukov <dvyukov@google.com>,
-        Eric Biggers <ebiggers@kernel.org>,
-        Eric Chiang <ericchiang@google.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>,
-        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Lakshmi Ramasubramanian <nramas@linux.microsoft.com>,
-        Matthew Garrett <mjg59@google.com>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Miklos Szeredi <mszeredi@redhat.com>,
-        Philippe =?iso-8859-1?Q?Tr=E9buchet?= 
-        <philippe.trebuchet@ssi.gouv.fr>,
-        Scott Shell <scottsh@microsoft.com>,
-        Sean Christopherson <sean.j.christopherson@intel.com>,
-        Shuah Khan <shuah@kernel.org>,
-        Steve Dower <steve.dower@python.org>,
-        Steve Grubb <sgrubb@redhat.com>,
-        Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>,
-        Thibaut Sautereau <thibaut.sautereau@clip-os.org>,
-        Vincent Strubel <vincent.strubel@ssi.gouv.fr>,
-        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
-        linux-integrity@vger.kernel.org,
-        linux-security-module@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org
-Subject: Re: [RFC PATCH v9 0/3] Add introspect_access(2) (was O_MAYEXEC)
-Message-ID: <20200910184033.GX6583@casper.infradead.org>
-References: <20200910164612.114215-1-mic@digikod.net>
- <20200910170424.GU6583@casper.infradead.org>
- <f6e2358c-8e5e-e688-3e66-2cdd943e360e@digikod.net>
- <a48145770780d36e90f28f1526805a7292eb74f6.camel@linux.ibm.com>
- <880bb4ee-89a2-b9b0-747b-0f779ceda995@digikod.net>
+        id S1725951AbgIJTrU convert rfc822-to-8bit (ORCPT
+        <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 10 Sep 2020 15:47:20 -0400
+Received: from eu-smtp-delivery-151.mimecast.com ([207.82.80.151]:35157 "EHLO
+        eu-smtp-delivery-151.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1731267AbgIJPZO (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 10 Sep 2020 11:25:14 -0400
+Received: from AcuMS.aculab.com (156.67.243.126 [156.67.243.126]) (Using
+ TLS) by relay.mimecast.com with ESMTP id
+ uk-mta-193-SwYyQJkFN1CKNX6P6arlLA-1; Thu, 10 Sep 2020 16:23:41 +0100
+X-MC-Unique: SwYyQJkFN1CKNX6P6arlLA-1
+Received: from AcuMS.Aculab.com (fd9f:af1c:a25b:0:43c:695e:880f:8750) by
+ AcuMS.aculab.com (fd9f:af1c:a25b:0:43c:695e:880f:8750) with Microsoft SMTP
+ Server (TLS) id 15.0.1347.2; Thu, 10 Sep 2020 16:23:40 +0100
+Received: from AcuMS.Aculab.com ([fe80::43c:695e:880f:8750]) by
+ AcuMS.aculab.com ([fe80::43c:695e:880f:8750%12]) with mapi id 15.00.1347.000;
+ Thu, 10 Sep 2020 16:23:40 +0100
+From:   David Laight <David.Laight@ACULAB.COM>
+To:     'Rich Felker' <dalias@libc.org>,
+        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+CC:     Alexander Viro <viro@zeniv.linux.org.uk>,
+        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Subject: RE: [PATCH] vfs: add fchmodat2 syscall
+Thread-Topic: [PATCH] vfs: add fchmodat2 syscall
+Thread-Index: AQHWh4NogO4zJqm73EG5GUWCltp+Valh+9/A
+Date:   Thu, 10 Sep 2020 15:23:40 +0000
+Message-ID: <1111806ca0344527a8855616e46346c5@AcuMS.aculab.com>
+References: <20200910142335.GG3265@brightrain.aerifal.cx>
+In-Reply-To: <20200910142335.GG3265@brightrain.aerifal.cx>
+Accept-Language: en-GB, en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-ms-exchange-transport-fromentityheader: Hosted
+x-originating-ip: [10.202.205.107]
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <880bb4ee-89a2-b9b0-747b-0f779ceda995@digikod.net>
+Authentication-Results: relay.mimecast.com;
+        auth=pass smtp.auth=C51A453 smtp.mailfrom=david.laight@aculab.com
+X-Mimecast-Spam-Score: 0.002
+X-Mimecast-Originator: aculab.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Content-Language: en-US
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Sep 10, 2020 at 08:38:21PM +0200, Mickaël Salaün wrote:
-> There is also the use case of noexec mounts and file permissions. From
-> user space point of view, it doesn't matter which kernel component is in
-> charge of defining the policy. The syscall should then not be tied with
-> a verification/integrity/signature/appraisal vocabulary, but simply an
-> access control one.
+From: Rich Felker
+> Sent: 10 September 2020 15:24
+...
+> index 9af548fb841b..570a21f4d81e 100644
+> --- a/fs/open.c
+> +++ b/fs/open.c
+> @@ -610,15 +610,30 @@ SYSCALL_DEFINE2(fchmod, unsigned int, fd, umode_t, mode)
+>  	return err;
+>  }
+> 
+> -static int do_fchmodat(int dfd, const char __user *filename, umode_t mode)
+> +static int do_fchmodat(int dfd, const char __user *filename, umode_t mode, int flags)
+>  {
+>  	struct path path;
+>  	int error;
+>  	unsigned int lookup_flags = LOOKUP_FOLLOW;
+> +
+> +	if (flags & AT_SYMLINK_NOFOLLOW)
+> +		lookup_flags &= ~LOOKUP_FOLLOW;
+> +	if (flags & ~AT_SYMLINK_NOFOLLOW)
+> +		return -EINVAL;
 
-permission()?
+I think I'd swap over those two tests.
+So unsupported flags are clearly errored.
+
+>  retry:
+>  	error = user_path_at(dfd, filename, lookup_flags, &path);
+>  	if (!error) {
+> -		error = chmod_common(&path, mode);
+> +		/* Block chmod from getting to fs layer. Ideally the
+> +		 * fs would either allow it or fail with EOPNOTSUPP,
+> +		 * but some are buggy and return an error but change
+> +		 * the mode, which is non-conforming and wrong.
+> +		 * Userspace emulation of AT_SYMLINK_NOFOLLOW in
+> +		 * glibc and musl blocked it too, for same reason. */
+> +		if (S_ISLNK(path.dentry->d_inode->i_mode)
+> +		    && (flags & AT_SYMLINK_NOFOLLOW))
+> +			error = -EOPNOTSUPP;
+
+Again swap the order of the tests. I think it reads better as:
+		if ((flags & AT_SYMLINK_NOFOLLOW)
+		    && S_ISLNK(path.dentry->d_inode->i_mode))
+			error = -EOPNOTSUPP;
+As well as saving a few clock cycles.
+
+> +		else
+> +			error = chmod_common(&path, mode);
+>  		path_put(&path);
+>  		if (retry_estale(error, lookup_flags)) {
+>  			lookup_flags |= LOOKUP_REVAL;
+...
+
+	David
+
+-
+Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT, UK
+Registration No: 1397386 (Wales)
+
