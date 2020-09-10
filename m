@@ -2,79 +2,123 @@ Return-Path: <SRS0=9Ueg=CT=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B7B90C43461
-	for <linux-api@archiver.kernel.org>; Thu, 10 Sep 2020 17:15:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 48967C43461
+	for <linux-api@archiver.kernel.org>; Thu, 10 Sep 2020 17:47:39 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 79F7E20C09
-	for <linux-api@archiver.kernel.org>; Thu, 10 Sep 2020 17:15:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EE7B7206BE
+	for <linux-api@archiver.kernel.org>; Thu, 10 Sep 2020 17:47:38 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726828AbgIJROz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 10 Sep 2020 13:14:55 -0400
-Received: from brightrain.aerifal.cx ([216.12.86.13]:52460 "EHLO
-        brightrain.aerifal.cx" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726833AbgIJQf3 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 10 Sep 2020 12:35:29 -0400
-Date:   Thu, 10 Sep 2020 12:35:24 -0400
-From:   Rich Felker <dalias@libc.org>
-To:     Greg KH <gregkh@linuxfoundation.org>
-Cc:     linux-api@vger.kernel.org,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH] vfs: add fchmodat2 syscall
-Message-ID: <20200910163524.GI3265@brightrain.aerifal.cx>
-References: <20200910142335.GG3265@brightrain.aerifal.cx>
- <20200910161615.GA1180022@kroah.com>
+        id S1727804AbgIJRrg (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 10 Sep 2020 13:47:36 -0400
+Received: from smtp-42a9.mail.infomaniak.ch ([84.16.66.169]:39277 "EHLO
+        smtp-42a9.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1726800AbgIJRrd (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 10 Sep 2020 13:47:33 -0400
+Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4BnRD01cD0zlhbLN;
+        Thu, 10 Sep 2020 19:47:12 +0200 (CEST)
+Received: from ns3096276.ip-94-23-54.eu (unknown [94.23.54.103])
+        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4BnRCx4s7fzlh8TC;
+        Thu, 10 Sep 2020 19:47:09 +0200 (CEST)
+Subject: Re: [RFC PATCH v9 0/3] Add introspect_access(2) (was O_MAYEXEC)
+From:   =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+To:     Matthew Wilcox <willy@infradead.org>
+Cc:     linux-kernel@vger.kernel.org, Aleksa Sarai <cyphar@cyphar.com>,
+        Alexei Starovoitov <ast@kernel.org>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Casey Schaufler <casey@schaufler-ca.com>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Christian Heimes <christian@python.org>,
+        Daniel Borkmann <daniel@iogearbox.net>,
+        Deven Bowers <deven.desai@linux.microsoft.com>,
+        Dmitry Vyukov <dvyukov@google.com>,
+        Eric Biggers <ebiggers@kernel.org>,
+        Eric Chiang <ericchiang@google.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>,
+        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Lakshmi Ramasubramanian <nramas@linux.microsoft.com>,
+        Matthew Garrett <mjg59@google.com>,
+        Michael Kerrisk <mtk.manpages@gmail.com>,
+        Miklos Szeredi <mszeredi@redhat.com>,
+        Mimi Zohar <zohar@linux.ibm.com>,
+        =?UTF-8?Q?Philippe_Tr=c3=a9buchet?= 
+        <philippe.trebuchet@ssi.gouv.fr>,
+        Scott Shell <scottsh@microsoft.com>,
+        Sean Christopherson <sean.j.christopherson@intel.com>,
+        Shuah Khan <shuah@kernel.org>,
+        Steve Dower <steve.dower@python.org>,
+        Steve Grubb <sgrubb@redhat.com>,
+        Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>,
+        Thibaut Sautereau <thibaut.sautereau@clip-os.org>,
+        Vincent Strubel <vincent.strubel@ssi.gouv.fr>,
+        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
+        linux-integrity@vger.kernel.org,
+        linux-security-module@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org
+References: <20200910164612.114215-1-mic@digikod.net>
+ <20200910170424.GU6583@casper.infradead.org>
+ <f6e2358c-8e5e-e688-3e66-2cdd943e360e@digikod.net>
+Message-ID: <18ff83c0-d128-76bc-1081-82e3a3c51616@digikod.net>
+Date:   Thu, 10 Sep 2020 19:47:09 +0200
+User-Agent: 
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20200910161615.GA1180022@kroah.com>
-User-Agent: Mutt/1.5.21 (2010-09-15)
+In-Reply-To: <f6e2358c-8e5e-e688-3e66-2cdd943e360e@digikod.net>
+Content-Type: text/plain; charset=iso-8859-15
+Content-Language: en-US
+Content-Transfer-Encoding: 8bit
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Sep 10, 2020 at 06:16:15PM +0200, Greg KH wrote:
-> On Thu, Sep 10, 2020 at 10:23:37AM -0400, Rich Felker wrote:
-> > POSIX defines fchmodat as having a 4th argument, flags, that can be
-> > AT_SYMLINK_NOFOLLOW. Support for changing the access mode of symbolic
-> > links is optional (EOPNOTSUPP allowed if not supported), but this flag
-> > is important even on systems where symlinks do not have access modes,
-> > since it's the only way to safely change the mode of a file which
-> > might be asynchronously replaced with a symbolic link, without a race
-> > condition whereby the link target is changed.
-> > 
-> > It's possible to emulate AT_SYMLINK_NOFOLLOW in userspace, and both
-> > musl libc and glibc do this, by opening an O_PATH file descriptor and
-> > performing chmod on the corresponding magic symlink in /proc/self/fd.
-> > However, this requires procfs to be mounted and accessible.
-> > 
-> > It was determined (see glibc issue #14578 and commit a492b1e5ef) that,
-> > on some filesystems, performing chmod on the link itself produces a
-> > change in the inode's access mode, but returns an EOPNOTSUPP error.
-> > This is non-conforming and wrong. Rather than try to fix all the
-> > broken filesystem backends, block attempts to change the symlink
-> > access mode via fchmodat2 at the frontend layer. This matches the
-> > userspace emulation done in libc implementations. No change is made to
-> > the underlying chmod_common(), so it's still possible to attempt
-> > changes via procfs, if desired. If at some point all filesystems have
-> > been fixed, this could be relaxed to allow filesystems to make their
-> > own decision whether changing access mode of links is supported.
+
+On 10/09/2020 19:21, Mickaël Salaün wrote:
 > 
-> A new syscall just because we have broken filesystems seems really odd,
-> why not just fix the filesystems instead?
+> On 10/09/2020 19:04, Matthew Wilcox wrote:
+>> On Thu, Sep 10, 2020 at 06:46:09PM +0200, Mickaël Salaün wrote:
+>>> This ninth patch series rework the previous AT_INTERPRETED and O_MAYEXEC
+>>> series with a new syscall: introspect_access(2) .  Access check are now
+>>> only possible on a file descriptor, which enable to avoid possible race
+>>> conditions in user space.
+>>
+>> But introspection is about examining _yourself_.  This isn't about
+>> doing that.  It's about doing ... something ... to a script that you're
+>> going to execute.  If the script were going to call the syscall, then
+>> it might be introspection.  Or if the interpreter were measuring itself,
+>> that would be introspection.  But neither of those would be useful things
+>> to do, because an attacker could simply avoid doing them.
+> 
+> Picking a good name other than "access" (or faccessat2) is not easy. The
+> idea with introspect_access() is for the calling task to ask the kernel
+> if this task should allows to do give access to a kernel resource which
+> is already available to this task. In this sense, we think that
+> introspection makes sense because it is the choice of the task to allow
+> or deny an access.
+> 
+>>
+>> So, bad name.  What might be better?  sys_security_check()?
+>> sys_measure()?  sys_verify_fd()?  I don't know.
+>>
+> 
+> "security_check" looks quite broad, "measure" doesn't make sense here,
+> "verify_fd" doesn't reflect that it is an access check. Yes, not easy,
+> but if this is the only concern we are on the good track. :)
+> 
+> 
+> Other ideas:
+> - interpret_access (mainly, but not only, for interpreters)
+> - indirect_access
+> - may_access
+> - faccessat3
+> 
 
-The part about broken filesystems is just the justification for doing
-the EOPNOTSUPP check at this layer rather than relying on the
-filesystem to do it, not the purposse for the syscall.
-
-The purpose of the syscall is fixing the deficiency in the original
-one, which lacked the flags argument, making it so you have to do a
-complicated emulation dance involving O_PATH and procfs magic symlinks
-to implement the standard functionality.
-
-Rich
+I think that entrusted_access(2) looks good. What do you think?
