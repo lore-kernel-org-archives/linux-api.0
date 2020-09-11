@@ -1,128 +1,122 @@
-Return-Path: <SRS0=9Ueg=CT=vger.kernel.org=linux-api-owner@kernel.org>
+Return-Path: <SRS0=82cJ=CU=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.6 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1B069C433E2
-	for <linux-api@archiver.kernel.org>; Thu, 10 Sep 2020 20:58:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 00686C433E2
+	for <linux-api@archiver.kernel.org>; Fri, 11 Sep 2020 02:52:37 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CCC8520829
-	for <linux-api@archiver.kernel.org>; Thu, 10 Sep 2020 20:58:42 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B3C75207EA
+	for <linux-api@archiver.kernel.org>; Fri, 11 Sep 2020 02:52:36 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="sMzIJ5FG"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727868AbgIJU6f (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 10 Sep 2020 16:58:35 -0400
-Received: from mga09.intel.com ([134.134.136.24]:3015 "EHLO mga09.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727822AbgIJU5h (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 10 Sep 2020 16:57:37 -0400
-IronPort-SDR: 1TOdK89RVbF3hDO+XZUCXcHQLyqMN/h+TJdD5Xm0Dap1hzpGY8NsGojs3RnyDXh/Bb+7FoGx84
- nSikh2SkziqA==
-X-IronPort-AV: E=McAfee;i="6000,8403,9740"; a="159582264"
-X-IronPort-AV: E=Sophos;i="5.76,413,1592895600"; 
-   d="scan'208";a="159582264"
-X-Amp-Result: SKIPPED(no attachment in message)
-X-Amp-File-Uploaded: False
-Received: from fmsmga006.fm.intel.com ([10.253.24.20])
-  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Sep 2020 13:57:34 -0700
-IronPort-SDR: +mn3ZiCSVnFZ30u7TW5QvgoUkYPpic/R9XiyV69EN7U2pwwaj+iOxS/N7afN/O1Ibq44m56u5x
- /OrvUjhRlazw==
-X-IronPort-AV: E=Sophos;i="5.76,413,1592895600"; 
-   d="scan'208";a="505269924"
-Received: from asthajai-mobl.amr.corp.intel.com (HELO [10.209.150.113]) ([10.209.150.113])
-  by fmsmga006-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Sep 2020 13:57:34 -0700
-Subject: Re: Ways to deprecate /sys/devices/system/memory/memoryX/phys_device
- ?
-To:     David Hildenbrand <david@redhat.com>,
-        Gerald Schaefer <gerald.schaefer@linux.ibm.com>,
-        Michal Hocko <mhocko@kernel.org>,
-        "akpm@linux-foundation.org" <akpm@linux-foundation.org>,
-        Greg KH <gregkh@linuxfoundation.org>,
-        =?UTF-8?Q?Jan_H=c3=b6ppner?= <hoeppner@linux.ibm.com>,
-        Heiko Carstens <hca@linux.ibm.com>,
-        "linux-mm@kvack.org" <linux-mm@kvack.org>,
-        linux-api@vger.kernel.org,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-References: <21852ccb-bd06-9281-7c8e-485ec02f2883@redhat.com>
-From:   Dave Hansen <dave.hansen@intel.com>
-Autocrypt: addr=dave.hansen@intel.com; keydata=
- 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
- z5cecg==
-Message-ID: <0175453a-7969-f482-a228-34c5840fe0e0@intel.com>
-Date:   Thu, 10 Sep 2020 13:57:33 -0700
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.10.0
+        id S1725844AbgIKCwg (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 10 Sep 2020 22:52:36 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58698 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725355AbgIKCwe (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 10 Sep 2020 22:52:34 -0400
+Received: from mail-ed1-x543.google.com (mail-ed1-x543.google.com [IPv6:2a00:1450:4864:20::543])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 743F4C061573;
+        Thu, 10 Sep 2020 19:52:33 -0700 (PDT)
+Received: by mail-ed1-x543.google.com with SMTP id n13so8393165edo.10;
+        Thu, 10 Sep 2020 19:52:33 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=Rh9Pt7YWiJuvraTJEw+iENa93uiuxFqswvg59VFnc6k=;
+        b=sMzIJ5FGHMBaziTx/PNmiVfjtuRIgGHsCfOiukKXUtWWDXqx4zyi+l46IaqToLBYD5
+         o/7T07SKyvvJ4LV+5gVMpFsimNbwSQxj4Qe9OqarblX5aGy733vSPZZgHwhUIOF/3Y27
+         B2hZz8oRU9+PmjrohSC1fKeyrkbAeB1UKBYkMDo8NMCfK3etSog31MlBRUhspJJDE6c6
+         2jNW8wZnEwPCXTghUymxPbck0Dt5poc6oBj+zLm6aHlzx2Ii6gV7eyAWZnmsyA+Q3iWJ
+         rmilZVDNVS1AGqphtuFkqBDkKz2KGoXifDXAlvZCtVH4BR+XUD3/pb3EGEjka+LAZv4R
+         pR4Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=Rh9Pt7YWiJuvraTJEw+iENa93uiuxFqswvg59VFnc6k=;
+        b=oCdIvTJiQnvqbsWHH0wfIq+yzpAQkVdgvA/YngQuGfO15cUl4k7+YGqrtrjJnt14Vj
+         NyqX5loaZ98uAQp+RG1tg4K5K+JLTcpG/fy/TE/CbDBxr7RE3LEnQ/UN6FNSGSHsCn7A
+         7s3OZShyWtx2HxPAAOsKUyFdVeYYJzEOV4fgkWUbx/8cpS12jlvHg981bcf4nV3fxmeM
+         WVm+CQwvEyLcR86lhgMg4p+L02yKQaz5p/o4MZsRROi77r8SfGfeUI/rXyS3oRODRQco
+         I7KOdK99Fa0FRGK6ExW5Ke7GIkTLS+UYY24tQkzpLqdo/7haFG/UPD1DGP76cqEm0w8J
+         kwwg==
+X-Gm-Message-State: AOAM5320a+t4HYvPgw+QagPjvIpjgvjYyxANCGnagCb/QTH7wu9atInY
+        LOV9TnjIfPHxydbK8uM6QSz4p4JGCeh4HT/JPeg=
+X-Google-Smtp-Source: ABdhPJyvdhO2E+WIGNANGbpMRpyYJJsV/39TVNMjyh7xPuRhfmQw80nfT6TjdyzpW+P6aj1Q4yDgB0e2hFy/k3AOr/E=
+X-Received: by 2002:a50:fb15:: with SMTP id d21mr13117595edq.150.1599792751820;
+ Thu, 10 Sep 2020 19:52:31 -0700 (PDT)
 MIME-Version: 1.0
-In-Reply-To: <21852ccb-bd06-9281-7c8e-485ec02f2883@redhat.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 8bit
+References: <CAGnHSE=bhpL4REG5PXST6dF3gSWeewg1Eqr+sLw_9rtqL-ToFQ@mail.gmail.com>
+ <20200906012716.1553-1-tom.ty89@gmail.com> <20200906012716.1553-2-tom.ty89@gmail.com>
+ <20200907060927.GA18909@lst.de> <CAGnHSEnWPSaM3xS1MtFUJDrSZPfaH_VwAiQ5UkndFTVe3uWNVA@mail.gmail.com>
+ <20200908084258.GA17030@lst.de> <CAGnHSE=ASs3DG2yp1NpODHimwxHe+=XPRsOyDdkB3ThtyEU-KA@mail.gmail.com>
+ <20200910052835.GB18283@lst.de>
+In-Reply-To: <20200910052835.GB18283@lst.de>
+From:   Tom Yan <tom.ty89@gmail.com>
+Date:   Fri, 11 Sep 2020 10:52:19 +0800
+Message-ID: <CAGnHSE=pcW0zJMSaowdsRXFa=TmOeidekgvDuEPB8PU7mheXNA@mail.gmail.com>
+Subject: Re: [PATCH RESEND 2/4] scsi: sg: implement BLKSSZGET
+To:     Christoph Hellwig <hch@lst.de>
+Cc:     linux-scsi@vger.kernel.org, dgilbert@interlog.com,
+        Bart Van Assche <bvanassche@acm.org>,
+        Alan Stern <stern@rowland.harvard.edu>, akinobu.mita@gmail.com,
+        linux-api@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 9/10/20 3:20 AM, David Hildenbrand wrote:
-> While I'd love to rip it out completely, I think it would break old
-> lsmem/chmem completely - and I assume that's not acceptable. I was
-> wondering what would be considered safe to do now/in the future:
-> 
-> 1. Make it always return 0 (just as if "sclp.rzm" would be set to 0 on
-> s390x). This will make old lsmem/chmem behave differently after
-> switching to a new kernel, like if sclp.rzm would not be set by HW -
-> AFAIU, it will assume all memory is in a single memory increment. Do we
-> care?
-> 2. Restrict it to s390x only. It always returned 0 on other
-> architectures, I was not able to find any user.
+On Thu, 10 Sep 2020 at 13:28, Christoph Hellwig <hch@lst.de> wrote:
+>
+> On Thu, Sep 10, 2020 at 09:59:05AM +0800, Tom Yan wrote:
+> > If we rename it to e.g. SG_GET_MAX_XFER_BYTES, it will still break
+> > applications unless we also keep the wrong/ugly/confusing name (and
+> > you lose the advantage/generality that the two ioctls can be used on
+> > both sg and "pure" block devices; which seems to be the case of some
+> > SG_* ioctls as well).
+>
+> How is that an advantage?  Applications that works with block devices
+> don't really work with a magic passthrough character device.
 
-By "restrict it", do you mean just remove the sysfs file on everything
-other than s390x?  That seems like a good idea, especially if we don't
-have any users.  That, plus boot option or something to reenable it
-would be nice if someone trips over it disappearing.
+You must assume that there are applications already assuming that
+work. (And it will, at least in some cases, if this series get
+merged.)
 
-If there is a user, we stand a chance of finding them because they'll
-hopefully get a good error message.  Worst case, an strace will show an
--ENOENT and should be pretty easy to track down.
+And you have not been giving me a solid point anyway, as I said, it's
+just queue_*() at the end of the day; regardless of whether those
+would work in all sg cases, we have been using them in the sg driver
+anyway.
+
+And it's not like we have to guarantee that (the) ioctls can work in
+every case anyway, right? (Especially when they aren't named SG_*).
+
+I mean, what's even your point? How do you propose we fix this? Should
+we just leave it broken/wrong/rotten as-is (including the case that
+you don't consider it being so)? If that's what you are trying to say
+then please just say it, I'll just walk away quietly. I'm really kind
+of done with this sort of looping that leads to nowhere.
+
+>
+> > I don't really care enough though. I mean, I'm okay with
+> > SG_GET_MAX_XFER_BYTES *and* NO "improper" BLKSECTGET. If that will get
+> > the patch series in, I am willing to send a new version. If not, I'm
+> > just gonna drop this.
+>
+> You must assume that there are applications already that depend in the
+> "weird" BLKSECTGET on sg, given that it has been around so long.  Any
+> change to the semantics will break them.
+
+While you forgot to assume that there are applications assuming
+BLKSECTGET is as "weird" in the block layer at the same time. (That's
+exactly what has happened in qemu.) You don't get the slightest
+advantage in "trying not to break things" by doing the wrong thing. It
+only goes on making more things broken.
