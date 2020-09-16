@@ -2,121 +2,93 @@ Return-Path: <SRS0=vP9q=CZ=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 12BA2C2BB84
-	for <linux-api@archiver.kernel.org>; Wed, 16 Sep 2020 20:59:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 05DB5C433E2
+	for <linux-api@archiver.kernel.org>; Wed, 16 Sep 2020 21:07:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B559E21D7D
-	for <linux-api@archiver.kernel.org>; Wed, 16 Sep 2020 20:59:52 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1600289992;
-	bh=mDQ6UTyuaB2u7tLV1Dk8pnrUM2PuADeCLe8cuMXZ8Vk=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:List-ID:From;
-	b=O4bjWYkjEpkc4jhVTeS3FqsjL3X86NwdhRc2Z9oJT3thIi+6FF2KKpPtBMfBT8OvS
-	 TtuF6hTzk0ffllqIbkgeVRcOztt548FE0e1SywvwL2Ei0+PwhRAVfvq1kSaBY/fIKc
-	 enN5nSbLSHFaAtdmekgPOP0vTIas/SLLZFl+SXGA=
+	by mail.kernel.org (Postfix) with ESMTP id AEE872087D
+	for <linux-api@archiver.kernel.org>; Wed, 16 Sep 2020 21:07:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726631AbgIPU7j (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 16 Sep 2020 16:59:39 -0400
-Received: from mail.kernel.org ([198.145.29.99]:45640 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726378AbgIPQag (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 16 Sep 2020 12:30:36 -0400
-Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com [209.85.221.47])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id ED292222D9
-        for <linux-api@vger.kernel.org>; Wed, 16 Sep 2020 13:52:44 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1600264365;
-        bh=mDQ6UTyuaB2u7tLV1Dk8pnrUM2PuADeCLe8cuMXZ8Vk=;
-        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-        b=shzyBlLOTXJhv5uEUP9a13eFHZuifidHaD+0Pw/Hi7w8rSPCDS/1+xVICGYgHQO1t
-         yWiuYXtowmBQWAofGCYH6UiS3gBJACYqp2KHBVBI+X+mu3S/hxBalizuzm6GbgirpV
-         7jH2jFQnS52R+Ljtb6AZnvYViY3zCuRFbinq4Hzc=
-Received: by mail-wr1-f47.google.com with SMTP id t10so7056302wrv.1
-        for <linux-api@vger.kernel.org>; Wed, 16 Sep 2020 06:52:44 -0700 (PDT)
-X-Gm-Message-State: AOAM532FhLTZgGcHsxK1LiY+EWTDFnbn8gkY8Z4YjoJhbUEoba3mbg3A
-        0Jg+LR1hUWYart1s85JmMZya8NwYSrvuF7oJFlzm5w==
-X-Google-Smtp-Source: ABdhPJxD/I3WhheFm3L0eJSqFjhj5WfUh9gRyFn04NLA/7Rn8UKNcJjJ0TVa6hRJJ0zHq7OYjPoH15YRyOrXg65QVEw=
-X-Received: by 2002:a5d:5111:: with SMTP id s17mr26717007wrt.70.1600264363439;
- Wed, 16 Sep 2020 06:52:43 -0700 (PDT)
+        id S1726149AbgIPVH1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 16 Sep 2020 17:07:27 -0400
+Received: from brightrain.aerifal.cx ([216.12.86.13]:54180 "EHLO
+        brightrain.aerifal.cx" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726486AbgIPQOc (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 16 Sep 2020 12:14:32 -0400
+Date:   Wed, 16 Sep 2020 11:41:22 -0400
+From:   Rich Felker <dalias@libc.org>
+To:     Christoph Hellwig <hch@infradead.org>
+Cc:     linux-api@vger.kernel.org,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH v2 1/2] vfs: block chmod of symlinks
+Message-ID: <20200916154122.GU3265@brightrain.aerifal.cx>
+References: <20200916002157.GO3265@brightrain.aerifal.cx>
+ <20200916002253.GP3265@brightrain.aerifal.cx>
+ <20200916062553.GB27867@infradead.org>
 MIME-Version: 1.0
-References: <086c73d8-9b06-f074-e315-9964eb666db9@intel.com>
- <4f2dfefc-b55e-bf73-f254-7d95f9c67e5c@intel.com> <CAMe9rOqt9kbqERC8U1+K-LiDyNYuuuz3TX++DChrRJwr5ajt6Q@mail.gmail.com>
- <20200901102758.GY6642@arm.com> <c91bbad8-9e45-724b-4526-fe3674310c57@intel.com>
- <CALCETrWJQgtO_tP1pEaDYYsFgkZ=fOxhyTRE50THcxYoHyTTwg@mail.gmail.com>
- <32005d57-e51a-7c7f-4e86-612c2ff067f3@intel.com> <46dffdfd-92f8-0f05-6164-945f217b0958@intel.com>
- <ed929729-4677-3d3b-6bfd-b379af9272b8@intel.com> <6e1e22a5-1b7f-2783-351e-c8ed2d4893b8@intel.com>
- <5979c58d-a6e3-d14d-df92-72cdeb97298d@intel.com> <ab1a3344-60f4-9b9d-81d4-e6538fdcafcf@intel.com>
- <08c91835-8486-9da5-a7d1-75e716fc5d36@intel.com> <a881837d-c844-30e8-a614-8b92be814ef6@intel.com>
- <cbec8861-8722-ec31-2c02-1cfed20255eb@intel.com> <b3379d26-d8a7-deb7-59f1-c994bb297dcb@intel.com>
- <a1efc4330a3beff10671949eddbba96f8cde96da.camel@intel.com>
- <41aa5e8f-ad88-2934-6d10-6a78fcbe019b@intel.com> <CALCETrX5qJAZBe9sHL6+HFvre-bbo+us1==q9KHNCyRrzaUsjw@mail.gmail.com>
- <c61c9bf3-4097-089c-4e6d-d0ae0e4480f3@intel.com>
-In-Reply-To: <c61c9bf3-4097-089c-4e6d-d0ae0e4480f3@intel.com>
-From:   Andy Lutomirski <luto@kernel.org>
-Date:   Wed, 16 Sep 2020 06:52:31 -0700
-X-Gmail-Original-Message-ID: <CALCETrXGSXzqdAOK7tnDDYMJ5Uj4=u=AEvgdroS3BxRoyO3r+g@mail.gmail.com>
-Message-ID: <CALCETrXGSXzqdAOK7tnDDYMJ5Uj4=u=AEvgdroS3BxRoyO3r+g@mail.gmail.com>
-Subject: Re: [PATCH v11 25/25] x86/cet/shstk: Add arch_prctl functions for
- shadow stack
-To:     Dave Hansen <dave.hansen@intel.com>
-Cc:     Andy Lutomirski <luto@kernel.org>,
-        Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        Dave Martin <Dave.Martin@arm.com>,
-        "H.J. Lu" <hjl.tools@gmail.com>,
-        Florian Weimer <fweimer@redhat.com>, X86 ML <x86@kernel.org>,
-        "H. Peter Anvin" <hpa@zytor.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
-        Linux-MM <linux-mm@kvack.org>,
-        linux-arch <linux-arch@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Balbir Singh <bsingharora@gmail.com>,
-        Borislav Petkov <bp@alien8.de>,
-        Cyrill Gorcunov <gorcunov@gmail.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Eugene Syromiatnikov <esyr@redhat.com>,
-        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Nadav Amit <nadav.amit@gmail.com>,
-        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
-        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
-        Weijiang Yang <weijiang.yang@intel.com>
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20200916062553.GB27867@infradead.org>
+User-Agent: Mutt/1.5.21 (2010-09-15)
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Sep 14, 2020 at 2:14 PM Dave Hansen <dave.hansen@intel.com> wrote:
->
-> On 9/14/20 11:31 AM, Andy Lutomirski wrote:
-> > No matter what we do, the effects of calling vfork() are going to be a
-> > bit odd with SHSTK enabled.  I suppose we could disallow this, but
-> > that seems likely to cause its own issues.
->
-> What's odd about it?  If you're a vfork()'d child, you can't touch the
-> stack at all, right?  If you do, you or your parent will probably die a
-> horrible death.
->
+On Wed, Sep 16, 2020 at 07:25:53AM +0100, Christoph Hellwig wrote:
+> On Tue, Sep 15, 2020 at 08:22:54PM -0400, Rich Felker wrote:
+> > It was discovered while implementing userspace emulation of fchmodat
+> > AT_SYMLINK_NOFOLLOW (using O_PATH and procfs magic symlinks; otherwise
+> > it's not possible to target symlinks with chmod operations) that some
+> > filesystems erroneously allow access mode of symlinks to be changed,
+> > but return failure with EOPNOTSUPP (see glibc issue #14578 and commit
+> > a492b1e5ef). This inconsistency is non-conforming and wrong, and the
+> > consensus seems to be that it was unintentional to allow link modes to
+> > be changed in the first place.
+> > 
+> > Signed-off-by: Rich Felker <dalias@libc.org>
+> > ---
+> >  fs/open.c | 6 ++++++
+> >  1 file changed, 6 insertions(+)
+> > 
+> > diff --git a/fs/open.c b/fs/open.c
+> > index 9af548fb841b..cdb7964aaa6e 100644
+> > --- a/fs/open.c
+> > +++ b/fs/open.c
+> > @@ -570,6 +570,12 @@ int chmod_common(const struct path *path, umode_t mode)
+> >  	struct iattr newattrs;
+> >  	int error;
+> >  
+> > +	/* Block chmod from getting to fs layer. Ideally the fs would either
+> > +	 * allow it or fail with EOPNOTSUPP, but some are buggy and return
+> > +	 * an error but change the mode, which is non-conforming and wrong. */
+> > +	if (S_ISLNK(inode->i_mode))
+> > +		return -EOPNOTSUPP;
+> 
+> Our usualy place for this would be setattr_prepare.  Also the comment
+> style is off, and I don't think we should talk about buggy file systems
+> here, but a policy to not allow the chmod.  I also suspect the right
+> error value is EINVAL - EOPNOTSUPP isn't really used in normal posix
+> file system interfaces.
 
-An evil program could vfork(), have the child do a bunch of returns
-and a bunch of calls, and exit.  The net effect would be to change the
-parent's shadow stack contents.  In a sufficiently strict model, this
-is potentially problematic.
+EINVAL is non-conforming here. POSIX defines it as unsupported mode or
+flag. Lack of support for setting an access mode on symlinks is a
+distinct failure reason, and POSIX does not allow overloading error
+codes like this.
 
-The question is: how much do we want to protect userspace from itself?
+Even if it were permitted, it would be bad to do this because it would
+make it impossible for the application to tell whether the cause of
+failure is an invalid mode or that the filesystem/implementation
+doesn't support modes on symlinks. This matters because one is usually
+a fatal error and the other is a condition to ignore. Moreover, the
+affected applications (e.g. coreutils, tar, etc.) already accept
+EOPNOTSUPP here from libc. Defining a new error would break them
+unless libc translated whatever the syscall returns to the expected
+EOPNOTSUPP.
 
---Andy
+Rich
