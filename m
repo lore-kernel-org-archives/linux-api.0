@@ -6,37 +6,37 @@ X-Spam-Status: No, score=-10.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
 	SPF_PASS,USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B7AC1C43461
-	for <linux-api@archiver.kernel.org>; Wed, 16 Sep 2020 07:29:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 118B1C43461
+	for <linux-api@archiver.kernel.org>; Wed, 16 Sep 2020 07:36:01 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7F12F20771
-	for <linux-api@archiver.kernel.org>; Wed, 16 Sep 2020 07:29:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B5ABE221E5
+	for <linux-api@archiver.kernel.org>; Wed, 16 Sep 2020 07:36:00 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1600241349;
+	s=default; t=1600241760;
 	bh=2pPFIyfq0HjxH/I1nQKf+tcVT9qAd8yS6QngBOEx7EM=;
 	h=From:To:Cc:Subject:Date:List-ID:From;
-	b=EuoqPWwgxny97WOyhrSkFG3pM5qc8dJe/GfMXsI/xi708gx8rRAy1jFd0gcRiMMXb
-	 pQWvnV2HPMRQKi5ntilj+jL7JerMHz3tP832jChTfiEMXEKmXflmJVNpp6ZUIWXja0
-	 y2ZgDqo0rHpl2Lq0AU/Mhed8bxYa4IJASV9giK4g=
+	b=TtcEeDlxzeddE2fjUYozHXP13/s0A7PDNDMglWZTVqVPJ3babYslH8C3y2Iz7k+R/
+	 HT7+06OkISEXmzZ44W12nGavv1rEtg5J8kZrMsgf/pvjjlhsQ0YbMKDZ9/LkbXKMo6
+	 3fMTerpX/JGcjv8USTdmXARzQJPjKNHN8quHgkRk=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726291AbgIPH26 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 16 Sep 2020 03:28:58 -0400
-Received: from mail.kernel.org ([198.145.29.99]:54656 "EHLO mail.kernel.org"
+        id S1726159AbgIPHfz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 16 Sep 2020 03:35:55 -0400
+Received: from mail.kernel.org ([198.145.29.99]:58544 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726359AbgIPH26 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 16 Sep 2020 03:28:58 -0400
+        id S1726139AbgIPHfz (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 16 Sep 2020 03:35:55 -0400
 Received: from aquarius.haifa.ibm.com (nesher1.haifa.il.ibm.com [195.110.40.7])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id DE27F20771;
-        Wed, 16 Sep 2020 07:28:47 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id CC64420684;
+        Wed, 16 Sep 2020 07:35:44 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1600241337;
+        s=default; t=1600241753;
         bh=2pPFIyfq0HjxH/I1nQKf+tcVT9qAd8yS6QngBOEx7EM=;
         h=From:To:Cc:Subject:Date:From;
-        b=F0h5DWgUhvU5XLcsYtcxIKA1Q3wQfwVGd3nw0B8mU624p9XWkw6wiW7p1Zuz/xTRZ
-         O9KcB9xE81T9A1Gvj+KtDQXmGmJhd84/x+WIU0x3WwcVe459cy+13EBlfQ+CQkNRJM
-         twHYIljA0tJ22HO3pmMbhJOKF/hh5PkILOigTe2g=
+        b=vmdF6YyEB8K43yb24Kg6zm0j4OO0J4YfRQUhda6kxWGSkiiiEYf+hLqZ02CIXPwlM
+         Jdr8dbGjeKvbOlyunWXwNBY1AnSuPi1Px8CjQNkSTzaGVLH+Ni/iKzRTu6j/sknoVZ
+         k8/99vOci9u79NSkO4xPycClE/DSngY3k0XJOHdA=
 From:   Mike Rapoport <rppt@kernel.org>
 To:     Andrew Morton <akpm@linux-foundation.org>
 Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
@@ -68,8 +68,8 @@ Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
         linux-kernel@vger.kernel.org, linux-nvdimm@lists.01.org,
         linux-riscv@lists.infradead.org, x86@kernel.org
 Subject: [PATCH v5 0/5] mm: introduce memfd_secret system call to create "secret" memory areas
-Date:   Wed, 16 Sep 2020 10:28:37 +0300
-Message-Id: <20200916072842.3502-1-rppt@kernel.org>
+Date:   Wed, 16 Sep 2020 10:35:34 +0300
+Message-Id: <20200916073539.3552-1-rppt@kernel.org>
 X-Mailer: git-send-email 2.28.0
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
