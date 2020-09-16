@@ -2,95 +2,82 @@ Return-Path: <SRS0=vP9q=CZ=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-11.1 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	NICE_REPLY_A,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C90A5C433E2
-	for <linux-api@archiver.kernel.org>; Wed, 16 Sep 2020 19:26:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 008B9C43461
+	for <linux-api@archiver.kernel.org>; Wed, 16 Sep 2020 20:58:17 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 83E6120936
-	for <linux-api@archiver.kernel.org>; Wed, 16 Sep 2020 19:26:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 93EC8221F1
+	for <linux-api@archiver.kernel.org>; Wed, 16 Sep 2020 20:58:16 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="sha7upVR"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727778AbgIPTZ7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 16 Sep 2020 15:25:59 -0400
-Received: from mga06.intel.com ([134.134.136.31]:27693 "EHLO mga06.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727269AbgIPTZO (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 16 Sep 2020 15:25:14 -0400
-IronPort-SDR: Elx3oz4ZLtqSKa/D6RMCTUrl2Y2uaEvFDMMBDDa2k/6fptnJeOAa2FaMylOTv6dYpOUHOL++23
- ks/l5P6vV8+Q==
-X-IronPort-AV: E=McAfee;i="6000,8403,9746"; a="221106327"
-X-IronPort-AV: E=Sophos;i="5.76,434,1592895600"; 
-   d="scan'208";a="221106327"
-X-Amp-Result: SKIPPED(no attachment in message)
-X-Amp-File-Uploaded: False
-Received: from orsmga004.jf.intel.com ([10.7.209.38])
-  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Sep 2020 12:25:13 -0700
-IronPort-SDR: eg/Zchq5mOXDbpxpZFJ33RXMAD8TeVG7Z6YeVuuDo5eZiEwZNocXGb+rGVRDmIBihv4mUFVhg8
- Lk6TY0hQd4LA==
-X-IronPort-AV: E=Sophos;i="5.76,434,1592895600"; 
-   d="scan'208";a="451983016"
-Received: from yyu32-mobl1.amr.corp.intel.com (HELO [10.212.184.15]) ([10.212.184.15])
-  by orsmga004-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Sep 2020 12:25:12 -0700
-From:   "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
-Subject: Re: [PATCH v11 25/25] x86/cet/shstk: Add arch_prctl functions for
- shadow stack
-To:     Andy Lutomirski <luto@kernel.org>,
-        Dave Hansen <dave.hansen@intel.com>
-Cc:     Dave Martin <Dave.Martin@arm.com>, "H.J. Lu" <hjl.tools@gmail.com>,
-        Florian Weimer <fweimer@redhat.com>, X86 ML <x86@kernel.org>,
-        "H. Peter Anvin" <hpa@zytor.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
-        Linux-MM <linux-mm@kvack.org>,
-        linux-arch <linux-arch@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Balbir Singh <bsingharora@gmail.com>,
-        Borislav Petkov <bp@alien8.de>,
-        Cyrill Gorcunov <gorcunov@gmail.com>,
+        id S1728529AbgIPU6H (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 16 Sep 2020 16:58:07 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51880 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726460AbgIPQd1 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 16 Sep 2020 12:33:27 -0400
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 06A26C02C295;
+        Wed, 16 Sep 2020 08:59:58 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:Content-Type:
+        In-Reply-To:MIME-Version:Date:Message-ID:From:References:Cc:To:Subject:Sender
+        :Reply-To:Content-ID:Content-Description;
+        bh=2L8WeVvRo1osqjjhclSBTpn136Oyr6chq2WMPl65EcM=; b=sha7upVR0ozVlTJFDWdFS4KUrg
+        Dlh504xPkCjJ6bcnR0tgQmZYiIutQK/G0ONBD+iomCp+zVQ82oPYqYPfOa29q6UCwl36D+BB9FNFs
+        pSeTBdPEiVQz6llxOwpNLZRraxMD45Yt9agHPf8ceWEhufE5EkURg5LtEm+1DjoRnfjJ/WOFs5+4j
+        BadKgeBe/qwlbda6A6xYg/rSWFAOIGOJ/+qKGuMxZNBtCJ1ZUglDN7/DVuOWKZv/bNRIhqme65n0j
+        CV7jlQDHwCcs1yfZz07j2hPdh6zbICLmsA3R4X5f+JNoZnWPrhrt60ytieQyxK1LeEjJ519udtgbv
+        hAy+S0yQ==;
+Received: from [2601:1c0:6280:3f0::19c2]
+        by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
+        id 1kIZqU-0000qm-87; Wed, 16 Sep 2020 15:59:46 +0000
+Subject: Re: [PATCH v5 3/5] mm: introduce memfd_secret system call to create
+ "secret" memory areas
+To:     Mike Rapoport <rppt@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>
+Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
+        Andy Lutomirski <luto@kernel.org>,
+        Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Christopher Lameter <cl@linux.com>,
+        Dan Williams <dan.j.williams@intel.com>,
         Dave Hansen <dave.hansen@linux.intel.com>,
-        Eugene Syromiatnikov <esyr@redhat.com>,
-        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Nadav Amit <nadav.amit@gmail.com>,
-        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        David Hildenbrand <david@redhat.com>,
+        Elena Reshetova <elena.reshetova@intel.com>,
+        "H. Peter Anvin" <hpa@zytor.com>, Idan Yaniv <idan.yaniv@ibm.com>,
+        Ingo Molnar <mingo@redhat.com>,
+        James Bottomley <jejb@linux.ibm.com>,
+        "Kirill A. Shutemov" <kirill@shutemov.name>,
+        Matthew Wilcox <willy@infradead.org>,
+        Mark Rutland <mark.rutland@arm.com>,
+        Mike Rapoport <rppt@linux.ibm.com>,
+        Michael Kerrisk <mtk.manpages@gmail.com>,
+        Palmer Dabbelt <palmer@dabbelt.com>,
+        Paul Walmsley <paul.walmsley@sifive.com>,
         Peter Zijlstra <peterz@infradead.org>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
-        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
-        Weijiang Yang <weijiang.yang@intel.com>
-References: <086c73d8-9b06-f074-e315-9964eb666db9@intel.com>
- <20200901102758.GY6642@arm.com>
- <c91bbad8-9e45-724b-4526-fe3674310c57@intel.com>
- <CALCETrWJQgtO_tP1pEaDYYsFgkZ=fOxhyTRE50THcxYoHyTTwg@mail.gmail.com>
- <32005d57-e51a-7c7f-4e86-612c2ff067f3@intel.com>
- <46dffdfd-92f8-0f05-6164-945f217b0958@intel.com>
- <ed929729-4677-3d3b-6bfd-b379af9272b8@intel.com>
- <6e1e22a5-1b7f-2783-351e-c8ed2d4893b8@intel.com>
- <5979c58d-a6e3-d14d-df92-72cdeb97298d@intel.com>
- <ab1a3344-60f4-9b9d-81d4-e6538fdcafcf@intel.com>
- <08c91835-8486-9da5-a7d1-75e716fc5d36@intel.com>
- <a881837d-c844-30e8-a614-8b92be814ef6@intel.com>
- <cbec8861-8722-ec31-2c02-1cfed20255eb@intel.com>
- <b3379d26-d8a7-deb7-59f1-c994bb297dcb@intel.com>
- <a1efc4330a3beff10671949eddbba96f8cde96da.camel@intel.com>
- <41aa5e8f-ad88-2934-6d10-6a78fcbe019b@intel.com>
- <CALCETrX5qJAZBe9sHL6+HFvre-bbo+us1==q9KHNCyRrzaUsjw@mail.gmail.com>
- <c61c9bf3-4097-089c-4e6d-d0ae0e4480f3@intel.com>
- <CALCETrXGSXzqdAOK7tnDDYMJ5Uj4=u=AEvgdroS3BxRoyO3r+g@mail.gmail.com>
-Message-ID: <35af3052-324f-06e3-5092-ac6d435f1725@intel.com>
-Date:   Wed, 16 Sep 2020 12:25:11 -0700
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101
+        Thomas Gleixner <tglx@linutronix.de>,
+        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
+        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
+        linux-arm-kernel@lists.infradead.org,
+        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
+        linux-kernel@vger.kernel.org, linux-nvdimm@lists.01.org,
+        linux-riscv@lists.infradead.org, x86@kernel.org
+References: <20200916073539.3552-1-rppt@kernel.org>
+ <20200916073539.3552-4-rppt@kernel.org>
+From:   Randy Dunlap <rdunlap@infradead.org>
+Message-ID: <6319035d-73db-4b4d-3fa7-aaa11d3843a0@infradead.org>
+Date:   Wed, 16 Sep 2020 08:59:37 -0700
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
  Thunderbird/68.12.0
 MIME-Version: 1.0
-In-Reply-To: <CALCETrXGSXzqdAOK7tnDDYMJ5Uj4=u=AEvgdroS3BxRoyO3r+g@mail.gmail.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
+In-Reply-To: <20200916073539.3552-4-rppt@kernel.org>
+Content-Type: text/plain; charset=utf-8
 Content-Language: en-US
 Content-Transfer-Encoding: 7bit
 Sender: linux-api-owner@vger.kernel.org
@@ -98,34 +85,68 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 9/16/2020 6:52 AM, Andy Lutomirski wrote:
-> On Mon, Sep 14, 2020 at 2:14 PM Dave Hansen <dave.hansen@intel.com> wrote:
->>
->> On 9/14/20 11:31 AM, Andy Lutomirski wrote:
->>> No matter what we do, the effects of calling vfork() are going to be a
->>> bit odd with SHSTK enabled.  I suppose we could disallow this, but
->>> that seems likely to cause its own issues.
->>
->> What's odd about it?  If you're a vfork()'d child, you can't touch the
->> stack at all, right?  If you do, you or your parent will probably die a
->> horrible death.
->>
+Hi Mike,
+
+
+On 9/16/20 12:35 AM, Mike Rapoport wrote:
+> From: Mike Rapoport <rppt@linux.ibm.com>
 > 
-> An evil program could vfork(), have the child do a bunch of returns
-> and a bunch of calls, and exit.  The net effect would be to change the
-> parent's shadow stack contents.  In a sufficiently strict model, this
-> is potentially problematic.
-
-When a vfork child returns, its parent's shadow stack pointer is where 
-it was before the child starts.  To move the shadow stack pointer and 
-re-use the content left by the child, the parent needs to use CALL, RET, 
-INCSSP, or RSTORSSP.  This seems to be difficult.
-
 > 
-> The question is: how much do we want to protect userspace from itself?
- >
-
-If any issue comes up, people can always find ways to counter it.
-
-> --Andy
+> Signed-off-by: Mike Rapoport <rppt@linux.ibm.com>
+> ---
+>  arch/Kconfig                   |   7 +
+>  arch/x86/Kconfig               |   1 +
+>  include/uapi/linux/magic.h     |   1 +
+>  include/uapi/linux/secretmem.h |   8 +
+>  kernel/sys_ni.c                |   2 +
+>  mm/Kconfig                     |   4 +
+>  mm/Makefile                    |   1 +
+>  mm/secretmem.c                 | 264 +++++++++++++++++++++++++++++++++
+>  8 files changed, 288 insertions(+)
+>  create mode 100644 include/uapi/linux/secretmem.h
+>  create mode 100644 mm/secretmem.c
 > 
+> diff --git a/arch/Kconfig b/arch/Kconfig
+> index af14a567b493..8d161bd4142d 100644
+> --- a/arch/Kconfig
+> +++ b/arch/Kconfig
+> @@ -975,6 +975,13 @@ config HAVE_SPARSE_SYSCALL_NR
+>  config ARCH_HAS_VDSO_DATA
+>  	bool
+>  
+> +config HAVE_SECRETMEM_UNCACHED
+> +       bool
+> +       help
+> +          An architecture can select this if its semantics of non-cached
+> +          mappings can be used to prevent speculative loads and it is
+> +          useful for secret protection.
+
+Please use tabs instead of spaces for indentation.
+
+> +
+>  source "kernel/gcov/Kconfig"
+>  
+>  source "scripts/gcc-plugins/Kconfig"
+
+> diff --git a/mm/Kconfig b/mm/Kconfig
+> index 6c974888f86f..70cfc20d7caa 100644
+> --- a/mm/Kconfig
+> +++ b/mm/Kconfig
+> @@ -868,4 +868,8 @@ config ARCH_HAS_HUGEPD
+>  config MAPPING_DIRTY_HELPERS
+>          bool
+>  
+> +config SECRETMEM
+> +        def_bool ARCH_HAS_SET_DIRECT_MAP && !EMBEDDED
+
+Use tab above for indentation.
+
+> +	select GENERIC_ALLOCATOR
+> +
+>  endmenu
+
+
+thanks.
+-- 
+~Randy
+
