@@ -2,128 +2,255 @@ Return-Path: <SRS0=vP9q=CZ=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-20.4 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT,
+	USER_IN_DEF_DKIM_WL autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 71759C433E2
-	for <linux-api@archiver.kernel.org>; Wed, 16 Sep 2020 18:09:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8724FC433E2
+	for <linux-api@archiver.kernel.org>; Wed, 16 Sep 2020 18:31:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3A08C20872
-	for <linux-api@archiver.kernel.org>; Wed, 16 Sep 2020 18:09:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4155B21D90
+	for <linux-api@archiver.kernel.org>; Wed, 16 Sep 2020 18:31:08 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="Ujz+S1Oq"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727709AbgIPSJf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 16 Sep 2020 14:09:35 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38994 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727376AbgIPSJT (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 16 Sep 2020 14:09:19 -0400
-Received: from smtp-bc0b.mail.infomaniak.ch (smtp-bc0b.mail.infomaniak.ch [IPv6:2001:1600:3:17::bc0b])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B803FC0086D2
-        for <linux-api@vger.kernel.org>; Wed, 16 Sep 2020 06:42:46 -0700 (PDT)
-Received: from smtp-2-0001.mail.infomaniak.ch (unknown [10.5.36.108])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4Bs1Vt66Xxzlhp2Z;
-        Wed, 16 Sep 2020 15:42:30 +0200 (CEST)
-Received: from ns3096276.ip-94-23-54.eu (unknown [94.23.54.103])
-        by smtp-2-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4Bs1Vr3lT6zlh8TV;
-        Wed, 16 Sep 2020 15:42:28 +0200 (CEST)
-Subject: Re: [PATCH v20 05/12] LSM: Infrastructure management of the
- superblock
-To:     Stephen Smalley <stephen.smalley.work@gmail.com>
-Cc:     Stephen Smalley <sds@tycho.nsa.gov>,
-        Casey Schaufler <casey@schaufler-ca.com>,
-        Kees Cook <keescook@chromium.org>,
-        John Johansen <john.johansen@canonical.com>,
-        linux-kernel <linux-kernel@vger.kernel.org>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Andy Lutomirski <luto@amacapital.net>,
-        Anton Ivanov <anton.ivanov@cambridgegreys.com>,
-        Arnd Bergmann <arnd@arndb.de>,
-        James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>,
-        Jeff Dike <jdike@addtoit.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Richard Weinberger <richard@nod.at>,
-        "Serge E . Hallyn" <serge@hallyn.com>,
-        Shuah Khan <shuah@kernel.org>,
-        Vincent Dagonneau <vincent.dagonneau@ssi.gouv.fr>,
-        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
-        linux-arch@vger.kernel.org, linux-doc@vger.kernel.org,
-        Linux FS Devel <linux-fsdevel@vger.kernel.org>,
-        linux-kselftest@vger.kernel.org,
-        LSM List <linux-security-module@vger.kernel.org>,
-        X86 ML <x86@kernel.org>
-References: <20200802215903.91936-1-mic@digikod.net>
- <20200802215903.91936-6-mic@digikod.net>
- <779c290b-45f5-b86c-c573-2edb4004105d@tycho.nsa.gov>
- <03f522c0-414c-434b-a0d1-57c3b17fa67f@digikod.net>
- <CAEjxPJ7POnxKy=5w-iQkKhjftxf2-=UuvA6D8EmhUPJyS1F6qg@mail.gmail.com>
- <CAEjxPJ7ARJO57MBW66=xsBzMMRb=9uLgqocK5eskHCaiVMx7Vw@mail.gmail.com>
-From:   =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Message-ID: <49fa967e-d60f-bd52-6fe3-c04fe56e20f6@digikod.net>
-Date:   Wed, 16 Sep 2020 15:42:28 +0200
-User-Agent: 
-MIME-Version: 1.0
-In-Reply-To: <CAEjxPJ7ARJO57MBW66=xsBzMMRb=9uLgqocK5eskHCaiVMx7Vw@mail.gmail.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 8bit
+        id S1727986AbgIPSaf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 16 Sep 2020 14:30:35 -0400
+Received: from linux.microsoft.com ([13.77.154.182]:37872 "EHLO
+        linux.microsoft.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728094AbgIPSaE (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 16 Sep 2020 14:30:04 -0400
+Received: from localhost.localdomain (unknown [47.187.206.220])
+        by linux.microsoft.com (Postfix) with ESMTPSA id 169662074C90;
+        Wed, 16 Sep 2020 08:08:37 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 169662074C90
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
+        s=default; t=1600268917;
+        bh=b+dZfSYt921SZbqVi9d6jmG8B2GKXdUDhoo8NhJxV+k=;
+        h=From:To:Subject:Date:In-Reply-To:References:From;
+        b=Ujz+S1OqtosPp/8L9N3unu6wuJGss69KS6W/GHWBWqM4qfdWcRG/EKRgUKJbOEORc
+         x+qd/TTcA8Trl1XdmvODaLvWIGzELcQgFeVjLlgZi8uYhTVxlKm7dCUF532grSOPqk
+         Po96nXGPIm2UK+uUyzCR1OmHS74BMY4y3GHpUvus=
+From:   madvenka@linux.microsoft.com
+To:     kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
+        linux-arm-kernel@lists.infradead.org,
+        linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org,
+        linux-kernel@vger.kernel.org,
+        linux-security-module@vger.kernel.org, oleg@redhat.com,
+        x86@kernel.org, madvenka@linux.microsoft.com
+Subject: [PATCH v2 4/4] [RFC] arm/trampfd: Provide support for the trampoline file descriptor
+Date:   Wed, 16 Sep 2020 10:08:26 -0500
+Message-Id: <20200916150826.5990-5-madvenka@linux.microsoft.com>
+X-Mailer: git-send-email 2.17.1
+In-Reply-To: <20200916150826.5990-1-madvenka@linux.microsoft.com>
+References: <210d7cd762d5307c2aa1676705b392bd445f1baa>
+ <20200916150826.5990-1-madvenka@linux.microsoft.com>
 Sender: linux-api-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+From: "Madhavan T. Venkataraman" <madvenka@linux.microsoft.com>
 
-On 04/09/2020 16:06, Stephen Smalley wrote:
-> On Thu, Aug 13, 2020 at 2:39 PM Stephen Smalley
-> <stephen.smalley.work@gmail.com> wrote:
->>
->> On Thu, Aug 13, 2020 at 10:17 AM Mickaël Salaün <mic@digikod.net> wrote:
->>>
->>>
->>> On 12/08/2020 21:16, Stephen Smalley wrote:
->>>> On 8/2/20 5:58 PM, Mickaël Salaün wrote:
->>>>> From: Casey Schaufler <casey@schaufler-ca.com>
->>>>>
->>>>> Move management of the superblock->sb_security blob out
->>>>> of the individual security modules and into the security
->>>>> infrastructure. Instead of allocating the blobs from within
->>>>> the modules the modules tell the infrastructure how much
->>>>> space is required, and the space is allocated there.
->>>>>
->>>>> Signed-off-by: Casey Schaufler <casey@schaufler-ca.com>
->>>>> Reviewed-by: Kees Cook <keescook@chromium.org>
->>>>> Reviewed-by: John Johansen <john.johansen@canonical.com>
->>>>> Reviewed-by: Stephen Smalley <sds@tycho.nsa.gov>
->>>>> Reviewed-by: Mickaël Salaün <mic@digikod.net>
->>>>> Link:
->>>>> https://lore.kernel.org/r/20190829232935.7099-2-casey@schaufler-ca.com
->>>>> ---
->>>>>
->>>>> Changes since v17:
->>>>> * Rebase the original LSM stacking patch from v5.3 to v5.7: I fixed some
->>>>>    diff conflicts caused by code moves and function renames in
->>>>>    selinux/include/objsec.h and selinux/hooks.c .  I checked that it
->>>>>    builds but I didn't test the changes for SELinux nor SMACK.
->>>>
->>>> You shouldn't retain Signed-off-by and Reviewed-by lines from an earlier
->>>> patch if you made non-trivial changes to it (even more so if you didn't
->>>> test them).
->>>
->>> I think I made trivial changes according to the original patch. But
->>> without reply from other people with Signed-off-by or Reviewed-by
->>> (Casey, Kees, John), I'll remove them. I guess you don't want your
->>> Reviewed-by to be kept, so I'll remove it, except if you want to review
->>> this patch (or the modified part).
->>
->> At the very least your Reviewed-by line is wrong - yours should be
->> Signed-off-by because the patch went through you and you modified it.
->> I'll try to take a look as time permits but FYI you should this
->> address (already updated in MAINTAINERS) going forward.
-> 
-> I finally got around to reviewing your updated patch.  You can drop
-> the old line and add:
-> Reviewed-by: Stephen Smalley <stephen.smalley.work@gmail.com>
-> 
+	- Define architecture specific register names
+	- Architecture specific functions for:
+		- system call init
+		- code descriptor check
+		- data descriptor check
+	- Fill a page with a trampoline table,
 
-Thanks! I'll send a new series soon.
+Signed-off-by: Madhavan T. Venkataraman <madvenka@linux.microsoft.com>
+---
+ arch/arm/include/uapi/asm/ptrace.h |  21 +++++
+ arch/arm/kernel/Makefile           |   1 +
+ arch/arm/kernel/trampfd.c          | 124 +++++++++++++++++++++++++++++
+ arch/arm/tools/syscall.tbl         |   1 +
+ 4 files changed, 147 insertions(+)
+ create mode 100644 arch/arm/kernel/trampfd.c
+
+diff --git a/arch/arm/include/uapi/asm/ptrace.h b/arch/arm/include/uapi/asm/ptrace.h
+index e61c65b4018d..598047768f9b 100644
+--- a/arch/arm/include/uapi/asm/ptrace.h
++++ b/arch/arm/include/uapi/asm/ptrace.h
+@@ -151,6 +151,27 @@ struct pt_regs {
+ #define ARM_r0		uregs[0]
+ #define ARM_ORIG_r0	uregs[17]
+ 
++/*
++ * These register names are to be used by 32-bit applications.
++ */
++enum reg_32_name {
++	arm_min,
++	arm_r0 = arm_min,
++	arm_r1,
++	arm_r2,
++	arm_r3,
++	arm_r4,
++	arm_r5,
++	arm_r6,
++	arm_r7,
++	arm_r8,
++	arm_r9,
++	arm_r10,
++	arm_r11,
++	arm_r12,
++	arm_max,
++};
++
+ /*
+  * The size of the user-visible VFP state as seen by PTRACE_GET/SETVFPREGS
+  * and core dumps.
+diff --git a/arch/arm/kernel/Makefile b/arch/arm/kernel/Makefile
+index 89e5d864e923..652c54c2f19a 100644
+--- a/arch/arm/kernel/Makefile
++++ b/arch/arm/kernel/Makefile
+@@ -105,5 +105,6 @@ obj-$(CONFIG_SMP)		+= psci_smp.o
+ endif
+ 
+ obj-$(CONFIG_HAVE_ARM_SMCCC)	+= smccc-call.o
++obj-$(CONFIG_TRAMPFD)		+= trampfd.o
+ 
+ extra-y := $(head-y) vmlinux.lds
+diff --git a/arch/arm/kernel/trampfd.c b/arch/arm/kernel/trampfd.c
+new file mode 100644
+index 000000000000..45146ed489e8
+--- /dev/null
++++ b/arch/arm/kernel/trampfd.c
+@@ -0,0 +1,124 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Trampoline FD - ARM support.
++ *
++ * Author: Madhavan T. Venkataraman (madvenka@linux.microsoft.com)
++ *
++ * Copyright (c) 2020, Microsoft Corporation.
++ */
++
++#include <linux/thread_info.h>
++#include <linux/trampfd.h>
++
++#define TRAMPFD_CODE_SIZE		28
++
++/*
++ * trampfd syscall.
++ */
++void trampfd_arch(struct trampfd_info *info)
++{
++	info->code_size = TRAMPFD_CODE_SIZE;
++	info->ntrampolines = PAGE_SIZE / info->code_size;
++	info->code_offset = TRAMPFD_CODE_PGOFF << PAGE_SHIFT;
++	info->reserved = 0;
++}
++
++/*
++ * trampfd code descriptor check.
++ */
++int trampfd_code_arch(struct trampfd_code *code)
++{
++	int	ntrampolines;
++	int	min, max;
++
++	min = arm_min;
++	max = arm_max;
++	ntrampolines = PAGE_SIZE / TRAMPFD_CODE_SIZE;
++
++	if (code->reg < min || code->reg >= max)
++		return -EINVAL;
++
++	if (!code->ntrampolines || code->ntrampolines > ntrampolines)
++		return -EINVAL;
++	return 0;
++}
++
++/*
++ * trampfd data descriptor check.
++ */
++int trampfd_data_arch(struct trampfd_data *data)
++{
++	int	min, max;
++
++	min = arm_min;
++	max = arm_max;
++
++	if (data->reg < min || data->reg >= max)
++		return -EINVAL;
++	return 0;
++}
++
++#define MOVW(ins, reg, imm32)						\
++{									\
++	u16	*_imm16 = (u16 *) &(imm32);	/* little endian */	\
++	int	_hw, _opcode;						\
++									\
++	for (_hw = 0; _hw < 2; _hw++) {					\
++		/* movw or movt */					\
++		_opcode = _hw ? 0xe3400000 : 0xe3000000;		\
++		*ins++ = _opcode | (_imm16[_hw] >> 12) << 16 |		\
++			 (reg) << 12 | (_imm16[_hw] & 0xFFF);		\
++	}								\
++}
++
++#define LDR(ins, reg)							\
++{									\
++	*ins++ = 0xe5900000 | (reg) << 16 | (reg) << 12;		\
++}
++
++#define BX(ins, reg)							\
++{									\
++	*ins++ = 0xe12fff10 | (reg);					\
++}
++
++void trampfd_code_fill(struct trampfd *trampfd, char *addr)
++{
++	char		*eaddr = addr + PAGE_SIZE;
++	int		creg = trampfd->code_reg - arm_min;
++	int		dreg = trampfd->data_reg - arm_min;
++	u32		*code = trampfd->code;
++	u32		*data = trampfd->data;
++	u32		*instruction = (u32 *) addr;
++	int		i;
++
++	for (i = 0; i < trampfd->ntrampolines; i++, code++, data++) {
++		/*
++		 * movw creg, code & 0xFFFF
++		 * movt creg, code >> 16
++		 */
++		MOVW(instruction, creg, code);
++
++		/*
++		 * ldr	creg, [creg]
++		 */
++		LDR(instruction, creg);
++
++		/*
++		 * movw dreg, data & 0xFFFF
++		 * movt dreg, data >> 16
++		 */
++		MOVW(instruction, dreg, data);
++
++		/*
++		 * ldr	dreg, [dreg]
++		 */
++		LDR(instruction, dreg);
++
++		/*
++		 * bx	creg
++		 */
++		BX(instruction, creg);
++	}
++	addr = (char *) instruction;
++	memset(addr, 0, eaddr - addr);
++}
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index d5cae5ffede0..85dcbc9e08ee 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -452,3 +452,4 @@
+ 437	common	openat2				sys_openat2
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
++440	common	trampfd				sys_trampfd
+-- 
+2.17.1
+
