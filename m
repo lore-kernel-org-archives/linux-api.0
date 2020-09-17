@@ -2,79 +2,133 @@ Return-Path: <SRS0=RkrY=C2=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1,USER_IN_DEF_DKIM_WL
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 970F5C433E2
-	for <linux-api@archiver.kernel.org>; Thu, 17 Sep 2020 18:50:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 312AEC43461
+	for <linux-api@archiver.kernel.org>; Thu, 17 Sep 2020 19:06:37 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 463F32075B
-	for <linux-api@archiver.kernel.org>; Thu, 17 Sep 2020 18:50:41 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="Bap21mAv"
+	by mail.kernel.org (Postfix) with ESMTP id F33D320672
+	for <linux-api@archiver.kernel.org>; Thu, 17 Sep 2020 19:06:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726475AbgIQSug (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 17 Sep 2020 14:50:36 -0400
-Received: from linux.microsoft.com ([13.77.154.182]:59626 "EHLO
-        linux.microsoft.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728481AbgIQQZG (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 17 Sep 2020 12:25:06 -0400
-Received: from [192.168.254.38] (unknown [47.187.206.220])
-        by linux.microsoft.com (Postfix) with ESMTPSA id 0C12120B7178;
-        Thu, 17 Sep 2020 08:57:20 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 0C12120B7178
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
-        s=default; t=1600358241;
-        bh=gUfIqFqpkrN0miyEH74CDfja3bpQECkvCujVL/Nljqg=;
-        h=Subject:From:To:Cc:References:Date:In-Reply-To:From;
-        b=Bap21mAvyeJKL22S4sguYInURgSgiXufpOk5kqSzqijlzRcX3iHUIe82IA0u8e5iF
-         HUp6Jh7UtZquNUVfdaJKc5R07sTADe2RHBpUNCP9wEbiLC2OnHb/EKxDlG4YI6Xwcj
-         FLLh69Sze7efG1K6kw3QGbPypJvP6/2ulwQipahs=
-Subject: Re: [PATCH v2 0/4] [RFC] Implement Trampoline File Descriptor
-From:   "Madhavan T. Venkataraman" <madvenka@linux.microsoft.com>
-To:     Florian Weimer <fw@deneb.enyo.de>
-Cc:     kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
-        linux-arm-kernel@lists.infradead.org,
-        linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org,
-        linux-kernel@vger.kernel.org,
-        linux-security-module@vger.kernel.org, oleg@redhat.com,
-        x86@kernel.org, libffi-discuss@sourceware.org
-References: <20200916150826.5990-1-madvenka@linux.microsoft.com>
- <87v9gdz01h.fsf@mid.deneb.enyo.de>
- <96ea02df-4154-5888-1669-f3beeed60b33@linux.microsoft.com>
-Message-ID: <d96b87ed-9869-c732-9938-a1c717a065f3@linux.microsoft.com>
-Date:   Thu, 17 Sep 2020 10:57:20 -0500
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.10.0
+        id S1726538AbgIQTGX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 17 Sep 2020 15:06:23 -0400
+Received: from brightrain.aerifal.cx ([216.12.86.13]:54466 "EHLO
+        brightrain.aerifal.cx" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726634AbgIQS6M (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 17 Sep 2020 14:58:12 -0400
+Date:   Thu, 17 Sep 2020 14:42:46 -0400
+From:   Rich Felker <dalias@libc.org>
+To:     Al Viro <viro@zeniv.linux.org.uk>
+Cc:     Christoph Hellwig <hch@infradead.org>, linux-api@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH v2 1/2] vfs: block chmod of symlinks
+Message-ID: <20200917184245.GW3265@brightrain.aerifal.cx>
+References: <20200916002157.GO3265@brightrain.aerifal.cx>
+ <20200916002253.GP3265@brightrain.aerifal.cx>
+ <20200916062553.GB27867@infradead.org>
+ <20200917040715.GS3421308@ZenIV.linux.org.uk>
+ <20200917041503.GT3421308@ZenIV.linux.org.uk>
 MIME-Version: 1.0
-In-Reply-To: <96ea02df-4154-5888-1669-f3beeed60b33@linux.microsoft.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20200917041503.GT3421308@ZenIV.linux.org.uk>
+User-Agent: Mutt/1.5.21 (2010-09-15)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-
-
-On 9/17/20 10:36 AM, Madhavan T. Venkataraman wrote:
->>> libffi
->>> ======
->>>
->>> I have implemented my solution for libffi and provided the changes for
->>> X86 and ARM, 32-bit and 64-bit. Here is the reference patch:
->>>
->>> http://linux.microsoft.com/~madvenka/libffi/libffi.v2.txt
->> The URL does not appear to work, I get a 403 error.
-> I apologize for that. That site is supposed to be accessible publicly.
-> I will contact the administrator and get this resolved.
+On Thu, Sep 17, 2020 at 05:15:03AM +0100, Al Viro wrote:
+> On Thu, Sep 17, 2020 at 05:07:15AM +0100, Al Viro wrote:
+> > On Wed, Sep 16, 2020 at 07:25:53AM +0100, Christoph Hellwig wrote:
+> > > On Tue, Sep 15, 2020 at 08:22:54PM -0400, Rich Felker wrote:
+> > > > It was discovered while implementing userspace emulation of fchmodat
+> > > > AT_SYMLINK_NOFOLLOW (using O_PATH and procfs magic symlinks; otherwise
+> > > > it's not possible to target symlinks with chmod operations) that some
+> > > > filesystems erroneously allow access mode of symlinks to be changed,
+> > > > but return failure with EOPNOTSUPP (see glibc issue #14578 and commit
+> > > > a492b1e5ef). This inconsistency is non-conforming and wrong, and the
+> > > > consensus seems to be that it was unintentional to allow link modes to
+> > > > be changed in the first place.
+> > > > 
+> > > > Signed-off-by: Rich Felker <dalias@libc.org>
+> > > > ---
+> > > >  fs/open.c | 6 ++++++
+> > > >  1 file changed, 6 insertions(+)
+> > > > 
+> > > > diff --git a/fs/open.c b/fs/open.c
+> > > > index 9af548fb841b..cdb7964aaa6e 100644
+> > > > --- a/fs/open.c
+> > > > +++ b/fs/open.c
+> > > > @@ -570,6 +570,12 @@ int chmod_common(const struct path *path, umode_t mode)
+> > > >  	struct iattr newattrs;
+> > > >  	int error;
+> > > >  
+> > > > +	/* Block chmod from getting to fs layer. Ideally the fs would either
+> > > > +	 * allow it or fail with EOPNOTSUPP, but some are buggy and return
+> > > > +	 * an error but change the mode, which is non-conforming and wrong. */
+> > > > +	if (S_ISLNK(inode->i_mode))
+> > > > +		return -EOPNOTSUPP;
+> > > 
+> > > Our usualy place for this would be setattr_prepare.  Also the comment
+> > > style is off, and I don't think we should talk about buggy file systems
+> > > here, but a policy to not allow the chmod.  I also suspect the right
+> > > error value is EINVAL - EOPNOTSUPP isn't really used in normal posix
+> > > file system interfaces.
+> > 
+> > Er...   Wasn't that an ACL-related crap?  XFS calling posix_acl_chmod()
+> > after it has committed to i_mode change, propagating the error to
+> > caller of ->notify_change(), IIRC...
+> > 
+> > Put it another way, why do we want
+> >         if (!inode->i_op->set_acl)
+> >                 return -EOPNOTSUPP;
+> > in posix_acl_chmod(), when we have
+> >         if (!IS_POSIXACL(inode))
+> >                 return 0;
+> > right next to it?  If nothing else, make that
+> > 	if (!IS_POSIXACL(inode) || !inode->i_op->get_acl)
+> > 		return 0;	// piss off - nothing to adjust here
 > 
-> Sorry for the annoyance.
+> Arrgh...  That'd break shmem and similar filesystems...  Still, it
+> feels like we should _not_ bother in cases when there's no ACL
+> for that sucker; after all, if get_acl() returns NULL, we quietly
+> return 0 and that's it.
 > 
+> How about something like this instead?
+> 
+> diff --git a/fs/posix_acl.c b/fs/posix_acl.c
+> index 95882b3f5f62..2339160fabab 100644
+> --- a/fs/posix_acl.c
+> +++ b/fs/posix_acl.c
+> @@ -559,8 +559,6 @@ posix_acl_chmod(struct inode *inode, umode_t mode)
+>  
+>  	if (!IS_POSIXACL(inode))
+>  		return 0;
+> -	if (!inode->i_op->set_acl)
+> -		return -EOPNOTSUPP;
+>  
+>  	acl = get_acl(inode, ACL_TYPE_ACCESS);
+>  	if (IS_ERR_OR_NULL(acl)) {
+> @@ -569,6 +567,10 @@ posix_acl_chmod(struct inode *inode, umode_t mode)
+>  		return PTR_ERR(acl);
+>  	}
+>  
+> +	if (!inode->i_op->set_acl) {
+> +		posix_acl_release(acl);
+> +		return -EOPNOTSUPP;
+> +	}
+>  	ret = __posix_acl_chmod(&acl, GFP_KERNEL, mode);
+>  	if (ret)
+>  		return ret;
 
-Could you try the link again and confirm that you can access it?
-Again, sorry for the trouble.
+Does this make chmod of links behave consistently (either succeeding
+with return value 0, or returning -EOPNOTSUPP without doing anything)
+for all filesystems? I'm fine with (and would probably prefer) this
+fix if it's a complete one. If this goes in I think my patch 1/2 can
+just be dropped and patch 2/2 behaves as intended; does that sound
+correct to you?
 
-Madhavan
+Rich
