@@ -6,65 +6,48 @@ X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3240DC43461
-	for <linux-api@archiver.kernel.org>; Thu, 17 Sep 2020 16:05:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8A325C43461
+	for <linux-api@archiver.kernel.org>; Thu, 17 Sep 2020 18:45:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E25F3222C8
-	for <linux-api@archiver.kernel.org>; Thu, 17 Sep 2020 16:05:16 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4A2FF206D4
+	for <linux-api@archiver.kernel.org>; Thu, 17 Sep 2020 18:45:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728278AbgIQQDU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 17 Sep 2020 12:03:20 -0400
-Received: from albireo.enyo.de ([37.24.231.21]:53170 "EHLO albireo.enyo.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728269AbgIQQDH (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 17 Sep 2020 12:03:07 -0400
-Received: from [172.17.203.2] (helo=deneb.enyo.de)
-        by albireo.enyo.de with esmtps (TLS1.3:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        id 1kIwLq-0001jb-Tk; Thu, 17 Sep 2020 16:01:38 +0000
-Received: from fw by deneb.enyo.de with local (Exim 4.92)
-        (envelope-from <fw@deneb.enyo.de>)
-        id 1kIwLq-0006JJ-P8; Thu, 17 Sep 2020 18:01:38 +0200
-From:   Florian Weimer <fw@deneb.enyo.de>
-To:     "Madhavan T. Venkataraman" <madvenka@linux.microsoft.com>
-Cc:     kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
+        id S1728683AbgIQQvf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 17 Sep 2020 12:51:35 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52926 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728680AbgIQQvE (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 17 Sep 2020 12:51:04 -0400
+Received: from ZenIV.linux.org.uk (zeniv.linux.org.uk [IPv6:2002:c35c:fd02::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 314B7C061756;
+        Thu, 17 Sep 2020 09:50:55 -0700 (PDT)
+Received: from viro by ZenIV.linux.org.uk with local (Exim 4.92.3 #3 (Red Hat Linux))
+        id 1kIx7R-000Vhx-9T; Thu, 17 Sep 2020 16:50:49 +0000
+Date:   Thu, 17 Sep 2020 17:50:49 +0100
+From:   Al Viro <viro@zeniv.linux.org.uk>
+To:     Christoph Hellwig <hch@lst.de>
+Cc:     x86@kernel.org, Jan Kara <jack@suse.com>,
         linux-arm-kernel@lists.infradead.org,
-        linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org,
-        linux-kernel@vger.kernel.org,
-        linux-security-module@vger.kernel.org, oleg@redhat.com,
-        x86@kernel.org, libffi-discuss@sourceware.org
-Subject: Re: [PATCH v2 0/4] [RFC] Implement Trampoline File Descriptor
-References: <20200916150826.5990-1-madvenka@linux.microsoft.com>
-        <87v9gdz01h.fsf@mid.deneb.enyo.de>
-        <96ea02df-4154-5888-1669-f3beeed60b33@linux.microsoft.com>
-        <d96b87ed-9869-c732-9938-a1c717a065f3@linux.microsoft.com>
-Date:   Thu, 17 Sep 2020 18:01:38 +0200
-In-Reply-To: <d96b87ed-9869-c732-9938-a1c717a065f3@linux.microsoft.com>
-        (Madhavan T. Venkataraman's message of "Thu, 17 Sep 2020 10:57:20
-        -0500")
-Message-ID: <87y2l8xuhp.fsf@mid.deneb.enyo.de>
+        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-arch@vger.kernel.org
+Subject: Re: [PATCH 1/3] compat: lift compat_s64 and compat_u64 to
+ <asm-generic/compat.h>
+Message-ID: <20200917165049.GV3421308@ZenIV.linux.org.uk>
+References: <20200917074159.2442167-1-hch@lst.de>
+ <20200917074159.2442167-2-hch@lst.de>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20200917074159.2442167-2-hch@lst.de>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-* Madhavan T. Venkataraman:
+On Thu, Sep 17, 2020 at 09:41:57AM +0200, Christoph Hellwig wrote:
+> lift the compat_s64 and compat_u64 definitions into common code using the
+> COMPAT_FOR_U64_ALIGNMENT symbol for the x86 special case.
 
-> On 9/17/20 10:36 AM, Madhavan T. Venkataraman wrote:
->>>> libffi
->>>> ======
->>>>
->>>> I have implemented my solution for libffi and provided the changes for
->>>> X86 and ARM, 32-bit and 64-bit. Here is the reference patch:
->>>>
->>>> http://linux.microsoft.com/~madvenka/libffi/libffi.v2.txt
->>> The URL does not appear to work, I get a 403 error.
->> I apologize for that. That site is supposed to be accessible publicly.
->> I will contact the administrator and get this resolved.
->> 
->> Sorry for the annoyance.
+OK...  Unlike the previous series it's not trying to wean arm64 off the
+direct includes of asm/compat.h, avoiding the breakage you've got there.
 
-> Could you try the link again and confirm that you can access it?
-> Again, sorry for the trouble.
-
-Yes, it works now.  Thanks for having it fixed.
+Looks sane, applied.
