@@ -2,41 +2,29 @@ Return-Path: <SRS0=J0k9=C3=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.1 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3579EC43465
-	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 21:21:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B71D3C43465
+	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 21:23:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 004EA222BB
-	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 21:21:42 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8388D23119
+	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 21:23:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726252AbgIRVVj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 18 Sep 2020 17:21:39 -0400
-Received: from mga02.intel.com ([134.134.136.20]:39891 "EHLO mga02.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726247AbgIRVVj (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 18 Sep 2020 17:21:39 -0400
-IronPort-SDR: /YNQjK+3CfGUAwbUQfkGYAZ53dm1qYamVyqqoLDI6HzqIqiodyvlX9vt5N81oy/t1oLXSPX9De
- BQoZU5nCnUdQ==
-X-IronPort-AV: E=McAfee;i="6000,8403,9748"; a="147718685"
-X-IronPort-AV: E=Sophos;i="5.77,274,1596524400"; 
-   d="scan'208";a="147718685"
-X-Amp-Result: SKIPPED(no attachment in message)
-X-Amp-File-Uploaded: False
-Received: from orsmga001.jf.intel.com ([10.7.209.18])
-  by orsmga101.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Sep 2020 14:21:24 -0700
-IronPort-SDR: cqPmBsZP+6LCDOndU195386/Bgju5YHVNwiypFk5BMbPE9dJG8qo+zu4vjlHNtpOUfjRfXM7d/
- s8nIq35e4evA==
-X-IronPort-AV: E=Sophos;i="5.77,274,1596524400"; 
-   d="scan'208";a="381051016"
-Received: from yyu32-mobl1.amr.corp.intel.com (HELO [10.212.0.248]) ([10.212.0.248])
-  by orsmga001-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Sep 2020 14:21:13 -0700
-Subject: Re: [PATCH v12 8/8] x86: Disallow vsyscall emulation when CET is
- enabled
-To:     Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>
-Cc:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
+        id S1726157AbgIRVXC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 18 Sep 2020 17:23:02 -0400
+Received: from jabberwock.ucw.cz ([46.255.230.98]:34998 "EHLO
+        jabberwock.ucw.cz" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726118AbgIRVXC (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 18 Sep 2020 17:23:02 -0400
+Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
+        id 0590D1C0B78; Fri, 18 Sep 2020 23:22:59 +0200 (CEST)
+Date:   Fri, 18 Sep 2020 23:22:58 +0200
+From:   Pavel Machek <pavel@ucw.cz>
+To:     "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
+Cc:     Dave Hansen <dave.hansen@intel.com>, x86@kernel.org,
+        "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
         Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
         linux-doc@vger.kernel.org, linux-mm@kvack.org,
@@ -61,51 +49,78 @@ Cc:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>
+Subject: Re: [PATCH v12 8/8] x86: Disallow vsyscall emulation when CET is
+ enabled
+Message-ID: <20200918212258.GD4304@duo.ucw.cz>
 References: <20200918192312.25978-1-yu-cheng.yu@intel.com>
  <20200918192312.25978-9-yu-cheng.yu@intel.com>
  <f02b511d-1d48-6dea-d2e6-84d58e21e6cd@intel.com>
  <20200918210026.GC4304@duo.ucw.cz>
-From:   "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
-Message-ID: <862eef02-eba2-e13f-ed67-f915f749ebca@intel.com>
-Date:   Fri, 18 Sep 2020 14:21:10 -0700
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101
- Thunderbird/68.12.0
+ <862eef02-eba2-e13f-ed67-f915f749ebca@intel.com>
 MIME-Version: 1.0
-In-Reply-To: <20200918210026.GC4304@duo.ucw.cz>
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="NklN7DEeGtkPCoo3"
+Content-Disposition: inline
+In-Reply-To: <862eef02-eba2-e13f-ed67-f915f749ebca@intel.com>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 9/18/2020 2:00 PM, Pavel Machek wrote:
-> On Fri 2020-09-18 12:32:57, Dave Hansen wrote:
->> On 9/18/20 12:23 PM, Yu-cheng Yu wrote:
->>> Emulation of the legacy vsyscall page is required by some programs
->>> built before 2013.  Newer programs after 2013 don't use it.
->>> Disable vsyscall emulation when Control-flow Enforcement (CET) is
->>> enabled to enhance security.
->>
->> How does this "enhance security"?
->>
->> What is the connection between vsyscall emulation and CET?
-> 
-> Boom.
-> 
-> We don't break compatibility by default, and you should not tell
-> people to enable CET by default if you plan to do this.
 
-I would revise the wording if there is another version.  What this patch 
-does is:
+--NklN7DEeGtkPCoo3
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-If an application is compiled for CET and the system supports it, then 
-the application cannot do vsyscall emulation.  Earlier we allow the 
-emulation, and had a patch that fixes the shadow stack and endbr for the 
-emulation code.  Since newer programs mostly do no do the emulation, we 
-changed the patch do block it when attempted.
+On Fri 2020-09-18 14:21:10, Yu, Yu-cheng wrote:
+> On 9/18/2020 2:00 PM, Pavel Machek wrote:
+> > On Fri 2020-09-18 12:32:57, Dave Hansen wrote:
+> > > On 9/18/20 12:23 PM, Yu-cheng Yu wrote:
+> > > > Emulation of the legacy vsyscall page is required by some programs
+> > > > built before 2013.  Newer programs after 2013 don't use it.
+> > > > Disable vsyscall emulation when Control-flow Enforcement (CET) is
+> > > > enabled to enhance security.
+> > >=20
+> > > How does this "enhance security"?
+> > >=20
+> > > What is the connection between vsyscall emulation and CET?
+> >=20
+> > Boom.
+> >=20
+> > We don't break compatibility by default, and you should not tell
+> > people to enable CET by default if you plan to do this.
+>=20
+> I would revise the wording if there is another version.  What this patch
+> does is:
+>=20
+> If an application is compiled for CET and the system supports it, then the
+> application cannot do vsyscall emulation.  Earlier we allow the emulation,
+> and had a patch that fixes the shadow stack and endbr for the emulation
+> code.  Since newer programs mostly do no do the emulation, we changed the
+> patch do block it when attempted.
+>=20
+> This patch would not block any legacy applications or any applications on
+> older machines.
 
-This patch would not block any legacy applications or any applications 
-on older machines.
+Aha, makes sense, sorry for the noise.
 
-Yu-cheng
+Best regards,
+									Pavel
+
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
+
+--NklN7DEeGtkPCoo3
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCX2UlMgAKCRAw5/Bqldv6
+8vVFAJ41iKxZD+QTSRHZvYWU+1CsdoJREgCcCLoiJeApvT43KAk2xvBWtw06jWU=
+=Yah9
+-----END PGP SIGNATURE-----
+
+--NklN7DEeGtkPCoo3--
