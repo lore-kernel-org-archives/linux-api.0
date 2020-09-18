@@ -4,36 +4,36 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 87649C43468
-	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 19:23:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 48ABDC43466
+	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 19:24:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5DA5E22208
-	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 19:23:58 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 11DC522208
+	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 19:24:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726472AbgIRTXu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 18 Sep 2020 15:23:50 -0400
-Received: from mga18.intel.com ([134.134.136.126]:41777 "EHLO mga18.intel.com"
+        id S1726794AbgIRTYO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 18 Sep 2020 15:24:14 -0400
+Received: from mga18.intel.com ([134.134.136.126]:41779 "EHLO mga18.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726335AbgIRTWW (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 18 Sep 2020 15:22:22 -0400
-IronPort-SDR: hdMID4K7dU421HJYmgr34wgJS/jasa4BeYQ8c6F7MYVQlNVDmTB9x4F8y/vyV9Ft+iaOR3IWM5
- 2mX1I9CdV4mA==
-X-IronPort-AV: E=McAfee;i="6000,8403,9748"; a="147766215"
+        id S1726554AbgIRTXF (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 18 Sep 2020 15:23:05 -0400
+IronPort-SDR: SQm0I4monXdsUcBpWCTK6dsG2bX+DMhvbpaeWZMforPZe0r7SUL1jzm0F4fhT6rFVo28lApv8u
+ uKS7mYOIz9Hg==
+X-IronPort-AV: E=McAfee;i="6000,8403,9748"; a="147766256"
 X-IronPort-AV: E=Sophos;i="5.77,274,1596524400"; 
-   d="scan'208";a="147766215"
+   d="scan'208";a="147766256"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Sep 2020 12:22:12 -0700
-IronPort-SDR: Uv2/h1uWrG4m+eQv8TmHVKUHEXdG/hZKUhwqON+hzzpOuGbh2hu9RyMNd7SeVDrp5WDoJAEzvM
- cl+FDUqCGeSA==
+  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Sep 2020 12:22:26 -0700
+IronPort-SDR: AanOZ7Dolnpten14T9jfbhDNVNCUtl0BfxRhKxQ4pDRPqz1x6+PH3A7fbT4kZxejdtbwpGPo+x
+ 2aManixdF9Qg==
 X-IronPort-AV: E=Sophos;i="5.77,274,1596524400"; 
-   d="scan'208";a="484331796"
+   d="scan'208";a="484331917"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Sep 2020 12:22:11 -0700
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Sep 2020 12:22:26 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,9 +61,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v12 01/26] Documentation/x86: Add CET description
-Date:   Fri, 18 Sep 2020 12:20:59 -0700
-Message-Id: <20200918192125.25473-2-yu-cheng.yu@intel.com>
+Subject: [PATCH v12 25/26] x86/cet/shstk: Add arch_prctl functions for shadow stack
+Date:   Fri, 18 Sep 2020 12:21:23 -0700
+Message-Id: <20200918192125.25473-26-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20200918192125.25473-1-yu-cheng.yu@intel.com>
 References: <20200918192125.25473-1-yu-cheng.yu@intel.com>
@@ -73,203 +73,210 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Explain no_user_shstk/no_user_ibt kernel parameters, and introduce a new
-document on Control-flow Enforcement Technology (CET).
+arch_prctl(ARCH_X86_CET_STATUS, u64 *args)
+    Get CET feature status.
+
+    The parameter 'args' is a pointer to a user buffer.  The kernel returns
+    the following information:
+
+    *args = shadow stack/IBT status
+    *(args + 1) = shadow stack base address
+    *(args + 2) = shadow stack size
+
+arch_prctl(ARCH_X86_CET_DISABLE, unsigned int features)
+    Disable CET features specified in 'features'.  Return -EPERM if CET is
+    locked.
+
+arch_prctl(ARCH_X86_CET_LOCK)
+    Lock in CET features.
+
+Also change do_arch_prctl_common()'s parameter 'cpuid_enabled' to
+'arg2', as it is now also passed to prctl_cet().
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
 v12:
-- Remove ARCH_X86_CET_MMAP_SHSTK information.
+- Remove ARCH_X86_CET_MMAP_SHSTK.
 
 v11:
-- Add back GLIBC tunables information.
-- Add ARCH_X86_CET_MMAP_SHSTK information.
+- Check input for invalid features.
+- Fix prctl_cet() return values.
+- Change ARCH_X86_CET_ALLOC_SHSTK to ARCH_X86_CET_MMAP_SHSTK to take
+  MAP_32BIT, MAP_POPULATE as inputs.
 
 v10:
-- Change no_cet_shstk and no_cet_ibt to no_user_shstk and no_user_ibt.
-- Remove the opcode section, as it is already in the Intel SDM.
-- Remove sections related to GLIBC implementation.
-- Remove shadow stack memory management section, as it is already in the
-  code comments.
-- Remove legacy bitmap related information, as it is not supported now.
-- Fix arch_ioctl() related text.
-- Change SHSTK, IBT to plain English.
+- Verify CET is enabled before handling arch_prctl.
+- Change input parameters from unsigned long to u64, to make it clear they
+  are 64-bit.
 
- .../admin-guide/kernel-parameters.txt         |   6 +
- Documentation/x86/index.rst                   |   1 +
- Documentation/x86/intel_cet.rst               | 133 ++++++++++++++++++
- 3 files changed, 140 insertions(+)
- create mode 100644 Documentation/x86/intel_cet.rst
+ arch/x86/include/asm/cet.h              |  3 ++
+ arch/x86/include/uapi/asm/prctl.h       |  4 ++
+ arch/x86/kernel/Makefile                |  2 +-
+ arch/x86/kernel/cet_prctl.c             | 68 +++++++++++++++++++++++++
+ arch/x86/kernel/process.c               |  6 +--
+ tools/arch/x86/include/uapi/asm/prctl.h |  4 ++
+ 6 files changed, 83 insertions(+), 4 deletions(-)
+ create mode 100644 arch/x86/kernel/cet_prctl.c
 
-diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index a1068742a6df..7c7124a6a7ac 100644
---- a/Documentation/admin-guide/kernel-parameters.txt
-+++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -3164,6 +3164,12 @@
- 			noexec=on: enable non-executable mappings (default)
- 			noexec=off: disable non-executable mappings
+diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+index 7a416c8af791..1ebe82416196 100644
+--- a/arch/x86/include/asm/cet.h
++++ b/arch/x86/include/asm/cet.h
+@@ -14,9 +14,11 @@ struct sc_ext;
+ struct cet_status {
+ 	unsigned long	shstk_base;
+ 	unsigned long	shstk_size;
++	unsigned int	locked:1;
+ };
  
-+	no_user_shstk	[X86-64] Disable Shadow Stack for user-mode
-+			applications
+ #ifdef CONFIG_X86_INTEL_CET
++int prctl_cet(int option, u64 arg2);
+ int cet_setup_shstk(void);
+ int cet_setup_thread_shstk(struct task_struct *p, unsigned long clone_flags);
+ void cet_disable_shstk(void);
+@@ -25,6 +27,7 @@ int cet_verify_rstor_token(bool ia32, unsigned long ssp, unsigned long *new_ssp)
+ void cet_restore_signal(struct sc_ext *sc);
+ int cet_setup_signal(bool ia32, unsigned long rstor, struct sc_ext *sc);
+ #else
++static inline int prctl_cet(int option, u64 arg2) { return -EINVAL; }
+ static inline int cet_setup_thread_shstk(struct task_struct *p,
+ 					 unsigned long clone_flags) { return 0; }
+ static inline void cet_disable_shstk(void) {}
+diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
+index 5a6aac9fa41f..9245bf629120 100644
+--- a/arch/x86/include/uapi/asm/prctl.h
++++ b/arch/x86/include/uapi/asm/prctl.h
+@@ -14,4 +14,8 @@
+ #define ARCH_MAP_VDSO_32	0x2002
+ #define ARCH_MAP_VDSO_64	0x2003
+ 
++#define ARCH_X86_CET_STATUS		0x3001
++#define ARCH_X86_CET_DISABLE		0x3002
++#define ARCH_X86_CET_LOCK		0x3003
 +
-+	no_user_ibt	[X86-64] Disable Indirect Branch Tracking for user-mode
-+			applications
-+
- 	nosmap		[X86,PPC]
- 			Disable SMAP (Supervisor Mode Access Prevention)
- 			even if it is supported by processor.
-diff --git a/Documentation/x86/index.rst b/Documentation/x86/index.rst
-index 265d9e9a093b..2aef972a868d 100644
---- a/Documentation/x86/index.rst
-+++ b/Documentation/x86/index.rst
-@@ -19,6 +19,7 @@ x86-specific Documentation
-    tlb
-    mtrr
-    pat
-+   intel_cet
-    intel-iommu
-    intel_txt
-    amd-memory-encryption
-diff --git a/Documentation/x86/intel_cet.rst b/Documentation/x86/intel_cet.rst
+ #endif /* _ASM_X86_PRCTL_H */
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index 76f27f518266..97556e4204d6 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -145,7 +145,7 @@ obj-$(CONFIG_UNWINDER_ORC)		+= unwind_orc.o
+ obj-$(CONFIG_UNWINDER_FRAME_POINTER)	+= unwind_frame.o
+ obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
+ 
+-obj-$(CONFIG_X86_INTEL_CET)		+= cet.o
++obj-$(CONFIG_X86_INTEL_CET)		+= cet.o cet_prctl.o
+ 
+ ###
+ # 64 bit specific files
+diff --git a/arch/x86/kernel/cet_prctl.c b/arch/x86/kernel/cet_prctl.c
 new file mode 100644
-index 000000000000..b57fcd6ed65c
+index 000000000000..3e1d049e65c3
 --- /dev/null
-+++ b/Documentation/x86/intel_cet.rst
-@@ -0,0 +1,133 @@
-+.. SPDX-License-Identifier: GPL-2.0
++++ b/arch/x86/kernel/cet_prctl.c
+@@ -0,0 +1,68 @@
++// SPDX-License-Identifier: GPL-2.0
 +
-+=========================================
-+Control-flow Enforcement Technology (CET)
-+=========================================
++#include <linux/errno.h>
++#include <linux/uaccess.h>
++#include <linux/prctl.h>
++#include <linux/compat.h>
++#include <linux/mman.h>
++#include <linux/elfcore.h>
++#include <asm/processor.h>
++#include <asm/prctl.h>
++#include <asm/cet.h>
 +
-+[1] Overview
-+============
++/* See Documentation/x86/intel_cet.rst. */
 +
-+Control-flow Enforcement Technology (CET) is an Intel processor feature
-+that provides protection against return/jump-oriented programming (ROP)
-+attacks.  It can be set up to protect both applications and the kernel.
-+Only user-mode protection is implemented in the 64-bit kernel, including
-+support for running legacy 32-bit applications.
++static int copy_status_to_user(struct cet_status *cet, u64 arg2)
++{
++	u64 buf[3] = {0, 0, 0};
 +
-+CET introduces Shadow Stack and Indirect Branch Tracking.  Shadow stack is
-+a secondary stack allocated from memory and cannot be directly modified by
-+applications.  When executing a CALL, the processor pushes the return
-+address to both the normal stack and the shadow stack.  Upon function
-+return, the processor pops the shadow stack copy and compares it to the
-+normal stack copy.  If the two differ, the processor raises a control-
-+protection fault.  Indirect branch tracking verifies indirect CALL/JMP
-+targets are intended as marked by the compiler with 'ENDBR' opcodes.
++	if (cet->shstk_size) {
++		buf[0] |= GNU_PROPERTY_X86_FEATURE_1_SHSTK;
++		buf[1] = (u64)cet->shstk_base;
++		buf[2] = (u64)cet->shstk_size;
++	}
 +
-+There are two kernel configuration options:
++	return copy_to_user((u64 __user *)arg2, buf, sizeof(buf));
++}
 +
-+    X86_INTEL_SHADOW_STACK_USER, and
-+    X86_INTEL_BRANCH_TRACKING_USER.
++int prctl_cet(int option, u64 arg2)
++{
++	struct cet_status *cet;
++	unsigned int features;
 +
-+These need to be enabled to build a CET-enabled kernel, and Binutils v2.31
-+and GCC v8.1 or later are required to build a CET kernel.  To build a CET-
-+enabled application, GLIBC v2.28 or later is also required.
++	/*
++	 * GLIBC's ENOTSUPP == EOPNOTSUPP == 95, and it does not recognize
++	 * the kernel's ENOTSUPP (524).  So return EOPNOTSUPP here.
++	 */
++	if (!IS_ENABLED(CONFIG_X86_INTEL_CET))
++		return -EOPNOTSUPP;
 +
-+There are two command-line options for disabling CET features::
++	cet = &current->thread.cet;
 +
-+    no_user_shstk - disables user shadow stack, and
-+    no_user_ibt   - disables user indirect branch tracking.
++	if (option == ARCH_X86_CET_STATUS)
++		return copy_status_to_user(cet, arg2);
 +
-+At run time, /proc/cpuinfo shows CET features if the processor supports
-+CET.
++	if (!static_cpu_has(X86_FEATURE_SHSTK))
++		return -EOPNOTSUPP;
 +
-+[2] Application Enabling
-+========================
++	switch (option) {
++	case ARCH_X86_CET_DISABLE:
++		if (cet->locked)
++			return -EPERM;
 +
-+An application's CET capability is marked in its ELF header and can be
-+verified from the following command output, in the NT_GNU_PROPERTY_TYPE_0
-+field:
++		features = (unsigned int)arg2;
 +
-+    readelf -n <application>
++		if (features & GNU_PROPERTY_X86_FEATURE_1_INVAL)
++			return -EINVAL;
++		if (features & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
++			cet_disable_shstk();
++		return 0;
 +
-+If an application supports CET and is statically linked, it will run with
-+CET protection.  If the application needs any shared libraries, the loader
-+checks all dependencies and enables CET when all requirements are met.
++	case ARCH_X86_CET_LOCK:
++		cet->locked = 1;
++		return 0;
 +
-+[3] Backward Compatibility
-+==========================
++	default:
++		return -ENOSYS;
++	}
++}
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index 1d292d0cfe8a..bd773036ed6b 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -976,14 +976,14 @@ unsigned long get_wchan(struct task_struct *p)
+ }
+ 
+ long do_arch_prctl_common(struct task_struct *task, int option,
+-			  unsigned long cpuid_enabled)
++			  unsigned long arg2)
+ {
+ 	switch (option) {
+ 	case ARCH_GET_CPUID:
+ 		return get_cpuid_mode();
+ 	case ARCH_SET_CPUID:
+-		return set_cpuid_mode(task, cpuid_enabled);
++		return set_cpuid_mode(task, arg2);
+ 	}
+ 
+-	return -EINVAL;
++	return prctl_cet(option, arg2);
+ }
+diff --git a/tools/arch/x86/include/uapi/asm/prctl.h b/tools/arch/x86/include/uapi/asm/prctl.h
+index 5a6aac9fa41f..9245bf629120 100644
+--- a/tools/arch/x86/include/uapi/asm/prctl.h
++++ b/tools/arch/x86/include/uapi/asm/prctl.h
+@@ -14,4 +14,8 @@
+ #define ARCH_MAP_VDSO_32	0x2002
+ #define ARCH_MAP_VDSO_64	0x2003
+ 
++#define ARCH_X86_CET_STATUS		0x3001
++#define ARCH_X86_CET_DISABLE		0x3002
++#define ARCH_X86_CET_LOCK		0x3003
 +
-+GLIBC provides a few tunables for backward compatibility.
-+
-+GLIBC_TUNABLES=glibc.tune.hwcaps=-SHSTK,-IBT
-+    Turn off SHSTK/IBT for the current shell.
-+
-+GLIBC_TUNABLES=glibc.tune.x86_shstk=<on, permissive>
-+    This controls how dlopen() handles SHSTK legacy libraries::
-+
-+        on         - continue with SHSTK enabled;
-+        permissive - continue with SHSTK off.
-+
-+[4] CET arch_prctl()'s
-+======================
-+
-+Several arch_prctl()'s have been added for CET:
-+
-+arch_prctl(ARCH_X86_CET_STATUS, u64 *addr)
-+    Return CET feature status.
-+
-+    The parameter 'addr' is a pointer to a user buffer.
-+    On returning to the caller, the kernel fills the following
-+    information::
-+
-+        *addr       = shadow stack/indirect branch tracking status
-+        *(addr + 1) = shadow stack base address
-+        *(addr + 2) = shadow stack size
-+
-+arch_prctl(ARCH_X86_CET_DISABLE, unsigned int features)
-+    Disable shadow stack and/or indirect branch tracking as specified in
-+    'features'.  Return -EPERM if CET is locked.
-+
-+arch_prctl(ARCH_X86_CET_LOCK)
-+    Lock in all CET features.  They cannot be turned off afterwards.
-+
-+Note:
-+  There is no CET-enabling arch_prctl function.  By design, CET is enabled
-+  automatically if the binary and the system can support it.
-+
-+[5] The implementation of the Shadow Stack
-+==========================================
-+
-+Shadow Stack size
-+-----------------
-+
-+A task's shadow stack is allocated from memory to a fixed size of
-+MIN(RLIMIT_STACK, 4 GB).  In other words, the shadow stack is allocated to
-+the maximum size of the normal stack, but capped to 4 GB.  However,
-+a compat-mode application's address space is smaller, each of its thread's
-+shadow stack size is MIN(1/4 RLIMIT_STACK, 4 GB).
-+
-+Signal
-+------
-+
-+The main program and its signal handlers use the same shadow stack.
-+Because the shadow stack stores only return addresses, a large shadow
-+stack covers the condition that both the program stack and the signal
-+alternate stack run out.
-+
-+The kernel creates a restore token for the shadow stack restoring address
-+and verifies that token when restoring from the signal handler.
-+
-+Fork
-+----
-+
-+The shadow stack's vma has VM_SHSTK flag set; its PTEs are required to be
-+read-only and dirty.  When a shadow stack PTE is not RO and dirty, a
-+shadow access triggers a page fault with the shadow stack access bit set
-+in the page fault error code.
-+
-+When a task forks a child, its shadow stack PTEs are copied and both the
-+parent's and the child's shadow stack PTEs are cleared of the dirty bit.
-+Upon the next shadow stack access, the resulting shadow stack page fault
-+is handled by page copy/re-use.
-+
-+When a pthread child is created, the kernel allocates a new shadow stack
-+for the new thread.
+ #endif /* _ASM_X86_PRCTL_H */
 -- 
 2.21.0
 
