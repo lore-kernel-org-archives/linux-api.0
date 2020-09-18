@@ -2,50 +2,77 @@ Return-Path: <SRS0=J0k9=C3=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.2 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-3.6 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6CBE4C43464
-	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 20:25:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2BEABC43463
+	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 21:06:43 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 139D620789
-	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 20:25:01 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DA08223119
+	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 21:06:42 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="RQptF1yK"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="IWLwt/Jb"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726299AbgIRUY5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 18 Sep 2020 16:24:57 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54466 "EHLO
+        id S1726250AbgIRVGj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 18 Sep 2020 17:06:39 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60982 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726118AbgIRUY5 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 18 Sep 2020 16:24:57 -0400
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BEBF7C0613CE;
-        Fri, 18 Sep 2020 13:24:54 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:Content-Type:
-        In-Reply-To:MIME-Version:Date:Message-ID:From:References:To:Subject:Sender:
-        Reply-To:Cc:Content-ID:Content-Description;
-        bh=yAMhSupJBbZkPaKwYOyhZeq16yiQVbhqGBu9I9QwZJ8=; b=RQptF1yKQdaMfvH2IgafRgkWxV
-        mb4GAZQaANOjCgO0bQShHHOeqS2Fcp47TLzLJDI7JZziWojmB1dMU84PNmdHFX1i32Gzma+r59q3u
-        GMwDCEfkbwLX9j/GqqUmQGvVQeEDoFXotxbPGssyVoNds3EbNvzI9g1X7+bPPyGT6enQhQZMr+C3F
-        pt6pAhDnei4+UsHrvmwbIz77O0NrQp9r+A7ma4dnzItBuSqCjJrl+U2ojV0opWzF1X+dzvOk87QG3
-        UTXBWdFVyKRX+mCkCmNvb96C24bp866cQi972lyvXFgg4J0TsaCmL5ee5aYdFV/ivgsIGiYfQFz2H
-        9i++2+3g==;
-Received: from [2601:1c0:6280:3f0::19c2]
-        by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1kJMve-0005x8-EQ; Fri, 18 Sep 2020 20:24:22 +0000
-Subject: Re: [PATCH v12 1/8] x86/cet/ibt: Add Kconfig option for user-mode
- Indirect Branch Tracking
-To:     Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org,
+        with ESMTP id S1726118AbgIRVGi (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 18 Sep 2020 17:06:38 -0400
+Received: from mail-io1-xd42.google.com (mail-io1-xd42.google.com [IPv6:2607:f8b0:4864:20::d42])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A8AEDC0613CE;
+        Fri, 18 Sep 2020 14:06:38 -0700 (PDT)
+Received: by mail-io1-xd42.google.com with SMTP id y74so8460856iof.12;
+        Fri, 18 Sep 2020 14:06:38 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=MvHhXjI9PINmG+l6DCDjKQZbsTRKGGMkTBP5zN5aSFQ=;
+        b=IWLwt/JbdMSRpT6Wv3WAyCBN9qFCREgWtJcF0R1RIzLVY0SISm4RFwHsdcXIdL5d4E
+         Yy7/2s+LDlk/87c0Fp+tQVi0zmDpn6GNtT8zIFczwsT7f4zqRnFy453Wbrx2aO+2VbVj
+         vdaq2zhFJLmSjCLU0mocGAmtZoaaUK6RKO8Qz0A7yeJUTDJbRPhXHIh5ZOcHlXUvXFk3
+         LUOd/Bi9DKb0KWJIFqeinsKHmFCXFee6BbXLTqIXmNkioPBdjnv37wleZo/wrgkqn1NX
+         72vkgJhAipRe1DB64E2Yesd7jEdncu2/Nm2GU5jxRqcToMVoB7Ia5jtjXQAZwflWHYOc
+         Ckjw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=MvHhXjI9PINmG+l6DCDjKQZbsTRKGGMkTBP5zN5aSFQ=;
+        b=A/WFCEewpv/hVP+yj013d7fyobtZY8fzFKEx4Junlhi7DrYSak7z3b0OLVahYulrHB
+         8NFC6b6mNd7Lg5G6mwHrfT+pLbyzV96qZKN//EwbDgSCAQjNhORLMHUNyS2FKZWIyxJk
+         Fwmrq0DlLMkxwM4DgFZu9OX4Xph7r12OwbM5AZoOtEqeGG3XGY97Wjc5gjc+3+W0d22c
+         MGUl/FltLIoTeJuPOhJrMiqcgdDDTopfSSKUMCyffb5xylQpPxRIkFHanGHhLRqjgDYn
+         K+UNQWnsr1jsKXu+vqb9GW7A8a27SKRn9slONAWBTY9KActvTnBsEwoIXvZer2dGEzu3
+         5Xrw==
+X-Gm-Message-State: AOAM531ceTPCGYCq7GYxVopo4hkPHCdZ4yuRW3CTkWOJHw1eUkvzV73r
+        W/vrN/MLASot8dzmTKH08JwEr2HMjIHIuIuMrXM=
+X-Google-Smtp-Source: ABdhPJz3m6rfOxVGTE582qPYyesCg/UTfBm54/gjoz20D1+b0ua1bBFx46wx6IdHom/D2OhPgwwR2gJWI9CZGMjZWXc=
+X-Received: by 2002:a5e:9e4c:: with SMTP id j12mr29230986ioq.37.1600463197971;
+ Fri, 18 Sep 2020 14:06:37 -0700 (PDT)
+MIME-Version: 1.0
+References: <20200918192312.25978-1-yu-cheng.yu@intel.com> <20200918192312.25978-9-yu-cheng.yu@intel.com>
+ <f02b511d-1d48-6dea-d2e6-84d58e21e6cd@intel.com> <20200918210026.GC4304@duo.ucw.cz>
+In-Reply-To: <20200918210026.GC4304@duo.ucw.cz>
+From:   "H.J. Lu" <hjl.tools@gmail.com>
+Date:   Fri, 18 Sep 2020 14:06:02 -0700
+Message-ID: <CAMe9rOrHCE51dKSz3fPXG-ORNim_Ok7rtwQxnudH9et4ecHBRA@mail.gmail.com>
+Subject: Re: [PATCH v12 8/8] x86: Disallow vsyscall emulation when CET is enabled
+To:     Pavel Machek <pavel@ucw.cz>
+Cc:     Dave Hansen <dave.hansen@intel.com>,
+        Yu-cheng Yu <yu-cheng.yu@intel.com>,
+        "the arch/x86 maintainers" <x86@kernel.org>,
         "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-doc@vger.kernel.org, linux-mm@kvack.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        Ingo Molnar <mingo@redhat.com>,
+        LKML <linux-kernel@vger.kernel.org>,
+        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
+        Linux-MM <linux-mm@kvack.org>,
+        linux-arch <linux-arch@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
         Arnd Bergmann <arnd@arndb.de>,
         Andy Lutomirski <luto@kernel.org>,
         Balbir Singh <bsingharora@gmail.com>,
@@ -54,87 +81,43 @@ To:     Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org,
         Dave Hansen <dave.hansen@linux.intel.com>,
         Eugene Syromiatnikov <esyr@redhat.com>,
         Florian Weimer <fweimer@redhat.com>,
-        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
-        Jonathan Corbet <corbet@lwn.net>,
+        Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
         Kees Cook <keescook@chromium.org>,
         Mike Kravetz <mike.kravetz@oracle.com>,
         Nadav Amit <nadav.amit@gmail.com>,
-        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Oleg Nesterov <oleg@redhat.com>,
         Peter Zijlstra <peterz@infradead.org>,
+        Randy Dunlap <rdunlap@infradead.org>,
         "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
         Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>
-References: <20200918192312.25978-1-yu-cheng.yu@intel.com>
- <20200918192312.25978-2-yu-cheng.yu@intel.com>
-From:   Randy Dunlap <rdunlap@infradead.org>
-Message-ID: <ce2524cc-081b-aec9-177a-11c7431cb20d@infradead.org>
-Date:   Fri, 18 Sep 2020 13:24:13 -0700
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.12.0
-MIME-Version: 1.0
-In-Reply-To: <20200918192312.25978-2-yu-cheng.yu@intel.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi,
+On Fri, Sep 18, 2020 at 2:00 PM Pavel Machek <pavel@ucw.cz> wrote:
+>
+> On Fri 2020-09-18 12:32:57, Dave Hansen wrote:
+> > On 9/18/20 12:23 PM, Yu-cheng Yu wrote:
+> > > Emulation of the legacy vsyscall page is required by some programs
+> > > built before 2013.  Newer programs after 2013 don't use it.
+> > > Disable vsyscall emulation when Control-flow Enforcement (CET) is
+> > > enabled to enhance security.
+> >
+> > How does this "enhance security"?
+> >
+> > What is the connection between vsyscall emulation and CET?
+>
+> Boom.
+>
+> We don't break compatibility by default, and you should not tell
+> people to enable CET by default if you plan to do this.
+>
 
-If you do another version of this:
-
-On 9/18/20 12:23 PM, Yu-cheng Yu wrote:
-> Introduce Kconfig option X86_INTEL_BRANCH_TRACKING_USER.
-> 
-> Indirect Branch Tracking (IBT) provides protection against CALL-/JMP-
-> oriented programming attacks.  It is active when the kernel has this
-> feature enabled, and the processor and the application support it.
-> When this feature is enabled, legacy non-IBT applications continue to
-> work, but without IBT protection.
-> 
-> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-> ---
-> v10:
-> - Change build-time CET check to config depends on.
-> 
->  arch/x86/Kconfig | 16 ++++++++++++++++
->  1 file changed, 16 insertions(+)
-> 
-> diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-> index 6b6dad011763..b047e0a8d1c2 100644
-> --- a/arch/x86/Kconfig
-> +++ b/arch/x86/Kconfig
-> @@ -1963,6 +1963,22 @@ config X86_INTEL_SHADOW_STACK_USER
->  
->  	  If unsure, say y.
->  
-> +config X86_INTEL_BRANCH_TRACKING_USER
-> +	prompt "Intel Indirect Branch Tracking for user-mode"
-> +	def_bool n
-> +	depends on CPU_SUP_INTEL && X86_64
-> +	depends on $(cc-option,-fcf-protection)
-> +	select X86_INTEL_CET
-> +	help
-> +	  Indirect Branch Tracking (IBT) provides protection against
-> +	  CALL-/JMP-oriented programming attacks.  It is active when
-> +	  the kernel has this feature enabled, and the processor and
-> +	  the application support it.  When this feature is enabled,
-> +	  legacy non-IBT applications continue to work, but without
-> +	  IBT protection.
-> +
-> +	  If unsure, say y
-
-	  If unsure, say y.
-
-> +
->  config EFI
->  	bool "EFI runtime service support"
->  	depends on ACPI
-> 
-
+Nothing will be broken.   CET enabled applications don't use/need
+vsyscall emulation.
 
 -- 
-~Randy
-
+H.J.
