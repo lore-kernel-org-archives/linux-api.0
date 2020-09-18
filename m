@@ -7,33 +7,33 @@ X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 01E8AC43469
-	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 19:24:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A8EDEC4346F
+	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 19:24:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C2AAD221EC
-	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 19:24:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 81CAC2311D
+	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 19:24:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726840AbgIRTYR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 18 Sep 2020 15:24:17 -0400
+        id S1726829AbgIRTYQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 18 Sep 2020 15:24:16 -0400
 Received: from mga14.intel.com ([192.55.52.115]:44701 "EHLO mga14.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726811AbgIRTYP (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 18 Sep 2020 15:24:15 -0400
-IronPort-SDR: 0QRhzVnerpejLKrcHfe5P6VW5obmHdo/P1uWx+M5KbheIsp5rOFBBMlKrq5cAa76zAu2fmRFc3
- 5aSWlYM6b7Nw==
-X-IronPort-AV: E=McAfee;i="6000,8403,9748"; a="159330654"
+        id S1726332AbgIRTYO (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 18 Sep 2020 15:24:14 -0400
+IronPort-SDR: eDAPw26xU4BCdW1uhWBP1P56PUqz83NfDf1hsE4oBoMK7c+Vhsak0HGGqZ+zL9bCpW3v8Cq+7O
+ XxiOUHjS+q9w==
+X-IronPort-AV: E=McAfee;i="6000,8403,9748"; a="159330618"
 X-IronPort-AV: E=Sophos;i="5.77,274,1596524400"; 
-   d="scan'208";a="159330654"
+   d="scan'208";a="159330618"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Sep 2020 12:23:32 -0700
-IronPort-SDR: Nho7nHA5b5XpzAcHxNEw5h09TPc6KRo+anc12hycz+GZPgKxhymLdoeYO7wmK796bYz31fYQd8
- QCN2mRkHYjLg==
+  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Sep 2020 12:23:30 -0700
+IronPort-SDR: ImL7SPJ85D04MoBJQKtfrY5bdV9+R3VtlvS/XuxKBDEKgQIvwGViS/Zt72oqhYvbrMi5RElAdY
+ b7Uqh8S/83NQ==
 X-IronPort-AV: E=Sophos;i="5.77,274,1596524400"; 
-   d="scan'208";a="484332829"
+   d="scan'208";a="484332775"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Sep 2020 12:23:32 -0700
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Sep 2020 12:23:29 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,9 +61,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v12 8/8] x86: Disallow vsyscall emulation when CET is enabled
-Date:   Fri, 18 Sep 2020 12:23:12 -0700
-Message-Id: <20200918192312.25978-9-yu-cheng.yu@intel.com>
+Subject: [PATCH v12 4/8] x86/cet/ibt: ELF header parsing for Indirect Branch Tracking
+Date:   Fri, 18 Sep 2020 12:23:08 -0700
+Message-Id: <20200918192312.25978-5-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20200918192312.25978-1-yu-cheng.yu@intel.com>
 References: <20200918192312.25978-1-yu-cheng.yu@intel.com>
@@ -73,39 +73,49 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Emulation of the legacy vsyscall page is required by some programs
-built before 2013.  Newer programs after 2013 don't use it.
-Disable vsyscall emulation when Control-flow Enforcement (CET) is
-enabled to enhance security.
+Update arch_setup_elf_property() for Indirect Branch Tracking.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
-v12:
-- Disable vsyscall emulation only when it is attempted (vs. at compile time).
+v9:
+- Change cpu_feature_enabled() to static_cpu_has().
 
- arch/x86/entry/vsyscall/vsyscall_64.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ arch/x86/Kconfig             | 2 ++
+ arch/x86/kernel/process_64.c | 8 ++++++++
+ 2 files changed, 10 insertions(+)
 
-diff --git a/arch/x86/entry/vsyscall/vsyscall_64.c b/arch/x86/entry/vsyscall/vsyscall_64.c
-index 44c33103a955..3196e963e365 100644
---- a/arch/x86/entry/vsyscall/vsyscall_64.c
-+++ b/arch/x86/entry/vsyscall/vsyscall_64.c
-@@ -150,6 +150,15 @@ bool emulate_vsyscall(unsigned long error_code,
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index b047e0a8d1c2..5bd6d6a10047 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1969,6 +1969,8 @@ config X86_INTEL_BRANCH_TRACKING_USER
+ 	depends on CPU_SUP_INTEL && X86_64
+ 	depends on $(cc-option,-fcf-protection)
+ 	select X86_INTEL_CET
++	select ARCH_USE_GNU_PROPERTY
++	select ARCH_BINFMT_ELF_STATE
+ 	help
+ 	  Indirect Branch Tracking (IBT) provides protection against
+ 	  CALL-/JMP-oriented programming attacks.  It is active when
+diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
+index fd4644865a3b..c084e1a37d11 100644
+--- a/arch/x86/kernel/process_64.c
++++ b/arch/x86/kernel/process_64.c
+@@ -866,6 +866,14 @@ int arch_setup_elf_property(struct arch_elf_state *state)
+ 			r = cet_setup_shstk();
+ 	}
  
- 	WARN_ON_ONCE(address != regs->ip);
- 
-+#ifdef CONFIG_X86_INTEL_CET
-+	if (current->thread.cet.shstk_size ||
-+	    current->thread.cet.ibt_enabled) {
-+		warn_bad_vsyscall(KERN_INFO, regs,
-+				  "vsyscall attempted with cet enabled");
-+		return false;
-+	}
-+#endif
++	if (r < 0)
++		return r;
 +
- 	if (vsyscall_mode == NONE) {
- 		warn_bad_vsyscall(KERN_INFO, regs,
- 				  "vsyscall attempted with vsyscall=none");
++	if (static_cpu_has(X86_FEATURE_IBT)) {
++		if (state->gnu_property & GNU_PROPERTY_X86_FEATURE_1_IBT)
++			r = cet_setup_ibt();
++	}
++
+ 	return r;
+ }
+ #endif
 -- 
 2.21.0
 
