@@ -7,45 +7,46 @@ X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1B539C43464
-	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 02:39:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4FA2BC43465
+	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 02:48:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D517123772
-	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 02:39:21 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1078F235F8
+	for <linux-api@archiver.kernel.org>; Fri, 18 Sep 2020 02:48:15 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1600396761;
-	bh=R+FcVsk4idUsCIqnF7xfPVNJV0Y4c5vyctAqVvnmUIM=;
+	s=default; t=1600397295;
+	bh=JYuoka6Dcpa7rPPX+K0pgm8y9LHlMras/8gA7lLYGAY=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
-	b=CJpwQ5KKiED2eQBMqg579tWQo4Aimb4fD5ALQiajp30IBxjqrCATRihcGZqz4cITq
-	 6d4NB/xY38t7eIcsmRWYm/bvjSfp5t5qVIx4FtubMRUPYwcjS/PlURCSf0Z/UFeA1G
-	 w1aOb7B92zL0Qde4/AYUTNL4JakwX+VUU5l/kdCQ=
+	b=KmOVTGEcQtx8NcrRbhYGG+LEd9rnJqviPAu6nZ5oVeG9JuTPnOxiCUugbrmXhg/PV
+	 8/HFXFzR9Bgz/GwLbMMz4A4YLh/5aB/hT0fGfy2arPDD1JoIN75H/ePiSP4Kh/kh4y
+	 lZhbf2gzG7b7om5YSpO+u4vJi7RyRTLlofipahxM=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728746AbgIRCjB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 17 Sep 2020 22:39:01 -0400
-Received: from mail.kernel.org ([198.145.29.99]:38354 "EHLO mail.kernel.org"
+        id S1727318AbgIRCJT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 17 Sep 2020 22:09:19 -0400
+Received: from mail.kernel.org ([198.145.29.99]:32828 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728743AbgIRCMK (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 17 Sep 2020 22:12:10 -0400
+        id S1728262AbgIRCJR (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 17 Sep 2020 22:09:17 -0400
 Received: from sasha-vm.mshome.net (c-73-47-72-35.hsd1.nh.comcast.net [73.47.72.35])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id B1319208E4;
-        Fri, 18 Sep 2020 02:12:09 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 1F23E23976;
+        Fri, 18 Sep 2020 02:09:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1600395130;
-        bh=R+FcVsk4idUsCIqnF7xfPVNJV0Y4c5vyctAqVvnmUIM=;
+        s=default; t=1600394956;
+        bh=JYuoka6Dcpa7rPPX+K0pgm8y9LHlMras/8gA7lLYGAY=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=oVz1Iq8H7TP2zQe4IVm6ZK7yfjeGfTnvQ1T2ycaDJWqwAtwakEvtIPCwITdLNgp4V
-         sbKcDbIdLQfJacR2rRtgANAH9DERXgJ9mhilC2tO8//cOoJ6KSh+dVSWtUw3t3lYL2
-         UPbjtccjyLn5oZSY0WRsqgRSAHiW9AZ+oPdl+Afc=
+        b=JpNlqPiTCgUm2WmrTfFSnl33FR0dGLbN2HHgsmJ4Gz+e4tsTHtqE8ceN1S3t5hatS
+         UjPrAevXFfRX3DlO6Y4Jq8u4qF6s2pSx2R5mmSfwVnXDuGlFuW2EH+n8sJKGLD77lK
+         EbwsZUN39xGaUO/RJXIJY9R3Casz7s51QlqtEThc=
 From:   Sasha Levin <sashal@kernel.org>
 To:     linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc:     Andy Lutomirski <luto@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
+Cc:     Sven Schnelle <svens@linux.ibm.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Shuah Khan <skhan@linuxfoundation.org>,
         Sasha Levin <sashal@kernel.org>, linux-api@vger.kernel.org
-Subject: [PATCH AUTOSEL 4.19 200/206] selftests/x86/syscall_nt: Clear weird flags after each test
-Date:   Thu, 17 Sep 2020 22:07:56 -0400
-Message-Id: <20200918020802.2065198-200-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 4.19 063/206] selftests/ftrace: fix glob selftest
+Date:   Thu, 17 Sep 2020 22:05:39 -0400
+Message-Id: <20200918020802.2065198-63-sashal@kernel.org>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20200918020802.2065198-1-sashal@kernel.org>
 References: <20200918020802.2065198-1-sashal@kernel.org>
@@ -57,33 +58,37 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Andy Lutomirski <luto@kernel.org>
+From: Sven Schnelle <svens@linux.ibm.com>
 
-[ Upstream commit a61fa2799ef9bf6c4f54cf7295036577cececc72 ]
+[ Upstream commit af4ddd607dff7aabd466a4a878e01b9f592a75ab ]
 
-Clear the weird flags before logging to improve strace output --
-logging results while, say, TF is set does no one any favors.
+test.d/ftrace/func-filter-glob.tc is failing on s390 because it has
+ARCH_INLINE_SPIN_LOCK and friends set to 'y'. So the usual
+__raw_spin_lock symbol isn't in the ftrace function list. Change
+'*aw*lock' to '*spin*lock' which would hopefully match some of the
+locking functions on all platforms.
 
-Signed-off-by: Andy Lutomirski <luto@kernel.org>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Link: https://lkml.kernel.org/r/907bfa5a42d4475b8245e18b67a04b13ca51ffdb.1593191971.git.luto@kernel.org
+Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+Signed-off-by: Sven Schnelle <svens@linux.ibm.com>
+Signed-off-by: Shuah Khan <skhan@linuxfoundation.org>
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- tools/testing/selftests/x86/syscall_nt.c | 1 +
- 1 file changed, 1 insertion(+)
+ .../testing/selftests/ftrace/test.d/ftrace/func-filter-glob.tc  | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/tools/testing/selftests/x86/syscall_nt.c b/tools/testing/selftests/x86/syscall_nt.c
-index 43fcab367fb0a..74e6b3fc2d09e 100644
---- a/tools/testing/selftests/x86/syscall_nt.c
-+++ b/tools/testing/selftests/x86/syscall_nt.c
-@@ -67,6 +67,7 @@ static void do_it(unsigned long extraflags)
- 	set_eflags(get_eflags() | extraflags);
- 	syscall(SYS_getpid);
- 	flags = get_eflags();
-+	set_eflags(X86_EFLAGS_IF | X86_EFLAGS_FIXED);
- 	if ((flags & extraflags) == extraflags) {
- 		printf("[OK]\tThe syscall worked and flags are still set\n");
- 	} else {
+diff --git a/tools/testing/selftests/ftrace/test.d/ftrace/func-filter-glob.tc b/tools/testing/selftests/ftrace/test.d/ftrace/func-filter-glob.tc
+index 27a54a17da65d..f4e92afab14b2 100644
+--- a/tools/testing/selftests/ftrace/test.d/ftrace/func-filter-glob.tc
++++ b/tools/testing/selftests/ftrace/test.d/ftrace/func-filter-glob.tc
+@@ -30,7 +30,7 @@ ftrace_filter_check '*schedule*' '^.*schedule.*$'
+ ftrace_filter_check 'schedule*' '^schedule.*$'
+ 
+ # filter by *mid*end
+-ftrace_filter_check '*aw*lock' '.*aw.*lock$'
++ftrace_filter_check '*pin*lock' '.*pin.*lock$'
+ 
+ # filter by start*mid*
+ ftrace_filter_check 'mutex*try*' '^mutex.*try.*'
 -- 
 2.25.1
 
