@@ -2,60 +2,61 @@ Return-Path: <SRS0=ciX6=C7=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.6 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-12.6 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8C74CC2D0E2
-	for <linux-api@archiver.kernel.org>; Tue, 22 Sep 2020 20:15:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3C581C2D0E2
+	for <linux-api@archiver.kernel.org>; Tue, 22 Sep 2020 20:15:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2515820709
-	for <linux-api@archiver.kernel.org>; Tue, 22 Sep 2020 20:15:34 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C35E1221E8
+	for <linux-api@archiver.kernel.org>; Tue, 22 Sep 2020 20:15:39 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="L1rUdoLc"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="cb6TSxO0"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726576AbgIVUPd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 22 Sep 2020 16:15:33 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34498 "EHLO
+        id S1726625AbgIVUPj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 22 Sep 2020 16:15:39 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34516 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726567AbgIVUPd (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 22 Sep 2020 16:15:33 -0400
-Received: from mail-pf1-x442.google.com (mail-pf1-x442.google.com [IPv6:2607:f8b0:4864:20::442])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7A87BC061755;
-        Tue, 22 Sep 2020 13:15:33 -0700 (PDT)
-Received: by mail-pf1-x442.google.com with SMTP id n14so13487993pff.6;
-        Tue, 22 Sep 2020 13:15:33 -0700 (PDT)
+        with ESMTP id S1726623AbgIVUPi (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 22 Sep 2020 16:15:38 -0400
+Received: from mail-pf1-x441.google.com (mail-pf1-x441.google.com [IPv6:2607:f8b0:4864:20::441])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2FFBDC0613D0;
+        Tue, 22 Sep 2020 13:15:38 -0700 (PDT)
+Received: by mail-pf1-x441.google.com with SMTP id z19so13482459pfn.8;
+        Tue, 22 Sep 2020 13:15:38 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=from:to:cc:subject:date:message-id;
-        bh=hn6et9LbYd8DuVyzW2thhcz6VZuD8GdG4uKwbIXOb50=;
-        b=L1rUdoLclGSVBza/7wOpYY8ml/ZUxKH4wjY5LU820mOjsxd04jcg+HlQCmL179hWO2
-         JvQgv7YapT+ocwEE4i8l8H7G1tULRf7itL6VvemEh1TLT0w0uLIA6ZAd8L/TXIb7gn0m
-         oZXfdSWFv0vZoiU/lqVHLT/bGrVxbVejElaf+26Yne/a0kz+M83FclZ6VvimMuUSLuk3
-         hyIMU+42B4aHSuvFAAvIvwXYIPxqDOYlGKggmpQcyn6BWTPYJsKHyxUEbL2oNiS6qzIo
-         oN36BxQtB4xg+9LTgMJy17o8gnmzA1KxTZ4ZzJNo/6ffyucwbigoEAT6aXiFxrMfyGHB
-         HiNg==
+        h=from:to:cc:subject:date:message-id:in-reply-to:references;
+        bh=hFUA2EodpJe3a9+C7aWrHwYTMpFRcWcG5EO2y8L7QQ4=;
+        b=cb6TSxO09xgASZW5w/ndzqlwT/f33uAipEpyMeGncV+CUE+1CA0ES0EQtCyRalYIGS
+         z1+pmUyhFQPpuAdRAeXqFykTMJ29tnmkCvnSSPqBSHEPpsYqnpfhk5Z6CzonOkjX0G74
+         e/l5XvRGEkw1VqzWl1M2yioIA9D/r6+/Pd1IRvEWrAOfYkTzqWBE/4Xca2HrkR7pWKIn
+         cWZpctP0xZdBGL1gBJnucU6apck4SCi9bjrDJKklrRhb2x7krAV+XhYheMDYbVQEsw9V
+         47RD6d8ABg3hfBcU+Rd4Ux0nfO6vUtVAfdsTWDTZ5Lb1hgens19ZRZqKNYYP7ua42jD0
+         8XyA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id;
-        bh=hn6et9LbYd8DuVyzW2thhcz6VZuD8GdG4uKwbIXOb50=;
-        b=OTWMW+2XV3okRhStDY7cBujHof+IVrphLSPjZK9HF3Gb7HcGHHEIJkocJeWceXf16K
-         bRSj3mfu01pYIVUh3b90vieh/9/Gxvkl1NXzLsQn2Ib0nM853/VibvljpzotfENNVjXr
-         Rhm9C+lYlV1xk4POhPbFGGTChOpAlJBoj3PPS0n73Vy99PtqGgxw+KHAXnZud0Tm82cT
-         F9QcQQDEpbpBmw2wHLghYIOeoUvDSyxwAJtcPJmGgkekW5yoC/XR9qPKFA8CMsVAt6mC
-         YI2CJK9O4I3PO/Ee5TCc/hvFQEPoW2OrdH7Fmy+mDKKndccPWRF44gAThPR69nildDaU
-         SpFQ==
-X-Gm-Message-State: AOAM533Kqy9Jmmh68ydkROlOqYDaq1/wOH0e4YdQruC0jVEm3n+Ga/Tr
-        +/rtc59UNKJOgZ86LT7gM+t743bnxo0=
-X-Google-Smtp-Source: ABdhPJzEPDUhfqu6NbM4GZAuqgCh4rpYrCNwa9Rrcdh9kGjLXyYxyeXhqo7dh8JiTyamXowx9V1Gwg==
-X-Received: by 2002:a17:902:a402:b029:d2:21a:d994 with SMTP id p2-20020a170902a402b02900d2021ad994mr6196232plq.52.1600805732950;
-        Tue, 22 Sep 2020 13:15:32 -0700 (PDT)
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references;
+        bh=hFUA2EodpJe3a9+C7aWrHwYTMpFRcWcG5EO2y8L7QQ4=;
+        b=ovyvmaghL1pKRbs75QanhzlQlgtc7nMaqMGjvKY924rhh4un6YADsRnm263Ke0BWKr
+         4p3cYdNW1KA6kmPP5V/HAKbPJDkJCKSwt/vhlGDwyEKHQ1zrKrnu2E3Zzym1W10+e2PR
+         8FqNsP8vl/6GINBj0Z015YvTUgg20psp8nIUA8zqrL1iYZP0aMC2O0sz26OW6NbVK/O+
+         oy2CvYiZ6J8Mdq1XB3ITgwOkTp++JcXbuJtqGlSv/23wV9wG11vGFs6R9eL+Wmc4mGWj
+         p8PGJfS/eKhDYRSRqqQXAs/uFZUgsqu7zf8u9AJ59WXaRJay534uvKTy0bM1DKRRAw3C
+         KpuQ==
+X-Gm-Message-State: AOAM532dhWlmJs20L0If6xfwMgn4sfNXcUVs9/VK81mFCRhOLOJGI0nn
+        VouZJE833bC/1i/dAgBozGE=
+X-Google-Smtp-Source: ABdhPJwbJEwVptTJRflWCsGdDPOF6cfoG20m3qjacf25ZN60IqTFmZ1QZxD8y5p50uSPKweyKLw1uQ==
+X-Received: by 2002:a17:902:7445:b029:d1:dea3:a3ca with SMTP id e5-20020a1709027445b02900d1dea3a3camr6258358plt.19.1600805737742;
+        Tue, 22 Sep 2020 13:15:37 -0700 (PDT)
 Received: from jacob-builder.jf.intel.com (jfdmzpr04-ext.jf.intel.com. [134.134.137.73])
-        by smtp.gmail.com with ESMTPSA id e10sm15793028pgb.45.2020.09.22.13.15.31
+        by smtp.gmail.com with ESMTPSA id e10sm15793028pgb.45.2020.09.22.13.15.36
         (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Tue, 22 Sep 2020 13:15:32 -0700 (PDT)
+        Tue, 22 Sep 2020 13:15:37 -0700 (PDT)
 From:   Jacob Pan <jacob.pan.linux@gmail.com>
 X-Google-Original-From: Jacob Pan <jacob.jun.pan@linux.intel.com>
 To:     iommu@lists.linux-foundation.org,
@@ -74,111 +75,108 @@ Cc:     linux-api@vger.kernel.org,
         Raj Ashok <ashok.raj@intel.com>, Wu Hao <hao.wu@intel.com>,
         Yi Sun <yi.y.sun@intel.com>,
         Randy Dunlap <rdunlap@infradead.org>
-Subject: [PATCH v10 0/7] IOMMU user API enhancement
-Date:   Tue, 22 Sep 2020 13:16:55 -0700
-Message-Id: <1600805822-1177-1-git-send-email-jacob.jun.pan@linux.intel.com>
+Subject: [PATCH v10 2/7] iommu/uapi: Add argsz for user filled data
+Date:   Tue, 22 Sep 2020 13:16:57 -0700
+Message-Id: <1600805822-1177-3-git-send-email-jacob.jun.pan@linux.intel.com>
 X-Mailer: git-send-email 2.7.4
+In-Reply-To: <1600805822-1177-1-git-send-email-jacob.jun.pan@linux.intel.com>
+References: <1600805822-1177-1-git-send-email-jacob.jun.pan@linux.intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-IOMMU user API header was introduced to support nested DMA translation and
-related fault handling. The current UAPI data structures consist of three
-areas that cover the interactions between host kernel and guest:
- - fault handling
- - cache invalidation
- - bind guest page tables, i.e. guest PASID
+As IOMMU UAPI gets extended, user data size may increase. To support
+backward compatibiliy, this patch introduces a size field to each UAPI
+data structures. It is *always* the responsibility for the user to fill in
+the correct size. Padding fields are adjusted to ensure 8 byte alignment.
 
-Future extensions are likely to support more architectures and vIOMMU features.
+Specific scenarios for user data handling are documented in:
+Documentation/userspace-api/iommu.rst
 
-In the previous discussion, using user-filled data size and feature flags is
-made a preferred approach over a unified version number.
-https://lkml.org/lkml/2020/1/29/45
+As there is no current users of the API, struct version is not
+incremented.
 
-In addition to introduce argsz field to data structures, this patchset is also
-trying to document the UAPI design, usage, and extension rules. VT-d driver
-changes to utilize the new argsz field is included, VFIO usage is to follow.
+Reviewed-by: Eric Auger <eric.auger@redhat.com>
+Signed-off-by: Liu Yi L <yi.l.liu@intel.com>
+Signed-off-by: Jacob Pan <jacob.jun.pan@linux.intel.com>
+---
+ include/uapi/linux/iommu.h | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
 
-This set is available at:
-https://github.com/jacobpan/linux.git vsva_v5.9_uapi_v10
-
-Thanks,
-
-Jacob
-
-
-Changelog:
-v10
-	- Documentation grammar fixes based on Randy's review
-v9
-	- Directly pass PASID value to iommu_sva_unbind_gpasid() without
-	  the superfluous data in struct iommu_gpasid_bind_data.
-v8
-	- Rebased to v5.9-rc2
-	- Addressed review comments from Eric Auger
-	  1. added a check for the unused vendor flags
-	  2. commit message improvements
-v7
-	- Added PASID data format enum for range checking
-	- Tidy up based on reviews from Alex W.
-	- Removed doc section for vIOMMU fault handling
-v6
-	- Renamed all UAPI functions with iommu_uapi_ prefix
-	- Replaced argsz maxsz checking with flag specific size checks
-	- Documentation improvements based on suggestions by Eric Auger
-	  Replaced example code with a pointer to the actual code
-	- Added more checks for illegal flags combinations
-	- Added doc file to MAINTAINERS
-v5
-	- Addjusted paddings in UAPI data to be 8 byte aligned
-	- Do not clobber argsz in IOMMU core before passing on to vendor driver
-	- Removed pr_warn_ for invalid UAPI data check, just return -EINVAL
-	- Clarified VFIO responsibility in UAPI data handling
-	- Use iommu_uapi prefix to differentiate APIs has in-kernel caller
-	- Added comment for unchecked flags of invalidation granularity
-	- Added example in doc to show vendor data checking
-
-v4
-	- Added checks of UAPI data for reserved fields, version, and flags.
-	- Removed version check from vendor driver (vt-d)
-	- Relaxed argsz check to match the UAPI struct size instead of variable
-	  union size
-	- Updated documentation
-
-v3:
-	- Rewrote backward compatibility rule to support existing code
-	  re-compiled with newer kernel UAPI header that runs on older
-	  kernel. Based on review comment from Alex W.
-	  https://lore.kernel.org/linux-iommu/20200611094741.6d118fa8@w520.home/
-	- Take user pointer directly in UAPI functions. Perform argsz check
-	  and copy_from_user() in IOMMU driver. Eliminate the need for
-	  VFIO or other upper layer to parse IOMMU data.
-	- Create wrapper function for in-kernel users of UAPI functions
-v2:
-	- Removed unified API version and helper
-	- Introduced argsz for each UAPI data
-	- Introduced UAPI doc
-
-
-Jacob Pan (7):
-  docs: IOMMU user API
-  iommu/uapi: Add argsz for user filled data
-  iommu/uapi: Introduce enum type for PASID data format
-  iommu/uapi: Use named union for user data
-  iommu/uapi: Rename uapi functions
-  iommu/uapi: Handle data and argsz filled by users
-  iommu/vt-d: Check UAPI data processed by IOMMU core
-
- Documentation/userspace-api/iommu.rst | 210 ++++++++++++++++++++++++++++++++++
- MAINTAINERS                           |   1 +
- drivers/iommu/intel/iommu.c           |  25 ++--
- drivers/iommu/intel/svm.c             |  13 ++-
- drivers/iommu/iommu.c                 | 201 ++++++++++++++++++++++++++++++--
- include/linux/iommu.h                 |  35 ++++--
- include/uapi/linux/iommu.h            |  25 ++--
- 7 files changed, 467 insertions(+), 43 deletions(-)
- create mode 100644 Documentation/userspace-api/iommu.rst
-
+diff --git a/include/uapi/linux/iommu.h b/include/uapi/linux/iommu.h
+index c2b2caf9ed41..b42acc8fe007 100644
+--- a/include/uapi/linux/iommu.h
++++ b/include/uapi/linux/iommu.h
+@@ -139,6 +139,7 @@ enum iommu_page_response_code {
+ 
+ /**
+  * struct iommu_page_response - Generic page response information
++ * @argsz: User filled size of this data
+  * @version: API version of this structure
+  * @flags: encodes whether the corresponding fields are valid
+  *         (IOMMU_FAULT_PAGE_RESPONSE_* values)
+@@ -147,6 +148,7 @@ enum iommu_page_response_code {
+  * @code: response code from &enum iommu_page_response_code
+  */
+ struct iommu_page_response {
++	__u32	argsz;
+ #define IOMMU_PAGE_RESP_VERSION_1	1
+ 	__u32	version;
+ #define IOMMU_PAGE_RESP_PASID_VALID	(1 << 0)
+@@ -222,6 +224,7 @@ struct iommu_inv_pasid_info {
+ /**
+  * struct iommu_cache_invalidate_info - First level/stage invalidation
+  *     information
++ * @argsz: User filled size of this data
+  * @version: API version of this structure
+  * @cache: bitfield that allows to select which caches to invalidate
+  * @granularity: defines the lowest granularity used for the invalidation:
+@@ -250,6 +253,7 @@ struct iommu_inv_pasid_info {
+  * must support the used granularity.
+  */
+ struct iommu_cache_invalidate_info {
++	__u32	argsz;
+ #define IOMMU_CACHE_INVALIDATE_INFO_VERSION_1 1
+ 	__u32	version;
+ /* IOMMU paging structure cache */
+@@ -259,7 +263,7 @@ struct iommu_cache_invalidate_info {
+ #define IOMMU_CACHE_INV_TYPE_NR		(3)
+ 	__u8	cache;
+ 	__u8	granularity;
+-	__u8	padding[2];
++	__u8	padding[6];
+ 	union {
+ 		struct iommu_inv_pasid_info pasid_info;
+ 		struct iommu_inv_addr_info addr_info;
+@@ -296,6 +300,7 @@ struct iommu_gpasid_bind_data_vtd {
+ 
+ /**
+  * struct iommu_gpasid_bind_data - Information about device and guest PASID binding
++ * @argsz:	User filled size of this data
+  * @version:	Version of this data structure
+  * @format:	PASID table entry format
+  * @flags:	Additional information on guest bind request
+@@ -313,17 +318,18 @@ struct iommu_gpasid_bind_data_vtd {
+  * PASID to host PASID based on this bind data.
+  */
+ struct iommu_gpasid_bind_data {
++	__u32 argsz;
+ #define IOMMU_GPASID_BIND_VERSION_1	1
+ 	__u32 version;
+ #define IOMMU_PASID_FORMAT_INTEL_VTD	1
+ 	__u32 format;
++	__u32 addr_width;
+ #define IOMMU_SVA_GPASID_VAL	(1 << 0) /* guest PASID valid */
+ 	__u64 flags;
+ 	__u64 gpgd;
+ 	__u64 hpasid;
+ 	__u64 gpasid;
+-	__u32 addr_width;
+-	__u8  padding[12];
++	__u8  padding[8];
+ 	/* Vendor specific data */
+ 	union {
+ 		struct iommu_gpasid_bind_data_vtd vtd;
 -- 
 2.7.4
 
