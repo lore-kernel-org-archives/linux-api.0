@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-20.4 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT,
 	USER_IN_DEF_DKIM_WL autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CC7CDC47429
-	for <linux-api@archiver.kernel.org>; Tue, 22 Sep 2020 21:54:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2D7F4C4727E
+	for <linux-api@archiver.kernel.org>; Tue, 22 Sep 2020 21:54:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 969E520773
+	by mail.kernel.org (Postfix) with ESMTP id DCD4D22262
 	for <linux-api@archiver.kernel.org>; Tue, 22 Sep 2020 21:54:05 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="IYCw8eGI"
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="R8hQixnw"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726799AbgIVVxs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S1726786AbgIVVxs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Tue, 22 Sep 2020 17:53:48 -0400
-Received: from linux.microsoft.com ([13.77.154.182]:55332 "EHLO
+Received: from linux.microsoft.com ([13.77.154.182]:55318 "EHLO
         linux.microsoft.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726781AbgIVVxo (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 22 Sep 2020 17:53:44 -0400
+        with ESMTP id S1726779AbgIVVxn (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 22 Sep 2020 17:53:43 -0400
 Received: from localhost.localdomain (unknown [47.187.206.220])
-        by linux.microsoft.com (Postfix) with ESMTPSA id ABB0920C27C5;
-        Tue, 22 Sep 2020 14:53:41 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com ABB0920C27C5
+        by linux.microsoft.com (Postfix) with ESMTPSA id DA8CD20C27C2;
+        Tue, 22 Sep 2020 14:53:39 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com DA8CD20C27C2
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
-        s=default; t=1600811622;
-        bh=b+dZfSYt921SZbqVi9d6jmG8B2GKXdUDhoo8NhJxV+k=;
+        s=default; t=1600811621;
+        bh=7zXFDd5e9gQDRl70elYDzZIUqUSxDlwg1R6LYZvjU+I=;
         h=From:To:Subject:Date:In-Reply-To:References:From;
-        b=IYCw8eGIRinivB/mke9s56rfh0IoShsw0x+m1MrlH+ClEZT172gdzHmTznyb90Tlq
-         /1NbC1bWq19USuqC8IvAY4OPuW/L8149bG3rog5kNBYVZ9KhWZPbVxueJG13qcFrzs
-         gI20WK9s0lJaLwaZgnXOuao31fv/Ggt1KRH+IYYM=
+        b=R8hQixnwCw7jKlbVUp2WcLjT2B1eBsMGQhRGCHNCB47lVsvQkkqkE3GV8ZKHy6wm3
+         vjRjNeec0yvuNQGVTYgEsDBiFlWgGUdbCIl0J/1RtyjlTOyS71ozka1LIzRDkzafYK
+         4hr5haytbkwGkefRtLhPALrM+xuyoPG5a6DtkxXU=
 From:   madvenka@linux.microsoft.com
 To:     kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
         linux-arm-kernel@lists.infradead.org,
@@ -41,9 +41,9 @@ To:     kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
         x86@kernel.org, luto@kernel.org, David.Laight@ACULAB.COM,
         fweimer@redhat.com, mark.rutland@arm.com, mic@digikod.net,
         pavel@ucw.cz, madvenka@linux.microsoft.com
-Subject: [PATCH v2 4/4] [RFC] arm/trampfd: Provide support for the trampoline file descriptor
-Date:   Tue, 22 Sep 2020 16:53:26 -0500
-Message-Id: <20200922215326.4603-5-madvenka@linux.microsoft.com>
+Subject: [PATCH v2 3/4] [RFC] arm64/trampfd: Provide support for the trampoline file descriptor
+Date:   Tue, 22 Sep 2020 16:53:25 -0500
+Message-Id: <20200922215326.4603-4-madvenka@linux.microsoft.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20200922215326.4603-1-madvenka@linux.microsoft.com>
 References: <210d7cd762d5307c2aa1676705b392bd445f1baa>
@@ -59,24 +59,53 @@ From: "Madhavan T. Venkataraman" <madvenka@linux.microsoft.com>
 		- system call init
 		- code descriptor check
 		- data descriptor check
-	- Fill a page with a trampoline table,
+	- Fill a page with a trampoline table for:
+		- 32-bit user process
+		- 64-bit user process
 
 Signed-off-by: Madhavan T. Venkataraman <madvenka@linux.microsoft.com>
 ---
- arch/arm/include/uapi/asm/ptrace.h |  21 +++++
- arch/arm/kernel/Makefile           |   1 +
- arch/arm/kernel/trampfd.c          | 124 +++++++++++++++++++++++++++++
- arch/arm/tools/syscall.tbl         |   1 +
- 4 files changed, 147 insertions(+)
- create mode 100644 arch/arm/kernel/trampfd.c
+ arch/arm64/include/asm/unistd.h      |   2 +-
+ arch/arm64/include/asm/unistd32.h    |   2 +
+ arch/arm64/include/uapi/asm/ptrace.h |  59 +++++++
+ arch/arm64/kernel/Makefile           |   2 +
+ arch/arm64/kernel/trampfd.c          | 244 +++++++++++++++++++++++++++
+ 5 files changed, 308 insertions(+), 1 deletion(-)
+ create mode 100644 arch/arm64/kernel/trampfd.c
 
-diff --git a/arch/arm/include/uapi/asm/ptrace.h b/arch/arm/include/uapi/asm/ptrace.h
-index e61c65b4018d..598047768f9b 100644
---- a/arch/arm/include/uapi/asm/ptrace.h
-+++ b/arch/arm/include/uapi/asm/ptrace.h
-@@ -151,6 +151,27 @@ struct pt_regs {
- #define ARM_r0		uregs[0]
- #define ARM_ORIG_r0	uregs[17]
+diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
+index 3b859596840d..b3b2019f8d16 100644
+--- a/arch/arm64/include/asm/unistd.h
++++ b/arch/arm64/include/asm/unistd.h
+@@ -38,7 +38,7 @@
+ #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE + 5)
+ #define __ARM_NR_COMPAT_END		(__ARM_NR_COMPAT_BASE + 0x800)
+ 
+-#define __NR_compat_syscalls		440
++#define __NR_compat_syscalls		441
+ #endif
+ 
+ #define __ARCH_WANT_SYS_CLONE
+diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
+index 6d95d0c8bf2f..c0493c5322d9 100644
+--- a/arch/arm64/include/asm/unistd32.h
++++ b/arch/arm64/include/asm/unistd32.h
+@@ -885,6 +885,8 @@ __SYSCALL(__NR_openat2, sys_openat2)
+ __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
+ #define __NR_faccessat2 439
+ __SYSCALL(__NR_faccessat2, sys_faccessat2)
++#define __NR_trampfd 440
++__SYSCALL(__NR_trampfd, sys_trampfd)
+ 
+ /*
+  * Please add new compat syscalls above this comment and update
+diff --git a/arch/arm64/include/uapi/asm/ptrace.h b/arch/arm64/include/uapi/asm/ptrace.h
+index 42cbe34d95ce..2778789c1cbe 100644
+--- a/arch/arm64/include/uapi/asm/ptrace.h
++++ b/arch/arm64/include/uapi/asm/ptrace.h
+@@ -88,6 +88,65 @@ struct user_pt_regs {
+ 	__u64		pstate;
+ };
  
 +/*
 + * These register names are to be used by 32-bit applications.
@@ -99,29 +128,66 @@ index e61c65b4018d..598047768f9b 100644
 +	arm_max,
 +};
 +
- /*
-  * The size of the user-visible VFP state as seen by PTRACE_GET/SETVFPREGS
-  * and core dumps.
-diff --git a/arch/arm/kernel/Makefile b/arch/arm/kernel/Makefile
-index 89e5d864e923..652c54c2f19a 100644
---- a/arch/arm/kernel/Makefile
-+++ b/arch/arm/kernel/Makefile
-@@ -105,5 +105,6 @@ obj-$(CONFIG_SMP)		+= psci_smp.o
++/*
++ * These register names are to be used by 64-bit applications.
++ */
++enum reg_64_name {
++	arm64_min = arm_max,
++	arm64_r0 = arm64_min,
++	arm64_r1,
++	arm64_r2,
++	arm64_r3,
++	arm64_r4,
++	arm64_r5,
++	arm64_r6,
++	arm64_r7,
++	arm64_r8,
++	arm64_r9,
++	arm64_r10,
++	arm64_r11,
++	arm64_r12,
++	arm64_r13,
++	arm64_r14,
++	arm64_r15,
++	arm64_r16,
++	arm64_r17,
++	arm64_r18,
++	arm64_r19,
++	arm64_r20,
++	arm64_r21,
++	arm64_r22,
++	arm64_r23,
++	arm64_r24,
++	arm64_r25,
++	arm64_r26,
++	arm64_r27,
++	arm64_r28,
++	arm64_r29,
++	arm64_max,
++};
++
+ struct user_fpsimd_state {
+ 	__uint128_t	vregs[32];
+ 	__u32		fpsr;
+diff --git a/arch/arm64/kernel/Makefile b/arch/arm64/kernel/Makefile
+index a561cbb91d4d..18d373fb1208 100644
+--- a/arch/arm64/kernel/Makefile
++++ b/arch/arm64/kernel/Makefile
+@@ -71,3 +71,5 @@ extra-y					+= $(head-y) vmlinux.lds
+ ifeq ($(CONFIG_DEBUG_EFI),y)
+ AFLAGS_head.o += -DVMLINUX_PATH="\"$(realpath $(objtree)/vmlinux)\""
  endif
- 
- obj-$(CONFIG_HAVE_ARM_SMCCC)	+= smccc-call.o
-+obj-$(CONFIG_TRAMPFD)		+= trampfd.o
- 
- extra-y := $(head-y) vmlinux.lds
-diff --git a/arch/arm/kernel/trampfd.c b/arch/arm/kernel/trampfd.c
++
++obj-$(CONFIG_TRAMPFD)			+= trampfd.o
+diff --git a/arch/arm64/kernel/trampfd.c b/arch/arm64/kernel/trampfd.c
 new file mode 100644
-index 000000000000..45146ed489e8
+index 000000000000..3b40ebb12907
 --- /dev/null
-+++ b/arch/arm/kernel/trampfd.c
-@@ -0,0 +1,124 @@
++++ b/arch/arm64/kernel/trampfd.c
+@@ -0,0 +1,244 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Trampoline FD - ARM support.
++ * Trampoline FD - ARM64 support.
 + *
 + * Author: Madhavan T. Venkataraman (madvenka@linux.microsoft.com)
 + *
@@ -129,16 +195,26 @@ index 000000000000..45146ed489e8
 + */
 +
 +#include <linux/thread_info.h>
++#include <asm/compat.h>
 +#include <linux/trampfd.h>
 +
-+#define TRAMPFD_CODE_SIZE		28
++#define TRAMPFD_CODE_32_SIZE		28
++#define TRAMPFD_CODE_64_SIZE		48
++
++static inline bool is_compat(void)
++{
++	return is_compat_thread(task_thread_info(current));
++}
 +
 +/*
 + * trampfd syscall.
 + */
 +void trampfd_arch(struct trampfd_info *info)
 +{
-+	info->code_size = TRAMPFD_CODE_SIZE;
++	if (is_compat())
++		info->code_size = TRAMPFD_CODE_32_SIZE;
++	else
++		info->code_size = TRAMPFD_CODE_64_SIZE;
 +	info->ntrampolines = PAGE_SIZE / info->code_size;
 +	info->code_offset = TRAMPFD_CODE_PGOFF << PAGE_SHIFT;
 +	info->reserved = 0;
@@ -152,9 +228,15 @@ index 000000000000..45146ed489e8
 +	int	ntrampolines;
 +	int	min, max;
 +
-+	min = arm_min;
-+	max = arm_max;
-+	ntrampolines = PAGE_SIZE / TRAMPFD_CODE_SIZE;
++	if (is_compat()) {
++		min = arm_min;
++		max = arm_max;
++		ntrampolines = PAGE_SIZE / TRAMPFD_CODE_32_SIZE;
++	} else {
++		min = arm64_min;
++		max = arm64_max;
++		ntrampolines = PAGE_SIZE / TRAMPFD_CODE_64_SIZE;
++	}
 +
 +	if (code->reg < min || code->reg >= max)
 +		return -EINVAL;
@@ -171,15 +253,20 @@ index 000000000000..45146ed489e8
 +{
 +	int	min, max;
 +
-+	min = arm_min;
-+	max = arm_max;
++	if (is_compat()) {
++		min = arm_min;
++		max = arm_max;
++	} else {
++		min = arm64_min;
++		max = arm64_max;
++	}
 +
 +	if (data->reg < min || data->reg >= max)
 +		return -EINVAL;
 +	return 0;
 +}
 +
-+#define MOVW(ins, reg, imm32)						\
++#define MOVARM(ins, reg, imm32)						\
 +{									\
 +	u16	*_imm16 = (u16 *) &(imm32);	/* little endian */	\
 +	int	_hw, _opcode;						\
@@ -192,17 +279,17 @@ index 000000000000..45146ed489e8
 +	}								\
 +}
 +
-+#define LDR(ins, reg)							\
++#define LDRARM(ins, reg)						\
 +{									\
 +	*ins++ = 0xe5900000 | (reg) << 16 | (reg) << 12;		\
 +}
 +
-+#define BX(ins, reg)							\
++#define BXARM(ins, reg)							\
 +{									\
 +	*ins++ = 0xe12fff10 | (reg);					\
 +}
 +
-+void trampfd_code_fill(struct trampfd *trampfd, char *addr)
++static void trampfd_code_fill_32(struct trampfd *trampfd, char *addr)
 +{
 +	char		*eaddr = addr + PAGE_SIZE;
 +	int		creg = trampfd->code_reg - arm_min;
@@ -217,7 +304,85 @@ index 000000000000..45146ed489e8
 +		 * movw creg, code & 0xFFFF
 +		 * movt creg, code >> 16
 +		 */
-+		MOVW(instruction, creg, code);
++		MOVARM(instruction, creg, code);
++
++		/*
++		 * ldr	creg, [creg]
++		 */
++		LDRARM(instruction, creg);
++
++		/*
++		 * movw dreg, data & 0xFFFF
++		 * movt dreg, data >> 16
++		 */
++		MOVARM(instruction, dreg, data);
++
++		/*
++		 * ldr	dreg, [dreg]
++		 */
++		LDRARM(instruction, dreg);
++
++		/*
++		 * bx	creg
++		 */
++		BXARM(instruction, creg);
++	}
++	addr = (char *) instruction;
++	memset(addr, 0, eaddr - addr);
++}
++
++#define MOVQ(ins, reg, imm64)						\
++{									\
++	u16	*_imm16 = (u16 *) &(imm64);	/* little endian */	\
++	int	_hw, _opcode;						\
++									\
++	for (_hw = 0; _hw < 4; _hw++) {					\
++		/* movz or movk */					\
++		_opcode = _hw ? 0xf2800000 : 0xd2800000;		\
++		*ins++ = _opcode | _hw << 21 | _imm16[_hw] << 5 | (reg);\
++	}								\
++}
++
++#define LDR(ins, reg)							\
++{									\
++	*ins++ = 0xf9400000 | (reg) << 5 | (reg);			\
++}
++
++#define BR(ins, reg)							\
++{									\
++	*ins++ = 0xd61f0000 | (reg) << 5;				\
++}
++
++#define PAD(ins)							\
++{									\
++	while ((uintptr_t) ins & 7)					\
++		*ins++ = 0;						\
++}
++
++static void trampfd_code_fill_64(struct trampfd *trampfd, char *addr)
++{
++	char		*eaddr = addr + PAGE_SIZE;
++	int		creg = trampfd->code_reg - arm64_min;
++	int		dreg = trampfd->data_reg - arm64_min;
++	u64		*code = trampfd->code;
++	u64		*data = trampfd->data;
++	u32		*instruction = (u32 *) addr;
++	int		i;
++
++	for (i = 0; i < trampfd->ntrampolines; i++, code++, data++) {
++		/*
++		 * Pseudo instruction:
++		 *
++		 * movq creg, code
++		 *
++		 * Actual instructions:
++		 *
++		 * movz	creg, code & 0xFFFF
++		 * movk	creg, (code >> 16) & 0xFFFF, lsl 16
++		 * movk	creg, (code >> 32) & 0xFFFF, lsl 32
++		 * movk	creg, (code >> 48) & 0xFFFF, lsl 48
++		 */
++		MOVQ(instruction, creg, code);
 +
 +		/*
 +		 * ldr	creg, [creg]
@@ -225,10 +390,18 @@ index 000000000000..45146ed489e8
 +		LDR(instruction, creg);
 +
 +		/*
-+		 * movw dreg, data & 0xFFFF
-+		 * movt dreg, data >> 16
++		 * Pseudo instruction:
++		 *
++		 * movq dreg, data
++		 *
++		 * Actual instructions:
++		 *
++		 * movz	dreg, data & 0xFFFF
++		 * movk	dreg, (data >> 16) & 0xFFFF, lsl 16
++		 * movk	dreg, (data >> 32) & 0xFFFF, lsl 32
++		 * movk	dreg, (data >> 48) & 0xFFFF, lsl 48
 +		 */
-+		MOVW(instruction, dreg, data);
++		MOVQ(instruction, dreg, data);
 +
 +		/*
 +		 * ldr	dreg, [dreg]
@@ -236,22 +409,26 @@ index 000000000000..45146ed489e8
 +		LDR(instruction, dreg);
 +
 +		/*
-+		 * bx	creg
++		 * br	creg
 +		 */
-+		BX(instruction, creg);
++		BR(instruction, creg);
++
++		/*
++		 * Pad to 8-byte boundary
++		 */
++		PAD(instruction);
 +	}
 +	addr = (char *) instruction;
 +	memset(addr, 0, eaddr - addr);
 +}
-diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
-index d5cae5ffede0..85dcbc9e08ee 100644
---- a/arch/arm/tools/syscall.tbl
-+++ b/arch/arm/tools/syscall.tbl
-@@ -452,3 +452,4 @@
- 437	common	openat2				sys_openat2
- 438	common	pidfd_getfd			sys_pidfd_getfd
- 439	common	faccessat2			sys_faccessat2
-+440	common	trampfd				sys_trampfd
++
++void trampfd_code_fill(struct trampfd *trampfd, char *addr)
++{
++	if (is_compat())
++		trampfd_code_fill_32(trampfd, addr);
++	else
++		trampfd_code_fill_64(trampfd, addr);
++}
 -- 
 2.17.1
 
