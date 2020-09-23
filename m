@@ -2,61 +2,67 @@ Return-Path: <SRS0=9OaR=DA=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-17.4 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+	URIBL_BLOCKED,USER_IN_DEF_DKIM_WL autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4C9EFC4363D
-	for <linux-api@archiver.kernel.org>; Wed, 23 Sep 2020 23:35:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A276EC2D0A8
+	for <linux-api@archiver.kernel.org>; Wed, 23 Sep 2020 23:48:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0718F20C09
-	for <linux-api@archiver.kernel.org>; Wed, 23 Sep 2020 23:35:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 635AD212CC
+	for <linux-api@archiver.kernel.org>; Wed, 23 Sep 2020 23:48:40 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="CK/yLRWK"
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="HDDz0mvq"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726265AbgIWXez (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 23 Sep 2020 19:34:55 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60298 "EHLO
+        id S1726562AbgIWXs1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 23 Sep 2020 19:48:27 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34978 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726687AbgIWX32 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Sep 2020 19:29:28 -0400
-Received: from mail-pj1-x1044.google.com (mail-pj1-x1044.google.com [IPv6:2607:f8b0:4864:20::1044])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3FC97C0613D2
-        for <linux-api@vger.kernel.org>; Wed, 23 Sep 2020 16:29:28 -0700 (PDT)
-Received: by mail-pj1-x1044.google.com with SMTP id q4so573757pjh.5
-        for <linux-api@vger.kernel.org>; Wed, 23 Sep 2020 16:29:28 -0700 (PDT)
+        with ESMTP id S1726265AbgIWXsR (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Sep 2020 19:48:17 -0400
+Received: from mail-ej1-x641.google.com (mail-ej1-x641.google.com [IPv6:2a00:1450:4864:20::641])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 92045C0613CE
+        for <linux-api@vger.kernel.org>; Wed, 23 Sep 2020 16:48:15 -0700 (PDT)
+Received: by mail-ej1-x641.google.com with SMTP id p9so1960780ejf.6
+        for <linux-api@vger.kernel.org>; Wed, 23 Sep 2020 16:48:15 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google;
-        h=from:to:cc:subject:date:message-id:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=Sc3ebczz8rmNH2w8JraN/35ap0kTxnvAQhEv63luYfE=;
-        b=CK/yLRWK/GnklstIhHZjn/0pYYnnQjH99MYWDkAXuYI9+NOqvUU0ANa6rBD+NsWFEz
-         c7QexSPQWD74DI1zL2hhf0A48GuOV9gJ6xUM59jCUCjfUWNr9xxPmzGVjGXG9Ux5vdnC
-         z4nOhOyvGdEr88w/pVmbgsicGvkUkxDZlRCWA=
+        d=google.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=39UUQGQGuW0pJ99c+3XIOwje30cjhE1B1JoOVCrOppE=;
+        b=HDDz0mvq7a3RG21pW1YeQt8LuyT+FQycHVtfHpuOxU6Biqeaq27Gw7cP0U+Spr7uTp
+         Nfq1GselwDFRfr9FK3059LriMRW5TYJYcX4A3//RneCtrNUpPDWnkxJMQiwtFIpc+xw1
+         TrsSkUpUgbQzzNtMrHzq4TS+NTY69w1m+cz1jSf5lzvMoJsoiRFI4xUrHsuNE58iigSY
+         dsycOzIWKTJ/5jb7J3PeM5sJ+YXGWe5SKxbRup2+kxQQThT5O52j2q8aOVj3NI/LcdsV
+         4K4MJstPwqmiwhW2iAm2V8jx4jj4lNPMoabpg7l5YPdv92Pf0rDC2GeoWWIt7WxkjGvU
+         abwg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references:mime-version:content-transfer-encoding;
-        bh=Sc3ebczz8rmNH2w8JraN/35ap0kTxnvAQhEv63luYfE=;
-        b=F1uLMMAO99sPnpFDnldCqlGzGsMqiui611U08mWJ8fwgM3Ky1BjV/livsfly9h0sfA
-         ynb6xsuXgoVxVdugha/uIDCSxuIe1SB6L9Zvbrw5PA5lKxAEgSOb+dKA0aqGzkQspqke
-         UyrEVzLJeAwolFD7qjMBKcYZfq7fXTDoZTtAWpBFEt/LmfAzaZcQnaaIrwvSx4ZXSEuR
-         3txbSCLmYtT/29A3QqSqrA1q0tfCWKsWyLtdd3ftLqD56WEhmcx8Hi7kAbmZZY4q16+T
-         +Pjk1chEJWi5Htv4hIqM8MDXuza+cfwXVPETjgwzWBPcqmwbtOxVaFQVqTTqsrsUTXTr
-         o+lQ==
-X-Gm-Message-State: AOAM530WJnzd0M7F3OgJDbHV4Y+Jb7BgpnWlF8bNFRbi+V2x6fKg4wHH
-        0xnlDZoSB/DrXAL7231sSuhrJw==
-X-Google-Smtp-Source: ABdhPJyZ7o0DnR5kI8957XIopuSRrBSpPx9KS7ET42fO0J8UuNz+QkuV9tPkvD3v4Fah2MtxvVfhKg==
-X-Received: by 2002:a17:90a:db05:: with SMTP id g5mr1549879pjv.22.1600903767757;
-        Wed, 23 Sep 2020 16:29:27 -0700 (PDT)
-Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id w185sm724485pfc.36.2020.09.23.16.29.26
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 23 Sep 2020 16:29:26 -0700 (PDT)
-From:   Kees Cook <keescook@chromium.org>
-To:     YiFei Zhu <yifeifz2@illinois.edu>
-Cc:     Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>,
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=39UUQGQGuW0pJ99c+3XIOwje30cjhE1B1JoOVCrOppE=;
+        b=VLfE8UQrbckOak5CWhn+NCkShwHO4O+9fC+LxiidO5CSGloGobUPMJ6CYUViT801Fm
+         fDjbEg1JyKRJkGris4BJ8ORxpCd7C6Qro36Jm1AnXOAmL0DDSTM2wasf55fs8W4UKcv0
+         0a8IaqKtXAdgRvo5SvdqusItY5YOQYWW8nNOOywXAwHEPs6fN3p+vBsiX9C6ovORFM4+
+         HrqCqknxTba10csPdb0bX8euTDDNt1L2BxFX+7zrsI+5tODU8Y5sfJ89for8JIl4x6IZ
+         rTFijar8Ij2YAqQ33QIpo9fAxEnlg3OH5+jnYXH5h8WGRxnjnpOUIo3dDp8O5Cn/icAg
+         J/dQ==
+X-Gm-Message-State: AOAM5302BRYEJW+InQSeXqI8p/jHZ28Cq4J8n8XLU7fwxtMFdNDPt27q
+        GpQXZw/bg88CNUzYDD099vldB4i880qIrIpd6VI0Cw==
+X-Google-Smtp-Source: ABdhPJztAHF67qXzKrzzYSP3nT64vv5jq7HwOELGrmAfvL52R7Pr4wN/V46V4Apb43rLzuJU3SZ/sIdez/zch09EI8g=
+X-Received: by 2002:a17:907:64d:: with SMTP id wq13mr1931271ejb.513.1600904893980;
+ Wed, 23 Sep 2020 16:48:13 -0700 (PDT)
+MIME-Version: 1.0
+References: <20200923232923.3142503-1-keescook@chromium.org> <20200923232923.3142503-5-keescook@chromium.org>
+In-Reply-To: <20200923232923.3142503-5-keescook@chromium.org>
+From:   Jann Horn <jannh@google.com>
+Date:   Thu, 24 Sep 2020 01:47:47 +0200
+Message-ID: <CAG48ez251v19U60GYH4aWE6+C-3PYw5mr_Ax_kxnebqDOBn_+Q@mail.gmail.com>
+Subject: Re: [PATCH 4/6] seccomp: Emulate basic filters for constant action results
+To:     Kees Cook <keescook@chromium.org>
+Cc:     YiFei Zhu <yifeifz2@illinois.edu>,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Tycho Andersen <tycho@tycho.pizza>,
         Andy Lutomirski <luto@amacapital.net>,
@@ -69,171 +75,83 @@ Cc:     Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>,
         Hubertus Franke <frankeh@us.ibm.com>,
         Jack Chen <jianyan2@illinois.edu>,
         Josep Torrellas <torrella@illinois.edu>,
-        Tianyin Xu <tyxu@illinois.edu>, bpf@vger.kernel.org,
-        containers@lists.linux-foundation.org, linux-api@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-Subject: [PATCH 4/6] seccomp: Emulate basic filters for constant action results
-Date:   Wed, 23 Sep 2020 16:29:21 -0700
-Message-Id: <20200923232923.3142503-5-keescook@chromium.org>
-X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20200923232923.3142503-1-keescook@chromium.org>
-References: <20200923232923.3142503-1-keescook@chromium.org>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+        Tianyin Xu <tyxu@illinois.edu>, bpf <bpf@vger.kernel.org>,
+        Linux Containers <containers@lists.linux-foundation.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        kernel list <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This emulates absolutely the most basic seccomp filters to figure out
-if they will always give the same results for a given arch/nr combo.
+On Thu, Sep 24, 2020 at 1:29 AM Kees Cook <keescook@chromium.org> wrote:
+> This emulates absolutely the most basic seccomp filters to figure out
+> if they will always give the same results for a given arch/nr combo.
+>
+> Nearly all seccomp filters are built from the following ops:
+>
+> BPF_LD  | BPF_W    | BPF_ABS
+> BPF_JMP | BPF_JEQ  | BPF_K
+> BPF_JMP | BPF_JGE  | BPF_K
+> BPF_JMP | BPF_JGT  | BPF_K
+> BPF_JMP | BPF_JSET | BPF_K
+> BPF_JMP | BPF_JA
+> BPF_RET | BPF_K
+>
+> These are now emulated to check for accesses beyond seccomp_data::arch
+> or unknown instructions.
+>
+> Not yet implemented are:
+>
+> BPF_ALU | BPF_AND (generated by libseccomp and Chrome)
 
-Nearly all seccomp filters are built from the following ops:
+BPF_AND is normally only used on syscall arguments, not on the syscall
+number or the architecture, right? And when a syscall argument is
+loaded, we abort execution anyway. So I think there is no need to
+implement those?
 
-BPF_LD  | BPF_W    | BPF_ABS
-BPF_JMP | BPF_JEQ  | BPF_K
-BPF_JMP | BPF_JGE  | BPF_K
-BPF_JMP | BPF_JGT  | BPF_K
-BPF_JMP | BPF_JSET | BPF_K
-BPF_JMP | BPF_JA
-BPF_RET | BPF_K
+> Suggested-by: Jann Horn <jannh@google.com>
+> Link: https://lore.kernel.org/lkml/CAG48ez1p=dR_2ikKq=xVxkoGg0fYpTBpkhJSv1w-6BG=76PAvw@mail.gmail.com/
+> Signed-off-by: Kees Cook <keescook@chromium.org>
+> ---
+>  kernel/seccomp.c  | 82 ++++++++++++++++++++++++++++++++++++++++++++---
+>  net/core/filter.c |  3 +-
+>  2 files changed, 79 insertions(+), 6 deletions(-)
+>
+> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+> index 111a238bc532..9921f6f39d12 100644
+> --- a/kernel/seccomp.c
+> +++ b/kernel/seccomp.c
+> @@ -610,7 +610,12 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
+>  {
+>         struct seccomp_filter *sfilter;
+>         int ret;
+> -       const bool save_orig = IS_ENABLED(CONFIG_CHECKPOINT_RESTORE);
+> +       const bool save_orig =
+> +#if defined(CONFIG_CHECKPOINT_RESTORE) || defined(SECCOMP_ARCH)
+> +               true;
+> +#else
+> +               false;
+> +#endif
 
-These are now emulated to check for accesses beyond seccomp_data::arch
-or unknown instructions.
+You could probably write this as something like:
 
-Not yet implemented are:
+const bool save_orig = IS_ENABLED(CONFIG_CHECKPOINT_RESTORE) ||
+__is_defined(SECCOMP_ARCH);
 
-BPF_ALU | BPF_AND (generated by libseccomp and Chrome)
+[...]
+> diff --git a/net/core/filter.c b/net/core/filter.c
+[...]
+> -static void bpf_release_orig_filter(struct bpf_prog *fp)
+> +void bpf_release_orig_filter(struct bpf_prog *fp)
+>  {
+>         struct sock_fprog_kern *fprog = fp->orig_prog;
+>
+> @@ -1154,6 +1154,7 @@ static void bpf_release_orig_filter(struct bpf_prog *fp)
+>                 kfree(fprog);
+>         }
+>  }
+> +EXPORT_SYMBOL_GPL(bpf_release_orig_filter);
 
-Suggested-by: Jann Horn <jannh@google.com>
-Link: https://lore.kernel.org/lkml/CAG48ez1p=dR_2ikKq=xVxkoGg0fYpTBpkhJSv1w-6BG=76PAvw@mail.gmail.com/
-Signed-off-by: Kees Cook <keescook@chromium.org>
----
- kernel/seccomp.c  | 82 ++++++++++++++++++++++++++++++++++++++++++++---
- net/core/filter.c |  3 +-
- 2 files changed, 79 insertions(+), 6 deletions(-)
-
-diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index 111a238bc532..9921f6f39d12 100644
---- a/kernel/seccomp.c
-+++ b/kernel/seccomp.c
-@@ -610,7 +610,12 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
- {
- 	struct seccomp_filter *sfilter;
- 	int ret;
--	const bool save_orig = IS_ENABLED(CONFIG_CHECKPOINT_RESTORE);
-+	const bool save_orig =
-+#if defined(CONFIG_CHECKPOINT_RESTORE) || defined(SECCOMP_ARCH)
-+		true;
-+#else
-+		false;
-+#endif
- 
- 	if (fprog->len == 0 || fprog->len > BPF_MAXINSNS)
- 		return ERR_PTR(-EINVAL);
-@@ -690,11 +695,78 @@ static inline bool sd_touched(pte_t *ptep)
-  * This approach could also be used to test for access to sd->arch too,
-  * if we wanted to warn about compat-unsafe filters.
-  */
--static inline bool seccomp_filter_action_is_constant(struct bpf_prog *prog,
--						     struct seccomp_data *sd,
--						     u32 *action)
-+static bool seccomp_filter_action_is_constant(struct bpf_prog *prog,
-+					      struct seccomp_data *sd,
-+					      u32 *action)
- {
--	/* No evaluation implementation yet. */
-+	struct sock_fprog_kern *fprog = prog->orig_prog;
-+	unsigned int insns;
-+	unsigned int reg_value = 0;
-+	unsigned int pc;
-+	bool op_res;
-+
-+	if (WARN_ON_ONCE(!fprog))
-+		return false;
-+
-+	insns = bpf_classic_proglen(fprog);
-+	for (pc = 0; pc < insns; pc++) {
-+		struct sock_filter *insn = &fprog->filter[pc];
-+		u16 code = insn->code;
-+		u32 k = insn->k;
-+
-+		switch (code) {
-+		case BPF_LD | BPF_W | BPF_ABS:
-+			switch (k) {
-+			case offsetof(struct seccomp_data, nr):
-+				reg_value = sd->nr;
-+				break;
-+			case offsetof(struct seccomp_data, arch):
-+				reg_value = sd->arch;
-+				break;
-+			default:
-+				/* can't optimize (non-constant value load) */
-+				return false;
-+			}
-+			break;
-+		case BPF_RET | BPF_K:
-+			*action = insn->k;
-+			/* success: reached return with constant values only */
-+			return true;
-+		case BPF_JMP | BPF_JA:
-+			pc += insn->k;
-+			break;
-+		case BPF_JMP | BPF_JEQ | BPF_K:
-+		case BPF_JMP | BPF_JGE | BPF_K:
-+		case BPF_JMP | BPF_JGT | BPF_K:
-+		case BPF_JMP | BPF_JSET | BPF_K:
-+			switch (BPF_OP(code)) {
-+			case BPF_JEQ:
-+				op_res = reg_value == k;
-+				break;
-+			case BPF_JGE:
-+				op_res = reg_value >= k;
-+				break;
-+			case BPF_JGT:
-+				op_res = reg_value > k;
-+				break;
-+			case BPF_JSET:
-+				op_res = !!(reg_value & k);
-+				break;
-+			default:
-+				/* can't optimize (unknown jump) */
-+				return false;
-+			}
-+
-+			pc += op_res ? insn->jt : insn->jf;
-+			break;
-+		default:
-+			/* can't optimize (unknown insn) */
-+			return false;
-+		}
-+	}
-+
-+	/* ran off the end of the filter?! */
-+	WARN_ON(1);
- 	return false;
- }
- 
-diff --git a/net/core/filter.c b/net/core/filter.c
-index b2df52086445..cb1bdb0bfe87 100644
---- a/net/core/filter.c
-+++ b/net/core/filter.c
-@@ -1145,7 +1145,7 @@ static int bpf_prog_store_orig_filter(struct bpf_prog *fp,
- 	return 0;
- }
- 
--static void bpf_release_orig_filter(struct bpf_prog *fp)
-+void bpf_release_orig_filter(struct bpf_prog *fp)
- {
- 	struct sock_fprog_kern *fprog = fp->orig_prog;
- 
-@@ -1154,6 +1154,7 @@ static void bpf_release_orig_filter(struct bpf_prog *fp)
- 		kfree(fprog);
- 	}
- }
-+EXPORT_SYMBOL_GPL(bpf_release_orig_filter);
- 
- static void __bpf_prog_release(struct bpf_prog *prog)
- {
--- 
-2.25.1
-
+If this change really belongs into this patch (which I don't think it
+does), please describe why in the commit message.
