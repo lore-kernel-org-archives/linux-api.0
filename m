@@ -2,59 +2,58 @@ Return-Path: <SRS0=9OaR=DA=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-8.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
-	version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F3DB8C4363D
-	for <linux-api@archiver.kernel.org>; Wed, 23 Sep 2020 23:31:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 082EDC4363D
+	for <linux-api@archiver.kernel.org>; Wed, 23 Sep 2020 23:34:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9F62820C09
-	for <linux-api@archiver.kernel.org>; Wed, 23 Sep 2020 23:31:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C08A420888
+	for <linux-api@archiver.kernel.org>; Wed, 23 Sep 2020 23:34:17 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="bfAu8zmg"
+	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="d23i7lGk"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726761AbgIWX3l (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 23 Sep 2020 19:29:41 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60326 "EHLO
+        id S1726643AbgIWXbx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 23 Sep 2020 19:31:53 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60302 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726752AbgIWX3b (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Sep 2020 19:29:31 -0400
-Received: from mail-pl1-x643.google.com (mail-pl1-x643.google.com [IPv6:2607:f8b0:4864:20::643])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 80992C0613CE
-        for <linux-api@vger.kernel.org>; Wed, 23 Sep 2020 16:29:31 -0700 (PDT)
-Received: by mail-pl1-x643.google.com with SMTP id y17so578359plb.6
-        for <linux-api@vger.kernel.org>; Wed, 23 Sep 2020 16:29:31 -0700 (PDT)
+        with ESMTP id S1726562AbgIWX33 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Sep 2020 19:29:29 -0400
+Received: from mail-pj1-x1042.google.com (mail-pj1-x1042.google.com [IPv6:2607:f8b0:4864:20::1042])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 38058C0613CE
+        for <linux-api@vger.kernel.org>; Wed, 23 Sep 2020 16:29:29 -0700 (PDT)
+Received: by mail-pj1-x1042.google.com with SMTP id v14so537036pjd.4
+        for <linux-api@vger.kernel.org>; Wed, 23 Sep 2020 16:29:29 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=chromium.org; s=google;
-        h=from:to:cc:subject:date:message-id:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=ZE/79qG6H6lRxtOX3Wkl7bfi0pnZJM8pQYKGylI4ASw=;
-        b=bfAu8zmgfDT6BYa5AFuGjf5HULT1RoGX5U1MHYBaJnsDPZIqHGceGVjIq0QrWYsXIN
-         1nBIJcYwVXI/M/1TjzCxBqSwMVufR5fhXA7ESw3zg0MsBcR9YmbOnfl/dmqa5ZQdhGUH
-         ueFBHPnxoz7qOSdPu1rvnb8vHu9CQAEMJn3Nk=
+        h=from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=KnYowXpX9ek9m66e/Htp70CeCYZxw6hk1IiAy6Kl5rQ=;
+        b=d23i7lGk81zKYyusnqeg3ju3nwOqSpKeXXqEXfHcMkudEXxh6GYe4vsSAUdXG2Kmda
+         6xUIDq6pAnsBhq4Uwb61Qv+JVTAqLdlu5ggSiDwArbU7/fQlOyXMiVKgIeSUdEW9+pdY
+         Yl9rNSLOlhuM/5SpwR5+gAAFa1s7kNPrF+Xkg=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references:mime-version:content-transfer-encoding;
-        bh=ZE/79qG6H6lRxtOX3Wkl7bfi0pnZJM8pQYKGylI4ASw=;
-        b=Eo3BBk9x5tRCSoiDuYjZoFBiF+rGYM7UDuoX/NC43JqoEyjtihONimvZ40OaeqKFCV
-         zTSrbF/jde9dNomdE7zwnUzh/rlF7DsA1SM2sgNskiJw6+H82jNyKkqwUBD5hvgscVU8
-         ZMTXyoOA4Q6A3KxpbBa+/DKUlGyx/exCU+l0iZ82ODbCkRDJAz6FiU5SlT4uy+TJYexV
-         hHR5Dm41410laysSCAWG3v7FsT+PIUzLgHGgJCmXRQDeHJKzn3hv7xaJtXK2ci0T34q2
-         rwkq5RUVQ884I1Z8zwRBELBY5Ui662932rfWaSbeqgoea1vBAslTqcQgUTUqyovvVp4w
-         YaBQ==
-X-Gm-Message-State: AOAM5314bd8wwcbem6BgJqUmDtVSrjEKTftkTeFc/1JsoNsaMb1ipbEh
-        MGRo1BSPEfS26ezJYofezgK0MA==
-X-Google-Smtp-Source: ABdhPJwhKgUZq608+q5NwYON4+CAPcXtEBNdHupkMvWVr63aqwYCkQW/0sNAogHldmRsrQqXgPaIjA==
-X-Received: by 2002:a17:902:c692:b029:d0:90a3:24f4 with SMTP id r18-20020a170902c692b02900d090a324f4mr1951226plx.12.1600903771027;
-        Wed, 23 Sep 2020 16:29:31 -0700 (PDT)
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=KnYowXpX9ek9m66e/Htp70CeCYZxw6hk1IiAy6Kl5rQ=;
+        b=KRap6zNdx5sU0x/gjdfm+9ZrNHn2FjCNLp/KP/gfLB3kgN8Hpg+N6NTQbWx+HXTdaN
+         6Ehrls/WtUtrLcb8l0K1avVjO5WsxQGR1HnL40wHNWAblwAbCJcs9+bBrT1z0C1d4roF
+         RbF9Wp8RyIKXG2NxIYSv3EwqUgohIaa3jrRduGUbGpYYfwuOS7WKkw04leCNsSWQossj
+         1eGo46eTkUQWzoNYu8AJ3treD77eZ7OADS09ZKjUwH+GyvqqzYG1HoieyAhtuUuMyIpQ
+         PKKztMKfZVG7LFUvQWrHITAnecDZc4m9cKvQ0g41XEWBPpR8mYkIYL777Lx9Hm8QvCbQ
+         gnfQ==
+X-Gm-Message-State: AOAM533/EZhDUOishewS1H3/IHW/zEtoKb1Sl6nOuZ44AjaEqF7pCryT
+        PCgctLGAAwNhLtu4l3WaL91+zw==
+X-Google-Smtp-Source: ABdhPJyayNyPvuS62S2fNWA1VUxrMaI1OAUF1FMKlIQFQYU1vC9AcNWm/orb6K3zoxr7u7I4hLjRvQ==
+X-Received: by 2002:a17:902:8689:b029:d1:9bf7:230a with SMTP id g9-20020a1709028689b02900d19bf7230amr2038591plo.22.1600903768727;
+        Wed, 23 Sep 2020 16:29:28 -0700 (PDT)
 Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id z1sm669570pfj.113.2020.09.23.16.29.27
+        by smtp.gmail.com with ESMTPSA id y1sm836499pgy.0.2020.09.23.16.29.26
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 23 Sep 2020 16:29:30 -0700 (PDT)
+        Wed, 23 Sep 2020 16:29:26 -0700 (PDT)
 From:   Kees Cook <keescook@chromium.org>
 To:     YiFei Zhu <yifeifz2@illinois.edu>
 Cc:     Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>,
@@ -73,173 +72,109 @@ Cc:     Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>,
         Tianyin Xu <tyxu@illinois.edu>, bpf@vger.kernel.org,
         containers@lists.linux-foundation.org, linux-api@vger.kernel.org,
         linux-kernel@vger.kernel.org
-Subject: [PATCH 6/6] [DEBUG] seccomp: Report bitmap coverage ranges
-Date:   Wed, 23 Sep 2020 16:29:23 -0700
-Message-Id: <20200923232923.3142503-7-keescook@chromium.org>
+Subject: [PATCH v1 0/6] seccomp: Implement constant action bitmaps
+Date:   Wed, 23 Sep 2020 16:29:17 -0700
+Message-Id: <20200923232923.3142503-1-keescook@chromium.org>
 X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20200923232923.3142503-1-keescook@chromium.org>
-References: <20200923232923.3142503-1-keescook@chromium.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This is what I've been using to explore actual bitmap results for
-real-world filters...
+rfc: https://lore.kernel.org/lkml/20200616074934.1600036-1-keescook@chromium.org/
+alternative: https://lore.kernel.org/containers/cover.1600661418.git.yifeifz2@illinois.edu/
+v1:
+- rebase to for-next/seccomp
+- finish X86_X32 support for both pinning and bitmaps
+- replace TLB magic with Jann's emulator
+- add JSET insn
 
-Signed-off-by: Kees Cook <keescook@chromium.org>
----
- kernel/seccomp.c | 115 +++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 115 insertions(+)
+TODO:
+- add ALU|AND insn
+- significantly more testing
 
-diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index 9921f6f39d12..1a0595d7f8ef 100644
---- a/kernel/seccomp.c
-+++ b/kernel/seccomp.c
-@@ -835,6 +835,85 @@ static void seccomp_update_bitmap(struct seccomp_filter *filter,
- 	}
- }
- 
-+static void __report_bitmap(const char *arch, u32 ret, int start, int finish)
-+{
-+	int gap;
-+	char *name;
-+
-+	if (finish == -1)
-+		return;
-+
-+	switch (ret) {
-+	case UINT_MAX:
-+		name = "filter";
-+		break;
-+	case SECCOMP_RET_ALLOW:
-+		name = "SECCOMP_RET_ALLOW";
-+		break;
-+	case SECCOMP_RET_KILL_PROCESS:
-+		name = "SECCOMP_RET_KILL_PROCESS";
-+		break;
-+	case SECCOMP_RET_KILL_THREAD:
-+		name = "SECCOMP_RET_KILL_THREAD";
-+		break;
-+	default:
-+		WARN_ON_ONCE(1);
-+		name = "unknown";
-+		break;
-+	}
-+
-+	gap = 0;
-+	if (start < 100)
-+		gap++;
-+	if (start < 10)
-+		gap++;
-+	if (finish < 100)
-+		gap++;
-+	if (finish < 10)
-+		gap++;
-+
-+	if (start == finish)
-+		pr_info("%s     %3d: %s\n", arch, start, name);
-+	else if (start + 1 == finish)
-+		pr_info("%s %*s%d,%d: %s\n", arch, gap, "", start, finish, name);
-+	else
-+		pr_info("%s %*s%d-%d: %s\n", arch, gap, "", start, finish, name);
-+}
-+
-+static void report_bitmap(struct seccomp_bitmaps *bitmaps, const char *arch)
-+{
-+	u32 nr;
-+	int start = 0, finish = -1;
-+	u32 ret = UINT_MAX;
-+	struct report_states {
-+		unsigned long *bitmap;
-+		u32 ret;
-+	} states[] = {
-+		{ .bitmap = bitmaps->allow,	   .ret = SECCOMP_RET_ALLOW, },
-+		{ .bitmap = bitmaps->kill_process, .ret = SECCOMP_RET_KILL_PROCESS, },
-+		{ .bitmap = bitmaps->kill_thread,  .ret = SECCOMP_RET_KILL_THREAD, },
-+		{ .bitmap = NULL,		   .ret = UINT_MAX, },
-+	};
-+
-+	for (nr = 0; nr < NR_syscalls; nr++) {
-+		int i;
-+
-+		for (i = 0; i < ARRAY_SIZE(states); i++) {
-+			if (!states[i].bitmap || test_bit(nr, states[i].bitmap)) {
-+				if (ret != states[i].ret) {
-+					__report_bitmap(arch, ret, start, finish);
-+					ret = states[i].ret;
-+					start = nr;
-+				}
-+				finish = nr;
-+				break;
-+			}
-+		}
-+	}
-+	if (start != nr)
-+		__report_bitmap(arch, ret, start, finish);
-+}
-+
- static void seccomp_update_bitmaps(struct seccomp_filter *filter,
- 				   void *pagepair)
- {
-@@ -849,6 +928,23 @@ static void seccomp_update_bitmaps(struct seccomp_filter *filter,
- 			      SECCOMP_MULTIPLEXED_SYSCALL_TABLE_MASK,
- 			      &current->seccomp.multiplex);
- #endif
-+	if (strncmp(current->comm, "test-", 5) == 0 ||
-+	    strcmp(current->comm, "seccomp_bpf") == 0 ||
-+	    /*
-+	     * Why are systemd's process names head-truncated to 8 bytes
-+	     * and wrapped in parens!?
-+	     */
-+	    (current->comm[0] == '(' && strrchr(current->comm, ')') != NULL)) {
-+		pr_info("reporting syscall bitmap usage for %d (%s):\n",
-+			task_pid_nr(current), current->comm);
-+		report_bitmap(&current->seccomp.native, "native");
-+#ifdef CONFIG_COMPAT
-+		report_bitmap(&current->seccomp.compat, "compat");
-+#endif
-+#ifdef SECCOMP_MULTIPLEXED_SYSCALL_TABLE_ARCH
-+		report_bitmap(&current->seccomp.multiplex, "multiplex");
-+#endif
-+	}
- }
- #else
- static void seccomp_update_bitmaps(struct seccomp_filter *filter,
-@@ -908,6 +1004,10 @@ static long seccomp_attach_filter(unsigned int flags,
- 	filter->prev = current->seccomp.filter;
- 	current->seccomp.filter = filter;
- 	atomic_inc(&current->seccomp.filter_count);
-+	if (atomic_read(&current->seccomp.filter_count) > 10)
-+		pr_info("%d filters: %d (%s)\n",
-+			atomic_read(&current->seccomp.filter_count),
-+			task_pid_nr(current), current->comm);
- 
- 	/* Evaluate filter for new known-outcome syscalls */
- 	seccomp_update_bitmaps(filter, pagepair);
-@@ -2419,6 +2519,21 @@ static int __init seccomp_sysctl_init(void)
- 		pr_warn("sysctl registration failed\n");
- 	else
- 		kmemleak_not_leak(hdr);
-+#ifndef SECCOMP_ARCH
-+	pr_info("arch lacks support for constant action bitmaps\n");
-+#else
-+	pr_info("NR_syscalls: %d\n", NR_syscalls);
-+	pr_info("arch: 0x%x\n", SECCOMP_ARCH);
-+#ifdef CONFIG_COMPAT
-+	pr_info("compat arch: 0x%x\n", SECCOMP_ARCH_COMPAT);
-+#endif
-+#ifdef SECCOMP_MULTIPLEXED_SYSCALL_TABLE_ARCH
-+	pr_info("multiplex arch: 0x%x (mask: 0x%x)\n",
-+		SECCOMP_MULTIPLEXED_SYSCALL_TABLE_ARCH,
-+		SECCOMP_MULTIPLEXED_SYSCALL_TABLE_MASK);
-+#endif
-+#endif
-+	pr_info("sizeof(struct seccomp_bitmaps): %zu\n", sizeof(struct seccomp_bitmaps));
- 
- 	return 0;
- }
+Hi,
+
+This is a refresh of my earlier constant action bitmap series. It looks
+like the RFC was missed on the container list, so I've CCed it now. :)
+I'd like to work from this series, as it handles the multi-architecture
+stuff.
+
+Repeating the commit log from patch 3:
+
+    seccomp: Implement constant action bitmaps
+    
+    One of the most common pain points with seccomp filters has been dealing
+    with the overhead of processing the filters, especially for "always allow"
+    or "always reject" cases. While BPF is extremely fast[1], it will always
+    have overhead associated with it. Additionally, due to seccomp's design,
+    filters are layered, which means processing time goes up as the number
+    of filters attached goes up.
+    
+    In the past, efforts have been focused on making filter execution complete
+    in a shorter amount of time. For example, filters were rewritten from
+    using linear if/then/else syscall search to using balanced binary trees,
+    or moving tests for syscalls common to the process's workload to the
+    front of the filter. However, there are limits to this, especially when
+    some processes are dealing with tens of filters[2], or when some
+    architectures have a less efficient BPF engine[3].
+    
+    The most common use of seccomp, constructing syscall block/allow-lists,
+    where syscalls that are always allowed or always rejected (without regard
+    to any arguments), also tends to produce the most pathological runtime
+    problems, in that a large number of syscall checks in the filter need
+    to be performed to come to a determination.
+    
+    In order to optimize these cases from O(n) to O(1), seccomp can
+    use bitmaps to immediately determine the desired action. A critical
+    observation in the prior paragraph bears repeating: the common case for
+    syscall tests do not check arguments. For any given filter, there is a
+    constant mapping from the combination of architecture and syscall to the
+    seccomp action result. (For kernels/architectures without CONFIG_COMPAT,
+    there is a single architecture.). As such, it is possible to construct
+    a mapping of arch/syscall to action, which can be updated as new filters
+    are attached to a process.
+    
+    In order to build this mapping at filter attach time, each filter is
+    executed for every syscall (under each possible architecture), and
+    checked for any accesses of struct seccomp_data that are not the "arch"
+    nor "nr" (syscall) members. If only "arch" and "nr" are examined, then
+    there is a constant mapping for that syscall, and bitmaps can be updated
+    accordingly. If any accesses happen outside of those struct members,
+    seccomp must not bypass filter execution for that syscall, since program
+    state will be used to determine filter action result. (This logic comes
+    in the next patch.)
+    
+    [1] https://lore.kernel.org/bpf/20200531171915.wsxvdjeetmhpsdv2@ast-mbp.dhcp.thefacebook.com/
+    [2] https://lore.kernel.org/bpf/20200601101137.GA121847@gardel-login/
+    [3] https://lore.kernel.org/bpf/717a06e7f35740ccb4c70470ec70fb2f@huawei.com/
+
+
+Thanks!
+
+-Kees
+
+
+Kees Cook (6):
+  seccomp: Introduce SECCOMP_PIN_ARCHITECTURE
+  x86: Enable seccomp architecture tracking
+  seccomp: Implement constant action bitmaps
+  seccomp: Emulate basic filters for constant action results
+  selftests/seccomp: Compare bitmap vs filter overhead
+  [DEBUG] seccomp: Report bitmap coverage ranges
+
+ arch/x86/include/asm/seccomp.h                |  14 +
+ include/linux/seccomp.h                       |  27 +
+ include/uapi/linux/seccomp.h                  |   1 +
+ kernel/seccomp.c                              | 473 +++++++++++++++++-
+ net/core/filter.c                             |   3 +-
+ .../selftests/seccomp/seccomp_benchmark.c     | 151 +++++-
+ tools/testing/selftests/seccomp/seccomp_bpf.c |  33 ++
+ tools/testing/selftests/seccomp/settings      |   2 +-
+ 8 files changed, 674 insertions(+), 30 deletions(-)
+
 -- 
 2.25.1
 
