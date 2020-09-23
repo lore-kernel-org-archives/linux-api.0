@@ -5,54 +5,53 @@ X-Spam-Level:
 X-Spam-Status: No, score=-14.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
-	version=3.4.0
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D22C1C4363D
-	for <linux-api@archiver.kernel.org>; Wed, 23 Sep 2020 23:34:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4C9EFC4363D
+	for <linux-api@archiver.kernel.org>; Wed, 23 Sep 2020 23:35:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8ADF220C09
-	for <linux-api@archiver.kernel.org>; Wed, 23 Sep 2020 23:34:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0718F20C09
+	for <linux-api@archiver.kernel.org>; Wed, 23 Sep 2020 23:35:13 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="TIMKD+uY"
+	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="CK/yLRWK"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726515AbgIWXbw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 23 Sep 2020 19:31:52 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60312 "EHLO
+        id S1726265AbgIWXez (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 23 Sep 2020 19:34:55 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60298 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726731AbgIWX3a (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Sep 2020 19:29:30 -0400
-Received: from mail-pj1-x1041.google.com (mail-pj1-x1041.google.com [IPv6:2607:f8b0:4864:20::1041])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DE936C0613D2
-        for <linux-api@vger.kernel.org>; Wed, 23 Sep 2020 16:29:29 -0700 (PDT)
-Received: by mail-pj1-x1041.google.com with SMTP id b17so547732pji.1
-        for <linux-api@vger.kernel.org>; Wed, 23 Sep 2020 16:29:29 -0700 (PDT)
+        with ESMTP id S1726687AbgIWX32 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Sep 2020 19:29:28 -0400
+Received: from mail-pj1-x1044.google.com (mail-pj1-x1044.google.com [IPv6:2607:f8b0:4864:20::1044])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3FC97C0613D2
+        for <linux-api@vger.kernel.org>; Wed, 23 Sep 2020 16:29:28 -0700 (PDT)
+Received: by mail-pj1-x1044.google.com with SMTP id q4so573757pjh.5
+        for <linux-api@vger.kernel.org>; Wed, 23 Sep 2020 16:29:28 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=chromium.org; s=google;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=3tjQcJgxkky4Q5tL6fI5yShZ9VEKJUWBe4Oa7zhVXG8=;
-        b=TIMKD+uYvr1YdPLTyJHHVcZYjQEqHy0tYbelapcjRZOHTZmAY0natT6ajDzivxjqj0
-         d299ZNX8bo0prRnqHPaoQWmTB3QxOMSQUltgTLVgC9Q6lPVc3huZ3ArX+ynawPF0/Q14
-         qzbrM9jQOYsMsxWgjCGVivEWrJHkrGpS1EtOY=
+        bh=Sc3ebczz8rmNH2w8JraN/35ap0kTxnvAQhEv63luYfE=;
+        b=CK/yLRWK/GnklstIhHZjn/0pYYnnQjH99MYWDkAXuYI9+NOqvUU0ANa6rBD+NsWFEz
+         c7QexSPQWD74DI1zL2hhf0A48GuOV9gJ6xUM59jCUCjfUWNr9xxPmzGVjGXG9Ux5vdnC
+         z4nOhOyvGdEr88w/pVmbgsicGvkUkxDZlRCWA=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=3tjQcJgxkky4Q5tL6fI5yShZ9VEKJUWBe4Oa7zhVXG8=;
-        b=gnBmE/Mvu147eaUyk/AOOQW4BSN/SCpl8GvwcDjBWb/DLck0csdMFDIKyLwaVS5/RS
-         Ttpv+jU5jEfmvHrH6/F/xk08/uhdpdEMIscWWrU9bakd2ACkzGTLe1yQgZgkt43SV81Y
-         kLYyrBJDMgpywAkoUZzFzdjJ8Q5NpBqX/1q/ol6nZPChxPamOiUEk2vmedCUAb2Zd55G
-         JHZeM518nCLsVi1c8Q8KpRYyBxDxCXs+CtqZmD3tbRsVYpoCdm5AE+qmHgB4sRNNpdoM
-         /qT1BRcSOAuLvNa8pFWpPGMe1iJ/bIn/BA4hucw2REGKIyNbXU13vagPUY8CRgUUmJQU
-         +kDg==
-X-Gm-Message-State: AOAM533vKFwHB5eOxQzrVxq7hqPZChbe3DQ2L8qbfnEzMgZkSr678j88
-        dl23dMkZZyY+lgtLcwJ9hm/5Dw==
-X-Google-Smtp-Source: ABdhPJzLUGIsXfVbpAr9Ol7X8IFNcdiV/Cvmi2IKpWqmpxO2CSLDl74T/4D2rNKxV1OQwP7WhREFXQ==
-X-Received: by 2002:a17:90a:6848:: with SMTP id e8mr1361792pjm.221.1600903769404;
-        Wed, 23 Sep 2020 16:29:29 -0700 (PDT)
+        bh=Sc3ebczz8rmNH2w8JraN/35ap0kTxnvAQhEv63luYfE=;
+        b=F1uLMMAO99sPnpFDnldCqlGzGsMqiui611U08mWJ8fwgM3Ky1BjV/livsfly9h0sfA
+         ynb6xsuXgoVxVdugha/uIDCSxuIe1SB6L9Zvbrw5PA5lKxAEgSOb+dKA0aqGzkQspqke
+         UyrEVzLJeAwolFD7qjMBKcYZfq7fXTDoZTtAWpBFEt/LmfAzaZcQnaaIrwvSx4ZXSEuR
+         3txbSCLmYtT/29A3QqSqrA1q0tfCWKsWyLtdd3ftLqD56WEhmcx8Hi7kAbmZZY4q16+T
+         +Pjk1chEJWi5Htv4hIqM8MDXuza+cfwXVPETjgwzWBPcqmwbtOxVaFQVqTTqsrsUTXTr
+         o+lQ==
+X-Gm-Message-State: AOAM530WJnzd0M7F3OgJDbHV4Y+Jb7BgpnWlF8bNFRbi+V2x6fKg4wHH
+        0xnlDZoSB/DrXAL7231sSuhrJw==
+X-Google-Smtp-Source: ABdhPJyZ7o0DnR5kI8957XIopuSRrBSpPx9KS7ET42fO0J8UuNz+QkuV9tPkvD3v4Fah2MtxvVfhKg==
+X-Received: by 2002:a17:90a:db05:: with SMTP id g5mr1549879pjv.22.1600903767757;
+        Wed, 23 Sep 2020 16:29:27 -0700 (PDT)
 Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id j13sm492649pjn.14.2020.09.23.16.29.26
+        by smtp.gmail.com with ESMTPSA id w185sm724485pfc.36.2020.09.23.16.29.26
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Wed, 23 Sep 2020 16:29:26 -0700 (PDT)
 From:   Kees Cook <keescook@chromium.org>
@@ -73,9 +72,9 @@ Cc:     Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>,
         Tianyin Xu <tyxu@illinois.edu>, bpf@vger.kernel.org,
         containers@lists.linux-foundation.org, linux-api@vger.kernel.org,
         linux-kernel@vger.kernel.org
-Subject: [PATCH 1/6] seccomp: Introduce SECCOMP_PIN_ARCHITECTURE
-Date:   Wed, 23 Sep 2020 16:29:18 -0700
-Message-Id: <20200923232923.3142503-2-keescook@chromium.org>
+Subject: [PATCH 4/6] seccomp: Emulate basic filters for constant action results
+Date:   Wed, 23 Sep 2020 16:29:21 -0700
+Message-Id: <20200923232923.3142503-5-keescook@chromium.org>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20200923232923.3142503-1-keescook@chromium.org>
 References: <20200923232923.3142503-1-keescook@chromium.org>
@@ -85,240 +84,156 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-For systems that provide multiple syscall maps based on audit
-architectures (e.g. AUDIT_ARCH_X86_64 and AUDIT_ARCH_I386 via
-CONFIG_COMPAT) or via syscall masks (e.g. x86_x32), allow a fast way
-to pin the process to a specific syscall table, instead of needing
-to generate all filters with an architecture check as the first filter
-action.
+This emulates absolutely the most basic seccomp filters to figure out
+if they will always give the same results for a given arch/nr combo.
 
-This creates the internal representation that seccomp itself can use
-(which is separate from the filters, which need to stay runtime
-agnostic). Additionally paves the way for constant-action bitmaps.
+Nearly all seccomp filters are built from the following ops:
 
+BPF_LD  | BPF_W    | BPF_ABS
+BPF_JMP | BPF_JEQ  | BPF_K
+BPF_JMP | BPF_JGE  | BPF_K
+BPF_JMP | BPF_JGT  | BPF_K
+BPF_JMP | BPF_JSET | BPF_K
+BPF_JMP | BPF_JA
+BPF_RET | BPF_K
+
+These are now emulated to check for accesses beyond seccomp_data::arch
+or unknown instructions.
+
+Not yet implemented are:
+
+BPF_ALU | BPF_AND (generated by libseccomp and Chrome)
+
+Suggested-by: Jann Horn <jannh@google.com>
+Link: https://lore.kernel.org/lkml/CAG48ez1p=dR_2ikKq=xVxkoGg0fYpTBpkhJSv1w-6BG=76PAvw@mail.gmail.com/
 Signed-off-by: Kees Cook <keescook@chromium.org>
 ---
- include/linux/seccomp.h                       |  9 +++
- include/uapi/linux/seccomp.h                  |  1 +
- kernel/seccomp.c                              | 79 ++++++++++++++++++-
- tools/testing/selftests/seccomp/seccomp_bpf.c | 33 ++++++++
- 4 files changed, 120 insertions(+), 2 deletions(-)
+ kernel/seccomp.c  | 82 ++++++++++++++++++++++++++++++++++++++++++++---
+ net/core/filter.c |  3 +-
+ 2 files changed, 79 insertions(+), 6 deletions(-)
 
-diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
-index 02aef2844c38..0be20bc81ea9 100644
---- a/include/linux/seccomp.h
-+++ b/include/linux/seccomp.h
-@@ -20,12 +20,18 @@
- #include <linux/atomic.h>
- #include <asm/seccomp.h>
- 
-+#define SECCOMP_ARCH_IS_NATIVE		1
-+#define SECCOMP_ARCH_IS_COMPAT		2
-+#define SECCOMP_ARCH_IS_MULTIPLEX	3
-+#define SECCOMP_ARCH_IS_UNKNOWN		0xff
-+
- struct seccomp_filter;
- /**
-  * struct seccomp - the state of a seccomp'ed process
-  *
-  * @mode:  indicates one of the valid values above for controlled
-  *         system calls available to a process.
-+ * @arch: seccomp's internal architecture identifier (not seccomp_data->arch)
-  * @filter: must always point to a valid seccomp-filter or NULL as it is
-  *          accessed without locking during system call entry.
-  *
-@@ -34,6 +40,9 @@ struct seccomp_filter;
-  */
- struct seccomp {
- 	int mode;
-+#ifdef SECCOMP_ARCH
-+	u8 arch;
-+#endif
- 	atomic_t filter_count;
- 	struct seccomp_filter *filter;
- };
-diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
-index 6ba18b82a02e..f4d134ebfa7e 100644
---- a/include/uapi/linux/seccomp.h
-+++ b/include/uapi/linux/seccomp.h
-@@ -16,6 +16,7 @@
- #define SECCOMP_SET_MODE_FILTER		1
- #define SECCOMP_GET_ACTION_AVAIL	2
- #define SECCOMP_GET_NOTIF_SIZES		3
-+#define SECCOMP_PIN_ARCHITECTURE	4
- 
- /* Valid flags for SECCOMP_SET_MODE_FILTER */
- #define SECCOMP_FILTER_FLAG_TSYNC		(1UL << 0)
 diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index ae6b40cc39f4..0a3ff8eb8aea 100644
+index 111a238bc532..9921f6f39d12 100644
 --- a/kernel/seccomp.c
 +++ b/kernel/seccomp.c
-@@ -298,6 +298,47 @@ static int seccomp_check_filter(struct sock_filter *filter, unsigned int flen)
- 	return 0;
- }
- 
-+#ifdef SECCOMP_ARCH
-+static inline u8 seccomp_get_arch(u32 syscall_arch, u32 syscall_nr)
-+{
-+	u8 seccomp_arch;
-+
-+	switch (syscall_arch) {
-+	case SECCOMP_ARCH:
-+		seccomp_arch = SECCOMP_ARCH_IS_NATIVE;
-+		break;
-+#ifdef CONFIG_COMPAT
-+	case SECCOMP_ARCH_COMPAT:
-+		seccomp_arch = SECCOMP_ARCH_IS_COMPAT;
-+		break;
-+#endif
-+	default:
-+		seccomp_arch = SECCOMP_ARCH_IS_UNKNOWN;
-+	}
-+
-+#ifdef SECCOMP_MULTIPLEXED_SYSCALL_TABLE_ARCH
-+	if (syscall_arch == SECCOMP_MULTIPLEXED_SYSCALL_TABLE_ARCH) {
-+		seccomp_arch |= (sd->nr & SECCOMP_MULTIPLEXED_SYSCALL_TABLE_MASK) >>
-+				SECCOMP_MULTIPLEXED_SYSCALL_TABLE_SHIFT;
-+	}
-+#endif
-+
-+	return seccomp_arch;
-+}
-+#endif
-+
-+static inline bool seccomp_arch_mismatch(struct seccomp *seccomp,
-+					 const struct seccomp_data *sd)
-+{
-+#ifdef SECCOMP_ARCH
-+	/* Block mismatched architectures. */
-+	if (seccomp->arch && seccomp->arch != seccomp_get_arch(sd->arch, sd->nr))
-+		return true;
-+#endif
-+
-+	return false;
-+}
-+
- /**
-  * seccomp_run_filters - evaluates all seccomp filters against @sd
-  * @sd: optional seccomp data to be passed to filters
-@@ -312,9 +353,14 @@ static u32 seccomp_run_filters(const struct seccomp_data *sd,
- 			       struct seccomp_filter **match)
+@@ -610,7 +610,12 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
  {
- 	u32 ret = SECCOMP_RET_ALLOW;
-+	struct seccomp_filter *f;
-+	struct seccomp *seccomp = &current->seccomp;
-+
-+	if (seccomp_arch_mismatch(seccomp, sd))
-+		return SECCOMP_RET_KILL_PROCESS;
-+
- 	/* Make sure cross-thread synced filter points somewhere sane. */
--	struct seccomp_filter *f =
--			READ_ONCE(current->seccomp.filter);
-+	f = READ_ONCE(seccomp->filter);
- 
- 	/* Ensure unexpected behavior doesn't result in failing open. */
- 	if (WARN_ON(f == NULL))
-@@ -522,6 +568,11 @@ static inline void seccomp_sync_threads(unsigned long flags)
- 		if (task_no_new_privs(caller))
- 			task_set_no_new_privs(thread);
- 
-+#ifdef SECCOMP_ARCH
-+		/* Copy any pinned architecture. */
-+		thread->seccomp.arch = caller->seccomp.arch;
+ 	struct seccomp_filter *sfilter;
+ 	int ret;
+-	const bool save_orig = IS_ENABLED(CONFIG_CHECKPOINT_RESTORE);
++	const bool save_orig =
++#if defined(CONFIG_CHECKPOINT_RESTORE) || defined(SECCOMP_ARCH)
++		true;
++#else
++		false;
 +#endif
+ 
+ 	if (fprog->len == 0 || fprog->len > BPF_MAXINSNS)
+ 		return ERR_PTR(-EINVAL);
+@@ -690,11 +695,78 @@ static inline bool sd_touched(pte_t *ptep)
+  * This approach could also be used to test for access to sd->arch too,
+  * if we wanted to warn about compat-unsafe filters.
+  */
+-static inline bool seccomp_filter_action_is_constant(struct bpf_prog *prog,
+-						     struct seccomp_data *sd,
+-						     u32 *action)
++static bool seccomp_filter_action_is_constant(struct bpf_prog *prog,
++					      struct seccomp_data *sd,
++					      u32 *action)
+ {
+-	/* No evaluation implementation yet. */
++	struct sock_fprog_kern *fprog = prog->orig_prog;
++	unsigned int insns;
++	unsigned int reg_value = 0;
++	unsigned int pc;
++	bool op_res;
 +
- 		/*
- 		 * Opt the other thread into seccomp if needed.
- 		 * As threads are considered to be trust-realm
-@@ -1652,6 +1703,23 @@ static long seccomp_get_notif_sizes(void __user *usizes)
++	if (WARN_ON_ONCE(!fprog))
++		return false;
++
++	insns = bpf_classic_proglen(fprog);
++	for (pc = 0; pc < insns; pc++) {
++		struct sock_filter *insn = &fprog->filter[pc];
++		u16 code = insn->code;
++		u32 k = insn->k;
++
++		switch (code) {
++		case BPF_LD | BPF_W | BPF_ABS:
++			switch (k) {
++			case offsetof(struct seccomp_data, nr):
++				reg_value = sd->nr;
++				break;
++			case offsetof(struct seccomp_data, arch):
++				reg_value = sd->arch;
++				break;
++			default:
++				/* can't optimize (non-constant value load) */
++				return false;
++			}
++			break;
++		case BPF_RET | BPF_K:
++			*action = insn->k;
++			/* success: reached return with constant values only */
++			return true;
++		case BPF_JMP | BPF_JA:
++			pc += insn->k;
++			break;
++		case BPF_JMP | BPF_JEQ | BPF_K:
++		case BPF_JMP | BPF_JGE | BPF_K:
++		case BPF_JMP | BPF_JGT | BPF_K:
++		case BPF_JMP | BPF_JSET | BPF_K:
++			switch (BPF_OP(code)) {
++			case BPF_JEQ:
++				op_res = reg_value == k;
++				break;
++			case BPF_JGE:
++				op_res = reg_value >= k;
++				break;
++			case BPF_JGT:
++				op_res = reg_value > k;
++				break;
++			case BPF_JSET:
++				op_res = !!(reg_value & k);
++				break;
++			default:
++				/* can't optimize (unknown jump) */
++				return false;
++			}
++
++			pc += op_res ? insn->jt : insn->jf;
++			break;
++		default:
++			/* can't optimize (unknown insn) */
++			return false;
++		}
++	}
++
++	/* ran off the end of the filter?! */
++	WARN_ON(1);
+ 	return false;
+ }
+ 
+diff --git a/net/core/filter.c b/net/core/filter.c
+index b2df52086445..cb1bdb0bfe87 100644
+--- a/net/core/filter.c
++++ b/net/core/filter.c
+@@ -1145,7 +1145,7 @@ static int bpf_prog_store_orig_filter(struct bpf_prog *fp,
  	return 0;
  }
  
-+static long seccomp_pin_architecture(void)
-+{
-+#ifdef SECCOMP_ARCH
-+	struct task_struct *task = current;
-+
-+	u8 arch = seccomp_get_arch(syscall_get_arch(task),
-+				   syscall_get_nr(task, task_pt_regs(task)));
-+
-+	/* How did you even get here? */
-+	if (task->seccomp.arch && task->seccomp.arch != arch)
-+		return -EBUSY;
-+
-+	task->seccomp.arch = arch;
-+#endif
-+	return 0;
-+}
-+
- /* Common entry point for both prctl and syscall. */
- static long do_seccomp(unsigned int op, unsigned int flags,
- 		       void __user *uargs)
-@@ -1673,6 +1741,13 @@ static long do_seccomp(unsigned int op, unsigned int flags,
- 			return -EINVAL;
+-static void bpf_release_orig_filter(struct bpf_prog *fp)
++void bpf_release_orig_filter(struct bpf_prog *fp)
+ {
+ 	struct sock_fprog_kern *fprog = fp->orig_prog;
  
- 		return seccomp_get_notif_sizes(uargs);
-+	case SECCOMP_PIN_ARCHITECTURE:
-+		if (flags != 0)
-+			return -EINVAL;
-+		if (uargs != NULL)
-+			return -EINVAL;
-+
-+		return seccomp_pin_architecture();
- 	default:
- 		return -EINVAL;
+@@ -1154,6 +1154,7 @@ static void bpf_release_orig_filter(struct bpf_prog *fp)
+ 		kfree(fprog);
  	}
-diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
-index 9c398768553b..d90551e0385e 100644
---- a/tools/testing/selftests/seccomp/seccomp_bpf.c
-+++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
-@@ -157,6 +157,10 @@ struct seccomp_data {
- #define SECCOMP_GET_NOTIF_SIZES 3
- #endif
- 
-+#ifndef SECCOMP_PIN_ARCHITECTURE
-+#define SECCOMP_PIN_ARCHITECTURE 4
-+#endif
-+
- #ifndef SECCOMP_FILTER_FLAG_TSYNC
- #define SECCOMP_FILTER_FLAG_TSYNC (1UL << 0)
- #endif
-@@ -2221,6 +2225,35 @@ TEST_F_SIGNAL(TRACE_syscall, kill_after, SIGSYS)
- 	EXPECT_NE(self->mypid, syscall(__NR_getpid));
  }
++EXPORT_SYMBOL_GPL(bpf_release_orig_filter);
  
-+TEST(seccomp_architecture_pin)
-+{
-+	long ret;
-+
-+	ret = seccomp(SECCOMP_PIN_ARCHITECTURE, 0, NULL);
-+	ASSERT_EQ(0, ret) {
-+		TH_LOG("Kernel does not support SECCOMP_PIN_ARCHITECTURE!");
-+	}
-+
-+	/* Make sure unexpected arguments are rejected. */
-+	ret = seccomp(SECCOMP_PIN_ARCHITECTURE, 1, NULL);
-+	ASSERT_EQ(-1, ret);
-+	EXPECT_EQ(EINVAL, errno) {
-+		TH_LOG("Did not reject SECCOMP_PIN_ARCHITECTURE with flags!");
-+	}
-+
-+	ret = seccomp(SECCOMP_PIN_ARCHITECTURE, 0, &ret);
-+	ASSERT_EQ(-1, ret);
-+	EXPECT_EQ(EINVAL, errno) {
-+		TH_LOG("Did not reject SECCOMP_PIN_ARCHITECTURE with address!");
-+	}
-+
-+	ret = seccomp(SECCOMP_PIN_ARCHITECTURE, 1, &ret);
-+	ASSERT_EQ(-1, ret);
-+	EXPECT_EQ(EINVAL, errno) {
-+		TH_LOG("Did not reject SECCOMP_PIN_ARCHITECTURE with flags and address!");
-+	}
-+}
-+
- TEST(seccomp_syscall)
+ static void __bpf_prog_release(struct bpf_prog *prog)
  {
- 	struct sock_filter filter[] = {
 -- 
 2.25.1
 
