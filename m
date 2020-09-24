@@ -8,55 +8,55 @@ X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E7468C4363D
-	for <linux-api@archiver.kernel.org>; Thu, 24 Sep 2020 19:22:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 80F78C47427
+	for <linux-api@archiver.kernel.org>; Thu, 24 Sep 2020 19:22:48 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B172623899
-	for <linux-api@archiver.kernel.org>; Thu, 24 Sep 2020 19:22:46 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3BA1121D91
+	for <linux-api@archiver.kernel.org>; Thu, 24 Sep 2020 19:22:48 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="q4qlrJKS"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="b2/Zodyy"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728783AbgIXTWl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 24 Sep 2020 15:22:41 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46748 "EHLO
+        id S1728807AbgIXTWr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 24 Sep 2020 15:22:47 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46760 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728773AbgIXTWk (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 24 Sep 2020 15:22:40 -0400
-Received: from mail-pj1-x1041.google.com (mail-pj1-x1041.google.com [IPv6:2607:f8b0:4864:20::1041])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 931A3C0613D3;
-        Thu, 24 Sep 2020 12:22:40 -0700 (PDT)
-Received: by mail-pj1-x1041.google.com with SMTP id q4so282311pjh.5;
-        Thu, 24 Sep 2020 12:22:40 -0700 (PDT)
+        with ESMTP id S1728773AbgIXTWn (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 24 Sep 2020 15:22:43 -0400
+Received: from mail-pj1-x1042.google.com (mail-pj1-x1042.google.com [IPv6:2607:f8b0:4864:20::1042])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9CCE5C0613D3;
+        Thu, 24 Sep 2020 12:22:43 -0700 (PDT)
+Received: by mail-pj1-x1042.google.com with SMTP id q4so282441pjh.5;
+        Thu, 24 Sep 2020 12:22:43 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=hFUA2EodpJe3a9+C7aWrHwYTMpFRcWcG5EO2y8L7QQ4=;
-        b=q4qlrJKSBvKQ5y7ypuPGCLfmz1oEgVicS+2y7ZQNsHdABjg0cffy3LOrxtscih684+
-         mZoFVdgB4qyTw1260eVnuPFAapfaIq6seZ4CkhN3RSVOI8qU19FESn05ShwQfNc/DmwO
-         QmtIhoaiJZkjaxUWRl87cLroObqyaZjhextSrLA/NgIu1neddA+LsoeCC/FCD0XShHgb
-         DoSZURPRe7K8sApOsWIg5B+Zhmy2jPsETsitFVY7qbviNgThZL/r9YS5WD3qL5FNk7yZ
-         wYiCVnr7ZSWOOL9hzMOTiF7tt7ynuvOlfI3r+u8CexhNSulNCpPvYPZ+zLm0onxaL4j6
-         yB0w==
+        bh=cd/kUvj/qKVGHAwJBYWnGQx2hf0aCQ0hRurRYYSX7es=;
+        b=b2/ZodyybF0tlt2ecP+O6ZdLrWUimeXoncxegNY9lLQktYeCTzDDIsLJDeeBAsceKR
+         8y8bHuINmBYxkh+5yjtGHxWeUFaWWhgLlnzfV8bs0oTKsdRJUCGi/VG7/+THkpqKtS7d
+         +QN4WKhUK1fLysC3qrZBRJJPuWM848aL+NyE3Mzvw714fVmwHF38S3r6JROz0ayODrbF
+         dYvzI1xciuweLzOtpnfV7QWn4QrKijBMFuSHrwdNiZZkCFyNY+eByZWdTOlo482wLb74
+         Li20vVljcalZsTAhKPmwSZALsPIUBn0c6zNUU0/DuykFqYIarCy3tLR7EzUBwFmyxVX7
+         wvTQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references;
-        bh=hFUA2EodpJe3a9+C7aWrHwYTMpFRcWcG5EO2y8L7QQ4=;
-        b=QzyuX5/JBpk34T6bbRS73IMkPS5q2DS06yLKg+UBsIJSHzb4SATUEQOcmiidyTRxSh
-         QRmUpY76rYwAeQ2C9iI9wgTfyAHOpLgkutDuvYbDhHkCcQWwls1FvWpTyUGpuSlEt276
-         a+MBEhmFSf7+k6Fh/FMfJreYfhSJJQ1NvcYZKMKdAxzUkE8OWJMc6XjSdrgmhws0k+5t
-         oe5+S74LILXFLQz3B3o/U/fFmXMDIodEQOhm9tM4p+Xa2EbdgPAeCtUgY2BXrbYCIDuh
-         S2oGX39j8fvD3JeEGZBHQeN7Eq3NqcuI4+l1oRH/hGptmAc/CvkJYhd4s66KmrG/HEhe
-         WuEA==
-X-Gm-Message-State: AOAM532Zp9/f5iXnnaP6WMsYKA4nV3OKuSKh1J4iJmxXlFlQ0Y/ETBGE
-        8eHEkzsFmt8s8+zuhweBKE4=
-X-Google-Smtp-Source: ABdhPJxdPc8B899pY5H/1k0KRSUxQSKNnVQc4GXozbwWwXkRJQ6Hqpge4rKpj6X4S2dlY2N3jc9EdQ==
-X-Received: by 2002:a17:90a:e017:: with SMTP id u23mr411887pjy.3.1600975360063;
-        Thu, 24 Sep 2020 12:22:40 -0700 (PDT)
+        bh=cd/kUvj/qKVGHAwJBYWnGQx2hf0aCQ0hRurRYYSX7es=;
+        b=JgfnvxYqWARCSj0OLZsbgB8ceBym1ZYAIsnUPI3DAu2BjHye8kDNLwJIfahyIfj2bt
+         KqCHNVyfHh8/oLOGJJDfZmZGBznDwZpGqwyj7Ro3uFTeqMhIStgQbn9V+zj0wPssu2xt
+         2vLngsYSdM1lI7Fnv9uCXeZeI8WxZ4nDfkkctXeIXVoHJsJuK69Ij4oL+Eeh3r/7+CVs
+         LGpMsTwPPOKi1jl4AxgJJ4eLPiN/wXo14vxyMTSqCkUaBR9nSvk7MxOW1dYj4y7VGmiP
+         8WTdXEs6iFYkSNj0ET0haQ7jwuz7V+T+N4g9ZD6K3TYAk4bt9Tiwk/YQU91JM4mrPLBQ
+         d8Hg==
+X-Gm-Message-State: AOAM5322x5G8C9uVOOUU9M36i0ls11HlkRwbsBaBFghHBxRYYE+KRoiP
+        UqTAXk30aJkEvvEsqm5eqPs=
+X-Google-Smtp-Source: ABdhPJxZs0Dhi/7nKfg/AwCX+fMd7pdzWw3nLFX4U2GjDYNu6/T3UEz0a2SxCiAG9jgFAtZHwrKPHQ==
+X-Received: by 2002:a17:90b:4ac2:: with SMTP id mh2mr444252pjb.210.1600975363215;
+        Thu, 24 Sep 2020 12:22:43 -0700 (PDT)
 Received: from jacob-builder.jf.intel.com (jfdmzpr04-ext.jf.intel.com. [134.134.137.73])
-        by smtp.gmail.com with ESMTPSA id o15sm140918pgi.74.2020.09.24.12.22.38
+        by smtp.gmail.com with ESMTPSA id o15sm140918pgi.74.2020.09.24.12.22.42
         (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Thu, 24 Sep 2020 12:22:39 -0700 (PDT)
+        Thu, 24 Sep 2020 12:22:42 -0700 (PDT)
 From:   Jacob Pan <jacob.pan.linux@gmail.com>
 X-Google-Original-From: Jacob Pan <jacob.jun.pan@linux.intel.com>
 To:     iommu@lists.linux-foundation.org,
@@ -75,9 +75,9 @@ Cc:     linux-api@vger.kernel.org,
         Raj Ashok <ashok.raj@intel.com>, Wu Hao <hao.wu@intel.com>,
         Yi Sun <yi.y.sun@intel.com>,
         Randy Dunlap <rdunlap@infradead.org>
-Subject: [PATCH v11 2/6] iommu/uapi: Add argsz for user filled data
-Date:   Thu, 24 Sep 2020 12:24:16 -0700
-Message-Id: <1600975460-64521-3-git-send-email-jacob.jun.pan@linux.intel.com>
+Subject: [PATCH v11 4/6] iommu/uapi: Rename uapi functions
+Date:   Thu, 24 Sep 2020 12:24:18 -0700
+Message-Id: <1600975460-64521-5-git-send-email-jacob.jun.pan@linux.intel.com>
 X-Mailer: git-send-email 2.7.4
 In-Reply-To: <1600975460-64521-1-git-send-email-jacob.jun.pan@linux.intel.com>
 References: <1600975460-64521-1-git-send-email-jacob.jun.pan@linux.intel.com>
@@ -85,98 +85,129 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-As IOMMU UAPI gets extended, user data size may increase. To support
-backward compatibiliy, this patch introduces a size field to each UAPI
-data structures. It is *always* the responsibility for the user to fill in
-the correct size. Padding fields are adjusted to ensure 8 byte alignment.
+User APIs such as iommu_sva_unbind_gpasid() may also be used by the
+kernel. Since we introduced user pointer to the UAPI functions,
+in-kernel callers cannot share the same APIs. In-kernel callers are also
+trusted, there is no need to validate the data.
 
-Specific scenarios for user data handling are documented in:
-Documentation/userspace-api/iommu.rst
+We plan to have two flavors of the same API functions, one called
+through ioctls, carrying a user pointer and one called directly with
+valid IOMMU UAPI structs. To differentiate both, let's rename existing
+functions with an iommu_uapi_ prefix.
 
-As there is no current users of the API, struct version is not
-incremented.
-
+Suggested-by: Alex Williamson <alex.williamson@redhat.com>
 Reviewed-by: Eric Auger <eric.auger@redhat.com>
-Signed-off-by: Liu Yi L <yi.l.liu@intel.com>
 Signed-off-by: Jacob Pan <jacob.jun.pan@linux.intel.com>
 ---
- include/uapi/linux/iommu.h | 12 +++++++++---
- 1 file changed, 9 insertions(+), 3 deletions(-)
+ drivers/iommu/iommu.c | 18 +++++++++---------
+ include/linux/iommu.h | 31 ++++++++++++++++---------------
+ 2 files changed, 25 insertions(+), 24 deletions(-)
 
-diff --git a/include/uapi/linux/iommu.h b/include/uapi/linux/iommu.h
-index c2b2caf9ed41..b42acc8fe007 100644
---- a/include/uapi/linux/iommu.h
-+++ b/include/uapi/linux/iommu.h
-@@ -139,6 +139,7 @@ enum iommu_page_response_code {
+diff --git a/drivers/iommu/iommu.c b/drivers/iommu/iommu.c
+index 609bd25bf154..4ae02291ccc2 100644
+--- a/drivers/iommu/iommu.c
++++ b/drivers/iommu/iommu.c
+@@ -1961,35 +1961,35 @@ int iommu_attach_device(struct iommu_domain *domain, struct device *dev)
+ }
+ EXPORT_SYMBOL_GPL(iommu_attach_device);
  
- /**
-  * struct iommu_page_response - Generic page response information
-+ * @argsz: User filled size of this data
-  * @version: API version of this structure
-  * @flags: encodes whether the corresponding fields are valid
-  *         (IOMMU_FAULT_PAGE_RESPONSE_* values)
-@@ -147,6 +148,7 @@ enum iommu_page_response_code {
-  * @code: response code from &enum iommu_page_response_code
-  */
- struct iommu_page_response {
-+	__u32	argsz;
- #define IOMMU_PAGE_RESP_VERSION_1	1
- 	__u32	version;
- #define IOMMU_PAGE_RESP_PASID_VALID	(1 << 0)
-@@ -222,6 +224,7 @@ struct iommu_inv_pasid_info {
- /**
-  * struct iommu_cache_invalidate_info - First level/stage invalidation
-  *     information
-+ * @argsz: User filled size of this data
-  * @version: API version of this structure
-  * @cache: bitfield that allows to select which caches to invalidate
-  * @granularity: defines the lowest granularity used for the invalidation:
-@@ -250,6 +253,7 @@ struct iommu_inv_pasid_info {
-  * must support the used granularity.
-  */
- struct iommu_cache_invalidate_info {
-+	__u32	argsz;
- #define IOMMU_CACHE_INVALIDATE_INFO_VERSION_1 1
- 	__u32	version;
- /* IOMMU paging structure cache */
-@@ -259,7 +263,7 @@ struct iommu_cache_invalidate_info {
- #define IOMMU_CACHE_INV_TYPE_NR		(3)
- 	__u8	cache;
- 	__u8	granularity;
--	__u8	padding[2];
-+	__u8	padding[6];
- 	union {
- 		struct iommu_inv_pasid_info pasid_info;
- 		struct iommu_inv_addr_info addr_info;
-@@ -296,6 +300,7 @@ struct iommu_gpasid_bind_data_vtd {
+-int iommu_cache_invalidate(struct iommu_domain *domain, struct device *dev,
+-			   struct iommu_cache_invalidate_info *inv_info)
++int iommu_uapi_cache_invalidate(struct iommu_domain *domain, struct device *dev,
++				struct iommu_cache_invalidate_info *inv_info)
+ {
+ 	if (unlikely(!domain->ops->cache_invalidate))
+ 		return -ENODEV;
  
- /**
-  * struct iommu_gpasid_bind_data - Information about device and guest PASID binding
-+ * @argsz:	User filled size of this data
-  * @version:	Version of this data structure
-  * @format:	PASID table entry format
-  * @flags:	Additional information on guest bind request
-@@ -313,17 +318,18 @@ struct iommu_gpasid_bind_data_vtd {
-  * PASID to host PASID based on this bind data.
-  */
- struct iommu_gpasid_bind_data {
-+	__u32 argsz;
- #define IOMMU_GPASID_BIND_VERSION_1	1
- 	__u32 version;
- #define IOMMU_PASID_FORMAT_INTEL_VTD	1
- 	__u32 format;
-+	__u32 addr_width;
- #define IOMMU_SVA_GPASID_VAL	(1 << 0) /* guest PASID valid */
- 	__u64 flags;
- 	__u64 gpgd;
- 	__u64 hpasid;
- 	__u64 gpasid;
--	__u32 addr_width;
--	__u8  padding[12];
-+	__u8  padding[8];
- 	/* Vendor specific data */
- 	union {
- 		struct iommu_gpasid_bind_data_vtd vtd;
+ 	return domain->ops->cache_invalidate(domain, dev, inv_info);
+ }
+-EXPORT_SYMBOL_GPL(iommu_cache_invalidate);
++EXPORT_SYMBOL_GPL(iommu_uapi_cache_invalidate);
+ 
+-int iommu_sva_bind_gpasid(struct iommu_domain *domain,
+-			   struct device *dev, struct iommu_gpasid_bind_data *data)
++int iommu_uapi_sva_bind_gpasid(struct iommu_domain *domain,
++			       struct device *dev, struct iommu_gpasid_bind_data *data)
+ {
+ 	if (unlikely(!domain->ops->sva_bind_gpasid))
+ 		return -ENODEV;
+ 
+ 	return domain->ops->sva_bind_gpasid(domain, dev, data);
+ }
+-EXPORT_SYMBOL_GPL(iommu_sva_bind_gpasid);
++EXPORT_SYMBOL_GPL(iommu_uapi_sva_bind_gpasid);
+ 
+-int iommu_sva_unbind_gpasid(struct iommu_domain *domain, struct device *dev,
+-			     ioasid_t pasid)
++int iommu_uapi_sva_unbind_gpasid(struct iommu_domain *domain, struct device *dev,
++				 ioasid_t pasid)
+ {
+ 	if (unlikely(!domain->ops->sva_unbind_gpasid))
+ 		return -ENODEV;
+ 
+ 	return domain->ops->sva_unbind_gpasid(dev, pasid);
+ }
+-EXPORT_SYMBOL_GPL(iommu_sva_unbind_gpasid);
++EXPORT_SYMBOL_GPL(iommu_uapi_sva_unbind_gpasid);
+ 
+ static void __iommu_detach_device(struct iommu_domain *domain,
+ 				  struct device *dev)
+diff --git a/include/linux/iommu.h b/include/linux/iommu.h
+index fee209efb756..710d5d2691eb 100644
+--- a/include/linux/iommu.h
++++ b/include/linux/iommu.h
+@@ -424,13 +424,13 @@ extern int iommu_attach_device(struct iommu_domain *domain,
+ 			       struct device *dev);
+ extern void iommu_detach_device(struct iommu_domain *domain,
+ 				struct device *dev);
+-extern int iommu_cache_invalidate(struct iommu_domain *domain,
+-				  struct device *dev,
+-				  struct iommu_cache_invalidate_info *inv_info);
+-extern int iommu_sva_bind_gpasid(struct iommu_domain *domain,
+-		struct device *dev, struct iommu_gpasid_bind_data *data);
+-extern int iommu_sva_unbind_gpasid(struct iommu_domain *domain,
+-				struct device *dev, ioasid_t pasid);
++extern int iommu_uapi_cache_invalidate(struct iommu_domain *domain,
++				       struct device *dev,
++				       struct iommu_cache_invalidate_info *inv_info);
++extern int iommu_uapi_sva_bind_gpasid(struct iommu_domain *domain,
++				      struct device *dev, struct iommu_gpasid_bind_data *data);
++extern int iommu_uapi_sva_unbind_gpasid(struct iommu_domain *domain,
++					struct device *dev, ioasid_t pasid);
+ extern struct iommu_domain *iommu_get_domain_for_dev(struct device *dev);
+ extern struct iommu_domain *iommu_get_dma_domain(struct device *dev);
+ extern int iommu_map(struct iommu_domain *domain, unsigned long iova,
+@@ -1032,21 +1032,22 @@ static inline int iommu_sva_get_pasid(struct iommu_sva *handle)
+ 	return IOMMU_PASID_INVALID;
+ }
+ 
+-static inline int
+-iommu_cache_invalidate(struct iommu_domain *domain,
+-		       struct device *dev,
+-		       struct iommu_cache_invalidate_info *inv_info)
++static inline int iommu_uapi_cache_invalidate(struct iommu_domain *domain,
++					      struct device *dev,
++					      struct iommu_cache_invalidate_info *inv_info)
+ {
+ 	return -ENODEV;
+ }
+-static inline int iommu_sva_bind_gpasid(struct iommu_domain *domain,
+-				struct device *dev, struct iommu_gpasid_bind_data *data)
++
++static inline int iommu_uapi_sva_bind_gpasid(struct iommu_domain *domain,
++					     struct device *dev,
++					     struct iommu_gpasid_bind_data *data)
+ {
+ 	return -ENODEV;
+ }
+ 
+-static inline int iommu_sva_unbind_gpasid(struct iommu_domain *domain,
+-					   struct device *dev, int pasid)
++static inline int iommu_uapi_sva_unbind_gpasid(struct iommu_domain *domain,
++					       struct device *dev, int pasid)
+ {
+ 	return -ENODEV;
+ }
 -- 
 2.7.4
 
