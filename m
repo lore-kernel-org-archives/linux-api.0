@@ -7,33 +7,33 @@ X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 86705C4727D
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 15:25:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5E9D1C4363D
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 15:26:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 58BF82311D
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 15:25:34 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 23A712371F
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 15:26:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729352AbgIYPZb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 25 Sep 2020 11:25:31 -0400
-Received: from mga04.intel.com ([192.55.52.120]:19949 "EHLO mga04.intel.com"
+        id S1728678AbgIYP0a (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 25 Sep 2020 11:26:30 -0400
+Received: from mga04.intel.com ([192.55.52.120]:20030 "EHLO mga04.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728678AbgIYPZa (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 25 Sep 2020 11:25:30 -0400
-IronPort-SDR: pTZ4wDZNQOLCHTry4cEf7wxxzmEWCiiv5elgHt0RJcIzEONt8s7hVE9wK1mR7UGjLUaKPrCO1s
- dKkynv9pZRJA==
-X-IronPort-AV: E=McAfee;i="6000,8403,9755"; a="158942301"
+        id S1727749AbgIYP0a (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 25 Sep 2020 11:26:30 -0400
+IronPort-SDR: SjTyMUYWeBl2WfW9IneMrthLhdJcdrenzwyhuC+gSHW+nTfuwYlvtif5Ez29z/Ecd/6+JHJ1Cw
+ tlG+MSLLldaQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9755"; a="158942315"
 X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
-   d="scan'208";a="158942301"
+   d="scan'208";a="158942315"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:22 -0700
-IronPort-SDR: r1BMx5Qu3bfGkLVfz4QblRFjZhcbtWh8XVeTX73hcYo5zqxypGMr/4S4Ga9RbSSkPZd7lbeAB5
- KusDdOKr0zzA==
+  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:24 -0700
+IronPort-SDR: Rhq31SWCqEbWpGXoWOZJUDAE2t0HyQQElpwsz2fb4mQqS9x9l6PGOYb9pJL9spIwm6aB3X+Yqo
+ ddocbUFzxLMQ==
 X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
-   d="scan'208";a="487499183"
+   d="scan'208";a="487499204"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:22 -0700
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:24 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -62,9 +62,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v13 13/26] x86/mm: Shadow Stack page fault error checking
-Date:   Fri, 25 Sep 2020 07:56:36 -0700
-Message-Id: <20200925145649.5438-14-yu-cheng.yu@intel.com>
+Subject: [PATCH v13 16/26] mm: Add guard pages around a shadow stack.
+Date:   Fri, 25 Sep 2020 07:56:39 -0700
+Message-Id: <20200925145649.5438-17-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20200925145649.5438-1-yu-cheng.yu@intel.com>
 References: <20200925145649.5438-1-yu-cheng.yu@intel.com>
@@ -74,94 +74,96 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Shadow stack accesses are those that are performed by the CPU where it
-expects to encounter a shadow stack mapping.  These accesses are performed
-implicitly by CALL/RET at the site of the shadow stack pointer.  These
-accesses are made explicitly by shadow stack management instructions like
-WRUSSQ.
+INCSSP(Q/D) increments shadow stack pointer and 'pops and discards' the
+first and the last elements in the range, effectively touches those memory
+areas.
 
-Shadow stacks accesses to shadow-stack mapping can see faults in normal,
-valid operation just like regular accesses to regular mappings.  Shadow
-stacks need some of the same features like delayed allocation, swap and
-copy-on-write.
-
-Shadow stack accesses can also result in errors, such as when a shadow
-stack overflows, or if a shadow stack access occurs to a non-shadow-stack
-mapping.
-
-In handling a shadow stack page fault, verify it occurs within a shadow
-stack mapping.  It is always an error otherwise.  For valid shadow stack
-accesses, set FAULT_FLAG_WRITE to effect copy-on-write.  Because clearing
-_PAGE_DIRTY_HW (vs. _PAGE_RW) is used to trigger the fault, shadow stack
-read fault and shadow stack write fault are not differentiated and both are
-handled as a write access.
+The maximum moving distance by INCSSPQ is 255 * 8 = 2040 bytes and
+255 * 4 = 1020 bytes by INCSSPD.  Both ranges are far from PAGE_SIZE.
+Thus, putting a gap page on both ends of a shadow stack prevents INCSSP,
+CALL, and RET from going beyond.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
 v10:
--Revise commit log.
+- Define ARCH_SHADOW_STACK_GUARD_GAP.
 
- arch/x86/include/asm/traps.h |  2 ++
- arch/x86/mm/fault.c          | 19 +++++++++++++++++++
- 2 files changed, 21 insertions(+)
+ arch/x86/include/asm/processor.h | 10 ++++++++++
+ include/linux/mm.h               | 24 ++++++++++++++++++++----
+ 2 files changed, 30 insertions(+), 4 deletions(-)
 
-diff --git a/arch/x86/include/asm/traps.h b/arch/x86/include/asm/traps.h
-index 714b1a30e7b0..28b493c53d70 100644
---- a/arch/x86/include/asm/traps.h
-+++ b/arch/x86/include/asm/traps.h
-@@ -50,6 +50,7 @@ void __noreturn handle_stack_overflow(const char *message,
-  *   bit 3 ==				1: use of reserved bit detected
-  *   bit 4 ==				1: fault was an instruction fetch
-  *   bit 5 ==				1: protection keys block access
-+ *   bit 6 ==				1: shadow stack access fault
-  */
- enum x86_pf_error_code {
- 	X86_PF_PROT	=		1 << 0,
-@@ -58,5 +59,6 @@ enum x86_pf_error_code {
- 	X86_PF_RSVD	=		1 << 3,
- 	X86_PF_INSTR	=		1 << 4,
- 	X86_PF_PK	=		1 << 5,
-+	X86_PF_SHSTK	=		1 << 6,
- };
- #endif /* _ASM_X86_TRAPS_H */
-diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
-index 6e3e8a124903..2390399c157f 100644
---- a/arch/x86/mm/fault.c
-+++ b/arch/x86/mm/fault.c
-@@ -1110,6 +1110,17 @@ access_error(unsigned long error_code, struct vm_area_struct *vma)
- 				       (error_code & X86_PF_INSTR), foreign))
- 		return 1;
+diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+index 97143d87994c..01acbd63cad8 100644
+--- a/arch/x86/include/asm/processor.h
++++ b/arch/x86/include/asm/processor.h
+@@ -840,6 +840,16 @@ static inline void spin_lock_prefetch(const void *x)
+ #define STACK_TOP		TASK_SIZE_LOW
+ #define STACK_TOP_MAX		TASK_SIZE_MAX
  
-+	/*
-+	 * Verify a shadow stack access is within a shadow stack VMA.
-+	 * It is always an error otherwise.  Normal data access to a
-+	 * shadow stack area is checked in the case followed.
-+	 */
-+	if (error_code & X86_PF_SHSTK) {
-+		if (!(vma->vm_flags & VM_SHSTK))
-+			return 1;
-+		return 0;
-+	}
++/*
++ * Shadow stack pointer is moved by CALL, JMP, and INCSSP(Q/D).  INCSSPQ
++ * moves shadow stack pointer up to 255 * 8 = ~2 KB (~1KB for INCSSPD) and
++ * touches the first and the last element in the range, which triggers a
++ * page fault if the range is not in a shadow stack.  Because of this,
++ * creating 4-KB guard pages around a shadow stack prevents these
++ * instructions from going beyond.
++ */
++#define ARCH_SHADOW_STACK_GUARD_GAP PAGE_SIZE
 +
- 	if (error_code & X86_PF_WRITE) {
- 		/* write, present and write, not present: */
- 		if (unlikely(!(vma->vm_flags & VM_WRITE)))
-@@ -1275,6 +1286,14 @@ void do_user_addr_fault(struct pt_regs *regs,
+ #define INIT_THREAD  {						\
+ 	.addr_limit		= KERNEL_DS,			\
+ }
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index db76ced54f9a..e09d13699bbe 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -2615,6 +2615,10 @@ extern vm_fault_t filemap_page_mkwrite(struct vm_fault *vmf);
+ int __must_check write_one_page(struct page *page);
+ void task_dirty_inc(struct task_struct *tsk);
  
- 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
++#ifndef ARCH_SHADOW_STACK_GUARD_GAP
++#define ARCH_SHADOW_STACK_GUARD_GAP 0
++#endif
++
+ extern unsigned long stack_guard_gap;
+ /* Generic expand stack which grows the stack according to GROWS{UP,DOWN} */
+ extern int expand_stack(struct vm_area_struct *vma, unsigned long address);
+@@ -2647,9 +2651,15 @@ static inline struct vm_area_struct * find_vma_intersection(struct mm_struct * m
+ static inline unsigned long vm_start_gap(struct vm_area_struct *vma)
+ {
+ 	unsigned long vm_start = vma->vm_start;
++	unsigned long gap = 0;
  
-+	/*
-+	 * Clearing _PAGE_DIRTY_HW is used to detect shadow stack access.
-+	 * This method cannot distinguish shadow stack read vs. write.
-+	 * For valid shadow stack accesses, set FAULT_FLAG_WRITE to effect
-+	 * copy-on-write.
-+	 */
-+	if (hw_error_code & X86_PF_SHSTK)
-+		flags |= FAULT_FLAG_WRITE;
- 	if (hw_error_code & X86_PF_WRITE)
- 		flags |= FAULT_FLAG_WRITE;
- 	if (hw_error_code & X86_PF_INSTR)
+-	if (vma->vm_flags & VM_GROWSDOWN) {
+-		vm_start -= stack_guard_gap;
++	if (vma->vm_flags & VM_GROWSDOWN)
++		gap = stack_guard_gap;
++	else if (vma->vm_flags & VM_SHSTK)
++		gap = ARCH_SHADOW_STACK_GUARD_GAP;
++
++	if (gap != 0) {
++		vm_start -= gap;
+ 		if (vm_start > vma->vm_start)
+ 			vm_start = 0;
+ 	}
+@@ -2659,9 +2669,15 @@ static inline unsigned long vm_start_gap(struct vm_area_struct *vma)
+ static inline unsigned long vm_end_gap(struct vm_area_struct *vma)
+ {
+ 	unsigned long vm_end = vma->vm_end;
++	unsigned long gap = 0;
++
++	if (vma->vm_flags & VM_GROWSUP)
++		gap = stack_guard_gap;
++	else if (vma->vm_flags & VM_SHSTK)
++		gap = ARCH_SHADOW_STACK_GUARD_GAP;
+ 
+-	if (vma->vm_flags & VM_GROWSUP) {
+-		vm_end += stack_guard_gap;
++	if (gap != 0) {
++		vm_end += gap;
+ 		if (vm_end < vma->vm_end)
+ 			vm_end = -PAGE_SIZE;
+ 	}
 -- 
 2.21.0
 
