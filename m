@@ -2,46 +2,50 @@ Return-Path: <SRS0=H7yB=DC=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.5 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 57C33C4727E
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:34:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B7D83C4363D
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:48:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1025D221EC
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:34:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8F06D21D7A
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:48:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728933AbgIYQei (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 25 Sep 2020 12:34:38 -0400
-Received: from mga04.intel.com ([192.55.52.120]:26253 "EHLO mga04.intel.com"
+        id S1729041AbgIYQsE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 25 Sep 2020 12:48:04 -0400
+Received: from mga01.intel.com ([192.55.52.88]:45354 "EHLO mga01.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727201AbgIYQei (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 25 Sep 2020 12:34:38 -0400
-IronPort-SDR: Q2vyGSq1yOwwxp2WaUzS6nkVW7z1qL2ADmpQRkn5llpTJkc2zIB3xxIdLXyzCHmhZhte72phmC
- iaFQPhPB+JzQ==
-X-IronPort-AV: E=McAfee;i="6000,8403,9755"; a="158942352"
+        id S1727812AbgIYQsD (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 25 Sep 2020 12:48:03 -0400
+IronPort-SDR: IGBJdcdLHK/rkTvqrCAOZsnNpD0AbG+qAZydLzSFxtMZ3JRqv4O1cTSfoG4DkkgOPDOYtWQwZG
+ PS+qlJ59cpAA==
+X-IronPort-AV: E=McAfee;i="6000,8403,9755"; a="179657363"
 X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
-   d="scan'208";a="158942352"
+   d="scan'208";a="179657363"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
-Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:31 -0700
-IronPort-SDR: L7HFsBcj4pDbbE+PSkFJM62Z8GSbhLHCG6CyQXs6ixSVVHSLKDU1PlhQubn6Q+ExIXMEowCuQ9
- jdQyAixhZq6g==
+Received: from fmsmga004.fm.intel.com ([10.253.24.48])
+  by fmsmga101.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 09:48:02 -0700
+IronPort-SDR: XbYr2jPVpT1Wf6fIuRpAKebBnup6ZoThBmfiO9H5MEW0vAntBNX4+b0Tc3QLEpvPIPzUkLk/qB
+ wcEFkVXs16qQ==
 X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
-   d="scan'208";a="487499266"
-Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:30 -0700
-From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
-To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
+   d="scan'208";a="336806828"
+Received: from yyu32-mobl1.amr.corp.intel.com (HELO [10.213.161.229]) ([10.213.161.229])
+  by fmsmga004-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 09:47:59 -0700
+Subject: Re: [PATCH v13 8/8] x86/vsyscall/64: Fixup Shadow Stack and Indirect
+ Branch Tracking for vsyscall emulation
+To:     Andy Lutomirski <luto@kernel.org>
+Cc:     X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-doc@vger.kernel.org, linux-mm@kvack.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        Ingo Molnar <mingo@redhat.com>,
+        LKML <linux-kernel@vger.kernel.org>,
+        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
+        Linux-MM <linux-mm@kvack.org>,
+        linux-arch <linux-arch@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
         Arnd Bergmann <arnd@arndb.de>,
-        Andy Lutomirski <luto@kernel.org>,
         Balbir Singh <bsingharora@gmail.com>,
         Borislav Petkov <bp@alien8.de>,
         Cyrill Gorcunov <gorcunov@gmail.com>,
@@ -61,223 +65,67 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v13 25/26] x86/cet/shstk: Add arch_prctl functions for shadow stack
-Date:   Fri, 25 Sep 2020 07:56:48 -0700
-Message-Id: <20200925145649.5438-26-yu-cheng.yu@intel.com>
-X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20200925145649.5438-1-yu-cheng.yu@intel.com>
-References: <20200925145649.5438-1-yu-cheng.yu@intel.com>
+References: <20200925145804.5821-1-yu-cheng.yu@intel.com>
+ <20200925145804.5821-9-yu-cheng.yu@intel.com>
+ <CALCETrXs11c8ZcB2QdWUm5CeCXRm1wo706g5J9ajR8+6yYTgtQ@mail.gmail.com>
+From:   "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
+Message-ID: <d0e4077e-129f-6823-dcea-a101ef626e8c@intel.com>
+Date:   Fri, 25 Sep 2020 09:47:55 -0700
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101
+ Thunderbird/68.12.0
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <CALCETrXs11c8ZcB2QdWUm5CeCXRm1wo706g5J9ajR8+6yYTgtQ@mail.gmail.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-arch_prctl(ARCH_X86_CET_STATUS, u64 *args)
-    Get CET feature status.
+On 9/25/2020 9:31 AM, Andy Lutomirski wrote:
+> On Fri, Sep 25, 2020 at 7:58 AM Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+>>
 
-    The parameter 'args' is a pointer to a user buffer.  The kernel returns
-    the following information:
+[...]
 
-    *args = shadow stack/IBT status
-    *(args + 1) = shadow stack base address
-    *(args + 2) = shadow stack size
+>> @@ -286,6 +289,37 @@ bool emulate_vsyscall(unsigned long error_code,
+>>          /* Emulate a ret instruction. */
+>>          regs->ip = caller;
+>>          regs->sp += 8;
+>> +
+>> +#ifdef CONFIG_X86_CET
+>> +       if (tsk->thread.cet.shstk_size || tsk->thread.cet.ibt_enabled) {
+>> +               struct cet_user_state *cet;
+>> +               struct fpu *fpu;
+>> +
+>> +               fpu = &tsk->thread.fpu;
+>> +               fpregs_lock();
+>> +
+>> +               if (!test_thread_flag(TIF_NEED_FPU_LOAD)) {
+>> +                       copy_fpregs_to_fpstate(fpu);
+>> +                       set_thread_flag(TIF_NEED_FPU_LOAD);
+>> +               }
+>> +
+>> +               cet = get_xsave_addr(&fpu->state.xsave, XFEATURE_CET_USER);
+>> +               if (!cet) {
+>> +                       fpregs_unlock();
+>> +                       goto sigsegv;
+> 
+> I *think* your patchset tries to keep cet.shstk_size and
+> cet.ibt_enabled in sync with the MSR, in which case it should be
+> impossible to get here, but a comment and a warning would be much
+> better than a random sigsegv.
 
-arch_prctl(ARCH_X86_CET_DISABLE, unsigned int features)
-    Disable CET features specified in 'features'.  Return -EPERM if CET is
-    locked.
+Yes, it should be impossible to get here.  I will add a comment and a 
+warning, but still do sigsegv.  Should this happen, and the function 
+return, the app gets a control-protection fault.  Why not let it fail early?
 
-arch_prctl(ARCH_X86_CET_LOCK)
-    Lock in CET features.
+>
+> Shouldn't we have a get_xsave_addr_or_allocate() that will never
+> return NULL but instead will mark the state as in use and set up the
+> init state if the feature was previously not in use?
+> 
 
-Also change do_arch_prctl_common()'s parameter 'cpuid_enabled' to
-'arg2', as it is now also passed to prctl_cet().
-
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
----
-v12:
-- Remove ARCH_X86_CET_MMAP_SHSTK.
-
-v11:
-- Check input for invalid features.
-- Fix prctl_cet() return values.
-- Change ARCH_X86_CET_ALLOC_SHSTK to ARCH_X86_CET_MMAP_SHSTK to take
-  MAP_32BIT, MAP_POPULATE as inputs.
-
-v10:
-- Verify CET is enabled before handling arch_prctl.
-- Change input parameters from unsigned long to u64, to make it clear they
-  are 64-bit.
-
- arch/x86/include/asm/cet.h              |  3 ++
- arch/x86/include/uapi/asm/prctl.h       |  4 ++
- arch/x86/kernel/Makefile                |  2 +-
- arch/x86/kernel/cet_prctl.c             | 68 +++++++++++++++++++++++++
- arch/x86/kernel/process.c               |  6 +--
- tools/arch/x86/include/uapi/asm/prctl.h |  4 ++
- 6 files changed, 83 insertions(+), 4 deletions(-)
- create mode 100644 arch/x86/kernel/cet_prctl.c
-
-diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index ec4b5e62d0ce..16870e5bc8eb 100644
---- a/arch/x86/include/asm/cet.h
-+++ b/arch/x86/include/asm/cet.h
-@@ -14,9 +14,11 @@ struct sc_ext;
- struct cet_status {
- 	unsigned long	shstk_base;
- 	unsigned long	shstk_size;
-+	unsigned int	locked:1;
- };
- 
- #ifdef CONFIG_X86_CET
-+int prctl_cet(int option, u64 arg2);
- int cet_setup_shstk(void);
- int cet_setup_thread_shstk(struct task_struct *p, unsigned long clone_flags);
- void cet_disable_shstk(void);
-@@ -25,6 +27,7 @@ int cet_verify_rstor_token(bool ia32, unsigned long ssp, unsigned long *new_ssp)
- void cet_restore_signal(struct sc_ext *sc);
- int cet_setup_signal(bool ia32, unsigned long rstor, struct sc_ext *sc);
- #else
-+static inline int prctl_cet(int option, u64 arg2) { return -EINVAL; }
- static inline int cet_setup_thread_shstk(struct task_struct *p,
- 					 unsigned long clone_flags) { return 0; }
- static inline void cet_disable_shstk(void) {}
-diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
-index 5a6aac9fa41f..9245bf629120 100644
---- a/arch/x86/include/uapi/asm/prctl.h
-+++ b/arch/x86/include/uapi/asm/prctl.h
-@@ -14,4 +14,8 @@
- #define ARCH_MAP_VDSO_32	0x2002
- #define ARCH_MAP_VDSO_64	0x2003
- 
-+#define ARCH_X86_CET_STATUS		0x3001
-+#define ARCH_X86_CET_DISABLE		0x3002
-+#define ARCH_X86_CET_LOCK		0x3003
-+
- #endif /* _ASM_X86_PRCTL_H */
-diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
-index 1fb85595afa7..321ef52e4470 100644
---- a/arch/x86/kernel/Makefile
-+++ b/arch/x86/kernel/Makefile
-@@ -145,7 +145,7 @@ obj-$(CONFIG_UNWINDER_ORC)		+= unwind_orc.o
- obj-$(CONFIG_UNWINDER_FRAME_POINTER)	+= unwind_frame.o
- obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
- 
--obj-$(CONFIG_X86_CET)			+= cet.o
-+obj-$(CONFIG_X86_CET)			+= cet.o cet_prctl.o
- 
- ###
- # 64 bit specific files
-diff --git a/arch/x86/kernel/cet_prctl.c b/arch/x86/kernel/cet_prctl.c
-new file mode 100644
-index 000000000000..bd5ad11763e4
---- /dev/null
-+++ b/arch/x86/kernel/cet_prctl.c
-@@ -0,0 +1,68 @@
-+// SPDX-License-Identifier: GPL-2.0
-+
-+#include <linux/errno.h>
-+#include <linux/uaccess.h>
-+#include <linux/prctl.h>
-+#include <linux/compat.h>
-+#include <linux/mman.h>
-+#include <linux/elfcore.h>
-+#include <asm/processor.h>
-+#include <asm/prctl.h>
-+#include <asm/cet.h>
-+
-+/* See Documentation/x86/intel_cet.rst. */
-+
-+static int copy_status_to_user(struct cet_status *cet, u64 arg2)
-+{
-+	u64 buf[3] = {0, 0, 0};
-+
-+	if (cet->shstk_size) {
-+		buf[0] |= GNU_PROPERTY_X86_FEATURE_1_SHSTK;
-+		buf[1] = (u64)cet->shstk_base;
-+		buf[2] = (u64)cet->shstk_size;
-+	}
-+
-+	return copy_to_user((u64 __user *)arg2, buf, sizeof(buf));
-+}
-+
-+int prctl_cet(int option, u64 arg2)
-+{
-+	struct cet_status *cet;
-+	unsigned int features;
-+
-+	/*
-+	 * GLIBC's ENOTSUPP == EOPNOTSUPP == 95, and it does not recognize
-+	 * the kernel's ENOTSUPP (524).  So return EOPNOTSUPP here.
-+	 */
-+	if (!IS_ENABLED(CONFIG_X86_CET))
-+		return -EOPNOTSUPP;
-+
-+	cet = &current->thread.cet;
-+
-+	if (option == ARCH_X86_CET_STATUS)
-+		return copy_status_to_user(cet, arg2);
-+
-+	if (!static_cpu_has(X86_FEATURE_SHSTK))
-+		return -EOPNOTSUPP;
-+
-+	switch (option) {
-+	case ARCH_X86_CET_DISABLE:
-+		if (cet->locked)
-+			return -EPERM;
-+
-+		features = (unsigned int)arg2;
-+
-+		if (features & GNU_PROPERTY_X86_FEATURE_1_INVAL)
-+			return -EINVAL;
-+		if (features & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
-+			cet_disable_shstk();
-+		return 0;
-+
-+	case ARCH_X86_CET_LOCK:
-+		cet->locked = 1;
-+		return 0;
-+
-+	default:
-+		return -ENOSYS;
-+	}
-+}
-diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
-index 67632ba893b7..33cb6da22ef0 100644
---- a/arch/x86/kernel/process.c
-+++ b/arch/x86/kernel/process.c
-@@ -977,14 +977,14 @@ unsigned long get_wchan(struct task_struct *p)
- }
- 
- long do_arch_prctl_common(struct task_struct *task, int option,
--			  unsigned long cpuid_enabled)
-+			  unsigned long arg2)
- {
- 	switch (option) {
- 	case ARCH_GET_CPUID:
- 		return get_cpuid_mode();
- 	case ARCH_SET_CPUID:
--		return set_cpuid_mode(task, cpuid_enabled);
-+		return set_cpuid_mode(task, arg2);
- 	}
- 
--	return -EINVAL;
-+	return prctl_cet(option, arg2);
- }
-diff --git a/tools/arch/x86/include/uapi/asm/prctl.h b/tools/arch/x86/include/uapi/asm/prctl.h
-index 5a6aac9fa41f..9245bf629120 100644
---- a/tools/arch/x86/include/uapi/asm/prctl.h
-+++ b/tools/arch/x86/include/uapi/asm/prctl.h
-@@ -14,4 +14,8 @@
- #define ARCH_MAP_VDSO_32	0x2002
- #define ARCH_MAP_VDSO_64	0x2003
- 
-+#define ARCH_X86_CET_STATUS		0x3001
-+#define ARCH_X86_CET_DISABLE		0x3002
-+#define ARCH_X86_CET_LOCK		0x3003
-+
- #endif /* _ASM_X86_PRCTL_H */
--- 
-2.21.0
-
+We already have a static __raw_xsave_addr(), which returns a pointer to 
+the requested xstate.  Maybe we can export __raw_xsave_addr(), if that 
+is needed.
