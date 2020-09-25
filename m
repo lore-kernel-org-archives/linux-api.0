@@ -2,60 +2,61 @@ Return-Path: <SRS0=H7yB=DC=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8BCF8C4363D
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:30:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0FABEC4727E
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:30:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 31D9120738
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:30:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AD26521D7A
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:30:58 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Ytu1IT20"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VytEt46a"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728069AbgIYQaw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 25 Sep 2020 12:30:52 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44470 "EHLO
+        id S1727521AbgIYQa5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 25 Sep 2020 12:30:57 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44488 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728654AbgIYQaw (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 25 Sep 2020 12:30:52 -0400
-Received: from mail-pj1-x1041.google.com (mail-pj1-x1041.google.com [IPv6:2607:f8b0:4864:20::1041])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1D00CC0613CE;
-        Fri, 25 Sep 2020 09:30:52 -0700 (PDT)
-Received: by mail-pj1-x1041.google.com with SMTP id t7so2094666pjd.3;
-        Fri, 25 Sep 2020 09:30:52 -0700 (PDT)
+        with ESMTP id S1728654AbgIYQa4 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 25 Sep 2020 12:30:56 -0400
+Received: from mail-pj1-x1042.google.com (mail-pj1-x1042.google.com [IPv6:2607:f8b0:4864:20::1042])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CC9BFC0613CE;
+        Fri, 25 Sep 2020 09:30:56 -0700 (PDT)
+Received: by mail-pj1-x1042.google.com with SMTP id a9so2100383pjg.1;
+        Fri, 25 Sep 2020 09:30:56 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=from:to:cc:subject:date:message-id;
-        bh=TjJK6XN5jlS9wkc7N97gyRXrkYGGb2wNNiD+ZxlnoDY=;
-        b=Ytu1IT20bjPDOrxeMxT5l67LMIda5L5usR+fLSz8zC/ivopJkNvACGbl8N6Wx0/IwV
-         qGa3dIY5oUQFKYGL43bmVCEIir1FD9+TADuLMOFkrOhcbD4utnlupFIPhh9vDYQf1doP
-         AaiRwttnDGpJVCWzqUsWicV51z9GU9oX+IXnCWL4btbQCNMwwk/ULht+Zy86Spi1xmLn
-         3R8bW7wzSXMcS3niDevXzeijrzotWpfLWvctPqyk2RohEFas/IZawJVF0IDOXFsNVU+V
-         Q/Od4zBV3N8wJF7+GRVWNLLBuQ593w9doO1vIo988UooNCggYD66TxdTI1hH58ERW6lP
-         Ny4w==
+        h=from:to:cc:subject:date:message-id:in-reply-to:references;
+        bh=vUY73uGNXRdGBf6OJopom4ParHouExoa+/+ufyGwMqo=;
+        b=VytEt46aajPufsI4GahDOSYsgCoAmLwFG477/s2czYsnwtQiUaVS2r1cqdQ3B2yprz
+         XATVAzTkwJ5JfsKJhPiUnHacvkkqpq0HRCWttGAi2EoXUNRiwTAgo/GwaR+yg5AYPKoc
+         iHEIBnfjtHMep9K8CqYGiKHqdAYA7u1R0Ri6IjyTvHU3gqGM9kXCFt3KGeJ0K3uzNlto
+         pG2LLDxXmRzbfF1tXozGk39nPUVbU2H1gr8Mswq11NHU6KdFKysPvsg4H/mJVD4iMYPi
+         NI3v0cN9PbHIijozrpH5ISFz8IxTQB36okSIsjoMu8lbEW2hIdK53LU4nEhwOWUWxrU5
+         9G8g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id;
-        bh=TjJK6XN5jlS9wkc7N97gyRXrkYGGb2wNNiD+ZxlnoDY=;
-        b=Y8iuOwOQjWrHMrbASVnfVnxpIV3aA7IHvrW9+htVwxzW5NCVEoeRYcQw5IJC2uwZ84
-         cHwfhp3I7pSmjIR+Kd1yaDNgHqc2EUHeCDGceJj243Lb1RVHprCyidnKQmlGTBiQzjo/
-         ldsmsgPWKd5y0RIzJJpzUxwX61DfUYUf7cSimQXEjPkqQYPGfFOGuC4gj6FsWtbCKJs+
-         88K4s75PKPzqYDt0n468QhqcKI4RqlP7JHj2ehob9x4qtH+dAK+PC8c0jofxRJ827XsU
-         JVg45FZf3CzSlMdHNjlEhsiSGLs2Vfmdn9X6dEMfjAIx7MP60E6l36GF0x0pQ8lqXVB8
-         KX2w==
-X-Gm-Message-State: AOAM532LHNiez/4vmZ82OgP+blQuZ/gXcaobSx5QFB7Rd+GqUdQuTbrE
-        dqF9ZjoEN2XrJbPgREpDAJ8=
-X-Google-Smtp-Source: ABdhPJw9WV8IFgqFgR7/YTd9vFzMCOePTuSLuRR93fCwMzasZmyOHxVnFzGm952RNmAwPYx7+Wd0gA==
-X-Received: by 2002:a17:90b:f0b:: with SMTP id br11mr380158pjb.191.1601051451563;
-        Fri, 25 Sep 2020 09:30:51 -0700 (PDT)
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references;
+        bh=vUY73uGNXRdGBf6OJopom4ParHouExoa+/+ufyGwMqo=;
+        b=tst7ZMUoFNBs/CxE2fNRe+u+ES9L92aLC2oIlWtLB2RQ1dUmfa1hRjppB9IchTJEbC
+         wlCA6yrHFF0/7PwtDhNRlF4i56Wl78tu+WPJL7pDdKMgcGEzMsgiEsZ8iSoTp951fZjp
+         4dysaYWgSdcRSYnO7UAR+Y3wZN0gcOqDF+/VIXDLuRF5Vh8aiS1NgM/ZkF1WFYmKWZf0
+         QTBa7BRDKhefxUPb4GTD3lK+nfzN5B8ZJm6WTatYlzokJ9M4aXLfzgo9UjnzoQU1nTJu
+         Qd0IQcle0zIbUIAhK9MKHaTDIX0ghGNEWCO7Jtw+H99YiJBIv11uuFHG0+g90HSbDych
+         ULVg==
+X-Gm-Message-State: AOAM532EURnLuLbtguwYa9wWcGnadnS+evTSTkgjWg9lNSeEoKLk6moS
+        lTsiAE3PAAx2wayerlVJs/k=
+X-Google-Smtp-Source: ABdhPJw9rdZ8nPicF3cXOAtrpxmc2N1oWOsbXZNewmqu24lQwzW6J9SWZAXQnMTmId37PJ3LOvfaKQ==
+X-Received: by 2002:a17:90a:4b42:: with SMTP id o2mr338515pjl.205.1601051456301;
+        Fri, 25 Sep 2020 09:30:56 -0700 (PDT)
 Received: from jacob-builder.jf.intel.com (jfdmzpr04-ext.jf.intel.com. [134.134.137.73])
-        by smtp.gmail.com with ESMTPSA id j19sm3197039pfe.108.2020.09.25.09.30.49
+        by smtp.gmail.com with ESMTPSA id j19sm3197039pfe.108.2020.09.25.09.30.55
         (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Fri, 25 Sep 2020 09:30:50 -0700 (PDT)
+        Fri, 25 Sep 2020 09:30:55 -0700 (PDT)
 From:   Jacob Pan <jacob.pan.linux@gmail.com>
 X-Google-Original-From: Jacob Pan <jacob.jun.pan@linux.intel.com>
 To:     iommu@lists.linux-foundation.org,
@@ -74,117 +75,132 @@ Cc:     linux-api@vger.kernel.org,
         Raj Ashok <ashok.raj@intel.com>, Wu Hao <hao.wu@intel.com>,
         Yi Sun <yi.y.sun@intel.com>,
         Randy Dunlap <rdunlap@infradead.org>
-Subject: [PATCH v12 0/6] IOMMU user API enhancement
-Date:   Fri, 25 Sep 2020 09:32:41 -0700
-Message-Id: <1601051567-54787-1-git-send-email-jacob.jun.pan@linux.intel.com>
+Subject: [PATCH v12 3/6] iommu/uapi: Use named union for user data
+Date:   Fri, 25 Sep 2020 09:32:44 -0700
+Message-Id: <1601051567-54787-4-git-send-email-jacob.jun.pan@linux.intel.com>
 X-Mailer: git-send-email 2.7.4
+In-Reply-To: <1601051567-54787-1-git-send-email-jacob.jun.pan@linux.intel.com>
+References: <1601051567-54787-1-git-send-email-jacob.jun.pan@linux.intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-IOMMU user API header was introduced to support nested DMA translation and
-related fault handling. The current UAPI data structures consist of three
-areas that cover the interactions between host kernel and guest:
- - fault handling
- - cache invalidation
- - bind guest page tables, i.e. guest PASID
+IOMMU UAPI data size is filled by the user space which must be validated
+by the kernel. To ensure backward compatibility, user data can only be
+extended by either re-purpose padding bytes or extend the variable sized
+union at the end. No size change is allowed before the union. Therefore,
+the minimum size is the offset of the union.
 
-Future extensions are likely to support more architectures and vIOMMU features.
+To use offsetof() on the union, we must make it named.
 
-In the previous discussion, using user-filled data size and feature flags is
-made a preferred approach over a unified version number.
-https://lkml.org/lkml/2020/1/29/45
+Link: https://lore.kernel.org/linux-iommu/20200611145518.0c2817d6@x1.home/
+Signed-off-by: Jacob Pan <jacob.jun.pan@linux.intel.com>
+Reviewed-by: Lu Baolu <baolu.lu@linux.intel.com>
+Reviewed-by: Eric Auger <eric.auger@redhat.com>
+---
+ drivers/iommu/intel/iommu.c | 22 +++++++++++-----------
+ drivers/iommu/intel/svm.c   |  2 +-
+ include/uapi/linux/iommu.h  |  4 ++--
+ 3 files changed, 14 insertions(+), 14 deletions(-)
 
-In addition to introduce argsz field to data structures, this patchset is also
-trying to document the UAPI design, usage, and extension rules. VT-d driver
-changes to utilize the new argsz field is included, VFIO usage is to follow.
-
-This set is available at:
-https://github.com/jacobpan/linux.git vsva_v5.9_uapi_v12
-
-Thanks,
-
-Jacob
-
-
-Changelog:
-v12
-	- Removed a redundant check in cache invalidate API
-v11
-	- Use #define instead of enum in PASID data format, squashed change
-	  into "iommu/uapi: Handle data and argsz filled by users"
-	- Remove alloc/free from documentation per Yi's comment. IOMMU UAPI
-	  does not perform IOASID alloc/free.
-v10
-	- Documentation grammar fixes based on Randy's review
-v9
-	- Directly pass PASID value to iommu_sva_unbind_gpasid() without
-	  the superfluous data in struct iommu_gpasid_bind_data.
-v8
-	- Rebased to v5.9-rc2
-	- Addressed review comments from Eric Auger
-	  1. added a check for the unused vendor flags
-	  2. commit message improvements
-v7
-	- Added PASID data format enum for range checking
-	- Tidy up based on reviews from Alex W.
-	- Removed doc section for vIOMMU fault handling
-v6
-	- Renamed all UAPI functions with iommu_uapi_ prefix
-	- Replaced argsz maxsz checking with flag specific size checks
-	- Documentation improvements based on suggestions by Eric Auger
-	  Replaced example code with a pointer to the actual code
-	- Added more checks for illegal flags combinations
-	- Added doc file to MAINTAINERS
-v5
-	- Addjusted paddings in UAPI data to be 8 byte aligned
-	- Do not clobber argsz in IOMMU core before passing on to vendor driver
-	- Removed pr_warn_ for invalid UAPI data check, just return -EINVAL
-	- Clarified VFIO responsibility in UAPI data handling
-	- Use iommu_uapi prefix to differentiate APIs has in-kernel caller
-	- Added comment for unchecked flags of invalidation granularity
-	- Added example in doc to show vendor data checking
-
-v4
-	- Added checks of UAPI data for reserved fields, version, and flags.
-	- Removed version check from vendor driver (vt-d)
-	- Relaxed argsz check to match the UAPI struct size instead of variable
-	  union size
-	- Updated documentation
-
-v3:
-	- Rewrote backward compatibility rule to support existing code
-	  re-compiled with newer kernel UAPI header that runs on older
-	  kernel. Based on review comment from Alex W.
-	  https://lore.kernel.org/linux-iommu/20200611094741.6d118fa8@w520.home/
-	- Take user pointer directly in UAPI functions. Perform argsz check
-	  and copy_from_user() in IOMMU driver. Eliminate the need for
-	  VFIO or other upper layer to parse IOMMU data.
-	- Create wrapper function for in-kernel users of UAPI functions
-v2:
-	- Removed unified API version and helper
-	- Introduced argsz for each UAPI data
-	- Introduced UAPI doc
-
-
-Jacob Pan (6):
-  docs: IOMMU user API
-  iommu/uapi: Add argsz for user filled data
-  iommu/uapi: Use named union for user data
-  iommu/uapi: Rename uapi functions
-  iommu/uapi: Handle data and argsz filled by users
-  iommu/vt-d: Check UAPI data processed by IOMMU core
-
- Documentation/userspace-api/iommu.rst | 209 ++++++++++++++++++++++++++++++++++
- MAINTAINERS                           |   1 +
- drivers/iommu/intel/iommu.c           |  25 ++--
- drivers/iommu/intel/svm.c             |  13 ++-
- drivers/iommu/iommu.c                 | 196 +++++++++++++++++++++++++++++--
- include/linux/iommu.h                 |  35 ++++--
- include/uapi/linux/iommu.h            |  18 ++-
- 7 files changed, 456 insertions(+), 41 deletions(-)
- create mode 100644 Documentation/userspace-api/iommu.rst
-
+diff --git a/drivers/iommu/intel/iommu.c b/drivers/iommu/intel/iommu.c
+index 87b17bac04c2..461f3a6864d4 100644
+--- a/drivers/iommu/intel/iommu.c
++++ b/drivers/iommu/intel/iommu.c
+@@ -5434,8 +5434,8 @@ intel_iommu_sva_invalidate(struct iommu_domain *domain, struct device *dev,
+ 
+ 	/* Size is only valid in address selective invalidation */
+ 	if (inv_info->granularity == IOMMU_INV_GRANU_ADDR)
+-		size = to_vtd_size(inv_info->addr_info.granule_size,
+-				   inv_info->addr_info.nb_granules);
++		size = to_vtd_size(inv_info->granu.addr_info.granule_size,
++				   inv_info->granu.addr_info.nb_granules);
+ 
+ 	for_each_set_bit(cache_type,
+ 			 (unsigned long *)&inv_info->cache,
+@@ -5456,20 +5456,20 @@ intel_iommu_sva_invalidate(struct iommu_domain *domain, struct device *dev,
+ 		 * granularity.
+ 		 */
+ 		if (inv_info->granularity == IOMMU_INV_GRANU_PASID &&
+-		    (inv_info->pasid_info.flags & IOMMU_INV_PASID_FLAGS_PASID))
+-			pasid = inv_info->pasid_info.pasid;
++		    (inv_info->granu.pasid_info.flags & IOMMU_INV_PASID_FLAGS_PASID))
++			pasid = inv_info->granu.pasid_info.pasid;
+ 		else if (inv_info->granularity == IOMMU_INV_GRANU_ADDR &&
+-			 (inv_info->addr_info.flags & IOMMU_INV_ADDR_FLAGS_PASID))
+-			pasid = inv_info->addr_info.pasid;
++			 (inv_info->granu.addr_info.flags & IOMMU_INV_ADDR_FLAGS_PASID))
++			pasid = inv_info->granu.addr_info.pasid;
+ 
+ 		switch (BIT(cache_type)) {
+ 		case IOMMU_CACHE_INV_TYPE_IOTLB:
+ 			/* HW will ignore LSB bits based on address mask */
+ 			if (inv_info->granularity == IOMMU_INV_GRANU_ADDR &&
+ 			    size &&
+-			    (inv_info->addr_info.addr & ((BIT(VTD_PAGE_SHIFT + size)) - 1))) {
++			    (inv_info->granu.addr_info.addr & ((BIT(VTD_PAGE_SHIFT + size)) - 1))) {
+ 				pr_err_ratelimited("User address not aligned, 0x%llx, size order %llu\n",
+-						   inv_info->addr_info.addr, size);
++						   inv_info->granu.addr_info.addr, size);
+ 			}
+ 
+ 			/*
+@@ -5477,9 +5477,9 @@ intel_iommu_sva_invalidate(struct iommu_domain *domain, struct device *dev,
+ 			 * We use npages = -1 to indicate that.
+ 			 */
+ 			qi_flush_piotlb(iommu, did, pasid,
+-					mm_to_dma_pfn(inv_info->addr_info.addr),
++					mm_to_dma_pfn(inv_info->granu.addr_info.addr),
+ 					(granu == QI_GRAN_NONG_PASID) ? -1 : 1 << size,
+-					inv_info->addr_info.flags & IOMMU_INV_ADDR_FLAGS_LEAF);
++					inv_info->granu.addr_info.flags & IOMMU_INV_ADDR_FLAGS_LEAF);
+ 
+ 			if (!info->ats_enabled)
+ 				break;
+@@ -5502,7 +5502,7 @@ intel_iommu_sva_invalidate(struct iommu_domain *domain, struct device *dev,
+ 				size = 64 - VTD_PAGE_SHIFT;
+ 				addr = 0;
+ 			} else if (inv_info->granularity == IOMMU_INV_GRANU_ADDR) {
+-				addr = inv_info->addr_info.addr;
++				addr = inv_info->granu.addr_info.addr;
+ 			}
+ 
+ 			if (info->ats_enabled)
+diff --git a/drivers/iommu/intel/svm.c b/drivers/iommu/intel/svm.c
+index 95c3164a2302..99353d6468fa 100644
+--- a/drivers/iommu/intel/svm.c
++++ b/drivers/iommu/intel/svm.c
+@@ -370,7 +370,7 @@ int intel_svm_bind_gpasid(struct iommu_domain *domain, struct device *dev,
+ 	spin_lock(&iommu->lock);
+ 	ret = intel_pasid_setup_nested(iommu, dev,
+ 				       (pgd_t *)(uintptr_t)data->gpgd,
+-				       data->hpasid, &data->vtd, dmar_domain,
++				       data->hpasid, &data->vendor.vtd, dmar_domain,
+ 				       data->addr_width);
+ 	spin_unlock(&iommu->lock);
+ 	if (ret) {
+diff --git a/include/uapi/linux/iommu.h b/include/uapi/linux/iommu.h
+index b42acc8fe007..5946779ac1f9 100644
+--- a/include/uapi/linux/iommu.h
++++ b/include/uapi/linux/iommu.h
+@@ -267,7 +267,7 @@ struct iommu_cache_invalidate_info {
+ 	union {
+ 		struct iommu_inv_pasid_info pasid_info;
+ 		struct iommu_inv_addr_info addr_info;
+-	};
++	} granu;
+ };
+ 
+ /**
+@@ -333,7 +333,7 @@ struct iommu_gpasid_bind_data {
+ 	/* Vendor specific data */
+ 	union {
+ 		struct iommu_gpasid_bind_data_vtd vtd;
+-	};
++	} vendor;
+ };
+ 
+ #endif /* _UAPI_IOMMU_H */
 -- 
 2.7.4
 
