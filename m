@@ -2,187 +2,442 @@ Return-Path: <SRS0=H7yB=DC=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E8198C4363D
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 15:47:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CFCC0C4363D
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 15:47:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7EDDB21741
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 15:47:28 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Bbv2Njg5"
+	by mail.kernel.org (Postfix) with ESMTP id 93B5521D7A
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 15:47:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728654AbgIYPr2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 25 Sep 2020 11:47:28 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:29408 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1726990AbgIYPr1 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 25 Sep 2020 11:47:27 -0400
-Dkim-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1601048845;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-        bh=dJVTQEVrvrQ1TucEcBQVDr5HUZYn/DQCEiIJd65tA0c=;
-        b=Bbv2Njg5oGYtjVygH3nckdXfAwx6nUeIWhBb2Sm2pGZ2m379JXl5LVZhnVnI/JLJxOyAbv
-        STLeBfzICXBatt61GZ0FBu2tcAv7GiPbM3n+VE3YIZ3nVhG2MDiDn8QJ5+ZiqAfLVcxmV3
-        asxPPiGkxzPuwWzi3dKw4pSGd1PS7jA=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-77-2vkGZAieMuyt_LiMzk726g-1; Fri, 25 Sep 2020 11:47:24 -0400
-X-MC-Unique: 2vkGZAieMuyt_LiMzk726g-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5DA3490BB0C;
-        Fri, 25 Sep 2020 15:47:21 +0000 (UTC)
-Received: from [10.36.112.211] (ovpn-112-211.ams2.redhat.com [10.36.112.211])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 3E5A819C66;
-        Fri, 25 Sep 2020 15:47:19 +0000 (UTC)
-Subject: Re: Ways to deprecate /sys/devices/system/memory/memoryX/phys_device
- ?
-To:     Michal Hocko <mhocko@suse.com>
-Cc:     Gerald Schaefer <gerald.schaefer@linux.ibm.com>,
-        "akpm@linux-foundation.org" <akpm@linux-foundation.org>,
-        Greg KH <gregkh@linuxfoundation.org>,
-        =?UTF-8?Q?Jan_H=c3=b6ppner?= <hoeppner@linux.ibm.com>,
-        Heiko Carstens <hca@linux.ibm.com>,
-        "linux-mm@kvack.org" <linux-mm@kvack.org>,
-        linux-api@vger.kernel.org,
+        id S1729325AbgIYPrd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 25 Sep 2020 11:47:33 -0400
+Received: from mga04.intel.com ([192.55.52.120]:21732 "EHLO mga04.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1728423AbgIYPrc (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 25 Sep 2020 11:47:32 -0400
+IronPort-SDR: u2b06A+4cbQo51+NfQYxddsPdKoImafr64J5VI9y3SDQkarRnoL2RivsIT9ygy90dbpxg2Ifd+
+ UuEE3G8D2uQA==
+X-IronPort-AV: E=McAfee;i="6000,8403,9755"; a="158942279"
+X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
+   d="scan'208";a="158942279"
+X-Amp-Result: SKIPPED(no attachment in message)
+X-Amp-File-Uploaded: False
+Received: from orsmga005.jf.intel.com ([10.7.209.41])
+  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:19 -0700
+IronPort-SDR: pv91liv5aQu3UoYGO+/7YAxS7vZbMjw0l8223TrNoQUUmDiqU6ivxEdudw0VxRzv/9oOKFM8dW
+ C02QvI+xpNEQ==
+X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
+   d="scan'208";a="487499162"
+Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:18 -0700
+From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
+To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-doc@vger.kernel.org, linux-mm@kvack.org,
+        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andy Lutomirski <luto@kernel.org>,
+        Balbir Singh <bsingharora@gmail.com>,
+        Borislav Petkov <bp@alien8.de>,
+        Cyrill Gorcunov <gorcunov@gmail.com>,
         Dave Hansen <dave.hansen@linux.intel.com>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-References: <21852ccb-bd06-9281-7c8e-485ec02f2883@redhat.com>
- <20200922155611.379373f7@thinkpad>
- <a7d02345-2195-3092-a368-ca3209e2c93e@redhat.com>
- <20200925153908.GH3389@dhcp22.suse.cz>
-From:   David Hildenbrand <david@redhat.com>
-Autocrypt: addr=david@redhat.com; prefer-encrypt=mutual; keydata=
- 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
- WNyWQQ==
-Organization: Red Hat GmbH
-Message-ID: <f973e594-fbb5-3c2f-414b-c4dbc9757793@redhat.com>
-Date:   Fri, 25 Sep 2020 17:47:18 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.11.0
+        Eugene Syromiatnikov <esyr@redhat.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Nadav Amit <nadav.amit@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
+        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Weijiang Yang <weijiang.yang@intel.com>,
+        Pengfei Xu <pengfei.xu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v13 08/26] x86/mm: Introduce _PAGE_COW
+Date:   Fri, 25 Sep 2020 07:56:31 -0700
+Message-Id: <20200925145649.5438-9-yu-cheng.yu@intel.com>
+X-Mailer: git-send-email 2.21.0
+In-Reply-To: <20200925145649.5438-1-yu-cheng.yu@intel.com>
+References: <20200925145649.5438-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
-In-Reply-To: <20200925153908.GH3389@dhcp22.suse.cz>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
->>>> 2. Restrict it to s390x only. It always returned 0 on other
->>>> architectures, I was not able to find any user.
->>>>
->>>> I think 2 should be safe to do (never used on other archs). I do wonder
->>>> what the feelings are about 1.
->>>
->>> Please don't add any s390-specific workarounds here, that does not
->>> really sound like a clean-up, rather the opposite.
->>
->> People seem to have different opinions here. I'm happy as long as we can
->> get rid of it (either now, or in the future with a new model).
->>
->>>
->>> That being said, I do not really see the benefit of this change at
->>> all. As Michal mentioned, there really should be some more fundamental
->>> change. And from the rest of this thread, it also seems that phys_device
->>> usage might not be the biggest issue here.
->>>
->>
->> As I already expressed, I am more of a friend of small, incremental
->> changes than having a single big world switch where everything will be
->> shiny and perfect.
->>
->> (Deprecating it now - in any way - stops any new users from appearing -
->> both, in the kernel and from user space - eventually making the big
->> world switch later a little easier because there is one thing less that
->> vanished)
->
-> Realistically people do not care about deprecation all that much. They
-> simply use whatever they can find or somebody will show them. Really,
-> deprecation has never really worked. The only thing that worked was to
-> remove the functionality and then wait for somebody to complain and
-> revert or somehow allow the functionality without necessity to alter the
-> userspace.
+There is essentially no room left in the x86 hardware PTEs on some OSes
+(not Linux).  That left the hardware architects looking for a way to
+represent a new memory type (shadow stack) within the existing bits.
+They chose to repurpose a lightly-used state: Write=0,Dirty=1.
 
-Mainframe people are usually ... more conservative (well, they focus on
-stability and pay a lot of money for that - including HW). :)
+The reason it's lightly used is that Dirty=1 is normally set by hardware
+and cannot normally be set by hardware on a Write=0 PTE.  Software must
+normally be involved to create one of these PTEs, so software can simply
+opt to not create them.
 
-What they would lose here is s390x lsmem/chmem functionality, used to
-manage standby memory (under LPAR and z/VM, if enabled) - with the old
-tools. I have the feeling that this would be acceptable (I never had
-access to an LPAR that allowed for it ...), but yeah, you never now.
+But that leaves us with a Linux problem: we need to ensure we never create
+Write=0,Dirty=1 PTEs.  In places where we do create them, we need to find
+an alternative way to represent them _without_ using the same hardware bit
+combination.  Thus, enter _PAGE_COW.  This results in the following:
 
-> 
-> As much as I would like to remove as much crud as possible I strongly
-> suspect that the existing hotplug interface is just a lost case and it
-> doesn't make for the best used time to put a lip stick on a pig. Even if
-> we remove this particular interface we are not going to get rid of a lot
-> of code or we won't gain any more sensible semantic, right?
-> 
+(a) A modified, copy-on-write (COW) page: (R/O + _PAGE_COW)
+(b) A R/O page that has been COW'ed: (R/O + _PAGE_COW)
+    The user page is in a R/O VMA, and get_user_pages() needs a writable
+    copy.  The page fault handler creates a copy of the page and sets
+    the new copy's PTE as R/O and _PAGE_COW.
+(c) A shadow stack PTE: (R/O + _PAGE_DIRTY_HW)
+(d) A shared shadow stack PTE: (R/O + _PAGE_COW)
+    When a shadow stack page is being shared among processes (this happens
+    at fork()), its PTE is cleared of _PAGE_DIRTY_HW, so the next shadow
+    stack access causes a fault, and the page is duplicated and
+    _PAGE_DIRTY_HW is set again.  This is the COW equivalent for shadow
+    stack pages, even though it's copy-on-access rather than copy-on-write.
+(e) A page where the processor observed a Write=1 PTE, started a write, set
+    Dirty=1, but then observed a Write=0 PTE.  That's possible today, but
+    will not happen on processors that support shadow stack.
 
-Excluding some documentation
+Use _PAGE_COW in pte_wrprotect() and _PAGE_DIRTY_HW in pte_mkwrite().
+Apply the same changes to pmd and pud.
 
- drivers/base/memory.c        | 29 -----------------------------
- drivers/s390/char/sclp_cmd.c |  7 -------
- include/linux/memory.h       |  2 --
- 3 files changed, 38 deletions(-)
+When this patch is applied, there are six free bits left in the 64-bit PTE.
+There are no more free bits in the 32-bit PTE (except for PAE) and shadow
+stack is not implemented for the 32-bit kernel.
 
-Seems like this is the only way to deprecate. (I mean I can add comments
-in the code, but as you say, doesn't stop new user space users from
-showing up)
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+---
+v10:
+- Change _PAGE_BIT_DIRTY_SW to _PAGE_BIT_COW, as it is used for copy-on-
+  write PTEs.
+- Update pte_write() and treat shadow stack as writable.
+- Change *_mkdirty_shstk() to *_mkwrite_shstk() as these make shadow stack
+  pages writable.
+- Use bit test & shift to move _PAGE_BIT_DIRTY_HW to _PAGE_BIT_COW.
+- Change static_cpu_has() to cpu_feature_enabled().
+- Revise commit log.
 
+v9:
+- Remove pte_move_flags() etc. and put the logic directly in
+  pte_wrprotect()/pte_mkwrite() etc.
+- Change compile-time conditionals to run-time checks.
+- Split out pte_modify()/pmd_modify() to a new patch.
+- Update comments.
+
+ arch/x86/include/asm/pgtable.h       | 120 ++++++++++++++++++++++++---
+ arch/x86/include/asm/pgtable_types.h |  41 ++++++++-
+ 2 files changed, 150 insertions(+), 11 deletions(-)
+
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index 86b7acd221c1..ac4ed814be96 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -122,9 +122,9 @@ extern pmdval_t early_pmd_flags;
+  * The following only work if pte_present() is true.
+  * Undefined behaviour if not..
+  */
+-static inline int pte_dirty(pte_t pte)
++static inline bool pte_dirty(pte_t pte)
+ {
+-	return pte_flags(pte) & _PAGE_DIRTY_HW;
++	return pte_flags(pte) & _PAGE_DIRTY_BITS;
+ }
+ 
+ 
+@@ -161,9 +161,9 @@ static inline int pte_young(pte_t pte)
+ 	return pte_flags(pte) & _PAGE_ACCESSED;
+ }
+ 
+-static inline int pmd_dirty(pmd_t pmd)
++static inline bool pmd_dirty(pmd_t pmd)
+ {
+-	return pmd_flags(pmd) & _PAGE_DIRTY_HW;
++	return pmd_flags(pmd) & _PAGE_DIRTY_BITS;
+ }
+ 
+ static inline int pmd_young(pmd_t pmd)
+@@ -171,9 +171,9 @@ static inline int pmd_young(pmd_t pmd)
+ 	return pmd_flags(pmd) & _PAGE_ACCESSED;
+ }
+ 
+-static inline int pud_dirty(pud_t pud)
++static inline bool pud_dirty(pud_t pud)
+ {
+-	return pud_flags(pud) & _PAGE_DIRTY_HW;
++	return pud_flags(pud) & _PAGE_DIRTY_BITS;
+ }
+ 
+ static inline int pud_young(pud_t pud)
+@@ -183,6 +183,12 @@ static inline int pud_young(pud_t pud)
+ 
+ static inline int pte_write(pte_t pte)
+ {
++	/*
++	 * If _PAGE_DIRTY_HW is set, the PTE must either have
++	 * _PAGE_RW or be a shadow stack PTE, which is logically writable.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK))
++		return pte_flags(pte) & (_PAGE_RW | _PAGE_DIRTY_HW);
+ 	return pte_flags(pte) & _PAGE_RW;
+ }
+ 
+@@ -334,7 +340,7 @@ static inline pte_t pte_clear_uffd_wp(pte_t pte)
+ 
+ static inline pte_t pte_mkclean(pte_t pte)
+ {
+-	return pte_clear_flags(pte, _PAGE_DIRTY_HW);
++	return pte_clear_flags(pte, _PAGE_DIRTY_BITS);
+ }
+ 
+ static inline pte_t pte_mkold(pte_t pte)
+@@ -344,6 +350,17 @@ static inline pte_t pte_mkold(pte_t pte)
+ 
+ static inline pte_t pte_wrprotect(pte_t pte)
+ {
++	/*
++	 * Blindly clearing _PAGE_RW might accidentally create
++	 * a shadow stack PTE (RW=0,Dirty=1).  Move the hardware
++	 * dirty value to the software bit.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		pte.pte |= (pte.pte & _PAGE_DIRTY_HW) >>
++			   _PAGE_BIT_DIRTY_HW << _PAGE_BIT_COW;
++		pte = pte_clear_flags(pte, _PAGE_DIRTY_HW);
++	}
++
+ 	return pte_clear_flags(pte, _PAGE_RW);
+ }
+ 
+@@ -354,6 +371,18 @@ static inline pte_t pte_mkexec(pte_t pte)
+ 
+ static inline pte_t pte_mkdirty(pte_t pte)
+ {
++	pteval_t dirty = _PAGE_DIRTY_HW;
++
++	/* Avoid creating (HW)Dirty=1,Write=0 PTEs */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK) && !pte_write(pte))
++		dirty = _PAGE_COW;
++
++	return pte_set_flags(pte, dirty | _PAGE_SOFT_DIRTY);
++}
++
++static inline pte_t pte_mkwrite_shstk(pte_t pte)
++{
++	pte = pte_clear_flags(pte, _PAGE_COW);
+ 	return pte_set_flags(pte, _PAGE_DIRTY_HW | _PAGE_SOFT_DIRTY);
+ }
+ 
+@@ -364,6 +393,13 @@ static inline pte_t pte_mkyoung(pte_t pte)
+ 
+ static inline pte_t pte_mkwrite(pte_t pte)
+ {
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		if (pte_flags(pte) & _PAGE_COW) {
++			pte = pte_clear_flags(pte, _PAGE_COW);
++			pte = pte_set_flags(pte, _PAGE_DIRTY_HW);
++		}
++	}
++
+ 	return pte_set_flags(pte, _PAGE_RW);
+ }
+ 
+@@ -435,16 +471,41 @@ static inline pmd_t pmd_mkold(pmd_t pmd)
+ 
+ static inline pmd_t pmd_mkclean(pmd_t pmd)
+ {
+-	return pmd_clear_flags(pmd, _PAGE_DIRTY_HW);
++	return pmd_clear_flags(pmd, _PAGE_DIRTY_BITS);
+ }
+ 
+ static inline pmd_t pmd_wrprotect(pmd_t pmd)
+ {
++	/*
++	 * Blindly clearing _PAGE_RW might accidentally create
++	 * a shadow stack PMD (RW=0,Dirty=1).  Move the hardware
++	 * dirty value to the software bit.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		pmdval_t v = native_pmd_val(pmd);
++
++		v |= (v & _PAGE_DIRTY_HW) >> _PAGE_BIT_DIRTY_HW <<
++		     _PAGE_BIT_COW;
++		pmd = pmd_clear_flags(__pmd(v), _PAGE_DIRTY_HW);
++	}
++
+ 	return pmd_clear_flags(pmd, _PAGE_RW);
+ }
+ 
+ static inline pmd_t pmd_mkdirty(pmd_t pmd)
+ {
++	pmdval_t dirty = _PAGE_DIRTY_HW;
++
++	/* Avoid creating (HW)Dirty=1,Write=0 PMDs */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK) && !(pmd_flags(pmd) & _PAGE_RW))
++		dirty = _PAGE_COW;
++
++	return pmd_set_flags(pmd, dirty | _PAGE_SOFT_DIRTY);
++}
++
++static inline pmd_t pmd_mkwrite_shstk(pmd_t pmd)
++{
++	pmd = pmd_clear_flags(pmd, _PAGE_COW);
+ 	return pmd_set_flags(pmd, _PAGE_DIRTY_HW | _PAGE_SOFT_DIRTY);
+ }
+ 
+@@ -465,6 +526,13 @@ static inline pmd_t pmd_mkyoung(pmd_t pmd)
+ 
+ static inline pmd_t pmd_mkwrite(pmd_t pmd)
+ {
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		if (pmd_flags(pmd) & _PAGE_COW) {
++			pmd = pmd_clear_flags(pmd, _PAGE_COW);
++			pmd = pmd_set_flags(pmd, _PAGE_DIRTY_HW);
++		}
++	}
++
+ 	return pmd_set_flags(pmd, _PAGE_RW);
+ }
+ 
+@@ -489,17 +557,36 @@ static inline pud_t pud_mkold(pud_t pud)
+ 
+ static inline pud_t pud_mkclean(pud_t pud)
+ {
+-	return pud_clear_flags(pud, _PAGE_DIRTY_HW);
++	return pud_clear_flags(pud, _PAGE_DIRTY_BITS);
+ }
+ 
+ static inline pud_t pud_wrprotect(pud_t pud)
+ {
++	/*
++	 * Blindly clearing _PAGE_RW might accidentally create
++	 * a shadow stack PUD (RW=0,Dirty=1).  Move the hardware
++	 * dirty value to the software bit.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		pudval_t v = native_pud_val(pud);
++
++		v |= (v & _PAGE_DIRTY_HW) >> _PAGE_BIT_DIRTY_HW <<
++		     _PAGE_BIT_COW;
++		pud = pud_clear_flags(__pud(v), _PAGE_DIRTY_HW);
++	}
++
+ 	return pud_clear_flags(pud, _PAGE_RW);
+ }
+ 
+ static inline pud_t pud_mkdirty(pud_t pud)
+ {
+-	return pud_set_flags(pud, _PAGE_DIRTY_HW | _PAGE_SOFT_DIRTY);
++	pudval_t dirty = _PAGE_DIRTY_HW;
++
++	/* Avoid creating (HW)Dirty=1,Write=0 PUDs */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK) && !(pud_flags(pud) & _PAGE_RW))
++		dirty = _PAGE_COW;
++
++	return pud_set_flags(pud, dirty | _PAGE_SOFT_DIRTY);
+ }
+ 
+ static inline pud_t pud_mkdevmap(pud_t pud)
+@@ -519,6 +606,13 @@ static inline pud_t pud_mkyoung(pud_t pud)
+ 
+ static inline pud_t pud_mkwrite(pud_t pud)
+ {
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		if (pud_flags(pud) & _PAGE_COW) {
++			pud = pud_clear_flags(pud, _PAGE_COW);
++			pud = pud_set_flags(pud, _PAGE_DIRTY_HW);
++		}
++	}
++
+ 	return pud_set_flags(pud, _PAGE_RW);
+ }
+ 
+@@ -1132,6 +1226,12 @@ extern int pmdp_clear_flush_young(struct vm_area_struct *vma,
+ #define pmd_write pmd_write
+ static inline int pmd_write(pmd_t pmd)
+ {
++	/*
++	 * If _PAGE_DIRTY_HW is set, then the PMD must either have
++	 * _PAGE_RW or be a shadow stack PMD, which is logically writable.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK))
++		return pmd_flags(pmd) & (_PAGE_RW | _PAGE_DIRTY_HW);
+ 	return pmd_flags(pmd) & _PAGE_RW;
+ }
+ 
+diff --git a/arch/x86/include/asm/pgtable_types.h b/arch/x86/include/asm/pgtable_types.h
+index 5f31f1c407b9..75362df8b226 100644
+--- a/arch/x86/include/asm/pgtable_types.h
++++ b/arch/x86/include/asm/pgtable_types.h
+@@ -23,7 +23,8 @@
+ #define _PAGE_BIT_SOFTW2	10	/* " */
+ #define _PAGE_BIT_SOFTW3	11	/* " */
+ #define _PAGE_BIT_PAT_LARGE	12	/* On 2MB or 1GB pages */
+-#define _PAGE_BIT_SOFTW4	58	/* available for programmer */
++#define _PAGE_BIT_SOFTW4	57	/* available for programmer */
++#define _PAGE_BIT_SOFTW5	58	/* available for programmer */
+ #define _PAGE_BIT_PKEY_BIT0	59	/* Protection Keys, bit 1/4 */
+ #define _PAGE_BIT_PKEY_BIT1	60	/* Protection Keys, bit 2/4 */
+ #define _PAGE_BIT_PKEY_BIT2	61	/* Protection Keys, bit 3/4 */
+@@ -36,6 +37,16 @@
+ #define _PAGE_BIT_SOFT_DIRTY	_PAGE_BIT_SOFTW3 /* software dirty tracking */
+ #define _PAGE_BIT_DEVMAP	_PAGE_BIT_SOFTW4
+ 
++/*
++ * This bit indicates a copy-on-write page, and is different from
++ * _PAGE_BIT_SOFT_DIRTY, which tracks which pages a task writes to.
++ */
++#ifdef CONFIG_X86_64
++#define _PAGE_BIT_COW		_PAGE_BIT_SOFTW5 /* copy-on-write */
++#else
++#define _PAGE_BIT_COW		0
++#endif
++
+ /* If _PAGE_BIT_PRESENT is clear, we use these: */
+ /* - if the user mapped it with PROT_NONE; pte_present gives true */
+ #define _PAGE_BIT_PROTNONE	_PAGE_BIT_GLOBAL
+@@ -117,6 +128,34 @@
+ #define _PAGE_DEVMAP	(_AT(pteval_t, 0))
+ #endif
+ 
++/*
++ * _PAGE_COW is used to separate R/O and copy-on-write PTEs created by
++ * software from the shadow stack PTE setting required by the hardware:
++ * (a) A modified, copy-on-write (COW) page: (R/O + _PAGE_COW)
++ * (b) A R/O page that has been COW'ed: (R/O +_PAGE_COW)
++ *     The user page is in a R/O VMA, and get_user_pages() needs a
++ *     writable copy.  The page fault handler creates a copy of the page
++ *     and sets the new copy's PTE as R/O and _PAGE_COW.
++ * (c) A shadow stack PTE: (R/O + _PAGE_DIRTY_HW)
++ * (d) A shared (copy-on-access) shadow stack PTE: (R/O + _PAGE_COW)
++ *     When a shadow stack page is being shared among processes (this
++ *     happens at fork()), its PTE is cleared of _PAGE_DIRTY_HW, so the
++ *     next shadow stack access causes a fault, and the page is duplicated
++ *     and _PAGE_DIRTY_HW is set again.  This is the COW equivalent for
++ *     shadow stack pages, even though it's copy-on-access rather than
++ *     copy-on-write.
++ * (e) A page where the processor observed a Write=1 PTE, started a write,
++ *     set Dirty=1, but then observed a Write=0 PTE.  That's possible
++ *     today, but will not happen on processors that support shadow stack.
++ */
++#ifdef CONFIG_X86_SHADOW_STACK_USER
++#define _PAGE_COW	(_AT(pteval_t, 1) << _PAGE_BIT_COW)
++#else
++#define _PAGE_COW	(_AT(pteval_t, 0))
++#endif
++
++#define _PAGE_DIRTY_BITS (_PAGE_DIRTY_HW | _PAGE_COW)
++
+ #define _PAGE_PROTNONE	(_AT(pteval_t, 1) << _PAGE_BIT_PROTNONE)
+ 
+ /*
 -- 
-Thanks,
-
-David / dhildenb
+2.21.0
 
