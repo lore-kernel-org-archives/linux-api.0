@@ -2,78 +2,46 @@ Return-Path: <SRS0=H7yB=DC=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2F353C4727E
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:51:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6AC29C4363D
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:59:43 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D5062235F9
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:51:18 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=amacapital-net.20150623.gappssmtp.com header.i=@amacapital-net.20150623.gappssmtp.com header.b="X0DpLV6l"
+	by mail.kernel.org (Postfix) with ESMTP id 2EA0321D42
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:59:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729415AbgIYQvS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 25 Sep 2020 12:51:18 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47660 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728212AbgIYQvS (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 25 Sep 2020 12:51:18 -0400
-Received: from mail-pg1-x541.google.com (mail-pg1-x541.google.com [IPv6:2607:f8b0:4864:20::541])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EAE4EC0613D3
-        for <linux-api@vger.kernel.org>; Fri, 25 Sep 2020 09:51:17 -0700 (PDT)
-Received: by mail-pg1-x541.google.com with SMTP id 197so3074906pge.8
-        for <linux-api@vger.kernel.org>; Fri, 25 Sep 2020 09:51:17 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=amacapital-net.20150623.gappssmtp.com; s=20150623;
-        h=content-transfer-encoding:from:mime-version:subject:date:message-id
-         :references:cc:in-reply-to:to;
-        bh=4XOAAiIQRCCNU86tnCHCg8fQuqW/LCTSjYNlXVnzp2A=;
-        b=X0DpLV6lbBuvB1scwWVNnCPJ80OMbFrr6SBJC0ex7XH+Ht2IzQxNvwOFji/qqPWGjF
-         S5LnN+V0Xzbst7EJrAmht8e/NuEC2LQ3hryzKnae6jiw3KuTdH89kIZOv9crXVRpEV0d
-         kztSv1hhTmHEUXwWQUnZ5aBZd3ET54DExUFdo08fB9vDiB1dqarhPK006pwMdCRR2Eet
-         U0vFIe+YManXCc5WhujOi61ob2w/wPWE6BRy2GzmlbDNvzXBQ4ByT/RO4D0YSx/F75It
-         5gN41S6u7ob0ZU2i4eqvy5ibWW8yTZ4WTFNAj1A588SY/4pzv09gKFujgnwCULdpsKNT
-         Ee0A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:content-transfer-encoding:from:mime-version
-         :subject:date:message-id:references:cc:in-reply-to:to;
-        bh=4XOAAiIQRCCNU86tnCHCg8fQuqW/LCTSjYNlXVnzp2A=;
-        b=JxP/Op5Cs196vGUSIBmBIQfV5fX304uYC9BofNEhz0CVYJSiWzRX2P3g4msCcEB0um
-         IxgpO1rxsSrbphkwmuPz1rtWwY8bZCMM2FL4+CL8mpbuClZxxaM30ZACWtZnzAZSgUzs
-         wuUpHkL/EgTdPlix8k+9IE5//f4WHIbeHHONRykw4gYdU145ljFKXYwTpIbQy/f+YV3E
-         ySLcQKxhmlhYnlet/YVz0wQOQfPhuZfJxClFt3Y0oTfudhbGxyWD0MdTmpw1A8+woTEP
-         1iOSK9nUZIdjB/SZfH0Vy5eKDhPYYy8HWRqqW0xjvYMjCKEx/5rXeAt5ycp44fomOc4P
-         iLOw==
-X-Gm-Message-State: AOAM5317k5PH+t7Rt9L5U/vUQoytREsb8uGAJSWXdub+MUbcoPv169z6
-        y94HHo4dY5LZNFynHGvU2xicxw==
-X-Google-Smtp-Source: ABdhPJzmrvzRE0ItT8WGaJW6i9EQyNgQz1eC7YkG4/zQ1uzyIKPyWaVCi2nURst6I0Tm6/QcDV8Ebg==
-X-Received: by 2002:a17:902:fe0e:b029:d1:e5ec:28d6 with SMTP id g14-20020a170902fe0eb02900d1e5ec28d6mr298326plj.66.1601052677488;
-        Fri, 25 Sep 2020 09:51:17 -0700 (PDT)
-Received: from localhost.localdomain (c-67-180-165-146.hsd1.ca.comcast.net. [67.180.165.146])
-        by smtp.gmail.com with ESMTPSA id w185sm3382485pfc.36.2020.09.25.09.51.15
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 25 Sep 2020 09:51:16 -0700 (PDT)
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-From:   Andy Lutomirski <luto@amacapital.net>
-Mime-Version: 1.0 (1.0)
-Subject: Re: [PATCH v13 8/8] x86/vsyscall/64: Fixup Shadow Stack and Indirect Branch Tracking for vsyscall emulation
-Date:   Fri, 25 Sep 2020 09:51:14 -0700
-Message-Id: <99B32E59-CFF2-4756-89BD-AEA0021F355F@amacapital.net>
-References: <d0e4077e-129f-6823-dcea-a101ef626e8c@intel.com>
-Cc:     Andy Lutomirski <luto@kernel.org>, X86 ML <x86@kernel.org>,
-        "H. Peter Anvin" <hpa@zytor.com>,
+        id S1727521AbgIYQ7k (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 25 Sep 2020 12:59:40 -0400
+Received: from mga04.intel.com ([192.55.52.120]:28344 "EHLO mga04.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727402AbgIYQ7j (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 25 Sep 2020 12:59:39 -0400
+IronPort-SDR: yBZ1rEq6ydFN2eqs8T655QXMZkOOZ6j84HMrbp7KGK5MmPWBz9KqKpsmU3LssCY/fX51aKyb1z
+ kSNQ5ku8LvbQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9755"; a="158942259"
+X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
+   d="scan'208";a="158942259"
+X-Amp-Result: SKIPPED(no attachment in message)
+X-Amp-File-Uploaded: False
+Received: from orsmga005.jf.intel.com ([10.7.209.41])
+  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:16 -0700
+IronPort-SDR: oAhpvDyQfu3Ob5yS4gn2h7BMsyP/9git+o+mrcL/hLp/0ifyHu9SYnAqQcn3kvvPkdCuEY220g
+ +32rvFq05W+Q==
+X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
+   d="scan'208";a="487499144"
+Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:15 -0700
+From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
+To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
-        Linux-MM <linux-mm@kvack.org>,
-        linux-arch <linux-arch@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
+        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-doc@vger.kernel.org, linux-mm@kvack.org,
+        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
         Arnd Bergmann <arnd@arndb.de>,
+        Andy Lutomirski <luto@kernel.org>,
         Balbir Singh <bsingharora@gmail.com>,
         Borislav Petkov <bp@alien8.de>,
         Cyrill Gorcunov <gorcunov@gmail.com>,
@@ -93,69 +61,175 @@ Cc:     Andy Lutomirski <luto@kernel.org>, X86 ML <x86@kernel.org>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
-In-Reply-To: <d0e4077e-129f-6823-dcea-a101ef626e8c@intel.com>
-To:     "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
-X-Mailer: iPhone Mail (18A373)
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v13 04/26] x86/cet: Add control-protection fault handler
+Date:   Fri, 25 Sep 2020 07:56:27 -0700
+Message-Id: <20200925145649.5438-5-yu-cheng.yu@intel.com>
+X-Mailer: git-send-email 2.21.0
+In-Reply-To: <20200925145649.5438-1-yu-cheng.yu@intel.com>
+References: <20200925145649.5438-1-yu-cheng.yu@intel.com>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+A control-protection fault is triggered when a control-flow transfer
+attempt violates Shadow Stack or Indirect Branch Tracking constraints.
+For example, the return address for a RET instruction differs from the copy
+on the Shadow Stack; or an indirect JMP instruction, without the NOTRACK
+prefix, arrives at a non-ENDBR opcode.
 
+The control-protection fault handler works in a similar way as the general
+protection fault handler.  It provides the si_code SEGV_CPERR to the signal
+handler.
 
-> On Sep 25, 2020, at 9:48 AM, Yu, Yu-cheng <yu-cheng.yu@intel.com> wrote:
->=20
-> =EF=BB=BFOn 9/25/2020 9:31 AM, Andy Lutomirski wrote:
->>> On Fri, Sep 25, 2020 at 7:58 AM Yu-cheng Yu <yu-cheng.yu@intel.com> wrot=
-e:
->>>=20
->=20
-> [...]
->=20
->>> @@ -286,6 +289,37 @@ bool emulate_vsyscall(unsigned long error_code,
->>>         /* Emulate a ret instruction. */
->>>         regs->ip =3D caller;
->>>         regs->sp +=3D 8;
->>> +
->>> +#ifdef CONFIG_X86_CET
->>> +       if (tsk->thread.cet.shstk_size || tsk->thread.cet.ibt_enabled) {=
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+---
+v13:
+- Change X86_INTEL_* to X86_*.
 
->>> +               struct cet_user_state *cet;
->>> +               struct fpu *fpu;
->>> +
->>> +               fpu =3D &tsk->thread.fpu;
->>> +               fpregs_lock();
->>> +
->>> +               if (!test_thread_flag(TIF_NEED_FPU_LOAD)) {
->>> +                       copy_fpregs_to_fpstate(fpu);
->>> +                       set_thread_flag(TIF_NEED_FPU_LOAD);
->>> +               }
->>> +
->>> +               cet =3D get_xsave_addr(&fpu->state.xsave, XFEATURE_CET_U=
-SER);
->>> +               if (!cet) {
->>> +                       fpregs_unlock();
->>> +                       goto sigsegv;
->> I *think* your patchset tries to keep cet.shstk_size and
->> cet.ibt_enabled in sync with the MSR, in which case it should be
->> impossible to get here, but a comment and a warning would be much
->> better than a random sigsegv.
->=20
-> Yes, it should be impossible to get here.  I will add a comment and a warn=
-ing, but still do sigsegv.  Should this happen, and the function return, the=
- app gets a control-protection fault.  Why not let it fail early?
+v10:
+- Change CONFIG_X86_64 to CONFIG_X86_INTEL_CET.
 
-I=E2=80=99m okay with either approach as long as we get a comment and warnin=
-g.
+v9:
+- Add Shadow Stack pointer to the fault printout.
 
->=20
->>=20
->> Shouldn't we have a get_xsave_addr_or_allocate() that will never
->> return NULL but instead will mark the state as in use and set up the
->> init state if the feature was previously not in use?
->=20
-> We already have a static __raw_xsave_addr(), which returns a pointer to th=
-e requested xstate.  Maybe we can export __raw_xsave_addr(), if that is need=
-ed.
+ arch/x86/include/asm/idtentry.h    |  4 ++
+ arch/x86/kernel/idt.c              |  4 ++
+ arch/x86/kernel/signal_compat.c    |  2 +-
+ arch/x86/kernel/traps.c            | 59 ++++++++++++++++++++++++++++++
+ include/uapi/asm-generic/siginfo.h |  3 +-
+ 5 files changed, 70 insertions(+), 2 deletions(-)
 
-I don=E2=80=99t think that=E2=80=99s what we want in general =E2=80=94 we wa=
-nt the whole construct of initializing the state if needed.=
+diff --git a/arch/x86/include/asm/idtentry.h b/arch/x86/include/asm/idtentry.h
+index a43366191212..6293d94b9b66 100644
+--- a/arch/x86/include/asm/idtentry.h
++++ b/arch/x86/include/asm/idtentry.h
+@@ -532,6 +532,10 @@ DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_SS,	exc_stack_segment);
+ DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_GP,	exc_general_protection);
+ DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_AC,	exc_alignment_check);
+ 
++#ifdef CONFIG_X86_CET
++DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_CP, exc_control_protection);
++#endif
++
+ /* Raw exception entries which need extra work */
+ DECLARE_IDTENTRY_RAW(X86_TRAP_UD,		exc_invalid_op);
+ DECLARE_IDTENTRY_RAW(X86_TRAP_BP,		exc_int3);
+diff --git a/arch/x86/kernel/idt.c b/arch/x86/kernel/idt.c
+index 7ecf9babf0cb..34f2a7383d5d 100644
+--- a/arch/x86/kernel/idt.c
++++ b/arch/x86/kernel/idt.c
+@@ -112,6 +112,10 @@ static const __initconst struct idt_data def_idts[] = {
+ #elif defined(CONFIG_X86_32)
+ 	SYSG(IA32_SYSCALL_VECTOR,	entry_INT80_32),
+ #endif
++
++#ifdef CONFIG_X86_CET
++	INTG(X86_TRAP_CP,		asm_exc_control_protection),
++#endif
+ };
+ 
+ /*
+diff --git a/arch/x86/kernel/signal_compat.c b/arch/x86/kernel/signal_compat.c
+index 9ccbf0576cd0..c572a3de1037 100644
+--- a/arch/x86/kernel/signal_compat.c
++++ b/arch/x86/kernel/signal_compat.c
+@@ -27,7 +27,7 @@ static inline void signal_compat_build_tests(void)
+ 	 */
+ 	BUILD_BUG_ON(NSIGILL  != 11);
+ 	BUILD_BUG_ON(NSIGFPE  != 15);
+-	BUILD_BUG_ON(NSIGSEGV != 7);
++	BUILD_BUG_ON(NSIGSEGV != 8);
+ 	BUILD_BUG_ON(NSIGBUS  != 5);
+ 	BUILD_BUG_ON(NSIGTRAP != 5);
+ 	BUILD_BUG_ON(NSIGCHLD != 6);
+diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
+index 81a2fb711091..97a049258e33 100644
+--- a/arch/x86/kernel/traps.c
++++ b/arch/x86/kernel/traps.c
+@@ -597,6 +597,65 @@ DEFINE_IDTENTRY_ERRORCODE(exc_general_protection)
+ 	cond_local_irq_disable(regs);
+ }
+ 
++#ifdef CONFIG_X86_CET
++static const char * const control_protection_err[] = {
++	"unknown",
++	"near-ret",
++	"far-ret/iret",
++	"endbranch",
++	"rstorssp",
++	"setssbsy",
++};
++
++/*
++ * When a control protection exception occurs, send a signal
++ * to the responsible application.  Currently, control
++ * protection is only enabled for the user mode.  This
++ * exception should not come from the kernel mode.
++ */
++DEFINE_IDTENTRY_ERRORCODE(exc_control_protection)
++{
++	struct task_struct *tsk;
++
++	if (notify_die(DIE_TRAP, "control protection fault", regs,
++		       error_code, X86_TRAP_CP, SIGSEGV) == NOTIFY_STOP)
++		return;
++	cond_local_irq_enable(regs);
++
++	if (!user_mode(regs))
++		die("kernel control protection fault", regs, error_code);
++
++	if (!static_cpu_has(X86_FEATURE_SHSTK) &&
++	    !static_cpu_has(X86_FEATURE_IBT))
++		WARN_ONCE(1, "CET is disabled but got control protection fault\n");
++
++	tsk = current;
++	tsk->thread.error_code = error_code;
++	tsk->thread.trap_nr = X86_TRAP_CP;
++
++	if (show_unhandled_signals && unhandled_signal(tsk, SIGSEGV) &&
++	    printk_ratelimit()) {
++		unsigned int max_err;
++		unsigned long ssp;
++
++		max_err = ARRAY_SIZE(control_protection_err) - 1;
++		if ((error_code < 0) || (error_code > max_err))
++			error_code = 0;
++		rdmsrl(MSR_IA32_PL3_SSP, ssp);
++		pr_info("%s[%d] control protection ip:%lx sp:%lx ssp:%lx error:%lx(%s)",
++			tsk->comm, task_pid_nr(tsk),
++			regs->ip, regs->sp, ssp, error_code,
++			control_protection_err[error_code]);
++		print_vma_addr(KERN_CONT " in ", regs->ip);
++		pr_cont("\n");
++	}
++
++	force_sig_fault(SIGSEGV, SEGV_CPERR,
++			(void __user *)uprobe_get_trap_addr(regs));
++	cond_local_irq_disable(regs);
++}
++#endif
++
+ static bool do_int3(struct pt_regs *regs)
+ {
+ 	int res;
+diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
+index cb3d6c267181..91e10cbe3bb0 100644
+--- a/include/uapi/asm-generic/siginfo.h
++++ b/include/uapi/asm-generic/siginfo.h
+@@ -229,7 +229,8 @@ typedef struct siginfo {
+ #define SEGV_ACCADI	5	/* ADI not enabled for mapped object */
+ #define SEGV_ADIDERR	6	/* Disrupting MCD error */
+ #define SEGV_ADIPERR	7	/* Precise MCD exception */
+-#define NSIGSEGV	7
++#define SEGV_CPERR	8	/* Control protection fault */
++#define NSIGSEGV	8
+ 
+ /*
+  * SIGBUS si_codes
+-- 
+2.21.0
+
