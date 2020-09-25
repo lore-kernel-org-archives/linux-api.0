@@ -2,181 +2,152 @@ Return-Path: <SRS0=H7yB=DC=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+X-Spam-Status: No, score=-11.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 65367C4727E
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:31:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CE854C4363D
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:31:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 20C79221EC
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:31:14 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="u1CC6Ugb"
+	by mail.kernel.org (Postfix) with ESMTP id 7E5A0238EE
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:31:56 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1601051516;
+	bh=Ik7sogL+z9aD/+1OiO4uM25gNcDglZeUy/6lyvSwMb4=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:List-ID:From;
+	b=rrEzTDZZKlQ9/GgRVka9n10ZZaPdqPsZVnb/BflwI6R9vyjV5xmSSak8zXWnbveXy
+	 aC9WvNl+xjc/m34OBAHjrX7kOnZsBF4bhp4+9r53dJJPZIgBVUXzqYOQ0zCkbMBH6X
+	 c++THtrwEQc4mvcb087PtOMNTnsltAIAy7pTl9YQ=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727874AbgIYQbM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 25 Sep 2020 12:31:12 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44480 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729459AbgIYQaz (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 25 Sep 2020 12:30:55 -0400
-Received: from mail-pg1-x542.google.com (mail-pg1-x542.google.com [IPv6:2607:f8b0:4864:20::542])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7FA57C0613CE;
-        Fri, 25 Sep 2020 09:30:55 -0700 (PDT)
-Received: by mail-pg1-x542.google.com with SMTP id g29so3060283pgl.2;
-        Fri, 25 Sep 2020 09:30:55 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=hFUA2EodpJe3a9+C7aWrHwYTMpFRcWcG5EO2y8L7QQ4=;
-        b=u1CC6UgbFSs/8n+6OuBKY80/00NmmpT23RHftCwURVNAW/XjtaqSnKBCKGuzKdsE1A
-         CbFkI6imHijXT9TdUdVw6Qw+8OsqASw71Ek9d/o064dWvbguqNHox/hFFxeW1jHVY/Ha
-         u93M5ZFeoirgDjD7ClMsOV9F1BNAVf+VptLa5n7dHwtQ1y7+fvgNxwAapv4h9IoXtX7T
-         2Qf/QchPR2v3PglxIVrmx+TkMKLA0mQyCRfAahF8VLPeA28CnhOANo0H23YfER+KmmL1
-         PjUWLFz1DXz/N+1JS7/IEtjhtOijkPNIg5wmpGC25ymJwouaa8uH9/MRv8BT2w1tKcqb
-         pmxg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references;
-        bh=hFUA2EodpJe3a9+C7aWrHwYTMpFRcWcG5EO2y8L7QQ4=;
-        b=cVnDX/pWYQzf78YiqZcjOk32OqfZnZxkc9onADm+5oleO/amvvBOiKuQ0BBMIPGUIZ
-         cIwI8MPbY/Z0JqdhRjHCRqdKnbEvH+sSwBuL0HGATiJUDDD3CZGpxtvHw6R4Owx3oCMK
-         lLpLqYrLPKXchlhuBnc9LQStEAgaPENcWknmHT/MIluHlUUbDZYdUNCizE3bb4aXy5cp
-         X7gDkOAGjbI822L72jNn06hiQTK5SLJhD9z7UJY4elbK5T6GMzkeV2+bH01/Kne4qaip
-         /kVwbsrmg5YT0pggZa8H3qeMccY8mfM2MNs87PtUN/jOfodwrZZabvhUBx2LsLXY9zob
-         HJNA==
-X-Gm-Message-State: AOAM533Jss2ygf6/5DH9Fo3oeDs0Ee7UOD4aCNCupjegyTaYONItKMmK
-        1+z1EfgaVgXQ5kO95kr2HiU=
-X-Google-Smtp-Source: ABdhPJyi++x1n9the3G91l4hEQEpKwsrMBbznrQDzsOtq+hr5iutBcuOLtLLyf3aIihb4UyuA0Ce/w==
-X-Received: by 2002:a17:902:8682:b029:d1:f289:1b8a with SMTP id g2-20020a1709028682b02900d1f2891b8amr175665plo.69.1601051455086;
-        Fri, 25 Sep 2020 09:30:55 -0700 (PDT)
-Received: from jacob-builder.jf.intel.com (jfdmzpr04-ext.jf.intel.com. [134.134.137.73])
-        by smtp.gmail.com with ESMTPSA id j19sm3197039pfe.108.2020.09.25.09.30.54
-        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Fri, 25 Sep 2020 09:30:54 -0700 (PDT)
-From:   Jacob Pan <jacob.pan.linux@gmail.com>
-X-Google-Original-From: Jacob Pan <jacob.jun.pan@linux.intel.com>
-To:     iommu@lists.linux-foundation.org,
+        id S1728069AbgIYQb4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 25 Sep 2020 12:31:56 -0400
+Received: from mail.kernel.org ([198.145.29.99]:60620 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726368AbgIYQbz (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 25 Sep 2020 12:31:55 -0400
+Received: from mail-wr1-f49.google.com (mail-wr1-f49.google.com [209.85.221.49])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 81FC7235FD
+        for <linux-api@vger.kernel.org>; Fri, 25 Sep 2020 16:31:54 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1601051514;
+        bh=Ik7sogL+z9aD/+1OiO4uM25gNcDglZeUy/6lyvSwMb4=;
+        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+        b=nm1XxwGHIt9UmR/Ifr4xaeqfrQvzLDMgtpU5lpUmSpR33k/zrqbBOn3hX+AwEosps
+         2RQ7KCKnD7imgUyW9DiA/EdUWTNV7LG5Q7VMUEG/SR1m2R2ImEta9ouGe2Bl078/bI
+         0V179iT1PxrQibpFo9qCprANqXPllF8qydxgC0vw=
+Received: by mail-wr1-f49.google.com with SMTP id z4so4285236wrr.4
+        for <linux-api@vger.kernel.org>; Fri, 25 Sep 2020 09:31:54 -0700 (PDT)
+X-Gm-Message-State: AOAM531KSpoDaFgZJ+T/KEVqEcJbIdn9xiqy2/KIfUCxsIKn7LvttMqd
+        m6ira83lN4N3rw6H3J5Z8ZALFq1MV9VR61IYm8VqiA==
+X-Google-Smtp-Source: ABdhPJwloz7GRCeaksqcAiQSK6BA/smLdlgKTRsnAcqj22VT9muQh8MWEkpeHivxaVg9kyXoGTbw7yd3PH1Uou0uWMU=
+X-Received: by 2002:a5d:5281:: with SMTP id c1mr5368504wrv.184.1601051512977;
+ Fri, 25 Sep 2020 09:31:52 -0700 (PDT)
+MIME-Version: 1.0
+References: <20200925145804.5821-1-yu-cheng.yu@intel.com> <20200925145804.5821-9-yu-cheng.yu@intel.com>
+In-Reply-To: <20200925145804.5821-9-yu-cheng.yu@intel.com>
+From:   Andy Lutomirski <luto@kernel.org>
+Date:   Fri, 25 Sep 2020 09:31:40 -0700
+X-Gmail-Original-Message-ID: <CALCETrXs11c8ZcB2QdWUm5CeCXRm1wo706g5J9ajR8+6yYTgtQ@mail.gmail.com>
+Message-ID: <CALCETrXs11c8ZcB2QdWUm5CeCXRm1wo706g5J9ajR8+6yYTgtQ@mail.gmail.com>
+Subject: Re: [PATCH v13 8/8] x86/vsyscall/64: Fixup Shadow Stack and Indirect
+ Branch Tracking for vsyscall emulation
+To:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc:     X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>,
         LKML <linux-kernel@vger.kernel.org>,
-        Joerg Roedel <joro@8bytes.org>,
-        Alex Williamson <alex.williamson@redhat.com>,
-        "Lu Baolu" <baolu.lu@linux.intel.com>,
-        David Woodhouse <dwmw2@infradead.org>,
-        Jonathan Corbet <corbet@lwn.net>
-Cc:     linux-api@vger.kernel.org,
-        Jean-Philippe Brucker <jean-philippe@linaro.com>,
-        Eric Auger <eric.auger@redhat.com>,
-        Jacob Pan <jacob.jun.pan@linux.intel.com>,
-        Yi Liu <yi.l.liu@intel.com>,
-        "Tian, Kevin" <kevin.tian@intel.com>,
-        Raj Ashok <ashok.raj@intel.com>, Wu Hao <hao.wu@intel.com>,
-        Yi Sun <yi.y.sun@intel.com>,
-        Randy Dunlap <rdunlap@infradead.org>
-Subject: [PATCH v12 2/6] iommu/uapi: Add argsz for user filled data
-Date:   Fri, 25 Sep 2020 09:32:43 -0700
-Message-Id: <1601051567-54787-3-git-send-email-jacob.jun.pan@linux.intel.com>
-X-Mailer: git-send-email 2.7.4
-In-Reply-To: <1601051567-54787-1-git-send-email-jacob.jun.pan@linux.intel.com>
-References: <1601051567-54787-1-git-send-email-jacob.jun.pan@linux.intel.com>
+        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
+        Linux-MM <linux-mm@kvack.org>,
+        linux-arch <linux-arch@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andy Lutomirski <luto@kernel.org>,
+        Balbir Singh <bsingharora@gmail.com>,
+        Borislav Petkov <bp@alien8.de>,
+        Cyrill Gorcunov <gorcunov@gmail.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Eugene Syromiatnikov <esyr@redhat.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Nadav Amit <nadav.amit@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
+        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Weijiang Yang <weijiang.yang@intel.com>,
+        Pengfei Xu <pengfei.xu@intel.com>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-As IOMMU UAPI gets extended, user data size may increase. To support
-backward compatibiliy, this patch introduces a size field to each UAPI
-data structures. It is *always* the responsibility for the user to fill in
-the correct size. Padding fields are adjusted to ensure 8 byte alignment.
+On Fri, Sep 25, 2020 at 7:58 AM Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+>
+> Vsyscall entry points are effectively branch targets.  Mark them with
+> ENDBR64 opcodes.  When emulating the RET instruction, unwind shadow stack
+> and reset IBT state machine.
+>
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> ---
+> v13:
+> - Check shadow stack address is canonical.
+> - Change from writing to MSRs to writing to CET xstate.
+>
+>  arch/x86/entry/vsyscall/vsyscall_64.c     | 34 +++++++++++++++++++++++
+>  arch/x86/entry/vsyscall/vsyscall_emu_64.S |  9 ++++++
+>  arch/x86/entry/vsyscall/vsyscall_trace.h  |  1 +
+>  3 files changed, 44 insertions(+)
+>
+> diff --git a/arch/x86/entry/vsyscall/vsyscall_64.c b/arch/x86/entry/vsyscall/vsyscall_64.c
+> index 44c33103a955..315ee3572664 100644
+> --- a/arch/x86/entry/vsyscall/vsyscall_64.c
+> +++ b/arch/x86/entry/vsyscall/vsyscall_64.c
+> @@ -38,6 +38,9 @@
+>  #include <asm/fixmap.h>
+>  #include <asm/traps.h>
+>  #include <asm/paravirt.h>
+> +#include <asm/fpu/xstate.h>
+> +#include <asm/fpu/types.h>
+> +#include <asm/fpu/internal.h>
+>
+>  #define CREATE_TRACE_POINTS
+>  #include "vsyscall_trace.h"
+> @@ -286,6 +289,37 @@ bool emulate_vsyscall(unsigned long error_code,
+>         /* Emulate a ret instruction. */
+>         regs->ip = caller;
+>         regs->sp += 8;
+> +
+> +#ifdef CONFIG_X86_CET
+> +       if (tsk->thread.cet.shstk_size || tsk->thread.cet.ibt_enabled) {
+> +               struct cet_user_state *cet;
+> +               struct fpu *fpu;
+> +
+> +               fpu = &tsk->thread.fpu;
+> +               fpregs_lock();
+> +
+> +               if (!test_thread_flag(TIF_NEED_FPU_LOAD)) {
+> +                       copy_fpregs_to_fpstate(fpu);
+> +                       set_thread_flag(TIF_NEED_FPU_LOAD);
+> +               }
+> +
+> +               cet = get_xsave_addr(&fpu->state.xsave, XFEATURE_CET_USER);
+> +               if (!cet) {
+> +                       fpregs_unlock();
+> +                       goto sigsegv;
 
-Specific scenarios for user data handling are documented in:
-Documentation/userspace-api/iommu.rst
+I *think* your patchset tries to keep cet.shstk_size and
+cet.ibt_enabled in sync with the MSR, in which case it should be
+impossible to get here, but a comment and a warning would be much
+better than a random sigsegv.
 
-As there is no current users of the API, struct version is not
-incremented.
-
-Reviewed-by: Eric Auger <eric.auger@redhat.com>
-Signed-off-by: Liu Yi L <yi.l.liu@intel.com>
-Signed-off-by: Jacob Pan <jacob.jun.pan@linux.intel.com>
----
- include/uapi/linux/iommu.h | 12 +++++++++---
- 1 file changed, 9 insertions(+), 3 deletions(-)
-
-diff --git a/include/uapi/linux/iommu.h b/include/uapi/linux/iommu.h
-index c2b2caf9ed41..b42acc8fe007 100644
---- a/include/uapi/linux/iommu.h
-+++ b/include/uapi/linux/iommu.h
-@@ -139,6 +139,7 @@ enum iommu_page_response_code {
- 
- /**
-  * struct iommu_page_response - Generic page response information
-+ * @argsz: User filled size of this data
-  * @version: API version of this structure
-  * @flags: encodes whether the corresponding fields are valid
-  *         (IOMMU_FAULT_PAGE_RESPONSE_* values)
-@@ -147,6 +148,7 @@ enum iommu_page_response_code {
-  * @code: response code from &enum iommu_page_response_code
-  */
- struct iommu_page_response {
-+	__u32	argsz;
- #define IOMMU_PAGE_RESP_VERSION_1	1
- 	__u32	version;
- #define IOMMU_PAGE_RESP_PASID_VALID	(1 << 0)
-@@ -222,6 +224,7 @@ struct iommu_inv_pasid_info {
- /**
-  * struct iommu_cache_invalidate_info - First level/stage invalidation
-  *     information
-+ * @argsz: User filled size of this data
-  * @version: API version of this structure
-  * @cache: bitfield that allows to select which caches to invalidate
-  * @granularity: defines the lowest granularity used for the invalidation:
-@@ -250,6 +253,7 @@ struct iommu_inv_pasid_info {
-  * must support the used granularity.
-  */
- struct iommu_cache_invalidate_info {
-+	__u32	argsz;
- #define IOMMU_CACHE_INVALIDATE_INFO_VERSION_1 1
- 	__u32	version;
- /* IOMMU paging structure cache */
-@@ -259,7 +263,7 @@ struct iommu_cache_invalidate_info {
- #define IOMMU_CACHE_INV_TYPE_NR		(3)
- 	__u8	cache;
- 	__u8	granularity;
--	__u8	padding[2];
-+	__u8	padding[6];
- 	union {
- 		struct iommu_inv_pasid_info pasid_info;
- 		struct iommu_inv_addr_info addr_info;
-@@ -296,6 +300,7 @@ struct iommu_gpasid_bind_data_vtd {
- 
- /**
-  * struct iommu_gpasid_bind_data - Information about device and guest PASID binding
-+ * @argsz:	User filled size of this data
-  * @version:	Version of this data structure
-  * @format:	PASID table entry format
-  * @flags:	Additional information on guest bind request
-@@ -313,17 +318,18 @@ struct iommu_gpasid_bind_data_vtd {
-  * PASID to host PASID based on this bind data.
-  */
- struct iommu_gpasid_bind_data {
-+	__u32 argsz;
- #define IOMMU_GPASID_BIND_VERSION_1	1
- 	__u32 version;
- #define IOMMU_PASID_FORMAT_INTEL_VTD	1
- 	__u32 format;
-+	__u32 addr_width;
- #define IOMMU_SVA_GPASID_VAL	(1 << 0) /* guest PASID valid */
- 	__u64 flags;
- 	__u64 gpgd;
- 	__u64 hpasid;
- 	__u64 gpasid;
--	__u32 addr_width;
--	__u8  padding[12];
-+	__u8  padding[8];
- 	/* Vendor specific data */
- 	union {
- 		struct iommu_gpasid_bind_data_vtd vtd;
--- 
-2.7.4
-
+Shouldn't we have a get_xsave_addr_or_allocate() that will never
+return NULL but instead will mark the state as in use and set up the
+init state if the feature was previously not in use?
