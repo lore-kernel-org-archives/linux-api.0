@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ABF34C4742D
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 14:58:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A59C5C47425
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 14:58:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 656012311D
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 14:58:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5FD5B21D42
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 14:58:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729243AbgIYO6n (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 25 Sep 2020 10:58:43 -0400
-Received: from mga07.intel.com ([134.134.136.100]:47916 "EHLO mga07.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729137AbgIYO6Q (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        id S1729147AbgIYO6Q (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Fri, 25 Sep 2020 10:58:16 -0400
-IronPort-SDR: dm7XkAfT1Pn9f4iszUy1Ix5Eah89atcuw9Of7T5AoMYxcYBJGRA6i2ElaxLFim7K8Vspa4uXDq
- au40bdD998SA==
-X-IronPort-AV: E=McAfee;i="6000,8403,9755"; a="225704494"
+Received: from mga07.intel.com ([134.134.136.100]:47925 "EHLO mga07.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1729134AbgIYO6P (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 25 Sep 2020 10:58:15 -0400
+IronPort-SDR: mhH12wAkb6euEdyEz7mpTa4gdNuNmYN5LME8MzqTojXey5+ICnWjWRlvbhUANdqdulSfrRXImf
+ 8XhRCS8nQVvw==
+X-IronPort-AV: E=McAfee;i="6000,8403,9755"; a="225704488"
 X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
-   d="scan'208";a="225704494"
+   d="scan'208";a="225704488"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from fmsmga005.fm.intel.com ([10.253.24.32])
-  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:58:15 -0700
-IronPort-SDR: /xYfSw8Dn/zExQtH9j5R+QYIsdZssY8Ygp2yq1GuThrHK2HC0qe9nJKAoN1NtCPf2HKXE/Q/e5
- En2YMISETexA==
+  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:58:14 -0700
+IronPort-SDR: ByVBDmZe8R5Q3jrRfTehXGSoT6vkekq7Lm3P1KyPfW08+oqHmsDNW/FLh/n30+RzNplFg8ef9d
+ HneBCcCXhWCw==
 X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
-   d="scan'208";a="512916979"
+   d="scan'208";a="512916971"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
   by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:58:14 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
@@ -62,9 +62,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v13 6/8] x86/vdso/32: Add ENDBR32 to __kernel_vsyscall entry point
-Date:   Fri, 25 Sep 2020 07:58:02 -0700
-Message-Id: <20200925145804.5821-7-yu-cheng.yu@intel.com>
+Subject: [PATCH v13 4/8] x86/cet/ibt: ELF header parsing for Indirect Branch Tracking
+Date:   Fri, 25 Sep 2020 07:58:00 -0700
+Message-Id: <20200925145804.5821-5-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20200925145804.5821-1-yu-cheng.yu@intel.com>
 References: <20200925145804.5821-1-yu-cheng.yu@intel.com>
@@ -74,31 +74,49 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: "H.J. Lu" <hjl.tools@gmail.com>
+Update arch_setup_elf_property() for Indirect Branch Tracking.
 
-Add ENDBR32 to __kernel_vsyscall entry point.
-
-Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Acked-by: Andy Lutomirski <luto@kernel.org>
 ---
- arch/x86/entry/vdso/vdso32/system_call.S | 3 +++
- 1 file changed, 3 insertions(+)
+v9:
+- Change cpu_feature_enabled() to static_cpu_has().
 
-diff --git a/arch/x86/entry/vdso/vdso32/system_call.S b/arch/x86/entry/vdso/vdso32/system_call.S
-index de1fff7188aa..e331fcdebd95 100644
---- a/arch/x86/entry/vdso/vdso32/system_call.S
-+++ b/arch/x86/entry/vdso/vdso32/system_call.S
-@@ -14,6 +14,9 @@
- 	ALIGN
- __kernel_vsyscall:
- 	CFI_STARTPROC
-+#ifdef CONFIG_X86_BRANCH_TRACKING_USER
-+	endbr32
-+#endif
- 	/*
- 	 * Reshuffle regs so that all of any of the entry instructions
- 	 * will preserve enough state.
+ arch/x86/Kconfig             | 2 ++
+ arch/x86/kernel/process_64.c | 8 ++++++++
+ 2 files changed, 10 insertions(+)
+
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 15c7f2606c9d..cc9876f85e91 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1972,6 +1972,8 @@ config X86_BRANCH_TRACKING_USER
+ 	depends on CPU_SUP_INTEL && X86_64
+ 	depends on $(cc-option,-fcf-protection)
+ 	select X86_CET
++	select ARCH_USE_GNU_PROPERTY
++	select ARCH_BINFMT_ELF_STATE
+ 	help
+ 	  Indirect Branch Tracking (IBT) provides protection against
+ 	  CALL-/JMP-oriented programming attacks.  It is active when
+diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
+index 8725e67bcd44..1147a1052a07 100644
+--- a/arch/x86/kernel/process_64.c
++++ b/arch/x86/kernel/process_64.c
+@@ -866,6 +866,14 @@ int arch_setup_elf_property(struct arch_elf_state *state)
+ 			r = cet_setup_shstk();
+ 	}
+ 
++	if (r < 0)
++		return r;
++
++	if (static_cpu_has(X86_FEATURE_IBT)) {
++		if (state->gnu_property & GNU_PROPERTY_X86_FEATURE_1_IBT)
++			r = cet_setup_ibt();
++	}
++
+ 	return r;
+ }
+ #endif
 -- 
 2.21.0
 
