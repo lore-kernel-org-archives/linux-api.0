@@ -2,442 +2,477 @@ Return-Path: <SRS0=H7yB=DC=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-11.3 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_2 autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CFCC0C4363D
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 15:47:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D88A0C4363D
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 15:59:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 93B5521D7A
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 15:47:36 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 978D622B2D
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 15:59:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729325AbgIYPrd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 25 Sep 2020 11:47:33 -0400
-Received: from mga04.intel.com ([192.55.52.120]:21732 "EHLO mga04.intel.com"
+        id S1729333AbgIYP7H (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 25 Sep 2020 11:59:07 -0400
+Received: from mga18.intel.com ([134.134.136.126]:60264 "EHLO mga18.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728423AbgIYPrc (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 25 Sep 2020 11:47:32 -0400
-IronPort-SDR: u2b06A+4cbQo51+NfQYxddsPdKoImafr64J5VI9y3SDQkarRnoL2RivsIT9ygy90dbpxg2Ifd+
- UuEE3G8D2uQA==
-X-IronPort-AV: E=McAfee;i="6000,8403,9755"; a="158942279"
+        id S1728932AbgIYP7H (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 25 Sep 2020 11:59:07 -0400
+IronPort-SDR: xc3B7uSBpOBjRUVcHLehbS9aeJebYrJBahCJh0Ruo+usouuSoIb2iOzisfAFfsqbeNj6fzO8HF
+ pUZK4npz7TYg==
+X-IronPort-AV: E=McAfee;i="6000,8403,9755"; a="149338397"
 X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
-   d="scan'208";a="158942279"
+   d="scan'208";a="149338397"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
-Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:19 -0700
-IronPort-SDR: pv91liv5aQu3UoYGO+/7YAxS7vZbMjw0l8223TrNoQUUmDiqU6ivxEdudw0VxRzv/9oOKFM8dW
- C02QvI+xpNEQ==
+Received: from orsmga001.jf.intel.com ([10.7.209.18])
+  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 08:59:03 -0700
+IronPort-SDR: u2lScz7p+jXuEaVemEFcSztUjUhrRhEnr5bXEhUoXkPGAUQRAEsQl/K6pLG3qG2GndyRoqpAlj
+ 0gHai0Hko3gg==
 X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
-   d="scan'208";a="487499162"
-Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:18 -0700
-From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
-To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-doc@vger.kernel.org, linux-mm@kvack.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
-        Arnd Bergmann <arnd@arndb.de>,
-        Andy Lutomirski <luto@kernel.org>,
-        Balbir Singh <bsingharora@gmail.com>,
-        Borislav Petkov <bp@alien8.de>,
-        Cyrill Gorcunov <gorcunov@gmail.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Eugene Syromiatnikov <esyr@redhat.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Nadav Amit <nadav.amit@gmail.com>,
-        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
-        Peter Zijlstra <peterz@infradead.org>,
+   d="scan'208";a="383528566"
+Received: from jacob-builder.jf.intel.com (HELO jacob-builder) ([10.7.199.155])
+  by orsmga001-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 08:59:03 -0700
+Date:   Fri, 25 Sep 2020 09:01:10 -0700
+From:   Jacob Pan <jacob.jun.pan@linux.intel.com>
+To:     Jean-Philippe Brucker <jean-philippe@linaro.org>
+Cc:     Jacob Pan <jacob.pan.linux@gmail.com>,
+        iommu@lists.linux-foundation.org,
+        LKML <linux-kernel@vger.kernel.org>,
+        Joerg Roedel <joro@8bytes.org>,
+        Alex Williamson <alex.williamson@redhat.com>,
+        Lu Baolu <baolu.lu@linux.intel.com>,
+        David Woodhouse <dwmw2@infradead.org>,
+        Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org,
+        Jean-Philippe Brucker <jean-philippe@linaro.com>,
+        Eric Auger <eric.auger@redhat.com>,
+        Yi Liu <yi.l.liu@intel.com>,
+        "Tian, Kevin" <kevin.tian@intel.com>,
+        Raj Ashok <ashok.raj@intel.com>, Wu Hao <hao.wu@intel.com>,
+        Yi Sun <yi.y.sun@intel.com>,
         Randy Dunlap <rdunlap@infradead.org>,
-        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
-        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
-        Dave Martin <Dave.Martin@arm.com>,
-        Weijiang Yang <weijiang.yang@intel.com>,
-        Pengfei Xu <pengfei.xu@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v13 08/26] x86/mm: Introduce _PAGE_COW
-Date:   Fri, 25 Sep 2020 07:56:31 -0700
-Message-Id: <20200925145649.5438-9-yu-cheng.yu@intel.com>
-X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20200925145649.5438-1-yu-cheng.yu@intel.com>
-References: <20200925145649.5438-1-yu-cheng.yu@intel.com>
+        jacob.jun.pan@linux.intel.com
+Subject: Re: [PATCH v11 5/6] iommu/uapi: Handle data and argsz filled by
+ users
+Message-ID: <20200925090110.6c168f17@jacob-builder>
+In-Reply-To: <20200925094636.GC490533@myrica>
+References: <1600975460-64521-1-git-send-email-jacob.jun.pan@linux.intel.com>
+        <1600975460-64521-6-git-send-email-jacob.jun.pan@linux.intel.com>
+        <20200925094636.GC490533@myrica>
+Organization: OTC
+X-Mailer: Claws Mail 3.13.2 (GTK+ 2.24.30; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-There is essentially no room left in the x86 hardware PTEs on some OSes
-(not Linux).  That left the hardware architects looking for a way to
-represent a new memory type (shadow stack) within the existing bits.
-They chose to repurpose a lightly-used state: Write=0,Dirty=1.
+Hi Jean-Philippe,
 
-The reason it's lightly used is that Dirty=1 is normally set by hardware
-and cannot normally be set by hardware on a Write=0 PTE.  Software must
-normally be involved to create one of these PTEs, so software can simply
-opt to not create them.
+On Fri, 25 Sep 2020 11:46:36 +0200, Jean-Philippe Brucker
+<jean-philippe@linaro.org> wrote:
 
-But that leaves us with a Linux problem: we need to ensure we never create
-Write=0,Dirty=1 PTEs.  In places where we do create them, we need to find
-an alternative way to represent them _without_ using the same hardware bit
-combination.  Thus, enter _PAGE_COW.  This results in the following:
+> On Thu, Sep 24, 2020 at 12:24:19PM -0700, Jacob Pan wrote:
+> > IOMMU user APIs are responsible for processing user data. This patch
+> > changes the interface such that user pointers can be passed into IOMMU
+> > code directly. Separate kernel APIs without user pointers are introduced
+> > for in-kernel users of the UAPI functionality.
+> > 
+> > IOMMU UAPI data has a user filled argsz field which indicates the data
+> > length of the structure. User data is not trusted, argsz must be
+> > validated based on the current kernel data size, mandatory data size,
+> > and feature flags.
+> > 
+> > User data may also be extended, resulting in possible argsz increase.
+> > Backward compatibility is ensured based on size and flags (or
+> > the functional equivalent fields) checking.
+> > 
+> > This patch adds sanity checks in the IOMMU layer. In addition to argsz,
+> > reserved/unused fields in padding, flags, and version are also checked.
+> > Details are documented in Documentation/userspace-api/iommu.rst
+> > 
+> > Signed-off-by: Liu Yi L <yi.l.liu@intel.com>
+> > Signed-off-by: Jacob Pan <jacob.jun.pan@linux.intel.com>  
+> 
+> Reviewed-by: Jean-Philippe Brucker <jean-philippe@linaro.org>
+> 
+> Some comments below in case you're resending, but nothing important.
+> 
+Thanks for the review, I will respin.
 
-(a) A modified, copy-on-write (COW) page: (R/O + _PAGE_COW)
-(b) A R/O page that has been COW'ed: (R/O + _PAGE_COW)
-    The user page is in a R/O VMA, and get_user_pages() needs a writable
-    copy.  The page fault handler creates a copy of the page and sets
-    the new copy's PTE as R/O and _PAGE_COW.
-(c) A shadow stack PTE: (R/O + _PAGE_DIRTY_HW)
-(d) A shared shadow stack PTE: (R/O + _PAGE_COW)
-    When a shadow stack page is being shared among processes (this happens
-    at fork()), its PTE is cleared of _PAGE_DIRTY_HW, so the next shadow
-    stack access causes a fault, and the page is duplicated and
-    _PAGE_DIRTY_HW is set again.  This is the COW equivalent for shadow
-    stack pages, even though it's copy-on-access rather than copy-on-write.
-(e) A page where the processor observed a Write=1 PTE, started a write, set
-    Dirty=1, but then observed a Write=0 PTE.  That's possible today, but
-    will not happen on processors that support shadow stack.
+> > ---
+> >  drivers/iommu/iommu.c      | 199
+> > +++++++++++++++++++++++++++++++++++++++++++--
+> > include/linux/iommu.h      |  28 +++++-- include/uapi/linux/iommu.h |
+> > 1 + 3 files changed, 212 insertions(+), 16 deletions(-)
+> > 
+> > diff --git a/drivers/iommu/iommu.c b/drivers/iommu/iommu.c
+> > index 4ae02291ccc2..5c1b7ae48aae 100644
+> > --- a/drivers/iommu/iommu.c
+> > +++ b/drivers/iommu/iommu.c
+> > @@ -1961,34 +1961,219 @@ int iommu_attach_device(struct iommu_domain
+> > *domain, struct device *dev) }
+> >  EXPORT_SYMBOL_GPL(iommu_attach_device);
+> >  
+> > +/*
+> > + * Check flags and other user provided data for valid combinations. We
+> > also
+> > + * make sure no reserved fields or unused flags are set. This is to
+> > ensure
+> > + * not breaking userspace in the future when these fields or flags are
+> > used.
+> > + */
+> > +static int iommu_check_cache_invl_data(struct
+> > iommu_cache_invalidate_info *info) +{
+> > +	u32 mask;
+> > +	int i;
+> > +
+> > +	if (info->version != IOMMU_CACHE_INVALIDATE_INFO_VERSION_1)
+> > +		return -EINVAL;
+> > +
+> > +	mask = (1 << IOMMU_CACHE_INV_TYPE_NR) - 1;
+> > +	if (info->cache & ~mask)
+> > +		return -EINVAL;
+> > +
+> > +	if (info->granularity >= IOMMU_INV_GRANU_NR)
+> > +		return -EINVAL;
+> > +
+> > +	switch (info->granularity) {
+> > +	case IOMMU_INV_GRANU_ADDR:
+> > +		if (info->cache & IOMMU_CACHE_INV_TYPE_PASID)
+> > +			return -EINVAL;
+> > +
+> > +		mask = IOMMU_INV_ADDR_FLAGS_PASID |
+> > +			IOMMU_INV_ADDR_FLAGS_ARCHID |
+> > +			IOMMU_INV_ADDR_FLAGS_LEAF;
+> > +
+> > +		if (info->granu.addr_info.flags & ~mask)
+> > +			return -EINVAL;
+> > +		break;
+> > +	case IOMMU_INV_GRANU_PASID:
+> > +		mask = IOMMU_INV_PASID_FLAGS_PASID |
+> > +			IOMMU_INV_PASID_FLAGS_ARCHID;
+> > +		if (info->granu.pasid_info.flags & ~mask)
+> > +			return -EINVAL;
+> > +
+> > +		break;
+> > +	case IOMMU_INV_GRANU_DOMAIN:
+> > +		if (info->cache & IOMMU_CACHE_INV_TYPE_DEV_IOTLB)
+> > +			return -EINVAL;
+> > +		break;
+> > +	default:
+> > +		return -EINVAL;
+> > +	}
+> > +
+> > +	/* Check reserved padding fields */
+> > +	for (i = 0; i < sizeof(info->padding); i++) {
+> > +		if (info->padding[i])
+> > +			return -EINVAL;
+> > +	}
+> > +
+> > +	return 0;
+> > +}
+> > +
+> >  int iommu_uapi_cache_invalidate(struct iommu_domain *domain, struct
+> > device *dev,
+> > -				struct iommu_cache_invalidate_info
+> > *inv_info)
+> > +				void __user *uinfo)
+> >  {
+> > +	struct iommu_cache_invalidate_info inv_info = { 0 };
+> > +	u32 minsz;
+> > +	int ret = 0;  
+> 
+> nit: no need to initialize it
+> 
+got it.
 
-Use _PAGE_COW in pte_wrprotect() and _PAGE_DIRTY_HW in pte_mkwrite().
-Apply the same changes to pmd and pud.
+> > +
+> >  	if (unlikely(!domain->ops->cache_invalidate))
+> >  		return -ENODEV;
+> >  
+> > -	return domain->ops->cache_invalidate(domain, dev, inv_info);
+> > +	/*
+> > +	 * No new spaces can be added before the variable sized union,
+> > the
+> > +	 * minimum size is the offset to the union.
+> > +	 */
+> > +	minsz = offsetof(struct iommu_cache_invalidate_info, granu);  
+> 
+> Why not use offsetofend() to avoid naming the unions?
+> 
+offsetofend() was used in earlier version but the named union would avoid
+future code change if we were to re-purpose the padding fields.
+minzs is always at the offsetof the union due to our expansion rules.
 
-When this patch is applied, there are six free bits left in the 64-bit PTE.
-There are no more free bits in the 32-bit PTE (except for PAE) and shadow
-stack is not implemented for the 32-bit kernel.
+> > +
+> > +	/* Copy minsz from user to get flags and argsz */
+> > +	if (copy_from_user(&inv_info, uinfo, minsz))
+> > +		return -EFAULT;
+> > +
+> > +	/* Fields before variable size union is mandatory */
+> > +	if (inv_info.argsz < minsz)
+> > +		return -EINVAL;
+> > +
+> > +	/* PASID and address granu require additional info beyond
+> > minsz */
+> > +	if (inv_info.argsz == minsz &&
+> > +	    ((inv_info.granularity == IOMMU_INV_GRANU_PASID) ||
+> > +		    (inv_info.granularity == IOMMU_INV_GRANU_ADDR)))
+> > +		return -EINVAL;  
+> 
+> Made redundant by the two checks below
+> 
+Good point! This case is covered by the two checks below.
 
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
----
-v10:
-- Change _PAGE_BIT_DIRTY_SW to _PAGE_BIT_COW, as it is used for copy-on-
-  write PTEs.
-- Update pte_write() and treat shadow stack as writable.
-- Change *_mkdirty_shstk() to *_mkwrite_shstk() as these make shadow stack
-  pages writable.
-- Use bit test & shift to move _PAGE_BIT_DIRTY_HW to _PAGE_BIT_COW.
-- Change static_cpu_has() to cpu_feature_enabled().
-- Revise commit log.
+> > +
+> > +	if (inv_info.granularity == IOMMU_INV_GRANU_PASID &&
+> > +	    inv_info.argsz < offsetofend(struct
+> > iommu_cache_invalidate_info, granu.pasid_info))
+> > +		return -EINVAL;
+> > +
+> > +	if (inv_info.granularity == IOMMU_INV_GRANU_ADDR &&
+> > +	    inv_info.argsz < offsetofend(struct
+> > iommu_cache_invalidate_info, granu.addr_info))
+> > +		return -EINVAL;
+> > +
+> > +	/*
+> > +	 * User might be using a newer UAPI header which has a larger
+> > data
+> > +	 * size, we shall support the existing flags within the current
+> > +	 * size. Copy the remaining user data _after_ minsz but not
+> > more
+> > +	 * than the current kernel supported size.
+> > +	 */
+> > +	if (copy_from_user((void *)&inv_info + minsz, uinfo + minsz,
+> > +			   min_t(u32, inv_info.argsz,
+> > sizeof(inv_info)) - minsz))
+> > +		return -EFAULT;
+> > +
+> > +	/* Now the argsz is validated, check the content */
+> > +	ret = iommu_check_cache_invl_data(&inv_info);
+> > +	if (ret)
+> > +		return ret;
+> > +
+> > +	return domain->ops->cache_invalidate(domain, dev, &inv_info);
+> >  }
+> >  EXPORT_SYMBOL_GPL(iommu_uapi_cache_invalidate);
+> >  
+> > -int iommu_uapi_sva_bind_gpasid(struct iommu_domain *domain,
+> > -			       struct device *dev, struct
+> > iommu_gpasid_bind_data *data) +static int iommu_check_bind_data(struct
+> > iommu_gpasid_bind_data *data) +{
+> > +	u32 mask;
+> > +	int i;
+> > +
+> > +	if (data->version != IOMMU_GPASID_BIND_VERSION_1)
+> > +		return -EINVAL;
+> > +
+> > +	/* Check the range of supported formats */
+> > +	if (data->format >= IOMMU_PASID_FORMAT_LAST)
+> > +		return -EINVAL;
+> > +
+> > +	/* Check all flags */
+> > +	mask = IOMMU_SVA_GPASID_VAL;
+> > +	if (data->flags & ~mask)
+> > +		return -EINVAL;
+> > +
+> > +	/* Check reserved padding fields */
+> > +	for (i = 0; i < sizeof(data->padding); i++) {
+> > +		if (data->padding[i])
+> > +			return -EINVAL;
+> > +	}
+> > +
+> > +	return 0;
+> > +}
+> > +
+> > +static int iommu_sva_prepare_bind_data(void __user *udata,
+> > +				       struct iommu_gpasid_bind_data
+> > *data) {
+> > +	u32 minsz;
+> > +
+> > +	/*
+> > +	 * No new spaces can be added before the variable sized union,
+> > the
+> > +	 * minimum size is the offset to the union.
+> > +	 */
+> > +	minsz = offsetof(struct iommu_gpasid_bind_data, vendor);
+> > +
+> > +	/* Copy minsz from user to get flags and argsz */
+> > +	if (copy_from_user(data, udata, minsz))
+> > +		return -EFAULT;
+> > +
+> > +	/* Fields before variable size union is mandatory */  
+> 
+> "are mandatory", but this comment is a bit redundant.
+> 
+Yes, it is implied by minsz. But I still feel it adds more clarity. Will
+fix the plural.
 
-v9:
-- Remove pte_move_flags() etc. and put the logic directly in
-  pte_wrprotect()/pte_mkwrite() etc.
-- Change compile-time conditionals to run-time checks.
-- Split out pte_modify()/pmd_modify() to a new patch.
-- Update comments.
+Thanks!
 
- arch/x86/include/asm/pgtable.h       | 120 ++++++++++++++++++++++++---
- arch/x86/include/asm/pgtable_types.h |  41 ++++++++-
- 2 files changed, 150 insertions(+), 11 deletions(-)
+> Thanks,
+> Jean
+> 
+> > +	if (data->argsz < minsz)
+> > +		return -EINVAL;
+> > +	/*
+> > +	 * User might be using a newer UAPI header, we shall let IOMMU
+> > vendor
+> > +	 * driver decide on what size it needs. Since the guest PASID
+> > bind data
+> > +	 * can be vendor specific, larger argsz could be the result of
+> > extension
+> > +	 * for one vendor but it should not affect another vendor.
+> > +	 * Copy the remaining user data _after_ minsz
+> > +	 */
+> > +	if (copy_from_user((void *)data + minsz, udata + minsz,
+> > +			   min_t(u32, data->argsz, sizeof(*data)) -
+> > minsz))
+> > +		return -EFAULT;
+> > +
+> > +	return iommu_check_bind_data(data);
+> > +}
+> > +
+> > +int iommu_uapi_sva_bind_gpasid(struct iommu_domain *domain, struct
+> > device *dev,
+> > +			       void __user *udata)
+> > +{
+> > +	struct iommu_gpasid_bind_data data = { 0 };
+> > +	int ret;
+> > +
+> >  	if (unlikely(!domain->ops->sva_bind_gpasid))
+> >  		return -ENODEV;
+> >  
+> > -	return domain->ops->sva_bind_gpasid(domain, dev, data);
+> > +	ret = iommu_sva_prepare_bind_data(udata, &data);
+> > +	if (ret)
+> > +		return ret;
+> > +
+> > +	return domain->ops->sva_bind_gpasid(domain, dev, &data);
+> >  }
+> >  EXPORT_SYMBOL_GPL(iommu_uapi_sva_bind_gpasid);
+> >  
+> > -int iommu_uapi_sva_unbind_gpasid(struct iommu_domain *domain, struct
+> > device *dev,
+> > -				 ioasid_t pasid)
+> > +int iommu_sva_unbind_gpasid(struct iommu_domain *domain, struct device
+> > *dev,
+> > +			     ioasid_t pasid)
+> >  {
+> >  	if (unlikely(!domain->ops->sva_unbind_gpasid))
+> >  		return -ENODEV;
+> >  
+> >  	return domain->ops->sva_unbind_gpasid(dev, pasid);
+> >  }
+> > +EXPORT_SYMBOL_GPL(iommu_sva_unbind_gpasid);
+> > +
+> > +int iommu_uapi_sva_unbind_gpasid(struct iommu_domain *domain, struct
+> > device *dev,
+> > +				 void __user *udata)
+> > +{
+> > +	struct iommu_gpasid_bind_data data = { 0 };
+> > +	int ret;
+> > +
+> > +	if (unlikely(!domain->ops->sva_bind_gpasid))
+> > +		return -ENODEV;
+> > +
+> > +	ret = iommu_sva_prepare_bind_data(udata, &data);
+> > +	if (ret)
+> > +		return ret;
+> > +
+> > +	return iommu_sva_unbind_gpasid(domain, dev, data.hpasid);
+> > +}
+> >  EXPORT_SYMBOL_GPL(iommu_uapi_sva_unbind_gpasid);
+> >  
+> >  static void __iommu_detach_device(struct iommu_domain *domain,
+> > diff --git a/include/linux/iommu.h b/include/linux/iommu.h
+> > index 710d5d2691eb..3ca3a40fc80f 100644
+> > --- a/include/linux/iommu.h
+> > +++ b/include/linux/iommu.h
+> > @@ -426,11 +426,14 @@ extern void iommu_detach_device(struct
+> > iommu_domain *domain, struct device *dev);
+> >  extern int iommu_uapi_cache_invalidate(struct iommu_domain *domain,
+> >  				       struct device *dev,
+> > -				       struct
+> > iommu_cache_invalidate_info *inv_info);
+> > +				       void __user *uinfo);
+> > +
+> >  extern int iommu_uapi_sva_bind_gpasid(struct iommu_domain *domain,
+> > -				      struct device *dev, struct
+> > iommu_gpasid_bind_data *data);
+> > +				      struct device *dev, void __user
+> > *udata); extern int iommu_uapi_sva_unbind_gpasid(struct iommu_domain
+> > *domain,
+> > -					struct device *dev, ioasid_t
+> > pasid);
+> > +					struct device *dev, void
+> > __user *udata); +extern int iommu_sva_unbind_gpasid(struct iommu_domain
+> > *domain,
+> > +				   struct device *dev, ioasid_t pasid);
+> >  extern struct iommu_domain *iommu_get_domain_for_dev(struct device
+> > *dev); extern struct iommu_domain *iommu_get_dma_domain(struct device
+> > *dev); extern int iommu_map(struct iommu_domain *domain, unsigned long
+> > iova, @@ -1032,22 +1035,29 @@ static inline int
+> > iommu_sva_get_pasid(struct iommu_sva *handle) return
+> > IOMMU_PASID_INVALID; }
+> >  
+> > -static inline int iommu_uapi_cache_invalidate(struct iommu_domain
+> > *domain,
+> > -					      struct device *dev,
+> > -					      struct
+> > iommu_cache_invalidate_info *inv_info) +static inline int
+> > +iommu_uapi_cache_invalidate(struct iommu_domain *domain,
+> > +			    struct device *dev,
+> > +			    struct iommu_cache_invalidate_info
+> > *inv_info) {
+> >  	return -ENODEV;
+> >  }
+> >  
+> >  static inline int iommu_uapi_sva_bind_gpasid(struct iommu_domain
+> > *domain,
+> > -					     struct device *dev,
+> > -					     struct
+> > iommu_gpasid_bind_data *data)
+> > +					     struct device *dev, void
+> > __user *udata) {
+> >  	return -ENODEV;
+> >  }
+> >  
+> >  static inline int iommu_uapi_sva_unbind_gpasid(struct iommu_domain
+> > *domain,
+> > -					       struct device *dev, int
+> > pasid)
+> > +					       struct device *dev,
+> > void __user *udata) +{
+> > +	return -ENODEV;
+> > +}
+> > +
+> > +static inline int iommu_sva_unbind_gpasid(struct iommu_domain *domain,
+> > +					  struct device *dev,
+> > +					  ioasid_t pasid)
+> >  {
+> >  	return -ENODEV;
+> >  }
+> > diff --git a/include/uapi/linux/iommu.h b/include/uapi/linux/iommu.h
+> > index 5946779ac1f9..66d4ca40b40f 100644
+> > --- a/include/uapi/linux/iommu.h
+> > +++ b/include/uapi/linux/iommu.h
+> > @@ -322,6 +322,7 @@ struct iommu_gpasid_bind_data {
+> >  #define IOMMU_GPASID_BIND_VERSION_1	1
+> >  	__u32 version;
+> >  #define IOMMU_PASID_FORMAT_INTEL_VTD	1
+> > +#define IOMMU_PASID_FORMAT_LAST		2
+> >  	__u32 format;
+> >  	__u32 addr_width;
+> >  #define IOMMU_SVA_GPASID_VAL	(1 << 0) /* guest PASID valid */
+> > -- 
+> > 2.7.4
+> >   
 
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index 86b7acd221c1..ac4ed814be96 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -122,9 +122,9 @@ extern pmdval_t early_pmd_flags;
-  * The following only work if pte_present() is true.
-  * Undefined behaviour if not..
-  */
--static inline int pte_dirty(pte_t pte)
-+static inline bool pte_dirty(pte_t pte)
- {
--	return pte_flags(pte) & _PAGE_DIRTY_HW;
-+	return pte_flags(pte) & _PAGE_DIRTY_BITS;
- }
- 
- 
-@@ -161,9 +161,9 @@ static inline int pte_young(pte_t pte)
- 	return pte_flags(pte) & _PAGE_ACCESSED;
- }
- 
--static inline int pmd_dirty(pmd_t pmd)
-+static inline bool pmd_dirty(pmd_t pmd)
- {
--	return pmd_flags(pmd) & _PAGE_DIRTY_HW;
-+	return pmd_flags(pmd) & _PAGE_DIRTY_BITS;
- }
- 
- static inline int pmd_young(pmd_t pmd)
-@@ -171,9 +171,9 @@ static inline int pmd_young(pmd_t pmd)
- 	return pmd_flags(pmd) & _PAGE_ACCESSED;
- }
- 
--static inline int pud_dirty(pud_t pud)
-+static inline bool pud_dirty(pud_t pud)
- {
--	return pud_flags(pud) & _PAGE_DIRTY_HW;
-+	return pud_flags(pud) & _PAGE_DIRTY_BITS;
- }
- 
- static inline int pud_young(pud_t pud)
-@@ -183,6 +183,12 @@ static inline int pud_young(pud_t pud)
- 
- static inline int pte_write(pte_t pte)
- {
-+	/*
-+	 * If _PAGE_DIRTY_HW is set, the PTE must either have
-+	 * _PAGE_RW or be a shadow stack PTE, which is logically writable.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK))
-+		return pte_flags(pte) & (_PAGE_RW | _PAGE_DIRTY_HW);
- 	return pte_flags(pte) & _PAGE_RW;
- }
- 
-@@ -334,7 +340,7 @@ static inline pte_t pte_clear_uffd_wp(pte_t pte)
- 
- static inline pte_t pte_mkclean(pte_t pte)
- {
--	return pte_clear_flags(pte, _PAGE_DIRTY_HW);
-+	return pte_clear_flags(pte, _PAGE_DIRTY_BITS);
- }
- 
- static inline pte_t pte_mkold(pte_t pte)
-@@ -344,6 +350,17 @@ static inline pte_t pte_mkold(pte_t pte)
- 
- static inline pte_t pte_wrprotect(pte_t pte)
- {
-+	/*
-+	 * Blindly clearing _PAGE_RW might accidentally create
-+	 * a shadow stack PTE (RW=0,Dirty=1).  Move the hardware
-+	 * dirty value to the software bit.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		pte.pte |= (pte.pte & _PAGE_DIRTY_HW) >>
-+			   _PAGE_BIT_DIRTY_HW << _PAGE_BIT_COW;
-+		pte = pte_clear_flags(pte, _PAGE_DIRTY_HW);
-+	}
-+
- 	return pte_clear_flags(pte, _PAGE_RW);
- }
- 
-@@ -354,6 +371,18 @@ static inline pte_t pte_mkexec(pte_t pte)
- 
- static inline pte_t pte_mkdirty(pte_t pte)
- {
-+	pteval_t dirty = _PAGE_DIRTY_HW;
-+
-+	/* Avoid creating (HW)Dirty=1,Write=0 PTEs */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK) && !pte_write(pte))
-+		dirty = _PAGE_COW;
-+
-+	return pte_set_flags(pte, dirty | _PAGE_SOFT_DIRTY);
-+}
-+
-+static inline pte_t pte_mkwrite_shstk(pte_t pte)
-+{
-+	pte = pte_clear_flags(pte, _PAGE_COW);
- 	return pte_set_flags(pte, _PAGE_DIRTY_HW | _PAGE_SOFT_DIRTY);
- }
- 
-@@ -364,6 +393,13 @@ static inline pte_t pte_mkyoung(pte_t pte)
- 
- static inline pte_t pte_mkwrite(pte_t pte)
- {
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		if (pte_flags(pte) & _PAGE_COW) {
-+			pte = pte_clear_flags(pte, _PAGE_COW);
-+			pte = pte_set_flags(pte, _PAGE_DIRTY_HW);
-+		}
-+	}
-+
- 	return pte_set_flags(pte, _PAGE_RW);
- }
- 
-@@ -435,16 +471,41 @@ static inline pmd_t pmd_mkold(pmd_t pmd)
- 
- static inline pmd_t pmd_mkclean(pmd_t pmd)
- {
--	return pmd_clear_flags(pmd, _PAGE_DIRTY_HW);
-+	return pmd_clear_flags(pmd, _PAGE_DIRTY_BITS);
- }
- 
- static inline pmd_t pmd_wrprotect(pmd_t pmd)
- {
-+	/*
-+	 * Blindly clearing _PAGE_RW might accidentally create
-+	 * a shadow stack PMD (RW=0,Dirty=1).  Move the hardware
-+	 * dirty value to the software bit.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		pmdval_t v = native_pmd_val(pmd);
-+
-+		v |= (v & _PAGE_DIRTY_HW) >> _PAGE_BIT_DIRTY_HW <<
-+		     _PAGE_BIT_COW;
-+		pmd = pmd_clear_flags(__pmd(v), _PAGE_DIRTY_HW);
-+	}
-+
- 	return pmd_clear_flags(pmd, _PAGE_RW);
- }
- 
- static inline pmd_t pmd_mkdirty(pmd_t pmd)
- {
-+	pmdval_t dirty = _PAGE_DIRTY_HW;
-+
-+	/* Avoid creating (HW)Dirty=1,Write=0 PMDs */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK) && !(pmd_flags(pmd) & _PAGE_RW))
-+		dirty = _PAGE_COW;
-+
-+	return pmd_set_flags(pmd, dirty | _PAGE_SOFT_DIRTY);
-+}
-+
-+static inline pmd_t pmd_mkwrite_shstk(pmd_t pmd)
-+{
-+	pmd = pmd_clear_flags(pmd, _PAGE_COW);
- 	return pmd_set_flags(pmd, _PAGE_DIRTY_HW | _PAGE_SOFT_DIRTY);
- }
- 
-@@ -465,6 +526,13 @@ static inline pmd_t pmd_mkyoung(pmd_t pmd)
- 
- static inline pmd_t pmd_mkwrite(pmd_t pmd)
- {
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		if (pmd_flags(pmd) & _PAGE_COW) {
-+			pmd = pmd_clear_flags(pmd, _PAGE_COW);
-+			pmd = pmd_set_flags(pmd, _PAGE_DIRTY_HW);
-+		}
-+	}
-+
- 	return pmd_set_flags(pmd, _PAGE_RW);
- }
- 
-@@ -489,17 +557,36 @@ static inline pud_t pud_mkold(pud_t pud)
- 
- static inline pud_t pud_mkclean(pud_t pud)
- {
--	return pud_clear_flags(pud, _PAGE_DIRTY_HW);
-+	return pud_clear_flags(pud, _PAGE_DIRTY_BITS);
- }
- 
- static inline pud_t pud_wrprotect(pud_t pud)
- {
-+	/*
-+	 * Blindly clearing _PAGE_RW might accidentally create
-+	 * a shadow stack PUD (RW=0,Dirty=1).  Move the hardware
-+	 * dirty value to the software bit.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		pudval_t v = native_pud_val(pud);
-+
-+		v |= (v & _PAGE_DIRTY_HW) >> _PAGE_BIT_DIRTY_HW <<
-+		     _PAGE_BIT_COW;
-+		pud = pud_clear_flags(__pud(v), _PAGE_DIRTY_HW);
-+	}
-+
- 	return pud_clear_flags(pud, _PAGE_RW);
- }
- 
- static inline pud_t pud_mkdirty(pud_t pud)
- {
--	return pud_set_flags(pud, _PAGE_DIRTY_HW | _PAGE_SOFT_DIRTY);
-+	pudval_t dirty = _PAGE_DIRTY_HW;
-+
-+	/* Avoid creating (HW)Dirty=1,Write=0 PUDs */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK) && !(pud_flags(pud) & _PAGE_RW))
-+		dirty = _PAGE_COW;
-+
-+	return pud_set_flags(pud, dirty | _PAGE_SOFT_DIRTY);
- }
- 
- static inline pud_t pud_mkdevmap(pud_t pud)
-@@ -519,6 +606,13 @@ static inline pud_t pud_mkyoung(pud_t pud)
- 
- static inline pud_t pud_mkwrite(pud_t pud)
- {
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		if (pud_flags(pud) & _PAGE_COW) {
-+			pud = pud_clear_flags(pud, _PAGE_COW);
-+			pud = pud_set_flags(pud, _PAGE_DIRTY_HW);
-+		}
-+	}
-+
- 	return pud_set_flags(pud, _PAGE_RW);
- }
- 
-@@ -1132,6 +1226,12 @@ extern int pmdp_clear_flush_young(struct vm_area_struct *vma,
- #define pmd_write pmd_write
- static inline int pmd_write(pmd_t pmd)
- {
-+	/*
-+	 * If _PAGE_DIRTY_HW is set, then the PMD must either have
-+	 * _PAGE_RW or be a shadow stack PMD, which is logically writable.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK))
-+		return pmd_flags(pmd) & (_PAGE_RW | _PAGE_DIRTY_HW);
- 	return pmd_flags(pmd) & _PAGE_RW;
- }
- 
-diff --git a/arch/x86/include/asm/pgtable_types.h b/arch/x86/include/asm/pgtable_types.h
-index 5f31f1c407b9..75362df8b226 100644
---- a/arch/x86/include/asm/pgtable_types.h
-+++ b/arch/x86/include/asm/pgtable_types.h
-@@ -23,7 +23,8 @@
- #define _PAGE_BIT_SOFTW2	10	/* " */
- #define _PAGE_BIT_SOFTW3	11	/* " */
- #define _PAGE_BIT_PAT_LARGE	12	/* On 2MB or 1GB pages */
--#define _PAGE_BIT_SOFTW4	58	/* available for programmer */
-+#define _PAGE_BIT_SOFTW4	57	/* available for programmer */
-+#define _PAGE_BIT_SOFTW5	58	/* available for programmer */
- #define _PAGE_BIT_PKEY_BIT0	59	/* Protection Keys, bit 1/4 */
- #define _PAGE_BIT_PKEY_BIT1	60	/* Protection Keys, bit 2/4 */
- #define _PAGE_BIT_PKEY_BIT2	61	/* Protection Keys, bit 3/4 */
-@@ -36,6 +37,16 @@
- #define _PAGE_BIT_SOFT_DIRTY	_PAGE_BIT_SOFTW3 /* software dirty tracking */
- #define _PAGE_BIT_DEVMAP	_PAGE_BIT_SOFTW4
- 
-+/*
-+ * This bit indicates a copy-on-write page, and is different from
-+ * _PAGE_BIT_SOFT_DIRTY, which tracks which pages a task writes to.
-+ */
-+#ifdef CONFIG_X86_64
-+#define _PAGE_BIT_COW		_PAGE_BIT_SOFTW5 /* copy-on-write */
-+#else
-+#define _PAGE_BIT_COW		0
-+#endif
-+
- /* If _PAGE_BIT_PRESENT is clear, we use these: */
- /* - if the user mapped it with PROT_NONE; pte_present gives true */
- #define _PAGE_BIT_PROTNONE	_PAGE_BIT_GLOBAL
-@@ -117,6 +128,34 @@
- #define _PAGE_DEVMAP	(_AT(pteval_t, 0))
- #endif
- 
-+/*
-+ * _PAGE_COW is used to separate R/O and copy-on-write PTEs created by
-+ * software from the shadow stack PTE setting required by the hardware:
-+ * (a) A modified, copy-on-write (COW) page: (R/O + _PAGE_COW)
-+ * (b) A R/O page that has been COW'ed: (R/O +_PAGE_COW)
-+ *     The user page is in a R/O VMA, and get_user_pages() needs a
-+ *     writable copy.  The page fault handler creates a copy of the page
-+ *     and sets the new copy's PTE as R/O and _PAGE_COW.
-+ * (c) A shadow stack PTE: (R/O + _PAGE_DIRTY_HW)
-+ * (d) A shared (copy-on-access) shadow stack PTE: (R/O + _PAGE_COW)
-+ *     When a shadow stack page is being shared among processes (this
-+ *     happens at fork()), its PTE is cleared of _PAGE_DIRTY_HW, so the
-+ *     next shadow stack access causes a fault, and the page is duplicated
-+ *     and _PAGE_DIRTY_HW is set again.  This is the COW equivalent for
-+ *     shadow stack pages, even though it's copy-on-access rather than
-+ *     copy-on-write.
-+ * (e) A page where the processor observed a Write=1 PTE, started a write,
-+ *     set Dirty=1, but then observed a Write=0 PTE.  That's possible
-+ *     today, but will not happen on processors that support shadow stack.
-+ */
-+#ifdef CONFIG_X86_SHADOW_STACK_USER
-+#define _PAGE_COW	(_AT(pteval_t, 1) << _PAGE_BIT_COW)
-+#else
-+#define _PAGE_COW	(_AT(pteval_t, 0))
-+#endif
-+
-+#define _PAGE_DIRTY_BITS (_PAGE_DIRTY_HW | _PAGE_COW)
-+
- #define _PAGE_PROTNONE	(_AT(pteval_t, 1) << _PAGE_BIT_PROTNONE)
- 
- /*
--- 
-2.21.0
 
+Thanks,
+
+Jacob
