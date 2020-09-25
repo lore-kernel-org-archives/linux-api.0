@@ -7,33 +7,33 @@ X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6AC29C4363D
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:59:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 888A2C47420
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 17:12:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2EA0321D42
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 16:59:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5374B235F9
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 17:12:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727521AbgIYQ7k (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 25 Sep 2020 12:59:40 -0400
-Received: from mga04.intel.com ([192.55.52.120]:28344 "EHLO mga04.intel.com"
+        id S1729110AbgIYRMn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 25 Sep 2020 13:12:43 -0400
+Received: from mga04.intel.com ([192.55.52.120]:29630 "EHLO mga04.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727402AbgIYQ7j (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 25 Sep 2020 12:59:39 -0400
-IronPort-SDR: yBZ1rEq6ydFN2eqs8T655QXMZkOOZ6j84HMrbp7KGK5MmPWBz9KqKpsmU3LssCY/fX51aKyb1z
- kSNQ5ku8LvbQ==
-X-IronPort-AV: E=McAfee;i="6000,8403,9755"; a="158942259"
+        id S1727874AbgIYRMn (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 25 Sep 2020 13:12:43 -0400
+IronPort-SDR: 3TGoqDEj0bB4Rze2/OUfoQwqRxXZclznBrj6ghRjA3BaBNUocFf0nJbjNSu4Xc6krmMnqD6ekE
+ fqNdkvDAzfNQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9755"; a="158942356"
 X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
-   d="scan'208";a="158942259"
+   d="scan'208";a="158942356"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:16 -0700
-IronPort-SDR: oAhpvDyQfu3Ob5yS4gn2h7BMsyP/9git+o+mrcL/hLp/0ifyHu9SYnAqQcn3kvvPkdCuEY220g
- +32rvFq05W+Q==
+  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:31 -0700
+IronPort-SDR: 1Hb9j2LyV9QwAOiAqYpd5eKTmtyJUtzDG4aN/F1NWOJroAq0GcWjvgA6Xm99qHKtgu0W8dCXc/
+ a4ykrY2aCpTw==
 X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
-   d="scan'208";a="487499144"
+   d="scan'208";a="487499277"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:15 -0700
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:31 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -62,9 +62,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v13 04/26] x86/cet: Add control-protection fault handler
-Date:   Fri, 25 Sep 2020 07:56:27 -0700
-Message-Id: <20200925145649.5438-5-yu-cheng.yu@intel.com>
+Subject: [PATCH v13 26/26] mm: Introduce PROT_SHSTK for shadow stack
+Date:   Fri, 25 Sep 2020 07:56:49 -0700
+Message-Id: <20200925145649.5438-27-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20200925145649.5438-1-yu-cheng.yu@intel.com>
 References: <20200925145649.5438-1-yu-cheng.yu@intel.com>
@@ -74,162 +74,245 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-A control-protection fault is triggered when a control-flow transfer
-attempt violates Shadow Stack or Indirect Branch Tracking constraints.
-For example, the return address for a RET instruction differs from the copy
-on the Shadow Stack; or an indirect JMP instruction, without the NOTRACK
-prefix, arrives at a non-ENDBR opcode.
+There are three possible options to create a shadow stack allocation API:
+an arch_prctl, a new syscall, or adding PROT_SHSTK to mmap()/mprotect().
+Each has its advantages and compromises.
 
-The control-protection fault handler works in a similar way as the general
-protection fault handler.  It provides the si_code SEGV_CPERR to the signal
-handler.
+An arch_prctl() is the least intrusive.  However, the existing x86
+arch_prctl() takes only two parameters.  Multiple parameters must be
+passed in a memory buffer.  There is a proposal to pass more parameters in
+registers [1], but no active discussion on that.
+
+A new syscall minimizes compatibility issues and offers an extensible frame
+work to other architectures, but this will likely result in some overlap of
+mmap()/mprotect().
+
+The introduction of PROT_SHSTK to mmap()/mprotect() takes advantage of
+existing APIs.  The x86-specific PROT_SHSTK is translated to VM_SHSTK and
+a shadow stack mapping is created without reinventing the wheel.  There are
+potential pitfalls though.  The most obvious one would be using this as a
+bypass to shadow stack protection.  However, the attacker would have to get
+to the syscall first.
+
+Since arch_calc_vm_prot_bits() is modified, I have moved arch_vm_get_page
+_prot() and arch_calc_vm_prot_bits() to x86/include/asm/mman.h.
+This will be more consistent with other architectures.
+
+[1] https://lore.kernel.org/lkml/20200828121624.108243-1-hjl.tools@gmail.com/
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
 v13:
-- Change X86_INTEL_* to X86_*.
+- Add VM_SHSTK to VM_ARCH_CLEAR.
 
-v10:
-- Change CONFIG_X86_64 to CONFIG_X86_INTEL_CET.
+ arch/x86/include/asm/mman.h      | 81 ++++++++++++++++++++++++++++++++
+ arch/x86/include/uapi/asm/mman.h | 28 ++---------
+ include/linux/mm.h               |  1 +
+ include/linux/mman.h             |  8 ++++
+ mm/mmap.c                        |  8 +++-
+ mm/mprotect.c                    |  4 ++
+ 6 files changed, 105 insertions(+), 25 deletions(-)
+ create mode 100644 arch/x86/include/asm/mman.h
 
-v9:
-- Add Shadow Stack pointer to the fault printout.
-
- arch/x86/include/asm/idtentry.h    |  4 ++
- arch/x86/kernel/idt.c              |  4 ++
- arch/x86/kernel/signal_compat.c    |  2 +-
- arch/x86/kernel/traps.c            | 59 ++++++++++++++++++++++++++++++
- include/uapi/asm-generic/siginfo.h |  3 +-
- 5 files changed, 70 insertions(+), 2 deletions(-)
-
-diff --git a/arch/x86/include/asm/idtentry.h b/arch/x86/include/asm/idtentry.h
-index a43366191212..6293d94b9b66 100644
---- a/arch/x86/include/asm/idtentry.h
-+++ b/arch/x86/include/asm/idtentry.h
-@@ -532,6 +532,10 @@ DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_SS,	exc_stack_segment);
- DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_GP,	exc_general_protection);
- DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_AC,	exc_alignment_check);
- 
-+#ifdef CONFIG_X86_CET
-+DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_CP, exc_control_protection);
-+#endif
+diff --git a/arch/x86/include/asm/mman.h b/arch/x86/include/asm/mman.h
+new file mode 100644
+index 000000000000..5cd6040d5c10
+--- /dev/null
++++ b/arch/x86/include/asm/mman.h
+@@ -0,0 +1,81 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _ASM_X86_MMAN_H
++#define _ASM_X86_MMAN_H
 +
- /* Raw exception entries which need extra work */
- DECLARE_IDTENTRY_RAW(X86_TRAP_UD,		exc_invalid_op);
- DECLARE_IDTENTRY_RAW(X86_TRAP_BP,		exc_int3);
-diff --git a/arch/x86/kernel/idt.c b/arch/x86/kernel/idt.c
-index 7ecf9babf0cb..34f2a7383d5d 100644
---- a/arch/x86/kernel/idt.c
-+++ b/arch/x86/kernel/idt.c
-@@ -112,6 +112,10 @@ static const __initconst struct idt_data def_idts[] = {
- #elif defined(CONFIG_X86_32)
- 	SYSG(IA32_SYSCALL_VECTOR,	entry_INT80_32),
- #endif
++#include <asm/cpufeature.h>
++#include <linux/mm.h>
++#include <uapi/asm/mman.h>
 +
-+#ifdef CONFIG_X86_CET
-+	INTG(X86_TRAP_CP,		asm_exc_control_protection),
-+#endif
- };
- 
- /*
-diff --git a/arch/x86/kernel/signal_compat.c b/arch/x86/kernel/signal_compat.c
-index 9ccbf0576cd0..c572a3de1037 100644
---- a/arch/x86/kernel/signal_compat.c
-+++ b/arch/x86/kernel/signal_compat.c
-@@ -27,7 +27,7 @@ static inline void signal_compat_build_tests(void)
- 	 */
- 	BUILD_BUG_ON(NSIGILL  != 11);
- 	BUILD_BUG_ON(NSIGFPE  != 15);
--	BUILD_BUG_ON(NSIGSEGV != 7);
-+	BUILD_BUG_ON(NSIGSEGV != 8);
- 	BUILD_BUG_ON(NSIGBUS  != 5);
- 	BUILD_BUG_ON(NSIGTRAP != 5);
- 	BUILD_BUG_ON(NSIGCHLD != 6);
-diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
-index 81a2fb711091..97a049258e33 100644
---- a/arch/x86/kernel/traps.c
-+++ b/arch/x86/kernel/traps.c
-@@ -597,6 +597,65 @@ DEFINE_IDTENTRY_ERRORCODE(exc_general_protection)
- 	cond_local_irq_disable(regs);
- }
- 
-+#ifdef CONFIG_X86_CET
-+static const char * const control_protection_err[] = {
-+	"unknown",
-+	"near-ret",
-+	"far-ret/iret",
-+	"endbranch",
-+	"rstorssp",
-+	"setssbsy",
-+};
-+
++#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
 +/*
-+ * When a control protection exception occurs, send a signal
-+ * to the responsible application.  Currently, control
-+ * protection is only enabled for the user mode.  This
-+ * exception should not come from the kernel mode.
++ * Take the 4 protection key bits out of the vma->vm_flags
++ * value and turn them in to the bits that we can put in
++ * to a pte.
++ *
++ * Only override these if Protection Keys are available
++ * (which is only on 64-bit).
 + */
-+DEFINE_IDTENTRY_ERRORCODE(exc_control_protection)
++#define arch_vm_get_page_prot(vm_flags)	__pgprot(	\
++		((vm_flags) & VM_PKEY_BIT0 ? _PAGE_PKEY_BIT0 : 0) |	\
++		((vm_flags) & VM_PKEY_BIT1 ? _PAGE_PKEY_BIT1 : 0) |	\
++		((vm_flags) & VM_PKEY_BIT2 ? _PAGE_PKEY_BIT2 : 0) |	\
++		((vm_flags) & VM_PKEY_BIT3 ? _PAGE_PKEY_BIT3 : 0))
++
++#define pkey_vm_prot_bits(prot, key) (			\
++		((key) & 0x1 ? VM_PKEY_BIT0 : 0) |      \
++		((key) & 0x2 ? VM_PKEY_BIT1 : 0) |      \
++		((key) & 0x4 ? VM_PKEY_BIT2 : 0) |      \
++		((key) & 0x8 ? VM_PKEY_BIT3 : 0))
++#else
++#define pkey_vm_prot_bits(prot, key) (0)
++#endif
++
++static inline unsigned long arch_calc_vm_prot_bits(unsigned long prot,
++	unsigned long pkey)
 +{
-+	struct task_struct *tsk;
++	unsigned long vm_prot_bits = pkey_vm_prot_bits(prot, pkey);
 +
-+	if (notify_die(DIE_TRAP, "control protection fault", regs,
-+		       error_code, X86_TRAP_CP, SIGSEGV) == NOTIFY_STOP)
-+		return;
-+	cond_local_irq_enable(regs);
++	if (!(prot & PROT_WRITE) && (prot & PROT_SHSTK))
++		vm_prot_bits |= VM_SHSTK;
 +
-+	if (!user_mode(regs))
-+		die("kernel control protection fault", regs, error_code);
++	return vm_prot_bits;
++}
++#define arch_calc_vm_prot_bits(prot, pkey) arch_calc_vm_prot_bits(prot, pkey)
 +
-+	if (!static_cpu_has(X86_FEATURE_SHSTK) &&
-+	    !static_cpu_has(X86_FEATURE_IBT))
-+		WARN_ONCE(1, "CET is disabled but got control protection fault\n");
++static inline bool arch_validate_prot(unsigned long prot, unsigned long addr)
++{
++	unsigned long supported = PROT_READ | PROT_WRITE | PROT_EXEC | PROT_SEM;
 +
-+	tsk = current;
-+	tsk->thread.error_code = error_code;
-+	tsk->thread.trap_nr = X86_TRAP_CP;
++	if (IS_ENABLED(CONFIG_X86_SHADOW_STACK_USER) &&
++	    static_cpu_has(X86_FEATURE_SHSTK) && (prot & PROT_SHSTK)) {
 +
-+	if (show_unhandled_signals && unhandled_signal(tsk, SIGSEGV) &&
-+	    printk_ratelimit()) {
-+		unsigned int max_err;
-+		unsigned long ssp;
++		supported |= PROT_SHSTK;
 +
-+		max_err = ARRAY_SIZE(control_protection_err) - 1;
-+		if ((error_code < 0) || (error_code > max_err))
-+			error_code = 0;
-+		rdmsrl(MSR_IA32_PL3_SSP, ssp);
-+		pr_info("%s[%d] control protection ip:%lx sp:%lx ssp:%lx error:%lx(%s)",
-+			tsk->comm, task_pid_nr(tsk),
-+			regs->ip, regs->sp, ssp, error_code,
-+			control_protection_err[error_code]);
-+		print_vma_addr(KERN_CONT " in ", regs->ip);
-+		pr_cont("\n");
++		/*
++		 * A shadow stack mapping is indirectly writable by only
++		 * the CALL and WRUSS instructions, but not other write
++		 * instructions).  PROT_SHSTK and PROT_WRITE are mutually
++		 * exclusive.
++		 */
++		supported &= ~PROT_WRITE;
 +	}
 +
-+	force_sig_fault(SIGSEGV, SEGV_CPERR,
-+			(void __user *)uprobe_get_trap_addr(regs));
-+	cond_local_irq_disable(regs);
++	return (prot & ~supported) == 0;
 +}
++#define arch_validate_prot arch_validate_prot
++
++static inline bool arch_vma_can_mprot(struct vm_area_struct *vma,
++	unsigned long prot)
++{
++	bool can_mprot;
++
++	/*
++	 * Function call stack should not be backed by a file or shared.
++	 */
++	can_mprot = !(prot & PROT_SHSTK) ||
++		    !(vma->vm_file || (vma->vm_flags & VM_SHARED));
++	return can_mprot;
++}
++#define arch_vma_can_mprot arch_vma_can_mprot
++
++#endif /* _ASM_X86_MMAN_H */
+diff --git a/arch/x86/include/uapi/asm/mman.h b/arch/x86/include/uapi/asm/mman.h
+index d4a8d0424bfb..39bb7db344a6 100644
+--- a/arch/x86/include/uapi/asm/mman.h
++++ b/arch/x86/include/uapi/asm/mman.h
+@@ -1,31 +1,11 @@
+ /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+-#ifndef _ASM_X86_MMAN_H
+-#define _ASM_X86_MMAN_H
++#ifndef _UAPI_ASM_X86_MMAN_H
++#define _UAPI_ASM_X86_MMAN_H
+ 
+ #define MAP_32BIT	0x40		/* only give out 32bit addresses */
+ 
+-#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
+-/*
+- * Take the 4 protection key bits out of the vma->vm_flags
+- * value and turn them in to the bits that we can put in
+- * to a pte.
+- *
+- * Only override these if Protection Keys are available
+- * (which is only on 64-bit).
+- */
+-#define arch_vm_get_page_prot(vm_flags)	__pgprot(	\
+-		((vm_flags) & VM_PKEY_BIT0 ? _PAGE_PKEY_BIT0 : 0) |	\
+-		((vm_flags) & VM_PKEY_BIT1 ? _PAGE_PKEY_BIT1 : 0) |	\
+-		((vm_flags) & VM_PKEY_BIT2 ? _PAGE_PKEY_BIT2 : 0) |	\
+-		((vm_flags) & VM_PKEY_BIT3 ? _PAGE_PKEY_BIT3 : 0))
+-
+-#define arch_calc_vm_prot_bits(prot, key) (		\
+-		((key) & 0x1 ? VM_PKEY_BIT0 : 0) |      \
+-		((key) & 0x2 ? VM_PKEY_BIT1 : 0) |      \
+-		((key) & 0x4 ? VM_PKEY_BIT2 : 0) |      \
+-		((key) & 0x8 ? VM_PKEY_BIT3 : 0))
+-#endif
++#define PROT_SHSTK	0x10		/* shadow stack pages */
+ 
+ #include <asm-generic/mman.h>
+ 
+-#endif /* _ASM_X86_MMAN_H */
++#endif /* _UAPI_ASM_X86_MMAN_H */
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 9b6a0f22cd89..da4f7d3a14b7 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -334,6 +334,7 @@ extern unsigned int kobjsize(const void *objp);
+ 
+ #if defined(CONFIG_X86)
+ # define VM_PAT		VM_ARCH_1	/* PAT reserves whole VMA at once (x86) */
++# define VM_ARCH_CLEAR	VM_SHSTK
+ #elif defined(CONFIG_PPC)
+ # define VM_SAO		VM_ARCH_1	/* Strong Access Ordering (powerpc) */
+ #elif defined(CONFIG_PARISC)
+diff --git a/include/linux/mman.h b/include/linux/mman.h
+index 6f34c33075f9..4d776adb0fdf 100644
+--- a/include/linux/mman.h
++++ b/include/linux/mman.h
+@@ -103,6 +103,14 @@ static inline bool arch_validate_prot(unsigned long prot, unsigned long addr)
+ #define arch_validate_prot arch_validate_prot
+ #endif
+ 
++#ifndef arch_vma_can_mprot
++/*
++ * Allow architectures to check if the vma can support the new
++ * protection.
++ */
++#define arch_vma_can_mprot(vma, prot) true
 +#endif
 +
- static bool do_int3(struct pt_regs *regs)
- {
- 	int res;
-diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
-index cb3d6c267181..91e10cbe3bb0 100644
---- a/include/uapi/asm-generic/siginfo.h
-+++ b/include/uapi/asm-generic/siginfo.h
-@@ -229,7 +229,8 @@ typedef struct siginfo {
- #define SEGV_ACCADI	5	/* ADI not enabled for mapped object */
- #define SEGV_ADIDERR	6	/* Disrupting MCD error */
- #define SEGV_ADIPERR	7	/* Precise MCD exception */
--#define NSIGSEGV	7
-+#define SEGV_CPERR	8	/* Control protection fault */
-+#define NSIGSEGV	8
- 
  /*
-  * SIGBUS si_codes
+  * Optimisation macro.  It is equivalent to:
+  *      (x & bit1) ? bit2 : 0
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 81d4a00092da..4c403dfccff0 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1445,6 +1445,12 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 		struct inode *inode = file_inode(file);
+ 		unsigned long flags_mask;
+ 
++		/*
++		 * Call stack cannot be backed by a file.
++		 */
++		if (vm_flags & VM_SHSTK)
++			return -EINVAL;
++
+ 		if (!file_mmap_ok(file, inode, pgoff, len))
+ 			return -EOVERFLOW;
+ 
+@@ -1509,7 +1515,7 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 	} else {
+ 		switch (flags & MAP_TYPE) {
+ 		case MAP_SHARED:
+-			if (vm_flags & (VM_GROWSDOWN|VM_GROWSUP))
++			if (vm_flags & (VM_GROWSDOWN|VM_GROWSUP|VM_SHSTK))
+ 				return -EINVAL;
+ 			/*
+ 			 * Ignore pgoff.
+diff --git a/mm/mprotect.c b/mm/mprotect.c
+index a8edbcb3af99..cf73b59a36da 100644
+--- a/mm/mprotect.c
++++ b/mm/mprotect.c
+@@ -553,6 +553,10 @@ static int do_mprotect_pkey(unsigned long start, size_t len,
+ 	error = -ENOMEM;
+ 	if (!vma)
+ 		goto out;
++	if (!arch_vma_can_mprot(vma, prot)) {
++		error = -EINVAL;
++		goto out;
++	}
+ 	prev = vma->vm_prev;
+ 	if (unlikely(grows & PROT_GROWSDOWN)) {
+ 		if (vma->vm_start >= end)
 -- 
 2.21.0
 
