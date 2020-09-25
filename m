@@ -2,143 +2,145 @@ Return-Path: <SRS0=H7yB=DC=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E4AA9C4727D
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 15:39:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 038EBC4363D
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 15:46:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9FACB20878
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 15:39:12 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="G3g2Wkor"
+	by mail.kernel.org (Postfix) with ESMTP id BF9DE21D7A
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 15:46:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728693AbgIYPjM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 25 Sep 2020 11:39:12 -0400
-Received: from mx2.suse.de ([195.135.220.15]:57154 "EHLO mx2.suse.de"
+        id S1729036AbgIYPqe (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 25 Sep 2020 11:46:34 -0400
+Received: from mga04.intel.com ([192.55.52.120]:21660 "EHLO mga04.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728678AbgIYPjM (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 25 Sep 2020 11:39:12 -0400
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-        t=1601048349;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=jDnBhjhUv7YmI2bb5gm13xCZ5HPNcb3nq4eD9eHGM6I=;
-        b=G3g2WkorQDLCkKfxkqvc66L0olkKD9cuZWPclS07u6X4tJRnpoRrAWzK9W9pArxeL9tyxh
-        RNSC1iTHPwqiaYZOUBBty1wDxcG9kPltD5gU2SP6owKvAssYCWxufwyz3e+0fcf9Gd9Z0i
-        SapfbUbiajqlZFrXyqSHVOHhxwCwLnU=
-Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 90176ACA3;
-        Fri, 25 Sep 2020 15:39:09 +0000 (UTC)
-Date:   Fri, 25 Sep 2020 17:39:08 +0200
-From:   Michal Hocko <mhocko@suse.com>
-To:     David Hildenbrand <david@redhat.com>
-Cc:     Gerald Schaefer <gerald.schaefer@linux.ibm.com>,
-        "akpm@linux-foundation.org" <akpm@linux-foundation.org>,
-        Greg KH <gregkh@linuxfoundation.org>,
-        Jan =?iso-8859-1?Q?H=F6ppner?= <hoeppner@linux.ibm.com>,
-        Heiko Carstens <hca@linux.ibm.com>,
-        "linux-mm@kvack.org" <linux-mm@kvack.org>,
-        linux-api@vger.kernel.org,
+        id S1726990AbgIYPqe (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 25 Sep 2020 11:46:34 -0400
+IronPort-SDR: rTNabEBnyzms64aZn+aZDVstr2WNnbu+QoKqPkCUSYIEPIjfrgsPuC4yLuZZ2+P5ZZG6r5h7Yw
+ XrhdS7Us0c7A==
+X-IronPort-AV: E=McAfee;i="6000,8403,9755"; a="158942249"
+X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
+   d="scan'208";a="158942249"
+X-Amp-Result: SKIPPED(no attachment in message)
+X-Amp-File-Uploaded: False
+Received: from orsmga005.jf.intel.com ([10.7.209.41])
+  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:15 -0700
+IronPort-SDR: AHkmUdFYoTL2TwSbkYScum328qgCyU2qmzdxvrHiGXotpfNZibXm4/eEfSeagHO84o3Cd+Fqzf
+ Lq1hNNkbd08Q==
+X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
+   d="scan'208";a="487499136"
+Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:57:14 -0700
+From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
+To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-doc@vger.kernel.org, linux-mm@kvack.org,
+        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andy Lutomirski <luto@kernel.org>,
+        Balbir Singh <bsingharora@gmail.com>,
+        Borislav Petkov <bp@alien8.de>,
+        Cyrill Gorcunov <gorcunov@gmail.com>,
         Dave Hansen <dave.hansen@linux.intel.com>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-Subject: Re: Ways to deprecate /sys/devices/system/memory/memoryX/phys_device
- ?
-Message-ID: <20200925153908.GH3389@dhcp22.suse.cz>
-References: <21852ccb-bd06-9281-7c8e-485ec02f2883@redhat.com>
- <20200922155611.379373f7@thinkpad>
- <a7d02345-2195-3092-a368-ca3209e2c93e@redhat.com>
+        Eugene Syromiatnikov <esyr@redhat.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Nadav Amit <nadav.amit@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
+        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Weijiang Yang <weijiang.yang@intel.com>,
+        Pengfei Xu <pengfei.xu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>, Borislav Petkov <bp@suse.de>
+Subject: [PATCH v13 02/26] x86/cpufeatures: Add CET CPU feature flags for Control-flow Enforcement Technology (CET)
+Date:   Fri, 25 Sep 2020 07:56:25 -0700
+Message-Id: <20200925145649.5438-3-yu-cheng.yu@intel.com>
+X-Mailer: git-send-email 2.21.0
+In-Reply-To: <20200925145649.5438-1-yu-cheng.yu@intel.com>
+References: <20200925145649.5438-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <a7d02345-2195-3092-a368-ca3209e2c93e@redhat.com>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri 25-09-20 16:49:28, David Hildenbrand wrote:
-> >> There were once RFC patches to make use of it in ACPI, but it could be
-> >> solved using different interfaces [1].
-> >>
-> >>
-> >> While I'd love to rip it out completely, I think it would break old
-> >> lsmem/chmem completely - and I assume that's not acceptable. I was
-> >> wondering what would be considered safe to do now/in the future:
-> >>
-> >> 1. Make it always return 0 (just as if "sclp.rzm" would be set to 0 on
-> >> s390x). This will make old lsmem/chmem behave differently after
-> >> switching to a new kernel, like if sclp.rzm would not be set by HW -
-> >> AFAIU, it will assume all memory is in a single memory increment. Do we
-> >> care?
-> > 
-> > No, at least not until that kernel change would be backported to some
-> > old distribution level where we still use lsmem/chmem from s390-tools.
-> > Given that this is just some clean-up w/o any functional benefit, and
-> > hopefully w/o any negative impact, I think we can safely assume that no
-> > distributor will do that "just for fun".
-> > 
-> > Even if there would be good reasons for backports, then I guess we also
-> > have good reasons for backporting / switching to the util-linux version
-> > of lsmem / chmem for such distribution levels. Alternatively, adjust the
-> > s390-tools lsmem / chmem there.
-> > 
-> > But I would rather "rip it out completely" than just return 0. You'd
-> > need some lsmem / chmem changes anyway, at least in case this would
-> > ever be backported.
-> 
-> Thanks for your input Gerald.
-> 
-> So unless people would be running shiny new kernels on older
-> distributions it shouldn't be a problem (and I don't think we care too
-> much about something like that). I don't expect something like that to
-> get backported - there is absolutely no reason to do so IMHO.
+Add CPU feature flags for Control-flow Enforcement Technology (CET).
 
-Ohh, there are many people running current Linus tree on an older
-distribution. Including me.
+CPUID.(EAX=7,ECX=0):ECX[bit 7] Shadow stack
+CPUID.(EAX=7,ECX=0):EDX[bit 20] Indirect Branch Tracking
 
-> >> 2. Restrict it to s390x only. It always returned 0 on other
-> >> architectures, I was not able to find any user.
-> >>
-> >> I think 2 should be safe to do (never used on other archs). I do wonder
-> >> what the feelings are about 1.
-> > 
-> > Please don't add any s390-specific workarounds here, that does not
-> > really sound like a clean-up, rather the opposite.
-> 
-> People seem to have different opinions here. I'm happy as long as we can
-> get rid of it (either now, or in the future with a new model).
-> 
-> > 
-> > That being said, I do not really see the benefit of this change at
-> > all. As Michal mentioned, there really should be some more fundamental
-> > change. And from the rest of this thread, it also seems that phys_device
-> > usage might not be the biggest issue here.
-> > 
-> 
-> As I already expressed, I am more of a friend of small, incremental
-> changes than having a single big world switch where everything will be
-> shiny and perfect.
-> 
-> (Deprecating it now - in any way - stops any new users from appearing -
-> both, in the kernel and from user space - eventually making the big
-> world switch later a little easier because there is one thing less that
-> vanished)
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+---
+ arch/x86/include/asm/cpufeatures.h       | 2 ++
+ arch/x86/kernel/cpu/cpuid-deps.c         | 2 ++
+ tools/arch/x86/include/asm/cpufeatures.h | 2 ++
+ 3 files changed, 6 insertions(+)
 
-Realistically people do not care about deprecation all that much. They
-simply use whatever they can find or somebody will show them. Really,
-deprecation has never really worked. The only thing that worked was to
-remove the functionality and then wait for somebody to complain and
-revert or somehow allow the functionality without necessity to alter the
-userspace.
-
-As much as I would like to remove as much crud as possible I strongly
-suspect that the existing hotplug interface is just a lost case and it
-doesn't make for the best used time to put a lip stick on a pig. Even if
-we remove this particular interface we are not going to get rid of a lot
-of code or we won't gain any more sensible semantic, right?
+diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+index 2901d5df4366..c794e18e8a14 100644
+--- a/arch/x86/include/asm/cpufeatures.h
++++ b/arch/x86/include/asm/cpufeatures.h
+@@ -341,6 +341,7 @@
+ #define X86_FEATURE_OSPKE		(16*32+ 4) /* OS Protection Keys Enable */
+ #define X86_FEATURE_WAITPKG		(16*32+ 5) /* UMONITOR/UMWAIT/TPAUSE Instructions */
+ #define X86_FEATURE_AVX512_VBMI2	(16*32+ 6) /* Additional AVX512 Vector Bit Manipulation Instructions */
++#define X86_FEATURE_SHSTK		(16*32+ 7) /* Shadow Stack */
+ #define X86_FEATURE_GFNI		(16*32+ 8) /* Galois Field New Instructions */
+ #define X86_FEATURE_VAES		(16*32+ 9) /* Vector AES */
+ #define X86_FEATURE_VPCLMULQDQ		(16*32+10) /* Carry-Less Multiplication Double Quadword */
+@@ -370,6 +371,7 @@
+ #define X86_FEATURE_SERIALIZE		(18*32+14) /* SERIALIZE instruction */
+ #define X86_FEATURE_PCONFIG		(18*32+18) /* Intel PCONFIG */
+ #define X86_FEATURE_ARCH_LBR		(18*32+19) /* Intel ARCH LBR */
++#define X86_FEATURE_IBT			(18*32+20) /* Indirect Branch Tracking */
+ #define X86_FEATURE_SPEC_CTRL		(18*32+26) /* "" Speculation Control (IBRS + IBPB) */
+ #define X86_FEATURE_INTEL_STIBP		(18*32+27) /* "" Single Thread Indirect Branch Predictors */
+ #define X86_FEATURE_FLUSH_L1D		(18*32+28) /* Flush L1D cache */
+diff --git a/arch/x86/kernel/cpu/cpuid-deps.c b/arch/x86/kernel/cpu/cpuid-deps.c
+index 3cbe24ca80ab..fec83cc74b9e 100644
+--- a/arch/x86/kernel/cpu/cpuid-deps.c
++++ b/arch/x86/kernel/cpu/cpuid-deps.c
+@@ -69,6 +69,8 @@ static const struct cpuid_dep cpuid_deps[] = {
+ 	{ X86_FEATURE_CQM_MBM_TOTAL,		X86_FEATURE_CQM_LLC   },
+ 	{ X86_FEATURE_CQM_MBM_LOCAL,		X86_FEATURE_CQM_LLC   },
+ 	{ X86_FEATURE_AVX512_BF16,		X86_FEATURE_AVX512VL  },
++	{ X86_FEATURE_SHSTK,			X86_FEATURE_XSAVES    },
++	{ X86_FEATURE_IBT,			X86_FEATURE_XSAVES    },
+ 	{}
+ };
+ 
+diff --git a/tools/arch/x86/include/asm/cpufeatures.h b/tools/arch/x86/include/asm/cpufeatures.h
+index 2901d5df4366..c794e18e8a14 100644
+--- a/tools/arch/x86/include/asm/cpufeatures.h
++++ b/tools/arch/x86/include/asm/cpufeatures.h
+@@ -341,6 +341,7 @@
+ #define X86_FEATURE_OSPKE		(16*32+ 4) /* OS Protection Keys Enable */
+ #define X86_FEATURE_WAITPKG		(16*32+ 5) /* UMONITOR/UMWAIT/TPAUSE Instructions */
+ #define X86_FEATURE_AVX512_VBMI2	(16*32+ 6) /* Additional AVX512 Vector Bit Manipulation Instructions */
++#define X86_FEATURE_SHSTK		(16*32+ 7) /* Shadow Stack */
+ #define X86_FEATURE_GFNI		(16*32+ 8) /* Galois Field New Instructions */
+ #define X86_FEATURE_VAES		(16*32+ 9) /* Vector AES */
+ #define X86_FEATURE_VPCLMULQDQ		(16*32+10) /* Carry-Less Multiplication Double Quadword */
+@@ -370,6 +371,7 @@
+ #define X86_FEATURE_SERIALIZE		(18*32+14) /* SERIALIZE instruction */
+ #define X86_FEATURE_PCONFIG		(18*32+18) /* Intel PCONFIG */
+ #define X86_FEATURE_ARCH_LBR		(18*32+19) /* Intel ARCH LBR */
++#define X86_FEATURE_IBT			(18*32+20) /* Indirect Branch Tracking */
+ #define X86_FEATURE_SPEC_CTRL		(18*32+26) /* "" Speculation Control (IBRS + IBPB) */
+ #define X86_FEATURE_INTEL_STIBP		(18*32+27) /* "" Single Thread Indirect Branch Predictors */
+ #define X86_FEATURE_FLUSH_L1D		(18*32+28) /* Flush L1D cache */
 -- 
-Michal Hocko
-SUSE Labs
+2.21.0
+
