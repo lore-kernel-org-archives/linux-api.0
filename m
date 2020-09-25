@@ -2,38 +2,37 @@ Return-Path: <SRS0=H7yB=DC=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0F17CC47423
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 14:58:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E8230C47423
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 14:58:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BCF932311D
-	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 14:58:36 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B361E221EC
+	for <linux-api@archiver.kernel.org>; Fri, 25 Sep 2020 14:58:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729228AbgIYO6g (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 25 Sep 2020 10:58:36 -0400
+        id S1729174AbgIYO6R (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 25 Sep 2020 10:58:17 -0400
 Received: from mga07.intel.com ([134.134.136.100]:47916 "EHLO mga07.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729165AbgIYO6R (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 25 Sep 2020 10:58:17 -0400
-IronPort-SDR: aon0WTaC9Y32Z3xQc2t7vA1gkmzccV1F86r3xzuXdzrtHRuz+a9fbG+NUunhTQLO8HlNfYO8Le
- Z6f24t+FOGVg==
-X-IronPort-AV: E=McAfee;i="6000,8403,9755"; a="225704499"
+        id S1729114AbgIYO6O (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 25 Sep 2020 10:58:14 -0400
+IronPort-SDR: G4GEr9bvc6t349AnG1us96uc09AB6Ix7j7ZXzj8WH6QyvIjSFsf8Do1LMZYGZMpdpBrWnPjDjo
+ Tx1+Wm/bbjUw==
+X-IronPort-AV: E=McAfee;i="6000,8403,9755"; a="225704474"
 X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
-   d="scan'208";a="225704499"
+   d="scan'208";a="225704474"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from fmsmga005.fm.intel.com ([10.253.24.32])
-  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:58:15 -0700
-IronPort-SDR: mk4f5HgZi9QgZiPRFPoL0+ZOP49MveK1M7h2fTdfm5ELo0AwQdsVLEWDy06xhC/j8QvOhtdJMe
- 58vuIGKuUIlA==
+  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:58:13 -0700
+IronPort-SDR: URjgH0tF0D7TmKiW7s0Aj70ANXXmQDg/X2UeRBd2M/oHM/QpX6i8r0ifdPafqs1Tv4Binh7PPH
+ jxdvhJJ53usw==
 X-IronPort-AV: E=Sophos;i="5.77,302,1596524400"; 
-   d="scan'208";a="512916985"
+   d="scan'208";a="512916953"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:58:15 -0700
+  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Sep 2020 07:58:13 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -62,127 +61,68 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v13 8/8] x86/vsyscall/64: Fixup Shadow Stack and Indirect Branch Tracking for vsyscall emulation
-Date:   Fri, 25 Sep 2020 07:58:04 -0700
-Message-Id: <20200925145804.5821-9-yu-cheng.yu@intel.com>
+Subject: [PATCH v13 0/8] Control-flow Enforcement: Indirect Branch Tracking
+Date:   Fri, 25 Sep 2020 07:57:56 -0700
+Message-Id: <20200925145804.5821-1-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20200925145804.5821-1-yu-cheng.yu@intel.com>
-References: <20200925145804.5821-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Vsyscall entry points are effectively branch targets.  Mark them with
-ENDBR64 opcodes.  When emulating the RET instruction, unwind shadow stack
-and reset IBT state machine.
+Control-flow Enforcement (CET) is a new Intel processor feature that blocks
+return/jump-oriented programming attacks.  Details are in "Intel 64 and
+IA-32 Architectures Software Developer's Manual" [1].
 
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
----
-v13:
-- Check shadow stack address is canonical.
-- Change from writing to MSRs to writing to CET xstate.
+This is the second part of CET and enables Indirect Branch Tracking (IBT).
+It is built on top of the shadow stack series.
 
- arch/x86/entry/vsyscall/vsyscall_64.c     | 34 +++++++++++++++++++++++
- arch/x86/entry/vsyscall/vsyscall_emu_64.S |  9 ++++++
- arch/x86/entry/vsyscall/vsyscall_trace.h  |  1 +
- 3 files changed, 44 insertions(+)
+Changes in v13:
+- Drop the patch that disables vsyscall emulation when CET is enabled, and
+  re-introduce an earlier patch that fixes shadow stack and IBT for the
+  emulation code.
+- Remove "INTEL" string from CET Kconfig options, update help text, and
+  change IBT default configuration to N.
 
-diff --git a/arch/x86/entry/vsyscall/vsyscall_64.c b/arch/x86/entry/vsyscall/vsyscall_64.c
-index 44c33103a955..315ee3572664 100644
---- a/arch/x86/entry/vsyscall/vsyscall_64.c
-+++ b/arch/x86/entry/vsyscall/vsyscall_64.c
-@@ -38,6 +38,9 @@
- #include <asm/fixmap.h>
- #include <asm/traps.h>
- #include <asm/paravirt.h>
-+#include <asm/fpu/xstate.h>
-+#include <asm/fpu/types.h>
-+#include <asm/fpu/internal.h>
- 
- #define CREATE_TRACE_POINTS
- #include "vsyscall_trace.h"
-@@ -286,6 +289,37 @@ bool emulate_vsyscall(unsigned long error_code,
- 	/* Emulate a ret instruction. */
- 	regs->ip = caller;
- 	regs->sp += 8;
-+
-+#ifdef CONFIG_X86_CET
-+	if (tsk->thread.cet.shstk_size || tsk->thread.cet.ibt_enabled) {
-+		struct cet_user_state *cet;
-+		struct fpu *fpu;
-+
-+		fpu = &tsk->thread.fpu;
-+		fpregs_lock();
-+
-+		if (!test_thread_flag(TIF_NEED_FPU_LOAD)) {
-+			copy_fpregs_to_fpstate(fpu);
-+			set_thread_flag(TIF_NEED_FPU_LOAD);
-+		}
-+
-+		cet = get_xsave_addr(&fpu->state.xsave, XFEATURE_CET_USER);
-+		if (!cet) {
-+			fpregs_unlock();
-+			goto sigsegv;
-+		}
-+
-+		if (cet->user_ssp && ((cet->user_ssp + 8) < TASK_SIZE_MAX))
-+			cet->user_ssp += 8;
-+
-+		if (cet->user_cet & CET_ENDBR_EN)
-+			cet->user_cet &= ~CET_WAIT_ENDBR;
-+
-+		__fpu_invalidate_fpregs_state(fpu);
-+		fpregs_unlock();
-+	}
-+#endif
-+
- 	return true;
- 
- sigsegv:
-diff --git a/arch/x86/entry/vsyscall/vsyscall_emu_64.S b/arch/x86/entry/vsyscall/vsyscall_emu_64.S
-index 2e203f3a25a7..b2fa92104cdb 100644
---- a/arch/x86/entry/vsyscall/vsyscall_emu_64.S
-+++ b/arch/x86/entry/vsyscall/vsyscall_emu_64.S
-@@ -17,16 +17,25 @@ __PAGE_ALIGNED_DATA
- 	.type __vsyscall_page, @object
- __vsyscall_page:
- 
-+#ifdef CONFIG_X86_BRANCH_TRACKING_USER
-+	endbr64
-+#endif
- 	mov $__NR_gettimeofday, %rax
- 	syscall
- 	ret
- 
- 	.balign 1024, 0xcc
-+#ifdef CONFIG_X86_BRANCH_TRACKING_USER
-+	endbr64
-+#endif
- 	mov $__NR_time, %rax
- 	syscall
- 	ret
- 
- 	.balign 1024, 0xcc
-+#ifdef CONFIG_X86_BRANCH_TRACKING_USER
-+	endbr64
-+#endif
- 	mov $__NR_getcpu, %rax
- 	syscall
- 	ret
-diff --git a/arch/x86/entry/vsyscall/vsyscall_trace.h b/arch/x86/entry/vsyscall/vsyscall_trace.h
-index 3c3f9765a85c..7aa2101ada44 100644
---- a/arch/x86/entry/vsyscall/vsyscall_trace.h
-+++ b/arch/x86/entry/vsyscall/vsyscall_trace.h
-@@ -25,6 +25,7 @@ TRACE_EVENT(emulate_vsyscall,
- #endif
- 
- #undef TRACE_INCLUDE_PATH
-+#undef TRACE_INCLUDE_FILE
- #define TRACE_INCLUDE_PATH ../../arch/x86/entry/vsyscall/
- #define TRACE_INCLUDE_FILE vsyscall_trace
- #include <trace/define_trace.h>
+[1] Intel 64 and IA-32 Architectures Software Developer's Manual:
+
+    https://software.intel.com/en-us/download/intel-64-and-ia-32-
+    architectures-sdm-combined-volumes-1-2a-2b-2c-2d-3a-3b-3c-3d-and-4
+
+[2] Indirect Branch Tracking patches v12.
+
+    https://lkml.kernel.org/r/20200918192312.25978-1-yu-cheng.yu@intel.com/
+
+H.J. Lu (3):
+  x86/cet/ibt: Update arch_prctl functions for Indirect Branch Tracking
+  x86/vdso/32: Add ENDBR32 to __kernel_vsyscall entry point
+  x86/vdso: Insert endbr32/endbr64 to vDSO
+
+Yu-cheng Yu (5):
+  x86/cet/ibt: Add Kconfig option for user-mode Indirect Branch Tracking
+  x86/cet/ibt: User-mode Indirect Branch Tracking support
+  x86/cet/ibt: Handle signals for Indirect Branch Tracking
+  x86/cet/ibt: ELF header parsing for Indirect Branch Tracking
+  x86/vsyscall/64: Fixup Shadow Stack and Indirect Branch Tracking for
+    vsyscall emulation
+
+ arch/x86/Kconfig                              | 21 +++++++
+ arch/x86/entry/vdso/Makefile                  |  4 ++
+ arch/x86/entry/vdso/vdso32/system_call.S      |  3 +
+ arch/x86/entry/vsyscall/vsyscall_64.c         | 34 +++++++++++
+ arch/x86/entry/vsyscall/vsyscall_emu_64.S     |  9 +++
+ arch/x86/entry/vsyscall/vsyscall_trace.h      |  1 +
+ arch/x86/include/asm/cet.h                    |  3 +
+ arch/x86/include/asm/disabled-features.h      |  8 ++-
+ arch/x86/kernel/cet.c                         | 60 ++++++++++++++++++-
+ arch/x86/kernel/cet_prctl.c                   |  8 ++-
+ arch/x86/kernel/cpu/common.c                  | 17 ++++++
+ arch/x86/kernel/fpu/signal.c                  |  8 ++-
+ arch/x86/kernel/process_64.c                  |  8 +++
+ .../arch/x86/include/asm/disabled-features.h  |  8 ++-
+ 14 files changed, 184 insertions(+), 8 deletions(-)
+
 -- 
 2.21.0
 
