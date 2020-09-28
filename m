@@ -6,57 +6,57 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
 	SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1EDFEC2D0A8
-	for <linux-api@archiver.kernel.org>; Mon, 28 Sep 2020 21:36:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 522C9C47425
+	for <linux-api@archiver.kernel.org>; Mon, 28 Sep 2020 21:36:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CDA6F208FE
-	for <linux-api@archiver.kernel.org>; Mon, 28 Sep 2020 21:36:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1B9AF21531
+	for <linux-api@archiver.kernel.org>; Mon, 28 Sep 2020 21:36:55 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="AfhNiBZ3"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Kb9q23sP"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727003AbgI1Vgr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 28 Sep 2020 17:36:47 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49590 "EHLO
+        id S1727026AbgI1Vgt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 28 Sep 2020 17:36:49 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49598 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726959AbgI1Vgq (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 28 Sep 2020 17:36:46 -0400
-Received: from mail-pj1-x1042.google.com (mail-pj1-x1042.google.com [IPv6:2607:f8b0:4864:20::1042])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BD940C0613CE;
-        Mon, 28 Sep 2020 14:36:46 -0700 (PDT)
-Received: by mail-pj1-x1042.google.com with SMTP id md22so2782920pjb.0;
-        Mon, 28 Sep 2020 14:36:46 -0700 (PDT)
+        with ESMTP id S1726959AbgI1Vgs (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 28 Sep 2020 17:36:48 -0400
+Received: from mail-pj1-x1044.google.com (mail-pj1-x1044.google.com [IPv6:2607:f8b0:4864:20::1044])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C67A7C0613CE;
+        Mon, 28 Sep 2020 14:36:48 -0700 (PDT)
+Received: by mail-pj1-x1044.google.com with SMTP id q4so1483308pjh.5;
+        Mon, 28 Sep 2020 14:36:48 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=MYpPSnzf7wFktbr//qjM+H85a7ND2QWunvW4sMQhPic=;
-        b=AfhNiBZ3y4VLME6QMDWrRmWV6D4N6WoKulskg8+Hrocu+cv0d0NLb4OXqVxwzIkr/7
-         pd5i1gzeBDkeODVVTgQNpvPkQ8ikTJ79ZQOfxFmiMVQ6wvu8TQu4o75WJSfb4L49ulLH
-         sGjvR6/aG1JYxM5TPP+CijNnOpHji/WaOmkHBymvbOS0URoaPbNJpyAJpAVKoposvmmY
-         1L8TXy5odOjYXXtdMxrP6YFBg+mKYz9KS3B31N9+qMavi41EN8Hn8IdImjIomU+qrHnG
-         D1edMXAVTreqh0qIZG1ciQuUavQdmh4ZyE0uI6pKRUQg/mSu9adzHIIvaAU0eB46reiX
-         ohcQ==
+        bh=WrycSqfFwgro1544B9fdHLaLNfHVDac357G1kt17GJI=;
+        b=Kb9q23sPGgUyP1xOwc0nnzQiUdt/USvAEWwpN+/lGcIlI6oMtrG86vMz3EyuyQqUjn
+         g9Qm6QuwloJc1YYvC4woVROgE2cCnCEp6/3ZDlxttDDXXCTc+2kYbc8Ai0+kOkUfErzk
+         xxvqeQOSAWD6qfw4taneDEwBsVN1wOeem3XuHcb0l9v0M3purNhB5gxZObpoznaQhtJl
+         ink3pH9NrfwppGXN3UMO1ukXAXq1OBfm/6ShSgXeH99YFe10iVU9YG+E6EB7p0iKB2El
+         p7L1Q8ACluZWnY+FgaLDwUzCkrhF4z/n5qHeq3BLs5w8VwbOmilgpZbOl5az3JvgqfK0
+         yNSw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references;
-        bh=MYpPSnzf7wFktbr//qjM+H85a7ND2QWunvW4sMQhPic=;
-        b=Qx7/4dLbXHRVBQdYWQ+VM7MBaCK2+iTU4eBX5B40ziF/dP56PGAAbx+8AmlFtZ1mfg
-         FVUxuGV4VqZxVOWS8DTnvbkQ6GrnMlp8ap37BuMFutkynVVnyK0yo4ST+VzhAudfkUOi
-         G0RagiaDf1rEHzD1qPaortur7XDAgYTS8wlJeCTUykqx9tTiL4AmgbW6tK73q4/9Ji/V
-         dzX8B5FpHouh7oYkX5FDH6L8gpSThJDHpQf0WsEQwdc+TQBykR+hIMQKgVUzEULSJz1n
-         NzmUYuXcvhk7/qRPyBSfAZGUaCjzRUbwCRyb7nOArRGSpP20epwSkAFkzdE0qQYbd47q
-         5tTQ==
-X-Gm-Message-State: AOAM531bj8iOLHrblIkKK/rlQARttIbHz0m4t2qHnR0cssbML0aD1Akz
-        Hub8A8ty7mk0y8Z2rdV/RHU=
-X-Google-Smtp-Source: ABdhPJzehtrtRBhg3lZdaKSsz3aa9JDa/K5e4NsmahiEFn3owyozG9YtLr3acyFytGVwmpNMAlpzww==
-X-Received: by 2002:a17:90a:6a0e:: with SMTP id t14mr1014463pjj.97.1601329006297;
-        Mon, 28 Sep 2020 14:36:46 -0700 (PDT)
+        bh=WrycSqfFwgro1544B9fdHLaLNfHVDac357G1kt17GJI=;
+        b=AFi2d7dzlVwLDcxBG4UH9lWsoZnc99WTiclq/H700OYdyFUi24I5cawTat64ciO/qt
+         kng3Y301N6lTEgquNUO5FZ0+jKclbL49uSN2+y6uPZiXgwZzdbkFKEXdUX8YSAvcszbZ
+         LKHIPgMcYdDjYzNdG4d/+9vO5YijGrRw2j47+JuhRnl7nRQ1fUhgZ4f3RAaK/eYGyXTQ
+         glHUKa+flycFyeaVg1s/M4TeG2p7H11CoY/PtPzAqLsByr48Wyrev4eJk5Lj+KDkzxU6
+         ifHJxW91NbahzcK69Pi+glIDBaM/wIxXd3qfT2S3jmJguiyngoS/zldgVpNzVd2MNa4z
+         KNnA==
+X-Gm-Message-State: AOAM533kI/nnJS7khgeNti/FrFMLTacwOQaF9Pvcq/iW1OcY+jJ6Lurh
+        ZY0gzpkK29VpK3k68eKwYMc=
+X-Google-Smtp-Source: ABdhPJwfpXpe8calsKuaQ30f9foaawWHO3e8GwjwWs2Wem/63O+55jMMYsxr2+0Ly3E5r4jzAJEM6Q==
+X-Received: by 2002:a17:90a:e015:: with SMTP id u21mr1011131pjy.33.1601329008375;
+        Mon, 28 Sep 2020 14:36:48 -0700 (PDT)
 Received: from jacob-builder.jf.intel.com (jfdmzpr04-ext.jf.intel.com. [134.134.137.73])
-        by smtp.gmail.com with ESMTPSA id l11sm2220864pjf.17.2020.09.28.14.36.45
+        by smtp.gmail.com with ESMTPSA id l11sm2220864pjf.17.2020.09.28.14.36.47
         (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Mon, 28 Sep 2020 14:36:45 -0700 (PDT)
+        Mon, 28 Sep 2020 14:36:47 -0700 (PDT)
 From:   Jacob Pan <jacob.pan.linux@gmail.com>
 X-Google-Original-From: Jacob Pan <jacob.jun.pan@linux.intel.com>
 To:     iommu@lists.linux-foundation.org,
@@ -75,9 +75,9 @@ Cc:     linux-api@vger.kernel.org,
         Raj Ashok <ashok.raj@intel.com>, Wu Hao <hao.wu@intel.com>,
         Yi Sun <yi.y.sun@intel.com>, Dave Jiang <dave.jiang@intel.com>,
         Randy Dunlap <rdunlap@infradead.org>
-Subject: [PATCH v3 02/14] iommu/ioasid: Rename ioasid_set_data()
-Date:   Mon, 28 Sep 2020 14:38:29 -0700
-Message-Id: <1601329121-36979-3-git-send-email-jacob.jun.pan@linux.intel.com>
+Subject: [PATCH v3 04/14] iommu/ioasid: Support setting system-wide capacity
+Date:   Mon, 28 Sep 2020 14:38:31 -0700
+Message-Id: <1601329121-36979-5-git-send-email-jacob.jun.pan@linux.intel.com>
 X-Mailer: git-send-email 2.7.4
 In-Reply-To: <1601329121-36979-1-git-send-email-jacob.jun.pan@linux.intel.com>
 References: <1601329121-36979-1-git-send-email-jacob.jun.pan@linux.intel.com>
@@ -85,101 +85,109 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Rename ioasid_set_data() to ioasid_attach_data() to avoid confusion with
-struct ioasid_set. ioasid_set is a group of IOASIDs that share a common
-token.
+IOASID is a system-wide resource that could vary on different systems.
+The default capacity is 20 bits as defined in the PCI-E specifications.
+This patch adds a function to allow adjusting system IOASID capacity.
+For VT-d this is set during boot as part of the Intel IOMMU
+initialization.
 
-Reviewed-by: Jean-Philippe Brucker <jean-philippe@linaro.org>
 Signed-off-by: Jacob Pan <jacob.jun.pan@linux.intel.com>
 ---
- drivers/iommu/intel/svm.c | 6 +++---
- drivers/iommu/ioasid.c    | 6 +++---
- include/linux/ioasid.h    | 4 ++--
- 3 files changed, 8 insertions(+), 8 deletions(-)
+ drivers/iommu/intel/iommu.c |  5 +++++
+ drivers/iommu/ioasid.c      | 20 ++++++++++++++++++++
+ include/linux/ioasid.h      | 11 +++++++++++
+ 3 files changed, 36 insertions(+)
 
-diff --git a/drivers/iommu/intel/svm.c b/drivers/iommu/intel/svm.c
-index 0cb9a15f1112..2c5645f0737a 100644
---- a/drivers/iommu/intel/svm.c
-+++ b/drivers/iommu/intel/svm.c
-@@ -346,7 +346,7 @@ int intel_svm_bind_gpasid(struct iommu_domain *domain, struct device *dev,
- 			svm->gpasid = data->gpasid;
- 			svm->flags |= SVM_FLAG_GUEST_PASID;
- 		}
--		ioasid_set_data(data->hpasid, svm);
-+		ioasid_attach_data(data->hpasid, svm);
- 		INIT_LIST_HEAD_RCU(&svm->devs);
- 		mmput(svm->mm);
- 	}
-@@ -398,7 +398,7 @@ int intel_svm_bind_gpasid(struct iommu_domain *domain, struct device *dev,
- 	list_add_rcu(&sdev->list, &svm->devs);
-  out:
- 	if (!IS_ERR_OR_NULL(svm) && list_empty(&svm->devs)) {
--		ioasid_set_data(data->hpasid, NULL);
-+		ioasid_attach_data(data->hpasid, NULL);
- 		kfree(svm);
- 	}
+diff --git a/drivers/iommu/intel/iommu.c b/drivers/iommu/intel/iommu.c
+index 18ed3b3c70d7..e7bcb299e51e 100644
+--- a/drivers/iommu/intel/iommu.c
++++ b/drivers/iommu/intel/iommu.c
+@@ -42,6 +42,7 @@
+ #include <linux/crash_dump.h>
+ #include <linux/numa.h>
+ #include <linux/swiotlb.h>
++#include <linux/ioasid.h>
+ #include <asm/irq_remapping.h>
+ #include <asm/cacheflush.h>
+ #include <asm/iommu.h>
+@@ -3331,6 +3332,10 @@ static int __init init_dmars(void)
+ 	if (ret)
+ 		goto free_iommu;
  
-@@ -441,7 +441,7 @@ int intel_svm_unbind_gpasid(struct device *dev, int pasid)
- 				 * the unbind, IOMMU driver will get notified
- 				 * and perform cleanup.
- 				 */
--				ioasid_set_data(pasid, NULL);
-+				ioasid_attach_data(pasid, NULL);
- 				kfree(svm);
- 			}
- 		}
++	/* PASID is needed for scalable mode irrespective to SVM */
++	if (intel_iommu_sm)
++		ioasid_install_capacity(intel_pasid_max_id);
++
+ 	/*
+ 	 * for each drhd
+ 	 *   enable fault log
 diff --git a/drivers/iommu/ioasid.c b/drivers/iommu/ioasid.c
-index 0f8dd377aada..5f63af07acd5 100644
+index 6cfbdfb492e0..4277cb17e15b 100644
 --- a/drivers/iommu/ioasid.c
 +++ b/drivers/iommu/ioasid.c
-@@ -258,14 +258,14 @@ void ioasid_unregister_allocator(struct ioasid_allocator_ops *ops)
- EXPORT_SYMBOL_GPL(ioasid_unregister_allocator);
+@@ -10,6 +10,10 @@
+ #include <linux/spinlock.h>
+ #include <linux/xarray.h>
  
- /**
-- * ioasid_set_data - Set private data for an allocated ioasid
-+ * ioasid_attach_data - Set private data for an allocated ioasid
-  * @ioasid: the ID to set data
-  * @data:   the private data
-  *
-  * For IOASID that is already allocated, private data can be set
-  * via this API. Future lookup can be done via ioasid_find.
-  */
--int ioasid_set_data(ioasid_t ioasid, void *data)
-+int ioasid_attach_data(ioasid_t ioasid, void *data)
- {
- 	struct ioasid_data *ioasid_data;
- 	int ret = 0;
-@@ -287,7 +287,7 @@ int ioasid_set_data(ioasid_t ioasid, void *data)
++/* Default to PCIe standard 20 bit PASID */
++#define PCI_PASID_MAX 0x100000
++static ioasid_t ioasid_capacity = PCI_PASID_MAX;
++static ioasid_t ioasid_capacity_avail = PCI_PASID_MAX;
+ struct ioasid_data {
+ 	ioasid_t id;
+ 	struct ioasid_set *set;
+@@ -17,6 +21,22 @@ struct ioasid_data {
+ 	struct rcu_head rcu;
+ };
  
- 	return ret;
- }
--EXPORT_SYMBOL_GPL(ioasid_set_data);
-+EXPORT_SYMBOL_GPL(ioasid_attach_data);
- 
- /**
-  * ioasid_alloc - Allocate an IOASID
++void ioasid_install_capacity(ioasid_t total)
++{
++	if (ioasid_capacity && ioasid_capacity != PCI_PASID_MAX) {
++		pr_warn("IOASID capacity is already set.\n");
++		return;
++	}
++	ioasid_capacity = ioasid_capacity_avail = total;
++}
++EXPORT_SYMBOL_GPL(ioasid_install_capacity);
++
++ioasid_t ioasid_get_capacity(void)
++{
++	return ioasid_capacity;
++}
++EXPORT_SYMBOL_GPL(ioasid_get_capacity);
++
+ /*
+  * struct ioasid_allocator_data - Internal data structure to hold information
+  * about an allocator. There are two types of allocators:
 diff --git a/include/linux/ioasid.h b/include/linux/ioasid.h
-index 6f000d7a0ddc..9c44947a68c8 100644
+index c7f649fa970a..7fc320656be2 100644
 --- a/include/linux/ioasid.h
 +++ b/include/linux/ioasid.h
-@@ -39,7 +39,7 @@ void *ioasid_find(struct ioasid_set *set, ioasid_t ioasid,
- 		  bool (*getter)(void *));
- int ioasid_register_allocator(struct ioasid_allocator_ops *allocator);
- void ioasid_unregister_allocator(struct ioasid_allocator_ops *allocator);
--int ioasid_set_data(ioasid_t ioasid, void *data);
-+int ioasid_attach_data(ioasid_t ioasid, void *data);
+@@ -32,6 +32,8 @@ struct ioasid_allocator_ops {
+ #define DECLARE_IOASID_SET(name) struct ioasid_set name = { 0 }
  
+ #if IS_ENABLED(CONFIG_IOASID)
++void ioasid_install_capacity(ioasid_t total);
++ioasid_t ioasid_get_capacity(void);
+ ioasid_t ioasid_alloc(struct ioasid_set *set, ioasid_t min, ioasid_t max,
+ 		      void *private);
+ void ioasid_free(ioasid_t ioasid);
+@@ -42,6 +44,15 @@ void ioasid_unregister_allocator(struct ioasid_allocator_ops *allocator);
+ int ioasid_attach_data(ioasid_t ioasid, void *data);
+ void ioasid_detach_data(ioasid_t ioasid);
  #else /* !CONFIG_IOASID */
++static inline void ioasid_install_capacity(ioasid_t total)
++{
++}
++
++static inline ioasid_t ioasid_get_capacity(void)
++{
++	return 0;
++}
++
  static inline ioasid_t ioasid_alloc(struct ioasid_set *set, ioasid_t min,
-@@ -67,7 +67,7 @@ static inline void ioasid_unregister_allocator(struct ioasid_allocator_ops *allo
+ 				    ioasid_t max, void *private)
  {
- }
- 
--static inline int ioasid_set_data(ioasid_t ioasid, void *data)
-+static inline int ioasid_attach_data(ioasid_t ioasid, void *data)
- {
- 	return -ENOTSUPP;
- }
 -- 
 2.7.4
 
