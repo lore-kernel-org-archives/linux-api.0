@@ -8,56 +8,55 @@ X-Spam-Status: No, score=-12.6 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1C76BC4727C
-	for <linux-api@archiver.kernel.org>; Mon, 28 Sep 2020 21:37:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 10499C4727F
+	for <linux-api@archiver.kernel.org>; Mon, 28 Sep 2020 21:37:37 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DE8F4208FE
-	for <linux-api@archiver.kernel.org>; Mon, 28 Sep 2020 21:37:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CBCF3208FE
+	for <linux-api@archiver.kernel.org>; Mon, 28 Sep 2020 21:37:36 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="sx18k5qa"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="tTP4J0Ia"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727014AbgI1Vh1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 28 Sep 2020 17:37:27 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49654 "EHLO
+        id S1727072AbgI1VhG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 28 Sep 2020 17:37:06 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49652 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727078AbgI1VhH (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 28 Sep 2020 17:37:07 -0400
+        with ESMTP id S1726998AbgI1VhF (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 28 Sep 2020 17:37:05 -0400
 Received: from mail-pj1-x1044.google.com (mail-pj1-x1044.google.com [IPv6:2607:f8b0:4864:20::1044])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 86488C0613D5;
-        Mon, 28 Sep 2020 14:36:56 -0700 (PDT)
-Received: by mail-pj1-x1044.google.com with SMTP id t7so1492097pjd.3;
-        Mon, 28 Sep 2020 14:36:56 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9A982C0613D7;
+        Mon, 28 Sep 2020 14:36:58 -0700 (PDT)
+Received: by mail-pj1-x1044.google.com with SMTP id jw11so1472143pjb.0;
+        Mon, 28 Sep 2020 14:36:58 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=from:to:cc:subject:date:message-id:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=Atey8nbuDzuUr3JKV5+LdIsFe8hfPfYfTvoAcQuofpk=;
-        b=sx18k5qaKY7D44k250bMwq3BUbcBw0v4NNDbb7A3icBG7vgtWUUMQ56NxQaIUEyFZ2
-         VAzw/jy0F2ydRi+14LPRsoaSfUxDSUBrWSpCMo6egbxoEEr+q3Bmo0zRmlZPA6Bj/P9Y
-         minFyrHvScqwmmBLXc4P38QYP0JAChRfaMNaJf7lD5FVe/YPbblmKFBY2NBo2yrM8FbN
-         Afo/LOcLg5udhHvPjOzuV8yK7xjKSPLgVvAOWQ4cVgRMa1OPGkGbmKiZCaq5fh+pzVPV
-         FHR/roIi2Asx9cjJORqQe9hn2dj/o/q9vKlM4QIIBcWwI5+9/t1PSLAkApaImjDI56/I
-         MaxQ==
+        h=from:to:cc:subject:date:message-id:in-reply-to:references;
+        bh=Gd3yej60dudO/8DXRzuDh/k17amPnxhlwfOMJTioVQM=;
+        b=tTP4J0IaMk227Z8asAN85KOSM1A9No6RY5e4LLFeNceqe/24u2KHAriyTcErBdU/B1
+         31JrR3t6e3CMvNPvKtmHYn5xeL0W5vprCR+nt/PqLPtlde7HhW2YJ7Ifw4hkewplV1En
+         3f1l3EKdbTyvD2l6+wVWCFO6ca8AHad7f2TtYBshmeXQPwFA+jlBxzx9StY2//cJs4fP
+         nux79mYcFISBDkY6rB1Z21u41p7ZwLBrP/+/hv826s2RTf3iBTCgiynbv311mURUl3pe
+         CcxIbqqZgFAB8feDEaYIjQw7quZqOmnwjXIxwKKC8e9R7eRCr5Zz+sn+EXAOw41VaWRb
+         NQjA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references:mime-version:content-transfer-encoding;
-        bh=Atey8nbuDzuUr3JKV5+LdIsFe8hfPfYfTvoAcQuofpk=;
-        b=ENbNzUNN28kl72o+WoTr+Xh5hLa1dsDu7sioCCyifcxwVdFKtIdY/ckTk7WzhpTT2v
-         D0wY8XMLZ4gD/zRQR0R19uxROyz3mJAi6rQ+4JnDGAA/WJuoHGEbl48PoJgVLZaZP3fM
-         mWAZMt7gW3JB4laOa4kTTKNQEtyJ+sO5TqPKfI/wN4t6OkK4tgObECVXWL3JdK/jVWY6
-         p7JEEETnsOFg52dTX7HxBYNE1ywb25C8pmgE+S/0kJHS+BgZ3/uJY4HTPO87/qOksW8x
-         j5n2/aY6ivnlWx3PykKC3SBDl4bcAywAqf9R8hgttnRT/+nQ2Xn35s2dchm8PvY7w11M
-         9/dA==
-X-Gm-Message-State: AOAM533YnLvzhahlwlOVRfIU7VHH8koq5sxvDBBcTYfyvwgbhudMWNbG
-        ecRuxW79SXG+0Y6djY+BqfQ=
-X-Google-Smtp-Source: ABdhPJz/P48h6PBRWfmYp4KTl1u93gqaZoCJDUfjjgJpm/85E2fGfKu8V02yVviaaDMvuehX6BNagw==
-X-Received: by 2002:a17:90b:b8f:: with SMTP id bd15mr1062834pjb.65.1601329016059;
-        Mon, 28 Sep 2020 14:36:56 -0700 (PDT)
+         :references;
+        bh=Gd3yej60dudO/8DXRzuDh/k17amPnxhlwfOMJTioVQM=;
+        b=YqhXtOXl+LFdHw+Ped2NEf/1WPZKJJViqFq0R0gy9sEoibsJ+KhqaUXwh1oshtmcdp
+         ESYh4UTDEOyFsz4dTiegehxQGp6jTaX3GPZ8wxDwIHWIXaOLwFxF/Ltlbr8v13PgQdqG
+         S/n/G7M8/W+q38V7KOP2jiHpz5eRuIg5hYKhU0jssOqDHIjW1JbrzBHswgcxPcAzdbeP
+         6K7/jd7xyZGr+i1L1vYztK+CJ3KdFLlsfPpos4Xkd8BJCSSHCBVrpx0RmgAD4FwLCVBc
+         9w4kLY+SJfUMd6ob7MXe+/7Oi2nknEjiqVdNEYjLiVtOF1kW7lNnGZ/XhjVr3la66Af4
+         4S/A==
+X-Gm-Message-State: AOAM5320ltJHKpJhgJaOUqlL7urSJvdyGXAEgX/henKGI49T4MiiJtKs
+        H2jbVqM58JqcCcf3DtErNL0=
+X-Google-Smtp-Source: ABdhPJx9iz0liS3WtMH3HKPteQJgZuhpU2LsqxwnYQPtfa8tQQAV9sXRarVwRsALY0g9GPPWrLoaKQ==
+X-Received: by 2002:a17:90b:889:: with SMTP id bj9mr1004758pjb.73.1601329018191;
+        Mon, 28 Sep 2020 14:36:58 -0700 (PDT)
 Received: from jacob-builder.jf.intel.com (jfdmzpr04-ext.jf.intel.com. [134.134.137.73])
-        by smtp.gmail.com with ESMTPSA id l11sm2220864pjf.17.2020.09.28.14.36.55
+        by smtp.gmail.com with ESMTPSA id l11sm2220864pjf.17.2020.09.28.14.36.57
         (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Mon, 28 Sep 2020 14:36:55 -0700 (PDT)
+        Mon, 28 Sep 2020 14:36:57 -0700 (PDT)
 From:   Jacob Pan <jacob.pan.linux@gmail.com>
 X-Google-Original-From: Jacob Pan <jacob.jun.pan@linux.intel.com>
 To:     iommu@lists.linux-foundation.org,
@@ -76,215 +75,176 @@ Cc:     linux-api@vger.kernel.org,
         Raj Ashok <ashok.raj@intel.com>, Wu Hao <hao.wu@intel.com>,
         Yi Sun <yi.y.sun@intel.com>, Dave Jiang <dave.jiang@intel.com>,
         Randy Dunlap <rdunlap@infradead.org>
-Subject: [PATCH v3 11/14] iommu/ioasid: Support mm type ioasid_set notifications
-Date:   Mon, 28 Sep 2020 14:38:38 -0700
-Message-Id: <1601329121-36979-12-git-send-email-jacob.jun.pan@linux.intel.com>
+Subject: [PATCH v3 13/14] iommu/vt-d: Listen to IOASID notifications
+Date:   Mon, 28 Sep 2020 14:38:40 -0700
+Message-Id: <1601329121-36979-14-git-send-email-jacob.jun.pan@linux.intel.com>
 X-Mailer: git-send-email 2.7.4
 In-Reply-To: <1601329121-36979-1-git-send-email-jacob.jun.pan@linux.intel.com>
 References: <1601329121-36979-1-git-send-email-jacob.jun.pan@linux.intel.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-As a system-wide resource, IOASID is often shared by multiple kernel
-subsystems that are independent of each other. However, at the
-ioasid_set level, these kernel subsystems must communicate with each
-other for ownership checking, event notifications, etc. For example, on
-Intel Scalable IO Virtualization (SIOV) enabled platforms, KVM and VFIO
-instances under the same process/guest must be aware of a shared IOASID
-set.
-IOASID_SET_TYPE_MM token type was introduced to explicitly mark an
-IOASID set that belongs to a process, thus use the same mm_struct
-pointer as a token. Users of the same process can then identify with
-each other based on this token.
+On Intel Scalable I/O Virtualization (SIOV) enabled platforms, IOMMU
+driver is one of the users of IOASIDs. In normal flow, callers will
+perform IOASID allocation, bind, unbind, and free in order. However, for
+guest SVA, IOASID free could come before unbind as guest is untrusted.
+This patch registers IOASID notification handler such that IOMMU driver
+can perform PASID teardown upon receiving an unexpected IOASID free
+event.
 
-This patch introduces MM token specific event registration APIs. Event
-subscribers such as KVM instances can register IOASID event handler
-without the knowledge of its ioasid_set. Event handlers are registered
-based on its mm_struct pointer as a token. In case when subscribers
-register handler *prior* to the creation of the ioasid_set, the
-handler’s notification block is stored in a pending list within IOASID
-core. Once the ioasid_set of the MM token is created, the notification
-block will be registered by the IOASID core.
-
-Signed-off-by: Liu Yi L <yi.l.liu@intel.com>
-Signed-off-by: Wu Hao <hao.wu@intel.com>
 Signed-off-by: Jacob Pan <jacob.jun.pan@linux.intel.com>
 ---
- drivers/iommu/ioasid.c | 117 +++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/ioasid.h |  15 +++++++
- 2 files changed, 132 insertions(+)
+ drivers/iommu/intel/svm.c   | 94 ++++++++++++++++++++++++++++++++++++++++++++-
+ include/linux/intel-iommu.h |  2 +
+ 2 files changed, 94 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/iommu/ioasid.c b/drivers/iommu/ioasid.c
-index 894b17c06ead..d5faeb559a43 100644
---- a/drivers/iommu/ioasid.c
-+++ b/drivers/iommu/ioasid.c
-@@ -889,6 +889,29 @@ void ioasid_set_put(struct ioasid_set *set)
+diff --git a/drivers/iommu/intel/svm.c b/drivers/iommu/intel/svm.c
+index 39a09a93300e..8f886718df83 100644
+--- a/drivers/iommu/intel/svm.c
++++ b/drivers/iommu/intel/svm.c
+@@ -95,6 +95,90 @@ static inline bool intel_svm_capable(struct intel_iommu *iommu)
+ 	return iommu->flags & VTD_FLAG_SVM_CAPABLE;
  }
- EXPORT_SYMBOL_GPL(ioasid_set_put);
  
-+/*
-+ * ioasid_find_mm_set - Retrieve IOASID set with mm token
-+ * Take a reference of the set if found.
-+ */
-+static struct ioasid_set *ioasid_find_mm_set(struct mm_struct *token)
++static inline void intel_svm_drop_pasid(ioasid_t pasid)
 +{
-+	struct ioasid_set *set;
-+	unsigned long index;
-+
-+	spin_lock(&ioasid_allocator_lock);
-+
-+	xa_for_each(&ioasid_sets, index, set) {
-+		if (set->type == IOASID_SET_TYPE_MM && set->token == token) {
-+			refcount_inc(&set->ref);
-+			goto exit_unlock;
-+		}
-+	}
-+	set = NULL;
-+exit_unlock:
-+	spin_unlock(&ioasid_allocator_lock);
-+	return set;
++	ioasid_detach_data(pasid);
++	ioasid_put(NULL, pasid);
 +}
 +
- /**
-  * ioasid_adjust_set - Adjust the quota of an IOASID set
-  * @set:	IOASID set to be assigned
-@@ -1121,6 +1144,100 @@ void ioasid_unregister_notifier(struct ioasid_set *set,
- }
- EXPORT_SYMBOL_GPL(ioasid_unregister_notifier);
- 
-+/**
-+ * ioasid_register_notifier_mm - Register a notifier block on the IOASID set
-+ *                               created by the mm_struct pointer as the token
-+ *
-+ * @mm: the mm_struct token of the ioasid_set
-+ * @nb: notfier block to be registered on the ioasid_set
-+ *
-+ * This a variant of ioasid_register_notifier() where the caller intends to
-+ * listen to IOASID events belong the ioasid_set created under the same
-+ * process. Caller is not aware of the ioasid_set, no need to hold reference
-+ * of the ioasid_set.
-+ */
-+int ioasid_register_notifier_mm(struct mm_struct *mm, struct notifier_block *nb)
++static DEFINE_MUTEX(pasid_mutex);
++#define pasid_lock_held() lock_is_held(&pasid_mutex.dep_map)
++
++static void intel_svm_free_async_fn(struct work_struct *work)
 +{
-+	struct ioasid_set_nb *curr;
-+	struct ioasid_set *set;
-+	int ret = 0;
++	struct intel_svm *svm = container_of(work, struct intel_svm, work);
++	struct intel_svm_dev *sdev;
 +
-+	if (!mm)
-+		return -EINVAL;
-+
-+	spin_lock(&ioasid_nb_lock);
-+
-+	/* Check for duplicates, nb is unique per set */
-+	list_for_each_entry(curr, &ioasid_nb_pending_list, list) {
-+		if (curr->token == mm && curr->nb == nb) {
-+			ret = -EBUSY;
-+			goto exit_unlock;
-+		}
++	/*
++	 * Unbind all devices associated with this PASID which is
++	 * being freed by other users such as VFIO.
++	 */
++	mutex_lock(&pasid_mutex);
++	list_for_each_entry_rcu(sdev, &svm->devs, list, pasid_lock_held()) {
++		/* Does not poison forward pointer */
++		list_del_rcu(&sdev->list);
++		spin_lock(&svm->iommu->lock);
++		intel_pasid_tear_down_entry(svm->iommu, sdev->dev,
++					svm->pasid, true);
++		spin_unlock(&svm->iommu->lock);
++		kfree_rcu(sdev, rcu);
 +	}
++	/*
++	 * We may not be the last user to drop the reference but since
++	 * the PASID is in FREE_PENDING state, no one can get new reference.
++	 * Therefore, we can safely free the private data svm.
++	 */
++	intel_svm_drop_pasid(svm->pasid);
++	/*
++	 * Free before unbind can only happen with host PASIDs used for
++	 * guest SVM. We get here because ioasid_free is called with
++	 * outstanding references. So we need to drop the reference
++	 * such that the PASID can be reclaimed. unbind_gpasid() after this
++	 * will not result in dropping refcount since the private data is
++	 * already detached.
++	 */
++	kfree(svm);
 +
-+	/* Check if the token has an existing set */
-+	set = ioasid_find_mm_set(mm);
-+	if (!set) {
-+		/* Add to the rsvd list as inactive */
-+		curr->active = false;
-+	} else {
-+		/* REVISIT: Only register empty set for now. Can add an option
-+		 * in the future to playback existing PASIDs.
-+		 */
-+		if (set->nr_ioasids) {
-+			pr_warn("IOASID set %d not empty\n", set->id);
-+			ret = -EBUSY;
-+			goto exit_unlock;
-+		}
-+		curr = kzalloc(sizeof(*curr), GFP_ATOMIC);
-+		if (!curr) {
-+			ret = -ENOMEM;
-+			goto exit_unlock;
-+		}
-+		curr->token = mm;
-+		curr->nb = nb;
-+		curr->active = true;
-+		curr->set = set;
++	mutex_unlock(&pasid_mutex);
++}
 +
-+		/* Set already created, add to the notifier chain */
-+		atomic_notifier_chain_register(&set->nh, nb);
++
++static int pasid_status_change(struct notifier_block *nb,
++				unsigned long code, void *data)
++{
++	struct ioasid_nb_args *args = (struct ioasid_nb_args *)data;
++	struct intel_svm *svm = (struct intel_svm *)args->pdata;
++	int ret = NOTIFY_DONE;
++
++	if (code == IOASID_NOTIFY_FREE) {
 +		/*
-+		 * Do not hold a reference, if the set gets destroyed, the nb
-+		 * entry will be marked inactive.
++		 * If PASID UNBIND happens before FREE, private data of the
++		 * IOASID should be NULL, then we don't need to do anything.
 +		 */
-+		ioasid_set_put(set);
++		if (!svm)
++			goto done;
++		if (args->id != svm->pasid) {
++			pr_warn("Notify PASID does not match data %d : %d\n",
++				args->id, svm->pasid);
++			goto done;
++		}
++		schedule_work(&svm->work);
++		return NOTIFY_OK;
 +	}
-+
-+	list_add(&curr->list, &ioasid_nb_pending_list);
-+
-+exit_unlock:
-+	spin_unlock(&ioasid_nb_lock);
++done:
 +	return ret;
 +}
-+EXPORT_SYMBOL_GPL(ioasid_register_notifier_mm);
 +
-+void ioasid_unregister_notifier_mm(struct mm_struct *mm, struct notifier_block *nb)
++static struct notifier_block pasid_nb = {
++	.notifier_call = pasid_status_change,
++};
++
++void intel_svm_add_pasid_notifier(void)
 +{
-+	struct ioasid_set_nb *curr;
-+
-+	spin_lock(&ioasid_nb_lock);
-+	list_for_each_entry(curr, &ioasid_nb_pending_list, list) {
-+		if (curr->token == mm && curr->nb == nb) {
-+			list_del(&curr->list);
-+			spin_unlock(&ioasid_nb_lock);
-+			if (curr->active) {
-+				atomic_notifier_chain_unregister(&curr->set->nh,
-+								 nb);
-+			}
-+			kfree(curr);
-+			return;
-+		}
-+	}
-+	pr_warn("No ioasid set found for mm token %llx\n",  (u64)mm);
-+	spin_unlock(&ioasid_nb_lock);
++	/* Listen to all PASIDs, not specific to a set */
++	ioasid_register_notifier(NULL, &pasid_nb);
 +}
-+EXPORT_SYMBOL_GPL(ioasid_unregister_notifier_mm);
 +
- MODULE_AUTHOR("Jean-Philippe Brucker <jean-philippe.brucker@arm.com>");
- MODULE_AUTHOR("Jacob Pan <jacob.jun.pan@linux.intel.com>");
- MODULE_DESCRIPTION("IO Address Space ID (IOASID) allocator");
-diff --git a/include/linux/ioasid.h b/include/linux/ioasid.h
-index 1b551c99d568..c6cc855aadb6 100644
---- a/include/linux/ioasid.h
-+++ b/include/linux/ioasid.h
-@@ -132,6 +132,9 @@ void ioasid_unregister_notifier(struct ioasid_set *set,
- void ioasid_set_for_each_ioasid(struct ioasid_set *sdata,
- 				void (*fn)(ioasid_t id, void *data),
- 				void *data);
-+int ioasid_register_notifier_mm(struct mm_struct *mm, struct notifier_block *nb);
-+void ioasid_unregister_notifier_mm(struct mm_struct *mm, struct notifier_block *nb);
-+
- #else /* !CONFIG_IOASID */
- static inline void ioasid_install_capacity(ioasid_t total)
+ void intel_svm_check(struct intel_iommu *iommu)
  {
-@@ -238,5 +241,17 @@ static inline void ioasid_set_for_each_ioasid(struct ioasid_set *sdata,
- 					      void *data)
- {
- }
-+
-+static inline int ioasid_register_notifier_mm(struct mm_struct *mm,
-+					      struct notifier_block *nb)
-+{
-+	return -ENOTSUPP;
-+}
-+
-+static inline void ioasid_unregister_notifier_mm(struct mm_struct *mm,
-+						 struct notifier_block *nb)
-+{
-+}
-+
- #endif /* CONFIG_IOASID */
- #endif /* __LINUX_IOASID_H */
+ 	if (!pasid_supported(iommu))
+@@ -221,7 +305,6 @@ static const struct mmu_notifier_ops intel_mmuops = {
+ 	.invalidate_range = intel_invalidate_range,
+ };
+ 
+-static DEFINE_MUTEX(pasid_mutex);
+ static LIST_HEAD(global_svm_list);
+ 
+ #define for_each_svm_dev(sdev, svm, d)			\
+@@ -344,6 +427,13 @@ int intel_svm_bind_gpasid(struct iommu_domain *domain, struct device *dev,
+ 			svm->flags |= SVM_FLAG_GUEST_PASID;
+ 		}
+ 		ioasid_attach_data(data->hpasid, svm);
++		ioasid_get(NULL, svm->pasid);
++		svm->iommu = iommu;
++		/*
++		 * Set up cleanup async work in case IOASID core notify us PASID
++		 * is freed before unbind.
++		 */
++		INIT_WORK(&svm->work, intel_svm_free_async_fn);
+ 		INIT_LIST_HEAD_RCU(&svm->devs);
+ 	}
+ 	sdev = kzalloc(sizeof(*sdev), GFP_KERNEL);
+@@ -437,7 +527,7 @@ int intel_svm_unbind_gpasid(struct device *dev, int pasid)
+ 				 * the unbind, IOMMU driver will get notified
+ 				 * and perform cleanup.
+ 				 */
+-				ioasid_detach_data(pasid);
++				intel_svm_drop_pasid(pasid);
+ 				kfree(svm);
+ 			}
+ 		}
+diff --git a/include/linux/intel-iommu.h b/include/linux/intel-iommu.h
+index b1ed2f25f7c0..d36038e6ae0b 100644
+--- a/include/linux/intel-iommu.h
++++ b/include/linux/intel-iommu.h
+@@ -744,6 +744,7 @@ void intel_svm_unbind(struct iommu_sva *handle);
+ int intel_svm_get_pasid(struct iommu_sva *handle);
+ int intel_svm_page_response(struct device *dev, struct iommu_fault_event *evt,
+ 			    struct iommu_page_response *msg);
++void intel_svm_add_pasid_notifier(void);
+ 
+ struct svm_dev_ops;
+ 
+@@ -770,6 +771,7 @@ struct intel_svm {
+ 	int gpasid; /* In case that guest PASID is different from host PASID */
+ 	struct list_head devs;
+ 	struct list_head list;
++	struct work_struct work; /* For deferred clean up */
+ };
+ #else
+ static inline void intel_svm_check(struct intel_iommu *iommu) {}
 -- 
 2.7.4
 
