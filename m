@@ -5,58 +5,58 @@ X-Spam-Level:
 X-Spam-Status: No, score=-12.6 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1CAAEC4727F
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 53CEAC4741F
 	for <linux-api@archiver.kernel.org>; Mon, 28 Sep 2020 21:37:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E2B2E2083B
-	for <linux-api@archiver.kernel.org>; Mon, 28 Sep 2020 21:37:27 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 20B462193E
+	for <linux-api@archiver.kernel.org>; Mon, 28 Sep 2020 21:37:28 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="r0TFUtTL"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XPHtpj/x"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726921AbgI1Vh1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 28 Sep 2020 17:37:27 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49658 "EHLO
+        id S1727076AbgI1VhG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 28 Sep 2020 17:37:06 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49612 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727079AbgI1VhH (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 28 Sep 2020 17:37:07 -0400
-Received: from mail-pg1-x542.google.com (mail-pg1-x542.google.com [IPv6:2607:f8b0:4864:20::542])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7F3DFC0613D6;
-        Mon, 28 Sep 2020 14:36:57 -0700 (PDT)
-Received: by mail-pg1-x542.google.com with SMTP id 7so2042999pgm.11;
-        Mon, 28 Sep 2020 14:36:57 -0700 (PDT)
+        with ESMTP id S1726961AbgI1Vgw (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 28 Sep 2020 17:36:52 -0400
+Received: from mail-pf1-x441.google.com (mail-pf1-x441.google.com [IPv6:2607:f8b0:4864:20::441])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 54872C0613CF;
+        Mon, 28 Sep 2020 14:36:52 -0700 (PDT)
+Received: by mail-pf1-x441.google.com with SMTP id k13so2421778pfg.1;
+        Mon, 28 Sep 2020 14:36:52 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=d1FfSiT0/rNuXhBVREG/yc6QeqXaZmsaJ55ClmMPrSA=;
-        b=r0TFUtTL36ac2nmkkmqUvShag9p4Nr90dTd1zKFHpK0u06RB7xzvc10y/8rI43dRe9
-         aL92VrM5u5jZPGZTrUTvzcCbWgiyP4IcC96N052t63wUVxyrF/jZ7TDILYSXdKRmmr/L
-         GEX41iDNcl+PjkT7LI/2yZK1HVJ83WPCUcOeUtUuwd0GNCVro3zwgXgxmi1qwlKttoCR
-         xNC42K+M5nDlIwHkyZA8/Hmp646Gumsdrwn+oVp4UOzedPc3hrLGGIUYuRmBnUsuzTZq
-         hNy82OUKOWV1dcv//ylXy4FULe24ZdrYw95f9PDvCipj1BN+xc/Ip+xKPrBsIAtdMh0j
-         I18A==
+        bh=JJmT+wXDNgmHpDjA6Wjx651ekcEY2yxOz6JsHoiTC2s=;
+        b=XPHtpj/xAaJjyziV9uUCZbopBjydUsAQm85HbGN9XN242XTj1VTZmgInoTDzMvtpjj
+         SO75OlJk1Qqps448QZahHPvBHDaYYTNC3m+f1+7FMcb2upRsU9xA+n3wDJUChaVMv0G8
+         tGWUmLpKn10ZWyqw/N2p2nUPjyIskGbVs//ejlAXtyMMAh/h5I4vvVUjOYCWkYgHwybQ
+         iWTP5MZk71it+JLkusmAIW+j4u5M/Wh1w3b+D0VVAxl8dkKm0p7Yjlfz5qnm9w23lLjz
+         nRYC9cY8T0j+hwpDfsiMWhlXr9sTxf0Q4y0GYzCGmEBBYI1FzoW5VxJRM0vrCjCXCao6
+         zc5A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references;
-        bh=d1FfSiT0/rNuXhBVREG/yc6QeqXaZmsaJ55ClmMPrSA=;
-        b=cRzV0EkkCdEyvx5+2KazepHNz3NBeHwWGn9HjF6HQDf/6c+OTa3zyfxO81928lPKxv
-         1vGwdDqfueDU+OAFY/5Vynnaan49wHM/OKPL83EsCsyZHjznpptY3wLGSumhD5I1BT/u
-         /JzcWbxchnGFHnVLfjyyACZZX0mqZu4iBGBv3AsDiPVd4hjvdBXyeyh10cJdaLDIIkEq
-         cp6JZ6H09XUnUin2AgCWM8TfM1u5rJ1i1aYUtuRCTMbDBEpA4shtYK22vi7Wxe+MuE7R
-         p9LuhaGcY8yEbQZsteLmUusXeSEvWKoqqZAPENtF9Dn7e9MAVa4ovid4HMrjEAIjjsPA
-         1SXA==
-X-Gm-Message-State: AOAM533BUzXPVvjsz94tKlxCgBGOB4v0rP7Na/B+A3vThYlg6LEre4M/
-        K1fzfaecxXWxqnbE+4HJJtI=
-X-Google-Smtp-Source: ABdhPJwj+5XtiJEtx58cHwj9dKNKedPMVVg0ZTMpDicVIRoVL1W2IJBC4s9o5U0euw0uP7XZGvRA0g==
-X-Received: by 2002:a65:410c:: with SMTP id w12mr756685pgp.411.1601329017069;
-        Mon, 28 Sep 2020 14:36:57 -0700 (PDT)
+        bh=JJmT+wXDNgmHpDjA6Wjx651ekcEY2yxOz6JsHoiTC2s=;
+        b=US4lZ52Z+Oxlu/0bhGn2nTxJTDTqNwPZ8vmLEeZAeozxYUhhItAgjkrpyaOzDJW0R1
+         GrGcfQ6QxgQ5BI9/354brYKQ0W4qZn7Do9djYn94Ht747QXcu7If2q8U0n9SRTwLO8lq
+         Hu7oOAFwfjNWMWcPbuPLyqK5mRxk3GseFAeeMlRpHcUJotLN6pTSHPJML0oC10ubiLzs
+         FZ6xX2SHevP76NcxdvhbLrJUbUD10rTlvB2rqKy5r91yxyGCxp7KICuaP05V5By1M857
+         ZGN0XA42OTMIOo6hoK00FDOrsDlkOU3rvk8HqaMouSFvCVZDDFJaGPAQedfoKa7ZgdwS
+         xDQg==
+X-Gm-Message-State: AOAM530StPrH3OweLgIb5Z+a2ZGtSIP3mI8/5bMXAqTN92YduaORZPfv
+        UlPbCyu0D4FL/xS+r0J8W6SEf6uoRNk=
+X-Google-Smtp-Source: ABdhPJz2pmATJMgyHqSyYo2SPSRnU2JNB0/L1WajIRXqX0MDjnmGUy7mo2PGrKAkolcH0IWcZPipFg==
+X-Received: by 2002:aa7:83d9:0:b029:138:b217:f347 with SMTP id j25-20020aa783d90000b0290138b217f347mr1356862pfn.0.1601329011768;
+        Mon, 28 Sep 2020 14:36:51 -0700 (PDT)
 Received: from jacob-builder.jf.intel.com (jfdmzpr04-ext.jf.intel.com. [134.134.137.73])
-        by smtp.gmail.com with ESMTPSA id l11sm2220864pjf.17.2020.09.28.14.36.56
+        by smtp.gmail.com with ESMTPSA id l11sm2220864pjf.17.2020.09.28.14.36.50
         (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Mon, 28 Sep 2020 14:36:56 -0700 (PDT)
+        Mon, 28 Sep 2020 14:36:51 -0700 (PDT)
 From:   Jacob Pan <jacob.pan.linux@gmail.com>
 X-Google-Original-From: Jacob Pan <jacob.jun.pan@linux.intel.com>
 To:     iommu@lists.linux-foundation.org,
@@ -75,9 +75,9 @@ Cc:     linux-api@vger.kernel.org,
         Raj Ashok <ashok.raj@intel.com>, Wu Hao <hao.wu@intel.com>,
         Yi Sun <yi.y.sun@intel.com>, Dave Jiang <dave.jiang@intel.com>,
         Randy Dunlap <rdunlap@infradead.org>
-Subject: [PATCH v3 12/14] iommu/vt-d: Remove mm reference for guest SVA
-Date:   Mon, 28 Sep 2020 14:38:39 -0700
-Message-Id: <1601329121-36979-13-git-send-email-jacob.jun.pan@linux.intel.com>
+Subject: [PATCH v3 07/14] iommu/ioasid: Add an iterator API for ioasid_set
+Date:   Mon, 28 Sep 2020 14:38:34 -0700
+Message-Id: <1601329121-36979-8-git-send-email-jacob.jun.pan@linux.intel.com>
 X-Mailer: git-send-email 2.7.4
 In-Reply-To: <1601329121-36979-1-git-send-email-jacob.jun.pan@linux.intel.com>
 References: <1601329121-36979-1-git-send-email-jacob.jun.pan@linux.intel.com>
@@ -85,41 +85,74 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Now that IOASID core keeps track of the IOASID to mm_struct ownership in
-the forms of ioasid_set with IOASID_SET_TYPE_MM token type, there is no
-need to keep the same mapping in VT-d driver specific data. Native SVM
-usage is not affected by the change.
+Users of an ioasid_set may not keep track of all the IOASIDs allocated
+under the set. When collective actions are needed for each IOASIDs, it
+is useful to iterate over all the IOASIDs within the set. For example,
+when the ioasid_set is freed, the user might perform the same cleanup
+operation on each IOASID.
+
+This patch adds an API to iterate all the IOASIDs within the set.
 
 Signed-off-by: Jacob Pan <jacob.jun.pan@linux.intel.com>
 ---
- drivers/iommu/intel/svm.c | 7 -------
- 1 file changed, 7 deletions(-)
+ drivers/iommu/ioasid.c | 17 +++++++++++++++++
+ include/linux/ioasid.h |  9 +++++++++
+ 2 files changed, 26 insertions(+)
 
-diff --git a/drivers/iommu/intel/svm.c b/drivers/iommu/intel/svm.c
-index 2e764e283469..39a09a93300e 100644
---- a/drivers/iommu/intel/svm.c
-+++ b/drivers/iommu/intel/svm.c
-@@ -338,12 +338,6 @@ int intel_svm_bind_gpasid(struct iommu_domain *domain, struct device *dev,
- 			ret = -ENOMEM;
- 			goto out;
- 		}
--		/* REVISIT: upper layer/VFIO can track host process that bind
--		 * the PASID. ioasid_set = mm might be sufficient for vfio to
--		 * check pasid VMM ownership. We can drop the following line
--		 * once VFIO and IOASID set check is in place.
--		 */
--		svm->mm = get_task_mm(current);
- 		svm->pasid = data->hpasid;
- 		if (data->flags & IOMMU_SVA_GPASID_VAL) {
- 			svm->gpasid = data->gpasid;
-@@ -351,7 +345,6 @@ int intel_svm_bind_gpasid(struct iommu_domain *domain, struct device *dev,
- 		}
- 		ioasid_attach_data(data->hpasid, svm);
- 		INIT_LIST_HEAD_RCU(&svm->devs);
--		mmput(svm->mm);
- 	}
- 	sdev = kzalloc(sizeof(*sdev), GFP_KERNEL);
- 	if (!sdev) {
+diff --git a/drivers/iommu/ioasid.c b/drivers/iommu/ioasid.c
+index cf8c7d34e2de..9628e78b2ab4 100644
+--- a/drivers/iommu/ioasid.c
++++ b/drivers/iommu/ioasid.c
+@@ -701,6 +701,23 @@ int ioasid_adjust_set(struct ioasid_set *set, int quota)
+ EXPORT_SYMBOL_GPL(ioasid_adjust_set);
+ 
+ /**
++ * ioasid_set_for_each_ioasid - Iterate over all the IOASIDs within the set
++ *
++ * Caller must hold a reference of the set and handles its own locking.
++ */
++void ioasid_set_for_each_ioasid(struct ioasid_set *set,
++				void (*fn)(ioasid_t id, void *data),
++				void *data)
++{
++	struct ioasid_data *entry;
++	unsigned long index;
++
++	xa_for_each(&set->xa, index, entry)
++		fn(index, data);
++}
++EXPORT_SYMBOL_GPL(ioasid_set_for_each_ioasid);
++
++/**
+  * ioasid_find - Find IOASID data
+  * @set: the IOASID set
+  * @ioasid: the IOASID to find
+diff --git a/include/linux/ioasid.h b/include/linux/ioasid.h
+index 0a5e82148eb9..aab58bc26714 100644
+--- a/include/linux/ioasid.h
++++ b/include/linux/ioasid.h
+@@ -75,6 +75,9 @@ int ioasid_register_allocator(struct ioasid_allocator_ops *allocator);
+ void ioasid_unregister_allocator(struct ioasid_allocator_ops *allocator);
+ int ioasid_attach_data(ioasid_t ioasid, void *data);
+ void ioasid_detach_data(ioasid_t ioasid);
++void ioasid_set_for_each_ioasid(struct ioasid_set *sdata,
++				void (*fn)(ioasid_t id, void *data),
++				void *data);
+ #else /* !CONFIG_IOASID */
+ static inline void ioasid_install_capacity(ioasid_t total)
+ {
+@@ -131,5 +134,11 @@ static inline int ioasid_attach_data(ioasid_t ioasid, void *data)
+ static inline void ioasid_detach_data(ioasid_t ioasid)
+ {
+ }
++
++static inline void ioasid_set_for_each_ioasid(struct ioasid_set *sdata,
++					      void (*fn)(ioasid_t id, void *data),
++					      void *data)
++{
++}
+ #endif /* CONFIG_IOASID */
+ #endif /* __LINUX_IOASID_H */
 -- 
 2.7.4
 
