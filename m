@@ -4,35 +4,35 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BFD3EC4727D
-	for <linux-api@archiver.kernel.org>; Tue, 29 Sep 2020 21:01:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 608A0C47423
+	for <linux-api@archiver.kernel.org>; Tue, 29 Sep 2020 21:02:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 76E5D20774
-	for <linux-api@archiver.kernel.org>; Tue, 29 Sep 2020 21:01:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1794A20757
+	for <linux-api@archiver.kernel.org>; Tue, 29 Sep 2020 21:02:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729388AbgI2VBu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 29 Sep 2020 17:01:50 -0400
-Received: from mga02.intel.com ([134.134.136.20]:60573 "EHLO mga02.intel.com"
+        id S1729633AbgI2VBy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 29 Sep 2020 17:01:54 -0400
+Received: from mga02.intel.com ([134.134.136.20]:60586 "EHLO mga02.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728940AbgI2VBp (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 29 Sep 2020 17:01:45 -0400
-IronPort-SDR: n8W0OCJLb/60tdjioq91xS66Kp0kw65wcLCZXNZofvQ9Jun/cMsv4xDffo7N7UFF3rmQkYC9Qv
- RlSk5mOhFF8A==
-X-IronPort-AV: E=McAfee;i="6000,8403,9759"; a="149947657"
+        id S1729616AbgI2VBw (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 29 Sep 2020 17:01:52 -0400
+IronPort-SDR: YqjQ7BBj2w/VORYfL4iMIpRqNY1FRupbSPwRZwzhE3hDd6I35ku+MmBTA1colYUpyxWn7/4CyA
+ uc7wTWOCop2w==
+X-IronPort-AV: E=McAfee;i="6000,8403,9759"; a="149947659"
 X-IronPort-AV: E=Sophos;i="5.77,319,1596524400"; 
-   d="scan'208";a="149947657"
+   d="scan'208";a="149947659"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from fmsmga006.fm.intel.com ([10.253.24.20])
   by orsmga101.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2020 14:01:23 -0700
-IronPort-SDR: VS3vL4SKHXpAtfklpP5FNf6dKd6xCFeE0RBTUi3A3hTIteGHYUaB2vp2lUr/uvuY6aEfbfuAg5
- GFuzNYoWkYOQ==
+IronPort-SDR: kLPKBEWv63RmoW56qUnEOBnWqvvZ02oPrWI3Wcod7olPPek2flGdR8NkXIJxICnQNb60hS0YXo
+ iCrdENr9MXdg==
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="5.77,319,1596524400"; 
-   d="scan'208";a="514024810"
+   d="scan'208";a="514024816"
 Received: from chang-linux-3.sc.intel.com ([172.25.66.175])
   by fmsmga006.fm.intel.com with ESMTP; 29 Sep 2020 14:01:22 -0700
 From:   "Chang S. Bae" <chang.seok.bae@intel.com>
@@ -43,9 +43,9 @@ Cc:     len.brown@intel.com, dave.hansen@intel.com, hjl.tools@gmail.com,
         ravi.v.shankar@intel.com, libc-alpha@sourceware.org,
         linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
         linux-kernel@vger.kernel.org, chang.seok.bae@intel.com
-Subject: [RFC PATCH 1/4] x86/signal: Introduce helpers to get the maximum signal frame size
-Date:   Tue, 29 Sep 2020 13:57:43 -0700
-Message-Id: <20200929205746.6763-2-chang.seok.bae@intel.com>
+Subject: [RFC PATCH 3/4] x86/signal: Prevent an alternate stack overflow before a signal delivery
+Date:   Tue, 29 Sep 2020 13:57:45 -0700
+Message-Id: <20200929205746.6763-4-chang.seok.bae@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20200929205746.6763-1-chang.seok.bae@intel.com>
 References: <20200929205746.6763-1-chang.seok.bae@intel.com>
@@ -53,190 +53,100 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Signal frames do not have a fixed format and can vary in size when a number
-of things change: support XSAVE features, 32 vs. 64-bit apps. Add the code
-to support a runtime method for userspace to dynamically discover how large
-a signal stack needs to be.
+The kernel pushes data on the userspace stack when entering a signal. If
+using a sigaltstack(), the kernel precisely knows the user stack size.
 
-Introduce a new variable, max_frame_size, and helper functions for the
-calculation to be used in a new user interface. Set max_frame_size to a
-system-wide worst-case value, instead of storing multiple app-specific
-values.
+When the kernel knows that the user stack is too small, avoid the overflow
+and do an immediate SIGSEGV instead.
 
-Locate the body of the helper function -- fpu__get_fpstate_sigframe_size()
-in fpu/signal.c for its relevance.
+This overflow is known to occur on systems with large XSAVE state. The
+effort to increase the size typically used for altstacks reduces the
+frequency of these overflows, but this approach is still useful for legacy
+binaries.
+
+Here the kernel expects a bit conservative stack size (for 64-bit apps).
+Legacy binaries used a too-small sigaltstack would be already overflowed
+before this change, if they run on modern hardware.
 
 Signed-off-by: Chang S. Bae <chang.seok.bae@intel.com>
 Reviewed-by: Len Brown <len.brown@intel.com>
 Cc: x86@kernel.org
 Cc: linux-kernel@vger.kernel.org
 ---
- arch/x86/include/asm/fpu/signal.h |  2 ++
- arch/x86/include/asm/sigframe.h   | 23 ++++++++++++++++
- arch/x86/kernel/cpu/common.c      |  3 +++
- arch/x86/kernel/fpu/signal.c      | 20 ++++++++++++++
- arch/x86/kernel/signal.c          | 45 +++++++++++++++++++++++++++++++
- 5 files changed, 93 insertions(+)
+ arch/x86/ia32/ia32_signal.c     | 11 ++++++++---
+ arch/x86/include/asm/sigframe.h |  2 ++
+ arch/x86/kernel/signal.c        | 16 +++++++++++++++-
+ 3 files changed, 25 insertions(+), 4 deletions(-)
 
-diff --git a/arch/x86/include/asm/fpu/signal.h b/arch/x86/include/asm/fpu/signal.h
-index 7fb516b6893a..5bfbf8f2e5a3 100644
---- a/arch/x86/include/asm/fpu/signal.h
-+++ b/arch/x86/include/asm/fpu/signal.h
-@@ -29,6 +29,8 @@ unsigned long
- fpu__alloc_mathframe(unsigned long sp, int ia32_frame,
- 		     unsigned long *buf_fx, unsigned long *size);
+diff --git a/arch/x86/ia32/ia32_signal.c b/arch/x86/ia32/ia32_signal.c
+index 81cf22398cd1..85abd9eb79d5 100644
+--- a/arch/x86/ia32/ia32_signal.c
++++ b/arch/x86/ia32/ia32_signal.c
+@@ -210,13 +210,18 @@ static void __user *get_sigframe(struct ksignal *ksig, struct pt_regs *regs,
+ 	sp = regs->sp;
  
-+unsigned long fpu__get_fpstate_sigframe_size(void);
+ 	/* This is the X/Open sanctioned signal stack switching.  */
+-	if (ksig->ka.sa.sa_flags & SA_ONSTACK)
++	if (ksig->ka.sa.sa_flags & SA_ONSTACK) {
++		/* If the altstack might overflow, die with SIGSEGV: */
++		if (!altstack_size_ok(current))
++			return (void __user *)-1L;
 +
- extern void fpu__init_prepare_fx_sw_frame(void);
+ 		sp = sigsp(sp, ksig);
+ 	/* This is the legacy signal stack switching. */
+-	else if (regs->ss != __USER32_DS &&
++	} else if (regs->ss != __USER32_DS &&
+ 		!(ksig->ka.sa.sa_flags & SA_RESTORER) &&
+-		 ksig->ka.sa.sa_restorer)
++		 ksig->ka.sa.sa_restorer) {
+ 		sp = (unsigned long) ksig->ka.sa.sa_restorer;
++	}
  
- #endif /* _ASM_X86_FPU_SIGNAL_H */
+ 	sp = fpu__alloc_mathframe(sp, 1, &fx_aligned, &math_size);
+ 	*fpstate = (struct _fpstate_32 __user *) sp;
 diff --git a/arch/x86/include/asm/sigframe.h b/arch/x86/include/asm/sigframe.h
-index 84eab2724875..ac77f3f90bc9 100644
+index ac77f3f90bc9..c9f2f9ace76f 100644
 --- a/arch/x86/include/asm/sigframe.h
 +++ b/arch/x86/include/asm/sigframe.h
-@@ -52,6 +52,15 @@ struct rt_sigframe_ia32 {
- 	char retcode[8];
- 	/* fp state follows here */
- };
-+
-+#define SIZEOF_sigframe_ia32	sizeof(struct sigframe_ia32)
-+#define SIZEOF_rt_sigframe_ia32	sizeof(struct rt_sigframe_ia32)
-+
-+#else
-+
-+#define SIZEOF_sigframe_ia32	0
-+#define SIZEOF_rt_sigframe_ia32	0
-+
- #endif /* defined(CONFIG_X86_32) || defined(CONFIG_IA32_EMULATION) */
+@@ -106,6 +106,8 @@ struct rt_sigframe_x32 {
+ #define SIZEOF_rt_sigframe_x32	0
+ #endif
  
- #ifdef CONFIG_X86_64
-@@ -81,8 +90,22 @@ struct rt_sigframe_x32 {
- 	/* fp state follows here */
- };
++bool altstack_size_ok(struct task_struct *tsk);
++
+ void __init init_sigframe_size(void);
  
-+#define SIZEOF_rt_sigframe_x32	sizeof(struct rt_sigframe_x32)
-+
- #endif /* CONFIG_X86_X32_ABI */
- 
-+#define SIZEOF_rt_sigframe	sizeof(struct rt_sigframe)
-+
-+#else
-+
-+#define SIZEOF_rt_sigframe	0
-+
- #endif /* CONFIG_X86_64 */
- 
-+#ifndef SIZEOF_rt_sigframe_x32
-+#define SIZEOF_rt_sigframe_x32	0
-+#endif
-+
-+void __init init_sigframe_size(void);
-+
  #endif /* _ASM_X86_SIGFRAME_H */
-diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
-index c5d6f17d9b9d..d0363e15ec2e 100644
---- a/arch/x86/kernel/cpu/common.c
-+++ b/arch/x86/kernel/cpu/common.c
-@@ -57,6 +57,7 @@
- #include <asm/intel-family.h>
- #include <asm/cpu_device_id.h>
- #include <asm/uv/uv.h>
-+#include <asm/sigframe.h>
- 
- #include "cpu.h"
- 
-@@ -1276,6 +1277,8 @@ static void __init early_identify_cpu(struct cpuinfo_x86 *c)
- 
- 	fpu__init_system(c);
- 
-+	init_sigframe_size();
-+
- #ifdef CONFIG_X86_32
- 	/*
- 	 * Regardless of whether PCID is enumerated, the SDM says
-diff --git a/arch/x86/kernel/fpu/signal.c b/arch/x86/kernel/fpu/signal.c
-index a4ec65317a7f..9f009525f551 100644
---- a/arch/x86/kernel/fpu/signal.c
-+++ b/arch/x86/kernel/fpu/signal.c
-@@ -507,6 +507,26 @@ fpu__alloc_mathframe(unsigned long sp, int ia32_frame,
- 
- 	return sp;
- }
-+
-+unsigned long fpu__get_fpstate_sigframe_size(void)
-+{
-+	unsigned long xstate_size = xstate_sigframe_size();
-+	unsigned long fsave_header_size = 0;
-+
-+	/*
-+	 * This space is needed on (most) 32-bit kernels, or when a 32-bit
-+	 * app is running on a 64-bit kernel. To keep things simple, just
-+	 * assume the worst case and always include space for 'freg_state',
-+	 * even for 64-bit apps on 64-bit kernels. This wastes a bit of
-+	 * space, but keeps the code simple.
-+	 */
-+	if ((IS_ENABLED(CONFIG_IA32_EMULATION) ||
-+	     IS_ENABLED(CONFIG_X86_32)) && use_fxsr())
-+		fsave_header_size = sizeof(struct fregs_state);
-+
-+	return fsave_header_size + xstate_size;
-+}
-+
- /*
-  * Prepare the SW reserved portion of the fxsave memory layout, indicating
-  * the presence of the extended state information in the memory layout
 diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
-index be0d7d4152ec..239a0b23a4b0 100644
+index 2a313d34ec49..c042236ef52e 100644
 --- a/arch/x86/kernel/signal.c
 +++ b/arch/x86/kernel/signal.c
-@@ -663,6 +663,51 @@ SYSCALL_DEFINE0(rt_sigreturn)
- 	return 0;
+@@ -246,8 +246,13 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
+ 
+ 	/* This is the X/Open sanctioned signal stack switching.  */
+ 	if (ka->sa.sa_flags & SA_ONSTACK) {
+-		if (sas_ss_flags(sp) == 0)
++		if (sas_ss_flags(sp) == 0) {
++			/* If the altstack might overflow, die with SIGSEGV: */
++			if (!altstack_size_ok(current))
++				return (void __user *)-1L;
++
+ 			sp = current->sas_ss_sp + current->sas_ss_size;
++		}
+ 	} else if (IS_ENABLED(CONFIG_X86_32) &&
+ 		   !onsigstack &&
+ 		   regs->ss != __USER_DS &&
+@@ -713,6 +718,15 @@ unsigned long get_sigframe_size(void)
+ 	return max_frame_size;
  }
  
-+/*
-+ * The FP state frame contains an XSAVE buffer which must be 64-byte aligned.
-+ * If a signal frame starts at an unaligned address, extra space is required.
-+ * This is the max alignment padding, conservatively.
-+ */
-+#define MAX_XSAVE_PADDING	63UL
-+
-+/*
-+ * The frame data is composed of the following areas and laid out as:
-+ *
-+ * -------------------------
-+ * | alignment padding     |
-+ * -------------------------
-+ * | (f)xsave frame        |
-+ * -------------------------
-+ * | fsave header          |
-+ * -------------------------
-+ * | siginfo + ucontext    |
-+ * -------------------------
-+ */
-+
-+/* max_frame_size tells userspace the worst case signal stack size. */
-+static unsigned long __ro_after_init max_frame_size;
-+
-+void __init init_sigframe_size(void)
++bool altstack_size_ok(struct task_struct *tsk)
 +{
 +	/*
-+	 * Use the largest of possible structure formats. This might
-+	 * slightly oversize the frame for 64-bit apps.
++	 * Can this task's sigaltstack accommodate the largest
++	 * signal frame the kernel might need?
 +	 */
-+
-+	if (IS_ENABLED(CONFIG_X86_32) ||
-+	    IS_ENABLED(CONFIG_IA32_EMULATION))
-+		max_frame_size = max((unsigned long)SIZEOF_sigframe_ia32,
-+				     (unsigned long)SIZEOF_rt_sigframe_ia32);
-+
-+	if (IS_ENABLED(CONFIG_X86_X32_ABI))
-+		max_frame_size = max(max_frame_size, (unsigned long)SIZEOF_rt_sigframe_x32);
-+
-+	if (IS_ENABLED(CONFIG_X86_64))
-+		max_frame_size = max(max_frame_size, (unsigned long)SIZEOF_rt_sigframe);
-+
-+	max_frame_size += fpu__get_fpstate_sigframe_size() + MAX_XSAVE_PADDING;
++	return (tsk->sas_ss_size >= max_frame_size);
 +}
 +
  static inline int is_ia32_compat_frame(struct ksignal *ksig)
