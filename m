@@ -1,289 +1,393 @@
-Return-Path: <SRS0=FdE9=DO=vger.kernel.org=linux-api-owner@kernel.org>
+Return-Path: <SRS0=J3rg=DP=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.6 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-17.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9DA46C41604
-	for <linux-api@archiver.kernel.org>; Wed,  7 Oct 2020 17:43:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 147CBC04EBE
+	for <linux-api@archiver.kernel.org>; Thu,  8 Oct 2020 15:31:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3614521707
-	for <linux-api@archiver.kernel.org>; Wed,  7 Oct 2020 17:43:41 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jiNGfVsd"
+	by mail.kernel.org (Postfix) with ESMTP id B6E9E221EF
+	for <linux-api@archiver.kernel.org>; Thu,  8 Oct 2020 15:31:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728193AbgJGRnh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 7 Oct 2020 13:43:37 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33808 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727828AbgJGRnh (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 7 Oct 2020 13:43:37 -0400
-Received: from mail-oo1-xc43.google.com (mail-oo1-xc43.google.com [IPv6:2607:f8b0:4864:20::c43])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 69EF3C061755;
-        Wed,  7 Oct 2020 10:43:37 -0700 (PDT)
-Received: by mail-oo1-xc43.google.com with SMTP id w7so829214oow.7;
-        Wed, 07 Oct 2020 10:43:37 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=rr40AY17+JN/ccHdnYDYpYoE+EL3oWtfHYYLIZ6ISKI=;
-        b=jiNGfVsdbIVH7ct6dBucop1ZgWPgO3OoJlnYoceAGa/82d2s+oLMVvFzjiewVnqXXN
-         rif5allW3ZQ9I25wdg3wMCWGTT0TbobVGmUdsnimqCi0gMu9JM1j6rclRfEH0WxXVP1m
-         tB7ScWP07WLG9QOEnE/EuMkCyS10ciad37jGU3nDxft38JSt/Ulh7Lz7dN9dsUI17gKX
-         woggP5QeeqrKePHK4a++LMCVPkMxlQh0QHsrAgsz5lw7fMVuu5n6MP8EG8z6Dp4QLbfv
-         8rsBU4cIIU64uRMJ2vGpak49SfHWq4QD/1WcBtwCsSzsJLeskcpV621MVPNVNGv5G7Cf
-         2QTQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=rr40AY17+JN/ccHdnYDYpYoE+EL3oWtfHYYLIZ6ISKI=;
-        b=dYC1vOpqkiYAOwP9wMCRtRAle17tiaXzMy3pI97I8CU2jZli36W2E7J7xpgxUkGgZ9
-         HWAvq8iVGOJxday38PNtxDcf8iooq94+2Q/EBbOCOTYHP9eoTBs93cPGE9jN3dNenxcP
-         7YnBFBFQyTL1usaUeW80P/+xRxlUXtznlKL8RHkypc0b8f6jy/jFJylTLkBLMP3WKI0u
-         ncmOUsB1ZZUI3IvVhWrNO14iM/ovb/Dy0Wh9ZkmPEFf078cCF9eKGqaXV7sKrKWAdw3m
-         osytaJ9Bn7Uu/cThNpIfh5C0QnLj3o8B1ONpgyi10/7cao9sGGHQCWfTt0RBgGK+KOQw
-         MHMQ==
-X-Gm-Message-State: AOAM532jrDBFzFZFrNV8n7cgV4BJrIs/Ttm4Fqp/9oOACGpAS0u/ZvEP
-        TwuDtgxkndSdFLmREQTe1DCh2OgrUZIyATbXUbA=
-X-Google-Smtp-Source: ABdhPJzWMVzGqR5SxyUc86nVDzuxbj/uZppqxB/TRkQD4b0cE2CbMgcvq5u2gDDqnO15qQxtBZjZImNvNE0ffWyvl2Q=
-X-Received: by 2002:a4a:d40c:: with SMTP id n12mr2801524oos.35.1602092616732;
- Wed, 07 Oct 2020 10:43:36 -0700 (PDT)
+        id S1731026AbgJHPbR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 8 Oct 2020 11:31:17 -0400
+Received: from smtp-bc09.mail.infomaniak.ch ([45.157.188.9]:45991 "EHLO
+        smtp-bc09.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1731086AbgJHPbN (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 8 Oct 2020 11:31:13 -0400
+Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4C6Zt61n5fzlhXm9;
+        Thu,  8 Oct 2020 17:31:10 +0200 (CEST)
+Received: from localhost (unknown [94.23.54.103])
+        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4C6Zt55z1Dzlh8TP;
+        Thu,  8 Oct 2020 17:31:09 +0200 (CEST)
+From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
+To:     linux-kernel@vger.kernel.org, James Morris <jmorris@namei.org>,
+        "Serge E . Hallyn" <serge@hallyn.com>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Richard Weinberger <richard@nod.at>
+Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
+        Andy Lutomirski <luto@amacapital.net>,
+        Anton Ivanov <anton.ivanov@cambridgegreys.com>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Casey Schaufler <casey@schaufler-ca.com>,
+        Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Michael Kerrisk <mtk.manpages@gmail.com>,
+        Shuah Khan <shuah@kernel.org>,
+        Vincent Dagonneau <vincent.dagonneau@ssi.gouv.fr>,
+        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
+        linux-arch@vger.kernel.org, linux-doc@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org, linux-kselftest@vger.kernel.org,
+        linux-security-module@vger.kernel.org, x86@kernel.org,
+        =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@linux.microsoft.com>
+Subject: [PATCH v21 01/12] landlock: Add object management
+Date:   Thu,  8 Oct 2020 17:30:52 +0200
+Message-Id: <20201008153103.1155388-2-mic@digikod.net>
+X-Mailer: git-send-email 2.28.0
+In-Reply-To: <20201008153103.1155388-1-mic@digikod.net>
+References: <20201008153103.1155388-1-mic@digikod.net>
 MIME-Version: 1.0
-References: <20201005134534.GT6642@arm.com> <CAMe9rOpZm43aDG3UJeaioU32zSYdTxQ=ZyZuSS4u0zjbs9RoKw@mail.gmail.com>
- <20201006092532.GU6642@arm.com> <CAMe9rOq_nKa6xjHju3kVZephTiO+jEW3PqxgAhU9+RdLTo-jgg@mail.gmail.com>
- <20201006152553.GY6642@arm.com> <CAMe9rOpQiPUZMjysPqtyFfmGDtfRapUvzfMOk7X14xZFSQ66Aw@mail.gmail.com>
- <20201006165520.GA6642@arm.com> <CAMe9rOoY5T61uYCXMcEaKxL7NURDpACJ+0rF47HFmosYOvA2aA@mail.gmail.com>
- <20201007104720.GH6642@arm.com> <CAMe9rOq7yoAwT=+JR4nk4yWMGeXza9490YgJYNp4FKfkJRJxtQ@mail.gmail.com>
- <20201007154559.GI6642@arm.com>
-In-Reply-To: <20201007154559.GI6642@arm.com>
-From:   "H.J. Lu" <hjl.tools@gmail.com>
-Date:   Wed, 7 Oct 2020 10:43:00 -0700
-Message-ID: <CAMe9rOrkeZ7vPvYG6Uf9VX-_V1yaQWm0N7BV_WzL3Pjg52QEOA@mail.gmail.com>
-Subject: Re: [RFC PATCH 0/4] x86: Improve Minimum Alternate Stack Size
-To:     Dave Martin <Dave.Martin@arm.com>
-Cc:     "Chang S. Bae" <chang.seok.bae@intel.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@kernel.org>, Borislav Petkov <bp@suse.de>,
-        Andy Lutomirski <luto@kernel.org>,
-        "the arch/x86 maintainers" <x86@kernel.org>,
-        Len Brown <len.brown@intel.com>,
-        Dave Hansen <dave.hansen@intel.com>,
-        Michael Ellerman <mpe@ellerman.id.au>,
-        Tony Luck <tony.luck@intel.com>,
-        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
-        GNU C Library <libc-alpha@sourceware.org>,
-        linux-arch <linux-arch@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Oct 7, 2020 at 8:46 AM Dave Martin <Dave.Martin@arm.com> wrote:
->
-> On Wed, Oct 07, 2020 at 06:30:03AM -0700, H.J. Lu wrote:
-> > On Wed, Oct 7, 2020 at 3:47 AM Dave Martin <Dave.Martin@arm.com> wrote:
-> > >
-> > > On Tue, Oct 06, 2020 at 10:44:14AM -0700, H.J. Lu wrote:
->
-> [...]
->
-> > > > I updated my glibc patch to add both _SC_MINSIGSTKSZ and _SC_SIGSTKSZ.
-> > > > _SC_MINSIGSTKSZ is  the minimum signal stack size from AT_MINSIGSTKSZ,
-> > > > which is the signal frame size used by kernel, and _SC_SIGSTKSZ is the value
-> > > > of sysconf (_SC_MINSIGSTKSZ) + 6KB for user application.
-> > >
-> > > Can I suggest sysconf (_SC_MINSIGSTKSZ) * 4 instead?
-> >
-> > Done.
->
-> OK.  I was prepared to have to argue my case a bit more, but if you
-> think this is OK then I will stop arguing ;)
->
->
-> > > If the arch has more or bigger registers to save in the signal frame,
-> > > the chances are that they're going to get saved in some userspace stack
-> > > frames too.  So I suspect that the user signal handler stack usage may
-> > > scale up to some extent rather than being a constant.
-> > >
-> > >
-> > > To help people migrate without unpleasant surprises, I also figured it
-> > > would be a good idea to make sure that sysconf (_SC_MINSIGSTKSZ) >=
-> > > legacy MINSIGSTKSZ, and sysconf (_SC_SIGSTKSZ) >= legacy SIGSTKSZ.
-> > > This should makes it safer to use sysconf (_SC_MINSIGSTKSZ) as a
-> > > drop-in replacement for MINSIGSTKSZ, etc.
-> > >
-> > > (To explain: AT_MINSIGSTKSZ may actually be < MINSIGSTKSZ on AArch64.
-> > > My idea was that sysconf () should hide this surprise, but people who
-> > > really want to know the kernel value would tolerate some
-> > > nonportability and read AT_MINSIGSTKSZ directly.)
-> > >
-> > >
-> > > So then:
-> > >
-> > >         kernel_minsigstksz = getauxval(AT_MINSIGSTKSZ);
-> > >         minsigstksz = LEGACY_MINSIGSTKSZ;
-> > >         if (kernel_minsigstksz > minsigstksz)
-> > >                 minsistksz = kernel_minsigstksz;
-> > >
-> > >         sigstksz = LEGACY_SIGSTKSZ;
-> > >         if (minsigstksz * 4 > sigstksz)
-> > >                 sigstksz = minsigstksz * 4;
-> >
-> > I updated users/hjl/AT_MINSIGSTKSZ branch with
-> >
-> > +@item _SC_MINSIGSTKSZ
-> > +@standards{GNU, unistd.h}
->
-> Can we specify these more agressively now?
->
-> > +Inquire about the signal stack size used by the kernel.
->
-> I think we've already concluded that this should included all mandatory
-> overheads, including those imposed by the compiler and glibc?
->
-> e.g.:
->
-> --8<--
->
-> The returned value is the minimum number of bytes of free stack space
-> required in order to gurantee successful, non-nested handling of a
-> single signal whose handler is an empty function.
->
-> -->8--
->
-> > +
-> > +@item _SC_SIGSTKSZ
-> > +@standards{GNU, unistd.h}
-> > +Inquire about the default signal stack size for a signal handler.
->
-> Similarly:
->
-> --8<--
->
-> The returned value is the suggested minimum number of bytes of stack
-> space required for a signal stack.
->
-> This is not guaranteed to be enough for any specific purpose other than
-> the invocation of a single, non-nested, empty handler, but nonetheless
-> should be enough for basic scenarios involving simple signal handlers
-> and very low levels of signal nesting (say, 2 or 3 levels at the very
-> most).
->
-> This value is provided for developer convenience and to ease migration
-> from the legacy SIGSTKSZ constant.  Programs requiring stronger
-> guarantees should avoid using it if at all possible.
->
-> -->8--
+From: Mickaël Salaün <mic@linux.microsoft.com>
 
-Done.
+A Landlock object enables to identify a kernel object (e.g. an inode).
+A Landlock rule is a set of access rights allowed on an object.  Rules
+are grouped in rulesets that may be tied to a set of processes (i.e.
+subjects) to enforce a scoped access-control (i.e. a domain).
 
->
-> If these descriptions are too wordy, we might want to move some of it
-> out to signal.texi, though.
->
-> >
-> >     case _SC_MINSIGSTKSZ:
-> >       assert (GLRO(dl_minsigstacksize) != 0);
-> >       return GLRO(dl_minsigstacksize);
-> >
-> >     case _SC_SIGSTKSZ:
-> >       {
-> >         /* Return MAX (MINSIGSTKSZ, sysconf (_SC_MINSIGSTKSZ)) * 4.  */
-> >         long int minsigstacksize = GLRO(dl_minsigstacksize);
-> >         _Static_assert (__builtin_constant_p (MINSIGSTKSZ),
-> >                         "MINSIGSTKSZ is constant");
-> >         if (minsigstacksize < MINSIGSTKSZ)
-> >           minsigstacksize = MINSIGSTKSZ;
-> >         return minsigstacksize * 4;
-> >       }
-> >
-> > >
-> > > (Or something like that, unless the architecture provides its own
-> > > definitions.  ia64's MINSIGSTKSZ is enormous, so it probably doesn't
-> > > want this.)
-> > >
-> > >
-> > > Also: should all these values be rounded up to a multiple of the
-> > > architecture's preferred stack alignment?
-> >
-> > Kernel should provide a properly aligned AT_MINSIGSTKSZ.
->
-> OK.  Can you comment on Chang S. Bae's series?  I wasn't sure that the
-> proposal produces an aligned value for AT_MINSIGSTKSZ on x86, but maybe
-> I just worked it out wrong.
+Because Landlock's goal is to empower any process (especially
+unprivileged ones) to sandbox themselves, we can't rely on a system-wide
+object identification such as file extended attributes.  Indeed, we need
+innocuous, composable and modular access-controls.
 
-In Linux kernel, the signal frame data is composed of the following areas
-and laid out as:
-     ------------------------------
-     | alignment padding          |
-     ------------------------------
-     | xsave buffer               |  <<<<<<< This must be 64 byte aligned
-     ------------------------------
-     | fsave header (32-bit only) |
-     ------------------------------
-     | siginfo + ucontext         |
-     ------------------------------
+The main challenge with these constraints is to identify kernel objects
+while this identification is useful (i.e. when a security policy makes
+use of this object).  But this identification data should be freed once
+no policy is using it.  This ephemeral tagging should not and may not be
+written in the filesystem.  We then need to manage the lifetime of a
+rule according to the lifetime of its object.  To avoid a global lock,
+this implementation make use of RCU and counters to safely reference
+objects.
 
-In order to get the proper alignment for xsave buffer, the signal stake
-size should be rounded up to 64 byte aligned.  In glibc, I have
+A following commit uses this generic object management for inodes.
 
- /* Size of xsave buffer.  */
-  unsigned int sigframe_size = ebx;
-if (64 bit)
-  /* NB: sizeof(struct rt_sigframe) in Linux kernel.  */
-  sigframe_size += 440;
-else
-  /* NB: sizeof(struct sigframe_ia32) + sizeof(struct fregs_state)) in
-     Linux kernel.  */
-  sigframe_size += 736 + 112;
-endif
+Cc: James Morris <jmorris@namei.org>
+Cc: Jann Horn <jannh@google.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Serge E. Hallyn <serge@hallyn.com>
+Signed-off-by: Mickaël Salaün <mic@linux.microsoft.com>
+---
 
-  /* Round up to 64-byte aligned.  */
-  sigframe_size = ALIGN_UP (sigframe_size, 64);
+Changes since v18:
+* Account objects to kmemcg.
 
-  GLRO(dl_minsigstacksize) = sigframe_size;
+Changes since v14:
+* Simplify the object, rule and ruleset management at the expense of a
+  less aggressive memory freeing (contributed by Jann Horn, with
+  additional modifications):
+  - Remove object->list aggregating the rules tied to an object.
+  - Remove landlock_get_object(), landlock_drop_object(),
+    {get,put}_object_cleaner() and landlock_rule_is_disabled().
+  - Rewrite landlock_put_object() to use a more simple mechanism
+    (no tricky RCU).
+  - Replace enum landlock_object_type and landlock_release_object() with
+    landlock_object_underops->release()
+  - Adjust unions and Sparse annotations.
+  Cf. https://lore.kernel.org/lkml/CAG48ez21bEn0wL1bbmTiiu8j9jP5iEWtHOwz4tURUJ+ki0ydYw@mail.gmail.com/
+* Merge struct landlock_rule into landlock_ruleset_elem to simplify the
+  rule management.
+* Constify variables.
+* Improve kernel documentation.
+* Cosmetic variable renames.
+* Remove the "default" in the Kconfig (suggested by Jann Horn).
+* Only use refcount_inc() through getter helpers.
+* Update Kconfig description.
 
-Kernel should do something similar.
+Changes since v13:
+* New dedicated implementation, removing the need for eBPF.
 
->
-> > > Should the preferred stack alignment also be exposed through sysconf?
-> > > Portable code otherwise has no way to know this, though if the
-> > > preferred alignment is <= the minimum malloc()/alloca() alignment then
-> > > this is generally not an issue.)
-> >
-> > Good question.  But it is orthogonal to the signal stack size issue.
->
-> Ack.
->
-> There are various other brokennesses around this area, such as the fact
-> that the register data may now run off the end of the mcontext_t object
-> that is supposed to contain it.  Ideally we should fork ucontext_t or
-> mcontext_t into two types, one for the ucontext API and one for the
-> signal API (which are anyway highly incompatible with each other).
->
-> If this stuff is addressed, I guess we could bundle it under a more
-> general feature test macro.  But it's probably best to nail down this
-> series in something like its current form first.
+Previous changes:
+https://lore.kernel.org/lkml/20190721213116.23476-6-mic@digikod.net/
+---
+ MAINTAINERS                | 10 +++++
+ security/Kconfig           |  1 +
+ security/Makefile          |  2 +
+ security/landlock/Kconfig  | 18 ++++++++
+ security/landlock/Makefile |  3 ++
+ security/landlock/object.c | 66 +++++++++++++++++++++++++++
+ security/landlock/object.h | 91 ++++++++++++++++++++++++++++++++++++++
+ 7 files changed, 191 insertions(+)
+ create mode 100644 security/landlock/Kconfig
+ create mode 100644 security/landlock/Makefile
+ create mode 100644 security/landlock/object.c
+ create mode 100644 security/landlock/object.h
 
-Agreed.
-
->
-> I'll follow up on libc-alpha with a wishlist, but that will be a
-> separate conversation...
->
-> [...]
->
-> Cheers
-> ---Dave
-
-
-
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 33b27e62ce19..40b0ad2b101e 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -9763,6 +9763,16 @@ F:	net/core/sock_map.c
+ F:	net/ipv4/tcp_bpf.c
+ F:	net/ipv4/udp_bpf.c
+ 
++LANDLOCK SECURITY MODULE
++M:	Mickaël Salaün <mic@digikod.net>
++L:	linux-security-module@vger.kernel.org
++S:	Supported
++W:	https://landlock.io
++T:	git https://github.com/landlock-lsm/linux.git
++F:	security/landlock/
++K:	landlock
++K:	LANDLOCK
++
+ LANTIQ / INTEL Ethernet drivers
+ M:	Hauke Mehrtens <hauke@hauke-m.de>
+ L:	netdev@vger.kernel.org
+diff --git a/security/Kconfig b/security/Kconfig
+index 7561f6f99f1d..15a4342b5d01 100644
+--- a/security/Kconfig
++++ b/security/Kconfig
+@@ -238,6 +238,7 @@ source "security/loadpin/Kconfig"
+ source "security/yama/Kconfig"
+ source "security/safesetid/Kconfig"
+ source "security/lockdown/Kconfig"
++source "security/landlock/Kconfig"
+ 
+ source "security/integrity/Kconfig"
+ 
+diff --git a/security/Makefile b/security/Makefile
+index 3baf435de541..c688f4907a1b 100644
+--- a/security/Makefile
++++ b/security/Makefile
+@@ -13,6 +13,7 @@ subdir-$(CONFIG_SECURITY_LOADPIN)	+= loadpin
+ subdir-$(CONFIG_SECURITY_SAFESETID)    += safesetid
+ subdir-$(CONFIG_SECURITY_LOCKDOWN_LSM)	+= lockdown
+ subdir-$(CONFIG_BPF_LSM)		+= bpf
++subdir-$(CONFIG_SECURITY_LANDLOCK)		+= landlock
+ 
+ # always enable default capabilities
+ obj-y					+= commoncap.o
+@@ -32,6 +33,7 @@ obj-$(CONFIG_SECURITY_SAFESETID)       += safesetid/
+ obj-$(CONFIG_SECURITY_LOCKDOWN_LSM)	+= lockdown/
+ obj-$(CONFIG_CGROUPS)			+= device_cgroup.o
+ obj-$(CONFIG_BPF_LSM)			+= bpf/
++obj-$(CONFIG_SECURITY_LANDLOCK)	+= landlock/
+ 
+ # Object integrity file lists
+ subdir-$(CONFIG_INTEGRITY)		+= integrity
+diff --git a/security/landlock/Kconfig b/security/landlock/Kconfig
+new file mode 100644
+index 000000000000..9ec7593a534a
+--- /dev/null
++++ b/security/landlock/Kconfig
+@@ -0,0 +1,18 @@
++# SPDX-License-Identifier: GPL-2.0-only
++
++config SECURITY_LANDLOCK
++	bool "Landlock support"
++	depends on SECURITY
++	select SECURITY_PATH
++	help
++	  Landlock is a safe sandboxing mechanism which enables processes to
++	  restrict themselves (and their future children) by gradually
++	  enforcing tailored access control policies.  A security policy is a
++	  set of access rights (e.g. open a file in read-only, make a
++	  directory) tied to a file hierarchy.  The configuration can be set by
++	  any processes, including unprivileged ones, thanks to the landlock()
++	  system call.
++
++	  See Documentation/security/landlock/ for further information.
++
++	  If you are unsure how to answer this question, answer N.
+diff --git a/security/landlock/Makefile b/security/landlock/Makefile
+new file mode 100644
+index 000000000000..cb6deefbf4c0
+--- /dev/null
++++ b/security/landlock/Makefile
+@@ -0,0 +1,3 @@
++obj-$(CONFIG_SECURITY_LANDLOCK) := landlock.o
++
++landlock-y := object.o
+diff --git a/security/landlock/object.c b/security/landlock/object.c
+new file mode 100644
+index 000000000000..67937650885b
+--- /dev/null
++++ b/security/landlock/object.c
+@@ -0,0 +1,66 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Landlock LSM - Object management
++ *
++ * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
++ * Copyright © 2018-2020 ANSSI
++ */
++
++#include <linux/bug.h>
++#include <linux/compiler_types.h>
++#include <linux/kernel.h>
++#include <linux/rcupdate.h>
++#include <linux/refcount.h>
++#include <linux/slab.h>
++#include <linux/spinlock.h>
++
++#include "object.h"
++
++struct landlock_object *landlock_create_object(
++		const struct landlock_object_underops *underops,
++		void *const underobj)
++{
++	struct landlock_object *new_object;
++
++	if (WARN_ON_ONCE(!underops || !underobj))
++		return NULL;
++	new_object = kzalloc(sizeof(*new_object), GFP_KERNEL_ACCOUNT);
++	if (!new_object)
++		return NULL;
++	refcount_set(&new_object->usage, 1);
++	spin_lock_init(&new_object->lock);
++	new_object->underops = underops;
++	new_object->underobj = underobj;
++	return new_object;
++}
++
++/*
++ * The caller must own the object (i.e. thanks to object->usage) to safely put
++ * it.
++ */
++void landlock_put_object(struct landlock_object *const object)
++{
++	/*
++	 * The call to @object->underops->release(object) might sleep e.g.,
++	 * because of iput().
++	 */
++	might_sleep();
++	if (!object)
++		return;
++
++	/*
++	 * If the @object's refcount can't drop to zero, we can just decrement
++	 * the refcount without holding a lock. Otherwise, the decrement must
++	 * happen under @object->lock for synchronization with things like
++	 * get_inode_object().
++	 */
++	if (refcount_dec_and_lock(&object->usage, &object->lock)) {
++		__acquire(&object->lock);
++		/*
++		 * With @object->lock initially held, remove the reference from
++		 * @object->underobj to @object (if it still exists).
++		 */
++		object->underops->release(object);
++		kfree_rcu(object, rcu_free);
++	}
++}
+diff --git a/security/landlock/object.h b/security/landlock/object.h
+new file mode 100644
+index 000000000000..942bc0e18064
+--- /dev/null
++++ b/security/landlock/object.h
+@@ -0,0 +1,91 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Landlock LSM - Object management
++ *
++ * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
++ * Copyright © 2018-2020 ANSSI
++ */
++
++#ifndef _SECURITY_LANDLOCK_OBJECT_H
++#define _SECURITY_LANDLOCK_OBJECT_H
++
++#include <linux/compiler_types.h>
++#include <linux/refcount.h>
++#include <linux/spinlock.h>
++
++struct landlock_object;
++
++/**
++ * struct landlock_object_underops - Operations on an underlying object
++ */
++struct landlock_object_underops {
++	/**
++	 * @release: Releases the underlying object (e.g. iput() for an inode).
++	 */
++	void (*release)(struct landlock_object *const object)
++		__releases(object->lock);
++};
++
++/**
++ * struct landlock_object - Security blob tied to a kernel object
++ *
++ * The goal of this structure is to enable to tie a set of ephemeral access
++ * rights (pertaining to different domains) to a kernel object (e.g an inode)
++ * in a safe way.  This imply to handle concurrent use and modification.
++ *
++ * The lifetime of a &struct landlock_object depends of the rules referring to
++ * it.
++ */
++struct landlock_object {
++	/**
++	 * @usage: This counter is used to tie an object to the rules matching
++	 * it or to keep it alive while adding a new rule.  If this counter
++	 * reaches zero, this struct must not be modified, but this counter can
++	 * still be read from within an RCU read-side critical section.  When
++	 * adding a new rule to an object with a usage counter of zero, we must
++	 * wait until the pointer to this object is set to NULL (or recycled).
++	 */
++	refcount_t usage;
++	/**
++	 * @lock: Guards against concurrent modifications.  This lock must be
++	 * from the time @usage drops to zero until any weak references from
++	 * @underobj to this object have been cleaned up.
++	 *
++	 * Lock ordering: inode->i_lock nests inside this.
++	 */
++	spinlock_t lock;
++	/**
++	 * @underobj: Used when cleaning up an object and to mark an object as
++	 * tied to its underlying kernel structure.  This pointer is protected
++	 * by @lock.  Cf. landlock_release_inodes() and release_inode().
++	 */
++	void *underobj;
++	union {
++		/**
++		 * @rcu_free: Enables lockless use of @usage, @lock and
++		 * @underobj from within an RCU read-side critical section.
++		 * @rcu_free and @underops are only used by
++		 * landlock_put_object().
++		 */
++		struct rcu_head rcu_free;
++		/**
++		 * @underops: Enables landlock_put_object() to release the
++		 * underlying object (e.g. inode).
++		 */
++		const struct landlock_object_underops *underops;
++	};
++};
++
++struct landlock_object *landlock_create_object(
++		const struct landlock_object_underops *const underops,
++		void *const underojb);
++
++void landlock_put_object(struct landlock_object *const object);
++
++static inline void landlock_get_object(struct landlock_object *const object)
++{
++	if (object)
++		refcount_inc(&object->usage);
++}
++
++#endif /* _SECURITY_LANDLOCK_OBJECT_H */
 -- 
-H.J.
+2.28.0
+
