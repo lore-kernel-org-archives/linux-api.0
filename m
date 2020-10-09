@@ -4,36 +4,36 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4C6D6C4363D
-	for <linux-api@archiver.kernel.org>; Fri,  9 Oct 2020 18:34:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 106B7C4363A
+	for <linux-api@archiver.kernel.org>; Fri,  9 Oct 2020 18:34:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 151E422363
-	for <linux-api@archiver.kernel.org>; Fri,  9 Oct 2020 18:34:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C461E22284
+	for <linux-api@archiver.kernel.org>; Fri,  9 Oct 2020 18:34:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2390590AbgJISeY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 9 Oct 2020 14:34:24 -0400
+        id S2390624AbgJISep (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 9 Oct 2020 14:34:45 -0400
 Received: from mga14.intel.com ([192.55.52.115]:9530 "EHLO mga14.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2390453AbgJISdO (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 9 Oct 2020 14:33:14 -0400
-IronPort-SDR: UNwsjjPqlFLitJi2bRv29BAHR442T/IVSoBL4+8iNcIihJ2h9vkLgksSMTv1rPAyeUH5jj87qN
- 5e85/jSQlSdA==
-X-IronPort-AV: E=McAfee;i="6000,8403,9769"; a="164736600"
+        id S2390451AbgJISdN (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 9 Oct 2020 14:33:13 -0400
+IronPort-SDR: r4EECIXLMLO4633Z3RH2rw1MGkx9Is79jApORYbULDuo17GcDVV3uX/WWo3l9/xbMz6XlrwG2c
+ PZEKgFZJX65Q==
+X-IronPort-AV: E=McAfee;i="6000,8403,9769"; a="164736596"
 X-IronPort-AV: E=Sophos;i="5.77,355,1596524400"; 
-   d="scan'208";a="164736600"
+   d="scan'208";a="164736596"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Oct 2020 11:33:13 -0700
-IronPort-SDR: xRi/Ix4/li5FeqCIhxbfZVk9oqsLgG8ak+XgiiuRR//88BtnPwC1MeqjLh2e2g048gOyET70Mc
- MwfO1+IWcmmA==
+  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Oct 2020 11:33:12 -0700
+IronPort-SDR: vkpIhFwYaXZu40VveZiiSORQdIKVqGnxs1BvvEwkplNHapf9knDSM56bcasiVEBhrXz3csfcVU
+ 8wv6+ZtUJyHQ==
 X-IronPort-AV: E=Sophos;i="5.77,355,1596524400"; 
-   d="scan'208";a="529031129"
+   d="scan'208";a="529031116"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Oct 2020 11:33:13 -0700
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Oct 2020 11:33:11 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,11 +61,10 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        Dave Hansen <dave.hansen@intel.com>
-Subject: [PATCH v14 06/26] x86/mm: Change _PAGE_DIRTY to _PAGE_DIRTY_HW
-Date:   Fri,  9 Oct 2020 11:32:10 -0700
-Message-Id: <20201009183230.26717-7-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v14 04/26] x86/cet: Add control-protection fault handler
+Date:   Fri,  9 Oct 2020 11:32:08 -0700
+Message-Id: <20201009183230.26717-5-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20201009183230.26717-1-yu-cheng.yu@intel.com>
 References: <20201009183230.26717-1-yu-cheng.yu@intel.com>
@@ -75,195 +74,162 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Before introducing _PAGE_COW for non-hardware memory management purposes in
-the next patch, rename _PAGE_DIRTY to _PAGE_DIRTY_HW and _PAGE_BIT_DIRTY to
-_PAGE_BIT_DIRTY_HW to make meanings more clear.  There are no functional
-changes from this patch.
+A control-protection fault is triggered when a control-flow transfer
+attempt violates Shadow Stack or Indirect Branch Tracking constraints.
+For example, the return address for a RET instruction differs from the copy
+on the Shadow Stack; or an indirect JMP instruction, without the NOTRACK
+prefix, arrives at a non-ENDBR opcode.
+
+The control-protection fault handler works in a similar way as the general
+protection fault handler.  It provides the si_code SEGV_CPERR to the signal
+handler.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
-Reviewed-by: Dave Hansen <dave.hansen@intel.com>
+
+v13:
+- Change X86_INTEL_* to X86_*.
+
+v10:
+- Change CONFIG_X86_64 to CONFIG_X86_INTEL_CET.
 
 v9:
-- At some places _PAGE_DIRTY were not changed to _PAGE_DIRTY_HW, because
-  they will be changed again in the next patch to _PAGE_DIRTY_BITS.
-  However, this causes compile issues if the next patch is not yet applied.
-  Fix it by changing all _PAGE_DIRTY to _PAGE_DRITY_HW.
+- Add Shadow Stack pointer to the fault printout.
 ---
- arch/x86/include/asm/pgtable.h       | 18 +++++++++---------
- arch/x86/include/asm/pgtable_types.h | 11 +++++------
- arch/x86/kernel/relocate_kernel_64.S |  2 +-
- arch/x86/kvm/vmx/vmx.c               |  2 +-
- 4 files changed, 16 insertions(+), 17 deletions(-)
+ arch/x86/include/asm/idtentry.h    |  4 ++
+ arch/x86/kernel/idt.c              |  4 ++
+ arch/x86/kernel/signal_compat.c    |  2 +-
+ arch/x86/kernel/traps.c            | 59 ++++++++++++++++++++++++++++++
+ include/uapi/asm-generic/siginfo.h |  3 +-
+ 5 files changed, 70 insertions(+), 2 deletions(-)
 
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index b836138ce852..86b7acd221c1 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -124,7 +124,7 @@ extern pmdval_t early_pmd_flags;
-  */
- static inline int pte_dirty(pte_t pte)
- {
--	return pte_flags(pte) & _PAGE_DIRTY;
-+	return pte_flags(pte) & _PAGE_DIRTY_HW;
- }
+diff --git a/arch/x86/include/asm/idtentry.h b/arch/x86/include/asm/idtentry.h
+index a0638640f1ed..3130a6ec0a2a 100644
+--- a/arch/x86/include/asm/idtentry.h
++++ b/arch/x86/include/asm/idtentry.h
+@@ -532,6 +532,10 @@ DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_SS,	exc_stack_segment);
+ DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_GP,	exc_general_protection);
+ DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_AC,	exc_alignment_check);
  
- 
-@@ -163,7 +163,7 @@ static inline int pte_young(pte_t pte)
- 
- static inline int pmd_dirty(pmd_t pmd)
- {
--	return pmd_flags(pmd) & _PAGE_DIRTY;
-+	return pmd_flags(pmd) & _PAGE_DIRTY_HW;
- }
- 
- static inline int pmd_young(pmd_t pmd)
-@@ -173,7 +173,7 @@ static inline int pmd_young(pmd_t pmd)
- 
- static inline int pud_dirty(pud_t pud)
- {
--	return pud_flags(pud) & _PAGE_DIRTY;
-+	return pud_flags(pud) & _PAGE_DIRTY_HW;
- }
- 
- static inline int pud_young(pud_t pud)
-@@ -334,7 +334,7 @@ static inline pte_t pte_clear_uffd_wp(pte_t pte)
- 
- static inline pte_t pte_mkclean(pte_t pte)
- {
--	return pte_clear_flags(pte, _PAGE_DIRTY);
-+	return pte_clear_flags(pte, _PAGE_DIRTY_HW);
- }
- 
- static inline pte_t pte_mkold(pte_t pte)
-@@ -354,7 +354,7 @@ static inline pte_t pte_mkexec(pte_t pte)
- 
- static inline pte_t pte_mkdirty(pte_t pte)
- {
--	return pte_set_flags(pte, _PAGE_DIRTY | _PAGE_SOFT_DIRTY);
-+	return pte_set_flags(pte, _PAGE_DIRTY_HW | _PAGE_SOFT_DIRTY);
- }
- 
- static inline pte_t pte_mkyoung(pte_t pte)
-@@ -435,7 +435,7 @@ static inline pmd_t pmd_mkold(pmd_t pmd)
- 
- static inline pmd_t pmd_mkclean(pmd_t pmd)
- {
--	return pmd_clear_flags(pmd, _PAGE_DIRTY);
-+	return pmd_clear_flags(pmd, _PAGE_DIRTY_HW);
- }
- 
- static inline pmd_t pmd_wrprotect(pmd_t pmd)
-@@ -445,7 +445,7 @@ static inline pmd_t pmd_wrprotect(pmd_t pmd)
- 
- static inline pmd_t pmd_mkdirty(pmd_t pmd)
- {
--	return pmd_set_flags(pmd, _PAGE_DIRTY | _PAGE_SOFT_DIRTY);
-+	return pmd_set_flags(pmd, _PAGE_DIRTY_HW | _PAGE_SOFT_DIRTY);
- }
- 
- static inline pmd_t pmd_mkdevmap(pmd_t pmd)
-@@ -489,7 +489,7 @@ static inline pud_t pud_mkold(pud_t pud)
- 
- static inline pud_t pud_mkclean(pud_t pud)
- {
--	return pud_clear_flags(pud, _PAGE_DIRTY);
-+	return pud_clear_flags(pud, _PAGE_DIRTY_HW);
- }
- 
- static inline pud_t pud_wrprotect(pud_t pud)
-@@ -499,7 +499,7 @@ static inline pud_t pud_wrprotect(pud_t pud)
- 
- static inline pud_t pud_mkdirty(pud_t pud)
- {
--	return pud_set_flags(pud, _PAGE_DIRTY | _PAGE_SOFT_DIRTY);
-+	return pud_set_flags(pud, _PAGE_DIRTY_HW | _PAGE_SOFT_DIRTY);
- }
- 
- static inline pud_t pud_mkdevmap(pud_t pud)
-diff --git a/arch/x86/include/asm/pgtable_types.h b/arch/x86/include/asm/pgtable_types.h
-index 816b31c68550..192e1326b3db 100644
---- a/arch/x86/include/asm/pgtable_types.h
-+++ b/arch/x86/include/asm/pgtable_types.h
-@@ -15,7 +15,7 @@
- #define _PAGE_BIT_PWT		3	/* page write through */
- #define _PAGE_BIT_PCD		4	/* page cache disabled */
- #define _PAGE_BIT_ACCESSED	5	/* was accessed (raised by CPU) */
--#define _PAGE_BIT_DIRTY		6	/* was written to (raised by CPU) */
-+#define _PAGE_BIT_DIRTY_HW	6	/* was written to (raised by CPU) */
- #define _PAGE_BIT_PSE		7	/* 4 MB (or 2MB) page */
- #define _PAGE_BIT_PAT		7	/* on 4KB pages */
- #define _PAGE_BIT_GLOBAL	8	/* Global TLB entry PPro+ */
-@@ -46,7 +46,7 @@
- #define _PAGE_PWT	(_AT(pteval_t, 1) << _PAGE_BIT_PWT)
- #define _PAGE_PCD	(_AT(pteval_t, 1) << _PAGE_BIT_PCD)
- #define _PAGE_ACCESSED	(_AT(pteval_t, 1) << _PAGE_BIT_ACCESSED)
--#define _PAGE_DIRTY	(_AT(pteval_t, 1) << _PAGE_BIT_DIRTY)
-+#define _PAGE_DIRTY_HW	(_AT(pteval_t, 1) << _PAGE_BIT_DIRTY_HW)
- #define _PAGE_PSE	(_AT(pteval_t, 1) << _PAGE_BIT_PSE)
- #define _PAGE_GLOBAL	(_AT(pteval_t, 1) << _PAGE_BIT_GLOBAL)
- #define _PAGE_SOFTW1	(_AT(pteval_t, 1) << _PAGE_BIT_SOFTW1)
-@@ -74,7 +74,7 @@
- 			 _PAGE_PKEY_BIT3)
- 
- #if defined(CONFIG_X86_64) || defined(CONFIG_X86_PAE)
--#define _PAGE_KNL_ERRATUM_MASK (_PAGE_DIRTY | _PAGE_ACCESSED)
-+#define _PAGE_KNL_ERRATUM_MASK (_PAGE_DIRTY_HW | _PAGE_ACCESSED)
- #else
- #define _PAGE_KNL_ERRATUM_MASK 0
++#ifdef CONFIG_X86_CET
++DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_CP, exc_control_protection);
++#endif
++
+ /* Raw exception entries which need extra work */
+ DECLARE_IDTENTRY_RAW(X86_TRAP_UD,		exc_invalid_op);
+ DECLARE_IDTENTRY_RAW(X86_TRAP_BP,		exc_int3);
+diff --git a/arch/x86/kernel/idt.c b/arch/x86/kernel/idt.c
+index 7ecf9babf0cb..34f2a7383d5d 100644
+--- a/arch/x86/kernel/idt.c
++++ b/arch/x86/kernel/idt.c
+@@ -112,6 +112,10 @@ static const __initconst struct idt_data def_idts[] = {
+ #elif defined(CONFIG_X86_32)
+ 	SYSG(IA32_SYSCALL_VECTOR,	entry_INT80_32),
  #endif
-@@ -126,7 +126,7 @@
-  * pte_modify() does modify it.
-  */
- #define _PAGE_CHG_MASK	(PTE_PFN_MASK | _PAGE_PCD | _PAGE_PWT |		\
--			 _PAGE_SPECIAL | _PAGE_ACCESSED | _PAGE_DIRTY |	\
-+			 _PAGE_SPECIAL | _PAGE_ACCESSED | _PAGE_DIRTY_HW |	\
- 			 _PAGE_SOFT_DIRTY | _PAGE_DEVMAP | _PAGE_ENC |  \
- 			 _PAGE_UFFD_WP)
- #define _HPAGE_CHG_MASK (_PAGE_CHG_MASK | _PAGE_PSE)
-@@ -163,7 +163,7 @@ enum page_cache_mode {
- #define __RW _PAGE_RW
- #define _USR _PAGE_USER
- #define ___A _PAGE_ACCESSED
--#define ___D _PAGE_DIRTY
-+#define ___D _PAGE_DIRTY_HW
- #define ___G _PAGE_GLOBAL
- #define __NX _PAGE_NX
- 
-@@ -205,7 +205,6 @@ enum page_cache_mode {
- #define __PAGE_KERNEL_IO		__PAGE_KERNEL
- #define __PAGE_KERNEL_IO_NOCACHE	__PAGE_KERNEL_NOCACHE
- 
--
- #ifndef __ASSEMBLY__
- 
- #define __PAGE_KERNEL_ENC	(__PAGE_KERNEL    | _ENC)
-diff --git a/arch/x86/kernel/relocate_kernel_64.S b/arch/x86/kernel/relocate_kernel_64.S
-index a4d9a261425b..e3bb4ff95523 100644
---- a/arch/x86/kernel/relocate_kernel_64.S
-+++ b/arch/x86/kernel/relocate_kernel_64.S
-@@ -17,7 +17,7 @@
-  */
- 
- #define PTR(x) (x << 3)
--#define PAGE_ATTR (_PAGE_PRESENT | _PAGE_RW | _PAGE_ACCESSED | _PAGE_DIRTY)
-+#define PAGE_ATTR (_PAGE_PRESENT | _PAGE_RW | _PAGE_ACCESSED | _PAGE_DIRTY_HW)
++
++#ifdef CONFIG_X86_CET
++	INTG(X86_TRAP_CP,		asm_exc_control_protection),
++#endif
+ };
  
  /*
-  * control_page + KEXEC_CONTROL_CODE_MAX_SIZE
-diff --git a/arch/x86/kvm/vmx/vmx.c b/arch/x86/kvm/vmx/vmx.c
-index 96979c09ebd1..57c5ad890597 100644
---- a/arch/x86/kvm/vmx/vmx.c
-+++ b/arch/x86/kvm/vmx/vmx.c
-@@ -3620,7 +3620,7 @@ static int init_rmode_identity_map(struct kvm *kvm)
- 	/* Set up identity-mapping pagetable for EPT in real mode */
- 	for (i = 0; i < PT32_ENT_PER_PAGE; i++) {
- 		tmp = (i << 22) + (_PAGE_PRESENT | _PAGE_RW | _PAGE_USER |
--			_PAGE_ACCESSED | _PAGE_DIRTY | _PAGE_PSE);
-+			_PAGE_ACCESSED | _PAGE_DIRTY_HW | _PAGE_PSE);
- 		r = kvm_write_guest_page(kvm, identity_map_pfn,
- 				&tmp, i * sizeof(tmp), sizeof(tmp));
- 		if (r < 0)
+diff --git a/arch/x86/kernel/signal_compat.c b/arch/x86/kernel/signal_compat.c
+index 9ccbf0576cd0..c572a3de1037 100644
+--- a/arch/x86/kernel/signal_compat.c
++++ b/arch/x86/kernel/signal_compat.c
+@@ -27,7 +27,7 @@ static inline void signal_compat_build_tests(void)
+ 	 */
+ 	BUILD_BUG_ON(NSIGILL  != 11);
+ 	BUILD_BUG_ON(NSIGFPE  != 15);
+-	BUILD_BUG_ON(NSIGSEGV != 7);
++	BUILD_BUG_ON(NSIGSEGV != 8);
+ 	BUILD_BUG_ON(NSIGBUS  != 5);
+ 	BUILD_BUG_ON(NSIGTRAP != 5);
+ 	BUILD_BUG_ON(NSIGCHLD != 6);
+diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
+index 81a2fb711091..97a049258e33 100644
+--- a/arch/x86/kernel/traps.c
++++ b/arch/x86/kernel/traps.c
+@@ -597,6 +597,65 @@ DEFINE_IDTENTRY_ERRORCODE(exc_general_protection)
+ 	cond_local_irq_disable(regs);
+ }
+ 
++#ifdef CONFIG_X86_CET
++static const char * const control_protection_err[] = {
++	"unknown",
++	"near-ret",
++	"far-ret/iret",
++	"endbranch",
++	"rstorssp",
++	"setssbsy",
++};
++
++/*
++ * When a control protection exception occurs, send a signal
++ * to the responsible application.  Currently, control
++ * protection is only enabled for the user mode.  This
++ * exception should not come from the kernel mode.
++ */
++DEFINE_IDTENTRY_ERRORCODE(exc_control_protection)
++{
++	struct task_struct *tsk;
++
++	if (notify_die(DIE_TRAP, "control protection fault", regs,
++		       error_code, X86_TRAP_CP, SIGSEGV) == NOTIFY_STOP)
++		return;
++	cond_local_irq_enable(regs);
++
++	if (!user_mode(regs))
++		die("kernel control protection fault", regs, error_code);
++
++	if (!static_cpu_has(X86_FEATURE_SHSTK) &&
++	    !static_cpu_has(X86_FEATURE_IBT))
++		WARN_ONCE(1, "CET is disabled but got control protection fault\n");
++
++	tsk = current;
++	tsk->thread.error_code = error_code;
++	tsk->thread.trap_nr = X86_TRAP_CP;
++
++	if (show_unhandled_signals && unhandled_signal(tsk, SIGSEGV) &&
++	    printk_ratelimit()) {
++		unsigned int max_err;
++		unsigned long ssp;
++
++		max_err = ARRAY_SIZE(control_protection_err) - 1;
++		if ((error_code < 0) || (error_code > max_err))
++			error_code = 0;
++		rdmsrl(MSR_IA32_PL3_SSP, ssp);
++		pr_info("%s[%d] control protection ip:%lx sp:%lx ssp:%lx error:%lx(%s)",
++			tsk->comm, task_pid_nr(tsk),
++			regs->ip, regs->sp, ssp, error_code,
++			control_protection_err[error_code]);
++		print_vma_addr(KERN_CONT " in ", regs->ip);
++		pr_cont("\n");
++	}
++
++	force_sig_fault(SIGSEGV, SEGV_CPERR,
++			(void __user *)uprobe_get_trap_addr(regs));
++	cond_local_irq_disable(regs);
++}
++#endif
++
+ static bool do_int3(struct pt_regs *regs)
+ {
+ 	int res;
+diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
+index cb3d6c267181..91e10cbe3bb0 100644
+--- a/include/uapi/asm-generic/siginfo.h
++++ b/include/uapi/asm-generic/siginfo.h
+@@ -229,7 +229,8 @@ typedef struct siginfo {
+ #define SEGV_ACCADI	5	/* ADI not enabled for mapped object */
+ #define SEGV_ADIDERR	6	/* Disrupting MCD error */
+ #define SEGV_ADIPERR	7	/* Precise MCD exception */
+-#define NSIGSEGV	7
++#define SEGV_CPERR	8	/* Control protection fault */
++#define NSIGSEGV	8
+ 
+ /*
+  * SIGBUS si_codes
 -- 
 2.21.0
 
