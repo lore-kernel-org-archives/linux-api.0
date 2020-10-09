@@ -4,36 +4,36 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9CC84C2D0A1
-	for <linux-api@archiver.kernel.org>; Fri,  9 Oct 2020 18:34:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B6B94C2D0AE
+	for <linux-api@archiver.kernel.org>; Fri,  9 Oct 2020 18:34:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6EDE822284
-	for <linux-api@archiver.kernel.org>; Fri,  9 Oct 2020 18:34:20 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7DED1222B9
+	for <linux-api@archiver.kernel.org>; Fri,  9 Oct 2020 18:34:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2390478AbgJISdc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 9 Oct 2020 14:33:32 -0400
-Received: from mga14.intel.com ([192.55.52.115]:9542 "EHLO mga14.intel.com"
+        id S2390457AbgJISeW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 9 Oct 2020 14:34:22 -0400
+Received: from mga14.intel.com ([192.55.52.115]:9530 "EHLO mga14.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2390465AbgJISdX (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 9 Oct 2020 14:33:23 -0400
-IronPort-SDR: D+gkfEKxTfATm3GpOWztNzWE2IBBQfOMfBICakmGyxkO7Y98+a3zp6n/sYt3OG9z/M3NqYENLP
- /Vaw5uAOSwWg==
-X-IronPort-AV: E=McAfee;i="6000,8403,9769"; a="164736623"
+        id S2390455AbgJISdR (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 9 Oct 2020 14:33:17 -0400
+IronPort-SDR: UQWTVjSKgug9rNs3G50rO9gbjjm1EBLfSZ3XJUV+uSYKHUxGS2r4XSyUVwg+9fBuvx6ouhUisr
+ y0yPfYpPZIgA==
+X-IronPort-AV: E=McAfee;i="6000,8403,9769"; a="164736606"
 X-IronPort-AV: E=Sophos;i="5.77,355,1596524400"; 
-   d="scan'208";a="164736623"
+   d="scan'208";a="164736606"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Oct 2020 11:33:22 -0700
-IronPort-SDR: IEc5Yt270Rmj0Oi9i8rRmRUKNEuBztenkEftbr997kju6CQAkepjSwECp5P+SOQjI3q5i9nx5b
- Czf+uPq50ZsA==
+  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Oct 2020 11:33:15 -0700
+IronPort-SDR: WVoRiaZRSHeFbzkI9KihV+1PEhdnCkuHMPz3VYBAUN4m94fPVupXVF0Wv8QfcEUAz377iwAjja
+ jEkvaTw2AdnQ==
 X-IronPort-AV: E=Sophos;i="5.77,355,1596524400"; 
-   d="scan'208";a="529031186"
+   d="scan'208";a="529031143"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Oct 2020 11:33:22 -0700
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Oct 2020 11:33:14 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -62,9 +62,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v14 17/26] mm/mmap: Add shadow stack pages to memory accounting
-Date:   Fri,  9 Oct 2020 11:32:21 -0700
-Message-Id: <20201009183230.26717-18-yu-cheng.yu@intel.com>
+Subject: [PATCH v14 08/26] x86/mm: Introduce _PAGE_COW
+Date:   Fri,  9 Oct 2020 11:32:12 -0700
+Message-Id: <20201009183230.26717-9-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20201009183230.26717-1-yu-cheng.yu@intel.com>
 References: <20201009183230.26717-1-yu-cheng.yu@intel.com>
@@ -74,81 +74,370 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Account shadow stack pages to stack memory.
+There is essentially no room left in the x86 hardware PTEs on some OSes
+(not Linux).  That left the hardware architects looking for a way to
+represent a new memory type (shadow stack) within the existing bits.
+They chose to repurpose a lightly-used state: Write=0,Dirty=1.
+
+The reason it's lightly used is that Dirty=1 is normally set by hardware
+and cannot normally be set by hardware on a Write=0 PTE.  Software must
+normally be involved to create one of these PTEs, so software can simply
+opt to not create them.
+
+But that leaves us with a Linux problem: we need to ensure we never create
+Write=0,Dirty=1 PTEs.  In places where we do create them, we need to find
+an alternative way to represent them _without_ using the same hardware bit
+combination.  Thus, enter _PAGE_COW.  This results in the following:
+
+(a) A modified, copy-on-write (COW) page: (R/O + _PAGE_COW)
+(b) A R/O page that has been COW'ed: (R/O + _PAGE_COW)
+    The user page is in a R/O VMA, and get_user_pages() needs a writable
+    copy.  The page fault handler creates a copy of the page and sets
+    the new copy's PTE as R/O and _PAGE_COW.
+(c) A shadow stack PTE: (R/O + _PAGE_DIRTY_HW)
+(d) A shared shadow stack PTE: (R/O + _PAGE_COW)
+    When a shadow stack page is being shared among processes (this happens
+    at fork()), its PTE is cleared of _PAGE_DIRTY_HW, so the next shadow
+    stack access causes a fault, and the page is duplicated and
+    _PAGE_DIRTY_HW is set again.  This is the COW equivalent for shadow
+    stack pages, even though it's copy-on-access rather than copy-on-write.
+(e) A page where the processor observed a Write=1 PTE, started a write, set
+    Dirty=1, but then observed a Write=0 PTE.  That's possible today, but
+    will not happen on processors that support shadow stack.
+
+Use _PAGE_COW in pte_wrprotect() and _PAGE_DIRTY_HW in pte_mkwrite().
+Apply the same changes to pmd and pud.
+
+When this patch is applied, there are six free bits left in the 64-bit PTE.
+There are no more free bits in the 32-bit PTE (except for PAE) and shadow
+stack is not implemented for the 32-bit kernel.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 
 v10:
-- Use arch_shadow_stack_mapping() to make meaning clear.
+- Change _PAGE_BIT_DIRTY_SW to _PAGE_BIT_COW, as it is used for copy-on-
+  write PTEs.
+- Update pte_write() and treat shadow stack as writable.
+- Change *_mkdirty_shstk() to *_mkwrite_shstk() as these make shadow stack
+  pages writable.
+- Use bit test & shift to move _PAGE_BIT_DIRTY_HW to _PAGE_BIT_COW.
+- Change static_cpu_has() to cpu_feature_enabled().
+- Revise commit log.
 
-v8:
-- Change shadow stake pages from data_vm to stack_vm.
+v9:
+- Remove pte_move_flags() etc. and put the logic directly in
+  pte_wrprotect()/pte_mkwrite() etc.
+- Change compile-time conditionals to run-time checks.
+- Split out pte_modify()/pmd_modify() to a new patch.
+- Update comments.
 ---
- arch/x86/mm/pgtable.c   |  7 +++++++
- include/linux/pgtable.h | 11 +++++++++++
- mm/mmap.c               |  5 +++++
- 3 files changed, 23 insertions(+)
+ arch/x86/include/asm/pgtable.h       | 120 ++++++++++++++++++++++++---
+ arch/x86/include/asm/pgtable_types.h |  41 ++++++++-
+ 2 files changed, 150 insertions(+), 11 deletions(-)
 
-diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
-index a9666b64bc05..68e98f70298b 100644
---- a/arch/x86/mm/pgtable.c
-+++ b/arch/x86/mm/pgtable.c
-@@ -893,3 +893,10 @@ int pmd_free_pte_page(pmd_t *pmd, unsigned long addr)
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index 86b7acd221c1..ac4ed814be96 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -122,9 +122,9 @@ extern pmdval_t early_pmd_flags;
+  * The following only work if pte_present() is true.
+  * Undefined behaviour if not..
+  */
+-static inline int pte_dirty(pte_t pte)
++static inline bool pte_dirty(pte_t pte)
+ {
+-	return pte_flags(pte) & _PAGE_DIRTY_HW;
++	return pte_flags(pte) & _PAGE_DIRTY_BITS;
+ }
  
- #endif /* CONFIG_X86_64 */
- #endif	/* CONFIG_HAVE_ARCH_HUGE_VMAP */
+ 
+@@ -161,9 +161,9 @@ static inline int pte_young(pte_t pte)
+ 	return pte_flags(pte) & _PAGE_ACCESSED;
+ }
+ 
+-static inline int pmd_dirty(pmd_t pmd)
++static inline bool pmd_dirty(pmd_t pmd)
+ {
+-	return pmd_flags(pmd) & _PAGE_DIRTY_HW;
++	return pmd_flags(pmd) & _PAGE_DIRTY_BITS;
+ }
+ 
+ static inline int pmd_young(pmd_t pmd)
+@@ -171,9 +171,9 @@ static inline int pmd_young(pmd_t pmd)
+ 	return pmd_flags(pmd) & _PAGE_ACCESSED;
+ }
+ 
+-static inline int pud_dirty(pud_t pud)
++static inline bool pud_dirty(pud_t pud)
+ {
+-	return pud_flags(pud) & _PAGE_DIRTY_HW;
++	return pud_flags(pud) & _PAGE_DIRTY_BITS;
+ }
+ 
+ static inline int pud_young(pud_t pud)
+@@ -183,6 +183,12 @@ static inline int pud_young(pud_t pud)
+ 
+ static inline int pte_write(pte_t pte)
+ {
++	/*
++	 * If _PAGE_DIRTY_HW is set, the PTE must either have
++	 * _PAGE_RW or be a shadow stack PTE, which is logically writable.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK))
++		return pte_flags(pte) & (_PAGE_RW | _PAGE_DIRTY_HW);
+ 	return pte_flags(pte) & _PAGE_RW;
+ }
+ 
+@@ -334,7 +340,7 @@ static inline pte_t pte_clear_uffd_wp(pte_t pte)
+ 
+ static inline pte_t pte_mkclean(pte_t pte)
+ {
+-	return pte_clear_flags(pte, _PAGE_DIRTY_HW);
++	return pte_clear_flags(pte, _PAGE_DIRTY_BITS);
+ }
+ 
+ static inline pte_t pte_mkold(pte_t pte)
+@@ -344,6 +350,17 @@ static inline pte_t pte_mkold(pte_t pte)
+ 
+ static inline pte_t pte_wrprotect(pte_t pte)
+ {
++	/*
++	 * Blindly clearing _PAGE_RW might accidentally create
++	 * a shadow stack PTE (RW=0,Dirty=1).  Move the hardware
++	 * dirty value to the software bit.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		pte.pte |= (pte.pte & _PAGE_DIRTY_HW) >>
++			   _PAGE_BIT_DIRTY_HW << _PAGE_BIT_COW;
++		pte = pte_clear_flags(pte, _PAGE_DIRTY_HW);
++	}
 +
-+#ifdef CONFIG_ARCH_HAS_SHADOW_STACK
-+bool arch_shadow_stack_mapping(vm_flags_t vm_flags)
-+{
-+	return (vm_flags & VM_SHSTK);
-+}
-+#endif
-diff --git a/include/linux/pgtable.h b/include/linux/pgtable.h
-index 157f5e726896..6f2ca5fffd44 100644
---- a/include/linux/pgtable.h
-+++ b/include/linux/pgtable.h
-@@ -1380,6 +1380,17 @@ static inline pmd_t arch_maybe_pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma
- #endif /* CONFIG_ARCH_MAYBE_MKWRITE */
- #endif /* CONFIG_MMU */
+ 	return pte_clear_flags(pte, _PAGE_RW);
+ }
  
-+#ifdef CONFIG_MMU
-+#ifdef CONFIG_ARCH_HAS_SHADOW_STACK
-+bool arch_shadow_stack_mapping(vm_flags_t vm_flags);
+@@ -354,6 +371,18 @@ static inline pte_t pte_mkexec(pte_t pte)
+ 
+ static inline pte_t pte_mkdirty(pte_t pte)
+ {
++	pteval_t dirty = _PAGE_DIRTY_HW;
++
++	/* Avoid creating (HW)Dirty=1,Write=0 PTEs */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK) && !pte_write(pte))
++		dirty = _PAGE_COW;
++
++	return pte_set_flags(pte, dirty | _PAGE_SOFT_DIRTY);
++}
++
++static inline pte_t pte_mkwrite_shstk(pte_t pte)
++{
++	pte = pte_clear_flags(pte, _PAGE_COW);
+ 	return pte_set_flags(pte, _PAGE_DIRTY_HW | _PAGE_SOFT_DIRTY);
+ }
+ 
+@@ -364,6 +393,13 @@ static inline pte_t pte_mkyoung(pte_t pte)
+ 
+ static inline pte_t pte_mkwrite(pte_t pte)
+ {
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		if (pte_flags(pte) & _PAGE_COW) {
++			pte = pte_clear_flags(pte, _PAGE_COW);
++			pte = pte_set_flags(pte, _PAGE_DIRTY_HW);
++		}
++	}
++
+ 	return pte_set_flags(pte, _PAGE_RW);
+ }
+ 
+@@ -435,16 +471,41 @@ static inline pmd_t pmd_mkold(pmd_t pmd)
+ 
+ static inline pmd_t pmd_mkclean(pmd_t pmd)
+ {
+-	return pmd_clear_flags(pmd, _PAGE_DIRTY_HW);
++	return pmd_clear_flags(pmd, _PAGE_DIRTY_BITS);
+ }
+ 
+ static inline pmd_t pmd_wrprotect(pmd_t pmd)
+ {
++	/*
++	 * Blindly clearing _PAGE_RW might accidentally create
++	 * a shadow stack PMD (RW=0,Dirty=1).  Move the hardware
++	 * dirty value to the software bit.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		pmdval_t v = native_pmd_val(pmd);
++
++		v |= (v & _PAGE_DIRTY_HW) >> _PAGE_BIT_DIRTY_HW <<
++		     _PAGE_BIT_COW;
++		pmd = pmd_clear_flags(__pmd(v), _PAGE_DIRTY_HW);
++	}
++
+ 	return pmd_clear_flags(pmd, _PAGE_RW);
+ }
+ 
+ static inline pmd_t pmd_mkdirty(pmd_t pmd)
+ {
++	pmdval_t dirty = _PAGE_DIRTY_HW;
++
++	/* Avoid creating (HW)Dirty=1,Write=0 PMDs */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK) && !(pmd_flags(pmd) & _PAGE_RW))
++		dirty = _PAGE_COW;
++
++	return pmd_set_flags(pmd, dirty | _PAGE_SOFT_DIRTY);
++}
++
++static inline pmd_t pmd_mkwrite_shstk(pmd_t pmd)
++{
++	pmd = pmd_clear_flags(pmd, _PAGE_COW);
+ 	return pmd_set_flags(pmd, _PAGE_DIRTY_HW | _PAGE_SOFT_DIRTY);
+ }
+ 
+@@ -465,6 +526,13 @@ static inline pmd_t pmd_mkyoung(pmd_t pmd)
+ 
+ static inline pmd_t pmd_mkwrite(pmd_t pmd)
+ {
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		if (pmd_flags(pmd) & _PAGE_COW) {
++			pmd = pmd_clear_flags(pmd, _PAGE_COW);
++			pmd = pmd_set_flags(pmd, _PAGE_DIRTY_HW);
++		}
++	}
++
+ 	return pmd_set_flags(pmd, _PAGE_RW);
+ }
+ 
+@@ -489,17 +557,36 @@ static inline pud_t pud_mkold(pud_t pud)
+ 
+ static inline pud_t pud_mkclean(pud_t pud)
+ {
+-	return pud_clear_flags(pud, _PAGE_DIRTY_HW);
++	return pud_clear_flags(pud, _PAGE_DIRTY_BITS);
+ }
+ 
+ static inline pud_t pud_wrprotect(pud_t pud)
+ {
++	/*
++	 * Blindly clearing _PAGE_RW might accidentally create
++	 * a shadow stack PUD (RW=0,Dirty=1).  Move the hardware
++	 * dirty value to the software bit.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		pudval_t v = native_pud_val(pud);
++
++		v |= (v & _PAGE_DIRTY_HW) >> _PAGE_BIT_DIRTY_HW <<
++		     _PAGE_BIT_COW;
++		pud = pud_clear_flags(__pud(v), _PAGE_DIRTY_HW);
++	}
++
+ 	return pud_clear_flags(pud, _PAGE_RW);
+ }
+ 
+ static inline pud_t pud_mkdirty(pud_t pud)
+ {
+-	return pud_set_flags(pud, _PAGE_DIRTY_HW | _PAGE_SOFT_DIRTY);
++	pudval_t dirty = _PAGE_DIRTY_HW;
++
++	/* Avoid creating (HW)Dirty=1,Write=0 PUDs */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK) && !(pud_flags(pud) & _PAGE_RW))
++		dirty = _PAGE_COW;
++
++	return pud_set_flags(pud, dirty | _PAGE_SOFT_DIRTY);
+ }
+ 
+ static inline pud_t pud_mkdevmap(pud_t pud)
+@@ -519,6 +606,13 @@ static inline pud_t pud_mkyoung(pud_t pud)
+ 
+ static inline pud_t pud_mkwrite(pud_t pud)
+ {
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		if (pud_flags(pud) & _PAGE_COW) {
++			pud = pud_clear_flags(pud, _PAGE_COW);
++			pud = pud_set_flags(pud, _PAGE_DIRTY_HW);
++		}
++	}
++
+ 	return pud_set_flags(pud, _PAGE_RW);
+ }
+ 
+@@ -1132,6 +1226,12 @@ extern int pmdp_clear_flush_young(struct vm_area_struct *vma,
+ #define pmd_write pmd_write
+ static inline int pmd_write(pmd_t pmd)
+ {
++	/*
++	 * If _PAGE_DIRTY_HW is set, then the PMD must either have
++	 * _PAGE_RW or be a shadow stack PMD, which is logically writable.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK))
++		return pmd_flags(pmd) & (_PAGE_RW | _PAGE_DIRTY_HW);
+ 	return pmd_flags(pmd) & _PAGE_RW;
+ }
+ 
+diff --git a/arch/x86/include/asm/pgtable_types.h b/arch/x86/include/asm/pgtable_types.h
+index 5f31f1c407b9..75362df8b226 100644
+--- a/arch/x86/include/asm/pgtable_types.h
++++ b/arch/x86/include/asm/pgtable_types.h
+@@ -23,7 +23,8 @@
+ #define _PAGE_BIT_SOFTW2	10	/* " */
+ #define _PAGE_BIT_SOFTW3	11	/* " */
+ #define _PAGE_BIT_PAT_LARGE	12	/* On 2MB or 1GB pages */
+-#define _PAGE_BIT_SOFTW4	58	/* available for programmer */
++#define _PAGE_BIT_SOFTW4	57	/* available for programmer */
++#define _PAGE_BIT_SOFTW5	58	/* available for programmer */
+ #define _PAGE_BIT_PKEY_BIT0	59	/* Protection Keys, bit 1/4 */
+ #define _PAGE_BIT_PKEY_BIT1	60	/* Protection Keys, bit 2/4 */
+ #define _PAGE_BIT_PKEY_BIT2	61	/* Protection Keys, bit 3/4 */
+@@ -36,6 +37,16 @@
+ #define _PAGE_BIT_SOFT_DIRTY	_PAGE_BIT_SOFTW3 /* software dirty tracking */
+ #define _PAGE_BIT_DEVMAP	_PAGE_BIT_SOFTW4
+ 
++/*
++ * This bit indicates a copy-on-write page, and is different from
++ * _PAGE_BIT_SOFT_DIRTY, which tracks which pages a task writes to.
++ */
++#ifdef CONFIG_X86_64
++#define _PAGE_BIT_COW		_PAGE_BIT_SOFTW5 /* copy-on-write */
 +#else
-+static inline bool arch_shadow_stack_mapping(vm_flags_t vm_flags)
-+{
-+	return false;
-+}
-+#endif /* CONFIG_ARCH_HAS_SHADOW_STACK */
-+#endif /* CONFIG_MMU */
++#define _PAGE_BIT_COW		0
++#endif
 +
+ /* If _PAGE_BIT_PRESENT is clear, we use these: */
+ /* - if the user mapped it with PROT_NONE; pte_present gives true */
+ #define _PAGE_BIT_PROTNONE	_PAGE_BIT_GLOBAL
+@@ -117,6 +128,34 @@
+ #define _PAGE_DEVMAP	(_AT(pteval_t, 0))
+ #endif
+ 
++/*
++ * _PAGE_COW is used to separate R/O and copy-on-write PTEs created by
++ * software from the shadow stack PTE setting required by the hardware:
++ * (a) A modified, copy-on-write (COW) page: (R/O + _PAGE_COW)
++ * (b) A R/O page that has been COW'ed: (R/O +_PAGE_COW)
++ *     The user page is in a R/O VMA, and get_user_pages() needs a
++ *     writable copy.  The page fault handler creates a copy of the page
++ *     and sets the new copy's PTE as R/O and _PAGE_COW.
++ * (c) A shadow stack PTE: (R/O + _PAGE_DIRTY_HW)
++ * (d) A shared (copy-on-access) shadow stack PTE: (R/O + _PAGE_COW)
++ *     When a shadow stack page is being shared among processes (this
++ *     happens at fork()), its PTE is cleared of _PAGE_DIRTY_HW, so the
++ *     next shadow stack access causes a fault, and the page is duplicated
++ *     and _PAGE_DIRTY_HW is set again.  This is the COW equivalent for
++ *     shadow stack pages, even though it's copy-on-access rather than
++ *     copy-on-write.
++ * (e) A page where the processor observed a Write=1 PTE, started a write,
++ *     set Dirty=1, but then observed a Write=0 PTE.  That's possible
++ *     today, but will not happen on processors that support shadow stack.
++ */
++#ifdef CONFIG_X86_SHADOW_STACK_USER
++#define _PAGE_COW	(_AT(pteval_t, 1) << _PAGE_BIT_COW)
++#else
++#define _PAGE_COW	(_AT(pteval_t, 0))
++#endif
++
++#define _PAGE_DIRTY_BITS (_PAGE_DIRTY_HW | _PAGE_COW)
++
+ #define _PAGE_PROTNONE	(_AT(pteval_t, 1) << _PAGE_BIT_PROTNONE)
+ 
  /*
-  * Architecture PAGE_KERNEL_* fallbacks
-  *
-diff --git a/mm/mmap.c b/mm/mmap.c
-index 40248d84ad5f..574b3f273462 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
-@@ -1682,6 +1682,9 @@ static inline int accountable_mapping(struct file *file, vm_flags_t vm_flags)
- 	if (file && is_file_hugepages(file))
- 		return 0;
- 
-+	if (arch_shadow_stack_mapping(vm_flags))
-+		return 1;
-+
- 	return (vm_flags & (VM_NORESERVE | VM_SHARED | VM_WRITE)) == VM_WRITE;
- }
- 
-@@ -3352,6 +3355,8 @@ void vm_stat_account(struct mm_struct *mm, vm_flags_t flags, long npages)
- 		mm->stack_vm += npages;
- 	else if (is_data_mapping(flags))
- 		mm->data_vm += npages;
-+	else if (arch_shadow_stack_mapping(flags))
-+		mm->stack_vm += npages;
- }
- 
- static vm_fault_t special_mapping_fault(struct vm_fault *vmf);
 -- 
 2.21.0
 
