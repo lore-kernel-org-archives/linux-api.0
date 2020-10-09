@@ -7,33 +7,33 @@ X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 136E1C433DF
-	for <linux-api@archiver.kernel.org>; Fri,  9 Oct 2020 18:34:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B7EA5C4363D
+	for <linux-api@archiver.kernel.org>; Fri,  9 Oct 2020 18:34:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DAB57222C3
-	for <linux-api@archiver.kernel.org>; Fri,  9 Oct 2020 18:34:17 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 92DE422284
+	for <linux-api@archiver.kernel.org>; Fri,  9 Oct 2020 18:34:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2390467AbgJISdd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 9 Oct 2020 14:33:33 -0400
+        id S2390468AbgJISdc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 9 Oct 2020 14:33:32 -0400
 Received: from mga14.intel.com ([192.55.52.115]:9542 "EHLO mga14.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2390464AbgJISdW (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 9 Oct 2020 14:33:22 -0400
-IronPort-SDR: YWrPIKZpIMUGD55LLsDYPoe2zECRKJexQ82E+wtd37GloQOhBIyLLzF6pH1RBQbz7H0/Haat9C
- 4+jOiNehfidw==
-X-IronPort-AV: E=McAfee;i="6000,8403,9769"; a="164736622"
+        id S2390466AbgJISdZ (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 9 Oct 2020 14:33:25 -0400
+IronPort-SDR: KRd8KUjemwLY+81hdU4Ox28LMIftE66bVxf6gOQnGc7tYDJ5wsmj65jSk2zhPi9og9Bzw6U+9F
+ GUtYDOdcef9w==
+X-IronPort-AV: E=McAfee;i="6000,8403,9769"; a="164736628"
 X-IronPort-AV: E=Sophos;i="5.77,355,1596524400"; 
-   d="scan'208";a="164736622"
+   d="scan'208";a="164736628"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Oct 2020 11:33:22 -0700
-IronPort-SDR: kwqnonbsJTBKvJ1u/MPsZ7qKVw2rupj2KDzxzltIKru8fra2WhgDj8Wmu0wolWM/MgNw5jfCIp
- 119yCIcITC1w==
+  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Oct 2020 11:33:24 -0700
+IronPort-SDR: ft9ey/X2dPezFXtXG1CROWRok1s/kjizjQejy/YOe0ly7RCr7xt+vdwUUXgYL2fn+v5HzxrbxZ
+ y+A5wYR5JsWA==
 X-IronPort-AV: E=Sophos;i="5.77,355,1596524400"; 
-   d="scan'208";a="529031183"
+   d="scan'208";a="529031190"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Oct 2020 11:33:21 -0700
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Oct 2020 11:33:22 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -62,9 +62,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v14 16/26] mm: Add guard pages around a shadow stack.
-Date:   Fri,  9 Oct 2020 11:32:20 -0700
-Message-Id: <20201009183230.26717-17-yu-cheng.yu@intel.com>
+Subject: [PATCH v14 18/26] mm: Update can_follow_write_pte() for shadow stack
+Date:   Fri,  9 Oct 2020 11:32:22 -0700
+Message-Id: <20201009183230.26717-19-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20201009183230.26717-1-yu-cheng.yu@intel.com>
 References: <20201009183230.26717-1-yu-cheng.yu@intel.com>
@@ -74,96 +74,80 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-INCSSP(Q/D) increments shadow stack pointer and 'pops and discards' the
-first and the last elements in the range, effectively touches those memory
-areas.
+Can_follow_write_pte() ensures a read-only page is COWed by checking the
+FOLL_COW flag, and uses pte_dirty() to validate the flag is still valid.
 
-The maximum moving distance by INCSSPQ is 255 * 8 = 2040 bytes and
-255 * 4 = 1020 bytes by INCSSPD.  Both ranges are far from PAGE_SIZE.
-Thus, putting a gap page on both ends of a shadow stack prevents INCSSP,
-CALL, and RET from going beyond.
+Like a writable data page, a shadow stack page is writable, and becomes
+read-only during copy-on-write, but it is always dirty.  Thus, in the
+can_follow_write_pte() check, it belongs to the writable page case and
+should be excluded from the read-only page pte_dirty() check.  Apply
+the same changes to can_follow_write_pmd().
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 
 v10:
-- Define ARCH_SHADOW_STACK_GUARD_GAP.
+- Reverse name changes to can_follow_write_*().
 ---
- arch/x86/include/asm/processor.h | 10 ++++++++++
- include/linux/mm.h               | 24 ++++++++++++++++++++----
- 2 files changed, 30 insertions(+), 4 deletions(-)
+ mm/gup.c         | 8 +++++---
+ mm/huge_memory.c | 8 +++++---
+ 2 files changed, 10 insertions(+), 6 deletions(-)
 
-diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
-index 97143d87994c..01acbd63cad8 100644
---- a/arch/x86/include/asm/processor.h
-+++ b/arch/x86/include/asm/processor.h
-@@ -840,6 +840,16 @@ static inline void spin_lock_prefetch(const void *x)
- #define STACK_TOP		TASK_SIZE_LOW
- #define STACK_TOP_MAX		TASK_SIZE_MAX
- 
-+/*
-+ * Shadow stack pointer is moved by CALL, JMP, and INCSSP(Q/D).  INCSSPQ
-+ * moves shadow stack pointer up to 255 * 8 = ~2 KB (~1KB for INCSSPD) and
-+ * touches the first and the last element in the range, which triggers a
-+ * page fault if the range is not in a shadow stack.  Because of this,
-+ * creating 4-KB guard pages around a shadow stack prevents these
-+ * instructions from going beyond.
-+ */
-+#define ARCH_SHADOW_STACK_GUARD_GAP PAGE_SIZE
-+
- #define INIT_THREAD  {						\
- 	.addr_limit		= KERNEL_DS,			\
+diff --git a/mm/gup.c b/mm/gup.c
+index e869c634cc9a..10e32f574822 100644
+--- a/mm/gup.c
++++ b/mm/gup.c
+@@ -384,10 +384,12 @@ static int follow_pfn_pte(struct vm_area_struct *vma, unsigned long address,
+  * FOLL_FORCE can write to even unwritable pte's, but only
+  * after we've gone through a COW cycle and they are dirty.
+  */
+-static inline bool can_follow_write_pte(pte_t pte, unsigned int flags)
++static inline bool can_follow_write_pte(pte_t pte, unsigned int flags,
++					struct vm_area_struct *vma)
+ {
+ 	return pte_write(pte) ||
+-		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte));
++		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte) &&
++				  !arch_shadow_stack_mapping(vma->vm_flags));
  }
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 4f6305106feb..ce461795fd8b 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -2615,6 +2615,10 @@ extern vm_fault_t filemap_page_mkwrite(struct vm_fault *vmf);
- int __must_check write_one_page(struct page *page);
- void task_dirty_inc(struct task_struct *tsk);
  
-+#ifndef ARCH_SHADOW_STACK_GUARD_GAP
-+#define ARCH_SHADOW_STACK_GUARD_GAP 0
-+#endif
-+
- extern unsigned long stack_guard_gap;
- /* Generic expand stack which grows the stack according to GROWS{UP,DOWN} */
- extern int expand_stack(struct vm_area_struct *vma, unsigned long address);
-@@ -2647,9 +2651,15 @@ static inline struct vm_area_struct * find_vma_intersection(struct mm_struct * m
- static inline unsigned long vm_start_gap(struct vm_area_struct *vma)
- {
- 	unsigned long vm_start = vma->vm_start;
-+	unsigned long gap = 0;
- 
--	if (vma->vm_flags & VM_GROWSDOWN) {
--		vm_start -= stack_guard_gap;
-+	if (vma->vm_flags & VM_GROWSDOWN)
-+		gap = stack_guard_gap;
-+	else if (vma->vm_flags & VM_SHSTK)
-+		gap = ARCH_SHADOW_STACK_GUARD_GAP;
-+
-+	if (gap != 0) {
-+		vm_start -= gap;
- 		if (vm_start > vma->vm_start)
- 			vm_start = 0;
+ static struct page *follow_page_pte(struct vm_area_struct *vma,
+@@ -430,7 +432,7 @@ static struct page *follow_page_pte(struct vm_area_struct *vma,
  	}
-@@ -2659,9 +2669,15 @@ static inline unsigned long vm_start_gap(struct vm_area_struct *vma)
- static inline unsigned long vm_end_gap(struct vm_area_struct *vma)
- {
- 	unsigned long vm_end = vma->vm_end;
-+	unsigned long gap = 0;
-+
-+	if (vma->vm_flags & VM_GROWSUP)
-+		gap = stack_guard_gap;
-+	else if (vma->vm_flags & VM_SHSTK)
-+		gap = ARCH_SHADOW_STACK_GUARD_GAP;
- 
--	if (vma->vm_flags & VM_GROWSUP) {
--		vm_end += stack_guard_gap;
-+	if (gap != 0) {
-+		vm_end += gap;
- 		if (vm_end < vma->vm_end)
- 			vm_end = -PAGE_SIZE;
+ 	if ((flags & FOLL_NUMA) && pte_protnone(pte))
+ 		goto no_page;
+-	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags)) {
++	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags, vma)) {
+ 		pte_unmap_unlock(ptep, ptl);
+ 		return NULL;
  	}
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 01252b00cd06..fd22ceaba945 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -1324,10 +1324,12 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
+  * FOLL_FORCE can write to even unwritable pmd's, but only
+  * after we've gone through a COW cycle and they are dirty.
+  */
+-static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags)
++static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags,
++					struct vm_area_struct *vma)
+ {
+ 	return pmd_write(pmd) ||
+-	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) && pmd_dirty(pmd));
++	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) && pmd_dirty(pmd) &&
++				  !arch_shadow_stack_mapping(vma->vm_flags));
+ }
+ 
+ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
+@@ -1340,7 +1342,7 @@ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
+ 
+ 	assert_spin_locked(pmd_lockptr(mm, pmd));
+ 
+-	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags))
++	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags, vma))
+ 		goto out;
+ 
+ 	/* Avoid dumping huge zero page */
 -- 
 2.21.0
 
