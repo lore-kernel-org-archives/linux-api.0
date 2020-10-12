@@ -7,33 +7,33 @@ X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A87C0C35272
-	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:41:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3AE92C433DF
+	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:46:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 812C32087D
-	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:41:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0ED632074A
+	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:46:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2390885AbgJLPlw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 12 Oct 2020 11:41:52 -0400
-Received: from mga05.intel.com ([192.55.52.43]:1318 "EHLO mga05.intel.com"
+        id S2390414AbgJLPpz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 12 Oct 2020 11:45:55 -0400
+Received: from mga07.intel.com ([134.134.136.100]:28365 "EHLO mga07.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2390220AbgJLPjr (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 12 Oct 2020 11:39:47 -0400
-IronPort-SDR: rB/dfEAD2OBn7L/NJKsIqzq1+X0ehYd7Hzno0I1I2kz8P2hannpW1FpGbBTekPiZDQTX/RFovA
- H2aIVnvSbukw==
-X-IronPort-AV: E=McAfee;i="6000,8403,9772"; a="250452647"
+        id S2390385AbgJLPpy (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 12 Oct 2020 11:45:54 -0400
+IronPort-SDR: JfgnEf0AJiwh5dJr7I934aMDVnxniAD13vf2MsQ9380uSuWgpXn6s9AS9+aML0pT+G9uXGHv4G
+ 3MhPOO4AeUMA==
+X-IronPort-AV: E=McAfee;i="6000,8403,9772"; a="229939281"
 X-IronPort-AV: E=Sophos;i="5.77,367,1596524400"; 
-   d="scan'208";a="250452647"
+   d="scan'208";a="229939281"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:39:47 -0700
-IronPort-SDR: XTgCTCRrOZkmSn0c3bXb4zJ4RXcMepdbQrrrDrHfEcfquQYRVBjdPFphL9fcZ/ezjI83o27hgX
- hK1HidnIVlzw==
+  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:45:54 -0700
+IronPort-SDR: 57ycsLhE56v+1hN2jfK4axGyzqj7oD2nP1WDNWa6/0kQZ3lFCB5rT+5Y7Qc46fyUgDb78OAXCX
+ Ve22lnVXQ6eA==
 X-IronPort-AV: E=Sophos;i="5.77,367,1596524400"; 
-   d="scan'208";a="530010785"
+   d="scan'208";a="530012651"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:39:46 -0700
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:45:53 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -62,85 +62,43 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v14 05/26] x86/cet/shstk: Add Kconfig option for user-mode Shadow Stack
-Date:   Mon, 12 Oct 2020 08:38:29 -0700
-Message-Id: <20201012153850.26996-6-yu-cheng.yu@intel.com>
+Subject: [PATCH v14 6/7] x86/vdso/32: Add ENDBR32 to __kernel_vsyscall entry point
+Date:   Mon, 12 Oct 2020 08:45:29 -0700
+Message-Id: <20201012154530.28382-7-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20201012153850.26996-1-yu-cheng.yu@intel.com>
-References: <20201012153850.26996-1-yu-cheng.yu@intel.com>
+In-Reply-To: <20201012154530.28382-1-yu-cheng.yu@intel.com>
+References: <20201012154530.28382-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Shadow Stack provides protection against function return address
-corruption.  It is active when the processor supports it, the kernel has
-CONFIG_X86_SHADOW_STACK_USER, and the application is built for the feature.
-This is only implemented for the 64-bit kernel.  When it is enabled, legacy
-non-shadow stack applications continue to work, but without protection.
+From: "H.J. Lu" <hjl.tools@gmail.com>
 
+Add ENDBR32 to __kernel_vsyscall entry point.
+
+Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Acked-by: Andy Lutomirski <luto@kernel.org>
 ---
- arch/x86/Kconfig                      | 33 +++++++++++++++++++++++++++
- scripts/as-x86_64-has-shadow-stack.sh |  4 ++++
- 2 files changed, 37 insertions(+)
- create mode 100755 scripts/as-x86_64-has-shadow-stack.sh
+ arch/x86/entry/vdso/vdso32/system_call.S | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 7101ac64bb20..415fcc869afc 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -1927,6 +1927,39 @@ config X86_INTEL_TSX_MODE_AUTO
- 	  side channel attacks- equals the tsx=auto command line parameter.
- endchoice
- 
-+config AS_HAS_SHADOW_STACK
-+	def_bool $(success,$(srctree)/scripts/as-x86_64-has-shadow-stack.sh $(CC))
-+	help
-+	  Test the assembler for shadow stack instructions.
-+
-+config X86_CET
-+	def_bool n
-+
-+config ARCH_HAS_SHADOW_STACK
-+	def_bool n
-+
-+config X86_SHADOW_STACK_USER
-+	prompt "Intel Shadow Stacks for user-mode"
-+	def_bool n
-+	depends on CPU_SUP_INTEL && X86_64
-+	depends on AS_HAS_SHADOW_STACK
-+	select ARCH_USES_HIGH_VMA_FLAGS
-+	select X86_CET
-+	select ARCH_HAS_SHADOW_STACK
-+	help
-+	  Shadow Stacks provides protection against program stack
-+	  corruption.  It's a hardware feature.  This only matters
-+	  if you have the right hardware.  It's a security hardening
-+	  feature and apps must be enabled to use it.  You get no
-+	  protection "for free" on old userspace.  The hardware can
-+	  support user and kernel, but this option is for user space
-+	  only.
-+	  Support for this feature is only known to be present on
-+	  processors released in 2020 or later.  CET features are also
-+	  known to increase kernel text size by 3.7 KB.
-+
-+	  If unsure, say N.
-+
- config EFI
- 	bool "EFI runtime service support"
- 	depends on ACPI
-diff --git a/scripts/as-x86_64-has-shadow-stack.sh b/scripts/as-x86_64-has-shadow-stack.sh
-new file mode 100755
-index 000000000000..fac1d363a1b8
---- /dev/null
-+++ b/scripts/as-x86_64-has-shadow-stack.sh
-@@ -0,0 +1,4 @@
-+#!/bin/sh
-+# SPDX-License-Identifier: GPL-2.0
-+
-+echo "wrussq %rax, (%rbx)" | $* -x assembler -c -
+diff --git a/arch/x86/entry/vdso/vdso32/system_call.S b/arch/x86/entry/vdso/vdso32/system_call.S
+index de1fff7188aa..e331fcdebd95 100644
+--- a/arch/x86/entry/vdso/vdso32/system_call.S
++++ b/arch/x86/entry/vdso/vdso32/system_call.S
+@@ -14,6 +14,9 @@
+ 	ALIGN
+ __kernel_vsyscall:
+ 	CFI_STARTPROC
++#ifdef CONFIG_X86_BRANCH_TRACKING_USER
++	endbr32
++#endif
+ 	/*
+ 	 * Reshuffle regs so that all of any of the entry instructions
+ 	 * will preserve enough state.
 -- 
 2.21.0
 
