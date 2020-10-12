@@ -2,172 +2,259 @@ Return-Path: <SRS0=mqoo=DT=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.6 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 437E6C43457
-	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:46:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 06B12C433DF
+	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 18:39:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 137B520776
-	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:46:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 96BD320870
+	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 18:39:55 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="pZ8PPJfu"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2390571AbgJLPqH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 12 Oct 2020 11:46:07 -0400
-Received: from mga07.intel.com ([134.134.136.100]:28365 "EHLO mga07.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2389540AbgJLPpw (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 12 Oct 2020 11:45:52 -0400
-IronPort-SDR: kbiOaKC5vU/CTWeP9HTASalAvyUqioQbkNadgcM/v/zlfupa4H8UYozOP5oXpRWY8EP9eLP7oX
- GSwhyDyOmoLA==
-X-IronPort-AV: E=McAfee;i="6000,8403,9772"; a="229939275"
-X-IronPort-AV: E=Sophos;i="5.77,367,1596524400"; 
-   d="scan'208";a="229939275"
-X-Amp-Result: SKIPPED(no attachment in message)
-X-Amp-File-Uploaded: False
-Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:45:52 -0700
-IronPort-SDR: +ewMVzeoFtp7hZWuheQMK+NfvJHqiZ2L5PLnIo0TG52tI9roPU3/FZ2SIb9/1eHXUJalgwAv8R
- IlBuFr16OCVQ==
-X-IronPort-AV: E=Sophos;i="5.77,367,1596524400"; 
-   d="scan'208";a="530012635"
-Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:45:51 -0700
-From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
-To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-doc@vger.kernel.org, linux-mm@kvack.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
-        Arnd Bergmann <arnd@arndb.de>,
-        Andy Lutomirski <luto@kernel.org>,
-        Balbir Singh <bsingharora@gmail.com>,
-        Borislav Petkov <bp@alien8.de>,
-        Cyrill Gorcunov <gorcunov@gmail.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Eugene Syromiatnikov <esyr@redhat.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Nadav Amit <nadav.amit@gmail.com>,
-        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
-        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
-        Dave Martin <Dave.Martin@arm.com>,
-        Weijiang Yang <weijiang.yang@intel.com>,
-        Pengfei Xu <pengfei.xu@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v14 3/7] x86/cet/ibt: Handle signals for Indirect Branch Tracking
-Date:   Mon, 12 Oct 2020 08:45:26 -0700
-Message-Id: <20201012154530.28382-4-yu-cheng.yu@intel.com>
-X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20201012154530.28382-1-yu-cheng.yu@intel.com>
-References: <20201012154530.28382-1-yu-cheng.yu@intel.com>
+        id S1730033AbgJLSjz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 12 Oct 2020 14:39:55 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49230 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1729656AbgJLSjy (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 12 Oct 2020 14:39:54 -0400
+Received: from mail-oi1-x241.google.com (mail-oi1-x241.google.com [IPv6:2607:f8b0:4864:20::241])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D445BC0613D0;
+        Mon, 12 Oct 2020 11:39:54 -0700 (PDT)
+Received: by mail-oi1-x241.google.com with SMTP id j7so2139037oie.12;
+        Mon, 12 Oct 2020 11:39:54 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:reply-to:from:date:message-id:subject:to:cc;
+        bh=R/gYxTsYJFdTQ38CkcW02MIpSzR9RPkG/h3hLnnndhY=;
+        b=pZ8PPJfuk9F6Z1AKgc8pHbhiSMcYsSZFtzvTxccLwnMkYgT3/OEcNLvSKlFdJqD7P5
+         HvTGWQXCYXJmqywSL6OdTP40wSp2fg8haeRIYlHlkJF2qHpYqBgFyJ2bjioLHqrQHtC1
+         lhk78vwaSUg3NbnWnHZGwExASL/Rl1mIGG0qCEqJ5o48Je/qTAm8ZudczYHpCKN5QuPz
+         TsLnz4nhcn4n245TZNoPHIoSHw9oZbQehh2IxWpl8MiM4U6I3nAZCU03O7i0Fm3DYFCu
+         7mDq7v6Le2xMdp+42Vqjs292LnRFZBw+jOyDm4EyTligEGUh/unuN8aisX+z8VrNANP/
+         nCfA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:reply-to:from:date:message-id
+         :subject:to:cc;
+        bh=R/gYxTsYJFdTQ38CkcW02MIpSzR9RPkG/h3hLnnndhY=;
+        b=VelKh3AWxaFgt7GvZSSIGWAdTw+heIavlHTnURKKqHgSrST0NFZL/QXpFuE8XffEAa
+         8vEWq35+HZEJZhRi2g5GK9aOZP04EqVI4FZkBSQmszSnbc4Iz/J1EOFXWLLLvsy4VUjQ
+         VxEyZr9cQeuC8b3aEWptPhojRcLvO2ZbDkyf1lKYVUj+XCBPdEyMYTBwFfUH8NStRqz6
+         REft5UJ70br3YpPjcFZxQyqOcJMzpLPh2gnzaSeahmnWw4QW1ggKVZ9x1B7RzlHuCka/
+         ZPHLFbZnbH0CLy0xvKSGQjmGAkDsyS8LCQk4IGiY+X7g2ZosRGDU9H1WY16fL+zHzVZK
+         l0hg==
+X-Gm-Message-State: AOAM5308R80TIR4XIO+Z2RFFkiG/k7Yup0Gq81+KsAzayi/pHJJAvin0
+        0+gOoTN2NwxKmJckkTDQKZPqH9GtvzgDZFtzX3Q=
+X-Google-Smtp-Source: ABdhPJwcgUjAfcfxHqh9sGGJ577o7E+3OEBbUISmWiKBjAZPTlwZTf4GfCDmGknHmZg5F7JwQQD8LqB/iRBP7WbQJcA=
+X-Received: by 2002:aca:bb41:: with SMTP id l62mr9681768oif.148.1602527994142;
+ Mon, 12 Oct 2020 11:39:54 -0700 (PDT)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Reply-To: mtk.manpages@gmail.com
+From:   "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Date:   Mon, 12 Oct 2020 20:39:41 +0200
+Message-ID: <CAKgNAkjMBGeAwF=2MKK758BhxvW58wYTgYKB2V-gY1PwXxrH+Q@mail.gmail.com>
+Subject: Regression: epoll edge-triggered (EPOLLET) for pipes/FIFOs
+To:     Linus Torvalds <torvalds@linux-foundation.org>
+Cc:     David Howells <dhowells@redhat.com>,
+        Rasmus Villemoes <linux@rasmusvillemoes.dk>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Nicolas Dichtel <nicolas.dichtel@6wind.com>,
+        Ian Kent <raven@themaw.net>,
+        Christian Brauner <christian@brauner.io>,
+        keyrings@vger.kernel.org,
+        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        lkml <linux-kernel@vger.kernel.org>,
+        Michael Kerrisk <mtk.manpages@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-An indirect CALL/JMP moves the indirect branch tracking (IBT) state machine
-to WAIT_ENDBR status until the instruction reaches an ENDBR opcode.  If the
-CALL/JMP does not reach an ENDBR opcode, the processor raises a control-
-protection fault.  WAIT_ENDBR status can be read from MSR_IA32_U_CET.
+Hello Linus,
 
-WAIT_ENDBR is cleared for signal handling, and restored for sigreturn.
+Between Linux 5.4 and 5.5 a regression was introduced in the operation
+of the epoll EPOLLET flag. From some manual bisecting, the regression
+appears to have been introduced in
 
-IBT state machine is described in Intel SDM Vol. 1, Sec. 18.3.
+         commit 1b6b26ae7053e4914181eedf70f2d92c12abda8a
+         Author: Linus Torvalds <torvalds@linux-foundation.org>
+         Date:   Sat Dec 7 12:14:28 2019 -0800
 
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
----
- arch/x86/kernel/cet.c        | 27 +++++++++++++++++++++++++--
- arch/x86/kernel/fpu/signal.c |  8 +++++---
- 2 files changed, 30 insertions(+), 5 deletions(-)
+             pipe: fix and clarify pipe write wakeup logic
 
-diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
-index 1dcd16aa4f90..0edcbd70f408 100644
---- a/arch/x86/kernel/cet.c
-+++ b/arch/x86/kernel/cet.c
-@@ -295,6 +295,13 @@ void cet_restore_signal(struct sc_ext *sc_ext)
- 		msr_val |= CET_SHSTK_EN;
- 	}
- 
-+	if (cet->ibt_enabled) {
-+		msr_val |= (CET_ENDBR_EN | CET_NO_TRACK_EN);
-+
-+		if (sc_ext->wait_endbr)
-+			msr_val |= CET_WAIT_ENDBR;
-+	}
-+
- 	if (test_thread_flag(TIF_NEED_FPU_LOAD))
- 		cet_user_state->user_cet = msr_val;
- 	else
-@@ -335,9 +342,25 @@ int cet_setup_signal(bool ia32, unsigned long rstor_addr, struct sc_ext *sc_ext)
- 		sc_ext->ssp = new_ssp;
- 	}
- 
--	if (ssp) {
-+	if (ssp || cet->ibt_enabled) {
-+
- 		start_update_msrs();
--		wrmsrl(MSR_IA32_PL3_SSP, ssp);
-+
-+		if (ssp)
-+			wrmsrl(MSR_IA32_PL3_SSP, ssp);
-+
-+		if (cet->ibt_enabled) {
-+			u64 r;
-+
-+			rdmsrl(MSR_IA32_U_CET, r);
-+
-+			if (r & CET_WAIT_ENDBR) {
-+				sc_ext->wait_endbr = 1;
-+				r &= ~CET_WAIT_ENDBR;
-+				wrmsrl(MSR_IA32_U_CET, r);
-+			}
-+		}
-+
- 		end_update_msrs();
- 	}
- 
-diff --git a/arch/x86/kernel/fpu/signal.c b/arch/x86/kernel/fpu/signal.c
-index c0c2141cb4b3..077853ef6f48 100644
---- a/arch/x86/kernel/fpu/signal.c
-+++ b/arch/x86/kernel/fpu/signal.c
-@@ -57,7 +57,8 @@ int save_cet_to_sigframe(int ia32, void __user *fp, unsigned long restorer)
- {
- 	int err = 0;
- 
--	if (!current->thread.cet.shstk_size)
-+	if (!current->thread.cet.shstk_size &&
-+	    !current->thread.cet.ibt_enabled)
- 		return 0;
- 
- 	if (fp) {
-@@ -89,7 +90,8 @@ static int get_cet_from_sigframe(int ia32, void __user *fp, struct sc_ext *ext)
- 
- 	memset(ext, 0, sizeof(*ext));
- 
--	if (!current->thread.cet.shstk_size)
-+	if (!current->thread.cet.shstk_size &&
-+	    !current->thread.cet.ibt_enabled)
- 		return 0;
- 
- 	if (fp) {
-@@ -577,7 +579,7 @@ static unsigned long fpu__alloc_sigcontext_ext(unsigned long sp)
- 	 * sigcontext_ext is at: fpu + fpu_user_xstate_size +
- 	 * FP_XSTATE_MAGIC2_SIZE, then aligned to 8.
- 	 */
--	if (cet->shstk_size)
-+	if (cet->shstk_size || cet->ibt_enabled)
- 		sp -= (sizeof(struct sc_ext) + 8);
- 
- 	return sp;
--- 
-2.21.0
+(I also built a kernel from the  immediate preceding commit, and did
+not observe the regression.)
 
+The aim of ET (edge-triggered) notification is that epoll_wait() will
+tell us a file descriptor is ready only if there has been new activity
+on the FD since we were last informed about the FD. So, in the
+following scenario where the read end of a pipe is being monitored
+with EPOLLET, we see:
+
+[Write a byte to write end of pipe]
+1. Call epoll_wait() ==> tells us pipe read end is ready
+2. Call epoll_wait() [again] ==> does not tell us that the read end of
+pipe is ready
+
+    (By contrast, in step 2, level-triggered notification would tell
+    us the read end of the pipe is read.)
+
+If we go further:
+
+[Write another byte to write end of pipe]
+3. Call epoll_wait() ==> tells us pipe read end is ready
+
+The above was true until the regression. Now, step 3 does not tell us
+that the pipe read end is ready, even though there is NEW input
+available on the pipe. (In the analogous situation for sockets and
+terminals, step 3 does (still) correctly tell us that the FD is
+ready.)
+
+I've appended a test program below. The following are the results on
+kernel 5.4.0:
+
+        $ ./pipe_epollet_test
+        Writing a byte to pipe()
+            1: OK:   ret = 1, events = [ EPOLLIN ]
+            2: OK:   ret = 0
+        Writing a byte to pipe()
+            3: OK:   ret = 1, events = [ EPOLLIN ]
+        Closing write end of pipe()
+            4: OK:   ret = 1, events = [ EPOLLIN EPOLLHUP ]
+
+On current kernels, the results are as follows:
+
+        $ ./pipe_epollet_test
+        Writing a byte to pipe()
+            1: OK:   ret = 1, events = [ EPOLLIN ]
+            2: OK:   ret = 0
+        Writing a byte to pipe()
+            3: FAIL: ret = 0; EXPECTED: ret = 1, events = [ EPOLLIN ]
+        Closing write end of pipe()
+            4: OK:   ret = 1, events = [ EPOLLIN EPOLLHUP ]
+
+Thanks,
+
+Michael
+
+=====
+
+/* pipe_epollet_test.c
+
+   Copyright (c) 2020, Michael Kerrisk <mtk.manpages@gmail.com>
+
+   Licensed under GNU GPLv2 or later.
+*/
+#include <sys/epoll.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+                        } while (0)
+
+static void
+printMask(int events)
+{
+    printf(" [ %s%s]",
+                (events & EPOLLIN)  ? "EPOLLIN "  : "",
+                (events & EPOLLHUP) ? "EPOLLHUP " : "");
+}
+
+static void
+doEpollWait(int epfd, int timeout, int expectedRetval, int expectedEvents)
+{
+    struct epoll_event ev;
+    static int callNum = 0;
+
+    int retval = epoll_wait(epfd, &ev, 1, timeout);
+    if (retval == -1) {
+        perror("epoll_wait");
+        return;
+    }
+
+    /* The test succeeded if (1) we got the expected return value and
+       (2) when the return value was 1, we got the expected events mask */
+
+    bool succeeded = retval == expectedRetval &&
+            (expectedRetval == 0 || expectedEvents == ev.events);
+
+    callNum++;
+    printf("    %d: ", callNum);
+
+    if (succeeded)
+        printf("OK:   ");
+    else
+        printf("FAIL: ");
+
+    printf("ret = %d", retval);
+
+    if (retval == 1) {
+        printf(", events =");
+        printMask(ev.events);
+    }
+
+    if (!succeeded) {
+        printf("; EXPECTED: ret = %d", expectedRetval);
+        if (expectedRetval == 1) {
+            printf(", events =");
+            printMask(expectedEvents);
+        }
+    }
+    printf("\n");
+}
+
+int
+main(int argc, char *argv[])
+{
+    int epfd;
+    int pfd[2];
+
+    epfd = epoll_create(1);
+    if (epfd == -1)
+        errExit("epoll_create");
+
+    /* Create a pipe and add read end to epoll interest list */
+
+    if (pipe(pfd) == -1)
+        errExit("pipe");
+
+    struct epoll_event ev;
+    ev.data.fd = pfd[0];
+    ev.events = EPOLLIN | EPOLLET;
+    if (epoll_ctl(epfd, EPOLL_CTL_ADD, pfd[0], &ev) == -1)
+        errExit("epoll_ctl");
+
+    /* Run some tests */
+
+    printf("Writing a byte to pipe()\n");
+    write(pfd[1], "a", 1);
+
+    doEpollWait(epfd, 0, 1, EPOLLIN);
+    doEpollWait(epfd, 0, 0, 0);
+
+    printf("Writing a byte to pipe()\n");
+    write(pfd[1], "a", 1);
+
+    doEpollWait(epfd, 0, 1, EPOLLIN);
+
+    printf("Closing write end of pipe()\n");
+    close(pfd[1]);
+
+    doEpollWait(epfd, 0, 1, EPOLLIN | EPOLLHUP);
+
+    exit(EXIT_SUCCESS);
+}
+
+
+--
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
