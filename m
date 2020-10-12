@@ -2,38 +2,38 @@ Return-Path: <SRS0=mqoo=DT=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-9.9 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+	SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B4798C352B8
-	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:40:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1A33CC4363A
+	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:40:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 933D32087E
-	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:40:28 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DF2312087D
+	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:40:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2390496AbgJLPk1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S2390485AbgJLPk1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Mon, 12 Oct 2020 11:40:27 -0400
-Received: from mga05.intel.com ([192.55.52.43]:1378 "EHLO mga05.intel.com"
+Received: from mga05.intel.com ([192.55.52.43]:1310 "EHLO mga05.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2390460AbgJLPk0 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 12 Oct 2020 11:40:26 -0400
-IronPort-SDR: da73pWdLRnCgEygHVekIgojrtl20Pp4IcR/nJg9d9t3miwgCUl/rNIQULZa+MVQNGiivnaHy2B
- AFiE8vPjsSZQ==
-X-IronPort-AV: E=McAfee;i="6000,8403,9772"; a="250452725"
+        id S2390443AbgJLPkZ (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 12 Oct 2020 11:40:25 -0400
+IronPort-SDR: yXKf5K0TC7rPC0wY7oiJKvySAYqqUJcO3EqavLRV42UN7aoS75DLiZGvTA0MGbdUPZqaUvqMOX
+ 7QvOi16Bb34A==
+X-IronPort-AV: E=McAfee;i="6000,8403,9772"; a="250452713"
 X-IronPort-AV: E=Sophos;i="5.77,367,1596524400"; 
-   d="scan'208";a="250452725"
+   d="scan'208";a="250452713"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:39:59 -0700
-IronPort-SDR: 9QKsbFTjEDlvJotn39yA6AmgM8lOw30QFjZ0xPBmBQmfizmiI9f88Gc3iVUOy8lwimEzD9BZOg
- i6JTN63zjfMg==
+  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:39:57 -0700
+IronPort-SDR: MPDxJpP8zb+MbnMmlqPKvGZj7y/kET7m5Yt/b0DIOPEh8/B+7ylAl7JaZVKDdhiFiHOmDFvXM7
+ JRnCjL7DQVYg==
 X-IronPort-AV: E=Sophos;i="5.77,367,1596524400"; 
-   d="scan'208";a="530010915"
+   d="scan'208";a="530010903"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:39:59 -0700
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:39:57 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,12 +61,10 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        Mark Brown <broonie@kernel.org>,
-        Catalin Marinas <catalin.marinas@arm.com>
-Subject: [PATCH v14 23/26] ELF: Introduce arch_setup_elf_property()
-Date:   Mon, 12 Oct 2020 08:38:47 -0700
-Message-Id: <20201012153850.26996-24-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v14 20/26] x86/cet/shstk: User-mode shadow stack support
+Date:   Mon, 12 Oct 2020 08:38:44 -0700
+Message-Id: <20201012153850.26996-21-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20201012153850.26996-1-yu-cheng.yu@intel.com>
 References: <20201012153850.26996-1-yu-cheng.yu@intel.com>
@@ -76,155 +74,364 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-An ELF file's .note.gnu.property indicates arch features supported by the
-file.  These features are extracted by arch_parse_elf_property() and stored
-in 'arch_elf_state'.  Introduce arch_setup_elf_property() for enabling such
-features.  The first use-case of this function is shadow stack.
-
-ARM64 is the other arch that has ARCH_USER_GNU_PROPERTY and arch_parse_elf_
-property().  Add arch_setup_elf_property() for it.
+This patch adds basic shadow stack enabling/disabling routines.  A task's
+shadow stack is allocated from memory with VM_SHSTK flag and has a fixed
+size of min(RLIMIT_STACK, 4GB).
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: Mark Brown <broonie@kernel.org>
-Cc: Catalin Marinas <catalin.marinas@arm.com>
-Cc: Dave Martin <Dave.Martin@arm.com>
 ---
- arch/arm64/include/asm/elf.h |  5 +++++
- arch/x86/Kconfig             |  2 ++
- arch/x86/include/asm/elf.h   | 13 +++++++++++++
- arch/x86/kernel/process_64.c | 32 ++++++++++++++++++++++++++++++++
- fs/binfmt_elf.c              |  4 ++++
- include/linux/elf.h          |  6 ++++++
- 6 files changed, 62 insertions(+)
+ arch/x86/include/asm/cet.h                    |  28 ++++
+ arch/x86/include/asm/disabled-features.h      |   8 +-
+ arch/x86/include/asm/processor.h              |   5 +
+ arch/x86/kernel/Makefile                      |   2 +
+ arch/x86/kernel/cet.c                         | 147 ++++++++++++++++++
+ arch/x86/kernel/cpu/common.c                  |  28 ++++
+ arch/x86/kernel/process.c                     |   1 +
+ .../arch/x86/include/asm/disabled-features.h  |   8 +-
+ 8 files changed, 225 insertions(+), 2 deletions(-)
+ create mode 100644 arch/x86/include/asm/cet.h
+ create mode 100644 arch/x86/kernel/cet.c
 
-diff --git a/arch/arm64/include/asm/elf.h b/arch/arm64/include/asm/elf.h
-index 8d1c8dcb87fd..d37bc7915935 100644
---- a/arch/arm64/include/asm/elf.h
-+++ b/arch/arm64/include/asm/elf.h
-@@ -281,6 +281,11 @@ static inline int arch_parse_elf_property(u32 type, const void *data,
- 	return 0;
- }
- 
-+static inline int arch_setup_elf_property(struct arch_elf_state *arch)
-+{
-+	return 0;
-+}
+diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+new file mode 100644
+index 000000000000..5750fbcbb952
+--- /dev/null
++++ b/arch/x86/include/asm/cet.h
+@@ -0,0 +1,28 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _ASM_X86_CET_H
++#define _ASM_X86_CET_H
 +
- static inline int arch_elf_pt_proc(void *ehdr, void *phdr,
- 				   struct file *f, bool is_interp,
- 				   struct arch_elf_state *state)
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 7578327226e3..4b28a0ce4594 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -1950,6 +1950,8 @@ config X86_SHADOW_STACK_USER
- 	select X86_CET
- 	select ARCH_MAYBE_MKWRITE
- 	select ARCH_HAS_SHADOW_STACK
-+	select ARCH_USE_GNU_PROPERTY
-+	select ARCH_BINFMT_ELF_STATE
- 	help
- 	  Shadow Stacks provides protection against program stack
- 	  corruption.  It's a hardware feature.  This only matters
-diff --git a/arch/x86/include/asm/elf.h b/arch/x86/include/asm/elf.h
-index b9a5d488f1a5..0e1be2a13359 100644
---- a/arch/x86/include/asm/elf.h
-+++ b/arch/x86/include/asm/elf.h
-@@ -385,6 +385,19 @@ extern int compat_arch_setup_additional_pages(struct linux_binprm *bprm,
- 					      int uses_interp);
- #define compat_arch_setup_additional_pages compat_arch_setup_additional_pages
- 
-+#ifdef CONFIG_ARCH_BINFMT_ELF_STATE
-+struct arch_elf_state {
-+	unsigned int gnu_property;
++#ifndef __ASSEMBLY__
++#include <linux/types.h>
++
++struct task_struct;
++/*
++ * Per-thread CET status
++ */
++struct cet_status {
++	unsigned long	shstk_base;
++	unsigned long	shstk_size;
 +};
 +
-+#define INIT_ARCH_ELF_STATE {	\
-+	.gnu_property = 0,	\
-+}
-+
-+#define arch_elf_pt_proc(ehdr, phdr, elf, interp, state) (0)
-+#define arch_check_elf(ehdr, interp, interp_ehdr, state) (0)
++#ifdef CONFIG_X86_CET
++int cet_setup_shstk(void);
++void cet_disable_shstk(void);
++void cet_free_shstk(struct task_struct *p);
++#else
++static inline void cet_disable_shstk(void) {}
++static inline void cet_free_shstk(struct task_struct *p) {}
 +#endif
 +
- /* Do not change the values. See get_align_mask() */
- enum align_flags {
- 	ALIGN_VA_32	= BIT(0),
-diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
-index 9afefe325acb..8725e67bcd44 100644
---- a/arch/x86/kernel/process_64.c
-+++ b/arch/x86/kernel/process_64.c
-@@ -837,3 +837,35 @@ unsigned long KSTK_ESP(struct task_struct *task)
- {
- 	return task_pt_regs(task)->sp;
- }
++#endif /* __ASSEMBLY__ */
 +
-+#ifdef CONFIG_ARCH_USE_GNU_PROPERTY
-+int arch_parse_elf_property(u32 type, const void *data, size_t datasz,
-+			     bool compat, struct arch_elf_state *state)
-+{
-+	if (type != GNU_PROPERTY_X86_FEATURE_1_AND)
-+		return 0;
-+
-+	if (datasz != sizeof(unsigned int))
-+		return -ENOEXEC;
-+
-+	state->gnu_property = *(unsigned int *)data;
-+	return 0;
-+}
-+
-+int arch_setup_elf_property(struct arch_elf_state *state)
-+{
-+	int r = 0;
-+
-+	if (!IS_ENABLED(CONFIG_X86_CET))
-+		return r;
-+
-+	memset(&current->thread.cet, 0, sizeof(struct cet_status));
-+
-+	if (static_cpu_has(X86_FEATURE_SHSTK)) {
-+		if (state->gnu_property & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
-+			r = cet_setup_shstk();
-+	}
-+
-+	return r;
-+}
-+#endif
-diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
-index 13d053982dd7..2b4cfc256895 100644
---- a/fs/binfmt_elf.c
-+++ b/fs/binfmt_elf.c
-@@ -1217,6 +1217,10 @@ static int load_elf_binary(struct linux_binprm *bprm)
- 
- 	set_binfmt(&elf_format);
- 
-+	retval = arch_setup_elf_property(&arch_state);
-+	if (retval < 0)
-+		goto out;
-+
- #ifdef ARCH_HAS_SETUP_ADDITIONAL_PAGES
- 	retval = arch_setup_additional_pages(bprm, !!interpreter);
- 	if (retval < 0)
-diff --git a/include/linux/elf.h b/include/linux/elf.h
-index 5d5b0321da0b..4827695ca415 100644
---- a/include/linux/elf.h
-+++ b/include/linux/elf.h
-@@ -82,9 +82,15 @@ static inline int arch_parse_elf_property(u32 type, const void *data,
- {
- 	return 0;
- }
-+
-+static inline int arch_setup_elf_property(struct arch_elf_state *arch)
-+{
-+	return 0;
-+}
- #else
- extern int arch_parse_elf_property(u32 type, const void *data, size_t datasz,
- 				   bool compat, struct arch_elf_state *arch);
-+extern int arch_setup_elf_property(struct arch_elf_state *arch);
++#endif /* _ASM_X86_CET_H */
+diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
+index 4ea8584682f9..edac76ed75e7 100644
+--- a/arch/x86/include/asm/disabled-features.h
++++ b/arch/x86/include/asm/disabled-features.h
+@@ -56,6 +56,12 @@
+ # define DISABLE_PTI		(1 << (X86_FEATURE_PTI & 31))
  #endif
  
- #ifdef CONFIG_ARCH_HAVE_ELF_PROT
++#ifdef CONFIG_X86_SHADOW_STACK_USER
++#define DISABLE_SHSTK	0
++#else
++#define DISABLE_SHSTK	(1<<(X86_FEATURE_SHSTK & 31))
++#endif
++
+ /*
+  * Make sure to add features to the correct mask
+  */
+@@ -75,7 +81,7 @@
+ #define DISABLED_MASK13	0
+ #define DISABLED_MASK14	0
+ #define DISABLED_MASK15	0
+-#define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP)
++#define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP|DISABLE_SHSTK)
+ #define DISABLED_MASK17	0
+ #define DISABLED_MASK18	0
+ #define DISABLED_MASK_CHECK BUILD_BUG_ON_ZERO(NCAPINTS != 19)
+diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+index 01acbd63cad8..139cb99c7076 100644
+--- a/arch/x86/include/asm/processor.h
++++ b/arch/x86/include/asm/processor.h
+@@ -27,6 +27,7 @@ struct vm86;
+ #include <asm/unwind_hints.h>
+ #include <asm/vmxfeatures.h>
+ #include <asm/vdso/processor.h>
++#include <asm/cet.h>
+ 
+ #include <linux/personality.h>
+ #include <linux/cache.h>
+@@ -542,6 +543,10 @@ struct thread_struct {
+ 
+ 	unsigned int		sig_on_uaccess_err:1;
+ 
++#ifdef CONFIG_X86_CET
++	struct cet_status	cet;
++#endif
++
+ 	/* Floating point and extended processor state */
+ 	struct fpu		fpu;
+ 	/*
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index e77261db2391..1fb85595afa7 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -145,6 +145,8 @@ obj-$(CONFIG_UNWINDER_ORC)		+= unwind_orc.o
+ obj-$(CONFIG_UNWINDER_FRAME_POINTER)	+= unwind_frame.o
+ obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
+ 
++obj-$(CONFIG_X86_CET)			+= cet.o
++
+ ###
+ # 64 bit specific files
+ ifeq ($(CONFIG_X86_64),y)
+diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
+new file mode 100644
+index 000000000000..f8b0a077594f
+--- /dev/null
++++ b/arch/x86/kernel/cet.c
+@@ -0,0 +1,147 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * cet.c - Control-flow Enforcement (CET)
++ *
++ * Copyright (c) 2019, Intel Corporation.
++ * Yu-cheng Yu <yu-cheng.yu@intel.com>
++ */
++
++#include <linux/types.h>
++#include <linux/mm.h>
++#include <linux/mman.h>
++#include <linux/slab.h>
++#include <linux/uaccess.h>
++#include <linux/sched/signal.h>
++#include <linux/compat.h>
++#include <asm/msr.h>
++#include <asm/user.h>
++#include <asm/fpu/internal.h>
++#include <asm/fpu/xstate.h>
++#include <asm/fpu/types.h>
++#include <asm/cet.h>
++
++static void start_update_msrs(void)
++{
++	fpregs_lock();
++	if (test_thread_flag(TIF_NEED_FPU_LOAD))
++		__fpregs_load_activate();
++}
++
++static void end_update_msrs(void)
++{
++	fpregs_unlock();
++}
++
++static unsigned long cet_get_shstk_addr(void)
++{
++	struct fpu *fpu = &current->thread.fpu;
++	unsigned long ssp = 0;
++
++	fpregs_lock();
++
++	if (fpregs_state_valid(fpu, smp_processor_id())) {
++		rdmsrl(MSR_IA32_PL3_SSP, ssp);
++	} else {
++		struct cet_user_state *p;
++
++		p = get_xsave_addr(&fpu->state.xsave, XFEATURE_CET_USER);
++		if (p)
++			ssp = p->user_ssp;
++	}
++
++	fpregs_unlock();
++	return ssp;
++}
++
++static unsigned long alloc_shstk(unsigned long size, int flags)
++{
++	struct mm_struct *mm = current->mm;
++	unsigned long addr, populate;
++
++	/* VM_SHSTK requires MAP_ANONYMOUS, MAP_PRIVATE */
++	flags |= MAP_ANONYMOUS | MAP_PRIVATE;
++
++	mmap_write_lock(mm);
++	addr = do_mmap(NULL, 0, size, PROT_READ, flags, VM_SHSTK, 0,
++		       &populate, NULL);
++	mmap_write_unlock(mm);
++
++	if (populate)
++		mm_populate(addr, populate);
++
++	return addr;
++}
++
++int cet_setup_shstk(void)
++{
++	unsigned long addr, size;
++	struct cet_status *cet = &current->thread.cet;
++
++	if (!static_cpu_has(X86_FEATURE_SHSTK))
++		return -EOPNOTSUPP;
++
++	size = round_up(min(rlimit(RLIMIT_STACK), 1UL << 32), PAGE_SIZE);
++	addr = alloc_shstk(size, 0);
++
++	if (IS_ERR_VALUE(addr))
++		return PTR_ERR((void *)addr);
++
++	cet->shstk_base = addr;
++	cet->shstk_size = size;
++
++	start_update_msrs();
++	wrmsrl(MSR_IA32_PL3_SSP, addr + size);
++	wrmsrl(MSR_IA32_U_CET, CET_SHSTK_EN);
++	end_update_msrs();
++	return 0;
++}
++
++void cet_disable_shstk(void)
++{
++	struct cet_status *cet = &current->thread.cet;
++	u64 msr_val;
++
++	if (!static_cpu_has(X86_FEATURE_SHSTK) ||
++	    !cet->shstk_size || !cet->shstk_base)
++		return;
++
++	start_update_msrs();
++	rdmsrl(MSR_IA32_U_CET, msr_val);
++	wrmsrl(MSR_IA32_U_CET, msr_val & ~CET_SHSTK_EN);
++	wrmsrl(MSR_IA32_PL3_SSP, 0);
++	end_update_msrs();
++
++	cet_free_shstk(current);
++}
++
++void cet_free_shstk(struct task_struct *tsk)
++{
++	struct cet_status *cet = &tsk->thread.cet;
++
++	if (!static_cpu_has(X86_FEATURE_SHSTK) ||
++	    !cet->shstk_size || !cet->shstk_base)
++		return;
++
++	if (!tsk->mm || (tsk->mm != current->mm))
++		return;
++
++	while (1) {
++		int r;
++
++		r = vm_munmap(cet->shstk_base, cet->shstk_size);
++
++		/*
++		 * Retry if mmap_lock is not available.
++		 */
++		if (r == -EINTR) {
++			cond_resched();
++			continue;
++		}
++
++		WARN_ON_ONCE(r);
++		break;
++	}
++
++	cet->shstk_base = 0;
++	cet->shstk_size = 0;
++}
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index c5d6f17d9b9d..084480f975aa 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -56,6 +56,7 @@
+ #include <asm/microcode_intel.h>
+ #include <asm/intel-family.h>
+ #include <asm/cpu_device_id.h>
++#include <asm/cet.h>
+ #include <asm/uv/uv.h>
+ 
+ #include "cpu.h"
+@@ -509,6 +510,32 @@ static __init int setup_disable_pku(char *arg)
+ __setup("nopku", setup_disable_pku);
+ #endif /* CONFIG_X86_64 */
+ 
++static __always_inline void setup_cet(struct cpuinfo_x86 *c)
++{
++	if (!cpu_feature_enabled(X86_FEATURE_SHSTK) &&
++	    !cpu_feature_enabled(X86_FEATURE_IBT))
++		return;
++
++	cr4_set_bits(X86_CR4_CET);
++}
++
++#ifdef CONFIG_X86_SHADOW_STACK_USER
++static __init int setup_disable_shstk(char *s)
++{
++	/* require an exact match without trailing characters */
++	if (s[0] != '\0')
++		return 0;
++
++	if (!boot_cpu_has(X86_FEATURE_SHSTK))
++		return 1;
++
++	setup_clear_cpu_cap(X86_FEATURE_SHSTK);
++	pr_info("x86: 'no_user_shstk' specified, disabling user Shadow Stack\n");
++	return 1;
++}
++__setup("no_user_shstk", setup_disable_shstk);
++#endif
++
+ /*
+  * Some CPU features depend on higher CPUID levels, which may not always
+  * be available due to CPUID level capping or broken virtualization
+@@ -1544,6 +1571,7 @@ static void identify_cpu(struct cpuinfo_x86 *c)
+ 
+ 	x86_init_rdrand(c);
+ 	setup_pku(c);
++	setup_cet(c);
+ 
+ 	/*
+ 	 * Clear/Set all flags overridden by options, need do it
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index ba4593a913fa..ff3b44d6740b 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -43,6 +43,7 @@
+ #include <asm/io_bitmap.h>
+ #include <asm/proto.h>
+ #include <asm/frame.h>
++#include <asm/cet.h>
+ 
+ #include "process.h"
+ 
+diff --git a/tools/arch/x86/include/asm/disabled-features.h b/tools/arch/x86/include/asm/disabled-features.h
+index 4ea8584682f9..edac76ed75e7 100644
+--- a/tools/arch/x86/include/asm/disabled-features.h
++++ b/tools/arch/x86/include/asm/disabled-features.h
+@@ -56,6 +56,12 @@
+ # define DISABLE_PTI		(1 << (X86_FEATURE_PTI & 31))
+ #endif
+ 
++#ifdef CONFIG_X86_SHADOW_STACK_USER
++#define DISABLE_SHSTK	0
++#else
++#define DISABLE_SHSTK	(1<<(X86_FEATURE_SHSTK & 31))
++#endif
++
+ /*
+  * Make sure to add features to the correct mask
+  */
+@@ -75,7 +81,7 @@
+ #define DISABLED_MASK13	0
+ #define DISABLED_MASK14	0
+ #define DISABLED_MASK15	0
+-#define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP)
++#define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP|DISABLE_SHSTK)
+ #define DISABLED_MASK17	0
+ #define DISABLED_MASK18	0
+ #define DISABLED_MASK_CHECK BUILD_BUG_ON_ZERO(NCAPINTS != 19)
 -- 
 2.21.0
 
