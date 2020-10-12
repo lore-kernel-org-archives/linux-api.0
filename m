@@ -2,38 +2,38 @@ Return-Path: <SRS0=mqoo=DT=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.9 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1A33CC4363A
-	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:40:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 58F9AC35269
+	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:40:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DF2312087D
-	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:40:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 321D420BED
+	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:40:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2390485AbgJLPk1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 12 Oct 2020 11:40:27 -0400
-Received: from mga05.intel.com ([192.55.52.43]:1310 "EHLO mga05.intel.com"
+        id S2390568AbgJLPkk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 12 Oct 2020 11:40:40 -0400
+Received: from mga05.intel.com ([192.55.52.43]:1323 "EHLO mga05.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2390443AbgJLPkZ (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 12 Oct 2020 11:40:25 -0400
-IronPort-SDR: yXKf5K0TC7rPC0wY7oiJKvySAYqqUJcO3EqavLRV42UN7aoS75DLiZGvTA0MGbdUPZqaUvqMOX
- 7QvOi16Bb34A==
-X-IronPort-AV: E=McAfee;i="6000,8403,9772"; a="250452713"
+        id S2390465AbgJLPk0 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 12 Oct 2020 11:40:26 -0400
+IronPort-SDR: riJicKCeDq8NRymvYribex+1k+HXdNJUkniAMLXPAJU/Y7tZ9tPH1lkqVFO/7o4Q86Lv5jmGag
+ yu/J3W7c7OIQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9772"; a="250452742"
 X-IronPort-AV: E=Sophos;i="5.77,367,1596524400"; 
-   d="scan'208";a="250452713"
+   d="scan'208";a="250452742"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:39:57 -0700
-IronPort-SDR: MPDxJpP8zb+MbnMmlqPKvGZj7y/kET7m5Yt/b0DIOPEh8/B+7ylAl7JaZVKDdhiFiHOmDFvXM7
- JRnCjL7DQVYg==
+  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:40:01 -0700
+IronPort-SDR: sfBfql3l53sLSVOMfBD6l2qk+No/rhoDEvRmPcfPsfGWYUt8M1EZvmjJ7pDve7+5ZzPhjuF3/N
+ UAI/3zpzl11A==
 X-IronPort-AV: E=Sophos;i="5.77,367,1596524400"; 
-   d="scan'208";a="530010903"
+   d="scan'208";a="530010957"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:39:57 -0700
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:40:01 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -62,9 +62,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v14 20/26] x86/cet/shstk: User-mode shadow stack support
-Date:   Mon, 12 Oct 2020 08:38:44 -0700
-Message-Id: <20201012153850.26996-21-yu-cheng.yu@intel.com>
+Subject: [PATCH v14 26/26] mm: Introduce PROT_SHSTK for shadow stack
+Date:   Mon, 12 Oct 2020 08:38:50 -0700
+Message-Id: <20201012153850.26996-27-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20201012153850.26996-1-yu-cheng.yu@intel.com>
 References: <20201012153850.26996-1-yu-cheng.yu@intel.com>
@@ -74,364 +74,208 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This patch adds basic shadow stack enabling/disabling routines.  A task's
-shadow stack is allocated from memory with VM_SHSTK flag and has a fixed
-size of min(RLIMIT_STACK, 4GB).
+There are three possible options to create a shadow stack allocation API:
+an arch_prctl, a new syscall, or adding PROT_SHSTK to mmap()/mprotect().
+Each has its advantages and compromises.
+
+An arch_prctl() is the least intrusive.  However, the existing x86
+arch_prctl() takes only two parameters.  Multiple parameters must be
+passed in a memory buffer.  There is a proposal to pass more parameters in
+registers [1], but no active discussion on that.
+
+A new syscall minimizes compatibility issues and offers an extensible frame
+work to other architectures, but this will likely result in some overlap of
+mmap()/mprotect().
+
+The introduction of PROT_SHSTK to mmap()/mprotect() takes advantage of
+existing APIs.  The x86-specific PROT_SHSTK is translated to VM_SHSTK and
+a shadow stack mapping is created without reinventing the wheel.  There are
+potential pitfalls though.  The most obvious one would be using this as a
+bypass to shadow stack protection.  However, the attacker would have to get
+to the syscall first.
+
+Since arch_calc_vm_prot_bits() is modified, I have moved arch_vm_get_page
+_prot() and arch_calc_vm_prot_bits() to x86/include/asm/mman.h.
+This will be more consistent with other architectures.
+
+[1] https://lore.kernel.org/lkml/20200828121624.108243-1-hjl.tools@gmail.com/
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/asm/cet.h                    |  28 ++++
- arch/x86/include/asm/disabled-features.h      |   8 +-
- arch/x86/include/asm/processor.h              |   5 +
- arch/x86/kernel/Makefile                      |   2 +
- arch/x86/kernel/cet.c                         | 147 ++++++++++++++++++
- arch/x86/kernel/cpu/common.c                  |  28 ++++
- arch/x86/kernel/process.c                     |   1 +
- .../arch/x86/include/asm/disabled-features.h  |   8 +-
- 8 files changed, 225 insertions(+), 2 deletions(-)
- create mode 100644 arch/x86/include/asm/cet.h
- create mode 100644 arch/x86/kernel/cet.c
+ arch/x86/include/asm/mman.h      | 83 ++++++++++++++++++++++++++++++++
+ arch/x86/include/uapi/asm/mman.h | 28 ++---------
+ include/linux/mm.h               |  1 +
+ mm/mmap.c                        |  8 ++-
+ 4 files changed, 95 insertions(+), 25 deletions(-)
+ create mode 100644 arch/x86/include/asm/mman.h
 
-diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+diff --git a/arch/x86/include/asm/mman.h b/arch/x86/include/asm/mman.h
 new file mode 100644
-index 000000000000..5750fbcbb952
+index 000000000000..0dcaef6f889a
 --- /dev/null
-+++ b/arch/x86/include/asm/cet.h
-@@ -0,0 +1,28 @@
++++ b/arch/x86/include/asm/mman.h
+@@ -0,0 +1,83 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
-+#ifndef _ASM_X86_CET_H
-+#define _ASM_X86_CET_H
++#ifndef _ASM_X86_MMAN_H
++#define _ASM_X86_MMAN_H
 +
-+#ifndef __ASSEMBLY__
-+#include <linux/types.h>
-+
-+struct task_struct;
-+/*
-+ * Per-thread CET status
-+ */
-+struct cet_status {
-+	unsigned long	shstk_base;
-+	unsigned long	shstk_size;
-+};
-+
-+#ifdef CONFIG_X86_CET
-+int cet_setup_shstk(void);
-+void cet_disable_shstk(void);
-+void cet_free_shstk(struct task_struct *p);
-+#else
-+static inline void cet_disable_shstk(void) {}
-+static inline void cet_free_shstk(struct task_struct *p) {}
-+#endif
-+
-+#endif /* __ASSEMBLY__ */
-+
-+#endif /* _ASM_X86_CET_H */
-diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
-index 4ea8584682f9..edac76ed75e7 100644
---- a/arch/x86/include/asm/disabled-features.h
-+++ b/arch/x86/include/asm/disabled-features.h
-@@ -56,6 +56,12 @@
- # define DISABLE_PTI		(1 << (X86_FEATURE_PTI & 31))
- #endif
- 
-+#ifdef CONFIG_X86_SHADOW_STACK_USER
-+#define DISABLE_SHSTK	0
-+#else
-+#define DISABLE_SHSTK	(1<<(X86_FEATURE_SHSTK & 31))
-+#endif
-+
- /*
-  * Make sure to add features to the correct mask
-  */
-@@ -75,7 +81,7 @@
- #define DISABLED_MASK13	0
- #define DISABLED_MASK14	0
- #define DISABLED_MASK15	0
--#define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP)
-+#define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP|DISABLE_SHSTK)
- #define DISABLED_MASK17	0
- #define DISABLED_MASK18	0
- #define DISABLED_MASK_CHECK BUILD_BUG_ON_ZERO(NCAPINTS != 19)
-diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
-index 01acbd63cad8..139cb99c7076 100644
---- a/arch/x86/include/asm/processor.h
-+++ b/arch/x86/include/asm/processor.h
-@@ -27,6 +27,7 @@ struct vm86;
- #include <asm/unwind_hints.h>
- #include <asm/vmxfeatures.h>
- #include <asm/vdso/processor.h>
-+#include <asm/cet.h>
- 
- #include <linux/personality.h>
- #include <linux/cache.h>
-@@ -542,6 +543,10 @@ struct thread_struct {
- 
- 	unsigned int		sig_on_uaccess_err:1;
- 
-+#ifdef CONFIG_X86_CET
-+	struct cet_status	cet;
-+#endif
-+
- 	/* Floating point and extended processor state */
- 	struct fpu		fpu;
- 	/*
-diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
-index e77261db2391..1fb85595afa7 100644
---- a/arch/x86/kernel/Makefile
-+++ b/arch/x86/kernel/Makefile
-@@ -145,6 +145,8 @@ obj-$(CONFIG_UNWINDER_ORC)		+= unwind_orc.o
- obj-$(CONFIG_UNWINDER_FRAME_POINTER)	+= unwind_frame.o
- obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
- 
-+obj-$(CONFIG_X86_CET)			+= cet.o
-+
- ###
- # 64 bit specific files
- ifeq ($(CONFIG_X86_64),y)
-diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
-new file mode 100644
-index 000000000000..f8b0a077594f
---- /dev/null
-+++ b/arch/x86/kernel/cet.c
-@@ -0,0 +1,147 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * cet.c - Control-flow Enforcement (CET)
-+ *
-+ * Copyright (c) 2019, Intel Corporation.
-+ * Yu-cheng Yu <yu-cheng.yu@intel.com>
-+ */
-+
-+#include <linux/types.h>
 +#include <linux/mm.h>
-+#include <linux/mman.h>
-+#include <linux/slab.h>
-+#include <linux/uaccess.h>
-+#include <linux/sched/signal.h>
-+#include <linux/compat.h>
-+#include <asm/msr.h>
-+#include <asm/user.h>
-+#include <asm/fpu/internal.h>
-+#include <asm/fpu/xstate.h>
-+#include <asm/fpu/types.h>
-+#include <asm/cet.h>
++#include <uapi/asm/mman.h>
 +
-+static void start_update_msrs(void)
++#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
++/*
++ * Take the 4 protection key bits out of the vma->vm_flags
++ * value and turn them in to the bits that we can put in
++ * to a pte.
++ *
++ * Only override these if Protection Keys are available
++ * (which is only on 64-bit).
++ */
++#define arch_vm_get_page_prot(vm_flags)	__pgprot(	\
++		((vm_flags) & VM_PKEY_BIT0 ? _PAGE_PKEY_BIT0 : 0) |	\
++		((vm_flags) & VM_PKEY_BIT1 ? _PAGE_PKEY_BIT1 : 0) |	\
++		((vm_flags) & VM_PKEY_BIT2 ? _PAGE_PKEY_BIT2 : 0) |	\
++		((vm_flags) & VM_PKEY_BIT3 ? _PAGE_PKEY_BIT3 : 0))
++
++#define pkey_vm_prot_bits(prot, key) (			\
++		((key) & 0x1 ? VM_PKEY_BIT0 : 0) |      \
++		((key) & 0x2 ? VM_PKEY_BIT1 : 0) |      \
++		((key) & 0x4 ? VM_PKEY_BIT2 : 0) |      \
++		((key) & 0x8 ? VM_PKEY_BIT3 : 0))
++#else
++#define pkey_vm_prot_bits(prot, key) (0)
++#endif
++
++static inline unsigned long arch_calc_vm_prot_bits(unsigned long prot,
++	unsigned long pkey)
 +{
-+	fpregs_lock();
-+	if (test_thread_flag(TIF_NEED_FPU_LOAD))
-+		__fpregs_load_activate();
++	unsigned long vm_prot_bits = pkey_vm_prot_bits(prot, pkey);
++
++	if (!(prot & PROT_WRITE) && (prot & PROT_SHSTK))
++		vm_prot_bits |= VM_SHSTK;
++
++	return vm_prot_bits;
 +}
++#define arch_calc_vm_prot_bits(prot, pkey) arch_calc_vm_prot_bits(prot, pkey)
 +
-+static void end_update_msrs(void)
++#ifdef CONFIG_X86_SHADOW_STACK_USER
++static inline bool arch_validate_prot(unsigned long prot, unsigned long addr)
 +{
-+	fpregs_unlock();
-+}
++	unsigned long valid = PROT_READ | PROT_WRITE | PROT_EXEC | PROT_SEM;
 +
-+static unsigned long cet_get_shstk_addr(void)
-+{
-+	struct fpu *fpu = &current->thread.fpu;
-+	unsigned long ssp = 0;
++	if (prot & ~(valid | PROT_SHSTK))
++		return false;
 +
-+	fpregs_lock();
++	if (prot & PROT_SHSTK) {
++		struct vm_area_struct *vma;
 +
-+	if (fpregs_state_valid(fpu, smp_processor_id())) {
-+		rdmsrl(MSR_IA32_PL3_SSP, ssp);
-+	} else {
-+		struct cet_user_state *p;
-+
-+		p = get_xsave_addr(&fpu->state.xsave, XFEATURE_CET_USER);
-+		if (p)
-+			ssp = p->user_ssp;
-+	}
-+
-+	fpregs_unlock();
-+	return ssp;
-+}
-+
-+static unsigned long alloc_shstk(unsigned long size, int flags)
-+{
-+	struct mm_struct *mm = current->mm;
-+	unsigned long addr, populate;
-+
-+	/* VM_SHSTK requires MAP_ANONYMOUS, MAP_PRIVATE */
-+	flags |= MAP_ANONYMOUS | MAP_PRIVATE;
-+
-+	mmap_write_lock(mm);
-+	addr = do_mmap(NULL, 0, size, PROT_READ, flags, VM_SHSTK, 0,
-+		       &populate, NULL);
-+	mmap_write_unlock(mm);
-+
-+	if (populate)
-+		mm_populate(addr, populate);
-+
-+	return addr;
-+}
-+
-+int cet_setup_shstk(void)
-+{
-+	unsigned long addr, size;
-+	struct cet_status *cet = &current->thread.cet;
-+
-+	if (!static_cpu_has(X86_FEATURE_SHSTK))
-+		return -EOPNOTSUPP;
-+
-+	size = round_up(min(rlimit(RLIMIT_STACK), 1UL << 32), PAGE_SIZE);
-+	addr = alloc_shstk(size, 0);
-+
-+	if (IS_ERR_VALUE(addr))
-+		return PTR_ERR((void *)addr);
-+
-+	cet->shstk_base = addr;
-+	cet->shstk_size = size;
-+
-+	start_update_msrs();
-+	wrmsrl(MSR_IA32_PL3_SSP, addr + size);
-+	wrmsrl(MSR_IA32_U_CET, CET_SHSTK_EN);
-+	end_update_msrs();
-+	return 0;
-+}
-+
-+void cet_disable_shstk(void)
-+{
-+	struct cet_status *cet = &current->thread.cet;
-+	u64 msr_val;
-+
-+	if (!static_cpu_has(X86_FEATURE_SHSTK) ||
-+	    !cet->shstk_size || !cet->shstk_base)
-+		return;
-+
-+	start_update_msrs();
-+	rdmsrl(MSR_IA32_U_CET, msr_val);
-+	wrmsrl(MSR_IA32_U_CET, msr_val & ~CET_SHSTK_EN);
-+	wrmsrl(MSR_IA32_PL3_SSP, 0);
-+	end_update_msrs();
-+
-+	cet_free_shstk(current);
-+}
-+
-+void cet_free_shstk(struct task_struct *tsk)
-+{
-+	struct cet_status *cet = &tsk->thread.cet;
-+
-+	if (!static_cpu_has(X86_FEATURE_SHSTK) ||
-+	    !cet->shstk_size || !cet->shstk_base)
-+		return;
-+
-+	if (!tsk->mm || (tsk->mm != current->mm))
-+		return;
-+
-+	while (1) {
-+		int r;
-+
-+		r = vm_munmap(cet->shstk_base, cet->shstk_size);
++		if (!current->thread.cet.shstk_size)
++			return false;
 +
 +		/*
-+		 * Retry if mmap_lock is not available.
++		 * A shadow stack mapping is indirectly writable by only
++		 * the CALL and WRUSS instructions, but not other write
++		 * instructions).  PROT_SHSTK and PROT_WRITE are mutually
++		 * exclusive.
 +		 */
-+		if (r == -EINTR) {
-+			cond_resched();
-+			continue;
-+		}
++		if (prot & PROT_WRITE)
++			return false;
 +
-+		WARN_ON_ONCE(r);
-+		break;
++		vma = find_vma(current->mm, addr);
++		if (!vma)
++			return false;
++
++		/*
++		 * Shadow stack cannot be backed by a file or shared.
++		 */
++		if (vma->vm_file || (vma->vm_flags & VM_SHARED))
++			return false;
 +	}
 +
-+	cet->shstk_base = 0;
-+	cet->shstk_size = 0;
++	return true;
 +}
-diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
-index c5d6f17d9b9d..084480f975aa 100644
---- a/arch/x86/kernel/cpu/common.c
-+++ b/arch/x86/kernel/cpu/common.c
-@@ -56,6 +56,7 @@
- #include <asm/microcode_intel.h>
- #include <asm/intel-family.h>
- #include <asm/cpu_device_id.h>
-+#include <asm/cet.h>
- #include <asm/uv/uv.h>
- 
- #include "cpu.h"
-@@ -509,6 +510,32 @@ static __init int setup_disable_pku(char *arg)
- __setup("nopku", setup_disable_pku);
- #endif /* CONFIG_X86_64 */
- 
-+static __always_inline void setup_cet(struct cpuinfo_x86 *c)
-+{
-+	if (!cpu_feature_enabled(X86_FEATURE_SHSTK) &&
-+	    !cpu_feature_enabled(X86_FEATURE_IBT))
-+		return;
-+
-+	cr4_set_bits(X86_CR4_CET);
-+}
-+
-+#ifdef CONFIG_X86_SHADOW_STACK_USER
-+static __init int setup_disable_shstk(char *s)
-+{
-+	/* require an exact match without trailing characters */
-+	if (s[0] != '\0')
-+		return 0;
-+
-+	if (!boot_cpu_has(X86_FEATURE_SHSTK))
-+		return 1;
-+
-+	setup_clear_cpu_cap(X86_FEATURE_SHSTK);
-+	pr_info("x86: 'no_user_shstk' specified, disabling user Shadow Stack\n");
-+	return 1;
-+}
-+__setup("no_user_shstk", setup_disable_shstk);
++#define arch_validate_prot arch_validate_prot
 +#endif
 +
- /*
-  * Some CPU features depend on higher CPUID levels, which may not always
-  * be available due to CPUID level capping or broken virtualization
-@@ -1544,6 +1571,7 @@ static void identify_cpu(struct cpuinfo_x86 *c)
++#endif /* _ASM_X86_MMAN_H */
+diff --git a/arch/x86/include/uapi/asm/mman.h b/arch/x86/include/uapi/asm/mman.h
+index d4a8d0424bfb..39bb7db344a6 100644
+--- a/arch/x86/include/uapi/asm/mman.h
++++ b/arch/x86/include/uapi/asm/mman.h
+@@ -1,31 +1,11 @@
+ /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+-#ifndef _ASM_X86_MMAN_H
+-#define _ASM_X86_MMAN_H
++#ifndef _UAPI_ASM_X86_MMAN_H
++#define _UAPI_ASM_X86_MMAN_H
  
- 	x86_init_rdrand(c);
- 	setup_pku(c);
-+	setup_cet(c);
+ #define MAP_32BIT	0x40		/* only give out 32bit addresses */
  
- 	/*
- 	 * Clear/Set all flags overridden by options, need do it
-diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
-index ba4593a913fa..ff3b44d6740b 100644
---- a/arch/x86/kernel/process.c
-+++ b/arch/x86/kernel/process.c
-@@ -43,6 +43,7 @@
- #include <asm/io_bitmap.h>
- #include <asm/proto.h>
- #include <asm/frame.h>
-+#include <asm/cet.h>
+-#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
+-/*
+- * Take the 4 protection key bits out of the vma->vm_flags
+- * value and turn them in to the bits that we can put in
+- * to a pte.
+- *
+- * Only override these if Protection Keys are available
+- * (which is only on 64-bit).
+- */
+-#define arch_vm_get_page_prot(vm_flags)	__pgprot(	\
+-		((vm_flags) & VM_PKEY_BIT0 ? _PAGE_PKEY_BIT0 : 0) |	\
+-		((vm_flags) & VM_PKEY_BIT1 ? _PAGE_PKEY_BIT1 : 0) |	\
+-		((vm_flags) & VM_PKEY_BIT2 ? _PAGE_PKEY_BIT2 : 0) |	\
+-		((vm_flags) & VM_PKEY_BIT3 ? _PAGE_PKEY_BIT3 : 0))
+-
+-#define arch_calc_vm_prot_bits(prot, key) (		\
+-		((key) & 0x1 ? VM_PKEY_BIT0 : 0) |      \
+-		((key) & 0x2 ? VM_PKEY_BIT1 : 0) |      \
+-		((key) & 0x4 ? VM_PKEY_BIT2 : 0) |      \
+-		((key) & 0x8 ? VM_PKEY_BIT3 : 0))
+-#endif
++#define PROT_SHSTK	0x10		/* shadow stack pages */
  
- #include "process.h"
+ #include <asm-generic/mman.h>
  
-diff --git a/tools/arch/x86/include/asm/disabled-features.h b/tools/arch/x86/include/asm/disabled-features.h
-index 4ea8584682f9..edac76ed75e7 100644
---- a/tools/arch/x86/include/asm/disabled-features.h
-+++ b/tools/arch/x86/include/asm/disabled-features.h
-@@ -56,6 +56,12 @@
- # define DISABLE_PTI		(1 << (X86_FEATURE_PTI & 31))
- #endif
+-#endif /* _ASM_X86_MMAN_H */
++#endif /* _UAPI_ASM_X86_MMAN_H */
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 71677d498300..203b0ff02e7c 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -334,6 +334,7 @@ extern unsigned int kobjsize(const void *objp);
  
-+#ifdef CONFIG_X86_SHADOW_STACK_USER
-+#define DISABLE_SHSTK	0
-+#else
-+#define DISABLE_SHSTK	(1<<(X86_FEATURE_SHSTK & 31))
-+#endif
+ #if defined(CONFIG_X86)
+ # define VM_PAT		VM_ARCH_1	/* PAT reserves whole VMA at once (x86) */
++# define VM_ARCH_CLEAR	VM_SHSTK
+ #elif defined(CONFIG_PPC)
+ # define VM_SAO		VM_ARCH_1	/* Strong Access Ordering (powerpc) */
+ #elif defined(CONFIG_PARISC)
+diff --git a/mm/mmap.c b/mm/mmap.c
+index fc04184d2eae..f7a62f1bf92b 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1445,6 +1445,12 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 		struct inode *inode = file_inode(file);
+ 		unsigned long flags_mask;
+ 
++		/*
++		 * Call stack cannot be backed by a file.
++		 */
++		if (vm_flags & VM_SHSTK)
++			return -EINVAL;
 +
- /*
-  * Make sure to add features to the correct mask
-  */
-@@ -75,7 +81,7 @@
- #define DISABLED_MASK13	0
- #define DISABLED_MASK14	0
- #define DISABLED_MASK15	0
--#define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP)
-+#define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP|DISABLE_SHSTK)
- #define DISABLED_MASK17	0
- #define DISABLED_MASK18	0
- #define DISABLED_MASK_CHECK BUILD_BUG_ON_ZERO(NCAPINTS != 19)
+ 		if (!file_mmap_ok(file, inode, pgoff, len))
+ 			return -EOVERFLOW;
+ 
+@@ -1509,7 +1515,7 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 	} else {
+ 		switch (flags & MAP_TYPE) {
+ 		case MAP_SHARED:
+-			if (vm_flags & (VM_GROWSDOWN|VM_GROWSUP))
++			if (vm_flags & (VM_GROWSDOWN|VM_GROWSUP|VM_SHSTK))
+ 				return -EINVAL;
+ 			/*
+ 			 * Ignore pgoff.
 -- 
 2.21.0
 
