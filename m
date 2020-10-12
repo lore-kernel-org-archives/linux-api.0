@@ -7,33 +7,33 @@ X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D0E27C433E7
-	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:41:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 93978C352B9
+	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:41:37 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9C30B20575
-	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:41:33 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5DC9120575
+	for <linux-api@archiver.kernel.org>; Mon, 12 Oct 2020 15:41:37 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2390731AbgJLPlU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 12 Oct 2020 11:41:20 -0400
-Received: from mga05.intel.com ([192.55.52.43]:1323 "EHLO mga05.intel.com"
+        id S2390806AbgJLPlg (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 12 Oct 2020 11:41:36 -0400
+Received: from mga05.intel.com ([192.55.52.43]:1378 "EHLO mga05.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2390132AbgJLPkH (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 12 Oct 2020 11:40:07 -0400
-IronPort-SDR: 4Un84J5sFNtluYBZX01AwwWfEQ2eFz81S9BZfJTTgOtFtZrzqXimBqEZ3SAfPEH6HA+ZyHII5b
- 22xxVBwcayGw==
-X-IronPort-AV: E=McAfee;i="6000,8403,9772"; a="250452682"
+        id S2390299AbgJLPkC (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 12 Oct 2020 11:40:02 -0400
+IronPort-SDR: 3Q7ehtDFB1E3Mv1Qq1tmlFGZANXHaA8b+zAFyJJ8VJ+uZfRv5f5KB7FPW6kQZGS5NkOuVdP+KR
+ nMGQvqzK+gwQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9772"; a="250452654"
 X-IronPort-AV: E=Sophos;i="5.77,367,1596524400"; 
-   d="scan'208";a="250452682"
+   d="scan'208";a="250452654"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:39:52 -0700
-IronPort-SDR: LMWF7R6ugElAOLKb89iaHIAwDfXevWJ9f5wRH6nPAQb1pYkPOf/pdUjVrkmyhvWLmsfnz/KV9C
- qKrMxKB8ZH/A==
+  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:39:48 -0700
+IronPort-SDR: J48ZbiC5D6y9A0lao5qBgtIABndhRbUe1+LceEIsKublXpdLEbMcc7GICHJnoionYzkI27Owv6
+ lUXodCjkiH5A==
 X-IronPort-AV: E=Sophos;i="5.77,367,1596524400"; 
-   d="scan'208";a="530010865"
+   d="scan'208";a="530010806"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:39:52 -0700
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Oct 2020 08:39:48 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,10 +61,10 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v14 13/26] x86/mm: Shadow Stack page fault error checking
-Date:   Mon, 12 Oct 2020 08:38:37 -0700
-Message-Id: <20201012153850.26996-14-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>, Christoph Hellwig <hch@lst.de>
+Subject: [PATCH v14 07/26] x86/mm: Remove _PAGE_DIRTY_HW from kernel RO pages
+Date:   Mon, 12 Oct 2020 08:38:31 -0700
+Message-Id: <20201012153850.26996-8-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20201012153850.26996-1-yu-cheng.yu@intel.com>
 References: <20201012153850.26996-1-yu-cheng.yu@intel.com>
@@ -74,91 +74,55 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Shadow stack accesses are those that are performed by the CPU where it
-expects to encounter a shadow stack mapping.  These accesses are performed
-implicitly by CALL/RET at the site of the shadow stack pointer.  These
-accesses are made explicitly by shadow stack management instructions like
-WRUSSQ.
-
-Shadow stacks accesses to shadow-stack mapping can see faults in normal,
-valid operation just like regular accesses to regular mappings.  Shadow
-stacks need some of the same features like delayed allocation, swap and
-copy-on-write.
-
-Shadow stack accesses can also result in errors, such as when a shadow
-stack overflows, or if a shadow stack access occurs to a non-shadow-stack
-mapping.
-
-In handling a shadow stack page fault, verify it occurs within a shadow
-stack mapping.  It is always an error otherwise.  For valid shadow stack
-accesses, set FAULT_FLAG_WRITE to effect copy-on-write.  Because clearing
-_PAGE_DIRTY_HW (vs. _PAGE_RW) is used to trigger the fault, shadow stack
-read fault and shadow stack write fault are not differentiated and both are
-handled as a write access.
+Kernel read-only PTEs are setup as _PAGE_DIRTY_HW.  Since these become
+shadow stack PTEs, remove the dirty bit.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: "H. Peter Anvin" <hpa@zytor.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
 ---
- arch/x86/include/asm/traps.h |  2 ++
- arch/x86/mm/fault.c          | 19 +++++++++++++++++++
- 2 files changed, 21 insertions(+)
+ arch/x86/include/asm/pgtable_types.h | 6 +++---
+ arch/x86/mm/pat/set_memory.c         | 2 +-
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/arch/x86/include/asm/traps.h b/arch/x86/include/asm/traps.h
-index 714b1a30e7b0..28b493c53d70 100644
---- a/arch/x86/include/asm/traps.h
-+++ b/arch/x86/include/asm/traps.h
-@@ -50,6 +50,7 @@ void __noreturn handle_stack_overflow(const char *message,
-  *   bit 3 ==				1: use of reserved bit detected
-  *   bit 4 ==				1: fault was an instruction fetch
-  *   bit 5 ==				1: protection keys block access
-+ *   bit 6 ==				1: shadow stack access fault
-  */
- enum x86_pf_error_code {
- 	X86_PF_PROT	=		1 << 0,
-@@ -58,5 +59,6 @@ enum x86_pf_error_code {
- 	X86_PF_RSVD	=		1 << 3,
- 	X86_PF_INSTR	=		1 << 4,
- 	X86_PF_PK	=		1 << 5,
-+	X86_PF_SHSTK	=		1 << 6,
- };
- #endif /* _ASM_X86_TRAPS_H */
-diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
-index 6e3e8a124903..2390399c157f 100644
---- a/arch/x86/mm/fault.c
-+++ b/arch/x86/mm/fault.c
-@@ -1110,6 +1110,17 @@ access_error(unsigned long error_code, struct vm_area_struct *vma)
- 				       (error_code & X86_PF_INSTR), foreign))
- 		return 1;
+diff --git a/arch/x86/include/asm/pgtable_types.h b/arch/x86/include/asm/pgtable_types.h
+index 192e1326b3db..5f31f1c407b9 100644
+--- a/arch/x86/include/asm/pgtable_types.h
++++ b/arch/x86/include/asm/pgtable_types.h
+@@ -193,10 +193,10 @@ enum page_cache_mode {
+ #define _KERNPG_TABLE		 (__PP|__RW|   0|___A|   0|___D|   0|   0| _ENC)
+ #define _PAGE_TABLE_NOENC	 (__PP|__RW|_USR|___A|   0|___D|   0|   0)
+ #define _PAGE_TABLE		 (__PP|__RW|_USR|___A|   0|___D|   0|   0| _ENC)
+-#define __PAGE_KERNEL_RO	 (__PP|   0|   0|___A|__NX|___D|   0|___G)
+-#define __PAGE_KERNEL_ROX	 (__PP|   0|   0|___A|   0|___D|   0|___G)
++#define __PAGE_KERNEL_RO	 (__PP|   0|   0|___A|__NX|   0|   0|___G)
++#define __PAGE_KERNEL_ROX	 (__PP|   0|   0|___A|   0|   0|   0|___G)
+ #define __PAGE_KERNEL_NOCACHE	 (__PP|__RW|   0|___A|__NX|___D|   0|___G| __NC)
+-#define __PAGE_KERNEL_VVAR	 (__PP|   0|_USR|___A|__NX|___D|   0|___G)
++#define __PAGE_KERNEL_VVAR	 (__PP|   0|_USR|___A|__NX|   0|   0|___G)
+ #define __PAGE_KERNEL_LARGE	 (__PP|__RW|   0|___A|__NX|___D|_PSE|___G)
+ #define __PAGE_KERNEL_LARGE_EXEC (__PP|__RW|   0|___A|   0|___D|_PSE|___G)
+ #define __PAGE_KERNEL_WP	 (__PP|__RW|   0|___A|__NX|___D|   0|___G| __WP)
+diff --git a/arch/x86/mm/pat/set_memory.c b/arch/x86/mm/pat/set_memory.c
+index d1b2a889f035..962434fdf0d9 100644
+--- a/arch/x86/mm/pat/set_memory.c
++++ b/arch/x86/mm/pat/set_memory.c
+@@ -1932,7 +1932,7 @@ int set_memory_nx(unsigned long addr, int numpages)
  
-+	/*
-+	 * Verify a shadow stack access is within a shadow stack VMA.
-+	 * It is always an error otherwise.  Normal data access to a
-+	 * shadow stack area is checked in the case followed.
-+	 */
-+	if (error_code & X86_PF_SHSTK) {
-+		if (!(vma->vm_flags & VM_SHSTK))
-+			return 1;
-+		return 0;
-+	}
-+
- 	if (error_code & X86_PF_WRITE) {
- 		/* write, present and write, not present: */
- 		if (unlikely(!(vma->vm_flags & VM_WRITE)))
-@@ -1275,6 +1286,14 @@ void do_user_addr_fault(struct pt_regs *regs,
+ int set_memory_ro(unsigned long addr, int numpages)
+ {
+-	return change_page_attr_clear(&addr, numpages, __pgprot(_PAGE_RW), 0);
++	return change_page_attr_clear(&addr, numpages, __pgprot(_PAGE_RW | _PAGE_DIRTY_HW), 0);
+ }
  
- 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
- 
-+	/*
-+	 * Clearing _PAGE_DIRTY_HW is used to detect shadow stack access.
-+	 * This method cannot distinguish shadow stack read vs. write.
-+	 * For valid shadow stack accesses, set FAULT_FLAG_WRITE to effect
-+	 * copy-on-write.
-+	 */
-+	if (hw_error_code & X86_PF_SHSTK)
-+		flags |= FAULT_FLAG_WRITE;
- 	if (hw_error_code & X86_PF_WRITE)
- 		flags |= FAULT_FLAG_WRITE;
- 	if (hw_error_code & X86_PF_INSTR)
+ int set_memory_rw(unsigned long addr, int numpages)
 -- 
 2.21.0
 
