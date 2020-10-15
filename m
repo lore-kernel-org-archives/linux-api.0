@@ -2,172 +2,132 @@ Return-Path: <SRS0=iYpy=DW=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6FF79C433E7
-	for <linux-api@archiver.kernel.org>; Thu, 15 Oct 2020 12:32:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 27D7DC433DF
+	for <linux-api@archiver.kernel.org>; Thu, 15 Oct 2020 18:43:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 260D522267
-	for <linux-api@archiver.kernel.org>; Thu, 15 Oct 2020 12:32:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B90982076D
+	for <linux-api@archiver.kernel.org>; Thu, 15 Oct 2020 18:43:55 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1602787435;
+	bh=Hw5WM4z/PKQCv88gRxxzBpMjxvtkn/5+f5c9Ky3Y8Kg=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:List-ID:From;
+	b=hhX5QGhdmZMiejyOKRgvxuk64bpJ7tL7BV2ql7u14FJczUlFd3z9uBFxdePBv+4ZV
+	 Pu3Ac015VScyi3WMUapNe5dmay1VqoZ9Q6mBQRDmEhJic0SlbaaK1xUwieYTTd4v4S
+	 EbgsCJmlJRb/JMhFxKuN1Sk7HnO2ZntCBx1KM56Y=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728428AbgJOMcH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 15 Oct 2020 08:32:07 -0400
-Received: from smtp-190a.mail.infomaniak.ch ([185.125.25.10]:48233 "EHLO
-        smtp-190a.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1727873AbgJOMcF (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 15 Oct 2020 08:32:05 -0400
-Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
-        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4CBpZB5fPXzlhTQt;
-        Thu, 15 Oct 2020 14:32:02 +0200 (CEST)
-Received: from ns3096276.ip-94-23-54.eu (unknown [94.23.54.103])
-        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4CBpZ66ymBzlh8V2;
-        Thu, 15 Oct 2020 14:31:58 +0200 (CEST)
-Subject: Re: [PATCH v21 12/12] landlock: Add user and kernel documentation
-To:     James Morris <jmorris@namei.org>,
-        "Serge E . Hallyn" <serge@hallyn.com>,
-        Jonathan Corbet <corbet@lwn.net>
-Cc:     linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>,
-        Richard Weinberger <richard@nod.at>,
-        Andy Lutomirski <luto@amacapital.net>,
-        Anton Ivanov <anton.ivanov@cambridgegreys.com>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Casey Schaufler <casey@schaufler-ca.com>,
-        Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>,
-        Kees Cook <keescook@chromium.org>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Shuah Khan <shuah@kernel.org>,
-        Vincent Dagonneau <vincent.dagonneau@ssi.gouv.fr>,
-        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
-        linux-arch@vger.kernel.org, linux-doc@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org, linux-kselftest@vger.kernel.org,
-        linux-security-module@vger.kernel.org, x86@kernel.org,
-        =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@linux.microsoft.com>
-References: <20201008153103.1155388-1-mic@digikod.net>
- <20201008153103.1155388-13-mic@digikod.net>
-From:   =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Message-ID: <fc1c5675-034b-bf5b-ba2b-6be06e03b458@digikod.net>
-Date:   Thu, 15 Oct 2020 14:31:58 +0200
-User-Agent: 
+        id S2389428AbgJOSnz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 15 Oct 2020 14:43:55 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40298 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1731154AbgJOSnz (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 15 Oct 2020 14:43:55 -0400
+Received: from mail-pf1-x441.google.com (mail-pf1-x441.google.com [IPv6:2607:f8b0:4864:20::441])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7532AC061755;
+        Thu, 15 Oct 2020 11:43:53 -0700 (PDT)
+Received: by mail-pf1-x441.google.com with SMTP id f19so2544664pfj.11;
+        Thu, 15 Oct 2020 11:43:53 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to;
+        bh=xV+ZkBNMWugBuC3oFzXT5UBZRM8reU/hX0mycgZbUE0=;
+        b=JIOfP6QyLkJwJ+mlZ9xwHJKJyiUhBMF//TdMIdMRFRReUuQ1+XyXZB6RDX36HjEVOB
+         EYVjdMqy50q2hiyDvGgCcfk4ffeblCmtxPNKplTlkVGcVa0hc/5uSjw4rhFtt2dLNJo9
+         NLxIKAQcCtyYKb9UloN9yUAgzRn13IHvwmjs6enToUhXof3kxZnC1mQjpuO+CgmCwMKv
+         gCo+kssxju3VdQzcexK02yvCa6u4s24sZbgNQeXyzLQ0WrNCREFQGSvUJ5PYha/mgH+t
+         wMy9McRom8YWqXGeUyiD8mUO1ZOONsrjrv47gC7n/5iM8SkxEhI0lYRbkBLXgDFCgh5W
+         UONQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:date:from:to:cc:subject:message-id
+         :references:mime-version:content-disposition:in-reply-to;
+        bh=xV+ZkBNMWugBuC3oFzXT5UBZRM8reU/hX0mycgZbUE0=;
+        b=bbZFONxk/d1okMgPiz0X5uhCqlP+jEf9OglXNEyDspTFCMEpYi9pQ0E4CK3aPUlGWP
+         mVcLPJzaOeE1dchFihO2IzBCJAc7GnLgkekz2NCURlwzt0GfNPZonCR/cQmeyKg1tj3d
+         nnlbKDd6BKFYWdejsiuS5wpwYZcM4wEC9o1Obu/+vmMV4fXFXrcMZk7Hyn9vfeQ/QK/W
+         DgAIbbi49tPNSAYrzx+VpAbdDOBkjcxzoGFsvn0yAVefX0KhskQY5fRiytTWQMu0dF0g
+         4nt+ZN2xaA2HSxRzHRMhGlEXh/FapCCb0j/+MwypSNHTwRgU/9OyTcXhmefY7uNYQFog
+         766A==
+X-Gm-Message-State: AOAM532ANsxOucB7OtBWSN9bYrWCIvEYZThbablNx57+el5igJuEOBRb
+        oeF/z6wfGjKbD0tU4YizQUo=
+X-Google-Smtp-Source: ABdhPJzg1f36S7JBkpfzKfIJO9S7c1n4KYwgjLfZuKaKPBDCRuiD6ZZepcgfH4pFu1/2tQ79DGQkag==
+X-Received: by 2002:a63:3588:: with SMTP id c130mr176425pga.200.1602787432849;
+        Thu, 15 Oct 2020 11:43:52 -0700 (PDT)
+Received: from google.com ([2620:15c:211:1:7220:84ff:fe09:5e58])
+        by smtp.gmail.com with ESMTPSA id m19sm2400131pgn.93.2020.10.15.11.43.50
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 15 Oct 2020 11:43:51 -0700 (PDT)
+Sender: Minchan Kim <minchan.kim@gmail.com>
+Date:   Thu, 15 Oct 2020 11:43:49 -0700
+From:   Minchan Kim <minchan@kernel.org>
+To:     Michal Hocko <mhocko@suse.com>
+Cc:     Suren Baghdasaryan <surenb@google.com>, linux-api@vger.kernel.org,
+        linux-mm <linux-mm@kvack.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        David Rientjes <rientjes@google.com>,
+        Matthew Wilcox <willy@infradead.org>,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Roman Gushchin <guro@fb.com>, Rik van Riel <riel@surriel.com>,
+        Christian Brauner <christian@brauner.io>,
+        Oleg Nesterov <oleg@redhat.com>,
+        Tim Murray <timmurray@google.com>,
+        kernel-team <kernel-team@android.com>,
+        LKML <linux-kernel@vger.kernel.org>,
+        Mel Gorman <mgorman@techsingularity.net>
+Subject: Re: [RFC]: userspace memory reaping
+Message-ID: <20201015184349.GA3930989@google.com>
+References: <CAJuCfpGz1kPM3G1gZH+09Z7aoWKg05QSAMMisJ7H5MdmRrRhNQ@mail.gmail.com>
+ <CAJuCfpGjuUz5FPpR5iQ7oURJAhnP1ffBAnERuTUp9uPxQCRhDg@mail.gmail.com>
+ <20201014120937.GC4440@dhcp22.suse.cz>
+ <CAJuCfpEQ_ADYsMrF_zjfAeQ3d-FALSP+CeYsvgH2H1-FSoGGqg@mail.gmail.com>
+ <20201015092030.GB22589@dhcp22.suse.cz>
 MIME-Version: 1.0
-In-Reply-To: <20201008153103.1155388-13-mic@digikod.net>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20201015092030.GB22589@dhcp22.suse.cz>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+On Thu, Oct 15, 2020 at 11:20:30AM +0200, Michal Hocko wrote:
 
-On 08/10/2020 17:31, Mickaël Salaün wrote:
-> From: Mickaël Salaün <mic@linux.microsoft.com>
+> > > I do have a vague recollection that we have discussed a kill(2) based
+> > > approach as well in the past. Essentially SIG_KILL_SYNC which would
+> > > not only send the signal but it would start a teardown of resources
+> > > owned by the task - at least those we can remove safely. The interface
+> > > would be much more simple and less tricky to use. You just make your
+> > > userspace oom killer or potentially other users call SIG_KILL_SYNC which
+> > > will be more expensive but you would at least know that as many
+> > > resources have been freed as the kernel can afford at the moment.
+> > 
+> > Correct, my early RFC here
+> > https://patchwork.kernel.org/project/linux-mm/patch/20190411014353.113252-3-surenb@google.com
+> > was using a new flag for pidfd_send_signal() to request mm reaping by
+> > oom-reaper kthread. IIUC you propose to have a new SIG_KILL_SYNC
+> > signal instead of a new pidfd_send_signal() flag and otherwise a very
+> > similar solution. Is my understanding correct?
 > 
-> This documentation can be built with the Sphinx framework.
-> 
-> Cc: James Morris <jmorris@namei.org>
-> Cc: Jann Horn <jannh@google.com>
-> Cc: Kees Cook <keescook@chromium.org>
-> Cc: Serge E. Hallyn <serge@hallyn.com>
-> Signed-off-by: Mickaël Salaün <mic@linux.microsoft.com>
-> Reviewed-by: Vincent Dagonneau <vincent.dagonneau@ssi.gouv.fr>
-> ---
-> 
-> Changes since v20:
-> * Update examples and documentation with the new syscalls.
-> 
-> Changes since v19:
-> * Update examples and documentation with the new syscalls.
-> 
-> Changes since v15:
-> * Add current limitations.
-> 
-> Changes since v14:
-> * Fix spelling (contributed by Randy Dunlap).
-> * Extend documentation about inheritance and explain layer levels.
-> * Remove the use of now-removed access rights.
-> * Use GitHub links.
-> * Improve kernel documentation.
-> * Add section for tests.
-> * Update example.
-> 
-> Changes since v13:
-> * Rewrote the documentation according to the major revamp.
-> 
-> Previous changes:
-> https://lore.kernel.org/lkml/20191104172146.30797-8-mic@digikod.net/
-> ---
->  Documentation/security/index.rst           |   1 +
->  Documentation/security/landlock/index.rst  |  18 ++
->  Documentation/security/landlock/kernel.rst |  69 ++++++
->  Documentation/security/landlock/user.rst   | 242 +++++++++++++++++++++
->  4 files changed, 330 insertions(+)
->  create mode 100644 Documentation/security/landlock/index.rst
->  create mode 100644 Documentation/security/landlock/kernel.rst
->  create mode 100644 Documentation/security/landlock/user.rst
-> 
-> diff --git a/Documentation/security/index.rst b/Documentation/security/index.rst
-> index 8129405eb2cc..e3f2bf4fef77 100644
-> --- a/Documentation/security/index.rst
-> +++ b/Documentation/security/index.rst
-> @@ -16,3 +16,4 @@ Security Documentation
->     siphash
->     tpm/index
->     digsig
-> +   landlock/index
-> diff --git a/Documentation/security/landlock/index.rst b/Documentation/security/landlock/index.rst
-> new file mode 100644
-> index 000000000000..2520f8f33f5e
-> --- /dev/null
-> +++ b/Documentation/security/landlock/index.rst
-> @@ -0,0 +1,18 @@
-> +=========================================
-> +Landlock LSM: unprivileged access control
-> +=========================================
-> +
-> +:Author: Mickaël Salaün
-> +
-> +The goal of Landlock is to enable to restrict ambient rights (e.g.  global
-> +filesystem access) for a set of processes.  Because Landlock is a stackable
-> +LSM, it makes possible to create safe security sandboxes as new security layers
-> +in addition to the existing system-wide access-controls. This kind of sandbox
-> +is expected to help mitigate the security impact of bugs or
-> +unexpected/malicious behaviors in user-space applications. Landlock empowers
-> +any process, including unprivileged ones, to securely restrict themselves.
-> +
-> +.. toctree::
-> +
-> +    user
-> +    kernel
-> diff --git a/Documentation/security/landlock/kernel.rst b/Documentation/security/landlock/kernel.rst
-> new file mode 100644
-> index 000000000000..27c0933a0b6e
-> --- /dev/null
-> +++ b/Documentation/security/landlock/kernel.rst
-> @@ -0,0 +1,69 @@
-> +==============================
-> +Landlock: kernel documentation
-> +==============================
-Cf. https://landlock.io/linux-doc/landlock-v21/security/landlock/kernel.html
+> Well, I think you shouldn't focus too much on the oom-reaper aspect
+> of it. Sure it can be used for that but I believe that a new signal
+> should provide a sync behavior. People more familiar with the process
+> management would be better off defining what is possible for a new sync
+> signal.  Ideally not only pro-active process destruction but also sync
+> waiting until the target process is released so that you know that once
+> kill syscall returns the process is gone.
 
-I guess this is the good place for kernel API documentation.
+If we approach with signal, I am not sure we need to create new signal
+rather than pidfd and fsync(2) semantic.
 
-> diff --git a/Documentation/security/landlock/user.rst b/Documentation/security/landlock/user.rst
-> new file mode 100644
-> index 000000000000..e6fbc75c1af1
-> --- /dev/null
-> +++ b/Documentation/security/landlock/user.rst
-> @@ -0,0 +1,242 @@
-> +=================================
-> +Landlock: userspace documentation
-> +=================================
-Cf. https://landlock.io/linux-doc/landlock-v21/security/landlock/user.html
+Furthermore, process_madvise makes the work in the caller context but
+signal might work somewhere else context depending on implemenation(
+oom reaper or CPU resumed the task). I am not sure it it fulfils Suren's
+requirement.
 
-Shouldn't this go in Documentation/userspace-api/ instead?
-
-Documentation/security/lsm-development.rst says that LSM documentation
-should go to Documentation/admin-guide/LSM/ but this is not (like
-seccomp) an admin documentation.
-Should the Documentation/userspace-api/landlock.rst be linked from
-Documentation/admin-guide/LSM/index.rst too?
+One more thing to think over: Even though we spent some overhead to
+read /proc/pid/maps, we could make zapping in parallel in userspace
+with multi thread approach. I am not sure what's the win since Suren
+also care about zapping performance.
