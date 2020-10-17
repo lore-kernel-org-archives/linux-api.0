@@ -2,445 +2,344 @@ Return-Path: <SRS0=Po1q=DY=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.4 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+X-Spam-Status: No, score=-20.4 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_IN_DEF_DKIM_WL
-	autolearn=no autolearn_force=no version=3.4.0
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_GIT,USER_IN_DEF_DKIM_WL autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3AE19C433DF
-	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 06:02:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E37E4C433E7
+	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 06:02:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id F417F206B2
-	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 06:02:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AF6C820709
+	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 06:02:34 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="dQiCd8Xy"
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="lI9f0YYR"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2436900AbgJQGC0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 17 Oct 2020 02:02:26 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57294 "EHLO
+        id S2436678AbgJQGBj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 17 Oct 2020 02:01:39 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57306 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2408610AbgJQGBk (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 17 Oct 2020 02:01:40 -0400
-Received: from mail-lf1-x141.google.com (mail-lf1-x141.google.com [IPv6:2a00:1450:4864:20::141])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E67DDC0610D0
-        for <linux-api@vger.kernel.org>; Fri, 16 Oct 2020 18:40:36 -0700 (PDT)
-Received: by mail-lf1-x141.google.com with SMTP id v6so5592209lfa.13
-        for <linux-api@vger.kernel.org>; Fri, 16 Oct 2020 18:40:36 -0700 (PDT)
+        with ESMTP id S2411574AbgJQGBg (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 17 Oct 2020 02:01:36 -0400
+Received: from mail-pg1-x54a.google.com (mail-pg1-x54a.google.com [IPv6:2607:f8b0:4864:20::54a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 30E72C0613DC
+        for <linux-api@vger.kernel.org>; Fri, 16 Oct 2020 17:12:57 -0700 (PDT)
+Received: by mail-pg1-x54a.google.com with SMTP id 1so2129038pgd.9
+        for <linux-api@vger.kernel.org>; Fri, 16 Oct 2020 17:12:57 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=google.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=BopKGQtPaTfGwvlC86xQaWETvH2e42ZAR9Kr5ZDpv5s=;
-        b=dQiCd8XyqN/Fitc8jJSyUjY0qDqNyPd4ShZrsSIFOTL3hIXs/X4bpKQd9pwCeUBOFb
-         rOLxxBpLKrOA8rhA0PKoUKMLfJVMXtBRFwpgtaWBjmnQFfjRPHciUbyHFxHAs2M7Ew5r
-         Go6yyxTpGz2QKjj6Qe+uxMDSvLKOxUJLCapzz+Bz4LuJMdcWwb/eeIp4hUxbTF6+EAzG
-         xukDvdgot880aXqWOTeg+XakhsxqiTDpmPUY2afjLe/JRu3gDGQclNJUgrrh8wEYaq5e
-         oKCRvn2Io8fmIn5mXPhnlbp+xC5dBXEyamkajNc8GtUTODOpFnryQCw4W12GE+nS0sDV
-         5jGw==
+        h=sender:date:in-reply-to:message-id:mime-version:references:subject
+         :from:to:cc;
+        bh=u8/LRl2/qV4QI9xUjYWGrJSgKrHy7RyYkI/74EkmgQM=;
+        b=lI9f0YYR3iGhBL4onJoktDCEPLFF2WT03PAbrCw866sSdfPfRuy0rHtCDRECK1Er2j
+         8KbwdnlvHlP1WtM/3Si1EdkmA0ESPUbsZBRNWsSgt32mGgY+w89Kk3n96fCDG3h9kRID
+         DQqVAjm61LOfBrwcwPqRSGm5P+0pPMPH0HS9AJhV1A7rJF3LH3/edwRzbou25JhfSI4K
+         AjmKUMmuM4PaEH61jbvwyyeofnIpi1nbwN/jAoNX6LGae0GUtIWxZqsAjFfdtjsOqx8B
+         6bWP4P4hw84PLAS2uTq0WAxk6kocPrPf6dtQKRFq0/j/yQ/KYKqeIJcRlVhvR2s4Yzl1
+         bk8w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=BopKGQtPaTfGwvlC86xQaWETvH2e42ZAR9Kr5ZDpv5s=;
-        b=QMTdVqh17UnTNTAe6DZGWm43dETQAWC6kihJ46J2PEhDMRlw/rBdc92e+44AwLMiwC
-         aRYy1BVQ4EURM/PHjwF/WlNjC1Ue/X4oN75q7HP0+zKgQSE8BFI4HQ23lut8Nf8QBvDq
-         Yyf02qQYYWgSxnQNOar1cVHOqdwL7Vlo45snTrZTKbuuEGhu1qQlEwtKVnMgwF6UTNiw
-         Ummr1zsdDFXMIGEu5Jt9652rB8+e2law4owbMRlmBVnI0TsRbOpAJIgKCduuKkX3WKP/
-         d6gIUNY3Uf5nizTpl29D4UZvqPAhEc6Ig4yMgTMjRUfUEWZtVzSKh7gxHEfX6/sUIeXt
-         sLtg==
-X-Gm-Message-State: AOAM531jolmKnH85DEfrAAZ4lHUZ7zn8nO21Pnx6T4WIZiCyFe8+hqr8
-        wzeQVHLHK6w/W1d7aetPH5iSTg3vDyjlvUd3CPGfsw==
-X-Google-Smtp-Source: ABdhPJzGuYJEkcAsnQmiRIzfXcMIc/qN2/3dOgPxRLYyuzsdMoyuYhfEYm6oFrU0i0UreLfHV5fP3MEtahH4QnFku+A=
-X-Received: by 2002:a19:e308:: with SMTP id a8mr2221438lfh.573.1602898834832;
- Fri, 16 Oct 2020 18:40:34 -0700 (PDT)
-MIME-Version: 1.0
-References: <AQHWo8lIfZnFKGe8nkGmhTCXwq5R3w==> <788878CE-2578-4991-A5A6-669DCABAC2F2@amazon.com>
-In-Reply-To: <788878CE-2578-4991-A5A6-669DCABAC2F2@amazon.com>
-From:   Jann Horn <jannh@google.com>
-Date:   Sat, 17 Oct 2020 03:40:08 +0200
-Message-ID: <CAG48ez0EanBvDyfthe+hAP0OC8iGLNSq2e5wJVz-=ENNGF97_w@mail.gmail.com>
-Subject: Re: [PATCH] drivers/virt: vmgenid: add vm generation id driver
-To:     "Catangiu, Adrian Costin" <acatan@amazon.com>,
-        Andy Lutomirski <luto@kernel.org>,
-        Jason Donenfeld <Jason@zx2c4.com>,
-        "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>,
-        Eric Biggers <ebiggers@kernel.org>
-Cc:     "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "virtualization@lists.linux-foundation.org" 
-        <virtualization@lists.linux-foundation.org>,
-        "Graf (AWS), Alexander" <graf@amazon.de>,
-        "MacCarthaigh, Colm" <colmmacc@amazon.com>,
-        "Woodhouse, David" <dwmw@amazon.co.uk>,
-        "bonzini@gnu.org" <bonzini@gnu.org>,
-        "Singh, Balbir" <sblbir@amazon.com>,
-        "Weiss, Radu" <raduweis@amazon.com>,
-        "oridgar@gmail.com" <oridgar@gmail.com>,
-        "ghammer@redhat.com" <ghammer@redhat.com>,
-        "corbet@lwn.net" <corbet@lwn.net>,
-        "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>,
-        "mst@redhat.com" <mst@redhat.com>,
-        "qemu-devel@nongnu.org" <qemu-devel@nongnu.org>,
-        KVM list <kvm@vger.kernel.org>,
-        Michal Hocko <mhocko@kernel.org>,
-        "Rafael J. Wysocki" <rafael@kernel.org>,
-        Pavel Machek <pavel@ucw.cz>,
-        Linux API <linux-api@vger.kernel.org>
+        h=x-gm-message-state:sender:date:in-reply-to:message-id:mime-version
+         :references:subject:from:to:cc;
+        bh=u8/LRl2/qV4QI9xUjYWGrJSgKrHy7RyYkI/74EkmgQM=;
+        b=Ql199lo40sCcLcBK1EUCTQkCXaBQusvq9Fl1zW/AGmhc2k5EfJiCCGuUXW/2tfTbxR
+         h+TFDPEx0XVHJ0I8vbkw2DnLz+9r7R6r0gJLjleB5p2bbSrjgxDRhXcl/zFRJfUlTaop
+         LM4DqeqE+YUkyPpmFVERARE/NumW+at4kvdpZinOalDfP3osTIqR62jpgNt1tOZCe8mM
+         UYaKNrmmTP6JeXrT+e6PTPl+xlghD3F5q/y+0+POZMnPznEiY7F7jkIzbG5tORxpZAOo
+         NOX59jLMamokJDD5OtlyiGFtVXUG7k2LRyJrcdaD2+w1lBx5IxeE7AjZ9Fskj8lkWy5X
+         +s/A==
+X-Gm-Message-State: AOAM532kfbkxK+b3AmAfQPHlNa1xPYONBFafZfNkHUj5RjSPg6BF9srQ
+        GtSvNRih0bQYqxaY328ZNuzB2fc=
+X-Google-Smtp-Source: ABdhPJw2cdV6wyDbdnSSnQqUaSrIar3KYC+VaVtCNxLlTqE4vDyUvFyqMm5+5Qhy8mkNCfV9RPrhvME=
+Sender: "pcc via sendgmr" <pcc@pcc-desktop.svl.corp.google.com>
+X-Received: from pcc-desktop.svl.corp.google.com ([2620:15c:2ce:0:7220:84ff:fe09:385a])
+ (user=pcc job=sendgmr) by 2002:a62:7c09:0:b029:152:60c9:43b2 with SMTP id
+ x9-20020a627c090000b029015260c943b2mr6090892pfc.79.1602893576611; Fri, 16 Oct
+ 2020 17:12:56 -0700 (PDT)
+Date:   Fri, 16 Oct 2020 17:12:31 -0700
+In-Reply-To: <cover.1602892799.git.pcc@google.com>
+Message-Id: <3cabc4cf8ac3c7c9005df489625d26193c0db4c7.1602892799.git.pcc@google.com>
+Mime-Version: 1.0
+References: <cover.1602892799.git.pcc@google.com>
+X-Mailer: git-send-email 2.29.0.rc1.297.gfa9743e501-goog
+Subject: [PATCH v12 6/8] signal: deduplicate code dealing with common
+ _sigfault fields
+From:   Peter Collingbourne <pcc@google.com>
+To:     Catalin Marinas <catalin.marinas@arm.com>,
+        Evgenii Stepanov <eugenis@google.com>,
+        Kostya Serebryany <kcc@google.com>,
+        Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Will Deacon <will@kernel.org>, Oleg Nesterov <oleg@redhat.com>,
+        "Eric W. Biederman" <ebiederm@xmission.com>,
+        "James E.J. Bottomley" <James.Bottomley@hansenpartnership.com>
+Cc:     Peter Collingbourne <pcc@google.com>,
+        Linux ARM <linux-arm-kernel@lists.infradead.org>,
+        Kevin Brodsky <kevin.brodsky@arm.com>,
+        Andrey Konovalov <andreyknvl@google.com>,
+        Richard Henderson <rth@twiddle.net>, linux-api@vger.kernel.org,
+        Helge Deller <deller@gmx.de>,
+        David Spickett <david.spickett@linaro.org>
 Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-[adding some more people who are interested in RNG stuff: Andy, Jason,
-Theodore, Willy Tarreau, Eric Biggers. also linux-api@, because this
-concerns some pretty fundamental API stuff related to RNG usage]
+We're about to add more common _sigfault fields, so deduplicate the
+existing code for initializing _sigfault fields in {send,force}_sig_*,
+and for copying _sigfault fields in copy_siginfo_to_external32 and
+post_copy_siginfo_from_user32, to reduce the number of places that
+will need to be updated by upcoming changes.
 
-On Fri, Oct 16, 2020 at 4:33 PM Catangiu, Adrian Costin
-<acatan@amazon.com> wrote:
-> - Background
->
-> The VM Generation ID is a feature defined by Microsoft (paper:
-> http://go.microsoft.com/fwlink/?LinkId=260709) and supported by
-> multiple hypervisor vendors.
->
-> The feature is required in virtualized environments by apps that work
-> with local copies/caches of world-unique data such as random values,
-> uuids, monotonically increasing counters, etc.
-> Such apps can be negatively affected by VM snapshotting when the VM
-> is either cloned or returned to an earlier point in time.
->
-> The VM Generation ID is a simple concept meant to alleviate the issue
-> by providing a unique ID that changes each time the VM is restored
-> from a snapshot. The hw provided UUID value can be used to
-> differentiate between VMs or different generations of the same VM.
->
-> - Problem
->
-> The VM Generation ID is exposed through an ACPI device by multiple
-> hypervisor vendors but neither the vendors or upstream Linux have no
-> default driver for it leaving users to fend for themselves.
->
-> Furthermore, simply finding out about a VM generation change is only
-> the starting point of a process to renew internal states of possibly
-> multiple applications across the system. This process could benefit
-> from a driver that provides an interface through which orchestration
-> can be easily done.
->
-> - Solution
->
-> This patch is a driver which exposes the Virtual Machine Generation ID
-> via a char-dev FS interface that provides ID update sync and async
-> notification, retrieval and confirmation mechanisms:
->
-> When the device is 'open()'ed a copy of the current vm UUID is
-> associated with the file handle. 'read()' operations block until the
-> associated UUID is no longer up to date - until HW vm gen id changes -
-> at which point the new UUID is provided/returned. Nonblocking 'read()'
-> uses EWOULDBLOCK to signal that there is no _new_ UUID available.
->
-> 'poll()' is implemented to allow polling for UUID updates. Such
-> updates result in 'EPOLLIN' events.
->
-> Subsequent read()s following a UUID update no longer block, but return
-> the updated UUID. The application needs to acknowledge the UUID update
-> by confirming it through a 'write()'.
-> Only on writing back to the driver the right/latest UUID, will the
-> driver mark this "watcher" as up to date and remove EPOLLIN status.
->
-> 'mmap()' support allows mapping a single read-only shared page which
-> will always contain the latest UUID value at offset 0.
+Signed-off-by: Peter Collingbourne <pcc@google.com>
+Link: https://linux-review.googlesource.com/id/I4f56174e1b7b2bf4a3c8139e6879cbfd52750a24
+---
+ include/linux/signal.h |  13 ++++++
+ kernel/signal.c        | 101 ++++++++++++++++-------------------------
+ 2 files changed, 53 insertions(+), 61 deletions(-)
 
-It would be nicer if that page just contained an incrementing counter,
-instead of a UUID. It's not like the application cares *what* the UUID
-changed to, just that it *did* change and all RNGs state now needs to
-be reseeded from the kernel, right? And an application can't reliably
-read the entire UUID from the memory mapping anyway, because the VM
-might be forked in the middle.
+diff --git a/include/linux/signal.h b/include/linux/signal.h
+index 7bbc0e9cf084..9b7fef0c559d 100644
+--- a/include/linux/signal.h
++++ b/include/linux/signal.h
+@@ -50,6 +50,19 @@ enum siginfo_layout {
+ 
+ enum siginfo_layout siginfo_layout(unsigned sig, int si_code);
+ 
++static inline bool siginfo_layout_is_fault(enum siginfo_layout layout)
++{
++	switch (layout) {
++	case SIL_FAULT:
++	case SIL_FAULT_MCEERR:
++	case SIL_FAULT_BNDERR:
++	case SIL_FAULT_PKUERR:
++		return true;
++	default:
++		return false;
++	}
++}
++
+ /*
+  * Define some primitives to manipulate sigset_t.
+  */
+diff --git a/kernel/signal.c b/kernel/signal.c
+index 018c19f6cf66..acdfd5a6d424 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -1649,6 +1649,15 @@ void force_sigsegv(int sig)
+ 	force_sig(SIGSEGV);
+ }
+ 
++static void set_sigfault_common_fields(struct kernel_siginfo *info, int sig,
++				       int code, void __user *addr)
++{
++	info->si_signo = sig;
++	info->si_errno = 0;
++	info->si_code = code;
++	info->si_addr = addr;
++}
++
+ int force_sig_fault_to_task(int sig, int code, void __user *addr
+ 	___ARCH_SI_TRAPNO(int trapno)
+ 	___ARCH_SI_IA64(int imm, unsigned int flags, unsigned long isr)
+@@ -1657,10 +1666,7 @@ int force_sig_fault_to_task(int sig, int code, void __user *addr
+ 	struct kernel_siginfo info;
+ 
+ 	clear_siginfo(&info);
+-	info.si_signo = sig;
+-	info.si_errno = 0;
+-	info.si_code  = code;
+-	info.si_addr  = addr;
++	set_sigfault_common_fields(&info, sig, code, addr);
+ #ifdef __ARCH_SI_TRAPNO
+ 	info.si_trapno = trapno;
+ #endif
+@@ -1689,10 +1695,7 @@ int send_sig_fault(int sig, int code, void __user *addr
+ 	struct kernel_siginfo info;
+ 
+ 	clear_siginfo(&info);
+-	info.si_signo = sig;
+-	info.si_errno = 0;
+-	info.si_code  = code;
+-	info.si_addr  = addr;
++	set_sigfault_common_fields(&info, sig, code, addr);
+ #ifdef __ARCH_SI_TRAPNO
+ 	info.si_trapno = trapno;
+ #endif
+@@ -1710,10 +1713,7 @@ int force_sig_mceerr(int code, void __user *addr, short lsb)
+ 
+ 	WARN_ON((code != BUS_MCEERR_AO) && (code != BUS_MCEERR_AR));
+ 	clear_siginfo(&info);
+-	info.si_signo = SIGBUS;
+-	info.si_errno = 0;
+-	info.si_code = code;
+-	info.si_addr = addr;
++	set_sigfault_common_fields(&info, SIGBUS, code, addr);
+ 	info.si_addr_lsb = lsb;
+ 	return force_sig_info(&info);
+ }
+@@ -1724,10 +1724,7 @@ int send_sig_mceerr(int code, void __user *addr, short lsb, struct task_struct *
+ 
+ 	WARN_ON((code != BUS_MCEERR_AO) && (code != BUS_MCEERR_AR));
+ 	clear_siginfo(&info);
+-	info.si_signo = SIGBUS;
+-	info.si_errno = 0;
+-	info.si_code = code;
+-	info.si_addr = addr;
++	set_sigfault_common_fields(&info, SIGBUS, code, addr);
+ 	info.si_addr_lsb = lsb;
+ 	return send_sig_info(info.si_signo, &info, t);
+ }
+@@ -1738,10 +1735,7 @@ int force_sig_bnderr(void __user *addr, void __user *lower, void __user *upper)
+ 	struct kernel_siginfo info;
+ 
+ 	clear_siginfo(&info);
+-	info.si_signo = SIGSEGV;
+-	info.si_errno = 0;
+-	info.si_code  = SEGV_BNDERR;
+-	info.si_addr  = addr;
++	set_sigfault_common_fields(&info, SIGSEGV, SEGV_BNDERR, addr);
+ 	info.si_lower = lower;
+ 	info.si_upper = upper;
+ 	return force_sig_info(&info);
+@@ -1753,10 +1747,7 @@ int force_sig_pkuerr(void __user *addr, u32 pkey)
+ 	struct kernel_siginfo info;
+ 
+ 	clear_siginfo(&info);
+-	info.si_signo = SIGSEGV;
+-	info.si_errno = 0;
+-	info.si_code  = SEGV_PKUERR;
+-	info.si_addr  = addr;
++	set_sigfault_common_fields(&info, SIGSEGV, SEGV_PKUERR, addr);
+ 	info.si_pkey  = pkey;
+ 	return force_sig_info(&info);
+ }
+@@ -1770,10 +1761,8 @@ int force_sig_ptrace_errno_trap(int errno, void __user *addr)
+ 	struct kernel_siginfo info;
+ 
+ 	clear_siginfo(&info);
+-	info.si_signo = SIGTRAP;
++	set_sigfault_common_fields(&info, SIGTRAP, TRAP_HWBKPT, addr);
+ 	info.si_errno = errno;
+-	info.si_code  = TRAP_HWBKPT;
+-	info.si_addr  = addr;
+ 	return force_sig_info(&info);
+ }
+ 
+@@ -3266,12 +3255,23 @@ int copy_siginfo_from_user(kernel_siginfo_t *to, const siginfo_t __user *from)
+ void copy_siginfo_to_external32(struct compat_siginfo *to,
+ 		const struct kernel_siginfo *from)
+ {
++	enum siginfo_layout layout =
++		siginfo_layout(from->si_signo, from->si_code);
++
+ 	memset(to, 0, sizeof(*to));
+ 
+ 	to->si_signo = from->si_signo;
+ 	to->si_errno = from->si_errno;
+ 	to->si_code  = from->si_code;
+-	switch(siginfo_layout(from->si_signo, from->si_code)) {
++
++	if (siginfo_layout_is_fault(layout)) {
++		to->si_addr = ptr_to_compat(from->si_addr);
++#ifdef __ARCH_SI_TRAPNO
++		to->si_trapno = from->si_trapno;
++#endif
++	}
++
++	switch (layout) {
+ 	case SIL_KILL:
+ 		to->si_pid = from->si_pid;
+ 		to->si_uid = from->si_uid;
+@@ -3286,31 +3286,15 @@ void copy_siginfo_to_external32(struct compat_siginfo *to,
+ 		to->si_fd   = from->si_fd;
+ 		break;
+ 	case SIL_FAULT:
+-		to->si_addr = ptr_to_compat(from->si_addr);
+-#ifdef __ARCH_SI_TRAPNO
+-		to->si_trapno = from->si_trapno;
+-#endif
+ 		break;
+ 	case SIL_FAULT_MCEERR:
+-		to->si_addr = ptr_to_compat(from->si_addr);
+-#ifdef __ARCH_SI_TRAPNO
+-		to->si_trapno = from->si_trapno;
+-#endif
+ 		to->si_addr_lsb = from->si_addr_lsb;
+ 		break;
+ 	case SIL_FAULT_BNDERR:
+-		to->si_addr = ptr_to_compat(from->si_addr);
+-#ifdef __ARCH_SI_TRAPNO
+-		to->si_trapno = from->si_trapno;
+-#endif
+ 		to->si_lower = ptr_to_compat(from->si_lower);
+ 		to->si_upper = ptr_to_compat(from->si_upper);
+ 		break;
+ 	case SIL_FAULT_PKUERR:
+-		to->si_addr = ptr_to_compat(from->si_addr);
+-#ifdef __ARCH_SI_TRAPNO
+-		to->si_trapno = from->si_trapno;
+-#endif
+ 		to->si_pkey = from->si_pkey;
+ 		break;
+ 	case SIL_CHLD:
+@@ -3347,11 +3331,22 @@ int __copy_siginfo_to_user32(struct compat_siginfo __user *to,
+ static int post_copy_siginfo_from_user32(kernel_siginfo_t *to,
+ 					 const struct compat_siginfo *from)
+ {
++	enum siginfo_layout layout =
++		siginfo_layout(from->si_signo, from->si_code);
++
+ 	clear_siginfo(to);
+ 	to->si_signo = from->si_signo;
+ 	to->si_errno = from->si_errno;
+ 	to->si_code  = from->si_code;
+-	switch(siginfo_layout(from->si_signo, from->si_code)) {
++
++	if (siginfo_layout_is_fault(layout)) {
++		to->si_addr = compat_ptr(from->si_addr);
++#ifdef __ARCH_SI_TRAPNO
++		to->si_trapno = from->si_trapno;
++#endif
++	}
++
++	switch (layout) {
+ 	case SIL_KILL:
+ 		to->si_pid = from->si_pid;
+ 		to->si_uid = from->si_uid;
+@@ -3366,31 +3361,15 @@ static int post_copy_siginfo_from_user32(kernel_siginfo_t *to,
+ 		to->si_fd   = from->si_fd;
+ 		break;
+ 	case SIL_FAULT:
+-		to->si_addr = compat_ptr(from->si_addr);
+-#ifdef __ARCH_SI_TRAPNO
+-		to->si_trapno = from->si_trapno;
+-#endif
+ 		break;
+ 	case SIL_FAULT_MCEERR:
+-		to->si_addr = compat_ptr(from->si_addr);
+-#ifdef __ARCH_SI_TRAPNO
+-		to->si_trapno = from->si_trapno;
+-#endif
+ 		to->si_addr_lsb = from->si_addr_lsb;
+ 		break;
+ 	case SIL_FAULT_BNDERR:
+-		to->si_addr = compat_ptr(from->si_addr);
+-#ifdef __ARCH_SI_TRAPNO
+-		to->si_trapno = from->si_trapno;
+-#endif
+ 		to->si_lower = compat_ptr(from->si_lower);
+ 		to->si_upper = compat_ptr(from->si_upper);
+ 		break;
+ 	case SIL_FAULT_PKUERR:
+-		to->si_addr = compat_ptr(from->si_addr);
+-#ifdef __ARCH_SI_TRAPNO
+-		to->si_trapno = from->si_trapno;
+-#endif
+ 		to->si_pkey = from->si_pkey;
+ 		break;
+ 	case SIL_CHLD:
+-- 
+2.29.0.rc1.297.gfa9743e501-goog
 
-So I think your kernel driver should detect UUID changes and then turn
-those into a monotonically incrementing counter. (Probably 64 bits
-wide?) (That's probably also a little bit faster than comparing an
-entire UUID.)
-
-An option might be to put that counter into the vDSO, instead of a
-separate VMA; but I don't know how the other folks feel about that.
-Andy, do you have opinions on this? That way, normal userspace code
-that uses this infrastructure wouldn't have to mess around with a
-special device at all. And it'd be usable in seccomp sandboxes and so
-on without needing special plumbing. And libraries wouldn't have to
-call open() and mess with file descriptor numbers.
-
-> The driver also adds support for tracking count of open file handles
-> that haven't acknowledged an UUID update. This is exposed through
-> two IOCTLs:
->  * VMGENID_GET_OUTDATED_WATCHERS: immediately returns the number of
->    _outdated_ watchers - number of file handles that were open during
->    a VM generation change, and which have not yet confirmed the new
->    Vm-Gen-Id.
->  * VMGENID_WAIT_WATCHERS: blocks until there are no more _outdated_
->    watchers, or if a 'timeout' argument is provided, until the timeout
->    expires.
-
-Does this mean that code that uses the memory mapping to detect
-changes is still supposed to confirm generation IDs? What about
-multithreaded processes, especially ones that use libraries - if a
-library opens a single file descriptor that is used from multiple
-threads, is the library required to synchronize all its threads before
-confirming the change? That seems like it could get messy. And it
-again means that this interface can't easily be used from inside
-seccomp sandboxes.
-
-[...]
-> diff --git a/Documentation/virt/vmgenid.rst b/Documentation/virt/vmgenid.rst
-[...]
-> +``close()``:
-> +  Removes the file handle as a Vm-Gen-Id watcher.
-
-(Linux doesn't have "file handles". Technically close() just closes a
-file descriptor, and if that file descriptor points to the same file
-description object (aka struct file) as another file descriptor,
-nothing happens.)
-
-> +Example application workflows
-> +-----------------------------
-> +
-> +1) Watchdog thread simplified example::
-> +
-> +       void watchdog_thread_handler(int *thread_active)
-> +       {
-> +               uuid_t uuid;
-> +               int fd = open("/dev/vmgenid", O_RDWR, S_IRUSR | S_IWUSR);
-
-In case we actually keep this API, you should use O_CLOEXEC here.
-
-> +
-> +               do {
-> +                       // read new UUID - blocks until VM generation changes
-> +                       read(fd, &uuid, sizeof(uuid));
-> +
-> +                       // because of VM generation change, we need to rebuild world
-> +                       reseed_app_env();
-> +
-> +                       // confirm we're done handling UUID update
-> +                       write(fd, &uuid, sizeof(uuid));
-> +               } while (atomic_read(thread_active));
-> +
-> +               close(fd);
-> +       }
-[...]
-> +3) Mapped memory polling simplified example::
-> +
-> +       /*
-> +        * app/library function that provides cached secrets
-> +        */
-> +       char * safe_cached_secret(app_data_t *app)
-> +       {
-> +               char *secret;
-> +               volatile uuid_t *const uuid_ptr = get_vmgenid_mapping(app);
-> +       again:
-> +               secret = __cached_secret(app);
-> +
-> +               if (unlikely(*uuid_ptr != app->cached_uuid)) {
-> +                       app->cached_uuid = *uuid_ptr;
-> +
-> +                       // rebuild world then confirm the uuid update (thru write)
-> +                       rebuild_caches(app);
-> +                       ack_vmgenid_update(app);
-> +
-> +                       goto again;
-> +               }
-> +
-> +               return secret;
-> +       }
-> +
-> +4) Orchestrator simplified example::
-> +
-> +       /*
-> +        * orchestrator - manages multiple apps and libraries used by a service
-> +        * and tries to make sure all sensitive components gracefully handle
-> +        * VM generation changes.
-> +        * Following function is called on detection of a VM generation change.
-> +        */
-> +       int handle_vmgen_update(int vmgenfd, uuid_t new_uuid)
-> +       {
-> +               // pause until all components have handled event
-> +               pause_service();
-> +
-> +               // confirm *this* watcher as up-to-date
-> +               write(fd, &new_uuid, sizeof(uuid_t));
-> +
-> +               // wait for all *others*
-> +               ioctl(fd, VMGENID_WAIT_WATCHERS, NULL);
-> +
-> +               // all apps on the system have rebuilt worlds
-> +               resume_service();
-> +       }
-
-Can you describe what value such an "Orchestrator" would add? Because
-it seems to me like this will just unnecessarily complicate things.
-
-[...]
-> diff --git a/drivers/virt/Makefile b/drivers/virt/Makefile
-> index fd33124..a1f8dcc 100644
-> --- a/drivers/virt/Makefile
-> +++ b/drivers/virt/Makefile
-> @@ -4,4 +4,5 @@
->  #
->
->  obj-$(CONFIG_FSL_HV_MANAGER)   += fsl_hypervisor.o
-> +obj-$(CONFIG_VMGENID)          += vmgenid.o
->  obj-y                          += vboxguest/
-> diff --git a/drivers/virt/vmgenid.c b/drivers/virt/vmgenid.c
-[...]
-> +static int vmgenid_close(struct inode *inode, struct file *file)
-> +{
-> +       struct file_data *file_data = (struct file_data *) file->private_data;
-> +       struct dev_data *priv = file_data->dev_data;
-> +
-> +       if (!vmgenid_uuid_matches(priv, &file_data->acked_uuid))
-> +               vmgenid_put_outdated_watchers(priv);
-> +       atomic_dec(&priv->watchers);
-
-What happens if the UUID changes between the previous two calls? Then
-the outdated watcher count will go out of sync, right?
-
-(But as I've said, I think that maybe the outdated watcher counting is
-a bad idea in general, and we should just get rid of it.)
-
-> +       kfree(file->private_data);
-> +
-> +       return 0;
-> +}
-> +
-> +static ssize_t
-> +vmgenid_read(struct file *file, char __user *ubuf, size_t nbytes, loff_t *ppos)
-> +{
-> +       struct file_data *file_data =
-> +               (struct file_data *) file->private_data;
-> +       struct dev_data *priv = file_data->dev_data;
-> +       ssize_t ret;
-> +
-> +       if (nbytes == 0)
-> +               return 0;
-> +       /* disallow partial UUID reads */
-> +       if (nbytes < sizeof(uuid_t))
-> +               return -EINVAL;
-> +       nbytes = sizeof(uuid_t);
-> +
-> +       if (vmgenid_uuid_matches(priv, &file_data->acked_uuid)) {
-> +               if (file->f_flags & O_NONBLOCK)
-> +                       return -EAGAIN;
-> +               ret = wait_event_interruptible(
-> +                       priv->read_wait,
-> +                       !vmgenid_uuid_matches(priv, &file_data->acked_uuid)
-> +               );
-> +               if (ret)
-> +                       return ret;
-> +       }
-> +
-> +       ret = copy_to_user(ubuf, &priv->uuid, nbytes);
-
-If the VM is again forked in the middle of this, will userspace see a
-torn UUID (consisting of half old and half new value)?
-
-> +       if (ret)
-> +               return -EFAULT;
-> +
-> +       return nbytes;
-> +}
-[...]
-> +static vm_fault_t vmgenid_vm_fault(struct vm_fault *vmf)
-> +{
-> +       struct page *page;
-> +       struct file_data *file_data =
-> +                       (struct file_data *) vmf->vma->vm_private_data;
-> +       struct dev_data *priv = file_data->dev_data;
-> +
-> +       if (priv->map_buf) {
-> +               page = virt_to_page(priv->map_buf);
-> +               get_page(page);
-> +               vmf->page = page;
-> +       }
-> +
-> +       return 0;
-> +}
-> +
-> +static const struct vm_operations_struct vmgenid_vm_ops = {
-> +       .fault = vmgenid_vm_fault,
-> +};
-> +
-> +static int vmgenid_mmap(struct file *file, struct vm_area_struct *vma)
-> +{
-> +       if (vma->vm_pgoff != 0 || vma_pages(vma) > 1)
-> +               return -EINVAL;
-> +
-> +       if ((vma->vm_flags & VM_WRITE) != 0)
-> +               return -EPERM;
-
-This doesn't work, you also need to clear VM_MAYWRITE. See e.g. binder_mmap().
-
-Also, I think mmap handlers for special mappings like this usually
-directly install the page inside the mmap handler, using something
-like vm_insert_page(). And then they don't need a ->fault handler.
-
-(But if we decide to put this into the vDSO, the whole memory mapping
-thing would become unnecessary anyway.)
-
-> +       vma->vm_ops = &vmgenid_vm_ops;
-> +       vma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
-> +       vma->vm_private_data = file->private_data;
-> +
-> +       return 0;
-> +}
-> +
-> +static const struct file_operations fops = {
-> +       .owner          = THIS_MODULE,
-> +       .mmap           = vmgenid_mmap,
-> +       .open           = vmgenid_open,
-> +       .release        = vmgenid_close,
-> +       .read           = vmgenid_read,
-> +       .write          = vmgenid_write,
-> +       .poll           = vmgenid_poll,
-> +       .compat_ioctl   = vmgenid_ioctl,
-
-You don't need to define a compat_ioctl if the normal ioctl handler is the same.
-
-> +       .unlocked_ioctl = vmgenid_ioctl,
-> +};
-[...]
-> +static void vmgenid_acpi_notify(struct acpi_device *device, u32 event)
-> +{
-> +       uuid_t old_uuid;
-> +       struct dev_data *priv;
-> +
-> +       pr_debug("VMGENID notified, event %u", event);
-> +
-> +       if (!device || !acpi_driver_data(device)) {
-> +               pr_err("VMGENID notify with NULL private data");
-> +               return;
-> +       }
-> +       priv = acpi_driver_data(device);
-> +
-> +       /* update VM Generation UUID */
-> +       old_uuid = priv->uuid;
-> +       memcpy_fromio(&priv->uuid, priv->uuid_iomap, sizeof(uuid_t));
-> +
-> +       if (!vmgenid_uuid_matches(priv, &old_uuid)) {
-> +               /* HW uuid updated */
-> +               memcpy((void *) priv->map_buf, &priv->uuid, sizeof(uuid_t));
-> +               atomic_set(&priv->outdated_watchers,
-> +                        atomic_read(&priv->watchers));
-> +               wake_up_interruptible(&priv->read_wait);
-> +       }
-> +}
-
-If we know that the VM just got forked, we should probably also make
-sure that we reseed the kernel's internal RNG before we tell userspace
-to fetch new RNG seeds from the kernel? Otherwise this is kinda
-pointless. Or are we already taking care of that elsewhere? If not, we
-should probably mix the UUID into the entropy pool (at least
-`write_pool(&input_pool, uuid, sizeof(uuid_t))`, although technically
-it would be better to do it in a way that ensures that userspace can't
-write the same value into the RNG - maybe we should introduce type
-prefixes into write_pool()?) and then trigger a reseed of everything
-else (`crng_reseed(&primary_crng, &input_pool)`).
