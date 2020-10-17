@@ -2,156 +2,172 @@ Return-Path: <SRS0=Po1q=DY=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-20.4 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+X-Spam-Status: No, score=-11.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT,USER_IN_DEF_DKIM_WL autolearn=unavailable
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_IN_DEF_DKIM_WL
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 928F7C4363D
-	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 06:01:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BB08FC433DF
+	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 06:01:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 543FB20720
-	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 06:01:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 82A6920760
+	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 06:01:59 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="IdbWwjq/"
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="G0aFMwnX"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2436889AbgJQGBj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 17 Oct 2020 02:01:39 -0400
+        id S2436892AbgJQGB4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 17 Oct 2020 02:01:56 -0400
 Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57288 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2411580AbgJQGBg (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 17 Oct 2020 02:01:36 -0400
-Received: from mail-qt1-x84a.google.com (mail-qt1-x84a.google.com [IPv6:2607:f8b0:4864:20::84a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 62054C0613DB
-        for <linux-api@vger.kernel.org>; Fri, 16 Oct 2020 17:12:55 -0700 (PDT)
-Received: by mail-qt1-x84a.google.com with SMTP id e19so2370373qtq.17
-        for <linux-api@vger.kernel.org>; Fri, 16 Oct 2020 17:12:55 -0700 (PDT)
+        with ESMTP id S2436910AbgJQGBl (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 17 Oct 2020 02:01:41 -0400
+Received: from mail-lj1-x244.google.com (mail-lj1-x244.google.com [IPv6:2a00:1450:4864:20::244])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 62863C05BD1B
+        for <linux-api@vger.kernel.org>; Fri, 16 Oct 2020 21:03:05 -0700 (PDT)
+Received: by mail-lj1-x244.google.com with SMTP id i2so4923537ljg.4
+        for <linux-api@vger.kernel.org>; Fri, 16 Oct 2020 21:03:05 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=google.com; s=20161025;
-        h=sender:date:in-reply-to:message-id:mime-version:references:subject
-         :from:to:cc;
-        bh=beJYRcTSMXl+ssB1hZRLQHWjWaa0LSzrjyL4rY4lfCE=;
-        b=IdbWwjq/b+TLNtozI5kF+btUmTLlcbzVYXEGi1AU7DQGBpTF9aUlKXoyMLkzHkNYVx
-         zF15uNRB5iKTJMqlEfG/VHAhK8M7AfhiIbi9Jj6ada9NwjlQqiU2WpSwg1hwShMhSSdX
-         QN/Y7I3sqFvccG9a91KgIk1+oLceZh4SOTWzygKmHTta8SsCwGl6MOHwgsdNUkjKvbr4
-         dgrtJ30VpDPdGq1LFmvKGkQob5Aj12dxZpIr00Gqy1CvU8nNVae8FN7Y83M3bwxBoeuC
-         kAomeqgPWXk/Pqadyt1O7ld1Fwvuhp5lcb0xs6sH3iymOp2JGVlPmueooCh6G24SG0q2
-         KdbA==
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=uR2yRSoFIyQFa85ZmyTeQWbKesy0kogveF0JOmK3HCU=;
+        b=G0aFMwnXL3XlqQtltqTo0eoChMRvdBPFzMoicowzO+xAY5WA7wnecLBujcLmZah0k/
+         e5mpG2PgiCXI5UV6aPxyJHgp+ak3mHqsIwGNyATLAY9IpyytJ/yv/eUNLEx8n5Z8IWxM
+         5Ev81C4+GL/IiR5iIz/ra80OcP7ctuQ69Pj2L7/QrHYXrCEAAle4I31KIYWKOWdz7wXn
+         M3HFOt505tL/bufF7RKhxyavqsmuktaYt6aLjMXM2bezAY35bwnHVGu6RsGL9aReXefA
+         CUnwlpUOUePqMTfmrge6m16eiA1+eUvlxTaBEHUJphVGNMuBAicVc8kqC269vRlgE0G9
+         pD+w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:in-reply-to:message-id:mime-version
-         :references:subject:from:to:cc;
-        bh=beJYRcTSMXl+ssB1hZRLQHWjWaa0LSzrjyL4rY4lfCE=;
-        b=LOxrAxk2fILmQJEDO22zGIdYZvpXtuWwj2Y0JN6i77nUROB0pmD2T3IW2mHT8AE7dH
-         3pgrExxYXBD2dIhRiO8Vq1epThgPRTXqFtayQgnYFDTmmei0nPNNiGTbHVQD9u7MmPve
-         Dqw0+53cCj5xikXkDvtmT8ENKsRwWRA+YEmnVYb/dYlz8NZPvnTFAEpjYehctXGDseaW
-         vi0ABQy2t7TSZgir620BKDa0ah7DcJFsy4p0C0qXabPQul+vw7SB0fOHnaKUDwaDXZuF
-         mFXm7TbTbOJoEuhHHsChHebW7cyfBEaiv3aWcUO0SivyqxHdGAPZZ+MipGh/j6KqwmCJ
-         jqHg==
-X-Gm-Message-State: AOAM533418K+TS2j8isqDY60djcL3DIHl/EpbmSHx10mWYYWi6iiDnEi
-        kKEE/6m0g0TGKkzByPevLVPG9MM=
-X-Google-Smtp-Source: ABdhPJyzLwra6WILfeSqbZO3wb7k45mAfs3gB0fAOYaCDrkAeUSkn5dFszU06PBpEUlPQCRTQ9Yf86c=
-Sender: "pcc via sendgmr" <pcc@pcc-desktop.svl.corp.google.com>
-X-Received: from pcc-desktop.svl.corp.google.com ([2620:15c:2ce:0:7220:84ff:fe09:385a])
- (user=pcc job=sendgmr) by 2002:a0c:aa98:: with SMTP id f24mr6581581qvb.62.1602893574439;
- Fri, 16 Oct 2020 17:12:54 -0700 (PDT)
-Date:   Fri, 16 Oct 2020 17:12:30 -0700
-In-Reply-To: <cover.1602892799.git.pcc@google.com>
-Message-Id: <b0ef91feb52d05bf95174f78b4f1d3ae322dc03a.1602892799.git.pcc@google.com>
-Mime-Version: 1.0
-References: <cover.1602892799.git.pcc@google.com>
-X-Mailer: git-send-email 2.29.0.rc1.297.gfa9743e501-goog
-Subject: [PATCH v12 5/8] signal: define the SA_UNSUPPORTED bit in sa_flags
-From:   Peter Collingbourne <pcc@google.com>
-To:     Catalin Marinas <catalin.marinas@arm.com>,
-        Evgenii Stepanov <eugenis@google.com>,
-        Kostya Serebryany <kcc@google.com>,
-        Vincenzo Frascino <vincenzo.frascino@arm.com>,
-        Dave Martin <Dave.Martin@arm.com>,
-        Will Deacon <will@kernel.org>, Oleg Nesterov <oleg@redhat.com>,
-        "Eric W. Biederman" <ebiederm@xmission.com>,
-        "James E.J. Bottomley" <James.Bottomley@hansenpartnership.com>
-Cc:     Peter Collingbourne <pcc@google.com>,
-        Linux ARM <linux-arm-kernel@lists.infradead.org>,
-        Kevin Brodsky <kevin.brodsky@arm.com>,
-        Andrey Konovalov <andreyknvl@google.com>,
-        Richard Henderson <rth@twiddle.net>, linux-api@vger.kernel.org,
-        Helge Deller <deller@gmx.de>,
-        David Spickett <david.spickett@linaro.org>
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=uR2yRSoFIyQFa85ZmyTeQWbKesy0kogveF0JOmK3HCU=;
+        b=shtVrroqiuUYAyw+YFXCSsosJDJRILz5sz6vK1VsH+Iwz5Hpw+0QZZAfS2yTWdKAcI
+         LsRI9vxrBao9if5yDgFpkxNS32sE7SqFKqpRxIlnwo6StnOXLiXICVmpb7zRcFWqYaIO
+         bj/YOpkdalTB1WDJ8ElpCxIUaRktU8gIbfrmPDevuxmYwDpvty1WUslkCj1nhF46XaX2
+         7/dNwQufB6st91nO8ZATukKw7Al/YIJJkAUXrnbYhB11DnB1iAws7kTjTqbFyoEw2ThV
+         F+DiQp0UadDEXJAIV0jT/o1zPojU4yca1zFJq1iKAMNe6bImyUkRD3ftG6HIZExtWHWc
+         frpQ==
+X-Gm-Message-State: AOAM532zYYYyoNXg4qoypD4VUE1yfosvuTZ2mMAT36hITdGgFJgzV7aT
+        JRf26giSuiprynKEXa4wqgxk/0ouODcSiDz02/jatg==
+X-Google-Smtp-Source: ABdhPJyWM+KuxWSKm+WZakQM1coYpvqzhvFBssVoo8yKJsSvLXOonodEkq1Mrj4Ytt2McNT6VBun6xj6Gc9/hPkEfDk=
+X-Received: by 2002:a2e:8816:: with SMTP id x22mr2543467ljh.377.1602907383409;
+ Fri, 16 Oct 2020 21:03:03 -0700 (PDT)
+MIME-Version: 1.0
+References: <788878CE-2578-4991-A5A6-669DCABAC2F2@amazon.com>
+ <CAG48ez0EanBvDyfthe+hAP0OC8iGLNSq2e5wJVz-=ENNGF97_w@mail.gmail.com> <20201017033606.GA14014@1wt.eu>
+In-Reply-To: <20201017033606.GA14014@1wt.eu>
+From:   Jann Horn <jannh@google.com>
+Date:   Sat, 17 Oct 2020 06:02:36 +0200
+Message-ID: <CAG48ez0x2S9XuCrANAQbXNi8Jjwm822-fnQSmr-Zr07JgrEs1g@mail.gmail.com>
+Subject: Re: [PATCH] drivers/virt: vmgenid: add vm generation id driver
+To:     Willy Tarreau <w@1wt.eu>
+Cc:     "Catangiu, Adrian Costin" <acatan@amazon.com>,
+        Andy Lutomirski <luto@kernel.org>,
+        Jason Donenfeld <Jason@zx2c4.com>,
+        "Theodore Y. Ts'o" <tytso@mit.edu>,
+        Eric Biggers <ebiggers@kernel.org>,
+        "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "virtualization@lists.linux-foundation.org" 
+        <virtualization@lists.linux-foundation.org>,
+        "Graf (AWS), Alexander" <graf@amazon.de>,
+        "MacCarthaigh, Colm" <colmmacc@amazon.com>,
+        "Woodhouse, David" <dwmw@amazon.co.uk>,
+        "bonzini@gnu.org" <bonzini@gnu.org>,
+        "Singh, Balbir" <sblbir@amazon.com>,
+        "Weiss, Radu" <raduweis@amazon.com>,
+        "oridgar@gmail.com" <oridgar@gmail.com>,
+        "ghammer@redhat.com" <ghammer@redhat.com>,
+        "corbet@lwn.net" <corbet@lwn.net>,
+        "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>,
+        "mst@redhat.com" <mst@redhat.com>,
+        "qemu-devel@nongnu.org" <qemu-devel@nongnu.org>,
+        KVM list <kvm@vger.kernel.org>,
+        Michal Hocko <mhocko@kernel.org>,
+        "Rafael J. Wysocki" <rafael@kernel.org>,
+        Pavel Machek <pavel@ucw.cz>,
+        Linux API <linux-api@vger.kernel.org>
 Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Define a sa_flags bit, SA_UNSUPPORTED, which will never be supported
-in the uapi. The purpose of this flag bit is to allow userspace to
-distinguish an old kernel that does not clear unknown sa_flags bits
-from a kernel that supports every flag bit.
+On Sat, Oct 17, 2020 at 5:36 AM Willy Tarreau <w@1wt.eu> wrote:
+> On Sat, Oct 17, 2020 at 03:40:08AM +0200, Jann Horn wrote:
+> > [adding some more people who are interested in RNG stuff: Andy, Jason,
+> > Theodore, Willy Tarreau, Eric Biggers. also linux-api@, because this
+> > concerns some pretty fundamental API stuff related to RNG usage]
+> >
+> > On Fri, Oct 16, 2020 at 4:33 PM Catangiu, Adrian Costin
+> > <acatan@amazon.com> wrote:
+> > > This patch is a driver which exposes the Virtual Machine Generation ID
+> > > via a char-dev FS interface that provides ID update sync and async
+> > > notification, retrieval and confirmation mechanisms:
+> > >
+> > > When the device is 'open()'ed a copy of the current vm UUID is
+> > > associated with the file handle. 'read()' operations block until the
+> > > associated UUID is no longer up to date - until HW vm gen id changes -
+> > > at which point the new UUID is provided/returned. Nonblocking 'read()'
+> > > uses EWOULDBLOCK to signal that there is no _new_ UUID available.
+> > >
+> > > 'poll()' is implemented to allow polling for UUID updates. Such
+> > > updates result in 'EPOLLIN' events.
+> > >
+> > > Subsequent read()s following a UUID update no longer block, but return
+> > > the updated UUID. The application needs to acknowledge the UUID update
+> > > by confirming it through a 'write()'.
+> > > Only on writing back to the driver the right/latest UUID, will the
+> > > driver mark this "watcher" as up to date and remove EPOLLIN status.
+> > >
+> > > 'mmap()' support allows mapping a single read-only shared page which
+> > > will always contain the latest UUID value at offset 0.
+> >
+> > It would be nicer if that page just contained an incrementing counter,
+> > instead of a UUID. It's not like the application cares *what* the UUID
+> > changed to, just that it *did* change and all RNGs state now needs to
+> > be reseeded from the kernel, right? And an application can't reliably
+> > read the entire UUID from the memory mapping anyway, because the VM
+> > might be forked in the middle.
+> >
+> > So I think your kernel driver should detect UUID changes and then turn
+> > those into a monotonically incrementing counter. (Probably 64 bits
+> > wide?) (That's probably also a little bit faster than comparing an
+> > entire UUID.)
+>
+> I agree with this. Further, I'm observing there is a very common
+> confusion between "universally unique" and "random". Randoms are
+> needed when seeking unpredictability. A random number generator
+> *must* be able to return the same value multiple times in a row
+> (though this is rare), otherwise it's not random.
+[...]
+> If the UUIDs used there are real UUIDs, it could be as simple as
+> updating them according to their format, i.e. updating the timestamp,
+> and if the timestamp is already the same, just increase the seq counter.
+> Doing this doesn't require entropy, doesn't need to block and doesn't
+> needlessly leak randoms that sometimes make people feel nervous.
 
-In other words, if userspace does something like:
+Those UUIDs are supplied by existing hypervisor code; in that regard,
+this is almost like a driver for a hardware device. It is written
+against a fixed API provided by the underlying machine. Making sure
+that the sequence of UUIDs, as seen from inside the machine, never
+changes back to a previous one is the responsibility of the hypervisor
+and out of scope for this driver.
 
-  act.sa_flags |= SA_UNSUPPORTED;
-  sigaction(SIGSEGV, &act, 0);
-  sigaction(SIGSEGV, 0, &oldact);
+Microsoft's spec document (which is a .docx file for reasons I don't
+understand) actually promises us that it is a cryptographically random
+128-bit integer value, which means that if you fork a VM 2^64 times,
+the probability that any two of those VMs have the same counter is
+2^-64. That should be good enough.
 
-and finds that SA_UNSUPPORTED remains set in oldact.sa_flags, it means
-that the kernel cannot be trusted to have cleared unknown flag bits
-from sa_flags, so no assumptions about flag bit support can be made.
+But in userspace, we just need a simple counter. There's no need for
+us to worry about anything else, like timestamps or whatever. If we
+repeatedly fork a paused VM, the forked VMs will see the same counter
+value, but that's totally fine, because the only thing that matters to
+userspace is that the counter changes when the VM is forked.
 
-Signed-off-by: Peter Collingbourne <pcc@google.com>
-Reviewed-by: Dave Martin <Dave.Martin@arm.com>
-Link: https://linux-review.googlesource.com/id/Ic2501ad150a3a79c1cf27fb8c99be342e9dffbcb
----
-v11:
-- clarify the commit message
-
- include/uapi/asm-generic/signal-defs.h | 7 +++++++
- kernel/signal.c                        | 6 ++++++
- 2 files changed, 13 insertions(+)
-
-diff --git a/include/uapi/asm-generic/signal-defs.h b/include/uapi/asm-generic/signal-defs.h
-index 493953fe319b..0126ebda4d31 100644
---- a/include/uapi/asm-generic/signal-defs.h
-+++ b/include/uapi/asm-generic/signal-defs.h
-@@ -14,6 +14,12 @@
-  * SA_RESTART flag to get restarting signals (which were the default long ago)
-  * SA_NODEFER prevents the current signal from being masked in the handler.
-  * SA_RESETHAND clears the handler when the signal is delivered.
-+ * SA_UNSUPPORTED is a flag bit that will never be supported. Kernels from
-+ * before the introduction of SA_UNSUPPORTED did not clear unknown bits from
-+ * sa_flags when read using the oldact argument to sigaction and rt_sigaction,
-+ * so this bit allows flag bit support to be detected from userspace while
-+ * allowing an old kernel to be distinguished from a kernel that supports every
-+ * flag bit.
-  *
-  * SA_ONESHOT and SA_NOMASK are the historical Linux names for the Single
-  * Unix names RESETHAND and NODEFER respectively.
-@@ -42,6 +48,7 @@
- #ifndef SA_RESETHAND
- #define SA_RESETHAND	0x80000000
- #endif
-+#define SA_UNSUPPORTED	0x00000400
- 
- #define SA_NOMASK	SA_NODEFER
- #define SA_ONESHOT	SA_RESETHAND
-diff --git a/kernel/signal.c b/kernel/signal.c
-index 2ef8c238679e..018c19f6cf66 100644
---- a/kernel/signal.c
-+++ b/kernel/signal.c
-@@ -3984,6 +3984,12 @@ int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
- 	if (oact)
- 		*oact = *k;
- 
-+	/*
-+	 * Make sure that we never accidentally claim to support SA_UNSUPPORTED,
-+	 * e.g. by having an architecture use the bit in their uapi.
-+	 */
-+	BUILD_BUG_ON(UAPI_SA_FLAGS & SA_UNSUPPORTED);
-+
- 	/*
- 	 * Clear unknown flag bits in order to allow userspace to detect missing
- 	 * support for flag bits and to allow the kernel to use non-uapi bits
--- 
-2.29.0.rc1.297.gfa9743e501-goog
-
+And actually, since the value is a cryptographically random 128-bit
+value, I think that we should definitely use it to help reseed the
+kernel's RNG, and keep it secret from userspace. That way, even if the
+VM image is public, we can ensure that going forward, the kernel RNG
+will return securely random data.
