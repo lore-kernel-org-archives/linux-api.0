@@ -2,158 +2,141 @@ Return-Path: <SRS0=Po1q=DY=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+X-Spam-Status: No, score=-11.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT,
-	USER_IN_DEF_DKIM_WL autolearn=no autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_IN_DEF_DKIM_WL
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E0728C433DF
-	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 06:03:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1792CC433E7
+	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 06:21:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id AAC6B2072C
-	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 06:03:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D271720760
+	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 06:21:29 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="WuhlseqJ"
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="LMmylegy"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2436904AbgJQGDC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 17 Oct 2020 02:03:02 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57294 "EHLO
+        id S2437082AbgJQGV3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 17 Oct 2020 02:21:29 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60370 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2411569AbgJQGBh (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 17 Oct 2020 02:01:37 -0400
-Received: from mail-qk1-x749.google.com (mail-qk1-x749.google.com [IPv6:2607:f8b0:4864:20::749])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1A6CEC0613D3
-        for <linux-api@vger.kernel.org>; Fri, 16 Oct 2020 17:12:44 -0700 (PDT)
-Received: by mail-qk1-x749.google.com with SMTP id q15so2617412qkq.23
-        for <linux-api@vger.kernel.org>; Fri, 16 Oct 2020 17:12:44 -0700 (PDT)
+        with ESMTP id S2437079AbgJQGV2 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 17 Oct 2020 02:21:28 -0400
+Received: from mail-lj1-x244.google.com (mail-lj1-x244.google.com [IPv6:2a00:1450:4864:20::244])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C448DC061755
+        for <linux-api@vger.kernel.org>; Fri, 16 Oct 2020 23:21:26 -0700 (PDT)
+Received: by mail-lj1-x244.google.com with SMTP id c21so5049886ljn.13
+        for <linux-api@vger.kernel.org>; Fri, 16 Oct 2020 23:21:26 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=google.com; s=20161025;
-        h=sender:date:message-id:mime-version:subject:from:to:cc;
-        bh=0SzVqODEfPVXxLTAWYh1OlMRZX67EtQRCd+LR3qS49c=;
-        b=WuhlseqJkkPmSyZw616Hrf+g3JLaplGgcP+WbLNqPy6pbqoUqVy2fZfRmPjkKnlNEF
-         a5QjECu3iU010I4z4m5sv9yOYLjtgYQMD/ntbgYb0y7oaqRCzmy2Jhr0dSTYhJP9QDev
-         EABizo8Mme8p3TdOVqWL5im2eC+Shw6NDyno9Z+iAkK0YzHTLLQ20+l7sz/2txyxDbtN
-         kv8S9RWCC9Rte4uKn/cBRjsG1J8fN5X/JRpTFdBNv79AQ/ntKnI9Gz3mlw1vqxnB9Ixz
-         WWMeIe5grQwW+JAz61iF76EpV/juD7Z3uLyAlFgBDg4FPo6mb2jDawciNLJtNzKVYiE1
-         UbDw==
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=K5fP2IedoKQlRQouSCWpsDIMKmWivfsQ9eQLA1F2LGk=;
+        b=LMmylegyEXB4ETZFcAg0jZ3ywuK/RWOoyd8IF2q7wbf0FlBPa1CmGDbEXkW+jghAbm
+         L/ZDBTeW0W+eYkvJeGow+VVh0xMTCd2CjHybf0Yd0FJf6PC7WL4xF2qG5wrVBC42yxgQ
+         8zg/2jexyYshW1yQH1s+pVSH0LX9mH5ZboR6fOLWNE1KqDRC8jjvr83OZzi4/ipuIs9Q
+         dFrUSBctQ7q6gHPyfMClsBZMkU9oNgNQp7tdM4fX4J+lCCSGXw7In/UD6xkyOWe4J850
+         JMe5a+2COrcu8wW2/OjDhZZYR++6Jrvj9sBrMWL/JEJjmvrImBEV8RyU9R0lJv9ID5mO
+         57jQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:message-id:mime-version:subject:from
-         :to:cc;
-        bh=0SzVqODEfPVXxLTAWYh1OlMRZX67EtQRCd+LR3qS49c=;
-        b=DCnomnNc3gWuA3SC8zNIImf2qH0z3ahPbRKKNj19XAGdubr87qNG0X4iari9NrvBSh
-         f8CKVZ1xw4bg0nUib8UvkKiX91Q+WcLSBFi2UBbsgrAbe1Si1WTQXcueGg9lSogdGv87
-         mum0hbqT072WldKL6r0VCTHouiqQMncUnBMmaNYCIBUi8NGNtnetYIiPWED0RYiPJEAW
-         /IY7zpg1MiX4jYKqD3vANEJepo7ZGzAC4QUWu80RNxDUyn3ejgcvqqdeqO0HWzEhLb0h
-         MmJ+lJvgw65YMCOWdipNtREkdwYwFV6fHIzVagKNAqq4QHVlcyjkxhWwEWKvtQZRgWoI
-         rB+g==
-X-Gm-Message-State: AOAM532T/0ZRznHN/qrcgZWiCZlV62//XFht3gFcUfatAHKeZx4tuJdq
-        73kL/mq8of0TlTLmB/RPOONZqXY=
-X-Google-Smtp-Source: ABdhPJwrcG+HjhDPcsvVqMBOCzJnFkmyrsDDTznxLj+oymEZ6nBA7SBVRkAeE4Jure8saQqIjl/72hc=
-Sender: "pcc via sendgmr" <pcc@pcc-desktop.svl.corp.google.com>
-X-Received: from pcc-desktop.svl.corp.google.com ([2620:15c:2ce:0:7220:84ff:fe09:385a])
- (user=pcc job=sendgmr) by 2002:a05:6214:943:: with SMTP id
- dn3mr6291415qvb.45.1602893563003; Fri, 16 Oct 2020 17:12:43 -0700 (PDT)
-Date:   Fri, 16 Oct 2020 17:12:25 -0700
-Message-Id: <cover.1602892799.git.pcc@google.com>
-Mime-Version: 1.0
-X-Mailer: git-send-email 2.29.0.rc1.297.gfa9743e501-goog
-Subject: [PATCH v12 0/8] arm64: expose FAR_EL1 tag bits in siginfo
-From:   Peter Collingbourne <pcc@google.com>
-To:     Catalin Marinas <catalin.marinas@arm.com>,
-        Evgenii Stepanov <eugenis@google.com>,
-        Kostya Serebryany <kcc@google.com>,
-        Vincenzo Frascino <vincenzo.frascino@arm.com>,
-        Dave Martin <Dave.Martin@arm.com>,
-        Will Deacon <will@kernel.org>, Oleg Nesterov <oleg@redhat.com>,
-        "Eric W. Biederman" <ebiederm@xmission.com>,
-        "James E.J. Bottomley" <James.Bottomley@hansenpartnership.com>
-Cc:     Peter Collingbourne <pcc@google.com>,
-        Linux ARM <linux-arm-kernel@lists.infradead.org>,
-        Kevin Brodsky <kevin.brodsky@arm.com>,
-        Andrey Konovalov <andreyknvl@google.com>,
-        Richard Henderson <rth@twiddle.net>, linux-api@vger.kernel.org,
-        Helge Deller <deller@gmx.de>,
-        David Spickett <david.spickett@linaro.org>
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=K5fP2IedoKQlRQouSCWpsDIMKmWivfsQ9eQLA1F2LGk=;
+        b=h0o/sSe2iHIwCUcq6iq6pqT6No1kTQ+O95R281md7iGAMTVVPPO/yPGzkOpBNcS6fN
+         Jh3nNogjbujKpTEBWUtVHoJdpEuli9k2ORRMiNmmqH8aBlHPaRAKn67IBoHM0qmfusCj
+         bgA7ImqRXl82ze7cMUbQ+U3ootiybqGmVpci6QpUb+mvicPZoz4xSGWeYxisGyrL5aiB
+         R1/GcUKntdm0fL4RSmoczwp57UzuW9V7AFj3H6cU9d5VOVj08TMija9F+/wxDefmDnRJ
+         uNFZQeDgltWS8IqQ0c5DS3hVGDU/6HX7RV/WrvGZPGOkYjB+R4LjJu6x/gRfaKosje33
+         eTLQ==
+X-Gm-Message-State: AOAM532wHvV6qOX8OC/LafYN1wlT9itFKB+Ou8t8L9wc51SvKvQomZyG
+        mIZP0uMLxaZJpgcjR2dQZpun+sgPRXyW3XYWBi7+ZA==
+X-Google-Smtp-Source: ABdhPJxODCfO9ZVU11lc/q6G6VCj8F3pnGVHFozeCzeN2p8bjSk3h58nmS2HKf7Nkir5cfAE2D9bdypZ/Mc+oRT6tqk=
+X-Received: by 2002:a05:651c:1205:: with SMTP id i5mr2905687lja.47.1602915685058;
+ Fri, 16 Oct 2020 23:21:25 -0700 (PDT)
+MIME-Version: 1.0
+References: <00000000000014370305b1c55370@google.com> <202010162042.7C51549A16@keescook>
+In-Reply-To: <202010162042.7C51549A16@keescook>
+From:   Jann Horn <jannh@google.com>
+Date:   Sat, 17 Oct 2020 08:20:58 +0200
+Message-ID: <CAG48ez1KEOHL5VCNtrsRTHa6Wj9xUY+daReb4V08O8dFzarkjw@mail.gmail.com>
+Subject: Re: UBSAN: array-index-out-of-bounds in alg_bind
+To:     Kees Cook <keescook@chromium.org>
+Cc:     herbert@gondor.apana.org.au,
+        syzbot <syzbot+92ead4eb8e26a26d465e@syzkaller.appspotmail.com>,
+        linux-crypto@vger.kernel.org,
+        kernel list <linux-kernel@vger.kernel.org>,
+        syzkaller-bugs <syzkaller-bugs@googlegroups.com>,
+        linux-hardening@vger.kernel.org,
+        Elena Petrova <lenaptr@google.com>,
+        Linux API <linux-api@vger.kernel.org>
 Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The kernel currently clears the tag bits (i.e. bits 56-63) in the fault
-address exposed via siginfo.si_addr and sigcontext.fault_address. However,
-the tag bits may be needed by tools in order to accurately diagnose
-memory errors, such as HWASan [1] or future tools based on the Memory
-Tagging Extension (MTE).
++linux-api because this is about fixing UAPI without breaking userspace
 
-We should not stop clearing these bits in the existing fault address
-fields, because there may be existing userspace applications that are
-expecting the tag bits to be cleared. Instead, create a new pair of
-union fields in siginfo._sigfault, and store the tag bits of FAR_EL1
-there, together with a mask specifying which bits are valid.
+On Sat, Oct 17, 2020 at 8:02 AM Kees Cook <keescook@chromium.org> wrote:
+> On Fri, Oct 16, 2020 at 01:12:24AM -0700, syzbot wrote:
+> > dashboard link: https://syzkaller.appspot.com/bug?extid=92ead4eb8e26a26d465e
+> > [...]
+> > Reported-by: syzbot+92ead4eb8e26a26d465e@syzkaller.appspotmail.com
+> > [...]
+> > UBSAN: array-index-out-of-bounds in crypto/af_alg.c:166:2
+> > index 91 is out of range for type '__u8 [64]'
+>
+> This seems to be an "as intended", if very odd. false positive (the actual
+> memory area is backed by the on-stack _K_SS_MAXSIZE-sized sockaddr_storage
+> "address" variable in __sys_bind. But yes, af_alg's salg_name member
+> size here doesn't make sense. The origin appears to be that 3f69cc60768b
+> ("crypto: af_alg - Allow arbitrarily long algorithm names") intentionally
+> didn't extend the kernel structure (which is actually just using the UAPI
+> structure). I don't see a reason the UAPI couldn't have been extended:
+> it's a sockaddr implementation, so the size is always passed in as part
+> of the existing API.
 
-However, one does not simply add fields to siginfo, at least not without
-a mechanism for userspace to detect that they are present and valid.
-Therefore, the first seven patches in this series introduce a mechanism
-for userspace to detect the presence of our new siginfo fields,
-and the last patch uses it to advertise the presence of said fields.
+If you e.g. recompiled the wrong parts of the "btcheck" project with
+such changed UAPI headers, I think you'd get OOB writes, because they
+have this in a header
+(https://sources.debian.org/src/btcheck/2.1-4/src/kernelcryptoapi.h/?hl=29#L29):
 
-The series can be viewed on Gerrit here:
-https://linux-review.googlesource.com/q/Ia8876bad8c798e0a32df7c2ce1256c4771c81446
+typedef struct {
+  struct sockaddr_alg sa;
+  int safd;
+  int fd;
+} lkca_hash_ctx;
 
-[1] http://clang.llvm.org/docs/HardwareAssistedAddressSanitizerDesign.html
+so if you rebuilt e.g. kernelcryptoapi.o (which uses the struct)
+without also rebuilding hash.o (which allocates the struct), code in
+kernelcryptoapi.o would write beyond the end of lkca_hash_ctx, I
+think.
 
-Helge Deller (1):
-  parisc: Drop parisc special case for __sighandler_t
+Sure, there aren't many places that do this kind of thing for this
+struct. But at least in theory, you can't change the size of UAPI
+structs because someone might be passing instances of that struct
+around between object files.
 
-Peter Collingbourne (7):
-  parisc: start using signal-defs.h
-  arch: move SA_* definitions to generic headers
-  signal: clear non-uapi flag bits when passing/returning sa_flags
-  signal: define the SA_UNSUPPORTED bit in sa_flags
-  signal: deduplicate code dealing with common _sigfault fields
-  signal: define the field siginfo.si_xflags
-  arm64: expose FAR_EL1 tag bits in siginfo
+> At the very least the kernel needs to switch to using a correctly-sized
+> structure: I expected UBSAN_BOUNDS to be enabled globally by default at
+> some point in the future (with the minimal runtime -- the
+> instrumentation is tiny and catches real issues).
 
- Documentation/arm64/tagged-pointers.rst    |  21 +++-
- arch/alpha/include/uapi/asm/signal.h       |  14 ---
- arch/arm/include/asm/signal.h              |   2 +
- arch/arm/include/uapi/asm/signal.h         |  28 +----
- arch/arm64/include/asm/exception.h         |   2 +-
- arch/arm64/include/asm/signal.h            |  19 +++
- arch/arm64/include/asm/system_misc.h       |   2 +-
- arch/arm64/include/asm/traps.h             |   6 +-
- arch/arm64/kernel/debug-monitors.c         |   5 +-
- arch/arm64/kernel/entry-common.c           |   2 -
- arch/arm64/kernel/ptrace.c                 |   7 +-
- arch/arm64/kernel/sys_compat.c             |   5 +-
- arch/arm64/kernel/traps.c                  |  29 ++---
- arch/arm64/mm/fault.c                      |  68 ++++++-----
- arch/h8300/include/uapi/asm/signal.h       |  24 ----
- arch/ia64/include/uapi/asm/signal.h        |  24 ----
- arch/m68k/include/uapi/asm/signal.h        |  24 ----
- arch/mips/include/uapi/asm/signal.h        |  12 --
- arch/parisc/include/asm/signal.h           |   2 +
- arch/parisc/include/uapi/asm/signal.h      |  34 +-----
- arch/powerpc/include/uapi/asm/signal.h     |  24 ----
- arch/powerpc/platforms/powernv/vas-fault.c |   1 +
- arch/s390/include/uapi/asm/signal.h        |  24 ----
- arch/sparc/include/uapi/asm/signal.h       |   4 +-
- arch/x86/include/uapi/asm/signal.h         |  24 ----
- arch/x86/kernel/signal_compat.c            |  19 +--
- arch/xtensa/include/uapi/asm/signal.h      |  24 ----
- include/linux/compat.h                     |   4 +
- include/linux/signal.h                     |  29 +++++
- include/linux/signal_types.h               |  12 ++
- include/uapi/asm-generic/siginfo.h         |  14 +++
- include/uapi/asm-generic/signal-defs.h     |  58 +++++++++
- include/uapi/asm-generic/signal.h          |  29 -----
- include/uapi/linux/ptrace.h                |  12 ++
- kernel/ptrace.c                            |  32 ++++-
- kernel/signal.c                            | 134 +++++++++++----------
- 36 files changed, 345 insertions(+), 429 deletions(-)
- create mode 100644 arch/arm64/include/asm/signal.h
+Yeah, the kernel should probably use a struct that looks different
+from the userspace one. :/ I guess we'll probably end up with some
+ugly hack with "#ifdef __KERNEL__", where the same struct has
+different sizes between kernel and userspace? Or am I being too
+puritan about UAPI consistency?
 
--- 
-2.29.0.rc1.297.gfa9743e501-goog
+> Reproduction:
+>
+> struct sockaddr_alg sa = {
+>     .salg_family = AF_ALG,
+>     .salg_type = "skcipher",
+>     .salg_name = "cbc(aes)"
+> };
+> fd = socket(AF_ALG, SOCK_SEQPACKET, 0);
+> bind(fd, (void *)&sa, sizeof(sa));
+>
+> Replace "sizeof(sa)" with x where 64<x<=128.
 
+I think you mean 88<x<=128 ?
