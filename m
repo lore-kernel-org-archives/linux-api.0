@@ -1,135 +1,134 @@
-Return-Path: <SRS0=sl6g=DX=vger.kernel.org=linux-api-owner@kernel.org>
+Return-Path: <SRS0=Po1q=DY=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.6 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DBE19C433E7
-	for <linux-api@archiver.kernel.org>; Fri, 16 Oct 2020 06:50:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 56EBFC433DF
+	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 05:26:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 881402080A
-	for <linux-api@archiver.kernel.org>; Fri, 16 Oct 2020 06:50:37 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="f7XD5Y6t"
+	by mail.kernel.org (Postfix) with ESMTP id 3521C207EA
+	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 05:26:16 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2394392AbgJPGuh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 16 Oct 2020 02:50:37 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39490 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730492AbgJPGug (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 16 Oct 2020 02:50:36 -0400
-Received: from mail-oi1-x244.google.com (mail-oi1-x244.google.com [IPv6:2607:f8b0:4864:20::244])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3A553C061755;
-        Thu, 15 Oct 2020 23:50:35 -0700 (PDT)
-Received: by mail-oi1-x244.google.com with SMTP id h10so1317606oie.5;
-        Thu, 15 Oct 2020 23:50:35 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:reply-to:from:date:message-id
-         :subject:to:cc;
-        bh=yp9ezkkjfxFU72KviY2SkL912AddVp1dJs01IZSrZBg=;
-        b=f7XD5Y6tkQqNxCb9E2piNE/vVBs2nIqq57a1OUPD+2wvy5Mlq3Tx1ZXcM9tHRRYK7x
-         eqL4Cc2a6SA8D4e4qUReAf3gDYqvBmbUTIOMNByP1SMSo80g4jqQD95ytopbeGsoXpUq
-         H+IFbMbZRNippsbYwMWl4lMLLOHZSeb6c/7ozB9qMwJTSOjTwrInneS7Y4vOfsc+xW8Z
-         8gy5YZuzw+zYfV8ugPK4XDNjsd+2ntOuQBfB5qCJHuY0QcQESfzrx+A1B2cAmCGq5c9D
-         m4J47Z1JuODqDzTcxzwAEHypWfNz/TiDZ9Eu3JtbykLszQWiVsPc2SXlWRsqi31mDfN5
-         abpw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:reply-to
-         :from:date:message-id:subject:to:cc;
-        bh=yp9ezkkjfxFU72KviY2SkL912AddVp1dJs01IZSrZBg=;
-        b=FHuDFRpZyCfZoVwtegE5cd1P89DrQ5lLNdAMqHNYZuCSAdLE0JqdRbstgZl/dKYBjZ
-         /XukWmawwFFNJFJHchJROM0uCigB7cSOTaKB3oOKgOl5rBCSLQ2YVXNfY5yMEelU3bey
-         U0X6Z/FVZVXtxTsuOvkdCYUItBRsBB8qAnf8dFYTI9NWNJ9rgWao+0qXNh9i78KHI2w8
-         6zmvYH9suxLF2LnbNRD6Xa2I4PjHxwkNQfJo+RdNGEoiUDplDbBShQj5ihrxae+1YyRs
-         4wrmjOM13Y7jfOJPmX1+5t1sgfIUH3ow9ks0DBkHT4csl3BBZUurXyKcw5a+d9CxWOAR
-         KqzA==
-X-Gm-Message-State: AOAM531tVzCD5wfJpl5j/bu6+Tte3EKvkA6w6nNQMcaQzFbMoCkwt4j9
-        rxWlYYw71Vo/CrVN3l3C5sbnSqu/Iru2JOMht35vxwi26pA=
-X-Google-Smtp-Source: ABdhPJxxET8Z7gDhnMrab9PWw1QSWqPZi2aX8J9f+URrB7gyQFY/lMVbekd5YiqEg/0BXNj9zczVPsII0FL4f7AyZwM=
-X-Received: by 2002:aca:bb41:: with SMTP id l62mr1469702oif.148.1602831034578;
- Thu, 15 Oct 2020 23:50:34 -0700 (PDT)
+        id S2411546AbgJQFZw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 17 Oct 2020 01:25:52 -0400
+Received: from wtarreau.pck.nerim.net ([62.212.114.60]:43826 "EHLO 1wt.eu"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S2411543AbgJQFZv (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sat, 17 Oct 2020 01:25:51 -0400
+Received: (from willy@localhost)
+        by pcw.home.local (8.15.2/8.15.2/Submit) id 09H3a6p1014024;
+        Sat, 17 Oct 2020 05:36:06 +0200
+Date:   Sat, 17 Oct 2020 05:36:06 +0200
+From:   Willy Tarreau <w@1wt.eu>
+To:     Jann Horn <jannh@google.com>
+Cc:     "Catangiu, Adrian Costin" <acatan@amazon.com>,
+        Andy Lutomirski <luto@kernel.org>,
+        Jason Donenfeld <Jason@zx2c4.com>,
+        "Theodore Y. Ts'o" <tytso@mit.edu>,
+        Eric Biggers <ebiggers@kernel.org>,
+        "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "virtualization@lists.linux-foundation.org" 
+        <virtualization@lists.linux-foundation.org>,
+        "Graf (AWS), Alexander" <graf@amazon.de>,
+        "MacCarthaigh, Colm" <colmmacc@amazon.com>,
+        "Woodhouse, David" <dwmw@amazon.co.uk>,
+        "bonzini@gnu.org" <bonzini@gnu.org>,
+        "Singh, Balbir" <sblbir@amazon.com>,
+        "Weiss, Radu" <raduweis@amazon.com>,
+        "oridgar@gmail.com" <oridgar@gmail.com>,
+        "ghammer@redhat.com" <ghammer@redhat.com>,
+        "corbet@lwn.net" <corbet@lwn.net>,
+        "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>,
+        "mst@redhat.com" <mst@redhat.com>,
+        "qemu-devel@nongnu.org" <qemu-devel@nongnu.org>,
+        KVM list <kvm@vger.kernel.org>,
+        Michal Hocko <mhocko@kernel.org>,
+        "Rafael J. Wysocki" <rafael@kernel.org>,
+        Pavel Machek <pavel@ucw.cz>,
+        Linux API <linux-api@vger.kernel.org>
+Subject: Re: [PATCH] drivers/virt: vmgenid: add vm generation id driver
+Message-ID: <20201017033606.GA14014@1wt.eu>
+References: <AQHWo8lIfZnFKGe8nkGmhTCXwq5R3w==>
+ <788878CE-2578-4991-A5A6-669DCABAC2F2@amazon.com>
+ <CAG48ez0EanBvDyfthe+hAP0OC8iGLNSq2e5wJVz-=ENNGF97_w@mail.gmail.com>
 MIME-Version: 1.0
-References: <159827188271.306468.16962617119460123110.stgit@warthog.procyon.org.uk>
- <159827190508.306468.12755090833140558156.stgit@warthog.procyon.org.uk>
- <CAKgNAkho1WSOsxvCYQOs7vDxpfyeJ9JGdTL-Y0UEZtO3jVfmKw@mail.gmail.com>
- <667616.1599063270@warthog.procyon.org.uk> <CAKgNAkhjDB9bvQ0h5b13fkbhuP9tYrkBQe7w1cbeOH8gM--D0g@mail.gmail.com>
- <CAKgNAkh9h3aA1hiYownT2O=xg5JmZwmJUCvQ1Z4f85MTq-26Fw@mail.gmail.com>
-In-Reply-To: <CAKgNAkh9h3aA1hiYownT2O=xg5JmZwmJUCvQ1Z4f85MTq-26Fw@mail.gmail.com>
-Reply-To: mtk.manpages@gmail.com
-From:   "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Date:   Fri, 16 Oct 2020 08:50:23 +0200
-Message-ID: <CAKgNAkju-65h1bKBUJQf-k=TCZeFmD9Nf4ZgZ9Mm_TQ1rQA6MA@mail.gmail.com>
-Subject: Re: [PATCH 4/5] Add manpage for fsopen(2) and fsmount(2)
-To:     David Howells <dhowells@redhat.com>
-Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
-        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-        linux-man <linux-man@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        lkml <linux-kernel@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CAG48ez0EanBvDyfthe+hAP0OC8iGLNSq2e5wJVz-=ENNGF97_w@mail.gmail.com>
+User-Agent: Mutt/1.6.1 (2016-04-27)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi David,
-
-Another ping for these five patches please!
-
-Cheers,
-
-Michael
-
-On Fri, 11 Sep 2020 at 14:44, Michael Kerrisk (man-pages)
-<mtk.manpages@gmail.com> wrote:
->
-> Hi David,
->
-> A ping for these five patches please!
->
-> Cheers,
->
-> Michael
->
-> On Wed, 2 Sep 2020 at 22:14, Michael Kerrisk (man-pages)
-> <mtk.manpages@gmail.com> wrote:
+On Sat, Oct 17, 2020 at 03:40:08AM +0200, Jann Horn wrote:
+> [adding some more people who are interested in RNG stuff: Andy, Jason,
+> Theodore, Willy Tarreau, Eric Biggers. also linux-api@, because this
+> concerns some pretty fundamental API stuff related to RNG usage]
+> 
+> On Fri, Oct 16, 2020 at 4:33 PM Catangiu, Adrian Costin
+> <acatan@amazon.com> wrote:
+> > This patch is a driver which exposes the Virtual Machine Generation ID
+> > via a char-dev FS interface that provides ID update sync and async
+> > notification, retrieval and confirmation mechanisms:
 > >
-> > On Wed, 2 Sep 2020 at 18:14, David Howells <dhowells@redhat.com> wrote:
-> > >
-> > > Michael Kerrisk (man-pages) <mtk.manpages@gmail.com> wrote:
-> > >
-> > > > The term "filesystem configuration context" is introduced, but never
-> > > > really explained. I think it would be very helpful to have a sentence
-> > > > or three that explains this concept at the start of the page.
-> > >
-> > > Does that need a .7 manpage?
+> > When the device is 'open()'ed a copy of the current vm UUID is
+> > associated with the file handle. 'read()' operations block until the
+> > associated UUID is no longer up to date - until HW vm gen id changes -
+> > at which point the new UUID is provided/returned. Nonblocking 'read()'
+> > uses EWOULDBLOCK to signal that there is no _new_ UUID available.
 > >
-> > I was hoping a sentence or a paragraph in this page might suffice. Do
-> > you think more is required?
+> > 'poll()' is implemented to allow polling for UUID updates. Such
+> > updates result in 'EPOLLIN' events.
 > >
-> > Cheers,
+> > Subsequent read()s following a UUID update no longer block, but return
+> > the updated UUID. The application needs to acknowledge the UUID update
+> > by confirming it through a 'write()'.
+> > Only on writing back to the driver the right/latest UUID, will the
+> > driver mark this "watcher" as up to date and remove EPOLLIN status.
 > >
-> > Michael
-> >
-> > --
-> > Michael Kerrisk
-> > Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-> > Linux/UNIX System Programming Training: http://man7.org/training/
->
->
->
-> --
-> Michael Kerrisk
-> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-> Linux/UNIX System Programming Training: http://man7.org/training/
+> > 'mmap()' support allows mapping a single read-only shared page which
+> > will always contain the latest UUID value at offset 0.
+> 
+> It would be nicer if that page just contained an incrementing counter,
+> instead of a UUID. It's not like the application cares *what* the UUID
+> changed to, just that it *did* change and all RNGs state now needs to
+> be reseeded from the kernel, right? And an application can't reliably
+> read the entire UUID from the memory mapping anyway, because the VM
+> might be forked in the middle.
+> 
+> So I think your kernel driver should detect UUID changes and then turn
+> those into a monotonically incrementing counter. (Probably 64 bits
+> wide?) (That's probably also a little bit faster than comparing an
+> entire UUID.)
 
+I agree with this. Further, I'm observing there is a very common
+confusion between "universally unique" and "random". Randoms are
+needed when seeking unpredictability. A random number generator
+*must* be able to return the same value multiple times in a row
+(though this is rare), otherwise it's not random.
 
+To illustrate this, a die has less than 3 bits of randomness and
+is sufficient to play games with friends where a counter would allow
+everyone to cheat. Conversely if you want to assign IDs to members
+of your family you'd rather use a counter than a die for this or
+you risk collisions and/or long series of retries to pick unique
+IDs.
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+RFC4122 explains in great length how to produce guaranteed unique
+IDs, and this only involves space, time and counters. There's
+indeed a lazy variant that probably everyone uses nowadays,
+consisting in picking random numbers, but this is not guaranteed
+unique anymore.
+
+If the UUIDs used there are real UUIDs, it could be as simple as
+updating them according to their format, i.e. updating the timestamp,
+and if the timestamp is already the same, just increase the seq counter.
+Doing this doesn't require entropy, doesn't need to block and doesn't
+needlessly leak randoms that sometimes make people feel nervous.
+
+Just my two cents,
+Willy
