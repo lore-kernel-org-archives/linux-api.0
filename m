@@ -2,29 +2,69 @@ Return-Path: <SRS0=Po1q=DY=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_IN_DEF_DKIM_WL
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0D50BC433E7
-	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 05:37:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9B8C4C433DF
+	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 05:39:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CC11320714
-	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 05:37:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6359120720
+	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 05:39:52 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="Mj4ipAZT"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2411558AbgJQFhp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 17 Oct 2020 01:37:45 -0400
-Received: from wtarreau.pck.nerim.net ([62.212.114.60]:43838 "EHLO 1wt.eu"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2410829AbgJQFho (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Sat, 17 Oct 2020 01:37:44 -0400
-Received: (from willy@localhost)
-        by pcw.home.local (8.15.2/8.15.2/Submit) id 09H5bCCa014109;
-        Sat, 17 Oct 2020 07:37:12 +0200
-Date:   Sat, 17 Oct 2020 07:37:12 +0200
-From:   Willy Tarreau <w@1wt.eu>
-To:     Jann Horn <jannh@google.com>
-Cc:     Colm MacCarthaigh <colmmacc@amazon.com>,
+        id S2436544AbgJQFjn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 17 Oct 2020 01:39:43 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53848 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2436534AbgJQFjm (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 17 Oct 2020 01:39:42 -0400
+Received: from mail-lj1-x243.google.com (mail-lj1-x243.google.com [IPv6:2a00:1450:4864:20::243])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A488CC05BD30
+        for <linux-api@vger.kernel.org>; Fri, 16 Oct 2020 22:01:59 -0700 (PDT)
+Received: by mail-lj1-x243.google.com with SMTP id h20so4984659lji.9
+        for <linux-api@vger.kernel.org>; Fri, 16 Oct 2020 22:01:59 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc:content-transfer-encoding;
+        bh=Hx7Q/ww8SNQlC+Vff55Qg1KHQPfa6zByV8YGUpfQHNk=;
+        b=Mj4ipAZT8hm2EFBVYWNa/tPYN08h/c6I9aqqDDNKd/U1Gx8lY/fq6SCOLleNehgJrg
+         16iTyZDjW3bOYh1hhqWtA77oKiTI+TPM4N1Keo/JnJzSrlqFLzW7RPlCSwXodHNBHioe
+         60sjtbu/3EHa3YEwd0uy5df4RemUuD5LYm5H+8Y1Jz0qZOf6lUVUq/8KwhvUZ8M3r7Gw
+         bWF2ycp8+cBNuu5EidPWzLVcRpMEVOSaAgokNP1gQ/Vcr6lzp6alR3rT1I0+BfHSKna1
+         MUB9pFRtzc7GBqzTpgUnKrsGKvi+izpGnZj97WNgEpuknnloyOVePKBpgA5B1rIzMjOM
+         A/bQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc:content-transfer-encoding;
+        bh=Hx7Q/ww8SNQlC+Vff55Qg1KHQPfa6zByV8YGUpfQHNk=;
+        b=FBpq8/EHczYQV7aXwhPACFn8I6tHu3xScMwn6FKCc88p7sBYznDOl1c72vWcO+j8i8
+         r8j0rSZjZY5xLgolg1E+rvc50wzI6ciScduVPNDHrQe3F8yIUlZw/A3ALE1tYg4W0R3I
+         NKEO2lZ57THVY/MZ/TWSXXrmwK0prLqPzSJdEUv/UvpZZ8h3rdy6fnULaPnK+E60tRov
+         COzfiklv1dNdnA73YJKSgNErzOP6Lvl33+PvXt74QoDgynh8Cryh9hJZ23aNC8+2ufEm
+         /sS153v+QVMLiRXEyOOL0Q3jG+9aR2JSyLuUfRW7dlxE5Skw5u12iUdyDtjuoCsD/oA7
+         FeBQ==
+X-Gm-Message-State: AOAM533u7Ekrs3oAUw6pGPEBsWb3oLLCZ7L36Xus/mq/gyJBSZwSTHT3
+        ZGz/rXwax7o/0QEeiZcwwIIWioHj0wflrZlAg2xJhg==
+X-Google-Smtp-Source: ABdhPJxCQSIczBapjLlcHFxQX22QzzHRPdqAFoK5FO3ftEN502eaH7vfcq23H3Fg7kt7YZD0VFtLi0VxAAPhKjminMo=
+X-Received: by 2002:a2e:b6cf:: with SMTP id m15mr2566942ljo.74.1602910917566;
+ Fri, 16 Oct 2020 22:01:57 -0700 (PDT)
+MIME-Version: 1.0
+References: <788878CE-2578-4991-A5A6-669DCABAC2F2@amazon.com>
+ <CAG48ez0EanBvDyfthe+hAP0OC8iGLNSq2e5wJVz-=ENNGF97_w@mail.gmail.com>
+ <20201017033606.GA14014@1wt.eu> <CAG48ez0x2S9XuCrANAQbXNi8Jjwm822-fnQSmr-Zr07JgrEs1g@mail.gmail.com>
+ <6CC3DB03-27BA-4F5E-8ADA-BE605D83A85C@amazon.com>
+In-Reply-To: <6CC3DB03-27BA-4F5E-8ADA-BE605D83A85C@amazon.com>
+From:   Jann Horn <jannh@google.com>
+Date:   Sat, 17 Oct 2020 07:01:31 +0200
+Message-ID: <CAG48ez1ZtvjOs2CEq8-EMosPCd_o7WQ3Mz_+1mDe7OrH2arxFA@mail.gmail.com>
+Subject: Re: [PATCH] drivers/virt: vmgenid: add vm generation id driver
+To:     Colm MacCarthaigh <colmmacc@amazon.com>
+Cc:     Willy Tarreau <w@1wt.eu>,
         "Catangiu, Adrian Costin" <acatan@amazon.com>,
         Andy Lutomirski <luto@kernel.org>,
         Jason Donenfeld <Jason@zx2c4.com>,
@@ -47,42 +87,81 @@ Cc:     Colm MacCarthaigh <colmmacc@amazon.com>,
         "Rafael J. Wysocki" <rafael@kernel.org>,
         Pavel Machek <pavel@ucw.cz>,
         Linux API <linux-api@vger.kernel.org>
-Subject: Re: [PATCH] drivers/virt: vmgenid: add vm generation id driver
-Message-ID: <20201017053712.GA14105@1wt.eu>
-References: <788878CE-2578-4991-A5A6-669DCABAC2F2@amazon.com>
- <CAG48ez0EanBvDyfthe+hAP0OC8iGLNSq2e5wJVz-=ENNGF97_w@mail.gmail.com>
- <20201017033606.GA14014@1wt.eu>
- <CAG48ez0x2S9XuCrANAQbXNi8Jjwm822-fnQSmr-Zr07JgrEs1g@mail.gmail.com>
- <6CC3DB03-27BA-4F5E-8ADA-BE605D83A85C@amazon.com>
- <CAG48ez1ZtvjOs2CEq8-EMosPCd_o7WQ3Mz_+1mDe7OrH2arxFA@mail.gmail.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <CAG48ez1ZtvjOs2CEq8-EMosPCd_o7WQ3Mz_+1mDe7OrH2arxFA@mail.gmail.com>
-User-Agent: Mutt/1.6.1 (2016-04-27)
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Sat, Oct 17, 2020 at 07:01:31AM +0200, Jann Horn wrote:
-> Microsoft's documentation
-> (http://go.microsoft.com/fwlink/?LinkId=260709) says that the VM
-> Generation ID that we get after a fork "is a 128-bit,
-> cryptographically random integer value". If multiple people use the
-> same image, it guarantees that each use of the image gets its own,
-> fresh ID:
+On Sat, Oct 17, 2020 at 6:34 AM Colm MacCarthaigh <colmmacc@amazon.com> wro=
+te:
+> On 16 Oct 2020, at 21:02, Jann Horn wrote:
+> > On Sat, Oct 17, 2020 at 5:36 AM Willy Tarreau <w@1wt.eu> wrote:
+> > But in userspace, we just need a simple counter. There's no need for
+> > us to worry about anything else, like timestamps or whatever. If we
+> > repeatedly fork a paused VM, the forked VMs will see the same counter
+> > value, but that's totally fine, because the only thing that matters to
+> > userspace is that the counter changes when the VM is forked.
+>
+> For user-space, even a single bit would do. We added MADVISE_WIPEONFORK
+> so that userspace libraries can detect fork()/clone() robustly, for the
+> same reasons. It just wipes a page as the indicator, which is
+> effectively a single-bit signal, and it works well. On the user-space
+> side of this, I=E2=80=99m keen to find a solution like that that we can u=
+se
+> fairly easily inside of portable libraries and applications. The =E2=80=
+=9Chave
+> I forked=E2=80=9D checks do end up in hot paths, so it=E2=80=99s nice if =
+they can be
+> CPU cache friendly. Comparing a whole 128-bit value wouldn=E2=80=99t be m=
+y
+> favorite.
 
-No. It cannot be more unique than the source that feeds that cryptographic
-transformation. All it guarantees is that the entropy source is protected
-from being guessed based on the output. Applying cryptography on a simple
-counter provides apparently random numbers that will be unique for a long
-period for the same source, but as soon as you duplicate that code between
-users and they start from the same counter they'll get the same IDs.
+I'm pretty sure a single bit is not enough if you want to have a
+single page, shared across the entire system, that stores the VM
+forking state; you need a counter for that.
 
-This is why I think that using a counter is better if you really need something
-unique. Randoms only reduce predictability which helps avoiding collisions.
-And I'm saying this as someone who had on his external gateway the same SSH
-host key as 89 other hosts on the net, each of them using randoms to provide
-a universally unique one...
+> > And actually, since the value is a cryptographically random 128-bit
+> > value, I think that we should definitely use it to help reseed the
+> > kernel's RNG, and keep it secret from userspace. That way, even if the
+> > VM image is public, we can ensure that going forward, the kernel RNG
+> > will return securely random data.
+>
+> If the image is public, you need some extra new raw entropy from
+> somewhere. The gen-id could be mixed in, that can=E2=80=99t do any harm a=
+s
+> long as rigorous cryptographic mixing with the prior state is used, but
+> if that=E2=80=99s all you do then the final state is still deterministic =
+and
+> non-secret.
 
-Willy
+Microsoft's documentation
+(http://go.microsoft.com/fwlink/?LinkId=3D260709) says that the VM
+Generation ID that we get after a fork "is a 128-bit,
+cryptographically random integer value". If multiple people use the
+same image, it guarantees that each use of the image gets its own,
+fresh ID: The table in section "How to implement virtual machine
+generation ID support in a virtualization platform" says that (among
+other things) "Virtual machine is imported, copied, or cloned"
+generates a new generation ID.
+
+So the RNG state after mixing in the new VM Generation ID would
+contain 128 bits of secret entropy not known to anyone else, including
+people with access to the VM image.
+
+Now, 128 bits of cryptographically random data aren't _optimal_; I
+think something on the order of 256 bits would be nicer from a
+theoretical standpoint. But in practice I think we'll be good with the
+128 bits we're getting (since the number of users who fork a VM image
+is probably not going to be so large that worst-case collision
+probabilities matter).
+
+> The kernel would need to use the change as a trigger to
+> measure some entropy (e.g. interrupts and RDRAND, or whatever). Our just
+> define the machine contract as =E2=80=9Cthis has to be unique random data=
+ and
+> if it=E2=80=99s not unique, or if it=E2=80=99s pubic, you=E2=80=99re toas=
+t=E2=80=9D.
+
+As far as I can tell from Microsoft's spec, that is a guarantee we're
+already getting.
