@@ -2,133 +2,148 @@ Return-Path: <SRS0=Po1q=DY=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 56EBFC433DF
-	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 05:26:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 79021C433DF
+	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 05:29:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3521C207EA
-	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 05:26:16 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2D1B32076A
+	for <linux-api@archiver.kernel.org>; Sat, 17 Oct 2020 05:29:25 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=amazon.com header.i=@amazon.com header.b="Jf9H2Zd2"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2411546AbgJQFZw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 17 Oct 2020 01:25:52 -0400
-Received: from wtarreau.pck.nerim.net ([62.212.114.60]:43826 "EHLO 1wt.eu"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2411543AbgJQFZv (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Sat, 17 Oct 2020 01:25:51 -0400
-Received: (from willy@localhost)
-        by pcw.home.local (8.15.2/8.15.2/Submit) id 09H3a6p1014024;
-        Sat, 17 Oct 2020 05:36:06 +0200
-Date:   Sat, 17 Oct 2020 05:36:06 +0200
-From:   Willy Tarreau <w@1wt.eu>
+        id S2410943AbgJQF3Y (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 17 Oct 2020 01:29:24 -0400
+Received: from smtp-fw-9101.amazon.com ([207.171.184.25]:12821 "EHLO
+        smtp-fw-9101.amazon.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2391975AbgJQF3Y (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 17 Oct 2020 01:29:24 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+  d=amazon.com; i=@amazon.com; q=dns/txt; s=amazon201209;
+  t=1602912563; x=1634448563;
+  h=from:to:cc:date:message-id:in-reply-to:references:
+   mime-version:content-transfer-encoding:subject;
+  bh=4D+RWh/5beB78lRbdCD/b83sagLyNZAat88yYlEo6kY=;
+  b=Jf9H2Zd2Supmg22O3tLEBtoMqtAm0m/UzVnOGJeKZ3S674jKZRcmOVDs
+   +NyN8sJ69rNWfWC9bjdQn1J7oX7k8vzT0gXS/ArXKyEkP8k1P1OeIQDaz
+   Q3VSNC7k12vs5eh6f5Joq0HltI5+zKsG5Jlw7RXSpu5yTReEBKip3Ext3
+   s=;
+X-IronPort-AV: E=Sophos;i="5.77,385,1596499200"; 
+   d="scan'208";a="77295793"
+Subject: Re: [PATCH] drivers/virt: vmgenid: add vm generation id driver
+Received: from sea32-co-svc-lb4-vlan3.sea.corp.amazon.com (HELO email-inbound-relay-2b-4ff6265a.us-west-2.amazon.com) ([10.47.23.38])
+  by smtp-border-fw-out-9101.sea19.amazon.com with ESMTP; 17 Oct 2020 05:29:17 +0000
+Received: from EX13MTAUWA001.ant.amazon.com (pdx4-ws-svc-p6-lb7-vlan3.pdx.amazon.com [10.170.41.166])
+        by email-inbound-relay-2b-4ff6265a.us-west-2.amazon.com (Postfix) with ESMTPS id 5414EA26D1;
+        Sat, 17 Oct 2020 05:29:16 +0000 (UTC)
+Received: from EX13D01UWA003.ant.amazon.com (10.43.160.107) by
+ EX13MTAUWA001.ant.amazon.com (10.43.160.58) with Microsoft SMTP Server (TLS)
+ id 15.0.1497.2; Sat, 17 Oct 2020 05:29:15 +0000
+Received: from [10.50.40.37] (10.43.161.237) by EX13d01UWA003.ant.amazon.com
+ (10.43.160.107) with Microsoft SMTP Server (TLS) id 15.0.1497.2; Sat, 17 Oct
+ 2020 05:29:14 +0000
+From:   Colm MacCarthaigh <colmmacc@amazon.com>
 To:     Jann Horn <jannh@google.com>
-Cc:     "Catangiu, Adrian Costin" <acatan@amazon.com>,
+CC:     Willy Tarreau <w@1wt.eu>,
+        "Catangiu, Adrian Costin" <acatan@amazon.com>,
         Andy Lutomirski <luto@kernel.org>,
         Jason Donenfeld <Jason@zx2c4.com>,
         "Theodore Y. Ts'o" <tytso@mit.edu>,
         Eric Biggers <ebiggers@kernel.org>,
-        "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "virtualization@lists.linux-foundation.org" 
+        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
+        kernel list <linux-kernel@vger.kernel.org>,
+        "open list:VIRTIO GPU DRIVER" 
         <virtualization@lists.linux-foundation.org>,
         "Graf (AWS), Alexander" <graf@amazon.de>,
-        "MacCarthaigh, Colm" <colmmacc@amazon.com>,
-        "Woodhouse, David" <dwmw@amazon.co.uk>,
-        "bonzini@gnu.org" <bonzini@gnu.org>,
+        "Woodhouse, David" <dwmw@amazon.co.uk>, <bonzini@gnu.org>,
         "Singh, Balbir" <sblbir@amazon.com>,
-        "Weiss, Radu" <raduweis@amazon.com>,
-        "oridgar@gmail.com" <oridgar@gmail.com>,
-        "ghammer@redhat.com" <ghammer@redhat.com>,
-        "corbet@lwn.net" <corbet@lwn.net>,
-        "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>,
-        "mst@redhat.com" <mst@redhat.com>,
-        "qemu-devel@nongnu.org" <qemu-devel@nongnu.org>,
+        "Weiss, Radu" <raduweis@amazon.com>, <oridgar@gmail.com>,
+        <ghammer@redhat.com>, Jonathan Corbet <corbet@lwn.net>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        "Michael S. Tsirkin" <mst@redhat.com>,
+        Qemu Developers <qemu-devel@nongnu.org>,
         KVM list <kvm@vger.kernel.org>,
         Michal Hocko <mhocko@kernel.org>,
         "Rafael J. Wysocki" <rafael@kernel.org>,
         Pavel Machek <pavel@ucw.cz>,
         Linux API <linux-api@vger.kernel.org>
-Subject: Re: [PATCH] drivers/virt: vmgenid: add vm generation id driver
-Message-ID: <20201017033606.GA14014@1wt.eu>
-References: <AQHWo8lIfZnFKGe8nkGmhTCXwq5R3w==>
- <788878CE-2578-4991-A5A6-669DCABAC2F2@amazon.com>
+Date:   Fri, 16 Oct 2020 22:29:14 -0700
+X-Mailer: MailMate Trial (1.13.2r5673)
+Message-ID: <FF2CCC35-87DD-4311-A3CF-4943B29DBEE3@amazon.com>
+In-Reply-To: <CAG48ez1ZtvjOs2CEq8-EMosPCd_o7WQ3Mz_+1mDe7OrH2arxFA@mail.gmail.com>
+References: <788878CE-2578-4991-A5A6-669DCABAC2F2@amazon.com>
  <CAG48ez0EanBvDyfthe+hAP0OC8iGLNSq2e5wJVz-=ENNGF97_w@mail.gmail.com>
+ <20201017033606.GA14014@1wt.eu>
+ <CAG48ez0x2S9XuCrANAQbXNi8Jjwm822-fnQSmr-Zr07JgrEs1g@mail.gmail.com>
+ <6CC3DB03-27BA-4F5E-8ADA-BE605D83A85C@amazon.com>
+ <CAG48ez1ZtvjOs2CEq8-EMosPCd_o7WQ3Mz_+1mDe7OrH2arxFA@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <CAG48ez0EanBvDyfthe+hAP0OC8iGLNSq2e5wJVz-=ENNGF97_w@mail.gmail.com>
-User-Agent: Mutt/1.6.1 (2016-04-27)
+Content-Type: text/plain; charset="UTF-8"; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Originating-IP: [10.43.161.237]
+X-ClientProxiedBy: EX13d09UWC002.ant.amazon.com (10.43.162.102) To
+ EX13d01UWA003.ant.amazon.com (10.43.160.107)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Sat, Oct 17, 2020 at 03:40:08AM +0200, Jann Horn wrote:
-> [adding some more people who are interested in RNG stuff: Andy, Jason,
-> Theodore, Willy Tarreau, Eric Biggers. also linux-api@, because this
-> concerns some pretty fundamental API stuff related to RNG usage]
-> 
-> On Fri, Oct 16, 2020 at 4:33 PM Catangiu, Adrian Costin
-> <acatan@amazon.com> wrote:
-> > This patch is a driver which exposes the Virtual Machine Generation ID
-> > via a char-dev FS interface that provides ID update sync and async
-> > notification, retrieval and confirmation mechanisms:
-> >
-> > When the device is 'open()'ed a copy of the current vm UUID is
-> > associated with the file handle. 'read()' operations block until the
-> > associated UUID is no longer up to date - until HW vm gen id changes -
-> > at which point the new UUID is provided/returned. Nonblocking 'read()'
-> > uses EWOULDBLOCK to signal that there is no _new_ UUID available.
-> >
-> > 'poll()' is implemented to allow polling for UUID updates. Such
-> > updates result in 'EPOLLIN' events.
-> >
-> > Subsequent read()s following a UUID update no longer block, but return
-> > the updated UUID. The application needs to acknowledge the UUID update
-> > by confirming it through a 'write()'.
-> > Only on writing back to the driver the right/latest UUID, will the
-> > driver mark this "watcher" as up to date and remove EPOLLIN status.
-> >
-> > 'mmap()' support allows mapping a single read-only shared page which
-> > will always contain the latest UUID value at offset 0.
-> 
-> It would be nicer if that page just contained an incrementing counter,
-> instead of a UUID. It's not like the application cares *what* the UUID
-> changed to, just that it *did* change and all RNGs state now needs to
-> be reseeded from the kernel, right? And an application can't reliably
-> read the entire UUID from the memory mapping anyway, because the VM
-> might be forked in the middle.
-> 
-> So I think your kernel driver should detect UUID changes and then turn
-> those into a monotonically incrementing counter. (Probably 64 bits
-> wide?) (That's probably also a little bit faster than comparing an
-> entire UUID.)
 
-I agree with this. Further, I'm observing there is a very common
-confusion between "universally unique" and "random". Randoms are
-needed when seeking unpredictability. A random number generator
-*must* be able to return the same value multiple times in a row
-(though this is rare), otherwise it's not random.
 
-To illustrate this, a die has less than 3 bits of randomness and
-is sufficient to play games with friends where a counter would allow
-everyone to cheat. Conversely if you want to assign IDs to members
-of your family you'd rather use a counter than a die for this or
-you risk collisions and/or long series of retries to pick unique
-IDs.
+On 16 Oct 2020, at 22:01, Jann Horn wrote:
+>
+> On Sat, Oct 17, 2020 at 6:34 AM Colm MacCarthaigh 
+> <colmmacc@amazon.com> wrote:
+>> For user-space, even a single bit would do. We added 
+>> MADVISE_WIPEONFORK
+>> so that userspace libraries can detect fork()/clone() robustly, for 
+>> the
+>> same reasons. It just wipes a page as the indicator, which is
+>> effectively a single-bit signal, and it works well. On the user-space
+>> side of this, I’m keen to find a solution like that that we can use
+>> fairly easily inside of portable libraries and applications. The 
+>> “have
+>> I forked” checks do end up in hot paths, so it’s nice if they can 
+>> be
+>> CPU cache friendly. Comparing a whole 128-bit value wouldn’t be my
+>> favorite.
+>
+> I'm pretty sure a single bit is not enough if you want to have a
+> single page, shared across the entire system, that stores the VM
+> forking state; you need a counter for that.
 
-RFC4122 explains in great length how to produce guaranteed unique
-IDs, and this only involves space, time and counters. There's
-indeed a lazy variant that probably everyone uses nowadays,
-consisting in picking random numbers, but this is not guaranteed
-unique anymore.
+You’re right. WIPEONFORK is more like a single-bit per use. If it’s 
+something system wide then a counter is better.
 
-If the UUIDs used there are real UUIDs, it could be as simple as
-updating them according to their format, i.e. updating the timestamp,
-and if the timestamp is already the same, just increase the seq counter.
-Doing this doesn't require entropy, doesn't need to block and doesn't
-needlessly leak randoms that sometimes make people feel nervous.
+> So the RNG state after mixing in the new VM Generation ID would
+> contain 128 bits of secret entropy not known to anyone else, including
+> people with access to the VM image.
+>
+> Now, 128 bits of cryptographically random data aren't _optimal_; I
+> think something on the order of 256 bits would be nicer from a
+> theoretical standpoint. But in practice I think we'll be good with the
+> 128 bits we're getting (since the number of users who fork a VM image
+> is probably not going to be so large that worst-case collision
+> probabilities matter).
 
-Just my two cents,
-Willy
+This reminds me on key/IV usage limits for AES encryption, where the 
+same birthday bounds apply, and even though 256-bits would be better, we 
+routinely make 128-bit birthday bounds work for massively scalable 
+systems.
+
+>> The kernel would need to use the change as a trigger to
+>> measure some entropy (e.g. interrupts and RDRAND, or whatever). Our 
+>> just
+>> define the machine contract as “this has to be unique random data 
+>> and
+>> if it’s not unique, or if it’s pubic, you’re toast”.
+>
+> As far as I can tell from Microsoft's spec, that is a guarantee we're
+> already getting.
+
+Neat.
+
+-
+Colm
