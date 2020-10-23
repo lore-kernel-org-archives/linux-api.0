@@ -1,132 +1,136 @@
-Return-Path: <SRS0=otEp=D4=vger.kernel.org=linux-api-owner@kernel.org>
+Return-Path: <SRS0=3Z+t=D6=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6DCA8C55179
-	for <linux-api@archiver.kernel.org>; Wed, 21 Oct 2020 17:53:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 77D5BC55179
+	for <linux-api@archiver.kernel.org>; Fri, 23 Oct 2020 01:21:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0B22722453
-	for <linux-api@archiver.kernel.org>; Wed, 21 Oct 2020 17:53:34 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 06F47207E8
+	for <linux-api@archiver.kernel.org>; Fri, 23 Oct 2020 01:21:45 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="OWDTTe0S"
+	dkim=pass (2048-bit key) header.d=paul-moore-com.20150623.gappssmtp.com header.i=@paul-moore-com.20150623.gappssmtp.com header.b="bWPmglrU"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2503764AbgJURxb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 21 Oct 2020 13:53:31 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:31564 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S2503752AbgJURxb (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 21 Oct 2020 13:53:31 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1603302810;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=0aM6MG+N6GRh+zh31VWFPduo2rgWm3emASszSAw8inM=;
-        b=OWDTTe0SiGQKjc0mlEJCoVfy8KB0qeKRwNh34kmfl75kbHUp2t1k4Pqpi9YDFtoYuu/++3
-        fa+5IzxIDvNRpnolkxrwuA4Gs7N+uZ2IoeO9rD33K3nvcBofBo/4A51eQeG5wGWloi3uCM
-        oMV/LW+Vvw7kojkSlkSwJUO8gTQd7J4=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-582-0BAAGVqzMda2Ab5lMPFbVA-1; Wed, 21 Oct 2020 13:53:23 -0400
-X-MC-Unique: 0BAAGVqzMda2Ab5lMPFbVA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 57DDD804B66;
-        Wed, 21 Oct 2020 17:53:20 +0000 (UTC)
-Received: from madcap2.tricolour.ca (unknown [10.10.110.2])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id E934B5D9EF;
-        Wed, 21 Oct 2020 17:53:06 +0000 (UTC)
-Date:   Wed, 21 Oct 2020 13:53:03 -0400
-From:   Richard Guy Briggs <rgb@redhat.com>
-To:     Steve Grubb <sgrubb@redhat.com>
-Cc:     Paul Moore <paul@paul-moore.com>, linux-audit@redhat.com,
-        nhorman@tuxdriver.com, linux-api@vger.kernel.org,
+        id S374287AbgJWBVo (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Oct 2020 21:21:44 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49350 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S374283AbgJWBVo (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 22 Oct 2020 21:21:44 -0400
+Received: from mail-ej1-x642.google.com (mail-ej1-x642.google.com [IPv6:2a00:1450:4864:20::642])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A3CEFC0613CE
+        for <linux-api@vger.kernel.org>; Thu, 22 Oct 2020 18:21:43 -0700 (PDT)
+Received: by mail-ej1-x642.google.com with SMTP id k3so53999ejj.10
+        for <linux-api@vger.kernel.org>; Thu, 22 Oct 2020 18:21:43 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=paul-moore-com.20150623.gappssmtp.com; s=20150623;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc:content-transfer-encoding;
+        bh=aoxn8RZh5GwLX2OTvbY4F3fYrAFarAXAp+zyIW9UVc0=;
+        b=bWPmglrUmUWeh/iJB7I1EBJU+TdBzoO9kJeAZdj0Mj7vyjbv9DyccX5Lt+lUFusiZw
+         HWpqEJDPjpY3Pe66lK3CAkBsqcDG1SzJroJ/TrLWOH68lnkP3CHZa96739LkvB31F0p2
+         UKaI6v6FS6fL3igL3m2SvuN8QdEUHemh+0A+WspZbjpxU8NlNH1xji6y4zYUku/PAtIG
+         VlsE4Z2Vr2DxmyRQoiSH2mQuJn6k9T8lU/ZuPxibEI768Vlsje7dAVkK4A+TJ9+adHG8
+         +FBZ1+GlJF4yKcmomBogElmJ3P88v835veafFeBLgDo8obHbAFEfQjagR4wLw4RxeZia
+         Dx4Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc:content-transfer-encoding;
+        bh=aoxn8RZh5GwLX2OTvbY4F3fYrAFarAXAp+zyIW9UVc0=;
+        b=Nb+KwVUVekF6McIX+mMv5rr2SW1Hs7SBqpJvHNWLjN2D4Qy8f9BkDUNs2iau6qwhVK
+         QCWUDITyyskrjVmoxGCtnRZtlsc60nvdJLjsugq6TsP03h+e6EgGOpnezEhe7oDj5r/b
+         SzCfTyHv7e9T9UvE+rV73trJUMOg/KzJ7fW2qtIMNQoWJ6pWerxVkaPNIEaMtqDFTdJ4
+         JlEOPmPnz5E6KoSJreBDTQQnwlk4O76PAdXddSMi2mFY/vsi+u0bjg+L8QTzsQV+FZt8
+         M2L9WIREoadepy8HRawJmALBiRhZNY0+zroiXiKBK4kRYBtOcQX7/4jWvEKqOiQbOdTd
+         osPg==
+X-Gm-Message-State: AOAM5323Cj0Pjnp0aQjO6kqeUBidFse9xB7sC3wVQC9PoznANMvewNrq
+        JJ5qN6Wk1W5HlwPjlzRIZi99T9D6XSHaiyel/3wy
+X-Google-Smtp-Source: ABdhPJzDtfnYw+rfKgxc4a8mUFIh6ll/aQ2+0itoJxliGHEeO3L/XBWkrOQEYSixIJb79O9lCBjh5YKgmDlUs8u/x/U=
+X-Received: by 2002:a17:906:25cc:: with SMTP id n12mr4813564ejb.488.1603416102090;
+ Thu, 22 Oct 2020 18:21:42 -0700 (PDT)
+MIME-Version: 1.0
+References: <cover.1593198710.git.rgb@redhat.com> <6e2e10432e1400f747918eeb93bf45029de2aa6c.1593198710.git.rgb@redhat.com>
+ <CAHC9VhSCm5eeBcyY8bBsnxr-hK4rkso9_NJHJec2OXLu4m5QTA@mail.gmail.com>
+ <20200729194058.kcbsqjhzunjpipgm@madcap2.tricolour.ca> <CAHC9VhRUwCKBjffA_XNSjUwvUn8e6zfmy8WD203dK7R2KD0__g@mail.gmail.com>
+ <20201002195231.GH2882171@madcap2.tricolour.ca> <20201021163926.GA3929765@madcap2.tricolour.ca>
+In-Reply-To: <20201021163926.GA3929765@madcap2.tricolour.ca>
+From:   Paul Moore <paul@paul-moore.com>
+Date:   Thu, 22 Oct 2020 21:21:31 -0400
+Message-ID: <CAHC9VhRb7XMyTrcrmzM3yQO+eLdO_r2+DOLKr9apDDeH4ua2Ew@mail.gmail.com>
+Subject: Re: [PATCH ghak90 V9 05/13] audit: log container info of syscalls
+To:     Richard Guy Briggs <rgb@redhat.com>
+Cc:     nhorman@tuxdriver.com, linux-api@vger.kernel.org,
         containers@lists.linux-foundation.org,
         LKML <linux-kernel@vger.kernel.org>, dhowells@redhat.com,
+        Linux-Audit Mailing List <linux-audit@redhat.com>,
         netfilter-devel@vger.kernel.org, ebiederm@xmission.com,
         simo@redhat.com, netdev@vger.kernel.org,
         linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>,
         mpatel@redhat.com, Serge Hallyn <serge@hallyn.com>
-Subject: Re: [PATCH ghak90 V9 05/13] audit: log container info of syscalls
-Message-ID: <20201021175303.GH2882171@madcap2.tricolour.ca>
-References: <cover.1593198710.git.rgb@redhat.com>
- <20201002195231.GH2882171@madcap2.tricolour.ca>
- <20201021163926.GA3929765@madcap2.tricolour.ca>
- <2174083.ElGaqSPkdT@x2>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <2174083.ElGaqSPkdT@x2>
-User-Agent: Mutt/1.10.1 (2018-07-13)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 2020-10-21 12:49, Steve Grubb wrote:
-> On Wednesday, October 21, 2020 12:39:26 PM EDT Richard Guy Briggs wrote:
-> > > I think I have a way to generate a signal to multiple targets in one
-> > > syscall...  The added challenge is to also give those targets different
-> > > audit container identifiers.
-> > 
-> > Here is an exmple I was able to generate after updating the testsuite
-> > script to include a signalling example of a nested audit container
-> > identifier:
-> > 
-> > ----
-> > type=PROCTITLE msg=audit(2020-10-21 10:31:16.655:6731) :
-> > proctitle=/usr/bin/perl -w containerid/test type=CONTAINER_ID
-> > msg=audit(2020-10-21 10:31:16.655:6731) :
-> > contid=7129731255799087104^3333941723245477888 type=OBJ_PID
-> > msg=audit(2020-10-21 10:31:16.655:6731) : opid=115583 oauid=root ouid=root
-> > oses=1 obj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
-> > ocomm=perl type=CONTAINER_ID msg=audit(2020-10-21 10:31:16.655:6731) :
-> > contid=3333941723245477888 type=OBJ_PID msg=audit(2020-10-21
-> > 10:31:16.655:6731) : opid=115580 oauid=root ouid=root oses=1
-> > obj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 ocomm=perl
-> > type=CONTAINER_ID msg=audit(2020-10-21 10:31:16.655:6731) :
-> > contid=8098399240850112512^3333941723245477888 type=OBJ_PID
-> > msg=audit(2020-10-21 10:31:16.655:6731) : opid=115582 oauid=root ouid=root
-> > oses=1 obj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
-> > ocomm=perl type=SYSCALL msg=audit(2020-10-21 10:31:16.655:6731) :
-> > arch=x86_64 syscall=kill success=yes exit=0 a0=0xfffe3c84 a1=SIGTERM
-> > a2=0x4d524554 a3=0x0 items=0 ppid=115564 pid=115567 auid=root uid=root
-> > gid=root euid=root suid=root fsuid=root egid=root sgid=root fsgid=root
-> > tty=ttyS0 ses=1 comm=perl exe=/usr/bin/perl
-> > subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
-> > key=testsuite-1603290671-AcLtUulY ----
-> > 
-> > There are three CONTAINER_ID records which need some way of associating
-> > with OBJ_PID records.  An additional CONTAINER_ID record would be present
-> > if the killing process itself had an audit container identifier.  I think
-> > the most obvious way to connect them is with a pid= field in the
-> > CONTAINER_ID record.
-> 
-> pid is the process sending the signal, opid is the process receiving the 
-> signal. I think you mean opid?
+On Wed, Oct 21, 2020 at 12:39 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> Here is an exmple I was able to generate after updating the testsuite
+> script to include a signalling example of a nested audit container
+> identifier:
+>
+> ----
+> type=3DPROCTITLE msg=3Daudit(2020-10-21 10:31:16.655:6731) : proctitle=3D=
+/usr/bin/perl -w containerid/test
+> type=3DCONTAINER_ID msg=3Daudit(2020-10-21 10:31:16.655:6731) : contid=3D=
+7129731255799087104^3333941723245477888
+> type=3DOBJ_PID msg=3Daudit(2020-10-21 10:31:16.655:6731) : opid=3D115583 =
+oauid=3Droot ouid=3Droot oses=3D1 obj=3Dunconfined_u:unconfined_r:unconfine=
+d_t:s0-s0:c0.c1023 ocomm=3Dperl
+> type=3DCONTAINER_ID msg=3Daudit(2020-10-21 10:31:16.655:6731) : contid=3D=
+3333941723245477888
+> type=3DOBJ_PID msg=3Daudit(2020-10-21 10:31:16.655:6731) : opid=3D115580 =
+oauid=3Droot ouid=3Droot oses=3D1 obj=3Dunconfined_u:unconfined_r:unconfine=
+d_t:s0-s0:c0.c1023 ocomm=3Dperl
+> type=3DCONTAINER_ID msg=3Daudit(2020-10-21 10:31:16.655:6731) : contid=3D=
+8098399240850112512^3333941723245477888
+> type=3DOBJ_PID msg=3Daudit(2020-10-21 10:31:16.655:6731) : opid=3D115582 =
+oauid=3Droot ouid=3Droot oses=3D1 obj=3Dunconfined_u:unconfined_r:unconfine=
+d_t:s0-s0:c0.c1023 ocomm=3Dperl
+> type=3DSYSCALL msg=3Daudit(2020-10-21 10:31:16.655:6731) : arch=3Dx86_64 =
+syscall=3Dkill success=3Dyes exit=3D0 a0=3D0xfffe3c84 a1=3DSIGTERM a2=3D0x4=
+d524554 a3=3D0x0 items=3D0 ppid=3D115564 pid=3D115567 auid=3Droot uid=3Droo=
+t gid=3Droot euid=3Droot suid=3Droot fsuid=3Droot egid=3Droot sgid=3Droot f=
+sgid=3Droot tty=3DttyS0 ses=3D1 comm=3Dperl exe=3D/usr/bin/perl subj=3Dunco=
+nfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 key=3Dtestsuite-160329067=
+1-AcLtUulY
+> ----
+>
+> There are three CONTAINER_ID records which need some way of associating w=
+ith OBJ_PID records.  An additional CONTAINER_ID record would be present if=
+ the killing process itself had an audit container identifier.  I think the=
+ most obvious way to connect them is with a pid=3D field in the CONTAINER_I=
+D record.
 
-If the process sending the signal (it has a pid= field) has an audit
-container identifier, it will generate a CONTAINER_ID record.  Each
-process being signalled (each has an opid= field) that has an audit
-container identifier will also generate a CONTAINER_ID record.  The
-former will be much more common.  Which do we use in the CONTAINER_ID
-record?  Having swinging fields, pid vs opid does not seem like a
-reasonable solution.  Do we go back to "ref=pid=..." vs "ref=opid=..."?
+Using a "pid=3D" field as a way to link CONTAINER_ID records to other
+records raises a few questions.  What happens if/when we need to
+represent those PIDs in the context of a namespace?  Are we ever going
+to need to link to records which don't have a "pid=3D" field?  I haven't
+done the homework to know if either of these are a concern right now,
+but I worry that this might become a problem in the future.
 
-> -Steve
+The idea of using something like "item=3D" is interesting.  As you
+mention, the "item=3D" field does present some overlap problems with the
+PATH record, but perhaps we can do something similar.  What if we
+added a "record=3D" (or similar, I'm not worried about names at this
+point) to each record, reset to 0/1 at the start of each event, and
+when we needed to link records somehow we could add a "related=3D1,..,N"
+field.  This would potentially be useful beyond just the audit
+container ID work.
 
-- RGB
-
---
-Richard Guy Briggs <rgb@redhat.com>
-Sr. S/W Engineer, Kernel Security, Base Operating Systems
-Remote, Ottawa, Red Hat Canada
-IRC: rgb, SunRaycer
-Voice: +1.647.777.2635, Internal: (81) 32635
-
+--=20
+paul moore
+www.paul-moore.com
