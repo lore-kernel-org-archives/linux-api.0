@@ -1,415 +1,181 @@
-Return-Path: <SRS0=R9At=EC=vger.kernel.org=linux-api-owner@kernel.org>
+Return-Path: <SRS0=zEOp=ED=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.7 required=3.0 tests=BAYES_00,DATE_IN_PAST_12_24,
+	DKIM_SIGNED,DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0B5DCC56202
-	for <linux-api@archiver.kernel.org>; Tue, 27 Oct 2020 20:14:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 37ECBC56202
+	for <linux-api@archiver.kernel.org>; Wed, 28 Oct 2020 21:46:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BCCCC22267
-	for <linux-api@archiver.kernel.org>; Tue, 27 Oct 2020 20:13:59 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D2BAB24724
+	for <linux-api@archiver.kernel.org>; Wed, 28 Oct 2020 21:46:30 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=paul-moore-com.20150623.gappssmtp.com header.i=@paul-moore-com.20150623.gappssmtp.com header.b="Lj2eTMWd"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1831004AbgJ0UN6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 27 Oct 2020 16:13:58 -0400
-Received: from smtp-42ae.mail.infomaniak.ch ([84.16.66.174]:52469 "EHLO
-        smtp-42ae.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1831009AbgJ0UN5 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 27 Oct 2020 16:13:57 -0400
-X-Greylist: delayed 584 seconds by postgrey-1.27 at vger.kernel.org; Tue, 27 Oct 2020 16:13:55 EDT
-Received: from smtp-3-0000.mail.infomaniak.ch (unknown [10.4.36.107])
-        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4CLN2V6WzqzlhbhT;
-        Tue, 27 Oct 2020 21:04:18 +0100 (CET)
-Received: from localhost (unknown [94.23.54.103])
-        by smtp-3-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4CLN2V3y1bzlh8T8;
-        Tue, 27 Oct 2020 21:04:18 +0100 (CET)
-From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
-To:     James Morris <jmorris@namei.org>,
-        "Serge E . Hallyn" <serge@hallyn.com>
-Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Andy Lutomirski <luto@amacapital.net>,
-        Anton Ivanov <anton.ivanov@cambridgegreys.com>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Casey Schaufler <casey@schaufler-ca.com>,
-        Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Richard Weinberger <richard@nod.at>,
-        Shuah Khan <shuah@kernel.org>,
-        Vincent Dagonneau <vincent.dagonneau@ssi.gouv.fr>,
-        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
-        linux-arch@vger.kernel.org, linux-doc@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-kselftest@vger.kernel.org,
-        linux-security-module@vger.kernel.org, x86@kernel.org,
-        =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@linux.microsoft.com>
-Subject: [PATCH v22 11/12] samples/landlock: Add a sandbox manager example
-Date:   Tue, 27 Oct 2020 21:03:57 +0100
-Message-Id: <20201027200358.557003-12-mic@digikod.net>
-X-Mailer: git-send-email 2.28.0
-In-Reply-To: <20201027200358.557003-1-mic@digikod.net>
-References: <20201027200358.557003-1-mic@digikod.net>
+        id S1726175AbgJ1Vq3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 28 Oct 2020 17:46:29 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48064 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725446AbgJ1Vq2 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 28 Oct 2020 17:46:28 -0400
+Received: from mail-lf1-x143.google.com (mail-lf1-x143.google.com [IPv6:2a00:1450:4864:20::143])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 345FFC0613CF
+        for <linux-api@vger.kernel.org>; Wed, 28 Oct 2020 14:46:28 -0700 (PDT)
+Received: by mail-lf1-x143.google.com with SMTP id j30so712248lfp.4
+        for <linux-api@vger.kernel.org>; Wed, 28 Oct 2020 14:46:28 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=paul-moore-com.20150623.gappssmtp.com; s=20150623;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc:content-transfer-encoding;
+        bh=EhaQv7Xqn9C10/6kPilmFG/LY90YB69CHHSm/P4LmUk=;
+        b=Lj2eTMWdQNRX51rp+69kJ+7MIJveC7lv8t0w/6GAwNCZDU97tO7fXzTZewOx55Ac1l
+         qfo9NYf3w/1oZOOMsUpmk5QFBOLD6rEq4Y+xGwdcqgYSlAvt/V1eCOoLhOGtMpxn22lY
+         BpPv8So2RSzkwV4VqW9Z81xo/sm6G/2qErp4megpsjRLRnCsLMimzT//EYKnBmWXYPYY
+         Sljt2SxpJGW+CX70ABsj4p+oWaehsd7e48Xa9uvPlScUQdjQsFInIzQICwjOLHYNYT2Z
+         rVKc0MWZtpSmx99XULBfKIiPaFC7zAwivfy+JYaPy+FhDaqHk6y3p83LlgRiUo5yGc2I
+         JWSg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc:content-transfer-encoding;
+        bh=EhaQv7Xqn9C10/6kPilmFG/LY90YB69CHHSm/P4LmUk=;
+        b=EYjYDYY1ctc46EOutr7JZd9aRJTKlhVZqkqltG/UQy60RXhgjXL/jqTSR5sUQwCUt9
+         oByKC0SJr0njWvSBX9pgTKuxwzSQ5JNZ2i6j+9YJZw0xEuttyQ0ggEKyv5SKsuHZ0wao
+         UoHy3wENdyN06SD0ixHDOsOUtLAgCsCf1KSH7rfmrhQ0wSrMrZfe1O3bi/28XTukwJwh
+         8iQW8TxFYghEWvDashBIZAfQyC0vpU+uyGyEpQhuO8U9Z95qMXW8crr3jdIOHVlBp2pl
+         aLzAREtIKgOjlin7utUELQbB3kaG6mM5xioOfO0sH/h0PCs1Yjj54gan1r9j1NhViH67
+         1rnw==
+X-Gm-Message-State: AOAM531SNbbDBAe2E9+mEg+b6uno2MBLOuDjY5u+4qJLR62Gfjs4Mo8d
+        ARPcalyN7MODG9OhUN5Dq1L/XtviscT+UTkqHLfx9Ihdvw==
+X-Google-Smtp-Source: ABdhPJydImqf6rjIcFvdKoVKRijlUJM6c3tT5+zpyIh0DgksT/WwCUJmb9M0MAWnaqlVZBE1LbPiRD1v+2NmrHAlBa8=
+X-Received: by 2002:a17:906:4811:: with SMTP id w17mr4982322ejq.431.1603848928683;
+ Tue, 27 Oct 2020 18:35:28 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+References: <cover.1593198710.git.rgb@redhat.com> <6e2e10432e1400f747918eeb93bf45029de2aa6c.1593198710.git.rgb@redhat.com>
+ <CAHC9VhSCm5eeBcyY8bBsnxr-hK4rkso9_NJHJec2OXLu4m5QTA@mail.gmail.com>
+ <20200729194058.kcbsqjhzunjpipgm@madcap2.tricolour.ca> <CAHC9VhRUwCKBjffA_XNSjUwvUn8e6zfmy8WD203dK7R2KD0__g@mail.gmail.com>
+ <20201002195231.GH2882171@madcap2.tricolour.ca> <20201021163926.GA3929765@madcap2.tricolour.ca>
+ <CAHC9VhRb7XMyTrcrmzM3yQO+eLdO_r2+DOLKr9apDDeH4ua2Ew@mail.gmail.com> <20201023204033.GI2882171@madcap2.tricolour.ca>
+In-Reply-To: <20201023204033.GI2882171@madcap2.tricolour.ca>
+From:   Paul Moore <paul@paul-moore.com>
+Date:   Tue, 27 Oct 2020 21:35:17 -0400
+Message-ID: <CAHC9VhS7Gzd=pQ13eSOHDT8nO-z_yxsVW0E5r6mkpPYi3Txe2g@mail.gmail.com>
+Subject: Re: [PATCH ghak90 V9 05/13] audit: log container info of syscalls
+To:     Richard Guy Briggs <rgb@redhat.com>
+Cc:     nhorman@tuxdriver.com, linux-api@vger.kernel.org,
+        containers@lists.linux-foundation.org,
+        LKML <linux-kernel@vger.kernel.org>, dhowells@redhat.com,
+        Linux-Audit Mailing List <linux-audit@redhat.com>,
+        netfilter-devel@vger.kernel.org, ebiederm@xmission.com,
+        simo@redhat.com, netdev@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>,
+        mpatel@redhat.com, Serge Hallyn <serge@hallyn.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Mickaël Salaün <mic@linux.microsoft.com>
+On Fri, Oct 23, 2020 at 4:40 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2020-10-22 21:21, Paul Moore wrote:
+> > On Wed, Oct 21, 2020 at 12:39 PM Richard Guy Briggs <rgb@redhat.com> wr=
+ote:
+> > > Here is an exmple I was able to generate after updating the testsuite
+> > > script to include a signalling example of a nested audit container
+> > > identifier:
+> > >
+> > > ----
+> > > type=3DPROCTITLE msg=3Daudit(2020-10-21 10:31:16.655:6731) : proctitl=
+e=3D/usr/bin/perl -w containerid/test
+> > > type=3DCONTAINER_ID msg=3Daudit(2020-10-21 10:31:16.655:6731) : conti=
+d=3D7129731255799087104^3333941723245477888
+> > > type=3DOBJ_PID msg=3Daudit(2020-10-21 10:31:16.655:6731) : opid=3D115=
+583 oauid=3Droot ouid=3Droot oses=3D1 obj=3Dunconfined_u:unconfined_r:uncon=
+fined_t:s0-s0:c0.c1023 ocomm=3Dperl
+> > > type=3DCONTAINER_ID msg=3Daudit(2020-10-21 10:31:16.655:6731) : conti=
+d=3D3333941723245477888
+> > > type=3DOBJ_PID msg=3Daudit(2020-10-21 10:31:16.655:6731) : opid=3D115=
+580 oauid=3Droot ouid=3Droot oses=3D1 obj=3Dunconfined_u:unconfined_r:uncon=
+fined_t:s0-s0:c0.c1023 ocomm=3Dperl
+> > > type=3DCONTAINER_ID msg=3Daudit(2020-10-21 10:31:16.655:6731) : conti=
+d=3D8098399240850112512^3333941723245477888
+> > > type=3DOBJ_PID msg=3Daudit(2020-10-21 10:31:16.655:6731) : opid=3D115=
+582 oauid=3Droot ouid=3Droot oses=3D1 obj=3Dunconfined_u:unconfined_r:uncon=
+fined_t:s0-s0:c0.c1023 ocomm=3Dperl
+> > > type=3DSYSCALL msg=3Daudit(2020-10-21 10:31:16.655:6731) : arch=3Dx86=
+_64 syscall=3Dkill success=3Dyes exit=3D0 a0=3D0xfffe3c84 a1=3DSIGTERM a2=
+=3D0x4d524554 a3=3D0x0 items=3D0 ppid=3D115564 pid=3D115567 auid=3Droot uid=
+=3Droot gid=3Droot euid=3Droot suid=3Droot fsuid=3Droot egid=3Droot sgid=3D=
+root fsgid=3Droot tty=3DttyS0 ses=3D1 comm=3Dperl exe=3D/usr/bin/perl subj=
+=3Dunconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 key=3Dtestsuite-16=
+03290671-AcLtUulY
+> > > ----
+> > >
+> > > There are three CONTAINER_ID records which need some way of associati=
+ng with OBJ_PID records.  An additional CONTAINER_ID record would be presen=
+t if the killing process itself had an audit container identifier.  I think=
+ the most obvious way to connect them is with a pid=3D field in the CONTAIN=
+ER_ID record.
+> >
+> > Using a "pid=3D" field as a way to link CONTAINER_ID records to other
+> > records raises a few questions.  What happens if/when we need to
+> > represent those PIDs in the context of a namespace?  Are we ever going
+> > to need to link to records which don't have a "pid=3D" field?  I haven'=
+t
+> > done the homework to know if either of these are a concern right now,
+> > but I worry that this might become a problem in the future.
+>
+> Good point about PID namespaces in the future but those accompanying
+> records will already have to be conditioned for the PID namespace
+> context that is requesting it, so I don't see this as a showstopper.
 
-Add a basic sandbox tool to launch a command which can only access a
-whitelist of file hierarchies in a read-only or read-write way.
+Possibly, it just gets very messy.  Doubly so when you start looking
+at potentially adjusting for multiple audit daemons.  Thankfully it
+doesn't look like using the PID is a good idea for other reasons.
 
-Cc: James Morris <jmorris@namei.org>
-Cc: Jann Horn <jannh@google.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Serge E. Hallyn <serge@hallyn.com>
-Signed-off-by: Mickaël Salaün <mic@linux.microsoft.com>
----
+> I've forgotten about an important one we already hit, which is a network
+> event that only has a NETFILTER_PKT record, but in that case, there is
+> no ambiguity since there are no other records associated with that
+> event.  So the second is already an issue now.  Using
+> task_tgid_nr(current), in the contid testsuite script network event it
+> attributed it to ping which caused the event, but we cannot use this
+> since it wasn't triggered by a syscall and doesn't accurately reflect
+> the kernel thread that received it.  It could just be set to zero for
+> network events.
 
-Changes since v21:
-* Remove LANDLOCK_ACCESS_FS_CHROOT.
-* Clean up help.
+Possibly.  It just seems like too much hackery to start; that's the
+stuff you do once it has been in a kernel release for years and need
+to find a workaround that doesn't break everything.  I think we should
+aim a bit higher right now.
 
-Changes since v20:
-* Update with new syscalls and type names.
-* Update errno check for EOPNOTSUPP.
-* Use the full syscall interfaces: explicitely set the "flags" field to
-  zero.
+> > The idea of using something like "item=3D" is interesting.  As you
+> > mention, the "item=3D" field does present some overlap problems with th=
+e
+> > PATH record, but perhaps we can do something similar.  What if we
+> > added a "record=3D" (or similar, I'm not worried about names at this
+> > point) to each record, reset to 0/1 at the start of each event, and
+> > when we needed to link records somehow we could add a "related=3D1,..,N=
+"
+> > field.  This would potentially be useful beyond just the audit
+> > container ID work.
+>
+> Does it make any sense to use the same keyword in each type of record
+> such as record/records as in PATH/SYSCALL: item/items ?
 
-Changes since v19:
-* Update with the new Landlock syscalls.
-* Comply with commit 5f2fb52fac15 ("kbuild: rename hostprogs-y/always to
-  hostprogs/always-y").
+That was mentioned above, if you can assure yourself and the rest of
+us that it can be safely reused I think that might be okay, but I'm
+not convinced that is safe at the moment.  Although I will admit those
+are fears are not based on an exhaustive search through the code (or a
+determined "think").
 
-Changes since v16:
-* Switch syscall attribute pointer and size arguments.
+> (I prefer 0-indexed like item=3D...)
 
-Changes since v15:
-* Update access right names.
-* Properly assign access right to files according to the new related
-  syscall restriction.
-* Replace "select" with "depends on" HEADERS_INSTALL (suggested by Randy
-  Dunlap).
+I have no preference on where we start the index, but it makes sense
+to keep the same index starting point as the PATH records.
 
-Changes since v14:
-* Fix Kconfig dependency.
-* Remove access rights that may be required for FD-only requests:
-  mmap, truncate, getattr, lock, chmod, chown, chgrp, ioctl.
-* Fix useless hardcoded syscall number.
-* Use execvpe().
-* Follow symlinks.
-* Extend help with common file paths.
-* Constify variables.
-* Clean up comments.
-* Improve error message.
-
-Changes since v11:
-* Add back the filesystem sandbox manager and update it to work with the
-  new Landlock syscall.
-
-Previous changes:
-https://lore.kernel.org/lkml/20190721213116.23476-9-mic@digikod.net/
----
- samples/Kconfig              |   7 ++
- samples/Makefile             |   1 +
- samples/landlock/.gitignore  |   1 +
- samples/landlock/Makefile    |  15 +++
- samples/landlock/sandboxer.c | 219 +++++++++++++++++++++++++++++++++++
- 5 files changed, 243 insertions(+)
- create mode 100644 samples/landlock/.gitignore
- create mode 100644 samples/landlock/Makefile
- create mode 100644 samples/landlock/sandboxer.c
-
-diff --git a/samples/Kconfig b/samples/Kconfig
-index 0ed6e4d71d87..e6129496ced5 100644
---- a/samples/Kconfig
-+++ b/samples/Kconfig
-@@ -124,6 +124,13 @@ config SAMPLE_HIDRAW
- 	bool "hidraw sample"
- 	depends on CC_CAN_LINK && HEADERS_INSTALL
- 
-+config SAMPLE_LANDLOCK
-+	bool "Build Landlock sample code"
-+	depends on HEADERS_INSTALL
-+	help
-+	  Build a simple Landlock sandbox manager able to launch a process
-+	  restricted by a user-defined filesystem access control.
-+
- config SAMPLE_PIDFD
- 	bool "pidfd sample"
- 	depends on CC_CAN_LINK && HEADERS_INSTALL
-diff --git a/samples/Makefile b/samples/Makefile
-index c3392a595e4b..087e0988ccc5 100644
---- a/samples/Makefile
-+++ b/samples/Makefile
-@@ -11,6 +11,7 @@ obj-$(CONFIG_SAMPLE_KDB)		+= kdb/
- obj-$(CONFIG_SAMPLE_KFIFO)		+= kfifo/
- obj-$(CONFIG_SAMPLE_KOBJECT)		+= kobject/
- obj-$(CONFIG_SAMPLE_KPROBES)		+= kprobes/
-+subdir-$(CONFIG_SAMPLE_LANDLOCK)	+= landlock
- obj-$(CONFIG_SAMPLE_LIVEPATCH)		+= livepatch/
- subdir-$(CONFIG_SAMPLE_PIDFD)		+= pidfd
- obj-$(CONFIG_SAMPLE_QMI_CLIENT)		+= qmi/
-diff --git a/samples/landlock/.gitignore b/samples/landlock/.gitignore
-new file mode 100644
-index 000000000000..f43668b2d318
---- /dev/null
-+++ b/samples/landlock/.gitignore
-@@ -0,0 +1 @@
-+/sandboxer
-diff --git a/samples/landlock/Makefile b/samples/landlock/Makefile
-new file mode 100644
-index 000000000000..21eda5774948
---- /dev/null
-+++ b/samples/landlock/Makefile
-@@ -0,0 +1,15 @@
-+# SPDX-License-Identifier: BSD-3-Clause
-+
-+hostprogs := sandboxer
-+
-+always-y := $(hostprogs)
-+
-+KBUILD_HOSTCFLAGS += -I$(objtree)/usr/include
-+
-+.PHONY: all clean
-+
-+all:
-+	$(MAKE) -C ../.. samples/landlock/
-+
-+clean:
-+	$(MAKE) -C ../.. M=samples/landlock/ clean
-diff --git a/samples/landlock/sandboxer.c b/samples/landlock/sandboxer.c
-new file mode 100644
-index 000000000000..ee5ec1203cb7
---- /dev/null
-+++ b/samples/landlock/sandboxer.c
-@@ -0,0 +1,219 @@
-+// SPDX-License-Identifier: BSD-3-Clause
-+/*
-+ * Simple Landlock sandbox manager able to launch a process restricted by a
-+ * user-defined filesystem access control.
-+ *
-+ * Copyright © 2017-2020 Mickaël Salaün <mic@digikod.net>
-+ * Copyright © 2020 ANSSI
-+ */
-+
-+#define _GNU_SOURCE
-+#include <errno.h>
-+#include <fcntl.h>
-+#include <linux/landlock.h>
-+#include <linux/prctl.h>
-+#include <stddef.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <sys/prctl.h>
-+#include <sys/stat.h>
-+#include <sys/syscall.h>
-+#include <unistd.h>
-+
-+#ifndef landlock_create_ruleset
-+static inline int landlock_create_ruleset(
-+		const struct landlock_ruleset_attr *const attr,
-+		const size_t size, const __u32 flags)
-+{
-+	errno = 0;
-+	return syscall(__NR_landlock_create_ruleset, attr, size, flags);
-+}
-+#endif
-+
-+#ifndef landlock_add_rule
-+static inline int landlock_add_rule(const int ruleset_fd,
-+		const enum landlock_rule_type rule_type,
-+		const void *const rule_attr, const __u32 flags)
-+{
-+	errno = 0;
-+	return syscall(__NR_landlock_add_rule, ruleset_fd, rule_type,
-+			rule_attr, flags);
-+}
-+#endif
-+
-+#ifndef landlock_enforce_ruleset_current
-+static inline int landlock_enforce_ruleset_current(const int ruleset_fd,
-+		const __u32 flags)
-+{
-+	errno = 0;
-+	return syscall(__NR_landlock_enforce_ruleset_current, ruleset_fd,
-+			flags);
-+}
-+#endif
-+
-+#define ENV_FS_RO_NAME "LL_FS_RO"
-+#define ENV_FS_RW_NAME "LL_FS_RW"
-+#define ENV_PATH_TOKEN ":"
-+
-+static int parse_path(char *env_path, const char ***const path_list)
-+{
-+	int i, path_nb = 0;
-+
-+	if (env_path) {
-+		path_nb++;
-+		for (i = 0; env_path[i]; i++) {
-+			if (env_path[i] == ENV_PATH_TOKEN[0])
-+				path_nb++;
-+		}
-+	}
-+	*path_list = malloc(path_nb * sizeof(**path_list));
-+	for (i = 0; i < path_nb; i++)
-+		(*path_list)[i] = strsep(&env_path, ENV_PATH_TOKEN);
-+
-+	return path_nb;
-+}
-+
-+#define ACCESS_FILE ( \
-+	LANDLOCK_ACCESS_FS_EXECUTE | \
-+	LANDLOCK_ACCESS_FS_WRITE_FILE | \
-+	LANDLOCK_ACCESS_FS_READ_FILE)
-+
-+static int populate_ruleset(
-+		const char *const env_var, const int ruleset_fd,
-+		const __u64 allowed_access)
-+{
-+	int path_nb, i;
-+	char *env_path_name;
-+	const char **path_list = NULL;
-+	struct landlock_path_beneath_attr path_beneath = {
-+		.parent_fd = -1,
-+	};
-+
-+	env_path_name = getenv(env_var);
-+	if (!env_path_name) {
-+		fprintf(stderr, "Missing environment variable %s\n", env_var);
-+		return 1;
-+	}
-+	env_path_name = strdup(env_path_name);
-+	unsetenv(env_var);
-+	path_nb = parse_path(env_path_name, &path_list);
-+	if (path_nb == 1 && path_list[0][0] == '\0') {
-+		fprintf(stderr, "Missing path in %s\n", env_var);
-+		goto err_free_name;
-+	}
-+
-+	for (i = 0; i < path_nb; i++) {
-+		struct stat statbuf;
-+
-+		path_beneath.parent_fd = open(path_list[i], O_PATH |
-+				O_CLOEXEC);
-+		if (path_beneath.parent_fd < 0) {
-+			fprintf(stderr, "Failed to open \"%s\": %s\n",
-+					path_list[i],
-+					strerror(errno));
-+			goto err_free_name;
-+		}
-+		if (fstat(path_beneath.parent_fd, &statbuf)) {
-+			close(path_beneath.parent_fd);
-+			goto err_free_name;
-+		}
-+		path_beneath.allowed_access = allowed_access;
-+		if (!S_ISDIR(statbuf.st_mode))
-+			path_beneath.allowed_access &= ACCESS_FILE;
-+		if (landlock_add_rule(ruleset_fd, LANDLOCK_RULE_PATH_BENEATH,
-+					&path_beneath, 0)) {
-+			fprintf(stderr, "Failed to update the ruleset with \"%s\": %s\n",
-+					path_list[i], strerror(errno));
-+			close(path_beneath.parent_fd);
-+			goto err_free_name;
-+		}
-+		close(path_beneath.parent_fd);
-+	}
-+	free(env_path_name);
-+	return 0;
-+
-+err_free_name:
-+	free(env_path_name);
-+	return 1;
-+}
-+
-+#define ACCESS_FS_ROUGHLY_READ ( \
-+	LANDLOCK_ACCESS_FS_EXECUTE | \
-+	LANDLOCK_ACCESS_FS_READ_FILE | \
-+	LANDLOCK_ACCESS_FS_READ_DIR)
-+
-+#define ACCESS_FS_ROUGHLY_WRITE ( \
-+	LANDLOCK_ACCESS_FS_WRITE_FILE | \
-+	LANDLOCK_ACCESS_FS_REMOVE_DIR | \
-+	LANDLOCK_ACCESS_FS_REMOVE_FILE | \
-+	LANDLOCK_ACCESS_FS_MAKE_CHAR | \
-+	LANDLOCK_ACCESS_FS_MAKE_DIR | \
-+	LANDLOCK_ACCESS_FS_MAKE_REG | \
-+	LANDLOCK_ACCESS_FS_MAKE_SOCK | \
-+	LANDLOCK_ACCESS_FS_MAKE_FIFO | \
-+	LANDLOCK_ACCESS_FS_MAKE_BLOCK | \
-+	LANDLOCK_ACCESS_FS_MAKE_SYM)
-+
-+int main(const int argc, char *const argv[], char *const *const envp)
-+{
-+	const char *cmd_path;
-+	char *const *cmd_argv;
-+	int ruleset_fd;
-+	struct landlock_ruleset_attr ruleset_attr = {
-+		.handled_access_fs = ACCESS_FS_ROUGHLY_READ |
-+			ACCESS_FS_ROUGHLY_WRITE,
-+	};
-+
-+	if (argc < 2) {
-+		fprintf(stderr, "usage: %s=\"...\" %s=\"...\" %s <cmd> [args]...\n\n",
-+				ENV_FS_RO_NAME, ENV_FS_RW_NAME, argv[0]);
-+		fprintf(stderr, "Launch a command in a restricted environment.\n\n");
-+		fprintf(stderr, "Environment variables containing paths, each separated by a colon:\n");
-+		fprintf(stderr, "* %s: list of paths allowed to be used in a read-only way.\n",
-+				ENV_FS_RO_NAME);
-+		fprintf(stderr, "* %s: list of paths allowed to be used in a read-write way.\n",
-+				ENV_FS_RO_NAME);
-+		fprintf(stderr, "\nexample:\n"
-+				"%s=\"/bin:/lib:/usr:/proc:/etc:/dev/urandom\" "
-+				"%s=\"/dev/null:/dev/full:/dev/zero:/dev/pts:/tmp\" "
-+				"%s bash -i\n",
-+				ENV_FS_RO_NAME, ENV_FS_RW_NAME, argv[0]);
-+		return 1;
-+	}
-+
-+	ruleset_fd = landlock_create_ruleset(&ruleset_attr, sizeof(ruleset_attr), 0);
-+	if (ruleset_fd < 0) {
-+		perror("Failed to create a ruleset");
-+		return 1;
-+	}
-+	if (populate_ruleset(ENV_FS_RO_NAME, ruleset_fd,
-+				ACCESS_FS_ROUGHLY_READ)) {
-+		goto err_close_ruleset;
-+	}
-+	if (populate_ruleset(ENV_FS_RW_NAME, ruleset_fd,
-+				ACCESS_FS_ROUGHLY_READ | ACCESS_FS_ROUGHLY_WRITE)) {
-+		goto err_close_ruleset;
-+	}
-+	if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) {
-+		perror("Failed to restrict privileges");
-+		goto err_close_ruleset;
-+	}
-+	if (landlock_enforce_ruleset_current(ruleset_fd, 0)) {
-+		perror("Failed to enforce ruleset");
-+		goto err_close_ruleset;
-+	}
-+	close(ruleset_fd);
-+
-+	cmd_path = argv[1];
-+	cmd_argv = argv + 1;
-+	execvpe(cmd_path, cmd_argv, envp);
-+	fprintf(stderr, "Failed to execute \"%s\": %s\n", cmd_path,
-+			strerror(errno));
-+	fprintf(stderr, "Hint: access to the binary, the interpreter or shared libraries may be denied.\n");
-+	return 1;
-+
-+err_close_ruleset:
-+	close(ruleset_fd);
-+	return 1;
-+}
--- 
-2.28.0
-
+--=20
+paul moore
+www.paul-moore.com
