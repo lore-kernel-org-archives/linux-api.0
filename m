@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CDA93C4363A
-	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 00:51:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 87241C56202
+	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 00:53:21 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5BEB220790
-	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 00:51:29 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3006A20791
+	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 00:53:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2388845AbgJ2Aoh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 28 Oct 2020 20:44:37 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:60711 "EHLO
+        id S1732140AbgJ2Afg (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 28 Oct 2020 20:35:36 -0400
+Received: from youngberry.canonical.com ([91.189.89.112]:60628 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1732129AbgJ2Afo (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 28 Oct 2020 20:35:44 -0400
+        with ESMTP id S1729996AbgJ2Afg (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 28 Oct 2020 20:35:36 -0400
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kXvue-0008Ep-Dl; Thu, 29 Oct 2020 00:35:32 +0000
+        id 1kXvuP-0008Ep-23; Thu, 29 Oct 2020 00:35:17 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -60,11 +60,11 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
         linux-ext4@vger.kernel.org, linux-unionfs@vger.kernel.org,
         linux-audit@redhat.com, linux-integrity@vger.kernel.org,
-        selinux@vger.kernel.org, Tycho Andersen <tycho@tycho.pizza>,
+        selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH 12/34] xattr: handle idmapped mounts
-Date:   Thu, 29 Oct 2020 01:32:30 +0100
-Message-Id: <20201029003252.2128653-13-christian.brauner@ubuntu.com>
+Subject: [PATCH 03/34] fs: add mount_setattr()
+Date:   Thu, 29 Oct 2020 01:32:21 +0100
+Message-Id: <20201029003252.2128653-4-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.29.0
 In-Reply-To: <20201029003252.2128653-1-christian.brauner@ubuntu.com>
 References: <20201029003252.2128653-1-christian.brauner@ubuntu.com>
@@ -74,643 +74,703 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Tycho Andersen <tycho@tycho.pizza>
+This implements the mount_setattr() syscall. While the new mount api
+allows to change the properties of a superblock there is currently no
+way to change the mount properties of a mount or mount tree using mount
+file descriptors which the new mount api is based on. In addition the
+old mount api has the restriction that mount options cannot be
+applied recursively. This hasn't changed since changing mount options on
+a per-mount basis was implemented in [1] and has been a frequent
+request.
+The legacy mount is currently unable to accommodate this behavior
+without introducing a whole new set of flags because MS_REC | MS_REMOUNT
+| MS_BIND | MS_RDONLY | MS_NOEXEC | [...] only apply the mount option to
+the topmost mount. Changing MS_REC to apply to the whole mount tree
+would mean introducing a significant uapi change and would likely cause
+significant regressions.
 
-When interacting with extended attributes the vfs verifies that the
-caller is privileged over the inode with which the extended attribute is
-associated. Add helpers to handle extended attributes on idmapped
-mounts. If the inode is accessed through an idmapped mount we need to
-map it according to the mount's user namespace. Afterwards the checks
-are identical to non-idmapped mounts.
-This patch adds helpers to get, set, and remove extended attributes on
-idmapped mounts. The four helpers vfs_mapped_getxattr(),
-vfs_mapped_setxattr(), __vfs_mapped_removexattr(), and
-vfs_mapped_removexattr() are either used directly by the vfs (e.g.
-vfs_mapped_getxattr_alloc()) or by the filesystems targeted in this
-first interation.
+The new mount_setattr() syscall allows to recursively clear and set
+mount options in one shot. Multiple calls to change mount options
+requesting the same changes are idempotent:
 
-If the initial user namespace is passed all operations are a nop so
-non-idmapped mounts will not see a change in behavior and will also not
-see any performance impact. It also means that the non-idmapped-mount
-aware helpers can be implemented on top of their idmapped-mount aware
-counterparts by passing the initial user namespace.
+int mount_setattr(int dfd, const char *path, unsigned flags,
+                  struct mount_attr *uattr, size_t usize);
 
-Signed-off-by: Tycho Andersen <tycho@tycho.pizza>
+Flags to modify path resolution behavior are specified in the @flags
+argument. Currently, AT_EMPTY_PATH, AT_RECURSIVE, AT_SYMLINK_NOFOLLOW,
+and AT_NO_AUTOMOUNT are supported. If useful, additional lookup flags to
+restrict path resolution as introduced with openat2() might be supported
+in the future.
+
+mount_setattr() can be expected to grow over time and is designed with
+extensibility in mind. It follows the extensible syscall pattern we have
+used with other syscalls such as openat2(), clone3(),
+sched_{set,get}attr(), and others.
+The set of mount options is passed in the uapi struct mount_attr which
+currently has the following layout:
+
+struct mount_attr {
+	__u64 attr_set;
+	__u64 attr_clr;
+	__u32 propagation;
+};
+
+The @attr_set and @attr_clr members are used to clear and set mount
+options. This way a user can e.g. request that a set of flags is to be
+raised such as turning mounts readonly by raising MOUNT_ATTR_RDONLY in
+@attr_set while at the same time requesting that another set of flags is
+to be lowered such as removing noexec from a mount tree by specifying
+MOUNT_ATTR_NOEXEC in @attr_clr.
+Note, since the MOUNT_ATTR_<atime> values are an enum starting from 0,
+not a bitmap, users wanting to transition to a different atime setting
+cannot simply specify the atime setting in @attr_set, but must also
+specify MOUNT_ATTR__ATIME in the @attr_clr field. So we ensure that
+MOUNT_ATTR__ATIME can't be partially set in @attr_clr and that @attr_set
+can't have any atime bits set if MOUNT_ATTR__ATIME isn't set in
+@attr_clr.
+
+The @propagation field lets callers specify the propagation type of a
+mount tree. Propagation is a single property that has four different
+settings and as such is not really a flag argument but an enum.
+Specifically, it would be unclear what setting and clearing propagation
+settings in combination would amount to. The legacy mount() syscall thus
+forbids the combination of multiple propagation settings too. The goal
+is to keep the semantics of mount propagation somewhat simple as they
+are overly complex as it is.
+
+Changing mount option has quite a few moving parts and the locking is
+quite intricate so it is not unlikely that I got subtleties wrong.
+
+[1]: commit 2e4b7fcd9260 ("[PATCH] r/o bind mounts: honor mount writer counts at remount")
+Cc: David Howells <dhowells@redhat.com>
+Cc: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: linux-api@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
- fs/xattr.c            | 252 +++++++++++++++++++++++++++++-------------
- include/linux/xattr.h |  23 ++++
- 2 files changed, 196 insertions(+), 79 deletions(-)
+ arch/alpha/kernel/syscalls/syscall.tbl      |   1 +
+ arch/arm/tools/syscall.tbl                  |   1 +
+ arch/arm64/include/asm/unistd32.h           |   2 +
+ arch/ia64/kernel/syscalls/syscall.tbl       |   1 +
+ arch/m68k/kernel/syscalls/syscall.tbl       |   1 +
+ arch/microblaze/kernel/syscalls/syscall.tbl |   1 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl   |   1 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl   |   1 +
+ arch/mips/kernel/syscalls/syscall_o32.tbl   |   1 +
+ arch/parisc/kernel/syscalls/syscall.tbl     |   1 +
+ arch/powerpc/kernel/syscalls/syscall.tbl    |   1 +
+ arch/s390/kernel/syscalls/syscall.tbl       |   1 +
+ arch/sh/kernel/syscalls/syscall.tbl         |   1 +
+ arch/sparc/kernel/syscalls/syscall.tbl      |   1 +
+ arch/x86/entry/syscalls/syscall_32.tbl      |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl      |   1 +
+ arch/xtensa/kernel/syscalls/syscall.tbl     |   1 +
+ fs/internal.h                               |   8 +
+ fs/namespace.c                              | 286 ++++++++++++++++++--
+ include/linux/syscalls.h                    |   3 +
+ include/uapi/asm-generic/unistd.h           |   4 +-
+ include/uapi/linux/mount.h                  |  22 ++
+ tools/include/uapi/asm-generic/unistd.h     |   4 +-
+ 23 files changed, 319 insertions(+), 26 deletions(-)
 
-diff --git a/fs/xattr.c b/fs/xattr.c
-index 96ff53b42251..cdda2baeb9f7 100644
---- a/fs/xattr.c
-+++ b/fs/xattr.c
-@@ -83,7 +83,8 @@ xattr_resolve_name(struct inode *inode, const char **name)
-  * because different namespaces have very different rules.
-  */
- static int
--xattr_permission(struct inode *inode, const char *name, int mask)
-+xattr_permission(struct user_namespace *user_ns, struct inode *inode,
-+		 const char *name, int mask)
- {
- 	/*
- 	 * We can never set or remove an extended attribute on a read-only
-@@ -127,11 +128,11 @@ xattr_permission(struct inode *inode, const char *name, int mask)
- 		if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
- 			return (mask & MAY_WRITE) ? -EPERM : -ENODATA;
- 		if (S_ISDIR(inode->i_mode) && (inode->i_mode & S_ISVTX) &&
--		    (mask & MAY_WRITE) && !inode_owner_or_capable(inode))
-+		    (mask & MAY_WRITE) && !mapped_inode_owner_or_capable(user_ns, inode))
- 			return -EPERM;
- 	}
- 
--	return inode_permission(inode, mask);
-+	return mapped_inode_permission(user_ns, inode, mask);
- }
+diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
+index ee7b01bb7346..24d8709624b8 100644
+--- a/arch/alpha/kernel/syscalls/syscall.tbl
++++ b/arch/alpha/kernel/syscalls/syscall.tbl
+@@ -480,3 +480,4 @@
+ 548	common	pidfd_getfd			sys_pidfd_getfd
+ 549	common	faccessat2			sys_faccessat2
+ 550	common	process_madvise			sys_process_madvise
++551	common	mount_setattr			sys_mount_setattr
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index d056a548358e..e3785513d445 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -454,3 +454,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mount_setattr			sys_mount_setattr
+diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
+index 107f08e03b9f..78af754e070a 100644
+--- a/arch/arm64/include/asm/unistd32.h
++++ b/arch/arm64/include/asm/unistd32.h
+@@ -889,6 +889,8 @@ __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
+ __SYSCALL(__NR_faccessat2, sys_faccessat2)
+ #define __NR_process_madvise 440
+ __SYSCALL(__NR_process_madvise, sys_process_madvise)
++#define __NR_mount_setattr 441
++__SYSCALL(__NR_mount_setattr, sys_mount_setattr)
  
  /*
-@@ -161,9 +162,10 @@ xattr_supported_namespace(struct inode *inode, const char *prefix)
- }
- EXPORT_SYMBOL(xattr_supported_namespace);
+  * Please add new compat syscalls above this comment and update
+diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
+index b96ed8b8a508..f7d4b1f55be0 100644
+--- a/arch/ia64/kernel/syscalls/syscall.tbl
++++ b/arch/ia64/kernel/syscalls/syscall.tbl
+@@ -361,3 +361,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mount_setattr			sys_mount_setattr
+diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
+index 625fb6d32842..e96e9c6a6ffa 100644
+--- a/arch/m68k/kernel/syscalls/syscall.tbl
++++ b/arch/m68k/kernel/syscalls/syscall.tbl
+@@ -440,3 +440,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mount_setattr			sys_mount_setattr
+diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
+index aae729c95cf9..6538f075a18e 100644
+--- a/arch/microblaze/kernel/syscalls/syscall.tbl
++++ b/arch/microblaze/kernel/syscalls/syscall.tbl
+@@ -446,3 +446,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mount_setattr			sys_mount_setattr
+diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
+index 32817c954435..64d129db1aa7 100644
+--- a/arch/mips/kernel/syscalls/syscall_n32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
+@@ -379,3 +379,4 @@
+ 438	n32	pidfd_getfd			sys_pidfd_getfd
+ 439	n32	faccessat2			sys_faccessat2
+ 440	n32	process_madvise			sys_process_madvise
++441	n32	mount_setattr			sys_mount_setattr
+diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
+index 9e4ea3c31b1c..94b24e6b2608 100644
+--- a/arch/mips/kernel/syscalls/syscall_n64.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
+@@ -355,3 +355,4 @@
+ 438	n64	pidfd_getfd			sys_pidfd_getfd
+ 439	n64	faccessat2			sys_faccessat2
+ 440	n64	process_madvise			sys_process_madvise
++441	n64	mount_setattr			sys_mount_setattr
+diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
+index 29f5f28cf5ce..eae522306767 100644
+--- a/arch/mips/kernel/syscalls/syscall_o32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
+@@ -428,3 +428,4 @@
+ 438	o32	pidfd_getfd			sys_pidfd_getfd
+ 439	o32	faccessat2			sys_faccessat2
+ 440	o32	process_madvise			sys_process_madvise
++441	o32	mount_setattr			sys_mount_setattr
+diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
+index f375ea528e59..c7e25f1d219f 100644
+--- a/arch/parisc/kernel/syscalls/syscall.tbl
++++ b/arch/parisc/kernel/syscalls/syscall.tbl
+@@ -438,3 +438,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mount_setattr			sys_mount_setattr
+diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
+index 1275daec7fec..0b309ef64e91 100644
+--- a/arch/powerpc/kernel/syscalls/syscall.tbl
++++ b/arch/powerpc/kernel/syscalls/syscall.tbl
+@@ -530,3 +530,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mount_setattr			sys_mount_setattr
+diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
+index 28c168000483..0b30398fee42 100644
+--- a/arch/s390/kernel/syscalls/syscall.tbl
++++ b/arch/s390/kernel/syscalls/syscall.tbl
+@@ -443,3 +443,4 @@
+ 438  common	pidfd_getfd		sys_pidfd_getfd			sys_pidfd_getfd
+ 439  common	faccessat2		sys_faccessat2			sys_faccessat2
+ 440  common	process_madvise		sys_process_madvise		sys_process_madvise
++441  common	mount_setattr		sys_mount_setattr		sys_mount_setattr
+diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
+index 783738448ff5..8e4949c5b740 100644
+--- a/arch/sh/kernel/syscalls/syscall.tbl
++++ b/arch/sh/kernel/syscalls/syscall.tbl
+@@ -443,3 +443,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mount_setattr			sys_mount_setattr
+diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
+index 78160260991b..409f21a650b8 100644
+--- a/arch/sparc/kernel/syscalls/syscall.tbl
++++ b/arch/sparc/kernel/syscalls/syscall.tbl
+@@ -486,3 +486,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mount_setattr			sys_mount_setattr
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 0d0667a9fbd7..2a694420f6cd 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -445,3 +445,4 @@
+ 438	i386	pidfd_getfd		sys_pidfd_getfd
+ 439	i386	faccessat2		sys_faccessat2
+ 440	i386	process_madvise		sys_process_madvise
++441	i386	mount_setattr		sys_mount_setattr
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 1f47e24fb65c..773058fca7f8 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -362,6 +362,7 @@
+ 438	common	pidfd_getfd		sys_pidfd_getfd
+ 439	common	faccessat2		sys_faccessat2
+ 440	common	process_madvise		sys_process_madvise
++441	common	mount_setattr		sys_mount_setattr
  
--int
--__vfs_setxattr(struct dentry *dentry, struct inode *inode, const char *name,
--	       const void *value, size_t size, int flags)
-+static int
-+__vfs_mapped_setxattr(struct user_namespace *user_ns, struct dentry *dentry,
-+		  struct inode *inode, const char *name, const void *value,
-+		  size_t size, int flags)
- {
- 	const struct xattr_handler *handler;
- 
-@@ -174,7 +176,14 @@ __vfs_setxattr(struct dentry *dentry, struct inode *inode, const char *name,
- 		return -EOPNOTSUPP;
- 	if (size == 0)
- 		value = "";  /* empty EA, do not remove */
--	return handler->set(handler, dentry, inode, name, value, size, flags);
-+	return xattr_handler_set(handler, user_ns, dentry, inode, name, value, size, flags);
-+}
-+
-+int
-+__vfs_setxattr(struct dentry *dentry, struct inode *inode, const char *name,
-+	       const void *value, size_t size, int flags)
-+{
-+	return __vfs_mapped_setxattr(&init_user_ns, dentry, inode, name, value, size, flags);
- }
- EXPORT_SYMBOL(__vfs_setxattr);
- 
-@@ -182,6 +191,7 @@ EXPORT_SYMBOL(__vfs_setxattr);
-  *  __vfs_setxattr_noperm - perform setxattr operation without performing
-  *  permission checks.
-  *
-+ *  @user_ns - user namespace of the mount
-  *  @dentry - object to perform setxattr on
-  *  @name - xattr name to set
-  *  @value - value to set @name to
-@@ -194,8 +204,10 @@ EXPORT_SYMBOL(__vfs_setxattr);
-  *  is executed. It also assumes that the caller will make the appropriate
-  *  permission checks.
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
+index b070f272995d..a650dc05593d 100644
+--- a/arch/xtensa/kernel/syscalls/syscall.tbl
++++ b/arch/xtensa/kernel/syscalls/syscall.tbl
+@@ -411,3 +411,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mount_setattr			sys_mount_setattr
+diff --git a/fs/internal.h b/fs/internal.h
+index a7cd0f64faa4..a5a6c470dc07 100644
+--- a/fs/internal.h
++++ b/fs/internal.h
+@@ -82,6 +82,14 @@ int may_linkat(struct path *link);
+ /*
+  * namespace.c
   */
--int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
--		const void *value, size_t size, int flags)
-+static int
-+__vfs_mapped_setxattr_noperm(struct user_namespace *user_ns,
-+			     struct dentry *dentry, const char *name,
-+			     const void *value, size_t size, int flags)
- {
- 	struct inode *inode = dentry->d_inode;
- 	int error = -EAGAIN;
-@@ -205,7 +217,7 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
- 	if (issec)
- 		inode->i_flags &= ~S_NOSEC;
- 	if (inode->i_opflags & IOP_XATTR) {
--		error = __vfs_setxattr(dentry, inode, name, value, size, flags);
-+		error = __vfs_mapped_setxattr(user_ns, dentry, inode, name, value, size, flags);
- 		if (!error) {
- 			fsnotify_xattr(dentry);
- 			security_inode_post_setxattr(dentry, name, value,
-@@ -231,27 +243,23 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
- 	return error;
- }
++struct mount_kattr {
++	unsigned int attr_set;
++	unsigned int attr_clr;
++	unsigned int propagation;
++	unsigned int lookup_flags;
++	bool recurse;
++};
++
+ extern struct vfsmount *lookup_mnt(const struct path *);
+ extern int finish_automount(struct vfsmount *, struct path *);
  
--/**
-- * __vfs_setxattr_locked - set an extended attribute while holding the inode
-- * lock
-- *
-- *  @dentry: object to perform setxattr on
-- *  @name: xattr name to set
-- *  @value: value to set @name to
-- *  @size: size of @value
-- *  @flags: flags to pass into filesystem operations
-- *  @delegated_inode: on return, will contain an inode pointer that
-- *  a delegation was broken on, NULL if none.
-- */
--int
--__vfs_setxattr_locked(struct dentry *dentry, const char *name,
--		const void *value, size_t size, int flags,
--		struct inode **delegated_inode)
-+int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
-+		const void *value, size_t size, int flags)
-+{
-+	return __vfs_mapped_setxattr_noperm(&init_user_ns, dentry, name, value,
-+					    size, flags);
+diff --git a/fs/namespace.c b/fs/namespace.c
+index 6e0d5bb63197..e9c515b012a4 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -459,10 +459,8 @@ void mnt_drop_write_file(struct file *file)
+ }
+ EXPORT_SYMBOL(mnt_drop_write_file);
+ 
+-static int mnt_make_readonly(struct mount *mnt)
++static inline int mnt_hold_writers(struct mount *mnt)
+ {
+-	int ret = 0;
+-
+ 	mnt->mnt.mnt_flags |= MNT_WRITE_HOLD;
+ 	/*
+ 	 * After storing MNT_WRITE_HOLD, we'll read the counters. This store
+@@ -487,15 +485,29 @@ static int mnt_make_readonly(struct mount *mnt)
+ 	 * we're counting up here.
+ 	 */
+ 	if (mnt_get_writers(mnt) > 0)
+-		ret = -EBUSY;
+-	else
+-		mnt->mnt.mnt_flags |= MNT_READONLY;
++		return -EBUSY;
++
++	return 0;
 +}
 +
-+static int
-+__vfs_mapped_setxattr_locked(struct user_namespace *user_ns,
-+			     struct dentry *dentry, const char *name,
-+			     const void *value, size_t size, int flags,
-+			     struct inode **delegated_inode)
- {
- 	struct inode *inode = dentry->d_inode;
- 	int error;
- 
--	error = xattr_permission(inode, name, MAY_WRITE);
-+	error = xattr_permission(user_ns, inode, name, MAY_WRITE);
- 	if (error)
- 		return error;
- 
-@@ -263,16 +271,37 @@ __vfs_setxattr_locked(struct dentry *dentry, const char *name,
- 	if (error)
- 		goto out;
- 
--	error = __vfs_setxattr_noperm(dentry, name, value, size, flags);
-+	error = __vfs_mapped_setxattr_noperm(user_ns, dentry, name, value, size, flags);
- 
- out:
- 	return error;
- }
-+
-+/**
-+ * __vfs_setxattr_locked - set an extended attribute while holding the inode
-+ * lock
-+ *
-+ *  @dentry: object to perform setxattr on
-+ *  @name: xattr name to set
-+ *  @value: value to set @name to
-+ *  @size: size of @value
-+ *  @flags: flags to pass into filesystem operations
-+ *  @delegated_inode: on return, will contain an inode pointer that
-+ *  a delegation was broken on, NULL if none.
-+ */
-+int
-+__vfs_setxattr_locked(struct dentry *dentry, const char *name,
-+		const void *value, size_t size, int flags,
-+		struct inode **delegated_inode)
++static inline void mnt_unhold_writers(struct mount *mnt)
 +{
-+	return __vfs_mapped_setxattr_locked(&init_user_ns, dentry, name, value,
-+					    size, flags, delegated_inode);
+ 	/*
+ 	 * MNT_READONLY must become visible before ~MNT_WRITE_HOLD, so writers
+ 	 * that become unheld will see MNT_READONLY.
+ 	 */
+ 	smp_wmb();
+ 	mnt->mnt.mnt_flags &= ~MNT_WRITE_HOLD;
 +}
- EXPORT_SYMBOL_GPL(__vfs_setxattr_locked);
- 
- int
--vfs_setxattr(struct dentry *dentry, const char *name, const void *value,
--		size_t size, int flags)
-+vfs_mapped_setxattr(struct user_namespace *user_ns, struct dentry *dentry,
-+		const char *name, const void *value, size_t size, int flags)
- {
- 	struct inode *inode = dentry->d_inode;
- 	struct inode *delegated_inode = NULL;
-@@ -280,8 +309,8 @@ vfs_setxattr(struct dentry *dentry, const char *name, const void *value,
- 
- retry_deleg:
- 	inode_lock(inode);
--	error = __vfs_setxattr_locked(dentry, name, value, size, flags,
--	    &delegated_inode);
-+	error = __vfs_mapped_setxattr_locked(user_ns, dentry, name, value, size,
-+					     flags, &delegated_inode);
- 	inode_unlock(inode);
- 
- 	if (delegated_inode) {
-@@ -291,6 +320,14 @@ vfs_setxattr(struct dentry *dentry, const char *name, const void *value,
- 	}
- 	return error;
- }
-+EXPORT_SYMBOL_GPL(vfs_mapped_setxattr);
 +
-+int
-+vfs_setxattr(struct dentry *dentry, const char *name, const void *value,
-+		size_t size, int flags)
++static int mnt_make_readonly(struct mount *mnt)
 +{
-+	return vfs_mapped_setxattr(&init_user_ns, dentry, name, value, size, flags);
-+}
- EXPORT_SYMBOL_GPL(vfs_setxattr);
- 
- static ssize_t
-@@ -319,24 +356,17 @@ xattr_getsecurity(struct inode *inode, const char *name, void *value,
- 	return len;
++	int ret;
++
++	ret = mnt_hold_writers(mnt);
++	if (!ret)
++		mnt->mnt.mnt_flags |= MNT_READONLY;
++	mnt_unhold_writers(mnt);
+ 	return ret;
  }
  
--/*
-- * vfs_getxattr_alloc - allocate memory, if necessary, before calling getxattr
-- *
-- * Allocate memory, if not already allocated, or re-allocate correct size,
-- * before retrieving the extended attribute.
-- *
-- * Returns the result of alloc, if failed, or the getxattr operation.
-- */
- ssize_t
--vfs_getxattr_alloc(struct dentry *dentry, const char *name, char **xattr_value,
--		   size_t xattr_size, gfp_t flags)
-+vfs_mapped_getxattr_alloc(struct user_namespace *user_ns, struct dentry *dentry,
-+		      const char *name, char **xattr_value, size_t xattr_size,
-+		      gfp_t flags)
- {
- 	const struct xattr_handler *handler;
- 	struct inode *inode = dentry->d_inode;
- 	char *value = *xattr_value;
- 	int error;
+@@ -3433,6 +3445,33 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
+ 	return ret;
+ }
  
--	error = xattr_permission(inode, name, MAY_READ);
-+	error = xattr_permission(user_ns, inode, name, MAY_READ);
- 	if (error)
- 		return error;
++static int build_attr_flags(unsigned int attr_flags, unsigned int *flags)
++{
++	unsigned int aflags = 0;
++
++	if (attr_flags & ~(MOUNT_ATTR_RDONLY |
++			   MOUNT_ATTR_NOSUID |
++			   MOUNT_ATTR_NODEV |
++			   MOUNT_ATTR_NOEXEC |
++			   MOUNT_ATTR__ATIME |
++			   MOUNT_ATTR_NODIRATIME))
++		return -EINVAL;
++
++	if (attr_flags & MOUNT_ATTR_RDONLY)
++		aflags |= MNT_READONLY;
++	if (attr_flags & MOUNT_ATTR_NOSUID)
++		aflags |= MNT_NOSUID;
++	if (attr_flags & MOUNT_ATTR_NODEV)
++		aflags |= MNT_NODEV;
++	if (attr_flags & MOUNT_ATTR_NOEXEC)
++		aflags |= MNT_NOEXEC;
++	if (attr_flags & MOUNT_ATTR_NODIRATIME)
++		aflags |= MNT_NODIRATIME;
++
++	*flags = aflags;
++	return 0;
++}
++
+ /*
+  * Create a kernel mount representation for a new, prepared superblock
+  * (specified by fs_fd) and attach to an open_tree-like file descriptor.
+@@ -3455,24 +3494,9 @@ SYSCALL_DEFINE3(fsmount, int, fs_fd, unsigned int, flags,
+ 	if ((flags & ~(FSMOUNT_CLOEXEC)) != 0)
+ 		return -EINVAL;
  
-@@ -361,6 +391,22 @@ vfs_getxattr_alloc(struct dentry *dentry, const char *name, char **xattr_value,
+-	if (attr_flags & ~(MOUNT_ATTR_RDONLY |
+-			   MOUNT_ATTR_NOSUID |
+-			   MOUNT_ATTR_NODEV |
+-			   MOUNT_ATTR_NOEXEC |
+-			   MOUNT_ATTR__ATIME |
+-			   MOUNT_ATTR_NODIRATIME))
+-		return -EINVAL;
+-
+-	if (attr_flags & MOUNT_ATTR_RDONLY)
+-		mnt_flags |= MNT_READONLY;
+-	if (attr_flags & MOUNT_ATTR_NOSUID)
+-		mnt_flags |= MNT_NOSUID;
+-	if (attr_flags & MOUNT_ATTR_NODEV)
+-		mnt_flags |= MNT_NODEV;
+-	if (attr_flags & MOUNT_ATTR_NOEXEC)
+-		mnt_flags |= MNT_NOEXEC;
+-	if (attr_flags & MOUNT_ATTR_NODIRATIME)
+-		mnt_flags |= MNT_NODIRATIME;
++	ret = build_attr_flags(attr_flags, &mnt_flags);
++	if (ret)
++		return ret;
+ 
+ 	switch (attr_flags & MOUNT_ATTR__ATIME) {
+ 	case MOUNT_ATTR_STRICTATIME:
+@@ -3780,6 +3804,220 @@ SYSCALL_DEFINE2(pivot_root, const char __user *, new_root,
  	return error;
  }
+ 
++static int do_mount_setattr(struct path *path, struct mount_kattr *kattr)
++{
++	struct mount *mnt = real_mount(path->mnt), *m = mnt, *last = NULL;
++	unsigned int all_raised = kattr->attr_set | kattr->attr_clr;
++	bool rdonly_set = kattr->attr_set & MNT_READONLY;
++	int err = 0;
++
++	if (!check_mnt(m))
++		return -EINVAL;
++
++	if (path->dentry != m->mnt.mnt_root)
++		return -EINVAL;
++
++	if (kattr->propagation) {
++		/* Only take namespace_lock() if we're actually changing propagation. */
++		namespace_lock();
++		if (kattr->propagation == MS_SHARED) {
++			err = invent_group_ids(m, kattr->recurse);
++			if (err) {
++				namespace_unlock();
++				return err;
++			}
++		}
++	}
++
++	lock_mount_hash();
++	/*
++	 * Get the mount tree in a shape where we can change mount properties
++	 * without failure.
++	 */
++	m = mnt;
++	do {
++		last = m;
++
++		if (!can_change_locked_flags(m, all_raised)) {
++			err = -EPERM;
++			break;
++		}
++
++		if (rdonly_set && !(m->mnt.mnt_flags & MNT_READONLY)) {
++			err = mnt_hold_writers(m);
++			if (err)
++				break;
++		}
++	} while (kattr->recurse && (m = next_mnt(m, mnt)));
++
++	m = mnt;
++	do {
++		if (!err) {
++			unsigned int new_flags;
++
++			new_flags = m->mnt.mnt_flags;
++			/* Lower flags user wants us to clear. */
++			new_flags &= ~kattr->attr_clr;
++			/* Raise flags user wants us to set. */
++			new_flags |= kattr->attr_set;
++			WRITE_ONCE(m->mnt.mnt_flags, new_flags);
++		}
++
++		/*
++		 * We either set MNT_READONLY above so make it visible
++		 * before ~MNT_WRITE_HOLD or we failed to recursively
++		 * apply mount options.
++		 */
++		if (rdonly_set && (m->mnt.mnt_flags & MNT_WRITE_HOLD))
++			mnt_unhold_writers(m);
++
++		if (!err && kattr->propagation)
++			change_mnt_propagation(m, kattr->propagation);
++
++		/*
++		 * On failure, only cleanup until we found the first mount we
++		 * failed to handle.
++		 */
++		if (err && m == last)
++			break;
++	} while (kattr->recurse && (m = next_mnt(m, mnt)));
++
++	if (!err)
++		touch_mnt_namespace(mnt->mnt_ns);
++
++	unlock_mount_hash();
++
++	if (kattr->propagation) {
++		namespace_unlock();
++		if (err)
++			cleanup_group_ids(mnt, NULL);
++	}
++
++	return err;
++}
++
++static int build_mount_kattr(const struct mount_attr *attr,
++			     struct mount_kattr *kattr, unsigned int flags)
++{
++	unsigned int lookup_flags = LOOKUP_AUTOMOUNT | LOOKUP_FOLLOW;
++
++	if (flags & AT_NO_AUTOMOUNT)
++		lookup_flags &= ~LOOKUP_AUTOMOUNT;
++	if (flags & AT_SYMLINK_NOFOLLOW)
++		lookup_flags &= ~LOOKUP_FOLLOW;
++	if (flags & AT_EMPTY_PATH)
++		lookup_flags |= LOOKUP_EMPTY;
++
++	*kattr = (struct mount_kattr){
++		.lookup_flags	= lookup_flags,
++		.recurse	= !!(flags & AT_RECURSIVE),
++	};
++
++	switch (attr->propagation) {
++	case MAKE_PROPAGATION_UNCHANGED:
++		kattr->propagation = 0;
++		break;
++	case MAKE_PROPAGATION_UNBINDABLE:
++		kattr->propagation = MS_UNBINDABLE;
++		break;
++	case MAKE_PROPAGATION_PRIVATE:
++		kattr->propagation = MS_PRIVATE;
++		break;
++	case MAKE_PROPAGATION_DEPENDENT:
++		kattr->propagation = MS_SLAVE;
++		break;
++	case MAKE_PROPAGATION_SHARED:
++		kattr->propagation = MS_SHARED;
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	if (upper_32_bits(attr->attr_set))
++		return -EINVAL;
++	if (build_attr_flags(lower_32_bits(attr->attr_set), &kattr->attr_set))
++		return -EINVAL;
++
++	if (upper_32_bits(attr->attr_clr))
++		return -EINVAL;
++	if (build_attr_flags(lower_32_bits(attr->attr_clr), &kattr->attr_clr))
++		return -EINVAL;
++
++	/*
++	 * Since the MOUNT_ATTR_<atime> values are an enum, not a bitmap, users
++	 * wanting to transition to a different atime setting cannot simply
++	 * specify the atime setting in @attr_set, but must also specify
++	 * MOUNT_ATTR__ATIME in the @attr_clr field.
++	 * So ensure that MOUNT_ATTR__ATIME can't be partially set in
++	 * @attr_clr and that @attr_set can't have any atime bits set if
++	 * MOUNT_ATTR__ATIME isn't set in @attr_clr.
++	 */
++	if (!(attr->attr_clr & MOUNT_ATTR__ATIME) && (attr->attr_set & MOUNT_ATTR__ATIME))
++		return -EINVAL;
++	else if ((attr->attr_clr & MOUNT_ATTR__ATIME) &&
++		 ((attr->attr_clr & MOUNT_ATTR__ATIME) != MOUNT_ATTR__ATIME))
++		return -EINVAL;
++
++	if (attr->attr_clr & MOUNT_ATTR__ATIME) {
++		/* Clear all previous time settings as they are mutually exclusive. */
++		kattr->attr_clr |= MNT_RELATIME | MNT_NOATIME;
++		switch (attr->attr_set & MOUNT_ATTR__ATIME) {
++		case MOUNT_ATTR_RELATIME:
++			kattr->attr_set |= MNT_RELATIME;
++			break;
++		case MOUNT_ATTR_NOATIME:
++			kattr->attr_set |= MNT_NOATIME;
++			break;
++		case MOUNT_ATTR_STRICTATIME:
++			break;
++		default:
++			return -EINVAL;
++		}
++	}
++
++	return 0;
++}
++
++SYSCALL_DEFINE5(mount_setattr, int, dfd, const char __user *, path, unsigned int, flags,
++		struct mount_attr __user *, uattr, size_t, usize)
++{
++	int err;
++	struct path target;
++	struct mount_attr attr;
++	struct mount_kattr kattr;
++
++	BUILD_BUG_ON(sizeof(struct mount_attr) < MOUNT_ATTR_SIZE_VER0);
++	BUILD_BUG_ON(sizeof(struct mount_attr) != MOUNT_ATTR_SIZE_LATEST);
++
++	if (flags & ~(AT_EMPTY_PATH | AT_RECURSIVE | AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT))
++		return -EINVAL;
++
++	if (unlikely(usize < MOUNT_ATTR_SIZE_VER0))
++		return -EINVAL;
++
++	if (!may_mount())
++		return -EPERM;
++
++	err = copy_struct_from_user(&attr, sizeof(attr), uattr, usize);
++	if (err)
++		return err;
++
++	if (attr.attr_set == 0 && attr.attr_clr == 0 && attr.propagation == 0)
++		return 0;
++
++	err = build_mount_kattr(&attr, &kattr, flags);
++	if (err)
++		return err;
++
++	err = user_path_at(dfd, path, kattr.lookup_flags, &target);
++	if (err)
++		return err;
++
++	err = do_mount_setattr(&target, &kattr);
++	path_put(&target);
++	return err;
++}
++
+ static void __init init_mount_tree(void)
+ {
+ 	struct vfsmount *mnt;
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 37bea07c12f2..a62d5904fb6a 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -68,6 +68,7 @@ union bpf_attr;
+ struct io_uring_params;
+ struct clone_args;
+ struct open_how;
++struct mount_attr;
+ 
+ #include <linux/types.h>
+ #include <linux/aio_abi.h>
+@@ -999,6 +1000,8 @@ asmlinkage long sys_open_tree(int dfd, const char __user *path, unsigned flags);
+ asmlinkage long sys_move_mount(int from_dfd, const char __user *from_path,
+ 			       int to_dfd, const char __user *to_path,
+ 			       unsigned int ms_flags);
++asmlinkage long sys_mount_setattr(int dfd, const char __user *path, unsigned int flags,
++				  struct mount_attr __user *uattr, size_t usize);
+ asmlinkage long sys_fsopen(const char __user *fs_name, unsigned int flags);
+ asmlinkage long sys_fsconfig(int fs_fd, unsigned int cmd, const char __user *key,
+ 			     const void __user *value, int aux);
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 2056318988f7..0517f36fe783 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -859,9 +859,11 @@ __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
+ __SYSCALL(__NR_faccessat2, sys_faccessat2)
+ #define __NR_process_madvise 440
+ __SYSCALL(__NR_process_madvise, sys_process_madvise)
++#define __NR_mount_setattr 441
++__SYSCALL(__NR_mount_setattr, sys_mount_setattr)
+ 
+ #undef __NR_syscalls
+-#define __NR_syscalls 441
++#define __NR_syscalls 442
+ 
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/include/uapi/linux/mount.h b/include/uapi/linux/mount.h
+index dd8306ea336c..fb3ad26fdebf 100644
+--- a/include/uapi/linux/mount.h
++++ b/include/uapi/linux/mount.h
+@@ -118,4 +118,26 @@ enum fsconfig_command {
+ #define MOUNT_ATTR_STRICTATIME	0x00000020 /* - Always perform atime updates */
+ #define MOUNT_ATTR_NODIRATIME	0x00000080 /* Do not update directory access times */
  
 +/*
-+ * vfs_getxattr_alloc - allocate memory, if necessary, before calling getxattr
-+ *
-+ * Allocate memory, if not already allocated, or re-allocate correct size,
-+ * before retrieving the extended attribute.
-+ *
-+ * Returns the result of alloc, if failed, or the getxattr operation.
++ * mount_setattr()
 + */
-+ssize_t
-+vfs_getxattr_alloc(struct dentry *dentry, const char *name, char **xattr_value,
-+		   size_t xattr_size, gfp_t flags)
-+{
-+	return vfs_mapped_getxattr_alloc(&init_user_ns, dentry, name, xattr_value,
-+				     xattr_size, flags);
-+}
++struct mount_attr {
++	__u64 attr_set;
++	__u64 attr_clr;
++	__u64 propagation;
++};
 +
- ssize_t
- __vfs_getxattr(struct dentry *dentry, struct inode *inode, const char *name,
- 	       void *value, size_t size)
-@@ -377,12 +423,13 @@ __vfs_getxattr(struct dentry *dentry, struct inode *inode, const char *name,
- EXPORT_SYMBOL(__vfs_getxattr);
- 
- ssize_t
--vfs_getxattr(struct dentry *dentry, const char *name, void *value, size_t size)
-+vfs_mapped_getxattr(struct user_namespace *user_ns, struct dentry *dentry,
-+		const char *name, void *value, size_t size)
- {
- 	struct inode *inode = dentry->d_inode;
- 	int error;
- 
--	error = xattr_permission(inode, name, MAY_READ);
-+	error = xattr_permission(user_ns, inode, name, MAY_READ);
- 	if (error)
- 		return error;
- 
-@@ -405,6 +452,13 @@ vfs_getxattr(struct dentry *dentry, const char *name, void *value, size_t size)
- nolsm:
- 	return __vfs_getxattr(dentry, inode, name, value, size);
- }
-+EXPORT_SYMBOL_GPL(vfs_mapped_getxattr);
++/* Change propagation through mount_setattr(). */
++enum propagation_type {
++	MAKE_PROPAGATION_UNCHANGED	= 0, /* Don't change mount propagation (default). */
++	MAKE_PROPAGATION_UNBINDABLE	= 1, /* Make unbindable. */
++	MAKE_PROPAGATION_PRIVATE	= 2, /* Do not receive or send mount events. */
++	MAKE_PROPAGATION_DEPENDENT	= 3, /* Only receive mount events. */
++	MAKE_PROPAGATION_SHARED		= 4, /* Send and receive mount events. */
++};
 +
-+ssize_t
-+vfs_getxattr(struct dentry *dentry, const char *name, void *value, size_t size)
-+{
-+	return vfs_mapped_getxattr(&init_user_ns, dentry, name, value, size);
-+}
- EXPORT_SYMBOL_GPL(vfs_getxattr);
- 
- ssize_t
-@@ -428,7 +482,7 @@ vfs_listxattr(struct dentry *dentry, char *list, size_t size)
- EXPORT_SYMBOL_GPL(vfs_listxattr);
- 
- int
--__vfs_removexattr(struct dentry *dentry, const char *name)
-+__vfs_mapped_removexattr(struct user_namespace *user_ns, struct dentry *dentry, const char *name)
- {
- 	struct inode *inode = d_inode(dentry);
- 	const struct xattr_handler *handler;
-@@ -438,27 +492,26 @@ __vfs_removexattr(struct dentry *dentry, const char *name)
- 		return PTR_ERR(handler);
- 	if (!handler->set)
- 		return -EOPNOTSUPP;
--	return handler->set(handler, dentry, inode, name, NULL, 0, XATTR_REPLACE);
-+	return xattr_handler_set(handler, user_ns, dentry, inode, name, NULL, 0, XATTR_REPLACE);
- }
--EXPORT_SYMBOL(__vfs_removexattr);
-+EXPORT_SYMBOL(__vfs_mapped_removexattr);
- 
--/**
-- * __vfs_removexattr_locked - set an extended attribute while holding the inode
-- * lock
-- *
-- *  @dentry: object to perform setxattr on
-- *  @name: name of xattr to remove
-- *  @delegated_inode: on return, will contain an inode pointer that
-- *  a delegation was broken on, NULL if none.
-- */
- int
--__vfs_removexattr_locked(struct dentry *dentry, const char *name,
--		struct inode **delegated_inode)
-+__vfs_removexattr(struct dentry *dentry, const char *name)
-+{
-+	return __vfs_mapped_removexattr(&init_user_ns, dentry, name);
-+}
-+EXPORT_SYMBOL(__vfs_removexattr);
++/* List of all mount_attr versions. */
++#define MOUNT_ATTR_SIZE_VER0	24 /* sizeof first published struct */
++#define MOUNT_ATTR_SIZE_LATEST	MOUNT_ATTR_SIZE_VER0
 +
-+static int
-+__vfs_mapped_removexattr_locked(struct user_namespace *user_ns,
-+				struct dentry *dentry, const char *name,
-+				struct inode **delegated_inode)
- {
- 	struct inode *inode = dentry->d_inode;
- 	int error;
+ #endif /* _UAPI_LINUX_MOUNT_H */
+diff --git a/tools/include/uapi/asm-generic/unistd.h b/tools/include/uapi/asm-generic/unistd.h
+index f2b5d72a46c2..1cbe8bbda5fa 100644
+--- a/tools/include/uapi/asm-generic/unistd.h
++++ b/tools/include/uapi/asm-generic/unistd.h
+@@ -857,9 +857,11 @@ __SYSCALL(__NR_openat2, sys_openat2)
+ __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
+ #define __NR_faccessat2 439
+ __SYSCALL(__NR_faccessat2, sys_faccessat2)
++#define __NR_mount_setattr 441
++__SYSCALL(__NR_mount_setattr, sys_mount_setattr)
  
--	error = xattr_permission(inode, name, MAY_WRITE);
-+	error = xattr_permission(user_ns, inode, name, MAY_WRITE);
- 	if (error)
- 		return error;
- 
-@@ -470,7 +523,7 @@ __vfs_removexattr_locked(struct dentry *dentry, const char *name,
- 	if (error)
- 		goto out;
- 
--	error = __vfs_removexattr(dentry, name);
-+	error = __vfs_mapped_removexattr(user_ns, dentry, name);
- 
- 	if (!error) {
- 		fsnotify_xattr(dentry);
-@@ -480,10 +533,27 @@ __vfs_removexattr_locked(struct dentry *dentry, const char *name,
- out:
- 	return error;
- }
-+
-+/**
-+ * __vfs_removexattr_locked - set an extended attribute while holding the inode
-+ * lock
-+ *
-+ *  @dentry: object to perform setxattr on
-+ *  @name: name of xattr to remove
-+ *  @delegated_inode: on return, will contain an inode pointer that
-+ *  a delegation was broken on, NULL if none.
-+ */
-+int
-+__vfs_removexattr_locked(struct dentry *dentry, const char *name,
-+			 struct inode **delegated_inode)
-+{
-+	return __vfs_mapped_removexattr_locked(&init_user_ns, dentry, name, delegated_inode);
-+}
- EXPORT_SYMBOL_GPL(__vfs_removexattr_locked);
- 
- int
--vfs_removexattr(struct dentry *dentry, const char *name)
-+vfs_mapped_removexattr(struct user_namespace *user_ns, struct dentry *dentry,
-+		       const char *name)
- {
- 	struct inode *inode = dentry->d_inode;
- 	struct inode *delegated_inode = NULL;
-@@ -491,7 +561,7 @@ vfs_removexattr(struct dentry *dentry, const char *name)
- 
- retry_deleg:
- 	inode_lock(inode);
--	error = __vfs_removexattr_locked(dentry, name, &delegated_inode);
-+	error = __vfs_mapped_removexattr_locked(user_ns, dentry, name, &delegated_inode);
- 	inode_unlock(inode);
- 
- 	if (delegated_inode) {
-@@ -502,14 +572,22 @@ vfs_removexattr(struct dentry *dentry, const char *name)
- 
- 	return error;
- }
-+EXPORT_SYMBOL_GPL(vfs_mapped_removexattr);
-+
-+int
-+vfs_removexattr(struct dentry *dentry, const char *name)
-+{
-+	return vfs_mapped_removexattr(&init_user_ns, dentry, name);
-+}
- EXPORT_SYMBOL_GPL(vfs_removexattr);
+ #undef __NR_syscalls
+-#define __NR_syscalls 440
++#define __NR_syscalls 442
  
  /*
-  * Extended attribute SET operations
-  */
- static long
--setxattr(struct dentry *d, const char __user *name, const void __user *value,
--	 size_t size, int flags)
-+setxattr(struct user_namespace *user_ns, struct dentry *d,
-+	 const char __user *name, const void __user *value, size_t size,
-+	 int flags)
- {
- 	int error;
- 	void *kvalue = NULL;
-@@ -536,16 +614,16 @@ setxattr(struct dentry *d, const char __user *name, const void __user *value,
- 		}
- 		if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
- 		    (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
--			posix_acl_fix_xattr_from_user(&init_user_ns, kvalue, size);
-+			posix_acl_fix_xattr_from_user(user_ns, kvalue, size);
- 		else if (strcmp(kname, XATTR_NAME_CAPS) == 0) {
--			error = cap_convert_nscap(&init_user_ns, d, &kvalue, size);
-+			error = cap_convert_nscap(user_ns, d, &kvalue, size);
- 			if (error < 0)
- 				goto out;
- 			size = error;
- 		}
- 	}
- 
--	error = vfs_setxattr(d, kname, kvalue, size, flags);
-+	error = vfs_mapped_setxattr(user_ns, d, kname, kvalue, size, flags);
- out:
- 	kvfree(kvalue);
- 
-@@ -558,13 +636,17 @@ static int path_setxattr(const char __user *pathname,
- {
- 	struct path path;
- 	int error;
-+
- retry:
- 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
- 	if (error)
- 		return error;
- 	error = mnt_want_write(path.mnt);
- 	if (!error) {
--		error = setxattr(path.dentry, name, value, size, flags);
-+		struct user_namespace *user_ns;
-+
-+		user_ns = mnt_user_ns(path.mnt);
-+		error = setxattr(user_ns, path.dentry, name, value, size, flags);
- 		mnt_drop_write(path.mnt);
- 	}
- 	path_put(&path);
-@@ -600,7 +682,11 @@ SYSCALL_DEFINE5(fsetxattr, int, fd, const char __user *, name,
- 	audit_file(f.file);
- 	error = mnt_want_write_file(f.file);
- 	if (!error) {
--		error = setxattr(f.file->f_path.dentry, name, value, size, flags);
-+		struct user_namespace *user_ns;
-+
-+		user_ns = mnt_user_ns(f.file->f_path.mnt);
-+		error = setxattr(user_ns, f.file->f_path.dentry, name, value,
-+				 size, flags);
- 		mnt_drop_write_file(f.file);
- 	}
- 	fdput(f);
-@@ -612,7 +698,7 @@ SYSCALL_DEFINE5(fsetxattr, int, fd, const char __user *, name,
-  */
- static ssize_t
- getxattr(struct dentry *d, const char __user *name, void __user *value,
--	 size_t size)
-+	 size_t size, struct user_namespace *user_ns)
- {
- 	ssize_t error;
- 	void *kvalue = NULL;
-@@ -632,11 +718,11 @@ getxattr(struct dentry *d, const char __user *name, void __user *value,
- 			return -ENOMEM;
- 	}
- 
--	error = vfs_getxattr(d, kname, kvalue, size);
-+	error = vfs_mapped_getxattr(user_ns, d, kname, kvalue, size);
- 	if (error > 0) {
- 		if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
- 		    (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
--			posix_acl_fix_xattr_to_user(&init_user_ns, kvalue, error);
-+			posix_acl_fix_xattr_to_user(user_ns, kvalue, error);
- 		if (size && copy_to_user(value, kvalue, error))
- 			error = -EFAULT;
- 	} else if (error == -ERANGE && size >= XATTR_SIZE_MAX) {
-@@ -654,13 +740,15 @@ static ssize_t path_getxattr(const char __user *pathname,
- 			     const char __user *name, void __user *value,
- 			     size_t size, unsigned int lookup_flags)
- {
-+	struct user_namespace *user_ns;
- 	struct path path;
- 	ssize_t error;
- retry:
- 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
- 	if (error)
- 		return error;
--	error = getxattr(path.dentry, name, value, size);
-+	user_ns = mnt_user_ns(path.mnt);
-+	error = getxattr(path.dentry, name, value, size, user_ns);
- 	path_put(&path);
- 	if (retry_estale(error, lookup_flags)) {
- 		lookup_flags |= LOOKUP_REVAL;
-@@ -684,13 +772,15 @@ SYSCALL_DEFINE4(lgetxattr, const char __user *, pathname,
- SYSCALL_DEFINE4(fgetxattr, int, fd, const char __user *, name,
- 		void __user *, value, size_t, size)
- {
-+	struct user_namespace *user_ns;
- 	struct fd f = fdget(fd);
- 	ssize_t error = -EBADF;
- 
- 	if (!f.file)
- 		return error;
- 	audit_file(f.file);
--	error = getxattr(f.file->f_path.dentry, name, value, size);
-+	user_ns = mnt_user_ns(f.file->f_path.mnt);
-+	error = getxattr(f.file->f_path.dentry, name, value, size, user_ns);
- 	fdput(f);
- 	return error;
- }
-@@ -774,7 +864,7 @@ SYSCALL_DEFINE3(flistxattr, int, fd, char __user *, list, size_t, size)
-  * Extended attribute REMOVE operations
-  */
- static long
--removexattr(struct dentry *d, const char __user *name)
-+removexattr(struct user_namespace *user_ns, struct dentry *d, const char __user *name)
- {
- 	int error;
- 	char kname[XATTR_NAME_MAX + 1];
-@@ -785,7 +875,7 @@ removexattr(struct dentry *d, const char __user *name)
- 	if (error < 0)
- 		return error;
- 
--	return vfs_removexattr(d, kname);
-+	return vfs_mapped_removexattr(user_ns, d, kname);
- }
- 
- static int path_removexattr(const char __user *pathname,
-@@ -799,7 +889,9 @@ static int path_removexattr(const char __user *pathname,
- 		return error;
- 	error = mnt_want_write(path.mnt);
- 	if (!error) {
--		error = removexattr(path.dentry, name);
-+		struct user_namespace *user_ns = mnt_user_ns(path.mnt);
-+
-+		error = removexattr(user_ns, path.dentry, name);
- 		mnt_drop_write(path.mnt);
- 	}
- 	path_put(&path);
-@@ -832,7 +924,9 @@ SYSCALL_DEFINE2(fremovexattr, int, fd, const char __user *, name)
- 	audit_file(f.file);
- 	error = mnt_want_write_file(f.file);
- 	if (!error) {
--		error = removexattr(f.file->f_path.dentry, name);
-+		struct user_namespace *user_ns = mnt_user_ns(f.file->f_path.mnt);
-+
-+		error = removexattr(user_ns, f.file->f_path.dentry, name);
- 		mnt_drop_write_file(f.file);
- 	}
- 	fdput(f);
-diff --git a/include/linux/xattr.h b/include/linux/xattr.h
-index 908441e74f51..b2eeecdf6669 100644
---- a/include/linux/xattr.h
-+++ b/include/linux/xattr.h
-@@ -16,6 +16,7 @@
- #include <linux/types.h>
- #include <linux/spinlock.h>
- #include <linux/mm.h>
-+#include <linux/user_namespace.h>
- #include <uapi/linux/xattr.h>
- 
- struct inode;
-@@ -45,6 +46,19 @@ struct xattr_handler {
- #endif
- };
- 
-+static inline int xattr_handler_set(const struct xattr_handler *handler,
-+			  struct user_namespace *user_ns, struct dentry *dentry,
-+			  struct inode *inode, const char *name,
-+			  const void *buffer, size_t size, int flags)
-+{
-+#ifdef CONFIG_IDMAP_MOUNTS
-+	if (handler->set_mapped)
-+		return handler->set_mapped(handler, user_ns, dentry, inode,
-+					   name, buffer, size, flags);
-+#endif
-+	return handler->set(handler, dentry, inode, name, buffer, size, flags);
-+}
-+
- const char *xattr_full_name(const struct xattr_handler *, const char *);
- 
- struct xattr {
-@@ -55,18 +69,27 @@ struct xattr {
- 
- ssize_t __vfs_getxattr(struct dentry *, struct inode *, const char *, void *, size_t);
- ssize_t vfs_getxattr(struct dentry *, const char *, void *, size_t);
-+ssize_t vfs_mapped_getxattr(struct user_namespace *user_ns, struct dentry *dentry,
-+			const char *name, void *value, size_t size);
- ssize_t vfs_listxattr(struct dentry *d, char *list, size_t size);
- int __vfs_setxattr(struct dentry *, struct inode *, const char *, const void *, size_t, int);
- int __vfs_setxattr_noperm(struct dentry *, const char *, const void *, size_t, int);
- int __vfs_setxattr_locked(struct dentry *, const char *, const void *, size_t, int, struct inode **);
-+int vfs_mapped_setxattr(struct user_namespace *, struct dentry *, const char *, const void *, size_t, int);
- int vfs_setxattr(struct dentry *, const char *, const void *, size_t, int);
- int __vfs_removexattr(struct dentry *, const char *);
-+int __vfs_mapped_removexattr(struct user_namespace *, struct dentry *, const char *);
- int __vfs_removexattr_locked(struct dentry *, const char *, struct inode **);
- int vfs_removexattr(struct dentry *, const char *);
-+int vfs_mapped_removexattr(struct user_namespace *user_ns, struct dentry *, const char *);
- 
- ssize_t generic_listxattr(struct dentry *dentry, char *buffer, size_t buffer_size);
- ssize_t vfs_getxattr_alloc(struct dentry *dentry, const char *name,
- 			   char **xattr_value, size_t size, gfp_t flags);
-+ssize_t vfs_mapped_getxattr_alloc(struct user_namespace *user_ns,
-+			      struct dentry *dentry, const char *name,
-+			      char **xattr_value, size_t xattr_size,
-+			      gfp_t flags);
- 
- int xattr_supported_namespace(struct inode *inode, const char *prefix);
- 
+  * 32 bit systems traditionally used different
 -- 
 2.29.0
 
