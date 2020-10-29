@@ -6,31 +6,36 @@ X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 07B19C5DF9D
-	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 15:48:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E15E0C5DF9E
+	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 15:52:26 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CA6102076E
-	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 15:48:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 93991206B2
+	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 15:52:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728240AbgJ2PsY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 29 Oct 2020 11:48:24 -0400
-Received: from out02.mta.xmission.com ([166.70.13.232]:49260 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728146AbgJ2PsX (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 29 Oct 2020 11:48:23 -0400
-Received: from in02.mta.xmission.com ([166.70.13.52])
-        by out02.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-        (Exim 4.93)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1kYA9W-008Etr-HE; Thu, 29 Oct 2020 09:47:50 -0600
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
-        by in02.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-        (Exim 4.93)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1kYA9V-00AHk1-Ei; Thu, 29 Oct 2020 09:47:50 -0600
-From:   ebiederm@xmission.com (Eric W. Biederman)
-To:     Christian Brauner <christian.brauner@ubuntu.com>
-Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
+        id S1728527AbgJ2PwY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 29 Oct 2020 11:52:24 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49850 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728491AbgJ2PwX (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 29 Oct 2020 11:52:23 -0400
+Received: from mout-p-103.mailbox.org (mout-p-103.mailbox.org [IPv6:2001:67c:2050::465:103])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 462A0C0613CF;
+        Thu, 29 Oct 2020 08:52:23 -0700 (PDT)
+Received: from smtp2.mailbox.org (smtp2.mailbox.org [80.241.60.241])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange ECDHE (P-384) server-signature RSA-PSS (4096 bits) server-digest SHA256)
+        (No client certificate requested)
+        by mout-p-103.mailbox.org (Postfix) with ESMTPS id 4CMVLs2MljzQl31;
+        Thu, 29 Oct 2020 16:52:21 +0100 (CET)
+X-Virus-Scanned: amavisd-new at heinlein-support.de
+Received: from smtp2.mailbox.org ([80.241.60.241])
+        by spamfilter03.heinlein-hosting.de (spamfilter03.heinlein-hosting.de [80.241.56.117]) (amavisd-new, port 10030)
+        with ESMTP id pzROom4hCQJX; Thu, 29 Oct 2020 16:52:14 +0100 (CET)
+Date:   Fri, 30 Oct 2020 02:51:48 +1100
+From:   Aleksa Sarai <cyphar@cyphar.com>
+To:     "Eric W. Biederman" <ebiederm@xmission.com>
+Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
         linux-fsdevel@vger.kernel.org,
         John Johansen <john.johansen@canonical.com>,
@@ -54,8 +59,7 @@ Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
         James Bottomley <James.Bottomley@hansenpartnership.com>,
         Jann Horn <jannh@google.com>,
         Seth Forshee <seth.forshee@canonical.com>,
-        =?utf-8?Q?St=C3=A9phane?= Graber <stgraber@ubuntu.com>,
-        Aleksa Sarai <cyphar@cyphar.com>,
+        =?utf-8?B?U3TDqXBoYW5l?= Graber <stgraber@ubuntu.com>,
         Lennart Poettering <lennart@poettering.net>,
         smbarber@chromium.org, Phil Estes <estesp@gmail.com>,
         Serge Hallyn <serge@hallyn.com>,
@@ -66,72 +70,77 @@ Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
         linux-ext4@vger.kernel.org, linux-unionfs@vger.kernel.org,
         linux-audit@redhat.com, linux-integrity@vger.kernel.org,
         selinux@vger.kernel.org
-References: <20201029003252.2128653-1-christian.brauner@ubuntu.com>
-Date:   Thu, 29 Oct 2020 10:47:49 -0500
-In-Reply-To: <20201029003252.2128653-1-christian.brauner@ubuntu.com>
-        (Christian Brauner's message of "Thu, 29 Oct 2020 01:32:18 +0100")
-Message-ID: <87pn51ghju.fsf@x220.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
-MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1kYA9V-00AHk1-Ei;;;mid=<87pn51ghju.fsf@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1/KO2990XPv4odhdV8LRkhzi7akeV9MiV4=
-X-SA-Exim-Connect-IP: 68.227.160.95
-X-SA-Exim-Mail-From: ebiederm@xmission.com
 Subject: Re: [PATCH 00/34] fs: idmapped mounts
-X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
-X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
+Message-ID: <20201029155148.5odu4j2kt62ahcxq@yavin.dot.cyphar.com>
+References: <20201029003252.2128653-1-christian.brauner@ubuntu.com>
+ <87pn51ghju.fsf@x220.int.ebiederm.org>
+MIME-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="kgfxsa7rlwd3wkqj"
+Content-Disposition: inline
+In-Reply-To: <87pn51ghju.fsf@x220.int.ebiederm.org>
+X-MBO-SPAM-Probability: 
+X-Rspamd-Score: -3.91 / 15.00 / 15.00
+X-Rspamd-Queue-Id: 6627F1700
+X-Rspamd-UID: 698b92
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Christian Brauner <christian.brauner@ubuntu.com> writes:
 
-> Hey everyone,
->
-> I vanished for a little while to focus on this work here so sorry for
-> not being available by mail for a while.
->
-> Since quite a long time we have issues with sharing mounts between
-> multiple unprivileged containers with different id mappings, sharing a
-> rootfs between multiple containers with different id mappings, and also
-> sharing regular directories and filesystems between users with different
-> uids and gids. The latter use-cases have become even more important with
-> the availability and adoption of systemd-homed (cf. [1]) to implement
-> portable home directories.
+--kgfxsa7rlwd3wkqj
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Can you walk us through the motivating use case?
+On 2020-10-29, Eric W. Biederman <ebiederm@xmission.com> wrote:
+> Christian Brauner <christian.brauner@ubuntu.com> writes:
+>=20
+> > Hey everyone,
+> >
+> > I vanished for a little while to focus on this work here so sorry for
+> > not being available by mail for a while.
+> >
+> > Since quite a long time we have issues with sharing mounts between
+> > multiple unprivileged containers with different id mappings, sharing a
+> > rootfs between multiple containers with different id mappings, and also
+> > sharing regular directories and filesystems between users with different
+> > uids and gids. The latter use-cases have become even more important with
+> > the availability and adoption of systemd-homed (cf. [1]) to implement
+> > portable home directories.
+>=20
+> Can you walk us through the motivating use case?
+>=20
+> As of this year's LPC I had the distinct impression that the primary use
+> case for such a feature was due to the RLIMIT_NPROC problem where two
+> containers with the same users still wanted different uid mappings to
+> the disk because the users were conflicting with each other because of
+> the per user rlimits.
+>=20
+> Fixing rlimits is straight forward to implement, and easier to manage
+> for implementations and administrators.
 
-As of this year's LPC I had the distinct impression that the primary use
-case for such a feature was due to the RLIMIT_NPROC problem where two
-containers with the same users still wanted different uid mappings to
-the disk because the users were conflicting with each other because of
-the per user rlimits.
+This is separate to the question of "isolated user namespaces" and
+managing different mappings between containers. This patchset is solving
+the same problem that shiftfs solved -- sharing a single directory tree
+between containers that have different ID mappings. rlimits (nor any of
+the other proposals we discussed at LPC) will help with this problem.
 
-Fixing rlimits is straight forward to implement, and easier to manage
-for implementations and administrators.
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
 
+--kgfxsa7rlwd3wkqj
+Content-Type: application/pgp-signature; name="signature.asc"
 
+-----BEGIN PGP SIGNATURE-----
 
-Reading up on systemd-homed it appears to be a way to have encrypted
-home directories.  Those home directories can either be encrypted at the
-fs or at the block level.  Those home directories appear to have the
-goal of being luggable between systems.  If the systems in question
-don't have common administration of uids and gids after lugging your
-encrypted home directory to another system chowning the files is
-required.
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCX5rlEgAKCRCdlLljIbnQ
+EjiPAP9KREQ/2yXGdsYwcSMUpeqUj/wV1rG+UIzAlmjRSy5b2gEA+A5+ZdrAKLCh
+v+4J3Z/kM0lgTkLGg8Ib1D4QT/HGDQY=
+=Bh7P
+-----END PGP SIGNATURE-----
 
-Is that the use case you are looking at removing the need for
-systemd-homed to avoid chowning after lugging encrypted home directories
-from one system to another?  Why would it be desirable to avoid the
-chown?
-
-
-If the goal is to solve fragmented administration of uid assignment I
-suggest that it might be better to solve the administration problem so
-that all of the uids of interest get assigned the same way on all of the
-systems of interest.  To the extent it is possible to solve the uid
-assignment problem that would seem to have fewer long term
-administrative problems.
-
-Eric
+--kgfxsa7rlwd3wkqj--
