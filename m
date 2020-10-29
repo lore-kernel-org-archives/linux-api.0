@@ -4,26 +4,26 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 39776C55179
-	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 00:37:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 74C89C63699
+	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 00:37:32 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E052D2080D
-	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 00:37:30 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3A787206B6
+	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 00:37:32 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730261AbgJ2Ah2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 28 Oct 2020 20:37:28 -0400
-Received: from youngberry.canonical.com ([91.189.89.112]:33213 "EHLO
+        id S2388642AbgJ2Aha (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 28 Oct 2020 20:37:30 -0400
+Received: from youngberry.canonical.com ([91.189.89.112]:33153 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730706AbgJ2AhQ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 28 Oct 2020 20:37:16 -0400
+        with ESMTP id S1730010AbgJ2Agl (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 28 Oct 2020 20:36:41 -0400
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kXvvB-0008Ep-Sh; Thu, 29 Oct 2020 00:36:05 +0000
+        id 1kXvuw-0008Ep-5z; Thu, 29 Oct 2020 00:35:50 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -62,9 +62,9 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         linux-audit@redhat.com, linux-integrity@vger.kernel.org,
         selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH 31/34] expfs: handle idmapped mounts
-Date:   Thu, 29 Oct 2020 01:32:49 +0100
-Message-Id: <20201029003252.2128653-32-christian.brauner@ubuntu.com>
+Subject: [PATCH 22/34] af_unix: handle idmapped mounts
+Date:   Thu, 29 Oct 2020 01:32:40 +0100
+Message-Id: <20201029003252.2128653-23-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.29.0
 In-Reply-To: <20201029003252.2128653-1-christian.brauner@ubuntu.com>
 References: <20201029003252.2128653-1-christian.brauner@ubuntu.com>
@@ -74,37 +74,29 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-In follow-up patches we will port overlayfs to support idmapped mounts and
-since it makes use of expfs port expfs to handle idmapped mounts by using one
-of our newly introduced idmapped mount aware lookup helpers.
+When binding a non-abstract AF_UNIX socket it will gain a representation in the
+filesystem. Enable the socket infrastructure to handle idmapped mounts by using
+the new vfs_mapped_mknod() helper. Non-idmapped mounts will not see any altered
+behavior.
 
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
- fs/exportfs/expfs.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ net/unix/af_unix.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/fs/exportfs/expfs.c b/fs/exportfs/expfs.c
-index 2dd55b172d57..8066e8bdc912 100644
---- a/fs/exportfs/expfs.c
-+++ b/fs/exportfs/expfs.c
-@@ -145,7 +145,7 @@ static struct dentry *reconnect_one(struct vfsmount *mnt,
- 	if (err)
- 		goto out_err;
- 	dprintk("%s: found name: %s\n", __func__, nbuf);
--	tmp = lookup_one_len_unlocked(nbuf, parent, strlen(nbuf));
-+	tmp = lookup_one_len_mapped_unlocked(nbuf, parent, strlen(nbuf), mnt_user_ns(mnt));
- 	if (IS_ERR(tmp)) {
- 		dprintk("%s: lookup failed: %d\n", __func__, PTR_ERR(tmp));
- 		err = PTR_ERR(tmp);
-@@ -525,7 +525,7 @@ struct dentry *exportfs_decode_fh(struct vfsmount *mnt, struct fid *fid,
- 		}
- 
- 		inode_lock(target_dir->d_inode);
--		nresult = lookup_one_len(nbuf, target_dir, strlen(nbuf));
-+		nresult = lookup_one_len_mapped(nbuf, target_dir, strlen(nbuf), mnt_user_ns(mnt));
- 		if (!IS_ERR(nresult)) {
- 			if (unlikely(nresult->d_inode != result->d_inode)) {
- 				dput(nresult);
+diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
+index 41c3303c3357..f79f7ce3243f 100644
+--- a/net/unix/af_unix.c
++++ b/net/unix/af_unix.c
+@@ -996,7 +996,7 @@ static int unix_mknod(const char *sun_path, umode_t mode, struct path *res)
+ 	 */
+ 	err = security_path_mknod(&path, dentry, mode, 0);
+ 	if (!err) {
+-		err = vfs_mknod(d_inode(path.dentry), dentry, mode, 0);
++		err = vfs_mapped_mknod(mnt_user_ns(path.mnt), d_inode(path.dentry), dentry, mode, 0);
+ 		if (!err) {
+ 			res->mnt = mntget(path.mnt);
+ 			res->dentry = dget(dentry);
 -- 
 2.29.0
 
