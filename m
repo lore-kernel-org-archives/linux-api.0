@@ -8,59 +8,59 @@ X-Spam-Status: No, score=-17.4 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
 	URIBL_BLOCKED,USER_IN_DEF_DKIM_WL autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BB15AC388F7
-	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 01:08:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8F499C4363A
+	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 01:08:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 792CB20725
-	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 01:08:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2501020725
+	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 01:08:50 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="MTIV5nTA"
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="BDrxX4f+"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2404126AbgJ2BHn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 28 Oct 2020 21:07:43 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53120 "EHLO
+        id S1732084AbgJ2BHj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 28 Oct 2020 21:07:39 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52802 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2404261AbgJ2BHk (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 28 Oct 2020 21:07:40 -0400
-Received: from mail-lj1-x244.google.com (mail-lj1-x244.google.com [IPv6:2a00:1450:4864:20::244])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4BF44C0613D1
-        for <linux-api@vger.kernel.org>; Wed, 28 Oct 2020 18:07:40 -0700 (PDT)
-Received: by mail-lj1-x244.google.com with SMTP id y16so1326685ljk.1
-        for <linux-api@vger.kernel.org>; Wed, 28 Oct 2020 18:07:40 -0700 (PDT)
+        with ESMTP id S1732285AbgJ2BGR (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 28 Oct 2020 21:06:17 -0400
+Received: from mail-lf1-x141.google.com (mail-lf1-x141.google.com [IPv6:2a00:1450:4864:20::141])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 81242C0613CF
+        for <linux-api@vger.kernel.org>; Wed, 28 Oct 2020 18:06:16 -0700 (PDT)
+Received: by mail-lf1-x141.google.com with SMTP id a7so1164572lfk.9
+        for <linux-api@vger.kernel.org>; Wed, 28 Oct 2020 18:06:16 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=google.com; s=20161025;
         h=mime-version:references:in-reply-to:from:date:message-id:subject:to
          :cc:content-transfer-encoding;
-        bh=JHdZPPn9wLM8C261Oo5ewV1obQFhVZ5ZdtkoajBWV64=;
-        b=MTIV5nTARTLRBj0lxrRgSzGzRPYNAiPZWMkB9ep/3PqQq96Sbvp39GhCCvD9P7C/9G
-         jSa0WHMFFRSKIlGXwo17x9mJaZSXNA2WyNRoeARNazqPz6DjPLBNsihFZKJM4DFVZ/CQ
-         j3PNJYC6TnyMC9tXn4jy59H788ukVUiTCREIlCJtFaO+tL4gtg47eg+1qCzJX2qAaGf0
-         OGl7m75eU0hiHajz8+lj34XqRRj/KyofTQfSSo0wWrl+kguZAe7y41ED4NaXCYy9qrEK
-         VBXAJUcNjw8AKl3YDslsCgKie01Tu2Qs1ciqvcEbb3HuzunIQUzDI9drOA7XrORLRfmD
-         yjSg==
+        bh=bUbdsznkyssxZQUaGiYFef8NyYzvzo9ihU0AaJ53g/g=;
+        b=BDrxX4f+Wgvz7T2nQLENN+0irWwn/eNDmAKCTDCqH7wbKE23tfFJlUZmPAsdIVT6av
+         1Or1eDLwD4Ua1/VtLB9aLqgums1ThYkU6EoVz66waVy839CCdRQ4/jA5GhhAy7zJx4fP
+         lIOBOse97g1uBe2mm7vsNQdWsRKzB5bSgNBV7JJSa9s1KuspQmNoz02kO+9neBnMrIfH
+         9p9f4n15YsHkpW5CrApshNR4MlYwwrAZ2bcyzIfJFWhzAWKQIqVwpqwuGuD0xVKFI8YG
+         73ZcamzLaX7g3KVQHvBjBMxnmz2K2Y3WZoOLFQ4cjIZQPuTwsIYEU7TMMrzclXdPmFDT
+         MJYA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:mime-version:references:in-reply-to:from:date
          :message-id:subject:to:cc:content-transfer-encoding;
-        bh=JHdZPPn9wLM8C261Oo5ewV1obQFhVZ5ZdtkoajBWV64=;
-        b=m5We0ids6nxpotqqxD5EHmGJMGgy1XVj505cifOhiISh3bVcOB8gsfSiTAGaWWDyT/
-         RHVDsc/3EueLesSNNsWCJRJQc/BPwD+AbYDcqsjjMULMB8dueKzbwSShZ06FDjvg1JaG
-         MEqm8KMJzIcKABBb5b99yZ6r8BMGxOofgeNyyRYLqiZhEq/UX58XDNf/T+nLDbVFPQ+O
-         rlqeXrK2N/LfXqOtmlILeUcILMdyCA5oj11p155Ky1ilWh3iPv22Esp/lSrh4lcaIDJh
-         IYT144qsa4IxFb45DLtREzMFT+bFDITPvvsYfpmrIGvQCceh4KmoOmRW2HSdwiHB/5UM
-         tVZw==
-X-Gm-Message-State: AOAM5318rj8jYDiTU1/yGKdW7fj0Wr+UqYP9tyi9OgrnDPcsIUkOrhIV
-        nMSf1qDISmI5cgiUMl7y/tYsnJ4jWx6WKdI5ryomPw==
-X-Google-Smtp-Source: ABdhPJxZF2osDmUJJYFjNdSuFzFlSzMFSQ07MX9iBFABKWDfUCx38EmD5usneiPJrsJhn41DKD8OlPb4Di5oSfLsrWI=
-X-Received: by 2002:a2e:8816:: with SMTP id x22mr663617ljh.377.1603933658573;
- Wed, 28 Oct 2020 18:07:38 -0700 (PDT)
+        bh=bUbdsznkyssxZQUaGiYFef8NyYzvzo9ihU0AaJ53g/g=;
+        b=fgPVyWIJG4z3Vzde8OFPqh3GS7Aj8H7jngdvSgbQnhAN+wVDgU7zwphEqm9Zop7IrL
+         2TbThQ4yXVfAge8nwUUx7HQietvzjSx5FwkBhoTXypLyiV7HPCsQaZ7pU46rJJ/BJcJu
+         vCUJwyUVEIG1lppW3fZElAiKqfAwQjag1bSegWYga23hhL4nJsTrog9nLtbV8ZSrq5+B
+         Jn4YjxY2QebV4jHf/rxmwHusrZVqk251ewyyZltSGvW1EhT01mQLjSiLNRwo3dCLJzRK
+         FTTlSNIKVs0cx5mHuVJJslOX98JxdMy6pfUmimnEPKj6T2D4cG9m7U652nFSafKm87Ek
+         anqA==
+X-Gm-Message-State: AOAM530p+zDCFKzNr01B2FmmDbPq1QCUbDWu6RXTQZJVwTFTMgGUfrdl
+        NoMErLu3uI8NDTcF/krJ62q8ho5mUZNcfsdQbWcNQQ==
+X-Google-Smtp-Source: ABdhPJzcgEeCZDlwnUhahSeOHzAbFOzhL6qDHJsbmuNSbxi7XgpEx/FS/YazDdtI2Qw49nUhEoyWwL1tVaMHgN9tVZA=
+X-Received: by 2002:a05:6512:1054:: with SMTP id c20mr662361lfb.576.1603933574802;
+ Wed, 28 Oct 2020 18:06:14 -0700 (PDT)
 MIME-Version: 1.0
-References: <20201027200358.557003-1-mic@digikod.net> <20201027200358.557003-13-mic@digikod.net>
-In-Reply-To: <20201027200358.557003-13-mic@digikod.net>
+References: <20201027200358.557003-1-mic@digikod.net> <20201027200358.557003-2-mic@digikod.net>
+In-Reply-To: <20201027200358.557003-2-mic@digikod.net>
 From:   Jann Horn <jannh@google.com>
-Date:   Thu, 29 Oct 2020 02:07:11 +0100
-Message-ID: <CAG48ez07p+BtCRo4D75S3xsr76Kj_9Aipv3pBHsc4zyNjEiEmQ@mail.gmail.com>
-Subject: Re: [PATCH v22 12/12] landlock: Add user and kernel documentation
+Date:   Thu, 29 Oct 2020 02:05:47 +0100
+Message-ID: <CAG48ez3CKa12SFHjVUPnYzJm2E7OBWnuh3JzVMrsvqdcMS1A8A@mail.gmail.com>
+Subject: Re: [PATCH v22 01/12] landlock: Add object management
 To:     =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
 Cc:     James Morris <jmorris@namei.org>,
         "Serge E . Hallyn" <serge@hallyn.com>,
@@ -95,100 +95,91 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 On Tue, Oct 27, 2020 at 9:04 PM Micka=C3=ABl Sala=C3=BCn <mic@digikod.net> =
 wrote:
-> This documentation can be built with the Sphinx framework.
+> A Landlock object enables to identify a kernel object (e.g. an inode).
+> A Landlock rule is a set of access rights allowed on an object.  Rules
+> are grouped in rulesets that may be tied to a set of processes (i.e.
+> subjects) to enforce a scoped access-control (i.e. a domain).
+>
+> Because Landlock's goal is to empower any process (especially
+> unprivileged ones) to sandbox themselves, we cannot rely on a
+> system-wide object identification such as file extended attributes.
+> Indeed, we need innocuous, composable and modular access-controls.
+>
+> The main challenge with these constraints is to identify kernel objects
+> while this identification is useful (i.e. when a security policy makes
+> use of this object).  But this identification data should be freed once
+> no policy is using it.  This ephemeral tagging should not and may not be
+> written in the filesystem.  We then need to manage the lifetime of a
+> rule according to the lifetime of its objects.  To avoid a global lock,
+> this implementation make use of RCU and counters to safely reference
+> objects.
+>
+> A following commit uses this generic object management for inodes.
 >
 > Cc: James Morris <jmorris@namei.org>
 > Cc: Jann Horn <jannh@google.com>
 > Cc: Kees Cook <keescook@chromium.org>
 > Cc: Serge E. Hallyn <serge@hallyn.com>
 > Signed-off-by: Micka=C3=ABl Sala=C3=BCn <mic@linux.microsoft.com>
-> Reviewed-by: Vincent Dagonneau <vincent.dagonneau@ssi.gouv.fr>
-[...]
-> diff --git a/Documentation/userspace-api/landlock.rst b/Documentation/use=
-rspace-api/landlock.rst
-[...]
-> +Landlock rules
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> +
-> +A Landlock rule enables to describe an action on an object.  An object i=
-s
 
-s/enables to describe/describes/
+Reviewed-by: Jann Horn <jannh@google.com>
 
-> +currently a file hierarchy, and the related filesystem actions are defin=
-ed in
-> +`Access rights`_.  A set of rules is aggregated in a ruleset, which can =
-then
-> +restrict the thread enforcing it, and its future children.
-> +
-> +Defining and enforcing a security policy
-> +----------------------------------------
-> +
-> +We first need to create the ruleset that will contain our rules.  For th=
-is
-> +example, the ruleset will contain rules which only allow read actions, b=
-ut
-> +write actions will be denied.  The ruleset then needs to handle both of =
-these
-> +kind of actions.  To have a backward compatibility, these actions should=
- be
-> +ANDed with the supported ones.
-
-This sounds as if there is a way for userspace to discover which
-actions are supported by the running kernel; but we don't have
-anything like that, right?
-
-If we want to make that possible, we could maybe change
-sys_landlock_create_ruleset() so that if
-ruleset_attr.handled_access_fs contains bits we don't know, we clear
-those bits and then copy the struct back to userspace? And then
-userspace can retry the syscall with the cleared bits? Or something
-along those lines?
+except for some minor nits:
 
 [...]
-> +We can now add a new rule to this ruleset thanks to the returned file
-> +descriptor referring to this ruleset.  The rule will only enable to read=
- the
-
-s/enable to read/allow reading/
-
-> +file hierarchy ``/usr``.  Without another rule, write actions would then=
- be
-> +denied by the ruleset.  To add ``/usr`` to the ruleset, we open it with =
-the
-> +``O_PATH`` flag and fill the &struct landlock_path_beneath_attr with thi=
-s file
-> +descriptor.
+> diff --git a/security/landlock/object.c b/security/landlock/object.c
 [...]
-> +Inheritance
-> +-----------
+> +void landlock_put_object(struct landlock_object *const object)
+> +{
+> +       /*
+> +        * The call to @object->underops->release(object) might sleep e.g=
+.,
+
+s/ e.g.,/, e.g./
+
+> +        * because of iput().
+> +        */
+> +       might_sleep();
+> +       if (!object)
+> +               return;
+[...]
+> +}
+> diff --git a/security/landlock/object.h b/security/landlock/object.h
+[...]
+> +struct landlock_object {
+> +       /**
+> +        * @usage: This counter is used to tie an object to the rules mat=
+ching
+> +        * it or to keep it alive while adding a new rule.  If this count=
+er
+> +        * reaches zero, this struct must not be modified, but this count=
+er can
+> +        * still be read from within an RCU read-side critical section.  =
+When
+> +        * adding a new rule to an object with a usage counter of zero, w=
+e must
+> +        * wait until the pointer to this object is set to NULL (or recyc=
+led).
+> +        */
+> +       refcount_t usage;
+> +       /**
+> +        * @lock: Guards against concurrent modifications.  This lock mus=
+t be
+
+s/must be/must be held/ ?
+
+> +        * from the time @usage drops to zero until any weak references f=
+rom
+> +        * @underobj to this object have been cleaned up.
+> +        *
+> +        * Lock ordering: inode->i_lock nests inside this.
+> +        */
+> +       spinlock_t lock;
+[...]
+> +};
 > +
-> +Every new thread resulting from a :manpage:`clone(2)` inherits Landlock =
-domain
-> +restrictions from its parent.  This is similar to the seccomp inheritanc=
-e (cf.
-> +:doc:`/userspace-api/seccomp_filter`) or any other LSM dealing with task=
-'s
-> +:manpage:`credentials(7)`.  For instance, one process's thread may apply
-> +Landlock rules to itself, but they will not be automatically applied to =
-other
-> +sibling threads (unlike POSIX thread credential changes, cf.
-> +:manpage:`nptl(7)`).
-> +
-> +When a thread sandbox itself, we have the grantee that the related secur=
-ity
+> +struct landlock_object *landlock_create_object(
+> +               const struct landlock_object_underops *const underops,
+> +               void *const underojb);
 
-s/sandbox/sandboxes/
-s/grantee/guarantee/
-
-> +policy will stay enforced on all this thread's descendants.  This enable=
-s to
-> +create standalone and modular security policies per application, which w=
-ill
-
-s/enables to create/allows creating/
-
-
-> +automatically be composed between themselves according to their runtime =
-parent
-> +policies.
+nit: "underobj"
