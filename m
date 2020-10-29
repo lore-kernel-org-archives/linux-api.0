@@ -8,59 +8,59 @@ X-Spam-Status: No, score=-17.4 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
 	URIBL_BLOCKED,USER_IN_DEF_DKIM_WL autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E02D1C388F7
-	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 01:07:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 07ACFC4363A
+	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 01:07:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 763F420714
-	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 01:07:28 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A09582068D
+	for <linux-api@archiver.kernel.org>; Thu, 29 Oct 2020 01:07:32 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="df6qBeOa"
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="S5U0imA/"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2404134AbgJ2BH1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 28 Oct 2020 21:07:27 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52838 "EHLO
+        id S2404140AbgJ2BHa (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 28 Oct 2020 21:07:30 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53074 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2404133AbgJ2BGX (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 28 Oct 2020 21:06:23 -0400
-Received: from mail-lf1-x143.google.com (mail-lf1-x143.google.com [IPv6:2a00:1450:4864:20::143])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 81B2AC0613D3
-        for <linux-api@vger.kernel.org>; Wed, 28 Oct 2020 18:06:22 -0700 (PDT)
-Received: by mail-lf1-x143.google.com with SMTP id 126so1177182lfi.8
-        for <linux-api@vger.kernel.org>; Wed, 28 Oct 2020 18:06:22 -0700 (PDT)
+        with ESMTP id S2404238AbgJ2BH2 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 28 Oct 2020 21:07:28 -0400
+Received: from mail-lj1-x244.google.com (mail-lj1-x244.google.com [IPv6:2a00:1450:4864:20::244])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CC697C0613D4
+        for <linux-api@vger.kernel.org>; Wed, 28 Oct 2020 18:07:26 -0700 (PDT)
+Received: by mail-lj1-x244.google.com with SMTP id y16so1326279ljk.1
+        for <linux-api@vger.kernel.org>; Wed, 28 Oct 2020 18:07:26 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=google.com; s=20161025;
         h=mime-version:references:in-reply-to:from:date:message-id:subject:to
          :cc:content-transfer-encoding;
-        bh=uwGgr3GLwTr1yGzOv+StyXrvYqSZsWQzZJYgcvr8cgA=;
-        b=df6qBeOaNUd6TR5g2Iduv1RbCNFi8OcVtdGJPwnOqidbMRSpY+gx7jNumMCFFMrQR0
-         D2WTecqdr/nzO6H3904DrOChaJ95WPh5tkbtMP0IhqOzfuSvYEzIcM3dM5K3qYtS5nf+
-         tP1GqVk3jYP6rtxGckMrt1PCndsfnYCzEA7Ini61jyWjkjySwujyBt7Eaos5JTV8hwVN
-         PdL8fDYte/58X38wQyOqZPd37vxR+HBWhsaegapKGzwq1yuGHbNZUbK4+Ycfyh8EnWta
-         61pizGpWdO1q6PqMehNyy89spICLXBpIvm5gAXjHYml0kvQ3u+knHn7KFJsYkdr+F8Us
-         /xVA==
+        bh=br9kKS+gFA8BznJTzuPGoVM3iBvdwFO+Ql9r2LbNOMk=;
+        b=S5U0imA/A2cSiMX+/z+0z/lz+LR0BfcHiU2uN8JFu023cQ7/C3g0A9ewEoemNmg9Gq
+         lc0geXzLiz77TikTHXSfI1WkCExuZ6yFC8txlnUvmbho/a1wgCxu8ytSsOFxq+B9lgQc
+         Ctomz1rh6DgZvWfQegQd/4BqnkGRFnOy1qCHakTETFAptS7rqdPTZ8kG9/XUll/1+44G
+         f4W4wePPRnxGuoBJxzivBGZxNaYeBAi6ggUBEdeG56tZ6FnpQ9/DtGnQBfIPxCUR3Up0
+         JDE3azPAl0sPGCQ8w6PJK9FyWzjgRq059MqgLg7K9hBsyVBZjqZyNg15OkMJLhFhn5IB
+         mfFQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:mime-version:references:in-reply-to:from:date
          :message-id:subject:to:cc:content-transfer-encoding;
-        bh=uwGgr3GLwTr1yGzOv+StyXrvYqSZsWQzZJYgcvr8cgA=;
-        b=VjG18+TgofGFWVEyfuuRncxeGCmIQX4vBABqlyOW+aYyJF2+7rp/Eccks2LBrf6Pxf
-         rYMOPkMYRBbSt5bopnEZvaVuuq0scx25SslhmClE6tTLZnKcB8hAP1e/cyhSfkm6ejNT
-         aRje4ksRfEQTtehqyqXotgB3P/7y+VnmMvqbgY9319h8wwVAKXYFfLjMLE66402dNmih
-         SuDJA4HG1DvJxNiNy8zgGUsbiTVf2XaZWXOqNteWwVP4KtPh+jKMS90dorANwfkzAkpu
-         0NIUgNMdabQxrTzgqSqwWbflp8TvJO+eCHnzm2giYwTHVpBtIGzI3tke/yTC1/5PGjpR
-         rHMg==
-X-Gm-Message-State: AOAM533oNQw1ADJEgYJY8MIEtMe8qisxTKwHctSZjLKud7gm4ek+8c2s
-        3QS1lKZ+kdw7/or8PLwnpOJ3/XXlUlqyoSDQ5z0MQQ==
-X-Google-Smtp-Source: ABdhPJwPgJyMC5u+kpiuN1spW+0PRJDgh7VvqnPziPVW6Pzm2fdllTPcvPfrnGQZZXjgS9/qQttZh+vG7ocqG2scSuk=
-X-Received: by 2002:a19:ef07:: with SMTP id n7mr573964lfh.482.1603933580785;
- Wed, 28 Oct 2020 18:06:20 -0700 (PDT)
+        bh=br9kKS+gFA8BznJTzuPGoVM3iBvdwFO+Ql9r2LbNOMk=;
+        b=LXdipgqZhtuowE5fZU2aqX5QZHDq/xoJn1zIBM/o+UneJpv3zV41jWOhnVyh7RqhG9
+         a2iqvSvIa6DfIM267PivUowlCCMTnCaUoaPiNHKV0rouJAKe5Fdo//lExzqwkr9rBZLg
+         dwEeJhbcAbIaki7ayRVBkzBKFfk+Eu4YG7ngK7mwxuG4W29J+q99om8fRMh2S0daTIPR
+         QbXRGrThCx5d/yjmYL3tzgHJMmomPkXs/VhbNoqusvFNJ+hXwrFvr03+zaTZ+CGOJsN1
+         sKxuLOOe+9osdLAUWLY+PYCDJL51uuuqXk+eQluq4SGyFUEZtEPp1qG5Yv5YozL9d1Qi
+         S27Q==
+X-Gm-Message-State: AOAM531lg84yIp4PcgcXm5VmIWtSyBPS9DEkzR4WeJweQRm2lekH2gG9
+        KTdh7Ogf4HIpiiXPWEKeRl4ve6/yZqMVuoROxzaJSw==
+X-Google-Smtp-Source: ABdhPJzyVeStMQew4XabMc0NUvhBaLjb+ZFK+w6wLXdEwDI/BalwghYQUiGOdURfby5L62jSVPu7zskjTaVnRvUgjvE=
+X-Received: by 2002:a2e:9a17:: with SMTP id o23mr816986lji.242.1603933645156;
+ Wed, 28 Oct 2020 18:07:25 -0700 (PDT)
 MIME-Version: 1.0
-References: <20201027200358.557003-1-mic@digikod.net> <20201027200358.557003-3-mic@digikod.net>
-In-Reply-To: <20201027200358.557003-3-mic@digikod.net>
+References: <20201027200358.557003-1-mic@digikod.net> <20201027200358.557003-9-mic@digikod.net>
+In-Reply-To: <20201027200358.557003-9-mic@digikod.net>
 From:   Jann Horn <jannh@google.com>
-Date:   Thu, 29 Oct 2020 02:05:53 +0100
-Message-ID: <CAG48ez1j9KELLconr2RTmzt6j7QkY-wKC+8fn-rsG+wfxFJ=jg@mail.gmail.com>
-Subject: Re: [PATCH v22 02/12] landlock: Add ruleset and domain management
+Date:   Thu, 29 Oct 2020 02:06:58 +0100
+Message-ID: <CAG48ez1San538w=+He309vHg4pBSCvAf7e5xeHdqeOHA6qwitw@mail.gmail.com>
+Subject: Re: [PATCH v22 08/12] landlock: Add syscall implementations
 To:     =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
 Cc:     James Morris <jmorris@namei.org>,
         "Serge E . Hallyn" <serge@hallyn.com>,
@@ -95,275 +95,231 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 On Tue, Oct 27, 2020 at 9:04 PM Micka=C3=ABl Sala=C3=BCn <mic@digikod.net> =
 wrote:
-> A Landlock ruleset is mainly a red-black tree with Landlock rules as
-> nodes.  This enables quick update and lookup to match a requested access
-> e.g., to a file.  A ruleset is usable through a dedicated file
-> descriptor (cf. following commit implementing syscalls) which enables a
-> process to create and populate a ruleset with new rules.
->
-> A domain is a ruleset tied to a set of processes.  This group of rules
-> defines the security policy enforced on these processes and their future
-> children.  A domain can transition to a new domain which is the
-> intersection of all its constraints and those of a ruleset provided by
-> the current process.  This modification only impact the current process.
-> This means that a process can only gain more constraints (i.e. lose
-> accesses) over time.
->
+> These 3 system calls are designed to be used by unprivileged processes
+> to sandbox themselves:
+> * landlock_create_ruleset(2): Creates a ruleset and returns its file
+>   descriptor.
+> * landlock_add_rule(2): Adds a rule (e.g. file hierarchy access) to a
+>   ruleset, identified by the dedicated file descriptor.
+> * landlock_enforce_ruleset_current(2): Enforces a ruleset on the current
+>   thread and its future children (similar to seccomp).  This syscall has
+>   the same usage restrictions as seccomp(2): the caller must have the
+>   no_new_privs attribute set or have CAP_SYS_ADMIN in the current user
+>   namespace.
+[...]
+> Cc: Arnd Bergmann <arnd@arndb.de>
 > Cc: James Morris <jmorris@namei.org>
 > Cc: Jann Horn <jannh@google.com>
 > Cc: Kees Cook <keescook@chromium.org>
 > Cc: Serge E. Hallyn <serge@hallyn.com>
 > Signed-off-by: Micka=C3=ABl Sala=C3=BCn <mic@linux.microsoft.com>
-
-Reviewed-by: Jann Horn <jannh@google.com>
-
-with some nits:
-
 [...]
-> +static struct landlock_ruleset *create_ruleset(void)
-> +{
-> +       struct landlock_ruleset *new_ruleset;
-> +
-> +       new_ruleset =3D kzalloc(sizeof(*new_ruleset), GFP_KERNEL_ACCOUNT)=
-;
-> +       if (!new_ruleset)
-> +               return ERR_PTR(-ENOMEM);
-> +       refcount_set(&new_ruleset->usage, 1);
-> +       mutex_init(&new_ruleset->lock);
-> +       /*
-> +        * root =3D RB_ROOT
-
-This should probably be done explicitly, even though it's currently a
-no-op, in case the implementation of RB_ROOT changes in the future.
-
-> +        * hierarchy =3D NULL
-> +        * nb_rules =3D 0
-> +        * nb_layers =3D 0
-> +        * fs_access_mask =3D 0
-> +        */
-> +       return new_ruleset;
-> +}
+> diff --git a/include/uapi/linux/landlock.h b/include/uapi/linux/landlock.=
+h
 [...]
 > +/**
-> + * landlock_insert_rule - Insert a rule in a ruleset
+> + * struct landlock_path_beneath_attr - Path hierarchy definition
 > + *
-> + * @ruleset: The ruleset to be updated.
-> + * @rule: Read-only payload to be inserted (not own by this function).
-
-s/own/owned/
-
-> + * @is_merge: If true, intersects access rights and updates the rule's l=
-ayers
-> + *            (e.g. merge two rulesets), else do a union of access right=
-s and
-> + *            keep the rule's layers (e.g. extend a ruleset)
-> + *
-> + * Assumptions:
-> + *
-> + * - An inserted rule cannot be removed.
-> + * - The underlying kernel object must be held by the caller.
+> + * Argument of sys_landlock_add_rule().
 > + */
-> +int landlock_insert_rule(struct landlock_ruleset *const ruleset,
-> +               struct landlock_rule *const rule, const bool is_merge)
+> +struct landlock_path_beneath_attr {
+> +       /**
+> +        * @allowed_access: Bitmask of allowed actions for this file hier=
+archy
+> +        * (cf. `Filesystem flags`_).
+> +        */
+> +       __u64 allowed_access;
+> +       /**
+> +        * @parent_fd: File descriptor, open with ``O_PATH``, which ident=
+ify
+
+nit: "identifies"
+
+> +        * the parent directory of a file hierarchy, or just a file.
+> +        */
+> +       __s32 parent_fd;
+> +       /*
+> +        * This struct is packed to avoid trailing reserved members.
+> +        * Cf. security/landlock/syscall.c:build_check_abi()
+> +        */
+> +} __attribute__((packed));
 [...]
-> +static int merge_ruleset(struct landlock_ruleset *const dst,
-> +               struct landlock_ruleset *const src)
+> diff --git a/security/landlock/syscall.c b/security/landlock/syscall.c
+[...]
+> +static int copy_min_struct_from_user(void *const dst, const size_t ksize=
+,
+> +               const size_t ksize_min, const void __user *const src,
+> +               const size_t usize)
 > +{
-> +       struct landlock_rule *walker_rule, *next_rule;
-> +       int err =3D 0;
-> +
-> +       might_sleep();
+> +       /* Checks buffer inconsistencies. */
+> +       BUILD_BUG_ON(!dst);
 > +       if (!src)
-> +               return 0;
-> +       /* Only merge into a domain. */
-> +       if (WARN_ON_ONCE(!dst || !dst->hierarchy))
 > +               return -EFAULT;
 > +
-> +       mutex_lock(&dst->lock);
-> +       mutex_lock_nested(&src->lock, 1);
+> +       /* Checks size ranges. */
+> +       BUILD_BUG_ON(ksize <=3D 0);
+> +       BUILD_BUG_ON(ksize < ksize_min);
 
-Maybe add a comment like this above these two lines? "Ruleset locks
-are ordered by time of ruleset creation; dst is newer than src."
+To make these checks work reliably, you should add __always_inline to
+the function.
 
-Also, maybe s/1/SINGLE_DEPTH_NESTING/.
-
-
+> +       if (usize < ksize_min)
+> +               return -EINVAL;
+> +       if (usize > PAGE_SIZE)
+> +               return -E2BIG;
+> +
+> +       /* Copies user buffer and fills with zeros. */
+> +       return copy_struct_from_user(dst, ksize, src, usize);
+> +}
+[...]
+> +static int get_path_from_fd(const s32 fd, struct path *const path)
+> +{
+> +       struct fd f;
+> +       int err =3D 0;
+> +
+> +       BUILD_BUG_ON(!__same_type(fd,
+> +               ((struct landlock_path_beneath_attr *)NULL)->parent_fd));
+> +
+> +       /* Handles O_PATH. */
+> +       f =3D fdget_raw(fd);
+> +       if (!f.file)
+> +               return -EBADF;
 > +       /*
-> +        * Makes a new layer, but only increments the number of layers af=
-ter
-> +        * the rules are inserted.
+> +        * Only allows O_PATH file descriptor: enables to restrict ambien=
+t
+> +        * filesystem access without requiring to open and risk leaking o=
+r
+> +        * misusing a file descriptor.  Forbid internal filesystems (e.g.
+> +        * nsfs), including pseudo filesystems that will never be mountab=
+le
+> +        * (e.g. sockfs, pipefs).
 > +        */
-> +       if (dst->nb_layers =3D=3D sizeof(walker_rule->layers) * BITS_PER_=
-BYTE) {
-> +               err =3D -E2BIG;
-> +               goto out_unlock;
+> +       if (!(f.file->f_mode & FMODE_PATH) ||
+> +                       (f.file->f_path.mnt->mnt_flags & MNT_INTERNAL) ||
+> +                       (f.file->f_path.dentry->d_sb->s_flags & SB_NOUSER=
+) ||
+> +                       d_is_negative(f.file->f_path.dentry) ||
+> +                       IS_PRIVATE(d_backing_inode(f.file->f_path.dentry)=
+)) {
+> +               err =3D -EBADFD;
+> +               goto out_fdput;
 > +       }
-> +       dst->fs_access_mask |=3D src->fs_access_mask;
+> +       path->mnt =3D f.file->f_path.mnt;
+> +       path->dentry =3D f.file->f_path.dentry;
+
+those two lines can be replaced with "*path =3D f.file->f_path"
+
+> +       path_get(path);
 > +
-> +       /* Merges the @src tree. */
-> +       rbtree_postorder_for_each_entry_safe(walker_rule, next_rule,
-> +                       &src->root, node) {
-> +               err =3D landlock_insert_rule(dst, walker_rule, true);
-> +               if (err)
-> +                       goto out_unlock;
-> +       }
-> +       dst->nb_layers++;
-> +
-> +out_unlock:
-> +       mutex_unlock(&src->lock);
-> +       mutex_unlock(&dst->lock);
+> +out_fdput:
+> +       fdput(f);
 > +       return err;
 > +}
 [...]
-> diff --git a/security/landlock/ruleset.h b/security/landlock/ruleset.h
-[...]
-> +struct landlock_rule {
-> +       /**
-> +        * @node: Node in the red-black tree.
-
-s/the red-black tree/the ruleset's red-black tree/
-
-> +        */
-> +       struct rb_node node;
-> +       /**
-> +        * @object: Pointer to identify a kernel object (e.g. an inode). =
- This
-> +        * is used as a key for this ruleset element.  This pointer is se=
-t once
-> +        * and never modified.  It always point to an allocated object be=
-cause
-
-s/point/points/
-
-> +        * each rule increment the refcount of there object.
-
-s/increment/increments/
-s/there/its/
-
-> +        */
-> +       struct landlock_object *object;
-> +       /**
-> +        * @layers: Bitfield to identify the layers which resulted to @ac=
-cess
-> +        * from different consecutive intersections.
-> +        */
-> +       u64 layers;
-> +       /**
-> +        * @access: Bitfield of allowed actions on the kernel object.  Th=
-ey are
-> +        * relative to the object type (e.g. %LANDLOCK_ACTION_FS_READ).  =
-This
-> +        * may be the result of the merged access rights (boolean AND) fr=
-om
-> +        * multiple layers referring to the same object.
-> +        */
-> +       u32 access;
-> +};
-> +
 > +/**
-> + * struct landlock_hierarchy - Node in a ruleset hierarchy
-> + */
-> +struct landlock_hierarchy {
-> +       /**
-> +        * @parent: Pointer to the parent node, or NULL if it is a root L=
-anlock
-
-nit: Landlock
-
-> +        * domain.
-> +        */
-> +       struct landlock_hierarchy *parent;
-> +       /**
-> +        * @usage: Number of potential children domains plus their parent
-> +        * domain.
-> +        */
-> +       refcount_t usage;
-> +};
-> +
-> +/**
-> + * struct landlock_ruleset - Landlock ruleset
+> + * sys_landlock_enforce_ruleset_current - Enforce a ruleset on the curre=
+nt task
 > + *
-> + * This data structure must contains unique entries, be updatable, and q=
-uick to
+> + * @ruleset_fd: File descriptor tied to the ruleset to merge with the ta=
+rget.
+> + * @flags: Must be 0.
+> + *
+> + * This system call enables to enforce a Landlock ruleset on the current
+> + * thread.  Enforcing a ruleset requires that the task has CAP_SYS_ADMIN=
+ in its
+> + * namespace or be running with no_new_privs.  This avoids scenarios whe=
+re
 
-s/contains/contain/
+s/be/is/
 
-> + * match an object.
+> + * unprivileged tasks can affect the behavior of privileged children.
+> + *
+> + * Possible returned errors are:
+> + *
+> + * - EOPNOTSUPP: Landlock is supported by the kernel but disabled at boo=
+t time;
+> + * - EINVAL: @flags is not 0.
+> + * - EBADF: @ruleset_fd is not a file descriptor for the current thread;
+> + * - EBADFD: @ruleset_fd is not a ruleset file descriptor;
+> + * - EPERM: @ruleset_fd has no read access to the underlying ruleset, or=
+ the
+> + *   current thread is not running with no_new_privs (or doesn't have
+> + *   CAP_SYS_ADMIN in its namespace).
 > + */
-> +struct landlock_ruleset {
-> +       /**
-> +        * @root: Root of a red-black tree containing &struct landlock_ru=
-le
-> +        * nodes.
-
-Maybe add: "Once the ruleset is installed on a process, this tree is
-immutable until @usage reaches zero."
-
+> +SYSCALL_DEFINE2(landlock_enforce_ruleset_current,
+> +               const int, ruleset_fd, const __u32, flags)
+> +{
+> +       struct landlock_ruleset *new_dom, *ruleset;
+> +       struct cred *new_cred;
+> +       struct landlock_cred_security *new_llcred;
+> +       int err;
+> +
+> +       if (!landlock_initialized)
+> +               return -EOPNOTSUPP;
+> +
+> +       /* No flag for now. */
+> +       if (flags)
+> +               return -EINVAL;
+> +
+> +       /*
+> +        * Similar checks as for seccomp(2), except that an -EPERM may be
+> +        * returned.
 > +        */
-> +       struct rb_root root;
-> +       /**
-> +        * @hierarchy: Enables hierarchy identification even when a paren=
-t
-> +        * domain vanishes.  This is needed for the ptrace protection.
+> +       if (!task_no_new_privs(current)) {
+> +               err =3D security_capable(current_cred(), current_user_ns(=
+),
+> +                               CAP_SYS_ADMIN, CAP_OPT_NOAUDIT);
+
+I think this should be ns_capable_noaudit(current_user_ns(), CAP_SYS_ADMIN)=
+?
+
+> +               if (err)
+> +                       return err;
+> +       }
+> +
+> +       /* Gets and checks the ruleset. */
+> +       ruleset =3D get_ruleset_from_fd(ruleset_fd, FMODE_CAN_READ);
+> +       if (IS_ERR(ruleset))
+> +               return PTR_ERR(ruleset);
+> +
+> +       /* Prepares new credentials. */
+> +       new_cred =3D prepare_creds();
+> +       if (!new_cred) {
+> +               err =3D -ENOMEM;
+> +               goto out_put_ruleset;
+> +       }
+> +       new_llcred =3D landlock_cred(new_cred);
+> +
+> +       /*
+> +        * There is no possible race condition while copying and manipula=
+ting
+> +        * the current credentials because they are dedicated per thread.
 > +        */
-> +       struct landlock_hierarchy *hierarchy;
-> +       union {
-> +               /**
-> +                * @work_free: Enables to free a ruleset within a lockles=
-s
-> +                * section.  This is only used by
-> +                * landlock_put_ruleset_deferred() when @usage reaches ze=
-ro.
-> +                * The fields @lock, @usage, @nb_layers, @nb_rules and
-> +                * @fs_access_mask are then unused.
-> +                */
-> +               struct work_struct work_free;
-> +               struct {
-> +                       /**
-> +                        * @lock: Guards against concurrent modifications=
- of
-> +                        * @root, if @usage is greater than zero.
-> +                        */
-> +                       struct mutex lock;
-> +                       /**
-> +                        * @usage: Number of processes (i.e. domains) or =
-file
-> +                        * descriptors referencing this ruleset.
-> +                        */
-> +                       refcount_t usage;
-> +                       /**
-> +                        * @nb_rules: Number of non-overlapping (i.e. not=
- for
-> +                        * the same object) rules in this ruleset.
-> +                        */
-> +                       u32 nb_rules;
-> +                       /**
-> +                        * @nb_layers: Number of layers which are used in=
- this
-> +                        * ruleset.  This enables to check that all the l=
-ayers
-> +                        * allow an access request.  A value of 0 identif=
-y a
+> +       new_dom =3D landlock_merge_ruleset(new_llcred->domain, ruleset);
+> +       if (IS_ERR(new_dom)) {
+> +               err =3D PTR_ERR(new_dom);
+> +               goto out_put_creds;
+> +       }
+> +
+> +       /* Replaces the old (prepared) domain. */
+> +       landlock_put_ruleset(new_llcred->domain);
+> +       new_llcred->domain =3D new_dom;
+> +
+> +       landlock_put_ruleset(ruleset);
+> +       return commit_creds(new_cred);
+> +
+> +out_put_creds:
+> +       abort_creds(new_cred);
+> +       return err;
 
-s/identify/identifies/
+I think this "return err" is wrong - don't we still have to put "ruleset" h=
+ere?
 
 
-
-> +                        * non-merged ruleset (i.e. not a domain).
-> +                        */
-> +                       u32 nb_layers;
-> +                       /**
-> +                        * @fs_access_mask: Contains the subset of filesy=
-stem
-> +                        * actions which are restricted by a ruleset.  Th=
-is is
-> +                        * used when merging rulesets and for user space
-> +                        * backward compatibility (i.e. future-proof).  S=
-et
-> +                        * once and never changed for the lifetime of the
-> +                        * ruleset.
-> +                        */
-> +                       u32 fs_access_mask;
-> +               };
-> +       };
-> +};
+> +out_put_ruleset:
+> +       landlock_put_ruleset(ruleset);
+> +       return err;
+> +}
+> --
+> 2.28.0
+>
