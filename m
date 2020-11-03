@@ -4,30 +4,27 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 97BC7C6369E
-	for <linux-api@archiver.kernel.org>; Tue,  3 Nov 2020 18:21:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 12A39C63777
+	for <linux-api@archiver.kernel.org>; Tue,  3 Nov 2020 18:21:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5341E20786
-	for <linux-api@archiver.kernel.org>; Tue,  3 Nov 2020 18:21:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D917F223C6
+	for <linux-api@archiver.kernel.org>; Tue,  3 Nov 2020 18:21:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729492AbgKCSVs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S1729454AbgKCSVs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Tue, 3 Nov 2020 13:21:48 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55606 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729449AbgKCSVb (ORCPT
+Received: from smtp-8fad.mail.infomaniak.ch ([83.166.143.173]:44855 "EHLO
+        smtp-8fad.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1729401AbgKCSVb (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Tue, 3 Nov 2020 13:21:31 -0500
-Received: from smtp-42a8.mail.infomaniak.ch (smtp-42a8.mail.infomaniak.ch [IPv6:2001:1600:4:17::42a8])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CEE33C061A4E;
-        Tue,  3 Nov 2020 10:21:30 -0800 (PST)
-Received: from smtp-2-0001.mail.infomaniak.ch (unknown [10.5.36.108])
-        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4CQdQd4Z0yzlhTgm;
-        Tue,  3 Nov 2020 19:21:29 +0100 (CET)
+Received: from smtp-3-0000.mail.infomaniak.ch (unknown [10.4.36.107])
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4CQdQY6RTXzlhDj2;
+        Tue,  3 Nov 2020 19:21:25 +0100 (CET)
 Received: from localhost (unknown [94.23.54.103])
-        by smtp-2-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4CQdQd2D5Dzlh8TC;
-        Tue,  3 Nov 2020 19:21:29 +0100 (CET)
+        by smtp-3-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4CQdQY3fyGzlh8T7;
+        Tue,  3 Nov 2020 19:21:25 +0100 (CET)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     James Morris <jmorris@namei.org>,
         "Serge E . Hallyn" <serge@hallyn.com>
@@ -50,9 +47,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         linux-kselftest@vger.kernel.org,
         linux-security-module@vger.kernel.org, x86@kernel.org,
         =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@linux.microsoft.com>
-Subject: [PATCH v23 11/12] samples/landlock: Add a sandbox manager example
-Date:   Tue,  3 Nov 2020 19:21:08 +0100
-Message-Id: <20201103182109.1014179-12-mic@digikod.net>
+Subject: [PATCH v23 08/12] landlock: Add syscall implementations
+Date:   Tue,  3 Nov 2020 19:21:05 +0100
+Message-Id: <20201103182109.1014179-9-mic@digikod.net>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <20201103182109.1014179-1-mic@digikod.net>
 References: <20201103182109.1014179-1-mic@digikod.net>
@@ -65,9 +62,38 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Mickaël Salaün <mic@linux.microsoft.com>
 
-Add a basic sandbox tool to launch a command which can only access a
-whitelist of file hierarchies in a read-only or read-write way.
+These 3 system calls are designed to be used by unprivileged processes
+to sandbox themselves:
+* landlock_create_ruleset(2): Creates a ruleset and returns its file
+  descriptor.
+* landlock_add_rule(2): Adds a rule (e.g. file hierarchy access) to a
+  ruleset, identified by the dedicated file descriptor.
+* landlock_enforce_ruleset_current(2): Enforces a ruleset on the current
+  thread and its future children (similar to seccomp).  This syscall has
+  the same usage restrictions as seccomp(2): the caller must have the
+  no_new_privs attribute set or have CAP_SYS_ADMIN in the current user
+  namespace.
 
+All these syscalls have a "flags" argument (not currently used) to
+enable extensibility.
+
+Here are the motivations for these new syscalls:
+* A sandboxed process may not have access to file systems, including
+  /dev, /sys or /proc, but it should still be able to add more
+  restrictions to itself.
+* Neither prctl(2) nor seccomp(2) (which was used in a previous version)
+  fit well with the current definition of a Landlock security policy.
+
+All passed structs (attributes) are checked at build time to ensure that
+they don't contain holes and that they are aligned the same way for each
+architecture.
+
+See the user and kernel documentation for more details (provided by a
+following commit):
+* Documentation/userspace-api/landlock.rst
+* Documentation/security/landlock.rst
+
+Cc: Arnd Bergmann <arnd@arndb.de>
 Cc: James Morris <jmorris@namei.org>
 Cc: Jann Horn <jannh@google.com>
 Cc: Kees Cook <keescook@chromium.org>
@@ -75,342 +101,657 @@ Cc: Serge E. Hallyn <serge@hallyn.com>
 Signed-off-by: Mickaël Salaün <mic@linux.microsoft.com>
 ---
 
+Changes since v22:
+* Replace security_capable() with ns_capable_noaudit() (suggested by
+  Jann Horn) and explicitly return EPERM.
+* Fix landlock_enforce_ruleset_current(2)'s out_put_creds (spotted by
+  Jann Horn).
+* Add __always_inline to copy_min_struct_from_user() to make its
+  BUILD_BUG_ON() checks reliable (suggested by Jann Horn).
+* Simplify path assignation in get_path_from_fd() (suggested by Jann
+  Horn).
+* Fix spelling (spotted by Jann Horn).
+
 Changes since v21:
-* Remove LANDLOCK_ACCESS_FS_CHROOT.
-* Clean up help.
+* Fix and improve comments.
 
 Changes since v20:
-* Update with new syscalls and type names.
-* Update errno check for EOPNOTSUPP.
-* Use the full syscall interfaces: explicitely set the "flags" field to
-  zero.
+* Remove two arguments to landlock_enforce_ruleset(2) (requested by Arnd
+  Bergmann) and rename it to landlock_enforce_ruleset_current(2): remove
+  the enum landlock_target_type and the target file descriptor (not used
+  for now).  A ruleset can only be enforced on the current thread.
+* Remove the size argument in landlock_add_rule() (requested by Arnd
+  Bergmann).
+* Remove landlock_get_features(2) (suggested by Arnd Bergmann).
+* Simplify and rename copy_struct_if_any_from_user() to
+  copy_min_struct_from_user().
+* Rename "options" to "flags" to allign with current syscalls.
+* Rename some types and variables in a more consistent way.
+* Fix missing type declarations in syscalls.h .
 
 Changes since v19:
-* Update with the new Landlock syscalls.
-* Comply with commit 5f2fb52fac15 ("kbuild: rename hostprogs-y/always to
-  hostprogs/always-y").
+* Replace the landlock(2) syscall with 4 syscalls (one for each
+  command): landlock_get_features(2), landlock_create_ruleset(2),
+  landlock_add_rule(2) and landlock_enforce_ruleset(2) (suggested by
+  Arnd Bergmann).
+  https://lore.kernel.org/lkml/56d15841-e2c1-2d58-59b8-3a6a09b23b4a@digikod.net/
+* Return EOPNOTSUPP (instead of ENOPKG) when Landlock is disabled.
+* Add two new fields to landlock_attr_features to fit with the new
+  syscalls: last_rule_type and last_target_type.  This enable to easily
+  identify which types are supported.
+* Pack landlock_attr_path_beneath struct because of the removed
+  ruleset_fd.
+* Update documentation and fix spelling.
+
+Changes since v18:
+* Remove useless include.
+* Remove LLATTR_SIZE() which was only used to shorten lines. Cf. commit
+  bdc48fa11e46 ("checkpatch/coding-style: deprecate 80-column warning").
+
+Changes since v17:
+* Synchronize syscall declaration.
+* Fix comment.
 
 Changes since v16:
-* Switch syscall attribute pointer and size arguments.
+* Add a size_attr_features field to struct landlock_attr_features for
+  self-introspection, and move the access_fs field to be more
+  consistent.
+* Replace __aligned_u64 types of attribute fields with __u16, __s32,
+  __u32 and __u64, and check at build time that these structures does
+  not contain hole and that they are aligned the same way (8-bits) on
+  all architectures.  This shrinks the size of the userspace ABI, which
+  may be appreciated especially for struct landlock_attr_features which
+  could grow a lot in the future.  For instance, struct
+  landlock_attr_features shrinks from 72 bytes to 32 bytes.  This change
+  also enables to remove 64-bits to 32-bits conversion checks.
+* Switch syscall attribute pointer and size arguments to follow similar
+  syscall argument order (e.g. bpf, clone3, openat2).
+* Set LANDLOCK_OPT_* types to 32-bits.
+* Allow enforcement of empty ruleset, which enables deny-all policies.
+* Fix documentation inconsistency.
 
 Changes since v15:
-* Update access right names.
-* Properly assign access right to files according to the new related
-  syscall restriction.
-* Replace "select" with "depends on" HEADERS_INSTALL (suggested by Randy
-  Dunlap).
+* Do not add file descriptors referring to internal filesystems (e.g.
+  nsfs) in a ruleset.
+* Replace is_user_mountable() with in-place clean checks.
+* Replace EBADR with EBADFD in get_ruleset_from_fd() and
+  get_path_from_fd().
+* Remove ruleset's show_fdinfo() for now.
 
 Changes since v14:
-* Fix Kconfig dependency.
-* Remove access rights that may be required for FD-only requests:
-  mmap, truncate, getattr, lock, chmod, chown, chgrp, ioctl.
-* Fix useless hardcoded syscall number.
-* Use execvpe().
-* Follow symlinks.
-* Extend help with common file paths.
+* Remove the security_file_open() check in get_path_from_fd(): an
+  opened FD should not be restricted here, and even less with this hook.
+  As a result, it is now allowed to add a path to a ruleset even if the
+  access to this path is not allowed (without O_PATH). This doesn't
+  change the fact that enforcing a ruleset can't grant any right, only
+  remove some rights.  The new layer levels add more consistent
+  restrictions.
+* Check minimal landlock_attr_* size/content. This fix the case when
+  no data was provided and e.g., FD 0 was interpreted as ruleset_fd.
+  Now this leads to a returned -EINVAL.
+* Fix credential double-free error case.
+* Complete struct landlock_attr_size with size_attr_enforce.
+* Fix undefined reference to syscall when Landlock is not selected.
+* Remove f.file->f_path.mnt check (suggested by Al Viro).
+* Add build-time checks.
+* Move ABI checks from fs.c .
 * Constify variables.
-* Clean up comments.
-* Improve error message.
+* Fix spelling.
+* Add comments.
 
-Changes since v11:
-* Add back the filesystem sandbox manager and update it to work with the
-  new Landlock syscall.
-
-Previous changes:
-https://lore.kernel.org/lkml/20190721213116.23476-9-mic@digikod.net/
+Changes since v13:
+* New implementation, replacing the dependency on seccomp(2) and bpf(2).
 ---
- samples/Kconfig              |   7 ++
- samples/Makefile             |   1 +
- samples/landlock/.gitignore  |   1 +
- samples/landlock/Makefile    |  15 +++
- samples/landlock/sandboxer.c | 219 +++++++++++++++++++++++++++++++++++
- 5 files changed, 243 insertions(+)
- create mode 100644 samples/landlock/.gitignore
- create mode 100644 samples/landlock/Makefile
- create mode 100644 samples/landlock/sandboxer.c
+ include/linux/syscalls.h      |   7 +
+ include/uapi/linux/landlock.h |  53 +++++
+ kernel/sys_ni.c               |   5 +
+ security/landlock/Makefile    |   2 +-
+ security/landlock/syscall.c   | 422 ++++++++++++++++++++++++++++++++++
+ 5 files changed, 488 insertions(+), 1 deletion(-)
+ create mode 100644 security/landlock/syscall.c
 
-diff --git a/samples/Kconfig b/samples/Kconfig
-index 0ed6e4d71d87..e6129496ced5 100644
---- a/samples/Kconfig
-+++ b/samples/Kconfig
-@@ -124,6 +124,13 @@ config SAMPLE_HIDRAW
- 	bool "hidraw sample"
- 	depends on CC_CAN_LINK && HEADERS_INSTALL
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 37bea07c12f2..ee3e24095c5f 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -68,6 +68,8 @@ union bpf_attr;
+ struct io_uring_params;
+ struct clone_args;
+ struct open_how;
++struct landlock_ruleset_attr;
++enum landlock_rule_type;
  
-+config SAMPLE_LANDLOCK
-+	bool "Build Landlock sample code"
-+	depends on HEADERS_INSTALL
-+	help
-+	  Build a simple Landlock sandbox manager able to launch a process
-+	  restricted by a user-defined filesystem access control.
+ #include <linux/types.h>
+ #include <linux/aio_abi.h>
+@@ -1008,6 +1010,11 @@ asmlinkage long sys_pidfd_send_signal(int pidfd, int sig,
+ 				       siginfo_t __user *info,
+ 				       unsigned int flags);
+ asmlinkage long sys_pidfd_getfd(int pidfd, int fd, unsigned int flags);
++asmlinkage long sys_landlock_create_ruleset(const struct landlock_ruleset_attr __user *attr,
++		size_t size, __u32 flags);
++asmlinkage long sys_landlock_add_rule(int ruleset_fd, enum landlock_rule_type rule_type,
++		const void __user *rule_attr, __u32 flags);
++asmlinkage long sys_landlock_enforce_ruleset_current(int ruleset_fd, __u32 flags);
+ 
+ /*
+  * Architecture-specific system calls
+diff --git a/include/uapi/linux/landlock.h b/include/uapi/linux/landlock.h
+index d547bd49fe38..1a2299fa958a 100644
+--- a/include/uapi/linux/landlock.h
++++ b/include/uapi/linux/landlock.h
+@@ -9,6 +9,59 @@
+ #ifndef _UAPI__LINUX_LANDLOCK_H__
+ #define _UAPI__LINUX_LANDLOCK_H__
+ 
++#include <linux/types.h>
 +
- config SAMPLE_PIDFD
- 	bool "pidfd sample"
- 	depends on CC_CAN_LINK && HEADERS_INSTALL
-diff --git a/samples/Makefile b/samples/Makefile
-index c3392a595e4b..087e0988ccc5 100644
---- a/samples/Makefile
-+++ b/samples/Makefile
-@@ -11,6 +11,7 @@ obj-$(CONFIG_SAMPLE_KDB)		+= kdb/
- obj-$(CONFIG_SAMPLE_KFIFO)		+= kfifo/
- obj-$(CONFIG_SAMPLE_KOBJECT)		+= kobject/
- obj-$(CONFIG_SAMPLE_KPROBES)		+= kprobes/
-+subdir-$(CONFIG_SAMPLE_LANDLOCK)	+= landlock
- obj-$(CONFIG_SAMPLE_LIVEPATCH)		+= livepatch/
- subdir-$(CONFIG_SAMPLE_PIDFD)		+= pidfd
- obj-$(CONFIG_SAMPLE_QMI_CLIENT)		+= qmi/
-diff --git a/samples/landlock/.gitignore b/samples/landlock/.gitignore
-new file mode 100644
-index 000000000000..f43668b2d318
---- /dev/null
-+++ b/samples/landlock/.gitignore
-@@ -0,0 +1 @@
-+/sandboxer
-diff --git a/samples/landlock/Makefile b/samples/landlock/Makefile
-new file mode 100644
-index 000000000000..21eda5774948
---- /dev/null
-+++ b/samples/landlock/Makefile
-@@ -0,0 +1,15 @@
-+# SPDX-License-Identifier: BSD-3-Clause
-+
-+hostprogs := sandboxer
-+
-+always-y := $(hostprogs)
-+
-+KBUILD_HOSTCFLAGS += -I$(objtree)/usr/include
-+
-+.PHONY: all clean
-+
-+all:
-+	$(MAKE) -C ../.. samples/landlock/
-+
-+clean:
-+	$(MAKE) -C ../.. M=samples/landlock/ clean
-diff --git a/samples/landlock/sandboxer.c b/samples/landlock/sandboxer.c
-new file mode 100644
-index 000000000000..ee5ec1203cb7
---- /dev/null
-+++ b/samples/landlock/sandboxer.c
-@@ -0,0 +1,219 @@
-+// SPDX-License-Identifier: BSD-3-Clause
-+/*
-+ * Simple Landlock sandbox manager able to launch a process restricted by a
-+ * user-defined filesystem access control.
++/**
++ * struct landlock_ruleset_attr - Ruleset definition
 + *
-+ * Copyright © 2017-2020 Mickaël Salaün <mic@digikod.net>
-+ * Copyright © 2020 ANSSI
++ * Argument of sys_landlock_create_ruleset().  This structure can grow in
++ * future versions.
++ */
++struct landlock_ruleset_attr {
++	/**
++	 * @handled_access_fs: Bitmask of actions (cf. `Filesystem flags`_)
++	 * that is handled by this ruleset and should then be forbidden if no
++	 * rule explicitly allow them.  This is needed for backward
++	 * compatibility reasons.
++	 */
++	__u64 handled_access_fs;
++};
++
++/**
++ * enum landlock_rule_type - Landlock rule type
++ *
++ * Argument of sys_landlock_add_rule().
++ */
++enum landlock_rule_type {
++	/**
++	 * @LANDLOCK_RULE_PATH_BENEATH: Type of a &struct
++	 * landlock_path_beneath_attr .
++	 */
++	LANDLOCK_RULE_PATH_BENEATH = 1,
++};
++
++/**
++ * struct landlock_path_beneath_attr - Path hierarchy definition
++ *
++ * Argument of sys_landlock_add_rule().
++ */
++struct landlock_path_beneath_attr {
++	/**
++	 * @allowed_access: Bitmask of allowed actions for this file hierarchy
++	 * (cf. `Filesystem flags`_).
++	 */
++	__u64 allowed_access;
++	/**
++	 * @parent_fd: File descriptor, open with ``O_PATH``, which identifies
++	 * the parent directory of a file hierarchy, or just a file.
++	 */
++	__s32 parent_fd;
++	/*
++	 * This struct is packed to avoid trailing reserved members.
++	 * Cf. security/landlock/syscall.c:build_check_abi()
++	 */
++} __attribute__((packed));
++
+ /**
+  * DOC: fs_access
+  *
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index f27ac94d5fa7..0906cb79e801 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -264,6 +264,11 @@ COND_SYSCALL(request_key);
+ COND_SYSCALL(keyctl);
+ COND_SYSCALL_COMPAT(keyctl);
+ 
++/* security/landlock/syscall.c */
++COND_SYSCALL(landlock_create_ruleset);
++COND_SYSCALL(landlock_add_rule);
++COND_SYSCALL(landlock_enforce_ruleset_current);
++
+ /* arch/example/kernel/sys_example.c */
+ 
+ /* mm/fadvise.c */
+diff --git a/security/landlock/Makefile b/security/landlock/Makefile
+index 92e3d80ab8ed..4388494779ec 100644
+--- a/security/landlock/Makefile
++++ b/security/landlock/Makefile
+@@ -1,4 +1,4 @@
+ obj-$(CONFIG_SECURITY_LANDLOCK) := landlock.o
+ 
+-landlock-y := setup.o object.o ruleset.o \
++landlock-y := setup.o syscall.o object.o ruleset.o \
+ 	cred.o ptrace.o fs.o
+diff --git a/security/landlock/syscall.c b/security/landlock/syscall.c
+new file mode 100644
+index 000000000000..486136d4f46e
+--- /dev/null
++++ b/security/landlock/syscall.c
+@@ -0,0 +1,422 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Landlock LSM - System call implementations and user space interfaces
++ *
++ * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
++ * Copyright © 2018-2020 ANSSI
 + */
 +
-+#define _GNU_SOURCE
-+#include <errno.h>
-+#include <fcntl.h>
-+#include <linux/landlock.h>
-+#include <linux/prctl.h>
-+#include <stddef.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <sys/prctl.h>
-+#include <sys/stat.h>
-+#include <sys/syscall.h>
-+#include <unistd.h>
++#include <asm/current.h>
++#include <linux/anon_inodes.h>
++#include <linux/build_bug.h>
++#include <linux/capability.h>
++#include <linux/compiler_types.h>
++#include <linux/dcache.h>
++#include <linux/err.h>
++#include <linux/errno.h>
++#include <linux/fs.h>
++#include <linux/limits.h>
++#include <linux/mount.h>
++#include <linux/path.h>
++#include <linux/sched.h>
++#include <linux/security.h>
++#include <linux/stddef.h>
++#include <linux/syscalls.h>
++#include <linux/types.h>
++#include <linux/uaccess.h>
++#include <uapi/linux/landlock.h>
 +
-+#ifndef landlock_create_ruleset
-+static inline int landlock_create_ruleset(
-+		const struct landlock_ruleset_attr *const attr,
-+		const size_t size, const __u32 flags)
++#include "cred.h"
++#include "fs.h"
++#include "ruleset.h"
++#include "setup.h"
++
++/**
++ * copy_min_struct_from_user - Safe future-proof argument copying
++ *
++ * Extend copy_struct_from_user() to check for consistent user buffer.
++ *
++ * @dst: Kernel space pointer or NULL.
++ * @ksize: Actual size of the data pointed to by @dst.
++ * @ksize_min: Minimal required size to be copied.
++ * @src: User space pointer or NULL.
++ * @usize: (Alleged) size of the data pointed to by @src.
++ */
++static __always_inline int copy_min_struct_from_user(void *const dst,
++		const size_t ksize, const size_t ksize_min,
++		const void __user *const src, const size_t usize)
 +{
-+	errno = 0;
-+	return syscall(__NR_landlock_create_ruleset, attr, size, flags);
-+}
-+#endif
++	/* Checks buffer inconsistencies. */
++	BUILD_BUG_ON(!dst);
++	if (!src)
++		return -EFAULT;
 +
-+#ifndef landlock_add_rule
-+static inline int landlock_add_rule(const int ruleset_fd,
-+		const enum landlock_rule_type rule_type,
-+		const void *const rule_attr, const __u32 flags)
-+{
-+	errno = 0;
-+	return syscall(__NR_landlock_add_rule, ruleset_fd, rule_type,
-+			rule_attr, flags);
-+}
-+#endif
++	/* Checks size ranges. */
++	BUILD_BUG_ON(ksize <= 0);
++	BUILD_BUG_ON(ksize < ksize_min);
++	if (usize < ksize_min)
++		return -EINVAL;
++	if (usize > PAGE_SIZE)
++		return -E2BIG;
 +
-+#ifndef landlock_enforce_ruleset_current
-+static inline int landlock_enforce_ruleset_current(const int ruleset_fd,
-+		const __u32 flags)
-+{
-+	errno = 0;
-+	return syscall(__NR_landlock_enforce_ruleset_current, ruleset_fd,
-+			flags);
-+}
-+#endif
-+
-+#define ENV_FS_RO_NAME "LL_FS_RO"
-+#define ENV_FS_RW_NAME "LL_FS_RW"
-+#define ENV_PATH_TOKEN ":"
-+
-+static int parse_path(char *env_path, const char ***const path_list)
-+{
-+	int i, path_nb = 0;
-+
-+	if (env_path) {
-+		path_nb++;
-+		for (i = 0; env_path[i]; i++) {
-+			if (env_path[i] == ENV_PATH_TOKEN[0])
-+				path_nb++;
-+		}
-+	}
-+	*path_list = malloc(path_nb * sizeof(**path_list));
-+	for (i = 0; i < path_nb; i++)
-+		(*path_list)[i] = strsep(&env_path, ENV_PATH_TOKEN);
-+
-+	return path_nb;
++	/* Copies user buffer and fills with zeros. */
++	return copy_struct_from_user(dst, ksize, src, usize);
 +}
 +
-+#define ACCESS_FILE ( \
-+	LANDLOCK_ACCESS_FS_EXECUTE | \
-+	LANDLOCK_ACCESS_FS_WRITE_FILE | \
-+	LANDLOCK_ACCESS_FS_READ_FILE)
-+
-+static int populate_ruleset(
-+		const char *const env_var, const int ruleset_fd,
-+		const __u64 allowed_access)
++/*
++ * This function only contains arithmetic operations with constants, leading to
++ * BUILD_BUG_ON().  The related code is evaluated and checked at build time,
++ * but it is then ignored thanks to compiler optimizations.
++ */
++static void build_check_abi(void)
 +{
-+	int path_nb, i;
-+	char *env_path_name;
-+	const char **path_list = NULL;
-+	struct landlock_path_beneath_attr path_beneath = {
-+		.parent_fd = -1,
-+	};
++	size_t ruleset_size, path_beneath_size;
 +
-+	env_path_name = getenv(env_var);
-+	if (!env_path_name) {
-+		fprintf(stderr, "Missing environment variable %s\n", env_var);
-+		return 1;
-+	}
-+	env_path_name = strdup(env_path_name);
-+	unsetenv(env_var);
-+	path_nb = parse_path(env_path_name, &path_list);
-+	if (path_nb == 1 && path_list[0][0] == '\0') {
-+		fprintf(stderr, "Missing path in %s\n", env_var);
-+		goto err_free_name;
-+	}
++	/*
++	 * For each user space ABI structures, first checks that there is no
++	 * hole in them, then checks that all architectures have the same
++	 * struct size.
++	 */
++	ruleset_size = sizeof_field(struct landlock_ruleset_attr, handled_access_fs);
++	BUILD_BUG_ON(sizeof(struct landlock_ruleset_attr) != ruleset_size);
++	BUILD_BUG_ON(sizeof(struct landlock_ruleset_attr) != 8);
 +
-+	for (i = 0; i < path_nb; i++) {
-+		struct stat statbuf;
++	path_beneath_size = sizeof_field(struct landlock_path_beneath_attr, allowed_access);
++	path_beneath_size += sizeof_field(struct landlock_path_beneath_attr, parent_fd);
++	BUILD_BUG_ON(sizeof(struct landlock_path_beneath_attr) != path_beneath_size);
++	BUILD_BUG_ON(sizeof(struct landlock_path_beneath_attr) != 12);
++}
 +
-+		path_beneath.parent_fd = open(path_list[i], O_PATH |
-+				O_CLOEXEC);
-+		if (path_beneath.parent_fd < 0) {
-+			fprintf(stderr, "Failed to open \"%s\": %s\n",
-+					path_list[i],
-+					strerror(errno));
-+			goto err_free_name;
-+		}
-+		if (fstat(path_beneath.parent_fd, &statbuf)) {
-+			close(path_beneath.parent_fd);
-+			goto err_free_name;
-+		}
-+		path_beneath.allowed_access = allowed_access;
-+		if (!S_ISDIR(statbuf.st_mode))
-+			path_beneath.allowed_access &= ACCESS_FILE;
-+		if (landlock_add_rule(ruleset_fd, LANDLOCK_RULE_PATH_BENEATH,
-+					&path_beneath, 0)) {
-+			fprintf(stderr, "Failed to update the ruleset with \"%s\": %s\n",
-+					path_list[i], strerror(errno));
-+			close(path_beneath.parent_fd);
-+			goto err_free_name;
-+		}
-+		close(path_beneath.parent_fd);
-+	}
-+	free(env_path_name);
++/* Ruleset handling */
++
++static int fop_ruleset_release(struct inode *const inode,
++		struct file *const filp)
++{
++	struct landlock_ruleset *ruleset = filp->private_data;
++
++	landlock_put_ruleset(ruleset);
 +	return 0;
-+
-+err_free_name:
-+	free(env_path_name);
-+	return 1;
 +}
 +
-+#define ACCESS_FS_ROUGHLY_READ ( \
-+	LANDLOCK_ACCESS_FS_EXECUTE | \
-+	LANDLOCK_ACCESS_FS_READ_FILE | \
-+	LANDLOCK_ACCESS_FS_READ_DIR)
-+
-+#define ACCESS_FS_ROUGHLY_WRITE ( \
-+	LANDLOCK_ACCESS_FS_WRITE_FILE | \
-+	LANDLOCK_ACCESS_FS_REMOVE_DIR | \
-+	LANDLOCK_ACCESS_FS_REMOVE_FILE | \
-+	LANDLOCK_ACCESS_FS_MAKE_CHAR | \
-+	LANDLOCK_ACCESS_FS_MAKE_DIR | \
-+	LANDLOCK_ACCESS_FS_MAKE_REG | \
-+	LANDLOCK_ACCESS_FS_MAKE_SOCK | \
-+	LANDLOCK_ACCESS_FS_MAKE_FIFO | \
-+	LANDLOCK_ACCESS_FS_MAKE_BLOCK | \
-+	LANDLOCK_ACCESS_FS_MAKE_SYM)
-+
-+int main(const int argc, char *const argv[], char *const *const envp)
++static ssize_t fop_dummy_read(struct file *const filp, char __user *const buf,
++		const size_t size, loff_t *const ppos)
 +{
-+	const char *cmd_path;
-+	char *const *cmd_argv;
-+	int ruleset_fd;
-+	struct landlock_ruleset_attr ruleset_attr = {
-+		.handled_access_fs = ACCESS_FS_ROUGHLY_READ |
-+			ACCESS_FS_ROUGHLY_WRITE,
-+	};
++	/* Dummy handler to enable FMODE_CAN_READ. */
++	return -EINVAL;
++}
 +
-+	if (argc < 2) {
-+		fprintf(stderr, "usage: %s=\"...\" %s=\"...\" %s <cmd> [args]...\n\n",
-+				ENV_FS_RO_NAME, ENV_FS_RW_NAME, argv[0]);
-+		fprintf(stderr, "Launch a command in a restricted environment.\n\n");
-+		fprintf(stderr, "Environment variables containing paths, each separated by a colon:\n");
-+		fprintf(stderr, "* %s: list of paths allowed to be used in a read-only way.\n",
-+				ENV_FS_RO_NAME);
-+		fprintf(stderr, "* %s: list of paths allowed to be used in a read-write way.\n",
-+				ENV_FS_RO_NAME);
-+		fprintf(stderr, "\nexample:\n"
-+				"%s=\"/bin:/lib:/usr:/proc:/etc:/dev/urandom\" "
-+				"%s=\"/dev/null:/dev/full:/dev/zero:/dev/pts:/tmp\" "
-+				"%s bash -i\n",
-+				ENV_FS_RO_NAME, ENV_FS_RW_NAME, argv[0]);
-+		return 1;
++static ssize_t fop_dummy_write(struct file *const filp,
++		const char __user *const buf, const size_t size,
++		loff_t *const ppos)
++{
++	/* Dummy handler to enable FMODE_CAN_WRITE. */
++	return -EINVAL;
++}
++
++/*
++ * A ruleset file descriptor enables to build a ruleset by adding (i.e.
++ * writing) rule after rule, without relying on the task's context.  This
++ * reentrant design is also used in a read way to enforce the ruleset on the
++ * current task.
++ */
++static const struct file_operations ruleset_fops = {
++	.release = fop_ruleset_release,
++	.read = fop_dummy_read,
++	.write = fop_dummy_write,
++};
++
++/**
++ * sys_landlock_create_ruleset - Create a new ruleset
++ *
++ * @attr: Pointer to a &struct landlock_ruleset_attr identifying the scope of
++ *        the new ruleset.
++ * @size: Size of the pointed &struct landlock_ruleset_attr (needed for
++ *        backward and forward compatibility).
++ * @flags: Must be 0.
++ *
++ * This system call enables to create a new Landlock ruleset, and returns the
++ * related file descriptor on success.
++ *
++ * Possible returned errors are:
++ *
++ * - EOPNOTSUPP: Landlock is supported by the kernel but disabled at boot time;
++ * - EINVAL: @flags is not 0, or unknown access, or too small @size;
++ * - E2BIG or EFAULT: @attr or @size inconsistencies;
++ * - ENOMSG: empty &landlock_ruleset_attr.handled_access_fs.
++ */
++SYSCALL_DEFINE3(landlock_create_ruleset,
++		const struct landlock_ruleset_attr __user *const, attr,
++		const size_t, size, const __u32, flags)
++{
++	struct landlock_ruleset_attr ruleset_attr;
++	struct landlock_ruleset *ruleset;
++	int err, ruleset_fd;
++
++	/* Build-time checks. */
++	build_check_abi();
++
++	if (!landlock_initialized)
++		return -EOPNOTSUPP;
++
++	/* No flag for now. */
++	if (flags)
++		return -EINVAL;
++
++	/* Copies raw user space buffer. */
++	err = copy_min_struct_from_user(&ruleset_attr, sizeof(ruleset_attr),
++			offsetofend(typeof(ruleset_attr), handled_access_fs),
++			attr, size);
++	if (err)
++		return err;
++
++	/* Checks content (and 32-bits cast). */
++	if ((ruleset_attr.handled_access_fs | _LANDLOCK_ACCESS_FS_MASK) !=
++			_LANDLOCK_ACCESS_FS_MASK)
++		return -EINVAL;
++
++	/* Checks arguments and transforms to kernel struct. */
++	ruleset = landlock_create_ruleset(ruleset_attr.handled_access_fs);
++	if (IS_ERR(ruleset))
++		return PTR_ERR(ruleset);
++
++	/* Creates anonymous FD referring to the ruleset. */
++	ruleset_fd = anon_inode_getfd("landlock-ruleset", &ruleset_fops,
++			ruleset, O_RDWR | O_CLOEXEC);
++	if (ruleset_fd < 0)
++		landlock_put_ruleset(ruleset);
++	return ruleset_fd;
++}
++
++/*
++ * Returns an owned ruleset from a FD. It is thus needed to call
++ * landlock_put_ruleset() on the return value.
++ */
++static struct landlock_ruleset *get_ruleset_from_fd(const int fd,
++		const fmode_t mode)
++{
++	struct fd ruleset_f;
++	struct landlock_ruleset *ruleset;
++	int err;
++
++	ruleset_f = fdget(fd);
++	if (!ruleset_f.file)
++		return ERR_PTR(-EBADF);
++
++	/* Checks FD type and access right. */
++	err = 0;
++	if (ruleset_f.file->f_op != &ruleset_fops)
++		err = -EBADFD;
++	else if (!(ruleset_f.file->f_mode & mode))
++		err = -EPERM;
++	if (!err) {
++		ruleset = ruleset_f.file->private_data;
++		landlock_get_ruleset(ruleset);
++	}
++	fdput(ruleset_f);
++	return err ? ERR_PTR(err) : ruleset;
++}
++
++/* Path handling */
++
++/*
++ * @path: Must call put_path(@path) after the call if it succeeded.
++ */
++static int get_path_from_fd(const s32 fd, struct path *const path)
++{
++	struct fd f;
++	int err = 0;
++
++	BUILD_BUG_ON(!__same_type(fd,
++		((struct landlock_path_beneath_attr *)NULL)->parent_fd));
++
++	/* Handles O_PATH. */
++	f = fdget_raw(fd);
++	if (!f.file)
++		return -EBADF;
++	/*
++	 * Only allows O_PATH file descriptor: enables to restrict ambient
++	 * filesystem access without requiring to open and risk leaking or
++	 * misusing a file descriptor.  Forbid internal filesystems (e.g.
++	 * nsfs), including pseudo filesystems that will never be mountable
++	 * (e.g. sockfs, pipefs).
++	 */
++	if (!(f.file->f_mode & FMODE_PATH) ||
++			(f.file->f_path.mnt->mnt_flags & MNT_INTERNAL) ||
++			(f.file->f_path.dentry->d_sb->s_flags & SB_NOUSER) ||
++			d_is_negative(f.file->f_path.dentry) ||
++			IS_PRIVATE(d_backing_inode(f.file->f_path.dentry))) {
++		err = -EBADFD;
++		goto out_fdput;
++	}
++	*path = f.file->f_path;
++	path_get(path);
++
++out_fdput:
++	fdput(f);
++	return err;
++}
++
++/**
++ * sys_landlock_add_rule - Add a new rule to a ruleset
++ *
++ * @ruleset_fd: File descriptor tied to the ruleset which should be extended
++ *		with the new rule.
++ * @rule_type: Identify the structure type pointed to by @rule_attr (only
++ *             LANDLOCK_RULE_PATH_BENEATH for now).
++ * @rule_attr: Pointer to a rule (only of type &struct
++ *             landlock_path_beneath_attr for now).
++ * @flags: Must be 0.
++ *
++ * This system call enables to define a new rule and add it to an existing
++ * ruleset.
++ *
++ * Possible returned errors are:
++ *
++ * - EOPNOTSUPP: Landlock is supported by the kernel but disabled at boot time;
++ * - EINVAL: @flags is not 0, or inconsistent access in the rule (i.e.
++ *   &landlock_path_beneath_attr.allowed_access is not a subset of the rule's
++ *   accesses);
++ * - EBADF: @ruleset_fd is not a file descriptor for the current thread;
++ * - EBADFD: @ruleset_fd is not a ruleset file descriptor;
++ * - EPERM: @ruleset_fd has no write access to the underlying ruleset;
++ * - EFAULT: @rule_attr inconsistency.
++ */
++SYSCALL_DEFINE4(landlock_add_rule,
++		const int, ruleset_fd, const enum landlock_rule_type, rule_type,
++		const void __user *const, rule_attr, const __u32, flags)
++{
++	struct landlock_path_beneath_attr path_beneath_attr;
++	struct path path;
++	struct landlock_ruleset *ruleset;
++	int res, err;
++
++	if (!landlock_initialized)
++		return -EOPNOTSUPP;
++
++	/* No flag for now. */
++	if (flags)
++		return -EINVAL;
++
++	if (rule_type != LANDLOCK_RULE_PATH_BENEATH)
++		return -EINVAL;
++
++	/* Copies raw user space buffer, only one type for now. */
++	res = copy_from_user(&path_beneath_attr, rule_attr,
++			sizeof(path_beneath_attr));
++	if (res)
++		return -EFAULT;
++
++	/* Gets and checks the ruleset. */
++	ruleset = get_ruleset_from_fd(ruleset_fd, FMODE_CAN_WRITE);
++	if (IS_ERR(ruleset))
++		return PTR_ERR(ruleset);
++
++	/*
++	 * Checks that allowed_access matches the @ruleset constraints
++	 * (ruleset->fs_access_mask is automatically upgraded to 64-bits).
++	 * Allows empty allowed_access i.e., deny @ruleset->fs_access_mask .
++	 */
++	if ((path_beneath_attr.allowed_access | ruleset->fs_access_mask) !=
++			ruleset->fs_access_mask) {
++		err = -EINVAL;
++		goto out_put_ruleset;
 +	}
 +
-+	ruleset_fd = landlock_create_ruleset(&ruleset_attr, sizeof(ruleset_attr), 0);
-+	if (ruleset_fd < 0) {
-+		perror("Failed to create a ruleset");
-+		return 1;
-+	}
-+	if (populate_ruleset(ENV_FS_RO_NAME, ruleset_fd,
-+				ACCESS_FS_ROUGHLY_READ)) {
-+		goto err_close_ruleset;
-+	}
-+	if (populate_ruleset(ENV_FS_RW_NAME, ruleset_fd,
-+				ACCESS_FS_ROUGHLY_READ | ACCESS_FS_ROUGHLY_WRITE)) {
-+		goto err_close_ruleset;
-+	}
-+	if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) {
-+		perror("Failed to restrict privileges");
-+		goto err_close_ruleset;
-+	}
-+	if (landlock_enforce_ruleset_current(ruleset_fd, 0)) {
-+		perror("Failed to enforce ruleset");
-+		goto err_close_ruleset;
-+	}
-+	close(ruleset_fd);
++	/* Gets and checks the new rule. */
++	err = get_path_from_fd(path_beneath_attr.parent_fd, &path);
++	if (err)
++		goto out_put_ruleset;
 +
-+	cmd_path = argv[1];
-+	cmd_argv = argv + 1;
-+	execvpe(cmd_path, cmd_argv, envp);
-+	fprintf(stderr, "Failed to execute \"%s\": %s\n", cmd_path,
-+			strerror(errno));
-+	fprintf(stderr, "Hint: access to the binary, the interpreter or shared libraries may be denied.\n");
-+	return 1;
++	/* Imports the new rule. */
++	err = landlock_append_fs_rule(ruleset, &path,
++			path_beneath_attr.allowed_access);
++	path_put(&path);
 +
-+err_close_ruleset:
-+	close(ruleset_fd);
-+	return 1;
++out_put_ruleset:
++	landlock_put_ruleset(ruleset);
++	return err;
++}
++
++/* Enforcement */
++
++/**
++ * sys_landlock_enforce_ruleset_current - Enforce a ruleset on the current task
++ *
++ * @ruleset_fd: File descriptor tied to the ruleset to merge with the target.
++ * @flags: Must be 0.
++ *
++ * This system call enables to enforce a Landlock ruleset on the current
++ * thread.  Enforcing a ruleset requires that the task has CAP_SYS_ADMIN in its
++ * namespace or is running with no_new_privs.  This avoids scenarios where
++ * unprivileged tasks can affect the behavior of privileged children.
++ *
++ * Possible returned errors are:
++ *
++ * - EOPNOTSUPP: Landlock is supported by the kernel but disabled at boot time;
++ * - EINVAL: @flags is not 0.
++ * - EBADF: @ruleset_fd is not a file descriptor for the current thread;
++ * - EBADFD: @ruleset_fd is not a ruleset file descriptor;
++ * - EPERM: @ruleset_fd has no read access to the underlying ruleset, or the
++ *   current thread is not running with no_new_privs, or it doesn't have
++ *   CAP_SYS_ADMIN in its namespace.
++ */
++SYSCALL_DEFINE2(landlock_enforce_ruleset_current,
++		const int, ruleset_fd, const __u32, flags)
++{
++	struct landlock_ruleset *new_dom, *ruleset;
++	struct cred *new_cred;
++	struct landlock_cred_security *new_llcred;
++	int err;
++
++	if (!landlock_initialized)
++		return -EOPNOTSUPP;
++
++	/* No flag for now. */
++	if (flags)
++		return -EINVAL;
++
++	/*
++	 * Similar checks as for seccomp(2), except that an -EPERM may be
++	 * returned.
++	 */
++	if (!task_no_new_privs(current) &&
++			!ns_capable_noaudit(current_user_ns(), CAP_SYS_ADMIN))
++		return -EPERM;
++
++	/* Gets and checks the ruleset. */
++	ruleset = get_ruleset_from_fd(ruleset_fd, FMODE_CAN_READ);
++	if (IS_ERR(ruleset))
++		return PTR_ERR(ruleset);
++
++	/* Prepares new credentials. */
++	new_cred = prepare_creds();
++	if (!new_cred) {
++		err = -ENOMEM;
++		goto out_put_ruleset;
++	}
++	new_llcred = landlock_cred(new_cred);
++
++	/*
++	 * There is no possible race condition while copying and manipulating
++	 * the current credentials because they are dedicated per thread.
++	 */
++	new_dom = landlock_merge_ruleset(new_llcred->domain, ruleset);
++	if (IS_ERR(new_dom)) {
++		err = PTR_ERR(new_dom);
++		goto out_put_creds;
++	}
++
++	/* Replaces the old (prepared) domain. */
++	landlock_put_ruleset(new_llcred->domain);
++	new_llcred->domain = new_dom;
++
++	landlock_put_ruleset(ruleset);
++	return commit_creds(new_cred);
++
++out_put_creds:
++	abort_creds(new_cred);
++
++out_put_ruleset:
++	landlock_put_ruleset(ruleset);
++	return err;
 +}
 -- 
 2.28.0
