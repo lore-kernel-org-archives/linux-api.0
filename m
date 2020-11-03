@@ -2,67 +2,68 @@ Return-Path: <SRS0=E/Fr=EJ=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-20.4 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+X-Spam-Status: No, score=-25.4 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT,USER_IN_DEF_DKIM_WL autolearn=ham
-	autolearn_force=no version=3.4.0
+	INCLUDES_PATCH,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT,USER_IN_DEF_DKIM_WL
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0F934C388F2
-	for <linux-api@archiver.kernel.org>; Tue,  3 Nov 2020 04:10:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 18B76C388F2
+	for <linux-api@archiver.kernel.org>; Tue,  3 Nov 2020 04:10:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id ABF432225E
-	for <linux-api@archiver.kernel.org>; Tue,  3 Nov 2020 04:10:08 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BCB2622277
+	for <linux-api@archiver.kernel.org>; Tue,  3 Nov 2020 04:10:12 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="nhcnUQV+"
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="pxCPzGUT"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1725958AbgKCEKI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 2 Nov 2020 23:10:08 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35622 "EHLO
+        id S1725980AbgKCEKM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 2 Nov 2020 23:10:12 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35638 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725940AbgKCEKI (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 2 Nov 2020 23:10:08 -0500
-Received: from mail-yb1-xb49.google.com (mail-yb1-xb49.google.com [IPv6:2607:f8b0:4864:20::b49])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 021C7C0617A6
-        for <linux-api@vger.kernel.org>; Mon,  2 Nov 2020 20:10:08 -0800 (PST)
-Received: by mail-yb1-xb49.google.com with SMTP id a12so16560185ybc.20
-        for <linux-api@vger.kernel.org>; Mon, 02 Nov 2020 20:10:07 -0800 (PST)
+        with ESMTP id S1725940AbgKCEKM (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 2 Nov 2020 23:10:12 -0500
+Received: from mail-qv1-xf4a.google.com (mail-qv1-xf4a.google.com [IPv6:2607:f8b0:4864:20::f4a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EC101C0617A6
+        for <linux-api@vger.kernel.org>; Mon,  2 Nov 2020 20:10:11 -0800 (PST)
+Received: by mail-qv1-xf4a.google.com with SMTP id x34so9548916qvx.7
+        for <linux-api@vger.kernel.org>; Mon, 02 Nov 2020 20:10:11 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=google.com; s=20161025;
         h=sender:date:in-reply-to:message-id:mime-version:references:subject
          :from:to:cc;
-        bh=59sGcNP4h61z0LUyEOMh2LU3GdIsYbG4zMxVp1QCZaQ=;
-        b=nhcnUQV+Byb3ifYqbQkCCg8IY9rPRL0347EucNliC0NqmvFmaiBkmyZp5cIvQ9hlIw
-         IyLzUKkOXBOhAGSHs/09QezCh7ljT2ztGTwV9S3iePR7Z6StEye3HcXwi6x6jS1e7/sR
-         FDhJG2priVeJ9iuszueKBTOm8HosvQJAZBPSwLJWdZKMubyYMdGMLlFsWEKYlq3z1FKR
-         Z6YpdC/L31XgeIySGH/JAOrQ6GoYqTpuGr6Xwn3QEd2LXFgMyIx2QHMvFxl8jVQRk6Ec
-         jHwc0SohuSb5WmIQwbjIdyFk2TAEZyNOBtKh/mP8AL4nuBUG6lXxQcnSNBoU3BJefZGY
-         KRCw==
+        bh=pxTIdVkSiwy0DW0JwGKVWppwQt2XT4H9j3x0aB9cgOs=;
+        b=pxCPzGUTk9E0jl11FYJ5iivu7t8FZ1qBza2Mub+UWd5WP1q3snOuwz0zC2fgbZUNoU
+         WQGkGXY7++7B6TWQBiQsfSt2PaYh8IG9sPJW6j4RSxytY9dRilPSNSR0Qov3P9Ga3eoR
+         pAqbj7mPVLACUpIvzdYu0VAKmgNzdrxg9nyG8+vZb+LKZJNQsLo1WRgZvhSA8Tgi9qeY
+         c/m8JYa4VFoRY4bxxIM6leKhLoJit9JBpZXlXyyxJbOxd1HnbKYBEPEzj21ER7gygLnr
+         jANBhO8MzDt284x4dYMkEBThm2rXckC2BrLg759sf5gpmgeGpJ5WjZBGZD1cSBxPSjfd
+         UV8Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:in-reply-to:message-id:mime-version
          :references:subject:from:to:cc;
-        bh=59sGcNP4h61z0LUyEOMh2LU3GdIsYbG4zMxVp1QCZaQ=;
-        b=VyaCko0nyh4W0jUUiv8sTadFeWCgJRbzPEJayMLFXqfhmRcH42hZYEI8P58rWV9IO0
-         HAhhewqwA25+nyijHIB+hUrbcw9xBUAcYlp3do1pcorFA2Iq3OOktAjy8Kk7kI+Dulbn
-         NuL2IoWtD9IXvpQ5wAJ9hRUROP50Gt86BscScuGK1d4G1pdjZbwQQce9bSWdviogaxsR
-         o1rT9lvGgvMk4kT66UfWDxPL4Cm6DKcVv2oz3PyLxznDZ/wMl2HPyUUzWtkiZfklM6oT
-         0e0dkgteD1kurDWqkcaaDn6B/npfIDpmwvl4fL//kyqzlp6pngC46c2ADnvXrkyEzw5d
-         w9OQ==
-X-Gm-Message-State: AOAM533/fYpGgY2HdVHcZqMXeicTX+HO0VWeuCvOHLl/wpcnepSM3P7X
-        mdOW3j111dFE8E0XiNRhvrOINNg=
-X-Google-Smtp-Source: ABdhPJwV8ieWMf2XUr77nrZx/jVanpdK1gWvrJKo+dNmFv+nBgOFcbPfJhQ5TN8IAM8eLFXXT5N2Z+c=
+        bh=pxTIdVkSiwy0DW0JwGKVWppwQt2XT4H9j3x0aB9cgOs=;
+        b=Kt8fXZBfW01/qUNiemg2Pwm/tAdBINvu9zeheQU4ay9ZnNcKYnlpt+eyez44qhy3em
+         ZJ+0WaoeUjvuurht27+xi61lNtiJmopkZtzqlyusr0Jp+sXA34A5W8AK1DRrvpK+5AKL
+         xjpTjSZbozG64dyeGuWau0xtPCDwPBEoUCNUlEbzM07Mt6Ygq6rYILskFjkZJ5+jvK+r
+         uLSRMD+zs13Sa5uBQSuOnscLo+gdDawiHN7PIjHRigrismaNZTynxOWOV+8p+KXTacgH
+         RVMkBGwZ2LQNiFZ40IkyAcpAiH0SxBNBi8eD2HRlmW4S8ga/t8Z3Zlv1on16/PKjnq7X
+         DocQ==
+X-Gm-Message-State: AOAM533B+LkrzLawnn23k83x7DtMm5nBZmJ7VSfTf2nyu/cxKqlNE0Ge
+        FND6kD43bYmWQBRndFiCgAPhKV0=
+X-Google-Smtp-Source: ABdhPJwyAyipL+HC38PCFLuHDNhD7vRkpgNp+y+ZJT7Q/IPjeQDGpnajlCcuM1trpDJCKlAqLZnkzn0=
 Sender: "pcc via sendgmr" <pcc@pcc-desktop.svl.corp.google.com>
 X-Received: from pcc-desktop.svl.corp.google.com ([2620:15c:2ce:0:7220:84ff:fe09:385a])
- (user=pcc job=sendgmr) by 2002:a25:9701:: with SMTP id d1mr24145918ybo.409.1604376607226;
- Mon, 02 Nov 2020 20:10:07 -0800 (PST)
-Date:   Mon,  2 Nov 2020 20:09:38 -0800
+ (user=pcc job=sendgmr) by 2002:ad4:4e84:: with SMTP id dy4mr13013702qvb.47.1604376611105;
+ Mon, 02 Nov 2020 20:10:11 -0800 (PST)
+Date:   Mon,  2 Nov 2020 20:09:40 -0800
 In-Reply-To: <cover.1604376407.git.pcc@google.com>
-Message-Id: <e67e653cd06c573e932e7d72223dd7d48fcd21d3.1604376407.git.pcc@google.com>
+Message-Id: <8997d900debfcb424dbe721fc2ccaa102560c286.1604376407.git.pcc@google.com>
 Mime-Version: 1.0
 References: <cover.1604376407.git.pcc@google.com>
 X-Mailer: git-send-email 2.29.1.341.ge80a0c044ae-goog
-Subject: [PATCH v13 2/8] parisc: start using signal-defs.h
+Subject: [PATCH v13 4/8] signal: clear non-uapi flag bits when
+ passing/returning sa_flags
 From:   Peter Collingbourne <pcc@google.com>
 To:     Catalin Marinas <catalin.marinas@arm.com>,
         Evgenii Stepanov <eugenis@google.com>,
@@ -84,48 +85,138 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-We currently include signal-defs.h on all architectures except parisc.
-Make parisc fall in line. This will make maintenance easier once the
-flag bits are moved here.
+Previously we were not clearing non-uapi flag bits in
+sigaction.sa_flags when storing the userspace-provided sa_flags or
+when returning them via oldact. Start doing so.
 
+This allows userspace to detect missing support for flag bits and
+allows the kernel to use non-uapi bits internally, as we are already
+doing in arch/x86 for two flag bits. Now that this change is in
+place, we no longer need the code in arch/x86 that was hiding these
+bits from userspace, so remove it.
+
+This is technically a userspace-visible behavior change for sigaction, as
+the unknown bits returned via oldact.sa_flags are no longer set. However,
+we are free to define the behavior for unknown bits exactly because
+their behavior is currently undefined, so for now we can define the
+meaning of each of them to be "clear the bit in oldact.sa_flags unless
+the bit becomes known in the future". Furthermore, this behavior is
+consistent with OpenBSD [1], illumos [2] and XNU [3] (FreeBSD [4] and
+NetBSD [5] fail the syscall if unknown bits are set). So there is some
+precedent for this behavior in other kernels, and in particular in XNU,
+which is probably the most popular kernel among those that I looked at,
+which means that this change is less likely to be a compatibility issue.
+
+Link: [1] https://github.com/openbsd/src/blob/f634a6a4b5bf832e9c1de77f7894ae2625e74484/sys/kern/kern_sig.c#L278
+Link: [2] https://github.com/illumos/illumos-gate/blob/76f19f5fdc974fe5be5c82a556e43a4df93f1de1/usr/src/uts/common/syscall/sigaction.c#L86
+Link: [3] https://github.com/apple/darwin-xnu/blob/a449c6a3b8014d9406c2ddbdc81795da24aa7443/bsd/kern/kern_sig.c#L480
+Link: [4] https://github.com/freebsd/freebsd/blob/eded70c37057857c6e23fae51f86b8f8f43cd2d0/sys/kern/kern_sig.c#L699
+Link: [5] https://github.com/NetBSD/src/blob/3365779becdcedfca206091a645a0e8e22b2946e/sys/kern/sys_sig.c#L473
 Signed-off-by: Peter Collingbourne <pcc@google.com>
-Acked-by: Helge Deller <deller@gmx.de>
-Link: https://linux-review.googlesource.com/id/If03a5135fb514fe96548fb74610e6c3586a04064
+Reviewed-by: Dave Martin <Dave.Martin@arm.com>
+Link: https://linux-review.googlesource.com/id/I35aab6f5be932505d90f3b3450c083b4db1eca86
 ---
- arch/parisc/include/uapi/asm/signal.h | 13 +------------
- 1 file changed, 1 insertion(+), 12 deletions(-)
+v10:
+- rename SA_UAPI_FLAGS -> UAPI_SA_FLAGS
+- refactor how we define it to avoid mentioning flags more
+  than once
 
-diff --git a/arch/parisc/include/uapi/asm/signal.h b/arch/parisc/include/uapi/asm/signal.h
-index d9c51769851a..9e6f87bc8a73 100644
---- a/arch/parisc/include/uapi/asm/signal.h
-+++ b/arch/parisc/include/uapi/asm/signal.h
-@@ -68,14 +68,7 @@
- #define MINSIGSTKSZ	2048
- #define SIGSTKSZ	8192
+ arch/arm/include/asm/signal.h    |  2 ++
+ arch/parisc/include/asm/signal.h |  2 ++
+ arch/x86/kernel/signal_compat.c  |  7 -------
+ include/linux/signal_types.h     | 12 ++++++++++++
+ kernel/signal.c                  | 10 ++++++++++
+ 5 files changed, 26 insertions(+), 7 deletions(-)
+
+diff --git a/arch/arm/include/asm/signal.h b/arch/arm/include/asm/signal.h
+index 65530a042009..430be7774402 100644
+--- a/arch/arm/include/asm/signal.h
++++ b/arch/arm/include/asm/signal.h
+@@ -17,6 +17,8 @@ typedef struct {
+ 	unsigned long sig[_NSIG_WORDS];
+ } sigset_t;
  
++#define __ARCH_UAPI_SA_FLAGS	(SA_THIRTYTWO | SA_RESTORER)
++
+ #define __ARCH_HAS_SA_RESTORER
+ 
+ #include <asm/sigcontext.h>
+diff --git a/arch/parisc/include/asm/signal.h b/arch/parisc/include/asm/signal.h
+index 715c96ba2ec8..30dd1e43ef88 100644
+--- a/arch/parisc/include/asm/signal.h
++++ b/arch/parisc/include/asm/signal.h
+@@ -21,6 +21,8 @@ typedef struct {
+ 	unsigned long sig[_NSIG_WORDS];
+ } sigset_t;
+ 
++#define __ARCH_UAPI_SA_FLAGS	_SA_SIGGFAULT
++
+ #include <asm/sigcontext.h>
+ 
+ #endif /* !__ASSEMBLY */
+diff --git a/arch/x86/kernel/signal_compat.c b/arch/x86/kernel/signal_compat.c
+index a7f3e12cfbdb..ddfd919be46c 100644
+--- a/arch/x86/kernel/signal_compat.c
++++ b/arch/x86/kernel/signal_compat.c
+@@ -165,16 +165,9 @@ void sigaction_compat_abi(struct k_sigaction *act, struct k_sigaction *oact)
+ {
+ 	signal_compat_build_tests();
+ 
+-	/* Don't leak in-kernel non-uapi flags to user-space */
+-	if (oact)
+-		oact->sa.sa_flags &= ~(SA_IA32_ABI | SA_X32_ABI);
 -
--#define SIG_BLOCK          0	/* for blocking signals */
--#define SIG_UNBLOCK        1	/* for unblocking signals */
--#define SIG_SETMASK        2	/* for setting the signal mask */
+ 	if (!act)
+ 		return;
+ 
+-	/* Don't let flags to be set from userspace */
+-	act->sa.sa_flags &= ~(SA_IA32_ABI | SA_X32_ABI);
 -
--#define SIG_DFL	((__sighandler_t)0)	/* default signal handling */
--#define SIG_IGN	((__sighandler_t)1)	/* ignore signal */
--#define SIG_ERR	((__sighandler_t)-1)	/* error return from signal */
-+#include <asm-generic/signal-defs.h>
+ 	if (in_ia32_syscall())
+ 		act->sa.sa_flags |= SA_IA32_ABI;
+ 	if (in_x32_syscall())
+diff --git a/include/linux/signal_types.h b/include/linux/signal_types.h
+index f8a90ae9c6ec..a7887ad84d36 100644
+--- a/include/linux/signal_types.h
++++ b/include/linux/signal_types.h
+@@ -68,4 +68,16 @@ struct ksignal {
+ 	int sig;
+ };
  
- # ifndef __ASSEMBLY__
++#ifndef __ARCH_UAPI_SA_FLAGS
++#ifdef SA_RESTORER
++#define __ARCH_UAPI_SA_FLAGS	SA_RESTORER
++#else
++#define __ARCH_UAPI_SA_FLAGS	0
++#endif
++#endif
++
++#define UAPI_SA_FLAGS                                                          \
++	(SA_NOCLDSTOP | SA_NOCLDWAIT | SA_SIGINFO | SA_ONSTACK | SA_RESTART |  \
++	 SA_NODEFER | SA_RESETHAND | __ARCH_UAPI_SA_FLAGS)
++
+ #endif /* _LINUX_SIGNAL_TYPES_H */
+diff --git a/kernel/signal.c b/kernel/signal.c
+index ef8f2a28d37c..8f5bd12ee41b 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -3985,6 +3985,16 @@ int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
+ 	if (oact)
+ 		*oact = *k;
  
-@@ -84,10 +77,6 @@
- /* Avoid too many header ordering problems.  */
- struct siginfo;
++	/*
++	 * Clear unknown flag bits in order to allow userspace to detect missing
++	 * support for flag bits and to allow the kernel to use non-uapi bits
++	 * internally.
++	 */
++	if (act)
++		act->sa.sa_flags &= UAPI_SA_FLAGS;
++	if (oact)
++		oact->sa.sa_flags &= UAPI_SA_FLAGS;
++
+ 	sigaction_compat_abi(act, oact);
  
--/* Type of a signal handler.  */
--typedef void __signalfn_t(int);
--typedef __signalfn_t __user *__sighandler_t;
--
- typedef struct sigaltstack {
- 	void __user *ss_sp;
- 	int ss_flags;
+ 	if (act) {
 -- 
 2.29.1.341.ge80a0c044ae-goog
 
