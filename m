@@ -7,24 +7,24 @@ X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CE225C64E7C
-	for <linux-api@archiver.kernel.org>; Tue,  3 Nov 2020 18:22:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7FB4BC64E7B
+	for <linux-api@archiver.kernel.org>; Tue,  3 Nov 2020 18:22:43 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 960F52071A
-	for <linux-api@archiver.kernel.org>; Tue,  3 Nov 2020 18:22:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3D5802071A
+	for <linux-api@archiver.kernel.org>; Tue,  3 Nov 2020 18:22:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729388AbgKCSWi (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 3 Nov 2020 13:22:38 -0500
-Received: from smtp-bc08.mail.infomaniak.ch ([45.157.188.8]:33509 "EHLO
-        smtp-bc08.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1729343AbgKCSVX (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 3 Nov 2020 13:21:23 -0500
-Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
-        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4CQdQQ5nsLzlhHh7;
-        Tue,  3 Nov 2020 19:21:18 +0100 (CET)
+        id S1729309AbgKCSWh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 3 Nov 2020 13:22:37 -0500
+Received: from smtp-42a8.mail.infomaniak.ch ([84.16.66.168]:55111 "EHLO
+        smtp-42a8.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1729359AbgKCSVY (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 3 Nov 2020 13:21:24 -0500
+Received: from smtp-2-0001.mail.infomaniak.ch (unknown [10.5.36.108])
+        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4CQdQW33Z8zlhl6F;
+        Tue,  3 Nov 2020 19:21:23 +0100 (CET)
 Received: from localhost (unknown [94.23.54.103])
-        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4CQdQQ3XLhzlh8TK;
-        Tue,  3 Nov 2020 19:21:18 +0100 (CET)
+        by smtp-2-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4CQdQV1vstzlh8T2;
+        Tue,  3 Nov 2020 19:21:22 +0100 (CET)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     James Morris <jmorris@namei.org>,
         "Serge E . Hallyn" <serge@hallyn.com>
@@ -47,9 +47,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         linux-kselftest@vger.kernel.org,
         linux-security-module@vger.kernel.org, x86@kernel.org,
         =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@linux.microsoft.com>
-Subject: [PATCH v23 03/12] landlock: Set up the security framework and manage credentials
-Date:   Tue,  3 Nov 2020 19:21:00 +0100
-Message-Id: <20201103182109.1014179-4-mic@digikod.net>
+Subject: [PATCH v23 06/12] fs,security: Add sb_delete hook
+Date:   Tue,  3 Nov 2020 19:21:03 +0100
+Message-Id: <20201103182109.1014179-7-mic@digikod.net>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <20201103182109.1014179-1-mic@digikod.net>
 References: <20201103182109.1014179-1-mic@digikod.net>
@@ -62,12 +62,15 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Mickaël Salaün <mic@linux.microsoft.com>
 
-Process's credentials point to a Landlock domain, which is underneath
-implemented with a ruleset.  In the following commits, this domain is
-used to check and enforce the ptrace and filesystem security policies.
-A domain is inherited from a parent to its child the same way a thread
-inherits a seccomp policy.
+The sb_delete security hook is called when shutting down a superblock,
+which may be useful to release kernel objects tied to the superblock's
+lifetime (e.g. inodes).
 
+This new hook is needed by Landlock to release (ephemerally) tagged
+struct inodes.  This comes from the unprivileged nature of Landlock
+described in the next commit.
+
+Cc: Al Viro <viro@zeniv.linux.org.uk>
 Cc: James Morris <jmorris@namei.org>
 Cc: Kees Cook <keescook@chromium.org>
 Cc: Serge E. Hallyn <serge@hallyn.com>
@@ -75,275 +78,93 @@ Signed-off-by: Mickaël Salaün <mic@linux.microsoft.com>
 Reviewed-by: Jann Horn <jannh@google.com>
 ---
 
-Changes since v21:
-* Fix copyright dates.
-
 Changes since v17:
-* Constify returned domain pointers from landlock_get_current_domain()
-  and landlock_get_task_domain() helpers.
-
-Changes since v15:
-* Optimize landlocked() for current thread.
-* Display the greeting message when everything is initialized.
-
-Changes since v14:
-* Uses pr_fmt from common.h .
-* Constify variables.
-* Remove useless NULL initialization.
-
-Changes since v13:
-* totally get ride of the seccomp dependency
-* only keep credential management and LSM setup.
-
-Previous changes:
-https://lore.kernel.org/lkml/20191104172146.30797-4-mic@digikod.net/
+* Initial patch to replace the direct call to landlock_release_inodes()
+  (requested by James Morris).
+  https://lore.kernel.org/lkml/alpine.LRH.2.21.2005150536440.7929@namei.org/
 ---
- security/Kconfig           | 10 +++----
- security/landlock/Makefile |  3 +-
- security/landlock/common.h | 20 +++++++++++++
- security/landlock/cred.c   | 46 ++++++++++++++++++++++++++++++
- security/landlock/cred.h   | 58 ++++++++++++++++++++++++++++++++++++++
- security/landlock/setup.c  | 31 ++++++++++++++++++++
- security/landlock/setup.h  | 16 +++++++++++
- 7 files changed, 178 insertions(+), 6 deletions(-)
- create mode 100644 security/landlock/common.h
- create mode 100644 security/landlock/cred.c
- create mode 100644 security/landlock/cred.h
- create mode 100644 security/landlock/setup.c
- create mode 100644 security/landlock/setup.h
+ fs/super.c                    | 1 +
+ include/linux/lsm_hook_defs.h | 1 +
+ include/linux/lsm_hooks.h     | 2 ++
+ include/linux/security.h      | 4 ++++
+ security/security.c           | 5 +++++
+ 5 files changed, 13 insertions(+)
 
-diff --git a/security/Kconfig b/security/Kconfig
-index 15a4342b5d01..0ced7fd33e4d 100644
---- a/security/Kconfig
-+++ b/security/Kconfig
-@@ -278,11 +278,11 @@ endchoice
+diff --git a/fs/super.c b/fs/super.c
+index a51c2083cd6b..fea9475189f7 100644
+--- a/fs/super.c
++++ b/fs/super.c
+@@ -454,6 +454,7 @@ void generic_shutdown_super(struct super_block *sb)
+ 		evict_inodes(sb);
+ 		/* only nonzero refcount inodes can have marks */
+ 		fsnotify_sb_delete(sb);
++		security_sb_delete(sb);
  
- config LSM
- 	string "Ordered list of enabled LSMs"
--	default "lockdown,yama,loadpin,safesetid,integrity,smack,selinux,tomoyo,apparmor,bpf" if DEFAULT_SECURITY_SMACK
--	default "lockdown,yama,loadpin,safesetid,integrity,apparmor,selinux,smack,tomoyo,bpf" if DEFAULT_SECURITY_APPARMOR
--	default "lockdown,yama,loadpin,safesetid,integrity,tomoyo,bpf" if DEFAULT_SECURITY_TOMOYO
--	default "lockdown,yama,loadpin,safesetid,integrity,bpf" if DEFAULT_SECURITY_DAC
--	default "lockdown,yama,loadpin,safesetid,integrity,selinux,smack,tomoyo,apparmor,bpf"
-+	default "landlock,lockdown,yama,loadpin,safesetid,integrity,smack,selinux,tomoyo,apparmor,bpf" if DEFAULT_SECURITY_SMACK
-+	default "landlock,lockdown,yama,loadpin,safesetid,integrity,apparmor,selinux,smack,tomoyo,bpf" if DEFAULT_SECURITY_APPARMOR
-+	default "landlock,lockdown,yama,loadpin,safesetid,integrity,tomoyo,bpf" if DEFAULT_SECURITY_TOMOYO
-+	default "landlock,lockdown,yama,loadpin,safesetid,integrity,bpf" if DEFAULT_SECURITY_DAC
-+	default "landlock,lockdown,yama,loadpin,safesetid,integrity,selinux,smack,tomoyo,apparmor,bpf"
- 	help
- 	  A comma-separated list of LSMs, in initialization order.
- 	  Any LSMs left off this list will be ignored. This can be
-diff --git a/security/landlock/Makefile b/security/landlock/Makefile
-index d846eba445bb..041ea242e627 100644
---- a/security/landlock/Makefile
-+++ b/security/landlock/Makefile
-@@ -1,3 +1,4 @@
- obj-$(CONFIG_SECURITY_LANDLOCK) := landlock.o
+ 		if (sb->s_dio_done_wq) {
+ 			destroy_workqueue(sb->s_dio_done_wq);
+diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
+index 32a940117e7a..1ba9b4dfecb3 100644
+--- a/include/linux/lsm_hook_defs.h
++++ b/include/linux/lsm_hook_defs.h
+@@ -59,6 +59,7 @@ LSM_HOOK(int, 0, fs_context_dup, struct fs_context *fc,
+ LSM_HOOK(int, -ENOPARAM, fs_context_parse_param, struct fs_context *fc,
+ 	 struct fs_parameter *param)
+ LSM_HOOK(int, 0, sb_alloc_security, struct super_block *sb)
++LSM_HOOK(void, LSM_RET_VOID, sb_delete, struct super_block *sb)
+ LSM_HOOK(void, LSM_RET_VOID, sb_free_security, struct super_block *sb)
+ LSM_HOOK(void, LSM_RET_VOID, sb_free_mnt_opts, void *mnt_opts)
+ LSM_HOOK(int, 0, sb_eat_lsm_opts, char *orig, void **mnt_opts)
+diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
+index ff0f03a45c56..dbfcec05a176 100644
+--- a/include/linux/lsm_hooks.h
++++ b/include/linux/lsm_hooks.h
+@@ -108,6 +108,8 @@
+  *	allocated.
+  *	@sb contains the super_block structure to be modified.
+  *	Return 0 if operation was successful.
++ * @sb_delete:
++ *	Release objects tied to a superblock (e.g. inodes).
+  * @sb_free_security:
+  *	Deallocate and clear the sb->s_security field.
+  *	@sb contains the super_block structure to be modified.
+diff --git a/include/linux/security.h b/include/linux/security.h
+index bc2725491560..a4603b62d444 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -287,6 +287,7 @@ void security_bprm_committed_creds(struct linux_binprm *bprm);
+ int security_fs_context_dup(struct fs_context *fc, struct fs_context *src_fc);
+ int security_fs_context_parse_param(struct fs_context *fc, struct fs_parameter *param);
+ int security_sb_alloc(struct super_block *sb);
++void security_sb_delete(struct super_block *sb);
+ void security_sb_free(struct super_block *sb);
+ void security_free_mnt_opts(void **mnt_opts);
+ int security_sb_eat_lsm_opts(char *options, void **mnt_opts);
+@@ -619,6 +620,9 @@ static inline int security_sb_alloc(struct super_block *sb)
+ 	return 0;
+ }
  
--landlock-y := object.o ruleset.o
-+landlock-y := setup.o object.o ruleset.o \
-+	cred.o
-diff --git a/security/landlock/common.h b/security/landlock/common.h
-new file mode 100644
-index 000000000000..5dc0fe15707d
---- /dev/null
-+++ b/security/landlock/common.h
-@@ -0,0 +1,20 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Landlock LSM - Common constants and helpers
-+ *
-+ * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
-+ * Copyright © 2018-2020 ANSSI
-+ */
++static inline void security_sb_delete(struct super_block *sb)
++{ }
 +
-+#ifndef _SECURITY_LANDLOCK_COMMON_H
-+#define _SECURITY_LANDLOCK_COMMON_H
-+
-+#define LANDLOCK_NAME "landlock"
-+
-+#ifdef pr_fmt
-+#undef pr_fmt
-+#endif
-+
-+#define pr_fmt(fmt) LANDLOCK_NAME ": " fmt
-+
-+#endif /* _SECURITY_LANDLOCK_COMMON_H */
-diff --git a/security/landlock/cred.c b/security/landlock/cred.c
-new file mode 100644
-index 000000000000..7074149d2517
---- /dev/null
-+++ b/security/landlock/cred.c
-@@ -0,0 +1,46 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Landlock LSM - Credential hooks
-+ *
-+ * Copyright © 2017-2020 Mickaël Salaün <mic@digikod.net>
-+ * Copyright © 2018-2020 ANSSI
-+ */
-+
-+#include <linux/cred.h>
-+#include <linux/lsm_hooks.h>
-+
-+#include "common.h"
-+#include "cred.h"
-+#include "ruleset.h"
-+#include "setup.h"
-+
-+static int hook_cred_prepare(struct cred *const new,
-+		const struct cred *const old, const gfp_t gfp)
+ static inline void security_sb_free(struct super_block *sb)
+ { }
+ 
+diff --git a/security/security.c b/security/security.c
+index 4ffd6c3af9d7..4563e7a79216 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -899,6 +899,11 @@ int security_sb_alloc(struct super_block *sb)
+ 	return rc;
+ }
+ 
++void security_sb_delete(struct super_block *sb)
 +{
-+	const struct landlock_cred_security *cred_old = landlock_cred(old);
-+	struct landlock_cred_security *cred_new = landlock_cred(new);
-+	struct landlock_ruleset *dom_old;
-+
-+	dom_old = cred_old->domain;
-+	if (dom_old) {
-+		landlock_get_ruleset(dom_old);
-+		cred_new->domain = dom_old;
-+	}
-+	return 0;
++	call_void_hook(sb_delete, sb);
 +}
 +
-+static void hook_cred_free(struct cred *const cred)
-+{
-+	landlock_put_ruleset_deferred(landlock_cred(cred)->domain);
-+}
-+
-+static struct security_hook_list landlock_hooks[] __lsm_ro_after_init = {
-+	LSM_HOOK_INIT(cred_prepare, hook_cred_prepare),
-+	LSM_HOOK_INIT(cred_free, hook_cred_free),
-+};
-+
-+__init void landlock_add_hooks_cred(void)
-+{
-+	security_add_hooks(landlock_hooks, ARRAY_SIZE(landlock_hooks),
-+			LANDLOCK_NAME);
-+}
-diff --git a/security/landlock/cred.h b/security/landlock/cred.h
-new file mode 100644
-index 000000000000..f059c5c49583
---- /dev/null
-+++ b/security/landlock/cred.h
-@@ -0,0 +1,58 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Landlock LSM - Credential hooks
-+ *
-+ * Copyright © 2019-2020 Mickaël Salaün <mic@digikod.net>
-+ * Copyright © 2019-2020 ANSSI
-+ */
-+
-+#ifndef _SECURITY_LANDLOCK_CRED_H
-+#define _SECURITY_LANDLOCK_CRED_H
-+
-+#include <linux/cred.h>
-+#include <linux/init.h>
-+#include <linux/rcupdate.h>
-+
-+#include "ruleset.h"
-+#include "setup.h"
-+
-+struct landlock_cred_security {
-+	struct landlock_ruleset *domain;
-+};
-+
-+static inline struct landlock_cred_security *landlock_cred(
-+		const struct cred *cred)
-+{
-+	return cred->security + landlock_blob_sizes.lbs_cred;
-+}
-+
-+static inline const struct landlock_ruleset *landlock_get_current_domain(void)
-+{
-+	return landlock_cred(current_cred())->domain;
-+}
-+
-+/*
-+ * The call needs to come from an RCU read-side critical section.
-+ */
-+static inline const struct landlock_ruleset *landlock_get_task_domain(
-+		const struct task_struct *const task)
-+{
-+	return landlock_cred(__task_cred(task))->domain;
-+}
-+
-+static inline bool landlocked(const struct task_struct *const task)
-+{
-+	bool has_dom;
-+
-+	if (task == current)
-+		return !!landlock_get_current_domain();
-+
-+	rcu_read_lock();
-+	has_dom = !!landlock_get_task_domain(task);
-+	rcu_read_unlock();
-+	return has_dom;
-+}
-+
-+__init void landlock_add_hooks_cred(void);
-+
-+#endif /* _SECURITY_LANDLOCK_CRED_H */
-diff --git a/security/landlock/setup.c b/security/landlock/setup.c
-new file mode 100644
-index 000000000000..39ee1766f175
---- /dev/null
-+++ b/security/landlock/setup.c
-@@ -0,0 +1,31 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Landlock LSM - Security framework setup
-+ *
-+ * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
-+ * Copyright © 2018-2020 ANSSI
-+ */
-+
-+#include <linux/init.h>
-+#include <linux/lsm_hooks.h>
-+
-+#include "common.h"
-+#include "cred.h"
-+#include "setup.h"
-+
-+struct lsm_blob_sizes landlock_blob_sizes __lsm_ro_after_init = {
-+	.lbs_cred = sizeof(struct landlock_cred_security),
-+};
-+
-+static int __init landlock_init(void)
-+{
-+	landlock_add_hooks_cred();
-+	pr_info("Up and running.\n");
-+	return 0;
-+}
-+
-+DEFINE_LSM(LANDLOCK_NAME) = {
-+	.name = LANDLOCK_NAME,
-+	.init = landlock_init,
-+	.blobs = &landlock_blob_sizes,
-+};
-diff --git a/security/landlock/setup.h b/security/landlock/setup.h
-new file mode 100644
-index 000000000000..9fdbf33fcc33
---- /dev/null
-+++ b/security/landlock/setup.h
-@@ -0,0 +1,16 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Landlock LSM - Security framework setup
-+ *
-+ * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
-+ * Copyright © 2018-2020 ANSSI
-+ */
-+
-+#ifndef _SECURITY_LANDLOCK_SETUP_H
-+#define _SECURITY_LANDLOCK_SETUP_H
-+
-+#include <linux/lsm_hooks.h>
-+
-+extern struct lsm_blob_sizes landlock_blob_sizes;
-+
-+#endif /* _SECURITY_LANDLOCK_SETUP_H */
+ void security_sb_free(struct super_block *sb)
+ {
+ 	call_void_hook(sb_free_security, sb);
 -- 
 2.28.0
 
