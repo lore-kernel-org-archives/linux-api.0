@@ -2,37 +2,40 @@ Return-Path: <SRS0=tld+=EK=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no
+X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A5700C2D0A3
-	for <linux-api@archiver.kernel.org>; Wed,  4 Nov 2020 18:00:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A5EC1C2D0A3
+	for <linux-api@archiver.kernel.org>; Wed,  4 Nov 2020 18:05:43 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5166720825
-	for <linux-api@archiver.kernel.org>; Wed,  4 Nov 2020 18:00:34 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 51D2F20825
+	for <linux-api@archiver.kernel.org>; Wed,  4 Nov 2020 18:05:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726779AbgKDSAd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 4 Nov 2020 13:00:33 -0500
-Received: from foss.arm.com ([217.140.110.172]:41310 "EHLO foss.arm.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726608AbgKDSAd (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 4 Nov 2020 13:00:33 -0500
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 6807A139F;
-        Wed,  4 Nov 2020 10:00:32 -0800 (PST)
-Received: from arm.com (usa-sjc-imap-foss1.foss.arm.com [10.121.207.14])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 6AE643F718;
-        Wed,  4 Nov 2020 10:00:30 -0800 (PST)
-Date:   Wed, 4 Nov 2020 18:00:26 +0000
-From:   Dave Martin <Dave.Martin@arm.com>
-To:     Catalin Marinas <catalin.marinas@arm.com>
-Cc:     "Eric W. Biederman" <ebiederm@xmission.com>,
-        Peter Collingbourne <pcc@google.com>,
+        id S1727098AbgKDSFn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 4 Nov 2020 13:05:43 -0500
+Received: from out02.mta.xmission.com ([166.70.13.232]:50996 "EHLO
+        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726608AbgKDSFm (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 4 Nov 2020 13:05:42 -0500
+Received: from in01.mta.xmission.com ([166.70.13.51])
+        by out02.mta.xmission.com with esmtps  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1kaNA8-006Rnf-0m; Wed, 04 Nov 2020 11:05:36 -0700
+Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
+        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
+        (Exim 4.87)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1kaNA7-0003so-4W; Wed, 04 Nov 2020 11:05:35 -0700
+From:   ebiederm@xmission.com (Eric W. Biederman)
+To:     Peter Collingbourne <pcc@google.com>
+Cc:     Catalin Marinas <catalin.marinas@arm.com>,
         Evgenii Stepanov <eugenis@google.com>,
         Kostya Serebryany <kcc@google.com>,
         Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        Dave Martin <Dave.Martin@arm.com>,
         Will Deacon <will@kernel.org>, Oleg Nesterov <oleg@redhat.com>,
         "James E.J. Bottomley" <James.Bottomley@hansenpartnership.com>,
         Linux ARM <linux-arm-kernel@lists.infradead.org>,
@@ -41,72 +44,70 @@ Cc:     "Eric W. Biederman" <ebiederm@xmission.com>,
         Richard Henderson <rth@twiddle.net>, linux-api@vger.kernel.org,
         Helge Deller <deller@gmx.de>,
         David Spickett <david.spickett@linaro.org>
-Subject: Re: [PATCH v13 1/8] parisc: Drop parisc special case for
- __sighandler_t
-Message-ID: <20201104180026.GF6882@arm.com>
 References: <cover.1604376407.git.pcc@google.com>
- <7e26600459cb08c5016611b37fe88c23098b40eb.1604376407.git.pcc@google.com>
- <87a6vx6p11.fsf@x220.int.ebiederm.org>
- <20201104172447.GF28902@gaia>
+        <e67e653cd06c573e932e7d72223dd7d48fcd21d3.1604376407.git.pcc@google.com>
+Date:   Wed, 04 Nov 2020 12:05:31 -0600
+In-Reply-To: <e67e653cd06c573e932e7d72223dd7d48fcd21d3.1604376407.git.pcc@google.com>
+        (Peter Collingbourne's message of "Mon, 2 Nov 2020 20:09:38 -0800")
+Message-ID: <87r1p9576c.fsf@x220.int.ebiederm.org>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20201104172447.GF28902@gaia>
-User-Agent: Mutt/1.5.23 (2014-03-12)
+Content-Type: text/plain
+X-XM-SPF: eid=1kaNA7-0003so-4W;;;mid=<87r1p9576c.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1++bJSHWtQNH7zBfGB2JU+iGKcjfoK+Ahk=
+X-SA-Exim-Connect-IP: 68.227.160.95
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: Re: [PATCH v13 2/8] parisc: start using signal-defs.h
+X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
+X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Nov 04, 2020 at 05:24:48PM +0000, Catalin Marinas wrote:
-> On Wed, Nov 04, 2020 at 10:54:34AM -0600, Eric W. Biederman wrote:
-> > Peter Collingbourne <pcc@google.com> writes:
-> > > From: Helge Deller <deller@gmx.de>
-> > >
-> > > I believe we can and *should* drop this parisc-specific typedef for
-> > > __sighandler_t when compiling a 64-bit kernel. The reasons:
-> > >
-> > > 1. We don't have a 64-bit userspace yet, so nothing (on userspace side)
-> > > can break.
-> > >
-> > > 2. Inside the Linux kernel, this is only used in kernel/signal.c, in
-> > > function kernel_sigaction() where the signal handler is compared against
-> > > SIG_IGN.  SIG_IGN is defined as (__sighandler_t)1), so only the pointers
-> > > are compared.
-> > >
-> > > 3. Even when a 64-bit userspace gets added at some point, I think
-> > > __sighandler_t should be defined what it is: a function pointer struct.
-> > >
-> > > I compiled kernel/signal.c with and without the patch, and the produced code
-> > > is identical in both cases.
-> > >
-> > > Signed-off-by: Helge Deller <deller@gmx.de>
-> > > Reviewed-by: Peter Collingbourne <pcc@google.com>
-> > > Link:
-> > > https://linux-review.googlesource.com/id/I21c43f21b264f339e3aa395626af838646f62d97
-> > 
-> > Peter as you have sent this, this also needs your Signed-off-by.
-> > 
-> > Otherwise this looks reasonable to me.
-> > Acked-by: "Eric W. Biederman" <ebiederm@xmission.com>
-> > 
-> > While the final bits look like they are still under discussion it looks
-> > like the preceding cleanups are pretty solid at this point.
-> 
-> Minor nits, unless you nak the whole approach of SA_FAULTFLAGS and
-> SA_UNSUPPORTED ;) (it looks a bit complicated to me but I don't have a
-> better idea for a generic implementation).
+Peter Collingbourne <pcc@google.com> writes:
 
-It is a bit complicated, but we didn't come up with anything better so
-far that can cope with the various historical quirks in the signal API.
+> We currently include signal-defs.h on all architectures except parisc.
+> Make parisc fall in line. This will make maintenance easier once the
+> flag bits are moved here.
+>
+> Signed-off-by: Peter Collingbourne <pcc@google.com>
+> Acked-by: Helge Deller <deller@gmx.de>
+> Link: https://linux-review.googlesource.com/id/If03a5135fb514fe96548fb74610e6c3586a04064
 
-A bigger overhaul of the whole interface might be a good idea at some
-point, but it would probably be a mistake to rush that.
+Acked-by: "Eric W. Biederman" <ebiederm@xmission.com>
 
-
-It may be possible to make the SA_UNSUPPORTED stuff a bit more
-digestible via libc.  I'll try to get a discussion started on that.
-
-[...]
-
-Cheers
----Dave
+> ---
+>  arch/parisc/include/uapi/asm/signal.h | 13 +------------
+>  1 file changed, 1 insertion(+), 12 deletions(-)
+>
+> diff --git a/arch/parisc/include/uapi/asm/signal.h b/arch/parisc/include/uapi/asm/signal.h
+> index d9c51769851a..9e6f87bc8a73 100644
+> --- a/arch/parisc/include/uapi/asm/signal.h
+> +++ b/arch/parisc/include/uapi/asm/signal.h
+> @@ -68,14 +68,7 @@
+>  #define MINSIGSTKSZ	2048
+>  #define SIGSTKSZ	8192
+>  
+> -
+> -#define SIG_BLOCK          0	/* for blocking signals */
+> -#define SIG_UNBLOCK        1	/* for unblocking signals */
+> -#define SIG_SETMASK        2	/* for setting the signal mask */
+> -
+> -#define SIG_DFL	((__sighandler_t)0)	/* default signal handling */
+> -#define SIG_IGN	((__sighandler_t)1)	/* ignore signal */
+> -#define SIG_ERR	((__sighandler_t)-1)	/* error return from signal */
+> +#include <asm-generic/signal-defs.h>
+>  
+>  # ifndef __ASSEMBLY__
+>  
+> @@ -84,10 +77,6 @@
+>  /* Avoid too many header ordering problems.  */
+>  struct siginfo;
+>  
+> -/* Type of a signal handler.  */
+> -typedef void __signalfn_t(int);
+> -typedef __signalfn_t __user *__sighandler_t;
+> -
+>  typedef struct sigaltstack {
+>  	void __user *ss_sp;
+>  	int ss_flags;
