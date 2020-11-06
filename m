@@ -2,41 +2,39 @@ Return-Path: <SRS0=5q8X=EM=vger.kernel.org=linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5DB34C5517A
-	for <linux-api@archiver.kernel.org>; Fri,  6 Nov 2020 18:28:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 454F2C55178
+	for <linux-api@archiver.kernel.org>; Fri,  6 Nov 2020 18:32:23 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 07E3D208FE
-	for <linux-api@archiver.kernel.org>; Fri,  6 Nov 2020 18:28:42 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=alien8.de header.i=@alien8.de header.b="lG3pAyYv"
+	by mail.kernel.org (Postfix) with ESMTP id E3C6A22201
+	for <linux-api@archiver.kernel.org>; Fri,  6 Nov 2020 18:32:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727830AbgKFS2j (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 6 Nov 2020 13:28:39 -0500
-Received: from mail.skyhub.de ([5.9.137.197]:35248 "EHLO mail.skyhub.de"
+        id S1727334AbgKFScW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 6 Nov 2020 13:32:22 -0500
+Received: from mga12.intel.com ([192.55.52.136]:34321 "EHLO mga12.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726415AbgKFS2j (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 6 Nov 2020 13:28:39 -0500
-Received: from zn.tnic (p200300ec2f0d1f00570cf78b071a7fce.dip0.t-ipconnect.de [IPv6:2003:ec:2f0d:1f00:570c:f78b:71a:7fce])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.skyhub.de (SuperMail on ZX Spectrum 128k) with ESMTPSA id 5C4761EC047F;
-        Fri,  6 Nov 2020 19:28:37 +0100 (CET)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=alien8.de; s=dkim;
-        t=1604687317;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:in-reply-to:in-reply-to:  references:references;
-        bh=0dCrt2bo7ao0s5Db0UkWo185mnioH6HrSSqToa1Rk6M=;
-        b=lG3pAyYv3D6a7HejoZ42uGNv3kVm3K7AO9R6HBDUf1q8pZt1NZ6WVvn9v+YLfrvBNhajt/
-        aA11jyMY4fpKmsov02L2BLVbc4aj2CSJK3kQ0L3b2GOJqCLqhOarPLqILco34A1hIquNmj
-        V3FTCtID+3IDJpC0jPUOfvaKMcoCLXU=
-Date:   Fri, 6 Nov 2020 19:28:22 +0100
-From:   Borislav Petkov <bp@alien8.de>
-To:     "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
+        id S1726034AbgKFScW (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 6 Nov 2020 13:32:22 -0500
+IronPort-SDR: Cp74Iq1flIMTKF+H5IKJrARO1I0RmYO/6NXQb86uJliKuaV9kSw7YdwST59G03fLRO+vWVMhdO
+ CcRcGcpedCVA==
+X-IronPort-AV: E=McAfee;i="6000,8403,9797"; a="148863646"
+X-IronPort-AV: E=Sophos;i="5.77,457,1596524400"; 
+   d="scan'208";a="148863646"
+X-Amp-Result: SKIPPED(no attachment in message)
+X-Amp-File-Uploaded: False
+Received: from orsmga003.jf.intel.com ([10.7.209.27])
+  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 06 Nov 2020 10:32:20 -0800
+IronPort-SDR: QSmFF3Phay518UCkCcIx2W5ZdMDtxuhDzkXD52/pILlFfYCbVlk48QwvROMhAgEMgM9IDY1xVI
+ h68Cyix7Os1w==
+X-IronPort-AV: E=Sophos;i="5.77,457,1596524400"; 
+   d="scan'208";a="321681117"
+Received: from yyu32-mobl1.amr.corp.intel.com (HELO [10.212.221.127]) ([10.212.221.127])
+  by orsmga003-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 06 Nov 2020 10:32:19 -0800
+Subject: Re: [PATCH v14 01/26] Documentation/x86: Add CET description
+To:     Borislav Petkov <bp@alien8.de>
 Cc:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
         Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
@@ -62,30 +60,35 @@ Cc:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
-Subject: Re: [PATCH v14 01/26] Documentation/x86: Add CET description
-Message-ID: <20201106182822.GH14914@zn.tnic>
 References: <20201012153850.26996-1-yu-cheng.yu@intel.com>
  <20201012153850.26996-2-yu-cheng.yu@intel.com>
  <20201106173410.GG14914@zn.tnic>
  <ebaff261-f8ad-d184-edd5-8efbd675deeb@intel.com>
+ <20201106182822.GH14914@zn.tnic>
+From:   "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
+Message-ID: <dca16efa-4869-d21d-1056-3aa57f396380@intel.com>
+Date:   Fri, 6 Nov 2020 10:32:18 -0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101
+ Thunderbird/68.12.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <ebaff261-f8ad-d184-edd5-8efbd675deeb@intel.com>
+In-Reply-To: <20201106182822.GH14914@zn.tnic>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Nov 06, 2020 at 10:16:47AM -0800, Yu, Yu-cheng wrote:
-> In the current shell, if GLIBC_TUNABLES variable is set as such,
-> applications started will have CET features disabled.  I can put more
-> details here, or maybe a reference to the GLIBC man pages.
+On 11/6/2020 10:28 AM, Borislav Petkov wrote:
+> On Fri, Nov 06, 2020 at 10:16:47AM -0800, Yu, Yu-cheng wrote:
+>> In the current shell, if GLIBC_TUNABLES variable is set as such,
+>> applications started will have CET features disabled.  I can put more
+>> details here, or maybe a reference to the GLIBC man pages.
+> 
+> Why do you keep repeating "the current shell"? You pass it with
+> setenv(3) too, can't you?
+> 
 
-Why do you keep repeating "the current shell"? You pass it with
-setenv(3) too, can't you?
+Ture.  I will revise it.
 
--- 
-Regards/Gruss,
-    Boris.
-
-https://people.kernel.org/tglx/notes-about-netiquette
+Yu-cheng
