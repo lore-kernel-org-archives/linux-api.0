@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 234AFC5517A
-	for <linux-api@archiver.kernel.org>; Tue, 10 Nov 2020 16:25:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 17A8AC388F7
+	for <linux-api@archiver.kernel.org>; Tue, 10 Nov 2020 16:25:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CEF2720780
-	for <linux-api@archiver.kernel.org>; Tue, 10 Nov 2020 16:25:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C265320870
+	for <linux-api@archiver.kernel.org>; Tue, 10 Nov 2020 16:25:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730943AbgKJQZo (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 10 Nov 2020 11:25:44 -0500
+        id S1731596AbgKJQZu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 10 Nov 2020 11:25:50 -0500
 Received: from mga12.intel.com ([192.55.52.136]:63836 "EHLO mga12.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1732692AbgKJQZE (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 10 Nov 2020 11:25:04 -0500
-IronPort-SDR: Q1S40emYboo5a7rNz9pWx9+yr0OcMoZ1K7307Cb/MMWGHTY7hwC4Yd8VBZy5zRYNev0ZP3ZUyD
- 0CFEa60Srflg==
-X-IronPort-AV: E=McAfee;i="6000,8403,9801"; a="149278315"
+        id S1729674AbgKJQZD (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 10 Nov 2020 11:25:03 -0500
+IronPort-SDR: YmWAMIGd8FIZ4Hpf85LI0y8IzqhgE6SCXawtG8iLfPt4hDTuICrT5cWFV+YzFHt1pe9UxPG0C6
+ kf1aqK25K8SQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9801"; a="149278321"
 X-IronPort-AV: E=Sophos;i="5.77,466,1596524400"; 
-   d="scan'208";a="149278315"
+   d="scan'208";a="149278321"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from fmsmga007.fm.intel.com ([10.253.24.52])
   by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Nov 2020 08:25:02 -0800
-IronPort-SDR: xU1nkYA8Tc0c0rIi1q6hQkbJtcav6IxZCYXq5ghL1g5nKJxdopVPW+GVZqL719+oorBvQeXE6a
- 8eiU9sYRyzvw==
+IronPort-SDR: 8EN/psopol6Lj4Q3hAHF/kSUlONsUzH8ppz6zonlPvpFlsGNaFxk55o6wRBjZwLy/HvJU4E5U5
+ OMls29BrhDxQ==
 X-IronPort-AV: E=Sophos;i="5.77,466,1596524400"; 
-   d="scan'208";a="308469029"
+   d="scan'208";a="308469039"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
   by fmsmga007-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Nov 2020 08:25:02 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
@@ -62,9 +62,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v15 1/7] x86/cet/ibt: Add Kconfig option for user-mode Indirect Branch Tracking
-Date:   Tue, 10 Nov 2020 08:24:42 -0800
-Message-Id: <20201110162448.9846-2-yu-cheng.yu@intel.com>
+Subject: [PATCH v15 3/7] x86/cet/ibt: Handle signals for Indirect Branch Tracking
+Date:   Tue, 10 Nov 2020 08:24:44 -0800
+Message-Id: <20201110162448.9846-4-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20201110162448.9846-1-yu-cheng.yu@intel.com>
 References: <20201110162448.9846-1-yu-cheng.yu@intel.com>
@@ -74,49 +74,100 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Introduce Kconfig option X86_BRANCH_TRACKING_USER.
+An indirect CALL/JMP moves the indirect branch tracking (IBT) state machine
+to WAIT_ENDBR status until the instruction reaches an ENDBR opcode.  If the
+CALL/JMP does not reach an ENDBR opcode, the processor raises a control-
+protection fault.  WAIT_ENDBR status can be read from MSR_IA32_U_CET.
 
-Indirect Branch Tracking (IBT) provides protection against CALL-/JMP-
-oriented programming attacks.  It is active when the kernel has this
-feature enabled, and the processor and the application support it.
-When this feature is enabled, legacy non-IBT applications continue to
-work, but without IBT protection.
+WAIT_ENDBR is cleared for signal handling, and restored for sigreturn.
+
+IBT state machine is described in Intel SDM Vol. 1, Sec. 18.3.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/Kconfig | 19 +++++++++++++++++++
- 1 file changed, 19 insertions(+)
+ arch/x86/kernel/cet.c        | 27 +++++++++++++++++++++++++--
+ arch/x86/kernel/fpu/signal.c |  8 +++++---
+ 2 files changed, 30 insertions(+), 5 deletions(-)
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 18fd8cb549ad..e27f0c19a4b3 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -1969,6 +1969,25 @@ config X86_SHADOW_STACK_USER
+diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
+index 1dcd16aa4f90..0edcbd70f408 100644
+--- a/arch/x86/kernel/cet.c
++++ b/arch/x86/kernel/cet.c
+@@ -295,6 +295,13 @@ void cet_restore_signal(struct sc_ext *sc_ext)
+ 		msr_val |= CET_SHSTK_EN;
+ 	}
  
- 	  If unsure, say N.
++	if (cet->ibt_enabled) {
++		msr_val |= (CET_ENDBR_EN | CET_NO_TRACK_EN);
++
++		if (sc_ext->wait_endbr)
++			msr_val |= CET_WAIT_ENDBR;
++	}
++
+ 	if (test_thread_flag(TIF_NEED_FPU_LOAD))
+ 		cet_user_state->user_cet = msr_val;
+ 	else
+@@ -335,9 +342,25 @@ int cet_setup_signal(bool ia32, unsigned long rstor_addr, struct sc_ext *sc_ext)
+ 		sc_ext->ssp = new_ssp;
+ 	}
  
-+config X86_BRANCH_TRACKING_USER
-+	prompt "Intel Indirect Branch Tracking for user-mode"
-+	def_bool n
-+	depends on CPU_SUP_INTEL && X86_64
-+	depends on $(cc-option,-fcf-protection)
-+	select X86_CET
-+	help
-+	  Indirect Branch Tracking (IBT) provides protection against
-+	  CALL-/JMP-oriented programming attacks.  It is active when
-+	  the kernel has this feature enabled, and the processor and
-+	  the application support it.  When this feature is enabled,
-+	  legacy non-IBT applications continue to work, but without
-+	  IBT protection.
-+	  Support for this feature is only known to be present on
-+	  processors released in 2020 or later.  CET features are also
-+	  known to increase kernel text size by 3.7 KB.
+-	if (ssp) {
++	if (ssp || cet->ibt_enabled) {
 +
-+	  If unsure, say N.
+ 		start_update_msrs();
+-		wrmsrl(MSR_IA32_PL3_SSP, ssp);
 +
- config EFI
- 	bool "EFI runtime service support"
- 	depends on ACPI
++		if (ssp)
++			wrmsrl(MSR_IA32_PL3_SSP, ssp);
++
++		if (cet->ibt_enabled) {
++			u64 r;
++
++			rdmsrl(MSR_IA32_U_CET, r);
++
++			if (r & CET_WAIT_ENDBR) {
++				sc_ext->wait_endbr = 1;
++				r &= ~CET_WAIT_ENDBR;
++				wrmsrl(MSR_IA32_U_CET, r);
++			}
++		}
++
+ 		end_update_msrs();
+ 	}
+ 
+diff --git a/arch/x86/kernel/fpu/signal.c b/arch/x86/kernel/fpu/signal.c
+index c0c2141cb4b3..077853ef6f48 100644
+--- a/arch/x86/kernel/fpu/signal.c
++++ b/arch/x86/kernel/fpu/signal.c
+@@ -57,7 +57,8 @@ int save_cet_to_sigframe(int ia32, void __user *fp, unsigned long restorer)
+ {
+ 	int err = 0;
+ 
+-	if (!current->thread.cet.shstk_size)
++	if (!current->thread.cet.shstk_size &&
++	    !current->thread.cet.ibt_enabled)
+ 		return 0;
+ 
+ 	if (fp) {
+@@ -89,7 +90,8 @@ static int get_cet_from_sigframe(int ia32, void __user *fp, struct sc_ext *ext)
+ 
+ 	memset(ext, 0, sizeof(*ext));
+ 
+-	if (!current->thread.cet.shstk_size)
++	if (!current->thread.cet.shstk_size &&
++	    !current->thread.cet.ibt_enabled)
+ 		return 0;
+ 
+ 	if (fp) {
+@@ -577,7 +579,7 @@ static unsigned long fpu__alloc_sigcontext_ext(unsigned long sp)
+ 	 * sigcontext_ext is at: fpu + fpu_user_xstate_size +
+ 	 * FP_XSTATE_MAGIC2_SIZE, then aligned to 8.
+ 	 */
+-	if (cet->shstk_size)
++	if (cet->shstk_size || cet->ibt_enabled)
+ 		sp -= (sizeof(struct sc_ext) + 8);
+ 
+ 	return sp;
 -- 
 2.21.0
 
