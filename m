@@ -7,33 +7,33 @@ X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 731A4C56201
-	for <linux-api@archiver.kernel.org>; Tue, 10 Nov 2020 16:22:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2DBE4C64E69
+	for <linux-api@archiver.kernel.org>; Tue, 10 Nov 2020 16:23:01 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 29F12221E9
-	for <linux-api@archiver.kernel.org>; Tue, 10 Nov 2020 16:22:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C833A21D91
+	for <linux-api@archiver.kernel.org>; Tue, 10 Nov 2020 16:23:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730306AbgKJQWx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 10 Nov 2020 11:22:53 -0500
-Received: from mga11.intel.com ([192.55.52.93]:42882 "EHLO mga11.intel.com"
+        id S1731105AbgKJQW7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 10 Nov 2020 11:22:59 -0500
+Received: from mga04.intel.com ([192.55.52.120]:36537 "EHLO mga04.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729016AbgKJQWw (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 10 Nov 2020 11:22:52 -0500
-IronPort-SDR: yX9ynkp3yi0DXZ6iXFvYVj67Jyl4w8e12LfBjUGe1s0L1DDMZNxhMjLdVKNkzt4zbxAaiz1fwH
- W6m4FniqK2Hg==
-X-IronPort-AV: E=McAfee;i="6000,8403,9801"; a="166492954"
+        id S1726428AbgKJQW5 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 10 Nov 2020 11:22:57 -0500
+IronPort-SDR: LQjQFNvMOcqtjiGI3Y5g218T1jeGg+oV4rslknL6qGOiV3f5NPTlSWXa07D2IYqNvVm2dnQOTM
+ nspwwYHwqHSA==
+X-IronPort-AV: E=McAfee;i="6000,8403,9801"; a="167418676"
 X-IronPort-AV: E=Sophos;i="5.77,466,1596524400"; 
-   d="scan'208";a="166492954"
+   d="scan'208";a="167418676"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from fmsmga003.fm.intel.com ([10.253.24.29])
-  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Nov 2020 08:22:49 -0800
-IronPort-SDR: jlwf48Tx1kzec6Z120/eeqXhrL4CUeg1OnqAtvRdpdLvsTb+eG7RJjSzQpbMYu+PHhcEX17hla
- Yw5MeNvNIbkw==
+  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Nov 2020 08:22:54 -0800
+IronPort-SDR: cVUhgk+9LQvhWAAhB85xFpm94tMT/bs1j3LxdeggDuELIae/Ks6bVaRHoPcr5eN1yyw0IPyfJ9
+ wto+uxFz8nZg==
 X-IronPort-AV: E=Sophos;i="5.77,466,1596524400"; 
-   d="scan'208";a="365572816"
+   d="scan'208";a="365572885"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Nov 2020 08:22:49 -0800
+  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Nov 2020 08:22:53 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -62,9 +62,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v15 05/26] x86/cet/shstk: Add Kconfig option for user-mode Shadow Stack
-Date:   Tue, 10 Nov 2020 08:21:50 -0800
-Message-Id: <20201110162211.9207-6-yu-cheng.yu@intel.com>
+Subject: [PATCH v15 17/26] mm/mmap: Add shadow stack pages to memory accounting
+Date:   Tue, 10 Nov 2020 08:22:02 -0800
+Message-Id: <20201110162211.9207-18-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20201110162211.9207-1-yu-cheng.yu@intel.com>
 References: <20201110162211.9207-1-yu-cheng.yu@intel.com>
@@ -74,73 +74,75 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Shadow Stack provides protection against function return address
-corruption.  It is active when the processor supports it, the kernel has
-CONFIG_X86_SHADOW_STACK_USER, and the application is built for the feature.
-This is only implemented for the 64-bit kernel.  When it is enabled, legacy
-non-shadow stack applications continue to work, but without protection.
+Account shadow stack pages to stack memory.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/Kconfig                      | 33 +++++++++++++++++++++++++++
- scripts/as-x86_64-has-shadow-stack.sh |  4 ++++
- 2 files changed, 37 insertions(+)
- create mode 100755 scripts/as-x86_64-has-shadow-stack.sh
+ arch/x86/mm/pgtable.c   |  7 +++++++
+ include/linux/pgtable.h | 11 +++++++++++
+ mm/mmap.c               |  5 +++++
+ 3 files changed, 23 insertions(+)
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index f6946b81f74a..a51d2a3de166 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -1930,6 +1930,39 @@ config X86_INTEL_TSX_MODE_AUTO
- 	  side channel attacks- equals the tsx=auto command line parameter.
- endchoice
+diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
+index a9666b64bc05..68e98f70298b 100644
+--- a/arch/x86/mm/pgtable.c
++++ b/arch/x86/mm/pgtable.c
+@@ -893,3 +893,10 @@ int pmd_free_pte_page(pmd_t *pmd, unsigned long addr)
  
-+config AS_HAS_SHADOW_STACK
-+	def_bool $(success,$(srctree)/scripts/as-x86_64-has-shadow-stack.sh $(CC))
-+	help
-+	  Test the assembler for shadow stack instructions.
+ #endif /* CONFIG_X86_64 */
+ #endif	/* CONFIG_HAVE_ARCH_HUGE_VMAP */
 +
-+config X86_CET
-+	def_bool n
++#ifdef CONFIG_ARCH_HAS_SHADOW_STACK
++bool arch_shadow_stack_mapping(vm_flags_t vm_flags)
++{
++	return (vm_flags & VM_SHSTK);
++}
++#endif
+diff --git a/include/linux/pgtable.h b/include/linux/pgtable.h
+index ea66461610ae..13cb5fe3c2be 100644
+--- a/include/linux/pgtable.h
++++ b/include/linux/pgtable.h
+@@ -1408,6 +1408,17 @@ static inline pmd_t arch_maybe_pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma
+ #endif /* CONFIG_ARCH_MAYBE_MKWRITE */
+ #endif /* CONFIG_MMU */
+ 
++#ifdef CONFIG_MMU
++#ifdef CONFIG_ARCH_HAS_SHADOW_STACK
++bool arch_shadow_stack_mapping(vm_flags_t vm_flags);
++#else
++static inline bool arch_shadow_stack_mapping(vm_flags_t vm_flags)
++{
++	return false;
++}
++#endif /* CONFIG_ARCH_HAS_SHADOW_STACK */
++#endif /* CONFIG_MMU */
 +
-+config ARCH_HAS_SHADOW_STACK
-+	def_bool n
+ /*
+  * Architecture PAGE_KERNEL_* fallbacks
+  *
+diff --git a/mm/mmap.c b/mm/mmap.c
+index d91ecb00d38c..2290a67f4d3f 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1720,6 +1720,9 @@ static inline int accountable_mapping(struct file *file, vm_flags_t vm_flags)
+ 	if (file && is_file_hugepages(file))
+ 		return 0;
+ 
++	if (arch_shadow_stack_mapping(vm_flags))
++		return 1;
 +
-+config X86_SHADOW_STACK_USER
-+	prompt "Intel Shadow Stacks for user-mode"
-+	def_bool n
-+	depends on CPU_SUP_INTEL && X86_64
-+	depends on AS_HAS_SHADOW_STACK
-+	select ARCH_USES_HIGH_VMA_FLAGS
-+	select X86_CET
-+	select ARCH_HAS_SHADOW_STACK
-+	help
-+	  Shadow Stacks provides protection against program stack
-+	  corruption.  It's a hardware feature.  This only matters
-+	  if you have the right hardware.  It's a security hardening
-+	  feature and apps must be enabled to use it.  You get no
-+	  protection "for free" on old userspace.  The hardware can
-+	  support user and kernel, but this option is for user space
-+	  only.
-+	  Support for this feature is only known to be present on
-+	  processors released in 2020 or later.  CET features are also
-+	  known to increase kernel text size by 3.7 KB.
-+
-+	  If unsure, say N.
-+
- config EFI
- 	bool "EFI runtime service support"
- 	depends on ACPI
-diff --git a/scripts/as-x86_64-has-shadow-stack.sh b/scripts/as-x86_64-has-shadow-stack.sh
-new file mode 100755
-index 000000000000..fac1d363a1b8
---- /dev/null
-+++ b/scripts/as-x86_64-has-shadow-stack.sh
-@@ -0,0 +1,4 @@
-+#!/bin/sh
-+# SPDX-License-Identifier: GPL-2.0
-+
-+echo "wrussq %rax, (%rbx)" | $* -x assembler -c -
+ 	return (vm_flags & (VM_NORESERVE | VM_SHARED | VM_WRITE)) == VM_WRITE;
+ }
+ 
+@@ -3391,6 +3394,8 @@ void vm_stat_account(struct mm_struct *mm, vm_flags_t flags, long npages)
+ 		mm->stack_vm += npages;
+ 	else if (is_data_mapping(flags))
+ 		mm->data_vm += npages;
++	else if (arch_shadow_stack_mapping(flags))
++		mm->stack_vm += npages;
+ }
+ 
+ static vm_fault_t special_mapping_fault(struct vm_fault *vmf);
 -- 
 2.21.0
 
