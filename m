@@ -7,33 +7,33 @@ X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 17A8AC388F7
-	for <linux-api@archiver.kernel.org>; Tue, 10 Nov 2020 16:25:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D4185C61DD8
+	for <linux-api@archiver.kernel.org>; Tue, 10 Nov 2020 16:25:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C265320870
-	for <linux-api@archiver.kernel.org>; Tue, 10 Nov 2020 16:25:54 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2937220797
+	for <linux-api@archiver.kernel.org>; Tue, 10 Nov 2020 16:25:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731596AbgKJQZu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 10 Nov 2020 11:25:50 -0500
-Received: from mga12.intel.com ([192.55.52.136]:63836 "EHLO mga12.intel.com"
+        id S1729718AbgKJQZC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 10 Nov 2020 11:25:02 -0500
+Received: from mga11.intel.com ([192.55.52.93]:42886 "EHLO mga11.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729674AbgKJQZD (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 10 Nov 2020 11:25:03 -0500
-IronPort-SDR: YmWAMIGd8FIZ4Hpf85LI0y8IzqhgE6SCXawtG8iLfPt4hDTuICrT5cWFV+YzFHt1pe9UxPG0C6
- kf1aqK25K8SQ==
-X-IronPort-AV: E=McAfee;i="6000,8403,9801"; a="149278321"
+        id S1730021AbgKJQWw (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 10 Nov 2020 11:22:52 -0500
+IronPort-SDR: 0KbxxW5/EgObPppDuB4J43WISB0pcqRhrMcOZG/EXCg8n23rX85FDZxx9TvuDiQtMi0vc2sj02
+ vuPHmUirL43Q==
+X-IronPort-AV: E=McAfee;i="6000,8403,9801"; a="166492962"
 X-IronPort-AV: E=Sophos;i="5.77,466,1596524400"; 
-   d="scan'208";a="149278321"
+   d="scan'208";a="166492962"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
-Received: from fmsmga007.fm.intel.com ([10.253.24.52])
-  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Nov 2020 08:25:02 -0800
-IronPort-SDR: 8EN/psopol6Lj4Q3hAHF/kSUlONsUzH8ppz6zonlPvpFlsGNaFxk55o6wRBjZwLy/HvJU4E5U5
- OMls29BrhDxQ==
+Received: from fmsmga003.fm.intel.com ([10.253.24.29])
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Nov 2020 08:22:50 -0800
+IronPort-SDR: AmzUa4WBNZk2GkthNU4ezuSQAO+7yQHYreTaLxWHMzAL851bBBiKiT6B5qCpXEfPSJYVm4txOd
+ 7qrjQFquKUdg==
 X-IronPort-AV: E=Sophos;i="5.77,466,1596524400"; 
-   d="scan'208";a="308469039"
+   d="scan'208";a="365572826"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga007-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Nov 2020 08:25:02 -0800
+  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Nov 2020 08:22:50 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,113 +61,68 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v15 3/7] x86/cet/ibt: Handle signals for Indirect Branch Tracking
-Date:   Tue, 10 Nov 2020 08:24:44 -0800
-Message-Id: <20201110162448.9846-4-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>, Christoph Hellwig <hch@lst.de>
+Subject: [PATCH v15 07/26] x86/mm: Remove _PAGE_DIRTY_HW from kernel RO pages
+Date:   Tue, 10 Nov 2020 08:21:52 -0800
+Message-Id: <20201110162211.9207-8-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20201110162448.9846-1-yu-cheng.yu@intel.com>
-References: <20201110162448.9846-1-yu-cheng.yu@intel.com>
+In-Reply-To: <20201110162211.9207-1-yu-cheng.yu@intel.com>
+References: <20201110162211.9207-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-An indirect CALL/JMP moves the indirect branch tracking (IBT) state machine
-to WAIT_ENDBR status until the instruction reaches an ENDBR opcode.  If the
-CALL/JMP does not reach an ENDBR opcode, the processor raises a control-
-protection fault.  WAIT_ENDBR status can be read from MSR_IA32_U_CET.
-
-WAIT_ENDBR is cleared for signal handling, and restored for sigreturn.
-
-IBT state machine is described in Intel SDM Vol. 1, Sec. 18.3.
+Kernel read-only PTEs are setup as _PAGE_DIRTY_HW.  Since these become
+shadow stack PTEs, remove the dirty bit.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: "H. Peter Anvin" <hpa@zytor.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
 ---
- arch/x86/kernel/cet.c        | 27 +++++++++++++++++++++++++--
- arch/x86/kernel/fpu/signal.c |  8 +++++---
- 2 files changed, 30 insertions(+), 5 deletions(-)
+ arch/x86/include/asm/pgtable_types.h | 6 +++---
+ arch/x86/mm/pat/set_memory.c         | 2 +-
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
-index 1dcd16aa4f90..0edcbd70f408 100644
---- a/arch/x86/kernel/cet.c
-+++ b/arch/x86/kernel/cet.c
-@@ -295,6 +295,13 @@ void cet_restore_signal(struct sc_ext *sc_ext)
- 		msr_val |= CET_SHSTK_EN;
- 	}
+diff --git a/arch/x86/include/asm/pgtable_types.h b/arch/x86/include/asm/pgtable_types.h
+index 810eb1567050..7462a574fc93 100644
+--- a/arch/x86/include/asm/pgtable_types.h
++++ b/arch/x86/include/asm/pgtable_types.h
+@@ -193,10 +193,10 @@ enum page_cache_mode {
+ #define _KERNPG_TABLE		 (__PP|__RW|   0|___A|   0|___D|   0|   0| _ENC)
+ #define _PAGE_TABLE_NOENC	 (__PP|__RW|_USR|___A|   0|___D|   0|   0)
+ #define _PAGE_TABLE		 (__PP|__RW|_USR|___A|   0|___D|   0|   0| _ENC)
+-#define __PAGE_KERNEL_RO	 (__PP|   0|   0|___A|__NX|___D|   0|___G)
+-#define __PAGE_KERNEL_ROX	 (__PP|   0|   0|___A|   0|___D|   0|___G)
++#define __PAGE_KERNEL_RO	 (__PP|   0|   0|___A|__NX|   0|   0|___G)
++#define __PAGE_KERNEL_ROX	 (__PP|   0|   0|___A|   0|   0|   0|___G)
+ #define __PAGE_KERNEL_NOCACHE	 (__PP|__RW|   0|___A|__NX|___D|   0|___G| __NC)
+-#define __PAGE_KERNEL_VVAR	 (__PP|   0|_USR|___A|__NX|___D|   0|___G)
++#define __PAGE_KERNEL_VVAR	 (__PP|   0|_USR|___A|__NX|   0|   0|___G)
+ #define __PAGE_KERNEL_LARGE	 (__PP|__RW|   0|___A|__NX|___D|_PSE|___G)
+ #define __PAGE_KERNEL_LARGE_EXEC (__PP|__RW|   0|___A|   0|___D|_PSE|___G)
+ #define __PAGE_KERNEL_WP	 (__PP|__RW|   0|___A|__NX|___D|   0|___G| __WP)
+diff --git a/arch/x86/mm/pat/set_memory.c b/arch/x86/mm/pat/set_memory.c
+index 40baa90e74f4..207bbf796f5f 100644
+--- a/arch/x86/mm/pat/set_memory.c
++++ b/arch/x86/mm/pat/set_memory.c
+@@ -1932,7 +1932,7 @@ int set_memory_nx(unsigned long addr, int numpages)
  
-+	if (cet->ibt_enabled) {
-+		msr_val |= (CET_ENDBR_EN | CET_NO_TRACK_EN);
-+
-+		if (sc_ext->wait_endbr)
-+			msr_val |= CET_WAIT_ENDBR;
-+	}
-+
- 	if (test_thread_flag(TIF_NEED_FPU_LOAD))
- 		cet_user_state->user_cet = msr_val;
- 	else
-@@ -335,9 +342,25 @@ int cet_setup_signal(bool ia32, unsigned long rstor_addr, struct sc_ext *sc_ext)
- 		sc_ext->ssp = new_ssp;
- 	}
- 
--	if (ssp) {
-+	if (ssp || cet->ibt_enabled) {
-+
- 		start_update_msrs();
--		wrmsrl(MSR_IA32_PL3_SSP, ssp);
-+
-+		if (ssp)
-+			wrmsrl(MSR_IA32_PL3_SSP, ssp);
-+
-+		if (cet->ibt_enabled) {
-+			u64 r;
-+
-+			rdmsrl(MSR_IA32_U_CET, r);
-+
-+			if (r & CET_WAIT_ENDBR) {
-+				sc_ext->wait_endbr = 1;
-+				r &= ~CET_WAIT_ENDBR;
-+				wrmsrl(MSR_IA32_U_CET, r);
-+			}
-+		}
-+
- 		end_update_msrs();
- 	}
- 
-diff --git a/arch/x86/kernel/fpu/signal.c b/arch/x86/kernel/fpu/signal.c
-index c0c2141cb4b3..077853ef6f48 100644
---- a/arch/x86/kernel/fpu/signal.c
-+++ b/arch/x86/kernel/fpu/signal.c
-@@ -57,7 +57,8 @@ int save_cet_to_sigframe(int ia32, void __user *fp, unsigned long restorer)
+ int set_memory_ro(unsigned long addr, int numpages)
  {
- 	int err = 0;
+-	return change_page_attr_clear(&addr, numpages, __pgprot(_PAGE_RW), 0);
++	return change_page_attr_clear(&addr, numpages, __pgprot(_PAGE_RW | _PAGE_DIRTY_HW), 0);
+ }
  
--	if (!current->thread.cet.shstk_size)
-+	if (!current->thread.cet.shstk_size &&
-+	    !current->thread.cet.ibt_enabled)
- 		return 0;
- 
- 	if (fp) {
-@@ -89,7 +90,8 @@ static int get_cet_from_sigframe(int ia32, void __user *fp, struct sc_ext *ext)
- 
- 	memset(ext, 0, sizeof(*ext));
- 
--	if (!current->thread.cet.shstk_size)
-+	if (!current->thread.cet.shstk_size &&
-+	    !current->thread.cet.ibt_enabled)
- 		return 0;
- 
- 	if (fp) {
-@@ -577,7 +579,7 @@ static unsigned long fpu__alloc_sigcontext_ext(unsigned long sp)
- 	 * sigcontext_ext is at: fpu + fpu_user_xstate_size +
- 	 * FP_XSTATE_MAGIC2_SIZE, then aligned to 8.
- 	 */
--	if (cet->shstk_size)
-+	if (cet->shstk_size || cet->ibt_enabled)
- 		sp -= (sizeof(struct sc_ext) + 8);
- 
- 	return sp;
+ int set_memory_rw(unsigned long addr, int numpages)
 -- 
 2.21.0
 
