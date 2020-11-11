@@ -6,28 +6,28 @@ X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8B5D5C5517A
-	for <linux-api@archiver.kernel.org>; Wed, 11 Nov 2020 20:15:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 66DCBC5517A
+	for <linux-api@archiver.kernel.org>; Wed, 11 Nov 2020 20:29:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2BFED208B8
-	for <linux-api@archiver.kernel.org>; Wed, 11 Nov 2020 20:15:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1936E208B8
+	for <linux-api@archiver.kernel.org>; Wed, 11 Nov 2020 20:29:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726359AbgKKUPe (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 11 Nov 2020 15:15:34 -0500
-Received: from out03.mta.xmission.com ([166.70.13.233]:40584 "EHLO
+        id S1726268AbgKKU27 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 11 Nov 2020 15:28:59 -0500
+Received: from out03.mta.xmission.com ([166.70.13.233]:43290 "EHLO
         out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726203AbgKKUPe (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 11 Nov 2020 15:15:34 -0500
+        with ESMTP id S1725860AbgKKU27 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 11 Nov 2020 15:28:59 -0500
 Received: from in01.mta.xmission.com ([166.70.13.51])
         by out03.mta.xmission.com with esmtps  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1kcwWe-006g7P-Aw; Wed, 11 Nov 2020 13:15:28 -0700
+        id 1kcwja-006h9G-A2; Wed, 11 Nov 2020 13:28:50 -0700
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
         by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
         (Exim 4.87)
         (envelope-from <ebiederm@xmission.com>)
-        id 1kcwWc-0000EG-Pi; Wed, 11 Nov 2020 13:15:28 -0700
+        id 1kcwjZ-0001sH-7Z; Wed, 11 Nov 2020 13:28:50 -0700
 From:   ebiederm@xmission.com (Eric W. Biederman)
 To:     Dave Martin <Dave.Martin@arm.com>
 Cc:     Peter Collingbourne <pcc@google.com>,
@@ -46,15 +46,16 @@ Cc:     Peter Collingbourne <pcc@google.com>,
 References: <cover.1604523707.git.pcc@google.com>
         <0eb601a5d1906fadd7099149eb605181911cfc04.1604523707.git.pcc@google.com>
         <87zh3qug6q.fsf@x220.int.ebiederm.org> <20201111172703.GP6882@arm.com>
-Date:   Wed, 11 Nov 2020 14:15:15 -0600
-In-Reply-To: <20201111172703.GP6882@arm.com> (Dave Martin's message of "Wed,
-        11 Nov 2020 17:27:04 +0000")
-Message-ID: <87imabr6p8.fsf@x220.int.ebiederm.org>
+        <87imabr6p8.fsf@x220.int.ebiederm.org>
+Date:   Wed, 11 Nov 2020 14:28:38 -0600
+In-Reply-To: <87imabr6p8.fsf@x220.int.ebiederm.org> (Eric W. Biederman's
+        message of "Wed, 11 Nov 2020 14:15:15 -0600")
+Message-ID: <87sg9fprih.fsf@x220.int.ebiederm.org>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
-X-XM-SPF: eid=1kcwWc-0000EG-Pi;;;mid=<87imabr6p8.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1/7N/eWBv/4p/S3APPKai60j3a29t5pU/E=
+X-XM-SPF: eid=1kcwjZ-0001sH-7Z;;;mid=<87sg9fprih.fsf@x220.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX18lpmMBPjqLYT8vRUSW3WgpXm2YOGjA/oc=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
 Subject: Re: [PATCH v14 7/8] signal: define the field siginfo.si_faultflags
@@ -64,102 +65,126 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Dave Martin <Dave.Martin@arm.com> writes:
+ebiederm@xmission.com (Eric W. Biederman) writes:
 
-> On Mon, Nov 09, 2020 at 07:57:33PM -0600, Eric W. Biederman wrote:
->> Peter Collingbourne <pcc@google.com> writes:
->> 
->> > This field will contain flags that may be used by signal handlers to
->> > determine whether other fields in the _sigfault portion of siginfo are
->> > valid. An example use case is the following patch, which introduces
->> > the si_addr_tag_bits{,_mask} fields.
->> >
->> > A new sigcontext flag, SA_FAULTFLAGS, is introduced in order to allow
->> > a signal handler to require the kernel to set the field (but note
->> > that the field will be set anyway if the kernel supports the flag,
->> > regardless of its value). In combination with the previous patches,
->> > this allows a userspace program to determine whether the kernel will
->> > set the field.
->> >
->> > It is possible for an si_faultflags-unaware program to cause a signal
->> > handler in an si_faultflags-aware program to be called with a provided
->> > siginfo data structure by using one of the following syscalls:
->> >
->> > - ptrace(PTRACE_SETSIGINFO)
->> > - pidfd_send_signal
->> > - rt_sigqueueinfo
->> > - rt_tgsigqueueinfo
->> >
->> > So we need to prevent the si_faultflags-unaware program from causing an
->> > uninitialized read of si_faultflags in the si_faultflags-aware program when
->> > it uses one of these syscalls.
->> >
->> > The last three cases can be handled by observing that each of these
->> > syscalls fails if si_code >= 0. We also observe that kill(2) and
->> > tgkill(2) may be used to send a signal where si_code == 0 (SI_USER),
->> > so we define si_faultflags to only be valid if si_code > 0.
->> >
->> > There is no such check on si_code in ptrace(PTRACE_SETSIGINFO), so
->> > we make ptrace(PTRACE_SETSIGINFO) clear the si_faultflags field if it
->> > detects that the signal would use the _sigfault layout, and introduce
->> > a new ptrace request type, PTRACE_SETSIGINFO2, that a si_faultflags-aware
->> > program may use to opt out of this behavior.
->> 
->> So I think while well intentioned this is misguided.
->> 
->> gdb and the like may use this but I expect the primary user is CRIU
->> which simply reads the signal out of one process saves it on disk
->> and then restores the signal as read into the new process (possibly
->> on a different machine).
->> 
->> At least for the CRIU usage PTRACE_SETSIGINFO need to remain a raw
->> pass through kind of operation.
+> Dave Martin <Dave.Martin@arm.com> writes:
 >
-> This is a problem, though.
+>> On Mon, Nov 09, 2020 at 07:57:33PM -0600, Eric W. Biederman wrote:
+>>> Peter Collingbourne <pcc@google.com> writes:
+>>> 
+>>> > This field will contain flags that may be used by signal handlers to
+>>> > determine whether other fields in the _sigfault portion of siginfo are
+>>> > valid. An example use case is the following patch, which introduces
+>>> > the si_addr_tag_bits{,_mask} fields.
+>>> >
+>>> > A new sigcontext flag, SA_FAULTFLAGS, is introduced in order to allow
+>>> > a signal handler to require the kernel to set the field (but note
+>>> > that the field will be set anyway if the kernel supports the flag,
+>>> > regardless of its value). In combination with the previous patches,
+>>> > this allows a userspace program to determine whether the kernel will
+>>> > set the field.
+>>> >
+>>> > It is possible for an si_faultflags-unaware program to cause a signal
+>>> > handler in an si_faultflags-aware program to be called with a provided
+>>> > siginfo data structure by using one of the following syscalls:
+>>> >
+>>> > - ptrace(PTRACE_SETSIGINFO)
+>>> > - pidfd_send_signal
+>>> > - rt_sigqueueinfo
+>>> > - rt_tgsigqueueinfo
+>>> >
+>>> > So we need to prevent the si_faultflags-unaware program from causing an
+>>> > uninitialized read of si_faultflags in the si_faultflags-aware program when
+>>> > it uses one of these syscalls.
+>>> >
+>>> > The last three cases can be handled by observing that each of these
+>>> > syscalls fails if si_code >= 0. We also observe that kill(2) and
+>>> > tgkill(2) may be used to send a signal where si_code == 0 (SI_USER),
+>>> > so we define si_faultflags to only be valid if si_code > 0.
+>>> >
+>>> > There is no such check on si_code in ptrace(PTRACE_SETSIGINFO), so
+>>> > we make ptrace(PTRACE_SETSIGINFO) clear the si_faultflags field if it
+>>> > detects that the signal would use the _sigfault layout, and introduce
+>>> > a new ptrace request type, PTRACE_SETSIGINFO2, that a si_faultflags-aware
+>>> > program may use to opt out of this behavior.
+>>> 
+>>> So I think while well intentioned this is misguided.
+>>> 
+>>> gdb and the like may use this but I expect the primary user is CRIU
+>>> which simply reads the signal out of one process saves it on disk
+>>> and then restores the signal as read into the new process (possibly
+>>> on a different machine).
+>>> 
+>>> At least for the CRIU usage PTRACE_SETSIGINFO need to remain a raw
+>>> pass through kind of operation.
+>>
+>> This is a problem, though.
+>>
+>> How can we tell the difference between a siginfo that was generated by
+>> the kernel and a siginfo that was generated (or altered) by a non-xflags
+>> aware userspace?
+>>
+>> Short of revving the whole API, I don't see a simple solution to this.
 >
-> How can we tell the difference between a siginfo that was generated by
-> the kernel and a siginfo that was generated (or altered) by a non-xflags
-> aware userspace?
+> Unlike receiving a signal.  We do know that userspace old and new
+> always sends unused fields as zero into PTRACE_SETSIGINFO.
 >
-> Short of revving the whole API, I don't see a simple solution to this.
+> The split into kernel_siginfo verifies this and fails userspace if it
+> does something different.  No problems have been reported.
+>
+> So in the case of xflags a non-xflags aware userspace would either pass
+> the siginfo from through from somewhere else (such as
+> PTRACE_GETSIGINFO), or it would simply generate a signal with all of
+> the xflags bits clear.  So everything should work regardless.
+>
+>> Although a bit of a hack, could we include some kind of checksum in the
+>> siginfo?  If the checksum matches during PTRACE_SETSIGINFO, we could
+>> accept the whole thing; xflags included.  Otherwise, we could silently
+>> drop non-self-describing extensions.
+>>
+>> If we only need to generate the checksum when PTRACE_GETSIGINFO is
+>> called then it might be feasible to use a strong hash; otherwise, this
+>> mechanism will be far from bulletproof.
+>>
+>> A hash has the advantage that we don't need any other information
+>> to validate it beyond a salt: if the hash matches, it's self-
+>> validating.  We could also package other data with it to describe the
+>> presence of extensions, but relying on this for regular sigaction()/
+>> signal delivery use feels too high-overhead.
+>>
+>> For debuggers, I suspect that PTRACE_SETSIGINFO2 is still useful:
+>> userspace callers that want to write an extension field that they
+>> knowingly generated themselves should have a way to express that.
+>>
+>> Thoughts?
+>
+> I think there are two cases:
+> 1) CRIU  -- It is just a passthrough of PTRACE_GETSIGINFO
+> 2) Creating a signal from nowhere -- Code that does not know about
+>    xflags would leave xflags at 0 so no problem.
+>
+> Does anyone see any other cases I am missing?
+>
 
-Unlike receiving a signal.  We do know that userspace old and new
-always sends unused fields as zero into PTRACE_SETSIGINFO.
+Zoinks.  I forgot to read and double check the code I wrote.
 
-The split into kernel_siginfo verifies this and fails userspace if it
-does something different.  No problems have been reported.
+copy_siginfo_from_user only verifies against 0 when we don't know the
+layout.  So I don't know if we can count on userspace providing the
+extra data as 0 or not.
 
-So in the case of xflags a non-xflags aware userspace would either pass
-the siginfo from through from somewhere else (such as
-PTRACE_GETSIGINFO), or it would simply generate a signal with all of
-the xflags bits clear.  So everything should work regardless.
+So if we do indeed continue to need xflags we might care.
 
-> Although a bit of a hack, could we include some kind of checksum in the
-> siginfo?  If the checksum matches during PTRACE_SETSIGINFO, we could
-> accept the whole thing; xflags included.  Otherwise, we could silently
-> drop non-self-describing extensions.
->
-> If we only need to generate the checksum when PTRACE_GETSIGINFO is
-> called then it might be feasible to use a strong hash; otherwise, this
-> mechanism will be far from bulletproof.
->
-> A hash has the advantage that we don't need any other information
-> to validate it beyond a salt: if the hash matches, it's self-
-> validating.  We could also package other data with it to describe the
-> presence of extensions, but relying on this for regular sigaction()/
-> signal delivery use feels too high-overhead.
->
-> For debuggers, I suspect that PTRACE_SETSIGINFO2 is still useful:
-> userspace callers that want to write an extension field that they
-> knowingly generated themselves should have a way to express that.
->
-> Thoughts?
+It is currently an undefined non-sense case to provide non-zero fields
+there.  So I think it is reasonable to expect even debuggers generating
+signals to set those fields to know values such as 0.
 
-I think there are two cases:
-1) CRIU  -- It is just a passthrough of PTRACE_GETSIGINFO
-2) Creating a signal from nowhere -- Code that does not know about
-   xflags would leave xflags at 0 so no problem.
+Further I expect it is rare for debuggers to generate pretend faults.
 
-Does anyone see any other cases I am missing?
+So I would say perform whatever testing we can, so that there are no
+obvious problem users of PTRACE_SETSIGINFO and then to simply not worry
+about the PTRACE_SETSIGINFO unless someone reports a regression.
+
+But fist let's see if we really need xflags at all.
 
 Eric
+
