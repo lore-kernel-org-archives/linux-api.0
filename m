@@ -7,27 +7,24 @@ X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 78663C71155
-	for <linux-api@archiver.kernel.org>; Thu, 12 Nov 2020 20:52:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8A244C64E7B
+	for <linux-api@archiver.kernel.org>; Thu, 12 Nov 2020 20:52:43 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3AE5122244
-	for <linux-api@archiver.kernel.org>; Thu, 12 Nov 2020 20:52:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3184222244
+	for <linux-api@archiver.kernel.org>; Thu, 12 Nov 2020 20:52:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727365AbgKLUwb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 12 Nov 2020 15:52:31 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34012 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727251AbgKLUwK (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 12 Nov 2020 15:52:10 -0500
-Received: from smtp-bc0d.mail.infomaniak.ch (smtp-bc0d.mail.infomaniak.ch [IPv6:2001:1600:3:17::bc0d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C431DC061A47
-        for <linux-api@vger.kernel.org>; Thu, 12 Nov 2020 12:52:05 -0800 (PST)
+        id S1727386AbgKLUwm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 12 Nov 2020 15:52:42 -0500
+Received: from smtp-8faf.mail.infomaniak.ch ([83.166.143.175]:46897 "EHLO
+        smtp-8faf.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1727276AbgKLUwG (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 12 Nov 2020 15:52:06 -0500
 Received: from smtp-3-0000.mail.infomaniak.ch (unknown [10.4.36.107])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4CXDLD41gGzlhWgj;
-        Thu, 12 Nov 2020 21:52:04 +0100 (CET)
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4CXDLB1SV7zlhLsJ;
+        Thu, 12 Nov 2020 21:52:02 +0100 (CET)
 Received: from localhost (unknown [94.23.54.103])
-        by smtp-3-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4CXDLD1pHdzlh8T6;
-        Thu, 12 Nov 2020 21:52:04 +0100 (CET)
+        by smtp-3-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4CXDL95xClzlh8T6;
+        Thu, 12 Nov 2020 21:52:01 +0100 (CET)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     James Morris <jmorris@namei.org>,
         "Serge E . Hallyn" <serge@hallyn.com>
@@ -50,9 +47,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         linux-kselftest@vger.kernel.org,
         linux-security-module@vger.kernel.org, x86@kernel.org,
         =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@linux.microsoft.com>
-Subject: [PATCH v24 11/12] samples/landlock: Add a sandbox manager example
-Date:   Thu, 12 Nov 2020 21:51:40 +0100
-Message-Id: <20201112205141.775752-12-mic@digikod.net>
+Subject: [PATCH v24 09/12] arch: Wire up Landlock syscalls
+Date:   Thu, 12 Nov 2020 21:51:38 +0100
+Message-Id: <20201112205141.775752-10-mic@digikod.net>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201112205141.775752-1-mic@digikod.net>
 References: <20201112205141.775752-1-mic@digikod.net>
@@ -65,9 +62,12 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Mickaël Salaün <mic@linux.microsoft.com>
 
-Add a basic sandbox tool to launch a command which can only access a
-whitelist of file hierarchies in a read-only or read-write way.
+Wire up the following system calls for all architectures:
+* landlock_create_ruleset(2)
+* landlock_add_rule(2)
+* landlock_enforce_ruleset_current(2)
 
+Cc: Arnd Bergmann <arnd@arndb.de>
 Cc: James Morris <jmorris@namei.org>
 Cc: Jann Horn <jannh@google.com>
 Cc: Kees Cook <keescook@chromium.org>
@@ -75,365 +75,283 @@ Cc: Serge E. Hallyn <serge@hallyn.com>
 Signed-off-by: Mickaël Salaün <mic@linux.microsoft.com>
 ---
 
-Changes since v23:
-* Re-add hints to help users understand the required kernel
-  configuration.  This was removed with the removal of
-  landlock_get_features(2).
-
 Changes since v21:
-* Remove LANDLOCK_ACCESS_FS_CHROOT.
-* Clean up help.
+* Rebase and leave space for watch_mount(2) from -next.
 
 Changes since v20:
-* Update with new syscalls and type names.
-* Update errno check for EOPNOTSUPP.
-* Use the full syscall interfaces: explicitely set the "flags" field to
-  zero.
+* Remove landlock_get_features(2).
+* Decrease syscall numbers to stick to process_madvise(2) in -next.
+* Rename landlock_enforce_ruleset(2) to
+  landlock_enforce_ruleset_current(2).
 
 Changes since v19:
-* Update with the new Landlock syscalls.
-* Comply with commit 5f2fb52fac15 ("kbuild: rename hostprogs-y/always to
-  hostprogs/always-y").
+* Increase syscall numbers by 4 to leave space for new ones (in
+  linux-next): watch_mount(2), watch_sb(2), fsinfo(2) and
+  process_madvise(2) (requested by Arnd Bergmann).
+* Replace the previous multiplexor landlock(2) with 4 syscalls:
+  landlock_get_features(2), landlock_create_ruleset(2),
+  landlock_add_rule(2) and landlock_enforce_ruleset(2).
 
-Changes since v16:
-* Switch syscall attribute pointer and size arguments.
-
-Changes since v15:
-* Update access right names.
-* Properly assign access right to files according to the new related
-  syscall restriction.
-* Replace "select" with "depends on" HEADERS_INSTALL (suggested by Randy
-  Dunlap).
+Changes since v18:
+* Increase the syscall number because of the new faccessat2(2).
 
 Changes since v14:
-* Fix Kconfig dependency.
-* Remove access rights that may be required for FD-only requests:
-  mmap, truncate, getattr, lock, chmod, chown, chgrp, ioctl.
-* Fix useless hardcoded syscall number.
-* Use execvpe().
-* Follow symlinks.
-* Extend help with common file paths.
-* Constify variables.
-* Clean up comments.
-* Improve error message.
+* Add all architectures.
 
-Changes since v11:
-* Add back the filesystem sandbox manager and update it to work with the
-  new Landlock syscall.
-
-Previous changes:
-https://lore.kernel.org/lkml/20190721213116.23476-9-mic@digikod.net/
+Changes since v13:
+* New implementation.
 ---
- samples/Kconfig              |   7 ++
- samples/Makefile             |   1 +
- samples/landlock/.gitignore  |   1 +
- samples/landlock/Makefile    |  15 +++
- samples/landlock/sandboxer.c | 236 +++++++++++++++++++++++++++++++++++
- 5 files changed, 260 insertions(+)
- create mode 100644 samples/landlock/.gitignore
- create mode 100644 samples/landlock/Makefile
- create mode 100644 samples/landlock/sandboxer.c
+ arch/alpha/kernel/syscalls/syscall.tbl      | 3 +++
+ arch/arm/tools/syscall.tbl                  | 3 +++
+ arch/arm64/include/asm/unistd.h             | 2 +-
+ arch/arm64/include/asm/unistd32.h           | 6 ++++++
+ arch/ia64/kernel/syscalls/syscall.tbl       | 3 +++
+ arch/m68k/kernel/syscalls/syscall.tbl       | 3 +++
+ arch/microblaze/kernel/syscalls/syscall.tbl | 3 +++
+ arch/mips/kernel/syscalls/syscall_n32.tbl   | 3 +++
+ arch/mips/kernel/syscalls/syscall_n64.tbl   | 3 +++
+ arch/mips/kernel/syscalls/syscall_o32.tbl   | 3 +++
+ arch/parisc/kernel/syscalls/syscall.tbl     | 3 +++
+ arch/powerpc/kernel/syscalls/syscall.tbl    | 3 +++
+ arch/s390/kernel/syscalls/syscall.tbl       | 3 +++
+ arch/sh/kernel/syscalls/syscall.tbl         | 3 +++
+ arch/sparc/kernel/syscalls/syscall.tbl      | 3 +++
+ arch/x86/entry/syscalls/syscall_32.tbl      | 3 +++
+ arch/x86/entry/syscalls/syscall_64.tbl      | 3 +++
+ arch/xtensa/kernel/syscalls/syscall.tbl     | 3 +++
+ include/uapi/asm-generic/unistd.h           | 8 +++++++-
+ 19 files changed, 62 insertions(+), 2 deletions(-)
 
-diff --git a/samples/Kconfig b/samples/Kconfig
-index 0ed6e4d71d87..e6129496ced5 100644
---- a/samples/Kconfig
-+++ b/samples/Kconfig
-@@ -124,6 +124,13 @@ config SAMPLE_HIDRAW
- 	bool "hidraw sample"
- 	depends on CC_CAN_LINK && HEADERS_INSTALL
+diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
+index ee7b01bb7346..7ef9966fc654 100644
+--- a/arch/alpha/kernel/syscalls/syscall.tbl
++++ b/arch/alpha/kernel/syscalls/syscall.tbl
+@@ -480,3 +480,6 @@
+ 548	common	pidfd_getfd			sys_pidfd_getfd
+ 549	common	faccessat2			sys_faccessat2
+ 550	common	process_madvise			sys_process_madvise
++552	common	landlock_create_ruleset				sys_landlock_create_ruleset
++553	common	landlock_add_rule					sys_landlock_add_rule
++554	common	landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index d056a548358e..5bde774cef96 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -454,3 +454,6 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++442	common	landlock_create_ruleset				sys_landlock_create_ruleset
++443	common	landlock_add_rule					sys_landlock_add_rule
++444	common	landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current
+diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
+index b3b2019f8d16..64ebdc1ec581 100644
+--- a/arch/arm64/include/asm/unistd.h
++++ b/arch/arm64/include/asm/unistd.h
+@@ -38,7 +38,7 @@
+ #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE + 5)
+ #define __ARM_NR_COMPAT_END		(__ARM_NR_COMPAT_BASE + 0x800)
  
-+config SAMPLE_LANDLOCK
-+	bool "Build Landlock sample code"
-+	depends on HEADERS_INSTALL
-+	help
-+	  Build a simple Landlock sandbox manager able to launch a process
-+	  restricted by a user-defined filesystem access control.
-+
- config SAMPLE_PIDFD
- 	bool "pidfd sample"
- 	depends on CC_CAN_LINK && HEADERS_INSTALL
-diff --git a/samples/Makefile b/samples/Makefile
-index c3392a595e4b..087e0988ccc5 100644
---- a/samples/Makefile
-+++ b/samples/Makefile
-@@ -11,6 +11,7 @@ obj-$(CONFIG_SAMPLE_KDB)		+= kdb/
- obj-$(CONFIG_SAMPLE_KFIFO)		+= kfifo/
- obj-$(CONFIG_SAMPLE_KOBJECT)		+= kobject/
- obj-$(CONFIG_SAMPLE_KPROBES)		+= kprobes/
-+subdir-$(CONFIG_SAMPLE_LANDLOCK)	+= landlock
- obj-$(CONFIG_SAMPLE_LIVEPATCH)		+= livepatch/
- subdir-$(CONFIG_SAMPLE_PIDFD)		+= pidfd
- obj-$(CONFIG_SAMPLE_QMI_CLIENT)		+= qmi/
-diff --git a/samples/landlock/.gitignore b/samples/landlock/.gitignore
-new file mode 100644
-index 000000000000..f43668b2d318
---- /dev/null
-+++ b/samples/landlock/.gitignore
-@@ -0,0 +1 @@
-+/sandboxer
-diff --git a/samples/landlock/Makefile b/samples/landlock/Makefile
-new file mode 100644
-index 000000000000..21eda5774948
---- /dev/null
-+++ b/samples/landlock/Makefile
-@@ -0,0 +1,15 @@
-+# SPDX-License-Identifier: BSD-3-Clause
-+
-+hostprogs := sandboxer
-+
-+always-y := $(hostprogs)
-+
-+KBUILD_HOSTCFLAGS += -I$(objtree)/usr/include
-+
-+.PHONY: all clean
-+
-+all:
-+	$(MAKE) -C ../.. samples/landlock/
-+
-+clean:
-+	$(MAKE) -C ../.. M=samples/landlock/ clean
-diff --git a/samples/landlock/sandboxer.c b/samples/landlock/sandboxer.c
-new file mode 100644
-index 000000000000..127fb063c23a
---- /dev/null
-+++ b/samples/landlock/sandboxer.c
-@@ -0,0 +1,236 @@
-+// SPDX-License-Identifier: BSD-3-Clause
-+/*
-+ * Simple Landlock sandbox manager able to launch a process restricted by a
-+ * user-defined filesystem access control.
-+ *
-+ * Copyright © 2017-2020 Mickaël Salaün <mic@digikod.net>
-+ * Copyright © 2020 ANSSI
-+ */
-+
-+#define _GNU_SOURCE
-+#include <errno.h>
-+#include <fcntl.h>
-+#include <linux/landlock.h>
-+#include <linux/prctl.h>
-+#include <stddef.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <sys/prctl.h>
-+#include <sys/stat.h>
-+#include <sys/syscall.h>
-+#include <unistd.h>
-+
-+#ifndef landlock_create_ruleset
-+static inline int landlock_create_ruleset(
-+		const struct landlock_ruleset_attr *const attr,
-+		const size_t size, const __u32 flags)
-+{
-+	errno = 0;
-+	return syscall(__NR_landlock_create_ruleset, attr, size, flags);
-+}
-+#endif
-+
-+#ifndef landlock_add_rule
-+static inline int landlock_add_rule(const int ruleset_fd,
-+		const enum landlock_rule_type rule_type,
-+		const void *const rule_attr, const __u32 flags)
-+{
-+	errno = 0;
-+	return syscall(__NR_landlock_add_rule, ruleset_fd, rule_type,
-+			rule_attr, flags);
-+}
-+#endif
-+
-+#ifndef landlock_enforce_ruleset_current
-+static inline int landlock_enforce_ruleset_current(const int ruleset_fd,
-+		const __u32 flags)
-+{
-+	errno = 0;
-+	return syscall(__NR_landlock_enforce_ruleset_current, ruleset_fd,
-+			flags);
-+}
-+#endif
-+
-+#define ENV_FS_RO_NAME "LL_FS_RO"
-+#define ENV_FS_RW_NAME "LL_FS_RW"
-+#define ENV_PATH_TOKEN ":"
-+
-+static int parse_path(char *env_path, const char ***const path_list)
-+{
-+	int i, path_nb = 0;
-+
-+	if (env_path) {
-+		path_nb++;
-+		for (i = 0; env_path[i]; i++) {
-+			if (env_path[i] == ENV_PATH_TOKEN[0])
-+				path_nb++;
-+		}
-+	}
-+	*path_list = malloc(path_nb * sizeof(**path_list));
-+	for (i = 0; i < path_nb; i++)
-+		(*path_list)[i] = strsep(&env_path, ENV_PATH_TOKEN);
-+
-+	return path_nb;
-+}
-+
-+#define ACCESS_FILE ( \
-+	LANDLOCK_ACCESS_FS_EXECUTE | \
-+	LANDLOCK_ACCESS_FS_WRITE_FILE | \
-+	LANDLOCK_ACCESS_FS_READ_FILE)
-+
-+static int populate_ruleset(
-+		const char *const env_var, const int ruleset_fd,
-+		const __u64 allowed_access)
-+{
-+	int path_nb, i;
-+	char *env_path_name;
-+	const char **path_list = NULL;
-+	struct landlock_path_beneath_attr path_beneath = {
-+		.parent_fd = -1,
-+	};
-+
-+	env_path_name = getenv(env_var);
-+	if (!env_path_name) {
-+		fprintf(stderr, "Missing environment variable %s\n", env_var);
-+		return 1;
-+	}
-+	env_path_name = strdup(env_path_name);
-+	unsetenv(env_var);
-+	path_nb = parse_path(env_path_name, &path_list);
-+	if (path_nb == 1 && path_list[0][0] == '\0') {
-+		fprintf(stderr, "Missing path in %s\n", env_var);
-+		goto err_free_name;
-+	}
-+
-+	for (i = 0; i < path_nb; i++) {
-+		struct stat statbuf;
-+
-+		path_beneath.parent_fd = open(path_list[i], O_PATH |
-+				O_CLOEXEC);
-+		if (path_beneath.parent_fd < 0) {
-+			fprintf(stderr, "Failed to open \"%s\": %s\n",
-+					path_list[i],
-+					strerror(errno));
-+			goto err_free_name;
-+		}
-+		if (fstat(path_beneath.parent_fd, &statbuf)) {
-+			close(path_beneath.parent_fd);
-+			goto err_free_name;
-+		}
-+		path_beneath.allowed_access = allowed_access;
-+		if (!S_ISDIR(statbuf.st_mode))
-+			path_beneath.allowed_access &= ACCESS_FILE;
-+		if (landlock_add_rule(ruleset_fd, LANDLOCK_RULE_PATH_BENEATH,
-+					&path_beneath, 0)) {
-+			fprintf(stderr, "Failed to update the ruleset with \"%s\": %s\n",
-+					path_list[i], strerror(errno));
-+			close(path_beneath.parent_fd);
-+			goto err_free_name;
-+		}
-+		close(path_beneath.parent_fd);
-+	}
-+	free(env_path_name);
-+	return 0;
-+
-+err_free_name:
-+	free(env_path_name);
-+	return 1;
-+}
-+
-+#define ACCESS_FS_ROUGHLY_READ ( \
-+	LANDLOCK_ACCESS_FS_EXECUTE | \
-+	LANDLOCK_ACCESS_FS_READ_FILE | \
-+	LANDLOCK_ACCESS_FS_READ_DIR)
-+
-+#define ACCESS_FS_ROUGHLY_WRITE ( \
-+	LANDLOCK_ACCESS_FS_WRITE_FILE | \
-+	LANDLOCK_ACCESS_FS_REMOVE_DIR | \
-+	LANDLOCK_ACCESS_FS_REMOVE_FILE | \
-+	LANDLOCK_ACCESS_FS_MAKE_CHAR | \
-+	LANDLOCK_ACCESS_FS_MAKE_DIR | \
-+	LANDLOCK_ACCESS_FS_MAKE_REG | \
-+	LANDLOCK_ACCESS_FS_MAKE_SOCK | \
-+	LANDLOCK_ACCESS_FS_MAKE_FIFO | \
-+	LANDLOCK_ACCESS_FS_MAKE_BLOCK | \
-+	LANDLOCK_ACCESS_FS_MAKE_SYM)
-+
-+int main(const int argc, char *const argv[], char *const *const envp)
-+{
-+	const char *cmd_path;
-+	char *const *cmd_argv;
-+	int ruleset_fd;
-+	struct landlock_ruleset_attr ruleset_attr = {
-+		.handled_access_fs = ACCESS_FS_ROUGHLY_READ |
-+			ACCESS_FS_ROUGHLY_WRITE,
-+	};
-+
-+	if (argc < 2) {
-+		fprintf(stderr, "usage: %s=\"...\" %s=\"...\" %s <cmd> [args]...\n\n",
-+				ENV_FS_RO_NAME, ENV_FS_RW_NAME, argv[0]);
-+		fprintf(stderr, "Launch a command in a restricted environment.\n\n");
-+		fprintf(stderr, "Environment variables containing paths, "
-+				"each separated by a colon:\n");
-+		fprintf(stderr, "* %s: list of paths allowed to be used in a read-only way.\n",
-+				ENV_FS_RO_NAME);
-+		fprintf(stderr, "* %s: list of paths allowed to be used in a read-write way.\n",
-+				ENV_FS_RO_NAME);
-+		fprintf(stderr, "\nexample:\n"
-+				"%s=\"/bin:/lib:/usr:/proc:/etc:/dev/urandom\" "
-+				"%s=\"/dev/null:/dev/full:/dev/zero:/dev/pts:/tmp\" "
-+				"%s bash -i\n",
-+				ENV_FS_RO_NAME, ENV_FS_RW_NAME, argv[0]);
-+		return 1;
-+	}
-+
-+	ruleset_fd = landlock_create_ruleset(&ruleset_attr, sizeof(ruleset_attr), 0);
-+	if (ruleset_fd < 0) {
-+		perror("Failed to create a ruleset");
-+		switch (errno) {
-+		case ENOSYS:
-+			fprintf(stderr, "Hint: Landlock is not supported by the current kernel. "
-+					"To support it, build the kernel with "
-+					"CONFIG_SECURITY_LANDLOCK=y and prepend "
-+					"\"landlock,\" to the content of CONFIG_LSM.\n");
-+			break;
-+		case EOPNOTSUPP:
-+			fprintf(stderr, "Hint: Landlock is currently disabled. "
-+					"It can be enabled in the kernel configuration by "
-+					"prepending \"landlock,\" to the content of CONFIG_LSM, "
-+					"or at boot time by setting the same content to the "
-+					"\"lsm\" kernel parameter.\n");
-+			break;
-+		}
-+		return 1;
-+	}
-+	if (populate_ruleset(ENV_FS_RO_NAME, ruleset_fd,
-+				ACCESS_FS_ROUGHLY_READ)) {
-+		goto err_close_ruleset;
-+	}
-+	if (populate_ruleset(ENV_FS_RW_NAME, ruleset_fd,
-+				ACCESS_FS_ROUGHLY_READ | ACCESS_FS_ROUGHLY_WRITE)) {
-+		goto err_close_ruleset;
-+	}
-+	if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) {
-+		perror("Failed to restrict privileges");
-+		goto err_close_ruleset;
-+	}
-+	if (landlock_enforce_ruleset_current(ruleset_fd, 0)) {
-+		perror("Failed to enforce ruleset");
-+		goto err_close_ruleset;
-+	}
-+	close(ruleset_fd);
-+
-+	cmd_path = argv[1];
-+	cmd_argv = argv + 1;
-+	execvpe(cmd_path, cmd_argv, envp);
-+	fprintf(stderr, "Failed to execute \"%s\": %s\n", cmd_path,
-+			strerror(errno));
-+	fprintf(stderr, "Hint: access to the binary, the interpreter or "
-+			"shared libraries may be denied.\n");
-+	return 1;
-+
-+err_close_ruleset:
-+	close(ruleset_fd);
-+	return 1;
-+}
+-#define __NR_compat_syscalls		441
++#define __NR_compat_syscalls		445
+ #endif
+ 
+ #define __ARCH_WANT_SYS_CLONE
+diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
+index 107f08e03b9f..253521adb064 100644
+--- a/arch/arm64/include/asm/unistd32.h
++++ b/arch/arm64/include/asm/unistd32.h
+@@ -889,6 +889,12 @@ __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
+ __SYSCALL(__NR_faccessat2, sys_faccessat2)
+ #define __NR_process_madvise 440
+ __SYSCALL(__NR_process_madvise, sys_process_madvise)
++#define __NR_landlock_create_ruleset 442
++__SYSCALL(__NR_landlock_create_ruleset, sys_landlock_create_ruleset)
++#define __NR_landlock_add_rule 443
++__SYSCALL(__NR_landlock_add_rule, sys_landlock_add_rule)
++#define __NR_landlock_enforce_ruleset_current 444
++__SYSCALL(__NR_landlock_enforce_ruleset_current, sys_landlock_enforce_ruleset_current)
+ 
+ /*
+  * Please add new compat syscalls above this comment and update
+diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
+index b96ed8b8a508..b3790ee36efa 100644
+--- a/arch/ia64/kernel/syscalls/syscall.tbl
++++ b/arch/ia64/kernel/syscalls/syscall.tbl
+@@ -361,3 +361,6 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++442	common	landlock_create_ruleset				sys_landlock_create_ruleset
++443	common	landlock_add_rule					sys_landlock_add_rule
++444	common	landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current
+diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
+index 625fb6d32842..1958c994511b 100644
+--- a/arch/m68k/kernel/syscalls/syscall.tbl
++++ b/arch/m68k/kernel/syscalls/syscall.tbl
+@@ -440,3 +440,6 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++442	common	landlock_create_ruleset				sys_landlock_create_ruleset
++443	common	landlock_add_rule					sys_landlock_add_rule
++444	common	landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current
+diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
+index aae729c95cf9..213f731f719f 100644
+--- a/arch/microblaze/kernel/syscalls/syscall.tbl
++++ b/arch/microblaze/kernel/syscalls/syscall.tbl
+@@ -446,3 +446,6 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++442	common	landlock_create_ruleset				sys_landlock_create_ruleset
++443	common	landlock_add_rule					sys_landlock_add_rule
++444	common	landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current
+diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
+index 32817c954435..d9df5ab558d9 100644
+--- a/arch/mips/kernel/syscalls/syscall_n32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
+@@ -379,3 +379,6 @@
+ 438	n32	pidfd_getfd			sys_pidfd_getfd
+ 439	n32	faccessat2			sys_faccessat2
+ 440	n32	process_madvise			sys_process_madvise
++442	n32	landlock_create_ruleset				sys_landlock_create_ruleset
++443	n32	landlock_add_rule					sys_landlock_add_rule
++444	n32	landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current
+diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
+index 9e4ea3c31b1c..d7f7f1b8586a 100644
+--- a/arch/mips/kernel/syscalls/syscall_n64.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
+@@ -355,3 +355,6 @@
+ 438	n64	pidfd_getfd			sys_pidfd_getfd
+ 439	n64	faccessat2			sys_faccessat2
+ 440	n64	process_madvise			sys_process_madvise
++442	n64	landlock_create_ruleset				sys_landlock_create_ruleset
++443	n64	landlock_add_rule					sys_landlock_add_rule
++444	n64	landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current
+diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
+index 29f5f28cf5ce..940572554130 100644
+--- a/arch/mips/kernel/syscalls/syscall_o32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
+@@ -428,3 +428,6 @@
+ 438	o32	pidfd_getfd			sys_pidfd_getfd
+ 439	o32	faccessat2			sys_faccessat2
+ 440	o32	process_madvise			sys_process_madvise
++442	o32	landlock_create_ruleset				sys_landlock_create_ruleset
++443	o32	landlock_add_rule					sys_landlock_add_rule
++444	o32	landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current
+diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
+index f375ea528e59..344bd5011555 100644
+--- a/arch/parisc/kernel/syscalls/syscall.tbl
++++ b/arch/parisc/kernel/syscalls/syscall.tbl
+@@ -438,3 +438,6 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++442	common	landlock_create_ruleset				sys_landlock_create_ruleset
++443	common	landlock_add_rule					sys_landlock_add_rule
++444	common	landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current
+diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
+index 1275daec7fec..a00381d714ed 100644
+--- a/arch/powerpc/kernel/syscalls/syscall.tbl
++++ b/arch/powerpc/kernel/syscalls/syscall.tbl
+@@ -530,3 +530,6 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++442	common	landlock_create_ruleset				sys_landlock_create_ruleset
++443	common	landlock_add_rule					sys_landlock_add_rule
++444	common	landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current
+diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
+index 28c168000483..2b58ee29e071 100644
+--- a/arch/s390/kernel/syscalls/syscall.tbl
++++ b/arch/s390/kernel/syscalls/syscall.tbl
+@@ -443,3 +443,6 @@
+ 438  common	pidfd_getfd		sys_pidfd_getfd			sys_pidfd_getfd
+ 439  common	faccessat2		sys_faccessat2			sys_faccessat2
+ 440  common	process_madvise		sys_process_madvise		sys_process_madvise
++442  common	landlock_create_ruleset				sys_landlock_create_ruleset				sys_landlock_create_ruleset
++443  common	landlock_add_rule					sys_landlock_add_rule					sys_landlock_add_rule
++444  common	landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current
+diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
+index 783738448ff5..adf7c7de5e2b 100644
+--- a/arch/sh/kernel/syscalls/syscall.tbl
++++ b/arch/sh/kernel/syscalls/syscall.tbl
+@@ -443,3 +443,6 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++442	common	landlock_create_ruleset				sys_landlock_create_ruleset
++443	common	landlock_add_rule					sys_landlock_add_rule
++444	common	landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current
+diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
+index 78160260991b..c9b58cdd8830 100644
+--- a/arch/sparc/kernel/syscalls/syscall.tbl
++++ b/arch/sparc/kernel/syscalls/syscall.tbl
+@@ -486,3 +486,6 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++442	common	landlock_create_ruleset				sys_landlock_create_ruleset
++443	common	landlock_add_rule					sys_landlock_add_rule
++444	common	landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 0d0667a9fbd7..2a3d87873d76 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -445,3 +445,6 @@
+ 438	i386	pidfd_getfd		sys_pidfd_getfd
+ 439	i386	faccessat2		sys_faccessat2
+ 440	i386	process_madvise		sys_process_madvise
++442	i386	landlock_create_ruleset				sys_landlock_create_ruleset
++443	i386	landlock_add_rule					sys_landlock_add_rule
++444	i386	landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 379819244b91..3bcbd5ad60fb 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -362,6 +362,9 @@
+ 438	common	pidfd_getfd		sys_pidfd_getfd
+ 439	common	faccessat2		sys_faccessat2
+ 440	common	process_madvise		sys_process_madvise
++442	common	landlock_create_ruleset				sys_landlock_create_ruleset
++443	common	landlock_add_rule					sys_landlock_add_rule
++444	common	landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current
+ 
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
+diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
+index b070f272995d..09c587a75625 100644
+--- a/arch/xtensa/kernel/syscalls/syscall.tbl
++++ b/arch/xtensa/kernel/syscalls/syscall.tbl
+@@ -411,3 +411,6 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++442	common	landlock_create_ruleset				sys_landlock_create_ruleset
++443	common	landlock_add_rule					sys_landlock_add_rule
++444	common	landlock_enforce_ruleset_current	sys_landlock_enforce_ruleset_current
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 2056318988f7..6892c0de6fbd 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -859,9 +859,15 @@ __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
+ __SYSCALL(__NR_faccessat2, sys_faccessat2)
+ #define __NR_process_madvise 440
+ __SYSCALL(__NR_process_madvise, sys_process_madvise)
++#define __NR_landlock_create_ruleset 442
++__SYSCALL(__NR_landlock_create_ruleset, sys_landlock_create_ruleset)
++#define __NR_landlock_add_rule 443
++__SYSCALL(__NR_landlock_add_rule, sys_landlock_add_rule)
++#define __NR_landlock_enforce_ruleset_current 444
++__SYSCALL(__NR_landlock_enforce_ruleset_current, sys_landlock_enforce_ruleset_current)
+ 
+ #undef __NR_syscalls
+-#define __NR_syscalls 441
++#define __NR_syscalls 445
+ 
+ /*
+  * 32 bit systems traditionally used different
 -- 
 2.29.2
 
