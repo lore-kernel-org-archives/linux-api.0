@@ -2,124 +2,178 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B4954C55ABD
-	for <linux-api@archiver.kernel.org>; Sun, 15 Nov 2020 09:51:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 97A1AC2D0E4
+	for <linux-api@archiver.kernel.org>; Sun, 15 Nov 2020 10:38:26 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 700AC2222C
-	for <linux-api@archiver.kernel.org>; Sun, 15 Nov 2020 09:51:34 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="aR8eavkP"
+	by mail.kernel.org (Postfix) with ESMTP id 4E8EC24137
+	for <linux-api@archiver.kernel.org>; Sun, 15 Nov 2020 10:38:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726552AbgKOJvO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 15 Nov 2020 04:51:14 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35322 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726230AbgKOJvN (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 15 Nov 2020 04:51:13 -0500
-Received: from mail-wm1-x342.google.com (mail-wm1-x342.google.com [IPv6:2a00:1450:4864:20::342])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 94D73C0613D1;
-        Sun, 15 Nov 2020 01:51:12 -0800 (PST)
-Received: by mail-wm1-x342.google.com with SMTP id 10so20968612wml.2;
-        Sun, 15 Nov 2020 01:51:12 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=cc:subject:to:references:from:message-id:date:user-agent
-         :mime-version:in-reply-to:content-language:content-transfer-encoding;
-        bh=DxPhSq5x6juh7P8dcR2Yq3kUAwvxk05jpxUKEYJN6Sc=;
-        b=aR8eavkPWhoWnzL/RN0tPKslk3HeE/9+6E7utMUn740eqL++lb6FHN9j8lxamTJqHJ
-         Vje+KeKQ/igIFoOX+RJKWFKSTykRxgOiGKyg0mseiaMrxt8lec9rc9U+lm/HbcZpr8+Q
-         RJqNLkvhUCiHP+5mc3Ap8weUzMvc01csN6Mud6Qu67Jca4M2U6Qzain/p/HzAhHSviKC
-         lA4I4/xj3kfIYUFBCqUQi7zi0/EoRab4NbD8dXHruhjxDRNA85QyNJ7PZFLh2IRyA/39
-         YUnTQQt/epGQYxALh3EoNMWAVS+AJ0cfgGAe8CRxv2AB7PfzZt5bP9I8YczABwblMEFw
-         6ZlQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:cc:subject:to:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-language
-         :content-transfer-encoding;
-        bh=DxPhSq5x6juh7P8dcR2Yq3kUAwvxk05jpxUKEYJN6Sc=;
-        b=Q6uDb50sl8kve9g/WDCmwq3nbwNKStUKkN8kGCtRYot1BsBekgWqISH4KdHh6bcr1L
-         qV7puwcgsV1q0763iMOQbgVUhSAbqRJ9YLPPQF+Crr7ugDZxVjpB0Hb/JdSszUn+e7pq
-         PBei8VhaBabirzIDYlYFl/Y4vdcDLI9nhzZQlYKOFJ9c/JPIwo6zpn6ZcokLADCUxM4u
-         a3DNT3ZPSbK38nLmltDf4T38ys6sfeciHZJt3H+laFu1514EUtv4uRFtOsP+ska6/5k5
-         alBQRAQqXehzTQn5zKB8OW2KoOCYPE8Qj8H/hJWBrOd7hFvrHmLmw96y/7tEh2i5gvn4
-         rL+Q==
-X-Gm-Message-State: AOAM532h+GFOgQ45pu+53YaaCDuMLthw5sYwLDP6Hp8d6unRNQvT8htk
-        gWCG0OD9c2aJttu38JrnPPM=
-X-Google-Smtp-Source: ABdhPJy7JywbkquFwdP6gSZTViQiPHk5O9f8b+Tw4EP7CD5x/piMdcxCrmYwLDVKpyHCQfgWL40mjQ==
-X-Received: by 2002:a1c:a185:: with SMTP id k127mr10041707wme.23.1605433871086;
-        Sun, 15 Nov 2020 01:51:11 -0800 (PST)
-Received: from ?IPv6:2001:a61:24b3:de01:7310:e730:497d:ea6a? ([2001:a61:24b3:de01:7310:e730:497d:ea6a])
-        by smtp.gmail.com with ESMTPSA id d2sm13217582wra.73.2020.11.15.01.51.09
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Sun, 15 Nov 2020 01:51:10 -0800 (PST)
-Cc:     mtk.manpages@gmail.com, Dave.Martin@arm.com,
-        James.Bottomley@hansenpartnership.com, andreyknvl@google.com,
-        catalin.marinas@arm.com, david.spickett@linaro.org, deller@gmx.de,
-        ebiederm@xmission.com, eugenis@google.com, kcc@google.com,
-        kevin.brodsky@arm.com, linux-api@vger.kernel.org,
-        linux-arm-kernel@lists.infradead.org, linux-man@vger.kernel.org,
-        oleg@redhat.com, vincenzo.frascino@arm.com, will@kernel.org
-Subject: Re: [PATCH] sigaction.2: Document SA_EXPOSE_TAGBITS and the flag
- support detection protocol
-To:     Alejandro Colomar <alx.manpages@gmail.com>, pcc@google.com
-References: <20201114014132.2439310-1-pcc@google.com>
- <20201114214914.177815-1-colomar.6.4.3@gmail.com>
-From:   "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Message-ID: <44cf5d5c-bd7d-1dab-40e3-0759201a9e34@gmail.com>
-Date:   Sun, 15 Nov 2020 10:51:08 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.3.1
+        id S1726741AbgKOKiZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 15 Nov 2020 05:38:25 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:58635 "EHLO
+        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726438AbgKOKiX (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 15 Nov 2020 05:38:23 -0500
+Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
+        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.86_2)
+        (envelope-from <christian.brauner@ubuntu.com>)
+        id 1keFQD-0000Kt-Om; Sun, 15 Nov 2020 10:38:13 +0000
+From:   Christian Brauner <christian.brauner@ubuntu.com>
+To:     Alexander Viro <viro@zeniv.linux.org.uk>,
+        Christoph Hellwig <hch@infradead.org>,
+        linux-fsdevel@vger.kernel.org
+Cc:     John Johansen <john.johansen@canonical.com>,
+        James Morris <jmorris@namei.org>,
+        Mimi Zohar <zohar@linux.ibm.com>,
+        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
+        Stephen Smalley <stephen.smalley.work@gmail.com>,
+        Casey Schaufler <casey@schaufler-ca.com>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andreas Dilger <adilger.kernel@dilger.ca>,
+        OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>,
+        Geoffrey Thomas <geofft@ldpreload.com>,
+        Mrunal Patel <mpatel@redhat.com>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Theodore Tso <tytso@mit.edu>, Alban Crequy <alban@kinvolk.io>,
+        Tycho Andersen <tycho@tycho.ws>,
+        David Howells <dhowells@redhat.com>,
+        James Bottomley <James.Bottomley@hansenpartnership.com>,
+        Jann Horn <jannh@google.com>,
+        Seth Forshee <seth.forshee@canonical.com>,
+        =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
+        Aleksa Sarai <cyphar@cyphar.com>,
+        Lennart Poettering <lennart@poettering.net>,
+        "Eric W. Biederman" <ebiederm@xmission.com>, smbarber@chromium.org,
+        Phil Estes <estesp@gmail.com>, Serge Hallyn <serge@hallyn.com>,
+        Kees Cook <keescook@chromium.org>,
+        Todd Kjos <tkjos@google.com>, Jonathan Corbet <corbet@lwn.net>,
+        containers@lists.linux-foundation.org,
+        linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-ext4@vger.kernel.org, linux-audit@redhat.com,
+        linux-integrity@vger.kernel.org, selinux@vger.kernel.org,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Christoph Hellwig <hch@lst.de>
+Subject: [PATCH v2 01/39] namespace: take lock_mount_hash() directly when changing flags
+Date:   Sun, 15 Nov 2020 11:36:40 +0100
+Message-Id: <20201115103718.298186-2-christian.brauner@ubuntu.com>
+X-Mailer: git-send-email 2.29.2
+In-Reply-To: <20201115103718.298186-1-christian.brauner@ubuntu.com>
+References: <20201115103718.298186-1-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
-In-Reply-To: <20201114214914.177815-1-colomar.6.4.3@gmail.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi Alex,
+Changing mount options always ends up taking lock_mount_hash() but when
+MNT_READONLY is requested and neither the mount nor the superblock are
+not already MNT_READONLY we end up taking the lock, dropping it, and
+retaking it to change the other mount attributes. Instead of this,
+acquire the lock once when changing mount properties. This simplifies
+the locking in these codepath, makes them easier to reason about and
+avoids having to reacquire the lock right after dropping it.
 
-On 11/14/20 10:49 PM, Alejandro Colomar wrote:
-> From: Peter Collingbourne <pcc@google.com>
-> 
-> Signed-off-by: Peter Collingbourne <pcc@google.com>
-> [alx: srcfix + ffix]
-> Cowritten-by: Alejandro Colomar <alx.manpages@gmail.com>
-> Signed-off-by: Alejandro Colomar <alx.manpages@gmail.com>
-> ---
-> 
-> Hi Michael,
-> 
-> as Peter noted, this patch is not ready
-> (code hasn't been merged into the kernel yet).
-> 
-> And a spin-off question:
-> How would you prefer it?:
-> [
-> .B SA_*
-> ] (there are 79 similar cases in the pages [1])
-> or
-> [
-> .BR SA_ *
-> ] (there are 3 similar cases in the pages [2])
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: David Howells <dhowells@redhat.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: linux-fsdevel@vger.kernel.org
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+---
+/* v2 */
+- Christoph Hellwig:
+  - Remove pointless __mnt_unmake_readonly() helper.
+  - Even though Christoph suggested to lockdep_assert_held() into places that
+    require {lock,unlock}_mount_hash() it seems that seqlock's don't support
+    it.
+---
+ fs/namespace.c | 22 ++++++++--------------
+ 1 file changed, 8 insertions(+), 14 deletions(-)
 
-I think the second form has crept in by accident.
-The first form is preferred.
-
-Thanks,
-
-Michael
-
-
+diff --git a/fs/namespace.c b/fs/namespace.c
+index cebaa3e81794..f183161833ad 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -463,7 +463,6 @@ static int mnt_make_readonly(struct mount *mnt)
+ {
+ 	int ret = 0;
+ 
+-	lock_mount_hash();
+ 	mnt->mnt.mnt_flags |= MNT_WRITE_HOLD;
+ 	/*
+ 	 * After storing MNT_WRITE_HOLD, we'll read the counters. This store
+@@ -497,18 +496,9 @@ static int mnt_make_readonly(struct mount *mnt)
+ 	 */
+ 	smp_wmb();
+ 	mnt->mnt.mnt_flags &= ~MNT_WRITE_HOLD;
+-	unlock_mount_hash();
+ 	return ret;
+ }
+ 
+-static int __mnt_unmake_readonly(struct mount *mnt)
+-{
+-	lock_mount_hash();
+-	mnt->mnt.mnt_flags &= ~MNT_READONLY;
+-	unlock_mount_hash();
+-	return 0;
+-}
+-
+ int sb_prepare_remount_readonly(struct super_block *sb)
+ {
+ 	struct mount *mnt;
+@@ -2508,7 +2498,8 @@ static int change_mount_ro_state(struct mount *mnt, unsigned int mnt_flags)
+ 	if (readonly_request)
+ 		return mnt_make_readonly(mnt);
+ 
+-	return __mnt_unmake_readonly(mnt);
++	mnt->mnt.mnt_flags &= ~MNT_READONLY;
++	return 0;
+ }
+ 
+ /*
+@@ -2517,11 +2508,9 @@ static int change_mount_ro_state(struct mount *mnt, unsigned int mnt_flags)
+  */
+ static void set_mount_attributes(struct mount *mnt, unsigned int mnt_flags)
+ {
+-	lock_mount_hash();
+ 	mnt_flags |= mnt->mnt.mnt_flags & ~MNT_USER_SETTABLE_MASK;
+ 	mnt->mnt.mnt_flags = mnt_flags;
+ 	touch_mnt_namespace(mnt->mnt_ns);
+-	unlock_mount_hash();
+ }
+ 
+ static void mnt_warn_timestamp_expiry(struct path *mountpoint, struct vfsmount *mnt)
+@@ -2567,9 +2556,11 @@ static int do_reconfigure_mnt(struct path *path, unsigned int mnt_flags)
+ 		return -EPERM;
+ 
+ 	down_write(&sb->s_umount);
++	lock_mount_hash();
+ 	ret = change_mount_ro_state(mnt, mnt_flags);
+ 	if (ret == 0)
+ 		set_mount_attributes(mnt, mnt_flags);
++	unlock_mount_hash();
+ 	up_write(&sb->s_umount);
+ 
+ 	mnt_warn_timestamp_expiry(path, &mnt->mnt);
+@@ -2610,8 +2601,11 @@ static int do_remount(struct path *path, int ms_flags, int sb_flags,
+ 		err = -EPERM;
+ 		if (ns_capable(sb->s_user_ns, CAP_SYS_ADMIN)) {
+ 			err = reconfigure_super(fc);
+-			if (!err)
++			if (!err) {
++				lock_mount_hash();
+ 				set_mount_attributes(mnt, mnt_flags);
++				unlock_mount_hash();
++			}
+ 		}
+ 		up_write(&sb->s_umount);
+ 	}
 -- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+2.29.2
+
