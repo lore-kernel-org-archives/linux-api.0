@@ -2,213 +2,191 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.6 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B7DB3C5519F
-	for <linux-api@archiver.kernel.org>; Sat, 14 Nov 2020 22:22:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1834FC61DD8
+	for <linux-api@archiver.kernel.org>; Sun, 15 Nov 2020 08:27:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 66DBD2245F
-	for <linux-api@archiver.kernel.org>; Sat, 14 Nov 2020 22:22:34 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C9B2E22409
+	for <linux-api@archiver.kernel.org>; Sun, 15 Nov 2020 08:27:05 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="hnY5QsME"
+	dkim=pass (1024-bit key) header.d=kernel.org header.i=@kernel.org header.b="OzCqWMqj"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726125AbgKNWWO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 14 Nov 2020 17:22:14 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43592 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726121AbgKNWWM (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 14 Nov 2020 17:22:12 -0500
-Received: from mail-wm1-x32b.google.com (mail-wm1-x32b.google.com [IPv6:2a00:1450:4864:20::32b])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7A265C0613D1;
-        Sat, 14 Nov 2020 14:22:10 -0800 (PST)
-Received: by mail-wm1-x32b.google.com with SMTP id a3so19938665wmb.5;
-        Sat, 14 Nov 2020 14:22:10 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=from:to:cc:subject:date:message-id:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=3ssMnzK9+Tf5itgz6j0CoOgfa2ffAC9LTASibshJr7o=;
-        b=hnY5QsMEXhC2aY5D4KCLUqThyzz7f6UwD5tvwgjGjlyXfzwk4khtvneMwXflhb1i/h
-         o+DDeo0ocgQyx/46vED99y/hQxpNZUf+pEZ6McAYDkKk9R/K0cEFQpZNNpPW6Tz3eiVS
-         mVNEAhuOdDS4nZcfwDd5wr+u6KQTF2EIquOb7Ka5ZLB0vKWXBionjLFBmn6fqTzlzzOK
-         QSSRUdpOhZG+si0IXh1R0tOhx7lvONO0xsrvZgg22Del1ZrRh4AOQMPdG9xf/logGRQ+
-         kiUGwz3PcnVt5EzVG1/4e+FUkpLtD8tvu4ohYVHBmqKLCDuBgwz49nsPYF8GpzScF+E5
-         F80g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references:mime-version:content-transfer-encoding;
-        bh=3ssMnzK9+Tf5itgz6j0CoOgfa2ffAC9LTASibshJr7o=;
-        b=GXqOgqACHpFouclCdHrVOZguTZZchgaP6yEjHx5UQpE79j2uT6qNrBfOaDGctJFKzi
-         6bFNobkk7lsgcD/wK9PzzpFAYFqaSJs3jjrzmuuMJ98BnIYavmL98fSx/84aoD8C6s1K
-         0Tv+QafGo21Q1PNFPNo3X74AoQOawGUdcuHxN8TyuqeVtpVyZRGeckjfIJE44K+ZyTDa
-         S1siWf51rC2Dfj81RzGXZiHzXLZdTXUi1dndnqHrBFqJx0O+EFOKDVw8PL8F/Wv/t3qo
-         cut0TRbTMigAxV5O/RFZxGj3ibnKumEFQjspLkI4ZZ+D11D9o2QVDyTa0GEGQEQsRKoQ
-         f6Ww==
-X-Gm-Message-State: AOAM532KcNv6tIn/X64tzm1gIpxcsWRqHuel2a4/ClkVWbOdsVpt9Bci
-        fFqlFWxFiFwMIIzb0g/CN5Q=
-X-Google-Smtp-Source: ABdhPJwUusLonRJPfLhID5eqG5hv9dEooBLirv2Q0V3Al1ERtM61F/Ze8oONhADBQzsOzTKlzXYPtw==
-X-Received: by 2002:a1c:4302:: with SMTP id q2mr8543859wma.182.1605392528005;
-        Sat, 14 Nov 2020 14:22:08 -0800 (PST)
-Received: from localhost.localdomain ([170.253.49.0])
-        by smtp.googlemail.com with ESMTPSA id 89sm16826357wrp.58.2020.11.14.14.22.06
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 14 Nov 2020 14:22:07 -0800 (PST)
-From:   Alejandro Colomar <alx.manpages@gmail.com>
-X-Google-Original-From: Alejandro Colomar <colomar.6.4.3@gmail.com>
-To:     pcc@google.com, mtk.manpages@gmail.com
-Cc:     Dave.Martin@arm.com, James.Bottomley@hansenpartnership.com,
-        andreyknvl@google.com, catalin.marinas@arm.com,
-        david.spickett@linaro.org, deller@gmx.de, ebiederm@xmission.com,
-        eugenis@google.com, kcc@google.com, kevin.brodsky@arm.com,
-        linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
-        linux-man@vger.kernel.org, oleg@redhat.com,
-        vincenzo.frascino@arm.com, will@kernel.org,
-        Alejandro Colomar <alx.manpages@gmail.com>
-Subject: [PATCH] sigaction.2: Document SA_EXPOSE_TAGBITS and the flag support detection protocol
-Date:   Sat, 14 Nov 2020 22:49:15 +0100
-Message-Id: <20201114214914.177815-1-colomar.6.4.3@gmail.com>
-X-Mailer: git-send-email 2.28.0
-In-Reply-To: <20201114014132.2439310-1-pcc@google.com>
-References: <20201114014132.2439310-1-pcc@google.com>
+        id S1726741AbgKOI0l (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 15 Nov 2020 03:26:41 -0500
+Received: from mail.kernel.org ([198.145.29.99]:51566 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726230AbgKOI0j (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sun, 15 Nov 2020 03:26:39 -0500
+Received: from kernel.org (unknown [77.125.7.142])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 2B40D20825;
+        Sun, 15 Nov 2020 08:26:28 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1605428798;
+        bh=N8nX4EItu7ygJosleHRb6Se+RCkeKeuBhze7L0pxdoc=;
+        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+        b=OzCqWMqjydzAb9tsTc50ml1otm0W+jgR45ewsq/G5RaHSABMkhoMFFhu9KCzP5EgM
+         H4hHM4CWx5jTJGIkXhhIkkUUbJjjG0LCaHvvN1Sygkt5FEaoKMH2vyKuxCD0ZXI6ak
+         TE0ypAnInCIfqSa2/EaG3mDDyN0He79bGRMwfBCI=
+Date:   Sun, 15 Nov 2020 10:26:25 +0200
+From:   Mike Rapoport <rppt@kernel.org>
+To:     David Hildenbrand <david@redhat.com>
+Cc:     Andrew Morton <akpm@linux-foundation.org>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        Andy Lutomirski <luto@kernel.org>,
+        Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Christopher Lameter <cl@linux.com>,
+        Dan Williams <dan.j.williams@intel.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Elena Reshetova <elena.reshetova@intel.com>,
+        "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,
+        James Bottomley <jejb@linux.ibm.com>,
+        "Kirill A. Shutemov" <kirill@shutemov.name>,
+        Matthew Wilcox <willy@infradead.org>,
+        Mark Rutland <mark.rutland@arm.com>,
+        Mike Rapoport <rppt@linux.ibm.com>,
+        Michael Kerrisk <mtk.manpages@gmail.com>,
+        Palmer Dabbelt <palmer@dabbelt.com>,
+        Paul Walmsley <paul.walmsley@sifive.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Rick Edgecombe <rick.p.edgecombe@intel.com>,
+        Shuah Khan <shuah@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
+        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
+        linux-arm-kernel@lists.infradead.org,
+        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
+        linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
+        linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
+        x86@kernel.org
+Subject: Re: [PATCH v8 2/9] mmap: make mlock_future_check() global
+Message-ID: <20201115082625.GT4758@kernel.org>
+References: <20201112190827.GP4758@kernel.org>
+ <7A16CA44-782D-4ABA-8D93-76BDD0A90F94@redhat.com>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
+In-Reply-To: <7A16CA44-782D-4ABA-8D93-76BDD0A90F94@redhat.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Peter Collingbourne <pcc@google.com>
+On Thu, Nov 12, 2020 at 09:15:18PM +0100, David Hildenbrand wrote:
+> 
+> > Am 12.11.2020 um 20:08 schrieb Mike Rapoport <rppt@kernel.org>:
+> > 
+> > ﻿On Thu, Nov 12, 2020 at 05:22:00PM +0100, David Hildenbrand wrote:
+> >>> On 10.11.20 19:06, Mike Rapoport wrote:
+> >>> On Tue, Nov 10, 2020 at 06:17:26PM +0100, David Hildenbrand wrote:
+> >>>> On 10.11.20 16:14, Mike Rapoport wrote:
+> >>>>> From: Mike Rapoport <rppt@linux.ibm.com>
+> >>>>> 
+> >>>>> It will be used by the upcoming secret memory implementation.
+> >>>>> 
+> >>>>> Signed-off-by: Mike Rapoport <rppt@linux.ibm.com>
+> >>>>> ---
+> >>>>>   mm/internal.h | 3 +++
+> >>>>>   mm/mmap.c     | 5 ++---
+> >>>>>   2 files changed, 5 insertions(+), 3 deletions(-)
+> >>>>> 
+> >>>>> diff --git a/mm/internal.h b/mm/internal.h
+> >>>>> index c43ccdddb0f6..ae146a260b14 100644
+> >>>>> --- a/mm/internal.h
+> >>>>> +++ b/mm/internal.h
+> >>>>> @@ -348,6 +348,9 @@ static inline void munlock_vma_pages_all(struct vm_area_struct *vma)
+> >>>>>   extern void mlock_vma_page(struct page *page);
+> >>>>>   extern unsigned int munlock_vma_page(struct page *page);
+> >>>>> +extern int mlock_future_check(struct mm_struct *mm, unsigned long flags,
+> >>>>> +                  unsigned long len);
+> >>>>> +
+> >>>>>   /*
+> >>>>>    * Clear the page's PageMlocked().  This can be useful in a situation where
+> >>>>>    * we want to unconditionally remove a page from the pagecache -- e.g.,
+> >>>>> diff --git a/mm/mmap.c b/mm/mmap.c
+> >>>>> index 61f72b09d990..c481f088bd50 100644
+> >>>>> --- a/mm/mmap.c
+> >>>>> +++ b/mm/mmap.c
+> >>>>> @@ -1348,9 +1348,8 @@ static inline unsigned long round_hint_to_min(unsigned long hint)
+> >>>>>       return hint;
+> >>>>>   }
+> >>>>> -static inline int mlock_future_check(struct mm_struct *mm,
+> >>>>> -                     unsigned long flags,
+> >>>>> -                     unsigned long len)
+> >>>>> +int mlock_future_check(struct mm_struct *mm, unsigned long flags,
+> >>>>> +               unsigned long len)
+> >>>>>   {
+> >>>>>       unsigned long locked, lock_limit;
+> >>>>> 
+> >>>> 
+> >>>> So, an interesting question is if you actually want to charge secretmem
+> >>>> pages against mlock now, or if you want a dedicated secretmem cgroup
+> >>>> controller instead?
+> >>> 
+> >>> Well, with the current implementation there are three limits an
+> >>> administrator can use to control secretmem limits: mlock, memcg and
+> >>> kernel parameter.
+> >>> 
+> >>> The kernel parameter puts a global upper limit for secretmem usage,
+> >>> memcg accounts all secretmem allocations, including the unused memory in
+> >>> large pages caching and mlock allows per task limit for secretmem
+> >>> mappings, well, like mlock does.
+> >>> 
+> >>> I didn't consider a dedicated cgroup, as it seems we already have enough
+> >>> existing knobs and a new one would be unnecessary.
+> >> 
+> >> To me it feels like the mlock() limit is a wrong fit for secretmem. But
+> >> maybe there are other cases of using the mlock() limit without actually
+> >> doing mlock() that I am not aware of (most probably :) )?
+> > 
+> > Secretmem does not explicitly calls to mlock() but it does what mlock()
+> > does and a bit more. Citing mlock(2):
+> > 
+> >  mlock(),  mlock2(),  and  mlockall()  lock  part  or all of the calling
+> >  process's virtual address space into RAM, preventing that  memory  from
+> >  being paged to the swap area.
+> > 
+> > So, based on that secretmem pages are not swappable, I think that
+> > RLIMIT_MEMLOCK is appropriate here.
+> > 
+> 
+> The page explicitly lists mlock() system calls.
 
-Signed-off-by: Peter Collingbourne <pcc@google.com>
-[alx: srcfix + ffix]
-Cowritten-by: Alejandro Colomar <alx.manpages@gmail.com>
-Signed-off-by: Alejandro Colomar <alx.manpages@gmail.com>
----
+Well, it's mlock() man page, isn't it? ;-)
 
-Hi Michael,
+My thinking was that since secretmem does what mlock() does wrt
+swapability, it should at least obey the same limit, i.e.
+RLIMIT_MEMLOCK.
 
-as Peter noted, this patch is not ready
-(code hasn't been merged into the kernel yet).
+> E.g., we also don‘t
+> account for gigantic pages - which might be allocated from CMA and are
+> not swappable.
+ 
+Do you mean gigantic pages in hugetlbfs?
+It seems to me that hugetlbfs accounting is a completely different
+story.
 
-And a spin-off question:
-How would you prefer it?:
-[
-.B SA_*
-] (there are 79 similar cases in the pages [1])
-or
-[
-.BR SA_ *
-] (there are 3 similar cases in the pages [2])
+> >> I mean, my concern is not earth shattering, this can be reworked later. As I
+> >> said, it just feels wrong.
+> >> 
+> >> -- 
+> >> Thanks,
+> >> 
+> >> David / dhildenb
+> >> 
+> > 
+> > -- 
+> > Sincerely yours,
+> > Mike.
+> > 
+> 
 
-
-Hi Peter,
-
-I improved a few minor things in your patch:
-
-- Use semantic newlines (see man-pages(7)).
-- Change explicit blank lines to [.PP]
-  (see 'Formatting conventions(general)' in man-pages(7)).
-- Use Oxford comma.
-
-
-Thanks,
-
-Alex
-
-
-[1](grep -r "_\*" man? | wc -l)
-[2](grep -r "_ \*" man? | wc -l)
-
- man2/sigaction.2 | 65 ++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 65 insertions(+)
-
-diff --git a/man2/sigaction.2 b/man2/sigaction.2
-index 22da658d0..91c46f3e3 100644
---- a/man2/sigaction.2
-+++ b/man2/sigaction.2
-@@ -251,6 +251,19 @@ This flag is meaningful only when establishing a signal handler.
- .\" .I sa_sigaction
- .\" field was added in Linux 2.1.86.)
- .\"
-+.TP
-+.BR SA_UNSUPPORTED " (since Linux 5.??)"
-+This flag bit will never be supported by the kernel.
-+It is used as part of the flag support detection protocol described below.
-+.TP
-+.BR SA_EXPOSE_TAGBITS " (since Linux 5.??)"
-+Normally, when delivering a signal,
-+an architecture-specific set of tag bits are cleared from the
-+.I si_addr
-+field of
-+.IR siginfo_t .
-+If this flag is set, the tag bits will be preserved in
-+.IR si_addr .
- .SS The siginfo_t argument to a SA_SIGINFO handler
- When the
- .B SA_SIGINFO
-@@ -834,6 +847,58 @@ Triggered by a
- .BR seccomp (2)
- filter rule.
- .RE
-+.SS Detecting flag support in sa_flags
-+The Linux kernel supports a mechanism for programs to
-+detect kernel support for
-+.B SA_*
-+flags in
-+.IR sa_flags .
-+This mechanism is quite subtle for backwards compatibility reasons
-+related to the historical behavior of the kernel.
-+.PP
-+Starting with Linux 5.??,
-+the kernel will clear any unrecognized bits from the
-+.I sa_flags
-+value returned via
-+.I oldact
-+if those bits were set when the signal handler was originally installed.
-+Therefore, a program that only needs to be compatible with
-+Linux 5.?? and above
-+may test for flag bit support by issuing a second call to
-+.BR sigaction ()
-+and testing whether the bit remains set in
-+.IR oldact.sa_flags .
-+.PP
-+Prior to Linux 5.x, unrecognized flag bits were preserved in
-+.I oldact.sa_flags
-+so this protocol on its own would not be sufficient to allow a
-+userspace program to test for flag bit support
-+if it needs to be compatible with kernel versions older than 5.??.
-+Therefore, the
-+.B SA_UNSUPPORTED
-+flag bit was defined,
-+which the kernel will always consider to be unknown.
-+A userspace program that sets this flag bit in
-+.I act.sa_flags
-+and finds that it has been cleared in
-+.I oldact.sa_flags
-+in a subsequent call to
-+.BR sigaction ()
-+may trust that any other unknown flag bits have been cleared.
-+.PP
-+A reasonably modern program may trust that the flags
-+.BR SA_NOCLDSTOP ,
-+.BR SA_NOCLDWAIT ,
-+.BR SA_SIGINFO ,
-+.BR SA_ONSTACK ,
-+.BR SA_RESTART ,
-+.BR SA_NODEFER ,
-+.BR SA_RESETHAND ,
-+and, if defined by the architecture,
-+.B SA_RESTORER
-+are supported by the kernel,
-+without relying on the flag bit support detection protocol,
-+since these flags have all been supported since Linux 2.6.
- .SH RETURN VALUE
- .BR sigaction ()
- returns 0 on success; on error, \-1 is returned, and
 -- 
-2.28.0
-
+Sincerely yours,
+Mike.
