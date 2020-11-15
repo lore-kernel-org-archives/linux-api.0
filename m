@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F0542C63697
-	for <linux-api@archiver.kernel.org>; Sun, 15 Nov 2020 10:49:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 730AFC64E75
+	for <linux-api@archiver.kernel.org>; Sun, 15 Nov 2020 10:49:23 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C2FAE2463D
-	for <linux-api@archiver.kernel.org>; Sun, 15 Nov 2020 10:49:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 515D624630
+	for <linux-api@archiver.kernel.org>; Sun, 15 Nov 2020 10:49:23 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727000AbgKOKtJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 15 Nov 2020 05:49:09 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:59947 "EHLO
+        id S1727140AbgKOKtP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 15 Nov 2020 05:49:15 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:59962 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726749AbgKOKtJ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 15 Nov 2020 05:49:09 -0500
+        with ESMTP id S1727139AbgKOKtO (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 15 Nov 2020 05:49:14 -0500
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1keFRM-0000Kt-3D; Sun, 15 Nov 2020 10:39:24 +0000
+        id 1keFRW-0000Kt-5S; Sun, 15 Nov 2020 10:39:34 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -60,9 +60,9 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         linux-integrity@vger.kernel.org, selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v2 23/39] fcntl: handle idmapped mounts
-Date:   Sun, 15 Nov 2020 11:37:02 +0100
-Message-Id: <20201115103718.298186-24-christian.brauner@ubuntu.com>
+Subject: [PATCH v2 26/39] ioctl: handle idmapped mounts
+Date:   Sun, 15 Nov 2020 11:37:05 +0100
+Message-Id: <20201115103718.298186-27-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201115103718.298186-1-christian.brauner@ubuntu.com>
 References: <20201115103718.298186-1-christian.brauner@ubuntu.com>
@@ -72,8 +72,8 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Enable the setfl() helper to handle idmapped mounts by passing down the
-mount's user namespace.
+Enable generic ioctls to handle idmapped mounts by passing down the mount's
+user namespace.
 
 Cc: Christoph Hellwig <hch@lst.de>
 Cc: David Howells <dhowells@redhat.com>
@@ -84,30 +84,46 @@ Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 /* v2 */
 patch introduced
 ---
- fs/fcntl.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ fs/remap_range.c   | 7 +++++--
+ fs/verity/enable.c | 2 +-
+ 2 files changed, 6 insertions(+), 3 deletions(-)
 
-diff --git a/fs/fcntl.c b/fs/fcntl.c
-index df091d435603..ed330fa91438 100644
---- a/fs/fcntl.c
-+++ b/fs/fcntl.c
-@@ -25,6 +25,7 @@
- #include <linux/user_namespace.h>
- #include <linux/memfd.h>
- #include <linux/compat.h>
-+#include <linux/mount.h>
+diff --git a/fs/remap_range.c b/fs/remap_range.c
+index 9e5b27641756..fe7f07228462 100644
+--- a/fs/remap_range.c
++++ b/fs/remap_range.c
+@@ -432,13 +432,16 @@ EXPORT_SYMBOL(vfs_clone_file_range);
+ /* Check whether we are allowed to dedupe the destination file */
+ static bool allow_file_dedupe(struct file *file)
+ {
++	struct user_namespace *user_ns = mnt_user_ns(file->f_path.mnt);
++	struct inode *inode = file_inode(file);
++
+ 	if (capable(CAP_SYS_ADMIN))
+ 		return true;
+ 	if (file->f_mode & FMODE_WRITE)
+ 		return true;
+-	if (uid_eq(current_fsuid(), file_inode(file)->i_uid))
++	if (uid_eq(current_fsuid(), i_uid_into_mnt(user_ns, inode)))
+ 		return true;
+-	if (!inode_permission(&init_user_ns, file_inode(file), MAY_WRITE))
++	if (!inode_permission(user_ns, inode, MAY_WRITE))
+ 		return true;
+ 	return false;
+ }
+diff --git a/fs/verity/enable.c b/fs/verity/enable.c
+index 7449ef0050f4..8b9ea0f0850f 100644
+--- a/fs/verity/enable.c
++++ b/fs/verity/enable.c
+@@ -369,7 +369,7 @@ int fsverity_ioctl_enable(struct file *filp, const void __user *uarg)
+ 	 * has verity enabled, and to stabilize the data being hashed.
+ 	 */
  
- #include <linux/poll.h>
- #include <asm/siginfo.h>
-@@ -46,7 +47,7 @@ static int setfl(int fd, struct file * filp, unsigned long arg)
+-	err = inode_permission(&init_user_ns, inode, MAY_WRITE);
++	err = inode_permission(mnt_user_ns(filp->f_path.mnt), inode, MAY_WRITE);
+ 	if (err)
+ 		return err;
  
- 	/* O_NOATIME can only be set by the owner or superuser */
- 	if ((arg & O_NOATIME) && !(filp->f_flags & O_NOATIME))
--		if (!inode_owner_or_capable(&init_user_ns, inode))
-+		if (!inode_owner_or_capable(mnt_user_ns(filp->f_path.mnt), inode))
- 			return -EPERM;
- 
- 	/* required for strict SunOS emulation */
 -- 
 2.29.2
 
