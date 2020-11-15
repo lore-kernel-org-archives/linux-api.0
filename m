@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 51BD3C64E75
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EFD0CC64E7A
 	for <linux-api@archiver.kernel.org>; Sun, 15 Nov 2020 10:48:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 220EB24170
+	by mail.kernel.org (Postfix) with ESMTP id C10232417E
 	for <linux-api@archiver.kernel.org>; Sun, 15 Nov 2020 10:48:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727017AbgKOKr6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S1726989AbgKOKr6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Sun, 15 Nov 2020 05:47:58 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:59758 "EHLO
+Received: from youngberry.canonical.com ([91.189.89.112]:59797 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726647AbgKOKrS (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 15 Nov 2020 05:47:18 -0500
+        with ESMTP id S1726510AbgKOKrj (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 15 Nov 2020 05:47:39 -0500
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1keFRc-0000Kt-PM; Sun, 15 Nov 2020 10:39:40 +0000
+        id 1keFRS-0000Kt-Ok; Sun, 15 Nov 2020 10:39:31 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -60,9 +60,9 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         linux-integrity@vger.kernel.org, selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v2 28/39] exec: handle idmapped mounts
-Date:   Sun, 15 Nov 2020 11:37:07 +0100
-Message-Id: <20201115103718.298186-29-christian.brauner@ubuntu.com>
+Subject: [PATCH v2 25/39] init: handle idmapped mounts
+Date:   Sun, 15 Nov 2020 11:37:04 +0100
+Message-Id: <20201115103718.298186-26-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201115103718.298186-1-christian.brauner@ubuntu.com>
 References: <20201115103718.298186-1-christian.brauner@ubuntu.com>
@@ -72,12 +72,8 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-When executing a setuid binary the kernel will verify in bprm_fill_uid() that
-the inode has a mapping in the caller's user namespace before setting the
-callers uid and gid. Let bprm_fill_uid() handle idmapped mounts. If the inode
-is accessed through an idmapped mount it is mapped according to the mount's
-user namespace. Afterwards the checks are identical to non-idmapped mounts.On
-regular mounts this is a nop.
+Enable the init helpers to handle idmapped mounts by passing down the mount's
+user namespace.
 
 Cc: Christoph Hellwig <hch@lst.de>
 Cc: David Howells <dhowells@redhat.com>
@@ -86,41 +82,51 @@ Cc: linux-fsdevel@vger.kernel.org
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
-unchanged
+patch introduced
 ---
- fs/exec.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ fs/init.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/fs/exec.c b/fs/exec.c
-index 10c06fdf78a7..7d6d3dd17e84 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -1567,6 +1567,7 @@ static void check_unsafe_exec(struct linux_binprm *bprm)
- static void bprm_fill_uid(struct linux_binprm *bprm, struct file *file)
- {
- 	/* Handle suid and sgid on files */
-+	struct user_namespace *user_ns;
- 	struct inode *inode;
- 	unsigned int mode;
- 	kuid_t uid;
-@@ -1583,13 +1584,15 @@ static void bprm_fill_uid(struct linux_binprm *bprm, struct file *file)
- 	if (!(mode & (S_ISUID|S_ISGID)))
- 		return;
- 
-+	user_ns = mnt_user_ns(file->f_path.mnt);
-+
- 	/* Be careful if suid/sgid is set */
- 	inode_lock(inode);
- 
- 	/* reload atomically mode/uid/gid now that lock held */
- 	mode = inode->i_mode;
--	uid = inode->i_uid;
--	gid = inode->i_gid;
-+	uid = i_uid_into_mnt(user_ns, inode);
-+	gid = i_gid_into_mnt(user_ns, inode);
- 	inode_unlock(inode);
- 
- 	/* We ignore suid/sgid if there are no mappings for them in the ns */
+diff --git a/fs/init.c b/fs/init.c
+index 76f493600030..334e4c9c07eb 100644
+--- a/fs/init.c
++++ b/fs/init.c
+@@ -49,7 +49,7 @@ int __init init_chdir(const char *filename)
+ 	error = kern_path(filename, LOOKUP_FOLLOW | LOOKUP_DIRECTORY, &path);
+ 	if (error)
+ 		return error;
+-	error = inode_permission(&init_user_ns, path.dentry->d_inode,
++	error = inode_permission(mnt_user_ns(path.mnt), path.dentry->d_inode,
+ 				 MAY_EXEC | MAY_CHDIR);
+ 	if (!error)
+ 		set_fs_pwd(current->fs, &path);
+@@ -65,7 +65,7 @@ int __init init_chroot(const char *filename)
+ 	error = kern_path(filename, LOOKUP_FOLLOW | LOOKUP_DIRECTORY, &path);
+ 	if (error)
+ 		return error;
+-	error = inode_permission(&init_user_ns, path.dentry->d_inode,
++	error = inode_permission(mnt_user_ns(path.mnt), path.dentry->d_inode,
+ 				 MAY_EXEC | MAY_CHDIR);
+ 	if (error)
+ 		goto dput_and_out;
+@@ -120,7 +120,7 @@ int __init init_eaccess(const char *filename)
+ 	error = kern_path(filename, LOOKUP_FOLLOW, &path);
+ 	if (error)
+ 		return error;
+-	error = inode_permission(&init_user_ns, d_inode(path.dentry),
++	error = inode_permission(mnt_user_ns(path.mnt), d_inode(path.dentry),
+ 				 MAY_ACCESS);
+ 	path_put(&path);
+ 	return error;
+@@ -190,7 +190,7 @@ int __init init_link(const char *oldname, const char *newname)
+ 	error = security_path_link(old_path.dentry, &new_path, new_dentry);
+ 	if (error)
+ 		goto out_dput;
+-	error = vfs_link(old_path.dentry, &init_user_ns, 
++	error = vfs_link(old_path.dentry, &init_user_ns,
+ 			 new_path.dentry->d_inode, new_dentry, NULL);
+ out_dput:
+ 	done_path_create(&new_path, new_dentry);
 -- 
 2.29.2
 
