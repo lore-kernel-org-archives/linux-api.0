@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EFD0CC64E7A
-	for <linux-api@archiver.kernel.org>; Sun, 15 Nov 2020 10:48:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 21F70C64E90
+	for <linux-api@archiver.kernel.org>; Sun, 15 Nov 2020 10:48:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C10232417E
-	for <linux-api@archiver.kernel.org>; Sun, 15 Nov 2020 10:48:02 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E920B241A6
+	for <linux-api@archiver.kernel.org>; Sun, 15 Nov 2020 10:48:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726989AbgKOKr6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 15 Nov 2020 05:47:58 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:59797 "EHLO
+        id S1726903AbgKOKsE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 15 Nov 2020 05:48:04 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:59832 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726510AbgKOKrj (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 15 Nov 2020 05:47:39 -0500
+        with ESMTP id S1727076AbgKOKsC (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 15 Nov 2020 05:48:02 -0500
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1keFRS-0000Kt-Ok; Sun, 15 Nov 2020 10:39:31 +0000
+        id 1keFRI-0000Kt-US; Sun, 15 Nov 2020 10:39:21 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -60,9 +60,9 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         linux-integrity@vger.kernel.org, selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v2 25/39] init: handle idmapped mounts
-Date:   Sun, 15 Nov 2020 11:37:04 +0100
-Message-Id: <20201115103718.298186-26-christian.brauner@ubuntu.com>
+Subject: [PATCH v2 22/39] utimes: handle idmapped mounts
+Date:   Sun, 15 Nov 2020 11:37:01 +0100
+Message-Id: <20201115103718.298186-23-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201115103718.298186-1-christian.brauner@ubuntu.com>
 References: <20201115103718.298186-1-christian.brauner@ubuntu.com>
@@ -72,8 +72,8 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Enable the init helpers to handle idmapped mounts by passing down the mount's
-user namespace.
+Enable the vfs_utimes() helper to handle idmapped mounts by passing down
+the mount's user namespace.
 
 Cc: Christoph Hellwig <hch@lst.de>
 Cc: David Howells <dhowells@redhat.com>
@@ -82,51 +82,34 @@ Cc: linux-fsdevel@vger.kernel.org
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
-patch introduced
+unchanged
 ---
- fs/init.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ fs/utimes.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/fs/init.c b/fs/init.c
-index 76f493600030..334e4c9c07eb 100644
---- a/fs/init.c
-+++ b/fs/init.c
-@@ -49,7 +49,7 @@ int __init init_chdir(const char *filename)
- 	error = kern_path(filename, LOOKUP_FOLLOW | LOOKUP_DIRECTORY, &path);
- 	if (error)
- 		return error;
--	error = inode_permission(&init_user_ns, path.dentry->d_inode,
-+	error = inode_permission(mnt_user_ns(path.mnt), path.dentry->d_inode,
- 				 MAY_EXEC | MAY_CHDIR);
- 	if (!error)
- 		set_fs_pwd(current->fs, &path);
-@@ -65,7 +65,7 @@ int __init init_chroot(const char *filename)
- 	error = kern_path(filename, LOOKUP_FOLLOW | LOOKUP_DIRECTORY, &path);
- 	if (error)
- 		return error;
--	error = inode_permission(&init_user_ns, path.dentry->d_inode,
-+	error = inode_permission(mnt_user_ns(path.mnt), path.dentry->d_inode,
- 				 MAY_EXEC | MAY_CHDIR);
- 	if (error)
- 		goto dput_and_out;
-@@ -120,7 +120,7 @@ int __init init_eaccess(const char *filename)
- 	error = kern_path(filename, LOOKUP_FOLLOW, &path);
- 	if (error)
- 		return error;
--	error = inode_permission(&init_user_ns, d_inode(path.dentry),
-+	error = inode_permission(mnt_user_ns(path.mnt), d_inode(path.dentry),
- 				 MAY_ACCESS);
- 	path_put(&path);
- 	return error;
-@@ -190,7 +190,7 @@ int __init init_link(const char *oldname, const char *newname)
- 	error = security_path_link(old_path.dentry, &new_path, new_dentry);
- 	if (error)
- 		goto out_dput;
--	error = vfs_link(old_path.dentry, &init_user_ns, 
-+	error = vfs_link(old_path.dentry, &init_user_ns,
- 			 new_path.dentry->d_inode, new_dentry, NULL);
- out_dput:
- 	done_path_create(&new_path, new_dentry);
+diff --git a/fs/utimes.c b/fs/utimes.c
+index 1a4130bee157..ead17d623aaa 100644
+--- a/fs/utimes.c
++++ b/fs/utimes.c
+@@ -22,6 +22,7 @@ int vfs_utimes(const struct path *path, struct timespec64 *times)
+ 	struct iattr newattrs;
+ 	struct inode *inode = path->dentry->d_inode;
+ 	struct inode *delegated_inode = NULL;
++	struct user_namespace *user_ns;
+ 
+ 	if (times) {
+ 		if (!nsec_valid(times[0].tv_nsec) ||
+@@ -61,8 +62,9 @@ int vfs_utimes(const struct path *path, struct timespec64 *times)
+ 		newattrs.ia_valid |= ATTR_TOUCH;
+ 	}
+ retry_deleg:
++	user_ns = mnt_user_ns(path->mnt);
+ 	inode_lock(inode);
+-	error = notify_change(&init_user_ns, path->dentry, &newattrs, &delegated_inode);
++	error = notify_change(user_ns, path->dentry, &newattrs, &delegated_inode);
+ 	inode_unlock(inode);
+ 	if (delegated_inode) {
+ 		error = break_deleg_wait(&delegated_inode);
 -- 
 2.29.2
 
