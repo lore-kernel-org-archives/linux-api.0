@@ -2,107 +2,283 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-14.2 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6493CC63697
-	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 13:38:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 653B1C5519F
+	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 14:05:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0DA0924671
-	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 13:38:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D499521D40
+	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 14:05:21 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="JFrprZzO"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1725822AbgKRNhx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 18 Nov 2020 08:37:53 -0500
-Received: from mail.kernel.org ([198.145.29.99]:53258 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725613AbgKRNhx (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 18 Nov 2020 08:37:53 -0500
-Received: from trantor (unknown [2.26.170.190])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 271312083E;
-        Wed, 18 Nov 2020 13:37:50 +0000 (UTC)
-Date:   Wed, 18 Nov 2020 13:37:47 +0000
-From:   Catalin Marinas <catalin.marinas@arm.com>
-To:     Szabolcs Nagy <szabolcs.nagy@arm.com>
-Cc:     Peter Collingbourne <pcc@google.com>,
-        Florian Weimer <fw@deneb.enyo.de>, libc-alpha@sourceware.org,
-        Kevin Brodsky <kevin.brodsky@arm.com>,
-        Linux API <linux-api@vger.kernel.org>,
-        Kostya Serebryany <kcc@google.com>,
+        id S1726810AbgKROFA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 18 Nov 2020 09:05:00 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35196 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726683AbgKROFA (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 18 Nov 2020 09:05:00 -0500
+Received: from mail-wm1-x344.google.com (mail-wm1-x344.google.com [IPv6:2a00:1450:4864:20::344])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 000FDC0613D4;
+        Wed, 18 Nov 2020 06:04:59 -0800 (PST)
+Received: by mail-wm1-x344.google.com with SMTP id c9so3121034wml.5;
+        Wed, 18 Nov 2020 06:04:59 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=subject:from:to:cc:references:message-id:date:user-agent
+         :mime-version:in-reply-to:content-language:content-transfer-encoding;
+        bh=Qyt3KmXW+Zg/2rU5IYdqdLQ5eBxh43hmngwUzyBBa58=;
+        b=JFrprZzOR9SLrBaIVib2ojrSFw6Hpd4NHzRQU+Ygz2qZhfNRQEk0STJ2JS2A9UP05G
+         RnitYDCq809sq8I2XfCu2mSeWkdwEL7+pptOUjQu5M2YVF5Sketd777WdNagU5RSTAmT
+         mQs5O/3arkzygeZtDS+/QKdktoffIuyVPg3nfLrbJsln27d9LO6h+IbV64ylUjiuDVN3
+         Nbdk4eqfB4psQ0x3kj1w2da6868eIKIrrcTafgAKkP3/8nneBhqUvrlnbMzY8Ust0dzZ
+         SYEmBiuNI4+Ny/ahv/YZww30+6ScxZiB9JBLxDZ1nEgCsQPouJdc3Mbn/o2qJy4SXx4/
+         35Dg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:subject:from:to:cc:references:message-id:date
+         :user-agent:mime-version:in-reply-to:content-language
+         :content-transfer-encoding;
+        bh=Qyt3KmXW+Zg/2rU5IYdqdLQ5eBxh43hmngwUzyBBa58=;
+        b=swAPHYIF3VwW8G/qVrGxsNtELTNSl6/IhL4yAQrM5vblUhwHmLkc1YTn0ALg2MCsrR
+         aZu7KMhWclTDr/0ho5+GT0ve1kOov+VO6mjlz3LGg112YakPjNGBh8m5P7OQ44PV4zKV
+         wFjOc6MITm3ousSpdtsUg/btGlArp01UjFmZcMZY4MGvD2Uwtwvd1gOxhOz1rjT4dxiJ
+         0Ns1gmlbad+yTuLVrX8lgF/9Tps6RxlL90J151GWs1B9w9a7Is4Zagib5c9H067NSfaw
+         jkNrPmrNKuxyO3yGPJwYA/0ynDb2NGDvGYkVxOr+Fm7RizouY0XJ/TQp+Jr5p0F3LSsw
+         zNqQ==
+X-Gm-Message-State: AOAM531HlN1mEDuSgBizLGtFUWBzQjVfV0vi+fyldLtbr+YI8AEZ04Ey
+        mRPzDbF665yQBbkPX9Ef+9VKnPpD642Asg==
+X-Google-Smtp-Source: ABdhPJy5zEiyFd9aTwIeaiBNbDKAIHmkrjBk8TFTppP2HBYVH7ubRIr19GToeyLjtiu0VdI8mSPj3w==
+X-Received: by 2002:a1c:6a0d:: with SMTP id f13mr194771wmc.172.1605708298288;
+        Wed, 18 Nov 2020 06:04:58 -0800 (PST)
+Received: from [192.168.1.143] ([170.253.51.130])
+        by smtp.gmail.com with ESMTPSA id t11sm3940122wmf.35.2020.11.18.06.04.56
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 18 Nov 2020 06:04:57 -0800 (PST)
+Subject: Re: [PATCH v2] sigaction.2: Document SA_EXPOSE_TAGBITS and the flag
+ support detection protocol
+From:   "Alejandro Colomar (man-pages)" <alx.manpages@gmail.com>
+To:     Peter Collingbourne <pcc@google.com>,
+        Catalin Marinas <catalin.marinas@arm.com>,
         Evgenii Stepanov <eugenis@google.com>,
-        Andrey Konovalov <andreyknvl@google.com>,
+        Kostya Serebryany <kcc@google.com>,
         Vincenzo Frascino <vincenzo.frascino@arm.com>,
-        Will Deacon <will@kernel.org>,
         Dave Martin <Dave.Martin@arm.com>,
-        Linux ARM <linux-arm-kernel@lists.infradead.org>
-Subject: Re: [PATCH v2] arm64: Introduce prctl(PR_PAC_{SET,GET}_ENABLED_KEYS)
-Message-ID: <X7Ujq6RCzEQKFVId@trantor>
-References: <20201014055106.25164-1-pcc@google.com>
- <87blfv6fj3.fsf@mid.deneb.enyo.de>
- <CAMn1gO7a-uyP93P4KapbsXy1+HRSuJR4r_kyy0_-FCY69qO_nA@mail.gmail.com>
- <20201117183911.GI15033@arm.com>
- <X7UUoFcmtuHEhoz9@trantor>
- <20201118133121.GA20578@arm.com>
+        Will Deacon <will@kernel.org>, Oleg Nesterov <oleg@redhat.com>,
+        "Eric W. Biederman" <ebiederm@xmission.com>,
+        "James E.J. Bottomley" <James.Bottomley@hansenpartnership.com>,
+        Michael Kerrisk <mtk.manpages@gmail.com>
+Cc:     Linux ARM <linux-arm-kernel@lists.infradead.org>,
+        linux-api@vger.kernel.org, linux-man@vger.kernel.org
+References: <20201117235447.816252-1-pcc@google.com>
+ <b052f55a-682e-705a-285c-f9b1892c0e07@gmail.com>
+Message-ID: <5b99f5af-de0e-508a-f6e8-133fb290ae03@gmail.com>
+Date:   Wed, 18 Nov 2020 15:04:56 +0100
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.12.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20201118133121.GA20578@arm.com>
+In-Reply-To: <b052f55a-682e-705a-285c-f9b1892c0e07@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Nov 18, 2020 at 01:31:21PM +0000, Szabolcs Nagy wrote:
-> The 11/18/2020 12:33, Catalin Marinas wrote:
-> > On Tue, Nov 17, 2020 at 06:39:13PM +0000, Szabolcs Nagy wrote:
-> > > The 11/17/2020 10:17, Peter Collingbourne via Libc-alpha wrote:
-> > > > On Tue, Nov 17, 2020 at 9:48 AM Florian Weimer <fw@deneb.enyo.de> wrote:
-> > > > >
-> > > > > * Peter Collingbourne:
-> > > > >
-> > > > > > This prctl allows the user program to control which PAC keys are enabled
-> > > > > > in a particular task. The main reason why this is useful is to enable a
-> > > > > > userspace ABI that uses PAC to sign and authenticate function pointers
-> > > > > > and other pointers exposed outside of the function, while still allowing
-> > > > > > binaries conforming to the ABI to interoperate with legacy binaries that
-> > > > > > do not sign or authenticate pointers.
-> > > > > >
-> > > > > > The idea is that a dynamic loader or early startup code would issue
-> > > > > > this prctl very early after establishing that a process may load legacy
-> > > > > > binaries, but before executing any PAC instructions.
-> > > > >
-> > > > > I thought that the silicon did not support this?
-> > 
-> > I think the past discussion we had was around enabling PAC for kernel
-> > while disabling it for user. The hardware doesn't give us separate bits,
-> > so Peter's patch toggles them on kernel entry/return, with some overhead
-> > given by the MSR+ISB (to be added).
+
+
+On 11/18/20 12:42 PM, Alejandro Colomar (man-pages) wrote:
+> [[ Removed some CCs because gmail
+>    didn't allow me to send it with so many CCs:
+>    Kevin B., Andrey K., Helge D., David S.
+> ]]
 > 
-> ah ok. i probably incorrectly thought that toggling that sys
-> register bit is too much overhead at kernel entry so assumed
-> we cannot have PAC off by default or set per process.
-
-I think Peter can rerun his benchmarks but with the ISB added after MSR.
-If they are not too bad, we can take this series.
-
-> (i think with the proposed prctl it's possible to disable PAC
-> at early ld.so startup and reenable it before calling into the
-> main exe entry code, if we ever need to disable PAC-RET.)
+> On 11/18/20 12:54 AM, Peter Collingbourne wrote:
+>> Signed-off-by: Peter Collingbourne <pcc@google.com>
+>> ---
+>> These features are implemented in this patch series:
+>>
+> https://lore.kernel.org/linux-arm-kernel/cover.1605235762.git.pcc@google.com/
+>> which is still under review, so the patch should not be applied
+>> yet.
+>>
+>> Alejandro, thanks for the review. Since the patch was almost
+>> rewritten I didn't base this on your patch, instead I tried to
+>> use the correct formatting in this patch.
 > 
-> i assume thread creation/fork inherits the setting but exec
-> does not (this is another point that may be worth adding to
-> the documentation).
+> Hi Peter,
+> 
+> Fine.
+> See below a small fix.
 
-Yes, that's my understanding from the patch. It should be documented
-explicitly (I haven't read the doc updates, maybe it does this already).
+D'oh!
+Fixing the CCs I forgot to add the fix to the code.
+See below now.
 
-> if we run into issues in userspace with PAC then a prctl that
-> can be inherited across exec is a possible workaround (so PAC
-> can be disabled for an entire process tree).
+> 
+> Cheers,
+> 
+> Alex
+> 
+>>
+>> v2:
+>> - fix formatting
+>> - address feedback from Dave
+>>
+>>  man2/sigaction.2 | 125 +++++++++++++++++++++++++++++++++++++++++++++++
+>>  1 file changed, 125 insertions(+)
+>>
+>> diff --git a/man2/sigaction.2 b/man2/sigaction.2
+>> index 6a8142324..0e4236a43 100644
+>> --- a/man2/sigaction.2
+>> +++ b/man2/sigaction.2
+>> @@ -250,6 +250,44 @@ This flag is meaningful only when establishing a
+> signal handler.
+>>  .\" .I sa_sigaction
+>>  .\" field was added in Linux 2.1.86.)
+>>  .\"
+>> +.TP
+>> +.BR SA_UNSUPPORTED
+>> +Used to dynamically probe for flag bit support.
+>> +.IP
+>> +If an attempt to register a handler succeeds with this flag set in
+>> +.I act->sa_flags
+>> +alongside other flags that are potentially unsupported by the kernel,
+>> +and an immediately subsequent
+>> +.BR sigaction ()
+>> +call specifying the same signal number n and with non-NULL
+>> +.I oldact
+>> +yields
+>> +.B SA_UNSUPPORTED
+>> +.I clear
+>> +in
+>> +.IR oldact->sa_flags ,
+>> +then
+>> +.IR oldact->sa_flags
 
-Can you do something similar to MTE with an environment variable forcing
-PAC off?
+s/.IR/.I/
 
--- 
-Catalin
+There's no roman part there.
+
+>> +may be used as a bitmask
+>> +describing which of the potentially unsupported flags are,
+>> +in fact, supported.
+>> +See the section "Dynamically probing for flag bit support"
+>> +below for more details.
+>> +.TP
+>> +.BR SA_EXPOSE_TAGBITS " (since Linux 5.x)"
+>> +Normally, when delivering a signal,
+>> +an architecture-specific set of tag bits are cleared from the
+>> +.I si_addr
+>> +field of
+>> +.IR siginfo_t .
+>> +If this flag is set,
+>> +an architecture-specific subset of the tag bits will be preserved in
+>> +.IR si_addr .
+>> +.IP
+>> +Programs that need to be compatible with Linux versions older than 5.x
+>> +must use
+>> +.B SA_UNSUPPORTED
+>> +to probe for support.
+>>  .SS The siginfo_t argument to a SA_SIGINFO handler
+>>  When the
+>>  .B SA_SIGINFO
+>> @@ -833,6 +871,93 @@ Triggered by a
+>>  .BR seccomp (2)
+>>  filter rule.
+>>  .RE
+>> +.SS Dynamically probing for flag bit support
+>> +The
+>> +.BR sigaction ()
+>> +call on Linux accepts unknown bits set in
+>> +.I act->sa_flags
+>> +without error.
+>> +The behavior of the kernel starting with Linux 5.x is that a second
+>> +.BR sigaction ()
+>> +will clear unknown bits from
+>> +.IR oldact->sa_flags .
+>> +However, historically, a second
+>> +.BR sigaction ()
+>> +call would typically leave those bits set in
+>> +.IR oldact->sa_flags .
+>> +.PP
+>> +This means that support for new flags cannot be detected
+>> +simply by testing for a flag in
+>> +.IR sa_flags ,
+>> +and a program must test that
+>> +.B SA_UNSUPPORTED
+>> +has been cleared before relying on the contents of
+>> +.IR sa_flags .
+>> +.PP
+>> +Since the behavior of the signal handler cannot be guaranteed
+>> +unless the check passes,
+>> +it is wise to either block the affected signal
+>> +while registering the handler and performing the check in this case,
+>> +or where this is not possible,
+>> +for example if the signal is synchronous, to issue the second
+>> +.BR sigaction ()
+>> +in the signal handler itself.
+>> +.PP
+>> +In kernels that do not support a specific flag,
+>> +the kernel's behavior is as if the flag was not set,
+>> +even if the flag was set in
+>> +.IR act->sa_flags .
+>> +.PP
+>> +The flags
+>> +.BR SA_NOCLDSTOP ,
+>> +.BR SA_NOCLDWAIT ,
+>> +.BR SA_SIGINFO ,
+>> +.BR SA_ONSTACK ,
+>> +.BR SA_RESTART ,
+>> +.BR SA_NODEFER ,
+>> +.BR SA_RESETHAND ,
+>> +and, if defined by the architecture,
+>> +.B SA_RESTORER
+>> +may not be reliably probed for using this mechanism,
+>> +because they were introduced before Linux 5.x.
+>> +However, in general, programs may assume that these flags are supported,
+>> +since they have all been supported since Linux 2.6,
+>> +which was released in the year 2003.
+>> +.PP
+>> +The following example program exits with status 0 if
+>> +.B SA_EXPOSE_TAGBITS
+>> +is determined to be supported, and 1 otherwise.
+>> +.PP
+>> +.EX
+>> +#include <signal.h>
+>> +#include <stdio.h>
+>> +#include <unistd.h>
+>> +
+>> +void handler(int signo, siginfo_t *info, void *context) {
+>> +  struct sigaction oldact;
+>> +  if (sigaction(SIGSEGV, 0, &oldact) == 0 &&
+>> +      !(oldact.sa_flags & SA_UNSUPPORTED) &&
+>> +      (oldact.sa_flags & SA_EXPOSE_TAGBITS)) {
+>> +    _exit(0);
+>> +  } else {
+>> +    _exit(1);
+>> +  }
+>> +}
+>> +
+>> +int main(void) {
+>> +  struct sigaction act = {};
+>> +  act.sa_flags = SA_SIGINFO | SA_UNSUPPORTED | SA_EXPOSE_TAGBITS;
+>> +  act.sa_sigaction = handler;
+>> +  if (sigaction(SIGSEGV, &act, 0) != 0) {
+>> +    perror("sigaction");
+>> +    return 1;
+>> +  }
+>> +
+>> +  /* Force a SIGSEGV. */
+>> +  *(volatile int *)0 = 0;
+>> +  return 1;
+>> +}
+>> +.EE
+>>  .SH RETURN VALUE
+>>  .BR sigaction ()
+>>  returns 0 on success; on error, \-1 is returned, and
+>>
