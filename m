@@ -2,26 +2,26 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,UNPARSEABLE_RELAY,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,URIBL_BLOCKED,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E2860C63777
-	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 03:28:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9CC77C6379D
+	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 03:29:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9AB0321D7E
-	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 03:28:59 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6DBF2221F9
+	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 03:29:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727185AbgKRD2y (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 17 Nov 2020 22:28:54 -0500
-Received: from bhuna.collabora.co.uk ([46.235.227.227]:55350 "EHLO
+        id S1727672AbgKRD3J (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 17 Nov 2020 22:29:09 -0500
+Received: from bhuna.collabora.co.uk ([46.235.227.227]:55370 "EHLO
         bhuna.collabora.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726982AbgKRD2y (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 17 Nov 2020 22:28:54 -0500
+        with ESMTP id S1725808AbgKRD3I (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 17 Nov 2020 22:29:08 -0500
 Received: from [127.0.0.1] (localhost [127.0.0.1])
         (Authenticated sender: krisman)
-        with ESMTPSA id 8185E1F44AB3
+        with ESMTPSA id F387C1F44AB3
 From:   Gabriel Krisman Bertazi <krisman@collabora.com>
 To:     luto@kernel.org, tglx@linutronix.de, keescook@chromium.org
 Cc:     christian.brauner@ubuntu.com, peterz@infradead.org,
@@ -30,105 +30,57 @@ Cc:     christian.brauner@ubuntu.com, peterz@infradead.org,
         linux-kselftest@vger.kernel.org, x86@kernel.org, gofmanp@gmail.com,
         Gabriel Krisman Bertazi <krisman@collabora.com>,
         kernel@collabora.com
-Subject: [PATCH v7 0/7] Syscall User Dispatch
-Date:   Tue, 17 Nov 2020 22:28:33 -0500
-Message-Id: <20201118032840.3429268-1-krisman@collabora.com>
+Subject: [PATCH v7 2/7] signal: Expose SYS_USER_DISPATCH si_code type
+Date:   Tue, 17 Nov 2020 22:28:35 -0500
+Message-Id: <20201118032840.3429268-3-krisman@collabora.com>
 X-Mailer: git-send-email 2.29.2
+In-Reply-To: <20201118032840.3429268-1-krisman@collabora.com>
+References: <20201118032840.3429268-1-krisman@collabora.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi,
+SYS_USER_DISPATCH will be triggered when a syscall is sent to userspace
+by the Syscall User Dispatch mechanism.  This adjusts eventual
+BUILD_BUG_ON around the tree.
 
-This is the v7 of syscall user dispatch.  This version is a bit
-different from v6 on the following points, after the modifications
-requested on that submission.
+Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
+Acked-by: Kees Cook <keescook@chromium.org>
+Acked-by: Christian Brauner <christian.brauner@ubuntu.com>
+---
+ arch/x86/kernel/signal_compat.c    | 2 +-
+ include/uapi/asm-generic/siginfo.h | 3 ++-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
-* The interface no longer receives  <start>,<end> end parameters, but
-  <start>,<length> as suggested by PeterZ.
-
-* Syscall User Dispatch is now done before ptrace, and this means there
-  is some SYSCALL_WORK_EXIT work that needs to be done.  No challenges
-  there, but I'd like to draw attention to that region of the code that
-  is new in this submission.
-
-* The previous TIF_SYSCALL_USER_DISPATCH is now handled through
-  SYSCALL_WORK flags.
-
-* Introduced a new test as patch 6, which benchmarks the fast submission
-  path and test the return in blocked selector state.
-
-* Nothing is architecture dependent anymore. No config switches.  It
-  only depends on CONFIG_GENERIC_ENTRY.
-
-Other smaller changes are documented one each commit.
-
-This was tested using the kselftests tests in patch 5 and 6 and compiled
-tested with !CONFIG_GENERIC_ENTRY.
-
-This patchset is based on the core/entry branch of the TIP tree.
-
-A working tree with this patchset is available at:
-
-  https://gitlab.collabora.com/krisman/linux -b syscall-user-dispatch-v7
-
-Previous submissions are archived at:
-
-RFC/v1: https://lkml.org/lkml/2020/7/8/96
-v2: https://lkml.org/lkml/2020/7/9/17
-v3: https://lkml.org/lkml/2020/7/12/4
-v4: https://www.spinics.net/lists/linux-kselftest/msg16377.html
-v5: https://lkml.org/lkml/2020/8/10/1320
-v6: https://lkml.org/lkml/2020/9/4/1122
-
-Gabriel Krisman Bertazi (7):
-  x86: vdso: Expose sigreturn address on vdso to the kernel
-  signal: Expose SYS_USER_DISPATCH si_code type
-  kernel: Implement selective syscall userspace redirection
-  entry: Support Syscall User Dispatch on common syscall entry
-  selftests: Add kselftest for syscall user dispatch
-  selftests: Add benchmark for syscall user dispatch
-  docs: Document Syscall User Dispatch
-
- .../admin-guide/syscall-user-dispatch.rst     |  87 +++++
- arch/x86/entry/vdso/vdso2c.c                  |   2 +
- arch/x86/entry/vdso/vdso32/sigreturn.S        |   2 +
- arch/x86/entry/vdso/vma.c                     |  15 +
- arch/x86/include/asm/elf.h                    |   2 +
- arch/x86/include/asm/vdso.h                   |   2 +
- arch/x86/kernel/signal_compat.c               |   2 +-
- fs/exec.c                                     |   3 +
- include/linux/entry-common.h                  |   2 +
- include/linux/sched.h                         |   2 +
- include/linux/syscall_user_dispatch.h         |  40 +++
- include/linux/thread_info.h                   |   2 +
- include/uapi/asm-generic/siginfo.h            |   3 +-
- include/uapi/linux/prctl.h                    |   5 +
- kernel/entry/Makefile                         |   2 +-
- kernel/entry/common.c                         |  17 +
- kernel/entry/common.h                         |  16 +
- kernel/entry/syscall_user_dispatch.c          | 102 ++++++
- kernel/fork.c                                 |   1 +
- kernel/sys.c                                  |   5 +
- tools/testing/selftests/Makefile              |   1 +
- .../syscall_user_dispatch/.gitignore          |   3 +
- .../selftests/syscall_user_dispatch/Makefile  |   9 +
- .../selftests/syscall_user_dispatch/config    |   1 +
- .../syscall_user_dispatch/sud_benchmark.c     | 200 +++++++++++
- .../syscall_user_dispatch/sud_test.c          | 310 ++++++++++++++++++
- 26 files changed, 833 insertions(+), 3 deletions(-)
- create mode 100644 Documentation/admin-guide/syscall-user-dispatch.rst
- create mode 100644 include/linux/syscall_user_dispatch.h
- create mode 100644 kernel/entry/common.h
- create mode 100644 kernel/entry/syscall_user_dispatch.c
- create mode 100644 tools/testing/selftests/syscall_user_dispatch/.gitignore
- create mode 100644 tools/testing/selftests/syscall_user_dispatch/Makefile
- create mode 100644 tools/testing/selftests/syscall_user_dispatch/config
- create mode 100644 tools/testing/selftests/syscall_user_dispatch/sud_benchmark.c
- create mode 100644 tools/testing/selftests/syscall_user_dispatch/sud_test.c
-
+diff --git a/arch/x86/kernel/signal_compat.c b/arch/x86/kernel/signal_compat.c
+index a7f3e12cfbdb..d7b51870f16b 100644
+--- a/arch/x86/kernel/signal_compat.c
++++ b/arch/x86/kernel/signal_compat.c
+@@ -31,7 +31,7 @@ static inline void signal_compat_build_tests(void)
+ 	BUILD_BUG_ON(NSIGBUS  != 5);
+ 	BUILD_BUG_ON(NSIGTRAP != 5);
+ 	BUILD_BUG_ON(NSIGCHLD != 6);
+-	BUILD_BUG_ON(NSIGSYS  != 1);
++	BUILD_BUG_ON(NSIGSYS  != 2);
+ 
+ 	/* This is part of the ABI and can never change in size: */
+ 	BUILD_BUG_ON(sizeof(compat_siginfo_t) != 128);
+diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
+index 7aacf9389010..d2597000407a 100644
+--- a/include/uapi/asm-generic/siginfo.h
++++ b/include/uapi/asm-generic/siginfo.h
+@@ -286,7 +286,8 @@ typedef struct siginfo {
+  * SIGSYS si_codes
+  */
+ #define SYS_SECCOMP	1	/* seccomp triggered */
+-#define NSIGSYS		1
++#define SYS_USER_DISPATCH 2	/* syscall user dispatch triggered */
++#define NSIGSYS		2
+ 
+ /*
+  * SIGEMT si_codes
 -- 
 2.29.2
 
