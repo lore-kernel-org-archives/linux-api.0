@@ -5,58 +5,58 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 28E5CC64E69
-	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 19:18:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 909F4C6379F
+	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 19:19:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DB0BB2222C
-	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 19:18:58 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3899D2220B
+	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 19:19:02 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=osandov-com.20150623.gappssmtp.com header.i=@osandov-com.20150623.gappssmtp.com header.b="GwZdwOGU"
+	dkim=pass (2048-bit key) header.d=osandov-com.20150623.gappssmtp.com header.i=@osandov-com.20150623.gappssmtp.com header.b="dGsoiUKA"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727063AbgKRTSo (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 18 Nov 2020 14:18:44 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55670 "EHLO
+        id S1727199AbgKRTSz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 18 Nov 2020 14:18:55 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55720 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727006AbgKRTSo (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 18 Nov 2020 14:18:44 -0500
-Received: from mail-pf1-x441.google.com (mail-pf1-x441.google.com [IPv6:2607:f8b0:4864:20::441])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3A024C0613D4
-        for <linux-api@vger.kernel.org>; Wed, 18 Nov 2020 11:18:44 -0800 (PST)
-Received: by mail-pf1-x441.google.com with SMTP id 10so2053454pfp.5
-        for <linux-api@vger.kernel.org>; Wed, 18 Nov 2020 11:18:44 -0800 (PST)
+        with ESMTP id S1727131AbgKRTSz (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 18 Nov 2020 14:18:55 -0500
+Received: from mail-pf1-x429.google.com (mail-pf1-x429.google.com [IPv6:2607:f8b0:4864:20::429])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CE375C0613D6
+        for <linux-api@vger.kernel.org>; Wed, 18 Nov 2020 11:18:53 -0800 (PST)
+Received: by mail-pf1-x429.google.com with SMTP id v12so2023793pfm.13
+        for <linux-api@vger.kernel.org>; Wed, 18 Nov 2020 11:18:53 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=osandov-com.20150623.gappssmtp.com; s=20150623;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=5MWvx3Ver7VQMAjkIz8yJn/b/DZfGy90gJU2/HV9wyc=;
-        b=GwZdwOGUW0dgpNA2dZ61X/ZcHIWrgh8n/MfP1Raf+Xt/pZesKw2hdfYdLqAiGRMKuJ
-         Q1xDGpIi0ja5/B6Pv7ccfvJVmuqsSOV5JjlzXJdLOlTih9jEnLpreYmisAAb2i5ab/+4
-         42YvY4NU/utzkmcEi8GlqabIgSCKGGrEDdhc8o2suISL9wb4zLlxN6nBKYcA4GF2bgdM
-         QKF5EMo/XfGgxnwqcLeh8QDPXAs3dKghDdNUl6B4bAkpqHT6Kz36JcyhVJvJAEkAA8Q7
-         J+C9bLLgrzi6Ra1aEZDdxg1TCO12KFjxYAlxjwkBzzfWHL7UO1+lXrXOLjgaIZ2vdb5R
-         BJWQ==
+        bh=/LhTkSOujSBpd5Mf8igBCmm7Eiz6u7mkhf9wXhapCH4=;
+        b=dGsoiUKAcgNQ20n1L6DoVqZCrUg3WfcdOYZuHMD2XYUVhT5LY1XflfdizmQwTI4bQn
+         ZvHEWHxbgobvAjphkajESCtVVCYdr+AqEQKcWvPWSbAOI/Z4QJ/XDgVdZYBKhnJqb4pV
+         Ynv4zFeAVOJr0398r9q+3knLWT65VTcvBbAl6buYtZY9W30RKpca2KS6Ijsf3vFeh6KK
+         QDkRopAlXq07XL2zPbkvVi9Pde8XuGrYZew5SpjTIJ+/AobtPXPJriOzsBXvujyfU8DZ
+         cn04+0Dxdrcuz6JPlA4lM9AXg/EqOYAIFTwZdhB6SguD8ueZafbDD4Nh0QsDWeQr4Fof
+         zZXQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=5MWvx3Ver7VQMAjkIz8yJn/b/DZfGy90gJU2/HV9wyc=;
-        b=ScM6nKqft9bWhKRRtn8oh7gbkUQ/yxAHJy4//Ws6Oh3edQUI4SjnAtuVb31rhncyfH
-         xRVO8nvxnJxOEUjpp0a4SiEcBFN0IIMNq4dz6zYsW1JBfYxjUiRHYfbIPugbOgG7B/Pq
-         OEyoQbzFPR2tesFR7S9EpUD0O/t0KAMw1IkdTB8iejcoxTEr29HE3a5mfgagPN3Sl7kq
-         H7cDKpKkMQ0FYx9FgL1y0PQl8Va/kp1TVR+ioB3gCSkDTl3Es8jBnOP/uiHwuMtn5Y6w
-         SyDNyqTi2wpbb0wkctJWEsRj1Fb2Y9WOx3BTFGPDjMWtKF7k07sYVVYhw6bVwsuywmK+
-         U8ew==
-X-Gm-Message-State: AOAM5322DYclSqCnipTz/4xju8hKp00/7t+8yvn2SmlaKqayEeUn8Kj7
-        O47XYdqzmaSRFPFc0Wr0fVOleQ==
-X-Google-Smtp-Source: ABdhPJxzYboN2gIhwKGOa22Ojjf5qoXPudAh6b4IuXJSHFMcz1Po+K8Ms6MPO8ByqmBRoO66I+SqQw==
-X-Received: by 2002:a17:90b:33d1:: with SMTP id lk17mr515346pjb.174.1605727123777;
-        Wed, 18 Nov 2020 11:18:43 -0800 (PST)
+        bh=/LhTkSOujSBpd5Mf8igBCmm7Eiz6u7mkhf9wXhapCH4=;
+        b=LNWY+Epg56NCdf3T1ziRyTry9XsBr19SaGrfGo/OfDrs7lMQHRemDYjuErz2q2l/1C
+         JL0XiM0XgETpp58POk+AtGp3Bv7MPra8ha2nipGKpzuFxDRs+s54yFGCg4Si/Yoy6j6c
+         rTjyMV8pVBUUDHXTlydgq9Bm5bvSj2xPFatA+5ArB3Mb1N0JkjVQu/l1l5YUCIr346So
+         BofmwDbTIqRx3R/0kw1aNvHZFYh7IPjk3e7aDmtLuRgYair7YtCAHvoaTgwd0aVeHZh0
+         0lGfGbLHaMCGPRnxcujuTb/kdWTAESv6Kt1s22huDQad7n7syMpfrnWk7+d5xRXQr7CB
+         2LMA==
+X-Gm-Message-State: AOAM530akkMwuMbgUzpIqEvoHVh5+6Z8Ii8uX/OSDCgaNzGEQFelxJDj
+        QUzxyYvWdh/PuKHMY5JCk4TA/A==
+X-Google-Smtp-Source: ABdhPJyLdSJTd+YkT1zVpE1CloWdhL6H2uSWqje1vr5qNvNdr9PrzG59NyyQTjaU/Ipxi0sd/x0M1w==
+X-Received: by 2002:a17:90a:1d47:: with SMTP id u7mr521297pju.49.1605727133347;
+        Wed, 18 Nov 2020 11:18:53 -0800 (PST)
 Received: from relinquished.tfbnw.net ([2620:10d:c090:400::5:8b43])
-        by smtp.gmail.com with ESMTPSA id c22sm19491863pfo.211.2020.11.18.11.18.41
+        by smtp.gmail.com with ESMTPSA id c22sm19491863pfo.211.2020.11.18.11.18.51
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 18 Nov 2020 11:18:42 -0800 (PST)
+        Wed, 18 Nov 2020 11:18:52 -0800 (PST)
 From:   Omar Sandoval <osandov@osandov.com>
 To:     linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org,
         Al Viro <viro@zeniv.linux.org.uk>,
@@ -65,9 +65,9 @@ Cc:     Dave Chinner <david@fromorbit.com>, Jann Horn <jannh@google.com>,
         Amir Goldstein <amir73il@gmail.com>,
         Aleksa Sarai <cyphar@cyphar.com>, linux-api@vger.kernel.org,
         kernel-team@fb.com
-Subject: [PATCH v6 05/11] btrfs: fix check_data_csum() error message for direct I/O
-Date:   Wed, 18 Nov 2020 11:18:12 -0800
-Message-Id: <e33db7a6a4f56d0caedfe6a1aad131edca56b340.1605723568.git.osandov@fb.com>
+Subject: [PATCH v6 09/11] btrfs: optionally extend i_size in cow_file_range_inline()
+Date:   Wed, 18 Nov 2020 11:18:16 -0800
+Message-Id: <a92fe0848e673e213a5e0da0c3908857f107c4c8.1605723568.git.osandov@fb.com>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <cover.1605723568.git.osandov@fb.com>
 References: <cover.1605723568.git.osandov@fb.com>
@@ -79,65 +79,230 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-Commit 1dae796aabf6 ("btrfs: inode: sink parameter start and len to
-check_data_csum()") replaced the start parameter to check_data_csum()
-with page_offset(), but page_offset() is not meaningful for direct I/O
-pages. Bring back the start parameter.
+Currently, an inline extent is always created after i_size is extended
+from btrfs_dirty_pages(). However, for encoded writes, we only want to
+update i_size after we successfully created the inline extent. Add an
+update_i_size parameter to cow_file_range_inline() and
+insert_inline_extent() and pass in the size of the extent rather than
+determining it from i_size. Since the start parameter is always passed
+as 0, get rid of it and simplify the logic in these two functions. While
+we're here, let's document the requirements for creating an inline
+extent.
 
-Fixes: 1dae796aabf6 ("btrfs: inode: sink parameter start and len to check_data_csum()")
+Reviewed-by: Josef Bacik <josef@toxicpanda.com>
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- fs/btrfs/inode.c | 12 +++++++-----
- 1 file changed, 7 insertions(+), 5 deletions(-)
+ fs/btrfs/inode.c | 100 +++++++++++++++++++++++------------------------
+ 1 file changed, 48 insertions(+), 52 deletions(-)
 
 diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
-index abc0fd162f6c..c5fa1bd3dfe7 100644
+index 8e5ceeb4c686..1ff903f5c5a4 100644
 --- a/fs/btrfs/inode.c
 +++ b/fs/btrfs/inode.c
-@@ -2939,11 +2939,12 @@ void btrfs_writepage_endio_finish_ordered(struct page *page, u64 start,
-  * @icsum:	checksum index in the io_bio->csum array, size of csum_size
-  * @page:	page where is the data to be verified
-  * @pgoff:	offset inside the page
-+ * @start:	logical offset in the file
-  *
-  * The length of such check is always one sector size.
-  */
- static int check_data_csum(struct inode *inode, struct btrfs_io_bio *io_bio,
--			   int icsum, struct page *page, int pgoff)
-+			   int icsum, struct page *page, int pgoff, u64 start)
+@@ -204,9 +204,10 @@ static int btrfs_init_inode_security(struct btrfs_trans_handle *trans,
+ static int insert_inline_extent(struct btrfs_trans_handle *trans,
+ 				struct btrfs_path *path, bool extent_inserted,
+ 				struct btrfs_root *root, struct inode *inode,
+-				u64 start, size_t size, size_t compressed_size,
++				size_t size, size_t compressed_size,
+ 				int compress_type,
+-				struct page **compressed_pages)
++				struct page **compressed_pages,
++				bool update_i_size)
  {
- 	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
- 	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
-@@ -2968,8 +2969,8 @@ static int check_data_csum(struct inode *inode, struct btrfs_io_bio *io_bio,
- 	kunmap_atomic(kaddr);
- 	return 0;
- zeroit:
--	btrfs_print_data_csum_error(BTRFS_I(inode), page_offset(page) + pgoff,
--				    csum, csum_expected, io_bio->mirror_num);
-+	btrfs_print_data_csum_error(BTRFS_I(inode), start, csum, csum_expected,
-+				    io_bio->mirror_num);
- 	if (io_bio->device)
- 		btrfs_dev_stat_inc_and_print(io_bio->device,
- 					     BTRFS_DEV_STAT_CORRUPTION_ERRS);
-@@ -3010,7 +3011,7 @@ int btrfs_verify_data_csum(struct btrfs_io_bio *io_bio, u64 phy_offset,
+ 	struct extent_buffer *leaf;
+ 	struct page *page = NULL;
+@@ -215,7 +216,7 @@ static int insert_inline_extent(struct btrfs_trans_handle *trans,
+ 	struct btrfs_file_extent_item *ei;
+ 	int ret;
+ 	size_t cur_size = size;
+-	unsigned long offset;
++	u64 i_size;
+ 
+ 	ASSERT((compressed_size > 0 && compressed_pages) ||
+ 	       (compressed_size == 0 && !compressed_pages));
+@@ -228,7 +229,7 @@ static int insert_inline_extent(struct btrfs_trans_handle *trans,
+ 		size_t datasize;
+ 
+ 		key.objectid = btrfs_ino(BTRFS_I(inode));
+-		key.offset = start;
++		key.offset = 0;
+ 		key.type = BTRFS_EXTENT_DATA_KEY;
+ 
+ 		datasize = btrfs_file_extent_calc_inline_size(cur_size);
+@@ -266,12 +267,10 @@ static int insert_inline_extent(struct btrfs_trans_handle *trans,
+ 		btrfs_set_file_extent_compression(leaf, ei,
+ 						  compress_type);
+ 	} else {
+-		page = find_get_page(inode->i_mapping,
+-				     start >> PAGE_SHIFT);
++		page = find_get_page(inode->i_mapping, 0);
+ 		btrfs_set_file_extent_compression(leaf, ei, 0);
+ 		kaddr = kmap_atomic(page);
+-		offset = offset_in_page(start);
+-		write_extent_buffer(leaf, kaddr + offset, ptr, size);
++		write_extent_buffer(leaf, kaddr, ptr, size);
+ 		kunmap_atomic(kaddr);
+ 		put_page(page);
+ 	}
+@@ -282,8 +281,8 @@ static int insert_inline_extent(struct btrfs_trans_handle *trans,
+ 	 * We align size to sectorsize for inline extents just for simplicity
+ 	 * sake.
+ 	 */
+-	size = ALIGN(size, root->fs_info->sectorsize);
+-	ret = btrfs_inode_set_file_extent_range(BTRFS_I(inode), start, size);
++	ret = btrfs_inode_set_file_extent_range(BTRFS_I(inode), 0,
++					ALIGN(size, root->fs_info->sectorsize));
+ 	if (ret)
+ 		goto fail;
+ 
+@@ -296,7 +295,13 @@ static int insert_inline_extent(struct btrfs_trans_handle *trans,
+ 	 * before we unlock the pages.  Otherwise we
+ 	 * could end up racing with unlink.
+ 	 */
+-	BTRFS_I(inode)->disk_i_size = inode->i_size;
++	i_size = i_size_read(inode);
++	if (update_i_size && size > i_size) {
++		i_size_write(inode, size);
++		i_size = size;
++	}
++	BTRFS_I(inode)->disk_i_size = i_size;
++
+ fail:
+ 	return ret;
+ }
+@@ -307,35 +312,31 @@ static int insert_inline_extent(struct btrfs_trans_handle *trans,
+  * does the checks required to make sure the data is small enough
+  * to fit as an inline extent.
+  */
+-static noinline int cow_file_range_inline(struct btrfs_inode *inode, u64 start,
+-					  u64 end, size_t compressed_size,
++static noinline int cow_file_range_inline(struct btrfs_inode *inode, u64 size,
++					  size_t compressed_size,
+ 					  int compress_type,
+-					  struct page **compressed_pages)
++					  struct page **compressed_pages,
++					  bool update_i_size)
+ {
+ 	struct btrfs_drop_extents_args drop_args = { 0 };
+ 	struct btrfs_root *root = inode->root;
+ 	struct btrfs_fs_info *fs_info = root->fs_info;
+ 	struct btrfs_trans_handle *trans;
+-	u64 isize = i_size_read(&inode->vfs_inode);
+-	u64 actual_end = min(end + 1, isize);
+-	u64 inline_len = actual_end - start;
+-	u64 aligned_end = ALIGN(end, fs_info->sectorsize);
+-	u64 data_len = inline_len;
++	u64 data_len = compressed_size ? compressed_size : size;
+ 	int ret;
+ 	struct btrfs_path *path;
+ 
+-	if (compressed_size)
+-		data_len = compressed_size;
+-
+-	if (start > 0 ||
+-	    actual_end > fs_info->sectorsize ||
++	/*
++	 * We can create an inline extent if it ends at or beyond the current
++	 * i_size, is no larger than a sector (decompressed), and the (possibly
++	 * compressed) data fits in a leaf and the configured maximum inline
++	 * size.
++	 */
++	if (size < i_size_read(&inode->vfs_inode) ||
++	    size > fs_info->sectorsize ||
+ 	    data_len > BTRFS_MAX_INLINE_DATA_SIZE(fs_info) ||
+-	    (!compressed_size &&
+-	    (actual_end & (fs_info->sectorsize - 1)) == 0) ||
+-	    end + 1 < isize ||
+-	    data_len > fs_info->max_inline) {
++	    data_len > fs_info->max_inline)
+ 		return 1;
+-	}
+ 
+ 	path = btrfs_alloc_path();
+ 	if (!path)
+@@ -349,30 +350,21 @@ static noinline int cow_file_range_inline(struct btrfs_inode *inode, u64 start,
+ 	trans->block_rsv = &inode->block_rsv;
+ 
+ 	drop_args.path = path;
+-	drop_args.start = start;
+-	drop_args.end = aligned_end;
++	drop_args.start = 0;
++	drop_args.end = fs_info->sectorsize;
+ 	drop_args.drop_cache = true;
+ 	drop_args.replace_extent = true;
+-
+-	if (compressed_size && compressed_pages)
+-		drop_args.extent_item_size = btrfs_file_extent_calc_inline_size(
+-		   compressed_size);
+-	else
+-		drop_args.extent_item_size = btrfs_file_extent_calc_inline_size(
+-		    inline_len);
+-
++	drop_args.extent_item_size = btrfs_file_extent_calc_inline_size(data_len);
+ 	ret = btrfs_drop_extents(trans, root, inode, &drop_args);
+ 	if (ret) {
+ 		btrfs_abort_transaction(trans, ret);
+ 		goto out;
  	}
  
- 	phy_offset >>= root->fs_info->sectorsize_bits;
--	return check_data_csum(inode, io_bio, phy_offset, page, offset);
-+	return check_data_csum(inode, io_bio, phy_offset, page, offset, start);
- }
+-	if (isize > actual_end)
+-		inline_len = min_t(u64, isize, actual_end);
+-	ret = insert_inline_extent(trans, path, drop_args.extent_inserted,
+-				   root, &inode->vfs_inode, start,
+-				   inline_len, compressed_size,
+-				   compress_type, compressed_pages);
++	ret = insert_inline_extent(trans, path, drop_args.extent_inserted, root,
++				   &inode->vfs_inode, size, compressed_size,
++				   compress_type, compressed_pages,
++				   update_i_size);
+ 	if (ret && ret != -ENOSPC) {
+ 		btrfs_abort_transaction(trans, ret);
+ 		goto out;
+@@ -381,7 +373,7 @@ static noinline int cow_file_range_inline(struct btrfs_inode *inode, u64 start,
+ 		goto out;
+ 	}
  
- /*
-@@ -7733,7 +7734,8 @@ static blk_status_t btrfs_check_read_dio_bio(struct inode *inode,
- 			ASSERT(pgoff < PAGE_SIZE);
- 			if (uptodate &&
- 			    (!csum || !check_data_csum(inode, io_bio, icsum,
--						       bvec.bv_page, pgoff))) {
-+						       bvec.bv_page, pgoff,
-+						       start))) {
- 				clean_io_failure(fs_info, failure_tree, io_tree,
- 						 start, bvec.bv_page,
- 						 btrfs_ino(BTRFS_I(inode)),
+-	btrfs_update_inode_bytes(inode, inline_len, drop_args.bytes_found);
++	btrfs_update_inode_bytes(inode, size, drop_args.bytes_found);
+ 	ret = btrfs_update_inode(trans, root, inode);
+ 	if (ret && ret != -ENOSPC) {
+ 		btrfs_abort_transaction(trans, ret);
+@@ -662,14 +654,15 @@ static noinline int compress_file_range(struct async_chunk *async_chunk)
+ 			/* we didn't compress the entire range, try
+ 			 * to make an uncompressed inline extent.
+ 			 */
+-			ret = cow_file_range_inline(BTRFS_I(inode), start, end,
++			ret = cow_file_range_inline(BTRFS_I(inode), actual_end,
+ 						    0, BTRFS_COMPRESS_NONE,
+-						    NULL);
++						    NULL, false);
+ 		} else {
+ 			/* try making a compressed inline extent */
+-			ret = cow_file_range_inline(BTRFS_I(inode), start, end,
++			ret = cow_file_range_inline(BTRFS_I(inode), actual_end,
+ 						    total_compressed,
+-						    compress_type, pages);
++						    compress_type, pages,
++						    false);
+ 		}
+ 		if (ret <= 0) {
+ 			unsigned long clear_flags = EXTENT_DELALLOC |
+@@ -1057,9 +1050,12 @@ static noinline int cow_file_range(struct btrfs_inode *inode,
+ 	inode_should_defrag(inode, start, end, num_bytes, SZ_64K);
+ 
+ 	if (start == 0) {
++		u64 actual_end = min_t(u64, i_size_read(&inode->vfs_inode),
++				       end + 1);
++
+ 		/* lets try to make an inline extent */
+-		ret = cow_file_range_inline(inode, start, end, 0,
+-					    BTRFS_COMPRESS_NONE, NULL);
++		ret = cow_file_range_inline(inode, actual_end, 0,
++					    BTRFS_COMPRESS_NONE, NULL, false);
+ 		if (ret == 0) {
+ 			/*
+ 			 * We use DO_ACCOUNTING here because we need the
 -- 
 2.29.2
 
