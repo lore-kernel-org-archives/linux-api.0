@@ -2,250 +2,177 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-26.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+X-Spam-Status: No, score=-18.2 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT,USER_IN_DEF_DKIM_WL autolearn=unavailable autolearn_force=no
-	version=3.4.0
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_IN_DEF_DKIM_WL autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 371DBC64E75
-	for <linux-api@archiver.kernel.org>; Tue, 17 Nov 2020 23:55:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A962DC56202
+	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 00:39:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D4B5A2072C
-	for <linux-api@archiver.kernel.org>; Tue, 17 Nov 2020 23:54:59 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6A98324682
+	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 00:39:53 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="Md/nmo4u"
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="awh9T6J4"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727059AbgKQXy4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 17 Nov 2020 18:54:56 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45298 "EHLO
+        id S1726992AbgKRAjf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 17 Nov 2020 19:39:35 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52272 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725774AbgKQXy4 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 17 Nov 2020 18:54:56 -0500
-Received: from mail-pg1-x549.google.com (mail-pg1-x549.google.com [IPv6:2607:f8b0:4864:20::549])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D34B3C0617A6
-        for <linux-api@vger.kernel.org>; Tue, 17 Nov 2020 15:54:55 -0800 (PST)
-Received: by mail-pg1-x549.google.com with SMTP id t1so22718pgo.23
-        for <linux-api@vger.kernel.org>; Tue, 17 Nov 2020 15:54:55 -0800 (PST)
+        with ESMTP id S1725943AbgKRAje (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 17 Nov 2020 19:39:34 -0500
+Received: from mail-il1-x141.google.com (mail-il1-x141.google.com [IPv6:2607:f8b0:4864:20::141])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B594CC061A48
+        for <linux-api@vger.kernel.org>; Tue, 17 Nov 2020 16:39:34 -0800 (PST)
+Received: by mail-il1-x141.google.com with SMTP id z14so375263ilp.11
+        for <linux-api@vger.kernel.org>; Tue, 17 Nov 2020 16:39:34 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=google.com; s=20161025;
-        h=sender:date:message-id:mime-version:subject:from:to:cc;
-        bh=F67sbUoPJ71YXDG7sdUK0EmBqROtcgMmtrjF66jycJ4=;
-        b=Md/nmo4uiAVyWtqr7sCUzbTACIHP4eOwwozR73nab59SpdXPs8GapTu+xjzW6JH2aE
-         GhtfmU+lugSfD10mpukhmiFFxA6gkp/sbPB8yqpft1lJ3WHXzK4lqwNG9k10dQv1JEND
-         31erme1g+RM0BrFqmT+73UMO86i2vdv+rBA5xBkG/V5kagU8zEPZTS9/QaRq162rltRZ
-         LXZunBwniZET8NRFdhhIyl3LQEiF5YI+25bLj61nDddPxmAFCR8drF+PNifaIWTRt9Fx
-         pVuRy67Ap5XQxuZZDpiHe/ggdaMv0sMklDkbZTNnIPBqMY/yW8DwLHCJdrW0XzkvFkDt
-         iLRA==
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=Sbfjxw3pC8MpPSWm9cZSPR2YSBmckPurKQMcUUNsl30=;
+        b=awh9T6J45mhdENvEZi2f1eOsV0Oa07/5ufXvh2qn22YqqZ8oQXcRIwyAUlqLfwnYjn
+         hgmRArxYc3Khl9EsFqPP4It/MCNNQ4fXgCHKDjgPbWYQW7IdL3r2TVk2G4No9XzgYayJ
+         KO33VFI4O2LbAaTF5veC0F6GPouRA7Aq9udue6nYtaQwEKJLYSbOi6SI4DqVw/Yh2XiZ
+         6OIxVa0Nm3Udyzuc2pA8+LJ0lqmP5czaKPjclEjwws9EWjCbbZh4K44tm07z0dTnfyE9
+         oGFmwVEmpVi2dvKgMbUQrbzXpCMdNXLBFFnivkTwn5esU4WnPYYwU3QWZe9way43xmHf
+         lXXw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:message-id:mime-version:subject:from
-         :to:cc;
-        bh=F67sbUoPJ71YXDG7sdUK0EmBqROtcgMmtrjF66jycJ4=;
-        b=MfwPQEhk8l5zh2ydhYnMpza7RXcaw2AGeITS/G0XNvv7BVPsIhQD9gFbBMhEeUDS0V
-         m5dN3ISDildsyPUkLGqHi28BhwATVdwCsFFrw+UgNpvv4Bt/SbOhLGYyQ5oM1rx2BnDO
-         X4cLjXUbzE2L6KuJE8uAFix8Y4JpB0BJTwhI637x8oMY8ejlQ5NAauoPtj/QtQOO1+sR
-         KVsPDMa/2tE6rXDpmzpn8Tc7vUEH1oq6CGpcNxHpSf82RtOyS3ROnxWX3OAGmYbbDYS8
-         GOT+dwUCIS195kb1l+ip/nzNQ/Ghjjo01D62xXSXRTadZZSTzL3NgorySrhL3NDcfwCy
-         dZ9A==
-X-Gm-Message-State: AOAM531kv413rpF62gTBzm1O0/oeqTSC+zw61A3Uw/4izHEbBe4J5mIb
-        SRqxk53x5x/Dcn/kDaiKcwfDUIo=
-X-Google-Smtp-Source: ABdhPJwlmN1K/jlt1uoHIVnW31y/VSYJ7CSIVvxjavwBUeC71cH00smjXcq31zUDviTB4xHMlEgLniE=
-Sender: "pcc via sendgmr" <pcc@pcc-desktop.svl.corp.google.com>
-X-Received: from pcc-desktop.svl.corp.google.com ([2620:15c:2ce:0:7220:84ff:fe09:385a])
- (user=pcc job=sendgmr) by 2002:a62:17c8:0:b029:18b:5a97:a8d1 with SMTP id
- 191-20020a6217c80000b029018b5a97a8d1mr1823895pfx.15.1605657295349; Tue, 17
- Nov 2020 15:54:55 -0800 (PST)
-Date:   Tue, 17 Nov 2020 15:54:47 -0800
-Message-Id: <20201117235447.816252-1-pcc@google.com>
-Mime-Version: 1.0
-X-Mailer: git-send-email 2.29.2.299.gdc1121823c-goog
-Subject: [PATCH v2] sigaction.2: Document SA_EXPOSE_TAGBITS and the flag
- support detection protocol
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=Sbfjxw3pC8MpPSWm9cZSPR2YSBmckPurKQMcUUNsl30=;
+        b=IIPtwnVgIJ7+WLBw4CUUFaJLWKCEnuhK9NkZ01AWWK6nENw6IYHr0DTpJB3n/6Rums
+         ufzS88pumTri4LwRfZ7Wb5HtWkGPwQtik4YcRHnNMNp2gUfLCX1aHovU8gaGyaCIRC/C
+         SkBJ7ZkiLaAK0PPIJGRzKWYqDJ+LjhgVxkqTGby32ZSocFyQpgtk7EPSikQ+acCn0Wm3
+         TZ9JLAg+2hBzrvTm+ebtrOP0tzal5H+erOw9I/8uDKtE1SJAMdsuxFKNQUv0Om0zIuoE
+         hdDZBstRBDlMEgtc1BZwajIFET24gNVyRm4anFVNI03j84XU3wOQjCIMc8f/IueRe1Oa
+         tsiA==
+X-Gm-Message-State: AOAM531ZAYmKCLqp6fYKOCtaVONJQoI7vTcM8wPs/mgxCcfEMJrZ8cbJ
+        1GmPELrCf7jod2BMLOy4paF1xUrjl7FE9kmIB6vALw==
+X-Google-Smtp-Source: ABdhPJx3CDcEugJ9oT+32RRhq8HiobubRR5EAMaBIWAeRUsFyNY1tki1dz14QrKvIT8Oa6/vnb4iY7qtqZ9P+SBpFN0=
+X-Received: by 2002:a92:d18a:: with SMTP id z10mr13666668ilz.61.1605659973810;
+ Tue, 17 Nov 2020 16:39:33 -0800 (PST)
+MIME-Version: 1.0
+References: <20201117195205.645925-1-pcc@google.com> <877dqj8y2n.fsf@x220.int.ebiederm.org>
+In-Reply-To: <877dqj8y2n.fsf@x220.int.ebiederm.org>
 From:   Peter Collingbourne <pcc@google.com>
-To:     Catalin Marinas <catalin.marinas@arm.com>,
+Date:   Tue, 17 Nov 2020 16:39:23 -0800
+Message-ID: <CAMn1gO5NKS6vUvYFHGHxscgXmy_oSSgYZpShCzmoLCEoT6swvA@mail.gmail.com>
+Subject: Re: [PATCH v18] arm64: expose FAR_EL1 tag bits in siginfo
+To:     "Eric W. Biederman" <ebiederm@xmission.com>
+Cc:     Catalin Marinas <catalin.marinas@arm.com>,
         Evgenii Stepanov <eugenis@google.com>,
         Kostya Serebryany <kcc@google.com>,
         Vincenzo Frascino <vincenzo.frascino@arm.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Will Deacon <will@kernel.org>, Oleg Nesterov <oleg@redhat.com>,
-        "Eric W. Biederman" <ebiederm@xmission.com>,
         "James E.J. Bottomley" <James.Bottomley@hansenpartnership.com>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Alejandro Colomar <alx.manpages@gmail.com>
-Cc:     Peter Collingbourne <pcc@google.com>,
         Linux ARM <linux-arm-kernel@lists.infradead.org>,
         Kevin Brodsky <kevin.brodsky@arm.com>,
         Andrey Konovalov <andreyknvl@google.com>,
-        linux-api@vger.kernel.org, Helge Deller <deller@gmx.de>,
-        David Spickett <david.spickett@linaro.org>,
-        linux-man@vger.kernel.org
+        Linux API <linux-api@vger.kernel.org>,
+        Helge Deller <deller@gmx.de>,
+        David Spickett <david.spickett@linaro.org>
 Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Signed-off-by: Peter Collingbourne <pcc@google.com>
----
-These features are implemented in this patch series:
-  https://lore.kernel.org/linux-arm-kernel/cover.1605235762.git.pcc@google.com/
-which is still under review, so the patch should not be applied
-yet.
+On Tue, Nov 17, 2020 at 1:37 PM Eric W. Biederman <ebiederm@xmission.com> wrote:
+>
+> Peter Collingbourne <pcc@google.com> writes:
+>
+> > diff --git a/include/uapi/asm-generic/signal-defs.h b/include/uapi/asm-generic/signal-defs.h
+> > index c790f67304ba..fe929e7b77ca 100644
+> > --- a/include/uapi/asm-generic/signal-defs.h
+> > +++ b/include/uapi/asm-generic/signal-defs.h
+> > @@ -20,6 +20,8 @@
+> >   * so this bit allows flag bit support to be detected from userspace while
+> >   * allowing an old kernel to be distinguished from a kernel that supports every
+> >   * flag bit.
+> > + * SA_EXPOSE_TAGBITS exposes an architecture-defined set of tag bits in
+> > + * siginfo.si_addr.
+>
+> Do we perhaps want to say the high bits of si_addr?
 
-Alejandro, thanks for the review. Since the patch was almost
-rewritten I didn't base this on your patch, instead I tried to
-use the correct formatting in this patch.
+I wouldn't want to make any specific claims about which bits of
+si_addr are involved here since they would not necessarily be the high
+bits. For example, imagine a software implementation of tagged
+addresses that works by constructing a fake top-level page table such
+that it contains N identical references to what from the kernel's
+perspective would be the true top-level page table. Assuming that your
+architecture does not give you the full 64 bits of address space to
+use with page tables your tag bits would be somewhere in the middle.
 
-v2:
-- fix formatting
-- address feedback from Dave
+> >   *
+> >   * SA_ONESHOT and SA_NOMASK are the historical Linux names for the Single
+> >   * Unix names RESETHAND and NODEFER respectively.
+> > @@ -41,6 +43,7 @@
+> >  /* 0x00000100 used on sparc */
+> >  /* 0x00000200 used on sparc */
+> >  #define SA_UNSUPPORTED       0x00000400
+> > +#define SA_EXPOSE_TAGBITS    0x00000800
+> >  /* 0x00010000 used on mips */
+> >  /* 0x01000000 used on x86 */
+> >  /* 0x02000000 used on x86 */
+> > diff --git a/kernel/signal.c b/kernel/signal.c
+> > index 8f34819e80de..576de3d9bd86 100644
+> > --- a/kernel/signal.c
+> > +++ b/kernel/signal.c
+> > @@ -2658,6 +2658,26 @@ bool get_signal(struct ksignal *ksig)
+> >
+> >               ka = &sighand->action[signr-1];
+> >
+> > +             if (!(ka->sa.sa_flags & SA_EXPOSE_TAGBITS)) {
+> > +                     switch (siginfo_layout(signr, ksig->info.si_code)) {
+> > +                     case SIL_FAULT:
+> > +                     case SIL_FAULT_MCEERR:
+> > +                     case SIL_FAULT_BNDERR:
+> > +                     case SIL_FAULT_PKUERR:
+> > +                             ksig->info.si_addr = arch_untagged_si_addr(
+> > +                                     ksig->info.si_addr, signr,
+> > +                                     ksig->info.si_code);
+> > +                             break;
+> > +                     case SIL_KILL:
+> > +                     case SIL_TIMER:
+> > +                     case SIL_POLL:
+> > +                     case SIL_CHLD:
+> > +                     case SIL_RT:
+> > +                     case SIL_SYS:
+> > +                             break;
+> > +                     }
+> > +             }
+> > +
+> >               /* Trace actually delivered signals. */
+> >               trace_signal_deliver(signr, &ksig->info, ka);
+>
+> Overall this looks good.
+>
+> It is a common path so I wonder about the generated code, and how close
+> to a noop this becomes on x86 and other architetures without tag bits.
 
- man2/sigaction.2 | 125 +++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 125 insertions(+)
+I would in general expect compilers to be able to optimize all of this
+away on non-arm64 architectures because the compiler has enough
+information to know that the code isn't doing anything. Indeed I
+compiled the kernel for x86_64 with and without this change and the
+size of kernel/signal.o was the same.
 
-diff --git a/man2/sigaction.2 b/man2/sigaction.2
-index 6a8142324..0e4236a43 100644
---- a/man2/sigaction.2
-+++ b/man2/sigaction.2
-@@ -250,6 +250,44 @@ This flag is meaningful only when establishing a signal handler.
- .\" .I sa_sigaction
- .\" field was added in Linux 2.1.86.)
- .\"
-+.TP
-+.BR SA_UNSUPPORTED
-+Used to dynamically probe for flag bit support.
-+.IP
-+If an attempt to register a handler succeeds with this flag set in
-+.I act->sa_flags
-+alongside other flags that are potentially unsupported by the kernel,
-+and an immediately subsequent
-+.BR sigaction ()
-+call specifying the same signal number n and with non-NULL
-+.I oldact
-+yields
-+.B SA_UNSUPPORTED
-+.I clear
-+in
-+.IR oldact->sa_flags ,
-+then
-+.IR oldact->sa_flags
-+may be used as a bitmask
-+describing which of the potentially unsupported flags are,
-+in fact, supported.
-+See the section "Dynamically probing for flag bit support"
-+below for more details.
-+.TP
-+.BR SA_EXPOSE_TAGBITS " (since Linux 5.x)"
-+Normally, when delivering a signal,
-+an architecture-specific set of tag bits are cleared from the
-+.I si_addr
-+field of
-+.IR siginfo_t .
-+If this flag is set,
-+an architecture-specific subset of the tag bits will be preserved in
-+.IR si_addr .
-+.IP
-+Programs that need to be compatible with Linux versions older than 5.x
-+must use
-+.B SA_UNSUPPORTED
-+to probe for support.
- .SS The siginfo_t argument to a SA_SIGINFO handler
- When the
- .B SA_SIGINFO
-@@ -833,6 +871,93 @@ Triggered by a
- .BR seccomp (2)
- filter rule.
- .RE
-+.SS Dynamically probing for flag bit support
-+The
-+.BR sigaction ()
-+call on Linux accepts unknown bits set in
-+.I act->sa_flags
-+without error.
-+The behavior of the kernel starting with Linux 5.x is that a second
-+.BR sigaction ()
-+will clear unknown bits from
-+.IR oldact->sa_flags .
-+However, historically, a second
-+.BR sigaction ()
-+call would typically leave those bits set in
-+.IR oldact->sa_flags .
-+.PP
-+This means that support for new flags cannot be detected
-+simply by testing for a flag in
-+.IR sa_flags ,
-+and a program must test that
-+.B SA_UNSUPPORTED
-+has been cleared before relying on the contents of
-+.IR sa_flags .
-+.PP
-+Since the behavior of the signal handler cannot be guaranteed
-+unless the check passes,
-+it is wise to either block the affected signal
-+while registering the handler and performing the check in this case,
-+or where this is not possible,
-+for example if the signal is synchronous, to issue the second
-+.BR sigaction ()
-+in the signal handler itself.
-+.PP
-+In kernels that do not support a specific flag,
-+the kernel's behavior is as if the flag was not set,
-+even if the flag was set in
-+.IR act->sa_flags .
-+.PP
-+The flags
-+.BR SA_NOCLDSTOP ,
-+.BR SA_NOCLDWAIT ,
-+.BR SA_SIGINFO ,
-+.BR SA_ONSTACK ,
-+.BR SA_RESTART ,
-+.BR SA_NODEFER ,
-+.BR SA_RESETHAND ,
-+and, if defined by the architecture,
-+.B SA_RESTORER
-+may not be reliably probed for using this mechanism,
-+because they were introduced before Linux 5.x.
-+However, in general, programs may assume that these flags are supported,
-+since they have all been supported since Linux 2.6,
-+which was released in the year 2003.
-+.PP
-+The following example program exits with status 0 if
-+.B SA_EXPOSE_TAGBITS
-+is determined to be supported, and 1 otherwise.
-+.PP
-+.EX
-+#include <signal.h>
-+#include <stdio.h>
-+#include <unistd.h>
-+
-+void handler(int signo, siginfo_t *info, void *context) {
-+  struct sigaction oldact;
-+  if (sigaction(SIGSEGV, 0, &oldact) == 0 &&
-+      !(oldact.sa_flags & SA_UNSUPPORTED) &&
-+      (oldact.sa_flags & SA_EXPOSE_TAGBITS)) {
-+    _exit(0);
-+  } else {
-+    _exit(1);
-+  }
-+}
-+
-+int main(void) {
-+  struct sigaction act = {};
-+  act.sa_flags = SA_SIGINFO | SA_UNSUPPORTED | SA_EXPOSE_TAGBITS;
-+  act.sa_sigaction = handler;
-+  if (sigaction(SIGSEGV, &act, 0) != 0) {
-+    perror("sigaction");
-+    return 1;
-+  }
-+
-+  /* Force a SIGSEGV. */
-+  *(volatile int *)0 = 0;
-+  return 1;
-+}
-+.EE
- .SH RETURN VALUE
- .BR sigaction ()
- returns 0 on success; on error, \-1 is returned, and
--- 
-2.29.2.299.gdc1121823c-goog
+> Can you put this blob of code in it's own function (perhaps called
+> hide_si_addr_tag_bits) and call it right after "ksig->sig = signr" line?
+>
+> Effectively that is the same place in the code but it gets it outside of
+> the sighand lock.  The tracing code does not care as it does not look at
+> si_addr.
+>
+> I am concerned with the complexity of reading get_signal and using a
+> well named inline function should make it unnecessary to read that
+> code unless you care about what is going on.
+>
+> Further having the code outside of the lock at the end of get_signal
+> with nothing else going on seems much easier to reason about.  The code
+> is get_signal is something that needs reading and reasoning about.
 
+Okay, done in v19.
+
+Peter
