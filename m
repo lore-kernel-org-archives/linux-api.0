@@ -2,269 +2,229 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.2 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9DC75C63697
-	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 11:42:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A9231C5519F
+	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 12:25:21 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 40EB82225B
-	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 11:42:55 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GQK5dpFr"
+	by mail.kernel.org (Postfix) with ESMTP id 4550F2417E
+	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 12:25:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727082AbgKRLme (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 18 Nov 2020 06:42:34 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41508 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726156AbgKRLmd (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 18 Nov 2020 06:42:33 -0500
-Received: from mail-wm1-x344.google.com (mail-wm1-x344.google.com [IPv6:2a00:1450:4864:20::344])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 67EB2C0613D4;
-        Wed, 18 Nov 2020 03:42:33 -0800 (PST)
-Received: by mail-wm1-x344.google.com with SMTP id a3so2412308wmb.5;
-        Wed, 18 Nov 2020 03:42:33 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=subject:to:cc:references:from:message-id:date:user-agent
-         :mime-version:in-reply-to:content-language:content-transfer-encoding;
-        bh=cNxYJ2h2CVZlNjlM0f3oEwG1YXfqRrBKar7rsqZqciA=;
-        b=GQK5dpFr8QYgH5EQECkqAeWdv0jyeJNiaBXvUIe1LMFhV2/EhN9dNOuEiDH5xgeudf
-         cUDAINh0+3YecaZ+cJk4o1OdOBgWoZ+5U/1d38BBIq4kwErmt2MDsu46JJCWCRITzkOJ
-         u/wp4CWCFN79B5B5JfwoeRvzSAyCkTNhe5hQZrItR0QzIpimD5jCTTn3QgExQHeGA3Fe
-         Fi4dS/ShUwWna0yqY8qh8CdfqBgvtUQctJJnC0RmP8MN4oi3qwCYJinjhxFS5Tv4P7RU
-         g6kLOxCPYOG9WTOs+VUFRyOhhcu4gg4W4kbyTN3x+KjHlitMItr7mPtq7pNJPB6drs47
-         HUYA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-language
-         :content-transfer-encoding;
-        bh=cNxYJ2h2CVZlNjlM0f3oEwG1YXfqRrBKar7rsqZqciA=;
-        b=hIEiNIopBmiRKT7fy7q/RBZsxX9yvI9SPHo8ZNb71cK7TDHvBwy6RwGa5bjml5cDo8
-         mV8OInIqfgUQQKbaUEe4dlPNY7o9iXfZs5Q//IneQjGf6ULjThYsPWhrpfHpZB8ZclCq
-         nDGEDe3A/mGOOMLkuLeAlCfzniXMsf4HP+mrvodjqdYgCTFhz7Zk4QU8wMNc1AsC73tN
-         UcZA3JR9v9V5sJoNjJVX3BkobXEYRWfj4JdwtY0ML1cTSRN68DAj+GVBPQBfaQyhm3i0
-         jFDVd629pT7/LrhkGfhy20qc4IDh/qNyihylsiUNTZJAmuOkyjKkd55cSHa70tbxuqLU
-         sR7w==
-X-Gm-Message-State: AOAM5305QOjOYG5U6p1s+DG7SwC4HH4DJw8npjFMPb3Ev463BWZEPsGQ
-        GeRcI6bhELFiG5yRVCOCXBcvcPFaBybIUw==
-X-Google-Smtp-Source: ABdhPJwe5tYy1Cb1vjttkemcXVNvw1FwmZD+AYuSWJtpOK5O69mbTySGADCbxeQaHLbeS3W2QpeWtQ==
-X-Received: by 2002:a1c:2583:: with SMTP id l125mr3956371wml.50.1605699751781;
-        Wed, 18 Nov 2020 03:42:31 -0800 (PST)
-Received: from [192.168.1.143] ([170.253.51.130])
-        by smtp.gmail.com with ESMTPSA id v2sm32027937wrm.96.2020.11.18.03.42.30
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 18 Nov 2020 03:42:31 -0800 (PST)
-Subject: Re: [PATCH v2] sigaction.2: Document SA_EXPOSE_TAGBITS and the flag
- support detection protocol
-To:     Peter Collingbourne <pcc@google.com>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Evgenii Stepanov <eugenis@google.com>,
+        id S1726199AbgKRMZV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 18 Nov 2020 07:25:21 -0500
+Received: from mail.kernel.org ([198.145.29.99]:46562 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726156AbgKRMZU (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 18 Nov 2020 07:25:20 -0500
+Received: from trantor (unknown [2.26.170.190])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 3FDD7238E6;
+        Wed, 18 Nov 2020 12:25:17 +0000 (UTC)
+Date:   Wed, 18 Nov 2020 12:25:14 +0000
+From:   Catalin Marinas <catalin.marinas@arm.com>
+To:     Peter Collingbourne <pcc@google.com>
+Cc:     Evgenii Stepanov <eugenis@google.com>,
         Kostya Serebryany <kcc@google.com>,
         Vincenzo Frascino <vincenzo.frascino@arm.com>,
         Dave Martin <Dave.Martin@arm.com>,
-        Will Deacon <will@kernel.org>, Oleg Nesterov <oleg@redhat.com>,
-        "Eric W. Biederman" <ebiederm@xmission.com>,
-        "James E.J. Bottomley" <James.Bottomley@hansenpartnership.com>,
-        Michael Kerrisk <mtk.manpages@gmail.com>
-Cc:     Linux ARM <linux-arm-kernel@lists.infradead.org>,
-        linux-api@vger.kernel.org, linux-man@vger.kernel.org
-References: <20201117235447.816252-1-pcc@google.com>
-From:   "Alejandro Colomar (man-pages)" <alx.manpages@gmail.com>
-Message-ID: <b052f55a-682e-705a-285c-f9b1892c0e07@gmail.com>
-Date:   Wed, 18 Nov 2020 12:42:30 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.12.0
+        Linux ARM <linux-arm-kernel@lists.infradead.org>,
+        Kevin Brodsky <kevin.brodsky@arm.com>,
+        Andrey Konovalov <andreyknvl@google.com>,
+        Will Deacon <will@kernel.org>, linux-api@vger.kernel.org,
+        Szabolcs Nagy <szabolcs.nagy@arm.com>,
+        libc-alpha@sourceware.org
+Subject: Re: [PATCH v2] arm64: Introduce prctl(PR_PAC_{SET,GET}_ENABLED_KEYS)
+Message-ID: <X7USqgzzyAWrHoXf@trantor>
+References: <20201014055106.25164-1-pcc@google.com>
 MIME-Version: 1.0
-In-Reply-To: <20201117235447.816252-1-pcc@google.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20201014055106.25164-1-pcc@google.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-[[ Removed some CCs because gmail
-   didn't allow me to send it with so many CCs:
-   Kevin B., Andrey K., Helge D., David S.
-]]
+On Tue, Oct 13, 2020 at 10:51:06PM -0700, Peter Collingbourne wrote:
+> diff --git a/arch/arm64/kernel/entry.S b/arch/arm64/kernel/entry.S
+> index ff34461524d4..19d24666b529 100644
+> --- a/arch/arm64/kernel/entry.S
+> +++ b/arch/arm64/kernel/entry.S
+> @@ -214,6 +214,18 @@ alternative_else_nop_endif
+>  
+>  	ptrauth_keys_install_kernel tsk, x20, x22, x23
+>  
+> +#ifdef CONFIG_ARM64_PTR_AUTH
+> +alternative_if ARM64_HAS_ADDRESS_AUTH
 
-On 11/18/20 12:54 AM, Peter Collingbourne wrote:
-> Signed-off-by: Peter Collingbourne <pcc@google.com>
-> ---
-> These features are implemented in this patch series:
->
-https://lore.kernel.org/linux-arm-kernel/cover.1605235762.git.pcc@google.com/
-> which is still under review, so the patch should not be applied
-> yet.
->
-> Alejandro, thanks for the review. Since the patch was almost
-> rewritten I didn't base this on your patch, instead I tried to
-> use the correct formatting in this patch.
+If we get too many instructions, we might as well do (same further
+down):
 
-Hi Peter,
+alternative_if_not ARM64_HAS_ADDRESS_AUTH
+	b	1f
+alternative_else_nop_endif
 
-Fine.
-See below a small fix.
+> +	/* Enable IA for in-kernel PAC if the task had it disabled. */
+> +	ldr	x0, [tsk, THREAD_SCTLR]
+> +	tbnz	x0, SCTLR_ELx_ENIA_SHIFT, 1f
+> +	mrs	x0, sctlr_el1
+> +	orr	x0, x0, SCTLR_ELx_ENIA
+> +	msr	sctlr_el1, x0
 
-Cheers,
+I now realised that this is missing an ISB. Writes to system registers
+in general are not visible until the context is synchronised. I suggest
+you change the line above your hunk to
+ptrauth_keys_install_kernel_nosync followed by an explicit isb here.
 
-Alex
+Note that this ISB may affect your benchmark results slightly. I think
+you only used MSR without ISB.
 
->
-> v2:
-> - fix formatting
-> - address feedback from Dave
->
->  man2/sigaction.2 | 125 +++++++++++++++++++++++++++++++++++++++++++++++
->  1 file changed, 125 insertions(+)
->
-> diff --git a/man2/sigaction.2 b/man2/sigaction.2
-> index 6a8142324..0e4236a43 100644
-> --- a/man2/sigaction.2
-> +++ b/man2/sigaction.2
-> @@ -250,6 +250,44 @@ This flag is meaningful only when establishing a
-signal handler.
->  .\" .I sa_sigaction
->  .\" field was added in Linux 2.1.86.)
->  .\"
-> +.TP
-> +.BR SA_UNSUPPORTED
-> +Used to dynamically probe for flag bit support.
-> +.IP
-> +If an attempt to register a handler succeeds with this flag set in
-> +.I act->sa_flags
-> +alongside other flags that are potentially unsupported by the kernel,
-> +and an immediately subsequent
-> +.BR sigaction ()
-> +call specifying the same signal number n and with non-NULL
-> +.I oldact
-> +yields
-> +.B SA_UNSUPPORTED
-> +.I clear
-> +in
-> +.IR oldact->sa_flags ,
-> +then
-> +.IR oldact->sa_flags
-> +may be used as a bitmask
-> +describing which of the potentially unsupported flags are,
-> +in fact, supported.
-> +See the section "Dynamically probing for flag bit support"
-> +below for more details.
-> +.TP
-> +.BR SA_EXPOSE_TAGBITS " (since Linux 5.x)"
-> +Normally, when delivering a signal,
-> +an architecture-specific set of tag bits are cleared from the
-> +.I si_addr
-> +field of
-> +.IR siginfo_t .
-> +If this flag is set,
-> +an architecture-specific subset of the tag bits will be preserved in
-> +.IR si_addr .
-> +.IP
-> +Programs that need to be compatible with Linux versions older than 5.x
-> +must use
-> +.B SA_UNSUPPORTED
-> +to probe for support.
->  .SS The siginfo_t argument to a SA_SIGINFO handler
->  When the
->  .B SA_SIGINFO
-> @@ -833,6 +871,93 @@ Triggered by a
->  .BR seccomp (2)
->  filter rule.
->  .RE
-> +.SS Dynamically probing for flag bit support
-> +The
-> +.BR sigaction ()
-> +call on Linux accepts unknown bits set in
-> +.I act->sa_flags
-> +without error.
-> +The behavior of the kernel starting with Linux 5.x is that a second
-> +.BR sigaction ()
-> +will clear unknown bits from
-> +.IR oldact->sa_flags .
-> +However, historically, a second
-> +.BR sigaction ()
-> +call would typically leave those bits set in
-> +.IR oldact->sa_flags .
-> +.PP
-> +This means that support for new flags cannot be detected
-> +simply by testing for a flag in
-> +.IR sa_flags ,
-> +and a program must test that
-> +.B SA_UNSUPPORTED
-> +has been cleared before relying on the contents of
-> +.IR sa_flags .
-> +.PP
-> +Since the behavior of the signal handler cannot be guaranteed
-> +unless the check passes,
-> +it is wise to either block the affected signal
-> +while registering the handler and performing the check in this case,
-> +or where this is not possible,
-> +for example if the signal is synchronous, to issue the second
-> +.BR sigaction ()
-> +in the signal handler itself.
-> +.PP
-> +In kernels that do not support a specific flag,
-> +the kernel's behavior is as if the flag was not set,
-> +even if the flag was set in
-> +.IR act->sa_flags .
-> +.PP
-> +The flags
-> +.BR SA_NOCLDSTOP ,
-> +.BR SA_NOCLDWAIT ,
-> +.BR SA_SIGINFO ,
-> +.BR SA_ONSTACK ,
-> +.BR SA_RESTART ,
-> +.BR SA_NODEFER ,
-> +.BR SA_RESETHAND ,
-> +and, if defined by the architecture,
-> +.B SA_RESTORER
-> +may not be reliably probed for using this mechanism,
-> +because they were introduced before Linux 5.x.
-> +However, in general, programs may assume that these flags are supported,
-> +since they have all been supported since Linux 2.6,
-> +which was released in the year 2003.
-> +.PP
-> +The following example program exits with status 0 if
-> +.B SA_EXPOSE_TAGBITS
-> +is determined to be supported, and 1 otherwise.
-> +.PP
-> +.EX
-> +#include <signal.h>
-> +#include <stdio.h>
-> +#include <unistd.h>
+> +1:
+> +alternative_else_nop_endif
+> +#endif
 > +
-> +void handler(int signo, siginfo_t *info, void *context) {
-> +  struct sigaction oldact;
-> +  if (sigaction(SIGSEGV, 0, &oldact) == 0 &&
-> +      !(oldact.sa_flags & SA_UNSUPPORTED) &&
-> +      (oldact.sa_flags & SA_EXPOSE_TAGBITS)) {
-> +    _exit(0);
-> +  } else {
-> +    _exit(1);
-> +  }
+>  	scs_load tsk, x20
+>  	.else
+>  	add	x21, sp, #S_FRAME_SIZE
+> @@ -332,6 +344,21 @@ alternative_else_nop_endif
+>  	/* No kernel C function calls after this as user keys are set. */
+>  	ptrauth_keys_install_user tsk, x0, x1, x2
+>  
+> +#ifdef CONFIG_ARM64_PTR_AUTH
+> +alternative_if ARM64_HAS_ADDRESS_AUTH
+> +	/*
+> +	 * IA was enabled for in-kernel PAC. Disable it now if needed.
+> +	 * All other per-task SCTLR bits were updated on task switch.
+> +	 */
+> +	ldr	x0, [tsk, THREAD_SCTLR]
+> +	tbnz	x0, SCTLR_ELx_ENIA_SHIFT, 1f
+> +	mrs	x0, sctlr_el1
+> +	bic	x0, x0, SCTLR_ELx_ENIA
+> +	msr	sctlr_el1, x0
+
+That's correct, no need for context synchronisation here as we are soon
+doing an ERET.
+
+> +1:
+> +alternative_else_nop_endif
+> +#endif
+> +
+>  	apply_ssbd 0, x0, x1
+>  	.endif
+>  
+[...]
+> diff --git a/arch/arm64/kernel/process.c b/arch/arm64/kernel/process.c
+> index 05a9cdd0b471..7fb28ccdf862 100644
+> --- a/arch/arm64/kernel/process.c
+> +++ b/arch/arm64/kernel/process.c
+> @@ -552,6 +552,37 @@ static void erratum_1418040_thread_switch(struct task_struct *prev,
+>  	write_sysreg(val, cntkctl_el1);
+>  }
+>  
+> +#if defined(CONFIG_ARM64_PTR_AUTH) || defined(CONFIG_ARM64_MTE)
+> +static void update_sctlr_el1(u64 sctlr)
+> +{
+> +	/*
+> +	 * EnIA must not be cleared while in the kernel as this is necessary for
+> +	 * in-kernel PAC. It will be cleared on kernel exit if needed.
+> +	 */
+> +	sysreg_clear_set(sctlr_el1, SCTLR_TASK_MASK & ~SCTLR_ELx_ENIA, sctlr);
+> +
+> +	/* ISB required for the kernel uaccess routines when setting TCF0. */
+> +	isb();
 > +}
 > +
-> +int main(void) {
-> +  struct sigaction act = {};
-> +  act.sa_flags = SA_SIGINFO | SA_UNSUPPORTED | SA_EXPOSE_TAGBITS;
-> +  act.sa_sigaction = handler;
-> +  if (sigaction(SIGSEGV, &act, 0) != 0) {
-> +    perror("sigaction");
-> +    return 1;
-> +  }
-> +
-> +  /* Force a SIGSEGV. */
-> +  *(volatile int *)0 = 0;
-> +  return 1;
+> +void set_task_sctlr_el1(u64 sctlr)
+> +{
+> +	/*
+> +	 * __switch_to() checks current->thread.sctlr as an
+> +	 * optimisation. Disable preemption so that it does not see
+> +	 * the variable update before the SCTLR_EL1 one.
+> +	 */
+> +	preempt_disable();
+> +	current->thread.sctlr = sctlr;
+> +	update_sctlr_el1(sctlr);
+> +	preempt_enable();
 > +}
-> +.EE
->  .SH RETURN VALUE
->  .BR sigaction ()
->  returns 0 on success; on error, \-1 is returned, and
->
+> +#else
+> +static void update_sctlr_el1(u64 sctlr)
+> +{
+> +}
+> +#endif  /* defined(CONFIG_ARM64_PTR_AUTH) || defined(CONFIG_ARM64_MTE) */
+> +
+>  /*
+>   * Thread switching.
+>   */
+> @@ -577,6 +608,10 @@ __notrace_funcgraph struct task_struct *__switch_to(struct task_struct *prev,
+>  	 */
+>  	dsb(ish);
+>  
+> +	/* avoid expensive SCTLR_EL1 accesses if no change */
+> +	if (prev->thread.sctlr != next->thread.sctlr)
+> +		update_sctlr_el1(next->thread.sctlr);
+> +
+>  	/*
+>  	 * MTE thread switching must happen after the DSB above to ensure that
+>  	 * any asynchronous tag check faults have been logged in the TFSR*_EL1
+> @@ -631,6 +666,8 @@ unsigned long arch_align_stack(unsigned long sp)
+>  void arch_setup_new_exec(void)
+>  {
+>  	current->mm->context.flags = is_compat_task() ? MMCF_AARCH32 : 0;
+> +	if (current->thread.sctlr != init_sctlr)
+> +		set_task_sctlr_el1(init_sctlr);
+
+init_sctlr may not have the full information when initialised in
+setup_arch(). We probably get away with this for the current features
+but it may have unexpected behaviour in the long run.
+
+I think we could start from the existing current->thread.sctlr and just
+set the PAC enable bits via ptrauth_thread_init_user(). Similarly, we
+could call a mte_thread_init_user() (just rename flush_mte_state() and
+move its call place) which sets the current->thread.stclr bits that we
+need.
+
+Since we set the bits explicitly within the SCTLR_TASK_MASK, I don't
+think we need any init_sctlr.
+
+> diff --git a/arch/arm64/kernel/setup.c b/arch/arm64/kernel/setup.c
+> index 77c4c9bad1b8..91932215a6dd 100644
+> --- a/arch/arm64/kernel/setup.c
+> +++ b/arch/arm64/kernel/setup.c
+> @@ -282,6 +282,8 @@ u64 cpu_logical_map(int cpu)
+>  }
+>  EXPORT_SYMBOL_GPL(cpu_logical_map);
+>  
+> +u64 init_sctlr;
+> +
+>  void __init __no_sanitize_address setup_arch(char **cmdline_p)
+>  {
+>  	init_mm.start_code = (unsigned long) _text;
+> @@ -370,6 +372,14 @@ void __init __no_sanitize_address setup_arch(char **cmdline_p)
+>  	init_task.thread_info.ttbr0 = __pa_symbol(empty_zero_page);
+>  #endif
+>  
+> +	/*
+> +	 * Stash a task's initial SCTLR_EL1 per-task bits, which is the same as
+> +	 * the value that it was set to by the early startup code.
+> +	 */
+> +	asm("mrs %0, sctlr_el1" : "=r"(init_sctlr));
+
+We have a read_sysreg(sctlr_el1) but I don't think we need it.
+
+> +	init_sctlr &= SCTLR_TASK_MASK;
+> +	init_task.thread.sctlr = init_sctlr;
+
+At this point we have the full SCTLR_EL1. The cpufeature framework may
+turn on additional bits when SMP is fully operational. Also, a user
+thread is not interested in bits that are specific to the kernel only.
+
+As I mentioned above, if we set the bits explicitly when creating a user
+thread, we can just leave init_task.thread.sctlr to 0.
+
+Also, I'd rename thread.sctlr to sctlr_user so that it's clearer that it
+doesn't affect the kernel settings.
+
+-- 
+Catalin
