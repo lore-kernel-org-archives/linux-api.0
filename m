@@ -7,21 +7,21 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,URIBL_BLOCKED,
 	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8C142C64E7C
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EAC15C71155
 	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 03:29:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 61A7E221EB
+	by mail.kernel.org (Postfix) with ESMTP id AF27E221E2
 	for <linux-api@archiver.kernel.org>; Wed, 18 Nov 2020 03:29:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727780AbgKRD3P (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 17 Nov 2020 22:29:15 -0500
-Received: from bhuna.collabora.co.uk ([46.235.227.227]:55406 "EHLO
+        id S1727498AbgKRD3G (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 17 Nov 2020 22:29:06 -0500
+Received: from bhuna.collabora.co.uk ([46.235.227.227]:55360 "EHLO
         bhuna.collabora.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727764AbgKRD3P (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 17 Nov 2020 22:29:15 -0500
+        with ESMTP id S1726982AbgKRD3F (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 17 Nov 2020 22:29:05 -0500
 Received: from [127.0.0.1] (localhost [127.0.0.1])
         (Authenticated sender: krisman)
-        with ESMTPSA id EF08E1F44CAA
+        with ESMTPSA id D78221F44AB3
 From:   Gabriel Krisman Bertazi <krisman@collabora.com>
 To:     luto@kernel.org, tglx@linutronix.de, keescook@chromium.org
 Cc:     christian.brauner@ubuntu.com, peterz@infradead.org,
@@ -30,9 +30,9 @@ Cc:     christian.brauner@ubuntu.com, peterz@infradead.org,
         linux-kselftest@vger.kernel.org, x86@kernel.org, gofmanp@gmail.com,
         Gabriel Krisman Bertazi <krisman@collabora.com>,
         kernel@collabora.com
-Subject: [PATCH v7 4/7] entry: Support Syscall User Dispatch on common syscall entry
-Date:   Tue, 17 Nov 2020 22:28:37 -0500
-Message-Id: <20201118032840.3429268-5-krisman@collabora.com>
+Subject: [PATCH v7 1/7] x86: vdso: Expose sigreturn address on vdso to the kernel
+Date:   Tue, 17 Nov 2020 22:28:34 -0500
+Message-Id: <20201118032840.3429268-2-krisman@collabora.com>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201118032840.3429268-1-krisman@collabora.com>
 References: <20201118032840.3429268-1-krisman@collabora.com>
@@ -42,90 +42,113 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Syscall User Dispatch (SUD) must take precedence over seccomp and
-ptrace, since the use case is emulation (it can be invoked with a
-different ABI) such that seccomp filtering by syscall number doesn't
-make sense in the first place.  In addition, either the syscall is
-dispatched back to userspace, in which case there is no resource for to
-trace, or the syscall will be executed, and seccomp/ptrace will execute
-next.
+Syscall user redirection requires the signal trampoline code to not be
+captured, in order to support returning with a locked selector while
+avoiding recursion back into the signal handler.  For ia-32, which has
+the trampoline in the vDSO, expose the entry points to the kernel, such
+that it can avoid dispatching syscalls from that region to userspace.
 
-Since SUD runs before tracepoints, it needs to be a SYSCALL_WORK_EXIT as
-well, just to prevent a trace exit event when dispatch was triggered.
-For that, the on_syscall_dispatch() examines context to skip the
-tracepoint, audit and other work.
-
+Suggested-by: Andy Lutomirski <luto@kernel.org>
 Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
+Acked-by: Andy Lutomirski <luto@kernel.org>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 
 ---
-Changes since v6:
-  - Update do_syscall_intercept signature (Christian Brauner)
-  - Move it to before tracepoints
-  - Use SYSCALL_WORK flags
+Changes since V5
+  - Change return address to bool (Andy)
 ---
- include/linux/entry-common.h |  2 ++
- kernel/entry/common.c        | 17 +++++++++++++++++
- 2 files changed, 19 insertions(+)
+ arch/x86/entry/vdso/vdso2c.c           |  2 ++
+ arch/x86/entry/vdso/vdso32/sigreturn.S |  2 ++
+ arch/x86/entry/vdso/vma.c              | 15 +++++++++++++++
+ arch/x86/include/asm/elf.h             |  2 ++
+ arch/x86/include/asm/vdso.h            |  2 ++
+ 5 files changed, 23 insertions(+)
 
-diff --git a/include/linux/entry-common.h b/include/linux/entry-common.h
-index 49b26b216e4e..a6e98b4ba8e9 100644
---- a/include/linux/entry-common.h
-+++ b/include/linux/entry-common.h
-@@ -44,10 +44,12 @@
- 				 SYSCALL_WORK_SYSCALL_TRACE |		\
- 				 SYSCALL_WORK_SYSCALL_EMU |		\
- 				 SYSCALL_WORK_SYSCALL_AUDIT |		\
-+				 SYSCALL_WORK_SYSCALL_USER_DISPATCH |	\
- 				 ARCH_SYSCALL_WORK_ENTER)
- #define SYSCALL_WORK_EXIT	(SYSCALL_WORK_SYSCALL_TRACEPOINT |	\
- 				 SYSCALL_WORK_SYSCALL_TRACE |		\
- 				 SYSCALL_WORK_SYSCALL_AUDIT |		\
-+				 SYSCALL_WORK_SYSCALL_USER_DISPATCH |	\
- 				 ARCH_SYSCALL_WORK_EXIT)
+diff --git a/arch/x86/entry/vdso/vdso2c.c b/arch/x86/entry/vdso/vdso2c.c
+index 7380908045c7..2d0f3d8bcc25 100644
+--- a/arch/x86/entry/vdso/vdso2c.c
++++ b/arch/x86/entry/vdso/vdso2c.c
+@@ -101,6 +101,8 @@ struct vdso_sym required_syms[] = {
+ 	{"__kernel_sigreturn", true},
+ 	{"__kernel_rt_sigreturn", true},
+ 	{"int80_landing_pad", true},
++	{"vdso32_rt_sigreturn_landing_pad", true},
++	{"vdso32_sigreturn_landing_pad", true},
+ };
  
- /*
-diff --git a/kernel/entry/common.c b/kernel/entry/common.c
-index 91e8fd50adf4..cef136fc7cb5 100644
---- a/kernel/entry/common.c
-+++ b/kernel/entry/common.c
-@@ -5,6 +5,8 @@
- #include <linux/livepatch.h>
- #include <linux/audit.h>
+ __attribute__((format(printf, 1, 2))) __attribute__((noreturn))
+diff --git a/arch/x86/entry/vdso/vdso32/sigreturn.S b/arch/x86/entry/vdso/vdso32/sigreturn.S
+index c3233ee98a6b..1bd068f72d4c 100644
+--- a/arch/x86/entry/vdso/vdso32/sigreturn.S
++++ b/arch/x86/entry/vdso/vdso32/sigreturn.S
+@@ -18,6 +18,7 @@ __kernel_sigreturn:
+ 	movl $__NR_sigreturn, %eax
+ 	SYSCALL_ENTER_KERNEL
+ .LEND_sigreturn:
++SYM_INNER_LABEL(vdso32_sigreturn_landing_pad, SYM_L_GLOBAL)
+ 	nop
+ 	.size __kernel_sigreturn,.-.LSTART_sigreturn
  
-+#include "common.h"
+@@ -29,6 +30,7 @@ __kernel_rt_sigreturn:
+ 	movl $__NR_rt_sigreturn, %eax
+ 	SYSCALL_ENTER_KERNEL
+ .LEND_rt_sigreturn:
++SYM_INNER_LABEL(vdso32_rt_sigreturn_landing_pad, SYM_L_GLOBAL)
+ 	nop
+ 	.size __kernel_rt_sigreturn,.-.LSTART_rt_sigreturn
+ 	.previous
+diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
+index 50e5d3a2e70a..de60cd37070b 100644
+--- a/arch/x86/entry/vdso/vma.c
++++ b/arch/x86/entry/vdso/vma.c
+@@ -436,6 +436,21 @@ int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
+ }
+ #endif
+ 
++bool arch_syscall_is_vdso_sigreturn(struct pt_regs *regs)
++{
++#if defined(CONFIG_X86_32) || defined(CONFIG_IA32_EMULATION)
++	const struct vdso_image *image = current->mm->context.vdso_image;
++	unsigned long vdso = (unsigned long) current->mm->context.vdso;
 +
- #define CREATE_TRACE_POINTS
- #include <trace/events/syscalls.h>
- 
-@@ -46,6 +48,16 @@ static long syscall_trace_enter(struct pt_regs *regs, long syscall,
- {
- 	long ret = 0;
- 
-+	/*
-+	 * Handle Syscall User Dispatch.  This must comes first, since
-+	 * the ABI here can be something that doesn't make sense for
-+	 * other syscall_work features.
-+	 */
-+	if (work & SYSCALL_WORK_SYSCALL_USER_DISPATCH) {
-+		if (do_syscall_user_dispatch(regs))
-+			return -1L;
++	if (in_ia32_syscall() && image == &vdso_image_32) {
++		if (regs->ip == vdso + image->sym_vdso32_sigreturn_landing_pad ||
++		    regs->ip == vdso + image->sym_vdso32_rt_sigreturn_landing_pad)
++			return true;
 +	}
++#endif
++	return false;
++}
 +
- 	/* Handle ptrace */
- 	if (work & (SYSCALL_WORK_SYSCALL_TRACE | SYSCALL_WORK_SYSCALL_EMU)) {
- 		ret = arch_syscall_enter_tracehook(regs);
-@@ -230,6 +242,11 @@ static void syscall_exit_work(struct pt_regs *regs, unsigned long work)
+ #ifdef CONFIG_X86_64
+ static __init int vdso_setup(char *s)
  {
- 	bool step;
+diff --git a/arch/x86/include/asm/elf.h b/arch/x86/include/asm/elf.h
+index 44a9b9940535..66bdfe838d61 100644
+--- a/arch/x86/include/asm/elf.h
++++ b/arch/x86/include/asm/elf.h
+@@ -388,6 +388,8 @@ extern int compat_arch_setup_additional_pages(struct linux_binprm *bprm,
+ 	compat_arch_setup_additional_pages(bprm, interpreter,		\
+ 					   (ex->e_machine == EM_X86_64))
  
-+	if (work & SYSCALL_WORK_SYSCALL_USER_DISPATCH) {
-+		if (on_syscall_dispatch())
-+			return;
-+	}
++extern bool arch_syscall_is_vdso_sigreturn(struct pt_regs *regs);
 +
- 	audit_syscall_exit(regs);
+ /* Do not change the values. See get_align_mask() */
+ enum align_flags {
+ 	ALIGN_VA_32	= BIT(0),
+diff --git a/arch/x86/include/asm/vdso.h b/arch/x86/include/asm/vdso.h
+index bbcdc7b8f963..589f489dd375 100644
+--- a/arch/x86/include/asm/vdso.h
++++ b/arch/x86/include/asm/vdso.h
+@@ -27,6 +27,8 @@ struct vdso_image {
+ 	long sym___kernel_rt_sigreturn;
+ 	long sym___kernel_vsyscall;
+ 	long sym_int80_landing_pad;
++	long sym_vdso32_sigreturn_landing_pad;
++	long sym_vdso32_rt_sigreturn_landing_pad;
+ };
  
- 	if (work & SYSCALL_WORK_SYSCALL_TRACEPOINT)
+ #ifdef CONFIG_X86_64
 -- 
 2.29.2
 
