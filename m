@@ -2,146 +2,124 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BD779C6369E
-	for <linux-api@archiver.kernel.org>; Thu, 19 Nov 2020 12:52:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D9781C2D0E4
+	for <linux-api@archiver.kernel.org>; Thu, 19 Nov 2020 13:11:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 499862224E
-	for <linux-api@archiver.kernel.org>; Thu, 19 Nov 2020 12:52:06 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=amazon.de header.i=@amazon.de header.b="vwCrC9bt"
+	by mail.kernel.org (Postfix) with ESMTP id 813072222F
+	for <linux-api@archiver.kernel.org>; Thu, 19 Nov 2020 13:11:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727266AbgKSMvm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 19 Nov 2020 07:51:42 -0500
-Received: from smtp-fw-6001.amazon.com ([52.95.48.154]:56083 "EHLO
-        smtp-fw-6001.amazon.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727103AbgKSMvm (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Nov 2020 07:51:42 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-  d=amazon.de; i=@amazon.de; q=dns/txt; s=amazon201209;
-  t=1605790302; x=1637326302;
-  h=subject:to:cc:references:from:message-id:date:
-   mime-version:in-reply-to:content-transfer-encoding;
-  bh=seGsIDsNhmWuP2Cjs6gFXzfbcZ1elM5hlAecchVtBF4=;
-  b=vwCrC9btAp/7cFGB17DVQTGPT3PMtfX25WPRDCTErwtC0XEYeMDpWE7B
-   W6kQFMFeGHogoX34xl3kSKclisxk1qQDZQKLBXSSahZH/hhu4g48y2v6N
-   4kcdCKyqd5Az29oiOI3LqCclqQdcWHxe/72VFMj7lZ4YYixBiR1j5ZiWB
-   w=;
-X-IronPort-AV: E=Sophos;i="5.77,490,1596499200"; 
-   d="scan'208";a="67415804"
-Received: from iad12-co-svc-p1-lb1-vlan2.amazon.com (HELO email-inbound-relay-2a-22cc717f.us-west-2.amazon.com) ([10.43.8.2])
-  by smtp-border-fw-out-6001.iad6.amazon.com with ESMTP; 19 Nov 2020 12:51:32 +0000
-Received: from EX13MTAUWC002.ant.amazon.com (pdx1-ws-svc-p6-lb9-vlan3.pdx.amazon.com [10.236.137.198])
-        by email-inbound-relay-2a-22cc717f.us-west-2.amazon.com (Postfix) with ESMTPS id 9D0B6A1CCD;
-        Thu, 19 Nov 2020 12:51:29 +0000 (UTC)
-Received: from EX13D20UWC001.ant.amazon.com (10.43.162.244) by
- EX13MTAUWC002.ant.amazon.com (10.43.162.240) with Microsoft SMTP Server (TLS)
- id 15.0.1497.2; Thu, 19 Nov 2020 12:51:29 +0000
-Received: from Alexanders-MacBook-Air.local (10.43.162.146) by
- EX13D20UWC001.ant.amazon.com (10.43.162.244) with Microsoft SMTP Server (TLS)
- id 15.0.1497.2; Thu, 19 Nov 2020 12:51:20 +0000
-Subject: Re: [PATCH v2] drivers/virt: vmgenid: add vm generation id driver
-To:     Christian Borntraeger <borntraeger@de.ibm.com>,
-        "Catangiu, Adrian Costin" <acatan@amazon.com>,
-        "Jason A. Donenfeld" <Jason@zx2c4.com>,
-        Jann Horn <jannh@google.com>
-CC:     Willy Tarreau <w@1wt.eu>,
-        "MacCarthaigh, Colm" <colmmacc@amazon.com>,
-        "Andy Lutomirski" <luto@kernel.org>,
-        "Theodore Y. Ts'o" <tytso@mit.edu>,
-        "Eric Biggers" <ebiggers@kernel.org>,
-        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
-        kernel list <linux-kernel@vger.kernel.org>,
-        "Woodhouse, David" <dwmw@amazon.co.uk>,
-        "bonzini@gnu.org" <bonzini@gnu.org>,
-        "Singh, Balbir" <sblbir@amazon.com>,
-        "Weiss, Radu" <raduweis@amazon.com>,
-        "oridgar@gmail.com" <oridgar@gmail.com>,
-        "ghammer@redhat.com" <ghammer@redhat.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        "Michael S. Tsirkin" <mst@redhat.com>,
-        "Qemu Developers" <qemu-devel@nongnu.org>,
-        KVM list <kvm@vger.kernel.org>,
-        "Michal Hocko" <mhocko@kernel.org>,
-        "Rafael J. Wysocki" <rafael@kernel.org>,
-        "Pavel Machek" <pavel@ucw.cz>,
-        Linux API <linux-api@vger.kernel.org>,
-        "mpe@ellerman.id.au" <mpe@ellerman.id.au>,
-        linux-s390 <linux-s390@vger.kernel.org>,
-        "areber@redhat.com" <areber@redhat.com>,
-        "Pavel Emelyanov" <ovzxemul@gmail.com>,
-        Andrey Vagin <avagin@gmail.com>,
-        "Mike Rapoport" <rppt@kernel.org>,
-        Dmitry Safonov <0x7f454c46@gmail.com>,
-        "Pavel Tikhomirov" <ptikhomirov@virtuozzo.com>,
-        "gil@azul.com" <gil@azul.com>,
-        "asmehra@redhat.com" <asmehra@redhat.com>,
-        "dgunigun@redhat.com" <dgunigun@redhat.com>,
-        "vijaysun@ca.ibm.com" <vijaysun@ca.ibm.com>
-References: <3E05451B-A9CD-4719-99D0-72750A304044@amazon.com>
- <300d4404-3efe-880e-ef30-692eabbff5f7@de.ibm.com>
-From:   Alexander Graf <graf@amazon.de>
-Message-ID: <da1a1fa7-a1de-d0e6-755b-dd587687765e@amazon.de>
-Date:   Thu, 19 Nov 2020 13:51:18 +0100
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.16; rv:78.0)
- Gecko/20100101 Thunderbird/78.4.3
+        id S1726691AbgKSNKo (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 19 Nov 2020 08:10:44 -0500
+Received: from out03.mta.xmission.com ([166.70.13.233]:34510 "EHLO
+        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726480AbgKSNKn (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Nov 2020 08:10:43 -0500
+Received: from in02.mta.xmission.com ([166.70.13.52])
+        by out03.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1kfjhs-003mfm-46; Thu, 19 Nov 2020 06:10:36 -0700
+Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=x220.xmission.com)
+        by in02.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1kfjhq-00AQiA-Tk; Thu, 19 Nov 2020 06:10:35 -0700
+From:   ebiederm@xmission.com (Eric W. Biederman)
+To:     Peter Collingbourne <pcc@google.com>
+Cc:     Catalin Marinas <catalin.marinas@arm.com>,
+        Evgenii Stepanov <eugenis@google.com>,
+        Kostya Serebryany <kcc@google.com>,
+        Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Will Deacon <will@kernel.org>, Oleg Nesterov <oleg@redhat.com>,
+        "James E.J. Bottomley" <James.Bottomley@hansenpartnership.com>,
+        Linux ARM <linux-arm-kernel@lists.infradead.org>,
+        Kevin Brodsky <kevin.brodsky@arm.com>,
+        Andrey Konovalov <andreyknvl@google.com>,
+        linux-api@vger.kernel.org, Helge Deller <deller@gmx.de>,
+        David Spickett <david.spickett@linaro.org>
+References: <20201118003853.926143-1-pcc@google.com>
+Date:   Thu, 19 Nov 2020 07:10:15 -0600
+In-Reply-To: <20201118003853.926143-1-pcc@google.com> (Peter Collingbourne's
+        message of "Tue, 17 Nov 2020 16:38:53 -0800")
+Message-ID: <87d0095w7c.fsf@x220.int.ebiederm.org>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
-In-Reply-To: <300d4404-3efe-880e-ef30-692eabbff5f7@de.ibm.com>
-Content-Language: en-US
-X-Originating-IP: [10.43.162.146]
-X-ClientProxiedBy: EX13D41UWB004.ant.amazon.com (10.43.161.135) To
- EX13D20UWC001.ant.amazon.com (10.43.162.244)
-Content-Type: text/plain; charset="utf-8"; format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain
+X-XM-SPF: eid=1kfjhq-00AQiA-Tk;;;mid=<87d0095w7c.fsf@x220.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1+WshTqlvQExp62nNunxhMf47paEadUJp4=
+X-SA-Exim-Connect-IP: 68.227.160.95
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: Re: [PATCH v19] arm64: expose FAR_EL1 tag bits in siginfo
+X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
+X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-CgpPbiAxOS4xMS4yMCAxMzowMiwgQ2hyaXN0aWFuIEJvcm50cmFlZ2VyIHdyb3RlOgo+IAo+IE9u
-IDE2LjExLjIwIDE2OjM0LCBDYXRhbmdpdSwgQWRyaWFuIENvc3RpbiB3cm90ZToKPj4gLSBCYWNr
-Z3JvdW5kCj4+Cj4+IFRoZSBWTSBHZW5lcmF0aW9uIElEIGlzIGEgZmVhdHVyZSBkZWZpbmVkIGJ5
-IE1pY3Jvc29mdCAocGFwZXI6Cj4+IGh0dHA6Ly9nby5taWNyb3NvZnQuY29tL2Z3bGluay8/TGlu
-a0lkPTI2MDcwOSkgYW5kIHN1cHBvcnRlZCBieQo+PiBtdWx0aXBsZSBoeXBlcnZpc29yIHZlbmRv
-cnMuCj4+Cj4+IFRoZSBmZWF0dXJlIGlzIHJlcXVpcmVkIGluIHZpcnR1YWxpemVkIGVudmlyb25t
-ZW50cyBieSBhcHBzIHRoYXQgd29yawo+PiB3aXRoIGxvY2FsIGNvcGllcy9jYWNoZXMgb2Ygd29y
-bGQtdW5pcXVlIGRhdGEgc3VjaCBhcyByYW5kb20gdmFsdWVzLAo+PiB1dWlkcywgbW9ub3Rvbmlj
-YWxseSBpbmNyZWFzaW5nIGNvdW50ZXJzLCBldGMuCj4+IFN1Y2ggYXBwcyBjYW4gYmUgbmVnYXRp
-dmVseSBhZmZlY3RlZCBieSBWTSBzbmFwc2hvdHRpbmcgd2hlbiB0aGUgVk0KPj4gaXMgZWl0aGVy
-IGNsb25lZCBvciByZXR1cm5lZCB0byBhbiBlYXJsaWVyIHBvaW50IGluIHRpbWUuCj4+Cj4+IFRo
-ZSBWTSBHZW5lcmF0aW9uIElEIGlzIGEgc2ltcGxlIGNvbmNlcHQgbWVhbnQgdG8gYWxsZXZpYXRl
-IHRoZSBpc3N1ZQo+PiBieSBwcm92aWRpbmcgYSB1bmlxdWUgSUQgdGhhdCBjaGFuZ2VzIGVhY2gg
-dGltZSB0aGUgVk0gaXMgcmVzdG9yZWQKPj4gZnJvbSBhIHNuYXBzaG90LiBUaGUgaHcgcHJvdmlk
-ZWQgVVVJRCB2YWx1ZSBjYW4gYmUgdXNlZCB0bwo+PiBkaWZmZXJlbnRpYXRlIGJldHdlZW4gVk1z
-IG9yIGRpZmZlcmVudCBnZW5lcmF0aW9ucyBvZiB0aGUgc2FtZSBWTS4KPj4KPj4gLSBQcm9ibGVt
-Cj4+Cj4+IFRoZSBWTSBHZW5lcmF0aW9uIElEIGlzIGV4cG9zZWQgdGhyb3VnaCBhbiBBQ1BJIGRl
-dmljZSBieSBtdWx0aXBsZQo+PiBoeXBlcnZpc29yIHZlbmRvcnMgYnV0IG5laXRoZXIgdGhlIHZl
-bmRvcnMgb3IgdXBzdHJlYW0gTGludXggaGF2ZSBubwo+PiBkZWZhdWx0IGRyaXZlciBmb3IgaXQg
-bGVhdmluZyB1c2VycyB0byBmZW5kIGZvciB0aGVtc2VsdmVzLgo+IAo+IEkgc2VlIHRoYXQgdGhl
-IHFlbXUgaW1wbGVtZW50YXRpb24gaXMgc3RpbGwgdW5kZXIgZGlzY3Vzc2lvbi4gV2hhdCBpcwoK
-VWgsIHRoZSBBQ1BJIFZtZ2VuaWQgZGV2aWNlIGVtdWxhdGlvbiBpcyBpbiBRRU1VIHNpbmNlIDIu
-OS4wIDopLgoKPiB0aGUgc3RhdHVzIG9mIHRoZSBvdGhlciBleGlzdGluZyBpbXBsZW1lbnRhdGlv
-bnMuIERvIHRoZXkgYWxyZWFkeSBleGlzdD8KPiBJbiBvdGhlciB3b3JkcyBpcyBBQ1BJIGEgZ2l2
-ZW4/Cj4gSSB0aGluayB0aGUgbWFqb3JpdHkgb2YgdGhpcyBkcml2ZXIgY291bGQgYmUgdXNlZCB3
-aXRoIGp1c3QgYSBkaWZmZXJlbnQKPiBiYWNrZW5kIGZvciBwbGF0Zm9ybXMgd2l0aG91dCBBQ1BJ
-IHNvIGluIGFueSBjYXNlIHdlIGNvdWxkIGZhY3RvciBvdXQKPiB0aGUgYmFja2VuZCAoYWNwaSwg
-dmlydGlvLCB3aGF0ZXZlcikgYnV0IGlmIHdlIGFyZSBvcGVuIHdlIGNvdWxkIG1heWJlCj4gc3Rh
-cnQgd2l0aCBzb21ldGhpbmcgZWxzZS4KCkkgYWdyZWUgMTAwJS4gSSBkb24ndCB0aGluayB3ZSBy
-ZWFsbHkgbmVlZCBhIG5ldyBmcmFtZXdvcmsgaW4gdGhlIGtlcm5lbCAKZm9yIHRoYXQuIFdlIGNh
-biBqdXN0IGhhdmUgZm9yIGV4YW1wbGUgYW4gczM5MHggc3BlY2lmaWMgZHJpdmVyIHRoYXQgCmFs
-c28gcHJvdmlkZXMgdGhlIHNhbWUgbm90aWZpY2F0aW9uIG1lY2hhbmlzbSB0aHJvdWdoIGEgZGV2
-aWNlIG5vZGUgdGhhdCAKaXMgYWxzbyBuYW1lZCAiL2Rldi92bWdlbmlkIiwgbm8/CgpPciBhbHRl
-cm5hdGl2ZWx5IHdlIGNhbiBzcGxpdCB0aGUgZ2VuZXJpYyBwYXJ0IG9mIHRoaXMgZHJpdmVyIGFz
-IHNvb24gYXMgCmEgc2Vjb25kIG9uZSBjb21lcyBhbG9uZyBhbmQgdGhlbiBoYXZlIGJvdGggZHJp
-dmVyIGluY2x1ZGUgdGhhdCBnZW5lcmljIApsb2dpYy4KClRoZSBvbmx5IHBpZWNlIHdoZXJlIEkn
-bSB1bnN1cmUgaXMgaG93IHRoaXMgd2lsbCBpbnRlcmFjdCB3aXRoIENSSVUuIENhbiAKY29udGFp
-bmVycyBlbXVsYXRlIGlvY3RscyBhbmQgZGV2aWNlIG5vZGVzPwoKCkFsZXgKCgoKQW1hem9uIERl
-dmVsb3BtZW50IENlbnRlciBHZXJtYW55IEdtYkgKS3JhdXNlbnN0ci4gMzgKMTAxMTcgQmVybGlu
-Ckdlc2NoYWVmdHNmdWVocnVuZzogQ2hyaXN0aWFuIFNjaGxhZWdlciwgSm9uYXRoYW4gV2Vpc3MK
-RWluZ2V0cmFnZW4gYW0gQW10c2dlcmljaHQgQ2hhcmxvdHRlbmJ1cmcgdW50ZXIgSFJCIDE0OTE3
-MyBCClNpdHo6IEJlcmxpbgpVc3QtSUQ6IERFIDI4OSAyMzcgODc5CgoK
+Peter Collingbourne <pcc@google.com> writes:
 
+> diff --git a/kernel/signal.c b/kernel/signal.c
+> index 8f34819e80de..678cdeb235ae 100644
+> --- a/kernel/signal.c
+> +++ b/kernel/signal.c
+> @@ -2524,6 +2524,26 @@ static int ptrace_signal(int signr, kernel_siginfo_t *info)
+>  	return signr;
+>  }
+>  
+> +static void hide_si_addr_tag_bits(struct ksignal *ksig)
+> +{
+> +	switch (siginfo_layout(ksig->sig, ksig->info.si_code)) {
+> +	case SIL_FAULT:
+> +	case SIL_FAULT_MCEERR:
+> +	case SIL_FAULT_BNDERR:
+> +	case SIL_FAULT_PKUERR:
+> +		ksig->info.si_addr = arch_untagged_si_addr(
+> +			ksig->info.si_addr, ksig->sig, ksig->info.si_code);
+> +		break;
+> +	case SIL_KILL:
+> +	case SIL_TIMER:
+> +	case SIL_POLL:
+> +	case SIL_CHLD:
+> +	case SIL_RT:
+> +	case SIL_SYS:
+> +		break;
+> +	}
+> +}
+> +
+>  bool get_signal(struct ksignal *ksig)
+>  {
+>  	struct sighand_struct *sighand = current->sighand;
+> @@ -2761,6 +2781,10 @@ bool get_signal(struct ksignal *ksig)
+>  	spin_unlock_irq(&sighand->siglock);
+>  
+>  	ksig->sig = signr;
+> +
+> +	if (!(sighand->action[signr - 1].sa.sa_flags & SA_EXPOSE_TAGBITS))
+> +		hide_si_addr_tag_bits(ksig);
+> +
+>  	return ksig->sig > 0;
+>  }
+
+Ok.  Seeing that this code compiles out I don't have any concerns about
+it's impact on other architectures.  And I like having it always
+present as that makes all of the concerns the code has to deal with
+easier to discover.
+
+There is one small issue.  The test should be:
+	if (!(ksig->ka.sa.sa_flags & SA_EXPOSE_TAGBITS))
+		hide_si_addr_tag_bits(ksig);
+
+Outside of sighand->siglock it is racy to access sighand->action and we
+already have an atomic snapshot of the values for exactly this reason.
+
+Is there some reason you didn't use ksig->ka?  Am I missing something?
+
+I agree that our consumption of SA bits is slow enough that my other
+concerns are a non-issue.
+
+Eric
