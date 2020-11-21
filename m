@@ -5,61 +5,61 @@ X-Spam-Level:
 X-Spam-Status: No, score=-18.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_IN_DEF_DKIM_WL autolearn=unavailable autolearn_force=no version=3.4.0
+	USER_IN_DEF_DKIM_WL autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8B31FC64E75
-	for <linux-api@archiver.kernel.org>; Sat, 21 Nov 2020 07:00:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 079FEC64E7D
+	for <linux-api@archiver.kernel.org>; Sat, 21 Nov 2020 07:00:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5088F22252
+	by mail.kernel.org (Postfix) with ESMTP id CB83822254
 	for <linux-api@archiver.kernel.org>; Sat, 21 Nov 2020 07:00:49 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="CqqdXLzD"
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="SXMdW3Iq"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726719AbgKUHA2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 21 Nov 2020 02:00:28 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44406 "EHLO
+        id S1727037AbgKUHAn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 21 Nov 2020 02:00:43 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44456 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726677AbgKUHA1 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 21 Nov 2020 02:00:27 -0500
-Received: from mail-lj1-x241.google.com (mail-lj1-x241.google.com [IPv6:2a00:1450:4864:20::241])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4D821C061A4A
-        for <linux-api@vger.kernel.org>; Fri, 20 Nov 2020 23:00:27 -0800 (PST)
-Received: by mail-lj1-x241.google.com with SMTP id r17so12432955ljg.5
-        for <linux-api@vger.kernel.org>; Fri, 20 Nov 2020 23:00:27 -0800 (PST)
+        with ESMTP id S1726674AbgKUHAn (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 21 Nov 2020 02:00:43 -0500
+Received: from mail-lf1-x141.google.com (mail-lf1-x141.google.com [IPv6:2a00:1450:4864:20::141])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C06F9C0613CF
+        for <linux-api@vger.kernel.org>; Fri, 20 Nov 2020 23:00:42 -0800 (PST)
+Received: by mail-lf1-x141.google.com with SMTP id j205so16618126lfj.6
+        for <linux-api@vger.kernel.org>; Fri, 20 Nov 2020 23:00:42 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=google.com; s=20161025;
         h=mime-version:references:in-reply-to:from:date:message-id:subject:to
          :cc:content-transfer-encoding;
-        bh=P7RjcsAj6PX+UJP0fflQn8MvjwEMgqrgy1hcrPo11aE=;
-        b=CqqdXLzD4RSHdi1Ar3pP94BnBGH2/7bkpPzT9SZ3UVxCKNiRlNpe2RQapzql1gIm0T
-         am2xz+0cm1WQPK4hE+ua1jVGF9VC83UFcIaMXQypAw6jE5utgWdZxOUYUFylOjfHEs4k
-         cbp452z2BIJGzCSR/2hAGhsY0QSIsJEbDk4heZBZkmBlDwTtBd/AS/iCd8874yBuTf5T
-         QD+koJXBJ9jZQb3KOZ/bZx4j7vb4L3rrLTabgKItYXXLtwSGDtDG7O0HsRGP6T2iCLK+
-         GNND4eZIvTwEJpJW7cZw1UxpXIjICH63bduH7dU7mXrLoZSkTtgZZS91V8myLILWnfZq
-         nenA==
+        bh=qSt/XnTloXSnWYtWCxId4OBXpP28x7HyJlEM0VTTxfw=;
+        b=SXMdW3IqDbJ6iWw8IZ9Q5CNHq9VhrWbVp/EFAUzmCzAPgt7dcdixohikYsRS8jBWb1
+         kjZbjAisDfdp9lwbGwx8t8ITuW2ZvTjirm7OuW6PzkBN++x9KgW/YZWIVfeW6e6mlx3U
+         /lumB7FQ98t3ujt+mefcDxCxr8UBoHSfT7/x/vIP0AqU4k0hMZAjxoIG9CjXFXs8CFQQ
+         HZdfjKvCNoGFCrGQCY8jcCvrkzlnJsbl7lsY/u+ZRYaynCCRUhJ+Qr2rZkAfpo8ZBl7g
+         IhCZE31GiyxOfhCWdnhAONlyo2d8Cy1QH+CApFXoypZopMLIK39U9YnN+CMIrVgDo1yp
+         gxMA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:mime-version:references:in-reply-to:from:date
          :message-id:subject:to:cc:content-transfer-encoding;
-        bh=P7RjcsAj6PX+UJP0fflQn8MvjwEMgqrgy1hcrPo11aE=;
-        b=nVg/cas7rrzojG060Nas2jWkT6LyOheE5VqPa3hgkSSjREkcA4+zWQT/aDQjVuJHF8
-         /S+L/K+Ge1IXbUtuXcxVqAkOTK+QceGYhzw/hUNcsx0WFG0tvKPatmwcECiI3TcmY1KY
-         RP1OQIa9VOwEbCWsNedVBvYsWjR741jq9nyNNa0vtIVrOtqEBab+RGKcJ7uZbgzAdnja
-         498PXhmITMmgLLrcVw3hcuSxvTQtxavIi2Umlmwm5tIRQeiBHWBFX8jG4tXkexNwubcX
-         JlbbtwYtpgHi1CNLqHYzIuKbqT7Ib3f8ATQ2wuIDrqDNLmZFEvqTqE8YvkHY6MncN7fM
-         psog==
-X-Gm-Message-State: AOAM530Z4troSoqeMjb9elng3IEGM2hED4QHfYXn1zD/7CRiVm2CvC5t
-        GtM0D3fFyU6FxKINWHto5GTvD9vqPvWn1/VG65Rg+A==
-X-Google-Smtp-Source: ABdhPJye0kUCNabvyYI/kru6Sk+gDfuo1c3+OQCYedsONLwptjC7PC4GO6R82FjXNTZ0iHwPOIZ11/4ebb/ZeEYyrjQ=
-X-Received: by 2002:a2e:8891:: with SMTP id k17mr8949700lji.326.1605942025591;
- Fri, 20 Nov 2020 23:00:25 -0800 (PST)
+        bh=qSt/XnTloXSnWYtWCxId4OBXpP28x7HyJlEM0VTTxfw=;
+        b=BQDTbxTA5CwMr1VDCSUkQ15lUi+Z4WpWAxoOeMUEd0c/9JcjuNHGSyN3s3hppvNRmg
+         tRu3AgOMDP2+/pB9bRcur2onhW3pEt6n8q+xCy6eIL+6r7tgzertbXI/SEcFSfCYiSa0
+         Doy46edBkO+P6xdJBWRl1V7TnTD9cppGnxruhNAMicIOqJf2GnEqseLr0JqFTvd2ZjRn
+         fNzTTkXVhgk8XtDK/7GeVci5ggQxSl4C/B8MRh0xqTKwsNDmJW5qqIHUXRYzHdDwW2Rn
+         FHFGssMyP73d8Kpk/MHJzGIDTaSGXUmuBNawpyMYSEcgo+3Gk4I5yzXXaO1uosrVzJ3o
+         fe1A==
+X-Gm-Message-State: AOAM532ihoZA09Al/eDLXlvYVlkIqnWqZ3834IRizg6K1fz5cTuW9Yl5
+        AEg0IMxi7Vim2kwDmRQ4PcygT10mL+/fvnp4uzY2ew==
+X-Google-Smtp-Source: ABdhPJysESVBpzmb8AIe4IsYMGTwUSB/SEEqglyDLyhegKtUN1uX2v4ambD1WjsgatbnwE0AiCnynPiP1Rb9iZe/YZ0=
+X-Received: by 2002:a05:6512:348e:: with SMTP id v14mr8698488lfr.97.1605942041000;
+ Fri, 20 Nov 2020 23:00:41 -0800 (PST)
 MIME-Version: 1.0
-References: <20201112205141.775752-1-mic@digikod.net> <20201112205141.775752-9-mic@digikod.net>
-In-Reply-To: <20201112205141.775752-9-mic@digikod.net>
+References: <20201112205141.775752-1-mic@digikod.net> <20201112205141.775752-13-mic@digikod.net>
+In-Reply-To: <20201112205141.775752-13-mic@digikod.net>
 From:   Jann Horn <jannh@google.com>
 Date:   Sat, 21 Nov 2020 08:00:00 +0100
-Message-ID: <CAG48ez28mn2YH65D67sr22Ur25kdNUchDbfuph+0TJ4iPwwvwg@mail.gmail.com>
-Subject: Re: [PATCH v24 08/12] landlock: Add syscall implementations
+Message-ID: <CAG48ez0S1_jd0YzXZ9tx94gU0sw-WeXgG336d=3YP7+iZvRgaA@mail.gmail.com>
+Subject: Re: [PATCH v24 12/12] landlock: Add user and kernel documentation
 To:     =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
 Cc:     James Morris <jmorris@namei.org>,
         "Serge E . Hallyn" <serge@hallyn.com>,
@@ -94,42 +94,13 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 On Thu, Nov 12, 2020 at 9:52 PM Micka=C3=ABl Sala=C3=BCn <mic@digikod.net> =
 wrote:
-> These 3 system calls are designed to be used by unprivileged processes
-> to sandbox themselves:
-> * landlock_create_ruleset(2): Creates a ruleset and returns its file
->   descriptor.
-> * landlock_add_rule(2): Adds a rule (e.g. file hierarchy access) to a
->   ruleset, identified by the dedicated file descriptor.
-> * landlock_enforce_ruleset_current(2): Enforces a ruleset on the current
->   thread and its future children (similar to seccomp).  This syscall has
->   the same usage restrictions as seccomp(2): the caller must have the
->   no_new_privs attribute set or have CAP_SYS_ADMIN in the current user
->   namespace.
+> This documentation can be built with the Sphinx framework.
 >
-> All these syscalls have a "flags" argument (not currently used) to
-> enable extensibility.
->
-> Here are the motivations for these new syscalls:
-> * A sandboxed process may not have access to file systems, including
->   /dev, /sys or /proc, but it should still be able to add more
->   restrictions to itself.
-> * Neither prctl(2) nor seccomp(2) (which was used in a previous version)
->   fit well with the current definition of a Landlock security policy.
->
-> All passed structs (attributes) are checked at build time to ensure that
-> they don't contain holes and that they are aligned the same way for each
-> architecture.
->
-> See the user and kernel documentation for more details (provided by a
-> following commit):
-> * Documentation/userspace-api/landlock.rst
-> * Documentation/security/landlock.rst
->
-> Cc: Arnd Bergmann <arnd@arndb.de>
 > Cc: James Morris <jmorris@namei.org>
 > Cc: Jann Horn <jannh@google.com>
 > Cc: Kees Cook <keescook@chromium.org>
 > Cc: Serge E. Hallyn <serge@hallyn.com>
 > Signed-off-by: Micka=C3=ABl Sala=C3=BCn <mic@linux.microsoft.com>
+> Reviewed-by: Vincent Dagonneau <vincent.dagonneau@ssi.gouv.fr>
 
 Reviewed-by: Jann Horn <jannh@google.com>
