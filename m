@@ -2,65 +2,81 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 12F76C56201
-	for <linux-api@archiver.kernel.org>; Tue, 24 Nov 2020 13:37:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AB671C64E7D
+	for <linux-api@archiver.kernel.org>; Tue, 24 Nov 2020 13:43:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A926F20708
-	for <linux-api@archiver.kernel.org>; Tue, 24 Nov 2020 13:37:42 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4989220782
+	for <linux-api@archiver.kernel.org>; Tue, 24 Nov 2020 13:43:59 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="VBYUp/uE"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cU44JXOR"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2387992AbgKXNhW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 24 Nov 2020 08:37:22 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35038 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2387693AbgKXNhV (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 24 Nov 2020 08:37:21 -0500
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 915BFC0613D6;
-        Tue, 24 Nov 2020 05:37:21 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=gxsDeVGamS0hlIf6ve+2luB3JdMIOEqdPuqPaIv9Dls=; b=VBYUp/uEnseBoeTeKEhlEWh3HQ
-        g9jh5J/6w+XXN7KTPAWqRI2umbF+U2cvDEHRZ2+NADxjtfotGOawPf+w3FZ95YmoiYfvSAmBJq9D4
-        26wEASipBY6rGNiLU2Hi8AssdKYuF70q8nnjB8RjiU2SZP0YZgXvYmtZelAahPgqFm4LGeIQPwHt2
-        lo8QqqROqwzFUNAoeIMBekulW9J+J1XJwzu6vYqp6gvntJCCRyHMb2MlYx3Ct96pZ8dB9NbUflhGt
-        pjlmHxstjZln9ZulPC9kuS4AQj7iF7mj/kiKWYtjSCVN0VIYtEoRfye1lyQIHousEOYYA4BSj7/yO
-        m9EVCaBg==;
-Received: from hch by casper.infradead.org with local (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1khYVT-00086n-HE; Tue, 24 Nov 2020 13:37:19 +0000
-Date:   Tue, 24 Nov 2020 13:37:19 +0000
-From:   Christoph Hellwig <hch@infradead.org>
-To:     Florian Weimer <fweimer@redhat.com>
-Cc:     linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
-        linux-kernel@vger.kernel.org, dev@opencontainers.org,
-        corbet@lwn.net, Carlos O'Donell <carlos@redhat.com>
-Subject: Re: [PATCH] syscalls: Document OCI seccomp filter interactions &
- workaround
-Message-ID: <20201124133719.GA30896@infradead.org>
-References: <87lfer2c0b.fsf@oldenburg2.str.redhat.com>
+        id S2388358AbgKXNmz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 24 Nov 2020 08:42:55 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:22836 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S2387947AbgKXNmX (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 24 Nov 2020 08:42:23 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1606225343;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=WRSwdJak4MDUgdM4oYuwCfc8hhy9ROBWcZnmVAse6LM=;
+        b=cU44JXORPEi3o3XPL7p0dCL/yexe1O7MDvAMpGncce1V4oTQfwWKcDQH2fIrpP2SS1ccG+
+        /wOUf5OHsNn9y+l35PPksJrJUEz4WbVGkafvifREafxeowNxFCVtv3cPzUyD4a12b+GWJN
+        mf+pak6/S44MxOq+DKGwBLV3OWTRw58=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-279-Xdhjv9jxPUycYkJDaQ-JWQ-1; Tue, 24 Nov 2020 08:42:18 -0500
+X-MC-Unique: Xdhjv9jxPUycYkJDaQ-JWQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 43B72805BEC;
+        Tue, 24 Nov 2020 13:42:15 +0000 (UTC)
+Received: from dhcp-27-174.brq.redhat.com (unknown [10.40.195.234])
+        by smtp.corp.redhat.com (Postfix) with SMTP id 7D7E360875;
+        Tue, 24 Nov 2020 13:42:10 +0000 (UTC)
+Received: by dhcp-27-174.brq.redhat.com (nbSMTP-1.00) for uid 1000
+        oleg@redhat.com; Tue, 24 Nov 2020 14:42:14 +0100 (CET)
+Date:   Tue, 24 Nov 2020 14:42:09 +0100
+From:   Oleg Nesterov <oleg@redhat.com>
+To:     Suren Baghdasaryan <surenb@google.com>
+Cc:     akpm@linux-foundation.org, mhocko@kernel.org, mhocko@suse.com,
+        rientjes@google.com, willy@infradead.org, hannes@cmpxchg.org,
+        guro@fb.com, riel@surriel.com, minchan@kernel.org,
+        christian@brauner.io, timmurray@google.com,
+        linux-api@vger.kernel.org, linux-mm@kvack.org,
+        linux-kernel@vger.kernel.org, kernel-team@android.com
+Subject: Re: [PATCH 2/2] mm/madvise: add process_madvise MADV_DONTNEER support
+Message-ID: <20201124134208.GA30125@redhat.com>
+References: <20201124053943.1684874-1-surenb@google.com>
+ <20201124053943.1684874-3-surenb@google.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <87lfer2c0b.fsf@oldenburg2.str.redhat.com>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
+In-Reply-To: <20201124053943.1684874-3-surenb@google.com>
+User-Agent: Mutt/1.5.24 (2015-08-30)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Nov 24, 2020 at 01:08:20PM +0100, Florian Weimer wrote:
-> This documents a way to safely use new security-related system calls
-> while preserving compatibility with container runtimes that require
-> insecure emulation (because they filter the system call by default).
-> Admittedly, it is somewhat hackish, but it can be implemented by
-> userspace today, for existing system calls such as faccessat2,
-> without kernel or container runtime changes.
+On 11/23, Suren Baghdasaryan wrote:
+>
+> +	if (madvise_destructive(behavior)) {
+> +		/* Allow destructive madvise only on a dying processes */
+> +		if (!signal_group_exit(task->signal)) {
 
-I think this is completely insane.  Tell the OCI folks to fix their
-completely broken specification instead.
+signal_group_exit(task) is true if this task execs and kills other threads,
+see the comment above this helper.
+
+I think you need !(task->signal->flags & SIGNAL_GROUP_EXIT).
+
+Oleg.
+
