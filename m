@@ -4,35 +4,35 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-19.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9844DC8300F
-	for <linux-api@archiver.kernel.org>; Tue, 24 Nov 2020 09:27:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 94978C2D0E4
+	for <linux-api@archiver.kernel.org>; Tue, 24 Nov 2020 09:27:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5A2C72076B
-	for <linux-api@archiver.kernel.org>; Tue, 24 Nov 2020 09:27:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 380C320782
+	for <linux-api@archiver.kernel.org>; Tue, 24 Nov 2020 09:27:46 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=kernel.org header.i=@kernel.org header.b="MmmZFXuB"
+	dkim=pass (1024-bit key) header.d=kernel.org header.i=@kernel.org header.b="EtlmtZCu"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728886AbgKXJ0q (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 24 Nov 2020 04:26:46 -0500
-Received: from mail.kernel.org ([198.145.29.99]:36406 "EHLO mail.kernel.org"
+        id S1731232AbgKXJ1J (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 24 Nov 2020 04:27:09 -0500
+Received: from mail.kernel.org ([198.145.29.99]:36720 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728517AbgKXJ0o (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 24 Nov 2020 04:26:44 -0500
+        id S1731237AbgKXJ1J (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 24 Nov 2020 04:27:09 -0500
 Received: from aquarius.haifa.ibm.com (nesher1.haifa.il.ibm.com [195.110.40.7])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 141DE2075A;
-        Tue, 24 Nov 2020 09:26:32 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id C02252087D;
+        Tue, 24 Nov 2020 09:26:54 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1606210003;
-        bh=+GdNX4mpKaMhhrniqkQ4cEGIr10edWa8YuyfI902ajQ=;
+        s=default; t=1606210025;
+        bh=LAwA7JIysoQWg82/yJyUQP7eFTb9BfgzLYqM+T8Rxg8=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=MmmZFXuBpoT77y8LcLszImfkniCwutZ1L0k/aQIR3hLbfjwBrE3IIwFfkrVhm+uA6
-         a5DKRimG2KHuZCugi7ao7p7nlv2PNoiZdsngQFHd1m1NTbkZJYHREnaiDt6wrVYt4b
-         YkpE2VtBdNUlYYOIOe1rkReOviI4rvZqb50A++/s=
+        b=EtlmtZCuDoc4j1Zjn+59Veaeo3LANEQ5bCR4GllzUe/DVhJwjFmgdBD+vvkfx0MRe
+         L0guOrKuQzx9OsZ7v7QShK3j0j6fRdkF6REUfneKI27Kv2wngq7k9vHvRWQR8sZ/hU
+         XpXh4v+iFn3myCoRNSGg62ZQq8CANPDv30YQoOwU=
 From:   Mike Rapoport <rppt@kernel.org>
 To:     Andrew Morton <akpm@linux-foundation.org>
 Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
@@ -65,9 +65,9 @@ Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
         linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
         linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
         x86@kernel.org
-Subject: [PATCH v11 3/9] set_memory: allow set_direct_map_*_noflush() for multiple pages
-Date:   Tue, 24 Nov 2020 11:25:50 +0200
-Message-Id: <20201124092556.12009-4-rppt@kernel.org>
+Subject: [PATCH v11 5/9] secretmem: use PMD-size pages to amortize direct map fragmentation
+Date:   Tue, 24 Nov 2020 11:25:52 +0200
+Message-Id: <20201124092556.12009-6-rppt@kernel.org>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <20201124092556.12009-1-rppt@kernel.org>
 References: <20201124092556.12009-1-rppt@kernel.org>
@@ -79,227 +79,302 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Mike Rapoport <rppt@linux.ibm.com>
 
-The underlying implementations of set_direct_map_invalid_noflush() and
-set_direct_map_default_noflush() allow updating multiple contiguous pages
-at once.
+Removing a PAGE_SIZE page from the direct map every time such page is
+allocated for a secret memory mapping will cause severe fragmentation of
+the direct map. This fragmentation can be reduced by using PMD-size pages
+as a pool for small pages for secret memory mappings.
 
-Add numpages parameter to set_direct_map_*_noflush() to expose this ability
-with these APIs.
+Add a gen_pool per secretmem inode and lazily populate this pool with
+PMD-size pages.
+
+As pages allocated by secretmem become unmovable, use CMA to back large
+page caches so that page allocator won't be surprised by failing attempt to
+migrate these pages.
+
+The CMA area used by secretmem is controlled by the "secretmem=" kernel
+parameter. This allows explicit control over the memory available for
+secretmem and provides upper hard limit for secretmem consumption.
 
 Signed-off-by: Mike Rapoport <rppt@linux.ibm.com>
-Acked-by: Catalin Marinas <catalin.marinas@arm.com>	# arm64
 ---
- arch/arm64/include/asm/cacheflush.h |  4 ++--
- arch/arm64/mm/pageattr.c            | 10 ++++++----
- arch/riscv/include/asm/set_memory.h |  4 ++--
- arch/riscv/mm/pageattr.c            |  8 ++++----
- arch/x86/include/asm/set_memory.h   |  4 ++--
- arch/x86/mm/pat/set_memory.c        |  8 ++++----
- include/linux/set_memory.h          |  4 ++--
- kernel/power/snapshot.c             |  4 ++--
- mm/vmalloc.c                        |  5 +++--
- 9 files changed, 27 insertions(+), 24 deletions(-)
+ mm/Kconfig     |   2 +
+ mm/secretmem.c | 152 ++++++++++++++++++++++++++++++++++++++++++-------
+ 2 files changed, 135 insertions(+), 19 deletions(-)
 
-diff --git a/arch/arm64/include/asm/cacheflush.h b/arch/arm64/include/asm/cacheflush.h
-index 45217f21f1fe..d3598419a284 100644
---- a/arch/arm64/include/asm/cacheflush.h
-+++ b/arch/arm64/include/asm/cacheflush.h
-@@ -138,8 +138,8 @@ static __always_inline void __flush_icache_all(void)
+diff --git a/mm/Kconfig b/mm/Kconfig
+index d8d170fa5210..e0e789398421 100644
+--- a/mm/Kconfig
++++ b/mm/Kconfig
+@@ -886,5 +886,7 @@ config MAPPING_DIRTY_HELPERS
  
- int set_memory_valid(unsigned long addr, int numpages, int enable);
+ config SECRETMEM
+ 	def_bool ARCH_HAS_SET_DIRECT_MAP && !EMBEDDED
++	select GENERIC_ALLOCATOR
++	select CMA
  
--int set_direct_map_invalid_noflush(struct page *page);
--int set_direct_map_default_noflush(struct page *page);
-+int set_direct_map_invalid_noflush(struct page *page, int numpages);
-+int set_direct_map_default_noflush(struct page *page, int numpages);
- bool kernel_page_present(struct page *page);
+ endmenu
+diff --git a/mm/secretmem.c b/mm/secretmem.c
+index 781aaaca8c70..52a900a135a5 100644
+--- a/mm/secretmem.c
++++ b/mm/secretmem.c
+@@ -7,12 +7,15 @@
  
- #include <asm-generic/cacheflush.h>
-diff --git a/arch/arm64/mm/pageattr.c b/arch/arm64/mm/pageattr.c
-index 92eccaf595c8..b53ef37bf95a 100644
---- a/arch/arm64/mm/pageattr.c
-+++ b/arch/arm64/mm/pageattr.c
-@@ -148,34 +148,36 @@ int set_memory_valid(unsigned long addr, int numpages, int enable)
- 					__pgprot(PTE_VALID));
- }
+ #include <linux/mm.h>
+ #include <linux/fs.h>
++#include <linux/cma.h>
+ #include <linux/mount.h>
+ #include <linux/memfd.h>
+ #include <linux/bitops.h>
+ #include <linux/printk.h>
+ #include <linux/pagemap.h>
++#include <linux/genalloc.h>
+ #include <linux/syscalls.h>
++#include <linux/memblock.h>
+ #include <linux/pseudo_fs.h>
+ #include <linux/secretmem.h>
+ #include <linux/set_memory.h>
+@@ -35,25 +38,80 @@
+ #define SECRETMEM_FLAGS_MASK	SECRETMEM_MODE_MASK
  
--int set_direct_map_invalid_noflush(struct page *page)
-+int set_direct_map_invalid_noflush(struct page *page, int numpages)
+ struct secretmem_ctx {
++	struct gen_pool *pool;
+ 	unsigned int mode;
+ };
+ 
+-static struct page *secretmem_alloc_page(gfp_t gfp)
++static struct cma *secretmem_cma;
++
++static int secretmem_pool_increase(struct secretmem_ctx *ctx, gfp_t gfp)
  {
- 	struct page_change_data data = {
- 		.set_mask = __pgprot(0),
- 		.clear_mask = __pgprot(PTE_VALID),
- 	};
-+	unsigned long size = PAGE_SIZE * numpages;
- 
- 	if (!debug_pagealloc_enabled() && !rodata_full)
- 		return 0;
- 
- 	return apply_to_page_range(&init_mm,
- 				   (unsigned long)page_address(page),
--				   PAGE_SIZE, change_page_range, &data);
-+				   size, change_page_range, &data);
++	unsigned long nr_pages = (1 << PMD_PAGE_ORDER);
++	struct gen_pool *pool = ctx->pool;
++	unsigned long addr;
++	struct page *page;
++	int err;
++
++	page = cma_alloc(secretmem_cma, nr_pages, PMD_SIZE, gfp & __GFP_NOWARN);
++	if (!page)
++		return -ENOMEM;
++
++	err = set_direct_map_invalid_noflush(page, nr_pages);
++	if (err)
++		goto err_cma_release;
++
++	addr = (unsigned long)page_address(page);
++	err = gen_pool_add(pool, addr, PMD_SIZE, NUMA_NO_NODE);
++	if (err)
++		goto err_set_direct_map;
++
++	flush_tlb_kernel_range(addr, addr + PMD_SIZE);
++
++	return 0;
++
++err_set_direct_map:
+ 	/*
+-	 * FIXME: use a cache of large pages to reduce the direct map
+-	 * fragmentation
++	 * If a split of PUD-size page was required, it already happened
++	 * when we marked the pages invalid which guarantees that this call
++	 * won't fail
+ 	 */
+-	return alloc_page(gfp);
++	set_direct_map_default_noflush(page, nr_pages);
++err_cma_release:
++	cma_release(secretmem_cma, page, nr_pages);
++	return err;
++}
++
++static struct page *secretmem_alloc_page(struct secretmem_ctx *ctx,
++					 gfp_t gfp)
++{
++	struct gen_pool *pool = ctx->pool;
++	unsigned long addr;
++	struct page *page;
++	int err;
++
++	if (gen_pool_avail(pool) < PAGE_SIZE) {
++		err = secretmem_pool_increase(ctx, gfp);
++		if (err)
++			return NULL;
++	}
++
++	addr = gen_pool_alloc(pool, PAGE_SIZE);
++	if (!addr)
++		return NULL;
++
++	page = virt_to_page(addr);
++	get_page(page);
++
++	return page;
  }
  
--int set_direct_map_default_noflush(struct page *page)
-+int set_direct_map_default_noflush(struct page *page, int numpages)
+ static vm_fault_t secretmem_fault(struct vm_fault *vmf)
  {
- 	struct page_change_data data = {
- 		.set_mask = __pgprot(PTE_VALID | PTE_WRITE),
- 		.clear_mask = __pgprot(PTE_RDONLY),
- 	};
-+	unsigned long size = PAGE_SIZE * numpages;
++	struct secretmem_ctx *ctx = vmf->vma->vm_file->private_data;
+ 	struct address_space *mapping = vmf->vma->vm_file->f_mapping;
+ 	struct inode *inode = file_inode(vmf->vma->vm_file);
+ 	pgoff_t offset = vmf->pgoff;
+ 	vm_fault_t ret = 0;
+-	unsigned long addr;
+ 	struct page *page;
+ 	int err;
  
- 	if (!debug_pagealloc_enabled() && !rodata_full)
- 		return 0;
+@@ -62,8 +120,7 @@ static vm_fault_t secretmem_fault(struct vm_fault *vmf)
  
- 	return apply_to_page_range(&init_mm,
- 				   (unsigned long)page_address(page),
--				   PAGE_SIZE, change_page_range, &data);
-+				   size, change_page_range, &data);
- }
+ 	page = find_get_page(mapping, offset);
+ 	if (!page) {
+-
+-		page = secretmem_alloc_page(vmf->gfp_mask);
++		page = secretmem_alloc_page(ctx, vmf->gfp_mask);
+ 		if (!page)
+ 			return vmf_error(-ENOMEM);
  
- #ifdef CONFIG_DEBUG_PAGEALLOC
-diff --git a/arch/riscv/include/asm/set_memory.h b/arch/riscv/include/asm/set_memory.h
-index d690b08dff2a..92b9bb26bf5e 100644
---- a/arch/riscv/include/asm/set_memory.h
-+++ b/arch/riscv/include/asm/set_memory.h
-@@ -22,8 +22,8 @@ static inline int set_memory_x(unsigned long addr, int numpages) { return 0; }
- static inline int set_memory_nx(unsigned long addr, int numpages) { return 0; }
- #endif
+@@ -71,14 +128,8 @@ static vm_fault_t secretmem_fault(struct vm_fault *vmf)
+ 		if (unlikely(err))
+ 			goto err_put_page;
  
--int set_direct_map_invalid_noflush(struct page *page);
--int set_direct_map_default_noflush(struct page *page);
-+int set_direct_map_invalid_noflush(struct page *page, int numpages);
-+int set_direct_map_default_noflush(struct page *page, int numpages);
- bool kernel_page_present(struct page *page);
+-		err = set_direct_map_invalid_noflush(page, 1);
+-		if (err)
+-			goto err_del_page_cache;
+-
+-		addr = (unsigned long)page_address(page);
+-		flush_tlb_kernel_range(addr, addr + PAGE_SIZE);
+-
+ 		__SetPageUptodate(page);
++		set_page_private(page, (unsigned long)ctx);
  
- #endif /* __ASSEMBLY__ */
-diff --git a/arch/riscv/mm/pageattr.c b/arch/riscv/mm/pageattr.c
-index 87ba5a68bbb8..0454f2d052c4 100644
---- a/arch/riscv/mm/pageattr.c
-+++ b/arch/riscv/mm/pageattr.c
-@@ -150,11 +150,11 @@ int set_memory_nx(unsigned long addr, int numpages)
- 	return __set_memory(addr, numpages, __pgprot(0), __pgprot(_PAGE_EXEC));
- }
+ 		ret = VM_FAULT_LOCKED;
+ 	}
+@@ -86,8 +137,6 @@ static vm_fault_t secretmem_fault(struct vm_fault *vmf)
+ 	vmf->page = page;
+ 	return ret;
  
--int set_direct_map_invalid_noflush(struct page *page)
-+int set_direct_map_invalid_noflush(struct page *page, int numpages)
+-err_del_page_cache:
+-	delete_from_page_cache(page);
+ err_put_page:
+ 	put_page(page);
+ 	return vmf_error(err);
+@@ -136,8 +185,11 @@ static int secretmem_migratepage(struct address_space *mapping,
+ 
+ static void secretmem_freepage(struct page *page)
  {
- 	int ret;
- 	unsigned long start = (unsigned long)page_address(page);
--	unsigned long end = start + PAGE_SIZE;
-+	unsigned long end = start + PAGE_SIZE * numpages;
- 	struct pageattr_masks masks = {
- 		.set_mask = __pgprot(0),
- 		.clear_mask = __pgprot(_PAGE_PRESENT)
-@@ -167,11 +167,11 @@ int set_direct_map_invalid_noflush(struct page *page)
+-	set_direct_map_default_noflush(page, 1);
+-	clear_highpage(page);
++	unsigned long addr = (unsigned long)page_address(page);
++	struct secretmem_ctx *ctx = (struct secretmem_ctx *)page_private(page);
++	struct gen_pool *pool = ctx->pool;
++
++	gen_pool_free(pool, addr, PAGE_SIZE);
+ }
+ 
+ static const struct address_space_operations secretmem_aops = {
+@@ -172,13 +224,18 @@ static struct file *secretmem_file_create(unsigned long flags)
+ 	if (!ctx)
+ 		goto err_free_inode;
+ 
++	ctx->pool = gen_pool_create(PAGE_SHIFT, NUMA_NO_NODE);
++	if (!ctx->pool)
++		goto err_free_ctx;
++
+ 	file = alloc_file_pseudo(inode, secretmem_mnt, "secretmem",
+ 				 O_RDWR, &secretmem_fops);
+ 	if (IS_ERR(file))
+-		goto err_free_ctx;
++		goto err_free_pool;
+ 
+ 	mapping_set_unevictable(inode->i_mapping);
+ 
++	inode->i_private = ctx;
+ 	inode->i_mapping->private_data = ctx;
+ 	inode->i_mapping->a_ops = &secretmem_aops;
+ 
+@@ -192,6 +249,8 @@ static struct file *secretmem_file_create(unsigned long flags)
+ 
+ 	return file;
+ 
++err_free_pool:
++	gen_pool_destroy(ctx->pool);
+ err_free_ctx:
+ 	kfree(ctx);
+ err_free_inode:
+@@ -210,6 +269,9 @@ SYSCALL_DEFINE1(memfd_secret, unsigned long, flags)
+ 	if (flags & ~(SECRETMEM_FLAGS_MASK | O_CLOEXEC))
+ 		return -EINVAL;
+ 
++	if (!secretmem_cma)
++		return -ENOMEM;
++
+ 	fd = get_unused_fd_flags(flags & O_CLOEXEC);
+ 	if (fd < 0)
+ 		return fd;
+@@ -230,11 +292,37 @@ SYSCALL_DEFINE1(memfd_secret, unsigned long, flags)
+ 	return err;
+ }
+ 
++static void secretmem_cleanup_chunk(struct gen_pool *pool,
++				    struct gen_pool_chunk *chunk, void *data)
++{
++	unsigned long start = chunk->start_addr;
++	unsigned long end = chunk->end_addr;
++	struct page *page = virt_to_page(start);
++	unsigned long nr_pages = (end - start + 1) / PAGE_SIZE;
++	int i;
++
++	set_direct_map_default_noflush(page, nr_pages);
++
++	for (i = 0; i < nr_pages; i++)
++		clear_highpage(page + i);
++
++	cma_release(secretmem_cma, page, nr_pages);
++}
++
++static void secretmem_cleanup_pool(struct secretmem_ctx *ctx)
++{
++	struct gen_pool *pool = ctx->pool;
++
++	gen_pool_for_each_chunk(pool, secretmem_cleanup_chunk, ctx);
++	gen_pool_destroy(pool);
++}
++
+ static void secretmem_evict_inode(struct inode *inode)
+ {
+ 	struct secretmem_ctx *ctx = inode->i_private;
+ 
+ 	truncate_inode_pages_final(&inode->i_data);
++	secretmem_cleanup_pool(ctx);
+ 	clear_inode(inode);
+ 	kfree(ctx);
+ }
+@@ -271,3 +359,29 @@ static int secretmem_init(void)
  	return ret;
  }
- 
--int set_direct_map_default_noflush(struct page *page)
-+int set_direct_map_default_noflush(struct page *page, int numpages)
- {
- 	int ret;
- 	unsigned long start = (unsigned long)page_address(page);
--	unsigned long end = start + PAGE_SIZE;
-+	unsigned long end = start + PAGE_SIZE * numpages;
- 	struct pageattr_masks masks = {
- 		.set_mask = PAGE_KERNEL,
- 		.clear_mask = __pgprot(0)
-diff --git a/arch/x86/include/asm/set_memory.h b/arch/x86/include/asm/set_memory.h
-index 4352f08bfbb5..6224cb291f6c 100644
---- a/arch/x86/include/asm/set_memory.h
-+++ b/arch/x86/include/asm/set_memory.h
-@@ -80,8 +80,8 @@ int set_pages_wb(struct page *page, int numpages);
- int set_pages_ro(struct page *page, int numpages);
- int set_pages_rw(struct page *page, int numpages);
- 
--int set_direct_map_invalid_noflush(struct page *page);
--int set_direct_map_default_noflush(struct page *page);
-+int set_direct_map_invalid_noflush(struct page *page, int numpages);
-+int set_direct_map_default_noflush(struct page *page, int numpages);
- bool kernel_page_present(struct page *page);
- 
- extern int kernel_set_to_readonly;
-diff --git a/arch/x86/mm/pat/set_memory.c b/arch/x86/mm/pat/set_memory.c
-index 16f878c26667..d157fd617c99 100644
---- a/arch/x86/mm/pat/set_memory.c
-+++ b/arch/x86/mm/pat/set_memory.c
-@@ -2184,14 +2184,14 @@ static int __set_pages_np(struct page *page, int numpages)
- 	return __change_page_attr_set_clr(&cpa, 0);
- }
- 
--int set_direct_map_invalid_noflush(struct page *page)
-+int set_direct_map_invalid_noflush(struct page *page, int numpages)
- {
--	return __set_pages_np(page, 1);
-+	return __set_pages_np(page, numpages);
- }
- 
--int set_direct_map_default_noflush(struct page *page)
-+int set_direct_map_default_noflush(struct page *page, int numpages)
- {
--	return __set_pages_p(page, 1);
-+	return __set_pages_p(page, numpages);
- }
- 
- #ifdef CONFIG_DEBUG_PAGEALLOC
-diff --git a/include/linux/set_memory.h b/include/linux/set_memory.h
-index fe1aa4e54680..c650f82db813 100644
---- a/include/linux/set_memory.h
-+++ b/include/linux/set_memory.h
-@@ -15,11 +15,11 @@ static inline int set_memory_nx(unsigned long addr, int numpages) { return 0; }
- #endif
- 
- #ifndef CONFIG_ARCH_HAS_SET_DIRECT_MAP
--static inline int set_direct_map_invalid_noflush(struct page *page)
-+static inline int set_direct_map_invalid_noflush(struct page *page, int numpages)
- {
- 	return 0;
- }
--static inline int set_direct_map_default_noflush(struct page *page)
-+static inline int set_direct_map_default_noflush(struct page *page, int numpages)
- {
- 	return 0;
- }
-diff --git a/kernel/power/snapshot.c b/kernel/power/snapshot.c
-index 069576704c57..d40bb6666735 100644
---- a/kernel/power/snapshot.c
-+++ b/kernel/power/snapshot.c
-@@ -89,9 +89,9 @@ static inline void hibernate_map_page(struct page *page, int enable)
- 		 * changes and this will no longer be the case.
- 		 */
- 		if (enable)
--			ret = set_direct_map_default_noflush(page);
-+			ret = set_direct_map_default_noflush(page, 1);
- 		else
--			ret = set_direct_map_invalid_noflush(page);
-+			ret = set_direct_map_invalid_noflush(page, 1);
- 
- 		if (ret) {
- 			pr_warn_once("Failed to remap page\n");
-diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index d7075ad340aa..7e903524e002 100644
---- a/mm/vmalloc.c
-+++ b/mm/vmalloc.c
-@@ -2179,13 +2179,14 @@ struct vm_struct *remove_vm_area(const void *addr)
- }
- 
- static inline void set_area_direct_map(const struct vm_struct *area,
--				       int (*set_direct_map)(struct page *page))
-+				       int (*set_direct_map)(struct page *page,
-+							     int numpages))
- {
- 	int i;
- 
- 	for (i = 0; i < area->nr_pages; i++)
- 		if (page_address(area->pages[i]))
--			set_direct_map(area->pages[i]);
-+			set_direct_map(area->pages[i], 1);
- }
- 
- /* Handle removing and resetting vm mappings related to the vm_struct. */
+ fs_initcall(secretmem_init);
++
++static int __init secretmem_setup(char *str)
++{
++	phys_addr_t align = PMD_SIZE;
++	unsigned long reserved_size;
++	int err;
++
++	reserved_size = memparse(str, NULL);
++	if (!reserved_size)
++		return 0;
++
++	if (reserved_size * 2 > PUD_SIZE)
++		align = PUD_SIZE;
++
++	err = cma_declare_contiguous(0, reserved_size, 0, align, 0, false,
++				     "secretmem", &secretmem_cma);
++	if (err) {
++		pr_err("failed to create CMA: %d\n", err);
++		return err;
++	}
++
++	pr_info("reserved %luM\n", reserved_size >> 20);
++
++	return 0;
++}
++__setup("secretmem=", secretmem_setup);
 -- 
 2.28.0
 
