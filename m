@@ -4,179 +4,459 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,URIBL_BLOCKED,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 90503C83028
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:24:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8F666C84106
+	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:24:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 69F4B22470
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:24:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 68DF12231B
+	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:24:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2387950AbgK1VtO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 28 Nov 2020 16:49:14 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:53653 "EHLO
-        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2387820AbgK1VqV (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 28 Nov 2020 16:46:21 -0500
-Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
-        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.86_2)
-        (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kj823-0002aM-3k; Sat, 28 Nov 2020 21:45:27 +0000
-From:   Christian Brauner <christian.brauner@ubuntu.com>
-To:     Alexander Viro <viro@zeniv.linux.org.uk>,
-        Christoph Hellwig <hch@infradead.org>,
-        linux-fsdevel@vger.kernel.org
-Cc:     John Johansen <john.johansen@canonical.com>,
-        James Morris <jmorris@namei.org>,
-        Mimi Zohar <zohar@linux.ibm.com>,
-        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
-        Stephen Smalley <stephen.smalley.work@gmail.com>,
-        Casey Schaufler <casey@schaufler-ca.com>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Andreas Dilger <adilger.kernel@dilger.ca>,
-        OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>,
-        Geoffrey Thomas <geofft@ldpreload.com>,
-        Mrunal Patel <mpatel@redhat.com>,
-        Josh Triplett <josh@joshtriplett.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Theodore Tso <tytso@mit.edu>, Alban Crequy <alban@kinvolk.io>,
-        Tycho Andersen <tycho@tycho.ws>,
-        David Howells <dhowells@redhat.com>,
-        James Bottomley <James.Bottomley@hansenpartnership.com>,
-        Seth Forshee <seth.forshee@canonical.com>,
-        =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
-        Aleksa Sarai <cyphar@cyphar.com>,
-        Lennart Poettering <lennart@poettering.net>,
-        "Eric W. Biederman" <ebiederm@xmission.com>, smbarber@chromium.org,
-        Phil Estes <estesp@gmail.com>, Serge Hallyn <serge@hallyn.com>,
-        Kees Cook <keescook@chromium.org>,
-        Todd Kjos <tkjos@google.com>, Paul Moore <paul@paul-moore.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        containers@lists.linux-foundation.org, fstests@vger.kernel.org,
-        linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-ext4@vger.kernel.org, linux-integrity@vger.kernel.org,
-        selinux@vger.kernel.org,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v3 01/38] namespace: take lock_mount_hash() directly when changing flags
-Date:   Sat, 28 Nov 2020 22:34:50 +0100
-Message-Id: <20201128213527.2669807-2-christian.brauner@ubuntu.com>
+        id S2387892AbgK1VtM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 28 Nov 2020 16:49:12 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55560 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1730635AbgK0TwS (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 27 Nov 2020 14:52:18 -0500
+Received: from bhuna.collabora.co.uk (bhuna.collabora.co.uk [IPv6:2a00:1098:0:82:1000:25:2eeb:e3e3])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CD44BC08E862;
+        Fri, 27 Nov 2020 11:38:08 -0800 (PST)
+Received: from [127.0.0.1] (localhost [127.0.0.1])
+        (Authenticated sender: krisman)
+        with ESMTPSA id 9BA6C1F465A1
+From:   Gabriel Krisman Bertazi <krisman@collabora.com>
+To:     luto@kernel.org, tglx@linutronix.de, keescook@chromium.org
+Cc:     gofmanp@gmail.com, christian.brauner@ubuntu.com,
+        peterz@infradead.org, willy@infradead.org, shuah@kernel.org,
+        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-kselftest@vger.kernel.org, x86@kernel.org,
+        Gabriel Krisman Bertazi <krisman@collabora.com>,
+        kernel@collabora.com
+Subject: [PATCH v8 3/7] kernel: Implement selective syscall userspace redirection
+Date:   Fri, 27 Nov 2020 14:32:34 -0500
+Message-Id: <20201127193238.821364-4-krisman@collabora.com>
 X-Mailer: git-send-email 2.29.2
-In-Reply-To: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
-References: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
+In-Reply-To: <20201127193238.821364-1-krisman@collabora.com>
+References: <20201127193238.821364-1-krisman@collabora.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Changing mount options always ends up taking lock_mount_hash() but when
-MNT_READONLY is requested and neither the mount nor the superblock are
-MNT_READONLY we end up taking the lock, dropping it, and retaking it to change
-the other mount attributes. Instead, let's acquire the lock once when changing
-the mount attributes. This simplifies the locking in these codepath, makes them
-easier to reason about and avoids having to reacquire the lock right after
-dropping it.
+Introduce a mechanism to quickly disable/enable syscall handling for a
+specific process and redirect to userspace via SIGSYS.  This is useful
+for processes with parts that require syscall redirection and parts that
+don't, but who need to perform this boundary crossing really fast,
+without paying the cost of a system call to reconfigure syscall handling
+on each boundary transition.  This is particularly important for Windows
+games running over Wine.
 
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: David Howells <dhowells@redhat.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Cc: linux-fsdevel@vger.kernel.org
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+The proposed interface looks like this:
+
+  prctl(PR_SET_SYSCALL_USER_DISPATCH, <op>, <off>, <length>, [selector])
+
+The range [<offset>,<offset>+<length>) is a part of the process memory
+map that is allowed to by-pass the redirection code and dispatch
+syscalls directly, such that in fast paths a process doesn't need to
+disable the trap nor the kernel has to check the selector.  This is
+essential to return from SIGSYS to a blocked area without triggering
+another SIGSYS from rt_sigreturn.
+
+selector is an optional pointer to a char-sized userspace memory region
+that has a key switch for the mechanism. This key switch is set to
+either PR_SYS_DISPATCH_ON, PR_SYS_DISPATCH_OFF to enable and disable the
+redirection without calling the kernel.
+
+The feature is meant to be set per-thread and it is disabled on
+fork/clone/execv.
+
+Internally, this doesn't add overhead to the syscall hot path, and it
+requires very little per-architecture support.  I avoided using seccomp,
+even though it duplicates some functionality, due to previous feedback
+that maybe it shouldn't mix with seccomp since it is not a security
+mechanism.  And obviously, this should never be considered a security
+mechanism, since any part of the program can by-pass it by using the
+syscall dispatcher.
+
+For the sysinfo benchmark, which measures the overhead added to
+executing a native syscall that doesn't require interception, the
+overhead using only the direct dispatcher region to issue syscalls is
+pretty much irrelevant.  The overhead of using the selector goes around
+40ns for a native (unredirected) syscall in my system, and it is (as
+expected) dominated by the supervisor-mode user-address access.  In
+fact, with SMAP off, the overhead is consistently less than 5ns on my
+test box.
+
+Cc: Matthew Wilcox <willy@infradead.org>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Paul Gofman <gofmanp@gmail.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: linux-api@vger.kernel.org
+Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
+Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+
 ---
-/* v2 */
-- Christoph Hellwig <hch@lst.de>:
-  - Remove pointless __mnt_unmake_readonly() helper.
-  - Even though Christoph suggested to lockdep_assert_held() into places that
-    require {lock,unlock}_mount_hash() it seems that seqlock's don't support
-    it.
+Changes since v7:
+  - Correct half-open interval in commit message (PeterZ)
+  - Solve rebase conflicts
 
-/* v3 */
-unchanged
+Changes since v6:
+  (Matthew Wilcox)
+  - Use unsigned long for mode
+  (peterZ)
+  - Change interface to {offset,len}
+  - Use SYSCALL_WORK interface instead of TIF flags
+
+Changes since v4:
+  (Andy Lutomirski)
+  - Allow sigreturn coming from vDSO
+  - Exit with SIGSYS instead of SIGSEGV on bad selector
+  (Thomas Gleixner)
+  - Use sizeof selector in access_ok
+  - Document usage of __get_user
+  - Use constant for state value
+  - Split out x86 parts
+  - Rebase on top of Gleixner's common entry code
+  - Don't expose do_syscall_user_dispatch
+
+Changes since v3:
+  - NTR.
+
+Changes since v2:
+  (Matthew Wilcox suggestions)
+  - Drop __user on non-ptr type.
+  - Move #define closer to similar defs
+  - Allow a memory region that can dispatch directly
+  (Kees Cook suggestions)
+  - Improve kconfig summary line
+  - Move flag cleanup on execve to begin_new_exec
+  - Hint branch predictor in the syscall path
+  (Me)
+  - Convert selector to char
+
+Changes since RFC:
+  (Kees Cook suggestions)
+  - Don't mention personality while explaining the feature
+  - Use syscall_get_nr
+  - Remove header guard on several places
+  - Convert WARN_ON to WARN_ON_ONCE
+  - Explicit check for state values
+  - Rename to syscall user dispatcher
 ---
- fs/namespace.c | 22 ++++++++--------------
- 1 file changed, 8 insertions(+), 14 deletions(-)
+ fs/exec.c                             |   3 +
+ include/linux/sched.h                 |   2 +
+ include/linux/syscall_user_dispatch.h |  40 ++++++++++
+ include/linux/thread_info.h           |   2 +
+ include/uapi/linux/prctl.h            |   5 ++
+ kernel/entry/Makefile                 |   2 +-
+ kernel/entry/common.h                 |  16 ++++
+ kernel/entry/syscall_user_dispatch.c  | 102 ++++++++++++++++++++++++++
+ kernel/fork.c                         |   1 +
+ kernel/sys.c                          |   5 ++
+ 10 files changed, 177 insertions(+), 1 deletion(-)
+ create mode 100644 include/linux/syscall_user_dispatch.h
+ create mode 100644 kernel/entry/common.h
+ create mode 100644 kernel/entry/syscall_user_dispatch.c
 
-diff --git a/fs/namespace.c b/fs/namespace.c
-index cebaa3e81794..f183161833ad 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -463,7 +463,6 @@ static int mnt_make_readonly(struct mount *mnt)
- {
- 	int ret = 0;
+diff --git a/fs/exec.c b/fs/exec.c
+index 547a2390baf5..aee36e5733ce 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -64,6 +64,7 @@
+ #include <linux/compat.h>
+ #include <linux/vmalloc.h>
+ #include <linux/io_uring.h>
++#include <linux/syscall_user_dispatch.h>
  
--	lock_mount_hash();
- 	mnt->mnt.mnt_flags |= MNT_WRITE_HOLD;
+ #include <linux/uaccess.h>
+ #include <asm/mmu_context.h>
+@@ -1302,6 +1303,8 @@ int begin_new_exec(struct linux_binprm * bprm)
+ 	flush_thread();
+ 	me->personality &= ~bprm->per_clear;
+ 
++	clear_syscall_work_syscall_user_dispatch(me);
++
  	/*
- 	 * After storing MNT_WRITE_HOLD, we'll read the counters. This store
-@@ -497,18 +496,9 @@ static int mnt_make_readonly(struct mount *mnt)
- 	 */
- 	smp_wmb();
- 	mnt->mnt.mnt_flags &= ~MNT_WRITE_HOLD;
--	unlock_mount_hash();
- 	return ret;
- }
+ 	 * We have to apply CLOEXEC before we change whether the process is
+ 	 * dumpable (in setup_new_exec) to avoid a race with a process in userspace
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index ee2fdf34095b..4b719dc2eba2 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -34,6 +34,7 @@
+ #include <linux/rseq.h>
+ #include <linux/seqlock.h>
+ #include <linux/kcsan.h>
++#include <linux/syscall_user_dispatch.h>
+ #include <asm/kmap_size.h>
  
--static int __mnt_unmake_readonly(struct mount *mnt)
--{
--	lock_mount_hash();
--	mnt->mnt.mnt_flags &= ~MNT_READONLY;
--	unlock_mount_hash();
--	return 0;
--}
--
- int sb_prepare_remount_readonly(struct super_block *sb)
- {
- 	struct mount *mnt;
-@@ -2508,7 +2498,8 @@ static int change_mount_ro_state(struct mount *mnt, unsigned int mnt_flags)
- 	if (readonly_request)
- 		return mnt_make_readonly(mnt);
+ /* task_struct member predeclarations (sorted alphabetically): */
+@@ -1000,6 +1001,7 @@ struct task_struct {
+ 	unsigned int			sessionid;
+ #endif
+ 	struct seccomp			seccomp;
++	struct syscall_user_dispatch	syscall_dispatch;
  
--	return __mnt_unmake_readonly(mnt);
-+	mnt->mnt.mnt_flags &= ~MNT_READONLY;
+ 	/* Thread group tracking: */
+ 	u64				parent_exec_id;
+diff --git a/include/linux/syscall_user_dispatch.h b/include/linux/syscall_user_dispatch.h
+new file mode 100644
+index 000000000000..9517ea16f090
+--- /dev/null
++++ b/include/linux/syscall_user_dispatch.h
+@@ -0,0 +1,40 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (C) 2020 Collabora Ltd.
++ */
++#ifndef _SYSCALL_USER_DISPATCH_H
++#define _SYSCALL_USER_DISPATCH_H
++
++#include <linux/thread_info.h>
++
++#ifdef CONFIG_GENERIC_ENTRY
++
++struct syscall_user_dispatch {
++	char __user *selector;
++	unsigned long offset;
++	unsigned long len;
++	bool on_dispatch;
++};
++
++int set_syscall_user_dispatch(unsigned long mode, unsigned long offset,
++			      unsigned long len, char __user *selector);
++
++#define clear_syscall_work_syscall_user_dispatch(tsk) \
++	clear_task_syscall_work(tsk, SYSCALL_USER_DISPATCH)
++
++#else
++struct syscall_user_dispatch {};
++
++static inline int set_syscall_user_dispatch(unsigned long mode, unsigned long offset,
++					    unsigned long len, char __user *selector)
++{
++	return -EINVAL;
++}
++
++static inline void clear_syscall_work_syscall_user_dispatch(struct task_struct *tsk)
++{
++}
++
++#endif /* CONFIG_GENERIC_ENTRY */
++
++#endif /* _SYSCALL_USER_DISPATCH_H */
+diff --git a/include/linux/thread_info.h b/include/linux/thread_info.h
+index ca80a214df09..c8a974cead73 100644
+--- a/include/linux/thread_info.h
++++ b/include/linux/thread_info.h
+@@ -42,6 +42,7 @@ enum syscall_work_bit {
+ 	SYSCALL_WORK_BIT_SYSCALL_TRACE,
+ 	SYSCALL_WORK_BIT_SYSCALL_EMU,
+ 	SYSCALL_WORK_BIT_SYSCALL_AUDIT,
++	SYSCALL_WORK_BIT_SYSCALL_USER_DISPATCH,
+ };
+ 
+ #define SYSCALL_WORK_SECCOMP		BIT(SYSCALL_WORK_BIT_SECCOMP)
+@@ -49,6 +50,7 @@ enum syscall_work_bit {
+ #define SYSCALL_WORK_SYSCALL_TRACE	BIT(SYSCALL_WORK_BIT_SYSCALL_TRACE)
+ #define SYSCALL_WORK_SYSCALL_EMU	BIT(SYSCALL_WORK_BIT_SYSCALL_EMU)
+ #define SYSCALL_WORK_SYSCALL_AUDIT	BIT(SYSCALL_WORK_BIT_SYSCALL_AUDIT)
++#define SYSCALL_WORK_SYSCALL_USER_DISPATCH BIT(SYSCALL_WORK_BIT_SYSCALL_USER_DISPATCH)
+ #endif
+ 
+ #include <asm/thread_info.h>
+diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
+index 7f0827705c9a..90deb41c8a34 100644
+--- a/include/uapi/linux/prctl.h
++++ b/include/uapi/linux/prctl.h
+@@ -247,4 +247,9 @@ struct prctl_mm_map {
+ #define PR_SET_IO_FLUSHER		57
+ #define PR_GET_IO_FLUSHER		58
+ 
++/* Dispatch syscalls to a userspace handler */
++#define PR_SET_SYSCALL_USER_DISPATCH	59
++# define PR_SYS_DISPATCH_OFF		0
++# define PR_SYS_DISPATCH_ON		1
++
+ #endif /* _LINUX_PRCTL_H */
+diff --git a/kernel/entry/Makefile b/kernel/entry/Makefile
+index 34c8a3f1c735..095c775e001e 100644
+--- a/kernel/entry/Makefile
++++ b/kernel/entry/Makefile
+@@ -9,5 +9,5 @@ KCOV_INSTRUMENT := n
+ CFLAGS_REMOVE_common.o	 = -fstack-protector -fstack-protector-strong
+ CFLAGS_common.o		+= -fno-stack-protector
+ 
+-obj-$(CONFIG_GENERIC_ENTRY) 		+= common.o
++obj-$(CONFIG_GENERIC_ENTRY) 		+= common.o syscall_user_dispatch.o
+ obj-$(CONFIG_KVM_XFER_TO_GUEST_WORK)	+= kvm.o
+diff --git a/kernel/entry/common.h b/kernel/entry/common.h
+new file mode 100644
+index 000000000000..cd0c4e5f143e
+--- /dev/null
++++ b/kernel/entry/common.h
+@@ -0,0 +1,16 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _COMMON_H
++#define _COMMON_H
++
++bool do_syscall_user_dispatch(struct pt_regs *regs);
++
++static inline bool on_syscall_dispatch(void)
++{
++	if (unlikely(current->syscall_dispatch.on_dispatch)) {
++		current->syscall_dispatch.on_dispatch = false;
++		return true;
++	}
++	return false;
++}
++
++#endif
+diff --git a/kernel/entry/syscall_user_dispatch.c b/kernel/entry/syscall_user_dispatch.c
+new file mode 100644
+index 000000000000..131c38a0b628
+--- /dev/null
++++ b/kernel/entry/syscall_user_dispatch.c
+@@ -0,0 +1,102 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (C) 2020 Collabora Ltd.
++ */
++#include <linux/sched.h>
++#include <linux/prctl.h>
++#include <linux/syscall_user_dispatch.h>
++#include <linux/uaccess.h>
++#include <linux/signal.h>
++#include <linux/elf.h>
++
++#include <asm/syscall.h>
++
++#include <linux/sched/signal.h>
++#include <linux/sched/task_stack.h>
++
++static void trigger_sigsys(struct pt_regs *regs)
++{
++	struct kernel_siginfo info;
++
++	clear_siginfo(&info);
++	info.si_signo = SIGSYS;
++	info.si_code = SYS_USER_DISPATCH;
++	info.si_call_addr = (void __user *)KSTK_EIP(current);
++	info.si_errno = 0;
++	info.si_arch = syscall_get_arch(current);
++	info.si_syscall = syscall_get_nr(current, regs);
++
++	force_sig_info(&info);
++}
++
++bool do_syscall_user_dispatch(struct pt_regs *regs)
++{
++	struct syscall_user_dispatch *sd = &current->syscall_dispatch;
++	char state;
++
++	if (likely(instruction_pointer(regs) - sd->offset < sd->len))
++		return false;
++
++	if (unlikely(arch_syscall_is_vdso_sigreturn(regs)))
++		return false;
++
++	if (likely(sd->selector)) {
++		/*
++		 * access_ok() is performed once, at prctl time, when
++		 * the selector is loaded by userspace.
++		 */
++		if (unlikely(__get_user(state, sd->selector)))
++			do_exit(SIGSEGV);
++
++		if (likely(state == PR_SYS_DISPATCH_OFF))
++			return false;
++
++		if (state != PR_SYS_DISPATCH_ON)
++			do_exit(SIGSYS);
++	}
++
++	sd->on_dispatch = true;
++	syscall_rollback(current, regs);
++	trigger_sigsys(regs);
++
++	return true;
++}
++
++int set_syscall_user_dispatch(unsigned long mode, unsigned long offset,
++			      unsigned long len, char __user *selector)
++{
++	switch (mode) {
++	case PR_SYS_DISPATCH_OFF:
++		if (offset || len || selector)
++			return -EINVAL;
++		break;
++	case PR_SYS_DISPATCH_ON:
++		/*
++		 * Validate the direct dispatcher region just for basic
++		 * sanity against overflow and a 0-sized dispatcher
++		 * region.  If the user is able to submit a syscall from
++		 * an address, that address is obviously valid.
++		 */
++		if (offset && offset + len <= offset)
++			return -EINVAL;
++
++		if (selector && !access_ok(selector, sizeof(*selector)))
++			return -EFAULT;
++
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	current->syscall_dispatch.selector = selector;
++	current->syscall_dispatch.offset = offset;
++	current->syscall_dispatch.len = len;
++	current->syscall_dispatch.on_dispatch = false;
++
++	if (mode == PR_SYS_DISPATCH_ON)
++		set_syscall_work(SYSCALL_USER_DISPATCH);
++	else
++		clear_syscall_work(SYSCALL_USER_DISPATCH);
++
 +	return 0;
- }
++}
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 9a01b89ed05c..99c76dab31c1 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -906,6 +906,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
+ 	clear_user_return_notifier(tsk);
+ 	clear_tsk_need_resched(tsk);
+ 	set_task_stack_end_magic(tsk);
++	clear_syscall_work_syscall_user_dispatch(tsk);
  
- /*
-@@ -2517,11 +2508,9 @@ static int change_mount_ro_state(struct mount *mnt, unsigned int mnt_flags)
-  */
- static void set_mount_attributes(struct mount *mnt, unsigned int mnt_flags)
- {
--	lock_mount_hash();
- 	mnt_flags |= mnt->mnt.mnt_flags & ~MNT_USER_SETTABLE_MASK;
- 	mnt->mnt.mnt_flags = mnt_flags;
- 	touch_mnt_namespace(mnt->mnt_ns);
--	unlock_mount_hash();
- }
+ #ifdef CONFIG_STACKPROTECTOR
+ 	tsk->stack_canary = get_random_canary();
+diff --git a/kernel/sys.c b/kernel/sys.c
+index a730c03ee607..51f00fe20e4d 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -42,6 +42,7 @@
+ #include <linux/syscore_ops.h>
+ #include <linux/version.h>
+ #include <linux/ctype.h>
++#include <linux/syscall_user_dispatch.h>
  
- static void mnt_warn_timestamp_expiry(struct path *mountpoint, struct vfsmount *mnt)
-@@ -2567,9 +2556,11 @@ static int do_reconfigure_mnt(struct path *path, unsigned int mnt_flags)
- 		return -EPERM;
+ #include <linux/compat.h>
+ #include <linux/syscalls.h>
+@@ -2530,6 +2531,10 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
  
- 	down_write(&sb->s_umount);
-+	lock_mount_hash();
- 	ret = change_mount_ro_state(mnt, mnt_flags);
- 	if (ret == 0)
- 		set_mount_attributes(mnt, mnt_flags);
-+	unlock_mount_hash();
- 	up_write(&sb->s_umount);
- 
- 	mnt_warn_timestamp_expiry(path, &mnt->mnt);
-@@ -2610,8 +2601,11 @@ static int do_remount(struct path *path, int ms_flags, int sb_flags,
- 		err = -EPERM;
- 		if (ns_capable(sb->s_user_ns, CAP_SYS_ADMIN)) {
- 			err = reconfigure_super(fc);
--			if (!err)
-+			if (!err) {
-+				lock_mount_hash();
- 				set_mount_attributes(mnt, mnt_flags);
-+				unlock_mount_hash();
-+			}
- 		}
- 		up_write(&sb->s_umount);
- 	}
+ 		error = (current->flags & PR_IO_FLUSHER) == PR_IO_FLUSHER;
+ 		break;
++	case PR_SET_SYSCALL_USER_DISPATCH:
++		error = set_syscall_user_dispatch(arg2, arg3, arg4,
++						  (char __user *) arg5);
++		break;
+ 	default:
+ 		error = -EINVAL;
+ 		break;
 -- 
 2.29.2
 
