@@ -5,25 +5,25 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E05DBC83022
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:14:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3E212C83030
+	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:14:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B23772224A
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:14:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 11D1222242
+	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:14:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2390499AbgK1WOX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 28 Nov 2020 17:14:23 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:55602 "EHLO
+        id S1727355AbgK1WOh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 28 Nov 2020 17:14:37 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:55612 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1731427AbgK1WOV (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 28 Nov 2020 17:14:21 -0500
+        with ESMTP id S2390586AbgK1WOe (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 28 Nov 2020 17:14:34 -0500
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kj83K-0002aM-8p; Sat, 28 Nov 2020 21:46:46 +0000
+        id 1kj83D-0002aM-N8; Sat, 28 Nov 2020 21:46:39 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -60,9 +60,9 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v3 27/38] would_dump: handle idmapped mounts
-Date:   Sat, 28 Nov 2020 22:35:16 +0100
-Message-Id: <20201128213527.2669807-28-christian.brauner@ubuntu.com>
+Subject: [PATCH v3 24/38] notify: handle idmapped mounts
+Date:   Sat, 28 Nov 2020 22:35:13 +0100
+Message-Id: <20201128213527.2669807-25-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
 References: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
@@ -72,11 +72,9 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-When determining whether or not to create a coredump the vfs will verify that
-the caller is privileged over the inode. Make the would_dump() helper handle
-idmapped mounts by passing down the mount's user namespace of the exec file. If
-the initial user namespace is passed nothing changes so non-idmapped mounts will
-see identical behavior as before.
+Enable notify implementations to handle idmapped mounts by passing down the
+mount's user namespace. If the initial user namespace is passed nothing changes
+so non-idmapped mounts will see identical behavior as before.
 
 Cc: Christoph Hellwig <hch@lst.de>
 Cc: David Howells <dhowells@redhat.com>
@@ -85,36 +83,49 @@ Cc: linux-fsdevel@vger.kernel.org
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
-unchanged
+patch introduced
 
 /* v3 */
 unchanged
 ---
- fs/exec.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ fs/notify/fanotify/fanotify_user.c | 2 +-
+ fs/notify/inotify/inotify_user.c   | 3 ++-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/fs/exec.c b/fs/exec.c
-index b499a1a03934..10c06fdf78a7 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -1391,14 +1391,15 @@ EXPORT_SYMBOL(begin_new_exec);
- void would_dump(struct linux_binprm *bprm, struct file *file)
- {
- 	struct inode *inode = file_inode(file);
--	if (inode_permission(&init_user_ns, inode, MAY_READ) < 0) {
-+	struct user_namespace *ns = mnt_user_ns(file->f_path.mnt);
-+	if (inode_permission(ns, inode, MAY_READ) < 0) {
- 		struct user_namespace *old, *user_ns;
- 		bprm->interp_flags |= BINPRM_FLAGS_ENFORCE_NONDUMP;
+diff --git a/fs/notify/fanotify/fanotify_user.c b/fs/notify/fanotify/fanotify_user.c
+index de4d01bb1d8d..e3b2cb6a9d81 100644
+--- a/fs/notify/fanotify/fanotify_user.c
++++ b/fs/notify/fanotify/fanotify_user.c
+@@ -702,7 +702,7 @@ static int fanotify_find_path(int dfd, const char __user *filename,
+ 	}
  
- 		/* Ensure mm->user_ns contains the executable */
- 		user_ns = old = bprm->mm->user_ns;
- 		while ((user_ns != &init_user_ns) &&
--		       !privileged_wrt_inode_uidgid(user_ns, &init_user_ns, inode))
-+		       !privileged_wrt_inode_uidgid(user_ns, ns, inode))
- 			user_ns = user_ns->parent;
+ 	/* you can only watch an inode if you have read permissions on it */
+-	ret = inode_permission(&init_user_ns, path->dentry->d_inode, MAY_READ);
++	ret = inode_permission(mnt_user_ns(path->mnt), path->dentry->d_inode, MAY_READ);
+ 	if (ret) {
+ 		path_put(path);
+ 		goto out;
+diff --git a/fs/notify/inotify/inotify_user.c b/fs/notify/inotify/inotify_user.c
+index e995fd4e4e53..f39f5b81f2b3 100644
+--- a/fs/notify/inotify/inotify_user.c
++++ b/fs/notify/inotify/inotify_user.c
+@@ -31,6 +31,7 @@
+ #include <linux/wait.h>
+ #include <linux/memcontrol.h>
+ #include <linux/security.h>
++#include <linux/mount.h>
  
- 		if (old != user_ns) {
+ #include "inotify.h"
+ #include "../fdinfo.h"
+@@ -343,7 +344,7 @@ static int inotify_find_inode(const char __user *dirname, struct path *path,
+ 	if (error)
+ 		return error;
+ 	/* you can only watch an inode if you have read permissions on it */
+-	error = inode_permission(&init_user_ns, path->dentry->d_inode, MAY_READ);
++	error = inode_permission(mnt_user_ns(path->mnt), path->dentry->d_inode, MAY_READ);
+ 	if (error) {
+ 		path_put(path);
+ 		return error;
 -- 
 2.29.2
 
