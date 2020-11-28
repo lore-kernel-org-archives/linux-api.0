@@ -2,1489 +2,1032 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A0AAEC83017
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:24:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 28AA3C8302E
+	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:24:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8898422403
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:24:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 00310222C2
+	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:24:40 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=kernel.org header.i=@kernel.org header.b="yZdliu4g"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729953AbgK1VtP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 28 Nov 2020 16:49:15 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:53810 "EHLO
-        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2387848AbgK1VrD (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 28 Nov 2020 16:47:03 -0500
-Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
-        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.86_2)
-        (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kj82e-0002aM-Cd; Sat, 28 Nov 2020 21:46:04 +0000
-From:   Christian Brauner <christian.brauner@ubuntu.com>
-To:     Alexander Viro <viro@zeniv.linux.org.uk>,
-        Christoph Hellwig <hch@infradead.org>,
-        linux-fsdevel@vger.kernel.org
-Cc:     John Johansen <john.johansen@canonical.com>,
-        James Morris <jmorris@namei.org>,
-        Mimi Zohar <zohar@linux.ibm.com>,
-        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
-        Stephen Smalley <stephen.smalley.work@gmail.com>,
-        Casey Schaufler <casey@schaufler-ca.com>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Andreas Dilger <adilger.kernel@dilger.ca>,
-        OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>,
-        Geoffrey Thomas <geofft@ldpreload.com>,
-        Mrunal Patel <mpatel@redhat.com>,
-        Josh Triplett <josh@joshtriplett.org>,
+        id S2387939AbgK1VtO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 28 Nov 2020 16:49:14 -0500
+Received: from mail.kernel.org ([198.145.29.99]:50318 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1732513AbgK1TB4 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sat, 28 Nov 2020 14:01:56 -0500
+Received: from kernel.org (unknown [77.125.7.142])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 0F478222EB;
+        Sat, 28 Nov 2020 10:16:08 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1606558581;
+        bh=SXZ50O0tZ9SfgxO8cbDzArUsagGX8/+Yhh5eFFtIV3g=;
+        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+        b=yZdliu4g5VM7aPv77CfA4Drg0lJGOysCszVmHduFA3ju2GDAiX1KFB119cnjPZb6B
+         ynWOzkQsPzH2rVyUnuaqIq+iA1CduHiSQyl0AQKoH1yJV6NYTIldrCTHzas/4lMJMD
+         6j7DGWWd/IYAF/1hu4n5YcAlfspmE3DEfZxmv6+A=
+Date:   Sat, 28 Nov 2020 12:16:04 +0200
+From:   Mike Rapoport <rppt@kernel.org>
+To:     "Catangiu, Adrian Costin" <acatan@amazon.com>
+Cc:     Dmitry Safonov <0x7f454c46@gmail.com>,
+        Alexander Graf <graf@amazon.de>,
+        Christian Borntraeger <borntraeger@de.ibm.com>,
+        "Jason A. Donenfeld" <Jason@zx2c4.com>,
+        Jann Horn <jannh@google.com>, Willy Tarreau <w@1wt.eu>,
+        "MacCarthaigh, Colm" <colmmacc@amazon.com>,
         Andy Lutomirski <luto@kernel.org>,
-        Theodore Tso <tytso@mit.edu>, Alban Crequy <alban@kinvolk.io>,
-        Tycho Andersen <tycho@tycho.ws>,
-        David Howells <dhowells@redhat.com>,
-        James Bottomley <James.Bottomley@hansenpartnership.com>,
-        Seth Forshee <seth.forshee@canonical.com>,
-        =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
-        Aleksa Sarai <cyphar@cyphar.com>,
-        Lennart Poettering <lennart@poettering.net>,
-        "Eric W. Biederman" <ebiederm@xmission.com>, smbarber@chromium.org,
-        Phil Estes <estesp@gmail.com>, Serge Hallyn <serge@hallyn.com>,
-        Kees Cook <keescook@chromium.org>,
-        Todd Kjos <tkjos@google.com>, Paul Moore <paul@paul-moore.com>,
+        "Theodore Y. Ts'o" <tytso@mit.edu>,
+        Eric Biggers <ebiggers@kernel.org>,
+        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
+        kernel list <linux-kernel@vger.kernel.org>,
+        "Woodhouse, David" <dwmw@amazon.co.uk>,
+        "bonzini@gnu.org" <bonzini@gnu.org>,
+        "Singh, Balbir" <sblbir@amazon.com>,
+        "Weiss, Radu" <raduweis@amazon.com>,
+        "oridgar@gmail.com" <oridgar@gmail.com>,
+        "ghammer@redhat.com" <ghammer@redhat.com>,
         Jonathan Corbet <corbet@lwn.net>,
-        containers@lists.linux-foundation.org, fstests@vger.kernel.org,
-        linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-ext4@vger.kernel.org, linux-integrity@vger.kernel.org,
-        selinux@vger.kernel.org,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v3 12/38] acl: handle idmapped mounts
-Date:   Sat, 28 Nov 2020 22:35:01 +0100
-Message-Id: <20201128213527.2669807-13-christian.brauner@ubuntu.com>
-X-Mailer: git-send-email 2.29.2
-In-Reply-To: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
-References: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        "Michael S. Tsirkin" <mst@redhat.com>,
+        Qemu Developers <qemu-devel@nongnu.org>,
+        KVM list <kvm@vger.kernel.org>,
+        Michal Hocko <mhocko@kernel.org>,
+        "Rafael J. Wysocki" <rafael@kernel.org>,
+        Pavel Machek <pavel@ucw.cz>,
+        Linux API <linux-api@vger.kernel.org>,
+        "mpe@ellerman.id.au" <mpe@ellerman.id.au>,
+        linux-s390 <linux-s390@vger.kernel.org>,
+        "areber@redhat.com" <areber@redhat.com>,
+        Pavel Emelyanov <ovzxemul@gmail.com>,
+        Andrey Vagin <avagin@gmail.com>,
+        Pavel Tikhomirov <ptikhomirov@virtuozzo.com>,
+        "gil@azul.com" <gil@azul.com>,
+        "asmehra@redhat.com" <asmehra@redhat.com>,
+        "dgunigun@redhat.com" <dgunigun@redhat.com>,
+        "vijaysun@ca.ibm.com" <vijaysun@ca.ibm.com>,
+        "Eric W. Biederman" <ebiederm@xmission.com>
+Subject: Re: [PATCH v3] drivers/virt: vmgenid: add vm generation id driver
+Message-ID: <20201128101604.GC557259@kernel.org>
+References: <3E05451B-A9CD-4719-99D0-72750A304044@amazon.com>
+ <300d4404-3efe-880e-ef30-692eabbff5f7@de.ibm.com>
+ <da1a1fa7-a1de-d0e6-755b-dd587687765e@amazon.de>
+ <20201119173800.GD8537@kernel.org>
+ <1cdb6fac-0d50-3399-74a6-24c119ebbaa5@amazon.de>
+ <106f56ca-49bc-7cad-480f-4b26656e90ce@gmail.com>
+ <96625ce2-66c6-34b8-ef81-7c17c05b4c7a@amazon.com>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
+In-Reply-To: <96625ce2-66c6-34b8-ef81-7c17c05b4c7a@amazon.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The posix acl permission checking helpers determine whether a caller is
-privileged over an inode according to the acls associated with the inode.
-Add helpers that make it possible to handle acls on idampped mounts.
+Hi Adrian,
 
-The vfs and the filesystems targeted by this first iteration make use of
-posix_acl_fix_xattr_from_user() and posix_acl_fix_xattr_to_user() to
-translate basic posix access and default permissions such as the ACL_USER
-and ACL_GROUP type according to the initial user namespace (or the
-superblock's user namespace) to and from the caller's current user
-namespace. Adapt these two helpers to handle idmapped mounts whereby we
-either shift from or into the mount's user namespace depending on in which
-direction we're translating.
-Similarly, cap_convert_nscap() is used by the vfs to translate user
-namespace and non-user namespace aware filesystem capabilities from the
-superblock's user namespace to the caller's user namespace. Enable it to
-handle idmapped mounts by accounting for the mount's user namespace.
+Usually each version of a patch is a separate e-mail thread
 
-In addition the fileystems targeted in the first iteration of this patch
-series make use of the posix_acl_chmod() and, posix_acl_update_mode()
-helpers. Both helpers perform permission checks on the target inode. Let
-them handle idmapped mounts. These two helpers are called when posix acls
-are set by the respective filesystems to handle this case we extend the
-->set() method to take an additional user namespace argument to pass the
-mount's user namespace down.
+On Fri, Nov 27, 2020 at 08:26:02PM +0200, Catangiu, Adrian Costin wrote:
+> - Background
+> 
+> The VM Generation ID is a feature defined by Microsoft (paper:
+> http://go.microsoft.com/fwlink/?LinkId=260709) and supported by
+> multiple hypervisor vendors.
+> 
+> The feature is required in virtualized environments by apps that work
+> with local copies/caches of world-unique data such as random values,
+> uuids, monotonically increasing counters, etc.
+> Such apps can be negatively affected by VM snapshotting when the VM
+> is either cloned or returned to an earlier point in time.
+> 
+> The VM Generation ID is a simple concept meant to alleviate the issue
+> by providing a unique ID that changes each time the VM is restored
+> from a snapshot. The hw provided UUID value can be used to
+> differentiate between VMs or different generations of the same VM.
+> 
+> - Problem
+> 
+> The VM Generation ID is exposed through an ACPI device by multiple
+> hypervisor vendors but neither the vendors or upstream Linux have no
+> default driver for it leaving users to fend for themselves.
+> 
+> Furthermore, simply finding out about a VM generation change is only
+> the starting point of a process to renew internal states of possibly
+> multiple applications across the system. This process could benefit
+> from a driver that provides an interface through which orchestration
+> can be easily done.
+> 
+> - Solution
+> 
+> This patch is a driver that exposes a monotonic incremental Virtual
+> Machine Generation u32 counter via a char-dev FS interface. The FS
+> interface provides sync and async VmGen counter updates notifications.
+> It also provides VmGen counter retrieval and confirmation mechanisms.
+> 
+> The generation counter and the interface through which it is exposed
+> are available even when there is no acpi device present.
+> 
+> When the device is present, the hw provided UUID is not exposed to
+> userspace, it is internally used by the driver to keep accounting for
+> the exposed VmGen counter. The counter starts from zero when the
+> driver is initialized and monotonically increments every time the hw
+> UUID changes (the VM generation changes).
+> On each hw UUID change, the new hypervisor-provided UUID is also fed
+> to the kernel RNG.
+> 
+> If there is no acpi vmgenid device present, the generation changes are
+> not driven by hw vmgenid events but can be driven by software through
+> a dedicated driver ioctl.
+> 
+> This patch builds on top of Or Idgar <oridgar@gmail.com>'s proposal
+> https://lkml.org/lkml/2018/3/1/498
+> 
+> - Future improvements
+> 
+> Ideally we would want the driver to register itself based on devices'
+> _CID and not _HID, but unfortunately I couldn't find a way to do that.
+> The problem is that ACPI device matching is done by
+> '__acpi_match_device()' which exclusively looks at
+> 'acpi_hardware_id *hwid'.
+> 
+> There is a path for platform devices to match on _CID when _HID is
+> 'PRP0001' - but this is not the case for the Qemu vmgenid device.
+> 
+> Guidance and help here would be greatly appreciated.
+> 
+> Signed-off-by: Adrian Catangiu <acatan@amazon.com>
+> 
+> ---
+ 
+Please put the history in the descending order next time
 
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: David Howells <dhowells@redhat.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Cc: linux-fsdevel@vger.kernel.org
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
----
-/* v2 */
-- Christoph Hellwig <hch@lst.de>:
-  - Don't pollute the vfs with additional helpers simply extend the existing
-    helpers with an additional argument and switch all callers.
+v2 -> v3:
+...
 
-/* v3 */
-unchanged
----
- Documentation/filesystems/locking.rst |  6 +--
- Documentation/filesystems/porting.rst |  2 +
- fs/9p/acl.c                           |  3 +-
- fs/9p/xattr.c                         |  1 +
- fs/afs/xattr.c                        |  2 +
- fs/btrfs/acl.c                        |  2 +-
- fs/btrfs/inode.c                      |  2 +-
- fs/btrfs/xattr.c                      |  2 +
- fs/ceph/acl.c                         |  2 +-
- fs/ceph/inode.c                       |  2 +-
- fs/ceph/xattr.c                       |  1 +
- fs/cifs/xattr.c                       |  1 +
- fs/ecryptfs/inode.c                   |  1 +
- fs/ext2/acl.c                         |  2 +-
- fs/ext2/inode.c                       |  2 +-
- fs/ext2/xattr_security.c              |  1 +
- fs/ext2/xattr_trusted.c               |  1 +
- fs/ext2/xattr_user.c                  |  1 +
- fs/ext4/acl.c                         |  2 +-
- fs/ext4/inode.c                       |  2 +-
- fs/ext4/xattr_hurd.c                  |  1 +
- fs/ext4/xattr_security.c              |  1 +
- fs/ext4/xattr_trusted.c               |  1 +
- fs/ext4/xattr_user.c                  |  1 +
- fs/f2fs/acl.c                         |  2 +-
- fs/f2fs/file.c                        |  2 +-
- fs/f2fs/xattr.c                       |  2 +
- fs/fuse/xattr.c                       |  2 +
- fs/gfs2/acl.c                         |  2 +-
- fs/gfs2/inode.c                       |  2 +-
- fs/gfs2/xattr.c                       |  1 +
- fs/hfs/attr.c                         |  1 +
- fs/hfsplus/xattr.c                    |  1 +
- fs/hfsplus/xattr_security.c           |  1 +
- fs/hfsplus/xattr_trusted.c            |  1 +
- fs/hfsplus/xattr_user.c               |  1 +
- fs/jffs2/acl.c                        |  2 +-
- fs/jffs2/fs.c                         |  2 +-
- fs/jffs2/security.c                   |  1 +
- fs/jffs2/xattr_trusted.c              |  1 +
- fs/jffs2/xattr_user.c                 |  1 +
- fs/jfs/acl.c                          |  2 +-
- fs/jfs/file.c                         |  2 +-
- fs/jfs/xattr.c                        |  2 +
- fs/kernfs/inode.c                     |  2 +
- fs/nfs/nfs4proc.c                     |  3 ++
- fs/nfsd/nfs2acl.c                     |  4 +-
- fs/nfsd/nfs3acl.c                     |  4 +-
- fs/nfsd/nfs4acl.c                     |  4 +-
- fs/ocfs2/acl.c                        |  2 +-
- fs/ocfs2/xattr.c                      |  3 ++
- fs/orangefs/acl.c                     |  2 +-
- fs/orangefs/inode.c                   |  2 +-
- fs/orangefs/xattr.c                   |  1 +
- fs/overlayfs/super.c                  |  3 ++
- fs/posix_acl.c                        | 54 +++++++++++++++++----------
- fs/reiserfs/xattr_acl.c               |  4 +-
- fs/reiserfs/xattr_security.c          |  3 +-
- fs/reiserfs/xattr_trusted.c           |  3 +-
- fs/reiserfs/xattr_user.c              |  3 +-
- fs/ubifs/xattr.c                      |  1 +
- fs/xattr.c                            | 10 ++---
- fs/xfs/xfs_acl.c                      |  2 +-
- fs/xfs/xfs_iops.c                     |  2 +-
- fs/xfs/xfs_xattr.c                    |  3 +-
- include/linux/capability.h            |  3 +-
- include/linux/posix_acl.h             |  9 +++--
- include/linux/posix_acl_xattr.h       | 12 ++++--
- include/linux/xattr.h                 |  6 +--
- mm/shmem.c                            |  3 +-
- net/socket.c                          |  1 +
- security/commoncap.c                  | 17 ++++++---
- 72 files changed, 159 insertions(+), 80 deletions(-)
+v1 -> v2:
+...
 
-diff --git a/Documentation/filesystems/locking.rst b/Documentation/filesystems/locking.rst
-index c0f2c7586531..e3b33c59b7f6 100644
---- a/Documentation/filesystems/locking.rst
-+++ b/Documentation/filesystems/locking.rst
-@@ -126,9 +126,9 @@ prototypes::
- 	int (*get)(const struct xattr_handler *handler, struct dentry *dentry,
- 		   struct inode *inode, const char *name, void *buffer,
- 		   size_t size);
--	int (*set)(const struct xattr_handler *handler, struct dentry *dentry,
--		   struct inode *inode, const char *name, const void *buffer,
--		   size_t size, int flags);
-+	int (*set)(const struct xattr_handler *handler, struct user_namespace *user_ns,
-+                   struct dentry *dentry, struct inode *inode, const char *name,
-+                   const void *buffer, size_t size, int flags);
- 
- locking rules:
- 	all may block
-diff --git a/Documentation/filesystems/porting.rst b/Documentation/filesystems/porting.rst
-index 867036aa90b8..de1dcec3b5b8 100644
---- a/Documentation/filesystems/porting.rst
-+++ b/Documentation/filesystems/porting.rst
-@@ -717,6 +717,8 @@ be removed.  Switch while you still can; the old one won't stay.
- **mandatory**
- 
- ->setxattr() and xattr_handler.set() get dentry and inode passed separately.
-+The xattr_handler.set() gets passed the user namespace of the mount the inode
-+is seen from so filesystems can idmap the i_uid and i_gid accordingly.
- dentry might be yet to be attached to inode, so do _not_ use its ->d_inode
- in the instances.  Rationale: !@#!@# security_d_instantiate() needs to be
- called before we attach dentry to inode and !@#!@##!@$!$#!@#$!@$!@$ smack
-diff --git a/fs/9p/acl.c b/fs/9p/acl.c
-index d77b28e8d57a..650b14dd3ccd 100644
---- a/fs/9p/acl.c
-+++ b/fs/9p/acl.c
-@@ -239,6 +239,7 @@ static int v9fs_xattr_get_acl(const struct xattr_handler *handler,
- }
- 
- static int v9fs_xattr_set_acl(const struct xattr_handler *handler,
-+			      struct user_namespace *user_ns,
- 			      struct dentry *dentry, struct inode *inode,
- 			      const char *name, const void *value,
- 			      size_t size, int flags)
-@@ -279,7 +280,7 @@ static int v9fs_xattr_set_acl(const struct xattr_handler *handler,
- 			struct iattr iattr = { 0 };
- 			struct posix_acl *old_acl = acl;
- 
--			retval = posix_acl_update_mode(inode, &iattr.ia_mode, &acl);
-+			retval = posix_acl_update_mode(user_ns, inode, &iattr.ia_mode, &acl);
- 			if (retval)
- 				goto err_out;
- 			if (!acl) {
-diff --git a/fs/9p/xattr.c b/fs/9p/xattr.c
-index ac8ff8ca4c11..13d8cb1712d6 100644
---- a/fs/9p/xattr.c
-+++ b/fs/9p/xattr.c
-@@ -147,6 +147,7 @@ static int v9fs_xattr_handler_get(const struct xattr_handler *handler,
- }
- 
- static int v9fs_xattr_handler_set(const struct xattr_handler *handler,
-+				  struct user_namespace *user_ns,
- 				  struct dentry *dentry, struct inode *inode,
- 				  const char *name, const void *value,
- 				  size_t size, int flags)
-diff --git a/fs/afs/xattr.c b/fs/afs/xattr.c
-index 95c573dcda11..2ec1c6551ab6 100644
---- a/fs/afs/xattr.c
-+++ b/fs/afs/xattr.c
-@@ -120,6 +120,7 @@ static const struct afs_operation_ops afs_store_acl_operation = {
-  * Set a file's AFS3 ACL.
-  */
- static int afs_xattr_set_acl(const struct xattr_handler *handler,
-+			     struct user_namespace *user_ns,
-                              struct dentry *dentry,
-                              struct inode *inode, const char *name,
-                              const void *buffer, size_t size, int flags)
-@@ -248,6 +249,7 @@ static const struct afs_operation_ops yfs_store_opaque_acl2_operation = {
-  * Set a file's YFS ACL.
-  */
- static int afs_xattr_set_yfs(const struct xattr_handler *handler,
-+			     struct user_namespace *user_ns,
-                              struct dentry *dentry,
-                              struct inode *inode, const char *name,
-                              const void *buffer, size_t size, int flags)
-diff --git a/fs/btrfs/acl.c b/fs/btrfs/acl.c
-index a0af1b952c4d..b5a683e895c6 100644
---- a/fs/btrfs/acl.c
-+++ b/fs/btrfs/acl.c
-@@ -113,7 +113,7 @@ int btrfs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
- 	umode_t old_mode = inode->i_mode;
- 
- 	if (type == ACL_TYPE_ACCESS && acl) {
--		ret = posix_acl_update_mode(inode, &inode->i_mode, &acl);
-+		ret = posix_acl_update_mode(&init_user_ns, inode, &inode->i_mode, &acl);
- 		if (ret)
- 			return ret;
- 	}
-diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
-index e65c54b7e828..e6f4aed0d311 100644
---- a/fs/btrfs/inode.c
-+++ b/fs/btrfs/inode.c
-@@ -4891,7 +4891,7 @@ static int btrfs_setattr(struct dentry *dentry, struct iattr *attr)
- 		err = btrfs_dirty_inode(inode);
- 
- 		if (!err && attr->ia_valid & ATTR_MODE)
--			err = posix_acl_chmod(inode, inode->i_mode);
-+			err = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
- 	}
- 
- 	return err;
-diff --git a/fs/btrfs/xattr.c b/fs/btrfs/xattr.c
-index 95d9aebff2c4..a6adb9decdfc 100644
---- a/fs/btrfs/xattr.c
-+++ b/fs/btrfs/xattr.c
-@@ -360,6 +360,7 @@ static int btrfs_xattr_handler_get(const struct xattr_handler *handler,
- }
- 
- static int btrfs_xattr_handler_set(const struct xattr_handler *handler,
-+				   struct user_namespace *user_ns,
- 				   struct dentry *unused, struct inode *inode,
- 				   const char *name, const void *buffer,
- 				   size_t size, int flags)
-@@ -369,6 +370,7 @@ static int btrfs_xattr_handler_set(const struct xattr_handler *handler,
- }
- 
- static int btrfs_xattr_handler_set_prop(const struct xattr_handler *handler,
-+					struct user_namespace *user_ns,
- 					struct dentry *unused, struct inode *inode,
- 					const char *name, const void *value,
- 					size_t size, int flags)
-diff --git a/fs/ceph/acl.c b/fs/ceph/acl.c
-index e0465741c591..bceab4c01585 100644
---- a/fs/ceph/acl.c
-+++ b/fs/ceph/acl.c
-@@ -100,7 +100,7 @@ int ceph_set_acl(struct inode *inode, struct posix_acl *acl, int type)
- 	case ACL_TYPE_ACCESS:
- 		name = XATTR_NAME_POSIX_ACL_ACCESS;
- 		if (acl) {
--			ret = posix_acl_update_mode(inode, &new_mode, &acl);
-+			ret = posix_acl_update_mode(&init_user_ns, inode, &new_mode, &acl);
- 			if (ret)
- 				goto out;
- 		}
-diff --git a/fs/ceph/inode.c b/fs/ceph/inode.c
-index 06645c2efa6f..19ec845ba5ec 100644
---- a/fs/ceph/inode.c
-+++ b/fs/ceph/inode.c
-@@ -2266,7 +2266,7 @@ int ceph_setattr(struct dentry *dentry, struct iattr *attr)
- 	err = __ceph_setattr(inode, attr);
- 
- 	if (err >= 0 && (attr->ia_valid & ATTR_MODE))
--		err = posix_acl_chmod(inode, attr->ia_mode);
-+		err = posix_acl_chmod(&init_user_ns, inode, attr->ia_mode);
- 
- 	return err;
- }
-diff --git a/fs/ceph/xattr.c b/fs/ceph/xattr.c
-index 197cb1234341..a01e0563049a 100644
---- a/fs/ceph/xattr.c
-+++ b/fs/ceph/xattr.c
-@@ -1163,6 +1163,7 @@ static int ceph_get_xattr_handler(const struct xattr_handler *handler,
- }
- 
- static int ceph_set_xattr_handler(const struct xattr_handler *handler,
-+				  struct user_namespace *user_ns,
- 				  struct dentry *unused, struct inode *inode,
- 				  const char *name, const void *value,
- 				  size_t size, int flags)
-diff --git a/fs/cifs/xattr.c b/fs/cifs/xattr.c
-index b8299173ea7e..33935bd038aa 100644
---- a/fs/cifs/xattr.c
-+++ b/fs/cifs/xattr.c
-@@ -99,6 +99,7 @@ static int cifs_creation_time_set(unsigned int xid, struct cifs_tcon *pTcon,
- }
- 
- static int cifs_xattr_set(const struct xattr_handler *handler,
-+			  struct user_namespace *user_ns,
- 			  struct dentry *dentry, struct inode *inode,
- 			  const char *name, const void *value,
- 			  size_t size, int flags)
-diff --git a/fs/ecryptfs/inode.c b/fs/ecryptfs/inode.c
-index 2454aef02a68..28cf830f0a4d 100644
---- a/fs/ecryptfs/inode.c
-+++ b/fs/ecryptfs/inode.c
-@@ -1131,6 +1131,7 @@ static int ecryptfs_xattr_get(const struct xattr_handler *handler,
- }
- 
- static int ecryptfs_xattr_set(const struct xattr_handler *handler,
-+			      struct user_namespace *user_ns,
- 			      struct dentry *dentry, struct inode *inode,
- 			      const char *name, const void *value, size_t size,
- 			      int flags)
-diff --git a/fs/ext2/acl.c b/fs/ext2/acl.c
-index cf4c77f8dd08..826987b23ccb 100644
---- a/fs/ext2/acl.c
-+++ b/fs/ext2/acl.c
-@@ -223,7 +223,7 @@ ext2_set_acl(struct inode *inode, struct posix_acl *acl, int type)
- 	umode_t mode = inode->i_mode;
- 
- 	if (type == ACL_TYPE_ACCESS && acl) {
--		error = posix_acl_update_mode(inode, &mode, &acl);
-+		error = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
- 		if (error)
- 			return error;
- 		update_mode = 1;
-diff --git a/fs/ext2/inode.c b/fs/ext2/inode.c
-index 8eccb67d04b2..5ff1e5e3c0fe 100644
---- a/fs/ext2/inode.c
-+++ b/fs/ext2/inode.c
-@@ -1690,7 +1690,7 @@ int ext2_setattr(struct dentry *dentry, struct iattr *iattr)
- 	}
- 	setattr_copy(&init_user_ns, inode, iattr);
- 	if (iattr->ia_valid & ATTR_MODE)
--		error = posix_acl_chmod(inode, inode->i_mode);
-+		error = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
- 	mark_inode_dirty(inode);
- 
- 	return error;
-diff --git a/fs/ext2/xattr_security.c b/fs/ext2/xattr_security.c
-index 9a682e440acb..f536f656b1dd 100644
---- a/fs/ext2/xattr_security.c
-+++ b/fs/ext2/xattr_security.c
-@@ -19,6 +19,7 @@ ext2_xattr_security_get(const struct xattr_handler *handler,
- 
- static int
- ext2_xattr_security_set(const struct xattr_handler *handler,
-+			struct user_namespace *user_ns,
- 			struct dentry *unused, struct inode *inode,
- 			const char *name, const void *value,
- 			size_t size, int flags)
-diff --git a/fs/ext2/xattr_trusted.c b/fs/ext2/xattr_trusted.c
-index 49add1107850..2a20108a8253 100644
---- a/fs/ext2/xattr_trusted.c
-+++ b/fs/ext2/xattr_trusted.c
-@@ -26,6 +26,7 @@ ext2_xattr_trusted_get(const struct xattr_handler *handler,
- 
- static int
- ext2_xattr_trusted_set(const struct xattr_handler *handler,
-+		       struct user_namespace *user_ns,
- 		       struct dentry *unused, struct inode *inode,
- 		       const char *name, const void *value,
- 		       size_t size, int flags)
-diff --git a/fs/ext2/xattr_user.c b/fs/ext2/xattr_user.c
-index c243a3b4d69d..e710f491663c 100644
---- a/fs/ext2/xattr_user.c
-+++ b/fs/ext2/xattr_user.c
-@@ -30,6 +30,7 @@ ext2_xattr_user_get(const struct xattr_handler *handler,
- 
- static int
- ext2_xattr_user_set(const struct xattr_handler *handler,
-+		    struct user_namespace *user_ns,
- 		    struct dentry *unused, struct inode *inode,
- 		    const char *name, const void *value,
- 		    size_t size, int flags)
-diff --git a/fs/ext4/acl.c b/fs/ext4/acl.c
-index 68aaed48315f..4aad060010d8 100644
---- a/fs/ext4/acl.c
-+++ b/fs/ext4/acl.c
-@@ -245,7 +245,7 @@ ext4_set_acl(struct inode *inode, struct posix_acl *acl, int type)
- 	ext4_fc_start_update(inode);
- 
- 	if ((type == ACL_TYPE_ACCESS) && acl) {
--		error = posix_acl_update_mode(inode, &mode, &acl);
-+		error = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
- 		if (error)
- 			goto out_stop;
- 		if (mode != inode->i_mode)
-diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index 96e33198066f..f0487795afd1 100644
---- a/fs/ext4/inode.c
-+++ b/fs/ext4/inode.c
-@@ -5511,7 +5511,7 @@ int ext4_setattr(struct dentry *dentry, struct iattr *attr)
- 		ext4_orphan_del(NULL, inode);
- 
- 	if (!error && (ia_valid & ATTR_MODE))
--		rc = posix_acl_chmod(inode, inode->i_mode);
-+		rc = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
- 
- err_out:
- 	if  (error)
-diff --git a/fs/ext4/xattr_hurd.c b/fs/ext4/xattr_hurd.c
-index 8cfa74a56361..74925eace7dc 100644
---- a/fs/ext4/xattr_hurd.c
-+++ b/fs/ext4/xattr_hurd.c
-@@ -32,6 +32,7 @@ ext4_xattr_hurd_get(const struct xattr_handler *handler,
- 
- static int
- ext4_xattr_hurd_set(const struct xattr_handler *handler,
-+		    struct user_namespace *user_ns,
- 		    struct dentry *unused, struct inode *inode,
- 		    const char *name, const void *value,
- 		    size_t size, int flags)
-diff --git a/fs/ext4/xattr_security.c b/fs/ext4/xattr_security.c
-index 197a9d8a15ef..cf6c772200b9 100644
---- a/fs/ext4/xattr_security.c
-+++ b/fs/ext4/xattr_security.c
-@@ -23,6 +23,7 @@ ext4_xattr_security_get(const struct xattr_handler *handler,
- 
- static int
- ext4_xattr_security_set(const struct xattr_handler *handler,
-+			struct user_namespace *user_ns,
- 			struct dentry *unused, struct inode *inode,
- 			const char *name, const void *value,
- 			size_t size, int flags)
-diff --git a/fs/ext4/xattr_trusted.c b/fs/ext4/xattr_trusted.c
-index e9389e5d75c3..b62112b9cb3b 100644
---- a/fs/ext4/xattr_trusted.c
-+++ b/fs/ext4/xattr_trusted.c
-@@ -30,6 +30,7 @@ ext4_xattr_trusted_get(const struct xattr_handler *handler,
- 
- static int
- ext4_xattr_trusted_set(const struct xattr_handler *handler,
-+		       struct user_namespace *user_ns,
- 		       struct dentry *unused, struct inode *inode,
- 		       const char *name, const void *value,
- 		       size_t size, int flags)
-diff --git a/fs/ext4/xattr_user.c b/fs/ext4/xattr_user.c
-index d4546184b34b..6cd01df6e8a5 100644
---- a/fs/ext4/xattr_user.c
-+++ b/fs/ext4/xattr_user.c
-@@ -31,6 +31,7 @@ ext4_xattr_user_get(const struct xattr_handler *handler,
- 
- static int
- ext4_xattr_user_set(const struct xattr_handler *handler,
-+		    struct user_namespace *user_ns,
- 		    struct dentry *unused, struct inode *inode,
- 		    const char *name, const void *value,
- 		    size_t size, int flags)
-diff --git a/fs/f2fs/acl.c b/fs/f2fs/acl.c
-index 306413589827..50735e8a354e 100644
---- a/fs/f2fs/acl.c
-+++ b/fs/f2fs/acl.c
-@@ -213,7 +213,7 @@ static int __f2fs_set_acl(struct inode *inode, int type,
- 	case ACL_TYPE_ACCESS:
- 		name_index = F2FS_XATTR_INDEX_POSIX_ACL_ACCESS;
- 		if (acl && !ipage) {
--			error = posix_acl_update_mode(inode, &mode, &acl);
-+			error = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
- 			if (error)
- 				return error;
- 			set_acl_inode(inode, mode);
-diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index bdb5534835ab..3633a558ddcc 100644
---- a/fs/f2fs/file.c
-+++ b/fs/f2fs/file.c
-@@ -944,7 +944,7 @@ int f2fs_setattr(struct dentry *dentry, struct iattr *attr)
- 	__setattr_copy(&init_user_ns, inode, attr);
- 
- 	if (attr->ia_valid & ATTR_MODE) {
--		err = posix_acl_chmod(inode, f2fs_get_inode_mode(inode));
-+		err = posix_acl_chmod(&init_user_ns, inode, f2fs_get_inode_mode(inode));
- 		if (err || is_inode_flag_set(inode, FI_ACL_MODE)) {
- 			inode->i_mode = F2FS_I(inode)->i_acl_mode;
- 			clear_inode_flag(inode, FI_ACL_MODE);
-diff --git a/fs/f2fs/xattr.c b/fs/f2fs/xattr.c
-index d772bf13a814..2b0b270ca80e 100644
---- a/fs/f2fs/xattr.c
-+++ b/fs/f2fs/xattr.c
-@@ -64,6 +64,7 @@ static int f2fs_xattr_generic_get(const struct xattr_handler *handler,
- }
- 
- static int f2fs_xattr_generic_set(const struct xattr_handler *handler,
-+		struct user_namespace *user_ns,
- 		struct dentry *unused, struct inode *inode,
- 		const char *name, const void *value,
- 		size_t size, int flags)
-@@ -107,6 +108,7 @@ static int f2fs_xattr_advise_get(const struct xattr_handler *handler,
- }
- 
- static int f2fs_xattr_advise_set(const struct xattr_handler *handler,
-+		struct user_namespace *user_ns,
- 		struct dentry *unused, struct inode *inode,
- 		const char *name, const void *value,
- 		size_t size, int flags)
-diff --git a/fs/fuse/xattr.c b/fs/fuse/xattr.c
-index 371bdcbc7233..518590494fdc 100644
---- a/fs/fuse/xattr.c
-+++ b/fs/fuse/xattr.c
-@@ -182,6 +182,7 @@ static int fuse_xattr_get(const struct xattr_handler *handler,
- }
- 
- static int fuse_xattr_set(const struct xattr_handler *handler,
-+			  struct user_namespace *user_ns,
- 			  struct dentry *dentry, struct inode *inode,
- 			  const char *name, const void *value, size_t size,
- 			  int flags)
-@@ -205,6 +206,7 @@ static int no_xattr_get(const struct xattr_handler *handler,
- }
- 
- static int no_xattr_set(const struct xattr_handler *handler,
-+			struct user_namespace *user_ns,
- 			struct dentry *dentry, struct inode *nodee,
- 			const char *name, const void *value,
- 			size_t size, int flags)
-diff --git a/fs/gfs2/acl.c b/fs/gfs2/acl.c
-index 2e939f5fe751..ce88ef29eef0 100644
---- a/fs/gfs2/acl.c
-+++ b/fs/gfs2/acl.c
-@@ -130,7 +130,7 @@ int gfs2_set_acl(struct inode *inode, struct posix_acl *acl, int type)
- 
- 	mode = inode->i_mode;
- 	if (type == ACL_TYPE_ACCESS && acl) {
--		ret = posix_acl_update_mode(inode, &mode, &acl);
-+		ret = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
- 		if (ret)
- 			goto unlock;
- 	}
-diff --git a/fs/gfs2/inode.c b/fs/gfs2/inode.c
-index 2cf9ed1575c4..a29b66116c01 100644
---- a/fs/gfs2/inode.c
-+++ b/fs/gfs2/inode.c
-@@ -1992,7 +1992,7 @@ static int gfs2_setattr(struct dentry *dentry, struct iattr *attr)
- 	else {
- 		error = gfs2_setattr_simple(inode, attr);
- 		if (!error && attr->ia_valid & ATTR_MODE)
--			error = posix_acl_chmod(inode, inode->i_mode);
-+			error = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
- 	}
- 
- error:
-diff --git a/fs/gfs2/xattr.c b/fs/gfs2/xattr.c
-index 9d7667bc4292..8e0eb5b3528f 100644
---- a/fs/gfs2/xattr.c
-+++ b/fs/gfs2/xattr.c
-@@ -1214,6 +1214,7 @@ int __gfs2_xattr_set(struct inode *inode, const char *name,
- }
- 
- static int gfs2_xattr_set(const struct xattr_handler *handler,
-+			  struct user_namespace *user_ns,
- 			  struct dentry *unused, struct inode *inode,
- 			  const char *name, const void *value,
- 			  size_t size, int flags)
-diff --git a/fs/hfs/attr.c b/fs/hfs/attr.c
-index 74fa62643136..ed2a50535bc1 100644
---- a/fs/hfs/attr.c
-+++ b/fs/hfs/attr.c
-@@ -121,6 +121,7 @@ static int hfs_xattr_get(const struct xattr_handler *handler,
- }
- 
- static int hfs_xattr_set(const struct xattr_handler *handler,
-+			 struct user_namespace *user_ns,
- 			 struct dentry *unused, struct inode *inode,
- 			 const char *name, const void *value, size_t size,
- 			 int flags)
-diff --git a/fs/hfsplus/xattr.c b/fs/hfsplus/xattr.c
-index bb0b27d88e50..0fc6000659db 100644
---- a/fs/hfsplus/xattr.c
-+++ b/fs/hfsplus/xattr.c
-@@ -858,6 +858,7 @@ static int hfsplus_osx_getxattr(const struct xattr_handler *handler,
- }
- 
- static int hfsplus_osx_setxattr(const struct xattr_handler *handler,
-+				struct user_namespace *user_ns,
- 				struct dentry *unused, struct inode *inode,
- 				const char *name, const void *buffer,
- 				size_t size, int flags)
-diff --git a/fs/hfsplus/xattr_security.c b/fs/hfsplus/xattr_security.c
-index cfbe6a3bfb1e..00c82f82a1dd 100644
---- a/fs/hfsplus/xattr_security.c
-+++ b/fs/hfsplus/xattr_security.c
-@@ -23,6 +23,7 @@ static int hfsplus_security_getxattr(const struct xattr_handler *handler,
- }
- 
- static int hfsplus_security_setxattr(const struct xattr_handler *handler,
-+				     struct user_namespace *user_ns,
- 				     struct dentry *unused, struct inode *inode,
- 				     const char *name, const void *buffer,
- 				     size_t size, int flags)
-diff --git a/fs/hfsplus/xattr_trusted.c b/fs/hfsplus/xattr_trusted.c
-index fbad91e1dada..e3a2712a55d1 100644
---- a/fs/hfsplus/xattr_trusted.c
-+++ b/fs/hfsplus/xattr_trusted.c
-@@ -22,6 +22,7 @@ static int hfsplus_trusted_getxattr(const struct xattr_handler *handler,
- }
- 
- static int hfsplus_trusted_setxattr(const struct xattr_handler *handler,
-+				    struct user_namespace *user_ns,
- 				    struct dentry *unused, struct inode *inode,
- 				    const char *name, const void *buffer,
- 				    size_t size, int flags)
-diff --git a/fs/hfsplus/xattr_user.c b/fs/hfsplus/xattr_user.c
-index 74d19faf255e..497f8114a132 100644
---- a/fs/hfsplus/xattr_user.c
-+++ b/fs/hfsplus/xattr_user.c
-@@ -22,6 +22,7 @@ static int hfsplus_user_getxattr(const struct xattr_handler *handler,
- }
- 
- static int hfsplus_user_setxattr(const struct xattr_handler *handler,
-+				 struct user_namespace *user_ns,
- 				 struct dentry *unused, struct inode *inode,
- 				 const char *name, const void *buffer,
- 				 size_t size, int flags)
-diff --git a/fs/jffs2/acl.c b/fs/jffs2/acl.c
-index 093ffbd82395..cf07a2fdf8bf 100644
---- a/fs/jffs2/acl.c
-+++ b/fs/jffs2/acl.c
-@@ -236,7 +236,7 @@ int jffs2_set_acl(struct inode *inode, struct posix_acl *acl, int type)
- 		if (acl) {
- 			umode_t mode;
- 
--			rc = posix_acl_update_mode(inode, &mode, &acl);
-+			rc = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
- 			if (rc)
- 				return rc;
- 			if (inode->i_mode != mode) {
-diff --git a/fs/jffs2/fs.c b/fs/jffs2/fs.c
-index 67993808f4da..ee9f51bab4c6 100644
---- a/fs/jffs2/fs.c
-+++ b/fs/jffs2/fs.c
-@@ -201,7 +201,7 @@ int jffs2_setattr(struct dentry *dentry, struct iattr *iattr)
- 
- 	rc = jffs2_do_setattr(inode, iattr);
- 	if (!rc && (iattr->ia_valid & ATTR_MODE))
--		rc = posix_acl_chmod(inode, inode->i_mode);
-+		rc = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
- 
- 	return rc;
- }
-diff --git a/fs/jffs2/security.c b/fs/jffs2/security.c
-index c2332e30f218..451e603c61c1 100644
---- a/fs/jffs2/security.c
-+++ b/fs/jffs2/security.c
-@@ -57,6 +57,7 @@ static int jffs2_security_getxattr(const struct xattr_handler *handler,
- }
- 
- static int jffs2_security_setxattr(const struct xattr_handler *handler,
-+				   struct user_namespace *user_ns,
- 				   struct dentry *unused, struct inode *inode,
- 				   const char *name, const void *buffer,
- 				   size_t size, int flags)
-diff --git a/fs/jffs2/xattr_trusted.c b/fs/jffs2/xattr_trusted.c
-index 5d6030826c52..ca1afca47910 100644
---- a/fs/jffs2/xattr_trusted.c
-+++ b/fs/jffs2/xattr_trusted.c
-@@ -25,6 +25,7 @@ static int jffs2_trusted_getxattr(const struct xattr_handler *handler,
- }
- 
- static int jffs2_trusted_setxattr(const struct xattr_handler *handler,
-+				  struct user_namespace *user_ns,
- 				  struct dentry *unused, struct inode *inode,
- 				  const char *name, const void *buffer,
- 				  size_t size, int flags)
-diff --git a/fs/jffs2/xattr_user.c b/fs/jffs2/xattr_user.c
-index 9d027b4abcf9..f6bc7da9c0d3 100644
---- a/fs/jffs2/xattr_user.c
-+++ b/fs/jffs2/xattr_user.c
-@@ -25,6 +25,7 @@ static int jffs2_user_getxattr(const struct xattr_handler *handler,
- }
- 
- static int jffs2_user_setxattr(const struct xattr_handler *handler,
-+			       struct user_namespace *user_ns,
- 			       struct dentry *unused, struct inode *inode,
- 			       const char *name, const void *buffer,
- 			       size_t size, int flags)
-diff --git a/fs/jfs/acl.c b/fs/jfs/acl.c
-index 92cc0ac2d1fc..cf79a34bfada 100644
---- a/fs/jfs/acl.c
-+++ b/fs/jfs/acl.c
-@@ -101,7 +101,7 @@ int jfs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
- 	tid = txBegin(inode->i_sb, 0);
- 	mutex_lock(&JFS_IP(inode)->commit_mutex);
- 	if (type == ACL_TYPE_ACCESS && acl) {
--		rc = posix_acl_update_mode(inode, &mode, &acl);
-+		rc = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
- 		if (rc)
- 			goto end_tx;
- 		if (mode != inode->i_mode)
-diff --git a/fs/jfs/file.c b/fs/jfs/file.c
-index ff49876e9c9b..61c3b0c1fbf6 100644
---- a/fs/jfs/file.c
-+++ b/fs/jfs/file.c
-@@ -122,7 +122,7 @@ int jfs_setattr(struct dentry *dentry, struct iattr *iattr)
- 	mark_inode_dirty(inode);
- 
- 	if (iattr->ia_valid & ATTR_MODE)
--		rc = posix_acl_chmod(inode, inode->i_mode);
-+		rc = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
- 	return rc;
- }
- 
-diff --git a/fs/jfs/xattr.c b/fs/jfs/xattr.c
-index db41e7803163..2c83750bdf2b 100644
---- a/fs/jfs/xattr.c
-+++ b/fs/jfs/xattr.c
-@@ -932,6 +932,7 @@ static int jfs_xattr_get(const struct xattr_handler *handler,
- }
- 
- static int jfs_xattr_set(const struct xattr_handler *handler,
-+			 struct user_namespace *user_ns,
- 			 struct dentry *unused, struct inode *inode,
- 			 const char *name, const void *value,
- 			 size_t size, int flags)
-@@ -950,6 +951,7 @@ static int jfs_xattr_get_os2(const struct xattr_handler *handler,
- }
- 
- static int jfs_xattr_set_os2(const struct xattr_handler *handler,
-+			     struct user_namespace *user_ns,
- 			     struct dentry *unused, struct inode *inode,
- 			     const char *name, const void *value,
- 			     size_t size, int flags)
-diff --git a/fs/kernfs/inode.c b/fs/kernfs/inode.c
-index 86bd4c593b78..74ee0ffcfe71 100644
---- a/fs/kernfs/inode.c
-+++ b/fs/kernfs/inode.c
-@@ -319,6 +319,7 @@ static int kernfs_vfs_xattr_get(const struct xattr_handler *handler,
- }
- 
- static int kernfs_vfs_xattr_set(const struct xattr_handler *handler,
-+				struct user_namespace *user_ns,
- 				struct dentry *unused, struct inode *inode,
- 				const char *suffix, const void *value,
- 				size_t size, int flags)
-@@ -385,6 +386,7 @@ static int kernfs_vfs_user_xattr_rm(struct kernfs_node *kn,
- }
- 
- static int kernfs_vfs_user_xattr_set(const struct xattr_handler *handler,
-+				     struct user_namespace *user_ns,
- 				     struct dentry *unused, struct inode *inode,
- 				     const char *suffix, const void *value,
- 				     size_t size, int flags)
-diff --git a/fs/nfs/nfs4proc.c b/fs/nfs/nfs4proc.c
-index 9e0ca9b2b210..77504501323c 100644
---- a/fs/nfs/nfs4proc.c
-+++ b/fs/nfs/nfs4proc.c
-@@ -7486,6 +7486,7 @@ nfs4_release_lockowner(struct nfs_server *server, struct nfs4_lock_state *lsp)
- #define XATTR_NAME_NFSV4_ACL "system.nfs4_acl"
- 
- static int nfs4_xattr_set_nfs4_acl(const struct xattr_handler *handler,
-+				   struct user_namespace *user_ns,
- 				   struct dentry *unused, struct inode *inode,
- 				   const char *key, const void *buf,
- 				   size_t buflen, int flags)
-@@ -7508,6 +7509,7 @@ static bool nfs4_xattr_list_nfs4_acl(struct dentry *dentry)
- #ifdef CONFIG_NFS_V4_SECURITY_LABEL
- 
- static int nfs4_xattr_set_nfs4_label(const struct xattr_handler *handler,
-+				     struct user_namespace *user_ns,
- 				     struct dentry *unused, struct inode *inode,
- 				     const char *key, const void *buf,
- 				     size_t buflen, int flags)
-@@ -7558,6 +7560,7 @@ nfs4_listxattr_nfs4_label(struct inode *inode, char *list, size_t list_len)
- 
- #ifdef CONFIG_NFS_V4_2
- static int nfs4_xattr_set_nfs4_user(const struct xattr_handler *handler,
-+				    struct user_namespace *user_ns,
- 				    struct dentry *unused, struct inode *inode,
- 				    const char *key, const void *buf,
- 				    size_t buflen, int flags)
-diff --git a/fs/nfsd/nfs2acl.c b/fs/nfsd/nfs2acl.c
-index 6a900f770dd2..e5f06f21c24a 100644
---- a/fs/nfsd/nfs2acl.c
-+++ b/fs/nfsd/nfs2acl.c
-@@ -113,10 +113,10 @@ static __be32 nfsacld_proc_setacl(struct svc_rqst *rqstp)
- 
- 	fh_lock(fh);
- 
--	error = set_posix_acl(inode, ACL_TYPE_ACCESS, argp->acl_access);
-+	error = set_posix_acl(&init_user_ns, inode, ACL_TYPE_ACCESS, argp->acl_access);
- 	if (error)
- 		goto out_drop_lock;
--	error = set_posix_acl(inode, ACL_TYPE_DEFAULT, argp->acl_default);
-+	error = set_posix_acl(&init_user_ns, inode, ACL_TYPE_DEFAULT, argp->acl_default);
- 	if (error)
- 		goto out_drop_lock;
- 
-diff --git a/fs/nfsd/nfs3acl.c b/fs/nfsd/nfs3acl.c
-index 34a394e50e1d..3618f62e118e 100644
---- a/fs/nfsd/nfs3acl.c
-+++ b/fs/nfsd/nfs3acl.c
-@@ -103,10 +103,10 @@ static __be32 nfsd3_proc_setacl(struct svc_rqst *rqstp)
- 
- 	fh_lock(fh);
- 
--	error = set_posix_acl(inode, ACL_TYPE_ACCESS, argp->acl_access);
-+	error = set_posix_acl(&init_user_ns, inode, ACL_TYPE_ACCESS, argp->acl_access);
- 	if (error)
- 		goto out_drop_lock;
--	error = set_posix_acl(inode, ACL_TYPE_DEFAULT, argp->acl_default);
-+	error = set_posix_acl(&init_user_ns, inode, ACL_TYPE_DEFAULT, argp->acl_default);
- 
- out_drop_lock:
- 	fh_unlock(fh);
-diff --git a/fs/nfsd/nfs4acl.c b/fs/nfsd/nfs4acl.c
-index 71292a0d6f09..0b35bc490aee 100644
---- a/fs/nfsd/nfs4acl.c
-+++ b/fs/nfsd/nfs4acl.c
-@@ -781,12 +781,12 @@ nfsd4_set_nfs4_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
- 
- 	fh_lock(fhp);
- 
--	host_error = set_posix_acl(inode, ACL_TYPE_ACCESS, pacl);
-+	host_error = set_posix_acl(&init_user_ns, inode, ACL_TYPE_ACCESS, pacl);
- 	if (host_error < 0)
- 		goto out_drop_lock;
- 
- 	if (S_ISDIR(inode->i_mode)) {
--		host_error = set_posix_acl(inode, ACL_TYPE_DEFAULT, dpacl);
-+		host_error = set_posix_acl(&init_user_ns, inode, ACL_TYPE_DEFAULT, dpacl);
- 	}
- 
- out_drop_lock:
-diff --git a/fs/ocfs2/acl.c b/fs/ocfs2/acl.c
-index 7b07f5df3a29..7e64dbe93251 100644
---- a/fs/ocfs2/acl.c
-+++ b/fs/ocfs2/acl.c
-@@ -274,7 +274,7 @@ int ocfs2_iop_set_acl(struct inode *inode, struct posix_acl *acl, int type)
- 	if (type == ACL_TYPE_ACCESS && acl) {
- 		umode_t mode;
- 
--		status = posix_acl_update_mode(inode, &mode, &acl);
-+		status = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
- 		if (status)
- 			goto unlock;
- 
-diff --git a/fs/ocfs2/xattr.c b/fs/ocfs2/xattr.c
-index 9ccd19d8f7b1..7b034aef0b0d 100644
---- a/fs/ocfs2/xattr.c
-+++ b/fs/ocfs2/xattr.c
-@@ -7249,6 +7249,7 @@ static int ocfs2_xattr_security_get(const struct xattr_handler *handler,
- }
- 
- static int ocfs2_xattr_security_set(const struct xattr_handler *handler,
-+				    struct user_namespace *user_ns,
- 				    struct dentry *unused, struct inode *inode,
- 				    const char *name, const void *value,
- 				    size_t size, int flags)
-@@ -7321,6 +7322,7 @@ static int ocfs2_xattr_trusted_get(const struct xattr_handler *handler,
- }
- 
- static int ocfs2_xattr_trusted_set(const struct xattr_handler *handler,
-+				   struct user_namespace *user_ns,
- 				   struct dentry *unused, struct inode *inode,
- 				   const char *name, const void *value,
- 				   size_t size, int flags)
-@@ -7351,6 +7353,7 @@ static int ocfs2_xattr_user_get(const struct xattr_handler *handler,
- }
- 
- static int ocfs2_xattr_user_set(const struct xattr_handler *handler,
-+				struct user_namespace *user_ns,
- 				struct dentry *unused, struct inode *inode,
- 				const char *name, const void *value,
- 				size_t size, int flags)
-diff --git a/fs/orangefs/acl.c b/fs/orangefs/acl.c
-index a25e6c890975..ba55d61906c2 100644
---- a/fs/orangefs/acl.c
-+++ b/fs/orangefs/acl.c
-@@ -132,7 +132,7 @@ int orangefs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
- 		 * and "mode" to the new desired value. It is up to
- 		 * us to propagate the new mode back to the server...
- 		 */
--		error = posix_acl_update_mode(inode, &iattr.ia_mode, &acl);
-+		error = posix_acl_update_mode(&init_user_ns, inode, &iattr.ia_mode, &acl);
- 		if (error) {
- 			gossip_err("%s: posix_acl_update_mode err: %d\n",
- 				   __func__,
-diff --git a/fs/orangefs/inode.c b/fs/orangefs/inode.c
-index 8ac9491ceb9a..563fe9ab8eb2 100644
---- a/fs/orangefs/inode.c
-+++ b/fs/orangefs/inode.c
-@@ -861,7 +861,7 @@ int __orangefs_setattr(struct inode *inode, struct iattr *iattr)
- 
- 	if (iattr->ia_valid & ATTR_MODE)
- 		/* change mod on a file that has ACLs */
--		ret = posix_acl_chmod(inode, inode->i_mode);
-+		ret = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
- 
- 	ret = 0;
- out:
-diff --git a/fs/orangefs/xattr.c b/fs/orangefs/xattr.c
-index bdc285aea360..41a4145ba697 100644
---- a/fs/orangefs/xattr.c
-+++ b/fs/orangefs/xattr.c
-@@ -526,6 +526,7 @@ ssize_t orangefs_listxattr(struct dentry *dentry, char *buffer, size_t size)
- }
- 
- static int orangefs_xattr_set_default(const struct xattr_handler *handler,
-+				      struct user_namespace *user_ns,
- 				      struct dentry *unused,
- 				      struct inode *inode,
- 				      const char *name,
-diff --git a/fs/overlayfs/super.c b/fs/overlayfs/super.c
-index 64f5f8f6f84e..9c12df942407 100644
---- a/fs/overlayfs/super.c
-+++ b/fs/overlayfs/super.c
-@@ -935,6 +935,7 @@ ovl_posix_acl_xattr_get(const struct xattr_handler *handler,
- 
- static int __maybe_unused
- ovl_posix_acl_xattr_set(const struct xattr_handler *handler,
-+			struct user_namespace *user_ns,
- 			struct dentry *dentry, struct inode *inode,
- 			const char *name, const void *value,
- 			size_t size, int flags)
-@@ -999,6 +1000,7 @@ static int ovl_own_xattr_get(const struct xattr_handler *handler,
- }
- 
- static int ovl_own_xattr_set(const struct xattr_handler *handler,
-+			     struct user_namespace *user_ns,
- 			     struct dentry *dentry, struct inode *inode,
- 			     const char *name, const void *value,
- 			     size_t size, int flags)
-@@ -1014,6 +1016,7 @@ static int ovl_other_xattr_get(const struct xattr_handler *handler,
- }
- 
- static int ovl_other_xattr_set(const struct xattr_handler *handler,
-+			       struct user_namespace *user_ns,
- 			       struct dentry *dentry, struct inode *inode,
- 			       const char *name, const void *value,
- 			       size_t size, int flags)
-diff --git a/fs/posix_acl.c b/fs/posix_acl.c
-index 87b5ec67000b..ee6c017802c3 100644
---- a/fs/posix_acl.c
-+++ b/fs/posix_acl.c
-@@ -559,7 +559,7 @@ __posix_acl_chmod(struct posix_acl **acl, gfp_t gfp, umode_t mode)
- EXPORT_SYMBOL(__posix_acl_chmod);
- 
- int
--posix_acl_chmod(struct inode *inode, umode_t mode)
-+posix_acl_chmod(struct user_namespace *user_ns, struct inode *inode, umode_t mode)
- {
- 	struct posix_acl *acl;
- 	int ret = 0;
-@@ -638,6 +638,7 @@ EXPORT_SYMBOL_GPL(posix_acl_create);
- 
- /**
-  * posix_acl_update_mode  -  update mode in set_acl
-+ * @user_ns: user namespace the inode is accessed from
-  * @inode: target inode
-  * @mode_p: mode (pointer) for update
-  * @acl: acl pointer
-@@ -651,8 +652,8 @@ EXPORT_SYMBOL_GPL(posix_acl_create);
-  *
-  * Called from set_acl inode operations.
-  */
--int posix_acl_update_mode(struct inode *inode, umode_t *mode_p,
--			  struct posix_acl **acl)
-+int posix_acl_update_mode(struct user_namespace *user_ns, struct inode *inode,
-+			  umode_t *mode_p, struct posix_acl **acl)
- {
- 	umode_t mode = inode->i_mode;
- 	int error;
-@@ -662,8 +663,8 @@ int posix_acl_update_mode(struct inode *inode, umode_t *mode_p,
- 		return error;
- 	if (error == 0)
- 		*acl = NULL;
--	if (!in_group_p(inode->i_gid) &&
--	    !capable_wrt_inode_uidgid(&init_user_ns, inode, CAP_FSETID))
-+	if (!in_group_p(i_gid_into_mnt(user_ns, inode)) &&
-+	    !capable_wrt_inode_uidgid(user_ns, inode, CAP_FSETID))
- 		mode &= ~S_ISGID;
- 	*mode_p = mode;
- 	return 0;
-@@ -675,7 +676,8 @@ EXPORT_SYMBOL(posix_acl_update_mode);
-  */
- static void posix_acl_fix_xattr_userns(
- 	struct user_namespace *to, struct user_namespace *from,
--	void *value, size_t size)
-+	struct user_namespace *mnt_user_ns,
-+	void *value, size_t size, bool from_user)
- {
- 	struct posix_acl_xattr_header *header = value;
- 	struct posix_acl_xattr_entry *entry = (void *)(header + 1), *end;
-@@ -700,10 +702,18 @@ static void posix_acl_fix_xattr_userns(
- 		switch(le16_to_cpu(entry->e_tag)) {
- 		case ACL_USER:
- 			uid = make_kuid(from, le32_to_cpu(entry->e_id));
-+			if (from_user)
-+				uid = kuid_from_mnt(mnt_user_ns, uid);
-+			else
-+				uid = kuid_into_mnt(mnt_user_ns, uid);
- 			entry->e_id = cpu_to_le32(from_kuid(to, uid));
- 			break;
- 		case ACL_GROUP:
- 			gid = make_kgid(from, le32_to_cpu(entry->e_id));
-+			if (from_user)
-+				gid = kgid_from_mnt(mnt_user_ns, gid);
-+			else
-+				gid = kgid_into_mnt(mnt_user_ns, gid);
- 			entry->e_id = cpu_to_le32(from_kgid(to, gid));
- 			break;
- 		default:
-@@ -712,21 +722,25 @@ static void posix_acl_fix_xattr_userns(
- 	}
- }
- 
--void posix_acl_fix_xattr_from_user(void *value, size_t size)
-+void posix_acl_fix_xattr_from_user(struct user_namespace *mnt_user_ns,
-+				   void *value, size_t size)
- {
- 	struct user_namespace *user_ns = current_user_ns();
--	if (user_ns == &init_user_ns)
-+	if ((user_ns == &init_user_ns) && (mnt_user_ns == &init_user_ns))
- 		return;
--	posix_acl_fix_xattr_userns(&init_user_ns, user_ns, value, size);
-+	posix_acl_fix_xattr_userns(&init_user_ns, user_ns, mnt_user_ns, value, size, true);
- }
-+EXPORT_SYMBOL(posix_acl_fix_xattr_from_user);
- 
--void posix_acl_fix_xattr_to_user(void *value, size_t size)
-+void posix_acl_fix_xattr_to_user(struct user_namespace *mnt_user_ns,
-+				 void *value, size_t size)
- {
- 	struct user_namespace *user_ns = current_user_ns();
--	if (user_ns == &init_user_ns)
-+	if ((user_ns == &init_user_ns) && (mnt_user_ns == &init_user_ns))
- 		return;
--	posix_acl_fix_xattr_userns(user_ns, &init_user_ns, value, size);
-+	posix_acl_fix_xattr_userns(user_ns, &init_user_ns, mnt_user_ns, value, size, false);
- }
-+EXPORT_SYMBOL(posix_acl_fix_xattr_to_user);
- 
- /*
-  * Convert from extended attribute to in-memory representation.
-@@ -865,7 +879,8 @@ posix_acl_xattr_get(const struct xattr_handler *handler,
- }
- 
- int
--set_posix_acl(struct inode *inode, int type, struct posix_acl *acl)
-+set_posix_acl(struct user_namespace *user_ns, struct inode *inode,
-+	      int type, struct posix_acl *acl)
- {
- 	if (!IS_POSIXACL(inode))
- 		return -EOPNOTSUPP;
-@@ -874,7 +889,7 @@ set_posix_acl(struct inode *inode, int type, struct posix_acl *acl)
- 
- 	if (type == ACL_TYPE_DEFAULT && !S_ISDIR(inode->i_mode))
- 		return acl ? -EACCES : 0;
--	if (!inode_owner_or_capable(&init_user_ns, inode))
-+	if (!inode_owner_or_capable(user_ns, inode))
- 		return -EPERM;
- 
- 	if (acl) {
-@@ -888,9 +903,10 @@ EXPORT_SYMBOL(set_posix_acl);
- 
- static int
- posix_acl_xattr_set(const struct xattr_handler *handler,
--		    struct dentry *unused, struct inode *inode,
--		    const char *name, const void *value,
--		    size_t size, int flags)
-+			   struct user_namespace *user_ns,
-+			   struct dentry *unused, struct inode *inode,
-+			   const char *name, const void *value, size_t size,
-+			   int flags)
- {
- 	struct posix_acl *acl = NULL;
- 	int ret;
-@@ -900,7 +916,7 @@ posix_acl_xattr_set(const struct xattr_handler *handler,
- 		if (IS_ERR(acl))
- 			return PTR_ERR(acl);
- 	}
--	ret = set_posix_acl(inode, handler->flags, acl);
-+	ret = set_posix_acl(user_ns, inode, handler->flags, acl);
- 	posix_acl_release(acl);
- 	return ret;
- }
-@@ -934,7 +950,7 @@ int simple_set_acl(struct inode *inode, struct posix_acl *acl, int type)
- 	int error;
- 
- 	if (type == ACL_TYPE_ACCESS) {
--		error = posix_acl_update_mode(inode,
-+		error = posix_acl_update_mode(&init_user_ns, inode,
- 				&inode->i_mode, &acl);
- 		if (error)
- 			return error;
-diff --git a/fs/reiserfs/xattr_acl.c b/fs/reiserfs/xattr_acl.c
-index ccd40df6eb45..b8f397134c17 100644
---- a/fs/reiserfs/xattr_acl.c
-+++ b/fs/reiserfs/xattr_acl.c
-@@ -40,7 +40,7 @@ reiserfs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
- 	reiserfs_write_unlock(inode->i_sb);
- 	if (error == 0) {
- 		if (type == ACL_TYPE_ACCESS && acl) {
--			error = posix_acl_update_mode(inode, &mode, &acl);
-+			error = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
- 			if (error)
- 				goto unlock;
- 			update_mode = 1;
-@@ -399,5 +399,5 @@ int reiserfs_acl_chmod(struct inode *inode)
- 	    !reiserfs_posixacl(inode->i_sb))
- 		return 0;
- 
--	return posix_acl_chmod(inode, inode->i_mode);
-+	return posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
- }
-diff --git a/fs/reiserfs/xattr_security.c b/fs/reiserfs/xattr_security.c
-index 20be9a0e5870..c98411a46c64 100644
---- a/fs/reiserfs/xattr_security.c
-+++ b/fs/reiserfs/xattr_security.c
-@@ -21,7 +21,8 @@ security_get(const struct xattr_handler *handler, struct dentry *unused,
- }
- 
- static int
--security_set(const struct xattr_handler *handler, struct dentry *unused,
-+security_set(const struct xattr_handler *handler, struct user_namespace *user_ns,
-+	     struct dentry *unused,
- 	     struct inode *inode, const char *name, const void *buffer,
- 	     size_t size, int flags)
- {
-diff --git a/fs/reiserfs/xattr_trusted.c b/fs/reiserfs/xattr_trusted.c
-index 5ed48da3d02b..d197cd9da0ec 100644
---- a/fs/reiserfs/xattr_trusted.c
-+++ b/fs/reiserfs/xattr_trusted.c
-@@ -20,7 +20,8 @@ trusted_get(const struct xattr_handler *handler, struct dentry *unused,
- }
- 
- static int
--trusted_set(const struct xattr_handler *handler, struct dentry *unused,
-+trusted_set(const struct xattr_handler *handler, struct user_namespace *user_ns,
-+	    struct dentry *unused,
- 	    struct inode *inode, const char *name, const void *buffer,
- 	    size_t size, int flags)
- {
-diff --git a/fs/reiserfs/xattr_user.c b/fs/reiserfs/xattr_user.c
-index a573ca45bacc..a79112aa0b4d 100644
---- a/fs/reiserfs/xattr_user.c
-+++ b/fs/reiserfs/xattr_user.c
-@@ -18,7 +18,8 @@ user_get(const struct xattr_handler *handler, struct dentry *unused,
- }
- 
- static int
--user_set(const struct xattr_handler *handler, struct dentry *unused,
-+user_set(const struct xattr_handler *handler, struct user_namespace *user_ns,
-+	 struct dentry *unused,
- 	 struct inode *inode, const char *name, const void *buffer,
- 	 size_t size, int flags)
- {
-diff --git a/fs/ubifs/xattr.c b/fs/ubifs/xattr.c
-index a0b9b349efe6..87d710d0e5b1 100644
---- a/fs/ubifs/xattr.c
-+++ b/fs/ubifs/xattr.c
-@@ -681,6 +681,7 @@ static int xattr_get(const struct xattr_handler *handler,
- }
- 
- static int xattr_set(const struct xattr_handler *handler,
-+			   struct user_namespace *user_ns,
- 			   struct dentry *dentry, struct inode *inode,
- 			   const char *name, const void *value,
- 			   size_t size, int flags)
-diff --git a/fs/xattr.c b/fs/xattr.c
-index fcc79c2a1ea1..ff9ffe77a4b2 100644
---- a/fs/xattr.c
-+++ b/fs/xattr.c
-@@ -174,7 +174,7 @@ __vfs_setxattr(struct dentry *dentry, struct inode *inode, const char *name,
- 		return -EOPNOTSUPP;
- 	if (size == 0)
- 		value = "";  /* empty EA, do not remove */
--	return handler->set(handler, dentry, inode, name, value, size, flags);
-+	return handler->set(handler, &init_user_ns, dentry, inode, name, value, size, flags);
- }
- EXPORT_SYMBOL(__vfs_setxattr);
- 
-@@ -438,7 +438,7 @@ __vfs_removexattr(struct dentry *dentry, const char *name)
- 		return PTR_ERR(handler);
- 	if (!handler->set)
- 		return -EOPNOTSUPP;
--	return handler->set(handler, dentry, inode, name, NULL, 0, XATTR_REPLACE);
-+	return handler->set(handler, &init_user_ns, dentry, inode, name, NULL, 0, XATTR_REPLACE);
- }
- EXPORT_SYMBOL(__vfs_removexattr);
- 
-@@ -536,9 +536,9 @@ setxattr(struct dentry *d, const char __user *name, const void __user *value,
- 		}
- 		if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
- 		    (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
--			posix_acl_fix_xattr_from_user(kvalue, size);
-+			posix_acl_fix_xattr_from_user(&init_user_ns, kvalue, size);
- 		else if (strcmp(kname, XATTR_NAME_CAPS) == 0) {
--			error = cap_convert_nscap(d, &kvalue, size);
-+			error = cap_convert_nscap(&init_user_ns, d, &kvalue, size);
- 			if (error < 0)
- 				goto out;
- 			size = error;
-@@ -636,7 +636,7 @@ getxattr(struct dentry *d, const char __user *name, void __user *value,
- 	if (error > 0) {
- 		if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
- 		    (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
--			posix_acl_fix_xattr_to_user(kvalue, error);
-+			posix_acl_fix_xattr_to_user(&init_user_ns, kvalue, error);
- 		if (size && copy_to_user(value, kvalue, error))
- 			error = -EFAULT;
- 	} else if (error == -ERANGE && size >= XATTR_SIZE_MAX) {
-diff --git a/fs/xfs/xfs_acl.c b/fs/xfs/xfs_acl.c
-index c544951a0c07..2e9d2d2878ce 100644
---- a/fs/xfs/xfs_acl.c
-+++ b/fs/xfs/xfs_acl.c
-@@ -244,7 +244,7 @@ xfs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
- 		return error;
- 
- 	if (type == ACL_TYPE_ACCESS) {
--		error = posix_acl_update_mode(inode, &mode, &acl);
-+		error = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
- 		if (error)
- 			return error;
- 		set_mode = true;
-diff --git a/fs/xfs/xfs_iops.c b/fs/xfs/xfs_iops.c
-index b1be836cf35e..c5f0db50c00f 100644
---- a/fs/xfs/xfs_iops.c
-+++ b/fs/xfs/xfs_iops.c
-@@ -810,7 +810,7 @@ xfs_setattr_nonsize(
- 	 * 	     Posix ACL code seems to care about this issue either.
- 	 */
- 	if ((mask & ATTR_MODE) && !(flags & XFS_ATTR_NOACL)) {
--		error = posix_acl_chmod(inode, inode->i_mode);
-+		error = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
- 		if (error)
- 			return error;
- 	}
-diff --git a/fs/xfs/xfs_xattr.c b/fs/xfs/xfs_xattr.c
-index bca48b308c02..76c9bdab2234 100644
---- a/fs/xfs/xfs_xattr.c
-+++ b/fs/xfs/xfs_xattr.c
-@@ -38,7 +38,8 @@ xfs_xattr_get(const struct xattr_handler *handler, struct dentry *unused,
- }
- 
- static int
--xfs_xattr_set(const struct xattr_handler *handler, struct dentry *unused,
-+xfs_xattr_set(const struct xattr_handler *handler, struct user_namespace *user_ns,
-+		struct dentry *unused,
- 		struct inode *inode, const char *name, const void *value,
- 		size_t size, int flags)
- {
-diff --git a/include/linux/capability.h b/include/linux/capability.h
-index 041e336f3369..0d54ca8abaed 100644
---- a/include/linux/capability.h
-+++ b/include/linux/capability.h
-@@ -273,6 +273,7 @@ static inline bool checkpoint_restore_ns_capable(struct user_namespace *ns)
- /* audit system wants to get cap info from files as well */
- extern int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps);
- 
--extern int cap_convert_nscap(struct dentry *dentry, void **ivalue, size_t size);
-+extern int cap_convert_nscap(struct user_namespace *user_ns,
-+			     struct dentry *dentry, void **ivalue, size_t size);
- 
- #endif /* !_LINUX_CAPABILITY_H */
-diff --git a/include/linux/posix_acl.h b/include/linux/posix_acl.h
-index 8276baefed13..28a789218d83 100644
---- a/include/linux/posix_acl.h
-+++ b/include/linux/posix_acl.h
-@@ -71,13 +71,13 @@ extern int __posix_acl_create(struct posix_acl **, gfp_t, umode_t *);
- extern int __posix_acl_chmod(struct posix_acl **, gfp_t, umode_t);
- 
- extern struct posix_acl *get_posix_acl(struct inode *, int);
--extern int set_posix_acl(struct inode *, int, struct posix_acl *);
-+extern int set_posix_acl(struct user_namespace *, struct inode *, int, struct posix_acl *);
- 
- #ifdef CONFIG_FS_POSIX_ACL
--extern int posix_acl_chmod(struct inode *, umode_t);
-+extern int posix_acl_chmod(struct user_namespace *, struct inode *, umode_t);
- extern int posix_acl_create(struct inode *, umode_t *, struct posix_acl **,
- 		struct posix_acl **);
--extern int posix_acl_update_mode(struct inode *, umode_t *, struct posix_acl **);
-+extern int posix_acl_update_mode(struct user_namespace *, struct inode *, umode_t *, struct posix_acl **);
- 
- extern int simple_set_acl(struct inode *, struct posix_acl *, int);
- extern int simple_acl_create(struct inode *, struct inode *);
-@@ -94,7 +94,8 @@ static inline void cache_no_acl(struct inode *inode)
- 	inode->i_default_acl = NULL;
- }
- #else
--static inline int posix_acl_chmod(struct inode *inode, umode_t mode)
-+static inline int posix_acl_chmod(struct user_namespace *user_ns,
-+				  struct inode *inode, umode_t mode)
- {
- 	return 0;
- }
-diff --git a/include/linux/posix_acl_xattr.h b/include/linux/posix_acl_xattr.h
-index 2387709991b5..9fdac573e1cb 100644
---- a/include/linux/posix_acl_xattr.h
-+++ b/include/linux/posix_acl_xattr.h
-@@ -33,13 +33,17 @@ posix_acl_xattr_count(size_t size)
- }
- 
- #ifdef CONFIG_FS_POSIX_ACL
--void posix_acl_fix_xattr_from_user(void *value, size_t size);
--void posix_acl_fix_xattr_to_user(void *value, size_t size);
-+void posix_acl_fix_xattr_from_user(struct user_namespace *mnt_user_ns,
-+				   void *value, size_t size);
-+void posix_acl_fix_xattr_to_user(struct user_namespace *mnt_user_ns,
-+				 void *value, size_t size);
- #else
--static inline void posix_acl_fix_xattr_from_user(void *value, size_t size)
-+static inline void posix_acl_fix_xattr_from_user(struct user_namespace *mnt_user_ns,
-+						 void *value, size_t size)
- {
- }
--static inline void posix_acl_fix_xattr_to_user(void *value, size_t size)
-+static inline void posix_acl_fix_xattr_to_user(struct user_namespace *mnt_user_ns,
-+					       void *value, size_t size)
- {
- }
- #endif
-diff --git a/include/linux/xattr.h b/include/linux/xattr.h
-index 10b4dc2709f0..6d2ef03ba399 100644
---- a/include/linux/xattr.h
-+++ b/include/linux/xattr.h
-@@ -34,9 +34,9 @@ struct xattr_handler {
- 	int (*get)(const struct xattr_handler *, struct dentry *dentry,
- 		   struct inode *inode, const char *name, void *buffer,
- 		   size_t size);
--	int (*set)(const struct xattr_handler *, struct dentry *dentry,
--		   struct inode *inode, const char *name, const void *buffer,
--		   size_t size, int flags);
-+	int (*set)(const struct xattr_handler *, struct user_namespace *user_ns,
-+		   struct dentry *dentry, struct inode *inode, const char *name,
-+		   const void *buffer, size_t size, int flags);
- };
- 
- const char *xattr_full_name(const struct xattr_handler *, const char *);
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 368555ddc411..8fdf52576e06 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -1143,7 +1143,7 @@ static int shmem_setattr(struct dentry *dentry, struct iattr *attr)
- 
- 	setattr_copy(&init_user_ns, inode, attr);
- 	if (attr->ia_valid & ATTR_MODE)
--		error = posix_acl_chmod(inode, inode->i_mode);
-+		error = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
- 	return error;
- }
- 
-@@ -3278,6 +3278,7 @@ static int shmem_xattr_handler_get(const struct xattr_handler *handler,
- }
- 
- static int shmem_xattr_handler_set(const struct xattr_handler *handler,
-+				   struct user_namespace *user_ns,
- 				   struct dentry *unused, struct inode *inode,
- 				   const char *name, const void *value,
- 				   size_t size, int flags)
-diff --git a/net/socket.c b/net/socket.c
-index 6e6cccc2104f..3bf36327f531 100644
---- a/net/socket.c
-+++ b/net/socket.c
-@@ -334,6 +334,7 @@ static const struct xattr_handler sockfs_xattr_handler = {
- };
- 
- static int sockfs_security_xattr_set(const struct xattr_handler *handler,
-+				     struct user_namespace *user_ns,
- 				     struct dentry *dentry, struct inode *inode,
- 				     const char *suffix, const void *value,
- 				     size_t size, int flags)
-diff --git a/security/commoncap.c b/security/commoncap.c
-index 4cd2bdfd0a8b..abefe9223b5e 100644
---- a/security/commoncap.c
-+++ b/security/commoncap.c
-@@ -451,15 +451,18 @@ int cap_inode_getsecurity(struct inode *inode, const char *name, void **buffer,
- }
- 
- static kuid_t rootid_from_xattr(const void *value, size_t size,
--				struct user_namespace *task_ns)
-+				struct user_namespace *task_ns,
-+				struct user_namespace *user_ns)
- {
- 	const struct vfs_ns_cap_data *nscap = value;
-+	kuid_t rootkid;
- 	uid_t rootid = 0;
- 
- 	if (size == XATTR_CAPS_SZ_3)
- 		rootid = le32_to_cpu(nscap->rootid);
- 
--	return make_kuid(task_ns, rootid);
-+	rootkid = make_kuid(task_ns, rootid);
-+	return kuid_from_mnt(user_ns, rootkid);
- }
- 
- static bool validheader(size_t size, const struct vfs_cap_data *cap)
-@@ -473,7 +476,8 @@ static bool validheader(size_t size, const struct vfs_cap_data *cap)
-  *
-  * If all is ok, we return the new size, on error return < 0.
-  */
--int cap_convert_nscap(struct dentry *dentry, void **ivalue, size_t size)
-+int cap_convert_nscap(struct user_namespace *user_ns, struct dentry *dentry,
-+		      void **ivalue, size_t size)
- {
- 	struct vfs_ns_cap_data *nscap;
- 	uid_t nsrootid;
-@@ -489,14 +493,14 @@ int cap_convert_nscap(struct dentry *dentry, void **ivalue, size_t size)
- 		return -EINVAL;
- 	if (!validheader(size, cap))
- 		return -EINVAL;
--	if (!capable_wrt_inode_uidgid(&init_user_ns, inode, CAP_SETFCAP))
-+	if (!capable_wrt_inode_uidgid(user_ns, inode, CAP_SETFCAP))
- 		return -EPERM;
--	if (size == XATTR_CAPS_SZ_2)
-+	if (size == XATTR_CAPS_SZ_2 && (user_ns == &init_user_ns))
- 		if (ns_capable(inode->i_sb->s_user_ns, CAP_SETFCAP))
- 			/* user is privileged, just write the v2 */
- 			return size;
- 
--	rootid = rootid_from_xattr(*ivalue, size, task_ns);
-+	rootid = rootid_from_xattr(*ivalue, size, task_ns, user_ns);
- 	if (!uid_valid(rootid))
- 		return -EINVAL;
- 
-@@ -520,6 +524,7 @@ int cap_convert_nscap(struct dentry *dentry, void **ivalue, size_t size)
- 	*ivalue = nscap;
- 	return newsize;
- }
-+EXPORT_SYMBOL(cap_convert_nscap);
- 
- /*
-  * Calculate the new process capability sets from the capability sets attached
+> v1 -> v2:
+> 
+>   - expose to userspace a monotonically increasing u32 Vm Gen Counter
+>     instead of the hw VmGen UUID
+>   - since the hw/hypervisor-provided 128-bit UUID is not public
+>     anymore, add it to the kernel RNG as device randomness
+>   - insert driver page containing Vm Gen Counter in the user vma in
+>     the driver's mmap handler instead of using a fault handler
+>   - turn driver into a misc device driver to auto-create /dev/vmgenid
+>   - change ioctl arg to avoid leaking kernel structs to userspace
+>   - update documentation
+>   - various nits
+>   - rebase on top of linus latest
+> 
+> v2 -> v3:
+> 
+>   - separate the core driver logic and interface, from the ACPI device.
+>     The ACPI vmgenid device is now one possible backend.
+>   - fix issue when timeout=0 in VMGENID_WAIT_WATCHERS
+>   - add locking to avoid races between fs ops handlers and hw irq
+>     driven generation updates
+>   - change VMGENID_WAIT_WATCHERS ioctl so if the current caller is
+>     outdated or a generation change happens while waiting (thus making
+>     current caller outdated), the ioctl returns -EINTR to signal the
+>     user to handle event and retry. Fixes blocking on oneself.
+>   - add VMGENID_FORCE_GEN_UPDATE ioctl conditioned by
+>     CAP_CHECKPOINT_RESTORE capability, through which software can force
+>     generation bump.
+> ---
+>  Documentation/virt/vmgenid.rst | 240 +++++++++++++++++++++++
+>  drivers/virt/Kconfig           |  17 ++
+>  drivers/virt/Makefile          |   1 +
+>  drivers/virt/vmgenid.c         | 435 +++++++++++++++++++++++++++++++++++++++++
+>  include/uapi/linux/vmgenid.h   |  14 ++
+>  5 files changed, 707 insertions(+)
+>  create mode 100644 Documentation/virt/vmgenid.rst
+>  create mode 100644 drivers/virt/vmgenid.c
+>  create mode 100644 include/uapi/linux/vmgenid.h
+> 
+> diff --git a/Documentation/virt/vmgenid.rst b/Documentation/virt/vmgenid.rst
+> new file mode 100644
+> index 0000000..b6a9f8d
+> --- /dev/null
+> +++ b/Documentation/virt/vmgenid.rst
+> @@ -0,0 +1,240 @@
+> +.. SPDX-License-Identifier: GPL-2.0
+> +
+> +============
+> +VMGENID
+> +============
+
+The "==" line should be the same length as the title, I think.
+
+> +
+> +The VM Generation ID is a feature defined by Microsoft (paper:
+> +http://go.microsoft.com/fwlink/?LinkId=260709) and supported by
+> +multiple hypervisor vendors.
+> +
+> +The feature is required in virtualized environments by apps that work
+
+Please spell 'applications' fully
+
+> +with local copies/caches of world-unique data such as random values,
+> +uuids, monotonically increasing counters, etc.
+
+UUIDs
+
+> +Such apps can be negatively affected by VM snapshotting when the VM
+
+       ^applications
+
+> +is either cloned or returned to an earlier point in time.
+> +
+> +The VM Generation ID is a simple concept meant to alleviate the issue
+> +by providing a unique ID that changes each time the VM is restored
+> +from a snapshot. The hw provided UUID value can be used to
+
+                       ^hardware (and below as well)
+
+> +differentiate between VMs or different generations of the same VM.
+> +
+> +The VM Generation ID is exposed through an ACPI device by multiple
+> +hypervisor vendors. The driver for it lives at
+> +``drivers/virt/vmgenid.c``
+> +
+> +The ``vmgenid`` driver exposes a monotonic incremental Virtual
+> +Machine Generation u32 counter via a char-dev FS interface that
+> +provides sync and async VmGen counter updates notifications. It also
+> +provides VmGen counter retrieval and confirmation mechanisms.
+
+It would be nice to memntion here the name of the chardev :)
+
+> +This counter and the interface through which it is exposed are
+> +available even when there is no acpi device present.
+> +
+> +When the device is present, the hw provided UUID is not exposed to
+> +userspace, it is internally used by the driver to keep accounting for
+> +the exposed VmGen counter. The counter starts from zero when the
+> +driver is initialized and monotonically increments every time the hw
+> +UUID changes (the VM generation changes).
+> +On each hw UUID change, the new UUID is also fed to the kernel RNG.
+> +
+> +If there is no acpi vmgenid device present, the generation changes are
+> +not driven by hw vmgenid events and thus should be driven by software
+> +through a dedicated driver ioctl.
+> +
+> +Driver interface:
+> +
+> +``open()``:
+> +  When the device is opened, a copy of the current Vm-Gen-Id (counter)
+> +  is associated with the open file descriptor. The driver now tracks
+> +  this file as an independent *watcher*. The driver tracks how many
+> +  watchers are aware of the latest Vm-Gen-Id counter and how many of
+> +  them are *outdated*; outdated being those that have lived through
+> +  a Vm-Gen-Id change but not yet confirmed the new generation counter.
+> +
+> +``read()``:
+> +  Read is meant to provide the *new* VM generation counter when a
+> +  generation change takes place. The read operation blocks until the
+> +  associated counter is no longer up to date - until HW vm gen id
+> +  changes - at which point the new counter is provided/returned.
+> +  Nonblocking ``read()`` uses ``EAGAIN`` to signal that there is no
+> +  *new* counter value available. The generation counter is considered
+> +  *new* for each open file descriptor that hasn't confirmed the new
+> +  value, following a generation change. Therefore, once a generation
+> +  change takes place, all ``read()`` calls will immediately return the
+> +  new generation counter and will continue to do so until the
+> +  new value is confirmed back to the driver through ``write()``.
+> +  Partial reads are not allowed - read buffer needs to be at least
+> +  ``sizeof(unsigned)`` in size.
+> +
+> +``write()``:
+> +  Write is used to confirm the up-to-date Vm Gen counter back to the
+> +  driver.
+> +  Following a VM generation change, all existing watchers are marked
+> +  as *outdated*. Each file descriptor will maintain the *outdated*
+> +  status until a ``write()`` confirms the up-to-date counter back to
+> +  the driver.
+> +  Partial writes are not allowed - write buffer should be exactly
+> +  ``sizeof(unsigned)`` in size.
+> +
+> +``poll()``:
+> +  Poll is implemented to allow polling for generation counter updates.
+> +  Such updates result in ``EPOLLIN`` polling status until the new
+> +  up-to-date counter is confirmed back to the driver through a
+> +  ``write()``.
+> +
+> +``ioctl()``:
+> +  The driver also adds support for tracking count of open file
+> +  descriptors that haven't acknowledged a generation counter update.
+> +  This is exposed through two IOCTLs:
+> +
+> +  - VMGENID_GET_OUTDATED_WATCHERS: immediately returns the number of
+> +    *outdated* watchers - number of file descriptors that were open
+> +    during a VM generation change, and which have not yet confirmed the
+> +    new generation counter.
+> +  - VMGENID_WAIT_WATCHERS: blocks until there are no more *outdated*
+> +    watchers, or if a ``timeout`` argument is provided, until the
+> +    timeout expires.
+> +    If the current caller is *outdated* or a generation change happens
+> +    while waiting (thus making current caller *outdated*), the ioctl
+> +    returns ``-EINTR`` to signal the user to handle event and retry.
+> +  - VMGENID_FORCE_GEN_UPDATE: forces a generation counter bump. Can only
+> +    be used by processes with CAP_CHECKPOINT_RESTORE or CAP_SYS_ADMIN
+> +    capabilities.
+> +
+> +``mmap()``:
+> +  The driver supports ``PROT_READ, MAP_SHARED`` mmaps of a single page
+> +  in size. The first 4 bytes of the mapped page will contain an
+> +  up-to-date copy of the VM generation counter.
+> +  The mapped memory can be used as a low-latency generation counter
+> +  probe mechanism in critical sections - see examples.
+> +
+> +``close()``:
+> +  Removes the file descriptor as a Vm generation counter watcher.
+> +
+> +Example application workflows
+> +-----------------------------
+> +
+> +1) Watchdog thread simplified example::
+> +
+> +    void watchdog_thread_handler(int *thread_active)
+> +    {
+> +        unsigned genid;
+> +        int fd = open("/dev/vmgenid", O_RDWR | O_CLOEXEC, S_IRUSR |
+> S_IWUSR);
+> +
+> +        do {
+> +            // read new gen ID - blocks until VM generation changes
+> +            read(fd, &genid, sizeof(genid));
+> +
+> +            // because of VM generation change, we need to rebuild world
+> +            reseed_app_env();
+> +
+> +            // confirm we're done handling gen ID update
+> +            write(fd, &genid, sizeof(genid));
+> +        } while (atomic_read(thread_active));
+> +
+> +        close(fd);
+> +    }
+> +
+> +2) ASYNC simplified example::
+> +
+> +    void handle_io_on_vmgenfd(int vmgenfd)
+> +    {
+> +        unsigned genid;
+> +
+> +        // read new gen ID - we need it to confirm we've handled update
+> +        read(fd, &genid, sizeof(genid));
+> +
+> +        // because of VM generation change, we need to rebuild world
+> +        reseed_app_env();
+> +
+> +        // confirm we're done handling the gen ID update
+> +        write(fd, &genid, sizeof(genid));
+> +    }
+> +
+> +    int main() {
+> +        int epfd, vmgenfd;
+> +        struct epoll_event ev;
+> +
+> +        epfd = epoll_create(EPOLL_QUEUE_LEN);
+> +
+> +        vmgenfd = open("/dev/vmgenid",
+> +                       O_RDWR | O_CLOEXEC | O_NONBLOCK,
+> +                       S_IRUSR | S_IWUSR);
+> +
+> +        // register vmgenid for polling
+> +        ev.events = EPOLLIN;
+> +        ev.data.fd = vmgenfd;
+> +        epoll_ctl(epfd, EPOLL_CTL_ADD, vmgenfd, &ev);
+> +
+> +        // register other parts of your app for polling
+> +        // ...
+> +
+> +        while (1) {
+> +            // wait for something to do...
+> +            int nfds = epoll_wait(epfd, events,
+> +                MAX_EPOLL_EVENTS_PER_RUN,
+> +                EPOLL_RUN_TIMEOUT);
+> +            if (nfds < 0) die("Error in epoll_wait!");
+> +
+> +            // for each ready fd
+> +            for(int i = 0; i < nfds; i++) {
+> +                int fd = events[i].data.fd;
+> +
+> +                if (fd == vmgenfd)
+> +                    handle_io_on_vmgenfd(vmgenfd);
+> +                else
+> +                    handle_some_other_part_of_the_app(fd);
+> +            }
+> +        }
+> +
+> +        return 0;
+> +    }
+> +
+> +3) Mapped memory polling simplified example::
+> +
+> +    /*
+> +     * app/library function that provides cached secrets
+> +     */
+> +    char * safe_cached_secret(app_data_t *app)
+> +    {
+> +        char *secret;
+> +        volatile unsigned *const genid_ptr = get_vmgenid_mapping(app);
+> +    again:
+> +        secret = __cached_secret(app);
+> +
+> +        if (unlikely(*genid_ptr != app->cached_genid)) {
+> +            // rebuild world then confirm the genid update (thru write)
+> +            rebuild_caches(app);
+> +
+> +            app->cached_genid = *genid_ptr;
+> +            ack_vmgenid_update(app);
+> +
+> +            goto again;
+> +        }
+> +
+> +        return secret;
+> +    }
+> +
+> +4) Orchestrator simplified example::
+> +
+> +    /*
+> +     * orchestrator - manages multiple apps and libraries used by a service
+> +     * and tries to make sure all sensitive components gracefully handle
+> +     * VM generation changes.
+> +     * Following function is called on detection of a VM generation change.
+> +     */
+> +    int handle_vmgen_update(int vmgen_fd, unsigned new_gen_id)
+> +    {
+> +        // pause until all components have handled event
+> +        pause_service();
+> +
+> +        // confirm *this* watcher as up-to-date
+> +        write(vmgen_fd, &new_gen_id, sizeof(unsigned));
+> +
+> +        // wait for all *others* for at most 5 seconds.
+> +        ioctl(vmgen_fd, VMGENID_WAIT_WATCHERS, 5000);
+> +
+> +        // all apps on the system have rebuilt worlds
+> +        resume_service();
+> +    }
+> diff --git a/drivers/virt/Kconfig b/drivers/virt/Kconfig
+> index 80c5f9c1..5d5f37b 100644
+> --- a/drivers/virt/Kconfig
+> +++ b/drivers/virt/Kconfig
+> @@ -13,6 +13,23 @@ menuconfig VIRT_DRIVERS
+>  
+>  if VIRT_DRIVERS
+>  
+> +config VMGENID
+> +    tristate "Virtual Machine Generation ID driver"
+> +    depends on ACPI
+
+I think this is not needed. We have /dev/vmgenid regardless of ACPI
+device for container usecase and we may have a different HW emulation
+for s390 and PowerPC.
+
+> +    default N
+> +    help
+> +      This is a Virtual Machine Generation ID driver which provides
+> +      a virtual machine generation counter. The driver exposes FS ops
+> +      on /dev/vmgenid through which it can provide information and
+> +      notifications on VM generation changes that happen on snapshots
+> +      or cloning.
+> +      This enables applications and libraries that store or cache
+> +      sensitive information, to know that they need to regenerate it
+> +      after process memory has been exposed to potential copying.
+> +
+> +      To compile this driver as a module, choose M here: the
+> +      module will be called vmgenid.
+> +
+>  config FSL_HV_MANAGER
+>      tristate "Freescale hypervisor management driver"
+>      depends on FSL_SOC
+> diff --git a/drivers/virt/Makefile b/drivers/virt/Makefile
+> index f28425c..889be01 100644
+> --- a/drivers/virt/Makefile
+> +++ b/drivers/virt/Makefile
+> @@ -4,6 +4,7 @@
+>  #
+>  
+>  obj-$(CONFIG_FSL_HV_MANAGER)    += fsl_hypervisor.o
+> +obj-$(CONFIG_VMGENID)        += vmgenid.o
+>  obj-y                += vboxguest/
+>  
+>  obj-$(CONFIG_NITRO_ENCLAVES)    += nitro_enclaves/
+> diff --git a/drivers/virt/vmgenid.c b/drivers/virt/vmgenid.c
+> new file mode 100644
+> index 0000000..c4d4683
+> --- /dev/null
+> +++ b/drivers/virt/vmgenid.c
+> @@ -0,0 +1,435 @@
+> +// SPDX-License-Identifier: GPL-2.0
+> +/*
+> + * Virtual Machine Generation ID driver
+> + *
+> + * Copyright (C) 2018 Red Hat Inc. All rights reserved.
+> + *
+> + * Copyright (C) 2020 Amazon. All rights reserved.
+> + *
+> + *    Authors:
+> + *      Adrian Catangiu <acatan@amazon.com>
+> + *      Or Idgar <oridgar@gmail.com>
+> + *      Gal Hammer <ghammer@redhat.com>
+> + *
+> + */
+> +#include <linux/acpi.h>
+> +#include <linux/kernel.h>
+> +#include <linux/miscdevice.h>
+> +#include <linux/mm.h>
+> +#include <linux/module.h>
+> +#include <linux/poll.h>
+> +#include <linux/random.h>
+> +#include <linux/uuid.h>
+> +#include <linux/vmgenid.h>
+> +
+> +#define DEV_NAME "vmgenid"
+> +ACPI_MODULE_NAME(DEV_NAME);
+> +
+> +struct acpi_data {
+> +    uuid_t uuid;
+> +    void   *uuid_iomap;
+> +};
+> +
+> +struct driver_data {
+
+I'd suggest vmgenid_data
+
+> +    unsigned long     map_buf;
+
+We use tab=8 for indentation. Please run your patch though
+scripts/checkpatch.pl to make sure it conforms the coding style.
+
+> +    wait_queue_head_t read_waitq;
+> +    atomic_t          generation_counter;
+> +
+> +    unsigned int      watchers;
+> +    atomic_t          outdated_watchers;
+> +    wait_queue_head_t outdated_waitq;
+> +    spinlock_t        lock;
+> +
+> +    struct acpi_data  *acpi_data;
+> +};
+> +struct driver_data driver_data;
+
+static 
+
+> +
+> +struct file_data {
+> +    unsigned int acked_gen_counter;
+> +};
+> +
+> +static int equals_gen_counter(unsigned int counter)
+> +{
+> +    return counter == atomic_read(&driver_data.generation_counter);
+> +}
+> +
+> +static void vmgenid_bump_generation(void)
+> +{
+> +    unsigned long flags;
+> +    int counter;
+> +
+> +    spin_lock_irqsave(&driver_data.lock, flags);
+> +    counter = atomic_inc_return(&driver_data.generation_counter);
+> +    *((int *) driver_data.map_buf) = counter;
+> +    atomic_set(&driver_data.outdated_watchers, driver_data.watchers);
+> +
+> +    wake_up_interruptible(&driver_data.read_waitq);
+> +    wake_up_interruptible(&driver_data.outdated_waitq);
+> +    spin_unlock_irqrestore(&driver_data.lock, flags);
+> +}
+> +
+> +static void vmgenid_put_outdated_watchers(void)
+> +{
+> +    if (atomic_dec_and_test(&driver_data.outdated_watchers))
+> +        wake_up_interruptible(&driver_data.outdated_waitq);
+> +}
+> +
+> +static int vmgenid_open(struct inode *inode, struct file *file)
+> +{
+> +    struct file_data *fdata = kzalloc(sizeof(struct file_data),
+> GFP_KERNEL);
+> +    unsigned long flags;
+> +
+> +    if (!fdata)
+> +        return -ENOMEM;
+> +
+> +    spin_lock_irqsave(&driver_data.lock, flags);
+> +    fdata->acked_gen_counter =
+> atomic_read(&driver_data.generation_counter);
+> +    ++driver_data.watchers;
+> +    spin_unlock_irqrestore(&driver_data.lock, flags);
+> +
+> +    file->private_data = fdata;
+> +
+> +    return 0;
+> +}
+> +
+> +static int vmgenid_close(struct inode *inode, struct file *file)
+> +{
+> +    struct file_data *fdata = file->private_data;
+> +    unsigned long flags;
+> +
+> +    spin_lock_irqsave(&driver_data.lock, flags);
+> +    if (!equals_gen_counter(fdata->acked_gen_counter))
+> +        vmgenid_put_outdated_watchers();
+> +    --driver_data.watchers;
+> +    spin_unlock_irqrestore(&driver_data.lock, flags);
+> +
+> +    kfree(fdata);
+> +
+> +    return 0;
+> +}
+> +
+> +static ssize_t
+> +vmgenid_read(struct file *file, char __user *ubuf, size_t nbytes,
+
+Please keep the function name at the same line as return type and wrap
+parameters to the next line.
+
+> loff_t *ppos)
+> +{
+> +    struct file_data *fdata = file->private_data;
+> +    ssize_t ret;
+> +    int gen_counter;
+> +
+> +    if (nbytes == 0)
+> +        return 0;
+> +    /* disallow partial reads */
+> +    if (nbytes < sizeof(gen_counter))
+> +        return -EINVAL;
+> +
+> +    if (equals_gen_counter(fdata->acked_gen_counter)) {
+> +        if (file->f_flags & O_NONBLOCK)
+> +            return -EAGAIN;
+> +        ret = wait_event_interruptible(
+> +            driver_data.read_waitq,
+> +            !equals_gen_counter(fdata->acked_gen_counter)
+> +        );
+> +        if (ret)
+> +            return ret;
+> +    }
+> +
+> +    gen_counter = atomic_read(&driver_data.generation_counter);
+> +    ret = copy_to_user(ubuf, &gen_counter, sizeof(gen_counter));
+> +    if (ret)
+> +        return -EFAULT;
+> +
+> +    return sizeof(gen_counter);
+> +}
+> +
+> +static ssize_t vmgenid_write(struct file *file, const char __user *ubuf,
+> +                size_t count, loff_t *ppos)
+> +{
+> +    struct file_data *fdata = file->private_data;
+> +    unsigned int new_acked_gen;
+> +    unsigned long flags;
+> +
+> +    /* disallow partial writes */
+> +    if (count != sizeof(new_acked_gen))
+> +        return -EINVAL;
+> +    if (copy_from_user(&new_acked_gen, ubuf, count))
+> +        return -EFAULT;
+> +
+> +    spin_lock_irqsave(&driver_data.lock, flags);
+> +    /* wrong gen-counter acknowledged */
+> +    if (!equals_gen_counter(new_acked_gen)) {
+> +        spin_unlock_irqrestore(&driver_data.lock, flags);
+> +        return -EINVAL;
+> +    }
+> +    if (!equals_gen_counter(fdata->acked_gen_counter)) {
+> +        fdata->acked_gen_counter = new_acked_gen;
+> +        vmgenid_put_outdated_watchers();
+> +    }
+> +    spin_unlock_irqrestore(&driver_data.lock, flags);
+> +
+> +    return (ssize_t)count;
+> +}
+> +
+> +static __poll_t
+> +vmgenid_poll(struct file *file, poll_table *wait)
+> +{
+> +    __poll_t mask = 0;
+> +    struct file_data *fdata = file->private_data;
+> +
+> +    if (!equals_gen_counter(fdata->acked_gen_counter))
+> +        return EPOLLIN | EPOLLRDNORM;
+> +
+> +    poll_wait(file, &driver_data.read_waitq, wait);
+> +
+> +    if (!equals_gen_counter(fdata->acked_gen_counter))
+> +        mask = EPOLLIN | EPOLLRDNORM;
+> +
+> +    return mask;
+> +}
+> +
+> +static long vmgenid_ioctl(struct file *file,
+> +        unsigned int cmd, unsigned long arg)
+> +{
+> +    struct file_data *fdata = file->private_data;
+> +    unsigned long timeout_ns;
+> +    ktime_t until;
+> +    int ret = 0;
+> +
+> +    switch (cmd) {
+> +    case VMGENID_GET_OUTDATED_WATCHERS:
+> +        ret = atomic_read(&driver_data.outdated_watchers);
+> +        break;
+> +    case VMGENID_WAIT_WATCHERS:
+> +        timeout_ns = arg * NSEC_PER_MSEC;
+> +        until = timeout_ns ? ktime_set(0, timeout_ns) : KTIME_MAX;
+> +
+> +        ret = wait_event_interruptible_hrtimeout(
+> +            driver_data.outdated_waitq,
+> +            (!atomic_read(&driver_data.outdated_watchers) ||
+> +                    !equals_gen_counter(fdata->acked_gen_counter)),
+> +            until
+> +        );
+> +        if (atomic_read(&driver_data.outdated_watchers))
+> +            ret = -EINTR;
+> +        else
+> +            ret = 0;
+> +        break;
+> +    case VMGENID_FORCE_GEN_UPDATE:
+> +        if (!checkpoint_restore_ns_capable(current_user_ns()))
+> +            return -EACCES;
+> +        vmgenid_bump_generation();
+> +        break;
+> +    default:
+> +        ret = -EINVAL;
+> +        break;
+> +    }
+> +    return ret;
+> +}
+> +
+> +static int vmgenid_mmap(struct file *file, struct vm_area_struct *vma)
+> +{
+> +    struct file_data *fdata = file->private_data;
+> +
+> +    if (vma->vm_pgoff != 0 || vma_pages(vma) > 1)
+> +        return -EINVAL;
+> +
+> +    if ((vma->vm_flags & VM_WRITE) != 0)
+> +        return -EPERM;
+> +
+> +    vma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
+> +    vma->vm_flags &= ~VM_MAYWRITE;
+> +    vma->vm_private_data = fdata;
+> +
+> +    return vm_insert_page(vma, vma->vm_start,
+> +                          virt_to_page(driver_data.map_buf));
+> +}
+> +
+> +static const struct file_operations fops = {
+> +    .owner          = THIS_MODULE,
+> +    .mmap           = vmgenid_mmap,
+> +    .open           = vmgenid_open,
+> +    .release        = vmgenid_close,
+> +    .read           = vmgenid_read,
+> +    .write          = vmgenid_write,
+> +    .poll           = vmgenid_poll,
+> +    .unlocked_ioctl = vmgenid_ioctl,
+> +};
+> +
+> +struct miscdevice vmgenid_misc = {
+
+static
+
+> +    .minor = MISC_DYNAMIC_MINOR,
+> +    .name = "vmgenid",
+> +    .fops = &fops,
+> +};
+> +
+> +static int vmgenid_acpi_map(struct acpi_data *priv, acpi_handle handle)
+> +{
+> +    int i;
+> +    phys_addr_t phys_addr;
+> +    struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
+> +    acpi_status status;
+> +    union acpi_object *pss;
+> +    union acpi_object *element;
+> +
+> +    status = acpi_evaluate_object(handle, "ADDR", NULL, &buffer);
+> +    if (ACPI_FAILURE(status)) {
+> +        ACPI_EXCEPTION((AE_INFO, status, "Evaluating ADDR"));
+> +        return -ENODEV;
+> +    }
+> +    pss = buffer.pointer;
+> +    if (!pss || pss->type != ACPI_TYPE_PACKAGE || pss->package.count != 2)
+> +        return -EINVAL;
+> +
+> +    phys_addr = 0;
+> +    for (i = 0; i < pss->package.count; i++) {
+> +        element = &(pss->package.elements[i]);
+> +        if (element->type != ACPI_TYPE_INTEGER)
+> +            return -EINVAL;
+> +        phys_addr |= element->integer.value << i * 32;
+> +    }
+> +
+> +    priv->uuid_iomap = acpi_os_map_memory(phys_addr, sizeof(uuid_t));
+> +    if (!priv->uuid_iomap) {
+> +        pr_err("Could not map memory at 0x%llx, size %u\n",
+> +               phys_addr,
+> +               (u32) sizeof(uuid_t));
+> +        return -ENOMEM;
+> +    }
+> +
+> +    memcpy_fromio(&priv->uuid, priv->uuid_iomap, sizeof(uuid_t));
+> +
+> +    return 0;
+> +}
+> +
+> +static int vmgenid_acpi_add(struct acpi_device *device)
+> +{
+> +    int ret;
+> +
+> +    if (!device)
+> +        return -EINVAL;
+> +
+> +    driver_data.acpi_data = kzalloc(sizeof(struct acpi_data), GFP_KERNEL);
+> +    if (!driver_data.acpi_data) {
+> +        pr_err("vmgenid: failed to allocate acpi_data\n");
+> +        return -ENOMEM;
+> +    }
+> +    device->driver_data = &driver_data;
+> +
+> +    ret = vmgenid_acpi_map(driver_data.acpi_data, device->handle);
+> +    if (ret < 0) {
+> +        pr_err("vmgenid: failed to map acpi device\n");
+> +        goto err;
+> +    }
+> +
+> +    return 0;
+> +
+> +err:
+> +    kfree(driver_data.acpi_data);
+> +    driver_data.acpi_data = NULL;
+> +
+> +    return ret;
+> +}
+> +
+> +static int vmgenid_acpi_remove(struct acpi_device *device)
+> +{
+> +    struct acpi_data *priv;
+> +
+> +    if (!device || !acpi_driver_data(device))
+> +        return -EINVAL;
+> +
+> +    device->driver_data = NULL;
+> +    priv = driver_data.acpi_data;
+> +    driver_data.acpi_data = NULL;
+> +
+> +    if (priv && priv->uuid_iomap)
+> +        acpi_os_unmap_memory(priv->uuid_iomap, sizeof(uuid_t));
+> +    kfree(priv);
+> +
+> +    return 0;
+> +}
+> +
+> +static void vmgenid_acpi_notify(struct acpi_device *device, u32 event)
+> +{
+> +    struct acpi_data *priv;
+> +    uuid_t old_uuid;
+> +
+> +    if (!device || !acpi_driver_data(device)) {
+> +        pr_err("VMGENID notify with NULL private data\n");
+> +        return;
+> +    }
+> +    priv = driver_data.acpi_data;
+> +
+> +    /* update VM Generation UUID */
+> +    old_uuid = priv->uuid;
+> +    memcpy_fromio(&priv->uuid, priv->uuid_iomap, sizeof(uuid_t));
+> +
+> +    if (memcmp(&old_uuid, &priv->uuid, sizeof(uuid_t))) {
+> +        /* HW uuid updated */
+> +        vmgenid_bump_generation();
+> +        add_device_randomness(&priv->uuid, sizeof(uuid_t));
+> +    }
+> +}
+> +
+> +static const struct acpi_device_id vmgenid_ids[] = {
+> +    {"QEMUVGID", 0},
+> +    {"", 0},
+> +};
+> +
+> +static struct acpi_driver acpi_vmgenid_driver = {
+> +    .name = "vm_generation_id",
+> +    .ids = vmgenid_ids,
+> +    .owner = THIS_MODULE,
+> +    .ops = {
+> +        .add = vmgenid_acpi_add,
+> +        .remove = vmgenid_acpi_remove,
+> +        .notify = vmgenid_acpi_notify,
+> +    }
+> +};
+> +
+> +static int __init vmgenid_init(void)
+> +{
+> +    int ret;
+> +
+> +    driver_data.map_buf = get_zeroed_page(GFP_KERNEL);
+> +    if (!driver_data.map_buf)
+> +        return -ENOMEM;
+> +
+> +    atomic_set(&driver_data.generation_counter, 0);
+> +    atomic_set(&driver_data.outdated_watchers, 0);
+> +    init_waitqueue_head(&driver_data.read_waitq);
+> +    init_waitqueue_head(&driver_data.outdated_waitq);
+> +    spin_lock_init(&driver_data.lock);
+> +    driver_data.acpi_data = NULL;
+> +
+> +    ret = misc_register(&vmgenid_misc);
+> +    if (ret < 0) {
+> +        pr_err("misc_register() failed for vmgenid\n");
+> +        goto err;
+> +    }
+> +
+> +    ret = acpi_bus_register_driver(&acpi_vmgenid_driver);
+> +    if (ret < 0)
+> +        pr_warn("No vmgenid acpi device found\n");
+
+I think this needs to be reworked to support no-ACPI version. For
+instance we can call here something like
+
+	ret = vmgenid_hw_register();
+
+and have 
+
+#ifdef CONFIG_ACPI
+static int vmgenid_hw_register(void)
+{
+	return acpi_bus_register_driver(&acpi_vmgenid_driver);
+}
+#else
+static int vmgenid_hw_register(void)
+{
+	return 0;
+}
+#endif
+
+> +
+> +    return 0;
+> +
+> +err:
+> +    free_pages(driver_data.map_buf, 0);
+> +    driver_data.map_buf = 0;
+> +
+> +    return ret;
+> +}
+> +
+> +static void __exit vmgenid_exit(void)
+> +{
+> +    acpi_bus_unregister_driver(&acpi_vmgenid_driver);
+> +
+> +    misc_deregister(&vmgenid_misc);
+> +    free_pages(driver_data.map_buf, 0);
+> +    driver_data.map_buf = 0;
+> +}
+> +
+> +module_init(vmgenid_init);
+> +module_exit(vmgenid_exit);
+> +
+> +MODULE_AUTHOR("Adrian Catangiu");
+> +MODULE_DESCRIPTION("Virtual Machine Generation ID");
+> +MODULE_LICENSE("GPL");
+> +MODULE_VERSION("0.1");
+> diff --git a/include/uapi/linux/vmgenid.h b/include/uapi/linux/vmgenid.h
+> new file mode 100644
+> index 0000000..9316b00
+> --- /dev/null
+> +++ b/include/uapi/linux/vmgenid.h
+> @@ -0,0 +1,14 @@
+> +/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+> +
+> +#ifndef _UAPI_LINUX_VMGENID_H
+> +#define _UAPI_LINUX_VMGENID_H
+> +
+> +#include <linux/ioctl.h>
+> +
+> +#define VMGENID_IOCTL 0x2d
+> +#define VMGENID_GET_OUTDATED_WATCHERS _IO(VMGENID_IOCTL, 1)
+> +#define VMGENID_WAIT_WATCHERS         _IO(VMGENID_IOCTL, 2)
+> +#define VMGENID_FORCE_GEN_UPDATE      _IO(VMGENID_IOCTL, 3)
+> +
+> +#endif /* _UAPI_LINUX_VMGENID_H */
+> +
+> -- 
+> 2.7.4
+> 
+
 -- 
-2.29.2
-
+Sincerely yours,
+Mike.
