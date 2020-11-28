@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CC346C83010
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:10:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6445DC71156
+	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:11:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id AC1C1221FF
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:10:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3D4A521534
+	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:11:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731094AbgK1WJv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 28 Nov 2020 17:09:51 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:55225 "EHLO
+        id S1728013AbgK1WKd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 28 Nov 2020 17:10:33 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:55232 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730847AbgK1WJu (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 28 Nov 2020 17:09:50 -0500
+        with ESMTP id S1725294AbgK1WKd (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 28 Nov 2020 17:10:33 -0500
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kj83e-0002aM-EF; Sat, 28 Nov 2020 21:47:06 +0000
+        id 1kj835-0002aM-LK; Sat, 28 Nov 2020 21:46:32 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -60,9 +60,9 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v3 35/38] overlayfs: do not mount on top of idmapped mounts
-Date:   Sat, 28 Nov 2020 22:35:24 +0100
-Message-Id: <20201128213527.2669807-36-christian.brauner@ubuntu.com>
+Subject: [PATCH v3 21/38] af_unix: handle idmapped mounts
+Date:   Sat, 28 Nov 2020 22:35:10 +0100
+Message-Id: <20201128213527.2669807-22-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
 References: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
@@ -72,8 +72,11 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Prevent overlayfs from being mounted on top of idmapped mounts until we
-have ported it to handle this case and added proper testing for it.
+When binding a non-abstract AF_UNIX socket it will gain a representation in the
+filesystem. Enable the socket infrastructure to handle idmapped mounts by
+passing down the user namespace of the mount the socket will be created from. If
+the initial user namespace is passed nothing changes so non-idmapped mounts will
+see identical behavior as before.
 
 Cc: Christoph Hellwig <hch@lst.de>
 Cc: David Howells <dhowells@redhat.com>
@@ -82,32 +85,27 @@ Cc: linux-fsdevel@vger.kernel.org
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
-patch introduced
+unchanged
 
 /* v3 */
-- Amir Goldstein <amir73il@gmail.com>:
-  - Move check for idmapped lower layers into ovl_mount_dir_noesc().
-- David Howells <dhowells@redhat.com>:
-  - Adapt check after removing mnt_idmapped() helper.
+unchanged
 ---
- fs/overlayfs/super.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ net/unix/af_unix.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/fs/overlayfs/super.c b/fs/overlayfs/super.c
-index 0d4f2baf6836..5002f97b01e6 100644
---- a/fs/overlayfs/super.c
-+++ b/fs/overlayfs/super.c
-@@ -811,6 +811,10 @@ static int ovl_mount_dir_noesc(const char *name, struct path *path)
- 		pr_err("filesystem on '%s' not supported\n", name);
- 		goto out_put;
- 	}
-+	if (mnt_user_ns(path->mnt) != &init_user_ns) {
-+		pr_err("idmapped layers are currently not supported\n");
-+		goto out_put;
-+	}
- 	if (!d_is_dir(path->dentry)) {
- 		pr_err("'%s' not a directory\n", name);
- 		goto out_put;
+diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
+index b4987805e5e5..4be33240e9cc 100644
+--- a/net/unix/af_unix.c
++++ b/net/unix/af_unix.c
+@@ -996,7 +996,7 @@ static int unix_mknod(const char *sun_path, umode_t mode, struct path *res)
+ 	 */
+ 	err = security_path_mknod(&path, dentry, mode, 0);
+ 	if (!err) {
+-		err = vfs_mknod(&init_user_ns, d_inode(path.dentry), dentry, mode, 0);
++		err = vfs_mknod(mnt_user_ns(path.mnt), d_inode(path.dentry), dentry, mode, 0);
+ 		if (!err) {
+ 			res->mnt = mntget(path.mnt);
+ 			res->dentry = dget(dentry);
 -- 
 2.29.2
 
