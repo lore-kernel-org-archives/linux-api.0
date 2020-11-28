@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D5343C83014
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:12:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CC2EAC8301A
+	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:13:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id ACFB122259
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:12:59 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A3420221FF
+	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:13:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731830AbgK1WMs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 28 Nov 2020 17:12:48 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:55500 "EHLO
+        id S1732080AbgK1WMv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 28 Nov 2020 17:12:51 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:55503 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725294AbgK1WMr (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 28 Nov 2020 17:12:47 -0500
+        with ESMTP id S1730911AbgK1WMs (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 28 Nov 2020 17:12:48 -0500
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kj83H-0002aM-QC; Sat, 28 Nov 2020 21:46:43 +0000
+        id 1kj83M-0002aM-Pu; Sat, 28 Nov 2020 21:46:48 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -60,9 +60,9 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v3 26/38] ioctl: handle idmapped mounts
-Date:   Sat, 28 Nov 2020 22:35:15 +0100
-Message-Id: <20201128213527.2669807-27-christian.brauner@ubuntu.com>
+Subject: [PATCH v3 28/38] exec: handle idmapped mounts
+Date:   Sat, 28 Nov 2020 22:35:17 +0100
+Message-Id: <20201128213527.2669807-29-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
 References: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
@@ -72,9 +72,13 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Enable generic ioctls to handle idmapped mounts by passing down the mount's user
-namespace. If the initial user namespace is passed nothing changes so
-non-idmapped mounts will see identical behavior as before.
+When executing a setuid binary the kernel will verify in bprm_fill_uid() that
+the inode has a mapping in the caller's user namespace before setting the
+callers uid and gid. Let bprm_fill_uid() handle idmapped mounts. If the inode
+is accessed through an idmapped mount it is mapped according to the mount's
+user namespace. Afterwards the checks are identical to non-idmapped mounts. If
+the initial user namespace is passed nothing changes so non-idmapped mounts will
+see identical behavior as before.
 
 Cc: Christoph Hellwig <hch@lst.de>
 Cc: David Howells <dhowells@redhat.com>
@@ -83,51 +87,44 @@ Cc: linux-fsdevel@vger.kernel.org
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
-patch introduced
+unchanged
 
 /* v3 */
 unchanged
 ---
- fs/remap_range.c   | 7 +++++--
- fs/verity/enable.c | 2 +-
- 2 files changed, 6 insertions(+), 3 deletions(-)
+ fs/exec.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/fs/remap_range.c b/fs/remap_range.c
-index 9e5b27641756..fe7f07228462 100644
---- a/fs/remap_range.c
-+++ b/fs/remap_range.c
-@@ -432,13 +432,16 @@ EXPORT_SYMBOL(vfs_clone_file_range);
- /* Check whether we are allowed to dedupe the destination file */
- static bool allow_file_dedupe(struct file *file)
+diff --git a/fs/exec.c b/fs/exec.c
+index 10c06fdf78a7..7d6d3dd17e84 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1567,6 +1567,7 @@ static void check_unsafe_exec(struct linux_binprm *bprm)
+ static void bprm_fill_uid(struct linux_binprm *bprm, struct file *file)
  {
-+	struct user_namespace *user_ns = mnt_user_ns(file->f_path.mnt);
-+	struct inode *inode = file_inode(file);
+ 	/* Handle suid and sgid on files */
++	struct user_namespace *user_ns;
+ 	struct inode *inode;
+ 	unsigned int mode;
+ 	kuid_t uid;
+@@ -1583,13 +1584,15 @@ static void bprm_fill_uid(struct linux_binprm *bprm, struct file *file)
+ 	if (!(mode & (S_ISUID|S_ISGID)))
+ 		return;
+ 
++	user_ns = mnt_user_ns(file->f_path.mnt);
 +
- 	if (capable(CAP_SYS_ADMIN))
- 		return true;
- 	if (file->f_mode & FMODE_WRITE)
- 		return true;
--	if (uid_eq(current_fsuid(), file_inode(file)->i_uid))
-+	if (uid_eq(current_fsuid(), i_uid_into_mnt(user_ns, inode)))
- 		return true;
--	if (!inode_permission(&init_user_ns, file_inode(file), MAY_WRITE))
-+	if (!inode_permission(user_ns, inode, MAY_WRITE))
- 		return true;
- 	return false;
- }
-diff --git a/fs/verity/enable.c b/fs/verity/enable.c
-index 7449ef0050f4..8b9ea0f0850f 100644
---- a/fs/verity/enable.c
-+++ b/fs/verity/enable.c
-@@ -369,7 +369,7 @@ int fsverity_ioctl_enable(struct file *filp, const void __user *uarg)
- 	 * has verity enabled, and to stabilize the data being hashed.
- 	 */
+ 	/* Be careful if suid/sgid is set */
+ 	inode_lock(inode);
  
--	err = inode_permission(&init_user_ns, inode, MAY_WRITE);
-+	err = inode_permission(mnt_user_ns(filp->f_path.mnt), inode, MAY_WRITE);
- 	if (err)
- 		return err;
+ 	/* reload atomically mode/uid/gid now that lock held */
+ 	mode = inode->i_mode;
+-	uid = inode->i_uid;
+-	gid = inode->i_gid;
++	uid = i_uid_into_mnt(user_ns, inode);
++	gid = i_gid_into_mnt(user_ns, inode);
+ 	inode_unlock(inode);
  
+ 	/* We ignore suid/sgid if there are no mappings for them in the ns */
 -- 
 2.29.2
 
