@@ -4,156 +4,203 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B3A53C63777
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 21:49:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F1542C83017
+	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:07:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 77DD420857
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 21:49:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D5BE02224D
+	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:07:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2387894AbgK1VtN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 28 Nov 2020 16:49:13 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55642 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730731AbgK0TxD (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 27 Nov 2020 14:53:03 -0500
-Received: from bhuna.collabora.co.uk (bhuna.collabora.co.uk [IPv6:2a00:1098:0:82:1000:25:2eeb:e3e3])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 17834C08E9AA;
-        Fri, 27 Nov 2020 11:39:08 -0800 (PST)
-Received: from [127.0.0.1] (localhost [127.0.0.1])
-        (Authenticated sender: krisman)
-        with ESMTPSA id 069C31F465A0
-From:   Gabriel Krisman Bertazi <krisman@collabora.com>
-To:     luto@kernel.org, tglx@linutronix.de, keescook@chromium.org
-Cc:     gofmanp@gmail.com, christian.brauner@ubuntu.com,
-        peterz@infradead.org, willy@infradead.org, shuah@kernel.org,
-        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-kselftest@vger.kernel.org, x86@kernel.org,
-        Gabriel Krisman Bertazi <krisman@collabora.com>,
-        kernel@collabora.com
-Subject: [PATCH v8 7/7] docs: Document Syscall User Dispatch
-Date:   Fri, 27 Nov 2020 14:32:38 -0500
-Message-Id: <20201127193238.821364-8-krisman@collabora.com>
+        id S1731392AbgK1WGt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 28 Nov 2020 17:06:49 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:55201 "EHLO
+        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726122AbgK1WGr (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 28 Nov 2020 17:06:47 -0500
+Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
+        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.86_2)
+        (envelope-from <christian.brauner@ubuntu.com>)
+        id 1kj83X-0002aM-3g; Sat, 28 Nov 2020 21:46:59 +0000
+From:   Christian Brauner <christian.brauner@ubuntu.com>
+To:     Alexander Viro <viro@zeniv.linux.org.uk>,
+        Christoph Hellwig <hch@infradead.org>,
+        linux-fsdevel@vger.kernel.org
+Cc:     John Johansen <john.johansen@canonical.com>,
+        James Morris <jmorris@namei.org>,
+        Mimi Zohar <zohar@linux.ibm.com>,
+        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
+        Stephen Smalley <stephen.smalley.work@gmail.com>,
+        Casey Schaufler <casey@schaufler-ca.com>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andreas Dilger <adilger.kernel@dilger.ca>,
+        OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>,
+        Geoffrey Thomas <geofft@ldpreload.com>,
+        Mrunal Patel <mpatel@redhat.com>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Theodore Tso <tytso@mit.edu>, Alban Crequy <alban@kinvolk.io>,
+        Tycho Andersen <tycho@tycho.ws>,
+        David Howells <dhowells@redhat.com>,
+        James Bottomley <James.Bottomley@hansenpartnership.com>,
+        Seth Forshee <seth.forshee@canonical.com>,
+        =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
+        Aleksa Sarai <cyphar@cyphar.com>,
+        Lennart Poettering <lennart@poettering.net>,
+        "Eric W. Biederman" <ebiederm@xmission.com>, smbarber@chromium.org,
+        Phil Estes <estesp@gmail.com>, Serge Hallyn <serge@hallyn.com>,
+        Kees Cook <keescook@chromium.org>,
+        Todd Kjos <tkjos@google.com>, Paul Moore <paul@paul-moore.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        containers@lists.linux-foundation.org, fstests@vger.kernel.org,
+        linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-ext4@vger.kernel.org, linux-integrity@vger.kernel.org,
+        selinux@vger.kernel.org,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Christoph Hellwig <hch@lst.de>
+Subject: [PATCH v3 32/38] fat: handle idmapped mounts
+Date:   Sat, 28 Nov 2020 22:35:21 +0100
+Message-Id: <20201128213527.2669807-33-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.29.2
-In-Reply-To: <20201127193238.821364-1-krisman@collabora.com>
-References: <20201127193238.821364-1-krisman@collabora.com>
+In-Reply-To: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
+References: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Explain the interface, provide some background and security notes.
+Let fat handle idmapped mounts. This allows to have the same fat mount appear
+in multiple locations with different id mappings. This allows to expose a vfat
+formatted USB stick to multiple user with different ids on the host or in user
+namespaces allowing for dac permissions:
 
-Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
-Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+mount -o uid=1000,gid=1000 /dev/sdb /mnt
 
+u1001@f2-vm:/lower1$ ls -ln /mnt/
+total 4
+-rwxr-xr-x 1 1000 1000 4 Oct 28 03:44 aaa
+-rwxr-xr-x 1 1000 1000 0 Oct 28 01:09 bbb
+-rwxr-xr-x 1 1000 1000 0 Oct 28 01:10 ccc
+-rwxr-xr-x 1 1000 1000 0 Oct 28 03:46 ddd
+-rwxr-xr-x 1 1000 1000 0 Oct 28 04:01 eee
+
+mount2 --idmap both:1000:1001:1
+
+u1001@f2-vm:/lower1$ ls -ln /lower1/
+total 4
+-rwxr-xr-x 1 1001 1001 4 Oct 28 03:44 aaa
+-rwxr-xr-x 1 1001 1001 0 Oct 28 01:09 bbb
+-rwxr-xr-x 1 1001 1001 0 Oct 28 01:10 ccc
+-rwxr-xr-x 1 1001 1001 0 Oct 28 03:46 ddd
+-rwxr-xr-x 1 1001 1001 0 Oct 28 04:01 eee
+
+u1001@f2-vm:/lower1$ touch /lower1/fff
+
+u1001@f2-vm:/lower1$ ls -ln /lower1/fff
+-rwxr-xr-x 1 1001 1001 0 Oct 28 04:03 /lower1/fff
+
+u1001@f2-vm:/lower1$ ls -ln /mnt/fff
+-rwxr-xr-x 1 1000 1000 0 Oct 28 04:03 /mnt/fff
+
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: David Howells <dhowells@redhat.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: linux-fsdevel@vger.kernel.org
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
-Changes since v7:
-  - Change process -> thread (Florian Weimer)
-  - Drop bogus reference to CONFIG_SYSCALL_USER_DISPATCH (me)
-  - Document the interval as a half-open interval (me)
----
- .../admin-guide/syscall-user-dispatch.rst     | 87 +++++++++++++++++++
- 1 file changed, 87 insertions(+)
- create mode 100644 Documentation/admin-guide/syscall-user-dispatch.rst
+/* v2 */
+unchanged
 
-diff --git a/Documentation/admin-guide/syscall-user-dispatch.rst b/Documentation/admin-guide/syscall-user-dispatch.rst
-new file mode 100644
-index 000000000000..0ee7491440b3
---- /dev/null
-+++ b/Documentation/admin-guide/syscall-user-dispatch.rst
-@@ -0,0 +1,87 @@
-+.. SPDX-License-Identifier: GPL-2.0
-+
-+=====================
-+Syscall User Dispatch
-+=====================
-+
-+Background
-+----------
-+
-+Compatibility layers like Wine need a way to efficiently emulate system
-+calls of only a part of their process - the part that has the
-+incompatible code - while being able to execute native syscalls without
-+a high performance penalty on the native part of the process.  Seccomp
-+falls short on this task, since it has limited support to efficiently
-+filter syscalls based on memory regions, and it doesn't support removing
-+filters.  Therefore a new mechanism is necessary.
-+
-+Syscall User Dispatch brings the filtering of the syscall dispatcher
-+address back to userspace.  The application is in control of a flip
-+switch, indicating the current personality of the process.  A
-+multiple-personality application can then flip the switch without
-+invoking the kernel, when crossing the compatibility layer API
-+boundaries, to enable/disable the syscall redirection and execute
-+syscalls directly (disabled) or send them to be emulated in userspace
-+through a SIGSYS.
-+
-+The goal of this design is to provide very quick compatibility layer
-+boundary crosses, which is achieved by not executing a syscall to change
-+personality every time the compatibility layer executes.  Instead, a
-+userspace memory region exposed to the kernel indicates the current
-+personality, and the application simply modifies that variable to
-+configure the mechanism.
-+
-+There is a relatively high cost associated with handling signals on most
-+architectures, like x86, but at least for Wine, syscalls issued by
-+native Windows code are currently not known to be a performance problem,
-+since they are quite rare, at least for modern gaming applications.
-+
-+Since this mechanism is designed to capture syscalls issued by
-+non-native applications, it must function on syscalls whose invocation
-+ABI is completely unexpected to Linux.  Syscall User Dispatch, therefore
-+doesn't rely on any of the syscall ABI to make the filtering.  It uses
-+only the syscall dispatcher address and the userspace key.
-+
-+Interface
-+---------
-+
-+A thread can setup this mechanism on supported kernels by executing the
-+following prctl:
-+
-+  prctl(PR_SET_SYSCALL_USER_DISPATCH, <op>, <offset>, <length>, [selector])
-+
-+<op> is either PR_SYS_DISPATCH_ON or PR_SYS_DISPATCH_OFF, to enable and
-+disable the mechanism globally for that thread.  When
-+PR_SYS_DISPATCH_OFF is used, the other fields must be zero.
-+
-+[<offset>, <offset>+<length>) delimit a memory region interval
-+from which syscalls are always executed directly, regardless of the
-+userspace selector.  This provides a fast path for the C library, which
-+includes the most common syscall dispatchers in the native code
-+applications, and also provides a way for the signal handler to return
-+without triggering a nested SIGSYS on (rt_)sigreturn.  Users of this
-+interface should make sure that at least the signal trampoline code is
-+included in this region. In addition, for syscalls that implement the
-+trampoline code on the vDSO, that trampoline is never intercepted.
-+
-+[selector] is a pointer to a char-sized region in the process memory
-+region, that provides a quick way to enable disable syscall redirection
-+thread-wide, without the need to invoke the kernel directly.  selector
-+can be set to PR_SYS_DISPATCH_ON or PR_SYS_DISPATCH_OFF.  Any other
-+value should terminate the program with a SIGSYS.
-+
-+Security Notes
-+--------------
-+
-+Syscall User Dispatch provides functionality for compatibility layers to
-+quickly capture system calls issued by a non-native part of the
-+application, while not impacting the Linux native regions of the
-+process.  It is not a mechanism for sandboxing system calls, and it
-+should not be seen as a security mechanism, since it is trivial for a
-+malicious application to subvert the mechanism by jumping to an allowed
-+dispatcher region prior to executing the syscall, or to discover the
-+address and modify the selector value.  If the use case requires any
-+kind of security sandboxing, Seccomp should be used instead.
-+
-+Any fork or exec of the existing process resets the mechanism to
-+PR_SYS_DISPATCH_OFF.
+/* v3 */
+unchanged
+---
+ fs/fat/file.c        | 15 ++++++++-------
+ fs/fat/namei_msdos.c |  2 +-
+ fs/fat/namei_vfat.c  |  2 +-
+ 3 files changed, 10 insertions(+), 9 deletions(-)
+
+diff --git a/fs/fat/file.c b/fs/fat/file.c
+index 5b12cf209801..15dc8d27aa72 100644
+--- a/fs/fat/file.c
++++ b/fs/fat/file.c
+@@ -398,7 +398,7 @@ int fat_getattr(const struct path *path, struct kstat *stat,
+ 		u32 request_mask, unsigned int flags)
+ {
+ 	struct inode *inode = d_inode(path->dentry);
+-	generic_fillattr(&init_user_ns, inode, stat);
++	generic_fillattr(mnt_user_ns(path->mnt), inode, stat);
+ 	stat->blksize = MSDOS_SB(inode->i_sb)->cluster_size;
+ 
+ 	if (MSDOS_SB(inode->i_sb)->options.nfs == FAT_NFS_NOSTALE_RO) {
+@@ -447,12 +447,13 @@ static int fat_sanitize_mode(const struct msdos_sb_info *sbi,
+ 	return 0;
+ }
+ 
+-static int fat_allow_set_time(struct msdos_sb_info *sbi, struct inode *inode)
++static int fat_allow_set_time(struct user_namespace *user_ns,
++			      struct msdos_sb_info *sbi, struct inode *inode)
+ {
+ 	umode_t allow_utime = sbi->options.allow_utime;
+ 
+-	if (!uid_eq(current_fsuid(), inode->i_uid)) {
+-		if (in_group_p(inode->i_gid))
++	if (!uid_eq(current_fsuid(), i_uid_into_mnt(user_ns, inode))) {
++		if (in_group_p(i_gid_into_mnt(user_ns, inode)))
+ 			allow_utime >>= 3;
+ 		if (allow_utime & MAY_WRITE)
+ 			return 1;
+@@ -477,11 +478,11 @@ int fat_setattr(struct user_namespace *user_ns, struct dentry *dentry,
+ 	/* Check for setting the inode time. */
+ 	ia_valid = attr->ia_valid;
+ 	if (ia_valid & TIMES_SET_FLAGS) {
+-		if (fat_allow_set_time(sbi, inode))
++		if (fat_allow_set_time(user_ns, sbi, inode))
+ 			attr->ia_valid &= ~TIMES_SET_FLAGS;
+ 	}
+ 
+-	error = setattr_prepare(&init_user_ns, dentry, attr);
++	error = setattr_prepare(user_ns, dentry, attr);
+ 	attr->ia_valid = ia_valid;
+ 	if (error) {
+ 		if (sbi->options.quiet)
+@@ -551,7 +552,7 @@ int fat_setattr(struct user_namespace *user_ns, struct dentry *dentry,
+ 		fat_truncate_time(inode, &attr->ia_mtime, S_MTIME);
+ 	attr->ia_valid &= ~(ATTR_ATIME|ATTR_CTIME|ATTR_MTIME);
+ 
+-	setattr_copy(&init_user_ns, inode, attr);
++	setattr_copy(user_ns, inode, attr);
+ 	mark_inode_dirty(inode);
+ out:
+ 	return error;
+diff --git a/fs/fat/namei_msdos.c b/fs/fat/namei_msdos.c
+index 608b0606f3ca..0f871a1b6620 100644
+--- a/fs/fat/namei_msdos.c
++++ b/fs/fat/namei_msdos.c
+@@ -666,7 +666,7 @@ static struct file_system_type msdos_fs_type = {
+ 	.name		= "msdos",
+ 	.mount		= msdos_mount,
+ 	.kill_sb	= kill_block_super,
+-	.fs_flags	= FS_REQUIRES_DEV,
++	.fs_flags	= FS_REQUIRES_DEV | FS_ALLOW_IDMAP,
+ };
+ MODULE_ALIAS_FS("msdos");
+ 
+diff --git a/fs/fat/namei_vfat.c b/fs/fat/namei_vfat.c
+index 34903d14d6a6..177d939b95da 100644
+--- a/fs/fat/namei_vfat.c
++++ b/fs/fat/namei_vfat.c
+@@ -1063,7 +1063,7 @@ static struct file_system_type vfat_fs_type = {
+ 	.name		= "vfat",
+ 	.mount		= vfat_mount,
+ 	.kill_sb	= kill_block_super,
+-	.fs_flags	= FS_REQUIRES_DEV,
++	.fs_flags	= FS_REQUIRES_DEV | FS_ALLOW_IDMAP,
+ };
+ MODULE_ALIAS_FS("vfat");
+ 
 -- 
 2.29.2
 
