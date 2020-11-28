@@ -5,25 +5,25 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F1542C83017
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:07:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AE03CC8301D
+	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:08:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D5BE02224D
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:07:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9325B21D7A
+	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:08:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731392AbgK1WGt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 28 Nov 2020 17:06:49 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:55201 "EHLO
+        id S1730942AbgK1WHd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 28 Nov 2020 17:07:33 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:55205 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726122AbgK1WGr (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 28 Nov 2020 17:06:47 -0500
+        with ESMTP id S1730847AbgK1WHc (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 28 Nov 2020 17:07:32 -0500
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kj83X-0002aM-3g; Sat, 28 Nov 2020 21:46:59 +0000
+        id 1kj83F-0002aM-Ku; Sat, 28 Nov 2020 21:46:41 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -60,9 +60,9 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v3 32/38] fat: handle idmapped mounts
-Date:   Sat, 28 Nov 2020 22:35:21 +0100
-Message-Id: <20201128213527.2669807-33-christian.brauner@ubuntu.com>
+Subject: [PATCH v3 25/38] init: handle idmapped mounts
+Date:   Sat, 28 Nov 2020 22:35:14 +0100
+Message-Id: <20201128213527.2669807-26-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
 References: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
@@ -72,38 +72,9 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Let fat handle idmapped mounts. This allows to have the same fat mount appear
-in multiple locations with different id mappings. This allows to expose a vfat
-formatted USB stick to multiple user with different ids on the host or in user
-namespaces allowing for dac permissions:
-
-mount -o uid=1000,gid=1000 /dev/sdb /mnt
-
-u1001@f2-vm:/lower1$ ls -ln /mnt/
-total 4
--rwxr-xr-x 1 1000 1000 4 Oct 28 03:44 aaa
--rwxr-xr-x 1 1000 1000 0 Oct 28 01:09 bbb
--rwxr-xr-x 1 1000 1000 0 Oct 28 01:10 ccc
--rwxr-xr-x 1 1000 1000 0 Oct 28 03:46 ddd
--rwxr-xr-x 1 1000 1000 0 Oct 28 04:01 eee
-
-mount2 --idmap both:1000:1001:1
-
-u1001@f2-vm:/lower1$ ls -ln /lower1/
-total 4
--rwxr-xr-x 1 1001 1001 4 Oct 28 03:44 aaa
--rwxr-xr-x 1 1001 1001 0 Oct 28 01:09 bbb
--rwxr-xr-x 1 1001 1001 0 Oct 28 01:10 ccc
--rwxr-xr-x 1 1001 1001 0 Oct 28 03:46 ddd
--rwxr-xr-x 1 1001 1001 0 Oct 28 04:01 eee
-
-u1001@f2-vm:/lower1$ touch /lower1/fff
-
-u1001@f2-vm:/lower1$ ls -ln /lower1/fff
--rwxr-xr-x 1 1001 1001 0 Oct 28 04:03 /lower1/fff
-
-u1001@f2-vm:/lower1$ ls -ln /mnt/fff
--rwxr-xr-x 1 1000 1000 0 Oct 28 04:03 /mnt/fff
+Enable the init helpers to handle idmapped mounts by passing down the mount's
+user namespace. If the initial user namespace is passed nothing changes so
+non-idmapped mounts will see identical behavior as before.
 
 Cc: Christoph Hellwig <hch@lst.de>
 Cc: David Howells <dhowells@redhat.com>
@@ -112,95 +83,85 @@ Cc: linux-fsdevel@vger.kernel.org
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
-unchanged
+patch introduced
 
 /* v3 */
 unchanged
 ---
- fs/fat/file.c        | 15 ++++++++-------
- fs/fat/namei_msdos.c |  2 +-
- fs/fat/namei_vfat.c  |  2 +-
- 3 files changed, 10 insertions(+), 9 deletions(-)
+ fs/init.c | 18 ++++++++++--------
+ 1 file changed, 10 insertions(+), 8 deletions(-)
 
-diff --git a/fs/fat/file.c b/fs/fat/file.c
-index 5b12cf209801..15dc8d27aa72 100644
---- a/fs/fat/file.c
-+++ b/fs/fat/file.c
-@@ -398,7 +398,7 @@ int fat_getattr(const struct path *path, struct kstat *stat,
- 		u32 request_mask, unsigned int flags)
- {
- 	struct inode *inode = d_inode(path->dentry);
--	generic_fillattr(&init_user_ns, inode, stat);
-+	generic_fillattr(mnt_user_ns(path->mnt), inode, stat);
- 	stat->blksize = MSDOS_SB(inode->i_sb)->cluster_size;
- 
- 	if (MSDOS_SB(inode->i_sb)->options.nfs == FAT_NFS_NOSTALE_RO) {
-@@ -447,12 +447,13 @@ static int fat_sanitize_mode(const struct msdos_sb_info *sbi,
- 	return 0;
- }
- 
--static int fat_allow_set_time(struct msdos_sb_info *sbi, struct inode *inode)
-+static int fat_allow_set_time(struct user_namespace *user_ns,
-+			      struct msdos_sb_info *sbi, struct inode *inode)
- {
- 	umode_t allow_utime = sbi->options.allow_utime;
- 
--	if (!uid_eq(current_fsuid(), inode->i_uid)) {
--		if (in_group_p(inode->i_gid))
-+	if (!uid_eq(current_fsuid(), i_uid_into_mnt(user_ns, inode))) {
-+		if (in_group_p(i_gid_into_mnt(user_ns, inode)))
- 			allow_utime >>= 3;
- 		if (allow_utime & MAY_WRITE)
- 			return 1;
-@@ -477,11 +478,11 @@ int fat_setattr(struct user_namespace *user_ns, struct dentry *dentry,
- 	/* Check for setting the inode time. */
- 	ia_valid = attr->ia_valid;
- 	if (ia_valid & TIMES_SET_FLAGS) {
--		if (fat_allow_set_time(sbi, inode))
-+		if (fat_allow_set_time(user_ns, sbi, inode))
- 			attr->ia_valid &= ~TIMES_SET_FLAGS;
- 	}
- 
--	error = setattr_prepare(&init_user_ns, dentry, attr);
-+	error = setattr_prepare(user_ns, dentry, attr);
- 	attr->ia_valid = ia_valid;
- 	if (error) {
- 		if (sbi->options.quiet)
-@@ -551,7 +552,7 @@ int fat_setattr(struct user_namespace *user_ns, struct dentry *dentry,
- 		fat_truncate_time(inode, &attr->ia_mtime, S_MTIME);
- 	attr->ia_valid &= ~(ATTR_ATIME|ATTR_CTIME|ATTR_MTIME);
- 
--	setattr_copy(&init_user_ns, inode, attr);
-+	setattr_copy(user_ns, inode, attr);
- 	mark_inode_dirty(inode);
- out:
+diff --git a/fs/init.c b/fs/init.c
+index 76f493600030..41adfee75763 100644
+--- a/fs/init.c
++++ b/fs/init.c
+@@ -49,7 +49,7 @@ int __init init_chdir(const char *filename)
+ 	error = kern_path(filename, LOOKUP_FOLLOW | LOOKUP_DIRECTORY, &path);
+ 	if (error)
+ 		return error;
+-	error = inode_permission(&init_user_ns, path.dentry->d_inode,
++	error = inode_permission(mnt_user_ns(path.mnt), path.dentry->d_inode,
+ 				 MAY_EXEC | MAY_CHDIR);
+ 	if (!error)
+ 		set_fs_pwd(current->fs, &path);
+@@ -65,7 +65,7 @@ int __init init_chroot(const char *filename)
+ 	error = kern_path(filename, LOOKUP_FOLLOW | LOOKUP_DIRECTORY, &path);
+ 	if (error)
+ 		return error;
+-	error = inode_permission(&init_user_ns, path.dentry->d_inode,
++	error = inode_permission(mnt_user_ns(path.mnt), path.dentry->d_inode,
+ 				 MAY_EXEC | MAY_CHDIR);
+ 	if (error)
+ 		goto dput_and_out;
+@@ -120,7 +120,7 @@ int __init init_eaccess(const char *filename)
+ 	error = kern_path(filename, LOOKUP_FOLLOW, &path);
+ 	if (error)
+ 		return error;
+-	error = inode_permission(&init_user_ns, d_inode(path.dentry),
++	error = inode_permission(mnt_user_ns(path.mnt), d_inode(path.dentry),
+ 				 MAY_ACCESS);
+ 	path_put(&path);
  	return error;
-diff --git a/fs/fat/namei_msdos.c b/fs/fat/namei_msdos.c
-index 608b0606f3ca..0f871a1b6620 100644
---- a/fs/fat/namei_msdos.c
-+++ b/fs/fat/namei_msdos.c
-@@ -666,7 +666,7 @@ static struct file_system_type msdos_fs_type = {
- 	.name		= "msdos",
- 	.mount		= msdos_mount,
- 	.kill_sb	= kill_block_super,
--	.fs_flags	= FS_REQUIRES_DEV,
-+	.fs_flags	= FS_REQUIRES_DEV | FS_ALLOW_IDMAP,
- };
- MODULE_ALIAS_FS("msdos");
- 
-diff --git a/fs/fat/namei_vfat.c b/fs/fat/namei_vfat.c
-index 34903d14d6a6..177d939b95da 100644
---- a/fs/fat/namei_vfat.c
-+++ b/fs/fat/namei_vfat.c
-@@ -1063,7 +1063,7 @@ static struct file_system_type vfat_fs_type = {
- 	.name		= "vfat",
- 	.mount		= vfat_mount,
- 	.kill_sb	= kill_block_super,
--	.fs_flags	= FS_REQUIRES_DEV,
-+	.fs_flags	= FS_REQUIRES_DEV | FS_ALLOW_IDMAP,
- };
- MODULE_ALIAS_FS("vfat");
- 
+@@ -160,8 +160,8 @@ int __init init_mknod(const char *filename, umode_t mode, unsigned int dev)
+ 		mode &= ~current_umask();
+ 	error = security_path_mknod(&path, dentry, mode, dev);
+ 	if (!error)
+-		error = vfs_mknod(&init_user_ns, path.dentry->d_inode, dentry,
+-				  mode, new_decode_dev(dev));
++		error = vfs_mknod(mnt_user_ns(path.mnt), path.dentry->d_inode,
++				  dentry, mode, new_decode_dev(dev));
+ 	done_path_create(&path, dentry);
+ 	return error;
+ }
+@@ -190,7 +190,7 @@ int __init init_link(const char *oldname, const char *newname)
+ 	error = security_path_link(old_path.dentry, &new_path, new_dentry);
+ 	if (error)
+ 		goto out_dput;
+-	error = vfs_link(old_path.dentry, &init_user_ns, 
++	error = vfs_link(old_path.dentry, mnt_user_ns(new_path.mnt),
+ 			 new_path.dentry->d_inode, new_dentry, NULL);
+ out_dput:
+ 	done_path_create(&new_path, new_dentry);
+@@ -210,7 +210,8 @@ int __init init_symlink(const char *oldname, const char *newname)
+ 		return PTR_ERR(dentry);
+ 	error = security_path_symlink(&path, dentry, oldname);
+ 	if (!error)
+-		error = vfs_symlink(&init_user_ns, path.dentry->d_inode, dentry, oldname);
++		error = vfs_symlink(mnt_user_ns(path.mnt), path.dentry->d_inode,
++				    dentry, oldname);
+ 	done_path_create(&path, dentry);
+ 	return error;
+ }
+@@ -233,7 +234,8 @@ int __init init_mkdir(const char *pathname, umode_t mode)
+ 		mode &= ~current_umask();
+ 	error = security_path_mkdir(&path, dentry, mode);
+ 	if (!error)
+-		error = vfs_mkdir(&init_user_ns, path.dentry->d_inode, dentry, mode);
++		error = vfs_mkdir(mnt_user_ns(path.mnt), path.dentry->d_inode,
++				  dentry, mode);
+ 	done_path_create(&path, dentry);
+ 	return error;
+ }
 -- 
 2.29.2
 
