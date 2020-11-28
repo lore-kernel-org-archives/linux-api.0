@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EE070C8301C
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:10:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CC346C83010
+	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:10:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D47A321D7F
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:10:32 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AC1C1221FF
+	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:10:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2389989AbgK1WJy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 28 Nov 2020 17:09:54 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:55226 "EHLO
+        id S1731094AbgK1WJv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 28 Nov 2020 17:09:51 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:55225 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730916AbgK1WJx (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 28 Nov 2020 17:09:53 -0500
+        with ESMTP id S1730847AbgK1WJu (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 28 Nov 2020 17:09:50 -0500
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kj83B-0002aM-L3; Sat, 28 Nov 2020 21:46:37 +0000
+        id 1kj83e-0002aM-EF; Sat, 28 Nov 2020 21:47:06 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -60,9 +60,9 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v3 23/38] fcntl: handle idmapped mounts
-Date:   Sat, 28 Nov 2020 22:35:12 +0100
-Message-Id: <20201128213527.2669807-24-christian.brauner@ubuntu.com>
+Subject: [PATCH v3 35/38] overlayfs: do not mount on top of idmapped mounts
+Date:   Sat, 28 Nov 2020 22:35:24 +0100
+Message-Id: <20201128213527.2669807-36-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
 References: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
@@ -72,9 +72,8 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Enable the setfl() helper to handle idmapped mounts by passing down the
-mount's user namespace. If the initial user namespace is passed nothing changes
-so non-idmapped mounts will see identical behavior as before.
+Prevent overlayfs from being mounted on top of idmapped mounts until we
+have ported it to handle this case and added proper testing for it.
 
 Cc: Christoph Hellwig <hch@lst.de>
 Cc: David Howells <dhowells@redhat.com>
@@ -86,32 +85,29 @@ Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 patch introduced
 
 /* v3 */
-unchanged
+- Amir Goldstein <amir73il@gmail.com>:
+  - Move check for idmapped lower layers into ovl_mount_dir_noesc().
+- David Howells <dhowells@redhat.com>:
+  - Adapt check after removing mnt_idmapped() helper.
 ---
- fs/fcntl.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ fs/overlayfs/super.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/fs/fcntl.c b/fs/fcntl.c
-index df091d435603..ed330fa91438 100644
---- a/fs/fcntl.c
-+++ b/fs/fcntl.c
-@@ -25,6 +25,7 @@
- #include <linux/user_namespace.h>
- #include <linux/memfd.h>
- #include <linux/compat.h>
-+#include <linux/mount.h>
- 
- #include <linux/poll.h>
- #include <asm/siginfo.h>
-@@ -46,7 +47,7 @@ static int setfl(int fd, struct file * filp, unsigned long arg)
- 
- 	/* O_NOATIME can only be set by the owner or superuser */
- 	if ((arg & O_NOATIME) && !(filp->f_flags & O_NOATIME))
--		if (!inode_owner_or_capable(&init_user_ns, inode))
-+		if (!inode_owner_or_capable(mnt_user_ns(filp->f_path.mnt), inode))
- 			return -EPERM;
- 
- 	/* required for strict SunOS emulation */
+diff --git a/fs/overlayfs/super.c b/fs/overlayfs/super.c
+index 0d4f2baf6836..5002f97b01e6 100644
+--- a/fs/overlayfs/super.c
++++ b/fs/overlayfs/super.c
+@@ -811,6 +811,10 @@ static int ovl_mount_dir_noesc(const char *name, struct path *path)
+ 		pr_err("filesystem on '%s' not supported\n", name);
+ 		goto out_put;
+ 	}
++	if (mnt_user_ns(path->mnt) != &init_user_ns) {
++		pr_err("idmapped layers are currently not supported\n");
++		goto out_put;
++	}
+ 	if (!d_is_dir(path->dentry)) {
+ 		pr_err("'%s' not a directory\n", name);
+ 		goto out_put;
 -- 
 2.29.2
 
