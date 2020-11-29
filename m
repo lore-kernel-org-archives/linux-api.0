@@ -2,91 +2,112 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-18.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	UNPARSEABLE_RELAY,USER_AGENT_GIT autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 29B59C83017
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:55:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B3BE7C64E7A
+	for <linux-api@archiver.kernel.org>; Sun, 29 Nov 2020 03:05:38 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 06E942224A
-	for <linux-api@archiver.kernel.org>; Sat, 28 Nov 2020 22:55:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 74C3820853
+	for <linux-api@archiver.kernel.org>; Sun, 29 Nov 2020 03:05:38 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="kwTcE4Us"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1732454AbgK1Wzd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 28 Nov 2020 17:55:33 -0500
-Received: from mail.hallyn.com ([178.63.66.53]:60772 "EHLO mail.hallyn.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727070AbgK1Wzd (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Sat, 28 Nov 2020 17:55:33 -0500
-Received: by mail.hallyn.com (Postfix, from userid 1001)
-        id 65BD38AB; Sat, 28 Nov 2020 16:54:50 -0600 (CST)
-Date:   Sat, 28 Nov 2020 16:54:50 -0600
-From:   "Serge E. Hallyn" <serge@hallyn.com>
-To:     Christian Brauner <christian.brauner@ubuntu.com>
-Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
-        Christoph Hellwig <hch@infradead.org>,
-        linux-fsdevel@vger.kernel.org,
-        John Johansen <john.johansen@canonical.com>,
-        James Morris <jmorris@namei.org>,
-        Mimi Zohar <zohar@linux.ibm.com>,
-        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
-        Stephen Smalley <stephen.smalley.work@gmail.com>,
-        Casey Schaufler <casey@schaufler-ca.com>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Andreas Dilger <adilger.kernel@dilger.ca>,
-        OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>,
-        Geoffrey Thomas <geofft@ldpreload.com>,
-        Mrunal Patel <mpatel@redhat.com>,
-        Josh Triplett <josh@joshtriplett.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Theodore Tso <tytso@mit.edu>, Alban Crequy <alban@kinvolk.io>,
-        Tycho Andersen <tycho@tycho.ws>,
-        David Howells <dhowells@redhat.com>,
-        James Bottomley <James.Bottomley@hansenpartnership.com>,
-        Seth Forshee <seth.forshee@canonical.com>,
-        =?iso-8859-1?Q?St=E9phane?= Graber <stgraber@ubuntu.com>,
-        Aleksa Sarai <cyphar@cyphar.com>,
-        Lennart Poettering <lennart@poettering.net>,
-        "Eric W. Biederman" <ebiederm@xmission.com>, smbarber@chromium.org,
-        Phil Estes <estesp@gmail.com>, Serge Hallyn <serge@hallyn.com>,
-        Kees Cook <keescook@chromium.org>,
-        Todd Kjos <tkjos@google.com>, Paul Moore <paul@paul-moore.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        containers@lists.linux-foundation.org, fstests@vger.kernel.org,
-        linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-ext4@vger.kernel.org, linux-integrity@vger.kernel.org,
-        selinux@vger.kernel.org
-Subject: Re: [PATCH v3 00/38] idmapped mounts
-Message-ID: <20201128225450.GC22812@mail.hallyn.com>
-References: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
-User-Agent: Mutt/1.9.4 (2018-02-28)
+        id S1725839AbgK2DFi (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 28 Nov 2020 22:05:38 -0500
+Received: from aserp2130.oracle.com ([141.146.126.79]:32934 "EHLO
+        aserp2130.oracle.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725294AbgK2DFh (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 28 Nov 2020 22:05:37 -0500
+Received: from pps.filterd (aserp2130.oracle.com [127.0.0.1])
+        by aserp2130.oracle.com (8.16.0.42/8.16.0.42) with SMTP id 0AT34oVc143863;
+        Sun, 29 Nov 2020 03:04:50 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=from : to : cc :
+ subject : date : message-id : in-reply-to : references; s=corp-2020-01-29;
+ bh=gxNaaU/W3FUj48sXjVNEtaJGXcSYRrY8PpuBzT4uXH0=;
+ b=kwTcE4UsJrxzCFG1bfoUuleo+uvEJ8tU4pa9JO5LUXq5B+beTxX9QUjPn8qGmGtGEFYP
+ Sf/KIFApE8gJ0vUVqb1CFHROeTJ5tGteveMrU9xvBy3cKApTIMEIXc7ivyf5+WoEQO+R
+ shs1oNr1IfzJ6O3DnIlOug9Gt19RKf0QXd/UfRNIDmVSVOjb+X7TT7NnKx2QFAQdKS+F
+ tyHhkyWbx7fm3KFVmn7SIwL2h/8Ulm7xbLIAEgcc1Qkpopz8IqXulRO5qIESQVL7TWet
+ FQYA+JCnRQwlFlkvp1Q95zrt3m40apGiEEPGikRcemjffo5cAU8r1CXDKPsLSc11LjJa /Q== 
+Received: from userp3020.oracle.com (userp3020.oracle.com [156.151.31.79])
+        by aserp2130.oracle.com with ESMTP id 353c2ahmqw-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=FAIL);
+        Sun, 29 Nov 2020 03:04:50 +0000
+Received: from pps.filterd (userp3020.oracle.com [127.0.0.1])
+        by userp3020.oracle.com (8.16.0.42/8.16.0.42) with SMTP id 0AT305Zi138952;
+        Sun, 29 Nov 2020 03:04:50 GMT
+Received: from userv0122.oracle.com (userv0122.oracle.com [156.151.31.75])
+        by userp3020.oracle.com with ESMTP id 3540anwh4t-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+        Sun, 29 Nov 2020 03:04:50 +0000
+Received: from abhmp0016.oracle.com (abhmp0016.oracle.com [141.146.116.22])
+        by userv0122.oracle.com (8.14.4/8.14.4) with ESMTP id 0AT34jfp006991;
+        Sun, 29 Nov 2020 03:04:46 GMT
+Received: from oracle.com (/10.129.135.37)
+        by default (Oracle Beehive Gateway v4.0)
+        with ESMTP ; Sat, 28 Nov 2020 19:04:45 -0800
+From:   rao.shoaib@oracle.com
+To:     hch@lst.de, pabeni@redhat.com, jbi.octave@gmail.com,
+        linux-api@vger.kernel.org
+Cc:     Rao Shoaib <rao.shoaib@oracle.com>
+Subject: [RFC net-next af_unix v1 1/1] af_unix: Allow delivery of SIGURG on AF_UNIX streams socket
+Date:   Sat, 28 Nov 2020 18:52:12 -0800
+Message-Id: <1606618332-23345-2-git-send-email-rao.shoaib@oracle.com>
+X-Mailer: git-send-email 1.8.3.1
+In-Reply-To: <1606618332-23345-1-git-send-email-rao.shoaib@oracle.com>
+References: <1606618332-23345-1-git-send-email-rao.shoaib@oracle.com>
+X-Proofpoint-Virus-Version: vendor=nai engine=6000 definitions=9819 signatures=668682
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 mlxlogscore=999 bulkscore=0
+ phishscore=0 mlxscore=0 adultscore=0 malwarescore=0 suspectscore=0
+ spamscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.12.0-2009150000 definitions=main-2011290016
+X-Proofpoint-Virus-Version: vendor=nai engine=6000 definitions=9819 signatures=668682
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 suspectscore=0 lowpriorityscore=0
+ clxscore=1011 bulkscore=0 mlxlogscore=999 phishscore=0 malwarescore=0
+ spamscore=0 adultscore=0 mlxscore=0 priorityscore=1501 impostorscore=0
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2009150000
+ definitions=main-2011290017
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Sat, Nov 28, 2020 at 10:34:49PM +0100, Christian Brauner wrote:
-> Hey everyone,
+From: Rao Shoaib <rao.shoaib@oracle.com>
 
-Hey Christian,
+For AF_UNIX stream socket send SIGURG to the peer if
+the msg has MSG_OOB flag set.
 
-a general request.  Argue with me if it seems misguided.
+Signed-off-by: Rao Shoaib <rao.shoaib@oracle.com>
+---
+ net/unix/af_unix.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-When looking at a patch or a small hunk of code, these days, if a variable
-called 'ns' or 'user_ns' is seen passed to a function, it can be easy to
-assume which user_ns it is based on what you think would make sense, but if
-your assumption is wrong, your patch review will be wrong.
+diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
+index 92784e5..4f01d74 100644
+--- a/net/unix/af_unix.c
++++ b/net/unix/af_unix.c
+@@ -1840,8 +1840,6 @@ static int unix_stream_sendmsg(struct socket *sock, struct msghdr *msg,
+ 		return err;
+ 
+ 	err = -EOPNOTSUPP;
+-	if (msg->msg_flags&MSG_OOB)
+-		goto out_err;
+ 
+ 	if (msg->msg_namelen) {
+ 		err = sk->sk_state == TCP_ESTABLISHED ? -EISCONN : -EOPNOTSUPP;
+@@ -1906,6 +1904,9 @@ static int unix_stream_sendmsg(struct socket *sock, struct msghdr *msg,
+ 		sent += size;
+ 	}
+ 
++	if (msg->msg_flags & MSG_OOB)
++		sk_send_sigurg(other);
++
+ 	scm_destroy(&scm);
+ 
+ 	return sent;
+-- 
+1.8.3.1
 
-Can we stick to a convention where we have maybe
-
-subj_userns - the userns of the task seeking some action
-obj_userns - the userns of the thing being acted on - task, superblock,...
-mnt_userns - the userns of a mountpoint through which an object is seen
-
-You're replacing a lot of such callers and callsites in this patchset, so
-this would be a great time to start doing that.
-
--serge
