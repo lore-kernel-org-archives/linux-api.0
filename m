@@ -2,38 +2,37 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-20.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
-	version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BCE06C8301D
-	for <linux-api@archiver.kernel.org>; Tue,  1 Dec 2020 07:48:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5B555C83012
+	for <linux-api@archiver.kernel.org>; Tue,  1 Dec 2020 07:49:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5670D2087D
-	for <linux-api@archiver.kernel.org>; Tue,  1 Dec 2020 07:48:32 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1D2812087C
+	for <linux-api@archiver.kernel.org>; Tue,  1 Dec 2020 07:49:00 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=kernel.org header.i=@kernel.org header.b="eW/8bMGy"
+	dkim=pass (1024-bit key) header.d=kernel.org header.i=@kernel.org header.b="fpRj5Xju"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728606AbgLAHsV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 1 Dec 2020 02:48:21 -0500
-Received: from mail.kernel.org ([198.145.29.99]:40972 "EHLO mail.kernel.org"
+        id S1728599AbgLAHsl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 1 Dec 2020 02:48:41 -0500
+Received: from mail.kernel.org ([198.145.29.99]:41348 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728598AbgLAHsU (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 1 Dec 2020 02:48:20 -0500
+        id S1728598AbgLAHsk (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 1 Dec 2020 02:48:40 -0500
 Received: from aquarius.haifa.ibm.com (nesher1.haifa.il.ibm.com [195.110.40.7])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id A01CA21D7A;
-        Tue,  1 Dec 2020 07:47:29 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id AFEA421D7F;
+        Tue,  1 Dec 2020 07:47:49 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1606808859;
-        bh=jzflA3mR/TMzuhxXwTnDLrV2CbCxIP/Hh6KajityKxs=;
+        s=default; t=1606808879;
+        bh=nXWBb7VNx5Ew6mZTNiEuV+OrEbhyWBuQkN8JK4eddws=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=eW/8bMGyWgXk4XFLSwQHPftGwbMv6DmYwb9zILLbV4THe297bPBFMXaCCykYmuUHE
-         cHARK/s1amKRgcqsdapN2UA6LfxBIJ12mJipxLAsYiMJDd1YCnl/o7ScrtzM7jCcRH
-         tbIlDG4eWSc+kn7bHXS6JttxeY6OjyR8FiP3b21s=
+        b=fpRj5XjuYCSqtU2hSjjRkpE2ZtosTOjHgsSM9UtqT0TuIkpF3wZMAnUNrEC1BX5rL
+         UarcCSsg4eKPKGwRSkV2rTuueHezvvxFw/5nUKVSXujRgD6WBn62HC1wg378nrQOfI
+         Oy33plKpG2nlrees4crUgbvMFlnO5lxjFrUGRtys=
 From:   Mike Rapoport <rppt@kernel.org>
 To:     Andrew Morton <akpm@linux-foundation.org>
 Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
@@ -67,10 +66,10 @@ Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
         linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
         linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
         linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
-        x86@kernel.org
-Subject: [PATCH v13 07/10] secretmem: add memcg accounting
-Date:   Tue,  1 Dec 2020 09:45:56 +0200
-Message-Id: <20201201074559.27742-8-rppt@kernel.org>
+        x86@kernel.org, Palmer Dabbelt <palmerdabbelt@google.com>
+Subject: [PATCH v13 09/10] arch, mm: wire up memfd_secret system call were relevant
+Date:   Tue,  1 Dec 2020 09:45:58 +0200
+Message-Id: <20201201074559.27742-10-rppt@kernel.org>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <20201201074559.27742-1-rppt@kernel.org>
 References: <20201201074559.27742-1-rppt@kernel.org>
@@ -82,115 +81,127 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Mike Rapoport <rppt@linux.ibm.com>
 
-Account memory consumed by secretmem to memcg. The accounting is updated
-when the memory is actually allocated and freed.
+Wire up memfd_secret system call on architectures that define
+ARCH_HAS_SET_DIRECT_MAP, namely arm64, risc-v and x86.
 
 Signed-off-by: Mike Rapoport <rppt@linux.ibm.com>
-Acked-by: Roman Gushchin <guro@fb.com>
+Acked-by: Palmer Dabbelt <palmerdabbelt@google.com>
+Acked-by: Arnd Bergmann <arnd@arndb.de>
 ---
- mm/filemap.c   |  3 ++-
- mm/secretmem.c | 36 +++++++++++++++++++++++++++++++++++-
- 2 files changed, 37 insertions(+), 2 deletions(-)
+ arch/arm64/include/uapi/asm/unistd.h   | 1 +
+ arch/riscv/include/asm/unistd.h        | 1 +
+ arch/x86/entry/syscalls/syscall_32.tbl | 1 +
+ arch/x86/entry/syscalls/syscall_64.tbl | 1 +
+ include/linux/syscalls.h               | 1 +
+ include/uapi/asm-generic/unistd.h      | 6 +++++-
+ mm/secretmem.c                         | 3 +++
+ scripts/checksyscalls.sh               | 4 ++++
+ 8 files changed, 17 insertions(+), 1 deletion(-)
 
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 249cf489f5df..cf7f1dc9f4b8 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -42,6 +42,7 @@
- #include <linux/psi.h>
- #include <linux/ramfs.h>
- #include <linux/page_idle.h>
-+#include <linux/secretmem.h>
- #include "internal.h"
+diff --git a/arch/arm64/include/uapi/asm/unistd.h b/arch/arm64/include/uapi/asm/unistd.h
+index f83a70e07df8..ce2ee8f1e361 100644
+--- a/arch/arm64/include/uapi/asm/unistd.h
++++ b/arch/arm64/include/uapi/asm/unistd.h
+@@ -20,5 +20,6 @@
+ #define __ARCH_WANT_SET_GET_RLIMIT
+ #define __ARCH_WANT_TIME32_SYSCALLS
+ #define __ARCH_WANT_SYS_CLONE3
++#define __ARCH_WANT_MEMFD_SECRET
  
- #define CREATE_TRACE_POINTS
-@@ -844,7 +845,7 @@ static noinline int __add_to_page_cache_locked(struct page *page,
- 	page->mapping = mapping;
- 	page->index = offset;
+ #include <asm-generic/unistd.h>
+diff --git a/arch/riscv/include/asm/unistd.h b/arch/riscv/include/asm/unistd.h
+index 977ee6181dab..6c316093a1e5 100644
+--- a/arch/riscv/include/asm/unistd.h
++++ b/arch/riscv/include/asm/unistd.h
+@@ -9,6 +9,7 @@
+  */
  
--	if (!huge) {
-+	if (!huge && !page_is_secretmem(page)) {
- 		error = mem_cgroup_charge(page, current->mm, gfp);
- 		if (error)
- 			goto error;
+ #define __ARCH_WANT_SYS_CLONE
++#define __ARCH_WANT_MEMFD_SECRET
+ 
+ #include <uapi/asm/unistd.h>
+ 
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index c52ab1c4a755..109e6681b8fa 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -446,3 +446,4 @@
+ 439	i386	faccessat2		sys_faccessat2
+ 440	i386	process_madvise		sys_process_madvise
+ 441	i386	watch_mount		sys_watch_mount
++442	i386	memfd_secret		sys_memfd_secret
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index f3270a9ef467..742cf17d7725 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -363,6 +363,7 @@
+ 439	common	faccessat2		sys_faccessat2
+ 440	common	process_madvise		sys_process_madvise
+ 441	common	watch_mount		sys_watch_mount
++442	common	memfd_secret		sys_memfd_secret
+ 
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 6d55324363ab..f9d93fbf9b69 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -1010,6 +1010,7 @@ asmlinkage long sys_pidfd_send_signal(int pidfd, int sig,
+ asmlinkage long sys_pidfd_getfd(int pidfd, int fd, unsigned int flags);
+ asmlinkage long sys_watch_mount(int dfd, const char __user *path,
+ 				unsigned int at_flags, int watch_fd, int watch_id);
++asmlinkage long sys_memfd_secret(unsigned long flags);
+ 
+ /*
+  * Architecture-specific system calls
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 5df46517260e..51151888f330 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -861,9 +861,13 @@ __SYSCALL(__NR_faccessat2, sys_faccessat2)
+ __SYSCALL(__NR_process_madvise, sys_process_madvise)
+ #define __NR_watch_mount 441
+ __SYSCALL(__NR_watch_mount, sys_watch_mount)
++#ifdef __ARCH_WANT_MEMFD_SECRET
++#define __NR_memfd_secret 442
++__SYSCALL(__NR_memfd_secret, sys_memfd_secret)
++#endif
+ 
+ #undef __NR_syscalls
+-#define __NR_syscalls 442
++#define __NR_syscalls 443
+ 
+ /*
+  * 32 bit systems traditionally used different
 diff --git a/mm/secretmem.c b/mm/secretmem.c
-index 52a900a135a5..5e3e5102ad4c 100644
+index 2cf5cc79418b..ecd7a586af8e 100644
 --- a/mm/secretmem.c
 +++ b/mm/secretmem.c
-@@ -18,6 +18,7 @@
- #include <linux/memblock.h>
- #include <linux/pseudo_fs.h>
- #include <linux/secretmem.h>
-+#include <linux/memcontrol.h>
- #include <linux/set_memory.h>
- #include <linux/sched/signal.h>
+@@ -415,6 +415,9 @@ static int __init secretmem_setup(char *str)
+ 	unsigned long reserved_size;
+ 	int err;
  
-@@ -44,6 +45,32 @@ struct secretmem_ctx {
++	if (!can_set_direct_map())
++		return 0;
++
+ 	reserved_size = memparse(str, NULL);
+ 	if (!reserved_size)
+ 		return 0;
+diff --git a/scripts/checksyscalls.sh b/scripts/checksyscalls.sh
+index a18b47695f55..b7609958ee36 100755
+--- a/scripts/checksyscalls.sh
++++ b/scripts/checksyscalls.sh
+@@ -40,6 +40,10 @@ cat << EOF
+ #define __IGNORE_setrlimit	/* setrlimit */
+ #endif
  
- static struct cma *secretmem_cma;
++#ifndef __ARCH_WANT_MEMFD_SECRET
++#define __IGNORE_memfd_secret
++#endif
++
+ /* Missing flags argument */
+ #define __IGNORE_renameat	/* renameat2 */
  
-+static int secretmem_account_pages(struct page *page, gfp_t gfp, int order)
-+{
-+	int err;
-+
-+	err = memcg_kmem_charge_page(page, gfp, order);
-+	if (err)
-+		return err;
-+
-+	/*
-+	 * seceremem caches are unreclaimable kernel allocations, so treat
-+	 * them as unreclaimable slab memory for VM statistics purposes
-+	 */
-+	mod_lruvec_page_state(page, NR_SLAB_UNRECLAIMABLE_B,
-+			      PAGE_SIZE << order);
-+
-+	return 0;
-+}
-+
-+static void secretmem_unaccount_pages(struct page *page, int order)
-+{
-+
-+	mod_node_page_state(page_pgdat(page), NR_SLAB_UNRECLAIMABLE_B,
-+			    -PAGE_SIZE << order);
-+	memcg_kmem_uncharge_page(page, order);
-+}
-+
- static int secretmem_pool_increase(struct secretmem_ctx *ctx, gfp_t gfp)
- {
- 	unsigned long nr_pages = (1 << PMD_PAGE_ORDER);
-@@ -56,10 +83,14 @@ static int secretmem_pool_increase(struct secretmem_ctx *ctx, gfp_t gfp)
- 	if (!page)
- 		return -ENOMEM;
- 
--	err = set_direct_map_invalid_noflush(page, nr_pages);
-+	err = secretmem_account_pages(page, gfp, PMD_PAGE_ORDER);
- 	if (err)
- 		goto err_cma_release;
- 
-+	err = set_direct_map_invalid_noflush(page, nr_pages);
-+	if (err)
-+		goto err_memcg_uncharge;
-+
- 	addr = (unsigned long)page_address(page);
- 	err = gen_pool_add(pool, addr, PMD_SIZE, NUMA_NO_NODE);
- 	if (err)
-@@ -76,6 +107,8 @@ static int secretmem_pool_increase(struct secretmem_ctx *ctx, gfp_t gfp)
- 	 * won't fail
- 	 */
- 	set_direct_map_default_noflush(page, nr_pages);
-+err_memcg_uncharge:
-+	secretmem_unaccount_pages(page, PMD_PAGE_ORDER);
- err_cma_release:
- 	cma_release(secretmem_cma, page, nr_pages);
- 	return err;
-@@ -302,6 +335,7 @@ static void secretmem_cleanup_chunk(struct gen_pool *pool,
- 	int i;
- 
- 	set_direct_map_default_noflush(page, nr_pages);
-+	secretmem_unaccount_pages(page, PMD_PAGE_ORDER);
- 
- 	for (i = 0; i < nr_pages; i++)
- 		clear_highpage(page + i);
 -- 
 2.28.0
 
