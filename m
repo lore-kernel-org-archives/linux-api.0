@@ -2,93 +2,164 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-20.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DA327C63777
-	for <linux-api@archiver.kernel.org>; Tue,  1 Dec 2020 00:28:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EDE68C83011
+	for <linux-api@archiver.kernel.org>; Tue,  1 Dec 2020 07:47:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7BD9A20809
-	for <linux-api@archiver.kernel.org>; Tue,  1 Dec 2020 00:28:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AB9E92087C
+	for <linux-api@archiver.kernel.org>; Tue,  1 Dec 2020 07:47:28 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=kernel.org header.i=@kernel.org header.b="n1pRvsSH"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2389126AbgLAA22 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 30 Nov 2020 19:28:28 -0500
-Received: from mga03.intel.com ([134.134.136.65]:20861 "EHLO mga03.intel.com"
+        id S1728465AbgLAHrT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 1 Dec 2020 02:47:19 -0500
+Received: from mail.kernel.org ([198.145.29.99]:39880 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2388133AbgLAA22 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 30 Nov 2020 19:28:28 -0500
-IronPort-SDR: EGok0JIPBGoXxKI+Qyvggij90dKB/fec+NGHabY8Z6cq1HbDNFlAMvq5sGaT968u7qNzP37ci0
- CzecyGDtxFtA==
-X-IronPort-AV: E=McAfee;i="6000,8403,9821"; a="172835294"
-X-IronPort-AV: E=Sophos;i="5.78,382,1599548400"; 
-   d="scan'208";a="172835294"
-X-Amp-Result: SKIPPED(no attachment in message)
-X-Amp-File-Uploaded: False
-Received: from fmsmga004.fm.intel.com ([10.253.24.48])
-  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Nov 2020 16:27:47 -0800
-IronPort-SDR: yj4LV58XLzO268tAWATMfYPQ0jKvINmzRsB/h2Q/p5ZAfNM73gOp5tYLgWAKrXlg8LkmukzX/8
- Q4mrBZKEgV9A==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.78,382,1599548400"; 
-   d="scan'208";a="364459780"
-Received: from yhuang-dev.sh.intel.com (HELO yhuang-dev) ([10.239.159.50])
-  by fmsmga004.fm.intel.com with ESMTP; 30 Nov 2020 16:27:44 -0800
-From:   "Huang\, Ying" <ying.huang@intel.com>
-To:     Dave Hansen <dave.hansen@intel.com>
-Cc:     Peter Zijlstra <peterz@infradead.org>, <linux-mm@kvack.org>,
-        <linux-kernel@vger.kernel.org>,
-        "Matthew Wilcox \(Oracle\)" <willy@infradead.org>,
-        Rafael Aquini <aquini@redhat.com>,
-        "Andrew Morton" <akpm@linux-foundation.org>,
-        Ingo Molnar <mingo@redhat.com>, "Mel Gorman" <mgorman@suse.de>,
-        Rik van Riel <riel@redhat.com>,
-        Johannes Weiner <hannes@cmpxchg.org>,
-        Andi Kleen <ak@linux.intel.com>,
-        Michal Hocko <mhocko@suse.com>,
-        David Rientjes <rientjes@google.com>,
-        <linux-api@vger.kernel.org>
-Subject: Re: [PATCH -v6 2/3] NOT kernel/man-pages man2/set_mempolicy.2: Add mode flag MPOL_F_NUMA_BALANCING
-References: <20201126053219.234793-1-ying.huang@intel.com>
-        <20201126053219.234793-3-ying.huang@intel.com>
-        <a5d4c16b-74d7-403f-5f1c-8a1e8cbe4efb@intel.com>
-Date:   Tue, 01 Dec 2020 08:27:43 +0800
-In-Reply-To: <a5d4c16b-74d7-403f-5f1c-8a1e8cbe4efb@intel.com> (Dave Hansen's
-        message of "Mon, 30 Nov 2020 09:48:56 -0800")
-Message-ID: <87a6uyqsjk.fsf@yhuang-dev.intel.com>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.3 (gnu/linux)
+        id S1726314AbgLAHrT (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 1 Dec 2020 02:47:19 -0500
+Received: from aquarius.haifa.ibm.com (nesher1.haifa.il.ibm.com [195.110.40.7])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id CE32721D46;
+        Tue,  1 Dec 2020 07:46:28 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1606808798;
+        bh=OLkQOPwpPNkO447yVMVm5zd/5Ppg8ePwSShqZnVfuJg=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+        b=n1pRvsSH3sNDXPtV7EfFtfdh3jMHz7HQrsBy6vkoiduNpY3lf620mj1U2u+N4kKDr
+         ABMNi3Nq47DFZ2CIVJ4SP/0dKJBhxadiz6Suz4PQh9kseO8h2V0MmJWmD1BKS7Xjmi
+         DgKbT+pkttZtuWFRtVYLXlR88EE2TVj9TdpbBmAw=
+From:   Mike Rapoport <rppt@kernel.org>
+To:     Andrew Morton <akpm@linux-foundation.org>
+Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
+        Andy Lutomirski <luto@kernel.org>,
+        Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Christopher Lameter <cl@linux.com>,
+        Dan Williams <dan.j.williams@intel.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        David Hildenbrand <david@redhat.com>,
+        Elena Reshetova <elena.reshetova@intel.com>,
+        "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,
+        James Bottomley <jejb@linux.ibm.com>,
+        "Kirill A. Shutemov" <kirill@shutemov.name>,
+        Matthew Wilcox <willy@infradead.org>,
+        Mark Rutland <mark.rutland@arm.com>,
+        Mike Rapoport <rppt@linux.ibm.com>,
+        Mike Rapoport <rppt@kernel.org>,
+        Michael Kerrisk <mtk.manpages@gmail.com>,
+        Palmer Dabbelt <palmer@dabbelt.com>,
+        Paul Walmsley <paul.walmsley@sifive.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Rick Edgecombe <rick.p.edgecombe@intel.com>,
+        Roman Gushchin <guro@fb.com>,
+        Shakeel Butt <shakeelb@google.com>,
+        Shuah Khan <shuah@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
+        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
+        linux-arm-kernel@lists.infradead.org,
+        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
+        linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
+        linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
+        x86@kernel.org
+Subject: [PATCH v13 01/10] mm: add definition of PMD_PAGE_ORDER
+Date:   Tue,  1 Dec 2020 09:45:50 +0200
+Message-Id: <20201201074559.27742-2-rppt@kernel.org>
+X-Mailer: git-send-email 2.28.0
+In-Reply-To: <20201201074559.27742-1-rppt@kernel.org>
+References: <20201201074559.27742-1-rppt@kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=ascii
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Dave Hansen <dave.hansen@intel.com> writes:
+From: Mike Rapoport <rppt@linux.ibm.com>
 
-> On 11/25/20 9:32 PM, Huang Ying wrote:
->> --- a/man2/set_mempolicy.2
->> +++ b/man2/set_mempolicy.2
->> @@ -113,6 +113,11 @@ A nonempty
->>  .I nodemask
->>  specifies node IDs that are relative to the set of
->>  node IDs allowed by the process's current cpuset.
->> +.TP
->> +.BR MPOL_F_NUMA_BALANCING " (since Linux 5.11)"
->> +Enable the Linux kernel NUMA balancing for the task if it is supported
->> +by kernel.  If the flag isn't supported by Linux kernel, return -1 and
->> +errno is set to EINVAL.
->
-> The one thing I learned about manpage CodingStyle is that new sentences
-> go on new lines.  I think this needs to be:
->
-> .TP
-> .BR MPOL_F_NUMA_BALANCING " (since Linux 5.11)"
-> Enable the Linux kernel NUMA balancing for the task if it is supported
-> by kernel.
-> If the flag isn't supported by Linux kernel, return -1 and errno is set
-> to EINVAL.
+The definition of PMD_PAGE_ORDER denoting the number of base pages in the
+second-level leaf page is already used by DAX and maybe handy in other
+cases as well.
 
-Thanks a lot for your information!  I will revise this in the next version.
+Several architectures already have definition of PMD_ORDER as the size of
+second level page table, so to avoid conflict with these definitions use
+PMD_PAGE_ORDER name and update DAX respectively.
 
-Best Regards,
-Huang, Ying
+Signed-off-by: Mike Rapoport <rppt@linux.ibm.com>
+Reviewed-by: David Hildenbrand <david@redhat.com>
+---
+ fs/dax.c                | 11 ++++-------
+ include/linux/pgtable.h |  3 +++
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/fs/dax.c b/fs/dax.c
+index 26d5dcd2d69e..0f109eb16196 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -49,9 +49,6 @@ static inline unsigned int pe_order(enum page_entry_size pe_size)
+ #define PG_PMD_COLOUR	((PMD_SIZE >> PAGE_SHIFT) - 1)
+ #define PG_PMD_NR	(PMD_SIZE >> PAGE_SHIFT)
+ 
+-/* The order of a PMD entry */
+-#define PMD_ORDER	(PMD_SHIFT - PAGE_SHIFT)
+-
+ static wait_queue_head_t wait_table[DAX_WAIT_TABLE_ENTRIES];
+ 
+ static int __init init_dax_wait_table(void)
+@@ -98,7 +95,7 @@ static bool dax_is_locked(void *entry)
+ static unsigned int dax_entry_order(void *entry)
+ {
+ 	if (xa_to_value(entry) & DAX_PMD)
+-		return PMD_ORDER;
++		return PMD_PAGE_ORDER;
+ 	return 0;
+ }
+ 
+@@ -1470,7 +1467,7 @@ static vm_fault_t dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
+ {
+ 	struct vm_area_struct *vma = vmf->vma;
+ 	struct address_space *mapping = vma->vm_file->f_mapping;
+-	XA_STATE_ORDER(xas, &mapping->i_pages, vmf->pgoff, PMD_ORDER);
++	XA_STATE_ORDER(xas, &mapping->i_pages, vmf->pgoff, PMD_PAGE_ORDER);
+ 	unsigned long pmd_addr = vmf->address & PMD_MASK;
+ 	bool write = vmf->flags & FAULT_FLAG_WRITE;
+ 	bool sync;
+@@ -1529,7 +1526,7 @@ static vm_fault_t dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
+ 	 * entry is already in the array, for instance), it will return
+ 	 * VM_FAULT_FALLBACK.
+ 	 */
+-	entry = grab_mapping_entry(&xas, mapping, PMD_ORDER);
++	entry = grab_mapping_entry(&xas, mapping, PMD_PAGE_ORDER);
+ 	if (xa_is_internal(entry)) {
+ 		result = xa_to_internal(entry);
+ 		goto fallback;
+@@ -1695,7 +1692,7 @@ dax_insert_pfn_mkwrite(struct vm_fault *vmf, pfn_t pfn, unsigned int order)
+ 	if (order == 0)
+ 		ret = vmf_insert_mixed_mkwrite(vmf->vma, vmf->address, pfn);
+ #ifdef CONFIG_FS_DAX_PMD
+-	else if (order == PMD_ORDER)
++	else if (order == PMD_PAGE_ORDER)
+ 		ret = vmf_insert_pfn_pmd(vmf, pfn, FAULT_FLAG_WRITE);
+ #endif
+ 	else
+diff --git a/include/linux/pgtable.h b/include/linux/pgtable.h
+index 71125a4676c4..7f718b8dc789 100644
+--- a/include/linux/pgtable.h
++++ b/include/linux/pgtable.h
+@@ -28,6 +28,9 @@
+ #define USER_PGTABLES_CEILING	0UL
+ #endif
+ 
++/* Number of base pages in a second level leaf page */
++#define PMD_PAGE_ORDER	(PMD_SHIFT - PAGE_SHIFT)
++
+ /*
+  * A page table page can be thought of an array like this: pXd_t[PTRS_PER_PxD]
+  *
+-- 
+2.28.0
+
