@@ -2,207 +2,145 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-12.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,MSGID_FROM_MTA_HEADER,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5C1B3C64E7A
-	for <linux-api@archiver.kernel.org>; Tue,  1 Dec 2020 16:45:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 973C7C64E7A
+	for <linux-api@archiver.kernel.org>; Tue,  1 Dec 2020 18:02:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0738420758
-	for <linux-api@archiver.kernel.org>; Tue,  1 Dec 2020 16:45:41 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 359AE206E0
+	for <linux-api@archiver.kernel.org>; Tue,  1 Dec 2020 18:02:14 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=kernel.org header.i=@kernel.org header.b="gvfnhaSL"
+	dkim=pass (2048-bit key) header.d=nvidia.com header.i=@nvidia.com header.b="ONiAAFm5"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727193AbgLAQpW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 1 Dec 2020 11:45:22 -0500
-Received: from mail.kernel.org ([198.145.29.99]:59542 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728720AbgLAQpW (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 1 Dec 2020 11:45:22 -0500
-Received: from kernel.org (unknown [87.71.85.130])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id DAF89206B7;
-        Tue,  1 Dec 2020 16:44:29 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1606841081;
-        bh=GUtX0hNx32YEEtCdAUkzC5OF7zPy+e78biDig6Frozg=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=gvfnhaSLv1jMRih6i9BkZFwqT83+9p5JD98gXcO7JIrkTzOBB+rRro5U9QgAxqQSV
-         7dt/xWjtLVQEVt1Ex5jrQh1zNLQMN4ovnZ42jokTz+d8CL1J4Neq9s1+q39AS5euFb
-         +V52ld2bkVC2Nmbbgl6GFHYT0sShRwKokRlnOllM=
-Date:   Tue, 1 Dec 2020 18:44:24 +0200
-From:   Mike Rapoport <rppt@kernel.org>
-To:     Shakeel Butt <shakeelb@google.com>
-Cc:     Andrew Morton <akpm@linux-foundation.org>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
+        id S2404221AbgLASB6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 1 Dec 2020 13:01:58 -0500
+Received: from hqnvemgate25.nvidia.com ([216.228.121.64]:16480 "EHLO
+        hqnvemgate25.nvidia.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726104AbgLASB5 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 1 Dec 2020 13:01:57 -0500
+Received: from hqmail.nvidia.com (Not Verified[216.228.121.13]) by hqnvemgate25.nvidia.com (using TLS: TLSv1.2, AES256-SHA)
+        id <B5fc684eb0001>; Tue, 01 Dec 2020 10:01:15 -0800
+Received: from HQMAIL111.nvidia.com (172.20.187.18) by HQMAIL111.nvidia.com
+ (172.20.187.18) with Microsoft SMTP Server (TLS) id 15.0.1473.3; Tue, 1 Dec
+ 2020 18:01:15 +0000
+Received: from NAM12-BN8-obe.outbound.protection.outlook.com (104.47.55.169)
+ by HQMAIL111.nvidia.com (172.20.187.18) with Microsoft SMTP Server (TLS) id
+ 15.0.1473.3 via Frontend Transport; Tue, 1 Dec 2020 18:01:14 +0000
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=eIvv93DOJqTSfVNnS0si2Ol4vNWDftbOG6Y4EYYaTIkEN4zZpfZBPGMoeqRIB6832RsbBHV6H/Jw02SZabqfGyC8ZRKuKcEO+5/f0WvmMoLtajL2EwWEGWUdeLU8mFK5Q6MeN1kTQFLqZZHvNgvyldLYAa6BJUMIyIodDzuSjVj/yMUkp5J7RXSDtbb9ygvactmee0/MVBV5sDoRhcpCu5KmZUCjGvusBWRZQC/+qseeCbPJohhH+WnI09ZnM97Ph4r4HoRvHYleC3vG8pPsP2Z5aWaGWQ/Q+xZZTDYZGm3XybzTyHL6rUOEtcEWUxQAdhgCOKCC+rRCIdakmxmr1A==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=hafZzjATtu2mX19gY6LAnVioZz1FqT2kyJuaRi9Zo6k=;
+ b=LJVydS4qt0r1MY+07ThBZPXju/ZZAN+ccdeUCJmI/hYpbNB9tVtOq+WphKCyyZjNIvLAjejDerzFxQUTxwQZ0JOM9LWBhBHE/vufIdJhY+DGzSCrfH3K71aZ54dZAzhBs6Olq1VlhBDCTlLC+iK7k+g8uDJBGx+LHL/Zk/l1Pp8HueNT+vQAafgxt5o5CO2NFtvaU//qpk1IN5cOaHHsKKEGLuOusvccs2p74FVsbVSND9ZyEHhJscFyb41GHa+pujHuF7FH66xVbcJTVPSZYV1uMY/7JIjW4V+38IMKoDoMjzjcvpHXTKaDHTyFZCAa8Npw4ZvftZ+d/cqUDQmTMQ==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=nvidia.com; dmarc=pass action=none header.from=nvidia.com;
+ dkim=pass header.d=nvidia.com; arc=none
+Received: from DM6PR12MB3834.namprd12.prod.outlook.com (2603:10b6:5:14a::12)
+ by DM6PR12MB4451.namprd12.prod.outlook.com (2603:10b6:5:2ab::18) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3632.17; Tue, 1 Dec
+ 2020 18:01:13 +0000
+Received: from DM6PR12MB3834.namprd12.prod.outlook.com
+ ([fe80::1ce9:3434:90fe:3433]) by DM6PR12MB3834.namprd12.prod.outlook.com
+ ([fe80::1ce9:3434:90fe:3433%3]) with mapi id 15.20.3611.031; Tue, 1 Dec 2020
+ 18:01:13 +0000
+Date:   Tue, 1 Dec 2020 14:01:11 -0400
+From:   Jason Gunthorpe <jgg@nvidia.com>
+To:     Matthew Wilcox <willy@infradead.org>
+CC:     Adalbert =?utf-8?B?TGF6xINy?= <alazar@bitdefender.com>,
+        <linux-mm@kvack.org>, <linux-api@vger.kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Alexander Graf <graf@amazon.com>,
+        Stefan Hajnoczi <stefanha@redhat.com>,
+        Jerome Glisse <jglisse@redhat.com>,
+        Paolo Bonzini <pbonzini@redhat.com>,
+        Mihai =?utf-8?B?RG9uyJt1?= <mdontu@bitdefender.com>,
+        Mircea Cirjaliu <mcirjaliu@bitdefender.com>,
         Andy Lutomirski <luto@kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Christopher Lameter <cl@linux.com>,
-        Dan Williams <dan.j.williams@intel.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        David Hildenbrand <david@redhat.com>,
-        Elena Reshetova <elena.reshetova@intel.com>,
-        "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,
-        James Bottomley <jejb@linux.ibm.com>,
-        "Kirill A. Shutemov" <kirill@shutemov.name>,
-        Matthew Wilcox <willy@infradead.org>,
-        Mark Rutland <mark.rutland@arm.com>,
-        Mike Rapoport <rppt@linux.ibm.com>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Palmer Dabbelt <palmer@dabbelt.com>,
-        Paul Walmsley <paul.walmsley@sifive.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Rick Edgecombe <rick.p.edgecombe@intel.com>,
-        Roman Gushchin <guro@fb.com>, Shuah Khan <shuah@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
-        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
-        linux-arm-kernel@lists.infradead.org,
-        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-        Linux MM <linux-mm@kvack.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-kselftest@vger.kernel.org, linux-nvdimm@lists.01.org,
-        linux-riscv@lists.infradead.org, x86@kernel.org
-Subject: Re: [PATCH v13 07/10] secretmem: add memcg accounting
-Message-ID: <20201201164424.GC751215@kernel.org>
-References: <20201201074559.27742-1-rppt@kernel.org>
- <20201201074559.27742-8-rppt@kernel.org>
- <CALvZod4bTBGf7DS=5EUCeU810p5C1aqf5sB0n1N8sc4jt5W3Tg@mail.gmail.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+        Arnd Bergmann <arnd@arndb.de>,
+        Sargun Dhillon <sargun@sargun.me>,
+        Aleksa Sarai <cyphar@cyphar.com>,
+        Oleg Nesterov <oleg@redhat.com>, Jann Horn <jannh@google.com>,
+        Kees Cook <keescook@chromium.org>,
+        Christian Brauner <christian.brauner@ubuntu.com>
+Subject: Re: [RESEND RFC PATCH 0/5] Remote mapping
+Message-ID: <20201201180111.GA1074504@nvidia.com>
+References: <20200904113116.20648-1-alazar@bitdefender.com>
+ <20200904121148.GR24045@ziepe.ca>
+ <20200904194139.GA5881@casper.infradead.org>
+Content-Type: text/plain; charset="utf-8"
 Content-Disposition: inline
-In-Reply-To: <CALvZod4bTBGf7DS=5EUCeU810p5C1aqf5sB0n1N8sc4jt5W3Tg@mail.gmail.com>
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <20200904194139.GA5881@casper.infradead.org>
+X-ClientProxiedBy: MN2PR05CA0005.namprd05.prod.outlook.com
+ (2603:10b6:208:c0::18) To DM6PR12MB3834.namprd12.prod.outlook.com
+ (2603:10b6:5:14a::12)
+MIME-Version: 1.0
+X-MS-Exchange-MessageSentRepresentingType: 1
+Received: from mlx.ziepe.ca (156.34.48.30) by MN2PR05CA0005.namprd05.prod.outlook.com (2603:10b6:208:c0::18) with Microsoft SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3632.6 via Frontend Transport; Tue, 1 Dec 2020 18:01:12 +0000
+Received: from jgg by mlx with local (Exim 4.94)        (envelope-from <jgg@nvidia.com>)        id 1kk9xf-004ViB-17; Tue, 01 Dec 2020 14:01:11 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nvidia.com; s=n1;
+        t=1606845675; bh=kVBl4qffB0PMZzayVp89igSBN2O+SlLrNbvle5/c/EI=;
+        h=ARC-Seal:ARC-Message-Signature:ARC-Authentication-Results:Date:
+         From:To:CC:Subject:Message-ID:References:Content-Type:
+         Content-Disposition:Content-Transfer-Encoding:In-Reply-To:
+         X-ClientProxiedBy:MIME-Version:
+         X-MS-Exchange-MessageSentRepresentingType;
+        b=ONiAAFm5L5uHy5uEIqqdWAWdgRANlXEriWbznx74zFEn3jcYZyEoiboG8zTec7O9A
+         5A6mZE+8PLwLSZ9sgnSjTvScJoTjdn9HnCVJgvcY/J01QZr7kByC78DsKAGcAGy0wg
+         L1aFGMec77PhVvO9rUrMuOmQgciXD0junYEx70e04AX8h4F3jeXd5vXTtfWHbKrSB8
+         6nyCC6fV3eMP/pJnCg5055LuH2cvHZ+IVQOC+dXa9FOoh8iLvf+2GinLVHWzzA3MFr
+         ZLi4tz+igKsxYU7Wy3oP0ctSp35zJsj2oLBazxAraYNUJPhbKS5jSMBbXjkzmi6hCy
+         aEdKU17bRDukA==
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Dec 01, 2020 at 08:26:28AM -0800, Shakeel Butt wrote:
-> On Mon, Nov 30, 2020 at 11:47 PM Mike Rapoport <rppt@kernel.org> wrote:
-> >
-> > From: Mike Rapoport <rppt@linux.ibm.com>
-> >
-> > Account memory consumed by secretmem to memcg. The accounting is updated
-> > when the memory is actually allocated and freed.
-> >
-> > Signed-off-by: Mike Rapoport <rppt@linux.ibm.com>
-> > Acked-by: Roman Gushchin <guro@fb.com>
-> > ---
-> >  mm/filemap.c   |  3 ++-
-> >  mm/secretmem.c | 36 +++++++++++++++++++++++++++++++++++-
-> >  2 files changed, 37 insertions(+), 2 deletions(-)
-> >
-> > diff --git a/mm/filemap.c b/mm/filemap.c
-> > index 249cf489f5df..cf7f1dc9f4b8 100644
-> > --- a/mm/filemap.c
-> > +++ b/mm/filemap.c
-> > @@ -42,6 +42,7 @@
-> >  #include <linux/psi.h>
-> >  #include <linux/ramfs.h>
-> >  #include <linux/page_idle.h>
-> > +#include <linux/secretmem.h>
-> >  #include "internal.h"
-> >
-> >  #define CREATE_TRACE_POINTS
-> > @@ -844,7 +845,7 @@ static noinline int __add_to_page_cache_locked(struct page *page,
-> >         page->mapping = mapping;
-> >         page->index = offset;
-> >
-> > -       if (!huge) {
-> > +       if (!huge && !page_is_secretmem(page)) {
-> >                 error = mem_cgroup_charge(page, current->mm, gfp);
-> >                 if (error)
-> >                         goto error;
-> > diff --git a/mm/secretmem.c b/mm/secretmem.c
-> > index 52a900a135a5..5e3e5102ad4c 100644
-> > --- a/mm/secretmem.c
-> > +++ b/mm/secretmem.c
-> > @@ -18,6 +18,7 @@
-> >  #include <linux/memblock.h>
-> >  #include <linux/pseudo_fs.h>
-> >  #include <linux/secretmem.h>
-> > +#include <linux/memcontrol.h>
-> >  #include <linux/set_memory.h>
-> >  #include <linux/sched/signal.h>
-> >
-> > @@ -44,6 +45,32 @@ struct secretmem_ctx {
-> >
-> >  static struct cma *secretmem_cma;
-> >
-> > +static int secretmem_account_pages(struct page *page, gfp_t gfp, int order)
-> > +{
-> > +       int err;
-> > +
-> > +       err = memcg_kmem_charge_page(page, gfp, order);
-> > +       if (err)
-> > +               return err;
-> > +
-> > +       /*
-> > +        * seceremem caches are unreclaimable kernel allocations, so treat
-> > +        * them as unreclaimable slab memory for VM statistics purposes
-> > +        */
-> > +       mod_lruvec_page_state(page, NR_SLAB_UNRECLAIMABLE_B,
-> > +                             PAGE_SIZE << order);
-> > +
-> > +       return 0;
-> > +}
-> > +
-> > +static void secretmem_unaccount_pages(struct page *page, int order)
-> > +{
-> > +
-> > +       mod_node_page_state(page_pgdat(page), NR_SLAB_UNRECLAIMABLE_B,
-> > +                           -PAGE_SIZE << order);
-> 
-> mod_lruvec_page_state()
+On Fri, Sep 04, 2020 at 08:41:39PM +0100, Matthew Wilcox wrote:
+> On Fri, Sep 04, 2020 at 09:11:48AM -0300, Jason Gunthorpe wrote:
+> > On Fri, Sep 04, 2020 at 02:31:11PM +0300, Adalbert Laz=C4=83r wrote:
+> > > VMAs obtained by mmap()ing memory access fds mirror the contents of t=
+he remote
+> > > process address space within the specified range. Pages are installed=
+ in the
+> > > current process page tables at fault time and removed by the mmu_inte=
+rval_notifier
+> > > invalidate callbck. No further memory management is involved.
+> > > On attempts to access a hole, or if a mapping was removed by PIDFD_ME=
+M_UNMAP,
+> > > or if the remote process address space was reaped by OOM, the remote =
+mapping
+> > > fault handler returns VM_FAULT_SIGBUS.
+> >=20
+> > I still think anything along these lines needs to meet the XPMEM use
+> > cases as well, we have to have more general solutions for such MM
+> > stuff:
+> >=20
+> > https://gitlab.com/hjelmn/xpmem
+> >=20
+> > However, I think this fundamentally falls into some of the same bad
+> > direction as xpmem.
+> >=20
+> > I would much rather see this design copy & clone the VMA's than try to
+> > mirror the PTEs inside the VMAs from the remote into a single giant
+> > VMA and somehow split/mirror the VMA ops.
+>=20
+> I'm on holiday for the next few days, but does the mshare() API work for
+> your use case?
+>=20
+> Proposal: http://www.wil.cx/~willy/linux/sileby.html
+> Start at implementation:
+> http://git.infradead.org/users/willy/linux.git/shortlog/refs/heads/mshare
 
-Argh... Will fix.
+I found some interest in this project here, with the detail that
+pin_user_pages() should keep working, ideally on both sides of the
+share, but essentially on the side that calls mshare()
 
-> > +       memcg_kmem_uncharge_page(page, order);
-> > +}
-> > +
-> >  static int secretmem_pool_increase(struct secretmem_ctx *ctx, gfp_t gfp)
-> >  {
-> >         unsigned long nr_pages = (1 << PMD_PAGE_ORDER);
-> > @@ -56,10 +83,14 @@ static int secretmem_pool_increase(struct secretmem_ctx *ctx, gfp_t gfp)
-> >         if (!page)
-> >                 return -ENOMEM;
-> >
-> > -       err = set_direct_map_invalid_noflush(page, nr_pages);
-> > +       err = secretmem_account_pages(page, gfp, PMD_PAGE_ORDER);
-> >         if (err)
-> >                 goto err_cma_release;
-> >
-> > +       err = set_direct_map_invalid_noflush(page, nr_pages);
-> > +       if (err)
-> > +               goto err_memcg_uncharge;
-> > +
-> >         addr = (unsigned long)page_address(page);
-> >         err = gen_pool_add(pool, addr, PMD_SIZE, NUMA_NO_NODE);
-> >         if (err)
-> > @@ -76,6 +107,8 @@ static int secretmem_pool_increase(struct secretmem_ctx *ctx, gfp_t gfp)
-> >          * won't fail
-> >          */
-> >         set_direct_map_default_noflush(page, nr_pages);
-> > +err_memcg_uncharge:
-> > +       secretmem_unaccount_pages(page, PMD_PAGE_ORDER);
-> >  err_cma_release:
-> >         cma_release(secretmem_cma, page, nr_pages);
-> >         return err;
-> > @@ -302,6 +335,7 @@ static void secretmem_cleanup_chunk(struct gen_pool *pool,
-> >         int i;
-> >
-> >         set_direct_map_default_noflush(page, nr_pages);
-> > +       secretmem_unaccount_pages(page, PMD_PAGE_ORDER);
-> >
-> >         for (i = 0; i < nr_pages; i++)
-> >                 clear_highpage(page + i);
-> > --
-> > 2.28.0
-> >
+Maybe we can help out, at least cc me if you make progress :)
 
--- 
-Sincerely yours,
-Mike.
+Thanks,
+Jason
