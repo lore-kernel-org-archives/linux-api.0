@@ -2,37 +2,38 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B32A0C64E8A
-	for <linux-api@archiver.kernel.org>; Wed,  2 Dec 2020 08:43:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 44214C64E8A
+	for <linux-api@archiver.kernel.org>; Wed,  2 Dec 2020 08:43:58 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6555F22202
-	for <linux-api@archiver.kernel.org>; Wed,  2 Dec 2020 08:43:30 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D4E92206C0
+	for <linux-api@archiver.kernel.org>; Wed,  2 Dec 2020 08:43:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728474AbgLBIn3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 2 Dec 2020 03:43:29 -0500
-Received: from mga09.intel.com ([134.134.136.24]:6200 "EHLO mga09.intel.com"
+        id S1728138AbgLBInm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 2 Dec 2020 03:43:42 -0500
+Received: from mga05.intel.com ([192.55.52.43]:38719 "EHLO mga05.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728138AbgLBIn3 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 2 Dec 2020 03:43:29 -0500
-IronPort-SDR: hngSES8WVCAQGSR+myztLaosCtDSqC7fBoeLlALn032Mo8Dpb6W9UF2RSh1r2w2vTycPqy6T3T
- GQ8j5ML6Ap/A==
-X-IronPort-AV: E=McAfee;i="6000,8403,9822"; a="173139133"
+        id S1726309AbgLBInl (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 2 Dec 2020 03:43:41 -0500
+IronPort-SDR: 6bWkYQf4RdSofpavhEZKNMhoh+t0EvN59cmqGu98xMwpfDZLOZBRACSGAzLEuIWSX//yZm9rUd
+ JKcY8p3vaHhQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9822"; a="257690463"
 X-IronPort-AV: E=Sophos;i="5.78,386,1599548400"; 
-   d="scan'208";a="173139133"
+   d="scan'208";a="257690463"
 X-Amp-Result: SKIPPED(no attachment in message)
 X-Amp-File-Uploaded: False
 Received: from fmsmga005.fm.intel.com ([10.253.24.32])
-  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2020 00:42:45 -0800
-IronPort-SDR: ck9wfVEYEuqh+5W1FN2nFOOAjksmVctGqCsbS/9+8CATF4FPPl5A8ZqQvXQ1ky2ToM2W/ShC+T
- uL+WdzkNsC/w==
+  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2020 00:43:00 -0800
+IronPort-SDR: s76vDhUEHZ3RZ4RavnvNuEQYmA2wyF3aXEBp3a7AVb3VsCXjcwBR1JXHp+bYUEiptCtWoCBXVW
+ x2P0xKMaWNTA==
 X-IronPort-AV: E=Sophos;i="5.78,386,1599548400"; 
-   d="scan'208";a="539590044"
+   d="scan'208";a="539590147"
 Received: from yhuang6-mobl1.sh.intel.com (HELO yhuang6-MOBL1.intel.com) ([10.238.5.184])
-  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2020 00:42:41 -0800
+  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2020 00:42:54 -0800
 From:   Huang Ying <ying.huang@intel.com>
 To:     Peter Zijlstra <peterz@infradead.org>, Mel Gorman <mgorman@suse.de>
 Cc:     linux-mm@kvack.org, linux-kernel@vger.kernel.org,
@@ -47,53 +48,239 @@ Cc:     linux-mm@kvack.org, linux-kernel@vger.kernel.org,
         Andi Kleen <ak@linux.intel.com>,
         Michal Hocko <mhocko@suse.com>,
         David Rientjes <rientjes@google.com>, linux-api@vger.kernel.org
-Subject: [PATCH -V6 RESEND 0/3] numa balancing: Migrate on fault among multiple bound nodes
-Date:   Wed,  2 Dec 2020 16:42:31 +0800
-Message-Id: <20201202084234.15797-1-ying.huang@intel.com>
+Subject: [PATCH -V6 RESEND 3/3] NOT kernel/numactl: Support to enable Linux kernel NUMA balancing
+Date:   Wed,  2 Dec 2020 16:42:34 +0800
+Message-Id: <20201202084234.15797-4-ying.huang@intel.com>
 X-Mailer: git-send-email 2.29.2
+In-Reply-To: <20201202084234.15797-1-ying.huang@intel.com>
+References: <20201202084234.15797-1-ying.huang@intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-To make it possible to optimize cross-socket memory accessing with
-AutoNUMA even if the memory of the application is bound to multiple
-NUMA nodes.
+A new API: numa_set_membind_balancing() is added to libnuma.  It is
+same as numa_set_membind() except that the Linux kernel NUMA balancing
+will be enabled for the task if the feature is supported by the
+kernel.
 
-Patch [2/3] and [3/3] are NOT kernel patches.  Instead, they are
-patches for man-pages and numactl respectively.  They are sent
-together to make it easy to review the newly added kernel API.
+At the same time, a new option: --balancing (-b) is added to numactl.
+Which can be used before the memory policy options in the command
+line.  With it, the Linux kernel NUMA balancing will be enabled for
+the process if the feature is supported by the kernel.
 
-Changes:
+Signed-off-by: "Huang, Ying" <ying.huang@intel.com>
+---
+ libnuma.c         | 14 ++++++++++++++
+ numa.3            | 15 +++++++++++++++
+ numa.h            |  4 ++++
+ numactl.8         |  9 +++++++++
+ numactl.c         | 17 ++++++++++++++---
+ numaif.h          |  3 +++
+ versions.ldscript |  8 ++++++++
+ 7 files changed, 67 insertions(+), 3 deletions(-)
 
-v6:
+diff --git a/libnuma.c b/libnuma.c
+index 88f479b..f073c50 100644
+--- a/libnuma.c
++++ b/libnuma.c
+@@ -1064,6 +1064,20 @@ numa_set_membind_v2(struct bitmask *bmp)
+ 
+ make_internal_alias(numa_set_membind_v2);
+ 
++void
++numa_set_membind_balancing(struct bitmask *bmp)
++{
++	/* MPOL_F_NUMA_BALANCING: ignore if unsupported */
++	if (set_mempolicy(MPOL_BIND | MPOL_F_NUMA_BALANCING,
++			  bmp->maskp, bmp->size + 1) < 0) {
++		if (errno == EINVAL) {
++			errno = 0;
++			numa_set_membind_v2(bmp);
++		} else
++			numa_error("set_mempolicy");
++	}
++}
++
+ /*
+  * copy a bitmask map body to a numa.h nodemask_t structure
+  */
+diff --git a/numa.3 b/numa.3
+index 3e18098..af01c8f 100644
+--- a/numa.3
++++ b/numa.3
+@@ -80,6 +80,8 @@ numa \- NUMA policy library
+ .br
+ .BI "void numa_set_membind(struct bitmask *" nodemask );
+ .br
++.BI "void numa_set_membind_balancing(struct bitmask *" nodemask );
++.br
+ .B struct bitmask *numa_get_membind(void);
+ .sp
+ .BI "void *numa_alloc_onnode(size_t " size ", int " node );
+@@ -538,6 +540,19 @@ that contains nodes other than those in the mask returned by
+ .IR numa_get_mems_allowed ()
+ will result in an error.
+ 
++.BR numa_set_membind_balancing ()
++sets the memory allocation mask and enable the Linux kernel NUMA
++balancing for the task if the feature is supported by the kernel.
++The task will only allocate memory from the nodes set in
++.IR nodemask .
++Passing an empty
++.I nodemask
++or a
++.I nodemask
++that contains nodes other than those in the mask returned by
++.IR numa_get_mems_allowed ()
++will result in an error.
++
+ .BR numa_get_membind ()
+ returns the mask of nodes from which memory can currently be allocated.
+ If the returned mask is equal to
+diff --git a/numa.h b/numa.h
+index bd1d676..5d8543a 100644
+--- a/numa.h
++++ b/numa.h
+@@ -192,6 +192,10 @@ void numa_set_localalloc(void);
+ /* Only allocate memory from the nodes set in mask. 0 to turn off */
+ void numa_set_membind(struct bitmask *nodemask);
+ 
++/* Only allocate memory from the nodes set in mask. Optimize page
++   placement with Linux kernel NUMA balancing if possible. 0 to turn off */
++void numa_set_membind_balancing(struct bitmask *bmp);
++
+ /* Return current membind */
+ struct bitmask *numa_get_membind(void);
+ 
+diff --git a/numactl.8 b/numactl.8
+index f3bb22b..109dd8f 100644
+--- a/numactl.8
++++ b/numactl.8
+@@ -25,6 +25,8 @@ numactl \- Control NUMA policy for processes or shared memory
+ [
+ .B \-\-all
+ ] [
++.B \-\-balancing
++] [
+ .B \-\-interleave nodes
+ ] [
+ .B \-\-preferred node 
+@@ -168,6 +170,9 @@ but if memory cannot be allocated there fall back to other nodes.
+ This option takes only a single node number.
+ Relative notation may be used.
+ .TP
++.B \-\-balancing, \-b
++Enable Linux kernel NUMA balancing for the process if it is supported by kernel.
++.TP
+ .B \-\-show, \-s
+ Show NUMA policy settings of the current process. 
+ .TP
+@@ -278,6 +283,10 @@ numactl \-\-cpunodebind=0 \-\-membind=0,1 -- process -l
+ Run process as above, but with an option (-l) that would be confused with
+ a numactl option.
+ 
++numactl \-\-cpunodebind=0 \-\-balancing \-\-membind=0,1 process
++Run process on node 0 with memory allocated on node 0 and 1.  Optimize the
++page placement with Linux kernel NUMA balancing mechanism if possible.
++
+ numactl \-\-cpunodebind=netdev:eth0 \-\-membind=netdev:eth0 network-server
+ Run network-server on the node of network device eth0 with its memory
+ also in the same node.
+diff --git a/numactl.c b/numactl.c
+index df9dbcb..5a9d2df 100644
+--- a/numactl.c
++++ b/numactl.c
+@@ -45,6 +45,7 @@ struct option opts[] = {
+ 	{"membind", 1, 0, 'm'},
+ 	{"show", 0, 0, 's' },
+ 	{"localalloc", 0,0, 'l'},
++	{"balancing", 0, 0, 'b'},
+ 	{"hardware", 0,0,'H' },
+ 
+ 	{"shm", 1, 0, 'S'},
+@@ -65,9 +66,10 @@ struct option opts[] = {
+ void usage(void)
+ {
+ 	fprintf(stderr,
+-		"usage: numactl [--all | -a] [--interleave= | -i <nodes>] [--preferred= | -p <node>]\n"
+-		"               [--physcpubind= | -C <cpus>] [--cpunodebind= | -N <nodes>]\n"
+-		"               [--membind= | -m <nodes>] [--localalloc | -l] command args ...\n"
++		"usage: numactl [--all | -a] [--balancing | -b] [--interleave= | -i <nodes>]\n"
++		"               [--preferred= | -p <node>] [--physcpubind= | -C <cpus>]\n"
++		"               [--cpunodebind= | -N <nodes>] [--membind= | -m <nodes>]\n"
++		"               [--localalloc | -l] command args ...\n"
+ 		"       numactl [--show | -s]\n"
+ 		"       numactl [--hardware | -H]\n"
+ 		"       numactl [--length | -l <length>] [--offset | -o <offset>] [--shmmode | -M <shmmode>]\n"
+@@ -90,6 +92,8 @@ void usage(void)
+ 		"all numbers and ranges can be made cpuset-relative with +\n"
+ 		"the old --cpubind argument is deprecated.\n"
+ 		"use --cpunodebind or --physcpubind instead\n"
++		"use --balancing | -b to enable Linux kernel NUMA balancing\n"
++		"for the process if it is supported by kernel\n"
+ 		"<length> can have g (GB), m (MB) or k (KB) suffixes\n");
+ 	exit(1);
+ }
+@@ -338,6 +342,7 @@ int do_dump = 0;
+ int shmattached = 0;
+ int did_node_cpu_parse = 0;
+ int parse_all = 0;
++int numa_balancing = 0;
+ char *shmoption;
+ 
+ void check_cpubind(int flag)
+@@ -431,6 +436,10 @@ int main(int ac, char **av)
+ 			nopolicy();
+ 			hardware();
+ 			exit(0);
++		case 'b': /* --balancing  */
++			nopolicy();
++			numa_balancing = 1;
++			break;
+ 		case 'i': /* --interleave */
+ 			checknuma();
+ 			if (parse_all)
+@@ -507,6 +516,8 @@ int main(int ac, char **av)
+ 			numa_set_bind_policy(1);
+ 			if (shmfd >= 0) {
+ 				numa_tonodemask_memory(shmptr, shmlen, mask);
++			} else if (numa_balancing) {
++				numa_set_membind_balancing(mask);
+ 			} else {
+ 				numa_set_membind(mask);
+ 			}
+diff --git a/numaif.h b/numaif.h
+index 91aa230..32c12c3 100644
+--- a/numaif.h
++++ b/numaif.h
+@@ -29,6 +29,9 @@ extern long move_pages(int pid, unsigned long count,
+ #define MPOL_LOCAL       4
+ #define MPOL_MAX         5
+ 
++/* Flags for set_mempolicy, specified in mode */
++#define MPOL_F_NUMA_BALANCING	(1 << 13) /* Optimize with NUMA balancing if possible */
++
+ /* Flags for get_mem_policy */
+ #define MPOL_F_NODE    (1<<0)   /* return next il node or node of address */
+ 				/* Warning: MPOL_F_NODE is unsupported and
+diff --git a/versions.ldscript b/versions.ldscript
+index 23074a0..358eeeb 100644
+--- a/versions.ldscript
++++ b/versions.ldscript
+@@ -146,3 +146,11 @@ libnuma_1.4 {
+   local:
+     *;
+ } libnuma_1.3;
++
++# New interface for membind with NUMA balancing optimization
++libnuma_1.5 {
++  global:
++    numa_set_membind_balancing;
++  local:
++    *;
++} libnuma_1.4;
+-- 
+2.29.2
 
-- Rebased on latest upstream kernel 5.10-rc5
-
-- Added some benchmark data and example in patch description of [1/3]
-
-- Rename AutoNUMA to NUMA Balancing
-
-- Add patches to man-pages [2/3] and numactl [3/3]
-
-v5:
-
-- Remove mbind() support, because it's not clear that it's necessary.
-
-v4:
-
-- Use new flags instead of reuse MPOL_MF_LAZY.
-
-v3:
-
-- Rebased on latest upstream (v5.10-rc3)
-
-- Revised the change log.
-
-v2:
-
-- Rebased on latest upstream (v5.10-rc1)
-
-Best Regards,
-Huang, Ying
