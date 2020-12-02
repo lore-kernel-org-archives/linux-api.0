@@ -7,24 +7,24 @@ X-Spam-Status: No, score=-8.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 159A0C83016
-	for <linux-api@archiver.kernel.org>; Wed,  2 Dec 2020 09:12:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CE1BCC64E7C
+	for <linux-api@archiver.kernel.org>; Wed,  2 Dec 2020 09:14:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C3EDE20709
-	for <linux-api@archiver.kernel.org>; Wed,  2 Dec 2020 09:12:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7953C22206
+	for <linux-api@archiver.kernel.org>; Wed,  2 Dec 2020 09:14:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2388072AbgLBJMY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 2 Dec 2020 04:12:24 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:34023 "EHLO
+        id S2387931AbgLBJOv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 2 Dec 2020 04:14:51 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:34179 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2387901AbgLBJMY (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 2 Dec 2020 04:12:24 -0500
+        with ESMTP id S2387797AbgLBJOv (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 2 Dec 2020 04:14:51 -0500
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kkOAl-00019g-FX; Wed, 02 Dec 2020 09:11:39 +0000
-Date:   Wed, 2 Dec 2020 10:11:36 +0100
+        id 1kkOD7-0001NW-VZ; Wed, 02 Dec 2020 09:14:06 +0000
+Date:   Wed, 2 Dec 2020 10:14:03 +0100
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Christoph Hellwig <hch@lst.de>
 Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
@@ -60,33 +60,22 @@ Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
         linux-ext4@vger.kernel.org, linux-integrity@vger.kernel.org,
         selinux@vger.kernel.org
-Subject: Re: [PATCH v3 02/38] mount: make {lock,unlock}_mount_hash() static
-Message-ID: <20201202091136.skx4v2ltkoiibl25@wittgenstein>
+Subject: Re: [PATCH v3 03/38] namespace: only take read lock in
+ do_reconfigure_mnt()
+Message-ID: <20201202091403.jdip5k5jyf6o6pqw@wittgenstein>
 References: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
- <20201128213527.2669807-3-christian.brauner@ubuntu.com>
- <20201201103203.GB27730@lst.de>
+ <20201128213527.2669807-4-christian.brauner@ubuntu.com>
+ <20201201103224.GC27730@lst.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20201201103203.GB27730@lst.de>
+In-Reply-To: <20201201103224.GC27730@lst.de>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Dec 01, 2020 at 11:32:03AM +0100, Christoph Hellwig wrote:
-> On Sat, Nov 28, 2020 at 10:34:51PM +0100, Christian Brauner wrote:
-> > The lock_mount_hash() and unlock_mount_hash() helpers are never called outside a
-> > single file. Remove them from the header and make them static to reflect this
-> > fact. There's no need to have them callable from other places right now, as
-> > Christoph observed.
-> 
-> You are spilling over the usual 73 chars for commit logs, so please check
-> this and the other patches.
-
-I've changed all commit messages to adhere to a 73 character limit.
-
-> 
-> Otherwise looks good:
+On Tue, Dec 01, 2020 at 11:32:24AM +0100, Christoph Hellwig wrote:
+> Looks good,
 > 
 > Reviewed-by: Christoph Hellwig <hch@lst.de>
 
