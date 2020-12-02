@@ -2,96 +2,82 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 51D33C64E8A
-	for <linux-api@archiver.kernel.org>; Wed,  2 Dec 2020 08:44:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 89CC6C71155
+	for <linux-api@archiver.kernel.org>; Wed,  2 Dec 2020 09:10:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E99FB206D5
-	for <linux-api@archiver.kernel.org>; Wed,  2 Dec 2020 08:44:16 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3B57222249
+	for <linux-api@archiver.kernel.org>; Wed,  2 Dec 2020 09:10:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2387775AbgLBIoB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 2 Dec 2020 03:44:01 -0500
-Received: from mga09.intel.com ([134.134.136.24]:6200 "EHLO mga09.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2387700AbgLBIoA (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 2 Dec 2020 03:44:00 -0500
-IronPort-SDR: T8Tz0CKOxnNj2InxYyyV5jIGgBGk051L6g25/SI7RmQlc+VUDNc13xYz1Edc0Mex0GRH6R8SKV
- Zdvk7QZw633g==
-X-IronPort-AV: E=McAfee;i="6000,8403,9822"; a="173139164"
-X-IronPort-AV: E=Sophos;i="5.78,386,1599548400"; 
-   d="scan'208";a="173139164"
-X-Amp-Result: SKIPPED(no attachment in message)
-X-Amp-File-Uploaded: False
-Received: from fmsmga005.fm.intel.com ([10.253.24.32])
-  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2020 00:42:54 -0800
-IronPort-SDR: 59lfLOZMG1FRpT/zHmSkEXl1OymOw7dey734xunXqss8j0lU8MlQNWGrVeKXXmuHopTIfawP2M
- AtqxpwR531jA==
-X-IronPort-AV: E=Sophos;i="5.78,386,1599548400"; 
-   d="scan'208";a="539590119"
-Received: from yhuang6-mobl1.sh.intel.com (HELO yhuang6-MOBL1.intel.com) ([10.238.5.184])
-  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2020 00:42:49 -0800
-From:   Huang Ying <ying.huang@intel.com>
-To:     Peter Zijlstra <peterz@infradead.org>, Mel Gorman <mgorman@suse.de>
-Cc:     linux-mm@kvack.org, linux-kernel@vger.kernel.org,
-        Huang Ying <ying.huang@intel.com>,
-        "Matthew Wilcox (Oracle)" <willy@infradead.org>,
-        Rafael Aquini <aquini@redhat.com>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Ingo Molnar <mingo@redhat.com>,
-        Rik van Riel <riel@surriel.com>,
-        Johannes Weiner <hannes@cmpxchg.org>,
-        Dave Hansen <dave.hansen@intel.com>,
-        Andi Kleen <ak@linux.intel.com>,
-        Michal Hocko <mhocko@suse.com>,
-        David Rientjes <rientjes@google.com>, linux-api@vger.kernel.org
-Subject: [PATCH -V6 RESEND 2/3] NOT kernel/man-pages: man2/set_mempolicy.2: Add mode flag MPOL_F_NUMA_BALANCING
-Date:   Wed,  2 Dec 2020 16:42:33 +0800
-Message-Id: <20201202084234.15797-3-ying.huang@intel.com>
-X-Mailer: git-send-email 2.29.2
-In-Reply-To: <20201202084234.15797-1-ying.huang@intel.com>
-References: <20201202084234.15797-1-ying.huang@intel.com>
+        id S2387996AbgLBJKo (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 2 Dec 2020 04:10:44 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:33705 "EHLO
+        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2387961AbgLBJKo (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 2 Dec 2020 04:10:44 -0500
+Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein)
+        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.86_2)
+        (envelope-from <christian.brauner@ubuntu.com>)
+        id 1kkO92-0000oc-SX; Wed, 02 Dec 2020 09:09:53 +0000
+Date:   Wed, 2 Dec 2020 10:09:48 +0100
+From:   Christian Brauner <christian.brauner@ubuntu.com>
+To:     Christoph Hellwig <hch@lst.de>
+Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
+        Christoph Hellwig <hch@infradead.org>,
+        linux-fsdevel@vger.kernel.org,
+        John Johansen <john.johansen@canonical.com>,
+        James Morris <jmorris@namei.org>,
+        Mimi Zohar <zohar@linux.ibm.com>,
+        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
+        Stephen Smalley <stephen.smalley.work@gmail.com>,
+        Casey Schaufler <casey@schaufler-ca.com>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andreas Dilger <adilger.kernel@dilger.ca>,
+        OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>,
+        Geoffrey Thomas <geofft@ldpreload.com>,
+        Mrunal Patel <mpatel@redhat.com>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Theodore Tso <tytso@mit.edu>, Alban Crequy <alban@kinvolk.io>,
+        Tycho Andersen <tycho@tycho.ws>,
+        David Howells <dhowells@redhat.com>,
+        James Bottomley <James.Bottomley@hansenpartnership.com>,
+        Seth Forshee <seth.forshee@canonical.com>,
+        =?utf-8?B?U3TDqXBoYW5l?= Graber <stgraber@ubuntu.com>,
+        Aleksa Sarai <cyphar@cyphar.com>,
+        Lennart Poettering <lennart@poettering.net>,
+        "Eric W. Biederman" <ebiederm@xmission.com>, smbarber@chromium.org,
+        Phil Estes <estesp@gmail.com>, Serge Hallyn <serge@hallyn.com>,
+        Kees Cook <keescook@chromium.org>,
+        Todd Kjos <tkjos@google.com>, Paul Moore <paul@paul-moore.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        containers@lists.linux-foundation.org, fstests@vger.kernel.org,
+        linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-ext4@vger.kernel.org, linux-integrity@vger.kernel.org,
+        selinux@vger.kernel.org
+Subject: Re: [PATCH v3 01/38] namespace: take lock_mount_hash() directly when
+ changing flags
+Message-ID: <20201202090948.lezq2p33gnq56vc2@wittgenstein>
+References: <20201128213527.2669807-1-christian.brauner@ubuntu.com>
+ <20201128213527.2669807-2-christian.brauner@ubuntu.com>
+ <20201201103119.GA27730@lst.de>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20201201103119.GA27730@lst.de>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Signed-off-by: "Huang, Ying" <ying.huang@intel.com>
----
- man2/set_mempolicy.2 | 9 +++++++++
- 1 file changed, 9 insertions(+)
+On Tue, Dec 01, 2020 at 11:31:19AM +0100, Christoph Hellwig wrote:
+> Looks good,
+> 
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
 
-diff --git a/man2/set_mempolicy.2 b/man2/set_mempolicy.2
-index 68011eecb..3754b3e12 100644
---- a/man2/set_mempolicy.2
-+++ b/man2/set_mempolicy.2
-@@ -113,6 +113,12 @@ A nonempty
- .I nodemask
- specifies node IDs that are relative to the set of
- node IDs allowed by the process's current cpuset.
-+.TP
-+.BR MPOL_F_NUMA_BALANCING " (since Linux 5.11)"
-+Enable the Linux kernel NUMA balancing for the task if it is supported
-+by kernel.
-+If the flag isn't supported by Linux kernel, return -1 and errno is
-+set to EINVAL.
- .PP
- .I nodemask
- points to a bit mask of node IDs that contains up to
-@@ -293,6 +299,9 @@ argument specified both
- .B MPOL_F_STATIC_NODES
- and
- .BR MPOL_F_RELATIVE_NODES .
-+Or, the
-+.B MPOL_F_NUMA_BALANCING
-+isn't supported by the Linux kernel.
- .TP
- .B ENOMEM
- Insufficient kernel memory was available.
--- 
-2.29.2
-
+Thanks!
+Christian
