@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A27DCC19425
-	for <linux-api@archiver.kernel.org>; Fri,  4 Dec 2020 00:08:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1F8E6C193FE
+	for <linux-api@archiver.kernel.org>; Fri,  4 Dec 2020 00:08:37 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 717A3224DE
-	for <linux-api@archiver.kernel.org>; Fri,  4 Dec 2020 00:08:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BD8D1222B6
+	for <linux-api@archiver.kernel.org>; Fri,  4 Dec 2020 00:08:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2502039AbgLDAH6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 3 Dec 2020 19:07:58 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:42580 "EHLO
+        id S2389318AbgLDAIf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 3 Dec 2020 19:08:35 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:42629 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726619AbgLDAH5 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 3 Dec 2020 19:07:57 -0500
+        with ESMTP id S1726619AbgLDAIe (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 3 Dec 2020 19:08:34 -0500
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kkyYI-0007ka-DY; Fri, 04 Dec 2020 00:02:22 +0000
+        id 1kkyYG-0007ka-IY; Fri, 04 Dec 2020 00:02:20 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -60,9 +60,9 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v4 37/40] overlayfs: do not mount on top of idmapped mounts
-Date:   Fri,  4 Dec 2020 00:57:33 +0100
-Message-Id: <20201203235736.3528991-38-christian.brauner@ubuntu.com>
+Subject: [PATCH v4 36/40] ecryptfs: do not mount on top of idmapped mounts
+Date:   Fri,  4 Dec 2020 00:57:32 +0100
+Message-Id: <20201203235736.3528991-37-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201203235736.3528991-1-christian.brauner@ubuntu.com>
 References: <20201203235736.3528991-1-christian.brauner@ubuntu.com>
@@ -72,7 +72,7 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Prevent overlayfs from being mounted on top of idmapped mounts until we
+Prevent ecryptfs from being mounted on top of idmapped mounts until we
 have ported it to handle this case and added proper testing for it.
 
 Cc: Christoph Hellwig <hch@lst.de>
@@ -85,32 +85,32 @@ Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 patch introduced
 
 /* v3 */
-- Amir Goldstein <amir73il@gmail.com>:
-  - Move check for idmapped lower layers into ovl_mount_dir_noesc().
 - David Howells <dhowells@redhat.com>:
   - Adapt check after removing mnt_idmapped() helper.
 
 /* v4 */
 unchanged
 ---
- fs/overlayfs/super.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ fs/ecryptfs/main.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/fs/overlayfs/super.c b/fs/overlayfs/super.c
-index aed21e569390..2be17c769322 100644
---- a/fs/overlayfs/super.c
-+++ b/fs/overlayfs/super.c
-@@ -811,6 +811,10 @@ static int ovl_mount_dir_noesc(const char *name, struct path *path)
- 		pr_err("filesystem on '%s' not supported\n", name);
- 		goto out_put;
+diff --git a/fs/ecryptfs/main.c b/fs/ecryptfs/main.c
+index e63259fdef28..cdf40a54a35d 100644
+--- a/fs/ecryptfs/main.c
++++ b/fs/ecryptfs/main.c
+@@ -531,6 +531,12 @@ static struct dentry *ecryptfs_mount(struct file_system_type *fs_type, int flags
+ 		goto out_free;
  	}
-+	if (mnt_user_ns(path->mnt) != &init_user_ns) {
-+		pr_err("idmapped layers are currently not supported\n");
-+		goto out_put;
+ 
++	if (mnt_user_ns(path.mnt) != &init_user_ns) {
++		rc = -EINVAL;
++		printk(KERN_ERR "Mounting on idmapped mounts currently disallowed\n");
++		goto out_free;
 +	}
- 	if (!d_is_dir(path->dentry)) {
- 		pr_err("'%s' not a directory\n", name);
- 		goto out_put;
++
+ 	if (check_ruid && !uid_eq(d_inode(path.dentry)->i_uid, current_uid())) {
+ 		rc = -EPERM;
+ 		printk(KERN_ERR "Mount of device (uid: %d) not owned by "
 -- 
 2.29.2
 
