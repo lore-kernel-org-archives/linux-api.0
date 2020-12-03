@@ -2,98 +2,157 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AED96C4361A
-	for <linux-api@archiver.kernel.org>; Thu,  3 Dec 2020 23:40:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 899BBC433FE
+	for <linux-api@archiver.kernel.org>; Fri,  4 Dec 2020 00:02:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5B01F22285
-	for <linux-api@archiver.kernel.org>; Thu,  3 Dec 2020 23:40:01 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4A811224F9
+	for <linux-api@archiver.kernel.org>; Fri,  4 Dec 2020 00:02:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727896AbgLCXkB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 3 Dec 2020 18:40:01 -0500
-Received: from mail.kernel.org ([198.145.29.99]:44740 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727495AbgLCXkA (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 3 Dec 2020 18:40:00 -0500
-Date:   Thu, 3 Dec 2020 15:39:16 -0800
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linux-foundation.org;
-        s=korg; t=1607038759;
-        bh=zDBJmA1njD9c5R9U97XtgqdT27wAv2IVLfk1nPS0FJM=;
-        h=From:To:Cc:Subject:In-Reply-To:References:From;
-        b=mS6E8T6sd+XV4qfkYaIC7AzHKw/6zG99ExlvCv9CM2GiRif+p2YkZqPRApdyQ8W6k
-         4GQb78gRhspuJjIgU7TpCoScNXnKT9kg7Cb/IBT70e6ZKsRZ74kZc1jLZ9uATm4O+j
-         kPi+AoMzreC1GgZnwmGefOwVW3qrUNdYbrXPS6vE=
-From:   Andrew Morton <akpm@linux-foundation.org>
-To:     Mike Rapoport <rppt@kernel.org>
-Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
+        id S2388180AbgLDACN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 3 Dec 2020 19:02:13 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:41698 "EHLO
+        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728138AbgLDACL (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 3 Dec 2020 19:02:11 -0500
+Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
+        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.86_2)
+        (envelope-from <christian.brauner@ubuntu.com>)
+        id 1kkyXL-0007ka-79; Fri, 04 Dec 2020 00:01:23 +0000
+From:   Christian Brauner <christian.brauner@ubuntu.com>
+To:     Alexander Viro <viro@zeniv.linux.org.uk>,
+        Christoph Hellwig <hch@infradead.org>,
+        linux-fsdevel@vger.kernel.org
+Cc:     John Johansen <john.johansen@canonical.com>,
+        James Morris <jmorris@namei.org>,
+        Mimi Zohar <zohar@linux.ibm.com>,
+        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
+        Stephen Smalley <stephen.smalley.work@gmail.com>,
+        Casey Schaufler <casey@schaufler-ca.com>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andreas Dilger <adilger.kernel@dilger.ca>,
+        OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>,
+        Geoffrey Thomas <geofft@ldpreload.com>,
+        Mrunal Patel <mpatel@redhat.com>,
+        Josh Triplett <josh@joshtriplett.org>,
         Andy Lutomirski <luto@kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Christopher Lameter <cl@linux.com>,
-        Dan Williams <dan.j.williams@intel.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        David Hildenbrand <david@redhat.com>,
-        Elena Reshetova <elena.reshetova@intel.com>,
-        "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,
-        James Bottomley <jejb@linux.ibm.com>,
-        "Kirill A. Shutemov" <kirill@shutemov.name>,
-        Matthew Wilcox <willy@infradead.org>,
-        Mark Rutland <mark.rutland@arm.com>,
-        Mike Rapoport <rppt@linux.ibm.com>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Palmer Dabbelt <palmer@dabbelt.com>,
-        Paul Walmsley <paul.walmsley@sifive.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Rick Edgecombe <rick.p.edgecombe@intel.com>,
-        Roman Gushchin <guro@fb.com>,
-        Shakeel Butt <shakeelb@google.com>,
-        Shuah Khan <shuah@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
-        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
-        linux-arm-kernel@lists.infradead.org,
-        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
-        linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
-        linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
-        x86@kernel.org, Palmer Dabbelt <palmerdabbelt@google.com>
-Subject: Re: [PATCH v14 09/10] arch, mm: wire up memfd_secret system call
- were relevant
-Message-Id: <20201203153916.91f0f80dcb8a0fa81fc341fa@linux-foundation.org>
-In-Reply-To: <20201203062949.5484-10-rppt@kernel.org>
-References: <20201203062949.5484-1-rppt@kernel.org>
-        <20201203062949.5484-10-rppt@kernel.org>
-X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.31; x86_64-pc-linux-gnu)
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+        Theodore Tso <tytso@mit.edu>, Alban Crequy <alban@kinvolk.io>,
+        Tycho Andersen <tycho@tycho.ws>,
+        David Howells <dhowells@redhat.com>,
+        James Bottomley <James.Bottomley@hansenpartnership.com>,
+        Seth Forshee <seth.forshee@canonical.com>,
+        =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
+        Aleksa Sarai <cyphar@cyphar.com>,
+        Lennart Poettering <lennart@poettering.net>,
+        "Eric W. Biederman" <ebiederm@xmission.com>, smbarber@chromium.org,
+        Phil Estes <estesp@gmail.com>, Serge Hallyn <serge@hallyn.com>,
+        Kees Cook <keescook@chromium.org>,
+        Todd Kjos <tkjos@google.com>, Paul Moore <paul@paul-moore.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        containers@lists.linux-foundation.org,
+        linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-ext4@vger.kernel.org, linux-integrity@vger.kernel.org,
+        selinux@vger.kernel.org,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Christoph Hellwig <hch@lst.de>
+Subject: [PATCH v4 05/40] fs: add attr_flags_to_mnt_flags helper
+Date:   Fri,  4 Dec 2020 00:57:01 +0100
+Message-Id: <20201203235736.3528991-6-christian.brauner@ubuntu.com>
+X-Mailer: git-send-email 2.29.2
+In-Reply-To: <20201203235736.3528991-1-christian.brauner@ubuntu.com>
+References: <20201203235736.3528991-1-christian.brauner@ubuntu.com>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu,  3 Dec 2020 08:29:48 +0200 Mike Rapoport <rppt@kernel.org> wrote:
+Add a simple helper to translate uapi MOUNT_ATTR_* flags to MNT_* flags
+which we will use in follow-up patches too.
 
-> From: Mike Rapoport <rppt@linux.ibm.com>
-> 
-> Wire up memfd_secret system call on architectures that define
-> ARCH_HAS_SET_DIRECT_MAP, namely arm64, risc-v and x86.
-> 
-> ...
->
-> --- a/include/uapi/asm-generic/unistd.h
-> +++ b/include/uapi/asm-generic/unistd.h
-> @@ -861,9 +861,13 @@ __SYSCALL(__NR_faccessat2, sys_faccessat2)
->  __SYSCALL(__NR_process_madvise, sys_process_madvise)
->  #define __NR_watch_mount 441
->  __SYSCALL(__NR_watch_mount, sys_watch_mount)
-> +#ifdef __ARCH_WANT_MEMFD_SECRET
-> +#define __NR_memfd_secret 442
-> +__SYSCALL(__NR_memfd_secret, sys_memfd_secret)
-> +#endif
+Suggested-by: Christoph Hellwig <hch@lst.de>
+Cc: David Howells <dhowells@redhat.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: linux-fsdevel@vger.kernel.org
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+---
+/* v2 */
+patch not present
 
-Why do we add the ifdef?  Can't we simply define the syscall on all
-architectures and let sys_ni do its thing?
+/* v3 */
+patch not present
+
+/* v4 */
+patch introduced
+---
+ fs/namespace.c | 40 ++++++++++++++++++++++++----------------
+ 1 file changed, 24 insertions(+), 16 deletions(-)
+
+diff --git a/fs/namespace.c b/fs/namespace.c
+index 1a756d33c91a..b2a9eb7b43d3 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -3450,6 +3450,28 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
+ 	return ret;
+ }
+ 
++#define FSMOUNT_VALID_FLAGS                                                    \
++	(MOUNT_ATTR_RDONLY | MOUNT_ATTR_NOSUID | MOUNT_ATTR_NODEV |            \
++	 MOUNT_ATTR_NOEXEC | MOUNT_ATTR__ATIME | MOUNT_ATTR_NODIRATIME)
++
++static unsigned int attr_flags_to_mnt_flags(u64 attr_flags)
++{
++	unsigned int mnt_flags = 0;
++
++	if (attr_flags & MOUNT_ATTR_RDONLY)
++		mnt_flags |= MNT_READONLY;
++	if (attr_flags & MOUNT_ATTR_NOSUID)
++		mnt_flags |= MNT_NOSUID;
++	if (attr_flags & MOUNT_ATTR_NODEV)
++		mnt_flags |= MNT_NODEV;
++	if (attr_flags & MOUNT_ATTR_NOEXEC)
++		mnt_flags |= MNT_NOEXEC;
++	if (attr_flags & MOUNT_ATTR_NODIRATIME)
++		mnt_flags |= MNT_NODIRATIME;
++
++	return mnt_flags;
++}
++
+ /*
+  * Create a kernel mount representation for a new, prepared superblock
+  * (specified by fs_fd) and attach to an open_tree-like file descriptor.
+@@ -3472,24 +3494,10 @@ SYSCALL_DEFINE3(fsmount, int, fs_fd, unsigned int, flags,
+ 	if ((flags & ~(FSMOUNT_CLOEXEC)) != 0)
+ 		return -EINVAL;
+ 
+-	if (attr_flags & ~(MOUNT_ATTR_RDONLY |
+-			   MOUNT_ATTR_NOSUID |
+-			   MOUNT_ATTR_NODEV |
+-			   MOUNT_ATTR_NOEXEC |
+-			   MOUNT_ATTR__ATIME |
+-			   MOUNT_ATTR_NODIRATIME))
++	if (attr_flags & ~FSMOUNT_VALID_FLAGS)
+ 		return -EINVAL;
+ 
+-	if (attr_flags & MOUNT_ATTR_RDONLY)
+-		mnt_flags |= MNT_READONLY;
+-	if (attr_flags & MOUNT_ATTR_NOSUID)
+-		mnt_flags |= MNT_NOSUID;
+-	if (attr_flags & MOUNT_ATTR_NODEV)
+-		mnt_flags |= MNT_NODEV;
+-	if (attr_flags & MOUNT_ATTR_NOEXEC)
+-		mnt_flags |= MNT_NOEXEC;
+-	if (attr_flags & MOUNT_ATTR_NODIRATIME)
+-		mnt_flags |= MNT_NODIRATIME;
++	mnt_flags = attr_flags_to_mnt_flags(attr_flags);
+ 
+ 	switch (attr_flags & MOUNT_ATTR__ATIME) {
+ 	case MOUNT_ATTR_STRICTATIME:
+-- 
+2.29.2
 
