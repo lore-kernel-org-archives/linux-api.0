@@ -2,79 +2,77 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.2 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.2 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 38F61C63777
-	for <linux-api@archiver.kernel.org>; Thu,  3 Dec 2020 12:03:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D273EC3527A
+	for <linux-api@archiver.kernel.org>; Thu,  3 Dec 2020 14:46:32 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C92E720872
-	for <linux-api@archiver.kernel.org>; Thu,  3 Dec 2020 12:03:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4AFEC2244A
+	for <linux-api@archiver.kernel.org>; Thu,  3 Dec 2020 14:38:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2387556AbgLCMDJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 3 Dec 2020 07:03:09 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45568 "EHLO
+        id S1729448AbgLCOiO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 3 Dec 2020 09:38:14 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41374 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728716AbgLCMDJ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 3 Dec 2020 07:03:09 -0500
-Received: from mail-lj1-x22e.google.com (mail-lj1-x22e.google.com [IPv6:2a00:1450:4864:20::22e])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7E0DDC061A4E;
-        Thu,  3 Dec 2020 04:02:28 -0800 (PST)
-Received: by mail-lj1-x22e.google.com with SMTP id f18so2218537ljg.9;
-        Thu, 03 Dec 2020 04:02:28 -0800 (PST)
+        with ESMTP id S1729355AbgLCOiO (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 3 Dec 2020 09:38:14 -0500
+Received: from mail-qk1-x743.google.com (mail-qk1-x743.google.com [IPv6:2607:f8b0:4864:20::743])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 30A62C061A4F
+        for <linux-api@vger.kernel.org>; Thu,  3 Dec 2020 06:37:28 -0800 (PST)
+Received: by mail-qk1-x743.google.com with SMTP id q5so2169836qkc.12
+        for <linux-api@vger.kernel.org>; Thu, 03 Dec 2020 06:37:28 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
+        d=toxicpanda-com.20150623.gappssmtp.com; s=20150623;
         h=subject:to:cc:references:from:message-id:date:user-agent
          :mime-version:in-reply-to:content-language:content-transfer-encoding;
-        bh=IaH1Ay2WDIAxMFtXzoOalR9PJQnL9IHu/7OpcWmCb60=;
-        b=GqwPxheJDKpMMqbf8GKtCQsRNdkZ9ty6yZMmX6GnvUKlV8uPMeTHJAWdu0SBMriDtz
-         t/lSst+rrTVjLuyRcEtwSE+uQGscgLF5LcBHrqxErP3K/8K0mc5blLZcS/IpnyfADSq/
-         7B5vQViuH30s4qz6gP6RqkB/NGf59Fv42R/uVzopGsPW8tSqVRjstXsgx0XVmWIdyQNU
-         +sehwVV5DSpWBdFXfjmCr+hPaIveMTNvIi+gpim6bOo/njHtZZZusWOxX0nGW0h6BiQr
-         SNB0hrrz25XEhG6Qgw70P0FBtrfsmskcFnm7j0vAzrhS2czUcX1UQEV1aXV9qUMnEY3t
-         zrAA==
+        bh=tRaksBdiJ9O3u8mQ5z+bBUCn8VpNBVTbpG+ZUh7pbQQ=;
+        b=kpYJ8mb/ShcMAiNzLiEB+p/aBtblThc0DZJd9ro0DuU3BjVw5Q7mHxKpEm5Z35eOPq
+         6vZxEiSgr46CaICHgD8sMy7QVVEzU4NVWDCRxehtTN8UbR9YMBuHXCFQ7uIUEzzHM9yT
+         e2OhCAcHyCUsgYCKiWS0kXuUaY3BhGOpR/s0p6hbpqbt3AJUT9Xhe0rBsRJ7ZV9bc46Y
+         TDp/1GUTIOvK3bJ1cNX3p8zNq9t0X/bWDnjnn45ZdG3E48pVEAz6ET+C+Ranm39plFdB
+         ygxPw4NbcMOei5EZksnKbx4ryJ2DkC7LGeplGWEcJbC7zTrfd8p9jZEzhDW6KHE55ata
+         K/yQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:subject:to:cc:references:from:message-id:date
          :user-agent:mime-version:in-reply-to:content-language
          :content-transfer-encoding;
-        bh=IaH1Ay2WDIAxMFtXzoOalR9PJQnL9IHu/7OpcWmCb60=;
-        b=fNrBg564IGtCwZZPVkS9iPy5sOUnIxx2UIKsnt6Khv5oDjrulkWjFDv0+HPzk8JDnC
-         ZN0rKUTknJdSFxVv8voAku9HNhbb/66fAX1UynAPo8BG1Y6gbPdo5SYOiMvBgOb9+Ylu
-         gvBpOYMeZHXXhvcZ5yuYtBh4RdjfPrWcuJWyVtMBy+4bJ2Foptw/MdYI3sY9xDzRIVhJ
-         8vWI9pz6pDWgkVZoWTo3431ftmFA6gLb3hlOrSqg3V+JIMfNoF1FDl6ia0rNeVNZFxQ7
-         e+tSmFKf47Eau80udpK9aey9uz7W1e/GM/S0EjclpovyJARr1Q2Za4svznrTgS3DuuOr
-         BbhA==
-X-Gm-Message-State: AOAM5305WsqpZe9KboLSdUQ92xHzz2htnrkPVIWp8U+02FNxv7Lub9ti
-        ug4WdEGs4F7IQmTmeL8wdbZDtbeoXW4=
-X-Google-Smtp-Source: ABdhPJyCzognIJDPh7B1KJBBA0Nm3ojFxr32mjSG1N0v0D144se4CngiUAVcQ5T5T5QBJYTOlu8EUA==
-X-Received: by 2002:a2e:9550:: with SMTP id t16mr1098917ljh.117.1606996946693;
-        Thu, 03 Dec 2020 04:02:26 -0800 (PST)
-Received: from [192.168.1.40] (88-114-216-158.elisa-laajakaista.fi. [88.114.216.158])
-        by smtp.gmail.com with ESMTPSA id h23sm443031lfk.148.2020.12.03.04.02.25
+        bh=tRaksBdiJ9O3u8mQ5z+bBUCn8VpNBVTbpG+ZUh7pbQQ=;
+        b=PIrq99yl2RzseV2Tc1jUMv+/vvc0LH9c7nJWU7tMAn6oHlUXzb257G9dbJtsurg43i
+         06gAa/j/aub8S+G4E89R9uBaQqQ4ZTFvkbXg0d9asRPyH3zPwxfb+Cvzydkx4H3U4V94
+         4yR6b9b83/L1ojqu1MGAI1vll7hp3Ete0i4XKyFnO8byl11I3Pgklo7ajn3rxsPHXOqJ
+         1oZ8vRM2h7cBq0qcIziNOV/88XjmVHCZ+dwV90jzTKih3A5pI196Rh9HEQdb6Vn82PMI
+         kDvPP6myQNfj95pNfYNIjScSPVpKcMFSTbCa5AidbRwH53hqrjMXfyj0JbZhqoHoo/7Q
+         LVFw==
+X-Gm-Message-State: AOAM532tKcp+LXpiQdd11GxuWH2BXpnRispuYOxmm+911Dr1WXvxIZkj
+        oy5cZFV0IQunaccXzUybsbxkhg==
+X-Google-Smtp-Source: ABdhPJzMX8HmCsVHfR0OmrZIiDkY3k1n+yjarn0l1aQitgNLcxdJGX8+i5hzVL952EH6qox7kOkGYA==
+X-Received: by 2002:a05:620a:790:: with SMTP id 16mr3154252qka.169.1607006247296;
+        Thu, 03 Dec 2020 06:37:27 -0800 (PST)
+Received: from [192.168.1.45] (cpe-174-109-172-136.nc.res.rr.com. [174.109.172.136])
+        by smtp.gmail.com with ESMTPSA id v9sm1394976qkv.34.2020.12.03.06.37.25
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 03 Dec 2020 04:02:26 -0800 (PST)
-Subject: Re: [PATCH v5] mm: Optional full ASLR for mmap(), mremap(), vdso and
- stack
-To:     Florian Weimer <fweimer@redhat.com>
-Cc:     linux-hardening@vger.kernel.org, akpm@linux-foundation.org,
-        linux-mm@kvack.org, linux-kernel@vger.kernel.org,
-        Jann Horn <jannh@google.com>,
-        Kees Cook <keescook@chromium.org>,
-        Matthew Wilcox <willy@infradead.org>,
-        Mike Rapoport <rppt@kernel.org>,
-        Linux API <linux-api@vger.kernel.org>
-References: <20201129211517.2208-1-toiwoton@gmail.com>
- <87im9j2pbs.fsf@oldenburg2.str.redhat.com>
-From:   Topi Miettinen <toiwoton@gmail.com>
-Message-ID: <e8c458fe-073b-2c4d-4d80-3637041c1485@gmail.com>
-Date:   Thu, 3 Dec 2020 14:02:22 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.5.0
+        Thu, 03 Dec 2020 06:37:26 -0800 (PST)
+Subject: Re: [PATCH v6 11/11] btrfs: implement RWF_ENCODED writes
+To:     Omar Sandoval <osandov@osandov.com>, linux-fsdevel@vger.kernel.org,
+        linux-btrfs@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>,
+        Christoph Hellwig <hch@infradead.org>
+Cc:     Dave Chinner <david@fromorbit.com>, Jann Horn <jannh@google.com>,
+        Amir Goldstein <amir73il@gmail.com>,
+        Aleksa Sarai <cyphar@cyphar.com>, linux-api@vger.kernel.org,
+        kernel-team@fb.com
+References: <cover.1605723568.git.osandov@fb.com>
+ <fe58a0fe2c1455567fe1e9e62232e8b711797a93.1605723568.git.osandov@fb.com>
+From:   Josef Bacik <josef@toxicpanda.com>
+Message-ID: <ffca5825-27f1-63c2-1195-d0c338cd067d@toxicpanda.com>
+Date:   Thu, 3 Dec 2020 09:37:24 -0500
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
+ Gecko/20100101 Thunderbird/78.5.0
 MIME-Version: 1.0
-In-Reply-To: <87im9j2pbs.fsf@oldenburg2.str.redhat.com>
+In-Reply-To: <fe58a0fe2c1455567fe1e9e62232e8b711797a93.1605723568.git.osandov@fb.com>
 Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Language: en-US
 Content-Transfer-Encoding: 7bit
@@ -82,47 +80,24 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 3.12.2020 11.47, Florian Weimer wrote:
-> * Topi Miettinen:
+On 11/18/20 2:18 PM, Omar Sandoval wrote:
+> From: Omar Sandoval <osandov@fb.com>
 > 
->> +3   Additionally enable full randomization of memory mappings created
->> +    with mmap(NULL, ...). With 2, the base of the VMA used for such
->> +    mappings is random, but the mappings are created in predictable
->> +    places within the VMA and in sequential order. With 3, new VMAs
->> +    are created to fully randomize the mappings.
->> +
->> +    Also mremap(..., MREMAP_MAYMOVE) will move the mappings even if
->> +    not necessary and the location of stack and vdso are also
->> +    randomized.
->> +
->> +    On 32 bit systems this may cause problems due to increased VM
->> +    fragmentation if the address space gets crowded.
+> The implementation resembles direct I/O: we have to flush any ordered
+> extents, invalidate the page cache, and do the io tree/delalloc/extent
+> map/ordered extent dance. From there, we can reuse the compression code
+> with a minor modification to distinguish the write from writeback. This
+> also creates inline extents when possible.
 > 
-> Isn't this a bit of an understatement?  I think you'll have to restrict
-> this randomization to a subregion of the entire address space, otherwise
-> the reduction in maximum mapping size due to fragmentation will be a
-> problem on 64-bit architectures as well (which generally do not support
-> the full 64 bits for user-space addresses).
-
-Restricting randomization would reduce the address space layout 
-randomization and make this less useful. There's 48 or 56 bits, which 
-translate to 128TB and 64PB of VM for user applications. Is it really 
-possible to build today (or in near future) a system, which would 
-contain so much RAM that such fragmentation could realistically happen? 
-Perhaps also in a special case where lots of 1GB huge pages are 
-necessary? Maybe in those cases you shouldn't use randomize_va_space=3. 
-Or perhaps there could be randomize_va_space=3 which does something, and 
-randomize_va_space=4 for those who want maximum randomization.
-
->> +    On all systems, it will reduce performance and increase memory
->> +    usage due to less efficient use of page tables and inability to
->> +    merge adjacent VMAs with compatible attributes. In the worst case,
->> +    additional page table entries of up to 4 pages are created for
->> +    each mapping, so with small mappings there's considerable penalty.
+> Now that read and write are implemented, this also sets the
+> FMODE_ENCODED_IO flag in btrfs_file_open().
 > 
-> The number 4 is architecture-specific, right?
+> Signed-off-by: Omar Sandoval <osandov@fb.com>
 
-Yes, I only know x86_64. Actually it could have 5 level page tables. 
-I'll fix this in next version.
+Fix up the spacing thing and then you can add
 
--Topi
+Reviewed-by: Josef Bacik <josef@toxicpanda.com>
+
+Thanks,
+
+Josef
