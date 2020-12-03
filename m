@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 52ADCC197BF
-	for <linux-api@archiver.kernel.org>; Fri,  4 Dec 2020 00:13:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 19075C433FE
+	for <linux-api@archiver.kernel.org>; Fri,  4 Dec 2020 00:13:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 27A6E222B6
-	for <linux-api@archiver.kernel.org>; Fri,  4 Dec 2020 00:13:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BE71522224
+	for <linux-api@archiver.kernel.org>; Fri,  4 Dec 2020 00:13:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2502150AbgLDANL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 3 Dec 2020 19:13:11 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:43386 "EHLO
+        id S2502155AbgLDANT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 3 Dec 2020 19:13:19 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:43400 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2502147AbgLDANL (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 3 Dec 2020 19:13:11 -0500
+        with ESMTP id S2502147AbgLDANS (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 3 Dec 2020 19:13:18 -0500
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kkyY5-0007ka-I8; Fri, 04 Dec 2020 00:02:09 +0000
+        id 1kkyYC-0007ka-U4; Fri, 04 Dec 2020 00:02:17 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -60,26 +60,51 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v4 30/40] exec: handle idmapped mounts
-Date:   Fri,  4 Dec 2020 00:57:26 +0100
-Message-Id: <20201203235736.3528991-31-christian.brauner@ubuntu.com>
+Subject: [PATCH v4 34/40] fat: handle idmapped mounts
+Date:   Fri,  4 Dec 2020 00:57:30 +0100
+Message-Id: <20201203235736.3528991-35-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201203235736.3528991-1-christian.brauner@ubuntu.com>
 References: <20201203235736.3528991-1-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-When executing a setuid binary the kernel will verify in bprm_fill_uid()
-that the inode has a mapping in the caller's user namespace before
-setting the callers uid and gid. Let bprm_fill_uid() handle idmapped
-mounts. If the inode is accessed through an idmapped mount it is mapped
-according to the mount's user namespace. Afterwards the checks are
-identical to non-idmapped mounts. If the initial user namespace is
-passed nothing changes so non-idmapped mounts will see identical
-behavior as before.
+Let fat handle idmapped mounts. This allows to have the same fat mount
+appear in multiple locations with different id mappings. This allows to
+expose a vfat formatted USB stick to multiple user with different ids on
+the host or in user namespaces allowing for dac permissions:
+
+mount -o uid=1000,gid=1000 /dev/sdb /mnt
+
+u1001@f2-vm:/lower1$ ls -ln /mnt/
+total 4
+-rwxr-xr-x 1 1000 1000 4 Oct 28 03:44 aaa
+-rwxr-xr-x 1 1000 1000 0 Oct 28 01:09 bbb
+-rwxr-xr-x 1 1000 1000 0 Oct 28 01:10 ccc
+-rwxr-xr-x 1 1000 1000 0 Oct 28 03:46 ddd
+-rwxr-xr-x 1 1000 1000 0 Oct 28 04:01 eee
+
+mount-idmapped --map-mount b:1000:1001:1
+
+u1001@f2-vm:/lower1$ ls -ln /lower1/
+total 4
+-rwxr-xr-x 1 1001 1001 4 Oct 28 03:44 aaa
+-rwxr-xr-x 1 1001 1001 0 Oct 28 01:09 bbb
+-rwxr-xr-x 1 1001 1001 0 Oct 28 01:10 ccc
+-rwxr-xr-x 1 1001 1001 0 Oct 28 03:46 ddd
+-rwxr-xr-x 1 1001 1001 0 Oct 28 04:01 eee
+
+u1001@f2-vm:/lower1$ touch /lower1/fff
+
+u1001@f2-vm:/lower1$ ls -ln /lower1/fff
+-rwxr-xr-x 1 1001 1001 0 Oct 28 04:03 /lower1/fff
+
+u1001@f2-vm:/lower1$ ls -ln /mnt/fff
+-rwxr-xr-x 1 1000 1000 0 Oct 28 04:03 /mnt/fff
 
 Cc: Christoph Hellwig <hch@lst.de>
 Cc: David Howells <dhowells@redhat.com>
@@ -94,43 +119,97 @@ unchanged
 unchanged
 
 /* v4 */
+- Mauricio Vásquez Bernal <mauricio@kinvolk.io>:
+  - Fix mount example in commit message.
+
 - Serge Hallyn <serge@hallyn.com>:
   - Use "mnt_userns" to refer to a vfsmount's userns everywhere to make
     terminology consistent.
 ---
- fs/exec.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ fs/fat/file.c        | 15 ++++++++-------
+ fs/fat/namei_msdos.c |  2 +-
+ fs/fat/namei_vfat.c  |  2 +-
+ 3 files changed, 10 insertions(+), 9 deletions(-)
 
-diff --git a/fs/exec.c b/fs/exec.c
-index 1efcda495708..05d5009eeba7 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -1567,6 +1567,7 @@ static void check_unsafe_exec(struct linux_binprm *bprm)
- static void bprm_fill_uid(struct linux_binprm *bprm, struct file *file)
+diff --git a/fs/fat/file.c b/fs/fat/file.c
+index 73acd0843d92..6a618e9450c8 100644
+--- a/fs/fat/file.c
++++ b/fs/fat/file.c
+@@ -398,7 +398,7 @@ int fat_getattr(struct user_namespace *mnt_userns, const struct path *path,
+ 		struct kstat *stat, u32 request_mask, unsigned int flags)
  {
- 	/* Handle suid and sgid on files */
-+	struct user_namespace *mnt_userns;
- 	struct inode *inode;
- 	unsigned int mode;
- 	kuid_t uid;
-@@ -1583,13 +1584,15 @@ static void bprm_fill_uid(struct linux_binprm *bprm, struct file *file)
- 	if (!(mode & (S_ISUID|S_ISGID)))
- 		return;
+ 	struct inode *inode = d_inode(path->dentry);
+-	generic_fillattr(&init_user_ns, inode, stat);
++	generic_fillattr(mnt_userns, inode, stat);
+ 	stat->blksize = MSDOS_SB(inode->i_sb)->cluster_size;
  
-+	mnt_userns = mnt_user_ns(file->f_path.mnt);
-+
- 	/* Be careful if suid/sgid is set */
- 	inode_lock(inode);
+ 	if (MSDOS_SB(inode->i_sb)->options.nfs == FAT_NFS_NOSTALE_RO) {
+@@ -447,12 +447,13 @@ static int fat_sanitize_mode(const struct msdos_sb_info *sbi,
+ 	return 0;
+ }
  
- 	/* reload atomically mode/uid/gid now that lock held */
- 	mode = inode->i_mode;
--	uid = inode->i_uid;
--	gid = inode->i_gid;
-+	uid = i_uid_into_mnt(mnt_userns, inode);
-+	gid = i_gid_into_mnt(mnt_userns, inode);
- 	inode_unlock(inode);
+-static int fat_allow_set_time(struct msdos_sb_info *sbi, struct inode *inode)
++static int fat_allow_set_time(struct user_namespace *mnt_userns,
++			      struct msdos_sb_info *sbi, struct inode *inode)
+ {
+ 	umode_t allow_utime = sbi->options.allow_utime;
  
- 	/* We ignore suid/sgid if there are no mappings for them in the ns */
+-	if (!uid_eq(current_fsuid(), inode->i_uid)) {
+-		if (in_group_p(inode->i_gid))
++	if (!uid_eq(current_fsuid(), i_uid_into_mnt(mnt_userns, inode))) {
++		if (in_group_p(i_gid_into_mnt(mnt_userns, inode)))
+ 			allow_utime >>= 3;
+ 		if (allow_utime & MAY_WRITE)
+ 			return 1;
+@@ -477,11 +478,11 @@ int fat_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
+ 	/* Check for setting the inode time. */
+ 	ia_valid = attr->ia_valid;
+ 	if (ia_valid & TIMES_SET_FLAGS) {
+-		if (fat_allow_set_time(sbi, inode))
++		if (fat_allow_set_time(mnt_userns, sbi, inode))
+ 			attr->ia_valid &= ~TIMES_SET_FLAGS;
+ 	}
+ 
+-	error = setattr_prepare(&init_user_ns, dentry, attr);
++	error = setattr_prepare(mnt_userns, dentry, attr);
+ 	attr->ia_valid = ia_valid;
+ 	if (error) {
+ 		if (sbi->options.quiet)
+@@ -551,7 +552,7 @@ int fat_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
+ 		fat_truncate_time(inode, &attr->ia_mtime, S_MTIME);
+ 	attr->ia_valid &= ~(ATTR_ATIME|ATTR_CTIME|ATTR_MTIME);
+ 
+-	setattr_copy(&init_user_ns, inode, attr);
++	setattr_copy(mnt_userns, inode, attr);
+ 	mark_inode_dirty(inode);
+ out:
+ 	return error;
+diff --git a/fs/fat/namei_msdos.c b/fs/fat/namei_msdos.c
+index a8f3375d9d10..efba301d68ae 100644
+--- a/fs/fat/namei_msdos.c
++++ b/fs/fat/namei_msdos.c
+@@ -667,7 +667,7 @@ static struct file_system_type msdos_fs_type = {
+ 	.name		= "msdos",
+ 	.mount		= msdos_mount,
+ 	.kill_sb	= kill_block_super,
+-	.fs_flags	= FS_REQUIRES_DEV,
++	.fs_flags	= FS_REQUIRES_DEV | FS_ALLOW_IDMAP,
+ };
+ MODULE_ALIAS_FS("msdos");
+ 
+diff --git a/fs/fat/namei_vfat.c b/fs/fat/namei_vfat.c
+index 23936ecf79a5..5369d82e0bfb 100644
+--- a/fs/fat/namei_vfat.c
++++ b/fs/fat/namei_vfat.c
+@@ -1063,7 +1063,7 @@ static struct file_system_type vfat_fs_type = {
+ 	.name		= "vfat",
+ 	.mount		= vfat_mount,
+ 	.kill_sb	= kill_block_super,
+-	.fs_flags	= FS_REQUIRES_DEV,
++	.fs_flags	= FS_REQUIRES_DEV | FS_ALLOW_IDMAP,
+ };
+ MODULE_ALIAS_FS("vfat");
+ 
 -- 
 2.29.2
 
