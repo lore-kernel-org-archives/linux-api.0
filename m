@@ -2,119 +2,87 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4D538C4361B
-	for <linux-api@archiver.kernel.org>; Tue,  8 Dec 2020 08:14:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3F16BC1B0D9
+	for <linux-api@archiver.kernel.org>; Tue,  8 Dec 2020 10:08:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1876323A51
-	for <linux-api@archiver.kernel.org>; Tue,  8 Dec 2020 08:14:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EE204217A0
+	for <linux-api@archiver.kernel.org>; Tue,  8 Dec 2020 10:08:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726734AbgLHIOI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 8 Dec 2020 03:14:08 -0500
-Received: from mga06.intel.com ([134.134.136.31]:39643 "EHLO mga06.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725927AbgLHIOI (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 8 Dec 2020 03:14:08 -0500
-IronPort-SDR: +CkbzDWQFsf6hYHhDlnzlo7bg4xUZVxH6e/kJiKq7mxIbQf4+7OylY250IRYiWo9gXN29h9vpY
- 3MqgSwS0b8MQ==
-X-IronPort-AV: E=McAfee;i="6000,8403,9828"; a="235450677"
-X-IronPort-AV: E=Sophos;i="5.78,401,1599548400"; 
-   d="scan'208";a="235450677"
-Received: from fmsmga008.fm.intel.com ([10.253.24.58])
-  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 08 Dec 2020 00:13:25 -0800
-IronPort-SDR: W21BXtgwhhJqh+/qdeSS/3WKv+CiAmn3UztY0E5NznK4F5IQp/0FBnhhz1akokPWaRXmY3rbar
- 3l7G0TZzFk+A==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.78,401,1599548400"; 
-   d="scan'208";a="317693850"
-Received: from yhuang-dev.sh.intel.com (HELO yhuang-dev) ([10.239.159.50])
-  by fmsmga008.fm.intel.com with ESMTP; 08 Dec 2020 00:13:22 -0800
-From:   "Huang\, Ying" <ying.huang@intel.com>
-To:     "Alejandro Colomar \(mailing lists\; readonly\)" 
-        <alx.mailinglists@gmail.com>
-Cc:     Peter Zijlstra <peterz@infradead.org>,
-        Mel Gorman <mgorman@suse.de>, linux-mm@kvack.org,
-        linux-kernel@vger.kernel.org,
-        "Matthew Wilcox \(Oracle\)" <willy@infradead.org>,
-        Rafael Aquini <aquini@redhat.com>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Ingo Molnar <mingo@redhat.com>,
-        Rik van Riel <riel@surriel.com>,
-        Johannes Weiner <hannes@cmpxchg.org>,
-        Dave Hansen <dave.hansen@intel.com>,
-        Andi Kleen <ak@linux.intel.com>,
-        Michal Hocko <mhocko@suse.com>,
-        David Rientjes <rientjes@google.com>, linux-api@vger.kernel.org
-Subject: Re: [PATCH -V6 RESEND 2/3] NOT kernel/man-pages: man2/set_mempolicy.2: Add mode flag MPOL_F_NUMA_BALANCING
-References: <20201202084234.15797-1-ying.huang@intel.com>
-        <20201202084234.15797-3-ying.huang@intel.com>
-        <48e758d7-9961-e28e-26f5-3bb381d36309@gmail.com>
-Date:   Tue, 08 Dec 2020 16:13:21 +0800
-In-Reply-To: <48e758d7-9961-e28e-26f5-3bb381d36309@gmail.com> (Alejandro
-        Colomar's message of "Wed, 2 Dec 2020 13:33:13 +0100")
-Message-ID: <87pn3klnq6.fsf@yhuang-dev.intel.com>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.3 (gnu/linux)
+        id S1728970AbgLHKII (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 8 Dec 2020 05:08:08 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:37384 "EHLO
+        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727122AbgLHKIH (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 8 Dec 2020 05:08:07 -0500
+Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein)
+        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.86_2)
+        (envelope-from <christian.brauner@ubuntu.com>)
+        id 1kmZtq-0001Ek-3Q; Tue, 08 Dec 2020 10:07:14 +0000
+Date:   Tue, 8 Dec 2020 11:07:10 +0100
+From:   Christian Brauner <christian.brauner@ubuntu.com>
+To:     Christoph Hellwig <hch@lst.de>
+Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
+        Christoph Hellwig <hch@infradead.org>,
+        linux-fsdevel@vger.kernel.org,
+        John Johansen <john.johansen@canonical.com>,
+        James Morris <jmorris@namei.org>,
+        Mimi Zohar <zohar@linux.ibm.com>,
+        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
+        Stephen Smalley <stephen.smalley.work@gmail.com>,
+        Casey Schaufler <casey@schaufler-ca.com>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andreas Dilger <adilger.kernel@dilger.ca>,
+        OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>,
+        Geoffrey Thomas <geofft@ldpreload.com>,
+        Mrunal Patel <mpatel@redhat.com>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Theodore Tso <tytso@mit.edu>, Alban Crequy <alban@kinvolk.io>,
+        Tycho Andersen <tycho@tycho.ws>,
+        David Howells <dhowells@redhat.com>,
+        James Bottomley <James.Bottomley@hansenpartnership.com>,
+        Seth Forshee <seth.forshee@canonical.com>,
+        =?utf-8?B?U3TDqXBoYW5l?= Graber <stgraber@ubuntu.com>,
+        Aleksa Sarai <cyphar@cyphar.com>,
+        Lennart Poettering <lennart@poettering.net>,
+        "Eric W. Biederman" <ebiederm@xmission.com>, smbarber@chromium.org,
+        Phil Estes <estesp@gmail.com>, Serge Hallyn <serge@hallyn.com>,
+        Kees Cook <keescook@chromium.org>,
+        Todd Kjos <tkjos@google.com>, Paul Moore <paul@paul-moore.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        containers@lists.linux-foundation.org,
+        linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-ext4@vger.kernel.org, linux-integrity@vger.kernel.org,
+        selinux@vger.kernel.org
+Subject: Re: [PATCH v4 05/40] fs: add attr_flags_to_mnt_flags helper
+Message-ID: <20201208100710.7hmim5663xeqnivu@wittgenstein>
+References: <20201203235736.3528991-1-christian.brauner@ubuntu.com>
+ <20201203235736.3528991-6-christian.brauner@ubuntu.com>
+ <20201207171021.GB13614@lst.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=ascii
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20201207171021.GB13614@lst.de>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi, Alex,
+On Mon, Dec 07, 2020 at 06:10:21PM +0100, Christoph Hellwig wrote:
+> > @@ -3450,6 +3450,28 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
+> >  	return ret;
+> >  }
+> >  
+> > +#define FSMOUNT_VALID_FLAGS                                                    \
+> > +	(MOUNT_ATTR_RDONLY | MOUNT_ATTR_NOSUID | MOUNT_ATTR_NODEV |            \
+> > +	 MOUNT_ATTR_NOEXEC | MOUNT_ATTR__ATIME | MOUNT_ATTR_NODIRATIME)
+> 
+> Any good reason for aligning the \ using spaces all the way out?
 
-Sorry for late, I just notice this email today.
-
-"Alejandro Colomar (mailing lists; readonly)"
-<alx.mailinglists@gmail.com> writes:
-
-> Hi Huang Ying,
->
-> Please see a few fixes below.
->
-> Michael, as always, some question for you too ;)
->
-> Thanks,
->
-> Alex
->
-> On 12/2/20 9:42 AM, Huang Ying wrote:
->> Signed-off-by: "Huang, Ying" <ying.huang@intel.com>
->> ---
->>  man2/set_mempolicy.2 | 9 +++++++++
->>  1 file changed, 9 insertions(+)
->> 
->> diff --git a/man2/set_mempolicy.2 b/man2/set_mempolicy.2
->> index 68011eecb..3754b3e12 100644
->> --- a/man2/set_mempolicy.2
->> +++ b/man2/set_mempolicy.2
->> @@ -113,6 +113,12 @@ A nonempty
->>  .I nodemask
->>  specifies node IDs that are relative to the set of
->>  node IDs allowed by the process's current cpuset.
->> +.TP
->> +.BR MPOL_F_NUMA_BALANCING " (since Linux 5.11)"
->
-> I'd prefer it to be in alphabetical order (rather than just adding at
-> the bottom).
-
-That's OK for me.  But it's better to be done in another patch to
-distinguish contents from pure order change?
-
-> That way, when lists grow, it's easier to find things.
->
->> +Enable the Linux kernel NUMA balancing for the task if it is supported
->> +by kernel.
->
-> I'd s/Linux kernel/kernel/ when it doesn't specifically refer to the
-> Linux kernel to differentiate it from other kernels.  It only adds noise
-> (IMHO).  mtk?
-
-Sure.  Will fix this and all following comments below.  Thanks a lot for
-your help!  I am new to man pages.
-
-Best Regards,
-Huang, Ying
+That's just my clang-format config I use with vim. When I do Ctrl + E it
+automatically aligns them on the closest "tab boundary. I'll fix this
+up.
