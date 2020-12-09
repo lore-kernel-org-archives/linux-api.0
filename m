@@ -5,33 +5,33 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8E9BDC433FE
-	for <linux-api@archiver.kernel.org>; Wed,  9 Dec 2020 22:26:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C23F7C2BB48
+	for <linux-api@archiver.kernel.org>; Wed,  9 Dec 2020 22:26:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5BE7D23440
-	for <linux-api@archiver.kernel.org>; Wed,  9 Dec 2020 22:26:04 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9BD42238A0
+	for <linux-api@archiver.kernel.org>; Wed,  9 Dec 2020 22:26:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2388760AbgLIWZq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 9 Dec 2020 17:25:46 -0500
-Received: from mga18.intel.com ([134.134.136.126]:14589 "EHLO mga18.intel.com"
+        id S2388788AbgLIW0H (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 9 Dec 2020 17:26:07 -0500
+Received: from mga18.intel.com ([134.134.136.126]:14593 "EHLO mga18.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2388751AbgLIWZp (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 9 Dec 2020 17:25:45 -0500
-IronPort-SDR: wZ66uLjbSU6Mrm8DrT4LAVZdc30tv5Jp19I/CJYhsQVsGPnSYS7v9xIOIp/+Vdfy73H87beoH2
- iaUjHtZrNSEA==
-X-IronPort-AV: E=McAfee;i="6000,8403,9830"; a="161918116"
+        id S2388258AbgLIWZu (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 9 Dec 2020 17:25:50 -0500
+IronPort-SDR: I49YF6J0salycPXKOVjS/Vqg3wU4sMAzuPq34PRzopz+RDmQlZnDNVzB1muduVxAz082j5tons
+ kDAiE1qoW7Uw==
+X-IronPort-AV: E=McAfee;i="6000,8403,9830"; a="161918130"
 X-IronPort-AV: E=Sophos;i="5.78,407,1599548400"; 
-   d="scan'208";a="161918116"
+   d="scan'208";a="161918130"
 Received: from fmsmga008.fm.intel.com ([10.253.24.58])
   by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Dec 2020 14:23:52 -0800
-IronPort-SDR: YmDpJkYXncJb2EtRdm+6T20ge0kHE7CIYsmr96/6xDr7EuKVkTEckN57C/ujvFmYliPbq9NwLC
- tLHAEXLgiJhg==
+IronPort-SDR: yIbqGrNbje/WS53Ay2vrHrTkO68SFpbsu50OlZMLO+hHp9GQMEpA6LlqP/kdtouW6+n73ftboN
+ ssVI6a2HPBTg==
 X-IronPort-AV: E=Sophos;i="5.78,407,1599548400"; 
-   d="scan'208";a="318543583"
+   d="scan'208";a="318543594"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Dec 2020 14:23:51 -0800
+  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Dec 2020 14:23:52 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,9 +60,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v16 21/26] x86/cet/shstk: Handle signals for shadow stack
-Date:   Wed,  9 Dec 2020 14:23:15 -0800
-Message-Id: <20201209222320.1724-22-yu-cheng.yu@intel.com>
+Subject: [PATCH v16 24/26] x86/cet/shstk: Handle thread shadow stack
+Date:   Wed,  9 Dec 2020 14:23:18 -0800
+Message-Id: <20201209222320.1724-25-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20201209222320.1724-1-yu-cheng.yu@intel.com>
 References: <20201209222320.1724-1-yu-cheng.yu@intel.com>
@@ -72,550 +72,157 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-To deliver a signal, create a shadow stack restore token and put a restore
-token and the signal restorer address on the shadow stack.  For sigreturn,
-verify the token and restore the shadow stack pointer.
+The kernel allocates (and frees on thread exit) a new shadow stack for a
+pthread child.
 
-Introduce WRUSS, which is a kernel-mode instruction but writes directly to
-user shadow stack.  It is used to construct the user signal stack as
-described above.
+    It is possible for the kernel to complete the clone syscall and set the
+    child's shadow stack pointer to NULL and let the child thread allocate
+    a shadow stack for itself.  There are two issues in this approach: It
+    is not compatible with existing code that does inline syscall and it
+    cannot handle signals before the child can successfully allocate a
+    shadow stack.
 
-Introduce a signal context extension struct 'sc_ext', which is used to save
-shadow stack restore token address and WAIT_ENDBR status.  WAIT_ENDBR will
-be introduced later in the Indirect Branch Tracking (IBT) series, but add
-that into sc_ext now to keep the struct stable in case the IBT series is
-applied later.
+A 64-bit shadow stack has a size of min(RLIMIT_STACK, 4 GB).  A compat-mode
+thread shadow stack has a size of 1/4 min(RLIMIT_STACK, 4 GB).  This allows
+more threads to run in a 32-bit address space.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/ia32/ia32_signal.c            |  17 +++
- arch/x86/include/asm/cet.h             |   8 ++
- arch/x86/include/asm/fpu/internal.h    |  10 ++
- arch/x86/include/asm/special_insns.h   |  32 ++++++
- arch/x86/include/uapi/asm/sigcontext.h |   9 ++
- arch/x86/kernel/cet.c                  | 152 +++++++++++++++++++++++++
- arch/x86/kernel/fpu/signal.c           | 100 ++++++++++++++++
- arch/x86/kernel/signal.c               |  10 ++
- 8 files changed, 338 insertions(+)
+ arch/x86/include/asm/cet.h         |  3 ++
+ arch/x86/include/asm/mmu_context.h |  3 ++
+ arch/x86/kernel/cet.c              | 44 ++++++++++++++++++++++++++++++
+ arch/x86/kernel/process.c          |  8 ++++++
+ 4 files changed, 58 insertions(+)
 
-diff --git a/arch/x86/ia32/ia32_signal.c b/arch/x86/ia32/ia32_signal.c
-index 81cf22398cd1..cec9cf0a00cf 100644
---- a/arch/x86/ia32/ia32_signal.c
-+++ b/arch/x86/ia32/ia32_signal.c
-@@ -35,6 +35,7 @@
- #include <asm/sigframe.h>
- #include <asm/sighandling.h>
- #include <asm/smap.h>
-+#include <asm/cet.h>
- 
- static inline void reload_segments(struct sigcontext_32 *sc)
- {
-@@ -205,6 +206,7 @@ static void __user *get_sigframe(struct ksignal *ksig, struct pt_regs *regs,
- 				 void __user **fpstate)
- {
- 	unsigned long sp, fx_aligned, math_size;
-+	void __user *restorer = NULL;
- 
- 	/* Default to using normal stack */
- 	sp = regs->sp;
-@@ -218,8 +220,23 @@ static void __user *get_sigframe(struct ksignal *ksig, struct pt_regs *regs,
- 		 ksig->ka.sa.sa_restorer)
- 		sp = (unsigned long) ksig->ka.sa.sa_restorer;
- 
-+	if (ksig->ka.sa.sa_flags & SA_RESTORER) {
-+		restorer = ksig->ka.sa.sa_restorer;
-+	} else if (current->mm->context.vdso) {
-+		if (ksig->ka.sa.sa_flags & SA_SIGINFO)
-+			restorer = current->mm->context.vdso +
-+				vdso_image_32.sym___kernel_rt_sigreturn;
-+		else
-+			restorer = current->mm->context.vdso +
-+				vdso_image_32.sym___kernel_sigreturn;
-+	}
-+
- 	sp = fpu__alloc_mathframe(sp, 1, &fx_aligned, &math_size);
- 	*fpstate = (struct _fpstate_32 __user *) sp;
-+
-+	if (save_cet_to_sigframe(1, *fpstate, (unsigned long)restorer))
-+		return (void __user *) -1L;
-+
- 	if (copy_fpstate_to_sigframe(*fpstate, (void __user *)fx_aligned,
- 				     math_size) < 0)
- 		return (void __user *) -1L;
 diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index 6d0df5c26c22..9576550c1f2c 100644
+index 9576550c1f2c..4b222aa1e18e 100644
 --- a/arch/x86/include/asm/cet.h
 +++ b/arch/x86/include/asm/cet.h
-@@ -6,6 +6,8 @@
- #include <linux/types.h>
+@@ -18,12 +18,15 @@ struct cet_status {
  
- struct task_struct;
-+struct sc_ext;
-+
- /*
-  * Per-thread CET status
-  */
-@@ -18,9 +20,15 @@ struct cet_status {
+ #ifdef CONFIG_X86_CET_USER
  int cet_setup_shstk(void);
++int cet_setup_thread_shstk(struct task_struct *p, unsigned long clone_flags);
  void cet_disable_shstk(void);
  void cet_free_shstk(struct task_struct *p);
-+int cet_verify_rstor_token(bool ia32, unsigned long ssp, unsigned long *new_ssp);
-+void cet_restore_signal(struct sc_ext *sc);
-+int cet_setup_signal(bool ia32, unsigned long rstor, struct sc_ext *sc);
+ int cet_verify_rstor_token(bool ia32, unsigned long ssp, unsigned long *new_ssp);
+ void cet_restore_signal(struct sc_ext *sc);
+ int cet_setup_signal(bool ia32, unsigned long rstor, struct sc_ext *sc);
  #else
++static inline int cet_setup_thread_shstk(struct task_struct *p,
++					 unsigned long clone_flags) { return 0; }
  static inline void cet_disable_shstk(void) {}
  static inline void cet_free_shstk(struct task_struct *p) {}
-+static inline void cet_restore_signal(struct sc_ext *sc) { return; }
-+static inline int cet_setup_signal(bool ia32, unsigned long rstor,
-+				   struct sc_ext *sc) { return -EINVAL; }
- #endif
+ static inline void cet_restore_signal(struct sc_ext *sc) { return; }
+diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
+index d98016b83755..ceb593e405e1 100644
+--- a/arch/x86/include/asm/mmu_context.h
++++ b/arch/x86/include/asm/mmu_context.h
+@@ -11,6 +11,7 @@
  
- #endif /* __ASSEMBLY__ */
-diff --git a/arch/x86/include/asm/fpu/internal.h b/arch/x86/include/asm/fpu/internal.h
-index 8d33ad80704f..3d7300061d84 100644
---- a/arch/x86/include/asm/fpu/internal.h
-+++ b/arch/x86/include/asm/fpu/internal.h
-@@ -443,6 +443,16 @@ static inline void copy_kernel_to_fpregs(union fpregs_state *fpstate)
- 	__copy_kernel_to_fpregs(fpstate, -1);
- }
+ #include <asm/tlbflush.h>
+ #include <asm/paravirt.h>
++#include <asm/cet.h>
+ #include <asm/debugreg.h>
  
-+#ifdef CONFIG_X86_CET_USER
-+extern int save_cet_to_sigframe(int ia32, void __user *fp,
-+				unsigned long restorer);
-+#else
-+static inline int save_cet_to_sigframe(int ia32, void __user *fp,
-+				unsigned long restorer)
-+{
-+	return 0;
-+}
-+#endif
- extern int copy_fpstate_to_sigframe(void __user *buf, void __user *fp, int size);
- 
- /*
-diff --git a/arch/x86/include/asm/special_insns.h b/arch/x86/include/asm/special_insns.h
-index cc177b4431ae..888a864ba329 100644
---- a/arch/x86/include/asm/special_insns.h
-+++ b/arch/x86/include/asm/special_insns.h
-@@ -234,6 +234,38 @@ static inline void clwb(volatile void *__p)
- 		: [pax] "a" (p));
- }
- 
-+#ifdef CONFIG_X86_CET_USER
-+#if defined(CONFIG_IA32_EMULATION) || defined(CONFIG_X86_X32)
-+static inline int write_user_shstk_32(unsigned long addr, unsigned int val)
-+{
-+	asm_volatile_goto("1: wrussd %1, (%0)\n"
-+			  _ASM_EXTABLE(1b, %l[fail])
-+			  :: "r" (addr), "r" (val)
-+			  :: fail);
-+	return 0;
-+fail:
-+	return -EPERM;
-+}
-+#else
-+static inline int write_user_shstk_32(unsigned long addr, unsigned int val)
-+{
-+	WARN_ONCE(1, "%s used but not supported.\n", __func__);
-+	return -EFAULT;
-+}
-+#endif
-+
-+static inline int write_user_shstk_64(unsigned long addr, unsigned long val)
-+{
-+	asm_volatile_goto("1: wrussq %1, (%0)\n"
-+			  _ASM_EXTABLE(1b, %l[fail])
-+			  :: "r" (addr), "r" (val)
-+			  :: fail);
-+	return 0;
-+fail:
-+	return -EPERM;
-+}
-+#endif /* CONFIG_X86_CET_USER */
-+
- #define nop() asm volatile ("nop")
- 
- static inline void serialize(void)
-diff --git a/arch/x86/include/uapi/asm/sigcontext.h b/arch/x86/include/uapi/asm/sigcontext.h
-index 844d60eb1882..cf2d55db3be4 100644
---- a/arch/x86/include/uapi/asm/sigcontext.h
-+++ b/arch/x86/include/uapi/asm/sigcontext.h
-@@ -196,6 +196,15 @@ struct _xstate {
- 	/* New processor state extensions go here: */
- };
- 
-+/*
-+ * Located at the end of sigcontext->fpstate, aligned to 8.
-+ */
-+struct sc_ext {
-+	unsigned long total_size;
-+	unsigned long ssp;
-+	unsigned long wait_endbr;
-+};
-+
- /*
-  * The 32-bit signal frame:
-  */
+ extern atomic64_t last_mm_ctx_id;
+@@ -142,6 +143,8 @@ do {						\
+ #else
+ #define deactivate_mm(tsk, mm)			\
+ do {						\
++	if (!tsk->vfork_done)			\
++		cet_free_shstk(tsk);		\
+ 	load_gs_index(0);			\
+ 	loadsegment(fs, 0);			\
+ } while (0)
 diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
-index f8b0a077594f..c3da4f59bd17 100644
+index c3da4f59bd17..038419f06fc9 100644
 --- a/arch/x86/kernel/cet.c
 +++ b/arch/x86/kernel/cet.c
-@@ -19,6 +19,8 @@
- #include <asm/fpu/xstate.h>
- #include <asm/fpu/types.h>
- #include <asm/cet.h>
-+#include <asm/special_insns.h>
-+#include <uapi/asm/sigcontext.h>
- 
- static void start_update_msrs(void)
- {
-@@ -72,6 +74,80 @@ static unsigned long alloc_shstk(unsigned long size, int flags)
- 	return addr;
- }
- 
-+#define TOKEN_MODE_MASK	3UL
-+#define TOKEN_MODE_64	1UL
-+#define IS_TOKEN_64(token) (((token) & TOKEN_MODE_MASK) == TOKEN_MODE_64)
-+#define IS_TOKEN_32(token) (((token) & TOKEN_MODE_MASK) == 0)
-+
-+/*
-+ * Verify the restore token at the address of 'ssp' is
-+ * valid and then set shadow stack pointer according to the
-+ * token.
-+ */
-+int cet_verify_rstor_token(bool ia32, unsigned long ssp,
-+			   unsigned long *new_ssp)
-+{
-+	unsigned long token;
-+
-+	*new_ssp = 0;
-+
-+	if (!IS_ALIGNED(ssp, 8))
-+		return -EINVAL;
-+
-+	if (get_user(token, (unsigned long __user *)ssp))
-+		return -EFAULT;
-+
-+	/* Is 64-bit mode flag correct? */
-+	if (!ia32 && !IS_TOKEN_64(token))
-+		return -EINVAL;
-+	else if (ia32 && !IS_TOKEN_32(token))
-+		return -EINVAL;
-+
-+	token &= ~TOKEN_MODE_MASK;
-+
-+	/*
-+	 * Restore address properly aligned?
-+	 */
-+	if ((!ia32 && !IS_ALIGNED(token, 8)) || !IS_ALIGNED(token, 4))
-+		return -EINVAL;
-+
-+	/*
-+	 * Token was placed properly?
-+	 */
-+	if (((ALIGN_DOWN(token, 8) - 8) != ssp) || (token >= TASK_SIZE_MAX))
-+		return -EINVAL;
-+
-+	*new_ssp = token;
-+	return 0;
-+}
-+
-+/*
-+ * Create a restore token on the shadow stack.
-+ * A token is always 8-byte and aligned to 8.
-+ */
-+static int create_rstor_token(bool ia32, unsigned long ssp,
-+			      unsigned long *new_ssp)
-+{
-+	unsigned long addr;
-+
-+	*new_ssp = 0;
-+
-+	if ((!ia32 && !IS_ALIGNED(ssp, 8)) || !IS_ALIGNED(ssp, 4))
-+		return -EINVAL;
-+
-+	addr = ALIGN_DOWN(ssp, 8) - 8;
-+
-+	/* Is the token for 64-bit? */
-+	if (!ia32)
-+		ssp |= TOKEN_MODE_64;
-+
-+	if (write_user_shstk_64(addr, ssp))
-+		return -EFAULT;
-+
-+	*new_ssp = addr;
-+	return 0;
-+}
-+
- int cet_setup_shstk(void)
- {
- 	unsigned long addr, size;
-@@ -145,3 +221,79 @@ void cet_free_shstk(struct task_struct *tsk)
- 	cet->shstk_base = 0;
- 	cet->shstk_size = 0;
- }
-+
-+/*
-+ * Called from __fpu__restore_sig() and XSAVES buffer is protected by
-+ * set_thread_flag(TIF_NEED_FPU_LOAD) in the slow path.
-+ */
-+void cet_restore_signal(struct sc_ext *sc_ext)
-+{
-+	struct cet_user_state *cet_user_state;
-+	struct cet_status *cet = &current->thread.cet;
-+	u64 msr_val = 0;
-+
-+	if (!static_cpu_has(X86_FEATURE_SHSTK))
-+		return;
-+
-+	cet_user_state = get_xsave_addr(&current->thread.fpu.state.xsave,
-+					XFEATURE_CET_USER);
-+	if (!cet_user_state)
-+		return;
-+
-+	if (cet->shstk_size) {
-+		if (test_thread_flag(TIF_NEED_FPU_LOAD))
-+			cet_user_state->user_ssp = sc_ext->ssp;
-+		else
-+			wrmsrl(MSR_IA32_PL3_SSP, sc_ext->ssp);
-+
-+		msr_val |= CET_SHSTK_EN;
-+	}
-+
-+	if (test_thread_flag(TIF_NEED_FPU_LOAD))
-+		cet_user_state->user_cet = msr_val;
-+	else
-+		wrmsrl(MSR_IA32_U_CET, msr_val);
-+}
-+
-+/*
-+ * Setup the shadow stack for the signal handler: first,
-+ * create a restore token to keep track of the current ssp,
-+ * and then the return address of the signal handler.
-+ */
-+int cet_setup_signal(bool ia32, unsigned long rstor_addr, struct sc_ext *sc_ext)
-+{
-+	struct cet_status *cet = &current->thread.cet;
-+	unsigned long ssp = 0, new_ssp = 0;
-+	int err;
-+
-+	if (cet->shstk_size) {
-+		if (!rstor_addr)
-+			return -EINVAL;
-+
-+		ssp = cet_get_shstk_addr();
-+		err = create_rstor_token(ia32, ssp, &new_ssp);
-+		if (err)
-+			return err;
-+
-+		if (ia32) {
-+			ssp = new_ssp - sizeof(u32);
-+			err = write_user_shstk_32(ssp, (unsigned int)rstor_addr);
-+		} else {
-+			ssp = new_ssp - sizeof(u64);
-+			err = write_user_shstk_64(ssp, rstor_addr);
-+		}
-+
-+		if (err)
-+			return err;
-+
-+		sc_ext->ssp = new_ssp;
-+	}
-+
-+	if (ssp) {
-+		start_update_msrs();
-+		wrmsrl(MSR_IA32_PL3_SSP, ssp);
-+		end_update_msrs();
-+	}
-+
-+	return 0;
-+}
-diff --git a/arch/x86/kernel/fpu/signal.c b/arch/x86/kernel/fpu/signal.c
-index a4ec65317a7f..d5d02b34f516 100644
---- a/arch/x86/kernel/fpu/signal.c
-+++ b/arch/x86/kernel/fpu/signal.c
-@@ -52,6 +52,74 @@ static inline int check_for_xstate(struct fxregs_state __user *buf,
+@@ -172,6 +172,50 @@ int cet_setup_shstk(void)
  	return 0;
  }
  
-+#ifdef CONFIG_X86_CET_USER
-+int save_cet_to_sigframe(int ia32, void __user *fp, unsigned long restorer)
++int cet_setup_thread_shstk(struct task_struct *tsk, unsigned long clone_flags)
 +{
-+	int err = 0;
++	unsigned long addr, size;
++	struct cet_user_state *state;
++	struct cet_status *cet = &tsk->thread.cet;
 +
-+	if (!current->thread.cet.shstk_size)
++	if (!cet->shstk_size)
 +		return 0;
 +
-+	if (fp) {
-+		struct sc_ext ext = {0, 0, 0};
-+
-+		err = cet_setup_signal(ia32, restorer, &ext);
-+		if (!err) {
-+			void __user *p = fp;
-+
-+			ext.total_size = sizeof(ext);
-+
-+			if (ia32)
-+				p += sizeof(struct fregs_state);
-+
-+			p += fpu_user_xstate_size + FP_XSTATE_MAGIC2_SIZE;
-+			p = (void __user *)ALIGN((unsigned long)p, 8);
-+
-+			if (copy_to_user(p, &ext, sizeof(ext)))
-+				return -EFAULT;
-+		}
-+	}
-+
-+	return err;
-+}
-+
-+static int get_cet_from_sigframe(int ia32, void __user *fp, struct sc_ext *ext)
-+{
-+	int err = 0;
-+
-+	memset(ext, 0, sizeof(*ext));
-+
-+	if (!current->thread.cet.shstk_size)
++	if ((clone_flags & (CLONE_VFORK | CLONE_VM)) != CLONE_VM)
 +		return 0;
 +
-+	if (fp) {
-+		void __user *p = fp;
++	state = get_xsave_addr(&tsk->thread.fpu.state.xsave,
++			       XFEATURE_CET_USER);
 +
-+		if (ia32)
-+			p += sizeof(struct fregs_state);
++	if (!state)
++		return -EINVAL;
 +
-+		p += fpu_user_xstate_size + FP_XSTATE_MAGIC2_SIZE;
-+		p = (void __user *)ALIGN((unsigned long)p, 8);
-+
-+		if (copy_from_user(ext, p, sizeof(*ext)))
-+			return -EFAULT;
-+
-+		if (ext->total_size != sizeof(*ext))
-+			return -EFAULT;
-+
-+		if (current->thread.cet.shstk_size)
-+			err = cet_verify_rstor_token(ia32, ext->ssp, &ext->ssp);
-+	}
-+
-+	return err;
-+}
-+#else
-+static int get_cet_from_sigframe(int ia32, void __user *fp, struct sc_ext *ext)
-+{
-+	return 0;
-+}
-+#endif
-+
- /*
-  * Signal frame handlers.
-  */
-@@ -295,6 +363,7 @@ static int __fpu__restore_sig(void __user *buf, void __user *buf_fx, int size)
- 	struct task_struct *tsk = current;
- 	struct fpu *fpu = &tsk->thread.fpu;
- 	struct user_i387_ia32_struct env;
-+	struct sc_ext sc_ext;
- 	u64 user_xfeatures = 0;
- 	int fx_only = 0;
- 	int ret = 0;
-@@ -335,6 +404,10 @@ static int __fpu__restore_sig(void __user *buf, void __user *buf_fx, int size)
- 	if ((unsigned long)buf_fx % 64)
- 		fx_only = 1;
- 
-+	ret = get_cet_from_sigframe(ia32_fxstate, buf, &sc_ext);
-+	if (ret)
-+		return ret;
-+
- 	if (!ia32_fxstate) {
- 		/*
- 		 * Attempt to restore the FPU registers directly from user
-@@ -349,6 +422,8 @@ static int __fpu__restore_sig(void __user *buf, void __user *buf_fx, int size)
- 		pagefault_enable();
- 		if (!ret) {
- 
-+			cet_restore_signal(&sc_ext);
-+
- 			/*
- 			 * Restore supervisor states: previous context switch
- 			 * etc has done XSAVES and saved the supervisor states
-@@ -423,6 +498,8 @@ static int __fpu__restore_sig(void __user *buf, void __user *buf_fx, int size)
- 		if (unlikely(init_bv))
- 			copy_kernel_to_xregs(&init_fpstate.xsave, init_bv);
- 
-+		cet_restore_signal(&sc_ext);
-+
- 		/*
- 		 * Restore previously saved supervisor xstates along with
- 		 * copied-in user xstates.
-@@ -491,12 +568,35 @@ int fpu__restore_sig(void __user *buf, int ia32_frame)
- 	return __fpu__restore_sig(buf, buf_fx, size);
- }
- 
-+#ifdef CONFIG_X86_CET_USER
-+static unsigned long fpu__alloc_sigcontext_ext(unsigned long sp)
-+{
-+	struct cet_status *cet = &current->thread.cet;
++	/* Cap shadow stack size to 4 GB */
++	size = min(rlimit(RLIMIT_STACK), 1UL << 32);
 +
 +	/*
-+	 * sigcontext_ext is at: fpu + fpu_user_xstate_size +
-+	 * FP_XSTATE_MAGIC2_SIZE, then aligned to 8.
++	 * Compat-mode pthreads share a limited address space.
++	 * If each function call takes an average of four slots
++	 * stack space, allocate 1/4 of stack size for shadow stack.
 +	 */
-+	if (cet->shstk_size)
-+		sp -= (sizeof(struct sc_ext) + 8);
++	if (in_compat_syscall())
++		size /= 4;
++	size = round_up(size, PAGE_SIZE);
++	addr = alloc_shstk(size, 0);
 +
-+	return sp;
-+}
-+#else
-+static unsigned long fpu__alloc_sigcontext_ext(unsigned long sp)
-+{
-+	return sp;
-+}
-+#endif
++	if (IS_ERR_VALUE(addr)) {
++		cet->shstk_base = 0;
++		cet->shstk_size = 0;
++		return PTR_ERR((void *)addr);
++	}
 +
- unsigned long
- fpu__alloc_mathframe(unsigned long sp, int ia32_frame,
- 		     unsigned long *buf_fx, unsigned long *size)
++	fpu__prepare_write(&tsk->thread.fpu);
++	state->user_ssp = (u64)(addr + size);
++	cet->shstk_base = addr;
++	cet->shstk_size = size;
++	return 0;
++}
++
+ void cet_disable_shstk(void)
  {
- 	unsigned long frame_size = xstate_sigframe_size();
- 
-+	sp = fpu__alloc_sigcontext_ext(sp);
-+
- 	*buf_fx = sp = round_down(sp - frame_size, 64);
- 	if (ia32_frame && use_fxsr()) {
- 		frame_size += sizeof(struct fregs_state);
-diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
-index be0d7d4152ec..f39335ed4f7e 100644
---- a/arch/x86/kernel/signal.c
-+++ b/arch/x86/kernel/signal.c
-@@ -46,6 +46,7 @@
- #include <asm/syscall.h>
- #include <asm/sigframe.h>
- #include <asm/signal.h>
+ 	struct cet_status *cet = &current->thread.cet;
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index 145a7ac0c19a..3af6b36e1a5c 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -43,6 +43,7 @@
+ #include <asm/io_bitmap.h>
+ #include <asm/proto.h>
+ #include <asm/frame.h>
 +#include <asm/cet.h>
  
- #ifdef CONFIG_X86_64
- /*
-@@ -239,6 +240,9 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
- 	unsigned long buf_fx = 0;
- 	int onsigstack = on_sig_stack(sp);
- 	int ret;
-+#ifdef CONFIG_X86_64
-+	void __user *restorer = NULL;
-+#endif
+ #include "process.h"
  
- 	/* redzone */
- 	if (IS_ENABLED(CONFIG_X86_64))
-@@ -270,6 +274,12 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
- 	if (onsigstack && !likely(on_sig_stack(sp)))
- 		return (void __user *)-1L;
+@@ -109,6 +110,7 @@ void exit_thread(struct task_struct *tsk)
+ 
+ 	free_vm86(t);
+ 
++	cet_free_shstk(tsk);
+ 	fpu__drop(fpu);
+ }
+ 
+@@ -181,6 +183,12 @@ int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
+ 	if (clone_flags & CLONE_SETTLS)
+ 		ret = set_new_tls(p, tls);
  
 +#ifdef CONFIG_X86_64
-+	if (ka->sa.sa_flags & SA_RESTORER)
-+		restorer = ka->sa.sa_restorer;
-+	ret = save_cet_to_sigframe(0, *fpstate, (unsigned long)restorer);
++	/* Allocate a new shadow stack for pthread */
++	if (!ret)
++		ret = cet_setup_thread_shstk(p, clone_flags);
 +#endif
 +
- 	/* save i387 and extended state */
- 	ret = copy_fpstate_to_sigframe(*fpstate, (void __user *)buf_fx, math_size);
- 	if (ret < 0)
+ 	if (!ret && unlikely(test_tsk_thread_flag(current, TIF_IO_BITMAP)))
+ 		io_bitmap_share(p);
+ 
 -- 
 2.21.0
 
