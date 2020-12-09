@@ -2,420 +2,226 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-21.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 18945C4361B
-	for <linux-api@archiver.kernel.org>; Wed,  9 Dec 2020 19:42:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 482F9C2BB40
+	for <linux-api@archiver.kernel.org>; Wed,  9 Dec 2020 22:24:45 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D3BBD23C92
-	for <linux-api@archiver.kernel.org>; Wed,  9 Dec 2020 19:42:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2050C238A0
+	for <linux-api@archiver.kernel.org>; Wed,  9 Dec 2020 22:24:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731267AbgLITls (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 9 Dec 2020 14:41:48 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54580 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729345AbgLIT3r (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 9 Dec 2020 14:29:47 -0500
-Received: from smtp-bc0b.mail.infomaniak.ch (smtp-bc0b.mail.infomaniak.ch [IPv6:2001:1600:3:17::bc0b])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C6FA9C061793
-        for <linux-api@vger.kernel.org>; Wed,  9 Dec 2020 11:28:51 -0800 (PST)
-Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4CrnCj6kPCzlhBbm;
-        Wed,  9 Dec 2020 20:28:49 +0100 (CET)
-Received: from localhost (unknown [23.97.221.149])
-        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4CrnCh2rLszlppyf;
-        Wed,  9 Dec 2020 20:28:48 +0100 (CET)
-From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
-To:     James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>,
-        "Serge E . Hallyn" <serge@hallyn.com>
-Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Andy Lutomirski <luto@amacapital.net>,
-        Anton Ivanov <anton.ivanov@cambridgegreys.com>,
+        id S2388649AbgLIWYd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 9 Dec 2020 17:24:33 -0500
+Received: from mga18.intel.com ([134.134.136.126]:14579 "EHLO mga18.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S2388638AbgLIWYa (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 9 Dec 2020 17:24:30 -0500
+IronPort-SDR: AiLs0oe3r+gZPB8LYA0GFmkVYjokSMQRuBYwnwZCLxoihExBht/4UWneT4t8tRzsVDugBWDgyq
+ q1RAzHguv9Sg==
+X-IronPort-AV: E=McAfee;i="6000,8403,9830"; a="161918050"
+X-IronPort-AV: E=Sophos;i="5.78,407,1599548400"; 
+   d="scan'208";a="161918050"
+Received: from fmsmga008.fm.intel.com ([10.253.24.58])
+  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Dec 2020 14:23:46 -0800
+IronPort-SDR: +zKmNy3RFFKlJ9BVXS7s89Qg0S5JK5g9WfK+mR5AilkAAkVq6Szw23tpvAIbgkx639/fHXWmWr
+ 7Rv83dmxyE8A==
+X-IronPort-AV: E=Sophos;i="5.78,407,1599548400"; 
+   d="scan'208";a="318543504"
+Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
+  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Dec 2020 14:23:46 -0800
+From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
+To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-doc@vger.kernel.org, linux-mm@kvack.org,
+        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
         Arnd Bergmann <arnd@arndb.de>,
-        Casey Schaufler <casey@schaufler-ca.com>,
-        Jeff Dike <jdike@addtoit.com>,
+        Andy Lutomirski <luto@kernel.org>,
+        Balbir Singh <bsingharora@gmail.com>,
+        Borislav Petkov <bp@alien8.de>,
+        Cyrill Gorcunov <gorcunov@gmail.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Eugene Syromiatnikov <esyr@redhat.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
         Jonathan Corbet <corbet@lwn.net>,
         Kees Cook <keescook@chromium.org>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Richard Weinberger <richard@nod.at>,
-        Shuah Khan <shuah@kernel.org>,
-        Vincent Dagonneau <vincent.dagonneau@ssi.gouv.fr>,
-        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
-        linux-arch@vger.kernel.org, linux-doc@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-kselftest@vger.kernel.org,
-        linux-security-module@vger.kernel.org, x86@kernel.org,
-        =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@linux.microsoft.com>
-Subject: [PATCH v26 01/12] landlock: Add object management
-Date:   Wed,  9 Dec 2020 20:28:28 +0100
-Message-Id: <20201209192839.1396820-2-mic@digikod.net>
-X-Mailer: git-send-email 2.29.2
-In-Reply-To: <20201209192839.1396820-1-mic@digikod.net>
-References: <20201209192839.1396820-1-mic@digikod.net>
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Nadav Amit <nadav.amit@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
+        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Weijiang Yang <weijiang.yang@intel.com>,
+        Pengfei Xu <pengfei.xu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v16 00/26] Control-flow Enforcement: Shadow Stack
+Date:   Wed,  9 Dec 2020 14:22:54 -0800
+Message-Id: <20201209222320.1724-1-yu-cheng.yu@intel.com>
+X-Mailer: git-send-email 2.21.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Mickaël Salaün <mic@linux.microsoft.com>
+Control-flow Enforcement (CET) is a new Intel processor feature that blocks
+return/jump-oriented programming attacks.  Details are in "Intel 64 and
+IA-32 Architectures Software Developer's Manual" [1].
 
-A Landlock object enables to identify a kernel object (e.g. an inode).
-A Landlock rule is a set of access rights allowed on an object.  Rules
-are grouped in rulesets that may be tied to a set of processes (i.e.
-subjects) to enforce a scoped access-control (i.e. a domain).
+CET can protect applications and the kernel.  This series enables only
+application-level protection, and has three parts:
 
-Because Landlock's goal is to empower any process (especially
-unprivileged ones) to sandbox themselves, we cannot rely on a
-system-wide object identification such as file extended attributes.
-Indeed, we need innocuous, composable and modular access-controls.
+  - Shadow stack [2],
+  - Indirect branch tracking [3], and
+  - Selftests [4].
 
-The main challenge with these constraints is to identify kernel objects
-while this identification is useful (i.e. when a security policy makes
-use of this object).  But this identification data should be freed once
-no policy is using it.  This ephemeral tagging should not and may not be
-written in the filesystem.  We then need to manage the lifetime of a
-rule according to the lifetime of its objects.  To avoid a global lock,
-this implementation make use of RCU and counters to safely reference
-objects.
+I have run tests on these patches for quite some time, and they have been
+very stable.  Linux distributions with CET are available now, and Intel
+processors with CET are already on the market.  It would be nice if CET
+support can be accepted into the kernel.  I will be working to address any
+issues should they come up.
 
-A following commit uses this generic object management for inodes.
+Changes in v16:
+- Rebase to v5.10-rc7.
+- Replace Kconfig options for Shadow Stack and IBT with just one option,
+  and fix some small issues (AS dependency check, wording).
+- Create a software-defined X86_FEATURE_CET to indicate either Shadow Stack
+  or IBT is present, simplify XSAVES dependency check.  Move parameter
+  parsing to cpu_parse_early_param().
+- Fix control-protection fault handling for kernel-mode faults.
+- Drop the patch that changes _PAGE_DIRTY to _PAGE_DIRTY_HW.
+- Small changes to the documentation to reflect Kconfig changes and add
+  LLVM information.
 
-Cc: James Morris <jmorris@namei.org>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Serge E. Hallyn <serge@hallyn.com>
-Signed-off-by: Mickaël Salaün <mic@linux.microsoft.com>
-Reviewed-by: Jann Horn <jannh@google.com>
----
+[1] Intel 64 and IA-32 Architectures Software Developer's Manual:
 
-Changes since v24:
-* Fix typo in comment (spotted by Jann Horn).
-* Add Reviewed-by: Jann Horn <jannh@google.com>
+    https://software.intel.com/en-us/download/intel-64-and-ia-32-
+    architectures-sdm-combined-volumes-1-2a-2b-2c-2d-3a-3b-3c-3d-and-4
 
-Changes since v23:
-* Update landlock_create_object() to return error codes instead of NULL.
-  This help error handling in callers.
-* When using make oldconfig with a previous configuration already
-  including the CONFIG_LSM variable, no question is asked to update its
-  content.  Update the Kconfig help to warn about LSM stacking
-  configuration.
-* Constify variable (spotted by Vincent Dagonneau).
+[2] CET Shadow Stack patches v15:
 
-Changes since v22:
-* Fix spelling (spotted by Jann Horn).
+    https://lkml.kernel.org/r/20201110162211.9207-1-yu-cheng.yu@intel.com/
 
-Changes since v21:
-* Update Kconfig help.
-* Clean up comments.
+[3] Indirect Branch Tracking patches v15.
 
-Changes since v18:
-* Account objects to kmemcg.
+    https://lkml.kernel.org/r/20201110162448.9846-1-yu-cheng.yu@intel.com/
 
-Changes since v14:
-* Simplify the object, rule and ruleset management at the expense of a
-  less aggressive memory freeing (contributed by Jann Horn, with
-  additional modifications):
-  - Remove object->list aggregating the rules tied to an object.
-  - Remove landlock_get_object(), landlock_drop_object(),
-    {get,put}_object_cleaner() and landlock_rule_is_disabled().
-  - Rewrite landlock_put_object() to use a more simple mechanism
-    (no tricky RCU).
-  - Replace enum landlock_object_type and landlock_release_object() with
-    landlock_object_underops->release()
-  - Adjust unions and Sparse annotations.
-  Cf. https://lore.kernel.org/lkml/CAG48ez21bEn0wL1bbmTiiu8j9jP5iEWtHOwz4tURUJ+ki0ydYw@mail.gmail.com/
-* Merge struct landlock_rule into landlock_ruleset_elem to simplify the
-  rule management.
-* Constify variables.
-* Improve kernel documentation.
-* Cosmetic variable renames.
-* Remove the "default" in the Kconfig (suggested by Jann Horn).
-* Only use refcount_inc() through getter helpers.
-* Update Kconfig description.
+[4] I am holding off the selftests changes and working to get Acked-by's.
+    The earlier version of the selftests patches:
 
-Changes since v13:
-* New dedicated implementation, removing the need for eBPF.
+    https://lkml.kernel.org/r/20200521211720.20236-1-yu-cheng.yu@intel.com/
 
-Previous changes:
-https://lore.kernel.org/lkml/20190721213116.23476-6-mic@digikod.net/
----
- MAINTAINERS                | 10 +++++
- security/Kconfig           |  1 +
- security/Makefile          |  2 +
- security/landlock/Kconfig  | 21 +++++++++
- security/landlock/Makefile |  3 ++
- security/landlock/object.c | 67 ++++++++++++++++++++++++++++
- security/landlock/object.h | 91 ++++++++++++++++++++++++++++++++++++++
- 7 files changed, 195 insertions(+)
- create mode 100644 security/landlock/Kconfig
- create mode 100644 security/landlock/Makefile
- create mode 100644 security/landlock/object.c
- create mode 100644 security/landlock/object.h
+[5] The kernel ptrace patch is tested with an Intel-internal updated GDB.
+    I am holding off the kernel ptrace patch to re-test it with my earlier
+    patch for fixing regset holes.
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 6f474153dbec..dc718573317e 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -9827,6 +9827,16 @@ F:	net/core/sock_map.c
- F:	net/ipv4/tcp_bpf.c
- F:	net/ipv4/udp_bpf.c
- 
-+LANDLOCK SECURITY MODULE
-+M:	Mickaël Salaün <mic@digikod.net>
-+L:	linux-security-module@vger.kernel.org
-+S:	Supported
-+W:	https://landlock.io
-+T:	git https://github.com/landlock-lsm/linux.git
-+F:	security/landlock/
-+K:	landlock
-+K:	LANDLOCK
-+
- LANTIQ / INTEL Ethernet drivers
- M:	Hauke Mehrtens <hauke@hauke-m.de>
- L:	netdev@vger.kernel.org
-diff --git a/security/Kconfig b/security/Kconfig
-index 7561f6f99f1d..15a4342b5d01 100644
---- a/security/Kconfig
-+++ b/security/Kconfig
-@@ -238,6 +238,7 @@ source "security/loadpin/Kconfig"
- source "security/yama/Kconfig"
- source "security/safesetid/Kconfig"
- source "security/lockdown/Kconfig"
-+source "security/landlock/Kconfig"
- 
- source "security/integrity/Kconfig"
- 
-diff --git a/security/Makefile b/security/Makefile
-index 3baf435de541..c688f4907a1b 100644
---- a/security/Makefile
-+++ b/security/Makefile
-@@ -13,6 +13,7 @@ subdir-$(CONFIG_SECURITY_LOADPIN)	+= loadpin
- subdir-$(CONFIG_SECURITY_SAFESETID)    += safesetid
- subdir-$(CONFIG_SECURITY_LOCKDOWN_LSM)	+= lockdown
- subdir-$(CONFIG_BPF_LSM)		+= bpf
-+subdir-$(CONFIG_SECURITY_LANDLOCK)		+= landlock
- 
- # always enable default capabilities
- obj-y					+= commoncap.o
-@@ -32,6 +33,7 @@ obj-$(CONFIG_SECURITY_SAFESETID)       += safesetid/
- obj-$(CONFIG_SECURITY_LOCKDOWN_LSM)	+= lockdown/
- obj-$(CONFIG_CGROUPS)			+= device_cgroup.o
- obj-$(CONFIG_BPF_LSM)			+= bpf/
-+obj-$(CONFIG_SECURITY_LANDLOCK)	+= landlock/
- 
- # Object integrity file lists
- subdir-$(CONFIG_INTEGRITY)		+= integrity
-diff --git a/security/landlock/Kconfig b/security/landlock/Kconfig
-new file mode 100644
-index 000000000000..ea58e6208afa
---- /dev/null
-+++ b/security/landlock/Kconfig
-@@ -0,0 +1,21 @@
-+# SPDX-License-Identifier: GPL-2.0-only
-+
-+config SECURITY_LANDLOCK
-+	bool "Landlock support"
-+	depends on SECURITY
-+	select SECURITY_PATH
-+	help
-+	  Landlock is a safe sandboxing mechanism which enables processes to
-+	  restrict themselves (and their future children) by gradually
-+	  enforcing tailored access control policies.  A security policy is a
-+	  set of access rights (e.g. open a file in read-only, make a
-+	  directory, etc.) tied to a file hierarchy.  Such policy can be configured
-+	  and enforced by any processes for themselves thanks to dedicated system
-+	  calls: landlock_create_ruleset(), landlock_add_rule(), and
-+	  landlock_enforce_ruleset_current().
-+
-+	  See Documentation/userspace-api/landlock.rst for further information.
-+
-+	  If you are unsure how to answer this question, answer N.  Otherwise, you
-+	  should also prepend "landlock," to the content of CONFIG_LSM to enable
-+	  Landlock at boot time.
-diff --git a/security/landlock/Makefile b/security/landlock/Makefile
-new file mode 100644
-index 000000000000..cb6deefbf4c0
---- /dev/null
-+++ b/security/landlock/Makefile
-@@ -0,0 +1,3 @@
-+obj-$(CONFIG_SECURITY_LANDLOCK) := landlock.o
-+
-+landlock-y := object.o
-diff --git a/security/landlock/object.c b/security/landlock/object.c
-new file mode 100644
-index 000000000000..d674fdf9ff04
---- /dev/null
-+++ b/security/landlock/object.c
-@@ -0,0 +1,67 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Landlock LSM - Object management
-+ *
-+ * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
-+ * Copyright © 2018-2020 ANSSI
-+ */
-+
-+#include <linux/bug.h>
-+#include <linux/compiler_types.h>
-+#include <linux/err.h>
-+#include <linux/kernel.h>
-+#include <linux/rcupdate.h>
-+#include <linux/refcount.h>
-+#include <linux/slab.h>
-+#include <linux/spinlock.h>
-+
-+#include "object.h"
-+
-+struct landlock_object *landlock_create_object(
-+		const struct landlock_object_underops *const underops,
-+		void *const underobj)
-+{
-+	struct landlock_object *new_object;
-+
-+	if (WARN_ON_ONCE(!underops || !underobj))
-+		return ERR_PTR(-ENOENT);
-+	new_object = kzalloc(sizeof(*new_object), GFP_KERNEL_ACCOUNT);
-+	if (!new_object)
-+		return ERR_PTR(-ENOMEM);
-+	refcount_set(&new_object->usage, 1);
-+	spin_lock_init(&new_object->lock);
-+	new_object->underops = underops;
-+	new_object->underobj = underobj;
-+	return new_object;
-+}
-+
-+/*
-+ * The caller must own the object (i.e. thanks to object->usage) to safely put
-+ * it.
-+ */
-+void landlock_put_object(struct landlock_object *const object)
-+{
-+	/*
-+	 * The call to @object->underops->release(object) might sleep, e.g.
-+	 * because of iput().
-+	 */
-+	might_sleep();
-+	if (!object)
-+		return;
-+
-+	/*
-+	 * If the @object's refcount cannot drop to zero, we can just decrement
-+	 * the refcount without holding a lock. Otherwise, the decrement must
-+	 * happen under @object->lock for synchronization with things like
-+	 * get_inode_object().
-+	 */
-+	if (refcount_dec_and_lock(&object->usage, &object->lock)) {
-+		__acquire(&object->lock);
-+		/*
-+		 * With @object->lock initially held, remove the reference from
-+		 * @object->underobj to @object (if it still exists).
-+		 */
-+		object->underops->release(object);
-+		kfree_rcu(object, rcu_free);
-+	}
-+}
-diff --git a/security/landlock/object.h b/security/landlock/object.h
-new file mode 100644
-index 000000000000..1d6edbf939e2
---- /dev/null
-+++ b/security/landlock/object.h
-@@ -0,0 +1,91 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Landlock LSM - Object management
-+ *
-+ * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
-+ * Copyright © 2018-2020 ANSSI
-+ */
-+
-+#ifndef _SECURITY_LANDLOCK_OBJECT_H
-+#define _SECURITY_LANDLOCK_OBJECT_H
-+
-+#include <linux/compiler_types.h>
-+#include <linux/refcount.h>
-+#include <linux/spinlock.h>
-+
-+struct landlock_object;
-+
-+/**
-+ * struct landlock_object_underops - Operations on an underlying object
-+ */
-+struct landlock_object_underops {
-+	/**
-+	 * @release: Releases the underlying object (e.g. iput() for an inode).
-+	 */
-+	void (*release)(struct landlock_object *const object)
-+		__releases(object->lock);
-+};
-+
-+/**
-+ * struct landlock_object - Security blob tied to a kernel object
-+ *
-+ * The goal of this structure is to enable to tie a set of ephemeral access
-+ * rights (pertaining to different domains) to a kernel object (e.g an inode)
-+ * in a safe way.  This imply to handle concurrent use and modification.
-+ *
-+ * The lifetime of a &struct landlock_object depends of the rules referring to
-+ * it.
-+ */
-+struct landlock_object {
-+	/**
-+	 * @usage: This counter is used to tie an object to the rules matching
-+	 * it or to keep it alive while adding a new rule.  If this counter
-+	 * reaches zero, this struct must not be modified, but this counter can
-+	 * still be read from within an RCU read-side critical section.  When
-+	 * adding a new rule to an object with a usage counter of zero, we must
-+	 * wait until the pointer to this object is set to NULL (or recycled).
-+	 */
-+	refcount_t usage;
-+	/**
-+	 * @lock: Guards against concurrent modifications.  This lock must be
-+	 * held from the time @usage drops to zero until any weak references
-+	 * from @underobj to this object have been cleaned up.
-+	 *
-+	 * Lock ordering: inode->i_lock nests inside this.
-+	 */
-+	spinlock_t lock;
-+	/**
-+	 * @underobj: Used when cleaning up an object and to mark an object as
-+	 * tied to its underlying kernel structure.  This pointer is protected
-+	 * by @lock.  Cf. landlock_release_inodes() and release_inode().
-+	 */
-+	void *underobj;
-+	union {
-+		/**
-+		 * @rcu_free: Enables lockless use of @usage, @lock and
-+		 * @underobj from within an RCU read-side critical section.
-+		 * @rcu_free and @underops are only used by
-+		 * landlock_put_object().
-+		 */
-+		struct rcu_head rcu_free;
-+		/**
-+		 * @underops: Enables landlock_put_object() to release the
-+		 * underlying object (e.g. inode).
-+		 */
-+		const struct landlock_object_underops *underops;
-+	};
-+};
-+
-+struct landlock_object *landlock_create_object(
-+		const struct landlock_object_underops *const underops,
-+		void *const underobj);
-+
-+void landlock_put_object(struct landlock_object *const object);
-+
-+static inline void landlock_get_object(struct landlock_object *const object)
-+{
-+	if (object)
-+		refcount_inc(&object->usage);
-+}
-+
-+#endif /* _SECURITY_LANDLOCK_OBJECT_H */
+Yu-cheng Yu (26):
+  Documentation/x86: Add CET description
+  x86/cet/shstk: Add Kconfig option for user-mode control-flow
+    protection
+  x86/cpufeatures: Add CET CPU feature flags for Control-flow
+    Enforcement Technology (CET)
+  x86/cpufeatures: Introduce X86_FEATURE_CET and setup functions
+  x86/fpu/xstate: Introduce CET MSR and XSAVES supervisor states
+  x86/cet: Add control-protection fault handler
+  x86/mm: Remove _PAGE_DIRTY from kernel RO pages
+  x86/mm: Introduce _PAGE_COW
+  drm/i915/gvt: Change _PAGE_DIRTY to _PAGE_DIRTY_BITS
+  x86/mm: Update pte_modify for _PAGE_COW
+  x86/mm: Update ptep_set_wrprotect() and pmdp_set_wrprotect() for
+    transition from _PAGE_DIRTY to _PAGE_COW
+  mm: Introduce VM_SHSTK for shadow stack memory
+  x86/mm: Shadow Stack page fault error checking
+  x86/mm: Update maybe_mkwrite() for shadow stack
+  mm: Fixup places that call pte_mkwrite() directly
+  mm: Add guard pages around a shadow stack.
+  mm/mmap: Add shadow stack pages to memory accounting
+  mm: Update can_follow_write_pte() for shadow stack
+  mm: Re-introduce vm_flags to do_mmap()
+  x86/cet/shstk: User-mode shadow stack support
+  x86/cet/shstk: Handle signals for shadow stack
+  binfmt_elf: Define GNU_PROPERTY_X86_FEATURE_1_AND properties
+  ELF: Introduce arch_setup_elf_property()
+  x86/cet/shstk: Handle thread shadow stack
+  x86/cet/shstk: Add arch_prctl functions for shadow stack
+  mm: Introduce PROT_SHSTK for shadow stack
+
+ .../admin-guide/kernel-parameters.txt         |   6 +
+ Documentation/x86/index.rst                   |   1 +
+ Documentation/x86/intel_cet.rst               | 136 +++++++
+ arch/arm64/include/asm/elf.h                  |   5 +
+ arch/x86/Kconfig                              |  28 ++
+ arch/x86/Kconfig.assembler                    |   5 +
+ arch/x86/ia32/ia32_signal.c                   |  17 +
+ arch/x86/include/asm/cet.h                    |  42 +++
+ arch/x86/include/asm/cpufeatures.h            |   4 +-
+ arch/x86/include/asm/disabled-features.h      |  17 +-
+ arch/x86/include/asm/elf.h                    |  13 +
+ arch/x86/include/asm/fpu/internal.h           |  10 +
+ arch/x86/include/asm/fpu/types.h              |  23 +-
+ arch/x86/include/asm/fpu/xstate.h             |   6 +-
+ arch/x86/include/asm/idtentry.h               |   4 +
+ arch/x86/include/asm/mman.h                   |  83 +++++
+ arch/x86/include/asm/mmu_context.h            |   3 +
+ arch/x86/include/asm/msr-index.h              |  19 +
+ arch/x86/include/asm/page_64_types.h          |  10 +
+ arch/x86/include/asm/pgtable.h                | 202 ++++++++++-
+ arch/x86/include/asm/pgtable_types.h          |  48 ++-
+ arch/x86/include/asm/processor.h              |   5 +
+ arch/x86/include/asm/special_insns.h          |  32 ++
+ arch/x86/include/asm/trap_pf.h                |   2 +
+ arch/x86/include/uapi/asm/mman.h              |  28 +-
+ arch/x86/include/uapi/asm/prctl.h             |   4 +
+ arch/x86/include/uapi/asm/processor-flags.h   |   2 +
+ arch/x86/include/uapi/asm/sigcontext.h        |   9 +
+ arch/x86/kernel/Makefile                      |   2 +
+ arch/x86/kernel/cet.c                         | 343 ++++++++++++++++++
+ arch/x86/kernel/cet_prctl.c                   |  68 ++++
+ arch/x86/kernel/cpu/common.c                  |  40 +-
+ arch/x86/kernel/cpu/cpuid-deps.c              |   2 +
+ arch/x86/kernel/fpu/signal.c                  | 100 +++++
+ arch/x86/kernel/fpu/xstate.c                  |  10 +-
+ arch/x86/kernel/idt.c                         |   4 +
+ arch/x86/kernel/process.c                     |  14 +-
+ arch/x86/kernel/process_64.c                  |  32 ++
+ arch/x86/kernel/signal.c                      |  10 +
+ arch/x86/kernel/signal_compat.c               |   2 +-
+ arch/x86/kernel/traps.c                       |  59 +++
+ arch/x86/mm/fault.c                           |  19 +
+ arch/x86/mm/mmap.c                            |   2 +
+ arch/x86/mm/pat/set_memory.c                  |   2 +-
+ arch/x86/mm/pgtable.c                         |  25 ++
+ drivers/gpu/drm/i915/gvt/gtt.c                |   2 +-
+ fs/aio.c                                      |   2 +-
+ fs/binfmt_elf.c                               |   4 +
+ fs/proc/task_mmu.c                            |   3 +
+ include/linux/elf.h                           |   6 +
+ include/linux/mm.h                            |  38 +-
+ include/linux/pgtable.h                       |  35 ++
+ include/uapi/asm-generic/siginfo.h            |   3 +-
+ include/uapi/linux/elf.h                      |   9 +
+ ipc/shm.c                                     |   2 +-
+ mm/gup.c                                      |   8 +-
+ mm/huge_memory.c                              |  10 +-
+ mm/memory.c                                   |   5 +-
+ mm/migrate.c                                  |   3 +-
+ mm/mmap.c                                     |  23 +-
+ mm/mprotect.c                                 |   2 +-
+ mm/nommu.c                                    |   4 +-
+ mm/util.c                                     |   2 +-
+ 63 files changed, 1576 insertions(+), 83 deletions(-)
+ create mode 100644 Documentation/x86/intel_cet.rst
+ create mode 100644 arch/x86/include/asm/cet.h
+ create mode 100644 arch/x86/include/asm/mman.h
+ create mode 100644 arch/x86/kernel/cet.c
+ create mode 100644 arch/x86/kernel/cet_prctl.c
+
 -- 
-2.29.2
+2.21.0
 
