@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 14A6BC19425
-	for <linux-api@archiver.kernel.org>; Wed,  9 Dec 2020 22:31:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7AA7CC2BB48
+	for <linux-api@archiver.kernel.org>; Wed,  9 Dec 2020 22:32:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D781523B85
-	for <linux-api@archiver.kernel.org>; Wed,  9 Dec 2020 22:31:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4C79D23B85
+	for <linux-api@archiver.kernel.org>; Wed,  9 Dec 2020 22:32:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2388429AbgLIWbO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 9 Dec 2020 17:31:14 -0500
-Received: from mga01.intel.com ([192.55.52.88]:7847 "EHLO mga01.intel.com"
+        id S2388253AbgLIW30 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 9 Dec 2020 17:29:26 -0500
+Received: from mga01.intel.com ([192.55.52.88]:7773 "EHLO mga01.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2388921AbgLIWaA (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 9 Dec 2020 17:30:00 -0500
-IronPort-SDR: /aF/LUo+5kuD5NoFFtr9z5zxxHynnReWcb72jaW3gelgumqI17sQUXlcE3tS8Uc2ZYrSR61OIQ
- P9VzwFmtyC6A==
-X-IronPort-AV: E=McAfee;i="6000,8403,9830"; a="192468374"
+        id S2388699AbgLIW3Q (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 9 Dec 2020 17:29:16 -0500
+IronPort-SDR: mpy0vBMjrtUgYTf3i+lA9/75C2qLn/ye1K6a3JkxxmTWdO45lTx6KmI5txzHYW005Iqhhtk2wK
+ K8ocrgn98wUQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9830"; a="192468353"
 X-IronPort-AV: E=Sophos;i="5.78,407,1599548400"; 
-   d="scan'208";a="192468374"
+   d="scan'208";a="192468353"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by fmsmga101.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Dec 2020 14:28:14 -0800
-IronPort-SDR: +yLKon261aIKdvlbli8Wg7+Dy5bUEJEO4nSnX9Lnc8AeDDki3LeUZFaAcZQQ4z0TfKvSjK67ZC
- RC+D2FftXdew==
+  by fmsmga101.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Dec 2020 14:28:10 -0800
+IronPort-SDR: Q68EBq02wyhMX6tVMQGq6R1dG5qjEMZ0OYfHaX1NQOpCdtDXy0RPDX8mowHOa+7bBZPjkHkme4
+ aXHH+VSnGGfQ==
 X-IronPort-AV: E=Sophos;i="5.78,407,1599548400"; 
-   d="scan'208";a="364333635"
+   d="scan'208";a="364333612"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Dec 2020 14:28:13 -0800
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Dec 2020 14:28:10 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,9 +60,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v16 6/7] x86/vdso/32: Add ENDBR32 to __kernel_vsyscall entry point
-Date:   Wed,  9 Dec 2020 14:27:51 -0800
-Message-Id: <20201209222752.2911-7-yu-cheng.yu@intel.com>
+Subject: [PATCH v16 1/7] x86/cet/ibt: Update Kconfig for user-mode Indirect Branch Tracking
+Date:   Wed,  9 Dec 2020 14:27:46 -0800
+Message-Id: <20201209222752.2911-2-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20201209222752.2911-1-yu-cheng.yu@intel.com>
 References: <20201209222752.2911-1-yu-cheng.yu@intel.com>
@@ -72,31 +72,30 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: "H.J. Lu" <hjl.tools@gmail.com>
+Indirect branch tracking is a hardware security feature that verifies near
+indirect call/jump instructions arrive at intended targets, which are
+labeled by the compiler with ENDBR opcodes.  If such instructions reach
+unlabeled locations, the processor raises control-protection faults.
 
-Add ENDBR32 to __kernel_vsyscall entry point.
+Check the compiler is up-to-date at config time.
 
-Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Acked-by: Andy Lutomirski <luto@kernel.org>
 ---
- arch/x86/entry/vdso/vdso32/system_call.S | 3 +++
- 1 file changed, 3 insertions(+)
+ arch/x86/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/arch/x86/entry/vdso/vdso32/system_call.S b/arch/x86/entry/vdso/vdso32/system_call.S
-index de1fff7188aa..d28d20d8d4ce 100644
---- a/arch/x86/entry/vdso/vdso32/system_call.S
-+++ b/arch/x86/entry/vdso/vdso32/system_call.S
-@@ -14,6 +14,9 @@
- 	ALIGN
- __kernel_vsyscall:
- 	CFI_STARTPROC
-+#ifdef CONFIG_X86_CET_USER
-+	endbr32
-+#endif
- 	/*
- 	 * Reshuffle regs so that all of any of the entry instructions
- 	 * will preserve enough state.
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 264de177a721..d08c0eb563da 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1942,6 +1942,7 @@ config X86_CET_USER
+ 	def_bool n
+ 	depends on CPU_SUP_INTEL && X86_64
+ 	depends on AS_WRUSS
++	depends on $(cc-option,-fcf-protection)
+ 	select ARCH_USES_HIGH_VMA_FLAGS
+ 	select ARCH_HAS_SHADOW_STACK
+ 	select ARCH_MAYBE_MKWRITE
 -- 
 2.21.0
 
