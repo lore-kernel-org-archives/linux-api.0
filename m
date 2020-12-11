@@ -2,124 +2,175 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.2 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-2.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BD8E0C4167B
-	for <linux-api@archiver.kernel.org>; Thu, 10 Dec 2020 19:59:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A184CC4361B
+	for <linux-api@archiver.kernel.org>; Fri, 11 Dec 2020 19:43:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 82B2C23406
-	for <linux-api@archiver.kernel.org>; Thu, 10 Dec 2020 19:59:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 492FF23329
+	for <linux-api@archiver.kernel.org>; Fri, 11 Dec 2020 19:43:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2390492AbgLJT7b (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 10 Dec 2020 14:59:31 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55738 "EHLO
+        id S1730108AbgLKSJO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 11 Dec 2020 13:09:14 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50258 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2390146AbgLJT7T (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 10 Dec 2020 14:59:19 -0500
-Received: from mail-lf1-x144.google.com (mail-lf1-x144.google.com [IPv6:2a00:1450:4864:20::144])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 48804C0613D6;
-        Thu, 10 Dec 2020 11:58:38 -0800 (PST)
-Received: by mail-lf1-x144.google.com with SMTP id o17so7094735lfg.4;
-        Thu, 10 Dec 2020 11:58:38 -0800 (PST)
+        with ESMTP id S1729143AbgLKSIx (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 11 Dec 2020 13:08:53 -0500
+Received: from mail-qk1-x736.google.com (mail-qk1-x736.google.com [IPv6:2607:f8b0:4864:20::736])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 948D9C061793;
+        Fri, 11 Dec 2020 10:08:13 -0800 (PST)
+Received: by mail-qk1-x736.google.com with SMTP id h4so4397831qkk.4;
+        Fri, 11 Dec 2020 10:08:13 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=subject:to:cc:references:from:message-id:date:user-agent
-         :mime-version:in-reply-to:content-language:content-transfer-encoding;
-        bh=GC/XblOlRvC+qjSKhqvPWSHVmyf1S0klyHzoOlN2iQc=;
-        b=B5RF+oI/aEJk5oFliIENmOnUpk914JFiTNv0xNVgQe+zFhST94+JU5cbGP7hvBpD9v
-         grxe8oo1mX5tiYCWySi3nscdMci1ElaO8JweSiONVZk+k+nFZ+Kil9YPERX7lJIBwAp8
-         iy82acrzkeA+z40q3fstbj9Na9DxCUJBIJO4V8acsMMpNsuHaaCjX/6RpStSTLkStSlp
-         +wdaFCm1yjv/7n6d1uFK+yR9yzHEX3YPRZ3gE15T5vJKAoG0OHqFg4VUTXpMMDBpPYFN
-         litjpTzzUYBMug4zvP+YywyKEC/jnyuvyath1r6HNbRBTF3VG3syPj8iBwdgEZbiHgk+
-         rlpQ==
+        h=date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to;
+        bh=tb0y+vgKZ75r7FvS5QVh1rGnGDYz+mrb7UR1MucpS5w=;
+        b=AUs7F4ua1aW9ZopDlCVYQZ6GvmSlovN0hlWDGixtj3frbcGgr4QNT+Ra3lpWARZXJ+
+         f4Nw8GgWhumDeCn1ywP5GGnzYP0vGwRIzmYXQa1XvK2YJZqHLc/N3RXUKFdOtf1qry+k
+         jMEhOYGOcf7Ric1YLs+0HCb9OEXwRvXZ0sgKcRVOBbi7Skiz+ZMaH5Lk6a/xrpm3yOOd
+         UuHzlapcvquwseMbWAahI5MmZPMTAjWCvkJftxW6/2YZA9njqsjT3SNz+jV9kL8mx7op
+         Ib8+08PzSXQmMk+Hq8rSYIC+6tpL1cn7nLBpLEr1M+OrkNmqsNj/MPdRE1pMmADvWPNA
+         qu6w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-language
-         :content-transfer-encoding;
-        bh=GC/XblOlRvC+qjSKhqvPWSHVmyf1S0klyHzoOlN2iQc=;
-        b=t57opLBFFhpW9+EIFUOhjeCTe51ke4emR+JSWaNOSXjdhIZaIThjAkXoSbC6niEuls
-         9XSCbTnehFx9igE06uSvzd1tdl8FIjFLRc0AnUJ5+MDltH8u1/qcEy+DS3t3kk76zDR4
-         ostvuH1++0gZfi7bYo5VzUWAzejo3CAsbFIKJuvqdrQBvzw/9dhDwXKHcle1Kt7oW54A
-         viNJapX6Z+TmpsJPi3f9uH4D5a29hD7oLVs5cEiNbYhIROU7Jq5deqixa/9iSaWNj1+9
-         4S1q5IkvAaZIECwc7HvaaPXGhzqNNe/rA/rd6RN7auDYrb0es/uFOTxHVkvKrE+Jt98I
-         7YpA==
-X-Gm-Message-State: AOAM532oiAvAjCtuPw06mvXdv2NSdtmszajK2TsNe0N0oTzgAFmJGCCh
-        4n+vhXHKLAf059DGiBQpjv0=
-X-Google-Smtp-Source: ABdhPJxhUF+Yv2avD1Pj5n+dOKXAWNePLfrPOFYOF7WHhPIbi9+WEBCX4vmjJXJECzcEC8KHTOt0Jw==
-X-Received: by 2002:a19:8b55:: with SMTP id n82mr3398587lfd.485.1607630316854;
-        Thu, 10 Dec 2020 11:58:36 -0800 (PST)
-Received: from [192.168.1.33] (88-114-222-21.elisa-laajakaista.fi. [88.114.222.21])
-        by smtp.gmail.com with ESMTPSA id r16sm712488ljj.52.2020.12.10.11.58.35
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 10 Dec 2020 11:58:36 -0800 (PST)
-Subject: Re: [PATCH] mm/vmalloc: randomize vmalloc() allocations
-To:     Mike Rapoport <rppt@kernel.org>
-Cc:     linux-hardening@vger.kernel.org, akpm@linux-foundation.org,
-        linux-mm@kvack.org, linux-kernel@vger.kernel.org,
-        Andy Lutomirski <luto@kernel.org>,
-        Jann Horn <jannh@google.com>,
-        Kees Cook <keescook@chromium.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        Matthew Wilcox <willy@infradead.org>
-References: <20201201214547.9721-1-toiwoton@gmail.com>
- <9d34fb0a-7aba-1e84-6426-006ea7c3d9f5@gmail.com>
- <20201203065801.GH751215@kernel.org>
-From:   Topi Miettinen <toiwoton@gmail.com>
-Message-ID: <37787c16-e188-89ae-a5fb-583fd97e6661@gmail.com>
-Date:   Thu, 10 Dec 2020 21:58:33 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.5.1
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=tb0y+vgKZ75r7FvS5QVh1rGnGDYz+mrb7UR1MucpS5w=;
+        b=kuMn8Pv6KJcvahQaKIC3uXAtgfjyxRt5AWJHp7Cy6IG/cMpzmpBWuUUpuGub7ReOTj
+         6pYJXZfbC44eaWLHSsLQD0UGzUDJoiOgO0bjwtsFZc/ccMuTO3KbF6BTjRZ7WSQMZP5P
+         +ZJ5Oj6q1aK5358bTKT9jHIUYVhaCikemq/NoCITuO30Qg9h4p6Pw52knJTYPi28iyXL
+         C6ARfgItXBIkwHoPtxZ9Dii/Nvwv0xYsQbevF+ilRAYT3ghfzaVNAvWl/BeBnig0duMY
+         Qxpd7rJlX3NUDSkF7hb/FFE/9LP8wm/szuUYzvuQ76wy2HyaZQVziXziewc3saCGdOY8
+         7Cjg==
+X-Gm-Message-State: AOAM530l3eI7PjkO7wFkrzuBynykAhkPr3kg9Klj0joh3GZTDw3yzgpE
+        MARorLiN9YWCnVNoAyQiuTk=
+X-Google-Smtp-Source: ABdhPJwvJuRnmcVRNXqpa7e69IuosIRo3bP9ze7lFEvemoSBzlYKUFwNAlUgS46RCQXWVw8VE7FW0w==
+X-Received: by 2002:ae9:c01a:: with SMTP id u26mr17800951qkk.372.1607710091170;
+        Fri, 11 Dec 2020 10:08:11 -0800 (PST)
+Received: from localhost (d27-96-190-162.evv.wideopenwest.com. [96.27.162.190])
+        by smtp.gmail.com with ESMTPSA id o21sm6598541qko.9.2020.12.11.10.08.10
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 11 Dec 2020 10:08:10 -0800 (PST)
+Date:   Fri, 11 Dec 2020 10:08:09 -0800
+From:   Yury Norov <yury.norov@gmail.com>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     Pavel Machek <pavel@ucw.cz>, Alex Belits <abelits@marvell.com>,
+        "nitesh@redhat.com" <nitesh@redhat.com>,
+        "frederic@kernel.org" <frederic@kernel.org>,
+        Prasun Kapoor <pkapoor@marvell.com>,
+        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
+        "davem@davemloft.net" <davem@davemloft.net>,
+        "trix@redhat.com" <trix@redhat.com>,
+        "mingo@kernel.org" <mingo@kernel.org>,
+        "catalin.marinas@arm.com" <catalin.marinas@arm.com>,
+        "rostedt@goodmis.org" <rostedt@goodmis.org>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "peterx@redhat.com" <peterx@redhat.com>,
+        "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>,
+        "mtosatti@redhat.com" <mtosatti@redhat.com>,
+        "will@kernel.org" <will@kernel.org>,
+        "peterz@infradead.org" <peterz@infradead.org>,
+        "leon@sidebranch.com" <leon@sidebranch.com>,
+        "linux-arm-kernel@lists.infradead.org" 
+        <linux-arm-kernel@lists.infradead.org>,
+        "pauld@redhat.com" <pauld@redhat.com>,
+        "netdev@vger.kernel.org" <netdev@vger.kernel.org>
+Subject: Re: [PATCH v5 0/9] "Task_isolation" mode
+Message-ID: <20201211180809.GA397355@yury-ThinkPad>
+References: <8d887e59ca713726f4fcb25a316e1e932b02823e.camel@marvell.com>
+ <20201205204049.GA8578@amd>
+ <87h7oz96o6.fsf@nanos.tec.linutronix.de>
 MIME-Version: 1.0
-In-Reply-To: <20201203065801.GH751215@kernel.org>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-US
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <87h7oz96o6.fsf@nanos.tec.linutronix.de>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 3.12.2020 8.58, Mike Rapoport wrote:
-> On Wed, Dec 02, 2020 at 08:49:06PM +0200, Topi Miettinen wrote:
->> On 1.12.2020 23.45, Topi Miettinen wrote:
->>> Memory mappings inside kernel allocated with vmalloc() are in
->>> predictable order and packed tightly toward the low addresses. With
->>> new kernel boot parameter 'randomize_vmalloc=1', the entire area is
->>> used randomly to make the allocations less predictable and harder to
->>> guess for attackers.
->>>
->>
->> This also seems to randomize module addresses. I was going to check that
->> next, so nice surprise!
+On Sun, Dec 06, 2020 at 12:25:45AM +0100, Thomas Gleixner wrote:
+> Pavel,
 > 
-> Heh, that's because module_alloc() uses vmalloc() in that way or another :)
+> On Sat, Dec 05 2020 at 21:40, Pavel Machek wrote:
+> > So... what kind of guarantees does this aim to provide / what tasks it
+> > is useful for?
+> >
+> > For real time response, we have other approaches.
+> 
+> Depends on your requirements. Some problems are actually better solved
+> with busy polling. See below.
+> 
+> > If you want to guarantee performnace of the "isolated" task... I don't
+> > see how that works. Other tasks on the system still compete for DRAM
+> > bandwidth, caches, etc...
+> 
+> Applications which want to run as undisturbed as possible. There is
+> quite a range of those:
+> 
+>   - Hardware in the loop simulation is today often done with that crude
+>     approach of "offlining" a CPU and then instead of playing dead
+>     jumping to a preloaded bare metal executable. That's a horrible hack
+>     and impossible to debug, but gives them the results they need to
+>     achieve. These applications are well optimized vs. cache and memory
+>     foot print, so they don't worry about these things too much and they
+>     surely don't run on SMI and BIOS value add inflicted machines.
+> 
+>     Don't even think about waiting for an interrupt to achieve what
+>     these folks are doing. So no, there are problems which a general
+>     purpose realtime OS cannot solve ever.
+> 
+>   - HPC computations on large data sets. While the memory foot print is
+>     large the access patterns are cache optimized. 
+> 
+>     The problem there is that any unnecessary IPI, tick interrupt or
+>     whatever nuisance is disturbing the carefully optimized cache usage
+>     and alone getting rid of the timer interrupt gained them measurable
+>     performance. Even very low single digit percentage of runtime saving
+>     is valuable for these folks because the compute time on such beasts
+>     is expensive.
+> 
+>   - Realtime guests in KVM. With posted interrupts and a fully populated
+>     host side page table there is no point in running host side
+>     interrupts or IPIs for random accounting or whatever purposes as
+>     they affect the latency in the guest. With all the side effects
+>     mitigated and a properly set up guest and host it is possible to get
+>     to a zero exit situation after the bootup phase which means pretty
+>     much matching bare metal behaviour.
+> 
+>     Yes, you can do that with e.g. Jailhouse as well, but you lose lots
+>     of the fancy things KVM provides. And people care about these not
+>     just because they are fancy. They care because their application
+>     scenario needs them.
+> 
+> There are more reasons why people want to be able to get as much
+> isolation from the OS as possible but at the same time have a sane
+> execution environment, debugging, performance monitoring and the OS
+> provided protection mechanisms instead of horrible hacks.
+> 
+> Isolation makes sense for a range of applications and there is no reason
+> why Linux should not support them. 
 
-I got a bit further with really using vmalloc with 
-[VMALLOC_START..VMALLOC_END] for modules, but then inserting a module 
-fails because of the relocations:
-[    9.202856] module: overflow in relocation type 11 val ffffe1950e27f080
+One good client for the task isolation is Open Data Plane. There are
+even some code stubs supposed to enable isolation where needed.
 
-Type 11 is R_X86_64_32S expecting a 32 bits signed offset, so the loader 
-obviously can't fit the relocation from the highest 2GB to somewhere 32 
-TB lower.
+> > If you want to guarantee performnace of the "isolated" task... I don't
+> > see how that works. Other tasks on the system still compete for DRAM
+> > bandwidth, caches, etc...
 
-The problem seems to be that the modules aren't really built as 
-position-independent shared objects with -fPIE/-fPIC, but instead 
-there's explicit -fno-PIE. I guess the modules also shouldn't use 
--mcmodel=kernel. Though tweaking the flags shows that some combinations 
-aren't well supported (like ’-mindirect-branch=thunk-extern’ and 
-‘-mcmodel=large’ are not compatible) and the handwritten assembly code 
-also assumes 32 bit offsets.
+My experiments say that typical delay caused by dry IPI or syscall is
+2000-20000 'ticks'. Typical delay caused by cache miss is 3-30 ticks.
 
-A different approach could be to make the entire kernel relocatable to 
-lower addresses and then the modules could stay close nearby. I guess 
-the asm files aren't written with position independence in mind either.
+To guarantee cache / memory bandwidth, one can use resctrl. Linux has
+implementation of it for x86 only, but arm64 has support for for
+resctrl on CPU side.
 
-But it seems that I'm finding and breaking lots of assumptions built in 
-to the system. What's the experts' opinion, is full module/kernel 
-randomization ever going to fly?
+Thanks,
+Yury
 
--Topi
+> Thanks,
+> 
+>         tglx
