@@ -3,38 +3,30 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-17.0 required=3.0 tests=BAYES_00,INCLUDES_CR_TRAILER,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BC3C2C4167B
-	for <linux-api@archiver.kernel.org>; Sat, 12 Dec 2020 16:34:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9E9D0C19425
+	for <linux-api@archiver.kernel.org>; Sat, 12 Dec 2020 16:37:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9051B221E8
-	for <linux-api@archiver.kernel.org>; Sat, 12 Dec 2020 16:34:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6CF982225E
+	for <linux-api@archiver.kernel.org>; Sat, 12 Dec 2020 16:37:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2439409AbgLLQKB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 12 Dec 2020 11:10:01 -0500
-Received: from mail.kernel.org ([198.145.29.99]:57712 "EHLO mail.kernel.org"
+        id S2407659AbgLLQh1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 12 Dec 2020 11:37:27 -0500
+Received: from mail.kernel.org ([198.145.29.99]:57724 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2439401AbgLLQJ4 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Sat, 12 Dec 2020 11:09:56 -0500
+        id S2439377AbgLLQJg (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sat, 12 Dec 2020 11:09:36 -0500
 From:   Sasha Levin <sashal@kernel.org>
 Authentication-Results: mail.kernel.org; dkim=permerror (bad message/signature format)
 To:     linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc:     Xingxing Su <suxingxing@loongson.cn>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Shuah Khan <shuah@kernel.org>,
-        Sandipan Das <sandipan@linux.ibm.com>,
-        John Hubbard <jhubbard@nvidia.com>,
-        Dave Hansen <dave.hansen@intel.com>,
-        "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>,
-        Brian Geffon <bgeffon@google.com>,
-        Mina Almasry <almasrymina@google.com>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
+Cc:     Davide Caratti <dcaratti@redhat.com>,
+        Jakub Kicinski <kuba@kernel.org>,
         Sasha Levin <sashal@kernel.org>, linux-api@vger.kernel.org
-Subject: [PATCH AUTOSEL 5.9 23/23] tools/testing/selftests/vm: fix build error
-Date:   Sat, 12 Dec 2020 11:08:04 -0500
-Message-Id: <20201212160804.2334982-23-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 5.9 09/23] selftests: tc-testing: enable CONFIG_NET_SCH_RED as a module
+Date:   Sat, 12 Dec 2020 11:07:50 -0500
+Message-Id: <20201212160804.2334982-9-sashal@kernel.org>
 X-Mailer: git-send-email 2.27.0
 In-Reply-To: <20201212160804.2334982-1-sashal@kernel.org>
 References: <20201212160804.2334982-1-sashal@kernel.org>
@@ -46,64 +38,37 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Xingxing Su <suxingxing@loongson.cn>
+From: Davide Caratti <dcaratti@redhat.com>
 
-[ Upstream commit d8cbe8bfa7df3c680ddfd5e1eee3a5c86d8dc764 ]
+[ Upstream commit e14038a7ead09faa180eb072adc4a2157a0b475f ]
 
-Only x86 and PowerPC implement the pkey-xxx.h, and an error was reported
-when compiling protection_keys.c.
+a proper kernel configuration for running kselftest can be obtained with:
 
-Add a Arch judgment to compile "protection_keys" in the Makefile.
+ $ yes | make kselftest-merge
 
-If other arch implement this, add the arch name to the Makefile.
-eg:
-    ifneq (,$(findstring $(ARCH),powerpc mips ... ))
+enable compile support for the 'red' qdisc: otherwise, tdc kselftest fail
+when trying to run tdc test items contained in red.json.
 
-Following build errors:
-
-    pkey-helpers.h:93:2: error: #error Architecture not supported
-     #error Architecture not supported
-    pkey-helpers.h:96:20: error: `PKEY_DISABLE_ACCESS' undeclared
-     #define PKEY_MASK (PKEY_DISABLE_ACCESS | PKEY_DISABLE_WRITE)
-                        ^
-    protection_keys.c:218:45: error: `PKEY_DISABLE_WRITE' undeclared
-     pkey_assert(flags & (PKEY_DISABLE_ACCESS | PKEY_DISABLE_WRITE));
-                                                ^
-
-Signed-off-by: Xingxing Su <suxingxing@loongson.cn>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
-Cc: Shuah Khan <shuah@kernel.org>
-Cc: Sandipan Das <sandipan@linux.ibm.com>
-Cc: John Hubbard <jhubbard@nvidia.com>
-Cc: Dave Hansen <dave.hansen@intel.com>
-Cc: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
-Cc: Brian Geffon <bgeffon@google.com>
-Cc: Mina Almasry <almasrymina@google.com>
-Link: https://lkml.kernel.org/r/1606826876-30656-1-git-send-email-suxingxing@loongson.cn
-Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Davide Caratti <dcaratti@redhat.com>
+Link: https://lore.kernel.org/r/cfa23f2d4f672401e6cebca3a321dd1901a9ff07.1606416464.git.dcaratti@redhat.com
+Signed-off-by: Jakub Kicinski <kuba@kernel.org>
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- tools/testing/selftests/vm/Makefile | 4 ++++
- 1 file changed, 4 insertions(+)
+ tools/testing/selftests/tc-testing/config | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selftests/vm/Makefile
-index a9026706d597d..ac76a78249739 100644
---- a/tools/testing/selftests/vm/Makefile
-+++ b/tools/testing/selftests/vm/Makefile
-@@ -43,9 +43,13 @@ ifeq ($(CAN_BUILD_X86_64),1)
- TEST_GEN_FILES += $(BINARIES_64)
- endif
- else
-+
-+ifneq (,$(findstring $(ARCH),powerpc))
- TEST_GEN_FILES += protection_keys
- endif
+diff --git a/tools/testing/selftests/tc-testing/config b/tools/testing/selftests/tc-testing/config
+index c33a7aac27ff7..b71828df5a6dd 100644
+--- a/tools/testing/selftests/tc-testing/config
++++ b/tools/testing/selftests/tc-testing/config
+@@ -59,6 +59,7 @@ CONFIG_NET_IFE_SKBPRIO=m
+ CONFIG_NET_IFE_SKBTCINDEX=m
+ CONFIG_NET_SCH_FIFO=y
+ CONFIG_NET_SCH_ETS=m
++CONFIG_NET_SCH_RED=m
  
-+endif
-+
- ifneq (,$(filter $(MACHINE),arm64 ia64 mips64 parisc64 ppc64 ppc64le riscv64 s390x sh64 sparc64 x86_64))
- TEST_GEN_FILES += va_128TBswitch
- TEST_GEN_FILES += virtual_address_range
+ #
+ ## Network testing
 -- 
 2.27.0
 
