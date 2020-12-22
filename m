@@ -2,121 +2,102 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-18.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 377B6C433DB
-	for <linux-api@archiver.kernel.org>; Mon, 21 Dec 2020 18:21:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BD626C433DB
+	for <linux-api@archiver.kernel.org>; Tue, 22 Dec 2020 13:45:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 07399230FC
-	for <linux-api@archiver.kernel.org>; Mon, 21 Dec 2020 18:21:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 890E123103
+	for <linux-api@archiver.kernel.org>; Tue, 22 Dec 2020 13:45:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1725820AbgLUSVc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 21 Dec 2020 13:21:32 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51448 "EHLO
+        id S1727091AbgLVNph (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 22 Dec 2020 08:45:37 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:32816 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725807AbgLUSVc (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 21 Dec 2020 13:21:32 -0500
-Received: from mail-lf1-x130.google.com (mail-lf1-x130.google.com [IPv6:2a00:1450:4864:20::130])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7926EC061282
-        for <linux-api@vger.kernel.org>; Mon, 21 Dec 2020 10:20:51 -0800 (PST)
-Received: by mail-lf1-x130.google.com with SMTP id y19so25802540lfa.13
-        for <linux-api@vger.kernel.org>; Mon, 21 Dec 2020 10:20:51 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=paul-moore-com.20150623.gappssmtp.com; s=20150623;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=RDT3CMWkb5v4KlAY6bNjmDFLqwN6ZEiRSV+Z6DSzr0s=;
-        b=jrj8LYfQ+G2abRBjq/EQNO52IGqX1ROGqjr73asfsMUx2io1t/Kj5vaWeNRQ05QBws
-         7ORYHBk1SfigU2h39+yGI1Lk3AhN50Cgw2pM71/m4zP1hwb+ikD3+K55GDIFL6cu4N9x
-         ZXqkVEqq4e9zYCD39Pgl2Yl2UyuINtmv3u1EhVxYVIV2oRUT+oNTfNWmFPJ0oiSuI1AA
-         DmducotL7D+1FUZXOZvqHAm9lf7QMa82bUozYx7IzidUTWK7x6Iib27Ho/jYH5ne0Z0S
-         Of1Dbmmu0Q124UefwB1rJjBdPSQEFSj36Hggs/J2Zs9T0HFyX0niq795BUINRYC4pEQ5
-         L9qw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=RDT3CMWkb5v4KlAY6bNjmDFLqwN6ZEiRSV+Z6DSzr0s=;
-        b=OuYQy2qQE5FrWtSbr+CHJNmBvKd4Nbe+QkS+YhOnid1b6MnIDpHXTrCiPR1ROIehJu
-         DVLrC+zckAjln1El2wbi4Ip8g5GZHA4V6R4+UWt9pVxC7E206LhHQ/L2WTH9QH1Kx2f7
-         lAzSy4FLPZ1gacMP83yx9c8IDQ9AAmJSLztCNZ345BVtqSulJgXlH7AyPBCMgzswKBgq
-         YI4oVgxwi+IQ11jI5BGWCKrz2bzAPZ1XCkj6vo560D8MhSnopROOO6MhY/UMUxPiqNZf
-         hu2R6ZSJI1HBjW55E8yOKnFhsKCPaxNGHNkOmVdrbLEp1Zi9bKOWzC3cXGIpnLeH4v6v
-         /Swg==
-X-Gm-Message-State: AOAM532GMH4zVeG/YWd6qciuUd29R2i1nNp6jZK5jCyu6bVPClTU4yIx
-        HMMw/08H0TKtsFqUAhBrjqgX8BCL64nrBh1wFucEcHxJGw==
-X-Google-Smtp-Source: ABdhPJwPBtlia5uDw63ingozAyc7AR0jROeP8m6nydP3bWYSBIMRH20XUWt+8TeXFSZsv23dBiOY4HZ+Ga0eJQoO4Vg=
-X-Received: by 2002:a17:907:d9e:: with SMTP id go30mr15735065ejc.488.1608570889830;
- Mon, 21 Dec 2020 09:14:49 -0800 (PST)
-MIME-Version: 1.0
-References: <cover.1608225886.git.rgb@redhat.com> <982b9adffbd32264a853fe7f4f06f0d0a882c11d.1608225886.git.rgb@redhat.com>
-In-Reply-To: <982b9adffbd32264a853fe7f4f06f0d0a882c11d.1608225886.git.rgb@redhat.com>
-From:   Paul Moore <paul@paul-moore.com>
-Date:   Mon, 21 Dec 2020 12:14:38 -0500
-Message-ID: <CAHC9VhSTuBJ3LXxMY=nD7qBzmKLDjXY0V3hsuN34_siq_xRrig@mail.gmail.com>
-Subject: Re: [PATCH ghak90 v10 01/11] audit: collect audit task parameters
-To:     Richard Guy Briggs <rgb@redhat.com>
-Cc:     Linux Containers List <containers@lists.linux-foundation.org>,
+        with ESMTP id S1727062AbgLVNph (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 22 Dec 2020 08:45:37 -0500
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 423A5C0613D3;
+        Tue, 22 Dec 2020 05:44:57 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=eXSyGreQyqo1MSmMoq/qMuV3OWCVLUj1olxIkYhTkl0=; b=Ix8mJC38mYvh+lNbE2zOg73S2V
+        aW8+bJnapCtY5yvKkPflK2jIdDa2nZaR3ghWYIzq0sfRZ02qOCAZfEHG/mQxOfcyk+/5GLm05CZQ9
+        1//PIsYFfsPOM9YnsFc0MK/+cW401LKBSC2npcgsbbVx1H8rIZUUCGQvsW/j3gF48T2Ea/CWgFu1O
+        I9Naeba9H0I76TnpqQ+UlimvfzMahfalNYx17Dgwpb1XFwQw7Ul9big6pvyPf8LViAJOc/g7sy+8P
+        nJ0DkW1OpNbL/pl3rC86J8zT2uhv7RCpK+zUzX7Ig0Fjcsl47jE82uuldUA8ToZjHCcGMET5UW5we
+        NmGAkx3g==;
+Received: from hch by casper.infradead.org with local (Exim 4.92.3 #3 (Red Hat Linux))
+        id 1krhxu-0002DJ-GS; Tue, 22 Dec 2020 13:44:38 +0000
+Date:   Tue, 22 Dec 2020 13:44:38 +0000
+From:   Christoph Hellwig <hch@infradead.org>
+To:     Jann Horn <jannh@google.com>
+Cc:     Minchan Kim <minchan@kernel.org>, Christoph Hellwig <hch@lst.de>,
+        Suren Baghdasaryan <surenb@google.com>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Michal Hocko <mhocko@kernel.org>,
+        Michal Hocko <mhocko@suse.com>,
+        David Rientjes <rientjes@google.com>,
+        Matthew Wilcox <willy@infradead.org>,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Roman Gushchin <guro@fb.com>, Rik van Riel <riel@surriel.com>,
+        Christian Brauner <christian@brauner.io>,
+        Oleg Nesterov <oleg@redhat.com>,
+        Tim Murray <timmurray@google.com>,
         Linux API <linux-api@vger.kernel.org>,
-        Linux-Audit Mailing List <linux-audit@redhat.com>,
-        Linux FSdevel <linux-fsdevel@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Linux NetDev Upstream Mailing List <netdev@vger.kernel.org>,
-        Netfilter Devel List <netfilter-devel@vger.kernel.org>,
-        Jens Axboe <axboe@kernel.dk>,
-        Neil Horman <nhorman@tuxdriver.com>,
-        David Howells <dhowells@redhat.com>,
-        "Eric W. Biederman" <ebiederm@xmission.com>,
-        Simo Sorce <simo@redhat.com>,
-        Eric Paris <eparis@parisplace.org>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        mpatel@redhat.com, Serge Hallyn <serge@hallyn.com>
-Content-Type: text/plain; charset="UTF-8"
+        Linux-MM <linux-mm@kvack.org>,
+        kernel list <linux-kernel@vger.kernel.org>,
+        kernel-team <kernel-team@android.com>
+Subject: Re: [PATCH 1/2] mm/madvise: allow process_madvise operations on
+ entire memory range
+Message-ID: <20201222134438.GA7170@infradead.org>
+References: <20201124053943.1684874-1-surenb@google.com>
+ <20201124053943.1684874-2-surenb@google.com>
+ <20201125231322.GF1484898@google.com>
+ <CAG48ez0UKYCdgyW91SmOcT52vbLFz9RjLpaucWpj6bTrgQCwnA@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CAG48ez0UKYCdgyW91SmOcT52vbLFz9RjLpaucWpj6bTrgQCwnA@mail.gmail.com>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Dec 21, 2020 at 11:57 AM Richard Guy Briggs <rgb@redhat.com> wrote:
->
-> The audit-related parameters in struct task_struct should ideally be
-> collected together and accessed through a standard audit API and the audit
-> structures made opaque to other kernel subsystems.
->
-> Collect the existing loginuid, sessionid and audit_context together in a
-> new opaque struct audit_task_info called "audit" in struct task_struct.
->
-> Use kmem_cache to manage this pool of memory.
-> Un-inline audit_free() to be able to always recover that memory.
->
-> Please see the upstream github issues
-> https://github.com/linux-audit/audit-kernel/issues/81
-> https://github.com/linux-audit/audit-kernel/issues/90
->
-> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> Acked-by: Neil Horman <nhorman@tuxdriver.com>
-> Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
+On Fri, Dec 11, 2020 at 09:27:46PM +0100, Jann Horn wrote:
+> > Can we just use one element in iovec to indicate entire address rather
+> > than using up the reserved flags?
+> >
+> >         struct iovec {
+> >                 .iov_base = NULL,
+> >                 .iov_len = (~(size_t)0),
+> >         };
+> 
+> In addition to Suren's objections, I think it's also worth considering
+> how this looks in terms of compat API. If a compat process does
+> process_madvise() on another compat process, it would be specifying
+> the maximum 32-bit number, rather than the maximum 64-bit number, so
+> you'd need special code to catch that case, which would be ugly.
+> 
+> And when a compat process uses this API on a non-compat process, it
+> semantically gets really weird: The actual address range covered would
+> be larger than the address range specified.
+> 
+> And if we want different access checks for the two flavors in the
+> future, gating that different behavior on special values in the iovec
+> would feel too magical to me.
+> 
+> And the length value SIZE_MAX doesn't really make sense anyway because
+> the length of the whole address space would be SIZE_MAX+1, which you
+> can't express.
+> 
+> So I'm in favor of a new flag, and strongly against using SIZE_MAX as
+> a magic number here.
 
-Did Neil and Ondrej really ACK/Review the changes that you made here
-in v10 or are you just carrying over the ACK/Review?  I'm hopeful it
-is the former, because I'm going to be a little upset if it is the
-latter.
-
-> ---
->  fs/io-wq.c            |   8 +--
->  fs/io_uring.c         |  16 ++---
->  include/linux/audit.h |  49 +++++---------
->  include/linux/sched.h |   7 +-
->  init/init_task.c      |   3 +-
->  init/main.c           |   2 +
->  kernel/audit.c        | 154 +++++++++++++++++++++++++++++++++++++++++-
->  kernel/audit.h        |   7 ++
->  kernel/auditsc.c      |  24 ++++---
->  kernel/fork.c         |   1 -
->  10 files changed, 205 insertions(+), 66 deletions(-)
-
--- 
-paul moore
-www.paul-moore.com
+Yes, using SIZE_MAX is a horrible interface in this case.  I'm not
+a huge fan of a flag either.  What is the use case for the madvise
+to all of a processes address space anyway?
