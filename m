@@ -2,36 +2,37 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-14.0 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 78949C433E6
-	for <linux-api@archiver.kernel.org>; Tue, 29 Dec 2020 21:36:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6C1EFC433E6
+	for <linux-api@archiver.kernel.org>; Tue, 29 Dec 2020 21:36:17 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 52DFB221F8
-	for <linux-api@archiver.kernel.org>; Tue, 29 Dec 2020 21:36:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 44B9F221F8
+	for <linux-api@archiver.kernel.org>; Tue, 29 Dec 2020 21:36:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726540AbgL2VdR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 29 Dec 2020 16:33:17 -0500
-Received: from mga03.intel.com ([134.134.136.65]:11897 "EHLO mga03.intel.com"
+        id S1726508AbgL2VdN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 29 Dec 2020 16:33:13 -0500
+Received: from mga03.intel.com ([134.134.136.65]:11917 "EHLO mga03.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726514AbgL2VdO (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 29 Dec 2020 16:33:14 -0500
-IronPort-SDR: JSkASdcZoJqlVWlJQ+0ezSHnxdh5DHoBQd6VWsPsKVB1NEwNK4MXFeCENQ5Me40mwt8OqM5/Hs
- XW4WJlPSS20g==
-X-IronPort-AV: E=McAfee;i="6000,8403,9849"; a="176640512"
+        id S1726348AbgL2VdN (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 29 Dec 2020 16:33:13 -0500
+IronPort-SDR: p50Z9/Tj+ev4u18waQimcwJeoLc8ODtzNQQ/MF9pgR6rF4C669kMI7xfvdVd3d0kNBUdCcOreP
+ bTaJBypL/MhQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9849"; a="176640507"
 X-IronPort-AV: E=Sophos;i="5.78,459,1599548400"; 
-   d="scan'208";a="176640512"
+   d="scan'208";a="176640507"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Dec 2020 13:32:20 -0800
-IronPort-SDR: +vMRj3DvuwKykJcUh3oUqmQC6mTErIaBa8yfQ39AoZs5q9Z2FbaR/PnBX9EEpHfjo8HsbXinnf
- CXA567TuxwNQ==
+  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Dec 2020 13:32:19 -0800
+IronPort-SDR: jgf9MhRnGxA7Zz11Voi8O+URBuwdb0RUXab7O7Sj5BMa7uRGQHdzve8vN1K3X2d7aPT8DGtWy2
+ UWcNeNrxEgRA==
 X-IronPort-AV: E=Sophos;i="5.78,459,1599548400"; 
-   d="scan'208";a="376189588"
+   d="scan'208";a="376189578"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Dec 2020 13:32:19 -0800
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Dec 2020 13:32:18 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,9 +61,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v17 06/26] x86/cet: Add control-protection fault handler
-Date:   Tue, 29 Dec 2020 13:30:33 -0800
-Message-Id: <20201229213053.16395-7-yu-cheng.yu@intel.com>
+Subject: [PATCH v17 04/26] x86/cpufeatures: Introduce X86_FEATURE_CET and setup functions
+Date:   Tue, 29 Dec 2020 13:30:31 -0800
+Message-Id: <20201229213053.16395-5-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20201229213053.16395-1-yu-cheng.yu@intel.com>
 References: <20201229213053.16395-1-yu-cheng.yu@intel.com>
@@ -72,152 +73,165 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-A control-protection fault is triggered when a control-flow transfer
-attempt violates Shadow Stack or Indirect Branch Tracking constraints.
-For example, the return address for a RET instruction differs from the copy
-on the shadow stack; or an indirect JMP instruction, without the NOTRACK
-prefix, arrives at a non-ENDBR opcode.
-
-The control-protection fault handler works in a similar way as the general
-protection fault handler.  It provides the si_code SEGV_CPERR to the signal
-handler.
+Introduce a software-defined X86_FEATURE_CET, which indicates either Shadow
+Stack or Indirect Branch Tracking (or both) is present.  Also introduce
+related cpu init/setup functions.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/asm/idtentry.h    |  4 ++
- arch/x86/kernel/idt.c              |  4 ++
- arch/x86/kernel/signal_compat.c    |  2 +-
- arch/x86/kernel/traps.c            | 59 ++++++++++++++++++++++++++++++
- include/uapi/asm-generic/siginfo.h |  3 +-
- 5 files changed, 70 insertions(+), 2 deletions(-)
+ arch/x86/include/asm/cpufeatures.h          |  2 +-
+ arch/x86/include/asm/disabled-features.h    |  5 ++-
+ arch/x86/include/uapi/asm/processor-flags.h |  2 ++
+ arch/x86/kernel/cpu/common.c                | 40 ++++++++++++++++++++-
+ 4 files changed, 46 insertions(+), 3 deletions(-)
 
-diff --git a/arch/x86/include/asm/idtentry.h b/arch/x86/include/asm/idtentry.h
-index 247a60a47331..244dee0e092a 100644
---- a/arch/x86/include/asm/idtentry.h
-+++ b/arch/x86/include/asm/idtentry.h
-@@ -574,6 +574,10 @@ DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_SS,	exc_stack_segment);
- DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_GP,	exc_general_protection);
- DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_AC,	exc_alignment_check);
+diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+index 292fe87b26b3..d1866659edbd 100644
+--- a/arch/x86/include/asm/cpufeatures.h
++++ b/arch/x86/include/asm/cpufeatures.h
+@@ -108,7 +108,7 @@
+ #define X86_FEATURE_EXTD_APICID		( 3*32+26) /* Extended APICID (8 bits) */
+ #define X86_FEATURE_AMD_DCM		( 3*32+27) /* AMD multi-node processor */
+ #define X86_FEATURE_APERFMPERF		( 3*32+28) /* P-State hardware coordination feedback capability (APERF/MPERF MSRs) */
+-/* free					( 3*32+29) */
++#define X86_FEATURE_CET			( 3*32+29) /* Control-flow enforcement */
+ #define X86_FEATURE_NONSTOP_TSC_S3	( 3*32+30) /* TSC doesn't stop in S3 state */
+ #define X86_FEATURE_TSC_KNOWN_FREQ	( 3*32+31) /* TSC has known frequency */
  
-+#ifdef CONFIG_X86_CET_USER
-+DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_CP, exc_control_protection);
-+#endif
-+
- /* Raw exception entries which need extra work */
- DECLARE_IDTENTRY_RAW(X86_TRAP_UD,		exc_invalid_op);
- DECLARE_IDTENTRY_RAW(X86_TRAP_BP,		exc_int3);
-diff --git a/arch/x86/kernel/idt.c b/arch/x86/kernel/idt.c
-index ee1a283f8e96..463dcae55c3f 100644
---- a/arch/x86/kernel/idt.c
-+++ b/arch/x86/kernel/idt.c
-@@ -105,6 +105,10 @@ static const __initconst struct idt_data def_idts[] = {
- #elif defined(CONFIG_X86_32)
- 	SYSG(IA32_SYSCALL_VECTOR,	entry_INT80_32),
+diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
+index 4d3b7ce509e5..86ac4a1c6d81 100644
+--- a/arch/x86/include/asm/disabled-features.h
++++ b/arch/x86/include/asm/disabled-features.h
+@@ -71,9 +71,11 @@
+ #ifdef CONFIG_X86_CET_USER
+ #define DISABLE_SHSTK	0
+ #define DISABLE_IBT	0
++#define DISABLE_CET	0
+ #else
+ #define DISABLE_SHSTK	(1 << (X86_FEATURE_SHSTK & 31))
+ #define DISABLE_IBT	(1 << (X86_FEATURE_IBT & 31))
++#define DISABLE_CET	(1 << (X86_FEATURE_CET & 31))
  #endif
-+
-+#ifdef CONFIG_X86_CET_USER
-+	INTG(X86_TRAP_CP,		asm_exc_control_protection),
-+#endif
- };
  
  /*
-diff --git a/arch/x86/kernel/signal_compat.c b/arch/x86/kernel/signal_compat.c
-index a5330ff498f0..dd92490b1e7f 100644
---- a/arch/x86/kernel/signal_compat.c
-+++ b/arch/x86/kernel/signal_compat.c
-@@ -27,7 +27,7 @@ static inline void signal_compat_build_tests(void)
- 	 */
- 	BUILD_BUG_ON(NSIGILL  != 11);
- 	BUILD_BUG_ON(NSIGFPE  != 15);
--	BUILD_BUG_ON(NSIGSEGV != 9);
-+	BUILD_BUG_ON(NSIGSEGV != 10);
- 	BUILD_BUG_ON(NSIGBUS  != 5);
- 	BUILD_BUG_ON(NSIGTRAP != 5);
- 	BUILD_BUG_ON(NSIGCHLD != 6);
-diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
-index 7f5aec758f0e..b0a3e05f9950 100644
---- a/arch/x86/kernel/traps.c
-+++ b/arch/x86/kernel/traps.c
-@@ -606,6 +606,65 @@ DEFINE_IDTENTRY_ERRORCODE(exc_general_protection)
- 	cond_local_irq_disable(regs);
+@@ -82,7 +84,8 @@
+ #define DISABLED_MASK0	(DISABLE_VME)
+ #define DISABLED_MASK1	0
+ #define DISABLED_MASK2	0
+-#define DISABLED_MASK3	(DISABLE_CYRIX_ARR|DISABLE_CENTAUR_MCR|DISABLE_K6_MTRR)
++#define DISABLED_MASK3	(DISABLE_CYRIX_ARR|DISABLE_CENTAUR_MCR|DISABLE_K6_MTRR| \
++			 DISABLE_CET)
+ #define DISABLED_MASK4	(DISABLE_PCID)
+ #define DISABLED_MASK5	0
+ #define DISABLED_MASK6	0
+diff --git a/arch/x86/include/uapi/asm/processor-flags.h b/arch/x86/include/uapi/asm/processor-flags.h
+index bcba3c643e63..a8df907e8017 100644
+--- a/arch/x86/include/uapi/asm/processor-flags.h
++++ b/arch/x86/include/uapi/asm/processor-flags.h
+@@ -130,6 +130,8 @@
+ #define X86_CR4_SMAP		_BITUL(X86_CR4_SMAP_BIT)
+ #define X86_CR4_PKE_BIT		22 /* enable Protection Keys support */
+ #define X86_CR4_PKE		_BITUL(X86_CR4_PKE_BIT)
++#define X86_CR4_CET_BIT		23 /* enable Control-flow Enforcement */
++#define X86_CR4_CET		_BITUL(X86_CR4_CET_BIT)
+ 
+ /*
+  * x86-64 Task Priority Register, CR8
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index 35ad8480c464..03c367f79adc 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -510,6 +510,14 @@ static __init int setup_disable_pku(char *arg)
+ __setup("nopku", setup_disable_pku);
+ #endif /* CONFIG_X86_64 */
+ 
++static __always_inline void setup_cet(struct cpuinfo_x86 *c)
++{
++	if (!cpu_feature_enabled(X86_FEATURE_CET))
++		return;
++
++	cr4_set_bits(X86_CR4_CET);
++}
++
+ /*
+  * Some CPU features depend on higher CPUID levels, which may not always
+  * be available due to CPUID level capping or broken virtualization
+@@ -895,6 +903,12 @@ static void init_speculation_control(struct cpuinfo_x86 *c)
+ 	}
  }
  
-+#ifdef CONFIG_X86_CET_USER
-+static const char * const control_protection_err[] = {
-+	"unknown",
-+	"near-ret",
-+	"far-ret/iret",
-+	"endbranch",
-+	"rstorssp",
-+	"setssbsy",
-+};
-+
-+/*
-+ * When a control protection exception occurs, send a signal to the responsible
-+ * application.  Currently, control protection is only enabled for the user
-+ * mode.  This exception should not come from the kernel mode.
-+ */
-+DEFINE_IDTENTRY_ERRORCODE(exc_control_protection)
++static void init_cet_features(struct cpuinfo_x86 *c)
 +{
-+	struct task_struct *tsk;
-+
-+	if (!user_mode(regs)) {
-+		if (notify_die(DIE_TRAP, "control protection fault", regs,
-+			       error_code, X86_TRAP_CP, SIGSEGV) == NOTIFY_STOP)
-+			return;
-+		die("Upexpected/unsupported kernel control protection fault", regs, error_code);
-+	}
-+
-+	cond_local_irq_enable(regs);
-+
-+	if (!boot_cpu_has(X86_FEATURE_CET))
-+		WARN_ONCE(1, "Control protection fault with CET support disabled\n");
-+
-+	tsk = current;
-+	tsk->thread.error_code = error_code;
-+	tsk->thread.trap_nr = X86_TRAP_CP;
-+
-+	if (show_unhandled_signals && unhandled_signal(tsk, SIGSEGV) &&
-+	    printk_ratelimit()) {
-+		unsigned int max_err;
-+		unsigned long ssp;
-+
-+		max_err = ARRAY_SIZE(control_protection_err) - 1;
-+		if ((error_code < 0) || (error_code > max_err))
-+			error_code = 0;
-+
-+		rdmsrl(MSR_IA32_PL3_SSP, ssp);
-+		pr_info("%s[%d] control protection ip:%lx sp:%lx ssp:%lx error:%lx(%s)",
-+			tsk->comm, task_pid_nr(tsk),
-+			regs->ip, regs->sp, ssp, error_code,
-+			control_protection_err[error_code]);
-+		print_vma_addr(KERN_CONT " in ", regs->ip);
-+		pr_cont("\n");
-+	}
-+
-+	force_sig_fault(SIGSEGV, SEGV_CPERR,
-+			(void __user *)uprobe_get_trap_addr(regs));
-+	cond_local_irq_disable(regs);
++	if (cpu_has(c, X86_FEATURE_SHSTK) || cpu_has(c, X86_FEATURE_IBT))
++		set_cpu_cap(c, X86_FEATURE_CET);
 +}
++
+ void get_cpu_cap(struct cpuinfo_x86 *c)
+ {
+ 	u32 eax, ebx, ecx, edx;
+@@ -960,6 +974,7 @@ void get_cpu_cap(struct cpuinfo_x86 *c)
+ 	if (c->extended_cpuid_level >= 0x8000000a)
+ 		c->x86_capability[CPUID_8000_000A_EDX] = cpuid_edx(0x8000000a);
+ 
++	init_cet_features(c);
+ 	init_scattered_cpuid_features(c);
+ 	init_speculation_control(c);
+ 
+@@ -1221,6 +1236,15 @@ static void detect_nopl(void)
+ #endif
+ }
+ 
++static void adjust_combined_cpu_features(void)
++{
++#ifdef CONFIG_X86_CET_USER
++	if (test_bit(X86_FEATURE_SHSTK, (unsigned long *)cpu_caps_cleared) &&
++	    test_bit(X86_FEATURE_IBT, (unsigned long *)cpu_caps_cleared))
++		setup_clear_cpu_cap(X86_FEATURE_CET);
++#endif
++}
++
+ /*
+  * We parse cpu parameters early because fpu__init_system() is executed
+  * before parse_early_param().
+@@ -1252,9 +1276,19 @@ static void __init cpu_parse_early_param(void)
+ 	if (cmdline_find_option_bool(boot_command_line, "noxsaves"))
+ 		setup_clear_cpu_cap(X86_FEATURE_XSAVES);
+ 
++	/*
++	 * CET states are XSAVES states and options must be parsed early.
++	 */
++#ifdef CONFIG_X86_CET_USER
++	if (cmdline_find_option_bool(boot_command_line, "no_user_shstk"))
++		setup_clear_cpu_cap(X86_FEATURE_SHSTK);
++	if (cmdline_find_option_bool(boot_command_line, "no_user_ibt"))
++		setup_clear_cpu_cap(X86_FEATURE_IBT);
 +#endif
 +
- static bool do_int3(struct pt_regs *regs)
- {
- 	int res;
-diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
-index d2597000407a..1c2ea91284a0 100644
---- a/include/uapi/asm-generic/siginfo.h
-+++ b/include/uapi/asm-generic/siginfo.h
-@@ -231,7 +231,8 @@ typedef struct siginfo {
- #define SEGV_ADIPERR	7	/* Precise MCD exception */
- #define SEGV_MTEAERR	8	/* Asynchronous ARM MTE error */
- #define SEGV_MTESERR	9	/* Synchronous ARM MTE exception */
--#define NSIGSEGV	9
-+#define SEGV_CPERR	10	/* Control protection fault */
-+#define NSIGSEGV	10
+ 	arglen = cmdline_find_option(boot_command_line, "clearcpuid", arg, sizeof(arg));
+ 	if (arglen <= 0)
+-		return;
++		goto done;
+ 
+ 	pr_info("Clearing CPUID bits:");
+ 	do {
+@@ -1272,6 +1306,9 @@ static void __init cpu_parse_early_param(void)
+ 		}
+ 	} while (res == 2);
+ 	pr_cont("\n");
++
++done:
++	adjust_combined_cpu_features();
+ }
  
  /*
-  * SIGBUS si_codes
+@@ -1591,6 +1628,7 @@ static void identify_cpu(struct cpuinfo_x86 *c)
+ 
+ 	x86_init_rdrand(c);
+ 	setup_pku(c);
++	setup_cet(c);
+ 
+ 	/*
+ 	 * Clear/Set all flags overridden by options, need do it
 -- 
 2.21.0
 
