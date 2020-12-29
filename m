@@ -4,34 +4,34 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	MAILING_LIST_MULTI,SPF_HELO_NONE,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4ED14C4360C
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8D8C5C43142
 	for <linux-api@archiver.kernel.org>; Tue, 29 Dec 2020 21:35:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2836821D1B
+	by mail.kernel.org (Postfix) with ESMTP id 6B5C022209
 	for <linux-api@archiver.kernel.org>; Tue, 29 Dec 2020 21:35:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726719AbgL2Vdl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 29 Dec 2020 16:33:41 -0500
-Received: from mga03.intel.com ([134.134.136.65]:11908 "EHLO mga03.intel.com"
+        id S1726663AbgL2Vdc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 29 Dec 2020 16:33:32 -0500
+Received: from mga03.intel.com ([134.134.136.65]:11897 "EHLO mga03.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726681AbgL2Vdk (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 29 Dec 2020 16:33:40 -0500
-IronPort-SDR: lEdvJhtalkMWKzVllvZ2RpWmhQWNgUrjVT/n4A15NFxvNOwi8Ilndl1FivscKKnSmE3DoV9n47
- 5ZodtB8U7K8w==
-X-IronPort-AV: E=McAfee;i="6000,8403,9849"; a="176640529"
+        id S1726652AbgL2Vdc (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 29 Dec 2020 16:33:32 -0500
+IronPort-SDR: b1pMd7CLyIYaQnZ7IB38xWCKbQ7S1F0ClfNJrmqHVWOJ5s58dZ5FIiLT3h8zzff/3/YHbyOuXk
+ yOaWXjxA9wkw==
+X-IronPort-AV: E=McAfee;i="6000,8403,9849"; a="176640524"
 X-IronPort-AV: E=Sophos;i="5.78,459,1599548400"; 
-   d="scan'208";a="176640529"
+   d="scan'208";a="176640524"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Dec 2020 13:32:24 -0800
-IronPort-SDR: D9Ia1Tht7Kq5k26+jJYuE+PsQo447qYH8YyCUoxZxF32ecv3X0VACbdzsRV2RExfhII3QABz1M
- jDLACEHu64wQ==
+  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Dec 2020 13:32:23 -0800
+IronPort-SDR: X/tenw+0DyHjxL92CaOVC5mw2evFr4SO13TzgpUDUgyEMTFEVj8h6+EDVknu/1scXAYPjpBWNz
+ qJgLkA/hiSQA==
 X-IronPort-AV: E=Sophos;i="5.78,459,1599548400"; 
-   d="scan'208";a="376189615"
+   d="scan'208";a="376189608"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Dec 2020 13:32:24 -0800
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Dec 2020 13:32:22 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,9 +60,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v17 13/26] x86/mm: Shadow Stack page fault error checking
-Date:   Tue, 29 Dec 2020 13:30:40 -0800
-Message-Id: <20201229213053.16395-14-yu-cheng.yu@intel.com>
+Subject: [PATCH v17 11/26] x86/mm: Update ptep_set_wrprotect() and pmdp_set_wrprotect() for transition from _PAGE_DIRTY to _PAGE_COW
+Date:   Tue, 29 Dec 2020 13:30:38 -0800
+Message-Id: <20201229213053.16395-12-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20201229213053.16395-1-yu-cheng.yu@intel.com>
 References: <20201229213053.16395-1-yu-cheng.yu@intel.com>
@@ -72,92 +72,100 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Shadow stack accesses are those that are performed by the CPU where it
-expects to encounter a shadow stack mapping.  These accesses are performed
-implicitly by CALL/RET at the site of the shadow stack pointer.  These
-accesses are made explicitly by shadow stack management instructions like
-WRUSSQ.
+When Shadow Stack is introduced, [R/O + _PAGE_DIRTY] PTE is reserved for
+shadow stack.  Copy-on-write PTEs have [R/O + _PAGE_COW].
 
-Shadow stacks accesses to shadow-stack mapping can see faults in normal,
-valid operation just like regular accesses to regular mappings.  Shadow
-stacks need some of the same features like delayed allocation, swap and
-copy-on-write.
+When a PTE goes from [R/W + _PAGE_DIRTY] to [R/O + _PAGE_COW], it could
+become a transient shadow stack PTE in two cases:
 
-Shadow stack accesses can also result in errors, such as when a shadow
-stack overflows, or if a shadow stack access occurs to a non-shadow-stack
-mapping.
+The first case is that some processors can start a write but end up seeing
+a read-only PTE by the time they get to the Dirty bit, creating a transient
+shadow stack PTE.  However, this will not occur on processors supporting
+Shadow Stack, therefore we don't need a TLB flush here.
 
-In handling a shadow stack page fault, verify it occurs within a shadow
-stack mapping.  It is always an error otherwise.  For valid shadow stack
-accesses, set FAULT_FLAG_WRITE to effect copy-on-write.  Because clearing
-_PAGE_DIRTY (vs. _PAGE_RW) is used to trigger the fault, shadow stack read
-fault and shadow stack write fault are not differentiated and both are
-handled as a write access.
+The second case is that when the software, without atomic, tests & replaces
+_PAGE_DIRTY with _PAGE_COW, a transient shadow stack PTE can exist.
+This is prevented with cmpxchg.
+
+Dave Hansen, Jann Horn, Andy Lutomirski, and Peter Zijlstra provided many
+insights to the issue.  Jann Horn provided the cmpxchg solution.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
- arch/x86/include/asm/trap_pf.h |  2 ++
- arch/x86/mm/fault.c            | 19 +++++++++++++++++++
- 2 files changed, 21 insertions(+)
+ arch/x86/include/asm/pgtable.h | 52 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 52 insertions(+)
 
-diff --git a/arch/x86/include/asm/trap_pf.h b/arch/x86/include/asm/trap_pf.h
-index 10b1de500ab1..afa524325e55 100644
---- a/arch/x86/include/asm/trap_pf.h
-+++ b/arch/x86/include/asm/trap_pf.h
-@@ -11,6 +11,7 @@
-  *   bit 3 ==				1: use of reserved bit detected
-  *   bit 4 ==				1: fault was an instruction fetch
-  *   bit 5 ==				1: protection keys block access
-+ *   bit 6 ==				1: shadow stack access fault
-  *   bit 15 ==				1: SGX MMU page-fault
-  */
- enum x86_pf_error_code {
-@@ -20,6 +21,7 @@ enum x86_pf_error_code {
- 	X86_PF_RSVD	=		1 << 3,
- 	X86_PF_INSTR	=		1 << 4,
- 	X86_PF_PK	=		1 << 5,
-+	X86_PF_SHSTK	=		1 << 6,
- 	X86_PF_SGX	=		1 << 15,
- };
- 
-diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
-index f1f1b5a0956a..4cfb8c474a82 100644
---- a/arch/x86/mm/fault.c
-+++ b/arch/x86/mm/fault.c
-@@ -1131,6 +1131,17 @@ access_error(unsigned long error_code, struct vm_area_struct *vma)
- 				       (error_code & X86_PF_INSTR), foreign))
- 		return 1;
- 
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index 666c25ab9564..1c84f1ba32b9 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -1226,6 +1226,32 @@ static inline pte_t ptep_get_and_clear_full(struct mm_struct *mm,
+ static inline void ptep_set_wrprotect(struct mm_struct *mm,
+ 				      unsigned long addr, pte_t *ptep)
+ {
 +	/*
-+	 * Verify a shadow stack access is within a shadow stack VMA.
-+	 * It is always an error otherwise.  Normal data access to a
-+	 * shadow stack area is checked in the case followed.
++	 * Some processors can start a write, but end up seeing a read-only
++	 * PTE by the time they get to the Dirty bit.  In this case, they
++	 * will set the Dirty bit, leaving a read-only, Dirty PTE which
++	 * looks like a shadow stack PTE.
++	 *
++	 * However, this behavior has been improved and will not occur on
++	 * processors supporting Shadow Stack.  Without this guarantee, a
++	 * transition to a non-present PTE and flush the TLB would be
++	 * needed.
++	 *
++	 * When changing a writable PTE to read-only and if the PTE has
++	 * _PAGE_DIRTY set, move that bit to _PAGE_COW so that the PTE is
++	 * not a shadow stack PTE.
 +	 */
-+	if (error_code & X86_PF_SHSTK) {
-+		if (!(vma->vm_flags & VM_SHSTK))
-+			return 1;
-+		return 0;
-+	}
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		pte_t old_pte, new_pte;
 +
- 	if (error_code & X86_PF_WRITE) {
- 		/* write, present and write, not present: */
- 		if (unlikely(!(vma->vm_flags & VM_WRITE)))
-@@ -1296,6 +1307,14 @@ void do_user_addr_fault(struct pt_regs *regs,
++		do {
++			old_pte = READ_ONCE(*ptep);
++			new_pte = pte_wrprotect(old_pte);
++
++		} while (!try_cmpxchg(&ptep->pte, &old_pte.pte, new_pte.pte));
++
++		return;
++	}
+ 	clear_bit(_PAGE_BIT_RW, (unsigned long *)&ptep->pte);
+ }
  
- 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
- 
+@@ -1282,6 +1308,32 @@ static inline pud_t pudp_huge_get_and_clear(struct mm_struct *mm,
+ static inline void pmdp_set_wrprotect(struct mm_struct *mm,
+ 				      unsigned long addr, pmd_t *pmdp)
+ {
 +	/*
-+	 * Clearing _PAGE_DIRTY is used to detect shadow stack access.
-+	 * This method cannot distinguish shadow stack read vs. write.
-+	 * For valid shadow stack accesses, set FAULT_FLAG_WRITE to effect
-+	 * copy-on-write.
++	 * Some processors can start a write, but end up seeing a read-only
++	 * PMD by the time they get to the Dirty bit.  In this case, they
++	 * will set the Dirty bit, leaving a read-only, Dirty PMD which
++	 * looks like a Shadow Stack PMD.
++	 *
++	 * However, this behavior has been improved and will not occur on
++	 * processors supporting Shadow Stack.  Without this guarantee, a
++	 * transition to a non-present PMD and flush the TLB would be
++	 * needed.
++	 *
++	 * When changing a writable PMD to read-only and if the PMD has
++	 * _PAGE_DIRTY set, move that bit to _PAGE_COW so that the PMD is
++	 * not a shadow stack PMD.
 +	 */
-+	if (hw_error_code & X86_PF_SHSTK)
-+		flags |= FAULT_FLAG_WRITE;
- 	if (hw_error_code & X86_PF_WRITE)
- 		flags |= FAULT_FLAG_WRITE;
- 	if (hw_error_code & X86_PF_INSTR)
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		pmd_t old_pmd, new_pmd;
++
++		do {
++			old_pmd = READ_ONCE(*pmdp);
++			new_pmd = pmd_wrprotect(old_pmd);
++
++		} while (!try_cmpxchg((pmdval_t *)pmdp, (pmdval_t *)&old_pmd, pmd_val(new_pmd)));
++
++		return;
++	}
+ 	clear_bit(_PAGE_BIT_RW, (unsigned long *)pmdp);
+ }
+ 
 -- 
 2.21.0
 
