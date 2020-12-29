@@ -7,29 +7,29 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AD097C43332
-	for <linux-api@archiver.kernel.org>; Tue, 29 Dec 2020 21:36:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1B4E6C43217
+	for <linux-api@archiver.kernel.org>; Tue, 29 Dec 2020 21:36:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 76D442229C
+	by mail.kernel.org (Postfix) with ESMTP id DDCF922225
 	for <linux-api@archiver.kernel.org>; Tue, 29 Dec 2020 21:36:01 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727290AbgL2VfT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 29 Dec 2020 16:35:19 -0500
-Received: from mga09.intel.com ([134.134.136.24]:31879 "EHLO mga09.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727275AbgL2VfS (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        id S1727285AbgL2VfS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Tue, 29 Dec 2020 16:35:18 -0500
-IronPort-SDR: oGO0OZ+j9In+cSIsNU6UlRIThO/QD2iUaHIQwUDtI14volZmV2hkgjfCNat4/sYlPlmXxt76gH
- iV7RKFln5cCA==
-X-IronPort-AV: E=McAfee;i="6000,8403,9849"; a="176695629"
+Received: from mga09.intel.com ([134.134.136.24]:31875 "EHLO mga09.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727271AbgL2VfS (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 29 Dec 2020 16:35:18 -0500
+IronPort-SDR: HsRc4zWw35iy3b9BRwIPuMhWtKgAvRyJt4SELxTbcvg+lcRFw57IEAWQ0kc8PAJoMchMuO/I2B
+ rnnqY9TUtznA==
+X-IronPort-AV: E=McAfee;i="6000,8403,9849"; a="176695631"
 X-IronPort-AV: E=Sophos;i="5.78,459,1599548400"; 
-   d="scan'208";a="176695629"
+   d="scan'208";a="176695631"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
   by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Dec 2020 13:34:21 -0800
-IronPort-SDR: gYCoL2EYiljV1FjHciFY+X8u4oxLg/qUpU6NMkyOsnaYcnFeaXT4QtIZNgBcoF3p+iJ09xR5pw
- SxwmZ2zgjNCQ==
+IronPort-SDR: em94ChZJ5iqwVNNU8N2XD4cFxh5861kbdaGDUIaTV/xLAYKgd3zoHY4sS3X+LDDbB7CP7/GomV
+ 1IS/SxgugESw==
 X-IronPort-AV: E=Sophos;i="5.78,459,1599548400"; 
-   d="scan'208";a="376190131"
+   d="scan'208";a="376190139"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
   by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Dec 2020 13:34:20 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
@@ -60,9 +60,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v17 4/7] x86/cet/ibt: Update ELF header parsing for Indirect Branch Tracking
-Date:   Tue, 29 Dec 2020 13:33:47 -0800
-Message-Id: <20201229213350.17010-5-yu-cheng.yu@intel.com>
+Subject: [PATCH v17 5/7] x86/cet/ibt: Update arch_prctl functions for Indirect Branch Tracking
+Date:   Tue, 29 Dec 2020 13:33:48 -0800
+Message-Id: <20201229213350.17010-6-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20201229213350.17010-1-yu-cheng.yu@intel.com>
 References: <20201229213350.17010-1-yu-cheng.yu@intel.com>
@@ -72,34 +72,40 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-An ELF file's .note.gnu.property indicates features the file supports.
-The property is parsed at loading time and passed to arch_setup_elf_
-property().  Update it for Indirect Branch Tracking.
+From: "H.J. Lu" <hjl.tools@gmail.com>
 
+Update ARCH_X86_CET_STATUS and ARCH_X86_CET_DISABLE for Indirect Branch
+Tracking.
+
+Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/kernel/process_64.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ arch/x86/kernel/cet_prctl.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
-index 2e8decf79f8c..c646221fd55b 100644
---- a/arch/x86/kernel/process_64.c
-+++ b/arch/x86/kernel/process_64.c
-@@ -864,6 +864,14 @@ int arch_setup_elf_property(struct arch_elf_state *state)
- 			r = cet_setup_shstk();
+diff --git a/arch/x86/kernel/cet_prctl.c b/arch/x86/kernel/cet_prctl.c
+index 4197d985b5ff..92120d8bdd9f 100644
+--- a/arch/x86/kernel/cet_prctl.c
++++ b/arch/x86/kernel/cet_prctl.c
+@@ -22,6 +22,9 @@ static int copy_status_to_user(struct cet_status *cet, u64 arg2)
+ 		buf[2] = (u64)cet->shstk_size;
  	}
  
-+	if (r < 0)
-+		return r;
++	if (cet->ibt_enabled)
++		buf[0] |= GNU_PROPERTY_X86_FEATURE_1_IBT;
 +
-+	if (static_cpu_has(X86_FEATURE_IBT)) {
-+		if (state->gnu_property & GNU_PROPERTY_X86_FEATURE_1_IBT)
-+			r = cet_setup_ibt();
-+	}
-+
- 	return r;
+ 	return copy_to_user((u64 __user *)arg2, buf, sizeof(buf));
  }
- #endif
+ 
+@@ -56,6 +59,8 @@ int prctl_cet(int option, u64 arg2)
+ 			return -EINVAL;
+ 		if (features & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
+ 			cet_disable_shstk();
++		if (features & GNU_PROPERTY_X86_FEATURE_1_IBT)
++			cet_disable_ibt();
+ 		return 0;
+ 
+ 	case ARCH_X86_CET_LOCK:
 -- 
 2.21.0
 
