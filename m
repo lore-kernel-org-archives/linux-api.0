@@ -4,41 +4,41 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-16.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6E607C4361B
-	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 15:13:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D606DC433E9
+	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 15:14:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2EAFC23133
-	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 15:13:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A438723135
+	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 15:14:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2404086AbhALPMu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 12 Jan 2021 10:12:50 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:38061 "EHLO
+        id S2404514AbhALPNW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 12 Jan 2021 10:13:22 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:23222 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S2403978AbhALPMs (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 12 Jan 2021 10:12:48 -0500
+        by vger.kernel.org with ESMTP id S2404644AbhALPNV (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 12 Jan 2021 10:13:21 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1610464281;
+        s=mimecast20190719; t=1610464315;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:in-reply-to:in-reply-to:references:references;
-        bh=B4MqYHKr8TbFkYs/2e1aPcB4fVxp3WF5DM/hpXMoX7w=;
-        b=EHp8xoQ3uvCR330R2o8QuEJe0knfPWaqwH/wJYjHDOkDEBVJP/2v/HdksPRY/XcBVWnZF6
-        WShKxBhNztB78PTqbFemtWhMSgfezkRTGS3UOL8YAhRWCGOSZ0q/psVlKWsqIhR0BSIq/M
-        4+6honNf8E9qWG4Io/YB5QRBbxJXyH8=
+        bh=JMNDxOpcSJpy1boyDiRFGw1VU2TRGbjXVre/O5w1TLo=;
+        b=WXKL7fix78CqLKio9qN/MC3/dTmWc48LukUEWeh3ztvSM1Z0nYJ3wIBUhtIFTaxRtMCkbZ
+        88JhR/XT4XoDVrW2ybAxSFTeBgj0RVJnVvBUgO3ZDJ4rxJkNLjTvVLBbb6juSuXE1xaENP
+        WrY9aIhobrexxYdU3o5ZukySJ4DvoDs=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-306-Zw5pJXaIPCqj_W33p2gwkA-1; Tue, 12 Jan 2021 10:11:17 -0500
-X-MC-Unique: Zw5pJXaIPCqj_W33p2gwkA-1
+ us-mta-158-5ZMed7MhNqO0gmxicNO--Q-1; Tue, 12 Jan 2021 10:11:53 -0500
+X-MC-Unique: 5ZMed7MhNqO0gmxicNO--Q-1
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8139D196632C;
-        Tue, 12 Jan 2021 15:11:15 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8A9D4EC1A7;
+        Tue, 12 Jan 2021 15:11:51 +0000 (UTC)
 Received: from madcap2.tricolour.ca (unknown [10.10.110.8])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 3B6155D9DB;
-        Tue, 12 Jan 2021 15:11:11 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 8E9B75D9CD;
+        Tue, 12 Jan 2021 15:11:42 +0000 (UTC)
 From:   Richard Guy Briggs <rgb@redhat.com>
 To:     Linux Containers List <containers@lists.linux-foundation.org>,
         Linux API <linux-api@vger.kernel.org>,
@@ -57,9 +57,9 @@ Cc:     Neil Horman <nhorman@tuxdriver.com>,
         Jens Axboe <axboe@kernel.dk>,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Richard Guy Briggs <rgb@redhat.com>
-Subject: [PATCH ghak90 v11 05/11] audit: add support for non-syscall auxiliary records
-Date:   Tue, 12 Jan 2021 10:09:33 -0500
-Message-Id: <189fca12a04d2d8b6ce59e009cc8fc4e995a52b4.1610399347.git.rgb@redhat.com>
+Subject: [PATCH ghak90 v11 09/11] audit: contid check descendancy and nesting
+Date:   Tue, 12 Jan 2021 10:09:37 -0500
+Message-Id: <33d06da75cd65fa88c92968e35b6eb4346e98ffc.1610399347.git.rgb@redhat.com>
 In-Reply-To: <cover.1610399347.git.rgb@redhat.com>
 References: <cover.1610399347.git.rgb@redhat.com>
 X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
@@ -67,140 +67,182 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Standalone audit records have the timestamp and serial number generated
-on the fly and as such are unique, making them standalone.  This new
-function audit_alloc_local() generates a local audit context that will
-be used only for a standalone record and its auxiliary record(s).  The
-context is discarded immediately after the local associated records are
-produced.
+Require the target task to be a descendant of the container
+orchestrator/engine.
 
-A new flag, "local" was used rather than "in_syscall" since it would be
-overloading the original purpose and meaning.  Events using this
-function may not be triggered by a syscall but still need records
-linked by timestamp and serial.
+You would only change the audit container ID from one set or inherited
+value to another if you were nesting containers.
+
+If changing the contid, the container orchestrator/engine must be a
+descendant and not same orchestrator as the one that set it so it is not
+possible to change the contid of another orchestrator's container.
+
+Since the task_is_descendant() function is used in YAMA and in audit,
+remove the duplication and pull the function into kernel/core/sched.c
 
 Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-Acked-by: Serge Hallyn <serge@hallyn.com>
-Acked-by: Neil Horman <nhorman@tuxdriver.com>
-Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
 ---
- include/linux/audit.h |  8 ++++++++
- kernel/audit.h        |  1 +
- kernel/auditsc.c      | 31 ++++++++++++++++++++++++++-----
- 3 files changed, 35 insertions(+), 5 deletions(-)
+ include/linux/sched.h    |  3 +++
+ kernel/audit.c           | 26 +++++++++++++++++++++++---
+ kernel/sched/core.c      | 33 +++++++++++++++++++++++++++++++++
+ security/yama/yama_lsm.c | 33 ---------------------------------
+ 4 files changed, 59 insertions(+), 36 deletions(-)
 
-diff --git a/include/linux/audit.h b/include/linux/audit.h
-index 7c1928e75cfe..9f0238f7960f 100644
---- a/include/linux/audit.h
-+++ b/include/linux/audit.h
-@@ -304,6 +304,8 @@ static inline int audit_signal_info(int sig, struct task_struct *t)
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 1d10d81b8fd5..b30bbfec31ab 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -2097,4 +2097,7 @@ int sched_trace_rq_nr_running(struct rq *rq);
  
- /* These are defined in auditsc.c */
- 				/* Public API */
-+extern struct audit_context *audit_alloc_local(gfp_t gfpflags);
-+extern void audit_free_context(struct audit_context *context);
- extern void __audit_syscall_entry(int major, unsigned long a0, unsigned long a1,
- 				  unsigned long a2, unsigned long a3);
- extern void __audit_syscall_exit(int ret_success, long ret_value);
-@@ -555,6 +557,12 @@ static inline void audit_log_nfcfg(const char *name, u8 af,
- extern int audit_n_rules;
- extern int audit_signals;
- #else /* CONFIG_AUDITSYSCALL */
-+static inline struct audit_context *audit_alloc_local(gfp_t gfpflags)
-+{
-+	return NULL;
-+}
-+static inline void audit_free_context(struct audit_context *context)
-+{ }
- static inline void audit_syscall_entry(int major, unsigned long a0,
- 				       unsigned long a1, unsigned long a2,
- 				       unsigned long a3)
-diff --git a/kernel/audit.h b/kernel/audit.h
-index de79f59d623f..40e609787a0c 100644
---- a/kernel/audit.h
-+++ b/kernel/audit.h
-@@ -98,6 +98,7 @@ struct audit_proctitle {
- struct audit_context {
- 	int		    dummy;	/* must be the first element */
- 	int		    in_syscall;	/* 1 if task is in a syscall */
-+	bool		    local;	/* local context needed */
- 	enum audit_state    state, current_state;
- 	unsigned int	    serial;     /* serial number for record */
- 	int		    major;      /* syscall number */
-diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-index 2d9762f2f432..fc781ab5af2c 100644
---- a/kernel/auditsc.c
-+++ b/kernel/auditsc.c
-@@ -920,11 +920,12 @@ static inline void audit_free_aux(struct audit_context *context)
- 	}
- }
+ const struct cpumask *sched_trace_rd_span(struct root_domain *rd);
  
--static inline struct audit_context *audit_alloc_context(enum audit_state state)
-+static inline struct audit_context *audit_alloc_context(enum audit_state state,
-+							gfp_t gfpflags)
- {
- 	struct audit_context *context;
- 
--	context = kzalloc(sizeof(*context), GFP_KERNEL);
-+	context = kzalloc(sizeof(*context), gfpflags);
- 	if (!context)
- 		return NULL;
- 	context->state = state;
-@@ -962,7 +963,8 @@ int audit_alloc_syscall(struct task_struct *tsk)
- 		return 0;
- 	}
- 
--	if (!(context = audit_alloc_context(state))) {
-+	context = audit_alloc_context(state, GFP_KERNEL);
-+	if (!context) {
- 		kfree(key);
- 		audit_log_lost("out of memory in audit_alloc_syscall");
- 		return -ENOMEM;
-@@ -974,8 +976,26 @@ int audit_alloc_syscall(struct task_struct *tsk)
- 	return 0;
- }
- 
--static inline void audit_free_context(struct audit_context *context)
-+struct audit_context *audit_alloc_local(gfp_t gfpflags)
- {
-+	struct audit_context *context;
++extern int task_is_descendant(struct task_struct *parent,
++			      struct task_struct *child);
 +
-+	context = audit_alloc_context(AUDIT_RECORD_CONTEXT, gfpflags);
-+	if (!context) {
-+		audit_log_lost("out of memory in audit_alloc_local");
-+		return NULL;
+ #endif
+diff --git a/kernel/audit.c b/kernel/audit.c
+index c30bcd525dad..fcb78a6d8e4a 100644
+--- a/kernel/audit.c
++++ b/kernel/audit.c
+@@ -476,11 +476,13 @@ void audit_free(struct task_struct *tsk)
+ 	rcu_read_lock();
+ 	cont = _audit_contobj_get_bytask(tsk);
+ 	rcu_read_unlock();
+-	spin_lock_irqsave(&_audit_contobj_list_lock, flags);
+ 	if (ns) {
+ 		audit_netns_contid_del(ns->net_ns, cont);
++		spin_lock_irqsave(&_audit_contobj_list_lock, flags);
+ 		_audit_contobj_put(cont);
++		spin_unlock_irqrestore(&_audit_contobj_list_lock, flags);
+ 	}
++	spin_lock_irqsave(&_audit_contobj_list_lock, flags);
+ 	_audit_contobj_put(cont);
+ 	spin_unlock_irqrestore(&_audit_contobj_list_lock, flags);
+ 	audit_free_syscall(tsk);
+@@ -2924,6 +2926,21 @@ int audit_signal_info(int sig, struct task_struct *t)
+ 	return audit_signal_info_syscall(t);
+ }
+ 
++static bool audit_contid_isnesting(struct task_struct *tsk)
++{
++	bool isowner = false;
++	bool ownerisparent = false;
++	struct audit_task_info *info = tsk->audit;
++
++	rcu_read_lock();
++	if (info && info->cont) {
++		isowner = current == info->cont->owner;
++		ownerisparent = task_is_descendant(info->cont->owner, current);
 +	}
-+	context->serial = audit_serial();
-+	ktime_get_coarse_real_ts64(&context->ctime);
-+	context->local = true;
-+	return context;
++	rcu_read_unlock();
++	return !isowner && ownerisparent;
 +}
-+EXPORT_SYMBOL(audit_alloc_local);
 +
-+void audit_free_context(struct audit_context *context)
-+{
-+	if (!context)
-+		return;
- 	audit_free_module(context);
- 	audit_free_names(context);
- 	unroll_tree_refs(context, NULL, 0);
-@@ -986,6 +1006,7 @@ static inline void audit_free_context(struct audit_context *context)
- 	audit_proctitle_free(context);
- 	kfree(context);
+ /*
+  * audit_set_contid - set current task's audit contid
+  * @tsk: target task
+@@ -2964,8 +2981,11 @@ int audit_set_contid(struct task_struct *tsk, u64 contid)
+ 		   !(thread_group_leader(tsk) && thread_group_empty(tsk))) {
+ 		/* if task has children or is not single-threaded, deny */
+ 		rc = -EBUSY;
+-	} else if (info->cont) {
+-		/* if contid is already set, deny */
++	} else if (tsk == current || !task_is_descendant(current, tsk)) {
++		/* if task is not descendant, block */
++		rc = -EXDEV;
++	} else if (info->cont && !audit_contid_isnesting(tsk)) {
++		/* only allow contid setting again if nesting */
+ 		rc = -EEXIST;
+ 	}
+ 	rcu_read_lock();
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 15d2562118d1..f769bcba4ee8 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -9072,6 +9072,39 @@ void dump_cpu_task(int cpu)
+ 	sched_show_task(cpu_curr(cpu));
  }
-+EXPORT_SYMBOL(audit_free_context);
  
- static int audit_log_pid_context(struct audit_context *context, pid_t pid,
- 				 kuid_t auid, kuid_t uid, unsigned int sessionid,
-@@ -2223,7 +2244,7 @@ EXPORT_SYMBOL_GPL(__audit_inode_child);
- int auditsc_get_stamp(struct audit_context *ctx,
- 		       struct timespec64 *t, unsigned int *serial)
- {
--	if (!ctx->in_syscall)
-+	if (!ctx->in_syscall && !ctx->local)
- 		return 0;
- 	if (!ctx->serial)
- 		ctx->serial = audit_serial();
++/*
++ * task_is_descendant - walk up a process family tree looking for a match
++ * @parent: the process to compare against while walking up from child
++ * @child: the process to start from while looking upwards for parent
++ *
++ * Returns 1 if child is a descendant of parent, 0 if not.
++ */
++int task_is_descendant(struct task_struct *parent,
++			      struct task_struct *child)
++{
++	int rc = 0;
++	struct task_struct *walker = child;
++
++	if (!parent || !child)
++		return 0;
++
++	rcu_read_lock();
++	if (!thread_group_leader(parent))
++		parent = rcu_dereference(parent->group_leader);
++	while (walker->pid > 0) {
++		if (!thread_group_leader(walker))
++			walker = rcu_dereference(walker->group_leader);
++		if (walker == parent) {
++			rc = 1;
++			break;
++		}
++		walker = rcu_dereference(walker->real_parent);
++	}
++	rcu_read_unlock();
++
++	return rc;
++}
++
+ /*
+  * Nice levels are multiplicative, with a gentle 10% change for every
+  * nice level changed. I.e. when a CPU-bound task goes from nice 0 to
+diff --git a/security/yama/yama_lsm.c b/security/yama/yama_lsm.c
+index 06e226166aab..2930e42eafc2 100644
+--- a/security/yama/yama_lsm.c
++++ b/security/yama/yama_lsm.c
+@@ -262,39 +262,6 @@ static int yama_task_prctl(int option, unsigned long arg2, unsigned long arg3,
+ 	return rc;
+ }
+ 
+-/**
+- * task_is_descendant - walk up a process family tree looking for a match
+- * @parent: the process to compare against while walking up from child
+- * @child: the process to start from while looking upwards for parent
+- *
+- * Returns 1 if child is a descendant of parent, 0 if not.
+- */
+-static int task_is_descendant(struct task_struct *parent,
+-			      struct task_struct *child)
+-{
+-	int rc = 0;
+-	struct task_struct *walker = child;
+-
+-	if (!parent || !child)
+-		return 0;
+-
+-	rcu_read_lock();
+-	if (!thread_group_leader(parent))
+-		parent = rcu_dereference(parent->group_leader);
+-	while (walker->pid > 0) {
+-		if (!thread_group_leader(walker))
+-			walker = rcu_dereference(walker->group_leader);
+-		if (walker == parent) {
+-			rc = 1;
+-			break;
+-		}
+-		walker = rcu_dereference(walker->real_parent);
+-	}
+-	rcu_read_unlock();
+-
+-	return rc;
+-}
+-
+ /**
+  * ptracer_exception_found - tracer registered as exception for this tracee
+  * @tracer: the task_struct of the process attempting ptrace
 -- 
 2.18.4
 
