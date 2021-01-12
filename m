@@ -5,25 +5,25 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 08095C433E0
-	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:15:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C55FDC433E0
+	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:17:23 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BDFD523127
-	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:15:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 86C3A23127
+	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:17:23 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2437128AbhALWPs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 12 Jan 2021 17:15:48 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:44658 "EHLO
+        id S2404981AbhALWQc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 12 Jan 2021 17:16:32 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:44823 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2436785AbhALWPD (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 12 Jan 2021 17:15:03 -0500
+        with ESMTP id S2438195AbhALWQL (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 12 Jan 2021 17:16:11 -0500
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kzRm8-0003bd-Cp; Tue, 12 Jan 2021 22:04:28 +0000
+        id 1kzRlg-0003bd-7c; Tue, 12 Jan 2021 22:04:00 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -61,22 +61,23 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         linux-integrity@vger.kernel.org, selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v5 38/42] ecryptfs: do not mount on top of idmapped mounts
-Date:   Tue, 12 Jan 2021 23:01:20 +0100
-Message-Id: <20210112220124.837960-39-christian.brauner@ubuntu.com>
+Subject: [PATCH v5 28/42] init: handle idmapped mounts
+Date:   Tue, 12 Jan 2021 23:01:10 +0100
+Message-Id: <20210112220124.837960-29-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.30.0
 In-Reply-To: <20210112220124.837960-1-christian.brauner@ubuntu.com>
 References: <20210112220124.837960-1-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
-X-Patch-Hashes: v=1; h=sha256; i=ghv/kMxBjWVz72L+xFuQBh/xSmPaVl07FCNHzoGv4Rk=; m=RIGatARQovooPnBDA/H8CPhh/6JweIoTP2cJrYbkVCI=; p=y+aaA7asfnKesPwKpXtBf+Gzv/rdSr5LpwUc8kyT8VY=; g=c814c6483a8755fc91bca27ebabaa2b2beaaec75
-X-Patch-Sig: m=pgp; i=christian.brauner@ubuntu.com; s=0x0x91C61BC06578DCA2; b=iHUEABYKAB0WIQRAhzRXHqcMeLMyaSiRxhvAZXjcogUCX/4YuQAKCRCRxhvAZXjcoqzRAQCd5MD U/DLZ1XXAd4SCdch11W5V9WgLBiIRycGgQlrdPQD+INTClteAZTqsKDQe0S15bIP8C5YjBes4H9Wk KS/yCwU=
+X-Patch-Hashes: v=1; h=sha256; i=K1Mmb+2iBnpojBmIU4SJaafXPX8O2CFx1CDw+utpuOU=; m=xvNrFhQ1y2dLwavhTa/L5ycYJlSyn9UahBsh8fnhzMg=; p=T84ylcJgm7jErZy8A3A4JEJzeX2Sy/VPnkeSnFEr7Mg=; g=463fa33c5c532e8c7af638fb27b57db52004da88
+X-Patch-Sig: m=pgp; i=christian.brauner@ubuntu.com; s=0x0x91C61BC06578DCA2; b=iHUEABYKAB0WIQRAhzRXHqcMeLMyaSiRxhvAZXjcogUCX/4YuAAKCRCRxhvAZXjcop8AAQCXD3D 4M62CMgvA6omdkdSEWaz7FL2OLzNdBtMvfUobNgEA/4AMHFZRBaM4sgnQsdBwRx8Ot748zQ6VHemO ok8YmwI=
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Prevent ecryptfs from being mounted on top of idmapped mounts until we
-have ported it to handle this case and added proper testing for it.
+Enable the init helpers to handle idmapped mounts by passing down the
+mount's user namespace. If the initial user namespace is passed nothing
+changes so non-idmapped mounts will see identical behavior as before.
 
 Cc: Christoph Hellwig <hch@lst.de>
 Cc: David Howells <dhowells@redhat.com>
@@ -88,38 +89,106 @@ Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 patch introduced
 
 /* v3 */
-- David Howells <dhowells@redhat.com>:
-  - Adapt check after removing mnt_idmapped() helper.
+unchanged
 
 /* v4 */
 unchanged
 
 /* v5 */
 base-commit: 7c53f6b671f4aba70ff15e1b05148b10d58c2837
-
-- Christoph Hellwig <hch@lst.de>:
-  - Use new file_userns_helper().
 ---
- fs/ecryptfs/main.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ fs/init.c | 24 ++++++++++++++----------
+ 1 file changed, 14 insertions(+), 10 deletions(-)
 
-diff --git a/fs/ecryptfs/main.c b/fs/ecryptfs/main.c
-index e63259fdef28..cdf40a54a35d 100644
---- a/fs/ecryptfs/main.c
-+++ b/fs/ecryptfs/main.c
-@@ -531,6 +531,12 @@ static struct dentry *ecryptfs_mount(struct file_system_type *fs_type, int flags
- 		goto out_free;
- 	}
+diff --git a/fs/init.c b/fs/init.c
+index 06d8e52ce18e..1db2b392e4e6 100644
+--- a/fs/init.c
++++ b/fs/init.c
+@@ -49,7 +49,7 @@ int __init init_chdir(const char *filename)
+ 	error = kern_path(filename, LOOKUP_FOLLOW | LOOKUP_DIRECTORY, &path);
+ 	if (error)
+ 		return error;
+-	error = inode_permission(&init_user_ns, path.dentry->d_inode,
++	error = inode_permission(mnt_user_ns(path.mnt), path.dentry->d_inode,
+ 				 MAY_EXEC | MAY_CHDIR);
+ 	if (!error)
+ 		set_fs_pwd(current->fs, &path);
+@@ -65,7 +65,7 @@ int __init init_chroot(const char *filename)
+ 	error = kern_path(filename, LOOKUP_FOLLOW | LOOKUP_DIRECTORY, &path);
+ 	if (error)
+ 		return error;
+-	error = inode_permission(&init_user_ns, path.dentry->d_inode,
++	error = inode_permission(mnt_user_ns(path.mnt), path.dentry->d_inode,
+ 				 MAY_EXEC | MAY_CHDIR);
+ 	if (error)
+ 		goto dput_and_out;
+@@ -120,7 +120,7 @@ int __init init_eaccess(const char *filename)
+ 	error = kern_path(filename, LOOKUP_FOLLOW, &path);
+ 	if (error)
+ 		return error;
+-	error = inode_permission(&init_user_ns, d_inode(path.dentry),
++	error = inode_permission(mnt_user_ns(path.mnt), d_inode(path.dentry),
+ 				 MAY_ACCESS);
+ 	path_put(&path);
+ 	return error;
+@@ -160,8 +160,8 @@ int __init init_mknod(const char *filename, umode_t mode, unsigned int dev)
+ 		mode &= ~current_umask();
+ 	error = security_path_mknod(&path, dentry, mode, dev);
+ 	if (!error)
+-		error = vfs_mknod(&init_user_ns, path.dentry->d_inode, dentry,
+-				  mode, new_decode_dev(dev));
++		error = vfs_mknod(mnt_user_ns(path.mnt), path.dentry->d_inode,
++				  dentry, mode, new_decode_dev(dev));
+ 	done_path_create(&path, dentry);
+ 	return error;
+ }
+@@ -170,6 +170,7 @@ int __init init_link(const char *oldname, const char *newname)
+ {
+ 	struct dentry *new_dentry;
+ 	struct path old_path, new_path;
++	struct user_namespace *mnt_userns;
+ 	int error;
  
-+	if (mnt_user_ns(path.mnt) != &init_user_ns) {
-+		rc = -EINVAL;
-+		printk(KERN_ERR "Mounting on idmapped mounts currently disallowed\n");
-+		goto out_free;
-+	}
-+
- 	if (check_ruid && !uid_eq(d_inode(path.dentry)->i_uid, current_uid())) {
- 		rc = -EPERM;
- 		printk(KERN_ERR "Mount of device (uid: %d) not owned by "
+ 	error = kern_path(oldname, 0, &old_path);
+@@ -184,14 +185,15 @@ int __init init_link(const char *oldname, const char *newname)
+ 	error = -EXDEV;
+ 	if (old_path.mnt != new_path.mnt)
+ 		goto out_dput;
+-	error = may_linkat(&init_user_ns, &old_path);
++	mnt_userns = mnt_user_ns(new_path.mnt);
++	error = may_linkat(mnt_userns, &old_path);
+ 	if (unlikely(error))
+ 		goto out_dput;
+ 	error = security_path_link(old_path.dentry, &new_path, new_dentry);
+ 	if (error)
+ 		goto out_dput;
+-	error = vfs_link(old_path.dentry, &init_user_ns,
+-			 new_path.dentry->d_inode, new_dentry, NULL);
++	error = vfs_link(old_path.dentry, mnt_userns, new_path.dentry->d_inode,
++			 new_dentry, NULL);
+ out_dput:
+ 	done_path_create(&new_path, new_dentry);
+ out:
+@@ -210,7 +212,8 @@ int __init init_symlink(const char *oldname, const char *newname)
+ 		return PTR_ERR(dentry);
+ 	error = security_path_symlink(&path, dentry, oldname);
+ 	if (!error)
+-		error = vfs_symlink(&init_user_ns, path.dentry->d_inode, dentry, oldname);
++		error = vfs_symlink(mnt_user_ns(path.mnt), path.dentry->d_inode,
++				    dentry, oldname);
+ 	done_path_create(&path, dentry);
+ 	return error;
+ }
+@@ -233,7 +236,8 @@ int __init init_mkdir(const char *pathname, umode_t mode)
+ 		mode &= ~current_umask();
+ 	error = security_path_mkdir(&path, dentry, mode);
+ 	if (!error)
+-		error = vfs_mkdir(&init_user_ns, path.dentry->d_inode, dentry, mode);
++		error = vfs_mkdir(mnt_user_ns(path.mnt), path.dentry->d_inode,
++				  dentry, mode);
+ 	done_path_create(&path, dentry);
+ 	return error;
+ }
 -- 
 2.30.0
 
