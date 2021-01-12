@@ -5,25 +5,25 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 87FA1C432C3
-	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:04:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A7FF5C433E0
+	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:04:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5498623122
-	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:04:54 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 74CE82310A
+	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:04:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2394117AbhALWEX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 12 Jan 2021 17:04:23 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:43089 "EHLO
+        id S2394161AbhALWEn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 12 Jan 2021 17:04:43 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:43171 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2393922AbhALWEH (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 12 Jan 2021 17:04:07 -0500
+        with ESMTP id S2393934AbhALWEV (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 12 Jan 2021 17:04:21 -0500
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kzRkw-0003bd-OO; Tue, 12 Jan 2021 22:03:14 +0000
+        id 1kzRl3-0003bd-HL; Tue, 12 Jan 2021 22:03:21 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -61,33 +61,45 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         linux-integrity@vger.kernel.org, selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v5 12/42] inode: make init and permission helpers idmapped mount aware
-Date:   Tue, 12 Jan 2021 23:00:54 +0100
-Message-Id: <20210112220124.837960-13-christian.brauner@ubuntu.com>
+Subject: [PATCH v5 14/42] acl: handle idmapped mounts
+Date:   Tue, 12 Jan 2021 23:00:56 +0100
+Message-Id: <20210112220124.837960-15-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.30.0
 In-Reply-To: <20210112220124.837960-1-christian.brauner@ubuntu.com>
 References: <20210112220124.837960-1-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
-X-Patch-Hashes: v=1; h=sha256; i=o7IKAg/SfkpCJhk+/JiD6n8ve2dVchBPf2aIh8zJ+58=; m=BNsbGAm3Gfrg0kw9FPbeTMZ6B5khlldwec7Yr97nuUo=; p=pW5IKVP78sH9xzdK47GPLQWdb7rQ6RKJqI968DKYg+s=; g=9fd7935e773b78c9ca5b59c6cb43023d1005dc32
-X-Patch-Sig: m=pgp; i=christian.brauner@ubuntu.com; s=0x0x91C61BC06578DCA2; b=iHUEABYKAB0WIQRAhzRXHqcMeLMyaSiRxhvAZXjcogUCX/4YtgAKCRCRxhvAZXjcokxzAQDq3hC arm1W0tdjww3h4DJNXU8Q72c6GZ0KM/jA+pmf8wEAlG7eu/FZW3moZo1QnbCvpNSntvLjVVrazYwV 4pV+RwI=
+X-Patch-Hashes: v=1; h=sha256; i=RKz0iauU0hLnt7MR7SgnNo05MjWNv5jy1mlxwO0jxA8=; m=UnR1udk8XIZanZ7jiFgGkASXZkOoKJgpHRwqIbwfhPM=; p=b0gD3mhgYyzh+dQ+5w1b5NEz1GmAKxm0lfVAyDb8oGs=; g=a66afa3045b6d5372db97983ea0698dfa5177a29
+X-Patch-Sig: m=pgp; i=christian.brauner@ubuntu.com; s=0x0x91C61BC06578DCA2; b=iHQEABYKAB0WIQRAhzRXHqcMeLMyaSiRxhvAZXjcogUCX/4YtgAKCRCRxhvAZXjcomUSAP9SnFQ Ux+akLE7+xD+fc1VdZI5/wndC46+hIWWhLcKkbQD2MQoia4drs7oH+/LV2YY4YbFLc3Fo3+q6hJd7 EBn/DQ==
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The inode_owner_or_capable() helper determines whether the caller is the
-owner of the inode or is capable with respect to that inode. Allow it to
-handle idmapped mounts. If the inode is accessed through an idmapped
-mount we first need to map it according to the mount's user namespace.
-Afterwards the checks are identical to non-idmapped mounts. If the
-initial user namespace is passed nothing changes so non-idmapped mounts
-will see identical behavior as before.
+The posix acl permission checking helpers determine whether a caller is
+privileged over an inode according to the acls associated with the
+inode. Add helpers that make it possible to handle acls on idmapped
+mounts.
 
-Similarly, we allow the inode_init_owner() helper to handle idmapped
-mounts. It initializes a new inode on idmapped mounts by mapping the
-fsuid and fsgid of the caller from the mount's user namespace. If the
-initial user namespace is passed nothing changes so non-idmapped mounts
-will see identical behavior as before.
+The vfs and the filesystems targeted by this first iteration make use of
+posix_acl_fix_xattr_from_user() and posix_acl_fix_xattr_to_user() to
+translate basic posix access and default permissions such as the
+ACL_USER and ACL_GROUP type according to the initial user namespace (or
+the superblock's user namespace) to and from the caller's current user
+namespace. Adapt these two helpers to handle idmapped mounts whereby we
+either shift from or into the mount's user namespace depending on in
+which direction we're translating.
+Similarly, cap_convert_nscap() is used by the vfs to translate user
+namespace and non-user namespace aware filesystem capabilities from the
+superblock's user namespace to the caller's user namespace. Enable it to
+handle idmapped mounts by accounting for the mount's user namespace.
+
+In addition the fileystems targeted in the first iteration of this patch
+series make use of the posix_acl_chmod() and, posix_acl_update_mode()
+helpers. Both helpers perform permission checks on the target inode. Let
+them handle idmapped mounts. These two helpers are called when posix
+acls are set by the respective filesystems to handle this case we extend
+the ->set() method to take an additional user namespace argument to pass
+the mount's user namespace down.
 
 Cc: Christoph Hellwig <hch@lst.de>
 Cc: David Howells <dhowells@redhat.com>
@@ -104,1089 +116,1456 @@ Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 unchanged
 
 /* v4 */
-- Christoph Hellwig <hch@lst.de>:
-  - Change commit message to reflect the fact that no new permission helpers are
-    introduced but only the existing ones changed.
-
 - Serge Hallyn <serge@hallyn.com>:
   - Use "mnt_userns" to refer to a vfsmount's userns everywhere to make
     terminology consistent.
-  - Note that inode_owner_or_capable() contains a comparison of the
-    caller's fsuid to the inode's i_uid to determine whether the caller
-    is the owner of the inode. Serge asked whether it is possible that
-    the caller's fsuid is INVALID_UID. If so and i_uid_into_mnt() makes
-    the inode's i_uid INVALID_UID too then the caller could potentially
-    gain privilege over an inode it doesn't own. But this is not
-    feasible since the callers fsuid should never be INVALID_UID unless
-    we have a severe bug how we manage set*id() calls or cred
-    management. Also, if it is possible that the caller's fsuid were to
-    be INVALID_UID we might already have an issue in case a filesystem
-    was mounted with an s_user_ns that doesn't contain a mapping for a
-    inode that was created when the filesystem was mounted with a
-    different user namespace.
 
 /* v5 */
 base-commit: 7c53f6b671f4aba70ff15e1b05148b10d58c2837
 ---
- fs/9p/acl.c                  |  2 +-
- fs/9p/vfs_inode.c            |  2 +-
- fs/attr.c                    |  6 +++---
- fs/bfs/dir.c                 |  2 +-
- fs/btrfs/inode.c             |  2 +-
- fs/btrfs/ioctl.c             | 10 +++++-----
- fs/btrfs/tests/btrfs-tests.c |  2 +-
- fs/crypto/policy.c           |  2 +-
- fs/efivarfs/file.c           |  2 +-
- fs/ext2/ialloc.c             |  2 +-
- fs/ext2/ioctl.c              |  6 +++---
- fs/ext4/ialloc.c             |  2 +-
- fs/ext4/ioctl.c              | 14 +++++++-------
- fs/f2fs/file.c               | 14 +++++++-------
- fs/f2fs/namei.c              |  2 +-
- fs/f2fs/xattr.c              |  2 +-
- fs/fcntl.c                   |  2 +-
- fs/gfs2/file.c               |  2 +-
- fs/hfsplus/inode.c           |  2 +-
- fs/hfsplus/ioctl.c           |  2 +-
- fs/hugetlbfs/inode.c         |  2 +-
- fs/inode.c                   | 35 ++++++++++++++++++++++++++---------
- fs/jfs/ioctl.c               |  2 +-
- fs/jfs/jfs_inode.c           |  2 +-
- fs/minix/bitmap.c            |  2 +-
- fs/namei.c                   |  4 ++--
- fs/nilfs2/inode.c            |  2 +-
- fs/nilfs2/ioctl.c            |  2 +-
- fs/ocfs2/dlmfs/dlmfs.c       |  4 ++--
- fs/ocfs2/ioctl.c             |  2 +-
- fs/ocfs2/namei.c             |  2 +-
- fs/omfs/inode.c              |  2 +-
- fs/overlayfs/dir.c           |  2 +-
- fs/overlayfs/file.c          |  4 ++--
- fs/overlayfs/super.c         |  2 +-
- fs/overlayfs/util.c          |  2 +-
- fs/posix_acl.c               |  2 +-
- fs/ramfs/inode.c             |  2 +-
- fs/reiserfs/ioctl.c          |  4 ++--
- fs/reiserfs/namei.c          |  2 +-
- fs/sysv/ialloc.c             |  2 +-
- fs/ubifs/dir.c               |  2 +-
- fs/ubifs/ioctl.c             |  2 +-
- fs/udf/ialloc.c              |  2 +-
- fs/ufs/ialloc.c              |  2 +-
- fs/xattr.c                   |  2 +-
- fs/xfs/xfs_ioctl.c           |  2 +-
- fs/zonefs/super.c            |  2 +-
- include/linux/fs.h           |  9 +++++----
- kernel/bpf/inode.c           |  2 +-
- mm/madvise.c                 |  2 +-
- mm/mincore.c                 |  2 +-
- mm/shmem.c                   |  2 +-
- security/selinux/hooks.c     |  4 ++--
- 54 files changed, 108 insertions(+), 90 deletions(-)
+ Documentation/filesystems/locking.rst |  6 +--
+ Documentation/filesystems/porting.rst |  2 +
+ fs/9p/acl.c                           |  4 +-
+ fs/9p/xattr.c                         |  1 +
+ fs/afs/xattr.c                        |  2 +
+ fs/btrfs/acl.c                        |  2 +-
+ fs/btrfs/inode.c                      |  2 +-
+ fs/btrfs/xattr.c                      |  2 +
+ fs/ceph/acl.c                         |  2 +-
+ fs/ceph/inode.c                       |  2 +-
+ fs/ceph/xattr.c                       |  1 +
+ fs/cifs/xattr.c                       |  1 +
+ fs/ecryptfs/inode.c                   |  1 +
+ fs/ext2/acl.c                         |  2 +-
+ fs/ext2/inode.c                       |  2 +-
+ fs/ext2/xattr_security.c              |  1 +
+ fs/ext2/xattr_trusted.c               |  1 +
+ fs/ext2/xattr_user.c                  |  1 +
+ fs/ext4/acl.c                         |  2 +-
+ fs/ext4/inode.c                       |  2 +-
+ fs/ext4/xattr_hurd.c                  |  1 +
+ fs/ext4/xattr_security.c              |  1 +
+ fs/ext4/xattr_trusted.c               |  1 +
+ fs/ext4/xattr_user.c                  |  1 +
+ fs/f2fs/acl.c                         |  2 +-
+ fs/f2fs/file.c                        |  2 +-
+ fs/f2fs/xattr.c                       |  2 +
+ fs/fuse/xattr.c                       |  2 +
+ fs/gfs2/acl.c                         |  2 +-
+ fs/gfs2/inode.c                       |  2 +-
+ fs/gfs2/xattr.c                       |  1 +
+ fs/hfs/attr.c                         |  1 +
+ fs/hfsplus/xattr.c                    |  1 +
+ fs/hfsplus/xattr_security.c           |  1 +
+ fs/hfsplus/xattr_trusted.c            |  1 +
+ fs/hfsplus/xattr_user.c               |  1 +
+ fs/jffs2/acl.c                        |  2 +-
+ fs/jffs2/fs.c                         |  2 +-
+ fs/jffs2/security.c                   |  1 +
+ fs/jffs2/xattr_trusted.c              |  1 +
+ fs/jffs2/xattr_user.c                 |  1 +
+ fs/jfs/acl.c                          |  2 +-
+ fs/jfs/file.c                         |  2 +-
+ fs/jfs/xattr.c                        |  2 +
+ fs/kernfs/inode.c                     |  2 +
+ fs/nfs/nfs4proc.c                     |  3 ++
+ fs/nfsd/nfs2acl.c                     |  4 +-
+ fs/nfsd/nfs3acl.c                     |  4 +-
+ fs/nfsd/nfs4acl.c                     |  4 +-
+ fs/ocfs2/acl.c                        |  2 +-
+ fs/ocfs2/xattr.c                      |  3 ++
+ fs/orangefs/acl.c                     |  2 +-
+ fs/orangefs/inode.c                   |  2 +-
+ fs/orangefs/xattr.c                   |  1 +
+ fs/overlayfs/super.c                  |  3 ++
+ fs/posix_acl.c                        | 77 +++++++++++++++++++--------
+ fs/reiserfs/xattr_acl.c               |  4 +-
+ fs/reiserfs/xattr_security.c          |  3 +-
+ fs/reiserfs/xattr_trusted.c           |  3 +-
+ fs/reiserfs/xattr_user.c              |  3 +-
+ fs/ubifs/xattr.c                      |  1 +
+ fs/xattr.c                            | 10 ++--
+ fs/xfs/xfs_acl.c                      |  2 +-
+ fs/xfs/xfs_iops.c                     |  2 +-
+ fs/xfs/xfs_xattr.c                    |  3 +-
+ include/linux/capability.h            |  4 +-
+ include/linux/posix_acl.h             |  9 ++--
+ include/linux/posix_acl_xattr.h       | 12 +++--
+ include/linux/xattr.h                 |  6 +--
+ mm/shmem.c                            |  3 +-
+ net/socket.c                          |  1 +
+ security/commoncap.c                  | 47 +++++++++++++---
+ 72 files changed, 210 insertions(+), 84 deletions(-)
 
+diff --git a/Documentation/filesystems/locking.rst b/Documentation/filesystems/locking.rst
+index c0f2c7586531..daf132a038ad 100644
+--- a/Documentation/filesystems/locking.rst
++++ b/Documentation/filesystems/locking.rst
+@@ -126,9 +126,9 @@ prototypes::
+ 	int (*get)(const struct xattr_handler *handler, struct dentry *dentry,
+ 		   struct inode *inode, const char *name, void *buffer,
+ 		   size_t size);
+-	int (*set)(const struct xattr_handler *handler, struct dentry *dentry,
+-		   struct inode *inode, const char *name, const void *buffer,
+-		   size_t size, int flags);
++	int (*set)(const struct xattr_handler *handler, struct user_namespace *mnt_userns,
++                   struct dentry *dentry, struct inode *inode, const char *name,
++                   const void *buffer, size_t size, int flags);
+ 
+ locking rules:
+ 	all may block
+diff --git a/Documentation/filesystems/porting.rst b/Documentation/filesystems/porting.rst
+index 867036aa90b8..de1dcec3b5b8 100644
+--- a/Documentation/filesystems/porting.rst
++++ b/Documentation/filesystems/porting.rst
+@@ -717,6 +717,8 @@ be removed.  Switch while you still can; the old one won't stay.
+ **mandatory**
+ 
+ ->setxattr() and xattr_handler.set() get dentry and inode passed separately.
++The xattr_handler.set() gets passed the user namespace of the mount the inode
++is seen from so filesystems can idmap the i_uid and i_gid accordingly.
+ dentry might be yet to be attached to inode, so do _not_ use its ->d_inode
+ in the instances.  Rationale: !@#!@# security_d_instantiate() needs to be
+ called before we attach dentry to inode and !@#!@##!@$!$#!@#$!@$!@$ smack
 diff --git a/fs/9p/acl.c b/fs/9p/acl.c
-index 6261719f6f2a..d77b28e8d57a 100644
+index d77b28e8d57a..1c14f18a6ec9 100644
 --- a/fs/9p/acl.c
 +++ b/fs/9p/acl.c
-@@ -258,7 +258,7 @@ static int v9fs_xattr_set_acl(const struct xattr_handler *handler,
- 
- 	if (S_ISLNK(inode->i_mode))
- 		return -EOPNOTSUPP;
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EPERM;
- 	if (value) {
- 		/* update the cached acl value */
-diff --git a/fs/9p/vfs_inode.c b/fs/9p/vfs_inode.c
-index 4a937fac1acb..f66eb3c12c8a 100644
---- a/fs/9p/vfs_inode.c
-+++ b/fs/9p/vfs_inode.c
-@@ -251,7 +251,7 @@ int v9fs_init_inode(struct v9fs_session_info *v9ses,
- {
- 	int err = 0;
- 
--	inode_init_owner(inode, NULL, mode);
-+	inode_init_owner(&init_user_ns,inode,  NULL, mode);
- 	inode->i_blocks = 0;
- 	inode->i_rdev = rdev;
- 	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
-diff --git a/fs/attr.c b/fs/attr.c
-index c9e29e589cec..00ae0b000146 100644
---- a/fs/attr.c
-+++ b/fs/attr.c
-@@ -87,7 +87,7 @@ int setattr_prepare(struct dentry *dentry, struct iattr *attr)
- 
- 	/* Make sure a caller can chmod. */
- 	if (ia_valid & ATTR_MODE) {
--		if (!inode_owner_or_capable(inode))
-+		if (!inode_owner_or_capable(&init_user_ns, inode))
- 			return -EPERM;
- 		/* Also check the setgid bit! */
- 		if (!in_group_p((ia_valid & ATTR_GID) ? attr->ia_gid :
-@@ -98,7 +98,7 @@ int setattr_prepare(struct dentry *dentry, struct iattr *attr)
- 
- 	/* Check for setting the inode time. */
- 	if (ia_valid & (ATTR_MTIME_SET | ATTR_ATIME_SET | ATTR_TIMES_SET)) {
--		if (!inode_owner_or_capable(inode))
-+		if (!inode_owner_or_capable(&init_user_ns, inode))
- 			return -EPERM;
- 	}
- 
-@@ -243,7 +243,7 @@ int notify_change(struct dentry * dentry, struct iattr * attr, struct inode **de
- 		if (IS_IMMUTABLE(inode))
- 			return -EPERM;
- 
--		if (!inode_owner_or_capable(inode)) {
-+		if (!inode_owner_or_capable(&init_user_ns, inode)) {
- 			error = inode_permission(&init_user_ns, inode,
- 						 MAY_WRITE);
- 			if (error)
-diff --git a/fs/bfs/dir.c b/fs/bfs/dir.c
-index d8dfe3a0cb39..be1335a8d25b 100644
---- a/fs/bfs/dir.c
-+++ b/fs/bfs/dir.c
-@@ -96,7 +96,7 @@ static int bfs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
- 	}
- 	set_bit(ino, info->si_imap);
- 	info->si_freei--;
--	inode_init_owner(inode, dir, mode);
-+	inode_init_owner(&init_user_ns, inode, dir, mode);
- 	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
- 	inode->i_blocks = 0;
- 	inode->i_op = &bfs_file_inops;
-diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
-index f834ba3b16b7..550f89553b80 100644
---- a/fs/btrfs/inode.c
-+++ b/fs/btrfs/inode.c
-@@ -6190,7 +6190,7 @@ static struct inode *btrfs_new_inode(struct btrfs_trans_handle *trans,
- 	if (ret != 0)
- 		goto fail_unlock;
- 
--	inode_init_owner(inode, dir, mode);
-+	inode_init_owner(&init_user_ns, inode, dir, mode);
- 	inode_set_bytes(inode, 0);
- 
- 	inode->i_mtime = current_time(inode);
-diff --git a/fs/btrfs/ioctl.c b/fs/btrfs/ioctl.c
-index 7b47af3d8d5a..950b4f1b9092 100644
---- a/fs/btrfs/ioctl.c
-+++ b/fs/btrfs/ioctl.c
-@@ -213,7 +213,7 @@ static int btrfs_ioctl_setflags(struct file *file, void __user *arg)
- 	const char *comp = NULL;
- 	u32 binode_flags;
- 
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EPERM;
- 
- 	if (btrfs_root_readonly(root))
-@@ -429,7 +429,7 @@ static int btrfs_ioctl_fssetxattr(struct file *file, void __user *arg)
- 	unsigned old_i_flags;
- 	int ret = 0;
- 
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EPERM;
- 
- 	if (btrfs_root_readonly(root))
-@@ -1862,7 +1862,7 @@ static noinline int __btrfs_ioctl_snap_create(struct file *file,
- 			btrfs_info(BTRFS_I(file_inode(file))->root->fs_info,
- 				   "Snapshot src from another FS");
- 			ret = -EXDEV;
--		} else if (!inode_owner_or_capable(src_inode)) {
-+		} else if (!inode_owner_or_capable(&init_user_ns, src_inode)) {
- 			/*
- 			 * Subvolume creation is not restricted, but snapshots
- 			 * are limited to own subvolumes only
-@@ -1982,7 +1982,7 @@ static noinline int btrfs_ioctl_subvol_setflags(struct file *file,
- 	u64 flags;
- 	int ret = 0;
- 
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EPERM;
- 
- 	ret = mnt_want_write_file(file);
-@@ -4451,7 +4451,7 @@ static long _btrfs_ioctl_set_received_subvol(struct file *file,
- 	int ret = 0;
- 	int received_uuid_changed;
- 
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EPERM;
- 
- 	ret = mnt_want_write_file(file);
-diff --git a/fs/btrfs/tests/btrfs-tests.c b/fs/btrfs/tests/btrfs-tests.c
-index 6bd97bd4cb37..3a4099a2bf05 100644
---- a/fs/btrfs/tests/btrfs-tests.c
-+++ b/fs/btrfs/tests/btrfs-tests.c
-@@ -62,7 +62,7 @@ struct inode *btrfs_new_test_inode(void)
- 	BTRFS_I(inode)->location.type = BTRFS_INODE_ITEM_KEY;
- 	BTRFS_I(inode)->location.objectid = BTRFS_FIRST_FREE_OBJECTID;
- 	BTRFS_I(inode)->location.offset = 0;
--	inode_init_owner(inode, NULL, S_IFREG);
-+	inode_init_owner(&init_user_ns, inode, NULL, S_IFREG);
- 
- 	return inode;
+@@ -239,6 +239,7 @@ static int v9fs_xattr_get_acl(const struct xattr_handler *handler,
  }
-diff --git a/fs/crypto/policy.c b/fs/crypto/policy.c
-index a51cef6bd27f..ed3d623724cd 100644
---- a/fs/crypto/policy.c
-+++ b/fs/crypto/policy.c
-@@ -465,7 +465,7 @@ int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
- 		return -EFAULT;
- 	policy.version = version;
  
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EACCES;
+ static int v9fs_xattr_set_acl(const struct xattr_handler *handler,
++			      struct user_namespace *mnt_userns,
+ 			      struct dentry *dentry, struct inode *inode,
+ 			      const char *name, const void *value,
+ 			      size_t size, int flags)
+@@ -279,7 +280,8 @@ static int v9fs_xattr_set_acl(const struct xattr_handler *handler,
+ 			struct iattr iattr = { 0 };
+ 			struct posix_acl *old_acl = acl;
  
- 	ret = mnt_want_write_file(filp);
-diff --git a/fs/efivarfs/file.c b/fs/efivarfs/file.c
-index feaa5e182b7b..e6bc0302643b 100644
---- a/fs/efivarfs/file.c
-+++ b/fs/efivarfs/file.c
-@@ -137,7 +137,7 @@ efivarfs_ioc_setxflags(struct file *file, void __user *arg)
- 	unsigned int oldflags = efivarfs_getflags(inode);
- 	int error;
+-			retval = posix_acl_update_mode(inode, &iattr.ia_mode, &acl);
++			retval = posix_acl_update_mode(mnt_userns, inode,
++						       &iattr.ia_mode, &acl);
+ 			if (retval)
+ 				goto err_out;
+ 			if (!acl) {
+diff --git a/fs/9p/xattr.c b/fs/9p/xattr.c
+index 87217dd0433e..ee331845e2c7 100644
+--- a/fs/9p/xattr.c
++++ b/fs/9p/xattr.c
+@@ -157,6 +157,7 @@ static int v9fs_xattr_handler_get(const struct xattr_handler *handler,
+ }
  
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EACCES;
+ static int v9fs_xattr_handler_set(const struct xattr_handler *handler,
++				  struct user_namespace *mnt_userns,
+ 				  struct dentry *dentry, struct inode *inode,
+ 				  const char *name, const void *value,
+ 				  size_t size, int flags)
+diff --git a/fs/afs/xattr.c b/fs/afs/xattr.c
+index 95c573dcda11..c629caae5002 100644
+--- a/fs/afs/xattr.c
++++ b/fs/afs/xattr.c
+@@ -120,6 +120,7 @@ static const struct afs_operation_ops afs_store_acl_operation = {
+  * Set a file's AFS3 ACL.
+  */
+ static int afs_xattr_set_acl(const struct xattr_handler *handler,
++			     struct user_namespace *mnt_userns,
+                              struct dentry *dentry,
+                              struct inode *inode, const char *name,
+                              const void *buffer, size_t size, int flags)
+@@ -248,6 +249,7 @@ static const struct afs_operation_ops yfs_store_opaque_acl2_operation = {
+  * Set a file's YFS ACL.
+  */
+ static int afs_xattr_set_yfs(const struct xattr_handler *handler,
++			     struct user_namespace *mnt_userns,
+                              struct dentry *dentry,
+                              struct inode *inode, const char *name,
+                              const void *buffer, size_t size, int flags)
+diff --git a/fs/btrfs/acl.c b/fs/btrfs/acl.c
+index a0af1b952c4d..b5a683e895c6 100644
+--- a/fs/btrfs/acl.c
++++ b/fs/btrfs/acl.c
+@@ -113,7 +113,7 @@ int btrfs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+ 	umode_t old_mode = inode->i_mode;
  
- 	if (copy_from_user(&flags, arg, sizeof(flags)))
-diff --git a/fs/ext2/ialloc.c b/fs/ext2/ialloc.c
-index 432c3febea6d..df14e750e9fe 100644
---- a/fs/ext2/ialloc.c
-+++ b/fs/ext2/ialloc.c
-@@ -551,7 +551,7 @@ struct inode *ext2_new_inode(struct inode *dir, umode_t mode,
- 		inode->i_uid = current_fsuid();
- 		inode->i_gid = dir->i_gid;
- 	} else
--		inode_init_owner(inode, dir, mode);
-+		inode_init_owner(&init_user_ns, inode, dir, mode);
- 
- 	inode->i_ino = ino;
- 	inode->i_blocks = 0;
-diff --git a/fs/ext2/ioctl.c b/fs/ext2/ioctl.c
-index 32a8d10b579d..b399cbb7022d 100644
---- a/fs/ext2/ioctl.c
-+++ b/fs/ext2/ioctl.c
-@@ -39,7 +39,7 @@ long ext2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 	if (type == ACL_TYPE_ACCESS && acl) {
+-		ret = posix_acl_update_mode(inode, &inode->i_mode, &acl);
++		ret = posix_acl_update_mode(&init_user_ns, inode, &inode->i_mode, &acl);
  		if (ret)
  			return ret;
+ 	}
+diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
+index 19d432a453b1..97bbf80ee12d 100644
+--- a/fs/btrfs/inode.c
++++ b/fs/btrfs/inode.c
+@@ -5070,7 +5070,7 @@ static int btrfs_setattr(struct dentry *dentry, struct iattr *attr)
+ 		err = btrfs_dirty_inode(inode);
  
--		if (!inode_owner_or_capable(inode)) {
-+		if (!inode_owner_or_capable(&init_user_ns, inode)) {
- 			ret = -EACCES;
- 			goto setflags_out;
+ 		if (!err && attr->ia_valid & ATTR_MODE)
+-			err = posix_acl_chmod(inode, inode->i_mode);
++			err = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
+ 	}
+ 
+ 	return err;
+diff --git a/fs/btrfs/xattr.c b/fs/btrfs/xattr.c
+index af6246f36a9e..b025102e435f 100644
+--- a/fs/btrfs/xattr.c
++++ b/fs/btrfs/xattr.c
+@@ -362,6 +362,7 @@ static int btrfs_xattr_handler_get(const struct xattr_handler *handler,
+ }
+ 
+ static int btrfs_xattr_handler_set(const struct xattr_handler *handler,
++				   struct user_namespace *mnt_userns,
+ 				   struct dentry *unused, struct inode *inode,
+ 				   const char *name, const void *buffer,
+ 				   size_t size, int flags)
+@@ -371,6 +372,7 @@ static int btrfs_xattr_handler_set(const struct xattr_handler *handler,
+ }
+ 
+ static int btrfs_xattr_handler_set_prop(const struct xattr_handler *handler,
++					struct user_namespace *mnt_userns,
+ 					struct dentry *unused, struct inode *inode,
+ 					const char *name, const void *value,
+ 					size_t size, int flags)
+diff --git a/fs/ceph/acl.c b/fs/ceph/acl.c
+index e0465741c591..bceab4c01585 100644
+--- a/fs/ceph/acl.c
++++ b/fs/ceph/acl.c
+@@ -100,7 +100,7 @@ int ceph_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+ 	case ACL_TYPE_ACCESS:
+ 		name = XATTR_NAME_POSIX_ACL_ACCESS;
+ 		if (acl) {
+-			ret = posix_acl_update_mode(inode, &new_mode, &acl);
++			ret = posix_acl_update_mode(&init_user_ns, inode, &new_mode, &acl);
+ 			if (ret)
+ 				goto out;
  		}
-@@ -84,7 +84,7 @@ long ext2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 	case EXT2_IOC_SETVERSION: {
- 		__u32 generation;
+diff --git a/fs/ceph/inode.c b/fs/ceph/inode.c
+index 285d3baca27e..145e26a4ddbb 100644
+--- a/fs/ceph/inode.c
++++ b/fs/ceph/inode.c
+@@ -2262,7 +2262,7 @@ int ceph_setattr(struct dentry *dentry, struct iattr *attr)
+ 	err = __ceph_setattr(inode, attr);
  
--		if (!inode_owner_or_capable(inode))
-+		if (!inode_owner_or_capable(&init_user_ns, inode))
- 			return -EPERM;
- 		ret = mnt_want_write_file(filp);
- 		if (ret)
-@@ -117,7 +117,7 @@ long ext2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 		if (!test_opt(inode->i_sb, RESERVATION) ||!S_ISREG(inode->i_mode))
- 			return -ENOTTY;
+ 	if (err >= 0 && (attr->ia_valid & ATTR_MODE))
+-		err = posix_acl_chmod(inode, attr->ia_mode);
++		err = posix_acl_chmod(&init_user_ns, inode, attr->ia_mode);
  
--		if (!inode_owner_or_capable(inode))
-+		if (!inode_owner_or_capable(&init_user_ns, inode))
- 			return -EACCES;
+ 	return err;
+ }
+diff --git a/fs/ceph/xattr.c b/fs/ceph/xattr.c
+index 24997982de01..02f59bcb4f27 100644
+--- a/fs/ceph/xattr.c
++++ b/fs/ceph/xattr.c
+@@ -1238,6 +1238,7 @@ static int ceph_get_xattr_handler(const struct xattr_handler *handler,
+ }
  
- 		if (get_user(rsv_window_size, (int __user *)arg))
-diff --git a/fs/ext4/ialloc.c b/fs/ext4/ialloc.c
-index b215c564bc31..00c1ec6eee16 100644
---- a/fs/ext4/ialloc.c
-+++ b/fs/ext4/ialloc.c
-@@ -972,7 +972,7 @@ struct inode *__ext4_new_inode(handle_t *handle, struct inode *dir,
- 		inode->i_uid = current_fsuid();
- 		inode->i_gid = dir->i_gid;
- 	} else
--		inode_init_owner(inode, dir, mode);
-+		inode_init_owner(&init_user_ns, inode, dir, mode);
+ static int ceph_set_xattr_handler(const struct xattr_handler *handler,
++				  struct user_namespace *mnt_userns,
+ 				  struct dentry *unused, struct inode *inode,
+ 				  const char *name, const void *value,
+ 				  size_t size, int flags)
+diff --git a/fs/cifs/xattr.c b/fs/cifs/xattr.c
+index 6b658a1172ef..41a611e76bb7 100644
+--- a/fs/cifs/xattr.c
++++ b/fs/cifs/xattr.c
+@@ -101,6 +101,7 @@ static int cifs_creation_time_set(unsigned int xid, struct cifs_tcon *pTcon,
+ }
  
- 	if (ext4_has_feature_project(sb) &&
- 	    ext4_test_inode_flag(dir, EXT4_INODE_PROJINHERIT))
-diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
-index 524e13432447..42335ae5dd94 100644
---- a/fs/ext4/ioctl.c
-+++ b/fs/ext4/ioctl.c
-@@ -139,7 +139,7 @@ static long swap_inode_boot_loader(struct super_block *sb,
+ static int cifs_xattr_set(const struct xattr_handler *handler,
++			  struct user_namespace *mnt_userns,
+ 			  struct dentry *dentry, struct inode *inode,
+ 			  const char *name, const void *value,
+ 			  size_t size, int flags)
+diff --git a/fs/ecryptfs/inode.c b/fs/ecryptfs/inode.c
+index 2454aef02a68..fa794c98c395 100644
+--- a/fs/ecryptfs/inode.c
++++ b/fs/ecryptfs/inode.c
+@@ -1131,6 +1131,7 @@ static int ecryptfs_xattr_get(const struct xattr_handler *handler,
+ }
+ 
+ static int ecryptfs_xattr_set(const struct xattr_handler *handler,
++			      struct user_namespace *mnt_userns,
+ 			      struct dentry *dentry, struct inode *inode,
+ 			      const char *name, const void *value, size_t size,
+ 			      int flags)
+diff --git a/fs/ext2/acl.c b/fs/ext2/acl.c
+index cf4c77f8dd08..826987b23ccb 100644
+--- a/fs/ext2/acl.c
++++ b/fs/ext2/acl.c
+@@ -223,7 +223,7 @@ ext2_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+ 	umode_t mode = inode->i_mode;
+ 
+ 	if (type == ACL_TYPE_ACCESS && acl) {
+-		error = posix_acl_update_mode(inode, &mode, &acl);
++		error = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
+ 		if (error)
+ 			return error;
+ 		update_mode = 1;
+diff --git a/fs/ext2/inode.c b/fs/ext2/inode.c
+index 06c0cf28c1a0..9de813635d8d 100644
+--- a/fs/ext2/inode.c
++++ b/fs/ext2/inode.c
+@@ -1691,7 +1691,7 @@ int ext2_setattr(struct dentry *dentry, struct iattr *iattr)
  	}
+ 	setattr_copy(&init_user_ns, inode, iattr);
+ 	if (iattr->ia_valid & ATTR_MODE)
+-		error = posix_acl_chmod(inode, inode->i_mode);
++		error = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
+ 	mark_inode_dirty(inode);
  
- 	if (IS_RDONLY(inode) || IS_APPEND(inode) || IS_IMMUTABLE(inode) ||
--	    !inode_owner_or_capable(inode) || !capable(CAP_SYS_ADMIN)) {
-+	    !inode_owner_or_capable(&init_user_ns, inode) || !capable(CAP_SYS_ADMIN)) {
- 		err = -EPERM;
- 		goto journal_err_out;
- 	}
-@@ -829,7 +829,7 @@ static long __ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 	case FS_IOC_SETFLAGS: {
- 		int err;
+ 	return error;
+diff --git a/fs/ext2/xattr_security.c b/fs/ext2/xattr_security.c
+index 9a682e440acb..ebade1f52451 100644
+--- a/fs/ext2/xattr_security.c
++++ b/fs/ext2/xattr_security.c
+@@ -19,6 +19,7 @@ ext2_xattr_security_get(const struct xattr_handler *handler,
  
--		if (!inode_owner_or_capable(inode))
-+		if (!inode_owner_or_capable(&init_user_ns, inode))
- 			return -EACCES;
+ static int
+ ext2_xattr_security_set(const struct xattr_handler *handler,
++			struct user_namespace *mnt_userns,
+ 			struct dentry *unused, struct inode *inode,
+ 			const char *name, const void *value,
+ 			size_t size, int flags)
+diff --git a/fs/ext2/xattr_trusted.c b/fs/ext2/xattr_trusted.c
+index 49add1107850..18a87d5dd1ab 100644
+--- a/fs/ext2/xattr_trusted.c
++++ b/fs/ext2/xattr_trusted.c
+@@ -26,6 +26,7 @@ ext2_xattr_trusted_get(const struct xattr_handler *handler,
  
- 		if (get_user(flags, (int __user *) arg))
-@@ -871,7 +871,7 @@ static long __ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 		__u32 generation;
- 		int err;
+ static int
+ ext2_xattr_trusted_set(const struct xattr_handler *handler,
++		       struct user_namespace *mnt_userns,
+ 		       struct dentry *unused, struct inode *inode,
+ 		       const char *name, const void *value,
+ 		       size_t size, int flags)
+diff --git a/fs/ext2/xattr_user.c b/fs/ext2/xattr_user.c
+index c243a3b4d69d..58092449f8ff 100644
+--- a/fs/ext2/xattr_user.c
++++ b/fs/ext2/xattr_user.c
+@@ -30,6 +30,7 @@ ext2_xattr_user_get(const struct xattr_handler *handler,
  
--		if (!inode_owner_or_capable(inode))
-+		if (!inode_owner_or_capable(&init_user_ns, inode))
- 			return -EPERM;
+ static int
+ ext2_xattr_user_set(const struct xattr_handler *handler,
++		    struct user_namespace *mnt_userns,
+ 		    struct dentry *unused, struct inode *inode,
+ 		    const char *name, const void *value,
+ 		    size_t size, int flags)
+diff --git a/fs/ext4/acl.c b/fs/ext4/acl.c
+index 68aaed48315f..4aad060010d8 100644
+--- a/fs/ext4/acl.c
++++ b/fs/ext4/acl.c
+@@ -245,7 +245,7 @@ ext4_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+ 	ext4_fc_start_update(inode);
  
- 		if (ext4_has_metadata_csum(inode->i_sb)) {
-@@ -1010,7 +1010,7 @@ static long __ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 	case EXT4_IOC_MIGRATE:
- 	{
- 		int err;
--		if (!inode_owner_or_capable(inode))
-+		if (!inode_owner_or_capable(&init_user_ns, inode))
- 			return -EACCES;
+ 	if ((type == ACL_TYPE_ACCESS) && acl) {
+-		error = posix_acl_update_mode(inode, &mode, &acl);
++		error = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
+ 		if (error)
+ 			goto out_stop;
+ 		if (mode != inode->i_mode)
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 644510b5e06c..55990b74b9e4 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -5520,7 +5520,7 @@ int ext4_setattr(struct dentry *dentry, struct iattr *attr)
+ 		ext4_orphan_del(NULL, inode);
  
- 		err = mnt_want_write_file(filp);
-@@ -1032,7 +1032,7 @@ static long __ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 	case EXT4_IOC_ALLOC_DA_BLKS:
- 	{
- 		int err;
--		if (!inode_owner_or_capable(inode))
-+		if (!inode_owner_or_capable(&init_user_ns, inode))
- 			return -EACCES;
+ 	if (!error && (ia_valid & ATTR_MODE))
+-		rc = posix_acl_chmod(inode, inode->i_mode);
++		rc = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
  
- 		err = mnt_want_write_file(filp);
-@@ -1214,7 +1214,7 @@ static long __ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ err_out:
+ 	if  (error)
+diff --git a/fs/ext4/xattr_hurd.c b/fs/ext4/xattr_hurd.c
+index 8cfa74a56361..c78df5790377 100644
+--- a/fs/ext4/xattr_hurd.c
++++ b/fs/ext4/xattr_hurd.c
+@@ -32,6 +32,7 @@ ext4_xattr_hurd_get(const struct xattr_handler *handler,
  
- 	case EXT4_IOC_CLEAR_ES_CACHE:
- 	{
--		if (!inode_owner_or_capable(inode))
-+		if (!inode_owner_or_capable(&init_user_ns, inode))
- 			return -EACCES;
- 		ext4_clear_inode_es(inode);
- 		return 0;
-@@ -1260,7 +1260,7 @@ static long __ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 			return -EFAULT;
+ static int
+ ext4_xattr_hurd_set(const struct xattr_handler *handler,
++		    struct user_namespace *mnt_userns,
+ 		    struct dentry *unused, struct inode *inode,
+ 		    const char *name, const void *value,
+ 		    size_t size, int flags)
+diff --git a/fs/ext4/xattr_security.c b/fs/ext4/xattr_security.c
+index 197a9d8a15ef..8213f66f7b2d 100644
+--- a/fs/ext4/xattr_security.c
++++ b/fs/ext4/xattr_security.c
+@@ -23,6 +23,7 @@ ext4_xattr_security_get(const struct xattr_handler *handler,
  
- 		/* Make sure caller has proper permission */
--		if (!inode_owner_or_capable(inode))
-+		if (!inode_owner_or_capable(&init_user_ns, inode))
- 			return -EACCES;
+ static int
+ ext4_xattr_security_set(const struct xattr_handler *handler,
++			struct user_namespace *mnt_userns,
+ 			struct dentry *unused, struct inode *inode,
+ 			const char *name, const void *value,
+ 			size_t size, int flags)
+diff --git a/fs/ext4/xattr_trusted.c b/fs/ext4/xattr_trusted.c
+index e9389e5d75c3..7c21ffb26d25 100644
+--- a/fs/ext4/xattr_trusted.c
++++ b/fs/ext4/xattr_trusted.c
+@@ -30,6 +30,7 @@ ext4_xattr_trusted_get(const struct xattr_handler *handler,
  
- 		if (fa.fsx_xflags & ~EXT4_SUPPORTED_FS_XFLAGS)
+ static int
+ ext4_xattr_trusted_set(const struct xattr_handler *handler,
++		       struct user_namespace *mnt_userns,
+ 		       struct dentry *unused, struct inode *inode,
+ 		       const char *name, const void *value,
+ 		       size_t size, int flags)
+diff --git a/fs/ext4/xattr_user.c b/fs/ext4/xattr_user.c
+index d4546184b34b..2fe7ff0a479c 100644
+--- a/fs/ext4/xattr_user.c
++++ b/fs/ext4/xattr_user.c
+@@ -31,6 +31,7 @@ ext4_xattr_user_get(const struct xattr_handler *handler,
+ 
+ static int
+ ext4_xattr_user_set(const struct xattr_handler *handler,
++		    struct user_namespace *mnt_userns,
+ 		    struct dentry *unused, struct inode *inode,
+ 		    const char *name, const void *value,
+ 		    size_t size, int flags)
+diff --git a/fs/f2fs/acl.c b/fs/f2fs/acl.c
+index 1e5e9b1136ee..144e434834b3 100644
+--- a/fs/f2fs/acl.c
++++ b/fs/f2fs/acl.c
+@@ -213,7 +213,7 @@ static int __f2fs_set_acl(struct inode *inode, int type,
+ 	case ACL_TYPE_ACCESS:
+ 		name_index = F2FS_XATTR_INDEX_POSIX_ACL_ACCESS;
+ 		if (acl && !ipage) {
+-			error = posix_acl_update_mode(inode, &mode, &acl);
++			error = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
+ 			if (error)
+ 				return error;
+ 			set_acl_inode(inode, mode);
 diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index f585545277d7..5fc0ff28b5dd 100644
+index 90d7b89176de..ba18b7e28d51 100644
 --- a/fs/f2fs/file.c
 +++ b/fs/f2fs/file.c
-@@ -1961,7 +1961,7 @@ static int f2fs_ioc_setflags(struct file *filp, unsigned long arg)
- 	u32 iflags;
- 	int ret;
+@@ -950,7 +950,7 @@ int f2fs_setattr(struct dentry *dentry, struct iattr *attr)
+ 	__setattr_copy(&init_user_ns, inode, attr);
  
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EACCES;
- 
- 	if (get_user(fsflags, (int __user *)arg))
-@@ -2008,7 +2008,7 @@ static int f2fs_ioc_start_atomic_write(struct file *filp)
- 	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
- 	int ret;
- 
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EACCES;
- 
- 	if (!S_ISREG(inode->i_mode))
-@@ -2075,7 +2075,7 @@ static int f2fs_ioc_commit_atomic_write(struct file *filp)
- 	struct inode *inode = file_inode(filp);
- 	int ret;
- 
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EACCES;
- 
- 	ret = mnt_want_write_file(filp);
-@@ -2117,7 +2117,7 @@ static int f2fs_ioc_start_volatile_write(struct file *filp)
- 	struct inode *inode = file_inode(filp);
- 	int ret;
- 
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EACCES;
- 
- 	if (!S_ISREG(inode->i_mode))
-@@ -2152,7 +2152,7 @@ static int f2fs_ioc_release_volatile_write(struct file *filp)
- 	struct inode *inode = file_inode(filp);
- 	int ret;
- 
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EACCES;
- 
- 	ret = mnt_want_write_file(filp);
-@@ -2181,7 +2181,7 @@ static int f2fs_ioc_abort_volatile_write(struct file *filp)
- 	struct inode *inode = file_inode(filp);
- 	int ret;
- 
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EACCES;
- 
- 	ret = mnt_want_write_file(filp);
-@@ -3158,7 +3158,7 @@ static int f2fs_ioc_fssetxattr(struct file *filp, unsigned long arg)
- 		return -EFAULT;
- 
- 	/* Make sure caller has proper permission */
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EACCES;
- 
- 	if (fa.fsx_xflags & ~F2FS_SUPPORTED_XFLAGS)
-diff --git a/fs/f2fs/namei.c b/fs/f2fs/namei.c
-index 6edb1ab579a1..ad98926bacac 100644
---- a/fs/f2fs/namei.c
-+++ b/fs/f2fs/namei.c
-@@ -46,7 +46,7 @@ static struct inode *f2fs_new_inode(struct inode *dir, umode_t mode)
- 
- 	nid_free = true;
- 
--	inode_init_owner(inode, dir, mode);
-+	inode_init_owner(&init_user_ns, inode, dir, mode);
- 
- 	inode->i_ino = ino;
- 	inode->i_blocks = 0;
+ 	if (attr->ia_valid & ATTR_MODE) {
+-		err = posix_acl_chmod(inode, f2fs_get_inode_mode(inode));
++		err = posix_acl_chmod(&init_user_ns, inode, f2fs_get_inode_mode(inode));
+ 		if (err || is_inode_flag_set(inode, FI_ACL_MODE)) {
+ 			inode->i_mode = F2FS_I(inode)->i_acl_mode;
+ 			clear_inode_flag(inode, FI_ACL_MODE);
 diff --git a/fs/f2fs/xattr.c b/fs/f2fs/xattr.c
-index 65afcc3cc68a..d772bf13a814 100644
+index d772bf13a814..10081bf74324 100644
 --- a/fs/f2fs/xattr.c
 +++ b/fs/f2fs/xattr.c
-@@ -114,7 +114,7 @@ static int f2fs_xattr_advise_set(const struct xattr_handler *handler,
- 	unsigned char old_advise = F2FS_I(inode)->i_advise;
- 	unsigned char new_advise;
- 
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EPERM;
- 	if (value == NULL)
- 		return -EINVAL;
-diff --git a/fs/fcntl.c b/fs/fcntl.c
-index 05b36b28f2e8..74d99731fd43 100644
---- a/fs/fcntl.c
-+++ b/fs/fcntl.c
-@@ -46,7 +46,7 @@ static int setfl(int fd, struct file * filp, unsigned long arg)
- 
- 	/* O_NOATIME can only be set by the owner or superuser */
- 	if ((arg & O_NOATIME) && !(filp->f_flags & O_NOATIME))
--		if (!inode_owner_or_capable(inode))
-+		if (!inode_owner_or_capable(&init_user_ns, inode))
- 			return -EPERM;
- 
- 	/* required for strict SunOS emulation */
-diff --git a/fs/gfs2/file.c b/fs/gfs2/file.c
-index b39b339feddc..1d994bdfffaa 100644
---- a/fs/gfs2/file.c
-+++ b/fs/gfs2/file.c
-@@ -238,7 +238,7 @@ static int do_gfs2_set_flags(struct file *filp, u32 reqflags, u32 mask,
- 		goto out;
- 
- 	error = -EACCES;
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		goto out;
- 
- 	error = 0;
-diff --git a/fs/hfsplus/inode.c b/fs/hfsplus/inode.c
-index e3da9e96b835..21357046b039 100644
---- a/fs/hfsplus/inode.c
-+++ b/fs/hfsplus/inode.c
-@@ -376,7 +376,7 @@ struct inode *hfsplus_new_inode(struct super_block *sb, struct inode *dir,
- 		return NULL;
- 
- 	inode->i_ino = sbi->next_cnid++;
--	inode_init_owner(inode, dir, mode);
-+	inode_init_owner(&init_user_ns, inode, dir, mode);
- 	set_nlink(inode, 1);
- 	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
- 
-diff --git a/fs/hfsplus/ioctl.c b/fs/hfsplus/ioctl.c
-index ce15b9496b77..3edb1926d127 100644
---- a/fs/hfsplus/ioctl.c
-+++ b/fs/hfsplus/ioctl.c
-@@ -91,7 +91,7 @@ static int hfsplus_ioctl_setflags(struct file *file, int __user *user_flags)
- 	if (err)
- 		goto out;
- 
--	if (!inode_owner_or_capable(inode)) {
-+	if (!inode_owner_or_capable(&init_user_ns, inode)) {
- 		err = -EACCES;
- 		goto out_drop_write;
- 	}
-diff --git a/fs/hugetlbfs/inode.c b/fs/hugetlbfs/inode.c
-index b5c109703daa..6737929e443c 100644
---- a/fs/hugetlbfs/inode.c
-+++ b/fs/hugetlbfs/inode.c
-@@ -836,7 +836,7 @@ static struct inode *hugetlbfs_get_inode(struct super_block *sb,
- 		struct hugetlbfs_inode_info *info = HUGETLBFS_I(inode);
- 
- 		inode->i_ino = get_next_ino();
--		inode_init_owner(inode, dir, mode);
-+		inode_init_owner(&init_user_ns, inode, dir, mode);
- 		lockdep_set_class(&inode->i_mapping->i_mmap_rwsem,
- 				&hugetlbfs_i_mmap_rwsem_key);
- 		inode->i_mapping->a_ops = &hugetlbfs_aops;
-diff --git a/fs/inode.c b/fs/inode.c
-index e1a58950f5e6..a9ac97a27784 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -2130,14 +2130,21 @@ EXPORT_SYMBOL(init_special_inode);
- 
- /**
-  * inode_init_owner - Init uid,gid,mode for new inode according to posix standards
-+ * @mnt_userns:	User namespace of the mount the inode was created from
-  * @inode: New inode
-  * @dir: Directory inode
-  * @mode: mode of the new inode
-+ *
-+ * If the inode has been created through an idmapped mount the user namespace of
-+ * the vfsmount must be passed through @mnt_userns. This function will then take
-+ * care to map the inode according to @mnt_userns before checking permissions
-+ * and initializing i_uid and i_gid. On non-idmapped mounts or if permission
-+ * checking is to be performed on the raw inode simply passs init_user_ns.
-  */
--void inode_init_owner(struct inode *inode, const struct inode *dir,
--			umode_t mode)
-+void inode_init_owner(struct user_namespace *mnt_userns, struct inode *inode,
-+		      const struct inode *dir, umode_t mode)
- {
--	inode->i_uid = current_fsuid();
-+	inode->i_uid = fsuid_into_mnt(mnt_userns);
- 	if (dir && dir->i_mode & S_ISGID) {
- 		inode->i_gid = dir->i_gid;
- 
-@@ -2145,31 +2152,41 @@ void inode_init_owner(struct inode *inode, const struct inode *dir,
- 		if (S_ISDIR(mode))
- 			mode |= S_ISGID;
- 		else if ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP) &&
--			 !in_group_p(inode->i_gid) &&
--			 !capable_wrt_inode_uidgid(&init_user_ns, dir, CAP_FSETID))
-+			 !in_group_p(i_gid_into_mnt(mnt_userns, dir)) &&
-+			 !capable_wrt_inode_uidgid(mnt_userns, dir, CAP_FSETID))
- 			mode &= ~S_ISGID;
- 	} else
--		inode->i_gid = current_fsgid();
-+		inode->i_gid = fsgid_into_mnt(mnt_userns);
- 	inode->i_mode = mode;
+@@ -64,6 +64,7 @@ static int f2fs_xattr_generic_get(const struct xattr_handler *handler,
  }
- EXPORT_SYMBOL(inode_init_owner);
  
- /**
-  * inode_owner_or_capable - check current task permissions to inode
-+ * @mnt_userns:	user namespace of the mount the inode was found from
-  * @inode: inode being checked
-  *
-  * Return true if current either has CAP_FOWNER in a namespace with the
-  * inode owner uid mapped, or owns the file.
+ static int f2fs_xattr_generic_set(const struct xattr_handler *handler,
++		struct user_namespace *mnt_userns,
+ 		struct dentry *unused, struct inode *inode,
+ 		const char *name, const void *value,
+ 		size_t size, int flags)
+@@ -107,6 +108,7 @@ static int f2fs_xattr_advise_get(const struct xattr_handler *handler,
+ }
+ 
+ static int f2fs_xattr_advise_set(const struct xattr_handler *handler,
++		struct user_namespace *mnt_userns,
+ 		struct dentry *unused, struct inode *inode,
+ 		const char *name, const void *value,
+ 		size_t size, int flags)
+diff --git a/fs/fuse/xattr.c b/fs/fuse/xattr.c
+index cdea18de94f7..1a7d7ace54e1 100644
+--- a/fs/fuse/xattr.c
++++ b/fs/fuse/xattr.c
+@@ -188,6 +188,7 @@ static int fuse_xattr_get(const struct xattr_handler *handler,
+ }
+ 
+ static int fuse_xattr_set(const struct xattr_handler *handler,
++			  struct user_namespace *mnt_userns,
+ 			  struct dentry *dentry, struct inode *inode,
+ 			  const char *name, const void *value, size_t size,
+ 			  int flags)
+@@ -214,6 +215,7 @@ static int no_xattr_get(const struct xattr_handler *handler,
+ }
+ 
+ static int no_xattr_set(const struct xattr_handler *handler,
++			struct user_namespace *mnt_userns,
+ 			struct dentry *dentry, struct inode *nodee,
+ 			const char *name, const void *value,
+ 			size_t size, int flags)
+diff --git a/fs/gfs2/acl.c b/fs/gfs2/acl.c
+index 2e939f5fe751..ce88ef29eef0 100644
+--- a/fs/gfs2/acl.c
++++ b/fs/gfs2/acl.c
+@@ -130,7 +130,7 @@ int gfs2_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+ 
+ 	mode = inode->i_mode;
+ 	if (type == ACL_TYPE_ACCESS && acl) {
+-		ret = posix_acl_update_mode(inode, &mode, &acl);
++		ret = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
+ 		if (ret)
+ 			goto unlock;
+ 	}
+diff --git a/fs/gfs2/inode.c b/fs/gfs2/inode.c
+index 59c25181d108..aef2f7587392 100644
+--- a/fs/gfs2/inode.c
++++ b/fs/gfs2/inode.c
+@@ -1993,7 +1993,7 @@ static int gfs2_setattr(struct dentry *dentry, struct iattr *attr)
+ 	else {
+ 		error = gfs2_setattr_simple(inode, attr);
+ 		if (!error && attr->ia_valid & ATTR_MODE)
+-			error = posix_acl_chmod(inode, inode->i_mode);
++			error = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
+ 	}
+ 
+ error:
+diff --git a/fs/gfs2/xattr.c b/fs/gfs2/xattr.c
+index 9d7667bc4292..13969a813410 100644
+--- a/fs/gfs2/xattr.c
++++ b/fs/gfs2/xattr.c
+@@ -1214,6 +1214,7 @@ int __gfs2_xattr_set(struct inode *inode, const char *name,
+ }
+ 
+ static int gfs2_xattr_set(const struct xattr_handler *handler,
++			  struct user_namespace *mnt_userns,
+ 			  struct dentry *unused, struct inode *inode,
+ 			  const char *name, const void *value,
+ 			  size_t size, int flags)
+diff --git a/fs/hfs/attr.c b/fs/hfs/attr.c
+index 74fa62643136..2bd54efaf416 100644
+--- a/fs/hfs/attr.c
++++ b/fs/hfs/attr.c
+@@ -121,6 +121,7 @@ static int hfs_xattr_get(const struct xattr_handler *handler,
+ }
+ 
+ static int hfs_xattr_set(const struct xattr_handler *handler,
++			 struct user_namespace *mnt_userns,
+ 			 struct dentry *unused, struct inode *inode,
+ 			 const char *name, const void *value, size_t size,
+ 			 int flags)
+diff --git a/fs/hfsplus/xattr.c b/fs/hfsplus/xattr.c
+index bb0b27d88e50..4d169c5a2673 100644
+--- a/fs/hfsplus/xattr.c
++++ b/fs/hfsplus/xattr.c
+@@ -858,6 +858,7 @@ static int hfsplus_osx_getxattr(const struct xattr_handler *handler,
+ }
+ 
+ static int hfsplus_osx_setxattr(const struct xattr_handler *handler,
++				struct user_namespace *mnt_userns,
+ 				struct dentry *unused, struct inode *inode,
+ 				const char *name, const void *buffer,
+ 				size_t size, int flags)
+diff --git a/fs/hfsplus/xattr_security.c b/fs/hfsplus/xattr_security.c
+index cfbe6a3bfb1e..c1c7a16cbf21 100644
+--- a/fs/hfsplus/xattr_security.c
++++ b/fs/hfsplus/xattr_security.c
+@@ -23,6 +23,7 @@ static int hfsplus_security_getxattr(const struct xattr_handler *handler,
+ }
+ 
+ static int hfsplus_security_setxattr(const struct xattr_handler *handler,
++				     struct user_namespace *mnt_userns,
+ 				     struct dentry *unused, struct inode *inode,
+ 				     const char *name, const void *buffer,
+ 				     size_t size, int flags)
+diff --git a/fs/hfsplus/xattr_trusted.c b/fs/hfsplus/xattr_trusted.c
+index fbad91e1dada..e150372ec564 100644
+--- a/fs/hfsplus/xattr_trusted.c
++++ b/fs/hfsplus/xattr_trusted.c
+@@ -22,6 +22,7 @@ static int hfsplus_trusted_getxattr(const struct xattr_handler *handler,
+ }
+ 
+ static int hfsplus_trusted_setxattr(const struct xattr_handler *handler,
++				    struct user_namespace *mnt_userns,
+ 				    struct dentry *unused, struct inode *inode,
+ 				    const char *name, const void *buffer,
+ 				    size_t size, int flags)
+diff --git a/fs/hfsplus/xattr_user.c b/fs/hfsplus/xattr_user.c
+index 74d19faf255e..a6b60b153916 100644
+--- a/fs/hfsplus/xattr_user.c
++++ b/fs/hfsplus/xattr_user.c
+@@ -22,6 +22,7 @@ static int hfsplus_user_getxattr(const struct xattr_handler *handler,
+ }
+ 
+ static int hfsplus_user_setxattr(const struct xattr_handler *handler,
++				 struct user_namespace *mnt_userns,
+ 				 struct dentry *unused, struct inode *inode,
+ 				 const char *name, const void *buffer,
+ 				 size_t size, int flags)
+diff --git a/fs/jffs2/acl.c b/fs/jffs2/acl.c
+index 093ffbd82395..cf07a2fdf8bf 100644
+--- a/fs/jffs2/acl.c
++++ b/fs/jffs2/acl.c
+@@ -236,7 +236,7 @@ int jffs2_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+ 		if (acl) {
+ 			umode_t mode;
+ 
+-			rc = posix_acl_update_mode(inode, &mode, &acl);
++			rc = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
+ 			if (rc)
+ 				return rc;
+ 			if (inode->i_mode != mode) {
+diff --git a/fs/jffs2/fs.c b/fs/jffs2/fs.c
+index 67993808f4da..ee9f51bab4c6 100644
+--- a/fs/jffs2/fs.c
++++ b/fs/jffs2/fs.c
+@@ -201,7 +201,7 @@ int jffs2_setattr(struct dentry *dentry, struct iattr *iattr)
+ 
+ 	rc = jffs2_do_setattr(inode, iattr);
+ 	if (!rc && (iattr->ia_valid & ATTR_MODE))
+-		rc = posix_acl_chmod(inode, inode->i_mode);
++		rc = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
+ 
+ 	return rc;
+ }
+diff --git a/fs/jffs2/security.c b/fs/jffs2/security.c
+index c2332e30f218..aef5522551db 100644
+--- a/fs/jffs2/security.c
++++ b/fs/jffs2/security.c
+@@ -57,6 +57,7 @@ static int jffs2_security_getxattr(const struct xattr_handler *handler,
+ }
+ 
+ static int jffs2_security_setxattr(const struct xattr_handler *handler,
++				   struct user_namespace *mnt_userns,
+ 				   struct dentry *unused, struct inode *inode,
+ 				   const char *name, const void *buffer,
+ 				   size_t size, int flags)
+diff --git a/fs/jffs2/xattr_trusted.c b/fs/jffs2/xattr_trusted.c
+index 5d6030826c52..cc3f24883e7d 100644
+--- a/fs/jffs2/xattr_trusted.c
++++ b/fs/jffs2/xattr_trusted.c
+@@ -25,6 +25,7 @@ static int jffs2_trusted_getxattr(const struct xattr_handler *handler,
+ }
+ 
+ static int jffs2_trusted_setxattr(const struct xattr_handler *handler,
++				  struct user_namespace *mnt_userns,
+ 				  struct dentry *unused, struct inode *inode,
+ 				  const char *name, const void *buffer,
+ 				  size_t size, int flags)
+diff --git a/fs/jffs2/xattr_user.c b/fs/jffs2/xattr_user.c
+index 9d027b4abcf9..fb945977c013 100644
+--- a/fs/jffs2/xattr_user.c
++++ b/fs/jffs2/xattr_user.c
+@@ -25,6 +25,7 @@ static int jffs2_user_getxattr(const struct xattr_handler *handler,
+ }
+ 
+ static int jffs2_user_setxattr(const struct xattr_handler *handler,
++			       struct user_namespace *mnt_userns,
+ 			       struct dentry *unused, struct inode *inode,
+ 			       const char *name, const void *buffer,
+ 			       size_t size, int flags)
+diff --git a/fs/jfs/acl.c b/fs/jfs/acl.c
+index 92cc0ac2d1fc..cf79a34bfada 100644
+--- a/fs/jfs/acl.c
++++ b/fs/jfs/acl.c
+@@ -101,7 +101,7 @@ int jfs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+ 	tid = txBegin(inode->i_sb, 0);
+ 	mutex_lock(&JFS_IP(inode)->commit_mutex);
+ 	if (type == ACL_TYPE_ACCESS && acl) {
+-		rc = posix_acl_update_mode(inode, &mode, &acl);
++		rc = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
+ 		if (rc)
+ 			goto end_tx;
+ 		if (mode != inode->i_mode)
+diff --git a/fs/jfs/file.c b/fs/jfs/file.c
+index ff49876e9c9b..61c3b0c1fbf6 100644
+--- a/fs/jfs/file.c
++++ b/fs/jfs/file.c
+@@ -122,7 +122,7 @@ int jfs_setattr(struct dentry *dentry, struct iattr *iattr)
+ 	mark_inode_dirty(inode);
+ 
+ 	if (iattr->ia_valid & ATTR_MODE)
+-		rc = posix_acl_chmod(inode, inode->i_mode);
++		rc = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
+ 	return rc;
+ }
+ 
+diff --git a/fs/jfs/xattr.c b/fs/jfs/xattr.c
+index db41e7803163..f9273f6901c8 100644
+--- a/fs/jfs/xattr.c
++++ b/fs/jfs/xattr.c
+@@ -932,6 +932,7 @@ static int jfs_xattr_get(const struct xattr_handler *handler,
+ }
+ 
+ static int jfs_xattr_set(const struct xattr_handler *handler,
++			 struct user_namespace *mnt_userns,
+ 			 struct dentry *unused, struct inode *inode,
+ 			 const char *name, const void *value,
+ 			 size_t size, int flags)
+@@ -950,6 +951,7 @@ static int jfs_xattr_get_os2(const struct xattr_handler *handler,
+ }
+ 
+ static int jfs_xattr_set_os2(const struct xattr_handler *handler,
++			     struct user_namespace *mnt_userns,
+ 			     struct dentry *unused, struct inode *inode,
+ 			     const char *name, const void *value,
+ 			     size_t size, int flags)
+diff --git a/fs/kernfs/inode.c b/fs/kernfs/inode.c
+index 86bd4c593b78..7e44052b42e1 100644
+--- a/fs/kernfs/inode.c
++++ b/fs/kernfs/inode.c
+@@ -319,6 +319,7 @@ static int kernfs_vfs_xattr_get(const struct xattr_handler *handler,
+ }
+ 
+ static int kernfs_vfs_xattr_set(const struct xattr_handler *handler,
++				struct user_namespace *mnt_userns,
+ 				struct dentry *unused, struct inode *inode,
+ 				const char *suffix, const void *value,
+ 				size_t size, int flags)
+@@ -385,6 +386,7 @@ static int kernfs_vfs_user_xattr_rm(struct kernfs_node *kn,
+ }
+ 
+ static int kernfs_vfs_user_xattr_set(const struct xattr_handler *handler,
++				     struct user_namespace *mnt_userns,
+ 				     struct dentry *unused, struct inode *inode,
+ 				     const char *suffix, const void *value,
+ 				     size_t size, int flags)
+diff --git a/fs/nfs/nfs4proc.c b/fs/nfs/nfs4proc.c
+index 0ce04e0e5d82..98ac98bb999c 100644
+--- a/fs/nfs/nfs4proc.c
++++ b/fs/nfs/nfs4proc.c
+@@ -7497,6 +7497,7 @@ nfs4_release_lockowner(struct nfs_server *server, struct nfs4_lock_state *lsp)
+ #define XATTR_NAME_NFSV4_ACL "system.nfs4_acl"
+ 
+ static int nfs4_xattr_set_nfs4_acl(const struct xattr_handler *handler,
++				   struct user_namespace *mnt_userns,
+ 				   struct dentry *unused, struct inode *inode,
+ 				   const char *key, const void *buf,
+ 				   size_t buflen, int flags)
+@@ -7519,6 +7520,7 @@ static bool nfs4_xattr_list_nfs4_acl(struct dentry *dentry)
+ #ifdef CONFIG_NFS_V4_SECURITY_LABEL
+ 
+ static int nfs4_xattr_set_nfs4_label(const struct xattr_handler *handler,
++				     struct user_namespace *mnt_userns,
+ 				     struct dentry *unused, struct inode *inode,
+ 				     const char *key, const void *buf,
+ 				     size_t buflen, int flags)
+@@ -7569,6 +7571,7 @@ nfs4_listxattr_nfs4_label(struct inode *inode, char *list, size_t list_len)
+ 
+ #ifdef CONFIG_NFS_V4_2
+ static int nfs4_xattr_set_nfs4_user(const struct xattr_handler *handler,
++				    struct user_namespace *mnt_userns,
+ 				    struct dentry *unused, struct inode *inode,
+ 				    const char *key, const void *buf,
+ 				    size_t buflen, int flags)
+diff --git a/fs/nfsd/nfs2acl.c b/fs/nfsd/nfs2acl.c
+index b0f66604532a..6808645cb6b0 100644
+--- a/fs/nfsd/nfs2acl.c
++++ b/fs/nfsd/nfs2acl.c
+@@ -113,10 +113,10 @@ static __be32 nfsacld_proc_setacl(struct svc_rqst *rqstp)
+ 
+ 	fh_lock(fh);
+ 
+-	error = set_posix_acl(inode, ACL_TYPE_ACCESS, argp->acl_access);
++	error = set_posix_acl(&init_user_ns, inode, ACL_TYPE_ACCESS, argp->acl_access);
+ 	if (error)
+ 		goto out_drop_lock;
+-	error = set_posix_acl(inode, ACL_TYPE_DEFAULT, argp->acl_default);
++	error = set_posix_acl(&init_user_ns, inode, ACL_TYPE_DEFAULT, argp->acl_default);
+ 	if (error)
+ 		goto out_drop_lock;
+ 
+diff --git a/fs/nfsd/nfs3acl.c b/fs/nfsd/nfs3acl.c
+index 7c30876a31a1..c38a818ca041 100644
+--- a/fs/nfsd/nfs3acl.c
++++ b/fs/nfsd/nfs3acl.c
+@@ -103,10 +103,10 @@ static __be32 nfsd3_proc_setacl(struct svc_rqst *rqstp)
+ 
+ 	fh_lock(fh);
+ 
+-	error = set_posix_acl(inode, ACL_TYPE_ACCESS, argp->acl_access);
++	error = set_posix_acl(&init_user_ns, inode, ACL_TYPE_ACCESS, argp->acl_access);
+ 	if (error)
+ 		goto out_drop_lock;
+-	error = set_posix_acl(inode, ACL_TYPE_DEFAULT, argp->acl_default);
++	error = set_posix_acl(&init_user_ns, inode, ACL_TYPE_DEFAULT, argp->acl_default);
+ 
+ out_drop_lock:
+ 	fh_unlock(fh);
+diff --git a/fs/nfsd/nfs4acl.c b/fs/nfsd/nfs4acl.c
+index 71292a0d6f09..0b35bc490aee 100644
+--- a/fs/nfsd/nfs4acl.c
++++ b/fs/nfsd/nfs4acl.c
+@@ -781,12 +781,12 @@ nfsd4_set_nfs4_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
+ 
+ 	fh_lock(fhp);
+ 
+-	host_error = set_posix_acl(inode, ACL_TYPE_ACCESS, pacl);
++	host_error = set_posix_acl(&init_user_ns, inode, ACL_TYPE_ACCESS, pacl);
+ 	if (host_error < 0)
+ 		goto out_drop_lock;
+ 
+ 	if (S_ISDIR(inode->i_mode)) {
+-		host_error = set_posix_acl(inode, ACL_TYPE_DEFAULT, dpacl);
++		host_error = set_posix_acl(&init_user_ns, inode, ACL_TYPE_DEFAULT, dpacl);
+ 	}
+ 
+ out_drop_lock:
+diff --git a/fs/ocfs2/acl.c b/fs/ocfs2/acl.c
+index 7b07f5df3a29..7e64dbe93251 100644
+--- a/fs/ocfs2/acl.c
++++ b/fs/ocfs2/acl.c
+@@ -274,7 +274,7 @@ int ocfs2_iop_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+ 	if (type == ACL_TYPE_ACCESS && acl) {
+ 		umode_t mode;
+ 
+-		status = posix_acl_update_mode(inode, &mode, &acl);
++		status = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
+ 		if (status)
+ 			goto unlock;
+ 
+diff --git a/fs/ocfs2/xattr.c b/fs/ocfs2/xattr.c
+index 9ccd19d8f7b1..36ae47a4aef6 100644
+--- a/fs/ocfs2/xattr.c
++++ b/fs/ocfs2/xattr.c
+@@ -7249,6 +7249,7 @@ static int ocfs2_xattr_security_get(const struct xattr_handler *handler,
+ }
+ 
+ static int ocfs2_xattr_security_set(const struct xattr_handler *handler,
++				    struct user_namespace *mnt_userns,
+ 				    struct dentry *unused, struct inode *inode,
+ 				    const char *name, const void *value,
+ 				    size_t size, int flags)
+@@ -7321,6 +7322,7 @@ static int ocfs2_xattr_trusted_get(const struct xattr_handler *handler,
+ }
+ 
+ static int ocfs2_xattr_trusted_set(const struct xattr_handler *handler,
++				   struct user_namespace *mnt_userns,
+ 				   struct dentry *unused, struct inode *inode,
+ 				   const char *name, const void *value,
+ 				   size_t size, int flags)
+@@ -7351,6 +7353,7 @@ static int ocfs2_xattr_user_get(const struct xattr_handler *handler,
+ }
+ 
+ static int ocfs2_xattr_user_set(const struct xattr_handler *handler,
++				struct user_namespace *mnt_userns,
+ 				struct dentry *unused, struct inode *inode,
+ 				const char *name, const void *value,
+ 				size_t size, int flags)
+diff --git a/fs/orangefs/acl.c b/fs/orangefs/acl.c
+index a25e6c890975..ba55d61906c2 100644
+--- a/fs/orangefs/acl.c
++++ b/fs/orangefs/acl.c
+@@ -132,7 +132,7 @@ int orangefs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+ 		 * and "mode" to the new desired value. It is up to
+ 		 * us to propagate the new mode back to the server...
+ 		 */
+-		error = posix_acl_update_mode(inode, &iattr.ia_mode, &acl);
++		error = posix_acl_update_mode(&init_user_ns, inode, &iattr.ia_mode, &acl);
+ 		if (error) {
+ 			gossip_err("%s: posix_acl_update_mode err: %d\n",
+ 				   __func__,
+diff --git a/fs/orangefs/inode.c b/fs/orangefs/inode.c
+index 8ac9491ceb9a..563fe9ab8eb2 100644
+--- a/fs/orangefs/inode.c
++++ b/fs/orangefs/inode.c
+@@ -861,7 +861,7 @@ int __orangefs_setattr(struct inode *inode, struct iattr *iattr)
+ 
+ 	if (iattr->ia_valid & ATTR_MODE)
+ 		/* change mod on a file that has ACLs */
+-		ret = posix_acl_chmod(inode, inode->i_mode);
++		ret = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
+ 
+ 	ret = 0;
+ out:
+diff --git a/fs/orangefs/xattr.c b/fs/orangefs/xattr.c
+index bdc285aea360..9a5b757fbd2f 100644
+--- a/fs/orangefs/xattr.c
++++ b/fs/orangefs/xattr.c
+@@ -526,6 +526,7 @@ ssize_t orangefs_listxattr(struct dentry *dentry, char *buffer, size_t size)
+ }
+ 
+ static int orangefs_xattr_set_default(const struct xattr_handler *handler,
++				      struct user_namespace *mnt_userns,
+ 				      struct dentry *unused,
+ 				      struct inode *inode,
+ 				      const char *name,
+diff --git a/fs/overlayfs/super.c b/fs/overlayfs/super.c
+index 39b2e9aa0e5b..e24c995c5fd4 100644
+--- a/fs/overlayfs/super.c
++++ b/fs/overlayfs/super.c
+@@ -980,6 +980,7 @@ ovl_posix_acl_xattr_get(const struct xattr_handler *handler,
+ 
+ static int __maybe_unused
+ ovl_posix_acl_xattr_set(const struct xattr_handler *handler,
++			struct user_namespace *mnt_userns,
+ 			struct dentry *dentry, struct inode *inode,
+ 			const char *name, const void *value,
+ 			size_t size, int flags)
+@@ -1044,6 +1045,7 @@ static int ovl_own_xattr_get(const struct xattr_handler *handler,
+ }
+ 
+ static int ovl_own_xattr_set(const struct xattr_handler *handler,
++			     struct user_namespace *mnt_userns,
+ 			     struct dentry *dentry, struct inode *inode,
+ 			     const char *name, const void *value,
+ 			     size_t size, int flags)
+@@ -1059,6 +1061,7 @@ static int ovl_other_xattr_get(const struct xattr_handler *handler,
+ }
+ 
+ static int ovl_other_xattr_set(const struct xattr_handler *handler,
++			       struct user_namespace *mnt_userns,
+ 			       struct dentry *dentry, struct inode *inode,
+ 			       const char *name, const void *value,
+ 			       size_t size, int flags)
+diff --git a/fs/posix_acl.c b/fs/posix_acl.c
+index 9ce8214bfdac..7f579917195b 100644
+--- a/fs/posix_acl.c
++++ b/fs/posix_acl.c
+@@ -558,8 +558,21 @@ __posix_acl_chmod(struct posix_acl **acl, gfp_t gfp, umode_t mode)
+ }
+ EXPORT_SYMBOL(__posix_acl_chmod);
+ 
++/**
++ * posix_acl_chmod - chmod a posix acl
++ *
++ * @mnt_userns:	user namespace of the mount @inode was found from
++ * @inode:	inode to check permissions on
++ * @mode:	the new mode of @inode
 + *
 + * If the inode has been found through an idmapped mount the user namespace of
 + * the vfsmount must be passed through @mnt_userns. This function will then take
-+ * care to map the inode according to @mnt_userns before checking permissions.
-+ * On non-idmapped mounts or if permission checking is to be performed on the
-+ * raw inode simply passs init_user_ns.
-  */
--bool inode_owner_or_capable(const struct inode *inode)
-+bool inode_owner_or_capable(struct user_namespace *mnt_userns,
-+			    const struct inode *inode)
++ * care to map the inode according to @mnt_userns before checking permissions. On
++ * non-idmapped mounts or if permission checking is to be performed on the raw
++ * inode simply passs init_user_ns.
++ */
+ int
+-posix_acl_chmod(struct inode *inode, umode_t mode)
++posix_acl_chmod(struct user_namespace *mnt_userns, struct inode *inode, umode_t mode)
  {
-+	kuid_t i_uid;
- 	struct user_namespace *ns;
+ 	struct posix_acl *acl;
+ 	int ret = 0;
+@@ -638,9 +651,10 @@ EXPORT_SYMBOL_GPL(posix_acl_create);
  
--	if (uid_eq(current_fsuid(), inode->i_uid))
-+	i_uid = i_uid_into_mnt(mnt_userns, inode);
-+	if (uid_eq(current_fsuid(), i_uid))
- 		return true;
- 
- 	ns = current_user_ns();
--	if (kuid_has_mapping(ns, inode->i_uid) && ns_capable(ns, CAP_FOWNER))
-+	if (kuid_has_mapping(ns, i_uid) && ns_capable(ns, CAP_FOWNER))
- 		return true;
- 	return false;
- }
-diff --git a/fs/jfs/ioctl.c b/fs/jfs/ioctl.c
-index 10ee0ecca1a8..2581d4db58ff 100644
---- a/fs/jfs/ioctl.c
-+++ b/fs/jfs/ioctl.c
-@@ -76,7 +76,7 @@ long jfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 		if (err)
- 			return err;
- 
--		if (!inode_owner_or_capable(inode)) {
-+		if (!inode_owner_or_capable(&init_user_ns, inode)) {
- 			err = -EACCES;
- 			goto setflags_out;
- 		}
-diff --git a/fs/jfs/jfs_inode.c b/fs/jfs/jfs_inode.c
-index 4cef170630db..59379089e939 100644
---- a/fs/jfs/jfs_inode.c
-+++ b/fs/jfs/jfs_inode.c
-@@ -64,7 +64,7 @@ struct inode *ialloc(struct inode *parent, umode_t mode)
- 		goto fail_put;
- 	}
- 
--	inode_init_owner(inode, parent, mode);
-+	inode_init_owner(&init_user_ns, inode, parent, mode);
- 	/*
- 	 * New inodes need to save sane values on disk when
- 	 * uid & gid mount options are used
-diff --git a/fs/minix/bitmap.c b/fs/minix/bitmap.c
-index f4e5e5181a14..9115948c624e 100644
---- a/fs/minix/bitmap.c
-+++ b/fs/minix/bitmap.c
-@@ -252,7 +252,7 @@ struct inode *minix_new_inode(const struct inode *dir, umode_t mode, int *error)
- 		iput(inode);
- 		return NULL;
- 	}
--	inode_init_owner(inode, dir, mode);
-+	inode_init_owner(&init_user_ns, inode, dir, mode);
- 	inode->i_ino = j;
- 	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
- 	inode->i_blocks = 0;
-diff --git a/fs/namei.c b/fs/namei.c
-index 630a3b5be249..cd124e18cec5 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -1086,7 +1086,7 @@ int may_linkat(struct path *link)
- 	/* Source inode owner (or CAP_FOWNER) can hardlink all they like,
- 	 * otherwise, it must be a safe source.
- 	 */
--	if (safe_hardlink_source(inode) || inode_owner_or_capable(inode))
-+	if (safe_hardlink_source(inode) || inode_owner_or_capable(&init_user_ns, inode))
- 		return 0;
- 
- 	audit_log_path_denied(AUDIT_ANOM_LINK, "linkat");
-@@ -2938,7 +2938,7 @@ static int may_open(const struct path *path, int acc_mode, int flag)
- 	}
- 
- 	/* O_NOATIME can only be set by the owner or superuser */
--	if (flag & O_NOATIME && !inode_owner_or_capable(inode))
-+	if (flag & O_NOATIME && !inode_owner_or_capable(&init_user_ns, inode))
- 		return -EPERM;
- 
+ /**
+  * posix_acl_update_mode  -  update mode in set_acl
+- * @inode: target inode
+- * @mode_p: mode (pointer) for update
+- * @acl: acl pointer
++ * @mnt_userns:	user namespace of the mount @inode was found from
++ * @inode:	target inode
++ * @mode_p:	mode (pointer) for update
++ * @acl:	acl pointer
+  *
+  * Update the file mode when setting an ACL: compute the new file permission
+  * bits based on the ACL.  In addition, if the ACL is equivalent to the new
+@@ -649,10 +663,16 @@ EXPORT_SYMBOL_GPL(posix_acl_create);
+  * As with chmod, clear the setgid bit if the caller is not in the owning group
+  * or capable of CAP_FSETID (see inode_change_ok).
+  *
++ * If the inode has been found through an idmapped mount the user namespace of
++ * the vfsmount must be passed through @mnt_userns. This function will then take
++ * care to map the inode according to @mnt_userns before checking permissions. On
++ * non-idmapped mounts or if permission checking is to be performed on the raw
++ * inode simply passs init_user_ns.
++ *
+  * Called from set_acl inode operations.
+  */
+-int posix_acl_update_mode(struct inode *inode, umode_t *mode_p,
+-			  struct posix_acl **acl)
++int posix_acl_update_mode(struct user_namespace *mnt_userns, struct inode *inode,
++			  umode_t *mode_p, struct posix_acl **acl)
+ {
+ 	umode_t mode = inode->i_mode;
+ 	int error;
+@@ -662,8 +682,8 @@ int posix_acl_update_mode(struct inode *inode, umode_t *mode_p,
+ 		return error;
+ 	if (error == 0)
+ 		*acl = NULL;
+-	if (!in_group_p(inode->i_gid) &&
+-	    !capable_wrt_inode_uidgid(&init_user_ns, inode, CAP_FSETID))
++	if (!in_group_p(i_gid_into_mnt(mnt_userns, inode)) &&
++	    !capable_wrt_inode_uidgid(mnt_userns, inode, CAP_FSETID))
+ 		mode &= ~S_ISGID;
+ 	*mode_p = mode;
  	return 0;
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index b6517220cad5..11225a659736 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -348,7 +348,7 @@ struct inode *nilfs_new_inode(struct inode *dir, umode_t mode)
- 	/* reference count of i_bh inherits from nilfs_mdt_read_block() */
- 
- 	atomic64_inc(&root->inodes_count);
--	inode_init_owner(inode, dir, mode);
-+	inode_init_owner(&init_user_ns, inode, dir, mode);
- 	inode->i_ino = ino;
- 	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
- 
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index 07d26f61f22a..b053b40315bf 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -132,7 +132,7 @@ static int nilfs_ioctl_setflags(struct inode *inode, struct file *filp,
- 	unsigned int flags, oldflags;
- 	int ret;
- 
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EACCES;
- 
- 	if (get_user(flags, (int __user *)argp))
-diff --git a/fs/ocfs2/dlmfs/dlmfs.c b/fs/ocfs2/dlmfs/dlmfs.c
-index 583820ec63e2..37c7d03a6284 100644
---- a/fs/ocfs2/dlmfs/dlmfs.c
-+++ b/fs/ocfs2/dlmfs/dlmfs.c
-@@ -329,7 +329,7 @@ static struct inode *dlmfs_get_root_inode(struct super_block *sb)
- 
- 	if (inode) {
- 		inode->i_ino = get_next_ino();
--		inode_init_owner(inode, NULL, mode);
-+		inode_init_owner(&init_user_ns, inode, NULL, mode);
- 		inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
- 		inc_nlink(inode);
- 
-@@ -352,7 +352,7 @@ static struct inode *dlmfs_get_inode(struct inode *parent,
- 		return NULL;
- 
- 	inode->i_ino = get_next_ino();
--	inode_init_owner(inode, parent, mode);
-+	inode_init_owner(&init_user_ns, inode, parent, mode);
- 	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
- 
- 	ip = DLMFS_I(inode);
-diff --git a/fs/ocfs2/ioctl.c b/fs/ocfs2/ioctl.c
-index 89984172fc4a..50c9b30ee9f6 100644
---- a/fs/ocfs2/ioctl.c
-+++ b/fs/ocfs2/ioctl.c
-@@ -96,7 +96,7 @@ static int ocfs2_set_inode_attr(struct inode *inode, unsigned flags,
+@@ -675,7 +695,8 @@ EXPORT_SYMBOL(posix_acl_update_mode);
+  */
+ static void posix_acl_fix_xattr_userns(
+ 	struct user_namespace *to, struct user_namespace *from,
+-	void *value, size_t size)
++	struct user_namespace *mnt_userns,
++	void *value, size_t size, bool from_user)
+ {
+ 	struct posix_acl_xattr_header *header = value;
+ 	struct posix_acl_xattr_entry *entry = (void *)(header + 1), *end;
+@@ -700,10 +721,18 @@ static void posix_acl_fix_xattr_userns(
+ 		switch(le16_to_cpu(entry->e_tag)) {
+ 		case ACL_USER:
+ 			uid = make_kuid(from, le32_to_cpu(entry->e_id));
++			if (from_user)
++				uid = kuid_from_mnt(mnt_userns, uid);
++			else
++				uid = kuid_into_mnt(mnt_userns, uid);
+ 			entry->e_id = cpu_to_le32(from_kuid(to, uid));
+ 			break;
+ 		case ACL_GROUP:
+ 			gid = make_kgid(from, le32_to_cpu(entry->e_id));
++			if (from_user)
++				gid = kgid_from_mnt(mnt_userns, gid);
++			else
++				gid = kgid_into_mnt(mnt_userns, gid);
+ 			entry->e_id = cpu_to_le32(from_kgid(to, gid));
+ 			break;
+ 		default:
+@@ -712,20 +741,22 @@ static void posix_acl_fix_xattr_userns(
  	}
+ }
  
- 	status = -EACCES;
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		goto bail_unlock;
+-void posix_acl_fix_xattr_from_user(void *value, size_t size)
++void posix_acl_fix_xattr_from_user(struct user_namespace *mnt_userns,
++				   void *value, size_t size)
+ {
+ 	struct user_namespace *user_ns = current_user_ns();
+-	if (user_ns == &init_user_ns)
++	if ((user_ns == &init_user_ns) && (mnt_userns == &init_user_ns))
+ 		return;
+-	posix_acl_fix_xattr_userns(&init_user_ns, user_ns, value, size);
++	posix_acl_fix_xattr_userns(&init_user_ns, user_ns, mnt_userns, value, size, true);
+ }
  
- 	if (!S_ISDIR(inode->i_mode))
-diff --git a/fs/ocfs2/namei.c b/fs/ocfs2/namei.c
-index 2a237ab00453..908b79e1082b 100644
---- a/fs/ocfs2/namei.c
-+++ b/fs/ocfs2/namei.c
-@@ -198,7 +198,7 @@ static struct inode *ocfs2_get_init_inode(struct inode *dir, umode_t mode)
- 	 * callers. */
- 	if (S_ISDIR(mode))
- 		set_nlink(inode, 2);
--	inode_init_owner(inode, dir, mode);
-+	inode_init_owner(&init_user_ns, inode, dir, mode);
- 	status = dquot_initialize(inode);
- 	if (status)
- 		return ERR_PTR(status);
-diff --git a/fs/omfs/inode.c b/fs/omfs/inode.c
-index ce93ccca8639..2a0e83236c01 100644
---- a/fs/omfs/inode.c
-+++ b/fs/omfs/inode.c
-@@ -48,7 +48,7 @@ struct inode *omfs_new_inode(struct inode *dir, umode_t mode)
- 		goto fail;
+-void posix_acl_fix_xattr_to_user(void *value, size_t size)
++void posix_acl_fix_xattr_to_user(struct user_namespace *mnt_userns,
++				 void *value, size_t size)
+ {
+ 	struct user_namespace *user_ns = current_user_ns();
+-	if (user_ns == &init_user_ns)
++	if ((user_ns == &init_user_ns) && (mnt_userns == &init_user_ns))
+ 		return;
+-	posix_acl_fix_xattr_userns(user_ns, &init_user_ns, value, size);
++	posix_acl_fix_xattr_userns(user_ns, &init_user_ns, mnt_userns, value, size, false);
+ }
  
- 	inode->i_ino = new_block;
--	inode_init_owner(inode, NULL, mode);
-+	inode_init_owner(&init_user_ns, inode, NULL, mode);
- 	inode->i_mapping->a_ops = &omfs_aops;
+ /*
+@@ -865,7 +896,8 @@ posix_acl_xattr_get(const struct xattr_handler *handler,
+ }
  
- 	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
-diff --git a/fs/overlayfs/dir.c b/fs/overlayfs/dir.c
-index 28a075b5f5b2..98a23353b19a 100644
---- a/fs/overlayfs/dir.c
-+++ b/fs/overlayfs/dir.c
-@@ -636,7 +636,7 @@ static int ovl_create_object(struct dentry *dentry, int mode, dev_t rdev,
- 	inode->i_state |= I_CREATING;
- 	spin_unlock(&inode->i_lock);
- 
--	inode_init_owner(inode, dentry->d_parent->d_inode, mode);
-+	inode_init_owner(&init_user_ns, inode, dentry->d_parent->d_inode, mode);
- 	attr.mode = inode->i_mode;
- 
- 	err = ovl_create_or_link(dentry, inode, &attr, false);
-diff --git a/fs/overlayfs/file.c b/fs/overlayfs/file.c
-index b2948e7b3210..7d8b84c715b3 100644
---- a/fs/overlayfs/file.c
-+++ b/fs/overlayfs/file.c
-@@ -54,7 +54,7 @@ static struct file *ovl_open_realfile(const struct file *file,
- 	if (err) {
- 		realfile = ERR_PTR(err);
- 	} else {
--		if (!inode_owner_or_capable(realinode))
-+		if (!inode_owner_or_capable(&init_user_ns, realinode))
- 			flags &= ~O_NOATIME;
- 
- 		realfile = open_with_fake_path(&file->f_path, flags, realinode,
-@@ -520,7 +520,7 @@ static long ovl_ioctl_set_flags(struct file *file, unsigned int cmd,
- 	long ret;
- 	struct inode *inode = file_inode(file);
- 
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		return -EACCES;
- 
- 	ret = mnt_want_write_file(file);
-diff --git a/fs/overlayfs/super.c b/fs/overlayfs/super.c
-index 88d877787770..3e925deaa19a 100644
---- a/fs/overlayfs/super.c
-+++ b/fs/overlayfs/super.c
-@@ -1005,7 +1005,7 @@ ovl_posix_acl_xattr_set(const struct xattr_handler *handler,
- 		goto out_acl_release;
- 	}
- 	err = -EPERM;
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
- 		goto out_acl_release;
- 
- 	posix_acl_release(acl);
-diff --git a/fs/overlayfs/util.c b/fs/overlayfs/util.c
-index de5c2047a0e9..06013b7b1e87 100644
---- a/fs/overlayfs/util.c
-+++ b/fs/overlayfs/util.c
-@@ -484,7 +484,7 @@ struct file *ovl_path_open(struct path *path, int flags)
- 		return ERR_PTR(err);
- 
- 	/* O_NOATIME is an optimization, don't fail if not permitted */
--	if (inode_owner_or_capable(inode))
-+	if (inode_owner_or_capable(&init_user_ns, inode))
- 		flags |= O_NOATIME;
- 
- 	return dentry_open(path, flags, current_cred());
-diff --git a/fs/posix_acl.c b/fs/posix_acl.c
-index 5d9fe2fb2953..9ce8214bfdac 100644
---- a/fs/posix_acl.c
-+++ b/fs/posix_acl.c
-@@ -874,7 +874,7 @@ set_posix_acl(struct inode *inode, int type, struct posix_acl *acl)
+ int
+-set_posix_acl(struct inode *inode, int type, struct posix_acl *acl)
++set_posix_acl(struct user_namespace *mnt_userns, struct inode *inode,
++	      int type, struct posix_acl *acl)
+ {
+ 	if (!IS_POSIXACL(inode))
+ 		return -EOPNOTSUPP;
+@@ -874,7 +906,7 @@ set_posix_acl(struct inode *inode, int type, struct posix_acl *acl)
  
  	if (type == ACL_TYPE_DEFAULT && !S_ISDIR(inode->i_mode))
  		return acl ? -EACCES : 0;
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
+-	if (!inode_owner_or_capable(&init_user_ns, inode))
++	if (!inode_owner_or_capable(mnt_userns, inode))
  		return -EPERM;
  
  	if (acl) {
-diff --git a/fs/ramfs/inode.c b/fs/ramfs/inode.c
-index ee179a81b3da..3fd4326f36b5 100644
---- a/fs/ramfs/inode.c
-+++ b/fs/ramfs/inode.c
-@@ -67,7 +67,7 @@ struct inode *ramfs_get_inode(struct super_block *sb,
+@@ -888,9 +920,10 @@ EXPORT_SYMBOL(set_posix_acl);
  
- 	if (inode) {
- 		inode->i_ino = get_next_ino();
--		inode_init_owner(inode, dir, mode);
-+		inode_init_owner(&init_user_ns, inode, dir, mode);
- 		inode->i_mapping->a_ops = &ramfs_aops;
- 		mapping_set_gfp_mask(inode->i_mapping, GFP_HIGHUSER);
- 		mapping_set_unevictable(inode->i_mapping);
-diff --git a/fs/reiserfs/ioctl.c b/fs/reiserfs/ioctl.c
-index adb21bea3d60..4f1cbd930179 100644
---- a/fs/reiserfs/ioctl.c
-+++ b/fs/reiserfs/ioctl.c
-@@ -59,7 +59,7 @@ long reiserfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 			if (err)
- 				break;
+ static int
+ posix_acl_xattr_set(const struct xattr_handler *handler,
+-		    struct dentry *unused, struct inode *inode,
+-		    const char *name, const void *value,
+-		    size_t size, int flags)
++			   struct user_namespace *mnt_userns,
++			   struct dentry *unused, struct inode *inode,
++			   const char *name, const void *value, size_t size,
++			   int flags)
+ {
+ 	struct posix_acl *acl = NULL;
+ 	int ret;
+@@ -900,7 +933,7 @@ posix_acl_xattr_set(const struct xattr_handler *handler,
+ 		if (IS_ERR(acl))
+ 			return PTR_ERR(acl);
+ 	}
+-	ret = set_posix_acl(inode, handler->flags, acl);
++	ret = set_posix_acl(mnt_userns, inode, handler->flags, acl);
+ 	posix_acl_release(acl);
+ 	return ret;
+ }
+@@ -934,7 +967,7 @@ int simple_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+ 	int error;
  
--			if (!inode_owner_or_capable(inode)) {
-+			if (!inode_owner_or_capable(&init_user_ns, inode)) {
- 				err = -EPERM;
- 				goto setflags_out;
- 			}
-@@ -101,7 +101,7 @@ long reiserfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 		err = put_user(inode->i_generation, (int __user *)arg);
- 		break;
- 	case REISERFS_IOC_SETVERSION:
--		if (!inode_owner_or_capable(inode)) {
-+		if (!inode_owner_or_capable(&init_user_ns, inode)) {
- 			err = -EPERM;
- 			break;
- 		}
-diff --git a/fs/reiserfs/namei.c b/fs/reiserfs/namei.c
-index 1594687582f0..a67a7d371725 100644
---- a/fs/reiserfs/namei.c
-+++ b/fs/reiserfs/namei.c
-@@ -615,7 +615,7 @@ static int new_inode_init(struct inode *inode, struct inode *dir, umode_t mode)
- 	 * the quota init calls have to know who to charge the quota to, so
- 	 * we have to set uid and gid here
- 	 */
--	inode_init_owner(inode, dir, mode);
-+	inode_init_owner(&init_user_ns, inode, dir, mode);
- 	return dquot_initialize(inode);
+ 	if (type == ACL_TYPE_ACCESS) {
+-		error = posix_acl_update_mode(inode,
++		error = posix_acl_update_mode(&init_user_ns, inode,
+ 				&inode->i_mode, &acl);
+ 		if (error)
+ 			return error;
+diff --git a/fs/reiserfs/xattr_acl.c b/fs/reiserfs/xattr_acl.c
+index ccd40df6eb45..b8f397134c17 100644
+--- a/fs/reiserfs/xattr_acl.c
++++ b/fs/reiserfs/xattr_acl.c
+@@ -40,7 +40,7 @@ reiserfs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+ 	reiserfs_write_unlock(inode->i_sb);
+ 	if (error == 0) {
+ 		if (type == ACL_TYPE_ACCESS && acl) {
+-			error = posix_acl_update_mode(inode, &mode, &acl);
++			error = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
+ 			if (error)
+ 				goto unlock;
+ 			update_mode = 1;
+@@ -399,5 +399,5 @@ int reiserfs_acl_chmod(struct inode *inode)
+ 	    !reiserfs_posixacl(inode->i_sb))
+ 		return 0;
+ 
+-	return posix_acl_chmod(inode, inode->i_mode);
++	return posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
+ }
+diff --git a/fs/reiserfs/xattr_security.c b/fs/reiserfs/xattr_security.c
+index 20be9a0e5870..3411ce2bfbd0 100644
+--- a/fs/reiserfs/xattr_security.c
++++ b/fs/reiserfs/xattr_security.c
+@@ -21,7 +21,8 @@ security_get(const struct xattr_handler *handler, struct dentry *unused,
  }
  
-diff --git a/fs/sysv/ialloc.c b/fs/sysv/ialloc.c
-index 6c9801986af6..50df794a3c1f 100644
---- a/fs/sysv/ialloc.c
-+++ b/fs/sysv/ialloc.c
-@@ -163,7 +163,7 @@ struct inode * sysv_new_inode(const struct inode * dir, umode_t mode)
- 	*sbi->s_sb_fic_count = cpu_to_fs16(sbi, count);
- 	fs16_add(sbi, sbi->s_sb_total_free_inodes, -1);
- 	dirty_sb(sb);
--	inode_init_owner(inode, dir, mode);
-+	inode_init_owner(&init_user_ns, inode, dir, mode);
- 	inode->i_ino = fs16_to_cpu(sbi, ino);
- 	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
- 	inode->i_blocks = 0;
-diff --git a/fs/ubifs/dir.c b/fs/ubifs/dir.c
-index 9a6b8660425a..694e7714545b 100644
---- a/fs/ubifs/dir.c
-+++ b/fs/ubifs/dir.c
-@@ -94,7 +94,7 @@ struct inode *ubifs_new_inode(struct ubifs_info *c, struct inode *dir,
- 	 */
- 	inode->i_flags |= S_NOCMTIME;
+ static int
+-security_set(const struct xattr_handler *handler, struct dentry *unused,
++security_set(const struct xattr_handler *handler, struct user_namespace *mnt_userns,
++	     struct dentry *unused,
+ 	     struct inode *inode, const char *name, const void *buffer,
+ 	     size_t size, int flags)
+ {
+diff --git a/fs/reiserfs/xattr_trusted.c b/fs/reiserfs/xattr_trusted.c
+index 5ed48da3d02b..d338a24f26e7 100644
+--- a/fs/reiserfs/xattr_trusted.c
++++ b/fs/reiserfs/xattr_trusted.c
+@@ -20,7 +20,8 @@ trusted_get(const struct xattr_handler *handler, struct dentry *unused,
+ }
  
--	inode_init_owner(inode, dir, mode);
-+	inode_init_owner(&init_user_ns, inode, dir, mode);
- 	inode->i_mtime = inode->i_atime = inode->i_ctime =
- 			 current_time(inode);
- 	inode->i_mapping->nrpages = 0;
-diff --git a/fs/ubifs/ioctl.c b/fs/ubifs/ioctl.c
-index 4363d85a3fd4..2326d5122beb 100644
---- a/fs/ubifs/ioctl.c
-+++ b/fs/ubifs/ioctl.c
-@@ -155,7 +155,7 @@ long ubifs_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 		if (IS_RDONLY(inode))
- 			return -EROFS;
+ static int
+-trusted_set(const struct xattr_handler *handler, struct dentry *unused,
++trusted_set(const struct xattr_handler *handler, struct user_namespace *mnt_userns,
++	    struct dentry *unused,
+ 	    struct inode *inode, const char *name, const void *buffer,
+ 	    size_t size, int flags)
+ {
+diff --git a/fs/reiserfs/xattr_user.c b/fs/reiserfs/xattr_user.c
+index a573ca45bacc..65d9cd10a5ea 100644
+--- a/fs/reiserfs/xattr_user.c
++++ b/fs/reiserfs/xattr_user.c
+@@ -18,7 +18,8 @@ user_get(const struct xattr_handler *handler, struct dentry *unused,
+ }
  
--		if (!inode_owner_or_capable(inode))
-+		if (!inode_owner_or_capable(&init_user_ns, inode))
- 			return -EACCES;
+ static int
+-user_set(const struct xattr_handler *handler, struct dentry *unused,
++user_set(const struct xattr_handler *handler, struct user_namespace *mnt_userns,
++	 struct dentry *unused,
+ 	 struct inode *inode, const char *name, const void *buffer,
+ 	 size_t size, int flags)
+ {
+diff --git a/fs/ubifs/xattr.c b/fs/ubifs/xattr.c
+index a0b9b349efe6..8f4135c22ab6 100644
+--- a/fs/ubifs/xattr.c
++++ b/fs/ubifs/xattr.c
+@@ -681,6 +681,7 @@ static int xattr_get(const struct xattr_handler *handler,
+ }
  
- 		if (get_user(flags, (int __user *) arg))
-diff --git a/fs/udf/ialloc.c b/fs/udf/ialloc.c
-index 84ed23edebfd..2ecf0e87660e 100644
---- a/fs/udf/ialloc.c
-+++ b/fs/udf/ialloc.c
-@@ -103,7 +103,7 @@ struct inode *udf_new_inode(struct inode *dir, umode_t mode)
- 		mutex_unlock(&sbi->s_alloc_mutex);
- 	}
- 
--	inode_init_owner(inode, dir, mode);
-+	inode_init_owner(&init_user_ns, inode, dir, mode);
- 	if (UDF_QUERY_FLAG(sb, UDF_FLAG_UID_SET))
- 		inode->i_uid = sbi->s_uid;
- 	if (UDF_QUERY_FLAG(sb, UDF_FLAG_GID_SET))
-diff --git a/fs/ufs/ialloc.c b/fs/ufs/ialloc.c
-index 969fd60436d3..7e3e08c0166f 100644
---- a/fs/ufs/ialloc.c
-+++ b/fs/ufs/ialloc.c
-@@ -289,7 +289,7 @@ struct inode *ufs_new_inode(struct inode *dir, umode_t mode)
- 	ufs_mark_sb_dirty(sb);
- 
- 	inode->i_ino = cg * uspi->s_ipg + bit;
--	inode_init_owner(inode, dir, mode);
-+	inode_init_owner(&init_user_ns, inode, dir, mode);
- 	inode->i_blocks = 0;
- 	inode->i_generation = 0;
- 	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
+ static int xattr_set(const struct xattr_handler *handler,
++			   struct user_namespace *mnt_userns,
+ 			   struct dentry *dentry, struct inode *inode,
+ 			   const char *name, const void *value,
+ 			   size_t size, int flags)
 diff --git a/fs/xattr.c b/fs/xattr.c
-index 56151bd9e642..7773ed7e0562 100644
+index 7773ed7e0562..dc6068c6b7e5 100644
 --- a/fs/xattr.c
 +++ b/fs/xattr.c
-@@ -127,7 +127,7 @@ xattr_permission(struct inode *inode, const char *name, int mask)
- 		if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
- 			return (mask & MAY_WRITE) ? -EPERM : -ENODATA;
- 		if (S_ISDIR(inode->i_mode) && (inode->i_mode & S_ISVTX) &&
--		    (mask & MAY_WRITE) && !inode_owner_or_capable(inode))
-+		    (mask & MAY_WRITE) && !inode_owner_or_capable(&init_user_ns, inode))
- 			return -EPERM;
+@@ -174,7 +174,7 @@ __vfs_setxattr(struct dentry *dentry, struct inode *inode, const char *name,
+ 		return -EOPNOTSUPP;
+ 	if (size == 0)
+ 		value = "";  /* empty EA, do not remove */
+-	return handler->set(handler, dentry, inode, name, value, size, flags);
++	return handler->set(handler, &init_user_ns, dentry, inode, name, value, size, flags);
+ }
+ EXPORT_SYMBOL(__vfs_setxattr);
+ 
+@@ -280,7 +280,7 @@ vfs_setxattr(struct dentry *dentry, const char *name, const void *value,
+ 	int error;
+ 
+ 	if (size && strcmp(name, XATTR_NAME_CAPS) == 0) {
+-		error = cap_convert_nscap(dentry, &value, size);
++		error = cap_convert_nscap(&init_user_ns, dentry, &value, size);
+ 		if (error < 0)
+ 			return error;
+ 		size = error;
+@@ -449,7 +449,7 @@ __vfs_removexattr(struct dentry *dentry, const char *name)
+ 		return PTR_ERR(handler);
+ 	if (!handler->set)
+ 		return -EOPNOTSUPP;
+-	return handler->set(handler, dentry, inode, name, NULL, 0, XATTR_REPLACE);
++	return handler->set(handler, &init_user_ns, dentry, inode, name, NULL, 0, XATTR_REPLACE);
+ }
+ EXPORT_SYMBOL(__vfs_removexattr);
+ 
+@@ -547,7 +547,7 @@ setxattr(struct dentry *d, const char __user *name, const void __user *value,
+ 		}
+ 		if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
+ 		    (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
+-			posix_acl_fix_xattr_from_user(kvalue, size);
++			posix_acl_fix_xattr_from_user(&init_user_ns, kvalue, size);
  	}
  
-diff --git a/fs/xfs/xfs_ioctl.c b/fs/xfs/xfs_ioctl.c
-index 97bd29fc8c43..218e80afc859 100644
---- a/fs/xfs/xfs_ioctl.c
-+++ b/fs/xfs/xfs_ioctl.c
-@@ -1300,7 +1300,7 @@ xfs_ioctl_setattr_get_trans(
- 	 * The user ID of the calling process must be equal to the file owner
- 	 * ID, except in cases where the CAP_FSETID capability is applicable.
+ 	error = vfs_setxattr(d, kname, kvalue, size, flags);
+@@ -641,7 +641,7 @@ getxattr(struct dentry *d, const char __user *name, void __user *value,
+ 	if (error > 0) {
+ 		if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
+ 		    (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
+-			posix_acl_fix_xattr_to_user(kvalue, error);
++			posix_acl_fix_xattr_to_user(&init_user_ns, kvalue, error);
+ 		if (size && copy_to_user(value, kvalue, error))
+ 			error = -EFAULT;
+ 	} else if (error == -ERANGE && size >= XATTR_SIZE_MAX) {
+diff --git a/fs/xfs/xfs_acl.c b/fs/xfs/xfs_acl.c
+index 779cb73b3d00..0927247d656f 100644
+--- a/fs/xfs/xfs_acl.c
++++ b/fs/xfs/xfs_acl.c
+@@ -252,7 +252,7 @@ xfs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+ 		return error;
+ 
+ 	if (type == ACL_TYPE_ACCESS) {
+-		error = posix_acl_update_mode(inode, &mode, &acl);
++		error = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
+ 		if (error)
+ 			return error;
+ 		set_mode = true;
+diff --git a/fs/xfs/xfs_iops.c b/fs/xfs/xfs_iops.c
+index 08a478d25122..26d22edef741 100644
+--- a/fs/xfs/xfs_iops.c
++++ b/fs/xfs/xfs_iops.c
+@@ -807,7 +807,7 @@ xfs_setattr_nonsize(
+ 	 * 	     Posix ACL code seems to care about this issue either.
  	 */
--	if (!inode_owner_or_capable(VFS_I(ip))) {
-+	if (!inode_owner_or_capable(&init_user_ns, VFS_I(ip))) {
- 		error = -EPERM;
- 		goto out_cancel;
+ 	if (mask & ATTR_MODE) {
+-		error = posix_acl_chmod(inode, inode->i_mode);
++		error = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
+ 		if (error)
+ 			return error;
  	}
-diff --git a/fs/zonefs/super.c b/fs/zonefs/super.c
-index bec47f2d074b..569525ee8f69 100644
---- a/fs/zonefs/super.c
-+++ b/fs/zonefs/super.c
-@@ -1223,7 +1223,7 @@ static void zonefs_init_dir_inode(struct inode *parent, struct inode *inode,
- 	struct super_block *sb = parent->i_sb;
- 
- 	inode->i_ino = blkdev_nr_zones(sb->s_bdev->bd_disk) + type + 1;
--	inode_init_owner(inode, parent, S_IFDIR | 0555);
-+	inode_init_owner(&init_user_ns, inode, parent, S_IFDIR | 0555);
- 	inode->i_op = &zonefs_dir_inode_operations;
- 	inode->i_fop = &simple_dir_operations;
- 	set_nlink(inode, 2);
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index bf62306c22a8..430434317f9e 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1761,8 +1761,8 @@ static inline bool sb_start_intwrite_trylock(struct super_block *sb)
- 	return __sb_start_write_trylock(sb, SB_FREEZE_FS);
+diff --git a/fs/xfs/xfs_xattr.c b/fs/xfs/xfs_xattr.c
+index bca48b308c02..4ea08dd47826 100644
+--- a/fs/xfs/xfs_xattr.c
++++ b/fs/xfs/xfs_xattr.c
+@@ -38,7 +38,8 @@ xfs_xattr_get(const struct xattr_handler *handler, struct dentry *unused,
  }
  
--
--extern bool inode_owner_or_capable(const struct inode *inode);
-+extern bool inode_owner_or_capable(struct user_namespace *mnt_userns,
-+				   const struct inode *inode);
+ static int
+-xfs_xattr_set(const struct xattr_handler *handler, struct dentry *unused,
++xfs_xattr_set(const struct xattr_handler *handler, struct user_namespace *mnt_userns,
++		struct dentry *unused,
+ 		struct inode *inode, const char *name, const void *value,
+ 		size_t size, int flags)
+ {
+diff --git a/include/linux/capability.h b/include/linux/capability.h
+index 53d5acfd23c4..575436b977bc 100644
+--- a/include/linux/capability.h
++++ b/include/linux/capability.h
+@@ -273,6 +273,8 @@ static inline bool checkpoint_restore_ns_capable(struct user_namespace *ns)
+ /* audit system wants to get cap info from files as well */
+ extern int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps);
  
- /*
-  * VFS helper functions..
-@@ -1804,8 +1804,9 @@ extern long compat_ptr_ioctl(struct file *file, unsigned int cmd,
- /*
-  * VFS file helper functions.
-  */
--extern void inode_init_owner(struct inode *inode, const struct inode *dir,
--			umode_t mode);
-+extern void inode_init_owner(struct user_namespace *mnt_userns,
-+			     struct inode *inode, const struct inode *dir,
-+			     umode_t mode);
- extern bool may_open_dev(const struct path *path);
+-extern int cap_convert_nscap(struct dentry *dentry, const void **ivalue, size_t size);
++extern int cap_convert_nscap(struct user_namespace *mnt_userns,
++			     struct dentry *dentry, const void **ivalue,
++			     size_t size);
  
- /*
-diff --git a/kernel/bpf/inode.c b/kernel/bpf/inode.c
-index f1c393e5d47d..dd6f124c12c7 100644
---- a/kernel/bpf/inode.c
-+++ b/kernel/bpf/inode.c
-@@ -122,7 +122,7 @@ static struct inode *bpf_get_inode(struct super_block *sb,
- 	inode->i_mtime = inode->i_atime;
- 	inode->i_ctime = inode->i_atime;
+ #endif /* !_LINUX_CAPABILITY_H */
+diff --git a/include/linux/posix_acl.h b/include/linux/posix_acl.h
+index 8276baefed13..50e266fdaaef 100644
+--- a/include/linux/posix_acl.h
++++ b/include/linux/posix_acl.h
+@@ -71,13 +71,13 @@ extern int __posix_acl_create(struct posix_acl **, gfp_t, umode_t *);
+ extern int __posix_acl_chmod(struct posix_acl **, gfp_t, umode_t);
  
--	inode_init_owner(inode, dir, mode);
-+	inode_init_owner(&init_user_ns, inode, dir, mode);
+ extern struct posix_acl *get_posix_acl(struct inode *, int);
+-extern int set_posix_acl(struct inode *, int, struct posix_acl *);
++extern int set_posix_acl(struct user_namespace *, struct inode *, int, struct posix_acl *);
  
- 	return inode;
+ #ifdef CONFIG_FS_POSIX_ACL
+-extern int posix_acl_chmod(struct inode *, umode_t);
++extern int posix_acl_chmod(struct user_namespace *, struct inode *, umode_t);
+ extern int posix_acl_create(struct inode *, umode_t *, struct posix_acl **,
+ 		struct posix_acl **);
+-extern int posix_acl_update_mode(struct inode *, umode_t *, struct posix_acl **);
++extern int posix_acl_update_mode(struct user_namespace *, struct inode *, umode_t *, struct posix_acl **);
+ 
+ extern int simple_set_acl(struct inode *, struct posix_acl *, int);
+ extern int simple_acl_create(struct inode *, struct inode *);
+@@ -94,7 +94,8 @@ static inline void cache_no_acl(struct inode *inode)
+ 	inode->i_default_acl = NULL;
  }
-diff --git a/mm/madvise.c b/mm/madvise.c
-index bb44b1a4534b..6830ebe3fc5c 100644
---- a/mm/madvise.c
-+++ b/mm/madvise.c
-@@ -539,7 +539,7 @@ static inline bool can_do_pageout(struct vm_area_struct *vma)
- 	 * otherwise we'd be including shared non-exclusive mappings, which
- 	 * opens a side channel.
- 	 */
--	return inode_owner_or_capable(file_inode(vma->vm_file)) ||
-+	return inode_owner_or_capable(&init_user_ns, file_inode(vma->vm_file)) ||
- 		inode_permission(&init_user_ns, file_inode(vma->vm_file), MAY_WRITE) == 0;
+ #else
+-static inline int posix_acl_chmod(struct inode *inode, umode_t mode)
++static inline int posix_acl_chmod(struct user_namespace *mnt_userns,
++				  struct inode *inode, umode_t mode)
+ {
+ 	return 0;
+ }
+diff --git a/include/linux/posix_acl_xattr.h b/include/linux/posix_acl_xattr.h
+index 2387709991b5..060e8d203181 100644
+--- a/include/linux/posix_acl_xattr.h
++++ b/include/linux/posix_acl_xattr.h
+@@ -33,13 +33,17 @@ posix_acl_xattr_count(size_t size)
  }
  
-diff --git a/mm/mincore.c b/mm/mincore.c
-index d5a58e61eac6..ad2dfb7a4500 100644
---- a/mm/mincore.c
-+++ b/mm/mincore.c
-@@ -166,7 +166,7 @@ static inline bool can_do_mincore(struct vm_area_struct *vma)
- 	 * for writing; otherwise we'd be including shared non-exclusive
- 	 * mappings, which opens a side channel.
- 	 */
--	return inode_owner_or_capable(file_inode(vma->vm_file)) ||
-+	return inode_owner_or_capable(&init_user_ns, file_inode(vma->vm_file)) ||
- 		inode_permission(&init_user_ns, file_inode(vma->vm_file), MAY_WRITE) == 0;
+ #ifdef CONFIG_FS_POSIX_ACL
+-void posix_acl_fix_xattr_from_user(void *value, size_t size);
+-void posix_acl_fix_xattr_to_user(void *value, size_t size);
++void posix_acl_fix_xattr_from_user(struct user_namespace *mnt_userns,
++				   void *value, size_t size);
++void posix_acl_fix_xattr_to_user(struct user_namespace *mnt_userns,
++				 void *value, size_t size);
+ #else
+-static inline void posix_acl_fix_xattr_from_user(void *value, size_t size)
++static inline void posix_acl_fix_xattr_from_user(struct user_namespace *mnt_userns,
++						 void *value, size_t size)
+ {
  }
+-static inline void posix_acl_fix_xattr_to_user(void *value, size_t size)
++static inline void posix_acl_fix_xattr_to_user(struct user_namespace *mnt_userns,
++					       void *value, size_t size)
+ {
+ }
+ #endif
+diff --git a/include/linux/xattr.h b/include/linux/xattr.h
+index 10b4dc2709f0..d3c7ad273392 100644
+--- a/include/linux/xattr.h
++++ b/include/linux/xattr.h
+@@ -34,9 +34,9 @@ struct xattr_handler {
+ 	int (*get)(const struct xattr_handler *, struct dentry *dentry,
+ 		   struct inode *inode, const char *name, void *buffer,
+ 		   size_t size);
+-	int (*set)(const struct xattr_handler *, struct dentry *dentry,
+-		   struct inode *inode, const char *name, const void *buffer,
+-		   size_t size, int flags);
++	int (*set)(const struct xattr_handler *, struct user_namespace *mnt_userns,
++		   struct dentry *dentry, struct inode *inode, const char *name,
++		   const void *buffer, size_t size, int flags);
+ };
  
+ const char *xattr_full_name(const struct xattr_handler *, const char *);
 diff --git a/mm/shmem.c b/mm/shmem.c
-index 7c6b6d8f6c39..1c68c9edba5e 100644
+index 1cb451e131ec..23b8e9c15a42 100644
 --- a/mm/shmem.c
 +++ b/mm/shmem.c
-@@ -2303,7 +2303,7 @@ static struct inode *shmem_get_inode(struct super_block *sb, const struct inode
- 	inode = new_inode(sb);
- 	if (inode) {
- 		inode->i_ino = ino;
--		inode_init_owner(inode, dir, mode);
-+		inode_init_owner(&init_user_ns, inode, dir, mode);
- 		inode->i_blocks = 0;
- 		inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
- 		inode->i_generation = prandom_u32();
-diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
-index 644b17ec9e63..9d6d3da2caf2 100644
---- a/security/selinux/hooks.c
-+++ b/security/selinux/hooks.c
-@@ -3140,13 +3140,13 @@ static int selinux_inode_setxattr(struct dentry *dentry, const char *name,
- 	}
+@@ -1143,7 +1143,7 @@ static int shmem_setattr(struct dentry *dentry, struct iattr *attr)
  
- 	if (!selinux_initialized(&selinux_state))
--		return (inode_owner_or_capable(inode) ? 0 : -EPERM);
-+		return (inode_owner_or_capable(&init_user_ns, inode) ? 0 : -EPERM);
+ 	setattr_copy(&init_user_ns, inode, attr);
+ 	if (attr->ia_valid & ATTR_MODE)
+-		error = posix_acl_chmod(inode, inode->i_mode);
++		error = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
+ 	return error;
+ }
  
- 	sbsec = inode->i_sb->s_security;
- 	if (!(sbsec->flags & SBLABEL_MNT))
- 		return -EOPNOTSUPP;
+@@ -3273,6 +3273,7 @@ static int shmem_xattr_handler_get(const struct xattr_handler *handler,
+ }
  
--	if (!inode_owner_or_capable(inode))
-+	if (!inode_owner_or_capable(&init_user_ns, inode))
+ static int shmem_xattr_handler_set(const struct xattr_handler *handler,
++				   struct user_namespace *mnt_userns,
+ 				   struct dentry *unused, struct inode *inode,
+ 				   const char *name, const void *value,
+ 				   size_t size, int flags)
+diff --git a/net/socket.c b/net/socket.c
+index 33e8b6c4e1d3..c76703c6f480 100644
+--- a/net/socket.c
++++ b/net/socket.c
+@@ -334,6 +334,7 @@ static const struct xattr_handler sockfs_xattr_handler = {
+ };
+ 
+ static int sockfs_security_xattr_set(const struct xattr_handler *handler,
++				     struct user_namespace *mnt_userns,
+ 				     struct dentry *dentry, struct inode *inode,
+ 				     const char *suffix, const void *value,
+ 				     size_t size, int flags)
+diff --git a/security/commoncap.c b/security/commoncap.c
+index 88ee345f7bfa..9a0b97a099af 100644
+--- a/security/commoncap.c
++++ b/security/commoncap.c
+@@ -450,16 +450,34 @@ int cap_inode_getsecurity(struct inode *inode, const char *name, void **buffer,
+ 	return size;
+ }
+ 
++/**
++ * rootid_from_xattr - translate root uid of vfs caps
++ *
++ * @value:	vfs caps value which may be modified by this function
++ * @size:	size of @ivalue
++ * @task_ns:	user namespace of the caller
++ * @mnt_userns:	user namespace of the mount the inode was found from
++ *
++ * If the inode has been found through an idmapped mount the user namespace of
++ * the vfsmount must be passed through @mnt_userns. This function will then take
++ * care to map the inode according to @mnt_userns before checking permissions. On
++ * non-idmapped mounts or if permission checking is to be performed on the raw
++ * inode simply passs init_user_ns.
++ *
++ */
+ static kuid_t rootid_from_xattr(const void *value, size_t size,
+-				struct user_namespace *task_ns)
++				struct user_namespace *task_ns,
++				struct user_namespace *mnt_userns)
+ {
+ 	const struct vfs_ns_cap_data *nscap = value;
++	kuid_t rootkid;
+ 	uid_t rootid = 0;
+ 
+ 	if (size == XATTR_CAPS_SZ_3)
+ 		rootid = le32_to_cpu(nscap->rootid);
+ 
+-	return make_kuid(task_ns, rootid);
++	rootkid = make_kuid(task_ns, rootid);
++	return kuid_from_mnt(mnt_userns, rootkid);
+ }
+ 
+ static bool validheader(size_t size, const struct vfs_cap_data *cap)
+@@ -467,13 +485,27 @@ static bool validheader(size_t size, const struct vfs_cap_data *cap)
+ 	return is_v2header(size, cap) || is_v3header(size, cap);
+ }
+ 
+-/*
++/**
++ * cap_convert_nscap - check vfs caps
++ *
++ * @mnt_userns:	user namespace of the mount the inode was found from
++ * @dentry:	used to retrieve inode to check permissions on
++ * @ivalue:	vfs caps value which may be modified by this function
++ * @size:	size of @ivalue
++ *
+  * User requested a write of security.capability.  If needed, update the
+  * xattr to change from v2 to v3, or to fixup the v3 rootid.
+  *
++ * If the inode has been found through an idmapped mount the user namespace of
++ * the vfsmount must be passed through @mnt_userns. This function will then take
++ * care to map the inode according to @mnt_userns before checking permissions. On
++ * non-idmapped mounts or if permission checking is to be performed on the raw
++ * inode simply passs init_user_ns.
++ *
+  * If all is ok, we return the new size, on error return < 0.
+  */
+-int cap_convert_nscap(struct dentry *dentry, const void **ivalue, size_t size)
++int cap_convert_nscap(struct user_namespace *mnt_userns, struct dentry *dentry,
++		      const void **ivalue, size_t size)
+ {
+ 	struct vfs_ns_cap_data *nscap;
+ 	uid_t nsrootid;
+@@ -489,14 +521,14 @@ int cap_convert_nscap(struct dentry *dentry, const void **ivalue, size_t size)
+ 		return -EINVAL;
+ 	if (!validheader(size, cap))
+ 		return -EINVAL;
+-	if (!capable_wrt_inode_uidgid(&init_user_ns, inode, CAP_SETFCAP))
++	if (!capable_wrt_inode_uidgid(mnt_userns, inode, CAP_SETFCAP))
  		return -EPERM;
+-	if (size == XATTR_CAPS_SZ_2)
++	if (size == XATTR_CAPS_SZ_2 && (mnt_userns == &init_user_ns))
+ 		if (ns_capable(inode->i_sb->s_user_ns, CAP_SETFCAP))
+ 			/* user is privileged, just write the v2 */
+ 			return size;
  
- 	ad.type = LSM_AUDIT_DATA_DENTRY;
+-	rootid = rootid_from_xattr(*ivalue, size, task_ns);
++	rootid = rootid_from_xattr(*ivalue, size, task_ns, mnt_userns);
+ 	if (!uid_valid(rootid))
+ 		return -EINVAL;
+ 
+@@ -519,6 +551,7 @@ int cap_convert_nscap(struct dentry *dentry, const void **ivalue, size_t size)
+ 	*ivalue = nscap;
+ 	return newsize;
+ }
++EXPORT_SYMBOL(cap_convert_nscap);
+ 
+ /*
+  * Calculate the new process capability sets from the capability sets attached
 -- 
 2.30.0
 
