@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C0957C072AD
-	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:03:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1A868C43219
+	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:03:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 86A4D221F5
-	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:03:46 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D58BC221FF
+	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:03:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2393872AbhALWDi (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 12 Jan 2021 17:03:38 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:42912 "EHLO
+        id S2392466AbhALWDw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 12 Jan 2021 17:03:52 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:43004 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2393849AbhALWDi (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 12 Jan 2021 17:03:38 -0500
+        with ESMTP id S2393847AbhALWDv (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 12 Jan 2021 17:03:51 -0500
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kzRka-0003bd-SB; Tue, 12 Jan 2021 22:02:52 +0000
+        id 1kzRko-0003bd-DF; Tue, 12 Jan 2021 22:03:06 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -61,94 +61,150 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         linux-integrity@vger.kernel.org, selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v5 04/42] fs: split out functions to hold writers
-Date:   Tue, 12 Jan 2021 23:00:46 +0100
-Message-Id: <20210112220124.837960-5-christian.brauner@ubuntu.com>
+Subject: [PATCH v5 09/42] mount: attach mappings to mounts
+Date:   Tue, 12 Jan 2021 23:00:51 +0100
+Message-Id: <20210112220124.837960-10-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.30.0
 In-Reply-To: <20210112220124.837960-1-christian.brauner@ubuntu.com>
 References: <20210112220124.837960-1-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
-X-Patch-Hashes: v=1; h=sha256; i=tA4kasRGHqyT9lXmq5D7y93eprXCx71LRmCCdBBaY00=; m=nI7OMzVl1+0j2kjIaa7/usg9c4r2VoQ64Pjs5BnWA4U=; p=veHrsX8JHuzzEFPnrDDzG6jRQQ6VJXMdTLmV/Ias+FE=; g=4b5ff4be4775a50ca22b9c4a0244a22bea618b32
-X-Patch-Sig: m=pgp; i=christian.brauner@ubuntu.com; s=0x0x91C61BC06578DCA2; b=iHUEABYKAB0WIQRAhzRXHqcMeLMyaSiRxhvAZXjcogUCX/4YtQAKCRCRxhvAZXjcok/NAQDZl7g IMc+hu3azYgiyrffuzboK1p/OvP+06fVleHk9qQD9H3HRtaTr8Y5KdnnZgV9UsILzObq0ONhA0f3m 5I6ZBQw=
+X-Patch-Hashes: v=1; h=sha256; i=RNdtgoKaLGCMkof4zQAU3N/xXjoHA/9IvgBRCO94lyQ=; m=m4sUTX63tJxvlN1Z3yC4IXx3n9AwTpPsjK1VR2fo7TE=; p=ACCirFhhOVkzdjl4ucxJqbt+8lVejkyYQx6FbUt2W0Y=; g=4082bc07095b82d49722a5cf3c1cbde1a8cff890
+X-Patch-Sig: m=pgp; i=christian.brauner@ubuntu.com; s=0x0x91C61BC06578DCA2; b=iHUEABYKAB0WIQRAhzRXHqcMeLMyaSiRxhvAZXjcogUCX/4YtQAKCRCRxhvAZXjcojOHAPwJ60p Jde8zuYoECLqnZgXBRFHaHLBnEA7sZmKWUf76yQD/d0wHNPoB6SEzYiVZsKY/YVpkPJYpt2GB76b9 R2Jp6g4=
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-When a mount is marked read-only we set MNT_WRITE_HOLD on it if there
-aren't currently any active writers. Split this logic out into simple
-helpers that we can use in follow-up patches.
+In order to support per-mount idmappings vfsmounts will be marked with
+user namespaces. The idmapping associated with that user namespace will
+be used to map the ids of vfs objects when they are accessed through
+that mount. By default all vfsmounts are marked with the initial user
+namespace. The initial user namespace is used to indicate that a mount
+is not idmapped. All operations behave as before.
 
-Suggested-by: Christoph Hellwig <hch@lst.de>
+Based on prior discussions we want to attach the whole user namespace
+and not just a dedicated idmapping struct. This allows us to reuse all
+the helpers that already exist for dealing with idmappings instead of
+introducing a whole new range of helpers. In addition, if we decide in
+the future that we are confident enough to enable unprivileged users to
+setup idmapped mounts we can allow the user namespace an already
+idmapped mounts has been marked with to be replaced with another one.
+The permission checking would then take into account whether the caller
+is privileged in the user namespace the mount is currently marked with
+and that is about to be replaced with another one. For now, we will
+enforce in later patches that once a mount has been idmapped it can't be
+remapped. This keeps permission checking and life-cycle management
+simple, especially since users can always create a new mount with a
+different idmapping anyway.
+
+The idea to attach user namespaces to vfsmounts has been floated around
+in various forms at Linux Plumbers in ~2018 with the original idea
+tracing back to a discussion during a conference in St. Petersburg
+between Christoph, Tycho, and myself.
+
+Cc: Christoph Hellwig <hch@lst.de>
 Cc: David Howells <dhowells@redhat.com>
 Cc: Al Viro <viro@zeniv.linux.org.uk>
 Cc: linux-fsdevel@vger.kernel.org
-Reviewed-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
-patch not present
+patch introduced
+- Christoph Hellwig <hch@lst.de>:
+  - Split internal implementation into separate patch and move syscall
+    implementation later.
 
 /* v3 */
-patch not present
+- David Howells <dhowells@redhat.com>:
+  - Remove MNT_IDMAPPED flag. We can simply check the pointer and use
+    smp_load_acquire() in later patches.
+
+- Tycho Andersen <tycho@tycho.pizza>:
+  - Use READ_ONCE() in mnt_user_ns().
 
 /* v4 */
-patch introduced
+- Serge Hallyn <serge@hallyn.com>:
+  - Use "mnt_userns" to refer to a vfsmount's userns everywhere to make
+    terminology consistent.
+
+- Christoph Hellwig <hch@lst.de>:
+  - Drop the READ_ONCE() from this patch. At this point in the series we
+    don't allowing changing the vfsmount's userns. The infra to do that
+    is only introduced as almost the last patch in the series and there
+    we immediately use smp_load_acquire() and smp_store_release().
 
 /* v5 */
 base-commit: 7c53f6b671f4aba70ff15e1b05148b10d58c2837
 ---
- fs/namespace.c | 24 ++++++++++++++++++------
- 1 file changed, 18 insertions(+), 6 deletions(-)
+ fs/namespace.c        | 9 +++++++++
+ include/linux/fs.h    | 1 +
+ include/linux/mount.h | 6 ++++++
+ 3 files changed, 16 insertions(+)
 
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 5177bf6d810e..4aab396e5f21 100644
+index 6efae2681bcd..ceb2943f8458 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
-@@ -469,10 +469,8 @@ void mnt_drop_write_file(struct file *file)
- }
- EXPORT_SYMBOL(mnt_drop_write_file);
+@@ -228,6 +228,7 @@ static struct mount *alloc_vfsmnt(const char *name)
+ 		INIT_HLIST_NODE(&mnt->mnt_mp_list);
+ 		INIT_LIST_HEAD(&mnt->mnt_umounting);
+ 		INIT_HLIST_HEAD(&mnt->mnt_stuck_children);
++		mnt->mnt.mnt_userns = &init_user_ns;
+ 	}
+ 	return mnt;
  
--static int mnt_make_readonly(struct mount *mnt)
-+static inline int mnt_hold_writers(struct mount *mnt)
+@@ -567,6 +568,11 @@ int sb_prepare_remount_readonly(struct super_block *sb)
+ 
+ static void free_vfsmnt(struct mount *mnt)
  {
--	int ret = 0;
--
- 	mnt->mnt.mnt_flags |= MNT_WRITE_HOLD;
- 	/*
- 	 * After storing MNT_WRITE_HOLD, we'll read the counters. This store
-@@ -497,15 +495,29 @@ static int mnt_make_readonly(struct mount *mnt)
- 	 * we're counting up here.
- 	 */
- 	if (mnt_get_writers(mnt) > 0)
--		ret = -EBUSY;
--	else
--		mnt->mnt.mnt_flags |= MNT_READONLY;
-+		return -EBUSY;
++	struct user_namespace *mnt_userns;
 +
-+	return 0;
++	mnt_userns = mnt_user_ns(&mnt->mnt);
++	if (mnt_userns != &init_user_ns)
++		put_user_ns(mnt_userns);
+ 	kfree_const(mnt->mnt_devname);
+ #ifdef CONFIG_SMP
+ 	free_percpu(mnt->mnt_pcp);
+@@ -1075,6 +1081,9 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
+ 	mnt->mnt.mnt_flags &= ~(MNT_WRITE_HOLD|MNT_MARKED|MNT_INTERNAL);
+ 
+ 	atomic_inc(&sb->s_active);
++	mnt->mnt.mnt_userns = mnt_user_ns(&old->mnt);
++	if (mnt->mnt.mnt_userns != &init_user_ns)
++		mnt->mnt.mnt_userns = get_user_ns(mnt->mnt.mnt_userns);
+ 	mnt->mnt.mnt_sb = sb;
+ 	mnt->mnt.mnt_root = dget(root);
+ 	mnt->mnt_mountpoint = mnt->mnt.mnt_root;
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 1da4c21fb588..0e2b8d235dca 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -2278,6 +2278,7 @@ struct file_system_type {
+ #define FS_HAS_SUBTYPE		4
+ #define FS_USERNS_MOUNT		8	/* Can be mounted by userns root */
+ #define FS_DISALLOW_NOTIFY_PERM	16	/* Disable fanotify permission events */
++#define FS_ALLOW_IDMAP         32      /* FS has been updated to handle vfs idmappings. */
+ #define FS_THP_SUPPORT		8192	/* Remove once all fs converted */
+ #define FS_RENAME_DOES_D_MOVE	32768	/* FS will handle d_move() during rename() internally. */
+ 	int (*init_fs_context)(struct fs_context *);
+diff --git a/include/linux/mount.h b/include/linux/mount.h
+index aaf343b38671..52de25e08319 100644
+--- a/include/linux/mount.h
++++ b/include/linux/mount.h
+@@ -72,8 +72,14 @@ struct vfsmount {
+ 	struct dentry *mnt_root;	/* root of the mounted tree */
+ 	struct super_block *mnt_sb;	/* pointer to superblock */
+ 	int mnt_flags;
++	struct user_namespace *mnt_userns;
+ } __randomize_layout;
+ 
++static inline struct user_namespace *mnt_user_ns(const struct vfsmount *mnt)
++{
++	return mnt->mnt_userns;
 +}
 +
-+static inline void mnt_unhold_writers(struct mount *mnt)
-+{
- 	/*
- 	 * MNT_READONLY must become visible before ~MNT_WRITE_HOLD, so writers
- 	 * that become unheld will see MNT_READONLY.
- 	 */
- 	smp_wmb();
- 	mnt->mnt.mnt_flags &= ~MNT_WRITE_HOLD;
-+}
-+
-+static int mnt_make_readonly(struct mount *mnt)
-+{
-+	int ret;
-+
-+	ret = mnt_hold_writers(mnt);
-+	if (!ret)
-+		mnt->mnt.mnt_flags |= MNT_READONLY;
-+	mnt_unhold_writers(mnt);
- 	return ret;
- }
+ struct file; /* forward dec */
+ struct path;
  
 -- 
 2.30.0
