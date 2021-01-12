@@ -7,23 +7,23 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6B80FC433E0
-	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:15:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 161C6C433DB
+	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:15:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2C9DE23122
-	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:15:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C140023122
+	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:15:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2404444AbhALWPr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 12 Jan 2021 17:15:47 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:44480 "EHLO
+        id S2437108AbhALWPs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 12 Jan 2021 17:15:48 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:44613 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2394514AbhALWNp (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 12 Jan 2021 17:13:45 -0500
+        with ESMTP id S2404252AbhALWOf (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 12 Jan 2021 17:14:35 -0500
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kzRm0-0003bd-Q3; Tue, 12 Jan 2021 22:04:20 +0000
+        id 1kzRlP-0003bd-Ug; Tue, 12 Jan 2021 22:03:44 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -61,53 +61,26 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         linux-integrity@vger.kernel.org, selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v5 35/42] fat: handle idmapped mounts
-Date:   Tue, 12 Jan 2021 23:01:17 +0100
-Message-Id: <20210112220124.837960-36-christian.brauner@ubuntu.com>
+Subject: [PATCH v5 22/42] open: handle idmapped mounts in do_truncate()
+Date:   Tue, 12 Jan 2021 23:01:04 +0100
+Message-Id: <20210112220124.837960-23-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.30.0
 In-Reply-To: <20210112220124.837960-1-christian.brauner@ubuntu.com>
 References: <20210112220124.837960-1-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-X-Patch-Hashes: v=1; h=sha256; i=wF1t0OLeehpDD/Or8zja7KrHnkwazZpHv9hvAGPb0LU=; m=IzKHY5UlBsKA0pPEwB9A/OnVkasfk4B8OCNzZgzMRzQ=; p=W4xT6agIbCGbQ8L3psvuVW/ITKb4ltRLzEUwTwuzS3I=; g=b83c1538a9fca485d728fb60a703fb616e8fd418
-X-Patch-Sig: m=pgp; i=christian.brauner@ubuntu.com; s=0x0x91C61BC06578DCA2; b=iHUEABYKAB0WIQRAhzRXHqcMeLMyaSiRxhvAZXjcogUCX/4YuAAKCRCRxhvAZXjcou6sAQDySkZ L7ZLE/Uxetr6HsqPvqdlEn9zH1QTBH8F1nvuqfQEAh+rG7S7mSaekCQKygAYunPLO7s6jK3u5CuAr 8VVgEQA=
+X-Patch-Hashes: v=1; h=sha256; i=luWr+VA/K8XJzgT4gX4nqMzEuQJylBRV32CcnmZlQJ8=; m=zihUaivpqCA4dvvv7oCB94rDjzWEIICAfJJq/K4EDho=; p=KfbmBmgWHl85flKsZy/AbgNujB/mqkPONcX1pd32kPc=; g=7e679aa791c5fb9885f599cc34e763b93247e60a
+X-Patch-Sig: m=pgp; i=christian.brauner@ubuntu.com; s=0x0x91C61BC06578DCA2; b=iHUEABYKAB0WIQRAhzRXHqcMeLMyaSiRxhvAZXjcogUCX/4YtwAKCRCRxhvAZXjcoqZdAP48OLZ aDDiOtxK0vClMT+iUjL5k3mIGJsk5lM/T5tH6/QD+KWIm8W5oXr/5hZUtS+8tH3pBZHZJzfiy1jyl hF94pA0=
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Let fat handle idmapped mounts. This allows to have the same fat mount
-appear in multiple locations with different id mappings. This allows to
-expose a vfat formatted USB stick to multiple user with different ids on
-the host or in user namespaces allowing for dac permissions:
-
-mount -o uid=1000,gid=1000 /dev/sdb /mnt
-
-u1001@f2-vm:/lower1$ ls -ln /mnt/
-total 4
--rwxr-xr-x 1 1000 1000 4 Oct 28 03:44 aaa
--rwxr-xr-x 1 1000 1000 0 Oct 28 01:09 bbb
--rwxr-xr-x 1 1000 1000 0 Oct 28 01:10 ccc
--rwxr-xr-x 1 1000 1000 0 Oct 28 03:46 ddd
--rwxr-xr-x 1 1000 1000 0 Oct 28 04:01 eee
-
-mount-idmapped --map-mount b:1000:1001:1
-
-u1001@f2-vm:/lower1$ ls -ln /lower1/
-total 4
--rwxr-xr-x 1 1001 1001 4 Oct 28 03:44 aaa
--rwxr-xr-x 1 1001 1001 0 Oct 28 01:09 bbb
--rwxr-xr-x 1 1001 1001 0 Oct 28 01:10 ccc
--rwxr-xr-x 1 1001 1001 0 Oct 28 03:46 ddd
--rwxr-xr-x 1 1001 1001 0 Oct 28 04:01 eee
-
-u1001@f2-vm:/lower1$ touch /lower1/fff
-
-u1001@f2-vm:/lower1$ ls -ln /lower1/fff
--rwxr-xr-x 1 1001 1001 0 Oct 28 04:03 /lower1/fff
-
-u1001@f2-vm:/lower1$ ls -ln /mnt/fff
--rwxr-xr-x 1 1000 1000 0 Oct 28 04:03 /mnt/fff
+When truncating files the vfs will verify that the caller is privileged
+over the inode. Extend it to handle idmapped mounts. If the inode is
+accessed through an idmapped mount it is mapped according to the mount's
+user namespace. Afterwards the permissions checks are identical to
+non-idmapped mounts. If the initial user namespace is passed nothing
+changes so non-idmapped mounts will see identical behavior as before.
 
 Cc: Christoph Hellwig <hch@lst.de>
 Cc: David Howells <dhowells@redhat.com>
@@ -122,100 +95,207 @@ unchanged
 unchanged
 
 /* v4 */
-- Mauricio Vásquez Bernal <mauricio@kinvolk.io>:
-  - Fix mount example in commit message.
-
 - Serge Hallyn <serge@hallyn.com>:
   - Use "mnt_userns" to refer to a vfsmount's userns everywhere to make
     terminology consistent.
 
 /* v5 */
 base-commit: 7c53f6b671f4aba70ff15e1b05148b10d58c2837
----
- fs/fat/file.c        | 15 ++++++++-------
- fs/fat/namei_msdos.c |  2 +-
- fs/fat/namei_vfat.c  |  2 +-
- 3 files changed, 10 insertions(+), 9 deletions(-)
 
-diff --git a/fs/fat/file.c b/fs/fat/file.c
-index 80fbf1b5bb6c..107e9ece1a7c 100644
---- a/fs/fat/file.c
-+++ b/fs/fat/file.c
-@@ -398,7 +398,7 @@ int fat_getattr(struct user_namespace *mnt_userns, const struct path *path,
- 		struct kstat *stat, u32 request_mask, unsigned int flags)
- {
- 	struct inode *inode = d_inode(path->dentry);
--	generic_fillattr(&init_user_ns, inode, stat);
-+	generic_fillattr(mnt_userns, inode, stat);
- 	stat->blksize = MSDOS_SB(inode->i_sb)->cluster_size;
- 
- 	if (MSDOS_SB(inode->i_sb)->options.nfs == FAT_NFS_NOSTALE_RO) {
-@@ -447,12 +447,13 @@ static int fat_sanitize_mode(const struct msdos_sb_info *sbi,
- 	return 0;
- }
- 
--static int fat_allow_set_time(struct msdos_sb_info *sbi, struct inode *inode)
-+static int fat_allow_set_time(struct user_namespace *mnt_userns,
-+			      struct msdos_sb_info *sbi, struct inode *inode)
- {
- 	umode_t allow_utime = sbi->options.allow_utime;
- 
--	if (!uid_eq(current_fsuid(), inode->i_uid)) {
--		if (in_group_p(inode->i_gid))
-+	if (!uid_eq(current_fsuid(), i_uid_into_mnt(mnt_userns, inode))) {
-+		if (in_group_p(i_gid_into_mnt(mnt_userns, inode)))
- 			allow_utime >>= 3;
- 		if (allow_utime & MAY_WRITE)
- 			return 1;
-@@ -477,11 +478,11 @@ int fat_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
- 	/* Check for setting the inode time. */
- 	ia_valid = attr->ia_valid;
- 	if (ia_valid & TIMES_SET_FLAGS) {
--		if (fat_allow_set_time(sbi, inode))
-+		if (fat_allow_set_time(mnt_userns, sbi, inode))
- 			attr->ia_valid &= ~TIMES_SET_FLAGS;
+- Christoph Hellwig <hch@lst.de>:
+  - Use new file_userns_helper().
+---
+ fs/coredump.c      | 14 ++++++++++----
+ fs/inode.c         | 13 +++++++++----
+ fs/namei.c         |  6 +++---
+ fs/open.c          | 21 +++++++++++++--------
+ include/linux/fs.h |  4 ++--
+ 5 files changed, 37 insertions(+), 21 deletions(-)
+
+diff --git a/fs/coredump.c b/fs/coredump.c
+index a2f6ecc8e345..929d3f3bbe21 100644
+--- a/fs/coredump.c
++++ b/fs/coredump.c
+@@ -703,6 +703,7 @@ void do_coredump(const kernel_siginfo_t *siginfo)
+ 			goto close_fail;
+ 		}
+ 	} else {
++		struct user_namespace *mnt_userns;
+ 		struct inode *inode;
+ 		int open_flags = O_CREAT | O_RDWR | O_NOFOLLOW |
+ 				 O_LARGEFILE | O_EXCL;
+@@ -780,13 +781,14 @@ void do_coredump(const kernel_siginfo_t *siginfo)
+ 		 * a process dumps core while its cwd is e.g. on a vfat
+ 		 * filesystem.
+ 		 */
+-		if (!uid_eq(inode->i_uid, current_fsuid()))
++		mnt_userns = file_user_ns(cprm.file);
++		if (!uid_eq(i_uid_into_mnt(mnt_userns, inode), current_fsuid()))
+ 			goto close_fail;
+ 		if ((inode->i_mode & 0677) != 0600)
+ 			goto close_fail;
+ 		if (!(cprm.file->f_mode & FMODE_CAN_WRITE))
+ 			goto close_fail;
+-		if (do_truncate(cprm.file->f_path.dentry, 0, 0, cprm.file))
++		if (do_truncate(mnt_userns, cprm.file->f_path.dentry, 0, 0, cprm.file))
+ 			goto close_fail;
  	}
  
--	error = setattr_prepare(&init_user_ns, dentry, attr);
-+	error = setattr_prepare(mnt_userns, dentry, attr);
- 	attr->ia_valid = ia_valid;
- 	if (error) {
- 		if (sbi->options.quiet)
-@@ -551,7 +552,7 @@ int fat_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
- 		fat_truncate_time(inode, &attr->ia_mtime, S_MTIME);
- 	attr->ia_valid &= ~(ATTR_ATIME|ATTR_CTIME|ATTR_MTIME);
+@@ -930,8 +932,12 @@ void dump_truncate(struct coredump_params *cprm)
  
--	setattr_copy(&init_user_ns, inode, attr);
-+	setattr_copy(mnt_userns, inode, attr);
- 	mark_inode_dirty(inode);
- out:
+ 	if (file->f_op->llseek && file->f_op->llseek != no_llseek) {
+ 		offset = file->f_op->llseek(file, 0, SEEK_CUR);
+-		if (i_size_read(file->f_mapping->host) < offset)
+-			do_truncate(file->f_path.dentry, offset, 0, file);
++		if (i_size_read(file->f_mapping->host) < offset) {
++			struct user_namespace *mnt_userns;
++
++			mnt_userns = file_user_ns(file);
++			do_truncate(mnt_userns, file->f_path.dentry, offset, 0, file);
++		}
+ 	}
+ }
+ EXPORT_SYMBOL(dump_truncate);
+diff --git a/fs/inode.c b/fs/inode.c
+index 46116ef44c9f..aefcfd31a9c7 100644
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -1903,7 +1903,8 @@ int dentry_needs_remove_privs(struct dentry *dentry)
+ 	return mask;
+ }
+ 
+-static int __remove_privs(struct dentry *dentry, int kill)
++static int __remove_privs(struct user_namespace *mnt_userns, struct dentry *dentry,
++			  int kill)
+ {
+ 	struct iattr newattrs;
+ 
+@@ -1912,7 +1913,7 @@ static int __remove_privs(struct dentry *dentry, int kill)
+ 	 * Note we call this on write, so notify_change will not
+ 	 * encounter any conflicting delegations:
+ 	 */
+-	return notify_change(&init_user_ns, dentry, &newattrs, NULL);
++	return notify_change(mnt_userns, dentry, &newattrs, NULL);
+ }
+ 
+ /*
+@@ -1938,8 +1939,12 @@ int file_remove_privs(struct file *file)
+ 	kill = dentry_needs_remove_privs(dentry);
+ 	if (kill < 0)
+ 		return kill;
+-	if (kill)
+-		error = __remove_privs(dentry, kill);
++	if (kill) {
++		struct user_namespace *mnt_userns;
++
++		mnt_userns = file_user_ns(file);
++		error = __remove_privs(mnt_userns, dentry, kill);
++	}
+ 	if (!error)
+ 		inode_has_no_xattr(inode);
+ 
+diff --git a/fs/namei.c b/fs/namei.c
+index e085831c6b85..016d52fda656 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -3013,9 +3013,9 @@ static int handle_truncate(struct file *filp)
+ 	if (!error)
+ 		error = security_path_truncate(path);
+ 	if (!error) {
+-		error = do_truncate(path->dentry, 0,
+-				    ATTR_MTIME|ATTR_CTIME|ATTR_OPEN,
+-				    filp);
++		error = do_truncate(file_user_ns(filp),
++				    path->dentry, 0,
++				    ATTR_MTIME | ATTR_CTIME | ATTR_OPEN, filp);
+ 	}
+ 	put_write_access(inode);
  	return error;
-diff --git a/fs/fat/namei_msdos.c b/fs/fat/namei_msdos.c
-index a8f3375d9d10..efba301d68ae 100644
---- a/fs/fat/namei_msdos.c
-+++ b/fs/fat/namei_msdos.c
-@@ -667,7 +667,7 @@ static struct file_system_type msdos_fs_type = {
- 	.name		= "msdos",
- 	.mount		= msdos_mount,
- 	.kill_sb	= kill_block_super,
--	.fs_flags	= FS_REQUIRES_DEV,
-+	.fs_flags	= FS_REQUIRES_DEV | FS_ALLOW_IDMAP,
- };
- MODULE_ALIAS_FS("msdos");
+diff --git a/fs/open.c b/fs/open.c
+index bae00ee63af8..a9f3a3b46ef1 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -35,8 +35,8 @@
  
-diff --git a/fs/fat/namei_vfat.c b/fs/fat/namei_vfat.c
-index 23936ecf79a5..5369d82e0bfb 100644
---- a/fs/fat/namei_vfat.c
-+++ b/fs/fat/namei_vfat.c
-@@ -1063,7 +1063,7 @@ static struct file_system_type vfat_fs_type = {
- 	.name		= "vfat",
- 	.mount		= vfat_mount,
- 	.kill_sb	= kill_block_super,
--	.fs_flags	= FS_REQUIRES_DEV,
-+	.fs_flags	= FS_REQUIRES_DEV | FS_ALLOW_IDMAP,
- };
- MODULE_ALIAS_FS("vfat");
+ #include "internal.h"
  
+-int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
+-	struct file *filp)
++int do_truncate(struct user_namespace *mnt_userns, struct dentry *dentry,
++		loff_t length, unsigned int time_attrs, struct file *filp)
+ {
+ 	int ret;
+ 	struct iattr newattrs;
+@@ -61,13 +61,14 @@ int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
+ 
+ 	inode_lock(dentry->d_inode);
+ 	/* Note any delegations or leases have already been broken: */
+-	ret = notify_change(&init_user_ns, dentry, &newattrs, NULL);
++	ret = notify_change(mnt_userns, dentry, &newattrs, NULL);
+ 	inode_unlock(dentry->d_inode);
+ 	return ret;
+ }
+ 
+ long vfs_truncate(const struct path *path, loff_t length)
+ {
++	struct user_namespace *mnt_userns;
+ 	struct inode *inode;
+ 	long error;
+ 
+@@ -83,7 +84,8 @@ long vfs_truncate(const struct path *path, loff_t length)
+ 	if (error)
+ 		goto out;
+ 
+-	error = inode_permission(&init_user_ns, inode, MAY_WRITE);
++	mnt_userns = mnt_user_ns(path->mnt);
++	error = inode_permission(mnt_userns, inode, MAY_WRITE);
+ 	if (error)
+ 		goto mnt_drop_write_and_out;
+ 
+@@ -107,7 +109,7 @@ long vfs_truncate(const struct path *path, loff_t length)
+ 	if (!error)
+ 		error = security_path_truncate(path);
+ 	if (!error)
+-		error = do_truncate(path->dentry, length, 0, NULL);
++		error = do_truncate(mnt_userns, path->dentry, length, 0, NULL);
+ 
+ put_write_and_out:
+ 	put_write_access(inode);
+@@ -186,13 +188,16 @@ long do_sys_ftruncate(unsigned int fd, loff_t length, int small)
+ 	/* Check IS_APPEND on real upper inode */
+ 	if (IS_APPEND(file_inode(f.file)))
+ 		goto out_putf;
+-
+ 	sb_start_write(inode->i_sb);
+ 	error = locks_verify_truncate(inode, f.file, length);
+ 	if (!error)
+ 		error = security_path_truncate(&f.file->f_path);
+-	if (!error)
+-		error = do_truncate(dentry, length, ATTR_MTIME|ATTR_CTIME, f.file);
++	if (!error) {
++		struct user_namespace *mnt_userns;
++
++		mnt_userns = file_user_ns(f.file);
++		error = do_truncate(mnt_userns, dentry, length, ATTR_MTIME | ATTR_CTIME, f.file);
++	}
+ 	sb_end_write(inode->i_sb);
+ out_putf:
+ 	fdput(f);
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index e74995558c31..168b8d3f5afb 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -2584,8 +2584,8 @@ struct filename {
+ static_assert(offsetof(struct filename, iname) % sizeof(long) == 0);
+ 
+ extern long vfs_truncate(const struct path *, loff_t);
+-extern int do_truncate(struct dentry *, loff_t start, unsigned int time_attrs,
+-		       struct file *filp);
++extern int do_truncate(struct user_namespace *, struct dentry *, loff_t start,
++		       unsigned int time_attrs, struct file *filp);
+ extern int vfs_fallocate(struct file *file, int mode, loff_t offset,
+ 			loff_t len);
+ extern long do_sys_open(int dfd, const char __user *filename, int flags,
 -- 
 2.30.0
 
