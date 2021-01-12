@@ -5,25 +5,25 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 17045C4332E
-	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:06:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AA6FAC433E9
+	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:06:45 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D443E221F5
-	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:06:11 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 756F42310A
+	for <linux-api@archiver.kernel.org>; Tue, 12 Jan 2021 22:06:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2394256AbhALWGF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 12 Jan 2021 17:06:05 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:42904 "EHLO
+        id S2394252AbhALWGD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 12 Jan 2021 17:06:03 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:43187 "EHLO
         youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2389648AbhALWDf (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 12 Jan 2021 17:03:35 -0500
+        with ESMTP id S2393942AbhALWEK (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 12 Jan 2021 17:04:10 -0500
 Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
         by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.86_2)
         (envelope-from <christian.brauner@ubuntu.com>)
-        id 1kzRkS-0003bd-67; Tue, 12 Jan 2021 22:02:44 +0000
+        id 1kzRl7-0003bd-87; Tue, 12 Jan 2021 22:03:25 +0000
 From:   Christian Brauner <christian.brauner@ubuntu.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Christoph Hellwig <hch@infradead.org>,
@@ -61,131 +61,81 @@ Cc:     John Johansen <john.johansen@canonical.com>,
         linux-integrity@vger.kernel.org, selinux@vger.kernel.org,
         Christian Brauner <christian.brauner@ubuntu.com>,
         Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v5 01/42] namespace: take lock_mount_hash() directly when changing flags
-Date:   Tue, 12 Jan 2021 23:00:43 +0100
-Message-Id: <20210112220124.837960-2-christian.brauner@ubuntu.com>
+Subject: [PATCH v5 15/42] fs: add file_user_ns() helper
+Date:   Tue, 12 Jan 2021 23:00:57 +0100
+Message-Id: <20210112220124.837960-16-christian.brauner@ubuntu.com>
 X-Mailer: git-send-email 2.30.0
 In-Reply-To: <20210112220124.837960-1-christian.brauner@ubuntu.com>
 References: <20210112220124.837960-1-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
-X-Patch-Hashes: v=1; h=sha256; i=+EOqvkSOxu9JCGW0Rc3vZBIUJjJSA6JSNVX4DwVrmRY=; m=1ldsXyQsqFzxZT47hY5iS9n+gKweLAHoZ2/lfZPgpJA=; p=Gmp8PEq1ocGHlzNKtKR+I8ZfJbh6G/h1rPDV3ZFUV6Y=; g=8e89644d361e75b82524365516392cf4a074a9c9
-X-Patch-Sig: m=pgp; i=christian.brauner@ubuntu.com; s=0x0x91C61BC06578DCA2; b=iHUEABYKAB0WIQRAhzRXHqcMeLMyaSiRxhvAZXjcogUCX/4YtAAKCRCRxhvAZXjcohiHAQDbiHx Wr7Ip4En4GOzkOlVR6L5UXpUzmB1DY7b+sZLgzQD/bVGUnIwFA2RGO53R7V/Sm3SASWjlW/E2LXED UJ6d2A0=
+X-Patch-Hashes: v=1; h=sha256; i=MZF5H2APPgBbS6dalQP77IpBwjL8HOOCA8mxwD5I4mI=; m=rorofWYhlCYDsCHBmUT6ySFEXdKQZ/BhNiBUrVhD44Y=; p=donUDu8QUHywwTXuK+sEKtSO4q8ThCf0JgX/00ZRl3c=; g=56b63087ece42342c8428cabd6c7826fd940bf53
+X-Patch-Sig: m=pgp; i=christian.brauner@ubuntu.com; s=0x0x91C61BC06578DCA2; b=iHUEABYKAB0WIQRAhzRXHqcMeLMyaSiRxhvAZXjcogUCX/4YtgAKCRCRxhvAZXjcoinBAP9Zb0X yPth7UfV2DKrmKc17yNpYOz/9nCdo68TG5JthyQD/fWKi5+wXROsRJbp1i3YxlH/gCo28bVGPOR3L W/gWZAw=
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Changing mount options always ends up taking lock_mount_hash() but when
-MNT_READONLY is requested and neither the mount nor the superblock are
-MNT_READONLY we end up taking the lock, dropping it, and retaking it to
-change the other mount attributes. Instead, let's acquire the lock once
-when changing the mount attributes. This simplifies the locking in these
-codepath, makes them easier to reason about and avoids having to
-reacquire the lock right after dropping it.
+Add a simple helper to retrieve the user namespace associated with the
+vfsmount of a file. Christoph correctly points out that this makes
+codepaths (e.g. ioctls) way easier to follow that would otherwise
+dereference via mnt_user_ns(file->f_path.mnt).
+
+In order to make file_user_ns() static inline we'd need to include
+mount.h in either file.h or fs.h which seems undesirable so let's simply
+not force file_user_ns() to be inline.
 
 Cc: David Howells <dhowells@redhat.com>
 Cc: Al Viro <viro@zeniv.linux.org.uk>
 Cc: linux-fsdevel@vger.kernel.org
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+Suggested-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v2 */
-- Christoph Hellwig <hch@lst.de>:
-  - Remove pointless __mnt_unmake_readonly() helper.
-  - Even though Christoph suggested to lockdep_assert_held() into places that
-    require {lock,unlock}_mount_hash() it seems that seqlock's don't support
-    it.
+patch not present
 
 /* v3 */
-unchanged
+patch not present
 
 /* v4 */
-unchanged
+patch not present
 
 /* v5 */
+patch introduced
 base-commit: 7c53f6b671f4aba70ff15e1b05148b10d58c2837
 ---
- fs/namespace.c | 22 ++++++++--------------
- 1 file changed, 8 insertions(+), 14 deletions(-)
+ fs/namei.c         | 6 ++++++
+ include/linux/fs.h | 1 +
+ 2 files changed, 7 insertions(+)
 
-diff --git a/fs/namespace.c b/fs/namespace.c
-index d2db7dfe232b..dc782ddf603e 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -463,7 +463,6 @@ static int mnt_make_readonly(struct mount *mnt)
- {
- 	int ret = 0;
- 
--	lock_mount_hash();
- 	mnt->mnt.mnt_flags |= MNT_WRITE_HOLD;
- 	/*
- 	 * After storing MNT_WRITE_HOLD, we'll read the counters. This store
-@@ -497,18 +496,9 @@ static int mnt_make_readonly(struct mount *mnt)
- 	 */
- 	smp_wmb();
- 	mnt->mnt.mnt_flags &= ~MNT_WRITE_HOLD;
--	unlock_mount_hash();
- 	return ret;
+diff --git a/fs/namei.c b/fs/namei.c
+index cd124e18cec5..d8dee449e92a 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -259,6 +259,12 @@ void putname(struct filename *name)
+ 		__putname(name);
  }
  
--static int __mnt_unmake_readonly(struct mount *mnt)
--{
--	lock_mount_hash();
--	mnt->mnt.mnt_flags &= ~MNT_READONLY;
--	unlock_mount_hash();
--	return 0;
--}
--
- int sb_prepare_remount_readonly(struct super_block *sb)
- {
- 	struct mount *mnt;
-@@ -2511,7 +2501,8 @@ static int change_mount_ro_state(struct mount *mnt, unsigned int mnt_flags)
- 	if (readonly_request)
- 		return mnt_make_readonly(mnt);
- 
--	return __mnt_unmake_readonly(mnt);
-+	mnt->mnt.mnt_flags &= ~MNT_READONLY;
-+	return 0;
++struct user_namespace *file_user_ns(struct file *file)
++{
++	return mnt_user_ns(file->f_path.mnt);
++}
++EXPORT_SYMBOL(file_user_ns);
++
+ /**
+  * check_acl - perform ACL permission checking
+  * @mnt_userns:	user namespace of the mount the inode was found from
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index ef993857682b..89e41a821bad 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -2585,6 +2585,7 @@ static inline struct file *file_clone_open(struct file *file)
+ 	return dentry_open(&file->f_path, file->f_flags, file->f_cred);
  }
+ extern int filp_close(struct file *, fl_owner_t id);
++extern struct user_namespace *file_user_ns(struct file *file);
  
- /*
-@@ -2520,11 +2511,9 @@ static int change_mount_ro_state(struct mount *mnt, unsigned int mnt_flags)
-  */
- static void set_mount_attributes(struct mount *mnt, unsigned int mnt_flags)
- {
--	lock_mount_hash();
- 	mnt_flags |= mnt->mnt.mnt_flags & ~MNT_USER_SETTABLE_MASK;
- 	mnt->mnt.mnt_flags = mnt_flags;
- 	touch_mnt_namespace(mnt->mnt_ns);
--	unlock_mount_hash();
- }
- 
- static void mnt_warn_timestamp_expiry(struct path *mountpoint, struct vfsmount *mnt)
-@@ -2570,9 +2559,11 @@ static int do_reconfigure_mnt(struct path *path, unsigned int mnt_flags)
- 		return -EPERM;
- 
- 	down_write(&sb->s_umount);
-+	lock_mount_hash();
- 	ret = change_mount_ro_state(mnt, mnt_flags);
- 	if (ret == 0)
- 		set_mount_attributes(mnt, mnt_flags);
-+	unlock_mount_hash();
- 	up_write(&sb->s_umount);
- 
- 	mnt_warn_timestamp_expiry(path, &mnt->mnt);
-@@ -2613,8 +2604,11 @@ static int do_remount(struct path *path, int ms_flags, int sb_flags,
- 		err = -EPERM;
- 		if (ns_capable(sb->s_user_ns, CAP_SYS_ADMIN)) {
- 			err = reconfigure_super(fc);
--			if (!err)
-+			if (!err) {
-+				lock_mount_hash();
- 				set_mount_attributes(mnt, mnt_flags);
-+				unlock_mount_hash();
-+			}
- 		}
- 		up_write(&sb->s_umount);
- 	}
+ extern struct filename *getname_flags(const char __user *, int, int *);
+ extern struct filename *getname(const char __user *);
 -- 
 2.30.0
 
