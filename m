@@ -2,99 +2,105 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 26E45C432C3
-	for <linux-api@archiver.kernel.org>; Thu, 14 Jan 2021 02:03:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C182DC4332B
+	for <linux-api@archiver.kernel.org>; Thu, 14 Jan 2021 02:12:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id EBDAB23447
-	for <linux-api@archiver.kernel.org>; Thu, 14 Jan 2021 02:03:11 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9C62D2242A
+	for <linux-api@archiver.kernel.org>; Thu, 14 Jan 2021 02:12:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728414AbhANCDJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 13 Jan 2021 21:03:09 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38732 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726953AbhAMXVd (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 13 Jan 2021 18:21:33 -0500
-Received: from bedivere.hansenpartnership.com (bedivere.hansenpartnership.com [IPv6:2607:fcd0:100:8a00::2])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0B3F9C0617BD;
-        Wed, 13 Jan 2021 15:19:05 -0800 (PST)
-Received: from localhost (localhost [127.0.0.1])
-        by bedivere.hansenpartnership.com (Postfix) with ESMTP id 564A31280123;
-        Wed, 13 Jan 2021 15:19:03 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-        d=hansenpartnership.com; s=20151216; t=1610579943;
-        bh=A4tTySHUmA3iIsjYOH6q0S4Z4LhKvBiJ468wy5vYyrc=;
-        h=From:To:Subject:Date:Message-Id:From;
-        b=b9ZdiLtI2UT0d78+wdZvzmWXDRcWqwxBUiEIfgk7vlufGI0MBlKsEvZPkD9OrvDr5
-         hKg4kUjJ37In7LW3ZhX1dLtt/Y4G/8nXLQVGMDWMNO+Jx9rAukKUX1mGPTdIgEV3+n
-         XvaHBBeV7oU070zNOo1OVayKRubR3rd5B9rmKIzU=
-Received: from bedivere.hansenpartnership.com ([127.0.0.1])
-        by localhost (bedivere.hansenpartnership.com [127.0.0.1]) (amavisd-new, port 10024)
-        with ESMTP id 2iJsp8V7DlS6; Wed, 13 Jan 2021 15:19:03 -0800 (PST)
-Received: from jarvis.int.hansenpartnership.com (jarvis.ext.hansenpartnership.com [153.66.160.226])
-        by bedivere.hansenpartnership.com (Postfix) with ESMTP id EECC01280116;
-        Wed, 13 Jan 2021 15:19:02 -0800 (PST)
-From:   James Bottomley <James.Bottomley@HansenPartnership.com>
-To:     linux-integrity@vger.kernel.org
-Cc:     Mimi Zohar <zohar@linux.ibm.com>,
-        Jarkko Sakkinen <jarkko@kernel.org>, linux-api@vger.kernel.org
-Subject: [PATCH v5 0/2] add sysfs exports for TPM 2 PCR registers
-Date:   Wed, 13 Jan 2021 15:18:58 -0800
-Message-Id: <20210113231900.22883-1-James.Bottomley@HansenPartnership.com>
-X-Mailer: git-send-email 2.26.2
+        id S1729272AbhANCLi (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 13 Jan 2021 21:11:38 -0500
+Received: from mail.kernel.org ([198.145.29.99]:43216 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1729251AbhAMWPS (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 13 Jan 2021 17:15:18 -0500
+Received: by mail.kernel.org (Postfix) with ESMTPSA id DC5B823339;
+        Wed, 13 Jan 2021 22:14:27 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1610576069;
+        bh=YPaA0+QkNX7/eq1Wwg82C84x12V1KgYhdxKCWybAf+s=;
+        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+        b=TPbBI+c5z5j8US2/+SnQvl6ws1oIjV/+5WO9kPgqQIB3iIqL0W4Fet3M7Wr79vg0o
+         HSrhF8H9OHK5Cx1wjuL4xisOUrfrbuMaMrTMl0qy+FmHI8sYkkiP59LbTWV23KH3HQ
+         4VOh4gizvB5yYUDLYwxQ/V92bNIZu8f94t5mARZxE1UJG9gQi6akxhvU0KdwvZCDXa
+         UPoiJhCjrnpBuWjV8d8B/YhKOwixKMs8vdai/30sHpjuURYIHYFqu5wka7eQzHiOko
+         sOom5LmkoFSrg61hPZDvksKoLJvKtxfrVOoZqmVVJaOAFq7capIIWJjzKd/KGFgAex
+         BaZ8v50WQkgzw==
+Date:   Thu, 14 Jan 2021 00:14:24 +0200
+From:   Jarkko Sakkinen <jarkko@kernel.org>
+To:     James Bottomley <James.Bottomley@hansenpartnership.com>
+Cc:     Greg KH <greg@kroah.com>, linux-integrity@vger.kernel.org,
+        Mimi Zohar <zohar@linux.ibm.com>,
+        Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>,
+        linux-api@vger.kernel.org
+Subject: Re: [PATCH v5 1/1] tpm: add sysfs exports for all banks of PCR
+ registers
+Message-ID: <X/9wwEr477zSttED@kernel.org>
+References: <20210113015958.6685-1-James.Bottomley@HansenPartnership.com>
+ <20210113015958.6685-2-James.Bottomley@HansenPartnership.com>
+ <X/6lyuhqQ8TSXOSa@kroah.com>
+ <a6bdeef73f9271cca99585d3e855681cf6b6f589.camel@HansenPartnership.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <a6bdeef73f9271cca99585d3e855681cf6b6f589.camel@HansenPartnership.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This represents v5 which has the spelling mistake fixed and the WARN
-on unrecognized TPM hash algorithm becoming a dev_err.
+On Wed, Jan 13, 2021 at 09:31:44AM -0800, James Bottomley wrote:
+> On Wed, 2021-01-13 at 08:48 +0100, Greg KH wrote:
+> > On Tue, Jan 12, 2021 at 05:59:58PM -0800, James Bottomley wrote:
+> > > Create sysfs per hash groups with 24 PCR files in them one group,
+> > > named pcr-<hash>, for each agile hash of the TPM.  The files are
+> > > plugged in to a PCR read function which is TPM version agnostic, so
+> > > this works also for TPM 1.2 but the hash is only sha1 in that case.
+> > > 
+> > > Note: the macros used to create the hashes emit spurious checkpatch
+> > > warnings.  Do not try to "fix" them as checkpatch recommends,
+> > > otherwise
+> > > they'll break.
+> > > 
+> > > Signed-off-by: James Bottomley <
+> > > James.Bottomley@HansenPartnership.com>
+> > > Reviewed-by: Jerry Snitselaar <jsnitsel@redhat.com>
+> > > Tested-by: Thiago Jung Bauermann <bauerman@linux.ibm.com>
+> > > 
+> > > ---
+> > > 
+> > > v2: fix TPM 1.2 legacy links failure
+> > > v3: fix warn on and add note to tpm_algorithms
+> > > v4: reword commit and add tested-by
+> > > v5: algorithm spelling fix WARN->dev_err
+> > > ---
+> > >  drivers/char/tpm/tpm-sysfs.c | 179
+> > > +++++++++++++++++++++++++++++++++++
+> > >  include/linux/tpm.h          |   9 +-
+> > >  2 files changed, 187 insertions(+), 1 deletion(-)
+> > 
+> > You add new sysfs files, but do not add Documentation/ABI/ entries
+> > showing how they are used and what they contain :(
+> > 
+> > Please do that for the next version of this patch.
+> 
+> It's a bit of a chicken and egg problem since I've no idea when this
+> will go upstream and the entries require that information making the
+> ABI more of a post accept type thing.  I can make a guess about the
+> values if Jarkko is going to but this in for the next merge window.
+> 
+> James
 
-We've had a fairly extensive discussion and iterated to agreement on
-the output format, which becomes our ABI being one single compact hex
-representation of the hash value per file according to sysfs rules,
-with the file hierarchy going under
+I agree with the ABI side, so you can safely include this to the patch set. 
+And yes, this looks like something I can include to the 5.12 PR.
 
-  /sys/class/tpm/tmp<x>/pcr-<hash>/<pcr number>
+Did you address Greg's remarks about warns?
 
-So to get the value of PCR 7 in the sha256 bank of the default TPM I'd do
+Other than that, please send a version with ABI entries  so that
+we can move forward with this.
 
-   cat /sys/class/tpm/tpm0/pcr-sha256/7
-   2ED93F199692DC6788EFA6A1FE74514AB9760B2A6CEEAEF6C808C13E4ABB0D42
-
-If you need the binary hash of a set of PCRs, as is required for TPM
-policy statements that lock to PCRs, you'd use something like:
-
-  cat /sys/class/tpm/tpm0/pcr-sha256/{1,6,7}|xxd -r -p|sha256sum
-
-Which produces the binary hash of PCRs 1, 6 and 7 in that order.
-
-Note that this patch also adds the sha1 bank for TPM 1.2 in the same
-manner (one file per PCR) but does not remove the existing pcrs file
-which has the space separated all PCRs in one file format of
-
-  PCR-00: 7D 29 CB 08 0C 0F C4 16 7A 0E 9A F7 C6 D3 97 CD C1 21 A7 69 
-  PCR-01: 9C B6 79 4C E4 4B 62 97 4C AB 55 13 1A 2F 7E AE 09 B3 30 BE 
-  ...
-
-James
-
----
-
-James Bottomley (2):
-  tpm: add sysfs exports for all banks of PCR registers
-  ABI: add sysfs description for tpm exports of PCR registers
-
- Documentation/ABI/stable/sysfs-class-tpm |  14 ++
- drivers/char/tpm/tpm-sysfs.c             | 179 +++++++++++++++++++++++
- include/linux/tpm.h                      |   9 +-
- 3 files changed, 201 insertions(+), 1 deletion(-)
-
--- 
-2.26.2
-
+/Jarkko
