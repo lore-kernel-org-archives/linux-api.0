@@ -6,29 +6,28 @@ X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 80FD4C433E6
-	for <linux-api@archiver.kernel.org>; Thu, 14 Jan 2021 19:02:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C9112C433E0
+	for <linux-api@archiver.kernel.org>; Thu, 14 Jan 2021 19:05:09 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5791523B31
-	for <linux-api@archiver.kernel.org>; Thu, 14 Jan 2021 19:02:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7605F23A57
+	for <linux-api@archiver.kernel.org>; Thu, 14 Jan 2021 19:05:09 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729731AbhANTCC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 14 Jan 2021 14:02:02 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39218 "EHLO
+        id S1729679AbhANTEs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 14 Jan 2021 14:04:48 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39754 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729282AbhANTCC (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 14 Jan 2021 14:02:02 -0500
-X-Greylist: delayed 386 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 14 Jan 2021 11:01:16 PST
-Received: from smtp-190e.mail.infomaniak.ch (smtp-190e.mail.infomaniak.ch [IPv6:2001:1600:4:17::190e])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AB5CCC061575
-        for <linux-api@vger.kernel.org>; Thu, 14 Jan 2021 11:01:16 -0800 (PST)
-Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
-        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4DGtls2KsZzMq8XJ;
-        Thu, 14 Jan 2021 19:54:49 +0100 (CET)
+        with ESMTP id S1727453AbhANTEr (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 14 Jan 2021 14:04:47 -0500
+Received: from smtp-42ae.mail.infomaniak.ch (smtp-42ae.mail.infomaniak.ch [IPv6:2001:1600:4:17::42ae])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 93325C061575
+        for <linux-api@vger.kernel.org>; Thu, 14 Jan 2021 11:04:27 -0800 (PST)
+Received: from smtp-2-0001.mail.infomaniak.ch (unknown [10.5.36.108])
+        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4DGty40K9jzMq8Xg;
+        Thu, 14 Jan 2021 20:03:40 +0100 (CET)
 Received: from ns3096276.ip-94-23-54.eu (unknown [23.97.221.149])
-        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4DGtlp18bWzlh8T2;
-        Thu, 14 Jan 2021 19:54:46 +0100 (CET)
-Subject: Re: [PATCH v26 07/12] landlock: Support filesystem access-control
+        by smtp-2-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4DGty16Bhkzlh8T2;
+        Thu, 14 Jan 2021 20:03:37 +0100 (CET)
+Subject: Re: [PATCH v26 00/12] Landlock LSM
 To:     Jann Horn <jannh@google.com>
 Cc:     James Morris <jmorris@namei.org>,
         "Serge E . Hallyn" <serge@hallyn.com>,
@@ -53,17 +52,15 @@ Cc:     James Morris <jmorris@namei.org>,
         "open list:KERNEL SELFTEST FRAMEWORK" 
         <linux-kselftest@vger.kernel.org>,
         linux-security-module <linux-security-module@vger.kernel.org>,
-        the arch/x86 maintainers <x86@kernel.org>,
-        =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@linux.microsoft.com>
+        the arch/x86 maintainers <x86@kernel.org>
 References: <20201209192839.1396820-1-mic@digikod.net>
- <20201209192839.1396820-8-mic@digikod.net>
- <CAG48ez1wbAQwU-eoC9DngHyUM_5F01MJQpRnLaJFvfRUrnXBdA@mail.gmail.com>
+ <CAG48ez3DE8xgr_etVGV5eNjH2CXXo9MR7jTcu+_LCkJUchLXcQ@mail.gmail.com>
 From:   =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Message-ID: <aeb3e152-8108-89d2-0577-4b130368f14f@digikod.net>
-Date:   Thu, 14 Jan 2021 19:54:36 +0100
+Message-ID: <92df89c9-3442-0761-224a-ab53bb917850@digikod.net>
+Date:   Thu, 14 Jan 2021 20:03:47 +0100
 User-Agent: 
 MIME-Version: 1.0
-In-Reply-To: <CAG48ez1wbAQwU-eoC9DngHyUM_5F01MJQpRnLaJFvfRUrnXBdA@mail.gmail.com>
+In-Reply-To: <CAG48ez3DE8xgr_etVGV5eNjH2CXXo9MR7jTcu+_LCkJUchLXcQ@mail.gmail.com>
 Content-Type: text/plain; charset=utf-8
 Content-Language: en-US
 Content-Transfer-Encoding: 8bit
@@ -74,83 +71,21 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 On 14/01/2021 04:22, Jann Horn wrote:
 > On Wed, Dec 9, 2020 at 8:28 PM Mickaël Salaün <mic@digikod.net> wrote:
->> Thanks to the Landlock objects and ruleset, it is possible to identify
->> inodes according to a process's domain.  To enable an unprivileged
->> process to express a file hierarchy, it first needs to open a directory
->> (or a file) and pass this file descriptor to the kernel through
->> landlock_add_rule(2).  When checking if a file access request is
->> allowed, we walk from the requested dentry to the real root, following
->> the different mount layers.  The access to each "tagged" inodes are
->> collected according to their rule layer level, and ANDed to create
->> access to the requested file hierarchy.  This makes possible to identify
->> a lot of files without tagging every inodes nor modifying the
->> filesystem, while still following the view and understanding the user
->> has from the filesystem.
->>
->> Add a new ARCH_EPHEMERAL_INODES for UML because it currently does not
->> keep the same struct inodes for the same inodes whereas these inodes are
->> in use.
->>
->> This commit adds a minimal set of supported filesystem access-control
->> which doesn't enable to restrict all file-related actions.  This is the
->> result of multiple discussions to minimize the code of Landlock to ease
->> review.  Thanks to the Landlock design, extending this access-control
->> without breaking user space will not be a problem.  Moreover, seccomp
->> filters can be used to restrict the use of syscall families which may
->> not be currently handled by Landlock.
-> [...]
->> +static bool check_access_path_continue(
->> +               const struct landlock_ruleset *const domain,
->> +               const struct path *const path, const u32 access_request,
->> +               u64 *const layer_mask)
->> +{
-> [...]
->> +       /*
->> +        * An access is granted if, for each policy layer, at least one rule
->> +        * encountered on the pathwalk grants the access, regardless of their
->> +        * position in the layer stack.  We must then check not-yet-seen layers
->> +        * for each inode, from the last one added to the first one.
->> +        */
->> +       for (i = 0; i < rule->num_layers; i++) {
->> +               const struct landlock_layer *const layer = &rule->layers[i];
->> +               const u64 layer_level = BIT_ULL(layer->level - 1);
->> +
->> +               if (!(layer_level & *layer_mask))
->> +                       continue;
->> +               if ((layer->access & access_request) != access_request)
->> +                       return false;
->> +               *layer_mask &= ~layer_level;
+>> This patch series adds new built-time checks, a new test, renames some
+>> variables and functions to improve readability, and shift syscall
+>> numbers to align with -next.
 > 
-> Hmm... shouldn't the last 5 lines be replaced by the following?
+> Sorry, I've finally gotten around to looking at v26 - I hadn't
+> actually looked at v25 either yet. I think there's still one remaining
+> small issue in the filesystem access logic, but I think that's very
+> simple to fix, as long as we agree on what the expected semantics are.
+> Otherwise it basically looks good, apart from some typos.
 > 
-> if ((layer->access & access_request) == access_request)
->     *layer_mask &= ~layer_level;
+> I think v27 will be the final version of this series. :) (And I'll try
+> to actually look at that version much faster - I realize that waiting
+> for code reviews this long sucks.)
 > 
-> And then, since this function would always return true, you could
-> change its return type to "void".
-> 
-> 
-> As far as I can tell, the current version will still, if a ruleset
-> looks like this:
-> 
-> /usr read+write
-> /usr/lib/ read
-> 
-> reject write access to /usr/lib, right?
 
-If these two rules are from different layers, then yes it would work as
-intended. However, if these rules are from the same layer the path walk
-will not stop at /usr/lib but go down to /usr, which grants write
-access. This is the reason I wrote it like this and the
-layout1.inherit_subset test checks that. I'm updating the documentation
-to better explain how an access is checked with one or multiple layers.
-
-Doing this way also enables to stop the path walk earlier, which is the
-original purpose of this function.
-
-
-> 
-> 
->> +       }
->> +       return true;
->> +}
+I'm improving the tests, especially with bind mounts and overlayfs
+tests. The v27 will also contains a better documentation to clarify the
+semantic and explain how these mounts are handled. Thanks!
