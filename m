@@ -4,149 +4,145 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D362FC433E0
-	for <linux-api@archiver.kernel.org>; Thu, 14 Jan 2021 19:07:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9D830C43381
+	for <linux-api@archiver.kernel.org>; Thu, 14 Jan 2021 20:53:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7C23B23A58
-	for <linux-api@archiver.kernel.org>; Thu, 14 Jan 2021 19:07:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7828D23A9A
+	for <linux-api@archiver.kernel.org>; Thu, 14 Jan 2021 20:53:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728612AbhANTHz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 14 Jan 2021 14:07:55 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40502 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726518AbhANTHy (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 14 Jan 2021 14:07:54 -0500
-X-Greylist: delayed 392 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 14 Jan 2021 11:07:09 PST
-Received: from smtp-8fa9.mail.infomaniak.ch (smtp-8fa9.mail.infomaniak.ch [IPv6:2001:1600:3:17::8fa9])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7E4F5C061575
-        for <linux-api@vger.kernel.org>; Thu, 14 Jan 2021 11:07:09 -0800 (PST)
-Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4DGtsd3prKzMqNmw;
-        Thu, 14 Jan 2021 19:59:49 +0100 (CET)
-Received: from ns3096276.ip-94-23-54.eu (unknown [23.97.221.149])
-        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4DGtsb4TJWzlh8T8;
-        Thu, 14 Jan 2021 19:59:47 +0100 (CET)
-Subject: Re: [PATCH v26 11/12] samples/landlock: Add a sandbox manager example
-To:     Jann Horn <jannh@google.com>
-Cc:     James Morris <jmorris@namei.org>,
-        "Serge E . Hallyn" <serge@hallyn.com>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Andy Lutomirski <luto@amacapital.net>,
-        Anton Ivanov <anton.ivanov@cambridgegreys.com>,
-        Arnd Bergmann <arnd@arndb.de>,
+        id S1728511AbhANUwn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 14 Jan 2021 15:52:43 -0500
+Received: from mail110.syd.optusnet.com.au ([211.29.132.97]:43884 "EHLO
+        mail110.syd.optusnet.com.au" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1726578AbhANUwn (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 14 Jan 2021 15:52:43 -0500
+X-Greylist: delayed 489 seconds by postgrey-1.27 at vger.kernel.org; Thu, 14 Jan 2021 15:52:40 EST
+Received: from dread.disaster.area (pa49-179-167-107.pa.nsw.optusnet.com.au [49.179.167.107])
+        by mail110.syd.optusnet.com.au (Postfix) with ESMTPS id 03E40105E38;
+        Fri, 15 Jan 2021 07:51:54 +1100 (AEDT)
+Received: from dave by dread.disaster.area with local (Exim 4.92.3)
+        (envelope-from <david@fromorbit.com>)
+        id 1l09b0-006Uat-5I; Fri, 15 Jan 2021 07:51:54 +1100
+Date:   Fri, 15 Jan 2021 07:51:54 +1100
+From:   Dave Chinner <david@fromorbit.com>
+To:     Christian Brauner <christian.brauner@ubuntu.com>
+Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
+        Christoph Hellwig <hch@infradead.org>,
+        linux-fsdevel@vger.kernel.org,
+        John Johansen <john.johansen@canonical.com>,
+        James Morris <jmorris@namei.org>,
+        Mimi Zohar <zohar@linux.ibm.com>,
+        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
+        Stephen Smalley <stephen.smalley.work@gmail.com>,
         Casey Schaufler <casey@schaufler-ca.com>,
-        Jeff Dike <jdike@addtoit.com>,
-        Jonathan Corbet <corbet@lwn.net>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andreas Dilger <adilger.kernel@dilger.ca>,
+        OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>,
+        Geoffrey Thomas <geofft@ldpreload.com>,
+        Mrunal Patel <mpatel@redhat.com>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Theodore Tso <tytso@mit.edu>, Alban Crequy <alban@kinvolk.io>,
+        Tycho Andersen <tycho@tycho.ws>,
+        David Howells <dhowells@redhat.com>,
+        James Bottomley <James.Bottomley@hansenpartnership.com>,
+        Seth Forshee <seth.forshee@canonical.com>,
+        =?iso-8859-1?Q?St=E9phane?= Graber <stgraber@ubuntu.com>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Aleksa Sarai <cyphar@cyphar.com>,
+        Lennart Poettering <lennart@poettering.net>,
+        "Eric W. Biederman" <ebiederm@xmission.com>, smbarber@chromium.org,
+        Phil Estes <estesp@gmail.com>, Serge Hallyn <serge@hallyn.com>,
         Kees Cook <keescook@chromium.org>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Richard Weinberger <richard@nod.at>,
-        Shuah Khan <shuah@kernel.org>,
-        Vincent Dagonneau <vincent.dagonneau@ssi.gouv.fr>,
-        Kernel Hardening <kernel-hardening@lists.openwall.com>,
-        Linux API <linux-api@vger.kernel.org>,
-        linux-arch <linux-arch@vger.kernel.org>,
-        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
-        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-        kernel list <linux-kernel@vger.kernel.org>,
-        "open list:KERNEL SELFTEST FRAMEWORK" 
-        <linux-kselftest@vger.kernel.org>,
-        linux-security-module <linux-security-module@vger.kernel.org>,
-        the arch/x86 maintainers <x86@kernel.org>,
-        =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@linux.microsoft.com>
-References: <20201209192839.1396820-1-mic@digikod.net>
- <20201209192839.1396820-12-mic@digikod.net>
- <CAG48ez2yQNvcCrmCCBZKy_cxoZzNgremxWMia1YHsgaj4edqrA@mail.gmail.com>
-From:   =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Message-ID: <f3ca5fb2-64c6-b525-0f16-5353f1f7eddb@digikod.net>
-Date:   Thu, 14 Jan 2021 19:59:57 +0100
-User-Agent: 
+        Todd Kjos <tkjos@google.com>, Paul Moore <paul@paul-moore.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        containers@lists.linux-foundation.org,
+        linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org,
+        linux-integrity@vger.kernel.org, selinux@vger.kernel.org,
+        Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH v5 37/42] xfs: support idmapped mounts
+Message-ID: <20210114205154.GL331610@dread.disaster.area>
+References: <20210112220124.837960-1-christian.brauner@ubuntu.com>
+ <20210112220124.837960-38-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
-In-Reply-To: <CAG48ez2yQNvcCrmCCBZKy_cxoZzNgremxWMia1YHsgaj4edqrA@mail.gmail.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20210112220124.837960-38-christian.brauner@ubuntu.com>
+X-Optus-CM-Score: 0
+X-Optus-CM-Analysis: v=2.3 cv=Ubgvt5aN c=1 sm=1 tr=0 cx=a_idp_d
+        a=+wqVUQIkAh0lLYI+QRsciw==:117 a=+wqVUQIkAh0lLYI+QRsciw==:17
+        a=kj9zAlcOel0A:10 a=EmqxpYm9HcoA:10 a=7-415B0cAAAA:8
+        a=44ec6t6cGFOkeLdKtF4A:9 a=CjuIK1q_8ugA:10 a=biEYGPWJfzWAr4FL6Ov7:22
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+On Tue, Jan 12, 2021 at 11:01:19PM +0100, Christian Brauner wrote:
+> From: Christoph Hellwig <hch@lst.de>
+> 
+> Enable idmapped mounts for xfs. This basically just means passing down
+> the user_namespace argument from the VFS methods down to where it is
+> passed to helper.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+....
+> @@ -654,6 +658,7 @@ xfs_vn_change_ok(
+>   */
+>  static int
+>  xfs_setattr_nonsize(
+> +	struct user_namespace	*mnt_userns,
+>  	struct xfs_inode	*ip,
+>  	struct iattr		*iattr)
+>  {
+> @@ -813,7 +818,7 @@ xfs_setattr_nonsize(
+>  	 * 	     Posix ACL code seems to care about this issue either.
+>  	 */
+>  	if (mask & ATTR_MODE) {
+> -		error = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
+> +		error = posix_acl_chmod(mnt_userns, inode, inode->i_mode);
+>  		if (error)
+>  			return error;
+>  	}
+> @@ -868,7 +873,7 @@ xfs_setattr_size(
+>  		 * Use the regular setattr path to update the timestamps.
+>  		 */
+>  		iattr->ia_valid &= ~ATTR_SIZE;
+> -		return xfs_setattr_nonsize(ip, iattr);
+> +		return xfs_setattr_nonsize(&init_user_ns, ip, iattr);
 
-On 14/01/2021 04:21, Jann Horn wrote:
-> On Wed, Dec 9, 2020 at 8:29 PM Mickaël Salaün <mic@digikod.net> wrote:
->> Add a basic sandbox tool to launch a command which can only access a
->> whitelist of file hierarchies in a read-only or read-write way.
-> 
-> I have to admit that I didn't really look at this closely before
-> because it's just sample code... but I guess I should. You can add
-> 
-> Reviewed-by: Jann Horn <jannh@google.com>
-> 
-> if you fix the following nits:
+Shouldn't that be passing mnt_userns?
 
-OK, I will!
+>  	}
+>  
+>  	/*
+> @@ -1037,6 +1042,7 @@ xfs_setattr_size(
+>  
+>  int
+>  xfs_vn_setattr_size(
+> +	struct user_namespace	*mnt_userns,
+>  	struct dentry		*dentry,
+>  	struct iattr		*iattr)
+>  {
+> @@ -1045,7 +1051,7 @@ xfs_vn_setattr_size(
+>  
+>  	trace_xfs_setattr(ip);
+>  
+> -	error = xfs_vn_change_ok(dentry, iattr);
+> +	error = xfs_vn_change_ok(mnt_userns, dentry, iattr);
+>  	if (error)
+>  		return error;
+>  	return xfs_setattr_size(ip, iattr);
 
-> 
-> [...]
->> diff --git a/samples/Kconfig b/samples/Kconfig
-> [...]
->> +config SAMPLE_LANDLOCK
->> +       bool "Build Landlock sample code"
->> +       depends on HEADERS_INSTALL
->> +       help
->> +         Build a simple Landlock sandbox manager able to launch a process
->> +         restricted by a user-defined filesystem access control.
-> 
-> nit: s/filesystem access control/filesystem access control policy/
-> 
-> [...]
->> diff --git a/samples/landlock/sandboxer.c b/samples/landlock/sandboxer.c
-> [...]
->> +/*
->> + * Simple Landlock sandbox manager able to launch a process restricted by a
->> + * user-defined filesystem access control.
-> 
-> nit: s/filesystem access control/filesystem access control policy/
-> 
-> [...]
->> +int main(const int argc, char *const argv[], char *const *const envp)
->> +{
-> [...]
->> +       if (argc < 2) {
-> [...]
->> +               fprintf(stderr, "* %s: list of paths allowed to be used in a read-only way.\n",
->> +                               ENV_FS_RO_NAME);
->> +               fprintf(stderr, "* %s: list of paths allowed to be used in a read-write way.\n",
->> +                               ENV_FS_RO_NAME);
-> 
-> s/ENV_FS_RO_NAME/ENV_FS_RW_NAME/
-> 
->> +               fprintf(stderr, "\nexample:\n"
->> +                               "%s=\"/bin:/lib:/usr:/proc:/etc:/dev/urandom\" "
->> +                               "%s=\"/dev/null:/dev/full:/dev/zero:/dev/pts:/tmp\" "
->> +                               "%s bash -i\n",
->> +                               ENV_FS_RO_NAME, ENV_FS_RW_NAME, argv[0]);
->> +               return 1;
->> +       }
->> +
->> +       ruleset_fd = landlock_create_ruleset(&ruleset_attr, sizeof(ruleset_attr), 0);
->> +       if (ruleset_fd < 0) {
->> +               perror("Failed to create a ruleset");
->> +               switch (errno) {
-> 
-> (Just as a note: In theory perror() can change the value of errno, as
-> far as I know - so AFAIK you'd theoretically have to do something
-> like:
-> 
-> int errno_ = errno;
-> perror("...");
-> switch (errno_) {
->  ...
-> }
+And this passing mnt_userns down into xfs_setattr_size()?  Seems
+like a bit of a landmine...
 
-Indeed :)
+Cheers,
 
-> 
-> I'll almost certainly work fine as-is in practice though.)
-> 
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
