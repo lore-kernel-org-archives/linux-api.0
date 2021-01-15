@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-19.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 392F3C433E0
-	for <linux-api@archiver.kernel.org>; Fri, 15 Jan 2021 18:21:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C5966C433DB
+	for <linux-api@archiver.kernel.org>; Fri, 15 Jan 2021 18:21:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1751E23A6C
-	for <linux-api@archiver.kernel.org>; Fri, 15 Jan 2021 18:21:11 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 98DD523A9C
+	for <linux-api@archiver.kernel.org>; Fri, 15 Jan 2021 18:21:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2388081AbhAOSUy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 15 Jan 2021 13:20:54 -0500
-Received: from mail.kernel.org ([198.145.29.99]:43466 "EHLO mail.kernel.org"
+        id S2387929AbhAOSV0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 15 Jan 2021 13:21:26 -0500
+Received: from mail.kernel.org ([198.145.29.99]:43474 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1732055AbhAOSUx (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 15 Jan 2021 13:20:53 -0500
-Received: by mail.kernel.org (Postfix) with ESMTPSA id BC9D823B03;
-        Fri, 15 Jan 2021 18:19:33 +0000 (UTC)
+        id S2388076AbhAOSUy (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 15 Jan 2021 13:20:54 -0500
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 851D523A6C;
+        Fri, 15 Jan 2021 18:19:34 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
         s=k20201202; t=1610734774;
-        bh=gsd3qneQDJcEAWvK+26tVqknLPQ+kerh+7FxEp9mAvE=;
+        bh=DBm5POVqThVqB6dR0uFKTktVEXLstitiHg1DG/aF4QM=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=ChoMe9ho9PcGemgjTm2q12Bj6EiXXCXdgfNIY+rHRqA2eBl8pv5YGPzLH11U8uEPJ
-         OVkenwHQw+fuoDIPVVZNU+2lQrYyiNpBkW7rLCxqwVzIHOoYoFRCVHL8aNS4+z1CB5
-         znTDLZehtUNRd6hUeqedT7eTp+XFuTC2m2VXmxUUBSruXBOzN8evT9crnLa2WhWbBd
-         481fhP5zXOwBby4Zs1ap2AsJDJJ3DB3SffV+wBcIssdTGz1LJ7aEyu2vjOMbFhxlkt
-         tRt5FlgHNmQASBoSX82i8xkbTOzc0ndw/uIQp6f9p85nnPd74rc2Fp/6WOkHjWmbuE
-         OratH61jn8whg==
+        b=S+zoOQ/fI9iHtksm84CuXz1loVV1PH1en9rM/bpCSgerSJhppwjg5/JABqS/Q/5MN
+         YmeKczMMxKNkLgO3M7tG1m2t4LcJ0iyoLF7dq8JrL/dSouRxvEmWmh2S3KxJ2GkWz0
+         kyDALixxhhcVKKmePXO6AGp6523+Cyhwhb+IlT5TKnnUqf8FoszDmmecHTSLey6Xk2
+         UKF40HtqlrfFyYUhgFcChzqtRb0e3HyystLXBkB9/ijX/ZMXf73iV1RyQM1Timzr/D
+         uZdJjKdLF2/tFlMXM28HHK6z1pRLPMlCDuj5wECLquhkZ7pQNWID7kyiykpYEmP1X1
+         J9zA0rCEu6/OA==
 From:   Eric Biggers <ebiggers@kernel.org>
 To:     linux-fscrypt@vger.kernel.org
 Cc:     linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
@@ -38,9 +38,9 @@ Cc:     linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
         Theodore Ts'o <tytso@mit.edu>,
         Jaegeuk Kim <jaegeuk@kernel.org>,
         Victor Hsieh <victorhsieh@google.com>
-Subject: [PATCH 4/6] fs-verity: support reading Merkle tree with ioctl
-Date:   Fri, 15 Jan 2021 10:18:17 -0800
-Message-Id: <20210115181819.34732-5-ebiggers@kernel.org>
+Subject: [PATCH 6/6] fs-verity: support reading signature with ioctl
+Date:   Fri, 15 Jan 2021 10:18:19 -0800
+Message-Id: <20210115181819.34732-7-ebiggers@kernel.org>
 X-Mailer: git-send-email 2.30.0
 In-Reply-To: <20210115181819.34732-1-ebiggers@kernel.org>
 References: <20210115181819.34732-1-ebiggers@kernel.org>
@@ -52,153 +52,121 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-Add support for FS_VERITY_METADATA_TYPE_MERKLE_TREE to
+Add support for FS_VERITY_METADATA_TYPE_SIGNATURE to
 FS_IOC_READ_VERITY_METADATA.  This allows a userspace server program to
-retrieve the Merkle tree of a verity file for serving to a client which
-implements fs-verity compatible verification.  See the patch which
-introduced FS_IOC_READ_VERITY_METADATA for more details.
+retrieve the built-in signature (if present) of a verity file for
+serving to a client which implements fs-verity compatible verification.
+See the patch which introduced FS_IOC_READ_VERITY_METADATA for more
+details.
+
+The ability for userspace to read the built-in signatures is also useful
+because it allows a system that is using the in-kernel signature
+verification to migrate to userspace signature verification.
 
 This has been tested using a new xfstest which calls this ioctl via a
 new subcommand for the 'fsverity' program from fsverity-utils.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- Documentation/filesystems/fsverity.rst | 10 +++-
- fs/verity/read_metadata.c              | 70 ++++++++++++++++++++++++++
- include/uapi/linux/fsverity.h          |  2 +
- 3 files changed, 81 insertions(+), 1 deletion(-)
+ Documentation/filesystems/fsverity.rst |  9 +++++++-
+ fs/verity/read_metadata.c              | 30 ++++++++++++++++++++++++++
+ include/uapi/linux/fsverity.h          |  1 +
+ 3 files changed, 39 insertions(+), 1 deletion(-)
 
 diff --git a/Documentation/filesystems/fsverity.rst b/Documentation/filesystems/fsverity.rst
-index 9ef7a7de60085..50b47a6d9ea11 100644
+index 6dc5772037ef9..1d831e3cbcb33 100644
 --- a/Documentation/filesystems/fsverity.rst
 +++ b/Documentation/filesystems/fsverity.rst
-@@ -234,6 +234,8 @@ need this ioctl.
+@@ -236,6 +236,7 @@ This ioctl takes in a pointer to the following structure::
  
- This ioctl takes in a pointer to the following structure::
+    #define FS_VERITY_METADATA_TYPE_MERKLE_TREE     1
+    #define FS_VERITY_METADATA_TYPE_DESCRIPTOR      2
++   #define FS_VERITY_METADATA_TYPE_SIGNATURE       3
  
-+   #define FS_VERITY_METADATA_TYPE_MERKLE_TREE     1
-+
     struct fsverity_read_metadata_arg {
             __u64 metadata_type;
-            __u64 offset;
-@@ -242,7 +244,13 @@ This ioctl takes in a pointer to the following structure::
-            __u64 __reserved;
-    };
+@@ -256,6 +257,10 @@ This ioctl takes in a pointer to the following structure::
+ - ``FS_VERITY_METADATA_TYPE_DESCRIPTOR`` reads the fs-verity
+   descriptor.  See `fs-verity descriptor`_.
  
--``metadata_type`` specifies the type of metadata to read.
-+``metadata_type`` specifies the type of metadata to read:
++- ``FS_VERITY_METADATA_TYPE_SIGNATURE`` reads the signature which was
++  passed to FS_IOC_ENABLE_VERITY, if any.  See `Built-in signature
++  verification`_.
 +
-+- ``FS_VERITY_METADATA_TYPE_MERKLE_TREE`` reads the blocks of the
-+  Merkle tree.  The blocks are returned in order from the root level
-+  to the leaf level.  Within each level, the blocks are returned in
-+  the same order that their hashes are themselves hashed.
-+  See `Merkle tree`_ for more information.
- 
  The semantics are similar to those of ``pread()``.  ``offset``
  specifies the offset in bytes into the metadata item to read from, and
+ ``length`` specifies the maximum number of bytes to read from the
+@@ -279,7 +284,9 @@ FS_IOC_READ_VERITY_METADATA can fail with the following errors:
+ - ``EINTR``: the ioctl was interrupted before any data was read
+ - ``EINVAL``: reserved fields were set, or ``offset + length``
+   overflowed
+-- ``ENODATA``: the file is not a verity file
++- ``ENODATA``: the file is not a verity file, or
++  FS_VERITY_METADATA_TYPE_SIGNATURE was requested but the file doesn't
++  have a built-in signature
+ - ``ENOTTY``: this type of filesystem does not implement fs-verity, or
+   this ioctl is not yet implemented on it
+ - ``EOPNOTSUPP``: the kernel was not configured with fs-verity
 diff --git a/fs/verity/read_metadata.c b/fs/verity/read_metadata.c
-index 43be990fd53e4..0f8ad2991cf90 100644
+index 2dea6dd3bb05a..7e2d0c7bdf0de 100644
 --- a/fs/verity/read_metadata.c
 +++ b/fs/verity/read_metadata.c
-@@ -7,8 +7,75 @@
- 
- #include "fsverity_private.h"
- 
-+#include <linux/backing-dev.h>
-+#include <linux/highmem.h>
-+#include <linux/sched/signal.h>
- #include <linux/uaccess.h>
- 
-+static int fsverity_read_merkle_tree(struct inode *inode,
-+				     const struct fsverity_info *vi,
-+				     void __user *buf, u64 offset, int length)
-+{
-+	const struct fsverity_operations *vops = inode->i_sb->s_vop;
-+	u64 end_offset;
-+	unsigned int offs_in_page;
-+	pgoff_t index, last_index;
-+	int retval = 0;
-+	int err = 0;
+@@ -114,6 +114,34 @@ static int fsverity_read_descriptor(struct inode *inode,
+ 	kfree(desc);
+ 	return res;
+ }
 +
-+	end_offset = min(offset + length, vi->tree_params.tree_size);
-+	if (offset >= end_offset)
-+		return 0;
-+	offs_in_page = offset_in_page(offset);
-+	last_index = (end_offset - 1) >> PAGE_SHIFT;
++static int fsverity_read_signature(struct inode *inode,
++				   void __user *buf, u64 offset, int length)
++{
++	struct fsverity_descriptor *desc;
++	size_t desc_size;
++	int res;
++
++	res = fsverity_get_descriptor(inode, &desc, &desc_size);
++	if (res)
++		return res;
++
++	if (desc->sig_size == 0) {
++		res = -ENODATA;
++		goto out;
++	}
 +
 +	/*
-+	 * Iterate through each Merkle tree page in the requested range and copy
-+	 * the requested portion to userspace.  Note that the Merkle tree block
-+	 * size isn't important here, as we are returning a byte stream; i.e.,
-+	 * we can just work with pages even if the tree block size != PAGE_SIZE.
++	 * Include only the signature.  Note that fsverity_get_descriptor()
++	 * already verified that sig_size is in-bounds.
 +	 */
-+	for (index = offset >> PAGE_SHIFT; index <= last_index; index++) {
-+		unsigned long num_ra_pages =
-+			min_t(unsigned long, last_index - index + 1,
-+			      inode->i_sb->s_bdi->io_pages);
-+		unsigned int bytes_to_copy = min_t(u64, end_offset - offset,
-+						   PAGE_SIZE - offs_in_page);
-+		struct page *page;
-+		const void *virt;
-+
-+		page = vops->read_merkle_tree_page(inode, index, num_ra_pages);
-+		if (IS_ERR(page)) {
-+			err = PTR_ERR(page);
-+			fsverity_err(inode,
-+				     "Error %d reading Merkle tree page %lu",
-+				     err, index);
-+			break;
-+		}
-+
-+		virt = kmap(page);
-+		if (copy_to_user(buf, virt + offs_in_page, bytes_to_copy)) {
-+			kunmap(page);
-+			put_page(page);
-+			err = -EFAULT;
-+			break;
-+		}
-+		kunmap(page);
-+		put_page(page);
-+
-+		retval += bytes_to_copy;
-+		buf += bytes_to_copy;
-+		offset += bytes_to_copy;
-+
-+		if (fatal_signal_pending(current))  {
-+			err = -EINTR;
-+			break;
-+		}
-+		cond_resched();
-+		offs_in_page = 0;
-+	}
-+	return retval ? retval : err;
++	res = fsverity_read_buffer(buf, offset, length, desc->signature,
++				   le32_to_cpu(desc->sig_size));
++out:
++	kfree(desc);
++	return res;
 +}
++
  /**
   * fsverity_ioctl_read_metadata() - read verity metadata from a file
   * @filp: file to read the metadata from
-@@ -48,6 +115,9 @@ int fsverity_ioctl_read_metadata(struct file *filp, const void __user *uarg)
- 	buf = u64_to_user_ptr(arg.buf_ptr);
- 
- 	switch (arg.metadata_type) {
-+	case FS_VERITY_METADATA_TYPE_MERKLE_TREE:
-+		return fsverity_read_merkle_tree(inode, vi, buf, arg.offset,
-+						 length);
+@@ -158,6 +186,8 @@ int fsverity_ioctl_read_metadata(struct file *filp, const void __user *uarg)
+ 						 length);
+ 	case FS_VERITY_METADATA_TYPE_DESCRIPTOR:
+ 		return fsverity_read_descriptor(inode, buf, arg.offset, length);
++	case FS_VERITY_METADATA_TYPE_SIGNATURE:
++		return fsverity_read_signature(inode, buf, arg.offset, length);
  	default:
  		return -EINVAL;
  	}
 diff --git a/include/uapi/linux/fsverity.h b/include/uapi/linux/fsverity.h
-index e062751294d01..94003b153cb3d 100644
+index 41abc283dbccb..15384e22e331e 100644
 --- a/include/uapi/linux/fsverity.h
 +++ b/include/uapi/linux/fsverity.h
-@@ -83,6 +83,8 @@ struct fsverity_formatted_digest {
- 	__u8 digest[];
- };
+@@ -85,6 +85,7 @@ struct fsverity_formatted_digest {
  
-+#define FS_VERITY_METADATA_TYPE_MERKLE_TREE	1
-+
+ #define FS_VERITY_METADATA_TYPE_MERKLE_TREE	1
+ #define FS_VERITY_METADATA_TYPE_DESCRIPTOR	2
++#define FS_VERITY_METADATA_TYPE_SIGNATURE	3
+ 
  struct fsverity_read_metadata_arg {
  	__u64 metadata_type;
- 	__u64 offset;
 -- 
 2.30.0
 
