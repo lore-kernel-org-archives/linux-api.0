@@ -2,35 +2,35 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-19.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-14.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F0C4EC43603
-	for <linux-api@archiver.kernel.org>; Fri, 15 Jan 2021 18:20:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E6879C43381
+	for <linux-api@archiver.kernel.org>; Fri, 15 Jan 2021 18:20:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C72F2222B3
-	for <linux-api@archiver.kernel.org>; Fri, 15 Jan 2021 18:20:25 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CF2CE23A58
+	for <linux-api@archiver.kernel.org>; Fri, 15 Jan 2021 18:20:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2388154AbhAOSUW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 15 Jan 2021 13:20:22 -0500
-Received: from mail.kernel.org ([198.145.29.99]:42920 "EHLO mail.kernel.org"
+        id S2388402AbhAOSUZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 15 Jan 2021 13:20:25 -0500
+Received: from mail.kernel.org ([198.145.29.99]:42808 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2388279AbhAOSUN (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        id S2388218AbhAOSUN (ORCPT <rfc822;linux-api@vger.kernel.org>);
         Fri, 15 Jan 2021 13:20:13 -0500
-Received: by mail.kernel.org (Postfix) with ESMTPSA id F176023AAA;
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 3550423A58;
         Fri, 15 Jan 2021 18:19:32 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1610734773;
-        bh=Jel0jSfxzz6JC5YFbmX2zBvLW5g+Ng3wqiU7Ogpwi0U=;
-        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=nV+PbKlE4fejFkAJT2QUpw8lFuA/9WiIzVOwQWxZ8m42b+BxHOeac7Nv6YlEjicfq
-         9NSow62EK+Kce5qwM4tuIP2FNmGnI6wXaQpgyE3Oi2QZgObDE4cHU0EwJKw7W+7QI3
-         juUYfw9Dd7eoWLJIeQpui6nAsYH85pO3czfkCYC/8+ei411Yaq6owCWkqVqFFI5m9S
-         aVfh9Vxwm+x/hpT6nvN2QvoQIcFbjV8dhTFfs7RVUpxYhzHusxOnMS75ZVuA+qNssB
-         DjCldKSxFgNoSAhvqz23SuCDosGmeRCT+VaVBego5uOG/vv9IgcpB8VIPQrt/BO3RZ
-         Mx374CmaajuLg==
+        s=k20201202; t=1610734772;
+        bh=7HZGCsiZfKx7k8RTP6gegLOEC7SUZGN0WL2KEa1MIqw=;
+        h=From:To:Cc:Subject:Date:From;
+        b=OLgSi9dXP1/YkA9HyFOY/X6hDj3RaQ6Ohe7A5+afoRqJVi76p4BsVaWFg67i7xPN+
+         6tZ+JGUzOYkAc4C6Sqpk7z0yCXnts0hnTQUE9wijYEKFxyXOS+SYpEz0qXShSdLEMS
+         IeVxDBKO7PWFFEmTKsOKfgQW8p3OWYonyQJLlena81DsNsqLA9MvUbaXw3qdaBVUFQ
+         RlvnXyxdljEpWdHSNlQ0ZgoJ6VenS6b64yLhH9TfUezjo6pSp27OciWtK9MAPSrZ7P
+         yat9Uam8Fm2+YLYUl4HU+10eRYuebg0aC9S/umMOtp6WfZpH/R0zghGYgHcWvoPGz3
+         P26n77xWu0DGw==
 From:   Eric Biggers <ebiggers@kernel.org>
 To:     linux-fscrypt@vger.kernel.org
 Cc:     linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
@@ -38,122 +38,90 @@ Cc:     linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
         Theodore Ts'o <tytso@mit.edu>,
         Jaegeuk Kim <jaegeuk@kernel.org>,
         Victor Hsieh <victorhsieh@google.com>
-Subject: [PATCH 2/6] fs-verity: don't pass whole descriptor to fsverity_verify_signature()
-Date:   Fri, 15 Jan 2021 10:18:15 -0800
-Message-Id: <20210115181819.34732-3-ebiggers@kernel.org>
+Subject: [PATCH 0/6] fs-verity: add an ioctl to read verity metadata
+Date:   Fri, 15 Jan 2021 10:18:13 -0800
+Message-Id: <20210115181819.34732-1-ebiggers@kernel.org>
 X-Mailer: git-send-email 2.30.0
-In-Reply-To: <20210115181819.34732-1-ebiggers@kernel.org>
-References: <20210115181819.34732-1-ebiggers@kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Eric Biggers <ebiggers@google.com>
+[This patchset applies to v5.11-rc3]
 
-Now that fsverity_get_descriptor() validates the sig_size field,
-fsverity_verify_signature() doesn't need to do it.
+Add an ioctl FS_IOC_READ_VERITY_METADATA which allows reading verity
+metadata from a file that has fs-verity enabled, including:
 
-Just change the prototype of fsverity_verify_signature() to take the
-signature directly rather than take a fsverity_descriptor.
+- The Merkle tree
+- The fsverity_descriptor (not including the signature if present)
+- The built-in signature, if present
 
-Signed-off-by: Eric Biggers <ebiggers@google.com>
----
- fs/verity/fsverity_private.h |  6 ++----
- fs/verity/open.c             |  3 ++-
- fs/verity/signature.c        | 20 ++++++--------------
- 3 files changed, 10 insertions(+), 19 deletions(-)
+This ioctl has similar semantics to pread().  It is passed the type of
+metadata to read (one of the above three), and a buffer, offset, and
+size.  It returns the number of bytes read or an error.
 
-diff --git a/fs/verity/fsverity_private.h b/fs/verity/fsverity_private.h
-index 6c9caccc06021..a7920434bae50 100644
---- a/fs/verity/fsverity_private.h
-+++ b/fs/verity/fsverity_private.h
-@@ -140,15 +140,13 @@ void __init fsverity_exit_info_cache(void);
- 
- #ifdef CONFIG_FS_VERITY_BUILTIN_SIGNATURES
- int fsverity_verify_signature(const struct fsverity_info *vi,
--			      const struct fsverity_descriptor *desc,
--			      size_t desc_size);
-+			      const u8 *signature, size_t sig_size);
- 
- int __init fsverity_init_signature(void);
- #else /* !CONFIG_FS_VERITY_BUILTIN_SIGNATURES */
- static inline int
- fsverity_verify_signature(const struct fsverity_info *vi,
--			  const struct fsverity_descriptor *desc,
--			  size_t desc_size)
-+			  const u8 *signature, size_t sig_size)
- {
- 	return 0;
- }
-diff --git a/fs/verity/open.c b/fs/verity/open.c
-index a987bb785e9b0..60ff8af7219fe 100644
---- a/fs/verity/open.c
-+++ b/fs/verity/open.c
-@@ -181,7 +181,8 @@ struct fsverity_info *fsverity_create_info(const struct inode *inode,
- 		 vi->tree_params.hash_alg->name,
- 		 vi->tree_params.digest_size, vi->file_digest);
- 
--	err = fsverity_verify_signature(vi, desc, desc_size);
-+	err = fsverity_verify_signature(vi, desc->signature,
-+					le32_to_cpu(desc->sig_size));
- out:
- 	if (err) {
- 		fsverity_free_info(vi);
-diff --git a/fs/verity/signature.c b/fs/verity/signature.c
-index 012468eda2a78..143a530a80088 100644
---- a/fs/verity/signature.c
-+++ b/fs/verity/signature.c
-@@ -29,21 +29,19 @@ static struct key *fsverity_keyring;
- /**
-  * fsverity_verify_signature() - check a verity file's signature
-  * @vi: the file's fsverity_info
-- * @desc: the file's fsverity_descriptor
-- * @desc_size: size of @desc
-+ * @signature: the file's built-in signature
-+ * @sig_size: size of signature in bytes, or 0 if no signature
-  *
-- * If the file's fs-verity descriptor includes a signature of the file digest,
-- * verify it against the certificates in the fs-verity keyring.
-+ * If the file includes a signature of its fs-verity file digest, verify it
-+ * against the certificates in the fs-verity keyring.
-  *
-  * Return: 0 on success (signature valid or not required); -errno on failure
-  */
- int fsverity_verify_signature(const struct fsverity_info *vi,
--			      const struct fsverity_descriptor *desc,
--			      size_t desc_size)
-+			      const u8 *signature, size_t sig_size)
- {
- 	const struct inode *inode = vi->inode;
- 	const struct fsverity_hash_alg *hash_alg = vi->tree_params.hash_alg;
--	const u32 sig_size = le32_to_cpu(desc->sig_size);
- 	struct fsverity_formatted_digest *d;
- 	int err;
- 
-@@ -56,11 +54,6 @@ int fsverity_verify_signature(const struct fsverity_info *vi,
- 		return 0;
- 	}
- 
--	if (sig_size > desc_size - sizeof(*desc)) {
--		fsverity_err(inode, "Signature overflows verity descriptor");
--		return -EBADMSG;
--	}
--
- 	d = kzalloc(sizeof(*d) + hash_alg->digest_size, GFP_KERNEL);
- 	if (!d)
- 		return -ENOMEM;
-@@ -70,8 +63,7 @@ int fsverity_verify_signature(const struct fsverity_info *vi,
- 	memcpy(d->digest, vi->file_digest, hash_alg->digest_size);
- 
- 	err = verify_pkcs7_signature(d, sizeof(*d) + hash_alg->digest_size,
--				     desc->signature, sig_size,
--				     fsverity_keyring,
-+				     signature, sig_size, fsverity_keyring,
- 				     VERIFYING_UNSPECIFIED_SIGNATURE,
- 				     NULL, NULL);
- 	kfree(d);
+This ioctl doesn't make any assumption about where the metadata is
+stored on-disk.  It does assume the metadata is in a stable format, but
+that's basically already the case:
+
+- The Merkle tree and fsverity_descriptor are defined by how fs-verity
+  file digests are computed; see the "File digest computation" section
+  of Documentation/filesystems/fsverity.rst.  Technically, the way in
+  which the levels of the tree are ordered relative to each other wasn't
+  previously specified, but it's logical to put the root level first.
+
+- The built-in signature is the value passed to FS_IOC_ENABLE_VERITY.
+
+This ioctl is useful because it allows writing a server program that
+takes a verity file and serves it to a client program, such that the
+client can do its own fs-verity compatible verification of the file.
+This only makes sense if the client doesn't trust the server and if the
+server needs to provide the storage for the client.
+
+More concretely, there is interest in using this ability in Android to
+export APK files (which are protected by fs-verity) to "protected VMs".
+This would use Protected KVM (https://lwn.net/Articles/836693), which
+provides an isolated execution environment without having to trust the
+traditional "host".  A "guest" VM can boot from a signed image and
+perform specific tasks in a minimum trusted environment using files that
+have fs-verity enabled on the host, without trusting the host or
+requiring that the guest has its own trusted storage.
+
+Technically, it would be possible to duplicate the metadata and store it
+in separate files for serving.  However, that would be less efficient
+and would require extra care in userspace to maintain file consistency.
+
+In addition to the above, the ability to read the built-in signatures is
+useful because it allows a system that is using the in-kernel signature
+verification to migrate to userspace signature verification.
+
+This patchset has been tested by new xfstests which call this new ioctl
+via a new subcommand for the 'fsverity' program from fsverity-utils.
+
+Eric Biggers (6):
+  fs-verity: factor out fsverity_get_descriptor()
+  fs-verity: don't pass whole descriptor to fsverity_verify_signature()
+  fs-verity: add FS_IOC_READ_VERITY_METADATA ioctl
+  fs-verity: support reading Merkle tree with ioctl
+  fs-verity: support reading descriptor with ioctl
+  fs-verity: support reading signature with ioctl
+
+ Documentation/filesystems/fsverity.rst |  76 ++++++++++
+ fs/ext4/ioctl.c                        |   7 +
+ fs/f2fs/file.c                         |  11 ++
+ fs/verity/Makefile                     |   1 +
+ fs/verity/fsverity_private.h           |  13 +-
+ fs/verity/open.c                       | 133 +++++++++++------
+ fs/verity/read_metadata.c              | 195 +++++++++++++++++++++++++
+ fs/verity/signature.c                  |  20 +--
+ include/linux/fsverity.h               |  12 ++
+ include/uapi/linux/fsverity.h          |  14 ++
+ 10 files changed, 417 insertions(+), 65 deletions(-)
+ create mode 100644 fs/verity/read_metadata.c
+
+
+base-commit: 7c53f6b671f4aba70ff15e1b05148b10d58c2837
 -- 
 2.30.0
 
