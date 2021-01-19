@@ -2,147 +2,125 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_IN_DEF_DKIM_WL autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3C272C433DB
-	for <linux-api@archiver.kernel.org>; Tue, 19 Jan 2021 20:33:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B6AF7C4360C
+	for <linux-api@archiver.kernel.org>; Tue, 19 Jan 2021 21:42:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D760F2310D
-	for <linux-api@archiver.kernel.org>; Tue, 19 Jan 2021 20:33:01 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 87C47230FE
+	for <linux-api@archiver.kernel.org>; Tue, 19 Jan 2021 21:42:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728316AbhASU1U (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 19 Jan 2021 15:27:20 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45152 "EHLO
+        id S2390969AbhASRte (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 19 Jan 2021 12:49:34 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60748 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2391951AbhASU0X (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Jan 2021 15:26:23 -0500
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DA58BC0613ED;
-        Tue, 19 Jan 2021 12:25:31 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=3skarH8usgooZsIjjZg9m11Y8vaFLaunY8jfnB6wGPQ=; b=IcFHUlBLm4M8B7XITZrlaPwJZk
-        PxLbfPfkfkOKcDtLlhfkXiUHka5CvTPb7hLgrgmT3Ja+UqcHjN9zY1H6Tmg+WZOu5IRktFRwdo/cS
-        V9j3hg1Ow8RITENXtDtJLmBCwghrrgT8ZPHCKw/4HQvv4xpai+rfbtNKnht6rSRWFZHmep0AFdaLc
-        WpT0BIFZXKaOI1hvNwPxLTcH2Gpj0LlBuWbpsOxA9rDZtRWPCXjXziJFZX6g2OZYB33LP00RMcFkb
-        3de7nf3N03r6bUtfXPBA8XywS5tDj8kVNevPplCpPm+FZKgebPUFH+9MEl3Zc+oBbVK/fmh04LESS
-        xKXNl/dg==;
-Received: from willy by casper.infradead.org with local (Exim 4.94 #2 (Red Hat Linux))
-        id 1l1xW1-00EmeP-RV; Tue, 19 Jan 2021 20:22:22 +0000
-Date:   Tue, 19 Jan 2021 20:22:13 +0000
-From:   Matthew Wilcox <willy@infradead.org>
-To:     Mike Rapoport <rppt@kernel.org>
-Cc:     Andrew Morton <akpm@linux-foundation.org>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        Andy Lutomirski <luto@kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Christopher Lameter <cl@linux.com>,
-        Dan Williams <dan.j.williams@intel.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        David Hildenbrand <david@redhat.com>,
-        Elena Reshetova <elena.reshetova@intel.com>,
-        "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,
-        James Bottomley <jejb@linux.ibm.com>,
-        "Kirill A. Shutemov" <kirill@shutemov.name>,
-        Mark Rutland <mark.rutland@arm.com>,
-        Mike Rapoport <rppt@linux.ibm.com>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Palmer Dabbelt <palmer@dabbelt.com>,
-        Paul Walmsley <paul.walmsley@sifive.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Rick Edgecombe <rick.p.edgecombe@intel.com>,
-        Roman Gushchin <guro@fb.com>,
-        Shakeel Butt <shakeelb@google.com>,
-        Shuah Khan <shuah@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
-        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
-        linux-arm-kernel@lists.infradead.org,
-        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
-        linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
-        linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
-        x86@kernel.org, Hagen Paul Pfeifer <hagen@jauu.net>
-Subject: Re: [PATCH v14 05/10] mm: introduce memfd_secret system call to
- create "secret" memory areas
-Message-ID: <20210119202213.GI2260413@casper.infradead.org>
-References: <20201203062949.5484-1-rppt@kernel.org>
- <20201203062949.5484-6-rppt@kernel.org>
+        with ESMTP id S2390060AbhASPHA (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Jan 2021 10:07:00 -0500
+Received: from mail-lf1-x12c.google.com (mail-lf1-x12c.google.com [IPv6:2a00:1450:4864:20::12c])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1A18EC061799
+        for <linux-api@vger.kernel.org>; Tue, 19 Jan 2021 07:05:29 -0800 (PST)
+Received: by mail-lf1-x12c.google.com with SMTP id o19so29523752lfo.1
+        for <linux-api@vger.kernel.org>; Tue, 19 Jan 2021 07:05:28 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=gOmgvCPsNvi85/TpBsHHlznh/AXeaDwbv8LGPCZK7GU=;
+        b=jHOv7ZfcUJDyBrUH8oJXnGIi8zR/GVQigV9JsU3VOD2zVPzE8Qi8FcxCv3RN2B9A6r
+         xugkjyegXRk25clhQPkHPl6Bgq5is0HjaMKTdere1dxwfXiSoujavM6bCqwMy7DZTLAY
+         XzwyrYIOx+UbZ4taCEFKeVgvzFkPqWMiBrHN0cesc58X2THa+V2gdhqFGvQ0m5hl69PP
+         86p4cNSHXci62Q5bRCDCUjqJlCKurpnZ2KQ8/bUtutXFEHhOZcuBiBOGHUyG7S3P/OJ0
+         UhrskVG5YmmxTBCZMbabr3ZIzMkK81tYRiWGV1k3KMjBXOmM5Zrq6ssCUVgGucgyhjVM
+         mc6A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=gOmgvCPsNvi85/TpBsHHlznh/AXeaDwbv8LGPCZK7GU=;
+        b=EbhWuYjUj4w/rgiCJDNe3jwl/ASdi6kakSSu9nJNTKLWH2vvIGpA4EjC3bX1bg43Uy
+         w6k7Chkoi929QbEYr6xDaGZ8bL2P3eTna4ywpvp5SKYSz5DExR3t3eXBSqjoHyMFq8Q7
+         5vyoU5gv57NUSDfXhajAKMrM3Ac0RtmB+DCHupPtw9X8ZAgApaSHqoxbMPEpG5toNt+Y
+         0/pdw3rM+Dg23d31bD5ckoMAoEgeArxY/GGb4k22VGYpV0csvmR5yNtPI+0znErn9iZu
+         w2l4WTK4ZWFt15HYoFTwvhXCcI2TevrSjQtAHzLG7ZAtOH8GjJ7euizNzP4ucGp0MMLb
+         4V9Q==
+X-Gm-Message-State: AOAM530souN1rtQALhBES5ayZbwA2O06iDBNTGDO85zJHhffhiM18XXb
+        Haq84VJfyoXSB2r0mAEJsj6MrR228hI2oJzDX5SR9w==
+X-Google-Smtp-Source: ABdhPJxFxS+hG4x6TwLiOwPtHwa+9Zao0MvjeAr8yET1CRB9c/HolYwSYvtkLR07E5CI/h61T92ZT6GwaxlT4i6ykfk=
+X-Received: by 2002:a19:197:: with SMTP id 145mr2043470lfb.352.1611068727150;
+ Tue, 19 Jan 2021 07:05:27 -0800 (PST)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20201203062949.5484-6-rppt@kernel.org>
+References: <20210112220124.837960-1-christian.brauner@ubuntu.com> <20210112220124.837960-16-christian.brauner@ubuntu.com>
+In-Reply-To: <20210112220124.837960-16-christian.brauner@ubuntu.com>
+From:   Jann Horn <jannh@google.com>
+Date:   Tue, 19 Jan 2021 16:05:00 +0100
+Message-ID: <CAG48ez3Ccr77+zH56YGimESf9jdy_xnQrebypn1TXEP3Q+xw=w@mail.gmail.com>
+Subject: Re: [PATCH v5 15/42] fs: add file_user_ns() helper
+To:     Christian Brauner <christian.brauner@ubuntu.com>
+Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
+        Christoph Hellwig <hch@infradead.org>,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        John Johansen <john.johansen@canonical.com>,
+        James Morris <jmorris@namei.org>,
+        Mimi Zohar <zohar@linux.ibm.com>,
+        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
+        Stephen Smalley <stephen.smalley.work@gmail.com>,
+        Casey Schaufler <casey@schaufler-ca.com>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andreas Dilger <adilger.kernel@dilger.ca>,
+        OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>,
+        Geoffrey Thomas <geofft@ldpreload.com>,
+        Mrunal Patel <mpatel@redhat.com>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Theodore Tso <tytso@mit.edu>, Alban Crequy <alban@kinvolk.io>,
+        Tycho Andersen <tycho@tycho.ws>,
+        David Howells <dhowells@redhat.com>,
+        James Bottomley <James.Bottomley@hansenpartnership.com>,
+        Seth Forshee <seth.forshee@canonical.com>,
+        =?UTF-8?Q?St=C3=A9phane_Graber?= <stgraber@ubuntu.com>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Aleksa Sarai <cyphar@cyphar.com>,
+        Lennart Poettering <lennart@poettering.net>,
+        "Eric W. Biederman" <ebiederm@xmission.com>,
+        Stephen Barber <smbarber@chromium.org>,
+        Phil Estes <estesp@gmail.com>, Serge Hallyn <serge@hallyn.com>,
+        Kees Cook <keescook@chromium.org>,
+        Todd Kjos <tkjos@google.com>, Paul Moore <paul@paul-moore.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Linux Containers <containers@lists.linux-foundation.org>,
+        linux-security-module <linux-security-module@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        Ext4 Developers List <linux-ext4@vger.kernel.org>,
+        linux-xfs@vger.kernel.org, linux-integrity@vger.kernel.org,
+        SElinux list <selinux@vger.kernel.org>,
+        Christoph Hellwig <hch@lst.de>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Dec 03, 2020 at 08:29:44AM +0200, Mike Rapoport wrote:
-> +static vm_fault_t secretmem_fault(struct vm_fault *vmf)
+On Wed, Jan 13, 2021 at 1:52 AM Christian Brauner
+<christian.brauner@ubuntu.com> wrote:
+> Add a simple helper to retrieve the user namespace associated with the
+> vfsmount of a file. Christoph correctly points out that this makes
+> codepaths (e.g. ioctls) way easier to follow that would otherwise
+> dereference via mnt_user_ns(file->f_path.mnt).
+>
+> In order to make file_user_ns() static inline we'd need to include
+> mount.h in either file.h or fs.h which seems undesirable so let's simply
+> not force file_user_ns() to be inline.
+[...]
+> +struct user_namespace *file_user_ns(struct file *file)
 > +{
-> +	struct address_space *mapping = vmf->vma->vm_file->f_mapping;
-> +	struct inode *inode = file_inode(vmf->vma->vm_file);
-> +	pgoff_t offset = vmf->pgoff;
-> +	vm_fault_t ret = 0;
-> +	unsigned long addr;
-> +	struct page *page;
-> +	int err;
-> +
-> +	if (((loff_t)vmf->pgoff << PAGE_SHIFT) >= i_size_read(inode))
-> +		return vmf_error(-EINVAL);
-> +
-> +	page = find_get_page(mapping, offset);
-> +	if (!page) {
-> +
-> +		page = secretmem_alloc_page(vmf->gfp_mask);
-> +		if (!page)
-> +			return vmf_error(-ENOMEM);
-
-Just use VM_FAULT_OOM directly.
-
-> +		err = add_to_page_cache(page, mapping, offset, vmf->gfp_mask);
-> +		if (unlikely(err))
-> +			goto err_put_page;
-
-What if the error is EEXIST because somebody else raced with you to add
-a new page to the page cache?
-
-> +		err = set_direct_map_invalid_noflush(page, 1);
-> +		if (err)
-> +			goto err_del_page_cache;
-
-Does this work correctly if somebody else has a reference to the page
-in the meantime?
-
-> +		addr = (unsigned long)page_address(page);
-> +		flush_tlb_kernel_range(addr, addr + PAGE_SIZE);
-> +
-> +		__SetPageUptodate(page);
-
-Once you've added it to the cache, somebody else can come along and try
-to lock it.  They will set PageWaiter.  Now you call __SetPageUptodate
-and wipe out their PageWaiter bit.  So you won't wake them up when you
-unlock.
-
-You can call __SetPageUptodate before adding it to the page cache,
-but once it's visible to another thread, you can't do that.
-
-> +		ret = VM_FAULT_LOCKED;
-> +	}
-> +
-> +	vmf->page = page;
-
-You're supposed to return the page locked, so use find_lock_page() instead
-of find_get_page().
-
-> +	return ret;
-> +
-> +err_del_page_cache:
-> +	delete_from_page_cache(page);
-> +err_put_page:
-> +	put_page(page);
-> +	return vmf_error(err);
+> +       return mnt_user_ns(file->f_path.mnt);
 > +}
+
+That name is confusing to me, because when I think of "the userns of a
+file", it's file->f_cred->user_ns. There are a bunch of places that
+look at that, as you can see from grepping for "f_cred->user_ns".
+
+If you really want this to be a separate helper, can you maybe give it
+a clearer name? file_mnt_user_ns(), or something like that, idk.
