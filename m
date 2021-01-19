@@ -2,39 +2,39 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C681DC43331
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 90B0DC43381
 	for <linux-api@archiver.kernel.org>; Tue, 19 Jan 2021 14:26:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A9DBA205ED
+	by mail.kernel.org (Postfix) with ESMTP id 65C4A205ED
 	for <linux-api@archiver.kernel.org>; Tue, 19 Jan 2021 14:26:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726974AbhASOVa (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 19 Jan 2021 09:21:30 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43820 "EHLO
+        id S1726550AbhASOVM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 19 Jan 2021 09:21:12 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43326 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1732896AbhASJZe (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Jan 2021 04:25:34 -0500
+        with ESMTP id S1732622AbhASJXP (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Jan 2021 04:23:15 -0500
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B8284C061573;
-        Tue, 19 Jan 2021 01:24:53 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C0FF9C061573;
+        Tue, 19 Jan 2021 01:22:24 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
         References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
         Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=HBX08NJ3TxK02eX7cMNkSDCj3k9eyxvh3icTlumhzms=; b=vf6MUOhvJN5WweMHbf11jDMDsw
-        Mh4oCiAP9qN0P4yx098uwrNsWZbR/4C6aOD7SacnPMXbgoyQflf/KzX6n8lc/gZrt7VaNk4rJNHdw
-        HGg24Sh4PgjEUcQNPYbzxBYWOQLlXT6VlcMbtbOPXAXgBRuEHS5WT0jyuSPF1bK0Tl5UvgGeoo+Qp
-        +tOp4/MRTsC0nogPQrVTnK0RY61MvQuVmznsbVwhLSbx86BL4DUgt/DlX3GekBR0vYQTOHvJh60j1
-        D0eo3Ac5XRwEdpj+iyfI9Q2FNll9ulnEdg8Cb3IWh64UNzAYjP69l53PSB6TYcx8D+sQPJotYh1R7
-        4CmpOKkQ==;
+        bh=8CnqJfggo7kaSxEGLE1dXWml/p5HVDe2QcHu8G5xzpE=; b=B/SF+oWpDEp4Ow/6qcRj1Pjtuc
+        ZTgPRyBXj6uvJk2kKGr1zBt+JZJx3z/Ge42kzCCxBwj24xTNtoscGGc8tBtyTWazzdta2HMlw2rxX
+        GBqbhVRzbwxIbrObTT5WMZL/+bEHg4a7SpO6xwoijVGm9hlDxYcVFxT4RwlU4nqM8xZxyzScZISk3
+        VCXLak/ZtbHGP+jNdjz9dqXFHrMWmmXZHfzHAdLnIquDP0kLPFjkHlVLKeFGqwpKVTHj+m6UwvADV
+        qrwMy1bfJkq7V7gHv7Ej0mYvbwwatOwTL22s0adqKcO3VN4V5pG1ioZ7deJCA9RINgyNMj+FTYPJd
+        2C3UBbrg==;
 Received: from hch by casper.infradead.org with local (Exim 4.94 #2 (Red Hat Linux))
-        id 1l1nFU-00E6x4-F8; Tue, 19 Jan 2021 09:24:38 +0000
-Date:   Tue, 19 Jan 2021 09:24:28 +0000
+        id 1l1nDF-00E6mf-Sl; Tue, 19 Jan 2021 09:22:11 +0000
+Date:   Tue, 19 Jan 2021 09:22:09 +0000
 From:   Christoph Hellwig <hch@infradead.org>
 To:     Christian Brauner <christian.brauner@ubuntu.com>
 Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
@@ -72,31 +72,34 @@ Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
         linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org,
         linux-integrity@vger.kernel.org, selinux@vger.kernel.org,
         Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH v5 12/42] inode: make init and permission helpers
- idmapped mount aware
-Message-ID: <20210119092428.GD3361757@infradead.org>
+Subject: Re: [PATCH v5 10/42] capability: handle idmapped mounts
+Message-ID: <20210119092209.GB3361757@infradead.org>
 References: <20210112220124.837960-1-christian.brauner@ubuntu.com>
- <20210112220124.837960-13-christian.brauner@ubuntu.com>
+ <20210112220124.837960-11-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20210112220124.837960-13-christian.brauner@ubuntu.com>
+In-Reply-To: <20210112220124.837960-11-christian.brauner@ubuntu.com>
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-> @@ -1761,8 +1761,8 @@ static inline bool sb_start_intwrite_trylock(struct super_block *sb)
->  	return __sb_start_write_trylock(sb, SB_FREEZE_FS);
->  }
->  
-> -
-> -extern bool inode_owner_or_capable(const struct inode *inode);
-> +extern bool inode_owner_or_capable(struct user_namespace *mnt_userns,
-> +				   const struct inode *inode);
+On Tue, Jan 12, 2021 at 11:00:52PM +0100, Christian Brauner wrote:
+> In order to determine whether a caller holds privilege over a given
+> inode the capability framework exposes the two helpers
+> privileged_wrt_inode_uidgid() and capable_wrt_inode_uidgid(). The former
+> verifies that the inode has a mapping in the caller's user namespace and
+> the latter additionally verifies that the caller has the requested
+> capability in their current user namespace.
+> If the inode is accessed through an idmapped mount we simply need to map
+> it according to the mount's user namespace. Afterwards the checks are
+> identical to non-idmapped inodes. If the initial user namespace is
+> passed all operations are a nop so non-idmapped mounts will not see a
+> change in behavior and will also not see any performance impact.
 
-While you're at it - it would be nice to drop the superflous externs in
-the headers.
+This adds a bunch of pointless > 80 char lines, that would be nice to
+fix up.
 
 Otherwise looks good:
 
