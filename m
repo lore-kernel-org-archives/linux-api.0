@@ -3,38 +3,38 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 67F71C10DC1
-	for <linux-api@archiver.kernel.org>; Tue, 19 Jan 2021 14:26:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D5ECDC43219
+	for <linux-api@archiver.kernel.org>; Tue, 19 Jan 2021 14:26:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 41BED2082D
-	for <linux-api@archiver.kernel.org>; Tue, 19 Jan 2021 14:26:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9BC3F207FB
+	for <linux-api@archiver.kernel.org>; Tue, 19 Jan 2021 14:26:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2391619AbhASOXg (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 19 Jan 2021 09:23:36 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47956 "EHLO
+        id S2391598AbhASOXG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 19 Jan 2021 09:23:06 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46512 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2387895AbhASJo7 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Jan 2021 04:44:59 -0500
+        with ESMTP id S2387665AbhASJiH (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Jan 2021 04:38:07 -0500
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 54F4FC0613D3;
-        Tue, 19 Jan 2021 01:44:07 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E0F81C061573;
+        Tue, 19 Jan 2021 01:37:26 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
         References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
         Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=lPUT4BIPvjjCigfj+gwWcq84YOMCaUD9YUasmcIOtgU=; b=kC5U3uMCKrCdQwzr7bsvxcfxzm
-        fewFkXAHif7op94rMpcMd8CgWPxuymKRh0r3QdzGeQWVjr0hvAx3gYLfYrHzQuSBWrfRqg4oQSFzm
-        aqrdqutN/oRSFc3xFbv6tnqZjEp/dsdqkftL/qzUtB4vv2p6XPRAXfWDEf3UqaigjmYarQ4FyypZD
-        PBhQRburzoHMPRsPVBRntHEeZtZ0WugF3YP+PvRkiLFxqxPCK7M5a5Is6txx2oOF17qQ9omG170Iq
-        XKrtxwJ34xba9qhgS8V2a2FWK5Af/bAmlUfHIVHQszylYqdLO4bf4ppjo82Bkwcxq/oyhEZukD+T/
-        gTTYD9GQ==;
+        bh=lkd5BoXRXZXegz0OAW0KP/ZWkeXWrChLRnyeG1Ce6eM=; b=Mh9s8AHw1yhDl8mLTSrmKY92NR
+        qApA5C2Sos5Xw/oxVQZ4P5QVp9lEKDefhVdmrQUrH4hnXHygg1L6hlz7MR64dWZ0fsWJrBcgjJat8
+        A5SrHVAImT3UUPZBGl78jzF32nOeqYKjCVEZ1wMgFhr3vrU9LvZSW8jcXxQcavpg7ztYyySly00pg
+        syGJXrpNCNL+2IkOt4s8RfVfDqcT0PH+xeiBhjJx43VBcL0Sm8DSEFFPDMpoBCr68OnYzR00zBD0/
+        0VSK5NkCJvCBzhPLkK/E46VBpO/yV08GyBZYo/yhBPdrQDK4UM4EgtrJTiNuUNzDrJ9vbVDl8ra5x
+        PZFa4w3g==;
 Received: from hch by casper.infradead.org with local (Exim 4.94 #2 (Red Hat Linux))
-        id 1l1nYQ-00E8Km-9k; Tue, 19 Jan 2021 09:44:02 +0000
-Date:   Tue, 19 Jan 2021 09:44:02 +0000
+        id 1l1nRw-00E7p7-2E; Tue, 19 Jan 2021 09:37:21 +0000
+Date:   Tue, 19 Jan 2021 09:37:20 +0000
 From:   Christoph Hellwig <hch@infradead.org>
 To:     Christian Brauner <christian.brauner@ubuntu.com>
 Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
@@ -72,24 +72,33 @@ Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
         linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org,
         linux-integrity@vger.kernel.org, selinux@vger.kernel.org,
         Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH v5 29/42] ioctl: handle idmapped mounts
-Message-ID: <20210119094402.GM3364550@infradead.org>
+Subject: Re: [PATCH v5 22/42] open: handle idmapped mounts in do_truncate()
+Message-ID: <20210119093720.GG3364550@infradead.org>
 References: <20210112220124.837960-1-christian.brauner@ubuntu.com>
- <20210112220124.837960-30-christian.brauner@ubuntu.com>
+ <20210112220124.837960-23-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20210112220124.837960-30-christian.brauner@ubuntu.com>
+In-Reply-To: <20210112220124.837960-23-christian.brauner@ubuntu.com>
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Jan 12, 2021 at 11:01:11PM +0100, Christian Brauner wrote:
-> Enable generic ioctls to handle idmapped mounts by passing down the
-> mount's user namespace. If the initial user namespace is passed nothing
-> changes so non-idmapped mounts will see identical behavior as before.
+On Tue, Jan 12, 2021 at 11:01:04PM +0100, Christian Brauner wrote:
+> @@ -930,8 +932,12 @@ void dump_truncate(struct coredump_params *cprm)
+>  
+>  	if (file->f_op->llseek && file->f_op->llseek != no_llseek) {
+>  		offset = file->f_op->llseek(file, 0, SEEK_CUR);
+> -		if (i_size_read(file->f_mapping->host) < offset)
+> -			do_truncate(file->f_path.dentry, offset, 0, file);
+> +		if (i_size_read(file->f_mapping->host) < offset) {
+> +			struct user_namespace *mnt_userns;
+> +
+> +			mnt_userns = file_user_ns(file);
+> +			do_truncate(mnt_userns, file->f_path.dentry, offset, 0, file);
+> +		}
 
-Looks good, although file_permission would help here as well..
-
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+I think we can skip the local variable here.  In fact for all callers
+of do_truncate except vfs_truncate a little file_truncate helper that
+takes a struct file would help readability a lot.
