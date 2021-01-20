@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-19.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 33E1EC433E6
-	for <linux-api@archiver.kernel.org>; Wed, 20 Jan 2021 18:09:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AB075C433E0
+	for <linux-api@archiver.kernel.org>; Wed, 20 Jan 2021 18:09:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E1FA3233F6
-	for <linux-api@archiver.kernel.org>; Wed, 20 Jan 2021 18:09:08 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7786B23405
+	for <linux-api@archiver.kernel.org>; Wed, 20 Jan 2021 18:09:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2404176AbhATSI0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 20 Jan 2021 13:08:26 -0500
-Received: from mail.kernel.org ([198.145.29.99]:44538 "EHLO mail.kernel.org"
+        id S2404276AbhATSJX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 20 Jan 2021 13:09:23 -0500
+Received: from mail.kernel.org ([198.145.29.99]:45230 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2390414AbhATSHz (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 20 Jan 2021 13:07:55 -0500
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 4D8C7233FA;
-        Wed, 20 Jan 2021 18:07:05 +0000 (UTC)
+        id S2404259AbhATSI6 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 20 Jan 2021 13:08:58 -0500
+Received: by mail.kernel.org (Postfix) with ESMTPSA id C49DD23434;
+        Wed, 20 Jan 2021 18:07:52 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1611166034;
-        bh=JrQqqTfDn7PtqcmO+RqR6Q5m5y8+aY3Lj4TuxpUnQmI=;
+        s=k20201202; t=1611166081;
+        bh=aQnb8toyTYnIk3szmn2PNJqXyvTSNUJCXWq4IUJHcWo=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=MTVlOesTWf6RN7IZf2qjDD01PC0sSAdGlDMzPbhjDVSt2dRNwNjIqKpK0P0kfHuNn
-         Hi30ZImh5XELCM/uqhQl1PzwkxeLClvav1fe16mmvdIm7WjmqskfadgnjwG+8vlf7J
-         jrELe/MhoMOzhYFoKWZNUV7+Aki+w52mOv2rw3SH3hp6AaHp4lVvgJay9guVe5jYuB
-         4HDluMA+1vgAzE4IUbsX9oE877d1OrUP0tw8jpzS+0b/e8DcuWzaWSP156qeCuVftE
-         toB9HrxOUYkJa9rJEKX7JJ6Sy26nqLsOZbRfAx8V5TZS/bhrDahyhS3v1Fi1l+WPO+
-         eUChfyxJvf5uA==
+        b=ZtcpWfc80YUtx+ftGpQdZC+YYlROZgj7SmUZwmol6QxuGrwMzrp/r2XC+lH5PzSvG
+         Qv3K+6W2HSoii4UFOVNOoo0LXIfIkwQkf2l6fXCLUbOSnCKIa9ZatSSFuBxc6yJHLP
+         N+OPb6xWFp+RoKuUoloONfgcltnn6uJJX4lZxBO3R1nvHvken24AI2MQfAsEWaLO7K
+         VSH2TkJysW9rm4ad6CVCCsbCzlwdTDZo2cbmXE2XUySa0e0mBGNUxtI0VRHFF2OWCy
+         pAC9ZaFJcoATRboHAai2x/6oL1hF+FOsS9fpqHUdgwDZlopmvsgRJcqbWzRlYmOWJr
+         tyVIxJYAfv8hw==
 From:   Mike Rapoport <rppt@kernel.org>
 To:     Andrew Morton <akpm@linux-foundation.org>
 Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
@@ -64,11 +64,11 @@ Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
         linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
         linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
         linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
-        x86@kernel.org, Hagen Paul Pfeifer <hagen@jauu.net>,
-        Palmer Dabbelt <palmerdabbelt@google.com>
-Subject: [PATCH v15 05/11] set_memory: allow querying whether set_direct_map_*() is actually enabled
-Date:   Wed, 20 Jan 2021 20:06:06 +0200
-Message-Id: <20210120180612.1058-6-rppt@kernel.org>
+        x86@kernel.org, Palmer Dabbelt <palmerdabbelt@google.com>,
+        Hagen Paul Pfeifer <hagen@jauu.net>
+Subject: [PATCH v15 10/11] arch, mm: wire up memfd_secret system call where relevant
+Date:   Wed, 20 Jan 2021 20:06:11 +0200
+Message-Id: <20210120180612.1058-11-rppt@kernel.org>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <20210120180612.1058-1-rppt@kernel.org>
 References: <20210120180612.1058-1-rppt@kernel.org>
@@ -80,28 +80,20 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Mike Rapoport <rppt@linux.ibm.com>
 
-On arm64, set_direct_map_*() functions may return 0 without actually
-changing the linear map. This behaviour can be controlled using kernel
-parameters, so we need a way to determine at runtime whether calls to
-set_direct_map_invalid_noflush() and set_direct_map_default_noflush() have
-any effect.
-
-Extend set_memory API with can_set_direct_map() function that allows
-checking if calling set_direct_map_*() will actually change the page table,
-replace several occurrences of open coded checks in arm64 with the new
-function and provide a generic stub for architectures that always modify
-page tables upon calls to set_direct_map APIs.
+Wire up memfd_secret system call on architectures that define
+ARCH_HAS_SET_DIRECT_MAP, namely arm64, risc-v and x86.
 
 Signed-off-by: Mike Rapoport <rppt@linux.ibm.com>
-Reviewed-by: Catalin Marinas <catalin.marinas@arm.com>
-Reviewed-by: David Hildenbrand <david@redhat.com>
+Acked-by: Palmer Dabbelt <palmerdabbelt@google.com>
+Acked-by: Arnd Bergmann <arnd@arndb.de>
 Cc: Alexander Viro <viro@zeniv.linux.org.uk>
 Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Arnd Bergmann <arnd@arndb.de>
 Cc: Borislav Petkov <bp@alien8.de>
+Cc: Catalin Marinas <catalin.marinas@arm.com>
 Cc: Christopher Lameter <cl@linux.com>
 Cc: Dan Williams <dan.j.williams@intel.com>
 Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Hildenbrand <david@redhat.com>
 Cc: Elena Reshetova <elena.reshetova@intel.com>
 Cc: Hagen Paul Pfeifer <hagen@jauu.net>
 Cc: "H. Peter Anvin" <hpa@zytor.com>
@@ -112,7 +104,6 @@ Cc: Mark Rutland <mark.rutland@arm.com>
 Cc: Matthew Wilcox <willy@infradead.org>
 Cc: Michael Kerrisk <mtk.manpages@gmail.com>
 Cc: Palmer Dabbelt <palmer@dabbelt.com>
-Cc: Palmer Dabbelt <palmerdabbelt@google.com>
 Cc: Paul Walmsley <paul.walmsley@sifive.com>
 Cc: Peter Zijlstra <peterz@infradead.org>
 Cc: Rick Edgecombe <rick.p.edgecombe@intel.com>
@@ -123,185 +114,120 @@ Cc: Thomas Gleixner <tglx@linutronix.de>
 Cc: Tycho Andersen <tycho@tycho.ws>
 Cc: Will Deacon <will@kernel.org>
 ---
- arch/arm64/include/asm/Kbuild       |  1 -
- arch/arm64/include/asm/cacheflush.h |  6 ------
- arch/arm64/include/asm/set_memory.h | 17 +++++++++++++++++
- arch/arm64/kernel/machine_kexec.c   |  1 +
- arch/arm64/mm/mmu.c                 |  6 +++---
- arch/arm64/mm/pageattr.c            | 13 +++++++++----
- include/linux/set_memory.h          | 12 ++++++++++++
- 7 files changed, 42 insertions(+), 14 deletions(-)
- create mode 100644 arch/arm64/include/asm/set_memory.h
+ arch/arm64/include/uapi/asm/unistd.h   | 1 +
+ arch/riscv/include/asm/unistd.h        | 1 +
+ arch/x86/entry/syscalls/syscall_32.tbl | 1 +
+ arch/x86/entry/syscalls/syscall_64.tbl | 1 +
+ include/linux/syscalls.h               | 1 +
+ include/uapi/asm-generic/unistd.h      | 6 +++++-
+ mm/secretmem.c                         | 3 +++
+ scripts/checksyscalls.sh               | 4 ++++
+ 8 files changed, 17 insertions(+), 1 deletion(-)
 
-diff --git a/arch/arm64/include/asm/Kbuild b/arch/arm64/include/asm/Kbuild
-index 07ac208edc89..73aa25843f65 100644
---- a/arch/arm64/include/asm/Kbuild
-+++ b/arch/arm64/include/asm/Kbuild
-@@ -3,5 +3,4 @@ generic-y += early_ioremap.h
- generic-y += mcs_spinlock.h
- generic-y += qrwlock.h
- generic-y += qspinlock.h
--generic-y += set_memory.h
- generic-y += user.h
-diff --git a/arch/arm64/include/asm/cacheflush.h b/arch/arm64/include/asm/cacheflush.h
-index d3598419a284..b1bdf83a73db 100644
---- a/arch/arm64/include/asm/cacheflush.h
-+++ b/arch/arm64/include/asm/cacheflush.h
-@@ -136,12 +136,6 @@ static __always_inline void __flush_icache_all(void)
- 	dsb(ish);
- }
+diff --git a/arch/arm64/include/uapi/asm/unistd.h b/arch/arm64/include/uapi/asm/unistd.h
+index f83a70e07df8..ce2ee8f1e361 100644
+--- a/arch/arm64/include/uapi/asm/unistd.h
++++ b/arch/arm64/include/uapi/asm/unistd.h
+@@ -20,5 +20,6 @@
+ #define __ARCH_WANT_SET_GET_RLIMIT
+ #define __ARCH_WANT_TIME32_SYSCALLS
+ #define __ARCH_WANT_SYS_CLONE3
++#define __ARCH_WANT_MEMFD_SECRET
  
--int set_memory_valid(unsigned long addr, int numpages, int enable);
--
--int set_direct_map_invalid_noflush(struct page *page, int numpages);
--int set_direct_map_default_noflush(struct page *page, int numpages);
--bool kernel_page_present(struct page *page);
--
- #include <asm-generic/cacheflush.h>
+ #include <asm-generic/unistd.h>
+diff --git a/arch/riscv/include/asm/unistd.h b/arch/riscv/include/asm/unistd.h
+index 977ee6181dab..6c316093a1e5 100644
+--- a/arch/riscv/include/asm/unistd.h
++++ b/arch/riscv/include/asm/unistd.h
+@@ -9,6 +9,7 @@
+  */
  
- #endif /* __ASM_CACHEFLUSH_H */
-diff --git a/arch/arm64/include/asm/set_memory.h b/arch/arm64/include/asm/set_memory.h
-new file mode 100644
-index 000000000000..ecb6b0f449ab
---- /dev/null
-+++ b/arch/arm64/include/asm/set_memory.h
-@@ -0,0 +1,17 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+
-+#ifndef _ASM_ARM64_SET_MEMORY_H
-+#define _ASM_ARM64_SET_MEMORY_H
-+
-+#include <asm-generic/set_memory.h>
-+
-+bool can_set_direct_map(void);
-+#define can_set_direct_map can_set_direct_map
-+
-+int set_memory_valid(unsigned long addr, int numpages, int enable);
-+
-+int set_direct_map_invalid_noflush(struct page *page, int numpages);
-+int set_direct_map_default_noflush(struct page *page, int numpages);
-+bool kernel_page_present(struct page *page);
-+
-+#endif /* _ASM_ARM64_SET_MEMORY_H */
-diff --git a/arch/arm64/kernel/machine_kexec.c b/arch/arm64/kernel/machine_kexec.c
-index a0b144cfaea7..0cbc50c4fa5a 100644
---- a/arch/arm64/kernel/machine_kexec.c
-+++ b/arch/arm64/kernel/machine_kexec.c
-@@ -11,6 +11,7 @@
- #include <linux/kernel.h>
- #include <linux/kexec.h>
- #include <linux/page-flags.h>
-+#include <linux/set_memory.h>
- #include <linux/smp.h>
+ #define __ARCH_WANT_SYS_CLONE
++#define __ARCH_WANT_MEMFD_SECRET
  
- #include <asm/cacheflush.h>
-diff --git a/arch/arm64/mm/mmu.c b/arch/arm64/mm/mmu.c
-index 30c6dd02e706..79604049fff5 100644
---- a/arch/arm64/mm/mmu.c
-+++ b/arch/arm64/mm/mmu.c
-@@ -22,6 +22,7 @@
- #include <linux/io.h>
- #include <linux/mm.h>
- #include <linux/vmalloc.h>
-+#include <linux/set_memory.h>
+ #include <uapi/asm/unistd.h>
  
- #include <asm/barrier.h>
- #include <asm/cputype.h>
-@@ -492,7 +493,7 @@ static void __init map_mem(pgd_t *pgdp)
- 	int flags = 0;
- 	u64 i;
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 02a349afaf9c..a1578cdf6d91 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -447,3 +447,4 @@
+ 440	i386	process_madvise		sys_process_madvise
+ 441	i386	epoll_pwait2		sys_epoll_pwait2		compat_sys_epoll_pwait2
+ 442	i386	watch_mount		sys_watch_mount
++443	i386	memfd_secret		sys_memfd_secret
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index d9bcc4e02588..d8ecd9df0942 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -364,6 +364,7 @@
+ 440	common	process_madvise		sys_process_madvise
+ 441	common	epoll_pwait2		sys_epoll_pwait2
+ 442	common	watch_mount		sys_watch_mount
++443	common	memfd_secret		sys_memfd_secret
  
--	if (rodata_full || crash_mem_map || debug_pagealloc_enabled())
-+	if (can_set_direct_map() || crash_mem_map)
- 		flags = NO_BLOCK_MAPPINGS | NO_CONT_MAPPINGS;
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 28bde029109d..4bc70ac0e993 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -1039,6 +1039,7 @@ asmlinkage long sys_pidfd_send_signal(int pidfd, int sig,
+ asmlinkage long sys_pidfd_getfd(int pidfd, int fd, unsigned int flags);
+ asmlinkage long sys_watch_mount(int dfd, const char __user *path,
+ 				unsigned int at_flags, int watch_fd, int watch_id);
++asmlinkage long sys_memfd_secret(unsigned long flags);
  
- 	/*
-@@ -1468,8 +1469,7 @@ int arch_add_memory(int nid, u64 start, u64 size,
- 	 * KFENCE requires linear map to be mapped at page granularity, so that
- 	 * it is possible to protect/unprotect single pages in the KFENCE pool.
- 	 */
--	if (rodata_full || debug_pagealloc_enabled() ||
--	    IS_ENABLED(CONFIG_KFENCE))
-+	if (can_set_direct_map() || IS_ENABLED(CONFIG_KFENCE))
- 		flags = NO_BLOCK_MAPPINGS | NO_CONT_MAPPINGS;
+ /*
+  * Architecture-specific system calls
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index ad58f661f4aa..26125974a8a2 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -863,9 +863,13 @@ __SYSCALL(__NR_process_madvise, sys_process_madvise)
+ __SC_COMP(__NR_epoll_pwait2, sys_epoll_pwait2, compat_sys_epoll_pwait2)
+ #define __NR_watch_mount 442
+ __SYSCALL(__NR_watch_mount, sys_watch_mount)
++#ifdef __ARCH_WANT_MEMFD_SECRET
++#define __NR_memfd_secret 443
++__SYSCALL(__NR_memfd_secret, sys_memfd_secret)
++#endif
  
- 	__create_pgd_mapping(swapper_pg_dir, start, __phys_to_virt(start),
-diff --git a/arch/arm64/mm/pageattr.c b/arch/arm64/mm/pageattr.c
-index b53ef37bf95a..d505172265b0 100644
---- a/arch/arm64/mm/pageattr.c
-+++ b/arch/arm64/mm/pageattr.c
-@@ -19,6 +19,11 @@ struct page_change_data {
+ #undef __NR_syscalls
+-#define __NR_syscalls 443
++#define __NR_syscalls 444
  
- bool rodata_full __ro_after_init = IS_ENABLED(CONFIG_RODATA_FULL_DEFAULT_ENABLED);
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/mm/secretmem.c b/mm/secretmem.c
+index 2de06446ebf9..6f75c0c69c70 100644
+--- a/mm/secretmem.c
++++ b/mm/secretmem.c
+@@ -420,6 +420,9 @@ static int __init secretmem_setup(char *str)
+ 	unsigned long reserved_size;
+ 	int err;
  
-+bool can_set_direct_map(void)
-+{
-+	return rodata_full || debug_pagealloc_enabled();
-+}
-+
- static int change_page_range(pte_t *ptep, unsigned long addr, void *data)
- {
- 	struct page_change_data *cdata = data;
-@@ -156,7 +161,7 @@ int set_direct_map_invalid_noflush(struct page *page, int numpages)
- 	};
- 	unsigned long size = PAGE_SIZE * numpages;
- 
--	if (!debug_pagealloc_enabled() && !rodata_full)
 +	if (!can_set_direct_map())
++		return 0;
++
+ 	reserved_size = memparse(str, NULL);
+ 	if (!reserved_size)
  		return 0;
- 
- 	return apply_to_page_range(&init_mm,
-@@ -172,7 +177,7 @@ int set_direct_map_default_noflush(struct page *page, int numpages)
- 	};
- 	unsigned long size = PAGE_SIZE * numpages;
- 
--	if (!debug_pagealloc_enabled() && !rodata_full)
-+	if (!can_set_direct_map())
- 		return 0;
- 
- 	return apply_to_page_range(&init_mm,
-@@ -183,7 +188,7 @@ int set_direct_map_default_noflush(struct page *page, int numpages)
- #ifdef CONFIG_DEBUG_PAGEALLOC
- void __kernel_map_pages(struct page *page, int numpages, int enable)
- {
--	if (!debug_pagealloc_enabled() && !rodata_full)
-+	if (!can_set_direct_map())
- 		return;
- 
- 	set_memory_valid((unsigned long)page_address(page), numpages, enable);
-@@ -208,7 +213,7 @@ bool kernel_page_present(struct page *page)
- 	pte_t *ptep;
- 	unsigned long addr = (unsigned long)page_address(page);
- 
--	if (!debug_pagealloc_enabled() && !rodata_full)
-+	if (!can_set_direct_map())
- 		return true;
- 
- 	pgdp = pgd_offset_k(addr);
-diff --git a/include/linux/set_memory.h b/include/linux/set_memory.h
-index c650f82db813..7b4b6626032d 100644
---- a/include/linux/set_memory.h
-+++ b/include/linux/set_memory.h
-@@ -28,7 +28,19 @@ static inline bool kernel_page_present(struct page *page)
- {
- 	return true;
- }
-+#else /* CONFIG_ARCH_HAS_SET_DIRECT_MAP */
-+/*
-+ * Some architectures, e.g. ARM64 can disable direct map modifications at
-+ * boot time. Let them overrive this query.
-+ */
-+#ifndef can_set_direct_map
-+static inline bool can_set_direct_map(void)
-+{
-+	return true;
-+}
-+#define can_set_direct_map can_set_direct_map
+diff --git a/scripts/checksyscalls.sh b/scripts/checksyscalls.sh
+index a18b47695f55..b7609958ee36 100755
+--- a/scripts/checksyscalls.sh
++++ b/scripts/checksyscalls.sh
+@@ -40,6 +40,10 @@ cat << EOF
+ #define __IGNORE_setrlimit	/* setrlimit */
  #endif
-+#endif /* CONFIG_ARCH_HAS_SET_DIRECT_MAP */
  
- #ifndef set_mce_nospec
- static inline int set_mce_nospec(unsigned long pfn, bool unmap)
++#ifndef __ARCH_WANT_MEMFD_SECRET
++#define __IGNORE_memfd_secret
++#endif
++
+ /* Missing flags argument */
+ #define __IGNORE_renameat	/* renameat2 */
+ 
 -- 
 2.28.0
 
