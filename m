@@ -3,78 +3,56 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 51116C4361B
-	for <linux-api@archiver.kernel.org>; Tue, 19 Jan 2021 21:42:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 12524C433DB
+	for <linux-api@archiver.kernel.org>; Wed, 20 Jan 2021 05:10:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 11FE423104
-	for <linux-api@archiver.kernel.org>; Tue, 19 Jan 2021 21:42:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D2D0D2311C
+	for <linux-api@archiver.kernel.org>; Wed, 20 Jan 2021 05:10:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2389710AbhASRt1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 19 Jan 2021 12:49:27 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:35725 "EHLO
-        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726638AbhASO6Y (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Jan 2021 09:58:24 -0500
-Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein)
-        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.86_2)
-        (envelope-from <christian.brauner@ubuntu.com>)
-        id 1l1sRR-0006A4-Nk; Tue, 19 Jan 2021 14:57:09 +0000
-Date:   Tue, 19 Jan 2021 15:57:05 +0100
-From:   Christian Brauner <christian.brauner@ubuntu.com>
-To:     Christoph Hellwig <hch@infradead.org>
-Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
-        linux-fsdevel@vger.kernel.org,
-        John Johansen <john.johansen@canonical.com>,
-        James Morris <jmorris@namei.org>,
-        Mimi Zohar <zohar@linux.ibm.com>,
-        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
-        Stephen Smalley <stephen.smalley.work@gmail.com>,
-        Casey Schaufler <casey@schaufler-ca.com>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Andreas Dilger <adilger.kernel@dilger.ca>,
-        OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>,
-        Geoffrey Thomas <geofft@ldpreload.com>,
-        Mrunal Patel <mpatel@redhat.com>,
-        Josh Triplett <josh@joshtriplett.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Theodore Tso <tytso@mit.edu>, Alban Crequy <alban@kinvolk.io>,
-        Tycho Andersen <tycho@tycho.ws>,
-        David Howells <dhowells@redhat.com>,
-        James Bottomley <James.Bottomley@hansenpartnership.com>,
-        Seth Forshee <seth.forshee@canonical.com>,
-        St??phane Graber <stgraber@ubuntu.com>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Aleksa Sarai <cyphar@cyphar.com>,
-        Lennart Poettering <lennart@poettering.net>,
-        "Eric W. Biederman" <ebiederm@xmission.com>, smbarber@chromium.org,
-        Phil Estes <estesp@gmail.com>, Serge Hallyn <serge@hallyn.com>,
-        Kees Cook <keescook@chromium.org>,
-        Todd Kjos <tkjos@google.com>, Paul Moore <paul@paul-moore.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        containers@lists.linux-foundation.org,
-        linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org,
-        linux-integrity@vger.kernel.org, selinux@vger.kernel.org,
-        Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH v5 23/42] open: handle idmapped mounts
-Message-ID: <20210119145705.g2je6ec3lq42fffd@wittgenstein>
-References: <20210112220124.837960-1-christian.brauner@ubuntu.com>
- <20210112220124.837960-24-christian.brauner@ubuntu.com>
- <20210119093848.GH3364550@infradead.org>
+        id S1727088AbhATFKI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 20 Jan 2021 00:10:08 -0500
+Received: from namei.org ([65.99.196.166]:50812 "EHLO mail.namei.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1729291AbhATFCm (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 20 Jan 2021 00:02:42 -0500
+Received: from localhost (localhost [127.0.0.1])
+        by mail.namei.org (Postfix) with ESMTPS id 964A8751;
+        Wed, 20 Jan 2021 05:01:13 +0000 (UTC)
+Date:   Wed, 20 Jan 2021 16:01:13 +1100 (AEDT)
+From:   James Morris <jmorris@namei.org>
+To:     Suren Baghdasaryan <surenb@google.com>
+cc:     Andrew Morton <akpm@linux-foundation.org>, jannh@google.com,
+        Kees Cook <keescook@chromium.org>, jeffv@google.com,
+        minchan@kernel.org, mhocko@suse.com, shakeelb@google.com,
+        rientjes@google.com, edgararriaga@google.com, timmurray@google.com,
+        linux-mm@kvack.org, selinux@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-kernel@vger.kernel.org,
+        kernel-team@android.com, linux-security-module@vger.kernel.org
+Subject: Re: [PATCH v2 1/1] mm/madvise: replace ptrace attach requirement
+ for process_madvise
+In-Reply-To: <20210111170622.2613577-1-surenb@google.com>
+Message-ID: <c586aa93-52d7-bd6c-3d5-77be4ed4afae@namei.org>
+References: <20210111170622.2613577-1-surenb@google.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20210119093848.GH3364550@infradead.org>
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Jan 19, 2021 at 09:38:48AM +0000, Christoph Hellwig wrote:
-> I think path_permission() and file_persmission() helpers would reduce
-> the clutter a lot here.
+On Mon, 11 Jan 2021, Suren Baghdasaryan wrote:
 
-Done.
+> Replace PTRACE_MODE_ATTACH with a combination of PTRACE_MODE_READ
+> and CAP_SYS_NICE. PTRACE_MODE_READ to prevent leaking ASLR metadata
+> and CAP_SYS_NICE for influencing process performance.
+
+
+Almost missed these -- please cc the LSM mailing list when modifying 
+capabilities or other LSM-related things.
+
+-- 
+James Morris
+<jmorris@namei.org>
+
