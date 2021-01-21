@@ -2,88 +2,125 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+X-Spam-Status: No, score=-26.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_IN_DEF_DKIM_WL
-	autolearn=no autolearn_force=no version=3.4.0
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_GIT,USER_IN_DEF_DKIM_WL autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A5DD6C433DB
-	for <linux-api@archiver.kernel.org>; Thu, 21 Jan 2021 12:57:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 62FC9C433DB
+	for <linux-api@archiver.kernel.org>; Thu, 21 Jan 2021 13:21:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5E4CB239FD
-	for <linux-api@archiver.kernel.org>; Thu, 21 Jan 2021 12:57:46 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1129B23A01
+	for <linux-api@archiver.kernel.org>; Thu, 21 Jan 2021 13:21:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729531AbhAUM52 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 21 Jan 2021 07:57:28 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60560 "EHLO
+        id S1731513AbhAUNUo (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 21 Jan 2021 08:20:44 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37236 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729492AbhAUM5V (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 21 Jan 2021 07:57:21 -0500
-Received: from mail-qk1-x72d.google.com (mail-qk1-x72d.google.com [IPv6:2607:f8b0:4864:20::72d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9F74BC061575
-        for <linux-api@vger.kernel.org>; Thu, 21 Jan 2021 04:56:40 -0800 (PST)
-Received: by mail-qk1-x72d.google.com with SMTP id f26so1479839qka.0
-        for <linux-api@vger.kernel.org>; Thu, 21 Jan 2021 04:56:40 -0800 (PST)
+        with ESMTP id S1731670AbhAUNUF (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 21 Jan 2021 08:20:05 -0500
+Received: from mail-yb1-xb4a.google.com (mail-yb1-xb4a.google.com [IPv6:2607:f8b0:4864:20::b4a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E844CC0613C1
+        for <linux-api@vger.kernel.org>; Thu, 21 Jan 2021 05:19:24 -0800 (PST)
+Received: by mail-yb1-xb4a.google.com with SMTP id b3so2146526yba.20
+        for <linux-api@vger.kernel.org>; Thu, 21 Jan 2021 05:19:24 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=google.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=MGllKdkQl1dzjQF+oEV0/buZzhLSlwj6awai/2y06Rc=;
-        b=DvSaFGXIpYcHINOe1ssUXXKHBrUabYUPLap8GErwGt22sWOaNAKDMoqWg6/gUj2aWl
-         S6fLqbd9bo8btemdsvTfVNsEOAVJOXE1dy969kgJeKRkzItmtWwCQfq5wInJ3IhQzqwH
-         9hTVEEv81BvQIYf31Pl9N6FMSxCiARL+7YaZREbNc7wMN/hbB20yR3aHMi7Ilrg9HpnF
-         bXLpIi/kYOQrtmub9tRR7KfgDskxjgqWl+0FnNjiYVMB0vvZL5m5JFdAfVnIsiKNsuor
-         iefUQJgvR0zZkpLUUjdaQVv2J+k6+v14cnyJHzhbCoWC5K3keZGzHVCE5CZmcNV4WIfJ
-         4VoA==
+        h=sender:date:in-reply-to:message-id:mime-version:references:subject
+         :from:to:cc;
+        bh=EZM8uwys0tIYTV5rV7IMpiN4Wky1Ucyd+XglcRPDA0k=;
+        b=WFun/2AwoihyT9AoddjjkcKTUjc9aI3jv7IFGHwz+lYgIMz5b4WPNxXTiyzbrd+LJk
+         WO3FxCB1Z/havwsDuvKosLXatsLCtqTnsMN3N5jAgG74u80nWFXEmQ+mBgYjdUB//JjX
+         Q6kAQ+pAl8XYDz2Ei2+nblI2fGGTv+uKtJHtRqlXQfEDBJAQS+jkFBswpyKA8etRcnUH
+         OOs71Y+Fd5/i9qecUzQiepvITmFqkejQn7UN/r27rnGMC+BNYBM5HmdI/y7s1YXWGRBt
+         lfvhUY4CVirmJMHsy+tYXnPwttmMKEyvF9fWE1SPqi/BxiZHoPg/x/SPCfVGkwMJnOka
+         xM9Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=MGllKdkQl1dzjQF+oEV0/buZzhLSlwj6awai/2y06Rc=;
-        b=fE3+eNr6miMyfSqH3qg2kI4GKDsKM6KbC7G0OGYttzLVthxclqcjx7bSn/igmy5FFU
-         T2PVGieVXDnyZz3XXTb3NEuCY+WYppsjI9OTVjxGWO2P2lF1zsgQYD03Yfl/UqU/Eqar
-         aE0uaVNFiZQl+/MARF5r2G4yYKJfZo4HFfAXioq9yrQg6v3MPQhXBeZyDFsbOjE3OOji
-         gQfYByz408qQYgQF0B5cNj8TNZVscRCH/ZJuux4cp2URcRgzu3RKRuqSMdXQL+8HlnHQ
-         SU5PzDYIjMtpnX7I5Bc3Y3Mboq7WOTjUnXr9Bwl/PMX39//9XHhyPgU+gkalZNsUxnqm
-         2PTA==
-X-Gm-Message-State: AOAM533fOoraLx5nya2+wSbTI+synmWcS6pUMnWset1zr2ko18S+AY2q
-        oRNLH5PYrYYjjoENpaBZU02RWceK/pIc0zauC+nFkQ==
-X-Google-Smtp-Source: ABdhPJw2zLh8J0ro26s+uFnrBswVGONEgQBNiYaAzPv60CCJl2SOdDc3zUKdweWzJKy8oLKgAiX12G63RJIpm9O51Nk=
-X-Received: by 2002:a05:620a:5fb:: with SMTP id z27mr427204qkg.326.1611233799509;
- Thu, 21 Jan 2021 04:56:39 -0800 (PST)
-MIME-Version: 1.0
-References: <20210115130336.2520663-1-glider@google.com> <5ae22590-752e-7ea2-5341-a49a99e7507d@suse.cz>
- <CAG_fn=Vp0b3GX78azCiNsqAVs2Pj3bDikSUsf2kBZh7XiX+hzA@mail.gmail.com>
-In-Reply-To: <CAG_fn=Vp0b3GX78azCiNsqAVs2Pj3bDikSUsf2kBZh7XiX+hzA@mail.gmail.com>
+        h=x-gm-message-state:sender:date:in-reply-to:message-id:mime-version
+         :references:subject:from:to:cc;
+        bh=EZM8uwys0tIYTV5rV7IMpiN4Wky1Ucyd+XglcRPDA0k=;
+        b=cbzWnDJExCSZmZmmECpx7z37sJ+mtMbK26zcYMjZkVGsEKQZeKoQ0rPQia7U9Vl3Ei
+         qQf4whGgnM+oZf64N0ltEHC23beu0pZ97VdfY5MEtb0En6sanuMfvDpurQLfo928ZgMN
+         QDmkaeb+hN23ot2bDbdMOnXR4fpmUCv1vPbiX12D7gl6wTogBZS4LCKkcHa0aH164Zuj
+         x7PpQQ8jzc8bIWMbPzKuJ9kxrzzX1kSbh9Z0Daj4KA+sWs8wD8Xdkox8tTeqHa5ZD/hX
+         IcsIr/LrqvNuLmwLeR5QAXU8GDow8WbsD7B/0ftw6UEofiElO9ccP6NNe+55y5AD6OXp
+         5UWQ==
+X-Gm-Message-State: AOAM533QpEYNzuZgbcLqiZrA5PfjHIqYgCcY1PSBYPnX1zffvjA1rkhp
+        73FI99z6On9U2K6D5PxE9JE7pqynThk=
+X-Google-Smtp-Source: ABdhPJwtDkTgRZRk3yc/3yCU/TR+GnrcNDSCBz+LT6IxxpACRB4tZzjHkAxKgNiuzuLPqOyxu2xUmBX1mnc=
+Sender: "glider via sendgmr" <glider@glider.muc.corp.google.com>
+X-Received: from glider.muc.corp.google.com ([2a00:79e0:15:13:f693:9fff:fef4:9ff])
+ (user=glider job=sendgmr) by 2002:a25:3bc5:: with SMTP id i188mr20415374yba.332.1611235164118;
+ Thu, 21 Jan 2021 05:19:24 -0800 (PST)
+Date:   Thu, 21 Jan 2021 14:19:14 +0100
+In-Reply-To: <20210121131915.1331302-1-glider@google.com>
+Message-Id: <20210121131915.1331302-3-glider@google.com>
+Mime-Version: 1.0
+References: <20210121131915.1331302-1-glider@google.com>
+X-Mailer: git-send-email 2.30.0.296.g2bfb1c46d8-goog
+Subject: [PATCH 2/3] kfence: use error_report_end tracepoint
 From:   Alexander Potapenko <glider@google.com>
-Date:   Thu, 21 Jan 2021 13:56:28 +0100
-Message-ID: <CAG_fn=XXYUAFfB91AyDM0MzuKG9_DDP8uDb15S497upu-MWiEg@mail.gmail.com>
-Subject: Re: [PATCH v2 0/5] Add sysfs interface to collect reports from
- debugging tools
-To:     Vlastimil Babka <vbabka@suse.cz>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        Andrey Konovalov <andreyknvl@google.com>,
-        Dmitriy Vyukov <dvyukov@google.com>,
-        Ingo Molnar <mingo@redhat.com>, Marco Elver <elver@google.com>,
-        Petr Mladek <pmladek@suse.com>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Sergey Senozhatsky <sergey.senozhatsky@gmail.com>,
-        Linux Memory Management List <linux-mm@kvack.org>
+To:     akpm@linux-foundation.org, glider@google.com
+Cc:     elver@google.com, andreyknvl@google.com, dvyukov@google.com,
+        mingo@redhat.com, pmladek@suse.com, rostedt@goodmis.org,
+        sergey.senozhatsky@gmail.com, linux-mm@kvack.org,
+        linux-api@vger.kernel.org, vbabka@suse.cz,
+        gregkh@linuxfoundation.org
 Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Jan 15, 2021 at 2:09 PM Alexander Potapenko <glider@google.com> wrote:
->
-> On Fri, Jan 15, 2021 at 2:06 PM Vlastimil Babka <vbabka@suse.cz> wrote:
-> >
-> > Should have CCd linux-api@, please do next time
-> Thanks, will do!
-> Shall I also CC the v2 ABI patch explicitly?
+Make it possible to trace KFENCE error reporting. A good usecase is
+watching for trace events from the userspace to detect and process
+memory corruption reports from the kernel.
 
-I'll be dropping the sysfs changes from this patchset, but assume it
-still makes sense to CC linux-api@ since v3 will be introducing
-tracepoints.
+Suggested-by: Marco Elver <elver@google.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Andrey Konovalov <andreyknvl@google.com>
+Cc: Dmitry Vyukov <dvyukov@google.com>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: Marco Elver <elver@google.com>
+Cc: Petr Mladek <pmladek@suse.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Sergey Senozhatsky <sergey.senozhatsky@gmail.com>
+Cc: linux-mm@kvack.org
+Signed-off-by: Alexander Potapenko <glider@google.com>
+
+---
+v3:
+ - dropped error_report_start
+
+v2:
+ - change error_report_start and error_report_end prototypes
+   to accept enum error_detector instead of char*
+   (as suggested by Steven Rostedt)
+---
+ mm/kfence/report.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/mm/kfence/report.c b/mm/kfence/report.c
+index 901bd7ee83d8..f9fc93b2fe2e 100644
+--- a/mm/kfence/report.c
++++ b/mm/kfence/report.c
+@@ -14,6 +14,7 @@
+ #include <linux/seq_file.h>
+ #include <linux/stacktrace.h>
+ #include <linux/string.h>
++#include <trace/events/error_report.h>
+ 
+ #include <asm/kfence.h>
+ 
+@@ -246,6 +247,7 @@ void kfence_report_error(unsigned long address, bool is_write, struct pt_regs *r
+ 		show_regs(regs);
+ 	else
+ 		dump_stack_print_info(KERN_ERR);
++	trace_error_report_end(ERROR_DETECTOR_KFENCE, address);
+ 	pr_err("==================================================================\n");
+ 
+ 	lockdep_on();
+-- 
+2.30.0.296.g2bfb1c46d8-goog
+
