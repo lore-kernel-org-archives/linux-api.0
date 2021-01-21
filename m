@@ -2,146 +2,181 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-26.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT,USER_IN_DEF_DKIM_WL autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C97F8C433DB
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EE213C433E6
 	for <linux-api@archiver.kernel.org>; Thu, 21 Jan 2021 15:44:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 87E9B22BE8
+	by mail.kernel.org (Postfix) with ESMTP id BDEB423A24
 	for <linux-api@archiver.kernel.org>; Thu, 21 Jan 2021 15:44:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731382AbhAUNVY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 21 Jan 2021 08:21:24 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37248 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1731885AbhAUNUI (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 21 Jan 2021 08:20:08 -0500
-Received: from mail-wr1-x449.google.com (mail-wr1-x449.google.com [IPv6:2a00:1450:4864:20::449])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 26E1CC0613CF
-        for <linux-api@vger.kernel.org>; Thu, 21 Jan 2021 05:19:28 -0800 (PST)
-Received: by mail-wr1-x449.google.com with SMTP id g16so1004271wrv.1
-        for <linux-api@vger.kernel.org>; Thu, 21 Jan 2021 05:19:28 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20161025;
-        h=sender:date:in-reply-to:message-id:mime-version:references:subject
-         :from:to:cc;
-        bh=3UapMw1B/lQ8O8rK1t5yloPW20aKmQdYgqwziIYXJaY=;
-        b=UKSOk4WzR2mtDoCBipGA36JhtfgylD1LozvLVpUwCjthtsOSGbdlWMc2q8E2pmyHdh
-         3ImBadYTaBj0ZhQ+OwufJlquLcifn27sJvDhP0iaz3UGUhMdgJ+ZkmZkw/tS7/zcjsdU
-         Tgi7ErDfePAS28w8dFBLeqBfhd7QxzXchYbQqGyVwlSPXpoZfZEbQGSWasZmh6lV8Tto
-         J68r/4NDvEugjF8vneCaHszTUtwU1yUHjFp64o+lFACtZ1m94s7NluiylwXXRR9NZYGX
-         VlEqcWHT2m77F7gPpMAfNi1xcWxFQilRXACXBtGrekrUVW3fkZmmd86URU/K8Zy5mWUu
-         y+WQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:in-reply-to:message-id:mime-version
-         :references:subject:from:to:cc;
-        bh=3UapMw1B/lQ8O8rK1t5yloPW20aKmQdYgqwziIYXJaY=;
-        b=V5pQ2Cyeb7uj4bH+hGLKIVkx/U1TKzVb/m4MRJT83ZZcP9YpQN0Ml7Wq7f5lOF9ANj
-         1OpAziWKQNakdphONEBUJPpUagym1f0b8HEPiLbdxkXg4Tw7B1JfsxV5A9K2EEwT1p8m
-         F9P5jP3ir6AYrq5iyEART8C9oG40vNMRGipUIfMTpSfvhnb9LF9tMs2LJLydLp0SILED
-         lt/VoF3/TKM+FkEB423lS6GqNere8qTg6idsKCjUPENrACxfzvfgcUFLWcgL/grjOmin
-         pWsuG3/lY7vg+Sf02Z9hgpvTqrqYzystpuO2RuBWKaEVPYmbOw/EdL+yJneC0bhtc+s9
-         rXJQ==
-X-Gm-Message-State: AOAM532FDwRkhcclSArGOP2zbHSMLk0dKOigaqa1prJwnjuBJ0VKkz1H
-        0l9IO3GJ/wZ8KlIJp/2rsGDl2N4XVU0=
-X-Google-Smtp-Source: ABdhPJw5JH6viWlCpNTEeENNaqAUbl0z56mqHOR+JS2XF/jIGeIsHBiubDSgHt35cRONxjNqkHPgiHd/phA=
-Sender: "glider via sendgmr" <glider@glider.muc.corp.google.com>
-X-Received: from glider.muc.corp.google.com ([2a00:79e0:15:13:f693:9fff:fef4:9ff])
- (user=glider job=sendgmr) by 2002:a5d:6c6b:: with SMTP id r11mr3209323wrz.38.1611235166783;
- Thu, 21 Jan 2021 05:19:26 -0800 (PST)
-Date:   Thu, 21 Jan 2021 14:19:15 +0100
-In-Reply-To: <20210121131915.1331302-1-glider@google.com>
-Message-Id: <20210121131915.1331302-4-glider@google.com>
-Mime-Version: 1.0
-References: <20210121131915.1331302-1-glider@google.com>
-X-Mailer: git-send-email 2.30.0.296.g2bfb1c46d8-goog
-Subject: [PATCH 3/3] kasan: use error_report_end tracepoint
-From:   Alexander Potapenko <glider@google.com>
-To:     akpm@linux-foundation.org, glider@google.com
-Cc:     elver@google.com, andreyknvl@google.com, dvyukov@google.com,
-        mingo@redhat.com, pmladek@suse.com, rostedt@goodmis.org,
-        sergey.senozhatsky@gmail.com, linux-mm@kvack.org,
-        linux-api@vger.kernel.org, vbabka@suse.cz,
-        gregkh@linuxfoundation.org
-Content-Type: text/plain; charset="UTF-8"
+        id S1733198AbhAUPnu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 21 Jan 2021 10:43:50 -0500
+Received: from youngberry.canonical.com ([91.189.89.112]:53783 "EHLO
+        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1731810AbhAUNVZ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 21 Jan 2021 08:21:25 -0500
+Received: from ip5f5af0a0.dynamic.kabel-deutschland.de ([95.90.240.160] helo=wittgenstein.fritz.box)
+        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.86_2)
+        (envelope-from <christian.brauner@ubuntu.com>)
+        id 1l2Zsx-0005g7-Vb; Thu, 21 Jan 2021 13:20:28 +0000
+From:   Christian Brauner <christian.brauner@ubuntu.com>
+To:     Alexander Viro <viro@zeniv.linux.org.uk>,
+        Christoph Hellwig <hch@lst.de>, linux-fsdevel@vger.kernel.org
+Cc:     John Johansen <john.johansen@canonical.com>,
+        James Morris <jmorris@namei.org>,
+        Mimi Zohar <zohar@linux.ibm.com>,
+        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
+        Stephen Smalley <stephen.smalley.work@gmail.com>,
+        Casey Schaufler <casey@schaufler-ca.com>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andreas Dilger <adilger.kernel@dilger.ca>,
+        OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>,
+        Geoffrey Thomas <geofft@ldpreload.com>,
+        Mrunal Patel <mpatel@redhat.com>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Andy Lutomirski <luto@kernel.org>,
+        Theodore Tso <tytso@mit.edu>, Alban Crequy <alban@kinvolk.io>,
+        Tycho Andersen <tycho@tycho.ws>,
+        David Howells <dhowells@redhat.com>,
+        James Bottomley <James.Bottomley@hansenpartnership.com>,
+        Seth Forshee <seth.forshee@canonical.com>,
+        =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Aleksa Sarai <cyphar@cyphar.com>,
+        Lennart Poettering <lennart@poettering.net>,
+        "Eric W. Biederman" <ebiederm@xmission.com>, smbarber@chromium.org,
+        Phil Estes <estesp@gmail.com>, Serge Hallyn <serge@hallyn.com>,
+        Kees Cook <keescook@chromium.org>,
+        Todd Kjos <tkjos@google.com>, Paul Moore <paul@paul-moore.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        containers@lists.linux-foundation.org,
+        linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org,
+        linux-integrity@vger.kernel.org, selinux@vger.kernel.org,
+        Christian Brauner <christian.brauner@ubuntu.com>
+Subject: [PATCH v6 02/40] fs: add id translation helpers
+Date:   Thu, 21 Jan 2021 14:19:21 +0100
+Message-Id: <20210121131959.646623-3-christian.brauner@ubuntu.com>
+X-Mailer: git-send-email 2.30.0
+In-Reply-To: <20210121131959.646623-1-christian.brauner@ubuntu.com>
+References: <20210121131959.646623-1-christian.brauner@ubuntu.com>
+MIME-Version: 1.0
+X-Patch-Hashes: v=1; h=sha256; i=DPHLY9J1WgTtTJIZfW+M0ys29DrUndhBq8NbMQ4LhTc=; m=Z8GBK4fC03sqIZqOXqQYkCcHQhdF7ERtuNE2eOhnSzE=; p=i6IwWhz0PkRJmocnM2jCkNT8zKQq005bIpkzoIXat+A=; g=ec4a8e87015d814e143e60b5b5e399b0589415a2
+X-Patch-Sig: m=pgp; i=christian.brauner@ubuntu.com; s=0x0x91C61BC06578DCA2; b=iHUEABYKAB0WIQRAhzRXHqcMeLMyaSiRxhvAZXjcogUCYAl9owAKCRCRxhvAZXjconzfAQDQavg rIQRRUmnUDAhPbiiIzXQemWyr2/c439+nPRr9LgEA1vZvPehXei8CIjRiOLT8+cPPAQyc9a5nYiYG h9Gl/gQ=
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Make it possible to trace KASAN error reporting. A good usecase is
-watching for trace events from the userspace to detect and process
-memory corruption reports from the kernel.
+Add simple helpers to make it easy to map kuids into and from idmapped
+mounts. We provide simple wrappers that filesystems can use to e.g.
+initialize inodes similar to i_{uid,gid}_read() and i_{uid,gid}_write().
+Accessing an inode through an idmapped mount maps the i_uid and i_gid of
+the inode to the mount's user namespace. If the fsids are used to
+initialize inodes they are unmapped according to the mount's user
+namespace. Passing the initial user namespace to these helpers makes
+them a nop and so any non-idmapped paths will not be impacted.
 
-Suggested-by: Marco Elver <elver@google.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Andrey Konovalov <andreyknvl@google.com>
-Cc: Dmitry Vyukov <dvyukov@google.com>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Marco Elver <elver@google.com>
-Cc: Petr Mladek <pmladek@suse.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Sergey Senozhatsky <sergey.senozhatsky@gmail.com>
-Cc: linux-mm@kvack.org
-Signed-off-by: Alexander Potapenko <glider@google.com>
-
+Link: https://lore.kernel.org/r/20210112220124.837960-9-christian.brauner@ubuntu.com
+Cc: David Howells <dhowells@redhat.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: linux-fsdevel@vger.kernel.org
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
-v3:
- - dropped error_report_start
+/* v2 */
+- Christoph Hellwig <hch@lst.de>:
+  - Get rid of the ifdefs and the config option that hid idmapped mounts.
 
-v2:
- - change error_report_start and error_report_end prototypes
-   to accept enum error_detector instead of char*
-   (as suggested by Steven Rostedt)
+/* v3 */
+unchanged
+
+/* v4 */
+- Serge Hallyn <serge@hallyn.com>:
+  - Use "mnt_userns" to refer to a vfsmount's userns everywhere to make
+    terminology consistent.
+
+/* v5 */
+unchanged
+base-commit: 7c53f6b671f4aba70ff15e1b05148b10d58c2837
+
+/* v6 */
+unchanged
+base-commit: 19c329f6808995b142b3966301f217c831e7cf31
 ---
- mm/kasan/report.c | 8 +++++---
- 1 file changed, 5 insertions(+), 3 deletions(-)
+ include/linux/fs.h | 47 ++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 47 insertions(+)
 
-diff --git a/mm/kasan/report.c b/mm/kasan/report.c
-index 234f35a84f19..87b271206163 100644
---- a/mm/kasan/report.c
-+++ b/mm/kasan/report.c
-@@ -25,6 +25,7 @@
- #include <linux/module.h>
- #include <linux/sched/task_stack.h>
- #include <linux/uaccess.h>
-+#include <trace/events/error_report.h>
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index fd0b80e6361d..3165998e2294 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -40,6 +40,7 @@
+ #include <linux/build_bug.h>
+ #include <linux/stddef.h>
+ #include <linux/mount.h>
++#include <linux/cred.h>
  
- #include <asm/sections.h>
- 
-@@ -84,8 +85,9 @@ static void start_report(unsigned long *flags)
- 	pr_err("==================================================================\n");
+ #include <asm/byteorder.h>
+ #include <uapi/linux/fs.h>
+@@ -1573,6 +1574,52 @@ static inline void i_gid_write(struct inode *inode, gid_t gid)
+ 	inode->i_gid = make_kgid(inode->i_sb->s_user_ns, gid);
  }
  
--static void end_report(unsigned long *flags)
-+static void end_report(unsigned long *flags, unsigned long addr)
- {
-+	trace_error_report_end(ERROR_DETECTOR_KASAN, addr);
- 	pr_err("==================================================================\n");
- 	add_taint(TAINT_BAD_PAGE, LOCKDEP_NOW_UNRELIABLE);
- 	spin_unlock_irqrestore(&report_lock, *flags);
-@@ -355,7 +357,7 @@ void kasan_report_invalid_free(void *object, unsigned long ip)
- 	print_address_description(object, tag);
- 	pr_err("\n");
- 	print_memory_metadata(object);
--	end_report(&flags);
-+	end_report(&flags, (unsigned long)object);
- }
++static inline kuid_t kuid_into_mnt(struct user_namespace *mnt_userns,
++				   kuid_t kuid)
++{
++	return make_kuid(mnt_userns, __kuid_val(kuid));
++}
++
++static inline kgid_t kgid_into_mnt(struct user_namespace *mnt_userns,
++				   kgid_t kgid)
++{
++	return make_kgid(mnt_userns, __kgid_val(kgid));
++}
++
++static inline kuid_t i_uid_into_mnt(struct user_namespace *mnt_userns,
++				    const struct inode *inode)
++{
++	return kuid_into_mnt(mnt_userns, inode->i_uid);
++}
++
++static inline kgid_t i_gid_into_mnt(struct user_namespace *mnt_userns,
++				    const struct inode *inode)
++{
++	return kgid_into_mnt(mnt_userns, inode->i_gid);
++}
++
++static inline kuid_t kuid_from_mnt(struct user_namespace *mnt_userns,
++				   kuid_t kuid)
++{
++	return KUIDT_INIT(from_kuid(mnt_userns, kuid));
++}
++
++static inline kgid_t kgid_from_mnt(struct user_namespace *mnt_userns,
++				   kgid_t kgid)
++{
++	return KGIDT_INIT(from_kgid(mnt_userns, kgid));
++}
++
++static inline kuid_t fsuid_into_mnt(struct user_namespace *mnt_userns)
++{
++	return kuid_from_mnt(mnt_userns, current_fsuid());
++}
++
++static inline kgid_t fsgid_into_mnt(struct user_namespace *mnt_userns)
++{
++	return kgid_from_mnt(mnt_userns, current_fsgid());
++}
++
+ extern struct timespec64 current_time(struct inode *inode);
  
- static void __kasan_report(unsigned long addr, size_t size, bool is_write,
-@@ -401,7 +403,7 @@ static void __kasan_report(unsigned long addr, size_t size, bool is_write,
- 		dump_stack();
- 	}
- 
--	end_report(&flags);
-+	end_report(&flags, addr);
- }
- 
- bool kasan_report(unsigned long addr, size_t size, bool is_write,
+ /*
 -- 
-2.30.0.296.g2bfb1c46d8-goog
+2.30.0
 
