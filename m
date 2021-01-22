@@ -7,54 +7,54 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4C3B6C433E0
-	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 21:15:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 77200C433E0
+	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 21:16:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E94B623AF8
-	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 21:15:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4CF5F23AF8
+	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 21:16:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729226AbhAVVNy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 22 Jan 2021 16:13:54 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49350 "EHLO
+        id S1729342AbhAVVQG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 22 Jan 2021 16:16:06 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49330 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730436AbhAVUvg (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 22 Jan 2021 15:51:36 -0500
-Received: from mail-pf1-x42b.google.com (mail-pf1-x42b.google.com [IPv6:2607:f8b0:4864:20::42b])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 61C60C0610D6
-        for <linux-api@vger.kernel.org>; Fri, 22 Jan 2021 12:47:52 -0800 (PST)
-Received: by mail-pf1-x42b.google.com with SMTP id q131so4597741pfq.10
-        for <linux-api@vger.kernel.org>; Fri, 22 Jan 2021 12:47:52 -0800 (PST)
+        with ESMTP id S1728600AbhAVUtW (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 22 Jan 2021 15:49:22 -0500
+Received: from mail-pj1-x102a.google.com (mail-pj1-x102a.google.com [IPv6:2607:f8b0:4864:20::102a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9F6ECC0617AA
+        for <linux-api@vger.kernel.org>; Fri, 22 Jan 2021 12:47:21 -0800 (PST)
+Received: by mail-pj1-x102a.google.com with SMTP id g15so4660938pjd.2
+        for <linux-api@vger.kernel.org>; Fri, 22 Jan 2021 12:47:21 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=osandov-com.20150623.gappssmtp.com; s=20150623;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=q4vux4IYhSQov6A9+C6Myiq5tzHRUo+ynvL8O+spikA=;
-        b=gvca7qDrqZ0Wa1VjQTiJmUBdws/Y0o9mE18jDgN7CDCZaAAUCsb/qFM1f3i1E31Srk
-         ofFEvh30Fe8DM4awZja1cgieHfWVVM/xeKKW2g2psoWHbPzzjCbNHsKb19SHaqiypIxH
-         OKd+8cLL/r4v6pP5i0wnNjTQeN7Izl/Wm4qsgc4wXc9aPgnk7vUARGtzFN+4gq2psJUn
-         yTQ7hp72UNpC9JUQcs7EGSPbMvpKS+isi+/jaAkFR2P75mqqF79Oih6vjVFgAhynJouv
-         9DUz9kaHdo7eERNVHsTwPD+/q9jT/xLgbEaE0h2uBJUFCkH9lqFssUqXWdV7YMwHfuN4
-         OSvA==
+        bh=rUrSv5a3k4qaJA6xCjOA8O8ZkzvHiOJp37R6oMRhd/s=;
+        b=cy0QcBWEJOpNlrEEH0Rtvrozscq6t7muLe7G4vOHIQmvaG6O34slLP+UhdcVfMS2Ij
+         m50JAjx5fsKG6cHJiQ1VHW5woqouctcQZDdXSy8ZXhzewz3YtBTXfMdIyYe2Y2K3wWVN
+         6/Nch2PFRFvWM6ApcJD+68fu26qelaHpN7z5kuw6HVAiBssB6r1QRILGkS6+9SnQ5yfT
+         0di5h77BoSxmZD10Mjk+1KvTyHmRR6DHI7QghfEo6IsYdhYBA+VjQtAMTLq96j4leXhK
+         riaGoCpLAWX1SeVu0bJgSpbDsthPNPd/sstc3ceGHV3/a1SJl4L2pYHh3767mev3QHbF
+         bLGg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=q4vux4IYhSQov6A9+C6Myiq5tzHRUo+ynvL8O+spikA=;
-        b=CApmtiiqjNmLdHWbWyAh23x8kNgVJ0oEhbWXzwEc75csuLsEmYlxQZ1A0SBtSxrPFQ
-         Mz5R9Flj+Uj/I/jyqMMpMl/ZhGP5oBC/kIcxHCghqPGiMLkMgkiulIe1NkrZ/QUTavwN
-         3nDO5Vq+J9sgwW37PO2al/dbhVvFSiD6iUlyxV4P6I9zb2dV//e3xR3fbFwxdcstip5Z
-         +2dTzfhTL3D1QopZdKVT+tXRGaz1TnPFPFryGSx06MXAOVymSrgZ2mpXdiAunuJmOJjF
-         wywZ4Mv9S2trtj+JP12EJyL6KJ0GABQAHwvMDlCwtN3XtHy9KZEd4PTWK1kyofWJtYMq
-         kiNQ==
-X-Gm-Message-State: AOAM5305rnqGsmw20J5oWfUhiixzMH13dTMjz2ohKFGdmIH70XVWPvJZ
-        bydKQFHiDlS6//gWf7aynfvqBA==
-X-Google-Smtp-Source: ABdhPJxi2I6deG2+BmNH0RU39zwTIM5ZJrtytwUwCnMqIqiCxMNYjOOKUVZ+Bbz/HQuEmXpcyrQGKQ==
-X-Received: by 2002:a63:b550:: with SMTP id u16mr6365796pgo.448.1611348471960;
-        Fri, 22 Jan 2021 12:47:51 -0800 (PST)
+        bh=rUrSv5a3k4qaJA6xCjOA8O8ZkzvHiOJp37R6oMRhd/s=;
+        b=kgWMlXBQEoqhP+DV3V0sNxWz800TKa413O/qCzmiZ0T3IW6a6T+qlNzSnm6EZCANx6
+         ZRKw3G+DtnERoEOWMrpv2ho2wGqAi+O+F0s+qd1s8C7OmxXkrWa/YGYe+vBrpCO7eUj8
+         mhoNkymDOMDbBH3Z+RV38JS9wIJCJfONf/xo0ssef7klKvdVgCpR8mRUrY8LNkLpr7jq
+         YB9tKJxkMGJsdTAvStOhHs9bvfbf3yiRftcCpOUOhd/ibWcTxAhCwftCcWz8qMcBJ4qW
+         emcrlYI709u9w6nVpaZVBVWjIXrI9nC2TyVKlz/hP0C66ToDyWzeBCxXVRtSlVKg1t7l
+         MKFg==
+X-Gm-Message-State: AOAM532NKaHBZ6AbZjYd+VopRpT58QFT2VjoETbr4ntJHyCCJ0rolW8v
+        JavoyKerzJNc0bhKAMIeuO5QZQ==
+X-Google-Smtp-Source: ABdhPJz1B4n6Rk7dvmWq3RNevUOFnZeWA8G4FgacZGyIY3z/iihHeNfBrAFENgHBLu0CfBfWS3X5tQ==
+X-Received: by 2002:a17:90b:1a86:: with SMTP id ng6mr7239385pjb.113.1611348441102;
+        Fri, 22 Jan 2021 12:47:21 -0800 (PST)
 Received: from relinquished.tfbnw.net ([2620:10d:c090:400::5:ea88])
-        by smtp.gmail.com with ESMTPSA id j18sm4092900pfc.99.2021.01.22.12.47.49
+        by smtp.gmail.com with ESMTPSA id j18sm4092900pfc.99.2021.01.22.12.47.18
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 22 Jan 2021 12:47:50 -0800 (PST)
+        Fri, 22 Jan 2021 12:47:20 -0800 (PST)
 From:   Omar Sandoval <osandov@osandov.com>
 To:     linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org,
         Al Viro <viro@zeniv.linux.org.uk>,
@@ -63,12 +63,12 @@ Cc:     Dave Chinner <david@fromorbit.com>, Jann Horn <jannh@google.com>,
         Amir Goldstein <amir73il@gmail.com>,
         Aleksa Sarai <cyphar@cyphar.com>, linux-api@vger.kernel.org,
         kernel-team@fb.com
-Subject: [PATCH v7 13/15] btrfs: send: allocate send buffer with alloc_page() and vmap() for v2
-Date:   Fri, 22 Jan 2021 12:47:00 -0800
-Message-Id: <1f0903a7762e9bf7381584251d0d22c0ae684402.1611346574.git.osandov@fb.com>
+Subject: [PATCH v7 01/10] iov_iter: add copy_struct_from_iter()
+Date:   Fri, 22 Jan 2021 12:46:48 -0800
+Message-Id: <e71e712d27b2e2c19efc5b1454bd8581ad98d900.1611346706.git.osandov@fb.com>
 X-Mailer: git-send-email 2.30.0
-In-Reply-To: <cover.1611346574.git.osandov@fb.com>
-References: <cover.1611346574.git.osandov@fb.com>
+In-Reply-To: <cover.1611346706.git.osandov@fb.com>
+References: <cover.1611346706.git.osandov@fb.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
@@ -77,84 +77,122 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-For encoded writes, we need the raw pages for reading compressed data
-directly via a bio. So, replace kvmalloc() with vmap() so we have access
-to the raw pages. 144k is large enough that it usually gets allocated
-with vmalloc(), anyways.
+This is essentially copy_struct_from_user() but for an iov_iter.
 
+Suggested-by: Aleksa Sarai <cyphar@cyphar.com>
+Reviewed-by: Josef Bacik <josef@toxicpanda.com>
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- fs/btrfs/send.c | 33 +++++++++++++++++++++++++++++++--
- 1 file changed, 31 insertions(+), 2 deletions(-)
+ include/linux/uio.h |  2 ++
+ lib/iov_iter.c      | 82 +++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 84 insertions(+)
 
-diff --git a/fs/btrfs/send.c b/fs/btrfs/send.c
-index 98948568017c..25b1a60a568c 100644
---- a/fs/btrfs/send.c
-+++ b/fs/btrfs/send.c
-@@ -81,6 +81,7 @@ struct send_ctx {
- 	char *send_buf;
- 	u32 send_size;
- 	u32 send_max_size;
-+	struct page **send_buf_pages;
- 	u64 total_send_size;
- 	u64 cmd_send_size[BTRFS_SEND_C_MAX + 1];
- 	u64 flags;	/* 'flags' member of btrfs_ioctl_send_args is u64 */
-@@ -7203,6 +7204,7 @@ long btrfs_ioctl_send(struct file *mnt_file, struct btrfs_ioctl_send_args *arg)
- 	struct btrfs_root *clone_root;
- 	struct send_ctx *sctx = NULL;
- 	u32 i;
-+	u32 send_buf_num_pages = 0;
- 	u64 *clone_sources_tmp = NULL;
- 	int clone_sources_to_rollback = 0;
- 	size_t alloc_size;
-@@ -7283,10 +7285,28 @@ long btrfs_ioctl_send(struct file *mnt_file, struct btrfs_ioctl_send_args *arg)
- 	if (sctx->flags & BTRFS_SEND_FLAG_STREAM_V2) {
- 		sctx->send_max_size = ALIGN(SZ_16K + BTRFS_MAX_COMPRESSED,
- 					    PAGE_SIZE);
-+		send_buf_num_pages = sctx->send_max_size >> PAGE_SHIFT;
-+		sctx->send_buf_pages = kcalloc(send_buf_num_pages,
-+					       sizeof(*sctx->send_buf_pages),
-+					       GFP_KERNEL);
-+		if (!sctx->send_buf_pages) {
-+			send_buf_num_pages = 0;
-+			ret = -ENOMEM;
-+			goto out;
-+		}
-+		for (i = 0; i < send_buf_num_pages; i++) {
-+			sctx->send_buf_pages[i] = alloc_page(GFP_KERNEL);
-+			if (!sctx->send_buf_pages[i]) {
-+				ret = -ENOMEM;
-+				goto out;
-+			}
-+		}
-+		sctx->send_buf = vmap(sctx->send_buf_pages, send_buf_num_pages,
-+				      VM_MAP, PAGE_KERNEL);
- 	} else {
- 		sctx->send_max_size = BTRFS_SEND_BUF_SIZE_V1;
-+		sctx->send_buf = kvmalloc(sctx->send_max_size, GFP_KERNEL);
- 	}
--	sctx->send_buf = kvmalloc(sctx->send_max_size, GFP_KERNEL);
- 	if (!sctx->send_buf) {
- 		ret = -ENOMEM;
- 		goto out;
-@@ -7495,7 +7515,16 @@ long btrfs_ioctl_send(struct file *mnt_file, struct btrfs_ioctl_send_args *arg)
- 			fput(sctx->send_filp);
+diff --git a/include/linux/uio.h b/include/linux/uio.h
+index 72d88566694e..f4e6ea85a269 100644
+--- a/include/linux/uio.h
++++ b/include/linux/uio.h
+@@ -121,6 +121,8 @@ size_t copy_page_to_iter(struct page *page, size_t offset, size_t bytes,
+ 			 struct iov_iter *i);
+ size_t copy_page_from_iter(struct page *page, size_t offset, size_t bytes,
+ 			 struct iov_iter *i);
++int copy_struct_from_iter(void *dst, size_t ksize, struct iov_iter *i,
++			  size_t usize);
  
- 		kvfree(sctx->clone_roots);
--		kvfree(sctx->send_buf);
-+		if (sctx->flags & BTRFS_SEND_FLAG_STREAM_V2) {
-+			vunmap(sctx->send_buf);
-+			for (i = 0; i < send_buf_num_pages; i++) {
-+				if (sctx->send_buf_pages[i])
-+					__free_page(sctx->send_buf_pages[i]);
-+			}
-+			kfree(sctx->send_buf_pages);
-+		} else {
-+			kvfree(sctx->send_buf);
-+		}
+ size_t _copy_to_iter(const void *addr, size_t bytes, struct iov_iter *i);
+ size_t _copy_from_iter(void *addr, size_t bytes, struct iov_iter *i);
+diff --git a/lib/iov_iter.c b/lib/iov_iter.c
+index a21e6a5792c5..f45826ed7528 100644
+--- a/lib/iov_iter.c
++++ b/lib/iov_iter.c
+@@ -948,6 +948,88 @@ size_t copy_page_from_iter(struct page *page, size_t offset, size_t bytes,
+ }
+ EXPORT_SYMBOL(copy_page_from_iter);
  
- 		name_cache_free(sctx);
- 
++/**
++ * copy_struct_from_iter - copy a struct from an iov_iter
++ * @dst: Destination buffer.
++ * @ksize: Size of @dst struct.
++ * @i: Source iterator.
++ * @usize: (Alleged) size of struct in @i.
++ *
++ * Copies a struct from an iov_iter in a way that guarantees
++ * backwards-compatibility for struct arguments in an iovec (as long as the
++ * rules for copy_struct_from_user() are followed).
++ *
++ * The recommended usage is that @usize be taken from the current segment:
++ *
++ *   int do_foo(struct iov_iter *i)
++ *   {
++ *     size_t usize = iov_iter_single_seg_count(i);
++ *     struct foo karg;
++ *     int err;
++ *
++ *     if (usize > PAGE_SIZE)
++ *       return -E2BIG;
++ *     if (usize < FOO_SIZE_VER0)
++ *       return -EINVAL;
++ *     err = copy_struct_from_iter(&karg, sizeof(karg), i, usize);
++ *     if (err)
++ *       return err;
++ *
++ *     // ...
++ *   }
++ *
++ * Return: 0 on success, -errno on error (see copy_struct_from_user()).
++ *
++ * On success, the iterator is advanced @usize bytes. On error, the iterator is
++ * not advanced.
++ */
++int copy_struct_from_iter(void *dst, size_t ksize, struct iov_iter *i,
++			  size_t usize)
++{
++	if (usize <= ksize) {
++		if (!copy_from_iter_full(dst, usize, i))
++			return -EFAULT;
++		memset(dst + usize, 0, ksize - usize);
++	} else {
++		size_t copied = 0, copy;
++		int ret;
++
++		if (WARN_ON(iov_iter_is_pipe(i)) || unlikely(i->count < usize))
++			return -EFAULT;
++		if (iter_is_iovec(i))
++			might_fault();
++		iterate_all_kinds(i, usize, v, ({
++			copy = min(ksize - copied, v.iov_len);
++			if (copy && copyin(dst + copied, v.iov_base, copy))
++				return -EFAULT;
++			copied += copy;
++			ret = check_zeroed_user(v.iov_base + copy,
++						v.iov_len - copy);
++			if (ret <= 0)
++				return ret ?: -E2BIG;
++			0;}), ({
++			char *addr = kmap_atomic(v.bv_page);
++			copy = min_t(size_t, ksize - copied, v.bv_len);
++			memcpy(dst + copied, addr + v.bv_offset, copy);
++			copied += copy;
++			ret = memchr_inv(addr + v.bv_offset + copy, 0,
++					 v.bv_len - copy) ? -E2BIG : 0;
++			kunmap_atomic(addr);
++			if (ret)
++				return ret;
++			}), ({
++			copy = min(ksize - copied, v.iov_len);
++			memcpy(dst + copied, v.iov_base, copy);
++			if (memchr_inv(v.iov_base, 0, v.iov_len))
++				return -E2BIG;
++			})
++		)
++		iov_iter_advance(i, usize);
++	}
++	return 0;
++}
++EXPORT_SYMBOL_GPL(copy_struct_from_iter);
++
+ static size_t pipe_zero(size_t bytes, struct iov_iter *i)
+ {
+ 	struct pipe_inode_info *pipe = i->pipe;
 -- 
 2.30.0
 
