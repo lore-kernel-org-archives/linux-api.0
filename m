@@ -4,25 +4,25 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A8EECC433E0
-	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 04:19:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D4E7DC4332E
+	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 04:35:37 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 69F0C238D7
-	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 04:19:16 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A206E238EE
+	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 04:35:37 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726825AbhAVETP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 21 Jan 2021 23:19:15 -0500
-Received: from namei.org ([65.99.196.166]:53028 "EHLO mail.namei.org"
+        id S1726795AbhAVEfT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 21 Jan 2021 23:35:19 -0500
+Received: from namei.org ([65.99.196.166]:53082 "EHLO mail.namei.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726127AbhAVETO (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 21 Jan 2021 23:19:14 -0500
+        id S1725935AbhAVEfR (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 21 Jan 2021 23:35:17 -0500
 Received: from localhost (localhost [127.0.0.1])
-        by mail.namei.org (Postfix) with ESMTPS id 278651BC;
-        Fri, 22 Jan 2021 04:17:41 +0000 (UTC)
-Date:   Fri, 22 Jan 2021 15:17:41 +1100 (AEDT)
+        by mail.namei.org (Postfix) with ESMTPS id 143EE1BC;
+        Fri, 22 Jan 2021 04:33:44 +0000 (UTC)
+Date:   Fri, 22 Jan 2021 15:33:43 +1100 (AEDT)
 From:   James Morris <jmorris@namei.org>
 To:     Christian Brauner <christian.brauner@ubuntu.com>
 cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
@@ -57,10 +57,10 @@ cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
         linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
         linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org,
         linux-integrity@vger.kernel.org, selinux@vger.kernel.org
-Subject: Re: [PATCH v6 19/40] fcntl: handle idmapped mounts
-In-Reply-To: <20210121131959.646623-20-christian.brauner@ubuntu.com>
-Message-ID: <eb912eb9-8eca-46c3-18c0-ebb7a0dde65e@namei.org>
-References: <20210121131959.646623-1-christian.brauner@ubuntu.com> <20210121131959.646623-20-christian.brauner@ubuntu.com>
+Subject: Re: [PATCH v6 21/40] ioctl: handle idmapped mounts
+In-Reply-To: <20210121131959.646623-22-christian.brauner@ubuntu.com>
+Message-ID: <f4129122-cc1f-ed12-e35-d3cebc73aba2@namei.org>
+References: <20210121131959.646623-1-christian.brauner@ubuntu.com> <20210121131959.646623-22-christian.brauner@ubuntu.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -69,11 +69,11 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 On Thu, 21 Jan 2021, Christian Brauner wrote:
 
-> Enable the setfl() helper to handle idmapped mounts by passing down the
+> Enable generic ioctls to handle idmapped mounts by passing down the
 > mount's user namespace. If the initial user namespace is passed nothing
 > changes so non-idmapped mounts will see identical behavior as before.
 > 
-> Link: https://lore.kernel.org/r/20210112220124.837960-27-christian.brauner@ubuntu.com
+> Link: https://lore.kernel.org/r/20210112220124.837960-30-christian.brauner@ubuntu.com
 > Cc: Christoph Hellwig <hch@lst.de>
 > Cc: David Howells <dhowells@redhat.com>
 > Cc: Al Viro <viro@zeniv.linux.org.uk>
@@ -83,7 +83,6 @@ On Thu, 21 Jan 2021, Christian Brauner wrote:
 
 
 Reviewed-by: James Morris <jamorris@linux.microsoft.com>
-
 
 -- 
 James Morris
