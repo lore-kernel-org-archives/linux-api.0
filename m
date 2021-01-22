@@ -2,150 +2,88 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 23D79C433DB
-	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 08:43:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A8615C433E0
+	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 08:53:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D1579235FF
-	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 08:43:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5067B20739
+	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 08:53:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727165AbhAVIm3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 22 Jan 2021 03:42:29 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33570 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727155AbhAVImI (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 22 Jan 2021 03:42:08 -0500
-Received: from mail-ot1-x32b.google.com (mail-ot1-x32b.google.com [IPv6:2607:f8b0:4864:20::32b])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D0FF2C06178B;
-        Fri, 22 Jan 2021 00:41:25 -0800 (PST)
-Received: by mail-ot1-x32b.google.com with SMTP id 36so4406749otp.2;
-        Fri, 22 Jan 2021 00:41:25 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:reply-to:from:date:message-id
-         :subject:to:cc;
-        bh=QH7Qc5EQ7iifT7PzYgbghVIv9P26i6FsrQ+fd6jlx2w=;
-        b=r0BzrOD/8aKlJe4I292/JfGk8q+SEssSkkTBjumXnHMUhfyk5+ElKGazW+Tf4a66Hc
-         rofMyEvAyKln95BGEZ31pSk03oLXw10PASDJ+VIsYqG43y/ZehZp7no4u5RJO30DA0CK
-         5PgmEh0q8cImXoISKljnAjHjh27u/T4hoBGDQW2qZp4repP04uAUnchAYQ+yyycq1Qi+
-         9DswLI66Rk7AMSqeQ6qGqElV3gzjUytCHKwmtuHiMAOar9yt+ERF0Rg+t0DosYf2NH64
-         HLO0bsppV/w1W/G0aQc19l0Z/tnE2Ovusaof49jm54X2FMiXHOj3CC7wAj5BJKL3RXwW
-         MXLg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:reply-to
-         :from:date:message-id:subject:to:cc;
-        bh=QH7Qc5EQ7iifT7PzYgbghVIv9P26i6FsrQ+fd6jlx2w=;
-        b=qADU/nnCd54XHLLFl17lc/TByJ4wh14/ECnHwuHBls9ACaHxl/AbidquHHKMDRUsNn
-         gkRZm1giYau3AG2CtDOfJj2BOzP7gLo42NIjaW013Ho4e5NVDVjvR9SNOhhfk14rTSSK
-         dWkvjLF5ruV+DSIWJ9G+EeNCrrnwQ84tMce+ViXCyRtrZhUrgtF3JoqtF+errivqyeid
-         aQEf9MGQKFlkvYVbTKdun8SU87ipZRz47rISjEAWsBgcLSvMdBuOeKMf+iBJF3Pz9mNz
-         YaWo9fpnKgHWkcIbbuSD0dUU7SRwSzyPLNIz5duB13LYjh00NV3/pwDZBG3B1teMnDVL
-         MeuQ==
-X-Gm-Message-State: AOAM533EMrEL0uvsawEoDjE7hE8w2OxVQAhNDo7bD3TGjMmf9BqzMQoN
-        /j0jJVdJeAlTYMa9C8YJ6PqWPDk1rLowG5Jo3jtCRYJlGJ0=
-X-Google-Smtp-Source: ABdhPJxDgUWr1yNvwGw8O1L6XDuuZb4Ue2CL9xlpxJHgUOwefeqwKx21mVzvCC65O1WSjAwp6M2ZPcLK4p7JVNMp6CQ=
-X-Received: by 2002:a9d:5e0f:: with SMTP id d15mr2540660oti.308.1611304885285;
- Fri, 22 Jan 2021 00:41:25 -0800 (PST)
-MIME-Version: 1.0
-References: <159827188271.306468.16962617119460123110.stgit@warthog.procyon.org.uk>
- <159827190508.306468.12755090833140558156.stgit@warthog.procyon.org.uk>
- <CAKgNAkho1WSOsxvCYQOs7vDxpfyeJ9JGdTL-Y0UEZtO3jVfmKw@mail.gmail.com>
- <667616.1599063270@warthog.procyon.org.uk> <CAKgNAkhjDB9bvQ0h5b13fkbhuP9tYrkBQe7w1cbeOH8gM--D0g@mail.gmail.com>
- <CAKgNAkh9h3aA1hiYownT2O=xg5JmZwmJUCvQ1Z4f85MTq-26Fw@mail.gmail.com> <CAKgNAkju-65h1bKBUJQf-k=TCZeFmD9Nf4ZgZ9Mm_TQ1rQA6MA@mail.gmail.com>
-In-Reply-To: <CAKgNAkju-65h1bKBUJQf-k=TCZeFmD9Nf4ZgZ9Mm_TQ1rQA6MA@mail.gmail.com>
-Reply-To: mtk.manpages@gmail.com
-From:   "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Date:   Fri, 22 Jan 2021 09:41:14 +0100
-Message-ID: <CAKgNAkg78pHD90CuUaDtAhnwGqOwMU0SrZFny_fYXpDNSzovNA@mail.gmail.com>
-Subject: Re: [PATCH 4/5] Add manpage for fsopen(2) and fsmount(2)
-To:     David Howells <dhowells@redhat.com>
-Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
-        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-        linux-man <linux-man@vger.kernel.org>,
+        id S1726712AbhAVIwK (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 22 Jan 2021 03:52:10 -0500
+Received: from mx2.suse.de ([195.135.220.15]:45340 "EHLO mx2.suse.de"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727065AbhAVIui (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 22 Jan 2021 03:50:38 -0500
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+        t=1611305388; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=NEFq9Vo5tsftoHadkZR1mekE9jHN/36+yPVxwO7sQQM=;
+        b=YJLj7QPUdvJeZ8wtD8Ll51QT3Sqvet61bFV2X4+SqXNrEcGPF1XZKhnJarw0xIf0rqbwpx
+        G6DvicyaYRRvKuFNbczaMhLCI6wkkFm2sKhnRU9VU0oNjBtRh1bbzoxYV3fw7N85RH/uGd
+        gV3lDRxqn8CYgwhADWmumUrCyoclbZ8=
+Received: from relay2.suse.de (unknown [195.135.221.27])
+        by mx2.suse.de (Postfix) with ESMTP id 44016AB9F;
+        Fri, 22 Jan 2021 08:49:48 +0000 (UTC)
+Date:   Fri, 22 Jan 2021 09:49:47 +0100
+From:   Petr Mladek <pmladek@suse.com>
+To:     Alexander Potapenko <glider@google.com>
+Cc:     Andrew Morton <akpm@linux-foundation.org>,
+        Marco Elver <elver@google.com>,
+        Andrey Konovalov <andreyknvl@google.com>,
+        Dmitriy Vyukov <dvyukov@google.com>,
+        Ingo Molnar <mingo@redhat.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Sergey Senozhatsky <sergey.senozhatsky@gmail.com>,
+        Linux Memory Management List <linux-mm@kvack.org>,
         Linux API <linux-api@vger.kernel.org>,
-        lkml <linux-kernel@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+        Vlastimil Babka <vbabka@suse.cz>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH v3 0/3] Add error_report_end tracepoint to KFENCE and
+ KASAN
+Message-ID: <YAqRqwDfWSsjtMRf@alley>
+References: <20210121131915.1331302-1-glider@google.com>
+ <YAqNoTWfp7HQ9c5m@alley>
+ <CAG_fn=WJ7QwBF67H2ND3-3n0XSZ26Xmk=Lvfwn_bpecXqq=NGQ@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CAG_fn=WJ7QwBF67H2ND3-3n0XSZ26Xmk=Lvfwn_bpecXqq=NGQ@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hello David,
-
-Ping!
-
-Thanks,
-
-Michael
-
-On Fri, 16 Oct 2020 at 08:50, Michael Kerrisk (man-pages)
-<mtk.manpages@gmail.com> wrote:
->
-> Hi David,
->
-> Another ping for these five patches please!
->
-> Cheers,
->
-> Michael
->
-> On Fri, 11 Sep 2020 at 14:44, Michael Kerrisk (man-pages)
-> <mtk.manpages@gmail.com> wrote:
+On Fri 2021-01-22 09:41:54, Alexander Potapenko wrote:
+> On Fri, Jan 22, 2021 at 9:32 AM Petr Mladek <pmladek@suse.com> wrote:
 > >
-> > Hi David,
-> >
-> > A ping for these five patches please!
-> >
-> > Cheers,
-> >
-> > Michael
-> >
-> > On Wed, 2 Sep 2020 at 22:14, Michael Kerrisk (man-pages)
-> > <mtk.manpages@gmail.com> wrote:
+> > On Thu 2021-01-21 14:19:12, Alexander Potapenko wrote:
+> > > This patchset adds a tracepoint, error_repor_end, that is to be used by
+> > > KFENCE, KASAN, and potentially other bug detection tools, when they
+> > > print an error report.
+> > > One of the possible use cases is userspace collection of kernel error
+> > > reports: interested parties can subscribe to the tracing event via
+> > > tracefs, and get notified when an error report occurs.
 > > >
-> > > On Wed, 2 Sep 2020 at 18:14, David Howells <dhowells@redhat.com> wrote:
-> > > >
-> > > > Michael Kerrisk (man-pages) <mtk.manpages@gmail.com> wrote:
-> > > >
-> > > > > The term "filesystem configuration context" is introduced, but never
-> > > > > really explained. I think it would be very helpful to have a sentence
-> > > > > or three that explains this concept at the start of the page.
-> > > >
-> > > > Does that need a .7 manpage?
-> > >
-> > > I was hoping a sentence or a paragraph in this page might suffice. Do
-> > > you think more is required?
-> > >
-> > > Cheers,
-> > >
-> > > Michael
-> > >
-> > > --
-> > > Michael Kerrisk
-> > > Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-> > > Linux/UNIX System Programming Training: http://man7.org/training/
+> > > v3:
+> > >  - dropped the sysfs interface for log collection
+> > >  - dropped error_report_start tracepoint
 > >
-> >
-> >
-> > --
-> > Michael Kerrisk
-> > Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-> > Linux/UNIX System Programming Training: http://man7.org/training/
->
->
->
-> --
-> Michael Kerrisk
-> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-> Linux/UNIX System Programming Training: http://man7.org/training/
+> > Just for record. This approach looks reasonable to me.
+> > Thanks for removing the sysfs interface. It would have been
+> > a potential can of worms.
+> 
+> Thanks for the input!
+> At least it was premature to touch prink just for the sake of
+> collecting some particular crashes.
+> Perhaps we can revisit this topic when stronger arguments arise :)
 
+Sure :-)
 
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Best Regards,
+Petr
