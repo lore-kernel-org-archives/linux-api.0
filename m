@@ -2,286 +2,154 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-17.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 565D9C4332E
-	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 10:55:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1A37CC433E0
+	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 15:03:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 363D520739
-	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 10:55:16 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E775823AC2
+	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 15:03:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727037AbhAVJ3k (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 22 Jan 2021 04:29:40 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33324 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727040AbhAVIlC (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 22 Jan 2021 03:41:02 -0500
-Received: from mail-oi1-x231.google.com (mail-oi1-x231.google.com [IPv6:2607:f8b0:4864:20::231])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 39C75C061786;
-        Fri, 22 Jan 2021 00:40:18 -0800 (PST)
-Received: by mail-oi1-x231.google.com with SMTP id q25so5212394oij.10;
-        Fri, 22 Jan 2021 00:40:18 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:reply-to:from:date:message-id
-         :subject:to:cc;
-        bh=e0T/0FMUpYKFq5BQWC0q9ZRuoujNmvORYqx5Qnxrd6U=;
-        b=Qg+bUYVKucO99QnqOD4irrWaQBQMH2hjBBwXFRQi8Pojs8JiwApZXHdXhzAXyM5Pqc
-         a+tQUweISQZagSTAGPD69wWhU8GeHSF5kqApp1qa/mBCX2KaFLKcf0Auzv3t4naom4dc
-         1gU8KN3/z5DcOduhiBWp++lA9Vf3QqS5FTK0BDE8E2pJz2pp76Lzr4tpAZfHFkOdhEdI
-         oN7dqVOhUeojDRk2v6aaAzKTnU4jCSm3crS9fVvVPFpLcV28nkOpJLC+8F17KHKV0hI1
-         NMf/rZw7ZMWZexe2AepQEVVARyALk8OczObHNBX2K+bOnM6zUSJYqqT6zgBFAD1wzWXv
-         HfNQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:reply-to
-         :from:date:message-id:subject:to:cc;
-        bh=e0T/0FMUpYKFq5BQWC0q9ZRuoujNmvORYqx5Qnxrd6U=;
-        b=R7qVdj0YvRNF6xv2FnDefesiUni2EEPR7tMRvF3k0e1GbHRb316IOF4iQ5bEuelGSx
-         xfMkbLlvVo0O+NifzWNxzyd4sjk6I/ph3RzhhEPoVK29SLZAZ03g4N9n0G/nG033Pyrz
-         itWPotGFOyBrLlLlcXZMXErODP7Y/U+ycNI/r5LsAwpNSZnIR6qkdjRMMnsoARnZzN6V
-         cL4rru58lFO1syEbGZp80UFJhJvnNJaPxcBRrSAgxhf6m6an7siSI1MPmq12NvPdRDwM
-         tZeweXPO1J+KDvOs4bZlsCXxF7vgdcBDLUKCtfw8NHmgrwHNPg32KHwVJBaVMMTFkQvb
-         aUPA==
-X-Gm-Message-State: AOAM530alvsGJPoF8CJ3Z7dCmZ4Gvo1+KhnXWBiN28nvDNdK44EbChiX
-        NG5j87OqKu+EuFRfb8rIPEzMDY9yRSaZu+C8pAM=
-X-Google-Smtp-Source: ABdhPJxO03NnkN0i+zF1FsF5GZIM81INjIxkYX25MAI0FxT8LEV/GLpukpWNGekHxp3VyVrLV2Dp109fDZqLDGQ89bA=
-X-Received: by 2002:aca:ded4:: with SMTP id v203mr2551827oig.148.1611304817605;
- Fri, 22 Jan 2021 00:40:17 -0800 (PST)
+        id S1729080AbhAVPDB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 22 Jan 2021 10:03:01 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:44838 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1729064AbhAVPCv (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 22 Jan 2021 10:02:51 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1611327684;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=pmb5w3rLav37us1XL43BkDMIwzOvI7ua2CZXzDfcqdo=;
+        b=DWIZtg/Q2B0MOLXk55SPeJCIB8Gwz3fUnQQRxx2GC468cSCwUcspW9GMkwZVt7pRFf0VsI
+        Zj38Iv+BtblqlZEVy+SIZmGCZL/pO72Qaz8BD0N25Ti0Qx27PtyLG0Qpl/7BdGgmCPqGZP
+        5z+nKGsRHXcRYe6QD2UQ1eR/p8LVO0k=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-321-8khLFf0OO4Wy_Qo2eG4Tuw-1; Fri, 22 Jan 2021 10:01:22 -0500
+X-MC-Unique: 8khLFf0OO4Wy_Qo2eG4Tuw-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A28DA190A7A1;
+        Fri, 22 Jan 2021 15:01:18 +0000 (UTC)
+Received: from fuller.cnet (ovpn-112-4.gru2.redhat.com [10.97.112.4])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 32EC36F990;
+        Fri, 22 Jan 2021 15:01:18 +0000 (UTC)
+Received: by fuller.cnet (Postfix, from userid 1000)
+        id 02E034178900; Fri, 22 Jan 2021 11:13:20 -0300 (-03)
+Date:   Fri, 22 Jan 2021 11:13:20 -0300
+From:   Marcelo Tosatti <mtosatti@redhat.com>
+To:     Frederic Weisbecker <frederic@kernel.org>
+Cc:     Alex Belits <abelits@marvell.com>,
+        "rostedt@goodmis.org" <rostedt@goodmis.org>,
+        Prasun Kapoor <pkapoor@marvell.com>,
+        "mingo@kernel.org" <mingo@kernel.org>,
+        "davem@davemloft.net" <davem@davemloft.net>,
+        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
+        "peterz@infradead.org" <peterz@infradead.org>,
+        "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>,
+        "catalin.marinas@arm.com" <catalin.marinas@arm.com>,
+        "tglx@linutronix.de" <tglx@linutronix.de>,
+        "will@kernel.org" <will@kernel.org>,
+        "linux-arm-kernel@lists.infradead.org" 
+        <linux-arm-kernel@lists.infradead.org>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "netdev@vger.kernel.org" <netdev@vger.kernel.org>
+Subject: Re: [PATCH v4 11/13] task_isolation: net: don't flush backlog on
+ CPUs running isolated tasks
+Message-ID: <20210122141320.GA66969@fuller.cnet>
+References: <04be044c1bcd76b7438b7563edc35383417f12c8.camel@marvell.com>
+ <01470cf1f1a2e79e46a87bb5a8a4780a1c3cc740.camel@marvell.com>
+ <20201001144731.GC6595@lothringen>
 MIME-Version: 1.0
-References: <159827188271.306468.16962617119460123110.stgit@warthog.procyon.org.uk>
- <159827189767.306468.1803062787718957199.stgit@warthog.procyon.org.uk>
-In-Reply-To: <159827189767.306468.1803062787718957199.stgit@warthog.procyon.org.uk>
-Reply-To: mtk.manpages@gmail.com
-From:   "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Date:   Fri, 22 Jan 2021 09:40:06 +0100
-Message-ID: <CAKgNAkj=1y51Yei9FchAEKEm=mgY_soVfn-58mRC+Z2Ae2HZZw@mail.gmail.com>
-Subject: Re: [PATCH 3/5] Add manpage for fspick(2)
-To:     David Howells <dhowells@redhat.com>
-Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
-        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-        linux-man <linux-man@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        lkml <linux-kernel@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20201001144731.GC6595@lothringen>
+User-Agent: Mutt/1.10.1 (2018-07-13)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hello David,
+On Thu, Oct 01, 2020 at 04:47:31PM +0200, Frederic Weisbecker wrote:
+> On Wed, Jul 22, 2020 at 02:58:24PM +0000, Alex Belits wrote:
+> > From: Yuri Norov <ynorov@marvell.com>
+> > 
 
-Ping!
+> > so we don't need to flush it.
+> 
+> What guarantees that we have no backlog on it?
 
-Thanks,
+From Paolo's work to use lockless reading of 
+per-CPU skb lists
 
-Michael
+https://www.spinics.net/lists/netdev/msg682693.html
 
-On Mon, 24 Aug 2020 at 14:25, David Howells <dhowells@redhat.com> wrote:
->
-> Add a manual page to document the fspick() system call.
->
-> Signed-off-by: David Howells <dhowells@redhat.com>
-> ---
->
->  man2/fspick.2 |  180 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
->  1 file changed, 180 insertions(+)
->  create mode 100644 man2/fspick.2
->
-> diff --git a/man2/fspick.2 b/man2/fspick.2
-> new file mode 100644
-> index 000000000..72bf645dd
-> --- /dev/null
-> +++ b/man2/fspick.2
-> @@ -0,0 +1,180 @@
-> +'\" t
-> +.\" Copyright (c) 2020 David Howells <dhowells@redhat.com>
-> +.\"
-> +.\" %%%LICENSE_START(VERBATIM)
-> +.\" Permission is granted to make and distribute verbatim copies of this
-> +.\" manual provided the copyright notice and this permission notice are
-> +.\" preserved on all copies.
-> +.\"
-> +.\" Permission is granted to copy and distribute modified versions of this
-> +.\" manual under the conditions for verbatim copying, provided that the
-> +.\" entire resulting derived work is distributed under the terms of a
-> +.\" permission notice identical to this one.
-> +.\"
-> +.\" Since the Linux kernel and libraries are constantly changing, this
-> +.\" manual page may be incorrect or out-of-date.  The author(s) assume no
-> +.\" responsibility for errors or omissions, or for damages resulting from
-> +.\" the use of the information contained herein.  The author(s) may not
-> +.\" have taken the same level of care in the production of this manual,
-> +.\" which is licensed free of charge, as they might when working
-> +.\" professionally.
-> +.\"
-> +.\" Formatted or processed versions of this manual, if unaccompanied by
-> +.\" the source, must acknowledge the copyright and authors of this work.
-> +.\" %%%LICENSE_END
-> +.\"
-> +.TH FSPICK 2 2020-08-24 "Linux" "Linux Programmer's Manual"
-> +.SH NAME
-> +fspick \- Select filesystem for reconfiguration
-> +.SH SYNOPSIS
-> +.nf
-> +.B #include <sys/types.h>
-> +.B #include <sys/mount.h>
-> +.B #include <unistd.h>
-> +.BR "#include <fcntl.h>           " "/* Definition of AT_* constants */"
-> +.PP
-> +.BI "int fspick(int " dirfd ", const char *" pathname ", unsigned int " flags );
-> +.fi
-> +.PP
-> +.IR Note :
-> +There is no glibc wrapper for this system call.
-> +.SH DESCRIPTION
-> +.PP
-> +.BR fspick ()
-> +creates a new filesystem configuration context within the kernel and attaches a
-> +pre-existing superblock to it so that it can be reconfigured (similar to
-> +.BR mount (8)
-> +with the "-o remount" option).  The configuration context is marked as being in
-> +reconfiguration mode and attached to a file descriptor, which is returned to
-> +the caller.  The file descriptor can be marked close-on-exec by setting
-> +.B FSPICK_CLOEXEC
-> +in
-> +.IR flags .
-> +.PP
-> +The target is whichever superblock backs the object determined by
-> +.IR dfd ", " pathname " and " flags .
-> +The following can be set in
-> +.I flags
-> +to control the pathwalk to that object:
-> +.TP
-> +.B FSPICK_SYMLINK_NOFOLLOW
-> +Don't follow symbolic links in the final component of the path.
-> +.TP
-> +.B FSPICK_NO_AUTOMOUNT
-> +Don't follow automounts in the final component of the path.
-> +.TP
-> +.B FSPICK_EMPTY_PATH
-> +Allow an empty string to be specified as the pathname.  This allows
-> +.I dirfd
-> +to specify the target mount exactly.
-> +.PP
-> +After calling fspick(), the file descriptor should be passed to the
-> +.BR fsconfig (2)
-> +system call, using that to specify the desired changes to filesystem and
-> +security parameters.
-> +.PP
-> +When the parameters are all set, the
-> +.BR fsconfig ()
-> +system call should then be called again with
-> +.B FSCONFIG_CMD_RECONFIGURE
-> +as the command argument to effect the reconfiguration.
-> +.PP
-> +After the reconfiguration has taken place, the context is wiped clean (apart
-> +from the superblock attachment, which remains) and can be reused to make
-> +another reconfiguration.
-> +.PP
-> +The file descriptor also serves as a channel by which more comprehensive error,
-> +warning and information messages may be retrieved from the kernel using
-> +.BR read (2).
-> +.SS Message Retrieval Interface
-> +The context file descriptor may be queried for message strings at any time by
-> +calling
-> +.BR read (2)
-> +on the file descriptor.  This will return formatted messages that are prefixed
-> +to indicate their class:
-> +.TP
-> +\fB"e <message>"\fP
-> +An error message string was logged.
-> +.TP
-> +\fB"i <message>"\fP
-> +An informational message string was logged.
-> +.TP
-> +\fB"w <message>"\fP
-> +An warning message string was logged.
-> +.PP
-> +Messages are removed from the queue as they're read and the queue has a limited
-> +depth of 8 messages, so it's possible for some to get lost.
-> +.SH RETURN VALUE
-> +On success, the function returns a file descriptor.  On error, \-1 is returned,
-> +and
-> +.I errno
-> +is set appropriately.
-> +.SH ERRORS
-> +The error values given below result from filesystem type independent errors.
-> +Additionally, each filesystem type may have its own special errors and its own
-> +special behavior.  See the Linux kernel source code for details.
-> +.TP
-> +.B EACCES
-> +A component of a path was not searchable.
-> +(See also
-> +.BR path_resolution (7).)
-> +.TP
-> +.B EFAULT
-> +.I pathname
-> +points outside the user address space.
-> +.TP
-> +.B EINVAL
-> +.I flags
-> +includes an undefined value.
-> +.TP
-> +.B ELOOP
-> +Too many links encountered during pathname resolution.
-> +.TP
-> +.B EMFILE
-> +The system has too many open files to create more.
-> +.TP
-> +.B ENFILE
-> +The process has too many open files to create more.
-> +.TP
-> +.B ENAMETOOLONG
-> +A pathname was longer than
-> +.BR MAXPATHLEN .
-> +.TP
-> +.B ENOENT
-> +A pathname was empty or had a nonexistent component.
-> +.TP
-> +.B ENOMEM
-> +The kernel could not allocate sufficient memory to complete the call.
-> +.TP
-> +.B EPERM
-> +The caller does not have the required privileges.
-> +.SH CONFORMING TO
-> +These functions are Linux-specific and should not be used in programs intended
-> +to be portable.
-> +.SH VERSIONS
-> +.BR fsopen "(), " fsmount "() and " fspick ()
-> +were added to Linux in kernel 5.2.
-> +.SH EXAMPLES
-> +To illustrate the process, here's an example whereby this can be used to
-> +reconfigure a filesystem:
-> +.PP
-> +.in +4n
-> +.nf
-> +sfd = fspick(AT_FDCWD, "/mnt", FSPICK_NO_AUTOMOUNT | FSPICK_CLOEXEC);
-> +fsconfig(sfd, FSCONFIG_SET_FLAG, "ro", NULL, 0);
-> +fsconfig(sfd, FSCONFIG_SET_STRING, "user_xattr", "false", 0);
-> +fsconfig(sfd, FSCONFIG_CMD_RECONFIGURE, NULL, NULL, 0);
-> +.fi
-> +.in
-> +.PP
-> +.SH NOTES
-> +Glibc does not (yet) provide a wrapper for the
-> +.BR fspick "()"
-> +system call; call it using
-> +.BR syscall (2).
-> +.SH SEE ALSO
-> +.BR mountpoint (1),
-> +.BR fsconfig (2),
-> +.BR fsopen (2),
-> +.BR path_resolution (7),
-> +.BR mount (8)
->
->
+It also exposed skb queue length to userspace
 
+https://www.spinics.net/lists/netdev/msg684939.html
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+But if i remember correctly waiting for a RCU grace
+period was also necessary to ensure no backlog !?! 
+
+Paolo would you please remind us what was the sequence of steps?
+(and then also, for the userspace isolation interface, where 
+the application informs the kernel that its entering isolated
+mode, is just confirming the queues have zero length is
+sufficient?).
+
+TIA!
+
+> 
+> > Currently flush_all_backlogs()
+> > enqueues corresponding work on all CPUs including ones that run
+> > isolated tasks. It leads to breaking task isolation for nothing.
+> > 
+> > In this patch, backlog flushing is enqueued only on non-isolated CPUs.
+> > 
+> > Signed-off-by: Yuri Norov <ynorov@marvell.com>
+> > [abelits@marvell.com: use safe task_isolation_on_cpu() implementation]
+> > Signed-off-by: Alex Belits <abelits@marvell.com>
+> > ---
+> >  net/core/dev.c | 7 ++++++-
+> >  1 file changed, 6 insertions(+), 1 deletion(-)
+> > 
+> > diff --git a/net/core/dev.c b/net/core/dev.c
+> > index 90b59fc50dc9..83a282f7453d 100644
+> > --- a/net/core/dev.c
+> > +++ b/net/core/dev.c
+> > @@ -74,6 +74,7 @@
+> >  #include <linux/cpu.h>
+> >  #include <linux/types.h>
+> >  #include <linux/kernel.h>
+> > +#include <linux/isolation.h>
+> >  #include <linux/hash.h>
+> >  #include <linux/slab.h>
+> >  #include <linux/sched.h>
+> > @@ -5624,9 +5625,13 @@ static void flush_all_backlogs(void)
+> >  
+> >  	get_online_cpus();
+> >  
+> > -	for_each_online_cpu(cpu)
+> > +	smp_rmb();
+> 
+> What is it ordering?
+> 
+> > +	for_each_online_cpu(cpu) {
+> > +		if (task_isolation_on_cpu(cpu))
+> > +			continue;
+> >  		queue_work_on(cpu, system_highpri_wq,
+> >  			      per_cpu_ptr(&flush_works, cpu));
+> > +	}
+> >  
+> >  	for_each_online_cpu(cpu)
+> >  		flush_work(per_cpu_ptr(&flush_works, cpu));
+> 
+> Thanks.
+
