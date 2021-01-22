@@ -5,56 +5,56 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A2799C433E6
-	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 20:52:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B4661C433E0
+	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 20:52:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7664523B09
-	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 20:52:02 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 84F9D23B08
+	for <linux-api@archiver.kernel.org>; Fri, 22 Jan 2021 20:52:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730198AbhAVUv6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 22 Jan 2021 15:51:58 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49740 "EHLO
+        id S1728165AbhAVUwA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 22 Jan 2021 15:52:00 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49276 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728165AbhAVUvN (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 22 Jan 2021 15:51:13 -0500
-Received: from mail-pg1-x533.google.com (mail-pg1-x533.google.com [IPv6:2607:f8b0:4864:20::533])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 978EFC061222
-        for <linux-api@vger.kernel.org>; Fri, 22 Jan 2021 12:47:31 -0800 (PST)
-Received: by mail-pg1-x533.google.com with SMTP id i7so4607807pgc.8
-        for <linux-api@vger.kernel.org>; Fri, 22 Jan 2021 12:47:31 -0800 (PST)
+        with ESMTP id S1730776AbhAVUvO (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 22 Jan 2021 15:51:14 -0500
+Received: from mail-pg1-x531.google.com (mail-pg1-x531.google.com [IPv6:2607:f8b0:4864:20::531])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D1D24C061A2B
+        for <linux-api@vger.kernel.org>; Fri, 22 Jan 2021 12:47:46 -0800 (PST)
+Received: by mail-pg1-x531.google.com with SMTP id p18so4594659pgm.11
+        for <linux-api@vger.kernel.org>; Fri, 22 Jan 2021 12:47:46 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=osandov-com.20150623.gappssmtp.com; s=20150623;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=VhHGYUrQEFiQHVA8AXG0InFmphCs9/EXfiOgqK1QhVc=;
-        b=bnXW9+hb6TDls7gQhd4oXm/0OkYlqL5pS5rGyf+a5bisR39L4vxDexZY062D/v0SYu
-         x5EIf0X1JLUKwFm61p5/weeRfiQLEFCGA9xY+ouwMo8f8h71jkTe7uOHUARQ4jCzOzQz
-         bpFSLj/ODB/eQsc6N5vFFVvem0LUX2WCIfosPXRWDx91mZn//nDLSzZh6uqNeGoZQIGm
-         CWmTtWpd4gBb4sw4WOZ4KuxrJHH3nMEIY62xNNL2cSUXIrzYZNnz/E8lAV0NrVU6lXmw
-         d0LEYxXU+oa3f/Dt6A28/WIowKBS47Vn7gyE7ezjQ2WspA5E2eKai6JwEN+csC+onK/y
-         rVJw==
+        bh=jsZgIcSUOs4ZF+x9oZeNSohaDc9IzmjXBuR8mId+lVo=;
+        b=Uj7VyxfrqBaR6EfVwAVle4XnvXB/BzhgIYK7thaYm3kgYXqFPLvt9QZ2CMSlz8h634
+         iF2qabPlAsDPzvgT/uZ+8xJS6ejB/hjnglGwHzbQffNtyHuHlW0Zqhr3IqfEfpLmUoih
+         nDZVn23jV5f6uSf4hah6CqfvT6pnPAgb5IzNMJNzAh3H9r8NX+oV9Y04xxch18LvOHGM
+         N73y/Doum+kGlBNlnqH7JbXLhP6ZhyEQsX5uHtHrHL8elPlBF4JKPkaulh5TFK6GKwi0
+         jDmOdkpqr2sMLptGgVJAjDXVNmilgfoxDCqeKGCjuEQSWtOS7GbvSzO0LMczannWc0+R
+         9NOQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=VhHGYUrQEFiQHVA8AXG0InFmphCs9/EXfiOgqK1QhVc=;
-        b=PVdwWtIFkotpNHSo2l8BgsxrBtFC1h2x85u/cnGBPW0k7x8D788oZzf1Cx/mF7VRJa
-         urtTjfYv6FVL/AkqTHNlRTI6uoP8wFdZOR0VlLEwlplKIb4L+FH1qFon2qm/7snSh5Om
-         Q2PkIi/YknoiVgDxsft/xihTuDr+ekioIPDz48SyWejnBoLJ+SrZUzvDc6wEhONlmGLs
-         K62R/XGGPS3U3WTUtOlMV0RsaRbIWbSNTSM3eo4lOfZmZZdvVSWbf74OK6HuPU3CpwPR
-         mdJoAB9Kk4iizrF+glPkPqdtaRtb/l0eJcGTSpzoMLPQdYSEo7trxcGo4X0E/IrjgJ+s
-         Kc4A==
-X-Gm-Message-State: AOAM532mTSmXjbk5qbtw1i+q0zTn5foFEG/CNx5SJFQHVwrcvbRc/Ww5
-        5KHIkTjzrVTGV4mAjG+Ku3c6vg==
-X-Google-Smtp-Source: ABdhPJwtq/3iY2Ut2QFubzDKCMRWCMZbHi/jmXgZ5Y3vXB5qHMGtMAkBjYTxSZOOkMUt1UqjhbHvjQ==
-X-Received: by 2002:a63:3303:: with SMTP id z3mr752033pgz.302.1611348451040;
-        Fri, 22 Jan 2021 12:47:31 -0800 (PST)
+        bh=jsZgIcSUOs4ZF+x9oZeNSohaDc9IzmjXBuR8mId+lVo=;
+        b=lL5YCTYOo/PQh6U4JcSoSIpNGFPkx6xo338VH21GTbPTEfjboPOU+e1luWZkWnpZYn
+         t62z5qUrWnCrj0e+i6CIVDW0xWtiFDbLIkIE7WlbWaWiNeeUhxhSfFg0fbt66Lc6+ulC
+         kBNgK2EAGSLGv42Qb5ENz6LnvN6iJiOzXu03LOSUbXxk906Qun9FV3PX0Jtlee3cFCAW
+         E0v1lj7ePUHcp+FcNhjFKqr0IDOJjbngEZtLcxoViyk+CA6gImikJ7AjjJpjRT93nwsi
+         8VmPoEWolDRv1I/8whaAhJH6MahXkzIvWH4TU0wi3NHdBiFWzOOF/QcFtkfla99/9iqb
+         CXZw==
+X-Gm-Message-State: AOAM5325y2Pfgo/oq66CyZyYyvz7HBI68PLRgwRHdw24DtD7kzdV3aHr
+        V8TxM5OUQ2cxX1mfB37hEgPdAw==
+X-Google-Smtp-Source: ABdhPJxanmXvXDv6AucgzHFRVoxE//s5+VubgqFvbkDMSK4HlwyegUAlajrb1bKcLf4Avm7bzbCN6w==
+X-Received: by 2002:aa7:8bce:0:b029:1b8:f395:87a with SMTP id s14-20020aa78bce0000b02901b8f395087amr6789477pfd.36.1611348466357;
+        Fri, 22 Jan 2021 12:47:46 -0800 (PST)
 Received: from relinquished.tfbnw.net ([2620:10d:c090:400::5:ea88])
-        by smtp.gmail.com with ESMTPSA id j18sm4092900pfc.99.2021.01.22.12.47.28
+        by smtp.gmail.com with ESMTPSA id j18sm4092900pfc.99.2021.01.22.12.47.44
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 22 Jan 2021 12:47:29 -0800 (PST)
+        Fri, 22 Jan 2021 12:47:45 -0800 (PST)
 From:   Omar Sandoval <osandov@osandov.com>
 To:     linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org,
         Al Viro <viro@zeniv.linux.org.uk>,
@@ -63,12 +63,12 @@ Cc:     Dave Chinner <david@fromorbit.com>, Jann Horn <jannh@google.com>,
         Amir Goldstein <amir73il@gmail.com>,
         Aleksa Sarai <cyphar@cyphar.com>, linux-api@vger.kernel.org,
         kernel-team@fb.com
-Subject: [PATCH v7 05/10] btrfs: don't advance offset for compressed bios in btrfs_csum_one_bio()
-Date:   Fri, 22 Jan 2021 12:46:52 -0800
-Message-Id: <455a42339058dab8c4b9c77547dde8daad7f9981.1611346706.git.osandov@fb.com>
+Subject: [PATCH v7 11/15] btrfs: add send stream v2 definitions
+Date:   Fri, 22 Jan 2021 12:46:58 -0800
+Message-Id: <ca550f6e2d6d1e7d79dee6c811638d4da02a56cc.1611346574.git.osandov@fb.com>
 X-Mailer: git-send-email 2.30.0
-In-Reply-To: <cover.1611346706.git.osandov@fb.com>
-References: <cover.1611346706.git.osandov@fb.com>
+In-Reply-To: <cover.1611346574.git.osandov@fb.com>
+References: <cover.1611346574.git.osandov@fb.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
@@ -77,198 +77,121 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-btrfs_csum_one_bio() loops over each filesystem block in the bio while
-keeping a cursor of its current logical position in the file in order to
-look up the ordered extent to add the checksums to. However, this
-doesn't make much sense for compressed extents, as a sector on disk does
-not correspond to a sector of decompressed file data. It happens to work
-because 1) the compressed bio always covers one ordered extent and 2)
-the size of the bio is always less than the size of the ordered extent.
-However, the second point will not always be true for encoded writes.
-
-Let's add a boolean parameter to btrfs_csum_one_bio() to indicate that
-it can assume that the bio only covers one ordered extent. Since we're
-already changing the signature, let's get rid of the contig parameter
-and make it implied by the offset parameter, similar to the change we
-recently made to btrfs_lookup_bio_sums(). Additionally, let's rename
-nr_sectors to blockcount to make it clear that it's the number of
-filesystem blocks, not the number of 512-byte sectors.
+This adds the definitions of the new commands for send stream version 2
+and their respective attributes: fallocate, FS_IOC_SETFLAGS (a.k.a.
+chattr), and encoded writes. It also documents two changes to the send
+stream format in v2: the receiver shouldn't assume a maximum command
+size, and the DATA attribute is encoded differently to allow for writes
+larger than 64k. These will be implemented in subsequent changes, and
+then the ioctl will accept the new flags.
 
 Reviewed-by: Josef Bacik <josef@toxicpanda.com>
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- fs/btrfs/compression.c |  5 +++--
- fs/btrfs/ctree.h       |  2 +-
- fs/btrfs/file-item.c   | 35 ++++++++++++++++-------------------
- fs/btrfs/inode.c       |  8 ++++----
- 4 files changed, 24 insertions(+), 26 deletions(-)
+ fs/btrfs/send.c            |  2 +-
+ fs/btrfs/send.h            | 30 +++++++++++++++++++++++++++++-
+ include/uapi/linux/btrfs.h | 13 +++++++++++++
+ 3 files changed, 43 insertions(+), 2 deletions(-)
 
-diff --git a/fs/btrfs/compression.c b/fs/btrfs/compression.c
-index 5ae3fa0386b7..d9d1d9e38fc5 100644
---- a/fs/btrfs/compression.c
-+++ b/fs/btrfs/compression.c
-@@ -436,7 +436,8 @@ blk_status_t btrfs_submit_compressed_write(struct btrfs_inode *inode, u64 start,
- 			BUG_ON(ret); /* -ENOMEM */
+diff --git a/fs/btrfs/send.c b/fs/btrfs/send.c
+index 3bcbf2bcb869..d07570588a16 100644
+--- a/fs/btrfs/send.c
++++ b/fs/btrfs/send.c
+@@ -7267,7 +7267,7 @@ long btrfs_ioctl_send(struct file *mnt_file, struct btrfs_ioctl_send_args *arg)
  
- 			if (!skip_sum) {
--				ret = btrfs_csum_one_bio(inode, bio, start, 1);
-+				ret = btrfs_csum_one_bio(inode, bio, start,
-+							 true);
- 				BUG_ON(ret); /* -ENOMEM */
- 			}
+ 	sctx->clone_roots_cnt = arg->clone_sources_count;
  
-@@ -468,7 +469,7 @@ blk_status_t btrfs_submit_compressed_write(struct btrfs_inode *inode, u64 start,
- 	BUG_ON(ret); /* -ENOMEM */
+-	sctx->send_max_size = BTRFS_SEND_BUF_SIZE;
++	sctx->send_max_size = BTRFS_SEND_BUF_SIZE_V1;
+ 	sctx->send_buf = kvmalloc(sctx->send_max_size, GFP_KERNEL);
+ 	if (!sctx->send_buf) {
+ 		ret = -ENOMEM;
+diff --git a/fs/btrfs/send.h b/fs/btrfs/send.h
+index de91488b7cd0..9f4f7b96b1eb 100644
+--- a/fs/btrfs/send.h
++++ b/fs/btrfs/send.h
+@@ -12,7 +12,11 @@
+ #define BTRFS_SEND_STREAM_MAGIC "btrfs-stream"
+ #define BTRFS_SEND_STREAM_VERSION 1
  
- 	if (!skip_sum) {
--		ret = btrfs_csum_one_bio(inode, bio, start, 1);
-+		ret = btrfs_csum_one_bio(inode, bio, start, true);
- 		BUG_ON(ret); /* -ENOMEM */
- 	}
+-#define BTRFS_SEND_BUF_SIZE SZ_64K
++/*
++ * In send stream v1, no command is larger than 64k. In send stream v2, no limit
++ * should be assumed.
++ */
++#define BTRFS_SEND_BUF_SIZE_V1 SZ_64K
  
-diff --git a/fs/btrfs/ctree.h b/fs/btrfs/ctree.h
-index 1bd416e5a731..f1b9a9e42cc6 100644
---- a/fs/btrfs/ctree.h
-+++ b/fs/btrfs/ctree.h
-@@ -3051,7 +3051,7 @@ int btrfs_csum_file_blocks(struct btrfs_trans_handle *trans,
- 			   struct btrfs_root *root,
- 			   struct btrfs_ordered_sum *sums);
- blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
--				u64 file_start, int contig);
-+				u64 offset, bool one_ordered);
- int btrfs_lookup_csums_range(struct btrfs_root *root, u64 start, u64 end,
- 			     struct list_head *list, int search_commit);
- void btrfs_extent_item_to_extent_map(struct btrfs_inode *inode,
-diff --git a/fs/btrfs/file-item.c b/fs/btrfs/file-item.c
-index 6ccfc019ad90..82d110c8dc03 100644
---- a/fs/btrfs/file-item.c
-+++ b/fs/btrfs/file-item.c
-@@ -608,28 +608,28 @@ int btrfs_lookup_csums_range(struct btrfs_root *root, u64 start, u64 end,
-  * btrfs_csum_one_bio - Calculates checksums of the data contained inside a bio
-  * @inode:	 Owner of the data inside the bio
-  * @bio:	 Contains the data to be checksummed
-- * @file_start:  offset in file this bio begins to describe
-- * @contig:	 Boolean. If true/1 means all bio vecs in this bio are
-- *		 contiguous and they begin at @file_start in the file. False/0
-- *		 means this bio can contains potentially discontigous bio vecs
-- *		 so the logical offset of each should be calculated separately.
-+ * @offset:      If (u64)-1, @bio may contain discontiguous bio vecs, so the
-+ *               file offsets are determined from the page offsets in the bio.
-+ *               Otherwise, this is the starting file offset of the bio vecs in
-+ *               @bio, which must be contiguous.
-+ * @one_ordered: If true, @bio only refers to one ordered extent.
+ enum btrfs_tlv_type {
+ 	BTRFS_TLV_U8,
+@@ -76,6 +80,13 @@ enum btrfs_send_cmd {
+ 
+ 	BTRFS_SEND_C_END,
+ 	BTRFS_SEND_C_UPDATE_EXTENT,
++
++	/* The following commands were added in send stream v2. */
++
++	BTRFS_SEND_C_FALLOCATE,
++	BTRFS_SEND_C_SETFLAGS,
++	BTRFS_SEND_C_ENCODED_WRITE,
++
+ 	__BTRFS_SEND_C_MAX,
+ };
+ #define BTRFS_SEND_C_MAX (__BTRFS_SEND_C_MAX - 1)
+@@ -106,6 +117,11 @@ enum {
+ 	BTRFS_SEND_A_PATH_LINK,
+ 
+ 	BTRFS_SEND_A_FILE_OFFSET,
++	/*
++	 * In send stream v2, this attribute is special: it must be the last
++	 * attribute in a command, its header contains only the type, and its
++	 * length is implicitly the remaining length of the command.
++	 */
+ 	BTRFS_SEND_A_DATA,
+ 
+ 	BTRFS_SEND_A_CLONE_UUID,
+@@ -114,6 +130,18 @@ enum {
+ 	BTRFS_SEND_A_CLONE_OFFSET,
+ 	BTRFS_SEND_A_CLONE_LEN,
+ 
++	/* The following attributes were added in send stream v2. */
++
++	BTRFS_SEND_A_FALLOCATE_MODE,
++
++	BTRFS_SEND_A_SETFLAGS_FLAGS,
++
++	BTRFS_SEND_A_UNENCODED_FILE_LEN,
++	BTRFS_SEND_A_UNENCODED_LEN,
++	BTRFS_SEND_A_UNENCODED_OFFSET,
++	BTRFS_SEND_A_COMPRESSION,
++	BTRFS_SEND_A_ENCRYPTION,
++
+ 	__BTRFS_SEND_A_MAX,
+ };
+ #define BTRFS_SEND_A_MAX (__BTRFS_SEND_A_MAX - 1)
+diff --git a/include/uapi/linux/btrfs.h b/include/uapi/linux/btrfs.h
+index 5df73001aad4..93aa0932234e 100644
+--- a/include/uapi/linux/btrfs.h
++++ b/include/uapi/linux/btrfs.h
+@@ -770,6 +770,19 @@ struct btrfs_ioctl_received_subvol_args {
   */
- blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
--		       u64 file_start, int contig)
-+				u64 offset, bool one_ordered)
- {
- 	struct btrfs_fs_info *fs_info = inode->root->fs_info;
- 	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
- 	struct btrfs_ordered_sum *sums;
- 	struct btrfs_ordered_extent *ordered = NULL;
-+	const bool page_offsets = (offset == (u64)-1);
- 	char *data;
- 	struct bvec_iter iter;
- 	struct bio_vec bvec;
- 	int index;
--	int nr_sectors;
-+	int blockcount;
- 	unsigned long total_bytes = 0;
- 	unsigned long this_sum_bytes = 0;
- 	int i;
--	u64 offset;
- 	unsigned nofs_flag;
+ #define BTRFS_SEND_FLAG_OMIT_END_CMD		0x4
  
- 	nofs_flag = memalloc_nofs_save();
-@@ -643,18 +643,13 @@ blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
- 	sums->len = bio->bi_iter.bi_size;
- 	INIT_LIST_HEAD(&sums->list);
- 
--	if (contig)
--		offset = file_start;
--	else
--		offset = 0; /* shut up gcc */
--
- 	sums->bytenr = bio->bi_iter.bi_sector << 9;
- 	index = 0;
- 
- 	shash->tfm = fs_info->csum_shash;
- 
- 	bio_for_each_segment(bvec, bio, iter) {
--		if (!contig)
-+		if (page_offsets)
- 			offset = page_offset(bvec.bv_page) + bvec.bv_offset;
- 
- 		if (!ordered) {
-@@ -662,13 +657,14 @@ blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
- 			BUG_ON(!ordered); /* Logic error */
- 		}
- 
--		nr_sectors = BTRFS_BYTES_TO_BLKS(fs_info,
-+		blockcount = BTRFS_BYTES_TO_BLKS(fs_info,
- 						 bvec.bv_len + fs_info->sectorsize
- 						 - 1);
- 
--		for (i = 0; i < nr_sectors; i++) {
--			if (offset >= ordered->file_offset + ordered->num_bytes ||
--			    offset < ordered->file_offset) {
-+		for (i = 0; i < blockcount; i++) {
-+			if (!one_ordered &&
-+			    (offset >= ordered->file_offset + ordered->num_bytes ||
-+			     offset < ordered->file_offset)) {
- 				unsigned long bytes_left;
- 
- 				sums->len = this_sum_bytes;
-@@ -699,7 +695,8 @@ blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
- 					    sums->sums + index);
- 			kunmap_atomic(data);
- 			index += fs_info->csum_size;
--			offset += fs_info->sectorsize;
-+			if (!one_ordered)
-+				offset += fs_info->sectorsize;
- 			this_sum_bytes += fs_info->sectorsize;
- 			total_bytes += fs_info->sectorsize;
- 		}
-diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
-index d2ece8554416..b92c4a1d6d2f 100644
---- a/fs/btrfs/inode.c
-+++ b/fs/btrfs/inode.c
-@@ -2214,7 +2214,7 @@ int btrfs_bio_fits_in_stripe(struct page *page, size_t size, struct bio *bio,
- static blk_status_t btrfs_submit_bio_start(struct inode *inode, struct bio *bio,
- 					   u64 dio_file_offset)
- {
--	return btrfs_csum_one_bio(BTRFS_I(inode), bio, 0, 0);
-+	return btrfs_csum_one_bio(BTRFS_I(inode), bio, (u64)-1, false);
- }
- 
- /*
-@@ -2282,7 +2282,7 @@ blk_status_t btrfs_submit_data_bio(struct inode *inode, struct bio *bio,
- 					  0, btrfs_submit_bio_start);
- 		goto out;
- 	} else if (!skip_sum) {
--		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, 0, 0);
-+		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, (u64)-1, false);
- 		if (ret)
- 			goto out;
- 	}
-@@ -7820,7 +7820,7 @@ static blk_status_t btrfs_submit_bio_start_direct_io(struct inode *inode,
- 						     struct bio *bio,
- 						     u64 dio_file_offset)
- {
--	return btrfs_csum_one_bio(BTRFS_I(inode), bio, dio_file_offset, 1);
-+	return btrfs_csum_one_bio(BTRFS_I(inode), bio, dio_file_offset, false);
- }
- 
- static void btrfs_end_dio_bio(struct bio *bio)
-@@ -7877,7 +7877,7 @@ static inline blk_status_t btrfs_submit_dio_bio(struct bio *bio,
- 		 * If we aren't doing async submit, calculate the csum of the
- 		 * bio now.
- 		 */
--		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, file_offset, 1);
-+		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, file_offset, false);
- 		if (ret)
- 			goto err;
- 	} else {
++/*
++ * Use version 2 of the send stream, which adds new commands and supports larger
++ * writes.
++ */
++#define BTRFS_SEND_FLAG_STREAM_V2		0x8
++
++/*
++ * Send compressed data using the ENCODED_WRITE command instead of decompressing
++ * the data and sending it with the WRITE command. This requires
++ * BTRFS_SEND_FLAG_STREAM_V2.
++ */
++#define BTRFS_SEND_FLAG_COMPRESSED		0x10
++
+ #define BTRFS_SEND_FLAG_MASK \
+ 	(BTRFS_SEND_FLAG_NO_FILE_DATA | \
+ 	 BTRFS_SEND_FLAG_OMIT_STREAM_HEADER | \
 -- 
 2.30.0
 
