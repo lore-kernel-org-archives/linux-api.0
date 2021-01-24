@@ -2,39 +2,46 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+X-Spam-Status: No, score=-13.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 71C9BC433DB
-	for <linux-api@archiver.kernel.org>; Sun, 24 Jan 2021 16:24:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 648D0C433DB
+	for <linux-api@archiver.kernel.org>; Sun, 24 Jan 2021 17:59:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 40F6822AAA
-	for <linux-api@archiver.kernel.org>; Sun, 24 Jan 2021 16:24:34 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2399322C9C
+	for <linux-api@archiver.kernel.org>; Sun, 24 Jan 2021 17:59:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726496AbhAXQYd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 24 Jan 2021 11:24:33 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43634 "EHLO
+        id S1726164AbhAXR7T (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 24 Jan 2021 12:59:19 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35758 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726422AbhAXQYc (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 24 Jan 2021 11:24:32 -0500
-X-Greylist: delayed 684 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Sun, 24 Jan 2021 08:23:46 PST
-Received: from haggis.mythic-beasts.com (haggis.mythic-beasts.com [IPv6:2a00:1098:0:86:1000:0:2:1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0644EC061573
-        for <linux-api@vger.kernel.org>; Sun, 24 Jan 2021 08:23:46 -0800 (PST)
-Received: from [174.126.29.109] (port=59666 helo=localhost)
-        by haggis.mythic-beasts.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        (Exim 4.92.3)
-        (envelope-from <sega01@go-beyond.org>)
-        id 1l3hza-0007wT-1G; Sun, 24 Jan 2021 16:11:59 +0000
-Date:   Sun, 24 Jan 2021 16:11:34 +0000
-From:   Teran McKinney <sega01@go-beyond.org>
+        with ESMTP id S1726103AbhAXR7R (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 24 Jan 2021 12:59:17 -0500
+X-Greylist: delayed 397 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Sun, 24 Jan 2021 09:58:36 PST
+Received: from clue.drijf.net (clue.drijf.net [IPv6:2a02:898::216:1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6DEC6C061573
+        for <linux-api@vger.kernel.org>; Sun, 24 Jan 2021 09:58:36 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=drijf.net; s=default;
+        t=1611510710;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=6R9cxIIPJyVqbiYIwH3/tA/8c+6DhQciQFD9pBBqCaw=;
+        b=dbWXWjPLe6u3ZvDorGvYtUhIlXOFmBV019x+6pShnH8uaVO1hK0XStDOnaXRQGDfMYb//m
+        7l4NV5JrDuD04Ih/HKSxhVZ+EAlMmse+MCtI+AQ2L6Kuq0tAuVB8GZfipy82zQzWPFJN5G
+        h56U6zHDVb0LCPd4JbJn+wIQaKHo9y4=
+Received: from clue.drijf.net (clue.drijf.net [94.142.244.34])
+        by mx1.drijf.net (OpenSMTPD) with ESMTPSA id 30a2f150 (TLSv1.3:AEAD-AES256-GCM-SHA384:256:NO);
+        Sun, 24 Jan 2021 18:51:50 +0100 (CET)
+Date:   Sun, 24 Jan 2021 18:51:48 +0100
+From:   Otto Moerbeek <otto@drijf.net>
 To:     Alejandro Colomar <alx.manpages@gmail.com>
 Cc:     Bernhard Voelker <mail@bernhard-voelker.de>,
         Alex Henrie <alexhenrie24@gmail.com>,
         Christian Groessler <chris@groessler.org>,
-        P??draig Brady <P@draigbrady.com>,
+        =?iso-8859-1?Q?P=E1draig?= Brady <P@draigbrady.com>,
         Coreutils <coreutils@gnu.org>,
         William Ahern <william@25thandclement.com>,
         Erik Auerswald <auerswal@unix-ag.uni-kl.de>,
@@ -46,19 +53,19 @@ Cc:     Bernhard Voelker <mail@bernhard-voelker.de>,
         juli@clockworksquid.com, ed@nuxi.nl, oshogbo@freebsd.org
 Subject: Re: [PATCH v3 (resend)] tee: Add -q, --quiet, --silent option to not
  write to stdout
-Message-ID: <YA2cNr/BQw1fAhwn@daemon>
+Message-ID: <YA2ztHUATu1gOxoV@clue.drijf.net>
 References: <1f8ce444-35e2-56a7-dbd1-34e885372b11@gmail.com>
  <20210124121845.38293-1-alx.manpages@gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 In-Reply-To: <20210124121845.38293-1-alx.manpages@gmail.com>
-X-BlackCat-Spam-Score: 4
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 2021-01-24 13-18-46    , Alejandro Colomar wrote:
+On Sun, Jan 24, 2021 at 01:18:46PM +0100, Alejandro Colomar wrote:
+
 > This is useful for using tee to just write to a file,
 > at the end of a pipeline,
 > without having to redirect to /dev/null
@@ -68,6 +75,16 @@ On 2021-01-24 13-18-46    , Alejandro Colomar wrote:
 > echo 'foo' | sudo tee -q /etc/foo;
 > 
 > is equivalent to the old (and ugly)
+
+You keep repeating "ugly" as the reason you are wanting this.
+
+I consider adding special options to command to solve an imagined
+issue that can be solved with a general concept like redirection ugly.
+Please stop pushing your diff to this list. So far nobody showed any
+interest.
+
+	-Otto
+
 > 
 > echo 'foo' | sudo tee /etc/foo >/dev/null;
 > 
@@ -149,28 +166,3 @@ On 2021-01-24 13-18-46    , Alejandro Colomar wrote:
 > -- 
 > 2.30.0
 > 
-> _______________________________________________
-> freebsd-hackers@freebsd.org mailing list
-> https://lists.freebsd.org/mailman/listinfo/freebsd-hackers
-> To unsubscribe, send any mail to "freebsd-hackers-unsubscribe@freebsd.org"
-
-Hi,
-
-Why is this a thing?
-
-The point of tee is to write a file *and* to stdout. If you don't want use that, use:
-
-`> file`
-
-To overwrite.
-
-Or
-
-`>> file`
-
-To append.
-
-I guess the only reason this would be used is if you wanted to write
-multiple files at the same time, which tee supports.
-
--Teran
