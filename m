@@ -4,110 +4,243 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B211AC433DB
-	for <linux-api@archiver.kernel.org>; Sun, 24 Jan 2021 18:43:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 207C2C433E9
+	for <linux-api@archiver.kernel.org>; Sun, 24 Jan 2021 18:43:09 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 873B922C9F
+	by mail.kernel.org (Postfix) with ESMTP id EE00422EBD
 	for <linux-api@archiver.kernel.org>; Sun, 24 Jan 2021 18:43:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726333AbhAXSmu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 24 Jan 2021 13:42:50 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45016 "EHLO
+        id S1726456AbhAXSm5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 24 Jan 2021 13:42:57 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45030 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725968AbhAXSmt (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 24 Jan 2021 13:42:49 -0500
-Received: from mail-ej1-x635.google.com (mail-ej1-x635.google.com [IPv6:2a00:1450:4864:20::635])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B71DAC061573;
-        Sun, 24 Jan 2021 10:42:08 -0800 (PST)
-Received: by mail-ej1-x635.google.com with SMTP id ke15so14814897ejc.12;
-        Sun, 24 Jan 2021 10:42:08 -0800 (PST)
+        with ESMTP id S1726440AbhAXSmw (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 24 Jan 2021 13:42:52 -0500
+Received: from mail-ej1-x629.google.com (mail-ej1-x629.google.com [IPv6:2a00:1450:4864:20::629])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A6264C06174A;
+        Sun, 24 Jan 2021 10:42:11 -0800 (PST)
+Received: by mail-ej1-x629.google.com with SMTP id kg20so14374940ejc.4;
+        Sun, 24 Jan 2021 10:42:11 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=W+JrCBsCsPTl6k7mNOkqzbJk1+UN8xbWUBx1eSyEtDs=;
-        b=hbw8BlgW+Ct3Bxn/x0gbkALVc1KsoL4rBhzA4mwCeM2VuWfruCw7rIktlxO/J8frZy
-         pSLVg9lssIJlmtP+qvc+a7+aqFYyHJdoD/OIiv1nG7zFVp9ZMzEiVXqUhTXcZni1jssG
-         zlMhNM/9bcDlAhtCAaa3RkfVtV6WdAJUQ7Z7xQjNMffrpjRzWljdWvlezYhKahSu2Sdu
-         7+50589H/fjgHUUHOI/knzaWnYKj3b8FYInOIX1MOQA7GO+A9kpu6a8aRL1YVeMsnHme
-         NWxJ0lQ0UUllW0nyCTtvkd/D6+vHdOAw792V1Se2kfZBP3E8IUrWxzc4inmNxw8dyirk
-         J1zg==
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=G3BlEFlRgLFVotdB02FrjvyaBpSzpnrT7MrYnf5yVs4=;
+        b=LcCLcyenJUR/k2rxUS4c8qV16qqm2ZjRs38tT6wwV4hxgbFRANUGL5VwhDythDxXOs
+         hiLq3PUFMOocUT4zrV4Ji536wpyes0yTboV9dRHiVst6fibKVwVYsuWAPj8r93wbAfsJ
+         FN589dZPN2XqX1GJMAirwETrRblOCOucsd/lGD47SXO31GDLdUf0a/gMRusWN+zDPqxO
+         AeDA9Dnr7F0gM31oc2j86vcpWLg1RG9BrcxrvSe2BoaGtZyUCEaZmvB5aYQO4ObXhmP5
+         0z9S2P4wbNbB3FsK3Tv4dKzgn1s3j4SRkAX4S2OpM0Ii64/FdQQ3z27BHsQ3kcR7IBGU
+         ClLA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=W+JrCBsCsPTl6k7mNOkqzbJk1+UN8xbWUBx1eSyEtDs=;
-        b=s0hiJkbZSbeqsY2BFkxvCzlcrfHrnz2K5sNXtYs6CCqxEEKYbzTzAJVVpeRLKsMLoD
-         FN/2pZOj43ak1XjNN/K0yhfGlq6s1xVY93UkIqw3Vpn+uf/S+xeDb7DFJDJAyDPhWvt/
-         bX7E5hmkJssDF6EoStQoSxdAcV7OK+wo1vM6t+dH1zTkzpGNEy4Pa1wezuK6/n6OU7ct
-         4JsNdLcvDpQVQD9EQxRkezTThztGeSEhEgDB0xu9+S67q25RBxDD/rgTows8lk59vqsl
-         K3qiLpqjYYQgL5Wmmi6oFJ1raup10in0dBexgCo12w8ptzpqqxIaPMx+FPXOPR8K1UB+
-         ulxQ==
-X-Gm-Message-State: AOAM53319dEywdBOKa6d5pDTU6X/V7BAmNfuptO5FKzOWV3XkB51er5i
-        +93ZNP5nPHLF18f0BHYjMKNX8cD0pos=
-X-Google-Smtp-Source: ABdhPJywZfVzgUMih3nNMYLdBzhLmwmHCvpx5+4UPoo6FmrqJvAdTKlTUgn9xmhEq7z1RvAlHmY3yQ==
-X-Received: by 2002:a17:906:6087:: with SMTP id t7mr106276ejj.90.1611513727474;
-        Sun, 24 Jan 2021 10:42:07 -0800 (PST)
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=G3BlEFlRgLFVotdB02FrjvyaBpSzpnrT7MrYnf5yVs4=;
+        b=nxShe8is8b4jIjcJYMqt1q60HIeQ2wkFa3MN3wdmgPPdptkhg3tqy1Oq/gMkogCEJ7
+         dh2mFKSyb9Gv2L7wCR5ha58S/7aeR6PbVVzHqeeWDWwbigkjHNWVu1+19Y6rPWGOx7d1
+         99Zgh8Bkjd2oFnfcn9P4danwHkEB0/x2MhgVFZK2hqKmCJWt48LfS6KjEYJ5YBCjYVaN
+         A5OVxZFlXBJWCqvd67bO+tb/5v93Kum07b80OGKCceQgPkL+B43TCbrZ0pSyG04bdA3M
+         THS1mQXYZ5jTB/PrTO6UEL994ytCQSoQenf1GWVVKprOHZNLvwR3GSiP93y398f1MM2Z
+         uIhw==
+X-Gm-Message-State: AOAM533BK14wsT0a7RsFXUj4wirLBJbryAV/CMdeujqtW//wQyOWY4uG
+        nQM3vFmIOe6KVlfX02e2zk0=
+X-Google-Smtp-Source: ABdhPJzwtE9O4TbxMERQemArqLbHqkBxn36y8fVhtmZGnjxpMpunChvNv6KZoXnFSUSRopyqoKAg4Q==
+X-Received: by 2002:a17:906:388a:: with SMTP id q10mr1485450ejd.496.1611513730373;
+        Sun, 24 Jan 2021 10:42:10 -0800 (PST)
 Received: from localhost.localdomain ([31.210.181.203])
-        by smtp.gmail.com with ESMTPSA id t9sm7260266ejc.51.2021.01.24.10.42.06
+        by smtp.gmail.com with ESMTPSA id t9sm7260266ejc.51.2021.01.24.10.42.09
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 24 Jan 2021 10:42:06 -0800 (PST)
+        Sun, 24 Jan 2021 10:42:09 -0800 (PST)
 From:   Amir Goldstein <amir73il@gmail.com>
 To:     Jan Kara <jack@suse.cz>
 Cc:     Matthew Bobrowski <mbobrowski@mbobrowski.org>,
         linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: [RFC][PATCH 0/2] unprivileged fanotify listener
-Date:   Sun, 24 Jan 2021 20:42:02 +0200
-Message-Id: <20210124184204.899729-1-amir73il@gmail.com>
+Subject: [RFC][PATCH 2/2] fanotify: support limited functionality for unprivileged users
+Date:   Sun, 24 Jan 2021 20:42:04 +0200
+Message-Id: <20210124184204.899729-3-amir73il@gmail.com>
 X-Mailer: git-send-email 2.25.1
+In-Reply-To: <20210124184204.899729-1-amir73il@gmail.com>
+References: <20210124184204.899729-1-amir73il@gmail.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Jan,
+Add limited support for unprivileged fanotify event listener.
+An unprivileged event listener does not get an open file descriptor in
+the event nor the process pid of another process.  An unprivileged event
+listener cannot request permission events, cannot set mount/filesystem
+marks and cannot request unlimited queue/marks.
 
-These patches try to implement the minimal set and least controversial
-functionality that we can allow for unprivileged users as a starting
-point.
+This enables the limited functionality similar to inotify when watching a
+set of files and directories for OPEN/ACCESS/MODIFY/CLOSE events, without
+requiring SYS_CAP_ADMIN privileges.
 
-I tried to be as conservative as I can with the system limits, but
-I wasn't sure how to handle the per group marks limit, so I left both
-per group and per user limits which looks quite confusing.
+The FAN_REPORT_DFID_NAME init flag, provide a method for an unprivileged
+event listener watching a set of directories (with FAN_EVENT_ON_CHILD)
+to monitor all changes inside those directories.
 
-I tested unprivileged listener with Matthew's LTP tests [1].
-I do not have test for the sysfs tunables yet, but I verified that
-existing LTP tests fail when lowering each of the tunables to 1 and
-pass after setting them back up.
+This typically requires that the listener keeps a map of watched directory
+fid to dirfd (O_PATH), where fid is obtained with name_to_handle_at()
+before starting to watch for changes.
 
-I think that the sysfs tunables can be considered even without the
-unprivileged listener.
+When getting an event, the reported fid of the parent should be resolved
+to dirfd and fstatsat(2) with dirfd and name should be used to query the
+state of the filesystem entry.
 
-Thanks,
-Amir.
+Note that even though events do not report the event creator pid,
+fanotify does not merge similar events on the same object that were
+generated by different processes. This is aligned with exiting behavior
+when generating processes are outside of the listener pidns (which
+results in reporting 0 pid to listener).
 
-[1] https://github.com/amir73il/ltp/commits/fanotify_unpriv
+Signed-off-by: Amir Goldstein <amir73il@gmail.com>
+---
+ fs/notify/fanotify/fanotify_user.c | 49 +++++++++++++++++++++++++++---
+ fs/notify/fdinfo.c                 |  3 +-
+ include/linux/fanotify.h           | 16 ++++++++++
+ 3 files changed, 62 insertions(+), 6 deletions(-)
 
-Amir Goldstein (2):
-  fanotify: configurable limits via sysfs
-  fanotify: support limited functionality for unprivileged users
-
- fs/notify/fanotify/fanotify.c      |  14 ++-
- fs/notify/fanotify/fanotify_user.c | 155 +++++++++++++++++++++++++----
- fs/notify/fdinfo.c                 |   3 +-
- include/linux/fanotify.h           |  19 ++++
- include/linux/fsnotify_backend.h   |   2 +-
- include/linux/sched/user.h         |   3 -
- include/linux/user_namespace.h     |   4 +
- kernel/sysctl.c                    |  12 ++-
- kernel/ucount.c                    |   4 +
- 9 files changed, 183 insertions(+), 33 deletions(-)
-
+diff --git a/fs/notify/fanotify/fanotify_user.c b/fs/notify/fanotify/fanotify_user.c
+index 4ade3f9df337..b70de273eedb 100644
+--- a/fs/notify/fanotify/fanotify_user.c
++++ b/fs/notify/fanotify/fanotify_user.c
+@@ -397,9 +397,21 @@ static ssize_t copy_event_to_user(struct fsnotify_group *group,
+ 	metadata.vers = FANOTIFY_METADATA_VERSION;
+ 	metadata.reserved = 0;
+ 	metadata.mask = event->mask & FANOTIFY_OUTGOING_EVENTS;
+-	metadata.pid = pid_vnr(event->pid);
++	/*
++	 * An unprivileged event listener does not get an open file descriptor
++	 * in the event nor another generating process pid. If the event was
++	 * generated by the unprivileged process itself, self pid is reported.
++	 * We may relax this in the future by checking calling process access
++	 * permissions to the object.
++	 */
++	if (!FAN_GROUP_FLAG(group, FANOTIFY_UNPRIV) ||
++	    task_tgid(current) == event->pid)
++		metadata.pid = pid_vnr(event->pid);
++	else
++		metadata.pid = 0;
+ 
+-	if (path && path->mnt && path->dentry) {
++	if (!FAN_GROUP_FLAG(group, FANOTIFY_UNPRIV) &&
++	    path && path->mnt && path->dentry) {
+ 		fd = create_fd(group, path, &f);
+ 		if (fd < 0)
+ 			return fd;
+@@ -995,12 +1007,29 @@ SYSCALL_DEFINE2(fanotify_init, unsigned int, flags, unsigned int, event_f_flags)
+ 	int f_flags, fd;
+ 	unsigned int fid_mode = flags & FANOTIFY_FID_BITS;
+ 	unsigned int class = flags & FANOTIFY_CLASS_BITS;
++	unsigned int internal_flags = 0;
+ 
+ 	pr_debug("%s: flags=%x event_f_flags=%x\n",
+ 		 __func__, flags, event_f_flags);
+ 
+-	if (!capable(CAP_SYS_ADMIN))
+-		return -EPERM;
++	if (!capable(CAP_SYS_ADMIN)) {
++		/*
++		 * An unprivileged user can setup an unprivileged listener with
++		 * limited functionality - an unprivileged event listener cannot
++		 * request permission events, cannot set mount/filesystem marks
++		 * and cannot request unlimited queue/marks.
++		 */
++		if ((flags & ~FANOTIFY_UNPRIV_INIT_FLAGS) ||
++		    class != FAN_CLASS_NOTIF)
++			return -EPERM;
++
++		/*
++		 * We set the internal flag FANOTIFY_UNPRIV on the group, so we
++		 * know that we need to limit setting mount/filesystem marks on
++		 * this group and avoid providing pid and open fd in the event.
++		 */
++		internal_flags |= FANOTIFY_UNPRIV;
++	}
+ 
+ #ifdef CONFIG_AUDITSYSCALL
+ 	if (flags & ~(FANOTIFY_INIT_FLAGS | FAN_ENABLE_AUDIT))
+@@ -1051,7 +1080,7 @@ SYSCALL_DEFINE2(fanotify_init, unsigned int, flags, unsigned int, event_f_flags)
+ 		goto out_destroy_group;
+ 	}
+ 
+-	group->fanotify_data.flags = flags;
++	group->fanotify_data.flags = flags | internal_flags;
+ 	group->memcg = get_mem_cgroup_from_mm(current->mm);
+ 
+ 	group->overflow_event = fanotify_alloc_overflow_event();
+@@ -1247,6 +1276,15 @@ static int do_fanotify_mark(int fanotify_fd, unsigned int flags, __u64 mask,
+ 		goto fput_and_out;
+ 	group = f.file->private_data;
+ 
++	/*
++	 * An unprivileged event listener is not allowed to watch a mount
++	 * point nor a filesystem.
++	 */
++	ret = -EPERM;
++	if (FAN_GROUP_FLAG(group, FANOTIFY_UNPRIV) &&
++	    mark_type != FAN_MARK_INODE)
++		goto fput_and_out;
++
+ 	/*
+ 	 * group->priority == FS_PRIO_0 == FAN_CLASS_NOTIF.  These are not
+ 	 * allowed to set permissions events.
+@@ -1379,6 +1417,7 @@ SYSCALL32_DEFINE6(fanotify_mark,
+  */
+ static int __init fanotify_user_setup(void)
+ {
++	BUILD_BUG_ON(FANOTIFY_INIT_FLAGS & FANOTIFY_INTERNAL_FLAGS);
+ 	BUILD_BUG_ON(HWEIGHT32(FANOTIFY_INIT_FLAGS) != 10);
+ 	BUILD_BUG_ON(HWEIGHT32(FANOTIFY_MARK_FLAGS) != 9);
+ 
+diff --git a/fs/notify/fdinfo.c b/fs/notify/fdinfo.c
+index f0d6b54be412..57f0d5d9f934 100644
+--- a/fs/notify/fdinfo.c
++++ b/fs/notify/fdinfo.c
+@@ -144,7 +144,8 @@ void fanotify_show_fdinfo(struct seq_file *m, struct file *f)
+ 	struct fsnotify_group *group = f->private_data;
+ 
+ 	seq_printf(m, "fanotify flags:%x event-flags:%x\n",
+-		   group->fanotify_data.flags, group->fanotify_data.f_flags);
++		   group->fanotify_data.flags & FANOTIFY_INIT_FLAGS,
++		   group->fanotify_data.f_flags);
+ 
+ 	show_fdinfo(m, f, fanotify_fdinfo);
+ }
+diff --git a/include/linux/fanotify.h b/include/linux/fanotify.h
+index 031a97d8369a..a573c1028c14 100644
+--- a/include/linux/fanotify.h
++++ b/include/linux/fanotify.h
+@@ -28,6 +28,22 @@ extern struct ctl_table fanotify_table[]; /* for sysctl */
+ 				 FAN_CLOEXEC | FAN_NONBLOCK | \
+ 				 FAN_UNLIMITED_QUEUE | FAN_UNLIMITED_MARKS)
+ 
++/* Internal flags */
++#define FANOTIFY_UNPRIV		0x80000000
++#define FANOTIFY_INTERNAL_FLAGS	(FANOTIFY_UNPRIV)
++
++/*
++ * fanotify_init() flags allowed for unprivileged listener.
++ * FAN_CLASS_NOTIF in this mask is purely semantic because it is zero,
++ * but it is the only class we allow for unprivileged listener.
++ * Since unprivileged listener does not provide file descriptors in events,
++ * reporting file handles makes sense, but it is not a must.
++ * FAN_REPORT_TID does not make sense for unprivileged listener, which uses
++ * event->pid only to filter out events generated by listener process itself.
++ */
++#define FANOTIFY_UNPRIV_INIT_FLAGS	(FAN_CLOEXEC | FAN_NONBLOCK | \
++					 FAN_CLASS_NOTIF | FANOTIFY_FID_BITS)
++
+ #define FANOTIFY_MARK_TYPE_BITS	(FAN_MARK_INODE | FAN_MARK_MOUNT | \
+ 				 FAN_MARK_FILESYSTEM)
+ 
 -- 
 2.25.1
 
