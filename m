@@ -2,65 +2,72 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1E776C433DB
-	for <linux-api@archiver.kernel.org>; Tue, 26 Jan 2021 19:17:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1A9D8C4332B
+	for <linux-api@archiver.kernel.org>; Tue, 26 Jan 2021 19:17:11 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id EAC4922A84
-	for <linux-api@archiver.kernel.org>; Tue, 26 Jan 2021 19:17:08 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DE36E2079A
+	for <linux-api@archiver.kernel.org>; Tue, 26 Jan 2021 19:17:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2388838AbhAZFwy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 26 Jan 2021 00:52:54 -0500
-Received: from mail.kernel.org ([198.145.29.99]:58350 "EHLO mail.kernel.org"
+        id S1727966AbhAZFwd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 26 Jan 2021 00:52:33 -0500
+Received: from mx2.suse.de ([195.135.220.15]:48444 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727610AbhAYSms (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 25 Jan 2021 13:42:48 -0500
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 07A5A230FF;
-        Mon, 25 Jan 2021 18:41:53 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1611600113;
-        bh=BcQjpfINfveQmERew10h4a0n6dN8EsCa5I5lsAkb6Uo=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=Qisl3plDrCd6OrPM4RX01TZ3EzRVZhIIPqBvHsMU53MkaYfxvUrLMMHNJjTnFHqBT
-         tjxUPpYruIOFMXnbKbEymBeQIUOepUclZLvugJfkFZvVa/A3ngMw7W5V4eBOAF/RDV
-         siJKR4b4zuOFcB+BSX7G4VbVlna5M+qfEwOoSkYEb3V7I7AjHuVC8Yz5iVshQ6H850
-         XQXewvlYPcHUIYFplER/X1iD3GkzAK89IibAPUjuUDLP4H9IbLKlbA13f/OGkTJNkq
-         qBqFGHMZozKrQY/hicThNo7ZOqu7H651159DR5T626+ks2I4/+SyZFE8CXknWOHxGo
-         S0AP3otBlibjw==
-Date:   Mon, 25 Jan 2021 10:41:45 -0800
-From:   Eric Biggers <ebiggers@kernel.org>
-To:     Victor Hsieh <victorhsieh@google.com>
-Cc:     linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
-        linux-api@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>,
-        Jaegeuk Kim <jaegeuk@kernel.org>
-Subject: Re: [PATCH 0/6] fs-verity: add an ioctl to read verity metadata
-Message-ID: <YA8Q6XLrLaaeMQeJ@sol.localdomain>
-References: <20210115181819.34732-1-ebiggers@kernel.org>
- <CAFCauYN12bWRn2N+uP455KuRmz7CQkCBXnz0B2sr5kCQtpJo4A@mail.gmail.com>
+        id S1728757AbhAYNVT (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 25 Jan 2021 08:21:19 -0500
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+        t=1611580783; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=hvyCg1tArEMURZiCaw0o7rfIdGticTsjrcjPx+/JdNc=;
+        b=A4Vm72+PELLClS/Iy715Uik0vACGATsRtA2iQMVkLUk7pB1NNEp+sD+oPc2YAwpCTCYFWo
+        S6cgCM5W61YrqU3UsTpXfJsNEmMTLpZ92x7E+4u1Hve30Vlh8wUkj93JfsZaBNc0InUmqa
+        E/9B6Y8rEAQXzzf6L5pfNetYN4lnJf8=
+Received: from relay2.suse.de (unknown [195.135.221.27])
+        by mx2.suse.de (Postfix) with ESMTP id D4325AAC6;
+        Mon, 25 Jan 2021 13:19:42 +0000 (UTC)
+Date:   Mon, 25 Jan 2021 14:19:35 +0100
+From:   Michal Hocko <mhocko@suse.com>
+To:     Suren Baghdasaryan <surenb@google.com>
+Cc:     linux-man@vger.kernel.org, akpm@linux-foundation.org,
+        jannh@google.com, keescook@chromium.org, jeffv@google.com,
+        minchan@kernel.org, shakeelb@google.com, rientjes@google.com,
+        edgararriaga@google.com, timmurray@google.com, linux-mm@kvack.org,
+        selinux@vger.kernel.org, linux-security-module@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-kernel@vger.kernel.org,
+        kernel-team@android.com
+Subject: Re: [PATCH 1/1] process_madvise.2: Add process_madvise man page
+Message-ID: <20210125131935.GI827@dhcp22.suse.cz>
+References: <20210120202337.1481402-1-surenb@google.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <CAFCauYN12bWRn2N+uP455KuRmz7CQkCBXnz0B2sr5kCQtpJo4A@mail.gmail.com>
+In-Reply-To: <20210120202337.1481402-1-surenb@google.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Jan 22, 2021 at 03:26:48PM -0800, Victor Hsieh wrote:
-> LGTM. Thanks!
-> 
-> Reviewed-by: Victor Hsieh <victorhsieh@google.com>
-> 
-> On Fri, Jan 15, 2021 at 10:19 AM Eric Biggers <ebiggers@kernel.org> wrote:
-> >
-> > [This patchset applies to v5.11-rc3]
-> >
-> > Add an ioctl FS_IOC_READ_VERITY_METADATA which allows reading verity
-> > metadata from a file that has fs-verity enabled, including:
+On Wed 20-01-21 12:23:37, Suren Baghdasaryan wrote:
+[...]
+>     MADV_COLD (since Linux 5.4.1)
+>         Deactivate a given range of pages by moving them from active to
+>         inactive LRU list. This is done to accelerate the reclaim of these
+>         pages. The advice might be ignored for some pages in the range when it
+>         is not applicable.
 
-Thanks Victor.  Does anyone else have comments on this patchset?
+I do not think we want to talk about active/inactive LRU lists here.
+Wouldn't it be sufficient to say
+Deactive a given range of pages which will make them a more probable
+reclaim target should there be a memory pressure. This is a
+non-destructive operation.
 
-- Eric
+Other than that, looks good to me from the content POV.
+
+Thanks!
+-- 
+Michal Hocko
+SUSE Labs
