@@ -2,92 +2,101 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0B30DC433DB
-	for <linux-api@archiver.kernel.org>; Mon, 25 Jan 2021 22:25:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E59C7C433E0
+	for <linux-api@archiver.kernel.org>; Mon, 25 Jan 2021 23:39:17 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D3D0520756
-	for <linux-api@archiver.kernel.org>; Mon, 25 Jan 2021 22:25:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B31DF2226A
+	for <linux-api@archiver.kernel.org>; Mon, 25 Jan 2021 23:39:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1732641AbhAYV6q (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 25 Jan 2021 16:58:46 -0500
-Received: from mail.skyhub.de ([5.9.137.197]:42174 "EHLO mail.skyhub.de"
+        id S1732735AbhAYXh5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 25 Jan 2021 18:37:57 -0500
+Received: from mail.kernel.org ([198.145.29.99]:37606 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1733068AbhAYV4t (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 25 Jan 2021 16:56:49 -0500
-Received: from zn.tnic (p200300ec2f09db009b1562b1e57abf87.dip0.t-ipconnect.de [IPv6:2003:ec:2f09:db00:9b15:62b1:e57a:bf87])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.skyhub.de (SuperMail on ZX Spectrum 128k) with ESMTPSA id A7F001EC030D;
-        Mon, 25 Jan 2021 22:56:04 +0100 (CET)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=alien8.de; s=dkim;
-        t=1611611764;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:in-reply-to:in-reply-to:  references:references;
-        bh=qM0k9Zt5h5Zx3SCR3YOZABIW2oo+eO+fLbbXzPfdTr8=;
-        b=YNQqaFYekHxBsVUjQ+VsThmxSQ0yUmNLkQuZ4oPFPWU45yEYEfRpU20zdCg7VrmjqQ/tdP
-        +DzTIL+MN/0DZLAzH71tnjW+dwXsFNeuzfMk1kBfSLq+tkWRkTh3BfOjZZAr10c/BV2SNF
-        VZ0xz5aVJ5crLol3QAEaJ95me3eyn6I=
-Date:   Mon, 25 Jan 2021 22:55:58 +0100
-From:   Borislav Petkov <bp@alien8.de>
-To:     "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
-Cc:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-doc@vger.kernel.org, linux-mm@kvack.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
-        Arnd Bergmann <arnd@arndb.de>,
-        Andy Lutomirski <luto@kernel.org>,
-        Balbir Singh <bsingharora@gmail.com>,
-        Cyrill Gorcunov <gorcunov@gmail.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Eugene Syromiatnikov <esyr@redhat.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Nadav Amit <nadav.amit@gmail.com>,
-        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
-        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
-        Dave Martin <Dave.Martin@arm.com>,
-        Weijiang Yang <weijiang.yang@intel.com>,
-        Pengfei Xu <pengfei.xu@intel.com>
-Subject: Re: [PATCH v17 11/26] x86/mm: Update ptep_set_wrprotect() and
- pmdp_set_wrprotect() for transition from _PAGE_DIRTY to _PAGE_COW
-Message-ID: <20210125215558.GK23070@zn.tnic>
-References: <20201229213053.16395-1-yu-cheng.yu@intel.com>
- <20201229213053.16395-12-yu-cheng.yu@intel.com>
- <20210125182709.GC23290@zn.tnic>
- <8084836b-4990-90e8-5c9a-97a920f0239e@intel.com>
+        id S1732663AbhAYXhc (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 25 Jan 2021 18:37:32 -0500
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 0B25A2226A;
+        Mon, 25 Jan 2021 23:36:50 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1611617811;
+        bh=btQutt9g5gmPo92SiwndArw245bwhH2tfk1kHeGLqwA=;
+        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+        b=VhQoLJXnNotLp3TZxEwUaKno4R5egQqxuQj+wh74UvfI4Zrfk8cqifEJiqsVtl7e6
+         1wWOIsOTGBMgopWtGz4r/Ga7aUieMivVs2FnYdgEcEjQxscgUVDBdvNvNO/a9qkoc2
+         27wWtYe/7ZCZCysNAmnGu7NWcvh3VXR2+UbwN2bhdCp9Pekr4PlS1IL6i4OHak6GEx
+         JEs7/tlN2sBB5JuBWqw60OBYMrXd4n23AdqdKKAiTFKo7wJOaUTOkmSX/tFsuYvQco
+         wE66K+C/Lv+ZWypcsUX4l1E691Dedcw/eo2HL6iMWaMGoY4lbhfGppNXIn4mPjsTGv
+         kQUdcgvlbFW3g==
+Date:   Mon, 25 Jan 2021 15:36:50 -0800
+From:   Jakub Kicinski <kuba@kernel.org>
+To:     "Matthew Wilcox (Oracle)" <willy@infradead.org>
+Cc:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        netdev@vger.kernel.org, "David S. Miller" <davem@davemloft.net>,
+        andy.rudoff@intel.com, Rao Shoaib <rao.shoaib@oracle.com>
+Subject: Re: [PATCH] af_unix: Allow Unix sockets to raise SIGURG
+Message-ID: <20210125153650.18c84b1a@kicinski-fedora-pc1c0hjn.dhcp.thefacebook.com>
+In-Reply-To: <20210122150638.210444-1-willy@infradead.org>
+References: <20210122150638.210444-1-willy@infradead.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <8084836b-4990-90e8-5c9a-97a920f0239e@intel.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Jan 25, 2021 at 01:27:51PM -0800, Yu, Yu-cheng wrote:
-> > Maybe I'm missing something but those two can happen outside of the
-> > loop, no? Or is *ptep somehow changing concurrently while the loop is
-> > doing the CMPXCHG and you need to recreate it each time?
-> > 
-> > IOW, you can generate upfront and do the empty loop...
+On Fri, 22 Jan 2021 15:06:37 +0000 Matthew Wilcox (Oracle) wrote:
+> From: Rao Shoaib <rao.shoaib@oracle.com>
 > 
-> *ptep can change concurrently.
+> TCP sockets allow SIGURG to be sent to the process holding the other
+> end of the socket.  Extend Unix sockets to have the same ability.
+> 
+> The API is the same in that the sender uses sendmsg() with MSG_OOB to
+> raise SIGURG.  Unix sockets behave in the same way as TCP sockets with
+> SO_OOBINLINE set.
 
-Care to elaborate?
+Noob question, if we only want to support the inline mode, why don't we
+require SO_OOBINLINE to have been called on @other? Wouldn't that
+provide more consistent behavior across address families?
 
--- 
-Regards/Gruss,
-    Boris.
+With the current implementation the receiver will also not see MSG_OOB
+set in msg->msg_flags, right?
 
-https://people.kernel.org/tglx/notes-about-netiquette
+> SIGURG is ignored by default, so applications which do not know about this
+> feature will be unaffected.  In addition to installing a SIGURG handler,
+> the receiving application must call F_SETOWN or F_SETOWN_EX to indicate
+> which process or thread should receive the signal.
+> 
+> Signed-off-by: Rao Shoaib <rao.shoaib@oracle.com>
+> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+> ---
+>  net/unix/af_unix.c | 5 +++--
+>  1 file changed, 3 insertions(+), 2 deletions(-)
+> 
+> diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
+> index 41c3303c3357..849dff688c2c 100644
+> --- a/net/unix/af_unix.c
+> +++ b/net/unix/af_unix.c
+> @@ -1837,8 +1837,6 @@ static int unix_stream_sendmsg(struct socket *sock, struct msghdr *msg,
+>  		return err;
+>  
+>  	err = -EOPNOTSUPP;
+> -	if (msg->msg_flags&MSG_OOB)
+> -		goto out_err;
+>  
+>  	if (msg->msg_namelen) {
+>  		err = sk->sk_state == TCP_ESTABLISHED ? -EISCONN : -EOPNOTSUPP;
+> @@ -1903,6 +1901,9 @@ static int unix_stream_sendmsg(struct socket *sock, struct msghdr *msg,
+>  		sent += size;
+>  	}
+>  
+> +	if (msg->msg_flags & MSG_OOB)
+> +		sk_send_sigurg(other);
+> +
+>  	scm_destroy(&scm);
+>  
+>  	return sent;
+
