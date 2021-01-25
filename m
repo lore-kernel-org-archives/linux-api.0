@@ -2,156 +2,134 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,NICE_REPLY_A,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 40629C433DB
-	for <linux-api@archiver.kernel.org>; Mon, 25 Jan 2021 21:29:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9726BC433DB
+	for <linux-api@archiver.kernel.org>; Mon, 25 Jan 2021 21:41:17 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E8F31208C7
-	for <linux-api@archiver.kernel.org>; Mon, 25 Jan 2021 21:29:04 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4A69722573
+	for <linux-api@archiver.kernel.org>; Mon, 25 Jan 2021 21:41:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1732641AbhAYV2w (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 25 Jan 2021 16:28:52 -0500
-Received: from mga12.intel.com ([192.55.52.136]:40418 "EHLO mga12.intel.com"
+        id S1733052AbhAYVkz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 25 Jan 2021 16:40:55 -0500
+Received: from mail.kernel.org ([198.145.29.99]:36582 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1732639AbhAYV2p (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 25 Jan 2021 16:28:45 -0500
-IronPort-SDR: qQemToLgMMZ59OKFRg4BQvDBfckkexbBzBk4PpAiPH126Dz75Y5yMs9dDGYIjhq25IYiX8ftK7
- Dg3uPJDK+Kow==
-X-IronPort-AV: E=McAfee;i="6000,8403,9875"; a="158982823"
-X-IronPort-AV: E=Sophos;i="5.79,374,1602572400"; 
-   d="scan'208";a="158982823"
-Received: from orsmga001.jf.intel.com ([10.7.209.18])
-  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Jan 2021 13:27:54 -0800
-IronPort-SDR: Zpt6kh4eRCAa6nhreOyas/x36owT9wmvFrJuKFK1hHDfdutyCbNqyanAiEN4kb+/4ZGudwMisH
- PLl97Bf6SEEg==
-X-IronPort-AV: E=Sophos;i="5.79,374,1602572400"; 
-   d="scan'208";a="429441203"
-Received: from yyu32-mobl1.amr.corp.intel.com (HELO [10.212.60.232]) ([10.212.60.232])
-  by orsmga001-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Jan 2021 13:27:52 -0800
-Subject: Re: [PATCH v17 11/26] x86/mm: Update ptep_set_wrprotect() and
- pmdp_set_wrprotect() for transition from _PAGE_DIRTY to _PAGE_COW
-To:     Borislav Petkov <bp@alien8.de>
-Cc:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-doc@vger.kernel.org, linux-mm@kvack.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
-        Arnd Bergmann <arnd@arndb.de>,
+        id S1732890AbhAYVjP (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 25 Jan 2021 16:39:15 -0500
+Received: by mail.kernel.org (Postfix) with ESMTPSA id A683E2083E;
+        Mon, 25 Jan 2021 21:38:21 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1611610714;
+        bh=oBbSa76JFc7v8+y55SX0g1Mr9sPSRsNOv4tmWq7xrRA=;
+        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+        b=ubeXULCeE5ESYXoKbbpQZvbpm7KD3rJtLMZd3bLMpG+Yf8ZlUgaes9e13MakOokA9
+         iEgnWl6tWG8fgiW+VJGsU1Vz4qkDtXaocuKZT5gFf6r99ZgN3QhYKOTmMnfoGOogzo
+         zlSt15bli+VWxniwjlxtECCstKhhIQyCjc9aSnUV55QlpbsGcamdfknFZPmcXMuxob
+         G02UJe9Qaa5X7Qu+hPXzpNUvjCDYeTaIEq+run7rkZRwSUoqDGVquo06czJpfyCKh6
+         lYHTox8ewX/SByv9aTWjggJVW9TsgcM9496MPOix7WOWD0WDa1bKzdlfYuPxgdGr6W
+         86DtTT5jWaIDg==
+Date:   Mon, 25 Jan 2021 23:38:17 +0200
+From:   Mike Rapoport <rppt@kernel.org>
+To:     Michal Hocko <mhocko@suse.com>
+Cc:     Andrew Morton <akpm@linux-foundation.org>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
         Andy Lutomirski <luto@kernel.org>,
-        Balbir Singh <bsingharora@gmail.com>,
-        Cyrill Gorcunov <gorcunov@gmail.com>,
+        Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Christopher Lameter <cl@linux.com>,
+        Dan Williams <dan.j.williams@intel.com>,
         Dave Hansen <dave.hansen@linux.intel.com>,
-        Eugene Syromiatnikov <esyr@redhat.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Nadav Amit <nadav.amit@gmail.com>,
-        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        David Hildenbrand <david@redhat.com>,
+        Elena Reshetova <elena.reshetova@intel.com>,
+        "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,
+        James Bottomley <jejb@linux.ibm.com>,
+        "Kirill A. Shutemov" <kirill@shutemov.name>,
+        Matthew Wilcox <willy@infradead.org>,
+        Mark Rutland <mark.rutland@arm.com>,
+        Mike Rapoport <rppt@linux.ibm.com>,
+        Michael Kerrisk <mtk.manpages@gmail.com>,
+        Palmer Dabbelt <palmer@dabbelt.com>,
+        Paul Walmsley <paul.walmsley@sifive.com>,
         Peter Zijlstra <peterz@infradead.org>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
-        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
-        Dave Martin <Dave.Martin@arm.com>,
-        Weijiang Yang <weijiang.yang@intel.com>,
-        Pengfei Xu <pengfei.xu@intel.com>
-References: <20201229213053.16395-1-yu-cheng.yu@intel.com>
- <20201229213053.16395-12-yu-cheng.yu@intel.com>
- <20210125182709.GC23290@zn.tnic>
-From:   "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
-Message-ID: <8084836b-4990-90e8-5c9a-97a920f0239e@intel.com>
-Date:   Mon, 25 Jan 2021 13:27:51 -0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
- Thunderbird/78.6.1
+        Rick Edgecombe <rick.p.edgecombe@intel.com>,
+        Roman Gushchin <guro@fb.com>,
+        Shakeel Butt <shakeelb@google.com>,
+        Shuah Khan <shuah@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
+        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
+        linux-arm-kernel@lists.infradead.org,
+        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
+        linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
+        linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
+        x86@kernel.org, Hagen Paul Pfeifer <hagen@jauu.net>,
+        Palmer Dabbelt <palmerdabbelt@google.com>
+Subject: Re: [PATCH v16 08/11] secretmem: add memcg accounting
+Message-ID: <20210125213817.GM6332@kernel.org>
+References: <20210121122723.3446-1-rppt@kernel.org>
+ <20210121122723.3446-9-rppt@kernel.org>
+ <20210125165451.GT827@dhcp22.suse.cz>
 MIME-Version: 1.0
-In-Reply-To: <20210125182709.GC23290@zn.tnic>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20210125165451.GT827@dhcp22.suse.cz>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 1/25/2021 10:27 AM, Borislav Petkov wrote:
-> On Tue, Dec 29, 2020 at 01:30:38PM -0800, Yu-cheng Yu wrote:
-
-[...]
-
->> diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
->> index 666c25ab9564..1c84f1ba32b9 100644
->> --- a/arch/x86/include/asm/pgtable.h
->> +++ b/arch/x86/include/asm/pgtable.h
->> @@ -1226,6 +1226,32 @@ static inline pte_t ptep_get_and_clear_full(struct mm_struct *mm,
->>   static inline void ptep_set_wrprotect(struct mm_struct *mm,
->>   				      unsigned long addr, pte_t *ptep)
->>   {
->> +	/*
->> +	 * Some processors can start a write, but end up seeing a read-only
->> +	 * PTE by the time they get to the Dirty bit.  In this case, they
->> +	 * will set the Dirty bit, leaving a read-only, Dirty PTE which
->> +	 * looks like a shadow stack PTE.
->> +	 *
->> +	 * However, this behavior has been improved
+On Mon, Jan 25, 2021 at 05:54:51PM +0100, Michal Hocko wrote:
+> On Thu 21-01-21 14:27:20, Mike Rapoport wrote:
+> > From: Mike Rapoport <rppt@linux.ibm.com>
+> > 
+> > Account memory consumed by secretmem to memcg. The accounting is updated
+> > when the memory is actually allocated and freed.
 > 
-> Improved how?
+> What does this mean?
 
-Processors supporting Shadow Stack will not set a read-only PTE's dirty 
-bit.  I will revise the comments.
+That means that the accounting is updated when secretmem does cma_alloc()
+and cma_relase().
 
->> and will not occur on
->> +	 * processors supporting Shadow Stack.  Without this guarantee, a
-> 
-> Which guarantee? That it won't happen on CPUs which support SHSTK?
-> 
+> What are the lifetime rules?
 
-Yes.
+Hmm, what do you mean by lifetime rules?
 
->> +	 * transition to a non-present PTE and flush the TLB would be
+> [...]
 > 
-> s/flush the TLB/TLB flush/
+> > +static int secretmem_account_pages(struct page *page, gfp_t gfp, int order)
+> > +{
+> > +	int err;
+> > +
+> > +	err = memcg_kmem_charge_page(page, gfp, order);
+> > +	if (err)
+> > +		return err;
+> > +
+> > +	/*
+> > +	 * seceremem caches are unreclaimable kernel allocations, so treat
+> > +	 * them as unreclaimable slab memory for VM statistics purposes
+> > +	 */
+> > +	mod_lruvec_page_state(page, NR_SLAB_UNRECLAIMABLE_B,
+> > +			      PAGE_SIZE << order);
 > 
->> +	 * needed.
->> +	 *
->> +	 * When changing a writable PTE to read-only and if the PTE has
->> +	 * _PAGE_DIRTY set, move that bit to _PAGE_COW so that the PTE is
->> +	 * not a shadow stack PTE.
->> +	 */
-> 
-> This sentence doesn't belong here as it refers to what pte_wrprotect()
-> does. You could expand the comment in pte_wrprotect() with this here as
-> it is better.
+> A lot of memcg accounted memory is not reclaimable. Why do you abuse
+> SLAB counter when this is not a slab owned memory? Why do you use the
+> kmem accounting API when __GFP_ACCOUNT should give you the same without
+> this details?
 
-I will move this paragraph to pte_wrprotect().
+I cannot use __GFP_ACCOUNT because cma_alloc() does not use gfp.
+Besides, kmem accounting with __GFP_ACCOUNT does not seem
+to update stats and there was an explicit request for statistics:
+ 
+https://lore.kernel.org/lkml/CALo0P13aq3GsONnZrksZNU9RtfhMsZXGWhK1n=xYJWQizCd4Zw@mail.gmail.com/
 
-> 
->> +	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
->> +		pte_t old_pte, new_pte;
->> +
->> +		do {
->> +			old_pte = READ_ONCE(*ptep);
->> +			new_pte = pte_wrprotect(old_pte);
-> 
-> Maybe I'm missing something but those two can happen outside of the
-> loop, no? Or is *ptep somehow changing concurrently while the loop is
-> doing the CMPXCHG and you need to recreate it each time?
-> 
-> IOW, you can generate upfront and do the empty loop...
+As for (ab)using NR_SLAB_UNRECLAIMABLE_B, as it was already discussed here:
 
-*ptep can change concurrently.
+https://lore.kernel.org/lkml/20201129172625.GD557259@kernel.org/
 
-> 
->> +
->> +		} while (!try_cmpxchg(&ptep->pte, &old_pte.pte, new_pte.pte));
->> +
->> +		return;
->> +	}
->>   	clear_bit(_PAGE_BIT_RW, (unsigned long *)&ptep->pte);
->>   }
->>   
+I think that a dedicated stats counter would be too much at the moment and
+NR_SLAB_UNRECLAIMABLE_B is the only explicit stat for unreclaimable memory.
 
-[...]
+-- 
+Sincerely yours,
+Mike.
