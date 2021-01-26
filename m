@@ -2,164 +2,114 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_IN_DEF_DKIM_WL
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 84929C4332E
-	for <linux-api@archiver.kernel.org>; Tue, 26 Jan 2021 18:44:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 06CFFC433E0
+	for <linux-api@archiver.kernel.org>; Tue, 26 Jan 2021 19:17:09 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 57B06206D4
-	for <linux-api@archiver.kernel.org>; Tue, 26 Jan 2021 18:44:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BDC1E20724
+	for <linux-api@archiver.kernel.org>; Tue, 26 Jan 2021 19:17:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1732182AbhAZRTw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 26 Jan 2021 12:19:52 -0500
-Received: from mx2.suse.de ([195.135.220.15]:60272 "EHLO mx2.suse.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2389511AbhAZHyX (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 26 Jan 2021 02:54:23 -0500
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-        t=1611646304; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=7zMRtj92K4aLVsKF/LtuTzpzMNc9rmo/TxWykS3K0E0=;
-        b=fbzVzS60+bW4/eLvVlMg8GidpFB1jBrR7hcptqrY8DOrxY95Wqr6BYjafHEM6FDX7G5i/a
-        47NUGFfcrm6l+Of7J1sWw4Lzuue/Bl54LKMg59hi6hWCs5djiniqInQ7mh6N/vOqeVmO+1
-        dcHiiymtcGUHsS6UXafRNc9p1dmXURc=
-Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 3F491AE61;
-        Tue, 26 Jan 2021 07:31:44 +0000 (UTC)
-Date:   Tue, 26 Jan 2021 08:31:42 +0100
-From:   Michal Hocko <mhocko@suse.com>
-To:     Mike Rapoport <rppt@kernel.org>
-Cc:     Andrew Morton <akpm@linux-foundation.org>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        Andy Lutomirski <luto@kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Christopher Lameter <cl@linux.com>,
-        Dan Williams <dan.j.williams@intel.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        David Hildenbrand <david@redhat.com>,
-        Elena Reshetova <elena.reshetova@intel.com>,
-        "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,
-        James Bottomley <jejb@linux.ibm.com>,
-        "Kirill A. Shutemov" <kirill@shutemov.name>,
-        Matthew Wilcox <willy@infradead.org>,
-        Mark Rutland <mark.rutland@arm.com>,
-        Mike Rapoport <rppt@linux.ibm.com>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Palmer Dabbelt <palmer@dabbelt.com>,
-        Paul Walmsley <paul.walmsley@sifive.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Rick Edgecombe <rick.p.edgecombe@intel.com>,
-        Roman Gushchin <guro@fb.com>,
-        Shakeel Butt <shakeelb@google.com>,
-        Shuah Khan <shuah@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
-        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
-        linux-arm-kernel@lists.infradead.org,
-        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
-        linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
-        linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
-        x86@kernel.org, Hagen Paul Pfeifer <hagen@jauu.net>,
-        Palmer Dabbelt <palmerdabbelt@google.com>
-Subject: Re: [PATCH v16 08/11] secretmem: add memcg accounting
-Message-ID: <20210126073142.GY827@dhcp22.suse.cz>
-References: <20210121122723.3446-1-rppt@kernel.org>
- <20210121122723.3446-9-rppt@kernel.org>
- <20210125165451.GT827@dhcp22.suse.cz>
- <20210125213817.GM6332@kernel.org>
+        id S2388849AbhAZFw7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 26 Jan 2021 00:52:59 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53992 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1731545AbhAZCDc (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 25 Jan 2021 21:03:32 -0500
+Received: from mail-wm1-x333.google.com (mail-wm1-x333.google.com [IPv6:2a00:1450:4864:20::333])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EC51BC0613ED
+        for <linux-api@vger.kernel.org>; Mon, 25 Jan 2021 16:14:12 -0800 (PST)
+Received: by mail-wm1-x333.google.com with SMTP id y187so1156554wmd.3
+        for <linux-api@vger.kernel.org>; Mon, 25 Jan 2021 16:14:12 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=Vz7Wx3SXxaN+HsWZGzhnHFVDxGZAroM2JwH4bW0nEhM=;
+        b=WulKks/yUSJwwUol1tm6wB9TJkukXvTYKvdB2ceQgXomgHQMSU12Q0ukxoGukdPNr8
+         HGAjlTfWtd5HvJzNWyfyy0crd2HH+/syiXerMgHWpnjKX2vL/MjmxngjAkb9Ff2XGB5O
+         2/Kvk7D9kj7xdMH5EBWmOi+BQjBDhtTEW1Gfpa+yh52P9hNpbK7Lr+NmN28rhnuHGel+
+         dO62MQLsOV4fBk09tq1r4tc2zrJUdUMA+jCyQbkJYdTVuaGSVsKAM9Ytr4Ozzu8qwh3t
+         JdPEfNF7P53HhUk4Nx0zB6G5G3rIGu1xvUCi6Vt61QOVMpU8sH7py/rv4XF0bp+yCvWD
+         rXZg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=Vz7Wx3SXxaN+HsWZGzhnHFVDxGZAroM2JwH4bW0nEhM=;
+        b=pl6xWw8rpN1XZfzZuO9CdDfnnfmrP2CAnhFvChc+CFvNASYwbJ6FwgEERYJHgEh5s2
+         /CfbF2S2MCGUTjtdKPMK6LmhXPnRrDX/m5yYcwFlgpBWLYMHJFMjbqB+4FpZsUptD+A/
+         PxbXvUnt/CcMwsYbqPlSvbWm9CW632W5wX3txhdX09UYbQ+y2EuIMEudL4carHtbwnKg
+         sivN2ABnXxVZHrSUfyNqfdCcuW8xcUxjipZI9nKpGcwRypd/PybGndxYwUBEw5RcSe7/
+         sfIgt4xs42eIk0XmoPpxZXoVYSifZjojcwcXZWGnJDySdu1MgXQYhHh70VkckyYd8ItS
+         zcyw==
+X-Gm-Message-State: AOAM530G9/7rY4uOdN6BRjsPgLD9GQ8zIsguwsYK3ZykifYGe3eygU2E
+        zSYkazMMnju+FyLhAi3SRTns27B/exv2cr1EMPb7wg==
+X-Google-Smtp-Source: ABdhPJytUOFxylJO9GQfWCZxkgmC08Bcn5+HCLBHOxR+Vvj6poU2sA/tL72vkNkKpaNCAmBDljbV4s4UOoZM8sJO7UI=
+X-Received: by 2002:a1c:7906:: with SMTP id l6mr2247505wme.22.1611620051415;
+ Mon, 25 Jan 2021 16:14:11 -0800 (PST)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20210125213817.GM6332@kernel.org>
+References: <20210120202337.1481402-1-surenb@google.com> <20210125131935.GI827@dhcp22.suse.cz>
+In-Reply-To: <20210125131935.GI827@dhcp22.suse.cz>
+From:   Suren Baghdasaryan <surenb@google.com>
+Date:   Mon, 25 Jan 2021 16:14:00 -0800
+Message-ID: <CAJuCfpGu_x4vxXejTUfD4Mjun=qJOsdoRs42gQhiv30EnED=nA@mail.gmail.com>
+Subject: Re: [PATCH 1/1] process_madvise.2: Add process_madvise man page
+To:     Michal Hocko <mhocko@suse.com>
+Cc:     linux-man@vger.kernel.org,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Jann Horn <jannh@google.com>,
+        Kees Cook <keescook@chromium.org>,
+        Jeffrey Vander Stoep <jeffv@google.com>,
+        Minchan Kim <minchan@kernel.org>,
+        Shakeel Butt <shakeelb@google.com>,
+        David Rientjes <rientjes@google.com>,
+        =?UTF-8?Q?Edgar_Arriaga_Garc=C3=ADa?= <edgararriaga@google.com>,
+        Tim Murray <timmurray@google.com>,
+        linux-mm <linux-mm@kvack.org>,
+        SElinux list <selinux@vger.kernel.org>,
+        linux-security-module <linux-security-module@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        kernel-team <kernel-team@android.com>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon 25-01-21 23:38:17, Mike Rapoport wrote:
-> On Mon, Jan 25, 2021 at 05:54:51PM +0100, Michal Hocko wrote:
-> > On Thu 21-01-21 14:27:20, Mike Rapoport wrote:
-> > > From: Mike Rapoport <rppt@linux.ibm.com>
-> > > 
-> > > Account memory consumed by secretmem to memcg. The accounting is updated
-> > > when the memory is actually allocated and freed.
-> > 
-> > What does this mean?
-> 
-> That means that the accounting is updated when secretmem does cma_alloc()
-> and cma_relase().
-> 
-> > What are the lifetime rules?
-> 
-> Hmm, what do you mean by lifetime rules?
+On Mon, Jan 25, 2021 at 5:19 AM 'Michal Hocko' via kernel-team
+<kernel-team@android.com> wrote:
+>
+> On Wed 20-01-21 12:23:37, Suren Baghdasaryan wrote:
+> [...]
+> >     MADV_COLD (since Linux 5.4.1)
+> >         Deactivate a given range of pages by moving them from active to
+> >         inactive LRU list. This is done to accelerate the reclaim of these
+> >         pages. The advice might be ignored for some pages in the range when it
+> >         is not applicable.
+>
+> I do not think we want to talk about active/inactive LRU lists here.
+> Wouldn't it be sufficient to say
+> Deactive a given range of pages which will make them a more probable
+> reclaim target should there be a memory pressure. This is a
+> non-destructive operation.
 
-OK, so let's start by reservation time (mmap time right?) then the
-instantiation time (faulting in memory). What if the calling process of
-the former has a different memcg context than the later. E.g. when you
-send your fd or inherited fd over fork will move to a different memcg.
+That sounds better. Will update in the next version.
 
-What about freeing path? E.g. when you punch a hole in the middle of
-a mapping?
+>
+> Other than that, looks good to me from the content POV.
+>
+> Thanks!
 
-Please make sure to document all this.
+Thanks for the review Michal!
 
-> > [...]
-> > 
-> > > +static int secretmem_account_pages(struct page *page, gfp_t gfp, int order)
-> > > +{
-> > > +	int err;
-> > > +
-> > > +	err = memcg_kmem_charge_page(page, gfp, order);
-> > > +	if (err)
-> > > +		return err;
-> > > +
-> > > +	/*
-> > > +	 * seceremem caches are unreclaimable kernel allocations, so treat
-> > > +	 * them as unreclaimable slab memory for VM statistics purposes
-> > > +	 */
-> > > +	mod_lruvec_page_state(page, NR_SLAB_UNRECLAIMABLE_B,
-> > > +			      PAGE_SIZE << order);
-> > 
-> > A lot of memcg accounted memory is not reclaimable. Why do you abuse
-> > SLAB counter when this is not a slab owned memory? Why do you use the
-> > kmem accounting API when __GFP_ACCOUNT should give you the same without
-> > this details?
-> 
-> I cannot use __GFP_ACCOUNT because cma_alloc() does not use gfp.
-
-Other people are working on this to change. But OK, I do see that this
-can be done later but it looks rather awkward.
-
-> Besides, kmem accounting with __GFP_ACCOUNT does not seem
-> to update stats and there was an explicit request for statistics:
->  
-> https://lore.kernel.org/lkml/CALo0P13aq3GsONnZrksZNU9RtfhMsZXGWhK1n=xYJWQizCd4Zw@mail.gmail.com/
-
-charging and stats are two different things. You can still take care of
-your stats without explicitly using the charging API. But this is a mere
-detail. It just hit my eyes.
-
-> As for (ab)using NR_SLAB_UNRECLAIMABLE_B, as it was already discussed here:
-> 
-> https://lore.kernel.org/lkml/20201129172625.GD557259@kernel.org/
-
-Those arguments should be a part of the changelof.
-
-> I think that a dedicated stats counter would be too much at the moment and
-> NR_SLAB_UNRECLAIMABLE_B is the only explicit stat for unreclaimable memory.
-
-Why do you think it would be too much? If the secret memory becomes a
-prevalent memory user because it will happen to back the whole virtual
-machine then hiding it into any existing counter would be less than
-useful.
-
-Please note that this all is a user visible stuff that will become PITA
-(if possible) to change later on. You should really have strong
-arguments in your justification here.
--- 
-Michal Hocko
-SUSE Labs
+> --
+> Michal Hocko
+> SUSE Labs
+>
+> --
+> To unsubscribe from this group and stop receiving emails from it, send an email to kernel-team+unsubscribe@android.com.
+>
