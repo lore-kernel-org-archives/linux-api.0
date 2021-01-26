@@ -2,87 +2,75 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.2 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
-	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 44AE4C433E0
-	for <linux-api@archiver.kernel.org>; Tue, 26 Jan 2021 19:17:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BAD3BC433DB
+	for <linux-api@archiver.kernel.org>; Wed, 27 Jan 2021 01:00:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1CBAD2079A
-	for <linux-api@archiver.kernel.org>; Tue, 26 Jan 2021 19:17:23 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 894872067C
+	for <linux-api@archiver.kernel.org>; Wed, 27 Jan 2021 01:00:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731460AbhAZFwW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 26 Jan 2021 00:52:22 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50504 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728270AbhAYMpG (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 25 Jan 2021 07:45:06 -0500
-Received: from mail-wr1-x430.google.com (mail-wr1-x430.google.com [IPv6:2a00:1450:4864:20::430])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AA304C0617A9
-        for <linux-api@vger.kernel.org>; Mon, 25 Jan 2021 03:33:37 -0800 (PST)
-Received: by mail-wr1-x430.google.com with SMTP id m1so11288879wrq.12
-        for <linux-api@vger.kernel.org>; Mon, 25 Jan 2021 03:33:37 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=subject:to:cc:references:from:message-id:date:user-agent
-         :mime-version:in-reply-to:content-language:content-transfer-encoding;
-        bh=UndO6GMVVZmcMmeat9dl3kmBPjIg2CugQuFU3Qe+syA=;
-        b=BWY1cdaIaXtNsoBI1CL94KUSaVZc4YPaLvwxnaI5Ua5JhJbzrpRNdhCerYVtrU/vqv
-         naqE+1sI0m3ANvWz3eikFQG3a6drkyzg9oRE0aC0hSR88Y8nbIpRuRNozVSXwPhWM7Jr
-         xCnkxyoXIIhvyCYVX0SEHW5+c4Faq76r0QXtfVPSChhuQ9SOmhQfDSEX8CLwmyc8AcRK
-         U6q7izAK66I/7zFCIG6aoyTjyn7N2sT5CCl2bm2QSSVyITAGO4v+D5i9iMCDiq4dbEO8
-         rqjA6OXfDhxeEU3KVflD77eud8imVjklpG496tjbKafd/y7/3cauqM8wggxiYx9jxF6b
-         6e5A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-language
-         :content-transfer-encoding;
-        bh=UndO6GMVVZmcMmeat9dl3kmBPjIg2CugQuFU3Qe+syA=;
-        b=j04JM57HHdmsaQvmrkdnxUXLcxei7UpLg7yj5TI1czdEU1DIk2149diQSG/se1ZQno
-         a9CaM09x3sszFAt3hb5OcnFKoqYFtCP0NbwkJlnSY7FfDxWrsxJQLOvvZtCt4OySXc6T
-         3aBA/QNHs0i6zKPdnK1P9a+pCeNE5I4mUSoALGHIIir5lbn7WJnYm8fgDH7/YXtLJttx
-         tJxubJCTLGL2sh6nd1DMdPJb903X9bVOeN3Ff+9Avbvvcxmi/ogB7oIQBqoQVebz3azJ
-         6NDYDAnyqP4dMn/7lhML/TcbXW1L3gMsPUE51vZG7MeE83sA8Z7NeWJfK2qnMc0GxgpA
-         QkxQ==
-X-Gm-Message-State: AOAM531DAmOMrSStcGpPWwc3SPoLqoTpIjWrqccRhVLPERYNz29wbwai
-        zaKSU7gAabXeLXOIzhESG6c=
-X-Google-Smtp-Source: ABdhPJxQajBxHs+X8bVvEq65CY8ZT27zqXuQFKWROK50rmJw6Ks4jGRr/doMBaLndHNsyL+8QrsRNQ==
-X-Received: by 2002:adf:e348:: with SMTP id n8mr468706wrj.148.1611574416444;
-        Mon, 25 Jan 2021 03:33:36 -0800 (PST)
-Received: from [10.8.0.134] ([195.53.121.100])
-        by smtp.gmail.com with ESMTPSA id n6sm20254332wmi.23.2021.01.25.03.33.33
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 25 Jan 2021 03:33:35 -0800 (PST)
-Subject: Re: [PATCH v3 (resend)] tee: Add -q, --quiet, --silent option to not
- write to stdout
-To:     Bernhard Voelker <mail@bernhard-voelker.de>,
-        Alex Henrie <alexhenrie24@gmail.com>,
-        Otto Moerbeek <otto@drijf.net>, Coreutils <coreutils@gnu.org>
-Cc:     Fabrice BAUZAC <noon@mykolab.com>, juli@clockworksquid.com,
-        Jeffrey Walton <noloader@gmail.com>,
-        freebsd-hackers@freebsd.org,
-        William Ahern <william@25thandclement.com>,
-        Roman Czyborra <roman@czyborra.com>, oshogbo@freebsd.org,
-        tech@openbsd.org, Christian Groessler <chris@groessler.org>,
-        linux-api@vger.kernel.org,
-        Michael Kerrisk <mtk.manpages@gmail.com>, ed@nuxi.nl,
-        Eric Pruitt <eric.pruitt@gmail.com>
-References: <1f8ce444-35e2-56a7-dbd1-34e885372b11@gmail.com>
- <20210124121845.38293-1-alx.manpages@gmail.com>
- <YA2ztHUATu1gOxoV@clue.drijf.net>
- <CAMMLpeSLbWtRrrzOjB6DJgZCem8KWpy7_pWmr6ecuGrSmg4Eng@mail.gmail.com>
- <d0f93c40-c471-7ef7-fa9a-2f467d775d3e@bernhard-voelker.de>
-From:   "Alejandro Colomar (man-pages)" <alx.manpages@gmail.com>
-Message-ID: <d0d1697b-7851-9078-289e-02ef76f3303a@gmail.com>
-Date:   Mon, 25 Jan 2021 12:33:31 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+        id S1730595AbhA0BAB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 26 Jan 2021 20:00:01 -0500
+Received: from mga18.intel.com ([134.134.136.126]:20783 "EHLO mga18.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S2389898AbhAZRHf (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 26 Jan 2021 12:07:35 -0500
+IronPort-SDR: 9wuXSXAJ/fTnUCYvNVky7DM26HdRJlCUxFyLAx1+wFQwT0Ner8vwQY5NSzxsCcgR6uhcBZabko
+ BSkpd4Ytrd7g==
+X-IronPort-AV: E=McAfee;i="6000,8403,9876"; a="167603534"
+X-IronPort-AV: E=Sophos;i="5.79,375,1602572400"; 
+   d="scan'208";a="167603534"
+Received: from orsmga004.jf.intel.com ([10.7.209.38])
+  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 26 Jan 2021 08:43:54 -0800
+IronPort-SDR: eGwpQ92J/sX81sqArYH6+QIHP+J0S4EMZTaaYIKsSJxcLe0QKMCKSSF3yj0bW41zDIEqCl3g42
+ x8Jj9aQHSdrg==
+X-IronPort-AV: E=Sophos;i="5.79,375,1602572400"; 
+   d="scan'208";a="504585840"
+Received: from yyu32-mobl1.amr.corp.intel.com (HELO [10.212.153.84]) ([10.212.153.84])
+  by orsmga004-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 26 Jan 2021 08:43:51 -0800
+Subject: Re: [PATCH v17 11/26] x86/mm: Update ptep_set_wrprotect() and
+ pmdp_set_wrprotect() for transition from _PAGE_DIRTY to _PAGE_COW
+To:     Peter Zijlstra <peterz@infradead.org>,
+        Borislav Petkov <bp@alien8.de>
+Cc:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-doc@vger.kernel.org, linux-mm@kvack.org,
+        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andy Lutomirski <luto@kernel.org>,
+        Balbir Singh <bsingharora@gmail.com>,
+        Cyrill Gorcunov <gorcunov@gmail.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Eugene Syromiatnikov <esyr@redhat.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Nadav Amit <nadav.amit@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
+        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Weijiang Yang <weijiang.yang@intel.com>,
+        Pengfei Xu <pengfei.xu@intel.com>
+References: <20201229213053.16395-1-yu-cheng.yu@intel.com>
+ <20201229213053.16395-12-yu-cheng.yu@intel.com>
+ <20210125182709.GC23290@zn.tnic>
+ <YA/W63sob0keoD+i@hirez.programming.kicks-ass.net>
+ <YA/jlOuNpcPPNHA1@hirez.programming.kicks-ass.net>
+From:   "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
+Message-ID: <2f69ab09-57e8-6da0-07ab-5b885758fc27@intel.com>
+Date:   Tue, 26 Jan 2021 08:43:51 -0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
  Thunderbird/78.6.1
 MIME-Version: 1.0
-In-Reply-To: <d0f93c40-c471-7ef7-fa9a-2f467d775d3e@bernhard-voelker.de>
+In-Reply-To: <YA/jlOuNpcPPNHA1@hirez.programming.kicks-ass.net>
 Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Language: en-US
 Content-Transfer-Encoding: 7bit
@@ -90,98 +78,40 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 1/25/21 5:03 AM, Bernhard Voelker wrote:
-> On 1/24/21 9:01 PM, Alex Henrie wrote:
->> I am definitely interested. Bernhard Voelker seemed to express
->> interest as well, conditional on -q being added to POSIX first.[1]
+On 1/26/2021 1:40 AM, Peter Zijlstra wrote:
+> On Tue, Jan 26, 2021 at 09:46:36AM +0100, Peter Zijlstra wrote:
+>> On Mon, Jan 25, 2021 at 07:27:09PM +0100, Borislav Petkov wrote:
+>>
+>>>> +		pte_t old_pte, new_pte;
+>>>> +
+>>>> +		do {
+>>>> +			old_pte = READ_ONCE(*ptep);
+>>>> +			new_pte = pte_wrprotect(old_pte);
+>>>
+>>> Maybe I'm missing something but those two can happen outside of the
+>>> loop, no? Or is *ptep somehow changing concurrently while the loop is
+>>> doing the CMPXCHG and you need to recreate it each time?
+>>>
+>>> IOW, you can generate upfront and do the empty loop...
+>>>
+>>>> +
+>>>> +		} while (!try_cmpxchg(&ptep->pte, &old_pte.pte, new_pte.pte));
+>>>> +
+>>>> +		return;
+>>>> +	}
+>>
+>> Empty loop would be wrong, but that wants to be written like:
+>>
+>> 	old_pte = READ_ONCE(*ptep);
+>> 	do {
+>> 		new_pte = pte_wrprotect(old_pte);
+>> 	} while (try_cmpxchg(&ptep->pte, &old_pte.pte, new_pte.pte));
 > 
-> Just to clarify: I'm not as enthusiastic to add that option as it
-> may have sounded.
+> ! went missing, too early, moar wake-up juice.
 > 
-> Let me put it like this: if -q once gets standardized by POSIX,
-> then we'd take it over in the GNU tee implementation.
-> 
-> Let me summarize so far:
-> The suggestion is to solve the problem to save some data coming from
-> a pipe as a different user.
-> There are at least those known solutions:
->    - use > or >> redirection.
->    - use dd(1)
-> 
-> I have the impression that a home for this feature was searched
-> in any tool, and as tee(1) already knew how to write to a file,
-> had the "append" feature, and is often used in pipes, it was
-> tempting to add it there.
-> 
-> But looking deeper, --quiet doesn't seem to fit well into 'tee'.
-> It even contradicts to the title line in the man page:
->    "read from standard input and write to standard output and files"
-> 
-> An off-tech argument: ask a local plumber if he'd would ever use
-> a tee piece instead of a pipe end piece.  I guess he would only
-> if he wouldn't have anything else at hand.
+>> Since try_cmpxchg() will update old_pte on failure.
 
-I never knew what 'tee' meant.  That makes sense now.
-
-> 
-> A word to the proposed patch: what should happen, if the user does
-> not give a file?
->    A | B | tee -q
-> The patch just silently ignored that situation which feels wrong.
-> 
-> Therefore, adding a feature which does not really fit is wrong, and
-> contradicts the one-tool-for-one-purpose UNIX philosophy.
-> 
-
-Agreed.
-
-> OTOH I understand that there's a little gap in the tool landscape.
-> Astonishingly, there doesn't seem to exist a trivial tool to redirect
-> from standard input (or any other input file descriptor) to a file.
-> I wrote such a little tool in the attached:
-> 
->    $ src/sink --help
->    Usage: src/sink [OPTION]... FILE
->    Copy input stream to FILE.
-> 
->    Mandatory arguments to long options are mandatory for short options too.
-> 
->      -a, --append              append to the given FILE, do not overwrite
->      -c, --create              ensure to create FILE, error if exists
->      -i, --input-stream=FD     read from stream FD instead of standard input
-> 
->    The default input stream number FD is 0, representing the standard input.
-> 
-> This allows not only to copy data from standard input, but from any
-> file descriptor open for reading.  It also allows control over
-> how the output file will be opened (e.g. with O_CREAT|E_EXCL).
-> 
-> The OPs case would look like:
-> 
->    echo 'foo' | sudo sink /etc/foo
-> or
->    echo 'foo' | sudo sink -a /etc/foo  # append.
-> or
->    echo 'foo' | sudo sink -c /etc/foo  # ensure creation of the file.
-> 
-> I'm not sure if this will ever be considered for inclusion -
-> I just did it "for fun". ;-)
-
-Tested-by: Alejandro Colomar <alx.manpages@gmail.com>
-Reviewed-by: Alejandro Colomar <alx.manpages@gmail.com>
-
-Much better than my patch.  :-)
-
-> 
-> Have a nice day,
-> Berny
-> 
-
-Have a nice day!
-Alex
-
+Thanks Peter!  I will fix that.
 
 --
-Alejandro Colomar
-Linux man-pages comaintainer; https://www.kernel.org/doc/man-pages/
-http://www.alejandro-colomar.es/
+Yu-cheng
