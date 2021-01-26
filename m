@@ -6,31 +6,31 @@ X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
 	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B8B9FC4332B
-	for <linux-api@archiver.kernel.org>; Tue, 26 Jan 2021 16:39:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B02FFC433E0
+	for <linux-api@archiver.kernel.org>; Tue, 26 Jan 2021 17:00:39 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 83E4723128
-	for <linux-api@archiver.kernel.org>; Tue, 26 Jan 2021 16:39:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7635A230FE
+	for <linux-api@archiver.kernel.org>; Tue, 26 Jan 2021 17:00:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730624AbhAZJX3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 26 Jan 2021 04:23:29 -0500
-Received: from mx2.suse.de ([195.135.220.15]:57472 "EHLO mx2.suse.de"
+        id S1730147AbhAZHSU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 26 Jan 2021 02:18:20 -0500
+Received: from mx2.suse.de ([195.135.220.15]:44972 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2389361AbhAZJTr (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 26 Jan 2021 04:19:47 -0500
+        id S1727223AbhAZHRG (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 26 Jan 2021 02:17:06 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-        t=1611652532; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+        t=1611645376; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
          mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=8+K0oyxRY1+vhNkSeXzm8M4Y2R64gVVtCdOHelIF+V8=;
-        b=kShKTVasjKcQgyk49obmmqJEv3Z3d6D+KjtCoEjGXxzkEZlE9pddLwPnfiYIY421ESnwFk
-        s121ANy6h6Uf22zm4fCv1pqav6eTOcya5rAIE9EhMH1YsS7w7Ixp5ITIzE4PQfYNNMffQz
-        Deb5a3d+IUk2PpGiCwbgFZJfGrBkuvI=
+        bh=Rfz4YhgMdQKfWEhdPjTzowRS8ZrfPb0PZUsBEItApiI=;
+        b=uSwnbNJryXqrtFn5ZDcik0uto2+MPvheE1cGTKIEOz6ZnfiLtVVNW3xYyy9RGpwnpMhlvH
+        1N3K5WJgiIeLyB1+A5OyZuJP2Jkezi6uvJEEzgHe7uQUCBH5hRl4x8iwIwlEA1xmTBtqZQ
+        dR3KQIpKfgXY/BC62Y8U0m9xExJlGg8=
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 36ABFB293;
-        Tue, 26 Jan 2021 09:15:32 +0000 (UTC)
-Date:   Tue, 26 Jan 2021 10:15:27 +0100
+        by mx2.suse.de (Postfix) with ESMTP id 5743EAE91;
+        Tue, 26 Jan 2021 07:16:16 +0000 (UTC)
+Date:   Tue, 26 Jan 2021 08:16:14 +0100
 From:   Michal Hocko <mhocko@suse.com>
 To:     Mike Rapoport <rppt@kernel.org>
 Cc:     Andrew Morton <akpm@linux-foundation.org>,
@@ -66,85 +66,68 @@ Cc:     Andrew Morton <akpm@linux-foundation.org>,
         linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
         x86@kernel.org, Hagen Paul Pfeifer <hagen@jauu.net>,
         Palmer Dabbelt <palmerdabbelt@google.com>
-Subject: Re: [PATCH v16 08/11] secretmem: add memcg accounting
-Message-ID: <20210126091527.GG827@dhcp22.suse.cz>
+Subject: Re: [PATCH v16 06/11] mm: introduce memfd_secret system call to
+ create "secret" memory areas
+Message-ID: <20210126071614.GX827@dhcp22.suse.cz>
 References: <20210121122723.3446-1-rppt@kernel.org>
- <20210121122723.3446-9-rppt@kernel.org>
- <20210125165451.GT827@dhcp22.suse.cz>
- <20210125213817.GM6332@kernel.org>
- <20210126073142.GY827@dhcp22.suse.cz>
- <20210126085654.GO6332@kernel.org>
+ <20210121122723.3446-7-rppt@kernel.org>
+ <20210125170122.GU827@dhcp22.suse.cz>
+ <20210125213618.GL6332@kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20210126085654.GO6332@kernel.org>
+In-Reply-To: <20210125213618.GL6332@kernel.org>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue 26-01-21 10:56:54, Mike Rapoport wrote:
-> On Tue, Jan 26, 2021 at 08:31:42AM +0100, Michal Hocko wrote:
-> > On Mon 25-01-21 23:38:17, Mike Rapoport wrote:
-> > > On Mon, Jan 25, 2021 at 05:54:51PM +0100, Michal Hocko wrote:
-> > > > On Thu 21-01-21 14:27:20, Mike Rapoport wrote:
-> > > > > From: Mike Rapoport <rppt@linux.ibm.com>
-> > > > > 
-> > > > > Account memory consumed by secretmem to memcg. The accounting is updated
-> > > > > when the memory is actually allocated and freed.
-> > > > 
-> > > > What does this mean?
+On Mon 25-01-21 23:36:18, Mike Rapoport wrote:
+> On Mon, Jan 25, 2021 at 06:01:22PM +0100, Michal Hocko wrote:
+> > On Thu 21-01-21 14:27:18, Mike Rapoport wrote:
+> > > From: Mike Rapoport <rppt@linux.ibm.com>
 > > > 
-> > > That means that the accounting is updated when secretmem does cma_alloc()
-> > > and cma_relase().
+> > > Introduce "memfd_secret" system call with the ability to create memory
+> > > areas visible only in the context of the owning process and not mapped not
+> > > only to other processes but in the kernel page tables as well.
 > > > 
-> > > > What are the lifetime rules?
+> > > The user will create a file descriptor using the memfd_secret() system
+> > > call. The memory areas created by mmap() calls from this file descriptor
+> > > will be unmapped from the kernel direct map and they will be only mapped in
+> > > the page table of the owning mm.
 > > > 
-> > > Hmm, what do you mean by lifetime rules?
+> > > The secret memory remains accessible in the process context using uaccess
+> > > primitives, but it is not accessible using direct/linear map addresses.
+> > > 
+> > > Functions in the follow_page()/get_user_page() family will refuse to return
+> > > a page that belongs to the secret memory area.
+> > > 
+> > > A page that was a part of the secret memory area is cleared when it is
+> > > freed.
+> > > 
+> > > The following example demonstrates creation of a secret mapping (error
+> > > handling is omitted):
+> > > 
+> > > 	fd = memfd_secret(0);
+> > > 	ftruncate(fd, MAP_SIZE);
+> > > 	ptr = mmap(NULL, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 > > 
-> > OK, so let's start by reservation time (mmap time right?) then the
-> > instantiation time (faulting in memory). What if the calling process of
-> > the former has a different memcg context than the later. E.g. when you
-> > send your fd or inherited fd over fork will move to a different memcg.
-> > 
-> > What about freeing path? E.g. when you punch a hole in the middle of
-> > a mapping?
-> > 
-> > Please make sure to document all this.
->  
-> So, does something like this answer your question:
+> > I do not see any access control or permission model for this feature.
+> > Is this feature generally safe to anybody?
 > 
-> ---
-> The memory cgroup is charged when secremem allocates pages from CMA to
-> increase large pages pool during ->fault() processing.
+> The mappings obey memlock limit. Besides, this feature should be enabled
+> explicitly at boot with the kernel parameter that says what is the maximal
+> memory size secretmem can consume.
 
-OK so that is when the memory is faulted in. Good that is a standard
-model we have. The memcg context of the creator of the secret memory is
-not really important. So whoever has created is not charged.
+Why is such a model sufficient and future proof? I mean even when it has
+to be enabled by an admin it is still all or nothing approach. Mlock
+limit is not really useful because it is per mm rather than per user.
 
-> The pages are uncharged from memory cgroup when they are released back to
-> CMA at the time secretme inode is evicted.
-> ---
+Is there any reason why this is allowed for non-privileged processes?
+Maybe this has been discussed in the past but is there any reason why
+this cannot be done by a special device which will allow to provide at
+least some permission policy?
 
-so effectivelly when they are unmapped, right? This is similar to
-anonymous memory.
-
-As I've said it would be really great to have this life cycle documented
-properly.
-
-> > Please note that this all is a user visible stuff that will become PITA
-> > (if possible) to change later on. You should really have strong
-> > arguments in your justification here.
-> 
-> I think that adding a dedicated counter for few 2M areas per container is
-> not worth the churn. 
-
-What kind of churn you have in mind? What is the downside?
-
-> When we'll get to the point that secretmem can be used to back the entire
-> guest memory we can add a new counter and it does not seem to PITA to me.
-
-What does really prevent a larger use with this implementation?
-
+Please make sure to describe all those details in the changelog.
 -- 
 Michal Hocko
 SUSE Labs
