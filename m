@@ -2,36 +2,36 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8EA2FC433DB
-	for <linux-api@archiver.kernel.org>; Wed, 27 Jan 2021 21:32:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1BA5BC433DB
+	for <linux-api@archiver.kernel.org>; Wed, 27 Jan 2021 21:33:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6024564DD0
-	for <linux-api@archiver.kernel.org>; Wed, 27 Jan 2021 21:32:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D781464DCE
+	for <linux-api@archiver.kernel.org>; Wed, 27 Jan 2021 21:33:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235258AbhA0VcC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 27 Jan 2021 16:32:02 -0500
-Received: from mga04.intel.com ([192.55.52.120]:48887 "EHLO mga04.intel.com"
+        id S233141AbhA0Vcg (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 27 Jan 2021 16:32:36 -0500
+Received: from mga04.intel.com ([192.55.52.120]:48884 "EHLO mga04.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S232452AbhA0Va2 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 27 Jan 2021 16:30:28 -0500
-IronPort-SDR: 2fh5xrgY+bF+FF8spq/HIioDxcczIkEjfmE8f0/S7WluHkTqlFo3+KPogZHPfLHsjRYoCSQuav
- LCEEXpExoySg==
-X-IronPort-AV: E=McAfee;i="6000,8403,9877"; a="177573096"
+        id S235048AbhA0VaG (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 27 Jan 2021 16:30:06 -0500
+IronPort-SDR: t085oXNa7fHm69RpTEQeRFPRwtTszt5hytW9w/6jN37O0+vJcRitocUo2bA16xrIIQE5cbcEER
+ eUygqnTm/UQA==
+X-IronPort-AV: E=McAfee;i="6000,8403,9877"; a="177573151"
 X-IronPort-AV: E=Sophos;i="5.79,380,1602572400"; 
-   d="scan'208";a="177573096"
+   d="scan'208";a="177573151"
 Received: from orsmga003.jf.intel.com ([10.7.209.27])
-  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Jan 2021 13:25:49 -0800
-IronPort-SDR: 8trR+rP6FBYVAeO/Acc8g+pD1YyZiwbF2EBPTkYOqpCxHqAWh1EQxUYIqIgSYSDxMUEtP5FL/j
- m8CU9MtEGM0A==
+  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Jan 2021 13:25:57 -0800
+IronPort-SDR: WaDoTtxLpRxNcZTqLThOL11/xNPLEtP7fl+TG3h5cvjvqcN7ZiaQP0dXKtVBRSbHrmXPqBxdox
+ 54nlM5zoah0g==
 X-IronPort-AV: E=Sophos;i="5.79,380,1602572400"; 
-   d="scan'208";a="353948183"
+   d="scan'208";a="353948236"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga003-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Jan 2021 13:25:47 -0800
+  by orsmga003-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Jan 2021 13:25:56 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,169 +60,97 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v18 00/25] Control-flow Enforcement: Shadow Stack
-Date:   Wed, 27 Jan 2021 13:24:59 -0800
-Message-Id: <20210127212524.10188-1-yu-cheng.yu@intel.com>
+Subject: [PATCH v18 15/25] mm: Fixup places that call pte_mkwrite() directly
+Date:   Wed, 27 Jan 2021 13:25:14 -0800
+Message-Id: <20210127212524.10188-16-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
+In-Reply-To: <20210127212524.10188-1-yu-cheng.yu@intel.com>
+References: <20210127212524.10188-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Control-flow Enforcement (CET) is a new Intel processor feature that blocks
-return/jump-oriented programming attacks.  Details are in "Intel 64 and
-IA-32 Architectures Software Developer's Manual" [1].
+When serving a page fault, maybe_mkwrite() makes a PTE writable if it is in
+a writable vma.  A shadow stack vma is writable, but its PTEs need
+_PAGE_DIRTY to be set to become writable.  For this reason, maybe_mkwrite()
+has been updated.
 
-CET can protect applications and the kernel.  This series enables only
-application-level protection, and has three parts:
+There are a few places that call pte_mkwrite() directly, but effect the
+same result as from maybe_mkwrite().  These sites need to be updated for
+shadow stack as well.  Thus, change them to maybe_mkwrite():
 
-  - Shadow stack [2],
-  - Indirect branch tracking [3], and
-  - Selftests [4].
+- do_anonymous_page() and migrate_vma_insert_page() check VM_WRITE directly
+  and call pte_mkwrite(), which is the same as maybe_mkwrite().  Change
+  them to maybe_mkwrite().
 
-I have run tests on these patches for quite some time, and they have been
-very stable.  Linux distributions with CET are available now, and Intel
-processors with CET are already on the market.  It would be nice if CET
-support can be accepted into the kernel.  I will be working to address any
-issues should they come up.
+- In do_numa_page(), if the numa entry 'was-writable', then pte_mkwrite()
+  is called directly.  Fix it by doing maybe_mkwrite().
 
-Changes in v18:
-- Patch #2: change X86_CET_USER to X86_CET
-- Patch #4: move setting of X86_FEATURE_CET from get_cpu_cap() to
-  bsp_init_intel().
-- Patch #6: change printk_ratelimit() to __ratelimit(), pr_info() to
-  pr_emerg(), and do panic() for kernel-mode control protection fault.
-- patch #8: make p*_wrprotect() more readable by using p*_set_flags()/
-  p*_clear_flags() directly.
-- patch #11: move reading old_pte out of while() loop.  Update comments.
-- patch #22: merge GNU_PROPERTY_* definitions and arch_setup_elf_property()
-  into one patch.
-- Rebase to v5.11-rc5
+- In change_pte_range(), pte_mkwrite() is called directly.  Replace it with
+  maybe_mkwrite().
 
-[1] Intel 64 and IA-32 Architectures Software Developer's Manual:
+  A shadow stack vma is writable but has different vma
+flags, and handled accordingly in maybe_mkwrite().
 
-    https://software.intel.com/en-us/download/intel-64-and-ia-32-
-    architectures-sdm-combined-volumes-1-2a-2b-2c-2d-3a-3b-3c-3d-and-4
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+---
+ mm/memory.c   | 5 ++---
+ mm/migrate.c  | 3 +--
+ mm/mprotect.c | 2 +-
+ 3 files changed, 4 insertions(+), 6 deletions(-)
 
-[2] CET Shadow Stack patches v17:
-
-    https://lkml.kernel.org/r/20201229213053.16395-1-yu-cheng.yu@intel.com/
-
-[3] Indirect Branch Tracking patches v17.
-
-    https://lkml.kernel.org/r/20201229213350.17010-1-yu-cheng.yu@intel.com/
-
-[4] I am holding off the selftests changes and working to get Reviewed-by's.
-    The earlier version of the selftests patches:
-
-    https://lkml.kernel.org/r/20200521211720.20236-1-yu-cheng.yu@intel.com/
-
-[5] The kernel ptrace patch is tested with an Intel-internal updated GDB.
-    I am holding off the kernel ptrace patch to re-test it with my earlier
-    patch for fixing regset holes.
-
-Yu-cheng Yu (25):
-  Documentation/x86: Add CET description
-  x86/cet/shstk: Add Kconfig option for user-mode control-flow
-    protection
-  x86/cpufeatures: Add CET CPU feature flags for Control-flow
-    Enforcement Technology (CET)
-  x86/cpufeatures: Introduce X86_FEATURE_CET and setup functions
-  x86/fpu/xstate: Introduce CET MSR and XSAVES supervisor states
-  x86/cet: Add control-protection fault handler
-  x86/mm: Remove _PAGE_DIRTY from kernel RO pages
-  x86/mm: Introduce _PAGE_COW
-  drm/i915/gvt: Change _PAGE_DIRTY to _PAGE_DIRTY_BITS
-  x86/mm: Update pte_modify for _PAGE_COW
-  x86/mm: Update ptep_set_wrprotect() and pmdp_set_wrprotect() for
-    transition from _PAGE_DIRTY to _PAGE_COW
-  mm: Introduce VM_SHSTK for shadow stack memory
-  x86/mm: Shadow Stack page fault error checking
-  x86/mm: Update maybe_mkwrite() for shadow stack
-  mm: Fixup places that call pte_mkwrite() directly
-  mm: Add guard pages around a shadow stack.
-  mm/mmap: Add shadow stack pages to memory accounting
-  mm: Update can_follow_write_pte() for shadow stack
-  mm: Re-introduce vm_flags to do_mmap()
-  x86/cet/shstk: User-mode shadow stack support
-  x86/cet/shstk: Handle signals for shadow stack
-  ELF: Introduce arch_setup_elf_property()
-  x86/cet/shstk: Handle thread shadow stack
-  x86/cet/shstk: Add arch_prctl functions for shadow stack
-  mm: Introduce PROT_SHSTK for shadow stack
-
- .../admin-guide/kernel-parameters.txt         |   6 +
- Documentation/x86/index.rst                   |   1 +
- Documentation/x86/intel_cet.rst               | 136 +++++++
- arch/arm64/include/asm/elf.h                  |   5 +
- arch/x86/Kconfig                              |  28 ++
- arch/x86/Kconfig.assembler                    |   5 +
- arch/x86/ia32/ia32_signal.c                   |  17 +
- arch/x86/include/asm/cet.h                    |  42 +++
- arch/x86/include/asm/cpufeatures.h            |   4 +-
- arch/x86/include/asm/disabled-features.h      |  17 +-
- arch/x86/include/asm/elf.h                    |  13 +
- arch/x86/include/asm/fpu/internal.h           |  10 +
- arch/x86/include/asm/fpu/types.h              |  23 +-
- arch/x86/include/asm/fpu/xstate.h             |   6 +-
- arch/x86/include/asm/idtentry.h               |   4 +
- arch/x86/include/asm/mman.h                   |  85 +++++
- arch/x86/include/asm/mmu_context.h            |   3 +
- arch/x86/include/asm/msr-index.h              |  19 +
- arch/x86/include/asm/page_64_types.h          |  10 +
- arch/x86/include/asm/pgtable.h                | 194 +++++++++-
- arch/x86/include/asm/pgtable_types.h          |  48 ++-
- arch/x86/include/asm/processor.h              |   5 +
- arch/x86/include/asm/special_insns.h          |  32 ++
- arch/x86/include/asm/trap_pf.h                |   2 +
- arch/x86/include/uapi/asm/mman.h              |  28 +-
- arch/x86/include/uapi/asm/prctl.h             |   4 +
- arch/x86/include/uapi/asm/processor-flags.h   |   2 +
- arch/x86/include/uapi/asm/sigcontext.h        |   9 +
- arch/x86/kernel/Makefile                      |   2 +
- arch/x86/kernel/cet.c                         | 343 ++++++++++++++++++
- arch/x86/kernel/cet_prctl.c                   |  68 ++++
- arch/x86/kernel/cpu/common.c                  |  16 +
- arch/x86/kernel/cpu/cpuid-deps.c              |   2 +
- arch/x86/kernel/cpu/intel.c                   |   3 +
- arch/x86/kernel/fpu/signal.c                  | 100 +++++
- arch/x86/kernel/fpu/xstate.c                  |  10 +-
- arch/x86/kernel/idt.c                         |   4 +
- arch/x86/kernel/process.c                     |  14 +-
- arch/x86/kernel/process_64.c                  |  32 ++
- arch/x86/kernel/signal.c                      |  10 +
- arch/x86/kernel/signal_compat.c               |   2 +-
- arch/x86/kernel/traps.c                       |  60 +++
- arch/x86/mm/fault.c                           |  19 +
- arch/x86/mm/mmap.c                            |   2 +
- arch/x86/mm/pat/set_memory.c                  |   2 +-
- arch/x86/mm/pgtable.c                         |  25 ++
- drivers/gpu/drm/i915/gvt/gtt.c                |   2 +-
- fs/aio.c                                      |   2 +-
- fs/binfmt_elf.c                               |   4 +
- fs/proc/task_mmu.c                            |   3 +
- include/linux/elf.h                           |   6 +
- include/linux/mm.h                            |  38 +-
- include/linux/pgtable.h                       |  35 ++
- include/uapi/asm-generic/siginfo.h            |   3 +-
- include/uapi/linux/elf.h                      |   9 +
- ipc/shm.c                                     |   2 +-
- mm/gup.c                                      |   8 +-
- mm/huge_memory.c                              |  10 +-
- mm/memory.c                                   |   5 +-
- mm/migrate.c                                  |   3 +-
- mm/mmap.c                                     |  23 +-
- mm/mprotect.c                                 |   2 +-
- mm/nommu.c                                    |   4 +-
- mm/util.c                                     |   2 +-
- 64 files changed, 1549 insertions(+), 84 deletions(-)
- create mode 100644 Documentation/x86/intel_cet.rst
- create mode 100644 arch/x86/include/asm/cet.h
- create mode 100644 arch/x86/include/asm/mman.h
- create mode 100644 arch/x86/kernel/cet.c
- create mode 100644 arch/x86/kernel/cet_prctl.c
-
+diff --git a/mm/memory.c b/mm/memory.c
+index feff48e1465a..1de649c61013 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -3549,8 +3549,7 @@ static vm_fault_t do_anonymous_page(struct vm_fault *vmf)
+ 
+ 	entry = mk_pte(page, vma->vm_page_prot);
+ 	entry = pte_sw_mkyoung(entry);
+-	if (vma->vm_flags & VM_WRITE)
+-		entry = pte_mkwrite(pte_mkdirty(entry));
++	entry = maybe_mkwrite(pte_mkdirty(entry), vma);
+ 
+ 	vmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd, vmf->address,
+ 			&vmf->ptl);
+@@ -4205,7 +4204,7 @@ static vm_fault_t do_numa_page(struct vm_fault *vmf)
+ 	pte = pte_modify(old_pte, vma->vm_page_prot);
+ 	pte = pte_mkyoung(pte);
+ 	if (was_writable)
+-		pte = pte_mkwrite(pte);
++		pte = maybe_mkwrite(pte, vma);
+ 	ptep_modify_prot_commit(vma, vmf->address, vmf->pte, old_pte, pte);
+ 	update_mmu_cache(vma, vmf->address, vmf->pte);
+ 
+diff --git a/mm/migrate.c b/mm/migrate.c
+index c0efe921bca5..8878d75c0db7 100644
+--- a/mm/migrate.c
++++ b/mm/migrate.c
+@@ -2964,8 +2964,7 @@ static void migrate_vma_insert_page(struct migrate_vma *migrate,
+ 		}
+ 	} else {
+ 		entry = mk_pte(page, vma->vm_page_prot);
+-		if (vma->vm_flags & VM_WRITE)
+-			entry = pte_mkwrite(pte_mkdirty(entry));
++		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
+ 	}
+ 
+ 	ptep = pte_offset_map_lock(mm, pmdp, addr, &ptl);
+diff --git a/mm/mprotect.c b/mm/mprotect.c
+index ab709023e9aa..ed26e675c423 100644
+--- a/mm/mprotect.c
++++ b/mm/mprotect.c
+@@ -135,7 +135,7 @@ static unsigned long change_pte_range(struct vm_area_struct *vma, pmd_t *pmd,
+ 			if (dirty_accountable && pte_dirty(ptent) &&
+ 					(pte_soft_dirty(ptent) ||
+ 					 !(vma->vm_flags & VM_SOFTDIRTY))) {
+-				ptent = pte_mkwrite(ptent);
++				ptent = maybe_mkwrite(ptent, vma);
+ 			}
+ 			ptep_modify_prot_commit(vma, addr, pte, oldpte, ptent);
+ 			pages++;
 -- 
 2.21.0
 
