@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CD88BC43381
-	for <linux-api@archiver.kernel.org>; Wed, 27 Jan 2021 21:38:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3A575C433E9
+	for <linux-api@archiver.kernel.org>; Wed, 27 Jan 2021 21:39:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9CE046146D
-	for <linux-api@archiver.kernel.org>; Wed, 27 Jan 2021 21:38:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DF76564DCC
+	for <linux-api@archiver.kernel.org>; Wed, 27 Jan 2021 21:39:32 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232453AbhA0Vh6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 27 Jan 2021 16:37:58 -0500
-Received: from mga12.intel.com ([192.55.52.136]:11286 "EHLO mga12.intel.com"
+        id S234571AbhA0Vib (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 27 Jan 2021 16:38:31 -0500
+Received: from mga12.intel.com ([192.55.52.136]:11624 "EHLO mga12.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S236004AbhA0Vfv (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 27 Jan 2021 16:35:51 -0500
-IronPort-SDR: Q+06Glvzc1E/0lMjvpmYmlvBqUFObMVxVCbBRll415bn3JARIDL8p/WviARVYCWPwQrw6ABYAy
- lUl8D4Snj7dg==
-X-IronPort-AV: E=McAfee;i="6000,8403,9877"; a="159309017"
+        id S234314AbhA0VgP (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 27 Jan 2021 16:36:15 -0500
+IronPort-SDR: 4phur53SME4seWMGQ2IWH/NtkV0WCOCyU2qRSD7PjFkyup4n2Ybzy2W7Bq3zjmCSqTzA809h9r
+ gbR1ok5eypPw==
+X-IronPort-AV: E=McAfee;i="6000,8403,9877"; a="159309021"
 X-IronPort-AV: E=Sophos;i="5.79,380,1602572400"; 
-   d="scan'208";a="159309017"
+   d="scan'208";a="159309021"
 Received: from fmsmga008.fm.intel.com ([10.253.24.58])
   by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Jan 2021 13:30:37 -0800
-IronPort-SDR: lb9omYTnY/cRYmQMmRl21iuEBjTaAtWgm0yPiuk/B3eNUYBfRYwmqN6c8feKFQp+RXBLs+HPft
- Tqu5MsdkkEmQ==
+IronPort-SDR: UFxGC2L+dArx7IA60bHIdRr79bWOxL6A6lCte0Bxn/H1S11Cx2Mnz4pnf7kVK4flpopSMo5LR8
+ wjZa5cSBFcbA==
 X-IronPort-AV: E=Sophos;i="5.79,380,1602572400"; 
-   d="scan'208";a="362581357"
+   d="scan'208";a="362581371"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Jan 2021 13:30:36 -0800
+  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Jan 2021 13:30:37 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,9 +60,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v18 1/7] x86/cet/ibt: Update Kconfig for user-mode Indirect Branch Tracking
-Date:   Wed, 27 Jan 2021 13:30:22 -0800
-Message-Id: <20210127213028.11362-2-yu-cheng.yu@intel.com>
+Subject: [PATCH v18 4/7] x86/cet/ibt: Update ELF header parsing for Indirect Branch Tracking
+Date:   Wed, 27 Jan 2021 13:30:25 -0800
+Message-Id: <20210127213028.11362-5-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210127213028.11362-1-yu-cheng.yu@intel.com>
 References: <20210127213028.11362-1-yu-cheng.yu@intel.com>
@@ -72,30 +72,34 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Indirect branch tracking is a hardware security feature that verifies near
-indirect call/jump instructions arrive at intended targets, which are
-labeled by the compiler with ENDBR opcodes.  If such instructions reach
-unlabeled locations, the processor raises control-protection faults.
-
-Check the compiler is up-to-date at config time.
+An ELF file's .note.gnu.property indicates features the file supports.
+The property is parsed at loading time and passed to arch_setup_elf_
+property().  Update it for Indirect Branch Tracking.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/Kconfig | 1 +
- 1 file changed, 1 insertion(+)
+ arch/x86/kernel/process_64.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index aec4c988a5ae..b3d2b821ec10 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -1962,6 +1962,7 @@ config X86_CET
- 	def_bool n
- 	depends on CPU_SUP_INTEL && X86_64
- 	depends on AS_WRUSS
-+	depends on $(cc-option,-fcf-protection)
- 	select ARCH_USES_HIGH_VMA_FLAGS
- 	select ARCH_HAS_SHADOW_STACK
- 	select ARCH_MAYBE_MKWRITE
+diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
+index 19f138f7a209..ccf3f66f4d2c 100644
+--- a/arch/x86/kernel/process_64.c
++++ b/arch/x86/kernel/process_64.c
+@@ -864,6 +864,14 @@ int arch_setup_elf_property(struct arch_elf_state *state)
+ 			r = cet_setup_shstk();
+ 	}
+ 
++	if (r < 0)
++		return r;
++
++	if (static_cpu_has(X86_FEATURE_IBT)) {
++		if (state->gnu_property & GNU_PROPERTY_X86_FEATURE_1_IBT)
++			r = cet_setup_ibt();
++	}
++
+ 	return r;
+ }
+ #endif
 -- 
 2.21.0
 
