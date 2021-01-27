@@ -5,33 +5,33 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 092F7C433E0
-	for <linux-api@archiver.kernel.org>; Wed, 27 Jan 2021 21:27:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BFF8EC433E0
+	for <linux-api@archiver.kernel.org>; Wed, 27 Jan 2021 21:27:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B40296146D
-	for <linux-api@archiver.kernel.org>; Wed, 27 Jan 2021 21:27:30 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7DFEE60C3E
+	for <linux-api@archiver.kernel.org>; Wed, 27 Jan 2021 21:27:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1344259AbhA0V10 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 27 Jan 2021 16:27:26 -0500
-Received: from mga04.intel.com ([192.55.52.120]:48884 "EHLO mga04.intel.com"
+        id S1343690AbhA0V1X (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 27 Jan 2021 16:27:23 -0500
+Received: from mga04.intel.com ([192.55.52.120]:48882 "EHLO mga04.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S234462AbhA0V0u (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        id S234507AbhA0V0u (ORCPT <rfc822;linux-api@vger.kernel.org>);
         Wed, 27 Jan 2021 16:26:50 -0500
-IronPort-SDR: 1Zd46pBw+eziIx0cYW1wxHOMPNqKo2Y8AKBd/JJn5KWoQi/CrCZ030NxxnUWOSkW+uha0mIw6e
- gSZof/rlK5YA==
-X-IronPort-AV: E=McAfee;i="6000,8403,9877"; a="177573098"
+IronPort-SDR: LI6XYAK6aNaIU7rR8BQdrYKmsrHs9e3UGT6r6SQ43UpQNHrB6pttQ0kpJ/F6CZzAtcy3VH1ssH
+ wM7j2J8oHZVg==
+X-IronPort-AV: E=McAfee;i="6000,8403,9877"; a="177573117"
 X-IronPort-AV: E=Sophos;i="5.79,380,1602572400"; 
-   d="scan'208";a="177573098"
+   d="scan'208";a="177573117"
 Received: from orsmga003.jf.intel.com ([10.7.209.27])
-  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Jan 2021 13:25:49 -0800
-IronPort-SDR: D4aDZfyvo1J+7UBhOQ49iNv7JhMiCuGG+vToy+qRFwayXLng2xzMnNfgwlbNXvFOqgPMTk+lub
- v9NRQYJZNB5g==
+  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Jan 2021 13:25:53 -0800
+IronPort-SDR: xDwIrpMYBhKD7HQjSxTEeU179oJG9ZcsGMnb/9h95KlxkPFMKjyHChENPsuo8iVorDETWyCx5h
+ 04ylv0VaaHPQ==
 X-IronPort-AV: E=Sophos;i="5.79,380,1602572400"; 
-   d="scan'208";a="353948187"
+   d="scan'208";a="353948212"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga003-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Jan 2021 13:25:48 -0800
+  by orsmga003-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Jan 2021 13:25:53 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -59,10 +59,17 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v18 02/25] x86/cet/shstk: Add Kconfig option for user-mode control-flow protection
-Date:   Wed, 27 Jan 2021 13:25:01 -0800
-Message-Id: <20210127212524.10188-3-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
+        David Airlie <airlied@linux.ie>,
+        Joonas Lahtinen <joonas.lahtinen@linux.intel.com>,
+        Jani Nikula <jani.nikula@linux.intel.com>,
+        Daniel Vetter <daniel@ffwll.ch>,
+        Rodrigo Vivi <rodrigo.vivi@intel.com>,
+        Zhenyu Wang <zhenyuw@linux.intel.com>,
+        Zhi Wang <zhi.a.wang@intel.com>
+Subject: [PATCH v18 09/25] drm/i915/gvt: Change _PAGE_DIRTY to _PAGE_DIRTY_BITS
+Date:   Wed, 27 Jan 2021 13:25:08 -0800
+Message-Id: <20210127212524.10188-10-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210127212524.10188-1-yu-cheng.yu@intel.com>
 References: <20210127212524.10188-1-yu-cheng.yu@intel.com>
@@ -72,64 +79,35 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Shadow Stack provides protection against function return address
-corruption.  It is active when the processor supports it, the kernel has
-CONFIG_X86_CET enabled, and the application is built for the feature.
-This is only implemented for the 64-bit kernel.  When it is enabled, legacy
-non-Shadow Stack applications continue to work, but without protection.
+After the introduction of _PAGE_COW, a modified page's PTE can have either
+_PAGE_DIRTY or _PAGE_COW.  Change _PAGE_DIRTY to _PAGE_DIRTY_BITS.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: David Airlie <airlied@linux.ie>
+Cc: Joonas Lahtinen <joonas.lahtinen@linux.intel.com>
+Cc: Jani Nikula <jani.nikula@linux.intel.com>
+Cc: Daniel Vetter <daniel@ffwll.ch>
+Cc: Rodrigo Vivi <rodrigo.vivi@intel.com>
+Cc: Zhenyu Wang <zhenyuw@linux.intel.com>
+Cc: Zhi Wang <zhi.a.wang@intel.com>
 ---
- arch/x86/Kconfig           | 22 ++++++++++++++++++++++
- arch/x86/Kconfig.assembler |  5 +++++
- 2 files changed, 27 insertions(+)
+ drivers/gpu/drm/i915/gvt/gtt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 21f851179ff0..2d080a2335df 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -1951,6 +1951,28 @@ config X86_SGX
+diff --git a/drivers/gpu/drm/i915/gvt/gtt.c b/drivers/gpu/drm/i915/gvt/gtt.c
+index 897c007ea96a..937b6083b2dc 100644
+--- a/drivers/gpu/drm/i915/gvt/gtt.c
++++ b/drivers/gpu/drm/i915/gvt/gtt.c
+@@ -1216,7 +1216,7 @@ static int split_2MB_gtt_entry(struct intel_vgpu *vgpu,
+ 	}
  
- 	  If unsure, say N.
+ 	/* Clear dirty field. */
+-	se->val64 &= ~_PAGE_DIRTY;
++	se->val64 &= ~_PAGE_DIRTY_BITS;
  
-+config ARCH_HAS_SHADOW_STACK
-+	def_bool n
-+
-+config X86_CET
-+	prompt "Intel Control-flow protection for user-mode"
-+	def_bool n
-+	depends on CPU_SUP_INTEL && X86_64
-+	depends on AS_WRUSS
-+	select ARCH_USES_HIGH_VMA_FLAGS
-+	select ARCH_HAS_SHADOW_STACK
-+	help
-+	  Control-flow protection is a hardware security hardening feature
-+	  that detects function-return address or jump target changes by
-+	  malicious code.  Applications must be enabled to use it, and old
-+	  userspace does not get protection "for free".
-+	  Support for this feature is present on processors released in
-+	  2020 or later.  Enabling this feature increases kernel text size
-+	  by 3.7 KB.
-+	  See Documentation/x86/intel_cet.rst for more information.
-+
-+	  If unsure, say N.
-+
- config EFI
- 	bool "EFI runtime service support"
- 	depends on ACPI
-diff --git a/arch/x86/Kconfig.assembler b/arch/x86/Kconfig.assembler
-index 26b8c08e2fc4..00c79dd93651 100644
---- a/arch/x86/Kconfig.assembler
-+++ b/arch/x86/Kconfig.assembler
-@@ -19,3 +19,8 @@ config AS_TPAUSE
- 	def_bool $(as-instr,tpause %ecx)
- 	help
- 	  Supported by binutils >= 2.31.1 and LLVM integrated assembler >= V7
-+
-+config AS_WRUSS
-+	def_bool $(as-instr,wrussq %rax$(comma)(%rbx))
-+	help
-+	  Supported by binutils >= 2.31 and LLVM integrated assembler
+ 	ops->clear_pse(se);
+ 	ops->clear_ips(se);
 -- 
 2.21.0
 
