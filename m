@@ -2,173 +2,145 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-7.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 421D9C433E6
-	for <linux-api@archiver.kernel.org>; Thu, 28 Jan 2021 16:48:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B1788C433E6
+	for <linux-api@archiver.kernel.org>; Thu, 28 Jan 2021 17:02:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 014AB64DF9
-	for <linux-api@archiver.kernel.org>; Thu, 28 Jan 2021 16:48:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 60E4164E17
+	for <linux-api@archiver.kernel.org>; Thu, 28 Jan 2021 17:02:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232651AbhA1Qrz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 28 Jan 2021 11:47:55 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:38849 "EHLO
+        id S232846AbhA1RCP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 28 Jan 2021 12:02:15 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:32273 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S232705AbhA1QrL (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 28 Jan 2021 11:47:11 -0500
+        by vger.kernel.org with ESMTP id S232837AbhA1RBJ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 28 Jan 2021 12:01:09 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1611852344;
+        s=mimecast20190719; t=1611853183;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=LrbBbrZjgAv/B1wjq2Km74Xb+2VP5Qkal75C1Cc+NeE=;
-        b=Hy7eBveUQJWbfNOLEtZp2SBaBgJ62/8wdZOAhgOHKKgroeN17uud4D7pVftgyooYJD9wZa
-        ua1wx/drWy+ZqNFtGsIs7oFaI3Jvfn0iWSRUUXry5AT+wMoByd7TEnqMWijuDatgqyIbTY
-        VtX/5uBGfWX6E45+v3Ee/orJa4qJoHg=
+        bh=O4v5XWPNcZdSmISm472mH90bUGvUqIsL5GmAjen7+Gg=;
+        b=THbRJBm9C9XSgmdfUbMY6x9m8FjBNm/k1tZeg1/K5xWDXqICJarKDeH0uohxvLCfiKUcdT
+        au3NtKrJN8lMzOaEYs9OfF9zMoIXnlDaE84/R+F6gEEe0EDlTcJWni59xXbbdag9VClS7y
+        Gn509y8Gkou2L/MWPmK/fJQJRXe6DLw=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-405-Sc0k_4bSOiuTVbO9hkQWLQ-1; Thu, 28 Jan 2021 11:45:42 -0500
-X-MC-Unique: Sc0k_4bSOiuTVbO9hkQWLQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-102-wSuEOgG5PI-g4NLjLJt2bw-1; Thu, 28 Jan 2021 11:59:39 -0500
+X-MC-Unique: wSuEOgG5PI-g4NLjLJt2bw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5FAC459;
-        Thu, 28 Jan 2021 16:45:40 +0000 (UTC)
-Received: from t480s.redhat.com (ovpn-113-207.ams2.redhat.com [10.36.113.207])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 3E5C910027A5;
-        Thu, 28 Jan 2021 16:45:34 +0000 (UTC)
-From:   David Hildenbrand <david@redhat.com>
-To:     linux-kernel@vger.kernel.org
-Cc:     linux-mm@kvack.org, David Hildenbrand <david@redhat.com>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        "Peter Zijlstra (Intel)" <peterz@infradead.org>,
-        Mike Rapoport <rppt@kernel.org>,
-        Oscar Salvador <osalvador@suse.de>,
-        Michal Hocko <mhocko@kernel.org>,
-        Wei Yang <richard.weiyang@linux.alibaba.com>,
-        linux-api@vger.kernel.org
-Subject: [PATCH v2] mm/page_alloc: count CMA pages per zone and print them in /proc/zoneinfo
-Date:   Thu, 28 Jan 2021 17:45:33 +0100
-Message-Id: <20210128164533.18566-1-david@redhat.com>
-In-Reply-To: <20210127101813.6370-3-david@redhat.com>
-References: <20210127101813.6370-3-david@redhat.com>
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B443280A5C0;
+        Thu, 28 Jan 2021 16:59:36 +0000 (UTC)
+Received: from fuller.cnet (ovpn-112-2.gru2.redhat.com [10.97.112.2])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 7FEA01F450;
+        Thu, 28 Jan 2021 16:59:29 +0000 (UTC)
+Received: by fuller.cnet (Postfix, from userid 1000)
+        id 7A60D4178900; Thu, 28 Jan 2021 13:59:03 -0300 (-03)
+Date:   Thu, 28 Jan 2021 13:59:03 -0300
+From:   Marcelo Tosatti <mtosatti@redhat.com>
+To:     Thomas Gleixner <tglx@linutronix.de>,
+        Nitesh Narayan Lal <nitesh@redhat.com>
+Cc:     Robin Murphy <robin.murphy@arm.com>,
+        Nitesh Narayan Lal <nitesh@redhat.com>,
+        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        frederic@kernel.org, juri.lelli@redhat.com, abelits@marvell.com,
+        bhelgaas@google.com, linux-pci@vger.kernel.org,
+        rostedt@goodmis.org, mingo@kernel.org, peterz@infradead.org,
+        davem@davemloft.net, akpm@linux-foundation.org,
+        sfr@canb.auug.org.au, stephen@networkplumber.org,
+        rppt@linux.vnet.ibm.com, jinyuqi@huawei.com,
+        zhangshaokun@hisilicon.com
+Subject: Re: [Patch v4 1/3] lib: Restrict cpumask_local_spread to houskeeping
+ CPUs
+Message-ID: <20210128165903.GB38339@fuller.cnet>
+References: <20200625223443.2684-1-nitesh@redhat.com>
+ <20200625223443.2684-2-nitesh@redhat.com>
+ <3e9ce666-c9cd-391b-52b6-3471fe2be2e6@arm.com>
+ <20210127121939.GA54725@fuller.cnet>
+ <87r1m5can2.fsf@nanos.tec.linutronix.de>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <87r1m5can2.fsf@nanos.tec.linutronix.de>
+User-Agent: Mutt/1.10.1 (2018-07-13)
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Let's count the number of CMA pages per zone and print them in
-/proc/zoneinfo.
+On Thu, Jan 28, 2021 at 05:02:41PM +0100, Thomas Gleixner wrote:
+> On Wed, Jan 27 2021 at 09:19, Marcelo Tosatti wrote:
+> > On Wed, Jan 27, 2021 at 11:57:16AM +0000, Robin Murphy wrote:
+> >> > +	hk_flags = HK_FLAG_DOMAIN | HK_FLAG_MANAGED_IRQ;
+> >> > +	mask = housekeeping_cpumask(hk_flags);
+> >> 
+> >> AFAICS, this generally resolves to something based on cpu_possible_mask
+> >> rather than cpu_online_mask as before, so could now potentially return an
+> >> offline CPU. Was that an intentional change?
+> >
+> > Robin,
+> >
+> > AFAICS online CPUs should be filtered.
+> 
+> The whole pile wants to be reverted. It's simply broken in several ways.
 
-Having access to the total number of CMA pages per zone is helpful for
-debugging purposes to know where exactly the CMA pages ended up, and to
-figure out how many pages of a zone might behave differently, even after
-some of these pages might already have been allocated.
+I was asking for your comments on interaction with CPU hotplug :-)
+Anyway...
 
-As one example, CMA pages part of a kernel zone cannot be used for
-ordinary kernel allocations but instead behave more like ZONE_MOVABLE.
+So housekeeping_cpumask has multiple meanings. In this case:
 
-For now, we are only able to get the global nr+free cma pages from
-/proc/meminfo and the free cma pages per zone from /proc/zoneinfo.
+HK_FLAG_DOMAIN | HK_FLAG_MANAGED_IRQ
 
-Example after this patch when booting a 6 GiB QEMU VM with
-"hugetlb_cma=2G":
-  # cat /proc/zoneinfo | grep cma
-          cma      0
-        nr_free_cma  0
-          cma      0
-        nr_free_cma  0
-          cma      524288
-        nr_free_cma  493016
-          cma      0
-          cma      0
-  # cat /proc/meminfo | grep Cma
-  CmaTotal:        2097152 kB
-  CmaFree:         1972064 kB
+     domain
+       Isolate from the general SMP balancing and scheduling
+       algorithms. Note that performing domain isolation this way
+       is irreversible: it's not possible to bring back a CPU to
+       the domains once isolated through isolcpus. It's strongly
+       advised to use cpusets instead to disable scheduler load
+       balancing through the "cpuset.sched_load_balance" file.
+       It offers a much more flexible interface where CPUs can
+       move in and out of an isolated set anytime.
 
-Note: We track/print only with CONFIG_CMA; "nr_free_cma" in /proc/zoneinfo
-is currently also printed without CONFIG_CMA.
+       You can move a process onto or off an "isolated" CPU via
+       the CPU affinity syscalls or cpuset.
+       <cpu number> begins at 0 and the maximum value is
+       "number of CPUs in system - 1".
 
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: "Peter Zijlstra (Intel)" <peterz@infradead.org>
-Cc: Mike Rapoport <rppt@kernel.org>
-Cc: Oscar Salvador <osalvador@suse.de>
-Cc: Michal Hocko <mhocko@kernel.org>
-Cc: Wei Yang <richard.weiyang@linux.alibaba.com>
-Cc: linux-api@vger.kernel.org
-Signed-off-by: David Hildenbrand <david@redhat.com>
----
+     managed_irq
 
-v1 -> v2:
-- Print/track only with CONFIG_CMA
-- Extend patch description
+       Isolate from being targeted by managed interrupts
+       which have an interrupt mask containing isolated
+       CPUs. The affinity of managed interrupts is
+       handled by the kernel and cannot be changed via
+       the /proc/irq/* interfaces.
 
----
- include/linux/mmzone.h | 6 ++++++
- mm/page_alloc.c        | 1 +
- mm/vmstat.c            | 5 +++++
- 3 files changed, 12 insertions(+)
+       This isolation is best effort and only effective
+       if the automatically assigned interrupt mask of a
+       device queue contains isolated and housekeeping
+       CPUs. If housekeeping CPUs are online then such
+       interrupts are directed to the housekeeping CPU
+       so that IO submitted on the housekeeping CPU
+       cannot disturb the isolated CPU.
 
-diff --git a/include/linux/mmzone.h b/include/linux/mmzone.h
-index ae588b2f87ef..27d22fb22e05 100644
---- a/include/linux/mmzone.h
-+++ b/include/linux/mmzone.h
-@@ -503,6 +503,9 @@ struct zone {
- 	 * bootmem allocator):
- 	 *	managed_pages = present_pages - reserved_pages;
- 	 *
-+	 * cma pages is present pages that are assigned for CMA use
-+	 * (MIGRATE_CMA).
-+	 *
- 	 * So present_pages may be used by memory hotplug or memory power
- 	 * management logic to figure out unmanaged pages by checking
- 	 * (present_pages - managed_pages). And managed_pages should be used
-@@ -527,6 +530,9 @@ struct zone {
- 	atomic_long_t		managed_pages;
- 	unsigned long		spanned_pages;
- 	unsigned long		present_pages;
-+#ifdef CONFIG_CMA
-+	unsigned long		cma_pages;
-+#endif
- 
- 	const char		*name;
- 
-diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index b031a5ae0bd5..9a82375bbcb2 100644
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -2168,6 +2168,7 @@ void __init init_cma_reserved_pageblock(struct page *page)
- 	}
- 
- 	adjust_managed_page_count(page, pageblock_nr_pages);
-+	page_zone(page)->cma_pages += pageblock_nr_pages;
- }
- #endif
- 
-diff --git a/mm/vmstat.c b/mm/vmstat.c
-index 7758486097f9..957680db41fa 100644
---- a/mm/vmstat.c
-+++ b/mm/vmstat.c
-@@ -1650,6 +1650,11 @@ static void zoneinfo_show_print(struct seq_file *m, pg_data_t *pgdat,
- 		   zone->spanned_pages,
- 		   zone->present_pages,
- 		   zone_managed_pages(zone));
-+#ifdef CONFIG_CMA
-+	seq_printf(m,
-+		   "\n        cma      %lu",
-+		   zone->cma_pages);
-+#endif
- 
- 	seq_printf(m,
- 		   "\n        protection: (%ld",
--- 
-2.29.2
+       If a queue's affinity mask contains only isolated
+       CPUs then this parameter has no effect on the
+       interrupt routing decision, though interrupts are
+       only delivered when tasks running on those
+       isolated CPUs submit IO. IO submitted on
+       housekeeping CPUs has no influence on those
+       queues.
+
+So as long as the meaning of the flags are respected, seems
+alright.
+
+Nitesh, is there anything preventing this from being fixed
+in userspace ? (as Thomas suggested previously).
+
+
 
