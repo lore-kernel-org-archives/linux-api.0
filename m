@@ -2,374 +2,67 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0BC32C4332D
-	for <linux-api@archiver.kernel.org>; Thu, 28 Jan 2021 01:17:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DC870C433E9
+	for <linux-api@archiver.kernel.org>; Thu, 28 Jan 2021 02:18:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CD3D864D99
-	for <linux-api@archiver.kernel.org>; Thu, 28 Jan 2021 01:17:28 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8B45164DCD
+	for <linux-api@archiver.kernel.org>; Thu, 28 Jan 2021 02:18:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231967AbhA1BRH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 27 Jan 2021 20:17:07 -0500
-Received: from mail.kernel.org ([198.145.29.99]:35340 "EHLO mail.kernel.org"
+        id S229569AbhA1CRr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 27 Jan 2021 21:17:47 -0500
+Received: from mail.kernel.org ([198.145.29.99]:43492 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231730AbhA1BGL (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 27 Jan 2021 20:06:11 -0500
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 4D91164DD0;
-        Thu, 28 Jan 2021 01:03:32 +0000 (UTC)
+        id S229528AbhA1CRr (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 27 Jan 2021 21:17:47 -0500
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 286BC64D9F;
+        Thu, 28 Jan 2021 02:17:06 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1611795812;
-        bh=tJuLCkaxnqYFnC3r4DDt1NFER2ZydcgjYXSW64W0n78=;
+        s=k20201202; t=1611800226;
+        bh=kkx2gxqL3eTEODYMMPfss/+rMKGv9VbYrVIUTu2Ff4o=;
         h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=bQ0WUeJJGsK0Ef7i48tLegB0bL49nSgKQV3db8BbdYYhYQATxe49hr5ITwO1GqBaF
-         dQNAReA97gXP9sYyVlbY2x2os7sGYmA5dKeSVxHyUgEI8/wRWMeIgIElw6NCmbqTc3
-         o2BYVmgStiM1aZaChJnQuygCyfwtjdyLQ7hTSQg0dPhKIq7kflaHMrRBALTGQFXyuK
-         cLpdqffNoScVa9T+kYFIStTBGgNYoCoaQVYdxc81z9e2p4rrN/yJCvtPGqXSyxraGh
-         T86ZyDcSZyCwi0jmPjOMJxjK2bNngiy03BDJJEOYggkEVX3XT9+ANu9KWNZn6nf10k
-         VL4TZ+EOV+GdQ==
-Date:   Wed, 27 Jan 2021 17:03:30 -0800
-From:   Jaegeuk Kim <jaegeuk@kernel.org>
-To:     Eric Biggers <ebiggers@kernel.org>
+        b=Cssw+EuDfiMMpcWBMW8S00pxx9lnqxS1W91b97rL7PG0rmKgJPZ5xqF6wb/gtp2yZ
+         GopReLJwPmf4Gnw6cSI59/I4BiHzQzOtVuXYJW2jboMdRI1BcosIqfsopkBhi9bKL2
+         Kp5zj2rgof2d620b1orH0QxaQ6iJO91DSkqZDfrc/AX68wLvUyw7HWTU9wD2W4evcT
+         hmxedXHJF7yQ1O8g0ngBrivco2m6rGJhN9FY8RIgb1HApK5YmtXYmN/LYxH/9nXek5
+         hl2Z5vb+kxKcIdlaG9skNoOL7ACiBqHgK73pw7VZdlMxaaEz0dPjAz04TY5gHE88+v
+         7Gm4drqXaqNyA==
+Date:   Wed, 27 Jan 2021 18:17:04 -0800
+From:   Eric Biggers <ebiggers@kernel.org>
+To:     Jaegeuk Kim <jaegeuk@kernel.org>
 Cc:     linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org,
         linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
         linux-api@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>,
         Victor Hsieh <victorhsieh@google.com>
-Subject: Re: [PATCH 3/6] fs-verity: add FS_IOC_READ_VERITY_METADATA ioctl
-Message-ID: <YBINYhAlBhQogk/+@google.com>
+Subject: Re: [PATCH 4/6] fs-verity: support reading Merkle tree with ioctl
+Message-ID: <YBIeoGowXVrG3QfU@sol.localdomain>
 References: <20210115181819.34732-1-ebiggers@kernel.org>
- <20210115181819.34732-4-ebiggers@kernel.org>
+ <20210115181819.34732-5-ebiggers@kernel.org>
+ <YBIPD53iVg1US++r@google.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20210115181819.34732-4-ebiggers@kernel.org>
+In-Reply-To: <YBIPD53iVg1US++r@google.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 01/15, Eric Biggers wrote:
-> From: Eric Biggers <ebiggers@google.com>
+On Wed, Jan 27, 2021 at 05:10:39PM -0800, Jaegeuk Kim wrote:
 > 
-> Add an ioctl FS_IOC_READ_VERITY_METADATA which will allow reading verity
-> metadata from a file that has fs-verity enabled, including:
+> Minor thought:
+> How about invalidating or truncating merkel tree pages?
 > 
-> - The Merkle tree
-> - The fsverity_descriptor (not including the signature if present)
-> - The built-in signature, if present
+> Reviewed-by: Jaegeuk Kim <jaegeuk@kernel.org>
 > 
-> This ioctl has similar semantics to pread().  It is passed the type of
-> metadata to read (one of the above three), and a buffer, offset, and
-> size.  It returns the number of bytes read or an error.
-> 
-> Separate patches will add support for each of the above metadata types.
-> This patch just adds the ioctl itself.
-> 
-> This ioctl doesn't make any assumption about where the metadata is
-> stored on-disk.  It does assume the metadata is in a stable format, but
-> that's basically already the case:
-> 
-> - The Merkle tree and fsverity_descriptor are defined by how fs-verity
->   file digests are computed; see the "File digest computation" section
->   of Documentation/filesystems/fsverity.rst.  Technically, the way in
->   which the levels of the tree are ordered relative to each other wasn't
->   previously specified, but it's logical to put the root level first.
-> 
-> - The built-in signature is the value passed to FS_IOC_ENABLE_VERITY.
-> 
-> This ioctl is useful because it allows writing a server program that
-> takes a verity file and serves it to a client program, such that the
-> client can do its own fs-verity compatible verification of the file.
-> This only makes sense if the client doesn't trust the server and if the
-> server needs to provide the storage for the client.
-> 
-> More concretely, there is interest in using this ability in Android to
-> export APK files (which are protected by fs-verity) to "protected VMs".
-> This would use Protected KVM (https://lwn.net/Articles/836693), which
-> provides an isolated execution environment without having to trust the
-> traditional "host".  A "guest" VM can boot from a signed image and
-> perform specific tasks in a minimum trusted environment using files that
-> have fs-verity enabled on the host, without trusting the host or
-> requiring that the guest has its own trusted storage.
-> 
-> Technically, it would be possible to duplicate the metadata and store it
-> in separate files for serving.  However, that would be less efficient
-> and would require extra care in userspace to maintain file consistency.
-> 
-> In addition to the above, the ability to read the built-in signatures is
-> useful because it allows a system that is using the in-kernel signature
-> verification to migrate to userspace signature verification.
-> 
-> Signed-off-by: Eric Biggers <ebiggers@google.com>
 
-Acked-by: Jaegeuk Kim <jaegeuk@kernel.org>
+Removing them from the page cache after the read, you mean?  I'm not sure we can
+assume that users of this ioctl would want the pages to *not* be cached, any
+more than we could assume that for any regular read().  I think we should just
+leave the pages cached (like a regular read) and not do anything special.  Like
+other pagecache pages, the kernel will evict the Merkle tree pages eventually if
+they aren't being accessed anymore and memory needs to be reclaimed.
 
-> ---
->  Documentation/filesystems/fsverity.rst | 57 ++++++++++++++++++++++++++
->  fs/ext4/ioctl.c                        |  7 ++++
->  fs/f2fs/file.c                         | 11 +++++
->  fs/verity/Makefile                     |  1 +
->  fs/verity/read_metadata.c              | 55 +++++++++++++++++++++++++
->  include/linux/fsverity.h               | 12 ++++++
->  include/uapi/linux/fsverity.h          | 10 +++++
->  7 files changed, 153 insertions(+)
->  create mode 100644 fs/verity/read_metadata.c
-> 
-> diff --git a/Documentation/filesystems/fsverity.rst b/Documentation/filesystems/fsverity.rst
-> index e0204a23e997e..9ef7a7de60085 100644
-> --- a/Documentation/filesystems/fsverity.rst
-> +++ b/Documentation/filesystems/fsverity.rst
-> @@ -217,6 +217,63 @@ FS_IOC_MEASURE_VERITY can fail with the following errors:
->  - ``EOVERFLOW``: the digest is longer than the specified
->    ``digest_size`` bytes.  Try providing a larger buffer.
->  
-> +FS_IOC_READ_VERITY_METADATA
-> +---------------------------
-> +
-> +The FS_IOC_READ_VERITY_METADATA ioctl reads verity metadata from a
-> +verity file.  This ioctl is available since Linux v5.12.
-> +
-> +This ioctl allows writing a server program that takes a verity file
-> +and serves it to a client program, such that the client can do its own
-> +fs-verity compatible verification of the file.  This only makes sense
-> +if the client doesn't trust the server and if the server needs to
-> +provide the storage for the client.
-> +
-> +This is a fairly specialized use case, and most fs-verity users won't
-> +need this ioctl.
-> +
-> +This ioctl takes in a pointer to the following structure::
-> +
-> +   struct fsverity_read_metadata_arg {
-> +           __u64 metadata_type;
-> +           __u64 offset;
-> +           __u64 length;
-> +           __u64 buf_ptr;
-> +           __u64 __reserved;
-> +   };
-> +
-> +``metadata_type`` specifies the type of metadata to read.
-> +
-> +The semantics are similar to those of ``pread()``.  ``offset``
-> +specifies the offset in bytes into the metadata item to read from, and
-> +``length`` specifies the maximum number of bytes to read from the
-> +metadata item.  ``buf_ptr`` is the pointer to the buffer to read into,
-> +cast to a 64-bit integer.  ``__reserved`` must be 0.  On success, the
-> +number of bytes read is returned.  0 is returned at the end of the
-> +metadata item.  The returned length may be less than ``length``, for
-> +example if the ioctl is interrupted.
-> +
-> +The metadata returned by FS_IOC_READ_VERITY_METADATA isn't guaranteed
-> +to be authenticated against the file digest that would be returned by
-> +`FS_IOC_MEASURE_VERITY`_, as the metadata is expected to be used to
-> +implement fs-verity compatible verification anyway (though absent a
-> +malicious disk, the metadata will indeed match).  E.g. to implement
-> +this ioctl, the filesystem is allowed to just read the Merkle tree
-> +blocks from disk without actually verifying the path to the root node.
-> +
-> +FS_IOC_READ_VERITY_METADATA can fail with the following errors:
-> +
-> +- ``EFAULT``: the caller provided inaccessible memory
-> +- ``EINTR``: the ioctl was interrupted before any data was read
-> +- ``EINVAL``: reserved fields were set, or ``offset + length``
-> +  overflowed
-> +- ``ENODATA``: the file is not a verity file
-> +- ``ENOTTY``: this type of filesystem does not implement fs-verity, or
-> +  this ioctl is not yet implemented on it
-> +- ``EOPNOTSUPP``: the kernel was not configured with fs-verity
-> +  support, or the filesystem superblock has not had the 'verity'
-> +  feature enabled on it.  (See `Filesystem support`_.)
-> +
->  FS_IOC_GETFLAGS
->  ---------------
->  
-> diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
-> index 524e134324475..56dc58adba8ac 100644
-> --- a/fs/ext4/ioctl.c
-> +++ b/fs/ext4/ioctl.c
-> @@ -1306,6 +1306,12 @@ static long __ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
->  			return -EOPNOTSUPP;
->  		return fsverity_ioctl_measure(filp, (void __user *)arg);
->  
-> +	case FS_IOC_READ_VERITY_METADATA:
-> +		if (!ext4_has_feature_verity(sb))
-> +			return -EOPNOTSUPP;
-> +		return fsverity_ioctl_read_metadata(filp,
-> +						    (const void __user *)arg);
-> +
->  	default:
->  		return -ENOTTY;
->  	}
-> @@ -1388,6 +1394,7 @@ long ext4_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
->  	case FS_IOC_GETFSMAP:
->  	case FS_IOC_ENABLE_VERITY:
->  	case FS_IOC_MEASURE_VERITY:
-> +	case FS_IOC_READ_VERITY_METADATA:
->  	case EXT4_IOC_CLEAR_ES_CACHE:
->  	case EXT4_IOC_GETSTATE:
->  	case EXT4_IOC_GET_ES_CACHE:
-> diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-> index f585545277d77..d0aefb5b97fac 100644
-> --- a/fs/f2fs/file.c
-> +++ b/fs/f2fs/file.c
-> @@ -3357,6 +3357,14 @@ static int f2fs_ioc_measure_verity(struct file *filp, unsigned long arg)
->  	return fsverity_ioctl_measure(filp, (void __user *)arg);
->  }
->  
-> +static int f2fs_ioc_read_verity_metadata(struct file *filp, unsigned long arg)
-> +{
-> +	if (!f2fs_sb_has_verity(F2FS_I_SB(file_inode(filp))))
-> +		return -EOPNOTSUPP;
-> +
-> +	return fsverity_ioctl_read_metadata(filp, (const void __user *)arg);
-> +}
-> +
->  static int f2fs_ioc_getfslabel(struct file *filp, unsigned long arg)
->  {
->  	struct inode *inode = file_inode(filp);
-> @@ -4272,6 +4280,8 @@ static long __f2fs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
->  		return f2fs_ioc_enable_verity(filp, arg);
->  	case FS_IOC_MEASURE_VERITY:
->  		return f2fs_ioc_measure_verity(filp, arg);
-> +	case FS_IOC_READ_VERITY_METADATA:
-> +		return f2fs_ioc_read_verity_metadata(filp, arg);
->  	case FS_IOC_GETFSLABEL:
->  		return f2fs_ioc_getfslabel(filp, arg);
->  	case FS_IOC_SETFSLABEL:
-> @@ -4523,6 +4533,7 @@ long f2fs_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
->  	case F2FS_IOC_RESIZE_FS:
->  	case FS_IOC_ENABLE_VERITY:
->  	case FS_IOC_MEASURE_VERITY:
-> +	case FS_IOC_READ_VERITY_METADATA:
->  	case FS_IOC_GETFSLABEL:
->  	case FS_IOC_SETFSLABEL:
->  	case F2FS_IOC_GET_COMPRESS_BLOCKS:
-> diff --git a/fs/verity/Makefile b/fs/verity/Makefile
-> index 570e9136334d4..435559a4fa9ea 100644
-> --- a/fs/verity/Makefile
-> +++ b/fs/verity/Makefile
-> @@ -5,6 +5,7 @@ obj-$(CONFIG_FS_VERITY) += enable.o \
->  			   init.o \
->  			   measure.o \
->  			   open.o \
-> +			   read_metadata.o \
->  			   verify.o
->  
->  obj-$(CONFIG_FS_VERITY_BUILTIN_SIGNATURES) += signature.o
-> diff --git a/fs/verity/read_metadata.c b/fs/verity/read_metadata.c
-> new file mode 100644
-> index 0000000000000..43be990fd53e4
-> --- /dev/null
-> +++ b/fs/verity/read_metadata.c
-> @@ -0,0 +1,55 @@
-> +// SPDX-License-Identifier: GPL-2.0-only
-> +/*
-> + * Ioctl to read verity metadata
-> + *
-> + * Copyright 2021 Google LLC
-> + */
-> +
-> +#include "fsverity_private.h"
-> +
-> +#include <linux/uaccess.h>
-> +
-> +/**
-> + * fsverity_ioctl_read_metadata() - read verity metadata from a file
-> + * @filp: file to read the metadata from
-> + * @uarg: user pointer to fsverity_read_metadata_arg
-> + *
-> + * Return: length read on success, 0 on EOF, -errno on failure
-> + */
-> +int fsverity_ioctl_read_metadata(struct file *filp, const void __user *uarg)
-> +{
-> +	struct inode *inode = file_inode(filp);
-> +	const struct fsverity_info *vi;
-> +	struct fsverity_read_metadata_arg arg;
-> +	int length;
-> +	void __user *buf;
-> +
-> +	vi = fsverity_get_info(inode);
-> +	if (!vi)
-> +		return -ENODATA; /* not a verity file */
-> +	/*
-> +	 * Note that we don't have to explicitly check that the file is open for
-> +	 * reading, since verity files can only be opened for reading.
-> +	 */
-> +
-> +	if (copy_from_user(&arg, uarg, sizeof(arg)))
-> +		return -EFAULT;
-> +
-> +	if (arg.__reserved)
-> +		return -EINVAL;
-> +
-> +	/* offset + length must not overflow. */
-> +	if (arg.offset + arg.length < arg.offset)
-> +		return -EINVAL;
-> +
-> +	/* Ensure that the return value will fit in INT_MAX. */
-> +	length = min_t(u64, arg.length, INT_MAX);
-> +
-> +	buf = u64_to_user_ptr(arg.buf_ptr);
-> +
-> +	switch (arg.metadata_type) {
-> +	default:
-> +		return -EINVAL;
-> +	}
-> +}
-> +EXPORT_SYMBOL_GPL(fsverity_ioctl_read_metadata);
-> diff --git a/include/linux/fsverity.h b/include/linux/fsverity.h
-> index c1144a4503920..b568b3c7d095e 100644
-> --- a/include/linux/fsverity.h
-> +++ b/include/linux/fsverity.h
-> @@ -138,6 +138,10 @@ int fsverity_file_open(struct inode *inode, struct file *filp);
->  int fsverity_prepare_setattr(struct dentry *dentry, struct iattr *attr);
->  void fsverity_cleanup_inode(struct inode *inode);
->  
-> +/* read_metadata.c */
-> +
-> +int fsverity_ioctl_read_metadata(struct file *filp, const void __user *uarg);
-> +
->  /* verify.c */
->  
->  bool fsverity_verify_page(struct page *page);
-> @@ -183,6 +187,14 @@ static inline void fsverity_cleanup_inode(struct inode *inode)
->  {
->  }
->  
-> +/* read_metadata.c */
-> +
-> +static inline int fsverity_ioctl_read_metadata(struct file *filp,
-> +					       const void __user *uarg)
-> +{
-> +	return -EOPNOTSUPP;
-> +}
-> +
->  /* verify.c */
->  
->  static inline bool fsverity_verify_page(struct page *page)
-> diff --git a/include/uapi/linux/fsverity.h b/include/uapi/linux/fsverity.h
-> index 33f44156f8ea5..e062751294d01 100644
-> --- a/include/uapi/linux/fsverity.h
-> +++ b/include/uapi/linux/fsverity.h
-> @@ -83,7 +83,17 @@ struct fsverity_formatted_digest {
->  	__u8 digest[];
->  };
->  
-> +struct fsverity_read_metadata_arg {
-> +	__u64 metadata_type;
-> +	__u64 offset;
-> +	__u64 length;
-> +	__u64 buf_ptr;
-> +	__u64 __reserved;
-> +};
-> +
->  #define FS_IOC_ENABLE_VERITY	_IOW('f', 133, struct fsverity_enable_arg)
->  #define FS_IOC_MEASURE_VERITY	_IOWR('f', 134, struct fsverity_digest)
-> +#define FS_IOC_READ_VERITY_METADATA \
-> +	_IOWR('f', 135, struct fsverity_read_metadata_arg)
->  
->  #endif /* _UAPI_LINUX_FSVERITY_H */
-> -- 
-> 2.30.0
+- Eric
