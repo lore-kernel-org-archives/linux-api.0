@@ -5,57 +5,57 @@ X-Spam-Level:
 X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 46533C433E6
-	for <linux-api@archiver.kernel.org>; Mon,  1 Feb 2021 19:42:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D3E6DC433E6
+	for <linux-api@archiver.kernel.org>; Mon,  1 Feb 2021 19:43:29 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1997964DBA
-	for <linux-api@archiver.kernel.org>; Mon,  1 Feb 2021 19:42:54 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8578364EA9
+	for <linux-api@archiver.kernel.org>; Mon,  1 Feb 2021 19:43:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232357AbhBATmt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 1 Feb 2021 14:42:49 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39698 "EHLO
+        id S232360AbhBATm6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 1 Feb 2021 14:42:58 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39714 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229879AbhBATml (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 1 Feb 2021 14:42:41 -0500
-Received: from mail-pj1-x102d.google.com (mail-pj1-x102d.google.com [IPv6:2607:f8b0:4864:20::102d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 596A9C061573;
-        Mon,  1 Feb 2021 11:42:00 -0800 (PST)
-Received: by mail-pj1-x102d.google.com with SMTP id s24so225082pjp.5;
-        Mon, 01 Feb 2021 11:42:00 -0800 (PST)
+        with ESMTP id S230179AbhBATmo (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 1 Feb 2021 14:42:44 -0500
+Received: from mail-pl1-x633.google.com (mail-pl1-x633.google.com [IPv6:2607:f8b0:4864:20::633])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 38CC2C061756;
+        Mon,  1 Feb 2021 11:42:03 -0800 (PST)
+Received: by mail-pl1-x633.google.com with SMTP id u11so10584108plg.13;
+        Mon, 01 Feb 2021 11:42:03 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=EQLuUgJy+o1hW9AunpfEc1qlY4Nc1HNzMaooRQ/maGI=;
-        b=c+2FqPenYDUXmY2kNElCjc1zpbv1nfM3B2pKaKRri5HOpiZXABTyHA/PQlo65RJr+Z
-         14Pt8sXeP01DXpN2ebzEEbqt4n938aJ3hopdR7MCIZlmle6G3XvdFqZapeDec2yFUeUJ
-         0avNYAVfgR+txKKakSpI+lBCzfKr//gTUa7x9uJ2gwwFu8V7eldlnJMjKhTgEnsQzER7
-         d0L/5h4KFw/n8EMVErFTT/nrrzJtdlioCpEas5H7QzuuqaU1bqnMPpsf4yAQNMLU6zax
-         /VMRyu313OLhK+I5lm57OtJpwofCPks0qjOWNX6mDMCAkxinGN7D9Mg5wEdg4IHQRdeX
-         6g8w==
+        bh=6sPxRlDZVCgLrmX5i4bW0vNdjIwlKi4D6sFiaqH5u5g=;
+        b=G+qStO7CkVvgsNXqB/Wb0xndz5YAZ0RZrs54KBqSeBWnQwmZZrW4vLkgw3gfK3GZt6
+         RpXWZRrP+uCyvoqxHBKNCS/uC8MXa7J7miKMoZeZelacqSbSARKbDmMaMBP79iE63Mv4
+         CzVYO6kKxCRIdhWNYow5YNV3mfte0MkkmbXcsRdk+Fo3t73XIlUekwU3nv/YhOCC5AKb
+         jqh9UWlv1tRU0f7qxTS1rydAYnNyhZdJZNoYgZUyFfmNOt0R7KLbbTnz4F9unRrd+t5P
+         heRn8ZL7Tj39fs+lxdA7Os0HhAnyzYpgv7n0U3mYoBOVOntHK1FvTDWzuNw3vMw5XtQL
+         re/A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=EQLuUgJy+o1hW9AunpfEc1qlY4Nc1HNzMaooRQ/maGI=;
-        b=Me/jWZJqp3DRHh6WtxlJaqashfDB0RgB6RhW9fIR5z7xbmmJVRm1f5FUbTeY9XwOFA
-         hZWqHiZy688Y/K9nBWoQCVpnCb4LWYMBDpcc+X8eyx5gxVyn9Sqj129H+im6iIO23E7X
-         HycM2Bb/Hbihh/+7ovGT32Q5qOPp03zYrEc0oczc6855wkV6IbQSOEu8xf/udWyLnT77
-         A23uq5NhECABuVWTYwQsYOFXqIinIuzN/sF45Jw4VoBbmk5RsnA9ns7CfcG5nbwf2vWE
-         /S5uPxn4j/zG3K2hqXT4UMo4Otq6r4Fom5cApzkJMzS4pQJUH+Xy+CIcMpjPsTv64jgx
-         h58w==
-X-Gm-Message-State: AOAM5300LVvJShndznNrBDJ7T7IOtyEFI+5slzUSXX8YZOeyWGzTmcjP
-        3uwtXvstDl3z+liCU+6CJn0=
-X-Google-Smtp-Source: ABdhPJyUpFpB8WB7DGdGa42I0331TOpmj95xQ5DyrrcB4Il8FwZOLlGyylyvihXjujMle9NwJNLgTA==
-X-Received: by 2002:a17:902:7d96:b029:e0:151c:598b with SMTP id a22-20020a1709027d96b02900e0151c598bmr18881431plm.2.1612208519740;
-        Mon, 01 Feb 2021 11:41:59 -0800 (PST)
+        bh=6sPxRlDZVCgLrmX5i4bW0vNdjIwlKi4D6sFiaqH5u5g=;
+        b=a7ifauJVZS6HjI/VUV/c91YGNu3u1sQAGZuU9LSaJmUTRW7XTKugBnkJdsM2nUnxI1
+         7XpI4NfiAk7qA+dMvitW2TplYrvjrxKUukJvXV78PBr0rRkemG187hoILw04PvvN92HI
+         bMFMM5J9N7OJTgVb6B+2GZOsukK2/Oft05xmWOSUYC8nKJGl6UxrYHc5tz2K9p1OW/cA
+         7yOLmZRvuzPQFHH9XjFs+njNwOvuvcA417LO/8mwZiSrb8qyMv7qqx7A3HMDADT1sJSQ
+         Pz+fFZXxbqEC31B0jhb7KqTv6Arw36G+1nPTHuWYR9RvqpAAB07kbey23DPen90JjGHP
+         1CRw==
+X-Gm-Message-State: AOAM5318PH2VEx/c37jf8NuqYoC8QTAYBgU1+5zofXo9BMvi17/j7Qos
+        FSA2B+CJsWQwhSIgR4TyL2Q=
+X-Google-Smtp-Source: ABdhPJw9YWcNuHFuTmMPxsVUG3s1VGIHPRHmuVePCWcxJqJN2Qj4tJcarkH23fR/KYYV3RZnTL99Kg==
+X-Received: by 2002:a17:902:a58c:b029:df:f345:80ec with SMTP id az12-20020a170902a58cb02900dff34580ecmr18525611plb.66.1612208522619;
+        Mon, 01 Feb 2021 11:42:02 -0800 (PST)
 Received: from laptop.hsd1.wa.comcast.net ([2601:600:9b7f:872e:a655:30fb:7373:c762])
-        by smtp.gmail.com with ESMTPSA id i4sm18213155pfo.40.2021.02.01.11.41.58
+        by smtp.gmail.com with ESMTPSA id i4sm18213155pfo.40.2021.02.01.11.42.01
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 01 Feb 2021 11:41:59 -0800 (PST)
+        Mon, 01 Feb 2021 11:42:01 -0800 (PST)
 From:   Andrei Vagin <avagin@gmail.com>
 To:     Will Deacon <will@kernel.org>,
         Catalin Marinas <catalin.marinas@arm.com>
@@ -66,9 +66,9 @@ Cc:     Oleg Nesterov <oleg@redhat.com>,
         Andrei Vagin <avagin@gmail.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Keno Fischer <keno@juliacomputing.com>
-Subject: [PATCH 1/3] arm64/ptrace: don't clobber task registers on syscall entry/exit traps
-Date:   Mon,  1 Feb 2021 11:40:10 -0800
-Message-Id: <20210201194012.524831-2-avagin@gmail.com>
+Subject: [PATCH 3/3] selftest/arm64/ptrace: add tests for PTRACE_O_ARM64_RAW_REGS
+Date:   Mon,  1 Feb 2021 11:40:12 -0800
+Message-Id: <20210201194012.524831-4-avagin@gmail.com>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20210201194012.524831-1-avagin@gmail.com>
 References: <20210201194012.524831-1-avagin@gmail.com>
@@ -78,203 +78,363 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-ip/r12 for AArch32 and x7 for AArch64 is used to indicate whether or not
-the stop has been signalled from syscall entry or syscall exit. This
-means that:
-
-- Any writes by the tracer to this register during the stop are
-  ignored/discarded.
-
-- The actual value of the register is not available during the stop,
-  so the tracer cannot save it and restore it later.
-
-Right now, these registers are clobbered in tracehook_report_syscall.
-This change moves the logic to gpr_get and compat_gpr_get where
-registers are copied into a user-space buffer.
-
-This will allow to change these registers and to introduce a new
-ptrace option to get the full set of registers.
+Test output:
+ TAP version 13
+ 1..2
+ # selftests: arm64/ptrace: ptrace_syscall_raw_regs_test
+ # 1..2
+ # ok 1 x7: 686920776f726c64
+ # ok 2 The child exited with code 0.
+ # # Totals: pass:2 fail:0 xfail:0 xpass:0 skip:0 error:0
+ ok 1 selftests: arm64/ptrace: ptrace_syscall_raw_regs_test
+ # selftests: arm64/ptrace: ptrace_syscall_regs_test
+ # 1..3
+ # ok 1 x7: 0
+ # ok 2 x7: 1
+ # ok 3 The child exited with code 0.
+ # # Totals: pass:3 fail:0 xfail:0 xpass:0 skip:0 error:0
+ ok 2 selftests: arm64/ptrace: ptrace_syscall_regs_test
 
 Signed-off-by: Andrei Vagin <avagin@gmail.com>
 ---
- arch/arm64/include/asm/ptrace.h |   5 ++
- arch/arm64/kernel/ptrace.c      | 104 ++++++++++++++++++++------------
- 2 files changed, 69 insertions(+), 40 deletions(-)
+ tools/testing/selftests/arm64/Makefile        |   2 +-
+ tools/testing/selftests/arm64/ptrace/Makefile |   6 +
+ .../ptrace/ptrace_syscall_raw_regs_test.c     | 142 +++++++++++++++++
+ .../arm64/ptrace/ptrace_syscall_regs_test.c   | 150 ++++++++++++++++++
+ 4 files changed, 299 insertions(+), 1 deletion(-)
+ create mode 100644 tools/testing/selftests/arm64/ptrace/Makefile
+ create mode 100644 tools/testing/selftests/arm64/ptrace/ptrace_syscall_raw_regs_test.c
+ create mode 100644 tools/testing/selftests/arm64/ptrace/ptrace_syscall_regs_test.c
 
-diff --git a/arch/arm64/include/asm/ptrace.h b/arch/arm64/include/asm/ptrace.h
-index e58bca832dff..0a9552b4f61e 100644
---- a/arch/arm64/include/asm/ptrace.h
-+++ b/arch/arm64/include/asm/ptrace.h
-@@ -170,6 +170,11 @@ static inline unsigned long pstate_to_compat_psr(const unsigned long pstate)
- 	return psr;
- }
+diff --git a/tools/testing/selftests/arm64/Makefile b/tools/testing/selftests/arm64/Makefile
+index 2c9d012797a7..704770a60ece 100644
+--- a/tools/testing/selftests/arm64/Makefile
++++ b/tools/testing/selftests/arm64/Makefile
+@@ -4,7 +4,7 @@
+ ARCH ?= $(shell uname -m 2>/dev/null || echo not)
  
-+enum ptrace_syscall_dir {
-+	PTRACE_SYSCALL_ENTER = 0,
-+	PTRACE_SYSCALL_EXIT,
-+};
+ ifneq (,$(filter $(ARCH),aarch64 arm64))
+-ARM64_SUBTARGETS ?= tags signal pauth fp mte
++ARM64_SUBTARGETS ?= tags signal pauth fp mte ptrace
+ else
+ ARM64_SUBTARGETS :=
+ endif
+diff --git a/tools/testing/selftests/arm64/ptrace/Makefile b/tools/testing/selftests/arm64/ptrace/Makefile
+new file mode 100644
+index 000000000000..84b27449f3d1
+--- /dev/null
++++ b/tools/testing/selftests/arm64/ptrace/Makefile
+@@ -0,0 +1,6 @@
++# SPDX-License-Identifier: GPL-2.0
 +
- /*
-  * This struct defines the way the registers are stored on the stack during an
-  * exception. Note that sizeof(struct pt_regs) has to be a multiple of 16 (for
-diff --git a/arch/arm64/kernel/ptrace.c b/arch/arm64/kernel/ptrace.c
-index 8ac487c84e37..39da03104528 100644
---- a/arch/arm64/kernel/ptrace.c
-+++ b/arch/arm64/kernel/ptrace.c
-@@ -40,6 +40,7 @@
- #include <asm/syscall.h>
- #include <asm/traps.h>
- #include <asm/system_misc.h>
-+#include <asm/ptrace.h>
- 
- #define CREATE_TRACE_POINTS
- #include <trace/events/syscalls.h>
-@@ -561,7 +562,31 @@ static int gpr_get(struct task_struct *target,
- 		   struct membuf to)
- {
- 	struct user_pt_regs *uregs = &task_pt_regs(target)->user_regs;
--	return membuf_write(&to, uregs, sizeof(*uregs));
-+	unsigned long saved_reg;
-+	int ret;
++CFLAGS += -g -I../../../../../usr/include/
++TEST_GEN_PROGS := ptrace_syscall_raw_regs_test ptrace_syscall_regs_test
 +
-+	/*
-+	 * We have some ABI weirdness here in the way that we handle syscall
-+	 * exit stops because we indicate whether or not the stop has been
-+	 * signalled from syscall entry or syscall exit by clobbering the general
-+	 * purpose register x7.
-+	 */
-+	saved_reg = uregs->regs[7];
++include ../../lib.mk
+diff --git a/tools/testing/selftests/arm64/ptrace/ptrace_syscall_raw_regs_test.c b/tools/testing/selftests/arm64/ptrace/ptrace_syscall_raw_regs_test.c
+new file mode 100644
+index 000000000000..78f913303a99
+--- /dev/null
++++ b/tools/testing/selftests/arm64/ptrace/ptrace_syscall_raw_regs_test.c
+@@ -0,0 +1,142 @@
++// SPDX-License-Identifier: GPL-2.0-only
++#include <errno.h>
++#include <signal.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
 +
-+	switch (target->ptrace_message) {
-+	case PTRACE_EVENTMSG_SYSCALL_ENTRY:
-+		uregs->regs[7] = PTRACE_SYSCALL_ENTER;
-+		break;
-+	case PTRACE_EVENTMSG_SYSCALL_EXIT:
-+		uregs->regs[7] = PTRACE_SYSCALL_EXIT;
-+		break;
++#include <sys/types.h>
++#include <sys/ptrace.h>
++#include <sys/user.h>
++#include <sys/wait.h>
++#include <sys/uio.h>
++#include <linux/elf.h>
++#include <linux/unistd.h>
++
++#include "../../kselftest.h"
++
++#define TEST_VAL 0x686920776f726c64UL
++
++#define pr_p(func, fmt, ...)	func(fmt ": %m", ##__VA_ARGS__)
++
++#define pr_err(fmt, ...)						\
++	({								\
++		ksft_test_result_error(fmt "\n", ##__VA_ARGS__);		\
++		-1;							\
++	})
++
++#define pr_fail(fmt, ...)					\
++	({							\
++		ksft_test_result_fail(fmt "\n", ##__VA_ARGS__);	\
++		-1;						\
++	})
++
++#define pr_perror(fmt, ...)	pr_p(pr_err, fmt, ##__VA_ARGS__)
++
++static long loop(void *val)
++{
++	register long x0 __asm__("x0");
++	register void *x1 __asm__("x1") = val;
++	register long x8 __asm__("x8") = 555;
++
++	__asm__ (
++		"again:\n"
++		"ldr x7, [x1, 0]\n"
++		"svc 0\n"
++		"str x7, [x1, 0]\n"
++			   : "=r"(x0)
++			   : "r"(x1), "r"(x8)
++			   :
++	);
++	return 0;
++}
++
++static int child(void)
++{
++	long  val = TEST_VAL;
++
++	loop(&val);
++	if (val != ~TEST_VAL) {
++		ksft_print_msg("Unexpected x7: %lx\n", val);
++		return 1;
 +	}
 +
-+	ret =  membuf_write(&to, uregs, sizeof(*uregs));
++	return 0;
++}
 +
-+	uregs->regs[7] = saved_reg;
++#ifndef PTRACE_SYSEMU
++#define PTRACE_SYSEMU 31
++#endif
 +
-+	return ret;
- }
- 
- static int gpr_set(struct task_struct *target, const struct user_regset *regset,
-@@ -575,6 +600,17 @@ static int gpr_set(struct task_struct *target, const struct user_regset *regset,
- 	if (ret)
- 		return ret;
- 
-+	/*
-+	 * Historically, x7 can't be changed if the stop has been signalled
-+	 * from syscall-enter of syscall-exit.
-+	 */
-+	switch (target->ptrace_message) {
-+	case PTRACE_EVENTMSG_SYSCALL_ENTRY:
-+	case PTRACE_EVENTMSG_SYSCALL_EXIT:
-+		newregs.regs[7] = task_pt_regs(target)->regs[7];
-+		break;
++#ifndef PTRACE_O_ARM64_RAW_REGS
++#define PTRACE_O_ARM64_RAW_REGS                (1 << 28)
++#endif
++
++int main(int argc, void **argv)
++{
++	struct user_regs_struct regs = {};
++	struct iovec iov = {
++		.iov_base = &regs,
++		.iov_len = sizeof(struct user_regs_struct),
++	};
++	int status;
++	pid_t pid;
++
++	ksft_set_plan(2);
++
++	pid = fork();
++	if (pid == 0) {
++		kill(getpid(), SIGSTOP);
++		child();
++		_exit(0);
++	}
++	if (pid < 0)
++		return 1;
++
++	if (ptrace(PTRACE_ATTACH, pid, 0, 0))
++		return pr_perror("Can't attach to the child %d", pid);
++	if (waitpid(pid, &status, 0) != pid)
++		return pr_perror("Can't wait for the child %d", pid);
++	if (ptrace(PTRACE_SETOPTIONS, pid, 0, PTRACE_O_ARM64_RAW_REGS))
++		return pr_perror("Can't set PTRACE_O_ARM64_RAW_REGS");
++	/* skip SIGSTOP */
++	if (ptrace(PTRACE_CONT, pid, 0, 0))
++		return pr_perror("Can't resume the child %d", pid);
++	if (waitpid(pid, &status, 0) != pid)
++		return pr_perror("Can't wait for the child %d", pid);
++
++	/* Resume the child to the next system call. */
++	if (ptrace(PTRACE_SYSEMU, pid, 0, 0))
++		return pr_perror("Can't resume the child %d", pid);
++	if (waitpid(pid, &status, 0) != pid)
++		return pr_perror("Can't wait for the child %d", pid);
++	if (!WIFSTOPPED(status) || WSTOPSIG(status) != SIGTRAP)
++		return pr_err("Unexpected status: %d", status);
++
++	/* Check that x7 isnt't clobbered if PTRACE_O_ARM64_RAW_REGS is set. */
++	if (ptrace(PTRACE_GETREGSET, pid, NT_PRSTATUS, &iov))
++		return pr_perror("Can't get child registers");
++	if (regs.regs[7] != TEST_VAL)
++		return pr_fail("unexpected x7: %lx", regs.regs[7]);
++	ksft_test_result_pass("x7: %llx\n", regs.regs[7]);
++
++	/* Check that the child will see a new value of x7. */
++	regs.regs[0] = 0;
++	regs.regs[7] = ~TEST_VAL;
++	if (ptrace(PTRACE_SETREGSET, pid, NT_PRSTATUS, &iov))
++		return pr_perror("Can't set child registers");
++
++	if (ptrace(PTRACE_CONT, pid, 0, 0))
++		return pr_perror("Can't resume the child %d", pid);
++	if (waitpid(pid, &status, 0) != pid)
++		return pr_perror("Can't wait for the child %d", pid);
++
++	if (status != 0)
++		return pr_fail("Child exited with code %d.", status);
++
++	ksft_test_result_pass("The child exited with code 0.\n");
++	ksft_exit_pass();
++	return 0;
++}
++
+diff --git a/tools/testing/selftests/arm64/ptrace/ptrace_syscall_regs_test.c b/tools/testing/selftests/arm64/ptrace/ptrace_syscall_regs_test.c
+new file mode 100644
+index 000000000000..d1534525ef26
+--- /dev/null
++++ b/tools/testing/selftests/arm64/ptrace/ptrace_syscall_regs_test.c
+@@ -0,0 +1,150 @@
++// SPDX-License-Identifier: GPL-2.0-only
++#include <errno.h>
++#include <signal.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
++
++#include <sys/types.h>
++#include <sys/ptrace.h>
++#include <sys/user.h>
++#include <sys/wait.h>
++#include <sys/uio.h>
++#include <linux/elf.h>
++#include <linux/unistd.h>
++
++#include "../../kselftest.h"
++
++#define TEST_VAL 0x686920776f726c64UL
++
++#define pr_p(func, fmt, ...)	func(fmt ": %m", ##__VA_ARGS__)
++
++#define pr_err(fmt, ...)						\
++	({								\
++		ksft_test_result_error(fmt "\n", ##__VA_ARGS__);		\
++		-1;							\
++	})
++
++#define pr_fail(fmt, ...)					\
++	({							\
++		ksft_test_result_fail(fmt "\n", ##__VA_ARGS__);	\
++		-1;						\
++	})
++
++#define pr_perror(fmt, ...)	pr_p(pr_err, fmt, ##__VA_ARGS__)
++
++static long loop(void *val)
++{
++	register long x0 __asm__("x0");
++	register void *x1 __asm__("x1") = val;
++	register long x8 __asm__("x8") = 555;
++
++	__asm__ (
++		"again:\n"
++		"ldr x7, [x1, 0]\n"
++		"svc 0\n"
++		"str x7, [x1, 0]\n"
++			   : "=r"(x0)
++			   : "r"(x1), "r"(x8)
++			   :
++	);
++	return 0;
++}
++
++static int child(void)
++{
++	long  val = TEST_VAL;
++
++	loop(&val);
++	if (val != TEST_VAL) {
++		ksft_print_msg("Unexpected x7: %lx\n", val);
++		return 1;
 +	}
 +
- 	if (!valid_user_regs(&newregs, target))
- 		return -EINVAL;
- 
-@@ -1206,6 +1242,20 @@ static inline compat_ulong_t compat_get_user_reg(struct task_struct *task, int i
- 	struct pt_regs *regs = task_pt_regs(task);
- 
- 	switch (idx) {
-+	case 12:
-+		/*
-+		 * We have some ABI weirdness here in the way that we handle
-+		 * syscall exit stops because we indicate whether or not the
-+		 * stop has been signalled from syscall entry or syscall exit
-+		 * by clobbering the general purpose register r12.
-+		 */
-+		switch (task->ptrace_message) {
-+		case PTRACE_EVENTMSG_SYSCALL_ENTRY:
-+			return PTRACE_SYSCALL_ENTER;
-+		case PTRACE_EVENTMSG_SYSCALL_EXIT:
-+			return PTRACE_SYSCALL_EXIT;
-+		}
-+		return regs->regs[idx];
- 	case 15:
- 		return regs->pc;
- 	case 16:
-@@ -1282,6 +1332,17 @@ static int compat_gpr_set(struct task_struct *target,
- 
- 	}
- 
-+	/*
-+	 * Historically, x12 can't be changed if the stop has been signalled
-+	 * from syscall-enter of syscall-exit.
-+	 */
-+	switch (target->ptrace_message) {
-+	case PTRACE_EVENTMSG_SYSCALL_ENTRY:
-+	case PTRACE_EVENTMSG_SYSCALL_EXIT:
-+		newregs.regs[12] = task_pt_regs(target)->regs[12];
-+		break;
-+	}
++	return 0;
++}
 +
- 	if (valid_user_regs(&newregs.user_regs, target))
- 		*task_pt_regs(target) = newregs;
- 	else
-@@ -1740,53 +1801,16 @@ long arch_ptrace(struct task_struct *child, long request,
- 	return ptrace_request(child, request, addr, data);
- }
- 
--enum ptrace_syscall_dir {
--	PTRACE_SYSCALL_ENTER = 0,
--	PTRACE_SYSCALL_EXIT,
--};
--
- static void tracehook_report_syscall(struct pt_regs *regs,
- 				     enum ptrace_syscall_dir dir)
- {
--	int regno;
--	unsigned long saved_reg;
--
--	/*
--	 * We have some ABI weirdness here in the way that we handle syscall
--	 * exit stops because we indicate whether or not the stop has been
--	 * signalled from syscall entry or syscall exit by clobbering a general
--	 * purpose register (ip/r12 for AArch32, x7 for AArch64) in the tracee
--	 * and restoring its old value after the stop. This means that:
--	 *
--	 * - Any writes by the tracer to this register during the stop are
--	 *   ignored/discarded.
--	 *
--	 * - The actual value of the register is not available during the stop,
--	 *   so the tracer cannot save it and restore it later.
--	 *
--	 * - Syscall stops behave differently to seccomp and pseudo-step traps
--	 *   (the latter do not nobble any registers).
--	 */
--	regno = (is_compat_task() ? 12 : 7);
--	saved_reg = regs->regs[regno];
--	regs->regs[regno] = dir;
--
- 	if (dir == PTRACE_SYSCALL_ENTER) {
- 		if (tracehook_report_syscall_entry(regs))
- 			forget_syscall(regs);
--		regs->regs[regno] = saved_reg;
--	} else if (!test_thread_flag(TIF_SINGLESTEP)) {
--		tracehook_report_syscall_exit(regs, 0);
--		regs->regs[regno] = saved_reg;
- 	} else {
--		regs->regs[regno] = saved_reg;
-+		int singlestep = test_thread_flag(TIF_SINGLESTEP);
- 
--		/*
--		 * Signal a pseudo-step exception since we are stepping but
--		 * tracer modifications to the registers may have rewound the
--		 * state machine.
--		 */
--		tracehook_report_syscall_exit(regs, 1);
-+		tracehook_report_syscall_exit(regs, singlestep);
- 	}
- }
- 
++#ifndef PTRACE_O_ARM64_RAW_REGS
++#define PTRACE_O_ARM64_RAW_REGS                (1 << 28)
++#endif
++
++int main(int argc, void **argv)
++{
++	struct user_regs_struct regs = {};
++	struct iovec iov = {
++		.iov_base = &regs,
++		.iov_len = sizeof(struct user_regs_struct),
++	};
++	int status;
++	pid_t pid;
++
++	ksft_set_plan(3);
++
++	pid = fork();
++	if (pid == 0) {
++		kill(getpid(), SIGSTOP);
++		child();
++		_exit(0);
++	}
++	if (pid < 0)
++		return 1;
++
++	if (ptrace(PTRACE_ATTACH, pid, 0, 0))
++		return pr_perror("Can't attach to the child %d", pid);
++	if (waitpid(pid, &status, 0) != pid)
++		return pr_perror("Can't wait for the child %d", pid);
++	/* skip SIGSTOP */
++	if (ptrace(PTRACE_CONT, pid, 0, 0))
++		return pr_perror("Can't resume the child %d", pid);
++	if (waitpid(pid, &status, 0) != pid)
++		return pr_perror("Can't wait for the child %d", pid);
++
++	/* Resume the child to the next system call. */
++	if (ptrace(PTRACE_SYSCALL, pid, 0, 0))
++		return pr_perror("Can't resume the child %d", pid);
++	if (waitpid(pid, &status, 0) != pid)
++		return pr_perror("Can't wait for the child %d", pid);
++	if (!WIFSTOPPED(status) || WSTOPSIG(status) != SIGTRAP)
++		return pr_err("Unexpected status: %d", status);
++
++	/* Check that x7 is 0 on syscall-enter. */
++	if (ptrace(PTRACE_GETREGSET, pid, NT_PRSTATUS, &iov))
++		return pr_perror("Can't get child registers");
++	if (regs.regs[7] != 0)
++		return pr_fail("Unexpected x7: %lx", regs.regs[7]);
++	ksft_test_result_pass("x7: %llx\n", regs.regs[7]);
++
++	if (ptrace(PTRACE_SYSCALL, pid, 0, 0))
++		return pr_perror("Can't resume the child %d", pid);
++	if (waitpid(pid, &status, 0) != pid)
++		return pr_perror("Can't wait for the child %d", pid);
++	if (!WIFSTOPPED(status) || WSTOPSIG(status) != SIGTRAP)
++		return pr_err("Unexpected status: %d", status);
++
++	/* Check that x7 is 1 on syscall-exit. */
++	if (ptrace(PTRACE_GETREGSET, pid, NT_PRSTATUS, &iov))
++		return pr_perror("Can't get child registers");
++	if (regs.regs[7] != 1)
++		return pr_fail("Unexpected x7: %lx", regs.regs[7]);
++	ksft_test_result_pass("x7: %llx\n", regs.regs[7]);
++
++	/* Check that the child will not a new value of x7. */
++	regs.regs[0] = 0;
++	regs.regs[7] = ~TEST_VAL;
++	if (ptrace(PTRACE_SETREGSET, pid, NT_PRSTATUS, &iov))
++		return pr_perror("Can't set child registers");
++
++	if (ptrace(PTRACE_CONT, pid, 0, 0))
++		return pr_perror("Can't resume the child %d", pid);
++	if (waitpid(pid, &status, 0) != pid)
++		return pr_perror("Can't wait for the child %d", pid);
++
++	if (status != 0)
++		return pr_fail("Child exited with code %d.", status);
++
++	ksft_test_result_pass("The child exited with code 0.\n");
++	ksft_exit_pass();
++	return 0;
++}
++
 -- 
 2.29.2
 
