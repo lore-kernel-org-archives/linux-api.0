@@ -2,47 +2,38 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4D563C433E6
-	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 17:27:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AD494C433E0
+	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 18:19:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E931964ECE
-	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 17:27:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7B143601FB
+	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 18:19:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234231AbhBBR12 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 2 Feb 2021 12:27:28 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:38691 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S233921AbhBBOOG (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 2 Feb 2021 09:14:06 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1612275160;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=mAXEVjxGkaVgIUFhfXA1HRN3FgtOlJcIpAQw2h/beVM=;
-        b=eKDUxb1+pqSJGwixp0bJb9IpFbLQ2YWSNtr9y6B5b9tHnfKB8XWwqMi4lg2wcz689fqN+7
-        ixbEtjubRl8BQ3SthB9ROO4tXppvD18dReUGmXO7MA7mXPXT1SkBZZqlAPN5rjZaPaek3k
-        ft4gaH36hp6hgsL1Zdqrv2sUA+94Msc=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-460-DO7GaD-qPMSuJ9daYkp31A-1; Tue, 02 Feb 2021 09:12:35 -0500
-X-MC-Unique: DO7GaD-qPMSuJ9daYkp31A-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B117B100A8E8;
-        Tue,  2 Feb 2021 14:12:30 +0000 (UTC)
-Received: from [10.36.114.148] (ovpn-114-148.ams2.redhat.com [10.36.114.148])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 6CE915B4A7;
-        Tue,  2 Feb 2021 14:12:22 +0000 (UTC)
-To:     Michal Hocko <mhocko@suse.com>
-Cc:     Mike Rapoport <rppt@kernel.org>,
+        id S238017AbhBBSTJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 2 Feb 2021 13:19:09 -0500
+Received: from mail.kernel.org ([198.145.29.99]:57624 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S238384AbhBBSQ5 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 2 Feb 2021 13:16:57 -0500
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 9084864F92;
+        Tue,  2 Feb 2021 18:15:52 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1612289771;
+        bh=jExAi6+S0KhwmLELocI6wMJuzz/tLWY8R7yvg8v3kSM=;
+        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+        b=EDgDXp2MRosyELVG93hsa2FWpra6U+O1s/wok5z4I/qOXv7rdUmjG2axPtMIvq+YN
+         yBgA8wcWgNGCYn0pW2zVsZsv3wcPZETui3XjKumHzFywKHgYsDnq+d0PEjUY80BQCe
+         IzesvjbDuB+UAqmSCfbvnjKvS7w0UCcntNSHwnveAp/98Y5aklQbVLZ5aIeTMaBtIb
+         Y2S9E4/e0RHCm573D5HvZcykwBcZPsiKWKBYdn9Gm25wRz155OpIc0oI5MY1vEx2Z5
+         y6k9c5Z7N9NTPpMQGOvaiK4lasHyvoskCgCDKMvmuqHqWSSfiiKO+c0UX4uuveVSEz
+         Bmm6b/PXs32Ig==
+Date:   Tue, 2 Feb 2021 20:15:46 +0200
+From:   Mike Rapoport <rppt@kernel.org>
+To:     David Hildenbrand <david@redhat.com>
+Cc:     Michal Hocko <mhocko@suse.com>,
         James Bottomley <jejb@linux.ibm.com>,
         Andrew Morton <akpm@linux-foundation.org>,
         Alexander Viro <viro@zeniv.linux.org.uk>,
@@ -75,70 +66,64 @@ Cc:     Mike Rapoport <rppt@kernel.org>,
         linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
         x86@kernel.org, Hagen Paul Pfeifer <hagen@jauu.net>,
         Palmer Dabbelt <palmerdabbelt@google.com>
-References: <303f348d-e494-e386-d1f5-14505b5da254@redhat.com>
- <20210126120823.GM827@dhcp22.suse.cz> <20210128092259.GB242749@kernel.org>
- <YBK1kqL7JA7NePBQ@dhcp22.suse.cz>
- <73738cda43236b5ac2714e228af362b67a712f5d.camel@linux.ibm.com>
- <YBPF8ETGBHUzxaZR@dhcp22.suse.cz>
- <6de6b9f9c2d28eecc494e7db6ffbedc262317e11.camel@linux.ibm.com>
- <YBkcyQsky2scjEcP@dhcp22.suse.cz> <20210202124857.GN242749@kernel.org>
- <6653288a-dd02-f9de-ef6a-e8d567d71d53@redhat.com>
- <YBlUXdwV93xMIff6@dhcp22.suse.cz>
-From:   David Hildenbrand <david@redhat.com>
-Organization: Red Hat GmbH
 Subject: Re: [PATCH v16 07/11] secretmem: use PMD-size pages to amortize
  direct map fragmentation
-Message-ID: <211f0214-1868-a5be-9428-7acfc3b73993@redhat.com>
-Date:   Tue, 2 Feb 2021 15:12:21 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.5.0
+Message-ID: <20210202181546.GO242749@kernel.org>
+References: <6de6b9f9c2d28eecc494e7db6ffbedc262317e11.camel@linux.ibm.com>
+ <YBkcyQsky2scjEcP@dhcp22.suse.cz>
+ <20210202124857.GN242749@kernel.org>
+ <6653288a-dd02-f9de-ef6a-e8d567d71d53@redhat.com>
+ <YBlUXdwV93xMIff6@dhcp22.suse.cz>
+ <211f0214-1868-a5be-9428-7acfc3b73993@redhat.com>
+ <YBlgCl8MQuuII22w@dhcp22.suse.cz>
+ <d4fe580a-ef0e-e13f-9ee4-16fb8b6d65dd@redhat.com>
+ <YBlicIupOyPF9f3D@dhcp22.suse.cz>
+ <95625b83-f7e2-b27a-2b99-d231338047fb@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <YBlUXdwV93xMIff6@dhcp22.suse.cz>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-US
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <95625b83-f7e2-b27a-2b99-d231338047fb@redhat.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 02.02.21 14:32, Michal Hocko wrote:
-> On Tue 02-02-21 14:14:09, David Hildenbrand wrote:
-> [...]
->> As already expressed, I dislike allowing user space to consume an unlimited
->> number unmovable/unmigratable allocations. We already have that in some
->> cases with huge pages (when the arch does not support migration) - but there
->> we can at least manage the consumption using the whole max/reserved/free/...
->> infrastructure. In addition, adding arch support for migration shouldn't be
->> too complicated.
+On Tue, Feb 02, 2021 at 03:34:29PM +0100, David Hildenbrand wrote:
+> On 02.02.21 15:32, Michal Hocko wrote:
+> > On Tue 02-02-21 15:26:20, David Hildenbrand wrote:
+> > > On 02.02.21 15:22, Michal Hocko wrote:
+> > > > On Tue 02-02-21 15:12:21, David Hildenbrand wrote:
+> > > > [...]
+> > > > > I think secretmem behaves much more like longterm GUP right now
+> > > > > ("unmigratable", "lifetime controlled by user space", "cannot go on
+> > > > > CMA/ZONE_MOVABLE"). I'd either want to reasonably well control/limit it or
+> > > > > make it behave more like mlocked pages.
+> > > > 
+> > > > I thought I have already asked but I must have forgotten. Is there any
+> > > > actual reason why the memory is not movable? Timing attacks?
+> > > 
+> > > I think the reason is simple: no direct map, no copying of memory.
+> > 
+> > This is an implementation detail though and not something terribly hard
+> > to add on top later on. I was more worried there would be really
+> > fundamental reason why this is not possible. E.g. security implications.
 > 
-> Well, mlock is not too different here as well. Hugepages are arguably an
-> easier model because it requires an explicit pre-configuration by an
-> admin. Mlock doesn't have anything like that. Please also note that
-> while mlock pages are migrateable by default, this is not the case in
-> general because they can be configured to disalow migration to prevent
-> from minor page faults as some workloads require that (e.g. RT).
+> I don't remember all the details. Let's see what Mike thinks regarding
+> migration (e.g., security concerns).
 
-Yeah, however that is a very special case. In most cases mlock() simply 
-prevents swapping, you still have movable pages you can place anywhere 
-you like (including on ZONE_MOVABLE).
+Thanks for considering me a security expert :-)
 
-> Another example is ramdisk or even tmpfs (with swap storage depleted or
-> not configured). Both are PITA from the OOM POV but they are manageable
-> if people are careful.
+Yet, I cannot estimate how dangerous is the temporal exposure of
+this data to the kernel via the direct map in the simple map/copy/unmap
+sequence.
 
-Right, but again, special cases - e.g., tmpfs explicitly has to be resized.
+More secure way would be to map source and destination in a different page table
+rather than in the direct map, similarly to the way text_poke() on x86
+does.
 
-> If secretmem behaves along those existing models
-> then we know what to expect at least.
-
-I think secretmem behaves much more like longterm GUP right now 
-("unmigratable", "lifetime controlled by user space", "cannot go on 
-CMA/ZONE_MOVABLE"). I'd either want to reasonably well control/limit it 
-or make it behave more like mlocked pages.
+I've left the migration callback empty for now because it can be added on
+top and its implementation would depend on the way we do (or do not do)
+pooling.
 
 -- 
-Thanks,
-
-David / dhildenb
-
+Sincerely yours,
+Mike.
