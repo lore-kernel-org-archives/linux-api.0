@@ -6,31 +6,31 @@ X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
 	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 471C7C433E0
-	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 13:35:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B3DEEC433E9
+	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 14:25:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1416B64DDA
-	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 13:35:21 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 843CA64E2B
+	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 14:25:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232568AbhBBNef (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 2 Feb 2021 08:34:35 -0500
-Received: from mx2.suse.de ([195.135.220.15]:42098 "EHLO mx2.suse.de"
+        id S233337AbhBBOZZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 2 Feb 2021 09:25:25 -0500
+Received: from mx2.suse.de ([195.135.220.15]:57414 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S232490AbhBBNdB (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 2 Feb 2021 08:33:01 -0500
+        id S231694AbhBBOWu (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 2 Feb 2021 09:22:50 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-        t=1612272735; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+        t=1612275723; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
          mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=qhASYy52HrQdJQILCHxBxIDs1mcnSSfDvbUg8Hv9Huk=;
-        b=O35yhETCIJcmvITBzmA06eT7x4pieJO9swql+e/dEuWJvoBkcPrcGAQe2sM2r3gNYCJ97G
-        cutl0j+I7mXW23xuyyuYKFCdVv7+WC+a62VtrpsBAxAPUoJKjRiqBrbLEGz3xn0w2G09n8
-        8FyL2zHquLohp9unYR6VoEzGZD+347Q=
+        bh=R943Hhww/s8HfwhLLXb1uWHRCnoPFQpOe010kfNqw0k=;
+        b=fHocb+MTavxWBaHy7elKwE/yL3x53CAFSTx7Ec5PyThdseXBRBPCY5AKV9uCh24917Ksr6
+        93vnD7/9Q6qsFDHG6pp5zSmP3tK/80NiZSn/XttDieru/aAjlpLx41SgaL48APT65OFzOh
+        GW83fVWD+A4BOVW6LtyBPmd+Mga4QmE=
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id B66D6AF92;
-        Tue,  2 Feb 2021 13:32:14 +0000 (UTC)
-Date:   Tue, 2 Feb 2021 14:32:13 +0100
+        by mx2.suse.de (Postfix) with ESMTP id ED12DB11D;
+        Tue,  2 Feb 2021 14:22:02 +0000 (UTC)
+Date:   Tue, 2 Feb 2021 15:22:02 +0100
 From:   Michal Hocko <mhocko@suse.com>
 To:     David Hildenbrand <david@redhat.com>
 Cc:     Mike Rapoport <rppt@kernel.org>,
@@ -68,10 +68,8 @@ Cc:     Mike Rapoport <rppt@kernel.org>,
         Palmer Dabbelt <palmerdabbelt@google.com>
 Subject: Re: [PATCH v16 07/11] secretmem: use PMD-size pages to amortize
  direct map fragmentation
-Message-ID: <YBlUXdwV93xMIff6@dhcp22.suse.cz>
-References: <303f348d-e494-e386-d1f5-14505b5da254@redhat.com>
- <20210126120823.GM827@dhcp22.suse.cz>
- <20210128092259.GB242749@kernel.org>
+Message-ID: <YBlgCl8MQuuII22w@dhcp22.suse.cz>
+References: <20210128092259.GB242749@kernel.org>
  <YBK1kqL7JA7NePBQ@dhcp22.suse.cz>
  <73738cda43236b5ac2714e228af362b67a712f5d.camel@linux.ibm.com>
  <YBPF8ETGBHUzxaZR@dhcp22.suse.cz>
@@ -79,33 +77,25 @@ References: <303f348d-e494-e386-d1f5-14505b5da254@redhat.com>
  <YBkcyQsky2scjEcP@dhcp22.suse.cz>
  <20210202124857.GN242749@kernel.org>
  <6653288a-dd02-f9de-ef6a-e8d567d71d53@redhat.com>
+ <YBlUXdwV93xMIff6@dhcp22.suse.cz>
+ <211f0214-1868-a5be-9428-7acfc3b73993@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <6653288a-dd02-f9de-ef6a-e8d567d71d53@redhat.com>
+In-Reply-To: <211f0214-1868-a5be-9428-7acfc3b73993@redhat.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue 02-02-21 14:14:09, David Hildenbrand wrote:
+On Tue 02-02-21 15:12:21, David Hildenbrand wrote:
 [...]
-> As already expressed, I dislike allowing user space to consume an unlimited
-> number unmovable/unmigratable allocations. We already have that in some
-> cases with huge pages (when the arch does not support migration) - but there
-> we can at least manage the consumption using the whole max/reserved/free/...
-> infrastructure. In addition, adding arch support for migration shouldn't be
-> too complicated.
+> I think secretmem behaves much more like longterm GUP right now
+> ("unmigratable", "lifetime controlled by user space", "cannot go on
+> CMA/ZONE_MOVABLE"). I'd either want to reasonably well control/limit it or
+> make it behave more like mlocked pages.
 
-Well, mlock is not too different here as well. Hugepages are arguably an
-easier model because it requires an explicit pre-configuration by an
-admin. Mlock doesn't have anything like that. Please also note that
-while mlock pages are migrateable by default, this is not the case in
-general because they can be configured to disalow migration to prevent
-from minor page faults as some workloads require that (e.g. RT).
-Another example is ramdisk or even tmpfs (with swap storage depleted or
-not configured). Both are PITA from the OOM POV but they are manageable
-if people are careful. If secretmem behaves along those existing models
-then we know what to expect at least.
+I thought I have already asked but I must have forgotten. Is there any
+actual reason why the memory is not movable? Timing attacks?
 -- 
 Michal Hocko
 SUSE Labs
