@@ -6,35 +6,35 @@ X-Spam-Status: No, score=-6.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
 	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AD494C433E0
-	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 18:19:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 77719C433E6
+	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 19:14:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7B143601FB
-	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 18:19:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 41FEB64E0A
+	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 19:14:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238017AbhBBSTJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 2 Feb 2021 13:19:09 -0500
-Received: from mail.kernel.org ([198.145.29.99]:57624 "EHLO mail.kernel.org"
+        id S239318AbhBBTN5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 2 Feb 2021 14:13:57 -0500
+Received: from mail.kernel.org ([198.145.29.99]:45758 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S238384AbhBBSQ5 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 2 Feb 2021 13:16:57 -0500
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 9084864F92;
-        Tue,  2 Feb 2021 18:15:52 +0000 (UTC)
+        id S231862AbhBBTLw (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 2 Feb 2021 14:11:52 -0500
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 47C6D64D87;
+        Tue,  2 Feb 2021 19:10:45 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1612289771;
-        bh=jExAi6+S0KhwmLELocI6wMJuzz/tLWY8R7yvg8v3kSM=;
+        s=k20201202; t=1612293066;
+        bh=Pzyl+wYYgvPCwgJ+GvBahmfBmshzS1gdeGZydw56C1k=;
         h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=EDgDXp2MRosyELVG93hsa2FWpra6U+O1s/wok5z4I/qOXv7rdUmjG2axPtMIvq+YN
-         yBgA8wcWgNGCYn0pW2zVsZsv3wcPZETui3XjKumHzFywKHgYsDnq+d0PEjUY80BQCe
-         IzesvjbDuB+UAqmSCfbvnjKvS7w0UCcntNSHwnveAp/98Y5aklQbVLZ5aIeTMaBtIb
-         Y2S9E4/e0RHCm573D5HvZcykwBcZPsiKWKBYdn9Gm25wRz155OpIc0oI5MY1vEx2Z5
-         y6k9c5Z7N9NTPpMQGOvaiK4lasHyvoskCgCDKMvmuqHqWSSfiiKO+c0UX4uuveVSEz
-         Bmm6b/PXs32Ig==
-Date:   Tue, 2 Feb 2021 20:15:46 +0200
+        b=urlxNYufSkfJp0SH0EEfwFzSeIYwXDdueMnyILwXIullWx4SbMoEerX80f5OQqyLU
+         Bg+fxp5cMzP5FzVAMlOPfjBauj+B1/aEKphaIK3R5lVLYCvCQesqrDIQmZvMjDXmNR
+         wmsGMRNi9ZfDbI6vAJ5p7VMbSsLj4nb8l1NhazBIB10phtLBckQ1cOU2nN3vTXLilS
+         uJtQ4CoJagfCIkQnsWqgtg/k3AnTkwWKwrvb5ozbBGjBggCHGi2zD+24ANJ5uL76kr
+         bEh+jPfAk+q1UtVeseCuM6MVzwqCxfVLsegGHFyjAVr0PWSO8yZEm61pbzlwU5cRc5
+         HnguLQxiFymVg==
+Date:   Tue, 2 Feb 2021 21:10:40 +0200
 From:   Mike Rapoport <rppt@kernel.org>
-To:     David Hildenbrand <david@redhat.com>
-Cc:     Michal Hocko <mhocko@suse.com>,
-        James Bottomley <jejb@linux.ibm.com>,
+To:     Michal Hocko <mhocko@suse.com>
+Cc:     James Bottomley <jejb@linux.ibm.com>,
+        David Hildenbrand <david@redhat.com>,
         Andrew Morton <akpm@linux-foundation.org>,
         Alexander Viro <viro@zeniv.linux.org.uk>,
         Andy Lutomirski <luto@kernel.org>,
@@ -68,61 +68,93 @@ Cc:     Michal Hocko <mhocko@suse.com>,
         Palmer Dabbelt <palmerdabbelt@google.com>
 Subject: Re: [PATCH v16 07/11] secretmem: use PMD-size pages to amortize
  direct map fragmentation
-Message-ID: <20210202181546.GO242749@kernel.org>
-References: <6de6b9f9c2d28eecc494e7db6ffbedc262317e11.camel@linux.ibm.com>
+Message-ID: <20210202191040.GP242749@kernel.org>
+References: <303f348d-e494-e386-d1f5-14505b5da254@redhat.com>
+ <20210126120823.GM827@dhcp22.suse.cz>
+ <20210128092259.GB242749@kernel.org>
+ <YBK1kqL7JA7NePBQ@dhcp22.suse.cz>
+ <73738cda43236b5ac2714e228af362b67a712f5d.camel@linux.ibm.com>
+ <YBPF8ETGBHUzxaZR@dhcp22.suse.cz>
+ <6de6b9f9c2d28eecc494e7db6ffbedc262317e11.camel@linux.ibm.com>
  <YBkcyQsky2scjEcP@dhcp22.suse.cz>
  <20210202124857.GN242749@kernel.org>
- <6653288a-dd02-f9de-ef6a-e8d567d71d53@redhat.com>
- <YBlUXdwV93xMIff6@dhcp22.suse.cz>
- <211f0214-1868-a5be-9428-7acfc3b73993@redhat.com>
- <YBlgCl8MQuuII22w@dhcp22.suse.cz>
- <d4fe580a-ef0e-e13f-9ee4-16fb8b6d65dd@redhat.com>
- <YBlicIupOyPF9f3D@dhcp22.suse.cz>
- <95625b83-f7e2-b27a-2b99-d231338047fb@redhat.com>
+ <YBlTMqjB06aqyGbT@dhcp22.suse.cz>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <95625b83-f7e2-b27a-2b99-d231338047fb@redhat.com>
+In-Reply-To: <YBlTMqjB06aqyGbT@dhcp22.suse.cz>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Feb 02, 2021 at 03:34:29PM +0100, David Hildenbrand wrote:
-> On 02.02.21 15:32, Michal Hocko wrote:
-> > On Tue 02-02-21 15:26:20, David Hildenbrand wrote:
-> > > On 02.02.21 15:22, Michal Hocko wrote:
-> > > > On Tue 02-02-21 15:12:21, David Hildenbrand wrote:
-> > > > [...]
-> > > > > I think secretmem behaves much more like longterm GUP right now
-> > > > > ("unmigratable", "lifetime controlled by user space", "cannot go on
-> > > > > CMA/ZONE_MOVABLE"). I'd either want to reasonably well control/limit it or
-> > > > > make it behave more like mlocked pages.
-> > > > 
-> > > > I thought I have already asked but I must have forgotten. Is there any
-> > > > actual reason why the memory is not movable? Timing attacks?
+On Tue, Feb 02, 2021 at 02:27:14PM +0100, Michal Hocko wrote:
+> On Tue 02-02-21 14:48:57, Mike Rapoport wrote:
+> > On Tue, Feb 02, 2021 at 10:35:05AM +0100, Michal Hocko wrote:
+> > > On Mon 01-02-21 08:56:19, James Bottomley wrote:
 > > > 
-> > > I think the reason is simple: no direct map, no copying of memory.
+> > > I have also proposed potential ways out of this. Either the pool is not
+> > > fixed sized and you make it a regular unevictable memory (if direct map
+> > > fragmentation is not considered a major problem)
 > > 
-> > This is an implementation detail though and not something terribly hard
-> > to add on top later on. I was more worried there would be really
-> > fundamental reason why this is not possible. E.g. security implications.
+> > I think that the direct map fragmentation is not a major problem, and the
+> > data we have confirms it, so I'd be more than happy to entirely drop the
+> > pool, allocate memory page by page and remove each page from the direct
+> > map. 
+> > 
+> > Still, we cannot prove negative and it could happen that there is a
+> > workload that would suffer a lot from the direct map fragmentation, so
+> > having a pool of large pages upfront is better than trying to fix it
+> > afterwards. As we get more confidence that the direct map fragmentation is
+> > not an issue as it is common to believe we may remove the pool altogether.
 > 
-> I don't remember all the details. Let's see what Mike thinks regarding
-> migration (e.g., security concerns).
+> I would drop the pool altogether and instantiate pages to the
+> unevictable LRU list and internally treat it as ramdisk/mlock so you
+> will get an accounting correctly. The feature should be still opt-in
+> (e.g. a kernel command line parameter) for now. The recent report by
+> Intel (http://lkml.kernel.org/r/213b4567-46ce-f116-9cdf-bbd0c884eb3c@linux.intel.com)
+> there is no clear win to have huge mappings in _general_ but there are
+> still workloads which benefit. 
+>  
+> > I think that using PMD_ORDER allocations for the pool with a fallback to
+> > order 0 will do the job, but unfortunately I doubt we'll reach a consensus
+> > about this because dogmatic beliefs are hard to shake...
+> 
+> If this is opt-in then those beliefs can be relaxed somehow. Long term
+> it makes a lot of sense to optimize for a better direct map management
+> but I do not think this is a hard requirement for an initial
+> implementation if it is not imposed to everybody by default.
+>
+> > A more restrictive possibility is to still use plain PMD_ORDER allocations
+> > to fill the pool, without relying on CMA. In this case there will be no
+> > global secretmem specific pool to exhaust, but then it's possible to drain
+> > high order free blocks in a system, so CMA has an advantage of limiting
+> > secretmem pools to certain amount of memory with somewhat higher
+> > probability for high order allocation to succeed. 
+> > 
+> > > or you need a careful access control 
+> > 
+> > Do you mind elaborating what do you mean by "careful access control"?
+> 
+> As already mentioned, a mechanism to control who can use this feature -
+> e.g. make it a special device which you can access control by
+> permissions or higher level security policies. But that is really needed
+> only if the pool is fixed sized.
+  
+Let me reiterate to make sure I don't misread your suggestion.
 
-Thanks for considering me a security expert :-)
+If we make secretmem an opt-in feature with, e.g. kernel parameter, the
+pooling of large pages is unnecessary. In this case there is no limited
+resource we need to protect because secretmem will allocate page by page.
 
-Yet, I cannot estimate how dangerous is the temporal exposure of
-this data to the kernel via the direct map in the simple map/copy/unmap
-sequence.
+Since there is no limited resource, we don't need special permissions
+to access secretmem so we can move forward with a system call that creates
+a mmapable file descriptor and save the hassle of a chardev.
 
-More secure way would be to map source and destination in a different page table
-rather than in the direct map, similarly to the way text_poke() on x86
-does.
+I cannot say I don't like this as it cuts roughly half of mm/secretmem.c :)
 
-I've left the migration callback empty for now because it can be added on
-top and its implementation would depend on the way we do (or do not do)
-pooling.
+But I must say I am still a bit concerned about that we have no provisions
+here for dealing with the direct map fragmentation even with the set goal
+to improve the direct map management in the long run...
 
 -- 
 Sincerely yours,
