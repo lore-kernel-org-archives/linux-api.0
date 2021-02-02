@@ -2,196 +2,224 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-23.2 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED,USER_IN_DEF_DKIM_WL autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D6904C43381
-	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 19:20:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5BCDBC433E0
+	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 22:14:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9D86964E45
-	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 19:20:29 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0B56864F7F
+	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 22:14:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239724AbhBBTUX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 2 Feb 2021 14:20:23 -0500
-Received: from mx0b-001b2d01.pphosted.com ([148.163.158.5]:56780 "EHLO
-        mx0a-001b2d01.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S237941AbhBBS5T (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 2 Feb 2021 13:57:19 -0500
-Received: from pps.filterd (m0098416.ppops.net [127.0.0.1])
-        by mx0b-001b2d01.pphosted.com (8.16.0.42/8.16.0.42) with SMTP id 112Iqm6i191657;
-        Tue, 2 Feb 2021 13:55:51 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=message-id : subject :
- from : reply-to : to : cc : date : in-reply-to : references : content-type
- : mime-version : content-transfer-encoding; s=pp1;
- bh=f9zxCUw4M03BQ4ynBUOKWIG13PioNXDzHmOyFa7Yr50=;
- b=tGajUAV7nYMnOgvJ5XNDB+HPM04G6aJ4uyjJERBKE6JseyoiPK4ybLmz+xUMeF8A3ZvV
- 9CfgO1s4p/sWRTklZ/KBtXbyyaPSzcfHlGVLfsiesYbCjVINSb+2+ZSghFuAtlP+5PYP
- 1tDcLnZhDFH4d67b0vpQDKhAQj5nPXzfzvVe2pWz6p1vmBP5dlo0H/g8bmWucwiktluQ
- 4dF2nFgI9gYwGl5wdHr2aEN9XgChXUJmOhGJKG7TPXfSW1tejjZNletMaQBAMopJusM2
- WhMHFRJU7YZhPmNPJYYNTpO+11nR6aUDaj7QMRSQAP9T67mCdO2bXla32F4Zi+GZHxSP dg== 
-Received: from pps.reinject (localhost [127.0.0.1])
-        by mx0b-001b2d01.pphosted.com with ESMTP id 36fcd60231-1
-        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-        Tue, 02 Feb 2021 13:55:51 -0500
-Received: from m0098416.ppops.net (m0098416.ppops.net [127.0.0.1])
-        by pps.reinject (8.16.0.36/8.16.0.36) with SMTP id 112Ir8MT196513;
-        Tue, 2 Feb 2021 13:55:51 -0500
-Received: from ppma01wdc.us.ibm.com (fd.55.37a9.ip4.static.sl-reverse.com [169.55.85.253])
-        by mx0b-001b2d01.pphosted.com with ESMTP id 36fcd6022n-1
-        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-        Tue, 02 Feb 2021 13:55:50 -0500
-Received: from pps.filterd (ppma01wdc.us.ibm.com [127.0.0.1])
-        by ppma01wdc.us.ibm.com (8.16.0.42/8.16.0.42) with SMTP id 112IkXHS016248;
-        Tue, 2 Feb 2021 18:55:50 GMT
-Received: from b03cxnp08026.gho.boulder.ibm.com (b03cxnp08026.gho.boulder.ibm.com [9.17.130.18])
-        by ppma01wdc.us.ibm.com with ESMTP id 36eyucmt0m-1
-        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-        Tue, 02 Feb 2021 18:55:49 +0000
-Received: from b03ledav004.gho.boulder.ibm.com (b03ledav004.gho.boulder.ibm.com [9.17.130.235])
-        by b03cxnp08026.gho.boulder.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 112ItlXY24641948
-        (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-        Tue, 2 Feb 2021 18:55:48 GMT
-Received: from b03ledav004.gho.boulder.ibm.com (unknown [127.0.0.1])
-        by IMSVA (Postfix) with ESMTP id E42A67805C;
-        Tue,  2 Feb 2021 18:55:47 +0000 (GMT)
-Received: from b03ledav004.gho.boulder.ibm.com (unknown [127.0.0.1])
-        by IMSVA (Postfix) with ESMTP id 6E0857805E;
-        Tue,  2 Feb 2021 18:55:41 +0000 (GMT)
-Received: from jarvis.int.hansenpartnership.com (unknown [9.85.153.205])
-        by b03ledav004.gho.boulder.ibm.com (Postfix) with ESMTP;
-        Tue,  2 Feb 2021 18:55:41 +0000 (GMT)
-Message-ID: <f26a17366194880d58e67d10cb5d7d7fdf2f3c19.camel@linux.ibm.com>
-Subject: Re: [PATCH v16 07/11] secretmem: use PMD-size pages to amortize
- direct map fragmentation
-From:   James Bottomley <jejb@linux.ibm.com>
-Reply-To: jejb@linux.ibm.com
-To:     Mike Rapoport <rppt@kernel.org>,
-        David Hildenbrand <david@redhat.com>
-Cc:     Michal Hocko <mhocko@suse.com>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        Andy Lutomirski <luto@kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Christopher Lameter <cl@linux.com>,
-        Dan Williams <dan.j.williams@intel.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Elena Reshetova <elena.reshetova@intel.com>,
-        "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,
-        "Kirill A. Shutemov" <kirill@shutemov.name>,
-        Matthew Wilcox <willy@infradead.org>,
-        Mark Rutland <mark.rutland@arm.com>,
-        Mike Rapoport <rppt@linux.ibm.com>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Palmer Dabbelt <palmer@dabbelt.com>,
-        Paul Walmsley <paul.walmsley@sifive.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Rick Edgecombe <rick.p.edgecombe@intel.com>,
-        Roman Gushchin <guro@fb.com>,
-        Shakeel Butt <shakeelb@google.com>,
-        Shuah Khan <shuah@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
-        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
-        linux-arm-kernel@lists.infradead.org,
-        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
-        linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
-        linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
-        x86@kernel.org, Hagen Paul Pfeifer <hagen@jauu.net>,
-        Palmer Dabbelt <palmerdabbelt@google.com>
-Date:   Tue, 02 Feb 2021 10:55:40 -0800
-In-Reply-To: <20210202181546.GO242749@kernel.org>
-References: <6de6b9f9c2d28eecc494e7db6ffbedc262317e11.camel@linux.ibm.com>
-         <YBkcyQsky2scjEcP@dhcp22.suse.cz> <20210202124857.GN242749@kernel.org>
-         <6653288a-dd02-f9de-ef6a-e8d567d71d53@redhat.com>
-         <YBlUXdwV93xMIff6@dhcp22.suse.cz>
-         <211f0214-1868-a5be-9428-7acfc3b73993@redhat.com>
-         <YBlgCl8MQuuII22w@dhcp22.suse.cz>
-         <d4fe580a-ef0e-e13f-9ee4-16fb8b6d65dd@redhat.com>
-         <YBlicIupOyPF9f3D@dhcp22.suse.cz>
-         <95625b83-f7e2-b27a-2b99-d231338047fb@redhat.com>
-         <20210202181546.GO242749@kernel.org>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.34.4 
+        id S232882AbhBBWNq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 2 Feb 2021 17:13:46 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42952 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S234212AbhBBWNj (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 2 Feb 2021 17:13:39 -0500
+Received: from mail-wr1-x430.google.com (mail-wr1-x430.google.com [IPv6:2a00:1450:4864:20::430])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6B724C0613ED
+        for <linux-api@vger.kernel.org>; Tue,  2 Feb 2021 14:12:58 -0800 (PST)
+Received: by mail-wr1-x430.google.com with SMTP id 7so22101226wrz.0
+        for <linux-api@vger.kernel.org>; Tue, 02 Feb 2021 14:12:58 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=xqP0a66Os6f9sXyF+kMsv13PEbv0LhzI8V6aeWIM0Ok=;
+        b=TPz3NwZfJQX2n8XN2IcK3GG1+YdjmSwEfCGkkfB/R3l9sej3bWUpfbAM6RCQCZ7zSg
+         wtMWuG93czJxsPaqc/vxVW5m5aofw7Xucq73fsummtWKzVU1OcRLPV1d4bpHrkbnQvc4
+         IGVMEw8sSzmZ9C62tJnk3nveiCu7uLVYsZYtvwViU06V6jZ65gHNw7E+q3Wxw3dk6eXe
+         z5op6gObDb+ORYEdWZ3w4BYU3o2SvM5AHHBAGBxccLb/WJ/Qhq7WY8qKqMIPltmMJ5MP
+         z66weUVMT+YCRplS4JltaxL/GEcdZbNO5Nz0syi3n8gD39XWVSSc8FUArjYvPDInNAiR
+         z2yg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=xqP0a66Os6f9sXyF+kMsv13PEbv0LhzI8V6aeWIM0Ok=;
+        b=mNqopaS9fpuSKRw16cG/a2acLFvJhNNrenWrUdoQS9JHmDUWRHAOif3g7olWbpcrEn
+         Ul47yzQbAgUMdk0ygJ5r6vAQ6DPc2lWQKkqq2f5NJqpHmirxUaRmWrKXtsbXxtTqtkzp
+         Tr/cGqb+i6bNdrGmpV7jNCF5TtLFzr6y/duVRkFEyl00W+2TAlLyYSyiICcFa2+B421c
+         NUWCszNKjzUOhnu6n36JU0SHmRlUnIQoOtxUuBpkMBPoKZyD7u1dy0nMKUFBhVTVOghS
+         yrWUu4cVQLrcAHdhjaGsf9DKrbXcMZPfP5k+9n6HNeshANm36M1jYU8OTY72oXJ+hZAc
+         rAXQ==
+X-Gm-Message-State: AOAM533njExQRU3IjFw52Ye6/vdwTz1tfQ8cjXqoAb5gjRGFXpEAmaqP
+        cc6mxYrXeQluhJfSdqrQffU06TUw+GM/+s4HpA40Fg==
+X-Google-Smtp-Source: ABdhPJzXdtevgSVe8n6EmjpNVas/jAjd+jbkaq+OR2OyjZFVqFMgbuoQU4zl5BsooeiKMks3pFo2re/Jz6z7ZkZVsLc=
+X-Received: by 2002:a5d:6884:: with SMTP id h4mr218812wru.106.1612303976784;
+ Tue, 02 Feb 2021 14:12:56 -0800 (PST)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-X-TM-AS-GCONF: 00
-X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.369,18.0.737
- definitions=2021-02-02_09:2021-02-02,2021-02-02 signatures=0
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 mlxscore=0 malwarescore=0
- bulkscore=0 spamscore=0 phishscore=0 adultscore=0 mlxlogscore=530
- clxscore=1015 suspectscore=0 lowpriorityscore=0 priorityscore=1501
- impostorscore=0 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.12.0-2009150000 definitions=main-2102020118
+References: <20210202053046.1653012-1-surenb@google.com> <079db245-a08c-0dbd-01d4-8065f533652e@gmail.com>
+In-Reply-To: <079db245-a08c-0dbd-01d4-8065f533652e@gmail.com>
+From:   Suren Baghdasaryan <surenb@google.com>
+Date:   Tue, 2 Feb 2021 14:12:45 -0800
+Message-ID: <CAJuCfpGotx_04Stn5Nw6Au+TVG9LuAJ=CB_s7uxjMLOLerw-GA@mail.gmail.com>
+Subject: Re: [PATCH v3 1/1] process_madvise.2: Add process_madvise man page
+To:     "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc:     linux-man <linux-man@vger.kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Jann Horn <jannh@google.com>,
+        Kees Cook <keescook@chromium.org>,
+        Jeffrey Vander Stoep <jeffv@google.com>,
+        Minchan Kim <minchan@kernel.org>,
+        Michal Hocko <mhocko@suse.com>,
+        Shakeel Butt <shakeelb@google.com>,
+        David Rientjes <rientjes@google.com>,
+        =?UTF-8?Q?Edgar_Arriaga_Garc=C3=ADa?= <edgararriaga@google.com>,
+        Tim Murray <timmurray@google.com>,
+        linux-mm <linux-mm@kvack.org>,
+        SElinux list <selinux@vger.kernel.org>,
+        linux-security-module <linux-security-module@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        kernel-team <kernel-team@android.com>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, 2021-02-02 at 20:15 +0200, Mike Rapoport wrote:
-> On Tue, Feb 02, 2021 at 03:34:29PM +0100, David Hildenbrand wrote:
-> > On 02.02.21 15:32, Michal Hocko wrote:
-> > > On Tue 02-02-21 15:26:20, David Hildenbrand wrote:
-> > > > On 02.02.21 15:22, Michal Hocko wrote:
-> > > > > On Tue 02-02-21 15:12:21, David Hildenbrand wrote:
-> > > > > [...]
-> > > > > > I think secretmem behaves much more like longterm GUP right
-> > > > > > now
-> > > > > > ("unmigratable", "lifetime controlled by user space",
-> > > > > > "cannot go on
-> > > > > > CMA/ZONE_MOVABLE"). I'd either want to reasonably well
-> > > > > > control/limit it or
-> > > > > > make it behave more like mlocked pages.
-> > > > > 
-> > > > > I thought I have already asked but I must have forgotten. Is
-> > > > > there any
-> > > > > actual reason why the memory is not movable? Timing attacks?
-> > > > 
-> > > > I think the reason is simple: no direct map, no copying of
-> > > > memory.
-> > > 
-> > > This is an implementation detail though and not something
-> > > terribly hard
-> > > to add on top later on. I was more worried there would be really
-> > > fundamental reason why this is not possible. E.g. security
-> > > implications.
-> > 
-> > I don't remember all the details. Let's see what Mike thinks
-> > regarding
-> > migration (e.g., security concerns).
-> 
-> Thanks for considering me a security expert :-)
-> 
-> Yet, I cannot estimate how dangerous is the temporal exposure of
-> this data to the kernel via the direct map in the simple
-> map/copy/unmap
-> sequence.
+Hi Michael,
 
-Well the safest security statement is that we never expose the data to
-the kernel because it's a very clean security statement and easy to
-enforce.  It's also the easiest threat model to analyse.   Once we do
-start exposing the secret to the kernel it alters the threat profile
-and the analysis and obviously potentially provides the ROP gadget to
-an attacker to do the same.  Instinct tells me that the loss of
-security doesn't really make up for the ability to swap or migrate but
-if there were a case for doing the latter, it would have to be a
-security policy of the user (i.e. a user should be able to decide their
-data is too sensitive to expose to the kernel).
+On Tue, Feb 2, 2021 at 2:45 AM Michael Kerrisk (man-pages)
+<mtk.manpages@gmail.com> wrote:
+>
+> Hello Suren (and Minchan and Michal)
+>
+> Thank you for the revisions!
+>
+> I've applied this patch, and done a few light edits.
 
-> More secure way would be to map source and destination in a different
-> page table rather than in the direct map, similarly to the way
-> text_poke() on x86 does.
+Thanks!
 
-I think doing this would have much less of an impact on the security
-posture because it's already theoretically possible to have kmap
-restore access to the kernel.
+>
+> However, I have a questions about undocumented pieces in *madvise(2)*,
+> as well as one other question. See below.
+>
+> On 2/2/21 6:30 AM, Suren Baghdasaryan wrote:
+> > Initial version of process_madvise(2) manual page. Initial text was
+> > extracted from [1], amended after fix [2] and more details added using
+> > man pages of madvise(2) and process_vm_read(2) as examples. It also
+> > includes the changes to required permission proposed in [3].
+> >
+> > [1] https://lore.kernel.org/patchwork/patch/1297933/
+> > [2] https://lkml.org/lkml/2020/12/8/1282
+> > [3] https://patchwork.kernel.org/project/selinux/patch/20210111170622.2613577-1-surenb@google.com/#23888311
+> >
+> > Signed-off-by: Suren Baghdasaryan <surenb@google.com>
+> > Reviewed-by: Michal Hocko <mhocko@suse.com>
+> > ---
+> > changes in v2:
+> > - Changed description of MADV_COLD per Michal Hocko's suggestion
+> > - Applied fixes suggested by Michael Kerrisk
+> > changes in v3:
+> > - Added Michal's Reviewed-by
+> > - Applied additional fixes suggested by Michael Kerrisk
+> >
+> > NAME
+> >     process_madvise - give advice about use of memory to a process
+> >
+> > SYNOPSIS
+> >     #include <sys/uio.h>
+> >
+> >     ssize_t process_madvise(int pidfd,
+> >                            const struct iovec *iovec,
+> >                            unsigned long vlen,
+> >                            int advice,
+> >                            unsigned int flags);
+> >
+> > DESCRIPTION
+> >     The process_madvise() system call is used to give advice or directions
+> >     to the kernel about the address ranges of another process or the calling
+> >     process. It provides the advice to the address ranges described by iovec
+> >     and vlen. The goal of such advice is to improve system or application
+> >     performance.
+> >
+> >     The pidfd argument is a PID file descriptor (see pidfd_open(2)) that
+> >     specifies the process to which the advice is to be applied.
+> >
+> >     The pointer iovec points to an array of iovec structures, defined in
+> >     <sys/uio.h> as:
+> >
+> >     struct iovec {
+> >         void  *iov_base;    /* Starting address */
+> >         size_t iov_len;     /* Number of bytes to transfer */
+> >     };
+> >
+> >     The iovec structure describes address ranges beginning at iov_base address
+> >     and with the size of iov_len bytes.
+> >
+> >     The vlen represents the number of elements in the iovec structure.
+> >
+> >     The advice argument is one of the values listed below.
+> >
+> >   Linux-specific advice values
+> >     The following Linux-specific advice values have no counterparts in the
+> >     POSIX-specified posix_madvise(3), and may or may not have counterparts
+> >     in the madvise(2) interface available on other implementations.
+> >
+> >     MADV_COLD (since Linux 5.4.1)
+>
+> I just noticed these version numbers now, and thought: they can't be
+> right (because the system call appeared only in v5.11). So I removed
+> them. But, of course in another sense the version numbers are (nearly)
+> right, since these advice values were added for madvise(2) in Linux 5.4.
+> However, they are not documented in the madvise(2) manual page. Is it
+> correct to assume that MADV_COLD and MADV_PAGEOUT have exactly the same
+> meaning in madvise(2) (but just for the calling process, of course)?
 
-James
+Correct. They should be added in the madvise(2) man page as well IMHO.
 
+>
+> >         Deactive a given range of pages which will make them a more probable
+>
+> I changed: s/Deactive/Deactivate/
 
-> I've left the migration callback empty for now because it can be
-> added on top and its implementation would depend on the way we do (or
-> do not do) pooling.
-> 
+thanks!
 
+>
+> >         reclaim target should there be a memory pressure. This is a
+> >         nondestructive operation. The advice might be ignored for some pages
+> >         in the range when it is not applicable.
+> >
+> >     MADV_PAGEOUT (since Linux 5.4.1)
+> >         Reclaim a given range of pages. This is done to free up memory occupied
+> >         by these pages. If a page is anonymous it will be swapped out. If a
+> >         page is file-backed and dirty it will be written back to the backing
+> >         storage. The advice might be ignored for some pages in the range when
+> >         it is not applicable.
+>
+> [...]
+>
+> >     The hint might be applied to a part of iovec if one of its elements points
+> >     to an invalid memory region in the remote process. No further elements will
+> >     be processed beyond that point.
+>
+> Is the above scenario the one that leads to the partial advice case described in
+> RETURN VALUE? If yes, perhaps I should add some words to make that clearer.
 
+Correct. This describes the case when partial advice happens.
+
+>
+> You can see the light edits that I made in
+> https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/commit/?id=e3ce016472a1b3ec5dffdeb23c98b9fef618a97b
+> and following that I restructured DESCRIPTION a little in
+> https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/commit/?id=3aac0708a9acee5283e091461de6a8410bc921a6
+
+The edits LGTM.
+Thanks,
+Suren.
+
+>
+> Thanks,
+>
+> Michael
+>
+>
+> --
+> Michael Kerrisk
+> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+> Linux/UNIX System Programming Training: http://man7.org/training/
