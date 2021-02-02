@@ -2,40 +2,47 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6679CC433E0
-	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 14:34:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 60B8BC433E0
+	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 14:46:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3169664DDC
-	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 14:34:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3156464F49
+	for <linux-api@archiver.kernel.org>; Tue,  2 Feb 2021 14:46:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234588AbhBBOde (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 2 Feb 2021 09:33:34 -0500
-Received: from mx2.suse.de ([195.135.220.15]:45390 "EHLO mx2.suse.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S234568AbhBBOdF (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 2 Feb 2021 09:33:05 -0500
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-        t=1612276338; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
+        id S232287AbhBBOqR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 2 Feb 2021 09:46:17 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:57754 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S234729AbhBBOoO (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 2 Feb 2021 09:44:14 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1612276967;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=ZY7R/A8eLGtcqtBTwPz4dc8E6975FZbZj6rab/rk/co=;
-        b=j08LbR+/N4gscwMe9/vv1y6TbSr6g+uI8Fvmd6aUiZN3eXaYwuKCYZD1LwoDENfRkxwGU0
-        412GY/gqoJEVKSXG9cJ4ADonbDGXxcU99oWydp5Rm3Y/nVMao0u9sPUOYRoKgo3QRhPEJy
-        MTJSdg+5u8XcNBah4K1e9Bay/Y5Jdaw=
-Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 7D39BAD78;
-        Tue,  2 Feb 2021 14:32:18 +0000 (UTC)
-Date:   Tue, 2 Feb 2021 15:32:16 +0100
-From:   Michal Hocko <mhocko@suse.com>
-To:     David Hildenbrand <david@redhat.com>
-Cc:     Mike Rapoport <rppt@kernel.org>,
-        James Bottomley <jejb@linux.ibm.com>,
-        Andrew Morton <akpm@linux-foundation.org>,
+        bh=p9WVcjtJGSRM6w7F2m39UE8iZCliMcHMPGNuV986qrI=;
+        b=ef9GhwY3hFIcy7iOGjbtV8vjQUSaeYExmUGYz9HkArUUr/BpmRXhg8/eFsQB699Vqn571q
+        rJ9KwgVwL6IjKXOrMQso4pJphTJqTnrnhhzrid0aRiuAu/xrEQb57x6WUSD4yI/f3Flx5u
+        6fyc2MvnbewCMWlkOvwZK1V9ep1yvW8=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-521-8AQi4yF_NHCuVEWiuakmOQ-1; Tue, 02 Feb 2021 09:42:42 -0500
+X-MC-Unique: 8AQi4yF_NHCuVEWiuakmOQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 46BB9184DBED;
+        Tue,  2 Feb 2021 14:42:36 +0000 (UTC)
+Received: from [10.36.114.148] (ovpn-114-148.ams2.redhat.com [10.36.114.148])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 36D6560916;
+        Tue,  2 Feb 2021 14:42:28 +0000 (UTC)
+To:     Michal Hocko <mhocko@suse.com>, Mike Rapoport <rppt@kernel.org>
+Cc:     Andrew Morton <akpm@linux-foundation.org>,
         Alexander Viro <viro@zeniv.linux.org.uk>,
         Andy Lutomirski <luto@kernel.org>,
         Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
@@ -45,6 +52,7 @@ Cc:     Mike Rapoport <rppt@kernel.org>,
         Dave Hansen <dave.hansen@linux.intel.com>,
         Elena Reshetova <elena.reshetova@intel.com>,
         "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,
+        James Bottomley <jejb@linux.ibm.com>,
         "Kirill A. Shutemov" <kirill@shutemov.name>,
         Matthew Wilcox <willy@infradead.org>,
         Mark Rutland <mark.rutland@arm.com>,
@@ -66,44 +74,73 @@ Cc:     Mike Rapoport <rppt@kernel.org>,
         linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
         x86@kernel.org, Hagen Paul Pfeifer <hagen@jauu.net>,
         Palmer Dabbelt <palmerdabbelt@google.com>
+References: <20210121122723.3446-1-rppt@kernel.org>
+ <20210121122723.3446-8-rppt@kernel.org> <20210126114657.GL827@dhcp22.suse.cz>
+ <303f348d-e494-e386-d1f5-14505b5da254@redhat.com>
+ <20210126120823.GM827@dhcp22.suse.cz> <20210128092259.GB242749@kernel.org>
+ <YBK1kqL7JA7NePBQ@dhcp22.suse.cz> <20210129072128.GD242749@kernel.org>
+ <YBPMg/C5Sb78gFEB@dhcp22.suse.cz>
+From:   David Hildenbrand <david@redhat.com>
+Organization: Red Hat GmbH
 Subject: Re: [PATCH v16 07/11] secretmem: use PMD-size pages to amortize
  direct map fragmentation
-Message-ID: <YBlicIupOyPF9f3D@dhcp22.suse.cz>
-References: <73738cda43236b5ac2714e228af362b67a712f5d.camel@linux.ibm.com>
- <YBPF8ETGBHUzxaZR@dhcp22.suse.cz>
- <6de6b9f9c2d28eecc494e7db6ffbedc262317e11.camel@linux.ibm.com>
- <YBkcyQsky2scjEcP@dhcp22.suse.cz>
- <20210202124857.GN242749@kernel.org>
- <6653288a-dd02-f9de-ef6a-e8d567d71d53@redhat.com>
- <YBlUXdwV93xMIff6@dhcp22.suse.cz>
- <211f0214-1868-a5be-9428-7acfc3b73993@redhat.com>
- <YBlgCl8MQuuII22w@dhcp22.suse.cz>
- <d4fe580a-ef0e-e13f-9ee4-16fb8b6d65dd@redhat.com>
+Message-ID: <f1f65516-e222-6543-aeae-9a1dc9920de8@redhat.com>
+Date:   Tue, 2 Feb 2021 15:42:26 +0100
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Thunderbird/78.5.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <d4fe580a-ef0e-e13f-9ee4-16fb8b6d65dd@redhat.com>
+In-Reply-To: <YBPMg/C5Sb78gFEB@dhcp22.suse.cz>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue 02-02-21 15:26:20, David Hildenbrand wrote:
-> On 02.02.21 15:22, Michal Hocko wrote:
-> > On Tue 02-02-21 15:12:21, David Hildenbrand wrote:
-> > [...]
-> > > I think secretmem behaves much more like longterm GUP right now
-> > > ("unmigratable", "lifetime controlled by user space", "cannot go on
-> > > CMA/ZONE_MOVABLE"). I'd either want to reasonably well control/limit it or
-> > > make it behave more like mlocked pages.
-> > 
-> > I thought I have already asked but I must have forgotten. Is there any
-> > actual reason why the memory is not movable? Timing attacks?
+On 29.01.21 09:51, Michal Hocko wrote:
+> On Fri 29-01-21 09:21:28, Mike Rapoport wrote:
+>> On Thu, Jan 28, 2021 at 02:01:06PM +0100, Michal Hocko wrote:
+>>> On Thu 28-01-21 11:22:59, Mike Rapoport wrote:
+>>>
+>>>> And hugetlb pools may be also depleted by anybody by calling
+>>>> mmap(MAP_HUGETLB) and there is no any limiting knob for this, while
+>>>> secretmem has RLIMIT_MEMLOCK.
+>>>
+>>> Yes it can fail. But it would fail at the mmap time when the reservation
+>>> fails. Not during the #PF time which can be at any time.
+>>
+>> It may fail at $PF time as well:
+>>
+>> hugetlb_fault()
+>>          hugeltb_no_page()
+>>                  ...
+>>                  alloc_huge_page()
+>>                          alloc_gigantic_page()
+>>                                  cma_alloc()
+>>                                          -ENOMEM;
 > 
-> I think the reason is simple: no direct map, no copying of memory.
+> I would have to double check. From what I remember cma allocator is an
+> optimization to increase chances to allocate hugetlb pages when
+> overcommiting because pages should be normally pre-allocated in the pool
+> and reserved during mmap time. But even if a hugetlb page is not pre
+> allocated then this will get propagated as SIGBUS unless that has
+> changed.
 
-This is an implementation detail though and not something terribly hard
-to add on top later on. I was more worried there would be really
-fundamental reason why this is not possible. E.g. security implications.
+It's an optimization to allocate gigantic pages dynamically later (so 
+not using memblock during boot). Not just for overcommit, but for any 
+kind of allocation.
+
+The actual allocation from cma should happen when setting nr_pages:
+
+nr_hugepages_store_common()->set_max_huge_pages()->alloc_pool_huge_page()...->alloc_gigantic_page()
+
+The path described above seems to be trying to overcommit gigantic 
+pages, something that can be expected to SIGBUS. Reservations are 
+handled via the pre-allocated pool.
+
 -- 
-Michal Hocko
-SUSE Labs
+Thanks,
+
+David / dhildenb
+
