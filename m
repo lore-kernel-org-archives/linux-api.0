@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E02FBC433E6
-	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 22:59:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0D9EDC4332E
+	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 22:59:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8F79B64F55
-	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 22:59:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B7C0E64F4D
+	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 22:59:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233342AbhBCW65 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 3 Feb 2021 17:58:57 -0500
+        id S233427AbhBCW7u (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 3 Feb 2021 17:59:50 -0500
 Received: from mga06.intel.com ([134.134.136.31]:30209 "EHLO mga06.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233278AbhBCW6X (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 3 Feb 2021 17:58:23 -0500
-IronPort-SDR: S1Eb9i95ZQHzjp9ltMM478aa4Izc0u/pXn53lhEWr+OT4lRP4QPsu+PnzXnzXrcynoPMnUunDU
- 2+G4U54M1bOg==
-X-IronPort-AV: E=McAfee;i="6000,8403,9884"; a="242642364"
+        id S233374AbhBCW7F (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 3 Feb 2021 17:59:05 -0500
+IronPort-SDR: VeNVPy6kvKALDIjW0Z46IE2sH4gQp+7R8drKks9UYH34YUB+6MBCCAm/7KD0iaCALJvKjfjhcS
+ 64A496iJSZig==
+X-IronPort-AV: E=McAfee;i="6000,8403,9884"; a="242642375"
 X-IronPort-AV: E=Sophos;i="5.79,399,1602572400"; 
-   d="scan'208";a="242642364"
+   d="scan'208";a="242642375"
 Received: from orsmga004.jf.intel.com ([10.7.209.38])
-  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 14:56:28 -0800
-IronPort-SDR: MG0TPj0ZcGBLtI9T9agKV0cyhUgx6EvkJccxzrdriFMk34TZS16NQ0XTyhY8s0UfhUaBALRUXy
- jWIt+XqaY5TQ==
+  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 14:56:32 -0800
+IronPort-SDR: XFN3R+LqN29Xr+OmlAZP1WoVol/lG42J0sf0PVyNPpaGNy/ZCw7QnZS6NVtgws5bft+HtM0IKK
+ fWukRC1ZJTRg==
 X-IronPort-AV: E=Sophos;i="5.79,399,1602572400"; 
-   d="scan'208";a="507921126"
+   d="scan'208";a="507921155"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga004-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 14:56:28 -0800
+  by orsmga004-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 14:56:32 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,9 +60,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v19 15/25] mm: Fixup places that call pte_mkwrite() directly
-Date:   Wed,  3 Feb 2021 14:55:37 -0800
-Message-Id: <20210203225547.32221-16-yu-cheng.yu@intel.com>
+Subject: [PATCH v19 21/25] x86/cet/shstk: Handle signals for shadow stack
+Date:   Wed,  3 Feb 2021 14:55:43 -0800
+Message-Id: <20210203225547.32221-22-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210203225547.32221-1-yu-cheng.yu@intel.com>
 References: <20210203225547.32221-1-yu-cheng.yu@intel.com>
@@ -72,85 +72,556 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-When serving a page fault, maybe_mkwrite() makes a PTE writable if it is in
-a writable vma.  A shadow stack vma is writable, but its PTEs need
-_PAGE_DIRTY to be set to become writable.  For this reason, maybe_mkwrite()
-has been updated.
+To deliver a signal, create a shadow stack restore token and put the token
+and the signal restorer address on the shadow stack.  For sigreturn, verify
+the token and restore from it the shadow stack pointer.
 
-There are a few places that call pte_mkwrite() directly, but effect the
-same result as from maybe_mkwrite().  These sites need to be updated for
-shadow stack as well.  Thus, change them to maybe_mkwrite():
+A shadow stack restore token marks a restore point of the shadow stack.
+The token is distinctively different from any shadow stack address.
+In sigreturn, restoring from a token ensures the target address is the
+location pointed by the token.
 
-- do_anonymous_page() and migrate_vma_insert_page() check VM_WRITE directly
-  and call pte_mkwrite(), which is the same as maybe_mkwrite().  Change
-  them to maybe_mkwrite().
+Introduce WRUSS, which is a kernel-mode instruction but writes directly to
+user shadow stack.  It is used to construct the user signal stack as
+described above.
 
-- In do_numa_page(), if the numa entry 'was-writable', then pte_mkwrite()
-  is called directly.  Fix it by doing maybe_mkwrite().
-
-- In change_pte_range(), pte_mkwrite() is called directly.  Replace it with
-  maybe_mkwrite().
-
-  A shadow stack vma is writable but has different vma
-flags, and handled accordingly in maybe_mkwrite().
+Currently there is no systematic facility for extending a signal context.
+Introduce a signal context extension 'struct sc_ext', which is used to save
+shadow stack restore token address and WAIT_ENDBR status.  WAIT_ENDBR will
+be introduced later in the Indirect Branch Tracking (IBT) series, but add
+that into sc_ext now to keep the struct stable in case the IBT series is
+applied later.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- mm/memory.c   | 5 ++---
- mm/migrate.c  | 3 +--
- mm/mprotect.c | 2 +-
- 3 files changed, 4 insertions(+), 6 deletions(-)
+ arch/x86/ia32/ia32_signal.c            |  17 +++
+ arch/x86/include/asm/cet.h             |   8 ++
+ arch/x86/include/asm/fpu/internal.h    |  10 ++
+ arch/x86/include/asm/special_insns.h   |  32 ++++++
+ arch/x86/include/uapi/asm/sigcontext.h |   9 ++
+ arch/x86/kernel/cet.c                  | 152 +++++++++++++++++++++++++
+ arch/x86/kernel/fpu/signal.c           | 100 ++++++++++++++++
+ arch/x86/kernel/signal.c               |  10 ++
+ 8 files changed, 338 insertions(+)
 
-diff --git a/mm/memory.c b/mm/memory.c
-index feff48e1465a..1de649c61013 100644
---- a/mm/memory.c
-+++ b/mm/memory.c
-@@ -3549,8 +3549,7 @@ static vm_fault_t do_anonymous_page(struct vm_fault *vmf)
+diff --git a/arch/x86/ia32/ia32_signal.c b/arch/x86/ia32/ia32_signal.c
+index 5e3d9b7fd5fb..377ae8de511f 100644
+--- a/arch/x86/ia32/ia32_signal.c
++++ b/arch/x86/ia32/ia32_signal.c
+@@ -35,6 +35,7 @@
+ #include <asm/sigframe.h>
+ #include <asm/sighandling.h>
+ #include <asm/smap.h>
++#include <asm/cet.h>
  
- 	entry = mk_pte(page, vma->vm_page_prot);
- 	entry = pte_sw_mkyoung(entry);
--	if (vma->vm_flags & VM_WRITE)
--		entry = pte_mkwrite(pte_mkdirty(entry));
-+	entry = maybe_mkwrite(pte_mkdirty(entry), vma);
+ static inline void reload_segments(struct sigcontext_32 *sc)
+ {
+@@ -205,6 +206,7 @@ static void __user *get_sigframe(struct ksignal *ksig, struct pt_regs *regs,
+ 				 void __user **fpstate)
+ {
+ 	unsigned long sp, fx_aligned, math_size;
++	void __user *restorer = NULL;
  
- 	vmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd, vmf->address,
- 			&vmf->ptl);
-@@ -4205,7 +4204,7 @@ static vm_fault_t do_numa_page(struct vm_fault *vmf)
- 	pte = pte_modify(old_pte, vma->vm_page_prot);
- 	pte = pte_mkyoung(pte);
- 	if (was_writable)
--		pte = pte_mkwrite(pte);
-+		pte = maybe_mkwrite(pte, vma);
- 	ptep_modify_prot_commit(vma, vmf->address, vmf->pte, old_pte, pte);
- 	update_mmu_cache(vma, vmf->address, vmf->pte);
+ 	/* Default to using normal stack */
+ 	sp = regs->sp;
+@@ -218,8 +220,23 @@ static void __user *get_sigframe(struct ksignal *ksig, struct pt_regs *regs,
+ 		 ksig->ka.sa.sa_restorer)
+ 		sp = (unsigned long) ksig->ka.sa.sa_restorer;
  
-diff --git a/mm/migrate.c b/mm/migrate.c
-index c0efe921bca5..8878d75c0db7 100644
---- a/mm/migrate.c
-+++ b/mm/migrate.c
-@@ -2964,8 +2964,7 @@ static void migrate_vma_insert_page(struct migrate_vma *migrate,
- 		}
- 	} else {
- 		entry = mk_pte(page, vma->vm_page_prot);
--		if (vma->vm_flags & VM_WRITE)
--			entry = pte_mkwrite(pte_mkdirty(entry));
-+		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
- 	}
++	if (ksig->ka.sa.sa_flags & SA_RESTORER) {
++		restorer = ksig->ka.sa.sa_restorer;
++	} else if (current->mm->context.vdso) {
++		if (ksig->ka.sa.sa_flags & SA_SIGINFO)
++			restorer = current->mm->context.vdso +
++				vdso_image_32.sym___kernel_rt_sigreturn;
++		else
++			restorer = current->mm->context.vdso +
++				vdso_image_32.sym___kernel_sigreturn;
++	}
++
+ 	sp = fpu__alloc_mathframe(sp, 1, &fx_aligned, &math_size);
+ 	*fpstate = (struct _fpstate_32 __user *) sp;
++
++	if (save_cet_to_sigframe(1, *fpstate, (unsigned long)restorer))
++		return (void __user *)-1L;
++
+ 	if (copy_fpstate_to_sigframe(*fpstate, (void __user *)fx_aligned,
+ 				     math_size) < 0)
+ 		return (void __user *) -1L;
+diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+index 5750fbcbb952..73435856ce54 100644
+--- a/arch/x86/include/asm/cet.h
++++ b/arch/x86/include/asm/cet.h
+@@ -6,6 +6,8 @@
+ #include <linux/types.h>
  
- 	ptep = pte_offset_map_lock(mm, pmdp, addr, &ptl);
-diff --git a/mm/mprotect.c b/mm/mprotect.c
-index ab709023e9aa..ed26e675c423 100644
---- a/mm/mprotect.c
-+++ b/mm/mprotect.c
-@@ -135,7 +135,7 @@ static unsigned long change_pte_range(struct vm_area_struct *vma, pmd_t *pmd,
- 			if (dirty_accountable && pte_dirty(ptent) &&
- 					(pte_soft_dirty(ptent) ||
- 					 !(vma->vm_flags & VM_SOFTDIRTY))) {
--				ptent = pte_mkwrite(ptent);
-+				ptent = maybe_mkwrite(ptent, vma);
- 			}
- 			ptep_modify_prot_commit(vma, addr, pte, oldpte, ptent);
- 			pages++;
+ struct task_struct;
++struct sc_ext;
++
+ /*
+  * Per-thread CET status
+  */
+@@ -18,9 +20,15 @@ struct cet_status {
+ int cet_setup_shstk(void);
+ void cet_disable_shstk(void);
+ void cet_free_shstk(struct task_struct *p);
++int cet_verify_rstor_token(bool ia32, unsigned long ssp, unsigned long *new_ssp);
++void cet_restore_signal(struct sc_ext *sc);
++int cet_setup_signal(bool ia32, unsigned long rstor, struct sc_ext *sc);
+ #else
+ static inline void cet_disable_shstk(void) {}
+ static inline void cet_free_shstk(struct task_struct *p) {}
++static inline void cet_restore_signal(struct sc_ext *sc) { return; }
++static inline int cet_setup_signal(bool ia32, unsigned long rstor,
++				   struct sc_ext *sc) { return -EINVAL; }
+ #endif
+ 
+ #endif /* __ASSEMBLY__ */
+diff --git a/arch/x86/include/asm/fpu/internal.h b/arch/x86/include/asm/fpu/internal.h
+index 8d33ad80704f..c1dedec2281b 100644
+--- a/arch/x86/include/asm/fpu/internal.h
++++ b/arch/x86/include/asm/fpu/internal.h
+@@ -443,6 +443,16 @@ static inline void copy_kernel_to_fpregs(union fpregs_state *fpstate)
+ 	__copy_kernel_to_fpregs(fpstate, -1);
+ }
+ 
++#ifdef CONFIG_X86_CET
++extern int save_cet_to_sigframe(int ia32, void __user *fp,
++				unsigned long restorer);
++#else
++static inline int save_cet_to_sigframe(int ia32, void __user *fp,
++				       unsigned long restorer)
++{
++	return 0;
++}
++#endif
+ extern int copy_fpstate_to_sigframe(void __user *buf, void __user *fp, int size);
+ 
+ /*
+diff --git a/arch/x86/include/asm/special_insns.h b/arch/x86/include/asm/special_insns.h
+index cc177b4431ae..d979d0deb3ae 100644
+--- a/arch/x86/include/asm/special_insns.h
++++ b/arch/x86/include/asm/special_insns.h
+@@ -234,6 +234,38 @@ static inline void clwb(volatile void *__p)
+ 		: [pax] "a" (p));
+ }
+ 
++#ifdef CONFIG_X86_CET
++#if defined(CONFIG_IA32_EMULATION) || defined(CONFIG_X86_X32)
++static inline int write_user_shstk_32(unsigned long addr, unsigned int val)
++{
++	asm_volatile_goto("1: wrussd %1, (%0)\n"
++			  _ASM_EXTABLE(1b, %l[fail])
++			  :: "r" (addr), "r" (val)
++			  :: fail);
++	return 0;
++fail:
++	return -EPERM;
++}
++#else
++static inline int write_user_shstk_32(unsigned long addr, unsigned int val)
++{
++	WARN_ONCE(1, "%s used but not supported.\n", __func__);
++	return -EFAULT;
++}
++#endif
++
++static inline int write_user_shstk_64(unsigned long addr, unsigned long val)
++{
++	asm_volatile_goto("1: wrussq %1, (%0)\n"
++			  _ASM_EXTABLE(1b, %l[fail])
++			  :: "r" (addr), "r" (val)
++			  :: fail);
++	return 0;
++fail:
++	return -EPERM;
++}
++#endif /* CONFIG_X86_CET */
++
+ #define nop() asm volatile ("nop")
+ 
+ static inline void serialize(void)
+diff --git a/arch/x86/include/uapi/asm/sigcontext.h b/arch/x86/include/uapi/asm/sigcontext.h
+index 844d60eb1882..cf2d55db3be4 100644
+--- a/arch/x86/include/uapi/asm/sigcontext.h
++++ b/arch/x86/include/uapi/asm/sigcontext.h
+@@ -196,6 +196,15 @@ struct _xstate {
+ 	/* New processor state extensions go here: */
+ };
+ 
++/*
++ * Located at the end of sigcontext->fpstate, aligned to 8.
++ */
++struct sc_ext {
++	unsigned long total_size;
++	unsigned long ssp;
++	unsigned long wait_endbr;
++};
++
+ /*
+  * The 32-bit signal frame:
+  */
+diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
+index f8b0a077594f..c3da4f59bd17 100644
+--- a/arch/x86/kernel/cet.c
++++ b/arch/x86/kernel/cet.c
+@@ -19,6 +19,8 @@
+ #include <asm/fpu/xstate.h>
+ #include <asm/fpu/types.h>
+ #include <asm/cet.h>
++#include <asm/special_insns.h>
++#include <uapi/asm/sigcontext.h>
+ 
+ static void start_update_msrs(void)
+ {
+@@ -72,6 +74,80 @@ static unsigned long alloc_shstk(unsigned long size, int flags)
+ 	return addr;
+ }
+ 
++#define TOKEN_MODE_MASK	3UL
++#define TOKEN_MODE_64	1UL
++#define IS_TOKEN_64(token) (((token) & TOKEN_MODE_MASK) == TOKEN_MODE_64)
++#define IS_TOKEN_32(token) (((token) & TOKEN_MODE_MASK) == 0)
++
++/*
++ * Verify the restore token at the address of 'ssp' is
++ * valid and then set shadow stack pointer according to the
++ * token.
++ */
++int cet_verify_rstor_token(bool ia32, unsigned long ssp,
++			   unsigned long *new_ssp)
++{
++	unsigned long token;
++
++	*new_ssp = 0;
++
++	if (!IS_ALIGNED(ssp, 8))
++		return -EINVAL;
++
++	if (get_user(token, (unsigned long __user *)ssp))
++		return -EFAULT;
++
++	/* Is 64-bit mode flag correct? */
++	if (!ia32 && !IS_TOKEN_64(token))
++		return -EINVAL;
++	else if (ia32 && !IS_TOKEN_32(token))
++		return -EINVAL;
++
++	token &= ~TOKEN_MODE_MASK;
++
++	/*
++	 * Restore address properly aligned?
++	 */
++	if ((!ia32 && !IS_ALIGNED(token, 8)) || !IS_ALIGNED(token, 4))
++		return -EINVAL;
++
++	/*
++	 * Token was placed properly?
++	 */
++	if (((ALIGN_DOWN(token, 8) - 8) != ssp) || (token >= TASK_SIZE_MAX))
++		return -EINVAL;
++
++	*new_ssp = token;
++	return 0;
++}
++
++/*
++ * Create a restore token on the shadow stack.
++ * A token is always 8-byte and aligned to 8.
++ */
++static int create_rstor_token(bool ia32, unsigned long ssp,
++			      unsigned long *new_ssp)
++{
++	unsigned long addr;
++
++	*new_ssp = 0;
++
++	if ((!ia32 && !IS_ALIGNED(ssp, 8)) || !IS_ALIGNED(ssp, 4))
++		return -EINVAL;
++
++	addr = ALIGN_DOWN(ssp, 8) - 8;
++
++	/* Is the token for 64-bit? */
++	if (!ia32)
++		ssp |= TOKEN_MODE_64;
++
++	if (write_user_shstk_64(addr, ssp))
++		return -EFAULT;
++
++	*new_ssp = addr;
++	return 0;
++}
++
+ int cet_setup_shstk(void)
+ {
+ 	unsigned long addr, size;
+@@ -145,3 +221,79 @@ void cet_free_shstk(struct task_struct *tsk)
+ 	cet->shstk_base = 0;
+ 	cet->shstk_size = 0;
+ }
++
++/*
++ * Called from __fpu__restore_sig() and XSAVES buffer is protected by
++ * set_thread_flag(TIF_NEED_FPU_LOAD) in the slow path.
++ */
++void cet_restore_signal(struct sc_ext *sc_ext)
++{
++	struct cet_user_state *cet_user_state;
++	struct cet_status *cet = &current->thread.cet;
++	u64 msr_val = 0;
++
++	if (!static_cpu_has(X86_FEATURE_SHSTK))
++		return;
++
++	cet_user_state = get_xsave_addr(&current->thread.fpu.state.xsave,
++					XFEATURE_CET_USER);
++	if (!cet_user_state)
++		return;
++
++	if (cet->shstk_size) {
++		if (test_thread_flag(TIF_NEED_FPU_LOAD))
++			cet_user_state->user_ssp = sc_ext->ssp;
++		else
++			wrmsrl(MSR_IA32_PL3_SSP, sc_ext->ssp);
++
++		msr_val |= CET_SHSTK_EN;
++	}
++
++	if (test_thread_flag(TIF_NEED_FPU_LOAD))
++		cet_user_state->user_cet = msr_val;
++	else
++		wrmsrl(MSR_IA32_U_CET, msr_val);
++}
++
++/*
++ * Setup the shadow stack for the signal handler: first,
++ * create a restore token to keep track of the current ssp,
++ * and then the return address of the signal handler.
++ */
++int cet_setup_signal(bool ia32, unsigned long rstor_addr, struct sc_ext *sc_ext)
++{
++	struct cet_status *cet = &current->thread.cet;
++	unsigned long ssp = 0, new_ssp = 0;
++	int err;
++
++	if (cet->shstk_size) {
++		if (!rstor_addr)
++			return -EINVAL;
++
++		ssp = cet_get_shstk_addr();
++		err = create_rstor_token(ia32, ssp, &new_ssp);
++		if (err)
++			return err;
++
++		if (ia32) {
++			ssp = new_ssp - sizeof(u32);
++			err = write_user_shstk_32(ssp, (unsigned int)rstor_addr);
++		} else {
++			ssp = new_ssp - sizeof(u64);
++			err = write_user_shstk_64(ssp, rstor_addr);
++		}
++
++		if (err)
++			return err;
++
++		sc_ext->ssp = new_ssp;
++	}
++
++	if (ssp) {
++		start_update_msrs();
++		wrmsrl(MSR_IA32_PL3_SSP, ssp);
++		end_update_msrs();
++	}
++
++	return 0;
++}
+diff --git a/arch/x86/kernel/fpu/signal.c b/arch/x86/kernel/fpu/signal.c
+index a4ec65317a7f..270e4649f435 100644
+--- a/arch/x86/kernel/fpu/signal.c
++++ b/arch/x86/kernel/fpu/signal.c
+@@ -52,6 +52,74 @@ static inline int check_for_xstate(struct fxregs_state __user *buf,
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_X86_CET
++int save_cet_to_sigframe(int ia32, void __user *fp, unsigned long restorer)
++{
++	int err = 0;
++
++	if (!current->thread.cet.shstk_size)
++		return 0;
++
++	if (fp) {
++		struct sc_ext ext = {};
++
++		err = cet_setup_signal(ia32, restorer, &ext);
++		if (!err) {
++			void __user *p = fp;
++
++			ext.total_size = sizeof(ext);
++
++			if (ia32)
++				p += sizeof(struct fregs_state);
++
++			p += fpu_user_xstate_size + FP_XSTATE_MAGIC2_SIZE;
++			p = (void __user *)ALIGN((unsigned long)p, 8);
++
++			if (copy_to_user(p, &ext, sizeof(ext)))
++				return -EFAULT;
++		}
++	}
++
++	return err;
++}
++
++static int get_cet_from_sigframe(int ia32, void __user *fp, struct sc_ext *ext)
++{
++	int err = 0;
++
++	memset(ext, 0, sizeof(*ext));
++
++	if (!current->thread.cet.shstk_size)
++		return 0;
++
++	if (fp) {
++		void __user *p = fp;
++
++		if (ia32)
++			p += sizeof(struct fregs_state);
++
++		p += fpu_user_xstate_size + FP_XSTATE_MAGIC2_SIZE;
++		p = (void __user *)ALIGN((unsigned long)p, 8);
++
++		if (copy_from_user(ext, p, sizeof(*ext)))
++			return -EFAULT;
++
++		if (ext->total_size != sizeof(*ext))
++			return -EFAULT;
++
++		if (current->thread.cet.shstk_size)
++			err = cet_verify_rstor_token(ia32, ext->ssp, &ext->ssp);
++	}
++
++	return err;
++}
++#else
++static int get_cet_from_sigframe(int ia32, void __user *fp, struct sc_ext *ext)
++{
++	return 0;
++}
++#endif
++
+ /*
+  * Signal frame handlers.
+  */
+@@ -295,6 +363,7 @@ static int __fpu__restore_sig(void __user *buf, void __user *buf_fx, int size)
+ 	struct task_struct *tsk = current;
+ 	struct fpu *fpu = &tsk->thread.fpu;
+ 	struct user_i387_ia32_struct env;
++	struct sc_ext sc_ext;
+ 	u64 user_xfeatures = 0;
+ 	int fx_only = 0;
+ 	int ret = 0;
+@@ -335,6 +404,10 @@ static int __fpu__restore_sig(void __user *buf, void __user *buf_fx, int size)
+ 	if ((unsigned long)buf_fx % 64)
+ 		fx_only = 1;
+ 
++	ret = get_cet_from_sigframe(ia32_fxstate, buf, &sc_ext);
++	if (ret)
++		return ret;
++
+ 	if (!ia32_fxstate) {
+ 		/*
+ 		 * Attempt to restore the FPU registers directly from user
+@@ -349,6 +422,8 @@ static int __fpu__restore_sig(void __user *buf, void __user *buf_fx, int size)
+ 		pagefault_enable();
+ 		if (!ret) {
+ 
++			cet_restore_signal(&sc_ext);
++
+ 			/*
+ 			 * Restore supervisor states: previous context switch
+ 			 * etc has done XSAVES and saved the supervisor states
+@@ -423,6 +498,8 @@ static int __fpu__restore_sig(void __user *buf, void __user *buf_fx, int size)
+ 		if (unlikely(init_bv))
+ 			copy_kernel_to_xregs(&init_fpstate.xsave, init_bv);
+ 
++		cet_restore_signal(&sc_ext);
++
+ 		/*
+ 		 * Restore previously saved supervisor xstates along with
+ 		 * copied-in user xstates.
+@@ -491,12 +568,35 @@ int fpu__restore_sig(void __user *buf, int ia32_frame)
+ 	return __fpu__restore_sig(buf, buf_fx, size);
+ }
+ 
++#ifdef CONFIG_X86_CET
++static unsigned long fpu__alloc_sigcontext_ext(unsigned long sp)
++{
++	struct cet_status *cet = &current->thread.cet;
++
++	/*
++	 * sigcontext_ext is at: fpu + fpu_user_xstate_size +
++	 * FP_XSTATE_MAGIC2_SIZE, then aligned to 8.
++	 */
++	if (cet->shstk_size)
++		sp -= (sizeof(struct sc_ext) + 8);
++
++	return sp;
++}
++#else
++static unsigned long fpu__alloc_sigcontext_ext(unsigned long sp)
++{
++	return sp;
++}
++#endif
++
+ unsigned long
+ fpu__alloc_mathframe(unsigned long sp, int ia32_frame,
+ 		     unsigned long *buf_fx, unsigned long *size)
+ {
+ 	unsigned long frame_size = xstate_sigframe_size();
+ 
++	sp = fpu__alloc_sigcontext_ext(sp);
++
+ 	*buf_fx = sp = round_down(sp - frame_size, 64);
+ 	if (ia32_frame && use_fxsr()) {
+ 		frame_size += sizeof(struct fregs_state);
+diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
+index ea794a083c44..1807379f1d86 100644
+--- a/arch/x86/kernel/signal.c
++++ b/arch/x86/kernel/signal.c
+@@ -46,6 +46,7 @@
+ #include <asm/syscall.h>
+ #include <asm/sigframe.h>
+ #include <asm/signal.h>
++#include <asm/cet.h>
+ 
+ #ifdef CONFIG_X86_64
+ /*
+@@ -239,6 +240,9 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
+ 	unsigned long buf_fx = 0;
+ 	int onsigstack = on_sig_stack(sp);
+ 	int ret;
++#ifdef CONFIG_X86_64
++	void __user *restorer = NULL;
++#endif
+ 
+ 	/* redzone */
+ 	if (IS_ENABLED(CONFIG_X86_64))
+@@ -270,6 +274,12 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
+ 	if (onsigstack && !likely(on_sig_stack(sp)))
+ 		return (void __user *)-1L;
+ 
++#ifdef CONFIG_X86_64
++	if (ka->sa.sa_flags & SA_RESTORER)
++		restorer = ka->sa.sa_restorer;
++	ret = save_cet_to_sigframe(0, *fpstate, (unsigned long)restorer);
++#endif
++
+ 	/* save i387 and extended state */
+ 	ret = copy_fpstate_to_sigframe(*fpstate, (void __user *)buf_fx, math_size);
+ 	if (ret < 0)
 -- 
 2.21.0
 
