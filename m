@@ -2,39 +2,38 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.4 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 06883C433DB
-	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 22:29:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DCA93C4332E
+	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 22:57:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C12A364F6B
-	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 22:29:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 973EA64E38
+	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 22:57:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232392AbhBCW3d (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 3 Feb 2021 17:29:33 -0500
-Received: from mga18.intel.com ([134.134.136.126]:44941 "EHLO mga18.intel.com"
+        id S233112AbhBCW5H (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 3 Feb 2021 17:57:07 -0500
+Received: from mga06.intel.com ([134.134.136.31]:30214 "EHLO mga06.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S232201AbhBCW3c (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 3 Feb 2021 17:29:32 -0500
-IronPort-SDR: qCnO0xfovv3BelUrCDlUnNmfqHusXdVcXEQsOE7kbiDRIjlXTDZ8+wNahfWg/PBR4Bm0s+gcgb
- ogZYZMEI+Rag==
-X-IronPort-AV: E=McAfee;i="6000,8403,9884"; a="168811528"
+        id S233041AbhBCW5F (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 3 Feb 2021 17:57:05 -0500
+IronPort-SDR: 8gOXCn0NxBCAsYUJVyVsgic26t+MXyInAHrPJmOzNOFNllnJE6ql5Lhwq0E20ouxcjXBpH9d1g
+ XZAXuWO0Xx/w==
+X-IronPort-AV: E=McAfee;i="6000,8403,9884"; a="242642345"
 X-IronPort-AV: E=Sophos;i="5.79,399,1602572400"; 
-   d="scan'208";a="168811528"
-Received: from orsmga003.jf.intel.com ([10.7.209.27])
-  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 14:28:48 -0800
-IronPort-SDR: teAHso16AhsuO/DSh9wwnpQvwEfuXc8bhQHU+KbBseRyIWT4j15au9I7BKs1vITYb4rh6MgfvA
- BREiF+xDa61g==
+   d="scan'208";a="242642345"
+Received: from orsmga004.jf.intel.com ([10.7.209.38])
+  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 14:56:21 -0800
+IronPort-SDR: g1jd367J7sV6rrs6JbWsrYk0gNRpGLSUXhTsMItYrviS22dxAcLQndxiZB6HpYCjtf4X7R8eL3
+ 3THZUlwP3hww==
 X-IronPort-AV: E=Sophos;i="5.79,399,1602572400"; 
-   d="scan'208";a="356920008"
-Received: from yyu32-mobl1.amr.corp.intel.com (HELO [10.212.43.162]) ([10.212.43.162])
-  by orsmga003-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 14:28:46 -0800
-Subject: Re: [PATCH v18 24/25] x86/cet/shstk: Add arch_prctl functions for
- shadow stack
-To:     Dave Hansen <dave.hansen@intel.com>, x86@kernel.org,
-        "H. Peter Anvin" <hpa@zytor.com>,
+   d="scan'208";a="507921055"
+Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
+  by orsmga004-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 14:56:20 -0800
+From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
+To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
         Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
         linux-doc@vger.kernel.org, linux-mm@kvack.org,
@@ -60,72 +59,77 @@ To:     Dave Hansen <dave.hansen@intel.com>, x86@kernel.org,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
-References: <20210127212524.10188-1-yu-cheng.yu@intel.com>
- <20210127212524.10188-25-yu-cheng.yu@intel.com>
- <ba39586d-25b6-6ea5-19c3-adf17b59f910@intel.com>
- <761ae8ce-0560-24cc-e6f7-684475cb3708@intel.com>
- <6720b1a9-f785-dbbd-1f0e-8c9090be2069@intel.com>
- <a7ef2df2-815f-9994-11b7-026afe45094f@intel.com>
-From:   "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
-Message-ID: <c68f0f9b-2e56-6ca6-511d-58acd3d96ff2@intel.com>
-Date:   Wed, 3 Feb 2021 14:28:45 -0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
- Thunderbird/78.7.0
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v19 02/25] x86/cet/shstk: Add Kconfig option for user-mode control-flow protection
+Date:   Wed,  3 Feb 2021 14:55:24 -0800
+Message-Id: <20210203225547.32221-3-yu-cheng.yu@intel.com>
+X-Mailer: git-send-email 2.21.0
+In-Reply-To: <20210203225547.32221-1-yu-cheng.yu@intel.com>
+References: <20210203225547.32221-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
-In-Reply-To: <a7ef2df2-815f-9994-11b7-026afe45094f@intel.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-US
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 2/3/2021 2:11 PM, Dave Hansen wrote:
-> On 2/3/21 1:54 PM, Yu, Yu-cheng wrote:
->> On 1/29/2021 10:56 AM, Yu, Yu-cheng wrote:
->>> On 1/29/2021 9:07 AM, Dave Hansen wrote:
->>>> On 1/27/21 1:25 PM, Yu-cheng Yu wrote:
->>>>> +    if (!IS_ENABLED(CONFIG_X86_CET))
->>>>> +        return -EOPNOTSUPP;
->>>>
->>>> Let's ignore glibc for a moment.  What error code *should* the kernel be
->>>> returning here?  errno(3) says:
->>>>
->>>>          EOPNOTSUPP      Operation not supported on socket (POSIX.1)
->>>> ...
->>>>          ENOTSUP         Operation not supported (POSIX.1)
->>>>
->>>
->>> Yeah, other places in kernel use ENOTSUPP.  This seems to be out of
->>> line.  And since the issue is long-existing, applications already know
->>> how to deal with it.  I should have made that argument.  Change it to
->>> ENOTSUPP.
->>
->> When I make the change, checkpatch says...
->>
->> WARNING: ENOTSUPP is not a SUSV4 error code, prefer EOPNOTSUPP
->> #128: FILE: arch/x86/kernel/cet_prctl.c:33:
->> +        return -ENOTSUPP;
->>
->> Do we want to reconsider?
-> 
-> I'm not sure I trust checkpatch over manpages.  I had to google "SUSV4".
->   I'm not sure it matters at *all* for a 100% Linux-specific interface.
-> 
-> ENOTSUPP does seem less popular lately:
-> 
->> $ git diff v5.0.. kernel/ arch/ drivers/ | grep ^+.*return.*E.*NO.*SUP.*\; | grep -o -- -E.*\; | sort | uniq -c | sort -n
->> ... noise
->>       61 -EOPNOTSUPP);
->>      260 -ENOTSUPP;
->>     1577 -EOPNOTSUPP;
-> 
-> but far from unused.  That might be due to checkpatch spew more than
-> anything.
-> 
+Shadow Stack provides protection against function return address
+corruption.  It is active when the processor supports it, the kernel has
+CONFIG_X86_CET enabled, and the application is built for the feature.
+This is only implemented for the 64-bit kernel.  When it is enabled, legacy
+non-Shadow Stack applications continue to work, but without protection.
 
-Maybe I will keep it ENOTSUPP for now.  If any logical reason should 
-come up, I will be happy to change it again.  Thanks!
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+---
+ arch/x86/Kconfig           | 22 ++++++++++++++++++++++
+ arch/x86/Kconfig.assembler |  5 +++++
+ 2 files changed, 27 insertions(+)
 
---
-Yu-cheng
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 21f851179ff0..074b3c0e6bf6 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1951,6 +1951,28 @@ config X86_SGX
+ 
+ 	  If unsure, say N.
+ 
++config ARCH_HAS_SHADOW_STACK
++	def_bool n
++
++config X86_CET
++	prompt "Intel Control-flow protection for user-mode"
++	def_bool n
++	depends on X86_64
++	depends on AS_WRUSS
++	select ARCH_USES_HIGH_VMA_FLAGS
++	select ARCH_HAS_SHADOW_STACK
++	help
++	  Control-flow protection is a set of hardware features which place
++	  additional restrictions on indirect branches.  These help
++	  mitigate ROP attacks.  Applications must be enabled to use it,
++	  and old userspace does not get protection "for free".
++	  Support for this feature is present on Tiger Lake family of
++	  processors released in 2020 or later.  Enabling this feature
++	  increases kernel text size by 3.7 KB.
++	  See Documentation/x86/intel_cet.rst for more information.
++
++	  If unsure, say N.
++
+ config EFI
+ 	bool "EFI runtime service support"
+ 	depends on ACPI
+diff --git a/arch/x86/Kconfig.assembler b/arch/x86/Kconfig.assembler
+index 26b8c08e2fc4..00c79dd93651 100644
+--- a/arch/x86/Kconfig.assembler
++++ b/arch/x86/Kconfig.assembler
+@@ -19,3 +19,8 @@ config AS_TPAUSE
+ 	def_bool $(as-instr,tpause %ecx)
+ 	help
+ 	  Supported by binutils >= 2.31.1 and LLVM integrated assembler >= V7
++
++config AS_WRUSS
++	def_bool $(as-instr,wrussq %rax$(comma)(%rbx))
++	help
++	  Supported by binutils >= 2.31 and LLVM integrated assembler
+-- 
+2.21.0
+
