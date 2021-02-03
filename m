@@ -2,111 +2,101 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.9 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EF4ECC43381
-	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 16:04:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E0CBC433E0
+	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 17:28:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C8A6F64F92
-	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 16:04:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2668264F4B
+	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 17:28:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234663AbhBCQE2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 3 Feb 2021 11:04:28 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47484 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234792AbhBCQEV (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Feb 2021 11:04:21 -0500
-Received: from mail-pf1-x429.google.com (mail-pf1-x429.google.com [IPv6:2607:f8b0:4864:20::429])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 83D78C0613D6
-        for <linux-api@vger.kernel.org>; Wed,  3 Feb 2021 08:03:24 -0800 (PST)
-Received: by mail-pf1-x429.google.com with SMTP id y142so127528pfb.3
-        for <linux-api@vger.kernel.org>; Wed, 03 Feb 2021 08:03:24 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=osandov-com.20150623.gappssmtp.com; s=20150623;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=0gWBL/eKNx2OZCYn91QXaSCmyWxGaTKIKa0SQUOL4Rc=;
-        b=Y5qhogWEOYyCzqiRESQmo9Q3Ipm48K2LCotJy/xfds2wvGrnQkdRKBN9iI/eejSwSV
-         KZoZL8wkgzoNklDUUs9M4GMfLypJ2BHPpocs4447qwjUSD19E+s9p8+CZYLsN8wkGR6d
-         B9vxNJcTN2kto+15lSFEfioKxTTpAtQoxoqzW0NqCFZq1GU6eXtul4mI+LerA92QCvN+
-         b6L19l+6mROViWz9PWHe3kH3I1BLmiE3tL+x40WWOEtozyQiJ8kYX3t2HO3ydEQeQIVs
-         pGdTadpT6ILGFm/FZHvBhZb7IIIy7jlfckzB73sW2HNH3ed5AftaRqAL/p/6CGyLzkgR
-         ywKw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=0gWBL/eKNx2OZCYn91QXaSCmyWxGaTKIKa0SQUOL4Rc=;
-        b=OaD2mSd9SB+6lpoxTLnn/fninmA8ppkHoDpDrN6JbwyhX7d3rt78LYNLwnEyRyFLqn
-         EYFdbE4Miugyudxd75maf4CwuCWKjALLUh+m12qWO3MI9qvO/vMKHrgJj2SsBfvfRaZz
-         I5MuUNgtJ++JNdOXy9WulmglaKRBdmqHyxdp6J431ZE0Fa/eaVTNC40KrcOY+oTAPg9d
-         ekg/n9tQqCTXVagerJtI4nbzRgcW4MVQTLWPaDmcVjNUE6A8DlAOFH+W739zlSTlEC+j
-         FD+oTi9n/ZunJgf6XmrI+N0DrT14HkvDXcRXC8KmBQ+7Ug0cVCwa2/WvROsVhMzTKz+F
-         d1tA==
-X-Gm-Message-State: AOAM5319G4H+AquOXnQ9Fq7Kwm42363kcEL9S1H1eYvmEMvaxQ+fAzbO
-        Bjp61neLpyIxNNdtz+KMLe1NHw==
-X-Google-Smtp-Source: ABdhPJyb1dkIJejo7I2tX9/WXWn6AAkQ+Fo3iGdanmapXAiFMejRbp30LA0FxNkd342pnC6IgB2Bbg==
-X-Received: by 2002:a63:1863:: with SMTP id 35mr4418013pgy.191.1612368203947;
-        Wed, 03 Feb 2021 08:03:23 -0800 (PST)
-Received: from relinquished.localdomain ([2620:10d:c090:400::5:1510])
-        by smtp.gmail.com with ESMTPSA id 21sm2573808pfu.136.2021.02.03.08.03.21
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 03 Feb 2021 08:03:22 -0800 (PST)
-Date:   Wed, 3 Feb 2021 08:03:20 -0800
-From:   Omar Sandoval <osandov@osandov.com>
-To:     Josef Bacik <josef@toxicpanda.com>
-Cc:     linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Christoph Hellwig <hch@infradead.org>,
-        Dave Chinner <david@fromorbit.com>,
-        Jann Horn <jannh@google.com>,
-        Amir Goldstein <amir73il@gmail.com>,
-        Aleksa Sarai <cyphar@cyphar.com>, linux-api@vger.kernel.org,
-        kernel-team@fb.com
-Subject: Re: [PATCH v7 00/10] fs: interface for directly reading/writing
- compressed data
-Message-ID: <YBrJSFURu8TUIzCU@relinquished.localdomain>
-References: <cover.1611346706.git.osandov@fb.com>
- <7ce164cd-e849-80d8-3d9e-8a9987dc3ad9@toxicpanda.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <7ce164cd-e849-80d8-3d9e-8a9987dc3ad9@toxicpanda.com>
+        id S232263AbhBCR2G (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 3 Feb 2021 12:28:06 -0500
+Received: from mga06.intel.com ([134.134.136.31]:4059 "EHLO mga06.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S231486AbhBCR2C (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 3 Feb 2021 12:28:02 -0500
+IronPort-SDR: cUZWd+DWcbV5kdFuQIuq54M/wUx1AUi4FaqxNfMTttYlo+71DV17ONXO/mW12DoA5HDM46GgwR
+ 5VwlRZSmjNdg==
+X-IronPort-AV: E=McAfee;i="6000,8403,9884"; a="242592377"
+X-IronPort-AV: E=Sophos;i="5.79,399,1602572400"; 
+   d="scan'208";a="242592377"
+Received: from fmsmga004.fm.intel.com ([10.253.24.48])
+  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 09:27:21 -0800
+IronPort-SDR: Zai1BmQvbq3jyby+nkQruNCl9QuP/uC4qAGcVTVQo34i1MgpLZsnPeBoV6Ssqizf3Lw9tsF2t2
+ HeiWMdRh3u1g==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.79,399,1602572400"; 
+   d="scan'208";a="406723661"
+Received: from chang-linux-3.sc.intel.com ([172.25.66.175])
+  by fmsmga004.fm.intel.com with ESMTP; 03 Feb 2021 09:27:20 -0800
+From:   "Chang S. Bae" <chang.seok.bae@intel.com>
+To:     bp@suse.de, tglx@linutronix.de, mingo@kernel.org, luto@kernel.org,
+        x86@kernel.org
+Cc:     len.brown@intel.com, dave.hansen@intel.com, hjl.tools@gmail.com,
+        Dave.Martin@arm.com, jannh@google.com, mpe@ellerman.id.au,
+        carlos@redhat.com, tony.luck@intel.com, ravi.v.shankar@intel.com,
+        libc-alpha@sourceware.org, linux-arch@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-kernel@vger.kernel.org,
+        chang.seok.bae@intel.com, linux-arm-kernel@lists.infradead.org
+Subject: [PATCH v5 1/5] uapi: Move the aux vector AT_MINSIGSTKSZ define to uapi
+Date:   Wed,  3 Feb 2021 09:22:38 -0800
+Message-Id: <20210203172242.29644-2-chang.seok.bae@intel.com>
+X-Mailer: git-send-email 2.17.1
+In-Reply-To: <20210203172242.29644-1-chang.seok.bae@intel.com>
+References: <20210203172242.29644-1-chang.seok.bae@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Jan 29, 2021 at 11:32:06AM -0500, Josef Bacik wrote:
-> On 1/22/21 3:46 PM, Omar Sandoval wrote:
-> > From: Omar Sandoval <osandov@fb.com>
-> > 
-> > This series adds an API for reading compressed data on a filesystem
-> > without decompressing it as well as support for writing compressed data
-> > directly to the filesystem. As with the previous submissions, I've
-> > included a man page patch describing the API. I have test cases
-> > (including fsstress support) and example programs which I'll send up
-> > [1].
-> > 
-> > The main use-case is Btrfs send/receive: currently, when sending data
-> > from one compressed filesystem to another, the sending side decompresses
-> > the data and the receiving side recompresses it before writing it out.
-> > This is wasteful and can be avoided if we can just send and write
-> > compressed extents. The patches implementing the send/receive support
-> > will be sent shortly.
-> > 
-> > Patches 1-3 add the VFS support and UAPI. Patch 4 is a fix that this
-> > series depends on; it can be merged independently. Patches 5-8 are Btrfs
-> > prep patches. Patch 9 adds Btrfs encoded read support and patch 10 adds
-> > Btrfs encoded write support.
-> > 
-> > These patches are based on Dave Sterba's Btrfs misc-next branch [2],
-> > which is in turn currently based on v5.11-rc4.
-> > 
-> 
-> Is everybody OK with this?  Al?  I would like to go ahead and get this
-> merged for the next merge window as long as everybody is OK with it, as it's
-> blocking a fair bit of BTRFS work.  Thanks,
+Move the AT_MINSIGSTKSZ definition to generic Linux from arm64. It is
+already used as generic ABI in glibc's generic elf.h, and this move will
+prevent future namespace conflicts. In particular, x86 will re-use this
+generic definition.
 
-Ping. Al, Christoph, any thoughts?
+Signed-off-by: Chang S. Bae <chang.seok.bae@intel.com>
+Reviewed-by: Len Brown <len.brown@intel.com>
+Cc: Carlos O'Donell <carlos@redhat.com>
+Cc: Dave Martin <Dave.Martin@arm.com>
+Cc: libc-alpha@sourceware.org
+Cc: linux-arch@vger.kernel.org
+Cc: linux-api@vger.kernel.org
+Cc: linux-arm-kernel@lists.infradead.org
+Cc: linux-kernel@vger.kernel.org
+---
+Change from v4:
+* Added as a new patch (Carlos O'Donell)
+---
+ arch/arm64/include/uapi/asm/auxvec.h | 1 -
+ include/uapi/linux/auxvec.h          | 1 +
+ 2 files changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm64/include/uapi/asm/auxvec.h b/arch/arm64/include/uapi/asm/auxvec.h
+index 743c0b84fd30..767d710c92aa 100644
+--- a/arch/arm64/include/uapi/asm/auxvec.h
++++ b/arch/arm64/include/uapi/asm/auxvec.h
+@@ -19,7 +19,6 @@
+ 
+ /* vDSO location */
+ #define AT_SYSINFO_EHDR	33
+-#define AT_MINSIGSTKSZ	51	/* stack needed for signal delivery */
+ 
+ #define AT_VECTOR_SIZE_ARCH 2 /* entries in ARCH_DLINFO */
+ 
+diff --git a/include/uapi/linux/auxvec.h b/include/uapi/linux/auxvec.h
+index abe5f2b6581b..cc4fa77bd2a7 100644
+--- a/include/uapi/linux/auxvec.h
++++ b/include/uapi/linux/auxvec.h
+@@ -33,5 +33,6 @@
+ 
+ #define AT_EXECFN  31	/* filename of program */
+ 
++#define AT_MINSIGSTKSZ	51	/* stack needed for signal delivery  */
+ 
+ #endif /* _UAPI_LINUX_AUXVEC_H */
+-- 
+2.17.1
+
