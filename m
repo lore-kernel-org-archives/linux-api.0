@@ -2,36 +2,36 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AC706C433E0
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9A6EEC433DB
 	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 23:13:37 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6DD2A64F59
+	by mail.kernel.org (Postfix) with ESMTP id 4A3D164E4E
 	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 23:13:37 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233317AbhBCXMw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 3 Feb 2021 18:12:52 -0500
-Received: from mga06.intel.com ([134.134.136.31]:30220 "EHLO mga06.intel.com"
+        id S233469AbhBCXMx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 3 Feb 2021 18:12:53 -0500
+Received: from mga09.intel.com ([134.134.136.24]:18999 "EHLO mga09.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S232705AbhBCXAy (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 3 Feb 2021 18:00:54 -0500
-IronPort-SDR: hThtpYpuSJz8slIfCtY7DvNr95B3LLRc/zWc9fNDtsMmwBDqmZosz/MDFi/pc+57jqxf45i52V
- 9B/+cDyB1csw==
-X-IronPort-AV: E=McAfee;i="6000,8403,9884"; a="242642702"
+        id S233484AbhBCXAg (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 3 Feb 2021 18:00:36 -0500
+IronPort-SDR: q6yeBnW0TVPKURu5OqXBYgoZuNibVud/LzKVInEW/Z6wnWphs31dtAqhwQRVGfFuJmjTb8i7Rj
+ hEzG1TkIZpng==
+X-IronPort-AV: E=McAfee;i="6000,8403,9884"; a="181275677"
 X-IronPort-AV: E=Sophos;i="5.79,399,1602572400"; 
-   d="scan'208";a="242642702"
+   d="scan'208";a="181275677"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 14:59:38 -0800
-IronPort-SDR: hx/sv+fJRtZ5QlGY5kFKvcySAuSP0UPNqq299J1O2GMWLXV4+0uJYBmOB0IMZRgYsvkenge9h+
- djOrG2bUyhVQ==
+  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 14:59:43 -0800
+IronPort-SDR: HKyLgSeePrWa9UUvtrIEA/AJaKsT0VkROxeCWAPLsUYgTiJDmXCLhNurah2ITnFnhc+m8++NQH
+ xpPyd3dLjJbg==
 X-IronPort-AV: E=Sophos;i="5.79,399,1602572400"; 
-   d="scan'208";a="392697926"
+   d="scan'208";a="392698034"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 14:59:37 -0800
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 14:59:42 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,56 +60,47 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v19 0/7] Control-flow Enforcement: Indirect Branch Tracking
-Date:   Wed,  3 Feb 2021 14:58:55 -0800
-Message-Id: <20210203225902.479-1-yu-cheng.yu@intel.com>
+Subject: [PATCH v19 7/7] x86/vdso: Insert endbr32/endbr64 to vDSO
+Date:   Wed,  3 Feb 2021 14:59:02 -0800
+Message-Id: <20210203225902.479-8-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
+In-Reply-To: <20210203225902.479-1-yu-cheng.yu@intel.com>
+References: <20210203225902.479-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Control-flow Enforcement (CET) is a new Intel processor feature that blocks
-return/jump-oriented programming attacks.  Details are in "Intel 64 and
-IA-32 Architectures Software Developer's Manual" [1].
+From: "H.J. Lu" <hjl.tools@gmail.com>
 
-This is the second part of CET and enables Indirect Branch Tracking (IBT).
-It is built on top of the shadow stack series.
+When Indirect Branch Tracking (IBT) is enabled, vDSO functions may be
+called indirectly, and must have ENDBR32 or ENDBR64 as the first
+instruction.  The compiler must support -fcf-protection=branch so that it
+can be used to compile vDSO.
 
-This version has no changes from v18.  It is being re-sent as v19 to
-synchronize with the shadow stack series v19.
+Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Acked-by: Andy Lutomirski <luto@kernel.org>
+---
+ arch/x86/entry/vdso/Makefile | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-[1] Intel 64 and IA-32 Architectures Software Developer's Manual:
-
-    https://software.intel.com/en-us/download/intel-64-and-ia-32-
-    architectures-sdm-combined-volumes-1-2a-2b-2c-2d-3a-3b-3c-3d-and-4
-
-[2] Indirect Branch Tracking patches v18:
-
-    https://lkml.kernel.org/r/20210127213028.11362-1-yu-cheng.yu@intel.com/
-
-H.J. Lu (3):
-  x86/cet/ibt: Update arch_prctl functions for Indirect Branch Tracking
-  x86/vdso/32: Add ENDBR32 to __kernel_vsyscall entry point
-  x86/vdso: Insert endbr32/endbr64 to vDSO
-
-Yu-cheng Yu (4):
-  x86/cet/ibt: Update Kconfig for user-mode Indirect Branch Tracking
-  x86/cet/ibt: User-mode Indirect Branch Tracking support
-  x86/cet/ibt: Handle signals for Indirect Branch Tracking
-  x86/cet/ibt: Update ELF header parsing for Indirect Branch Tracking
-
- arch/x86/Kconfig                         |  1 +
- arch/x86/entry/vdso/Makefile             |  4 ++
- arch/x86/entry/vdso/vdso32/system_call.S |  3 ++
- arch/x86/include/asm/cet.h               |  3 ++
- arch/x86/kernel/cet.c                    | 60 +++++++++++++++++++++++-
- arch/x86/kernel/cet_prctl.c              |  5 ++
- arch/x86/kernel/fpu/signal.c             |  8 ++--
- arch/x86/kernel/process_64.c             |  8 ++++
- 8 files changed, 87 insertions(+), 5 deletions(-)
-
+diff --git a/arch/x86/entry/vdso/Makefile b/arch/x86/entry/vdso/Makefile
+index 02e3e42f380b..ff7b56feb5c3 100644
+--- a/arch/x86/entry/vdso/Makefile
++++ b/arch/x86/entry/vdso/Makefile
+@@ -93,6 +93,10 @@ endif
+ 
+ $(vobjs): KBUILD_CFLAGS := $(filter-out $(GCC_PLUGINS_CFLAGS) $(RETPOLINE_CFLAGS),$(KBUILD_CFLAGS)) $(CFL)
+ 
++ifdef CONFIG_X86_CET
++$(vobjs) $(vobjs32): KBUILD_CFLAGS += -fcf-protection=branch
++endif
++
+ #
+ # vDSO code runs in userspace and -pg doesn't help with profiling anyway.
+ #
 -- 
 2.21.0
 
