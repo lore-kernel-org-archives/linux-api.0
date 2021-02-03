@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4451FC4332E
-	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 23:04:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 358CDC433E0
+	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 23:04:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1A94564F6A
-	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 23:04:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id F30C864F6D
+	for <linux-api@archiver.kernel.org>; Wed,  3 Feb 2021 23:04:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233305AbhBCXDw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 3 Feb 2021 18:03:52 -0500
-Received: from mga06.intel.com ([134.134.136.31]:30209 "EHLO mga06.intel.com"
+        id S233165AbhBCXDv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 3 Feb 2021 18:03:51 -0500
+Received: from mga06.intel.com ([134.134.136.31]:30220 "EHLO mga06.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233591AbhBCXCx (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        id S233157AbhBCXCx (ORCPT <rfc822;linux-api@vger.kernel.org>);
         Wed, 3 Feb 2021 18:02:53 -0500
-IronPort-SDR: OPZnYxQSa7Pnw+FnPjW2tcVWOILEwTnZvvuUeHZmWk2E6i0HHm8x0dC29E8dxxJQXaZ0qd6Y7H
- PeTtR370s/7A==
-X-IronPort-AV: E=McAfee;i="6000,8403,9884"; a="242642710"
+IronPort-SDR: SBzl8aXVANiy1lQmn302OVWFLy8DyPzAMm0PUKGa1slqdWWi12JJ4Ke5jn3SQZ90cIuqcI53Cl
+ SUj5/mh9xoeA==
+X-IronPort-AV: E=McAfee;i="6000,8403,9884"; a="242642707"
 X-IronPort-AV: E=Sophos;i="5.79,399,1602572400"; 
-   d="scan'208";a="242642710"
+   d="scan'208";a="242642707"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 14:59:43 -0800
-IronPort-SDR: 0Bj1lQC6b8Istb399+hTMKe8nEFRobb64fLPwc9AmnvWaLrvsox0jAgg1z1V4SqkWipBKrbAv3
- e2sxyOZTwh4Q==
+  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 14:59:40 -0800
+IronPort-SDR: TGFoUaMsOFuCFEgxdK8XDmA6J3gkt3dSCanTykd3nZBbVQLzM9vg7vskAt+4Orhi6OWPH3KxpI
+ 6StdlhdgUCJg==
 X-IronPort-AV: E=Sophos;i="5.79,399,1602572400"; 
-   d="scan'208";a="392698020"
+   d="scan'208";a="392697979"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 14:59:42 -0800
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2021 14:59:39 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,9 +60,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v19 6/7] x86/vdso/32: Add ENDBR32 to __kernel_vsyscall entry point
-Date:   Wed,  3 Feb 2021 14:59:01 -0800
-Message-Id: <20210203225902.479-7-yu-cheng.yu@intel.com>
+Subject: [PATCH v19 4/7] x86/cet/ibt: Update ELF header parsing for Indirect Branch Tracking
+Date:   Wed,  3 Feb 2021 14:58:59 -0800
+Message-Id: <20210203225902.479-5-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210203225902.479-1-yu-cheng.yu@intel.com>
 References: <20210203225902.479-1-yu-cheng.yu@intel.com>
@@ -72,31 +72,34 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: "H.J. Lu" <hjl.tools@gmail.com>
+An ELF file's .note.gnu.property indicates features the file supports.
+The property is parsed at loading time and passed to arch_setup_elf_
+property().  Update it for Indirect Branch Tracking.
 
-Add ENDBR32 to __kernel_vsyscall entry point.
-
-Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Acked-by: Andy Lutomirski <luto@kernel.org>
 ---
- arch/x86/entry/vdso/vdso32/system_call.S | 3 +++
- 1 file changed, 3 insertions(+)
+ arch/x86/kernel/process_64.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/arch/x86/entry/vdso/vdso32/system_call.S b/arch/x86/entry/vdso/vdso32/system_call.S
-index de1fff7188aa..f19eaec3de3b 100644
---- a/arch/x86/entry/vdso/vdso32/system_call.S
-+++ b/arch/x86/entry/vdso/vdso32/system_call.S
-@@ -14,6 +14,9 @@
- 	ALIGN
- __kernel_vsyscall:
- 	CFI_STARTPROC
-+#ifdef CONFIG_X86_CET
-+	endbr32
-+#endif
- 	/*
- 	 * Reshuffle regs so that all of any of the entry instructions
- 	 * will preserve enough state.
+diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
+index 19f138f7a209..ccf3f66f4d2c 100644
+--- a/arch/x86/kernel/process_64.c
++++ b/arch/x86/kernel/process_64.c
+@@ -864,6 +864,14 @@ int arch_setup_elf_property(struct arch_elf_state *state)
+ 			r = cet_setup_shstk();
+ 	}
+ 
++	if (r < 0)
++		return r;
++
++	if (static_cpu_has(X86_FEATURE_IBT)) {
++		if (state->gnu_property & GNU_PROPERTY_X86_FEATURE_1_IBT)
++			r = cet_setup_ibt();
++	}
++
+ 	return r;
+ }
+ #endif
 -- 
 2.21.0
 
