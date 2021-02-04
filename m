@@ -2,59 +2,38 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+X-Spam-Status: No, score=-10.4 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
+	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8135EC433E0
-	for <linux-api@archiver.kernel.org>; Thu,  4 Feb 2021 20:04:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D1C55C433E0
+	for <linux-api@archiver.kernel.org>; Thu,  4 Feb 2021 20:05:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5B80A64E35
-	for <linux-api@archiver.kernel.org>; Thu,  4 Feb 2021 20:04:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9DCBB64F45
+	for <linux-api@archiver.kernel.org>; Thu,  4 Feb 2021 20:05:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239371AbhBDUE3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 4 Feb 2021 15:04:29 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40324 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239887AbhBDT5z (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 4 Feb 2021 14:57:55 -0500
-Received: from mail-pj1-x1034.google.com (mail-pj1-x1034.google.com [IPv6:2607:f8b0:4864:20::1034])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A09E1C06178A
-        for <linux-api@vger.kernel.org>; Thu,  4 Feb 2021 11:57:14 -0800 (PST)
-Received: by mail-pj1-x1034.google.com with SMTP id gx20so2449139pjb.1
-        for <linux-api@vger.kernel.org>; Thu, 04 Feb 2021 11:57:14 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=1mc7koCFdBCM4QqjJSOU9cMj9Z1hXBQ4lmWyrTn3L0c=;
-        b=EnD8y5C9tnrx7mX24x0SzpWobewSUEg1SAdrluNCKUh12ljNCsVkirYqiShSKNlsKa
-         xsRi+eb+jTferbjeWUAFTZcgQYeDzubETPjwMBp58Msk92q3Hys/Nc4CJaACBm3/rjRC
-         GvNCjLeIsVfLb9UgxqgnuVtL8xuHQDzZ4nhmM=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=1mc7koCFdBCM4QqjJSOU9cMj9Z1hXBQ4lmWyrTn3L0c=;
-        b=BzJJWh3z1umCblnD0/2JkOucuH9wih/l/4i42J+F74GSv2mJ81/7UGztDc6hKESPvN
-         z757ad18QsOH6XPG95Jhb6uYkIgBfHt872qyamll9SmjUqJCJ76/JiATAZyBURvnKTz4
-         NZa5x6IF47vsIN8K+asq1ANbdWekQpuOoY2S/NriN6Bw4ItfLnbuX5V+Wy4wmpqBd5f0
-         2rW7gkQBInqEfFWmOrlVuUjbCwzDoQUwa/VdYNlRvAlSVu4IDfhJh6jwo25aqvzz/Wov
-         fE2TtZnqoRPXt4EdQdyOnq87qNjjftpL5NwQ/qrMuYoXZvj+1ICAstCpebOvU23qXh72
-         yV5w==
-X-Gm-Message-State: AOAM533fcQ3reJWVq22SO3rqZyVvAcBsAnAApFX2o4Nk4uIC4BAQtZEy
-        tHTBJ2NcmYVON6Had1PJDuMS9Q==
-X-Google-Smtp-Source: ABdhPJwtXiBuI/xhNFZbYjzoCMZ7QTIDZ72P2hHtcVx/bckk4z+4MIhXEnynF9XH7xe8pNQlO3pu3g==
-X-Received: by 2002:a17:902:82cb:b029:e1:2b0f:da57 with SMTP id u11-20020a17090282cbb02900e12b0fda57mr748892plz.33.1612468634241;
-        Thu, 04 Feb 2021 11:57:14 -0800 (PST)
-Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id o1sm7150366pgq.1.2021.02.04.11.57.13
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 04 Feb 2021 11:57:13 -0800 (PST)
-Date:   Thu, 4 Feb 2021 11:57:12 -0800
-From:   Kees Cook <keescook@chromium.org>
-To:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+        id S239905AbhBDUEt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 4 Feb 2021 15:04:49 -0500
+Received: from mga17.intel.com ([192.55.52.151]:33281 "EHLO mga17.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S239008AbhBDUE2 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 4 Feb 2021 15:04:28 -0500
+IronPort-SDR: 2oE41L3fGN2kx+E1hX5iz4q/OhUL/M89yqB74o76uQzVlOzKksVvgfu0hBae9k5UHP54iUFvhc
+ zgSEq0ZgMpNw==
+X-IronPort-AV: E=McAfee;i="6000,8403,9885"; a="161075742"
+X-IronPort-AV: E=Sophos;i="5.81,153,1610438400"; 
+   d="scan'208";a="161075742"
+Received: from fmsmga008.fm.intel.com ([10.253.24.58])
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 04 Feb 2021 12:03:44 -0800
+IronPort-SDR: XxFJSw5z4InLRHJDvib+k6U2jBKrIPHUKyL9l5TVt4Lag6RVTHcOlPWqu11Yum3Cw0qMdpwBZ1
+ E3iX1OrjovMw==
+X-IronPort-AV: E=Sophos;i="5.81,153,1610438400"; 
+   d="scan'208";a="373001450"
+Received: from yyu32-mobl1.amr.corp.intel.com (HELO [10.209.100.6]) ([10.209.100.6])
+  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 04 Feb 2021 12:03:42 -0800
+Subject: Re: [PATCH v19 01/25] Documentation/x86: Add CET description
+To:     Kees Cook <keescook@chromium.org>
 Cc:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
         Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
@@ -80,28 +59,34 @@ Cc:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
-Subject: Re: [PATCH v19 03/25] x86/cpufeatures: Add CET CPU feature flags for
- Control-flow Enforcement Technology (CET)
-Message-ID: <202102041157.05BDDAE1@keescook>
 References: <20210203225547.32221-1-yu-cheng.yu@intel.com>
- <20210203225547.32221-4-yu-cheng.yu@intel.com>
+ <20210203225547.32221-2-yu-cheng.yu@intel.com>
+ <202102041152.E257D3E2BE@keescook>
+From:   "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
+Message-ID: <21717dd3-5b80-03a2-6858-d062ff81d7a5@intel.com>
+Date:   Thu, 4 Feb 2021 12:03:42 -0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
+ Thunderbird/78.7.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20210203225547.32221-4-yu-cheng.yu@intel.com>
+In-Reply-To: <202102041152.E257D3E2BE@keescook>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Feb 03, 2021 at 02:55:25PM -0800, Yu-cheng Yu wrote:
-> Add CPU feature flags for Control-flow Enforcement Technology (CET).
+On 2/4/2021 11:52 AM, Kees Cook wrote:
+> On Wed, Feb 03, 2021 at 02:55:23PM -0800, Yu-cheng Yu wrote:
+>> Explain no_user_shstk/no_user_ibt kernel parameters, and introduce a new
+>> document on Control-flow Enforcement Technology (CET).
+>>
+>> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 > 
-> CPUID.(EAX=7,ECX=0):ECX[bit 7] Shadow stack
-> CPUID.(EAX=7,ECX=0):EDX[bit 20] Indirect Branch Tracking
+> Reviewed-by: Kees Cook <keescook@chromium.org>
 > 
-> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 
-Reviewed-by: Kees Cook <keescook@chromium.org>
+Thanks for reviewing the series.
 
--- 
-Kees Cook
+--
+Yu-cheng
