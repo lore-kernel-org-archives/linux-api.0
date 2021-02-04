@@ -2,38 +2,59 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.4 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
-	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D1C55C433E0
-	for <linux-api@archiver.kernel.org>; Thu,  4 Feb 2021 20:05:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5BBDEC433DB
+	for <linux-api@archiver.kernel.org>; Thu,  4 Feb 2021 20:08:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9DCBB64F45
-	for <linux-api@archiver.kernel.org>; Thu,  4 Feb 2021 20:05:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 18AE364DF8
+	for <linux-api@archiver.kernel.org>; Thu,  4 Feb 2021 20:08:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239905AbhBDUEt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 4 Feb 2021 15:04:49 -0500
-Received: from mga17.intel.com ([192.55.52.151]:33281 "EHLO mga17.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S239008AbhBDUE2 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 4 Feb 2021 15:04:28 -0500
-IronPort-SDR: 2oE41L3fGN2kx+E1hX5iz4q/OhUL/M89yqB74o76uQzVlOzKksVvgfu0hBae9k5UHP54iUFvhc
- zgSEq0ZgMpNw==
-X-IronPort-AV: E=McAfee;i="6000,8403,9885"; a="161075742"
-X-IronPort-AV: E=Sophos;i="5.81,153,1610438400"; 
-   d="scan'208";a="161075742"
-Received: from fmsmga008.fm.intel.com ([10.253.24.58])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 04 Feb 2021 12:03:44 -0800
-IronPort-SDR: XxFJSw5z4InLRHJDvib+k6U2jBKrIPHUKyL9l5TVt4Lag6RVTHcOlPWqu11Yum3Cw0qMdpwBZ1
- E3iX1OrjovMw==
-X-IronPort-AV: E=Sophos;i="5.81,153,1610438400"; 
-   d="scan'208";a="373001450"
-Received: from yyu32-mobl1.amr.corp.intel.com (HELO [10.209.100.6]) ([10.209.100.6])
-  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 04 Feb 2021 12:03:42 -0800
-Subject: Re: [PATCH v19 01/25] Documentation/x86: Add CET description
-To:     Kees Cook <keescook@chromium.org>
+        id S239720AbhBDUHp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 4 Feb 2021 15:07:45 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40070 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S239705AbhBDT4q (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 4 Feb 2021 14:56:46 -0500
+Received: from mail-pl1-x62d.google.com (mail-pl1-x62d.google.com [IPv6:2607:f8b0:4864:20::62d])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 82A70C061786
+        for <linux-api@vger.kernel.org>; Thu,  4 Feb 2021 11:56:06 -0800 (PST)
+Received: by mail-pl1-x62d.google.com with SMTP id s15so2322021plr.9
+        for <linux-api@vger.kernel.org>; Thu, 04 Feb 2021 11:56:06 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=chromium.org; s=google;
+        h=date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to;
+        bh=cREe4mpEbDVYUgSGHck86DN+09/T0KggeVpHRB6Lhw0=;
+        b=eup2LSndCOmk227ViA0qGpuq32ZePmfrdzCY9BJdFC59+1KRofF3eCXZSHAMPm05xc
+         smyKEebKiEPOW6lcePOHYKqr7MKFsxuF4MVbe6hb2jY5oFL9Dg+Zz432FzpHpYW5RFhf
+         T202G8LNBQ7ucEp8j31zZxbtM+sQUqQBUGtI0=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=cREe4mpEbDVYUgSGHck86DN+09/T0KggeVpHRB6Lhw0=;
+        b=rz7WuTuXSBVPvLGWDy3/SrsnxKk5cpyGF61Z+aDQzsQPwha6lv+auA2GwrV0SGH2Cq
+         73PVfxWL2SWTwnsZ698Fjd0Mqopr97V5aQmyK7UIwa8jVPPwcpbmxhGZ8M1CFdiA2oOK
+         mwLoLL0aLIHA7VC+HOfpg4LqY9vGLcwU4AH2LwiixnxHetIk9+fXCrXo9Y8DcXOVjlKw
+         5ChEB2gtSyBaeUndKCHxnc25vzsnCYepi9Byo6/Z/hSzgOj3Jk/DqXG6BtPRPetWFGaE
+         XPYD6sh67yu4a4NswAKukK+ZR+/tUvUcPrJZKbK4DtF13PuX7pHZ4OEMziMpmkF/ljAW
+         MfzQ==
+X-Gm-Message-State: AOAM530u52lQ1q01AzzQUPwCe8efY7DvI+d/Ou3kbKVXl5u7c+zjR+bV
+        aKHaQrxQBrxr+1wUBD8/7zoLGA==
+X-Google-Smtp-Source: ABdhPJypiZ3aY6ToskYJVpLPmwjx1SQOOmTLh/FTIa/eMU4kbyKkSkLf+aRvyBCJP/3DAOQZoSKViw==
+X-Received: by 2002:a17:902:f688:b029:da:a817:1753 with SMTP id l8-20020a170902f688b02900daa8171753mr746883plg.76.1612468565931;
+        Thu, 04 Feb 2021 11:56:05 -0800 (PST)
+Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
+        by smtp.gmail.com with ESMTPSA id d88sm6889445pjk.23.2021.02.04.11.56.04
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 04 Feb 2021 11:56:04 -0800 (PST)
+Date:   Thu, 4 Feb 2021 11:56:03 -0800
+From:   Kees Cook <keescook@chromium.org>
+To:     Yu-cheng Yu <yu-cheng.yu@intel.com>
 Cc:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
         Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
@@ -59,34 +80,86 @@ Cc:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
+Subject: Re: [PATCH v19 02/25] x86/cet/shstk: Add Kconfig option for
+ user-mode control-flow protection
+Message-ID: <202102041154.F0264AC33@keescook>
 References: <20210203225547.32221-1-yu-cheng.yu@intel.com>
- <20210203225547.32221-2-yu-cheng.yu@intel.com>
- <202102041152.E257D3E2BE@keescook>
-From:   "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
-Message-ID: <21717dd3-5b80-03a2-6858-d062ff81d7a5@intel.com>
-Date:   Thu, 4 Feb 2021 12:03:42 -0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
- Thunderbird/78.7.0
+ <20210203225547.32221-3-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
-In-Reply-To: <202102041152.E257D3E2BE@keescook>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20210203225547.32221-3-yu-cheng.yu@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 2/4/2021 11:52 AM, Kees Cook wrote:
-> On Wed, Feb 03, 2021 at 02:55:23PM -0800, Yu-cheng Yu wrote:
->> Explain no_user_shstk/no_user_ibt kernel parameters, and introduce a new
->> document on Control-flow Enforcement Technology (CET).
->>
->> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+On Wed, Feb 03, 2021 at 02:55:24PM -0800, Yu-cheng Yu wrote:
+> Shadow Stack provides protection against function return address
+> corruption.  It is active when the processor supports it, the kernel has
+> CONFIG_X86_CET enabled, and the application is built for the feature.
+> This is only implemented for the 64-bit kernel.  When it is enabled, legacy
+> non-Shadow Stack applications continue to work, but without protection.
 > 
-> Reviewed-by: Kees Cook <keescook@chromium.org>
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> ---
+>  arch/x86/Kconfig           | 22 ++++++++++++++++++++++
+>  arch/x86/Kconfig.assembler |  5 +++++
+>  2 files changed, 27 insertions(+)
+> 
+> diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+> index 21f851179ff0..074b3c0e6bf6 100644
+> --- a/arch/x86/Kconfig
+> +++ b/arch/x86/Kconfig
+> @@ -1951,6 +1951,28 @@ config X86_SGX
+>  
+>  	  If unsure, say N.
+>  
+> +config ARCH_HAS_SHADOW_STACK
+> +	def_bool n
+> +
+> +config X86_CET
+> +	prompt "Intel Control-flow protection for user-mode"
+> +	def_bool n
+> +	depends on X86_64
+> +	depends on AS_WRUSS
+> +	select ARCH_USES_HIGH_VMA_FLAGS
+> +	select ARCH_HAS_SHADOW_STACK
+
+This seems backwards to me? Shouldn't 'config X86_64' do the 'select
+ARCH_HAS_SHADOW_STACK' and 'config X86_CET' do a 'depends on
+ARCH_HAS_SHADOW_STACK' instead?
+
+> +	help
+> +	  Control-flow protection is a set of hardware features which place
+> +	  additional restrictions on indirect branches.  These help
+> +	  mitigate ROP attacks.  Applications must be enabled to use it,
+> +	  and old userspace does not get protection "for free".
+> +	  Support for this feature is present on Tiger Lake family of
+> +	  processors released in 2020 or later.  Enabling this feature
+> +	  increases kernel text size by 3.7 KB.
+> +	  See Documentation/x86/intel_cet.rst for more information.
+> +
+> +	  If unsure, say N.
+> +
+>  config EFI
+>  	bool "EFI runtime service support"
+>  	depends on ACPI
+> diff --git a/arch/x86/Kconfig.assembler b/arch/x86/Kconfig.assembler
+> index 26b8c08e2fc4..00c79dd93651 100644
+> --- a/arch/x86/Kconfig.assembler
+> +++ b/arch/x86/Kconfig.assembler
+> @@ -19,3 +19,8 @@ config AS_TPAUSE
+>  	def_bool $(as-instr,tpause %ecx)
+>  	help
+>  	  Supported by binutils >= 2.31.1 and LLVM integrated assembler >= V7
+> +
+> +config AS_WRUSS
+> +	def_bool $(as-instr,wrussq %rax$(comma)(%rbx))
+> +	help
+> +	  Supported by binutils >= 2.31 and LLVM integrated assembler
+> -- 
+> 2.21.0
 > 
 
-Thanks for reviewing the series.
-
---
-Yu-cheng
+-- 
+Kees Cook
