@@ -2,224 +2,100 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B1CE5C433E9
-	for <linux-api@archiver.kernel.org>; Fri,  5 Feb 2021 02:47:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 196C4C433DB
+	for <linux-api@archiver.kernel.org>; Fri,  5 Feb 2021 08:27:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 68B3E64FB7
-	for <linux-api@archiver.kernel.org>; Fri,  5 Feb 2021 02:47:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DA60964F9B
+	for <linux-api@archiver.kernel.org>; Fri,  5 Feb 2021 08:27:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229777AbhBECrb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 4 Feb 2021 21:47:31 -0500
-Received: from mail.kernel.org ([198.145.29.99]:47554 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229705AbhBECr3 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 4 Feb 2021 21:47:29 -0500
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 38AF464FA7;
-        Fri,  5 Feb 2021 02:46:48 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1612493208;
-        bh=u7fCLAhX1pOwBx9BOcb331n4nXXbCELnac9pfuMdw40=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=aKqP2NtJwTWkkRvAXb7ogJw+spwaPwbSFR6MdVHrrbndME/wehMGYfotFjvjy44rN
-         EdnmJvO8unOg33HhXcSolWitHCL+LnXtd/2PDVjdeMUpItQyGKMMp0VBQYQTHSrIqb
-         zLsSTv7Xlht5g1dcjBN4b59L57IfHiVHyB5JQe0ULO5D4icYj+qHxFrhvo2iTR1ZBl
-         CdLEX8Od2/oABQQtdkcHad7hv4GhSaGt6UWHQMeWAigWU0tyrEnoqV/nnqY7ti2V5F
-         g3tD5v2wmksqiD/Bg3SxiISs6hagCAqXIDn8hDPKaoMHfNQ6L4fFxY+1g3oDePZK4W
-         JCnl0mclkQrbg==
-Date:   Fri, 5 Feb 2021 04:46:40 +0200
-From:   Jarkko Sakkinen <jarkko@kernel.org>
-To:     David Howells <dhowells@redhat.com>
-Cc:     sprabhu@redhat.com, christian@brauner.io, selinux@vger.kernel.org,
-        keyrings@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org,
+        id S229711AbhBEI1L (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 5 Feb 2021 03:27:11 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:54046 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S229702AbhBEI1K (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 5 Feb 2021 03:27:10 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1612513544;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=LxANOstSwBXrn0OC3M8r/TM5reax6AnMqz1DHOK0g18=;
+        b=PT6BreKnjyE1jcyTvL5BJVY77rJ7Vd035fYUJQ6x6FZSrsZN+rlnW26ltB7jjehP0AYgrK
+        69QWeOpf7hONb4CRLmaVJ01YbdhSICbxtX/JpN6qeKRVWegRP9rG1+jpDOC7MBeiI15cYP
+        bn6YNtn5ser0xdUJmlNP5Kz0TkI1tww=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-98-Aund-JwENnm_luJEaMImoA-1; Fri, 05 Feb 2021 03:25:40 -0500
+X-MC-Unique: Aund-JwENnm_luJEaMImoA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AAAB81800D50;
+        Fri,  5 Feb 2021 08:25:38 +0000 (UTC)
+Received: from warthog.procyon.org.uk (ovpn-115-23.rdu2.redhat.com [10.10.115.23])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id B582D1970A;
+        Fri,  5 Feb 2021 08:25:36 +0000 (UTC)
+Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
+        Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
+        Kingdom.
+        Registered in England and Wales under Company Registration No. 3798903
+From:   David Howells <dhowells@redhat.com>
+In-Reply-To: <YByxkDi0Ruhb0AA8@kernel.org>
+References: <YByxkDi0Ruhb0AA8@kernel.org> <161246085160.1990927.13137391845549674518.stgit@warthog.procyon.org.uk> <161246085966.1990927.2555272056564793056.stgit@warthog.procyon.org.uk>
+To:     Jarkko Sakkinen <jarkko@kernel.org>
+Cc:     dhowells@redhat.com, sprabhu@redhat.com, christian@brauner.io,
+        selinux@vger.kernel.org, keyrings@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
         linux-security-module@vger.kernel.org,
         linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org
-Subject: Re: [PATCH 1/2] Add namespace tags that can be used for matching
- without pinning a ns
-Message-ID: <YByxkDi0Ruhb0AA8@kernel.org>
-References: <161246085160.1990927.13137391845549674518.stgit@warthog.procyon.org.uk>
- <161246085966.1990927.2555272056564793056.stgit@warthog.procyon.org.uk>
+Subject: Re: [PATCH 1/2] Add namespace tags that can be used for matching without pinning a ns
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <161246085966.1990927.2555272056564793056.stgit@warthog.procyon.org.uk>
+Content-Type: text/plain; charset="us-ascii"
+Content-ID: <2094923.1612513535.1@warthog.procyon.org.uk>
+Date:   Fri, 05 Feb 2021 08:25:35 +0000
+Message-ID: <2094924.1612513535@warthog.procyon.org.uk>
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Feb 04, 2021 at 05:47:39PM +0000, David Howells wrote:
-> Add a ns tag struct that consists of just a refcount.  It's address can be
-> used to compare namespaces without the need to pin a namespace.  Just the
-> tag needs pinning.
+Jarkko Sakkinen <jarkko@kernel.org> wrote:
+
+> > + * init_ns_common - Initialise the common part of a namespace
 > 
-> Signed-off-by: David Howells <dhowells@redhat.com>
-> ---
+> Nit: init_ns_common()
+
+Interesting.  The majority of code doesn't put the brackets in.
+
+> I've used lately (e.g. arch/x86/kernel/cpu/sgx/ioctl.c) along the lines:
 > 
->  fs/namespace.c            |   18 ++++++++----------
->  include/linux/ns_common.h |   23 +++++++++++++++++++++++
->  include/linux/proc_ns.h   |   38 +++++++++++++++++++++++++++++++++++---
->  init/version.c            |    9 ++++++++-
->  ipc/msgutil.c             |    7 ++++++-
->  ipc/namespace.c           |    8 +++-----
->  kernel/cgroup/cgroup.c    |    5 +++++
->  kernel/cgroup/namespace.c |    6 +++---
->  kernel/pid.c              |    5 +++++
->  kernel/pid_namespace.c    |   18 +++++++++---------
->  kernel/time/namespace.c   |   13 +++++--------
->  kernel/user.c             |    5 +++++
->  kernel/user_namespace.c   |    7 +++----
->  kernel/utsname.c          |   24 +++++++++++++-----------
->  net/core/net_namespace.c  |   38 +++++++++++++++-----------------------
->  15 files changed, 146 insertions(+), 78 deletions(-)
+> * Return:
+> * - 0:          Initialization was successful.
+> * - -ENOMEM:    Out of memory.
+
+Actually, looking at kernel-doc.rst, this isn't necessarily the recommended
+approach as it will much everything into one line, complete with dashes, and
+can't handle splitting over lines.  You probably meant:
+
+      * Return:
+      * * 0		- OK to runtime suspend the device
+      * * -EBUSY	- Device should not be runtime suspended
+
+> * Return:
+> * - 0:          Initialization was successful.
+> * - -ENOMEM:    Out of memory.
 > 
-> diff --git a/fs/namespace.c b/fs/namespace.c
-> index 9d33909d0f9e..f8da9be8c6f7 100644
-> --- a/fs/namespace.c
-> +++ b/fs/namespace.c
-> @@ -3238,10 +3238,9 @@ static void dec_mnt_namespaces(struct ucounts *ucounts)
->  
->  static void free_mnt_ns(struct mnt_namespace *ns)
->  {
-> -	if (!is_anon_ns(ns))
-> -		ns_free_inum(&ns->ns);
->  	dec_mnt_namespaces(ns->ucounts);
->  	put_user_ns(ns->user_ns);
-> +	destroy_ns_common(&ns->ns);
->  	kfree(ns);
->  }
->  
-> @@ -3269,18 +3268,17 @@ static struct mnt_namespace *alloc_mnt_ns(struct user_namespace *user_ns, bool a
->  		dec_mnt_namespaces(ucounts);
->  		return ERR_PTR(-ENOMEM);
->  	}
-> -	if (!anon) {
-> -		ret = ns_alloc_inum(&new_ns->ns);
-> -		if (ret) {
-> -			kfree(new_ns);
-> -			dec_mnt_namespaces(ucounts);
-> -			return ERR_PTR(ret);
-> -		}
-> +
-> +	ret = init_ns_common(&new_ns->ns, anon);
-> +	if (ret) {
-> +		destroy_ns_common(&new_ns->ns);
-> +		kfree(new_ns);
-> +		dec_mnt_namespaces(ucounts);
-> +		return ERR_PTR(ret);
->  	}
->  	new_ns->ns.ops = &mntns_operations;
->  	if (!anon)
->  		new_ns->seq = atomic64_add_return(1, &mnt_ns_seq);
-> -	refcount_set(&new_ns->ns.count, 1);
->  	INIT_LIST_HEAD(&new_ns->list);
->  	init_waitqueue_head(&new_ns->poll);
->  	spin_lock_init(&new_ns->ns_lock);
-> diff --git a/include/linux/ns_common.h b/include/linux/ns_common.h
-> index 0f1d024bd958..45174ad8a435 100644
-> --- a/include/linux/ns_common.h
-> +++ b/include/linux/ns_common.h
-> @@ -3,14 +3,37 @@
->  #define _LINUX_NS_COMMON_H
->  
->  #include <linux/refcount.h>
-> +#include <linux/slab.h>
->  
->  struct proc_ns_operations;
->  
-> +/*
-> + * Comparable tag for namespaces so that namespaces don't have to be pinned by
-> + * something that wishes to detect if a namespace matches a criterion.
-> + */
-> +struct ns_tag {
-> +	refcount_t	usage;
+> Looking at the implementation, I guess this is a complete representation of
+> what it can return?
 
-Is that indentation necessary? I'd put just a space.
+It isn't.  It can return at least -ENOSPC as well, but it's awkward detailing
+the errors from functions it calls since they can change and then the
+description here is wrong.  I'm not sure there's a perfect answer to that.
 
-> +};
-> +
->  struct ns_common {
->  	atomic_long_t stashed;
->  	const struct proc_ns_operations *ops;
-> +	struct ns_tag *tag;
->  	unsigned int inum;
->  	refcount_t count;
->  };
->  
-> +static inline struct ns_tag *get_ns_tag(struct ns_tag *tag)
-> +{
-> +	if (tag)
-> +		refcount_inc(&tag->usage);
-> +	return tag;
-> +}
-> +
-> +static inline void put_ns_tag(struct ns_tag *tag)
-> +{
-> +	if (tag && refcount_dec_and_test(&tag->usage))
-> +		kfree(tag);
-> +}
-> +
->  #endif
-> diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
-> index 75807ecef880..9fb7eb403923 100644
-> --- a/include/linux/proc_ns.h
-> +++ b/include/linux/proc_ns.h
-> @@ -64,13 +64,45 @@ static inline void proc_free_inum(unsigned int inum) {}
->  
->  #endif /* CONFIG_PROC_FS */
->  
-> -static inline int ns_alloc_inum(struct ns_common *ns)
-> +/**
-> + * init_ns_common - Initialise the common part of a namespace
+David
 
-Nit: init_ns_common()
-
-> + * @ns: The namespace to initialise
-> + * @anon: The namespace will be anonymous
-> + *
-> + * Set up the common part of a namespace, assigning an inode number and
-> + * creating a tag.  Returns 0 on success and a negative error code on failure.
-> + * On failure, the caller must call destroy_ns_common().
-
-I've used lately (e.g. arch/x86/kernel/cpu/sgx/ioctl.c) along the lines:
-
-* Return:
-* - 0:          Initialization was successful.
-* - -ENOMEM:    Out of memory.
-
-Looking at the implementation, I guess this is a complete representation of
-what it can return?
-
-The driving point here is that this nicely lines up when rendered with
-"make htmldocs".
-
-> + */
-> +static inline int init_ns_common(struct ns_common *ns, bool anon)
->  {
-> +	struct ns_tag *tag;
-> +
-> +	tag = kzalloc(sizeof(*tag), GFP_KERNEL);
-> +	if (!tag)
-> +		return -ENOMEM;
-> +
-> +	refcount_set(&tag->usage, 1);
-> +	ns->tag = tag;
-> +	ns->inum = 0;
->  	atomic_long_set(&ns->stashed, 0);
-> -	return proc_alloc_inum(&ns->inum);
-> +	refcount_set(&ns->count, 1);
-> +
-> +	return anon ? 0 : proc_alloc_inum(&ns->inum);
->  }
->  
-> -#define ns_free_inum(ns) proc_free_inum((ns)->inum)
-> +/**
-> + * destroy_ns_common - Clean up the common part of a namespace
-
-Nit: destroy_ns_common()
-
-/Jarkko
