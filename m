@@ -2,93 +2,126 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.2 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B85E6C433DB
-	for <linux-api@archiver.kernel.org>; Sat,  6 Feb 2021 12:45:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1EC9CC433E0
+	for <linux-api@archiver.kernel.org>; Sat,  6 Feb 2021 17:57:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7B9B464ECC
-	for <linux-api@archiver.kernel.org>; Sat,  6 Feb 2021 12:45:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CA5EB64E2F
+	for <linux-api@archiver.kernel.org>; Sat,  6 Feb 2021 17:57:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229742AbhBFMpZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 6 Feb 2021 07:45:25 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55894 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229506AbhBFMpY (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 6 Feb 2021 07:45:24 -0500
-Received: from mail-wr1-x435.google.com (mail-wr1-x435.google.com [IPv6:2a00:1450:4864:20::435])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 72486C06174A
-        for <linux-api@vger.kernel.org>; Sat,  6 Feb 2021 04:44:43 -0800 (PST)
-Received: by mail-wr1-x435.google.com with SMTP id g10so10953401wrx.1
-        for <linux-api@vger.kernel.org>; Sat, 06 Feb 2021 04:44:43 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chrisdown.name; s=google;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to:user-agent;
-        bh=FdxkSResqQzkMQudO+mFnTtwity6/Y5j5OUXY7bW1CY=;
-        b=Aa1oif6wIeCk38mTPALdE/pM3IoRCp1VTkKq6cVjr/teo80g5ZDn9wwJKv68yBwVKt
-         qurR6BM7I9gYh/8T8nz/jyNfDIXvovtr5O5PMbcbd7AAO4Q1wxK6vvSoTcT3F6rtpmAI
-         v+vj0/V+uu8aKJSvTLcpBIB/Wg7LBmRayxQHQ=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to:user-agent;
-        bh=FdxkSResqQzkMQudO+mFnTtwity6/Y5j5OUXY7bW1CY=;
-        b=JtbzZkfscaNPSKx0O7uGzpiGxgkcIqfQqG4KFwtA45cVIbrwGLHrka3ePrenFYA6ce
-         CrJFs7634lSBorPopC8nRRfHhdMxt8lCYM7aeZgFBKZI/7MJcjNh7fbIUKfhFk5uTqQl
-         sDCsDNdXS5BFAMUeOWZZrNQkpWacaoTP55XylW2Zcqq745fV6l/k5pOf8ARyfB8lgauJ
-         PJdcjQ3eJ0mR8ZWTrs50gRU2Ltatur0Z5QqRWLfipfLtRBVRzAOT3UgWYjsNKNX20SMD
-         qtbc8P1ozWsaJr9V2npLsbiDNPPIegSN5k9A72hUYlT/R/PMSdfs7mEYVGBdQ9KfDp5Q
-         bpJw==
-X-Gm-Message-State: AOAM533DIQ8SpUvkC5tpYwwwcJm59UvlHSrPHbPWvfpgOr9PBcrM2kdO
-        LS33zBZHJNY1j1VARxCzcQbiLA==
-X-Google-Smtp-Source: ABdhPJyU0DSUD06+MJYK5IN96/TSbHWfYrAodvWTr13jCnWBAwHvl1W0Y0XNV8ZPPivdRQOVLvIyZw==
-X-Received: by 2002:adf:fb0c:: with SMTP id c12mr10268601wrr.6.1612615482067;
-        Sat, 06 Feb 2021 04:44:42 -0800 (PST)
-Received: from localhost ([85.255.234.177])
-        by smtp.gmail.com with ESMTPSA id r17sm15877486wro.46.2021.02.06.04.44.41
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 06 Feb 2021 04:44:41 -0800 (PST)
-Date:   Sat, 6 Feb 2021 12:44:39 +0000
-From:   Chris Down <chris@chrisdown.name>
-To:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc:     Steven Rostedt <rostedt@goodmis.org>,
-        Petr Mladek <pmladek@suse.com>, linux-kernel@vger.kernel.org,
+        id S230366AbhBFR5s (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 6 Feb 2021 12:57:48 -0500
+Received: from smtprelay0010.hostedemail.com ([216.40.44.10]:47152 "EHLO
+        smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S230251AbhBFR5r (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 6 Feb 2021 12:57:47 -0500
+Received: from filter.hostedemail.com (clb03-v110.bra.tucows.net [216.40.38.60])
+        by smtprelay03.hostedemail.com (Postfix) with ESMTP id 225168384365;
+        Sat,  6 Feb 2021 17:57:04 +0000 (UTC)
+X-Session-Marker: 6A6F6540706572636865732E636F6D
+X-HE-Tag: power55_5f041ec275ef
+X-Filterd-Recvd-Size: 3908
+Received: from [192.168.1.159] (unknown [47.151.137.21])
+        (Authenticated sender: joe@perches.com)
+        by omf11.hostedemail.com (Postfix) with ESMTPA;
+        Sat,  6 Feb 2021 17:57:01 +0000 (UTC)
+Message-ID: <49124db60cdc88c4e9fcca1bbc9767432ad5a93b.camel@perches.com>
+Subject: Re: [PATCH] printk: Userspace format enumeration support
+From:   Joe Perches <joe@perches.com>
+To:     Chris Down <chris@chrisdown.name>, Petr Mladek <pmladek@suse.com>
+Cc:     linux-kernel@vger.kernel.org,
         Sergey Senozhatsky <sergey.senozhatsky@gmail.com>,
         John Ogness <john.ogness@linutronix.de>,
         Johannes Weiner <hannes@cmpxchg.org>,
         Andrew Morton <akpm@linux-foundation.org>, kernel-team@fb.com,
+        Steven Rostedt <rostedt@goodmis.org>,
         Alexey Dobriyan <adobriyan@gmail.com>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         Jason Baron <jbaron@akamai.com>,
         Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org
-Subject: Re: [PATCH] printk: Userspace format enumeration support
-Message-ID: <YB6PN8VsVo4pNxCb@chrisdown.name>
-References: <YBwU0G+P0vb9wTwm@chrisdown.name>
- <YB11jybvFCb95S9e@alley>
- <20210205124748.4af2d406@gandalf.local.home>
- <YB3Kf896Zt9O+/Yh@chrisdown.name>
- <YB5Bsyk4o3Mqr6Li@kroah.com>
+Date:   Sat, 06 Feb 2021 09:57:00 -0800
+In-Reply-To: <YB3Fwh827m0F+y3n@chrisdown.name>
+References: <YBwU0G+P0vb9wTwm@chrisdown.name> <YB11jybvFCb95S9e@alley>
+         <YB3Fwh827m0F+y3n@chrisdown.name>
+Content-Type: text/plain; charset="ISO-8859-1"
+User-Agent: Evolution 3.38.1-1 
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Disposition: inline
-In-Reply-To: <YB5Bsyk4o3Mqr6Li@kroah.com>
-User-Agent: Mutt/2.0.5 (da5e3282) (2021-01-21)
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Greg Kroah-Hartman writes:
->> > I'm not against the idea. I don't think it belongs in /proc. Perhaps
->> > debugfs is a better place to put it.
->>
->> Any location is fine with me, as long as it gets to userspace. How does
->> <debugfs>/printk/formats or <debugfs>/printk/formats/<module> sound to you?
->
->That's fine with me, but I'd like to see the patch with this in it first
->before approving it :)
+On Fri, 2021-02-05 at 22:25 +0000, Chris Down wrote:
+> Petr Mladek writes:
+> >   + <module> is already optinaly added by pr_fmt() to the printed strings
+> >     as:  pr_fmt(): ...
+> 
+> pr_fmts are not consistently used across the kernel, and sometimes differ from 
+> the module itself. Many modules don't use it at all, and we also don't have it 
+> for pr_cont. Just picking some random examples:
+> 
+>      % grep -av vmlinux /proc/printk_formats | shuf -n 10
+>      mac80211,6%s: mesh STA %pM switches to channel requiring DFS (%d MHz, width:%d, CF1/2: %d/%d MHz), aborting
+>      thinkpad_acpi,c N/Athinkpad_acpi,c %dthinkpad_acpi,5thinkpad_acpi: temperatures (Celsius):thinkpad_acpi,3thinkpad_acpi: Out of memory for LED data
 
-Thanks! I'll send v2 soon then with the aforementioned changes, and a move to 
-debugfs.
+I don't understand this format.
+
+"Out of memory for LED data" is a single printk ending with a '\n' newline 
+I expected this to be broken up into multiple lines, one for each printk
+that endsd in a newline.
+
+And what would happen if the function was refactored removing the pr_cont
+uses like the below: (basically, any output that uses a mechanism that
+aggregates a buffer then emits it, and there are a _lot_ of those)
+
+	printk("%s\n", buffer);
+
+And there is already a relatively trivial way to do this using a modified
+version of strings that looks for KERN_SOH[0-6], and if dynamic_debug is
+enabled, look in the dynamic_debug section, either __verbose or __dyndbg
+depending on the kernel version.
+
+---
+ drivers/platform/x86/thinkpad_acpi.c | 15 ++++++++++-----
+ 1 file changed, 10 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/platform/x86/thinkpad_acpi.c b/drivers/platform/x86/thinkpad_acpi.c
+index 18b390153e7f..ff1c09c600f8 100644
+--- a/drivers/platform/x86/thinkpad_acpi.c
++++ b/drivers/platform/x86/thinkpad_acpi.c
+@@ -6353,21 +6353,26 @@ static void thermal_dump_all_sensors(void)
+ {
+ 	int n, i;
+ 	struct ibm_thermal_sensors_struct t;
++	char output[256];
++	int len = 0;
+ 
+ 	n = thermal_get_sensors(&t);
+ 	if (n <= 0)
+ 		return;
+ 
+-	pr_notice("temperatures (Celsius):");
++	len += scnprintf(output + len, sizeof(output) - len,
++		       "temperatures (Celsius):");
+ 
+ 	for (i = 0; i < n; i++) {
+-		if (t.temp[i] != TPACPI_THERMAL_SENSOR_NA)
+-			pr_cont(" %d", (int)(t.temp[i] / 1000));
++		if (t.temp[i] == TPACPI_THERMAL_SENSOR_NA)
++			len += scnprintf(output + len, sizeof(output) - len,
++					 " N/A");
+ 		else
+-			pr_cont(" N/A");
++			len += scnprintf(output + len, sizeof(output) - len,
++					 " %d", t.temp[i] / 1000);
+ 	}
+ 
+-	pr_cont("\n");
++	pr_notice("%s\n", output);
+ }
+ 
+ /* sysfs temp##_input -------------------------------------------------- */
+
