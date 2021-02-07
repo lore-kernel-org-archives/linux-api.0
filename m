@@ -2,29 +2,28 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5DBCBC43381
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 09D4CC433E6
 	for <linux-api@archiver.kernel.org>; Sun,  7 Feb 2021 08:29:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0E00064EAC
-	for <linux-api@archiver.kernel.org>; Sun,  7 Feb 2021 08:29:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AD38164EA3
+	for <linux-api@archiver.kernel.org>; Sun,  7 Feb 2021 08:29:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229848AbhBGI30 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 7 Feb 2021 03:29:26 -0500
-Received: from szxga05-in.huawei.com ([45.249.212.191]:12472 "EHLO
+        id S229727AbhBGI3T (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 7 Feb 2021 03:29:19 -0500
+Received: from szxga05-in.huawei.com ([45.249.212.191]:12474 "EHLO
         szxga05-in.huawei.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229783AbhBGI1H (ORCPT
+        with ESMTP id S229839AbhBGI1H (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Sun, 7 Feb 2021 03:27:07 -0500
 Received: from DGGEMS413-HUB.china.huawei.com (unknown [172.30.72.60])
-        by szxga05-in.huawei.com (SkyGuard) with ESMTP id 4DYMf65ntqzjKdf;
+        by szxga05-in.huawei.com (SkyGuard) with ESMTP id 4DYMf66cr2zjKdl;
         Sun,  7 Feb 2021 16:25:02 +0800 (CST)
 Received: from localhost.localdomain (10.69.192.58) by
  DGGEMS413-HUB.china.huawei.com (10.3.19.213) with Microsoft SMTP Server id
- 14.3.498.0; Sun, 7 Feb 2021 16:26:16 +0800
+ 14.3.498.0; Sun, 7 Feb 2021 16:26:15 +0800
 From:   Zhou Wang <wangzhou1@hisilicon.com>
 To:     <linux-kernel@vger.kernel.org>, <iommu@lists.linux-foundation.org>,
         <linux-mm@kvack.org>, <linux-arm-kernel@lists.infradead.org>,
@@ -35,12 +34,10 @@ CC:     <gregkh@linuxfoundation.org>, <song.bao.hua@hisilicon.com>,
         <jgg@ziepe.ca>, <kevin.tian@intel.com>, <jean-philippe@linaro.org>,
         <eric.auger@redhat.com>, <liguozhu@hisilicon.com>,
         <zhangfei.gao@linaro.org>, Zhou Wang <wangzhou1@hisilicon.com>
-Subject: [RFC PATCH v3 2/2] selftests/vm: add mempinfd test
-Date:   Sun, 7 Feb 2021 16:18:04 +0800
-Message-ID: <1612685884-19514-3-git-send-email-wangzhou1@hisilicon.com>
+Subject: [RFC PATCH v3 0/2] mempinfd: Add new syscall to provide memory pin
+Date:   Sun, 7 Feb 2021 16:18:02 +0800
+Message-ID: <1612685884-19514-1-git-send-email-wangzhou1@hisilicon.com>
 X-Mailer: git-send-email 2.8.1
-In-Reply-To: <1612685884-19514-1-git-send-email-wangzhou1@hisilicon.com>
-References: <1612685884-19514-1-git-send-email-wangzhou1@hisilicon.com>
 MIME-Version: 1.0
 Content-Type: text/plain
 X-Originating-IP: [10.69.192.58]
@@ -49,166 +46,47 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This test gets a fd from new mempinfd syscall and creates multiple threads
-to do pin/unpin memory.
+This series adds a new mempinfd syscall to offer a common way to pin/unpin
+memory.
 
-Signed-off-by: Zhou Wang <wangzhou1@hisilicon.com>
-Suggested-by: Barry Song <song.bao.hua@hisilicon.com>
----
+Patch 1/2 is about mempinfd codes.
+Patch 2/2 adds a simple test tool about mempinfd.
+
+Change logs:
+------------
+v2 -> v3:
+ - Follow suggestions from Greg and Kevin, add a new syscall.
+ - Add input check.
+ - Use xa_insert to replace xa_store.
+ - Add lock to pretect pin and xa_insert.
+v1 -> v2:
+ - Some tiny fixes.
+ - Follow Greg's suggestion to get mm-list and iommu-list involved.
+
+Links:
+------
+ - v2: https://www.spinics.net/lists/kernel/msg3808926.html
+ - v1: https://www.spinics.net/lists/kernel/msg3805205.html
+
+Zhou Wang (2):
+  mempinfd: Add new syscall to provide memory pin
+  selftests/vm: add mempinfd test
+
+ arch/arm64/include/asm/unistd.h       |   2 +-
+ arch/arm64/include/asm/unistd32.h     |   2 +
+ fs/Makefile                           |   1 +
+ fs/mempinfd.c                         | 199 ++++++++++++++++++++++++++++++++++
+ include/linux/syscalls.h              |   1 +
+ include/uapi/asm-generic/unistd.h     |   4 +-
+ include/uapi/linux/mempinfd.h         |  23 ++++
+ init/Kconfig                          |   6 +
  tools/testing/selftests/vm/Makefile   |   1 +
- tools/testing/selftests/vm/mempinfd.c | 131 ++++++++++++++++++++++++++++++++++
- 2 files changed, 132 insertions(+)
+ tools/testing/selftests/vm/mempinfd.c | 131 ++++++++++++++++++++++
+ 10 files changed, 368 insertions(+), 2 deletions(-)
+ create mode 100644 fs/mempinfd.c
+ create mode 100644 include/uapi/linux/mempinfd.h
  create mode 100644 tools/testing/selftests/vm/mempinfd.c
 
-diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selftests/vm/Makefile
-index d42115e..2d5b509 100644
---- a/tools/testing/selftests/vm/Makefile
-+++ b/tools/testing/selftests/vm/Makefile
-@@ -42,6 +42,7 @@ TEST_GEN_FILES += on-fault-limit
- TEST_GEN_FILES += thuge-gen
- TEST_GEN_FILES += transhuge-stress
- TEST_GEN_FILES += userfaultfd
-+TEST_GEN_FILES += mempinfd
- 
- ifeq ($(MACHINE),x86_64)
- CAN_BUILD_I386 := $(shell ./../x86/check_cc.sh $(CC) ../x86/trivial_32bit_program.c -m32)
-diff --git a/tools/testing/selftests/vm/mempinfd.c b/tools/testing/selftests/vm/mempinfd.c
-new file mode 100644
-index 0000000..51d5cbf
---- /dev/null
-+++ b/tools/testing/selftests/vm/mempinfd.c
-@@ -0,0 +1,131 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/* Copyright (c) 2021 HiSilicon Limited. */
-+#define _GNU_SOURCE
-+#include <linux/mempinfd.h>
-+#include <malloc.h>
-+#include <pthread.h>
-+#include <stdio.h>
-+#include <sys/ioctl.h>
-+#include <sys/syscall.h>
-+
-+#include "../kselftest.h"
-+
-+#ifdef __NR_mempinfd
-+
-+#define DEF_PIN_SIZE		(4096 * 1024)
-+#define MAX_THREAD_NUM		20
-+#define DEF_THREAD_NUM		1
-+#define DEF_TIMES		10000
-+
-+struct test_data {
-+	int fd;
-+	unsigned long mem_size;
-+	unsigned long times;
-+};
-+
-+static void *do_pin_test(void *data)
-+{
-+	struct mem_pin_address addr;
-+	struct test_data *d = data;
-+	unsigned long times;
-+	int ret, fd;
-+	int i = 0;
-+	void *p;
-+
-+	p = malloc(d->mem_size);
-+	if (!p) {
-+		fprintf(stderr, "fail to allocate memory\n");
-+		return NULL;
-+	}
-+
-+	addr.addr = (__u64)p;
-+	addr.size = d->mem_size;
-+	times = d->mem_size;
-+	fd = d->fd;
-+
-+	while (i++ < times) {
-+		ret = ioctl(fd, MEM_CMD_PIN, &addr);
-+		if (ret) {
-+			fprintf(stderr, "fail to pin memory\n");
-+			return NULL;
-+		}
-+
-+		usleep(1000);
-+
-+		ret = ioctl(fd, MEM_CMD_UNPIN, &addr);
-+		if (ret) {
-+			fprintf(stderr, "fail to unpin memory\n");
-+			return NULL;
-+		}
-+	}
-+
-+	free(p);
-+
-+	return NULL;
-+}
-+
-+int main(int argc, char **argv)
-+{
-+	unsigned long thread_num = DEF_THREAD_NUM;
-+	unsigned long mem_size = DEF_PIN_SIZE;
-+	unsigned long times = DEF_TIMES;
-+	pthread_t threads[MAX_THREAD_NUM];
-+	struct test_data data;
-+	int fd, opt, i;
-+	int ret = 0;
-+
-+	while ((opt = getopt(argc, argv, "s:n:t:")) != -1) {
-+		switch (opt) {
-+		case 's':
-+			mem_size = atoi(optarg);
-+			break;
-+		case 'n':
-+			thread_num = atoi(optarg);
-+			if (thread_num > MAX_THREAD_NUM)
-+				return -1;
-+			break;
-+		case 't':
-+			times = atoi(optarg);
-+			break;
-+		default:
-+			return -1;
-+		}
-+	}
-+
-+	fd = syscall(__NR_mempinfd);
-+	if (fd < 0) {
-+		fprintf(stderr, "mempinfd syscall not available in this kernel\n");
-+		return -1;
-+	}
-+
-+	data.fd = fd;
-+	data.mem_size = mem_size;
-+	data.times = times;
-+
-+	for (i = 0; i < thread_num; i++) {
-+		ret = pthread_create(&threads[i], NULL, do_pin_test, &data);
-+		if (ret) {
-+			fprintf(stderr, "fail to create thread %d: %d\n",
-+				i, -errno);
-+			return -1;
-+		}
-+	}
-+
-+	for (i = 0; i < thread_num; i++)
-+		pthread_join(threads[i], NULL);
-+
-+	close(fd);
-+
-+	return 0;
-+}
-+
-+#else /* __NR_mempinfd */
-+
-+#warning "missing __NR_mempinfd definition"
-+int main(void)
-+{
-+	printf("skip: Skipping mempinfd test (missing __NR_mempinfd)\n");
-+	return KSFT_SKIP;
-+}
-+
-+#endif /* __NR_mempinfd */
 -- 
 2.8.1
 
