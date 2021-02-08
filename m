@@ -2,177 +2,187 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8CEFEC433DB
-	for <linux-api@archiver.kernel.org>; Mon,  8 Feb 2021 09:31:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8E1F8C433E6
+	for <linux-api@archiver.kernel.org>; Mon,  8 Feb 2021 10:15:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 364C064E88
-	for <linux-api@archiver.kernel.org>; Mon,  8 Feb 2021 09:31:54 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5614C64E8C
+	for <linux-api@archiver.kernel.org>; Mon,  8 Feb 2021 10:15:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231579AbhBHJbM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 8 Feb 2021 04:31:12 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:44775 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S231563AbhBHJ3E (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 8 Feb 2021 04:29:04 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1612776456;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=dgUd+2G1OxW5XPBZGlc3z4gNM80hK8Gpg3YPMpWSREs=;
-        b=WOE/LplJn/hGVf7nGElyOmmsYJpBXmZQ1+/wrQ8XGnxccHhjkbtP5DOQKV7kWZKXvrtm9S
-        bB20+qMKqE3o1Doz+gyjxINBHi0qWGLc0Bdoh6s/f8AzpxR+tJq8X7z/C+CoNJ2duYGJVK
-        Hjdy7zRduKgEjcqYndWddzyU9Z8OY/A=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-304-wOalByIhNImBr91I-hxz5g-1; Mon, 08 Feb 2021 04:27:32 -0500
-X-MC-Unique: wOalByIhNImBr91I-hxz5g-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9EAF41934101;
-        Mon,  8 Feb 2021 09:27:27 +0000 (UTC)
-Received: from [10.36.113.240] (ovpn-113-240.ams2.redhat.com [10.36.113.240])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 80D2660C05;
-        Mon,  8 Feb 2021 09:27:19 +0000 (UTC)
-Subject: Re: [PATCH v17 00/10] mm: introduce memfd_secret system call to
- create "secret" memory areas
-To:     Mike Rapoport <rppt@kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>
-Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
-        Andy Lutomirski <luto@kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Christopher Lameter <cl@linux.com>,
-        Dan Williams <dan.j.williams@intel.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Elena Reshetova <elena.reshetova@intel.com>,
-        "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,
-        James Bottomley <jejb@linux.ibm.com>,
-        "Kirill A. Shutemov" <kirill@shutemov.name>,
-        Matthew Wilcox <willy@infradead.org>,
-        Mark Rutland <mark.rutland@arm.com>,
-        Michal Hocko <mhocko@suse.com>,
-        Mike Rapoport <rppt@linux.ibm.com>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Palmer Dabbelt <palmer@dabbelt.com>,
-        Paul Walmsley <paul.walmsley@sifive.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Rick Edgecombe <rick.p.edgecombe@intel.com>,
-        Roman Gushchin <guro@fb.com>,
-        Shakeel Butt <shakeelb@google.com>,
-        Shuah Khan <shuah@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
-        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
-        linux-arm-kernel@lists.infradead.org,
-        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
-        linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
-        linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
-        x86@kernel.org
-References: <20210208084920.2884-1-rppt@kernel.org>
-From:   David Hildenbrand <david@redhat.com>
-Organization: Red Hat GmbH
-Message-ID: <4996348d-5710-d77d-bb14-d84e370b4a5c@redhat.com>
-Date:   Mon, 8 Feb 2021 10:27:18 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.5.0
-MIME-Version: 1.0
-In-Reply-To: <20210208084920.2884-1-rppt@kernel.org>
-Content-Type: text/plain; charset=utf-8; format=flowed
+        id S232042AbhBHKPm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 8 Feb 2021 05:15:42 -0500
+Received: from szxga08-in.huawei.com ([45.249.212.255]:2828 "EHLO
+        szxga08-in.huawei.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S231933AbhBHKOh (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 8 Feb 2021 05:14:37 -0500
+Received: from DGGEMM403-HUB.china.huawei.com (unknown [172.30.72.56])
+        by szxga08-in.huawei.com (SkyGuard) with ESMTP id 4DZ1xz00dlz13rjY;
+        Mon,  8 Feb 2021 18:11:02 +0800 (CST)
+Received: from dggpemm100012.china.huawei.com (7.185.36.212) by
+ DGGEMM403-HUB.china.huawei.com (10.3.20.211) with Microsoft SMTP Server (TLS)
+ id 14.3.498.0; Mon, 8 Feb 2021 18:13:16 +0800
+Received: from dggemi761-chm.china.huawei.com (10.1.198.147) by
+ dggpemm100012.china.huawei.com (7.185.36.212) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256) id
+ 15.1.2106.2; Mon, 8 Feb 2021 18:13:16 +0800
+Received: from dggemi761-chm.china.huawei.com ([10.9.49.202]) by
+ dggemi761-chm.china.huawei.com ([10.9.49.202]) with mapi id 15.01.2106.006;
+ Mon, 8 Feb 2021 18:13:16 +0800
+From:   "Song Bao Hua (Barry Song)" <song.bao.hua@hisilicon.com>
+To:     David Hildenbrand <david@redhat.com>,
+        Matthew Wilcox <willy@infradead.org>
+CC:     "Wangzhou (B)" <wangzhou1@hisilicon.com>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "iommu@lists.linux-foundation.org" <iommu@lists.linux-foundation.org>,
+        "linux-mm@kvack.org" <linux-mm@kvack.org>,
+        "linux-arm-kernel@lists.infradead.org" 
+        <linux-arm-kernel@lists.infradead.org>,
+        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>,
+        "jgg@ziepe.ca" <jgg@ziepe.ca>,
+        "kevin.tian@intel.com" <kevin.tian@intel.com>,
+        "jean-philippe@linaro.org" <jean-philippe@linaro.org>,
+        "eric.auger@redhat.com" <eric.auger@redhat.com>,
+        "Liguozhu (Kenneth)" <liguozhu@hisilicon.com>,
+        "zhangfei.gao@linaro.org" <zhangfei.gao@linaro.org>,
+        "chensihang (A)" <chensihang1@hisilicon.com>
+Subject: RE: [RFC PATCH v3 1/2] mempinfd: Add new syscall to provide memory
+ pin
+Thread-Topic: [RFC PATCH v3 1/2] mempinfd: Add new syscall to provide memory
+ pin
+Thread-Index: AQHW/SrsWWMRpilf2UC1Pz29QqsBVqpMsX2AgACQE1D//7IVAIAAi2xQ///nWQCAAKIUUA==
+Date:   Mon, 8 Feb 2021 10:13:15 +0000
+Message-ID: <fdee54b5ab91453d93d2f775ca2532d2@hisilicon.com>
+References: <1612685884-19514-1-git-send-email-wangzhou1@hisilicon.com>
+ <1612685884-19514-2-git-send-email-wangzhou1@hisilicon.com>
+ <20210207213409.GL308988@casper.infradead.org>
+ <f4b2d7db8a1047d9952cbbfaf9e27824@hisilicon.com>
+ <20210208013056.GM308988@casper.infradead.org>
+ <b4e2acc237e44ffe916135e96ad3ef20@hisilicon.com>
+ <beb4dfb5-e9d2-a76c-f965-28cff5e4658b@redhat.com>
+In-Reply-To: <beb4dfb5-e9d2-a76c-f965-28cff5e4658b@redhat.com>
+Accept-Language: en-GB, en-US
 Content-Language: en-US
-Content-Transfer-Encoding: 7bit
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-originating-ip: [10.126.200.200]
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+MIME-Version: 1.0
+X-CFilter-Loop: Reflected
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 08.02.21 09:49, Mike Rapoport wrote:
-> From: Mike Rapoport <rppt@linux.ibm.com>
-> 
-> Hi,
-> 
-> @Andrew, this is based on v5.11-rc5-mmotm-2021-01-27-23-30, with secretmem
-> and related patches dropped from there, I can rebase whatever way you
-> prefer.
-> 
-> This is an implementation of "secret" mappings backed by a file descriptor.
-> 
-> The file descriptor backing secret memory mappings is created using a
-> dedicated memfd_secret system call The desired protection mode for the
-> memory is configured using flags parameter of the system call. The mmap()
-> of the file descriptor created with memfd_secret() will create a "secret"
-> memory mapping. The pages in that mapping will be marked as not present in
-> the direct map and will be present only in the page table of the owning mm.
-> 
-> Although normally Linux userspace mappings are protected from other users,
-> such secret mappings are useful for environments where a hostile tenant is
-> trying to trick the kernel into giving them access to other tenants
-> mappings.
-> 
-> Additionally, in the future the secret mappings may be used as a mean to
-> protect guest memory in a virtual machine host.
-> 
-> For demonstration of secret memory usage we've created a userspace library
-> 
-> https://git.kernel.org/pub/scm/linux/kernel/git/jejb/secret-memory-preloader.git
-> 
-> that does two things: the first is act as a preloader for openssl to
-> redirect all the OPENSSL_malloc calls to secret memory meaning any secret
-> keys get automatically protected this way and the other thing it does is
-> expose the API to the user who needs it. We anticipate that a lot of the
-> use cases would be like the openssl one: many toolkits that deal with
-> secret keys already have special handling for the memory to try to give
-> them greater protection, so this would simply be pluggable into the
-> toolkits without any need for user application modification.
-> 
-> Hiding secret memory mappings behind an anonymous file allows usage of
-> the page cache for tracking pages allocated for the "secret" mappings as
-> well as using address_space_operations for e.g. page migration callbacks.
-> 
-> The anonymous file may be also used implicitly, like hugetlb files, to
-> implement mmap(MAP_SECRET) and use the secret memory areas with "native" mm
-> ABIs in the future.
-> 
-> Removing of the pages from the direct map may cause its fragmentation on
-> architectures that use large pages to map the physical memory which affects
-> the system performance. However, the original Kconfig text for
-> CONFIG_DIRECT_GBPAGES said that gigabyte pages in the direct map "... can
-> improve the kernel's performance a tiny bit ..." (commit 00d1c5e05736
-> ("x86: add gbpages switches")) and the recent report [1] showed that "...
-> although 1G mappings are a good default choice, there is no compelling
-> evidence that it must be the only choice". Hence, it is sufficient to have
-> secretmem disabled by default with the ability of a system administrator to
-> enable it at boot time.
-> 
-> In addition, there is also a long term goal to improve management of the
-> direct map.
-
-Some questions (and request to document the answers) as we now allow to 
-have unmovable allocations all over the place and I don't see a single 
-comment regarding that in the cover letter:
-
-1. How will the issue of plenty of unmovable allocations for user space 
-be tackled in the future?
-
-2. How has this issue been documented? E.g., interaction with 
-ZONE_MOVABLE and CMA, alloc_conig_range()/alloc_contig_pages?.
-
-3. How are the plans to support migration in the future and which 
-interface changes will be required? (Michal mentioned some good points 
-to make this configurable via the interface, we should plan ahead and 
-document)
-
-Thanks!
-
--- 
-Thanks,
-
-David / dhildenb
-
+DQoNCj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCj4gRnJvbTogb3duZXItbGludXgtbW1A
+a3ZhY2sub3JnIFttYWlsdG86b3duZXItbGludXgtbW1Aa3ZhY2sub3JnXSBPbiBCZWhhbGYgT2YN
+Cj4gRGF2aWQgSGlsZGVuYnJhbmQNCj4gU2VudDogTW9uZGF5LCBGZWJydWFyeSA4LCAyMDIxIDk6
+MjIgUE0NCj4gVG86IFNvbmcgQmFvIEh1YSAoQmFycnkgU29uZykgPHNvbmcuYmFvLmh1YUBoaXNp
+bGljb24uY29tPjsgTWF0dGhldyBXaWxjb3gNCj4gPHdpbGx5QGluZnJhZGVhZC5vcmc+DQo+IENj
+OiBXYW5nemhvdSAoQikgPHdhbmd6aG91MUBoaXNpbGljb24uY29tPjsgbGludXgta2VybmVsQHZn
+ZXIua2VybmVsLm9yZzsNCj4gaW9tbXVAbGlzdHMubGludXgtZm91bmRhdGlvbi5vcmc7IGxpbnV4
+LW1tQGt2YWNrLm9yZzsNCj4gbGludXgtYXJtLWtlcm5lbEBsaXN0cy5pbmZyYWRlYWQub3JnOyBs
+aW51eC1hcGlAdmdlci5rZXJuZWwub3JnOyBBbmRyZXcNCj4gTW9ydG9uIDxha3BtQGxpbnV4LWZv
+dW5kYXRpb24ub3JnPjsgQWxleGFuZGVyIFZpcm8gPHZpcm9AemVuaXYubGludXgub3JnLnVrPjsN
+Cj4gZ3JlZ2toQGxpbnV4Zm91bmRhdGlvbi5vcmc7IGpnZ0B6aWVwZS5jYTsga2V2aW4udGlhbkBp
+bnRlbC5jb207DQo+IGplYW4tcGhpbGlwcGVAbGluYXJvLm9yZzsgZXJpYy5hdWdlckByZWRoYXQu
+Y29tOyBMaWd1b3podSAoS2VubmV0aCkNCj4gPGxpZ3Vvemh1QGhpc2lsaWNvbi5jb20+OyB6aGFu
+Z2ZlaS5nYW9AbGluYXJvLm9yZzsgY2hlbnNpaGFuZyAoQSkNCj4gPGNoZW5zaWhhbmcxQGhpc2ls
+aWNvbi5jb20+DQo+IFN1YmplY3Q6IFJlOiBbUkZDIFBBVENIIHYzIDEvMl0gbWVtcGluZmQ6IEFk
+ZCBuZXcgc3lzY2FsbCB0byBwcm92aWRlIG1lbW9yeQ0KPiBwaW4NCj4gDQo+IE9uIDA4LjAyLjIx
+IDAzOjI3LCBTb25nIEJhbyBIdWEgKEJhcnJ5IFNvbmcpIHdyb3RlOg0KPiA+DQo+ID4NCj4gPj4g
+LS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCj4gPj4gRnJvbTogb3duZXItbGludXgtbW1Aa3Zh
+Y2sub3JnIFttYWlsdG86b3duZXItbGludXgtbW1Aa3ZhY2sub3JnXSBPbiBCZWhhbGYNCj4gT2YN
+Cj4gPj4gTWF0dGhldyBXaWxjb3gNCj4gPj4gU2VudDogTW9uZGF5LCBGZWJydWFyeSA4LCAyMDIx
+IDI6MzEgUE0NCj4gPj4gVG86IFNvbmcgQmFvIEh1YSAoQmFycnkgU29uZykgPHNvbmcuYmFvLmh1
+YUBoaXNpbGljb24uY29tPg0KPiA+PiBDYzogV2FuZ3pob3UgKEIpIDx3YW5nemhvdTFAaGlzaWxp
+Y29uLmNvbT47IGxpbnV4LWtlcm5lbEB2Z2VyLmtlcm5lbC5vcmc7DQo+ID4+IGlvbW11QGxpc3Rz
+LmxpbnV4LWZvdW5kYXRpb24ub3JnOyBsaW51eC1tbUBrdmFjay5vcmc7DQo+ID4+IGxpbnV4LWFy
+bS1rZXJuZWxAbGlzdHMuaW5mcmFkZWFkLm9yZzsgbGludXgtYXBpQHZnZXIua2VybmVsLm9yZzsg
+QW5kcmV3DQo+ID4+IE1vcnRvbiA8YWtwbUBsaW51eC1mb3VuZGF0aW9uLm9yZz47IEFsZXhhbmRl
+ciBWaXJvDQo+IDx2aXJvQHplbml2LmxpbnV4Lm9yZy51az47DQo+ID4+IGdyZWdraEBsaW51eGZv
+dW5kYXRpb24ub3JnOyBqZ2dAemllcGUuY2E7IGtldmluLnRpYW5AaW50ZWwuY29tOw0KPiA+PiBq
+ZWFuLXBoaWxpcHBlQGxpbmFyby5vcmc7IGVyaWMuYXVnZXJAcmVkaGF0LmNvbTsgTGlndW96aHUg
+KEtlbm5ldGgpDQo+ID4+IDxsaWd1b3podUBoaXNpbGljb24uY29tPjsgemhhbmdmZWkuZ2FvQGxp
+bmFyby5vcmc7IGNoZW5zaWhhbmcgKEEpDQo+ID4+IDxjaGVuc2loYW5nMUBoaXNpbGljb24uY29t
+Pg0KPiA+PiBTdWJqZWN0OiBSZTogW1JGQyBQQVRDSCB2MyAxLzJdIG1lbXBpbmZkOiBBZGQgbmV3
+IHN5c2NhbGwgdG8gcHJvdmlkZSBtZW1vcnkNCj4gPj4gcGluDQo+ID4+DQo+ID4+IE9uIFN1biwg
+RmViIDA3LCAyMDIxIGF0IDEwOjI0OjI4UE0gKzAwMDAsIFNvbmcgQmFvIEh1YSAoQmFycnkgU29u
+Zykgd3JvdGU6DQo+ID4+Pj4+IEluIGhpZ2gtcGVyZm9ybWFuY2UgSS9PIGNhc2VzLCBhY2NlbGVy
+YXRvcnMgbWlnaHQgd2FudCB0byBwZXJmb3JtDQo+ID4+Pj4+IEkvTyBvbiBhIG1lbW9yeSB3aXRo
+b3V0IElPIHBhZ2UgZmF1bHRzIHdoaWNoIGNhbiByZXN1bHQgaW4gZHJhbWF0aWNhbGx5DQo+ID4+
+Pj4+IGluY3JlYXNlZCBsYXRlbmN5LiBDdXJyZW50IG1lbW9yeSByZWxhdGVkIEFQSXMgY291bGQg
+bm90IGFjaGlldmUgdGhpcw0KPiA+Pj4+PiByZXF1aXJlbWVudCwgZS5nLiBtbG9jayBjYW4gb25s
+eSBhdm9pZCBtZW1vcnkgdG8gc3dhcCB0byBiYWNrdXAgZGV2aWNlLA0KPiA+Pj4+PiBwYWdlIG1p
+Z3JhdGlvbiBjYW4gc3RpbGwgdHJpZ2dlciBJTyBwYWdlIGZhdWx0Lg0KPiA+Pj4+DQo+ID4+Pj4g
+V2VsbCAuLi4gd2UgaGF2ZSB0d28gcmVxdWlyZW1lbnRzLiAgVGhlIGFwcGxpY2F0aW9uIHdhbnRz
+IHRvIG5vdCB0YWtlDQo+ID4+Pj4gcGFnZSBmYXVsdHMuICBUaGUgc3lzdGVtIHdhbnRzIHRvIG1v
+dmUgdGhlIGFwcGxpY2F0aW9uIHRvIGEgZGlmZmVyZW50DQo+ID4+Pj4gTlVNQSBub2RlIGluIG9y
+ZGVyIHRvIG9wdGltaXNlIG92ZXJhbGwgcGVyZm9ybWFuY2UuICBXaHkgc2hvdWxkIHRoZQ0KPiA+
+Pj4+IGFwcGxpY2F0aW9uJ3MgZGVzaXJlcyB0YWtlIHByZWNlZGVuY2Ugb3ZlciB0aGUga2VybmVs
+J3MgZGVzaXJlcz8gIEFuZCB3aHkNCj4gPj4+PiBzaG91bGQgaXQgYmUgZG9uZSB0aGlzIHdheSBy
+YXRoZXIgdGhhbiBieSB0aGUgc3lzYWRtaW4gdXNpbmcgbnVtYWN0bCB0bw0KPiA+Pj4+IGxvY2sg
+dGhlIGFwcGxpY2F0aW9uIHRvIGEgcGFydGljdWxhciBub2RlPw0KPiA+Pj4NCj4gPj4+IE5VTUEg
+YmFsYW5jZXIgaXMganVzdCBvbmUgb2YgbWFueSByZWFzb25zIGZvciBwYWdlIG1pZ3JhdGlvbi4g
+RXZlbiBvbmUNCj4gPj4+IHNpbXBsZSBhbGxvY19wYWdlcygpIGNhbiBjYXVzZSBtZW1vcnkgbWln
+cmF0aW9uIGluIGp1c3Qgc2luZ2xlIE5VTUENCj4gPj4+IG5vZGUgb3IgVU1BIHN5c3RlbS4NCj4g
+Pj4+DQo+ID4+PiBUaGUgb3RoZXIgcmVhc29ucyBmb3IgcGFnZSBtaWdyYXRpb24gaW5jbHVkZSBi
+dXQgYXJlIG5vdCBsaW1pdGVkIHRvOg0KPiA+Pj4gKiBtZW1vcnkgbW92ZSBkdWUgdG8gQ01BDQo+
+ID4+PiAqIG1lbW9yeSBtb3ZlIGR1ZSB0byBodWdlIHBhZ2VzIGNyZWF0aW9uDQo+ID4+Pg0KPiA+
+Pj4gSGFyZGx5IHdlIGNhbiBhc2sgdXNlcnMgdG8gZGlzYWJsZSB0aGUgQ09NUEFDVElPTiwgQ01B
+IGFuZCBIdWdlIFBhZ2UNCj4gPj4+IGluIHRoZSB3aG9sZSBzeXN0ZW0uDQo+ID4+DQo+ID4+IFlv
+dSdyZSBkb2RnaW5nIHRoZSBxdWVzdGlvbi4gIFNob3VsZCB0aGUgQ01BIGFsbG9jYXRpb24gZmFp
+bCBiZWNhdXNlDQo+ID4+IGFub3RoZXIgYXBwbGljYXRpb24gaXMgdXNpbmcgU1ZBPw0KPiA+Pg0K
+PiA+PiBJIHdvdWxkIHNheSBuby4NCj4gPg0KPiA+IEkgd291bGQgc2F5IG5vIGFzIHdlbGwuDQo+
+ID4NCj4gPiBXaGlsZSBJT01NVSBpcyBlbmFibGVkLCBDTUEgYWxtb3N0IGhhcyBvbmUgdXNlciBv
+bmx5OiBJT01NVSBkcml2ZXINCj4gPiBhcyBvdGhlciBkcml2ZXJzIHdpbGwgZGVwZW5kIG9uIGlv
+bW11IHRvIHVzZSBub24tY29udGlndW91cyBtZW1vcnkNCj4gPiB0aG91Z2ggdGhleSBhcmUgc3Rp
+bGwgY2FsbGluZyBkbWFfYWxsb2NfY29oZXJlbnQoKS4NCj4gPg0KPiA+IEluIGlvbW11IGRyaXZl
+ciwgZG1hX2FsbG9jX2NvaGVyZW50IGlzIGNhbGxlZCBkdXJpbmcgaW5pdGlhbGl6YXRpb24NCj4g
+PiBhbmQgdGhlcmUgaXMgbm8gbmV3IGFsbG9jYXRpb24gYWZ0ZXJ3YXJkcy4gU28gaXQgd291bGRu
+J3QgY2F1c2UNCj4gPiBydW50aW1lIGltcGFjdCBvbiBTVkEgcGVyZm9ybWFuY2UuIEV2ZW4gdGhl
+cmUgaXMgbmV3IGFsbG9jYXRpb25zLA0KPiA+IENNQSB3aWxsIGZhbGwgYmFjayB0byBnZW5lcmFs
+IGFsbG9jX3BhZ2VzKCkgYW5kIGlvbW11IGRyaXZlcnMgYXJlDQo+ID4gYWxtb3N0IGFsbG9jYXRp
+bmcgc21hbGwgbWVtb3J5IGZvciBjb21tYW5kIHF1ZXVlcy4NCj4gPg0KPiA+IFNvIEkgd291bGQg
+c2F5IGdlbmVyYWwgY29tcG91bmQgcGFnZXMsIGh1Z2UgcGFnZXMsIGVzcGVjaWFsbHkNCj4gPiB0
+cmFuc3BhcmVudCBodWdlIHBhZ2VzLCB3b3VsZCBiZSBiaWdnZXIgY29uY2VybnMgdGhhbiBDTUEg
+Zm9yDQo+ID4gaW50ZXJuYWwgcGFnZSBtaWdyYXRpb24gd2l0aGluIG9uZSBOVU1BLg0KPiA+DQo+
+ID4gTm90IGxpa2UgQ01BLCBnZW5lcmFsIGFsbG9jX3BhZ2VzKCkgY2FuIGdldCBtZW1vcnkgYnkg
+bW92aW5nDQo+ID4gcGFnZXMgb3RoZXIgdGhhbiB0aG9zZSBwaW5uZWQuDQo+ID4NCj4gPiBBbmQg
+dGhlcmUgaXMgbm8gZ3VhcmFudGVlIHdlIGNhbiBhbHdheXMgYmluZCB0aGUgbWVtb3J5IG9mDQo+
+ID4gU1ZBIGFwcGxpY2F0aW9ucyB0byBzaW5nbGUgb25lIE5VTUEsIHNvIE5VTUEgYmFsYW5jaW5n
+IGlzDQo+ID4gc3RpbGwgYSBjb25jZXJuLg0KPiA+DQo+ID4gQnV0IEkgYWdyZWUgd2UgbmVlZCBh
+IHdheSB0byBtYWtlIENNQSBzdWNjZXNzIHdoaWxlIHRoZSB1c2Vyc3BhY2UNCj4gPiBwYWdlcyBh
+cmUgcGlubmVkLiBTaW5jZSBwaW4gaGFzIGJlZW4gdmlyYWwgaW4gbWFueSBkcml2ZXJzLCBJDQo+
+ID4gYXNzdW1lIHRoZXJlIGlzIGEgd2F5IHRvIGhhbmRsZSB0aGlzLiBPdGhlcndpc2UsIEFQSXMg
+bGlrZQ0KPiA+IFY0TDJfTUVNT1JZX1VTRVJQVFJbMV0gd2lsbCBwb3NzaWJseSBtYWtlIENNQSBm
+YWlsIGFzIHRoZXJlDQo+ID4gaXMgbm8gZ3VhcmFudGVlIHRoYXQgdXNlcnNzcGFjZSB3aWxsIGFs
+bG9jYXRlIHVubW92YWJsZSBtZW1vcnkNCj4gPiBhbmQgdGhlcmUgaXMgbm8gZ3VhcmFudGVlIHRo
+ZSBmYWxsYmFjayBwYXRoLSBhbGxvY19wYWdlcygpIGNhbg0KPiA+IHN1Y2NlZWQgd2hpbGUgYWxs
+b2NhdGluZyBiaWcgbWVtb3J5Lg0KPiA+DQo+IA0KPiBMb25nIHRlcm0gcGlubmluZ3MgY2Fubm90
+IGdvIG9udG8gQ01BLXJlc2VydmVkIG1lbW9yeSwgYW5kIHRoZXJlIGlzDQo+IHNpbWlsYXIgd29y
+ayB0byBhbHNvIGZpeCBaT05FX01PVkFCTEUgaW4gdGhhdCByZWdhcmQuDQo+IA0KPiBodHRwczov
+L2xrbWwua2VybmVsLm9yZy9yLzIwMjEwMTI1MTk0NzUxLjEyNzUzMTYtMS1wYXNoYS50YXRhc2hp
+bkBzb2xlZW4uYw0KPiBvbQ0KPiANCj4gT25lIG9mIHRoZSByZWFzb25zIEkgZGV0ZXN0IHVzaW5n
+IGxvbmcgdGVybSBwaW5uaW5nIG9mIHBhZ2VzIHdoZXJlIGl0DQo+IGNvdWxkIGJlIGF2b2lkZWQu
+IFRha2UgVkZJTyBhbmQgUkRNQSBhcyBhbiBleGFtcGxlOiB0aGVzZSB0aGluZ3MNCj4gY3VycmVu
+dGx5IGNhbid0IHdvcmsgd2l0aG91dCB0aGVtLg0KPiANCj4gV2hhdCBJIHJlYWQgaGVyZTogIkRN
+QSBwZXJmb3JtYW5jZSB3aWxsIGJlIGFmZmVjdGVkIHNldmVyZWx5Ii4gVGhhdCBkb2VzDQo+IG5v
+dCBzb3VuZCBsaWtlIGEgY29tcGVsbGluZyBhcmd1bWVudCB0byBtZSBmb3IgbG9uZyB0ZXJtIHBp
+bm5pbmdzLg0KPiBQbGVhc2UgZmluZCBhbm90aGVyIHdheSB0byBhY2hpZXZlIHRoZSBzYW1lIGdv
+YWwgd2l0aG91dCBsb25nIHRlcm0NCj4gcGlubmluZ3MgY29udHJvbGxlZCBieSB1c2VyIHNwYWNl
+IC0gZS5nLiwgY29udHJvbGxpbmcgd2hlbiBtaWdyYXRpb24NCj4gYWN0dWFsbHkgaGFwcGVucy4N
+Cj4gDQo+IEZvciBleGFtcGxlLCBDTUEvYWxsb2NfY29udGlnX3JhbmdlKCkvbWVtb3J5IHVucGx1
+ZyBhcmUgY29ybmVyIGNhc2VzDQo+IHRoYXQgaGFwcGVuIHJhcmVseSwgeW91IHNob3VsZG4ndCBo
+YXZlIHRvIHdvcnJ5IGFib3V0IHRoZW0gbWVzc2luZyB3aXRoDQo+IHlvdXIgRE1BIHBlcmZvcm1h
+bmNlLg0KDQpJIGFncmVlIENNQS9hbGxvY19jb250aWdfcmFuZ2UoKS9tZW1vcnkgdW5wbHVnIHdv
+dWxkIGJlIGNvcm5lciBjYXNlcywNCnRoZSBtYWpvciBjYXNlcyB3b3VsZCBiZSBUSFAsIE5VTUEg
+YmFsYW5jaW5nIHdoaWxlIHdlIGNvdWxkIHRvdGFsbHkNCmRpc2FibGUgdGhlbSBidXQgaXQgc2Vl
+bXMgaW5zZW5zaWJsZSB0byBkbyB0aGF0IG9ubHkgYmVjYXVzZSB0aGVyZSBpcw0KYSBwcm9jZXNz
+IHVzaW5nIFNWQSBpbiB0aGUgc3lzdGVtLg0KDQo+IA0KPiAtLQ0KPiBUaGFua3MsDQo+IA0KPiBE
+YXZpZCAvIGRoaWxkZW5iDQoNClRoYW5rcw0KQmFycnkNCg0K
