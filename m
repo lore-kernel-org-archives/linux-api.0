@@ -7,40 +7,43 @@ X-Spam-Status: No, score=-8.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 882C1C43381
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9F84AC4332B
 	for <linux-api@archiver.kernel.org>; Mon,  8 Feb 2021 11:19:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 39E1A64E42
+	by mail.kernel.org (Postfix) with ESMTP id 71B3F64D8F
 	for <linux-api@archiver.kernel.org>; Mon,  8 Feb 2021 11:19:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231945AbhBHLSr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 8 Feb 2021 06:18:47 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:60588 "EHLO
+        id S232705AbhBHLSv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 8 Feb 2021 06:18:51 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:43368 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S233014AbhBHLPy (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 8 Feb 2021 06:15:54 -0500
+        by vger.kernel.org with ESMTP id S233037AbhBHLQX (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 8 Feb 2021 06:16:23 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1612782847;
+        s=mimecast20190719; t=1612782897;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=rjBhYigDjL91xEreC6QyJ/Hq5Z8K5dAmnvBeKDYfa7U=;
-        b=e90AczawJx8pSW1PeHpMoq3ukT7qvocx5SAyi7bZilzaBD2+GapsBSzr+5jIzeiGO87gMc
-        tImXa2FZf6SvrSxbSwDNBwfEaPWR+q2teHGLN1TnmZfyoK2lwhFuDgL59kbcdXTVRxPmpv
-        552bOAv72GVZDyPUUKuOb6wqI7SI6N4=
+        bh=iMMAZUkyH+ZKGo/5ngkXcKGY7DpWIxntZe8dxLbr64A=;
+        b=eoLYIMD8SorQivSRX48jD8x51UI710nCugbiHoa2jkXONC/vEMmbKxE6WviH1GCsRQ4CWt
+        ijNcCPoYXA2KGz55cwPEkLzalTj+xcqidnOus0sy2JsTJ3L0c2utkmKVBZoko1hiSzoLUC
+        yKUbyHmJLTRR0NM1Ytb8QtC2S15mMks=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-92-kXoN8HQDORu6M_4PkL4cIg-1; Mon, 08 Feb 2021 06:14:03 -0500
-X-MC-Unique: kXoN8HQDORu6M_4PkL4cIg-1
+ us-mta-94-GXyOZsouM8ig9OB-3XPXHQ-1; Mon, 08 Feb 2021 06:14:53 -0500
+X-MC-Unique: GXyOZsouM8ig9OB-3XPXHQ-1
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5A00B801976;
-        Mon,  8 Feb 2021 11:13:58 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 15D6B80196E;
+        Mon,  8 Feb 2021 11:14:49 +0000 (UTC)
 Received: from [10.36.113.240] (ovpn-113-240.ams2.redhat.com [10.36.113.240])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 01D995C1D0;
-        Mon,  8 Feb 2021 11:13:50 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 9DCA95C1D0;
+        Mon,  8 Feb 2021 11:14:41 +0000 (UTC)
+Subject: Re: [PATCH v17 08/10] PM: hibernate: disable when there are active
+ secretmem users
+From:   David Hildenbrand <david@redhat.com>
 To:     Michal Hocko <mhocko@suse.com>
 Cc:     Mike Rapoport <rppt@kernel.org>,
         Andrew Morton <akpm@linux-foundation.org>,
@@ -81,64 +84,65 @@ References: <20210208084920.2884-1-rppt@kernel.org>
  <YCEXwUYepeQvEWTf@dhcp22.suse.cz>
  <a488a0bb-def5-0249-99e2-4643787cef69@redhat.com>
  <YCEZAWOv63KYglJZ@dhcp22.suse.cz>
-From:   David Hildenbrand <david@redhat.com>
+ <770690dc-634a-78dd-0772-3aba1a3beba8@redhat.com>
 Organization: Red Hat GmbH
-Subject: Re: [PATCH v17 08/10] PM: hibernate: disable when there are active
- secretmem users
-Message-ID: <770690dc-634a-78dd-0772-3aba1a3beba8@redhat.com>
-Date:   Mon, 8 Feb 2021 12:13:49 +0100
+Message-ID: <21f4e742-1aab-f8ba-f0e7-40faa6d6c0bb@redhat.com>
+Date:   Mon, 8 Feb 2021 12:14:40 +0100
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
  Thunderbird/78.5.0
 MIME-Version: 1.0
-In-Reply-To: <YCEZAWOv63KYglJZ@dhcp22.suse.cz>
+In-Reply-To: <770690dc-634a-78dd-0772-3aba1a3beba8@redhat.com>
 Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Language: en-US
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
 X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 08.02.21 11:57, Michal Hocko wrote:
-> On Mon 08-02-21 11:53:58, David Hildenbrand wrote:
->> On 08.02.21 11:51, Michal Hocko wrote:
->>> On Mon 08-02-21 11:32:11, David Hildenbrand wrote:
->>>> On 08.02.21 11:18, Michal Hocko wrote:
->>>>> On Mon 08-02-21 10:49:18, Mike Rapoport wrote:
->>>>>> From: Mike Rapoport <rppt@linux.ibm.com>
+On 08.02.21 12:13, David Hildenbrand wrote:
+> On 08.02.21 11:57, Michal Hocko wrote:
+>> On Mon 08-02-21 11:53:58, David Hildenbrand wrote:
+>>> On 08.02.21 11:51, Michal Hocko wrote:
+>>>> On Mon 08-02-21 11:32:11, David Hildenbrand wrote:
+>>>>> On 08.02.21 11:18, Michal Hocko wrote:
+>>>>>> On Mon 08-02-21 10:49:18, Mike Rapoport wrote:
+>>>>>>> From: Mike Rapoport <rppt@linux.ibm.com>
+>>>>>>>
+>>>>>>> It is unsafe to allow saving of secretmem areas to the hibernation
+>>>>>>> snapshot as they would be visible after the resume and this essentially
+>>>>>>> will defeat the purpose of secret memory mappings.
+>>>>>>>
+>>>>>>> Prevent hibernation whenever there are active secret memory users.
 >>>>>>
->>>>>> It is unsafe to allow saving of secretmem areas to the hibernation
->>>>>> snapshot as they would be visible after the resume and this essentially
->>>>>> will defeat the purpose of secret memory mappings.
+>>>>>> Does this feature need any special handling? As it is effectivelly
+>>>>>> unevictable memory then it should behave the same as other mlock, ramfs
+>>>>>> which should already disable hibernation as those cannot be swapped out,
+>>>>>> no?
 >>>>>>
->>>>>> Prevent hibernation whenever there are active secret memory users.
 >>>>>
->>>>> Does this feature need any special handling? As it is effectivelly
->>>>> unevictable memory then it should behave the same as other mlock, ramfs
->>>>> which should already disable hibernation as those cannot be swapped out,
->>>>> no?
+>>>>> Why should unevictable memory not go to swap when hibernating? We're merely
+>>>>> dumping all of our system RAM (including any unmovable allocations) to swap
+>>>>> storage and the system is essentially completely halted.
 >>>>>
->>>>
->>>> Why should unevictable memory not go to swap when hibernating? We're merely
->>>> dumping all of our system RAM (including any unmovable allocations) to swap
->>>> storage and the system is essentially completely halted.
->>>>
->>> My understanding is that mlock is never really made visible via swap
->>> storage.
+>>>> My understanding is that mlock is never really made visible via swap
+>>>> storage.
+>>>
+>>> "Using swap storage for hibernation" and "swapping at runtime" are two
+>>> different things. I might be wrong, though.
 >>
->> "Using swap storage for hibernation" and "swapping at runtime" are two
->> different things. I might be wrong, though.
+>> Well, mlock is certainly used to keep sensitive information, not only to
+>> protect from major/minor faults.
+>>
 > 
-> Well, mlock is certainly used to keep sensitive information, not only to
-> protect from major/minor faults.
+> I think you're right in theory, the man page mentions "Cryptographic
+> security software often handles critical bytes like passwords or secret
+> keys as data structures" ...
 > 
+> however, I am not aware of any such swap handling and wasn't able to
+> spot it quickly. Let me take a closer look.
 
-I think you're right in theory, the man page mentions "Cryptographic 
-security software often handles critical bytes like passwords or secret 
-keys as data structures" ...
-
-however, I am not aware of any such swap handling and wasn't able to 
-spot it quickly. Let me take a closer look.
+s/swap/hibernate/
 
 
 -- 
