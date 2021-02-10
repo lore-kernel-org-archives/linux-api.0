@@ -2,75 +2,172 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 343A2C433E0
-	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:54:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3DA2AC433DB
+	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 19:35:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id F052160C41
-	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:54:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 13F1B64E6F
+	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 19:35:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232091AbhBJSxq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 10 Feb 2021 13:53:46 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41564 "EHLO
+        id S232675AbhBJTe4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 10 Feb 2021 14:34:56 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50670 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234329AbhBJSvw (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 10 Feb 2021 13:51:52 -0500
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0BAEAC061788;
-        Wed, 10 Feb 2021 10:51:12 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=EjxwxHUNaOq23km6417evCVsqogE3nHC3sVFoKbPKg8=; b=cbatPENJ45p15QeKsGBV3IHWYB
-        MYY+XRAjvFdyEP+iDEN7xkSzpBF8JaSpuGwjfgDQQEVoM/xpsvi3INdXoOuJZl4r0QQlnvHCCAciJ
-        K/i0cA3Pwgde9FWWOLhdkA6YYagUEcEIMGbqk7+KZOOQ+qxq6cOSsGyLEBBVqyg8IR/EhcXGSzAi5
-        DrmHQ7abaKogcEgwxl2IxF8lApwCsy2ypMG647U37oOag2em5SznPVPpv05MjbAzva3gYU3woa/oH
-        +xIIvR6HMXdLr+peIu0bMCI/atrUkCcGpsugia1PXfoSpgp6DYOk2ID3l6Da2Zgsc8BsE+tykWGjN
-        kz8+SQ8Q==;
-Received: from willy by casper.infradead.org with local (Exim 4.94 #2 (Red Hat Linux))
-        id 1l9uZg-009FhE-Fm; Wed, 10 Feb 2021 18:50:53 +0000
-Date:   Wed, 10 Feb 2021 18:50:52 +0000
-From:   Matthew Wilcox <willy@infradead.org>
-To:     Zhou Wang <wangzhou1@hisilicon.com>
-Cc:     Greg KH <gregkh@linuxfoundation.org>,
-        Andy Lutomirski <luto@amacapital.net>,
-        linux-kernel@vger.kernel.org, iommu@lists.linux-foundation.org,
-        linux-mm@kvack.org, linux-arm-kernel@lists.infradead.org,
-        linux-api@vger.kernel.org,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        song.bao.hua@hisilicon.com, jgg@ziepe.ca, kevin.tian@intel.com,
-        jean-philippe@linaro.org, eric.auger@redhat.com,
-        liguozhu@hisilicon.com, zhangfei.gao@linaro.org,
-        Sihang Chen <chensihang1@hisilicon.com>
-Subject: Re: [RFC PATCH v3 1/2] mempinfd: Add new syscall to provide memory
- pin
-Message-ID: <20210210185052.GE308988@casper.infradead.org>
-References: <1612685884-19514-2-git-send-email-wangzhou1@hisilicon.com>
- <ED58431F-5972-47D1-BF50-93A20AD86C46@amacapital.net>
- <2e6cf99f-beb6-9bef-1316-5e58fb0aa86e@hisilicon.com>
- <YCJX6QFQ4hsNRrFj@kroah.com>
- <f73951ba-84be-b7f8-8c79-db84bc9081f3@hisilicon.com>
- <YCJ5k/Bxxkg3BNNj@kroah.com>
- <2237506a-0c98-7ba6-5d5f-b60b637174c5@hisilicon.com>
+        with ESMTP id S232279AbhBJTeZ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 10 Feb 2021 14:34:25 -0500
+Received: from mail-pg1-x530.google.com (mail-pg1-x530.google.com [IPv6:2607:f8b0:4864:20::530])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3CE2CC061574
+        for <linux-api@vger.kernel.org>; Wed, 10 Feb 2021 11:33:33 -0800 (PST)
+Received: by mail-pg1-x530.google.com with SMTP id r38so1879273pgk.13
+        for <linux-api@vger.kernel.org>; Wed, 10 Feb 2021 11:33:33 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=chromium.org; s=google;
+        h=date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to;
+        bh=5bTpxzmhyqMaSkCM7ds9uXFXoaDcIa78EBDnlUPl2tM=;
+        b=VWbs0iMTi2vxgqSwLGR1NXJdtgPJJ6t4i0fxXfJCU5WzFFtliBM/eTDIg5VfwrHuVh
+         oH1P/5nO3zxEOnMd9vQFOtU3haSm17GRulcWBQzjEjFXR4fgrpUzh5+QedWYnWjBhM3t
+         iJxFNTw5/lOdvOHNgy3tzs1MED1SyuOioaqak=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=5bTpxzmhyqMaSkCM7ds9uXFXoaDcIa78EBDnlUPl2tM=;
+        b=aYEGSiBi7Dehded+M/EEVDbvZOUtjJGdrOFiJQFF/YaNJGbE5f66DgdYcVNatUCIaJ
+         padcxBOAQEh802COPrRVjKJEkHWCmBFeo/qpZpUioaWashWlNxXcKcpdGFG1ryrXvHAY
+         GNBc7yH2p3R2d9NjXfK+34lyZRUQjTqB1DhRjkDV8TpKsni95IcCnTp1JUwow0bCEika
+         ga/qYErH1LN/jnvEo/iX9g5iBDaNxFbnU3tRuSygg2yAkY7y31+3LD5KsWVaD0euRQdV
+         aqs9G5JMcLmQd+0F5UupURc9eMxOOGaNv5NmAsVyUuv2SPYElmnpTk8NKmZ+edCJtoFh
+         dGLA==
+X-Gm-Message-State: AOAM530dfFFnKlfF0Ph7YESmvsrZs3KLocMEpjy/Wlvv4Oo6W5dWKe2q
+        lzArcbMYwpDVIxfi2BG4U065KA==
+X-Google-Smtp-Source: ABdhPJyb9Yi+7DfO6DoJ8QQltqWHPhVAwYYQxHwDF6BnEPn/Zzx5qk5FkuYTK7JIoitwMok0JH75Tw==
+X-Received: by 2002:a63:5459:: with SMTP id e25mr4520747pgm.403.1612985612828;
+        Wed, 10 Feb 2021 11:33:32 -0800 (PST)
+Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
+        by smtp.gmail.com with ESMTPSA id o185sm2139133pfb.196.2021.02.10.11.33.31
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 10 Feb 2021 11:33:32 -0800 (PST)
+Date:   Wed, 10 Feb 2021 11:33:30 -0800
+From:   Kees Cook <keescook@chromium.org>
+To:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-doc@vger.kernel.org, linux-mm@kvack.org,
+        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andy Lutomirski <luto@kernel.org>,
+        Balbir Singh <bsingharora@gmail.com>,
+        Borislav Petkov <bp@alien8.de>,
+        Cyrill Gorcunov <gorcunov@gmail.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Eugene Syromiatnikov <esyr@redhat.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Nadav Amit <nadav.amit@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
+        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Weijiang Yang <weijiang.yang@intel.com>,
+        Pengfei Xu <pengfei.xu@intel.com>, haitao.huang@intel.com
+Subject: Re: [PATCH v20 02/25] x86/cet/shstk: Add Kconfig option for
+ user-mode control-flow protection
+Message-ID: <202102101133.3C94A64@keescook>
+References: <20210210175703.12492-1-yu-cheng.yu@intel.com>
+ <20210210175703.12492-3-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <2237506a-0c98-7ba6-5d5f-b60b637174c5@hisilicon.com>
+In-Reply-To: <20210210175703.12492-3-yu-cheng.yu@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Feb 09, 2021 at 08:20:18PM +0800, Zhou Wang wrote:
-> Agree, will add it in next version.
+On Wed, Feb 10, 2021 at 09:56:40AM -0800, Yu-cheng Yu wrote:
+> Shadow Stack provides protection against function return address
+> corruption.  It is active when the processor supports it, the kernel has
+> CONFIG_X86_CET enabled, and the application is built for the feature.
+> This is only implemented for the 64-bit kernel.  When it is enabled, legacy
+> non-Shadow Stack applications continue to work, but without protection.
+> 
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> ---
+>  arch/x86/Kconfig           | 23 +++++++++++++++++++++++
+>  arch/x86/Kconfig.assembler |  5 +++++
+>  2 files changed, 28 insertions(+)
+> 
+> diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+> index 21f851179ff0..1138b5fa9b4f 100644
+> --- a/arch/x86/Kconfig
+> +++ b/arch/x86/Kconfig
+> @@ -28,6 +28,7 @@ config X86_64
+>  	select ARCH_HAS_GIGANTIC_PAGE
+>  	select ARCH_SUPPORTS_INT128 if CC_HAS_INT128
+>  	select ARCH_USE_CMPXCHG_LOCKREF
+> +	select ARCH_HAS_SHADOW_STACK
+>  	select HAVE_ARCH_SOFT_DIRTY
+>  	select MODULES_USE_ELF_RELA
+>  	select NEED_DMA_MAP_STATE
+> @@ -1951,6 +1952,28 @@ config X86_SGX
+>  
+>  	  If unsure, say N.
+>  
+> +config ARCH_HAS_SHADOW_STACK
+> +	def_bool n
+> +
+> +config X86_CET
+> +	prompt "Intel Control-flow protection for user-mode"
+> +	def_bool n
+> +	depends on X86_64
 
-No, don't do another version.  Jason is right, this approach is wrong.
-The point of SVA is that it doesn't require the application to do
-anything special.  If jitter from too-frequent page migration is actually
-a problem, then fix the frequency of page migration.  Don't pretend that
-this particular application is so important that it prevents the kernel
-from doing its housekeeping.
+This depends isn't needed any more. With that fixed:
+
+Reviewed-by: Kees Cook <keescook@chromium.org>
+
+> +	depends on AS_WRUSS
+> +	depends on ARCH_HAS_SHADOW_STACK
+> +	select ARCH_USES_HIGH_VMA_FLAGS
+> +	help
+> +	  Control-flow protection is a set of hardware features which place
+> +	  additional restrictions on indirect branches.  These help
+> +	  mitigate ROP attacks.  Applications must be enabled to use it,
+> +	  and old userspace does not get protection "for free".
+> +	  Support for this feature is present on Tiger Lake family of
+> +	  processors released in 2020 or later.  Enabling this feature
+> +	  increases kernel text size by 3.7 KB.
+> +	  See Documentation/x86/intel_cet.rst for more information.
+> +
+> +	  If unsure, say N.
+> +
+>  config EFI
+>  	bool "EFI runtime service support"
+>  	depends on ACPI
+> diff --git a/arch/x86/Kconfig.assembler b/arch/x86/Kconfig.assembler
+> index 26b8c08e2fc4..00c79dd93651 100644
+> --- a/arch/x86/Kconfig.assembler
+> +++ b/arch/x86/Kconfig.assembler
+> @@ -19,3 +19,8 @@ config AS_TPAUSE
+>  	def_bool $(as-instr,tpause %ecx)
+>  	help
+>  	  Supported by binutils >= 2.31.1 and LLVM integrated assembler >= V7
+> +
+> +config AS_WRUSS
+> +	def_bool $(as-instr,wrussq %rax$(comma)(%rbx))
+> +	help
+> +	  Supported by binutils >= 2.31 and LLVM integrated assembler
+> -- 
+> 2.21.0
+> 
+
+-- 
+Kees Cook
