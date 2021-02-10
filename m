@@ -2,116 +2,314 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 60FAEC433E9
-	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:08:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3AFE1C433E0
+	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:08:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2008B64DE1
-	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:08:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0C02A64EDA
+	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:08:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233832AbhBJSHY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 10 Feb 2021 13:07:24 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59702 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233672AbhBJSEt (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 10 Feb 2021 13:04:49 -0500
-Received: from mail-qk1-x730.google.com (mail-qk1-x730.google.com [IPv6:2607:f8b0:4864:20::730])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BC82AC0613D6
-        for <linux-api@vger.kernel.org>; Wed, 10 Feb 2021 10:04:08 -0800 (PST)
-Received: by mail-qk1-x730.google.com with SMTP id d85so2556842qkg.5
-        for <linux-api@vger.kernel.org>; Wed, 10 Feb 2021 10:04:08 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=ziepe.ca; s=google;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=fn4OROpwcMvlPuFG0mr8IX6FA+jFG3+mu5LheKqkXo0=;
-        b=iPiobhPwf6KAYITESCCZiytaCFr72WzGFqO5Krxg583eeHZJJswee2IVlHJuHVFk51
-         hUWKXhD6qUJQZ9akF+hoJ0SBMSynl89auCrmXzGqpwVR8TTrOwLCakALhhncmc/31KKO
-         w5cpzUSnU3cZ2kGIXac5w3JXTOg1uG5uRsLrYjb0siJVoMpiahMmcfRtKm3eynVnB77A
-         qq+aY8bUIaIHuFg9y9XapEOc7TwpMRqaDXdJ3B4ZZnVPlh2aFbugjNjlrCgAvTvQbuiv
-         8rQnonVEPXVhg74c+0AallmP+gLOo6xaV7ay5dZwzBUgW+9vToCfuh+GOlDUSGRfOBpQ
-         oKbA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=fn4OROpwcMvlPuFG0mr8IX6FA+jFG3+mu5LheKqkXo0=;
-        b=GEXNKPV724fezjfWeJ4wikQ5k7qP91xxE1+oG9UZ1yEgcmpSKZCEzGSzP0N/98tD1i
-         BB1sToWj0vVPsRdKRQZX9c5pLrzTYQtu997umB5T4lS8BCdjEb95iizjW/Nbnm4EvbR5
-         9/U1IuxGaESbBxb4V0phwpDldwxc5UVPffJRZRnOxD0SA6TzaYrecAvErjwTOX4R1lcz
-         tc0UNSIosQyOtwMmAU6a7670MHwiL1En05vYyNu3+R4+PGn+nLmVT8r8OX7QiscoaBXM
-         6JJpCG8F/Jzp7myRljeeKDoVg/0JDOaGoRtt9cvmFImZMry00XC0eulh/zm8uuwJoCZv
-         O6fg==
-X-Gm-Message-State: AOAM531lUR49xirobWerViDfmr2ct3tKdVNsFuEWz2qry6B5mIQsEx0w
-        t6x00TNO/AXrrVJM223AZ5mnQQ==
-X-Google-Smtp-Source: ABdhPJyf3nDN5LDKdSKYE48IyBU6XZ6U0kgAEb02GCT83X4HerFr5BHXcsaa/epIdRev4YLuR0GG8A==
-X-Received: by 2002:a37:6f01:: with SMTP id k1mr4613354qkc.252.1612980247944;
-        Wed, 10 Feb 2021 10:04:07 -0800 (PST)
-Received: from ziepe.ca (hlfxns017vw-142-162-115-133.dhcp-dynamic.fibreop.ns.bellaliant.net. [142.162.115.133])
-        by smtp.gmail.com with ESMTPSA id j46sm1828038qtk.1.2021.02.10.10.04.06
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 10 Feb 2021 10:04:06 -0800 (PST)
-Received: from jgg by mlx with local (Exim 4.94)
-        (envelope-from <jgg@ziepe.ca>)
-        id 1l9tqP-0068Ck-JW; Wed, 10 Feb 2021 14:04:05 -0400
-Date:   Wed, 10 Feb 2021 14:04:05 -0400
-From:   Jason Gunthorpe <jgg@ziepe.ca>
-To:     "Song Bao Hua (Barry Song)" <song.bao.hua@hisilicon.com>
-Cc:     David Hildenbrand <david@redhat.com>,
-        "Wangzhou (B)" <wangzhou1@hisilicon.com>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "iommu@lists.linux-foundation.org" <iommu@lists.linux-foundation.org>,
-        "linux-mm@kvack.org" <linux-mm@kvack.org>,
-        "linux-arm-kernel@lists.infradead.org" 
-        <linux-arm-kernel@lists.infradead.org>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>,
-        "kevin.tian@intel.com" <kevin.tian@intel.com>,
-        "jean-philippe@linaro.org" <jean-philippe@linaro.org>,
-        "eric.auger@redhat.com" <eric.auger@redhat.com>,
-        "Liguozhu (Kenneth)" <liguozhu@hisilicon.com>,
-        "zhangfei.gao@linaro.org" <zhangfei.gao@linaro.org>,
-        "chensihang (A)" <chensihang1@hisilicon.com>
-Subject: Re: [RFC PATCH v3 1/2] mempinfd: Add new syscall to provide memory
- pin
-Message-ID: <20210210180405.GP4718@ziepe.ca>
-References: <1612685884-19514-1-git-send-email-wangzhou1@hisilicon.com>
- <1612685884-19514-2-git-send-email-wangzhou1@hisilicon.com>
- <a587bd61-9194-4b46-c122-8b4da7b941a8@redhat.com>
- <20210208183348.GV4718@ziepe.ca>
- <0dca000a6cd34d8183062466ba7d6eaf@hisilicon.com>
- <20210208213023.GZ4718@ziepe.ca>
- <0868d209d7424942a46d1238674cf75d@hisilicon.com>
- <20210209135331.GF4718@ziepe.ca>
- <2527b4ac8df14fa1b427bef65dace719@hisilicon.com>
+        id S233608AbhBJSHk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 10 Feb 2021 13:07:40 -0500
+Received: from mga17.intel.com ([192.55.52.151]:29594 "EHLO mga17.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S233910AbhBJSFe (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 10 Feb 2021 13:05:34 -0500
+IronPort-SDR: F5SrEo0+2Yzj2Zg7klmoaBbOHwNCT8HsvPoRrTLpgUfimEz3Po6zrHytnJfL7tzeQtN/aZ/963
+ jFu0Ai/1v5ZQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9891"; a="161872867"
+X-IronPort-AV: E=Sophos;i="5.81,168,1610438400"; 
+   d="scan'208";a="161872867"
+Received: from fmsmga002.fm.intel.com ([10.253.24.26])
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:04 -0800
+IronPort-SDR: FF6BrQMGFtfq1mZvmaeCDdMO2Zak3HyfHALVfTAwuyC+l5dBrxlIlgrXLM8nxD1JyBTqk7iS4E
+ mYNaCHmoXLOA==
+X-IronPort-AV: E=Sophos;i="5.81,168,1610438400"; 
+   d="scan'208";a="421140793"
+Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
+  by fmsmga002-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:03 -0800
+From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
+To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-doc@vger.kernel.org, linux-mm@kvack.org,
+        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andy Lutomirski <luto@kernel.org>,
+        Balbir Singh <bsingharora@gmail.com>,
+        Borislav Petkov <bp@alien8.de>,
+        Cyrill Gorcunov <gorcunov@gmail.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Eugene Syromiatnikov <esyr@redhat.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Nadav Amit <nadav.amit@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
+        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Weijiang Yang <weijiang.yang@intel.com>,
+        Pengfei Xu <pengfei.xu@intel.com>, <haitao.huang@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v20 20/25] x86/cet/shstk: User-mode shadow stack support
+Date:   Wed, 10 Feb 2021 09:56:58 -0800
+Message-Id: <20210210175703.12492-21-yu-cheng.yu@intel.com>
+X-Mailer: git-send-email 2.21.0
+In-Reply-To: <20210210175703.12492-1-yu-cheng.yu@intel.com>
+References: <20210210175703.12492-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <2527b4ac8df14fa1b427bef65dace719@hisilicon.com>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Feb 09, 2021 at 10:22:47PM +0000, Song Bao Hua (Barry Song) wrote:
+Introduce basic shadow stack enabling/disabling/allocation routines.
+A task's shadow stack is allocated from memory with VM_SHSTK flag and has
+a fixed size of min(RLIMIT_STACK, 4GB).
 
-> The problem is that SVA declares we can use any memory of a process
-> to do I/O. And in real scenarios, we are unable to customize most
-> applications to make them use the pool. So we are looking for some
-> extension generically for applications such as Nginx, Ceph.
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+---
+ arch/x86/include/asm/cet.h       |  28 ++++++
+ arch/x86/include/asm/processor.h |   5 ++
+ arch/x86/kernel/Makefile         |   2 +
+ arch/x86/kernel/cet.c            | 147 +++++++++++++++++++++++++++++++
+ 4 files changed, 182 insertions(+)
+ create mode 100644 arch/x86/include/asm/cet.h
+ create mode 100644 arch/x86/kernel/cet.c
 
-But those applications will suffer jitter even if their are using CPU
-to do the same work. I fail to see why adding an accelerator suddenly
-means the application owner will care about jitter introduced by
-migration/etc.
+diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+new file mode 100644
+index 000000000000..5750fbcbb952
+--- /dev/null
++++ b/arch/x86/include/asm/cet.h
+@@ -0,0 +1,28 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _ASM_X86_CET_H
++#define _ASM_X86_CET_H
++
++#ifndef __ASSEMBLY__
++#include <linux/types.h>
++
++struct task_struct;
++/*
++ * Per-thread CET status
++ */
++struct cet_status {
++	unsigned long	shstk_base;
++	unsigned long	shstk_size;
++};
++
++#ifdef CONFIG_X86_CET
++int cet_setup_shstk(void);
++void cet_disable_shstk(void);
++void cet_free_shstk(struct task_struct *p);
++#else
++static inline void cet_disable_shstk(void) {}
++static inline void cet_free_shstk(struct task_struct *p) {}
++#endif
++
++#endif /* __ASSEMBLY__ */
++
++#endif /* _ASM_X86_CET_H */
+diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+index c20a52b5534b..51158c6beb4f 100644
+--- a/arch/x86/include/asm/processor.h
++++ b/arch/x86/include/asm/processor.h
+@@ -27,6 +27,7 @@ struct vm86;
+ #include <asm/unwind_hints.h>
+ #include <asm/vmxfeatures.h>
+ #include <asm/vdso/processor.h>
++#include <asm/cet.h>
+ 
+ #include <linux/personality.h>
+ #include <linux/cache.h>
+@@ -536,6 +537,10 @@ struct thread_struct {
+ 
+ 	unsigned int		sig_on_uaccess_err:1;
+ 
++#ifdef CONFIG_X86_CET
++	struct cet_status	cet;
++#endif
++
+ 	/* Floating point and extended processor state */
+ 	struct fpu		fpu;
+ 	/*
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index 5eeb808eb024..4a9a7e7d00dc 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -151,6 +151,8 @@ obj-$(CONFIG_UNWINDER_FRAME_POINTER)	+= unwind_frame.o
+ obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
+ 
+ obj-$(CONFIG_AMD_MEM_ENCRYPT)		+= sev-es.o
++obj-$(CONFIG_X86_CET)			+= cet.o
++
+ ###
+ # 64 bit specific files
+ ifeq ($(CONFIG_X86_64),y)
+diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
+new file mode 100644
+index 000000000000..d25a03215984
+--- /dev/null
++++ b/arch/x86/kernel/cet.c
+@@ -0,0 +1,147 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * cet.c - Control-flow Enforcement (CET)
++ *
++ * Copyright (c) 2019, Intel Corporation.
++ * Yu-cheng Yu <yu-cheng.yu@intel.com>
++ */
++
++#include <linux/types.h>
++#include <linux/mm.h>
++#include <linux/mman.h>
++#include <linux/slab.h>
++#include <linux/uaccess.h>
++#include <linux/sched/signal.h>
++#include <linux/compat.h>
++#include <asm/msr.h>
++#include <asm/user.h>
++#include <asm/fpu/internal.h>
++#include <asm/fpu/xstate.h>
++#include <asm/fpu/types.h>
++#include <asm/cet.h>
++
++static void start_update_msrs(void)
++{
++	fpregs_lock();
++	if (test_thread_flag(TIF_NEED_FPU_LOAD))
++		__fpregs_load_activate();
++}
++
++static void end_update_msrs(void)
++{
++	fpregs_unlock();
++}
++
++static unsigned long cet_get_shstk_addr(void)
++{
++	struct fpu *fpu = &current->thread.fpu;
++	unsigned long ssp = 0;
++
++	fpregs_lock();
++
++	if (fpregs_state_valid(fpu, smp_processor_id())) {
++		rdmsrl(MSR_IA32_PL3_SSP, ssp);
++	} else {
++		struct cet_user_state *p;
++
++		p = get_xsave_addr(&fpu->state.xsave, XFEATURE_CET_USER);
++		if (p)
++			ssp = p->user_ssp;
++	}
++
++	fpregs_unlock();
++	return ssp;
++}
++
++static unsigned long alloc_shstk(unsigned long size, int flags)
++{
++	struct mm_struct *mm = current->mm;
++	unsigned long addr, populate;
++
++	/* VM_SHSTK requires MAP_ANONYMOUS, MAP_PRIVATE */
++	flags |= MAP_ANONYMOUS | MAP_PRIVATE;
++
++	mmap_write_lock(mm);
++	addr = do_mmap(NULL, 0, size, PROT_READ, flags, VM_SHSTK, 0,
++		       &populate, NULL);
++	mmap_write_unlock(mm);
++
++	if (populate)
++		mm_populate(addr, populate);
++
++	return addr;
++}
++
++int cet_setup_shstk(void)
++{
++	unsigned long addr, size;
++	struct cet_status *cet = &current->thread.cet;
++
++	if (!static_cpu_has(X86_FEATURE_SHSTK))
++		return -EOPNOTSUPP;
++
++	size = round_up(min(rlimit(RLIMIT_STACK), 1UL << 32), PAGE_SIZE);
++	addr = alloc_shstk(size, 0);
++
++	if (IS_ERR_VALUE(addr))
++		return PTR_ERR((void *)addr);
++
++	cet->shstk_base = addr;
++	cet->shstk_size = size;
++
++	start_update_msrs();
++	wrmsrl(MSR_IA32_PL3_SSP, addr + size);
++	wrmsrl(MSR_IA32_U_CET, CET_SHSTK_EN);
++	end_update_msrs();
++	return 0;
++}
++
++void cet_disable_shstk(void)
++{
++	struct cet_status *cet = &current->thread.cet;
++	u64 msr_val;
++
++	if (!static_cpu_has(X86_FEATURE_SHSTK) ||
++	    !cet->shstk_size || !cet->shstk_base)
++		return;
++
++	start_update_msrs();
++	rdmsrl(MSR_IA32_U_CET, msr_val);
++	wrmsrl(MSR_IA32_U_CET, msr_val & ~CET_SHSTK_EN);
++	wrmsrl(MSR_IA32_PL3_SSP, 0);
++	end_update_msrs();
++
++	cet_free_shstk(current);
++}
++
++void cet_free_shstk(struct task_struct *tsk)
++{
++	struct cet_status *cet = &tsk->thread.cet;
++
++	if (!static_cpu_has(X86_FEATURE_SHSTK) ||
++	    !cet->shstk_size || !cet->shstk_base)
++		return;
++
++	if (!tsk->mm || tsk->mm != current->mm)
++		return;
++
++	while (1) {
++		int r;
++
++		r = vm_munmap(cet->shstk_base, cet->shstk_size);
++
++		/*
++		 * Retry if mmap_lock is not available.
++		 */
++		if (r == -EINTR) {
++			cond_resched();
++			continue;
++		}
++
++		WARN_ON_ONCE(r);
++		break;
++	}
++
++	cet->shstk_base = 0;
++	cet->shstk_size = 0;
++}
+-- 
+2.21.0
 
-Again in proper SVA it should be quite unlikely to take a fault caused
-by something like migration, on the same likelyhood as the CPU. If
-things are faulting so much this is a problem then I think it is a
-system level problem with doing too much page motion.
-
-Jason
