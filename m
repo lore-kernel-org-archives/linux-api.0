@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 97689C433DB
-	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:08:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7F236C433E6
+	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:09:12 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6ABAD6023B
-	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:08:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 52CE564ED7
+	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:09:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233730AbhBJSI3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 10 Feb 2021 13:08:29 -0500
-Received: from mga17.intel.com ([192.55.52.151]:29603 "EHLO mga17.intel.com"
+        id S233835AbhBJSIp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 10 Feb 2021 13:08:45 -0500
+Received: from mga18.intel.com ([134.134.136.126]:40633 "EHLO mga18.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233915AbhBJSFj (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 10 Feb 2021 13:05:39 -0500
-IronPort-SDR: AhB6bLjx0ccRawG8jo8EsACqRe1GLG9RbWwdLFgdX3wytO3EQMSSeKwTBGguWiK6O6DG4hOtm6
- PNOiRBWiAd+A==
-X-IronPort-AV: E=McAfee;i="6000,8403,9891"; a="161872860"
+        id S233928AbhBJSFr (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 10 Feb 2021 13:05:47 -0500
+IronPort-SDR: dnJRp8M2PnO2K9iQqGXPBoVNrUZcVkoTMvScsa3x9j+jjveV46Cp7N1QbNHvQqJrS13HKNDzRP
+ rbiuSQKk14gQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9891"; a="169798849"
 X-IronPort-AV: E=Sophos;i="5.81,168,1610438400"; 
-   d="scan'208";a="161872860"
-Received: from fmsmga002.fm.intel.com ([10.253.24.26])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:03 -0800
-IronPort-SDR: OMwmtszcRgMipJlvUfw9jKjh4roIuBBtG979ePIc5OhhqjXgiZaO8cVuwFKb1YFhD5TUQF9jQU
- xp53yo1QIgjg==
+   d="scan'208";a="169798849"
+Received: from fmsmga008.fm.intel.com ([10.253.24.58])
+  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 10:02:57 -0800
+IronPort-SDR: 50nqacSVFG7Y0/hpiEDWPi7m719/Hsd0Heiwuq66cPTNMx23ZNDf/u4Z38ELsW5cqRfdu389ep
+ zvW8CDjBCVdg==
 X-IronPort-AV: E=Sophos;i="5.81,168,1610438400"; 
-   d="scan'208";a="421140779"
+   d="scan'208";a="380239211"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga002-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:03 -0800
+  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 10:02:57 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,88 +60,110 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>, <haitao.huang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v20 17/25] mm/mmap: Add shadow stack pages to memory accounting
-Date:   Wed, 10 Feb 2021 09:56:55 -0800
-Message-Id: <20210210175703.12492-18-yu-cheng.yu@intel.com>
+Subject: [PATCH v20 3/7] x86/cet/ibt: Handle signals for Indirect Branch Tracking
+Date:   Wed, 10 Feb 2021 10:02:41 -0800
+Message-Id: <20210210180245.13770-4-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20210210175703.12492-1-yu-cheng.yu@intel.com>
-References: <20210210175703.12492-1-yu-cheng.yu@intel.com>
+In-Reply-To: <20210210180245.13770-1-yu-cheng.yu@intel.com>
+References: <20210210180245.13770-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Account shadow stack pages to stack memory.
+When an indirect CALL/JMP instruction is executed and before it reaches
+the target, it is in 'WAIT_ENDBR' status, which can be read from
+MSR_IA32_U_CET.  The status is part of a task's status before a signal is
+raised and preserved in the signal frame.  It is restored for sigreturn.
+
+IBT state machine is described in Intel SDM Vol. 1, Sec. 18.3.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
- arch/x86/mm/pgtable.c   |  7 +++++++
- include/linux/pgtable.h | 11 +++++++++++
- mm/mmap.c               |  5 +++++
- 3 files changed, 23 insertions(+)
+ arch/x86/kernel/cet.c        | 26 ++++++++++++++++++++++++--
+ arch/x86/kernel/fpu/signal.c |  8 +++++---
+ 2 files changed, 29 insertions(+), 5 deletions(-)
 
-diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
-index 0f4fbf51a9fc..948d28c29964 100644
---- a/arch/x86/mm/pgtable.c
-+++ b/arch/x86/mm/pgtable.c
-@@ -895,3 +895,10 @@ int pmd_free_pte_page(pmd_t *pmd, unsigned long addr)
+diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
+index 164139e23fef..ca2dc6b35c4d 100644
+--- a/arch/x86/kernel/cet.c
++++ b/arch/x86/kernel/cet.c
+@@ -295,6 +295,13 @@ void cet_restore_signal(struct sc_ext *sc_ext)
+ 		msr_val |= CET_SHSTK_EN;
+ 	}
  
- #endif /* CONFIG_X86_64 */
- #endif	/* CONFIG_HAVE_ARCH_HUGE_VMAP */
++	if (cet->ibt_enabled) {
++		msr_val |= (CET_ENDBR_EN | CET_NO_TRACK_EN);
 +
-+#ifdef CONFIG_ARCH_HAS_SHADOW_STACK
-+bool arch_shadow_stack_mapping(vm_flags_t vm_flags)
-+{
-+	return (vm_flags & VM_SHSTK);
-+}
-+#endif
-diff --git a/include/linux/pgtable.h b/include/linux/pgtable.h
-index d8452218d09b..b888b246b8b1 100644
---- a/include/linux/pgtable.h
-+++ b/include/linux/pgtable.h
-@@ -1463,6 +1463,17 @@ static inline pmd_t arch_maybe_pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma
- #endif /* CONFIG_ARCH_MAYBE_MKWRITE */
- #endif /* CONFIG_MMU */
++		if (sc_ext->wait_endbr)
++			msr_val |= CET_WAIT_ENDBR;
++	}
++
+ 	if (test_thread_flag(TIF_NEED_FPU_LOAD))
+ 		cet_user_state->user_cet = msr_val;
+ 	else
+@@ -335,9 +342,24 @@ int cet_setup_signal(bool ia32, unsigned long rstor_addr, struct sc_ext *sc_ext)
+ 		sc_ext->ssp = new_ssp;
+ 	}
  
-+#ifdef CONFIG_MMU
-+#ifdef CONFIG_ARCH_HAS_SHADOW_STACK
-+bool arch_shadow_stack_mapping(vm_flags_t vm_flags);
-+#else
-+static inline bool arch_shadow_stack_mapping(vm_flags_t vm_flags)
-+{
-+	return false;
-+}
-+#endif /* CONFIG_ARCH_HAS_SHADOW_STACK */
-+#endif /* CONFIG_MMU */
+-	if (ssp) {
++	if (ssp || cet->ibt_enabled) {
+ 		start_update_msrs();
+-		wrmsrl(MSR_IA32_PL3_SSP, ssp);
 +
- /*
-  * Architecture PAGE_KERNEL_* fallbacks
-  *
-diff --git a/mm/mmap.c b/mm/mmap.c
-index dc7206032387..51200b821898 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
-@@ -1720,6 +1720,9 @@ static inline int accountable_mapping(struct file *file, vm_flags_t vm_flags)
- 	if (file && is_file_hugepages(file))
++		if (ssp)
++			wrmsrl(MSR_IA32_PL3_SSP, ssp);
++
++		if (cet->ibt_enabled) {
++			u64 r;
++
++			rdmsrl(MSR_IA32_U_CET, r);
++
++			if (r & CET_WAIT_ENDBR) {
++				sc_ext->wait_endbr = 1;
++				r &= ~CET_WAIT_ENDBR;
++				wrmsrl(MSR_IA32_U_CET, r);
++			}
++		}
++
+ 		end_update_msrs();
+ 	}
+ 
+diff --git a/arch/x86/kernel/fpu/signal.c b/arch/x86/kernel/fpu/signal.c
+index 270e4649f435..b914d74c8ba6 100644
+--- a/arch/x86/kernel/fpu/signal.c
++++ b/arch/x86/kernel/fpu/signal.c
+@@ -57,7 +57,8 @@ int save_cet_to_sigframe(int ia32, void __user *fp, unsigned long restorer)
+ {
+ 	int err = 0;
+ 
+-	if (!current->thread.cet.shstk_size)
++	if (!current->thread.cet.shstk_size &&
++	    !current->thread.cet.ibt_enabled)
  		return 0;
  
-+	if (arch_shadow_stack_mapping(vm_flags))
-+		return 1;
-+
- 	return (vm_flags & (VM_NORESERVE | VM_SHARED | VM_WRITE)) == VM_WRITE;
- }
+ 	if (fp) {
+@@ -89,7 +90,8 @@ static int get_cet_from_sigframe(int ia32, void __user *fp, struct sc_ext *ext)
  
-@@ -3389,6 +3392,8 @@ void vm_stat_account(struct mm_struct *mm, vm_flags_t flags, long npages)
- 		mm->stack_vm += npages;
- 	else if (is_data_mapping(flags))
- 		mm->data_vm += npages;
-+	else if (arch_shadow_stack_mapping(flags))
-+		mm->stack_vm += npages;
- }
+ 	memset(ext, 0, sizeof(*ext));
  
- static vm_fault_t special_mapping_fault(struct vm_fault *vmf);
+-	if (!current->thread.cet.shstk_size)
++	if (!current->thread.cet.shstk_size &&
++	    !current->thread.cet.ibt_enabled)
+ 		return 0;
+ 
+ 	if (fp) {
+@@ -577,7 +579,7 @@ static unsigned long fpu__alloc_sigcontext_ext(unsigned long sp)
+ 	 * sigcontext_ext is at: fpu + fpu_user_xstate_size +
+ 	 * FP_XSTATE_MAGIC2_SIZE, then aligned to 8.
+ 	 */
+-	if (cet->shstk_size)
++	if (cet->shstk_size || cet->ibt_enabled)
+ 		sp -= (sizeof(struct sc_ext) + 8);
+ 
+ 	return sp;
 -- 
 2.21.0
 
