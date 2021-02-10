@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B62B2C433E0
-	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:10:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B4391C433E6
+	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:10:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 582EA64DE1
-	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:10:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8B09864EE1
+	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:10:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233871AbhBJSJ5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 10 Feb 2021 13:09:57 -0500
-Received: from mga17.intel.com ([192.55.52.151]:29603 "EHLO mga17.intel.com"
+        id S233885AbhBJSKB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 10 Feb 2021 13:10:01 -0500
+Received: from mga17.intel.com ([192.55.52.151]:29597 "EHLO mga17.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233977AbhBJSHz (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 10 Feb 2021 13:07:55 -0500
-IronPort-SDR: mFIcrNNjswvGAbVK4/mDELUYftoWAhtxgB4dDBi+JD0YFNf80NGpoXaqlNpOiOGnpsgppIkxEt
- XzieeWzhfRvw==
-X-IronPort-AV: E=McAfee;i="6000,8403,9891"; a="161872876"
+        id S233982AbhBJSH5 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 10 Feb 2021 13:07:57 -0500
+IronPort-SDR: e2uvYA1rxIAiXgGpWdsq4vQffPVXEABzUMgYDbK3SZ+3pCXYY1tnIQOvbPuotCttAbE/FIyObJ
+ 4JVQXKbtqL+w==
+X-IronPort-AV: E=McAfee;i="6000,8403,9891"; a="161872862"
 X-IronPort-AV: E=Sophos;i="5.81,168,1610438400"; 
-   d="scan'208";a="161872876"
+   d="scan'208";a="161872862"
 Received: from fmsmga002.fm.intel.com ([10.253.24.26])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:05 -0800
-IronPort-SDR: g1opHi5/hZjgfnFk9mLRV5Oo+8zX+qS4iiwi6sYfxqJ1e+LKHS5edMgV/iqlBQT/jAt17HnWsC
- l2390T3A7oWw==
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:03 -0800
+IronPort-SDR: 8zCTLfQG54U6kvyN1249jWeoXllxQZObmLXzf5FxOxcHYRvo+DUi+aO0X+09ZBIwKMD6ikgOxg
+ W496piLlt8TQ==
 X-IronPort-AV: E=Sophos;i="5.81,168,1610438400"; 
-   d="scan'208";a="421140809"
+   d="scan'208";a="421140785"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga002-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:04 -0800
+  by fmsmga002-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:03 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,9 +60,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>, <haitao.huang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v20 23/25] x86/cet/shstk: Handle thread shadow stack
-Date:   Wed, 10 Feb 2021 09:57:01 -0800
-Message-Id: <20210210175703.12492-24-yu-cheng.yu@intel.com>
+Subject: [PATCH v20 18/25] mm: Update can_follow_write_pte() for shadow stack
+Date:   Wed, 10 Feb 2021 09:56:56 -0800
+Message-Id: <20210210175703.12492-19-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210210175703.12492-1-yu-cheng.yu@intel.com>
 References: <20210210175703.12492-1-yu-cheng.yu@intel.com>
@@ -72,157 +72,78 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The kernel allocates (and frees on thread exit) a new shadow stack for a
-pthread child.
+Can_follow_write_pte() ensures a read-only page is COWed by checking the
+FOLL_COW flag, and uses pte_dirty() to validate the flag is still valid.
 
-    It is possible for the kernel to complete the clone syscall and set the
-    child's shadow stack pointer to NULL and let the child thread allocate
-    a shadow stack for itself.  There are two issues in this approach: It
-    is not compatible with existing code that does inline syscall and it
-    cannot handle signals before the child can successfully allocate a
-    shadow stack.
-
-A 64-bit shadow stack has a size of min(RLIMIT_STACK, 4 GB).  A compat-mode
-thread shadow stack has a size of 1/4 min(RLIMIT_STACK, 4 GB).  This allows
-more threads to run in a 32-bit address space.
+Like a writable data page, a shadow stack page is writable, and becomes
+read-only during copy-on-write, but it is always dirty.  Thus, in the
+can_follow_write_pte() check, it belongs to the writable page case and
+should be excluded from the read-only page pte_dirty() check.  Apply
+the same changes to can_follow_write_pmd().
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
- arch/x86/include/asm/cet.h         |  3 ++
- arch/x86/include/asm/mmu_context.h |  3 ++
- arch/x86/kernel/cet.c              | 44 ++++++++++++++++++++++++++++++
- arch/x86/kernel/process.c          |  8 ++++++
- 4 files changed, 58 insertions(+)
+ mm/gup.c         | 8 +++++---
+ mm/huge_memory.c | 8 +++++---
+ 2 files changed, 10 insertions(+), 6 deletions(-)
 
-diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index 73435856ce54..ec4b5e62d0ce 100644
---- a/arch/x86/include/asm/cet.h
-+++ b/arch/x86/include/asm/cet.h
-@@ -18,12 +18,15 @@ struct cet_status {
- 
- #ifdef CONFIG_X86_CET
- int cet_setup_shstk(void);
-+int cet_setup_thread_shstk(struct task_struct *p, unsigned long clone_flags);
- void cet_disable_shstk(void);
- void cet_free_shstk(struct task_struct *p);
- int cet_verify_rstor_token(bool ia32, unsigned long ssp, unsigned long *new_ssp);
- void cet_restore_signal(struct sc_ext *sc);
- int cet_setup_signal(bool ia32, unsigned long rstor, struct sc_ext *sc);
- #else
-+static inline int cet_setup_thread_shstk(struct task_struct *p,
-+					 unsigned long clone_flags) { return 0; }
- static inline void cet_disable_shstk(void) {}
- static inline void cet_free_shstk(struct task_struct *p) {}
- static inline void cet_restore_signal(struct sc_ext *sc) { return; }
-diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
-index 27516046117a..e90bd2ee8498 100644
---- a/arch/x86/include/asm/mmu_context.h
-+++ b/arch/x86/include/asm/mmu_context.h
-@@ -11,6 +11,7 @@
- 
- #include <asm/tlbflush.h>
- #include <asm/paravirt.h>
-+#include <asm/cet.h>
- #include <asm/debugreg.h>
- 
- extern atomic64_t last_mm_ctx_id;
-@@ -146,6 +147,8 @@ do {						\
- #else
- #define deactivate_mm(tsk, mm)			\
- do {						\
-+	if (!tsk->vfork_done)			\
-+		cet_free_shstk(tsk);		\
- 	load_gs_index(0);			\
- 	loadsegment(fs, 0);			\
- } while (0)
-diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
-index 08e43d9b5176..114f067eeb90 100644
---- a/arch/x86/kernel/cet.c
-+++ b/arch/x86/kernel/cet.c
-@@ -172,6 +172,50 @@ int cet_setup_shstk(void)
- 	return 0;
- }
- 
-+int cet_setup_thread_shstk(struct task_struct *tsk, unsigned long clone_flags)
-+{
-+	unsigned long addr, size;
-+	struct cet_user_state *state;
-+	struct cet_status *cet = &tsk->thread.cet;
-+
-+	if (!cet->shstk_size)
-+		return 0;
-+
-+	if ((clone_flags & (CLONE_VFORK | CLONE_VM)) != CLONE_VM)
-+		return 0;
-+
-+	state = get_xsave_addr(&tsk->thread.fpu.state.xsave,
-+			       XFEATURE_CET_USER);
-+
-+	if (!state)
-+		return -EINVAL;
-+
-+	/* Cap shadow stack size to 4 GB */
-+	size = min(rlimit(RLIMIT_STACK), 1UL << 32);
-+
-+	/*
-+	 * Compat-mode pthreads share a limited address space.
-+	 * If each function call takes an average of four slots
-+	 * stack space, allocate 1/4 of stack size for shadow stack.
-+	 */
-+	if (in_compat_syscall())
-+		size /= 4;
-+	size = round_up(size, PAGE_SIZE);
-+	addr = alloc_shstk(size, 0);
-+
-+	if (IS_ERR_VALUE(addr)) {
-+		cet->shstk_base = 0;
-+		cet->shstk_size = 0;
-+		return PTR_ERR((void *)addr);
-+	}
-+
-+	fpu__prepare_write(&tsk->thread.fpu);
-+	state->user_ssp = (u64)(addr + size);
-+	cet->shstk_base = addr;
-+	cet->shstk_size = size;
-+	return 0;
-+}
-+
- void cet_disable_shstk(void)
+diff --git a/mm/gup.c b/mm/gup.c
+index e4c224cd9661..66ab67626f57 100644
+--- a/mm/gup.c
++++ b/mm/gup.c
+@@ -357,10 +357,12 @@ static int follow_pfn_pte(struct vm_area_struct *vma, unsigned long address,
+  * FOLL_FORCE can write to even unwritable pte's, but only
+  * after we've gone through a COW cycle and they are dirty.
+  */
+-static inline bool can_follow_write_pte(pte_t pte, unsigned int flags)
++static inline bool can_follow_write_pte(pte_t pte, unsigned int flags,
++					struct vm_area_struct *vma)
  {
- 	struct cet_status *cet = &current->thread.cet;
-diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
-index 145a7ac0c19a..3af6b36e1a5c 100644
---- a/arch/x86/kernel/process.c
-+++ b/arch/x86/kernel/process.c
-@@ -43,6 +43,7 @@
- #include <asm/io_bitmap.h>
- #include <asm/proto.h>
- #include <asm/frame.h>
-+#include <asm/cet.h>
- 
- #include "process.h"
- 
-@@ -109,6 +110,7 @@ void exit_thread(struct task_struct *tsk)
- 
- 	free_vm86(t);
- 
-+	cet_free_shstk(tsk);
- 	fpu__drop(fpu);
+ 	return pte_write(pte) ||
+-		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte));
++		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte) &&
++				  !arch_shadow_stack_mapping(vma->vm_flags));
  }
  
-@@ -181,6 +183,12 @@ int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
- 	if (clone_flags & CLONE_SETTLS)
- 		ret = set_new_tls(p, tls);
+ static struct page *follow_page_pte(struct vm_area_struct *vma,
+@@ -403,7 +405,7 @@ static struct page *follow_page_pte(struct vm_area_struct *vma,
+ 	}
+ 	if ((flags & FOLL_NUMA) && pte_protnone(pte))
+ 		goto no_page;
+-	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags)) {
++	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags, vma)) {
+ 		pte_unmap_unlock(ptep, ptl);
+ 		return NULL;
+ 	}
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index ac651d529dbe..c18e4de3db62 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -1337,10 +1337,12 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
+  * FOLL_FORCE can write to even unwritable pmd's, but only
+  * after we've gone through a COW cycle and they are dirty.
+  */
+-static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags)
++static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags,
++					struct vm_area_struct *vma)
+ {
+ 	return pmd_write(pmd) ||
+-	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) && pmd_dirty(pmd));
++	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) && pmd_dirty(pmd) &&
++				  !arch_shadow_stack_mapping(vma->vm_flags));
+ }
  
-+#ifdef CONFIG_X86_64
-+	/* Allocate a new shadow stack for pthread */
-+	if (!ret)
-+		ret = cet_setup_thread_shstk(p, clone_flags);
-+#endif
-+
- 	if (!ret && unlikely(test_tsk_thread_flag(current, TIF_IO_BITMAP)))
- 		io_bitmap_share(p);
+ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
+@@ -1353,7 +1355,7 @@ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
  
+ 	assert_spin_locked(pmd_lockptr(mm, pmd));
+ 
+-	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags))
++	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags, vma))
+ 		goto out;
+ 
+ 	/* Avoid dumping huge zero page */
 -- 
 2.21.0
 
