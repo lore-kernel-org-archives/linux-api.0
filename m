@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A0D98C432C3
-	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:03:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B5D35C433E0
+	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:03:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7E43E64EFB
-	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:03:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7C68F64EDA
+	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:03:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233775AbhBJSDd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 10 Feb 2021 13:03:33 -0500
-Received: from mga17.intel.com ([192.55.52.151]:29597 "EHLO mga17.intel.com"
+        id S233807AbhBJSDf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 10 Feb 2021 13:03:35 -0500
+Received: from mga05.intel.com ([192.55.52.43]:41576 "EHLO mga05.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233521AbhBJSBF (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        id S233530AbhBJSBF (ORCPT <rfc822;linux-api@vger.kernel.org>);
         Wed, 10 Feb 2021 13:01:05 -0500
-IronPort-SDR: /KhLVnhnTBfL9WQrBvwmtAoOelhw6kaqGSF3AXf/nh0FfW0jBZRQrTiKKAAJt4d5IhjchabRpN
- hxYfdLE01wZA==
-X-IronPort-AV: E=McAfee;i="6000,8403,9891"; a="161872842"
+IronPort-SDR: w7P2ob3ogI4zngfSO7GbcDQcxrWExCs5DogpdEwq4acDx93m1Mn5LIdqqutpvVO5fM6sBAjnj3
+ GdR7PSHgl8jQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9891"; a="266962663"
 X-IronPort-AV: E=Sophos;i="5.81,168,1610438400"; 
-   d="scan'208";a="161872842"
+   d="scan'208";a="266962663"
 Received: from fmsmga002.fm.intel.com ([10.253.24.26])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:02 -0800
-IronPort-SDR: PBYtA4N6mhoYOMxAgGCwfBl+zxUII2tHovtxTEPZFa/79AlD+NxGnU2wyatL+iQvN3ohXGKH64
- tg+MjlguGf+w==
+  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:57:59 -0800
+IronPort-SDR: GpgqXd5+IpawuotK4AnFcQ75Gif3/SkJqrCDKWmbfgaZVMFlE6DiwOk3Kw0zrttjG10k6sB8lc
+ 9o+tCPCeXqQQ==
 X-IronPort-AV: E=Sophos;i="5.81,168,1610438400"; 
-   d="scan'208";a="421140748"
+   d="scan'208";a="421140705"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga002-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:01 -0800
+  by fmsmga002-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:57:59 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,9 +60,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>, <haitao.huang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v20 11/25] x86/mm: Update ptep_set_wrprotect() and pmdp_set_wrprotect() for transition from _PAGE_DIRTY to _PAGE_COW
-Date:   Wed, 10 Feb 2021 09:56:49 -0800
-Message-Id: <20210210175703.12492-12-yu-cheng.yu@intel.com>
+Subject: [PATCH v20 03/25] x86/cpufeatures: Add CET CPU feature flags for Control-flow Enforcement Technology (CET)
+Date:   Wed, 10 Feb 2021 09:56:41 -0800
+Message-Id: <20210210175703.12492-4-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210210175703.12492-1-yu-cheng.yu@intel.com>
 References: <20210210175703.12492-1-yu-cheng.yu@intel.com>
@@ -72,82 +72,82 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-When Shadow Stack is introduced, [R/O + _PAGE_DIRTY] PTE is reserved for
-shadow stack.  Copy-on-write PTEs have [R/O + _PAGE_COW].
+Add CPU feature flags for Control-flow Enforcement Technology (CET).
 
-When a PTE goes from [R/W + _PAGE_DIRTY] to [R/O + _PAGE_COW], it could
-become a transient shadow stack PTE in two cases:
-
-The first case is that some processors can start a write but end up seeing
-a read-only PTE by the time they get to the Dirty bit, creating a transient
-shadow stack PTE.  However, this will not occur on processors supporting
-Shadow Stack, and a TLB flush is not necessary.
-
-The second case is that when _PAGE_DIRTY is replaced with _PAGE_COW non-
-atomically, a transient shadow stack PTE can be created as a result.
-Thus, prevent that with cmpxchg.
-
-Dave Hansen, Jann Horn, Andy Lutomirski, and Peter Zijlstra provided many
-insights to the issue.  Jann Horn provided the cmpxchg solution.
+CPUID.(EAX=7,ECX=0):ECX[bit 7] Shadow stack
+CPUID.(EAX=7,ECX=0):EDX[bit 20] Indirect Branch Tracking
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
- arch/x86/include/asm/pgtable.h | 36 ++++++++++++++++++++++++++++++++++
- 1 file changed, 36 insertions(+)
+ arch/x86/include/asm/cpufeatures.h       |  2 ++
+ arch/x86/include/asm/disabled-features.h | 12 ++++++++++--
+ arch/x86/kernel/cpu/cpuid-deps.c         |  2 ++
+ 3 files changed, 14 insertions(+), 2 deletions(-)
 
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index b867f5ee862f..29aa6f07e3c9 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -1239,6 +1239,24 @@ static inline pte_t ptep_get_and_clear_full(struct mm_struct *mm,
- static inline void ptep_set_wrprotect(struct mm_struct *mm,
- 				      unsigned long addr, pte_t *ptep)
- {
-+	/*
-+	 * If Shadow Stack is enabled, pte_wrprotect() moves _PAGE_DIRTY
-+	 * to _PAGE_COW (see comments at pte_wrprotect()).
-+	 * When a thread reads a RW=1, Dirty=0 PTE and before changing it
-+	 * to RW=0, Dirty=0, another thread could have written to the page
-+	 * and the PTE is RW=1, Dirty=1 now.  Use try_cmpxchg() to detect
-+	 * PTE changes and update old_pte, then try again.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		pte_t old_pte, new_pte;
-+
-+		old_pte = READ_ONCE(*ptep);
-+		do {
-+			new_pte = pte_wrprotect(old_pte);
-+		} while (!try_cmpxchg(&ptep->pte, &old_pte.pte, new_pte.pte));
-+
-+		return;
-+	}
- 	clear_bit(_PAGE_BIT_RW, (unsigned long *)&ptep->pte);
- }
+diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+index 84b887825f12..292fe87b26b3 100644
+--- a/arch/x86/include/asm/cpufeatures.h
++++ b/arch/x86/include/asm/cpufeatures.h
+@@ -345,6 +345,7 @@
+ #define X86_FEATURE_OSPKE		(16*32+ 4) /* OS Protection Keys Enable */
+ #define X86_FEATURE_WAITPKG		(16*32+ 5) /* UMONITOR/UMWAIT/TPAUSE Instructions */
+ #define X86_FEATURE_AVX512_VBMI2	(16*32+ 6) /* Additional AVX512 Vector Bit Manipulation Instructions */
++#define X86_FEATURE_SHSTK		(16*32+ 7) /* Shadow Stack */
+ #define X86_FEATURE_GFNI		(16*32+ 8) /* Galois Field New Instructions */
+ #define X86_FEATURE_VAES		(16*32+ 9) /* Vector AES */
+ #define X86_FEATURE_VPCLMULQDQ		(16*32+10) /* Carry-Less Multiplication Double Quadword */
+@@ -377,6 +378,7 @@
+ #define X86_FEATURE_TSXLDTRK		(18*32+16) /* TSX Suspend Load Address Tracking */
+ #define X86_FEATURE_PCONFIG		(18*32+18) /* Intel PCONFIG */
+ #define X86_FEATURE_ARCH_LBR		(18*32+19) /* Intel ARCH LBR */
++#define X86_FEATURE_IBT			(18*32+20) /* Indirect Branch Tracking */
+ #define X86_FEATURE_AVX512_FP16		(18*32+23) /* AVX512 FP16 */
+ #define X86_FEATURE_SPEC_CTRL		(18*32+26) /* "" Speculation Control (IBRS + IBPB) */
+ #define X86_FEATURE_INTEL_STIBP		(18*32+27) /* "" Single Thread Indirect Branch Predictors */
+diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
+index 7947cb1782da..a66e7f34b788 100644
+--- a/arch/x86/include/asm/disabled-features.h
++++ b/arch/x86/include/asm/disabled-features.h
+@@ -68,6 +68,14 @@
+ # define DISABLE_SGX	(1 << (X86_FEATURE_SGX & 31))
+ #endif
  
-@@ -1297,6 +1315,24 @@ static inline pud_t pudp_huge_get_and_clear(struct mm_struct *mm,
- static inline void pmdp_set_wrprotect(struct mm_struct *mm,
- 				      unsigned long addr, pmd_t *pmdp)
- {
-+	/*
-+	 * If Shadow Stack is enabled, pmd_wrprotect() moves _PAGE_DIRTY
-+	 * to _PAGE_COW (see comments at pmd_wrprotect()).
-+	 * When a thread reads a RW=1, Dirty=0 PMD and before changing it
-+	 * to RW=0, Dirty=0, another thread could have written to the page
-+	 * and the PMD is RW=1, Dirty=1 now.  Use try_cmpxchg() to detect
-+	 * PMD changes and update old_pmd, then try again.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		pmd_t old_pmd, new_pmd;
++#ifdef CONFIG_X86_CET
++#define DISABLE_SHSTK	0
++#define DISABLE_IBT	0
++#else
++#define DISABLE_SHSTK	(1 << (X86_FEATURE_SHSTK & 31))
++#define DISABLE_IBT	(1 << (X86_FEATURE_IBT & 31))
++#endif
 +
-+		old_pmd = READ_ONCE(*pmdp);
-+		do {
-+			new_pmd = pmd_wrprotect(old_pmd);
-+		} while (!try_cmpxchg((pmdval_t *)pmdp, (pmdval_t *)&old_pmd, pmd_val(new_pmd)));
-+
-+		return;
-+	}
- 	clear_bit(_PAGE_BIT_RW, (unsigned long *)pmdp);
- }
+ /*
+  * Make sure to add features to the correct mask
+  */
+@@ -88,9 +96,9 @@
+ #define DISABLED_MASK14	0
+ #define DISABLED_MASK15	0
+ #define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP| \
+-			 DISABLE_ENQCMD)
++			 DISABLE_ENQCMD|DISABLE_SHSTK)
+ #define DISABLED_MASK17	0
+-#define DISABLED_MASK18	0
++#define DISABLED_MASK18	(DISABLE_IBT)
+ #define DISABLED_MASK_CHECK BUILD_BUG_ON_ZERO(NCAPINTS != 19)
+ 
+ #endif /* _ASM_X86_DISABLED_FEATURES_H */
+diff --git a/arch/x86/kernel/cpu/cpuid-deps.c b/arch/x86/kernel/cpu/cpuid-deps.c
+index 42af31b64c2c..52d9a682a0e6 100644
+--- a/arch/x86/kernel/cpu/cpuid-deps.c
++++ b/arch/x86/kernel/cpu/cpuid-deps.c
+@@ -72,6 +72,8 @@ static const struct cpuid_dep cpuid_deps[] = {
+ 	{ X86_FEATURE_AVX512_FP16,		X86_FEATURE_AVX512BW  },
+ 	{ X86_FEATURE_ENQCMD,			X86_FEATURE_XSAVES    },
+ 	{ X86_FEATURE_PER_THREAD_MBA,		X86_FEATURE_MBA       },
++	{ X86_FEATURE_SHSTK,			X86_FEATURE_XSAVES    },
++	{ X86_FEATURE_IBT,			X86_FEATURE_XSAVES    },
+ 	{}
+ };
  
 -- 
 2.21.0
