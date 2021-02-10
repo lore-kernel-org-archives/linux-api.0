@@ -5,31 +5,31 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8FA20C433DB
-	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:08:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 97689C433DB
+	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:08:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 56B4164EDA
-	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:08:45 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6ABAD6023B
+	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:08:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232891AbhBJSIV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 10 Feb 2021 13:08:21 -0500
-Received: from mga17.intel.com ([192.55.52.151]:29597 "EHLO mga17.intel.com"
+        id S233730AbhBJSI3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 10 Feb 2021 13:08:29 -0500
+Received: from mga17.intel.com ([192.55.52.151]:29603 "EHLO mga17.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233918AbhBJSFl (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 10 Feb 2021 13:05:41 -0500
-IronPort-SDR: vRdYomFTPllzkvI01N7v6PQrSSH+zQ0gdYmU/zG60Rrjxuxe5+G3yC3skPulQvhbVbdFI8BQ7S
- g+IOF1WfOLuQ==
-X-IronPort-AV: E=McAfee;i="6000,8403,9891"; a="161872864"
+        id S233915AbhBJSFj (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 10 Feb 2021 13:05:39 -0500
+IronPort-SDR: AhB6bLjx0ccRawG8jo8EsACqRe1GLG9RbWwdLFgdX3wytO3EQMSSeKwTBGguWiK6O6DG4hOtm6
+ PNOiRBWiAd+A==
+X-IronPort-AV: E=McAfee;i="6000,8403,9891"; a="161872860"
 X-IronPort-AV: E=Sophos;i="5.81,168,1610438400"; 
-   d="scan'208";a="161872864"
+   d="scan'208";a="161872860"
 Received: from fmsmga002.fm.intel.com ([10.253.24.26])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:04 -0800
-IronPort-SDR: 1/KsWwmvca5Mt77BB40OR7szWu6ytZ6pJhGz3QSk+B2BG+DXfFnd9KImNJAbv4P88dn1MTzPbD
- men/VB5h0gVA==
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:03 -0800
+IronPort-SDR: OMwmtszcRgMipJlvUfw9jKjh4roIuBBtG979ePIc5OhhqjXgiZaO8cVuwFKb1YFhD5TUQF9jQU
+ xp53yo1QIgjg==
 X-IronPort-AV: E=Sophos;i="5.81,168,1610438400"; 
-   d="scan'208";a="421140788"
+   d="scan'208";a="421140779"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
   by fmsmga002-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:03 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
@@ -59,12 +59,10 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>, <haitao.huang@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        Peter Collingbourne <pcc@google.com>,
-        Andrew Morton <akpm@linux-foundation.org>
-Subject: [PATCH v20 19/25] mm: Re-introduce vm_flags to do_mmap()
-Date:   Wed, 10 Feb 2021 09:56:57 -0800
-Message-Id: <20210210175703.12492-20-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v20 17/25] mm/mmap: Add shadow stack pages to memory accounting
+Date:   Wed, 10 Feb 2021 09:56:55 -0800
+Message-Id: <20210210175703.12492-18-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210210175703.12492-1-yu-cheng.yu@intel.com>
 References: <20210210175703.12492-1-yu-cheng.yu@intel.com>
@@ -74,150 +72,76 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-There was no more caller passing vm_flags to do_mmap(), and vm_flags was
-removed from the function's input by:
-
-    commit 45e55300f114 ("mm: remove unnecessary wrapper function do_mmap_pgoff()").
-
-There is a new user now.  Shadow stack allocation passes VM_SHSTK to
-do_mmap().  Re-introduce vm_flags to do_mmap(), but without the old wrapper
-do_mmap_pgoff().  Instead, make all callers of the wrapper pass a zero
-vm_flags to do_mmap().
+Account shadow stack pages to stack memory.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Peter Collingbourne <pcc@google.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Oleg Nesterov <oleg@redhat.com>
-Cc: linux-mm@kvack.org
 ---
- fs/aio.c           |  2 +-
- include/linux/mm.h |  3 ++-
- ipc/shm.c          |  2 +-
- mm/mmap.c          | 10 +++++-----
- mm/nommu.c         |  4 ++--
- mm/util.c          |  2 +-
- 6 files changed, 12 insertions(+), 11 deletions(-)
+ arch/x86/mm/pgtable.c   |  7 +++++++
+ include/linux/pgtable.h | 11 +++++++++++
+ mm/mmap.c               |  5 +++++
+ 3 files changed, 23 insertions(+)
 
-diff --git a/fs/aio.c b/fs/aio.c
-index 1f32da13d39e..b5d0586209a7 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -529,7 +529,7 @@ static int aio_setup_ring(struct kioctx *ctx, unsigned int nr_events)
+diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
+index 0f4fbf51a9fc..948d28c29964 100644
+--- a/arch/x86/mm/pgtable.c
++++ b/arch/x86/mm/pgtable.c
+@@ -895,3 +895,10 @@ int pmd_free_pte_page(pmd_t *pmd, unsigned long addr)
  
- 	ctx->mmap_base = do_mmap(ctx->aio_ring_file, 0, ctx->mmap_size,
- 				 PROT_READ | PROT_WRITE,
--				 MAP_SHARED, 0, &unused, NULL);
-+				 MAP_SHARED, 0, 0, &unused, NULL);
- 	mmap_write_unlock(mm);
- 	if (IS_ERR((void *)ctx->mmap_base)) {
- 		ctx->mmap_size = 0;
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index c12b3d36dbd3..06e9899e13b8 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -2585,7 +2585,8 @@ extern unsigned long mmap_region(struct file *file, unsigned long addr,
- 	struct list_head *uf);
- extern unsigned long do_mmap(struct file *file, unsigned long addr,
- 	unsigned long len, unsigned long prot, unsigned long flags,
--	unsigned long pgoff, unsigned long *populate, struct list_head *uf);
-+	vm_flags_t vm_flags, unsigned long pgoff, unsigned long *populate,
-+	struct list_head *uf);
- extern int __do_munmap(struct mm_struct *, unsigned long, size_t,
- 		       struct list_head *uf, bool downgrade);
- extern int do_munmap(struct mm_struct *, unsigned long, size_t,
-diff --git a/ipc/shm.c b/ipc/shm.c
-index febd88daba8c..b6370eb1eaab 100644
---- a/ipc/shm.c
-+++ b/ipc/shm.c
-@@ -1556,7 +1556,7 @@ long do_shmat(int shmid, char __user *shmaddr, int shmflg,
- 			goto invalid;
- 	}
+ #endif /* CONFIG_X86_64 */
+ #endif	/* CONFIG_HAVE_ARCH_HUGE_VMAP */
++
++#ifdef CONFIG_ARCH_HAS_SHADOW_STACK
++bool arch_shadow_stack_mapping(vm_flags_t vm_flags)
++{
++	return (vm_flags & VM_SHSTK);
++}
++#endif
+diff --git a/include/linux/pgtable.h b/include/linux/pgtable.h
+index d8452218d09b..b888b246b8b1 100644
+--- a/include/linux/pgtable.h
++++ b/include/linux/pgtable.h
+@@ -1463,6 +1463,17 @@ static inline pmd_t arch_maybe_pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma
+ #endif /* CONFIG_ARCH_MAYBE_MKWRITE */
+ #endif /* CONFIG_MMU */
  
--	addr = do_mmap(file, addr, size, prot, flags, 0, &populate, NULL);
-+	addr = do_mmap(file, addr, size, prot, flags, 0, 0, &populate, NULL);
- 	*raddr = addr;
- 	err = 0;
- 	if (IS_ERR_VALUE(addr))
++#ifdef CONFIG_MMU
++#ifdef CONFIG_ARCH_HAS_SHADOW_STACK
++bool arch_shadow_stack_mapping(vm_flags_t vm_flags);
++#else
++static inline bool arch_shadow_stack_mapping(vm_flags_t vm_flags)
++{
++	return false;
++}
++#endif /* CONFIG_ARCH_HAS_SHADOW_STACK */
++#endif /* CONFIG_MMU */
++
+ /*
+  * Architecture PAGE_KERNEL_* fallbacks
+  *
 diff --git a/mm/mmap.c b/mm/mmap.c
-index 51200b821898..95ce7cd68654 100644
+index dc7206032387..51200b821898 100644
 --- a/mm/mmap.c
 +++ b/mm/mmap.c
-@@ -1403,11 +1403,11 @@ static inline bool file_mmap_ok(struct file *file, struct inode *inode,
-  */
- unsigned long do_mmap(struct file *file, unsigned long addr,
- 			unsigned long len, unsigned long prot,
--			unsigned long flags, unsigned long pgoff,
--			unsigned long *populate, struct list_head *uf)
-+			unsigned long flags, vm_flags_t vm_flags,
-+			unsigned long pgoff, unsigned long *populate,
-+			struct list_head *uf)
- {
- 	struct mm_struct *mm = current->mm;
--	vm_flags_t vm_flags;
- 	int pkey = 0;
+@@ -1720,6 +1720,9 @@ static inline int accountable_mapping(struct file *file, vm_flags_t vm_flags)
+ 	if (file && is_file_hugepages(file))
+ 		return 0;
  
- 	*populate = 0;
-@@ -1469,7 +1469,7 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
- 	 * to. we assume access permissions have been handled by the open
- 	 * of the memory object, so we don't do any here.
- 	 */
--	vm_flags = calc_vm_prot_bits(prot, pkey) | calc_vm_flag_bits(flags) |
-+	vm_flags |= calc_vm_prot_bits(prot, pkey) | calc_vm_flag_bits(flags) |
- 			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
++	if (arch_shadow_stack_mapping(vm_flags))
++		return 1;
++
+ 	return (vm_flags & (VM_NORESERVE | VM_SHARED | VM_WRITE)) == VM_WRITE;
+ }
  
- 	if (flags & MAP_LOCKED)
-@@ -3049,7 +3049,7 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
+@@ -3389,6 +3392,8 @@ void vm_stat_account(struct mm_struct *mm, vm_flags_t flags, long npages)
+ 		mm->stack_vm += npages;
+ 	else if (is_data_mapping(flags))
+ 		mm->data_vm += npages;
++	else if (arch_shadow_stack_mapping(flags))
++		mm->stack_vm += npages;
+ }
  
- 	file = get_file(vma->vm_file);
- 	ret = do_mmap(vma->vm_file, start, size,
--			prot, flags, pgoff, &populate, NULL);
-+			prot, flags, 0, pgoff, &populate, NULL);
- 	fput(file);
- out:
- 	mmap_write_unlock(mm);
-diff --git a/mm/nommu.c b/mm/nommu.c
-index 870fea12823e..dbfa8e50d2db 100644
---- a/mm/nommu.c
-+++ b/mm/nommu.c
-@@ -1071,6 +1071,7 @@ unsigned long do_mmap(struct file *file,
- 			unsigned long len,
- 			unsigned long prot,
- 			unsigned long flags,
-+			vm_flags_t vm_flags,
- 			unsigned long pgoff,
- 			unsigned long *populate,
- 			struct list_head *uf)
-@@ -1078,7 +1079,6 @@ unsigned long do_mmap(struct file *file,
- 	struct vm_area_struct *vma;
- 	struct vm_region *region;
- 	struct rb_node *rb;
--	vm_flags_t vm_flags;
- 	unsigned long capabilities, result;
- 	int ret;
- 
-@@ -1097,7 +1097,7 @@ unsigned long do_mmap(struct file *file,
- 
- 	/* we've determined that we can make the mapping, now translate what we
- 	 * now know into VMA flags */
--	vm_flags = determine_vm_flags(file, prot, flags, capabilities);
-+	vm_flags |= determine_vm_flags(file, prot, flags, capabilities);
- 
- 	/* we're going to need to record the mapping */
- 	region = kmem_cache_zalloc(vm_region_jar, GFP_KERNEL);
-diff --git a/mm/util.c b/mm/util.c
-index 8c9b7d1e7c49..0f7ab91e672b 100644
---- a/mm/util.c
-+++ b/mm/util.c
-@@ -516,7 +516,7 @@ unsigned long vm_mmap_pgoff(struct file *file, unsigned long addr,
- 	if (!ret) {
- 		if (mmap_write_lock_killable(mm))
- 			return -EINTR;
--		ret = do_mmap(file, addr, len, prot, flag, pgoff, &populate,
-+		ret = do_mmap(file, addr, len, prot, flag, 0, pgoff, &populate,
- 			      &uf);
- 		mmap_write_unlock(mm);
- 		userfaultfd_unmap_complete(mm, &uf);
+ static vm_fault_t special_mapping_fault(struct vm_fault *vmf);
 -- 
 2.21.0
 
