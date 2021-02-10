@@ -2,36 +2,36 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D9A91C433E9
-	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:07:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BE452C433DB
+	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:07:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A5D3464ED0
-	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:07:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8959464DB1
+	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:07:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233814AbhBJSGr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 10 Feb 2021 13:06:47 -0500
-Received: from mga07.intel.com ([134.134.136.100]:19693 "EHLO mga07.intel.com"
+        id S233864AbhBJSGv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 10 Feb 2021 13:06:51 -0500
+Received: from mga05.intel.com ([192.55.52.43]:41351 "EHLO mga05.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233199AbhBJSE2 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 10 Feb 2021 13:04:28 -0500
-IronPort-SDR: OATUapw/TctPpfgwYIitU52itFbsVVktFlJONhgZGzDpx9eYnWFjDIadESlBmT0fGRizXrt85k
- PyXkJw9sejzg==
-X-IronPort-AV: E=McAfee;i="6000,8403,9891"; a="246189800"
+        id S232635AbhBJSD0 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 10 Feb 2021 13:03:26 -0500
+IronPort-SDR: 4TbTPDbaHX+486EDH2f3GK9Y+WrMDoVI0SsIrsa7Is6RFTy18wJZKl9/toCEN4dGwSXsBPaw4s
+ xZ1oKvd2knFw==
+X-IronPort-AV: E=McAfee;i="6000,8403,9891"; a="266962676"
 X-IronPort-AV: E=Sophos;i="5.81,168,1610438400"; 
-   d="scan'208";a="246189800"
-Received: from fmsmga008.fm.intel.com ([10.253.24.58])
-  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 10:02:56 -0800
-IronPort-SDR: IWazrkUP5rGUVxzdHsy7ZSs1uBnTfJjgAZH53SQiN9snK+aRMapwJYi0UFqEd0BH+IvWp71B0q
- sNGWjV7ohP5A==
+   d="scan'208";a="266962676"
+Received: from fmsmga002.fm.intel.com ([10.253.24.26])
+  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:00 -0800
+IronPort-SDR: 5xF/aJeElOOmSTos6q3DmF81YtgUGEPh04Csu6ZFkRxD6PCiZVEDMvbRPwjYLcHRCAxauYF+Xw
+ f6H42P82uFdg==
 X-IronPort-AV: E=Sophos;i="5.81,168,1610438400"; 
-   d="scan'208";a="380239191"
+   d="scan'208";a="421140722"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 10:02:55 -0800
+  by fmsmga002-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:00 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -59,58 +59,178 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>, <haitao.huang@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v20 0/7] Control-flow Enforcement: Indirect Branch Tracking
-Date:   Wed, 10 Feb 2021 10:02:38 -0800
-Message-Id: <20210210180245.13770-1-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
+        Michael Kerrisk <mtk.manpages@gmail.com>
+Subject: [PATCH v20 06/25] x86/cet: Add control-protection fault handler
+Date:   Wed, 10 Feb 2021 09:56:44 -0800
+Message-Id: <20210210175703.12492-7-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
+In-Reply-To: <20210210175703.12492-1-yu-cheng.yu@intel.com>
+References: <20210210175703.12492-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Control-flow Enforcement (CET) is a new Intel processor feature that blocks
-return/jump-oriented programming attacks.  Details are in "Intel 64 and
-IA-32 Architectures Software Developer's Manual" [1].
+A control-protection fault is triggered when a control-flow transfer
+attempt violates Shadow Stack or Indirect Branch Tracking constraints.
+For example, the return address for a RET instruction differs from the copy
+on the shadow stack; or an indirect JMP instruction, without the NOTRACK
+prefix, arrives at a non-ENDBR opcode.
 
-This is the second part of CET and enables Indirect Branch Tracking (IBT).
-It is built on top of the shadow stack series.
+The control-protection fault handler works in a similar way as the general
+protection fault handler.  It provides the si_code SEGV_CPERR to the signal
+handler.
 
-Changes in v20:
-- Pick up Reviewed-by tags.
-- Rebase to Linus tree v5.11-rc7.
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: Michael Kerrisk <mtk.manpages@gmail.com>
+---
+ arch/x86/include/asm/idtentry.h    |  4 ++
+ arch/x86/kernel/idt.c              |  4 ++
+ arch/x86/kernel/signal_compat.c    |  2 +-
+ arch/x86/kernel/traps.c            | 63 ++++++++++++++++++++++++++++++
+ include/uapi/asm-generic/siginfo.h |  3 +-
+ 5 files changed, 74 insertions(+), 2 deletions(-)
 
-[1] Intel 64 and IA-32 Architectures Software Developer's Manual:
-
-    https://software.intel.com/en-us/download/intel-64-and-ia-32-
-    architectures-sdm-combined-volumes-1-2a-2b-2c-2d-3a-3b-3c-3d-and-4
-
-[2] Indirect Branch Tracking patches v19:
-
-    https://lkml.kernel.org/r/20210203225902.479-1-yu-cheng.yu@intel.com/
-
-H.J. Lu (3):
-  x86/cet/ibt: Update arch_prctl functions for Indirect Branch Tracking
-  x86/vdso/32: Add ENDBR32 to __kernel_vsyscall entry point
-  x86/vdso: Insert endbr32/endbr64 to vDSO
-
-Yu-cheng Yu (4):
-  x86/cet/ibt: Update Kconfig for user-mode Indirect Branch Tracking
-  x86/cet/ibt: User-mode Indirect Branch Tracking support
-  x86/cet/ibt: Handle signals for Indirect Branch Tracking
-  x86/cet/ibt: Update ELF header parsing for Indirect Branch Tracking
-
- arch/x86/Kconfig                         |  1 +
- arch/x86/entry/vdso/Makefile             |  4 ++
- arch/x86/entry/vdso/vdso32/system_call.S |  3 ++
- arch/x86/include/asm/cet.h               |  3 ++
- arch/x86/kernel/cet.c                    | 59 +++++++++++++++++++++++-
- arch/x86/kernel/cet_prctl.c              |  5 ++
- arch/x86/kernel/fpu/signal.c             |  8 ++--
- arch/x86/kernel/process_64.c             |  8 ++++
- 8 files changed, 86 insertions(+), 5 deletions(-)
-
+diff --git a/arch/x86/include/asm/idtentry.h b/arch/x86/include/asm/idtentry.h
+index f656aabd1545..ff4b3bf634da 100644
+--- a/arch/x86/include/asm/idtentry.h
++++ b/arch/x86/include/asm/idtentry.h
+@@ -574,6 +574,10 @@ DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_SS,	exc_stack_segment);
+ DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_GP,	exc_general_protection);
+ DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_AC,	exc_alignment_check);
+ 
++#ifdef CONFIG_X86_CET
++DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_CP, exc_control_protection);
++#endif
++
+ /* Raw exception entries which need extra work */
+ DECLARE_IDTENTRY_RAW(X86_TRAP_UD,		exc_invalid_op);
+ DECLARE_IDTENTRY_RAW(X86_TRAP_BP,		exc_int3);
+diff --git a/arch/x86/kernel/idt.c b/arch/x86/kernel/idt.c
+index ee1a283f8e96..e8166d9bbb10 100644
+--- a/arch/x86/kernel/idt.c
++++ b/arch/x86/kernel/idt.c
+@@ -105,6 +105,10 @@ static const __initconst struct idt_data def_idts[] = {
+ #elif defined(CONFIG_X86_32)
+ 	SYSG(IA32_SYSCALL_VECTOR,	entry_INT80_32),
+ #endif
++
++#ifdef CONFIG_X86_CET
++	INTG(X86_TRAP_CP,		asm_exc_control_protection),
++#endif
+ };
+ 
+ /*
+diff --git a/arch/x86/kernel/signal_compat.c b/arch/x86/kernel/signal_compat.c
+index a5330ff498f0..dd92490b1e7f 100644
+--- a/arch/x86/kernel/signal_compat.c
++++ b/arch/x86/kernel/signal_compat.c
+@@ -27,7 +27,7 @@ static inline void signal_compat_build_tests(void)
+ 	 */
+ 	BUILD_BUG_ON(NSIGILL  != 11);
+ 	BUILD_BUG_ON(NSIGFPE  != 15);
+-	BUILD_BUG_ON(NSIGSEGV != 9);
++	BUILD_BUG_ON(NSIGSEGV != 10);
+ 	BUILD_BUG_ON(NSIGBUS  != 5);
+ 	BUILD_BUG_ON(NSIGTRAP != 5);
+ 	BUILD_BUG_ON(NSIGCHLD != 6);
+diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
+index 7f5aec758f0e..8c7fa91a57c9 100644
+--- a/arch/x86/kernel/traps.c
++++ b/arch/x86/kernel/traps.c
+@@ -39,6 +39,7 @@
+ #include <linux/io.h>
+ #include <linux/hardirq.h>
+ #include <linux/atomic.h>
++#include <linux/nospec.h>
+ 
+ #include <asm/stacktrace.h>
+ #include <asm/processor.h>
+@@ -606,6 +607,68 @@ DEFINE_IDTENTRY_ERRORCODE(exc_general_protection)
+ 	cond_local_irq_disable(regs);
+ }
+ 
++#ifdef CONFIG_X86_CET
++static const char * const control_protection_err[] = {
++	"unknown",
++	"near-ret",
++	"far-ret/iret",
++	"endbranch",
++	"rstorssp",
++	"setssbsy",
++	"unknown",
++};
++
++/*
++ * When a control protection exception occurs, send a signal to the responsible
++ * application.  Currently, control protection is only enabled for user mode.
++ * This exception should not come from kernel mode.
++ */
++DEFINE_IDTENTRY_ERRORCODE(exc_control_protection)
++{
++	static DEFINE_RATELIMIT_STATE(rs, DEFAULT_RATELIMIT_INTERVAL,
++				      DEFAULT_RATELIMIT_BURST);
++	struct task_struct *tsk;
++
++	if (!user_mode(regs)) {
++		pr_emerg("PANIC: unexpected kernel control protection fault\n");
++		die("kernel control protection fault", regs, error_code);
++		panic("Machine halted.");
++	}
++
++	cond_local_irq_enable(regs);
++
++	if (!boot_cpu_has(X86_FEATURE_CET))
++		WARN_ONCE(1, "Control protection fault with CET support disabled\n");
++
++	tsk = current;
++	tsk->thread.error_code = error_code;
++	tsk->thread.trap_nr = X86_TRAP_CP;
++
++	/*
++	 * Ratelimit to prevent log spamming.
++	 */
++	if (show_unhandled_signals && unhandled_signal(tsk, SIGSEGV) &&
++	    __ratelimit(&rs)) {
++		unsigned long ssp;
++		int err;
++
++		err = array_index_nospec(error_code, ARRAY_SIZE(control_protection_err));
++
++		rdmsrl(MSR_IA32_PL3_SSP, ssp);
++		pr_emerg("%s[%d] control protection ip:%lx sp:%lx ssp:%lx error:%lx(%s)",
++			 tsk->comm, task_pid_nr(tsk),
++			 regs->ip, regs->sp, ssp, error_code,
++			 control_protection_err[err]);
++		print_vma_addr(KERN_CONT " in ", regs->ip);
++		pr_cont("\n");
++	}
++
++	force_sig_fault(SIGSEGV, SEGV_CPERR,
++			(void __user *)uprobe_get_trap_addr(regs));
++	cond_local_irq_disable(regs);
++}
++#endif
++
+ static bool do_int3(struct pt_regs *regs)
+ {
+ 	int res;
+diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
+index d2597000407a..1c2ea91284a0 100644
+--- a/include/uapi/asm-generic/siginfo.h
++++ b/include/uapi/asm-generic/siginfo.h
+@@ -231,7 +231,8 @@ typedef struct siginfo {
+ #define SEGV_ADIPERR	7	/* Precise MCD exception */
+ #define SEGV_MTEAERR	8	/* Asynchronous ARM MTE error */
+ #define SEGV_MTESERR	9	/* Synchronous ARM MTE exception */
+-#define NSIGSEGV	9
++#define SEGV_CPERR	10	/* Control protection fault */
++#define NSIGSEGV	10
+ 
+ /*
+  * SIGBUS si_codes
 -- 
 2.21.0
 
