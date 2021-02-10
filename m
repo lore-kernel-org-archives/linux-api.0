@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B4391C433E6
-	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:10:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7789FC433E0
+	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:11:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8B09864EE1
-	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:10:41 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 442EA64EDF
+	for <linux-api@archiver.kernel.org>; Wed, 10 Feb 2021 18:11:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233885AbhBJSKB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 10 Feb 2021 13:10:01 -0500
-Received: from mga17.intel.com ([192.55.52.151]:29597 "EHLO mga17.intel.com"
+        id S233691AbhBJSLm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 10 Feb 2021 13:11:42 -0500
+Received: from mga17.intel.com ([192.55.52.151]:29594 "EHLO mga17.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233982AbhBJSH5 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 10 Feb 2021 13:07:57 -0500
-IronPort-SDR: e2uvYA1rxIAiXgGpWdsq4vQffPVXEABzUMgYDbK3SZ+3pCXYY1tnIQOvbPuotCttAbE/FIyObJ
- 4JVQXKbtqL+w==
-X-IronPort-AV: E=McAfee;i="6000,8403,9891"; a="161872862"
+        id S233893AbhBJSKF (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 10 Feb 2021 13:10:05 -0500
+IronPort-SDR: usnroQJ+VaKDZjPbWpxxuhbKRUUIa4hBo6gGKdDj+7r2xPS3EQ4ylcj/wkakz4KdJr8syLMO2A
+ qeCuPLWKlXbA==
+X-IronPort-AV: E=McAfee;i="6000,8403,9891"; a="161872879"
 X-IronPort-AV: E=Sophos;i="5.81,168,1610438400"; 
-   d="scan'208";a="161872862"
+   d="scan'208";a="161872879"
 Received: from fmsmga002.fm.intel.com ([10.253.24.26])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:03 -0800
-IronPort-SDR: 8zCTLfQG54U6kvyN1249jWeoXllxQZObmLXzf5FxOxcHYRvo+DUi+aO0X+09ZBIwKMD6ikgOxg
- W496piLlt8TQ==
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:05 -0800
+IronPort-SDR: mvgEWqEB2zxPCO8d0PgviEtW9yypMe+psGrAo4uNqdqhGW9Rryy0RREnrwuu73ayr/dm2opgVy
+ e0HG5n4PlI3g==
 X-IronPort-AV: E=Sophos;i="5.81,168,1610438400"; 
-   d="scan'208";a="421140785"
+   d="scan'208";a="421140814"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga002-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:03 -0800
+  by fmsmga002-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Feb 2021 09:58:05 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,9 +60,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>, <haitao.huang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v20 18/25] mm: Update can_follow_write_pte() for shadow stack
-Date:   Wed, 10 Feb 2021 09:56:56 -0800
-Message-Id: <20210210175703.12492-19-yu-cheng.yu@intel.com>
+Subject: [PATCH v20 24/25] x86/cet/shstk: Add arch_prctl functions for shadow stack
+Date:   Wed, 10 Feb 2021 09:57:02 -0800
+Message-Id: <20210210175703.12492-25-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210210175703.12492-1-yu-cheng.yu@intel.com>
 References: <20210210175703.12492-1-yu-cheng.yu@intel.com>
@@ -72,78 +72,178 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Can_follow_write_pte() ensures a read-only page is COWed by checking the
-FOLL_COW flag, and uses pte_dirty() to validate the flag is still valid.
+arch_prctl(ARCH_X86_CET_STATUS, u64 *args)
+    Get CET feature status.
 
-Like a writable data page, a shadow stack page is writable, and becomes
-read-only during copy-on-write, but it is always dirty.  Thus, in the
-can_follow_write_pte() check, it belongs to the writable page case and
-should be excluded from the read-only page pte_dirty() check.  Apply
-the same changes to can_follow_write_pmd().
+    The parameter 'args' is a pointer to a user buffer.  The kernel returns
+    the following information:
+
+    *args = shadow stack/IBT status
+    *(args + 1) = shadow stack base address
+    *(args + 2) = shadow stack size
+
+    32-bit binaries use the same interface, but only lower 32-bits of each
+    item.
+
+arch_prctl(ARCH_X86_CET_DISABLE, unsigned int features)
+    Disable CET features specified in 'features'.  Return -EPERM if CET is
+    locked.
+
+arch_prctl(ARCH_X86_CET_LOCK)
+    Lock in CET features.
+
+Also change do_arch_prctl_common()'s parameter 'cpuid_enabled' to
+'arg2', as it is now also passed to prctl_cet().
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
- mm/gup.c         | 8 +++++---
- mm/huge_memory.c | 8 +++++---
- 2 files changed, 10 insertions(+), 6 deletions(-)
+ arch/x86/include/asm/cet.h        |  3 ++
+ arch/x86/include/uapi/asm/prctl.h |  4 +++
+ arch/x86/kernel/Makefile          |  2 +-
+ arch/x86/kernel/cet_prctl.c       | 60 +++++++++++++++++++++++++++++++
+ arch/x86/kernel/process.c         |  6 ++--
+ 5 files changed, 71 insertions(+), 4 deletions(-)
+ create mode 100644 arch/x86/kernel/cet_prctl.c
 
-diff --git a/mm/gup.c b/mm/gup.c
-index e4c224cd9661..66ab67626f57 100644
---- a/mm/gup.c
-+++ b/mm/gup.c
-@@ -357,10 +357,12 @@ static int follow_pfn_pte(struct vm_area_struct *vma, unsigned long address,
-  * FOLL_FORCE can write to even unwritable pte's, but only
-  * after we've gone through a COW cycle and they are dirty.
-  */
--static inline bool can_follow_write_pte(pte_t pte, unsigned int flags)
-+static inline bool can_follow_write_pte(pte_t pte, unsigned int flags,
-+					struct vm_area_struct *vma)
- {
- 	return pte_write(pte) ||
--		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte));
-+		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte) &&
-+				  !arch_shadow_stack_mapping(vma->vm_flags));
+diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+index ec4b5e62d0ce..16870e5bc8eb 100644
+--- a/arch/x86/include/asm/cet.h
++++ b/arch/x86/include/asm/cet.h
+@@ -14,9 +14,11 @@ struct sc_ext;
+ struct cet_status {
+ 	unsigned long	shstk_base;
+ 	unsigned long	shstk_size;
++	unsigned int	locked:1;
+ };
+ 
+ #ifdef CONFIG_X86_CET
++int prctl_cet(int option, u64 arg2);
+ int cet_setup_shstk(void);
+ int cet_setup_thread_shstk(struct task_struct *p, unsigned long clone_flags);
+ void cet_disable_shstk(void);
+@@ -25,6 +27,7 @@ int cet_verify_rstor_token(bool ia32, unsigned long ssp, unsigned long *new_ssp)
+ void cet_restore_signal(struct sc_ext *sc);
+ int cet_setup_signal(bool ia32, unsigned long rstor, struct sc_ext *sc);
+ #else
++static inline int prctl_cet(int option, u64 arg2) { return -EINVAL; }
+ static inline int cet_setup_thread_shstk(struct task_struct *p,
+ 					 unsigned long clone_flags) { return 0; }
+ static inline void cet_disable_shstk(void) {}
+diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
+index 5a6aac9fa41f..9245bf629120 100644
+--- a/arch/x86/include/uapi/asm/prctl.h
++++ b/arch/x86/include/uapi/asm/prctl.h
+@@ -14,4 +14,8 @@
+ #define ARCH_MAP_VDSO_32	0x2002
+ #define ARCH_MAP_VDSO_64	0x2003
+ 
++#define ARCH_X86_CET_STATUS		0x3001
++#define ARCH_X86_CET_DISABLE		0x3002
++#define ARCH_X86_CET_LOCK		0x3003
++
+ #endif /* _ASM_X86_PRCTL_H */
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index 4a9a7e7d00dc..2f60a28769f9 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -151,7 +151,7 @@ obj-$(CONFIG_UNWINDER_FRAME_POINTER)	+= unwind_frame.o
+ obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
+ 
+ obj-$(CONFIG_AMD_MEM_ENCRYPT)		+= sev-es.o
+-obj-$(CONFIG_X86_CET)			+= cet.o
++obj-$(CONFIG_X86_CET)			+= cet.o cet_prctl.o
+ 
+ ###
+ # 64 bit specific files
+diff --git a/arch/x86/kernel/cet_prctl.c b/arch/x86/kernel/cet_prctl.c
+new file mode 100644
+index 000000000000..0030c63a08c0
+--- /dev/null
++++ b/arch/x86/kernel/cet_prctl.c
+@@ -0,0 +1,60 @@
++// SPDX-License-Identifier: GPL-2.0
++
++#include <linux/errno.h>
++#include <linux/uaccess.h>
++#include <linux/prctl.h>
++#include <linux/compat.h>
++#include <linux/mman.h>
++#include <linux/elfcore.h>
++#include <linux/processor.h>
++#include <asm/prctl.h>
++#include <asm/cet.h>
++
++/* See Documentation/x86/intel_cet.rst. */
++
++static int cet_copy_status_to_user(struct cet_status *cet, u64 __user *ubuf)
++{
++	u64 buf[3] = {};
++
++	if (cet->shstk_size) {
++		buf[0] |= GNU_PROPERTY_X86_FEATURE_1_SHSTK;
++		buf[1] = cet->shstk_base;
++		buf[2] = cet->shstk_size;
++	}
++
++	return copy_to_user(ubuf, buf, sizeof(buf));
++}
++
++int prctl_cet(int option, u64 arg2)
++{
++	struct cet_status *cet;
++
++	if (!cpu_feature_enabled(X86_FEATURE_CET))
++		return -ENOTSUPP;
++
++	cet = &current->thread.cet;
++
++	if (option == ARCH_X86_CET_STATUS)
++		return cet_copy_status_to_user(cet, (u64 __user *)arg2);
++
++	switch (option) {
++	case ARCH_X86_CET_DISABLE:
++		if (cet->locked)
++			return -EPERM;
++
++		if (arg2 & ~GNU_PROPERTY_X86_FEATURE_1_VALID)
++			return -EINVAL;
++		if (arg2 & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
++			cet_disable_shstk();
++		return 0;
++
++	case ARCH_X86_CET_LOCK:
++		if (arg2)
++			return -EINVAL;
++		cet->locked = 1;
++		return 0;
++
++	default:
++		return -ENOSYS;
++	}
++}
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index 3af6b36e1a5c..9e11e5f589f3 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -979,14 +979,14 @@ unsigned long get_wchan(struct task_struct *p)
  }
  
- static struct page *follow_page_pte(struct vm_area_struct *vma,
-@@ -403,7 +405,7 @@ static struct page *follow_page_pte(struct vm_area_struct *vma,
- 	}
- 	if ((flags & FOLL_NUMA) && pte_protnone(pte))
- 		goto no_page;
--	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags)) {
-+	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags, vma)) {
- 		pte_unmap_unlock(ptep, ptl);
- 		return NULL;
- 	}
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index ac651d529dbe..c18e4de3db62 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1337,10 +1337,12 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
-  * FOLL_FORCE can write to even unwritable pmd's, but only
-  * after we've gone through a COW cycle and they are dirty.
-  */
--static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags)
-+static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags,
-+					struct vm_area_struct *vma)
+ long do_arch_prctl_common(struct task_struct *task, int option,
+-			  unsigned long cpuid_enabled)
++			  unsigned long arg2)
  {
- 	return pmd_write(pmd) ||
--	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) && pmd_dirty(pmd));
-+	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) && pmd_dirty(pmd) &&
-+				  !arch_shadow_stack_mapping(vma->vm_flags));
+ 	switch (option) {
+ 	case ARCH_GET_CPUID:
+ 		return get_cpuid_mode();
+ 	case ARCH_SET_CPUID:
+-		return set_cpuid_mode(task, cpuid_enabled);
++		return set_cpuid_mode(task, arg2);
+ 	}
+ 
+-	return -EINVAL;
++	return prctl_cet(option, arg2);
  }
- 
- struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
-@@ -1353,7 +1355,7 @@ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
- 
- 	assert_spin_locked(pmd_lockptr(mm, pmd));
- 
--	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags))
-+	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags, vma))
- 		goto out;
- 
- 	/* Avoid dumping huge zero page */
 -- 
 2.21.0
 
