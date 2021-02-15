@@ -6,22 +6,25 @@ X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	UNPARSEABLE_RELAY autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 523FFC433E0
-	for <linux-api@archiver.kernel.org>; Mon, 15 Feb 2021 20:04:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8C607C433E0
+	for <linux-api@archiver.kernel.org>; Mon, 15 Feb 2021 20:09:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 26EDE64E25
-	for <linux-api@archiver.kernel.org>; Mon, 15 Feb 2021 20:04:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6097764EB7
+	for <linux-api@archiver.kernel.org>; Mon, 15 Feb 2021 20:09:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229764AbhBOUEj convert rfc822-to-8bit (ORCPT
+        id S229697AbhBOUI5 convert rfc822-to-8bit (ORCPT
         <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 15 Feb 2021 15:04:39 -0500
-Received: from bhuna.collabora.co.uk ([46.235.227.227]:34326 "EHLO
-        bhuna.collabora.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229928AbhBOUEe (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 15 Feb 2021 15:04:34 -0500
+        Mon, 15 Feb 2021 15:08:57 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41774 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229520AbhBOUI4 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 15 Feb 2021 15:08:56 -0500
+Received: from bhuna.collabora.co.uk (bhuna.collabora.co.uk [IPv6:2a00:1098:0:82:1000:25:2eeb:e3e3])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 49354C061574;
+        Mon, 15 Feb 2021 12:08:16 -0800 (PST)
 Received: from [127.0.0.1] (localhost [127.0.0.1])
         (Authenticated sender: krisman)
-        with ESMTPSA id AB0F01F45078
+        with ESMTPSA id 76F7D1F45078
 From:   Gabriel Krisman Bertazi <krisman@collabora.com>
 To:     =?utf-8?Q?Andr=C3=A9?= Almeida <andrealmeid@collabora.com>
 Cc:     Thomas Gleixner <tglx@linutronix.de>,
@@ -40,11 +43,11 @@ Subject: Re: [RFC PATCH 03/13] futex2: Implement vectorized wait
 Organization: Collabora
 References: <20210215152404.250281-1-andrealmeid@collabora.com>
         <20210215152404.250281-4-andrealmeid@collabora.com>
-Date:   Mon, 15 Feb 2021 15:03:48 -0500
+Date:   Mon, 15 Feb 2021 15:08:11 -0500
 In-Reply-To: <20210215152404.250281-4-andrealmeid@collabora.com>
  (=?utf-8?Q?=22Andr=C3=A9?=
         Almeida"'s message of "Mon, 15 Feb 2021 12:23:54 -0300")
-Message-ID: <87ft1xw123.fsf@collabora.com>
+Message-ID: <87a6s5w0us.fsf@collabora.com>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
@@ -60,25 +63,11 @@ André Almeida <andrealmeid@collabora.com> writes:
 >
 > futex_waitv(struct futex_waitv *waiters, unsigned int nr_futexes,
 > 	    unsigned int flags, struct timespec *timo)
->
-> struct futex_waitv {
-> 	void *uaddr;
-> 	unsigned int val;
-> 	unsigned int flags;
-> };
->
-> Given an array of struct futex_waitv, wait on each uaddr. The thread
-> wakes if a futex_wake() is performed at any uaddr. The syscall returns
-> immediately if any waiter has *uaddr != val. *timo is an optional
-> timeout value for the operation. The flags argument of the syscall
-> should be used solely for specifying the timeout as realtime, if needed.
-> Flags for shared futexes, sizes, etc. should be used on the individual
-> flags of each waiter.
 
-Given the previous proposal from Zebediah, one use case Wine has to
-support is the ability to wait on all (instead of any) of a list of
-futexes .  I suppose that could be done by a new FLAG_WAITALL passed on
-the third argument of the syscall.
+Sorry for the second email in a row.  But, if futex_wake is just a
+futex_wakev with nr_futexes == 1, why do we need two syscalls for that?
+Why not only have futex_waitv?
+
 
 -- 
 Gabriel Krisman Bertazi
