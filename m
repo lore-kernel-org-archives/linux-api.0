@@ -7,24 +7,24 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C8141C4332B
-	for <linux-api@archiver.kernel.org>; Mon, 15 Feb 2021 15:27:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D93BAC433E0
+	for <linux-api@archiver.kernel.org>; Mon, 15 Feb 2021 15:28:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A774964DC3
-	for <linux-api@archiver.kernel.org>; Mon, 15 Feb 2021 15:27:03 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 74CA364E37
+	for <linux-api@archiver.kernel.org>; Mon, 15 Feb 2021 15:28:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230491AbhBOP0u (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 15 Feb 2021 10:26:50 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37558 "EHLO
+        id S230063AbhBOP2B (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 15 Feb 2021 10:28:01 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37736 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230392AbhBOP0F (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 15 Feb 2021 10:26:05 -0500
+        with ESMTP id S230458AbhBOP12 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 15 Feb 2021 10:27:28 -0500
 Received: from bhuna.collabora.co.uk (bhuna.collabora.co.uk [IPv6:2a00:1098:0:82:1000:25:2eeb:e3e3])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AC627C061793;
-        Mon, 15 Feb 2021 07:25:23 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1A37BC0613D6;
+        Mon, 15 Feb 2021 07:25:45 -0800 (PST)
 Received: from [127.0.0.1] (localhost [127.0.0.1])
         (Authenticated sender: tonyk)
-        with ESMTPSA id BB5CE1F44F1F
+        with ESMTPSA id 23AB81F44F31
 From:   =?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@collabora.com>
 To:     Thomas Gleixner <tglx@linutronix.de>,
         Ingo Molnar <mingo@redhat.com>,
@@ -39,9 +39,9 @@ Cc:     kernel@collabora.com, krisman@collabora.com,
         libc-alpha@sourceware.org, linux-kselftest@vger.kernel.org,
         shuah@kernel.org, acme@kernel.org, corbet@lwn.net,
         =?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@collabora.com>
-Subject: [RFC PATCH 09/13] selftests: futex2: Add wouldblock test
-Date:   Mon, 15 Feb 2021 12:24:00 -0300
-Message-Id: <20210215152404.250281-10-andrealmeid@collabora.com>
+Subject: [RFC PATCH 13/13] kernel: Enable waitpid() for futex2
+Date:   Mon, 15 Feb 2021 12:24:04 -0300
+Message-Id: <20210215152404.250281-14-andrealmeid@collabora.com>
 X-Mailer: git-send-email 2.30.1
 In-Reply-To: <20210215152404.250281-1-andrealmeid@collabora.com>
 References: <20210215152404.250281-1-andrealmeid@collabora.com>
@@ -52,88 +52,101 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Adapt existing futex wait wouldblock file to test the same mechanism for
-futex2.
+To make pthreads works as expected if they are using futex2, wake
+clear_child_tid with futex2 as well. This is make applications that uses
+waitpid() (and clone(CLONE_CHILD_SETTID)) wake while waiting for the
+child to terminate. Given that apps should not mix futex() and futex2(),
+any correct app will trigger a harmless noop wakeup on the interface
+that it isn't using.
 
 Signed-off-by: André Almeida <andrealmeid@collabora.com>
 ---
- .../futex/functional/futex_wait_wouldblock.c  | 33 ++++++++++++++++---
- 1 file changed, 29 insertions(+), 4 deletions(-)
 
-diff --git a/tools/testing/selftests/futex/functional/futex_wait_wouldblock.c b/tools/testing/selftests/futex/functional/futex_wait_wouldblock.c
-index 0ae390ff8164..ed3660090907 100644
---- a/tools/testing/selftests/futex/functional/futex_wait_wouldblock.c
-+++ b/tools/testing/selftests/futex/functional/futex_wait_wouldblock.c
-@@ -12,6 +12,7 @@
-  *
-  * HISTORY
-  *      2009-Nov-14: Initial version by Gowrishankar <gowrishankar.m@in.ibm.com>
-+ *      2021-Feb-5: Add futex2 test by André <andrealmeid@collabora.com>
-  *
-  *****************************************************************************/
+This commit is here for the intend to show what we need to do in order
+to get a full NPTL working on top of futex2. It should be merged after
+we talk to glibc folks on the details around the futex_wait() side. For
+instance, we could use this as an opportunity to use private futexes or
+8bit sized futexes, but both sides need to use the exactly same flags.
+---
+ include/linux/syscalls.h |  2 ++
+ kernel/fork.c            |  2 ++
+ kernel/futex2.c          | 30 ++++++++++++++++++------------
+ 3 files changed, 22 insertions(+), 12 deletions(-)
+
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 06823bc7ef9d..38c2fc50ada9 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -1312,6 +1312,8 @@ int ksys_ipc(unsigned int call, int first, unsigned long second,
+ 	unsigned long third, void __user * ptr, long fifth);
+ int compat_ksys_ipc(u32 call, int first, int second,
+ 	u32 third, u32 ptr, u32 fifth);
++long ksys_futex_wake(void __user *uaddr, unsigned long nr_wake,
++		     unsigned int flags);
  
-@@ -21,7 +22,7 @@
- #include <stdlib.h>
- #include <string.h>
- #include <time.h>
--#include "futextest.h"
-+#include "futex2test.h"
- #include "logging.h"
+ /*
+  * The following kernel syscall equivalents are just wrappers to fs-internal
+diff --git a/kernel/fork.c b/kernel/fork.c
+index d66cd1014211..e39846a73a43 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1308,6 +1308,8 @@ static void mm_release(struct task_struct *tsk, struct mm_struct *mm)
+ 			put_user(0, tsk->clear_child_tid);
+ 			do_futex(tsk->clear_child_tid, FUTEX_WAKE,
+ 					1, NULL, NULL, 0, 0);
++			ksys_futex_wake(tsk->clear_child_tid, 1,
++					FUTEX_32 | FUTEX_SHARED_FLAG);
+ 		}
+ 		tsk->clear_child_tid = NULL;
+ 	}
+diff --git a/kernel/futex2.c b/kernel/futex2.c
+index 8a8b45f98d3b..a810b7f5c3a0 100644
+--- a/kernel/futex2.c
++++ b/kernel/futex2.c
+@@ -942,18 +942,8 @@ static inline bool futex_match(struct futex_key key1, struct futex_key key2)
+ 		key1.offset == key2.offset);
+ }
  
- #define TEST_NAME "futex-wait-wouldblock"
-@@ -39,6 +40,7 @@ void usage(char *prog)
- int main(int argc, char *argv[])
+-/**
+- * sys_futex_wake - Wake a number of futexes waiting on an address
+- * @uaddr:   Address of futex to be woken up
+- * @nr_wake: Number of futexes waiting in uaddr to be woken up
+- * @flags:   Flags for size and shared
+- *
+- * Wake `nr_wake` threads waiting at uaddr.
+- *
+- * Returns the number of woken threads on success, error code otherwise.
+- */
+-SYSCALL_DEFINE3(futex_wake, void __user *, uaddr, unsigned int, nr_wake,
+-		unsigned int, flags)
++long ksys_futex_wake(void __user *uaddr, unsigned long nr_wake,
++		     unsigned int flags)
  {
- 	struct timespec to = {.tv_sec = 0, .tv_nsec = timeout_ns};
-+	struct timespec64 to64;
- 	futex_t f1 = FUTEX_INITIALIZER;
- 	int res, ret = RET_PASS;
- 	int c;
-@@ -61,18 +63,41 @@ int main(int argc, char *argv[])
- 	}
- 
- 	ksft_print_header();
--	ksft_set_plan(1);
-+	ksft_set_plan(2);
- 	ksft_print_msg("%s: Test the unexpected futex value in FUTEX_WAIT\n",
- 	       basename(argv[0]));
- 
- 	info("Calling futex_wait on f1: %u @ %p with val=%u\n", f1, &f1, f1+1);
- 	res = futex_wait(&f1, f1+1, &to, FUTEX_PRIVATE_FLAG);
- 	if (!res || errno != EWOULDBLOCK) {
--		fail("futex_wait returned: %d %s\n",
-+		ksft_test_result_fail("futex_wait returned: %d %s\n",
- 		     res ? errno : res, res ? strerror(errno) : "");
- 		ret = RET_FAIL;
-+	} else {
-+		ksft_test_result_pass("futex_wait wouldblock succeeds\n");
- 	}
- 
--	print_result(TEST_NAME, ret);
-+	/* setting absolute timeout for futex2 */
-+	if (gettime64(CLOCK_MONOTONIC, &to64))
-+		error("gettime64 failed\n", errno);
-+
-+	to64.tv_nsec += timeout_ns;
-+
-+	if (to64.tv_nsec >= 1000000000) {
-+		to64.tv_sec++;
-+		to64.tv_nsec -= 1000000000;
-+	}
-+
-+	info("Calling futex2_wait on f1: %u @ %p with val=%u\n", f1, &f1, f1+1);
-+	res = futex2_wait(&f1, f1+1, FUTEX_32, &to64);
-+	if (!res || errno != EWOULDBLOCK) {
-+		ksft_test_result_fail("futex2_wait returned: %d %s\n",
-+		     res ? errno : res, res ? strerror(errno) : "");
-+		ret = RET_FAIL;
-+	} else {
-+		ksft_test_result_pass("futex2_wait wouldblock succeeds\n");
-+	}
-+
-+	ksft_print_cnts();
+ 	bool shared = (flags & FUTEX_SHARED_FLAG) ? true : false;
+ 	unsigned int size = flags & FUTEX_SIZE_MASK;
+@@ -990,6 +980,22 @@ SYSCALL_DEFINE3(futex_wake, void __user *, uaddr, unsigned int, nr_wake,
  	return ret;
  }
+ 
++/**
++ * sys_futex_wake - Wake a number of futexes waiting on an address
++ * @uaddr:   Address of futex to be woken up
++ * @nr_wake: Number of futexes waiting in uaddr to be woken up
++ * @flags:   Flags for size and shared
++ *
++ * Wake `nr_wake` threads waiting at uaddr.
++ *
++ * Returns the number of woken threads on success, error code otherwise.
++ */
++SYSCALL_DEFINE3(futex_wake, void __user *, uaddr, unsigned int, nr_wake,
++		unsigned int, flags)
++{
++	return ksys_futex_wake(uaddr, nr_wake, flags);
++}
++
+ static void futex_double_unlock(struct futex_bucket *b1, struct futex_bucket *b2)
+ {
+ 	spin_unlock(&b1->lock);
 -- 
 2.30.1
 
