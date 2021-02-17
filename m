@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0BCADC4332B
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 60951C43331
 	for <linux-api@archiver.kernel.org>; Wed, 17 Feb 2021 22:35:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E62E664EB6
-	for <linux-api@archiver.kernel.org>; Wed, 17 Feb 2021 22:35:30 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3099864EB3
+	for <linux-api@archiver.kernel.org>; Wed, 17 Feb 2021 22:35:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233189AbhBQWfL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 17 Feb 2021 17:35:11 -0500
-Received: from mga03.intel.com ([134.134.136.65]:15558 "EHLO mga03.intel.com"
+        id S233258AbhBQWfO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 17 Feb 2021 17:35:14 -0500
+Received: from mga09.intel.com ([134.134.136.24]:13777 "EHLO mga09.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S234152AbhBQWca (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 17 Feb 2021 17:32:30 -0500
-IronPort-SDR: AWnqT8NzrMQEJn8uhmT5R1kllKOYBoVz1DqgKcEZ4UQvQz8SZFkjdHLxOHPRO+Ra5mLZNVqAW9
- t9whDrzBfbFw==
-X-IronPort-AV: E=McAfee;i="6000,8403,9898"; a="183409006"
+        id S234188AbhBQWdJ (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 17 Feb 2021 17:33:09 -0500
+IronPort-SDR: 3SyOfAWa+vUDRT6hMhyFK9yC3x7p/iv6xaaKzMxD2rhj9JZkE4baIBMl8+5o7Wy9kKXE3irxCV
+ zuTWTNhcS0ZQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9898"; a="183461484"
 X-IronPort-AV: E=Sophos;i="5.81,185,1610438400"; 
-   d="scan'208";a="183409006"
-Received: from orsmga003.jf.intel.com ([10.7.209.27])
-  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 17 Feb 2021 14:31:46 -0800
-IronPort-SDR: CiMXfXQDjg2TqojXiGIMyyop8Tb2u39CAw492hp9P0fszZsddVtFWGGnZprgOw0mplgZIx2PYZ
- 0m3EdXOuctGg==
+   d="scan'208";a="183461484"
+Received: from orsmga008.jf.intel.com ([10.7.209.65])
+  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 17 Feb 2021 14:28:07 -0800
+IronPort-SDR: eHCef69DeJVUOYVbQTOOuYDdq+UqMsOYwZuqANQGPohafUK44GIxqgYoL5HKAdVTRhmTfq6F+J
+ YkAAJBSe/KmQ==
 X-IronPort-AV: E=Sophos;i="5.81,185,1610438400"; 
-   d="scan'208";a="362200463"
+   d="scan'208";a="400172683"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga003-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 17 Feb 2021 14:31:46 -0800
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 17 Feb 2021 14:28:06 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,98 +60,193 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v21 2/7] x86/cet/ibt: User-mode Indirect Branch Tracking support
-Date:   Wed, 17 Feb 2021 14:31:30 -0800
-Message-Id: <20210217223135.16790-3-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
+        Mark Brown <broonie@kernel.org>,
+        Catalin Marinas <catalin.marinas@arm.com>
+Subject: [PATCH v21 22/26] ELF: Introduce arch_setup_elf_property()
+Date:   Wed, 17 Feb 2021 14:27:26 -0800
+Message-Id: <20210217222730.15819-23-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20210217223135.16790-1-yu-cheng.yu@intel.com>
-References: <20210217223135.16790-1-yu-cheng.yu@intel.com>
+In-Reply-To: <20210217222730.15819-1-yu-cheng.yu@intel.com>
+References: <20210217222730.15819-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Introduce user-mode Indirect Branch Tracking (IBT) support.  Add routines
-for the setup/disable of IBT.
+An ELF file's .note.gnu.property indicates arch features supported by the
+file.  These features are extracted by arch_parse_elf_property() and stored
+in 'arch_elf_state'.
+
+Introduce x86 feature definitions and arch_setup_elf_property(), which
+enables such features.  The first use-case of this function is Shadow
+Stack.
+
+ARM64 is the other arch that has ARCH_USE_GNU_PROPERTY and arch_parse_elf_
+property().  Add arch_setup_elf_property() for it.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: Mark Brown <broonie@kernel.org>
+Cc: Catalin Marinas <catalin.marinas@arm.com>
+Cc: Dave Martin <Dave.Martin@arm.com>
 ---
- arch/x86/include/asm/cet.h |  3 +++
- arch/x86/kernel/cet.c      | 33 +++++++++++++++++++++++++++++++++
- 2 files changed, 36 insertions(+)
+ arch/arm64/include/asm/elf.h |  5 +++++
+ arch/x86/Kconfig             |  2 ++
+ arch/x86/include/asm/elf.h   | 13 +++++++++++++
+ arch/x86/kernel/process_64.c | 32 ++++++++++++++++++++++++++++++++
+ fs/binfmt_elf.c              |  4 ++++
+ include/linux/elf.h          |  6 ++++++
+ include/uapi/linux/elf.h     |  9 +++++++++
+ 7 files changed, 71 insertions(+)
 
-diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index c2437378f339..c20c2f671145 100644
---- a/arch/x86/include/asm/cet.h
-+++ b/arch/x86/include/asm/cet.h
-@@ -15,6 +15,7 @@ struct cet_status {
- 	unsigned long	shstk_base;
- 	unsigned long	shstk_size;
- 	unsigned int	locked:1;
-+	unsigned int	ibt_enabled:1;
- };
- 
- #ifdef CONFIG_X86_CET
-@@ -27,6 +28,8 @@ void cet_free_shstk(struct task_struct *p);
- int cet_verify_rstor_token(bool ia32, unsigned long ssp, unsigned long *new_ssp);
- void cet_restore_signal(struct sc_ext *sc);
- int cet_setup_signal(bool ia32, unsigned long rstor, struct sc_ext *sc);
-+int cet_setup_ibt(void);
-+void cet_disable_ibt(void);
- #else
- static inline int prctl_cet(int option, u64 arg2) { return -EINVAL; }
- static inline int cet_setup_thread_shstk(struct task_struct *p,
-diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
-index 12738cdfb5f2..3361706ba950 100644
---- a/arch/x86/kernel/cet.c
-+++ b/arch/x86/kernel/cet.c
-@@ -13,6 +13,8 @@
- #include <linux/uaccess.h>
- #include <linux/sched/signal.h>
- #include <linux/compat.h>
-+#include <linux/vmalloc.h>
-+#include <linux/bitops.h>
- #include <asm/msr.h>
- #include <asm/user.h>
- #include <asm/fpu/internal.h>
-@@ -346,3 +348,34 @@ int cet_setup_signal(bool ia32, unsigned long rstor_addr, struct sc_ext *sc_ext)
- 
+diff --git a/arch/arm64/include/asm/elf.h b/arch/arm64/include/asm/elf.h
+index 8d1c8dcb87fd..d37bc7915935 100644
+--- a/arch/arm64/include/asm/elf.h
++++ b/arch/arm64/include/asm/elf.h
+@@ -281,6 +281,11 @@ static inline int arch_parse_elf_property(u32 type, const void *data,
  	return 0;
  }
-+
-+int cet_setup_ibt(void)
+ 
++static inline int arch_setup_elf_property(struct arch_elf_state *arch)
 +{
-+	u64 msr_val;
-+
-+	if (!static_cpu_has(X86_FEATURE_IBT))
-+		return -EOPNOTSUPP;
-+
-+	start_update_msrs();
-+	rdmsrl(MSR_IA32_U_CET, msr_val);
-+	msr_val |= (CET_ENDBR_EN | CET_NO_TRACK_EN);
-+	wrmsrl(MSR_IA32_U_CET, msr_val);
-+	end_update_msrs();
-+	current->thread.cet.ibt_enabled = 1;
 +	return 0;
 +}
 +
-+void cet_disable_ibt(void)
-+{
-+	u64 msr_val;
+ static inline int arch_elf_pt_proc(void *ehdr, void *phdr,
+ 				   struct file *f, bool is_interp,
+ 				   struct arch_elf_state *state)
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index b6a1e2bd872d..cafa4a2c1d2d 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1965,6 +1965,8 @@ config X86_CET
+ 	depends on ARCH_HAS_SHADOW_STACK
+ 	select ARCH_USES_HIGH_VMA_FLAGS
+ 	select ARCH_MAYBE_MKWRITE
++	select ARCH_USE_GNU_PROPERTY
++	select ARCH_BINFMT_ELF_STATE
+ 	help
+ 	  Control-flow protection is a set of hardware features which place
+ 	  additional restrictions on indirect branches.  These help
+diff --git a/arch/x86/include/asm/elf.h b/arch/x86/include/asm/elf.h
+index 66bdfe838d61..13701eaa521c 100644
+--- a/arch/x86/include/asm/elf.h
++++ b/arch/x86/include/asm/elf.h
+@@ -390,6 +390,19 @@ extern int compat_arch_setup_additional_pages(struct linux_binprm *bprm,
+ 
+ extern bool arch_syscall_is_vdso_sigreturn(struct pt_regs *regs);
+ 
++#ifdef CONFIG_ARCH_BINFMT_ELF_STATE
++struct arch_elf_state {
++	unsigned int gnu_property;
++};
 +
-+	if (!static_cpu_has(X86_FEATURE_IBT))
-+		return;
-+
-+	start_update_msrs();
-+	rdmsrl(MSR_IA32_U_CET, msr_val);
-+	msr_val &= ~CET_ENDBR_EN;
-+	wrmsrl(MSR_IA32_U_CET, msr_val);
-+	end_update_msrs();
-+	current->thread.cet.ibt_enabled = 0;
++#define INIT_ARCH_ELF_STATE {	\
++	.gnu_property = 0,	\
 +}
++
++#define arch_elf_pt_proc(ehdr, phdr, elf, interp, state) (0)
++#define arch_check_elf(ehdr, interp, interp_ehdr, state) (0)
++#endif
++
+ /* Do not change the values. See get_align_mask() */
+ enum align_flags {
+ 	ALIGN_VA_32	= BIT(0),
+diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
+index ad582f9ac5a6..19f138f7a209 100644
+--- a/arch/x86/kernel/process_64.c
++++ b/arch/x86/kernel/process_64.c
+@@ -835,3 +835,35 @@ unsigned long KSTK_ESP(struct task_struct *task)
+ {
+ 	return task_pt_regs(task)->sp;
+ }
++
++#ifdef CONFIG_ARCH_USE_GNU_PROPERTY
++int arch_parse_elf_property(u32 type, const void *data, size_t datasz,
++			    bool compat, struct arch_elf_state *state)
++{
++	if (type != GNU_PROPERTY_X86_FEATURE_1_AND)
++		return 0;
++
++	if (datasz != sizeof(unsigned int))
++		return -ENOEXEC;
++
++	state->gnu_property = *(unsigned int *)data;
++	return 0;
++}
++
++int arch_setup_elf_property(struct arch_elf_state *state)
++{
++	int r = 0;
++
++	if (!IS_ENABLED(CONFIG_X86_CET))
++		return r;
++
++	memset(&current->thread.cet, 0, sizeof(struct cet_status));
++
++	if (static_cpu_has(X86_FEATURE_SHSTK)) {
++		if (state->gnu_property & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
++			r = cet_setup_shstk();
++	}
++
++	return r;
++}
++#endif
+diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
+index 950bc177238a..5d5f6a54a035 100644
+--- a/fs/binfmt_elf.c
++++ b/fs/binfmt_elf.c
+@@ -1245,6 +1245,10 @@ static int load_elf_binary(struct linux_binprm *bprm)
+ 
+ 	set_binfmt(&elf_format);
+ 
++	retval = arch_setup_elf_property(&arch_state);
++	if (retval < 0)
++		goto out;
++
+ #ifdef ARCH_HAS_SETUP_ADDITIONAL_PAGES
+ 	retval = ARCH_SETUP_ADDITIONAL_PAGES(bprm, elf_ex, !!interpreter);
+ 	if (retval < 0)
+diff --git a/include/linux/elf.h b/include/linux/elf.h
+index c9a46c4e183b..be04d15e937f 100644
+--- a/include/linux/elf.h
++++ b/include/linux/elf.h
+@@ -92,9 +92,15 @@ static inline int arch_parse_elf_property(u32 type, const void *data,
+ {
+ 	return 0;
+ }
++
++static inline int arch_setup_elf_property(struct arch_elf_state *arch)
++{
++	return 0;
++}
+ #else
+ extern int arch_parse_elf_property(u32 type, const void *data, size_t datasz,
+ 				   bool compat, struct arch_elf_state *arch);
++extern int arch_setup_elf_property(struct arch_elf_state *arch);
+ #endif
+ 
+ #ifdef CONFIG_ARCH_HAVE_ELF_PROT
+diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
+index 30f68b42eeb5..24ba55ba8278 100644
+--- a/include/uapi/linux/elf.h
++++ b/include/uapi/linux/elf.h
+@@ -455,4 +455,13 @@ typedef struct elf64_note {
+ /* Bits for GNU_PROPERTY_AARCH64_FEATURE_1_BTI */
+ #define GNU_PROPERTY_AARCH64_FEATURE_1_BTI	(1U << 0)
+ 
++/* .note.gnu.property types for x86: */
++#define GNU_PROPERTY_X86_FEATURE_1_AND		0xc0000002
++
++/* Bits for GNU_PROPERTY_X86_FEATURE_1_AND */
++#define GNU_PROPERTY_X86_FEATURE_1_IBT		0x00000001
++#define GNU_PROPERTY_X86_FEATURE_1_SHSTK	0x00000002
++#define GNU_PROPERTY_X86_FEATURE_1_VALID (GNU_PROPERTY_X86_FEATURE_1_IBT | \
++					   GNU_PROPERTY_X86_FEATURE_1_SHSTK)
++
+ #endif /* _UAPI_LINUX_ELF_H */
 -- 
 2.21.0
 
