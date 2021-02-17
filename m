@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F3684C4332B
-	for <linux-api@archiver.kernel.org>; Wed, 17 Feb 2021 22:31:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CC412C433DB
+	for <linux-api@archiver.kernel.org>; Wed, 17 Feb 2021 22:33:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B153464EAE
-	for <linux-api@archiver.kernel.org>; Wed, 17 Feb 2021 22:31:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AA2AE64E79
+	for <linux-api@archiver.kernel.org>; Wed, 17 Feb 2021 22:33:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232816AbhBQWbV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 17 Feb 2021 17:31:21 -0500
-Received: from mga09.intel.com ([134.134.136.24]:13791 "EHLO mga09.intel.com"
+        id S229885AbhBQWdo (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 17 Feb 2021 17:33:44 -0500
+Received: from mga09.intel.com ([134.134.136.24]:13777 "EHLO mga09.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233921AbhBQW3t (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 17 Feb 2021 17:29:49 -0500
-IronPort-SDR: 7tstTPmyB9lo+cn/WPhvVb5fP2cKVMcZ1K9UihIY4smoDh3bfEPaHSDiJux6+pcbfq7UWrr5hf
- BQ9DrVUF80Jw==
-X-IronPort-AV: E=McAfee;i="6000,8403,9898"; a="183461454"
+        id S233953AbhBQWaw (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 17 Feb 2021 17:30:52 -0500
+IronPort-SDR: 69Dqrcak29alzb41XYmQdrPO+J5og3MP3lBFEJf7Xo2dvlwed5p+TGzqLXFP6Un5YaVH1poKmh
+ zdeMjEsAOVkA==
+X-IronPort-AV: E=McAfee;i="6000,8403,9898"; a="183461476"
 X-IronPort-AV: E=Sophos;i="5.81,185,1610438400"; 
-   d="scan'208";a="183461454"
+   d="scan'208";a="183461476"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 17 Feb 2021 14:28:00 -0800
-IronPort-SDR: d/uCiBkTizfScNT9rOsOrbXyUhvmBvquFIOlHiwMA0X0a5as0+C6G5MK1MHzQ/iepPKLRVpkBa
- e92sD+b3Uj/g==
+  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 17 Feb 2021 14:28:05 -0800
+IronPort-SDR: Xli2ufXk495OxF9xjTM+LFfqTrIIjRL+nFOmUbC7ij1emZXxrdiuohBD1YhFTn5YtIYcWq2NjR
+ QdejM792/DQQ==
 X-IronPort-AV: E=Sophos;i="5.81,185,1610438400"; 
-   d="scan'208";a="400172632"
+   d="scan'208";a="400172676"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 17 Feb 2021 14:27:59 -0800
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 17 Feb 2021 14:28:05 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,9 +61,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v21 12/26] mm: Introduce VM_SHSTK for shadow stack memory
-Date:   Wed, 17 Feb 2021 14:27:16 -0800
-Message-Id: <20210217222730.15819-13-yu-cheng.yu@intel.com>
+Subject: [PATCH v21 20/26] x86/cet/shstk: User-mode shadow stack support
+Date:   Wed, 17 Feb 2021 14:27:24 -0800
+Message-Id: <20210217222730.15819-21-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210217222730.15819-1-yu-cheng.yu@intel.com>
 References: <20210217222730.15819-1-yu-cheng.yu@intel.com>
@@ -73,90 +73,244 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-A shadow stack PTE must be read-only and have _PAGE_DIRTY set.  However,
-read-only and Dirty PTEs also exist for copy-on-write (COW) pages.  These
-two cases are handled differently for page faults.  Introduce VM_SHSTK to
-track shadow stack VMAs.
+Introduce basic shadow stack enabling/disabling/allocation routines.
+A task's shadow stack is allocated from memory with VM_SHSTK flag and has
+a fixed size of min(RLIMIT_STACK, 4GB).
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
- Documentation/filesystems/proc.rst | 1 +
- arch/x86/mm/mmap.c                 | 2 ++
- fs/proc/task_mmu.c                 | 3 +++
- include/linux/mm.h                 | 8 ++++++++
- 4 files changed, 14 insertions(+)
+ arch/x86/include/asm/cet.h       |  28 ++++++
+ arch/x86/include/asm/processor.h |   5 ++
+ arch/x86/kernel/Makefile         |   2 +
+ arch/x86/kernel/cet.c            | 147 +++++++++++++++++++++++++++++++
+ 4 files changed, 182 insertions(+)
+ create mode 100644 arch/x86/include/asm/cet.h
+ create mode 100644 arch/x86/kernel/cet.c
 
-diff --git a/Documentation/filesystems/proc.rst b/Documentation/filesystems/proc.rst
-index 2fa69f710e2a..fc533bfb9391 100644
---- a/Documentation/filesystems/proc.rst
-+++ b/Documentation/filesystems/proc.rst
-@@ -549,6 +549,7 @@ encoded manner. The codes are the following:
-     mg    mergable advise flag
-     bt    arm64 BTI guarded page
-     mt    arm64 MTE allocation tags are enabled
-+    ss    shadow stack page
-     ==    =======================================
- 
- Note that there is no guarantee that every flag and associated mnemonic will
-diff --git a/arch/x86/mm/mmap.c b/arch/x86/mm/mmap.c
-index c90c20904a60..a22c6b6fc607 100644
---- a/arch/x86/mm/mmap.c
-+++ b/arch/x86/mm/mmap.c
-@@ -165,6 +165,8 @@ unsigned long get_mmap_base(int is_legacy)
- 
- const char *arch_vma_name(struct vm_area_struct *vma)
- {
-+	if (vma->vm_flags & VM_SHSTK)
-+		return "[shadow stack]";
- 	return NULL;
- }
- 
-diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-index 602e3a52884d..59623dcd92bb 100644
---- a/fs/proc/task_mmu.c
-+++ b/fs/proc/task_mmu.c
-@@ -661,6 +661,9 @@ static void show_smap_vma_flags(struct seq_file *m, struct vm_area_struct *vma)
- 		[ilog2(VM_PKEY_BIT4)]	= "",
- #endif
- #endif /* CONFIG_ARCH_HAS_PKEYS */
+diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+new file mode 100644
+index 000000000000..5750fbcbb952
+--- /dev/null
++++ b/arch/x86/include/asm/cet.h
+@@ -0,0 +1,28 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _ASM_X86_CET_H
++#define _ASM_X86_CET_H
++
++#ifndef __ASSEMBLY__
++#include <linux/types.h>
++
++struct task_struct;
++/*
++ * Per-thread CET status
++ */
++struct cet_status {
++	unsigned long	shstk_base;
++	unsigned long	shstk_size;
++};
++
 +#ifdef CONFIG_X86_CET
-+		[ilog2(VM_SHSTK)]	= "ss",
-+#endif
- 	};
- 	size_t i;
- 
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index ecdf8a8cd6ae..7be5f8b874aa 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -312,11 +312,13 @@ extern unsigned int kobjsize(const void *objp);
- #define VM_HIGH_ARCH_BIT_2	34	/* bit only usable on 64-bit architectures */
- #define VM_HIGH_ARCH_BIT_3	35	/* bit only usable on 64-bit architectures */
- #define VM_HIGH_ARCH_BIT_4	36	/* bit only usable on 64-bit architectures */
-+#define VM_HIGH_ARCH_BIT_5	37	/* bit only usable on 64-bit architectures */
- #define VM_HIGH_ARCH_0	BIT(VM_HIGH_ARCH_BIT_0)
- #define VM_HIGH_ARCH_1	BIT(VM_HIGH_ARCH_BIT_1)
- #define VM_HIGH_ARCH_2	BIT(VM_HIGH_ARCH_BIT_2)
- #define VM_HIGH_ARCH_3	BIT(VM_HIGH_ARCH_BIT_3)
- #define VM_HIGH_ARCH_4	BIT(VM_HIGH_ARCH_BIT_4)
-+#define VM_HIGH_ARCH_5	BIT(VM_HIGH_ARCH_BIT_5)
- #endif /* CONFIG_ARCH_USES_HIGH_VMA_FLAGS */
- 
- #ifdef CONFIG_ARCH_HAS_PKEYS
-@@ -332,6 +334,12 @@ extern unsigned int kobjsize(const void *objp);
- #endif
- #endif /* CONFIG_ARCH_HAS_PKEYS */
- 
-+#ifdef CONFIG_X86_CET
-+# define VM_SHSTK	VM_HIGH_ARCH_5
++int cet_setup_shstk(void);
++void cet_disable_shstk(void);
++void cet_free_shstk(struct task_struct *p);
 +#else
-+# define VM_SHSTK	VM_NONE
++static inline void cet_disable_shstk(void) {}
++static inline void cet_free_shstk(struct task_struct *p) {}
 +#endif
 +
- #if defined(CONFIG_X86)
- # define VM_PAT		VM_ARCH_1	/* PAT reserves whole VMA at once (x86) */
- #elif defined(CONFIG_PPC)
++#endif /* __ASSEMBLY__ */
++
++#endif /* _ASM_X86_CET_H */
+diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+index c20a52b5534b..51158c6beb4f 100644
+--- a/arch/x86/include/asm/processor.h
++++ b/arch/x86/include/asm/processor.h
+@@ -27,6 +27,7 @@ struct vm86;
+ #include <asm/unwind_hints.h>
+ #include <asm/vmxfeatures.h>
+ #include <asm/vdso/processor.h>
++#include <asm/cet.h>
+ 
+ #include <linux/personality.h>
+ #include <linux/cache.h>
+@@ -536,6 +537,10 @@ struct thread_struct {
+ 
+ 	unsigned int		sig_on_uaccess_err:1;
+ 
++#ifdef CONFIG_X86_CET
++	struct cet_status	cet;
++#endif
++
+ 	/* Floating point and extended processor state */
+ 	struct fpu		fpu;
+ 	/*
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index 5eeb808eb024..4a9a7e7d00dc 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -151,6 +151,8 @@ obj-$(CONFIG_UNWINDER_FRAME_POINTER)	+= unwind_frame.o
+ obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
+ 
+ obj-$(CONFIG_AMD_MEM_ENCRYPT)		+= sev-es.o
++obj-$(CONFIG_X86_CET)			+= cet.o
++
+ ###
+ # 64 bit specific files
+ ifeq ($(CONFIG_X86_64),y)
+diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
+new file mode 100644
+index 000000000000..d25a03215984
+--- /dev/null
++++ b/arch/x86/kernel/cet.c
+@@ -0,0 +1,147 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * cet.c - Control-flow Enforcement (CET)
++ *
++ * Copyright (c) 2019, Intel Corporation.
++ * Yu-cheng Yu <yu-cheng.yu@intel.com>
++ */
++
++#include <linux/types.h>
++#include <linux/mm.h>
++#include <linux/mman.h>
++#include <linux/slab.h>
++#include <linux/uaccess.h>
++#include <linux/sched/signal.h>
++#include <linux/compat.h>
++#include <asm/msr.h>
++#include <asm/user.h>
++#include <asm/fpu/internal.h>
++#include <asm/fpu/xstate.h>
++#include <asm/fpu/types.h>
++#include <asm/cet.h>
++
++static void start_update_msrs(void)
++{
++	fpregs_lock();
++	if (test_thread_flag(TIF_NEED_FPU_LOAD))
++		__fpregs_load_activate();
++}
++
++static void end_update_msrs(void)
++{
++	fpregs_unlock();
++}
++
++static unsigned long cet_get_shstk_addr(void)
++{
++	struct fpu *fpu = &current->thread.fpu;
++	unsigned long ssp = 0;
++
++	fpregs_lock();
++
++	if (fpregs_state_valid(fpu, smp_processor_id())) {
++		rdmsrl(MSR_IA32_PL3_SSP, ssp);
++	} else {
++		struct cet_user_state *p;
++
++		p = get_xsave_addr(&fpu->state.xsave, XFEATURE_CET_USER);
++		if (p)
++			ssp = p->user_ssp;
++	}
++
++	fpregs_unlock();
++	return ssp;
++}
++
++static unsigned long alloc_shstk(unsigned long size, int flags)
++{
++	struct mm_struct *mm = current->mm;
++	unsigned long addr, populate;
++
++	/* VM_SHSTK requires MAP_ANONYMOUS, MAP_PRIVATE */
++	flags |= MAP_ANONYMOUS | MAP_PRIVATE;
++
++	mmap_write_lock(mm);
++	addr = do_mmap(NULL, 0, size, PROT_READ, flags, VM_SHSTK, 0,
++		       &populate, NULL);
++	mmap_write_unlock(mm);
++
++	if (populate)
++		mm_populate(addr, populate);
++
++	return addr;
++}
++
++int cet_setup_shstk(void)
++{
++	unsigned long addr, size;
++	struct cet_status *cet = &current->thread.cet;
++
++	if (!static_cpu_has(X86_FEATURE_SHSTK))
++		return -EOPNOTSUPP;
++
++	size = round_up(min(rlimit(RLIMIT_STACK), 1UL << 32), PAGE_SIZE);
++	addr = alloc_shstk(size, 0);
++
++	if (IS_ERR_VALUE(addr))
++		return PTR_ERR((void *)addr);
++
++	cet->shstk_base = addr;
++	cet->shstk_size = size;
++
++	start_update_msrs();
++	wrmsrl(MSR_IA32_PL3_SSP, addr + size);
++	wrmsrl(MSR_IA32_U_CET, CET_SHSTK_EN);
++	end_update_msrs();
++	return 0;
++}
++
++void cet_disable_shstk(void)
++{
++	struct cet_status *cet = &current->thread.cet;
++	u64 msr_val;
++
++	if (!static_cpu_has(X86_FEATURE_SHSTK) ||
++	    !cet->shstk_size || !cet->shstk_base)
++		return;
++
++	start_update_msrs();
++	rdmsrl(MSR_IA32_U_CET, msr_val);
++	wrmsrl(MSR_IA32_U_CET, msr_val & ~CET_SHSTK_EN);
++	wrmsrl(MSR_IA32_PL3_SSP, 0);
++	end_update_msrs();
++
++	cet_free_shstk(current);
++}
++
++void cet_free_shstk(struct task_struct *tsk)
++{
++	struct cet_status *cet = &tsk->thread.cet;
++
++	if (!static_cpu_has(X86_FEATURE_SHSTK) ||
++	    !cet->shstk_size || !cet->shstk_base)
++		return;
++
++	if (!tsk->mm || tsk->mm != current->mm)
++		return;
++
++	while (1) {
++		int r;
++
++		r = vm_munmap(cet->shstk_base, cet->shstk_size);
++
++		/*
++		 * Retry if mmap_lock is not available.
++		 */
++		if (r == -EINTR) {
++			cond_resched();
++			continue;
++		}
++
++		WARN_ON_ONCE(r);
++		break;
++	}
++
++	cet->shstk_base = 0;
++	cet->shstk_size = 0;
++}
 -- 
 2.21.0
 
