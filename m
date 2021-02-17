@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 91A13C4332D
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D8C04C43332
 	for <linux-api@archiver.kernel.org>; Wed, 17 Feb 2021 22:30:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5508364DFF
+	by mail.kernel.org (Postfix) with ESMTP id AAFFB64EB3
 	for <linux-api@archiver.kernel.org>; Wed, 17 Feb 2021 22:30:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233881AbhBQW3n (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 17 Feb 2021 17:29:43 -0500
-Received: from mga09.intel.com ([134.134.136.24]:13777 "EHLO mga09.intel.com"
+        id S233888AbhBQW3o (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 17 Feb 2021 17:29:44 -0500
+Received: from mga09.intel.com ([134.134.136.24]:13773 "EHLO mga09.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233800AbhBQW3O (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 17 Feb 2021 17:29:14 -0500
-IronPort-SDR: CK5RnHHDjpIkXTIQurkOVVO0FnZ5XHU9KNVow8A4FvuIX1p0mf+RPtjSvFBQNU+DucycuvVBtd
- 9Ozup4UXd+sA==
-X-IronPort-AV: E=McAfee;i="6000,8403,9898"; a="183461438"
+        id S233838AbhBQW30 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 17 Feb 2021 17:29:26 -0500
+IronPort-SDR: gVO5rEk93vfMR8o1q0J5rruzxpSA4CVykLIVcDjSNeh3lZ47bY+hROrmvx1bwMvTKuxIrhnNrI
+ 8l+FQORFWT7w==
+X-IronPort-AV: E=McAfee;i="6000,8403,9898"; a="183461450"
 X-IronPort-AV: E=Sophos;i="5.81,185,1610438400"; 
-   d="scan'208";a="183461438"
+   d="scan'208";a="183461450"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 17 Feb 2021 14:27:57 -0800
-IronPort-SDR: 6Nkja6gk5lbsEGKXz5Gnbh7i0JRiXq3qyftHWyRwsRJhmqu5U6mDwdpnf71sUOY+B/hjESmx3P
- gIjxYJP90+wA==
+  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 17 Feb 2021 14:27:59 -0800
+IronPort-SDR: ukqMtKGBOyZg+KfLTUYto9+4hsOhQWMPxLmLU6nnuZFviJgSDOW3qLPQLXULp04mRbU1S6yzuF
+ Nce5G0Xks1oA==
 X-IronPort-AV: E=Sophos;i="5.81,185,1610438400"; 
-   d="scan'208";a="400172607"
+   d="scan'208";a="400172627"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 17 Feb 2021 14:27:56 -0800
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 17 Feb 2021 14:27:59 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,10 +60,10 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>, Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v21 07/26] x86/mm: Remove _PAGE_DIRTY from kernel RO pages
-Date:   Wed, 17 Feb 2021 14:27:11 -0800
-Message-Id: <20210217222730.15819-8-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v21 11/26] x86/mm: Update ptep_set_wrprotect() and pmdp_set_wrprotect() for transition from _PAGE_DIRTY to _PAGE_COW
+Date:   Wed, 17 Feb 2021 14:27:15 -0800
+Message-Id: <20210217222730.15819-12-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210217222730.15819-1-yu-cheng.yu@intel.com>
 References: <20210217222730.15819-1-yu-cheng.yu@intel.com>
@@ -73,61 +73,84 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The x86 family of processors do not directly create read-only and Dirty
-PTEs.  These PTEs are created by software.  One such case is that kernel
-read-only pages are historically setup as Dirty.
+When Shadow Stack is introduced, [R/O + _PAGE_DIRTY] PTE is reserved for
+shadow stack.  Copy-on-write PTEs have [R/O + _PAGE_COW].
 
-New processors that support Shadow Stack regard read-only and Dirty PTEs as
-shadow stack pages.  This results in ambiguity between shadow stack and
-kernel read-only pages.  To resolve this, removed Dirty from kernel read-
-only pages.
+When a PTE goes from [R/W + _PAGE_DIRTY] to [R/O + _PAGE_COW], it could
+become a transient shadow stack PTE in two cases:
+
+The first case is that some processors can start a write but end up seeing
+a read-only PTE by the time they get to the Dirty bit, creating a transient
+shadow stack PTE.  However, this will not occur on processors supporting
+Shadow Stack, and a TLB flush is not necessary.
+
+The second case is that when _PAGE_DIRTY is replaced with _PAGE_COW non-
+atomically, a transient shadow stack PTE can be created as a result.
+Thus, prevent that with cmpxchg.
+
+Dave Hansen, Jann Horn, Andy Lutomirski, and Peter Zijlstra provided many
+insights to the issue.  Jann Horn provided the cmpxchg solution.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: "H. Peter Anvin" <hpa@zytor.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Borislav Petkov <bp@alien8.de>
-Cc: Peter Zijlstra <peterz@infradead.org>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
- arch/x86/include/asm/pgtable_types.h | 6 +++---
- arch/x86/mm/pat/set_memory.c         | 2 +-
- 2 files changed, 4 insertions(+), 4 deletions(-)
+ arch/x86/include/asm/pgtable.h | 36 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 36 insertions(+)
 
-diff --git a/arch/x86/include/asm/pgtable_types.h b/arch/x86/include/asm/pgtable_types.h
-index 394757ee030a..b8b79d618bbc 100644
---- a/arch/x86/include/asm/pgtable_types.h
-+++ b/arch/x86/include/asm/pgtable_types.h
-@@ -194,10 +194,10 @@ enum page_cache_mode {
- #define _KERNPG_TABLE		 (__PP|__RW|   0|___A|   0|___D|   0|   0| _ENC)
- #define _PAGE_TABLE_NOENC	 (__PP|__RW|_USR|___A|   0|___D|   0|   0)
- #define _PAGE_TABLE		 (__PP|__RW|_USR|___A|   0|___D|   0|   0| _ENC)
--#define __PAGE_KERNEL_RO	 (__PP|   0|   0|___A|__NX|___D|   0|___G)
--#define __PAGE_KERNEL_ROX	 (__PP|   0|   0|___A|   0|___D|   0|___G)
-+#define __PAGE_KERNEL_RO	 (__PP|   0|   0|___A|__NX|   0|   0|___G)
-+#define __PAGE_KERNEL_ROX	 (__PP|   0|   0|___A|   0|   0|   0|___G)
- #define __PAGE_KERNEL_NOCACHE	 (__PP|__RW|   0|___A|__NX|___D|   0|___G| __NC)
--#define __PAGE_KERNEL_VVAR	 (__PP|   0|_USR|___A|__NX|___D|   0|___G)
-+#define __PAGE_KERNEL_VVAR	 (__PP|   0|_USR|___A|__NX|   0|   0|___G)
- #define __PAGE_KERNEL_LARGE	 (__PP|__RW|   0|___A|__NX|___D|_PSE|___G)
- #define __PAGE_KERNEL_LARGE_EXEC (__PP|__RW|   0|___A|   0|___D|_PSE|___G)
- #define __PAGE_KERNEL_WP	 (__PP|__RW|   0|___A|__NX|___D|   0|___G| __WP)
-diff --git a/arch/x86/mm/pat/set_memory.c b/arch/x86/mm/pat/set_memory.c
-index 16f878c26667..6bebb95a6988 100644
---- a/arch/x86/mm/pat/set_memory.c
-+++ b/arch/x86/mm/pat/set_memory.c
-@@ -1932,7 +1932,7 @@ int set_memory_nx(unsigned long addr, int numpages)
- 
- int set_memory_ro(unsigned long addr, int numpages)
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index 7a7f6af01ab5..71cc4abec704 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -1280,6 +1280,24 @@ static inline pte_t ptep_get_and_clear_full(struct mm_struct *mm,
+ static inline void ptep_set_wrprotect(struct mm_struct *mm,
+ 				      unsigned long addr, pte_t *ptep)
  {
--	return change_page_attr_clear(&addr, numpages, __pgprot(_PAGE_RW), 0);
-+	return change_page_attr_clear(&addr, numpages, __pgprot(_PAGE_RW | _PAGE_DIRTY), 0);
++	/*
++	 * If Shadow Stack is enabled, pte_wrprotect() moves _PAGE_DIRTY
++	 * to _PAGE_COW (see comments at pte_wrprotect()).
++	 * When a thread reads a RW=1, Dirty=0 PTE and before changing it
++	 * to RW=0, Dirty=0, another thread could have written to the page
++	 * and the PTE is RW=1, Dirty=1 now.  Use try_cmpxchg() to detect
++	 * PTE changes and update old_pte, then try again.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		pte_t old_pte, new_pte;
++
++		old_pte = READ_ONCE(*ptep);
++		do {
++			new_pte = pte_wrprotect(old_pte);
++		} while (!try_cmpxchg(&ptep->pte, &old_pte.pte, new_pte.pte));
++
++		return;
++	}
+ 	clear_bit(_PAGE_BIT_RW, (unsigned long *)&ptep->pte);
  }
  
- int set_memory_rw(unsigned long addr, int numpages)
+@@ -1330,6 +1348,24 @@ static inline pud_t pudp_huge_get_and_clear(struct mm_struct *mm,
+ static inline void pmdp_set_wrprotect(struct mm_struct *mm,
+ 				      unsigned long addr, pmd_t *pmdp)
+ {
++	/*
++	 * If Shadow Stack is enabled, pmd_wrprotect() moves _PAGE_DIRTY
++	 * to _PAGE_COW (see comments at pmd_wrprotect()).
++	 * When a thread reads a RW=1, Dirty=0 PMD and before changing it
++	 * to RW=0, Dirty=0, another thread could have written to the page
++	 * and the PMD is RW=1, Dirty=1 now.  Use try_cmpxchg() to detect
++	 * PMD changes and update old_pmd, then try again.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		pmd_t old_pmd, new_pmd;
++
++		old_pmd = READ_ONCE(*pmdp);
++		do {
++			new_pmd = pmd_wrprotect(old_pmd);
++		} while (!try_cmpxchg((pmdval_t *)pmdp, (pmdval_t *)&old_pmd, pmd_val(new_pmd)));
++
++		return;
++	}
+ 	clear_bit(_PAGE_BIT_RW, (unsigned long *)pmdp);
+ }
+ 
 -- 
 2.21.0
 
