@@ -7,25 +7,25 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 24F6EC43333
-	for <linux-api@archiver.kernel.org>; Thu, 25 Feb 2021 22:54:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6FF61C433E6
+	for <linux-api@archiver.kernel.org>; Thu, 25 Feb 2021 22:54:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id EB80A64F2F
-	for <linux-api@archiver.kernel.org>; Thu, 25 Feb 2021 22:54:11 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3937F64F29
+	for <linux-api@archiver.kernel.org>; Thu, 25 Feb 2021 22:54:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229800AbhBYWyI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 25 Feb 2021 17:54:08 -0500
-Received: from relmlor2.renesas.com ([210.160.252.172]:26370 "EHLO
-        relmlie6.idc.renesas.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S229491AbhBYWyG (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 25 Feb 2021 17:54:06 -0500
+        id S232591AbhBYWyZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 25 Feb 2021 17:54:25 -0500
+Received: from relmlor1.renesas.com ([210.160.252.171]:45423 "EHLO
+        relmlie5.idc.renesas.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S232446AbhBYWyO (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 25 Feb 2021 17:54:14 -0500
 X-IronPort-AV: E=Sophos;i="5.81,207,1610377200"; 
-   d="scan'208";a="73172359"
+   d="scan'208";a="73418611"
 Received: from unknown (HELO relmlir5.idc.renesas.com) ([10.200.68.151])
-  by relmlie6.idc.renesas.com with ESMTP; 26 Feb 2021 07:53:07 +0900
+  by relmlie5.idc.renesas.com with ESMTP; 26 Feb 2021 07:53:19 +0900
 Received: from devel.example.org?044ree.adwin.renesas.com (unknown [10.226.36.120])
-        by relmlir5.idc.renesas.com (Postfix) with ESMTP id 3F666400C73A;
-        Fri, 26 Feb 2021 07:53:04 +0900 (JST)
+        by relmlir5.idc.renesas.com (Postfix) with ESMTP id 1651B40083F0;
+        Fri, 26 Feb 2021 07:53:15 +0900 (JST)
 From:   Fabrizio Castro <fabrizio.castro.jz@renesas.com>
 To:     Rob Herring <robh+dt@kernel.org>, Arnd Bergmann <arnd@arndb.de>,
         Laurent Pinchart <laurent.pinchart@ideasonboard.com>,
@@ -42,9 +42,9 @@ Cc:     Fabrizio Castro <fabrizio.castro.jz@renesas.com>,
         Phil Edworthy <phil.edworthy@renesas.com>,
         Dirk Behme <Dirk.Behme@de.bosch.com>,
         Peter Erben <Peter.Erben@de.bosch.com>
-Subject: [PATCH 3/7] dt-bindings: misc: Add binding for R-Car DAB
-Date:   Thu, 25 Feb 2021 22:51:43 +0000
-Message-Id: <20210225225147.29920-4-fabrizio.castro.jz@renesas.com>
+Subject: [PATCH 5/7] arm64: dts: renesas: r8a77990: Add DAB support
+Date:   Thu, 25 Feb 2021 22:51:45 +0000
+Message-Id: <20210225225147.29920-6-fabrizio.castro.jz@renesas.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20210225225147.29920-1-fabrizio.castro.jz@renesas.com>
 References: <20210225225147.29920-1-fabrizio.castro.jz@renesas.com>
@@ -54,97 +54,37 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Document bindings for R-Car DAB hardware accelerator, currently
-found on the r8a77990 SoC (a.k.a. R-Car E3) and on the r8a77965
-SoC (a.k.a. R-Car M3-N).
+R-Car E3 (a.k.a. r8a77990) comes with the DAB hardware accelerator.
+This patch adds SoC specific support.
 
 Signed-off-by: Fabrizio Castro <fabrizio.castro.jz@renesas.com>
 ---
- .../devicetree/bindings/misc/renesas,dab.yaml | 75 +++++++++++++++++++
- 1 file changed, 75 insertions(+)
- create mode 100644 Documentation/devicetree/bindings/misc/renesas,dab.yaml
+ arch/arm64/boot/dts/renesas/r8a77990.dtsi | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
-diff --git a/Documentation/devicetree/bindings/misc/renesas,dab.yaml b/Documentation/devicetree/bindings/misc/renesas,dab.yaml
-new file mode 100644
-index 000000000000..e9494add13d7
---- /dev/null
-+++ b/Documentation/devicetree/bindings/misc/renesas,dab.yaml
-@@ -0,0 +1,75 @@
-+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
-+# Copyright (C) 2021 Renesas Electronics Corporation
-+%YAML 1.2
-+---
-+$id: http://devicetree.org/schemas/misc/renesas,dab.yaml#
-+$schema: http://devicetree.org/meta-schemas/core.yaml#
+diff --git a/arch/arm64/boot/dts/renesas/r8a77990.dtsi b/arch/arm64/boot/dts/renesas/r8a77990.dtsi
+index 5010f23fafcc..5a6b835f137a 100644
+--- a/arch/arm64/boot/dts/renesas/r8a77990.dtsi
++++ b/arch/arm64/boot/dts/renesas/r8a77990.dtsi
+@@ -963,6 +963,18 @@ ipmmu_vp0: iommu@fe990000 {
+ 			#iommu-cells = <1>;
+ 		};
+ 
++		dab: dab@e6730000 {
++			compatible = "renesas,dab-r8a77990",
++				     "renesas,rcar-gen3-dab";
++			reg = <0x00 0xe6730000 0x00 0x120>;
++			interrupts = <GIC_SPI 160 IRQ_TYPE_LEVEL_HIGH>;
++			clocks = <&cpg CPG_MOD 1016>;
++			clock-names = "dab";
++			power-domains = <&sysc R8A77990_PD_ALWAYS_ON>;
++			resets = <&cpg 1016>;
++			status = "disabled";
++		};
 +
-+title: Renesas R-Car DAB Hardware Accelerator
-+
-+maintainers:
-+  - Fabrizio Castro <fabrizio.castro.jz@renesas.com>
-+
-+description:
-+  The DAB hardware accelerator found on some R-Car devices is a hardware
-+  accelerator for software DAB demodulators.
-+  It consists of one FFT (Fast Fourier Transform) module and one decoder module,
-+  compatible with DAB specification (ETSI EN 300 401 and ETSI TS 102 563).
-+  The decoder module can perform FIC decoding and MSC decoding processing from
-+  de-puncture to final decoded result.
-+
-+properties:
-+  compatible:
-+    items:
-+      - enum:
-+          - renesas,dab-r8a77965     # R-Car M3-N
-+          - renesas,dab-r8a77990     # R-Car E3
-+      - const: renesas,rcar-gen3-dab # Generic fallback for R-Car Gen3 devices
-+
-+  reg:
-+    maxItems: 1
-+
-+  interrupts:
-+    maxItems: 1
-+
-+  clocks:
-+    maxItems: 1
-+
-+  clock-names:
-+    const: dab
-+
-+  power-domains:
-+    maxItems: 1
-+
-+  resets:
-+    maxItems: 1
-+
-+required:
-+  - compatible
-+  - reg
-+  - interrupts
-+  - clocks
-+  - clock-names
-+  - power-domains
-+  - resets
-+
-+additionalProperties: false
-+
-+examples:
-+  # R8A77990 (R-Car E3)
-+  - |
-+    #include <dt-bindings/clock/r8a77990-cpg-mssr.h>
-+    #include <dt-bindings/interrupt-controller/arm-gic.h>
-+    #include <dt-bindings/power/r8a77990-sysc.h>
-+
-+    dab: dab@e6730000 {
-+        compatible = "renesas,dab-r8a77990",
-+                     "renesas,rcar-gen3-dab";
-+        reg = <0xe6730000 0x120>;
-+        interrupts = <GIC_SPI 160 IRQ_TYPE_LEVEL_HIGH>;
-+        clocks = <&cpg CPG_MOD 1016>;
-+        clock-names = "dab";
-+        power-domains = <&sysc R8A77990_PD_ALWAYS_ON>;
-+        resets = <&cpg 1016>;
-+        status = "disabled";
-+    };
+ 		avb: ethernet@e6800000 {
+ 			compatible = "renesas,etheravb-r8a77990",
+ 				     "renesas,etheravb-rcar-gen3";
 -- 
 2.25.1
 
