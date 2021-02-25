@@ -2,296 +2,103 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CF7A7C433DB
-	for <linux-api@archiver.kernel.org>; Thu, 25 Feb 2021 19:15:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B9EC4C433DB
+	for <linux-api@archiver.kernel.org>; Thu, 25 Feb 2021 22:53:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 70FB064F7F
-	for <linux-api@archiver.kernel.org>; Thu, 25 Feb 2021 19:15:20 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7470164F29
+	for <linux-api@archiver.kernel.org>; Thu, 25 Feb 2021 22:53:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234112AbhBYTOz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 25 Feb 2021 14:14:55 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57860 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234392AbhBYTMi (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 25 Feb 2021 14:12:38 -0500
-Received: from smtp-bc09.mail.infomaniak.ch (smtp-bc09.mail.infomaniak.ch [IPv6:2001:1600:3:17::bc09])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 32C84C061793;
-        Thu, 25 Feb 2021 11:07:49 -0800 (PST)
-Received: from smtp-2-0001.mail.infomaniak.ch (unknown [10.5.36.108])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4Dmj0B4hDKzMqQm2;
-        Thu, 25 Feb 2021 20:04:58 +0100 (CET)
-Received: from localhost (unknown [23.97.221.149])
-        by smtp-2-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4Dmj0B2HKhzlh8T9;
-        Thu, 25 Feb 2021 20:04:58 +0100 (CET)
-From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
-To:     James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>,
-        "Serge E . Hallyn" <serge@hallyn.com>
-Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Andy Lutomirski <luto@amacapital.net>,
-        Anton Ivanov <anton.ivanov@cambridgegreys.com>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Casey Schaufler <casey@schaufler-ca.com>,
-        Jeff Dike <jdike@addtoit.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Richard Weinberger <richard@nod.at>,
-        Shuah Khan <shuah@kernel.org>,
-        Vincent Dagonneau <vincent.dagonneau@ssi.gouv.fr>,
-        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
-        linux-arch@vger.kernel.org, linux-doc@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-kselftest@vger.kernel.org,
-        linux-security-module@vger.kernel.org, x86@kernel.org,
-        =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@linux.microsoft.com>
-Subject: [PATCH v29 04/12] landlock: Add ptrace restrictions
-Date:   Thu, 25 Feb 2021 20:06:06 +0100
-Message-Id: <20210225190614.2181147-5-mic@digikod.net>
-X-Mailer: git-send-email 2.30.0
-In-Reply-To: <20210225190614.2181147-1-mic@digikod.net>
-References: <20210225190614.2181147-1-mic@digikod.net>
+        id S230494AbhBYWxf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 25 Feb 2021 17:53:35 -0500
+Received: from relmlor2.renesas.com ([210.160.252.172]:7678 "EHLO
+        relmlie6.idc.renesas.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S229966AbhBYWxf (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 25 Feb 2021 17:53:35 -0500
+X-IronPort-AV: E=Sophos;i="5.81,207,1610377200"; 
+   d="scan'208";a="73172325"
+Received: from unknown (HELO relmlir5.idc.renesas.com) ([10.200.68.151])
+  by relmlie6.idc.renesas.com with ESMTP; 26 Feb 2021 07:52:42 +0900
+Received: from devel.example.org?044ree.adwin.renesas.com (unknown [10.226.36.120])
+        by relmlir5.idc.renesas.com (Postfix) with ESMTP id 0DCB64002643;
+        Fri, 26 Feb 2021 07:52:38 +0900 (JST)
+From:   Fabrizio Castro <fabrizio.castro.jz@renesas.com>
+To:     Rob Herring <robh+dt@kernel.org>, Arnd Bergmann <arnd@arndb.de>,
+        Laurent Pinchart <laurent.pinchart@ideasonboard.com>,
+        Geert Uytterhoeven <geert+renesas@glider.be>
+Cc:     Fabrizio Castro <fabrizio.castro.jz@renesas.com>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        linux-renesas-soc@vger.kernel.org, devicetree@vger.kernel.org,
+        linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org,
+        linux-kernel@vger.kernel.org,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will@kernel.org>,
+        Chris Paterson <Chris.Paterson2@renesas.com>,
+        Prabhakar Mahadev Lad <prabhakar.mahadev-lad.rj@bp.renesas.com>,
+        Phil Edworthy <phil.edworthy@renesas.com>,
+        Dirk Behme <Dirk.Behme@de.bosch.com>,
+        Peter Erben <Peter.Erben@de.bosch.com>
+Subject: [PATCH 0/7] Add FFT Support for R-Car Gen3 devices
+Date:   Thu, 25 Feb 2021 22:51:40 +0000
+Message-Id: <20210225225147.29920-1-fabrizio.castro.jz@renesas.com>
+X-Mailer: git-send-email 2.25.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Mickaël Salaün <mic@linux.microsoft.com>
+The DAB hardware accelerator found on R-Car E3 (a.k.a. r8a77990)
+and R-Car M3-N (a.k.a. r8a77965) devices is a hardware accelerator
+for software DAB demodulators.
+It consists of one FFT (Fast Fourier Transform) module and one
+decoder module, compatible with DAB specification (ETSI EN 300 401
+and ETSI TS 102 563).
+The decoder module can perform FIC decoding and MSC decoding
+processing from de-puncture to final decoded result.
 
-Using ptrace(2) and related debug features on a target process can lead
-to a privilege escalation.  Indeed, ptrace(2) can be used by an attacker
-to impersonate another task and to remain undetected while performing
-malicious activities.  Thanks to  ptrace_may_access(), various part of
-the kernel can check if a tracer is more privileged than a tracee.
+This series adds FFT support only for R-Car E3 and R-Car M3-N,
+FIC and MSC support will be added later on.
 
-A landlocked process has fewer privileges than a non-landlocked process
-and must then be subject to additional restrictions when manipulating
-processes. To be allowed to use ptrace(2) and related syscalls on a
-target process, a landlocked process must have a subset of the target
-process's rules (i.e. the tracee must be in a sub-domain of the tracer).
+Thanks,
+Fab
 
-Cc: James Morris <jmorris@namei.org>
-Cc: Kees Cook <keescook@chromium.org>
-Signed-off-by: Mickaël Salaün <mic@linux.microsoft.com>
-Reviewed-by: Jann Horn <jannh@google.com>
-Acked-by: Serge Hallyn <serge@hallyn.com>
-Link: https://lore.kernel.org/r/20210225190614.2181147-5-mic@digikod.net
----
+Fabrizio Castro (7):
+  clk: renesas: r8a77990: Add DAB clock
+  clk: renesas: r8a77965: Add DAB clock
+  dt-bindings: misc: Add binding for R-Car DAB
+  misc: Add driver for DAB IP found on Renesas R-Car devices
+  arm64: dts: renesas: r8a77990: Add DAB support
+  arm64: dts: renesas: r8a77965: Add DAB support
+  arm64: configs: Add R-Car DAB support
 
-Changes since v28:
-* Add Acked-by Serge Hallyn.
+ .../devicetree/bindings/misc/renesas,dab.yaml |  75 ++++++++
+ MAINTAINERS                                   |   7 +
+ arch/arm64/boot/dts/renesas/r8a77965.dtsi     |  12 ++
+ arch/arm64/boot/dts/renesas/r8a77990.dtsi     |  12 ++
+ arch/arm64/configs/defconfig                  |   1 +
+ drivers/clk/renesas/r8a77965-cpg-mssr.c       |   1 +
+ drivers/clk/renesas/r8a77990-cpg-mssr.c       |   1 +
+ drivers/misc/Kconfig                          |   1 +
+ drivers/misc/Makefile                         |   1 +
+ drivers/misc/rcar_dab/Kconfig                 |  11 ++
+ drivers/misc/rcar_dab/Makefile                |   8 +
+ drivers/misc/rcar_dab/rcar_dev.c              | 176 ++++++++++++++++++
+ drivers/misc/rcar_dab/rcar_dev.h              | 116 ++++++++++++
+ drivers/misc/rcar_dab/rcar_fft.c              | 160 ++++++++++++++++
+ include/uapi/linux/rcar_dab.h                 |  35 ++++
+ 15 files changed, 617 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/misc/renesas,dab.yaml
+ create mode 100644 drivers/misc/rcar_dab/Kconfig
+ create mode 100644 drivers/misc/rcar_dab/Makefile
+ create mode 100644 drivers/misc/rcar_dab/rcar_dev.c
+ create mode 100644 drivers/misc/rcar_dab/rcar_dev.h
+ create mode 100644 drivers/misc/rcar_dab/rcar_fft.c
+ create mode 100644 include/uapi/linux/rcar_dab.h
 
-Changes since v25:
-* Rename function to landlock_add_ptrace_hooks().
-
-Changes since v22:
-* Add Reviewed-by: Jann Horn <jannh@google.com>
-
-Changes since v21:
-* Fix copyright dates.
-
-Changes since v14:
-* Constify variables.
-
-Changes since v13:
-* Make the ptrace restriction mandatory, like in the v10.
-* Remove the eBPF dependency.
-
-Previous changes:
-https://lore.kernel.org/lkml/20191104172146.30797-5-mic@digikod.net/
----
- security/landlock/Makefile |   2 +-
- security/landlock/ptrace.c | 120 +++++++++++++++++++++++++++++++++++++
- security/landlock/ptrace.h |  14 +++++
- security/landlock/setup.c  |   2 +
- 4 files changed, 137 insertions(+), 1 deletion(-)
- create mode 100644 security/landlock/ptrace.c
- create mode 100644 security/landlock/ptrace.h
-
-diff --git a/security/landlock/Makefile b/security/landlock/Makefile
-index 041ea242e627..f1d1eb72fa76 100644
---- a/security/landlock/Makefile
-+++ b/security/landlock/Makefile
-@@ -1,4 +1,4 @@
- obj-$(CONFIG_SECURITY_LANDLOCK) := landlock.o
- 
- landlock-y := setup.o object.o ruleset.o \
--	cred.o
-+	cred.o ptrace.o
-diff --git a/security/landlock/ptrace.c b/security/landlock/ptrace.c
-new file mode 100644
-index 000000000000..f55b82446de2
---- /dev/null
-+++ b/security/landlock/ptrace.c
-@@ -0,0 +1,120 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Landlock LSM - Ptrace hooks
-+ *
-+ * Copyright © 2017-2020 Mickaël Salaün <mic@digikod.net>
-+ * Copyright © 2019-2020 ANSSI
-+ */
-+
-+#include <asm/current.h>
-+#include <linux/cred.h>
-+#include <linux/errno.h>
-+#include <linux/kernel.h>
-+#include <linux/lsm_hooks.h>
-+#include <linux/rcupdate.h>
-+#include <linux/sched.h>
-+
-+#include "common.h"
-+#include "cred.h"
-+#include "ptrace.h"
-+#include "ruleset.h"
-+#include "setup.h"
-+
-+/**
-+ * domain_scope_le - Checks domain ordering for scoped ptrace
-+ *
-+ * @parent: Parent domain.
-+ * @child: Potential child of @parent.
-+ *
-+ * Checks if the @parent domain is less or equal to (i.e. an ancestor, which
-+ * means a subset of) the @child domain.
-+ */
-+static bool domain_scope_le(const struct landlock_ruleset *const parent,
-+		const struct landlock_ruleset *const child)
-+{
-+	const struct landlock_hierarchy *walker;
-+
-+	if (!parent)
-+		return true;
-+	if (!child)
-+		return false;
-+	for (walker = child->hierarchy; walker; walker = walker->parent) {
-+		if (walker == parent->hierarchy)
-+			/* @parent is in the scoped hierarchy of @child. */
-+			return true;
-+	}
-+	/* There is no relationship between @parent and @child. */
-+	return false;
-+}
-+
-+static bool task_is_scoped(const struct task_struct *const parent,
-+		const struct task_struct *const child)
-+{
-+	bool is_scoped;
-+	const struct landlock_ruleset *dom_parent, *dom_child;
-+
-+	rcu_read_lock();
-+	dom_parent = landlock_get_task_domain(parent);
-+	dom_child = landlock_get_task_domain(child);
-+	is_scoped = domain_scope_le(dom_parent, dom_child);
-+	rcu_read_unlock();
-+	return is_scoped;
-+}
-+
-+static int task_ptrace(const struct task_struct *const parent,
-+		const struct task_struct *const child)
-+{
-+	/* Quick return for non-landlocked tasks. */
-+	if (!landlocked(parent))
-+		return 0;
-+	if (task_is_scoped(parent, child))
-+		return 0;
-+	return -EPERM;
-+}
-+
-+/**
-+ * hook_ptrace_access_check - Determines whether the current process may access
-+ *			      another
-+ *
-+ * @child: Process to be accessed.
-+ * @mode: Mode of attachment.
-+ *
-+ * If the current task has Landlock rules, then the child must have at least
-+ * the same rules.  Else denied.
-+ *
-+ * Determines whether a process may access another, returning 0 if permission
-+ * granted, -errno if denied.
-+ */
-+static int hook_ptrace_access_check(struct task_struct *const child,
-+		const unsigned int mode)
-+{
-+	return task_ptrace(current, child);
-+}
-+
-+/**
-+ * hook_ptrace_traceme - Determines whether another process may trace the
-+ *			 current one
-+ *
-+ * @parent: Task proposed to be the tracer.
-+ *
-+ * If the parent has Landlock rules, then the current task must have the same
-+ * or more rules.  Else denied.
-+ *
-+ * Determines whether the nominated task is permitted to trace the current
-+ * process, returning 0 if permission is granted, -errno if denied.
-+ */
-+static int hook_ptrace_traceme(struct task_struct *const parent)
-+{
-+	return task_ptrace(parent, current);
-+}
-+
-+static struct security_hook_list landlock_hooks[] __lsm_ro_after_init = {
-+	LSM_HOOK_INIT(ptrace_access_check, hook_ptrace_access_check),
-+	LSM_HOOK_INIT(ptrace_traceme, hook_ptrace_traceme),
-+};
-+
-+__init void landlock_add_ptrace_hooks(void)
-+{
-+	security_add_hooks(landlock_hooks, ARRAY_SIZE(landlock_hooks),
-+			LANDLOCK_NAME);
-+}
-diff --git a/security/landlock/ptrace.h b/security/landlock/ptrace.h
-new file mode 100644
-index 000000000000..265b220ae3bf
---- /dev/null
-+++ b/security/landlock/ptrace.h
-@@ -0,0 +1,14 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Landlock LSM - Ptrace hooks
-+ *
-+ * Copyright © 2017-2019 Mickaël Salaün <mic@digikod.net>
-+ * Copyright © 2019 ANSSI
-+ */
-+
-+#ifndef _SECURITY_LANDLOCK_PTRACE_H
-+#define _SECURITY_LANDLOCK_PTRACE_H
-+
-+__init void landlock_add_ptrace_hooks(void);
-+
-+#endif /* _SECURITY_LANDLOCK_PTRACE_H */
-diff --git a/security/landlock/setup.c b/security/landlock/setup.c
-index 8661112fb238..a5d6ef334991 100644
---- a/security/landlock/setup.c
-+++ b/security/landlock/setup.c
-@@ -11,6 +11,7 @@
- 
- #include "common.h"
- #include "cred.h"
-+#include "ptrace.h"
- #include "setup.h"
- 
- struct lsm_blob_sizes landlock_blob_sizes __lsm_ro_after_init = {
-@@ -20,6 +21,7 @@ struct lsm_blob_sizes landlock_blob_sizes __lsm_ro_after_init = {
- static int __init landlock_init(void)
- {
- 	landlock_add_cred_hooks();
-+	landlock_add_ptrace_hooks();
- 	pr_info("Up and running.\n");
- 	return 0;
- }
 -- 
-2.30.0
+2.25.1
 
