@@ -2,29 +2,30 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B9EC4C433DB
-	for <linux-api@archiver.kernel.org>; Thu, 25 Feb 2021 22:53:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D6941C433DB
+	for <linux-api@archiver.kernel.org>; Thu, 25 Feb 2021 22:54:10 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7470164F29
-	for <linux-api@archiver.kernel.org>; Thu, 25 Feb 2021 22:53:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8184564F28
+	for <linux-api@archiver.kernel.org>; Thu, 25 Feb 2021 22:54:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230494AbhBYWxf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 25 Feb 2021 17:53:35 -0500
-Received: from relmlor2.renesas.com ([210.160.252.172]:7678 "EHLO
-        relmlie6.idc.renesas.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S229966AbhBYWxf (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 25 Feb 2021 17:53:35 -0500
+        id S231822AbhBYWxy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 25 Feb 2021 17:53:54 -0500
+Received: from relmlor1.renesas.com ([210.160.252.171]:45423 "EHLO
+        relmlie5.idc.renesas.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S229491AbhBYWxx (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 25 Feb 2021 17:53:53 -0500
 X-IronPort-AV: E=Sophos;i="5.81,207,1610377200"; 
-   d="scan'208";a="73172325"
+   d="scan'208";a="73418583"
 Received: from unknown (HELO relmlir5.idc.renesas.com) ([10.200.68.151])
-  by relmlie6.idc.renesas.com with ESMTP; 26 Feb 2021 07:52:42 +0900
+  by relmlie5.idc.renesas.com with ESMTP; 26 Feb 2021 07:53:02 +0900
 Received: from devel.example.org?044ree.adwin.renesas.com (unknown [10.226.36.120])
-        by relmlir5.idc.renesas.com (Postfix) with ESMTP id 0DCB64002643;
-        Fri, 26 Feb 2021 07:52:38 +0900 (JST)
+        by relmlir5.idc.renesas.com (Postfix) with ESMTP id 7C235400C73A;
+        Fri, 26 Feb 2021 07:52:58 +0900 (JST)
 From:   Fabrizio Castro <fabrizio.castro.jz@renesas.com>
 To:     Rob Herring <robh+dt@kernel.org>, Arnd Bergmann <arnd@arndb.de>,
         Laurent Pinchart <laurent.pinchart@ideasonboard.com>,
@@ -41,64 +42,37 @@ Cc:     Fabrizio Castro <fabrizio.castro.jz@renesas.com>,
         Phil Edworthy <phil.edworthy@renesas.com>,
         Dirk Behme <Dirk.Behme@de.bosch.com>,
         Peter Erben <Peter.Erben@de.bosch.com>
-Subject: [PATCH 0/7] Add FFT Support for R-Car Gen3 devices
-Date:   Thu, 25 Feb 2021 22:51:40 +0000
-Message-Id: <20210225225147.29920-1-fabrizio.castro.jz@renesas.com>
+Subject: [PATCH 2/7] clk: renesas: r8a77965: Add DAB clock
+Date:   Thu, 25 Feb 2021 22:51:42 +0000
+Message-Id: <20210225225147.29920-3-fabrizio.castro.jz@renesas.com>
 X-Mailer: git-send-email 2.25.1
+In-Reply-To: <20210225225147.29920-1-fabrizio.castro.jz@renesas.com>
+References: <20210225225147.29920-1-fabrizio.castro.jz@renesas.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The DAB hardware accelerator found on R-Car E3 (a.k.a. r8a77990)
-and R-Car M3-N (a.k.a. r8a77965) devices is a hardware accelerator
-for software DAB demodulators.
-It consists of one FFT (Fast Fourier Transform) module and one
-decoder module, compatible with DAB specification (ETSI EN 300 401
-and ETSI TS 102 563).
-The decoder module can perform FIC decoding and MSC decoding
-processing from de-puncture to final decoded result.
+This patch adds the DAB clock to the R8A77965 SoC.
 
-This series adds FFT support only for R-Car E3 and R-Car M3-N,
-FIC and MSC support will be added later on.
+Signed-off-by: Fabrizio Castro <fabrizio.castro.jz@renesas.com>
+---
+ drivers/clk/renesas/r8a77965-cpg-mssr.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-Thanks,
-Fab
-
-Fabrizio Castro (7):
-  clk: renesas: r8a77990: Add DAB clock
-  clk: renesas: r8a77965: Add DAB clock
-  dt-bindings: misc: Add binding for R-Car DAB
-  misc: Add driver for DAB IP found on Renesas R-Car devices
-  arm64: dts: renesas: r8a77990: Add DAB support
-  arm64: dts: renesas: r8a77965: Add DAB support
-  arm64: configs: Add R-Car DAB support
-
- .../devicetree/bindings/misc/renesas,dab.yaml |  75 ++++++++
- MAINTAINERS                                   |   7 +
- arch/arm64/boot/dts/renesas/r8a77965.dtsi     |  12 ++
- arch/arm64/boot/dts/renesas/r8a77990.dtsi     |  12 ++
- arch/arm64/configs/defconfig                  |   1 +
- drivers/clk/renesas/r8a77965-cpg-mssr.c       |   1 +
- drivers/clk/renesas/r8a77990-cpg-mssr.c       |   1 +
- drivers/misc/Kconfig                          |   1 +
- drivers/misc/Makefile                         |   1 +
- drivers/misc/rcar_dab/Kconfig                 |  11 ++
- drivers/misc/rcar_dab/Makefile                |   8 +
- drivers/misc/rcar_dab/rcar_dev.c              | 176 ++++++++++++++++++
- drivers/misc/rcar_dab/rcar_dev.h              | 116 ++++++++++++
- drivers/misc/rcar_dab/rcar_fft.c              | 160 ++++++++++++++++
- include/uapi/linux/rcar_dab.h                 |  35 ++++
- 15 files changed, 617 insertions(+)
- create mode 100644 Documentation/devicetree/bindings/misc/renesas,dab.yaml
- create mode 100644 drivers/misc/rcar_dab/Kconfig
- create mode 100644 drivers/misc/rcar_dab/Makefile
- create mode 100644 drivers/misc/rcar_dab/rcar_dev.c
- create mode 100644 drivers/misc/rcar_dab/rcar_dev.h
- create mode 100644 drivers/misc/rcar_dab/rcar_fft.c
- create mode 100644 include/uapi/linux/rcar_dab.h
-
+diff --git a/drivers/clk/renesas/r8a77965-cpg-mssr.c b/drivers/clk/renesas/r8a77965-cpg-mssr.c
+index 46a157732759..bc1be8bcbbe4 100644
+--- a/drivers/clk/renesas/r8a77965-cpg-mssr.c
++++ b/drivers/clk/renesas/r8a77965-cpg-mssr.c
+@@ -250,6 +250,7 @@ static const struct mssr_mod_clk r8a77965_mod_clks[] __initconst = {
+ 	DEF_MOD("ssi2",			1013,	MOD_CLK_ID(1005)),
+ 	DEF_MOD("ssi1",			1014,	MOD_CLK_ID(1005)),
+ 	DEF_MOD("ssi0",			1015,	MOD_CLK_ID(1005)),
++	DEF_MOD("dab",			1016,	R8A77965_CLK_S0D6),
+ 	DEF_MOD("scu-all",		1017,	R8A77965_CLK_S3D4),
+ 	DEF_MOD("scu-dvc1",		1018,	MOD_CLK_ID(1017)),
+ 	DEF_MOD("scu-dvc0",		1019,	MOD_CLK_ID(1017)),
 -- 
 2.25.1
 
