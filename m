@@ -7,25 +7,25 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D6941C433DB
-	for <linux-api@archiver.kernel.org>; Thu, 25 Feb 2021 22:54:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 454F0C433E9
+	for <linux-api@archiver.kernel.org>; Thu, 25 Feb 2021 22:54:11 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8184564F28
-	for <linux-api@archiver.kernel.org>; Thu, 25 Feb 2021 22:54:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 10D0F64F2F
+	for <linux-api@archiver.kernel.org>; Thu, 25 Feb 2021 22:54:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231822AbhBYWxy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 25 Feb 2021 17:53:54 -0500
-Received: from relmlor1.renesas.com ([210.160.252.171]:45423 "EHLO
-        relmlie5.idc.renesas.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S229491AbhBYWxx (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 25 Feb 2021 17:53:53 -0500
+        id S232072AbhBYWx4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 25 Feb 2021 17:53:56 -0500
+Received: from relmlor2.renesas.com ([210.160.252.172]:7678 "EHLO
+        relmlie6.idc.renesas.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S231942AbhBYWx4 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 25 Feb 2021 17:53:56 -0500
 X-IronPort-AV: E=Sophos;i="5.81,207,1610377200"; 
-   d="scan'208";a="73418583"
+   d="scan'208";a="73172335"
 Received: from unknown (HELO relmlir5.idc.renesas.com) ([10.200.68.151])
-  by relmlie5.idc.renesas.com with ESMTP; 26 Feb 2021 07:53:02 +0900
+  by relmlie6.idc.renesas.com with ESMTP; 26 Feb 2021 07:52:55 +0900
 Received: from devel.example.org?044ree.adwin.renesas.com (unknown [10.226.36.120])
-        by relmlir5.idc.renesas.com (Postfix) with ESMTP id 7C235400C73A;
-        Fri, 26 Feb 2021 07:52:58 +0900 (JST)
+        by relmlir5.idc.renesas.com (Postfix) with ESMTP id B103940083F0;
+        Fri, 26 Feb 2021 07:52:51 +0900 (JST)
 From:   Fabrizio Castro <fabrizio.castro.jz@renesas.com>
 To:     Rob Herring <robh+dt@kernel.org>, Arnd Bergmann <arnd@arndb.de>,
         Laurent Pinchart <laurent.pinchart@ideasonboard.com>,
@@ -42,9 +42,9 @@ Cc:     Fabrizio Castro <fabrizio.castro.jz@renesas.com>,
         Phil Edworthy <phil.edworthy@renesas.com>,
         Dirk Behme <Dirk.Behme@de.bosch.com>,
         Peter Erben <Peter.Erben@de.bosch.com>
-Subject: [PATCH 2/7] clk: renesas: r8a77965: Add DAB clock
-Date:   Thu, 25 Feb 2021 22:51:42 +0000
-Message-Id: <20210225225147.29920-3-fabrizio.castro.jz@renesas.com>
+Subject: [PATCH 1/7] clk: renesas: r8a77990: Add DAB clock
+Date:   Thu, 25 Feb 2021 22:51:41 +0000
+Message-Id: <20210225225147.29920-2-fabrizio.castro.jz@renesas.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20210225225147.29920-1-fabrizio.castro.jz@renesas.com>
 References: <20210225225147.29920-1-fabrizio.castro.jz@renesas.com>
@@ -54,23 +54,23 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This patch adds the DAB clock to the R8A77965 SoC.
+This patch adds the DAB clock to the R8A77990 SoC.
 
 Signed-off-by: Fabrizio Castro <fabrizio.castro.jz@renesas.com>
 ---
- drivers/clk/renesas/r8a77965-cpg-mssr.c | 1 +
+ drivers/clk/renesas/r8a77990-cpg-mssr.c | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/drivers/clk/renesas/r8a77965-cpg-mssr.c b/drivers/clk/renesas/r8a77965-cpg-mssr.c
-index 46a157732759..bc1be8bcbbe4 100644
---- a/drivers/clk/renesas/r8a77965-cpg-mssr.c
-+++ b/drivers/clk/renesas/r8a77965-cpg-mssr.c
-@@ -250,6 +250,7 @@ static const struct mssr_mod_clk r8a77965_mod_clks[] __initconst = {
+diff --git a/drivers/clk/renesas/r8a77990-cpg-mssr.c b/drivers/clk/renesas/r8a77990-cpg-mssr.c
+index 2d172f80b34c..a582f2ec3294 100644
+--- a/drivers/clk/renesas/r8a77990-cpg-mssr.c
++++ b/drivers/clk/renesas/r8a77990-cpg-mssr.c
+@@ -232,6 +232,7 @@ static const struct mssr_mod_clk r8a77990_mod_clks[] __initconst = {
  	DEF_MOD("ssi2",			1013,	MOD_CLK_ID(1005)),
  	DEF_MOD("ssi1",			1014,	MOD_CLK_ID(1005)),
  	DEF_MOD("ssi0",			1015,	MOD_CLK_ID(1005)),
-+	DEF_MOD("dab",			1016,	R8A77965_CLK_S0D6),
- 	DEF_MOD("scu-all",		1017,	R8A77965_CLK_S3D4),
++	DEF_MOD("dab",			1016,	R8A77990_CLK_S3D1),
+ 	DEF_MOD("scu-all",		1017,	R8A77990_CLK_S3D4),
  	DEF_MOD("scu-dvc1",		1018,	MOD_CLK_ID(1017)),
  	DEF_MOD("scu-dvc0",		1019,	MOD_CLK_ID(1017)),
 -- 
