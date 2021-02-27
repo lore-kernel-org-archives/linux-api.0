@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E0830C43381
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BF6D2C433E6
 	for <linux-api@archiver.kernel.org>; Sat, 27 Feb 2021 17:19:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BD1C464E86
+	by mail.kernel.org (Postfix) with ESMTP id 951E664EB7
 	for <linux-api@archiver.kernel.org>; Sat, 27 Feb 2021 17:19:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230235AbhB0RTq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 27 Feb 2021 12:19:46 -0500
-Received: from mga01.intel.com ([192.55.52.88]:56739 "EHLO mga01.intel.com"
+        id S230163AbhB0RT1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 27 Feb 2021 12:19:27 -0500
+Received: from mga01.intel.com ([192.55.52.88]:57209 "EHLO mga01.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230370AbhB0RMK (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Sat, 27 Feb 2021 12:12:10 -0500
-IronPort-SDR: tQ3nt26qHzn60S6tgma9wTD5mb55+x7RHFbbQu8sBUncjtUjKNmZL7dj8CvYmhx+usp+thN1ds
- jFRwG0Swqflw==
-X-IronPort-AV: E=McAfee;i="6000,8403,9908"; a="205700336"
+        id S230355AbhB0RKj (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sat, 27 Feb 2021 12:10:39 -0500
+IronPort-SDR: PirgmHn7xyLTuNT/IUZ6dMTaJj27glakKmRYH7hFT8BP1vU/qXA6rTEh0qMLzJ7apBGnya1GR1
+ um+HnXxoy40A==
+X-IronPort-AV: E=McAfee;i="6000,8403,9908"; a="205700332"
 X-IronPort-AV: E=Sophos;i="5.81,211,1610438400"; 
-   d="scan'208";a="205700336"
+   d="scan'208";a="205700332"
 Received: from fmsmga001.fm.intel.com ([10.253.24.23])
-  by fmsmga101.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2021 09:03:59 -0800
-IronPort-SDR: qDBf28JvrWl4kJOegFm5AnoReBa7dcgejc0weSFNCzsG3g9f5PVOp9XdK57fuq1YLVaYXqDhn2
- v+SheuDRzpGw==
+  by fmsmga101.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2021 09:03:58 -0800
+IronPort-SDR: 4+f4u1i75SajTtUtIQTGOiFmZpHuAZXhUDTjcei9hbNrkCywKnEqqAu777JL+gWM6dHrT9hLqd
+ VPZPV04x8Zvg==
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="5.81,211,1610438400"; 
-   d="scan'208";a="503906854"
+   d="scan'208";a="503906848"
 Received: from chang-linux-3.sc.intel.com ([172.25.66.175])
   by fmsmga001.fm.intel.com with ESMTP; 27 Feb 2021 09:03:58 -0800
 From:   "Chang S. Bae" <chang.seok.bae@intel.com>
@@ -41,10 +41,11 @@ Cc:     len.brown@intel.com, dave.hansen@intel.com, hjl.tools@gmail.com,
         carlos@redhat.com, tony.luck@intel.com, ravi.v.shankar@intel.com,
         libc-alpha@sourceware.org, linux-arch@vger.kernel.org,
         linux-api@vger.kernel.org, linux-kernel@vger.kernel.org,
-        chang.seok.bae@intel.com
-Subject: [PATCH v6 5/6] x86/signal: Detect and prevent an alternate signal stack overflow
-Date:   Sat, 27 Feb 2021 08:59:10 -0800
-Message-Id: <20210227165911.32757-6-chang.seok.bae@intel.com>
+        chang.seok.bae@intel.com, Fenghua Yu <fenghua.yu@intel.com>,
+        linux-doc@vger.kernel.org
+Subject: [PATCH v6 3/6] x86/elf: Support a new ELF aux vector AT_MINSIGSTKSZ
+Date:   Sat, 27 Feb 2021 08:59:08 -0800
+Message-Id: <20210227165911.32757-4-chang.seok.bae@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20210227165911.32757-1-chang.seok.bae@intel.com>
 References: <20210227165911.32757-1-chang.seok.bae@intel.com>
@@ -52,81 +53,179 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The kernel pushes context on to the userspace stack to prepare for the
-user's signal handler. When the user has supplied an alternate signal
-stack, via sigaltstack(2), it is easy for the kernel to verify that the
-stack size is sufficient for the current hardware context.
+Historically, signal.h defines MINSIGSTKSZ (2KB) and SIGSTKSZ (8KB), for
+use by all architectures with sigaltstack(2). Over time, the hardware state
+size grew, but these constants did not evolve. Today, literal use of these
+constants on several architectures may result in signal stack overflow, and
+thus user data corruption.
 
-Check if writing the hardware context to the alternate stack will exceed
-it's size. If yes, then instead of corrupting user-data and proceeding with
-the original signal handler, an immediate SIGSEGV signal is delivered.
+A few years ago, the ARM team addressed this issue by establishing
+getauxval(AT_MINSIGSTKSZ). This enables the kernel to supply at runtime
+value that is an appropriate replacement on the current and future
+hardware.
 
-Instead of calling on_sig_stack(), directly check the new stack pointer
-whether in the bounds.
+Add getauxval(AT_MINSIGSTKSZ) support to x86, analogous to the support
+added for ARM in commit 94b07c1f8c39 ("arm64: signal: Report signal frame
+size to userspace via auxv").
 
-While the kernel allows new source code to discover and use a sufficient
-alternate signal stack size, this check is still necessary to protect
-binaries with insufficient alternate signal stack size from data
-corruption.
+Also, include a documentation to describe x86-specific auxiliary vectors.
 
-Suggested-by: Jann Horn <jannh@google.com>
+Reported-by: Florian Weimer <fweimer@redhat.com>
+Fixes: c2bc11f10a39 ("x86, AVX-512: Enable AVX-512 States Context Switch")
 Signed-off-by: Chang S. Bae <chang.seok.bae@intel.com>
 Reviewed-by: Len Brown <len.brown@intel.com>
-Reviewed-by: Jann Horn <jannh@google.com>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Jann Horn <jannh@google.com>
+Cc: H.J. Lu <hjl.tools@gmail.com>
+Cc: Fenghua Yu <fenghua.yu@intel.com>
+Cc: Dave Martin <Dave.Martin@arm.com>
+Cc: Michael Ellerman <mpe@ellerman.id.au>
 Cc: x86@kernel.org
+Cc: libc-alpha@sourceware.org
+Cc: linux-arch@vger.kernel.org
+Cc: linux-api@vger.kernel.org
+Cc: linux-doc@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
+Link: https://bugzilla.kernel.org/show_bug.cgi?id=153531
 ---
 Changes from v5:
-* Fixed the overflow check. (Andy Lutomirski)
-* Updated the changelog.
-
-Changes from v3:
-* Updated the changelog (Borislav Petkov)
-
-Changes from v2:
-* Simplified the implementation (Jann Horn)
+* Added a documentation.
 ---
- arch/x86/kernel/signal.c | 10 +++++++---
- 1 file changed, 7 insertions(+), 3 deletions(-)
+ Documentation/x86/elf_auxvec.rst   | 56 ++++++++++++++++++++++++++++++
+ arch/x86/include/asm/elf.h         |  4 +++
+ arch/x86/include/uapi/asm/auxvec.h |  4 +--
+ arch/x86/kernel/signal.c           |  5 +++
+ 4 files changed, 67 insertions(+), 2 deletions(-)
+ create mode 100644 Documentation/x86/elf_auxvec.rst
 
+diff --git a/Documentation/x86/elf_auxvec.rst b/Documentation/x86/elf_auxvec.rst
+new file mode 100644
+index 000000000000..751c552c4048
+--- /dev/null
++++ b/Documentation/x86/elf_auxvec.rst
+@@ -0,0 +1,56 @@
++.. SPDX-License-Identifier: GPL-2.0
++
++==================================
++x86-specific ELF Auxiliary Vectors
++==================================
++
++This document describes the semantics of the x86 auxiliary vectors.
++
++1. Introduction
++---------------
++
++ELF Auxiliary vectors enable the kernel to efficiently provide
++configuration specific parameters to userspace. In this example, a program
++allocates an alternate stack based on the kernel-provided size.
++
++   #include <sys/auxv.h>
++   #include <elf.h>
++
++   #ifndef AT_MINSIGSTKSZ
++   #define AT_MINSIGSTKSZ	51
++   #endif
++
++   stack_t ss;
++   int err;
++
++   ss.ss_size = getauxval(AT_MINSIGSTKSZ) + SIGSTKSZ;
++   ss.ss_sp = malloc(ss.ss_size);
++   ...
++
++   err = sigaltstack(&ss, NULL);
++   ...
++
++
++2. The exposed auxiliary vectors
++---------------------------------
++
++AT_SYSINFO
++    The entry point to the system call function the virtual Dynamic Shared
++    Object (vDSO), not exported on 64-bit.
++
++AT_SYSINFO_EHDR
++    The start address of the page containing vDSO.
++
++AT_MINSIGSTKSZ
++    The minimum stack size required to deliver a signal. It is a calculated
++    sigframe size based on the largest possible user context. When programs
++    use sigaltstack() to provide alternate signal stack, that stack must be
++    at least the size to function properly on this hardware. Note that this
++    is a minimum of the kernel to correctly get to the signal handler.
++    Additional space must be added to handle objects pushed onto the stack
++    by the signal handlers, as well as for nested signal delivery.
++
++    The purpose of this parameter is to accommodate the different stack
++    sizes required by different hardware configuration. E.g., the x86
++    system supporting the Advanced Vector Extension needs at least 8KB more
++    than the one without it.
+diff --git a/arch/x86/include/asm/elf.h b/arch/x86/include/asm/elf.h
+index 66bdfe838d61..cd10795c178e 100644
+--- a/arch/x86/include/asm/elf.h
++++ b/arch/x86/include/asm/elf.h
+@@ -312,6 +312,7 @@ do {									\
+ 		NEW_AUX_ENT(AT_SYSINFO,	VDSO_ENTRY);			\
+ 		NEW_AUX_ENT(AT_SYSINFO_EHDR, VDSO_CURRENT_BASE);	\
+ 	}								\
++	NEW_AUX_ENT(AT_MINSIGSTKSZ, get_sigframe_size());			\
+ } while (0)
+ 
+ /*
+@@ -328,6 +329,7 @@ extern unsigned long task_size_32bit(void);
+ extern unsigned long task_size_64bit(int full_addr_space);
+ extern unsigned long get_mmap_base(int is_legacy);
+ extern bool mmap_address_hint_valid(unsigned long addr, unsigned long len);
++extern unsigned long get_sigframe_size(void);
+ 
+ #ifdef CONFIG_X86_32
+ 
+@@ -349,6 +351,7 @@ do {									\
+ 	if (vdso64_enabled)						\
+ 		NEW_AUX_ENT(AT_SYSINFO_EHDR,				\
+ 			    (unsigned long __force)current->mm->context.vdso); \
++	NEW_AUX_ENT(AT_MINSIGSTKSZ, get_sigframe_size());			\
+ } while (0)
+ 
+ /* As a historical oddity, the x32 and x86_64 vDSOs are controlled together. */
+@@ -357,6 +360,7 @@ do {									\
+ 	if (vdso64_enabled)						\
+ 		NEW_AUX_ENT(AT_SYSINFO_EHDR,				\
+ 			    (unsigned long __force)current->mm->context.vdso); \
++	NEW_AUX_ENT(AT_MINSIGSTKSZ, get_sigframe_size());			\
+ } while (0)
+ 
+ #define AT_SYSINFO		32
+diff --git a/arch/x86/include/uapi/asm/auxvec.h b/arch/x86/include/uapi/asm/auxvec.h
+index 580e3c567046..6beb55bbefa4 100644
+--- a/arch/x86/include/uapi/asm/auxvec.h
++++ b/arch/x86/include/uapi/asm/auxvec.h
+@@ -12,9 +12,9 @@
+ 
+ /* entries in ARCH_DLINFO: */
+ #if defined(CONFIG_IA32_EMULATION) || !defined(CONFIG_X86_64)
+-# define AT_VECTOR_SIZE_ARCH 2
++# define AT_VECTOR_SIZE_ARCH 3
+ #else /* else it's non-compat x86-64 */
+-# define AT_VECTOR_SIZE_ARCH 1
++# define AT_VECTOR_SIZE_ARCH 2
+ #endif
+ 
+ #endif /* _ASM_X86_AUXVEC_H */
 diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
-index 0d24f64d0145..9a62604fbf63 100644
+index 800243afd1ef..0d24f64d0145 100644
 --- a/arch/x86/kernel/signal.c
 +++ b/arch/x86/kernel/signal.c
-@@ -242,7 +242,7 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
- 	unsigned long math_size = 0;
- 	unsigned long sp = regs->sp;
- 	unsigned long buf_fx = 0;
--	int onsigstack = on_sig_stack(sp);
-+	bool onsigstack = on_sig_stack(sp);
- 	int ret;
+@@ -716,6 +716,11 @@ void __init init_sigframe_size(void)
+ 	max_frame_size = round_up(max_frame_size, FRAME_ALIGNMENT);
+ }
  
- 	/* redzone */
-@@ -251,8 +251,11 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
- 
- 	/* This is the X/Open sanctioned signal stack switching.  */
- 	if (ka->sa.sa_flags & SA_ONSTACK) {
--		if (sas_ss_flags(sp) == 0)
-+		if (sas_ss_flags(sp) == 0) {
- 			sp = current->sas_ss_sp + current->sas_ss_size;
-+			/* On the alternate signal stack */
-+			onsigstack = true;
-+		}
- 	} else if (IS_ENABLED(CONFIG_X86_32) &&
- 		   !onsigstack &&
- 		   regs->ss != __USER_DS &&
-@@ -272,7 +275,8 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
- 	 * If we are on the alternate signal stack and would overflow it, don't.
- 	 * Return an always-bogus address instead so we will die with SIGSEGV.
- 	 */
--	if (onsigstack && !likely(on_sig_stack(sp)))
-+	if (onsigstack && unlikely(sp <= current->sas_ss_sp ||
-+				   sp - current->sas_ss_sp > current->sas_ss_size))
- 		return (void __user *)-1L;
- 
- 	/* save i387 and extended state */
++unsigned long get_sigframe_size(void)
++{
++	return max_frame_size;
++}
++
+ static inline int is_ia32_compat_frame(struct ksignal *ksig)
+ {
+ 	return IS_ENABLED(CONFIG_IA32_EMULATION) &&
 -- 
 2.17.1
 
