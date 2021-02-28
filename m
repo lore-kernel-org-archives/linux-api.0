@@ -2,136 +2,369 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3E570C433E6
-	for <linux-api@archiver.kernel.org>; Sat, 27 Feb 2021 17:20:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4ACBAC433DB
+	for <linux-api@archiver.kernel.org>; Sun, 28 Feb 2021 00:32:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1AFCD64E84
-	for <linux-api@archiver.kernel.org>; Sat, 27 Feb 2021 17:20:33 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 00F3D60C40
+	for <linux-api@archiver.kernel.org>; Sun, 28 Feb 2021 00:32:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230207AbhB0RTz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 27 Feb 2021 12:19:55 -0500
-Received: from mga01.intel.com ([192.55.52.88]:57746 "EHLO mga01.intel.com"
+        id S230010AbhB1Ace (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 27 Feb 2021 19:32:34 -0500
+Received: from out2.migadu.com ([188.165.223.204]:60953 "EHLO out2.migadu.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230273AbhB0RQq (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Sat, 27 Feb 2021 12:16:46 -0500
-IronPort-SDR: DOda8PRzvAa2JwSSOG15gCW7chiaDusG3/eeG7QzadyureYGxo9Qo52IRwpSrtMbes3qWXcNvE
- cCs29TAkDJ1g==
-X-IronPort-AV: E=McAfee;i="6000,8403,9908"; a="205700323"
-X-IronPort-AV: E=Sophos;i="5.81,211,1610438400"; 
-   d="scan'208";a="205700323"
-Received: from fmsmga001.fm.intel.com ([10.253.24.23])
-  by fmsmga101.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2021 09:03:58 -0800
-IronPort-SDR: LA7o83PvWQmj39wNcGHGThah0FxynPD/l3gspiFgA6WRWHht1a6ovIZ2i9d5p9t4uUCPhZRjDU
- cmTtJ5XQ+UnA==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.81,211,1610438400"; 
-   d="scan'208";a="503906838"
-Received: from chang-linux-3.sc.intel.com ([172.25.66.175])
-  by fmsmga001.fm.intel.com with ESMTP; 27 Feb 2021 09:03:58 -0800
-From:   "Chang S. Bae" <chang.seok.bae@intel.com>
-To:     bp@suse.de, tglx@linutronix.de, mingo@kernel.org, luto@kernel.org,
-        x86@kernel.org
-Cc:     len.brown@intel.com, dave.hansen@intel.com, hjl.tools@gmail.com,
-        Dave.Martin@arm.com, jannh@google.com, mpe@ellerman.id.au,
-        carlos@redhat.com, tony.luck@intel.com, ravi.v.shankar@intel.com,
-        libc-alpha@sourceware.org, linux-arch@vger.kernel.org,
-        linux-api@vger.kernel.org, linux-kernel@vger.kernel.org,
-        chang.seok.bae@intel.com
-Subject: [PATCH v6 0/6] x86: Improve Minimum Alternate Stack Size
-Date:   Sat, 27 Feb 2021 08:59:05 -0800
-Message-Id: <20210227165911.32757-1-chang.seok.bae@intel.com>
-X-Mailer: git-send-email 2.17.1
+        id S230008AbhB1Ace (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sat, 27 Feb 2021 19:32:34 -0500
+X-Greylist: delayed 405 seconds by postgrey-1.27 at vger.kernel.org; Sat, 27 Feb 2021 19:32:30 EST
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=cmpwn.com; s=key1;
+        t=1614471903;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=Q8Y+vHhsGDbZpvB3gPEp+L9CqDH/Hm1OQHl6L3oqGnQ=;
+        b=DEKSXuSgwXOOAzD1goJ24T/oHmXjv3PpqoOK6LQeZ3A4pLfPez7ouQPMfdLDibe2xW9upC
+        P3g3KTigBjvaAYpYIlpeO2oP/Y8LEd20rwJXyB/u+r7dZ5pOtPwTekAoMmxAaGnV4BYkgz
+        lFYkJCvdiDx375nanWQqJFZvdf8WZhFfrihA5CG/C8Clp4b39kyxKiSRyyKAEL2bawsvLW
+        eAhKhsT61IS9uFFT3DP8hizz6HZg4EelJujlUC7MF/jvnOLk6AtHn1ZkG+0L956ciZWXaw
+        8oOJqW96zcHj5Sc9DonmoTPEeMt4fWH+1t6rpPpO7nrbqoOFBP9PcYQKhk3OYA==
+From:   Drew DeVault <sir@cmpwn.com>
+To:     linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
+Cc:     Drew DeVault <sir@cmpwn.com>, "Aleksa Sarai" <cyphar@cyphar.com>
+Subject: [RFC PATCH] fs: introduce mkdirat2 syscall for atomic mkdir
+Date:   Sat, 27 Feb 2021 19:25:00 -0500
+Message-Id: <20210228002500.11483-1-sir@cmpwn.com>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+X-Migadu-Flow: FLOW_OUT
+X-Migadu-Auth-User: sir@cmpwn.com
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-During signal entry, the kernel pushes data onto the normal userspace
-stack. On x86, the data pushed onto the user stack includes XSAVE state,
-which has grown over time as new features and larger registers have been
-added to the architecture.
+The mkdir and mkdirat syscalls both return 0 on success, and use of the
+newly-created directory requires a separate open or openat (or openat2)
+call. The time between these syscalls is an opportunity for a race
+condition. It is thus desirable to establish a means of creating a
+directory and returning an open dirfd for it in one atomic operation.
 
-MINSIGSTKSZ is a constant provided in the kernel signal.h headers and
-typically distributed in lib-dev(el) packages, e.g. [1]. Its value is
-compiled into programs and is part of the user/kernel ABI. The MINSIGSTKSZ
-constant indicates to userspace how much data the kernel expects to push on
-the user stack, [2][3].
+The possibility of using open(at(2)) with O_CREAT | O_DIRECTORY suggests
+itself. The present behavior for this flag combination is quite
+certainly wrong: it returns ENOTDIR, but creates a file with the desired
+name. We could explicitly support this combination of flags, but we are
+loathe to expand an already over-burdened syscall with additional flag
+combinations.
 
-However, this constant is much too small and does not reflect recent
-additions to the architecture. For instance, when AVX-512 states are in
-use, the signal frame size can be 3.5KB while MINSIGSTKSZ remains 2KB.
+This introduces mkdirat2, along with the requisite flag argument, which
+presently accepts the same flags as open - allowing the caller to
+specify, say, O_CLOEXEC - and leaving us room to expand the next time an
+unforeseeable addition to mkdir is called for. Otherwise, it behaves
+identically to mkdirat, but returns an open file descriptor for the new
+directory.
+---
+This is my first foray into the fs bits, and first syscall addition as
+well; the reader's patience with the many obvious errors this is certain
+to include is much appreciated.
 
-The bug report [4] explains this as an ABI issue. The small MINSIGSTKSZ can
-cause user stack overflow when delivering a signal.
+I am pretty sure that this is actually atomic - gated between
+user_path_create and done_path_create - but I admit that I don't grok
+the inode locking bits. Otherwise, this was basically made by splicing
+together relevant-looking bits of mkdir and openat until a syscall which
+appeared to work under testing emerged.
 
-In this series, we suggest a couple of things:
-1. Provide a variable minimum stack size to userspace, as a similar
-   approach to [5].
-2. Avoid using a too-small alternate stack.
+ arch/alpha/kernel/syscalls/syscall.tbl      |  1 +
+ arch/arm/tools/syscall.tbl                  |  1 +
+ arch/arm64/include/asm/unistd.h             |  2 +-
+ arch/arm64/include/asm/unistd32.h           |  2 +
+ arch/ia64/kernel/syscalls/syscall.tbl       |  1 +
+ arch/m68k/kernel/syscalls/syscall.tbl       |  1 +
+ arch/microblaze/kernel/syscalls/syscall.tbl |  1 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl   |  1 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl   |  1 +
+ arch/parisc/kernel/syscalls/syscall.tbl     |  1 +
+ arch/powerpc/kernel/syscalls/syscall.tbl    |  1 +
+ arch/s390/kernel/syscalls/syscall.tbl       |  1 +
+ arch/sh/kernel/syscalls/syscall.tbl         |  1 +
+ arch/sparc/kernel/syscalls/syscall.tbl      |  1 +
+ arch/x86/entry/syscalls/syscall_64.tbl      |  1 +
+ arch/xtensa/kernel/syscalls/syscall.tbl     |  1 +
+ fs/namei.c                                  | 46 ++++++++++++++++++---
+ include/linux/syscalls.h                    |  1 +
+ include/uapi/asm-generic/unistd.h           |  4 +-
+ 19 files changed, 62 insertions(+), 7 deletions(-)
 
-Changes form v5 [10]:
-* Fixed the overflow detection. (Andy Lutomirski)
-* Reverted the AT_MINSIGSTKSZ removal on arm64. (Dave Martin)
-* Added a documentation about the x86 AT_MINSIGSTKSZ.
-* Supported the existing sigaltstack test to use the new aux vector.
-
-Changes from v4 [9]:
-* Moved the aux vector define to the generic header. (Carlos O'Donell)
-
-Changes from v3 [8]:
-* Updated the changelog. (Borislav Petkov)
-* Revised the test messages again. (Borislav Petkov)
-
-Changes from v2 [7]:
-* Simplified the sigaltstack overflow prevention. (Jann Horn)
-* Renamed fpstate size helper with cleanup. (Borislav Petkov)
-* Cleaned up the signframe struct size defines. (Borislav Petkov)
-* Revised the selftest messages. (Borislav Petkov)
-* Revised a changelog. (Borislav Petkov)
-
-Changes from v1 [6]:
-* Took stack alignment into account for sigframe size. (Dave Martin)
-
-[1]: https://sourceware.org/git/?p=glibc.git;a=blob;f=sysdeps/unix/sysv/linux/bits/sigstack.h;h=b9dca794da093dc4d41d39db9851d444e1b54d9b;hb=HEAD
-[2]: https://www.gnu.org/software/libc/manual/html_node/Signal-Stack.html
-[3]: https://man7.org/linux/man-pages/man2/sigaltstack.2.html
-[4]: https://bugzilla.kernel.org/show_bug.cgi?id=153531
-[5]: https://blog.linuxplumbersconf.org/2017/ocw/system/presentations/4671/original/plumbers-dm-2017.pdf
-[6]: https://lore.kernel.org/lkml/20200929205746.6763-1-chang.seok.bae@intel.com/
-[7]: https://lore.kernel.org/lkml/20201119190237.626-1-chang.seok.bae@intel.com/
-[8]: https://lore.kernel.org/lkml/20201223015312.4882-1-chang.seok.bae@intel.com/
-[9]: https://lore.kernel.org/lkml/20210115211038.2072-1-chang.seok.bae@intel.com/
-[10]: https://lore.kernel.org/lkml/20210203172242.29644-1-chang.seok.bae@intel.com/
-
-Chang S. Bae (6):
-  uapi: Define the aux vector AT_MINSIGSTKSZ
-  x86/signal: Introduce helpers to get the maximum signal frame size
-  x86/elf: Support a new ELF aux vector AT_MINSIGSTKSZ
-  selftest/sigaltstack: Use the AT_MINSIGSTKSZ aux vector if available
-  x86/signal: Detect and prevent an alternate signal stack overflow
-  selftest/x86/signal: Include test cases for validating sigaltstack
-
- Documentation/x86/elf_auxvec.rst          |  56 ++++++++++
- arch/x86/include/asm/elf.h                |   4 +
- arch/x86/include/asm/fpu/signal.h         |   2 +
- arch/x86/include/asm/sigframe.h           |   2 +
- arch/x86/include/uapi/asm/auxvec.h        |   4 +-
- arch/x86/kernel/cpu/common.c              |   3 +
- arch/x86/kernel/fpu/signal.c              |  19 ++++
- arch/x86/kernel/signal.c                  |  72 +++++++++++-
- include/uapi/linux/auxvec.h               |   3 +
- tools/testing/selftests/sigaltstack/sas.c |  20 +++-
- tools/testing/selftests/x86/Makefile      |   2 +-
- tools/testing/selftests/x86/sigaltstack.c | 128 ++++++++++++++++++++++
- 12 files changed, 302 insertions(+), 13 deletions(-)
- create mode 100644 Documentation/x86/elf_auxvec.rst
- create mode 100644 tools/testing/selftests/x86/sigaltstack.c
-
-
-base-commit: f40ddce88593482919761f74910f42f4b84c004b
+diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
+index ee7b01bb7346..c621fa5aaccf 100644
+--- a/arch/alpha/kernel/syscalls/syscall.tbl
++++ b/arch/alpha/kernel/syscalls/syscall.tbl
+@@ -480,3 +480,4 @@
+ 548	common	pidfd_getfd			sys_pidfd_getfd
+ 549	common	faccessat2			sys_faccessat2
+ 550	common	process_madvise			sys_process_madvise
++551	common	mkdirat2			sys_mkdirat2
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index d056a548358e..8ad43ac853b4 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -454,3 +454,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mkdirat2			sys_mkdirat2
+diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
+index b3b2019f8d16..86a9d7b3eabe 100644
+--- a/arch/arm64/include/asm/unistd.h
++++ b/arch/arm64/include/asm/unistd.h
+@@ -38,7 +38,7 @@
+ #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE + 5)
+ #define __ARM_NR_COMPAT_END		(__ARM_NR_COMPAT_BASE + 0x800)
+ 
+-#define __NR_compat_syscalls		441
++#define __NR_compat_syscalls		442
+ #endif
+ 
+ #define __ARCH_WANT_SYS_CLONE
+diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
+index 107f08e03b9f..b9ae6fbba839 100644
+--- a/arch/arm64/include/asm/unistd32.h
++++ b/arch/arm64/include/asm/unistd32.h
+@@ -889,6 +889,8 @@ __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
+ __SYSCALL(__NR_faccessat2, sys_faccessat2)
+ #define __NR_process_madvise 440
+ __SYSCALL(__NR_process_madvise, sys_process_madvise)
++#define __NR_mkdirat2 441
++__SYSCALL(__NR_mkdirat2, sys_mkdirat2)
+ 
+ /*
+  * Please add new compat syscalls above this comment and update
+diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
+index b96ed8b8a508..e71ee20bf3da 100644
+--- a/arch/ia64/kernel/syscalls/syscall.tbl
++++ b/arch/ia64/kernel/syscalls/syscall.tbl
+@@ -361,3 +361,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mkdirat2			sys_mkdirat2
+diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
+index 625fb6d32842..a64bc3463b48 100644
+--- a/arch/m68k/kernel/syscalls/syscall.tbl
++++ b/arch/m68k/kernel/syscalls/syscall.tbl
+@@ -440,3 +440,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mkdirat2			sys_mkdirat2
+diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
+index aae729c95cf9..199f4a6df658 100644
+--- a/arch/microblaze/kernel/syscalls/syscall.tbl
++++ b/arch/microblaze/kernel/syscalls/syscall.tbl
+@@ -446,3 +446,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mkdirat2			sys_mkdirat2
+diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
+index 32817c954435..6fab6f6e9b0f 100644
+--- a/arch/mips/kernel/syscalls/syscall_n32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
+@@ -379,3 +379,4 @@
+ 438	n32	pidfd_getfd			sys_pidfd_getfd
+ 439	n32	faccessat2			sys_faccessat2
+ 440	n32	process_madvise			sys_process_madvise
++441	n32	mkdirat2			sys_mkdirat2
+diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
+index 9e4ea3c31b1c..f9c672d00e75 100644
+--- a/arch/mips/kernel/syscalls/syscall_n64.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
+@@ -355,3 +355,4 @@
+ 438	n64	pidfd_getfd			sys_pidfd_getfd
+ 439	n64	faccessat2			sys_faccessat2
+ 440	n64	process_madvise			sys_process_madvise
++441	n64	mkdirat2			sys_mkdirat2
+diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
+index f375ea528e59..a1f433044a7c 100644
+--- a/arch/parisc/kernel/syscalls/syscall.tbl
++++ b/arch/parisc/kernel/syscalls/syscall.tbl
+@@ -438,3 +438,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mkdirat2			sys_mkdirat2
+diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
+index 1275daec7fec..1c73b34517d1 100644
+--- a/arch/powerpc/kernel/syscalls/syscall.tbl
++++ b/arch/powerpc/kernel/syscalls/syscall.tbl
+@@ -530,3 +530,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mkdirat2			sys_mkdirat2
+diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
+index 28c168000483..2cc370736912 100644
+--- a/arch/s390/kernel/syscalls/syscall.tbl
++++ b/arch/s390/kernel/syscalls/syscall.tbl
+@@ -443,3 +443,4 @@
+ 438  common	pidfd_getfd		sys_pidfd_getfd			sys_pidfd_getfd
+ 439  common	faccessat2		sys_faccessat2			sys_faccessat2
+ 440  common	process_madvise		sys_process_madvise		sys_process_madvise
++441  common	mkdirat2		sys_mkdirat2			sys_mkdirat2
+diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
+index 783738448ff5..e0e15828c19f 100644
+--- a/arch/sh/kernel/syscalls/syscall.tbl
++++ b/arch/sh/kernel/syscalls/syscall.tbl
+@@ -443,3 +443,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mkdirat2			sys_mkdirat2
+diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
+index 78160260991b..57bee5e64645 100644
+--- a/arch/sparc/kernel/syscalls/syscall.tbl
++++ b/arch/sparc/kernel/syscalls/syscall.tbl
+@@ -486,3 +486,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++441	common	mkdirat2			sys_mkdirat2
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 379819244b91..8bb125749d7b 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -362,6 +362,7 @@
+ 438	common	pidfd_getfd		sys_pidfd_getfd
+ 439	common	faccessat2		sys_faccessat2
+ 440	common	process_madvise		sys_process_madvise
++441	common	mkdirat2		sys_mkdirat2
+ 
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
+diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
+index b070f272995d..07f1ddc8092f 100644
+--- a/arch/xtensa/kernel/syscalls/syscall.tbl
++++ b/arch/xtensa/kernel/syscalls/syscall.tbl
+@@ -411,3 +411,4 @@
+ 438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
++440	common	mkdirat2			sys_mkdirat2
+diff --git a/fs/namei.c b/fs/namei.c
+index d4a6dd772303..6bd296d929d7 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -3654,13 +3654,27 @@ int vfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
+ }
+ EXPORT_SYMBOL(vfs_mkdir);
+ 
+-static long do_mkdirat(int dfd, const char __user *pathname, umode_t mode)
++static long do_mkdirat2(int dfd, const char __user *pathname, umode_t mode,
++			int flags, bool open)
+ {
++	struct open_flags op;
+ 	struct dentry *dentry;
++	struct filename *tmp;
+ 	struct path path;
+ 	int error;
++	int fd;
+ 	unsigned int lookup_flags = LOOKUP_DIRECTORY;
+ 
++	if (open) {
++		tmp = getname(pathname);
++		if (IS_ERR(tmp))
++			return PTR_ERR(tmp);
++
++		fd = get_unused_fd_flags(flags);
++		if (fd < 0)
++			return fd;
++	}
++
+ retry:
+ 	dentry = user_path_create(dfd, pathname, &path, lookup_flags);
+ 	if (IS_ERR(dentry))
+@@ -3669,24 +3683,46 @@ static long do_mkdirat(int dfd, const char __user *pathname, umode_t mode)
+ 	if (!IS_POSIXACL(path.dentry->d_inode))
+ 		mode &= ~current_umask();
+ 	error = security_path_mkdir(&path, dentry, mode);
+-	if (!error)
++	if (!error) {
+ 		error = vfs_mkdir(path.dentry->d_inode, dentry, mode);
++		if (open) {
++			struct file *f = do_filp_open(dfd, tmp, &op);
++			if (IS_ERR(f)) {
++				put_unused_fd(fd);
++				error = PTR_ERR(f);
++				goto out;
++			} else {
++				fsnotify_open(f);
++				fd_install(fd, f);
++			}
++		}
++	}
+ 	done_path_create(&path, dentry);
+ 	if (retry_estale(error, lookup_flags)) {
+ 		lookup_flags |= LOOKUP_REVAL;
+ 		goto retry;
+ 	}
+-	return error;
++out:
++	if (open)
++		putname(tmp);
++	if (error < 0 || !open)
++		return error;
++	return fd;
++}
++
++SYSCALL_DEFINE4(mkdirat2, int, dfd, const char __user *, pathname, umode_t, mode, int, flags)
++{
++	return do_mkdirat2(dfd, pathname, mode, flags, true);
+ }
+ 
+ SYSCALL_DEFINE3(mkdirat, int, dfd, const char __user *, pathname, umode_t, mode)
+ {
+-	return do_mkdirat(dfd, pathname, mode);
++	return do_mkdirat2(dfd, pathname, mode, 0, false);
+ }
+ 
+ SYSCALL_DEFINE2(mkdir, const char __user *, pathname, umode_t, mode)
+ {
+-	return do_mkdirat(AT_FDCWD, pathname, mode);
++	return do_mkdirat2(AT_FDCWD, pathname, mode, 0, false);
+ }
+ 
+ int vfs_rmdir(struct inode *dir, struct dentry *dentry)
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index aea0ce9f3b74..8dd5d7acc333 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -417,6 +417,7 @@ asmlinkage long sys_flock(unsigned int fd, unsigned int cmd);
+ asmlinkage long sys_mknodat(int dfd, const char __user * filename, umode_t mode,
+ 			    unsigned dev);
+ asmlinkage long sys_mkdirat(int dfd, const char __user * pathname, umode_t mode);
++asmlinkage long sys_mkdirat2(int dfd, const char __user * pathname, umode_t mode, int flags);
+ asmlinkage long sys_unlinkat(int dfd, const char __user * pathname, int flag);
+ asmlinkage long sys_symlinkat(const char __user * oldname,
+ 			      int newdfd, const char __user * newname);
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 2056318988f7..5a4604461ede 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -859,9 +859,11 @@ __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
+ __SYSCALL(__NR_faccessat2, sys_faccessat2)
+ #define __NR_process_madvise 440
+ __SYSCALL(__NR_process_madvise, sys_process_madvise)
++#define __NR_process_madvise 441
++__SYSCALL(__NR_mkdirat2, sys_mkdirat2)
+ 
+ #undef __NR_syscalls
+-#define __NR_syscalls 441
++#define __NR_syscalls 442
+ 
+ /*
+  * 32 bit systems traditionally used different
 -- 
-2.17.1
+2.30.1
 
