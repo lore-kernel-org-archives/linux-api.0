@@ -2,280 +2,105 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-13.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_IN_DEF_DKIM_WL autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 02AC7C433DB
-	for <linux-api@archiver.kernel.org>; Mon,  1 Mar 2021 20:55:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 70DEFC433DB
+	for <linux-api@archiver.kernel.org>; Mon,  1 Mar 2021 20:59:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C3EE0601FC
-	for <linux-api@archiver.kernel.org>; Mon,  1 Mar 2021 20:55:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 36136601FA
+	for <linux-api@archiver.kernel.org>; Mon,  1 Mar 2021 20:59:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236705AbhCAUzf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 1 Mar 2021 15:55:35 -0500
-Received: from mail.kernel.org ([198.145.29.99]:56518 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S243898AbhCAUxU (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 1 Mar 2021 15:53:20 -0500
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 4A83664E59;
-        Mon,  1 Mar 2021 20:05:21 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1614629121;
-        bh=hyAhv1/q6cvQCTlV6LYpy1xT3/YK4Jj5FMw0D/k0sEg=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=YCfprNeYAGQFm//11dcqGFIpsCdoGMupTNydtxQa1WN9clJ1rA+3dp0VuqTSX58PL
-         nBGK7FXl3eQsqG34JyfsDJrssFDfLoguVhVNuHwzm8vf1l+tbiLVaPzvT2OtDTo3Md
-         zpkzsCkyKGmaOkG9bLY6KnWE6D2UWU3s5JAU+/Z8QouVx8ndlhyZgpsJQc/Bno7Qg0
-         SXZmn86k1ujjNKg4BXLCA1l8h2hZlErA4bzmtb0b5lgKXgiqZBHzqgziBKathvbrJD
-         BZ0NL51ktZ6PKWx7v00GbV0GQ+FObkCcDkeNyrzji77DpNXJNDAE/WxTydpBfSMKqy
-         dfNT2JCJKUg+w==
-Date:   Mon, 1 Mar 2021 12:05:20 -0800
-From:   "Darrick J. Wong" <djwong@kernel.org>
-To:     Christian Brauner <christian.brauner@ubuntu.com>
-Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
-        Christoph Hellwig <hch@lst.de>, linux-fsdevel@vger.kernel.org,
-        John Johansen <john.johansen@canonical.com>,
-        James Morris <jmorris@namei.org>,
-        Mimi Zohar <zohar@linux.ibm.com>,
-        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
-        Stephen Smalley <stephen.smalley.work@gmail.com>,
-        Casey Schaufler <casey@schaufler-ca.com>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Andreas Dilger <adilger.kernel@dilger.ca>,
-        OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>,
-        Geoffrey Thomas <geofft@ldpreload.com>,
-        Mrunal Patel <mpatel@redhat.com>,
-        Josh Triplett <josh@joshtriplett.org>,
-        Andy Lutomirski <luto@kernel.org>,
-        Theodore Tso <tytso@mit.edu>, Alban Crequy <alban@kinvolk.io>,
-        Tycho Andersen <tycho@tycho.ws>,
-        David Howells <dhowells@redhat.com>,
-        James Bottomley <James.Bottomley@hansenpartnership.com>,
-        Seth Forshee <seth.forshee@canonical.com>,
-        =?iso-8859-1?Q?St=E9phane?= Graber <stgraber@ubuntu.com>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Aleksa Sarai <cyphar@cyphar.com>,
-        Lennart Poettering <lennart@poettering.net>,
-        "Eric W. Biederman" <ebiederm@xmission.com>, smbarber@chromium.org,
-        Phil Estes <estesp@gmail.com>, Serge Hallyn <serge@hallyn.com>,
-        Kees Cook <keescook@chromium.org>,
-        Todd Kjos <tkjos@google.com>, Paul Moore <paul@paul-moore.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        containers@lists.linux-foundation.org,
-        linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org,
-        linux-integrity@vger.kernel.org, selinux@vger.kernel.org
-Subject: Re: [PATCH v6 39/40] xfs: support idmapped mounts
-Message-ID: <20210301200520.GK7272@magnolia>
-References: <20210121131959.646623-1-christian.brauner@ubuntu.com>
- <20210121131959.646623-40-christian.brauner@ubuntu.com>
+        id S239643AbhCAU7O (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 1 Mar 2021 15:59:14 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37778 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S243735AbhCAU4w (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 1 Mar 2021 15:56:52 -0500
+Received: from mail-pf1-x433.google.com (mail-pf1-x433.google.com [IPv6:2607:f8b0:4864:20::433])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 576CCC0617A7
+        for <linux-api@vger.kernel.org>; Mon,  1 Mar 2021 12:56:12 -0800 (PST)
+Received: by mail-pf1-x433.google.com with SMTP id o188so5681537pfg.2
+        for <linux-api@vger.kernel.org>; Mon, 01 Mar 2021 12:56:12 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20161025;
+        h=date:from:to:cc:subject:in-reply-to:message-id:references
+         :mime-version;
+        bh=aKfF3alorFUH2Sfxr377YFS/FLDvTTuPGkr1txbpzfE=;
+        b=fmlnWl+F1L7aHevhdvuJMOrhIkIsAB4LL2iKlq/YY1BFe1i6oxbYOFPgw7nFhKWQuh
+         2yVsyCAUoGGZKNGqWHm+QuZvEYn2GpNvbUkeIK5dezJ8d2LV+EwLRtsRM/c9ULADzcp1
+         TDujFfPdsyZ7Xt5ou5On45h61UBaJEg1FUzgroubl8Gse0jxsUpgZuTeMW69yrFAIsXL
+         JIIQOGCoBmJIfVq5/Cr/wHSngsnhTy+kh9u0hyTUxadEDbVhUDjWfAVyQ+2nNcaLNNYj
+         TSZFQ7ZUvsOnkux0QZxF9B6aeDfJuv6vVJHPiEHqhAPCB6+vojVkyW+UZigIt2MTtc0P
+         CLNg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
+         :references:mime-version;
+        bh=aKfF3alorFUH2Sfxr377YFS/FLDvTTuPGkr1txbpzfE=;
+        b=t8aLPGmWgXi6pWTTlwYJdf0Tn+PTrlq/Gy73wK3394KkPj+s5kSS37bJYsTd52N8D2
+         eLN4zz8/VbfNM2/vcQs9X1nhzz2bPJch3hnsj0NwWgbhWgC5A4c08jZMOtR5KuYnje9v
+         5hlIdkfCiLoxP00+T56fKM4G2vmNe5QDprZyCPQTp9nnoWYg6Qkx3J8dYweVBi82H/4E
+         yysIEqJsZVfyOrqTmNwfDqSc6QaeD6XP4dP4g8xjZY5k12BWb+/aQTHdPaXLV6nmA53M
+         UZUKDtz37m8tioleWTuEwdXKHc68Sguy2QusDLYpEFaFyILjenT4piVIA5OXG9borFG/
+         APog==
+X-Gm-Message-State: AOAM531epWrW85mPfiZla+pivAFz4lFEp1GKVprcZr/5MK3ca6uMXb9j
+        p2jyQPngqoyWe3EP1eimE8ReCw==
+X-Google-Smtp-Source: ABdhPJxu5zQwkM2bTrndEGxVnNeG6KkNKVB0vEkmSnhtwG0S4ImL+bKVlU6rrZD33WtiittGVRTTqQ==
+X-Received: by 2002:a62:2e83:0:b029:1db:8bd9:b8ad with SMTP id u125-20020a622e830000b02901db8bd9b8admr197900pfu.74.1614632171597;
+        Mon, 01 Mar 2021 12:56:11 -0800 (PST)
+Received: from [2620:15c:17:3:91e9:d3d2:53fd:5d0f] ([2620:15c:17:3:91e9:d3d2:53fd:5d0f])
+        by smtp.gmail.com with ESMTPSA id 186sm15017391pfx.132.2021.03.01.12.56.10
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 01 Mar 2021 12:56:10 -0800 (PST)
+Date:   Mon, 1 Mar 2021 12:56:10 -0800 (PST)
+From:   David Rientjes <rientjes@google.com>
+To:     Alex Shi <alex.shi@linux.alibaba.com>
+cc:     David Hildenbrand <david@redhat.com>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Michal Hocko <mhocko@suse.com>,
+        Hugh Dickins <hughd@google.com>,
+        Andrea Arcangeli <aarcange@redhat.com>,
+        "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>,
+        Song Liu <songliubraving@fb.com>,
+        Matthew Wilcox <willy@infradead.org>,
+        Minchan Kim <minchan@kernel.org>,
+        Chris Kennelly <ckennelly@google.com>, linux-mm@kvack.org,
+        linux-api@vger.kernel.org
+Subject: Re: [RFC] Hugepage collapse in process context
+In-Reply-To: <25d9347b-9359-efab-e1e3-f98bd0012af9@linux.alibaba.com>
+Message-ID: <544df052-f9f3-f068-f69e-343cc69d994b@google.com>
+References: <d098c392-273a-36a4-1a29-59731cdf5d3d@google.com> <YCzSDPbBsksCX5zP@dhcp22.suse.cz> <0b51a213-650e-7801-b6ed-9545466c15db@suse.cz> <600ee57f-d839-d402-fb0f-e9f350114dce@redhat.com> <5127b9c-a147-8ef5-c942-ae8c755413d0@google.com>
+ <25d9347b-9359-efab-e1e3-f98bd0012af9@linux.alibaba.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20210121131959.646623-40-christian.brauner@ubuntu.com>
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Jan 21, 2021 at 02:19:58PM +0100, Christian Brauner wrote:
-> From: Christoph Hellwig <hch@lst.de>
-> 
-> Enable idmapped mounts for xfs. This basically just means passing down
-> the user_namespace argument from the VFS methods down to where it is
-> passed to the relevant helpers.
-> 
-> Note that full-filesystem bulkstat is not supported from inside idmapped
-> mounts as it is an administrative operation that acts on the whole file
-> system. The limitation is not applied to the bulkstat single operation
-> that just operates on a single inode.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
-> ---
-> /* v2 */
-> 
-> /* v3 */
-> 
-> /* v4 */
-> 
-> /* v5 */
-> base-commit: 7c53f6b671f4aba70ff15e1b05148b10d58c2837
-> 
-> /* v6 */
-> unchanged
-> base-commit: 19c329f6808995b142b3966301f217c831e7cf31
-> ---
->  fs/xfs/xfs_acl.c     |  3 +--
->  fs/xfs/xfs_file.c    |  4 +++-
->  fs/xfs/xfs_inode.c   | 26 +++++++++++++++--------
->  fs/xfs/xfs_inode.h   | 16 +++++++++------
->  fs/xfs/xfs_ioctl.c   | 35 ++++++++++++++++++-------------
->  fs/xfs/xfs_ioctl32.c |  6 ++++--
->  fs/xfs/xfs_iops.c    | 49 +++++++++++++++++++++++++-------------------
->  fs/xfs/xfs_iops.h    |  3 ++-
->  fs/xfs/xfs_itable.c  | 17 +++++++++++----
->  fs/xfs/xfs_itable.h  |  1 +
->  fs/xfs/xfs_qm.c      |  3 ++-
->  fs/xfs/xfs_super.c   |  2 +-
->  fs/xfs/xfs_symlink.c |  5 +++--
->  fs/xfs/xfs_symlink.h |  5 +++--
->  14 files changed, 110 insertions(+), 65 deletions(-)
+On Wed, 24 Feb 2021, Alex Shi wrote:
 
-<snip> Sorry for not noticing until after this went upstream, but...
-
-> diff --git a/fs/xfs/xfs_itable.c b/fs/xfs/xfs_itable.c
-> index 16ca97a7ff00..ca310a125d1e 100644
-> --- a/fs/xfs/xfs_itable.c
-> +++ b/fs/xfs/xfs_itable.c
-> @@ -54,10 +54,12 @@ struct xfs_bstat_chunk {
->  STATIC int
->  xfs_bulkstat_one_int(
->  	struct xfs_mount	*mp,
-> +	struct user_namespace	*mnt_userns,
->  	struct xfs_trans	*tp,
->  	xfs_ino_t		ino,
->  	struct xfs_bstat_chunk	*bc)
->  {
-> +	struct user_namespace	*sb_userns = mp->m_super->s_user_ns;
->  	struct xfs_icdinode	*dic;		/* dinode core info pointer */
->  	struct xfs_inode	*ip;		/* incore inode pointer */
->  	struct inode		*inode;
-> @@ -86,8 +88,8 @@ xfs_bulkstat_one_int(
->  	 */
->  	buf->bs_projectid = ip->i_d.di_projid;
->  	buf->bs_ino = ino;
-> -	buf->bs_uid = i_uid_read(inode);
-> -	buf->bs_gid = i_gid_read(inode);
-> +	buf->bs_uid = from_kuid(sb_userns, i_uid_into_mnt(mnt_userns, inode));
-> +	buf->bs_gid = from_kgid(sb_userns, i_gid_into_mnt(mnt_userns, inode));
->  	buf->bs_size = dic->di_size;
->  
->  	buf->bs_nlink = inode->i_nlink;
-> @@ -173,7 +175,8 @@ xfs_bulkstat_one(
->  	if (!bc.buf)
->  		return -ENOMEM;
->  
-> -	error = xfs_bulkstat_one_int(breq->mp, NULL, breq->startino, &bc);
-> +	error = xfs_bulkstat_one_int(breq->mp, breq->mnt_userns, NULL,
-> +				     breq->startino, &bc);
->  
->  	kmem_free(bc.buf);
->  
-> @@ -194,9 +197,10 @@ xfs_bulkstat_iwalk(
->  	xfs_ino_t		ino,
->  	void			*data)
->  {
-> +	struct xfs_bstat_chunk	*bc = data;
->  	int			error;
->  
-> -	error = xfs_bulkstat_one_int(mp, tp, ino, data);
-> +	error = xfs_bulkstat_one_int(mp, bc->breq->mnt_userns, tp, ino, data);
->  	/* bulkstat just skips over missing inodes */
->  	if (error == -ENOENT || error == -EINVAL)
->  		return 0;
-> @@ -239,6 +243,11 @@ xfs_bulkstat(
->  	};
->  	int			error;
->  
-> +	if (breq->mnt_userns != &init_user_ns) {
-> +		xfs_warn_ratelimited(breq->mp,
-> +			"bulkstat not supported inside of idmapped mounts.");
-> +		return -EINVAL;
-
-Shouldn't this be -EPERM?
-
-Or -EOPNOTSUPP?
-
-Also, I'm not sure why bulkstat won't work in an idmapped mount but
-bulkstat_single does?  You can use the singleton version to stat inodes
-that aren't inside the submount.
-
---D
-
-> +	}
->  	if (xfs_bulkstat_already_done(breq->mp, breq->startino))
->  		return 0;
->  
-> diff --git a/fs/xfs/xfs_itable.h b/fs/xfs/xfs_itable.h
-> index 96a1e2a9be3f..7078d10c9b12 100644
-> --- a/fs/xfs/xfs_itable.h
-> +++ b/fs/xfs/xfs_itable.h
-> @@ -8,6 +8,7 @@
->  /* In-memory representation of a userspace request for batch inode data. */
->  struct xfs_ibulk {
->  	struct xfs_mount	*mp;
-> +	struct user_namespace   *mnt_userns;
->  	void __user		*ubuffer; /* user output buffer */
->  	xfs_ino_t		startino; /* start with this inode */
->  	unsigned int		icount;   /* number of elements in ubuffer */
-> diff --git a/fs/xfs/xfs_qm.c b/fs/xfs/xfs_qm.c
-> index c134eb4aeaa8..1b7b1393cab2 100644
-> --- a/fs/xfs/xfs_qm.c
-> +++ b/fs/xfs/xfs_qm.c
-> @@ -787,7 +787,8 @@ xfs_qm_qino_alloc(
->  		return error;
->  
->  	if (need_alloc) {
-> -		error = xfs_dir_ialloc(&tp, NULL, S_IFREG, 1, 0, 0, ipp);
-> +		error = xfs_dir_ialloc(&init_user_ns, &tp, NULL, S_IFREG, 1, 0,
-> +				       0, ipp);
->  		if (error) {
->  			xfs_trans_cancel(tp);
->  			return error;
-> diff --git a/fs/xfs/xfs_super.c b/fs/xfs/xfs_super.c
-> index 813be879a5e5..e95c1eff95e0 100644
-> --- a/fs/xfs/xfs_super.c
-> +++ b/fs/xfs/xfs_super.c
-> @@ -1912,7 +1912,7 @@ static struct file_system_type xfs_fs_type = {
->  	.init_fs_context	= xfs_init_fs_context,
->  	.parameters		= xfs_fs_parameters,
->  	.kill_sb		= kill_block_super,
-> -	.fs_flags		= FS_REQUIRES_DEV,
-> +	.fs_flags		= FS_REQUIRES_DEV | FS_ALLOW_IDMAP,
->  };
->  MODULE_ALIAS_FS("xfs");
->  
-> diff --git a/fs/xfs/xfs_symlink.c b/fs/xfs/xfs_symlink.c
-> index 1f43fd7f3209..77c8ea3229f1 100644
-> --- a/fs/xfs/xfs_symlink.c
-> +++ b/fs/xfs/xfs_symlink.c
-> @@ -134,6 +134,7 @@ xfs_readlink(
->  
->  int
->  xfs_symlink(
-> +	struct user_namespace	*mnt_userns,
->  	struct xfs_inode	*dp,
->  	struct xfs_name		*link_name,
->  	const char		*target_path,
-> @@ -223,8 +224,8 @@ xfs_symlink(
->  	/*
->  	 * Allocate an inode for the symlink.
->  	 */
-> -	error = xfs_dir_ialloc(&tp, dp, S_IFLNK | (mode & ~S_IFMT), 1, 0,
-> -			       prid, &ip);
-> +	error = xfs_dir_ialloc(mnt_userns, &tp, dp, S_IFLNK | (mode & ~S_IFMT),
-> +			       1, 0, prid, &ip);
->  	if (error)
->  		goto out_trans_cancel;
->  
-> diff --git a/fs/xfs/xfs_symlink.h b/fs/xfs/xfs_symlink.h
-> index b1fa091427e6..2586b7e393f3 100644
-> --- a/fs/xfs/xfs_symlink.h
-> +++ b/fs/xfs/xfs_symlink.h
-> @@ -7,8 +7,9 @@
->  
->  /* Kernel only symlink definitions */
->  
-> -int xfs_symlink(struct xfs_inode *dp, struct xfs_name *link_name,
-> -		const char *target_path, umode_t mode, struct xfs_inode **ipp);
-> +int xfs_symlink(struct user_namespace *mnt_userns, struct xfs_inode *dp,
-> +		struct xfs_name *link_name, const char *target_path,
-> +		umode_t mode, struct xfs_inode **ipp);
->  int xfs_readlink_bmap_ilocked(struct xfs_inode *ip, char *link);
->  int xfs_readlink(struct xfs_inode *ip, char *link);
->  int xfs_inactive_symlink(struct xfs_inode *ip);
-> -- 
-> 2.30.0
+> > Agreed, and happy to see that there's a general consensus for the 
+> > direction.  Benefit of a new madvise mode is that it can be used for 
+> > madvise() as well if you are interested in only a single range of your own 
+> > memory and then it doesn't need to reconcile with any of the already 
+> > overloaded semantics of MADV_HUGEPAGE.
 > 
+> It's a good idea to let process deal with its own THP policy.
+> but current applications will miss the benefit w/o changes, and change is
+> expensive for end users. So except this work, may a per memcg collapse benefit
+> apps and free for them, we often deploy apps in cgroups on server now.
+> 
+
+Hi Alex,
+
+I'm not sure that I understand: this MADV_COLLAPSE would be possible for 
+process_madvise() as well and by passing a vectored set of ranges so a 
+process can do this on behalf of other processes (it's the only way that 
+we could theoretically move khugepaged to userspace, although that's not 
+an explicit end goal).
+
+How would you see this working with memcg involved?  I had thought this 
+was entirely orthogonal to any cgroup.
