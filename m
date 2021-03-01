@@ -2,92 +2,76 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+X-Spam-Status: No, score=-7.3 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 16AE4C433E0
-	for <linux-api@archiver.kernel.org>; Mon,  1 Mar 2021 19:13:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A35CAC433E9
+	for <linux-api@archiver.kernel.org>; Mon,  1 Mar 2021 19:15:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C179A64E3F
-	for <linux-api@archiver.kernel.org>; Mon,  1 Mar 2021 19:13:20 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 604146148E
+	for <linux-api@archiver.kernel.org>; Mon,  1 Mar 2021 19:15:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240217AbhCATMh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 1 Mar 2021 14:12:37 -0500
-Received: from mx2.suse.de ([195.135.220.15]:43780 "EHLO mx2.suse.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S238166AbhCATKX (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 1 Mar 2021 14:10:23 -0500
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id BA07CAE37;
-        Mon,  1 Mar 2021 19:09:16 +0000 (UTC)
-Date:   Mon, 1 Mar 2021 20:09:09 +0100
-From:   Borislav Petkov <bp@suse.de>
-To:     "Chang S. Bae" <chang.seok.bae@intel.com>
-Cc:     tglx@linutronix.de, mingo@kernel.org, luto@kernel.org,
-        x86@kernel.org, len.brown@intel.com, dave.hansen@intel.com,
-        hjl.tools@gmail.com, Dave.Martin@arm.com, jannh@google.com,
-        mpe@ellerman.id.au, carlos@redhat.com, tony.luck@intel.com,
-        ravi.v.shankar@intel.com, libc-alpha@sourceware.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org
-Subject: Re: [PATCH v6 1/6] uapi: Define the aux vector AT_MINSIGSTKSZ
-Message-ID: <20210301190909.GF32622@zn.tnic>
-References: <20210227165911.32757-1-chang.seok.bae@intel.com>
- <20210227165911.32757-2-chang.seok.bae@intel.com>
+        id S240911AbhCATOZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 1 Mar 2021 14:14:25 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43034 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S240323AbhCATKS (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 1 Mar 2021 14:10:18 -0500
+Received: from fieldses.org (fieldses.org [IPv6:2600:3c00:e000:2f7::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 08618C061756;
+        Mon,  1 Mar 2021 11:09:04 -0800 (PST)
+Received: by fieldses.org (Postfix, from userid 2815)
+        id 580932501; Mon,  1 Mar 2021 14:09:03 -0500 (EST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 fieldses.org 580932501
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=fieldses.org;
+        s=default; t=1614625743;
+        bh=fx08SB4p4laIiZ9WJfR8nFHYQh/buf1pMVpOaKYR+GU=;
+        h=Date:To:Cc:Subject:References:In-Reply-To:From:From;
+        b=y4Ylmae1mUZaQR1v44qdwyjN/Q9y5UdUyUAW1kPwUFAukO3nDahtUWvsMVRRbu0zQ
+         HS0MV/drqw6+5vj7r37jHIVEBW74WG3WG8sdH53vrZ4Qm8yfhWfq0rUSH3pYbEpO4E
+         4B+G8L3S6lV4ytTE0qwbDo8ywFRxH84/lA6/kUVE=
+Date:   Mon, 1 Mar 2021 14:09:03 -0500
+To:     Drew DeVault <sir@cmpwn.com>
+Cc:     Matthew Wilcox <willy@infradead.org>,
+        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org,
+        Aleksa Sarai <cyphar@cyphar.com>
+Subject: Re: [RFC PATCH] fs: introduce mkdirat2 syscall for atomic mkdir
+Message-ID: <20210301190903.GD14881@fieldses.org>
+References: <20210228002500.11483-1-sir@cmpwn.com>
+ <20210228022440.GN2723601@casper.infradead.org>
+ <C9KT3SWXRPPA.257SY2N4MVBZD@taiga>
+ <20210228040345.GO2723601@casper.infradead.org>
+ <C9L7SV0Z2GZR.K2C3O186WDJ7@taiga>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <20210227165911.32757-2-chang.seok.bae@intel.com>
+In-Reply-To: <C9L7SV0Z2GZR.K2C3O186WDJ7@taiga>
+User-Agent: Mutt/1.5.21 (2010-09-15)
+From:   bfields@fieldses.org (J. Bruce Fields)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Sat, Feb 27, 2021 at 08:59:06AM -0800, Chang S. Bae wrote:
-> Define the AT_MINSIGSTKSZ in generic Linux. It is already used as generic
-> ABI in glibc's generic elf.h, and this define will prevent future namespace
-> conflicts. In particular, x86 is also using this generic definition.
+On Sun, Feb 28, 2021 at 08:57:20AM -0500, Drew DeVault wrote:
+> On Sat Feb 27, 2021 at 11:03 PM EST, Matthew Wilcox wrote:
+> > > 1. Program A creates a directory
+> > > 2. Program A is pre-empted
+> > > 3. Program B deletes the directory
+> > > 4. Program A creates a file in that directory
+> > > 5. RIP
+> >
+> > umm ... program B deletes the directory. program A opens it in order to
+> > use openat(). program A gets ENOENT and exits, confused. that's the
+> > race you're removing here -- and it seems fairly insignificant to me.
 > 
-> Signed-off-by: Chang S. Bae <chang.seok.bae@intel.com>
-> Reviewed-by: Len Brown <len.brown@intel.com>
-> Cc: Carlos O'Donell <carlos@redhat.com>
-> Cc: Dave Martin <Dave.Martin@arm.com>
-> Cc: libc-alpha@sourceware.org
-> Cc: linux-arch@vger.kernel.org
-> Cc: linux-api@vger.kernel.org
-> Cc: linux-arm-kernel@lists.infradead.org
-> Cc: linux-kernel@vger.kernel.org
-> ---
-> Change from v5:
-> * Reverted the arm64 change. (Dave Martin)
-> * Massaged the changelog.
-> 
-> Change from v4:
-> * Added as a new patch (Carlos O'Donell)
-> ---
->  include/uapi/linux/auxvec.h | 3 +++
->  1 file changed, 3 insertions(+)
-> 
-> diff --git a/include/uapi/linux/auxvec.h b/include/uapi/linux/auxvec.h
-> index abe5f2b6581b..15be98c75174 100644
-> --- a/include/uapi/linux/auxvec.h
-> +++ b/include/uapi/linux/auxvec.h
-> @@ -33,5 +33,8 @@
->  
->  #define AT_EXECFN  31	/* filename of program */
->  
-> +#ifndef AT_MINSIGSTKSZ
-> +#define AT_MINSIGSTKSZ	51	/* stack needed for signal delivery  */
+> Yes, that is the race being eliminated here. Instead of this, program A
+> has an fd which holds a reference to the directory, so it just works. A
+> race is a race. It's an oversight in the API.
 
-I know glibc's comment says a similar thing but the correct thing to say
-here should be "minimal stack size for signal delivery" or so. Even the
-variable name alludes to that too.
+Step 4 still fails either way, because you can't create a file in an
+unlinked directory, even if you hold a reference to that directory.
+What's the behavior change at step 4 that you're hoping for?
 
--- 
-Regards/Gruss,
-    Boris.
-
-SUSE Software Solutions Germany GmbH, GF: Felix Imendörffer, HRB 36809, AG Nürnberg
+--b.
