@@ -2,305 +2,245 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-18.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-19.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C7B16C43332
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 75964C4332B
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 852A764E62
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:21 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 30DE864E62
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1355475AbhCDA2y (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S244836AbhCDA2y (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Wed, 3 Mar 2021 19:28:54 -0500
-Received: from mx4.veeam.com ([104.41.138.86]:53888 "EHLO mx4.veeam.com"
+Received: from mail.kernel.org ([198.145.29.99]:45676 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231363AbhCCNFF (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 3 Mar 2021 08:05:05 -0500
-Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mx4.veeam.com (Postfix) with ESMTPS id 488D8114A96;
-        Wed,  3 Mar 2021 15:30:43 +0300 (MSK)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=veeam.com; s=mx4;
-        t=1614774643; bh=d/8zCRYtc8qXQVDCMasHDlNURXwuj37o4RUMhtXmscA=;
-        h=From:To:CC:Subject:Date:In-Reply-To:References:From;
-        b=ZWhpw4MstUM6lU5R2JIjR56OjdoScQ8HkEvQEeYLkWc23H2XvVPi8K2NXQnFV01yV
-         CTmUJ3IUZkJ0GIferUy9rBu1tBNliTIv/wv+ztapX+klkR9CLv1TnbOJbp+dznsMFh
-         7Cz/3+49DMvVwZfVfrNdjEvMB+l6wsZ9tu1MTRWM=
-Received: from prgdevlinuxpatch01.amust.local (172.24.14.5) by
- prgmbx01.amust.local (172.24.0.171) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.721.2;
- Wed, 3 Mar 2021 13:30:41 +0100
-From:   Sergei Shtepa <sergei.shtepa@veeam.com>
-To:     <snitzer@redhat.com>, <agk@redhat.com>, <hare@suse.de>,
-        <song@kernel.org>, <axboe@kernel.dk>, <dm-devel@redhat.com>,
-        <linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
-        <linux-raid@vger.kernel.org>, <linux-api@vger.kernel.org>
-CC:     <sergei.shtepa@veeam.com>, <pavel.tide@veeam.com>
-Subject: [PATCH v6 2/4] block: add blk_interposer
-Date:   Wed, 3 Mar 2021 15:30:16 +0300
-Message-ID: <1614774618-22410-3-git-send-email-sergei.shtepa@veeam.com>
-X-Mailer: git-send-email 1.8.3.1
-In-Reply-To: <1614774618-22410-1-git-send-email-sergei.shtepa@veeam.com>
-References: <1614774618-22410-1-git-send-email-sergei.shtepa@veeam.com>
+        id S238674AbhCCQXY (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 3 Mar 2021 11:23:24 -0500
+Received: by mail.kernel.org (Postfix) with ESMTPSA id E208E64EE9;
+        Wed,  3 Mar 2021 16:22:18 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1614788549;
+        bh=uF3t0VA9z663jvFfdtPCA44jnfXi5YIRbS8T3G1Nz50=;
+        h=From:To:Cc:Subject:Date:From;
+        b=lct2G1bVCGvORp7GQvonJWJ5LnnyRDqZFbPSzkLaRNro8vSjxYc25I8k2EyePlvMy
+         TtjOEAmbm53x/ICan84OdyBB9WBUxhrB/iQBUOFU18SBb4dGiVhBlj1eKIgcHa3t4p
+         X0IvgIvAnMSTunUIVYuG2wbq2R3kuOzn6EL4uA7/uIULMvjTzbCYVYbdED941WN8O3
+         lc4SHGKOFa+6MX+j9HAcIn+cIAS8UDA201zNevu+p/sHwfUEyBAbNahwjUOAFV/+Li
+         pVvXR6bh4wGUGuN9lsbqfmxNWvD/F7Dl6PEK8OE+e9RDnVqIuy4JtgVcY2Cv5/9dA4
+         54b9QlEOg2usA==
+From:   Mike Rapoport <rppt@kernel.org>
+To:     Andrew Morton <akpm@linux-foundation.org>
+Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
+        Andy Lutomirski <luto@kernel.org>,
+        Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Christopher Lameter <cl@linux.com>,
+        Dan Williams <dan.j.williams@intel.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        David Hildenbrand <david@redhat.com>,
+        Elena Reshetova <elena.reshetova@intel.com>,
+        "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,
+        James Bottomley <jejb@linux.ibm.com>,
+        "Kirill A. Shutemov" <kirill@shutemov.name>,
+        Matthew Wilcox <willy@infradead.org>,
+        Matthew Garrett <mjg59@srcf.ucam.org>,
+        Mark Rutland <mark.rutland@arm.com>,
+        Michal Hocko <mhocko@suse.com>,
+        Mike Rapoport <rppt@linux.ibm.com>,
+        Mike Rapoport <rppt@kernel.org>,
+        Michael Kerrisk <mtk.manpages@gmail.com>,
+        Palmer Dabbelt <palmer@dabbelt.com>,
+        Paul Walmsley <paul.walmsley@sifive.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        "Rafael J. Wysocki" <rjw@rjwysocki.net>,
+        Rick Edgecombe <rick.p.edgecombe@intel.com>,
+        Roman Gushchin <guro@fb.com>,
+        Shakeel Butt <shakeelb@google.com>,
+        Shuah Khan <shuah@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
+        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
+        linux-arm-kernel@lists.infradead.org,
+        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
+        linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
+        linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
+        x86@kernel.org
+Subject: [PATCH v18 0/9] mm: introduce memfd_secret system call to create "secret" memory areas
+Date:   Wed,  3 Mar 2021 18:22:00 +0200
+Message-Id: <20210303162209.8609-1-rppt@kernel.org>
+X-Mailer: git-send-email 2.28.0
 MIME-Version: 1.0
-Content-Type: text/plain
-X-Originating-IP: [172.24.14.5]
-X-ClientProxiedBy: prgmbx01.amust.local (172.24.0.171) To prgmbx01.amust.local
- (172.24.0.171)
-X-EsetResult: clean, is OK
-X-EsetId: 37303A29C604D265637363
-X-Veeam-MMEX: True
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-blk_interposer allows to intercept bio requests, remap bio
-to another devices or add new bios.
+From: Mike Rapoport <rppt@linux.ibm.com>
 
-Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
----
- block/bio.c               |  2 +
- block/blk-core.c          | 36 +++++++++++++++
- block/genhd.c             | 93 +++++++++++++++++++++++++++++++++++++++
- include/linux/blk_types.h |  4 ++
- include/linux/blkdev.h    | 17 +++++++
- 5 files changed, 152 insertions(+)
+Hi,
 
-diff --git a/block/bio.c b/block/bio.c
-index a1c4d2900c7a..0bfbf06475ee 100644
---- a/block/bio.c
-+++ b/block/bio.c
-@@ -640,6 +640,8 @@ void __bio_clone_fast(struct bio *bio, struct bio *bio_src)
- 		bio_set_flag(bio, BIO_THROTTLED);
- 	if (bio_flagged(bio_src, BIO_REMAPPED))
- 		bio_set_flag(bio, BIO_REMAPPED);
-+	if (bio_flagged(bio_src, BIO_INTERPOSED))
-+		bio_set_flag(bio, BIO_INTERPOSED);
- 	bio->bi_opf = bio_src->bi_opf;
- 	bio->bi_ioprio = bio_src->bi_ioprio;
- 	bio->bi_write_hint = bio_src->bi_write_hint;
-diff --git a/block/blk-core.c b/block/blk-core.c
-index fc60ff208497..e749507cadd3 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -1018,6 +1018,34 @@ static blk_qc_t __submit_bio_noacct_mq(struct bio *bio)
- 	return ret;
- }
+@Andrew, this is based on v5.12-rc1, I can rebase whatever way you prefer.
+
+This is an implementation of "secret" mappings backed by a file descriptor.
+
+The file descriptor backing secret memory mappings is created using a
+dedicated memfd_secret system call The desired protection mode for the
+memory is configured using flags parameter of the system call. The mmap()
+of the file descriptor created with memfd_secret() will create a "secret"
+memory mapping. The pages in that mapping will be marked as not present in
+the direct map and will be present only in the page table of the owning mm.
+
+Although normally Linux userspace mappings are protected from other users,
+such secret mappings are useful for environments where a hostile tenant is
+trying to trick the kernel into giving them access to other tenants
+mappings.
+
+Additionally, in the future the secret mappings may be used as a mean to
+protect guest memory in a virtual machine host.
+
+For demonstration of secret memory usage we've created a userspace library
+
+https://git.kernel.org/pub/scm/linux/kernel/git/jejb/secret-memory-preloader.git
+
+that does two things: the first is act as a preloader for openssl to
+redirect all the OPENSSL_malloc calls to secret memory meaning any secret
+keys get automatically protected this way and the other thing it does is
+expose the API to the user who needs it. We anticipate that a lot of the
+use cases would be like the openssl one: many toolkits that deal with
+secret keys already have special handling for the memory to try to give
+them greater protection, so this would simply be pluggable into the
+toolkits without any need for user application modification.
+
+Hiding secret memory mappings behind an anonymous file allows usage of
+the page cache for tracking pages allocated for the "secret" mappings as
+well as using address_space_operations for e.g. page migration callbacks.
+
+The anonymous file may be also used implicitly, like hugetlb files, to
+implement mmap(MAP_SECRET) and use the secret memory areas with "native" mm
+ABIs in the future.
+
+Removing of the pages from the direct map may cause its fragmentation on
+architectures that use large pages to map the physical memory which affects
+the system performance. However, the original Kconfig text for
+CONFIG_DIRECT_GBPAGES said that gigabyte pages in the direct map "... can
+improve the kernel's performance a tiny bit ..." (commit 00d1c5e05736
+("x86: add gbpages switches")) and the recent report [1] showed that "...
+although 1G mappings are a good default choice, there is no compelling
+evidence that it must be the only choice". Hence, it is sufficient to have
+secretmem disabled by default with the ability of a system administrator to
+enable it at boot time.
+
+In addition, there is also a long term goal to improve management of the
+direct map.
+
+[1] https://lore.kernel.org/linux-mm/213b4567-46ce-f116-9cdf-bbd0c884eb3c@linux.intel.com/
+
+v18:
+* rebase on v5.12-rc1
+* merge kfence fix into the original patch
+* massage commit message of the patch introducing the memfd_secret syscall
+
+v17: https://lore.kernel.org/lkml/20210208084920.2884-1-rppt@kernel.org
+* Remove pool of large pages backing secretmem allocations, per Michal Hocko
+* Add secretmem pages to unevictable LRU, per Michal Hocko
+* Use GFP_HIGHUSER as secretmem mapping mask, per Michal Hocko
+* Make secretmem an opt-in feature that is disabled by default
  
-+static blk_qc_t __submit_bio_interposed(struct bio *bio)
-+{
-+	struct bio_list bio_list[2] = { };
-+	blk_qc_t ret = BLK_QC_T_NONE;
-+
-+	current->bio_list = bio_list;
-+	if (likely(bio_queue_enter(bio) == 0)) {
-+		struct block_device *bdev = bio->bi_bdev;
-+
-+		if (likely(bdev_has_interposer(bdev))) {
-+			bio_set_flag(bio, BIO_INTERPOSED);
-+			bdev->bd_interposer->ip_submit_bio(bio);
-+		} else {
-+			/* interposer was removed */
-+			bio_list_add(&current->bio_list[0], bio);
-+		}
-+
-+		blk_queue_exit(bdev->bd_disk->queue);
-+	}
-+	current->bio_list = NULL;
-+
-+	/* Resubmit remaining bios */
-+	while ((bio = bio_list_pop(&bio_list[0])))
-+		ret = submit_bio_noacct(bio);
-+
-+	return ret;
-+}
-+
- /**
-  * submit_bio_noacct - re-submit a bio to the block device layer for I/O
-  * @bio:  The bio describing the location in memory and on the device.
-@@ -1043,6 +1071,14 @@ blk_qc_t submit_bio_noacct(struct bio *bio)
- 		return BLK_QC_T_NONE;
- 	}
- 
-+	/*
-+	 * Checking the BIO_INTERPOSED flag is necessary so that the bio
-+	 * created by the bdev_interposer do not get to it for processing.
-+	 */
-+	if (bdev_has_interposer(bio->bi_bdev) &&
-+	    !bio_flagged(bio, BIO_INTERPOSED))
-+		return __submit_bio_interposed(bio);
-+
- 	if (!bio->bi_bdev->bd_disk->fops->submit_bio)
- 		return __submit_bio_noacct_mq(bio);
- 	return __submit_bio_noacct(bio);
-diff --git a/block/genhd.c b/block/genhd.c
-index fcc530164b5a..1ae8516643c8 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -30,6 +30,11 @@
- static struct kobject *block_depr;
- 
- DECLARE_RWSEM(bdev_lookup_sem);
-+/*
-+ * Prevents different block-layer interposers from attaching or detaching
-+ * to the block device at the same time.
-+ */
-+DEFINE_MUTEX(bdev_interposer_attach_lock);
- 
- /* for extended dynamic devt allocation, currently only one major is used */
- #define NR_EXT_DEVT		(1 << MINORBITS)
-@@ -1941,3 +1946,91 @@ static void disk_release_events(struct gendisk *disk)
- 	WARN_ON_ONCE(disk->ev && disk->ev->block != 1);
- 	kfree(disk->ev);
- }
-+
-+/**
-+ * bdev_interposer_attach - Attach interposer to block device
-+ * @bdev: target block device
-+ * @interposer: block device interposer
-+ * @ip_submit_bio: hook for submit_bio()
-+ *
-+ * Returns:
-+ *     -EINVAL if @interposer is NULL.
-+ *     -EPERM if queue is not frozen.
-+ *     -EBUSY if the block device already has @interposer.
-+ *     -EALREADY if the block device already has @interposer with same callback.
-+ *     -ENODEV if the block device cannot be referenced.
-+ *
-+ * Disk must be frozen by blk_mq_freeze_queue().
-+ */
-+int bdev_interposer_attach(struct block_device *bdev, struct bdev_interposer *interposer,
-+			  const ip_submit_bio_t ip_submit_bio)
-+{
-+	int ret = 0;
-+
-+	if (WARN_ON(!interposer))
-+		return -EINVAL;
-+
-+	if (!blk_mq_is_queue_frozen(bdev->bd_disk->queue))
-+		return -EPERM;
-+
-+	mutex_lock(&bdev_interposer_attach_lock);
-+	if (bdev_has_interposer(bdev)) {
-+		if (bdev->bd_interposer->ip_submit_bio == ip_submit_bio)
-+			ret = -EALREADY;
-+		else
-+			ret = -EBUSY;
-+		goto out;
-+	}
-+
-+	interposer->ip_submit_bio = ip_submit_bio;
-+
-+	interposer->bdev = bdgrab(bdev);
-+	if (!interposer->bdev) {
-+		ret = -ENODEV;
-+		goto out;
-+	}
-+
-+	bdev->bd_interposer = interposer;
-+out:
-+	mutex_unlock(&bdev_interposer_attach_lock);
-+
-+	return ret;
-+}
-+EXPORT_SYMBOL_GPL(bdev_interposer_attach);
-+
-+/**
-+ * bdev_interposer_detach - Detach interposer from block device
-+ * @interposer: block device interposer
-+ * @ip_submit_bio: hook for submit_bio()
-+ *
-+ * Disk must be frozen by blk_mq_freeze_queue().
-+ */
-+void bdev_interposer_detach(struct bdev_interposer *interposer,
-+			  const ip_submit_bio_t ip_submit_bio)
-+{
-+	struct block_device *bdev;
-+
-+	if (WARN_ON(!interposer))
-+		return;
-+
-+	mutex_lock(&bdev_interposer_attach_lock);
-+
-+	/* Check if the interposer is still active. */
-+	bdev = interposer->bdev;
-+	if (WARN_ON(!bdev))
-+		goto out;
-+
-+	if (WARN_ON(!blk_mq_is_queue_frozen(bdev->bd_disk->queue)))
-+		goto out;
-+
-+	/* Check if it is really our interposer. */
-+	if (WARN_ON(bdev->bd_interposer->ip_submit_bio != ip_submit_bio))
-+		goto out;
-+
-+	bdev->bd_interposer = NULL;
-+	interposer->bdev = NULL;
-+	bdput(bdev);
-+out:
-+	mutex_unlock(&bdev_interposer_attach_lock);
-+}
-+EXPORT_SYMBOL_GPL(bdev_interposer_detach);
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index db026b6ec15a..2b43f65bb356 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -19,6 +19,7 @@ struct io_context;
- struct cgroup_subsys_state;
- typedef void (bio_end_io_t) (struct bio *);
- struct bio_crypt_ctx;
-+struct bdev_interposer;
- 
- struct block_device {
- 	sector_t		bd_start_sect;
-@@ -46,6 +47,7 @@ struct block_device {
- 	spinlock_t		bd_size_lock; /* for bd_inode->i_size updates */
- 	struct gendisk *	bd_disk;
- 	struct backing_dev_info *bd_bdi;
-+	struct bdev_interposer * bd_interposer;
- 
- 	/* The counter of freeze processes */
- 	int			bd_fsfreeze_count;
-@@ -304,6 +306,8 @@ enum {
- 	BIO_CGROUP_ACCT,	/* has been accounted to a cgroup */
- 	BIO_TRACKED,		/* set if bio goes through the rq_qos path */
- 	BIO_REMAPPED,
-+	BIO_INTERPOSED,		/* bio has been interposed and can be moved to
-+				 * a different block device */
- 	BIO_FLAG_LAST
- };
- 
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index c032cfe133c7..82f8515fa3c8 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -2033,4 +2033,21 @@ int fsync_bdev(struct block_device *bdev);
- int freeze_bdev(struct block_device *bdev);
- int thaw_bdev(struct block_device *bdev);
- 
-+/*
-+ * block layer interposers structure and functions
-+ */
-+typedef void (*ip_submit_bio_t) (struct bio *bio);
-+
-+struct bdev_interposer {
-+	ip_submit_bio_t ip_submit_bio;
-+	struct block_device *bdev;
-+};
-+
-+#define bdev_has_interposer(bd) ((bd)->bd_interposer != NULL)
-+
-+int bdev_interposer_attach(struct block_device *bdev, struct bdev_interposer *interposer,
-+			   const ip_submit_bio_t ip_submit_bio);
-+void bdev_interposer_detach(struct bdev_interposer *interposer,
-+			    const ip_submit_bio_t ip_submit_bio);
-+
- #endif /* _LINUX_BLKDEV_H */
+v16: https://lore.kernel.org/lkml/20210121122723.3446-1-rppt@kernel.org
+* Fix memory leak intorduced in v15
+* Clean the data left from previous page user before handing the page to
+  the userspace
+
+v15: https://lore.kernel.org/lkml/20210120180612.1058-1-rppt@kernel.org
+* Add riscv/Kconfig update to disable set_memory operations for nommu
+  builds (patch 3)
+* Update the code around add_to_page_cache() per Matthew's comments
+  (patches 6,7)
+* Add fixups for build/checkpatch errors discovered by CI systems
+
+v14: https://lore.kernel.org/lkml/20201203062949.5484-1-rppt@kernel.org
+* Finally s/mod_node_page_state/mod_lruvec_page_state/
+
+v13: https://lore.kernel.org/lkml/20201201074559.27742-1-rppt@kernel.org
+* Added Reviewed-by, thanks Catalin and David
+* s/mod_node_page_state/mod_lruvec_page_state/ as Shakeel suggested
+
+Older history:
+v12: https://lore.kernel.org/lkml/20201125092208.12544-1-rppt@kernel.org
+v11: https://lore.kernel.org/lkml/20201124092556.12009-1-rppt@kernel.org
+v10: https://lore.kernel.org/lkml/20201123095432.5860-1-rppt@kernel.org
+v9: https://lore.kernel.org/lkml/20201117162932.13649-1-rppt@kernel.org
+v8: https://lore.kernel.org/lkml/20201110151444.20662-1-rppt@kernel.org
+v7: https://lore.kernel.org/lkml/20201026083752.13267-1-rppt@kernel.org
+v6: https://lore.kernel.org/lkml/20200924132904.1391-1-rppt@kernel.org
+v5: https://lore.kernel.org/lkml/20200916073539.3552-1-rppt@kernel.org
+v4: https://lore.kernel.org/lkml/20200818141554.13945-1-rppt@kernel.org
+v3: https://lore.kernel.org/lkml/20200804095035.18778-1-rppt@kernel.org
+v2: https://lore.kernel.org/lkml/20200727162935.31714-1-rppt@kernel.org
+v1: https://lore.kernel.org/lkml/20200720092435.17469-1-rppt@kernel.org
+rfc-v2: https://lore.kernel.org/lkml/20200706172051.19465-1-rppt@kernel.org/
+rfc-v1: https://lore.kernel.org/lkml/20200130162340.GA14232@rapoport-lnx/
+rfc-v0: https://lore.kernel.org/lkml/1572171452-7958-1-git-send-email-rppt@kernel.org/
+
+Mike Rapoport (9):
+  mm: add definition of PMD_PAGE_ORDER
+  mmap: make mlock_future_check() global
+  riscv/Kconfig: make direct map manipulation options depend on MMU
+  set_memory: allow set_direct_map_*_noflush() for multiple pages
+  set_memory: allow querying whether set_direct_map_*() is actually enabled
+  mm: introduce memfd_secret system call to create "secret" memory areas
+  PM: hibernate: disable when there are active secretmem users
+  arch, mm: wire up memfd_secret system call where relevant
+  secretmem: test: add basic selftest for memfd_secret(2)
+
+ arch/arm64/include/asm/Kbuild             |   1 -
+ arch/arm64/include/asm/cacheflush.h       |   6 -
+ arch/arm64/include/asm/kfence.h           |   2 +-
+ arch/arm64/include/asm/set_memory.h       |  17 ++
+ arch/arm64/include/uapi/asm/unistd.h      |   1 +
+ arch/arm64/kernel/machine_kexec.c         |   1 +
+ arch/arm64/mm/mmu.c                       |   6 +-
+ arch/arm64/mm/pageattr.c                  |  23 +-
+ arch/riscv/Kconfig                        |   4 +-
+ arch/riscv/include/asm/set_memory.h       |   4 +-
+ arch/riscv/include/asm/unistd.h           |   1 +
+ arch/riscv/mm/pageattr.c                  |   8 +-
+ arch/x86/entry/syscalls/syscall_32.tbl    |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl    |   1 +
+ arch/x86/include/asm/set_memory.h         |   4 +-
+ arch/x86/mm/pat/set_memory.c              |   8 +-
+ fs/dax.c                                  |  11 +-
+ include/linux/pgtable.h                   |   3 +
+ include/linux/secretmem.h                 |  30 +++
+ include/linux/set_memory.h                |  16 +-
+ include/linux/syscalls.h                  |   1 +
+ include/uapi/asm-generic/unistd.h         |   6 +-
+ include/uapi/linux/magic.h                |   1 +
+ kernel/power/hibernate.c                  |   5 +-
+ kernel/power/snapshot.c                   |   4 +-
+ kernel/sys_ni.c                           |   2 +
+ mm/Kconfig                                |   3 +
+ mm/Makefile                               |   1 +
+ mm/gup.c                                  |  10 +
+ mm/internal.h                             |   3 +
+ mm/mlock.c                                |   3 +-
+ mm/mmap.c                                 |   5 +-
+ mm/secretmem.c                            | 261 +++++++++++++++++++
+ mm/vmalloc.c                              |   5 +-
+ scripts/checksyscalls.sh                  |   4 +
+ tools/testing/selftests/vm/.gitignore     |   1 +
+ tools/testing/selftests/vm/Makefile       |   3 +-
+ tools/testing/selftests/vm/memfd_secret.c | 296 ++++++++++++++++++++++
+ tools/testing/selftests/vm/run_vmtests.sh |  17 ++
+ 39 files changed, 726 insertions(+), 53 deletions(-)
+ create mode 100644 arch/arm64/include/asm/set_memory.h
+ create mode 100644 include/linux/secretmem.h
+ create mode 100644 mm/secretmem.c
+ create mode 100644 tools/testing/selftests/vm/memfd_secret.c
+
 -- 
-2.20.1
+2.28.0
 
