@@ -2,343 +2,305 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,
+X-Spam-Status: No, score=-18.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7A3A0C41621
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C7B16C43332
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:21 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 53F5C6023B
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:23 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 852A764E62
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1355477AbhCDA3B (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 3 Mar 2021 19:29:01 -0500
-Received: from mail.kernel.org ([198.145.29.99]:46922 "EHLO mail.kernel.org"
+        id S1355475AbhCDA2y (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 3 Mar 2021 19:28:54 -0500
+Received: from mx4.veeam.com ([104.41.138.86]:53888 "EHLO mx4.veeam.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S238886AbhCCQYv (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 3 Mar 2021 11:24:51 -0500
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 8C7D764EEB;
-        Wed,  3 Mar 2021 16:23:03 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1614788594;
-        bh=3L5LfgX8YQZHs8RhJs3aUV3Lp9pUuH2HcdGSCfQz7w8=;
-        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=ZGfvsZGZQAM599zQUIVcrTqth2yu+GJIaidUQ1VxQKtyB4kVeRNubHlrvDGzmHjrb
-         P8e1H/vG0/zaY55hqTarALIx9hq7kKeE175hk0vnoCLpEej7OzEfhmvY+mOUHDc2o3
-         CW4yk4ob8BGnQ2Ij/D4eL5k36utJUK/ySgdRHlEI9JI6MXgiH8/XquGySEjL2b651m
-         +5gHVUeyrsTGyJC7csSVRUFbpDqELxLTTVNNoC91CQ6p1sASqfFEM9qXWN9RKGa6Bo
-         b1cgGZPzWU9ZoNbd5PxwYd0Caw1zQMCebLmUxFfqKSh3htleCbNw/Y4+zDUNrWJe9a
-         SfFXg++8K8MSg==
-From:   Mike Rapoport <rppt@kernel.org>
-To:     Andrew Morton <akpm@linux-foundation.org>
-Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
-        Andy Lutomirski <luto@kernel.org>,
-        Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Christopher Lameter <cl@linux.com>,
-        Dan Williams <dan.j.williams@intel.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        David Hildenbrand <david@redhat.com>,
-        Elena Reshetova <elena.reshetova@intel.com>,
-        "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,
-        James Bottomley <jejb@linux.ibm.com>,
-        "Kirill A. Shutemov" <kirill@shutemov.name>,
-        Matthew Wilcox <willy@infradead.org>,
-        Matthew Garrett <mjg59@srcf.ucam.org>,
-        Mark Rutland <mark.rutland@arm.com>,
-        Michal Hocko <mhocko@suse.com>,
-        Mike Rapoport <rppt@linux.ibm.com>,
-        Mike Rapoport <rppt@kernel.org>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Palmer Dabbelt <palmer@dabbelt.com>,
-        Paul Walmsley <paul.walmsley@sifive.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        "Rafael J. Wysocki" <rjw@rjwysocki.net>,
-        Rick Edgecombe <rick.p.edgecombe@intel.com>,
-        Roman Gushchin <guro@fb.com>,
-        Shakeel Butt <shakeelb@google.com>,
-        Shuah Khan <shuah@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Tycho Andersen <tycho@tycho.ws>, Will Deacon <will@kernel.org>,
-        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
-        linux-arm-kernel@lists.infradead.org,
-        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
-        linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
-        linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
-        x86@kernel.org, Hagen Paul Pfeifer <hagen@jauu.net>,
-        Palmer Dabbelt <palmerdabbelt@google.com>
-Subject: [PATCH v18 4/9] set_memory: allow set_direct_map_*_noflush() for multiple pages
-Date:   Wed,  3 Mar 2021 18:22:04 +0200
-Message-Id: <20210303162209.8609-5-rppt@kernel.org>
-X-Mailer: git-send-email 2.28.0
-In-Reply-To: <20210303162209.8609-1-rppt@kernel.org>
-References: <20210303162209.8609-1-rppt@kernel.org>
+        id S231363AbhCCNFF (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 3 Mar 2021 08:05:05 -0500
+Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mx4.veeam.com (Postfix) with ESMTPS id 488D8114A96;
+        Wed,  3 Mar 2021 15:30:43 +0300 (MSK)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=veeam.com; s=mx4;
+        t=1614774643; bh=d/8zCRYtc8qXQVDCMasHDlNURXwuj37o4RUMhtXmscA=;
+        h=From:To:CC:Subject:Date:In-Reply-To:References:From;
+        b=ZWhpw4MstUM6lU5R2JIjR56OjdoScQ8HkEvQEeYLkWc23H2XvVPi8K2NXQnFV01yV
+         CTmUJ3IUZkJ0GIferUy9rBu1tBNliTIv/wv+ztapX+klkR9CLv1TnbOJbp+dznsMFh
+         7Cz/3+49DMvVwZfVfrNdjEvMB+l6wsZ9tu1MTRWM=
+Received: from prgdevlinuxpatch01.amust.local (172.24.14.5) by
+ prgmbx01.amust.local (172.24.0.171) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.721.2;
+ Wed, 3 Mar 2021 13:30:41 +0100
+From:   Sergei Shtepa <sergei.shtepa@veeam.com>
+To:     <snitzer@redhat.com>, <agk@redhat.com>, <hare@suse.de>,
+        <song@kernel.org>, <axboe@kernel.dk>, <dm-devel@redhat.com>,
+        <linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
+        <linux-raid@vger.kernel.org>, <linux-api@vger.kernel.org>
+CC:     <sergei.shtepa@veeam.com>, <pavel.tide@veeam.com>
+Subject: [PATCH v6 2/4] block: add blk_interposer
+Date:   Wed, 3 Mar 2021 15:30:16 +0300
+Message-ID: <1614774618-22410-3-git-send-email-sergei.shtepa@veeam.com>
+X-Mailer: git-send-email 1.8.3.1
+In-Reply-To: <1614774618-22410-1-git-send-email-sergei.shtepa@veeam.com>
+References: <1614774618-22410-1-git-send-email-sergei.shtepa@veeam.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-Originating-IP: [172.24.14.5]
+X-ClientProxiedBy: prgmbx01.amust.local (172.24.0.171) To prgmbx01.amust.local
+ (172.24.0.171)
+X-EsetResult: clean, is OK
+X-EsetId: 37303A29C604D265637363
+X-Veeam-MMEX: True
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Mike Rapoport <rppt@linux.ibm.com>
+blk_interposer allows to intercept bio requests, remap bio
+to another devices or add new bios.
 
-The underlying implementations of set_direct_map_invalid_noflush() and
-set_direct_map_default_noflush() allow updating multiple contiguous pages
-at once.
-
-Add numpages parameter to set_direct_map_*_noflush() to expose this
-ability with these APIs.
-
-Signed-off-by: Mike Rapoport <rppt@linux.ibm.com>
-Acked-by: Catalin Marinas <catalin.marinas@arm.com>	[arm64]
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Arnd Bergmann <arnd@arndb.de>
-Cc: Borislav Petkov <bp@alien8.de>
-Cc: Christopher Lameter <cl@linux.com>
-Cc: Dan Williams <dan.j.williams@intel.com>
-Cc: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: David Hildenbrand <david@redhat.com>
-Cc: Elena Reshetova <elena.reshetova@intel.com>
-Cc: Hagen Paul Pfeifer <hagen@jauu.net>
-Cc: "H. Peter Anvin" <hpa@zytor.com>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: James Bottomley <jejb@linux.ibm.com>
-Cc: "Kirill A. Shutemov" <kirill@shutemov.name>
-Cc: Mark Rutland <mark.rutland@arm.com>
-Cc: Matthew Wilcox <willy@infradead.org>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: Palmer Dabbelt <palmer@dabbelt.com>
-Cc: Palmer Dabbelt <palmerdabbelt@google.com>
-Cc: Paul Walmsley <paul.walmsley@sifive.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Rick Edgecombe <rick.p.edgecombe@intel.com>
-Cc: Roman Gushchin <guro@fb.com>
-Cc: Shakeel Butt <shakeelb@google.com>
-Cc: Shuah Khan <shuah@kernel.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Tycho Andersen <tycho@tycho.ws>
-Cc: Will Deacon <will@kernel.org>
+Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
 ---
- arch/arm64/include/asm/cacheflush.h |  4 ++--
- arch/arm64/mm/pageattr.c            | 10 ++++++----
- arch/riscv/include/asm/set_memory.h |  4 ++--
- arch/riscv/mm/pageattr.c            |  8 ++++----
- arch/x86/include/asm/set_memory.h   |  4 ++--
- arch/x86/mm/pat/set_memory.c        |  8 ++++----
- include/linux/set_memory.h          |  4 ++--
- kernel/power/snapshot.c             |  4 ++--
- mm/vmalloc.c                        |  5 +++--
- 9 files changed, 27 insertions(+), 24 deletions(-)
+ block/bio.c               |  2 +
+ block/blk-core.c          | 36 +++++++++++++++
+ block/genhd.c             | 93 +++++++++++++++++++++++++++++++++++++++
+ include/linux/blk_types.h |  4 ++
+ include/linux/blkdev.h    | 17 +++++++
+ 5 files changed, 152 insertions(+)
 
-diff --git a/arch/arm64/include/asm/cacheflush.h b/arch/arm64/include/asm/cacheflush.h
-index 52e5c1623224..ace2c3d7ae7e 100644
---- a/arch/arm64/include/asm/cacheflush.h
-+++ b/arch/arm64/include/asm/cacheflush.h
-@@ -133,8 +133,8 @@ static __always_inline void __flush_icache_all(void)
- 
- int set_memory_valid(unsigned long addr, int numpages, int enable);
- 
--int set_direct_map_invalid_noflush(struct page *page);
--int set_direct_map_default_noflush(struct page *page);
-+int set_direct_map_invalid_noflush(struct page *page, int numpages);
-+int set_direct_map_default_noflush(struct page *page, int numpages);
- bool kernel_page_present(struct page *page);
- 
- #include <asm-generic/cacheflush.h>
-diff --git a/arch/arm64/mm/pageattr.c b/arch/arm64/mm/pageattr.c
-index 92eccaf595c8..b53ef37bf95a 100644
---- a/arch/arm64/mm/pageattr.c
-+++ b/arch/arm64/mm/pageattr.c
-@@ -148,34 +148,36 @@ int set_memory_valid(unsigned long addr, int numpages, int enable)
- 					__pgprot(PTE_VALID));
- }
- 
--int set_direct_map_invalid_noflush(struct page *page)
-+int set_direct_map_invalid_noflush(struct page *page, int numpages)
- {
- 	struct page_change_data data = {
- 		.set_mask = __pgprot(0),
- 		.clear_mask = __pgprot(PTE_VALID),
- 	};
-+	unsigned long size = PAGE_SIZE * numpages;
- 
- 	if (!debug_pagealloc_enabled() && !rodata_full)
- 		return 0;
- 
- 	return apply_to_page_range(&init_mm,
- 				   (unsigned long)page_address(page),
--				   PAGE_SIZE, change_page_range, &data);
-+				   size, change_page_range, &data);
- }
- 
--int set_direct_map_default_noflush(struct page *page)
-+int set_direct_map_default_noflush(struct page *page, int numpages)
- {
- 	struct page_change_data data = {
- 		.set_mask = __pgprot(PTE_VALID | PTE_WRITE),
- 		.clear_mask = __pgprot(PTE_RDONLY),
- 	};
-+	unsigned long size = PAGE_SIZE * numpages;
- 
- 	if (!debug_pagealloc_enabled() && !rodata_full)
- 		return 0;
- 
- 	return apply_to_page_range(&init_mm,
- 				   (unsigned long)page_address(page),
--				   PAGE_SIZE, change_page_range, &data);
-+				   size, change_page_range, &data);
- }
- 
- #ifdef CONFIG_DEBUG_PAGEALLOC
-diff --git a/arch/riscv/include/asm/set_memory.h b/arch/riscv/include/asm/set_memory.h
-index 6887b3d9f371..018e26732940 100644
---- a/arch/riscv/include/asm/set_memory.h
-+++ b/arch/riscv/include/asm/set_memory.h
-@@ -26,8 +26,8 @@ static inline void protect_kernel_text_data(void) {}
- static inline int set_memory_rw_nx(unsigned long addr, int numpages) { return 0; }
- #endif
- 
--int set_direct_map_invalid_noflush(struct page *page);
--int set_direct_map_default_noflush(struct page *page);
-+int set_direct_map_invalid_noflush(struct page *page, int numpages);
-+int set_direct_map_default_noflush(struct page *page, int numpages);
- bool kernel_page_present(struct page *page);
- 
- #endif /* __ASSEMBLY__ */
-diff --git a/arch/riscv/mm/pageattr.c b/arch/riscv/mm/pageattr.c
-index 5e49e4b4a4cc..9618181b70be 100644
---- a/arch/riscv/mm/pageattr.c
-+++ b/arch/riscv/mm/pageattr.c
-@@ -156,11 +156,11 @@ int set_memory_nx(unsigned long addr, int numpages)
- 	return __set_memory(addr, numpages, __pgprot(0), __pgprot(_PAGE_EXEC));
- }
- 
--int set_direct_map_invalid_noflush(struct page *page)
-+int set_direct_map_invalid_noflush(struct page *page, int numpages)
- {
- 	int ret;
- 	unsigned long start = (unsigned long)page_address(page);
--	unsigned long end = start + PAGE_SIZE;
-+	unsigned long end = start + PAGE_SIZE * numpages;
- 	struct pageattr_masks masks = {
- 		.set_mask = __pgprot(0),
- 		.clear_mask = __pgprot(_PAGE_PRESENT)
-@@ -173,11 +173,11 @@ int set_direct_map_invalid_noflush(struct page *page)
+diff --git a/block/bio.c b/block/bio.c
+index a1c4d2900c7a..0bfbf06475ee 100644
+--- a/block/bio.c
++++ b/block/bio.c
+@@ -640,6 +640,8 @@ void __bio_clone_fast(struct bio *bio, struct bio *bio_src)
+ 		bio_set_flag(bio, BIO_THROTTLED);
+ 	if (bio_flagged(bio_src, BIO_REMAPPED))
+ 		bio_set_flag(bio, BIO_REMAPPED);
++	if (bio_flagged(bio_src, BIO_INTERPOSED))
++		bio_set_flag(bio, BIO_INTERPOSED);
+ 	bio->bi_opf = bio_src->bi_opf;
+ 	bio->bi_ioprio = bio_src->bi_ioprio;
+ 	bio->bi_write_hint = bio_src->bi_write_hint;
+diff --git a/block/blk-core.c b/block/blk-core.c
+index fc60ff208497..e749507cadd3 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1018,6 +1018,34 @@ static blk_qc_t __submit_bio_noacct_mq(struct bio *bio)
  	return ret;
  }
  
--int set_direct_map_default_noflush(struct page *page)
-+int set_direct_map_default_noflush(struct page *page, int numpages)
- {
- 	int ret;
- 	unsigned long start = (unsigned long)page_address(page);
--	unsigned long end = start + PAGE_SIZE;
-+	unsigned long end = start + PAGE_SIZE * numpages;
- 	struct pageattr_masks masks = {
- 		.set_mask = PAGE_KERNEL,
- 		.clear_mask = __pgprot(0)
-diff --git a/arch/x86/include/asm/set_memory.h b/arch/x86/include/asm/set_memory.h
-index 4352f08bfbb5..6224cb291f6c 100644
---- a/arch/x86/include/asm/set_memory.h
-+++ b/arch/x86/include/asm/set_memory.h
-@@ -80,8 +80,8 @@ int set_pages_wb(struct page *page, int numpages);
- int set_pages_ro(struct page *page, int numpages);
- int set_pages_rw(struct page *page, int numpages);
++static blk_qc_t __submit_bio_interposed(struct bio *bio)
++{
++	struct bio_list bio_list[2] = { };
++	blk_qc_t ret = BLK_QC_T_NONE;
++
++	current->bio_list = bio_list;
++	if (likely(bio_queue_enter(bio) == 0)) {
++		struct block_device *bdev = bio->bi_bdev;
++
++		if (likely(bdev_has_interposer(bdev))) {
++			bio_set_flag(bio, BIO_INTERPOSED);
++			bdev->bd_interposer->ip_submit_bio(bio);
++		} else {
++			/* interposer was removed */
++			bio_list_add(&current->bio_list[0], bio);
++		}
++
++		blk_queue_exit(bdev->bd_disk->queue);
++	}
++	current->bio_list = NULL;
++
++	/* Resubmit remaining bios */
++	while ((bio = bio_list_pop(&bio_list[0])))
++		ret = submit_bio_noacct(bio);
++
++	return ret;
++}
++
+ /**
+  * submit_bio_noacct - re-submit a bio to the block device layer for I/O
+  * @bio:  The bio describing the location in memory and on the device.
+@@ -1043,6 +1071,14 @@ blk_qc_t submit_bio_noacct(struct bio *bio)
+ 		return BLK_QC_T_NONE;
+ 	}
  
--int set_direct_map_invalid_noflush(struct page *page);
--int set_direct_map_default_noflush(struct page *page);
-+int set_direct_map_invalid_noflush(struct page *page, int numpages);
-+int set_direct_map_default_noflush(struct page *page, int numpages);
- bool kernel_page_present(struct page *page);
++	/*
++	 * Checking the BIO_INTERPOSED flag is necessary so that the bio
++	 * created by the bdev_interposer do not get to it for processing.
++	 */
++	if (bdev_has_interposer(bio->bi_bdev) &&
++	    !bio_flagged(bio, BIO_INTERPOSED))
++		return __submit_bio_interposed(bio);
++
+ 	if (!bio->bi_bdev->bd_disk->fops->submit_bio)
+ 		return __submit_bio_noacct_mq(bio);
+ 	return __submit_bio_noacct(bio);
+diff --git a/block/genhd.c b/block/genhd.c
+index fcc530164b5a..1ae8516643c8 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -30,6 +30,11 @@
+ static struct kobject *block_depr;
  
- extern int kernel_set_to_readonly;
-diff --git a/arch/x86/mm/pat/set_memory.c b/arch/x86/mm/pat/set_memory.c
-index 16f878c26667..d157fd617c99 100644
---- a/arch/x86/mm/pat/set_memory.c
-+++ b/arch/x86/mm/pat/set_memory.c
-@@ -2184,14 +2184,14 @@ static int __set_pages_np(struct page *page, int numpages)
- 	return __change_page_attr_set_clr(&cpa, 0);
+ DECLARE_RWSEM(bdev_lookup_sem);
++/*
++ * Prevents different block-layer interposers from attaching or detaching
++ * to the block device at the same time.
++ */
++DEFINE_MUTEX(bdev_interposer_attach_lock);
+ 
+ /* for extended dynamic devt allocation, currently only one major is used */
+ #define NR_EXT_DEVT		(1 << MINORBITS)
+@@ -1941,3 +1946,91 @@ static void disk_release_events(struct gendisk *disk)
+ 	WARN_ON_ONCE(disk->ev && disk->ev->block != 1);
+ 	kfree(disk->ev);
  }
++
++/**
++ * bdev_interposer_attach - Attach interposer to block device
++ * @bdev: target block device
++ * @interposer: block device interposer
++ * @ip_submit_bio: hook for submit_bio()
++ *
++ * Returns:
++ *     -EINVAL if @interposer is NULL.
++ *     -EPERM if queue is not frozen.
++ *     -EBUSY if the block device already has @interposer.
++ *     -EALREADY if the block device already has @interposer with same callback.
++ *     -ENODEV if the block device cannot be referenced.
++ *
++ * Disk must be frozen by blk_mq_freeze_queue().
++ */
++int bdev_interposer_attach(struct block_device *bdev, struct bdev_interposer *interposer,
++			  const ip_submit_bio_t ip_submit_bio)
++{
++	int ret = 0;
++
++	if (WARN_ON(!interposer))
++		return -EINVAL;
++
++	if (!blk_mq_is_queue_frozen(bdev->bd_disk->queue))
++		return -EPERM;
++
++	mutex_lock(&bdev_interposer_attach_lock);
++	if (bdev_has_interposer(bdev)) {
++		if (bdev->bd_interposer->ip_submit_bio == ip_submit_bio)
++			ret = -EALREADY;
++		else
++			ret = -EBUSY;
++		goto out;
++	}
++
++	interposer->ip_submit_bio = ip_submit_bio;
++
++	interposer->bdev = bdgrab(bdev);
++	if (!interposer->bdev) {
++		ret = -ENODEV;
++		goto out;
++	}
++
++	bdev->bd_interposer = interposer;
++out:
++	mutex_unlock(&bdev_interposer_attach_lock);
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(bdev_interposer_attach);
++
++/**
++ * bdev_interposer_detach - Detach interposer from block device
++ * @interposer: block device interposer
++ * @ip_submit_bio: hook for submit_bio()
++ *
++ * Disk must be frozen by blk_mq_freeze_queue().
++ */
++void bdev_interposer_detach(struct bdev_interposer *interposer,
++			  const ip_submit_bio_t ip_submit_bio)
++{
++	struct block_device *bdev;
++
++	if (WARN_ON(!interposer))
++		return;
++
++	mutex_lock(&bdev_interposer_attach_lock);
++
++	/* Check if the interposer is still active. */
++	bdev = interposer->bdev;
++	if (WARN_ON(!bdev))
++		goto out;
++
++	if (WARN_ON(!blk_mq_is_queue_frozen(bdev->bd_disk->queue)))
++		goto out;
++
++	/* Check if it is really our interposer. */
++	if (WARN_ON(bdev->bd_interposer->ip_submit_bio != ip_submit_bio))
++		goto out;
++
++	bdev->bd_interposer = NULL;
++	interposer->bdev = NULL;
++	bdput(bdev);
++out:
++	mutex_unlock(&bdev_interposer_attach_lock);
++}
++EXPORT_SYMBOL_GPL(bdev_interposer_detach);
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index db026b6ec15a..2b43f65bb356 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -19,6 +19,7 @@ struct io_context;
+ struct cgroup_subsys_state;
+ typedef void (bio_end_io_t) (struct bio *);
+ struct bio_crypt_ctx;
++struct bdev_interposer;
  
--int set_direct_map_invalid_noflush(struct page *page)
-+int set_direct_map_invalid_noflush(struct page *page, int numpages)
- {
--	return __set_pages_np(page, 1);
-+	return __set_pages_np(page, numpages);
- }
+ struct block_device {
+ 	sector_t		bd_start_sect;
+@@ -46,6 +47,7 @@ struct block_device {
+ 	spinlock_t		bd_size_lock; /* for bd_inode->i_size updates */
+ 	struct gendisk *	bd_disk;
+ 	struct backing_dev_info *bd_bdi;
++	struct bdev_interposer * bd_interposer;
  
--int set_direct_map_default_noflush(struct page *page)
-+int set_direct_map_default_noflush(struct page *page, int numpages)
- {
--	return __set_pages_p(page, 1);
-+	return __set_pages_p(page, numpages);
- }
+ 	/* The counter of freeze processes */
+ 	int			bd_fsfreeze_count;
+@@ -304,6 +306,8 @@ enum {
+ 	BIO_CGROUP_ACCT,	/* has been accounted to a cgroup */
+ 	BIO_TRACKED,		/* set if bio goes through the rq_qos path */
+ 	BIO_REMAPPED,
++	BIO_INTERPOSED,		/* bio has been interposed and can be moved to
++				 * a different block device */
+ 	BIO_FLAG_LAST
+ };
  
- #ifdef CONFIG_DEBUG_PAGEALLOC
-diff --git a/include/linux/set_memory.h b/include/linux/set_memory.h
-index fe1aa4e54680..c650f82db813 100644
---- a/include/linux/set_memory.h
-+++ b/include/linux/set_memory.h
-@@ -15,11 +15,11 @@ static inline int set_memory_nx(unsigned long addr, int numpages) { return 0; }
- #endif
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index c032cfe133c7..82f8515fa3c8 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -2033,4 +2033,21 @@ int fsync_bdev(struct block_device *bdev);
+ int freeze_bdev(struct block_device *bdev);
+ int thaw_bdev(struct block_device *bdev);
  
- #ifndef CONFIG_ARCH_HAS_SET_DIRECT_MAP
--static inline int set_direct_map_invalid_noflush(struct page *page)
-+static inline int set_direct_map_invalid_noflush(struct page *page, int numpages)
- {
- 	return 0;
- }
--static inline int set_direct_map_default_noflush(struct page *page)
-+static inline int set_direct_map_default_noflush(struct page *page, int numpages)
- {
- 	return 0;
- }
-diff --git a/kernel/power/snapshot.c b/kernel/power/snapshot.c
-index d63560e1cf87..64b7aab9aee4 100644
---- a/kernel/power/snapshot.c
-+++ b/kernel/power/snapshot.c
-@@ -86,7 +86,7 @@ static inline void hibernate_restore_unprotect_page(void *page_address) {}
- static inline void hibernate_map_page(struct page *page)
- {
- 	if (IS_ENABLED(CONFIG_ARCH_HAS_SET_DIRECT_MAP)) {
--		int ret = set_direct_map_default_noflush(page);
-+		int ret = set_direct_map_default_noflush(page, 1);
- 
- 		if (ret)
- 			pr_warn_once("Failed to remap page\n");
-@@ -99,7 +99,7 @@ static inline void hibernate_unmap_page(struct page *page)
- {
- 	if (IS_ENABLED(CONFIG_ARCH_HAS_SET_DIRECT_MAP)) {
- 		unsigned long addr = (unsigned long)page_address(page);
--		int ret  = set_direct_map_invalid_noflush(page);
-+		int ret = set_direct_map_invalid_noflush(page, 1);
- 
- 		if (ret)
- 			pr_warn_once("Failed to remap page\n");
-diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index 4f5f8c907897..8ab83fbecadd 100644
---- a/mm/vmalloc.c
-+++ b/mm/vmalloc.c
-@@ -2195,13 +2195,14 @@ struct vm_struct *remove_vm_area(const void *addr)
- }
- 
- static inline void set_area_direct_map(const struct vm_struct *area,
--				       int (*set_direct_map)(struct page *page))
-+				       int (*set_direct_map)(struct page *page,
-+							     int numpages))
- {
- 	int i;
- 
- 	for (i = 0; i < area->nr_pages; i++)
- 		if (page_address(area->pages[i]))
--			set_direct_map(area->pages[i]);
-+			set_direct_map(area->pages[i], 1);
- }
- 
- /* Handle removing and resetting vm mappings related to the vm_struct. */
++/*
++ * block layer interposers structure and functions
++ */
++typedef void (*ip_submit_bio_t) (struct bio *bio);
++
++struct bdev_interposer {
++	ip_submit_bio_t ip_submit_bio;
++	struct block_device *bdev;
++};
++
++#define bdev_has_interposer(bd) ((bd)->bd_interposer != NULL)
++
++int bdev_interposer_attach(struct block_device *bdev, struct bdev_interposer *interposer,
++			   const ip_submit_bio_t ip_submit_bio);
++void bdev_interposer_detach(struct bdev_interposer *interposer,
++			    const ip_submit_bio_t ip_submit_bio);
++
+ #endif /* _LINUX_BLKDEV_H */
 -- 
-2.28.0
+2.20.1
 
