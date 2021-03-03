@@ -2,143 +2,163 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-18.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0A73AC433E0
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BB47FC4332E
 	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:39 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C9A0564E68
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 985806023B
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234325AbhCDA3L (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 3 Mar 2021 19:29:11 -0500
-Received: from mail.efficios.com ([167.114.26.124]:41054 "EHLO
-        mail.efficios.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1349563AbhCCTE6 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Mar 2021 14:04:58 -0500
-Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id 64221322273;
-        Wed,  3 Mar 2021 13:55:39 -0500 (EST)
-Received: from mail.efficios.com ([127.0.0.1])
-        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
-        with ESMTP id nzmyisAEtpyn; Wed,  3 Mar 2021 13:55:39 -0500 (EST)
-Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id 21F7D3224BB;
-        Wed,  3 Mar 2021 13:55:39 -0500 (EST)
-DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 21F7D3224BB
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
-        s=default; t=1614797739;
-        bh=/+Cqqku+yj2v49ObRIAAYZyDmnbTz9LGncxn1fI29Ps=;
-        h=Date:From:To:Message-ID:MIME-Version;
-        b=GbxlIVqm7efnQ45RtVCzOCfqdFevWnV4Wyzn7JHHpWE+0kW93ElqMjI6yq7dxzt8l
-         2WSXEedfphWhw6AYPFWyvpLK3G4CgbjsKgPvcbVMxE+hZr9w/SRnut1hmufF0EqRPn
-         KEWcysdPcD3O3rqaWGuheyIyrdjF8s8WjULftPOz7JT9Ecerk/QvFsEbHCPrjxiLIX
-         bQyl7wpB14EYEWRAGflHweOC9547veDzzjHeKTMYkR0LFbUn61awhCuCK5Jp2QtLZm
-         vxWNO+i6I/PWSt/4u0hde3c1CSJsbgHjBvJzG/Zpaep3cex7+psgOkSGqQ7Da80P9G
-         wDXxuw/fAZsLg==
-X-Virus-Scanned: amavisd-new at efficios.com
-Received: from mail.efficios.com ([127.0.0.1])
-        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
-        with ESMTP id RSvuoPlpXd8c; Wed,  3 Mar 2021 13:55:39 -0500 (EST)
-Received: from mail03.efficios.com (mail03.efficios.com [167.114.26.124])
-        by mail.efficios.com (Postfix) with ESMTP id 11C6A3226AB;
-        Wed,  3 Mar 2021 13:55:39 -0500 (EST)
-Date:   Wed, 3 Mar 2021 13:55:39 -0500 (EST)
-From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-To:     Piotr Figiel <figiel@google.com>
-Cc:     Andrew Morton <akpm@linux-foundation.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        paulmck <paulmck@kernel.org>, Boqun Feng <boqun.feng@gmail.com>,
-        Oleg Nesterov <oleg@redhat.com>,
-        "Dmitry V. Levin" <ldv@altlinux.org>,
-        Florian Weimer <fweimer@redhat.com>,
-        Alexey Dobriyan <adobriyan@gmail.com>,
-        Andrei Vagin <avagin@gmail.com>,
-        linux-kernel <linux-kernel@vger.kernel.org>,
-        Peter Oskolkov <posk@google.com>,
-        Kamil Yurtsever <kyurtsever@google.com>,
-        Chris Kennelly <ckennelly@google.com>,
-        Paul Turner <pjt@google.com>, emmir <emmir@google.com>,
-        linux-man <linux-man@vger.kernel.org>,
-        linux-api <linux-api@vger.kernel.org>
-Message-ID: <1647666880.9529.1614797739047.JavaMail.zimbra@efficios.com>
-In-Reply-To: <YDkchUnCe5ctDwYB@google.com>
-References: <20210226135156.1081606-1-figiel@google.com> <192824546.8190.1614353555831.JavaMail.zimbra@efficios.com> <YDkchUnCe5ctDwYB@google.com>
-Subject: Re: [PATCH v2] ptrace: add PTRACE_GET_RSEQ_CONFIGURATION request
+        id S1355511AbhCDA3Q (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 3 Mar 2021 19:29:16 -0500
+Received: from ssl.serverraum.org ([176.9.125.105]:35199 "EHLO
+        ssl.serverraum.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1388000AbhCCUTO (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Mar 2021 15:19:14 -0500
+Received: from mwalle01.fritz.box (unknown [IPv6:2a02:810c:c200:2e91:fa59:71ff:fe9b:b851])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange ECDHE (P-384) server-signature RSA-PSS (2048 bits) server-digest SHA256)
+        (No client certificate requested)
+        by ssl.serverraum.org (Postfix) with ESMTPSA id 5A5232223A;
+        Wed,  3 Mar 2021 21:18:29 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=walle.cc; s=mail2016061301;
+        t=1614802710;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=bH5OIkVqJBqAQ09VIrZoFL+fgJq/hfQAqXuKtC2hFko=;
+        b=fzN6MJMnfbZg9AaRVlOKMsI9HmE9rktmpJz+tjAiqpFuwq9dcRJiiQIxzNaMjR6gT1Wr0B
+        3Lrgl6DybeyDsYNEhQSxe1fPfzh5tbDkF8qifpMPmARkiERM9ZI8icFrSvgTZ56PO6FNkN
+        FBFiw92krw7WR2QOHEMHAMdvruzWhak=
+From:   Michael Walle <michael@walle.cc>
+To:     linux-mtd@lists.infradead.org, linux-kernel@vger.kernel.org,
+        linux-api@vger.kernel.org
+Cc:     Miquel Raynal <miquel.raynal@bootlin.com>,
+        Richard Weinberger <richard@nod.at>,
+        Vignesh Raghavendra <vigneshr@ti.com>,
+        Tudor.Ambarus@microchip.com, Michael Walle <michael@walle.cc>
+Subject: [PATCH] mtd: add OTP (one-time-programmable) erase ioctl
+Date:   Wed,  3 Mar 2021 21:18:19 +0100
+Message-Id: <20210303201819.2752-1-michael@walle.cc>
+X-Mailer: git-send-email 2.20.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-X-Originating-IP: [167.114.26.124]
-X-Mailer: Zimbra 8.8.15_GA_3996 (ZimbraWebClient - FF86 (Linux)/8.8.15_GA_4007)
-Thread-Topic: ptrace: add PTRACE_GET_RSEQ_CONFIGURATION request
-Thread-Index: +gCa2M7/7eePF4mAiSVH9mBBgTSE+w==
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
------ On Feb 26, 2021, at 11:06 AM, Piotr Figiel figiel@google.com wrote:
+This may sound like a contradiction but some SPI-NOR flashes really
+support erasing their OTP region until it is finally locked. Having the
+possibility to erase an OTP region might come in handy during
+development.
 
-> Hi,
-> 
-> On Fri, Feb 26, 2021 at 10:32:35AM -0500, Mathieu Desnoyers wrote:
->> > +static long ptrace_get_rseq_configuration(struct task_struct *task,
->> > +					  unsigned long size, void __user *data)
->> > +{
->> > +	struct ptrace_rseq_configuration conf = {
->> > +		.rseq_abi_pointer = (u64)(uintptr_t)task->rseq,
->> > +		.rseq_abi_size = sizeof(*task->rseq),
->> > +		.signature = task->rseq_sig,
->> > +		.flags = 0,
->> > +	};
->> > +
->> > +	size = min_t(unsigned long, size, sizeof(conf));
->> > +	if (copy_to_user(data, &conf, size))
->> > +		return -EFAULT;
->> > +	return sizeof(conf);
->> > +}
->> 
->> I think what Florian was after would be:
->> 
->> struct ptrace_rseq_configuration {
->> 	__u32 size;  /* size of struct ptrace_rseq_configuration */
->> 	__u32 flags;
->> 	__u64 rseq_abi_pointer;
->> 	__u32 signature;
->> 	__u32 pad;
->> };
->> 
->> where:
->> 
->>     .size = sizeof(struct ptrace_rseq_configuration),
->> 
->> This way, the configuration structure can be expanded in the future. The
->> rseq ABI structure is by definition fixed-size, so there is no point in
->> having its size here.
-> 
-> Still rseq syscall accepts the rseq ABI structure size as a paremeter.
-> I think this way the information returned from ptrace is consistent with
-> the userspace view of the rseq state and allows expansion in case the
-> ABI structure would have to be extended (in spite of it's current
-> definition).
-> 
-> The configuration structure still can be expanded as its size is
-> reported to userspace as return value from the request (in line with
-> Dmitry's comments).
+The ioctl argument follows the OTPLOCK style.
 
-Fair enough. And now with the reply from Florian I see that I misunderstood his
-point.
+Signed-off-by: Michael Walle <michael@walle.cc>
+---
+Changes since RFC:
+ - check write permissions for OTPERASE
+ - use correct ioctl macro (_IOW)
 
-Thanks,
+ drivers/mtd/mtdchar.c      |  7 ++++++-
+ drivers/mtd/mtdcore.c      | 12 ++++++++++++
+ include/linux/mtd/mtd.h    |  3 +++
+ include/uapi/mtd/mtd-abi.h |  2 ++
+ 4 files changed, 23 insertions(+), 1 deletion(-)
 
-Mathieu
-
-> 
-> Best regards, Piotr.
-
+diff --git a/drivers/mtd/mtdchar.c b/drivers/mtd/mtdchar.c
+index 57c4a2f0b703..b9b56eb9457e 100644
+--- a/drivers/mtd/mtdchar.c
++++ b/drivers/mtd/mtdchar.c
+@@ -666,6 +666,7 @@ static int mtdchar_ioctl(struct file *file, u_int cmd, u_long arg)
+ 	case MEMWRITEOOB:
+ 	case MEMWRITEOOB64:
+ 	case MEMWRITE:
++	case OTPERASE:
+ 		if (!(file->f_mode & FMODE_WRITE))
+ 			return -EPERM;
+ 		break;
+@@ -930,6 +931,7 @@ static int mtdchar_ioctl(struct file *file, u_int cmd, u_long arg)
+ 	}
+ 
+ 	case OTPLOCK:
++	case OTPERASE:
+ 	{
+ 		struct otp_info oinfo;
+ 
+@@ -937,7 +939,10 @@ static int mtdchar_ioctl(struct file *file, u_int cmd, u_long arg)
+ 			return -EINVAL;
+ 		if (copy_from_user(&oinfo, argp, sizeof(oinfo)))
+ 			return -EFAULT;
+-		ret = mtd_lock_user_prot_reg(mtd, oinfo.start, oinfo.length);
++		if (cmd == OTPLOCK)
++			ret = mtd_lock_user_prot_reg(mtd, oinfo.start, oinfo.length);
++		else
++			ret = mtd_erase_user_prot_reg(mtd, oinfo.start, oinfo.length);
+ 		break;
+ 	}
+ 
+diff --git a/drivers/mtd/mtdcore.c b/drivers/mtd/mtdcore.c
+index 38782ceea1f6..aea58366a94e 100644
+--- a/drivers/mtd/mtdcore.c
++++ b/drivers/mtd/mtdcore.c
+@@ -1919,6 +1919,18 @@ int mtd_lock_user_prot_reg(struct mtd_info *mtd, loff_t from, size_t len)
+ }
+ EXPORT_SYMBOL_GPL(mtd_lock_user_prot_reg);
+ 
++int mtd_erase_user_prot_reg(struct mtd_info *mtd, loff_t from, size_t len)
++{
++	struct mtd_info *master = mtd_get_master(mtd);
++
++	if (!master->_erase_user_prot_reg)
++		return -EOPNOTSUPP;
++	if (!len)
++		return 0;
++	return master->_erase_user_prot_reg(master, from, len);
++}
++EXPORT_SYMBOL_GPL(mtd_erase_user_prot_reg);
++
+ /* Chip-supported device locking */
+ int mtd_lock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
+ {
+diff --git a/include/linux/mtd/mtd.h b/include/linux/mtd/mtd.h
+index ceabc2cae8a4..4aac200ca8b5 100644
+--- a/include/linux/mtd/mtd.h
++++ b/include/linux/mtd/mtd.h
+@@ -337,6 +337,8 @@ struct mtd_info {
+ 				     size_t len, size_t *retlen, u_char *buf);
+ 	int (*_lock_user_prot_reg) (struct mtd_info *mtd, loff_t from,
+ 				    size_t len);
++	int (*_erase_user_prot_reg) (struct mtd_info *mtd, loff_t from,
++				     size_t len);
+ 	int (*_writev) (struct mtd_info *mtd, const struct kvec *vecs,
+ 			unsigned long count, loff_t to, size_t *retlen);
+ 	void (*_sync) (struct mtd_info *mtd);
+@@ -518,6 +520,7 @@ int mtd_read_user_prot_reg(struct mtd_info *mtd, loff_t from, size_t len,
+ int mtd_write_user_prot_reg(struct mtd_info *mtd, loff_t to, size_t len,
+ 			    size_t *retlen, u_char *buf);
+ int mtd_lock_user_prot_reg(struct mtd_info *mtd, loff_t from, size_t len);
++int mtd_erase_user_prot_reg(struct mtd_info *mtd, loff_t from, size_t len);
+ 
+ int mtd_writev(struct mtd_info *mtd, const struct kvec *vecs,
+ 	       unsigned long count, loff_t to, size_t *retlen);
+diff --git a/include/uapi/mtd/mtd-abi.h b/include/uapi/mtd/mtd-abi.h
+index 65b9db936557..b869990c2db2 100644
+--- a/include/uapi/mtd/mtd-abi.h
++++ b/include/uapi/mtd/mtd-abi.h
+@@ -205,6 +205,8 @@ struct otp_info {
+  * without OOB, e.g., NOR flash.
+  */
+ #define MEMWRITE		_IOWR('M', 24, struct mtd_write_req)
++/* Erase a given range of user data (must be in mode %MTD_FILE_MODE_OTP_USER) */
++#define OTPERASE		_IOW('M', 25, struct otp_info)
+ 
+ /*
+  * Obsolete legacy interface. Keep it in order not to break userspace
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+2.20.1
+
