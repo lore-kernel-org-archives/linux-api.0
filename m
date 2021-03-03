@@ -2,119 +2,130 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-23.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED,USER_IN_DEF_DKIM_WL autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 20070C433DB
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4C1C0C43381
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:39 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CA49A6023B
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 230C864E68
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1355494AbhCDA3K (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 3 Mar 2021 19:29:10 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36590 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1838572AbhCCTBD (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Mar 2021 14:01:03 -0500
-Received: from mail-yb1-xb2d.google.com (mail-yb1-xb2d.google.com [IPv6:2607:f8b0:4864:20::b2d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EC32AC0613DB
-        for <linux-api@vger.kernel.org>; Wed,  3 Mar 2021 11:00:21 -0800 (PST)
-Received: by mail-yb1-xb2d.google.com with SMTP id c131so25668401ybf.7
-        for <linux-api@vger.kernel.org>; Wed, 03 Mar 2021 11:00:21 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=ZrTqH4ir7YoYXBYJzhf0HnVg/dFc9dw61rsSlwrZYJc=;
-        b=N7U0uNfWkVP4NW9gx+ZM7+WqO1PnpeOKwYdQn1NNZEUdkl+d5aPIzmGRnYsHY19r0w
-         5VRqsNVVL1ROKyKEYEZW/SShJeLdRC8ZstAmFPWaGRB3D02vBkfwLlBnpj3KphmqMlxM
-         GrQKAWdHFUFN457FWZRdPW2useEin+RkyWXW4ZeuBoGgDveJdm/gO9LA00Lcn9ABNX7s
-         Z9qo8XeUSD+f03Pz72kJMplig1z6iAvBkSO2abbUUOQv1oawHbk9lFGmPA+DtI2rcw7G
-         vbZkQku+GRWKMw0MW9QXHqMBVy4NKhFBN1r9BXlKNyUhJ9+xfSVWcaFJeCPHFZAvkEtK
-         Cbfw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=ZrTqH4ir7YoYXBYJzhf0HnVg/dFc9dw61rsSlwrZYJc=;
-        b=ngcR/sBSfzCxmDgdxjnsb9n3qX3bB4jI5hqZObdJ/td5K1ROuv55vYVOh5eolhenOn
-         heHyJ5VpustPNVQLe9eDlxmPQZ1MVZz+4IHn4Sy5UCvcxFUUgR29mULdlWDmm9AugEtM
-         GTNoQPK2zwIm20C4US4A6lSTfd6zBs/O36d0CkXa1Ij3N2i4Kg5FVGj+kHQF56QBmGlv
-         So4ci0L+snK9gqgLYIlGftyxFweLWqR/OeuoGKtoDPayX0RN9gIrQF5wL6ZomzY7SNbf
-         paPZSgKt/dW1M2xrl8XA0dackqxdrmZNPi2MklTuzI0RRIcfQ9ybI/1xSa0oD5OFSz2j
-         jiBw==
-X-Gm-Message-State: AOAM533MdqbbUmLxsbyAtP1Rq+G4ZSm49EGdVz5IwKFnmyXsCQiqco3i
-        XEPPG7QrSbVd1IJ41Vx87QCm3YO0t/Slp+HeMOEIag==
-X-Google-Smtp-Source: ABdhPJx7+ZXPd+WcJe7i7kEkFZqQUi+39Hen0g6qCGc3kFjshEp+Kww5NDzgQqpOmvG1w5A2IBEgm9hEPG2vbTNt4gw=
-X-Received: by 2002:a25:c503:: with SMTP id v3mr939685ybe.397.1614798021081;
- Wed, 03 Mar 2021 11:00:21 -0800 (PST)
+        id S1346632AbhCDA3M (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 3 Mar 2021 19:29:12 -0500
+Received: from mail.efficios.com ([167.114.26.124]:41052 "EHLO
+        mail.efficios.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1349597AbhCCTFJ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Mar 2021 14:05:09 -0500
+Received: from localhost (localhost [127.0.0.1])
+        by mail.efficios.com (Postfix) with ESMTP id D15D43220FC;
+        Wed,  3 Mar 2021 13:55:00 -0500 (EST)
+Received: from mail.efficios.com ([127.0.0.1])
+        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
+        with ESMTP id aAXDIHMqpOpt; Wed,  3 Mar 2021 13:55:00 -0500 (EST)
+Received: from localhost (localhost [127.0.0.1])
+        by mail.efficios.com (Postfix) with ESMTP id 6A56B3220FB;
+        Wed,  3 Mar 2021 13:55:00 -0500 (EST)
+DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 6A56B3220FB
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
+        s=default; t=1614797700;
+        bh=rCq90Cemnj8uIDnzvWa7FZTmINWyPkoJYeBmJ7lHhLM=;
+        h=Date:From:To:Message-ID:MIME-Version;
+        b=GTVjsfF3WiOHC2+vY+c6TYY9cvcQDkrU+9bfM2NO0e0kcGRUbJPZ0w9WB4tmtup/O
+         /LgQNvgx5blMss5mLTbGC9t8q4ylQ16nXq7t1NqOuSDMIkpVJNKhkDhZTLiytPfJSw
+         MRhu+8V5EYuKKUx76PvITOIXlmpXwlhmi0HxnUZD8Uwp3x4PFWgi0ciJxLXAWirSOL
+         ooJYN9AFHuC1x9a/aVWn5SAfeEHXL/ZH/hbwr8bZKq2wQu8X1Aepe5ZPVag69T3yK2
+         wNgkYVqjbqXR69ZZ5TlGr/Fhhts25RH9eLhlk55OZ1icgBvm/5YTBHk+GeFxjls+Ga
+         T+VjiPIxCa9pQ==
+X-Virus-Scanned: amavisd-new at efficios.com
+Received: from mail.efficios.com ([127.0.0.1])
+        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
+        with ESMTP id z7lHbMmAUfH0; Wed,  3 Mar 2021 13:55:00 -0500 (EST)
+Received: from mail03.efficios.com (mail03.efficios.com [167.114.26.124])
+        by mail.efficios.com (Postfix) with ESMTP id 562F43224B8;
+        Wed,  3 Mar 2021 13:55:00 -0500 (EST)
+Date:   Wed, 3 Mar 2021 13:55:00 -0500 (EST)
+From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To:     Piotr Figiel <figiel@google.com>
+Cc:     Andrew Morton <akpm@linux-foundation.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        paulmck <paulmck@kernel.org>, Boqun Feng <boqun.feng@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>,
+        Alexey Dobriyan <adobriyan@gmail.com>,
+        Andrei Vagin <avagin@gmail.com>,
+        linux-kernel <linux-kernel@vger.kernel.org>,
+        Peter Oskolkov <posk@google.com>,
+        Kamil Yurtsever <kyurtsever@google.com>,
+        Chris Kennelly <ckennelly@google.com>,
+        Paul Turner <pjt@google.com>, emmir <emmir@google.com>,
+        linux-man <linux-man@vger.kernel.org>,
+        linux-api <linux-api@vger.kernel.org>
+Message-ID: <1698111952.9528.1614797700222.JavaMail.zimbra@efficios.com>
+In-Reply-To: <YDkBlYp76PGsgUZs@google.com>
+References: <20210222100443.4155938-1-figiel@google.com> <1521573573.29432.1614005597395.JavaMail.zimbra@efficios.com> <YDkBlYp76PGsgUZs@google.com>
+Subject: Re: [PATCH] ptrace: add PTRACE_GET_RSEQ_CONFIGURATION request
 MIME-Version: 1.0
-References: <20210111170622.2613577-1-surenb@google.com> <20210112074629.GG22493@dhcp22.suse.cz>
- <20210112174507.GA23780@redhat.com> <CAJuCfpFQz=x-LvONO3c4iqjKP4NKJMgUuiYc8HACKHAv1Omu0w@mail.gmail.com>
- <20210113142202.GC22493@dhcp22.suse.cz> <CAG48ez0=QSzuj96+5oVQ2qWqfjedv3oKtfEFzw--C8bzfvj7EQ@mail.gmail.com>
- <20210126135254.GP827@dhcp22.suse.cz> <CAJuCfpEnMyo9XAnoF+q1j9EkC0okZfUxxdAFhzhPJi+adJYqjw@mail.gmail.com>
- <CAJuCfpF861zhp8yR_pYx8gb+WMrORAZ0tbzcKtKxaj7L=jzw+Q@mail.gmail.com>
- <CAJuCfpFzxiBXp1rdY=H=bX+eOAVGOe72_FxwC-NTWF4fhUO26g@mail.gmail.com>
- <CAJuCfpEOE8=L1fT4FSauy65cS82M_kW3EzTgH89ewE9HudL=VA@mail.gmail.com>
- <20210302161716.89a65d3cb5b60dbc5074cfa7@linux-foundation.org> <CAJuCfpF72mevYd4zQ_q-Tyn+Bj-fa7ywudu=iM6L7e4B-42fpg@mail.gmail.com>
-In-Reply-To: <CAJuCfpF72mevYd4zQ_q-Tyn+Bj-fa7ywudu=iM6L7e4B-42fpg@mail.gmail.com>
-From:   Suren Baghdasaryan <surenb@google.com>
-Date:   Wed, 3 Mar 2021 11:00:10 -0800
-Message-ID: <CAJuCfpEg5jJec9FGyVddmxXKEduGdpO4KViqG0EJPhxMxTjSqw@mail.gmail.com>
-Subject: Re: [PATCH v2 1/1] mm/madvise: replace ptrace attach requirement for process_madvise
-To:     Andrew Morton <akpm@linux-foundation.org>
-Cc:     Jann Horn <jannh@google.com>, Oleg Nesterov <oleg@redhat.com>,
-        Kees Cook <keescook@chromium.org>,
-        Jeffrey Vander Stoep <jeffv@google.com>,
-        Minchan Kim <minchan@kernel.org>,
-        Shakeel Butt <shakeelb@google.com>,
-        David Rientjes <rientjes@google.com>,
-        =?UTF-8?Q?Edgar_Arriaga_Garc=C3=ADa?= <edgararriaga@google.com>,
-        Tim Murray <timmurray@google.com>,
-        linux-mm <linux-mm@kvack.org>,
-        SElinux list <selinux@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        kernel-team <kernel-team@android.com>,
-        linux-security-module <linux-security-module@vger.kernel.org>,
-        stable <stable@vger.kernel.org>, Michal Hocko <mhocko@suse.com>
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+X-Originating-IP: [167.114.26.124]
+X-Mailer: Zimbra 8.8.15_GA_3996 (ZimbraWebClient - FF86 (Linux)/8.8.15_GA_4007)
+Thread-Topic: ptrace: add PTRACE_GET_RSEQ_CONFIGURATION request
+Thread-Index: cQoLUNh7wF6cm+pfSb0FxCqp8YWzpA==
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Mar 2, 2021 at 4:19 PM Suren Baghdasaryan <surenb@google.com> wrote:
->
-> On Tue, Mar 2, 2021 at 4:17 PM Andrew Morton <akpm@linux-foundation.org> wrote:
-> >
-> > On Tue, 2 Mar 2021 15:53:39 -0800 Suren Baghdasaryan <surenb@google.com> wrote:
-> >
-> > > Hi Andrew,
-> > > A friendly reminder to please include this patch into mm tree.
-> > > There seem to be no more questions or objections.
-> > > The man page you requested is accepted here:
-> > > https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/commit/?id=a144f458bad476a3358e3a45023789cb7bb9f993
-> > > stable is CC'ed and this patch should go into 5.10 and later kernels
-> > > The patch has been:
-> > > Acked-by: Minchan Kim <minchan@kernel.org>
-> > > Acked-by: David Rientjes <rientjes@google.com>
-> > > Reviewed-by: Kees Cook <keescook@chromium.org>
-> > >
-> > > If you want me to resend it, please let me know.
-> >
-> > This patch was tough.  I think it would be best to resend please, being
-> > sure to cc everyone who commented.  To give everyone another chance to
-> > get their heads around it.  If necessary, please update the changelog
-> > to address any confusion/questions which have arisen thus far.
->
-> Sure, will do. Thanks!
+----- On Feb 26, 2021, at 9:11 AM, Piotr Figiel figiel@google.com wrote:
 
-Posted v3 at https://lore.kernel.org/linux-mm/20210303185807.2160264-1-surenb@google.com/
+> Hi,
+> 
+> On Mon, Feb 22, 2021 at 09:53:17AM -0500, Mathieu Desnoyers wrote:
+> 
+>> I notice that other structures defined in this UAPI header are not
+>> packed as well.  Should we add an attribute packed on new structures ?
+>> It seems like it is generally a safer course of action, even though
+>> each field is naturally aligned here (there is no padding/hole in the
+>> structure).
+> 
+> I considered this for quite a while. There are some gains for this
+> approach, i.e. it's safer towards the ISO C, as theoretically compiler
+> can generate arbitrary offsets as long as struct elements have correct
+> order in memory.
+> Also with packed attribute it would be harder to make it incorrect in
+> future modifications.
+> User code also could theoretically put the structure on any misaligned
+> address.
+> 
+> But the drawback is that all accesses to the structure contents are
+> inefficient and some compilers may generate large chunks of code
+> whenever the structure elements are accessed (I recall at least one ARM
+> compiler which generates series of single-byte accesses for those). For
+> kernel it doesn't matter much because the structure type is used in one
+> place, but it may be different for the application code.
+> 
+> The change would be also inconsistent with the rest of the file and IMO
+> the gains are only theoretical.
+> 
+> If there are more opinions on this or you have some argument I'm missing
+> please let me know I can send v3 with packed and explicit padding
+> removed. I think this is rather borderline trade off.
 
->
-> >
-> > Thanks.
+I personally don't have a strong opinion on this and completely agree with
+your analysis. Maybe for pre-existing system calls adding more non-packed
+structures might be kind-of OK if some were already exposed, even though
+it seems rather fragile wrt ISO C.
+
+Thanks,
+
+Mathieu
+
+> 
+> Best regards and thanks for looking at this,
+> Piotr.
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
