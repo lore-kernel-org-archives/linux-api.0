@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-19.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8D7ABC433DB
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E856FC15507
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 515D064EA4
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:28 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B08AC64EBD
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1346230AbhCDA3H (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 3 Mar 2021 19:29:07 -0500
-Received: from mail.kernel.org ([198.145.29.99]:50512 "EHLO mail.kernel.org"
+        id S1355480AbhCDA3D (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 3 Mar 2021 19:29:03 -0500
+Received: from mail.kernel.org ([198.145.29.99]:50054 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1346460AbhCCQ0n (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 3 Mar 2021 11:26:43 -0500
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 8804664EFD;
-        Wed,  3 Mar 2021 16:24:00 +0000 (UTC)
+        id S1346275AbhCCQ0Q (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 3 Mar 2021 11:26:16 -0500
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 3499364EE4;
+        Wed,  3 Mar 2021 16:23:14 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1614788651;
-        bh=4leNaCIZ1xcR/mkizNz8otv7a82Efwmo44tjJNIZIk4=;
+        s=k20201202; t=1614788606;
+        bh=6b+ZR7FjQvlDr4jXaWCA00myeSkXgeo8Jm0+Vd2uO+U=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=JX+/9tLtUvIiDi7SFCqpWGhmAdreFxjmliUzXlVRwklzZTk4DPUwOSPZK9pwvWYD5
-         Ca308y9JA8UPmjRGSejqUIC8kF5wNup7qArHASl6egrzZtmLdpGXV/IY8XCH1jd/Uv
-         nKJMwPe04B4fCU+0jwUhaZtSAnKLIBUhF77TydDo8AtOLgchSuMhe5GzsFY0dzL5oT
-         sM0rWnwCWoGXKirD+9vHn1jE2/h2x7ew8QbbdZYzKOxMMWUROMkU0CRyKBx3/v04kq
-         9vg4tuPv2qegjZoZr9epw0w3+AFpfG3YdN5BeLeS2z2/mb0T3AWHqyIMb27IZdbBfo
-         DFuxxEQOzpUyA==
+        b=YHeQbLIcDKvS2ckCbMg6k+t1IysBN45ZxZP/MMJoTxp3cd+oixDyqB+eoyd84yzF+
+         3k1Ft0hUp8zAyLWpW2uZTEAlPqk1ai+BH61Gg0ONbznoZjyC+QAQNym6EsrzhB0O/M
+         D08ZIqGfx/qKr38497ZhZvri9D/Nbc8R8zP3kAgkTTZmE+mR+WrvUWd3aLAg+xH/1x
+         eIZAALd/WGP1FWFZo4jW68g6iRI/lnpa0wBOU+kHbrPFXXca2YG4nqEvLc+XxafH7s
+         FsSpl9izxiUJs6Klybx63D1BfMoiCOa1QbCpu8KLom+GxW4ACueMy9kJLhmJj364Qx
+         Pjou0FB3EuGlQ==
 From:   Mike Rapoport <rppt@kernel.org>
 To:     Andrew Morton <akpm@linux-foundation.org>
 Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
@@ -69,9 +69,9 @@ Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
         linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
         x86@kernel.org, Hagen Paul Pfeifer <hagen@jauu.net>,
         Palmer Dabbelt <palmerdabbelt@google.com>
-Subject: [PATCH v18 9/9] secretmem: test: add basic selftest for memfd_secret(2)
-Date:   Wed,  3 Mar 2021 18:22:09 +0200
-Message-Id: <20210303162209.8609-10-rppt@kernel.org>
+Subject: [PATCH v18 5/9] set_memory: allow querying whether set_direct_map_*() is actually enabled
+Date:   Wed,  3 Mar 2021 18:22:05 +0200
+Message-Id: <20210303162209.8609-6-rppt@kernel.org>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <20210303162209.8609-1-rppt@kernel.org>
 References: <20210303162209.8609-1-rppt@kernel.org>
@@ -83,21 +83,30 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Mike Rapoport <rppt@linux.ibm.com>
 
-The test verifies that file descriptor created with memfd_secret does not
-allow read/write operations, that secret memory mappings respect
-RLIMIT_MEMLOCK and that remote accesses with process_vm_read() and
-ptrace() to the secret memory fail.
+On arm64, set_direct_map_*() functions may return 0 without actually
+changing the linear map.  This behaviour can be controlled using kernel
+parameters, so we need a way to determine at runtime whether calls to
+set_direct_map_invalid_noflush() and set_direct_map_default_noflush() have
+any effect.
+
+Extend set_memory API with can_set_direct_map() function that allows
+checking if calling set_direct_map_*() will actually change the page
+table, replace several occurrences of open coded checks in arm64 with the
+new function and provide a generic stub for architectures that always
+modify page tables upon calls to set_direct_map APIs.
+
+[arnd@arndb.de: arm64: kfence: fix header inclusion ]
 
 Signed-off-by: Mike Rapoport <rppt@linux.ibm.com>
+Reviewed-by: Catalin Marinas <catalin.marinas@arm.com>
+Reviewed-by: David Hildenbrand <david@redhat.com>
 Cc: Alexander Viro <viro@zeniv.linux.org.uk>
 Cc: Andy Lutomirski <luto@kernel.org>
 Cc: Arnd Bergmann <arnd@arndb.de>
 Cc: Borislav Petkov <bp@alien8.de>
-Cc: Catalin Marinas <catalin.marinas@arm.com>
 Cc: Christopher Lameter <cl@linux.com>
 Cc: Dan Williams <dan.j.williams@intel.com>
 Cc: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: David Hildenbrand <david@redhat.com>
 Cc: Elena Reshetova <elena.reshetova@intel.com>
 Cc: Hagen Paul Pfeifer <hagen@jauu.net>
 Cc: "H. Peter Anvin" <hpa@zytor.com>
@@ -119,372 +128,199 @@ Cc: Thomas Gleixner <tglx@linutronix.de>
 Cc: Tycho Andersen <tycho@tycho.ws>
 Cc: Will Deacon <will@kernel.org>
 ---
- tools/testing/selftests/vm/.gitignore     |   1 +
- tools/testing/selftests/vm/Makefile       |   3 +-
- tools/testing/selftests/vm/memfd_secret.c | 296 ++++++++++++++++++++++
- tools/testing/selftests/vm/run_vmtests.sh |  17 ++
- 4 files changed, 316 insertions(+), 1 deletion(-)
- create mode 100644 tools/testing/selftests/vm/memfd_secret.c
+ arch/arm64/include/asm/Kbuild       |  1 -
+ arch/arm64/include/asm/cacheflush.h |  6 ------
+ arch/arm64/include/asm/kfence.h     |  2 +-
+ arch/arm64/include/asm/set_memory.h | 17 +++++++++++++++++
+ arch/arm64/kernel/machine_kexec.c   |  1 +
+ arch/arm64/mm/mmu.c                 |  6 +++---
+ arch/arm64/mm/pageattr.c            | 13 +++++++++----
+ include/linux/set_memory.h          | 12 ++++++++++++
+ 8 files changed, 43 insertions(+), 15 deletions(-)
+ create mode 100644 arch/arm64/include/asm/set_memory.h
 
-diff --git a/tools/testing/selftests/vm/.gitignore b/tools/testing/selftests/vm/.gitignore
-index 9a35c3f6a557..c8deddc81e7a 100644
---- a/tools/testing/selftests/vm/.gitignore
-+++ b/tools/testing/selftests/vm/.gitignore
-@@ -21,4 +21,5 @@ va_128TBswitch
- map_fixed_noreplace
- write_to_hugetlbfs
- hmm-tests
-+memfd_secret
- local_config.*
-diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selftests/vm/Makefile
-index d42115e4284d..0200fb61646c 100644
---- a/tools/testing/selftests/vm/Makefile
-+++ b/tools/testing/selftests/vm/Makefile
-@@ -34,6 +34,7 @@ TEST_GEN_FILES += khugepaged
- TEST_GEN_FILES += map_fixed_noreplace
- TEST_GEN_FILES += map_hugetlb
- TEST_GEN_FILES += map_populate
-+TEST_GEN_FILES += memfd_secret
- TEST_GEN_FILES += mlock-random-test
- TEST_GEN_FILES += mlock2-tests
- TEST_GEN_FILES += mremap_dontunmap
-@@ -133,7 +134,7 @@ warn_32bit_failure:
- endif
- endif
+diff --git a/arch/arm64/include/asm/Kbuild b/arch/arm64/include/asm/Kbuild
+index 07ac208edc89..73aa25843f65 100644
+--- a/arch/arm64/include/asm/Kbuild
++++ b/arch/arm64/include/asm/Kbuild
+@@ -3,5 +3,4 @@ generic-y += early_ioremap.h
+ generic-y += mcs_spinlock.h
+ generic-y += qrwlock.h
+ generic-y += qspinlock.h
+-generic-y += set_memory.h
+ generic-y += user.h
+diff --git a/arch/arm64/include/asm/cacheflush.h b/arch/arm64/include/asm/cacheflush.h
+index ace2c3d7ae7e..4e3c13799735 100644
+--- a/arch/arm64/include/asm/cacheflush.h
++++ b/arch/arm64/include/asm/cacheflush.h
+@@ -131,12 +131,6 @@ static __always_inline void __flush_icache_all(void)
+ 	dsb(ish);
+ }
  
--$(OUTPUT)/mlock-random-test: LDLIBS += -lcap
-+$(OUTPUT)/mlock-random-test $(OUTPUT)/memfd_secret: LDLIBS += -lcap
+-int set_memory_valid(unsigned long addr, int numpages, int enable);
+-
+-int set_direct_map_invalid_noflush(struct page *page, int numpages);
+-int set_direct_map_default_noflush(struct page *page, int numpages);
+-bool kernel_page_present(struct page *page);
+-
+ #include <asm-generic/cacheflush.h>
  
- $(OUTPUT)/gup_test: ../../../../mm/gup_test.h
+ #endif /* __ASM_CACHEFLUSH_H */
+diff --git a/arch/arm64/include/asm/kfence.h b/arch/arm64/include/asm/kfence.h
+index d061176d57ea..aa855c6a0ae6 100644
+--- a/arch/arm64/include/asm/kfence.h
++++ b/arch/arm64/include/asm/kfence.h
+@@ -8,7 +8,7 @@
+ #ifndef __ASM_KFENCE_H
+ #define __ASM_KFENCE_H
  
-diff --git a/tools/testing/selftests/vm/memfd_secret.c b/tools/testing/selftests/vm/memfd_secret.c
+-#include <asm/cacheflush.h>
++#include <asm/set_memory.h>
+ 
+ static inline bool arch_kfence_init_pool(void) { return true; }
+ 
+diff --git a/arch/arm64/include/asm/set_memory.h b/arch/arm64/include/asm/set_memory.h
 new file mode 100644
-index 000000000000..c878c2b841fc
+index 000000000000..ecb6b0f449ab
 --- /dev/null
-+++ b/tools/testing/selftests/vm/memfd_secret.c
-@@ -0,0 +1,296 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright IBM Corporation, 2020
-+ *
-+ * Author: Mike Rapoport <rppt@linux.ibm.com>
-+ */
++++ b/arch/arm64/include/asm/set_memory.h
+@@ -0,0 +1,17 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
 +
-+#define _GNU_SOURCE
-+#include <sys/uio.h>
-+#include <sys/mman.h>
-+#include <sys/wait.h>
-+#include <sys/types.h>
-+#include <sys/ptrace.h>
-+#include <sys/syscall.h>
-+#include <sys/resource.h>
-+#include <sys/capability.h>
++#ifndef _ASM_ARM64_SET_MEMORY_H
++#define _ASM_ARM64_SET_MEMORY_H
 +
-+#include <stdlib.h>
-+#include <string.h>
-+#include <unistd.h>
-+#include <errno.h>
-+#include <stdio.h>
++#include <asm-generic/set_memory.h>
 +
-+#include "../kselftest.h"
++bool can_set_direct_map(void);
++#define can_set_direct_map can_set_direct_map
 +
-+#define fail(fmt, ...) ksft_test_result_fail(fmt, ##__VA_ARGS__)
-+#define pass(fmt, ...) ksft_test_result_pass(fmt, ##__VA_ARGS__)
-+#define skip(fmt, ...) ksft_test_result_skip(fmt, ##__VA_ARGS__)
++int set_memory_valid(unsigned long addr, int numpages, int enable);
 +
-+#ifdef __NR_memfd_secret
++int set_direct_map_invalid_noflush(struct page *page, int numpages);
++int set_direct_map_default_noflush(struct page *page, int numpages);
++bool kernel_page_present(struct page *page);
 +
-+#define PATTERN	0x55
-+
-+static const int prot = PROT_READ | PROT_WRITE;
-+static const int mode = MAP_SHARED;
-+
-+static unsigned long page_size;
-+static unsigned long mlock_limit_cur;
-+static unsigned long mlock_limit_max;
-+
-+static int memfd_secret(unsigned long flags)
-+{
-+	return syscall(__NR_memfd_secret, flags);
-+}
-+
-+static void test_file_apis(int fd)
-+{
-+	char buf[64];
-+
-+	if ((read(fd, buf, sizeof(buf)) >= 0) ||
-+	    (write(fd, buf, sizeof(buf)) >= 0) ||
-+	    (pread(fd, buf, sizeof(buf), 0) >= 0) ||
-+	    (pwrite(fd, buf, sizeof(buf), 0) >= 0))
-+		fail("unexpected file IO\n");
-+	else
-+		pass("file IO is blocked as expected\n");
-+}
-+
-+static void test_mlock_limit(int fd)
-+{
-+	size_t len;
-+	char *mem;
-+
-+	len = mlock_limit_cur;
-+	mem = mmap(NULL, len, prot, mode, fd, 0);
-+	if (mem == MAP_FAILED) {
-+		fail("unable to mmap secret memory\n");
-+		return;
-+	}
-+	munmap(mem, len);
-+
-+	len = mlock_limit_max * 2;
-+	mem = mmap(NULL, len, prot, mode, fd, 0);
-+	if (mem != MAP_FAILED) {
-+		fail("unexpected mlock limit violation\n");
-+		munmap(mem, len);
-+		return;
-+	}
-+
-+	pass("mlock limit is respected\n");
-+}
-+
-+static void try_process_vm_read(int fd, int pipefd[2])
-+{
-+	struct iovec liov, riov;
-+	char buf[64];
-+	char *mem;
-+
-+	if (read(pipefd[0], &mem, sizeof(mem)) < 0) {
-+		fail("pipe write: %s\n", strerror(errno));
-+		exit(KSFT_FAIL);
-+	}
-+
-+	liov.iov_len = riov.iov_len = sizeof(buf);
-+	liov.iov_base = buf;
-+	riov.iov_base = mem;
-+
-+	if (process_vm_readv(getppid(), &liov, 1, &riov, 1, 0) < 0) {
-+		if (errno == ENOSYS)
-+			exit(KSFT_SKIP);
-+		exit(KSFT_PASS);
-+	}
-+
-+	exit(KSFT_FAIL);
-+}
-+
-+static void try_ptrace(int fd, int pipefd[2])
-+{
-+	pid_t ppid = getppid();
-+	int status;
-+	char *mem;
-+	long ret;
-+
-+	if (read(pipefd[0], &mem, sizeof(mem)) < 0) {
-+		perror("pipe write");
-+		exit(KSFT_FAIL);
-+	}
-+
-+	ret = ptrace(PTRACE_ATTACH, ppid, 0, 0);
-+	if (ret) {
-+		perror("ptrace_attach");
-+		exit(KSFT_FAIL);
-+	}
-+
-+	ret = waitpid(ppid, &status, WUNTRACED);
-+	if ((ret != ppid) || !(WIFSTOPPED(status))) {
-+		fprintf(stderr, "weird waitppid result %ld stat %x\n",
-+			ret, status);
-+		exit(KSFT_FAIL);
-+	}
-+
-+	if (ptrace(PTRACE_PEEKDATA, ppid, mem, 0))
-+		exit(KSFT_PASS);
-+
-+	exit(KSFT_FAIL);
-+}
-+
-+static void check_child_status(pid_t pid, const char *name)
-+{
-+	int status;
-+
-+	waitpid(pid, &status, 0);
-+
-+	if (WIFEXITED(status) && WEXITSTATUS(status) == KSFT_SKIP) {
-+		skip("%s is not supported\n", name);
-+		return;
-+	}
-+
-+	if ((WIFEXITED(status) && WEXITSTATUS(status) == KSFT_PASS) ||
-+	    WIFSIGNALED(status)) {
-+		pass("%s is blocked as expected\n", name);
-+		return;
-+	}
-+
-+	fail("%s: unexpected memory access\n", name);
-+}
-+
-+static void test_remote_access(int fd, const char *name,
-+			       void (*func)(int fd, int pipefd[2]))
-+{
-+	int pipefd[2];
-+	pid_t pid;
-+	char *mem;
-+
-+	if (pipe(pipefd)) {
-+		fail("pipe failed: %s\n", strerror(errno));
-+		return;
-+	}
-+
-+	pid = fork();
-+	if (pid < 0) {
-+		fail("fork failed: %s\n", strerror(errno));
-+		return;
-+	}
-+
-+	if (pid == 0) {
-+		func(fd, pipefd);
-+		return;
-+	}
-+
-+	mem = mmap(NULL, page_size, prot, mode, fd, 0);
-+	if (mem == MAP_FAILED) {
-+		fail("Unable to mmap secret memory\n");
-+		return;
-+	}
-+
-+	ftruncate(fd, page_size);
-+	memset(mem, PATTERN, page_size);
-+
-+	if (write(pipefd[1], &mem, sizeof(mem)) < 0) {
-+		fail("pipe write: %s\n", strerror(errno));
-+		return;
-+	}
-+
-+	check_child_status(pid, name);
-+}
-+
-+static void test_process_vm_read(int fd)
-+{
-+	test_remote_access(fd, "process_vm_read", try_process_vm_read);
-+}
-+
-+static void test_ptrace(int fd)
-+{
-+	test_remote_access(fd, "ptrace", try_ptrace);
-+}
-+
-+static int set_cap_limits(rlim_t max)
-+{
-+	struct rlimit new;
-+	cap_t cap = cap_init();
-+
-+	new.rlim_cur = max;
-+	new.rlim_max = max;
-+	if (setrlimit(RLIMIT_MEMLOCK, &new)) {
-+		perror("setrlimit() returns error");
-+		return -1;
-+	}
-+
-+	/* drop capabilities including CAP_IPC_LOCK */
-+	if (cap_set_proc(cap)) {
-+		perror("cap_set_proc() returns error");
-+		return -2;
-+	}
-+
-+	return 0;
-+}
-+
-+static void prepare(void)
-+{
-+	struct rlimit rlim;
-+
-+	page_size = sysconf(_SC_PAGE_SIZE);
-+	if (!page_size)
-+		ksft_exit_fail_msg("Failed to get page size %s\n",
-+				   strerror(errno));
-+
-+	if (getrlimit(RLIMIT_MEMLOCK, &rlim))
-+		ksft_exit_fail_msg("Unable to detect mlock limit: %s\n",
-+				   strerror(errno));
-+
-+	mlock_limit_cur = rlim.rlim_cur;
-+	mlock_limit_max = rlim.rlim_max;
-+
-+	printf("page_size: %ld, mlock.soft: %ld, mlock.hard: %ld\n",
-+	       page_size, mlock_limit_cur, mlock_limit_max);
-+
-+	if (page_size > mlock_limit_cur)
-+		mlock_limit_cur = page_size;
-+	if (page_size > mlock_limit_max)
-+		mlock_limit_max = page_size;
-+
-+	if (set_cap_limits(mlock_limit_max))
-+		ksft_exit_fail_msg("Unable to set mlock limit: %s\n",
-+				   strerror(errno));
-+}
-+
-+#define NUM_TESTS 4
-+
-+int main(int argc, char *argv[])
-+{
-+	int fd;
-+
-+	prepare();
-+
-+	ksft_print_header();
-+	ksft_set_plan(NUM_TESTS);
-+
-+	fd = memfd_secret(0);
-+	if (fd < 0) {
-+		if (errno == ENOSYS)
-+			ksft_exit_skip("memfd_secret is not supported\n");
-+		else
-+			ksft_exit_fail_msg("memfd_secret failed: %s\n",
-+					   strerror(errno));
-+	}
-+
-+	test_mlock_limit(fd);
-+	test_file_apis(fd);
-+	test_process_vm_read(fd);
-+	test_ptrace(fd);
-+
-+	close(fd);
-+
-+	ksft_exit(!ksft_get_fail_cnt());
-+}
-+
-+#else /* __NR_memfd_secret */
-+
-+int main(int argc, char *argv[])
-+{
-+	printf("skip: skipping memfd_secret test (missing __NR_memfd_secret)\n");
-+	return KSFT_SKIP;
-+}
-+
-+#endif /* __NR_memfd_secret */
-diff --git a/tools/testing/selftests/vm/run_vmtests.sh b/tools/testing/selftests/vm/run_vmtests.sh
-index e953f3cd9664..95a67382f132 100755
---- a/tools/testing/selftests/vm/run_vmtests.sh
-+++ b/tools/testing/selftests/vm/run_vmtests.sh
-@@ -346,4 +346,21 @@ else
- 	exitcode=1
- fi
++#endif /* _ASM_ARM64_SET_MEMORY_H */
+diff --git a/arch/arm64/kernel/machine_kexec.c b/arch/arm64/kernel/machine_kexec.c
+index 90a335c74442..0ec94e718724 100644
+--- a/arch/arm64/kernel/machine_kexec.c
++++ b/arch/arm64/kernel/machine_kexec.c
+@@ -11,6 +11,7 @@
+ #include <linux/kernel.h>
+ #include <linux/kexec.h>
+ #include <linux/page-flags.h>
++#include <linux/set_memory.h>
+ #include <linux/smp.h>
  
-+echo "running memfd_secret test"
-+echo "------------------------------------"
-+./memfd_secret
-+ret_val=$?
+ #include <asm/cacheflush.h>
+diff --git a/arch/arm64/mm/mmu.c b/arch/arm64/mm/mmu.c
+index 3802cfbdd20d..9243ea9f4e9f 100644
+--- a/arch/arm64/mm/mmu.c
++++ b/arch/arm64/mm/mmu.c
+@@ -22,6 +22,7 @@
+ #include <linux/io.h>
+ #include <linux/mm.h>
+ #include <linux/vmalloc.h>
++#include <linux/set_memory.h>
+ 
+ #include <asm/barrier.h>
+ #include <asm/cputype.h>
+@@ -492,7 +493,7 @@ static void __init map_mem(pgd_t *pgdp)
+ 	int flags = 0;
+ 	u64 i;
+ 
+-	if (rodata_full || crash_mem_map || debug_pagealloc_enabled())
++	if (can_set_direct_map() || crash_mem_map)
+ 		flags = NO_BLOCK_MAPPINGS | NO_CONT_MAPPINGS;
+ 
+ 	/*
+@@ -1470,8 +1471,7 @@ int arch_add_memory(int nid, u64 start, u64 size,
+ 	 * KFENCE requires linear map to be mapped at page granularity, so that
+ 	 * it is possible to protect/unprotect single pages in the KFENCE pool.
+ 	 */
+-	if (rodata_full || debug_pagealloc_enabled() ||
+-	    IS_ENABLED(CONFIG_KFENCE))
++	if (can_set_direct_map() || IS_ENABLED(CONFIG_KFENCE))
+ 		flags = NO_BLOCK_MAPPINGS | NO_CONT_MAPPINGS;
+ 
+ 	__create_pgd_mapping(swapper_pg_dir, start, __phys_to_virt(start),
+diff --git a/arch/arm64/mm/pageattr.c b/arch/arm64/mm/pageattr.c
+index b53ef37bf95a..d505172265b0 100644
+--- a/arch/arm64/mm/pageattr.c
++++ b/arch/arm64/mm/pageattr.c
+@@ -19,6 +19,11 @@ struct page_change_data {
+ 
+ bool rodata_full __ro_after_init = IS_ENABLED(CONFIG_RODATA_FULL_DEFAULT_ENABLED);
+ 
++bool can_set_direct_map(void)
++{
++	return rodata_full || debug_pagealloc_enabled();
++}
 +
-+if [ $ret_val -eq 0 ]; then
-+	echo "[PASS]"
-+elif [ $ret_val -eq $ksft_skip ]; then
-+	echo "[SKIP]"
-+	exitcode=$ksft_skip
-+else
-+	echo "[FAIL]"
-+	exitcode=1
-+fi
-+
-+exit $exitcode
-+
- exit $exitcode
+ static int change_page_range(pte_t *ptep, unsigned long addr, void *data)
+ {
+ 	struct page_change_data *cdata = data;
+@@ -156,7 +161,7 @@ int set_direct_map_invalid_noflush(struct page *page, int numpages)
+ 	};
+ 	unsigned long size = PAGE_SIZE * numpages;
+ 
+-	if (!debug_pagealloc_enabled() && !rodata_full)
++	if (!can_set_direct_map())
+ 		return 0;
+ 
+ 	return apply_to_page_range(&init_mm,
+@@ -172,7 +177,7 @@ int set_direct_map_default_noflush(struct page *page, int numpages)
+ 	};
+ 	unsigned long size = PAGE_SIZE * numpages;
+ 
+-	if (!debug_pagealloc_enabled() && !rodata_full)
++	if (!can_set_direct_map())
+ 		return 0;
+ 
+ 	return apply_to_page_range(&init_mm,
+@@ -183,7 +188,7 @@ int set_direct_map_default_noflush(struct page *page, int numpages)
+ #ifdef CONFIG_DEBUG_PAGEALLOC
+ void __kernel_map_pages(struct page *page, int numpages, int enable)
+ {
+-	if (!debug_pagealloc_enabled() && !rodata_full)
++	if (!can_set_direct_map())
+ 		return;
+ 
+ 	set_memory_valid((unsigned long)page_address(page), numpages, enable);
+@@ -208,7 +213,7 @@ bool kernel_page_present(struct page *page)
+ 	pte_t *ptep;
+ 	unsigned long addr = (unsigned long)page_address(page);
+ 
+-	if (!debug_pagealloc_enabled() && !rodata_full)
++	if (!can_set_direct_map())
+ 		return true;
+ 
+ 	pgdp = pgd_offset_k(addr);
+diff --git a/include/linux/set_memory.h b/include/linux/set_memory.h
+index c650f82db813..7b4b6626032d 100644
+--- a/include/linux/set_memory.h
++++ b/include/linux/set_memory.h
+@@ -28,7 +28,19 @@ static inline bool kernel_page_present(struct page *page)
+ {
+ 	return true;
+ }
++#else /* CONFIG_ARCH_HAS_SET_DIRECT_MAP */
++/*
++ * Some architectures, e.g. ARM64 can disable direct map modifications at
++ * boot time. Let them overrive this query.
++ */
++#ifndef can_set_direct_map
++static inline bool can_set_direct_map(void)
++{
++	return true;
++}
++#define can_set_direct_map can_set_direct_map
+ #endif
++#endif /* CONFIG_ARCH_HAS_SET_DIRECT_MAP */
+ 
+ #ifndef set_mce_nospec
+ static inline int set_mce_nospec(unsigned long pfn, bool unmap)
 -- 
 2.28.0
 
