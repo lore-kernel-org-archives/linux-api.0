@@ -2,98 +2,91 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D1B3DC433E6
-	for <linux-api@archiver.kernel.org>; Wed,  3 Mar 2021 03:11:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0872CC43381
+	for <linux-api@archiver.kernel.org>; Wed,  3 Mar 2021 03:11:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 927F364EBB
+	by mail.kernel.org (Postfix) with ESMTP id D0BC664E27
 	for <linux-api@archiver.kernel.org>; Wed,  3 Mar 2021 03:11:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S244336AbhCCDFT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 2 Mar 2021 22:05:19 -0500
-Received: from mga12.intel.com ([192.55.52.136]:4766 "EHLO mga12.intel.com"
+        id S244359AbhCCDFf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 2 Mar 2021 22:05:35 -0500
+Received: from mail.kernel.org ([198.145.29.99]:34996 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S232971AbhCBXve (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 2 Mar 2021 18:51:34 -0500
-IronPort-SDR: cpvKoa2amG/VNtTsYZeuoTrtQbqRKEk5UWbojAfbEIGfxODZQkeeC34u0XQ+eWqi1OY78DX5kn
- JDeTt6hVbfag==
-X-IronPort-AV: E=McAfee;i="6000,8403,9911"; a="166281817"
-X-IronPort-AV: E=Sophos;i="5.81,218,1610438400"; 
-   d="scan'208";a="166281817"
-Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Mar 2021 15:46:35 -0800
-IronPort-SDR: hv/iD/ygCIE8H3t1ule/ZVIvikOyUAjmtov+tEKECJNvBd4KKG97ozZ+KyDdeZWNtPmhqWwCMy
- sPoFp9TN6UxQ==
-X-IronPort-AV: E=Sophos;i="5.81,218,1610438400"; 
-   d="scan'208";a="406967876"
-Received: from yyu32-mobl1.amr.corp.intel.com (HELO [10.212.177.76]) ([10.212.177.76])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Mar 2021 15:46:32 -0800
-Subject: Re: [PATCH v21 08/26] x86/mm: Introduce _PAGE_COW
-To:     Borislav Petkov <bp@alien8.de>
-Cc:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-doc@vger.kernel.org, linux-mm@kvack.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
-        Arnd Bergmann <arnd@arndb.de>,
-        Andy Lutomirski <luto@kernel.org>,
-        Balbir Singh <bsingharora@gmail.com>,
-        Cyrill Gorcunov <gorcunov@gmail.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Eugene Syromiatnikov <esyr@redhat.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
-        Jonathan Corbet <corbet@lwn.net>,
+        id S234179AbhCCASV (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 2 Mar 2021 19:18:21 -0500
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 08BB064F48;
+        Wed,  3 Mar 2021 00:17:16 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linux-foundation.org;
+        s=korg; t=1614730637;
+        bh=mU5PveBMUOL4vXjHcyJ4Vk66Hg1AkYJuK82tzLO57oQ=;
+        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+        b=fFazfdEQJPlwzLPWA6JwystQrC4mSJJ0zoD3Xq50mm051lTZHifhHMHF/vO2b7qsD
+         hEsqhrkxH2QGhYrBVPY3k8ZB+lO1TebGwSpRuIiL0pvMOXJuBVWH8Gx7JfF7FY2MJe
+         jbpQJXCGv4nz0tGyB83KR6vs4g/7fkmp4Kw1GMXs=
+Date:   Tue, 2 Mar 2021 16:17:16 -0800
+From:   Andrew Morton <akpm@linux-foundation.org>
+To:     Suren Baghdasaryan <surenb@google.com>
+Cc:     Jann Horn <jannh@google.com>, Oleg Nesterov <oleg@redhat.com>,
         Kees Cook <keescook@chromium.org>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Nadav Amit <nadav.amit@gmail.com>,
-        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
-        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
-        Dave Martin <Dave.Martin@arm.com>,
-        Weijiang Yang <weijiang.yang@intel.com>,
-        Pengfei Xu <pengfei.xu@intel.com>,
-        Haitao Huang <haitao.huang@intel.com>
-References: <20210217222730.15819-1-yu-cheng.yu@intel.com>
- <20210217222730.15819-9-yu-cheng.yu@intel.com>
- <20210301155234.GF6699@zn.tnic>
-From:   "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
-Message-ID: <167f58a3-20ef-7210-1d66-cf25f4a9bbef@intel.com>
-Date:   Tue, 2 Mar 2021 15:46:31 -0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
- Thunderbird/78.8.0
-MIME-Version: 1.0
-In-Reply-To: <20210301155234.GF6699@zn.tnic>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-US
+        Jeffrey Vander Stoep <jeffv@google.com>,
+        Minchan Kim <minchan@kernel.org>,
+        Shakeel Butt <shakeelb@google.com>,
+        David Rientjes <rientjes@google.com>,
+        Edgar Arriaga =?ISO-8859-1?Q?Garc=EDa?= 
+        <edgararriaga@google.com>, Tim Murray <timmurray@google.com>,
+        linux-mm <linux-mm@kvack.org>,
+        SElinux list <selinux@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        kernel-team <kernel-team@android.com>,
+        linux-security-module <linux-security-module@vger.kernel.org>,
+        stable <stable@vger.kernel.org>, Michal Hocko <mhocko@suse.com>
+Subject: Re: [PATCH v2 1/1] mm/madvise: replace ptrace attach requirement
+ for process_madvise
+Message-Id: <20210302161716.89a65d3cb5b60dbc5074cfa7@linux-foundation.org>
+In-Reply-To: <CAJuCfpEOE8=L1fT4FSauy65cS82M_kW3EzTgH89ewE9HudL=VA@mail.gmail.com>
+References: <20210111170622.2613577-1-surenb@google.com>
+        <20210112074629.GG22493@dhcp22.suse.cz>
+        <20210112174507.GA23780@redhat.com>
+        <CAJuCfpFQz=x-LvONO3c4iqjKP4NKJMgUuiYc8HACKHAv1Omu0w@mail.gmail.com>
+        <20210113142202.GC22493@dhcp22.suse.cz>
+        <CAG48ez0=QSzuj96+5oVQ2qWqfjedv3oKtfEFzw--C8bzfvj7EQ@mail.gmail.com>
+        <20210126135254.GP827@dhcp22.suse.cz>
+        <CAJuCfpEnMyo9XAnoF+q1j9EkC0okZfUxxdAFhzhPJi+adJYqjw@mail.gmail.com>
+        <CAJuCfpF861zhp8yR_pYx8gb+WMrORAZ0tbzcKtKxaj7L=jzw+Q@mail.gmail.com>
+        <CAJuCfpFzxiBXp1rdY=H=bX+eOAVGOe72_FxwC-NTWF4fhUO26g@mail.gmail.com>
+        <CAJuCfpEOE8=L1fT4FSauy65cS82M_kW3EzTgH89ewE9HudL=VA@mail.gmail.com>
+X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.31; x86_64-pc-linux-gnu)
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 3/1/2021 7:52 AM, Borislav Petkov wrote:
-> On Wed, Feb 17, 2021 at 02:27:12PM -0800, Yu-cheng Yu wrote:
+On Tue, 2 Mar 2021 15:53:39 -0800 Suren Baghdasaryan <surenb@google.com> wrote:
 
-[...]
-
->>   static inline pmd_t pmd_mkdirty(pmd_t pmd)
->>   {
->> -	return pmd_set_flags(pmd, _PAGE_DIRTY | _PAGE_SOFT_DIRTY);
->> +	pmdval_t dirty = _PAGE_DIRTY;
->> +
->> +	/* Avoid creating (HW)Dirty=1, Write=0 PMDs */
->> +	if (cpu_feature_enabled(X86_FEATURE_SHSTK) && !(pmd_flags(pmd) & _PAGE_RW))
+> Hi Andrew,
+> A friendly reminder to please include this patch into mm tree.
+> There seem to be no more questions or objections.
+> The man page you requested is accepted here:
+> https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/commit/?id=a144f458bad476a3358e3a45023789cb7bb9f993
+> stable is CC'ed and this patch should go into 5.10 and later kernels
+> The patch has been:
+> Acked-by: Minchan Kim <minchan@kernel.org>
+> Acked-by: David Rientjes <rientjes@google.com>
+> Reviewed-by: Kees Cook <keescook@chromium.org>
 > 
-> 						      !(pmd_write(pmd))
-> 
+> If you want me to resend it, please let me know.
 
-There is a problem of doing that: pmd_write() is defined after this 
-function.  Maybe we can declare it first, or leave this as-is?
+This patch was tough.  I think it would be best to resend please, being
+sure to cc everyone who commented.  To give everyone another chance to
+get their heads around it.  If necessary, please update the changelog
+to address any confusion/questions which have arisen thus far.
 
---
-Yu-cheng
+Thanks.
