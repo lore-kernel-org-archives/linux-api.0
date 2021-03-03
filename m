@@ -2,125 +2,172 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.2 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-28.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_IN_DEF_DKIM_WL
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 80E3EC4332B
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8FFBCC433DB
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4F88A64E68
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6B1FE64EBA
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1355520AbhCDA3S (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 3 Mar 2021 19:29:18 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46918 "EHLO
+        id S1346697AbhCDA3V (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 3 Mar 2021 19:29:21 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44066 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1390132AbhCCWCA (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Mar 2021 17:02:00 -0500
-Received: from mail-ej1-x636.google.com (mail-ej1-x636.google.com [IPv6:2a00:1450:4864:20::636])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 73C63C061756
-        for <linux-api@vger.kernel.org>; Wed,  3 Mar 2021 13:52:41 -0800 (PST)
-Received: by mail-ej1-x636.google.com with SMTP id bm21so26419171ejb.4
-        for <linux-api@vger.kernel.org>; Wed, 03 Mar 2021 13:52:41 -0800 (PST)
+        with ESMTP id S233490AbhCDAAF (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Mar 2021 19:00:05 -0500
+Received: from mail-yb1-xb2c.google.com (mail-yb1-xb2c.google.com [IPv6:2607:f8b0:4864:20::b2c])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8F37BC0613E8
+        for <linux-api@vger.kernel.org>; Wed,  3 Mar 2021 15:34:23 -0800 (PST)
+Received: by mail-yb1-xb2c.google.com with SMTP id b10so26472099ybn.3
+        for <linux-api@vger.kernel.org>; Wed, 03 Mar 2021 15:34:23 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=cc:subject:to:references:from:message-id:date:user-agent
-         :mime-version:in-reply-to:content-language:content-transfer-encoding;
-        bh=Ule00/q7HX84OWwF406gDgGyERbFTpWlz3Kr8aowLtk=;
-        b=MEIFZsawybl0SFyEKqDr8seajr1wemtkm8Y3LG8LE3nlk7lOWdFYYj347UxRb+H5HP
-         TQvddfdQdF/8p1pdWrrTbHaKJPy8RilCcxGCFnOA+RLFr7EiRv+tKAkZ6FcaFpeigIxn
-         4ZlaPzR+HTY86VXgvYqn7iYRTljh1YCi974jWgVqqxxOE0sgc5oDmfDtCH0F9x/calu7
-         jFil5hjz+wrdnB3zsmesZ0RPduhH0NjVjyEPkk9C1NaS/627zyVGyNkJemsk7+lYv8Q1
-         a+z7e1exscugU8JWBlg3XSHS65dbQoX+Lj/A2IgCHWrPR2/mK2brUlYIWucTLL+5Wgs0
-         VuNg==
+        d=google.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=dK3NMZEn6j+LEopfsKHiSKgLCccGDXi0UgAxRfW2Oqc=;
+        b=PmpeEda9EVHOi2NUTA6CQFAIu3OnfUOUQQ1bsO2Wgb4Z1uXp+cFrBBjYJDNIBtXOTs
+         /ckOxfORWw2x+c6lh9BCl/9/Rr3/34Oa+ujJ1Dbtl9cyMTSfcly6z6kzFxCVwEPDAf8X
+         WwfEkSDvKoN4DZwVI3CiTHwAar1bL/8NnTjQ4x/6KFF+nqku5nwb1ciZ7kwpp6idKSnh
+         RB6vdb5nk0v4z94zYx0S/+pkC/AM9E7zatTomJLb6+qeJjTG/2b1x87YaMeyV9M0M70l
+         Xjwi2jPUWCxeQBBWPOfs9MN3LkjS5oQWbUtWkHUgml0L/3ZwnddJea2A85/vRg76WD7o
+         6u/g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:cc:subject:to:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-language
-         :content-transfer-encoding;
-        bh=Ule00/q7HX84OWwF406gDgGyERbFTpWlz3Kr8aowLtk=;
-        b=GUxPBJ+RMTNOrI/g9i3D3GJDKINEuG9iw1le0Oiu01mKM1j0UUtbNyOvoybP25xF3G
-         udIUKwsxvUANCVxmZ6mqnENzM24KTuU4xH/qpGG0I9OcAiDW75lfkIa2KBlAiMz08/7/
-         oCgFV81Ma4lD8gWQHHxY/Y+HgQcKsluylwGkPOmcU0BYEivrEK8w7rZP1SlalrLMBgx+
-         ipMzdqLYezfh7dZX3Lp/sXQNq3elgP03+WhptwnifXsbmTAR8URpfQu3rdAq70JEByTV
-         605QYGUdxf3RMMPynlEKY6Hf8yRFZk+oEeL5T9JUrA5BL23mC+RRwRFjTYHwwQ7WnpYQ
-         H8Mw==
-X-Gm-Message-State: AOAM530COkIVyYGvEVt3hhUkKiBYX/Hn5cRiseBr7aHpnz0++aXXksTf
-        IIo9qnrGAdjV0MccF6gNZeoADnkJ+jIrkw==
-X-Google-Smtp-Source: ABdhPJzmSHU96VSDyqk0V2Hlat3vjtWje8asxOLw35C6ZZjzW+/KG7QMnsJEHCTG4XD6P8cZ8EX4zg==
-X-Received: by 2002:a17:906:d9d1:: with SMTP id qk17mr814216ejb.52.1614808359885;
-        Wed, 03 Mar 2021 13:52:39 -0800 (PST)
-Received: from ?IPv6:2001:a61:3a2d:1d01:99ab:4f20:ed7f:402b? ([2001:a61:3a2d:1d01:99ab:4f20:ed7f:402b])
-        by smtp.gmail.com with ESMTPSA id jj16sm21507346ejc.19.2021.03.03.13.52.39
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 03 Mar 2021 13:52:39 -0800 (PST)
-Cc:     mtk.manpages@gmail.com, linux-api@vger.kernel.org
-Subject: Re: [PATCH] MAINTAINERS: exclude uapi directories in API/ABI section
-To:     Vlastimil Babka <vbabka@suse.cz>,
-        Andrew Morton <akpm@linux-foundation.org>
-References: <CAKgNAkiVWvzQOwRGOdSoh8JY-DpxcF6pWdLWNK4RHFdN-d6=+w@mail.gmail.com>
- <20210301100255.25229-1-vbabka@suse.cz>
-From:   "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Message-ID: <55ec3d9c-5c11-2c4c-2fb4-3cc985b7b0b6@gmail.com>
-Date:   Wed, 3 Mar 2021 22:52:36 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.6.0
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=dK3NMZEn6j+LEopfsKHiSKgLCccGDXi0UgAxRfW2Oqc=;
+        b=AhaTlt9O20M+5UmBl+Y3IHYVx0oETZdVcHtMprNIchyKUB/EVX4yCyLAal/CU1R3kH
+         /yBjgoEvjnJQPCk+8wnI8NLMwMvdzRiv7Wm4WDOPaCXNbjV52SCswEykWlycoBwaAKpp
+         ObExhh29AltKZnMtjkqWeLHE9z/bHLwuAqHs9wi+lgOFKLlBYp9iu2pAk7XSpryKsiwI
+         XdxdL+3o5BTpA0fD4rK6WmUOnsSUHGsnsmyijR7WEUKFlRDK9ZUX9q483NPJg89r+ep9
+         a47dpUlcm+bAMKyjvu7NIRv/1C7JwTKWsTo6lJnyRye579n++RQoIhZ28gK5JXMDgEjq
+         zfnQ==
+X-Gm-Message-State: AOAM531wSiMJo35A/IMh60uqDGNmhsQgOj64/FPJXqYdmbL9FP0Bpxh7
+        CAnkA5QTvDNkR0q5CuEFA5ZrSYRyDdxF0SBRagjKow==
+X-Google-Smtp-Source: ABdhPJzc/mHrww3IY/9z3+WUQSdSGo89Gggng+nexIlrYjiTSXlmpCbrmm1SF2HqKZOC/kksFNF5jAzISE+d4+AHWE0=
+X-Received: by 2002:a25:d74b:: with SMTP id o72mr2541368ybg.190.1614814462375;
+ Wed, 03 Mar 2021 15:34:22 -0800 (PST)
 MIME-Version: 1.0
-In-Reply-To: <20210301100255.25229-1-vbabka@suse.cz>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+References: <20210303185807.2160264-1-surenb@google.com> <CALvZod73Uem8jzP3QQdQ6waXbx80UUOTJQS7WBwnmaCdq++8xw@mail.gmail.com>
+In-Reply-To: <CALvZod73Uem8jzP3QQdQ6waXbx80UUOTJQS7WBwnmaCdq++8xw@mail.gmail.com>
+From:   Suren Baghdasaryan <surenb@google.com>
+Date:   Wed, 3 Mar 2021 15:34:11 -0800
+Message-ID: <CAJuCfpFgDRezmQMjCajXzBp86UbMLMJbqEaeo0_J+pneZ5XOgg@mail.gmail.com>
+Subject: Re: [PATCH v3 1/1] mm/madvise: replace ptrace attach requirement for process_madvise
+To:     Shakeel Butt <shakeelb@google.com>
+Cc:     Andrew Morton <akpm@linux-foundation.org>,
+        Jann Horn <jannh@google.com>,
+        Kees Cook <keescook@chromium.org>,
+        Jeffrey Vander Stoep <jeffv@google.com>,
+        Minchan Kim <minchan@kernel.org>,
+        Michal Hocko <mhocko@suse.com>,
+        David Rientjes <rientjes@google.com>,
+        =?UTF-8?Q?Edgar_Arriaga_Garc=C3=ADa?= <edgararriaga@google.com>,
+        Tim Murray <timmurray@google.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        Oleg Nesterov <oleg@redhat.com>,
+        James Morris <jmorris@namei.org>,
+        Linux MM <linux-mm@kvack.org>,
+        SElinux list <selinux@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        linux-security-module <linux-security-module@vger.kernel.org>,
+        stable <stable@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        kernel-team <kernel-team@android.com>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 3/1/21 11:02 AM, Vlastimil Babka wrote:
-> Commit 7b4693e644cb ("MAINTAINERS: add uapi directories to API/ABI section")
-> added include/uapi/ and arch/*/include/uapi/ so that patches modifying them
-> CC linux-api. However that was already done in the past and resulted in too
-> much noise and thus later removed, as explained in b14fd334ff3d ("MAINTAINERS:
-> trim the file triggers for ABI/API")
-> 
-> To prevent another round of addition and removal in the future, change the
-> entries to X: (explicit exclusion) for documentation purposes, although they
-> are not subdirectories of broader included directories, as there is apparently
-> no defined way to add plain comments in subsystem sections.
-> 
-> Reported-by: Michael Kerrisk (man-pages) <mtk.manpages@gmail.com>
-> Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
-> ---
->  MAINTAINERS | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/MAINTAINERS b/MAINTAINERS
-> index d92f85ca831d..591829cd1ba4 100644
-> --- a/MAINTAINERS
-> +++ b/MAINTAINERS
-> @@ -261,8 +261,8 @@ ABI/API
->  L:	linux-api@vger.kernel.org
->  F:	include/linux/syscalls.h
->  F:	kernel/sys_ni.c
-> -F:	include/uapi/
-> -F:	arch/*/include/uapi/
-> +X:	include/uapi/
-> +X:	arch/*/include/uapi/
->  
->  ABIT UGURU 1,2 HARDWARE MONITOR DRIVER
->  M:	Hans de Goede <hdegoede@redhat.com>
-> 
+On Wed, Mar 3, 2021 at 3:17 PM Shakeel Butt <shakeelb@google.com> wrote:
+>
+> On Wed, Mar 3, 2021 at 10:58 AM Suren Baghdasaryan <surenb@google.com> wrote:
+> >
+> > process_madvise currently requires ptrace attach capability.
+> > PTRACE_MODE_ATTACH gives one process complete control over another
+> > process. It effectively removes the security boundary between the
+> > two processes (in one direction). Granting ptrace attach capability
+> > even to a system process is considered dangerous since it creates an
+> > attack surface. This severely limits the usage of this API.
+> > The operations process_madvise can perform do not affect the correctness
+> > of the operation of the target process; they only affect where the data
+> > is physically located (and therefore, how fast it can be accessed).
+> > What we want is the ability for one process to influence another process
+> > in order to optimize performance across the entire system while leaving
+> > the security boundary intact.
+> > Replace PTRACE_MODE_ATTACH with a combination of PTRACE_MODE_READ
+> > and CAP_SYS_NICE. PTRACE_MODE_READ to prevent leaking ASLR metadata
+> > and CAP_SYS_NICE for influencing process performance.
+> >
+> > Cc: stable@vger.kernel.org # 5.10+
+> > Signed-off-by: Suren Baghdasaryan <surenb@google.com>
+> > Reviewed-by: Kees Cook <keescook@chromium.org>
+> > Acked-by: Minchan Kim <minchan@kernel.org>
+> > Acked-by: David Rientjes <rientjes@google.com>
+> > ---
+> > changes in v3
+> > - Added Reviewed-by: Kees Cook <keescook@chromium.org>
+> > - Created man page for process_madvise per Andrew's request: https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/commit/?id=a144f458bad476a3358e3a45023789cb7bb9f993
+> > - cc'ed stable@vger.kernel.org # 5.10+ per Andrew's request
+> > - cc'ed linux-security-module@vger.kernel.org per James Morris's request
+> >
+> >  mm/madvise.c | 13 ++++++++++++-
+> >  1 file changed, 12 insertions(+), 1 deletion(-)
+> >
+> > diff --git a/mm/madvise.c b/mm/madvise.c
+> > index df692d2e35d4..01fef79ac761 100644
+> > --- a/mm/madvise.c
+> > +++ b/mm/madvise.c
+> > @@ -1198,12 +1198,22 @@ SYSCALL_DEFINE5(process_madvise, int, pidfd, const struct iovec __user *, vec,
+> >                 goto release_task;
+> >         }
+> >
+> > -       mm = mm_access(task, PTRACE_MODE_ATTACH_FSCREDS);
+> > +       /* Require PTRACE_MODE_READ to avoid leaking ASLR metadata. */
+> > +       mm = mm_access(task, PTRACE_MODE_READ_FSCREDS);
+> >         if (IS_ERR_OR_NULL(mm)) {
+> >                 ret = IS_ERR(mm) ? PTR_ERR(mm) : -ESRCH;
+> >                 goto release_task;
+> >         }
+> >
+> > +       /*
+> > +        * Require CAP_SYS_NICE for influencing process performance. Note that
+> > +        * only non-destructive hints are currently supported.
+>
+> How is non-destructive defined? Is MADV_DONTNEED non-destructive?
 
-Thanks, Vlastimil.
+Non-destructive in this context means the data is not lost and can be
+recovered. I follow the logic described in
+https://lwn.net/Articles/794704/ where Minchan was introducing
+MADV_COLD and MADV_PAGEOUT as non-destructive versions of MADV_FREE
+and MADV_DONTNEED. Following that logic, MADV_FREE and MADV_DONTNEED
+would be considered destructive hints.
+Note that process_madvise_behavior_valid() allows only MADV_COLD and
+MADV_PAGEOUT at the moment, which are both non-destructive.
 
-Acked-by: Michael Kerrisk (man-pages) <mtk.manpages@gmail.com>
-
-Cheers,
-
-Michael
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+>
+> > +        */
+> > +       if (!capable(CAP_SYS_NICE)) {
+> > +               ret = -EPERM;
+> > +               goto release_mm;
+> > +       }
+> > +
+> >         total_len = iov_iter_count(&iter);
+> >
+> >         while (iov_iter_count(&iter)) {
+> > @@ -1218,6 +1228,7 @@ SYSCALL_DEFINE5(process_madvise, int, pidfd, const struct iovec __user *, vec,
+> >         if (ret == 0)
+> >                 ret = total_len - iov_iter_count(&iter);
+> >
+> > +release_mm:
+> >         mmput(mm);
+> >  release_task:
+> >         put_task_struct(task);
+> > --
+> > 2.30.1.766.gb4fecdf3b7-goog
+> >
