@@ -2,144 +2,94 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-31.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT,USER_IN_DEF_DKIM_WL
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 08C0CC4332B
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 84F8BC433E0
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C910464E68
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5202764EC0
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 00:29:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1355492AbhCDA3J (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 3 Mar 2021 19:29:09 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36136 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1837848AbhCCS67 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Mar 2021 13:58:59 -0500
-Received: from mail-yb1-xb49.google.com (mail-yb1-xb49.google.com [IPv6:2607:f8b0:4864:20::b49])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 089FAC0613DA
-        for <linux-api@vger.kernel.org>; Wed,  3 Mar 2021 10:58:18 -0800 (PST)
-Received: by mail-yb1-xb49.google.com with SMTP id g17so27922141ybh.4
-        for <linux-api@vger.kernel.org>; Wed, 03 Mar 2021 10:58:18 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20161025;
-        h=sender:date:message-id:mime-version:subject:from:to:cc;
-        bh=8A+Vn1cjgQFOcnDW+QJHWNfY0Snfwko60G1y42Y3xgQ=;
-        b=EpO/7HH81xcIMjmISnM93Lf1cTCniUoMKyu7mC95M0PrCQYm7LXCrQJFJxnhZLebYL
-         7pgo4FkTt/mXEQZGUDVK60yhEbDk+l70ihk7fVZRA7q4x00fCo4K0ZLzvUGDVBUCJ/Ip
-         XMq1817dtkxXcudmkwE9YXFa5LjA/esowmInvI2pZ8JnNxJ4EKkvy5wviOMspFd3DJJE
-         WO7EY93hE9dI9+/koHkwJLl1Bja54aqa7WzriMyAQE1AIbkNDaRz1Gy29w6vUOJQSNRX
-         Ov3RIk4m9opjmKSFTrlLQYe7ndJ/OAJuKsGAHDXeZtV2/2JBNiFf7obXAg8Vb1Pdkhkz
-         ILqg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:message-id:mime-version:subject:from
-         :to:cc;
-        bh=8A+Vn1cjgQFOcnDW+QJHWNfY0Snfwko60G1y42Y3xgQ=;
-        b=q3qgGzeO7u0lwETCpkVsd2omfCcTKnm1AYIaPh3FJpyKrzkpuLBQMVX+t4DRQNA3cb
-         evcBu/cw5YrQYdU6enI4tFEgTG4Fhlh0NtGUol0WpVmASIA9Ptw6YyATGbdEHO+YJ76/
-         IeBm18htbWhnlJbnizBKlrtECoXwRZBpHreqAvGQ0tvrvJ8nHoYTgdVnI8Zd7ErVTsHK
-         e8I7ZR+Ts/0lPMO4vr6qRS1G0NLsUohVc4RONbqoqF1fAg6XgeM/RQ9wOLDawxUJ/ICt
-         kLp5UT6NkJarAHNERrfWySEwae8srDR5AAHX0FVzIoedSlmdRmkG83dziQ9FkZEVrlwg
-         K03A==
-X-Gm-Message-State: AOAM531Pdrxe8v5Pa10bWctEk5fk+Ks/bUtkS3qDhKin2Zsb5EZLReJ0
-        8l4kecjnR2g1AWLGeWtbUh3yyvX/twg=
-X-Google-Smtp-Source: ABdhPJw5vqMC1rNuxjPhDpEuhkpA8XxV6s45QZbFWYlu/dQ45hxGXNv7dGL1NqqF16Ah3hvn7L52qLtxWkQ=
-Sender: "surenb via sendgmr" <surenb@surenb1.mtv.corp.google.com>
-X-Received: from surenb1.mtv.corp.google.com ([2620:15c:211:200:f028:1b0b:1705:8ebb])
- (user=surenb job=sendgmr) by 2002:a25:f40e:: with SMTP id q14mr1113934ybd.230.1614797898171;
- Wed, 03 Mar 2021 10:58:18 -0800 (PST)
-Date:   Wed,  3 Mar 2021 10:58:07 -0800
-Message-Id: <20210303185807.2160264-1-surenb@google.com>
-Mime-Version: 1.0
-X-Mailer: git-send-email 2.30.1.766.gb4fecdf3b7-goog
-Subject: [PATCH v3 1/1] mm/madvise: replace ptrace attach requirement for process_madvise
-From:   Suren Baghdasaryan <surenb@google.com>
-To:     akpm@linux-foundation.org
-Cc:     jannh@google.com, keescook@chromium.org, jeffv@google.com,
-        minchan@kernel.org, mhocko@suse.com, shakeelb@google.com,
-        rientjes@google.com, edgararriaga@google.com, timmurray@google.com,
-        fweimer@redhat.com, oleg@redhat.com, jmorris@namei.org,
-        linux-mm@kvack.org, selinux@vger.kernel.org,
-        linux-api@vger.kernel.org, linux-security-module@vger.kernel.org,
-        stable@vger.kernel.org, linux-kernel@vger.kernel.org,
-        kernel-team@android.com, surenb@google.com
-Content-Type: text/plain; charset="UTF-8"
+        id S1355447AbhCDA3I (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 3 Mar 2021 19:29:08 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:55792 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S237360AbhCCRMW (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Mar 2021 12:12:22 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1614791437;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=72AvldDshkpAm4vjL1rTWERNo04lTYkEaJw4N5Ow1KY=;
+        b=KwaJjgMdoaO8EQJrjzNTcoUAq2SmwZuMpfzkcmoENN+gTQbSIndpHRrumSXbNuAKFdXf/j
+        4RqPuwFWe1utVlap0X7OXuSDX5do5RsqlBYCqzDAd1WHDhjSH01m46Bcqa1EhhF4DpABW+
+        TK316qlKshl3JK+F+PKkS5zubAp8xW8=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-391-Vzp06uWgMW-4lLCQSKAZmA-1; Wed, 03 Mar 2021 12:10:33 -0500
+X-MC-Unique: Vzp06uWgMW-4lLCQSKAZmA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id ACB2E100A61D;
+        Wed,  3 Mar 2021 17:10:29 +0000 (UTC)
+Received: from oldenburg.str.redhat.com (ovpn-112-51.ams2.redhat.com [10.36.112.51])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 006F45C5DF;
+        Wed,  3 Mar 2021 17:10:21 +0000 (UTC)
+From:   Florian Weimer <fweimer@redhat.com>
+To:     Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc:     Piotr Figiel <figiel@google.com>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        paulmck <paulmck@kernel.org>, Boqun Feng <boqun.feng@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>,
+        "Dmitry V. Levin" <ldv@altlinux.org>,
+        Alexey Dobriyan <adobriyan@gmail.com>,
+        Andrei Vagin <avagin@gmail.com>,
+        linux-kernel <linux-kernel@vger.kernel.org>,
+        Peter Oskolkov <posk@google.com>,
+        Kamil Yurtsever <kyurtsever@google.com>,
+        Chris Kennelly <ckennelly@google.com>,
+        Paul Turner <pjt@google.com>, emmir <emmir@google.com>,
+        linux-man <linux-man@vger.kernel.org>,
+        linux-api <linux-api@vger.kernel.org>
+Subject: Re: [PATCH v2] ptrace: add PTRACE_GET_RSEQ_CONFIGURATION request
+References: <20210226135156.1081606-1-figiel@google.com>
+        <192824546.8190.1614353555831.JavaMail.zimbra@efficios.com>
+Date:   Wed, 03 Mar 2021 18:10:27 +0100
+In-Reply-To: <192824546.8190.1614353555831.JavaMail.zimbra@efficios.com>
+        (Mathieu Desnoyers's message of "Fri, 26 Feb 2021 10:32:35 -0500
+        (EST)")
+Message-ID: <87h7lsuprw.fsf@oldenburg.str.redhat.com>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
+MIME-Version: 1.0
+Content-Type: text/plain
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-process_madvise currently requires ptrace attach capability.
-PTRACE_MODE_ATTACH gives one process complete control over another
-process. It effectively removes the security boundary between the
-two processes (in one direction). Granting ptrace attach capability
-even to a system process is considered dangerous since it creates an
-attack surface. This severely limits the usage of this API.
-The operations process_madvise can perform do not affect the correctness
-of the operation of the target process; they only affect where the data
-is physically located (and therefore, how fast it can be accessed).
-What we want is the ability for one process to influence another process
-in order to optimize performance across the entire system while leaving
-the security boundary intact.
-Replace PTRACE_MODE_ATTACH with a combination of PTRACE_MODE_READ
-and CAP_SYS_NICE. PTRACE_MODE_READ to prevent leaking ASLR metadata
-and CAP_SYS_NICE for influencing process performance.
+* Mathieu Desnoyers:
 
-Cc: stable@vger.kernel.org # 5.10+
-Signed-off-by: Suren Baghdasaryan <surenb@google.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
-Acked-by: Minchan Kim <minchan@kernel.org>
-Acked-by: David Rientjes <rientjes@google.com>
----
-changes in v3
-- Added Reviewed-by: Kees Cook <keescook@chromium.org>
-- Created man page for process_madvise per Andrew's request: https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/commit/?id=a144f458bad476a3358e3a45023789cb7bb9f993
-- cc'ed stable@vger.kernel.org # 5.10+ per Andrew's request
-- cc'ed linux-security-module@vger.kernel.org per James Morris's request
+> This way, the configuration structure can be expanded in the future. The
+> rseq ABI structure is by definition fixed-size, so there is no point in
+> having its size here.
+>
+> Florian, did I understand your request correctly, or am I missing your
+> point ?
 
- mm/madvise.c | 13 ++++++++++++-
- 1 file changed, 12 insertions(+), 1 deletion(-)
+No, the idea was that if the kernel ever supports different rseq ABI
+sizes on registration (it could as there's a size argument to the rseq
+system call), that needs to be communicated to CRIU, so that it restores
+with the right size.
 
-diff --git a/mm/madvise.c b/mm/madvise.c
-index df692d2e35d4..01fef79ac761 100644
---- a/mm/madvise.c
-+++ b/mm/madvise.c
-@@ -1198,12 +1198,22 @@ SYSCALL_DEFINE5(process_madvise, int, pidfd, const struct iovec __user *, vec,
- 		goto release_task;
- 	}
- 
--	mm = mm_access(task, PTRACE_MODE_ATTACH_FSCREDS);
-+	/* Require PTRACE_MODE_READ to avoid leaking ASLR metadata. */
-+	mm = mm_access(task, PTRACE_MODE_READ_FSCREDS);
- 	if (IS_ERR_OR_NULL(mm)) {
- 		ret = IS_ERR(mm) ? PTR_ERR(mm) : -ESRCH;
- 		goto release_task;
- 	}
- 
-+	/*
-+	 * Require CAP_SYS_NICE for influencing process performance. Note that
-+	 * only non-destructive hints are currently supported.
-+	 */
-+	if (!capable(CAP_SYS_NICE)) {
-+		ret = -EPERM;
-+		goto release_mm;
-+	}
-+
- 	total_len = iov_iter_count(&iter);
- 
- 	while (iov_iter_count(&iter)) {
-@@ -1218,6 +1228,7 @@ SYSCALL_DEFINE5(process_madvise, int, pidfd, const struct iovec __user *, vec,
- 	if (ret == 0)
- 		ret = total_len - iov_iter_count(&iter);
- 
-+release_mm:
- 	mmput(mm);
- release_task:
- 	put_task_struct(task);
--- 
-2.30.1.766.gb4fecdf3b7-goog
+I haven't thought about whether it makes sense to make the ptrace
+argument struct extensible.
+
+Thanks,
+Florian
 
