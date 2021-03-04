@@ -2,152 +2,77 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C1888C433E9
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 12:38:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D1FA5C433E6
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 15:03:48 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 93EE764F1E
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 12:38:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8EEB964F6B
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 15:03:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240923AbhCDMhi (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 4 Mar 2021 07:37:38 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38598 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S241046AbhCDMhf (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 4 Mar 2021 07:37:35 -0500
-Received: from metis.ext.pengutronix.de (metis.ext.pengutronix.de [IPv6:2001:67c:670:201:290:27ff:fe1d:cc33])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 85EDAC0613DE
-        for <linux-api@vger.kernel.org>; Thu,  4 Mar 2021 04:36:14 -0800 (PST)
-Received: from dude02.hi.pengutronix.de ([2001:67c:670:100:1d::28])
-        by metis.ext.pengutronix.de with esmtps (TLS1.3:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        (Exim 4.92)
-        (envelope-from <sha@pengutronix.de>)
-        id 1lHnD1-0006vz-63; Thu, 04 Mar 2021 13:36:03 +0100
-Received: from sha by dude02.hi.pengutronix.de with local (Exim 4.92)
-        (envelope-from <sha@pengutronix.de>)
-        id 1lHnCz-00043q-VJ; Thu, 04 Mar 2021 13:36:01 +0100
-From:   Sascha Hauer <s.hauer@pengutronix.de>
-To:     linux-fsdevel@vger.kernel.org
-Cc:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        Christoph Hellwig <hch@infradead.org>, kernel@pengutronix.de,
-        Jan Kara <jack@suse.com>, Richard Weinberger <richard@nod.at>,
-        Sascha Hauer <s.hauer@pengutronix.de>,
-        Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 1/2] quota: Add mountpath based quota support
-Date:   Thu,  4 Mar 2021 13:35:39 +0100
-Message-Id: <20210304123541.30749-2-s.hauer@pengutronix.de>
-X-Mailer: git-send-email 2.29.2
-In-Reply-To: <20210304123541.30749-1-s.hauer@pengutronix.de>
-References: <20210304123541.30749-1-s.hauer@pengutronix.de>
+        id S232958AbhCDPDQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 4 Mar 2021 10:03:16 -0500
+Received: from outgoing-auth-1.mit.edu ([18.9.28.11]:51200 "EHLO
+        outgoing.mit.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+        with ESMTP id S232988AbhCDPDF (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 4 Mar 2021 10:03:05 -0500
+Received: from cwcc.thunk.org (pool-72-74-133-215.bstnma.fios.verizon.net [72.74.133.215])
+        (authenticated bits=0)
+        (User authenticated as tytso@ATHENA.MIT.EDU)
+        by outgoing.mit.edu (8.14.7/8.12.4) with ESMTP id 124F1E6c002357
+        (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+        Thu, 4 Mar 2021 10:01:15 -0500
+Received: by cwcc.thunk.org (Postfix, from userid 15806)
+        id A243015C3A88; Thu,  4 Mar 2021 10:01:14 -0500 (EST)
+Date:   Thu, 4 Mar 2021 10:01:14 -0500
+From:   "Theodore Ts'o" <tytso@mit.edu>
+To:     =?iso-8859-1?Q?Andr=E9?= Almeida <andrealmeid@collabora.com>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Darren Hart <dvhart@infradead.org>,
+        linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        kernel@collabora.com, krisman@collabora.com,
+        pgriffais@valvesoftware.com, z.figura12@gmail.com,
+        joel@joelfernandes.org, malteskarupke@fastmail.fm,
+        linux-api@vger.kernel.org, fweimer@redhat.com,
+        libc-alpha@sourceware.org, linux-kselftest@vger.kernel.org,
+        shuah@kernel.org, acme@kernel.org, corbet@lwn.net
+Subject: Re: [RFC PATCH v2 00/13] Add futex2 syscall
+Message-ID: <YED2OrBdsiYWMqpp@mit.edu>
+References: <20210304004219.134051-1-andrealmeid@collabora.com>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-X-SA-Exim-Connect-IP: 2001:67c:670:100:1d::28
-X-SA-Exim-Mail-From: sha@pengutronix.de
-X-SA-Exim-Scanned: No (on metis.ext.pengutronix.de); SAEximRunCond expanded to false
-X-PTX-Original-Recipient: linux-api@vger.kernel.org
+In-Reply-To: <20210304004219.134051-1-andrealmeid@collabora.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add syscall quotactl_path, a variant of quotactl which allows to specify
-the mountpath instead of a path of to a block device.
+On Wed, Mar 03, 2021 at 09:42:06PM -0300, André Almeida wrote:
+>  ** Performance
+> 
+>  - For comparing futex() and futex2() performance, I used the artificial
+>    benchmarks implemented at perf (wake, wake-parallel, hash and
+>    requeue). The setup was 200 runs for each test and using 8, 80, 800,
+>    8000 for the number of threads, Note that for this test, I'm not using
+>    patch 14 ("kernel: Enable waitpid() for futex2") , for reasons explained
+>    at "The patchset" section.
 
-The quotactl syscall expects a path to the mounted block device to
-specify the filesystem to work on. This limits usage to filesystems
-which actually have a block device. quotactl_path replaces the path
-to the block device with a path where the filesystem is mounted at.
+How heavily contended where the benchmarks?  One of the benefits of
+the original futex was that no system call was necessary in the happy
+path when the lock is uncontended.  Especially on a non-NUMA system
+(which are the far more common case), since that's where relying on a
+single memory access was a huge win for the original futex.  I would
+expect that futex2 will fare worse in this particular case, since it
+requires a system call entry for all operations --- the question is
+how large is the delta in this worst case (for futex2) and best case
+(for futex) scenario.
 
-The global Q_SYNC command to sync all filesystems is not supported for
-this new syscall, otherwise quotactl_path behaves like quotactl.
+Cheers,
 
-Signed-off-by: Sascha Hauer <s.hauer@pengutronix.de>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
----
- fs/quota/quota.c | 49 +++++++++++++++++++++++++++++++++++++++++++++---
- 1 file changed, 46 insertions(+), 3 deletions(-)
-
-diff --git a/fs/quota/quota.c b/fs/quota/quota.c
-index 6d16b2be5ac4..f7b4b66491fc 100644
---- a/fs/quota/quota.c
-+++ b/fs/quota/quota.c
-@@ -17,6 +17,7 @@
- #include <linux/capability.h>
- #include <linux/quotaops.h>
- #include <linux/types.h>
-+#include <linux/mount.h>
- #include <linux/writeback.h>
- #include <linux/nospec.h>
- #include "compat.h"
-@@ -827,8 +828,6 @@ static int do_quotactl(struct super_block *sb, int type, int cmd, qid_t id,
- 	}
- }
- 
--#ifdef CONFIG_BLOCK
--
- /* Return 1 if 'cmd' will block on frozen filesystem */
- static int quotactl_cmd_write(int cmd)
- {
-@@ -850,7 +849,6 @@ static int quotactl_cmd_write(int cmd)
- 	}
- 	return 1;
- }
--#endif /* CONFIG_BLOCK */
- 
- /* Return true if quotactl command is manipulating quota on/off state */
- static bool quotactl_cmd_onoff(int cmd)
-@@ -968,3 +966,48 @@ SYSCALL_DEFINE4(quotactl, unsigned int, cmd, const char __user *, special,
- 		path_put(pathp);
- 	return ret;
- }
-+
-+SYSCALL_DEFINE4(quotactl_path, unsigned int, cmd, const char __user *,
-+		mountpoint, qid_t, id, void __user *, addr)
-+{
-+	struct super_block *sb;
-+	struct path mountpath;
-+	unsigned int cmds = cmd >> SUBCMDSHIFT;
-+	unsigned int type = cmd & SUBCMDMASK;
-+	int ret;
-+
-+	if (type >= MAXQUOTAS)
-+		return -EINVAL;
-+
-+	ret = user_path_at(AT_FDCWD, mountpoint,
-+			     LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT, &mountpath);
-+	if (ret)
-+		return ret;
-+
-+	sb = mountpath.mnt->mnt_sb;
-+
-+	if (quotactl_cmd_write(cmds)) {
-+		ret = mnt_want_write(mountpath.mnt);
-+		if (ret)
-+			goto out;
-+	}
-+
-+	if (quotactl_cmd_onoff(cmds))
-+		down_write(&sb->s_umount);
-+	else
-+		down_read(&sb->s_umount);
-+
-+	ret = do_quotactl(sb, type, cmds, id, addr, ERR_PTR(-EINVAL));
-+
-+	if (quotactl_cmd_onoff(cmds))
-+		up_write(&sb->s_umount);
-+	else
-+		up_read(&sb->s_umount);
-+
-+	if (quotactl_cmd_write(cmds))
-+		mnt_drop_write(mountpath.mnt);
-+out:
-+	path_put(&mountpath);
-+
-+	return ret;
-+}
--- 
-2.29.2
-
+						- Ted
