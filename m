@@ -7,24 +7,24 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,URIBL_BLOCKED,
 	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 640C6C433DB
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 01:13:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 54CC3C433E6
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 01:14:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3420B64F10
-	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 01:13:56 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2E8F264F27
+	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 01:14:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S243281AbhCDBMI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 3 Mar 2021 20:12:08 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53768 "EHLO
+        id S243402AbhCDBMK (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 3 Mar 2021 20:12:10 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53840 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1453066AbhCDAoH (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Mar 2021 19:44:07 -0500
+        with ESMTP id S1453070AbhCDAoZ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Mar 2021 19:44:25 -0500
 Received: from bhuna.collabora.co.uk (bhuna.collabora.co.uk [IPv6:2a00:1098:0:82:1000:25:2eeb:e3e3])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DE2D1C061762;
-        Wed,  3 Mar 2021 16:43:26 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 08DC9C061764;
+        Wed,  3 Mar 2021 16:43:43 -0800 (PST)
 Received: from [127.0.0.1] (localhost [127.0.0.1])
         (Authenticated sender: tonyk)
-        with ESMTPSA id F02D71F460C9
+        with ESMTPSA id 0567D1F46043
 From:   =?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@collabora.com>
 To:     Thomas Gleixner <tglx@linutronix.de>,
         Ingo Molnar <mingo@redhat.com>,
@@ -39,9 +39,9 @@ Cc:     kernel@collabora.com, krisman@collabora.com,
         libc-alpha@sourceware.org, linux-kselftest@vger.kernel.org,
         shuah@kernel.org, acme@kernel.org, corbet@lwn.net,
         =?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@collabora.com>
-Subject: [RFC PATCH v2 05/13] futex2: Add compatibility entry point for x86_x32 ABI
-Date:   Wed,  3 Mar 2021 21:42:11 -0300
-Message-Id: <20210304004219.134051-6-andrealmeid@collabora.com>
+Subject: [RFC PATCH v2 08/13] selftests: futex2: Add timeout test
+Date:   Wed,  3 Mar 2021 21:42:14 -0300
+Message-Id: <20210304004219.134051-9-andrealmeid@collabora.com>
 X-Mailer: git-send-email 2.30.1
 In-Reply-To: <20210304004219.134051-1-andrealmeid@collabora.com>
 References: <20210304004219.134051-1-andrealmeid@collabora.com>
@@ -52,82 +52,113 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-New syscalls should use the same entry point for x86_64 and x86_x32
-paths. Add a wrapper for x32 calls to use parse functions that assumes
-32bit pointers.
+Adapt existing futex wait timeout file to test the same mechanism for
+futex2. futex2 accepts only absolute 64bit timers, but supports both
+monotonic and realtime clocks.
 
 Signed-off-by: André Almeida <andrealmeid@collabora.com>
 ---
- kernel/futex2.c | 42 +++++++++++++++++++++++++++++++++++-------
- 1 file changed, 35 insertions(+), 7 deletions(-)
+ .../futex/functional/futex_wait_timeout.c     | 58 ++++++++++++++++---
+ 1 file changed, 49 insertions(+), 9 deletions(-)
 
-diff --git a/kernel/futex2.c b/kernel/futex2.c
-index b3277ab39b3c..92b560206666 100644
---- a/kernel/futex2.c
-+++ b/kernel/futex2.c
-@@ -23,6 +23,10 @@
- #include <linux/syscalls.h>
- #include <uapi/linux/futex.h>
+diff --git a/tools/testing/selftests/futex/functional/futex_wait_timeout.c b/tools/testing/selftests/futex/functional/futex_wait_timeout.c
+index ee55e6d389a3..b4dffe9e3b44 100644
+--- a/tools/testing/selftests/futex/functional/futex_wait_timeout.c
++++ b/tools/testing/selftests/futex/functional/futex_wait_timeout.c
+@@ -11,6 +11,7 @@
+  *
+  * HISTORY
+  *      2009-Nov-6: Initial version by Darren Hart <dvhart@linux.intel.com>
++ *      2021-Feb-5: Add futex2 test by André <andrealmeid@collabora.com>
+  *
+  *****************************************************************************/
  
-+#ifdef CONFIG_X86_64
-+#include <linux/compat.h>
-+#endif
-+
- /**
-  * struct futex_key - Components to build unique key for a futex
-  * @pointer: Pointer to current->mm or inode's UUID for file backed futexes
-@@ -856,7 +860,16 @@ SYSCALL_DEFINE4(futex_waitv, struct futex_waitv __user *, waiters,
- 	futexv->hint = false;
- 	futexv->task = current;
+@@ -20,7 +21,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <time.h>
+-#include "futextest.h"
++#include "futex2test.h"
+ #include "logging.h"
  
--	ret = futex_parse_waitv(futexv, waiters, nr_futexes);
-+#ifdef CONFIG_X86_X32_ABI
-+	if (in_x32_syscall()) {
-+		ret = compat_futex_parse_waitv(futexv, (struct compat_futex_waitv *)waiters,
-+					       nr_futexes);
-+	} else
-+#endif
-+	{
-+		ret = futex_parse_waitv(futexv, waiters, nr_futexes);
+ #define TEST_NAME "futex-wait-timeout"
+@@ -40,7 +41,8 @@ void usage(char *prog)
+ int main(int argc, char *argv[])
+ {
+ 	futex_t f1 = FUTEX_INITIALIZER;
+-	struct timespec to;
++	struct timespec to = {.tv_sec = 0, .tv_nsec = timeout_ns};
++	struct timespec64 to64;
+ 	int res, ret = RET_PASS;
+ 	int c;
+ 
+@@ -65,22 +67,60 @@ int main(int argc, char *argv[])
+ 	}
+ 
+ 	ksft_print_header();
+-	ksft_set_plan(1);
++	ksft_set_plan(3);
+ 	ksft_print_msg("%s: Block on a futex and wait for timeout\n",
+ 	       basename(argv[0]));
+ 	ksft_print_msg("\tArguments: timeout=%ldns\n", timeout_ns);
+ 
+-	/* initialize timeout */
+-	to.tv_sec = 0;
+-	to.tv_nsec = timeout_ns;
+-
+ 	info("Calling futex_wait on f1: %u @ %p\n", f1, &f1);
+ 	res = futex_wait(&f1, f1, &to, FUTEX_PRIVATE_FLAG);
+ 	if (!res || errno != ETIMEDOUT) {
+-		fail("futex_wait returned %d\n", ret < 0 ? errno : ret);
++		ksft_test_result_fail("futex_wait returned %d\n", ret < 0 ? errno : ret);
++		ret = RET_FAIL;
++	} else {
++		ksft_test_result_pass("futex_wait timeout succeeds\n");
 +	}
 +
- 	if (!ret)
- 		ret = __futex_waitv(futexv, nr_futexes, timo, flags);
- 
-@@ -1163,13 +1176,28 @@ SYSCALL_DEFINE6(futex_requeue, struct futex_requeue __user *, uaddr1,
- 	if (flags)
- 		return -EINVAL;
- 
--	ret = futex_parse_requeue(&rq1, uaddr1, &shared1);
--	if (ret)
--		return ret;
-+#ifdef CONFIG_X86_X32_ABI
-+	if (in_x32_syscall()) {
-+		ret = compat_futex_parse_requeue(&rq1, (struct compat_futex_requeue *)uaddr1,
-+						 &shared1);
-+		if (ret)
-+			return ret;
- 
--	ret = futex_parse_requeue(&rq2, uaddr2, &shared2);
--	if (ret)
--		return ret;
-+		ret = compat_futex_parse_requeue(&rq2, (struct compat_futex_requeue *)uaddr2,
-+						 &shared2);
-+		if (ret)
-+			return ret;
-+	} else
-+#endif
-+	{
-+		ret = futex_parse_requeue(&rq1, uaddr1, &shared1);
-+		if (ret)
-+			return ret;
++	/* setting absolute monotonic timeout for futex2 */
++	if (gettime64(CLOCK_MONOTONIC, &to64))
++		error("gettime64 failed\n", errno);
 +
-+		ret = futex_parse_requeue(&rq2, uaddr2, &shared2);
-+		if (ret)
-+			return ret;
++	to64.tv_nsec += timeout_ns;
++
++	if (to64.tv_nsec >= 1000000000) {
++		to64.tv_sec++;
++		to64.tv_nsec -= 1000000000;
 +	}
++
++	info("Calling futex2_wait on f1: %u @ %p\n", f1, &f1);
++	res = futex2_wait(&f1, f1, FUTEX_32, &to64);
++	if (!res || errno != ETIMEDOUT) {
++		ksft_test_result_fail("futex2_wait monotonic returned %d\n", ret < 0 ? errno : ret);
++		ret = RET_FAIL;
++	} else {
++		ksft_test_result_pass("futex2_wait monotonic timeout succeeds\n");
++	}
++
++	/* setting absolute realtime timeout for futex2 */
++	if (gettime64(CLOCK_REALTIME, &to64))
++		error("gettime64 failed\n", errno);
++
++	to64.tv_nsec += timeout_ns;
++
++	if (to64.tv_nsec >= 1000000000) {
++		to64.tv_sec++;
++		to64.tv_nsec -= 1000000000;
++	}
++
++	info("Calling futex2_wait on f1: %u @ %p\n", f1, &f1);
++	res = futex2_wait(&f1, f1, FUTEX_32 | FUTEX_CLOCK_REALTIME, &to64);
++	if (!res || errno != ETIMEDOUT) {
++		ksft_test_result_fail("futex2_wait realtime returned %d\n", ret < 0 ? errno : ret);
+ 		ret = RET_FAIL;
++	} else {
++		ksft_test_result_pass("futex2_wait realtime timeout succeeds\n");
+ 	}
  
- 	return __futex_requeue(rq1, rq2, nr_wake, nr_requeue, cmpval, shared1, shared2);
+-	print_result(TEST_NAME, ret);
++	ksft_print_cnts();
+ 	return ret;
  }
 -- 
 2.30.1
