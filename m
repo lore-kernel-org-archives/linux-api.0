@@ -5,40 +5,41 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A0C9FC433DB
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C1888C433E9
 	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 12:38:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7139364F2B
+	by mail.kernel.org (Postfix) with ESMTP id 93EE764F1E
 	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 12:38:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232547AbhCDMhh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 4 Mar 2021 07:37:37 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38490 "EHLO
+        id S240923AbhCDMhi (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 4 Mar 2021 07:37:38 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38598 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S240908AbhCDMhJ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 4 Mar 2021 07:37:09 -0500
+        with ESMTP id S241046AbhCDMhf (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 4 Mar 2021 07:37:35 -0500
 Received: from metis.ext.pengutronix.de (metis.ext.pengutronix.de [IPv6:2001:67c:670:201:290:27ff:fe1d:cc33])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1B31AC061764
-        for <linux-api@vger.kernel.org>; Thu,  4 Mar 2021 04:36:06 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 85EDAC0613DE
+        for <linux-api@vger.kernel.org>; Thu,  4 Mar 2021 04:36:14 -0800 (PST)
 Received: from dude02.hi.pengutronix.de ([2001:67c:670:100:1d::28])
         by metis.ext.pengutronix.de with esmtps (TLS1.3:ECDHE_RSA_AES_256_GCM_SHA384:256)
         (Exim 4.92)
         (envelope-from <sha@pengutronix.de>)
-        id 1lHnD1-0006w2-1Q; Thu, 04 Mar 2021 13:36:03 +0100
+        id 1lHnD1-0006vz-63; Thu, 04 Mar 2021 13:36:03 +0100
 Received: from sha by dude02.hi.pengutronix.de with local (Exim 4.92)
         (envelope-from <sha@pengutronix.de>)
-        id 1lHnD0-00044V-2W; Thu, 04 Mar 2021 13:36:02 +0100
+        id 1lHnCz-00043q-VJ; Thu, 04 Mar 2021 13:36:01 +0100
 From:   Sascha Hauer <s.hauer@pengutronix.de>
 To:     linux-fsdevel@vger.kernel.org
 Cc:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
         Christoph Hellwig <hch@infradead.org>, kernel@pengutronix.de,
         Jan Kara <jack@suse.com>, Richard Weinberger <richard@nod.at>,
-        Sascha Hauer <s.hauer@pengutronix.de>
-Subject: [PATCH] quotactl.2: Add documentation for quotactl_path()
-Date:   Thu,  4 Mar 2021 13:35:41 +0100
-Message-Id: <20210304123541.30749-4-s.hauer@pengutronix.de>
+        Sascha Hauer <s.hauer@pengutronix.de>,
+        Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 1/2] quota: Add mountpath based quota support
+Date:   Thu,  4 Mar 2021 13:35:39 +0100
+Message-Id: <20210304123541.30749-2-s.hauer@pengutronix.de>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20210304123541.30749-1-s.hauer@pengutronix.de>
 References: <20210304123541.30749-1-s.hauer@pengutronix.de>
@@ -52,89 +53,101 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Expand the quotactl.2 manpage with a description for quotactl_path()
-that takes a mountpoint path instead of a path to a block device.
+Add syscall quotactl_path, a variant of quotactl which allows to specify
+the mountpath instead of a path of to a block device.
+
+The quotactl syscall expects a path to the mounted block device to
+specify the filesystem to work on. This limits usage to filesystems
+which actually have a block device. quotactl_path replaces the path
+to the block device with a path where the filesystem is mounted at.
+
+The global Q_SYNC command to sync all filesystems is not supported for
+this new syscall, otherwise quotactl_path behaves like quotactl.
 
 Signed-off-by: Sascha Hauer <s.hauer@pengutronix.de>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
 ---
- man2/quotactl.2      | 31 ++++++++++++++++++++++++++++---
- man2/quotactl_path.2 |  1 +
- 2 files changed, 29 insertions(+), 3 deletions(-)
- create mode 100644 man2/quotactl_path.2
+ fs/quota/quota.c | 49 +++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 46 insertions(+), 3 deletions(-)
 
-diff --git a/man2/quotactl.2 b/man2/quotactl.2
-index 7869c64ea..76505c668 100644
---- a/man2/quotactl.2
-+++ b/man2/quotactl.2
-@@ -34,6 +34,8 @@ quotactl \- manipulate disk quotas
- .PP
- .BI "int quotactl(int " cmd ", const char *" special ", int " id \
- ", caddr_t " addr );
-+.BI "int quotactl_path(int " cmd ", const char *" mountpoint ", int " id \
-+", caddr_t " addr );
- .fi
- .SH DESCRIPTION
- The quota system can be used to set per-user, per-group, and per-project limits
-@@ -48,7 +50,11 @@ after this, the soft limit counts as a hard limit.
- .PP
- The
- .BR quotactl ()
--call manipulates disk quotas.
-+and
-+.BR quotactl_path ()
-+calls manipulate disk quotas. The difference between both functions is the way
-+how the filesystem being manipulated is specified, see description of the arguments
-+below.
- The
- .I cmd
- argument indicates a command to be applied to the user or
-@@ -75,10 +81,19 @@ value is described below.
- .PP
- The
- .I special
--argument is a pointer to a null-terminated string containing the pathname
-+argument to
-+.BR quotactl ()
-+is a pointer to a null-terminated string containing the pathname
- of the (mounted) block special device for the filesystem being manipulated.
- .PP
- The
-+.I mountpoint
-+argument to
-+.BR quotactl_path ()
-+is a pointer to a null-terminated string containing the pathname
-+of the mountpoint for the filesystem being manipulated.
-+.PP
-+The
- .I addr
- argument is the address of an optional, command-specific, data structure
- that is copied in or out of the system.
-@@ -133,7 +148,17 @@ flag in the
- .I dqi_flags
- field returned by the
- .B Q_GETINFO
--operation.
-+operation. The
-+.BR quotactl_path ()
-+variant of this syscall generally ignores the
-+.IR addr
-+and
-+.IR id
-+arguments, so the
-+.B Q_QUOTAON
-+operation of
-+.BR quotactl_path ()
-+is only suitable for work with hidden system inodes.
- .IP
- This operation requires privilege
- .RB ( CAP_SYS_ADMIN ).
-diff --git a/man2/quotactl_path.2 b/man2/quotactl_path.2
-new file mode 100644
-index 000000000..5f63187c6
---- /dev/null
-+++ b/man2/quotactl_path.2
-@@ -0,0 +1 @@
-+.so man2/quotactl.2
+diff --git a/fs/quota/quota.c b/fs/quota/quota.c
+index 6d16b2be5ac4..f7b4b66491fc 100644
+--- a/fs/quota/quota.c
++++ b/fs/quota/quota.c
+@@ -17,6 +17,7 @@
+ #include <linux/capability.h>
+ #include <linux/quotaops.h>
+ #include <linux/types.h>
++#include <linux/mount.h>
+ #include <linux/writeback.h>
+ #include <linux/nospec.h>
+ #include "compat.h"
+@@ -827,8 +828,6 @@ static int do_quotactl(struct super_block *sb, int type, int cmd, qid_t id,
+ 	}
+ }
+ 
+-#ifdef CONFIG_BLOCK
+-
+ /* Return 1 if 'cmd' will block on frozen filesystem */
+ static int quotactl_cmd_write(int cmd)
+ {
+@@ -850,7 +849,6 @@ static int quotactl_cmd_write(int cmd)
+ 	}
+ 	return 1;
+ }
+-#endif /* CONFIG_BLOCK */
+ 
+ /* Return true if quotactl command is manipulating quota on/off state */
+ static bool quotactl_cmd_onoff(int cmd)
+@@ -968,3 +966,48 @@ SYSCALL_DEFINE4(quotactl, unsigned int, cmd, const char __user *, special,
+ 		path_put(pathp);
+ 	return ret;
+ }
++
++SYSCALL_DEFINE4(quotactl_path, unsigned int, cmd, const char __user *,
++		mountpoint, qid_t, id, void __user *, addr)
++{
++	struct super_block *sb;
++	struct path mountpath;
++	unsigned int cmds = cmd >> SUBCMDSHIFT;
++	unsigned int type = cmd & SUBCMDMASK;
++	int ret;
++
++	if (type >= MAXQUOTAS)
++		return -EINVAL;
++
++	ret = user_path_at(AT_FDCWD, mountpoint,
++			     LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT, &mountpath);
++	if (ret)
++		return ret;
++
++	sb = mountpath.mnt->mnt_sb;
++
++	if (quotactl_cmd_write(cmds)) {
++		ret = mnt_want_write(mountpath.mnt);
++		if (ret)
++			goto out;
++	}
++
++	if (quotactl_cmd_onoff(cmds))
++		down_write(&sb->s_umount);
++	else
++		down_read(&sb->s_umount);
++
++	ret = do_quotactl(sb, type, cmds, id, addr, ERR_PTR(-EINVAL));
++
++	if (quotactl_cmd_onoff(cmds))
++		up_write(&sb->s_umount);
++	else
++		up_read(&sb->s_umount);
++
++	if (quotactl_cmd_write(cmds))
++		mnt_drop_write(mountpath.mnt);
++out:
++	path_put(&mountpath);
++
++	return ret;
++}
 -- 
-2.20.1
+2.29.2
 
