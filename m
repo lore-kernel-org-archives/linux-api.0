@@ -7,24 +7,21 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,URIBL_BLOCKED,
 	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6217EC43381
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4AC39C433E6
 	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 01:12:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4388464F78
+	by mail.kernel.org (Postfix) with ESMTP id 2399F64F68
 	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 01:12:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S243253AbhCDBMH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 3 Mar 2021 20:12:07 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53750 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1453062AbhCDAoC (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Mar 2021 19:44:02 -0500
-Received: from bhuna.collabora.co.uk (bhuna.collabora.co.uk [IPv6:2a00:1098:0:82:1000:25:2eeb:e3e3])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8FDF1C061761;
-        Wed,  3 Mar 2021 16:43:21 -0800 (PST)
+        id S242930AbhCDBMG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 3 Mar 2021 20:12:06 -0500
+Received: from bhuna.collabora.co.uk ([46.235.227.227]:41954 "EHLO
+        bhuna.collabora.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1453058AbhCDAnu (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Mar 2021 19:43:50 -0500
 Received: from [127.0.0.1] (localhost [127.0.0.1])
         (Authenticated sender: tonyk)
-        with ESMTPSA id DF3BF1F460C2
+        with ESMTPSA id E98411F4603B
 From:   =?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@collabora.com>
 To:     Thomas Gleixner <tglx@linutronix.de>,
         Ingo Molnar <mingo@redhat.com>,
@@ -39,9 +36,9 @@ Cc:     kernel@collabora.com, krisman@collabora.com,
         libc-alpha@sourceware.org, linux-kselftest@vger.kernel.org,
         shuah@kernel.org, acme@kernel.org, corbet@lwn.net,
         =?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@collabora.com>
-Subject: [RFC PATCH v2 04/13] futex2: Implement requeue operation
-Date:   Wed,  3 Mar 2021 21:42:10 -0300
-Message-Id: <20210304004219.134051-5-andrealmeid@collabora.com>
+Subject: [RFC PATCH v2 02/13] futex2: Add support for shared futexes
+Date:   Wed,  3 Mar 2021 21:42:08 -0300
+Message-Id: <20210304004219.134051-3-andrealmeid@collabora.com>
 X-Mailer: git-send-email 2.30.1
 In-Reply-To: <20210304004219.134051-1-andrealmeid@collabora.com>
 References: <20210304004219.134051-1-andrealmeid@collabora.com>
@@ -52,471 +49,405 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Implement requeue interface similarly to FUTEX_CMP_REQUEUE operation.
-This is the syscall implemented by this patch:
+Add support for shared futexes for cross-process resources. This design
+relies on the same approach done in old futex to create an unique id for
+file-backed shared memory, by using a counter at struct inode.
 
-futex_requeue(struct futex_requeue *uaddr1, struct futex_requeue *uaddr2,
-	      unsigned int nr_wake, unsigned int nr_requeue,
-	      unsigned int cmpval, unsigned int flags)
+There are two types of futexes: private and shared ones. The private are
+futexes meant to be used by threads that shares the same memory space,
+are easier to be uniquely identified an thus can have some performance
+optimization. The elements for identifying one are: the start address of
+the page where the address is, the address offset within the page and
+the current->mm pointer.
 
-struct futex_requeue {
-	void *uaddr;
-	unsigned int flags;
-};
+Now, for uniquely identifying shared futex:
 
-If (uaddr1->uaddr == cmpval), wake at uaddr1->uaddr a nr_wake number of
-waiters and then, remove a number of nr_requeue waiters at uaddr1->uaddr
-and add them to uaddr2->uaddr list. Each uaddr has its own set of flags,
-that must be defined at struct futex_requeue (such as size, shared, NUMA).
-The flags argument of the syscall is there just for the sake of
-extensibility, and right now it needs to be zero.
+- If the page containing the user address is an anonymous page, we can
+  just use the same data used for private futexes (the start address of
+  the page, the address offset within the page and the current->mm
+  pointer) that will be enough for uniquely identifying such futex. We
+  also set one bit at the key to differentiate if a private futex is
+  used on the same address (mixing shared and private calls are not
+  allowed).
 
-Return the number of the woken futexes + the number of requeued ones on
-success, error code otherwise.
+- If the page is file-backed, current->mm maybe isn't the same one for
+  every user of this futex, so we need to use other data: the
+  page->index, an UUID for the struct inode and the offset within the
+  page.
+
+Note that members of futex_key doesn't have any particular meaning after
+they are part of the struct - they are just bytes to identify a futex.
+Given that, we don't need to use a particular name or type that matches
+the original data, we only need to care about the bitsize of each
+component and make both private and shared data fit in the same memory
+space.
 
 Signed-off-by: André Almeida <andrealmeid@collabora.com>
 ---
+ fs/inode.c                 |   1 +
+ include/linux/fs.h         |   1 +
+ include/uapi/linux/futex.h |   2 +
+ kernel/futex2.c            | 222 ++++++++++++++++++++++++++++++++++++-
+ 4 files changed, 220 insertions(+), 6 deletions(-)
 
-The original FUTEX_CMP_REQUEUE interfaces is such as follows:
-
-futex(*uaddr1, FUTEX_CMP_REQUEUE, nr_wake, nr_requeue, *uaddr2, cmpval);
-
-Given that when this interface was created they was only one type of
-futex (as opposed to futex2, where there is shared, sizes, and NUMA),
-there was no way to specify individual flags for uaddr1 and 2. When
-FUTEX_PRIVATE was implemented, a new opcode was created as well
-(FUTEX_CMP_REQUEUE_PRIVATE), but they apply both futexes, so they
-should be of the same type regarding private/shared. This imposes a
-limitation on the use cases of the operation, and to overcome that at futex2,
-`struct futex_requeue` was created, so one can set individual flags for
-each futex. This flexibility is a trade-off with performance, given that
-now we need to perform two extra copy_from_user(). One alternative would
-be to use the upper half of flags bits to the first one, and the bottom
-half for the second futex, but this would also impose limitations, given
-that we would limit by half the flags possibilities. If equal futexes
-are common enough, the following extension could be added to overcome
-the current performance:
-
-- A flag FUTEX_REQUEUE_EQUAL is added to futex2() flags;
-- If futex_requeue() see this flag, that means that both futexes uses
-  the same set of attributes.
-- Then, the function parses the flags as of futex_wait/wake().
-- *uaddr1 and *uaddr2 are used as void* (instead of struct
-  futex_requeue) just like wait/wake().
-
-In that way, we could avoid the copy_from_user().
----
- arch/arm/tools/syscall.tbl                    |   1 +
- arch/arm64/include/asm/unistd.h               |   2 +-
- arch/arm64/include/asm/unistd32.h             |   2 +
- arch/x86/entry/syscalls/syscall_32.tbl        |   1 +
- arch/x86/entry/syscalls/syscall_64.tbl        |   1 +
- include/linux/compat.h                        |  12 +
- include/linux/syscalls.h                      |   5 +
- include/uapi/asm-generic/unistd.h             |   5 +-
- include/uapi/linux/futex.h                    |  10 +
- kernel/futex2.c                               | 215 ++++++++++++++++++
- kernel/sys_ni.c                               |   1 +
- .../arch/x86/entry/syscalls/syscall_64.tbl    |   1 +
- 12 files changed, 254 insertions(+), 2 deletions(-)
-
-diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
-index f9b55f2ea444..24a700535747 100644
---- a/arch/arm/tools/syscall.tbl
-+++ b/arch/arm/tools/syscall.tbl
-@@ -459,3 +459,4 @@
- 443	common	futex_wait			sys_futex_wait
- 444	common	futex_wake			sys_futex_wake
- 445	common  futex_waitv                     sys_futex_waitv
-+446	common	futex_requeue			sys_futex_requeue
-diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
-index d1cc2849dc00..727bfc3be99b 100644
---- a/arch/arm64/include/asm/unistd.h
-+++ b/arch/arm64/include/asm/unistd.h
-@@ -38,7 +38,7 @@
- #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE + 5)
- #define __ARM_NR_COMPAT_END		(__ARM_NR_COMPAT_BASE + 0x800)
- 
--#define __NR_compat_syscalls		446
-+#define __NR_compat_syscalls		447
- #endif
- 
- #define __ARCH_WANT_SYS_CLONE
-diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
-index 1e19604b8885..e5015a2b9c94 100644
---- a/arch/arm64/include/asm/unistd32.h
-+++ b/arch/arm64/include/asm/unistd32.h
-@@ -899,6 +899,8 @@ __SYSCALL(__NR_futex_wait, sys_futex_wait)
- __SYSCALL(__NR_futex_wake, sys_futex_wake)
- #define __NR_futex_waitv 445
- __SYSCALL(__NR_futex_waitv, compat_sys_futex_waitv)
-+#define __NR_futex_waitv 446
-+__SYSCALL(__NR_futex_requeue, compat_sys_futex_requeue)
- 
- /*
-  * Please add new compat syscalls above this comment and update
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 4bc546c841b0..4d0111f44d79 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -450,3 +450,4 @@
- 443	i386	futex_wait		sys_futex_wait
- 444	i386	futex_wake		sys_futex_wake
- 445	i386	futex_waitv		sys_futex_waitv			compat_sys_futex_waitv
-+446	i386	futex_requeue		sys_futex_requeue		compat_sys_futex_requeue
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index a715e88e3d6d..61c0b47365e3 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -367,6 +367,7 @@
- 443	common	futex_wait		sys_futex_wait
- 444	common	futex_wake		sys_futex_wake
- 445	common	futex_waitv		sys_futex_waitv
-+446	common	futex_requeue		sys_futex_requeue
- 
- #
- # Due to a historical design error, certain syscalls are numbered differently
-diff --git a/include/linux/compat.h b/include/linux/compat.h
-index 041d18174350..d4c1b402b962 100644
---- a/include/linux/compat.h
-+++ b/include/linux/compat.h
-@@ -371,6 +371,11 @@ struct compat_futex_waitv {
- 	compat_uint_t flags;
- };
- 
-+struct compat_futex_requeue {
-+	compat_uptr_t uaddr;
-+	compat_uint_t flags;
-+};
-+
- #ifdef CONFIG_COMPAT_OLD_SIGACTION
- struct compat_old_sigaction {
- 	compat_uptr_t			sa_handler;
-@@ -665,6 +670,13 @@ asmlinkage long compat_sys_futex_waitv(struct compat_futex_waitv *waiters,
- 				       compat_uint_t nr_futexes, compat_uint_t flags,
- 				       struct __kernel_timespec __user *timo);
- 
-+asmlinkage long compat_sys_futex_requeue(struct compat_futex_requeue *uaddr1,
-+					 struct compat_futex_requeue *uaddr2,
-+					 compat_uint_t nr_wake,
-+					 compat_uint_t nr_requeue,
-+					 compat_uint_t cmpval,
-+					 compat_uint_t flags);
-+
- /* kernel/itimer.c */
- asmlinkage long compat_sys_getitimer(int which,
- 				     struct old_itimerval32 __user *it);
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 48e96fe7d8f6..b0675f236066 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -70,6 +70,7 @@ struct clone_args;
- struct open_how;
- struct mount_attr;
- struct futex_waitv;
-+struct futex_requeue;
- 
- #include <linux/types.h>
- #include <linux/aio_abi.h>
-@@ -629,6 +630,10 @@ asmlinkage long sys_futex_wake(void __user *uaddr, unsigned int nr_wake,
- asmlinkage long sys_futex_waitv(struct futex_waitv __user *waiters,
- 				unsigned int nr_futexes, unsigned int flags,
- 				struct __kernel_timespec __user *timo);
-+asmlinkage long sys_futex_requeue(struct futex_requeue __user *uaddr1,
-+				  struct futex_requeue __user *uaddr2,
-+				  unsigned int nr_wake, unsigned int nr_requeue,
-+				  unsigned int cmpval, unsigned int flags);
- 
- /* kernel/hrtimer.c */
- asmlinkage long sys_nanosleep(struct __kernel_timespec __user *rqtp,
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 2a6adca37fe9..2778da551846 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -873,8 +873,11 @@ __SYSCALL(__NR_futex_wake, sys_futex_wake)
- #define __NR_futex_waitv 445
- __SC_COMP(__NR_futex_waitv, sys_futex_waitv, compat_sys_futex_waitv)
- 
-+#define __NR_futex_requeue 446
-+__SC_COMP(__NR_futex_requeue, sys_futex_requeue, compat_sys_futex_requeue)
-+
- #undef __NR_syscalls
--#define __NR_syscalls 446
-+#define __NR_syscalls 447
- 
- /*
-  * 32 bit systems traditionally used different
+diff --git a/fs/inode.c b/fs/inode.c
+index a047ab306f9a..c5e1dd13fd40 100644
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -139,6 +139,7 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
+ 	inode->i_blkbits = sb->s_blocksize_bits;
+ 	inode->i_flags = 0;
+ 	atomic64_set(&inode->i_sequence, 0);
++	atomic64_set(&inode->i_sequence2, 0);
+ 	atomic_set(&inode->i_count, 1);
+ 	inode->i_op = &empty_iops;
+ 	inode->i_fop = &no_open_fops;
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index ec8f3ddf4a6a..33683ff94cb3 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -683,6 +683,7 @@ struct inode {
+ 	};
+ 	atomic64_t		i_version;
+ 	atomic64_t		i_sequence; /* see futex */
++	atomic64_t		i_sequence2; /* see futex2 */
+ 	atomic_t		i_count;
+ 	atomic_t		i_dio_count;
+ 	atomic_t		i_writecount;
 diff --git a/include/uapi/linux/futex.h b/include/uapi/linux/futex.h
-index 3216aee015d2..c15bfddcf1e2 100644
+index 8d30f4b6d094..70ea66fffb1c 100644
 --- a/include/uapi/linux/futex.h
 +++ b/include/uapi/linux/futex.h
-@@ -62,6 +62,16 @@ struct futex_waitv {
- 	unsigned int flags;
- };
+@@ -46,6 +46,8 @@
  
-+/**
-+ * struct futex_requeue - Define an address and its flags for requeue operation
-+ * @uaddr: User address of one of the requeue arguments
-+ * @flags: Flags for this address
-+ */
-+struct futex_requeue {
-+	void __user *uaddr;
-+	unsigned int flags;
-+};
+ #define FUTEX_SIZE_MASK	0x3
+ 
++#define FUTEX_SHARED_FLAG 8
 +
  /*
   * Support for robust futexes: the kernel cleans up held futexes at
   * thread exit time.
 diff --git a/kernel/futex2.c b/kernel/futex2.c
-index 98e7024bf5e3..b3277ab39b3c 100644
+index 91bbf06fef8a..0ac669fe6edd 100644
 --- a/kernel/futex2.c
 +++ b/kernel/futex2.c
-@@ -959,6 +959,221 @@ SYSCALL_DEFINE3(futex_wake, void __user *, uaddr, unsigned int, nr_wake,
- 	return ret;
+@@ -14,8 +14,10 @@
+  */
+ 
+ #include <linux/freezer.h>
++#include <linux/hugetlb.h>
+ #include <linux/jhash.h>
+ #include <linux/memblock.h>
++#include <linux/pagemap.h>
+ #include <linux/sched/wake_q.h>
+ #include <linux/spinlock.h>
+ #include <linux/syscalls.h>
+@@ -23,8 +25,8 @@
+ 
+ /**
+  * struct futex_key - Components to build unique key for a futex
+- * @pointer: Pointer to current->mm
+- * @index: Start address of the page containing futex
++ * @pointer: Pointer to current->mm or inode's UUID for file backed futexes
++ * @index: Start address of the page containing futex or index of the page
+  * @offset: Address offset of uaddr in a page
+  */
+ struct futex_key {
+@@ -78,7 +80,12 @@ struct futex_bucket {
+ };
+ 
+ /* Mask for futex2 flag operations */
+-#define FUTEX2_MASK (FUTEX_SIZE_MASK | FUTEX_CLOCK_REALTIME)
++#define FUTEX2_MASK (FUTEX_SIZE_MASK | FUTEX_CLOCK_REALTIME | FUTEX_SHARED_FLAG)
++
++#define is_object_shared ((futexv->objects[i].flags & FUTEX_SHARED_FLAG) ? true : false)
++
++#define FUT_OFF_INODE    1 /* We set bit 0 if key has a reference on inode */
++#define FUT_OFF_MMSHARED 2 /* We set bit 1 if key has a reference on mm */
+ 
+ static struct futex_bucket *futex_table;
+ static unsigned int futex2_hashsize;
+@@ -126,16 +133,200 @@ static inline int bucket_get_waiters(struct futex_bucket *bucket)
+ #endif
  }
  
-+static void futex_double_unlock(struct futex_bucket *b1, struct futex_bucket *b2)
++/**
++ * futex_get_inode_uuid - Gets an UUID for an inode
++ * @inode: inode to get UUID
++ *
++ * Generate a machine wide unique identifier for this inode.
++ *
++ * This relies on u64 not wrapping in the life-time of the machine; which with
++ * 1ns resolution means almost 585 years.
++ *
++ * This further relies on the fact that a well formed program will not unmap
++ * the file while it has a (shared) futex waiting on it. This mapping will have
++ * a file reference which pins the mount and inode.
++ *
++ * If for some reason an inode gets evicted and read back in again, it will get
++ * a new sequence number and will _NOT_ match, even though it is the exact same
++ * file.
++ *
++ * It is important that match_futex() will never have a false-positive, esp.
++ * for PI futexes that can mess up the state. The above argues that false-negatives
++ * are only possible for malformed programs.
++ *
++ * Returns: UUID for the given inode
++ */
++static u64 futex_get_inode_uuid(struct inode *inode)
 +{
-+	spin_unlock(&b1->lock);
-+	if (b1 != b2)
-+		spin_unlock(&b2->lock);
++	static atomic64_t i_seq;
++	u64 old;
++
++	/* Does the inode already have a sequence number? */
++	old = atomic64_read(&inode->i_sequence2);
++
++	if (likely(old))
++		return old;
++
++	for (;;) {
++		u64 new = atomic64_add_return(1, &i_seq);
++
++		if (WARN_ON_ONCE(!new))
++			continue;
++
++		old = atomic64_cmpxchg_relaxed(&inode->i_sequence2, 0, new);
++		if (old)
++			return old;
++		return new;
++	}
 +}
 +
-+static inline int __futex_requeue(struct futex_requeue rq1,
-+				  struct futex_requeue rq2, unsigned int nr_wake,
-+				  unsigned int nr_requeue, unsigned int cmpval,
-+				  bool shared1, bool shared2)
++/**
++ * futex_get_shared_key - Get a key for a shared futex
++ * @address: Futex memory address
++ * @mm:      Current process mm_struct pointer
++ * @key:     Key struct to be filled
++ *
++ * Returns: 0 on success, error code otherwise
++ */
++static int futex_get_shared_key(uintptr_t address, struct mm_struct *mm,
++				struct futex_key *key)
 +{
-+	struct futex_waiter w1, w2, *aux, *tmp;
-+	bool retry = false;
-+	struct futex_bucket *b1, *b2;
-+	DEFINE_WAKE_Q(wake_q);
-+	u32 uval;
 +	int ret;
++	struct page *page, *tail;
++	struct address_space *mapping;
 +
-+	b1 = futex_get_bucket(rq1.uaddr, &w1.key, shared1);
-+	if (IS_ERR(b1))
-+		return PTR_ERR(b1);
++again:
++	ret = get_user_pages_fast(address, 1, 0, &page);
++	if (ret < 0)
++		return ret;
 +
-+	b2 = futex_get_bucket(rq2.uaddr, &w2.key, shared2);
-+	if (IS_ERR(b2))
-+		return PTR_ERR(b2);
-+
-+retry:
-+	if (shared1 && retry) {
-+		b1 = futex_get_bucket(rq1.uaddr, &w1.key, shared1);
-+		if (IS_ERR(b1))
-+			return PTR_ERR(b1);
-+	}
-+
-+	if (shared2 && retry) {
-+		b2 = futex_get_bucket(rq2.uaddr, &w2.key, shared2);
-+		if (IS_ERR(b2))
-+			return PTR_ERR(b2);
-+	}
-+
-+	bucket_inc_waiters(b2);
 +	/*
-+	 * To ensure the locks are taken in the same order for all threads (and
-+	 * thus avoiding deadlocks), take the "smaller" one first
++	 * The treatment of mapping from this point on is critical. The page
++	 * lock protects many things but in this context the page lock
++	 * stabilizes mapping, prevents inode freeing in the shared
++	 * file-backed region case and guards against movement to swap cache.
++	 *
++	 * Strictly speaking the page lock is not needed in all cases being
++	 * considered here and page lock forces unnecessarily serialization
++	 * From this point on, mapping will be re-verified if necessary and
++	 * page lock will be acquired only if it is unavoidable
++	 *
++	 * Mapping checks require the head page for any compound page so the
++	 * head page and mapping is looked up now. For anonymous pages, it
++	 * does not matter if the page splits in the future as the key is
++	 * based on the address. For filesystem-backed pages, the tail is
++	 * required as the index of the page determines the key. For
++	 * base pages, there is no tail page and tail == page.
 +	 */
-+	if (b1 <= b2) {
-+		spin_lock(&b1->lock);
-+		if (b1 < b2)
-+			spin_lock_nested(&b2->lock, SINGLE_DEPTH_NESTING);
++	tail = page;
++	page = compound_head(page);
++	mapping = READ_ONCE(page->mapping);
++
++	/*
++	 * If page->mapping is NULL, then it cannot be a PageAnon
++	 * page; but it might be the ZERO_PAGE or in the gate area or
++	 * in a special mapping (all cases which we are happy to fail);
++	 * or it may have been a good file page when get_user_pages_fast
++	 * found it, but truncated or holepunched or subjected to
++	 * invalidate_complete_page2 before we got the page lock (also
++	 * cases which we are happy to fail).  And we hold a reference,
++	 * so refcount care in invalidate_complete_page's remove_mapping
++	 * prevents drop_caches from setting mapping to NULL beneath us.
++	 *
++	 * The case we do have to guard against is when memory pressure made
++	 * shmem_writepage move it from filecache to swapcache beneath us:
++	 * an unlikely race, but we do need to retry for page->mapping.
++	 */
++	if (unlikely(!mapping)) {
++		int shmem_swizzled;
++
++		/*
++		 * Page lock is required to identify which special case above
++		 * applies. If this is really a shmem page then the page lock
++		 * will prevent unexpected transitions.
++		 */
++		lock_page(page);
++		shmem_swizzled = PageSwapCache(page) || page->mapping;
++		unlock_page(page);
++		put_page(page);
++
++		if (shmem_swizzled)
++			goto again;
++
++		return -EFAULT;
++	}
++
++	/*
++	 * Private mappings are handled in a simple way.
++	 *
++	 * If the futex key is stored on an anonymous page, then the associated
++	 * object is the mm which is implicitly pinned by the calling process.
++	 *
++	 * NOTE: When userspace waits on a MAP_SHARED mapping, even if
++	 * it's a read-only handle, it's expected that futexes attach to
++	 * the object not the particular process.
++	 */
++	if (PageAnon(page)) {
++		key->offset |= FUT_OFF_MMSHARED;
 +	} else {
-+		spin_lock(&b2->lock);
-+		spin_lock_nested(&b1->lock, SINGLE_DEPTH_NESTING);
-+	}
++		struct inode *inode;
 +
-+	ret = futex_get_user(&uval, rq1.uaddr);
++		/*
++		 * The associated futex object in this case is the inode and
++		 * the page->mapping must be traversed. Ordinarily this should
++		 * be stabilised under page lock but it's not strictly
++		 * necessary in this case as we just want to pin the inode, not
++		 * update the radix tree or anything like that.
++		 *
++		 * The RCU read lock is taken as the inode is finally freed
++		 * under RCU. If the mapping still matches expectations then the
++		 * mapping->host can be safely accessed as being a valid inode.
++		 */
++		rcu_read_lock();
 +
-+	if (unlikely(ret)) {
-+		futex_double_unlock(b1, b2);
-+		if (__get_user(uval, (u32 __user *)rq1.uaddr))
-+			return -EFAULT;
++		if (READ_ONCE(page->mapping) != mapping) {
++			rcu_read_unlock();
++			put_page(page);
 +
-+		bucket_dec_waiters(b2);
-+		retry = true;
-+		goto retry;
-+	}
-+
-+	if (uval != cmpval) {
-+		futex_double_unlock(b1, b2);
-+
-+		bucket_dec_waiters(b2);
-+		return -EAGAIN;
-+	}
-+
-+	list_for_each_entry_safe(aux, tmp, &b1->list, list) {
-+		if (futex_match(w1.key, aux->key)) {
-+			if (ret < nr_wake) {
-+				futex_mark_wake(aux, b1, &wake_q);
-+				ret++;
-+				continue;
-+			}
-+
-+			if (ret >= nr_wake + nr_requeue)
-+				break;
-+
-+			aux->key.pointer = w2.key.pointer;
-+			aux->key.index = w2.key.index;
-+			aux->key.offset = w2.key.offset;
-+
-+			if (b1 != b2) {
-+				list_del_init(&aux->list);
-+				bucket_dec_waiters(b1);
-+
-+				list_add_tail(&aux->list, &b2->list);
-+				bucket_inc_waiters(b2);
-+			}
-+			ret++;
++			goto again;
 +		}
++
++		inode = READ_ONCE(mapping->host);
++		if (!inode) {
++			rcu_read_unlock();
++			put_page(page);
++
++			goto again;
++		}
++
++		key->pointer = futex_get_inode_uuid(inode);
++		key->index = (unsigned long)basepage_index(tail);
++		key->offset |= FUT_OFF_INODE;
++
++		rcu_read_unlock();
 +	}
 +
-+	futex_double_unlock(b1, b2);
-+	wake_up_q(&wake_q);
-+	bucket_dec_waiters(b2);
-+
-+	return ret;
-+}
-+
-+#ifdef CONFIG_COMPAT
-+static int compat_futex_parse_requeue(struct futex_requeue *rq,
-+				      struct compat_futex_requeue __user *uaddr,
-+				      bool *shared)
-+{
-+	struct compat_futex_requeue tmp;
-+
-+	if (copy_from_user(&tmp, uaddr, sizeof(tmp)))
-+		return -EFAULT;
-+
-+	if (tmp.flags & ~FUTEXV_WAITER_MASK ||
-+	    (tmp.flags & FUTEX_SIZE_MASK) != FUTEX_32)
-+		return -EINVAL;
-+
-+	*shared = (tmp.flags & FUTEX_SHARED_FLAG) ? true : false;
-+
-+	rq->uaddr = compat_ptr(tmp.uaddr);
-+	rq->flags = tmp.flags;
++	put_page(page);
 +
 +	return 0;
 +}
 +
-+COMPAT_SYSCALL_DEFINE6(futex_requeue, struct compat_futex_requeue __user *, uaddr1,
-+		       struct compat_futex_requeue __user *, uaddr2,
-+		       unsigned int, nr_wake, unsigned int, nr_requeue,
-+		       unsigned int, cmpval, unsigned int, flags)
-+{
-+	struct futex_requeue rq1, rq2;
-+	bool shared1, shared2;
-+	int ret;
-+
-+	if (flags)
-+		return -EINVAL;
-+
-+	ret = compat_futex_parse_requeue(&rq1, uaddr1, &shared1);
-+	if (ret)
-+		return ret;
-+
-+	ret = compat_futex_parse_requeue(&rq2, uaddr2, &shared2);
-+	if (ret)
-+		return ret;
-+
-+	return __futex_requeue(rq1, rq2, nr_wake, nr_requeue, cmpval, shared1, shared2);
-+}
-+#endif
-+
-+/**
-+ * futex_parse_requeue - Copy a user struct futex_requeue and check it's flags
-+ * @rq:    Kernel struct
-+ * @uaddr: Address of user struct
-+ * @shared: Out parameter, defines if this is a shared futex
+ /**
+  * futex_get_bucket - Check if the user address is valid, prepare internal
+  *                    data and calculate the hash
+  * @uaddr:   futex user address
+  * @key:     data that uniquely identifies a futex
++ * @shared:  is this a shared futex?
 + *
-+ * Return: 0 on success, error code otherwise
-+ */
-+static int futex_parse_requeue(struct futex_requeue *rq,
-+			       struct futex_requeue __user *uaddr, bool *shared)
-+{
-+	if (copy_from_user(rq, uaddr, sizeof(*rq)))
-+		return -EFAULT;
-+
-+	if (rq->flags & ~FUTEXV_WAITER_MASK ||
-+	    (rq->flags & FUTEX_SIZE_MASK) != FUTEX_32)
-+		return -EINVAL;
-+
-+	*shared = (rq->flags & FUTEX_SHARED_FLAG) ? true : false;
-+
-+	return 0;
-+}
-+
-+/**
-+ * sys_futex_requeue - Wake futexes at uaddr1 and requeue from uaddr1 to uaddr2
-+ * @uaddr1:	Address of futexes to be waken/dequeued
-+ * @uaddr2:	Address for the futexes to be enqueued
-+ * @nr_wake:	Number of futexes waiting in uaddr1 to be woken up
-+ * @nr_requeue: Number of futexes to be requeued from uaddr1 to uaddr2
-+ * @cmpval:	Expected value at uaddr1
-+ * @flags:	Reserved flags arg for requeue operation expansion. Must be 0.
-+ *
-+ * If (uaddr1->uaddr == cmpval), wake at uaddr1->uaddr a nr_wake number of
-+ * waiters and then, remove a number of nr_requeue waiters at uaddr1->uaddr
-+ * and add then to uaddr2->uaddr list. Each uaddr has its own set of flags,
-+ * that must be defined at struct futex_requeue (such as size, shared, NUMA).
-+ *
-+ * Return the number of the woken futexes + the number of requeued ones on
-+ * success, error code otherwise.
-+ */
-+SYSCALL_DEFINE6(futex_requeue, struct futex_requeue __user *, uaddr1,
-+		struct futex_requeue __user *, uaddr2,
-+		unsigned int, nr_wake, unsigned int, nr_requeue,
-+		unsigned int, cmpval, unsigned int, flags)
-+{
-+	struct futex_requeue rq1, rq2;
-+	bool shared1, shared2;
-+	int ret;
-+
-+	if (flags)
-+		return -EINVAL;
-+
-+	ret = futex_parse_requeue(&rq1, uaddr1, &shared1);
-+	if (ret)
-+		return ret;
-+
-+	ret = futex_parse_requeue(&rq2, uaddr2, &shared2);
-+	if (ret)
-+		return ret;
-+
-+	return __futex_requeue(rq1, rq2, nr_wake, nr_requeue, cmpval, shared1, shared2);
-+}
-+
- static int __init futex2_init(void)
++ * For private futexes, each uaddr will be unique for a given mm_struct, and it
++ * won't be freed for the life time of the process. For shared futexes, check
++ * futex_get_shared_key().
+  *
+  * Return: address of bucket on success, error code otherwise
+  */
+ static struct futex_bucket *futex_get_bucket(void __user *uaddr,
+-					     struct futex_key *key)
++					     struct futex_key *key,
++					     bool shared)
  {
- 	int i;
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index 977890c58ab5..1750dfc416d8 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -154,6 +154,7 @@ COND_SYSCALL_COMPAT(get_robust_list);
- COND_SYSCALL(futex_wait);
- COND_SYSCALL(futex_wake);
- COND_SYSCALL(futex_waitv);
-+COND_SYSCALL(futex_requeue);
+ 	uintptr_t address = (uintptr_t)uaddr;
+ 	u32 hash_key;
+@@ -151,6 +342,9 @@ static struct futex_bucket *futex_get_bucket(void __user *uaddr,
+ 	key->pointer = (u64)address;
+ 	key->index = (unsigned long)current->mm;
  
- /* kernel/hrtimer.c */
++	if (shared)
++		futex_get_shared_key(address, current->mm, key);
++
+ 	/* Generate hash key for this futex using uaddr and current->mm */
+ 	hash_key = jhash2((u32 *)key, sizeof(*key) / sizeof(u32), 0);
  
-diff --git a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-index 31661fc0cd25..2df921c75f6a 100644
---- a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -366,6 +366,7 @@
- 443	common  futex_wait              sys_futex_wait
- 444	common  futex_wake              sys_futex_wake
- 445	common  futex_waitv             sys_futex_waitv
-+446	common  futex_requeue		sys_futex_requeue
+@@ -288,6 +482,7 @@ static int futex_enqueue(struct futex_waiter_head *futexv, unsigned int nr_futex
+ 	int i, ret;
+ 	u32 uval, val;
+ 	u32 __user *uaddr;
++	bool retry = false;
+ 	struct futex_bucket *bucket;
  
- #
- # Due to a historical design error, certain syscalls are numbered differently
+ retry:
+@@ -297,6 +492,18 @@ static int futex_enqueue(struct futex_waiter_head *futexv, unsigned int nr_futex
+ 		uaddr = (u32 __user *)futexv->objects[i].uaddr;
+ 		val = (u32)futexv->objects[i].val;
+ 
++		if (is_object_shared && retry) {
++			struct futex_bucket *tmp =
++				futex_get_bucket((void __user *)uaddr,
++						 &futexv->objects[i].key, true);
++			if (IS_ERR(tmp)) {
++				__set_current_state(TASK_RUNNING);
++				futex_dequeue_multiple(futexv, i);
++				return PTR_ERR(tmp);
++			}
++			futexv->objects[i].bucket = tmp;
++		}
++
+ 		bucket = futexv->objects[i].bucket;
+ 
+ 		bucket_inc_waiters(bucket);
+@@ -317,6 +524,7 @@ static int futex_enqueue(struct futex_waiter_head *futexv, unsigned int nr_futex
+ 			if (__get_user(uval, uaddr))
+ 				return -EFAULT;
+ 
++			retry = true;
+ 			goto retry;
+ 		}
+ 
+@@ -443,6 +651,7 @@ static int __futex_waitv(struct futex_waiter_head *futexv, unsigned int nr_futex
+ SYSCALL_DEFINE4(futex_wait, void __user *, uaddr, unsigned int, val,
+ 		unsigned int, flags, struct __kernel_timespec __user *, timo)
+ {
++	bool shared = (flags & FUTEX_SHARED_FLAG) ? true : false;
+ 	unsigned int size = flags & FUTEX_SIZE_MASK;
+ 	struct futex_waiter *waiter;
+ 	struct futex_waiter_head *futexv;
+@@ -472,7 +681,7 @@ SYSCALL_DEFINE4(futex_wait, void __user *, uaddr, unsigned int, val,
+ 	INIT_LIST_HEAD(&waiter->list);
+ 
+ 	/* Get an unlocked hash bucket */
+-	waiter->bucket = futex_get_bucket(uaddr, &waiter->key);
++	waiter->bucket = futex_get_bucket(uaddr, &waiter->key, shared);
+ 	if (IS_ERR(waiter->bucket))
+ 		return PTR_ERR(waiter->bucket);
+ 
+@@ -538,6 +747,7 @@ static inline bool futex_match(struct futex_key key1, struct futex_key key2)
+ SYSCALL_DEFINE3(futex_wake, void __user *, uaddr, unsigned int, nr_wake,
+ 		unsigned int, flags)
+ {
++	bool shared = (flags & FUTEX_SHARED_FLAG) ? true : false;
+ 	unsigned int size = flags & FUTEX_SIZE_MASK;
+ 	struct futex_waiter waiter, *aux, *tmp;
+ 	struct futex_bucket *bucket;
+@@ -550,7 +760,7 @@ SYSCALL_DEFINE3(futex_wake, void __user *, uaddr, unsigned int, nr_wake,
+ 	if (size != FUTEX_32)
+ 		return -EINVAL;
+ 
+-	bucket = futex_get_bucket(uaddr, &waiter.key);
++	bucket = futex_get_bucket(uaddr, &waiter.key, shared);
+ 	if (IS_ERR(bucket))
+ 		return PTR_ERR(bucket);
+ 
 -- 
 2.30.1
 
