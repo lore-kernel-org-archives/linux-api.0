@@ -7,24 +7,24 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,URIBL_BLOCKED,
 	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3274EC4332B
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 80DC5C4332D
 	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 01:14:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0C87B64ED7
+	by mail.kernel.org (Postfix) with ESMTP id 5B4BA64F4D
 	for <linux-api@archiver.kernel.org>; Thu,  4 Mar 2021 01:14:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S243847AbhCDBMP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 3 Mar 2021 20:12:15 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53886 "EHLO
+        id S244222AbhCDBMQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 3 Mar 2021 20:12:16 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53932 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1453079AbhCDAoj (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Mar 2021 19:44:39 -0500
+        with ESMTP id S1453082AbhCDAou (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 3 Mar 2021 19:44:50 -0500
 Received: from bhuna.collabora.co.uk (bhuna.collabora.co.uk [IPv6:2a00:1098:0:82:1000:25:2eeb:e3e3])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0C3D1C061756;
-        Wed,  3 Mar 2021 16:43:59 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CC3A1C061761;
+        Wed,  3 Mar 2021 16:44:09 -0800 (PST)
 Received: from [127.0.0.1] (localhost [127.0.0.1])
         (Authenticated sender: tonyk)
-        with ESMTPSA id 1A03B1F4603B
+        with ESMTPSA id E35B41F46046
 From:   =?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@collabora.com>
 To:     Thomas Gleixner <tglx@linutronix.de>,
         Ingo Molnar <mingo@redhat.com>,
@@ -39,9 +39,9 @@ Cc:     kernel@collabora.com, krisman@collabora.com,
         libc-alpha@sourceware.org, linux-kselftest@vger.kernel.org,
         shuah@kernel.org, acme@kernel.org, corbet@lwn.net,
         =?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@collabora.com>
-Subject: [RFC PATCH v2 11/13] selftests: futex2: Add requeue test
-Date:   Wed,  3 Mar 2021 21:42:17 -0300
-Message-Id: <20210304004219.134051-12-andrealmeid@collabora.com>
+Subject: [RFC PATCH v2 13/13] kernel: Enable waitpid() for futex2
+Date:   Wed,  3 Mar 2021 21:42:19 -0300
+Message-Id: <20210304004219.134051-14-andrealmeid@collabora.com>
 X-Mailer: git-send-email 2.30.1
 In-Reply-To: <20210304004219.134051-1-andrealmeid@collabora.com>
 References: <20210304004219.134051-1-andrealmeid@collabora.com>
@@ -52,237 +52,101 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add testing for futex_requeue(). The first test just requeue from one
-waiter to another one, and wake it. The second performs both wake and
-requeue, and we check return values to see if the operation
-woke/requeued the expected number of waiters.
+To make pthreads works as expected if they are using futex2, wake
+clear_child_tid with futex2 as well. This is make applications that uses
+waitpid() (and clone(CLONE_CHILD_SETTID)) wake while waiting for the
+child to terminate. Given that apps should not mix futex() and futex2(),
+any correct app will trigger a harmless noop wakeup on the interface
+that it isn't using.
 
 Signed-off-by: André Almeida <andrealmeid@collabora.com>
 ---
- .../selftests/futex/functional/.gitignore     |   1 +
- .../selftests/futex/functional/Makefile       |   3 +-
- .../futex/functional/futex2_requeue.c         | 164 ++++++++++++++++++
- .../selftests/futex/include/futex2test.h      |  16 ++
- 4 files changed, 183 insertions(+), 1 deletion(-)
- create mode 100644 tools/testing/selftests/futex/functional/futex2_requeue.c
 
-diff --git a/tools/testing/selftests/futex/functional/.gitignore b/tools/testing/selftests/futex/functional/.gitignore
-index d0b8f637b786..af7557e821da 100644
---- a/tools/testing/selftests/futex/functional/.gitignore
-+++ b/tools/testing/selftests/futex/functional/.gitignore
-@@ -8,3 +8,4 @@ futex_wait_uninitialized_heap
- futex_wait_wouldblock
- futex2_wait
- futex2_waitv
-+futex2_requeue
-diff --git a/tools/testing/selftests/futex/functional/Makefile b/tools/testing/selftests/futex/functional/Makefile
-index 09c08ccdeaf2..3ccb9ea58ddd 100644
---- a/tools/testing/selftests/futex/functional/Makefile
-+++ b/tools/testing/selftests/futex/functional/Makefile
-@@ -17,7 +17,8 @@ TEST_GEN_FILES := \
- 	futex_wait_uninitialized_heap \
- 	futex_wait_private_mapped_file \
- 	futex2_wait \
--	futex2_waitv
-+	futex2_waitv \
-+	futex2_requeue
+This commit is here for the intend to show what we need to do in order
+to get a full NPTL working on top of futex2. It should be merged after
+we talk to glibc folks on the details around the futex_wait() side. For
+instance, we could use this as an opportunity to use private futexes or
+8bit sized futexes, but both sides need to use the exactly same flags.
+---
+ include/linux/syscalls.h |  2 ++
+ kernel/fork.c            |  2 ++
+ kernel/futex2.c          | 30 ++++++++++++++++++------------
+ 3 files changed, 22 insertions(+), 12 deletions(-)
+
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index b0675f236066..b07b7d4334a6 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -1316,6 +1316,8 @@ int ksys_ipc(unsigned int call, int first, unsigned long second,
+ 	unsigned long third, void __user * ptr, long fifth);
+ int compat_ksys_ipc(u32 call, int first, int second,
+ 	u32 third, u32 ptr, u32 fifth);
++long ksys_futex_wake(void __user *uaddr, unsigned long nr_wake,
++		     unsigned int flags);
  
- TEST_PROGS := run.sh
- 
-diff --git a/tools/testing/selftests/futex/functional/futex2_requeue.c b/tools/testing/selftests/futex/functional/futex2_requeue.c
-new file mode 100644
-index 000000000000..1bc3704dc8c2
---- /dev/null
-+++ b/tools/testing/selftests/futex/functional/futex2_requeue.c
-@@ -0,0 +1,164 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
-+/******************************************************************************
-+ *
-+ *   Copyright Collabora Ltd., 2021
-+ *
-+ * DESCRIPTION
-+ *	Test requeue mechanism of futex2, using 32bit sized futexes.
-+ *
-+ * AUTHOR
-+ *	André Almeida <andrealmeid@collabora.com>
-+ *
-+ * HISTORY
-+ *      2021-Feb-5: Initial version by André <andrealmeid@collabora.com>
-+ *
-+ *****************************************************************************/
-+
-+#include <errno.h>
-+#include <error.h>
-+#include <getopt.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <time.h>
-+#include <pthread.h>
-+#include <sys/shm.h>
-+#include <limits.h>
-+#include "futex2test.h"
-+#include "logging.h"
-+
-+#define TEST_NAME "futex2-wait"
-+#define timeout_ns  30000000
-+#define WAKE_WAIT_US 10000
-+volatile futex_t *f1;
-+
-+void usage(char *prog)
-+{
-+	printf("Usage: %s\n", prog);
-+	printf("  -c	Use color\n");
-+	printf("  -h	Display this help message\n");
-+	printf("  -v L	Verbosity level: %d=QUIET %d=CRITICAL %d=INFO\n",
-+	       VQUIET, VCRITICAL, VINFO);
-+}
-+
-+void *waiterfn(void *arg)
-+{
-+	struct timespec64 to64;
-+
-+	/* setting absolute timeout for futex2 */
-+	if (gettime64(CLOCK_MONOTONIC, &to64))
-+		error("gettime64 failed\n", errno);
-+
-+	to64.tv_nsec += timeout_ns;
-+
-+	if (to64.tv_nsec >= 1000000000) {
-+		to64.tv_sec++;
-+		to64.tv_nsec -= 1000000000;
-+	}
-+
-+	if (futex2_wait(f1, *f1, FUTEX_32, &to64))
-+		printf("waiter failed errno %d\n", errno);
-+
-+	return NULL;
-+}
-+
-+int main(int argc, char *argv[])
-+{
-+	pthread_t waiter[10];
-+	int res, ret = RET_PASS;
-+	int c, i;
-+	volatile futex_t _f1 = 0;
-+	volatile futex_t f2 = 0;
-+	struct futex_requeue r1, r2;
-+
-+	f1 = &_f1;
-+
-+	r1.flags = FUTEX_32;
-+	r2.flags = FUTEX_32;
-+
-+	r1.uaddr = f1;
-+	r2.uaddr = &f2;
-+
-+	while ((c = getopt(argc, argv, "cht:v:")) != -1) {
-+		switch (c) {
-+		case 'c':
-+			log_color(1);
-+			break;
-+		case 'h':
-+			usage(basename(argv[0]));
-+			exit(0);
-+		case 'v':
-+			log_verbosity(atoi(optarg));
-+			break;
-+		default:
-+			usage(basename(argv[0]));
-+			exit(1);
-+		}
-+	}
-+
-+	ksft_print_header();
-+	ksft_set_plan(2);
-+	ksft_print_msg("%s: Test FUTEX2_REQUEUE\n",
-+		       basename(argv[0]));
-+
-+	/*
-+	 * Requeue a waiter from f1 to f2, and wake f2.
-+	 */
-+	if (pthread_create(&waiter[0], NULL, waiterfn, NULL))
-+		error("pthread_create failed\n", errno);
-+
-+	usleep(WAKE_WAIT_US);
-+
-+	res = futex2_requeue(&r1, &r2, 0, 1, 0, 0);
-+	if (res != 1) {
-+		ksft_test_result_fail("futex2_requeue private returned: %d %s\n",
-+				      res ? errno : res,
-+				      res ? strerror(errno) : "");
-+		ret = RET_FAIL;
-+	}
-+
-+
-+	info("Calling private futex2_wake on f2: %u @ %p with val=%u\n", f2, &f2, f2);
-+	res = futex2_wake(&f2, 1, FUTEX_32);
-+	if (res != 1) {
-+		ksft_test_result_fail("futex2_requeue private returned: %d %s\n",
-+				      res ? errno : res,
-+				      res ? strerror(errno) : "");
-+		ret = RET_FAIL;
-+	} else {
-+		ksft_test_result_pass("futex2_requeue simple succeeds\n");
-+	}
-+
-+
-+	/*
-+	 * Create 10 waiters at f1. At futex_requeue, wake 3 and requeue 7.
-+	 * At futex_wake, wake INT_MAX (should be exaclty 7).
-+	 */
-+	for (i = 0; i < 10; i++) {
-+		if (pthread_create(&waiter[i], NULL, waiterfn, NULL))
-+			error("pthread_create failed\n", errno);
-+	}
-+
-+	usleep(WAKE_WAIT_US);
-+
-+	res = futex2_requeue(&r1, &r2, 3, 7, 0, 0);
-+	if (res != 10) {
-+		ksft_test_result_fail("futex2_requeue private returned: %d %s\n",
-+				      res ? errno : res,
-+				      res ? strerror(errno) : "");
-+		ret = RET_FAIL;
-+	}
-+
-+	res = futex2_wake(&f2, INT_MAX, FUTEX_32);
-+	if (res != 7) {
-+		ksft_test_result_fail("futex2_requeue private returned: %d %s\n",
-+				      res ? errno : res,
-+				      res ? strerror(errno) : "");
-+		ret = RET_FAIL;
-+	} else {
-+		ksft_test_result_pass("futex2_requeue succeeds\n");
-+	}
-+
-+	ksft_print_cnts();
-+	return ret;
-+}
-diff --git a/tools/testing/selftests/futex/include/futex2test.h b/tools/testing/selftests/futex/include/futex2test.h
-index 31979afc486f..e2635006b1a9 100644
---- a/tools/testing/selftests/futex/include/futex2test.h
-+++ b/tools/testing/selftests/futex/include/futex2test.h
-@@ -103,3 +103,19 @@ static inline int futex2_waitv(volatile struct futex_waitv *waiters, unsigned lo
- {
- 	return syscall(__NR_futex_waitv, waiters, nr_waiters, flags, timo);
+ /*
+  * The following kernel syscall equivalents are just wrappers to fs-internal
+diff --git a/kernel/fork.c b/kernel/fork.c
+index d66cd1014211..e39846a73a43 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1308,6 +1308,8 @@ static void mm_release(struct task_struct *tsk, struct mm_struct *mm)
+ 			put_user(0, tsk->clear_child_tid);
+ 			do_futex(tsk->clear_child_tid, FUTEX_WAKE,
+ 					1, NULL, NULL, 0, 0);
++			ksys_futex_wake(tsk->clear_child_tid, 1,
++					FUTEX_32 | FUTEX_SHARED_FLAG);
+ 		}
+ 		tsk->clear_child_tid = NULL;
+ 	}
+diff --git a/kernel/futex2.c b/kernel/futex2.c
+index 92b560206666..dd6f54ae0220 100644
+--- a/kernel/futex2.c
++++ b/kernel/futex2.c
+@@ -924,18 +924,8 @@ static inline bool futex_match(struct futex_key key1, struct futex_key key2)
+ 		key1.offset == key2.offset);
  }
-+
+ 
+-/**
+- * sys_futex_wake - Wake a number of futexes waiting on an address
+- * @uaddr:   Address of futex to be woken up
+- * @nr_wake: Number of futexes waiting in uaddr to be woken up
+- * @flags:   Flags for size and shared
+- *
+- * Wake `nr_wake` threads waiting at uaddr.
+- *
+- * Returns the number of woken threads on success, error code otherwise.
+- */
+-SYSCALL_DEFINE3(futex_wake, void __user *, uaddr, unsigned int, nr_wake,
+-		unsigned int, flags)
++long ksys_futex_wake(void __user *uaddr, unsigned long nr_wake,
++		     unsigned int flags)
+ {
+ 	bool shared = (flags & FUTEX_SHARED_FLAG) ? true : false;
+ 	unsigned int size = flags & FUTEX_SIZE_MASK;
+@@ -972,6 +962,22 @@ SYSCALL_DEFINE3(futex_wake, void __user *, uaddr, unsigned int, nr_wake,
+ 	return ret;
+ }
+ 
 +/**
-+ * futex2_requeue - Wake futexes at uaddr1 and requeue from uaddr1 to uaddr2
-+ * @uaddr1:     Original address to wake and requeue from
-+ * @uaddr2:     Address to requeue to
-+ * @nr_wake:    Number of futexes to wake at uaddr1 before requeuing
-+ * @nr_requeue: Number of futexes to requeue from uaddr1 to uaddr2
-+ * @cmpval:     If (uaddr1->uaddr != cmpval), return immediatally
-+ * @flgas:      Operation flags
++ * sys_futex_wake - Wake a number of futexes waiting on an address
++ * @uaddr:   Address of futex to be woken up
++ * @nr_wake: Number of futexes waiting in uaddr to be woken up
++ * @flags:   Flags for size and shared
++ *
++ * Wake `nr_wake` threads waiting at uaddr.
++ *
++ * Returns the number of woken threads on success, error code otherwise.
 + */
-+static inline int futex2_requeue(struct futex_requeue *uaddr1, struct futex_requeue *uaddr2,
-+				 unsigned int nr_wake, unsigned int nr_requeue,
-+				 unsigned int cmpval, unsigned long flags)
++SYSCALL_DEFINE3(futex_wake, void __user *, uaddr, unsigned int, nr_wake,
++		unsigned int, flags)
 +{
-+	return syscall(__NR_futex_requeue, uaddr1, uaddr2, nr_wake, nr_requeue, cmpval, flags);
++	return ksys_futex_wake(uaddr, nr_wake, flags);
 +}
++
+ static void futex_double_unlock(struct futex_bucket *b1, struct futex_bucket *b2)
+ {
+ 	spin_unlock(&b1->lock);
 -- 
 2.30.1
 
