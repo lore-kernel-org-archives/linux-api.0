@@ -2,197 +2,154 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7EAF7C433DB
-	for <linux-api@archiver.kernel.org>; Wed, 10 Mar 2021 18:50:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7CAA7C433E9
+	for <linux-api@archiver.kernel.org>; Wed, 10 Mar 2021 22:02:10 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4D05764F78
-	for <linux-api@archiver.kernel.org>; Wed, 10 Mar 2021 18:50:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5C4F064FD0
+	for <linux-api@archiver.kernel.org>; Wed, 10 Mar 2021 22:02:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231858AbhCJSuV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 10 Mar 2021 13:50:21 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:21538 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S233301AbhCJSuP (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 10 Mar 2021 13:50:15 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1615402214;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=ujgHC2APsB8R2uAWzIAh2HLokjAekCL0UgQUy4oA9CY=;
-        b=L56K0bKBiFyC97iMybfm5jPe1GT8hMnQD9L7G1BAw0OIZGHvvKqPz921Zg4U327lgMZacQ
-        Dos2U2FcRcw/6ITSQ/56TU7S1AHcs53FndJBDfoHtS3pJCpJd977zCwHxQGiZE53h1qn46
-        vjXKVpG/B7zGlFU4nyKuhRQ+65INLOs=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-552-huHmzua5PeKRAYpDhp0a9Q-1; Wed, 10 Mar 2021 13:50:10 -0500
-X-MC-Unique: huHmzua5PeKRAYpDhp0a9Q-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6891618D6A40;
-        Wed, 10 Mar 2021 18:50:08 +0000 (UTC)
-Received: from dhcp-27-174.brq.redhat.com (unknown [10.40.192.38])
-        by smtp.corp.redhat.com (Postfix) with SMTP id A5BA177BF0;
-        Wed, 10 Mar 2021 18:50:03 +0000 (UTC)
-Received: by dhcp-27-174.brq.redhat.com (nbSMTP-1.00) for uid 1000
-        oleg@redhat.com; Wed, 10 Mar 2021 19:50:08 +0100 (CET)
-Date:   Wed, 10 Mar 2021 19:50:02 +0100
-From:   Oleg Nesterov <oleg@redhat.com>
-To:     Piotr Figiel <figiel@google.com>
-Cc:     Andrew Morton <akpm@linux-foundation.org>,
-        mathieu.desnoyers@efficios.com, peterz@infradead.org,
-        paulmck@kernel.org, boqun.feng@gmail.com, ldv@altlinux.org,
-        fweimer@redhat.com, Alexey Dobriyan <adobriyan@gmail.com>,
-        Andrei Vagin <avagin@gmail.com>, linux-kernel@vger.kernel.org,
-        posk@google.com, kyurtsever@google.com, ckennelly@google.com,
-        pjt@google.com, emmir@google.com, linux-man@vger.kernel.org,
-        linux-api@vger.kernel.org
-Subject: Re: [PATCH v2] ptrace: add PTRACE_GET_RSEQ_CONFIGURATION request
-Message-ID: <20210310185001.GD8973@redhat.com>
-References: <20210226135156.1081606-1-figiel@google.com>
+        id S233498AbhCJWBh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 10 Mar 2021 17:01:37 -0500
+Received: from mga04.intel.com ([192.55.52.120]:4728 "EHLO mga04.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S233641AbhCJWBN (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 10 Mar 2021 17:01:13 -0500
+IronPort-SDR: pPTeMppwVpkjC4sPNzBmMF6B7shZJrPByA3VM9PkbQvd35G5iyBdGca6Tvm/rYzRKZrdGcLrj8
+ oyoydo1iGxKg==
+X-IronPort-AV: E=McAfee;i="6000,8403,9919"; a="186193113"
+X-IronPort-AV: E=Sophos;i="5.81,238,1610438400"; 
+   d="scan'208";a="186193113"
+Received: from fmsmga008.fm.intel.com ([10.253.24.58])
+  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Mar 2021 14:01:13 -0800
+IronPort-SDR: xZV0GJx04Q3+u/FHk9PprhljNzupZSf9TZcbTQSbrgTSefd2rQf+VIOzzyU0SPLhGdIXmTk03o
+ vEq7OSw/jyFg==
+X-IronPort-AV: E=Sophos;i="5.81,238,1610438400"; 
+   d="scan'208";a="403847584"
+Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
+  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Mar 2021 14:01:13 -0800
+From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
+To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-doc@vger.kernel.org, linux-mm@kvack.org,
+        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andy Lutomirski <luto@kernel.org>,
+        Balbir Singh <bsingharora@gmail.com>,
+        Borislav Petkov <bp@alien8.de>,
+        Cyrill Gorcunov <gorcunov@gmail.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Eugene Syromiatnikov <esyr@redhat.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Nadav Amit <nadav.amit@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
+        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Weijiang Yang <weijiang.yang@intel.com>,
+        Pengfei Xu <pengfei.xu@intel.com>,
+        Haitao Huang <haitao.huang@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v22 03/28] x86/cpufeatures: Add CET CPU feature flags for Control-flow Enforcement Technology (CET)
+Date:   Wed, 10 Mar 2021 14:00:21 -0800
+Message-Id: <20210310220046.15866-4-yu-cheng.yu@intel.com>
+X-Mailer: git-send-email 2.21.0
+In-Reply-To: <20210310220046.15866-1-yu-cheng.yu@intel.com>
+References: <20210310220046.15866-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20210226135156.1081606-1-figiel@google.com>
-User-Agent: Mutt/1.5.24 (2015-08-30)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-I don't think I can review this patch, I don't understand the problem space
-well enough. But just in case, I see nothing wrong in this simple patch.
+Add CPU feature flags for Control-flow Enforcement Technology (CET).
 
-Feel free to add
+CPUID.(EAX=7,ECX=0):ECX[bit 7] Shadow stack
+CPUID.(EAX=7,ECX=0):EDX[bit 20] Indirect Branch Tracking
 
-Acked-by: Oleg Nesterov <oleg@redhat.com>
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+---
+ arch/x86/include/asm/cpufeatures.h       |  2 ++
+ arch/x86/include/asm/disabled-features.h | 12 ++++++++++--
+ arch/x86/kernel/cpu/cpuid-deps.c         |  2 ++
+ 3 files changed, 14 insertions(+), 2 deletions(-)
 
-
-
-On 02/26, Piotr Figiel wrote:
->
-> For userspace checkpoint and restore (C/R) a way of getting process state
-> containing RSEQ configuration is needed.
-> 
-> There are two ways this information is going to be used:
->  - to re-enable RSEQ for threads which had it enabled before C/R
->  - to detect if a thread was in a critical section during C/R
-> 
-> Since C/R preserves TLS memory and addresses RSEQ ABI will be restored
-> using the address registered before C/R.
-> 
-> Detection whether the thread is in a critical section during C/R is needed
-> to enforce behavior of RSEQ abort during C/R. Attaching with ptrace()
-> before registers are dumped itself doesn't cause RSEQ abort.
-> Restoring the instruction pointer within the critical section is
-> problematic because rseq_cs may get cleared before the control is passed
-> to the migrated application code leading to RSEQ invariants not being
-> preserved. C/R code will use RSEQ ABI address to find the abort handler
-> to which the instruction pointer needs to be set.
-> 
-> To achieve above goals expose the RSEQ ABI address and the signature value
-> with the new ptrace request PTRACE_GET_RSEQ_CONFIGURATION.
-> 
-> This new ptrace request can also be used by debuggers so they are aware
-> of stops within restartable sequences in progress.
-> 
-> Signed-off-by: Piotr Figiel <figiel@google.com>
-> Reviewed-by: Michal Miroslaw <emmir@google.com>
-> 
-> ---
-> v2:
-> Applied review comments:
->  - changed return value from the ptrace request to the size of the
->    configuration structure
->  - expanded configuration structure with the flags field and
->    the rseq abi structure size
-> 
-> v1:
->  https://lore.kernel.org/lkml/20210222100443.4155938-1-figiel@google.com/
-> 
-> ---
->  include/uapi/linux/ptrace.h | 10 ++++++++++
->  kernel/ptrace.c             | 25 +++++++++++++++++++++++++
->  2 files changed, 35 insertions(+)
-> 
-> diff --git a/include/uapi/linux/ptrace.h b/include/uapi/linux/ptrace.h
-> index 83ee45fa634b..3747bf816f9a 100644
-> --- a/include/uapi/linux/ptrace.h
-> +++ b/include/uapi/linux/ptrace.h
-> @@ -102,6 +102,16 @@ struct ptrace_syscall_info {
->  	};
->  };
->  
-> +#define PTRACE_GET_RSEQ_CONFIGURATION	0x420f
-> +
-> +struct ptrace_rseq_configuration {
-> +	__u64 rseq_abi_pointer;
-> +	__u32 rseq_abi_size;
-> +	__u32 signature;
-> +	__u32 flags;
-> +	__u32 pad;
-> +};
-> +
->  /*
->   * These values are stored in task->ptrace_message
->   * by tracehook_report_syscall_* to describe the current syscall-stop.
-> diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-> index 61db50f7ca86..76f09456ec4b 100644
-> --- a/kernel/ptrace.c
-> +++ b/kernel/ptrace.c
-> @@ -31,6 +31,7 @@
->  #include <linux/cn_proc.h>
->  #include <linux/compat.h>
->  #include <linux/sched/signal.h>
-> +#include <linux/minmax.h>
->  
->  #include <asm/syscall.h>	/* for syscall_get_* */
->  
-> @@ -779,6 +780,24 @@ static int ptrace_peek_siginfo(struct task_struct *child,
->  	return ret;
->  }
->  
-> +#ifdef CONFIG_RSEQ
-> +static long ptrace_get_rseq_configuration(struct task_struct *task,
-> +					  unsigned long size, void __user *data)
-> +{
-> +	struct ptrace_rseq_configuration conf = {
-> +		.rseq_abi_pointer = (u64)(uintptr_t)task->rseq,
-> +		.rseq_abi_size = sizeof(*task->rseq),
-> +		.signature = task->rseq_sig,
-> +		.flags = 0,
-> +	};
-> +
-> +	size = min_t(unsigned long, size, sizeof(conf));
-> +	if (copy_to_user(data, &conf, size))
-> +		return -EFAULT;
-> +	return sizeof(conf);
-> +}
-> +#endif
-> +
->  #ifdef PTRACE_SINGLESTEP
->  #define is_singlestep(request)		((request) == PTRACE_SINGLESTEP)
->  #else
-> @@ -1222,6 +1241,12 @@ int ptrace_request(struct task_struct *child, long request,
->  		ret = seccomp_get_metadata(child, addr, datavp);
->  		break;
->  
-> +#ifdef CONFIG_RSEQ
-> +	case PTRACE_GET_RSEQ_CONFIGURATION:
-> +		ret = ptrace_get_rseq_configuration(child, addr, datavp);
-> +		break;
-> +#endif
-> +
->  	default:
->  		break;
->  	}
-> -- 
-> 2.30.1.766.gb4fecdf3b7-goog
-> 
+diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+index cc96e26d69f7..bf861fc89fef 100644
+--- a/arch/x86/include/asm/cpufeatures.h
++++ b/arch/x86/include/asm/cpufeatures.h
+@@ -345,6 +345,7 @@
+ #define X86_FEATURE_OSPKE		(16*32+ 4) /* OS Protection Keys Enable */
+ #define X86_FEATURE_WAITPKG		(16*32+ 5) /* UMONITOR/UMWAIT/TPAUSE Instructions */
+ #define X86_FEATURE_AVX512_VBMI2	(16*32+ 6) /* Additional AVX512 Vector Bit Manipulation Instructions */
++#define X86_FEATURE_SHSTK		(16*32+ 7) /* Shadow Stack */
+ #define X86_FEATURE_GFNI		(16*32+ 8) /* Galois Field New Instructions */
+ #define X86_FEATURE_VAES		(16*32+ 9) /* Vector AES */
+ #define X86_FEATURE_VPCLMULQDQ		(16*32+10) /* Carry-Less Multiplication Double Quadword */
+@@ -377,6 +378,7 @@
+ #define X86_FEATURE_TSXLDTRK		(18*32+16) /* TSX Suspend Load Address Tracking */
+ #define X86_FEATURE_PCONFIG		(18*32+18) /* Intel PCONFIG */
+ #define X86_FEATURE_ARCH_LBR		(18*32+19) /* Intel ARCH LBR */
++#define X86_FEATURE_IBT			(18*32+20) /* Indirect Branch Tracking */
+ #define X86_FEATURE_AVX512_FP16		(18*32+23) /* AVX512 FP16 */
+ #define X86_FEATURE_SPEC_CTRL		(18*32+26) /* "" Speculation Control (IBRS + IBPB) */
+ #define X86_FEATURE_INTEL_STIBP		(18*32+27) /* "" Single Thread Indirect Branch Predictors */
+diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
+index b7dd944dc867..914b353fe75c 100644
+--- a/arch/x86/include/asm/disabled-features.h
++++ b/arch/x86/include/asm/disabled-features.h
+@@ -68,6 +68,14 @@
+ # define DISABLE_SGX	(1 << (X86_FEATURE_SGX & 31))
+ #endif
+ 
++#ifdef CONFIG_X86_CET
++#define DISABLE_SHSTK	0
++#define DISABLE_IBT	0
++#else
++#define DISABLE_SHSTK	(1 << (X86_FEATURE_SHSTK & 31))
++#define DISABLE_IBT	(1 << (X86_FEATURE_IBT & 31))
++#endif
++
+ /*
+  * Make sure to add features to the correct mask
+  */
+@@ -88,9 +96,9 @@
+ #define DISABLED_MASK14	0
+ #define DISABLED_MASK15	0
+ #define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP| \
+-			 DISABLE_ENQCMD)
++			 DISABLE_ENQCMD|DISABLE_SHSTK)
+ #define DISABLED_MASK17	0
+-#define DISABLED_MASK18	0
++#define DISABLED_MASK18	(DISABLE_IBT)
+ #define DISABLED_MASK19	0
+ #define DISABLED_MASK_CHECK BUILD_BUG_ON_ZERO(NCAPINTS != 20)
+ 
+diff --git a/arch/x86/kernel/cpu/cpuid-deps.c b/arch/x86/kernel/cpu/cpuid-deps.c
+index 42af31b64c2c..52d9a682a0e6 100644
+--- a/arch/x86/kernel/cpu/cpuid-deps.c
++++ b/arch/x86/kernel/cpu/cpuid-deps.c
+@@ -72,6 +72,8 @@ static const struct cpuid_dep cpuid_deps[] = {
+ 	{ X86_FEATURE_AVX512_FP16,		X86_FEATURE_AVX512BW  },
+ 	{ X86_FEATURE_ENQCMD,			X86_FEATURE_XSAVES    },
+ 	{ X86_FEATURE_PER_THREAD_MBA,		X86_FEATURE_MBA       },
++	{ X86_FEATURE_SHSTK,			X86_FEATURE_XSAVES    },
++	{ X86_FEATURE_IBT,			X86_FEATURE_XSAVES    },
+ 	{}
+ };
+ 
+-- 
+2.21.0
 
