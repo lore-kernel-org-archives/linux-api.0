@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0F512C2BA19
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 58D4CC2BA2B
 	for <linux-api@archiver.kernel.org>; Wed, 10 Mar 2021 22:02:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E457C64FCD
-	for <linux-api@archiver.kernel.org>; Wed, 10 Mar 2021 22:02:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 476D664FCD
+	for <linux-api@archiver.kernel.org>; Wed, 10 Mar 2021 22:02:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233461AbhCJWBq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S229574AbhCJWBq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Wed, 10 Mar 2021 17:01:46 -0500
-Received: from mga04.intel.com ([192.55.52.120]:4734 "EHLO mga04.intel.com"
+Received: from mga04.intel.com ([192.55.52.120]:4738 "EHLO mga04.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233753AbhCJWBR (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 10 Mar 2021 17:01:17 -0500
-IronPort-SDR: 4clbODoIP4JxyiA0+AHLp41w6kDjetl5Zc3oDcAclw1lriP135S4IOgP8T8HHhP1d/EDubx4Ym
- xWIaLtdxdZFQ==
-X-IronPort-AV: E=McAfee;i="6000,8403,9919"; a="186193158"
+        id S233724AbhCJWBQ (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 10 Mar 2021 17:01:16 -0500
+IronPort-SDR: 2YIVahxHztJMn7HZWgpcg2HaocLsY8X28l1U4yAstKdp/MojigWCGrCgg8qCGsfBuSOWO55aUi
+ 6x8sxMq069MQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9919"; a="186193138"
 X-IronPort-AV: E=Sophos;i="5.81,238,1610438400"; 
-   d="scan'208";a="186193158"
+   d="scan'208";a="186193138"
 Received: from fmsmga008.fm.intel.com ([10.253.24.58])
-  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Mar 2021 14:01:17 -0800
-IronPort-SDR: pGEGdbO/oLxHtOnGhlWhqWfXV5ZfgoA8mCzm2Hugng3HBk1losY2D9hsI4UZFG8MJgfGznIgb0
- IZzfYpjIqKSQ==
+  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Mar 2021 14:01:15 -0800
+IronPort-SDR: /ibFHhtznRVTmD5bbYZjQhown5yP5Erw9e7xzF3i/ky+1IA5Cuwd4wordwiw3aMHEfV0VD7SEg
+ WOhGG/54uLNw==
 X-IronPort-AV: E=Sophos;i="5.81,238,1610438400"; 
-   d="scan'208";a="403847642"
+   d="scan'208";a="403847619"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Mar 2021 14:01:17 -0800
+  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Mar 2021 14:01:15 -0800
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,9 +61,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v22 20/28] mm/mprotect: Exclude shadow stack from preserve_write
-Date:   Wed, 10 Mar 2021 14:00:38 -0800
-Message-Id: <20210310220046.15866-21-yu-cheng.yu@intel.com>
+Subject: [PATCH v22 13/28] mm: Introduce VM_SHSTK for shadow stack memory
+Date:   Wed, 10 Mar 2021 14:00:31 -0800
+Message-Id: <20210310220046.15866-14-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210310220046.15866-1-yu-cheng.yu@intel.com>
 References: <20210310220046.15866-1-yu-cheng.yu@intel.com>
@@ -73,64 +73,90 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-In change_pte_range(), when a PTE is changed for prot_numa, _PAGE_RW is
-preserved to avoid the additional write fault after the NUMA hinting fault.
-However, pte_write() now includes both normal writable and shadow stack
-(RW=0, Dirty=1) PTEs, but the latter does not have _PAGE_RW and has no need
-to preserve it.
-
-Exclude shadow stack from preserve_write test, and apply the same change to
-change_huge_pmd().
+A shadow stack PTE must be read-only and have _PAGE_DIRTY set.  However,
+read-only and Dirty PTEs also exist for copy-on-write (COW) pages.  These
+two cases are handled differently for page faults.  Introduce VM_SHSTK to
+track shadow stack VMAs.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
- mm/huge_memory.c | 7 ++++++-
- mm/mprotect.c    | 9 ++++++++-
- 2 files changed, 14 insertions(+), 2 deletions(-)
+ Documentation/filesystems/proc.rst | 1 +
+ arch/x86/mm/mmap.c                 | 2 ++
+ fs/proc/task_mmu.c                 | 3 +++
+ include/linux/mm.h                 | 8 ++++++++
+ 4 files changed, 14 insertions(+)
 
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index de8c8b94e840..6b7dc5dd94de 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1816,12 +1816,17 @@ int change_huge_pmd(struct vm_area_struct *vma, pmd_t *pmd,
- 	bool prot_numa = cp_flags & MM_CP_PROT_NUMA;
- 	bool uffd_wp = cp_flags & MM_CP_UFFD_WP;
- 	bool uffd_wp_resolve = cp_flags & MM_CP_UFFD_WP_RESOLVE;
-+	bool shstk = arch_shadow_stack_mapping(vma->vm_flags);
+diff --git a/Documentation/filesystems/proc.rst b/Documentation/filesystems/proc.rst
+index 48fbfc336ebf..5d8a2d75c799 100644
+--- a/Documentation/filesystems/proc.rst
++++ b/Documentation/filesystems/proc.rst
+@@ -549,6 +549,7 @@ encoded manner. The codes are the following:
+     mg    mergable advise flag
+     bt    arm64 BTI guarded page
+     mt    arm64 MTE allocation tags are enabled
++    ss    shadow stack page
+     ==    =======================================
  
- 	ptl = __pmd_trans_huge_lock(pmd, vma);
- 	if (!ptl)
- 		return 0;
+ Note that there is no guarantee that every flag and associated mnemonic will
+diff --git a/arch/x86/mm/mmap.c b/arch/x86/mm/mmap.c
+index c90c20904a60..a22c6b6fc607 100644
+--- a/arch/x86/mm/mmap.c
++++ b/arch/x86/mm/mmap.c
+@@ -165,6 +165,8 @@ unsigned long get_mmap_base(int is_legacy)
  
--	preserve_write = prot_numa && pmd_write(*pmd);
-+	/*
-+	 * Preserve only normal writable huge PMD, but not shadow
-+	 * stack (RW=0, Dirty=1).
-+	 */
-+	preserve_write = prot_numa && pmd_write(*pmd) && !shstk;
- 	ret = 1;
+ const char *arch_vma_name(struct vm_area_struct *vma)
+ {
++	if (vma->vm_flags & VM_SHSTK)
++		return "[shadow stack]";
+ 	return NULL;
+ }
  
- #ifdef CONFIG_ARCH_ENABLE_THP_MIGRATION
-diff --git a/mm/mprotect.c b/mm/mprotect.c
-index c1ce78d688b6..e69278b346a9 100644
---- a/mm/mprotect.c
-+++ b/mm/mprotect.c
-@@ -75,7 +75,14 @@ static unsigned long change_pte_range(struct vm_area_struct *vma, pmd_t *pmd,
- 		oldpte = *pte;
- 		if (pte_present(oldpte)) {
- 			pte_t ptent;
--			bool preserve_write = prot_numa && pte_write(oldpte);
-+			bool shstk = arch_shadow_stack_mapping(vma->vm_flags);
-+			bool preserve_write;
+diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
+index 3cec6fbef725..e75b48aa99c6 100644
+--- a/fs/proc/task_mmu.c
++++ b/fs/proc/task_mmu.c
+@@ -661,6 +661,9 @@ static void show_smap_vma_flags(struct seq_file *m, struct vm_area_struct *vma)
+ 		[ilog2(VM_PKEY_BIT4)]	= "",
+ #endif
+ #endif /* CONFIG_ARCH_HAS_PKEYS */
++#ifdef CONFIG_X86_CET
++		[ilog2(VM_SHSTK)]	= "ss",
++#endif
+ 	};
+ 	size_t i;
+ 
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 77e64e3eac80..4adc8c7bef75 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -312,11 +312,13 @@ extern unsigned int kobjsize(const void *objp);
+ #define VM_HIGH_ARCH_BIT_2	34	/* bit only usable on 64-bit architectures */
+ #define VM_HIGH_ARCH_BIT_3	35	/* bit only usable on 64-bit architectures */
+ #define VM_HIGH_ARCH_BIT_4	36	/* bit only usable on 64-bit architectures */
++#define VM_HIGH_ARCH_BIT_5	37	/* bit only usable on 64-bit architectures */
+ #define VM_HIGH_ARCH_0	BIT(VM_HIGH_ARCH_BIT_0)
+ #define VM_HIGH_ARCH_1	BIT(VM_HIGH_ARCH_BIT_1)
+ #define VM_HIGH_ARCH_2	BIT(VM_HIGH_ARCH_BIT_2)
+ #define VM_HIGH_ARCH_3	BIT(VM_HIGH_ARCH_BIT_3)
+ #define VM_HIGH_ARCH_4	BIT(VM_HIGH_ARCH_BIT_4)
++#define VM_HIGH_ARCH_5	BIT(VM_HIGH_ARCH_BIT_5)
+ #endif /* CONFIG_ARCH_USES_HIGH_VMA_FLAGS */
+ 
+ #ifdef CONFIG_ARCH_HAS_PKEYS
+@@ -332,6 +334,12 @@ extern unsigned int kobjsize(const void *objp);
+ #endif
+ #endif /* CONFIG_ARCH_HAS_PKEYS */
+ 
++#ifdef CONFIG_X86_CET
++# define VM_SHSTK	VM_HIGH_ARCH_5
++#else
++# define VM_SHSTK	VM_NONE
++#endif
 +
-+			/*
-+			 * Preserve only normal writable PTE, but not shadow
-+			 * stack (RW=0, Dirty=1).
-+			 */
-+			preserve_write = prot_numa && pte_write(oldpte) && !shstk;
- 
- 			/*
- 			 * Avoid trapping faults against the zero or KSM
+ #if defined(CONFIG_X86)
+ # define VM_PAT		VM_ARCH_1	/* PAT reserves whole VMA at once (x86) */
+ #elif defined(CONFIG_PPC)
 -- 
 2.21.0
 
