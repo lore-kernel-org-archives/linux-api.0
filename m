@@ -2,38 +2,39 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 06BE8C433E6
-	for <linux-api@archiver.kernel.org>; Wed, 10 Mar 2021 22:06:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1AC4EC433E6
+	for <linux-api@archiver.kernel.org>; Wed, 10 Mar 2021 22:40:12 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D973D64E27
-	for <linux-api@archiver.kernel.org>; Wed, 10 Mar 2021 22:06:27 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DB22664FD5
+	for <linux-api@archiver.kernel.org>; Wed, 10 Mar 2021 22:40:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233924AbhCJWF5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 10 Mar 2021 17:05:57 -0500
-Received: from mga04.intel.com ([192.55.52.120]:5160 "EHLO mga04.intel.com"
+        id S231221AbhCJWjk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 10 Mar 2021 17:39:40 -0500
+Received: from mail.kernel.org ([198.145.29.99]:58734 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233209AbhCJWFv (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 10 Mar 2021 17:05:51 -0500
-IronPort-SDR: jRZRP1CZFVjcNOG6w9KH3G2XuUH8I1mkSwsVbmW4CgYcuaXlLS6+BGPuLBNhfRT4wKIzjYAenn
- 4LBye0Iv9zEQ==
-X-IronPort-AV: E=McAfee;i="6000,8403,9919"; a="186193992"
-X-IronPort-AV: E=Sophos;i="5.81,238,1610438400"; 
-   d="scan'208";a="186193992"
-Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Mar 2021 14:05:48 -0800
-IronPort-SDR: cPCCso8cCMLWJHhmS05VZD9OnGGxOSe2zpLwpFtgTCXRvg65dN2RSLVFZN7fj45WO39kU+igvh
- 3rH3dMee6igQ==
-X-IronPort-AV: E=Sophos;i="5.81,238,1610438400"; 
-   d="scan'208";a="410368517"
-Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Mar 2021 14:05:47 -0800
-From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
-To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
+        id S229574AbhCJWjd (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 10 Mar 2021 17:39:33 -0500
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 9440864FAD;
+        Wed, 10 Mar 2021 22:39:32 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1615415973;
+        bh=/46Jnxa7GWN9GVouuxzmFfEuec3FnGDcKOJciHOHIws=;
+        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+        b=RQVhIJPvxkTfFjVIPmqOKZDu2W4Nh4bCefUys/PH4bS7IXAKLvuIGeL9yhBYKdFP5
+         lksoks30ZjiCv8ilR8KqVY0PdBbpG0g0TNcfZHYk6hwqtefg7gFEAY87X7yt8mhdol
+         QJ2wOLKtIHhcKvcevYhkWhkRCocXou2LN0rCUhk4Zwgl/MnwRYDLqQcrzt1v6lVUMJ
+         Lb+tXWCBqUqRthdAEPSfKPBq6I4FMl068ag+2rhpdfTX7oWzWweApQZ/DYZhaSw0nL
+         DnvADmCkmQa8QE8r3T5gVPAbIyjReGYNV0r37VQZ0hTFu5acOicAQLQ41bdECi4BzT
+         VOU+cnaHYAdzQ==
+Date:   Thu, 11 Mar 2021 00:39:09 +0200
+From:   Jarkko Sakkinen <jarkko@kernel.org>
+To:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
         Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
         linux-doc@vger.kernel.org, linux-mm@kvack.org,
@@ -60,45 +61,52 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v22 6/8] x86/vdso/32: Add ENDBR32 to __kernel_vsyscall entry point
-Date:   Wed, 10 Mar 2021 14:05:17 -0800
-Message-Id: <20210310220519.16811-7-yu-cheng.yu@intel.com>
-X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20210310220519.16811-1-yu-cheng.yu@intel.com>
+Subject: Re: [PATCH v22 8/8] x86/vdso: Add ENDBR64 to __vdso_sgx_enter_enclave
+Message-ID: <YElKjT2v628tidE/@kernel.org>
 References: <20210310220519.16811-1-yu-cheng.yu@intel.com>
+ <20210310220519.16811-9-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20210310220519.16811-9-yu-cheng.yu@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: "H.J. Lu" <hjl.tools@gmail.com>
+On Wed, Mar 10, 2021 at 02:05:19PM -0800, Yu-cheng Yu wrote:
+> When CET is enabled, __vdso_sgx_enter_enclave() needs an endbr64
+> in the beginning of the function.
 
-Add ENDBR32 to __kernel_vsyscall entry point.
+OK.
 
-Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Acked-by: Andy Lutomirski <luto@kernel.org>
-Reviewed-by: Kees Cook <keescook@chromium.org>
----
- arch/x86/entry/vdso/vdso32/system_call.S | 3 +++
- 1 file changed, 3 insertions(+)
+What you should do is to explain what it does and why it's needed.
 
-diff --git a/arch/x86/entry/vdso/vdso32/system_call.S b/arch/x86/entry/vdso/vdso32/system_call.S
-index de1fff7188aa..f19eaec3de3b 100644
---- a/arch/x86/entry/vdso/vdso32/system_call.S
-+++ b/arch/x86/entry/vdso/vdso32/system_call.S
-@@ -14,6 +14,9 @@
- 	ALIGN
- __kernel_vsyscall:
- 	CFI_STARTPROC
-+#ifdef CONFIG_X86_CET
-+	endbr32
-+#endif
- 	/*
- 	 * Reshuffle regs so that all of any of the entry instructions
- 	 * will preserve enough state.
--- 
-2.21.0
+> 
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> Cc: Andy Lutomirski <luto@kernel.org>
+> Cc: Dave Hansen <dave.hansen@linux.intel.com>
+> Cc: Jarkko Sakkinen <jarkko@kernel.org>
+> ---
+>  arch/x86/entry/vdso/vsgx.S | 3 +++
+>  1 file changed, 3 insertions(+)
+> 
+> diff --git a/arch/x86/entry/vdso/vsgx.S b/arch/x86/entry/vdso/vsgx.S
+> index 86a0e94f68df..a70d4d09f713 100644
+> --- a/arch/x86/entry/vdso/vsgx.S
+> +++ b/arch/x86/entry/vdso/vsgx.S
+> @@ -27,6 +27,9 @@
+>  SYM_FUNC_START(__vdso_sgx_enter_enclave)
+>  	/* Prolog */
+>  	.cfi_startproc
+> +#ifdef CONFIG_X86_CET
+> +	endbr64
+> +#endif
+>  	push	%rbp
+>  	.cfi_adjust_cfa_offset	8
+>  	.cfi_rel_offset		%rbp, 0
+> -- 
+> 2.21.0
+> 
+> 
 
+/Jarkko
