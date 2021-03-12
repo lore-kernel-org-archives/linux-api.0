@@ -2,38 +2,38 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-19.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D0906C433E9
-	for <linux-api@archiver.kernel.org>; Fri, 12 Mar 2021 15:46:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 10E46C4332B
+	for <linux-api@archiver.kernel.org>; Fri, 12 Mar 2021 15:46:10 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id ABC9D65018
+	by mail.kernel.org (Postfix) with ESMTP id E6E6064FFD
 	for <linux-api@archiver.kernel.org>; Fri, 12 Mar 2021 15:46:09 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232105AbhCLPpk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 12 Mar 2021 10:45:40 -0500
-Received: from mx4.veeam.com ([104.41.138.86]:49884 "EHLO mx4.veeam.com"
+        id S232760AbhCLPpl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 12 Mar 2021 10:45:41 -0500
+Received: from mx4.veeam.com ([104.41.138.86]:50032 "EHLO mx4.veeam.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231789AbhCLPpT (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 12 Mar 2021 10:45:19 -0500
+        id S232878AbhCLPpX (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 12 Mar 2021 10:45:23 -0500
 Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mx4.veeam.com (Postfix) with ESMTPS id BB4E1114A84;
-        Fri, 12 Mar 2021 18:45:13 +0300 (MSK)
+        by mx4.veeam.com (Postfix) with ESMTPS id 741A9874F3;
+        Fri, 12 Mar 2021 18:45:19 +0300 (MSK)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=veeam.com; s=mx4;
-        t=1615563913; bh=ay5rQDiZzTT+utrO+8oIcBlw6h3n728bJRSViccZ2nw=;
-        h=From:To:CC:Subject:Date:From;
-        b=miu7nl73pYbNAwOnTFVd1AAqr9VBxGeSW9ETKlmzb6i0Dxgpi5B/t7J/tTJ9vFzfc
-         zPZmDoWbfnyfYnjeKj+RDcRLWoF5DW1K6w23phFtpke15oFbZVHPCxe89CbdGqYM4/
-         b+NvT21p4tk40WgRS8jprPUICz+ebalgOQytu6+U=
+        t=1615563919; bh=ZsS9OaFDK0F73QmlFcb2IgsRKU3DBf+S0NM5uzcqHR0=;
+        h=From:To:CC:Subject:Date:In-Reply-To:References:From;
+        b=dMYiXSmfV8U0INVNZkEnHxS0D6qqWRjuUbs/GKZLMo94CpQMN53kd3NFvqQ1ttdZg
+         HN2Y1unepikb3wRQaXOqEvgyMI7C8Zzgsv9xjQVr/vbd6BmVlvqdFO0OIn8kRDHCa+
+         Bn7oW8WTJZdJTcyYq0zZGm9h2Ul1mS0r8tg1DWzM=
 Received: from prgdevlinuxpatch01.amust.local (172.24.14.5) by
  prgmbx01.amust.local (172.24.0.171) with Microsoft SMTP Server
  (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.721.2;
- Fri, 12 Mar 2021 16:45:12 +0100
+ Fri, 12 Mar 2021 16:45:17 +0100
 From:   Sergei Shtepa <sergei.shtepa@veeam.com>
 To:     Christoph Hellwig <hch@infradead.org>,
         Mike Snitzer <snitzer@redhat.com>,
@@ -42,10 +42,12 @@ To:     Christoph Hellwig <hch@infradead.org>,
         <dm-devel@redhat.com>, <linux-block@vger.kernel.org>,
         <linux-kernel@vger.kernel.org>, <linux-api@vger.kernel.org>
 CC:     <sergei.shtepa@veeam.com>, <pavel.tide@veeam.com>
-Subject: [PATCH v7 0/3] block device interposer
-Date:   Fri, 12 Mar 2021 18:44:52 +0300
-Message-ID: <1615563895-28565-1-git-send-email-sergei.shtepa@veeam.com>
+Subject: [PATCH v7 2/3] block: add bdev_interposer
+Date:   Fri, 12 Mar 2021 18:44:54 +0300
+Message-ID: <1615563895-28565-3-git-send-email-sergei.shtepa@veeam.com>
 X-Mailer: git-send-email 1.8.3.1
+In-Reply-To: <1615563895-28565-1-git-send-email-sergei.shtepa@veeam.com>
+References: <1615563895-28565-1-git-send-email-sergei.shtepa@veeam.com>
 MIME-Version: 1.0
 Content-Type: text/plain
 X-Originating-IP: [172.24.14.5]
@@ -58,116 +60,220 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi all.
+bdev_interposer allows to redirect bio requests to another devices.
 
-I'm joyful to suggest the block device interposer (bdev_interposer) v7.
-bdev_interposer allows to redirect bio requests to other block devices.
+Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
+---
+ block/bio.c               |  2 ++
+ block/blk-core.c          | 57 +++++++++++++++++++++++++++++++++++++++
+ block/genhd.c             | 54 +++++++++++++++++++++++++++++++++++++
+ include/linux/blk_types.h |  3 +++
+ include/linux/blkdev.h    |  9 +++++++
+ 5 files changed, 125 insertions(+)
 
-In this series of patches I suggest a different implementation of the bio
-interception mechanism. Now the interposer is a different block device.
-Instead of an additional hook, the function fops->submit_bio() of
-the interposer device is used.
-This implementation greatly simplifies the application of this
-bdev_interposer in device-mapper. But there is one limitation - the size
-of the interposer device must be greater than or equal to the size of
-the original device.
-
-The first patch adds the function blk_mq_is_queue_frozen(). It allows to
-check a queue state.
-
-The second patch is dedicated to bdev_interposer itself, which provides
-the ability to redirect bio to the interposer device.
-
-The third one adds the DM_INTERPOSED_FLAG flag. When this flag is
-applied with the ioctl DM_TABLE_LOAD_CMD, the underlying devices are
-opened without the FMODE_EXCL flag and connected via bdev_interposer.
-
-Changes in this patchset v7:
-  * the request interception mechanism. Now the interposer is
-    a block device that receives requests instead of the original device;
-  * code design fixes.
-
-History:
-v6 - https://patchwork.kernel.org/project/linux-block/cover/1614774618-22410-1-git-send-email-sergei.shtepa@veeam.com/
-  * designed for 5.12;
-  * thanks to the new design of the bio structure in v5.12, it is
-    possible to perform interception not for the entire disk, but
-    for each block device;
-  * instead of the new ioctl DM_DEV_REMAP_CMD and the 'noexcl' option,
-    the DM_INTERPOSED_FLAG flag for the ioctl DM_TABLE_LOAD_CMD is
-    applied.
-
-v5 - https://patchwork.kernel.org/project/linux-block/cover/1612881028-7878-1-git-send-email-sergei.shtepa@veeam.com/
- * rebase for v5.11-rc7;
- * patch set organization;
- * fix defects in documentation;
- * add some comments;
- * change mutex names for better code readability;
- * remove calling bd_unlink_disk_holder() for targets with non-exclusive
-   flag;
- * change type for struct dm_remap_param from uint8_t to __u8.
-
-v4 - https://patchwork.kernel.org/project/linux-block/cover/1612367638-3794-1-git-send-email-sergei.shtepa@veeam.com/
-Mostly changes were made, due to Damien's comments:
- * on the design of the code;
- * by the patch set organization;
- * bug with passing a wrong parameter to dm_get_device();
- * description of the 'noexcl' parameter in the linear.rst.
-Also added remap_and_filter.rst.
-
-v3 - https://patchwork.kernel.org/project/linux-block/cover/1611853955-32167-1-git-send-email-sergei.shtepa@veeam.com/
-In this version, I already suggested blk_interposer to apply to dm-linear.
-Problems were solved:
- * Interception of bio requests from a specific device on the disk, not
-   from the entire disk. To do this, we added the dm_interposed_dev
-   structure and an interval tree to store these structures.
- * Implemented ioctl DM_DEV_REMAP_CMD. A patch with changes in the lvm2
-   project was sent to the team lvm-devel@redhat.com.
- * Added the 'noexcl' option for dm-linear, which allows you to open
-   the underlying block-device without FMODE_EXCL mode.
-
-v2 - https://patchwork.kernel.org/project/linux-block/cover/1607518911-30692-1-git-send-email-sergei.shtepa@veeam.com/
-I tried to suggest blk_interposer without using it in device mapper,
-but with the addition of a sample of its use. It was then that I learned
-about the maintainers' attitudes towards the samples directory :).
-
-v1 - https://lwn.net/ml/linux-block/20201119164924.74401-1-hare@suse.de/
-This Hannes's patch can be considered as a starting point, since this is
-where the interception mechanism and the term blk_interposer itself
-appeared. It became clear that blk_interposer can be useful for
-device mapper.
-
-before v1 - https://patchwork.kernel.org/project/linux-block/cover/1603271049-20681-1-git-send-email-sergei.shtepa@veeam.com/
-I tried to offer a rather cumbersome blk-filter and a monster-like
-blk-snap module for creating snapshots.
-
-Thank you to everyone who was able to take the time to review
-the previous versions.
-I hope that this time I achieved the required quality.
-
-Thanks,
-Sergei.
-
-Sergei Shtepa (3):
-  block: add blk_mq_is_queue_frozen()
-  block: add bdev_interposer
-  dm: add DM_INTERPOSED_FLAG
-
- block/bio.c                   |  2 ++
- block/blk-core.c              | 57 ++++++++++++++++++++++++++++++++
- block/blk-mq.c                | 13 ++++++++
- block/genhd.c                 | 54 +++++++++++++++++++++++++++++++
- drivers/md/dm-core.h          |  3 ++
- drivers/md/dm-ioctl.c         | 13 ++++++++
- drivers/md/dm-table.c         | 61 +++++++++++++++++++++++++++++------
- drivers/md/dm.c               | 38 +++++++++++++++-------
- include/linux/blk-mq.h        |  1 +
- include/linux/blk_types.h     |  3 ++
- include/linux/blkdev.h        |  9 ++++++
- include/linux/device-mapper.h |  1 +
- include/uapi/linux/dm-ioctl.h |  6 ++++
- 13 files changed, 240 insertions(+), 21 deletions(-)
-
+diff --git a/block/bio.c b/block/bio.c
+index a1c4d2900c7a..0bfbf06475ee 100644
+--- a/block/bio.c
++++ b/block/bio.c
+@@ -640,6 +640,8 @@ void __bio_clone_fast(struct bio *bio, struct bio *bio_src)
+ 		bio_set_flag(bio, BIO_THROTTLED);
+ 	if (bio_flagged(bio_src, BIO_REMAPPED))
+ 		bio_set_flag(bio, BIO_REMAPPED);
++	if (bio_flagged(bio_src, BIO_INTERPOSED))
++		bio_set_flag(bio, BIO_INTERPOSED);
+ 	bio->bi_opf = bio_src->bi_opf;
+ 	bio->bi_ioprio = bio_src->bi_ioprio;
+ 	bio->bi_write_hint = bio_src->bi_write_hint;
+diff --git a/block/blk-core.c b/block/blk-core.c
+index fc60ff208497..da1abc4c27a9 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1018,6 +1018,55 @@ static blk_qc_t __submit_bio_noacct_mq(struct bio *bio)
+ 	return ret;
+ }
+ 
++static noinline blk_qc_t submit_bio_interposed(struct bio *bio)
++{
++	blk_qc_t ret = BLK_QC_T_NONE;
++	struct bio_list bio_list[2] = { };
++	struct gendisk *orig_disk;
++
++	if (current->bio_list) {
++		bio_list_add(&current->bio_list[0], bio);
++		return BLK_QC_T_NONE;
++	}
++
++	orig_disk = bio->bi_bdev->bd_disk;
++	if (unlikely(bio_queue_enter(bio)))
++		return BLK_QC_T_NONE;
++
++	current->bio_list = bio_list;
++
++	do {
++		struct block_device *interposer = bio->bi_bdev->bd_interposer;
++
++		if (unlikely(!interposer)) {
++			/* interposer was removed */
++			bio_list_add(&current->bio_list[0], bio);
++			break;
++		}
++		/* assign bio to interposer device */
++		bio_set_dev(bio, interposer);
++		bio_set_flag(bio, BIO_INTERPOSED);
++
++		if (!submit_bio_checks(bio))
++			break;
++		/*
++		 * Because the current->bio_list is initialized,
++		 * the submit_bio callback will always return BLK_QC_T_NONE.
++		 */
++		interposer->bd_disk->fops->submit_bio(bio);
++	} while (false);
++
++	current->bio_list = NULL;
++
++	blk_queue_exit(orig_disk->queue);
++
++	/* Resubmit remaining bios */
++	while ((bio = bio_list_pop(&bio_list[0])))
++		ret = submit_bio_noacct(bio);
++
++	return ret;
++}
++
+ /**
+  * submit_bio_noacct - re-submit a bio to the block device layer for I/O
+  * @bio:  The bio describing the location in memory and on the device.
+@@ -1029,6 +1078,14 @@ static blk_qc_t __submit_bio_noacct_mq(struct bio *bio)
+  */
+ blk_qc_t submit_bio_noacct(struct bio *bio)
+ {
++	/*
++	 * Checking the BIO_INTERPOSED flag is necessary so that the bio
++	 * created by the bdev_interposer do not get to it for processing.
++	 */
++	if (bdev_has_interposer(bio->bi_bdev) &&
++	    !bio_flagged(bio, BIO_INTERPOSED))
++		return submit_bio_interposed(bio);
++
+ 	if (!submit_bio_checks(bio))
+ 		return BLK_QC_T_NONE;
+ 
+diff --git a/block/genhd.c b/block/genhd.c
+index c55e8f0fced1..c840ecffea68 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -30,6 +30,11 @@
+ static struct kobject *block_depr;
+ 
+ DECLARE_RWSEM(bdev_lookup_sem);
++/*
++ * Prevents different block-layer interposers from attaching or detaching
++ * to the block device at the same time.
++ */
++static DEFINE_MUTEX(bdev_interposer_attach_lock);
+ 
+ /* for extended dynamic devt allocation, currently only one major is used */
+ #define NR_EXT_DEVT		(1 << MINORBITS)
+@@ -1940,3 +1945,52 @@ static void disk_release_events(struct gendisk *disk)
+ 	WARN_ON_ONCE(disk->ev && disk->ev->block != 1);
+ 	kfree(disk->ev);
+ }
++
++int bdev_interposer_attach(struct block_device *original,
++			   struct block_device *interposer)
++{
++	int ret = 0;
++
++	if (WARN_ON(((!original) || (!interposer))))
++		return -EINVAL;
++	/*
++	 * interposer should be simple, no a multi-queue device
++	 */
++	if (!interposer->bd_disk->fops->submit_bio)
++		return -EINVAL;
++
++	if (WARN_ON(!blk_mq_is_queue_frozen(original->bd_disk->queue)))
++		return -EPERM;
++
++	mutex_lock(&bdev_interposer_attach_lock);
++
++	if (bdev_has_interposer(original))
++		ret = -EBUSY;
++	else {
++		original->bd_interposer = bdgrab(interposer);
++		if (!original->bd_interposer)
++			ret = -ENODEV;
++	}
++
++	mutex_unlock(&bdev_interposer_attach_lock);
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(bdev_interposer_attach);
++
++void bdev_interposer_detach(struct block_device *original)
++{
++	if (WARN_ON(!original))
++		return;
++
++	if (WARN_ON(!blk_mq_is_queue_frozen(original->bd_disk->queue)))
++		return;
++
++	mutex_lock(&bdev_interposer_attach_lock);
++	if (bdev_has_interposer(original)) {
++		bdput(original->bd_interposer);
++		original->bd_interposer = NULL;
++	}
++	mutex_unlock(&bdev_interposer_attach_lock);
++}
++EXPORT_SYMBOL_GPL(bdev_interposer_detach);
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index db026b6ec15a..13bda4732cf5 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -19,6 +19,7 @@ struct io_context;
+ struct cgroup_subsys_state;
+ typedef void (bio_end_io_t) (struct bio *);
+ struct bio_crypt_ctx;
++struct bdev_interposer;
+ 
+ struct block_device {
+ 	sector_t		bd_start_sect;
+@@ -46,6 +47,7 @@ struct block_device {
+ 	spinlock_t		bd_size_lock; /* for bd_inode->i_size updates */
+ 	struct gendisk *	bd_disk;
+ 	struct backing_dev_info *bd_bdi;
++	struct block_device     *bd_interposer;
+ 
+ 	/* The counter of freeze processes */
+ 	int			bd_fsfreeze_count;
+@@ -304,6 +306,7 @@ enum {
+ 	BIO_CGROUP_ACCT,	/* has been accounted to a cgroup */
+ 	BIO_TRACKED,		/* set if bio goes through the rq_qos path */
+ 	BIO_REMAPPED,
++	BIO_INTERPOSED,		/* bio was reassigned to another block device */
+ 	BIO_FLAG_LAST
+ };
+ 
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index bc6bc8383b43..90f62b4197da 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -2031,4 +2031,13 @@ int fsync_bdev(struct block_device *bdev);
+ int freeze_bdev(struct block_device *bdev);
+ int thaw_bdev(struct block_device *bdev);
+ 
++static inline bool bdev_has_interposer(struct block_device *bdev)
++{
++	return (bdev->bd_interposer != NULL);
++};
++
++int bdev_interposer_attach(struct block_device *original,
++			   struct block_device *interposer);
++void bdev_interposer_detach(struct block_device *original);
++
+ #endif /* _LINUX_BLKDEV_H */
 -- 
 2.20.1
 
