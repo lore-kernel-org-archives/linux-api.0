@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0F4B2C2BA1B
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DE5E5C41621
 	for <linux-api@archiver.kernel.org>; Tue, 16 Mar 2021 15:18:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E1E7C650E4
-	for <linux-api@archiver.kernel.org>; Tue, 16 Mar 2021 15:18:21 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B887A650E6
+	for <linux-api@archiver.kernel.org>; Tue, 16 Mar 2021 15:18:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235948AbhCPPRw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 16 Mar 2021 11:17:52 -0400
-Received: from mga05.intel.com ([192.55.52.43]:18965 "EHLO mga05.intel.com"
+        id S236086AbhCPPR4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 16 Mar 2021 11:17:56 -0400
+Received: from mga05.intel.com ([192.55.52.43]:18968 "EHLO mga05.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S235850AbhCPPRe (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 16 Mar 2021 11:17:34 -0400
-IronPort-SDR: M0ny2MnNf7VmJiGEqXm3GLFZ27ifWX5FgtamEZKiBKLR/qXS8QYSkcI3419DMmasYftkTZeT98
- eGmcEjyjOVfQ==
-X-IronPort-AV: E=McAfee;i="6000,8403,9924"; a="274320172"
+        id S236033AbhCPPRm (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 16 Mar 2021 11:17:42 -0400
+IronPort-SDR: pWbBt4mD5M9Cz0kaMAKmM4LjEUVUvEubaSOobQUEkaH4oaQC3H7N626tp5Hy7BTu9B6toKqIPG
+ junjOI9zUHIw==
+X-IronPort-AV: E=McAfee;i="6000,8403,9924"; a="274320180"
 X-IronPort-AV: E=Sophos;i="5.81,251,1610438400"; 
-   d="scan'208";a="274320172"
+   d="scan'208";a="274320180"
 Received: from orsmga001.jf.intel.com ([10.7.209.18])
-  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Mar 2021 08:13:31 -0700
-IronPort-SDR: XMUGFtokid+XPAH9VQHcrNL+ZV5UltfjoavGNjyXATpoL0I04trswapBg305eszfrbRqEB0FEF
- hjkTLoWaawWw==
+  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Mar 2021 08:13:32 -0700
+IronPort-SDR: T9KhWEDAq74fmTozthHpnQiG7lBU2imJ+JQKt7d/ROsKfTOXOvmzwXVPP/yB2cpF4lkbLUgp7v
+ tnnU68xSiJFQ==
 X-IronPort-AV: E=Sophos;i="5.81,251,1610438400"; 
-   d="scan'208";a="449749007"
+   d="scan'208";a="449749012"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga001-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Mar 2021 08:13:30 -0700
+  by orsmga001-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Mar 2021 08:13:31 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,10 +60,11 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v23 7/9] x86/vdso/32: Add ENDBR to __kernel_vsyscall entry point
-Date:   Tue, 16 Mar 2021 08:13:17 -0700
-Message-Id: <20210316151320.6123-8-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
+        Jarkko Sakkinen <jarkko@kernel.org>
+Subject: [PATCH v23 9/9] x86/vdso: Add ENDBR to __vdso_sgx_enter_enclave
+Date:   Tue, 16 Mar 2021 08:13:19 -0700
+Message-Id: <20210316151320.6123-10-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210316151320.6123-1-yu-cheng.yu@intel.com>
 References: <20210316151320.6123-1-yu-cheng.yu@intel.com>
@@ -72,8 +73,6 @@ Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
-
-From: "H.J. Lu" <hjl.tools@gmail.com>
 
 ENDBR is a special new instruction for the Indirect Branch Tracking (IBT)
 component of CET.  IBT prevents attacks by ensuring that (most) indirect
@@ -84,36 +83,54 @@ ENDBR is a noop when IBT is unsupported or disabled.  Most ENDBR
 instructions are inserted automatically by the compiler, but branch
 targets written in assembly must have ENDBR added manually.
 
-Add that to __kernel_vsyscall entry point.
+Add ENDBR to __vdso_sgx_enter_enclave() branch targets.
 
-Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Kees Cook <keescook@chromium.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: Jarkko Sakkinen <jarkko@kernel.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
 ---
- arch/x86/entry/vdso/vdso32/system_call.S | 2 ++
- 1 file changed, 2 insertions(+)
+ arch/x86/entry/vdso/vsgx.S | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/arch/x86/entry/vdso/vdso32/system_call.S b/arch/x86/entry/vdso/vdso32/system_call.S
-index de1fff7188aa..adbe948c1a81 100644
---- a/arch/x86/entry/vdso/vdso32/system_call.S
-+++ b/arch/x86/entry/vdso/vdso32/system_call.S
-@@ -7,6 +7,7 @@
- #include <asm/dwarf2.h>
- #include <asm/cpufeatures.h>
- #include <asm/alternative-asm.h>
-+#include "../../calling.h"
+diff --git a/arch/x86/entry/vdso/vsgx.S b/arch/x86/entry/vdso/vsgx.S
+index 86a0e94f68df..1baa9b49053e 100644
+--- a/arch/x86/entry/vdso/vsgx.S
++++ b/arch/x86/entry/vdso/vsgx.S
+@@ -6,6 +6,7 @@
+ #include <asm/enclu.h>
  
- 	.text
- 	.globl __kernel_vsyscall
-@@ -14,6 +15,7 @@
- 	ALIGN
- __kernel_vsyscall:
- 	CFI_STARTPROC
+ #include "extable.h"
++#include "../calling.h"
+ 
+ /* Relative to %rbp. */
+ #define SGX_ENCLAVE_OFFSET_OF_RUN		16
+@@ -27,6 +28,7 @@
+ SYM_FUNC_START(__vdso_sgx_enter_enclave)
+ 	/* Prolog */
+ 	.cfi_startproc
 +	ENDBR
- 	/*
- 	 * Reshuffle regs so that all of any of the entry instructions
- 	 * will preserve enough state.
+ 	push	%rbp
+ 	.cfi_adjust_cfa_offset	8
+ 	.cfi_rel_offset		%rbp, 0
+@@ -62,6 +64,7 @@ SYM_FUNC_START(__vdso_sgx_enter_enclave)
+ .Lasync_exit_pointer:
+ .Lenclu_eenter_eresume:
+ 	enclu
++	ENDBR
+ 
+ 	/* EEXIT jumps here unless the enclave is doing something fancy. */
+ 	mov	SGX_ENCLAVE_OFFSET_OF_RUN(%rbp), %rbx
+@@ -91,6 +94,7 @@ SYM_FUNC_START(__vdso_sgx_enter_enclave)
+ 	jmp	.Lout
+ 
+ .Lhandle_exception:
++	ENDBR
+ 	mov	SGX_ENCLAVE_OFFSET_OF_RUN(%rbp), %rbx
+ 
+ 	/* Set the exception info. */
 -- 
 2.21.0
 
