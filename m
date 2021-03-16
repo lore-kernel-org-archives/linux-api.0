@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E5501C46461
-	for <linux-api@archiver.kernel.org>; Tue, 16 Mar 2021 15:12:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CCDD1C2BB56
+	for <linux-api@archiver.kernel.org>; Tue, 16 Mar 2021 15:12:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A58FE650DD
-	for <linux-api@archiver.kernel.org>; Tue, 16 Mar 2021 15:12:30 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7EF3C650E6
+	for <linux-api@archiver.kernel.org>; Tue, 16 Mar 2021 15:12:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237825AbhCPPLo (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 16 Mar 2021 11:11:44 -0400
-Received: from mga02.intel.com ([134.134.136.20]:37585 "EHLO mga02.intel.com"
+        id S234447AbhCPPLq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 16 Mar 2021 11:11:46 -0400
+Received: from mga01.intel.com ([192.55.52.88]:38747 "EHLO mga01.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S235024AbhCPPLa (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 16 Mar 2021 11:11:30 -0400
-IronPort-SDR: /Jk+UJQhun6LuYn+AvTu/TNgaZ3gTWo9ILZah+aZzrMpmG3w36D1LzTcaTx+2BFJsE6SPVeaNm
- qdRiz2+GmB8g==
-X-IronPort-AV: E=McAfee;i="6000,8403,9924"; a="176406581"
+        id S236449AbhCPPLe (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 16 Mar 2021 11:11:34 -0400
+IronPort-SDR: wr/L9/C3aZe4akM+GoUB98hd2LlD0Yb3vvuhCoDvip0+hdkbO7GUqiMUdHoix0Txp/JK5Z3+El
+ FPtmzYSyB6Rg==
+X-IronPort-AV: E=McAfee;i="6000,8403,9924"; a="209212676"
 X-IronPort-AV: E=Sophos;i="5.81,251,1610438400"; 
-   d="scan'208";a="176406581"
+   d="scan'208";a="209212676"
 Received: from fmsmga008.fm.intel.com ([10.253.24.58])
-  by orsmga101.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Mar 2021 08:11:29 -0700
-IronPort-SDR: 8U+62CvavULhqz8rF6clY7/Qo263M6rzcf+lKXC7o6WGDfTn+CsiPlHq6OJQgym98Wsa2edP9a
- EcZPozc5Gd6g==
+  by fmsmga101.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Mar 2021 08:11:30 -0700
+IronPort-SDR: S8maHkWvak+XoSyRn7eachFrZ2ffc2pW4itZcILNY3BUF2hfZMQNs7rtArnZ1pISaZsc749tZv
+ KBksk6ycJHMQ==
 X-IronPort-AV: E=Sophos;i="5.81,251,1610438400"; 
-   d="scan'208";a="405570279"
+   d="scan'208";a="405570297"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Mar 2021 08:11:28 -0700
+  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Mar 2021 08:11:30 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,9 +61,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v23 11/28] x86/mm: Update pte_modify for _PAGE_COW
-Date:   Tue, 16 Mar 2021 08:10:37 -0700
-Message-Id: <20210316151054.5405-12-yu-cheng.yu@intel.com>
+Subject: [PATCH v23 16/28] mm: Fixup places that call pte_mkwrite() directly
+Date:   Tue, 16 Mar 2021 08:10:42 -0700
+Message-Id: <20210316151054.5405-17-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210316151054.5405-1-yu-cheng.yu@intel.com>
 References: <20210316151054.5405-1-yu-cheng.yu@intel.com>
@@ -73,88 +73,86 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The read-only and Dirty PTE has been used to indicate copy-on-write pages.
-However, newer x86 processors also regard a read-only and Dirty PTE as a
-shadow stack page.  In order to separate the two, the software-defined
-_PAGE_COW is created to replace _PAGE_DIRTY for the copy-on-write case, and
-pte_*() are updated.
+When serving a page fault, maybe_mkwrite() makes a PTE writable if it is in
+a writable vma.  A shadow stack vma is writable, but its PTEs need
+_PAGE_DIRTY to be set to become writable.  For this reason, maybe_mkwrite()
+has been updated.
 
-Pte_modify() changes a PTE to 'newprot', but it doesn't use the pte_*().
-Introduce fixup_dirty_pte(), which sets a dirty PTE, based on _PAGE_RW,
-to either _PAGE_DIRTY or _PAGE_COW.
+There are a few places that call pte_mkwrite() directly, but effect the
+same result as from maybe_mkwrite().  These sites need to be updated for
+shadow stack as well.  Thus, change them to maybe_mkwrite():
 
-Apply the same changes to pmd_modify().
+- do_anonymous_page() and migrate_vma_insert_page() check VM_WRITE directly
+  and call pte_mkwrite(), which is the same as maybe_mkwrite().  Change
+  them to maybe_mkwrite().
+
+- In do_numa_page(), if the numa entry 'was-writable', then pte_mkwrite()
+  is called directly.  Fix it by doing maybe_mkwrite().
+
+- In change_pte_range(), pte_mkwrite() is called directly.  Replace it with
+  maybe_mkwrite().
+
+  A shadow stack vma is writable but has different vma
+flags, and handled accordingly in maybe_mkwrite().
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
- arch/x86/include/asm/pgtable.h | 37 ++++++++++++++++++++++++++++++++++
- 1 file changed, 37 insertions(+)
+ mm/memory.c   | 5 ++---
+ mm/migrate.c  | 3 +--
+ mm/mprotect.c | 2 +-
+ 3 files changed, 4 insertions(+), 6 deletions(-)
 
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index 9c056d5815de..e1739f590ca6 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -799,6 +799,23 @@ static inline pmd_t pmd_mkinvalid(pmd_t pmd)
+diff --git a/mm/memory.c b/mm/memory.c
+index 5efa07fb6cdc..c70c3847f79d 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -3561,8 +3561,7 @@ static vm_fault_t do_anonymous_page(struct vm_fault *vmf)
+ 	__SetPageUptodate(page);
  
- static inline u64 flip_protnone_guard(u64 oldval, u64 val, u64 mask);
+ 	entry = mk_pte(page, vma->vm_page_prot);
+-	if (vma->vm_flags & VM_WRITE)
+-		entry = pte_mkwrite(pte_mkdirty(entry));
++	entry = maybe_mkwrite(pte_mkdirty(entry), vma);
  
-+static inline pteval_t fixup_dirty_pte(pteval_t pteval)
-+{
-+	pte_t pte = __pte(pteval);
-+
-+	/*
-+	 * Fix up potential shadow stack page flags because the RO, Dirty
-+	 * PTE is special.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		if (pte_dirty(pte)) {
-+			pte = pte_mkclean(pte);
-+			pte = pte_mkdirty(pte);
-+		}
-+	}
-+	return pte_val(pte);
-+}
-+
- static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
- {
- 	pteval_t val = pte_val(pte), oldval = val;
-@@ -809,16 +826,36 @@ static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
- 	 */
- 	val &= _PAGE_CHG_MASK;
- 	val |= check_pgprot(newprot) & ~_PAGE_CHG_MASK;
-+	val = fixup_dirty_pte(val);
- 	val = flip_protnone_guard(oldval, val, PTE_PFN_MASK);
- 	return __pte(val);
- }
+ 	vmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd, vmf->address,
+ 			&vmf->ptl);
+@@ -4125,7 +4124,7 @@ static vm_fault_t do_numa_page(struct vm_fault *vmf)
+ 	pte = pte_modify(old_pte, vma->vm_page_prot);
+ 	pte = pte_mkyoung(pte);
+ 	if (was_writable)
+-		pte = pte_mkwrite(pte);
++		pte = maybe_mkwrite(pte, vma);
+ 	ptep_modify_prot_commit(vma, vmf->address, vmf->pte, old_pte, pte);
+ 	update_mmu_cache(vma, vmf->address, vmf->pte);
  
-+static inline int pmd_write(pmd_t pmd);
-+static inline pmdval_t fixup_dirty_pmd(pmdval_t pmdval)
-+{
-+	pmd_t pmd = __pmd(pmdval);
-+
-+	/*
-+	 * Fix up potential shadow stack page flags because the RO, Dirty
-+	 * PMD is special.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		if (pmd_dirty(pmd)) {
-+			pmd = pmd_mkclean(pmd);
-+			pmd = pmd_mkdirty(pmd);
-+		}
-+	}
-+	return pmd_val(pmd);
-+}
-+
- static inline pmd_t pmd_modify(pmd_t pmd, pgprot_t newprot)
- {
- 	pmdval_t val = pmd_val(pmd), oldval = val;
+diff --git a/mm/migrate.c b/mm/migrate.c
+index 62b81d5257aa..7251c88a3d64 100644
+--- a/mm/migrate.c
++++ b/mm/migrate.c
+@@ -2976,8 +2976,7 @@ static void migrate_vma_insert_page(struct migrate_vma *migrate,
+ 		}
+ 	} else {
+ 		entry = mk_pte(page, vma->vm_page_prot);
+-		if (vma->vm_flags & VM_WRITE)
+-			entry = pte_mkwrite(pte_mkdirty(entry));
++		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
+ 	}
  
- 	val &= _HPAGE_CHG_MASK;
- 	val |= check_pgprot(newprot) & ~_HPAGE_CHG_MASK;
-+	val = fixup_dirty_pmd(val);
- 	val = flip_protnone_guard(oldval, val, PHYSICAL_PMD_PAGE_MASK);
- 	return __pmd(val);
- }
+ 	ptep = pte_offset_map_lock(mm, pmdp, addr, &ptl);
+diff --git a/mm/mprotect.c b/mm/mprotect.c
+index 94188df1ee55..c1ce78d688b6 100644
+--- a/mm/mprotect.c
++++ b/mm/mprotect.c
+@@ -135,7 +135,7 @@ static unsigned long change_pte_range(struct vm_area_struct *vma, pmd_t *pmd,
+ 			if (dirty_accountable && pte_dirty(ptent) &&
+ 					(pte_soft_dirty(ptent) ||
+ 					 !(vma->vm_flags & VM_SOFTDIRTY))) {
+-				ptent = pte_mkwrite(ptent);
++				ptent = maybe_mkwrite(ptent, vma);
+ 			}
+ 			ptep_modify_prot_commit(vma, addr, pte, oldpte, ptent);
+ 			pages++;
 -- 
 2.21.0
 
