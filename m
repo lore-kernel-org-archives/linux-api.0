@@ -2,36 +2,36 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ECE2AC2D0C2
-	for <linux-api@archiver.kernel.org>; Tue, 16 Mar 2021 15:12:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 63176C433DB
+	for <linux-api@archiver.kernel.org>; Tue, 16 Mar 2021 15:18:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DAB88650D5
-	for <linux-api@archiver.kernel.org>; Tue, 16 Mar 2021 15:12:58 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3B9C4650DB
+	for <linux-api@archiver.kernel.org>; Tue, 16 Mar 2021 15:18:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237986AbhCPPMb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 16 Mar 2021 11:12:31 -0400
-Received: from mga09.intel.com ([134.134.136.24]:13631 "EHLO mga09.intel.com"
+        id S232335AbhCPPRq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 16 Mar 2021 11:17:46 -0400
+Received: from mga05.intel.com ([192.55.52.43]:18965 "EHLO mga05.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S237757AbhCPPLf (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 16 Mar 2021 11:11:35 -0400
-IronPort-SDR: qsyzOCK6OcnlYOspWRWuFfSk+i7zHmeUMK8VoDVcTVo6v9dgOzY1q3MyjYyqZq6SgkizR9OCxp
- btfQYfA5EHWg==
-X-IronPort-AV: E=McAfee;i="6000,8403,9924"; a="189369524"
+        id S236013AbhCPPRI (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 16 Mar 2021 11:17:08 -0400
+IronPort-SDR: wJqnzQQa2YAknybRRxZEYsKhfAInLgoSJTSj+Te9nDpQUquI2ndiZjs/i3CIK+Su9Uw3d6fkaS
+ woJb2EGVzLyg==
+X-IronPort-AV: E=McAfee;i="6000,8403,9924"; a="274320146"
 X-IronPort-AV: E=Sophos;i="5.81,251,1610438400"; 
-   d="scan'208";a="189369524"
-Received: from fmsmga008.fm.intel.com ([10.253.24.58])
-  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Mar 2021 08:11:34 -0700
-IronPort-SDR: yKTJyoDxuDuQ52gv2T3vsoNPKuSvn4sROh6k0O5XGiTmpX+b/ftm5PJVAoSJj1dXXaEUmO+Suy
- uLrxcEnnBFQQ==
+   d="scan'208";a="274320146"
+Received: from orsmga001.jf.intel.com ([10.7.209.18])
+  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Mar 2021 08:13:26 -0700
+IronPort-SDR: IqQnowSIiUmzhkvbINxygMGAqof4v93N73/CesmNU6qqg4NirfR9vG9rAfoSRL413pkv+rNROU
+ C4+e+pVwZZzQ==
 X-IronPort-AV: E=Sophos;i="5.81,251,1610438400"; 
-   d="scan'208";a="405570335"
+   d="scan'208";a="449748967"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Mar 2021 08:11:33 -0700
+  by orsmga001-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Mar 2021 08:13:25 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,190 +61,63 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v23 26/28] x86/cet/shstk: Add arch_prctl functions for shadow stack
-Date:   Tue, 16 Mar 2021 08:10:52 -0700
-Message-Id: <20210316151054.5405-27-yu-cheng.yu@intel.com>
+Subject: [PATCH v23 0/9] Control-flow Enforcement: Indirect Branch Tracking
+Date:   Tue, 16 Mar 2021 08:13:10 -0700
+Message-Id: <20210316151320.6123-1-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20210316151054.5405-1-yu-cheng.yu@intel.com>
-References: <20210316151054.5405-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-arch_prctl(ARCH_X86_CET_STATUS, u64 *args)
-    Get CET feature status.
+Control-flow Enforcement (CET) is a new Intel processor feature that blocks
+return/jump-oriented programming attacks.  Details are in "Intel 64 and
+IA-32 Architectures Software Developer's Manual" [1].
 
-    The parameter 'args' is a pointer to a user buffer.  The kernel returns
-    the following information:
+This is the second part of CET and enables Indirect Branch Tracking (IBT).
+It is built on top of the shadow stack series.
 
-    *args = shadow stack/IBT status
-    *(args + 1) = shadow stack base address
-    *(args + 2) = shadow stack size
+Changes in v23:
+- Add patch #6: introduce a macro for ENDBR instructions.
+- Patch #7: replace endbr32 with ENDBR macro.
+- Patch #9: revise, add/replace endbr64 with ENDBR macro.
+- Rebase to Linus tree v5.12-rc3.
 
-    32-bit binaries use the same interface, but only lower 32-bits of each
-    item.
+[1] Intel 64 and IA-32 Architectures Software Developer's Manual:
 
-arch_prctl(ARCH_X86_CET_DISABLE, unsigned int features)
-    Disable CET features specified in 'features'.  Return -EPERM if CET is
-    locked.
+    https://software.intel.com/en-us/download/intel-64-and-ia-32-
+    architectures-sdm-combined-volumes-1-2a-2b-2c-2d-3a-3b-3c-3d-and-4
 
-arch_prctl(ARCH_X86_CET_LOCK)
-    Lock in CET features.
+[2] Indirect Branch Tracking patches v22:
 
-Also change do_arch_prctl_common()'s parameter 'cpuid_enabled' to
-'arg2', as it is now also passed to prctl_cet().
+    https://lore.kernel.org/r/20210310220519.16811-1-yu-cheng.yu@intel.com/
 
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
----
- arch/x86/include/asm/cet.h        |  3 ++
- arch/x86/include/uapi/asm/prctl.h |  4 +++
- arch/x86/kernel/Makefile          |  2 +-
- arch/x86/kernel/cet_prctl.c       | 60 +++++++++++++++++++++++++++++++
- arch/x86/kernel/process.c         |  6 ++--
- 5 files changed, 71 insertions(+), 4 deletions(-)
- create mode 100644 arch/x86/kernel/cet_prctl.c
+H.J. Lu (3):
+  x86/cet/ibt: Update arch_prctl functions for Indirect Branch Tracking
+  x86/vdso/32: Add ENDBR to __kernel_vsyscall entry point
+  x86/vdso: Insert endbr32/endbr64 to vDSO
 
-diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index 5d66340c7a13..c2437378f339 100644
---- a/arch/x86/include/asm/cet.h
-+++ b/arch/x86/include/asm/cet.h
-@@ -14,9 +14,11 @@ struct sc_ext;
- struct cet_status {
- 	unsigned long	shstk_base;
- 	unsigned long	shstk_size;
-+	unsigned int	locked:1;
- };
- 
- #ifdef CONFIG_X86_CET
-+int prctl_cet(int option, u64 arg2);
- int cet_setup_shstk(void);
- int cet_setup_thread_shstk(struct task_struct *p, unsigned long clone_flags,
- 			   unsigned long stack_size);
-@@ -26,6 +28,7 @@ int cet_verify_rstor_token(bool ia32, unsigned long ssp, unsigned long *new_ssp)
- void cet_restore_signal(struct sc_ext *sc);
- int cet_setup_signal(bool ia32, unsigned long rstor, struct sc_ext *sc);
- #else
-+static inline int prctl_cet(int option, u64 arg2) { return -EINVAL; }
- static inline int cet_setup_thread_shstk(struct task_struct *p,
- 					 unsigned long clone_flags,
- 					 unsigned long stack_size) { return 0; }
-diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
-index 5a6aac9fa41f..9245bf629120 100644
---- a/arch/x86/include/uapi/asm/prctl.h
-+++ b/arch/x86/include/uapi/asm/prctl.h
-@@ -14,4 +14,8 @@
- #define ARCH_MAP_VDSO_32	0x2002
- #define ARCH_MAP_VDSO_64	0x2003
- 
-+#define ARCH_X86_CET_STATUS		0x3001
-+#define ARCH_X86_CET_DISABLE		0x3002
-+#define ARCH_X86_CET_LOCK		0x3003
-+
- #endif /* _ASM_X86_PRCTL_H */
-diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
-index ed77517e527a..c4b6ffe54915 100644
---- a/arch/x86/kernel/Makefile
-+++ b/arch/x86/kernel/Makefile
-@@ -150,7 +150,7 @@ obj-$(CONFIG_UNWINDER_FRAME_POINTER)	+= unwind_frame.o
- obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
- 
- obj-$(CONFIG_AMD_MEM_ENCRYPT)		+= sev-es.o
--obj-$(CONFIG_X86_CET)			+= cet.o
-+obj-$(CONFIG_X86_CET)			+= cet.o cet_prctl.o
- 
- ###
- # 64 bit specific files
-diff --git a/arch/x86/kernel/cet_prctl.c b/arch/x86/kernel/cet_prctl.c
-new file mode 100644
-index 000000000000..0030c63a08c0
---- /dev/null
-+++ b/arch/x86/kernel/cet_prctl.c
-@@ -0,0 +1,60 @@
-+// SPDX-License-Identifier: GPL-2.0
-+
-+#include <linux/errno.h>
-+#include <linux/uaccess.h>
-+#include <linux/prctl.h>
-+#include <linux/compat.h>
-+#include <linux/mman.h>
-+#include <linux/elfcore.h>
-+#include <linux/processor.h>
-+#include <asm/prctl.h>
-+#include <asm/cet.h>
-+
-+/* See Documentation/x86/intel_cet.rst. */
-+
-+static int cet_copy_status_to_user(struct cet_status *cet, u64 __user *ubuf)
-+{
-+	u64 buf[3] = {};
-+
-+	if (cet->shstk_size) {
-+		buf[0] |= GNU_PROPERTY_X86_FEATURE_1_SHSTK;
-+		buf[1] = cet->shstk_base;
-+		buf[2] = cet->shstk_size;
-+	}
-+
-+	return copy_to_user(ubuf, buf, sizeof(buf));
-+}
-+
-+int prctl_cet(int option, u64 arg2)
-+{
-+	struct cet_status *cet;
-+
-+	if (!cpu_feature_enabled(X86_FEATURE_CET))
-+		return -ENOTSUPP;
-+
-+	cet = &current->thread.cet;
-+
-+	if (option == ARCH_X86_CET_STATUS)
-+		return cet_copy_status_to_user(cet, (u64 __user *)arg2);
-+
-+	switch (option) {
-+	case ARCH_X86_CET_DISABLE:
-+		if (cet->locked)
-+			return -EPERM;
-+
-+		if (arg2 & ~GNU_PROPERTY_X86_FEATURE_1_VALID)
-+			return -EINVAL;
-+		if (arg2 & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
-+			cet_disable_shstk();
-+		return 0;
-+
-+	case ARCH_X86_CET_LOCK:
-+		if (arg2)
-+			return -EINVAL;
-+		cet->locked = 1;
-+		return 0;
-+
-+	default:
-+		return -ENOSYS;
-+	}
-+}
-diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
-index b7c8fe2d93ec..8071b5d770fb 100644
---- a/arch/x86/kernel/process.c
-+++ b/arch/x86/kernel/process.c
-@@ -980,14 +980,14 @@ unsigned long get_wchan(struct task_struct *p)
- }
- 
- long do_arch_prctl_common(struct task_struct *task, int option,
--			  unsigned long cpuid_enabled)
-+			  unsigned long arg2)
- {
- 	switch (option) {
- 	case ARCH_GET_CPUID:
- 		return get_cpuid_mode();
- 	case ARCH_SET_CPUID:
--		return set_cpuid_mode(task, cpuid_enabled);
-+		return set_cpuid_mode(task, arg2);
- 	}
- 
--	return -EINVAL;
-+	return prctl_cet(option, arg2);
- }
+Yu-cheng Yu (6):
+  x86/cet/ibt: Update Kconfig for user-mode Indirect Branch Tracking
+  x86/cet/ibt: User-mode Indirect Branch Tracking support
+  x86/cet/ibt: Handle signals for Indirect Branch Tracking
+  x86/cet/ibt: Update ELF header parsing for Indirect Branch Tracking
+  x86/entry: Introduce ENDBR macro
+  x86/vdso: Add ENDBR to __vdso_sgx_enter_enclave
+
+ arch/x86/Kconfig                         |  1 +
+ arch/x86/entry/calling.h                 | 18 ++++++++
+ arch/x86/entry/vdso/Makefile             |  4 ++
+ arch/x86/entry/vdso/vdso32/system_call.S |  2 +
+ arch/x86/entry/vdso/vsgx.S               |  4 ++
+ arch/x86/include/asm/cet.h               |  3 ++
+ arch/x86/kernel/cet.c                    | 59 +++++++++++++++++++++++-
+ arch/x86/kernel/cet_prctl.c              |  5 ++
+ arch/x86/kernel/fpu/signal.c             |  8 ++--
+ arch/x86/kernel/process_64.c             |  8 ++++
+ 10 files changed, 107 insertions(+), 5 deletions(-)
+
 -- 
 2.21.0
 
