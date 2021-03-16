@@ -2,78 +2,143 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EF315C433E6
-	for <linux-api@archiver.kernel.org>; Tue, 16 Mar 2021 11:53:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 97297C433E0
+	for <linux-api@archiver.kernel.org>; Tue, 16 Mar 2021 15:12:26 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BD88E6504B
-	for <linux-api@archiver.kernel.org>; Tue, 16 Mar 2021 11:53:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 74063650AE
+	for <linux-api@archiver.kernel.org>; Tue, 16 Mar 2021 15:12:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230158AbhCPLxG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 16 Mar 2021 07:53:06 -0400
-Received: from mx2.suse.de ([195.135.220.15]:58294 "EHLO mx2.suse.de"
+        id S234212AbhCPPLg (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 16 Mar 2021 11:11:36 -0400
+Received: from mga02.intel.com ([134.134.136.20]:37585 "EHLO mga02.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229826AbhCPLww (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 16 Mar 2021 07:52:52 -0400
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id B988CAE56;
-        Tue, 16 Mar 2021 11:52:50 +0000 (UTC)
-Date:   Tue, 16 Mar 2021 12:52:48 +0100
-From:   Borislav Petkov <bp@suse.de>
-To:     "Chang S. Bae" <chang.seok.bae@intel.com>
-Cc:     tglx@linutronix.de, mingo@kernel.org, luto@kernel.org,
-        x86@kernel.org, len.brown@intel.com, dave.hansen@intel.com,
-        hjl.tools@gmail.com, Dave.Martin@arm.com, jannh@google.com,
-        mpe@ellerman.id.au, carlos@redhat.com, tony.luck@intel.com,
-        ravi.v.shankar@intel.com, libc-alpha@sourceware.org,
+        id S234476AbhCPPL3 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 16 Mar 2021 11:11:29 -0400
+IronPort-SDR: xWCdNY15Z7BOWTYtceqP4UxYQzOMmxekzpWerMXPBqA075ZXjrPYfIdKpHYOy1ZBKRqMzIb+C+
+ isAt/6an3CJQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9924"; a="176406557"
+X-IronPort-AV: E=Sophos;i="5.81,251,1610438400"; 
+   d="scan'208";a="176406557"
+Received: from fmsmga008.fm.intel.com ([10.253.24.58])
+  by orsmga101.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Mar 2021 08:11:27 -0700
+IronPort-SDR: EKChlCAAbRWLoI2CdDOK5riDQAK1nDK1CAjVK9+ddYR6PYV2FxYnBWFyC3HiUkpbNjmbg8J8QJ
+ +3LYgKGmTXkQ==
+X-IronPort-AV: E=Sophos;i="5.81,251,1610438400"; 
+   d="scan'208";a="405570232"
+Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
+  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Mar 2021 08:11:25 -0700
+From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
+To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-doc@vger.kernel.org, linux-mm@kvack.org,
         linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-Subject: Re: [PATCH v7 5/6] x86/signal: Detect and prevent an alternate
- signal stack overflow
-Message-ID: <20210316115248.GB18822@zn.tnic>
-References: <20210316065215.23768-1-chang.seok.bae@intel.com>
- <20210316065215.23768-6-chang.seok.bae@intel.com>
+        Arnd Bergmann <arnd@arndb.de>,
+        Andy Lutomirski <luto@kernel.org>,
+        Balbir Singh <bsingharora@gmail.com>,
+        Borislav Petkov <bp@alien8.de>,
+        Cyrill Gorcunov <gorcunov@gmail.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Eugene Syromiatnikov <esyr@redhat.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Nadav Amit <nadav.amit@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
+        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Weijiang Yang <weijiang.yang@intel.com>,
+        Pengfei Xu <pengfei.xu@intel.com>,
+        Haitao Huang <haitao.huang@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v23 02/28] x86/cet/shstk: Add Kconfig option for user-mode control-flow protection
+Date:   Tue, 16 Mar 2021 08:10:28 -0700
+Message-Id: <20210316151054.5405-3-yu-cheng.yu@intel.com>
+X-Mailer: git-send-email 2.21.0
+In-Reply-To: <20210316151054.5405-1-yu-cheng.yu@intel.com>
+References: <20210316151054.5405-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <20210316065215.23768-6-chang.seok.bae@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Mar 15, 2021 at 11:52:14PM -0700, Chang S. Bae wrote:
-> @@ -272,7 +275,8 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
->  	 * If we are on the alternate signal stack and would overflow it, don't.
->  	 * Return an always-bogus address instead so we will die with SIGSEGV.
->  	 */
-> -	if (onsigstack && !likely(on_sig_stack(sp)))
-> +	if (onsigstack && unlikely(sp <= current->sas_ss_sp ||
-> +				   sp - current->sas_ss_sp > current->sas_ss_size))
->  		return (void __user *)-1L;
+Shadow Stack provides protection against function return address
+corruption.  It is active when the processor supports it, the kernel has
+CONFIG_X86_CET enabled, and the application is built for the feature.
+This is only implemented for the 64-bit kernel.  When it is enabled, legacy
+non-Shadow Stack applications continue to work, but without protection.
 
-So clearly I'm missing something because trying to trigger the test case
-in the bugzilla:
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+---
+ arch/x86/Kconfig           | 22 ++++++++++++++++++++++
+ arch/x86/Kconfig.assembler |  5 +++++
+ 2 files changed, 27 insertions(+)
 
-https://bugzilla.kernel.org/show_bug.cgi?id=153531
-
-on current tip/master doesn't work. Runs with MY_MINSIGSTKSZ under 2048
-fail with:
-
-tst-minsigstksz-2: sigaltstack: Cannot allocate memory
-
-and above 2048 don't overwrite bytes below the stack.
-
-So something else is missing. How did you test this patch?
-
-Thx.
-
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 2792879d398e..bdfecc17c2d3 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -28,6 +28,7 @@ config X86_64
+ 	select ARCH_HAS_GIGANTIC_PAGE
+ 	select ARCH_SUPPORTS_INT128 if CC_HAS_INT128
+ 	select ARCH_USE_CMPXCHG_LOCKREF
++	select ARCH_HAS_SHADOW_STACK
+ 	select HAVE_ARCH_SOFT_DIRTY
+ 	select MODULES_USE_ELF_RELA
+ 	select NEED_DMA_MAP_STATE
+@@ -1941,6 +1942,27 @@ config X86_SGX
+ 
+ 	  If unsure, say N.
+ 
++config ARCH_HAS_SHADOW_STACK
++	def_bool n
++
++config X86_CET
++	prompt "Intel Control-flow protection for user-mode"
++	def_bool n
++	depends on AS_WRUSS
++	depends on ARCH_HAS_SHADOW_STACK
++	select ARCH_USES_HIGH_VMA_FLAGS
++	help
++	  Control-flow protection is a set of hardware features which place
++	  additional restrictions on indirect branches.  These help
++	  mitigate ROP attacks.  Applications must be enabled to use it,
++	  and old userspace does not get protection "for free".
++	  Support for this feature is present on Tiger Lake family of
++	  processors released in 2020 or later.  Enabling this feature
++	  increases kernel text size by 3.7 KB.
++	  See Documentation/x86/intel_cet.rst for more information.
++
++	  If unsure, say N.
++
+ config EFI
+ 	bool "EFI runtime service support"
+ 	depends on ACPI
+diff --git a/arch/x86/Kconfig.assembler b/arch/x86/Kconfig.assembler
+index 26b8c08e2fc4..00c79dd93651 100644
+--- a/arch/x86/Kconfig.assembler
++++ b/arch/x86/Kconfig.assembler
+@@ -19,3 +19,8 @@ config AS_TPAUSE
+ 	def_bool $(as-instr,tpause %ecx)
+ 	help
+ 	  Supported by binutils >= 2.31.1 and LLVM integrated assembler >= V7
++
++config AS_WRUSS
++	def_bool $(as-instr,wrussq %rax$(comma)(%rbx))
++	help
++	  Supported by binutils >= 2.31 and LLVM integrated assembler
 -- 
-Regards/Gruss,
-    Boris.
+2.21.0
 
-SUSE Software Solutions Germany GmbH, GF: Felix Imendörffer, HRB 36809, AG Nürnberg
