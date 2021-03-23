@@ -2,133 +2,222 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-13.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_IN_DEF_DKIM_WL autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D1D22C433E0
-	for <linux-api@archiver.kernel.org>; Mon, 22 Mar 2021 23:04:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A5907C433C1
+	for <linux-api@archiver.kernel.org>; Tue, 23 Mar 2021 00:14:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A5031619A4
-	for <linux-api@archiver.kernel.org>; Mon, 22 Mar 2021 23:04:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6752561992
+	for <linux-api@archiver.kernel.org>; Tue, 23 Mar 2021 00:14:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230167AbhCVXET (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 22 Mar 2021 19:04:19 -0400
-Received: from mail104.syd.optusnet.com.au ([211.29.132.246]:58552 "EHLO
-        mail104.syd.optusnet.com.au" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S230280AbhCVXD4 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 22 Mar 2021 19:03:56 -0400
-Received: from dread.disaster.area (pa49-181-239-12.pa.nsw.optusnet.com.au [49.181.239.12])
-        by mail104.syd.optusnet.com.au (Postfix) with ESMTPS id F3D6D828CF4;
-        Tue, 23 Mar 2021 10:03:52 +1100 (AEDT)
-Received: from dave by dread.disaster.area with local (Exim 4.92.3)
-        (envelope-from <david@fromorbit.com>)
-        id 1lOTaS-005cGK-1s; Tue, 23 Mar 2021 10:03:52 +1100
-Date:   Tue, 23 Mar 2021 10:03:52 +1100
-From:   Dave Chinner <david@fromorbit.com>
-To:     Amir Goldstein <amir73il@gmail.com>
-Cc:     "Darrick J . Wong" <darrick.wong@oracle.com>,
-        Jan Kara <jack@suse.cz>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        linux-api@vger.kernel.org
-Subject: Re: [PATCH] xfs: use a unique and persistent value for f_fsid
-Message-ID: <20210322230352.GW63242@dread.disaster.area>
-References: <20210322171118.446536-1-amir73il@gmail.com>
+        id S230499AbhCWAOV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 22 Mar 2021 20:14:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34132 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S231348AbhCWAOG (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 22 Mar 2021 20:14:06 -0400
+Received: from mail-lf1-x12a.google.com (mail-lf1-x12a.google.com [IPv6:2a00:1450:4864:20::12a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3DA5BC061765
+        for <linux-api@vger.kernel.org>; Mon, 22 Mar 2021 17:14:06 -0700 (PDT)
+Received: by mail-lf1-x12a.google.com with SMTP id b83so24022733lfd.11
+        for <linux-api@vger.kernel.org>; Mon, 22 Mar 2021 17:14:06 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc:content-transfer-encoding;
+        bh=TIGZs9jCzlV0x2/zD28u6hnF9ziSX82ipPw1eAlhUAk=;
+        b=NQ71vlDt19b2qIy3K62/rODvW/ipNZXPs54iaqoCcYgvr0ZoSYMPbU3vdVRzRslzc0
+         paD44AWGk2fGxml9DqHSXpWchMulVtSjoazoJQCHqMqDiZQv3PQGaTav7G+EZ+/Yz0Ph
+         +I/b57JKRKullcMz8vVJcYd0UwSmrTSWA4CeJdZBKpdTGzNd97/MAdsFkXxVZPhb3k+4
+         9ZqfVflxIPxDAKr+2r/8JCbzty+q0w/uN+ytri4BJTYKvpQ7fCZjmce6o20eSEVn/bUJ
+         Ik0/GtqeP0J9ZbJyd50mOg9CAXERLBgP8bORDoUzBiazlAWWJUCNW/Nya+XY3VMgqVqW
+         H7xg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc:content-transfer-encoding;
+        bh=TIGZs9jCzlV0x2/zD28u6hnF9ziSX82ipPw1eAlhUAk=;
+        b=BWoCboEGoHjggbbYyWCnxxlMTElwxI7KLpJu+mGpXi43Bq/bJcoBCioTO1zwCmb8dT
+         1Pu2OrXfxRwmnHLb/zGm2fKQ7VNGu5g8MaRX+k19p2q3ARJV3rBTpWjwikLDIMVg9Lnh
+         GuWd3RQ7BK2e8Kyb3SOf0B56RFKdcWdNwMkVeyEWFr4tZXqZq7qTobud6bFnAnNjLrEn
+         FIJE2MeI+GcRE9z4NEfEtaW6+WxQnrDiyRhGUa6Zq1o9ZTId7PeHG5Hpy+xJJm5qXVVq
+         f3+hSIJZVmDLSaSVtBprrfm1f9UzfL+Yagd/rFBc1/z8klVPOpZ0YtYvmnY5Eyedhw9T
+         gHgA==
+X-Gm-Message-State: AOAM530WgPW8+SAcgx0D+EawnJPpJxk0ZbtZ4CWHkr2DxNBa7uZWp+VA
+        v3GauEqz7waSOu2JwM333CqqeWVUHs6JmsZpbr3mVQ==
+X-Google-Smtp-Source: ABdhPJzjC3gk50Yb4Wr00pH4fD/9xfeZqVtXPShrjfrPIGPPmvrDVMK0gxGlsIriq6MtCniISI8bDCiz3gzLLpYfAU8=
+X-Received: by 2002:a19:946:: with SMTP id 67mr1116146lfj.74.1616458443362;
+ Mon, 22 Mar 2021 17:14:03 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20210322171118.446536-1-amir73il@gmail.com>
-X-Optus-CM-Score: 0
-X-Optus-CM-Analysis: v=2.3 cv=YKPhNiOx c=1 sm=1 tr=0 cx=a_idp_d
-        a=gO82wUwQTSpaJfP49aMSow==:117 a=gO82wUwQTSpaJfP49aMSow==:17
-        a=kj9zAlcOel0A:10 a=dESyimp9J3IA:10 a=pGLkceISAAAA:8 a=7-415B0cAAAA:8
-        a=UK19zw5Rb5foiGhwELMA:9 a=CjuIK1q_8ugA:10 a=biEYGPWJfzWAr4FL6Ov7:22
+References: <20210316204252.427806-1-mic@digikod.net> <20210316204252.427806-8-mic@digikod.net>
+In-Reply-To: <20210316204252.427806-8-mic@digikod.net>
+From:   Jann Horn <jannh@google.com>
+Date:   Tue, 23 Mar 2021 01:13:36 +0100
+Message-ID: <CAG48ez1arKO3uYzwng8fst-UHkcH6J7YzyHFN+vfXUT2=1HT+w@mail.gmail.com>
+Subject: Re: [PATCH v30 07/12] landlock: Support filesystem access-control
+To:     =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
+Cc:     James Morris <jmorris@namei.org>,
+        "Serge E . Hallyn" <serge@hallyn.com>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Andy Lutomirski <luto@amacapital.net>,
+        Anton Ivanov <anton.ivanov@cambridgegreys.com>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Casey Schaufler <casey@schaufler-ca.com>,
+        David Howells <dhowells@redhat.com>,
+        Jeff Dike <jdike@addtoit.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Michael Kerrisk <mtk.manpages@gmail.com>,
+        Richard Weinberger <richard@nod.at>,
+        Shuah Khan <shuah@kernel.org>,
+        Vincent Dagonneau <vincent.dagonneau@ssi.gouv.fr>,
+        Kernel Hardening <kernel-hardening@lists.openwall.com>,
+        Linux API <linux-api@vger.kernel.org>,
+        linux-arch <linux-arch@vger.kernel.org>,
+        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        kernel list <linux-kernel@vger.kernel.org>,
+        "open list:KERNEL SELFTEST FRAMEWORK" 
+        <linux-kselftest@vger.kernel.org>,
+        linux-security-module <linux-security-module@vger.kernel.org>,
+        "the arch/x86 maintainers" <x86@kernel.org>,
+        =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@linux.microsoft.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Mar 22, 2021 at 07:11:18PM +0200, Amir Goldstein wrote:
-> Some filesystems on persistent storage backend use a digest of the
-> filesystem's persistent uuid as the value for f_fsid returned by
-> statfs(2).
-> 
-> xfs, as many other filesystem provide the non-persistent block device
-> number as the value of f_fsid.
-> 
-> Since kernel v5.1, fanotify_init(2) supports the flag FAN_REPORT_FID
-> for identifying objects using file_handle and f_fsid in events.
+ On Tue, Mar 16, 2021 at 9:43 PM Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>=
+ wrote:
+> Using Landlock objects and ruleset, it is possible to tag inodes
+> according to a process's domain.
+[...]
+> +static void release_inode(struct landlock_object *const object)
+> +       __releases(object->lock)
+> +{
+> +       struct inode *const inode =3D object->underobj;
+> +       struct super_block *sb;
+> +
+> +       if (!inode) {
+> +               spin_unlock(&object->lock);
+> +               return;
+> +       }
+> +
+> +       /*
+> +        * Protects against concurrent use by hook_sb_delete() of the ref=
+erence
+> +        * to the underlying inode.
+> +        */
+> +       object->underobj =3D NULL;
+> +       /*
+> +        * Makes sure that if the filesystem is concurrently unmounted,
+> +        * hook_sb_delete() will wait for us to finish iput().
+> +        */
+> +       sb =3D inode->i_sb;
+> +       atomic_long_inc(&landlock_superblock(sb)->inode_refs);
+> +       spin_unlock(&object->lock);
+> +       /*
+> +        * Because object->underobj was not NULL, hook_sb_delete() and
+> +        * get_inode_object() guarantee that it is safe to reset
+> +        * landlock_inode(inode)->object while it is not NULL.  It is the=
+refore
+> +        * not necessary to lock inode->i_lock.
+> +        */
+> +       rcu_assign_pointer(landlock_inode(inode)->object, NULL);
+> +       /*
+> +        * Now, new rules can safely be tied to @inode with get_inode_obj=
+ect().
+> +        */
+> +
+> +       iput(inode);
+> +       if (atomic_long_dec_and_test(&landlock_superblock(sb)->inode_refs=
+))
+> +               wake_up_var(&landlock_superblock(sb)->inode_refs);
+> +}
+[...]
+> +static struct landlock_object *get_inode_object(struct inode *const inod=
+e)
+> +{
+> +       struct landlock_object *object, *new_object;
+> +       struct landlock_inode_security *inode_sec =3D landlock_inode(inod=
+e);
+> +
+> +       rcu_read_lock();
+> +retry:
+> +       object =3D rcu_dereference(inode_sec->object);
+> +       if (object) {
+> +               if (likely(refcount_inc_not_zero(&object->usage))) {
+> +                       rcu_read_unlock();
+> +                       return object;
+> +               }
+> +               /*
+> +                * We are racing with release_inode(), the object is goin=
+g
+> +                * away.  Wait for release_inode(), then retry.
+> +                */
+> +               spin_lock(&object->lock);
+> +               spin_unlock(&object->lock);
+> +               goto retry;
+> +       }
+> +       rcu_read_unlock();
+> +
+> +       /*
+> +        * If there is no object tied to @inode, then create a new one (w=
+ithout
+> +        * holding any locks).
+> +        */
+> +       new_object =3D landlock_create_object(&landlock_fs_underops, inod=
+e);
+> +       if (IS_ERR(new_object))
+> +               return new_object;
+> +
+> +       /* Protects against concurrent get_inode_object() calls. */
+> +       spin_lock(&inode->i_lock);
+> +       object =3D rcu_dereference_protected(inode_sec->object,
+> +                       lockdep_is_held(&inode->i_lock));
 
-The filesystem id is encoded into the VFS filehandle - it does not
-need some special external identifier to identify the filesystem it
-belongs to....
+rcu_dereference_protected() requires that inode_sec->object is not
+concurrently changed, but I think another thread could call
+get_inode_object() while we're in landlock_create_object(), and then
+we could race with the NULL write in release_inode() here? (It
+wouldn't actually be a UAF though because we're not actually accessing
+`object` here.) Or am I missing a lock that prevents this?
 
-> The xfs specific ioctl XFS_IOC_PATH_TO_FSHANDLE similarly attaches an
-> fsid to exported file handles, but it is not the same fsid exported
-> via statfs(2) - it is a persistent fsid based on the filesystem's uuid.
+In v28 this wasn't an issue because release_inode() was holding
+inode->i_lock (and object->lock) during the NULL store; but in v29 and
+this version the NULL store in release_inode() moved out of the locked
+region. I think you could just move the NULL store in release_inode()
+back up (and maybe add a comment explaining the locking rules for
+landlock_inode(...)->object)?
 
-To actually use that {fshandle,fhandle} tuple for anything
-requires CAP_SYS_ADMIN. A user can read the fshandle, but it can't
-use it for anything useful. i.e. it's use is entirely isolated to
-the file handle interface for identifying the filesystem the handle
-belongs to. This is messy, but XFS inherited this "fixed fsid"
-interface from Irix filehandles and was needed to port
-xfsdump/xfsrestore to Linux.  Realistically, it is not functionality
-that should be duplicated/exposed more widely on Linux...
+(Or alternatively you could use rcu_dereference_raw() with a comment
+explaining that the read pointer is only used to check for NULL-ness,
+and that it is guaranteed that the pointer can't change if it is NULL
+and we're holding the lock. But that'd be needlessly complicated, I
+think.)
 
-IMO, if fanotify needs a persistent filesystem ID on Linux, it
-should be using something common across all filesystems from the
-linux superblock, not deep dark internal filesystem magic. The
-export interfaces that generate VFS (and NFS) filehandles already
-have a persistent fsid associated with them, which may in fact be
-the filesystem UUID in it's entirety.
 
-The export-derived "filesystem ID" is what should be exported to
-userspace in combination with the file handle to identify the fs the
-handle belongs to because then you have consistent behaviour and a
-change that invalidates the filehandle will also invalidate the
-fshandle....
-
-> Use the same persistent value for f_fsid, so object identifiers in
-> fanotify events will describe the objects more uniquely.
-
-It's not persistent as in "will never change". The moment a user
-changes the XFS filesystem uuid, the f_fsid changes.
-
-However, changing the uuid on XFS is an offline (unmounted)
-operation, so there will be no fanotify marks present when it is
-changed. Hence when it is remounted, there will be a new f_fsid
-returned in statvfs(), just like what happens now, and all
-applications dependent on "persistent" fsids (and persistent
-filehandles for that matter) will now get ESTALE errors...
-
-And, worse, mp->m_fixed_fsid (and XFS superblock UUIDs in general)
-are not unique if you've got snapshots and they've been mounted via
-"-o nouuid" to avoid XFS's duplicate uuid checking. This is one of
-the reasons that the duplicate checking exists - so that fshandles
-are unique and resolve to a single filesystem....
-
-> Signed-off-by: Amir Goldstein <amir73il@gmail.com>
-> ---
-> 
-> Guys,
-> 
-> This change would be useful for fanotify users.
-> Do you see any problems with that minor change of uapi?
-
-Yes.
-
-IMO, we shouldn't be making a syscall interface rely on the
-undefined, filesystem specific behaviour a value some other syscall
-exposes to userspace. This means the fsid has no defined or
-standardised behaviour applications can rely on and can't be
-guaranteed unique and unchanging by fanotify. This seems like a
-lose-lose situation for everyone...
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+> +       if (unlikely(object)) {
+> +               /* Someone else just created the object, bail out and ret=
+ry. */
+> +               spin_unlock(&inode->i_lock);
+> +               kfree(new_object);
+> +
+> +               rcu_read_lock();
+> +               goto retry;
+> +       }
+> +
+> +       rcu_assign_pointer(inode_sec->object, new_object);
+> +       /*
+> +        * @inode will be released by hook_sb_delete() on its superblock
+> +        * shutdown.
+> +        */
+> +       ihold(inode);
+> +       spin_unlock(&inode->i_lock);
+> +       return new_object;
+> +}
