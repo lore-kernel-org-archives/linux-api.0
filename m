@@ -2,32 +2,32 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-21.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 008C5C43617
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 23CECC43618
 	for <linux-api@archiver.kernel.org>; Wed, 24 Mar 2021 19:15:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BAA0461A27
+	by mail.kernel.org (Postfix) with ESMTP id 0645761A1D
 	for <linux-api@archiver.kernel.org>; Wed, 24 Mar 2021 19:15:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237867AbhCXTPX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 24 Mar 2021 15:15:23 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55794 "EHLO
+        id S237889AbhCXTPZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 24 Mar 2021 15:15:25 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55860 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237881AbhCXTO5 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 24 Mar 2021 15:14:57 -0400
+        with ESMTP id S237914AbhCXTPF (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 24 Mar 2021 15:15:05 -0400
 Received: from smtp-bc09.mail.infomaniak.ch (smtp-bc09.mail.infomaniak.ch [IPv6:2001:1600:3:17::bc09])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B379FC0613DE
-        for <linux-api@vger.kernel.org>; Wed, 24 Mar 2021 12:14:56 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 538ECC0613DF
+        for <linux-api@vger.kernel.org>; Wed, 24 Mar 2021 12:15:04 -0700 (PDT)
 Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4F5HxC0LZTzMqLJQ;
-        Wed, 24 Mar 2021 20:14:55 +0100 (CET)
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4F5HxK52JqzMqLJH;
+        Wed, 24 Mar 2021 20:15:01 +0100 (CET)
 Received: from localhost (unknown [23.97.221.149])
-        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4F5HxB478zzlhDt7;
-        Wed, 24 Mar 2021 20:14:54 +0100 (CET)
+        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4F5HxK271ZzlhDtL;
+        Wed, 24 Mar 2021 20:15:01 +0100 (CET)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>,
         "Serge E . Hallyn" <serge@hallyn.com>
@@ -52,9 +52,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         linux-kselftest@vger.kernel.org,
         linux-security-module@vger.kernel.org, x86@kernel.org,
         =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@linux.microsoft.com>
-Subject: [PATCH v31 06/12] fs,security: Add sb_delete hook
-Date:   Wed, 24 Mar 2021 20:15:14 +0100
-Message-Id: <20210324191520.125779-7-mic@digikod.net>
+Subject: [PATCH v31 11/12] samples/landlock: Add a sandbox manager example
+Date:   Wed, 24 Mar 2021 20:15:19 +0100
+Message-Id: <20210324191520.125779-12-mic@digikod.net>
 X-Mailer: git-send-email 2.30.2
 In-Reply-To: <20210324191520.125779-1-mic@digikod.net>
 References: <20210324191520.125779-1-mic@digikod.net>
@@ -67,121 +67,417 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Mickaël Salaün <mic@linux.microsoft.com>
 
-The sb_delete security hook is called when shutting down a superblock,
-which may be useful to release kernel objects tied to the superblock's
-lifetime (e.g. inodes).
+Add a basic sandbox tool to launch a command which can only access a
+list of file hierarchies in a read-only or read-write way.
 
-This new hook is needed by Landlock to release (ephemerally) tagged
-struct inodes.  This comes from the unprivileged nature of Landlock
-described in the next commit.
-
-Cc: Al Viro <viro@zeniv.linux.org.uk>
 Cc: James Morris <jmorris@namei.org>
+Cc: Serge E. Hallyn <serge@hallyn.com>
 Signed-off-by: Mickaël Salaün <mic@linux.microsoft.com>
 Reviewed-by: Jann Horn <jannh@google.com>
-Acked-by: Serge Hallyn <serge@hallyn.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
-Link: https://lore.kernel.org/r/20210324191520.125779-7-mic@digikod.net
+Link: https://lore.kernel.org/r/20210324191520.125779-12-mic@digikod.net
 ---
 
 Changes since v30:
 * Add Reviewed-by Kees Cook.
 
 Changes since v28:
-* Extend hook description (suggested by Serge Hallyn).
-* Add Acked-by Serge Hallyn.
+* Simplify Kconfig option title.
 
-Changes since v22:
+Changes since v27:
+* Add samples/landlock/ to MAINTAINERS.
+* Update landlock_restrict_self(2).
+* Tweak Kconfig title and description.
+
+Changes since v25:
+* Improve comments and fix help (suggested by Jann Horn).
+* Add a safeguard for errno check (suggested by Jann Horn).
+* Allows users to not use all possible restrictions (e.g. use LL_FS_RO
+  without LL_FS_RW).
+* Update syscall names.
+* Improve Makefile:
+  - Replace hostprogs/always-y with userprogs-always-y, available since
+    commit faabed295ccc ("kbuild: introduce hostprogs-always-y and
+    userprogs-always-y").
+  - Depends on CC_CAN_LINK.
 * Add Reviewed-by Jann Horn.
 
-Changes since v17:
-* Initial patch to replace the direct call to landlock_release_inodes()
-  (requested by James Morris).
-  https://lore.kernel.org/lkml/alpine.LRH.2.21.2005150536440.7929@namei.org/
----
- fs/super.c                    | 1 +
- include/linux/lsm_hook_defs.h | 1 +
- include/linux/lsm_hooks.h     | 3 +++
- include/linux/security.h      | 4 ++++
- security/security.c           | 5 +++++
- 5 files changed, 14 insertions(+)
+Changes since v25:
+* Remove useless errno set in the syscall wrappers.
+* Cosmetic variable renames.
 
-diff --git a/fs/super.c b/fs/super.c
-index 8c1baca35c16..11b7e7213fd1 100644
---- a/fs/super.c
-+++ b/fs/super.c
-@@ -454,6 +454,7 @@ void generic_shutdown_super(struct super_block *sb)
- 		evict_inodes(sb);
- 		/* only nonzero refcount inodes can have marks */
- 		fsnotify_sb_delete(sb);
-+		security_sb_delete(sb);
+Changes since v23:
+* Re-add hints to help users understand the required kernel
+  configuration.  This was removed with the removal of
+  landlock_get_features(2).
+
+Changes since v21:
+* Remove LANDLOCK_ACCESS_FS_CHROOT.
+* Clean up help.
+
+Changes since v20:
+* Update with new syscalls and type names.
+* Update errno check for EOPNOTSUPP.
+* Use the full syscall interfaces: explicitely set the "flags" field to
+  zero.
+
+Changes since v19:
+* Update with the new Landlock syscalls.
+* Comply with commit 5f2fb52fac15 ("kbuild: rename hostprogs-y/always to
+  hostprogs/always-y").
+
+Changes since v16:
+* Switch syscall attribute pointer and size arguments.
+
+Changes since v15:
+* Update access right names.
+* Properly assign access right to files according to the new related
+  syscall restriction.
+* Replace "select" with "depends on" HEADERS_INSTALL (suggested by Randy
+  Dunlap).
+
+Changes since v14:
+* Fix Kconfig dependency.
+* Remove access rights that may be required for FD-only requests:
+  mmap, truncate, getattr, lock, chmod, chown, chgrp, ioctl.
+* Fix useless hardcoded syscall number.
+* Use execvpe().
+* Follow symlinks.
+* Extend help with common file paths.
+* Constify variables.
+* Clean up comments.
+* Improve error message.
+
+Changes since v11:
+* Add back the filesystem sandbox manager and update it to work with the
+  new Landlock syscall.
+
+Previous changes:
+https://lore.kernel.org/lkml/20190721213116.23476-9-mic@digikod.net/
+---
+ MAINTAINERS                  |   1 +
+ samples/Kconfig              |   7 ++
+ samples/Makefile             |   1 +
+ samples/landlock/.gitignore  |   1 +
+ samples/landlock/Makefile    |  13 ++
+ samples/landlock/sandboxer.c | 238 +++++++++++++++++++++++++++++++++++
+ 6 files changed, 261 insertions(+)
+ create mode 100644 samples/landlock/.gitignore
+ create mode 100644 samples/landlock/Makefile
+ create mode 100644 samples/landlock/sandboxer.c
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 8cab5854844e..88175ed1f315 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -10004,6 +10004,7 @@ S:	Supported
+ W:	https://landlock.io
+ T:	git https://github.com/landlock-lsm/linux.git
+ F:	include/uapi/linux/landlock.h
++F:	samples/landlock/
+ F:	security/landlock/
+ F:	tools/testing/selftests/landlock/
+ K:	landlock
+diff --git a/samples/Kconfig b/samples/Kconfig
+index e76cdfc50e25..b5a1a7aa7e23 100644
+--- a/samples/Kconfig
++++ b/samples/Kconfig
+@@ -124,6 +124,13 @@ config SAMPLE_HIDRAW
+ 	bool "hidraw sample"
+ 	depends on CC_CAN_LINK && HEADERS_INSTALL
  
- 		if (sb->s_dio_done_wq) {
- 			destroy_workqueue(sb->s_dio_done_wq);
-diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
-index 477a597db013..e8adadbf9581 100644
---- a/include/linux/lsm_hook_defs.h
-+++ b/include/linux/lsm_hook_defs.h
-@@ -59,6 +59,7 @@ LSM_HOOK(int, 0, fs_context_dup, struct fs_context *fc,
- LSM_HOOK(int, -ENOPARAM, fs_context_parse_param, struct fs_context *fc,
- 	 struct fs_parameter *param)
- LSM_HOOK(int, 0, sb_alloc_security, struct super_block *sb)
-+LSM_HOOK(void, LSM_RET_VOID, sb_delete, struct super_block *sb)
- LSM_HOOK(void, LSM_RET_VOID, sb_free_security, struct super_block *sb)
- LSM_HOOK(void, LSM_RET_VOID, sb_free_mnt_opts, void *mnt_opts)
- LSM_HOOK(int, 0, sb_eat_lsm_opts, char *orig, void **mnt_opts)
-diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
-index 75715998a95f..cc2eaaaec0e4 100644
---- a/include/linux/lsm_hooks.h
-+++ b/include/linux/lsm_hooks.h
-@@ -108,6 +108,9 @@
-  *	allocated.
-  *	@sb contains the super_block structure to be modified.
-  *	Return 0 if operation was successful.
-+ * @sb_delete:
-+ *	Release objects tied to a superblock (e.g. inodes).
-+ *	@sb contains the super_block structure being released.
-  * @sb_free_security:
-  *	Deallocate and clear the sb->s_security field.
-  *	@sb contains the super_block structure to be modified.
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 8aeebd6646dc..90298baa4551 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -291,6 +291,7 @@ void security_bprm_committed_creds(struct linux_binprm *bprm);
- int security_fs_context_dup(struct fs_context *fc, struct fs_context *src_fc);
- int security_fs_context_parse_param(struct fs_context *fc, struct fs_parameter *param);
- int security_sb_alloc(struct super_block *sb);
-+void security_sb_delete(struct super_block *sb);
- void security_sb_free(struct super_block *sb);
- void security_free_mnt_opts(void **mnt_opts);
- int security_sb_eat_lsm_opts(char *options, void **mnt_opts);
-@@ -631,6 +632,9 @@ static inline int security_sb_alloc(struct super_block *sb)
- 	return 0;
- }
- 
-+static inline void security_sb_delete(struct super_block *sb)
-+{ }
++config SAMPLE_LANDLOCK
++	bool "Landlock example"
++	depends on CC_CAN_LINK && HEADERS_INSTALL
++	help
++	  Build a simple Landlock sandbox manager able to start a process
++	  restricted by a user-defined filesystem access control policy.
 +
- static inline void security_sb_free(struct super_block *sb)
- { }
- 
-diff --git a/security/security.c b/security/security.c
-index e9c29480eb18..bb666f992497 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -900,6 +900,11 @@ int security_sb_alloc(struct super_block *sb)
- 	return rc;
- }
- 
-+void security_sb_delete(struct super_block *sb)
+ config SAMPLE_PIDFD
+ 	bool "pidfd sample"
+ 	depends on CC_CAN_LINK && HEADERS_INSTALL
+diff --git a/samples/Makefile b/samples/Makefile
+index c3392a595e4b..087e0988ccc5 100644
+--- a/samples/Makefile
++++ b/samples/Makefile
+@@ -11,6 +11,7 @@ obj-$(CONFIG_SAMPLE_KDB)		+= kdb/
+ obj-$(CONFIG_SAMPLE_KFIFO)		+= kfifo/
+ obj-$(CONFIG_SAMPLE_KOBJECT)		+= kobject/
+ obj-$(CONFIG_SAMPLE_KPROBES)		+= kprobes/
++subdir-$(CONFIG_SAMPLE_LANDLOCK)	+= landlock
+ obj-$(CONFIG_SAMPLE_LIVEPATCH)		+= livepatch/
+ subdir-$(CONFIG_SAMPLE_PIDFD)		+= pidfd
+ obj-$(CONFIG_SAMPLE_QMI_CLIENT)		+= qmi/
+diff --git a/samples/landlock/.gitignore b/samples/landlock/.gitignore
+new file mode 100644
+index 000000000000..f43668b2d318
+--- /dev/null
++++ b/samples/landlock/.gitignore
+@@ -0,0 +1 @@
++/sandboxer
+diff --git a/samples/landlock/Makefile b/samples/landlock/Makefile
+new file mode 100644
+index 000000000000..5d601e51c2eb
+--- /dev/null
++++ b/samples/landlock/Makefile
+@@ -0,0 +1,13 @@
++# SPDX-License-Identifier: BSD-3-Clause
++
++userprogs-always-y := sandboxer
++
++userccflags += -I usr/include
++
++.PHONY: all clean
++
++all:
++	$(MAKE) -C ../.. samples/landlock/
++
++clean:
++	$(MAKE) -C ../.. M=samples/landlock/ clean
+diff --git a/samples/landlock/sandboxer.c b/samples/landlock/sandboxer.c
+new file mode 100644
+index 000000000000..7a15910d2171
+--- /dev/null
++++ b/samples/landlock/sandboxer.c
+@@ -0,0 +1,238 @@
++// SPDX-License-Identifier: BSD-3-Clause
++/*
++ * Simple Landlock sandbox manager able to launch a process restricted by a
++ * user-defined filesystem access control policy.
++ *
++ * Copyright © 2017-2020 Mickaël Salaün <mic@digikod.net>
++ * Copyright © 2020 ANSSI
++ */
++
++#define _GNU_SOURCE
++#include <errno.h>
++#include <fcntl.h>
++#include <linux/landlock.h>
++#include <linux/prctl.h>
++#include <stddef.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/prctl.h>
++#include <sys/stat.h>
++#include <sys/syscall.h>
++#include <unistd.h>
++
++#ifndef landlock_create_ruleset
++static inline int landlock_create_ruleset(
++		const struct landlock_ruleset_attr *const attr,
++		const size_t size, const __u32 flags)
 +{
-+	call_void_hook(sb_delete, sb);
++	return syscall(__NR_landlock_create_ruleset, attr, size, flags);
++}
++#endif
++
++#ifndef landlock_add_rule
++static inline int landlock_add_rule(const int ruleset_fd,
++		const enum landlock_rule_type rule_type,
++		const void *const rule_attr, const __u32 flags)
++{
++	return syscall(__NR_landlock_add_rule, ruleset_fd, rule_type,
++			rule_attr, flags);
++}
++#endif
++
++#ifndef landlock_restrict_self
++static inline int landlock_restrict_self(const int ruleset_fd,
++		const __u32 flags)
++{
++	return syscall(__NR_landlock_restrict_self, ruleset_fd, flags);
++}
++#endif
++
++#define ENV_FS_RO_NAME "LL_FS_RO"
++#define ENV_FS_RW_NAME "LL_FS_RW"
++#define ENV_PATH_TOKEN ":"
++
++static int parse_path(char *env_path, const char ***const path_list)
++{
++	int i, num_paths = 0;
++
++	if (env_path) {
++		num_paths++;
++		for (i = 0; env_path[i]; i++) {
++			if (env_path[i] == ENV_PATH_TOKEN[0])
++				num_paths++;
++		}
++	}
++	*path_list = malloc(num_paths * sizeof(**path_list));
++	for (i = 0; i < num_paths; i++)
++		(*path_list)[i] = strsep(&env_path, ENV_PATH_TOKEN);
++
++	return num_paths;
 +}
 +
- void security_sb_free(struct super_block *sb)
- {
- 	call_void_hook(sb_free_security, sb);
++#define ACCESS_FILE ( \
++	LANDLOCK_ACCESS_FS_EXECUTE | \
++	LANDLOCK_ACCESS_FS_WRITE_FILE | \
++	LANDLOCK_ACCESS_FS_READ_FILE)
++
++static int populate_ruleset(
++		const char *const env_var, const int ruleset_fd,
++		const __u64 allowed_access)
++{
++	int num_paths, i, ret = 1;
++	char *env_path_name;
++	const char **path_list = NULL;
++	struct landlock_path_beneath_attr path_beneath = {
++		.parent_fd = -1,
++	};
++
++	env_path_name = getenv(env_var);
++	if (!env_path_name) {
++		/* Prevents users to forget a setting. */
++		fprintf(stderr, "Missing environment variable %s\n", env_var);
++		return 1;
++	}
++	env_path_name = strdup(env_path_name);
++	unsetenv(env_var);
++	num_paths = parse_path(env_path_name, &path_list);
++	if (num_paths == 1 && path_list[0][0] == '\0') {
++		/*
++		 * Allows to not use all possible restrictions (e.g. use
++		 * LL_FS_RO without LL_FS_RW).
++		 */
++		ret = 0;
++		goto out_free_name;
++	}
++
++	for (i = 0; i < num_paths; i++) {
++		struct stat statbuf;
++
++		path_beneath.parent_fd = open(path_list[i], O_PATH |
++				O_CLOEXEC);
++		if (path_beneath.parent_fd < 0) {
++			fprintf(stderr, "Failed to open \"%s\": %s\n",
++					path_list[i],
++					strerror(errno));
++			goto out_free_name;
++		}
++		if (fstat(path_beneath.parent_fd, &statbuf)) {
++			close(path_beneath.parent_fd);
++			goto out_free_name;
++		}
++		path_beneath.allowed_access = allowed_access;
++		if (!S_ISDIR(statbuf.st_mode))
++			path_beneath.allowed_access &= ACCESS_FILE;
++		if (landlock_add_rule(ruleset_fd, LANDLOCK_RULE_PATH_BENEATH,
++					&path_beneath, 0)) {
++			fprintf(stderr, "Failed to update the ruleset with \"%s\": %s\n",
++					path_list[i], strerror(errno));
++			close(path_beneath.parent_fd);
++			goto out_free_name;
++		}
++		close(path_beneath.parent_fd);
++	}
++	ret = 0;
++
++out_free_name:
++	free(env_path_name);
++	return ret;
++}
++
++#define ACCESS_FS_ROUGHLY_READ ( \
++	LANDLOCK_ACCESS_FS_EXECUTE | \
++	LANDLOCK_ACCESS_FS_READ_FILE | \
++	LANDLOCK_ACCESS_FS_READ_DIR)
++
++#define ACCESS_FS_ROUGHLY_WRITE ( \
++	LANDLOCK_ACCESS_FS_WRITE_FILE | \
++	LANDLOCK_ACCESS_FS_REMOVE_DIR | \
++	LANDLOCK_ACCESS_FS_REMOVE_FILE | \
++	LANDLOCK_ACCESS_FS_MAKE_CHAR | \
++	LANDLOCK_ACCESS_FS_MAKE_DIR | \
++	LANDLOCK_ACCESS_FS_MAKE_REG | \
++	LANDLOCK_ACCESS_FS_MAKE_SOCK | \
++	LANDLOCK_ACCESS_FS_MAKE_FIFO | \
++	LANDLOCK_ACCESS_FS_MAKE_BLOCK | \
++	LANDLOCK_ACCESS_FS_MAKE_SYM)
++
++int main(const int argc, char *const argv[], char *const *const envp)
++{
++	const char *cmd_path;
++	char *const *cmd_argv;
++	int ruleset_fd;
++	struct landlock_ruleset_attr ruleset_attr = {
++		.handled_access_fs = ACCESS_FS_ROUGHLY_READ |
++			ACCESS_FS_ROUGHLY_WRITE,
++	};
++
++	if (argc < 2) {
++		fprintf(stderr, "usage: %s=\"...\" %s=\"...\" %s <cmd> [args]...\n\n",
++				ENV_FS_RO_NAME, ENV_FS_RW_NAME, argv[0]);
++		fprintf(stderr, "Launch a command in a restricted environment.\n\n");
++		fprintf(stderr, "Environment variables containing paths, "
++				"each separated by a colon:\n");
++		fprintf(stderr, "* %s: list of paths allowed to be used in a read-only way.\n",
++				ENV_FS_RO_NAME);
++		fprintf(stderr, "* %s: list of paths allowed to be used in a read-write way.\n",
++				ENV_FS_RW_NAME);
++		fprintf(stderr, "\nexample:\n"
++				"%s=\"/bin:/lib:/usr:/proc:/etc:/dev/urandom\" "
++				"%s=\"/dev/null:/dev/full:/dev/zero:/dev/pts:/tmp\" "
++				"%s bash -i\n",
++				ENV_FS_RO_NAME, ENV_FS_RW_NAME, argv[0]);
++		return 1;
++	}
++
++	ruleset_fd = landlock_create_ruleset(&ruleset_attr, sizeof(ruleset_attr), 0);
++	if (ruleset_fd < 0) {
++		const int err = errno;
++
++		perror("Failed to create a ruleset");
++		switch (err) {
++		case ENOSYS:
++			fprintf(stderr, "Hint: Landlock is not supported by the current kernel. "
++					"To support it, build the kernel with "
++					"CONFIG_SECURITY_LANDLOCK=y and prepend "
++					"\"landlock,\" to the content of CONFIG_LSM.\n");
++			break;
++		case EOPNOTSUPP:
++			fprintf(stderr, "Hint: Landlock is currently disabled. "
++					"It can be enabled in the kernel configuration by "
++					"prepending \"landlock,\" to the content of CONFIG_LSM, "
++					"or at boot time by setting the same content to the "
++					"\"lsm\" kernel parameter.\n");
++			break;
++		}
++		return 1;
++	}
++	if (populate_ruleset(ENV_FS_RO_NAME, ruleset_fd,
++				ACCESS_FS_ROUGHLY_READ)) {
++		goto err_close_ruleset;
++	}
++	if (populate_ruleset(ENV_FS_RW_NAME, ruleset_fd,
++				ACCESS_FS_ROUGHLY_READ | ACCESS_FS_ROUGHLY_WRITE)) {
++		goto err_close_ruleset;
++	}
++	if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) {
++		perror("Failed to restrict privileges");
++		goto err_close_ruleset;
++	}
++	if (landlock_restrict_self(ruleset_fd, 0)) {
++		perror("Failed to enforce ruleset");
++		goto err_close_ruleset;
++	}
++	close(ruleset_fd);
++
++	cmd_path = argv[1];
++	cmd_argv = argv + 1;
++	execvpe(cmd_path, cmd_argv, envp);
++	fprintf(stderr, "Failed to execute \"%s\": %s\n", cmd_path,
++			strerror(errno));
++	fprintf(stderr, "Hint: access to the binary, the interpreter or "
++			"shared libraries may be denied.\n");
++	return 1;
++
++err_close_ruleset:
++	close(ruleset_fd);
++	return 1;
++}
 -- 
 2.30.2
 
