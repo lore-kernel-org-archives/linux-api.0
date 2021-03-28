@@ -2,302 +2,306 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-20.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 37528C433DB
-	for <linux-api@archiver.kernel.org>; Sun, 28 Mar 2021 15:57:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 52627C433C1
+	for <linux-api@archiver.kernel.org>; Sun, 28 Mar 2021 19:32:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id F390C619A9
-	for <linux-api@archiver.kernel.org>; Sun, 28 Mar 2021 15:57:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 29CEA61969
+	for <linux-api@archiver.kernel.org>; Sun, 28 Mar 2021 19:32:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230435AbhC1P4n (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 28 Mar 2021 11:56:43 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35482 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230451AbhC1P4a (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 28 Mar 2021 11:56:30 -0400
-Received: from mail-wr1-x42d.google.com (mail-wr1-x42d.google.com [IPv6:2a00:1450:4864:20::42d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 093F0C061756;
-        Sun, 28 Mar 2021 08:56:30 -0700 (PDT)
-Received: by mail-wr1-x42d.google.com with SMTP id x16so10384769wrn.4;
-        Sun, 28 Mar 2021 08:56:29 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=wzaJrj6qm4ly2Blj6LwN/Q19V8tdViJ7JjkrFUtAAFk=;
-        b=KFogYeqW56DETH5mHA+fWMQSgLtx0DV6pqTZpm3Q9txnv5IqxQU6zOiyePRYownqxC
-         0Tq8IbiNT1u87iG6cO3vL4LAejZ69AsZCKFajopCnMKpJ1eA5m8Jii9EJzznGgo936RG
-         XKkIFpojk+qUrEpDlei+9ga8zXiX/4uo9wbln+XDQT0euXwYNXyN5XCuH/dFMU8X9cGL
-         tNrmh+S3eSBafGoc9X6SNMqf568p7D4PkHNsZaXI9L/0HHYDkMUQgjgnJW7uZsw4t4iw
-         gi6NhFbUi9Qk8mzbwZiXGGYe3g4KPCGNktoLbDO3dzn1IobTuROZgwfuzsEA2vK0LGrM
-         c5PQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=wzaJrj6qm4ly2Blj6LwN/Q19V8tdViJ7JjkrFUtAAFk=;
-        b=TBONg8lYr7Stedurx+DNw9mjRlcNEWXENpL8dK9IKArMcxr7p6EFVT3HrJuwu4cSjV
-         NTpApbEmjRpP1fi8mh9pDV1fLYwjOg6Ubkoe2BPE9wUSGUHUlzimiAKDZnESg7rw06rK
-         oLEl6UnV+hLI9TqkwV/GcWQxJnkcxncTcOA2x7xWTSAUQrgd1lV1/tmBpDNZiin1UvL7
-         ELHe3IwhGHYiA0Y6AjhDfQaTHEaxLBBDbtG/P4YNBJkinYu7QqTi3uY24OIOGHDDX9tO
-         8RZPzUWZYiastUvTEL3zW8EURJtSj7ZsQBS34nK676cLldMOawFoddIBiXVVOMUoZw6m
-         GwLA==
-X-Gm-Message-State: AOAM532SjtcaLZkHSsTbanx9ppSg+urkHYUktE8F5L565ol/rYUhJwo2
-        JGU4FyjM5Kz28dOmzi+YcogabA/+17A=
-X-Google-Smtp-Source: ABdhPJzpUtNm25ny+sTqtt2G6ptkzX8TkfBOdl9JyDa9IdEo5ik23hdB8K5zCHvVVg+nF+F7lLDJZw==
-X-Received: by 2002:adf:f587:: with SMTP id f7mr24490257wro.147.1616946987517;
-        Sun, 28 Mar 2021 08:56:27 -0700 (PDT)
-Received: from localhost.localdomain ([141.226.241.101])
-        by smtp.gmail.com with ESMTPSA id k4sm31683289wrd.9.2021.03.28.08.56.26
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 28 Mar 2021 08:56:26 -0700 (PDT)
-From:   Amir Goldstein <amir73il@gmail.com>
-To:     Jan Kara <jack@suse.cz>
-Cc:     Christian Brauner <christian.brauner@ubuntu.com>,
-        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: [RFC][PATCH] fanotify: allow setting FAN_CREATE in mount mark mask
-Date:   Sun, 28 Mar 2021 18:56:24 +0300
-Message-Id: <20210328155624.930558-1-amir73il@gmail.com>
-X-Mailer: git-send-email 2.30.0
+        id S231312AbhC1TcI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 28 Mar 2021 15:32:08 -0400
+Received: from mga01.intel.com ([192.55.52.88]:29442 "EHLO mga01.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S230294AbhC1Tbd (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sun, 28 Mar 2021 15:31:33 -0400
+IronPort-SDR: Gp8qwKk6M3yS3oJwO7StUql3wDp1fxyyCKPABTLYKrtCRURy3/p+yr9kCYapz0Hot5d4gkFsKz
+ siDsjaEKQMnA==
+X-IronPort-AV: E=McAfee;i="6000,8403,9937"; a="211617194"
+X-IronPort-AV: E=Sophos;i="5.81,285,1610438400"; 
+   d="scan'208";a="211617194"
+Received: from orsmga003.jf.intel.com ([10.7.209.27])
+  by fmsmga101.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 28 Mar 2021 12:31:32 -0700
+IronPort-SDR: DkmjaJX3am0EYO4W9vzxXMBijiggxVlIHej7xjVvNql2vm6+r8bUtPkLv5nnXyIZ6qefiVQDb0
+ T+aBWpuYAhpA==
+X-IronPort-AV: E=Sophos;i="5.81,285,1610438400"; 
+   d="scan'208";a="376185671"
+Received: from bseshadr-mobl2.amr.corp.intel.com ([10.251.23.39])
+  by orsmga003-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 28 Mar 2021 12:31:31 -0700
+Message-ID: <a2665d9f450b5e6dc0cc5017e2b83a5c49840d3f.camel@linux.intel.com>
+Subject: Re: [PATCH] thermal/drivers/netlink: Add the temperature when
+ crossing a trip point
+From:   Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+To:     Daniel Lezcano <daniel.lezcano@linaro.org>,
+        "Rafael J. Wysocki" <rafael@kernel.org>
+Cc:     rkumbako@quicinc.com, Zhang Rui <rui.zhang@intel.com>,
+        Amit Kucheria <amitk@kernel.org>,
+        "open list:THERMAL" <linux-pm@vger.kernel.org>,
+        open list <linux-kernel@vger.kernel.org>,
+        "open list:ABI/API" <linux-api@vger.kernel.org>
+Date:   Sun, 28 Mar 2021 12:31:31 -0700
+In-Reply-To: <ae16d810-e5ec-ad63-7b29-fd1ddab68907@linaro.org>
+References: <20210325193633.19592-1-daniel.lezcano@linaro.org>
+         <CAJZ5v0g58LMVwRWdJaTWVOx09gt6KRGTa974k3cvHYQyxk0EYg@mail.gmail.com>
+         <444a7fc72e6525575b929760fcad186630577afc.camel@linux.intel.com>
+         <ae16d810-e5ec-ad63-7b29-fd1ddab68907@linaro.org>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.34.4 (3.34.4-1.fc31) 
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add a high level hook fsnotify_path_create() which is called from
-syscall context where mount context is available, so that FAN_CREATE
-event can be added to a mount mark mask.
+Hi Daniel,
 
-This high level hook is called in addition to fsnotify_create(),
-fsnotify_mkdir() and fsnotify_link() hooks in vfs helpers where the mount
-context is not available.
+On Sat, 2021-03-27 at 21:25 +0100, Daniel Lezcano wrote:
+> Hi Srinivas,
+> 
+> On 27/03/2021 18:46, Srinivas Pandruvada wrote:
+> > On Fri, 2021-03-26 at 17:37 +0100, Rafael J. Wysocki wrote:
+> > > On Thu, Mar 25, 2021 at 8:38 PM Daniel Lezcano
+> > > <daniel.lezcano@linaro.org> wrote:
+> > > > The slope of the temperature increase or decrease can be high
+> > > > and
+> > > > when
+> > > > the temperature crosses the trip point, there could be a
+> > > > significant
+> > > > difference between the trip temperature and the measured
+> > > > temperatures.
+> > > > 
+> > > > That forces the userspace to read the temperature back right
+> > > > after
+> > > > receiving a trip violation notification.
+> > > > 
+> > > > In order to be efficient, give the temperature which resulted
+> > > > in
+> > > > the
+> > > > trip violation.
+> > > > 
+> > > > Signed-off-by: Daniel Lezcano <daniel.lezcano@linaro.org>
+> > > 
+> > > Srinivas, what do you think?
+> > 
+> > - IMO netlink message should also be treated as we treat other
+> > ABIs. So
+> > add only when this is a must. Although here GENL version is
+> > incremented
+> > , users are not that careful. At least on x86, we know users
+> > created
+> > their own applications.
+> 
+> I don't see where is the problem. The protocol is still compatible
+> with
+> the previous version, so that does not break the existing AFAICT.
+> That
+> is done on purpose.
 
-In the context where fsnotify_path_create() will be called, a dentry flag
-flag is set on the new dentry the suppress the FS_CREATE event in the vfs
-level hooks.
+The size of netlink message is changed. This is not a good argument to
+just adding members at the end. The point I am trying that netlink now
+is an ABI, which should go through same process as we are
+adding/changing a sysfs attributes.
+ 
 
-This functionality was requested by Christian Brauner to replace
-recursive inotify watches for detecting when some path was created under
-an idmapped mount without having to monitor FAN_CREATE events in the
-entire filesystem.
+> 
+> There is a new attribute added, the application using the previous
+> version will just not be aware of its presence and parse the message
+> without getting the temperature.
+> 
+> > - Here the concern is temperature is changing so fast then netlink
+> > +
+> > user space processing latency is enough to change further to read
+> > temperature again. Atleast we assume that and read temperature
+> > again.
+> > So not sure that this is the right approach to add another field
+> > for
+> > the temperature.
+> 
+> I'm not sure to understand your comment. Whatever the mechanism
+> (interrupt based or polling), the temperature is read in any case by
+> the
+> call to thermal_zone_device_update() which in turns calls
+> handle_trip_point and then send the message. So, why not add the
+> temperature as the userspace is interested on getting the temperature
+> anyway.
+> For instance, in polling mode, (usually set to 1000ms), the trip
+> point
+> crossing is detected with a long delay and during this time the
+> temperature could be far beyond the trip temperature.
+> cosnumer
+> It is not about netlink latency but about avoiding a back and forth
+> when
+> the trip point is crossed and the temperature wavering around.
 
-In combination with more changes to allow unprivileged fanotify listener
-to watch an idmapped mount, this functionality would be usable also by
-nested container managers.
+That is the reasoning given to add this change in the description that
+slope of change is high so user is forced to read temperature again as
+the trip temp +- current temp is significant. If slope is very high
+then, when the temperature passed in the messages is already stale in
+few ms, so the user space will still end up in re-reading again.
 
-Link: https://lore.kernel.org/linux-fsdevel/20210318143140.jxycfn3fpqntq34z@wittgenstein/
-Cc: Christian Brauner <christian.brauner@ubuntu.com>
-Signed-off-by: Amir Goldstein <amir73il@gmail.com>
----
+The reason you want to add temperature is that you sampled the latest
+temperature during thermal_zone_device_update(), which may be different
+than the trip temperature. So provide temperature also to user space
+consumer, so it can decide whether to use as is or re-read sample. This
+change will save one additional read from user space in some cases and
+also allow disable notifications of trip if the temperature is hovering
+around trip.
+This is not to say that user can space totally can avoid another read.
+Then fine with me.
 
-Jan,
-
-After trying several different approaches, I finally realized that
-making FAN_CREATE available for mount marks is not that hard and it could
-be very useful IMO.
-
-Adding support for other "inode events" with mount mark, such as
-FAN_ATTRIB, FAN_DELETE, FAN_MOVE may also be possible, but adding support
-for FAN_CREATE was really easy due to the fact that all call sites are
-already surrounded by filename_creat()/done_path_create() calls.
-
-Also, there is an inherent a-symetry between FAN_CREATE and other
-events. All the rest of the events may be set when watching a postive
-path, for example, to know when a path of a bind mount that was
-"injected" to a container was moved or deleted, it is possible to start
-watching that directory before injecting the bind mount.
-
-It is not possible to do the same with a "negative" path to know when
-a positive dentry was instantiated at that path.
-
-This patch provides functionality that is independant of other changes,
-but I also tested it along with other changes that demonstrate how it
-would be utilized in userns setups [1][2].
-
-As can be seen in dcache.h patch, this patch comes on top a revert patch
-to reclaim an unused dentry flag. If you accept this proposal, I will
-post the full series.
 
 Thanks,
-Amir.
+Srinivas
 
-[1] https://github.com/amir73il/linux/commits/fanotify_userns
-[2] https://github.com/amir73il/inotify-tools/commits/fanotify_userns
-
- fs/namei.c               | 21 ++++++++++++++++++++-
- include/linux/dcache.h   |  2 +-
- include/linux/fanotify.h |  8 ++++----
- include/linux/fsnotify.h | 36 ++++++++++++++++++++++++++++++++++++
- 4 files changed, 61 insertions(+), 6 deletions(-)
-
-diff --git a/fs/namei.c b/fs/namei.c
-index 216f16e74351..cf979e956938 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -3288,7 +3288,7 @@ static const char *open_last_lookups(struct nameidata *nd,
- 		inode_lock_shared(dir->d_inode);
- 	dentry = lookup_open(nd, file, op, got_write);
- 	if (!IS_ERR(dentry) && (file->f_mode & FMODE_CREATED))
--		fsnotify_create(dir->d_inode, dentry);
-+		fsnotify_path_create(&nd->path, dentry);
- 	if (open_flag & O_CREAT)
- 		inode_unlock(dir->d_inode);
- 	else
-@@ -3560,6 +3560,20 @@ struct file *do_file_open_root(struct dentry *dentry, struct vfsmount *mnt,
- 	return file;
- }
- 
-+static void d_set_path_create(struct dentry *dentry)
-+{
-+	spin_lock(&dentry->d_lock);
-+	dentry->d_flags |= DCACHE_PATH_CREATE;
-+	spin_unlock(&dentry->d_lock);
-+}
-+
-+static void d_clear_path_create(struct dentry *dentry)
-+{
-+	spin_lock(&dentry->d_lock);
-+	dentry->d_flags &= ~DCACHE_PATH_CREATE;
-+	spin_unlock(&dentry->d_lock);
-+}
-+
- static struct dentry *filename_create(int dfd, struct filename *name,
- 				struct path *path, unsigned int lookup_flags)
- {
-@@ -3617,6 +3631,8 @@ static struct dentry *filename_create(int dfd, struct filename *name,
- 		goto fail;
- 	}
- 	putname(name);
-+	/* Start "path create" context that ends in done_path_create() */
-+	d_set_path_create(dentry);
- 	return dentry;
- fail:
- 	dput(dentry);
-@@ -3641,6 +3657,9 @@ EXPORT_SYMBOL(kern_path_create);
- 
- void done_path_create(struct path *path, struct dentry *dentry)
- {
-+	if (d_inode(dentry))
-+		fsnotify_path_create(path, dentry);
-+	d_clear_path_create(dentry);
- 	dput(dentry);
- 	inode_unlock(path->dentry->d_inode);
- 	mnt_drop_write(path->mnt);
-diff --git a/include/linux/dcache.h b/include/linux/dcache.h
-index 4225caa8cf02..d153793d5b95 100644
---- a/include/linux/dcache.h
-+++ b/include/linux/dcache.h
-@@ -213,7 +213,7 @@ struct dentry_operations {
- #define DCACHE_SYMLINK_TYPE		0x00600000 /* Symlink (or fallthru to such) */
- 
- #define DCACHE_MAY_FREE			0x00800000
--/* Was #define DCACHE_FALLTHRU			0x01000000 */
-+#define DCACHE_PATH_CREATE		0x01000000 /* "path_create" context */
- #define DCACHE_NOKEY_NAME		0x02000000 /* Encrypted name encoded without key */
- #define DCACHE_OP_REAL			0x04000000
- 
-diff --git a/include/linux/fanotify.h b/include/linux/fanotify.h
-index bad41bcb25df..f0c5a4a82b6e 100644
---- a/include/linux/fanotify.h
-+++ b/include/linux/fanotify.h
-@@ -65,10 +65,10 @@ extern struct ctl_table fanotify_table[]; /* for sysctl */
- 
- /*
-  * Events that can be reported with data type FSNOTIFY_EVENT_PATH.
-- * Note that FAN_MODIFY can also be reported with data type
-+ * Note that FAN_MODIFY and FAN_CREATE can also be reported with data type
-  * FSNOTIFY_EVENT_INODE.
-  */
--#define FANOTIFY_PATH_EVENTS	(FAN_ACCESS | FAN_MODIFY | \
-+#define FANOTIFY_PATH_EVENTS	(FAN_ACCESS | FAN_MODIFY | FAN_CREATE | \
- 				 FAN_CLOSE | FAN_OPEN | FAN_OPEN_EXEC)
- 
- /*
-@@ -78,8 +78,8 @@ extern struct ctl_table fanotify_table[]; /* for sysctl */
- #define FANOTIFY_DIRENT_EVENTS	(FAN_MOVE | FAN_CREATE | FAN_DELETE)
- 
- /* Events that can only be reported with data type FSNOTIFY_EVENT_INODE */
--#define FANOTIFY_INODE_EVENTS	(FANOTIFY_DIRENT_EVENTS | \
--				 FAN_ATTRIB | FAN_MOVE_SELF | FAN_DELETE_SELF)
-+#define FANOTIFY_INODE_EVENTS	(FAN_MOVE | FAN_DELETE | FAN_ATTRIB | \
-+				 FAN_MOVE_SELF | FAN_DELETE_SELF)
- 
- /* Events that user can request to be notified on */
- #define FANOTIFY_EVENTS		(FANOTIFY_PATH_EVENTS | \
-diff --git a/include/linux/fsnotify.h b/include/linux/fsnotify.h
-index f8acddcf54fb..9a3d9f7beeb2 100644
---- a/include/linux/fsnotify.h
-+++ b/include/linux/fsnotify.h
-@@ -179,6 +179,30 @@ static inline void fsnotify_inoderemove(struct inode *inode)
- 	__fsnotify_inode_delete(inode);
- }
- 
-+/*
-+ * fsnotify_path_create - an inode was linked to namespace
-+ *
-+ * This higher level hook is called in addition to fsnotify_create(),
-+ * fsnotify_mkdir() and fsnotify_link() vfs hooks when the mount context is
-+ * available, so that FS_CREATE event can be added to a mount mark mask.
-+ *
-+ * In that case the, DCACHE_PATH_CREATE flag is set to suppress the FS_CREATE
-+ * event in the lower level vfs hooks.
-+ */
-+static inline void fsnotify_path_create(struct path *path,
-+					struct dentry *child)
-+{
-+	struct inode *dir = path->dentry->d_inode;
-+	__u32 mask = FS_CREATE;
-+
-+	WARN_ON_ONCE(!inode_is_locked(dir));
-+
-+	if (S_ISDIR(d_inode(child)->i_mode))
-+		mask |= FS_ISDIR;
-+
-+	fsnotify(mask, path, FSNOTIFY_EVENT_PATH, dir, &child->d_name, NULL, 0);
-+}
-+
- /*
-  * fsnotify_create - 'name' was linked in
-  */
-@@ -186,6 +210,10 @@ static inline void fsnotify_create(struct inode *inode, struct dentry *dentry)
- {
- 	audit_inode_child(inode, dentry, AUDIT_TYPE_CHILD_CREATE);
- 
-+	/* fsnotify_path_create() will be called */
-+	if (dentry->d_flags & DCACHE_PATH_CREATE)
-+		return;
-+
- 	fsnotify_dirent(inode, dentry, FS_CREATE);
- }
- 
-@@ -200,6 +228,10 @@ static inline void fsnotify_link(struct inode *dir, struct inode *inode,
- 	fsnotify_link_count(inode);
- 	audit_inode_child(dir, new_dentry, AUDIT_TYPE_CHILD_CREATE);
- 
-+	/* fsnotify_path_create() will be called */
-+	if (new_dentry->d_flags & DCACHE_PATH_CREATE)
-+		return;
-+
- 	fsnotify_name(dir, FS_CREATE, inode, &new_dentry->d_name, 0);
- }
- 
-@@ -223,6 +255,10 @@ static inline void fsnotify_mkdir(struct inode *inode, struct dentry *dentry)
- {
- 	audit_inode_child(inode, dentry, AUDIT_TYPE_CHILD_CREATE);
- 
-+	/* fsnotify_path_create() will be called */
-+	if (dentry->d_flags & DCACHE_PATH_CREATE)
-+		return;
-+
- 	fsnotify_dirent(inode, dentry, FS_CREATE | FS_ISDIR);
- }
- 
--- 
-2.30.0
+> 
+> 
+> > > > ---
+> > > >  drivers/thermal/thermal_core.c    |  6 ++++--
+> > > >  drivers/thermal/thermal_netlink.c | 11 ++++++-----
+> > > >  drivers/thermal/thermal_netlink.h |  8 ++++----
+> > > >  include/uapi/linux/thermal.h      |  2 +-
+> > > >  4 files changed, 15 insertions(+), 12 deletions(-)
+> > > > 
+> > > > diff --git a/drivers/thermal/thermal_core.c
+> > > > b/drivers/thermal/thermal_core.c
+> > > > index 996c038f83a4..948020ef51b1 100644
+> > > > --- a/drivers/thermal/thermal_core.c
+> > > > +++ b/drivers/thermal/thermal_core.c
+> > > > @@ -430,10 +430,12 @@ static void handle_thermal_trip(struct
+> > > > thermal_zone_device *tz, int trip)
+> > > >         if (tz->last_temperature != THERMAL_TEMP_INVALID) {
+> > > >                 if (tz->last_temperature < trip_temp &&
+> > > >                     tz->temperature >= trip_temp)
+> > > > -                       thermal_notify_tz_trip_up(tz->id,
+> > > > trip);
+> > > > +                       thermal_notify_tz_trip_up(tz->id, trip,
+> > > > +                                                 tz-
+> > > > >temperature);
+> > > >                 if (tz->last_temperature >= trip_temp &&
+> > > >                     tz->temperature < (trip_temp - hyst))
+> > > > -                       thermal_notify_tz_trip_down(tz->id,
+> > > > trip);
+> > > > +                       thermal_notify_tz_trip_down(tz->id,
+> > > > trip,
+> > > > +                                                   tz-
+> > > > > temperature);
+> > > >         }
+> > > > 
+> > > >         if (type == THERMAL_TRIP_CRITICAL || type ==
+> > > > THERMAL_TRIP_HOT)
+> > > > diff --git a/drivers/thermal/thermal_netlink.c
+> > > > b/drivers/thermal/thermal_netlink.c
+> > > > index 1234dbe95895..a16dd4d5d710 100644
+> > > > --- a/drivers/thermal/thermal_netlink.c
+> > > > +++ b/drivers/thermal/thermal_netlink.c
+> > > > @@ -121,7 +121,8 @@ static int thermal_genl_event_tz(struct
+> > > > param
+> > > > *p)
+> > > >  static int thermal_genl_event_tz_trip_up(struct param *p)
+> > > >  {
+> > > >         if (nla_put_u32(p->msg, THERMAL_GENL_ATTR_TZ_ID, p-
+> > > > >tz_id)
+> > > > -           nla_put_u32(p->msg, THERMAL_GENL_ATTR_TZ_TRIP_ID,
+> > > > p-
+> > > > > trip_id))
+> > > > +           nla_put_u32(p->msg, THERMAL_GENL_ATTR_TZ_TRIP_ID,
+> > > > p-
+> > > > > trip_id) ||
+> > > > +           nla_put_u32(p->msg, THERMAL_GENL_ATTR_TZ_TEMP, p-
+> > > > > temp))
+> > > >                 return -EMSGSIZE;
+> > > > 
+> > > >         return 0;
+> > > > @@ -285,16 +286,16 @@ int thermal_notify_tz_disable(int tz_id)
+> > > >         return
+> > > > thermal_genl_send_event(THERMAL_GENL_EVENT_TZ_DISABLE, &p);
+> > > >  }
+> > > > 
+> > > > -int thermal_notify_tz_trip_down(int tz_id, int trip_id)
+> > > > +int thermal_notify_tz_trip_down(int tz_id, int trip_id, int
+> > > > temp)
+> > > >  {
+> > > > -       struct param p = { .tz_id = tz_id, .trip_id = trip_id
+> > > > };
+> > > > +       struct param p = { .tz_id = tz_id, .trip_id = trip_id,
+> > > > .temp = temp };
+> > > > 
+> > > >         return
+> > > > thermal_genl_send_event(THERMAL_GENL_EVENT_TZ_TRIP_DOWN, &p);
+> > > >  }
+> > > > 
+> > > > -int thermal_notify_tz_trip_up(int tz_id, int trip_id)
+> > > > +int thermal_notify_tz_trip_up(int tz_id, int trip_id, int
+> > > > temp)
+> > > >  {
+> > > > -       struct param p = { .tz_id = tz_id, .trip_id = trip_id
+> > > > };
+> > > > +       struct param p = { .tz_id = tz_id, .trip_id = trip_id,
+> > > > .temp = temp };
+> > > > 
+> > > >         return
+> > > > thermal_genl_send_event(THERMAL_GENL_EVENT_TZ_TRIP_UP, &p);
+> > > >  }
+> > > > diff --git a/drivers/thermal/thermal_netlink.h
+> > > > b/drivers/thermal/thermal_netlink.h
+> > > > index 828d1dddfa98..e554f76291f4 100644
+> > > > --- a/drivers/thermal/thermal_netlink.h
+> > > > +++ b/drivers/thermal/thermal_netlink.h
+> > > > @@ -11,8 +11,8 @@ int thermal_notify_tz_create(int tz_id, const
+> > > > char *name);
+> > > >  int thermal_notify_tz_delete(int tz_id);
+> > > >  int thermal_notify_tz_enable(int tz_id);
+> > > >  int thermal_notify_tz_disable(int tz_id);
+> > > > -int thermal_notify_tz_trip_down(int tz_id, int id);
+> > > > -int thermal_notify_tz_trip_up(int tz_id, int id);
+> > > > +int thermal_notify_tz_trip_down(int tz_id, int id, int temp);
+> > > > +int thermal_notify_tz_trip_up(int tz_id, int id, int temp);
+> > > >  int thermal_notify_tz_trip_delete(int tz_id, int id);
+> > > >  int thermal_notify_tz_trip_add(int tz_id, int id, int type,
+> > > >                                int temp, int hyst);
+> > > > @@ -49,12 +49,12 @@ static inline int
+> > > > thermal_notify_tz_disable(int
+> > > > tz_id)
+> > > >         return 0;
+> > > >  }
+> > > > 
+> > > > -static inline int thermal_notify_tz_trip_down(int tz_id, int
+> > > > id)
+> > > > +static inline int thermal_notify_tz_trip_down(int tz_id, int
+> > > > id,
+> > > > int temp)
+> > > >  {
+> > > >         return 0;
+> > > >  }
+> > > > 
+> > > > -static inline int thermal_notify_tz_trip_up(int tz_id, int id)
+> > > > +static inline int thermal_notify_tz_trip_up(int tz_id, int id,
+> > > > int
+> > > > temp)
+> > > >  {
+> > > >         return 0;
+> > > >  }
+> > > > diff --git a/include/uapi/linux/thermal.h
+> > > > b/include/uapi/linux/thermal.h
+> > > > index c105054cbb57..bf5d9c8ef16f 100644
+> > > > --- a/include/uapi/linux/thermal.h
+> > > > +++ b/include/uapi/linux/thermal.h
+> > > > @@ -18,7 +18,7 @@ enum thermal_trip_type {
+> > > > 
+> > > >  /* Adding event notification support elements */
+> > > >  #define THERMAL_GENL_FAMILY_NAME               "thermal"
+> > > > -#define THERMAL_GENL_VERSION                   0x01
+> > > > +#define THERMAL_GENL_VERSION                   0x02
+> > > >  #define THERMAL_GENL_SAMPLING_GROUP_NAME       "sampling"
+> > > >  #define THERMAL_GENL_EVENT_GROUP_NAME          "event"
+> > > > 
+> > > > --
+> > > > 2.17.1
+> > > > 
+> 
+> 
 
