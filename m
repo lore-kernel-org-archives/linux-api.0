@@ -2,155 +2,118 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-4.0 required=3.0 tests=BAYES_00,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 48763C433B4
-	for <linux-api@archiver.kernel.org>; Wed, 31 Mar 2021 15:21:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 231FEC433B4
+	for <linux-api@archiver.kernel.org>; Wed, 31 Mar 2021 16:32:23 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 250CD61025
-	for <linux-api@archiver.kernel.org>; Wed, 31 Mar 2021 15:21:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id F0E796100C
+	for <linux-api@archiver.kernel.org>; Wed, 31 Mar 2021 16:32:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236228AbhCaPVP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 31 Mar 2021 11:21:15 -0400
-Received: from mout.kundenserver.de ([212.227.126.133]:36397 "EHLO
-        mout.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236167AbhCaPVL (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 31 Mar 2021 11:21:11 -0400
-Received: from [192.168.1.155] ([77.4.59.177]) by mrelayeu.kundenserver.de
- (mreue009 [212.227.15.167]) with ESMTPSA (Nemesis) id
- 1N6KML-1lhFle26f3-016hMd; Wed, 31 Mar 2021 17:18:31 +0200
-Subject: Re: [PATCH v1 0/3] drivers/char: remove /dev/kmem for good
-To:     Andrew Morton <akpm@linux-foundation.org>,
-        David Hildenbrand <david@redhat.com>
-Cc:     linux-kernel@vger.kernel.org, linux-mm@kvack.org,
-        "Alexander A. Klimov" <grandmaster@al2klimov.de>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        Alexandre Belloni <alexandre.belloni@bootlin.com>,
-        Andrew Lunn <andrew@lunn.ch>,
-        Andrey Zhizhikin <andrey.zhizhikin@leica-geosystems.com>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Benjamin Herrenschmidt <benh@kernel.crashing.org>,
-        Brian Cain <bcain@codeaurora.org>,
-        Christian Borntraeger <borntraeger@de.ibm.com>,
-        Christophe Leroy <christophe.leroy@csgroup.eu>,
-        Chris Zankel <chris@zankel.net>,
-        Corentin Labbe <clabbe@baylibre.com>,
-        "David S. Miller" <davem@davemloft.net>,
-        "Eric W. Biederman" <ebiederm@xmission.com>,
-        Geert Uytterhoeven <geert@linux-m68k.org>,
-        Gerald Schaefer <gerald.schaefer@linux.ibm.com>,
-        Greentime Hu <green.hu@gmail.com>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Gregory Clement <gregory.clement@bootlin.com>,
-        Heiko Carstens <hca@linux.ibm.com>,
-        Helge Deller <deller@gmx.de>, Hillf Danton <hdanton@sina.com>,
-        huang ying <huang.ying.caritas@gmail.com>,
-        Ingo Molnar <mingo@kernel.org>,
-        Ivan Kokshaysky <ink@jurassic.park.msu.ru>,
-        "James E.J. Bottomley" <James.Bottomley@HansenPartnership.com>,
-        James Troup <james.troup@canonical.com>,
-        Jiaxun Yang <jiaxun.yang@flygoat.com>,
-        Jonas Bonn <jonas@southpole.se>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Kairui Song <kasong@redhat.com>,
-        Krzysztof Kozlowski <krzk@kernel.org>,
-        Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        Liviu Dudau <liviu.dudau@arm.com>,
-        Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>,
-        Luc Van Oostenryck <luc.vanoostenryck@gmail.com>,
-        Luis Chamberlain <mcgrof@kernel.org>,
-        Matthew Wilcox <willy@infradead.org>,
-        Matt Turner <mattst88@gmail.com>,
-        Max Filippov <jcmvbkbc@gmail.com>,
-        Michael Ellerman <mpe@ellerman.id.au>,
-        Michal Hocko <mhocko@suse.com>,
-        Mike Rapoport <rppt@kernel.org>,
-        Mikulas Patocka <mpatocka@redhat.com>,
-        Minchan Kim <minchan@kernel.org>,
-        Niklas Schnelle <schnelle@linux.ibm.com>,
-        Oleksiy Avramchenko <oleksiy.avramchenko@sonymobile.com>,
-        Palmer Dabbelt <palmerdabbelt@google.com>,
-        Paul Mackerras <paulus@samba.org>,
-        "Pavel Machek (CIP)" <pavel@denx.de>, Pavel Machek <pavel@ucw.cz>,
-        "Peter Zijlstra (Intel)" <peterz@infradead.org>,
-        Pierre Morel <pmorel@linux.ibm.com>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        Richard Henderson <rth@twiddle.net>,
-        Rich Felker <dalias@libc.org>,
-        Robert Richter <rric@kernel.org>,
-        Rob Herring <robh@kernel.org>,
-        Russell King <linux@armlinux.org.uk>,
-        Sam Ravnborg <sam@ravnborg.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>,
-        Stafford Horne <shorne@gmail.com>,
-        Stefan Kristiansson <stefan.kristiansson@saunalahti.fi>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Sudeep Holla <sudeep.holla@arm.com>,
-        Theodore Dubois <tblodt@icloud.com>,
-        Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Vasily Gorbik <gor@linux.ibm.com>,
-        Viresh Kumar <viresh.kumar@linaro.org>,
-        William Cohen <wcohen@redhat.com>,
-        Xiaoming Ni <nixiaoming@huawei.com>,
-        Yoshinori Sato <ysato@users.osdn.me>
-References: <20210324102351.6932-1-david@redhat.com>
- <20210324122412.e77247e6d3259d5493951019@linux-foundation.org>
-From:   "Enrico Weigelt, metux IT consult" <lkml@metux.net>
-Message-ID: <96217148-3104-410f-a765-72565ec46c9f@metux.net>
-Date:   Wed, 31 Mar 2021 17:18:13 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.9.0
+        id S234018AbhCaQbu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 31 Mar 2021 12:31:50 -0400
+Received: from mail-ed1-f52.google.com ([209.85.208.52]:44908 "EHLO
+        mail-ed1-f52.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S234040AbhCaQb2 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 31 Mar 2021 12:31:28 -0400
+Received: by mail-ed1-f52.google.com with SMTP id j3so22984265edp.11;
+        Wed, 31 Mar 2021 09:31:28 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=oweZjjwop38EsR+FhQjGg4CvnspHSK7xcJXVqop9w7w=;
+        b=JEvoh0jAxaeR5Fn0baKgOwx/t0QXPvOLY3OQUqE4hJeOYH99dxvj5T69vqepX2BxUS
+         a6j+wN6mmI/kuSZZlKWZtzqAfJEK9woA6Z3d4vhUKeLeGjjwtyhfj0kJ/0iXIvkl35ep
+         X6Cpf2WZnnD+9uNDkzqo7qRnm2gEpDjn4Hh/W2Lc0RgJCWpnR50gtBpijW2neRyHUG5A
+         syIQWP5KPoVvI2LcEz4l9GeG6A/hpnIWaaC2sUyFyUbEbXAkJFnTvxTFH2fjxD8AiEUJ
+         vD9PbRXQ5u/fh+RvK1bn1BV4R2i+KuU+ha8goPh14iLXxBSH6vsy0F1EMHTMBW6+D5gu
+         xcPg==
+X-Gm-Message-State: AOAM531yXn/+FPaiVwhSxY9Uhr10zjyD/o5ycKUV9LlVtjKTIH3Ob/S6
+        +15IEm0Qr3oTSFPYmhitYC8O2RjvMDMzBiuqXrA=
+X-Google-Smtp-Source: ABdhPJyx/SjornA6FNW5D3g0KangJ7zbgy74Uj8OaY2dy4QM25EW5wj+HzQ1r09VH6WBM1WGfM0CnkayxaKZfbA4+yc=
+X-Received: by 2002:a05:6402:35c9:: with SMTP id z9mr4801329edc.94.1617208287371;
+ Wed, 31 Mar 2021 09:31:27 -0700 (PDT)
 MIME-Version: 1.0
-In-Reply-To: <20210324122412.e77247e6d3259d5493951019@linux-foundation.org>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: tl
-Content-Transfer-Encoding: 8bit
-X-Provags-ID: V03:K1:VfyGJx6Kl38NiTptnjW3K10nVzgYxIK8cs0hHkREs3FHQJsYUzp
- Wwx4CLOohzFUI1f1nKfkOSZwrXbXzZis2skwvyYhEeCHAspoX/OHyW23B058DaozKIutafE
- RSAL9geaw+/9+9vrkJIUdhjYie7dIhZTPjgXgqaRg2ssWV6pq8U4x9hDZGBnqFyEkV52hu3
- ZlT4oTDCAC9+DCSMSIg5w==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:npk68NHKQ78=:22Pdn/EmXUk4GSszcJcY8V
- ikE19qv26vOphPBgZhBKpWAZli3GdkyjclfZTMaekBwday1DA2ILKN8zX8jxNeCuqx+QSueBK
- QXXt9Gx9yQyTPoetkWN+5JSiNmgOd8lDN4AQqFGv7Qs04vQRyWJghIE54EkIGfAx602nqw+nI
- E3nB809vwyVp/T9Qb5Lv/ZgGQajrsWkgu+5OhKkH4EdKmNh3IGtyVUYHb+W7vQnAeSU372Lpf
- j9OvV49plSUMrRv5Oa0F4Eee90ponbTbIwsBmGaidcFGDB8TzIwZovV10mMFbeoCto2fwt25v
- vDT30jWTQ7gHhOWh0mq5iNkxXbbLkDxDC/TEGa9y2UMT9M+NKSLQtIMxlGfo0JyodIEBni+b2
- BQRDqz+iD+HGK440usz3MwcXRCJD1D1xI10bs628FA73DXT9jmVlOEdfhrfLVVDEfber0j9xA
- ydWMLwuQfCF5l9tzl0E0FdhrbQVQ/SPwcqPUVh9mlIvgam6WC/nf
+References: <d10affcb-d315-cebc-4162-084f0a1e4d43@intel.com>
+ <F2653B18-239A-42BB-84EE-04F18B712279@amacapital.net> <CAJvTdKnwexRpHrLFQv+2ykK9WEqtXMwehjfa_D7T+O_8DO_CGA@mail.gmail.com>
+ <4aa49572cc5f4797922352d1760f3ef4@AcuMS.aculab.com>
+In-Reply-To: <4aa49572cc5f4797922352d1760f3ef4@AcuMS.aculab.com>
+From:   Len Brown <lenb@kernel.org>
+Date:   Wed, 31 Mar 2021 12:31:16 -0400
+Message-ID: <CAJvTdK=evAofQRcmt_iwtYx2f_wTGUDpXzvjuiVwgZZ6BZV_Qg@mail.gmail.com>
+Subject: Re: Candidate Linux ABI for Intel AMX and hypothetical new related features
+To:     David Laight <David.Laight@aculab.com>
+Cc:     Andy Lutomirski <luto@amacapital.net>,
+        Dave Hansen <dave.hansen@intel.com>,
+        Andy Lutomirski <luto@kernel.org>,
+        Greg KH <gregkh@linuxfoundation.org>,
+        "Bae, Chang Seok" <chang.seok.bae@intel.com>,
+        X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>,
+        libc-alpha <libc-alpha@sourceware.org>,
+        Florian Weimer <fweimer@redhat.com>,
+        Rich Felker <dalias@libc.org>, Kyle Huey <me@kylehuey.com>,
+        Keno Fischer <keno@juliacomputing.com>,
+        Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 24.03.21 20:24, Andrew Morton wrote:
+On Tue, Mar 30, 2021 at 6:01 PM David Laight <David.Laight@aculab.com> wrote:
 
-> We do tend to think about distros.  I bet there are a number of weird
-> embedded type systems using /dev/kmem - it's amazing what sorts of
-> hacks those people will put up with the get something out the door.
+> > Can we leave it in live registers?  That would be the speed-of-light
+> > signal handler approach.  But we'd need to teach the signal handler to
+> > not clobber it.  Perhaps that could be part of the contract that a
+> > fast signal handler signs?  INIT=0 AMX state could simply sit
+> > patiently in the AMX registers for the duration of the signal handler.
+> > You can't get any faster than doing nothing :-)
+> >
+> > Of course part of the contract for the fast signal handler is that it
+> > knows that it can't possibly use XRESTOR of the stuff on the stack to
+> > necessarily get back to the state of the signaled thread (assuming we
+> > even used XSTATE format on the fast signal handler stack, it would
+> > forget the contents of the AMX registers, in this example)
+>
+> gcc will just use the AVX registers for 'normal' code within
+> the signal handler.
+> So it has to have its own copy of all the registers.
+> (Well, maybe you could make the TMX instructions fault,
+> but that would need a nested signal delivered.)
 
-There certainly are (seen lots of such crap), another good reason for
-kicking it out asap.
+This is true, by default, but it doesn't have to be true.
 
-> But those systems tend to carry a lot of specialized changes anyway, so
-> they can just add "revert David's patch" to their pile.
+Today, gcc has an annotation for user-level interrupts
+https://gcc.gnu.org/onlinedocs/gcc/x86-Function-Attributes.html#x86-Function-Attributes
 
-Often those kind of people aren't capable of that. If anyone finds such
-systems, report them to cert, bsi, fd, ...
+An analogous annotation could be created for fast signals.
+gcc can be told exactly what registers and instructions it can use for
+that routine.
 
+Of course, this begs the question about what routines that handler calls,
+and that would need to be constrained too.
 
---mtx
+Today signal-safety(7) advises programmers to limit what legacy signal handlers
+can call.  There is no reason that a fast-signal-safety(7) could not be created
+for the fast path.
 
--- 
----
-Hinweis: unverschlüsselte E-Mails können leicht abgehört und manipuliert
-werden ! Für eine vertrauliche Kommunikation senden Sie bitte ihren
-GPG/PGP-Schlüssel zu.
----
-Enrico Weigelt, metux IT consult
-Free software and Linux embedded engineering
-info@metux.net -- +49-151-27565287
+> There is also the register save buffer that you need in order
+> to long-jump out of a signal handler.
+> Unfortunately that is required to work.
+> I'm pretty sure the original setjmp/longjmp just saved the stack
+> pointer - but that really doesn't work any more.
+>
+> OTOH most signal handlers don't care - but there isn't a flag
+> to sigset() (etc) so ask for a specific register layout.
+
+Right, the idea is to optimize for *most* signal handlers,
+since making any changes to *all* signal handlers is intractable.
+
+So the idea is that opting-in to a fast signal handler would opt-out
+of some legacy signal capibilities.  Complete state is one of them,
+and thus long-jump is not supported, because the complete state
+may not automatically be available.
+
+thanks,
+Len Brown, Intel Open Source Technology Center
