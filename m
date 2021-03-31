@@ -2,30 +2,40 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3D8ABC433B4
-	for <linux-api@archiver.kernel.org>; Wed, 31 Mar 2021 15:12:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 87E3DC433ED
+	for <linux-api@archiver.kernel.org>; Wed, 31 Mar 2021 15:20:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 16E8A6101E
-	for <linux-api@archiver.kernel.org>; Wed, 31 Mar 2021 15:12:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5792261026
+	for <linux-api@archiver.kernel.org>; Wed, 31 Mar 2021 15:20:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236091AbhCaPLy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 31 Mar 2021 11:11:54 -0400
-Received: from mout.kundenserver.de ([212.227.126.134]:39001 "EHLO
-        mout.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235662AbhCaPLk (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 31 Mar 2021 11:11:40 -0400
-Received: from [192.168.1.155] ([77.4.59.177]) by mrelayeu.kundenserver.de
- (mreue010 [212.227.15.167]) with ESMTPSA (Nemesis) id
- 1N1OsF-1ldQAY0W9z-012smt; Wed, 31 Mar 2021 17:08:21 +0200
-Subject: Re: [PATCH RFC 0/3] drivers/char: remove /dev/kmem for good
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        id S235662AbhCaPTh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 31 Mar 2021 11:19:37 -0400
+Received: from mx2.suse.de ([195.135.220.15]:56810 "EHLO mx2.suse.de"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S236256AbhCaPTL (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 31 Mar 2021 11:19:11 -0400
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+        t=1617203949; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=p6Ufx+acUY8pZhy/92+xIrmM8aKDEPteIyaOrAwJ5Og=;
+        b=GsCXeGFK5kIImf19mhwCwL/Xwmux98ybVuD6tWvR3u8+3C361FnJkHS1BCM5Uf0kBb65zA
+        IBycCO7HgQTI8H6hAwJfgDztnumNe98AdbdlnEvg3mFmkHixGhfiHUG6oc4jJtGaQKyvRk
+        hsYOcjnYDkhEr3IxqRioy9k3qJOodrE=
+Received: from relay2.suse.de (unknown [195.135.221.27])
+        by mx2.suse.de (Postfix) with ESMTP id 97CBAB2FF;
+        Wed, 31 Mar 2021 15:19:09 +0000 (UTC)
+Date:   Wed, 31 Mar 2021 17:19:03 +0200
+From:   Michal Hocko <mhocko@suse.com>
+To:     "Enrico Weigelt, metux IT consult" <lkml@metux.net>
+Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Linus Torvalds <torvalds@linux-foundation.org>,
-        carnil@debian.org
-Cc:     David Hildenbrand <david@redhat.com>,
+        carnil@debian.org, David Hildenbrand <david@redhat.com>,
         Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
         Linux-MM <linux-mm@kvack.org>,
         "Alexander A. Klimov" <grandmaster@al2klimov.de>,
@@ -69,7 +79,6 @@ Cc:     David Hildenbrand <david@redhat.com>,
         Matt Turner <mattst88@gmail.com>,
         Max Filippov <jcmvbkbc@gmail.com>,
         Michael Ellerman <mpe@ellerman.id.au>,
-        Michal Hocko <mhocko@suse.com>,
         Mike Rapoport <rppt@kernel.org>,
         Mikulas Patocka <mpatocka@redhat.com>,
         Minchan Kim <minchan@kernel.org>,
@@ -100,60 +109,40 @@ Cc:     David Hildenbrand <david@redhat.com>,
         William Cohen <wcohen@redhat.com>,
         Xiaoming Ni <nixiaoming@huawei.com>,
         Yoshinori Sato <ysato@users.sourceforge.jp>
+Subject: Re: [PATCH RFC 0/3] drivers/char: remove /dev/kmem for good
+Message-ID: <YGSS54HiG0eFM0J0@dhcp22.suse.cz>
 References: <20210319143452.25948-1-david@redhat.com>
  <CAHk-=wg1HTbXkjdMYA4zADEiE8HwpZ0=uWy0ujZTJYVT-KCehQ@mail.gmail.com>
  <20210319173334.pwkuj5np5ixwmtug@linutronix.de>
-From:   "Enrico Weigelt, metux IT consult" <lkml@metux.net>
-Message-ID: <dd297d94-8358-81b8-9a5b-0ebbfb5378d1@metux.net>
-Date:   Wed, 31 Mar 2021 17:08:03 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.9.0
+ <dd297d94-8358-81b8-9a5b-0ebbfb5378d1@metux.net>
 MIME-Version: 1.0
-In-Reply-To: <20210319173334.pwkuj5np5ixwmtug@linutronix.de>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: tl
-Content-Transfer-Encoding: 8bit
-X-Provags-ID: V03:K1:NovW3JxGTDnwNoX8z11i7Qai9NMNdLjbbHxHpmU3YZzCMtybqZd
- yLm4MZ7QANLpJ5UiTNQSzHFfCeioM6WJVyU7OZfjnpfvv1P5kDNWPKYM+yanZQI/xQk6pEz
- n5M1ef3viMmEZF8lRWCbzppAlaJdojVqJzjUoDYnsSuOtjGA+8AynOVWhdj7fiSC1pyonk1
- A1/b/YVuE+aw+MqjqKlFQ==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:GVn3kEhfAUs=:scsDeyIwHfX6aX05tC1oKm
- cW6nGO6eITFlaj9OIXEB77gyjNq3cfB9zpf6Q4Vx8ThjYmSH52i1UoJ0XLjCZXA+DYHWJsIEM
- l9CjmHG1cmLhKLbCReyFzMVuQUpZkt0Z6wVXHU1zMAWdUNjTwuHa61gZImwoS1BwTCYGH1hPK
- XJ2eUjOo3PSQepLmOZg1FcvaJOliITh/TNU2vZriVTHJS/yWO1rsZFu0aZ78xRAK/Qv7pn1lh
- FcTwZXqNM47B5atRCP9cKZmB8qXydvA06AN4yeFvcEK967k3zYFPUxHFs0QGXNcVqytEmmqdr
- 5Uy8Q5zZ8SZ7OrJjPOG3YKezsX3nKJjTSdFGSYbjqWjaGJJenXbbqcH8kzMlW1pyeNA3zheP8
- ovRQc96zO6LnD1cWsAUXFigjfIUwJotOGS55qjFUsHhS05Kx46dsDxX50yZe+OIJAS50uJ0Qh
- caURffhjxM7ob9kSOWVdZ/d1aSV6f4Yx7NdcOHP5s+PwgxHl5nji
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <dd297d94-8358-81b8-9a5b-0ebbfb5378d1@metux.net>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 19.03.21 18:33, Sebastian Andrzej Siewior wrote:
-> On 2021-03-19 10:14:02 [-0700], Linus Torvalds wrote:
->> On Fri, Mar 19, 2021 at 7:35 AM David Hildenbrand <david@redhat.com> wrote:
->>>
->>> Let's start a discussion if /dev/kmem is worth keeping around and
->>> fixing/maintaining or if we should just remove it now for good.
->>
->> I'll happily do this for the next merge window, but would really want
->> distros to confirm that they don't enable it.
->>
->> I can confirm that it's certainly not enabled on any of the machines I
->> have, but..
+On Wed 31-03-21 17:08:03, Enrico Weigelt, metux IT consult wrote:
+> On 19.03.21 18:33, Sebastian Andrzej Siewior wrote:
+> > On 2021-03-19 10:14:02 [-0700], Linus Torvalds wrote:
+> > > On Fri, Mar 19, 2021 at 7:35 AM David Hildenbrand <david@redhat.com> wrote:
+> > > > 
+> > > > Let's start a discussion if /dev/kmem is worth keeping around and
+> > > > fixing/maintaining or if we should just remove it now for good.
+> > > 
+> > > I'll happily do this for the next merge window, but would really want
+> > > distros to confirm that they don't enable it.
+> > > 
+> > > I can confirm that it's certainly not enabled on any of the machines I
+> > > have, but..
+> > 
+> > Debian has CONFIG_DEVKMEM disabled since 2.6.31.
 > 
-> Debian has CONFIG_DEVKMEM disabled since 2.6.31.
+> SLES, too. (but no idea since when exactly)
 
-SLES, too. (but no idea since when exactly)
-
---mtx
+15-SP2 IIRC
 
 -- 
----
-Hinweis: unverschlüsselte E-Mails können leicht abgehört und manipuliert
-werden ! Für eine vertrauliche Kommunikation senden Sie bitte ihren
-GPG/PGP-Schlüssel zu.
----
-Enrico Weigelt, metux IT consult
-Free software and Linux embedded engineering
-info@metux.net -- +49-151-27565287
+Michal Hocko
+SUSE Labs
