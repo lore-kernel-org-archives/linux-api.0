@@ -2,36 +2,36 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 98846C433ED
-	for <linux-api@archiver.kernel.org>; Thu,  1 Apr 2021 22:14:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 67176C433B4
+	for <linux-api@archiver.kernel.org>; Thu,  1 Apr 2021 22:14:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5864561156
-	for <linux-api@archiver.kernel.org>; Thu,  1 Apr 2021 22:14:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 259E261103
+	for <linux-api@archiver.kernel.org>; Thu,  1 Apr 2021 22:14:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235755AbhDAWOW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 1 Apr 2021 18:14:22 -0400
-Received: from mga09.intel.com ([134.134.136.24]:14872 "EHLO mga09.intel.com"
+        id S235669AbhDAWOc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 1 Apr 2021 18:14:32 -0400
+Received: from mga09.intel.com ([134.134.136.24]:14882 "EHLO mga09.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S234117AbhDAWOT (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 1 Apr 2021 18:14:19 -0400
-IronPort-SDR: xyRMCUl3oCp9lmuQCyo7cQHC3+LGgXFgQLpeVrURA7jKshaVmZ3XK+4TZiNT9P3navqBh5m6nr
- aagJcyQBj41g==
-X-IronPort-AV: E=McAfee;i="6000,8403,9941"; a="192444263"
+        id S233677AbhDAWOZ (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 1 Apr 2021 18:14:25 -0400
+IronPort-SDR: HoQEr66u/CE3lFsbyg4gYULp79YjEbfIinUhac/YypFEOdEAL8XrxnyP2KA3yeQX04togTRCOT
+ UCKEU+23ZLvg==
+X-IronPort-AV: E=McAfee;i="6000,8403,9941"; a="192444269"
 X-IronPort-AV: E=Sophos;i="5.81,296,1610438400"; 
-   d="scan'208";a="192444263"
+   d="scan'208";a="192444269"
 Received: from orsmga002.jf.intel.com ([10.7.209.21])
-  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Apr 2021 15:14:18 -0700
-IronPort-SDR: gHw7cCWJsDcoR2FCgF85mq2P7vbSMGq9LxzeDTVRMsq/xBVkhqYfZz3RLRkR15QVkC42S7wsmM
- ynoYAECYa1/w==
+  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Apr 2021 15:14:20 -0700
+IronPort-SDR: 4L3RNjy02GcIcNYyHEnLDRALuW28qKzsBGIbyP+a+XRG2s5WVY5i92In3mCkVWRDVePDt0sUHA
+ eiI1yzXykUmQ==
 X-IronPort-AV: E=Sophos;i="5.81,296,1610438400"; 
-   d="scan'208";a="394700308"
+   d="scan'208";a="394700326"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga002-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Apr 2021 15:14:14 -0700
+  by orsmga002-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Apr 2021 15:14:20 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,67 +61,135 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v24 0/9] Control-flow Enforcement: Indirect Branch Tracking
-Date:   Thu,  1 Apr 2021 15:13:54 -0700
-Message-Id: <20210401221403.32253-1-yu-cheng.yu@intel.com>
+Subject: [PATCH v24 2/9] x86/cet/ibt: Add user-mode Indirect Branch Tracking support
+Date:   Thu,  1 Apr 2021 15:13:56 -0700
+Message-Id: <20210401221403.32253-3-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
+In-Reply-To: <20210401221403.32253-1-yu-cheng.yu@intel.com>
+References: <20210401221403.32253-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Control-flow Enforcement (CET) is a new Intel processor feature that blocks
-return/jump-oriented programming attacks.  Details are in "Intel 64 and
-IA-32 Architectures Software Developer's Manual" [1].
+Introduce user-mode Indirect Branch Tracking (IBT) support.  Add routines
+for the setup/disable of IBT.
 
-This is the second part of CET and enables Indirect Branch Tracking (IBT).
-It is built on top of the shadow stack series.
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: Kees Cook <keescook@chromium.org>
+---
+v24:
+- Move IBT routines to a separate ibt.c, update related areas accordingly.
 
-Changes in v24:
-- Split IBT into a separate Kconfig option, update related areas
-  accordingly.  Specific changes are called out in each patch's commit
-  log.
-- Patch #7: Update ENDBR definition with compiler macros.
-- Rebase to Linus tree v5.12-rc5.
-
-[1] Intel 64 and IA-32 Architectures Software Developer's Manual:
-
-    https://software.intel.com/en-us/download/intel-64-and-ia-32-
-    architectures-sdm-combined-volumes-1-2a-2b-2c-2d-3a-3b-3c-3d-and-4
-
-[2] Indirect Branch Tracking patches v23:
-
-    https://lore.kernel.org/r/20210316151320.6123-1-yu-cheng.yu@intel.com/
-
-H.J. Lu (3):
-  x86/cet/ibt: Update arch_prctl functions for Indirect Branch Tracking
-  x86/vdso: Insert endbr32/endbr64 to vDSO
-  x86/vdso/32: Add ENDBR to __kernel_vsyscall entry point
-
-Yu-cheng Yu (6):
-  x86/cet/ibt: Add Kconfig option for Indirect Branch Tracking
-  x86/cet/ibt: Add user-mode Indirect Branch Tracking support
-  x86/cet/ibt: Handle signals for Indirect Branch Tracking
-  x86/cet/ibt: Update ELF header parsing for Indirect Branch Tracking
-  x86/vdso: Introduce ENDBR macro
-  x86/vdso: Add ENDBR to __vdso_sgx_enter_enclave
-
- arch/x86/Kconfig                         | 22 +++++++++
- arch/x86/entry/vdso/Makefile             |  5 +++
- arch/x86/entry/vdso/vdso32/system_call.S |  2 +
- arch/x86/entry/vdso/vsgx.S               |  4 ++
- arch/x86/include/asm/cet.h               |  9 ++++
- arch/x86/include/asm/disabled-features.h |  8 +++-
- arch/x86/include/asm/vdso.h              | 19 +++++++-
- arch/x86/kernel/Makefile                 |  1 +
- arch/x86/kernel/cet_prctl.c              |  5 +++
- arch/x86/kernel/fpu/signal.c             | 30 +++++++++++--
- arch/x86/kernel/ibt.c                    | 57 ++++++++++++++++++++++++
- arch/x86/kernel/process_64.c             |  8 ++++
- 12 files changed, 165 insertions(+), 5 deletions(-)
+ arch/x86/include/asm/cet.h |  9 ++++++
+ arch/x86/kernel/Makefile   |  1 +
+ arch/x86/kernel/ibt.c      | 57 ++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 67 insertions(+)
  create mode 100644 arch/x86/kernel/ibt.c
 
+diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+index 26124820d46f..b3df306699b4 100644
+--- a/arch/x86/include/asm/cet.h
++++ b/arch/x86/include/asm/cet.h
+@@ -15,6 +15,7 @@ struct cet_status {
+ 	unsigned long	shstk_base;
+ 	unsigned long	shstk_size;
+ 	unsigned int	locked:1;
++	unsigned int	ibt_enabled:1;
+ };
+ 
+ #ifdef CONFIG_X86_SHADOW_STACK
+@@ -41,6 +42,14 @@ static inline int shstk_check_rstor_token(bool ia32, unsigned long token_addr,
+ 					  unsigned long *new_ssp) { return 0; }
+ #endif
+ 
++#ifdef CONFIG_X86_IBT
++int ibt_setup(void);
++void ibt_disable(void);
++#else
++static inline int ibt_setup(void) { return 0; }
++static inline void ibt_disable(void) {}
++#endif
++
+ #ifdef CONFIG_X86_CET
+ int prctl_cet(int option, u64 arg2);
+ #else
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index 868cb3aac618..9653e422d0f3 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -152,6 +152,7 @@ obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
+ obj-$(CONFIG_AMD_MEM_ENCRYPT)		+= sev-es.o
+ obj-$(CONFIG_X86_SHADOW_STACK)		+= shstk.o
+ obj-$(CONFIG_X86_CET)			+= cet_prctl.o
++obj-$(CONFIG_X86_IBT)			+= ibt.o
+ 
+ ###
+ # 64 bit specific files
+diff --git a/arch/x86/kernel/ibt.c b/arch/x86/kernel/ibt.c
+new file mode 100644
+index 000000000000..d2cef1a0345b
+--- /dev/null
++++ b/arch/x86/kernel/ibt.c
+@@ -0,0 +1,57 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * ibt.c - Intel Indirect Branch Tracking support
++ *
++ * Copyright (c) 2021, Intel Corporation.
++ * Yu-cheng Yu <yu-cheng.yu@intel.com>
++ */
++
++#include <linux/user.h>
++#include <asm/msr.h>
++#include <asm/fpu/internal.h>
++#include <asm/fpu/xstate.h>
++#include <asm/fpu/types.h>
++#include <asm/cet.h>
++
++static void start_update_msrs(void)
++{
++	fpregs_lock();
++	if (test_thread_flag(TIF_NEED_FPU_LOAD))
++		__fpregs_load_activate();
++}
++
++static void end_update_msrs(void)
++{
++	fpregs_unlock();
++}
++
++int ibt_setup(void)
++{
++	u64 msr_val;
++
++	if (!cpu_feature_enabled(X86_FEATURE_IBT))
++		return -EOPNOTSUPP;
++
++	start_update_msrs();
++	rdmsrl(MSR_IA32_U_CET, msr_val);
++	msr_val |= (CET_ENDBR_EN | CET_NO_TRACK_EN);
++	wrmsrl(MSR_IA32_U_CET, msr_val);
++	end_update_msrs();
++	current->thread.cet.ibt_enabled = 1;
++	return 0;
++}
++
++void ibt_disable(void)
++{
++	u64 msr_val;
++
++	if (!cpu_feature_enabled(X86_FEATURE_IBT))
++		return;
++
++	start_update_msrs();
++	rdmsrl(MSR_IA32_U_CET, msr_val);
++	msr_val &= ~CET_ENDBR_EN;
++	wrmsrl(MSR_IA32_U_CET, msr_val);
++	end_update_msrs();
++	current->thread.cet.ibt_enabled = 0;
++}
 -- 
 2.21.0
 
