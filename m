@@ -5,56 +5,56 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 684E9C43460
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BD91DC43470
 	for <linux-api@archiver.kernel.org>; Thu,  1 Apr 2021 06:52:39 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 34DFF610CE
+	by mail.kernel.org (Postfix) with ESMTP id 97FE4610CF
 	for <linux-api@archiver.kernel.org>; Thu,  1 Apr 2021 06:52:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229459AbhDAGvj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 1 Apr 2021 02:51:39 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59938 "EHLO
+        id S232565AbhDAGvk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 1 Apr 2021 02:51:40 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59984 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232310AbhDAGva (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 1 Apr 2021 02:51:30 -0400
-Received: from mail-pj1-x102d.google.com (mail-pj1-x102d.google.com [IPv6:2607:f8b0:4864:20::102d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F3027C0613E6
-        for <linux-api@vger.kernel.org>; Wed, 31 Mar 2021 23:51:29 -0700 (PDT)
-Received: by mail-pj1-x102d.google.com with SMTP id il9-20020a17090b1649b0290114bcb0d6c2so2586293pjb.0
-        for <linux-api@vger.kernel.org>; Wed, 31 Mar 2021 23:51:29 -0700 (PDT)
+        with ESMTP id S233167AbhDAGvg (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 1 Apr 2021 02:51:36 -0400
+Received: from mail-pl1-x635.google.com (mail-pl1-x635.google.com [IPv6:2607:f8b0:4864:20::635])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 81663C0613E6
+        for <linux-api@vger.kernel.org>; Wed, 31 Mar 2021 23:51:36 -0700 (PDT)
+Received: by mail-pl1-x635.google.com with SMTP id v8so521135plz.10
+        for <linux-api@vger.kernel.org>; Wed, 31 Mar 2021 23:51:36 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=osandov-com.20150623.gappssmtp.com; s=20150623;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=fi2Oan0mGiDav2mDFzFT9HRE0EOQ+3jECdDIraTSexk=;
-        b=XQ86lQ4uO5W0N07XHeJXa1d+EXIJ/JfXF4DtoosSryycrrLeTXdfuq/KbCioRhE8Hg
-         En9/j1kfqqih3qlfA6Ddw8wTYegGCFT/+3eUEZ7f9Bq0dSMhXtQmqLlmBvuCswUho5Ba
-         9o3dv82jKFDcp54lG0Uf5hwy2bxPcgz3MJwN/Lrlzdfw6AoS6ODa7YnvPfcVlBDZhiND
-         ahzvVrF+iiyW1bdHWDIlB3ikPOK+Q/+CStHrN2t0Yy251licbNqBkucvHEKqBKVjA2UQ
-         NJ4iRlAUBrKx12XzXo54ouzIj0clQADnQd7J7MeTrDJek+msm0Kg5xTKd6zmGGlGGXgP
-         ixXw==
+        bh=V8uPByjtnHoUMkvJ5RUd2rRjE1zllky9RjeRMsW1NqQ=;
+        b=dFZnhYNW9EUE9e95vA11lEaGBczSZ0qlNbDAgV+vvMjg1tBDd/fEm/OHQbkFa59S3w
+         G8af9VZX6ApjeaEhEJqWyapEX+N/mt9cL66Zcf+hD/wZzjFRvCLylQjiXsFL2hPxg2vp
+         JVwqpu1qoV4FOUZmBrRuKmq4i2dbYk+NXwnbQjDHxzg7dl2UxmV13vvXzfk5K8cY9+Q3
+         CdymHGn0auRAdfiOEuP0UeXUxfc0UAE7AsIos1AfsmKUl+/9TLidn13Amq03Qf99TnWu
+         blSrTn0IJu4r0Zx/iFOnbBDs7DNM8vpYptOQrFx7hWrUfMOCHccqSGRGm3Ybda5gS2wH
+         Y8nw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=fi2Oan0mGiDav2mDFzFT9HRE0EOQ+3jECdDIraTSexk=;
-        b=cNAXigtVw1LgfUD82kCjXc8L+2Mc5gi1svx3dYmEVbKEPeZel8pVzXvwbkirk8gPkm
-         B2TRMarBx8+yMA/AXLgpatKHYyYsEKNHCM8nhQMe+Uxe1XGggha+/F33whA6v8HUlQsS
-         r2hhuA/rUGpLidKKszhut8fYrRKNwZojWStwkWd1EZeBiVNQM2tRvNjP709OxC9Q6gEI
-         SdowtLK/8L9c8QjTTQ69IFyc3xLjgPw+uAWIFCXi9wvQt6fVXI/+wzfTsGNJoo8oqx68
-         IkyHB1kEVzTL26q2jkskqgrgAzi/dINde2QpgN/IR3QkM9TKb6s7YJ3TU6WSAOVKl+Zn
-         Lyug==
-X-Gm-Message-State: AOAM532Xb2F1PY9Z5yEGw5+9EE0xwYgJ+Kh9VHc0G3vT3XC3douMhwoj
-        p23szwowxZTh0pNX4mEt8Qdz7KrFO7iNgQ==
-X-Google-Smtp-Source: ABdhPJwglSGsSsv4Q0/1gjwyc4kNp2Fh0c4K6jTX2oC/2h//t74GbXHnhluP11Ycwi4sbiZxCpektg==
-X-Received: by 2002:a17:90a:d991:: with SMTP id d17mr7290640pjv.229.1617259889486;
-        Wed, 31 Mar 2021 23:51:29 -0700 (PDT)
+        bh=V8uPByjtnHoUMkvJ5RUd2rRjE1zllky9RjeRMsW1NqQ=;
+        b=ESaT9jkeImqDVtQyD0ZwojFVGiLAIIGp9gjKp5gsbHs9ssvQu6eEJB9uuOeVXzWTDt
+         M9Ueitn1dq1bwjgnkM8o4ZVhbGcwdV7fCQC0wdONIKt7GEJZ6CYzbHWdgRzbN4m+9lrs
+         n5025REZZp3Is0t2RgBcNV04trELwnJXVIjVhil+2reKXWB27ry4D7efHdCDoPxU1lbe
+         a9vvxGp6rOhEYDZPOligWUNTNdjPRHduRTmw6Yi/RGNb9DL4zHDK/GFE5acxjCQ/sk1o
+         MSWQVlGkxlWZg7IdsAhmcvUyY0RUfbuYYfwUaXrRKxtZwa4Snn9EQw5KP0NsaD4uD/Id
+         IKgQ==
+X-Gm-Message-State: AOAM531+aDKKq0vIROmbPy13trn9RSw2kJNd0181jTkz/CMuZKd5O7nN
+        aaZ8uUrkBAbzy9jVssJ8KGjxbQ==
+X-Google-Smtp-Source: ABdhPJzPDmEyXE6hDNG9gjH7oORqGG1AwjQjQcPtusPPQXSQnVzbgdXAp8IR/pYnQJSnuHQD74a3PQ==
+X-Received: by 2002:a17:902:b589:b029:e6:2875:aa4c with SMTP id a9-20020a170902b589b02900e62875aa4cmr6610765pls.71.1617259895896;
+        Wed, 31 Mar 2021 23:51:35 -0700 (PDT)
 Received: from relinquished.tfbnw.net ([2620:10d:c090:400::5:3734])
-        by smtp.gmail.com with ESMTPSA id kk6sm4158345pjb.51.2021.03.31.23.51.27
+        by smtp.gmail.com with ESMTPSA id kk6sm4158345pjb.51.2021.03.31.23.51.33
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 31 Mar 2021 23:51:28 -0700 (PDT)
+        Wed, 31 Mar 2021 23:51:35 -0700 (PDT)
 From:   Omar Sandoval <osandov@osandov.com>
 To:     linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org,
         Al Viro <viro@zeniv.linux.org.uk>,
@@ -65,9 +65,9 @@ Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
         Amir Goldstein <amir73il@gmail.com>,
         Aleksa Sarai <cyphar@cyphar.com>, linux-api@vger.kernel.org,
         kernel-team@fb.com
-Subject: [PATCH v9 1/9] iov_iter: add copy_struct_from_iter()
-Date:   Wed, 31 Mar 2021 23:51:06 -0700
-Message-Id: <0e7270919b461c4249557b12c7dfce0ad35af300.1617258892.git.osandov@fb.com>
+Subject: [PATCH v9 4/9] btrfs: don't advance offset for compressed bios in btrfs_csum_one_bio()
+Date:   Wed, 31 Mar 2021 23:51:09 -0700
+Message-Id: <0c2dc25d854d7b8cfac9bd31d9766148b45b9b1e.1617258892.git.osandov@fb.com>
 X-Mailer: git-send-email 2.31.1
 In-Reply-To: <cover.1617258892.git.osandov@fb.com>
 References: <cover.1617258892.git.osandov@fb.com>
@@ -79,130 +79,198 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-This is essentially copy_struct_from_user() but for an iov_iter.
+btrfs_csum_one_bio() loops over each filesystem block in the bio while
+keeping a cursor of its current logical position in the file in order to
+look up the ordered extent to add the checksums to. However, this
+doesn't make much sense for compressed extents, as a sector on disk does
+not correspond to a sector of decompressed file data. It happens to work
+because 1) the compressed bio always covers one ordered extent and 2)
+the size of the bio is always less than the size of the ordered extent.
+However, the second point will not always be true for encoded writes.
 
-Suggested-by: Aleksa Sarai <cyphar@cyphar.com>
+Let's add a boolean parameter to btrfs_csum_one_bio() to indicate that
+it can assume that the bio only covers one ordered extent. Since we're
+already changing the signature, let's get rid of the contig parameter
+and make it implied by the offset parameter, similar to the change we
+recently made to btrfs_lookup_bio_sums(). Additionally, let's rename
+nr_sectors to blockcount to make it clear that it's the number of
+filesystem blocks, not the number of 512-byte sectors.
+
 Reviewed-by: Josef Bacik <josef@toxicpanda.com>
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- include/linux/uio.h |  1 +
- lib/iov_iter.c      | 91 +++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 92 insertions(+)
+ fs/btrfs/compression.c |  5 +++--
+ fs/btrfs/ctree.h       |  2 +-
+ fs/btrfs/file-item.c   | 35 ++++++++++++++++-------------------
+ fs/btrfs/inode.c       |  8 ++++----
+ 4 files changed, 24 insertions(+), 26 deletions(-)
 
-diff --git a/include/linux/uio.h b/include/linux/uio.h
-index 27ff8eb786dc..cc94223d16d9 100644
---- a/include/linux/uio.h
-+++ b/include/linux/uio.h
-@@ -121,6 +121,7 @@ size_t copy_page_to_iter(struct page *page, size_t offset, size_t bytes,
- 			 struct iov_iter *i);
- size_t copy_page_from_iter(struct page *page, size_t offset, size_t bytes,
- 			 struct iov_iter *i);
-+int copy_struct_from_iter(void *dst, size_t ksize, struct iov_iter *i);
+diff --git a/fs/btrfs/compression.c b/fs/btrfs/compression.c
+index 2600703fab83..5059d9888c23 100644
+--- a/fs/btrfs/compression.c
++++ b/fs/btrfs/compression.c
+@@ -449,7 +449,8 @@ blk_status_t btrfs_submit_compressed_write(struct btrfs_inode *inode, u64 start,
+ 			BUG_ON(ret); /* -ENOMEM */
  
- size_t _copy_to_iter(const void *addr, size_t bytes, struct iov_iter *i);
- size_t _copy_from_iter(void *addr, size_t bytes, struct iov_iter *i);
-diff --git a/lib/iov_iter.c b/lib/iov_iter.c
-index f66c62aa7154..9642f651e27a 100644
---- a/lib/iov_iter.c
-+++ b/lib/iov_iter.c
-@@ -934,6 +934,97 @@ size_t copy_page_from_iter(struct page *page, size_t offset, size_t bytes,
- }
- EXPORT_SYMBOL(copy_page_from_iter);
+ 			if (!skip_sum) {
+-				ret = btrfs_csum_one_bio(inode, bio, start, 1);
++				ret = btrfs_csum_one_bio(inode, bio, start,
++							 true);
+ 				BUG_ON(ret); /* -ENOMEM */
+ 			}
  
-+/**
-+ * copy_struct_from_iter - copy a struct from an iov_iter
-+ * @dst: Destination buffer.
-+ * @ksize: Size of @dst struct.
-+ * @i: Source iterator.
-+ *
-+ * Copies a struct from an iov_iter in a way that guarantees
-+ * backwards-compatibility for struct arguments in an iovec (as long as the
-+ * rules for copy_struct_from_user() are followed).
-+ *
-+ * The source struct is assumed to be stored in the current segment of the
-+ * iov_iter, and its size is the size of the current segment. The iov_iter must
-+ * be positioned at the beginning of the current segment.
-+ *
-+ * The recommended usage is something like the following:
-+ *
-+ *   int do_foo(struct iov_iter *i)
-+ *   {
-+ *     size_t usize = iov_iter_single_seg_count(i);
-+ *     struct foo karg;
-+ *     int err;
-+ *
-+ *     if (usize > PAGE_SIZE)
-+ *       return -E2BIG;
-+ *     if (usize < FOO_SIZE_VER0)
-+ *       return -EINVAL;
-+ *     err = copy_struct_from_iter(&karg, sizeof(karg), i);
-+ *     if (err)
-+ *       return err;
-+ *
-+ *     // ...
-+ *   }
-+ *
-+ * Returns 0 on success or one of the following errors:
-+ *  * -E2BIG:  (size of current segment > @ksize) and there are non-zero
-+ *             trailing bytes in the current segment.
-+ *  * -EFAULT: access to userspace failed.
-+ *  * -EINVAL: the iterator is not at the beginning of the current segment.
-+ *
-+ * On success, the iterator is advanced to the next segment. On error, the
-+ * iterator is not advanced.
-+ */
-+int copy_struct_from_iter(void *dst, size_t ksize, struct iov_iter *i)
-+{
-+	size_t usize;
-+	int ret;
-+
-+	if (i->iov_offset != 0)
-+		return -EINVAL;
-+	if (iter_is_iovec(i)) {
-+		usize = i->iov->iov_len;
-+		might_fault();
-+		if (copyin(dst, i->iov->iov_base, min(ksize, usize)))
-+			return -EFAULT;
-+		if (usize > ksize) {
-+			ret = check_zeroed_user(i->iov->iov_base + ksize,
-+						usize - ksize);
-+			if (ret < 0)
-+				return ret;
-+			else if (ret == 0)
-+				return -E2BIG;
-+		}
-+	} else if (iov_iter_is_kvec(i)) {
-+		usize = i->kvec->iov_len;
-+		memcpy(dst, i->kvec->iov_base, min(ksize, usize));
-+		if (usize > ksize &&
-+		    memchr_inv(i->kvec->iov_base + ksize, 0, usize - ksize))
-+			return -E2BIG;
-+	} else if (iov_iter_is_bvec(i)) {
-+		char *p;
-+
-+		usize = i->bvec->bv_len;
-+		p = kmap_local_page(i->bvec->bv_page);
-+		memcpy(dst, p + i->bvec->bv_offset, min(ksize, usize));
-+		if (usize > ksize &&
-+		    memchr_inv(p + i->bvec->bv_offset + ksize, 0,
-+			       usize - ksize)) {
-+			kunmap_local(p);
-+			return -E2BIG;
-+		}
-+		kunmap_local(p);
-+	} else {
-+		return -EFAULT;
-+	}
-+	if (usize < ksize)
-+		memset(dst + usize, 0, ksize - usize);
-+	iov_iter_advance(i, usize);
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(copy_struct_from_iter);
-+
- static size_t pipe_zero(size_t bytes, struct iov_iter *i)
+@@ -481,7 +482,7 @@ blk_status_t btrfs_submit_compressed_write(struct btrfs_inode *inode, u64 start,
+ 	BUG_ON(ret); /* -ENOMEM */
+ 
+ 	if (!skip_sum) {
+-		ret = btrfs_csum_one_bio(inode, bio, start, 1);
++		ret = btrfs_csum_one_bio(inode, bio, start, true);
+ 		BUG_ON(ret); /* -ENOMEM */
+ 	}
+ 
+diff --git a/fs/btrfs/ctree.h b/fs/btrfs/ctree.h
+index f2fd73e58ee6..ae764f6155d5 100644
+--- a/fs/btrfs/ctree.h
++++ b/fs/btrfs/ctree.h
+@@ -3050,7 +3050,7 @@ int btrfs_csum_file_blocks(struct btrfs_trans_handle *trans,
+ 			   struct btrfs_root *root,
+ 			   struct btrfs_ordered_sum *sums);
+ blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
+-				u64 file_start, int contig);
++				u64 offset, bool one_ordered);
+ int btrfs_lookup_csums_range(struct btrfs_root *root, u64 start, u64 end,
+ 			     struct list_head *list, int search_commit);
+ void btrfs_extent_item_to_extent_map(struct btrfs_inode *inode,
+diff --git a/fs/btrfs/file-item.c b/fs/btrfs/file-item.c
+index 294602f139ef..8f755ef20aaa 100644
+--- a/fs/btrfs/file-item.c
++++ b/fs/btrfs/file-item.c
+@@ -615,28 +615,28 @@ int btrfs_lookup_csums_range(struct btrfs_root *root, u64 start, u64 end,
+  * btrfs_csum_one_bio - Calculates checksums of the data contained inside a bio
+  * @inode:	 Owner of the data inside the bio
+  * @bio:	 Contains the data to be checksummed
+- * @file_start:  offset in file this bio begins to describe
+- * @contig:	 Boolean. If true/1 means all bio vecs in this bio are
+- *		 contiguous and they begin at @file_start in the file. False/0
+- *		 means this bio can contains potentially discontigous bio vecs
+- *		 so the logical offset of each should be calculated separately.
++ * @offset:      If (u64)-1, @bio may contain discontiguous bio vecs, so the
++ *               file offsets are determined from the page offsets in the bio.
++ *               Otherwise, this is the starting file offset of the bio vecs in
++ *               @bio, which must be contiguous.
++ * @one_ordered: If true, @bio only refers to one ordered extent.
+  */
+ blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
+-		       u64 file_start, int contig)
++				u64 offset, bool one_ordered)
  {
- 	struct pipe_inode_info *pipe = i->pipe;
+ 	struct btrfs_fs_info *fs_info = inode->root->fs_info;
+ 	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
+ 	struct btrfs_ordered_sum *sums;
+ 	struct btrfs_ordered_extent *ordered = NULL;
++	const bool page_offsets = (offset == (u64)-1);
+ 	char *data;
+ 	struct bvec_iter iter;
+ 	struct bio_vec bvec;
+ 	int index;
+-	int nr_sectors;
++	int blockcount;
+ 	unsigned long total_bytes = 0;
+ 	unsigned long this_sum_bytes = 0;
+ 	int i;
+-	u64 offset;
+ 	unsigned nofs_flag;
+ 
+ 	nofs_flag = memalloc_nofs_save();
+@@ -650,18 +650,13 @@ blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
+ 	sums->len = bio->bi_iter.bi_size;
+ 	INIT_LIST_HEAD(&sums->list);
+ 
+-	if (contig)
+-		offset = file_start;
+-	else
+-		offset = 0; /* shut up gcc */
+-
+ 	sums->bytenr = bio->bi_iter.bi_sector << 9;
+ 	index = 0;
+ 
+ 	shash->tfm = fs_info->csum_shash;
+ 
+ 	bio_for_each_segment(bvec, bio, iter) {
+-		if (!contig)
++		if (page_offsets)
+ 			offset = page_offset(bvec.bv_page) + bvec.bv_offset;
+ 
+ 		if (!ordered) {
+@@ -669,13 +664,14 @@ blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
+ 			BUG_ON(!ordered); /* Logic error */
+ 		}
+ 
+-		nr_sectors = BTRFS_BYTES_TO_BLKS(fs_info,
++		blockcount = BTRFS_BYTES_TO_BLKS(fs_info,
+ 						 bvec.bv_len + fs_info->sectorsize
+ 						 - 1);
+ 
+-		for (i = 0; i < nr_sectors; i++) {
+-			if (offset >= ordered->file_offset + ordered->num_bytes ||
+-			    offset < ordered->file_offset) {
++		for (i = 0; i < blockcount; i++) {
++			if (!one_ordered &&
++			    (offset >= ordered->file_offset + ordered->num_bytes ||
++			     offset < ordered->file_offset)) {
+ 				unsigned long bytes_left;
+ 
+ 				sums->len = this_sum_bytes;
+@@ -706,7 +702,8 @@ blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
+ 					    sums->sums + index);
+ 			kunmap_atomic(data);
+ 			index += fs_info->csum_size;
+-			offset += fs_info->sectorsize;
++			if (!one_ordered)
++				offset += fs_info->sectorsize;
+ 			this_sum_bytes += fs_info->sectorsize;
+ 			total_bytes += fs_info->sectorsize;
+ 		}
+diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
+index 1e0e20ad25e4..9d091272807a 100644
+--- a/fs/btrfs/inode.c
++++ b/fs/btrfs/inode.c
+@@ -2235,7 +2235,7 @@ int btrfs_bio_fits_in_stripe(struct page *page, size_t size, struct bio *bio,
+ static blk_status_t btrfs_submit_bio_start(struct inode *inode, struct bio *bio,
+ 					   u64 dio_file_offset)
+ {
+-	return btrfs_csum_one_bio(BTRFS_I(inode), bio, 0, 0);
++	return btrfs_csum_one_bio(BTRFS_I(inode), bio, (u64)-1, false);
+ }
+ 
+ bool btrfs_bio_fits_in_ordered_extent(struct page *page, struct bio *bio,
+@@ -2425,7 +2425,7 @@ blk_status_t btrfs_submit_data_bio(struct inode *inode, struct bio *bio,
+ 					  0, btrfs_submit_bio_start);
+ 		goto out;
+ 	} else if (!skip_sum) {
+-		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, 0, 0);
++		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, (u64)-1, false);
+ 		if (ret)
+ 			goto out;
+ 	}
+@@ -7998,7 +7998,7 @@ static blk_status_t btrfs_submit_bio_start_direct_io(struct inode *inode,
+ 						     struct bio *bio,
+ 						     u64 dio_file_offset)
+ {
+-	return btrfs_csum_one_bio(BTRFS_I(inode), bio, dio_file_offset, 1);
++	return btrfs_csum_one_bio(BTRFS_I(inode), bio, dio_file_offset, false);
+ }
+ 
+ static void btrfs_end_dio_bio(struct bio *bio)
+@@ -8057,7 +8057,7 @@ static inline blk_status_t btrfs_submit_dio_bio(struct bio *bio,
+ 		 * If we aren't doing async submit, calculate the csum of the
+ 		 * bio now.
+ 		 */
+-		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, file_offset, 1);
++		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, file_offset, false);
+ 		if (ret)
+ 			goto err;
+ 	} else {
 -- 
 2.31.1
 
