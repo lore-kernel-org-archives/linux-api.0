@@ -5,33 +5,33 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3E0B9C4361B
-	for <linux-api@archiver.kernel.org>; Thu,  1 Apr 2021 22:11:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 27BB2C4363C
+	for <linux-api@archiver.kernel.org>; Thu,  1 Apr 2021 22:11:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1192261164
+	by mail.kernel.org (Postfix) with ESMTP id D324A61157
 	for <linux-api@archiver.kernel.org>; Thu,  1 Apr 2021 22:11:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234405AbhDAWL0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 1 Apr 2021 18:11:26 -0400
-Received: from mga11.intel.com ([192.55.52.93]:34676 "EHLO mga11.intel.com"
+        id S234506AbhDAWL2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 1 Apr 2021 18:11:28 -0400
+Received: from mga04.intel.com ([192.55.52.120]:8162 "EHLO mga04.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S234023AbhDAWLW (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 1 Apr 2021 18:11:22 -0400
-IronPort-SDR: UvqOEgKFXaXHa5rWM6r8Km+lnDuIZj/8gcJZIQftNsamtz5YzYQPn6cUAVA1bq14jWw6R1QMl6
- v0JqAkhkLwOQ==
-X-IronPort-AV: E=McAfee;i="6000,8403,9941"; a="189084521"
+        id S234161AbhDAWLX (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 1 Apr 2021 18:11:23 -0400
+IronPort-SDR: e1EHy+2v4UWcltKM1WayEp9vVRE2v3Z5CIvkgEAlJoNdC5Piy45NzulYmvO4xWtApK6HnABHMA
+ PJQ6+GT9mi6A==
+X-IronPort-AV: E=McAfee;i="6000,8403,9941"; a="190110174"
 X-IronPort-AV: E=Sophos;i="5.81,296,1610438400"; 
-   d="scan'208";a="189084521"
+   d="scan'208";a="190110174"
 Received: from fmsmga001.fm.intel.com ([10.253.24.23])
-  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Apr 2021 15:11:20 -0700
-IronPort-SDR: DJYH4ZSS3iY/Oz3QycP6ZmTD0guvKii0n9VIIH6v8SWjnpjZja1ZEZiPwOsSUPJibEzATGikd8
- BxKwP5D8X1Fw==
+  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Apr 2021 15:11:23 -0700
+IronPort-SDR: FdGj2VNkGhFplIzibFFOJ2eqJuTzZKQq14uuWLi5ew5WLl3unCpzS9fDlJDoksEU2JXCFo+Of0
+ nx8/TjUkyBvg==
 X-IronPort-AV: E=Sophos;i="5.81,296,1610438400"; 
-   d="scan'208";a="517513854"
+   d="scan'208";a="517513907"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga001-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Apr 2021 15:11:20 -0700
+  by fmsmga001-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Apr 2021 15:11:23 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,10 +60,11 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v24 04/30] x86/cpufeatures: Introduce X86_FEATURE_CET and setup functions
-Date:   Thu,  1 Apr 2021 15:10:38 -0700
-Message-Id: <20210401221104.31584-5-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
+Subject: [PATCH v24 14/30] x86/mm: Shadow Stack page fault error checking
+Date:   Thu,  1 Apr 2021 15:10:48 -0700
+Message-Id: <20210401221104.31584-15-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210401221104.31584-1-yu-cheng.yu@intel.com>
 References: <20210401221104.31584-1-yu-cheng.yu@intel.com>
@@ -73,128 +74,96 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Introduce a software-defined X86_FEATURE_CET, which indicates either Shadow
-Stack or Indirect Branch Tracking (or both) is present.  Also introduce
-related cpu init/setup functions.
+Shadow stack accesses are those that are performed by the CPU where it
+expects to encounter a shadow stack mapping.  These accesses are performed
+implicitly by CALL/RET at the site of the shadow stack pointer.  These
+accesses are made explicitly by shadow stack management instructions like
+WRUSSQ.
+
+Shadow stacks accesses to shadow-stack mapping can see faults in normal,
+valid operation just like regular accesses to regular mappings.  Shadow
+stacks need some of the same features like delayed allocation, swap and
+copy-on-write.
+
+Shadow stack accesses can also result in errors, such as when a shadow
+stack overflows, or if a shadow stack access occurs to a non-shadow-stack
+mapping.
+
+In handling a shadow stack page fault, verify it occurs within a shadow
+stack mapping.  It is always an error otherwise.  For valid shadow stack
+accesses, set FAULT_FLAG_WRITE to effect copy-on-write.  Because clearing
+_PAGE_DIRTY (vs. _PAGE_RW) is used to trigger the fault, shadow stack read
+fault and shadow stack write fault are not differentiated and both are
+handled as a write access.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: Kees Cook <keescook@chromium.org>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 ---
 v24:
-- Update #ifdef placement to reflect Kconfig changes of splitting shadow stack and ibt.
+- Change VM_SHSTK to VM_SHADOW_STACK.
 
- arch/x86/include/asm/cpufeatures.h          |  2 +-
- arch/x86/include/asm/disabled-features.h    |  9 ++++++++-
- arch/x86/include/uapi/asm/processor-flags.h |  2 ++
- arch/x86/kernel/cpu/common.c                | 14 ++++++++++++++
- arch/x86/kernel/cpu/intel.c                 |  3 +++
- 5 files changed, 28 insertions(+), 2 deletions(-)
+ arch/x86/include/asm/trap_pf.h |  2 ++
+ arch/x86/mm/fault.c            | 19 +++++++++++++++++++
+ 2 files changed, 21 insertions(+)
 
-diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
-index bf861fc89fef..d771e62677de 100644
---- a/arch/x86/include/asm/cpufeatures.h
-+++ b/arch/x86/include/asm/cpufeatures.h
-@@ -108,7 +108,7 @@
- #define X86_FEATURE_EXTD_APICID		( 3*32+26) /* Extended APICID (8 bits) */
- #define X86_FEATURE_AMD_DCM		( 3*32+27) /* AMD multi-node processor */
- #define X86_FEATURE_APERFMPERF		( 3*32+28) /* P-State hardware coordination feedback capability (APERF/MPERF MSRs) */
--/* free					( 3*32+29) */
-+#define X86_FEATURE_CET			( 3*32+29) /* Control-flow enforcement */
- #define X86_FEATURE_NONSTOP_TSC_S3	( 3*32+30) /* TSC doesn't stop in S3 state */
- #define X86_FEATURE_TSC_KNOWN_FREQ	( 3*32+31) /* TSC has known frequency */
- 
-diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
-index e5c6ed9373e8..018cd7acd3e9 100644
---- a/arch/x86/include/asm/disabled-features.h
-+++ b/arch/x86/include/asm/disabled-features.h
-@@ -74,13 +74,20 @@
- #define DISABLE_SHSTK	(1 << (X86_FEATURE_SHSTK & 31))
- #endif
- 
-+#ifdef CONFIG_X86_CET
-+#define DISABLE_CET	0
-+#else
-+#define DISABLE_CET	(1 << (X86_FEATURE_CET & 31))
-+#endif
-+
- /*
-  * Make sure to add features to the correct mask
+diff --git a/arch/x86/include/asm/trap_pf.h b/arch/x86/include/asm/trap_pf.h
+index 10b1de500ab1..afa524325e55 100644
+--- a/arch/x86/include/asm/trap_pf.h
++++ b/arch/x86/include/asm/trap_pf.h
+@@ -11,6 +11,7 @@
+  *   bit 3 ==				1: use of reserved bit detected
+  *   bit 4 ==				1: fault was an instruction fetch
+  *   bit 5 ==				1: protection keys block access
++ *   bit 6 ==				1: shadow stack access fault
+  *   bit 15 ==				1: SGX MMU page-fault
   */
- #define DISABLED_MASK0	(DISABLE_VME)
- #define DISABLED_MASK1	0
- #define DISABLED_MASK2	0
--#define DISABLED_MASK3	(DISABLE_CYRIX_ARR|DISABLE_CENTAUR_MCR|DISABLE_K6_MTRR)
-+#define DISABLED_MASK3	(DISABLE_CYRIX_ARR|DISABLE_CENTAUR_MCR|DISABLE_K6_MTRR| \
-+			 DISABLE_CET)
- #define DISABLED_MASK4	(DISABLE_PCID)
- #define DISABLED_MASK5	0
- #define DISABLED_MASK6	0
-diff --git a/arch/x86/include/uapi/asm/processor-flags.h b/arch/x86/include/uapi/asm/processor-flags.h
-index bcba3c643e63..a8df907e8017 100644
---- a/arch/x86/include/uapi/asm/processor-flags.h
-+++ b/arch/x86/include/uapi/asm/processor-flags.h
-@@ -130,6 +130,8 @@
- #define X86_CR4_SMAP		_BITUL(X86_CR4_SMAP_BIT)
- #define X86_CR4_PKE_BIT		22 /* enable Protection Keys support */
- #define X86_CR4_PKE		_BITUL(X86_CR4_PKE_BIT)
-+#define X86_CR4_CET_BIT		23 /* enable Control-flow Enforcement */
-+#define X86_CR4_CET		_BITUL(X86_CR4_CET_BIT)
+ enum x86_pf_error_code {
+@@ -20,6 +21,7 @@ enum x86_pf_error_code {
+ 	X86_PF_RSVD	=		1 << 3,
+ 	X86_PF_INSTR	=		1 << 4,
+ 	X86_PF_PK	=		1 << 5,
++	X86_PF_SHSTK	=		1 << 6,
+ 	X86_PF_SGX	=		1 << 15,
+ };
  
- /*
-  * x86-64 Task Priority Register, CR8
-diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
-index ab640abe26b6..6bd07727089e 100644
---- a/arch/x86/kernel/cpu/common.c
-+++ b/arch/x86/kernel/cpu/common.c
-@@ -510,6 +510,14 @@ static __init int setup_disable_pku(char *arg)
- __setup("nopku", setup_disable_pku);
- #endif /* CONFIG_X86_64 */
+diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
+index a73347e2cdfc..394e504305b7 100644
+--- a/arch/x86/mm/fault.c
++++ b/arch/x86/mm/fault.c
+@@ -1100,6 +1100,17 @@ access_error(unsigned long error_code, struct vm_area_struct *vma)
+ 				       (error_code & X86_PF_INSTR), foreign))
+ 		return 1;
  
-+static __always_inline void setup_cet(struct cpuinfo_x86 *c)
-+{
-+	if (!cpu_feature_enabled(X86_FEATURE_CET))
-+		return;
++	/*
++	 * Verify a shadow stack access is within a shadow stack VMA.
++	 * It is always an error otherwise.  Normal data access to a
++	 * shadow stack area is checked in the case followed.
++	 */
++	if (error_code & X86_PF_SHSTK) {
++		if (!(vma->vm_flags & VM_SHADOW_STACK))
++			return 1;
++		return 0;
++	}
 +
-+	cr4_set_bits(X86_CR4_CET);
-+}
-+
- /*
-  * Some CPU features depend on higher CPUID levels, which may not always
-  * be available due to CPUID level capping or broken virtualization
-@@ -1255,6 +1263,11 @@ static void __init cpu_parse_early_param(void)
- 	if (cmdline_find_option_bool(boot_command_line, "noxsaves"))
- 		setup_clear_cpu_cap(X86_FEATURE_XSAVES);
+ 	if (error_code & X86_PF_WRITE) {
+ 		/* write, present and write, not present: */
+ 		if (unlikely(!(vma->vm_flags & VM_WRITE)))
+@@ -1293,6 +1304,14 @@ void do_user_addr_fault(struct pt_regs *regs,
  
-+	if (cmdline_find_option_bool(boot_command_line, "no_user_shstk"))
-+		setup_clear_cpu_cap(X86_FEATURE_SHSTK);
-+	if (cmdline_find_option_bool(boot_command_line, "no_user_ibt"))
-+		setup_clear_cpu_cap(X86_FEATURE_IBT);
-+
- 	arglen = cmdline_find_option(boot_command_line, "clearcpuid", arg, sizeof(arg));
- 	if (arglen <= 0)
- 		return;
-@@ -1594,6 +1607,7 @@ static void identify_cpu(struct cpuinfo_x86 *c)
+ 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
  
- 	x86_init_rdrand(c);
- 	setup_pku(c);
-+	setup_cet(c);
- 
- 	/*
- 	 * Clear/Set all flags overridden by options, need do it
-diff --git a/arch/x86/kernel/cpu/intel.c b/arch/x86/kernel/cpu/intel.c
-index 0e422a544835..2e11d9555e9b 100644
---- a/arch/x86/kernel/cpu/intel.c
-+++ b/arch/x86/kernel/cpu/intel.c
-@@ -334,6 +334,9 @@ static void early_init_intel(struct cpuinfo_x86 *c)
- 
- static void bsp_init_intel(struct cpuinfo_x86 *c)
- {
-+	if (cpu_has(c, X86_FEATURE_SHSTK) || cpu_has(c, X86_FEATURE_IBT))
-+		setup_force_cpu_cap(X86_FEATURE_CET);
-+
- 	resctrl_cpu_detect(c);
- }
- 
++	/*
++	 * Clearing _PAGE_DIRTY is used to detect shadow stack access.
++	 * This method cannot distinguish shadow stack read vs. write.
++	 * For valid shadow stack accesses, set FAULT_FLAG_WRITE to effect
++	 * copy-on-write.
++	 */
++	if (error_code & X86_PF_SHSTK)
++		flags |= FAULT_FLAG_WRITE;
+ 	if (error_code & X86_PF_WRITE)
+ 		flags |= FAULT_FLAG_WRITE;
+ 	if (error_code & X86_PF_INSTR)
 -- 
 2.21.0
 
