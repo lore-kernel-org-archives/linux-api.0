@@ -7,54 +7,54 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 002E7C43611
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5CBF8C43619
 	for <linux-api@archiver.kernel.org>; Thu,  1 Apr 2021 06:52:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D5676610CF
-	for <linux-api@archiver.kernel.org>; Thu,  1 Apr 2021 06:52:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3C464610CE
+	for <linux-api@archiver.kernel.org>; Thu,  1 Apr 2021 06:52:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232596AbhDAGvk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 1 Apr 2021 02:51:40 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59974 "EHLO
+        id S233376AbhDAGvl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 1 Apr 2021 02:51:41 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60000 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233102AbhDAGve (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 1 Apr 2021 02:51:34 -0400
-Received: from mail-pj1-x102c.google.com (mail-pj1-x102c.google.com [IPv6:2607:f8b0:4864:20::102c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 624DDC061788
-        for <linux-api@vger.kernel.org>; Wed, 31 Mar 2021 23:51:34 -0700 (PDT)
-Received: by mail-pj1-x102c.google.com with SMTP id ot17-20020a17090b3b51b0290109c9ac3c34so2556582pjb.4
-        for <linux-api@vger.kernel.org>; Wed, 31 Mar 2021 23:51:34 -0700 (PDT)
+        with ESMTP id S233195AbhDAGvi (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 1 Apr 2021 02:51:38 -0400
+Received: from mail-pj1-x1031.google.com (mail-pj1-x1031.google.com [IPv6:2607:f8b0:4864:20::1031])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BBFE9C061788
+        for <linux-api@vger.kernel.org>; Wed, 31 Mar 2021 23:51:38 -0700 (PDT)
+Received: by mail-pj1-x1031.google.com with SMTP id ha17so649441pjb.2
+        for <linux-api@vger.kernel.org>; Wed, 31 Mar 2021 23:51:38 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=osandov-com.20150623.gappssmtp.com; s=20150623;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=TL0yIPSgBqQg9K+SpnL1dqDaXv+MEk4aUKTBXVLaUpY=;
-        b=j6cnoLcnReJ6wKuKx7wRkJbjSXZlIqQmZyij2dBBHYtmt0npKVj8I+tc28+gIHleNS
-         k26uGXKSiZn4Jyim9/e5gIT4XC5D3z9J523DK3WUp2B/oosIbRlM1UczsRhCPX0+ZzRx
-         4KBLpIeAnKXIl5DzRhQr/5mdarO1ecEM5yilPaD383cNuRPGdbgf7k+HlGrqLLOkFr+P
-         VXIdP4P0kyfshYfw/6BUIkzIiizUAUoR1FgK3H9nZ3ILcZpfCM2N3qKpn6z0I7GvMi+y
-         NBuMK9W4F+KywMofcIpuKZ4zWP6vfm6q1BNuuk5KImVkUjth85ouJoLMqh7nzZnqvtY+
-         9EuA==
+        bh=JF3TCqRPUG1o+a6gNdZUCP9GnW1WOyhTGCtwwJ6+VjE=;
+        b=kSxNR5uSayRPF66M1ruYIEwI2ujdPCJ/AvmvA+mRIYlgjquzRyACqqg6gP5OMr9oKw
+         kTcSsm9lw9uMpgKnFD2raT6clDN8E8EvdhBrflziJUmjeVw5tkMTjlgsE1QhIBLmMCcd
+         oGITv3OdbWg6xk2ex4duUrj4LJwgR3/iqG0uqW97p7pe/T1Un3ujNe10DDitjN4A/vW6
+         r7CFweBgMcmzqFcBmFG7oLAHz+6Ql3b0u9v6Ii6YCmpk9aoTUGB9h0FJg9OqWXSkKPhx
+         lg++Ouj6BhtgWyUiaE31LacOsQh5QDd17p6pIyHMH9l4FHZBSzLlc7uPP7E5powZrhBD
+         CoUg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=TL0yIPSgBqQg9K+SpnL1dqDaXv+MEk4aUKTBXVLaUpY=;
-        b=psMR3vLbFvr2+oyX6PrsJ5DQrIaI+5rpTbv7QF7rsdfI9eNuxXXnUb1L4eeyMtSPlV
-         FO+ciN29a6vJgUrN6eF94a8tS6ong6h7Cs/93lKlh4i7vRHnEncyI7HGfWqtwCwNNYh9
-         N1t0aK/xOGABOw6g5hPU6FCAzIgcrnWWnY8y1CgXUUhFVVxa8+qgLc+QYvGObh/LxXer
-         1vXcm96BQGLpo+koZWXkVlWgHYALNEhrNhiah5pRvmVQul6fT9wo/LPgCt1dwOjUNNVb
-         qLeqxfq+j7Wp97KngGfRWBGUKBhHGFiqpm7l9xp1RbpX1uQDS/b9cKOwa1+fXyjQsyzf
-         FIqw==
-X-Gm-Message-State: AOAM53240PV+rdGqaJru+rvdjSN7Y+3ivS37UakjTYJ6RbBlAcS1ZNMg
-        sT9k2epUG4MlA7EGXsJzGg1EQg==
-X-Google-Smtp-Source: ABdhPJwLjZ2J+EeXd0Qo9hozEr8X68DsAU1iOEhRmeOYhE2HJ6HcQ8qRKBPql7NYu8ZyXxumHqU0Zg==
-X-Received: by 2002:a17:902:c48c:b029:e4:c093:593a with SMTP id n12-20020a170902c48cb02900e4c093593amr6591724plx.1.1617259893624;
-        Wed, 31 Mar 2021 23:51:33 -0700 (PDT)
+        bh=JF3TCqRPUG1o+a6gNdZUCP9GnW1WOyhTGCtwwJ6+VjE=;
+        b=KyP7SUPgwFq14cQ6/ZtQFA3KxF4ykcWVmTKjWCBekaJSeLv/W5SoLFymCbL/eggFPR
+         Ov6/wGaf7qgw9YcDQ6XRHQr12XDIwvuwIzOcjJ/Ddr5FTiM1s6NOzfX/9l7t1Vn1NHr9
+         MpaXygM4tgyr+T8Ak5QWfhtSKYZ1dbT3jZA3RYpAzBLj5WENNJ1GROPCs8NLb71hoIEn
+         sSpXAt/CA9ggmXNMb2odD8eT9QT8pD8iSmtHj1Zdn1xA9QZjIVZ1i2O6w9E9ss+28kzc
+         BK5yrFPi5Sjk9l8KHoEjGz1oNsFWWoT1yXNnHAxRXQQ/cYVEkhy6+V1hOITdkkWvdVWu
+         zwEA==
+X-Gm-Message-State: AOAM5306l7mSvd2sEg0nbgqPXMyD1BLt6B8mBSUhot9dfPS/nGk/15HK
+        i2MMfOwaDJXaCKXLHEq/FND0YFUmIDPz4g==
+X-Google-Smtp-Source: ABdhPJzZR6Vq7wsCCBD1w4HnETQDIEflEsVXp8ftBrohamCqp7e51c2jZNOxTTPryOXBtcXTgv8KFQ==
+X-Received: by 2002:a17:902:8687:b029:e6:5eda:c3a8 with SMTP id g7-20020a1709028687b02900e65edac3a8mr6479693plo.59.1617259898217;
+        Wed, 31 Mar 2021 23:51:38 -0700 (PDT)
 Received: from relinquished.tfbnw.net ([2620:10d:c090:400::5:3734])
-        by smtp.gmail.com with ESMTPSA id kk6sm4158345pjb.51.2021.03.31.23.51.31
+        by smtp.gmail.com with ESMTPSA id kk6sm4158345pjb.51.2021.03.31.23.51.36
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 31 Mar 2021 23:51:32 -0700 (PDT)
+        Wed, 31 Mar 2021 23:51:37 -0700 (PDT)
 From:   Omar Sandoval <osandov@osandov.com>
 To:     linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org,
         Al Viro <viro@zeniv.linux.org.uk>,
@@ -65,9 +65,9 @@ Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
         Amir Goldstein <amir73il@gmail.com>,
         Aleksa Sarai <cyphar@cyphar.com>, linux-api@vger.kernel.org,
         kernel-team@fb.com
-Subject: [PATCH v9 3/9] fs: add RWF_ENCODED for reading/writing compressed data
-Date:   Wed, 31 Mar 2021 23:51:08 -0700
-Message-Id: <e192638d62c9766c4bc3e98cc4aab6761574b952.1617258892.git.osandov@fb.com>
+Subject: [PATCH v9 5/9] btrfs: add ram_bytes and offset to btrfs_ordered_extent
+Date:   Wed, 31 Mar 2021 23:51:10 -0700
+Message-Id: <6d818e727a5a679841392e341236939fb4c91cc2.1617258892.git.osandov@fb.com>
 X-Mailer: git-send-email 2.31.1
 In-Reply-To: <cover.1617258892.git.osandov@fb.com>
 References: <cover.1617258892.git.osandov@fb.com>
@@ -79,624 +79,365 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-Btrfs supports transparent compression: data written by the user can be
-compressed when written to disk and decompressed when read back.
-However, we'd like to add an interface to write pre-compressed data
-directly to the filesystem, and the matching interface to read
-compressed data without decompressing it. This adds support for
-so-called "encoded I/O" via preadv2() and pwritev2().
+Currently, we only create ordered extents when ram_bytes == num_bytes
+and offset == 0. However, RWF_ENCODED writes may create extents which
+only refer to a subset of the full unencoded extent, so we need to plumb
+these fields through the ordered extent infrastructure and pass them
+down to insert_reserved_file_extent().
 
-A new RWF_ENCODED flags indicates that a read or write is "encoded". If
-this flag is set, iov[0].iov_base points to a struct encoded_iov which
-is used for metadata: namely, the compression algorithm, unencoded
-(i.e., decompressed) length, and what subrange of the unencoded data
-should be used (needed for truncated or hole-punched extents and when
-reading in the middle of an extent). For reads, the filesystem returns
-this information; for writes, the caller provides it to the filesystem.
-iov[0].iov_len must be set to sizeof(struct encoded_iov), which can be
-used to extend the interface in the future a la copy_struct_from_user().
-The remaining iovecs contain the encoded extent.
+Since we're changing the btrfs_add_ordered_extent* signature, let's get
+rid of the trivial wrappers and add a kernel-doc.
 
-This adds the VFS helpers for supporting encoded I/O and documentation.
-
+Reviewed-by: Nikolay Borisov <nborisov@suse.com>
 Reviewed-by: Josef Bacik <josef@toxicpanda.com>
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- Documentation/filesystems/encoded_io.rst | 240 +++++++++++++++++++++++
- Documentation/filesystems/index.rst      |   1 +
- fs/read_write.c                          | 168 ++++++++++++++--
- include/linux/encoded_io.h               |  17 ++
- include/linux/fs.h                       |  13 ++
- include/uapi/linux/encoded_io.h          |  30 +++
- include/uapi/linux/fs.h                  |   5 +-
- 7 files changed, 460 insertions(+), 14 deletions(-)
- create mode 100644 Documentation/filesystems/encoded_io.rst
- create mode 100644 include/linux/encoded_io.h
- create mode 100644 include/uapi/linux/encoded_io.h
+ fs/btrfs/inode.c        |  56 +++++++++++---------
+ fs/btrfs/ordered-data.c | 112 +++++++++++-----------------------------
+ fs/btrfs/ordered-data.h |  22 ++++----
+ 3 files changed, 76 insertions(+), 114 deletions(-)
 
-diff --git a/Documentation/filesystems/encoded_io.rst b/Documentation/filesystems/encoded_io.rst
-new file mode 100644
-index 000000000000..58132ec6f681
---- /dev/null
-+++ b/Documentation/filesystems/encoded_io.rst
-@@ -0,0 +1,240 @@
-+===========
-+Encoded I/O
-+===========
-+
-+Several filesystems (e.g., Btrfs) support transparent encoding (e.g.,
-+compression, encryption) of data on disk: written data is encoded by the kernel
-+before it is written to disk, and read data is decoded before being returned to
-+the user. In some cases, it is useful to skip this encoding step. For example,
-+the user may want to read the compressed contents of a file or write
-+pre-compressed data directly to a file. This is referred to as "encoded I/O".
-+
-+User API
-+========
-+
-+Encoded I/O is specified with the ``RWF_ENCODED`` flag to ``preadv2()`` and
-+``pwritev2()``. If ``RWF_ENCODED`` is specified, then ``iov[0].iov_base``
-+points to an ``encoded_iov`` structure, defined in ``<linux/encoded_io.h>``
-+as::
-+
-+    struct encoded_iov {
-+            __aligned_u64 len;
-+            __aligned_u64 unencoded_len;
-+            __aligned_u64 unencoded_offset;
-+            __u32 compression;
-+            __u32 encryption;
-+    };
-+
-+This may be extended in the future, so ``iov[0].iov_len`` must be set to
-+``sizeof(struct encoded_iov)`` for forward/backward compatibility. The
-+remaining buffers contain the encoded data.
-+
-+``compression`` and ``encryption`` are the encoding fields. ``compression`` is
-+``ENCODED_IOV_COMPRESSION_NONE`` (zero) or a filesystem-specific
-+``ENCODED_IOV_COMPRESSION_*`` constant; see `Filesystem support`_ below.
-+``encryption`` is currently always ``ENCODED_IOV_ENCRYPTION_NONE`` (zero).
-+
-+``unencoded_len`` is the length of the unencoded (i.e., decrypted and
-+decompressed) data. ``unencoded_offset`` is the offset from the first byte of
-+the unencoded data to the first byte of logical data in the file (less than or
-+equal to ``unencoded_len``). ``len`` is the length of the data in the file
-+(less than or equal to ``unencoded_len - unencoded_offset``). See `Extent
-+layout`_ below for some examples.
-+
-+If the unencoded data is actually longer than ``unencoded_len``, then it is
-+truncated; if it is shorter, then it is extended with zeroes.
-+
-+``pwritev2()`` uses the metadata specified in ``iov[0]``, writes the encoded
-+data from the remaining buffers, and returns the number of encoded bytes
-+written (that is, the sum of ``iov[n].iov_len for 1 <= n < iovcnt``; partial
-+writes will not occur). At least one encoding field must be non-zero. Note that
-+the encoded data is not validated when it is written; if it is not valid (e.g.,
-+it cannot be decompressed), then a subsequent read may return an error. If the
-+offset argument to ``pwritev2()`` is -1, then the file offset is incremented by
-+``len``. If ``iov[0].iov_len`` is less than ``sizeof(struct encoded_iov)`` in
-+the kernel, then any fields unknown to user space are treated as if they were
-+zero; if it is greater and any fields unknown to the kernel are non-zero, then
-+``pwritev2()`` returns -1 and sets errno to ``E2BIG``.
-+
-+``preadv2()`` populates the metadata in ``iov[0]``, the encoded data in the
-+remaining buffers, and returns the number of encoded bytes read. This will only
-+return one extent per call. This can also read data which is not encoded; all
-+encoding fields will be zero in that case. If the offset argument to
-+``preadv2()`` is -1, then the file offset is incremented by ``len``. If
-+``iov[0].iov_len`` is less than ``sizeof(struct encoded_iov)`` in the kernel
-+and any fields unknown to user space are non-zero, then ``preadv2()`` returns
-+-1 and sets errno to ``E2BIG``; if it is greater, then any fields unknown to
-+the kernel are returned as zero. If the provided buffers are not large enough
-+to return an entire encoded extent, then ``preadv2()`` returns -1 and sets
-+errno to ``ENOBUFS``.
-+
-+As the filesystem page cache typically contains decoded data, encoded I/O
-+bypasses the page cache.
-+
-+Extent layout
-+-------------
-+
-+By using ``len``, ``unencoded_len``, and ``unencoded_offset``, it is possible
-+to refer to a subset of an unencoded extent.
-+
-+In the simplest case, ``len`` is equal to ``unencoded_len`` and
-+``unencoded_offset`` is zero. This means that the entire unencoded extent is
-+used.
-+
-+However, suppose we read 50 bytes into a file which contains a single
-+compressed extent. The filesystem must still return the entire compressed
-+extent for us to be able to decompress it, so ``unencoded_len`` would be the
-+length of the entire decompressed extent. However, because the read was at
-+offset 50, the first 50 bytes should be ignored. Therefore,
-+``unencoded_offset`` would be 50, and ``len`` would accordingly be
-+``unencoded_len - 50``.
-+
-+Additionally, suppose we want to create an encrypted file with length 500, but
-+the file is encrypted with a block cipher using a block size of 4096. The
-+unencoded data would therefore include the appropriate padding, and
-+``unencoded_len`` would be 4096. However, to represent the logical size of the
-+file, ``len`` would be 500 (and ``unencoded_offset`` would be 0).
-+
-+Similar situations can arise in other cases:
-+
-+* If the filesystem pads data to the filesystem block size before compressing,
-+  then compressed files with a size unaligned to the filesystem block size will
-+  end with an extent with ``len < unencoded_len``.
-+
-+* Extents cloned from the middle of a larger encoded extent with
-+  ``FICLONERANGE`` may have a non-zero ``unencoded_offset`` and/or
-+  ``len < unencoded_len``.
-+
-+* If the middle of an encoded extent is overwritten, the filesystem may create
-+  extents with a non-zero ``unencoded_offset`` and/or ``len < unencoded_len``
-+  for the parts that were not overwritten.
-+
-+Security
-+--------
-+
-+Encoded I/O creates the potential for some security issues:
-+
-+* Encoded writes allow writing arbitrary data which the kernel will decode on a
-+  subsequent read. Decompression algorithms are complex and may have bugs that
-+  can be exploited by maliciously crafted data.
-+* Encoded reads may return data that is not logically present in the file (see
-+  the discussion of ``len`` vs ``unencoded_len`` above). It may not be intended
-+  for this data to be readable.
-+
-+Therefore, encoded I/O requires privilege. Namely, the ``RWF_ENCODED`` flag may
-+only be used if the file description has the ``O_ALLOW_ENCODED`` file status
-+flag set, and the ``O_ALLOW_ENCODED`` flag may only be set by a thread with the
-+``CAP_SYS_ADMIN`` capability. The ``O_ALLOW_ENCODED`` flag can be set by
-+``open()`` or ``fcntl()``. It can also be cleared by ``fcntl()``; clearing it
-+does not require ``CAP_SYS_ADMIN``. Note that it is not cleared on ``fork()``
-+or ``execve()``. One may wish to use ``O_CLOEXEC`` with ``O_ALLOW_ENCODED``.
-+
-+Filesystem support
-+------------------
-+
-+Encoded I/O is supported on the following filesystems:
-+
-+Btrfs (since Linux 5.13)
-+~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+Btrfs supports encoded reads and writes of compressed data. The data is encoded
-+as follows:
-+
-+* If ``compression`` is ``ENCODED_IOV_COMPRESSION_BTRFS_ZLIB``, then the encoded
-+  data is a single zlib stream.
-+* If ``compression`` is ``ENCODED_IOV_COMPRESSION_BTRFS_ZSTD``, then the
-+  encoded data is a single zstd frame compressed with the windowLog compression
-+  parameter set to no more than 17.
-+* If ``compression`` is one of ``ENCODED_IOV_COMPRESSION_BTRFS_LZO_4K``,
-+  ``ENCODED_IOV_COMPRESSION_BTRFS_LZO_8K``,
-+  ``ENCODED_IOV_COMPRESSION_BTRFS_LZO_16K``,
-+  ``ENCODED_IOV_COMPRESSION_BTRFS_LZO_32K``, or
-+  ``ENCODED_IOV_COMPRESSION_BTRFS_LZO_64K``, then the encoded data is
-+  compressed page by page (using the page size indicated by the name of the
-+  constant) with LZO1X and wrapped in the format documented in the Linux kernel
-+  source file ``fs/btrfs/lzo.c``.
-+
-+Additionally, there are some restrictions on ``pwritev2()``:
-+
-+* ``offset`` (or the current file offset if ``offset`` is -1) must be aligned
-+  to the sector size of the filesystem.
-+* ``len`` must be aligned to the sector size of the filesystem unless the data
-+  ends at or beyond the current end of the file.
-+* ``unencoded_len`` and the length of the encoded data must each be no more
-+  than 128 KiB. This limit may increase in the future.
-+* The length of the encoded data must be less than or equal to
-+  ``unencoded_len.``
-+* If using LZO, the filesystem's page size must match the compression page
-+  size.
-+
-+Implementation
-+==============
-+
-+This section describes the requirements for filesystems implementing encoded
-+I/O.
-+
-+First of all, a filesystem supporting encoded I/O must indicate this by setting
-+the ``FMODE_ENCODED_IO`` flag in its ``file_open`` file operation::
-+
-+    static int foo_file_open(struct inode *inode, struct file *filp)
-+    {
-+            ...
-+            filep->f_mode |= FMODE_ENCODED_IO;
-+            ...
-+    }
-+
-+Encoded I/O goes through ``read_iter`` and ``write_iter``, designated by the
-+``IOCB_ENCODED`` flag in ``kiocb->ki_flags``.
-+
-+Reads
-+-----
-+
-+Encoded ``read_iter`` should:
-+
-+1. Call ``generic_encoded_read_checks()`` to validate the file and buffers
-+   provided by userspace.
-+2. Initialize the ``encoded_iov`` appropriately.
-+3. Copy it to the user with ``copy_encoded_iov_to_iter()``.
-+4. Copy the encoded data to the user.
-+5. Advance ``kiocb->ki_pos`` by ``encoded_iov->len``.
-+6. Return the size of the encoded data read, not including the ``encoded_iov``.
-+
-+There are a few details to be aware of:
-+
-+* Encoded ``read_iter`` should support reading unencoded data if the extent is
-+  not encoded.
-+* If the buffers provided by the user are not large enough to contain an entire
-+  encoded extent, then ``read_iter`` should return ``-ENOBUFS``. This is to
-+  avoid confusing userspace with truncated data that cannot be properly
-+  decoded.
-+* Reads in the middle of an encoded extent can be returned by setting
-+  ``encoded_iov->unencoded_offset`` to non-zero.
-+* Truncated unencoded data (e.g., because the file does not end on a block
-+  boundary) may be returned by setting ``encoded_iov->len`` to a value smaller
-+  value than ``encoded_iov->unencoded_len - encoded_iov->unencoded_offset``.
-+
-+Writes
-+------
-+
-+Encoded ``write_iter`` should (in addition to the usual accounting/checks done
-+by ``write_iter``):
-+
-+1. Call ``copy_encoded_iov_from_iter()`` to get and validate the
-+   ``encoded_iov``.
-+2. Call ``generic_encoded_write_checks()`` instead of
-+   ``generic_write_checks()``.
-+3. Check that the provided encoding in ``encoded_iov`` is supported.
-+4. Advance ``kiocb->ki_pos`` by ``encoded_iov->len``.
-+5. Return the size of the encoded data written.
-+
-+Again, there are a few details:
-+
-+* Encoded ``write_iter`` doesn't need to support writing unencoded data.
-+* ``write_iter`` should either write all of the encoded data or none of it; it
-+  must not do partial writes.
-+* ``write_iter`` doesn't need to validate the encoded data; a subsequent read
-+  may return, e.g., ``-EIO`` if the data is not valid.
-+* The user may lie about the unencoded size of the data; a subsequent read
-+  should truncate or zero-extend the unencoded data rather than returning an
-+  error.
-+* Be careful of page cache coherency.
-diff --git a/Documentation/filesystems/index.rst b/Documentation/filesystems/index.rst
-index 1f76b1cb3348..4c391a3d6bad 100644
---- a/Documentation/filesystems/index.rst
-+++ b/Documentation/filesystems/index.rst
-@@ -53,6 +53,7 @@ filesystem implementations.
-    journalling
-    fscrypt
-    fsverity
-+   encoded_io
+diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
+index 9d091272807a..8345efb275eb 100644
+--- a/fs/btrfs/inode.c
++++ b/fs/btrfs/inode.c
+@@ -917,12 +917,12 @@ static noinline void submit_compressed_extents(struct async_chunk *async_chunk)
+ 			goto out_free_reserve;
+ 		free_extent_map(em);
  
- Filesystems
- ===========
-diff --git a/fs/read_write.c b/fs/read_write.c
-index 9db7adf160d2..f8db16e01227 100644
---- a/fs/read_write.c
-+++ b/fs/read_write.c
-@@ -20,6 +20,7 @@
- #include <linux/compat.h>
- #include <linux/mount.h>
- #include <linux/fs.h>
-+#include <linux/encoded_io.h>
- #include "internal.h"
+-		ret = btrfs_add_ordered_extent_compress(inode,
+-						async_extent->start,
+-						ins.objectid,
+-						async_extent->ram_size,
+-						ins.offset,
+-						async_extent->compress_type);
++		ret = btrfs_add_ordered_extent(inode, async_extent->start,
++					       async_extent->ram_size,
++					       async_extent->ram_size,
++					       ins.objectid, ins.offset, 0,
++					       1 << BTRFS_ORDERED_COMPRESSED,
++					       async_extent->compress_type);
+ 		if (ret) {
+ 			btrfs_drop_extent_cache(inode, async_extent->start,
+ 						async_extent->start +
+@@ -1127,9 +1127,9 @@ static noinline int cow_file_range(struct btrfs_inode *inode,
+ 		}
+ 		free_extent_map(em);
  
- #include <linux/uaccess.h>
-@@ -1632,24 +1633,15 @@ int generic_write_check_limits(struct file *file, loff_t pos, loff_t *count)
- 	return 0;
+-		ret = btrfs_add_ordered_extent(inode, start, ins.objectid,
+-					       ram_size, cur_alloc_size,
+-					       BTRFS_ORDERED_REGULAR);
++		ret = btrfs_add_ordered_extent(inode, start, ram_size, ram_size,
++					       ins.objectid, cur_alloc_size, 0,
++					       0, BTRFS_COMPRESS_NONE);
+ 		if (ret)
+ 			goto out_drop_extent_cache;
+ 
+@@ -1789,10 +1789,11 @@ static noinline int run_delalloc_nocow(struct btrfs_inode *inode,
+ 				goto error;
+ 			}
+ 			free_extent_map(em);
+-			ret = btrfs_add_ordered_extent(inode, cur_offset,
+-						       disk_bytenr, num_bytes,
+-						       num_bytes,
+-						       BTRFS_ORDERED_PREALLOC);
++			ret = btrfs_add_ordered_extent(inode,
++					cur_offset, num_bytes, num_bytes,
++					disk_bytenr, num_bytes, 0,
++					1 << BTRFS_ORDERED_PREALLOC,
++					BTRFS_COMPRESS_NONE);
+ 			if (ret) {
+ 				btrfs_drop_extent_cache(inode, cur_offset,
+ 							cur_offset + num_bytes - 1,
+@@ -1801,9 +1802,11 @@ static noinline int run_delalloc_nocow(struct btrfs_inode *inode,
+ 			}
+ 		} else {
+ 			ret = btrfs_add_ordered_extent(inode, cur_offset,
++						       num_bytes, num_bytes,
+ 						       disk_bytenr, num_bytes,
+-						       num_bytes,
+-						       BTRFS_ORDERED_NOCOW);
++						       0,
++						       1 << BTRFS_ORDERED_NOCOW,
++						       BTRFS_COMPRESS_NONE);
+ 			if (ret)
+ 				goto error;
+ 		}
+@@ -2729,6 +2732,7 @@ static int insert_reserved_file_extent(struct btrfs_trans_handle *trans,
+ 	struct btrfs_key ins;
+ 	u64 disk_num_bytes = btrfs_stack_file_extent_disk_num_bytes(stack_fi);
+ 	u64 disk_bytenr = btrfs_stack_file_extent_disk_bytenr(stack_fi);
++	u64 offset = btrfs_stack_file_extent_offset(stack_fi);
+ 	u64 num_bytes = btrfs_stack_file_extent_num_bytes(stack_fi);
+ 	u64 ram_bytes = btrfs_stack_file_extent_ram_bytes(stack_fi);
+ 	struct btrfs_drop_extents_args drop_args = { 0 };
+@@ -2803,7 +2807,8 @@ static int insert_reserved_file_extent(struct btrfs_trans_handle *trans,
+ 		goto out;
+ 
+ 	ret = btrfs_alloc_reserved_file_extent(trans, root, btrfs_ino(inode),
+-					       file_pos, qgroup_reserved, &ins);
++					       file_pos - offset,
++					       qgroup_reserved, &ins);
+ out:
+ 	btrfs_free_path(path);
+ 
+@@ -2829,20 +2834,20 @@ static int insert_ordered_extent_file_extent(struct btrfs_trans_handle *trans,
+ 					     struct btrfs_ordered_extent *oe)
+ {
+ 	struct btrfs_file_extent_item stack_fi;
+-	u64 logical_len;
+ 	bool update_inode_bytes;
++	u64 num_bytes = oe->num_bytes;
++	u64 ram_bytes = oe->ram_bytes;
+ 
+ 	memset(&stack_fi, 0, sizeof(stack_fi));
+ 	btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_FILE_EXTENT_REG);
+ 	btrfs_set_stack_file_extent_disk_bytenr(&stack_fi, oe->disk_bytenr);
+ 	btrfs_set_stack_file_extent_disk_num_bytes(&stack_fi,
+ 						   oe->disk_num_bytes);
++	btrfs_set_stack_file_extent_offset(&stack_fi, oe->offset);
+ 	if (test_bit(BTRFS_ORDERED_TRUNCATED, &oe->flags))
+-		logical_len = oe->truncated_len;
+-	else
+-		logical_len = oe->num_bytes;
+-	btrfs_set_stack_file_extent_num_bytes(&stack_fi, logical_len);
+-	btrfs_set_stack_file_extent_ram_bytes(&stack_fi, logical_len);
++		num_bytes = ram_bytes = oe->truncated_len;
++	btrfs_set_stack_file_extent_num_bytes(&stack_fi, num_bytes);
++	btrfs_set_stack_file_extent_ram_bytes(&stack_fi, ram_bytes);
+ 	btrfs_set_stack_file_extent_compression(&stack_fi, oe->compress_type);
+ 	/* Encryption and other encoding is reserved and all 0 */
+ 
+@@ -7218,8 +7223,11 @@ static struct extent_map *btrfs_create_dio_extent(struct btrfs_inode *inode,
+ 		if (IS_ERR(em))
+ 			goto out;
+ 	}
+-	ret = btrfs_add_ordered_extent_dio(inode, start, block_start, len,
+-					   block_len, type);
++	ret = btrfs_add_ordered_extent(inode, start, len, len, block_start,
++				       block_len, 0,
++				       (1 << type) |
++				       (1 << BTRFS_ORDERED_DIRECT),
++				       BTRFS_COMPRESS_NONE);
+ 	if (ret) {
+ 		if (em) {
+ 			free_extent_map(em);
+diff --git a/fs/btrfs/ordered-data.c b/fs/btrfs/ordered-data.c
+index 07b0b4218791..4d41b604196b 100644
+--- a/fs/btrfs/ordered-data.c
++++ b/fs/btrfs/ordered-data.c
+@@ -142,16 +142,27 @@ static inline struct rb_node *tree_search(struct btrfs_ordered_inode_tree *tree,
+ 	return ret;
  }
  
 -/*
-- * Performs necessary checks before doing a write
-- *
-- * Can adjust writing position or amount of bytes to write.
-- * Returns appropriate error code that caller should return or
-- * zero in case that write should be allowed.
-- */
--ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
-+static int generic_write_checks_common(struct kiocb *iocb, loff_t *count)
- {
- 	struct file *file = iocb->ki_filp;
- 	struct inode *inode = file->f_mapping->host;
--	loff_t count;
--	int ret;
- 
- 	if (IS_SWAPFILE(inode))
- 		return -ETXTBSY;
- 
--	if (!iov_iter_count(from))
-+	if (!*count)
- 		return 0;
- 
- 	/* FIXME: this is for backwards compatibility with 2.4 */
-@@ -1659,8 +1651,22 @@ ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
- 	if ((iocb->ki_flags & IOCB_NOWAIT) && !(iocb->ki_flags & IOCB_DIRECT))
- 		return -EINVAL;
- 
--	count = iov_iter_count(from);
--	ret = generic_write_check_limits(file, iocb->ki_pos, &count);
-+	return generic_write_check_limits(iocb->ki_filp, iocb->ki_pos, count);
-+}
-+
-+/*
-+ * Performs necessary checks before doing a write
+- * Allocate and add a new ordered_extent into the per-inode tree.
++/**
++ * btrfs_add_ordered_extent - Add an ordered extent to the per-inode tree.
++ * @inode: inode that this extent is for.
++ * @file_offset: Logical offset in file where the extent starts.
++ * @num_bytes: Logical length of extent in file.
++ * @ram_bytes: Full length of unencoded data.
++ * @disk_bytenr: Offset of extent on disk.
++ * @disk_num_bytes: Size of extent on disk.
++ * @offset: Offset into unencoded data where file data starts.
++ * @flags: Flags specifying type of extent (1 << BTRFS_ORDERED_*).
++ * @compress_type: Compression algorithm used for data.
+  *
+- * The tree is given a single reference on the ordered extent that was
+- * inserted.
++ * Most of these parameters correspond to &struct btrfs_file_extent_item. The
++ * tree is given a single reference on the ordered extent that was inserted.
 + *
-+ * Can adjust writing position or amount of bytes to write.
-+ * Returns appropriate error code that caller should return or
-+ * zero in case that write should be allowed.
-+ */
-+ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
-+{
-+	loff_t count = iov_iter_count(from);
-+	int ret;
-+
-+	ret = generic_write_checks_common(iocb, &count);
- 	if (ret)
- 		return ret;
++ * Return: 0 or -ENOMEM.
+  */
+-static int __btrfs_add_ordered_extent(struct btrfs_inode *inode, u64 file_offset,
+-				      u64 disk_bytenr, u64 num_bytes,
+-				      u64 disk_num_bytes, int type, int dio,
+-				      int compress_type)
++int btrfs_add_ordered_extent(struct btrfs_inode *inode, u64 file_offset,
++			     u64 num_bytes, u64 ram_bytes, u64 disk_bytenr,
++			     u64 disk_num_bytes, u64 offset, int flags,
++			     int compress_type)
+ {
+ 	struct btrfs_root *root = inode->root;
+ 	struct btrfs_fs_info *fs_info = root->fs_info;
+@@ -160,7 +171,8 @@ static int __btrfs_add_ordered_extent(struct btrfs_inode *inode, u64 file_offset
+ 	struct btrfs_ordered_extent *entry;
+ 	int ret;
  
-@@ -1691,3 +1697,139 @@ int generic_file_rw_checks(struct file *file_in, struct file *file_out)
+-	if (type == BTRFS_ORDERED_NOCOW || type == BTRFS_ORDERED_PREALLOC) {
++	if (flags &
++	    ((1 << BTRFS_ORDERED_NOCOW) | (1 << BTRFS_ORDERED_PREALLOC))) {
+ 		/* For nocow write, we can release the qgroup rsv right now */
+ 		ret = btrfs_qgroup_free_data(inode, NULL, file_offset, num_bytes);
+ 		if (ret < 0)
+@@ -180,9 +192,11 @@ static int __btrfs_add_ordered_extent(struct btrfs_inode *inode, u64 file_offset
+ 		return -ENOMEM;
  
+ 	entry->file_offset = file_offset;
+-	entry->disk_bytenr = disk_bytenr;
+ 	entry->num_bytes = num_bytes;
++	entry->ram_bytes = ram_bytes;
++	entry->disk_bytenr = disk_bytenr;
+ 	entry->disk_num_bytes = disk_num_bytes;
++	entry->offset = offset;
+ 	entry->bytes_left = num_bytes;
+ 	entry->inode = igrab(&inode->vfs_inode);
+ 	entry->compress_type = compress_type;
+@@ -192,18 +206,12 @@ static int __btrfs_add_ordered_extent(struct btrfs_inode *inode, u64 file_offset
+ 	entry->disk = NULL;
+ 	entry->partno = (u8)-1;
+ 
+-	ASSERT(type == BTRFS_ORDERED_REGULAR ||
+-	       type == BTRFS_ORDERED_NOCOW ||
+-	       type == BTRFS_ORDERED_PREALLOC ||
+-	       type == BTRFS_ORDERED_COMPRESSED);
+-	set_bit(type, &entry->flags);
++	ASSERT((flags & ~BTRFS_ORDERED_TYPE_FLAGS) == 0);
++	entry->flags = flags;
+ 
+ 	percpu_counter_add_batch(&fs_info->ordered_bytes, num_bytes,
+ 				 fs_info->delalloc_batch);
+ 
+-	if (dio)
+-		set_bit(BTRFS_ORDERED_DIRECT, &entry->flags);
+-
+ 	/* one ref for the tree */
+ 	refcount_set(&entry->refs, 1);
+ 	init_waitqueue_head(&entry->wait);
+@@ -248,41 +256,6 @@ static int __btrfs_add_ordered_extent(struct btrfs_inode *inode, u64 file_offset
  	return 0;
  }
-+
-+/**
-+ * generic_encoded_write_checks() - check an encoded write
-+ * @iocb: I/O context.
-+ * @encoded: Encoding metadata.
-+ *
-+ * This should be called by RWF_ENCODED write implementations rather than
-+ * generic_write_checks(). Unlike generic_write_checks(), it returns -EFBIG
-+ * instead of adjusting the size of the write.
-+ *
-+ * Return: 0 on success, -errno on error.
-+ */
-+int generic_encoded_write_checks(struct kiocb *iocb,
-+				 const struct encoded_iov *encoded)
-+{
-+	loff_t count = encoded->len;
-+	int ret;
-+
-+	if (!(iocb->ki_filp->f_flags & O_ALLOW_ENCODED))
-+		return -EPERM;
-+
-+	ret = generic_write_checks_common(iocb, &count);
-+	if (ret)
-+		return ret;
-+
-+	if (count != encoded->len) {
-+		/*
-+		 * The write got truncated by generic_write_checks_common(). We
-+		 * can't do a partial encoded write.
-+		 */
-+		return -EFBIG;
-+	}
-+	return 0;
-+}
-+EXPORT_SYMBOL(generic_encoded_write_checks);
-+
-+/**
-+ * copy_encoded_iov_from_iter() - copy a &struct encoded_iov from userspace
-+ * @encoded: Returned encoding metadata.
-+ * @from: Source iterator.
-+ *
-+ * This copies in the &struct encoded_iov and does some basic sanity checks.
-+ * This should always be used rather than a plain copy_from_iter(), as it does
-+ * the proper handling for backward- and forward-compatibility.
-+ *
-+ * Return: 0 on success, -EFAULT if access to userspace failed, -E2BIG if the
-+ *         copied structure contained non-zero fields that this kernel doesn't
-+ *         support, -EINVAL if the copied structure was invalid.
-+ */
-+int copy_encoded_iov_from_iter(struct encoded_iov *encoded,
-+			       struct iov_iter *from)
-+{
-+	size_t usize;
-+	int ret;
-+
-+	usize = iov_iter_single_seg_count(from);
-+	if (usize > PAGE_SIZE)
-+		return -E2BIG;
-+	if (usize < ENCODED_IOV_SIZE_VER0)
-+		return -EINVAL;
-+	ret = copy_struct_from_iter(encoded, sizeof(*encoded), from);
-+	if (ret)
-+		return ret;
-+
-+	if (encoded->compression == ENCODED_IOV_COMPRESSION_NONE &&
-+	    encoded->encryption == ENCODED_IOV_ENCRYPTION_NONE)
-+		return -EINVAL;
-+	if (encoded->compression > ENCODED_IOV_COMPRESSION_TYPES ||
-+	    encoded->encryption > ENCODED_IOV_ENCRYPTION_TYPES)
-+		return -EINVAL;
-+	if (encoded->unencoded_offset > encoded->unencoded_len)
-+		return -EINVAL;
-+	if (encoded->len > encoded->unencoded_len - encoded->unencoded_offset)
-+		return -EINVAL;
-+	return 0;
-+}
-+EXPORT_SYMBOL(copy_encoded_iov_from_iter);
-+
-+/**
-+ * generic_encoded_read_checks() - sanity check an RWF_ENCODED read
-+ * @iocb: I/O context.
-+ * @iter: Destination iterator for read.
-+ *
-+ * This should always be called by RWF_ENCODED read implementations before
-+ * returning any data.
-+ *
-+ * Return: Number of bytes available to return encoded data in @iter on success,
-+ *         -EPERM if the file was not opened with O_ALLOW_ENCODED, -EINVAL if
-+ *         the size of the &struct encoded_iov iovec is invalid.
-+ */
-+ssize_t generic_encoded_read_checks(struct kiocb *iocb, struct iov_iter *iter)
-+{
-+	size_t usize;
-+
-+	if (!(iocb->ki_filp->f_flags & O_ALLOW_ENCODED))
-+		return -EPERM;
-+	usize = iov_iter_single_seg_count(iter);
-+	if (usize > PAGE_SIZE || usize < ENCODED_IOV_SIZE_VER0)
-+		return -EINVAL;
-+	return iov_iter_count(iter) - usize;
-+}
-+EXPORT_SYMBOL(generic_encoded_read_checks);
-+
-+/**
-+ * copy_encoded_iov_to_iter() - copy a &struct encoded_iov to userspace
-+ * @encoded: Encoding metadata to return.
-+ * @to: Destination iterator.
-+ *
-+ * This should always be used by RWF_ENCODED read implementations rather than a
-+ * plain copy_to_iter(), as it does the proper handling for backward- and
-+ * forward-compatibility. The iterator must be sanity-checked with
-+ * generic_encoded_read_checks() before this is called.
-+ *
-+ * Return: 0 on success, -EFAULT if access to userspace failed, -E2BIG if there
-+ *         were non-zero fields in @encoded that the user buffer could not
-+ *         accommodate.
-+ */
-+int copy_encoded_iov_to_iter(const struct encoded_iov *encoded,
-+			     struct iov_iter *to)
-+{
-+	size_t ksize = sizeof(*encoded);
-+	size_t usize = iov_iter_single_seg_count(to);
-+	size_t size = min(ksize, usize);
-+
-+	/* We already sanity-checked usize in generic_encoded_read_checks(). */
-+
-+	if (usize < ksize &&
-+	    memchr_inv((char *)encoded + usize, 0, ksize - usize))
-+		return -E2BIG;
-+	if (copy_to_iter(encoded, size, to) != size ||
-+	    (usize > ksize &&
-+	     iov_iter_zero(usize - ksize, to) != usize - ksize))
-+		return -EFAULT;
-+	return 0;
-+}
-+EXPORT_SYMBOL(copy_encoded_iov_to_iter);
-diff --git a/include/linux/encoded_io.h b/include/linux/encoded_io.h
-new file mode 100644
-index 000000000000..a8cfc0108ba0
---- /dev/null
-+++ b/include/linux/encoded_io.h
-@@ -0,0 +1,17 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+#ifndef _LINUX_ENCODED_IO_H
-+#define _LINUX_ENCODED_IO_H
-+
-+#include <uapi/linux/encoded_io.h>
-+
-+struct encoded_iov;
-+struct iov_iter;
-+struct kiocb;
-+extern int generic_encoded_write_checks(struct kiocb *,
-+					const struct encoded_iov *);
-+extern int copy_encoded_iov_from_iter(struct encoded_iov *, struct iov_iter *);
-+extern ssize_t generic_encoded_read_checks(struct kiocb *, struct iov_iter *);
-+extern int copy_encoded_iov_to_iter(const struct encoded_iov *,
-+				    struct iov_iter *);
-+
-+#endif /* _LINUX_ENCODED_IO_H */
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index ec8f3ddf4a6a..7b63f85204eb 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -180,6 +180,9 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
- /* File supports async buffered reads */
- #define FMODE_BUF_RASYNC	((__force fmode_t)0x40000000)
  
-+/* File supports encoded IO */
-+#define FMODE_ENCODED_IO	((__force fmode_t)0x80000000)
-+
+-int btrfs_add_ordered_extent(struct btrfs_inode *inode, u64 file_offset,
+-			     u64 disk_bytenr, u64 num_bytes, u64 disk_num_bytes,
+-			     int type)
+-{
+-	ASSERT(type == BTRFS_ORDERED_REGULAR ||
+-	       type == BTRFS_ORDERED_NOCOW ||
+-	       type == BTRFS_ORDERED_PREALLOC);
+-	return __btrfs_add_ordered_extent(inode, file_offset, disk_bytenr,
+-					  num_bytes, disk_num_bytes, type, 0,
+-					  BTRFS_COMPRESS_NONE);
+-}
+-
+-int btrfs_add_ordered_extent_dio(struct btrfs_inode *inode, u64 file_offset,
+-				 u64 disk_bytenr, u64 num_bytes,
+-				 u64 disk_num_bytes, int type)
+-{
+-	ASSERT(type == BTRFS_ORDERED_REGULAR ||
+-	       type == BTRFS_ORDERED_NOCOW ||
+-	       type == BTRFS_ORDERED_PREALLOC);
+-	return __btrfs_add_ordered_extent(inode, file_offset, disk_bytenr,
+-					  num_bytes, disk_num_bytes, type, 1,
+-					  BTRFS_COMPRESS_NONE);
+-}
+-
+-int btrfs_add_ordered_extent_compress(struct btrfs_inode *inode, u64 file_offset,
+-				      u64 disk_bytenr, u64 num_bytes,
+-				      u64 disk_num_bytes, int compress_type)
+-{
+-	ASSERT(compress_type != BTRFS_COMPRESS_NONE);
+-	return __btrfs_add_ordered_extent(inode, file_offset, disk_bytenr,
+-					  num_bytes, disk_num_bytes,
+-					  BTRFS_ORDERED_COMPRESSED, 0,
+-					  compress_type);
+-}
+-
  /*
-  * Attribute flags.  These should be or-ed together to figure out what
-  * has been changed!
-@@ -310,6 +313,7 @@ enum rw_hint {
- #define IOCB_SYNC		(__force int) RWF_SYNC
- #define IOCB_NOWAIT		(__force int) RWF_NOWAIT
- #define IOCB_APPEND		(__force int) RWF_APPEND
-+#define IOCB_ENCODED		(__force int) RWF_ENCODED
+  * Add a struct btrfs_ordered_sum into the list of checksums to be inserted
+  * when an ordered extent is finished.  If the list covers more than one
+@@ -919,35 +892,12 @@ static int clone_ordered_extent(struct btrfs_ordered_extent *ordered, u64 pos,
+ 	struct inode *inode = ordered->inode;
+ 	u64 file_offset = ordered->file_offset + pos;
+ 	u64 disk_bytenr = ordered->disk_bytenr + pos;
+-	u64 num_bytes = len;
+-	u64 disk_num_bytes = len;
+-	int type;
+-	unsigned long flags_masked = ordered->flags & ~(1 << BTRFS_ORDERED_DIRECT);
+-	int compress_type = ordered->compress_type;
+-	unsigned long weight;
+-	int ret;
++	unsigned long flags = ordered->flags & BTRFS_ORDERED_TYPE_FLAGS;
  
- /* non-RWF related bits - start at 16 */
- #define IOCB_EVENTFD		(1 << 16)
-@@ -3079,6 +3083,13 @@ extern int generic_file_readonly_mmap(struct file *, struct vm_area_struct *);
- extern ssize_t generic_write_checks(struct kiocb *, struct iov_iter *);
- extern int generic_write_check_limits(struct file *file, loff_t pos,
- 		loff_t *count);
-+struct encoded_iov;
-+extern int generic_encoded_write_checks(struct kiocb *,
-+					const struct encoded_iov *);
-+extern int copy_encoded_iov_from_iter(struct encoded_iov *, struct iov_iter *);
-+extern ssize_t generic_encoded_read_checks(struct kiocb *, struct iov_iter *);
-+extern int copy_encoded_iov_to_iter(const struct encoded_iov *,
-+				    struct iov_iter *);
- extern int generic_file_rw_checks(struct file *file_in, struct file *file_out);
- ssize_t filemap_read(struct kiocb *iocb, struct iov_iter *to,
- 		ssize_t already_read);
-@@ -3384,6 +3395,8 @@ static inline int kiocb_set_rw_flags(struct kiocb *ki, rwf_t flags)
- 			return -EOPNOTSUPP;
- 		kiocb_flags |= IOCB_NOIO;
- 	}
-+	if ((flags & RWF_ENCODED) && !(ki->ki_filp->f_mode & FMODE_ENCODED_IO))
-+		return -EOPNOTSUPP;
- 	kiocb_flags |= (__force int) (flags & RWF_SUPPORTED);
- 	if (flags & RWF_SYNC)
- 		kiocb_flags |= IOCB_DSYNC;
-diff --git a/include/uapi/linux/encoded_io.h b/include/uapi/linux/encoded_io.h
-new file mode 100644
-index 000000000000..cf741453dba4
---- /dev/null
-+++ b/include/uapi/linux/encoded_io.h
-@@ -0,0 +1,30 @@
-+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-+#ifndef _UAPI_LINUX_ENCODED_IO_H
-+#define _UAPI_LINUX_ENCODED_IO_H
-+
-+#include <linux/types.h>
-+
-+#define ENCODED_IOV_COMPRESSION_NONE 0
-+#define ENCODED_IOV_COMPRESSION_BTRFS_ZLIB 1
-+#define ENCODED_IOV_COMPRESSION_BTRFS_ZSTD 2
-+#define ENCODED_IOV_COMPRESSION_BTRFS_LZO_4K 3
-+#define ENCODED_IOV_COMPRESSION_BTRFS_LZO_8K 4
-+#define ENCODED_IOV_COMPRESSION_BTRFS_LZO_16K 5
-+#define ENCODED_IOV_COMPRESSION_BTRFS_LZO_32K 6
-+#define ENCODED_IOV_COMPRESSION_BTRFS_LZO_64K 7
-+#define ENCODED_IOV_COMPRESSION_TYPES 8
-+
-+#define ENCODED_IOV_ENCRYPTION_NONE 0
-+#define ENCODED_IOV_ENCRYPTION_TYPES 1
-+
-+struct encoded_iov {
-+	__aligned_u64 len;
-+	__aligned_u64 unencoded_len;
-+	__aligned_u64 unencoded_offset;
-+	__u32 compression;
-+	__u32 encryption;
-+};
-+
-+#define ENCODED_IOV_SIZE_VER0 32
-+
-+#endif /* _UAPI_LINUX_ENCODED_IO_H */
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index f44eb0a04afd..0800b01524e8 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -300,8 +300,11 @@ typedef int __bitwise __kernel_rwf_t;
- /* per-IO O_APPEND */
- #define RWF_APPEND	((__force __kernel_rwf_t)0x00000010)
+-	weight = hweight_long(flags_masked);
+-	WARN_ON_ONCE(weight > 1);
+-	if (!weight)
+-		type = 0;
+-	else
+-		type = __ffs(flags_masked);
+-
+-	if (test_bit(BTRFS_ORDERED_COMPRESSED, &ordered->flags)) {
+-		WARN_ON_ONCE(1);
+-		ret = btrfs_add_ordered_extent_compress(BTRFS_I(inode),
+-				file_offset, disk_bytenr, num_bytes,
+-				disk_num_bytes, compress_type);
+-	} else if (test_bit(BTRFS_ORDERED_DIRECT, &ordered->flags)) {
+-		ret = btrfs_add_ordered_extent_dio(BTRFS_I(inode), file_offset,
+-				disk_bytenr, num_bytes, disk_num_bytes, type);
+-	} else {
+-		ret = btrfs_add_ordered_extent(BTRFS_I(inode), file_offset,
+-				disk_bytenr, num_bytes, disk_num_bytes, type);
+-	}
+-
+-	return ret;
++	WARN_ON_ONCE(flags & (1 << BTRFS_ORDERED_COMPRESSED));
++	return btrfs_add_ordered_extent(BTRFS_I(inode), file_offset, len, len,
++					disk_bytenr, len, 0, flags,
++					ordered->compress_type);
+ }
  
-+/* encoded (e.g., compressed and/or encrypted) IO */
-+#define RWF_ENCODED	((__force __kernel_rwf_t)0x00000020)
-+
- /* mask of flags supported by the kernel */
- #define RWF_SUPPORTED	(RWF_HIPRI | RWF_DSYNC | RWF_SYNC | RWF_NOWAIT |\
--			 RWF_APPEND)
-+			 RWF_APPEND | RWF_ENCODED)
+ int btrfs_split_ordered_extent(struct btrfs_ordered_extent *ordered, u64 pre,
+diff --git a/fs/btrfs/ordered-data.h b/fs/btrfs/ordered-data.h
+index e60c07f36427..fe1c50da373c 100644
+--- a/fs/btrfs/ordered-data.h
++++ b/fs/btrfs/ordered-data.h
+@@ -76,6 +76,13 @@ enum {
+ 	BTRFS_ORDERED_PENDING,
+ };
  
- #endif /* _UAPI_LINUX_FS_H */
++/* BTRFS_ORDERED_* flags that specify the type of the extent. */
++#define BTRFS_ORDERED_TYPE_FLAGS ((1UL << BTRFS_ORDERED_REGULAR) |	\
++				  (1UL << BTRFS_ORDERED_NOCOW) |	\
++				  (1UL << BTRFS_ORDERED_PREALLOC) |	\
++				  (1UL << BTRFS_ORDERED_COMPRESSED) |	\
++				  (1UL << BTRFS_ORDERED_DIRECT))
++
+ struct btrfs_ordered_extent {
+ 	/* logical offset in the file */
+ 	u64 file_offset;
+@@ -84,9 +91,11 @@ struct btrfs_ordered_extent {
+ 	 * These fields directly correspond to the same fields in
+ 	 * btrfs_file_extent_item.
+ 	 */
+-	u64 disk_bytenr;
+ 	u64 num_bytes;
++	u64 ram_bytes;
++	u64 disk_bytenr;
+ 	u64 disk_num_bytes;
++	u64 offset;
+ 
+ 	/* number of bytes that still need writing */
+ 	u64 bytes_left;
+@@ -180,14 +189,9 @@ bool btrfs_dec_test_first_ordered_pending(struct btrfs_inode *inode,
+ 				   u64 *file_offset, u64 io_size,
+ 				   int uptodate);
+ int btrfs_add_ordered_extent(struct btrfs_inode *inode, u64 file_offset,
+-			     u64 disk_bytenr, u64 num_bytes, u64 disk_num_bytes,
+-			     int type);
+-int btrfs_add_ordered_extent_dio(struct btrfs_inode *inode, u64 file_offset,
+-				 u64 disk_bytenr, u64 num_bytes,
+-				 u64 disk_num_bytes, int type);
+-int btrfs_add_ordered_extent_compress(struct btrfs_inode *inode, u64 file_offset,
+-				      u64 disk_bytenr, u64 num_bytes,
+-				      u64 disk_num_bytes, int compress_type);
++			     u64 num_bytes, u64 ram_bytes, u64 disk_bytenr,
++			     u64 disk_num_bytes, u64 offset, int flags,
++			     int compress_type);
+ void btrfs_add_ordered_sum(struct btrfs_ordered_extent *entry,
+ 			   struct btrfs_ordered_sum *sum);
+ struct btrfs_ordered_extent *btrfs_lookup_ordered_extent(struct btrfs_inode *inode,
 -- 
 2.31.1
 
