@@ -2,32 +2,29 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-21.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A1F0BC43600
-	for <linux-api@archiver.kernel.org>; Thu,  1 Apr 2021 20:51:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 03F44C433B4
+	for <linux-api@archiver.kernel.org>; Thu,  1 Apr 2021 20:51:48 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 71CC7610F8
-	for <linux-api@archiver.kernel.org>; Thu,  1 Apr 2021 20:51:21 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CAFBB60BBB
+	for <linux-api@archiver.kernel.org>; Thu,  1 Apr 2021 20:51:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233961AbhDAUvT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 1 Apr 2021 16:51:19 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43238 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233994AbhDAUvM (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 1 Apr 2021 16:51:12 -0400
-Received: from smtp-190c.mail.infomaniak.ch (smtp-190c.mail.infomaniak.ch [IPv6:2001:1600:4:17::190c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 66152C0617A7
-        for <linux-api@vger.kernel.org>; Thu,  1 Apr 2021 13:51:06 -0700 (PDT)
-Received: from smtp-3-0000.mail.infomaniak.ch (unknown [10.4.36.107])
-        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4FBFhS4FJlzMprhM;
-        Thu,  1 Apr 2021 22:51:04 +0200 (CEST)
+        id S234192AbhDAUvq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 1 Apr 2021 16:51:46 -0400
+Received: from smtp-8fad.mail.infomaniak.ch ([83.166.143.173]:46323 "EHLO
+        smtp-8fad.mail.infomaniak.ch" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S234029AbhDAUvR (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 1 Apr 2021 16:51:17 -0400
+Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4FBFhb343JzMqKyg;
+        Thu,  1 Apr 2021 22:51:11 +0200 (CEST)
 Received: from localhost (unknown [23.97.221.149])
-        by smtp-3-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4FBFhS1427zlh8T7;
-        Thu,  1 Apr 2021 22:51:04 +0200 (CEST)
+        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4FBFhb02cJzlppyf;
+        Thu,  1 Apr 2021 22:51:11 +0200 (CEST)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>,
         "Serge E . Hallyn" <serge@hallyn.com>
@@ -52,9 +49,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         linux-kselftest@vger.kernel.org,
         linux-security-module@vger.kernel.org, x86@kernel.org,
         =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@linux.microsoft.com>
-Subject: [PATCH v32 02/12] landlock: Add ruleset and domain management
-Date:   Thu,  1 Apr 2021 22:51:58 +0200
-Message-Id: <20210401205208.2756565-3-mic@digikod.net>
+Subject: [PATCH v32 07/12] landlock: Support filesystem access-control
+Date:   Thu,  1 Apr 2021 22:52:03 +0200
+Message-Id: <20210401205208.2756565-8-mic@digikod.net>
 X-Mailer: git-send-email 2.30.2
 In-Reply-To: <20210401205208.2756565-1-mic@digikod.net>
 References: <20210401205208.2756565-1-mic@digikod.net>
@@ -67,858 +64,1273 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Mickaël Salaün <mic@linux.microsoft.com>
 
-A Landlock ruleset is mainly a red-black tree with Landlock rules as
-nodes.  This enables quick update and lookup to match a requested
-access, e.g. to a file.  A ruleset is usable through a dedicated file
-descriptor (cf. following commit implementing syscalls) which enables a
-process to create and populate a ruleset with new rules.
+Using Landlock objects and ruleset, it is possible to tag inodes
+according to a process's domain.  To enable an unprivileged process to
+express a file hierarchy, it first needs to open a directory (or a file)
+and pass this file descriptor to the kernel through
+landlock_add_rule(2).  When checking if a file access request is
+allowed, we walk from the requested dentry to the real root, following
+the different mount layers.  The access to each "tagged" inodes are
+collected according to their rule layer level, and ANDed to create
+access to the requested file hierarchy.  This makes possible to identify
+a lot of files without tagging every inodes nor modifying the
+filesystem, while still following the view and understanding the user
+has from the filesystem.
 
-A domain is a ruleset tied to a set of processes.  This group of rules
-defines the security policy enforced on these processes and their future
-children.  A domain can transition to a new domain which is the
-intersection of all its constraints and those of a ruleset provided by
-the current process.  This modification only impact the current process.
-This means that a process can only gain more constraints (i.e. lose
-accesses) over time.
+Add a new ARCH_EPHEMERAL_INODES for UML because it currently does not
+keep the same struct inodes for the same inodes whereas these inodes are
+in use.
 
+This commit adds a minimal set of supported filesystem access-control
+which doesn't enable to restrict all file-related actions.  This is the
+result of multiple discussions to minimize the code of Landlock to ease
+review.  Thanks to the Landlock design, extending this access-control
+without breaking user space will not be a problem.  Moreover, seccomp
+filters can be used to restrict the use of syscall families which may
+not be currently handled by Landlock.
+
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Anton Ivanov <anton.ivanov@cambridgegreys.com>
 Cc: James Morris <jmorris@namei.org>
+Cc: Jann Horn <jannh@google.com>
+Cc: Jeff Dike <jdike@addtoit.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Richard Weinberger <richard@nod.at>
+Cc: Serge E. Hallyn <serge@hallyn.com>
 Signed-off-by: Mickaël Salaün <mic@linux.microsoft.com>
-Acked-by: Serge Hallyn <serge@hallyn.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
-Reviewed-by: Jann Horn <jannh@google.com>
-Link: https://lore.kernel.org/r/20210401205208.2756565-3-mic@digikod.net
+Link: https://lore.kernel.org/r/20210401205208.2756565-8-mic@digikod.net
 ---
 
+Changes since v31:
+* Gracefully forbid reparenting by returning EXDEV in hook_path_link()
+  and hook_path_rename() (hinted by Al Viro).
+* Replace excessive WARN_ON_ONCE() with unlikely() in
+  hook_path_rename() and use ENOENT instead of EACCES.
+* Improve comment in unmask_layers() (pointed out by Al Viro).  Also use
+  filesystem "topology" instead of "layout", which seems more
+  appropriate.
+* Add access(2) to the documented list of unsupported syscall families.
+* Replace "option" with "flag" in hook_sb_mount() comment.
+
 Changes since v30:
-* Rename put_rule() to free_rule() to be more consistent.
-* Add Reviewed-by Kees Cook.
-* Add Reviewed-by Jann Horn.
+* Fix a (theoretical) data race in get_inode_object() (spotted by Jann
+  Horn) and update the related comments.  Also move the ihold() call to
+  better reflect the logical order (opposite to release_inode() and
+  hook_sb_delete()), even if it is still protected by inode->i_lock.
+* Improve comments related to inode and superblock management.
+
+Changes since v29:
+* Remove a useless unlock/lock for the first loop walk in
+  hook_sb_delete().  This also makes the code clearer but doesn't change
+  the garantees for iput().
+* Rename iput_inode to prev_inode, which shows its origin.
 
 Changes since v28:
-* Add Acked-by Serge Hallyn.
-* Clean up comment.
+* Fix race conditions that could be caused by concurrent calls to
+  release_inode() and hook_sb_delete().
+* Avoid livelock when a lot of inodes are tagged.
+* Improve concurrency locking and add comments to explain the specific
+  lock rules.
+* Add an inode_free_security hook to check that release_inode() and
+  hook_sb_delete() do their job.
+* Add early return to check_access_path() to check if the access request
+  is empty.  This doesn't change the semantic.
+* Reword the first description sentence (suggested by Serge Hallyn).
 
 Changes since v27:
-* Fix domains with layers of non-overlapping access rights.
-* Add stricter limit checks (same semantic).
-* Change the grow direction of a rule layer stack to make it the same as
-  the new ruleset fs_access_masks stack (cosmetic change).
-* Cosmetic fix for a comment block.
+* Fix domains with layers of non-overlapping access rights (cf.
+  layout1.non_overlapping_accesses test) thanks to a stack of access
+  rights per layer (replacing ORed access rights).  This avoids
+  too-restrictive domains.
+* Cosmetic fixes and updates in comments and Kconfig.
 
 Changes since v26:
+* Check each rule of a path to enable a more permissive and pragmatic
+  access control per layer.  Suggested by Jann Horn:
+  https://lore.kernel.org/lkml/CAG48ez1O0VTwEiRd3KqexoF78WR+cmP5bGk5Kh5Cs7aPepiDVg@mail.gmail.com/
+* Rename check_access_path_continue() to unmask_layers() and make it
+  return the new layer mask.
+* Avoid double domain check in hook_file_open().
+* In the documentation, add utime(2) as another example of unhandled
+  syscalls.  Indeed, using `touch` to test write access may be tempting.
+* Remove outdated comment about OverlayFS.
+* Rename the landlock.h ifdef to align with most similar files.
 * Fix spelling.
 
 Changes since v25:
-* Add build-time checks for the num_layers and num_rules variables
-  according to LANDLOCK_MAX_NUM_LAYERS and LANDLOCK_MAX_NUM_RULES, and
-  move these limits to a dedicated file.
+* Move build_check_layer() to ruleset.c, and add built-time checks for
+  the fs_access_mask and access variables according to
+  _LANDLOCK_ACCESS_FS_MASK.
+* Move limits to a dedicated file and rename them:
+  _LANDLOCK_ACCESS_FS_LAST and _LANDLOCK_ACCESS_FS_MASK.
+* Set build_check_layer() as non-inline to trigger a warning if it is
+  not called.
+* Use BITS_PER_TYPE() macro.
+* Rename function to landlock_add_fs_hooks().
 * Cosmetic variable renames.
 
 Changes since v24:
-* Update struct landlock_rule with a layer stack.  This reverts "Always
-  intersect access rights" from v24 and also adds the ability to tie
-  access rights with their policy layer.  As noted by Jann Horn, always
-  intersecting access rights made some use cases uselessly more
-  difficult to handle in user space.  Thanks to this new stack, we still
-  have a deterministic policy behavior whatever their level in the stack
-  of policies, while using a "union" of accesses when building a
-  ruleset.  The implementation use a FAM to keep the access checks quick
-  and memory efficient (4 bytes per layer per inode).  Update
-  insert_rule() accordingly.
+* Use the new struct landlock_rule and landlock_layer to not mix
+  accesses from different layers.  Revert "Enforce deterministic
+  interleaved path rules" from v24, and fix the layer check.  This
+  enables to follow a sane semantic: an access is granted if, for each
+  policy layer, at least one rule encountered on the pathwalk grants the
+  access, regardless of their position in the layer stack (suggested by
+  Jann Horn).  See layout1.interleaved_masked_accesses tests from
+  tools/testing/selftests/landlock/fs_test.c for corner cases.
+* Add build-time checks for layers.
+* Use the new landlock_insert_rule() API.
 
 Changes since v23:
-* Always intersect access rights.  Following the filesystem change
-  logic, make ruleset updates more consistent by always intersecting
-  access rights (boolean AND) instead of combining them (boolean OR) for
-  the same layer.  This defensive approach could also help avoid user
-  space to inadvertently allow multiple access rights for the same
-  object (e.g.  write and execute access on a path hierarchy) instead of
-  dealing with such inconsistency.  This can happen when there is no
-  deduplication of objects (e.g. paths and underlying inodes) whereas
-  they get different access rights with landlock_add_rule(2).
-* Add extra checks to make sure that:
-  - there is always an (allocated) object in each used rules;
-  - when updating a ruleset with a new rule (i.e. not merging two
-    rulesets), the ruleset doesn't contain multiple layers.
-* Hide merge parameter from the public landlock_insert_rule() API.  This
-  helps avoid misuse of this function.
-* Replace a remaining hardcoded 1 with SINGLE_DEPTH_NESTING.
+* Enforce deterministic interleaved path rules.  To have consistent
+  layered rules, granting access to a path implies that all accesses
+  tied to inodes, from the requested file to the real root, must be
+  checked.  Otherwise, stacked rules may result to overzealous
+  restrictions.  By excluding the ability to add exceptions in the same
+  layer (e.g. /a allowed, /a/b denied, and /a/b/c allowed), we get
+  deterministic interleaved path rules.  This removes an optimization
+  which could be replaced by a proper cache mechanism.  This also
+  further simplifies and explain check_access_path_continue().
+* Fix memory allocation error handling in landlock_create_object()
+  calls.  This prevent to inadvertently hold an inode.
+* In get_inode_object(), improve comments, make code more readable and
+  move kfree() call out of the lock window.
+* Use the simplified landlock_insert_rule() API.
 
 Changes since v22:
-* Explicitely use RB_ROOT and SINGLE_DEPTH_NESTING (suggested by Jann
-  Horn).
-* Improve comments and fix spelling (suggested by Jann Horn).
+* Simplify check_access_path_continue() (suggested by Jann Horn).
+* Remove prefetch() call for now (suggested by Jann Horn).
+* Fix spelling and remove superfluous comment (spotted by Jann Horn).
+* Cosmetic variable renaming.
 
 Changes since v21:
-* Add and clean up comments.
+* Rename ARCH_EPHEMERAL_STATES to ARCH_EPHEMERAL_INODES (suggested by
+  James Morris).
+* Remove the LANDLOCK_ACCESS_FS_CHROOT right because chroot(2) (which
+  requires CAP_SYS_CHROOT) doesn't enable to bypass Landlock (as tests
+  demonstrate it), and because it is often used by sandboxes, it would
+  be counterproductive to forbid it.  This also reduces the code size.
+* Clean up documentation.
+
+Changes since v19:
+* Fix spelling (spotted by Randy Dunlap).
 
 Changes since v18:
-* Account rulesets to kmemcg.
-* Remove struct holes.
-* Cosmetic changes.
+* Remove useless include.
+* Fix spelling.
 
 Changes since v17:
-* Move include/uapi/linux/landlock.h and _LANDLOCK_ACCESS_FS_* to a
-  following patch.
+* Replace landlock_release_inodes() with security_sb_delete() (requested
+  by James Morris).
+* Replace struct super_block->s_landlock_inode_refs with the LSM
+  infrastructure management of the superblock (requested by James
+  Morris).
+* Fix mknod restriction with a zero mode (spotted by Vincent Dagonneau).
+* Minimize executed code in path_mknod and file_open hooks when the
+  current tasks is not sandboxed.
+* Remove useless checks on the file pointer and inode in
+  hook_file_open() .
+* Constify domain pointers.
+* Rename inode_landlock() to landlock_inode().
+* Import include/uapi/linux/landlock.h and _LANDLOCK_ACCESS_FS_* from
+  the ruleset and domain management patch.
+* Explain the rational of this minimal set of access-control.
+  https://lore.kernel.org/lkml/f646e1c7-33cf-333f-070c-0a40ad0468cd@digikod.net/
 
 Changes since v16:
-* Allow enforcement of empty ruleset, which enables deny-all policies.
+* Add ARCH_EPHEMERAL_STATES and enable it for UML.
 
 Changes since v15:
-* Replace layer_levels and layer_depth with a bitfield of layers, cf.
-  filesystem commit.
-* Rename the LANDLOCK_ACCESS_FS_{UNLINK,RMDIR} with
-  LANDLOCK_ACCESS_FS_REMOVE_{FILE,DIR} because it makes sense to use
-  them for the action of renaming a file or a directory, which may lead
-  to the removal of the source file or directory.  Removes the
-  LANDLOCK_ACCESS_FS_{LINK_TO,RENAME_FROM,RENAME_TO} which are now
-  replaced with LANDLOCK_ACCESS_FS_REMOVE_{FILE,DIR} and
-  LANDLOCK_ACCESS_FS_MAKE_* .
-* Update the documentation accordingly and highlight how the access
-  rights are taken into account.
-* Change nb_rules from atomic_t to u32 because it is not use anymore by
-  show_fdinfo().
-* Add safeguard for level variables types.
-* Check max number of rules.
-* Replace struct landlock_access (self and beneath bitfields) with one
-  bitfield.
-* Remove useless variable.
-* Add comments.
+* Replace layer_levels and layer_depth with a bitfield of layers: this
+  enables to properly manage superset and subset of access rights,
+  whatever their order in the stack of layers.
+  Cf. https://lore.kernel.org/lkml/e07fe473-1801-01cc-12ae-b3167f95250e@digikod.net/
+* Allow to open pipes and similar special files through /proc/self/fd/.
+* Properly handle internal filesystems such as nsfs: always allow these
+  kind of roots because disconnected path cannot be evaluated.
+* Remove the LANDLOCK_ACCESS_FS_LINK_TO and
+  LANDLOCK_ACCESS_FS_RENAME_{TO,FROM}, but use the
+  LANDLOCK_ACCESS_FS_REMOVE_{FILE,DIR} and LANDLOCK_ACCESS_FS_MAKE_*
+  instead.  Indeed, it is not possible for now (and not really useful)
+  to express the semantic of a source and a destination.
+* Check access rights to remove a directory or a file with rename(2).
+* Forbid reparenting when linking or renaming.  This is needed to easily
+  protect against possible privilege escalation by changing the place of
+  a file or directory in relation to an enforced access policy (from the
+  set of layers).  This will be relaxed in the future.
+* Update hooks to take into account replacement of the object's self and
+  beneath access bitfields with one.  Simplify the code.
+* Check file related access rights.
+* Check d_is_negative() instead of !d_backing_inode() in
+  check_access_path_continue(), and continue the path walk while there
+  is no mapped inode e.g., with rename(2).
+* Check private inode in check_access_path().
+* Optimize get_file_access() when dealing with a directory.
+* Add missing atomic.h .
 
 Changes since v14:
 * Simplify the object, rule and ruleset management at the expense of a
   less aggressive memory freeing (contributed by Jann Horn, with
   additional modifications):
-  - Make a domain immutable (remove the opportunistic cleaning).
-  - Remove RCU pointers.
-  - Merge struct landlock_ref and struct landlock_ruleset_elem into
-    landlock_rule: get ride of rule's RCU.
-  - Adjust union.
-  - Remove the landlock_insert_rule() check about a new object with the
-    same address as a previously disabled one, because it is not
-    possible to disable a rule anymore.
+  - Rewrite release_inode() to use inode->sb->s_landlock_inode_refs.
+  - Remove useless checks in landlock_release_inodes(), clean object
+    pointer according to the new struct landlock_object and wait for all
+    iput() to complete.
+  - Rewrite get_inode_object() according to the new struct
+    landlock_object.  If there is a race-condition when cleaning up an
+    object, we retry until the concurrent thread finished the object
+    cleaning.
   Cf. https://lore.kernel.org/lkml/CAG48ez21bEn0wL1bbmTiiu8j9jP5iEWtHOwz4tURUJ+ki0ydYw@mail.gmail.com/
 * Fix nested domains by implementing a notion of layer level and depth:
-  - Update landlock_insert_rule() to manage such layers.
-  - Add an inherit_ruleset() helper to properly create a new domain.
-  - Rename landlock_find_access() to landlock_find_rule() and return a
-    full rule reference.
-  - Add a layer_level and a layer_depth fields to struct landlock_rule.
-  - Add a top_layer_level field to struct landlock_ruleset.
-* Remove access rights that may be required for FD-only requests:
+  - Check for matching level ranges when walking through a file path.
+  - Only allow access if every layer granted the access request.
+* Handles files without mount points (e.g. pipes).
+* Hardens path walk by checking inode pointer values.
+* Prefetches d_parent when walking to the root directory.
+* Remove useless inode_alloc_security hook() (suggested by Jann Horn):
+  already initialized by lsm_inode_alloc().
+* Remove the inode_free_security hook.
+* Remove access checks that may be required for FD-only requests:
   truncate, getattr, lock, chmod, chown, chgrp, ioctl.  This will be
   handle in a future evolution of Landlock, but right now the goal is to
   lighten the code to ease review.
-* Remove LANDLOCK_ACCESS_FS_OPEN and rename
-  LANDLOCK_ACCESS_FS_{READ,WRITE} with a FILE suffix.
-* Rename LANDLOCK_ACCESS_FS_READDIR to match the *_FILE pattern.
-* Remove LANDLOCK_ACCESS_FS_MAP which was useless.
-* Fix memory leak in put_hierarchy() (reported by Jann Horn).
-* Fix user-after-free and rename free_ruleset() (reported by Jann Horn).
-* Replace the for loops with rbtree_postorder_for_each_entry_safe().
 * Constify variables.
-* Only use refcount_inc() through getter helpers.
-* Change Landlock_insert_ruleset_access() to
-  Landlock_insert_ruleset_rule().
-* Rename landlock_put_ruleset_enqueue() to landlock_put_ruleset_deferred().
-* Improve kernel documentation and add a warning about the unhandled
-  access/syscall families.
-* Move ABI check to syscall.c .
+* Move ABI checks into syscall.c .
+* Cosmetic variable renames.
 
-Changes since v13:
-* New implementation, inspired by the previous inode eBPF map, but
-  agnostic to the underlying kernel object.
+Changes since v11:
+* Add back, revamp and make a fully working filesystem access-control
+  based on paths and inodes.
+* Remove the eBPF dependency.
 
 Previous changes:
-https://lore.kernel.org/lkml/20190721213116.23476-7-mic@digikod.net/
+https://lore.kernel.org/lkml/20190721213116.23476-6-mic@digikod.net/
 ---
- security/landlock/Makefile  |   2 +-
- security/landlock/limits.h  |  17 ++
- security/landlock/ruleset.c | 469 ++++++++++++++++++++++++++++++++++++
- security/landlock/ruleset.h | 165 +++++++++++++
- 4 files changed, 652 insertions(+), 1 deletion(-)
- create mode 100644 security/landlock/limits.h
- create mode 100644 security/landlock/ruleset.c
- create mode 100644 security/landlock/ruleset.h
+ MAINTAINERS                   |   1 +
+ arch/Kconfig                  |   7 +
+ arch/um/Kconfig               |   1 +
+ include/uapi/linux/landlock.h |  76 ++++
+ security/landlock/Kconfig     |   2 +-
+ security/landlock/Makefile    |   2 +-
+ security/landlock/fs.c        | 692 ++++++++++++++++++++++++++++++++++
+ security/landlock/fs.h        |  70 ++++
+ security/landlock/limits.h    |   4 +
+ security/landlock/ruleset.c   |   4 +
+ security/landlock/setup.c     |   7 +
+ security/landlock/setup.h     |   2 +
+ 12 files changed, 866 insertions(+), 2 deletions(-)
+ create mode 100644 include/uapi/linux/landlock.h
+ create mode 100644 security/landlock/fs.c
+ create mode 100644 security/landlock/fs.h
 
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 87a2738dfdec..70ec117efa8a 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -10003,6 +10003,7 @@ L:	linux-security-module@vger.kernel.org
+ S:	Supported
+ W:	https://landlock.io
+ T:	git https://github.com/landlock-lsm/linux.git
++F:	include/uapi/linux/landlock.h
+ F:	security/landlock/
+ K:	landlock
+ K:	LANDLOCK
+diff --git a/arch/Kconfig b/arch/Kconfig
+index ecfd3520b676..8160ab7e3e03 100644
+--- a/arch/Kconfig
++++ b/arch/Kconfig
+@@ -1013,6 +1013,13 @@ config COMPAT_32BIT_TIME
+ config ARCH_NO_PREEMPT
+ 	bool
+ 
++config ARCH_EPHEMERAL_INODES
++	def_bool n
++	help
++	  An arch should select this symbol if it doesn't keep track of inode
++	  instances on its own, but instead relies on something else (e.g. the
++	  host kernel for an UML kernel).
++
+ config ARCH_SUPPORTS_RT
+ 	bool
+ 
+diff --git a/arch/um/Kconfig b/arch/um/Kconfig
+index c3030db3325f..57cfd9a1c082 100644
+--- a/arch/um/Kconfig
++++ b/arch/um/Kconfig
+@@ -5,6 +5,7 @@ menu "UML-specific options"
+ config UML
+ 	bool
+ 	default y
++	select ARCH_EPHEMERAL_INODES
+ 	select ARCH_HAS_KCOV
+ 	select ARCH_NO_PREEMPT
+ 	select HAVE_ARCH_AUDITSYSCALL
+diff --git a/include/uapi/linux/landlock.h b/include/uapi/linux/landlock.h
+new file mode 100644
+index 000000000000..b1a81b5a8b86
+--- /dev/null
++++ b/include/uapi/linux/landlock.h
+@@ -0,0 +1,76 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++/*
++ * Landlock - User space API
++ *
++ * Copyright © 2017-2020 Mickaël Salaün <mic@digikod.net>
++ * Copyright © 2018-2020 ANSSI
++ */
++
++#ifndef _UAPI_LINUX_LANDLOCK_H
++#define _UAPI_LINUX_LANDLOCK_H
++
++/**
++ * DOC: fs_access
++ *
++ * A set of actions on kernel objects may be defined by an attribute (e.g.
++ * &struct landlock_path_beneath_attr) including a bitmask of access.
++ *
++ * Filesystem flags
++ * ~~~~~~~~~~~~~~~~
++ *
++ * These flags enable to restrict a sandboxed process to a set of actions on
++ * files and directories.  Files or directories opened before the sandboxing
++ * are not subject to these restrictions.
++ *
++ * A file can only receive these access rights:
++ *
++ * - %LANDLOCK_ACCESS_FS_EXECUTE: Execute a file.
++ * - %LANDLOCK_ACCESS_FS_WRITE_FILE: Open a file with write access.
++ * - %LANDLOCK_ACCESS_FS_READ_FILE: Open a file with read access.
++ *
++ * A directory can receive access rights related to files or directories.  The
++ * following access right is applied to the directory itself, and the
++ * directories beneath it:
++ *
++ * - %LANDLOCK_ACCESS_FS_READ_DIR: Open a directory or list its content.
++ *
++ * However, the following access rights only apply to the content of a
++ * directory, not the directory itself:
++ *
++ * - %LANDLOCK_ACCESS_FS_REMOVE_DIR: Remove an empty directory or rename one.
++ * - %LANDLOCK_ACCESS_FS_REMOVE_FILE: Unlink (or rename) a file.
++ * - %LANDLOCK_ACCESS_FS_MAKE_CHAR: Create (or rename or link) a character
++ *   device.
++ * - %LANDLOCK_ACCESS_FS_MAKE_DIR: Create (or rename) a directory.
++ * - %LANDLOCK_ACCESS_FS_MAKE_REG: Create (or rename or link) a regular file.
++ * - %LANDLOCK_ACCESS_FS_MAKE_SOCK: Create (or rename or link) a UNIX domain
++ *   socket.
++ * - %LANDLOCK_ACCESS_FS_MAKE_FIFO: Create (or rename or link) a named pipe.
++ * - %LANDLOCK_ACCESS_FS_MAKE_BLOCK: Create (or rename or link) a block device.
++ * - %LANDLOCK_ACCESS_FS_MAKE_SYM: Create (or rename or link) a symbolic link.
++ *
++ * .. warning::
++ *
++ *   It is currently not possible to restrict some file-related actions
++ *   accessible through these syscall families: :manpage:`chdir(2)`,
++ *   :manpage:`truncate(2)`, :manpage:`stat(2)`, :manpage:`flock(2)`,
++ *   :manpage:`chmod(2)`, :manpage:`chown(2)`, :manpage:`setxattr(2)`,
++ *   :manpage:`utime(2)`, :manpage:`ioctl(2)`, :manpage:`fcntl(2)`,
++ *   :manpage:`access(2)`.
++ *   Future Landlock evolutions will enable to restrict them.
++ */
++#define LANDLOCK_ACCESS_FS_EXECUTE			(1ULL << 0)
++#define LANDLOCK_ACCESS_FS_WRITE_FILE			(1ULL << 1)
++#define LANDLOCK_ACCESS_FS_READ_FILE			(1ULL << 2)
++#define LANDLOCK_ACCESS_FS_READ_DIR			(1ULL << 3)
++#define LANDLOCK_ACCESS_FS_REMOVE_DIR			(1ULL << 4)
++#define LANDLOCK_ACCESS_FS_REMOVE_FILE			(1ULL << 5)
++#define LANDLOCK_ACCESS_FS_MAKE_CHAR			(1ULL << 6)
++#define LANDLOCK_ACCESS_FS_MAKE_DIR			(1ULL << 7)
++#define LANDLOCK_ACCESS_FS_MAKE_REG			(1ULL << 8)
++#define LANDLOCK_ACCESS_FS_MAKE_SOCK			(1ULL << 9)
++#define LANDLOCK_ACCESS_FS_MAKE_FIFO			(1ULL << 10)
++#define LANDLOCK_ACCESS_FS_MAKE_BLOCK			(1ULL << 11)
++#define LANDLOCK_ACCESS_FS_MAKE_SYM			(1ULL << 12)
++
++#endif /* _UAPI_LINUX_LANDLOCK_H */
+diff --git a/security/landlock/Kconfig b/security/landlock/Kconfig
+index c1e862a38410..8e33c4e8ffb8 100644
+--- a/security/landlock/Kconfig
++++ b/security/landlock/Kconfig
+@@ -2,7 +2,7 @@
+ 
+ config SECURITY_LANDLOCK
+ 	bool "Landlock support"
+-	depends on SECURITY
++	depends on SECURITY && !ARCH_EPHEMERAL_INODES
+ 	select SECURITY_PATH
+ 	help
+ 	  Landlock is a sandboxing mechanism that enables processes to restrict
 diff --git a/security/landlock/Makefile b/security/landlock/Makefile
-index cb6deefbf4c0..d846eba445bb 100644
+index f1d1eb72fa76..92e3d80ab8ed 100644
 --- a/security/landlock/Makefile
 +++ b/security/landlock/Makefile
-@@ -1,3 +1,3 @@
+@@ -1,4 +1,4 @@
  obj-$(CONFIG_SECURITY_LANDLOCK) := landlock.o
  
--landlock-y := object.o
-+landlock-y := object.o ruleset.o
-diff --git a/security/landlock/limits.h b/security/landlock/limits.h
+ landlock-y := setup.o object.o ruleset.o \
+-	cred.o ptrace.o
++	cred.o ptrace.o fs.o
+diff --git a/security/landlock/fs.c b/security/landlock/fs.c
 new file mode 100644
-index 000000000000..b734f597bb0e
+index 000000000000..97b8e421f617
 --- /dev/null
-+++ b/security/landlock/limits.h
-@@ -0,0 +1,17 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Landlock LSM - Limits for different components
-+ *
-+ * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
-+ * Copyright © 2018-2020 ANSSI
-+ */
-+
-+#ifndef _SECURITY_LANDLOCK_LIMITS_H
-+#define _SECURITY_LANDLOCK_LIMITS_H
-+
-+#include <linux/limits.h>
-+
-+#define LANDLOCK_MAX_NUM_LAYERS		64
-+#define LANDLOCK_MAX_NUM_RULES		U32_MAX
-+
-+#endif /* _SECURITY_LANDLOCK_LIMITS_H */
-diff --git a/security/landlock/ruleset.c b/security/landlock/ruleset.c
-new file mode 100644
-index 000000000000..2e616f6d5274
---- /dev/null
-+++ b/security/landlock/ruleset.c
-@@ -0,0 +1,469 @@
++++ b/security/landlock/fs.c
+@@ -0,0 +1,692 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
-+ * Landlock LSM - Ruleset management
++ * Landlock LSM - Filesystem management and hooks
 + *
 + * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
 + * Copyright © 2018-2020 ANSSI
 + */
 +
++#include <linux/atomic.h>
++#include <linux/bitops.h>
 +#include <linux/bits.h>
-+#include <linux/bug.h>
 +#include <linux/compiler_types.h>
++#include <linux/dcache.h>
 +#include <linux/err.h>
-+#include <linux/errno.h>
++#include <linux/fs.h>
++#include <linux/init.h>
 +#include <linux/kernel.h>
-+#include <linux/lockdep.h>
-+#include <linux/overflow.h>
-+#include <linux/rbtree.h>
-+#include <linux/refcount.h>
-+#include <linux/slab.h>
++#include <linux/limits.h>
++#include <linux/list.h>
++#include <linux/lsm_hooks.h>
++#include <linux/mount.h>
++#include <linux/namei.h>
++#include <linux/path.h>
++#include <linux/rcupdate.h>
 +#include <linux/spinlock.h>
++#include <linux/stat.h>
++#include <linux/types.h>
++#include <linux/wait_bit.h>
 +#include <linux/workqueue.h>
++#include <uapi/linux/landlock.h>
 +
++#include "common.h"
++#include "cred.h"
++#include "fs.h"
 +#include "limits.h"
 +#include "object.h"
 +#include "ruleset.h"
++#include "setup.h"
 +
-+static struct landlock_ruleset *create_ruleset(const u32 num_layers)
++/* Underlying object management */
++
++static void release_inode(struct landlock_object *const object)
++	__releases(object->lock)
 +{
-+	struct landlock_ruleset *new_ruleset;
++	struct inode *const inode = object->underobj;
++	struct super_block *sb;
 +
-+	new_ruleset = kzalloc(struct_size(new_ruleset, fs_access_masks,
-+				num_layers), GFP_KERNEL_ACCOUNT);
-+	if (!new_ruleset)
-+		return ERR_PTR(-ENOMEM);
-+	refcount_set(&new_ruleset->usage, 1);
-+	mutex_init(&new_ruleset->lock);
-+	new_ruleset->root = RB_ROOT;
-+	new_ruleset->num_layers = num_layers;
-+	/*
-+	 * hierarchy = NULL
-+	 * num_rules = 0
-+	 * fs_access_masks[] = 0
-+	 */
-+	return new_ruleset;
-+}
-+
-+struct landlock_ruleset *landlock_create_ruleset(const u32 fs_access_mask)
-+{
-+	struct landlock_ruleset *new_ruleset;
-+
-+	/* Informs about useless ruleset. */
-+	if (!fs_access_mask)
-+		return ERR_PTR(-ENOMSG);
-+	new_ruleset = create_ruleset(1);
-+	if (!IS_ERR(new_ruleset))
-+		new_ruleset->fs_access_masks[0] = fs_access_mask;
-+	return new_ruleset;
-+}
-+
-+static void build_check_rule(void)
-+{
-+	const struct landlock_rule rule = {
-+		.num_layers = ~0,
-+	};
-+
-+	BUILD_BUG_ON(rule.num_layers < LANDLOCK_MAX_NUM_LAYERS);
-+}
-+
-+static struct landlock_rule *create_rule(
-+		struct landlock_object *const object,
-+		const struct landlock_layer (*const layers)[],
-+		const u32 num_layers,
-+		const struct landlock_layer *const new_layer)
-+{
-+	struct landlock_rule *new_rule;
-+	u32 new_num_layers;
-+
-+	build_check_rule();
-+	if (new_layer) {
-+		/* Should already be checked by landlock_merge_ruleset(). */
-+		if (WARN_ON_ONCE(num_layers >= LANDLOCK_MAX_NUM_LAYERS))
-+			return ERR_PTR(-E2BIG);
-+		new_num_layers = num_layers + 1;
-+	} else {
-+		new_num_layers = num_layers;
-+	}
-+	new_rule = kzalloc(struct_size(new_rule, layers, new_num_layers),
-+			GFP_KERNEL_ACCOUNT);
-+	if (!new_rule)
-+		return ERR_PTR(-ENOMEM);
-+	RB_CLEAR_NODE(&new_rule->node);
-+	landlock_get_object(object);
-+	new_rule->object = object;
-+	new_rule->num_layers = new_num_layers;
-+	/* Copies the original layer stack. */
-+	memcpy(new_rule->layers, layers,
-+			flex_array_size(new_rule, layers, num_layers));
-+	if (new_layer)
-+		/* Adds a copy of @new_layer on the layer stack. */
-+		new_rule->layers[new_rule->num_layers - 1] = *new_layer;
-+	return new_rule;
-+}
-+
-+static void free_rule(struct landlock_rule *const rule)
-+{
-+	might_sleep();
-+	if (!rule)
++	if (!inode) {
++		spin_unlock(&object->lock);
 +		return;
-+	landlock_put_object(rule->object);
-+	kfree(rule);
++	}
++
++	/*
++	 * Protects against concurrent use by hook_sb_delete() of the reference
++	 * to the underlying inode.
++	 */
++	object->underobj = NULL;
++	/*
++	 * Makes sure that if the filesystem is concurrently unmounted,
++	 * hook_sb_delete() will wait for us to finish iput().
++	 */
++	sb = inode->i_sb;
++	atomic_long_inc(&landlock_superblock(sb)->inode_refs);
++	spin_unlock(&object->lock);
++	/*
++	 * Because object->underobj was not NULL, hook_sb_delete() and
++	 * get_inode_object() guarantee that it is safe to reset
++	 * landlock_inode(inode)->object while it is not NULL.  It is therefore
++	 * not necessary to lock inode->i_lock.
++	 */
++	rcu_assign_pointer(landlock_inode(inode)->object, NULL);
++	/*
++	 * Now, new rules can safely be tied to @inode with get_inode_object().
++	 */
++
++	iput(inode);
++	if (atomic_long_dec_and_test(&landlock_superblock(sb)->inode_refs))
++		wake_up_var(&landlock_superblock(sb)->inode_refs);
 +}
 +
-+static void build_check_ruleset(void)
++static const struct landlock_object_underops landlock_fs_underops = {
++	.release = release_inode
++};
++
++/* Ruleset management */
++
++static struct landlock_object *get_inode_object(struct inode *const inode)
 +{
-+	const struct landlock_ruleset ruleset = {
-+		.num_rules = ~0,
-+		.num_layers = ~0,
-+	};
++	struct landlock_object *object, *new_object;
++	struct landlock_inode_security *inode_sec = landlock_inode(inode);
 +
-+	BUILD_BUG_ON(ruleset.num_rules < LANDLOCK_MAX_NUM_RULES);
-+	BUILD_BUG_ON(ruleset.num_layers < LANDLOCK_MAX_NUM_LAYERS);
++	rcu_read_lock();
++retry:
++	object = rcu_dereference(inode_sec->object);
++	if (object) {
++		if (likely(refcount_inc_not_zero(&object->usage))) {
++			rcu_read_unlock();
++			return object;
++		}
++		/*
++		 * We are racing with release_inode(), the object is going
++		 * away.  Wait for release_inode(), then retry.
++		 */
++		spin_lock(&object->lock);
++		spin_unlock(&object->lock);
++		goto retry;
++	}
++	rcu_read_unlock();
++
++	/*
++	 * If there is no object tied to @inode, then create a new one (without
++	 * holding any locks).
++	 */
++	new_object = landlock_create_object(&landlock_fs_underops, inode);
++	if (IS_ERR(new_object))
++		return new_object;
++
++	/*
++	 * Protects against concurrent calls to get_inode_object() or
++	 * hook_sb_delete().
++	 */
++	spin_lock(&inode->i_lock);
++	if (unlikely(rcu_access_pointer(inode_sec->object))) {
++		/* Someone else just created the object, bail out and retry. */
++		spin_unlock(&inode->i_lock);
++		kfree(new_object);
++
++		rcu_read_lock();
++		goto retry;
++	}
++
++	/*
++	 * @inode will be released by hook_sb_delete() on its superblock
++	 * shutdown, or by release_inode() when no more ruleset references the
++	 * related object.
++	 */
++	ihold(inode);
++	rcu_assign_pointer(inode_sec->object, new_object);
++	spin_unlock(&inode->i_lock);
++	return new_object;
 +}
 +
-+/**
-+ * insert_rule - Create and insert a rule in a ruleset
-+ *
-+ * @ruleset: The ruleset to be updated.
-+ * @object: The object to build the new rule with.  The underlying kernel
-+ *          object must be held by the caller.
-+ * @layers: One or multiple layers to be copied into the new rule.
-+ * @num_layers: The number of @layers entries.
-+ *
-+ * When user space requests to add a new rule to a ruleset, @layers only
-+ * contains one entry and this entry is not assigned to any level.  In this
-+ * case, the new rule will extend @ruleset, similarly to a boolean OR between
-+ * access rights.
-+ *
-+ * When merging a ruleset in a domain, or copying a domain, @layers will be
-+ * added to @ruleset as new constraints, similarly to a boolean AND between
-+ * access rights.
++/* All access rights that can be tied to files. */
++#define ACCESS_FILE ( \
++	LANDLOCK_ACCESS_FS_EXECUTE | \
++	LANDLOCK_ACCESS_FS_WRITE_FILE | \
++	LANDLOCK_ACCESS_FS_READ_FILE)
++
++/*
++ * @path: Should have been checked by get_path_from_fd().
 + */
-+static int insert_rule(struct landlock_ruleset *const ruleset,
-+		struct landlock_object *const object,
-+		const struct landlock_layer (*const layers)[],
-+		size_t num_layers)
++int landlock_append_fs_rule(struct landlock_ruleset *const ruleset,
++		const struct path *const path, u32 access_rights)
 +{
-+	struct rb_node **walker_node;
-+	struct rb_node *parent_node = NULL;
-+	struct landlock_rule *new_rule;
++	int err;
++	struct landlock_object *object;
 +
-+	might_sleep();
-+	lockdep_assert_held(&ruleset->lock);
-+	if (WARN_ON_ONCE(!object || !layers))
-+		return -ENOENT;
-+	walker_node = &(ruleset->root.rb_node);
-+	while (*walker_node) {
-+		struct landlock_rule *const this = rb_entry(*walker_node,
-+				struct landlock_rule, node);
++	/* Files only get access rights that make sense. */
++	if (!d_is_dir(path->dentry) && (access_rights | ACCESS_FILE) !=
++			ACCESS_FILE)
++		return -EINVAL;
++	if (WARN_ON_ONCE(ruleset->num_layers != 1))
++		return -EINVAL;
 +
-+		if (this->object != object) {
-+			parent_node = *walker_node;
-+			if (this->object < object)
-+				walker_node = &((*walker_node)->rb_right);
-+			else
-+				walker_node = &((*walker_node)->rb_left);
++	/* Transforms relative access rights to absolute ones. */
++	access_rights |= LANDLOCK_MASK_ACCESS_FS & ~ruleset->fs_access_masks[0];
++	object = get_inode_object(d_backing_inode(path->dentry));
++	if (IS_ERR(object))
++		return PTR_ERR(object);
++	mutex_lock(&ruleset->lock);
++	err = landlock_insert_rule(ruleset, object, access_rights);
++	mutex_unlock(&ruleset->lock);
++	/*
++	 * No need to check for an error because landlock_insert_rule()
++	 * increments the refcount for the new object if needed.
++	 */
++	landlock_put_object(object);
++	return err;
++}
++
++/* Access-control management */
++
++static inline u64 unmask_layers(
++		const struct landlock_ruleset *const domain,
++		const struct path *const path, const u32 access_request,
++		u64 layer_mask)
++{
++	const struct landlock_rule *rule;
++	const struct inode *inode;
++	size_t i;
++
++	if (d_is_negative(path->dentry))
++		/* Ignore nonexistent leafs. */
++		return layer_mask;
++	inode = d_backing_inode(path->dentry);
++	rcu_read_lock();
++	rule = landlock_find_rule(domain,
++			rcu_dereference(landlock_inode(inode)->object));
++	rcu_read_unlock();
++	if (!rule)
++		return layer_mask;
++
++	/*
++	 * An access is granted if, for each policy layer, at least one rule
++	 * encountered on the pathwalk grants the requested accesses,
++	 * regardless of their position in the layer stack.  We must then check
++	 * the remaining layers for each inode, from the first added layer to
++	 * the last one.
++	 */
++	for (i = 0; i < rule->num_layers; i++) {
++		const struct landlock_layer *const layer = &rule->layers[i];
++		const u64 layer_level = BIT_ULL(layer->level - 1);
++
++		/* Checks that the layer grants access to the full request. */
++		if ((layer->access & access_request) == access_request) {
++			layer_mask &= ~layer_level;
++
++			if (layer_mask == 0)
++				return layer_mask;
++		}
++	}
++	return layer_mask;
++}
++
++static int check_access_path(const struct landlock_ruleset *const domain,
++		const struct path *const path, u32 access_request)
++{
++	bool allowed = false;
++	struct path walker_path;
++	u64 layer_mask;
++	size_t i;
++
++	/* Make sure all layers can be checked. */
++	BUILD_BUG_ON(BITS_PER_TYPE(layer_mask) < LANDLOCK_MAX_NUM_LAYERS);
++
++	if (!access_request)
++		return 0;
++	if (WARN_ON_ONCE(!domain || !path))
++		return 0;
++	/*
++	 * Allows access to pseudo filesystems that will never be mountable
++	 * (e.g. sockfs, pipefs), but can still be reachable through
++	 * /proc/<pid>/fd/<file-descriptor> .
++	 */
++	if ((path->dentry->d_sb->s_flags & SB_NOUSER) ||
++			(d_is_positive(path->dentry) &&
++			 unlikely(IS_PRIVATE(d_backing_inode(path->dentry)))))
++		return 0;
++	if (WARN_ON_ONCE(domain->num_layers < 1))
++		return -EACCES;
++
++	/* Saves all layers handling a subset of requested accesses. */
++	layer_mask = 0;
++	for (i = 0; i < domain->num_layers; i++) {
++		if (domain->fs_access_masks[i] & access_request)
++			layer_mask |= BIT_ULL(i);
++	}
++	/* An access request not handled by the domain is allowed. */
++	if (layer_mask == 0)
++		return 0;
++
++	walker_path = *path;
++	path_get(&walker_path);
++	/*
++	 * We need to walk through all the hierarchy to not miss any relevant
++	 * restriction.
++	 */
++	while (true) {
++		struct dentry *parent_dentry;
++
++		layer_mask = unmask_layers(domain, &walker_path,
++				access_request, layer_mask);
++		if (layer_mask == 0) {
++			/* Stops when a rule from each layer grants access. */
++			allowed = true;
++			break;
++		}
++
++jump_up:
++		if (walker_path.dentry == walker_path.mnt->mnt_root) {
++			if (follow_up(&walker_path)) {
++				/* Ignores hidden mount points. */
++				goto jump_up;
++			} else {
++				/*
++				 * Stops at the real root.  Denies access
++				 * because not all layers have granted access.
++				 */
++				allowed = false;
++				break;
++			}
++		}
++		if (unlikely(IS_ROOT(walker_path.dentry))) {
++			/*
++			 * Stops at disconnected root directories.  Only allows
++			 * access to internal filesystems (e.g. nsfs, which is
++			 * reachable through /proc/<pid>/ns/<namespace>).
++			 */
++			allowed = !!(walker_path.mnt->mnt_flags & MNT_INTERNAL);
++			break;
++		}
++		parent_dentry = dget_parent(walker_path.dentry);
++		dput(walker_path.dentry);
++		walker_path.dentry = parent_dentry;
++	}
++	path_put(&walker_path);
++	return allowed ? 0 : -EACCES;
++}
++
++static inline int current_check_access_path(const struct path *const path,
++		const u32 access_request)
++{
++	const struct landlock_ruleset *const dom =
++		landlock_get_current_domain();
++
++	if (!dom)
++		return 0;
++	return check_access_path(dom, path, access_request);
++}
++
++/* Inode hooks */
++
++static void hook_inode_free_security(struct inode *const inode)
++{
++	/*
++	 * All inodes must already have been untied from their object by
++	 * release_inode() or hook_sb_delete().
++	 */
++	WARN_ON_ONCE(landlock_inode(inode)->object);
++}
++
++/* Super-block hooks */
++
++/*
++ * Release the inodes used in a security policy.
++ *
++ * Cf. fsnotify_unmount_inodes() and invalidate_inodes()
++ */
++static void hook_sb_delete(struct super_block *const sb)
++{
++	struct inode *inode, *prev_inode = NULL;
++
++	if (!landlock_initialized)
++		return;
++
++	spin_lock(&sb->s_inode_list_lock);
++	list_for_each_entry(inode, &sb->s_inodes, i_sb_list) {
++		struct landlock_object *object;
++
++		/* Only handles referenced inodes. */
++		if (!atomic_read(&inode->i_count))
++			continue;
++
++		/*
++		 * Protects against concurrent modification of inode (e.g.
++		 * from get_inode_object()).
++		 */
++		spin_lock(&inode->i_lock);
++		/*
++		 * Checks I_FREEING and I_WILL_FREE  to protect against a race
++		 * condition when release_inode() just called iput(), which
++		 * could lead to a NULL dereference of inode->security or a
++		 * second call to iput() for the same Landlock object.  Also
++		 * checks I_NEW because such inode cannot be tied to an object.
++		 */
++		if (inode->i_state & (I_FREEING | I_WILL_FREE | I_NEW)) {
++			spin_unlock(&inode->i_lock);
 +			continue;
 +		}
 +
-+		/* Only a single-level layer should match an existing rule. */
-+		if (WARN_ON_ONCE(num_layers != 1))
-+			return -EINVAL;
-+
-+		/* If there is a matching rule, updates it. */
-+		if ((*layers)[0].level == 0) {
-+			/*
-+			 * Extends access rights when the request comes from
-+			 * landlock_add_rule(2), i.e. @ruleset is not a domain.
-+			 */
-+			if (WARN_ON_ONCE(this->num_layers != 1))
-+				return -EINVAL;
-+			if (WARN_ON_ONCE(this->layers[0].level != 0))
-+				return -EINVAL;
-+			this->layers[0].access |= (*layers)[0].access;
-+			return 0;
++		rcu_read_lock();
++		object = rcu_dereference(landlock_inode(inode)->object);
++		if (!object) {
++			rcu_read_unlock();
++			spin_unlock(&inode->i_lock);
++			continue;
 +		}
-+
-+		if (WARN_ON_ONCE(this->layers[0].level == 0))
-+			return -EINVAL;
++		/* Keeps a reference to this inode until the next loop walk. */
++		__iget(inode);
++		spin_unlock(&inode->i_lock);
 +
 +		/*
-+		 * Intersects access rights when it is a merge between a
-+		 * ruleset and a domain.
++		 * If there is no concurrent release_inode() ongoing, then we
++		 * are in charge of calling iput() on this inode, otherwise we
++		 * will just wait for it to finish.
 +		 */
-+		new_rule = create_rule(object, &this->layers, this->num_layers,
-+				&(*layers)[0]);
-+		if (IS_ERR(new_rule))
-+			return PTR_ERR(new_rule);
-+		rb_replace_node(&this->node, &new_rule->node, &ruleset->root);
-+		free_rule(this);
-+		return 0;
-+	}
++		spin_lock(&object->lock);
++		if (object->underobj == inode) {
++			object->underobj = NULL;
++			spin_unlock(&object->lock);
++			rcu_read_unlock();
 +
-+	/* There is no match for @object. */
-+	build_check_ruleset();
-+	if (ruleset->num_rules >= LANDLOCK_MAX_NUM_RULES)
-+		return -E2BIG;
-+	new_rule = create_rule(object, layers, num_layers, NULL);
-+	if (IS_ERR(new_rule))
-+		return PTR_ERR(new_rule);
-+	rb_link_node(&new_rule->node, parent_node, walker_node);
-+	rb_insert_color(&new_rule->node, &ruleset->root);
-+	ruleset->num_rules++;
-+	return 0;
-+}
-+
-+static void build_check_layer(void)
-+{
-+	const struct landlock_layer layer = {
-+		.level = ~0,
-+	};
-+
-+	BUILD_BUG_ON(layer.level < LANDLOCK_MAX_NUM_LAYERS);
-+}
-+
-+/* @ruleset must be locked by the caller. */
-+int landlock_insert_rule(struct landlock_ruleset *const ruleset,
-+		struct landlock_object *const object, const u32 access)
-+{
-+	struct landlock_layer layers[] = {{
-+		.access = access,
-+		/* When @level is zero, insert_rule() extends @ruleset. */
-+		.level = 0,
-+	}};
-+
-+	build_check_layer();
-+	return insert_rule(ruleset, object, &layers, ARRAY_SIZE(layers));
-+}
-+
-+static inline void get_hierarchy(struct landlock_hierarchy *const hierarchy)
-+{
-+	if (hierarchy)
-+		refcount_inc(&hierarchy->usage);
-+}
-+
-+static void put_hierarchy(struct landlock_hierarchy *hierarchy)
-+{
-+	while (hierarchy && refcount_dec_and_test(&hierarchy->usage)) {
-+		const struct landlock_hierarchy *const freeme = hierarchy;
-+
-+		hierarchy = hierarchy->parent;
-+		kfree(freeme);
-+	}
-+}
-+
-+static int merge_ruleset(struct landlock_ruleset *const dst,
-+		struct landlock_ruleset *const src)
-+{
-+	struct landlock_rule *walker_rule, *next_rule;
-+	int err = 0;
-+
-+	might_sleep();
-+	/* Should already be checked by landlock_merge_ruleset() */
-+	if (WARN_ON_ONCE(!src))
-+		return 0;
-+	/* Only merge into a domain. */
-+	if (WARN_ON_ONCE(!dst || !dst->hierarchy))
-+		return -EINVAL;
-+
-+	/* Locks @dst first because we are its only owner. */
-+	mutex_lock(&dst->lock);
-+	mutex_lock_nested(&src->lock, SINGLE_DEPTH_NESTING);
-+
-+	/* Stacks the new layer. */
-+	if (WARN_ON_ONCE(src->num_layers != 1 || dst->num_layers < 1)) {
-+		err = -EINVAL;
-+		goto out_unlock;
-+	}
-+	dst->fs_access_masks[dst->num_layers - 1] = src->fs_access_masks[0];
-+
-+	/* Merges the @src tree. */
-+	rbtree_postorder_for_each_entry_safe(walker_rule, next_rule,
-+			&src->root, node) {
-+		struct landlock_layer layers[] = {{
-+			.level = dst->num_layers,
-+		}};
-+
-+		if (WARN_ON_ONCE(walker_rule->num_layers != 1)) {
-+			err = -EINVAL;
-+			goto out_unlock;
++			/*
++			 * Because object->underobj was not NULL,
++			 * release_inode() and get_inode_object() guarantee
++			 * that it is safe to reset
++			 * landlock_inode(inode)->object while it is not NULL.
++			 * It is therefore not necessary to lock inode->i_lock.
++			 */
++			rcu_assign_pointer(landlock_inode(inode)->object, NULL);
++			/*
++			 * At this point, we own the ihold() reference that was
++			 * originally set up by get_inode_object() and the
++			 * __iget() reference that we just set in this loop
++			 * walk.  Therefore the following call to iput() will
++			 * not sleep nor drop the inode because there is now at
++			 * least two references to it.
++			 */
++			iput(inode);
++		} else {
++			spin_unlock(&object->lock);
++			rcu_read_unlock();
 +		}
-+		if (WARN_ON_ONCE(walker_rule->layers[0].level != 0)) {
-+			err = -EINVAL;
-+			goto out_unlock;
++
++		if (prev_inode) {
++			/*
++			 * At this point, we still own the __iget() reference
++			 * that we just set in this loop walk.  Therefore we
++			 * can drop the list lock and know that the inode won't
++			 * disappear from under us until the next loop walk.
++			 */
++			spin_unlock(&sb->s_inode_list_lock);
++			/*
++			 * We can now actually put the inode reference from the
++			 * previous loop walk, which is not needed anymore.
++			 */
++			iput(prev_inode);
++			cond_resched();
++			spin_lock(&sb->s_inode_list_lock);
 +		}
-+		layers[0].access = walker_rule->layers[0].access;
-+		err = insert_rule(dst, walker_rule->object, &layers,
-+				ARRAY_SIZE(layers));
-+		if (err)
-+			goto out_unlock;
++		prev_inode = inode;
 +	}
++	spin_unlock(&sb->s_inode_list_lock);
 +
-+out_unlock:
-+	mutex_unlock(&src->lock);
-+	mutex_unlock(&dst->lock);
-+	return err;
-+}
-+
-+static int inherit_ruleset(struct landlock_ruleset *const parent,
-+		struct landlock_ruleset *const child)
-+{
-+	struct landlock_rule *walker_rule, *next_rule;
-+	int err = 0;
-+
-+	might_sleep();
-+	if (!parent)
-+		return 0;
-+
-+	/* Locks @child first because we are its only owner. */
-+	mutex_lock(&child->lock);
-+	mutex_lock_nested(&parent->lock, SINGLE_DEPTH_NESTING);
-+
-+	/* Copies the @parent tree. */
-+	rbtree_postorder_for_each_entry_safe(walker_rule, next_rule,
-+			&parent->root, node) {
-+		err = insert_rule(child, walker_rule->object,
-+				&walker_rule->layers, walker_rule->num_layers);
-+		if (err)
-+			goto out_unlock;
-+	}
-+
-+	if (WARN_ON_ONCE(child->num_layers <= parent->num_layers)) {
-+		err = -EINVAL;
-+		goto out_unlock;
-+	}
-+	/* Copies the parent layer stack and leaves a space for the new layer. */
-+	memcpy(child->fs_access_masks, parent->fs_access_masks,
-+			flex_array_size(parent, fs_access_masks, parent->num_layers));
-+
-+	if (WARN_ON_ONCE(!parent->hierarchy)) {
-+		err = -EINVAL;
-+		goto out_unlock;
-+	}
-+	get_hierarchy(parent->hierarchy);
-+	child->hierarchy->parent = parent->hierarchy;
-+
-+out_unlock:
-+	mutex_unlock(&parent->lock);
-+	mutex_unlock(&child->lock);
-+	return err;
-+}
-+
-+static void free_ruleset(struct landlock_ruleset *const ruleset)
-+{
-+	struct landlock_rule *freeme, *next;
-+
-+	might_sleep();
-+	rbtree_postorder_for_each_entry_safe(freeme, next, &ruleset->root,
-+			node)
-+		free_rule(freeme);
-+	put_hierarchy(ruleset->hierarchy);
-+	kfree(ruleset);
-+}
-+
-+void landlock_put_ruleset(struct landlock_ruleset *const ruleset)
-+{
-+	might_sleep();
-+	if (ruleset && refcount_dec_and_test(&ruleset->usage))
-+		free_ruleset(ruleset);
-+}
-+
-+static void free_ruleset_work(struct work_struct *const work)
-+{
-+	struct landlock_ruleset *ruleset;
-+
-+	ruleset = container_of(work, struct landlock_ruleset, work_free);
-+	free_ruleset(ruleset);
-+}
-+
-+void landlock_put_ruleset_deferred(struct landlock_ruleset *const ruleset)
-+{
-+	if (ruleset && refcount_dec_and_test(&ruleset->usage)) {
-+		INIT_WORK(&ruleset->work_free, free_ruleset_work);
-+		schedule_work(&ruleset->work_free);
-+	}
-+}
-+
-+/**
-+ * landlock_merge_ruleset - Merge a ruleset with a domain
-+ *
-+ * @parent: Parent domain.
-+ * @ruleset: New ruleset to be merged.
-+ *
-+ * Returns the intersection of @parent and @ruleset, or returns @parent if
-+ * @ruleset is empty, or returns a duplicate of @ruleset if @parent is empty.
-+ */
-+struct landlock_ruleset *landlock_merge_ruleset(
-+		struct landlock_ruleset *const parent,
-+		struct landlock_ruleset *const ruleset)
-+{
-+	struct landlock_ruleset *new_dom;
-+	u32 num_layers;
-+	int err;
-+
-+	might_sleep();
-+	if (WARN_ON_ONCE(!ruleset || parent == ruleset))
-+		return ERR_PTR(-EINVAL);
-+
-+	if (parent) {
-+		if (parent->num_layers >= LANDLOCK_MAX_NUM_LAYERS)
-+			return ERR_PTR(-E2BIG);
-+		num_layers = parent->num_layers + 1;
-+	} else {
-+		num_layers = 1;
-+	}
-+
-+	/* Creates a new domain... */
-+	new_dom = create_ruleset(num_layers);
-+	if (IS_ERR(new_dom))
-+		return new_dom;
-+	new_dom->hierarchy = kzalloc(sizeof(*new_dom->hierarchy),
-+			GFP_KERNEL_ACCOUNT);
-+	if (!new_dom->hierarchy) {
-+		err = -ENOMEM;
-+		goto out_put_dom;
-+	}
-+	refcount_set(&new_dom->hierarchy->usage, 1);
-+
-+	/* ...as a child of @parent... */
-+	err = inherit_ruleset(parent, new_dom);
-+	if (err)
-+		goto out_put_dom;
-+
-+	/* ...and including @ruleset. */
-+	err = merge_ruleset(new_dom, ruleset);
-+	if (err)
-+		goto out_put_dom;
-+
-+	return new_dom;
-+
-+out_put_dom:
-+	landlock_put_ruleset(new_dom);
-+	return ERR_PTR(err);
++	/* Puts the inode reference from the last loop walk, if any. */
++	if (prev_inode)
++		iput(prev_inode);
++	/* Waits for pending iput() in release_inode(). */
++	wait_var_event(&landlock_superblock(sb)->inode_refs, !atomic_long_read(
++				&landlock_superblock(sb)->inode_refs));
 +}
 +
 +/*
-+ * The returned access has the same lifetime as @ruleset.
++ * Because a Landlock security policy is defined according to the filesystem
++ * topology (i.e. the mount namespace), changing it may grant access to files
++ * not previously allowed.
++ *
++ * To make it simple, deny any filesystem topology modification by landlocked
++ * processes.  Non-landlocked processes may still change the namespace of a
++ * landlocked process, but this kind of threat must be handled by a system-wide
++ * access-control security policy.
++ *
++ * This could be lifted in the future if Landlock can safely handle mount
++ * namespace updates requested by a landlocked process.  Indeed, we could
++ * update the current domain (which is currently read-only) by taking into
++ * account the accesses of the source and the destination of a new mount point.
++ * However, it would also require to make all the child domains dynamically
++ * inherit these new constraints.  Anyway, for backward compatibility reasons,
++ * a dedicated user space option would be required (e.g. as a ruleset flag).
 + */
-+const struct landlock_rule *landlock_find_rule(
-+		const struct landlock_ruleset *const ruleset,
-+		const struct landlock_object *const object)
++static int hook_sb_mount(const char *const dev_name,
++		const struct path *const path, const char *const type,
++		const unsigned long flags, void *const data)
 +{
-+	const struct rb_node *node;
-+
-+	if (!object)
-+		return NULL;
-+	node = ruleset->root.rb_node;
-+	while (node) {
-+		struct landlock_rule *this = rb_entry(node,
-+				struct landlock_rule, node);
-+
-+		if (this->object == object)
-+			return this;
-+		if (this->object < object)
-+			node = node->rb_right;
-+		else
-+			node = node->rb_left;
-+	}
-+	return NULL;
++	if (!landlock_get_current_domain())
++		return 0;
++	return -EPERM;
 +}
-diff --git a/security/landlock/ruleset.h b/security/landlock/ruleset.h
++
++static int hook_move_mount(const struct path *const from_path,
++		const struct path *const to_path)
++{
++	if (!landlock_get_current_domain())
++		return 0;
++	return -EPERM;
++}
++
++/*
++ * Removing a mount point may reveal a previously hidden file hierarchy, which
++ * may then grant access to files, which may have previously been forbidden.
++ */
++static int hook_sb_umount(struct vfsmount *const mnt, const int flags)
++{
++	if (!landlock_get_current_domain())
++		return 0;
++	return -EPERM;
++}
++
++static int hook_sb_remount(struct super_block *const sb, void *const mnt_opts)
++{
++	if (!landlock_get_current_domain())
++		return 0;
++	return -EPERM;
++}
++
++/*
++ * pivot_root(2), like mount(2), changes the current mount namespace.  It must
++ * then be forbidden for a landlocked process.
++ *
++ * However, chroot(2) may be allowed because it only changes the relative root
++ * directory of the current process.  Moreover, it can be used to restrict the
++ * view of the filesystem.
++ */
++static int hook_sb_pivotroot(const struct path *const old_path,
++		const struct path *const new_path)
++{
++	if (!landlock_get_current_domain())
++		return 0;
++	return -EPERM;
++}
++
++/* Path hooks */
++
++static inline u32 get_mode_access(const umode_t mode)
++{
++	switch (mode & S_IFMT) {
++	case S_IFLNK:
++		return LANDLOCK_ACCESS_FS_MAKE_SYM;
++	case 0:
++		/* A zero mode translates to S_IFREG. */
++	case S_IFREG:
++		return LANDLOCK_ACCESS_FS_MAKE_REG;
++	case S_IFDIR:
++		return LANDLOCK_ACCESS_FS_MAKE_DIR;
++	case S_IFCHR:
++		return LANDLOCK_ACCESS_FS_MAKE_CHAR;
++	case S_IFBLK:
++		return LANDLOCK_ACCESS_FS_MAKE_BLOCK;
++	case S_IFIFO:
++		return LANDLOCK_ACCESS_FS_MAKE_FIFO;
++	case S_IFSOCK:
++		return LANDLOCK_ACCESS_FS_MAKE_SOCK;
++	default:
++		WARN_ON_ONCE(1);
++		return 0;
++	}
++}
++
++/*
++ * Creating multiple links or renaming may lead to privilege escalations if not
++ * handled properly.  Indeed, we must be sure that the source doesn't gain more
++ * privileges by being accessible from the destination.  This is getting more
++ * complex when dealing with multiple layers.  The whole picture can be seen as
++ * a multilayer partial ordering problem.  A future version of Landlock will
++ * deal with that.
++ */
++static int hook_path_link(struct dentry *const old_dentry,
++		const struct path *const new_dir,
++		struct dentry *const new_dentry)
++{
++	const struct landlock_ruleset *const dom =
++		landlock_get_current_domain();
++
++	if (!dom)
++		return 0;
++	/* The mount points are the same for old and new paths, cf. EXDEV. */
++	if (old_dentry->d_parent != new_dir->dentry)
++		/* Gracefully forbids reparenting. */
++		return -EXDEV;
++	if (unlikely(d_is_negative(old_dentry)))
++		return -ENOENT;
++	return check_access_path(dom, new_dir,
++			get_mode_access(d_backing_inode(old_dentry)->i_mode));
++}
++
++static inline u32 maybe_remove(const struct dentry *const dentry)
++{
++	if (d_is_negative(dentry))
++		return 0;
++	return d_is_dir(dentry) ? LANDLOCK_ACCESS_FS_REMOVE_DIR :
++		LANDLOCK_ACCESS_FS_REMOVE_FILE;
++}
++
++static int hook_path_rename(const struct path *const old_dir,
++		struct dentry *const old_dentry,
++		const struct path *const new_dir,
++		struct dentry *const new_dentry)
++{
++	const struct landlock_ruleset *const dom =
++		landlock_get_current_domain();
++
++	if (!dom)
++		return 0;
++	/* The mount points are the same for old and new paths, cf. EXDEV. */
++	if (old_dir->dentry != new_dir->dentry)
++		/* Gracefully forbids reparenting. */
++		return -EXDEV;
++	if (unlikely(d_is_negative(old_dentry)))
++		return -ENOENT;
++	/* RENAME_EXCHANGE is handled because directories are the same. */
++	return check_access_path(dom, old_dir, maybe_remove(old_dentry) |
++			maybe_remove(new_dentry) |
++			get_mode_access(d_backing_inode(old_dentry)->i_mode));
++}
++
++static int hook_path_mkdir(const struct path *const dir,
++		struct dentry *const dentry, const umode_t mode)
++{
++	return current_check_access_path(dir, LANDLOCK_ACCESS_FS_MAKE_DIR);
++}
++
++static int hook_path_mknod(const struct path *const dir,
++		struct dentry *const dentry, const umode_t mode,
++		const unsigned int dev)
++{
++	const struct landlock_ruleset *const dom =
++		landlock_get_current_domain();
++
++	if (!dom)
++		return 0;
++	return check_access_path(dom, dir, get_mode_access(mode));
++}
++
++static int hook_path_symlink(const struct path *const dir,
++		struct dentry *const dentry, const char *const old_name)
++{
++	return current_check_access_path(dir, LANDLOCK_ACCESS_FS_MAKE_SYM);
++}
++
++static int hook_path_unlink(const struct path *const dir,
++		struct dentry *const dentry)
++{
++	return current_check_access_path(dir, LANDLOCK_ACCESS_FS_REMOVE_FILE);
++}
++
++static int hook_path_rmdir(const struct path *const dir,
++		struct dentry *const dentry)
++{
++	return current_check_access_path(dir, LANDLOCK_ACCESS_FS_REMOVE_DIR);
++}
++
++/* File hooks */
++
++static inline u32 get_file_access(const struct file *const file)
++{
++	u32 access = 0;
++
++	if (file->f_mode & FMODE_READ) {
++		/* A directory can only be opened in read mode. */
++		if (S_ISDIR(file_inode(file)->i_mode))
++			return LANDLOCK_ACCESS_FS_READ_DIR;
++		access = LANDLOCK_ACCESS_FS_READ_FILE;
++	}
++	if (file->f_mode & FMODE_WRITE)
++		access |= LANDLOCK_ACCESS_FS_WRITE_FILE;
++	/* __FMODE_EXEC is indeed part of f_flags, not f_mode. */
++	if (file->f_flags & __FMODE_EXEC)
++		access |= LANDLOCK_ACCESS_FS_EXECUTE;
++	return access;
++}
++
++static int hook_file_open(struct file *const file)
++{
++	const struct landlock_ruleset *const dom =
++		landlock_get_current_domain();
++
++	if (!dom)
++		return 0;
++	/*
++	 * Because a file may be opened with O_PATH, get_file_access() may
++	 * return 0.  This case will be handled with a future Landlock
++	 * evolution.
++	 */
++	return check_access_path(dom, &file->f_path, get_file_access(file));
++}
++
++static struct security_hook_list landlock_hooks[] __lsm_ro_after_init = {
++	LSM_HOOK_INIT(inode_free_security, hook_inode_free_security),
++
++	LSM_HOOK_INIT(sb_delete, hook_sb_delete),
++	LSM_HOOK_INIT(sb_mount, hook_sb_mount),
++	LSM_HOOK_INIT(move_mount, hook_move_mount),
++	LSM_HOOK_INIT(sb_umount, hook_sb_umount),
++	LSM_HOOK_INIT(sb_remount, hook_sb_remount),
++	LSM_HOOK_INIT(sb_pivotroot, hook_sb_pivotroot),
++
++	LSM_HOOK_INIT(path_link, hook_path_link),
++	LSM_HOOK_INIT(path_rename, hook_path_rename),
++	LSM_HOOK_INIT(path_mkdir, hook_path_mkdir),
++	LSM_HOOK_INIT(path_mknod, hook_path_mknod),
++	LSM_HOOK_INIT(path_symlink, hook_path_symlink),
++	LSM_HOOK_INIT(path_unlink, hook_path_unlink),
++	LSM_HOOK_INIT(path_rmdir, hook_path_rmdir),
++
++	LSM_HOOK_INIT(file_open, hook_file_open),
++};
++
++__init void landlock_add_fs_hooks(void)
++{
++	security_add_hooks(landlock_hooks, ARRAY_SIZE(landlock_hooks),
++			LANDLOCK_NAME);
++}
+diff --git a/security/landlock/fs.h b/security/landlock/fs.h
 new file mode 100644
-index 000000000000..2d3ed7ec5a0a
+index 000000000000..187284b421c9
 --- /dev/null
-+++ b/security/landlock/ruleset.h
-@@ -0,0 +1,165 @@
++++ b/security/landlock/fs.h
+@@ -0,0 +1,70 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
-+ * Landlock LSM - Ruleset management
++ * Landlock LSM - Filesystem management and hooks
 + *
-+ * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
++ * Copyright © 2017-2020 Mickaël Salaün <mic@digikod.net>
 + * Copyright © 2018-2020 ANSSI
 + */
 +
-+#ifndef _SECURITY_LANDLOCK_RULESET_H
-+#define _SECURITY_LANDLOCK_RULESET_H
++#ifndef _SECURITY_LANDLOCK_FS_H
++#define _SECURITY_LANDLOCK_FS_H
 +
-+#include <linux/mutex.h>
-+#include <linux/rbtree.h>
-+#include <linux/refcount.h>
-+#include <linux/workqueue.h>
++#include <linux/fs.h>
++#include <linux/init.h>
++#include <linux/rcupdate.h>
 +
-+#include "object.h"
-+
-+/**
-+ * struct landlock_layer - Access rights for a given layer
-+ */
-+struct landlock_layer {
-+	/**
-+	 * @level: Position of this layer in the layer stack.
-+	 */
-+	u16 level;
-+	/**
-+	 * @access: Bitfield of allowed actions on the kernel object.  They are
-+	 * relative to the object type (e.g. %LANDLOCK_ACTION_FS_READ).
-+	 */
-+	u16 access;
-+};
++#include "ruleset.h"
++#include "setup.h"
 +
 +/**
-+ * struct landlock_rule - Access rights tied to an object
-+ */
-+struct landlock_rule {
-+	/**
-+	 * @node: Node in the ruleset's red-black tree.
-+	 */
-+	struct rb_node node;
-+	/**
-+	 * @object: Pointer to identify a kernel object (e.g. an inode).  This
-+	 * is used as a key for this ruleset element.  This pointer is set once
-+	 * and never modified.  It always points to an allocated object because
-+	 * each rule increments the refcount of its object.
-+	 */
-+	struct landlock_object *object;
-+	/**
-+	 * @num_layers: Number of entries in @layers.
-+	 */
-+	u32 num_layers;
-+	/**
-+	 * @layers: Stack of layers, from the latest to the newest, implemented
-+	 * as a flexible array member (FAM).
-+	 */
-+	struct landlock_layer layers[];
-+};
-+
-+/**
-+ * struct landlock_hierarchy - Node in a ruleset hierarchy
-+ */
-+struct landlock_hierarchy {
-+	/**
-+	 * @parent: Pointer to the parent node, or NULL if it is a root
-+	 * Landlock domain.
-+	 */
-+	struct landlock_hierarchy *parent;
-+	/**
-+	 * @usage: Number of potential children domains plus their parent
-+	 * domain.
-+	 */
-+	refcount_t usage;
-+};
-+
-+/**
-+ * struct landlock_ruleset - Landlock ruleset
++ * struct landlock_inode_security - Inode security blob
 + *
-+ * This data structure must contain unique entries, be updatable, and quick to
-+ * match an object.
++ * Enable to reference a &struct landlock_object tied to an inode (i.e.
++ * underlying object).
 + */
-+struct landlock_ruleset {
++struct landlock_inode_security {
 +	/**
-+	 * @root: Root of a red-black tree containing &struct landlock_rule
-+	 * nodes.  Once a ruleset is tied to a process (i.e. as a domain), this
-+	 * tree is immutable until @usage reaches zero.
++	 * @object: Weak pointer to an allocated object.  All assignments of a
++	 * new object are protected by the underlying inode->i_lock.  However,
++	 * atomically disassociating @object from the inode is only protected
++	 * by @object->lock, from the time @object's usage refcount drops to
++	 * zero to the time this pointer is nulled out (cf. release_inode() and
++	 * hook_sb_delete()).  Indeed, such disassociation doesn't require
++	 * inode->i_lock thanks to the careful rcu_access_pointer() check
++	 * performed by get_inode_object().
 +	 */
-+	struct rb_root root;
-+	/**
-+	 * @hierarchy: Enables hierarchy identification even when a parent
-+	 * domain vanishes.  This is needed for the ptrace protection.
-+	 */
-+	struct landlock_hierarchy *hierarchy;
-+	union {
-+		/**
-+		 * @work_free: Enables to free a ruleset within a lockless
-+		 * section.  This is only used by
-+		 * landlock_put_ruleset_deferred() when @usage reaches zero.
-+		 * The fields @lock, @usage, @num_rules, @num_layers and
-+		 * @fs_access_masks are then unused.
-+		 */
-+		struct work_struct work_free;
-+		struct {
-+			/**
-+			 * @lock: Protects against concurrent modifications of
-+			 * @root, if @usage is greater than zero.
-+			 */
-+			struct mutex lock;
-+			/**
-+			 * @usage: Number of processes (i.e. domains) or file
-+			 * descriptors referencing this ruleset.
-+			 */
-+			refcount_t usage;
-+			/**
-+			 * @num_rules: Number of non-overlapping (i.e. not for
-+			 * the same object) rules in this ruleset.
-+			 */
-+			u32 num_rules;
-+			/**
-+			 * @num_layers: Number of layers that are used in this
-+			 * ruleset.  This enables to check that all the layers
-+			 * allow an access request.  A value of 0 identifies a
-+			 * non-merged ruleset (i.e. not a domain).
-+			 */
-+			u32 num_layers;
-+			/**
-+			 * @fs_access_masks: Contains the subset of filesystem
-+			 * actions that are restricted by a ruleset.  A domain
-+			 * saves all layers of merged rulesets in a stack
-+			 * (FAM), starting from the first layer to the last
-+			 * one.  These layers are used when merging rulesets,
-+			 * for user space backward compatibility (i.e.
-+			 * future-proof), and to properly handle merged
-+			 * rulesets without overlapping access rights.  These
-+			 * layers are set once and never changed for the
-+			 * lifetime of the ruleset.
-+			 */
-+			u16 fs_access_masks[];
-+		};
-+	};
++	struct landlock_object __rcu *object;
 +};
 +
-+struct landlock_ruleset *landlock_create_ruleset(const u32 fs_access_mask);
++/**
++ * struct landlock_superblock_security - Superblock security blob
++ *
++ * Enable hook_sb_delete() to wait for concurrent calls to release_inode().
++ */
++struct landlock_superblock_security {
++	/**
++	 * @inode_refs: Number of pending inodes (from this superblock) that
++	 * are being released by release_inode().
++	 * Cf. struct super_block->s_fsnotify_inode_refs .
++	 */
++	atomic_long_t inode_refs;
++};
 +
-+void landlock_put_ruleset(struct landlock_ruleset *const ruleset);
-+void landlock_put_ruleset_deferred(struct landlock_ruleset *const ruleset);
-+
-+int landlock_insert_rule(struct landlock_ruleset *const ruleset,
-+		struct landlock_object *const object, const u32 access);
-+
-+struct landlock_ruleset *landlock_merge_ruleset(
-+		struct landlock_ruleset *const parent,
-+		struct landlock_ruleset *const ruleset);
-+
-+const struct landlock_rule *landlock_find_rule(
-+		const struct landlock_ruleset *const ruleset,
-+		const struct landlock_object *const object);
-+
-+static inline void landlock_get_ruleset(struct landlock_ruleset *const ruleset)
++static inline struct landlock_inode_security *landlock_inode(
++		const struct inode *const inode)
 +{
-+	if (ruleset)
-+		refcount_inc(&ruleset->usage);
++	return inode->i_security + landlock_blob_sizes.lbs_inode;
 +}
 +
-+#endif /* _SECURITY_LANDLOCK_RULESET_H */
++static inline struct landlock_superblock_security *landlock_superblock(
++		const struct super_block *const superblock)
++{
++	return superblock->s_security + landlock_blob_sizes.lbs_superblock;
++}
++
++__init void landlock_add_fs_hooks(void);
++
++int landlock_append_fs_rule(struct landlock_ruleset *const ruleset,
++		const struct path *const path, u32 access_hierarchy);
++
++#endif /* _SECURITY_LANDLOCK_FS_H */
+diff --git a/security/landlock/limits.h b/security/landlock/limits.h
+index b734f597bb0e..2a0a1095ee27 100644
+--- a/security/landlock/limits.h
++++ b/security/landlock/limits.h
+@@ -10,8 +10,12 @@
+ #define _SECURITY_LANDLOCK_LIMITS_H
+ 
+ #include <linux/limits.h>
++#include <uapi/linux/landlock.h>
+ 
+ #define LANDLOCK_MAX_NUM_LAYERS		64
+ #define LANDLOCK_MAX_NUM_RULES		U32_MAX
+ 
++#define LANDLOCK_LAST_ACCESS_FS		LANDLOCK_ACCESS_FS_MAKE_SYM
++#define LANDLOCK_MASK_ACCESS_FS		((LANDLOCK_LAST_ACCESS_FS << 1) - 1)
++
+ #endif /* _SECURITY_LANDLOCK_LIMITS_H */
+diff --git a/security/landlock/ruleset.c b/security/landlock/ruleset.c
+index 2e616f6d5274..ec72b9262bf3 100644
+--- a/security/landlock/ruleset.c
++++ b/security/landlock/ruleset.c
+@@ -116,9 +116,11 @@ static void build_check_ruleset(void)
+ 		.num_rules = ~0,
+ 		.num_layers = ~0,
+ 	};
++	typeof(ruleset.fs_access_masks[0]) fs_access_mask = ~0;
+ 
+ 	BUILD_BUG_ON(ruleset.num_rules < LANDLOCK_MAX_NUM_RULES);
+ 	BUILD_BUG_ON(ruleset.num_layers < LANDLOCK_MAX_NUM_LAYERS);
++	BUILD_BUG_ON(fs_access_mask < LANDLOCK_MASK_ACCESS_FS);
+ }
+ 
+ /**
+@@ -217,9 +219,11 @@ static void build_check_layer(void)
+ {
+ 	const struct landlock_layer layer = {
+ 		.level = ~0,
++		.access = ~0,
+ 	};
+ 
+ 	BUILD_BUG_ON(layer.level < LANDLOCK_MAX_NUM_LAYERS);
++	BUILD_BUG_ON(layer.access < LANDLOCK_MASK_ACCESS_FS);
+ }
+ 
+ /* @ruleset must be locked by the caller. */
+diff --git a/security/landlock/setup.c b/security/landlock/setup.c
+index a5d6ef334991..f8e8e980454c 100644
+--- a/security/landlock/setup.c
++++ b/security/landlock/setup.c
+@@ -11,17 +11,24 @@
+ 
+ #include "common.h"
+ #include "cred.h"
++#include "fs.h"
+ #include "ptrace.h"
+ #include "setup.h"
+ 
++bool landlock_initialized __lsm_ro_after_init = false;
++
+ struct lsm_blob_sizes landlock_blob_sizes __lsm_ro_after_init = {
+ 	.lbs_cred = sizeof(struct landlock_cred_security),
++	.lbs_inode = sizeof(struct landlock_inode_security),
++	.lbs_superblock = sizeof(struct landlock_superblock_security),
+ };
+ 
+ static int __init landlock_init(void)
+ {
+ 	landlock_add_cred_hooks();
+ 	landlock_add_ptrace_hooks();
++	landlock_add_fs_hooks();
++	landlock_initialized = true;
+ 	pr_info("Up and running.\n");
+ 	return 0;
+ }
+diff --git a/security/landlock/setup.h b/security/landlock/setup.h
+index 9fdbf33fcc33..1daffab1ab4b 100644
+--- a/security/landlock/setup.h
++++ b/security/landlock/setup.h
+@@ -11,6 +11,8 @@
+ 
+ #include <linux/lsm_hooks.h>
+ 
++extern bool landlock_initialized;
++
+ extern struct lsm_blob_sizes landlock_blob_sizes;
+ 
+ #endif /* _SECURITY_LANDLOCK_SETUP_H */
 -- 
 2.30.2
 
