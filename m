@@ -7,27 +7,27 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 237D4C43461
-	for <linux-api@archiver.kernel.org>; Wed,  7 Apr 2021 16:06:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D4C3DC433ED
+	for <linux-api@archiver.kernel.org>; Wed,  7 Apr 2021 16:07:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 054C76138B
-	for <linux-api@archiver.kernel.org>; Wed,  7 Apr 2021 16:06:58 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AF5156128D
+	for <linux-api@archiver.kernel.org>; Wed,  7 Apr 2021 16:07:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1354204AbhDGQHG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 7 Apr 2021 12:07:06 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41392 "EHLO
+        id S1354127AbhDGQHJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 7 Apr 2021 12:07:09 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41326 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1354184AbhDGQGV (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 7 Apr 2021 12:06:21 -0400
-Received: from smtp-bc0f.mail.infomaniak.ch (smtp-bc0f.mail.infomaniak.ch [IPv6:2001:1600:3:17::bc0f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7018FC0613DF
-        for <linux-api@vger.kernel.org>; Wed,  7 Apr 2021 09:06:03 -0700 (PDT)
-Received: from smtp-3-0000.mail.infomaniak.ch (unknown [10.4.36.107])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4FFq4p0t14zMqHRl;
-        Wed,  7 Apr 2021 18:06:02 +0200 (CEST)
+        with ESMTP id S245684AbhDGQGY (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 7 Apr 2021 12:06:24 -0400
+Received: from smtp-8faf.mail.infomaniak.ch (smtp-8faf.mail.infomaniak.ch [IPv6:2001:1600:3:17::8faf])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 49AC9C061761;
+        Wed,  7 Apr 2021 09:05:59 -0700 (PDT)
+Received: from smtp-2-0001.mail.infomaniak.ch (unknown [10.5.36.108])
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4FFq4k0fRjzMqJTG;
+        Wed,  7 Apr 2021 18:05:58 +0200 (CEST)
 Received: from localhost (unknown [23.97.221.149])
-        by smtp-3-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4FFq4n4tZBzlh8T3;
-        Wed,  7 Apr 2021 18:06:01 +0200 (CEST)
+        by smtp-2-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4FFq4j4c1Zzlh8TD;
+        Wed,  7 Apr 2021 18:05:57 +0200 (CEST)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>,
         "Serge E . Hallyn" <serge@hallyn.com>
@@ -52,9 +52,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         linux-kselftest@vger.kernel.org,
         linux-security-module@vger.kernel.org, x86@kernel.org,
         =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@linux.microsoft.com>
-Subject: [PATCH v33 09/12] arch: Wire up Landlock syscalls
-Date:   Wed,  7 Apr 2021 18:07:23 +0200
-Message-Id: <20210407160726.542794-10-mic@digikod.net>
+Subject: [PATCH v33 06/12] fs,security: Add sb_delete hook
+Date:   Wed,  7 Apr 2021 18:07:20 +0200
+Message-Id: <20210407160726.542794-7-mic@digikod.net>
 X-Mailer: git-send-email 2.30.2
 In-Reply-To: <20210407160726.542794-1-mic@digikod.net>
 References: <20210407160726.542794-1-mic@digikod.net>
@@ -67,318 +67,121 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Mickaël Salaün <mic@linux.microsoft.com>
 
-Wire up the following system calls for all architectures:
-* landlock_create_ruleset(2)
-* landlock_add_rule(2)
-* landlock_restrict_self(2)
+The sb_delete security hook is called when shutting down a superblock,
+which may be useful to release kernel objects tied to the superblock's
+lifetime (e.g. inodes).
 
-Cc: Arnd Bergmann <arnd@arndb.de>
+This new hook is needed by Landlock to release (ephemerally) tagged
+struct inodes.  This comes from the unprivileged nature of Landlock
+described in the next commit.
+
+Cc: Al Viro <viro@zeniv.linux.org.uk>
 Cc: James Morris <jmorris@namei.org>
-Cc: Jann Horn <jannh@google.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Serge E. Hallyn <serge@hallyn.com>
 Signed-off-by: Mickaël Salaün <mic@linux.microsoft.com>
-Link: https://lore.kernel.org/r/20210407160726.542794-10-mic@digikod.net
+Reviewed-by: Jann Horn <jannh@google.com>
+Acked-by: Serge Hallyn <serge@hallyn.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Link: https://lore.kernel.org/r/20210407160726.542794-7-mic@digikod.net
 ---
 
 Changes since v30:
-* Increase syscall numbers to leave space for quotactl_path(2):
-  synchronize with Landlock syscalls in -next.
+* Add Reviewed-by Kees Cook.
 
-Changes since v29:
-* Rebase on v5.12-rc3 and fix trivial conflict with mount_setattr(2).
-* Synchronize syscall numbers with -next, which are the same as for
-  v5.12-rc3.
+Changes since v28:
+* Extend hook description (suggested by Serge Hallyn).
+* Add Acked-by Serge Hallyn.
 
-Changes since v27:
-* Rename landlock_enforce_ruleset_self(2) to landlock_restrict_self(2).
-* Cosmetic fix: align TBL enries.
+Changes since v22:
+* Add Reviewed-by Jann Horn.
 
-Changes since v26:
-* Rename landlock_enforce_ruleset_current(2) to
-  landlock_enforce_ruleset_self(2).
-
-Changes since v25:
-* Rebase and leave space for the new epoll_pwait2(2) and memfd_secret(2)
-  from -next.
-
-Changes since v21:
-* Rebase and leave space for watch_mount(2) from -next.
-
-Changes since v20:
-* Remove landlock_get_features(2).
-* Decrease syscall numbers to stick to process_madvise(2) in -next.
-* Rename landlock_enforce_ruleset(2) to
-  landlock_enforce_ruleset_current(2).
-
-Changes since v19:
-* Increase syscall numbers by 4 to leave space for new ones (in
-  linux-next): watch_mount(2), watch_sb(2), fsinfo(2) and
-  process_madvise(2) (requested by Arnd Bergmann).
-* Replace the previous multiplexor landlock(2) with 4 syscalls:
-  landlock_get_features(2), landlock_create_ruleset(2),
-  landlock_add_rule(2) and landlock_enforce_ruleset(2).
-
-Changes since v18:
-* Increase the syscall number because of the new faccessat2(2).
-
-Changes since v14:
-* Add all architectures.
-
-Changes since v13:
-* New implementation.
+Changes since v17:
+* Initial patch to replace the direct call to landlock_release_inodes()
+  (requested by James Morris).
+  https://lore.kernel.org/lkml/alpine.LRH.2.21.2005150536440.7929@namei.org/
 ---
- arch/alpha/kernel/syscalls/syscall.tbl      | 3 +++
- arch/arm/tools/syscall.tbl                  | 3 +++
- arch/arm64/include/asm/unistd.h             | 2 +-
- arch/arm64/include/asm/unistd32.h           | 6 ++++++
- arch/ia64/kernel/syscalls/syscall.tbl       | 3 +++
- arch/m68k/kernel/syscalls/syscall.tbl       | 3 +++
- arch/microblaze/kernel/syscalls/syscall.tbl | 3 +++
- arch/mips/kernel/syscalls/syscall_n32.tbl   | 3 +++
- arch/mips/kernel/syscalls/syscall_n64.tbl   | 3 +++
- arch/mips/kernel/syscalls/syscall_o32.tbl   | 3 +++
- arch/parisc/kernel/syscalls/syscall.tbl     | 3 +++
- arch/powerpc/kernel/syscalls/syscall.tbl    | 3 +++
- arch/s390/kernel/syscalls/syscall.tbl       | 3 +++
- arch/sh/kernel/syscalls/syscall.tbl         | 3 +++
- arch/sparc/kernel/syscalls/syscall.tbl      | 3 +++
- arch/x86/entry/syscalls/syscall_32.tbl      | 3 +++
- arch/x86/entry/syscalls/syscall_64.tbl      | 3 +++
- arch/xtensa/kernel/syscalls/syscall.tbl     | 3 +++
- include/uapi/asm-generic/unistd.h           | 8 +++++++-
- 19 files changed, 62 insertions(+), 2 deletions(-)
+ fs/super.c                    | 1 +
+ include/linux/lsm_hook_defs.h | 1 +
+ include/linux/lsm_hooks.h     | 3 +++
+ include/linux/security.h      | 4 ++++
+ security/security.c           | 5 +++++
+ 5 files changed, 14 insertions(+)
 
-diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
-index 02f0244e005c..4240f21b10b3 100644
---- a/arch/alpha/kernel/syscalls/syscall.tbl
-+++ b/arch/alpha/kernel/syscalls/syscall.tbl
-@@ -482,3 +482,6 @@
- 550	common	process_madvise			sys_process_madvise
- 551	common	epoll_pwait2			sys_epoll_pwait2
- 552	common	mount_setattr			sys_mount_setattr
-+554	common	landlock_create_ruleset		sys_landlock_create_ruleset
-+555	common	landlock_add_rule		sys_landlock_add_rule
-+556	common	landlock_restrict_self		sys_landlock_restrict_self
-diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
-index dcc1191291a2..161423a5d773 100644
---- a/arch/arm/tools/syscall.tbl
-+++ b/arch/arm/tools/syscall.tbl
-@@ -456,3 +456,6 @@
- 440	common	process_madvise			sys_process_madvise
- 441	common	epoll_pwait2			sys_epoll_pwait2
- 442	common	mount_setattr			sys_mount_setattr
-+444	common	landlock_create_ruleset		sys_landlock_create_ruleset
-+445	common	landlock_add_rule		sys_landlock_add_rule
-+446	common	landlock_restrict_self		sys_landlock_restrict_self
-diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
-index 949788f5ba40..727bfc3be99b 100644
---- a/arch/arm64/include/asm/unistd.h
-+++ b/arch/arm64/include/asm/unistd.h
-@@ -38,7 +38,7 @@
- #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE + 5)
- #define __ARM_NR_COMPAT_END		(__ARM_NR_COMPAT_BASE + 0x800)
+diff --git a/fs/super.c b/fs/super.c
+index 8c1baca35c16..11b7e7213fd1 100644
+--- a/fs/super.c
++++ b/fs/super.c
+@@ -454,6 +454,7 @@ void generic_shutdown_super(struct super_block *sb)
+ 		evict_inodes(sb);
+ 		/* only nonzero refcount inodes can have marks */
+ 		fsnotify_sb_delete(sb);
++		security_sb_delete(sb);
  
--#define __NR_compat_syscalls		443
-+#define __NR_compat_syscalls		447
- #endif
+ 		if (sb->s_dio_done_wq) {
+ 			destroy_workqueue(sb->s_dio_done_wq);
+diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
+index 477a597db013..e8adadbf9581 100644
+--- a/include/linux/lsm_hook_defs.h
++++ b/include/linux/lsm_hook_defs.h
+@@ -59,6 +59,7 @@ LSM_HOOK(int, 0, fs_context_dup, struct fs_context *fc,
+ LSM_HOOK(int, -ENOPARAM, fs_context_parse_param, struct fs_context *fc,
+ 	 struct fs_parameter *param)
+ LSM_HOOK(int, 0, sb_alloc_security, struct super_block *sb)
++LSM_HOOK(void, LSM_RET_VOID, sb_delete, struct super_block *sb)
+ LSM_HOOK(void, LSM_RET_VOID, sb_free_security, struct super_block *sb)
+ LSM_HOOK(void, LSM_RET_VOID, sb_free_mnt_opts, void *mnt_opts)
+ LSM_HOOK(int, 0, sb_eat_lsm_opts, char *orig, void **mnt_opts)
+diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
+index 75715998a95f..cc2eaaaec0e4 100644
+--- a/include/linux/lsm_hooks.h
++++ b/include/linux/lsm_hooks.h
+@@ -108,6 +108,9 @@
+  *	allocated.
+  *	@sb contains the super_block structure to be modified.
+  *	Return 0 if operation was successful.
++ * @sb_delete:
++ *	Release objects tied to a superblock (e.g. inodes).
++ *	@sb contains the super_block structure being released.
+  * @sb_free_security:
+  *	Deallocate and clear the sb->s_security field.
+  *	@sb contains the super_block structure to be modified.
+diff --git a/include/linux/security.h b/include/linux/security.h
+index 8aeebd6646dc..90298baa4551 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -291,6 +291,7 @@ void security_bprm_committed_creds(struct linux_binprm *bprm);
+ int security_fs_context_dup(struct fs_context *fc, struct fs_context *src_fc);
+ int security_fs_context_parse_param(struct fs_context *fc, struct fs_parameter *param);
+ int security_sb_alloc(struct super_block *sb);
++void security_sb_delete(struct super_block *sb);
+ void security_sb_free(struct super_block *sb);
+ void security_free_mnt_opts(void **mnt_opts);
+ int security_sb_eat_lsm_opts(char *options, void **mnt_opts);
+@@ -631,6 +632,9 @@ static inline int security_sb_alloc(struct super_block *sb)
+ 	return 0;
+ }
  
- #define __ARCH_WANT_SYS_CLONE
-diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
-index 3d874f624056..fdfe06bae3fc 100644
---- a/arch/arm64/include/asm/unistd32.h
-+++ b/arch/arm64/include/asm/unistd32.h
-@@ -893,6 +893,12 @@ __SYSCALL(__NR_process_madvise, sys_process_madvise)
- __SYSCALL(__NR_epoll_pwait2, compat_sys_epoll_pwait2)
- #define __NR_mount_setattr 442
- __SYSCALL(__NR_mount_setattr, sys_mount_setattr)
-+#define __NR_landlock_create_ruleset 444
-+__SYSCALL(__NR_landlock_create_ruleset, sys_landlock_create_ruleset)
-+#define __NR_landlock_add_rule 445
-+__SYSCALL(__NR_landlock_add_rule, sys_landlock_add_rule)
-+#define __NR_landlock_restrict_self 446
-+__SYSCALL(__NR_landlock_restrict_self, sys_landlock_restrict_self)
++static inline void security_sb_delete(struct super_block *sb)
++{ }
++
+ static inline void security_sb_free(struct super_block *sb)
+ { }
  
- /*
-  * Please add new compat syscalls above this comment and update
-diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
-index d89231166e19..48dbbc95a01f 100644
---- a/arch/ia64/kernel/syscalls/syscall.tbl
-+++ b/arch/ia64/kernel/syscalls/syscall.tbl
-@@ -363,3 +363,6 @@
- 440	common	process_madvise			sys_process_madvise
- 441	common	epoll_pwait2			sys_epoll_pwait2
- 442	common	mount_setattr			sys_mount_setattr
-+444	common	landlock_create_ruleset		sys_landlock_create_ruleset
-+445	common	landlock_add_rule		sys_landlock_add_rule
-+446	common	landlock_restrict_self		sys_landlock_restrict_self
-diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
-index 72bde6707dd3..595108bbbe42 100644
---- a/arch/m68k/kernel/syscalls/syscall.tbl
-+++ b/arch/m68k/kernel/syscalls/syscall.tbl
-@@ -442,3 +442,6 @@
- 440	common	process_madvise			sys_process_madvise
- 441	common	epoll_pwait2			sys_epoll_pwait2
- 442	common	mount_setattr			sys_mount_setattr
-+444	common	landlock_create_ruleset		sys_landlock_create_ruleset
-+445	common	landlock_add_rule		sys_landlock_add_rule
-+446	common	landlock_restrict_self		sys_landlock_restrict_self
-diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
-index d603a5ec9338..db23d65871f9 100644
---- a/arch/microblaze/kernel/syscalls/syscall.tbl
-+++ b/arch/microblaze/kernel/syscalls/syscall.tbl
-@@ -448,3 +448,6 @@
- 440	common	process_madvise			sys_process_madvise
- 441	common	epoll_pwait2			sys_epoll_pwait2
- 442	common	mount_setattr			sys_mount_setattr
-+444	common	landlock_create_ruleset		sys_landlock_create_ruleset
-+445	common	landlock_add_rule		sys_landlock_add_rule
-+446	common	landlock_restrict_self		sys_landlock_restrict_self
-diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
-index 8fd8c1790941..5028839225fa 100644
---- a/arch/mips/kernel/syscalls/syscall_n32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
-@@ -381,3 +381,6 @@
- 440	n32	process_madvise			sys_process_madvise
- 441	n32	epoll_pwait2			compat_sys_epoll_pwait2
- 442	n32	mount_setattr			sys_mount_setattr
-+444	n32	landlock_create_ruleset		sys_landlock_create_ruleset
-+445	n32	landlock_add_rule		sys_landlock_add_rule
-+446	n32	landlock_restrict_self		sys_landlock_restrict_self
-diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
-index 169f21438065..ec9c68b75e23 100644
---- a/arch/mips/kernel/syscalls/syscall_n64.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
-@@ -357,3 +357,6 @@
- 440	n64	process_madvise			sys_process_madvise
- 441	n64	epoll_pwait2			sys_epoll_pwait2
- 442	n64	mount_setattr			sys_mount_setattr
-+444	n64	landlock_create_ruleset		sys_landlock_create_ruleset
-+445	n64	landlock_add_rule		sys_landlock_add_rule
-+446	n64	landlock_restrict_self		sys_landlock_restrict_self
-diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
-index 090d29ca80ff..24afd33e3e49 100644
---- a/arch/mips/kernel/syscalls/syscall_o32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
-@@ -430,3 +430,6 @@
- 440	o32	process_madvise			sys_process_madvise
- 441	o32	epoll_pwait2			sys_epoll_pwait2		compat_sys_epoll_pwait2
- 442	o32	mount_setattr			sys_mount_setattr
-+444	o32	landlock_create_ruleset		sys_landlock_create_ruleset
-+445	o32	landlock_add_rule		sys_landlock_add_rule
-+446	o32	landlock_restrict_self		sys_landlock_restrict_self
-diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
-index 271a92519683..8ddd0b82d767 100644
---- a/arch/parisc/kernel/syscalls/syscall.tbl
-+++ b/arch/parisc/kernel/syscalls/syscall.tbl
-@@ -440,3 +440,6 @@
- 440	common	process_madvise			sys_process_madvise
- 441	common	epoll_pwait2			sys_epoll_pwait2		compat_sys_epoll_pwait2
- 442	common	mount_setattr			sys_mount_setattr
-+444	common	landlock_create_ruleset		sys_landlock_create_ruleset
-+445	common	landlock_add_rule		sys_landlock_add_rule
-+446	common	landlock_restrict_self		sys_landlock_restrict_self
-diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
-index 0b2480cf3e47..02150894b1cf 100644
---- a/arch/powerpc/kernel/syscalls/syscall.tbl
-+++ b/arch/powerpc/kernel/syscalls/syscall.tbl
-@@ -522,3 +522,6 @@
- 440	common	process_madvise			sys_process_madvise
- 441	common	epoll_pwait2			sys_epoll_pwait2		compat_sys_epoll_pwait2
- 442	common	mount_setattr			sys_mount_setattr
-+444	common	landlock_create_ruleset		sys_landlock_create_ruleset
-+445	common	landlock_add_rule		sys_landlock_add_rule
-+446	common	landlock_restrict_self		sys_landlock_restrict_self
-diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
-index 3abef2144dac..331663efd3e7 100644
---- a/arch/s390/kernel/syscalls/syscall.tbl
-+++ b/arch/s390/kernel/syscalls/syscall.tbl
-@@ -445,3 +445,6 @@
- 440  common	process_madvise		sys_process_madvise		sys_process_madvise
- 441  common	epoll_pwait2		sys_epoll_pwait2		compat_sys_epoll_pwait2
- 442  common	mount_setattr		sys_mount_setattr		sys_mount_setattr
-+444  common	landlock_create_ruleset	sys_landlock_create_ruleset	sys_landlock_create_ruleset
-+445  common	landlock_add_rule	sys_landlock_add_rule		sys_landlock_add_rule
-+446  common	landlock_restrict_self	sys_landlock_restrict_self	sys_landlock_restrict_self
-diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
-index d08eebad6b7f..6ada711f4b72 100644
---- a/arch/sh/kernel/syscalls/syscall.tbl
-+++ b/arch/sh/kernel/syscalls/syscall.tbl
-@@ -445,3 +445,6 @@
- 440	common	process_madvise			sys_process_madvise
- 441	common	epoll_pwait2			sys_epoll_pwait2
- 442	common	mount_setattr			sys_mount_setattr
-+444	common	landlock_create_ruleset		sys_landlock_create_ruleset
-+445	common	landlock_add_rule		sys_landlock_add_rule
-+446	common	landlock_restrict_self		sys_landlock_restrict_self
-diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
-index 84403a99039c..1dbe3239a638 100644
---- a/arch/sparc/kernel/syscalls/syscall.tbl
-+++ b/arch/sparc/kernel/syscalls/syscall.tbl
-@@ -488,3 +488,6 @@
- 440	common	process_madvise			sys_process_madvise
- 441	common	epoll_pwait2			sys_epoll_pwait2		compat_sys_epoll_pwait2
- 442	common	mount_setattr			sys_mount_setattr
-+444	common	landlock_create_ruleset		sys_landlock_create_ruleset
-+445	common	landlock_add_rule		sys_landlock_add_rule
-+446	common	landlock_restrict_self		sys_landlock_restrict_self
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index a1c9f496fca6..782c310de1da 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -447,3 +447,6 @@
- 440	i386	process_madvise		sys_process_madvise
- 441	i386	epoll_pwait2		sys_epoll_pwait2		compat_sys_epoll_pwait2
- 442	i386	mount_setattr		sys_mount_setattr
-+444	i386	landlock_create_ruleset	sys_landlock_create_ruleset
-+445	i386	landlock_add_rule	sys_landlock_add_rule
-+446	i386	landlock_restrict_self	sys_landlock_restrict_self
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 7bf01cbe582f..8604ee4bfff9 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -364,6 +364,9 @@
- 440	common	process_madvise		sys_process_madvise
- 441	common	epoll_pwait2		sys_epoll_pwait2
- 442	common	mount_setattr		sys_mount_setattr
-+444	common	landlock_create_ruleset	sys_landlock_create_ruleset
-+445	common	landlock_add_rule	sys_landlock_add_rule
-+446	common	landlock_restrict_self	sys_landlock_restrict_self
+diff --git a/security/security.c b/security/security.c
+index e9c29480eb18..bb666f992497 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -900,6 +900,11 @@ int security_sb_alloc(struct super_block *sb)
+ 	return rc;
+ }
  
- #
- # Due to a historical design error, certain syscalls are numbered differently
-diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
-index 365a9b849224..2fad056a32e8 100644
---- a/arch/xtensa/kernel/syscalls/syscall.tbl
-+++ b/arch/xtensa/kernel/syscalls/syscall.tbl
-@@ -413,3 +413,6 @@
- 440	common	process_madvise			sys_process_madvise
- 441	common	epoll_pwait2			sys_epoll_pwait2
- 442	common	mount_setattr			sys_mount_setattr
-+444	common	landlock_create_ruleset		sys_landlock_create_ruleset
-+445	common	landlock_add_rule		sys_landlock_add_rule
-+446	common	landlock_restrict_self		sys_landlock_restrict_self
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index ce58cff99b66..300608b05226 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -863,9 +863,15 @@ __SYSCALL(__NR_process_madvise, sys_process_madvise)
- __SC_COMP(__NR_epoll_pwait2, sys_epoll_pwait2, compat_sys_epoll_pwait2)
- #define __NR_mount_setattr 442
- __SYSCALL(__NR_mount_setattr, sys_mount_setattr)
-+#define __NR_landlock_create_ruleset 444
-+__SYSCALL(__NR_landlock_create_ruleset, sys_landlock_create_ruleset)
-+#define __NR_landlock_add_rule 445
-+__SYSCALL(__NR_landlock_add_rule, sys_landlock_add_rule)
-+#define __NR_landlock_restrict_self 446
-+__SYSCALL(__NR_landlock_restrict_self, sys_landlock_restrict_self)
- 
- #undef __NR_syscalls
--#define __NR_syscalls 443
-+#define __NR_syscalls 447
- 
- /*
-  * 32 bit systems traditionally used different
++void security_sb_delete(struct super_block *sb)
++{
++	call_void_hook(sb_delete, sb);
++}
++
+ void security_sb_free(struct super_block *sb)
+ {
+ 	call_void_hook(sb_free_security, sb);
 -- 
 2.30.2
 
