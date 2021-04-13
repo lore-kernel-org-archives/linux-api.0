@@ -5,62 +5,61 @@ X-Spam-Level:
 X-Spam-Status: No, score=-26.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT,USER_IN_DEF_DKIM_WL autolearn=ham autolearn_force=no
+	USER_AGENT_GIT,USER_IN_DEF_DKIM_WL autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6DF78C43461
-	for <linux-api@archiver.kernel.org>; Tue, 13 Apr 2021 05:17:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F2ACBC433B4
+	for <linux-api@archiver.kernel.org>; Tue, 13 Apr 2021 05:17:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 48C046109E
-	for <linux-api@archiver.kernel.org>; Tue, 13 Apr 2021 05:17:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D6E01613AB
+	for <linux-api@archiver.kernel.org>; Tue, 13 Apr 2021 05:17:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S244582AbhDMFSB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 13 Apr 2021 01:18:01 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50834 "EHLO
+        id S244464AbhDMFSA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 13 Apr 2021 01:18:00 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50836 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1344496AbhDMFSA (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 13 Apr 2021 01:18:00 -0400
-Received: from mail-yb1-xb49.google.com (mail-yb1-xb49.google.com [IPv6:2607:f8b0:4864:20::b49])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 37E36C06135E
-        for <linux-api@vger.kernel.org>; Mon, 12 Apr 2021 22:17:40 -0700 (PDT)
-Received: by mail-yb1-xb49.google.com with SMTP id t9so4547430ybd.11
-        for <linux-api@vger.kernel.org>; Mon, 12 Apr 2021 22:17:40 -0700 (PDT)
+        with ESMTP id S244581AbhDMFRt (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 13 Apr 2021 01:17:49 -0400
+Received: from mail-yb1-xb4a.google.com (mail-yb1-xb4a.google.com [IPv6:2607:f8b0:4864:20::b4a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 953E1C06138C
+        for <linux-api@vger.kernel.org>; Mon, 12 Apr 2021 22:17:29 -0700 (PDT)
+Received: by mail-yb1-xb4a.google.com with SMTP id w9so15206275ybw.7
+        for <linux-api@vger.kernel.org>; Mon, 12 Apr 2021 22:17:29 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=google.com; s=20161025;
         h=date:in-reply-to:message-id:mime-version:references:subject:from:to
          :cc;
-        bh=l2i93c0D52SLfGu2rkvXcmRcnJGNafhRbk6pUsLSI1w=;
-        b=C4Ph3T5LPg46cqLVVraagPCEdHhGh1gYl/hhbULoTKxzkji59i9JdW05JgvYQBh82z
-         gcxc4JXlELbBwT/dcsyu5fbUHU5BTVSvapR0E8czq77gOndoTR3aC+/pNIUsD6KmQwaV
-         lNXBy1mIuuS+pfwaJm3GwARldwPKpnJxjAhAR9Z+7+E55GDGhZAuAypUnX3XH9DeM+Sz
-         FzxGFyX5WnOvJhrGuAUETMqbKDgKkOMBAGj0LA+D8JWsn2/rnqqvYC9RioKQd4/FwJJl
-         YGwfVuWwhkTwI74ysw7FeByB6Ljdih1RijuGpZPgpdKJL8DrXmbZUCopdKaQfnALYL2D
-         ThFQ==
+        bh=f5i7eoTfHiYgIo4pkqN4NedFYngSEqp7EHb5hZXAit4=;
+        b=KSauzssyNsdmsxVMCwEwpohzc/lijD0sbmKil+kTsB8Ah2uZOn4zd/9iqlpmbQelhz
+         3tfwoAZip3K+SUKDc7s8hkYFs2GXqK+9kBBK9M4XqnYcQ5+7YmoDWKkddChMmp0hah8s
+         rM+encBY2WptIQ7JnBAcoPmB1DbCHjiG/HhPd0VZ7wQ0npJ7ZUHZw0Hvyy9MGQWvwzLz
+         x5z3svz6mOMiegYP45gSRNqtGGfa3KSdbfWZLN2dLd5n0nIa1fLN0D69A+UDLLyen67k
+         aTFzyjEfxqRROyaNrQm1h5UyvUAOiigfwkOGAld6Jl6ldg+91iEI70FssO93i2fEEXhp
+         E5CA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:date:in-reply-to:message-id:mime-version
          :references:subject:from:to:cc;
-        bh=l2i93c0D52SLfGu2rkvXcmRcnJGNafhRbk6pUsLSI1w=;
-        b=por6Culw3Hrzz3GEjLgfgigILxpFtPEqZNswVtSbu3lsmd9aL/xlTJQvfydOJtzcLV
-         mLzD7QSmcLBqbJ7IAv447fCVdBI6uzS1nhTSajQUzQP8SdCfwc1P3QvI0z/ABLZrNyq4
-         QP9iGV1FbUgE4rjTEBen6TzXJI3T038ztc8FnvodZFGGvHIKIRRlhu/FJFSFHyklI+O1
-         OhmdJYR2nYB3l62Nplryt36IvCfnitWwRsLfr7/teur5DrIF2BKxD378pImJRjfcFDcD
-         xmZBIBAmd3JGam1IBGLCPWtaj7ETnK5OR4xwTxgMfV1QbNMNKj3O63+6kornVzQ4Hc7o
-         lZXQ==
-X-Gm-Message-State: AOAM532dkiNE0bYCQ95U1XVqxiCDKEHcxuhV1InjGGaSiAyN+mKU/aNR
-        lehnR6epboUnik2R1uUr7sbeUEMfl4745v7hlDDY
-X-Google-Smtp-Source: ABdhPJzYi6y7kbLqWoNzDFmc0mNDDDXQIxQB5nuQA+FyuaB0LaEXxS55HjozjFHHAJ+1hNmZL7XJDp6yJLi6F9f+pHTq
+        bh=f5i7eoTfHiYgIo4pkqN4NedFYngSEqp7EHb5hZXAit4=;
+        b=dZhykD068QfIRUz1KP7zAeqPKvAXxSvwTxRIfNPFxTJxnbeRLwuaMoFFboVLRmbsPb
+         30Hs2saEAGteJf9y77vM/JUb8K9ExzAleuGrKXuzbB4FfhQbPikm0PbV1XK3RVE8/kQg
+         La1c88FyMbj0c/kkamZ+JB3ObbblBPEnbs8vSx+iSBfLigCAr7viqxRPHbniHMLGPGms
+         rhqxOO2z14U5V3xDCuECOd6BMGVLq9q8jnYXLwtdu2ioa64sEHPB/4MwjJVsdphWRMMk
+         u1BStPxRrcH7FjogVAb3j5vyRXAM1k1Y5MGs59NCyhIZYD+6CeoUyGch8bkLGSZIQkOl
+         atrQ==
+X-Gm-Message-State: AOAM5309SEoIDcp8QPnPnA64HRjb8AhdciHrFxPYTlnqeY3oC7J3B/Bi
+        nsQgni5DmgPSt3quA/fN+hkhnV04dgmTZcX75ESC
+X-Google-Smtp-Source: ABdhPJzLgiuYz8WwePd9AW3GNJYGRAow+Ug/R/wdNAKkO1ZjQuSeYMwOdhR5QIjk2B4Z9Xjj3hlOtFyStmQ7GWtZqbrQ
 X-Received: from ajr0.svl.corp.google.com ([2620:15c:2cd:203:d508:eee5:2d57:3e32])
- (user=axelrasmussen job=sendgmr) by 2002:a25:6c85:: with SMTP id
- h127mr39041723ybc.341.1618291059410; Mon, 12 Apr 2021 22:17:39 -0700 (PDT)
-Date:   Mon, 12 Apr 2021 22:17:20 -0700
+ (user=axelrasmussen job=sendgmr) by 2002:a25:7a45:: with SMTP id
+ v66mr42020225ybc.413.1618291048849; Mon, 12 Apr 2021 22:17:28 -0700 (PDT)
+Date:   Mon, 12 Apr 2021 22:17:14 -0700
 In-Reply-To: <20210413051721.2896915-1-axelrasmussen@google.com>
-Message-Id: <20210413051721.2896915-9-axelrasmussen@google.com>
+Message-Id: <20210413051721.2896915-3-axelrasmussen@google.com>
 Mime-Version: 1.0
 References: <20210413051721.2896915-1-axelrasmussen@google.com>
 X-Mailer: git-send-email 2.31.1.295.g9ea45b61b8-goog
-Subject: [PATCH v2 8/9] userfaultfd/selftests: exercise minor fault handling
- shmem support
+Subject: [PATCH v2 2/9] userfaultfd/shmem: combine shmem_{mcopy_atomic,mfill_zeropage}_pte
 From:   Axel Rasmussen <axelrasmussen@google.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Andrea Arcangeli <aarcange@redhat.com>,
@@ -87,83 +86,193 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Enable test_uffdio_minor for test_type == TEST_SHMEM, and modify the
-test slightly to pass in / check for the right feature flags.
+Previously, we did a dance where we had one calling path in
+userfaultfd.c (mfill_atomic_pte), but then we split it into two in
+shmem_fs.h (shmem_{mcopy_atomic,mfill_zeropage}_pte), and then rejoined
+into a single shared function in shmem.c (shmem_mfill_atomic_pte).
 
+This is all a bit overly complex. Just call the single combined shmem
+function directly, allowing us to clean up various branches,
+boilerplate, etc.
+
+While we're touching this function, two other small cleanup changes:
+- offset is equivalent to pgoff, so we can get rid of offset entirely.
+- Split two VM_BUG_ON cases into two statements. This means the line
+  number reported when the BUG is hit specifies exactly which condition
+  was true.
+
+Reviewed-by: Peter Xu <peterx@redhat.com>
 Signed-off-by: Axel Rasmussen <axelrasmussen@google.com>
 ---
- tools/testing/selftests/vm/userfaultfd.c | 29 ++++++++++++++++++++----
- 1 file changed, 25 insertions(+), 4 deletions(-)
+ include/linux/shmem_fs.h | 15 +++++-------
+ mm/shmem.c               | 52 +++++++++++++---------------------------
+ mm/userfaultfd.c         | 10 +++-----
+ 3 files changed, 25 insertions(+), 52 deletions(-)
 
-diff --git a/tools/testing/selftests/vm/userfaultfd.c b/tools/testing/selftests/vm/userfaultfd.c
-index 0ff01f437a39..0830f155e6c2 100644
---- a/tools/testing/selftests/vm/userfaultfd.c
-+++ b/tools/testing/selftests/vm/userfaultfd.c
-@@ -484,6 +484,7 @@ static void wp_range(int ufd, __u64 start, __u64 len, bool wp)
- static void continue_range(int ufd, __u64 start, __u64 len)
- {
- 	struct uffdio_continue req;
-+	int ret;
+diff --git a/include/linux/shmem_fs.h b/include/linux/shmem_fs.h
+index d82b6f396588..919e36671fe6 100644
+--- a/include/linux/shmem_fs.h
++++ b/include/linux/shmem_fs.h
+@@ -122,21 +122,18 @@ static inline bool shmem_file(struct file *file)
+ extern bool shmem_charge(struct inode *inode, long pages);
+ extern void shmem_uncharge(struct inode *inode, long pages);
  
- 	req.range.start = start;
- 	req.range.len = len;
-@@ -492,6 +493,17 @@ static void continue_range(int ufd, __u64 start, __u64 len)
- 	if (ioctl(ufd, UFFDIO_CONTINUE, &req))
- 		err("UFFDIO_CONTINUE failed for address 0x%" PRIx64,
- 		    (uint64_t)start);
-+
-+	/*
-+	 * Error handling within the kernel for continue is subtly different
-+	 * from copy or zeropage, so it may be a source of bugs. Trigger an
-+	 * error (-EEXIST) on purpose, to verify doing so doesn't cause a BUG.
-+	 */
-+	req.mapped = 0;
-+	ret = ioctl(ufd, UFFDIO_CONTINUE, &req);
-+	if (ret >= 0 || req.mapped != -EEXIST)
-+		err("failed to exercise UFFDIO_CONTINUE error handling, ret=%d, mapped=%" PRId64,
-+		    ret, (int64_t) req.mapped);
++#ifdef CONFIG_USERFAULTFD
+ #ifdef CONFIG_SHMEM
+ extern int shmem_mcopy_atomic_pte(struct mm_struct *dst_mm, pmd_t *dst_pmd,
+ 				  struct vm_area_struct *dst_vma,
+ 				  unsigned long dst_addr,
+ 				  unsigned long src_addr,
++				  bool zeropage,
+ 				  struct page **pagep);
+-extern int shmem_mfill_zeropage_pte(struct mm_struct *dst_mm,
+-				    pmd_t *dst_pmd,
+-				    struct vm_area_struct *dst_vma,
+-				    unsigned long dst_addr);
+-#else
++#else /* !CONFIG_SHMEM */
+ #define shmem_mcopy_atomic_pte(dst_mm, dst_pte, dst_vma, dst_addr, \
+-			       src_addr, pagep)        ({ BUG(); 0; })
+-#define shmem_mfill_zeropage_pte(dst_mm, dst_pmd, dst_vma, \
+-				 dst_addr)      ({ BUG(); 0; })
+-#endif
++			       src_addr, zeropage, pagep)       ({ BUG(); 0; })
++#endif /* CONFIG_SHMEM */
++#endif /* CONFIG_USERFAULTFD */
+ 
+ #endif
+diff --git a/mm/shmem.c b/mm/shmem.c
+index 26c76b13ad23..b72c55aa07fc 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -2354,13 +2354,14 @@ static struct inode *shmem_get_inode(struct super_block *sb, const struct inode
+ 	return inode;
  }
  
- static void *locking_thread(void *arg)
-@@ -1196,7 +1208,7 @@ static int userfaultfd_minor_test(void)
- 	void *expected_page;
- 	char c;
- 	struct uffd_stats stats = { 0 };
--	uint64_t features = UFFD_FEATURE_MINOR_HUGETLBFS;
-+	uint64_t req_features, features_out;
+-static int shmem_mfill_atomic_pte(struct mm_struct *dst_mm,
+-				  pmd_t *dst_pmd,
+-				  struct vm_area_struct *dst_vma,
+-				  unsigned long dst_addr,
+-				  unsigned long src_addr,
+-				  bool zeropage,
+-				  struct page **pagep)
++#ifdef CONFIG_USERFAULTFD
++int shmem_mcopy_atomic_pte(struct mm_struct *dst_mm,
++			   pmd_t *dst_pmd,
++			   struct vm_area_struct *dst_vma,
++			   unsigned long dst_addr,
++			   unsigned long src_addr,
++			   bool zeropage,
++			   struct page **pagep)
+ {
+ 	struct inode *inode = file_inode(dst_vma->vm_file);
+ 	struct shmem_inode_info *info = SHMEM_I(inode);
+@@ -2372,7 +2373,7 @@ static int shmem_mfill_atomic_pte(struct mm_struct *dst_mm,
+ 	struct page *page;
+ 	pte_t _dst_pte, *dst_pte;
+ 	int ret;
+-	pgoff_t offset, max_off;
++	pgoff_t max_off;
  
- 	if (!test_uffdio_minor)
- 		return 0;
-@@ -1204,10 +1216,18 @@ static int userfaultfd_minor_test(void)
- 	printf("testing minor faults: ");
- 	fflush(stdout);
+ 	ret = -ENOMEM;
+ 	if (!shmem_inode_acct_block(inode, 1))
+@@ -2383,7 +2384,7 @@ static int shmem_mfill_atomic_pte(struct mm_struct *dst_mm,
+ 		if (!page)
+ 			goto out_unacct_blocks;
  
--	if (uffd_test_ctx_clear() || uffd_test_ctx_init_ext(&features))
-+	if (test_type == TEST_HUGETLB)
-+		req_features = UFFD_FEATURE_MINOR_HUGETLBFS;
-+	else if (test_type == TEST_SHMEM)
-+		req_features = UFFD_FEATURE_MINOR_SHMEM;
-+	else
-+		return 1;
-+
-+	features_out = req_features;
-+	if (uffd_test_ctx_clear() || uffd_test_ctx_init_ext(&features_out))
- 		return 1;
--	/* If kernel reports the feature isn't supported, skip the test. */
--	if (!(features & UFFD_FEATURE_MINOR_HUGETLBFS)) {
-+	/* If kernel reports required features aren't supported, skip test. */
-+	if ((features_out & req_features) != req_features) {
- 		printf("skipping test due to lack of feature support\n");
- 		fflush(stdout);
- 		return 0;
-@@ -1442,6 +1462,7 @@ static void set_test_type(const char *type)
- 		map_shared = true;
- 		test_type = TEST_SHMEM;
- 		uffd_test_ops = &shmem_uffd_test_ops;
-+		test_uffdio_minor = true;
+-		if (!zeropage) {	/* mcopy_atomic */
++		if (!zeropage) {	/* COPY */
+ 			page_kaddr = kmap_atomic(page);
+ 			ret = copy_from_user(page_kaddr,
+ 					     (const void __user *)src_addr,
+@@ -2397,7 +2398,7 @@ static int shmem_mfill_atomic_pte(struct mm_struct *dst_mm,
+ 				/* don't free the page */
+ 				return -ENOENT;
+ 			}
+-		} else {		/* mfill_zeropage_atomic */
++		} else {		/* ZEROPAGE */
+ 			clear_highpage(page);
+ 		}
  	} else {
- 		err("Unknown test type: %s", type);
+@@ -2405,15 +2406,15 @@ static int shmem_mfill_atomic_pte(struct mm_struct *dst_mm,
+ 		*pagep = NULL;
  	}
+ 
+-	VM_BUG_ON(PageLocked(page) || PageSwapBacked(page));
++	VM_BUG_ON(PageLocked(page));
++	VM_BUG_ON(PageSwapBacked(page));
+ 	__SetPageLocked(page);
+ 	__SetPageSwapBacked(page);
+ 	__SetPageUptodate(page);
+ 
+ 	ret = -EFAULT;
+-	offset = linear_page_index(dst_vma, dst_addr);
+ 	max_off = DIV_ROUND_UP(i_size_read(inode), PAGE_SIZE);
+-	if (unlikely(offset >= max_off))
++	if (unlikely(pgoff >= max_off))
+ 		goto out_release;
+ 
+ 	ret = shmem_add_to_page_cache(page, mapping, pgoff, NULL,
+@@ -2439,7 +2440,7 @@ static int shmem_mfill_atomic_pte(struct mm_struct *dst_mm,
+ 
+ 	ret = -EFAULT;
+ 	max_off = DIV_ROUND_UP(i_size_read(inode), PAGE_SIZE);
+-	if (unlikely(offset >= max_off))
++	if (unlikely(pgoff >= max_off))
+ 		goto out_release_unlock;
+ 
+ 	ret = -EEXIST;
+@@ -2476,28 +2477,7 @@ static int shmem_mfill_atomic_pte(struct mm_struct *dst_mm,
+ 	shmem_inode_unacct_blocks(inode, 1);
+ 	goto out;
+ }
+-
+-int shmem_mcopy_atomic_pte(struct mm_struct *dst_mm,
+-			   pmd_t *dst_pmd,
+-			   struct vm_area_struct *dst_vma,
+-			   unsigned long dst_addr,
+-			   unsigned long src_addr,
+-			   struct page **pagep)
+-{
+-	return shmem_mfill_atomic_pte(dst_mm, dst_pmd, dst_vma,
+-				      dst_addr, src_addr, false, pagep);
+-}
+-
+-int shmem_mfill_zeropage_pte(struct mm_struct *dst_mm,
+-			     pmd_t *dst_pmd,
+-			     struct vm_area_struct *dst_vma,
+-			     unsigned long dst_addr)
+-{
+-	struct page *page = NULL;
+-
+-	return shmem_mfill_atomic_pte(dst_mm, dst_pmd, dst_vma,
+-				      dst_addr, 0, true, &page);
+-}
++#endif /* CONFIG_USERFAULTFD */
+ 
+ #ifdef CONFIG_TMPFS
+ static const struct inode_operations shmem_symlink_inode_operations;
+diff --git a/mm/userfaultfd.c b/mm/userfaultfd.c
+index e14b3820c6a8..23fa2583bbd1 100644
+--- a/mm/userfaultfd.c
++++ b/mm/userfaultfd.c
+@@ -440,13 +440,9 @@ static __always_inline ssize_t mfill_atomic_pte(struct mm_struct *dst_mm,
+ 						 dst_vma, dst_addr);
+ 	} else {
+ 		VM_WARN_ON_ONCE(wp_copy);
+-		if (!zeropage)
+-			err = shmem_mcopy_atomic_pte(dst_mm, dst_pmd,
+-						     dst_vma, dst_addr,
+-						     src_addr, page);
+-		else
+-			err = shmem_mfill_zeropage_pte(dst_mm, dst_pmd,
+-						       dst_vma, dst_addr);
++		err = shmem_mcopy_atomic_pte(dst_mm, dst_pmd, dst_vma,
++					     dst_addr, src_addr, zeropage,
++					     page);
+ 	}
+ 
+ 	return err;
 -- 
 2.31.1.295.g9ea45b61b8-goog
 
