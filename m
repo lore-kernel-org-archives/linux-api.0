@@ -2,59 +2,65 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-21.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+X-Spam-Status: No, score=-26.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT,
-	USER_IN_DEF_DKIM_WL autolearn=unavailable autolearn_force=no version=3.4.0
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT,USER_IN_DEF_DKIM_WL autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 75B19C433B4
-	for <linux-api@archiver.kernel.org>; Tue, 13 Apr 2021 05:17:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6DF78C43461
+	for <linux-api@archiver.kernel.org>; Tue, 13 Apr 2021 05:17:43 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4B509613AF
-	for <linux-api@archiver.kernel.org>; Tue, 13 Apr 2021 05:17:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 48C046109E
+	for <linux-api@archiver.kernel.org>; Tue, 13 Apr 2021 05:17:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S244180AbhDMFRr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 13 Apr 2021 01:17:47 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50814 "EHLO
+        id S244582AbhDMFSB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 13 Apr 2021 01:18:01 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50834 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S244189AbhDMFRq (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 13 Apr 2021 01:17:46 -0400
-Received: from mail-qk1-x749.google.com (mail-qk1-x749.google.com [IPv6:2607:f8b0:4864:20::749])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0ED6CC061574
-        for <linux-api@vger.kernel.org>; Mon, 12 Apr 2021 22:17:26 -0700 (PDT)
-Received: by mail-qk1-x749.google.com with SMTP id h19so10432012qkk.4
-        for <linux-api@vger.kernel.org>; Mon, 12 Apr 2021 22:17:26 -0700 (PDT)
+        with ESMTP id S1344496AbhDMFSA (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 13 Apr 2021 01:18:00 -0400
+Received: from mail-yb1-xb49.google.com (mail-yb1-xb49.google.com [IPv6:2607:f8b0:4864:20::b49])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 37E36C06135E
+        for <linux-api@vger.kernel.org>; Mon, 12 Apr 2021 22:17:40 -0700 (PDT)
+Received: by mail-yb1-xb49.google.com with SMTP id t9so4547430ybd.11
+        for <linux-api@vger.kernel.org>; Mon, 12 Apr 2021 22:17:40 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=google.com; s=20161025;
-        h=date:message-id:mime-version:subject:from:to:cc;
-        bh=wrbaVOYVgCtHDmQ7j5oVc9kHRwzikE6fRM9DNAMARAs=;
-        b=ZGD2PSv90bQPpcK7ImkqdxJeL3mh0oBpLqIRyzGn3TPamps4ADC6Ha6Z1lp3ZChArz
-         FYE4L8Ygcgoc7zV3RgtZSAewQqWFefjPu3FBOyCcqJyPh9TAjxvxQxMKXKe4MhWXiPL9
-         QlTF3H3CT0tkjpPIqB33NvonB1G43LMnC/p9UCQdAEaTlaFwukIB8uyn0RkFOwGoWvdW
-         F6opuB/CEyRc1du8vcR2QCriYNIi+qI4CLa5f635Jtc8Qs8dRMEJZekk5JPSdlB9NDsP
-         Hab2N4VkNBHBEqH4yI/6UJz7A6LzW+BohwZtJWT7nBSM1/lQJNewPX8yHrH6i4FdegNV
-         gfiA==
+        h=date:in-reply-to:message-id:mime-version:references:subject:from:to
+         :cc;
+        bh=l2i93c0D52SLfGu2rkvXcmRcnJGNafhRbk6pUsLSI1w=;
+        b=C4Ph3T5LPg46cqLVVraagPCEdHhGh1gYl/hhbULoTKxzkji59i9JdW05JgvYQBh82z
+         gcxc4JXlELbBwT/dcsyu5fbUHU5BTVSvapR0E8czq77gOndoTR3aC+/pNIUsD6KmQwaV
+         lNXBy1mIuuS+pfwaJm3GwARldwPKpnJxjAhAR9Z+7+E55GDGhZAuAypUnX3XH9DeM+Sz
+         FzxGFyX5WnOvJhrGuAUETMqbKDgKkOMBAGj0LA+D8JWsn2/rnqqvYC9RioKQd4/FwJJl
+         YGwfVuWwhkTwI74ysw7FeByB6Ljdih1RijuGpZPgpdKJL8DrXmbZUCopdKaQfnALYL2D
+         ThFQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:message-id:mime-version:subject:from:to:cc;
-        bh=wrbaVOYVgCtHDmQ7j5oVc9kHRwzikE6fRM9DNAMARAs=;
-        b=f69SlqvF6FYNucDGw0/g4KcyoI/sYyaI0jkHi18kpD4xiH9YpSZksDe/tN8YSFzjfG
-         y9g5xevPp8WE29r3/OlX/0zs6tjQ/DGFjkzjGZ7/qwf16xT4Qs5KTq3aAq7r6ClFvXmK
-         ZsRwNPy6DW2ASIcpC2DvOM/6wnPLyoTBvJVHPNNWHMjTdCLwoHw5fft10ado8Zg30AWj
-         o7BRrGr6B+Fm2JNuE2UEWEJ50Rs0c+VlqXOCY/coxgI1/GbD226U1XGwAUgF0LTIDzsO
-         LtYBMjG7sg6xgUG/KhoysLKRgHf71vF3kfY6hIc3RNKYDWg6HewbJDTPnmZ9xjGv/215
-         K38g==
-X-Gm-Message-State: AOAM530lfd0oj6aAd3SYHOtzOP5ifbrp3ls4RNy0cS5ZYwnBBF/9sYyb
-        oKPlzOkrgxG2Pivms9izc7C7L7Bh5/Rw9XUKAqTd
-X-Google-Smtp-Source: ABdhPJwpXWWVE6i6ZWio5ETUunQ5fX9pAV/e48HAXSa7RcyZWuQ4usmUgDe2/6lisFP49TmDPqMTfjVY+n212CLoIqm+
+        h=x-gm-message-state:date:in-reply-to:message-id:mime-version
+         :references:subject:from:to:cc;
+        bh=l2i93c0D52SLfGu2rkvXcmRcnJGNafhRbk6pUsLSI1w=;
+        b=por6Culw3Hrzz3GEjLgfgigILxpFtPEqZNswVtSbu3lsmd9aL/xlTJQvfydOJtzcLV
+         mLzD7QSmcLBqbJ7IAv447fCVdBI6uzS1nhTSajQUzQP8SdCfwc1P3QvI0z/ABLZrNyq4
+         QP9iGV1FbUgE4rjTEBen6TzXJI3T038ztc8FnvodZFGGvHIKIRRlhu/FJFSFHyklI+O1
+         OhmdJYR2nYB3l62Nplryt36IvCfnitWwRsLfr7/teur5DrIF2BKxD378pImJRjfcFDcD
+         xmZBIBAmd3JGam1IBGLCPWtaj7ETnK5OR4xwTxgMfV1QbNMNKj3O63+6kornVzQ4Hc7o
+         lZXQ==
+X-Gm-Message-State: AOAM532dkiNE0bYCQ95U1XVqxiCDKEHcxuhV1InjGGaSiAyN+mKU/aNR
+        lehnR6epboUnik2R1uUr7sbeUEMfl4745v7hlDDY
+X-Google-Smtp-Source: ABdhPJzYi6y7kbLqWoNzDFmc0mNDDDXQIxQB5nuQA+FyuaB0LaEXxS55HjozjFHHAJ+1hNmZL7XJDp6yJLi6F9f+pHTq
 X-Received: from ajr0.svl.corp.google.com ([2620:15c:2cd:203:d508:eee5:2d57:3e32])
- (user=axelrasmussen job=sendgmr) by 2002:a0c:8d44:: with SMTP id
- s4mr31548867qvb.53.1618291045176; Mon, 12 Apr 2021 22:17:25 -0700 (PDT)
-Date:   Mon, 12 Apr 2021 22:17:12 -0700
-Message-Id: <20210413051721.2896915-1-axelrasmussen@google.com>
+ (user=axelrasmussen job=sendgmr) by 2002:a25:6c85:: with SMTP id
+ h127mr39041723ybc.341.1618291059410; Mon, 12 Apr 2021 22:17:39 -0700 (PDT)
+Date:   Mon, 12 Apr 2021 22:17:20 -0700
+In-Reply-To: <20210413051721.2896915-1-axelrasmussen@google.com>
+Message-Id: <20210413051721.2896915-9-axelrasmussen@google.com>
 Mime-Version: 1.0
+References: <20210413051721.2896915-1-axelrasmussen@google.com>
 X-Mailer: git-send-email 2.31.1.295.g9ea45b61b8-goog
-Subject: [PATCH v2 0/9] userfaultfd: add minor fault handling for shmem
+Subject: [PATCH v2 8/9] userfaultfd/selftests: exercise minor fault handling
+ shmem support
 From:   Axel Rasmussen <axelrasmussen@google.com>
 To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Andrea Arcangeli <aarcange@redhat.com>,
@@ -81,103 +87,83 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Base
-====
+Enable test_uffdio_minor for test_type == TEST_SHMEM, and modify the
+test slightly to pass in / check for the right feature flags.
 
-This series is based on (and therefore should apply cleanly to) the tag
-"v5.12-rc7-mmots-2021-04-11-20-49", additionally with Peter's selftest cleanup
-series applied *first*:
+Signed-off-by: Axel Rasmussen <axelrasmussen@google.com>
+---
+ tools/testing/selftests/vm/userfaultfd.c | 29 ++++++++++++++++++++----
+ 1 file changed, 25 insertions(+), 4 deletions(-)
 
-https://lore.kernel.org/patchwork/cover/1412450/
-
-Changelog
-=========
-
-v1->v2:
-- Pick up Reviewed-by's.
-- Don't swapin page when a minor fault occurs. Notice that it needs to be
-  swapped in, and just immediately fire the minor fault. Let a future CONTINUE
-  deal with swapping in the page. [Peter]
-- Clarify comment about i_size checks in mm/userfaultfd.c. [Peter]
-- Only forward declare once (out of #ifdef) in hugetlb.h. [Peter]
-
-Changes since [2]:
-- Squash the fixes ([2]) in with the original series ([1]). This makes reviewing
-  easier, as we no longer have to sift through deltas undoing what we had done
-  before. [Hugh, Peter]
-- Modify shmem_mcopy_atomic_pte() to use the new mcopy_atomic_install_ptes()
-  helper, reducing code duplication. [Hugh]
-- Properly trigger handle_userfault() in the shmem_swapin_page() case. [Hugh]
-- Use shmem_getpage() instead of find_lock_page() to lookup the existing page in
-  for continue. This properly deals with swapped-out pages. [Hugh]
-- Unconditionally pte_mkdirty() for anon memory (as before). [Peter]
-- Don't include userfaultfd_k.h in either hugetlb.h or shmem_fs.h. [Hugh]
-- Add comment for UFFD_FEATURE_MINOR_SHMEM (to match _HUGETLBFS). [Hugh]
-- Fix some small cleanup issues (parens, reworded conditionals, reduced plumbing
-  of some parameters, simplify labels/gotos, ...). [Hugh, Peter]
-
-Overview
-========
-
-See the series which added minor faults for hugetlbfs [3] for a detailed
-overview of minor fault handling in general. This series adds the same support
-for shmem-backed areas.
-
-This series is structured as follows:
-
-- Commits 1 and 2 are cleanups.
-- Commits 3 and 4 implement the new feature (minor fault handling for shmem).
-- Commits 5, 6, 7, 8 update the userfaultfd selftest to exercise the feature.
-- Commit 9 is one final cleanup, modifying an existing code path to re-use a new
-  helper we've introduced. We rely on the selftest to show that this change
-  doesn't break anything.
-
-Use Case
-========
-
-In some cases it is useful to have VM memory backed by tmpfs instead of
-hugetlbfs. So, this feature will be used to support the same VM live migration
-use case described in my original series.
-
-Additionally, Android folks (Lokesh Gidra <lokeshgidra@google.com>) hope to
-optimize the Android Runtime garbage collector using this feature:
-
-"The plan is to use userfaultfd for concurrently compacting the heap. With
-this feature, the heap can be shared-mapped at another location where the
-GC-thread(s) could continue the compaction operation without the need to
-invoke userfault ioctl(UFFDIO_COPY) each time. OTOH, if and when Java threads
-get faults on the heap, UFFDIO_CONTINUE can be used to resume execution.
-Furthermore, this feature enables updating references in the 'non-moving'
-portion of the heap efficiently. Without this feature, uneccessary page
-copying (ioctl(UFFDIO_COPY)) would be required."
-
-[1] https://lore.kernel.org/patchwork/cover/1388144/
-[2] https://lore.kernel.org/patchwork/patch/1408161/
-[3] https://lore.kernel.org/linux-fsdevel/20210301222728.176417-1-axelrasmussen@google.com/T/#t
-
-Axel Rasmussen (9):
-  userfaultfd/hugetlbfs: avoid including userfaultfd_k.h in hugetlb.h
-  userfaultfd/shmem: combine shmem_{mcopy_atomic,mfill_zeropage}_pte
-  userfaultfd/shmem: support minor fault registration for shmem
-  userfaultfd/shmem: support UFFDIO_CONTINUE for shmem
-  userfaultfd/selftests: use memfd_create for shmem test type
-  userfaultfd/selftests: create alias mappings in the shmem test
-  userfaultfd/selftests: reinitialize test context in each test
-  userfaultfd/selftests: exercise minor fault handling shmem support
-  userfaultfd/shmem: modify shmem_mcopy_atomic_pte to use install_ptes
-
- fs/userfaultfd.c                         |   6 +-
- include/linux/hugetlb.h                  |   4 +-
- include/linux/shmem_fs.h                 |  15 +-
- include/linux/userfaultfd_k.h            |   5 +
- include/uapi/linux/userfaultfd.h         |   7 +-
- mm/hugetlb.c                             |   1 +
- mm/memory.c                              |   8 +-
- mm/shmem.c                               | 112 +++------
- mm/userfaultfd.c                         | 183 ++++++++++-----
- tools/testing/selftests/vm/userfaultfd.c | 280 +++++++++++++++--------
- 10 files changed, 377 insertions(+), 244 deletions(-)
-
---
+diff --git a/tools/testing/selftests/vm/userfaultfd.c b/tools/testing/selftests/vm/userfaultfd.c
+index 0ff01f437a39..0830f155e6c2 100644
+--- a/tools/testing/selftests/vm/userfaultfd.c
++++ b/tools/testing/selftests/vm/userfaultfd.c
+@@ -484,6 +484,7 @@ static void wp_range(int ufd, __u64 start, __u64 len, bool wp)
+ static void continue_range(int ufd, __u64 start, __u64 len)
+ {
+ 	struct uffdio_continue req;
++	int ret;
+ 
+ 	req.range.start = start;
+ 	req.range.len = len;
+@@ -492,6 +493,17 @@ static void continue_range(int ufd, __u64 start, __u64 len)
+ 	if (ioctl(ufd, UFFDIO_CONTINUE, &req))
+ 		err("UFFDIO_CONTINUE failed for address 0x%" PRIx64,
+ 		    (uint64_t)start);
++
++	/*
++	 * Error handling within the kernel for continue is subtly different
++	 * from copy or zeropage, so it may be a source of bugs. Trigger an
++	 * error (-EEXIST) on purpose, to verify doing so doesn't cause a BUG.
++	 */
++	req.mapped = 0;
++	ret = ioctl(ufd, UFFDIO_CONTINUE, &req);
++	if (ret >= 0 || req.mapped != -EEXIST)
++		err("failed to exercise UFFDIO_CONTINUE error handling, ret=%d, mapped=%" PRId64,
++		    ret, (int64_t) req.mapped);
+ }
+ 
+ static void *locking_thread(void *arg)
+@@ -1196,7 +1208,7 @@ static int userfaultfd_minor_test(void)
+ 	void *expected_page;
+ 	char c;
+ 	struct uffd_stats stats = { 0 };
+-	uint64_t features = UFFD_FEATURE_MINOR_HUGETLBFS;
++	uint64_t req_features, features_out;
+ 
+ 	if (!test_uffdio_minor)
+ 		return 0;
+@@ -1204,10 +1216,18 @@ static int userfaultfd_minor_test(void)
+ 	printf("testing minor faults: ");
+ 	fflush(stdout);
+ 
+-	if (uffd_test_ctx_clear() || uffd_test_ctx_init_ext(&features))
++	if (test_type == TEST_HUGETLB)
++		req_features = UFFD_FEATURE_MINOR_HUGETLBFS;
++	else if (test_type == TEST_SHMEM)
++		req_features = UFFD_FEATURE_MINOR_SHMEM;
++	else
++		return 1;
++
++	features_out = req_features;
++	if (uffd_test_ctx_clear() || uffd_test_ctx_init_ext(&features_out))
+ 		return 1;
+-	/* If kernel reports the feature isn't supported, skip the test. */
+-	if (!(features & UFFD_FEATURE_MINOR_HUGETLBFS)) {
++	/* If kernel reports required features aren't supported, skip test. */
++	if ((features_out & req_features) != req_features) {
+ 		printf("skipping test due to lack of feature support\n");
+ 		fflush(stdout);
+ 		return 0;
+@@ -1442,6 +1462,7 @@ static void set_test_type(const char *type)
+ 		map_shared = true;
+ 		test_type = TEST_SHMEM;
+ 		uffd_test_ops = &shmem_uffd_test_ops;
++		test_uffdio_minor = true;
+ 	} else {
+ 		err("Unknown test type: %s", type);
+ 	}
+-- 
 2.31.1.295.g9ea45b61b8-goog
 
