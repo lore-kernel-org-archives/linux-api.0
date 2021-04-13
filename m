@@ -2,440 +2,179 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-26.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT,USER_IN_DEF_DKIM_WL autolearn=unavailable autolearn_force=no
-	version=3.4.0
+	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E0D9AC43470
-	for <linux-api@archiver.kernel.org>; Tue, 13 Apr 2021 05:17:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 793C8C43460
+	for <linux-api@archiver.kernel.org>; Tue, 13 Apr 2021 08:13:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C29AD613AB
-	for <linux-api@archiver.kernel.org>; Tue, 13 Apr 2021 05:17:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 52FBD61222
+	for <linux-api@archiver.kernel.org>; Tue, 13 Apr 2021 08:13:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1344506AbhDMFSF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 13 Apr 2021 01:18:05 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50900 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S244581AbhDMFSA (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 13 Apr 2021 01:18:00 -0400
-Received: from mail-yb1-xb49.google.com (mail-yb1-xb49.google.com [IPv6:2607:f8b0:4864:20::b49])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 71D33C061358
-        for <linux-api@vger.kernel.org>; Mon, 12 Apr 2021 22:17:38 -0700 (PDT)
-Received: by mail-yb1-xb49.google.com with SMTP id i6so15104541ybk.2
-        for <linux-api@vger.kernel.org>; Mon, 12 Apr 2021 22:17:38 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20161025;
-        h=date:in-reply-to:message-id:mime-version:references:subject:from:to
-         :cc;
-        bh=LZq0Iuiqqfue6YSVowcg6Ya4T6hv7PLt3ULuSvfGEyI=;
-        b=wDqKVZJ1/41+q/ieGohj7aXqAuz+iDZzQE3Wjorge99oFpALxjNRjCB978tUwvoYRY
-         HCBLNnU9EShSFQU0wyQcTSkv4WvjiLVQ0nhGjIIEpgj7sBo7OwVMN0jE+mCFHukqdt65
-         Nt/qBgyEnkiO2oW+NoZnLb3TLKIJOvzwJnNQi6oLiOZXLkbdc0Gv8j2oKUAHgHhai+HJ
-         tGrhFjlSSPTab0Bsp6+/a82oPzIVrMre3MuCbbk9qDIlcLMddcUYhxZvf083k9ACSKaD
-         EWjGl8bZQq+NTGu1OdX3BQHAMyzkZwmVP7EN15A9XpkNruk4ZJyzpEuNgfkffYv0YUTT
-         E22g==
+        id S241770AbhDMINm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 13 Apr 2021 04:13:42 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:39128 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S239527AbhDMINj (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 13 Apr 2021 04:13:39 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1618301599;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=KLyUzT5M5en0X4VIingKMBNaeYaSW+6rovobSSA9k74=;
+        b=Z+eQwLmJH1wz9V3zvCulWMMFSTbzWCgT/QlvLMuqKMaThP5yU6AcT4WFZIyUAj42xF7ZEO
+        DmjGXxxo1+N++bDORuiYc+1Frw6cKKsPTuUs2xiWveSvyqwtwrNz33WaqFf3nWgsLQ9wEx
+        U/wAxph/ydqUBgaL+dc4ARruG555fUs=
+Received: from mail-yb1-f199.google.com (mail-yb1-f199.google.com
+ [209.85.219.199]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-430-FeGiPgV9Mcu85f2RmonBow-1; Tue, 13 Apr 2021 04:13:18 -0400
+X-MC-Unique: FeGiPgV9Mcu85f2RmonBow-1
+Received: by mail-yb1-f199.google.com with SMTP id e185so6395599ybf.4
+        for <linux-api@vger.kernel.org>; Tue, 13 Apr 2021 01:13:18 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:in-reply-to:message-id:mime-version
-         :references:subject:from:to:cc;
-        bh=LZq0Iuiqqfue6YSVowcg6Ya4T6hv7PLt3ULuSvfGEyI=;
-        b=fsAOgZL80Nv3ByJMbb6OrNeiXRZHr7caEL3cAcRp6gmYaKYIv0ckxm92hr+APGKRGh
-         DKdaEmVuQ2fJhbxuKL52jty62K+kKBzd2N4mTiGK6D9GiMEjO3pSVpndGa6Mns6UBjSl
-         tuDArhONvbO5zNJXw5y/zW0stxcChVlUxYotjE6oAf6jIii+Ggr5TiBt6/1t6CbCnFqJ
-         usAk+cxkSx0/tYmj8S+BBC8VuNcuUJMOVkGDo0++Q1e6zSVbLU+HDYzfJ5EUAkuJEdya
-         aJom8eMQ14igFk4bmlIhks8o03RQXodjCmjb3lNarSr+vlaYGWs5pUKZUuA/7IFPUDNh
-         /EFg==
-X-Gm-Message-State: AOAM53082Crvy8pTwx7jk8F111nLEOOtwQqPYAILSOmQj1VBJRqnzfz4
-        y0p8OnxF34olZO4JVbOQczVzZLRjibfT2BehAw/u
-X-Google-Smtp-Source: ABdhPJxgXy8eiMBX4maHs+7RzHF+oLynhJ+iU9/EUh7hnQWEnFvufUQODoCpW80w50bnqk1JOG7x9m4+/i1bop2HN7NE
-X-Received: from ajr0.svl.corp.google.com ([2620:15c:2cd:203:d508:eee5:2d57:3e32])
- (user=axelrasmussen job=sendgmr) by 2002:a25:7648:: with SMTP id
- r69mr28006023ybc.499.1618291057693; Mon, 12 Apr 2021 22:17:37 -0700 (PDT)
-Date:   Mon, 12 Apr 2021 22:17:19 -0700
-In-Reply-To: <20210413051721.2896915-1-axelrasmussen@google.com>
-Message-Id: <20210413051721.2896915-8-axelrasmussen@google.com>
-Mime-Version: 1.0
-References: <20210413051721.2896915-1-axelrasmussen@google.com>
-X-Mailer: git-send-email 2.31.1.295.g9ea45b61b8-goog
-Subject: [PATCH v2 7/9] userfaultfd/selftests: reinitialize test context in
- each test
-From:   Axel Rasmussen <axelrasmussen@google.com>
-To:     Alexander Viro <viro@zeniv.linux.org.uk>,
-        Andrea Arcangeli <aarcange@redhat.com>,
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=KLyUzT5M5en0X4VIingKMBNaeYaSW+6rovobSSA9k74=;
+        b=UthixQVjoELvAJfCjwO0eGQTgRmwlcoSx9jqjSLhT+byXDWDn/Rspe1O1P8Rcvkatb
+         hd10asaPtJowMHb2QGew6Bqhhgc0qsrx9Tsotbs/6lca8aRufPPb7ruG2kkC5/z7mEix
+         MYSC7iPwUJtxPDxZsXEXTLZlhlY3MhqKNze2XF+8tGpL/Rbu9S8hl4rs1w27QDLP9Pez
+         ROVWYha0JsyefrZeZaCZMqhPjOWy8b6FEqvyuNmj7pE/D8CCmA0Y4jOQclr9onI4jqqL
+         lMsH14Pa8QnDPA3w0Zsu/sXWfDKWR+PtXBsY+X++aXMV5eInWICBkC1wnDYRA6vIJs0q
+         2+zQ==
+X-Gm-Message-State: AOAM53125vGGxRblgTv/TUijbunk/ez0Yc0IO/zVo+5/RUsaJDCAseO7
+        xNxrBcE6W7lm7tz5mcArs79OctZYjeTdYMN7CmKaNTl/02zzpv0ZLqSJzB7HKbzzr//Nuv5bCCa
+        crjoZiOPZS1sbr112uQ7YRYvcGDWLLRmvlD5+
+X-Received: by 2002:a25:ce09:: with SMTP id x9mr7099187ybe.81.1618301597500;
+        Tue, 13 Apr 2021 01:13:17 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJyZMvsTkqUxAY9JNxCpjjk3fc9GGC9EFicegDOlF/Jpnn3EnjqB4N6bPUo4PnYHL4tsk1GsNBMxRJOZZ531USk=
+X-Received: by 2002:a25:ce09:: with SMTP id x9mr7099155ybe.81.1618301597217;
+ Tue, 13 Apr 2021 01:13:17 -0700 (PDT)
+MIME-Version: 1.0
+References: <20191012005747.210722465@goodmis.org> <20191012005921.580293464@goodmis.org>
+In-Reply-To: <20191012005921.580293464@goodmis.org>
+From:   Ondrej Mosnacek <omosnace@redhat.com>
+Date:   Tue, 13 Apr 2021 10:13:04 +0200
+Message-ID: <CAFqZXNs4eRC6kjFRe6CdwA-sng-w6bcJZf5io+hoLKwM98TVSA@mail.gmail.com>
+Subject: Re: [PATCH 7/7 v2] tracing: Do not create tracefs files if tracefs
+ lockdown is in effect
+To:     Steven Rostedt <rostedt@goodmis.org>
+Cc:     Linux kernel mailing list <linux-kernel@vger.kernel.org>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Ingo Molnar <mingo@kernel.org>,
         Andrew Morton <akpm@linux-foundation.org>,
-        Hugh Dickins <hughd@google.com>,
-        Jerome Glisse <jglisse@redhat.com>,
-        Joe Perches <joe@perches.com>,
-        Lokesh Gidra <lokeshgidra@google.com>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Mike Rapoport <rppt@linux.vnet.ibm.com>,
-        Peter Xu <peterx@redhat.com>, Shaohua Li <shli@fb.com>,
-        Shuah Khan <shuah@kernel.org>,
-        Stephen Rothwell <sfr@canb.auug.org.au>,
-        Wang Qing <wangqing@vivo.com>
-Cc:     linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
-        linux-mm@kvack.org, Axel Rasmussen <axelrasmussen@google.com>,
-        Brian Geffon <bgeffon@google.com>,
-        "Dr . David Alan Gilbert" <dgilbert@redhat.com>,
-        Mina Almasry <almasrymina@google.com>,
-        Oliver Upton <oupton@google.com>
+        Matthew Garrett <matthewgarrett@google.com>,
+        James Morris James Morris <jmorris@namei.org>,
+        LSM List <linux-security-module@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        Ben Hutchings <ben@decadent.org.uk>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Stephen Smalley <stephen.smalley.work@gmail.com>,
+        SElinux list <selinux@vger.kernel.org>,
+        Herton Krzesinski <hkrzesin@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Currently, the context (fds, mmap-ed areas, etc.) are global. Each test
-mutates this state in some way, in some cases really "clobbering it"
-(e.g., the events test mremap-ing area_dst over the top of area_src, or
-the minor faults tests overwriting the count_verify values in the test
-areas). We run the tests in a particular order, each test is careful to
-make the right assumptions about its starting state, etc.
+On Sat, Oct 12, 2019 at 2:59 AM Steven Rostedt <rostedt@goodmis.org> wrote:
+> From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+>
+> If on boot up, lockdown is activated for tracefs, don't even bother creating
+> the files. This can also prevent instances from being created if lockdown is
+> in effect.
+>
+> Link: http://lkml.kernel.org/r/CAHk-=whC6Ji=fWnjh2+eS4b15TnbsS4VPVtvBOwCy1jjEG_JHQ@mail.gmail.com
+>
+> Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
+> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> ---
+>  fs/tracefs/inode.c | 4 ++++
+>  1 file changed, 4 insertions(+)
+>
+> diff --git a/fs/tracefs/inode.c b/fs/tracefs/inode.c
+> index eeeae0475da9..0caa151cae4e 100644
+> --- a/fs/tracefs/inode.c
+> +++ b/fs/tracefs/inode.c
+> @@ -16,6 +16,7 @@
+>  #include <linux/namei.h>
+>  #include <linux/tracefs.h>
+>  #include <linux/fsnotify.h>
+> +#include <linux/security.h>
+>  #include <linux/seq_file.h>
+>  #include <linux/parser.h>
+>  #include <linux/magic.h>
+> @@ -390,6 +391,9 @@ struct dentry *tracefs_create_file(const char *name, umode_t mode,
+>         struct dentry *dentry;
+>         struct inode *inode;
+>
+> +       if (security_locked_down(LOCKDOWN_TRACEFS))
+> +               return NULL;
+> +
+>         if (!(mode & S_IFMT))
+>                 mode |= S_IFREG;
+>         BUG_ON(!S_ISREG(mode));
+> --
+> 2.23.0
 
-But, this is fragile. It's better for a test's success or failure to not
-depend on what some other prior test case did to the global state.
+Hi all,
 
-To that end, clear and reinitialize the test context at the start of
-each test case, so whatever prior test cases did doesn't affect future
-tests.
+sorry for coming back to an old thread, but it turns out that this
+patch doesn't play well with SELinux's implementation of the
+security_locked_down() hook, which was added a few months later (so
+not your fault :) in commit 59438b46471a ("security,lockdown,selinux:
+implement SELinux lockdown").
 
-This is particularly relevant to this series because the events test's
-mremap of area_dst screws up assumptions the minor fault test was
-relying on. This wasn't a problem for hugetlb, as we don't mremap in
-that case.
+What SELinux does is it checks if the current task's creds are allowed
+the lockdown::integrity or lockdown::confidentiality permission in the
+policy whenever security_locked_down() is called. The idea is to be
+able to control at SELinux domain level which tasks can do these
+sensitive operations (when the kernel is not actually locked down by
+the Lockdown LSM).
 
-Signed-off-by: Axel Rasmussen <axelrasmussen@google.com>
----
- tools/testing/selftests/vm/userfaultfd.c | 221 +++++++++++++----------
- 1 file changed, 127 insertions(+), 94 deletions(-)
+With this patch + the SELinux lockdown mechanism in use, when a
+userspace task loads a module that creates some tracefs nodes in its
+initcall SELinux will check if the task has the
+lockdown::confidentiality permission and if not, will report denials
+in audit log and prevent the tracefs entries from being created. But
+that is not a very logical behavior, since the task loading the module
+is itself not (explicitly) doing anything that would breach
+confidentiality. It just indirectly causes some tracefs nodes to be
+created, but doesn't actually use them at that point.
 
-diff --git a/tools/testing/selftests/vm/userfaultfd.c b/tools/testing/selftests/vm/userfaultfd.c
-index 1f65c4ab7994..0ff01f437a39 100644
---- a/tools/testing/selftests/vm/userfaultfd.c
-+++ b/tools/testing/selftests/vm/userfaultfd.c
-@@ -89,7 +89,8 @@ static int shm_fd;
- static int huge_fd;
- static char *huge_fd_off0;
- static unsigned long long *count_verify;
--static int uffd, uffd_flags, finished, *pipefd;
-+static int uffd = -1;
-+static int uffd_flags, finished, *pipefd;
- static char *area_src, *area_src_alias, *area_dst, *area_dst_alias;
- static char *zeropage;
- pthread_attr_t attr;
-@@ -342,6 +343,121 @@ static struct uffd_test_ops hugetlb_uffd_test_ops = {
- 
- static struct uffd_test_ops *uffd_test_ops;
- 
-+static int userfaultfd_open(uint64_t *features)
-+{
-+	struct uffdio_api uffdio_api;
-+
-+	uffd = syscall(__NR_userfaultfd, O_CLOEXEC | O_NONBLOCK);
-+	if (uffd < 0)
-+		err("userfaultfd syscall not available in this kernel");
-+	uffd_flags = fcntl(uffd, F_GETFD, NULL);
-+
-+	uffdio_api.api = UFFD_API;
-+	uffdio_api.features = *features;
-+	if (ioctl(uffd, UFFDIO_API, &uffdio_api))
-+		err("UFFDIO_API failed.\nPlease make sure to "
-+		    "run with either root or ptrace capability.");
-+	if (uffdio_api.api != UFFD_API)
-+		err("UFFDIO_API error: %" PRIu64, (uint64_t)uffdio_api.api);
-+
-+	*features = uffdio_api.features;
-+	return 0;
-+}
-+
-+static int uffd_test_ctx_init_ext(uint64_t *features)
-+{
-+	unsigned long nr, cpu;
-+
-+	uffd_test_ops->allocate_area((void **)&area_src);
-+	if (!area_src)
-+		return 1;
-+	uffd_test_ops->allocate_area((void **)&area_dst);
-+	if (!area_dst)
-+		return 1;
-+
-+	uffd_test_ops->release_pages(area_src);
-+	uffd_test_ops->release_pages(area_dst);
-+
-+	if (userfaultfd_open(features))
-+		return 1;
-+
-+	count_verify = malloc(nr_pages * sizeof(unsigned long long));
-+	if (!count_verify)
-+		err("count_verify");
-+
-+	for (nr = 0; nr < nr_pages; nr++) {
-+		*area_mutex(area_src, nr) =
-+			(pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
-+		count_verify[nr] = *area_count(area_src, nr) = 1;
-+		/*
-+		 * In the transition between 255 to 256, powerpc will
-+		 * read out of order in my_bcmp and see both bytes as
-+		 * zero, so leave a placeholder below always non-zero
-+		 * after the count, to avoid my_bcmp to trigger false
-+		 * positives.
-+		 */
-+		*(area_count(area_src, nr) + 1) = 1;
-+	}
-+
-+	pipefd = malloc(sizeof(int) * nr_cpus * 2);
-+	if (!pipefd)
-+		err("pipefd");
-+	for (cpu = 0; cpu < nr_cpus; cpu++)
-+		if (pipe2(&pipefd[cpu * 2], O_CLOEXEC | O_NONBLOCK))
-+			err("pipe");
-+
-+	return 0;
-+}
-+
-+static inline int uffd_test_ctx_init(uint64_t features)
-+{
-+	return uffd_test_ctx_init_ext(&features);
-+}
-+
-+static inline int munmap_area(void **area)
-+{
-+	if (*area)
-+		if (munmap(*area, nr_pages * page_size))
-+			err("munmap");
-+
-+	*area = NULL;
-+	return 0;
-+}
-+
-+static int uffd_test_ctx_clear(void)
-+{
-+	int ret = 0;
-+	size_t i;
-+
-+	if (pipefd) {
-+		for (i = 0; i < nr_cpus * 2; ++i) {
-+			if (close(pipefd[i]))
-+				err("close pipefd");
-+		}
-+		free(pipefd);
-+		pipefd = NULL;
-+	}
-+
-+	if (count_verify) {
-+		free(count_verify);
-+		count_verify = NULL;
-+	}
-+
-+	if (uffd != -1) {
-+		if (close(uffd))
-+			err("close uffd");
-+		uffd = -1;
-+	}
-+
-+	huge_fd_off0 = NULL;
-+	ret |= munmap_area((void **)&area_src);
-+	ret |= munmap_area((void **)&area_src_alias);
-+	ret |= munmap_area((void **)&area_dst);
-+	ret |= munmap_area((void **)&area_dst_alias);
-+
-+	return ret;
-+}
-+
- static int my_bcmp(char *str1, char *str2, size_t n)
- {
- 	unsigned long i;
-@@ -726,40 +842,6 @@ static int stress(struct uffd_stats *uffd_stats)
- 	return 0;
- }
- 
--static int userfaultfd_open_ext(uint64_t *features)
--{
--	struct uffdio_api uffdio_api;
--
--	uffd = syscall(__NR_userfaultfd, O_CLOEXEC | O_NONBLOCK | UFFD_USER_MODE_ONLY);
--	if (uffd < 0) {
--		fprintf(stderr,
--			"userfaultfd syscall not available in this kernel\n");
--		return 1;
--	}
--	uffd_flags = fcntl(uffd, F_GETFD, NULL);
--
--	uffdio_api.api = UFFD_API;
--	uffdio_api.features = *features;
--	if (ioctl(uffd, UFFDIO_API, &uffdio_api)) {
--		fprintf(stderr, "UFFDIO_API failed.\nPlease make sure to "
--			"run with either root or ptrace capability.\n");
--		return 1;
--	}
--	if (uffdio_api.api != UFFD_API) {
--		fprintf(stderr, "UFFDIO_API error: %" PRIu64 "\n",
--			(uint64_t)uffdio_api.api);
--		return 1;
--	}
--
--	*features = uffdio_api.features;
--	return 0;
--}
--
--static int userfaultfd_open(uint64_t features)
--{
--	return userfaultfd_open_ext(&features);
--}
--
- sigjmp_buf jbuf, *sigbuf;
- 
- static void sighndl(int sig, siginfo_t *siginfo, void *ptr)
-@@ -868,6 +950,8 @@ static int faulting_process(int signal_test)
- 			  MREMAP_MAYMOVE | MREMAP_FIXED, area_src);
- 	if (area_dst == MAP_FAILED)
- 		err("mremap");
-+	/* Reset area_src since we just clobbered it */
-+	area_src = NULL;
- 
- 	for (; nr < nr_pages; nr++) {
- 		count = *area_count(area_dst, nr);
-@@ -961,10 +1045,9 @@ static int userfaultfd_zeropage_test(void)
- 	printf("testing UFFDIO_ZEROPAGE: ");
- 	fflush(stdout);
- 
--	uffd_test_ops->release_pages(area_dst);
--
--	if (userfaultfd_open(0))
-+	if (uffd_test_ctx_clear() || uffd_test_ctx_init(0))
- 		return 1;
-+
- 	uffdio_register.range.start = (unsigned long) area_dst;
- 	uffdio_register.range.len = nr_pages * page_size;
- 	uffdio_register.mode = UFFDIO_REGISTER_MODE_MISSING;
-@@ -981,7 +1064,6 @@ static int userfaultfd_zeropage_test(void)
- 		if (my_bcmp(area_dst, zeropage, page_size))
- 			err("zeropage is not zero");
- 
--	close(uffd);
- 	printf("done.\n");
- 	return 0;
- }
-@@ -999,12 +1081,11 @@ static int userfaultfd_events_test(void)
- 	printf("testing events (fork, remap, remove): ");
- 	fflush(stdout);
- 
--	uffd_test_ops->release_pages(area_dst);
--
- 	features = UFFD_FEATURE_EVENT_FORK | UFFD_FEATURE_EVENT_REMAP |
- 		UFFD_FEATURE_EVENT_REMOVE;
--	if (userfaultfd_open(features))
-+	if (uffd_test_ctx_clear() || uffd_test_ctx_init(features))
- 		return 1;
-+
- 	fcntl(uffd, F_SETFL, uffd_flags | O_NONBLOCK);
- 
- 	uffdio_register.range.start = (unsigned long) area_dst;
-@@ -1037,8 +1118,6 @@ static int userfaultfd_events_test(void)
- 	if (pthread_join(uffd_mon, NULL))
- 		return 1;
- 
--	close(uffd);
--
- 	uffd_stats_report(&stats, 1);
- 
- 	return stats.missing_faults != nr_pages;
-@@ -1058,11 +1137,10 @@ static int userfaultfd_sig_test(void)
- 	printf("testing signal delivery: ");
- 	fflush(stdout);
- 
--	uffd_test_ops->release_pages(area_dst);
--
- 	features = UFFD_FEATURE_EVENT_FORK|UFFD_FEATURE_SIGBUS;
--	if (userfaultfd_open(features))
-+	if (uffd_test_ctx_clear() || uffd_test_ctx_init(features))
- 		return 1;
-+
- 	fcntl(uffd, F_SETFL, uffd_flags | O_NONBLOCK);
- 
- 	uffdio_register.range.start = (unsigned long) area_dst;
-@@ -1126,9 +1204,7 @@ static int userfaultfd_minor_test(void)
- 	printf("testing minor faults: ");
- 	fflush(stdout);
- 
--	uffd_test_ops->release_pages(area_dst);
--
--	if (userfaultfd_open_ext(&features))
-+	if (uffd_test_ctx_clear() || uffd_test_ctx_init_ext(&features))
- 		return 1;
- 	/* If kernel reports the feature isn't supported, skip the test. */
- 	if (!(features & UFFD_FEATURE_MINOR_HUGETLBFS)) {
-@@ -1183,8 +1259,6 @@ static int userfaultfd_minor_test(void)
- 	if (pthread_join(uffd_mon, NULL))
- 		return 1;
- 
--	close(uffd);
--
- 	uffd_stats_report(&stats, 1);
- 
- 	return stats.missing_faults != 0 || stats.minor_faults != nr_pages;
-@@ -1196,50 +1270,10 @@ static int userfaultfd_stress(void)
- 	char *tmp_area;
- 	unsigned long nr;
- 	struct uffdio_register uffdio_register;
--	unsigned long cpu;
- 	struct uffd_stats uffd_stats[nr_cpus];
- 
--	uffd_test_ops->allocate_area((void **)&area_src);
--	if (!area_src)
--		return 1;
--	uffd_test_ops->allocate_area((void **)&area_dst);
--	if (!area_dst)
--		return 1;
--
--	if (userfaultfd_open(0))
--		return 1;
--
--	count_verify = malloc(nr_pages * sizeof(unsigned long long));
--	if (!count_verify) {
--		perror("count_verify");
--		return 1;
--	}
--
--	for (nr = 0; nr < nr_pages; nr++) {
--		*area_mutex(area_src, nr) = (pthread_mutex_t)
--			PTHREAD_MUTEX_INITIALIZER;
--		count_verify[nr] = *area_count(area_src, nr) = 1;
--		/*
--		 * In the transition between 255 to 256, powerpc will
--		 * read out of order in my_bcmp and see both bytes as
--		 * zero, so leave a placeholder below always non-zero
--		 * after the count, to avoid my_bcmp to trigger false
--		 * positives.
--		 */
--		*(area_count(area_src, nr) + 1) = 1;
--	}
--
--	pipefd = malloc(sizeof(int) * nr_cpus * 2);
--	if (!pipefd) {
--		perror("pipefd");
-+	if (uffd_test_ctx_init(0))
- 		return 1;
--	}
--	for (cpu = 0; cpu < nr_cpus; cpu++) {
--		if (pipe2(&pipefd[cpu*2], O_CLOEXEC | O_NONBLOCK)) {
--			perror("pipe");
--			return 1;
--		}
--	}
- 
- 	if (posix_memalign(&area, page_size, page_size))
- 		err("out of memory");
-@@ -1360,7 +1394,6 @@ static int userfaultfd_stress(void)
- 		uffd_stats_report(uffd_stats, nr_cpus);
- 	}
- 
--	close(uffd);
- 	return userfaultfd_zeropage_test() || userfaultfd_sig_test()
- 		|| userfaultfd_events_test() || userfaultfd_minor_test();
- }
--- 
-2.31.1.295.g9ea45b61b8-goog
+Since it seems the other patches also added security_locked_down()
+calls to the tracefs nodes' open functions, I guess reverting this
+patch could be an acceptable way to fix this problem (please correct
+me if there is something that this call catches, which the other ones
+don't). However, even then I can understand that you (or someone else)
+might want to keep this as an optimization, in which case we could
+instead do this:
+1. Add a new hook security_locked_down_permanently() (the name is open
+for discussion), which would be intended for situations when we want
+to avoid doing some pointless work when the kernel is in a "hard"
+lockdown that can't be taken back (except perhaps in some rescue
+scenario...).
+2. This hook would be backed by the same implementation as
+security_locked_down() in the Lockdown LSM and left unimplemented by
+SELinux.
+3. tracefs_create_file() would call this hook instead of security_locked_down().
+
+This way it would work as before relative to the standard lockdown via
+the Lockdown LSM and would be simply ignored by SELinux. I went over
+all the security_locked_down() call in the kernel and I think this
+alternative hook could also fit better in arch/powerpc/xmon/xmon.c,
+where it seems to be called from interrupt context (so task creds are
+irrelevant, anyway...) and mainly causes some values to be redacted.
+(I also found a couple minor issues with how the hook is used in other
+places, for which I plan to send patches later.)
+
+Thoughts?
+
+--
+Ondrej Mosnacek
+Software Engineer, Linux Security - SELinux kernel
+Red Hat, Inc.
 
