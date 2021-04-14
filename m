@@ -2,119 +2,205 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E1ED1C43461
-	for <linux-api@archiver.kernel.org>; Wed, 14 Apr 2021 04:40:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6F393C433B4
+	for <linux-api@archiver.kernel.org>; Wed, 14 Apr 2021 05:54:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BC8EA613B1
-	for <linux-api@archiver.kernel.org>; Wed, 14 Apr 2021 04:40:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 53201613C7
+	for <linux-api@archiver.kernel.org>; Wed, 14 Apr 2021 05:54:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231447AbhDNEko (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 14 Apr 2021 00:40:44 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45940 "EHLO
+        id S1347991AbhDNFzR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 14 Apr 2021 01:55:17 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33730 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230496AbhDNEkn (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 14 Apr 2021 00:40:43 -0400
-Received: from mail-qt1-x830.google.com (mail-qt1-x830.google.com [IPv6:2607:f8b0:4864:20::830])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9974BC061574;
-        Tue, 13 Apr 2021 21:40:22 -0700 (PDT)
-Received: by mail-qt1-x830.google.com with SMTP id h7so14578974qtx.3;
-        Tue, 13 Apr 2021 21:40:22 -0700 (PDT)
+        with ESMTP id S233339AbhDNFzQ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 14 Apr 2021 01:55:16 -0400
+Received: from mail-pg1-x529.google.com (mail-pg1-x529.google.com [IPv6:2607:f8b0:4864:20::529])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BC378C061574;
+        Tue, 13 Apr 2021 22:54:55 -0700 (PDT)
+Received: by mail-pg1-x529.google.com with SMTP id j7so4222248pgi.3;
+        Tue, 13 Apr 2021 22:54:55 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=9BCnDgTYwbVMwDnN4eWFAK2W985VQMQVft27SbY4QTY=;
-        b=GGMyP8RVsvdwPgOFd1CrPyPEqN8Nm/Hz9bJ4al7HNqaQHbwGpUoldGFL4rgCniwC++
-         R54j6hEUgTW6g40XFYedO4bqHV5aYZkeWjEoZKfmy+1aquWz9eZ0UKAjUghSlqAdaDko
-         Zm4GvFZxi9uFixVDbsGLnI+skx91HjzGru6b4ExfM8lZyL/qZetVX1Nwt6ndwgtCNC67
-         /v8FQEMkejGT28tvRZSbWG23VmkO6/exbjz/4IjXytXtoFeUntk8G7v//sOjoGojl7Qb
-         YXp2KcaVl6JmiJvExO/QVXHeoqGcR3KCp7DNr7h2fXRLjPgRk+y5YAd24mQAtCutMMqh
-         TY4w==
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=kz+2y2O3gxdpZ0DuYw6Aqbtz8RqP4p8r4SUXEVxAEjc=;
+        b=gAzbxW5mGOxCiuogT7ZmDaQeABjlxmLbc9dFUuv/vUNLgVbEgZIzH/U4JQCETVBH0R
+         wi8JTjPXSv51Np6samyY61aeyWtlFstkUoWu0dPAwVdaoTqFmfE8pzkbDB35Dicbzmsw
+         wGzXMWqxc+u8mraJzUvYRIyQ1pp0Q520rOVjs05qspQzSBhS24Cx1Y8X3OWrZUmVwCER
+         zmiEuZBfbEzLfS15NHq06AU6s6k03Rc9zp2+p2wNGKfd9qsF2oMKYRG9wazsX1Bbz7ti
+         TbPnmEVHtOfY+Ck2DuzwH6pK4pSLAJn5Czxz8JuveDLrAn/svBks4WZxroBtXUl41dI4
+         tVVA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=9BCnDgTYwbVMwDnN4eWFAK2W985VQMQVft27SbY4QTY=;
-        b=by9gwWuNENQ9De9iDw7mPPYrlqUohv0YCE781holozKHhLT4ADcKB+Zu4Dqd3WfobN
-         5Afjjm9aMNv2DgDrUSIzuGTqLNc5MO6GZVhrgYtp9b1AIMGrt9iTEO9qOM+FMgrhhbeJ
-         21Filqp1TWzzkUeXrLAxdj0aXrCtdXAwDehrKlPI/dWzDbE0aL2vf3x/tHZbXKu3iWn1
-         x7AXx2ycE0mdP+0LOlkd7nreocK2Q/KfZlVsxp536FWrJ2B4G3D2K0I2LZ+JfkkZOrkh
-         DVKtxyqsitsxfknGUainXd2w5XXb4hiuj4Rg05Kp289vzthi4i028iuDoowcOVqsc2Zj
-         WWfQ==
-X-Gm-Message-State: AOAM530JLX1bjOeNj3R6Xg0U0vtcFQV4FQaBHUoMWkti+vmoAdJVZczI
-        9XaNokKkBS3id8BeZzKJuaBZ9hfhguE=
-X-Google-Smtp-Source: ABdhPJzXKIUj0I/LTjOOZ9Q3r/ZvWXA4butRYDA48FJpRVe3BL+JVdYczzYZf8GtnewuKU+2251ylA==
-X-Received: by 2002:ac8:59c9:: with SMTP id f9mr33576466qtf.234.1618375221607;
-        Tue, 13 Apr 2021 21:40:21 -0700 (PDT)
-Received: from localhost ([207.98.216.60])
-        by smtp.gmail.com with ESMTPSA id l24sm2625079qtp.18.2021.04.13.21.40.20
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=kz+2y2O3gxdpZ0DuYw6Aqbtz8RqP4p8r4SUXEVxAEjc=;
+        b=dxUOmgT0mWS687Nu6WP48ut579OqTHSMTg02QhXMKDhMtkT043k7kxinmpcsa8v4bq
+         Zd67gG6+Iki1reFzEfOVS7+183e5P2PjO8Awt+MLjW9eMKWUu78NEiKG+GkmbUYz+lM0
+         OCa1piZFPTDjrOhr92yn+Wi92YWlS/92DQ4/c2IZoUbXH86pi2+osYYxLvfM6StnKA0D
+         A/ApWGTkZF/aqmY9x5MXHOoycuekon55N7zIl248SqU//XBBLyCTMvn93Y7MhaoYkVs+
+         O8U8+is6TrmvqwVlIwZzr6QRe2EA1gQsVUAL9MOpzdBWFcG4PM9kGAzu8RoZLHWHDauG
+         QD3g==
+X-Gm-Message-State: AOAM533lnBfzj1fvrWAwQCpoD/7ovzkgU0rG/0tmCoWQQDiF67iJI3ZX
+        /wIzzw/1efR2XRSBYXH2tQZWqJM9a5ES5hxm
+X-Google-Smtp-Source: ABdhPJxeGX/lbWAFOpxLwjjnPfOzM9aCexo0emH5GWQfuu+lpIogaOnY38Jq+PTKfqA9j70+OBRHsA==
+X-Received: by 2002:a63:ee54:: with SMTP id n20mr19101537pgk.415.1618379694969;
+        Tue, 13 Apr 2021 22:54:54 -0700 (PDT)
+Received: from laptop.hsd1.wa.comcast.net ([2601:600:8500:5f14:d627:c51e:516e:a105])
+        by smtp.gmail.com with ESMTPSA id u17sm13728969pfm.113.2021.04.13.22.54.54
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 13 Apr 2021 21:40:21 -0700 (PDT)
-Date:   Tue, 13 Apr 2021 21:40:20 -0700
-From:   Yury Norov <yury.norov@gmail.com>
-To:     linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
-        linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc:     "Alexander A. Klimov" <grandmaster@al2klimov.de>,
-        =?iso-8859-1?Q?Andr=E9?= Almeida <andrealmeid@collabora.com>,
+        Tue, 13 Apr 2021 22:54:54 -0700 (PDT)
+From:   Andrei Vagin <avagin@gmail.com>
+To:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc:     linux-um@lists.infradead.org, criu@openvz.org, avagin@google.com,
+        Andrei Vagin <avagin@gmail.com>,
         Andrew Morton <akpm@linux-foundation.org>,
-        Arnd Bergmann <arnd@arndb.de>, David Sterba <dsterba@suse.com>,
-        Joe Perches <joe@perches.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Mauro Carvalho Chehab <mchehab+huawei@kernel.org>,
-        Mike Rapoport <rppt@kernel.org>
-Subject: Re: [PATCH] Documentation: syscalls: add a note about  ABI-agnostic
- types
-Message-ID: <20210414044020.GA44464@yury-ThinkPad>
-References: <20210409204304.1273139-1-yury.norov@gmail.com>
+        Andy Lutomirski <luto@kernel.org>,
+        Anton Ivanov <anton.ivanov@cambridgegreys.com>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Dmitry Safonov <0x7f454c46@gmail.com>,
+        Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>,
+        Mike Rapoport <rppt@linux.ibm.com>,
+        Michael Kerrisk <mtk.manpages@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Richard Weinberger <richard@nod.at>,
+        Thomas Gleixner <tglx@linutronix.de>
+Subject: [PATCH 1/4] signal: add a helper to restore a process state from sigcontex
+Date:   Tue, 13 Apr 2021 22:52:14 -0700
+Message-Id: <20210414055217.543246-2-avagin@gmail.com>
+X-Mailer: git-send-email 2.29.2
+In-Reply-To: <20210414055217.543246-1-avagin@gmail.com>
+References: <20210414055217.543246-1-avagin@gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20210409204304.1273139-1-yury.norov@gmail.com>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Ping?
+It will be used to implement process_vm_exec.
 
-On Fri, Apr 09, 2021 at 01:43:04PM -0700, Yury Norov wrote:
-> Recently added memfd_secret() syscall had a flags parameter passed
-> as unsigned long, which requires creation of compat entry for it.
-> It was possible to change the type of flags to unsigned int and so
-> avoid bothering with compat layer.
-> 
-> https://www.spinics.net/lists/linux-mm/msg251550.html
-> 
-> Documentation/process/adding-syscalls.rst doesn't point clearly about
-> preference of ABI-agnostic types. This patch adds such notification.
-> 
-> Signed-off-by: Yury Norov <yury.norov@gmail.com>
-> ---
->  Documentation/process/adding-syscalls.rst | 7 +++++++
->  1 file changed, 7 insertions(+)
-> 
-> diff --git a/Documentation/process/adding-syscalls.rst b/Documentation/process/adding-syscalls.rst
-> index 9af35f4ec728..46add16edf14 100644
-> --- a/Documentation/process/adding-syscalls.rst
-> +++ b/Documentation/process/adding-syscalls.rst
-> @@ -172,6 +172,13 @@ arguments (i.e. parameter 1, 3, 5), to allow use of contiguous pairs of 32-bit
->  registers.  (This concern does not apply if the arguments are part of a
->  structure that's passed in by pointer.)
->  
-> +Whenever possible, try to use ABI-agnostic types for passing parameters to
-> +a syscall in order to avoid creating compat entry for it. Linux supports two
-> +ABI models - ILP32 and LP64. The types like ``void *``, ``long``, ``size_t``,
-> +``off_t`` have different size in those ABIs; types like ``char`` and  ``int``
-> +have the same size and don't require a compat layer support. For flags, it's
-> +always better to use ``unsigned int``.
-> +
->  
->  Proposing the API
->  -----------------
-> -- 
-> 2.25.1
+Signed-off-by: Andrei Vagin <avagin@gmail.com>
+---
+ arch/x86/kernel/signal.c | 78 ++++++++++++++++++++++------------------
+ 1 file changed, 43 insertions(+), 35 deletions(-)
+
+diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
+index be0d7d4152ec..cc269a20dd5f 100644
+--- a/arch/x86/kernel/signal.c
++++ b/arch/x86/kernel/signal.c
+@@ -79,51 +79,43 @@ static void force_valid_ss(struct pt_regs *regs)
+ # define CONTEXT_COPY_SIZE	sizeof(struct sigcontext)
+ #endif
+ 
+-static int restore_sigcontext(struct pt_regs *regs,
+-			      struct sigcontext __user *usc,
++static int __restore_sigcontext(struct pt_regs *regs,
++			      struct sigcontext __user *sc,
+ 			      unsigned long uc_flags)
+ {
+-	struct sigcontext sc;
+-
+-	/* Always make any pending restarted system calls return -EINTR */
+-	current->restart_block.fn = do_no_restart_syscall;
+-
+-	if (copy_from_user(&sc, usc, CONTEXT_COPY_SIZE))
+-		return -EFAULT;
+-
+ #ifdef CONFIG_X86_32
+-	set_user_gs(regs, sc.gs);
+-	regs->fs = sc.fs;
+-	regs->es = sc.es;
+-	regs->ds = sc.ds;
++	set_user_gs(regs, sc->gs);
++	regs->fs = sc->fs;
++	regs->es = sc->es;
++	regs->ds = sc->ds;
+ #endif /* CONFIG_X86_32 */
+ 
+-	regs->bx = sc.bx;
+-	regs->cx = sc.cx;
+-	regs->dx = sc.dx;
+-	regs->si = sc.si;
+-	regs->di = sc.di;
+-	regs->bp = sc.bp;
+-	regs->ax = sc.ax;
+-	regs->sp = sc.sp;
+-	regs->ip = sc.ip;
++	regs->bx = sc->bx;
++	regs->cx = sc->cx;
++	regs->dx = sc->dx;
++	regs->si = sc->si;
++	regs->di = sc->di;
++	regs->bp = sc->bp;
++	regs->ax = sc->ax;
++	regs->sp = sc->sp;
++	regs->ip = sc->ip;
+ 
+ #ifdef CONFIG_X86_64
+-	regs->r8 = sc.r8;
+-	regs->r9 = sc.r9;
+-	regs->r10 = sc.r10;
+-	regs->r11 = sc.r11;
+-	regs->r12 = sc.r12;
+-	regs->r13 = sc.r13;
+-	regs->r14 = sc.r14;
+-	regs->r15 = sc.r15;
++	regs->r8 = sc->r8;
++	regs->r9 = sc->r9;
++	regs->r10 = sc->r10;
++	regs->r11 = sc->r11;
++	regs->r12 = sc->r12;
++	regs->r13 = sc->r13;
++	regs->r14 = sc->r14;
++	regs->r15 = sc->r15;
+ #endif /* CONFIG_X86_64 */
+ 
+ 	/* Get CS/SS and force CPL3 */
+-	regs->cs = sc.cs | 0x03;
+-	regs->ss = sc.ss | 0x03;
++	regs->cs = sc->cs | 0x03;
++	regs->ss = sc->ss | 0x03;
+ 
+-	regs->flags = (regs->flags & ~FIX_EFLAGS) | (sc.flags & FIX_EFLAGS);
++	regs->flags = (regs->flags & ~FIX_EFLAGS) | (sc->flags & FIX_EFLAGS);
+ 	/* disable syscall checks */
+ 	regs->orig_ax = -1;
+ 
+@@ -136,10 +128,26 @@ static int restore_sigcontext(struct pt_regs *regs,
+ 		force_valid_ss(regs);
+ #endif
+ 
+-	return fpu__restore_sig((void __user *)sc.fpstate,
++	return fpu__restore_sig((void __user *)sc->fpstate,
+ 			       IS_ENABLED(CONFIG_X86_32));
+ }
+ 
++static int restore_sigcontext(struct pt_regs *regs,
++			      struct sigcontext __user *usc,
++			      unsigned long uc_flags)
++{
++	struct sigcontext sc;
++
++	/* Always make any pending restarted system calls return -EINTR */
++	current->restart_block.fn = do_no_restart_syscall;
++
++	if (copy_from_user(&sc, usc, CONTEXT_COPY_SIZE))
++		return -EFAULT;
++
++	return __restore_sigcontext(regs, &sc, uc_flags);
++}
++
++
+ static __always_inline int
+ __unsafe_setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
+ 		     struct pt_regs *regs, unsigned long mask)
+-- 
+2.29.2
+
