@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B4BEFC433B4
-	for <linux-api@archiver.kernel.org>; Thu, 15 Apr 2021 22:18:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 16DC1C43461
+	for <linux-api@archiver.kernel.org>; Thu, 15 Apr 2021 22:18:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9AE56610FB
-	for <linux-api@archiver.kernel.org>; Thu, 15 Apr 2021 22:18:29 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D7417610FB
+	for <linux-api@archiver.kernel.org>; Thu, 15 Apr 2021 22:18:32 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235997AbhDOWSp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 15 Apr 2021 18:18:45 -0400
-Received: from mga07.intel.com ([134.134.136.100]:58105 "EHLO mga07.intel.com"
+        id S237220AbhDOWSy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 15 Apr 2021 18:18:54 -0400
+Received: from mga14.intel.com ([192.55.52.115]:22373 "EHLO mga14.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S236754AbhDOWSL (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 15 Apr 2021 18:18:11 -0400
-IronPort-SDR: 1Md/Iu3a7SxsjELpFVDMO6honN92tY8fI9r3ehQnGxIeo3Xs+mXPCqMRMetCCCLPo4FDFhev6N
- Ygt2JIWDxAxQ==
-X-IronPort-AV: E=McAfee;i="6200,9189,9955"; a="258913071"
+        id S235613AbhDOWSS (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 15 Apr 2021 18:18:18 -0400
+IronPort-SDR: 6pEg+eE4B4/AzRvEh92wT3skP/wcKotyuzD0puiAJ1UNGjtDJz/C9T7ny8wCcfDrIpmIcANquF
+ eURWv9t+GOrQ==
+X-IronPort-AV: E=McAfee;i="6200,9189,9955"; a="194513396"
 X-IronPort-AV: E=Sophos;i="5.82,225,1613462400"; 
-   d="scan'208";a="258913071"
-Received: from orsmga002.jf.intel.com ([10.7.209.21])
-  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Apr 2021 15:17:46 -0700
-IronPort-SDR: GR2QIhXtAvLyyLDhJK7j/d1IHPtTBJxYtrFbk4Gc6jPbT3ADRPjO7uHL3C1wy5sZxn3kgxLsz5
- h6u9BSRD23NA==
+   d="scan'208";a="194513396"
+Received: from fmsmga003.fm.intel.com ([10.253.24.29])
+  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Apr 2021 15:15:41 -0700
+IronPort-SDR: gkrnUJW7lLdEs9ZqoXWPJxOYahwqU4Vz5sZHvL9BPCUWMz23SkOH7u8G5g8N+03JCtzSY5LFdb
+ zdf2itKHu1Ag==
 X-IronPort-AV: E=Sophos;i="5.82,225,1613462400"; 
-   d="scan'208";a="399720965"
+   d="scan'208";a="451270957"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga002-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Apr 2021 15:17:45 -0700
+  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Apr 2021 15:15:40 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,135 +61,198 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v25 2/9] x86/cet/ibt: Add user-mode Indirect Branch Tracking support
-Date:   Thu, 15 Apr 2021 15:17:27 -0700
-Message-Id: <20210415221734.32628-3-yu-cheng.yu@intel.com>
+Subject: [PATCH v25 27/30] x86/cet/shstk: Add arch_prctl functions for shadow stack
+Date:   Thu, 15 Apr 2021 15:14:16 -0700
+Message-Id: <20210415221419.31835-28-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20210415221734.32628-1-yu-cheng.yu@intel.com>
-References: <20210415221734.32628-1-yu-cheng.yu@intel.com>
+In-Reply-To: <20210415221419.31835-1-yu-cheng.yu@intel.com>
+References: <20210415221419.31835-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Introduce user-mode Indirect Branch Tracking (IBT) support.  Add routines
-for the setup/disable of IBT.
+arch_prctl(ARCH_X86_CET_STATUS, u64 *args)
+    Get CET feature status.
+
+    The parameter 'args' is a pointer to a user buffer.  The kernel returns
+    the following information:
+
+    *args = shadow stack/IBT status
+    *(args + 1) = shadow stack base address
+    *(args + 2) = shadow stack size
+
+    32-bit binaries use the same interface, but only lower 32-bits of each
+    item.
+
+arch_prctl(ARCH_X86_CET_DISABLE, unsigned int features)
+    Disable CET features specified in 'features'.  Return -EPERM if CET is
+    locked.
+
+arch_prctl(ARCH_X86_CET_LOCK)
+    Lock in CET features.
+
+Also change do_arch_prctl_common()'s parameter 'cpuid_enabled' to
+'arg2', as it is now also passed to prctl_cet().
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: Kees Cook <keescook@chromium.org>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
+v25:
+- Change CONFIG_X86_CET to CONFIG_X86_SHADOW_STACK.
+- Change X86_FEATURE_CET to X86_FEATURE_SHSTK.
 v24:
-- Move IBT routines to a separate ibt.c, update related areas accordingly.
+- Update #ifdef placement relating to shadow stack and ibt split.
+- Update function names.
 
- arch/x86/include/asm/cet.h |  9 ++++++
- arch/x86/kernel/Makefile   |  1 +
- arch/x86/kernel/ibt.c      | 57 ++++++++++++++++++++++++++++++++++++++
- 3 files changed, 67 insertions(+)
- create mode 100644 arch/x86/kernel/ibt.c
+ arch/x86/include/asm/cet.h        |  7 ++++
+ arch/x86/include/uapi/asm/prctl.h |  4 +++
+ arch/x86/kernel/Makefile          |  2 +-
+ arch/x86/kernel/cet_prctl.c       | 60 +++++++++++++++++++++++++++++++
+ arch/x86/kernel/process.c         |  6 ++--
+ 5 files changed, 75 insertions(+), 4 deletions(-)
+ create mode 100644 arch/x86/kernel/cet_prctl.c
 
 diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index 662335ceb57f..17afcc9ea4d1 100644
+index 5e66919bd2fe..662335ceb57f 100644
 --- a/arch/x86/include/asm/cet.h
 +++ b/arch/x86/include/asm/cet.h
-@@ -15,6 +15,7 @@ struct cet_status {
+@@ -14,6 +14,7 @@ struct sc_ext;
+ struct cet_status {
  	unsigned long	shstk_base;
  	unsigned long	shstk_size;
- 	unsigned int	locked:1;
-+	unsigned int	ibt_enabled:1;
++	unsigned int	locked:1;
  };
  
  #ifdef CONFIG_X86_SHADOW_STACK
-@@ -41,6 +42,14 @@ static inline int shstk_check_rstor_token(bool ia32, unsigned long token_addr,
+@@ -40,6 +41,12 @@ static inline int shstk_check_rstor_token(bool ia32, unsigned long token_addr,
  					  unsigned long *new_ssp) { return 0; }
  #endif
  
-+#ifdef CONFIG_X86_IBT
-+int ibt_setup(void);
-+void ibt_disable(void);
++#ifdef CONFIG_X86_SHADOW_STACK
++int prctl_cet(int option, u64 arg2);
 +#else
-+static inline int ibt_setup(void) { return 0; }
-+static inline void ibt_disable(void) {}
++static inline int prctl_cet(int option, u64 arg2) { return -EINVAL; }
 +#endif
 +
- #ifdef CONFIG_X86_SHADOW_STACK
- int prctl_cet(int option, u64 arg2);
- #else
+ #endif /* __ASSEMBLY__ */
+ 
+ #endif /* _ASM_X86_CET_H */
+diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
+index 5a6aac9fa41f..9245bf629120 100644
+--- a/arch/x86/include/uapi/asm/prctl.h
++++ b/arch/x86/include/uapi/asm/prctl.h
+@@ -14,4 +14,8 @@
+ #define ARCH_MAP_VDSO_32	0x2002
+ #define ARCH_MAP_VDSO_64	0x2003
+ 
++#define ARCH_X86_CET_STATUS		0x3001
++#define ARCH_X86_CET_DISABLE		0x3002
++#define ARCH_X86_CET_LOCK		0x3003
++
+ #endif /* _ASM_X86_PRCTL_H */
 diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
-index eb13d578ad36..e10e007c1d80 100644
+index 0f99b093f350..eb13d578ad36 100644
 --- a/arch/x86/kernel/Makefile
 +++ b/arch/x86/kernel/Makefile
-@@ -151,6 +151,7 @@ obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
+@@ -150,7 +150,7 @@ obj-$(CONFIG_UNWINDER_FRAME_POINTER)	+= unwind_frame.o
+ obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
  
  obj-$(CONFIG_AMD_MEM_ENCRYPT)		+= sev-es.o
- obj-$(CONFIG_X86_SHADOW_STACK)		+= shstk.o cet_prctl.o
-+obj-$(CONFIG_X86_IBT)			+= ibt.o
+-obj-$(CONFIG_X86_SHADOW_STACK)		+= shstk.o
++obj-$(CONFIG_X86_SHADOW_STACK)		+= shstk.o cet_prctl.o
  
  ###
  # 64 bit specific files
-diff --git a/arch/x86/kernel/ibt.c b/arch/x86/kernel/ibt.c
+diff --git a/arch/x86/kernel/cet_prctl.c b/arch/x86/kernel/cet_prctl.c
 new file mode 100644
-index 000000000000..d2cef1a0345b
+index 000000000000..3bb9f32ca70d
 --- /dev/null
-+++ b/arch/x86/kernel/ibt.c
-@@ -0,0 +1,57 @@
++++ b/arch/x86/kernel/cet_prctl.c
+@@ -0,0 +1,60 @@
 +// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * ibt.c - Intel Indirect Branch Tracking support
-+ *
-+ * Copyright (c) 2021, Intel Corporation.
-+ * Yu-cheng Yu <yu-cheng.yu@intel.com>
-+ */
 +
-+#include <linux/user.h>
-+#include <asm/msr.h>
-+#include <asm/fpu/internal.h>
-+#include <asm/fpu/xstate.h>
-+#include <asm/fpu/types.h>
++#include <linux/errno.h>
++#include <linux/uaccess.h>
++#include <linux/prctl.h>
++#include <linux/compat.h>
++#include <linux/mman.h>
++#include <linux/elfcore.h>
++#include <linux/processor.h>
++#include <asm/prctl.h>
 +#include <asm/cet.h>
 +
-+static void start_update_msrs(void)
++/* See Documentation/x86/intel_cet.rst. */
++
++static int cet_copy_status_to_user(struct cet_status *cet, u64 __user *ubuf)
 +{
-+	fpregs_lock();
-+	if (test_thread_flag(TIF_NEED_FPU_LOAD))
-+		__fpregs_load_activate();
++	u64 buf[3] = {};
++
++	if (cet->shstk_size) {
++		buf[0] |= GNU_PROPERTY_X86_FEATURE_1_SHSTK;
++		buf[1] = cet->shstk_base;
++		buf[2] = cet->shstk_size;
++	}
++
++	return copy_to_user(ubuf, buf, sizeof(buf));
 +}
 +
-+static void end_update_msrs(void)
++int prctl_cet(int option, u64 arg2)
 +{
-+	fpregs_unlock();
++	struct cet_status *cet;
++
++	if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
++		return -ENOTSUPP;
++
++	cet = &current->thread.cet;
++
++	if (option == ARCH_X86_CET_STATUS)
++		return cet_copy_status_to_user(cet, (u64 __user *)arg2);
++
++	switch (option) {
++	case ARCH_X86_CET_DISABLE:
++		if (cet->locked)
++			return -EPERM;
++
++		if (arg2 & ~GNU_PROPERTY_X86_FEATURE_1_VALID)
++			return -EINVAL;
++		if (arg2 & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
++			shstk_disable();
++		return 0;
++
++	case ARCH_X86_CET_LOCK:
++		if (arg2)
++			return -EINVAL;
++		cet->locked = 1;
++		return 0;
++
++	default:
++		return -ENOSYS;
++	}
 +}
-+
-+int ibt_setup(void)
-+{
-+	u64 msr_val;
-+
-+	if (!cpu_feature_enabled(X86_FEATURE_IBT))
-+		return -EOPNOTSUPP;
-+
-+	start_update_msrs();
-+	rdmsrl(MSR_IA32_U_CET, msr_val);
-+	msr_val |= (CET_ENDBR_EN | CET_NO_TRACK_EN);
-+	wrmsrl(MSR_IA32_U_CET, msr_val);
-+	end_update_msrs();
-+	current->thread.cet.ibt_enabled = 1;
-+	return 0;
-+}
-+
-+void ibt_disable(void)
-+{
-+	u64 msr_val;
-+
-+	if (!cpu_feature_enabled(X86_FEATURE_IBT))
-+		return;
-+
-+	start_update_msrs();
-+	rdmsrl(MSR_IA32_U_CET, msr_val);
-+	msr_val &= ~CET_ENDBR_EN;
-+	wrmsrl(MSR_IA32_U_CET, msr_val);
-+	end_update_msrs();
-+	current->thread.cet.ibt_enabled = 0;
-+}
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index fa01e8679d01..315668a334fd 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -980,14 +980,14 @@ unsigned long get_wchan(struct task_struct *p)
+ }
+ 
+ long do_arch_prctl_common(struct task_struct *task, int option,
+-			  unsigned long cpuid_enabled)
++			  unsigned long arg2)
+ {
+ 	switch (option) {
+ 	case ARCH_GET_CPUID:
+ 		return get_cpuid_mode();
+ 	case ARCH_SET_CPUID:
+-		return set_cpuid_mode(task, cpuid_enabled);
++		return set_cpuid_mode(task, arg2);
+ 	}
+ 
+-	return -EINVAL;
++	return prctl_cet(option, arg2);
+ }
 -- 
 2.21.0
 
