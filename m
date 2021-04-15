@@ -5,33 +5,33 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 16DC1C43461
-	for <linux-api@archiver.kernel.org>; Thu, 15 Apr 2021 22:18:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DB934C43460
+	for <linux-api@archiver.kernel.org>; Thu, 15 Apr 2021 22:18:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D7417610FB
-	for <linux-api@archiver.kernel.org>; Thu, 15 Apr 2021 22:18:32 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BA9D3610FB
+	for <linux-api@archiver.kernel.org>; Thu, 15 Apr 2021 22:18:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237220AbhDOWSy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 15 Apr 2021 18:18:54 -0400
-Received: from mga14.intel.com ([192.55.52.115]:22373 "EHLO mga14.intel.com"
+        id S234803AbhDOWTJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 15 Apr 2021 18:19:09 -0400
+Received: from mga14.intel.com ([192.55.52.115]:22365 "EHLO mga14.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S235613AbhDOWSS (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 15 Apr 2021 18:18:18 -0400
-IronPort-SDR: 6pEg+eE4B4/AzRvEh92wT3skP/wcKotyuzD0puiAJ1UNGjtDJz/C9T7ny8wCcfDrIpmIcANquF
- eURWv9t+GOrQ==
-X-IronPort-AV: E=McAfee;i="6200,9189,9955"; a="194513396"
+        id S235093AbhDOWSX (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 15 Apr 2021 18:18:23 -0400
+IronPort-SDR: vXtTCGxKUYE2sz/IBieKRIDqh1qQ/Qq8oXhjbX9Kts8sioV4mOeyds9OLpSkOGGkkUGEZHXy3c
+ M3JIF6c9cIsw==
+X-IronPort-AV: E=McAfee;i="6200,9189,9955"; a="194513400"
 X-IronPort-AV: E=Sophos;i="5.82,225,1613462400"; 
-   d="scan'208";a="194513396"
+   d="scan'208";a="194513400"
 Received: from fmsmga003.fm.intel.com ([10.253.24.29])
   by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Apr 2021 15:15:41 -0700
-IronPort-SDR: gkrnUJW7lLdEs9ZqoXWPJxOYahwqU4Vz5sZHvL9BPCUWMz23SkOH7u8G5g8N+03JCtzSY5LFdb
- zdf2itKHu1Ag==
+IronPort-SDR: BGq2GgTjYFjNWk0FdG1FOzczjG8pUrhcXDgcUitGZRaB1Pbj9afE9Rj9CXYalJstxYRTlHCyuF
+ 8aKvOcDGn6iw==
 X-IronPort-AV: E=Sophos;i="5.82,225,1613462400"; 
-   d="scan'208";a="451270957"
+   d="scan'208";a="451270962"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Apr 2021 15:15:40 -0700
+  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Apr 2021 15:15:41 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,10 +60,14 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v25 27/30] x86/cet/shstk: Add arch_prctl functions for shadow stack
-Date:   Thu, 15 Apr 2021 15:14:16 -0700
-Message-Id: <20210415221419.31835-28-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
+        Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        Will Deacon <will@kernel.org>
+Subject: [PATCH v25 29/30] mm: Update arch_validate_flags() to include vma anonymous
+Date:   Thu, 15 Apr 2021 15:14:18 -0700
+Message-Id: <20210415221419.31835-30-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210415221419.31835-1-yu-cheng.yu@intel.com>
 References: <20210415221419.31835-1-yu-cheng.yu@intel.com>
@@ -73,186 +77,112 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-arch_prctl(ARCH_X86_CET_STATUS, u64 *args)
-    Get CET feature status.
+When newer VM flags are being created, such as VM_MTE, it becomes necessary
+for mmap/mprotect to verify if certain flags are being applied to an
+anonymous VMA.
 
-    The parameter 'args' is a pointer to a user buffer.  The kernel returns
-    the following information:
+To solve this, one approach is adding a VM flag to track that MAP_ANONYMOUS
+is specified [1], and then using the flag in arch_validate_flags().
 
-    *args = shadow stack/IBT status
-    *(args + 1) = shadow stack base address
-    *(args + 2) = shadow stack size
+Another approach is passing vma_is_anonymous() to arch_validate_flags().
+To prepare the introduction of PROT_SHSTK, which creates a shadow stack
+mapping and can only be applied to an anonymous VMA, update arch_validate_
+flags() to include anonymous VMA information.
 
-    32-bit binaries use the same interface, but only lower 32-bits of each
-    item.
-
-arch_prctl(ARCH_X86_CET_DISABLE, unsigned int features)
-    Disable CET features specified in 'features'.  Return -EPERM if CET is
-    locked.
-
-arch_prctl(ARCH_X86_CET_LOCK)
-    Lock in CET features.
-
-Also change do_arch_prctl_common()'s parameter 'cpuid_enabled' to
-'arg2', as it is now also passed to prctl_cet().
+[1] commit 9f3419315f3c ("arm64: mte: Add PROT_MTE support to mmap() and mprotect()"),
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: Catalin Marinas <catalin.marinas@arm.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Cc: Vincenzo Frascino <vincenzo.frascino@arm.com>
+Cc: Will Deacon <will@kernel.org>
 ---
-v25:
-- Change CONFIG_X86_CET to CONFIG_X86_SHADOW_STACK.
-- Change X86_FEATURE_CET to X86_FEATURE_SHSTK.
-v24:
-- Update #ifdef placement relating to shadow stack and ibt split.
-- Update function names.
+ arch/arm64/include/asm/mman.h | 4 ++--
+ arch/sparc/include/asm/mman.h | 4 ++--
+ include/linux/mman.h          | 2 +-
+ mm/mmap.c                     | 2 +-
+ mm/mprotect.c                 | 2 +-
+ 5 files changed, 7 insertions(+), 7 deletions(-)
 
- arch/x86/include/asm/cet.h        |  7 ++++
- arch/x86/include/uapi/asm/prctl.h |  4 +++
- arch/x86/kernel/Makefile          |  2 +-
- arch/x86/kernel/cet_prctl.c       | 60 +++++++++++++++++++++++++++++++
- arch/x86/kernel/process.c         |  6 ++--
- 5 files changed, 75 insertions(+), 4 deletions(-)
- create mode 100644 arch/x86/kernel/cet_prctl.c
-
-diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index 5e66919bd2fe..662335ceb57f 100644
---- a/arch/x86/include/asm/cet.h
-+++ b/arch/x86/include/asm/cet.h
-@@ -14,6 +14,7 @@ struct sc_ext;
- struct cet_status {
- 	unsigned long	shstk_base;
- 	unsigned long	shstk_size;
-+	unsigned int	locked:1;
- };
+diff --git a/arch/arm64/include/asm/mman.h b/arch/arm64/include/asm/mman.h
+index e3e28f7daf62..44add1a09041 100644
+--- a/arch/arm64/include/asm/mman.h
++++ b/arch/arm64/include/asm/mman.h
+@@ -74,7 +74,7 @@ static inline bool arch_validate_prot(unsigned long prot,
+ }
+ #define arch_validate_prot(prot, addr) arch_validate_prot(prot, addr)
  
- #ifdef CONFIG_X86_SHADOW_STACK
-@@ -40,6 +41,12 @@ static inline int shstk_check_rstor_token(bool ia32, unsigned long token_addr,
- 					  unsigned long *new_ssp) { return 0; }
- #endif
+-static inline bool arch_validate_flags(unsigned long vm_flags)
++static inline bool arch_validate_flags(unsigned long vm_flags, bool is_anon)
+ {
+ 	if (!system_supports_mte())
+ 		return true;
+@@ -82,6 +82,6 @@ static inline bool arch_validate_flags(unsigned long vm_flags)
+ 	/* only allow VM_MTE if VM_MTE_ALLOWED has been set previously */
+ 	return !(vm_flags & VM_MTE) || (vm_flags & VM_MTE_ALLOWED);
+ }
+-#define arch_validate_flags(vm_flags) arch_validate_flags(vm_flags)
++#define arch_validate_flags(vm_flags, is_anon) arch_validate_flags(vm_flags, is_anon)
  
-+#ifdef CONFIG_X86_SHADOW_STACK
-+int prctl_cet(int option, u64 arg2);
-+#else
-+static inline int prctl_cet(int option, u64 arg2) { return -EINVAL; }
-+#endif
-+
- #endif /* __ASSEMBLY__ */
- 
- #endif /* _ASM_X86_CET_H */
-diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
-index 5a6aac9fa41f..9245bf629120 100644
---- a/arch/x86/include/uapi/asm/prctl.h
-+++ b/arch/x86/include/uapi/asm/prctl.h
-@@ -14,4 +14,8 @@
- #define ARCH_MAP_VDSO_32	0x2002
- #define ARCH_MAP_VDSO_64	0x2003
- 
-+#define ARCH_X86_CET_STATUS		0x3001
-+#define ARCH_X86_CET_DISABLE		0x3002
-+#define ARCH_X86_CET_LOCK		0x3003
-+
- #endif /* _ASM_X86_PRCTL_H */
-diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
-index 0f99b093f350..eb13d578ad36 100644
---- a/arch/x86/kernel/Makefile
-+++ b/arch/x86/kernel/Makefile
-@@ -150,7 +150,7 @@ obj-$(CONFIG_UNWINDER_FRAME_POINTER)	+= unwind_frame.o
- obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
- 
- obj-$(CONFIG_AMD_MEM_ENCRYPT)		+= sev-es.o
--obj-$(CONFIG_X86_SHADOW_STACK)		+= shstk.o
-+obj-$(CONFIG_X86_SHADOW_STACK)		+= shstk.o cet_prctl.o
- 
- ###
- # 64 bit specific files
-diff --git a/arch/x86/kernel/cet_prctl.c b/arch/x86/kernel/cet_prctl.c
-new file mode 100644
-index 000000000000..3bb9f32ca70d
---- /dev/null
-+++ b/arch/x86/kernel/cet_prctl.c
-@@ -0,0 +1,60 @@
-+// SPDX-License-Identifier: GPL-2.0
-+
-+#include <linux/errno.h>
-+#include <linux/uaccess.h>
-+#include <linux/prctl.h>
-+#include <linux/compat.h>
-+#include <linux/mman.h>
-+#include <linux/elfcore.h>
-+#include <linux/processor.h>
-+#include <asm/prctl.h>
-+#include <asm/cet.h>
-+
-+/* See Documentation/x86/intel_cet.rst. */
-+
-+static int cet_copy_status_to_user(struct cet_status *cet, u64 __user *ubuf)
-+{
-+	u64 buf[3] = {};
-+
-+	if (cet->shstk_size) {
-+		buf[0] |= GNU_PROPERTY_X86_FEATURE_1_SHSTK;
-+		buf[1] = cet->shstk_base;
-+		buf[2] = cet->shstk_size;
-+	}
-+
-+	return copy_to_user(ubuf, buf, sizeof(buf));
-+}
-+
-+int prctl_cet(int option, u64 arg2)
-+{
-+	struct cet_status *cet;
-+
-+	if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
-+		return -ENOTSUPP;
-+
-+	cet = &current->thread.cet;
-+
-+	if (option == ARCH_X86_CET_STATUS)
-+		return cet_copy_status_to_user(cet, (u64 __user *)arg2);
-+
-+	switch (option) {
-+	case ARCH_X86_CET_DISABLE:
-+		if (cet->locked)
-+			return -EPERM;
-+
-+		if (arg2 & ~GNU_PROPERTY_X86_FEATURE_1_VALID)
-+			return -EINVAL;
-+		if (arg2 & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
-+			shstk_disable();
-+		return 0;
-+
-+	case ARCH_X86_CET_LOCK:
-+		if (arg2)
-+			return -EINVAL;
-+		cet->locked = 1;
-+		return 0;
-+
-+	default:
-+		return -ENOSYS;
-+	}
-+}
-diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
-index fa01e8679d01..315668a334fd 100644
---- a/arch/x86/kernel/process.c
-+++ b/arch/x86/kernel/process.c
-@@ -980,14 +980,14 @@ unsigned long get_wchan(struct task_struct *p)
+ #endif /* ! __ASM_MMAN_H__ */
+diff --git a/arch/sparc/include/asm/mman.h b/arch/sparc/include/asm/mman.h
+index 274217e7ed70..4a897c8a3f1a 100644
+--- a/arch/sparc/include/asm/mman.h
++++ b/arch/sparc/include/asm/mman.h
+@@ -60,11 +60,11 @@ static inline int sparc_validate_prot(unsigned long prot, unsigned long addr)
+ 	return 1;
  }
  
- long do_arch_prctl_common(struct task_struct *task, int option,
--			  unsigned long cpuid_enabled)
-+			  unsigned long arg2)
+-#define arch_validate_flags(vm_flags) arch_validate_flags(vm_flags)
++#define arch_validate_flags(vm_flags, is_anon) arch_validate_flags(vm_flags, is_anon)
+ /* arch_validate_flags() - Ensure combination of flags is valid for a
+  *	VMA.
+  */
+-static inline bool arch_validate_flags(unsigned long vm_flags)
++static inline bool arch_validate_flags(unsigned long vm_flags, bool is_anon)
  {
- 	switch (option) {
- 	case ARCH_GET_CPUID:
- 		return get_cpuid_mode();
- 	case ARCH_SET_CPUID:
--		return set_cpuid_mode(task, cpuid_enabled);
-+		return set_cpuid_mode(task, arg2);
+ 	/* If ADI is being enabled on this VMA, check for ADI
+ 	 * capability on the platform and ensure VMA is suitable
+diff --git a/include/linux/mman.h b/include/linux/mman.h
+index 629cefc4ecba..a22ed4495d13 100644
+--- a/include/linux/mman.h
++++ b/include/linux/mman.h
+@@ -114,7 +114,7 @@ static inline bool arch_validate_prot(unsigned long prot, unsigned long addr)
+  *
+  * Returns true if the VM_* flags are valid.
+  */
+-static inline bool arch_validate_flags(unsigned long flags)
++static inline bool arch_validate_flags(unsigned long flags, bool is_anonymous)
+ {
+ 	return true;
+ }
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 7b2992ef8ee0..db849e3ed9d3 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1850,7 +1850,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
  	}
  
--	return -EINVAL;
-+	return prctl_cet(option, arg2);
- }
+ 	/* Allow architectures to sanity-check the vm_flags */
+-	if (!arch_validate_flags(vma->vm_flags)) {
++	if (!arch_validate_flags(vma->vm_flags, vma_is_anonymous(vma))) {
+ 		error = -EINVAL;
+ 		if (file)
+ 			goto unmap_and_free_vma;
+diff --git a/mm/mprotect.c b/mm/mprotect.c
+index 3b2f0d75519f..64378b963548 100644
+--- a/mm/mprotect.c
++++ b/mm/mprotect.c
+@@ -611,7 +611,7 @@ static int do_mprotect_pkey(unsigned long start, size_t len,
+ 		}
+ 
+ 		/* Allow architectures to sanity-check the new flags */
+-		if (!arch_validate_flags(newflags)) {
++		if (!arch_validate_flags(newflags, vma_is_anonymous(vma))) {
+ 			error = -EINVAL;
+ 			goto out;
+ 		}
 -- 
 2.21.0
 
