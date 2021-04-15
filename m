@@ -5,33 +5,33 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1C1DAC43461
-	for <linux-api@archiver.kernel.org>; Thu, 15 Apr 2021 22:18:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 49CC6C43460
+	for <linux-api@archiver.kernel.org>; Thu, 15 Apr 2021 22:18:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id EC682610FC
-	for <linux-api@archiver.kernel.org>; Thu, 15 Apr 2021 22:18:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 25209610FC
+	for <linux-api@archiver.kernel.org>; Thu, 15 Apr 2021 22:18:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236208AbhDOWTL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 15 Apr 2021 18:19:11 -0400
-Received: from mga14.intel.com ([192.55.52.115]:22370 "EHLO mga14.intel.com"
+        id S235093AbhDOWTR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 15 Apr 2021 18:19:17 -0400
+Received: from mga07.intel.com ([134.134.136.100]:58096 "EHLO mga07.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S237080AbhDOWSX (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 15 Apr 2021 18:18:23 -0400
-IronPort-SDR: 7pjK0dX4KFg4RLH8vkxikfc7qyDVFsNxeOaEQHmafVzHzaqq7U0tN5XblRyKnSFQtPZhLaCEFX
- 4/+qUtmhh3pg==
-X-IronPort-AV: E=McAfee;i="6200,9189,9955"; a="194513403"
+        id S235893AbhDOWSn (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 15 Apr 2021 18:18:43 -0400
+IronPort-SDR: sm4ag+/Qa70uuYdkXnhmRj8NvxzzZBjfCmKEs+VGhjl3oC9H2LkolMCZkcHV3dNmR9Fv7TP/ZQ
+ Xl6igypGTNeg==
+X-IronPort-AV: E=McAfee;i="6200,9189,9955"; a="258913074"
 X-IronPort-AV: E=Sophos;i="5.82,225,1613462400"; 
-   d="scan'208";a="194513403"
-Received: from fmsmga003.fm.intel.com ([10.253.24.29])
-  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Apr 2021 15:15:42 -0700
-IronPort-SDR: hiRZuhDXd003udj/g1i7yN17E1YUUlPI0P2eilqr2+lUnrseiPpTGm6Gtrf3CM3MluzkH2SfAy
- Fyig77zogkvg==
+   d="scan'208";a="258913074"
+Received: from orsmga002.jf.intel.com ([10.7.209.21])
+  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Apr 2021 15:17:47 -0700
+IronPort-SDR: eZcpF59bidmyafLieAacJAhx8mMsmULeB5Sao3Mqc2gvetg0QfZZRAPTppGbp89WtKAy+oy8ie
+ f4sqCPQh4dgQ==
 X-IronPort-AV: E=Sophos;i="5.82,225,1613462400"; 
-   d="scan'208";a="451270967"
+   d="scan'208";a="399720968"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Apr 2021 15:15:41 -0700
+  by orsmga002-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Apr 2021 15:17:46 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,156 +60,127 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
-Subject: [PATCH v25 30/30] mm: Introduce PROT_SHSTK for shadow stack
-Date:   Thu, 15 Apr 2021 15:14:19 -0700
-Message-Id: <20210415221419.31835-31-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v25 3/9] x86/cet/ibt: Handle signals for Indirect Branch Tracking
+Date:   Thu, 15 Apr 2021 15:17:28 -0700
+Message-Id: <20210415221734.32628-4-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20210415221419.31835-1-yu-cheng.yu@intel.com>
-References: <20210415221419.31835-1-yu-cheng.yu@intel.com>
+In-Reply-To: <20210415221734.32628-1-yu-cheng.yu@intel.com>
+References: <20210415221734.32628-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-There are three possible options to create a shadow stack allocation API:
-an arch_prctl, a new syscall, or adding PROT_SHSTK to mmap()/mprotect().
-Each has its advantages and compromises.
+When an indirect CALL/JMP instruction is executed and before it reaches
+the target, it is in 'WAIT_ENDBR' status, which can be read from
+MSR_IA32_U_CET.  The status is part of a task's status before a signal is
+raised and preserved in the signal frame.  It is restored for sigreturn.
 
-An arch_prctl() is the least intrusive.  However, the existing x86
-arch_prctl() takes only two parameters.  Multiple parameters must be
-passed in a memory buffer.  There is a proposal to pass more parameters in
-registers [1], but no active discussion on that.
-
-A new syscall minimizes compatibility issues and offers an extensible frame
-work to other architectures, but this will likely result in some overlap of
-mmap()/mprotect().
-
-The introduction of PROT_SHSTK to mmap()/mprotect() takes advantage of
-existing APIs.  The x86-specific PROT_SHSTK is translated to
-VM_SHADOW_STACK and a shadow stack mapping is created without reinventing
-the wheel.  There are potential pitfalls though.  The most obvious one
-would be using this as a bypass to shadow stack protection.  However, the
-attacker would have to get to the syscall first.
-
-[1] https://lore.kernel.org/lkml/20200828121624.108243-1-hjl.tools@gmail.com/
+IBT state machine is described in Intel SDM Vol. 1, Sec. 18.3.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Cc: Kees Cook <keescook@chromium.org>
-Cc: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 ---
+v25:
+- Move the addition of sc_ext.wait_endbr from an earlier shadow stack
+  patch to here.
+- Change X86_FEATURE_CET to X86_FEATURE_SHSTK.
+- Change wrmsrl() to wrmsrl_safe() and handle error.
 v24:
-- Update arch_calc_vm_prot_bits(), leave PROT* checking to
-  arch_validate_prot().
-- Update arch_validate_prot(), leave vma flags checking to
-  arch_validate_flags().
-- Add arch_validate_flags().
+- Update for changes from splitting shadow stack and ibt.
 
- arch/x86/include/asm/mman.h      | 59 +++++++++++++++++++++++++++++++-
- arch/x86/include/uapi/asm/mman.h |  1 +
- include/linux/mm.h               |  1 +
- 3 files changed, 60 insertions(+), 1 deletion(-)
+ arch/x86/include/uapi/asm/sigcontext.h |  1 +
+ arch/x86/kernel/fpu/signal.c           | 33 +++++++++++++++++++++++---
+ 2 files changed, 31 insertions(+), 3 deletions(-)
 
-diff --git a/arch/x86/include/asm/mman.h b/arch/x86/include/asm/mman.h
-index 629f6c81263a..1821c179f35d 100644
---- a/arch/x86/include/asm/mman.h
-+++ b/arch/x86/include/asm/mman.h
-@@ -20,11 +20,68 @@
- 		((vm_flags) & VM_PKEY_BIT2 ? _PAGE_PKEY_BIT2 : 0) |	\
- 		((vm_flags) & VM_PKEY_BIT3 ? _PAGE_PKEY_BIT3 : 0))
+diff --git a/arch/x86/include/uapi/asm/sigcontext.h b/arch/x86/include/uapi/asm/sigcontext.h
+index 10d7fa192d48..ee5bacce7d87 100644
+--- a/arch/x86/include/uapi/asm/sigcontext.h
++++ b/arch/x86/include/uapi/asm/sigcontext.h
+@@ -203,6 +203,7 @@ struct _xstate {
+ struct sc_ext {
+ 	unsigned long total_size;
+ 	unsigned long ssp;
++	unsigned long wait_endbr;
+ };
  
--#define arch_calc_vm_prot_bits(prot, key) (		\
-+#define pkey_vm_prot_bits(prot, key) (			\
- 		((key) & 0x1 ? VM_PKEY_BIT0 : 0) |      \
- 		((key) & 0x2 ? VM_PKEY_BIT1 : 0) |      \
- 		((key) & 0x4 ? VM_PKEY_BIT2 : 0) |      \
- 		((key) & 0x8 ? VM_PKEY_BIT3 : 0))
-+#else
-+#define pkey_vm_prot_bits(prot, key) (0)
+ /*
+diff --git a/arch/x86/kernel/fpu/signal.c b/arch/x86/kernel/fpu/signal.c
+index 0488407bec81..0ed01e70b09e 100644
+--- a/arch/x86/kernel/fpu/signal.c
++++ b/arch/x86/kernel/fpu/signal.c
+@@ -71,16 +71,29 @@ int save_extra_state_to_sigframe(int ia32, void __user *fp, void __user *restore
+ 			return err;
+ 
+ 		ext.ssp = token_addr;
++	}
+ 
++	if (new_ssp || cet->ibt_enabled) {
+ 		fpregs_lock();
+ 		if (test_thread_flag(TIF_NEED_FPU_LOAD))
+ 			__fpregs_load_activate();
+ 		if (new_ssp)
+ 			err = wrmsrl_safe(MSR_IA32_PL3_SSP, new_ssp);
++
++		if (!err && cet->ibt_enabled) {
++			u64 msr_val;
++
++			err = rdmsrl_safe(MSR_IA32_U_CET, &msr_val);
++			if (!err && (msr_val & CET_WAIT_ENDBR)) {
++				ext.wait_endbr = 1;
++				msr_val &= ~CET_WAIT_ENDBR;
++				err = wrmsrl_safe(MSR_IA32_U_CET, msr_val);
++			}
++		}
+ 		fpregs_unlock();
+ 	}
+ 
+-	if (!err && ext.ssp) {
++	if (!err && (ext.ssp || cet->ibt_enabled)) {
+ 		void __user *p = fp;
+ 
+ 		ext.total_size = sizeof(ext);
+@@ -110,7 +123,8 @@ static int get_extra_state_from_sigframe(int ia32, void __user *fp, struct sc_ex
+ 	if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
+ 		return 0;
+ 
+-	if (!cet->shstk_size)
++	if (!cet->shstk_size &&
++	    !cet->ibt_enabled)
+ 		return 0;
+ 
+ 	memset(ext, 0, sizeof(*ext));
+@@ -149,6 +163,19 @@ static int restore_extra_state_to_xregs(struct sc_ext *sc_ext)
+ 
+ 	if (cet->shstk_size)
+ 		err = wrmsrl_safe(MSR_IA32_PL3_SSP, sc_ext->ssp);
++
++	if (err)
++		return err;
++
++	if (cet->ibt_enabled && sc_ext->wait_endbr) {
++		u64 msr_val;
++
++		err = rdmsrl_safe(MSR_IA32_U_CET, &msr_val);
++		if (!err) {
++			msr_val |= CET_WAIT_ENDBR;
++			err = wrmsrl_safe(MSR_IA32_U_CET, msr_val);
++		}
++	}
  #endif
- 
-+static inline unsigned long arch_calc_vm_prot_bits(unsigned long prot,
-+						   unsigned long pkey)
-+{
-+	unsigned long vm_prot_bits = pkey_vm_prot_bits(prot, pkey);
-+
-+	if (prot & PROT_SHSTK)
-+		vm_prot_bits |= VM_SHADOW_STACK;
-+
-+	return vm_prot_bits;
-+}
-+
-+#define arch_calc_vm_prot_bits(prot, pkey) arch_calc_vm_prot_bits(prot, pkey)
-+
-+#ifdef CONFIG_X86_SHADOW_STACK
-+static inline bool arch_validate_prot(unsigned long prot, unsigned long addr)
-+{
-+	unsigned long valid = PROT_READ | PROT_WRITE | PROT_EXEC | PROT_SEM |
-+			      PROT_SHSTK;
-+
-+	if (prot & ~valid)
-+		return false;
-+
-+	if (prot & PROT_SHSTK) {
-+		if (!current->thread.cet.shstk_size)
-+			return false;
-+
-+		/*
-+		 * A shadow stack mapping is indirectly writable by only
-+		 * the CALL and WRUSS instructions, but not other write
-+		 * instructions).  PROT_SHSTK and PROT_WRITE are mutually
-+		 * exclusive.
-+		 */
-+		if (prot & PROT_WRITE)
-+			return false;
-+	}
-+
-+	return true;
-+}
-+
-+#define arch_validate_prot arch_validate_prot
-+
-+static inline bool arch_validate_flags(unsigned long vm_flags, bool is_anon)
-+{
-+	if (vm_flags & VM_SHADOW_STACK) {
-+		if ((vm_flags & VM_SHARED) || !is_anon)
-+			return false;
-+	}
-+
-+	return true;
-+}
-+
-+#define arch_validate_flags(vm_flags, is_anon) arch_validate_flags(vm_flags, is_anon)
-+
-+#endif /* CONFIG_X86_SHADOW_STACK */
-+
- #endif /* _ASM_X86_MMAN_H */
-diff --git a/arch/x86/include/uapi/asm/mman.h b/arch/x86/include/uapi/asm/mman.h
-index 3ce1923e6ed9..39bb7db344a6 100644
---- a/arch/x86/include/uapi/asm/mman.h
-+++ b/arch/x86/include/uapi/asm/mman.h
-@@ -4,6 +4,7 @@
- 
- #define MAP_32BIT	0x40		/* only give out 32bit addresses */
- 
-+#define PROT_SHSTK	0x10		/* shadow stack pages */
- 
- #include <asm-generic/mman.h>
- 
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 1ccec5cc399b..9a7652eea207 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -342,6 +342,7 @@ extern unsigned int kobjsize(const void *objp);
- 
- #if defined(CONFIG_X86)
- # define VM_PAT		VM_ARCH_1	/* PAT reserves whole VMA at once (x86) */
-+# define VM_ARCH_CLEAR	VM_SHADOW_STACK
- #elif defined(CONFIG_PPC)
- # define VM_SAO		VM_ARCH_1	/* Strong Access Ordering (powerpc) */
- #elif defined(CONFIG_PARISC)
+ 	return err;
+ }
+@@ -616,7 +643,7 @@ static unsigned long fpu__alloc_sigcontext_ext(unsigned long sp)
+ 	 * sigcontext_ext is at: fpu + fpu_user_xstate_size +
+ 	 * FP_XSTATE_MAGIC2_SIZE, then aligned to 8.
+ 	 */
+-	if (cet->shstk_size)
++	if (cet->shstk_size || cet->ibt_enabled)
+ 		sp -= (sizeof(struct sc_ext) + 8);
+ #endif
+ 	return sp;
 -- 
 2.21.0
 
