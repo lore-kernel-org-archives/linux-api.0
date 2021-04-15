@@ -2,166 +2,116 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+X-Spam-Status: No, score=-18.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_IN_DEF_DKIM_WL
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 10B71C433B4
-	for <linux-api@archiver.kernel.org>; Thu, 15 Apr 2021 22:20:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C6827C433B4
+	for <linux-api@archiver.kernel.org>; Thu, 15 Apr 2021 23:22:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E3054610FB
-	for <linux-api@archiver.kernel.org>; Thu, 15 Apr 2021 22:20:36 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9E1E561029
+	for <linux-api@archiver.kernel.org>; Thu, 15 Apr 2021 23:22:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234701AbhDOWUy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 15 Apr 2021 18:20:54 -0400
-Received: from mga14.intel.com ([192.55.52.115]:22384 "EHLO mga14.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S237026AbhDOWSW (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 15 Apr 2021 18:18:22 -0400
-IronPort-SDR: jjw4xVsXSZ7+6UPbxn9LC4z5+sAoOXaM0oGENlIK56sK9O/BhD6uV3VopK3EtKu7S38NahOJ3v
- ry6Uv9tbJKlg==
-X-IronPort-AV: E=McAfee;i="6200,9189,9955"; a="194513398"
-X-IronPort-AV: E=Sophos;i="5.82,225,1613462400"; 
-   d="scan'208";a="194513398"
-Received: from fmsmga003.fm.intel.com ([10.253.24.29])
-  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Apr 2021 15:15:41 -0700
-IronPort-SDR: tfqI8ZqkLdWgkO5CqWxX4t4sTzCKsF9NHc+PbAGSBkiO5L6gRhPaSGQvX9zQhF0M4rQZwFdXvx
- /PDXGJ/D238w==
-X-IronPort-AV: E=Sophos;i="5.82,225,1613462400"; 
-   d="scan'208";a="451270959"
-Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Apr 2021 15:15:41 -0700
-From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
-To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-doc@vger.kernel.org, linux-mm@kvack.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
-        Arnd Bergmann <arnd@arndb.de>,
-        Andy Lutomirski <luto@kernel.org>,
-        Balbir Singh <bsingharora@gmail.com>,
-        Borislav Petkov <bp@alien8.de>,
-        Cyrill Gorcunov <gorcunov@gmail.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Eugene Syromiatnikov <esyr@redhat.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Nadav Amit <nadav.amit@gmail.com>,
-        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
-        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
-        Dave Martin <Dave.Martin@arm.com>,
-        Weijiang Yang <weijiang.yang@intel.com>,
-        Pengfei Xu <pengfei.xu@intel.com>,
-        Haitao Huang <haitao.huang@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
-Subject: [PATCH v25 28/30] mm: Move arch_calc_vm_prot_bits() to arch/x86/include/asm/mman.h
-Date:   Thu, 15 Apr 2021 15:14:17 -0700
-Message-Id: <20210415221419.31835-29-yu-cheng.yu@intel.com>
-X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20210415221419.31835-1-yu-cheng.yu@intel.com>
-References: <20210415221419.31835-1-yu-cheng.yu@intel.com>
+        id S237230AbhDOXWb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 15 Apr 2021 19:22:31 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42178 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S237019AbhDOXWa (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 15 Apr 2021 19:22:30 -0400
+Received: from mail-pf1-x431.google.com (mail-pf1-x431.google.com [IPv6:2607:f8b0:4864:20::431])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4E812C061574
+        for <linux-api@vger.kernel.org>; Thu, 15 Apr 2021 16:22:07 -0700 (PDT)
+Received: by mail-pf1-x431.google.com with SMTP id n38so17117678pfv.2
+        for <linux-api@vger.kernel.org>; Thu, 15 Apr 2021 16:22:07 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20161025;
+        h=date:from:to:cc:subject:message-id:mime-version:content-disposition;
+        bh=TCW1/ONXHa7WGN4lgho3PeX/tDvamKqJMxf6Tjrp4yc=;
+        b=Sm+yE7EEDfprcsH5vV69Bnhnqysr6JAP1Aky66+ghCetkGZvztgXnqbUZNZ5+So54f
+         Y7GKqTj2nk2YxBSrPy6cz59rB2Xukde723+Cxminb+GBaKiq3vi+oOxLcLws5XUVbkgY
+         PqXZPbPDcf8DJDzgB7HJRq8mikQT/uOn0pdO3bXkEl1njs+/SQ86AELyUn0d4LdGL3N4
+         H+gK9qN/JEvzy45cvE2fWMKoUP5/lsB3DJAI96T8w4tTvyIla93sljA5BsksVnBwjsBt
+         6ixOjKieMb2oIxOX4hqtPAwIEZVv+n7d3XBIE+6tsb83gtcN/f/msDJWcyC8SSqIvNJr
+         xDnQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:mime-version
+         :content-disposition;
+        bh=TCW1/ONXHa7WGN4lgho3PeX/tDvamKqJMxf6Tjrp4yc=;
+        b=qYqH30jloJm+7l10AB60HYoZBmRRv25Nqr5DjGOxQzTlO2aruGDbsYaLSvljtLN+C0
+         wg4xage2hW8jo/XP+8k9BNUFEbY2DJjKGy8tU+Q9Y5bjM6NsfiYFnrDsIigRJrxsAg3E
+         hCxerfBuBXk/n+QP2NZTSHeyLrNxgJnjOd9d3cQrvJph/lm5qiYKCF2WbEaKv16g3IbZ
+         xH4afxlEfUEBLIiFUtQTfZ8Mo56bgm8TlQxno/C98Rg92ePTd27XcCAzPIfO+BZ8iNgM
+         iFSyYd087h0HtrzHz8pr2dmaLOHB443tEg3LUoZpLhMtT2U6QEDYVQQnM8qxzkdvS33B
+         oi9A==
+X-Gm-Message-State: AOAM531DXHsUmZ/A/q1eWCLeT93IM6Taf7Rn0uM2mLwPOiTNnuv6nDer
+        qNITJSMFYe2q8KFB2uXohnEXgA==
+X-Google-Smtp-Source: ABdhPJwDxhn0/aSL0gpvbJ4vdiINft6HtMduIyvWgc3WW96xMMUikWcZ2eh5d4Zaf0nrbslu9EYKnA==
+X-Received: by 2002:a63:5265:: with SMTP id s37mr4763061pgl.253.1618528926672;
+        Thu, 15 Apr 2021 16:22:06 -0700 (PDT)
+Received: from google.com ([2401:fa00:9:211:3d18:8baf:8ab:7dd5])
+        by smtp.gmail.com with ESMTPSA id x2sm2983246pfu.77.2021.04.15.16.22.04
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 15 Apr 2021 16:22:06 -0700 (PDT)
+Date:   Fri, 16 Apr 2021 09:21:53 +1000
+From:   Matthew Bobrowski <repnop@google.com>
+To:     jack@suse.cz, amir73il@gmail.com, christian.brauner@ubuntu.com
+Cc:     linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Subject: [PATCH 0/2] fanotify: Adding pidfd support to the fanotify API
+Message-ID: <cover.1618527437.git.repnop@google.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-To prepare the introduction of PROT_SHSTK and be consistent with other
-architectures, move arch_vm_get_page_prot() and arch_calc_vm_prot_bits() to
-arch/x86/include/asm/mman.h.
+Hey Jan/Amir/Christian,
 
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
-Cc: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
----
- arch/x86/include/asm/mman.h      | 30 ++++++++++++++++++++++++++++++
- arch/x86/include/uapi/asm/mman.h | 27 +++------------------------
- 2 files changed, 33 insertions(+), 24 deletions(-)
- create mode 100644 arch/x86/include/asm/mman.h
+This is the RFC patch series for adding pidfd support to the fanotify
+API.
 
-diff --git a/arch/x86/include/asm/mman.h b/arch/x86/include/asm/mman.h
-new file mode 100644
-index 000000000000..629f6c81263a
---- /dev/null
-+++ b/arch/x86/include/asm/mman.h
-@@ -0,0 +1,30 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+#ifndef _ASM_X86_MMAN_H
-+#define _ASM_X86_MMAN_H
-+
-+#include <linux/mm.h>
-+#include <uapi/asm/mman.h>
-+
-+#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
-+/*
-+ * Take the 4 protection key bits out of the vma->vm_flags
-+ * value and turn them in to the bits that we can put in
-+ * to a pte.
-+ *
-+ * Only override these if Protection Keys are available
-+ * (which is only on 64-bit).
-+ */
-+#define arch_vm_get_page_prot(vm_flags)	__pgprot(	\
-+		((vm_flags) & VM_PKEY_BIT0 ? _PAGE_PKEY_BIT0 : 0) |	\
-+		((vm_flags) & VM_PKEY_BIT1 ? _PAGE_PKEY_BIT1 : 0) |	\
-+		((vm_flags) & VM_PKEY_BIT2 ? _PAGE_PKEY_BIT2 : 0) |	\
-+		((vm_flags) & VM_PKEY_BIT3 ? _PAGE_PKEY_BIT3 : 0))
-+
-+#define arch_calc_vm_prot_bits(prot, key) (		\
-+		((key) & 0x1 ? VM_PKEY_BIT0 : 0) |      \
-+		((key) & 0x2 ? VM_PKEY_BIT1 : 0) |      \
-+		((key) & 0x4 ? VM_PKEY_BIT2 : 0) |      \
-+		((key) & 0x8 ? VM_PKEY_BIT3 : 0))
-+#endif
-+
-+#endif /* _ASM_X86_MMAN_H */
-diff --git a/arch/x86/include/uapi/asm/mman.h b/arch/x86/include/uapi/asm/mman.h
-index d4a8d0424bfb..3ce1923e6ed9 100644
---- a/arch/x86/include/uapi/asm/mman.h
-+++ b/arch/x86/include/uapi/asm/mman.h
-@@ -1,31 +1,10 @@
- /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
--#ifndef _ASM_X86_MMAN_H
--#define _ASM_X86_MMAN_H
-+#ifndef _UAPI_ASM_X86_MMAN_H
-+#define _UAPI_ASM_X86_MMAN_H
- 
- #define MAP_32BIT	0x40		/* only give out 32bit addresses */
- 
--#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
--/*
-- * Take the 4 protection key bits out of the vma->vm_flags
-- * value and turn them in to the bits that we can put in
-- * to a pte.
-- *
-- * Only override these if Protection Keys are available
-- * (which is only on 64-bit).
-- */
--#define arch_vm_get_page_prot(vm_flags)	__pgprot(	\
--		((vm_flags) & VM_PKEY_BIT0 ? _PAGE_PKEY_BIT0 : 0) |	\
--		((vm_flags) & VM_PKEY_BIT1 ? _PAGE_PKEY_BIT1 : 0) |	\
--		((vm_flags) & VM_PKEY_BIT2 ? _PAGE_PKEY_BIT2 : 0) |	\
--		((vm_flags) & VM_PKEY_BIT3 ? _PAGE_PKEY_BIT3 : 0))
--
--#define arch_calc_vm_prot_bits(prot, key) (		\
--		((key) & 0x1 ? VM_PKEY_BIT0 : 0) |      \
--		((key) & 0x2 ? VM_PKEY_BIT1 : 0) |      \
--		((key) & 0x4 ? VM_PKEY_BIT2 : 0) |      \
--		((key) & 0x8 ? VM_PKEY_BIT3 : 0))
--#endif
- 
- #include <asm-generic/mman.h>
- 
--#endif /* _ASM_X86_MMAN_H */
-+#endif /* _UAPI_ASM_X86_MMAN_H */
+tl;dr rather than returning a pid within struct
+fanotify_event_metadata, a pidfd is returned instead when fanotify has
+been explicitly told to do so via the new FAN_REPORT_PIDFD flag.
+
+The main driver behind returning a pidfd within an event instead of a
+pid is that it permits userspace applications to better detect if
+they've possibly lost a TOCTOU race. A common paradigm among userspace
+applications that make use of the fanotify API is to crawl /proc/<pid>
+upon receiving an event. Userspace applications do this in order to
+further ascertain contextual meta-information about the process that
+was responsible for generating the filesystem event. On high pressure
+systems, where pid recycling isn't uncommon, it's no longer considered
+as a reliable approach to directly sift through /proc/<pid> and have
+userspace applications use the information contained within
+/proc/<pid> as it could, and does, lead to program execution
+inaccuracies.
+
+Now when a pidfd is returned in an event, a userspace application can:
+
+    a) Obtain the pid responsible for generating the filesystem event
+       from the pidfds fdinfo.
+
+    b) Detect whether the userspace application lost the procfs access
+       race by sending a 0 signal on the pidfd and checking the return
+       value. A -ESRCH is indicative of the userspace application
+       losing the race, meaning that the pid has been recycled.
+
+Matthew Bobrowski (2):
+  pidfd_create(): remove static qualifier and declare pidfd_create() in
+    linux/pid.h
+  fanotify: Add pidfd support to the fanotify API
+
+ fs/notify/fanotify/fanotify_user.c | 33 +++++++++++++++++++++++++++---
+ include/linux/fanotify.h           |  2 +-
+ include/linux/pid.h                |  1 +
+ include/uapi/linux/fanotify.h      |  2 ++
+ kernel/pid.c                       |  2 +-
+ 5 files changed, 35 insertions(+), 5 deletions(-)
+
 -- 
-2.21.0
+2.31.1.368.gbe11c130af-goog
 
+/M
