@@ -2,67 +2,65 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-26.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT,USER_IN_DEF_DKIM_WL autolearn=unavailable autolearn_force=no
-	version=3.4.0
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3C68BC43461
-	for <linux-api@archiver.kernel.org>; Tue, 20 Apr 2021 22:10:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EA1CAC433ED
+	for <linux-api@archiver.kernel.org>; Wed, 21 Apr 2021 01:02:12 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id F285361413
-	for <linux-api@archiver.kernel.org>; Tue, 20 Apr 2021 22:10:20 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A58E361410
+	for <linux-api@archiver.kernel.org>; Wed, 21 Apr 2021 01:02:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234300AbhDTWKv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 20 Apr 2021 18:10:51 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40374 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234268AbhDTWIu (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 20 Apr 2021 18:08:50 -0400
-Received: from mail-qt1-x84a.google.com (mail-qt1-x84a.google.com [IPv6:2607:f8b0:4864:20::84a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CFCB1C06138C
-        for <linux-api@vger.kernel.org>; Tue, 20 Apr 2021 15:08:16 -0700 (PDT)
-Received: by mail-qt1-x84a.google.com with SMTP id h4-20020ac858440000b029019d657b9f21so11896983qth.9
-        for <linux-api@vger.kernel.org>; Tue, 20 Apr 2021 15:08:16 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20161025;
-        h=date:in-reply-to:message-id:mime-version:references:subject:from:to
-         :cc;
-        bh=QUApq8UPhLnVOskfaex0nbVtMhAbaCtXI1eHuCuwzK0=;
-        b=go415UuMQZc9Zin/DWljWc8XS2D43ct53uUZqRvif920L9paMAYqU8DAomFyOgMzKy
-         BASyq6I6UBR+/DPIvFLjEmsDFvBoeoZ8ZRqAX2l59ua7fWNbLvGvrhRxeGBTRF0jfteS
-         70u3jBHIPKb/9Fp7miWXNnTGQ+RuVwC3KWRNfByHS7cGBdjkut5Ve2iijXJfv/YyRKEd
-         DFUg/i50NODl/vWSwTyUkQezOd3vv3pPewiisUw3YwuocrFoFn/VnpTq0HEB1N7vAnIO
-         z3HzvKXFWBQIEl7E2RHB32Ym368rCk4ECwgyz7C+Todyzdc2OTqQCeObDg2ncNld7X6n
-         3ZPA==
+        id S234309AbhDUBCn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 20 Apr 2021 21:02:43 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:35346 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S233936AbhDUBCn (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 20 Apr 2021 21:02:43 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1618966930;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=L8lGFtSTtYe7QCj8558nLeh4ir6XUy3/NvMAR84JMCU=;
+        b=M5crLszDrJrNv/NNQhtUnQrc/VeqekaC7OxoEWmkSEQVKG+r4QyxedNUywQNdb36vv/CJE
+        gwsTHM7o51TvXkOSjcZAgz6kNC5RzQVKneptTPPvMgZGaqCa/tpGs6UKUMnafwn7nndsue
+        8DKfNF6fsxPLb2LnyK/2WGGsofLYrsA=
+Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
+ [209.85.222.200]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-426-QiLg80BNNfSj6Q5Jv77okQ-1; Tue, 20 Apr 2021 21:02:09 -0400
+X-MC-Unique: QiLg80BNNfSj6Q5Jv77okQ-1
+Received: by mail-qk1-f200.google.com with SMTP id 14-20020a05620a078eb02902e3f1eae0f1so3524407qka.22
+        for <linux-api@vger.kernel.org>; Tue, 20 Apr 2021 18:02:09 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:in-reply-to:message-id:mime-version
-         :references:subject:from:to:cc;
-        bh=QUApq8UPhLnVOskfaex0nbVtMhAbaCtXI1eHuCuwzK0=;
-        b=k5ZOvq71fh3ZgFSxoXwKdvhllcN36/GX1kcBjoqSkaQmWXemf27vcJV4cWJtAJEiq+
-         HTId5vicf9v5wZ25BoQk8UKRwz3/1wFueqg0k/S0gVeSO+FZEWR45lT8mcXuJgeXaFl4
-         9zVp6TXK2B4KVeHUqPywF+kVHSpyuV3WM+Q8PPrqRwzdjrBalCXfFkSuU/Ht7CjWRHKn
-         JA/Xayrbgl8cbKvStHvhTpXhVmq43lnYZhAzkKoHL8JV6cKYbpEkLfP1P8b96BnOayyw
-         LS/NauXnQzIrLuCjL9Bhp2MVOdGpe1O/o+MYIUwnGFmc94uSg4B0V78npYLqFmhrhkGw
-         K97w==
-X-Gm-Message-State: AOAM532AbYY1oX9Lg5MPLLe435oAlvebdcpvc+xRPhaj6BDsvPCbr3ep
-        2EHijnmU7e6Dnjez+5VhzlnN/SuqX02klWckaV6K
-X-Google-Smtp-Source: ABdhPJysgqqNiiBX50a+ZoqyZ0kCGo4tvrGC3ywuggc7gqC2iDuh1na9Bbn6xDQ61bim3z6mT/0+24eR3Btt/RkfuRrA
-X-Received: from ajr0.svl.corp.google.com ([2620:15c:2cd:203:c40e:ee2c:2ab8:257a])
- (user=axelrasmussen job=sendgmr) by 2002:a05:6214:18d:: with SMTP id
- q13mr4532886qvr.60.1618956496024; Tue, 20 Apr 2021 15:08:16 -0700 (PDT)
-Date:   Tue, 20 Apr 2021 15:07:58 -0700
-In-Reply-To: <20210420220804.486803-1-axelrasmussen@google.com>
-Message-Id: <20210420220804.486803-5-axelrasmussen@google.com>
-Mime-Version: 1.0
-References: <20210420220804.486803-1-axelrasmussen@google.com>
-X-Mailer: git-send-email 2.31.1.368.gbe11c130af-goog
-Subject: [PATCH v4 04/10] userfaultfd/shmem: support minor fault registration
- for shmem
-From:   Axel Rasmussen <axelrasmussen@google.com>
-To:     Alexander Viro <viro@zeniv.linux.org.uk>,
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=L8lGFtSTtYe7QCj8558nLeh4ir6XUy3/NvMAR84JMCU=;
+        b=rJhH+hG+mDGK7fRMokrmmZWyY2rd8uSjPF2nUROOOryB8ZBUMDx4r1tADXC9iZvVYM
+         7iYVRgdaSikVmsVEyn2IMhFe9saPzLIGcxCOJfGyKMg7JXm3SmpeaYQVeojBmpo2Lmkt
+         UymkFGBaa9g8d0oHL9FiSQfAemHVuMGIxlalOC3qEr87EaR+kn4zDWGc5j/kXc1rj1+R
+         7EYE46yDx5EXcZipsaBkn94wzv7dyTlU7oxOvelHQA9+mNMDElT3uTMCLsCqaYgZ3v4I
+         x0bOdCAMrYWTsLY/yp/rgquyo7OUs2/E2EL72Mdw21ebhFN4I2mmZkgLYv7dM42UwQmq
+         6YWg==
+X-Gm-Message-State: AOAM530gS5RFl6DcT6KRcSNP1q9MaiYdyLQXfgopbmcIIbV5gIEQiGV5
+        7LTANqDPZaHka+S6VNXK4UPpEiaU98ez/Vr1mf7PTFBfglvVEN+c+LRa1YgAmvY9KkbVgWgfXNv
+        tBbaXoRweRe7MOgpB96mW
+X-Received: by 2002:a05:622a:1103:: with SMTP id e3mr20240294qty.346.1618966928469;
+        Tue, 20 Apr 2021 18:02:08 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJyGZYeVQLcG1SJpG+xTK5I038ewCztBIA6zotSHXUk9vOdU2Z5J2CvbVwJs93g3BaQtIHkvHg==
+X-Received: by 2002:a05:622a:1103:: with SMTP id e3mr20240260qty.346.1618966928149;
+        Tue, 20 Apr 2021 18:02:08 -0700 (PDT)
+Received: from xz-x1 (bras-base-toroon474qw-grc-88-174-93-75-154.dsl.bell.ca. [174.93.75.154])
+        by smtp.gmail.com with ESMTPSA id c14sm457297qtc.5.2021.04.20.18.02.06
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 20 Apr 2021 18:02:07 -0700 (PDT)
+Date:   Tue, 20 Apr 2021 21:02:05 -0400
+From:   Peter Xu <peterx@redhat.com>
+To:     Axel Rasmussen <axelrasmussen@google.com>
+Cc:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Andrea Arcangeli <aarcange@redhat.com>,
         Andrew Morton <akpm@linux-foundation.org>,
         Hugh Dickins <hughd@google.com>,
@@ -71,144 +69,208 @@ To:     Alexander Viro <viro@zeniv.linux.org.uk>,
         Lokesh Gidra <lokeshgidra@google.com>,
         Mike Kravetz <mike.kravetz@oracle.com>,
         Mike Rapoport <rppt@linux.vnet.ibm.com>,
-        Peter Xu <peterx@redhat.com>, Shaohua Li <shli@fb.com>,
-        Shuah Khan <shuah@kernel.org>,
+        Shaohua Li <shli@fb.com>, Shuah Khan <shuah@kernel.org>,
         Stephen Rothwell <sfr@canb.auug.org.au>,
-        Wang Qing <wangqing@vivo.com>
-Cc:     linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
-        linux-mm@kvack.org, Axel Rasmussen <axelrasmussen@google.com>,
+        Wang Qing <wangqing@vivo.com>, linux-api@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-kselftest@vger.kernel.org, linux-mm@kvack.org,
         Brian Geffon <bgeffon@google.com>,
         "Dr . David Alan Gilbert" <dgilbert@redhat.com>,
         Mina Almasry <almasrymina@google.com>,
         Oliver Upton <oupton@google.com>
-Content-Type: text/plain; charset="UTF-8"
+Subject: Re: [PATCH v4 09/10] userfaultfd/shmem: modify
+ shmem_mcopy_atomic_pte to use install_pte()
+Message-ID: <20210421010205.GH4440@xz-x1>
+References: <20210420220804.486803-1-axelrasmussen@google.com>
+ <20210420220804.486803-10-axelrasmussen@google.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20210420220804.486803-10-axelrasmussen@google.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This patch allows shmem-backed VMAs to be registered for minor faults.
-Minor faults are appropriately relayed to userspace in the fault path,
-for VMAs with the relevant flag.
+On Tue, Apr 20, 2021 at 03:08:03PM -0700, Axel Rasmussen wrote:
+> In a previous commit, we added the mcopy_atomic_install_pte() helper.
+> This helper does the job of setting up PTEs for an existing page, to map
+> it into a given VMA. It deals with both the anon and shmem cases, as
+> well as the shared and private cases.
+> 
+> In other words, shmem_mcopy_atomic_pte() duplicates a case it already
+> handles. So, expose it, and let shmem_mcopy_atomic_pte() use it
+> directly, to reduce code duplication.
+> 
+> This requires that we refactor shmem_mcopy_atomic_pte() a bit:
+> 
+> Instead of doing accounting (shmem_recalc_inode() et al) part-way
+> through the PTE setup, do it beforehand. This frees up
+> mcopy_atomic_install_pte() from having to care about this accounting,
+> but it does mean we need to clean it up if we get a failure afterwards
+> (shmem_uncharge()).
+> 
+> We can *almost* use shmem_charge() to do this, reducing code
+> duplication. But, it does `inode->i_mapping->nrpages++`, which would
+> double-count since shmem_add_to_page_cache() also does this.
 
-This commit doesn't hook up the UFFDIO_CONTINUE ioctl for shmem-backed
-minor faults, though, so userspace doesn't yet have a way to resolve
-such faults.
+Missing to mention the lru_cache_add() replacement comment as Hugh commented on
+this?
 
-Acked-by: Peter Xu <peterx@redhat.com>
-Signed-off-by: Axel Rasmussen <axelrasmussen@google.com>
----
- fs/userfaultfd.c                 |  6 +++---
- include/uapi/linux/userfaultfd.h |  7 ++++++-
- mm/memory.c                      |  8 +++++---
- mm/shmem.c                       | 12 +++++++++++-
- 4 files changed, 25 insertions(+), 8 deletions(-)
+> 
+> Signed-off-by: Axel Rasmussen <axelrasmussen@google.com>
+> ---
+>  include/linux/userfaultfd_k.h |  5 ++++
+>  mm/shmem.c                    | 53 ++++++++---------------------------
+>  mm/userfaultfd.c              | 17 ++++-------
+>  3 files changed, 22 insertions(+), 53 deletions(-)
+> 
+> diff --git a/include/linux/userfaultfd_k.h b/include/linux/userfaultfd_k.h
+> index 794d1538b8ba..39c094cc6641 100644
+> --- a/include/linux/userfaultfd_k.h
+> +++ b/include/linux/userfaultfd_k.h
+> @@ -53,6 +53,11 @@ enum mcopy_atomic_mode {
+>  	MCOPY_ATOMIC_CONTINUE,
+>  };
+>  
+> +extern int mcopy_atomic_install_pte(struct mm_struct *dst_mm, pmd_t *dst_pmd,
+> +				    struct vm_area_struct *dst_vma,
+> +				    unsigned long dst_addr, struct page *page,
+> +				    bool newly_allocated, bool wp_copy);
+> +
+>  extern ssize_t mcopy_atomic(struct mm_struct *dst_mm, unsigned long dst_start,
+>  			    unsigned long src_start, unsigned long len,
+>  			    bool *mmap_changing, __u64 mode);
+> diff --git a/mm/shmem.c b/mm/shmem.c
+> index 30c0bb501dc9..9bfa80fcd414 100644
+> --- a/mm/shmem.c
+> +++ b/mm/shmem.c
+> @@ -2378,10 +2378,8 @@ int shmem_mcopy_atomic_pte(struct mm_struct *dst_mm,
+>  	struct address_space *mapping = inode->i_mapping;
+>  	gfp_t gfp = mapping_gfp_mask(mapping);
+>  	pgoff_t pgoff = linear_page_index(dst_vma, dst_addr);
+> -	spinlock_t *ptl;
+>  	void *page_kaddr;
+>  	struct page *page;
+> -	pte_t _dst_pte, *dst_pte;
+>  	int ret;
+>  	pgoff_t max_off;
+>  
+> @@ -2391,8 +2389,10 @@ int shmem_mcopy_atomic_pte(struct mm_struct *dst_mm,
+>  
+>  	if (!*pagep) {
+>  		page = shmem_alloc_page(gfp, info, pgoff);
+> -		if (!page)
+> -			goto out_unacct_blocks;
+> +		if (!page) {
+> +			shmem_inode_unacct_blocks(inode, 1);
+> +			goto out;
+> +		}
+>  
+>  		if (!zeropage) {	/* COPY */
+>  			page_kaddr = kmap_atomic(page);
+> @@ -2432,59 +2432,28 @@ int shmem_mcopy_atomic_pte(struct mm_struct *dst_mm,
+>  	if (ret)
+>  		goto out_release;
+>  
+> -	_dst_pte = mk_pte(page, dst_vma->vm_page_prot);
+> -	if (dst_vma->vm_flags & VM_WRITE)
+> -		_dst_pte = pte_mkwrite(pte_mkdirty(_dst_pte));
+> -	else {
+> -		/*
+> -		 * We don't set the pte dirty if the vma has no
+> -		 * VM_WRITE permission, so mark the page dirty or it
+> -		 * could be freed from under us. We could do it
+> -		 * unconditionally before unlock_page(), but doing it
+> -		 * only if VM_WRITE is not set is faster.
+> -		 */
+> -		set_page_dirty(page);
+> -	}
+> -
+> -	dst_pte = pte_offset_map_lock(dst_mm, dst_pmd, dst_addr, &ptl);
+> -
+> -	ret = -EFAULT;
+> -	max_off = DIV_ROUND_UP(i_size_read(inode), PAGE_SIZE);
+> -	if (unlikely(pgoff >= max_off))
+> -		goto out_release_unlock;
+> -
+> -	ret = -EEXIST;
+> -	if (!pte_none(*dst_pte))
+> -		goto out_release_unlock;
+> -
+> -	lru_cache_add(page);
+> -
+>  	spin_lock_irq(&info->lock);
+>  	info->alloced++;
+>  	inode->i_blocks += BLOCKS_PER_PAGE;
+>  	shmem_recalc_inode(inode);
+>  	spin_unlock_irq(&info->lock);
+>  
+> -	inc_mm_counter(dst_mm, mm_counter_file(page));
+> -	page_add_file_rmap(page, false);
+> -	set_pte_at(dst_mm, dst_addr, dst_pte, _dst_pte);
+> +	ret = mcopy_atomic_install_pte(dst_mm, dst_pmd, dst_vma, dst_addr,
+> +				       page, true, false);
+> +	if (ret)
+> +		goto out_release_uncharge;
+>  
+> -	/* No need to invalidate - it was non-present before */
+> -	update_mmu_cache(dst_vma, dst_addr, dst_pte);
+> -	pte_unmap_unlock(dst_pte, ptl);
+> +	SetPageDirty(page);
+>  	unlock_page(page);
+>  	ret = 0;
+>  out:
+>  	return ret;
+> -out_release_unlock:
+> -	pte_unmap_unlock(dst_pte, ptl);
+> -	ClearPageDirty(page);
+> +out_release_uncharge:
+>  	delete_from_page_cache(page);
+> +	shmem_uncharge(inode, 1);
+>  out_release:
+>  	unlock_page(page);
+>  	put_page(page);
+> -out_unacct_blocks:
 
-diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
-index 14f92285d04f..9f3b8684cf3c 100644
---- a/fs/userfaultfd.c
-+++ b/fs/userfaultfd.c
-@@ -1267,8 +1267,7 @@ static inline bool vma_can_userfault(struct vm_area_struct *vma,
- 	}
- 
- 	if (vm_flags & VM_UFFD_MINOR) {
--		/* FIXME: Add minor fault interception for shmem. */
--		if (!is_vm_hugetlb_page(vma))
-+		if (!(is_vm_hugetlb_page(vma) || vma_is_shmem(vma)))
- 			return false;
- 	}
- 
-@@ -1941,7 +1940,8 @@ static int userfaultfd_api(struct userfaultfd_ctx *ctx,
- 	/* report all available features and ioctls to userland */
- 	uffdio_api.features = UFFD_API_FEATURES;
- #ifndef CONFIG_HAVE_ARCH_USERFAULTFD_MINOR
--	uffdio_api.features &= ~UFFD_FEATURE_MINOR_HUGETLBFS;
-+	uffdio_api.features &=
-+		~(UFFD_FEATURE_MINOR_HUGETLBFS | UFFD_FEATURE_MINOR_SHMEM);
- #endif
- 	uffdio_api.ioctls = UFFD_API_IOCTLS;
- 	ret = -EFAULT;
-diff --git a/include/uapi/linux/userfaultfd.h b/include/uapi/linux/userfaultfd.h
-index bafbeb1a2624..159a74e9564f 100644
---- a/include/uapi/linux/userfaultfd.h
-+++ b/include/uapi/linux/userfaultfd.h
-@@ -31,7 +31,8 @@
- 			   UFFD_FEATURE_MISSING_SHMEM |		\
- 			   UFFD_FEATURE_SIGBUS |		\
- 			   UFFD_FEATURE_THREAD_ID |		\
--			   UFFD_FEATURE_MINOR_HUGETLBFS)
-+			   UFFD_FEATURE_MINOR_HUGETLBFS |	\
-+			   UFFD_FEATURE_MINOR_SHMEM)
- #define UFFD_API_IOCTLS				\
- 	((__u64)1 << _UFFDIO_REGISTER |		\
- 	 (__u64)1 << _UFFDIO_UNREGISTER |	\
-@@ -185,6 +186,9 @@ struct uffdio_api {
- 	 * UFFD_FEATURE_MINOR_HUGETLBFS indicates that minor faults
- 	 * can be intercepted (via REGISTER_MODE_MINOR) for
- 	 * hugetlbfs-backed pages.
-+	 *
-+	 * UFFD_FEATURE_MINOR_SHMEM indicates the same support as
-+	 * UFFD_FEATURE_MINOR_HUGETLBFS, but for shmem-backed pages instead.
- 	 */
- #define UFFD_FEATURE_PAGEFAULT_FLAG_WP		(1<<0)
- #define UFFD_FEATURE_EVENT_FORK			(1<<1)
-@@ -196,6 +200,7 @@ struct uffdio_api {
- #define UFFD_FEATURE_SIGBUS			(1<<7)
- #define UFFD_FEATURE_THREAD_ID			(1<<8)
- #define UFFD_FEATURE_MINOR_HUGETLBFS		(1<<9)
-+#define UFFD_FEATURE_MINOR_SHMEM		(1<<10)
- 	__u64 features;
- 
- 	__u64 ioctls;
-diff --git a/mm/memory.c b/mm/memory.c
-index 4e358601c5d6..cc71a445c76c 100644
---- a/mm/memory.c
-+++ b/mm/memory.c
-@@ -3972,9 +3972,11 @@ static vm_fault_t do_read_fault(struct vm_fault *vmf)
- 	 * something).
- 	 */
- 	if (vma->vm_ops->map_pages && fault_around_bytes >> PAGE_SHIFT > 1) {
--		ret = do_fault_around(vmf);
--		if (ret)
--			return ret;
-+		if (likely(!userfaultfd_minor(vmf->vma))) {
-+			ret = do_fault_around(vmf);
-+			if (ret)
-+				return ret;
-+		}
- 	}
- 
- 	ret = __do_fault(vmf);
-diff --git a/mm/shmem.c b/mm/shmem.c
-index b72c55aa07fc..30c0bb501dc9 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -1785,7 +1785,7 @@ static int shmem_swapin_page(struct inode *inode, pgoff_t index,
-  * vm. If we swap it in we mark it dirty since we also free the swap
-  * entry since a page cannot live in both the swap and page cache.
-  *
-- * vmf and fault_type are only supplied by shmem_fault:
-+ * vma, vmf, and fault_type are only supplied by shmem_fault:
-  * otherwise they are NULL.
-  */
- static int shmem_getpage_gfp(struct inode *inode, pgoff_t index,
-@@ -1820,6 +1820,16 @@ static int shmem_getpage_gfp(struct inode *inode, pgoff_t index,
- 
- 	page = pagecache_get_page(mapping, index,
- 					FGP_ENTRY | FGP_HEAD | FGP_LOCK, 0);
-+
-+	if (page && vma && userfaultfd_minor(vma)) {
-+		if (!xa_is_value(page)) {
-+			unlock_page(page);
-+			put_page(page);
-+		}
-+		*fault_type = handle_userfault(vmf, VM_UFFD_MINOR);
-+		return 0;
-+	}
-+
- 	if (xa_is_value(page)) {
- 		error = shmem_swapin_page(inode, index, &page,
- 					  sgp, gfp, vma, fault_type);
+Will all the "goto out_release" miss one call to shmem_inode_unacct_blocks()?
+
+> -	shmem_inode_unacct_blocks(inode, 1);
+>  	goto out;
+>  }
+>  #endif /* CONFIG_USERFAULTFD */
+> diff --git a/mm/userfaultfd.c b/mm/userfaultfd.c
+> index 51d8c0127161..3a9ddbb2dbbd 100644
+> --- a/mm/userfaultfd.c
+> +++ b/mm/userfaultfd.c
+> @@ -51,18 +51,13 @@ struct vm_area_struct *find_dst_vma(struct mm_struct *dst_mm,
+>  /*
+>   * Install PTEs, to map dst_addr (within dst_vma) to page.
+>   *
+> - * This function handles MCOPY_ATOMIC_CONTINUE (which is always file-backed),
+> - * whether or not dst_vma is VM_SHARED. It also handles the more general
+> - * MCOPY_ATOMIC_NORMAL case, when dst_vma is *not* VM_SHARED (it may be file
+> - * backed, or not).
+> - *
+> - * Note that MCOPY_ATOMIC_NORMAL for a VM_SHARED dst_vma is handled by
+> - * shmem_mcopy_atomic_pte instead.
+> + * This function handles both MCOPY_ATOMIC_NORMAL and _CONTINUE for both shmem
+> + * and anon, and for both shared and private VMAs.
+>   */
+> -static int mcopy_atomic_install_pte(struct mm_struct *dst_mm, pmd_t *dst_pmd,
+> -				    struct vm_area_struct *dst_vma,
+> -				    unsigned long dst_addr, struct page *page,
+> -				    bool newly_allocated, bool wp_copy)
+> +int mcopy_atomic_install_pte(struct mm_struct *dst_mm, pmd_t *dst_pmd,
+> +			     struct vm_area_struct *dst_vma,
+> +			     unsigned long dst_addr, struct page *page,
+> +			     bool newly_allocated, bool wp_copy)
+>  {
+>  	int ret;
+>  	pte_t _dst_pte, *dst_pte;
+> -- 
+> 2.31.1.368.gbe11c130af-goog
+> 
+
 -- 
-2.31.1.368.gbe11c130af-goog
+Peter Xu
 
