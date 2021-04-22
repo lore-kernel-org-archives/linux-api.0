@@ -2,204 +2,127 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6D5C6C4361A
-	for <linux-api@archiver.kernel.org>; Thu, 22 Apr 2021 04:54:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B85A0C433ED
+	for <linux-api@archiver.kernel.org>; Thu, 22 Apr 2021 08:46:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 43D4A60FD7
-	for <linux-api@archiver.kernel.org>; Thu, 22 Apr 2021 04:54:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8521261026
+	for <linux-api@archiver.kernel.org>; Thu, 22 Apr 2021 08:46:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234258AbhDVEy5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Apr 2021 00:54:57 -0400
-Received: from mga18.intel.com ([134.134.136.126]:45532 "EHLO mga18.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231951AbhDVEyz (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 22 Apr 2021 00:54:55 -0400
-IronPort-SDR: ZHt+ORyftVH8JgSEucZl88csaI19UUb981lPJ8sBkrdJHNAvDWgjeGCBQ6LBp6WV+j6YN1pLJS
- QBW/EovGAMhA==
-X-IronPort-AV: E=McAfee;i="6200,9189,9961"; a="183311518"
-X-IronPort-AV: E=Sophos;i="5.82,241,1613462400"; 
-   d="scan'208";a="183311518"
-Received: from fmsmga001.fm.intel.com ([10.253.24.23])
-  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 Apr 2021 21:54:16 -0700
-IronPort-SDR: H9M7s7Tq5lLqy1IgIUl5X22B3QrbcTks8CkSyRRxYqoI+4pLwp6z34sn0TEctvZEQrja96wOp/
- LnhekJbhivqA==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.82,241,1613462400"; 
-   d="scan'208";a="524515419"
-Received: from chang-linux-3.sc.intel.com ([172.25.66.175])
-  by fmsmga001.fm.intel.com with ESMTP; 21 Apr 2021 21:54:16 -0700
-From:   "Chang S. Bae" <chang.seok.bae@intel.com>
-To:     bp@suse.de, tglx@linutronix.de, mingo@kernel.org, luto@kernel.org,
-        x86@kernel.org
-Cc:     len.brown@intel.com, dave.hansen@intel.com, hjl.tools@gmail.com,
-        Dave.Martin@arm.com, jannh@google.com, mpe@ellerman.id.au,
-        carlos@redhat.com, tony.luck@intel.com, ravi.v.shankar@intel.com,
-        libc-alpha@sourceware.org, linux-arch@vger.kernel.org,
-        linux-api@vger.kernel.org, linux-kernel@vger.kernel.org,
-        chang.seok.bae@intel.com
-Subject: [PATCH v8 5/6] x86/signal: Detect and prevent an alternate signal stack overflow
-Date:   Wed, 21 Apr 2021 21:48:55 -0700
-Message-Id: <20210422044856.27250-6-chang.seok.bae@intel.com>
-X-Mailer: git-send-email 2.17.1
-In-Reply-To: <20210422044856.27250-1-chang.seok.bae@intel.com>
+        id S230270AbhDVIq7 convert rfc822-to-8bit (ORCPT
+        <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Apr 2021 04:46:59 -0400
+Received: from eu-smtp-delivery-151.mimecast.com ([185.58.85.151]:55101 "EHLO
+        eu-smtp-delivery-151.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S235482AbhDVIq5 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 22 Apr 2021 04:46:57 -0400
+Received: from AcuMS.aculab.com (156.67.243.121 [156.67.243.121]) (Using
+ TLS) by relay.mimecast.com with ESMTP id
+ uk-mta-80-mYnYClkmMvq7hiPeIZodaQ-1; Thu, 22 Apr 2021 09:46:19 +0100
+X-MC-Unique: mYnYClkmMvq7hiPeIZodaQ-1
+Received: from AcuMS.Aculab.com (fd9f:af1c:a25b:0:994c:f5c2:35d6:9b65) by
+ AcuMS.aculab.com (fd9f:af1c:a25b:0:994c:f5c2:35d6:9b65) with Microsoft SMTP
+ Server (TLS) id 15.0.1497.2; Thu, 22 Apr 2021 09:46:14 +0100
+Received: from AcuMS.Aculab.com ([fe80::994c:f5c2:35d6:9b65]) by
+ AcuMS.aculab.com ([fe80::994c:f5c2:35d6:9b65%12]) with mapi id
+ 15.00.1497.015; Thu, 22 Apr 2021 09:46:14 +0100
+From:   David Laight <David.Laight@ACULAB.COM>
+To:     "'Chang S. Bae'" <chang.seok.bae@intel.com>,
+        "bp@suse.de" <bp@suse.de>,
+        "tglx@linutronix.de" <tglx@linutronix.de>,
+        "mingo@kernel.org" <mingo@kernel.org>,
+        "luto@kernel.org" <luto@kernel.org>,
+        "x86@kernel.org" <x86@kernel.org>
+CC:     "len.brown@intel.com" <len.brown@intel.com>,
+        "dave.hansen@intel.com" <dave.hansen@intel.com>,
+        "hjl.tools@gmail.com" <hjl.tools@gmail.com>,
+        "Dave.Martin@arm.com" <Dave.Martin@arm.com>,
+        "jannh@google.com" <jannh@google.com>,
+        "mpe@ellerman.id.au" <mpe@ellerman.id.au>,
+        "carlos@redhat.com" <carlos@redhat.com>,
+        "tony.luck@intel.com" <tony.luck@intel.com>,
+        "ravi.v.shankar@intel.com" <ravi.v.shankar@intel.com>,
+        "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>,
+        "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>,
+        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Subject: RE: [PATCH v8 5/6] x86/signal: Detect and prevent an alternate signal
+ stack overflow
+Thread-Topic: [PATCH v8 5/6] x86/signal: Detect and prevent an alternate
+ signal stack overflow
+Thread-Index: AQHXNzOfB++Ln2WD/U+jOvjJUzWT2qrAORRg
+Date:   Thu, 22 Apr 2021 08:46:14 +0000
+Message-ID: <854d6aefdf604b559e37e82669b5e67f@AcuMS.aculab.com>
 References: <20210422044856.27250-1-chang.seok.bae@intel.com>
+ <20210422044856.27250-6-chang.seok.bae@intel.com>
+In-Reply-To: <20210422044856.27250-6-chang.seok.bae@intel.com>
+Accept-Language: en-GB, en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-ms-exchange-transport-fromentityheader: Hosted
+x-originating-ip: [10.202.205.107]
+MIME-Version: 1.0
+Authentication-Results: relay.mimecast.com;
+        auth=pass smtp.auth=C51A453 smtp.mailfrom=david.laight@aculab.com
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: aculab.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The kernel pushes context on to the userspace stack to prepare for the
-user's signal handler. When the user has supplied an alternate signal
-stack, via sigaltstack(2), it is easy for the kernel to verify that the
-stack size is sufficient for the current hardware context.
+From: Chang S. Bae
+> Sent: 22 April 2021 05:49
+> 
+> The kernel pushes context on to the userspace stack to prepare for the
+> user's signal handler. When the user has supplied an alternate signal
+> stack, via sigaltstack(2), it is easy for the kernel to verify that the
+> stack size is sufficient for the current hardware context.
+> 
+> Check if writing the hardware context to the alternate stack will exceed
+> it's size. If yes, then instead of corrupting user-data and proceeding with
+> the original signal handler, an immediate SIGSEGV signal is delivered.
 
-Check if writing the hardware context to the alternate stack will exceed
-it's size. If yes, then instead of corrupting user-data and proceeding with
-the original signal handler, an immediate SIGSEGV signal is delivered.
+What happens if SIGSEGV is caught?
 
-Refactor the stack pointer check code from on_sig_stack() and use the new
-helper.
+> Refactor the stack pointer check code from on_sig_stack() and use the new
+> helper.
+> 
+> While the kernel allows new source code to discover and use a sufficient
+> alternate signal stack size, this check is still necessary to protect
+> binaries with insufficient alternate signal stack size from data
+> corruption.
+...
+> diff --git a/include/linux/sched/signal.h b/include/linux/sched/signal.h
+> index 3f6a0fcaa10c..ae60f838ebb9 100644
+> --- a/include/linux/sched/signal.h
+> +++ b/include/linux/sched/signal.h
+> @@ -537,6 +537,17 @@ static inline int kill_cad_pid(int sig, int priv)
+>  #define SEND_SIG_NOINFO ((struct kernel_siginfo *) 0)
+>  #define SEND_SIG_PRIV	((struct kernel_siginfo *) 1)
+> 
+> +static inline int __on_sig_stack(unsigned long sp)
+> +{
+> +#ifdef CONFIG_STACK_GROWSUP
+> +	return sp >= current->sas_ss_sp &&
+> +		sp - current->sas_ss_sp < current->sas_ss_size;
+> +#else
+> +	return sp > current->sas_ss_sp &&
+> +		sp - current->sas_ss_sp <= current->sas_ss_size;
+> +#endif
+> +}
+> +
 
-While the kernel allows new source code to discover and use a sufficient
-alternate signal stack size, this check is still necessary to protect
-binaries with insufficient alternate signal stack size from data
-corruption.
+Those don't look different enough.
 
-Reported-by: Florian Weimer <fweimer@redhat.com>
-Fixes: c2bc11f10a39 ("x86, AVX-512: Enable AVX-512 States Context Switch")
-Suggested-by: Jann Horn <jannh@google.com>
-Suggested-by: Andy Lutomirski <luto@kernel.org>
-Signed-off-by: Chang S. Bae <chang.seok.bae@intel.com>
-Reviewed-by: Len Brown <len.brown@intel.com>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Jann Horn <jannh@google.com>
-Cc: x86@kernel.org
-Cc: linux-kernel@vger.kernel.org
-Link: https://bugzilla.kernel.org/show_bug.cgi?id=153531
----
-Changes from v7:
-* Separated the notion for entering altstack from a nested signal on the
-  altstack. (Andy Lutomirski)
-* Added the message for sigalstack overflow. (Andy Lutomirski)
-* Refactored on_sig_stack(). (Borislav Petkov)
-* Included the "Fixes" tag and the bugzilla link as this patch fixes the
-  kernel behavior.
+	David
 
-Changes from v5:
-* Fixed the overflow check. (Andy Lutomirski)
-* Updated the changelog.
-
-Changes from v3:
-* Updated the changelog (Borislav Petkov)
-
-Changes from v2:
-* Simplified the implementation (Jann Horn)
----
- arch/x86/kernel/signal.c     | 24 ++++++++++++++++++++----
- include/linux/sched/signal.h | 19 ++++++++++++-------
- 2 files changed, 32 insertions(+), 11 deletions(-)
-
-diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
-index ca8fd18fba1f..beec56f845b7 100644
---- a/arch/x86/kernel/signal.c
-+++ b/arch/x86/kernel/signal.c
-@@ -239,10 +239,11 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
- 	     void __user **fpstate)
- {
- 	/* Default to using normal stack */
-+	bool nested_altstack = on_sig_stack(regs->sp);
-+	bool entering_altstack = false;
- 	unsigned long math_size = 0;
- 	unsigned long sp = regs->sp;
- 	unsigned long buf_fx = 0;
--	int onsigstack = on_sig_stack(sp);
- 	int ret;
- 
- 	/* redzone */
-@@ -251,15 +252,23 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
- 
- 	/* This is the X/Open sanctioned signal stack switching.  */
- 	if (ka->sa.sa_flags & SA_ONSTACK) {
--		if (sas_ss_flags(sp) == 0)
-+		/*
-+		 * This checks nested_altstack via sas_ss_flags(). Sensible
-+		 * programs use SS_AUTODISARM, which disables that check, and
-+		 * programs that don't use SS_AUTODISARM get compatible.
-+		 */
-+		if (sas_ss_flags(sp) == 0) {
- 			sp = current->sas_ss_sp + current->sas_ss_size;
-+			entering_altstack = true;
-+		}
- 	} else if (IS_ENABLED(CONFIG_X86_32) &&
--		   !onsigstack &&
-+		   !nested_altstack &&
- 		   regs->ss != __USER_DS &&
- 		   !(ka->sa.sa_flags & SA_RESTORER) &&
- 		   ka->sa.sa_restorer) {
- 		/* This is the legacy signal stack switching. */
- 		sp = (unsigned long) ka->sa.sa_restorer;
-+		entering_altstack = true;
- 	}
- 
- 	sp = fpu__alloc_mathframe(sp, IS_ENABLED(CONFIG_X86_32),
-@@ -272,8 +281,15 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
- 	 * If we are on the alternate signal stack and would overflow it, don't.
- 	 * Return an always-bogus address instead so we will die with SIGSEGV.
- 	 */
--	if (onsigstack && !likely(on_sig_stack(sp)))
-+	if (unlikely((nested_altstack || entering_altstack) &&
-+		     !__on_sig_stack(sp))) {
-+
-+		if (show_unhandled_signals && printk_ratelimit())
-+			pr_info("%s[%d] overflowed sigaltstack",
-+				current->comm, task_pid_nr(current));
-+
- 		return (void __user *)-1L;
-+	}
- 
- 	/* save i387 and extended state */
- 	ret = copy_fpstate_to_sigframe(*fpstate, (void __user *)buf_fx, math_size);
-diff --git a/include/linux/sched/signal.h b/include/linux/sched/signal.h
-index 3f6a0fcaa10c..ae60f838ebb9 100644
---- a/include/linux/sched/signal.h
-+++ b/include/linux/sched/signal.h
-@@ -537,6 +537,17 @@ static inline int kill_cad_pid(int sig, int priv)
- #define SEND_SIG_NOINFO ((struct kernel_siginfo *) 0)
- #define SEND_SIG_PRIV	((struct kernel_siginfo *) 1)
- 
-+static inline int __on_sig_stack(unsigned long sp)
-+{
-+#ifdef CONFIG_STACK_GROWSUP
-+	return sp >= current->sas_ss_sp &&
-+		sp - current->sas_ss_sp < current->sas_ss_size;
-+#else
-+	return sp > current->sas_ss_sp &&
-+		sp - current->sas_ss_sp <= current->sas_ss_size;
-+#endif
-+}
-+
- /*
-  * True if we are on the alternate signal stack.
-  */
-@@ -554,13 +565,7 @@ static inline int on_sig_stack(unsigned long sp)
- 	if (current->sas_ss_flags & SS_AUTODISARM)
- 		return 0;
- 
--#ifdef CONFIG_STACK_GROWSUP
--	return sp >= current->sas_ss_sp &&
--		sp - current->sas_ss_sp < current->sas_ss_size;
--#else
--	return sp > current->sas_ss_sp &&
--		sp - current->sas_ss_sp <= current->sas_ss_size;
--#endif
-+	return __on_sig_stack(sp);
- }
- 
- static inline int sas_ss_flags(unsigned long sp)
--- 
-2.17.1
+-
+Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT, UK
+Registration No: 1397386 (Wales)
 
