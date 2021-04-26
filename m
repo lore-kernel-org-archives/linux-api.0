@@ -7,54 +7,54 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 97C0EC433ED
-	for <linux-api@archiver.kernel.org>; Mon, 26 Apr 2021 19:06:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 94E6AC433ED
+	for <linux-api@archiver.kernel.org>; Mon, 26 Apr 2021 19:06:45 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 67DBA61078
-	for <linux-api@archiver.kernel.org>; Mon, 26 Apr 2021 19:06:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 640D360FE8
+	for <linux-api@archiver.kernel.org>; Mon, 26 Apr 2021 19:06:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239823AbhDZTHT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 26 Apr 2021 15:07:19 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52820 "EHLO
+        id S240062AbhDZTHX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 26 Apr 2021 15:07:23 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52850 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232868AbhDZTHL (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 26 Apr 2021 15:07:11 -0400
-Received: from mail-pj1-x1030.google.com (mail-pj1-x1030.google.com [IPv6:2607:f8b0:4864:20::1030])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C8522C061756
-        for <linux-api@vger.kernel.org>; Mon, 26 Apr 2021 12:06:25 -0700 (PDT)
-Received: by mail-pj1-x1030.google.com with SMTP id m6-20020a17090a8586b02901507e1acf0fso5863295pjn.3
-        for <linux-api@vger.kernel.org>; Mon, 26 Apr 2021 12:06:25 -0700 (PDT)
+        with ESMTP id S239897AbhDZTHP (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 26 Apr 2021 15:07:15 -0400
+Received: from mail-pf1-x436.google.com (mail-pf1-x436.google.com [IPv6:2607:f8b0:4864:20::436])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8B0E9C06138B
+        for <linux-api@vger.kernel.org>; Mon, 26 Apr 2021 12:06:31 -0700 (PDT)
+Received: by mail-pf1-x436.google.com with SMTP id c3so20856486pfo.3
+        for <linux-api@vger.kernel.org>; Mon, 26 Apr 2021 12:06:31 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=osandov-com.20150623.gappssmtp.com; s=20150623;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=NgT56OeZMtHDF6pkRlLefN/K3Ae4GRjJeZyqXlRwP5k=;
-        b=TrAQNjNPOEOiBSiPil19xi9Kckrg2XCOtr9sAsN6phy5iQuNLcrlIO1VHalknXSz0x
-         Bve7Ay6zCo8MC/k8rIfuLYu52bkS6WtN4mO21m0chEabbCTienaGUBUbsJUiVEeBq/Yu
-         z1weH7PGsiDuv2/C4dkJ64moP0NLyN7/2CTRJUfI/HXTFZ4gdL9m2/4fSAbuvhTKuE2R
-         P4jEEVpD6hsmIfzZp8o0b+6MzjDQPZS7H2cp7TI8EeO71gDkV76QMeaGtCB3L+S/YwUC
-         JbQsAwGDcI4azMkkdQp9EOKYowZsq2BEeRNcYTkub1x5QPLFFVb0dAUjAZhGZy+JnhKQ
-         dMfA==
+        bh=2l/GnWeoJQNh5Obqo5cWKdS1MTXgv8/WFibm3D3ykik=;
+        b=gUfkOSL1upXiyYnXs7b7FMgLFYaGh3+awSUFxZSQOHxPFOpYpAri0wTp9xXrYlcZ2V
+         1CH1VIlo1mmEMF0xfpNiy94RvoI2zy8n/EQjj4WRo61IYjLEc1pAc0i6RYWXm8P9iwu8
+         clywmBhzuG+vVnUIW2e6lTAlA3j60kU7oSjfctQKEoUTwCZZmynE+bWIYCpKV0kCXqpG
+         BC+1yfMfxMu+JM+5jF/bxtJR6A/BWyXl9NTPXC0o7ENiBEJhDLKsU8qYBPWUagBdBfti
+         zhgxp/onN5JOPPnCc9PZaVoQmdJ0rzm4XVxCdV8Loz1h9DQTPaR9PpNWE1rcVLJXG858
+         39fA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=NgT56OeZMtHDF6pkRlLefN/K3Ae4GRjJeZyqXlRwP5k=;
-        b=uTveUhCrcL6zwWaT93+0Xo5U7D63zPY5fj4aHHgGEiHAPyPidARZ2SNX/G4t+fWaW/
-         Sg6l2SWEZFAbZInGqdc7gaNgHTdrjFN92KxU7E+TIg6k6OuhKhzpDQxD80sJnsNayeoK
-         yN/ZfAOFHno5D2iBayxPZJKmO0R9mwczXJ+w9nLnHg+T6/xBSxJ7EGVppwTrCIZM26Gw
-         xYkVwisxD9A2awMvAqcdeEypPinWcc7xEZc+L4K4mxogUDovygof8Cs0hNmRfDZqkggL
-         PGAXPJLL9bCNIkmWS/X6KY6kY0LK3uUJld1/FCpHsZ1UYcznEvMhBbr3aTHS5rnkLqPK
-         9w5Q==
-X-Gm-Message-State: AOAM530NVjItkhlacgiWNJx7Ngtf7h7pbfXTCLX3DR9e+Tpo7owYRLcB
-        saPT3eS97W8kwp4rdgIA14BMoV5p1wyU6g==
-X-Google-Smtp-Source: ABdhPJw7tv00Z67MNpPnOz1hnXduWwtTrkRTVyF+Fq1SJHg2GEz9nBAbNzUcU5M3KVDpynr8d69mOg==
-X-Received: by 2002:a17:90a:a781:: with SMTP id f1mr23560054pjq.57.1619463985230;
-        Mon, 26 Apr 2021 12:06:25 -0700 (PDT)
+        bh=2l/GnWeoJQNh5Obqo5cWKdS1MTXgv8/WFibm3D3ykik=;
+        b=pFd56Vm0JRftecE+kCKlC5K3bF7ht83weRx7OD1ZcyS1P3XnjUl/CZevya4VuquRCe
+         BE/cjxfSY5nBj3JsxRUCmvO4pvdvt4a1mkcWr8JYkNHTvJWegNvUcjWfnk2/iubFOUKh
+         qkGUXdA8veMRgoZgNO8sXiL0M+DjxDEwO5ChPDHbkTUsFwDlkG/2uR2cu/kjiywTDGwL
+         pPKhpBSf75TMuriQDAHO02IPkytVQJ5k2xldJCOeRrKGuMdvgAMFwTwdXCvofgKms4Mp
+         7YxBLzBtFm+aXhzjNU2KaGgiPwkkBkerX6+wWhQKPHYJ6sKjzUlKLdAjPXuThzSpewK9
+         TElg==
+X-Gm-Message-State: AOAM5329amEbtSAYhwIGoq7FUTrQ7/48RQJNdTSp2t08DoYmBl7EPoWS
+        pwBIqun/GpUOydQ3y2xUeKPTwA==
+X-Google-Smtp-Source: ABdhPJxle902eBpq97bPNhNy5I8uLuW83UY9sOhR15kcJ7bMTfpRSg1+4zZuMIPvQYkkHwKzZmeZYQ==
+X-Received: by 2002:a65:4889:: with SMTP id n9mr17996992pgs.91.1619463991040;
+        Mon, 26 Apr 2021 12:06:31 -0700 (PDT)
 Received: from relinquished.tfbnw.net ([2620:10d:c090:400::5:f06a])
-        by smtp.gmail.com with ESMTPSA id lx11sm331745pjb.27.2021.04.26.12.06.23
+        by smtp.gmail.com with ESMTPSA id lx11sm331745pjb.27.2021.04.26.12.06.28
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 26 Apr 2021 12:06:24 -0700 (PDT)
+        Mon, 26 Apr 2021 12:06:30 -0700 (PDT)
 From:   Omar Sandoval <osandov@osandov.com>
 To:     linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org,
         Al Viro <viro@zeniv.linux.org.uk>,
@@ -65,9 +65,9 @@ Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
         Amir Goldstein <amir73il@gmail.com>,
         Aleksa Sarai <cyphar@cyphar.com>, linux-api@vger.kernel.org,
         kernel-team@fb.com
-Subject: [PATCH RESEND v9 2/9] fs: add O_ALLOW_ENCODED open flag
-Date:   Mon, 26 Apr 2021 12:06:05 -0700
-Message-Id: <61323972c3d5daf5f39c9034c58c0e4d7e651aac.1619463858.git.osandov@fb.com>
+Subject: [PATCH RESEND v9 4/9] btrfs: don't advance offset for compressed bios in btrfs_csum_one_bio()
+Date:   Mon, 26 Apr 2021 12:06:07 -0700
+Message-Id: <7c0b2cfc62531debc8a756ec796c56a06a62933a.1619463858.git.osandov@fb.com>
 X-Mailer: git-send-email 2.31.1
 In-Reply-To: <cover.1619463858.git.osandov@fb.com>
 References: <cover.1619463858.git.osandov@fb.com>
@@ -79,148 +79,198 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-The upcoming RWF_ENCODED operation introduces some security concerns:
+btrfs_csum_one_bio() loops over each filesystem block in the bio while
+keeping a cursor of its current logical position in the file in order to
+look up the ordered extent to add the checksums to. However, this
+doesn't make much sense for compressed extents, as a sector on disk does
+not correspond to a sector of decompressed file data. It happens to work
+because 1) the compressed bio always covers one ordered extent and 2)
+the size of the bio is always less than the size of the ordered extent.
+However, the second point will not always be true for encoded writes.
 
-1. Compressed writes will pass arbitrary data to decompression
-   algorithms in the kernel.
-2. Compressed reads can leak truncated/hole punched data.
-
-Therefore, we need to require privilege for RWF_ENCODED. It's not
-possible to do the permissions checks at the time of the read or write
-because, e.g., io_uring submits IO from a worker thread. So, add an open
-flag which requires CAP_SYS_ADMIN. It can also be set and cleared with
-fcntl(). The flag is not cleared in any way on fork or exec.
-
-Note that the usual issue that unknown open flags are ignored doesn't
-really matter for O_ALLOW_ENCODED; if the kernel doesn't support
-O_ALLOW_ENCODED, then it doesn't support RWF_ENCODED, either.
+Let's add a boolean parameter to btrfs_csum_one_bio() to indicate that
+it can assume that the bio only covers one ordered extent. Since we're
+already changing the signature, let's get rid of the contig parameter
+and make it implied by the offset parameter, similar to the change we
+recently made to btrfs_lookup_bio_sums(). Additionally, let's rename
+nr_sectors to blockcount to make it clear that it's the number of
+filesystem blocks, not the number of 512-byte sectors.
 
 Reviewed-by: Josef Bacik <josef@toxicpanda.com>
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- arch/alpha/include/uapi/asm/fcntl.h  |  1 +
- arch/parisc/include/uapi/asm/fcntl.h |  1 +
- arch/sparc/include/uapi/asm/fcntl.h  |  1 +
- fs/fcntl.c                           | 10 ++++++++--
- fs/namei.c                           |  4 ++++
- include/linux/fcntl.h                |  2 +-
- include/uapi/asm-generic/fcntl.h     |  4 ++++
- 7 files changed, 20 insertions(+), 3 deletions(-)
+ fs/btrfs/compression.c |  5 +++--
+ fs/btrfs/ctree.h       |  2 +-
+ fs/btrfs/file-item.c   | 35 ++++++++++++++++-------------------
+ fs/btrfs/inode.c       |  8 ++++----
+ 4 files changed, 24 insertions(+), 26 deletions(-)
 
-diff --git a/arch/alpha/include/uapi/asm/fcntl.h b/arch/alpha/include/uapi/asm/fcntl.h
-index 50bdc8e8a271..391e0d112e41 100644
---- a/arch/alpha/include/uapi/asm/fcntl.h
-+++ b/arch/alpha/include/uapi/asm/fcntl.h
-@@ -34,6 +34,7 @@
+diff --git a/fs/btrfs/compression.c b/fs/btrfs/compression.c
+index 17f93fd28f7e..4584e37f1710 100644
+--- a/fs/btrfs/compression.c
++++ b/fs/btrfs/compression.c
+@@ -454,7 +454,8 @@ blk_status_t btrfs_submit_compressed_write(struct btrfs_inode *inode, u64 start,
+ 			BUG_ON(ret); /* -ENOMEM */
  
- #define O_PATH		040000000
- #define __O_TMPFILE	0100000000
-+#define O_ALLOW_ENCODED	0200000000
+ 			if (!skip_sum) {
+-				ret = btrfs_csum_one_bio(inode, bio, start, 1);
++				ret = btrfs_csum_one_bio(inode, bio, start,
++							 true);
+ 				BUG_ON(ret); /* -ENOMEM */
+ 			}
  
- #define F_GETLK		7
- #define F_SETLK		8
-diff --git a/arch/parisc/include/uapi/asm/fcntl.h b/arch/parisc/include/uapi/asm/fcntl.h
-index 03dee816cb13..0feb31faaefa 100644
---- a/arch/parisc/include/uapi/asm/fcntl.h
-+++ b/arch/parisc/include/uapi/asm/fcntl.h
-@@ -19,6 +19,7 @@
+@@ -486,7 +487,7 @@ blk_status_t btrfs_submit_compressed_write(struct btrfs_inode *inode, u64 start,
+ 	BUG_ON(ret); /* -ENOMEM */
  
- #define O_PATH		020000000
- #define __O_TMPFILE	040000000
-+#define O_ALLOW_ENCODED	0100000000
+ 	if (!skip_sum) {
+-		ret = btrfs_csum_one_bio(inode, bio, start, 1);
++		ret = btrfs_csum_one_bio(inode, bio, start, true);
+ 		BUG_ON(ret); /* -ENOMEM */
+ 	}
  
- #define F_GETLK64	8
- #define F_SETLK64	9
-diff --git a/arch/sparc/include/uapi/asm/fcntl.h b/arch/sparc/include/uapi/asm/fcntl.h
-index 67dae75e5274..ac3e8c9cb32c 100644
---- a/arch/sparc/include/uapi/asm/fcntl.h
-+++ b/arch/sparc/include/uapi/asm/fcntl.h
-@@ -37,6 +37,7 @@
- 
- #define O_PATH		0x1000000
- #define __O_TMPFILE	0x2000000
-+#define O_ALLOW_ENCODED	0x8000000
- 
- #define F_GETOWN	5	/*  for sockets. */
- #define F_SETOWN	6	/*  for sockets. */
-diff --git a/fs/fcntl.c b/fs/fcntl.c
-index dfc72f15be7f..eca4eb008194 100644
---- a/fs/fcntl.c
-+++ b/fs/fcntl.c
-@@ -31,7 +31,8 @@
- #include <asm/siginfo.h>
- #include <linux/uaccess.h>
- 
--#define SETFL_MASK (O_APPEND | O_NONBLOCK | O_NDELAY | O_DIRECT | O_NOATIME)
-+#define SETFL_MASK (O_APPEND | O_NONBLOCK | O_NDELAY | O_DIRECT | O_NOATIME | \
-+		    O_ALLOW_ENCODED)
- 
- static int setfl(int fd, struct file * filp, unsigned long arg)
+diff --git a/fs/btrfs/ctree.h b/fs/btrfs/ctree.h
+index 278e0cbc9a98..572494cff2e4 100644
+--- a/fs/btrfs/ctree.h
++++ b/fs/btrfs/ctree.h
+@@ -3082,7 +3082,7 @@ int btrfs_csum_file_blocks(struct btrfs_trans_handle *trans,
+ 			   struct btrfs_root *root,
+ 			   struct btrfs_ordered_sum *sums);
+ blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
+-				u64 file_start, int contig);
++				u64 offset, bool one_ordered);
+ int btrfs_lookup_csums_range(struct btrfs_root *root, u64 start, u64 end,
+ 			     struct list_head *list, int search_commit);
+ void btrfs_extent_item_to_extent_map(struct btrfs_inode *inode,
+diff --git a/fs/btrfs/file-item.c b/fs/btrfs/file-item.c
+index 294602f139ef..8f755ef20aaa 100644
+--- a/fs/btrfs/file-item.c
++++ b/fs/btrfs/file-item.c
+@@ -615,28 +615,28 @@ int btrfs_lookup_csums_range(struct btrfs_root *root, u64 start, u64 end,
+  * btrfs_csum_one_bio - Calculates checksums of the data contained inside a bio
+  * @inode:	 Owner of the data inside the bio
+  * @bio:	 Contains the data to be checksummed
+- * @file_start:  offset in file this bio begins to describe
+- * @contig:	 Boolean. If true/1 means all bio vecs in this bio are
+- *		 contiguous and they begin at @file_start in the file. False/0
+- *		 means this bio can contains potentially discontigous bio vecs
+- *		 so the logical offset of each should be calculated separately.
++ * @offset:      If (u64)-1, @bio may contain discontiguous bio vecs, so the
++ *               file offsets are determined from the page offsets in the bio.
++ *               Otherwise, this is the starting file offset of the bio vecs in
++ *               @bio, which must be contiguous.
++ * @one_ordered: If true, @bio only refers to one ordered extent.
+  */
+ blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
+-		       u64 file_start, int contig)
++				u64 offset, bool one_ordered)
  {
-@@ -50,6 +51,11 @@ static int setfl(int fd, struct file * filp, unsigned long arg)
- 		if (!inode_owner_or_capable(file_mnt_user_ns(filp), inode))
- 			return -EPERM;
+ 	struct btrfs_fs_info *fs_info = inode->root->fs_info;
+ 	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
+ 	struct btrfs_ordered_sum *sums;
+ 	struct btrfs_ordered_extent *ordered = NULL;
++	const bool page_offsets = (offset == (u64)-1);
+ 	char *data;
+ 	struct bvec_iter iter;
+ 	struct bio_vec bvec;
+ 	int index;
+-	int nr_sectors;
++	int blockcount;
+ 	unsigned long total_bytes = 0;
+ 	unsigned long this_sum_bytes = 0;
+ 	int i;
+-	u64 offset;
+ 	unsigned nofs_flag;
  
-+	/* O_ALLOW_ENCODED can only be set by superuser */
-+	if ((arg & O_ALLOW_ENCODED) && !(filp->f_flags & O_ALLOW_ENCODED) &&
-+	    !capable(CAP_SYS_ADMIN))
-+		return -EPERM;
-+
- 	/* required for strict SunOS emulation */
- 	if (O_NONBLOCK != O_NDELAY)
- 	       if (arg & O_NDELAY)
-@@ -1043,7 +1049,7 @@ static int __init fcntl_init(void)
- 	 * Exceptions: O_NONBLOCK is a two bit define on parisc; O_NDELAY
- 	 * is defined as O_NONBLOCK on some platforms and not on others.
- 	 */
--	BUILD_BUG_ON(21 - 1 /* for O_RDONLY being 0 */ !=
-+	BUILD_BUG_ON(22 - 1 /* for O_RDONLY being 0 */ !=
- 		HWEIGHT32(
- 			(VALID_OPEN_FLAGS & ~(O_NONBLOCK | O_NDELAY)) |
- 			__FMODE_EXEC | __FMODE_NONOTIFY));
-diff --git a/fs/namei.c b/fs/namei.c
-index 48a2f288e802..986bd8312171 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -3000,6 +3000,10 @@ static int may_open(struct user_namespace *mnt_userns, const struct path *path,
- 	if (flag & O_NOATIME && !inode_owner_or_capable(mnt_userns, inode))
- 		return -EPERM;
+ 	nofs_flag = memalloc_nofs_save();
+@@ -650,18 +650,13 @@ blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
+ 	sums->len = bio->bi_iter.bi_size;
+ 	INIT_LIST_HEAD(&sums->list);
  
-+	/* O_ALLOW_ENCODED can only be set by superuser */
-+	if ((flag & O_ALLOW_ENCODED) && !capable(CAP_SYS_ADMIN))
-+		return -EPERM;
-+
- 	return 0;
+-	if (contig)
+-		offset = file_start;
+-	else
+-		offset = 0; /* shut up gcc */
+-
+ 	sums->bytenr = bio->bi_iter.bi_sector << 9;
+ 	index = 0;
+ 
+ 	shash->tfm = fs_info->csum_shash;
+ 
+ 	bio_for_each_segment(bvec, bio, iter) {
+-		if (!contig)
++		if (page_offsets)
+ 			offset = page_offset(bvec.bv_page) + bvec.bv_offset;
+ 
+ 		if (!ordered) {
+@@ -669,13 +664,14 @@ blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
+ 			BUG_ON(!ordered); /* Logic error */
+ 		}
+ 
+-		nr_sectors = BTRFS_BYTES_TO_BLKS(fs_info,
++		blockcount = BTRFS_BYTES_TO_BLKS(fs_info,
+ 						 bvec.bv_len + fs_info->sectorsize
+ 						 - 1);
+ 
+-		for (i = 0; i < nr_sectors; i++) {
+-			if (offset >= ordered->file_offset + ordered->num_bytes ||
+-			    offset < ordered->file_offset) {
++		for (i = 0; i < blockcount; i++) {
++			if (!one_ordered &&
++			    (offset >= ordered->file_offset + ordered->num_bytes ||
++			     offset < ordered->file_offset)) {
+ 				unsigned long bytes_left;
+ 
+ 				sums->len = this_sum_bytes;
+@@ -706,7 +702,8 @@ blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
+ 					    sums->sums + index);
+ 			kunmap_atomic(data);
+ 			index += fs_info->csum_size;
+-			offset += fs_info->sectorsize;
++			if (!one_ordered)
++				offset += fs_info->sectorsize;
+ 			this_sum_bytes += fs_info->sectorsize;
+ 			total_bytes += fs_info->sectorsize;
+ 		}
+diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
+index 1a349759efae..9aaa2f12da27 100644
+--- a/fs/btrfs/inode.c
++++ b/fs/btrfs/inode.c
+@@ -2235,7 +2235,7 @@ int btrfs_bio_fits_in_stripe(struct page *page, size_t size, struct bio *bio,
+ static blk_status_t btrfs_submit_bio_start(struct inode *inode, struct bio *bio,
+ 					   u64 dio_file_offset)
+ {
+-	return btrfs_csum_one_bio(BTRFS_I(inode), bio, 0, 0);
++	return btrfs_csum_one_bio(BTRFS_I(inode), bio, (u64)-1, false);
  }
  
-diff --git a/include/linux/fcntl.h b/include/linux/fcntl.h
-index 766fcd973beb..2cd6a9185d4c 100644
---- a/include/linux/fcntl.h
-+++ b/include/linux/fcntl.h
-@@ -10,7 +10,7 @@
- 	(O_RDONLY | O_WRONLY | O_RDWR | O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC | \
- 	 O_APPEND | O_NDELAY | O_NONBLOCK | __O_SYNC | O_DSYNC | \
- 	 FASYNC	| O_DIRECT | O_LARGEFILE | O_DIRECTORY | O_NOFOLLOW | \
--	 O_NOATIME | O_CLOEXEC | O_PATH | __O_TMPFILE)
-+	 O_NOATIME | O_CLOEXEC | O_PATH | __O_TMPFILE | O_ALLOW_ENCODED)
+ bool btrfs_bio_fits_in_ordered_extent(struct page *page, struct bio *bio,
+@@ -2425,7 +2425,7 @@ blk_status_t btrfs_submit_data_bio(struct inode *inode, struct bio *bio,
+ 					  0, btrfs_submit_bio_start);
+ 		goto out;
+ 	} else if (!skip_sum) {
+-		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, 0, 0);
++		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, (u64)-1, false);
+ 		if (ret)
+ 			goto out;
+ 	}
+@@ -8002,7 +8002,7 @@ static blk_status_t btrfs_submit_bio_start_direct_io(struct inode *inode,
+ 						     struct bio *bio,
+ 						     u64 dio_file_offset)
+ {
+-	return btrfs_csum_one_bio(BTRFS_I(inode), bio, dio_file_offset, 1);
++	return btrfs_csum_one_bio(BTRFS_I(inode), bio, dio_file_offset, false);
+ }
  
- /* List of all valid flags for the how->upgrade_mask argument: */
- #define VALID_UPGRADE_FLAGS \
-diff --git a/include/uapi/asm-generic/fcntl.h b/include/uapi/asm-generic/fcntl.h
-index 9dc0bf0c5a6e..75321c7a66ac 100644
---- a/include/uapi/asm-generic/fcntl.h
-+++ b/include/uapi/asm-generic/fcntl.h
-@@ -89,6 +89,10 @@
- #define __O_TMPFILE	020000000
- #endif
- 
-+#ifndef O_ALLOW_ENCODED
-+#define O_ALLOW_ENCODED	040000000
-+#endif
-+
- /* a horrid kludge trying to make sure that this will fail on old kernels */
- #define O_TMPFILE (__O_TMPFILE | O_DIRECTORY)
- #define O_TMPFILE_MASK (__O_TMPFILE | O_DIRECTORY | O_CREAT)      
+ static void btrfs_end_dio_bio(struct bio *bio)
+@@ -8061,7 +8061,7 @@ static inline blk_status_t btrfs_submit_dio_bio(struct bio *bio,
+ 		 * If we aren't doing async submit, calculate the csum of the
+ 		 * bio now.
+ 		 */
+-		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, file_offset, 1);
++		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, file_offset, false);
+ 		if (ret)
+ 			goto err;
+ 	} else {
 -- 
 2.31.1
 
