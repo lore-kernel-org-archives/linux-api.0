@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 37B4AC4360C
-	for <linux-api@archiver.kernel.org>; Tue, 27 Apr 2021 20:44:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1D1DEC433B4
+	for <linux-api@archiver.kernel.org>; Tue, 27 Apr 2021 20:44:26 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1B6616140C
-	for <linux-api@archiver.kernel.org>; Tue, 27 Apr 2021 20:44:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0242E6140C
+	for <linux-api@archiver.kernel.org>; Tue, 27 Apr 2021 20:44:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239098AbhD0UpE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 27 Apr 2021 16:45:04 -0400
-Received: from mga05.intel.com ([192.55.52.43]:31779 "EHLO mga05.intel.com"
+        id S239060AbhD0UpH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 27 Apr 2021 16:45:07 -0400
+Received: from mga05.intel.com ([192.55.52.43]:31780 "EHLO mga05.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S239038AbhD0Uow (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 27 Apr 2021 16:44:52 -0400
-IronPort-SDR: 0vx8tUf41OlnCihQhl1GQVjY2f9JPPYzlCxF5a6wiABAOpdOau3SBF/3siDJKsrS3LYKY/ofO7
- RDNg+MCZn+mQ==
-X-IronPort-AV: E=McAfee;i="6200,9189,9967"; a="281922446"
+        id S235416AbhD0UpA (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 27 Apr 2021 16:45:00 -0400
+IronPort-SDR: I57lO1CfP4ghGBwyHvx8pDO50yTcJG+djc0a8LhKH6nQR0apqkcqJ68NqcvuVcgz0DeUrP1dv0
+ sua5sVSIikhQ==
+X-IronPort-AV: E=McAfee;i="6200,9189,9967"; a="281922452"
 X-IronPort-AV: E=Sophos;i="5.82,255,1613462400"; 
-   d="scan'208";a="281922446"
+   d="scan'208";a="281922452"
 Received: from orsmga001.jf.intel.com ([10.7.209.18])
-  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Apr 2021 13:44:07 -0700
-IronPort-SDR: 7P8jTrq4zYxq3ucQoaAPWtoyBHLoKd1I1fXA8lTvxqFOvUSMbpYdEh7z1PHiAdeYJM27K219Id
- VJ/nB5nqJdKQ==
+  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Apr 2021 13:44:08 -0700
+IronPort-SDR: +tXvO61IkH4zH7pJV2sVpNWnofhwenRDVDS/7i0ig/pVnhV9EyAHWTpko3HUu3GazYRoxKx7IE
+ tHDu0dZ9obWw==
 X-IronPort-AV: E=Sophos;i="5.82,255,1613462400"; 
-   d="scan'208";a="465623429"
+   d="scan'208";a="465623436"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga001-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Apr 2021 13:44:06 -0700
+  by orsmga001-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Apr 2021 13:44:08 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,9 +61,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v26 02/30] x86/cet/shstk: Add Kconfig option for Shadow Stack
-Date:   Tue, 27 Apr 2021 13:42:47 -0700
-Message-Id: <20210427204315.24153-3-yu-cheng.yu@intel.com>
+Subject: [PATCH v26 04/30] x86/cpufeatures: Introduce CPU setup and option parsing for CET
+Date:   Tue, 27 Apr 2021 13:42:49 -0700
+Message-Id: <20210427204315.24153-5-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210427204315.24153-1-yu-cheng.yu@intel.com>
 References: <20210427204315.24153-1-yu-cheng.yu@intel.com>
@@ -73,79 +73,73 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Shadow Stack provides protection against function return address
-corruption.  It is active when the processor supports it, the kernel has
-CONFIG_X86_SHADOW_STACK enabled, and the application is built for the
-feature.  This is only implemented for the 64-bit kernel.  When it is
-enabled, legacy non-Shadow Stack applications continue to work, but without
-protection.
+Introduce CPU setup and boot option parsing for CET features.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Cc: Kees Cook <keescook@chromium.org>
 ---
 v25:
-- Remove X86_CET and use X86_SHADOW_STACK directly.
+- Remove software-defined X86_FEATURE_CET.
 
 v24:
-- Update for the splitting X86_CET to X86_SHADOW_STACK and X86_IBT.
+- Update #ifdef placement to reflect Kconfig changes of splitting shadow stack and ibt.
 
- arch/x86/Kconfig           | 22 ++++++++++++++++++++++
- arch/x86/Kconfig.assembler |  5 +++++
- 2 files changed, 27 insertions(+)
+ arch/x86/include/uapi/asm/processor-flags.h |  2 ++
+ arch/x86/kernel/cpu/common.c                | 14 ++++++++++++++
+ 2 files changed, 16 insertions(+)
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 2792879d398e..41283f82fd87 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -28,6 +28,7 @@ config X86_64
- 	select ARCH_HAS_GIGANTIC_PAGE
- 	select ARCH_SUPPORTS_INT128 if CC_HAS_INT128
- 	select ARCH_USE_CMPXCHG_LOCKREF
-+	select ARCH_HAS_SHADOW_STACK
- 	select HAVE_ARCH_SOFT_DIRTY
- 	select MODULES_USE_ELF_RELA
- 	select NEED_DMA_MAP_STATE
-@@ -1941,6 +1942,27 @@ config X86_SGX
+diff --git a/arch/x86/include/uapi/asm/processor-flags.h b/arch/x86/include/uapi/asm/processor-flags.h
+index bcba3c643e63..a8df907e8017 100644
+--- a/arch/x86/include/uapi/asm/processor-flags.h
++++ b/arch/x86/include/uapi/asm/processor-flags.h
+@@ -130,6 +130,8 @@
+ #define X86_CR4_SMAP		_BITUL(X86_CR4_SMAP_BIT)
+ #define X86_CR4_PKE_BIT		22 /* enable Protection Keys support */
+ #define X86_CR4_PKE		_BITUL(X86_CR4_PKE_BIT)
++#define X86_CR4_CET_BIT		23 /* enable Control-flow Enforcement */
++#define X86_CR4_CET		_BITUL(X86_CR4_CET_BIT)
  
- 	  If unsure, say N.
+ /*
+  * x86-64 Task Priority Register, CR8
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index ab640abe26b6..b6eeb5f2ae4d 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -510,6 +510,14 @@ static __init int setup_disable_pku(char *arg)
+ __setup("nopku", setup_disable_pku);
+ #endif /* CONFIG_X86_64 */
  
-+config ARCH_HAS_SHADOW_STACK
-+	def_bool n
++static __always_inline void setup_cet(struct cpuinfo_x86 *c)
++{
++	if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
++		return;
 +
-+config X86_SHADOW_STACK
-+	prompt "Intel Shadow Stack"
-+	def_bool n
-+	depends on AS_WRUSS
-+	depends on ARCH_HAS_SHADOW_STACK
-+	select ARCH_USES_HIGH_VMA_FLAGS
-+	help
-+	  Shadow Stack protection is a hardware feature that detects function
-+	  return address corruption.  This helps mitigate ROP attacks.
-+	  Applications must be enabled to use it, and old userspace does not
-+	  get protection "for free".
-+	  Support for this feature is present on Tiger Lake family of
-+	  processors released in 2020 or later.  Enabling this feature
-+	  increases kernel text size by 3.7 KB.
-+	  See Documentation/x86/intel_cet.rst for more information.
++	cr4_set_bits(X86_CR4_CET);
++}
 +
-+	  If unsure, say N.
+ /*
+  * Some CPU features depend on higher CPUID levels, which may not always
+  * be available due to CPUID level capping or broken virtualization
+@@ -1255,6 +1263,11 @@ static void __init cpu_parse_early_param(void)
+ 	if (cmdline_find_option_bool(boot_command_line, "noxsaves"))
+ 		setup_clear_cpu_cap(X86_FEATURE_XSAVES);
+ 
++	if (cmdline_find_option_bool(boot_command_line, "no_user_shstk"))
++		setup_clear_cpu_cap(X86_FEATURE_SHSTK);
++	if (cmdline_find_option_bool(boot_command_line, "no_user_ibt"))
++		setup_clear_cpu_cap(X86_FEATURE_IBT);
 +
- config EFI
- 	bool "EFI runtime service support"
- 	depends on ACPI
-diff --git a/arch/x86/Kconfig.assembler b/arch/x86/Kconfig.assembler
-index 26b8c08e2fc4..00c79dd93651 100644
---- a/arch/x86/Kconfig.assembler
-+++ b/arch/x86/Kconfig.assembler
-@@ -19,3 +19,8 @@ config AS_TPAUSE
- 	def_bool $(as-instr,tpause %ecx)
- 	help
- 	  Supported by binutils >= 2.31.1 and LLVM integrated assembler >= V7
-+
-+config AS_WRUSS
-+	def_bool $(as-instr,wrussq %rax$(comma)(%rbx))
-+	help
-+	  Supported by binutils >= 2.31 and LLVM integrated assembler
+ 	arglen = cmdline_find_option(boot_command_line, "clearcpuid", arg, sizeof(arg));
+ 	if (arglen <= 0)
+ 		return;
+@@ -1594,6 +1607,7 @@ static void identify_cpu(struct cpuinfo_x86 *c)
+ 
+ 	x86_init_rdrand(c);
+ 	setup_pku(c);
++	setup_cet(c);
+ 
+ 	/*
+ 	 * Clear/Set all flags overridden by options, need do it
 -- 
 2.21.0
 
