@@ -5,33 +5,33 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3E00EC43461
-	for <linux-api@archiver.kernel.org>; Tue, 27 Apr 2021 20:45:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 802F6C43603
+	for <linux-api@archiver.kernel.org>; Tue, 27 Apr 2021 20:45:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 21101613B0
-	for <linux-api@archiver.kernel.org>; Tue, 27 Apr 2021 20:45:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 69813613BC
+	for <linux-api@archiver.kernel.org>; Tue, 27 Apr 2021 20:45:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239196AbhD0UqV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 27 Apr 2021 16:46:21 -0400
-Received: from mga05.intel.com ([192.55.52.43]:31780 "EHLO mga05.intel.com"
+        id S239251AbhD0UqW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 27 Apr 2021 16:46:22 -0400
+Received: from mga05.intel.com ([192.55.52.43]:31798 "EHLO mga05.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S239188AbhD0UqE (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 27 Apr 2021 16:46:04 -0400
-IronPort-SDR: vUO1x/sG79f6UyyVwIYnLVUTZ7RjU2FyBnRYqH93bFcjm3isOGY8kQ00++ZYc3lLBjSPTqP5On
- SJEaT+mZ4Vgg==
-X-IronPort-AV: E=McAfee;i="6200,9189,9967"; a="281922486"
+        id S239213AbhD0UqG (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 27 Apr 2021 16:46:06 -0400
+IronPort-SDR: fj8TT8RgdqZK1KJznsJsnpAvb+C0TdQGd52aNNSuRG8dz72/ps7m3jqN1vhnJAWDg6pNd4ZYTC
+ Pk4E1k9HQuZw==
+X-IronPort-AV: E=McAfee;i="6200,9189,9967"; a="281922490"
 X-IronPort-AV: E=Sophos;i="5.82,255,1613462400"; 
-   d="scan'208";a="281922486"
+   d="scan'208";a="281922490"
 Received: from orsmga001.jf.intel.com ([10.7.209.18])
-  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Apr 2021 13:44:19 -0700
-IronPort-SDR: Y3eIhPtaBE1OHDJhM0C9YozO+hBI0cR0zf+ufyIl8shy1LMKbOcEAYlkNovrvQtP73wiNQ9ubD
- daQLBw43M/mg==
+  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Apr 2021 13:44:20 -0700
+IronPort-SDR: HR7ve9IwBTwRZRfRoPA9h33DhjwH/KZ4VjrmQmDONXSVEgEbzojR50sPTdPfUIWAlO2EDAH91t
+ ldt1kaKqujRQ==
 X-IronPort-AV: E=Sophos;i="5.82,255,1613462400"; 
-   d="scan'208";a="465623532"
+   d="scan'208";a="465623540"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga001-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Apr 2021 13:44:18 -0700
+  by orsmga001-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Apr 2021 13:44:20 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,10 +61,12 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
-Subject: [PATCH v26 19/30] mm: Update can_follow_write_pte() for shadow stack
-Date:   Tue, 27 Apr 2021 13:43:04 -0700
-Message-Id: <20210427204315.24153-20-yu-cheng.yu@intel.com>
+        Peter Collingbourne <pcc@google.com>,
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
+        Andrew Morton <akpm@linux-foundation.org>
+Subject: [PATCH v26 21/30] mm: Re-introduce vm_flags to do_mmap()
+Date:   Tue, 27 Apr 2021 13:43:06 -0700
+Message-Id: <20210427204315.24153-22-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210427204315.24153-1-yu-cheng.yu@intel.com>
 References: <20210427204315.24153-1-yu-cheng.yu@intel.com>
@@ -74,104 +76,153 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Can_follow_write_pte() ensures a read-only page is COWed by checking the
-FOLL_COW flag, and uses pte_dirty() to validate the flag is still valid.
+There was no more caller passing vm_flags to do_mmap(), and vm_flags was
+removed from the function's input by:
 
-Like a writable data page, a shadow stack page is writable, and becomes
-read-only during copy-on-write, but it is always dirty.  Thus, in the
-can_follow_write_pte() check, it belongs to the writable page case and
-should be excluded from the read-only page pte_dirty() check.  Apply
-the same changes to can_follow_write_pmd().
+    commit 45e55300f114 ("mm: remove unnecessary wrapper function do_mmap_pgoff()").
 
-While at it, also split the long line into smaller ones.
+There is a new user now.  Shadow stack allocation passes VM_SHADOW_STACK to
+do_mmap().  Thus, re-introduce vm_flags to do_mmap().
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Peter Collingbourne <pcc@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
-Cc: Kees Cook <keescook@chromium.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: linux-mm@kvack.org
 ---
-v26:
-- Instead of passing vm_flags, pass down vma pointer to can_follow_write_*().
-
-v25:
-- Split long line into smaller ones.
-
 v24:
-- Change arch_shadow_stack_mapping() to is_shadow_stack_mapping().
+- Change VM_SHSTK to VM_SHADOW_STACK.
+- Update commit log.
 
- mm/gup.c         | 16 ++++++++++++----
- mm/huge_memory.c | 16 ++++++++++++----
- 2 files changed, 24 insertions(+), 8 deletions(-)
+ fs/aio.c           |  2 +-
+ include/linux/mm.h |  3 ++-
+ ipc/shm.c          |  2 +-
+ mm/mmap.c          | 10 +++++-----
+ mm/nommu.c         |  4 ++--
+ mm/util.c          |  2 +-
+ 6 files changed, 12 insertions(+), 11 deletions(-)
 
-diff --git a/mm/gup.c b/mm/gup.c
-index ef7d2da9f03f..f9705281e853 100644
---- a/mm/gup.c
-+++ b/mm/gup.c
-@@ -356,10 +356,18 @@ static int follow_pfn_pte(struct vm_area_struct *vma, unsigned long address,
-  * FOLL_FORCE can write to even unwritable pte's, but only
-  * after we've gone through a COW cycle and they are dirty.
-  */
--static inline bool can_follow_write_pte(pte_t pte, unsigned int flags)
-+static inline bool can_follow_write_pte(pte_t pte, unsigned int flags,
-+					struct vm_area_struct *vma)
- {
--	return pte_write(pte) ||
--		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte));
-+	if (pte_write(pte))
-+		return true;
-+	if ((flags & (FOLL_FORCE | FOLL_COW)) != (FOLL_FORCE | FOLL_COW))
-+		return false;
-+	if (!pte_dirty(pte))
-+		return false;
-+	if (is_shadow_stack_mapping(vma->vm_flags))
-+		return false;
-+	return true;
- }
+diff --git a/fs/aio.c b/fs/aio.c
+index 1f32da13d39e..b5d0586209a7 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -529,7 +529,7 @@ static int aio_setup_ring(struct kioctx *ctx, unsigned int nr_events)
  
- static struct page *follow_page_pte(struct vm_area_struct *vma,
-@@ -402,7 +410,7 @@ static struct page *follow_page_pte(struct vm_area_struct *vma,
+ 	ctx->mmap_base = do_mmap(ctx->aio_ring_file, 0, ctx->mmap_size,
+ 				 PROT_READ | PROT_WRITE,
+-				 MAP_SHARED, 0, &unused, NULL);
++				 MAP_SHARED, 0, 0, &unused, NULL);
+ 	mmap_write_unlock(mm);
+ 	if (IS_ERR((void *)ctx->mmap_base)) {
+ 		ctx->mmap_size = 0;
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 3e9c84f21ef6..1ccec5cc399b 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -2576,7 +2576,8 @@ extern unsigned long mmap_region(struct file *file, unsigned long addr,
+ 	struct list_head *uf);
+ extern unsigned long do_mmap(struct file *file, unsigned long addr,
+ 	unsigned long len, unsigned long prot, unsigned long flags,
+-	unsigned long pgoff, unsigned long *populate, struct list_head *uf);
++	vm_flags_t vm_flags, unsigned long pgoff, unsigned long *populate,
++	struct list_head *uf);
+ extern int __do_munmap(struct mm_struct *, unsigned long, size_t,
+ 		       struct list_head *uf, bool downgrade);
+ extern int do_munmap(struct mm_struct *, unsigned long, size_t,
+diff --git a/ipc/shm.c b/ipc/shm.c
+index febd88daba8c..b6370eb1eaab 100644
+--- a/ipc/shm.c
++++ b/ipc/shm.c
+@@ -1556,7 +1556,7 @@ long do_shmat(int shmid, char __user *shmaddr, int shmflg,
+ 			goto invalid;
  	}
- 	if ((flags & FOLL_NUMA) && pte_protnone(pte))
- 		goto no_page;
--	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags)) {
-+	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags, vma)) {
- 		pte_unmap_unlock(ptep, ptl);
- 		return NULL;
- 	}
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 044029ef45cd..cf10c3822853 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1338,10 +1338,18 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
-  * FOLL_FORCE can write to even unwritable pmd's, but only
-  * after we've gone through a COW cycle and they are dirty.
+ 
+-	addr = do_mmap(file, addr, size, prot, flags, 0, &populate, NULL);
++	addr = do_mmap(file, addr, size, prot, flags, 0, 0, &populate, NULL);
+ 	*raddr = addr;
+ 	err = 0;
+ 	if (IS_ERR_VALUE(addr))
+diff --git a/mm/mmap.c b/mm/mmap.c
+index d77fb39b6ab5..7b2992ef8ee0 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1401,11 +1401,11 @@ static inline bool file_mmap_ok(struct file *file, struct inode *inode,
   */
--static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags)
-+static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags,
-+					struct vm_area_struct *vma)
+ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 			unsigned long len, unsigned long prot,
+-			unsigned long flags, unsigned long pgoff,
+-			unsigned long *populate, struct list_head *uf)
++			unsigned long flags, vm_flags_t vm_flags,
++			unsigned long pgoff, unsigned long *populate,
++			struct list_head *uf)
  {
--	return pmd_write(pmd) ||
--	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) && pmd_dirty(pmd));
-+	if (pmd_write(pmd))
-+		return true;
-+	if ((flags & (FOLL_FORCE | FOLL_COW)) != (FOLL_FORCE | FOLL_COW))
-+		return false;
-+	if (!pmd_dirty(pmd))
-+		return false;
-+	if (is_shadow_stack_mapping(vma->vm_flags))
-+		return false;
-+	return true;
- }
+ 	struct mm_struct *mm = current->mm;
+-	vm_flags_t vm_flags;
+ 	int pkey = 0;
  
- struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
-@@ -1354,7 +1362,7 @@ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
+ 	*populate = 0;
+@@ -1467,7 +1467,7 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 	 * to. we assume access permissions have been handled by the open
+ 	 * of the memory object, so we don't do any here.
+ 	 */
+-	vm_flags = calc_vm_prot_bits(prot, pkey) | calc_vm_flag_bits(flags) |
++	vm_flags |= calc_vm_prot_bits(prot, pkey) | calc_vm_flag_bits(flags) |
+ 			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
  
- 	assert_spin_locked(pmd_lockptr(mm, pmd));
+ 	if (flags & MAP_LOCKED)
+@@ -3047,7 +3047,7 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
  
--	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags))
-+	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags, vma))
- 		goto out;
+ 	file = get_file(vma->vm_file);
+ 	ret = do_mmap(vma->vm_file, start, size,
+-			prot, flags, pgoff, &populate, NULL);
++			prot, flags, 0, pgoff, &populate, NULL);
+ 	fput(file);
+ out:
+ 	mmap_write_unlock(mm);
+diff --git a/mm/nommu.c b/mm/nommu.c
+index 5c9ab799c0e6..9b6f7a1895c2 100644
+--- a/mm/nommu.c
++++ b/mm/nommu.c
+@@ -1071,6 +1071,7 @@ unsigned long do_mmap(struct file *file,
+ 			unsigned long len,
+ 			unsigned long prot,
+ 			unsigned long flags,
++			vm_flags_t vm_flags,
+ 			unsigned long pgoff,
+ 			unsigned long *populate,
+ 			struct list_head *uf)
+@@ -1078,7 +1079,6 @@ unsigned long do_mmap(struct file *file,
+ 	struct vm_area_struct *vma;
+ 	struct vm_region *region;
+ 	struct rb_node *rb;
+-	vm_flags_t vm_flags;
+ 	unsigned long capabilities, result;
+ 	int ret;
  
- 	/* Avoid dumping huge zero page */
+@@ -1097,7 +1097,7 @@ unsigned long do_mmap(struct file *file,
+ 
+ 	/* we've determined that we can make the mapping, now translate what we
+ 	 * now know into VMA flags */
+-	vm_flags = determine_vm_flags(file, prot, flags, capabilities);
++	vm_flags |= determine_vm_flags(file, prot, flags, capabilities);
+ 
+ 	/* we're going to need to record the mapping */
+ 	region = kmem_cache_zalloc(vm_region_jar, GFP_KERNEL);
+diff --git a/mm/util.c b/mm/util.c
+index 54870226cea6..49cbd4400d13 100644
+--- a/mm/util.c
++++ b/mm/util.c
+@@ -516,7 +516,7 @@ unsigned long vm_mmap_pgoff(struct file *file, unsigned long addr,
+ 	if (!ret) {
+ 		if (mmap_write_lock_killable(mm))
+ 			return -EINTR;
+-		ret = do_mmap(file, addr, len, prot, flag, pgoff, &populate,
++		ret = do_mmap(file, addr, len, prot, flag, 0, pgoff, &populate,
+ 			      &uf);
+ 		mmap_write_unlock(mm);
+ 		userfaultfd_unmap_complete(mm, &uf);
 -- 
 2.21.0
 
