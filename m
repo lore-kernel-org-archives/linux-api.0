@@ -2,84 +2,92 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BF406C433ED
-	for <linux-api@archiver.kernel.org>; Fri, 30 Apr 2021 21:49:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7896FC433B4
+	for <linux-api@archiver.kernel.org>; Fri, 30 Apr 2021 22:49:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9C2F161481
-	for <linux-api@archiver.kernel.org>; Fri, 30 Apr 2021 21:49:11 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 532FB613B0
+	for <linux-api@archiver.kernel.org>; Fri, 30 Apr 2021 22:49:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230465AbhD3Vt7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 30 Apr 2021 17:49:59 -0400
-Received: from outgoing-auth-1.mit.edu ([18.9.28.11]:56210 "EHLO
-        outgoing.mit.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S229915AbhD3Vt7 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 30 Apr 2021 17:49:59 -0400
-Received: from cwcc.thunk.org (pool-72-74-133-215.bstnma.fios.verizon.net [72.74.133.215])
-        (authenticated bits=0)
-        (User authenticated as tytso@ATHENA.MIT.EDU)
-        by outgoing.mit.edu (8.14.7/8.12.4) with ESMTP id 13ULmu1e024684
-        (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-        Fri, 30 Apr 2021 17:48:56 -0400
-Received: by cwcc.thunk.org (Postfix, from userid 15806)
-        id E6B1F15C39C4; Fri, 30 Apr 2021 17:48:55 -0400 (EDT)
-Date:   Fri, 30 Apr 2021 17:48:55 -0400
-From:   "Theodore Ts'o" <tytso@mit.edu>
-To:     Jiri Kosina <jikos@kernel.org>
-Cc:     ksummit@lists.linux.dev, linux-kernel@vger.kernel.org,
-        linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        linux-mm@kvack.org, netdev@vger.kernel.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org
-Subject: Re: Maintainers / Kernel Summit 2021 planning kick-off
-Message-ID: <YIx7R6tmcRRCl/az@mit.edu>
-References: <YH2hs6EsPTpDAqXc@mit.edu>
- <nycvar.YFH.7.76.2104281228350.18270@cbobk.fhfr.pm>
+        id S232158AbhD3Wul (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 30 Apr 2021 18:50:41 -0400
+Received: from out03.mta.xmission.com ([166.70.13.233]:56124 "EHLO
+        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S230378AbhD3Wul (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 30 Apr 2021 18:50:41 -0400
+Received: from in01.mta.xmission.com ([166.70.13.51])
+        by out03.mta.xmission.com with esmtps  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1lcbxF-004Atp-LD; Fri, 30 Apr 2021 16:49:49 -0600
+Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=fess.xmission.com)
+        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
+        (Exim 4.87)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1lcbxF-00038q-0D; Fri, 30 Apr 2021 16:49:49 -0600
+From:   ebiederm@xmission.com (Eric W. Biederman)
+To:     Marco Elver <elver@google.com>
+Cc:     Arnd Bergmann <arnd@arndb.de>, Florian Weimer <fweimer@redhat.com>,
+        "David S. Miller" <davem@davemloft.net>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Peter Collingbourne <pcc@google.com>,
+        Dmitry Vyukov <dvyukov@google.com>,
+        Alexander Potapenko <glider@google.com>,
+        sparclinux <sparclinux@vger.kernel.org>,
+        linux-arch <linux-arch@vger.kernel.org>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        kasan-dev <kasan-dev@googlegroups.com>
+References: <YIpkvGrBFGlB5vNj@elver.google.com>
+        <m11rat9f85.fsf@fess.ebiederm.org>
+        <CAK8P3a0+uKYwL1NhY6Hvtieghba2hKYGD6hcKx5n8=4Gtt+pHA@mail.gmail.com>
+        <m15z031z0a.fsf@fess.ebiederm.org> <YIxVWkT03TqcJLY3@elver.google.com>
+Date:   Fri, 30 Apr 2021 17:49:45 -0500
+In-Reply-To: <YIxVWkT03TqcJLY3@elver.google.com> (Marco Elver's message of
+        "Fri, 30 Apr 2021 21:07:06 +0200")
+Message-ID: <m1zgxfs7zq.fsf_-_@fess.ebiederm.org>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <nycvar.YFH.7.76.2104281228350.18270@cbobk.fhfr.pm>
+Content-Type: text/plain
+X-XM-SPF: eid=1lcbxF-00038q-0D;;;mid=<m1zgxfs7zq.fsf_-_@fess.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX194HKcbJ3hzROboO3aXmacGQftTa4VgQr0=
+X-SA-Exim-Connect-IP: 68.227.160.95
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: [RFC][PATCH 0/3] signal: Move si_trapno into the _si_fault union
+X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
+X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Apr 28, 2021 at 12:29:52PM +0200, Jiri Kosina wrote:
-> On Mon, 19 Apr 2021, Theodore Ts'o wrote:
-> 
-> > This year, the Maintainers and Kernel Summit is currently planned to
-> > be held in Dublin, Ireland, September 27 -- 29th.  
-> 
-> Given the fact that OSS is being relocated from Dublin to Washington [1], 
-> is Kernel Summit following that direction?
-> 
-> [1] https://www.linuxfoundation.org/en/press-release/the-linux-foundation-announces-open-source-summit-embedded-linux-conference-2021-will-move-from-dublin-ireland-to-seattle-washington/
 
-Apologies for the delay in responding; I wasiting for the LPC to post
-its announcement that the LPC will be going 100% virtual:
+Eric W. Biederman (3):
+      siginfo: Move si_trapno inside the union inside _si_fault
+      signal: Implement SIL_FAULT_TRAPNO
+      signal: Use dedicated helpers to send signals with si_trapno set
 
-   https://www.linuxplumbersconf.org/blog/2021/index.php/2021/04/30/linux-plumbers-goes-fully-virtual/
+ arch/alpha/kernel/osf_sys.c        |  2 +-
+ arch/alpha/kernel/signal.c         |  4 +-
+ arch/alpha/kernel/traps.c          | 24 ++++++------
+ arch/alpha/mm/fault.c              |  4 +-
+ arch/sparc/kernel/process_64.c     |  2 +-
+ arch/sparc/kernel/sys_sparc_32.c   |  2 +-
+ arch/sparc/kernel/sys_sparc_64.c   |  2 +-
+ arch/sparc/kernel/traps_32.c       | 22 +++++------
+ arch/sparc/kernel/traps_64.c       | 44 ++++++++++------------
+ arch/sparc/kernel/unaligned_32.c   |  2 +-
+ arch/sparc/mm/fault_32.c           |  2 +-
+ arch/sparc/mm/fault_64.c           |  2 +-
+ fs/signalfd.c                      |  7 +---
+ include/linux/compat.h             |  4 +-
+ include/linux/sched/signal.h       | 12 ++----
+ include/linux/signal.h             |  1 +
+ include/uapi/asm-generic/siginfo.h |  6 +--
+ kernel/signal.c                    | 77 ++++++++++++++++++++++----------------
+ 18 files changed, 107 insertions(+), 112 deletions(-)
 
-As the LPC planning committee stated,
-
-   "Unfortunately, the safety protocols imposed by event venues in the
-   US require masks and social distancing which make it impossible to
-   hold the interactive part of Plumbers (the Microconferences)."
-
-The Maintainer's Summit is even more interactive and discussion
-focused than most of the Microconferences.  In addition, for the last
-few years, the Kernel Summit is run as a track at the LPC.  As a
-result, both the Maintainer's and Kernel Summit will be held virtually
-this year, using the LPC infrastructure, and will not be colocated
-with OSS to Seattle.  We'll make sure the dates (plus some buffer for
-travel) won't overlap to avoid creating conflicts for those who are
-planning to attend OSS in Seattle.
-
-I know we're all really hungry for some in-person meetups and
-discussions, but at least for LPC, Kernel Summit, and Maintainer's
-Summit, we're going to have to wait for another year,
-
-Cheers,
-
-					- Ted
