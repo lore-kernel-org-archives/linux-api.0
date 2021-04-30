@@ -4,31 +4,31 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 07362C433ED
-	for <linux-api@archiver.kernel.org>; Fri, 30 Apr 2021 22:50:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ED6D9C433ED
+	for <linux-api@archiver.kernel.org>; Fri, 30 Apr 2021 22:54:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D4048613B1
-	for <linux-api@archiver.kernel.org>; Fri, 30 Apr 2021 22:50:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BFE56613B0
+	for <linux-api@archiver.kernel.org>; Fri, 30 Apr 2021 22:54:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232203AbhD3Wv0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 30 Apr 2021 18:51:26 -0400
-Received: from out02.mta.xmission.com ([166.70.13.232]:58832 "EHLO
+        id S231483AbhD3WzK (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 30 Apr 2021 18:55:10 -0400
+Received: from out02.mta.xmission.com ([166.70.13.232]:59424 "EHLO
         out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231265AbhD3Wv0 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 30 Apr 2021 18:51:26 -0400
-Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out02.mta.xmission.com with esmtps  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        with ESMTP id S230508AbhD3WzK (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 30 Apr 2021 18:55:10 -0400
+Received: from in02.mta.xmission.com ([166.70.13.52])
+        by out02.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1lcby1-00CRJD-1J; Fri, 30 Apr 2021 16:50:37 -0600
+        id 1lcc1c-00CRcp-TS; Fri, 30 Apr 2021 16:54:20 -0600
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=fess.xmission.com)
-        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        (Exim 4.87)
+        by in02.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1lcby0-0003Er-5p; Fri, 30 Apr 2021 16:50:36 -0600
+        id 1lcc1b-007EL6-J3; Fri, 30 Apr 2021 16:54:20 -0600
 From:   ebiederm@xmission.com (Eric W. Biederman)
 To:     Marco Elver <elver@google.com>
 Cc:     Arnd Bergmann <arnd@arndb.de>, Florian Weimer <fweimer@redhat.com>,
@@ -49,94 +49,174 @@ References: <YIpkvGrBFGlB5vNj@elver.google.com>
         <CAK8P3a0+uKYwL1NhY6Hvtieghba2hKYGD6hcKx5n8=4Gtt+pHA@mail.gmail.com>
         <m15z031z0a.fsf@fess.ebiederm.org> <YIxVWkT03TqcJLY3@elver.google.com>
         <m1zgxfs7zq.fsf_-_@fess.ebiederm.org>
-Date:   Fri, 30 Apr 2021 17:50:32 -0500
+Date:   Fri, 30 Apr 2021 17:54:16 -0500
 In-Reply-To: <m1zgxfs7zq.fsf_-_@fess.ebiederm.org> (Eric W. Biederman's
         message of "Fri, 30 Apr 2021 17:49:45 -0500")
-Message-ID: <m1tunns7yf.fsf_-_@fess.ebiederm.org>
+Message-ID: <m1o8dvs7s7.fsf_-_@fess.ebiederm.org>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
-X-XM-SPF: eid=1lcby0-0003Er-5p;;;mid=<m1tunns7yf.fsf_-_@fess.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1+Yarb9/ltgjgzGllxki6uzGX9RRVA0vaU=
+X-XM-SPF: eid=1lcc1b-007EL6-J3;;;mid=<m1o8dvs7s7.fsf_-_@fess.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1+P6+76RffWGTINLEazoBLyZeYoCYYvG1k=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: [PATCH 1/3] siginfo: Move si_trapno inside the union inside _si_fault
-X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
+Subject: [PATCH 2/3] signal: Implement SIL_FAULT_TRAPNO
+X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
+X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
 
-It turns out that linux uses si_trapno very sparingly, and as such it
-can be considered extra information for a very narrow selection of
-signals, rather than information that is present with every fault
-reported in siginfo.
+Now that si_trapno is part of the union in _si_fault and available on
+all architectures, add SIL_FAULT_TRAPNO and update siginfo_layout to
+return SIL_FAULT_TRAPNO when si_trapno is actually used.
 
-As such move si_trapno inside the union inside of _si_fault.  This
-results in no change in placement, and makes it eaiser to extend
-_si_fault in the future as this reduces the number of special cases.
-In particular with si_trapno included in the union it is no longer a
-concern that the union must be pointer alligned on most architectures
-because the union followes immediately after si_addr which is a
-pointer.
+Update the code that uses siginfo_layout to deal with SIL_FAULT_TRAPNO
+and have the same code ignore si_trapno in in all other cases.
 
 Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- include/linux/compat.h             | 4 +---
- include/uapi/asm-generic/siginfo.h | 6 +-----
- 2 files changed, 2 insertions(+), 8 deletions(-)
+ fs/signalfd.c          |  7 ++-----
+ include/linux/signal.h |  1 +
+ kernel/signal.c        | 36 ++++++++++++++----------------------
+ 3 files changed, 17 insertions(+), 27 deletions(-)
 
-diff --git a/include/linux/compat.h b/include/linux/compat.h
-index f0d2dd35d408..24462ed63af4 100644
---- a/include/linux/compat.h
-+++ b/include/linux/compat.h
-@@ -214,12 +214,10 @@ typedef struct compat_siginfo {
- 		/* SIGILL, SIGFPE, SIGSEGV, SIGBUS, SIGTRAP, SIGEMT */
- 		struct {
- 			compat_uptr_t _addr;	/* faulting insn/memory ref. */
+diff --git a/fs/signalfd.c b/fs/signalfd.c
+index 040a1142915f..126c681a30e7 100644
+--- a/fs/signalfd.c
++++ b/fs/signalfd.c
+@@ -123,15 +123,12 @@ static int signalfd_copyinfo(struct signalfd_siginfo __user *uinfo,
+ 		 */
+ 	case SIL_FAULT:
+ 		new.ssi_addr = (long) kinfo->si_addr;
 -#ifdef __ARCH_SI_TRAPNO
--			int _trapno;	/* TRAP # which caused the signal */
++	case SIL_FAULT_TRAPNO:
++		new.ssi_addr = (long) kinfo->si_addr;
+ 		new.ssi_trapno = kinfo->si_trapno;
 -#endif
- #define __COMPAT_ADDR_BND_PKEY_PAD  (__alignof__(compat_uptr_t) < sizeof(short) ? \
- 				     sizeof(short) : __alignof__(compat_uptr_t))
- 			union {
-+				int _trapno;	/* TRAP # which caused the signal */
- 				/*
- 				 * used when si_code=BUS_MCEERR_AR or
- 				 * used when si_code=BUS_MCEERR_AO
-diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
-index 03d6f6d2c1fe..2abdf1d19aad 100644
---- a/include/uapi/asm-generic/siginfo.h
-+++ b/include/uapi/asm-generic/siginfo.h
-@@ -63,9 +63,6 @@ union __sifields {
- 	/* SIGILL, SIGFPE, SIGSEGV, SIGBUS, SIGTRAP, SIGEMT */
- 	struct {
- 		void __user *_addr; /* faulting insn/memory ref. */
+ 		break;
+ 	case SIL_FAULT_MCEERR:
+ 		new.ssi_addr = (long) kinfo->si_addr;
 -#ifdef __ARCH_SI_TRAPNO
--		int _trapno;	/* TRAP # which caused the signal */
+-		new.ssi_trapno = kinfo->si_trapno;
 -#endif
- #ifdef __ia64__
- 		int _imm;		/* immediate value for "break" */
- 		unsigned int _flags;	/* see ia64 si_flags */
-@@ -75,6 +72,7 @@ union __sifields {
- #define __ADDR_BND_PKEY_PAD  (__alignof__(void *) < sizeof(short) ? \
- 			      sizeof(short) : __alignof__(void *))
- 		union {
-+			int _trapno;	/* TRAP # which caused the signal */
- 			/*
- 			 * used when si_code=BUS_MCEERR_AR or
- 			 * used when si_code=BUS_MCEERR_AO
-@@ -150,9 +148,7 @@ typedef struct siginfo {
- #define si_int		_sifields._rt._sigval.sival_int
- #define si_ptr		_sifields._rt._sigval.sival_ptr
- #define si_addr		_sifields._sigfault._addr
+ 		new.ssi_addr_lsb = (short) kinfo->si_addr_lsb;
+ 		break;
+ 	case SIL_PERF_EVENT:
+diff --git a/include/linux/signal.h b/include/linux/signal.h
+index 1e98548d7cf6..5160fd45e5ca 100644
+--- a/include/linux/signal.h
++++ b/include/linux/signal.h
+@@ -40,6 +40,7 @@ enum siginfo_layout {
+ 	SIL_TIMER,
+ 	SIL_POLL,
+ 	SIL_FAULT,
++	SIL_FAULT_TRAPNO,
+ 	SIL_FAULT_MCEERR,
+ 	SIL_FAULT_BNDERR,
+ 	SIL_FAULT_PKUERR,
+diff --git a/kernel/signal.c b/kernel/signal.c
+index c3017aa8024a..7b2d61cb7411 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -1194,6 +1194,7 @@ static inline bool has_si_pid_and_uid(struct kernel_siginfo *info)
+ 	case SIL_TIMER:
+ 	case SIL_POLL:
+ 	case SIL_FAULT:
++	case SIL_FAULT_TRAPNO:
+ 	case SIL_FAULT_MCEERR:
+ 	case SIL_FAULT_BNDERR:
+ 	case SIL_FAULT_PKUERR:
+@@ -2527,6 +2528,7 @@ static void hide_si_addr_tag_bits(struct ksignal *ksig)
+ {
+ 	switch (siginfo_layout(ksig->sig, ksig->info.si_code)) {
+ 	case SIL_FAULT:
++	case SIL_FAULT_TRAPNO:
+ 	case SIL_FAULT_MCEERR:
+ 	case SIL_FAULT_BNDERR:
+ 	case SIL_FAULT_PKUERR:
+@@ -3206,6 +3208,12 @@ enum siginfo_layout siginfo_layout(unsigned sig, int si_code)
+ 			if ((sig == SIGBUS) &&
+ 			    (si_code >= BUS_MCEERR_AR) && (si_code <= BUS_MCEERR_AO))
+ 				layout = SIL_FAULT_MCEERR;
++			else if (IS_ENABLED(ALPHA) &&
++				 ((sig == SIGFPE) ||
++				  ((sig == SIGTRAP) && (si_code == TRAP_UNK))))
++				layout = SIL_FAULT_TRAPNO;
++			else if (IS_ENABLED(SPARC) && (sig == SIGILL) && (si_code == ILL_ILLTRP))
++				layout = SIL_FAULT_TRAPNO;
+ 			else if ((sig == SIGSEGV) && (si_code == SEGV_BNDERR))
+ 				layout = SIL_FAULT_BNDERR;
+ #ifdef SEGV_PKUERR
+@@ -3317,30 +3325,22 @@ void copy_siginfo_to_external32(struct compat_siginfo *to,
+ 		break;
+ 	case SIL_FAULT:
+ 		to->si_addr = ptr_to_compat(from->si_addr);
 -#ifdef __ARCH_SI_TRAPNO
- #define si_trapno	_sifields._sigfault._trapno
++		break;
++	case SIL_FAULT_TRAPNO:
++		to->si_addr = ptr_to_compat(from->si_addr);
+ 		to->si_trapno = from->si_trapno;
 -#endif
- #define si_addr_lsb	_sifields._sigfault._addr_lsb
- #define si_lower	_sifields._sigfault._addr_bnd._lower
- #define si_upper	_sifields._sigfault._addr_bnd._upper
+ 		break;
+ 	case SIL_FAULT_MCEERR:
+ 		to->si_addr = ptr_to_compat(from->si_addr);
+-#ifdef __ARCH_SI_TRAPNO
+-		to->si_trapno = from->si_trapno;
+-#endif
+ 		to->si_addr_lsb = from->si_addr_lsb;
+ 		break;
+ 	case SIL_FAULT_BNDERR:
+ 		to->si_addr = ptr_to_compat(from->si_addr);
+-#ifdef __ARCH_SI_TRAPNO
+-		to->si_trapno = from->si_trapno;
+-#endif
+ 		to->si_lower = ptr_to_compat(from->si_lower);
+ 		to->si_upper = ptr_to_compat(from->si_upper);
+ 		break;
+ 	case SIL_FAULT_PKUERR:
+ 		to->si_addr = ptr_to_compat(from->si_addr);
+-#ifdef __ARCH_SI_TRAPNO
+-		to->si_trapno = from->si_trapno;
+-#endif
+ 		to->si_pkey = from->si_pkey;
+ 		break;
+ 	case SIL_PERF_EVENT:
+@@ -3401,30 +3401,22 @@ static int post_copy_siginfo_from_user32(kernel_siginfo_t *to,
+ 		break;
+ 	case SIL_FAULT:
+ 		to->si_addr = compat_ptr(from->si_addr);
+-#ifdef __ARCH_SI_TRAPNO
++		break;
++	case SIL_FAULT_TRAPNO:
++		to->si_addr = compat_ptr(from->si_addr);
+ 		to->si_trapno = from->si_trapno;
+-#endif
+ 		break;
+ 	case SIL_FAULT_MCEERR:
+ 		to->si_addr = compat_ptr(from->si_addr);
+-#ifdef __ARCH_SI_TRAPNO
+-		to->si_trapno = from->si_trapno;
+-#endif
+ 		to->si_addr_lsb = from->si_addr_lsb;
+ 		break;
+ 	case SIL_FAULT_BNDERR:
+ 		to->si_addr = compat_ptr(from->si_addr);
+-#ifdef __ARCH_SI_TRAPNO
+-		to->si_trapno = from->si_trapno;
+-#endif
+ 		to->si_lower = compat_ptr(from->si_lower);
+ 		to->si_upper = compat_ptr(from->si_upper);
+ 		break;
+ 	case SIL_FAULT_PKUERR:
+ 		to->si_addr = compat_ptr(from->si_addr);
+-#ifdef __ARCH_SI_TRAPNO
+-		to->si_trapno = from->si_trapno;
+-#endif
+ 		to->si_pkey = from->si_pkey;
+ 		break;
+ 	case SIL_PERF_EVENT:
 -- 
 2.30.1
 
