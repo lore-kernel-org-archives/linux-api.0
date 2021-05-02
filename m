@@ -2,33 +2,32 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B936FC43461
-	for <linux-api@archiver.kernel.org>; Sun,  2 May 2021 18:24:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 31F1CC43460
+	for <linux-api@archiver.kernel.org>; Sun,  2 May 2021 18:27:29 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8C9E361350
-	for <linux-api@archiver.kernel.org>; Sun,  2 May 2021 18:24:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 165B861352
+	for <linux-api@archiver.kernel.org>; Sun,  2 May 2021 18:27:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231909AbhEBSZq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 2 May 2021 14:25:46 -0400
-Received: from out03.mta.xmission.com ([166.70.13.233]:54044 "EHLO
-        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230206AbhEBSZp (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 2 May 2021 14:25:45 -0400
+        id S232418AbhEBS2T (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 2 May 2021 14:28:19 -0400
+Received: from out01.mta.xmission.com ([166.70.13.231]:39128 "EHLO
+        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S230206AbhEBS2T (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 2 May 2021 14:28:19 -0400
 Received: from in02.mta.xmission.com ([166.70.13.52])
-        by out03.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        by out01.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1ldGlv-006v2s-Aq; Sun, 02 May 2021 12:24:51 -0600
+        id 1ldGoQ-00FXga-HS; Sun, 02 May 2021 12:27:26 -0600
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=fess.xmission.com)
         by in02.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1ldGlu-00BNqY-8D; Sun, 02 May 2021 12:24:50 -0600
+        id 1ldGoP-00BO9w-MT; Sun, 02 May 2021 12:27:26 -0600
 From:   ebiederm@xmission.com (Eric W. Biederman)
 To:     Marco Elver <elver@google.com>
 Cc:     Arnd Bergmann <arnd@arndb.de>, Florian Weimer <fweimer@redhat.com>,
@@ -49,20 +48,20 @@ References: <YIpkvGrBFGlB5vNj@elver.google.com>
         <CAK8P3a0+uKYwL1NhY6Hvtieghba2hKYGD6hcKx5n8=4Gtt+pHA@mail.gmail.com>
         <m15z031z0a.fsf@fess.ebiederm.org> <YIxVWkT03TqcJLY3@elver.google.com>
         <m1zgxfs7zq.fsf_-_@fess.ebiederm.org>
-        <m1o8dvs7s7.fsf_-_@fess.ebiederm.org>
-        <CANpmjNNhd+qAy7tPSu=08_y-BZiowKigVkOh6HnXsxhWYuFpJA@mail.gmail.com>
-Date:   Sun, 02 May 2021 13:24:46 -0500
-In-Reply-To: <CANpmjNNhd+qAy7tPSu=08_y-BZiowKigVkOh6HnXsxhWYuFpJA@mail.gmail.com>
-        (Marco Elver's message of "Sat, 1 May 2021 12:33:27 +0200")
-Message-ID: <m1sg35ngcx.fsf@fess.ebiederm.org>
+        <m1tunns7yf.fsf_-_@fess.ebiederm.org>
+        <CANpmjNOZj-jRfFH365znJGqDAwdXL4Z2QBuHOtdvN_uNJ8WBSA@mail.gmail.com>
+Date:   Sun, 02 May 2021 13:27:21 -0500
+In-Reply-To: <CANpmjNOZj-jRfFH365znJGqDAwdXL4Z2QBuHOtdvN_uNJ8WBSA@mail.gmail.com>
+        (Marco Elver's message of "Sat, 1 May 2021 12:31:10 +0200")
+Message-ID: <m1czu9ng8m.fsf@fess.ebiederm.org>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
-X-XM-SPF: eid=1ldGlu-00BNqY-8D;;;mid=<m1sg35ngcx.fsf@fess.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1/0HsNqVjpzSZgBfn2EWtFrYSso3wfS118=
+X-XM-SPF: eid=1ldGoP-00BO9w-MT;;;mid=<m1czu9ng8m.fsf@fess.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1+I6HZ0cD4XvYQ+uzlALtJgYoOqGyYDPxk=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: Re: [PATCH 2/3] signal: Implement SIL_FAULT_TRAPNO
+Subject: Re: [PATCH 1/3] siginfo: Move si_trapno inside the union inside _si_fault
 X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
 X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Precedence: bulk
@@ -71,164 +70,39 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 Marco Elver <elver@google.com> writes:
 
-> On Sat, 1 May 2021 at 00:54, Eric W. Biederman <ebiederm@xmission.com> wrote:
+> On Sat, 1 May 2021 at 00:50, Eric W. Biederman <ebiederm@xmission.com> wrote:
 >>
->> Now that si_trapno is part of the union in _si_fault and available on
->> all architectures, add SIL_FAULT_TRAPNO and update siginfo_layout to
->> return SIL_FAULT_TRAPNO when si_trapno is actually used.
+>> It turns out that linux uses si_trapno very sparingly, and as such it
+>> can be considered extra information for a very narrow selection of
+>> signals, rather than information that is present with every fault
+>> reported in siginfo.
 >>
->> Update the code that uses siginfo_layout to deal with SIL_FAULT_TRAPNO
->> and have the same code ignore si_trapno in in all other cases.
+>> As such move si_trapno inside the union inside of _si_fault.  This
+>> results in no change in placement, and makes it eaiser to extend
+>> _si_fault in the future as this reduces the number of special cases.
+>> In particular with si_trapno included in the union it is no longer a
+>> concern that the union must be pointer alligned on most architectures
+>> because the union followes immediately after si_addr which is a
+>> pointer.
 >>
->> Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
->> ---
->>  fs/signalfd.c          |  7 ++-----
->>  include/linux/signal.h |  1 +
->>  kernel/signal.c        | 36 ++++++++++++++----------------------
->>  3 files changed, 17 insertions(+), 27 deletions(-)
->>
->> diff --git a/fs/signalfd.c b/fs/signalfd.c
->> index 040a1142915f..126c681a30e7 100644
->> --- a/fs/signalfd.c
->> +++ b/fs/signalfd.c
->> @@ -123,15 +123,12 @@ static int signalfd_copyinfo(struct signalfd_siginfo __user *uinfo,
->>                  */
->>         case SIL_FAULT:
->>                 new.ssi_addr = (long) kinfo->si_addr;
->> -#ifdef __ARCH_SI_TRAPNO
->> +       case SIL_FAULT_TRAPNO:
->> +               new.ssi_addr = (long) kinfo->si_addr;
->>                 new.ssi_trapno = kinfo->si_trapno;
->> -#endif
->>                 break;
->>         case SIL_FAULT_MCEERR:
->>                 new.ssi_addr = (long) kinfo->si_addr;
->> -#ifdef __ARCH_SI_TRAPNO
->> -               new.ssi_trapno = kinfo->si_trapno;
->> -#endif
->>                 new.ssi_addr_lsb = (short) kinfo->si_addr_lsb;
->>                 break;
->>         case SIL_PERF_EVENT:
->> diff --git a/include/linux/signal.h b/include/linux/signal.h
->> index 1e98548d7cf6..5160fd45e5ca 100644
->> --- a/include/linux/signal.h
->> +++ b/include/linux/signal.h
->> @@ -40,6 +40,7 @@ enum siginfo_layout {
->>         SIL_TIMER,
->>         SIL_POLL,
->>         SIL_FAULT,
->> +       SIL_FAULT_TRAPNO,
->>         SIL_FAULT_MCEERR,
->>         SIL_FAULT_BNDERR,
->>         SIL_FAULT_PKUERR,
->> diff --git a/kernel/signal.c b/kernel/signal.c
->> index c3017aa8024a..7b2d61cb7411 100644
->> --- a/kernel/signal.c
->> +++ b/kernel/signal.c
->> @@ -1194,6 +1194,7 @@ static inline bool has_si_pid_and_uid(struct kernel_siginfo *info)
->>         case SIL_TIMER:
->>         case SIL_POLL:
->>         case SIL_FAULT:
->> +       case SIL_FAULT_TRAPNO:
->>         case SIL_FAULT_MCEERR:
->>         case SIL_FAULT_BNDERR:
->>         case SIL_FAULT_PKUERR:
->> @@ -2527,6 +2528,7 @@ static void hide_si_addr_tag_bits(struct ksignal *ksig)
->>  {
->>         switch (siginfo_layout(ksig->sig, ksig->info.si_code)) {
->>         case SIL_FAULT:
->> +       case SIL_FAULT_TRAPNO:
->>         case SIL_FAULT_MCEERR:
->>         case SIL_FAULT_BNDERR:
->>         case SIL_FAULT_PKUERR:
->> @@ -3206,6 +3208,12 @@ enum siginfo_layout siginfo_layout(unsigned sig, int si_code)
->>                         if ((sig == SIGBUS) &&
->>                             (si_code >= BUS_MCEERR_AR) && (si_code <= BUS_MCEERR_AO))
->>                                 layout = SIL_FAULT_MCEERR;
->> +                       else if (IS_ENABLED(ALPHA) &&
->> +                                ((sig == SIGFPE) ||
->> +                                 ((sig == SIGTRAP) && (si_code == TRAP_UNK))))
->> +                               layout = SIL_FAULT_TRAPNO;
->> +                       else if (IS_ENABLED(SPARC) && (sig == SIGILL) && (si_code == ILL_ILLTRP))
->> +                               layout = SIL_FAULT_TRAPNO;
 >
-> The breakage isn't apparent here, but in later patches. These need to
-> become CONFIG_SPARC and CONFIG_ALPHA.
+> Maybe add "Link:
+> https://lkml.kernel.org/r/CAK8P3a0+uKYwL1NhY6Hvtieghba2hKYGD6hcKx5n8=4Gtt+pHA@mail.gmail.com"
+>
+>> Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+>
+> Acked-by: Marco Elver <elver@google.com>
+>
+> By no longer guarding it with __ARCH_SI_TRAPNO we run the risk that it
+> will be used by something else at some point. Is that intentional?
 
-Good catch.  For some reason I thought IS_ENABLED added the CONFIG_
-prefix but I looked and it doesn't.
+The motivation was letting the code be tested on other architectures.
 
+But once si_trapno falls inside the union instead of being present for
+every signal reporting a fault it doesn't really matter.
 
->>                         else if ((sig == SIGSEGV) && (si_code == SEGV_BNDERR))
->>                                 layout = SIL_FAULT_BNDERR;
->>  #ifdef SEGV_PKUERR
->> @@ -3317,30 +3325,22 @@ void copy_siginfo_to_external32(struct compat_siginfo *to,
->>                 break;
->>         case SIL_FAULT:
->>                 to->si_addr = ptr_to_compat(from->si_addr);
->> -#ifdef __ARCH_SI_TRAPNO
->> +               break;
->> +       case SIL_FAULT_TRAPNO:
->> +               to->si_addr = ptr_to_compat(from->si_addr);
->>                 to->si_trapno = from->si_trapno;
->> -#endif
->>                 break;
->>         case SIL_FAULT_MCEERR:
->>                 to->si_addr = ptr_to_compat(from->si_addr);
->> -#ifdef __ARCH_SI_TRAPNO
->> -               to->si_trapno = from->si_trapno;
->> -#endif
->>                 to->si_addr_lsb = from->si_addr_lsb;
->>                 break;
->>         case SIL_FAULT_BNDERR:
->>                 to->si_addr = ptr_to_compat(from->si_addr);
->> -#ifdef __ARCH_SI_TRAPNO
->> -               to->si_trapno = from->si_trapno;
->> -#endif
->>                 to->si_lower = ptr_to_compat(from->si_lower);
->>                 to->si_upper = ptr_to_compat(from->si_upper);
->>                 break;
->>         case SIL_FAULT_PKUERR:
->>                 to->si_addr = ptr_to_compat(from->si_addr);
->> -#ifdef __ARCH_SI_TRAPNO
->> -               to->si_trapno = from->si_trapno;
->> -#endif
->>                 to->si_pkey = from->si_pkey;
->>                 break;
->>         case SIL_PERF_EVENT:
->> @@ -3401,30 +3401,22 @@ static int post_copy_siginfo_from_user32(kernel_siginfo_t *to,
->>                 break;
->>         case SIL_FAULT:
->>                 to->si_addr = compat_ptr(from->si_addr);
->> -#ifdef __ARCH_SI_TRAPNO
->> +               break;
->> +       case SIL_FAULT_TRAPNO:
->> +               to->si_addr = compat_ptr(from->si_addr);
->>                 to->si_trapno = from->si_trapno;
->> -#endif
->>                 break;
->>         case SIL_FAULT_MCEERR:
->>                 to->si_addr = compat_ptr(from->si_addr);
->> -#ifdef __ARCH_SI_TRAPNO
->> -               to->si_trapno = from->si_trapno;
->> -#endif
->>                 to->si_addr_lsb = from->si_addr_lsb;
->>                 break;
->>         case SIL_FAULT_BNDERR:
->>                 to->si_addr = compat_ptr(from->si_addr);
->> -#ifdef __ARCH_SI_TRAPNO
->> -               to->si_trapno = from->si_trapno;
->> -#endif
->>                 to->si_lower = compat_ptr(from->si_lower);
->>                 to->si_upper = compat_ptr(from->si_upper);
->>                 break;
->>         case SIL_FAULT_PKUERR:
->>                 to->si_addr = compat_ptr(from->si_addr);
->> -#ifdef __ARCH_SI_TRAPNO
->> -               to->si_trapno = from->si_trapno;
->> -#endif
->>                 to->si_pkey = from->si_pkey;
->>                 break;
->>         case SIL_PERF_EVENT:
->> --
->> 2.30.1
+I think it would be poor taste but harmless to use si_trapno, mostly
+because defining a new entry in the union could be more specific and
+well defined.
+
+Eric
