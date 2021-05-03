@@ -7,28 +7,28 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EACF4C433B4
-	for <linux-api@archiver.kernel.org>; Mon,  3 May 2021 20:39:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4E582C4360C
+	for <linux-api@archiver.kernel.org>; Mon,  3 May 2021 20:39:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C208A611C9
-	for <linux-api@archiver.kernel.org>; Mon,  3 May 2021 20:39:32 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1B33A61165
+	for <linux-api@archiver.kernel.org>; Mon,  3 May 2021 20:39:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229497AbhECUkW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S229866AbhECUkW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Mon, 3 May 2021 16:40:22 -0400
-Received: from out02.mta.xmission.com ([166.70.13.232]:58984 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229722AbhECUkL (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 3 May 2021 16:40:11 -0400
+Received: from out03.mta.xmission.com ([166.70.13.233]:51124 "EHLO
+        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229842AbhECUkO (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 3 May 2021 16:40:14 -0400
 Received: from in02.mta.xmission.com ([166.70.13.52])
-        by out02.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        by out03.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1ldfLZ-00GyjR-DQ; Mon, 03 May 2021 14:39:17 -0600
+        id 1ldfLc-008idE-C8; Mon, 03 May 2021 14:39:20 -0600
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=fess.int.ebiederm.org)
         by in02.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1ldfLY-00E76Y-8K; Mon, 03 May 2021 14:39:17 -0600
+        id 1ldfLa-00E76Y-W2; Mon, 03 May 2021 14:39:19 -0600
 From:   "Eric W. Beiderman" <ebiederm@xmission.com>
 To:     Marco Elver <elver@google.com>
 Cc:     Arnd Bergmann <arnd@arndb.de>, Florian Weimer <fweimer@redhat.com>,
@@ -45,19 +45,19 @@ Cc:     Arnd Bergmann <arnd@arndb.de>, Florian Weimer <fweimer@redhat.com>,
         Linux API <linux-api@vger.kernel.org>,
         kasan-dev <kasan-dev@googlegroups.com>,
         "Eric W. Biederman" <ebiederm@xmission.com>
-Date:   Mon,  3 May 2021 15:38:11 -0500
-Message-Id: <20210503203814.25487-9-ebiederm@xmission.com>
+Date:   Mon,  3 May 2021 15:38:12 -0500
+Message-Id: <20210503203814.25487-10-ebiederm@xmission.com>
 X-Mailer: git-send-email 2.30.1
 In-Reply-To: <20210503203814.25487-1-ebiederm@xmission.com>
 References: <m14kfjh8et.fsf_-_@fess.ebiederm.org>
  <20210503203814.25487-1-ebiederm@xmission.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-XM-SPF: eid=1ldfLY-00E76Y-8K;;;mid=<20210503203814.25487-9-ebiederm@xmission.com>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX189tUaecX/QCvyNBX6HfKNGmtKwTn+Dm1Q=
+X-XM-SPF: eid=1ldfLa-00E76Y-W2;;;mid=<20210503203814.25487-10-ebiederm@xmission.com>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1/b9rhYWU75jryiJcDUuXS48JL3MxtXE3c=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: [PATCH 09/12] signal: Factor force_sig_perf out of perf_sigtrap
+Subject: [PATCH 10/12] signal: Redefine signinfo so 64bit fields are possible
 X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
 X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Precedence: bulk
@@ -66,81 +66,251 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: "Eric W. Biederman" <ebiederm@xmission.com>
 
-Separate generating the signal from deciding it needs to be sent.
+The si_perf code really wants to add a u64 field.  This change enables
+that by reorganizing the definition of siginfo_t, so that a 64bit
+field can be added without increasing the alignment of other fields.
 
-v1: https://lkml.kernel.org/r/m17dkjqqxz.fsf_-_@fess.ebiederm.org
 Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- include/linux/sched/signal.h |  1 +
- kernel/events/core.c         | 11 ++---------
- kernel/signal.c              | 13 +++++++++++++
- 3 files changed, 16 insertions(+), 9 deletions(-)
+ arch/x86/kernel/signal_compat.c    |  9 +++----
+ include/linux/compat.h             | 28 +++++++++++++-------
+ include/uapi/asm-generic/siginfo.h | 42 ++++++++++++++++++++----------
+ 3 files changed, 49 insertions(+), 30 deletions(-)
 
-diff --git a/include/linux/sched/signal.h b/include/linux/sched/signal.h
-index 7daa425f3055..1e2f61a1a512 100644
---- a/include/linux/sched/signal.h
-+++ b/include/linux/sched/signal.h
-@@ -318,6 +318,7 @@ int send_sig_mceerr(int code, void __user *, short, struct task_struct *);
- 
- int force_sig_bnderr(void __user *addr, void __user *lower, void __user *upper);
- int force_sig_pkuerr(void __user *addr, u32 pkey);
-+int force_sig_perf(void __user *addr, u32 type, u64 sig_data);
- 
- int force_sig_fault_trapno(int sig, int code, void __user *addr, int trapno);
- int send_sig_fault_trapno(int sig, int code, void __user *addr, int trapno,
-diff --git a/kernel/events/core.c b/kernel/events/core.c
-index 928b166d888e..48ea8863183b 100644
---- a/kernel/events/core.c
-+++ b/kernel/events/core.c
-@@ -6394,8 +6394,6 @@ void perf_event_wakeup(struct perf_event *event)
- 
- static void perf_sigtrap(struct perf_event *event)
+diff --git a/arch/x86/kernel/signal_compat.c b/arch/x86/kernel/signal_compat.c
+index a9fcabd8a5e5..a5cd01c52dfb 100644
+--- a/arch/x86/kernel/signal_compat.c
++++ b/arch/x86/kernel/signal_compat.c
+@@ -17,8 +17,6 @@
+  */
+ static inline void signal_compat_build_tests(void)
  {
--	struct kernel_siginfo info;
+-	int _sifields_offset = offsetof(compat_siginfo_t, _sifields);
 -
  	/*
- 	 * We'd expect this to only occur if the irq_work is delayed and either
- 	 * ctx->task or current has changed in the meantime. This can be the
-@@ -6410,13 +6408,8 @@ static void perf_sigtrap(struct perf_event *event)
- 	if (current->flags & PF_EXITING)
- 		return;
+ 	 * If adding a new si_code, there is probably new data in
+ 	 * the siginfo.  Make sure folks bumping the si_code
+@@ -40,8 +38,7 @@ static inline void signal_compat_build_tests(void)
+ 	 * in the ABI, of course.  Make sure none of them ever
+ 	 * move and are always at the beginning:
+ 	 */
+-	BUILD_BUG_ON(offsetof(compat_siginfo_t, _sifields) != 3 * sizeof(int));
+-#define CHECK_CSI_OFFSET(name)	  BUILD_BUG_ON(_sifields_offset != offsetof(compat_siginfo_t, _sifields.name))
++#define CHECK_CSI_OFFSET(name)	  BUILD_BUG_ON(0 != offsetof(compat_siginfo_t, _sifields.name))
  
--	clear_siginfo(&info);
--	info.si_signo = SIGTRAP;
--	info.si_code = TRAP_PERF;
--	info.si_errno = event->attr.type;
--	info.si_perf = event->attr.sig_data;
--	info.si_addr = (void __user *)event->pending_addr;
--	force_sig_info(&info);
-+	force_sig_perf((void __user *)event->pending_addr,
-+		       event->attr.type, event->attr.sig_data);
- }
+ 	BUILD_BUG_ON(offsetof(siginfo_t, si_signo) != 0);
+ 	BUILD_BUG_ON(offsetof(siginfo_t, si_errno) != 4);
+@@ -63,8 +60,8 @@ static inline void signal_compat_build_tests(void)
+ 	 * structure stays within the padding size (checked
+ 	 * above).
+ 	 */
+-#define CHECK_CSI_SIZE(name, size) BUILD_BUG_ON(size != sizeof(((compat_siginfo_t *)0)->_sifields.name))
+-#define CHECK_SI_SIZE(name, size) BUILD_BUG_ON(size != sizeof(((siginfo_t *)0)->_sifields.name))
++#define CHECK_CSI_SIZE(name, size) BUILD_BUG_ON(((3*sizeof(int))+(size)) != sizeof(((compat_siginfo_t *)0)->_sifields.name))
++#define CHECK_SI_SIZE(name, size) BUILD_BUG_ON(((4*sizeof(int))+(size)) != sizeof(((siginfo_t *)0)->_sifields.name))
  
- static void perf_pending_event_disable(struct perf_event *event)
-diff --git a/kernel/signal.c b/kernel/signal.c
-index 697c5fe58db8..49560ceac048 100644
---- a/kernel/signal.c
-+++ b/kernel/signal.c
-@@ -1753,6 +1753,19 @@ int force_sig_pkuerr(void __user *addr, u32 pkey)
- }
+ 	CHECK_CSI_OFFSET(_kill);
+ 	CHECK_CSI_SIZE  (_kill, 2*sizeof(int));
+diff --git a/include/linux/compat.h b/include/linux/compat.h
+index 6af7bef15e94..d81493248bf3 100644
+--- a/include/linux/compat.h
++++ b/include/linux/compat.h
+@@ -158,27 +158,28 @@ typedef union compat_sigval {
+ 	compat_uptr_t	sival_ptr;
+ } compat_sigval_t;
+ 
+-typedef struct compat_siginfo {
+-	int si_signo;
+-#ifndef __ARCH_HAS_SWAPPED_SIGINFO
+-	int si_errno;
+-	int si_code;
+-#else
+-	int si_code;
+-	int si_errno;
+-#endif
++#define __COMPAT_SIGINFO_COMMON	\
++	___SIGINFO_COMMON;	\
++	int	_common_pad[__alignof__(compat_uptr_t) != __alignof__(int)]
+ 
++typedef struct compat_siginfo {
++	union {
++		struct {
++			__COMPAT_SIGINFO_COMMON;
++		};
+ 	union {
+-		int _pad[128/sizeof(int) - 3];
++		int _pad[128/sizeof(int)];
+ 
+ 		/* kill() */
+ 		struct {
++			__COMPAT_SIGINFO_COMMON;
+ 			compat_pid_t _pid;	/* sender's pid */
+ 			__compat_uid32_t _uid;	/* sender's uid */
+ 		} _kill;
+ 
+ 		/* POSIX.1b timers */
+ 		struct {
++			__COMPAT_SIGINFO_COMMON;
+ 			compat_timer_t _tid;	/* timer id */
+ 			int _overrun;		/* overrun count */
+ 			compat_sigval_t _sigval;	/* same as below */
+@@ -186,6 +187,7 @@ typedef struct compat_siginfo {
+ 
+ 		/* POSIX.1b signals */
+ 		struct {
++			__COMPAT_SIGINFO_COMMON;
+ 			compat_pid_t _pid;	/* sender's pid */
+ 			__compat_uid32_t _uid;	/* sender's uid */
+ 			compat_sigval_t _sigval;
+@@ -193,6 +195,7 @@ typedef struct compat_siginfo {
+ 
+ 		/* SIGCHLD */
+ 		struct {
++			__COMPAT_SIGINFO_COMMON;
+ 			compat_pid_t _pid;	/* which child */
+ 			__compat_uid32_t _uid;	/* sender's uid */
+ 			int _status;		/* exit code */
+@@ -203,6 +206,7 @@ typedef struct compat_siginfo {
+ #ifdef CONFIG_X86_X32_ABI
+ 		/* SIGCHLD (x32 version) */
+ 		struct {
++			__COMPAT_SIGINFO_COMMON;
+ 			compat_pid_t _pid;	/* which child */
+ 			__compat_uid32_t _uid;	/* sender's uid */
+ 			int _status;		/* exit code */
+@@ -213,6 +217,7 @@ typedef struct compat_siginfo {
+ 
+ 		/* SIGILL, SIGFPE, SIGSEGV, SIGBUS, SIGTRAP, SIGEMT */
+ 		struct {
++			__COMPAT_SIGINFO_COMMON;
+ 			compat_uptr_t _addr;	/* faulting insn/memory ref. */
+ #define __COMPAT_ADDR_BND_PKEY_PAD  (__alignof__(compat_uptr_t) < sizeof(short) ? \
+ 				     sizeof(short) : __alignof__(compat_uptr_t))
+@@ -242,16 +247,19 @@ typedef struct compat_siginfo {
+ 
+ 		/* SIGPOLL */
+ 		struct {
++			__COMPAT_SIGINFO_COMMON;
+ 			compat_long_t _band;	/* POLL_IN, POLL_OUT, POLL_MSG */
+ 			int _fd;
+ 		} _sigpoll;
+ 
+ 		struct {
++			__COMPAT_SIGINFO_COMMON;
+ 			compat_uptr_t _call_addr; /* calling user insn */
+ 			int _syscall;	/* triggering system call number */
+ 			unsigned int _arch;	/* AUDIT_ARCH_* of syscall */
+ 		} _sigsys;
+ 	} _sifields;
++	};
+ } compat_siginfo_t;
+ 
+ struct compat_rlimit {
+diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
+index e663bf117b46..1fcede623a73 100644
+--- a/include/uapi/asm-generic/siginfo.h
++++ b/include/uapi/asm-generic/siginfo.h
+@@ -29,15 +29,33 @@ typedef union sigval {
+ #define __ARCH_SI_ATTRIBUTES
  #endif
  
-+int force_sig_perf(void __user *addr, u32 type, u64 sig_data)
-+{
-+	struct kernel_siginfo info;
++#ifndef __ARCH_HAS_SWAPPED_SIGINFO
++#define ___SIGINFO_COMMON	\
++	int	si_signo;	\
++	int	si_errno;	\
++	int	si_code
++#else
++#define ___SIGINFO_COMMON	\
++	int	si_signo;	\
++	int	si_code;	\
++	int	si_errno
++#endif /* __ARCH_HAS_SWAPPED_SIGINFO */
 +
-+	clear_siginfo(&info);
-+	info.si_signo = SIGTRAP;
-+	info.si_errno = type;
-+	info.si_code  = TRAP_PERF;
-+	info.si_addr  = addr;
-+	info.si_perf  = sig_data;
-+	return force_sig_info(&info);
-+}
++#define __SIGINFO_COMMON	\
++	___SIGINFO_COMMON;	\
++	int	_common_pad[__alignof__(void *) != __alignof(int)]
 +
- #if IS_ENABLED(CONFIG_SPARC)
- int force_sig_fault_trapno(int sig, int code, void __user *addr, int trapno)
- {
+ union __sifields {
+ 	/* kill() */
+ 	struct {
++		__SIGINFO_COMMON;
+ 		__kernel_pid_t _pid;	/* sender's pid */
+ 		__kernel_uid32_t _uid;	/* sender's uid */
+ 	} _kill;
+ 
+ 	/* POSIX.1b timers */
+ 	struct {
++		__SIGINFO_COMMON;
+ 		__kernel_timer_t _tid;	/* timer id */
+ 		int _overrun;		/* overrun count */
+ 		sigval_t _sigval;	/* same as below */
+@@ -46,6 +64,7 @@ union __sifields {
+ 
+ 	/* POSIX.1b signals */
+ 	struct {
++		__SIGINFO_COMMON;
+ 		__kernel_pid_t _pid;	/* sender's pid */
+ 		__kernel_uid32_t _uid;	/* sender's uid */
+ 		sigval_t _sigval;
+@@ -53,6 +72,7 @@ union __sifields {
+ 
+ 	/* SIGCHLD */
+ 	struct {
++		__SIGINFO_COMMON;
+ 		__kernel_pid_t _pid;	/* which child */
+ 		__kernel_uid32_t _uid;	/* sender's uid */
+ 		int _status;		/* exit code */
+@@ -62,6 +82,7 @@ union __sifields {
+ 
+ 	/* SIGILL, SIGFPE, SIGSEGV, SIGBUS, SIGTRAP, SIGEMT */
+ 	struct {
++		__SIGINFO_COMMON;
+ 		void __user *_addr; /* faulting insn/memory ref. */
+ #ifdef __ia64__
+ 		int _imm;		/* immediate value for "break" */
+@@ -97,35 +118,28 @@ union __sifields {
+ 
+ 	/* SIGPOLL */
+ 	struct {
++		__SIGINFO_COMMON;
+ 		__ARCH_SI_BAND_T _band;	/* POLL_IN, POLL_OUT, POLL_MSG */
+ 		int _fd;
+ 	} _sigpoll;
+ 
+ 	/* SIGSYS */
+ 	struct {
++		__SIGINFO_COMMON;
+ 		void __user *_call_addr; /* calling user insn */
+ 		int _syscall;	/* triggering system call number */
+ 		unsigned int _arch;	/* AUDIT_ARCH_* of syscall */
+ 	} _sigsys;
+ };
+ 
+-#ifndef __ARCH_HAS_SWAPPED_SIGINFO
+-#define __SIGINFO 			\
+-struct {				\
+-	int si_signo;			\
+-	int si_errno;			\
+-	int si_code;			\
+-	union __sifields _sifields;	\
+-}
+-#else
++
+ #define __SIGINFO 			\
+-struct {				\
+-	int si_signo;			\
+-	int si_code;			\
+-	int si_errno;			\
++union {					\
++	struct {			\
++		__SIGINFO_COMMON;	\
++	};				\
+ 	union __sifields _sifields;	\
+ }
+-#endif /* __ARCH_HAS_SWAPPED_SIGINFO */
+ 
+ typedef struct siginfo {
+ 	union {
 -- 
 2.30.1
 
