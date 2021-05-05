@@ -2,132 +2,97 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 34468C433ED
-	for <linux-api@archiver.kernel.org>; Wed,  5 May 2021 14:13:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 23FEEC433ED
+	for <linux-api@archiver.kernel.org>; Wed,  5 May 2021 14:23:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 15AAB613C7
-	for <linux-api@archiver.kernel.org>; Wed,  5 May 2021 14:13:03 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E797B61029
+	for <linux-api@archiver.kernel.org>; Wed,  5 May 2021 14:23:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232995AbhEEON5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 5 May 2021 10:13:57 -0400
-Received: from out03.mta.xmission.com ([166.70.13.233]:43334 "EHLO
-        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232596AbhEEONl (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 5 May 2021 10:13:41 -0400
-Received: from in02.mta.xmission.com ([166.70.13.52])
-        by out03.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-        (Exim 4.93)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1leIGa-00CGlJ-DX; Wed, 05 May 2021 08:12:44 -0600
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=fess.xmission.com)
-        by in02.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-        (Exim 4.93)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1leIGX-002GvZ-Te; Wed, 05 May 2021 08:12:43 -0600
-From:   ebiederm@xmission.com (Eric W. Biederman)
-To:     Marco Elver <elver@google.com>
-Cc:     Arnd Bergmann <arnd@arndb.de>, Florian Weimer <fweimer@redhat.com>,
-        "David S. Miller" <davem@davemloft.net>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Peter Collingbourne <pcc@google.com>,
-        Dmitry Vyukov <dvyukov@google.com>,
-        Alexander Potapenko <glider@google.com>,
-        sparclinux <sparclinux@vger.kernel.org>,
-        linux-arch <linux-arch@vger.kernel.org>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        kasan-dev <kasan-dev@googlegroups.com>
-References: <YIpkvGrBFGlB5vNj@elver.google.com>
-        <m11rat9f85.fsf@fess.ebiederm.org>
-        <CAK8P3a0+uKYwL1NhY6Hvtieghba2hKYGD6hcKx5n8=4Gtt+pHA@mail.gmail.com>
-        <m15z031z0a.fsf@fess.ebiederm.org> <YIxVWkT03TqcJLY3@elver.google.com>
-        <m1zgxfs7zq.fsf_-_@fess.ebiederm.org>
-        <m1r1irpc5v.fsf@fess.ebiederm.org>
-        <CANpmjNNfiSgntiOzgMc5Y41KVAV_3VexdXCMADekbQEqSP3vqQ@mail.gmail.com>
-        <m1czuapjpx.fsf@fess.ebiederm.org>
-        <CANpmjNNyifBNdpejc6ofT6+n6FtUw-Cap_z9Z9YCevd7Wf3JYQ@mail.gmail.com>
-        <m14kfjh8et.fsf_-_@fess.ebiederm.org>
-        <m1tuni8ano.fsf_-_@fess.ebiederm.org>
-        <CANpmjNM5sYihM_9P5YHx06BooqLDhK96cMHGKaf61nCcoDJBdw@mail.gmail.com>
-Date:   Wed, 05 May 2021 09:12:38 -0500
-In-Reply-To: <CANpmjNM5sYihM_9P5YHx06BooqLDhK96cMHGKaf61nCcoDJBdw@mail.gmail.com>
-        (Marco Elver's message of "Wed, 5 May 2021 00:05:00 +0200")
-Message-ID: <m1o8dp8e21.fsf@fess.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
+        id S232283AbhEEOYu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 5 May 2021 10:24:50 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:60826 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S233054AbhEEOYu (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 5 May 2021 10:24:50 -0400
+From:   Thomas Gleixner <tglx@linutronix.de>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1620224632;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=uqMX/kcgxstoPmvY8Wd/zciVA9qFnbv7Kyz4Ssl4A3I=;
+        b=q+jPs/ibe1vFk14EzFP32RiEk+khuaDqb1sbvNsjnQdnLzVO9H5M/j11YHjqJZ0ugu+3mq
+        7vTrifLgOeKwo0MstJ/rGJg0BN9//HwaPpFyVUY7wCuPJJC7QOd6Aa4c8ZGjl6fJtKelcS
+        8XViEY7UoTcKoLhOG8ha5H4ebq/rj/6vA8k03uyp/9beMrt6OcK+RFY5+fYXTOxp8+5zPk
+        dNqZr62L7G9VKFLm81KKGIDkjm0NdjRUV0k0Kj+GfpAIYnAnxGwPf2fJ9xDXx3lstQ86Mn
+        1P3lsZVrSy/wRkewtUe7ki+0ZhHU8MkkdF9kXMHxo6it1o2fni9KgvR2+1dCSQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1620224632;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=uqMX/kcgxstoPmvY8Wd/zciVA9qFnbv7Kyz4Ssl4A3I=;
+        b=NLPrA9n0vhFqdef38DyhJqDycsiHukl0bJ1bmOq18k3B4jnmKVYN9rHGW0uCCIAnbFOIgb
+        ZvE6N0pDbcaxsfBg==
+To:     Peter Zijlstra <peterz@infradead.org>,
+        =?utf-8?Q?Andr=C3=A9?= Almeida <andrealmeid@collabora.com>
+Cc:     Ingo Molnar <mingo@redhat.com>, Darren Hart <dvhart@infradead.org>,
+        linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        kernel@collabora.com, krisman@collabora.com,
+        pgriffais@valvesoftware.com, z.figura12@gmail.com,
+        joel@joelfernandes.org, malteskarupke@fastmail.fm,
+        linux-api@vger.kernel.org, fweimer@redhat.com,
+        libc-alpha@sourceware.org, linux-kselftest@vger.kernel.org,
+        shuah@kernel.org, acme@kernel.org, corbet@lwn.net,
+        Peter Oskolkov <posk@posk.io>
+Subject: Re: [PATCH v3 00/13] Add futex2 syscalls
+In-Reply-To: <YJKQLkHuTH3EWJoR@hirez.programming.kicks-ass.net>
+References: <20210427231248.220501-1-andrealmeid@collabora.com> <YJKQLkHuTH3EWJoR@hirez.programming.kicks-ass.net>
+Date:   Wed, 05 May 2021 16:23:52 +0200
+Message-ID: <87bl9pi7if.ffs@nanos.tec.linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1leIGX-002GvZ-Te;;;mid=<m1o8dp8e21.fsf@fess.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX19By7EuCGlSC+Hrh/+dmLFpw1rmZv8aoeM=
-X-SA-Exim-Connect-IP: 68.227.160.95
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: Re: [PATCH v3 00/12] signal: sort out si_trapno and si_perf
-X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
-X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Marco Elver <elver@google.com> writes:
+On Wed, May 05 2021 at 14:31, Peter Zijlstra wrote:
 
-> On Tue, 4 May 2021 at 23:13, Eric W. Biederman <ebiederm@xmission.com> wrote:
->>
->> This set of changes sorts out the ABI issues with SIGTRAP TRAP_PERF, and
->> hopefully will can get merged before any userspace code starts using the
->> new ABI.
->>
->> The big ideas are:
->> - Placing the asserts first to prevent unexpected ABI changes
->> - si_trapno becomming ordinary fault subfield.
->> - struct signalfd_siginfo is almost full
->>
->> This set of changes starts out with Marco's static_assert changes and
->> additional one of my own that enforces the fact that the alignment of
->> siginfo_t is also part of the ABI.  Together these build time
->> checks verify there are no unexpected ABI changes in the changes
->> that follow.
->>
->> The field si_trapno is changed to become an ordinary extension of the
->> _sigfault member of siginfo.
->>
->> The code is refactored a bit and then si_perf_type is added along side
->> si_perf_data in the _perf subfield of _sigfault of siginfo_t.
->>
->> Finally the signalfd_siginfo fields are removed as they appear to be
->> filling up the structure without userspace actually being able to use
->> them.
->>
->> v2: https://lkml.kernel.org/r/m14kfjh8et.fsf_-_@fess.ebiederm.org
->> v1: https://lkml.kernel.org/r/m1zgxfs7zq.fsf_-_@fess.ebiederm.org
->>
->> Eric W. Biederman (9):
->>       signal: Verify the alignment and size of siginfo_t
->>       siginfo: Move si_trapno inside the union inside _si_fault
->>       signal: Implement SIL_FAULT_TRAPNO
->>       signal: Use dedicated helpers to send signals with si_trapno set
->>       signal: Remove __ARCH_SI_TRAPNO
->>       signal: Rename SIL_PERF_EVENT SIL_FAULT_PERF_EVENT for consistency
->>       signal: Factor force_sig_perf out of perf_sigtrap
->>       signal: Deliver all of the siginfo perf data in _perf
->>       signalfd: Remove SIL_FAULT_PERF_EVENT fields from signalfd_siginfo
->>
->> Marco Elver (3):
->>       sparc64: Add compile-time asserts for siginfo_t offsets
->>       arm: Add compile-time asserts for siginfo_t offsets
->>       arm64: Add compile-time asserts for siginfo_t offsets
+> On Tue, Apr 27, 2021 at 08:12:35PM -0300, Andr=C3=A9 Almeida wrote:
+>> Hi,
+>>=20
+>> This patch series introduces the futex2 syscalls.
 >
-> I can't seem to see the rest of them in my inbox. LKML also is missing
-> them: https://lore.kernel.org/linux-api/m1tuni8ano.fsf_-_@fess.ebiederm.org/
+> I still utterly detest that this adds a second hash-table for no
+> descernable reason.
 >
-> Something must have swallowed them. Could you resend?
-> I'll then test in the morning.
+> The new syscall interface does not depend on that in any way, you
+> previously implemented the multi-wait thing in the current futex code.
+>
+> Like I said last time; I'm okay with the new interface, but I don't see
+> why you need to reimplement the insides, that's all pointless code
+> duplication.
 
-They got stuck going out you should see them any time now.
-Sorry about that.
+The real question is whether we really need to model all of this along
+the existing futex functionality. I wouldn't mind a new infrastructure
+which addresses all the other known issues of futexes and makes the
+overall design less horrible than what we have now.
 
-Eric
+But that needs input from futex users (libraries and other horrible
+wrappers) to figure out what they really need, hate, like or do not care
+about.
+
+Without that we are bound to pile more crap on the existing pile of
+horrors forever.
+
+Thanks,
+
+        tglx
