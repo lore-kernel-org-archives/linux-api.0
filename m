@@ -4,31 +4,31 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ED75DC4360C
-	for <linux-api@archiver.kernel.org>; Wed,  5 May 2021 14:11:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 967C3C433B4
+	for <linux-api@archiver.kernel.org>; Wed,  5 May 2021 14:11:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CBE2B613BE
-	for <linux-api@archiver.kernel.org>; Wed,  5 May 2021 14:11:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 643CD613BE
+	for <linux-api@archiver.kernel.org>; Wed,  5 May 2021 14:11:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233887AbhEEOMn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 5 May 2021 10:12:43 -0400
-Received: from out01.mta.xmission.com ([166.70.13.231]:57894 "EHLO
+        id S233905AbhEEOMp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 5 May 2021 10:12:45 -0400
+Received: from out01.mta.xmission.com ([166.70.13.231]:57930 "EHLO
         out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233869AbhEEOMj (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 5 May 2021 10:12:39 -0400
+        with ESMTP id S233858AbhEEOMl (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 5 May 2021 10:12:41 -0400
 Received: from in01.mta.xmission.com ([166.70.13.51])
         by out01.mta.xmission.com with esmtps  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1leIFZ-003DNA-CP; Wed, 05 May 2021 08:11:41 -0600
+        id 1leIFc-003DNj-OZ; Wed, 05 May 2021 08:11:44 -0600
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=fess.int.ebiederm.org)
         by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
         (Exim 4.87)
         (envelope-from <ebiederm@xmission.com>)
-        id 1leIFU-00007y-Mt; Wed, 05 May 2021 08:11:41 -0600
+        id 1leIFb-00007y-4X; Wed, 05 May 2021 08:11:43 -0600
 From:   "Eric W. Beiderman" <ebiederm@xmission.com>
 To:     Marco Elver <elver@google.com>
 Cc:     Arnd Bergmann <arnd@arndb.de>, Florian Weimer <fweimer@redhat.com>,
@@ -45,19 +45,19 @@ Cc:     Arnd Bergmann <arnd@arndb.de>, Florian Weimer <fweimer@redhat.com>,
         Linux API <linux-api@vger.kernel.org>,
         kasan-dev <kasan-dev@googlegroups.com>,
         "Eric W. Biederman" <ebiederm@xmission.com>
-Date:   Wed,  5 May 2021 09:10:57 -0500
-Message-Id: <20210505141101.11519-8-ebiederm@xmission.com>
+Date:   Wed,  5 May 2021 09:10:58 -0500
+Message-Id: <20210505141101.11519-9-ebiederm@xmission.com>
 X-Mailer: git-send-email 2.30.1
 In-Reply-To: <20210505141101.11519-1-ebiederm@xmission.com>
 References: <m1tuni8ano.fsf_-_@fess.ebiederm.org>
  <20210505141101.11519-1-ebiederm@xmission.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-XM-SPF: eid=1leIFU-00007y-Mt;;;mid=<20210505141101.11519-8-ebiederm@xmission.com>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1/QXnIVQ6G593CxEvZS6/KauUA3zjfSAPU=
+X-XM-SPF: eid=1leIFb-00007y-4X;;;mid=<20210505141101.11519-9-ebiederm@xmission.com>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX18coKjiiiBU6l9p4gly0Wdj13arBoebgrI=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: [PATCH v3 08/12] signal: Remove __ARCH_SI_TRAPNO
+Subject: [PATCH v3 09/12] signal: Rename SIL_PERF_EVENT SIL_FAULT_PERF_EVENT for consistency
 X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
 X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Precedence: bulk
@@ -66,57 +66,93 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: "Eric W. Biederman" <ebiederm@xmission.com>
 
-Now that this define is no longer used remove it from the kernel.
+It helps to know which part of the siginfo structure the siginfo_layout
+value is talking about.
 
 v1: https://lkml.kernel.org/r/m18s4zs7nu.fsf_-_@fess.ebiederm.org
-Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+Acked-by: Marco Elver <elver@google.com>
+Signed-off-by: Eric W. Biederman <ebiederm@xmission.com>
 ---
- arch/alpha/include/uapi/asm/siginfo.h | 2 --
- arch/mips/include/uapi/asm/siginfo.h  | 2 --
- arch/sparc/include/uapi/asm/siginfo.h | 3 ---
- 3 files changed, 7 deletions(-)
+ fs/signalfd.c          |  2 +-
+ include/linux/signal.h |  2 +-
+ kernel/signal.c        | 10 +++++-----
+ 3 files changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/arch/alpha/include/uapi/asm/siginfo.h b/arch/alpha/include/uapi/asm/siginfo.h
-index 6e1a2af2f962..e08eae88182b 100644
---- a/arch/alpha/include/uapi/asm/siginfo.h
-+++ b/arch/alpha/include/uapi/asm/siginfo.h
-@@ -2,8 +2,6 @@
- #ifndef _ALPHA_SIGINFO_H
- #define _ALPHA_SIGINFO_H
- 
--#define __ARCH_SI_TRAPNO
--
- #include <asm-generic/siginfo.h>
- 
+diff --git a/fs/signalfd.c b/fs/signalfd.c
+index e87e59581653..83130244f653 100644
+--- a/fs/signalfd.c
++++ b/fs/signalfd.c
+@@ -132,7 +132,7 @@ static int signalfd_copyinfo(struct signalfd_siginfo __user *uinfo,
+ 		new.ssi_addr = (long) kinfo->si_addr;
+ 		new.ssi_addr_lsb = (short) kinfo->si_addr_lsb;
+ 		break;
+-	case SIL_PERF_EVENT:
++	case SIL_FAULT_PERF_EVENT:
+ 		new.ssi_addr = (long) kinfo->si_addr;
+ 		new.ssi_perf = kinfo->si_perf;
+ 		break;
+diff --git a/include/linux/signal.h b/include/linux/signal.h
+index 5160fd45e5ca..ed896d790e46 100644
+--- a/include/linux/signal.h
++++ b/include/linux/signal.h
+@@ -44,7 +44,7 @@ enum siginfo_layout {
+ 	SIL_FAULT_MCEERR,
+ 	SIL_FAULT_BNDERR,
+ 	SIL_FAULT_PKUERR,
+-	SIL_PERF_EVENT,
++	SIL_FAULT_PERF_EVENT,
+ 	SIL_CHLD,
+ 	SIL_RT,
+ 	SIL_SYS,
+diff --git a/kernel/signal.c b/kernel/signal.c
+index 7eaa8d84db4c..697c5fe58db8 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -1198,7 +1198,7 @@ static inline bool has_si_pid_and_uid(struct kernel_siginfo *info)
+ 	case SIL_FAULT_MCEERR:
+ 	case SIL_FAULT_BNDERR:
+ 	case SIL_FAULT_PKUERR:
+-	case SIL_PERF_EVENT:
++	case SIL_FAULT_PERF_EVENT:
+ 	case SIL_SYS:
+ 		ret = false;
+ 		break;
+@@ -2553,7 +2553,7 @@ static void hide_si_addr_tag_bits(struct ksignal *ksig)
+ 	case SIL_FAULT_MCEERR:
+ 	case SIL_FAULT_BNDERR:
+ 	case SIL_FAULT_PKUERR:
+-	case SIL_PERF_EVENT:
++	case SIL_FAULT_PERF_EVENT:
+ 		ksig->info.si_addr = arch_untagged_si_addr(
+ 			ksig->info.si_addr, ksig->sig, ksig->info.si_code);
+ 		break;
+@@ -3243,7 +3243,7 @@ enum siginfo_layout siginfo_layout(unsigned sig, int si_code)
+ 				layout = SIL_FAULT_PKUERR;
  #endif
-diff --git a/arch/mips/include/uapi/asm/siginfo.h b/arch/mips/include/uapi/asm/siginfo.h
-index c34c7eef0a1c..8cb8bd061a68 100644
---- a/arch/mips/include/uapi/asm/siginfo.h
-+++ b/arch/mips/include/uapi/asm/siginfo.h
-@@ -10,9 +10,7 @@
- #ifndef _UAPI_ASM_SIGINFO_H
- #define _UAPI_ASM_SIGINFO_H
- 
--
- #define __ARCH_SIGEV_PREAMBLE_SIZE (sizeof(long) + 2*sizeof(int))
--#undef __ARCH_SI_TRAPNO /* exception code needs to fill this ...  */
- 
- #define __ARCH_HAS_SWAPPED_SIGINFO
- 
-diff --git a/arch/sparc/include/uapi/asm/siginfo.h b/arch/sparc/include/uapi/asm/siginfo.h
-index 68bdde4c2a2e..0e7c27522aed 100644
---- a/arch/sparc/include/uapi/asm/siginfo.h
-+++ b/arch/sparc/include/uapi/asm/siginfo.h
-@@ -8,9 +8,6 @@
- 
- #endif /* defined(__sparc__) && defined(__arch64__) */
- 
--
--#define __ARCH_SI_TRAPNO
--
- #include <asm-generic/siginfo.h>
- 
- 
+ 			else if ((sig == SIGTRAP) && (si_code == TRAP_PERF))
+-				layout = SIL_PERF_EVENT;
++				layout = SIL_FAULT_PERF_EVENT;
+ 		}
+ 		else if (si_code <= NSIGPOLL)
+ 			layout = SIL_POLL;
+@@ -3365,7 +3365,7 @@ void copy_siginfo_to_external32(struct compat_siginfo *to,
+ 		to->si_addr = ptr_to_compat(from->si_addr);
+ 		to->si_pkey = from->si_pkey;
+ 		break;
+-	case SIL_PERF_EVENT:
++	case SIL_FAULT_PERF_EVENT:
+ 		to->si_addr = ptr_to_compat(from->si_addr);
+ 		to->si_perf = from->si_perf;
+ 		break;
+@@ -3441,7 +3441,7 @@ static int post_copy_siginfo_from_user32(kernel_siginfo_t *to,
+ 		to->si_addr = compat_ptr(from->si_addr);
+ 		to->si_pkey = from->si_pkey;
+ 		break;
+-	case SIL_PERF_EVENT:
++	case SIL_FAULT_PERF_EVENT:
+ 		to->si_addr = compat_ptr(from->si_addr);
+ 		to->si_perf = from->si_perf;
+ 		break;
 -- 
 2.30.1
 
