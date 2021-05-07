@@ -2,52 +2,65 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EF2C5C433B4
-	for <linux-api@archiver.kernel.org>; Thu,  6 May 2021 23:41:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5B50AC43461
+	for <linux-api@archiver.kernel.org>; Fri,  7 May 2021 07:35:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CB89861164
-	for <linux-api@archiver.kernel.org>; Thu,  6 May 2021 23:41:01 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2CC6D61457
+	for <linux-api@archiver.kernel.org>; Fri,  7 May 2021 07:35:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232929AbhEFXl7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 6 May 2021 19:41:59 -0400
-Received: from mailgate.ics.forth.gr ([139.91.1.2]:13313 "EHLO
-        mailgate.ics.forth.gr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232896AbhEFXl7 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 6 May 2021 19:41:59 -0400
-X-Greylist: delayed 1479 seconds by postgrey-1.27 at vger.kernel.org; Thu, 06 May 2021 19:41:58 EDT
-Received: from av3.ics.forth.gr (av3in.ics.forth.gr [139.91.1.77])
-        by mailgate.ics.forth.gr (8.15.2/ICS-FORTH/V10-1.8-GATE) with ESMTP id 146NGIu4043560
-        for <linux-api@vger.kernel.org>; Fri, 7 May 2021 02:16:19 +0300 (EEST)
-DKIM-Signature: v=1; a=rsa-sha256; d=ics.forth.gr; s=av; c=relaxed/simple;
-        q=dns/txt; i=@ics.forth.gr; t=1620342973; x=1622934973;
-        h=From:Sender:Reply-To:Subject:Date:Message-ID:To:Cc:MIME-Version:Content-Type:
-        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:Resent-From:
-        Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:References:List-Id:
-        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-        bh=uf0onNfnHBzOPbID0tZ8t011w+r/nxI4x/Q1TyEOdQE=;
-        b=PM4UzE0tjJb0ton6+hFqgkCcvCPtBByAxRm712TdGgM8oH0uKI3fYmQulecm+EDP
-        VX/y3RFo1wqeqd0M0KT/NGXp67dMJ3EswjXL7/Rvs2m3exSNibfkcTfc4Ds1LdVZ
-        zIO1mwOOSeXB/gkB+gBayO9ehtfE1kOLWrgcVaes3kdO9vNH4wOxJv3okCWEcOXq
-        7wxQ55OdhLAsE3nZ4q/4x7s7ycQC0w3Gol5dj1eF7An6hnmST3jy8YU3tIa2mTWi
-        ctsjP4o/QYbATmSPpaRFC0hLvogkCgCc8SAFLAmz5IdYCrO9I64z/wBrUohkg55F
-        bxOCRdo40Lnk7VwOyEhcoA==;
-X-AuditID: 8b5b014d-a70347000000209f-ba-609478bd5c23
-Received: from enigma.ics.forth.gr (enigma.ics.forth.gr [139.91.151.35])
-        by av3.ics.forth.gr (Symantec Messaging Gateway) with SMTP id EB.87.08351.DB874906; Fri,  7 May 2021 02:16:13 +0300 (EEST)
-X-ICS-AUTH-INFO: Authenticated user:  at ics.forth.gr
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
- format=flowed
-Content-Transfer-Encoding: 8bit
-Date:   Fri, 07 May 2021 02:16:03 +0300
-From:   Nick Kossifidis <mick@ics.forth.gr>
-To:     jejb@linux.ibm.com
-Cc:     David Hildenbrand <david@redhat.com>,
-        Andrew Morton <akpm@linux-foundation.org>,
+        id S235375AbhEGHgw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 7 May 2021 03:36:52 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:59850 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S235363AbhEGHgv (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 7 May 2021 03:36:51 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1620372951;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=YRLhFcul/s0bAb0h6pwheuix10YVXJYp5em6Jk4RpTY=;
+        b=LKQ8IWaBht40hQ37zGhiXWlx+x+Dj6an1dgqmq+UDQ3Msuggv1C2b3TezDAWLG/j28CUxx
+        SYtxDjtmTeLa6lateTlt99a9Vpwn/iZBxnYdboXBfMzDsZa4lqARUwn76xIegra1nQR16K
+        nHeDtHsZAN4JgiRXzfUjQ3eqptexoS4=
+Received: from mail-ed1-f71.google.com (mail-ed1-f71.google.com
+ [209.85.208.71]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-600-5SsIjsNUN5WUurbwjX-yUA-1; Fri, 07 May 2021 03:35:49 -0400
+X-MC-Unique: 5SsIjsNUN5WUurbwjX-yUA-1
+Received: by mail-ed1-f71.google.com with SMTP id i2-20020a0564020542b02903875c5e7a00so3993083edx.6
+        for <linux-api@vger.kernel.org>; Fri, 07 May 2021 00:35:49 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:to:cc:references:from:organization:subject
+         :message-id:date:user-agent:mime-version:in-reply-to
+         :content-language:content-transfer-encoding;
+        bh=YRLhFcul/s0bAb0h6pwheuix10YVXJYp5em6Jk4RpTY=;
+        b=ZAaOXV7npGfwd/McDVQFCiFyWVEw68VVKlbm4yjl0mHVEhntq3sDJqB6n4bMo7k5E/
+         FwVKsHyjHsOisHNU4HqArQbG9wmX0YpMEksZ+q4jNpJgok5QFqDcjbUDiQ/dn1ras0FY
+         EjTlEqjyHBaObMrsgsoDbLW0fX8qdJRb2HPl/gig0ZYU/ZkrBqzlK39X2Eb8zZI/vgCL
+         y6MrGWKBW/h/wz6Jpt1y826Bk4XmsriPuW6loeKs1NVs3tiIjQOJH/phSUGyO/gnX/rR
+         FbCfaF2j3iApmfydaFqP1VppQL7F1HjIkR1y2wakXGhPJlR1A9lrdUAPBahDcbbO2Uw4
+         wHdQ==
+X-Gm-Message-State: AOAM532Kjd9GsVLTIzrWitXJql65xeF5/C2nNsNytoccm4YdocQtvxP+
+        RNg6i5lYF6x+4J15pctvO7btCxRUoDUsIU/QYqecR43JPlnAOG5Pbzyj2o2I6iiPpbYYqLpkLNT
+        JsYCKSdsKxwkRrP8I7Q2A
+X-Received: by 2002:a17:907:174a:: with SMTP id lf10mr8861595ejc.433.1620372948258;
+        Fri, 07 May 2021 00:35:48 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJx5XI2zKUbsKazvcW2Vr5jvMDeiB+dtOEKTtfzbIqz37aYae3i7ugq6B0OmfMhiabycSZroRA==
+X-Received: by 2002:a17:907:174a:: with SMTP id lf10mr8861569ejc.433.1620372947917;
+        Fri, 07 May 2021 00:35:47 -0700 (PDT)
+Received: from [192.168.3.132] (p5b0c63c0.dip0.t-ipconnect.de. [91.12.99.192])
+        by smtp.gmail.com with ESMTPSA id l17sm2925176ejk.22.2021.05.07.00.35.45
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 07 May 2021 00:35:47 -0700 (PDT)
+To:     Nick Kossifidis <mick@ics.forth.gr>, jejb@linux.ibm.com
+Cc:     Andrew Morton <akpm@linux-foundation.org>,
         Mike Rapoport <rppt@kernel.org>,
         Alexander Viro <viro@zeniv.linux.org.uk>,
         Andy Lutomirski <luto@kernel.org>,
@@ -81,75 +94,121 @@ Cc:     David Hildenbrand <david@redhat.com>,
         linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
         linux-nvdimm@lists.01.org, linux-riscv@lists.infradead.org,
         x86@kernel.org
-Subject: Re: [PATCH v18 0/9] mm: introduce memfd_secret system call to create
- "secret" memory areas
-Organization: FORTH
-In-Reply-To: <8eb933f921c9dfe4c9b1b304e8f8fa4fbc249d84.camel@linux.ibm.com>
 References: <20210303162209.8609-1-rppt@kernel.org>
  <20210505120806.abfd4ee657ccabf2f221a0eb@linux-foundation.org>
  <de27bfae0f4fdcbb0bb4ad17ec5aeffcd774c44b.camel@linux.ibm.com>
  <996dbc29-e79c-9c31-1e47-cbf20db2937d@redhat.com>
  <8eb933f921c9dfe4c9b1b304e8f8fa4fbc249d84.camel@linux.ibm.com>
-Message-ID: <77fe28bd940b2c1afd69d65b6d349352@mailhost.ics.forth.gr>
-X-Sender: mick@mailhost.ics.forth.gr
-User-Agent: Roundcube Webmail/1.3.16
-X-Brightmail-Tracker: H4sIAAAAAAAAA03SfUwTZxzA8Tx317uDrOFEGZdKwNWRbGwrmsn8JTKijs2LRuLMFhUW5AI3
-        YEMkLRAmc2EC8qqjtS+uRXlRAUlHoWUwCoQXZQUFXwpaNhHr4I91MNxkTEaHjK5bwj9PPsnv
-        l+f5/vHQuH+HSEKnpmcK8nQ+TUr6EmVxus1vdOeoE7Y8rwmBSpORhGXV9xTMNz8n4UldOQLH
-        n7MIdJo7CH5uLkKwYFrCoW5eTcCC6g4J2pZAqB1vw8CorMHB8qyYhGLrAgHmqfsi6OoeImDU
-        WkmCbuIJCZPGFRHkKx9Q0DZfQMJt6zciuOK4i8GjszvB3luNwb3HBgJuVDgpcI2W43Ba7we2
-        M70YLP+wegzftIvguqkdg3F1Hgl992cQqF1NFFjMGhxODZgwuL1sE0HBRAS4F1cfXWyeEu18
-        jXtWeJbgjBeNiHMvqRA363IRnDJ/juI69A8prtqcxVkawrhLXS6MMzeWkJz5qYri5m7dorjB
-        826Cmx7TYVxFbS/iLg69fyAo1jcySUhLzRbk4VEJvilu0zSWcdUvx5CnovKQ9oVS5EOzzDZ2
-        pP4SKkW+tD8zgNjxDhXlHUSwhu4S5LGYWccOfT1NeIwzwGrGepDXIWz+twbcY4IJZQunlzGP
-        SeZVtsret7pP0xuYF9k5Y7B3fUHMOpThHq9nBLbu0SjpsR+znn368K7IYx9mH/tTWRfh7WnE
-        2CbVH/81RLNttnukt+1l9je3k/LcH7BqywVpBVqnX1OqX1OqX1NajfBGxPDZb8pSExWyj4/L
-        M1NkyXIz+vd3of3foQeWX2X9CKNRP2JpXLpBfLP2XIK/OIn/7IQgP35UnpUmKPrRRpqQBorF
-        soqj/kwynyl8KggZgvz/KUb7SPIw2ye49vWaA7G7646gV97u3FS/vSc+sGAXzQTzA+8ym22D
-        fVdq9w5+0HCygX4skW48Nzw+c3lP/kRMg7mocleU6PCxbbGNY6f4SbrqWkzPaEn5mb25xS99
-        eCI0Lqp+UR2wPTc7aEYjuyHZpI4+KZS3HYmov1z11Wyc1nb+gmEpMqA874uglMPD82NO7Zxj
-        x+fh4cnYwc6t6SO7i6xJDvvgis+P7YfYmD36GVPxlwMfheXwzEF5xu9ME52YteN0HHM1VP2L
-        zKjtlBiynFH7nWVNrVN/C9b49ux3qt5rPRapmNTxRSst5MhkdHohWWFShiRu+ev6W/amVs2h
-        ay1B4vjS4FwpoUjht4bhcgX/D3XLkQHMAwAA
+ <77fe28bd940b2c1afd69d65b6d349352@mailhost.ics.forth.gr>
+From:   David Hildenbrand <david@redhat.com>
+Organization: Red Hat
+Subject: Re: [PATCH v18 0/9] mm: introduce memfd_secret system call to create
+ "secret" memory areas
+Message-ID: <5232c8a7-8a05-9d0f-69ff-3dba2b04e784@redhat.com>
+Date:   Fri, 7 May 2021 09:35:45 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Thunderbird/78.8.1
+MIME-Version: 1.0
+In-Reply-To: <77fe28bd940b2c1afd69d65b6d349352@mailhost.ics.forth.gr>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Στις 2021-05-06 20:05, James Bottomley έγραψε:
-> On Thu, 2021-05-06 at 18:45 +0200, David Hildenbrand wrote:
->> 
->> Also, there is a way to still read that memory when root by
->> 
->> 1. Having kdump active (which would often be the case, but maybe not
->> to dump user pages )
->> 2. Triggering a kernel crash (easy via proc as root)
->> 3. Waiting for the reboot after kump() created the dump and then
->> reading the content from disk.
+On 07.05.21 01:16, Nick Kossifidis wrote:
+> Στις 2021-05-06 20:05, James Bottomley έγραψε:
+>> On Thu, 2021-05-06 at 18:45 +0200, David Hildenbrand wrote:
+>>>
+>>> Also, there is a way to still read that memory when root by
+>>>
+>>> 1. Having kdump active (which would often be the case, but maybe not
+>>> to dump user pages )
+>>> 2. Triggering a kernel crash (easy via proc as root)
+>>> 3. Waiting for the reboot after kump() created the dump and then
+>>> reading the content from disk.
+>>
+>> Anything that can leave physical memory intact but boot to a kernel
+>> where the missing direct map entry is restored could theoretically
+>> extract the secret.  However, it's not exactly going to be a stealthy
+>> extraction ...
+>>
+>>> Or, as an attacker, load a custom kexec() kernel and read memory
+>>> from the new environment. Of course, the latter two are advanced
+>>> mechanisms, but they are possible when root. We might be able to
+>>> mitigate, for example, by zeroing out secretmem pages before booting
+>>> into the kexec kernel, if we care :)
+>>
+>> I think we could handle it by marking the region, yes, and a zero on
+>> shutdown might be useful ... it would prevent all warm reboot type
+>> attacks.
+>>
 > 
-> Anything that can leave physical memory intact but boot to a kernel
-> where the missing direct map entry is restored could theoretically
-> extract the secret.  However, it's not exactly going to be a stealthy
-> extraction ...
-> 
->> Or, as an attacker, load a custom kexec() kernel and read memory
->> from the new environment. Of course, the latter two are advanced
->> mechanisms, but they are possible when root. We might be able to
->> mitigate, for example, by zeroing out secretmem pages before booting
->> into the kexec kernel, if we care :)
-> 
-> I think we could handle it by marking the region, yes, and a zero on
-> shutdown might be useful ... it would prevent all warm reboot type
-> attacks.
-> 
+> I had similar concerns about recovering secrets with kdump, and
+> considered cleaning up keyrings before jumping to the new kernel. The
+> problem is we can't provide guarantees in that case, once the kernel has
+> crashed and we are on our way to run crashkernel, we can't be sure we
+> can reliably zero-out anything, the more code we add to that path the
 
-I had similar concerns about recovering secrets with kdump, and 
-considered cleaning up keyrings before jumping to the new kernel. The 
-problem is we can't provide guarantees in that case, once the kernel has 
-crashed and we are on our way to run crashkernel, we can't be sure we 
-can reliably zero-out anything, the more code we add to that path the 
-more risky it gets. However during reboot/normal kexec() we should do 
-some cleanup, it makes sense and secretmem can indeed be useful in that 
-case. Regarding loading custom kexec() kernels, we mitigate this with 
-the kexec file-based API where we can verify the signature of the loaded 
-kimage (assuming the system runs a kernel provided by a trusted 3rd 
-party and we 've maintained a chain of trust since booting).
+Well, I think it depends. Assume we do the following
+
+1) Zero out any secretmem pages when handing them back to the buddy. 
+(alternative: init_on_free=1) -- if not already done, I didn't check the 
+code.
+
+2) On kdump(), zero out all allocated secretmem. It'd be easier if we'd 
+just allocated from a fixed physical memory area; otherwise we have to 
+walk process page tables or use a PFN walker. And zeroing out secretmem 
+pages without a direct mapping is a different challenge.
+
+Now, during 2) it can happen that
+
+a) We crash in our clearing code (e.g., something is seriously messed 
+up) and fail to start the kdump kernel. That's actually good, instead of 
+leaking data we fail hard.
+
+b) We don't find all secretmem pages, for example, because process page 
+tables are messed up or something messed up our memmap (if we'd use that 
+to identify secretmem pages via a PFN walker somehow)
+
+
+But for the simple cases (e.g., malicious root tries to crash the kernel 
+via /proc/sysrq-trigger) both a) and b) wouldn't apply.
+
+Obviously, if an admin would want to mitigate right now, he would want 
+to disable kdump completely, meaning any attempt to load a crashkernel 
+would fail and cannot be enabled again for that kernel (also not via 
+cmdline an attacker could modify to reboot into a system with the option 
+for a crashkernel). Disabling kdump in the kernel when secretmem pages 
+are allocated is one approach, although sub-optimal.
+
+> more risky it gets. However during reboot/normal kexec() we should do
+> some cleanup, it makes sense and secretmem can indeed be useful in that
+> case. Regarding loading custom kexec() kernels, we mitigate this with
+> the kexec file-based API where we can verify the signature of the loaded
+> kimage (assuming the system runs a kernel provided by a trusted 3rd
+> party and we 've maintained a chain of trust since booting).
+
+For example in VMs (like QEMU), we often don't clear physical memory 
+during a reboot. So if an attacker manages to load a kernel that you can 
+trick into reading random physical memory areas, we can leak secretmem 
+data I think.
+
+And there might be ways to achieve that just using the cmdline, not 
+necessarily loading a different kernel. For example if you limit the 
+kernel footprint ("mem=256M") and disable strict_iomem_checks 
+("strict_iomem_checks=relaxed") you can just extract that memory via 
+/dev/mem if I am not wrong.
+
+So as an attacker, modify the (grub) cmdline to "mem=256M 
+strict_iomem_checks=relaxed", reboot, and read all memory via /dev/mem. 
+Or load a signed kexec kernel with that cmdline and boot into it.
+
+Interesting problem :)
+
+-- 
+Thanks,
+
+David / dhildenb
+
