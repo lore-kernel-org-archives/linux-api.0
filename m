@@ -2,183 +2,112 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EBA64C433ED
-	for <linux-api@archiver.kernel.org>; Mon, 17 May 2021 20:05:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A685CC433ED
+	for <linux-api@archiver.kernel.org>; Mon, 17 May 2021 20:18:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D052160FF2
-	for <linux-api@archiver.kernel.org>; Mon, 17 May 2021 20:05:11 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8E92D61350
+	for <linux-api@archiver.kernel.org>; Mon, 17 May 2021 20:18:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237461AbhEQUG1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 17 May 2021 16:06:27 -0400
-Received: from out02.mta.xmission.com ([166.70.13.232]:49328 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236497AbhEQUG0 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 17 May 2021 16:06:26 -0400
-Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out02.mta.xmission.com with esmtps  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        (Exim 4.93)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1lijUD-008wn0-6v; Mon, 17 May 2021 14:05:09 -0600
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=fess.int.ebiederm.org)
-        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.87)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1lijNr-0001rb-0e; Mon, 17 May 2021 13:58:35 -0600
-From:   "Eric W. Beiderman" <ebiederm@xmission.com>
-To:     Marco Elver <elver@google.com>
-Cc:     Arnd Bergmann <arnd@arndb.de>, Florian Weimer <fweimer@redhat.com>,
-        "David S. Miller" <davem@davemloft.net>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Peter Collingbourne <pcc@google.com>,
-        Dmitry Vyukov <dvyukov@google.com>,
-        Alexander Potapenko <glider@google.com>,
-        sparclinux <sparclinux@vger.kernel.org>,
-        linux-arch <linux-arch@vger.kernel.org>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        kasan-dev <kasan-dev@googlegroups.com>,
-        "Eric W. Biederman" <ebiederm@xmission.com>
-Date:   Mon, 17 May 2021 14:57:44 -0500
-Message-Id: <20210517195748.8880-1-ebiederm@xmission.com>
-X-Mailer: git-send-email 2.30.1
-In-Reply-To: <m1a6ot5e2h.fsf_-_@fess.ebiederm.org>
-References: <m1a6ot5e2h.fsf_-_@fess.ebiederm.org>
+        id S238949AbhEQUTr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 17 May 2021 16:19:47 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:55016 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S238942AbhEQUTq (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 17 May 2021 16:19:46 -0400
+From:   Thomas Gleixner <tglx@linutronix.de>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1621282707;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=4CblS4NWUSycccK6+ysE1vs1G6nKpvCAliA4XuNuKT4=;
+        b=sZEsINB9gW9rWKIThv/nJUQdVS0LVVxt3mk9SLmr2mnPlVG6wz5VMOrR7yTWtsO+G2D6xU
+        BsKI+EgFjlUDMXiDx5ZOIVJHVJDh9digvYou8HnEtX73UoubWvL37hI5Q5gUp7X55T9mjj
+        DOvrg+Fa5Cpa5GgGRmPsvz97s/IuHhEDUM7F7dXXjqJwipMa2zywAtAX872nuQ6XOq/nZK
+        qFUa/G8sO96R7rbVv6P6biiiDfkCYzjDpIc1iYfmyscNYYql/ptdLI5v31jgwegubZ9sNX
+        NJe6nlaunx1HUNB9R5DV7FYvBa2vEyqI/HssiVTqhgtGPdCPjCergsWkw3eF8w==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1621282707;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=4CblS4NWUSycccK6+ysE1vs1G6nKpvCAliA4XuNuKT4=;
+        b=nwXJo4JSXCjScrrvNBVQbD7dDyHa0ScZKzi1rD3hgFRAW9j4kIZ6zia4oYhFw9afxGfUeN
+        THODgb+5xRdI+9CA==
+To:     Robin Murphy <robin.murphy@arm.com>, Nitesh Lal <nilal@redhat.com>,
+        Jesse Brandeburg <jesse.brandeburg@intel.com>,
+        "frederic\@kernel.org" <frederic@kernel.org>,
+        "juri.lelli\@redhat.com" <juri.lelli@redhat.com>,
+        Marcelo Tosatti <mtosatti@redhat.com>
+Cc:     Ingo Molnar <mingo@kernel.org>, linux-kernel@vger.kernel.org,
+        intel-wired-lan@lists.osuosl.org, jbrandeb@kernel.org,
+        Alex Belits <abelits@marvell.com>,
+        "linux-api\@vger.kernel.org" <linux-api@vger.kernel.org>,
+        "bhelgaas\@google.com" <bhelgaas@google.com>,
+        "linux-pci\@vger.kernel.org" <linux-pci@vger.kernel.org>,
+        "rostedt\@goodmis.org" <rostedt@goodmis.org>,
+        "peterz\@infradead.org" <peterz@infradead.org>,
+        "davem\@davemloft.net" <davem@davemloft.net>,
+        "akpm\@linux-foundation.org" <akpm@linux-foundation.org>,
+        "sfr\@canb.auug.org.au" <sfr@canb.auug.org.au>,
+        "stephen\@networkplumber.org" <stephen@networkplumber.org>,
+        "rppt\@linux.vnet.ibm.com" <rppt@linux.vnet.ibm.com>,
+        "jinyuqi\@huawei.com" <jinyuqi@huawei.com>,
+        "zhangshaokun\@hisilicon.com" <zhangshaokun@hisilicon.com>,
+        netdev@vger.kernel.org, chris.friesen@windriver.com,
+        Marc Zyngier <maz@kernel.org>
+Subject: Re: [PATCH tip:irq/core v1] genirq: remove auto-set of the mask when setting the hint
+In-Reply-To: <874kf1faac.ffs@nanos.tec.linutronix.de>
+References: <20210501021832.743094-1-jesse.brandeburg@intel.com> <16d8ca67-30c6-bb4b-8946-79de8629156e@arm.com> <20210504092340.00006c61@intel.com> <CAFki+LmR-o+Fng21ggy48FUX7RhjjpjO87dn3Ld+L4BK2pSRZg@mail.gmail.com> <bf1d4892-0639-0bbf-443e-ba284a8ed457@arm.com> <87sg2lz0zz.ffs@nanos.tec.linutronix.de> <d1d5e797-49ee-4968-88c6-c07119343492@arm.com> <874kf1faac.ffs@nanos.tec.linutronix.de>
+Date:   Mon, 17 May 2021 22:18:27 +0200
+Message-ID: <87sg2ldsh8.ffs@nanos.tec.linutronix.de>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-XM-SPF: eid=1lijNr-0001rb-0e;;;mid=<20210517195748.8880-1-ebiederm@xmission.com>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1/fN9eCwd6Pf3euOoMd6UjKgwMo0ARlihE=
-X-SA-Exim-Connect-IP: 68.227.160.95
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: [PATCH v4 1/5] siginfo: Move si_trapno inside the union inside _si_fault
-X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: "Eric W. Biederman" <ebiederm@xmission.com>
+On Mon, May 17 2021 at 21:08, Thomas Gleixner wrote:
+> On Mon, May 17 2021 at 19:50, Robin Murphy wrote:
+>> On 2021-05-17 19:08, Thomas Gleixner wrote:
+>>> On Mon, May 17 2021 at 18:26, Robin Murphy wrote:
+>>>> On 2021-05-17 17:57, Nitesh Lal wrote:
+>>>> I'm not implying that there isn't a bug, or that this code ever made
+>>>> sense in the first place, just that fixing it will unfortunately be a
+>>>> bit more involved than a simple revert. This patch as-is *will* subtly
+>>>> break at least the system PMU drivers currently using
+>>> 
+>>> s/using/abusing/
+>>> 
+>>>> irq_set_affinity_hint() - those I know require the IRQ affinity to
+>>>> follow whichever CPU the PMU context is bound to, in order to meet perf
+>>>> core's assumptions about mutual exclusion.
+>>> 
+>>> Which driver is that?
+>>
+>> Right now, any driver which wants to control an IRQ's affinity and also 
+>> build as a module, for one thing. I'm familiar with drivers/perf/ where 
+>> a basic pattern has been widely copied;
+>
+> Bah. Why the heck can't people talk and just go and rumage until they
+> find something which hopefully does what they want...
+>
+> The name of that function should have rang all alarm bells...
 
-It turns out that linux uses si_trapno very sparingly, and as such it
-can be considered extra information for a very narrow selection of
-signals, rather than information that is present with every fault
-reported in siginfo.
+Aside of that all the warnings around the return value are useless cargo
+cult. Why?
 
-As such move si_trapno inside the union inside of _si_fault.  This
-results in no change in placement, and makes it eaiser
-to extend _si_fault in the future as this reduces the number of
-special cases.  In particular with si_trapno included in the union it
-is no longer a concern that the union must be pointer aligned on most
-architectures because the union follows immediately after si_addr
-which is a pointer.
+The only reason why this function returns an error code is when there is
+no irq descriptor assigned to the interrupt number, which is well close
+to impossible in that context.
 
-This change results in a difference in siginfo field placement on
-sparc and alpha for the fields si_addr_lsb, si_lower, si_upper,
-si_pkey, and si_perf.  These architectures do not implement the
-signals that would use si_addr_lsb, si_lower, si_upper, si_pkey, and
-si_perf.  Further these architecture have not yet implemented the
-userspace that would use si_perf.
+But it does _NOT_ return an error when the actual affinity setting
+fails...
 
-The point of this change is in fact to correct these placement issues
-before sparc or alpha grow userspace that cares.  This change was
-discussed[1] and the agreement is that this change is currently safe.
+Thanks,
 
-[1]: https://lkml.kernel.org/r/CAK8P3a0+uKYwL1NhY6Hvtieghba2hKYGD6hcKx5n8=4Gtt+pHA@mail.gmail.com
-Acked-by: Marco Elver <elver@google.com>
-v1: https://lkml.kernel.org/r/m1tunns7yf.fsf_-_@fess.ebiederm.org
-v2: https://lkml.kernel.org/r/20210505141101.11519-5-ebiederm@xmission.com
-Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
----
- arch/x86/kernel/signal_compat.c    | 3 +++
- include/linux/compat.h             | 5 ++---
- include/uapi/asm-generic/siginfo.h | 7 ++-----
- kernel/signal.c                    | 1 +
- 4 files changed, 8 insertions(+), 8 deletions(-)
-
-diff --git a/arch/x86/kernel/signal_compat.c b/arch/x86/kernel/signal_compat.c
-index 0e5d0a7e203b..a9fcabd8a5e5 100644
---- a/arch/x86/kernel/signal_compat.c
-+++ b/arch/x86/kernel/signal_compat.c
-@@ -127,6 +127,9 @@ static inline void signal_compat_build_tests(void)
- 	BUILD_BUG_ON(offsetof(siginfo_t, si_addr) != 0x10);
- 	BUILD_BUG_ON(offsetof(compat_siginfo_t, si_addr) != 0x0C);
- 
-+	BUILD_BUG_ON(offsetof(siginfo_t, si_trapno) != 0x18);
-+	BUILD_BUG_ON(offsetof(compat_siginfo_t, si_trapno) != 0x10);
-+
- 	BUILD_BUG_ON(offsetof(siginfo_t, si_addr_lsb) != 0x18);
- 	BUILD_BUG_ON(offsetof(compat_siginfo_t, si_addr_lsb) != 0x10);
- 
-diff --git a/include/linux/compat.h b/include/linux/compat.h
-index f0d2dd35d408..6af7bef15e94 100644
---- a/include/linux/compat.h
-+++ b/include/linux/compat.h
-@@ -214,12 +214,11 @@ typedef struct compat_siginfo {
- 		/* SIGILL, SIGFPE, SIGSEGV, SIGBUS, SIGTRAP, SIGEMT */
- 		struct {
- 			compat_uptr_t _addr;	/* faulting insn/memory ref. */
--#ifdef __ARCH_SI_TRAPNO
--			int _trapno;	/* TRAP # which caused the signal */
--#endif
- #define __COMPAT_ADDR_BND_PKEY_PAD  (__alignof__(compat_uptr_t) < sizeof(short) ? \
- 				     sizeof(short) : __alignof__(compat_uptr_t))
- 			union {
-+				/* used on alpha and sparc */
-+				int _trapno;	/* TRAP # which caused the signal */
- 				/*
- 				 * used when si_code=BUS_MCEERR_AR or
- 				 * used when si_code=BUS_MCEERR_AO
-diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
-index 03d6f6d2c1fe..e663bf117b46 100644
---- a/include/uapi/asm-generic/siginfo.h
-+++ b/include/uapi/asm-generic/siginfo.h
-@@ -63,9 +63,6 @@ union __sifields {
- 	/* SIGILL, SIGFPE, SIGSEGV, SIGBUS, SIGTRAP, SIGEMT */
- 	struct {
- 		void __user *_addr; /* faulting insn/memory ref. */
--#ifdef __ARCH_SI_TRAPNO
--		int _trapno;	/* TRAP # which caused the signal */
--#endif
- #ifdef __ia64__
- 		int _imm;		/* immediate value for "break" */
- 		unsigned int _flags;	/* see ia64 si_flags */
-@@ -75,6 +72,8 @@ union __sifields {
- #define __ADDR_BND_PKEY_PAD  (__alignof__(void *) < sizeof(short) ? \
- 			      sizeof(short) : __alignof__(void *))
- 		union {
-+			/* used on alpha and sparc */
-+			int _trapno;	/* TRAP # which caused the signal */
- 			/*
- 			 * used when si_code=BUS_MCEERR_AR or
- 			 * used when si_code=BUS_MCEERR_AO
-@@ -150,9 +149,7 @@ typedef struct siginfo {
- #define si_int		_sifields._rt._sigval.sival_int
- #define si_ptr		_sifields._rt._sigval.sival_ptr
- #define si_addr		_sifields._sigfault._addr
--#ifdef __ARCH_SI_TRAPNO
- #define si_trapno	_sifields._sigfault._trapno
--#endif
- #define si_addr_lsb	_sifields._sigfault._addr_lsb
- #define si_lower	_sifields._sigfault._addr_bnd._lower
- #define si_upper	_sifields._sigfault._addr_bnd._upper
-diff --git a/kernel/signal.c b/kernel/signal.c
-index c3017aa8024a..65888aec65a0 100644
---- a/kernel/signal.c
-+++ b/kernel/signal.c
-@@ -4607,6 +4607,7 @@ static inline void siginfo_buildtime_checks(void)
- 
- 	/* sigfault */
- 	CHECK_OFFSET(si_addr);
-+	CHECK_OFFSET(si_trapno);
- 	CHECK_OFFSET(si_addr_lsb);
- 	CHECK_OFFSET(si_lower);
- 	CHECK_OFFSET(si_upper);
--- 
-2.30.1
-
+        tglx
