@@ -2,104 +2,91 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F2414C433B4
-	for <linux-api@archiver.kernel.org>; Tue, 18 May 2021 18:05:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CF711C433ED
+	for <linux-api@archiver.kernel.org>; Tue, 18 May 2021 18:59:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D1054611CE
-	for <linux-api@archiver.kernel.org>; Tue, 18 May 2021 18:05:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AE24761261
+	for <linux-api@archiver.kernel.org>; Tue, 18 May 2021 18:59:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1351447AbhERSG4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 18 May 2021 14:06:56 -0400
-Received: from mga01.intel.com ([192.55.52.88]:26931 "EHLO mga01.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1346758AbhERSGz (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 18 May 2021 14:06:55 -0400
-IronPort-SDR: q+McRJhdftoHISkLhODa1E5JP+ke3SD4bEIeuLAwCAfubEZrATPlunM/k0+DtU5DNUZ+7KsKkI
- RRVnQKeSedzA==
-X-IronPort-AV: E=McAfee;i="6200,9189,9988"; a="221838914"
-X-IronPort-AV: E=Sophos;i="5.82,310,1613462400"; 
-   d="scan'208";a="221838914"
-Received: from orsmga001.jf.intel.com ([10.7.209.18])
-  by fmsmga101.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 May 2021 11:05:30 -0700
-IronPort-SDR: gAUNy8H1tWzyDtk3RjWGu7NYwEdtvHR844tMogSjaHv7ceZTTVu4XZLZKd+4fKBQaVCefCmmE4
- wSoG94ONbg3g==
-X-IronPort-AV: E=Sophos;i="5.82,310,1613462400"; 
-   d="scan'208";a="473078661"
-Received: from yyu32-mobl1.amr.corp.intel.com (HELO [10.209.166.158]) ([10.209.166.158])
-  by orsmga001-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 May 2021 11:05:28 -0700
-Subject: Re: [PATCH v26 24/30] x86/cet/shstk: Introduce shadow stack token
- setup/verify routines
-To:     Eugene Syromiatnikov <esyr@redhat.com>
-Cc:     Borislav Petkov <bp@alien8.de>, x86@kernel.org,
-        "H. Peter Anvin" <hpa@zytor.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-doc@vger.kernel.org, linux-mm@kvack.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
-        Arnd Bergmann <arnd@arndb.de>,
-        Andy Lutomirski <luto@kernel.org>,
-        Balbir Singh <bsingharora@gmail.com>,
-        Cyrill Gorcunov <gorcunov@gmail.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Nadav Amit <nadav.amit@gmail.com>,
-        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
-        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
-        Dave Martin <Dave.Martin@arm.com>,
-        Weijiang Yang <weijiang.yang@intel.com>,
-        Pengfei Xu <pengfei.xu@intel.com>,
-        Haitao Huang <haitao.huang@intel.com>
-References: <20210427204315.24153-1-yu-cheng.yu@intel.com>
- <20210427204315.24153-25-yu-cheng.yu@intel.com> <YKIfIEyW+sR+bDCk@zn.tnic>
- <e225e357-a1d5-9596-8900-79e6b94cf924@intel.com>
- <20210518001316.GR15897@asgard.redhat.com>
-From:   "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
-Message-ID: <ea096f7e-7761-081f-e855-3294f8d09471@intel.com>
-Date:   Tue, 18 May 2021 11:05:25 -0700
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
- Thunderbird/78.10.1
+        id S1351717AbhERTAV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 18 May 2021 15:00:21 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:32496 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S242103AbhERTAV (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 18 May 2021 15:00:21 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1621364342;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=62kI6pIOIPdtKW8CJ7bGGrK3d5OmdLNd14MdZWiAWKk=;
+        b=C9lLPZb7fSNJFwVARtTVQxTl6hlvqvNys02zevgAh8FfkDzCGmpWHC+cgvFl7vqf1tDuBZ
+        zrS/Muwwi7wtYP+TZcofUGKA7PP6qMI8g82nIFvHra7nEBhETsCjpl/bViGDSKBtaNSjCi
+        dZvuTiT/z/QhOarn6Gk0B9U2MDS8JN4=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-463-yWhZ7rJ4PVKo-CwT45TI7Q-1; Tue, 18 May 2021 14:58:58 -0400
+X-MC-Unique: yWhZ7rJ4PVKo-CwT45TI7Q-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 95E3B801106;
+        Tue, 18 May 2021 18:58:55 +0000 (UTC)
+Received: from redhat.com (ovpn-113-225.phx2.redhat.com [10.3.113.225])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 730F61037E81;
+        Tue, 18 May 2021 18:58:49 +0000 (UTC)
+Date:   Tue, 18 May 2021 12:58:13 -0600
+From:   Alex Williamson <alex.williamson@redhat.com>
+To:     Shenming Lu <lushenming@huawei.com>
+Cc:     Cornelia Huck <cohuck@redhat.com>, Will Deacon <will@kernel.org>,
+        Robin Murphy <robin.murphy@arm.com>,
+        Joerg Roedel <joro@8bytes.org>,
+        Jean-Philippe Brucker <jean-philippe@linaro.org>,
+        Eric Auger <eric.auger@redhat.com>, <kvm@vger.kernel.org>,
+        <linux-kernel@vger.kernel.org>,
+        <linux-arm-kernel@lists.infradead.org>,
+        <iommu@lists.linux-foundation.org>, <linux-api@vger.kernel.org>,
+        Kevin Tian <kevin.tian@intel.com>,
+        Lu Baolu <baolu.lu@linux.intel.com>, <yi.l.liu@intel.com>,
+        Christoph Hellwig <hch@infradead.org>,
+        Jonathan Cameron <Jonathan.Cameron@huawei.com>,
+        Barry Song <song.bao.hua@hisilicon.com>,
+        <wanghaibin.wang@huawei.com>, <yuzenghui@huawei.com>
+Subject: Re: [RFC PATCH v3 7/8] vfio/type1: Add selective DMA faulting
+ support
+Message-ID: <20210518125813.7b8a78f1.alex.williamson@redhat.com>
+In-Reply-To: <20210409034420.1799-8-lushenming@huawei.com>
+References: <20210409034420.1799-1-lushenming@huawei.com>
+        <20210409034420.1799-8-lushenming@huawei.com>
 MIME-Version: 1.0
-In-Reply-To: <20210518001316.GR15897@asgard.redhat.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-US
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 5/17/2021 5:14 PM, Eugene Syromiatnikov wrote:
-> On Mon, May 17, 2021 at 01:55:01PM -0700, Yu, Yu-cheng wrote:
->> On 5/17/2021 12:45 AM, Borislav Petkov wrote:
->>> On Tue, Apr 27, 2021 at 01:43:09PM -0700, Yu-cheng Yu wrote:
->>>> +static inline int write_user_shstk_32(u32 __user *addr, u32 val)
->>>> +{
->>>> +	WARN_ONCE(1, "%s used but not supported.\n", __func__);
->>>> +	return -EFAULT;
->>>> +}
->>>> +#endif
->>>
->>> What is that supposed to catch? Any concrete (mis-)use cases?
->>>
->>
->> If 32-bit apps are not supported, there should be no need of 32-bit shadow
->> stack write, otherwise there is a bug.
-> 
-> Speaking of which, I wonder what would happen if a 64-bit process makes
-> a 32-bit system call (using int 0x80, for example), and gets a signal.
-> 
+On Fri, 9 Apr 2021 11:44:19 +0800
+Shenming Lu <lushenming@huawei.com> wrote:
 
-Yes, that's right.  Thanks!  I should have said, if neither IA32 nor X32 
-is supported.
+> Some devices only allow selective DMA faulting. Similar to the selective
+> dirty page tracking, the vendor driver can call vfio_pin_pages() to
+> indicate the non-faultable scope, we add a new struct vfio_range to
+> record it, then when the IOPF handler receives any page request out
+> of the scope, we can directly return with an invalid response.
 
-Yu-cheng
+Seems like this highlights a deficiency in the design, that the user
+can't specify mappings as iopf enabled or disabled.  Also, if the
+vendor driver has pinned pages within the range, shouldn't that prevent
+them from faulting in the first place?  Why do we need yet more
+tracking structures?  Pages pinned by the vendor driver need to count
+against the user's locked memory limits regardless of iopf.  Thanks,
+
+Alex
+
