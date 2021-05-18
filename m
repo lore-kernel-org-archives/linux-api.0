@@ -2,210 +2,95 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 845EBC43462
-	for <linux-api@archiver.kernel.org>; Tue, 18 May 2021 18:59:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C5328C433B4
+	for <linux-api@archiver.kernel.org>; Tue, 18 May 2021 19:45:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6B42861285
-	for <linux-api@archiver.kernel.org>; Tue, 18 May 2021 18:59:25 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id ABA366135D
+	for <linux-api@archiver.kernel.org>; Tue, 18 May 2021 19:45:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1351825AbhERTAm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 18 May 2021 15:00:42 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:36076 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1351762AbhERTA1 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 18 May 2021 15:00:27 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1621364349;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=Tfjlufh0xC6ZP3c7VljIYlskYT5mjHLtMK/8FSz46Jg=;
-        b=Y5t6ayWSt6iwrOFDlc1S7cXWfgp7vjj40MA0kvIqxiFzX5tvTgd1ovO4pG6jnQa/psPmtH
-        zS3DjIbLUIYY4D49jiDz8OG13BGmLnMrUk1Z39tF5Th3p1zurMzJi2aNsbdDmXQDLDkfCr
-        0Da83nkwSciaxwV4HY83Lm7e6WFNwL8=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-556-urbit0cmMIiAzdAOFUsM4A-1; Tue, 18 May 2021 14:59:05 -0400
-X-MC-Unique: urbit0cmMIiAzdAOFUsM4A-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BEEFF6D4E6;
-        Tue, 18 May 2021 18:59:03 +0000 (UTC)
-Received: from redhat.com (ovpn-113-225.phx2.redhat.com [10.3.113.225])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id ED03B100F49F;
-        Tue, 18 May 2021 18:59:02 +0000 (UTC)
-Date:   Tue, 18 May 2021 12:58:18 -0600
-From:   Alex Williamson <alex.williamson@redhat.com>
-To:     Shenming Lu <lushenming@huawei.com>
-Cc:     Cornelia Huck <cohuck@redhat.com>, Will Deacon <will@kernel.org>,
-        Robin Murphy <robin.murphy@arm.com>,
-        Joerg Roedel <joro@8bytes.org>,
-        Jean-Philippe Brucker <jean-philippe@linaro.org>,
-        Eric Auger <eric.auger@redhat.com>, <kvm@vger.kernel.org>,
-        <linux-kernel@vger.kernel.org>,
-        <linux-arm-kernel@lists.infradead.org>,
-        <iommu@lists.linux-foundation.org>, <linux-api@vger.kernel.org>,
-        Kevin Tian <kevin.tian@intel.com>,
-        Lu Baolu <baolu.lu@linux.intel.com>, <yi.l.liu@intel.com>,
-        Christoph Hellwig <hch@infradead.org>,
-        Jonathan Cameron <Jonathan.Cameron@huawei.com>,
-        Barry Song <song.bao.hua@hisilicon.com>,
-        <wanghaibin.wang@huawei.com>, <yuzenghui@huawei.com>
-Subject: Re: [RFC PATCH v3 6/8] vfio/type1: No need to statically pin and
- map if IOPF enabled
-Message-ID: <20210518125818.2282941f.alex.williamson@redhat.com>
-In-Reply-To: <20210409034420.1799-7-lushenming@huawei.com>
-References: <20210409034420.1799-1-lushenming@huawei.com>
-        <20210409034420.1799-7-lushenming@huawei.com>
+        id S1351935AbhERTqp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 18 May 2021 15:46:45 -0400
+Received: from mga07.intel.com ([134.134.136.100]:27039 "EHLO mga07.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1351956AbhERTqm (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 18 May 2021 15:46:42 -0400
+IronPort-SDR: zQ0X6kd8P7C2v7/dKEdhUyu6nZleqfLe8HoacyZY7sYuZ1fXWE5a2cmr8gd6dxhn85RNBWp2dZ
+ dVA1Hj5RFtvQ==
+X-IronPort-AV: E=McAfee;i="6200,9189,9988"; a="264720044"
+X-IronPort-AV: E=Sophos;i="5.82,310,1613462400"; 
+   d="scan'208";a="264720044"
+Received: from orsmga008.jf.intel.com ([10.7.209.65])
+  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 May 2021 12:45:18 -0700
+IronPort-SDR: tYQi2B82XedKDm6qGiBjeEUdZVyLSN3ijHw1VG6+3/gOUcVnRwKduMlDNvjLJFTLm5urO60hXJ
+ V5q6mwSq98IA==
+X-IronPort-AV: E=Sophos;i="5.82,310,1613462400"; 
+   d="scan'208";a="439600915"
+Received: from yyu32-mobl1.amr.corp.intel.com (HELO [10.209.166.158]) ([10.209.166.158])
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 May 2021 12:45:16 -0700
+Subject: Re: [PATCH v26 24/30] x86/cet/shstk: Introduce shadow stack token
+ setup/verify routines
+To:     Borislav Petkov <bp@alien8.de>,
+        Eugene Syromiatnikov <esyr@redhat.com>
+Cc:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-doc@vger.kernel.org, linux-mm@kvack.org,
+        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andy Lutomirski <luto@kernel.org>,
+        Balbir Singh <bsingharora@gmail.com>,
+        Cyrill Gorcunov <gorcunov@gmail.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Nadav Amit <nadav.amit@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
+        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Weijiang Yang <weijiang.yang@intel.com>,
+        Pengfei Xu <pengfei.xu@intel.com>,
+        Haitao Huang <haitao.huang@intel.com>
+References: <20210427204315.24153-1-yu-cheng.yu@intel.com>
+ <20210427204315.24153-25-yu-cheng.yu@intel.com> <YKIfIEyW+sR+bDCk@zn.tnic>
+ <e225e357-a1d5-9596-8900-79e6b94cf924@intel.com>
+ <20210518001316.GR15897@asgard.redhat.com> <YKQATkbU4DJ/nC3T@zn.tnic>
+From:   "Yu, Yu-cheng" <yu-cheng.yu@intel.com>
+Message-ID: <10f74571-f8c4-9b08-0157-1570b30a1a6d@intel.com>
+Date:   Tue, 18 May 2021 12:45:13 -0700
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
+ Thunderbird/78.10.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+In-Reply-To: <YKQATkbU4DJ/nC3T@zn.tnic>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, 9 Apr 2021 11:44:18 +0800
-Shenming Lu <lushenming@huawei.com> wrote:
-
-> If IOPF enabled for the VFIO container, there is no need to statically
-> pin and map the entire DMA range, we can do it on demand. And unmap
-> according to the IOPF mapped bitmap when removing vfio_dma.
+On 5/18/2021 10:58 AM, Borislav Petkov wrote:
+> On Tue, May 18, 2021 at 02:14:14AM +0200, Eugene Syromiatnikov wrote:
+>> Speaking of which, I wonder what would happen if a 64-bit process makes
+>> a 32-bit system call (using int 0x80, for example), and gets a signal.
 > 
-> Note that we still mark all pages dirty even if IOPF enabled, we may
-> add IOPF-based fine grained dirty tracking support in the future.
+> I guess that's the next patch. And I see amluto has some concerns...
 > 
-> Signed-off-by: Shenming Lu <lushenming@huawei.com>
-> ---
->  drivers/vfio/vfio_iommu_type1.c | 38 +++++++++++++++++++++++++++------
->  1 file changed, 32 insertions(+), 6 deletions(-)
+> /me goes read.
 > 
-> diff --git a/drivers/vfio/vfio_iommu_type1.c b/drivers/vfio/vfio_iommu_type1.c
-> index 7df5711e743a..dcc93c3b258c 100644
-> --- a/drivers/vfio/vfio_iommu_type1.c
-> +++ b/drivers/vfio/vfio_iommu_type1.c
-> @@ -175,6 +175,7 @@ struct vfio_iopf_group {
->  #define IOPF_MAPPED_BITMAP_GET(dma, i)	\
->  			      ((dma->iopf_mapped_bitmap[(i) / BITS_PER_LONG]	\
->  			       >> ((i) % BITS_PER_LONG)) & 0x1)  
-> +#define IOPF_MAPPED_BITMAP_BYTES(n)	DIRTY_BITMAP_BYTES(n)
->  
->  #define WAITED 1
->  
-> @@ -959,7 +960,8 @@ static int vfio_iommu_type1_pin_pages(void *iommu_data,
->  	 * already pinned and accounted. Accouting should be done if there is no
->  	 * iommu capable domain in the container.
->  	 */
-> -	do_accounting = !IS_IOMMU_CAP_DOMAIN_IN_CONTAINER(iommu);
-> +	do_accounting = !IS_IOMMU_CAP_DOMAIN_IN_CONTAINER(iommu) ||
-> +			iommu->iopf_enabled;
->  
->  	for (i = 0; i < npage; i++) {
->  		struct vfio_pfn *vpfn;
-> @@ -1048,7 +1050,8 @@ static int vfio_iommu_type1_unpin_pages(void *iommu_data,
->  
->  	mutex_lock(&iommu->lock);
->  
-> -	do_accounting = !IS_IOMMU_CAP_DOMAIN_IN_CONTAINER(iommu);
-> +	do_accounting = !IS_IOMMU_CAP_DOMAIN_IN_CONTAINER(iommu) ||
-> +			iommu->iopf_enabled;
 
-pin/unpin are actually still pinning pages, why does iopf exempt them
-from accounting?
+In the next revision, there will be no "signal context extension" 
+struct.  However, the flow for 64, ia32 and x32 will be similar.  I will 
+send that out after some testing.
 
-
->  	for (i = 0; i < npage; i++) {
->  		struct vfio_dma *dma;
->  		dma_addr_t iova;
-> @@ -1169,7 +1172,7 @@ static long vfio_unmap_unpin(struct vfio_iommu *iommu, struct vfio_dma *dma,
->  	if (!dma->size)
->  		return 0;
->  
-> -	if (!IS_IOMMU_CAP_DOMAIN_IN_CONTAINER(iommu))
-> +	if (!IS_IOMMU_CAP_DOMAIN_IN_CONTAINER(iommu) || iommu->iopf_enabled)
->  		return 0;
->  
->  	/*
-> @@ -1306,11 +1309,20 @@ static void vfio_unmap_partial_iopf(struct vfio_iommu *iommu,
->  	}
->  }
->  
-> +static void vfio_dma_clean_iopf(struct vfio_iommu *iommu, struct vfio_dma *dma)
-> +{
-> +	vfio_unmap_partial_iopf(iommu, dma, dma->iova, dma->iova + dma->size);
-> +
-> +	kfree(dma->iopf_mapped_bitmap);
-> +}
-> +
->  static void vfio_remove_dma(struct vfio_iommu *iommu, struct vfio_dma *dma)
->  {
->  	WARN_ON(!RB_EMPTY_ROOT(&dma->pfn_list));
->  	vfio_unmap_unpin(iommu, dma, true);
->  	vfio_unlink_dma(iommu, dma);
-> +	if (iommu->iopf_enabled)
-> +		vfio_dma_clean_iopf(iommu, dma);
->  	put_task_struct(dma->task);
->  	vfio_dma_bitmap_free(dma);
->  	if (dma->vaddr_invalid) {
-> @@ -1359,7 +1371,8 @@ static int update_user_bitmap(u64 __user *bitmap, struct vfio_iommu *iommu,
->  	 * mark all pages dirty if any IOMMU capable device is not able
->  	 * to report dirty pages and all pages are pinned and mapped.
->  	 */
-> -	if (iommu->num_non_pinned_groups && dma->iommu_mapped)
-> +	if (iommu->num_non_pinned_groups &&
-> +	    (dma->iommu_mapped || iommu->iopf_enabled))
->  		bitmap_set(dma->bitmap, 0, nbits);
-
-This seems like really poor integration of iopf into dirty page
-tracking.  I'd expect dirty logging to flush the mapped pages and
-write faults to mark pages dirty.  Shouldn't the fault handler also
-provide only the access faulted, so for example a read fault wouldn't
-mark the page dirty?
-
->  
->  	if (shift) {
-> @@ -1772,6 +1785,16 @@ static int vfio_dma_do_map(struct vfio_iommu *iommu,
->  		goto out_unlock;
->  	}
->  
-> +	if (iommu->iopf_enabled) {
-> +		dma->iopf_mapped_bitmap = kvzalloc(IOPF_MAPPED_BITMAP_BYTES(
-> +						size >> PAGE_SHIFT), GFP_KERNEL);
-> +		if (!dma->iopf_mapped_bitmap) {
-> +			ret = -ENOMEM;
-> +			kfree(dma);
-> +			goto out_unlock;
-> +		}
-
-
-So we're assuming nothing can fault and therefore nothing can reference
-the iopf_mapped_bitmap until this point in the series?
-
-
-> +	}
-> +
->  	iommu->dma_avail--;
->  	dma->iova = iova;
->  	dma->vaddr = vaddr;
-> @@ -1811,8 +1834,11 @@ static int vfio_dma_do_map(struct vfio_iommu *iommu,
->  	/* Insert zero-sized and grow as we map chunks of it */
->  	vfio_link_dma(iommu, dma);
->  
-> -	/* Don't pin and map if container doesn't contain IOMMU capable domain*/
-> -	if (!IS_IOMMU_CAP_DOMAIN_IN_CONTAINER(iommu))
-> +	/*
-> +	 * Don't pin and map if container doesn't contain IOMMU capable domain,
-> +	 * or IOPF enabled for the container.
-> +	 */
-> +	if (!IS_IOMMU_CAP_DOMAIN_IN_CONTAINER(iommu) || iommu->iopf_enabled)
->  		dma->size = size;
->  	else
->  		ret = vfio_pin_map_dma(iommu, dma, size);
-
+Thanks,
+Yu-cheng
