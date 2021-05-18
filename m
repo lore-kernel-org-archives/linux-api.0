@@ -7,41 +7,41 @@ X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7125FC433B4
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EEAE4C43470
 	for <linux-api@archiver.kernel.org>; Tue, 18 May 2021 18:59:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5074A61261
+	by mail.kernel.org (Postfix) with ESMTP id D8F386135C
 	for <linux-api@archiver.kernel.org>; Tue, 18 May 2021 18:59:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1351739AbhERTAZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 18 May 2021 15:00:25 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:26727 "EHLO
+        id S1351746AbhERTA0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 18 May 2021 15:00:26 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:60968 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1351720AbhERTAW (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 18 May 2021 15:00:22 -0400
+        by vger.kernel.org with ESMTP id S1351733AbhERTAY (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 18 May 2021 15:00:24 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1621364344;
+        s=mimecast20190719; t=1621364345;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=F39UpyUhj6TqM2emKcBOtwE8fh18IvXzJ+eZ2ac+ukY=;
-        b=JyATTGtFLK40BDxQSh7pcdFBH1lolmNgJcZpfNWBTvd7Il7nrOeRpMT6DO83b8ajev4Mmg
-        MBDgZ0hhZsdaaMdpWL4AhA357G9szboVxS8LI715UHVh9Vo2NFg9cGCw81nOd1ycNGk3Ns
-        uTAnsNxLFItX8IHvMFSEzDQTi+fyoI4=
+        bh=Ax4CDb+Sd6mNQ6JnBMbZp3JYaJV2pPRPTkaJj0ycGsA=;
+        b=jK4mxrSrfeZ0nroNnipElArcVIsC0rjefG+VVazJCDGYRnDxO7IjFuEI4cpG+5jY1UdkGh
+        hG13D2fP8TjOsoqq6Y6Q8NGk96AAbvKK9UhJzMAFFARWYrWfrXy4H1ITMNih2lVuo92/XY
+        I5a3lAbHzB+LReFyIgFPbA2inrpIRyY=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-376-OTvTmDC-N2e0-bmwLs8OUA-1; Tue, 18 May 2021 14:59:00 -0400
-X-MC-Unique: OTvTmDC-N2e0-bmwLs8OUA-1
+ us-mta-399-LSvapAV8PQWv0YsaYRwixg-1; Tue, 18 May 2021 14:59:03 -0400
+X-MC-Unique: LSvapAV8PQWv0YsaYRwixg-1
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E2BA98042AA;
-        Tue, 18 May 2021 18:58:57 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 00050100C61D;
+        Tue, 18 May 2021 18:59:00 +0000 (UTC)
 Received: from redhat.com (ovpn-113-225.phx2.redhat.com [10.3.113.225])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 2A4261037E81;
-        Tue, 18 May 2021 18:58:57 +0000 (UTC)
-Date:   Tue, 18 May 2021 12:58:08 -0600
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 3A0F6100F49F;
+        Tue, 18 May 2021 18:59:00 +0000 (UTC)
+Date:   Tue, 18 May 2021 12:58:31 -0600
 From:   Alex Williamson <alex.williamson@redhat.com>
 To:     Shenming Lu <lushenming@huawei.com>
 Cc:     Cornelia Huck <cohuck@redhat.com>, Will Deacon <will@kernel.org>,
@@ -58,11 +58,12 @@ Cc:     Cornelia Huck <cohuck@redhat.com>, Will Deacon <will@kernel.org>,
         Jonathan Cameron <Jonathan.Cameron@huawei.com>,
         Barry Song <song.bao.hua@hisilicon.com>,
         <wanghaibin.wang@huawei.com>, <yuzenghui@huawei.com>
-Subject: Re: [RFC PATCH v3 8/8] vfio: Add nested IOPF support
-Message-ID: <20210518125808.345b812c.alex.williamson@redhat.com>
-In-Reply-To: <20210409034420.1799-9-lushenming@huawei.com>
+Subject: Re: [RFC PATCH v3 3/8] vfio/type1: Add an MMU notifier to avoid
+ pinning
+Message-ID: <20210518125831.153e039c.alex.williamson@redhat.com>
+In-Reply-To: <20210409034420.1799-4-lushenming@huawei.com>
 References: <20210409034420.1799-1-lushenming@huawei.com>
-        <20210409034420.1799-9-lushenming@huawei.com>
+        <20210409034420.1799-4-lushenming@huawei.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -71,249 +72,206 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, 9 Apr 2021 11:44:20 +0800
+On Fri, 9 Apr 2021 11:44:15 +0800
 Shenming Lu <lushenming@huawei.com> wrote:
 
-> To set up nested mode, drivers such as vfio_pci need to register a
-> handler to receive stage/level 1 faults from the IOMMU, but since
-> currently each device can only have one iommu dev fault handler,
-> and if stage 2 IOPF is already enabled (VFIO_IOMMU_ENABLE_IOPF),
-> we choose to update the registered handler (a consolidated one) via
-> flags (set FAULT_REPORT_NESTED_L1), and further deliver the received
-> stage 1 faults in the handler to the guest through a newly added
-> vfio_device_ops callback.
-
-Are there proposed in-kernel drivers that would use any of these
-symbols?
-
+> To avoid pinning pages when they are mapped in IOMMU page tables, we
+> add an MMU notifier to tell the addresses which are no longer valid
+> and try to unmap them.
+> 
 > Signed-off-by: Shenming Lu <lushenming@huawei.com>
 > ---
->  drivers/vfio/vfio.c             | 81 +++++++++++++++++++++++++++++++++
->  drivers/vfio/vfio_iommu_type1.c | 49 +++++++++++++++++++-
->  include/linux/vfio.h            | 12 +++++
->  3 files changed, 141 insertions(+), 1 deletion(-)
+>  drivers/vfio/vfio_iommu_type1.c | 112 +++++++++++++++++++++++++++++++-
+>  1 file changed, 109 insertions(+), 3 deletions(-)
 > 
-> diff --git a/drivers/vfio/vfio.c b/drivers/vfio/vfio.c
-> index 44c8dfabf7de..4245f15914bf 100644
-> --- a/drivers/vfio/vfio.c
-> +++ b/drivers/vfio/vfio.c
-> @@ -2356,6 +2356,87 @@ struct iommu_domain *vfio_group_iommu_domain(struct vfio_group *group)
->  }
->  EXPORT_SYMBOL_GPL(vfio_group_iommu_domain);
->  
-> +/*
-> + * Register/Update the VFIO IOPF handler to receive
-> + * nested stage/level 1 faults.
-> + */
-> +int vfio_iommu_dev_fault_handler_register_nested(struct device *dev)
-> +{
-> +	struct vfio_container *container;
-> +	struct vfio_group *group;
-> +	struct vfio_iommu_driver *driver;
-> +	int ret;
-> +
-> +	if (!dev)
-> +		return -EINVAL;
-> +
-> +	group = vfio_group_get_from_dev(dev);
-> +	if (!group)
-> +		return -ENODEV;
-> +
-> +	ret = vfio_group_add_container_user(group);
-> +	if (ret)
-> +		goto out;
-> +
-> +	container = group->container;
-> +	driver = container->iommu_driver;
-> +	if (likely(driver && driver->ops->register_handler))
-> +		ret = driver->ops->register_handler(container->iommu_data, dev);
-> +	else
-> +		ret = -ENOTTY;
-> +
-> +	vfio_group_try_dissolve_container(group);
-> +
-> +out:
-> +	vfio_group_put(group);
-> +	return ret;
-> +}
-> +EXPORT_SYMBOL_GPL(vfio_iommu_dev_fault_handler_register_nested);
-> +
-> +int vfio_iommu_dev_fault_handler_unregister_nested(struct device *dev)
-> +{
-> +	struct vfio_container *container;
-> +	struct vfio_group *group;
-> +	struct vfio_iommu_driver *driver;
-> +	int ret;
-> +
-> +	if (!dev)
-> +		return -EINVAL;
-> +
-> +	group = vfio_group_get_from_dev(dev);
-> +	if (!group)
-> +		return -ENODEV;
-> +
-> +	ret = vfio_group_add_container_user(group);
-> +	if (ret)
-> +		goto out;
-> +
-> +	container = group->container;
-> +	driver = container->iommu_driver;
-> +	if (likely(driver && driver->ops->unregister_handler))
-> +		ret = driver->ops->unregister_handler(container->iommu_data, dev);
-> +	else
-> +		ret = -ENOTTY;
-> +
-> +	vfio_group_try_dissolve_container(group);
-> +
-> +out:
-> +	vfio_group_put(group);
-> +	return ret;
-> +}
-> +EXPORT_SYMBOL_GPL(vfio_iommu_dev_fault_handler_unregister_nested);
-> +
-> +int vfio_transfer_iommu_fault(struct device *dev, struct iommu_fault *fault)
-> +{
-> +	struct vfio_device *device = dev_get_drvdata(dev);
-> +
-> +	if (unlikely(!device->ops->transfer))
-> +		return -EOPNOTSUPP;
-> +
-> +	return device->ops->transfer(device->device_data, fault);
-> +}
-> +EXPORT_SYMBOL_GPL(vfio_transfer_iommu_fault);
-> +
->  /**
->   * Module/class support
->   */
 > diff --git a/drivers/vfio/vfio_iommu_type1.c b/drivers/vfio/vfio_iommu_type1.c
-> index ba2b5a1cf6e9..9d1adeddb303 100644
+> index ab0ff60ee207..1cb9d1f2717b 100644
 > --- a/drivers/vfio/vfio_iommu_type1.c
 > +++ b/drivers/vfio/vfio_iommu_type1.c
-> @@ -3821,13 +3821,32 @@ static int vfio_iommu_type1_dma_map_iopf(struct iommu_fault *fault, void *data)
->  	struct vfio_batch batch;
->  	struct vfio_range *range;
->  	dma_addr_t iova = ALIGN_DOWN(fault->prm.addr, PAGE_SIZE);
-> -	int access_flags = 0;
-> +	int access_flags = 0, nested;
->  	size_t premap_len, map_len, mapped_len = 0;
->  	unsigned long bit_offset, vaddr, pfn, i, npages;
->  	int ret;
->  	enum iommu_page_response_code status = IOMMU_PAGE_RESP_INVALID;
->  	struct iommu_page_response resp = {0};
+> @@ -40,6 +40,7 @@
+>  #include <linux/notifier.h>
+>  #include <linux/dma-iommu.h>
+>  #include <linux/irqdomain.h>
+> +#include <linux/mmu_notifier.h>
 >  
-> +	if (vfio_dev_domian_nested(dev, &nested))
-> +		return -ENODEV;
-> +
-> +	/*
-> +	 * When configured in nested mode, further deliver the
-> +	 * stage/level 1 faults to the guest.
-> +	 */
-> +	if (nested) {
-> +		bool l2;
-> +
-> +		if (fault->type == IOMMU_FAULT_PAGE_REQ)
-> +			l2 = fault->prm.flags & IOMMU_FAULT_PAGE_REQUEST_L2;
-> +		if (fault->type == IOMMU_FAULT_DMA_UNRECOV)
-> +			l2 = fault->event.flags & IOMMU_FAULT_UNRECOV_L2;
-> +
-> +		if (!l2)
-> +			return vfio_transfer_iommu_fault(dev, fault);
-> +	}
-> +
->  	if (fault->type != IOMMU_FAULT_PAGE_REQ)
->  		return -EOPNOTSUPP;
->  
-> @@ -4201,6 +4220,32 @@ static void vfio_iommu_type1_notify(void *iommu_data,
->  	wake_up_all(&iommu->vaddr_wait);
+>  #define DRIVER_VERSION  "0.2"
+>  #define DRIVER_AUTHOR   "Alex Williamson <alex.williamson@redhat.com>"
+> @@ -69,6 +70,7 @@ struct vfio_iommu {
+>  	struct mutex		lock;
+>  	struct rb_root		dma_list;
+>  	struct blocking_notifier_head notifier;
+> +	struct mmu_notifier	mn;
+>  	unsigned int		dma_avail;
+>  	unsigned int		vaddr_invalid_count;
+>  	uint64_t		pgsize_bitmap;
+> @@ -1204,6 +1206,72 @@ static long vfio_unmap_unpin(struct vfio_iommu *iommu, struct vfio_dma *dma,
+>  	return unlocked;
 >  }
 >  
-> +static int vfio_iommu_type1_register_handler(void *iommu_data,
-> +					     struct device *dev)
+> +/* Unmap the IOPF mapped pages in the specified range. */
+> +static void vfio_unmap_partial_iopf(struct vfio_iommu *iommu,
+> +				    struct vfio_dma *dma,
+> +				    dma_addr_t start, dma_addr_t end)
 > +{
-> +	struct vfio_iommu *iommu = iommu_data;
+> +	struct iommu_iotlb_gather *gathers;
+> +	struct vfio_domain *d;
+> +	int i, num_domains = 0;
 > +
-> +	if (iommu->iopf_enabled)
-> +		return iommu_update_device_fault_handler(dev, ~0,
-> +						FAULT_REPORT_NESTED_L1);
-> +	else
-> +		return iommu_register_device_fault_handler(dev,
-> +						vfio_iommu_type1_dma_map_iopf,
-> +						FAULT_REPORT_NESTED_L1, dev);
+> +	list_for_each_entry(d, &iommu->domain_list, next)
+> +		num_domains++;
+> +
+> +	gathers = kzalloc(sizeof(*gathers) * num_domains, GFP_KERNEL);
+> +	if (gathers) {
+> +		for (i = 0; i < num_domains; i++)
+> +			iommu_iotlb_gather_init(&gathers[i]);
+> +	}
+
+
+If we're always serialized on iommu->lock, would it make sense to have
+gathers pre-allocated on the vfio_iommu object?
+
+> +
+> +	while (start < end) {
+> +		unsigned long bit_offset;
+> +		size_t len;
+> +
+> +		bit_offset = (start - dma->iova) >> PAGE_SHIFT;
+> +
+> +		for (len = 0; start + len < end; len += PAGE_SIZE) {
+> +			if (!IOPF_MAPPED_BITMAP_GET(dma,
+> +					bit_offset + (len >> PAGE_SHIFT)))
+> +				break;
+
+
+There are bitmap helpers for this, find_first_bit(),
+find_next_zero_bit().
+
+
+> +		}
+> +
+> +		if (len) {
+> +			i = 0;
+> +			list_for_each_entry(d, &iommu->domain_list, next) {
+> +				size_t unmapped;
+> +
+> +				if (gathers)
+> +					unmapped = iommu_unmap_fast(d->domain,
+> +								    start, len,
+> +								    &gathers[i++]);
+> +				else
+> +					unmapped = iommu_unmap(d->domain,
+> +							       start, len);
+> +
+> +				if (WARN_ON(unmapped != len))
+
+The IOMMU API does not guarantee arbitrary unmap sizes, this will
+trigger and this exit path is wrong.  If we've already unmapped the
+IOMMU, shouldn't we proceed with @unmapped rather than @len so the
+device can re-fault the extra mappings?  Otherwise the IOMMU state
+doesn't match the iopf bitmap state.
+
+> +					goto out;
+> +			}
+> +
+> +			bitmap_clear(dma->iopf_mapped_bitmap,
+> +				     bit_offset, len >> PAGE_SHIFT);
+> +
+> +			cond_resched();
+> +		}
+> +
+> +		start += (len + PAGE_SIZE);
+> +	}
+> +
+> +out:
+> +	if (gathers) {
+> +		i = 0;
+> +		list_for_each_entry(d, &iommu->domain_list, next)
+> +			iommu_iotlb_sync(d->domain, &gathers[i++]);
+> +
+> +		kfree(gathers);
+> +	}
 > +}
 > +
-> +static int vfio_iommu_type1_unregister_handler(void *iommu_data,
-> +					       struct device *dev)
+>  static void vfio_remove_dma(struct vfio_iommu *iommu, struct vfio_dma *dma)
+>  {
+>  	WARN_ON(!RB_EMPTY_ROOT(&dma->pfn_list));
+> @@ -3197,17 +3265,18 @@ static int vfio_iommu_type1_dma_map_iopf(struct iommu_fault *fault, void *data)
+>  
+>  	vaddr = iova - dma->iova + dma->vaddr;
+>  
+> -	if (vfio_pin_page_external(dma, vaddr, &pfn, true))
+> +	if (vfio_pin_page_external(dma, vaddr, &pfn, false))
+>  		goto out_invalid;
+>  
+>  	if (vfio_iommu_map(iommu, iova, pfn, 1, dma->prot)) {
+> -		if (put_pfn(pfn, dma->prot))
+> -			vfio_lock_acct(dma, -1, true);
+> +		put_pfn(pfn, dma->prot);
+>  		goto out_invalid;
+>  	}
+>  
+>  	bitmap_set(dma->iopf_mapped_bitmap, bit_offset, 1);
+>  
+> +	put_pfn(pfn, dma->prot);
+> +
+>  out_success:
+>  	status = IOMMU_PAGE_RESP_SUCCESS;
+>  
+> @@ -3220,6 +3289,43 @@ static int vfio_iommu_type1_dma_map_iopf(struct iommu_fault *fault, void *data)
+>  	return 0;
+>  }
+>  
+> +static void mn_invalidate_range(struct mmu_notifier *mn, struct mm_struct *mm,
+> +				unsigned long start, unsigned long end)
 > +{
-> +	struct vfio_iommu *iommu = iommu_data;
+> +	struct vfio_iommu *iommu = container_of(mn, struct vfio_iommu, mn);
+> +	struct rb_node *n;
+> +	int ret;
 > +
-> +	if (iommu->iopf_enabled)
-> +		return iommu_update_device_fault_handler(dev,
-> +						~FAULT_REPORT_NESTED_L1, 0);
-> +	else
-> +		return iommu_unregister_device_fault_handler(dev);
+> +	mutex_lock(&iommu->lock);
+> +
+> +	ret = vfio_wait_all_valid(iommu);
+> +	if (WARN_ON(ret < 0))
+> +		return;
+
+Is WARN_ON sufficient for this error condition?  We've been told to
+evacuate a range of mm, the device still has DMA access, we've removed
+page pinning.  This seems like a BUG_ON condition to me, we can't allow
+the system to continue in any way with pages getting unmapped from
+under the device.
+
+> +
+> +	for (n = rb_first(&iommu->dma_list); n; n = rb_next(n)) {
+> +		struct vfio_dma *dma = rb_entry(n, struct vfio_dma, node);
+> +		unsigned long start_n, end_n;
+> +
+> +		if (end <= dma->vaddr || start >= dma->vaddr + dma->size)
+> +			continue;
+> +
+> +		start_n = ALIGN_DOWN(max_t(unsigned long, start, dma->vaddr),
+> +				     PAGE_SIZE);
+> +		end_n = ALIGN(min_t(unsigned long, end, dma->vaddr + dma->size),
+> +			      PAGE_SIZE);
+> +
+> +		vfio_unmap_partial_iopf(iommu, dma,
+> +					start_n - dma->vaddr + dma->iova,
+> +					end_n - dma->vaddr + dma->iova);
+> +	}
+> +
+> +	mutex_unlock(&iommu->lock);
 > +}
-
-
-The path through vfio to register this is pretty ugly, but I don't see
-any reason for the the update interfaces here, the previously
-registered handler just changes its behavior.
-
-
 > +
->  static const struct vfio_iommu_driver_ops vfio_iommu_driver_ops_type1 = {
->  	.name			= "vfio-iommu-type1",
->  	.owner			= THIS_MODULE,
-> @@ -4216,6 +4261,8 @@ static const struct vfio_iommu_driver_ops vfio_iommu_driver_ops_type1 = {
->  	.dma_rw			= vfio_iommu_type1_dma_rw,
->  	.group_iommu_domain	= vfio_iommu_type1_group_iommu_domain,
->  	.notify			= vfio_iommu_type1_notify,
-> +	.register_handler	= vfio_iommu_type1_register_handler,
-> +	.unregister_handler	= vfio_iommu_type1_unregister_handler,
->  };
->  
->  static int __init vfio_iommu_type1_init(void)
-> diff --git a/include/linux/vfio.h b/include/linux/vfio.h
-> index a7b426d579df..4621d8f0395d 100644
-> --- a/include/linux/vfio.h
-> +++ b/include/linux/vfio.h
-> @@ -29,6 +29,8 @@
->   * @match: Optional device name match callback (return: 0 for no-match, >0 for
->   *         match, -errno for abort (ex. match with insufficient or incorrect
->   *         additional args)
-> + * @transfer: Optional. Transfer the received stage/level 1 faults to the guest
-> + *            for nested mode.
->   */
->  struct vfio_device_ops {
->  	char	*name;
-> @@ -43,6 +45,7 @@ struct vfio_device_ops {
->  	int	(*mmap)(void *device_data, struct vm_area_struct *vma);
->  	void	(*request)(void *device_data, unsigned int count);
->  	int	(*match)(void *device_data, char *buf);
-> +	int	(*transfer)(void *device_data, struct iommu_fault *fault);
->  };
->  
->  extern struct iommu_group *vfio_iommu_group_get(struct device *dev);
-> @@ -100,6 +103,10 @@ struct vfio_iommu_driver_ops {
->  						   struct iommu_group *group);
->  	void		(*notify)(void *iommu_data,
->  				  enum vfio_iommu_notify_type event);
-> +	int		(*register_handler)(void *iommu_data,
-> +					    struct device *dev);
-> +	int		(*unregister_handler)(void *iommu_data,
-> +					      struct device *dev);
->  };
->  
->  extern int vfio_register_iommu_driver(const struct vfio_iommu_driver_ops *ops);
-> @@ -161,6 +168,11 @@ extern int vfio_unregister_notifier(struct device *dev,
->  struct kvm;
->  extern void vfio_group_set_kvm(struct vfio_group *group, struct kvm *kvm);
->  
-> +extern int vfio_iommu_dev_fault_handler_register_nested(struct device *dev);
-> +extern int vfio_iommu_dev_fault_handler_unregister_nested(struct device *dev);
-> +extern int vfio_transfer_iommu_fault(struct device *dev,
-> +				     struct iommu_fault *fault);
+> +static const struct mmu_notifier_ops vfio_iommu_type1_mn_ops = {
+> +	.invalidate_range	= mn_invalidate_range,
+> +};
 > +
->  /*
->   * Sub-module helpers
->   */
+>  static long vfio_iommu_type1_ioctl(void *iommu_data,
+>  				   unsigned int cmd, unsigned long arg)
+>  {
+
+Again, this patch series is difficult to follow because we're
+introducing dead code until the mmu notifier actually has a path to be
+registered.  We shouldn't be taking any faults until iopf is enabled,
+so it seems like we can add more of the core support alongside this
+code.
 
