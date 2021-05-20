@@ -2,64 +2,64 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-23.5 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+X-Spam-Status: No, score=-26.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	UNWANTED_LANGUAGE_BODY,USER_AGENT_GIT,USER_IN_DEF_DKIM_WL autolearn=ham
-	autolearn_force=no version=3.4.0
+	USER_AGENT_GIT,USER_IN_DEF_DKIM_WL autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 907ABC4360C
-	for <linux-api@archiver.kernel.org>; Thu, 20 May 2021 18:36:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 90FB3C43616
+	for <linux-api@archiver.kernel.org>; Thu, 20 May 2021 18:36:38 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7620D6052B
-	for <linux-api@archiver.kernel.org>; Thu, 20 May 2021 18:36:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6EF35610CC
+	for <linux-api@archiver.kernel.org>; Thu, 20 May 2021 18:36:38 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235606AbhETShy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 20 May 2021 14:37:54 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55512 "EHLO
+        id S235693AbhETSh6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 20 May 2021 14:37:58 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55520 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235630AbhETShw (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 20 May 2021 14:37:52 -0400
-Received: from mail-qt1-x84a.google.com (mail-qt1-x84a.google.com [IPv6:2607:f8b0:4864:20::84a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A6AE1C061761
-        for <linux-api@vger.kernel.org>; Thu, 20 May 2021 11:36:30 -0700 (PDT)
-Received: by mail-qt1-x84a.google.com with SMTP id w15-20020ac857cf0000b02901e11cd2e82fso13006397qta.12
-        for <linux-api@vger.kernel.org>; Thu, 20 May 2021 11:36:30 -0700 (PDT)
+        with ESMTP id S235665AbhETSh4 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 20 May 2021 14:37:56 -0400
+Received: from mail-qv1-xf4a.google.com (mail-qv1-xf4a.google.com [IPv6:2607:f8b0:4864:20::f4a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C0196C061760
+        for <linux-api@vger.kernel.org>; Thu, 20 May 2021 11:36:34 -0700 (PDT)
+Received: by mail-qv1-xf4a.google.com with SMTP id w14-20020a056214012eb02901f3a4388530so5654590qvs.17
+        for <linux-api@vger.kernel.org>; Thu, 20 May 2021 11:36:34 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=google.com; s=20161025;
         h=date:in-reply-to:message-id:mime-version:references:subject:from:to
          :cc;
-        bh=CiYj3xqa/3sBIT+R8Q57s77BdvC1TkRWShRTcp4bolo=;
-        b=tZXEbCkDQJ+6wLLjrPP8nUVwzG2bUC5k3GqLx5LHDrNEHe892Koo89lKLm3Xsu2Ovw
-         MXNR6bVM0819HDDm510QNmGJN7UwuEirV0J3uE6Eid8r+qLoSzjMpamTzwDy93ABkaHE
-         g5uqvWTLj6CQzFR3jc5Nh8d3hh+pdfIYPIr9i9rWVKOhjdueiaeQ7acDkrWZ+4AsQj6p
-         uLrDxK3chu8kLWPpUWLhNVIakUM4vehc198rboYbv8GcX5wJXQCHl2l+g0OL++mKDH4D
-         l/eD4rgL3vWbFRLq0V2zy44Bqpsdk9+GMfWtURE5b+/+yzV21KUFXDc63yTWW5HMhSpn
-         91zg==
+        bh=MufDMzmIE4kExolJ/hVaiYVlok6nlWNNX5PFkp0AfBs=;
+        b=bKtdnyXWmN1Y+RRdVQCsNM9WDo8rzPWLYB7XrYMGt46q0Xnq2uWvGrFbQnHMcR5rBh
+         5jk4c4OG9IownmyVRk48UkuiZLDkAoDjzgRtYCkPEivuN6+HyY0l+oOVg0vmzC40FKMm
+         FzzVoCijQ2XUvkR+EdTD5PCCBnQfRfkNVpZ2r0Nfb+3rB/pmp2Wt+ysVeE2kCGQueoY0
+         z6qEeZRBxuNg/6hy+7zOa2utEOUc6ghwO7FNOJTobERsu4CL+8BwzpfvV2O0LK74Q93n
+         sknWYJ1i5v55FN3y2/cV0n0gydYGjzxnvOvs8i55WrVxhBNYS1XTDW5Rk9gUPYRPwHQX
+         Ring==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:date:in-reply-to:message-id:mime-version
          :references:subject:from:to:cc;
-        bh=CiYj3xqa/3sBIT+R8Q57s77BdvC1TkRWShRTcp4bolo=;
-        b=bXSddVL85wBFVvI3DDZAzltXFzWlk0QTV+3hfb6NiOpjFqiJaUHxdIyxkOFNmG4/MK
-         POuV7ynBBh32rEK9IfIdoRlgNmm9JMj3pfxHwXJ5wYDGCINBpajAtuwbycHKwnAc7leY
-         CDld3rNrowkGPPqnjTyUO8v+lLMDb6hjJkEkCg26C/IGH0iLNG10t/Hbv+m53k86xcqX
-         osp2XlU3U3p0zow0G0j5iGdonFz63hNe2rJkN8xmp5qf/BknaKEiqCNRoeBy8TeMxa9s
-         PcRxjxt0Uz1Ysg3kTyaErzBfOToMbMkYfWRdZFG6PPa8JnCbw/dL6yLnvWuFwpa0GN0Q
-         wnDg==
-X-Gm-Message-State: AOAM533hA2ln2NqeCjLgh5TbJWfUrkRAra+4rgdGJQjgPnnArLvBGHDy
-        eBB7eQ85oG7yR3BRKVSU+V5OsUdp
-X-Google-Smtp-Source: ABdhPJy87EdzjLGTZce486+xBvwPmlC9FsJxGv1NOqgtocZwZj/3HhaUKfB+vJmNYFIbG7US02n4foOE
+        bh=MufDMzmIE4kExolJ/hVaiYVlok6nlWNNX5PFkp0AfBs=;
+        b=UK+P/bmPgR0kmS5Q/OWxZ1BJK+RUobyj9POIWEKb1EAXvpECTqTYeNfCCIUzKYZsua
+         Woga36XoyMYOKmSkNGfg1K+jpRwDv2pXh2hq9ClhOtVByR4kltAnFjoHZfE+b/prbuhZ
+         rB7VKT0bj1Jy6wZbAbVi7VSVOWpccGTT/sTVD8PZv3CPN1wgk+p5ijXhW6qpaTk0A4tT
+         fS6WrgnDuoU9DTkOFaj3jQ50q8VLyWdNKdmx5B/GvsKcfKPD+goFGaNX2FvkKPv0Gss8
+         wt2REkjEq529g4AqNzfiqX85f977Q1hXSA9iFzcimkKKaeF0Yr/qVUVmX+DKQkGWu1zO
+         UcVw==
+X-Gm-Message-State: AOAM532XMRcySgjUonlwMj5b5oo9btkffM91PtQm38oO/HRAH12Q5cEw
+        8AQN3ckGdqfutKigxddN728lqKhO
+X-Google-Smtp-Source: ABdhPJwWhkDw+22iu2zplCyGb2ok7YScjUwbsiWBs4iM1qJB2i5wyRQ6JJLlzejdM8kJq1ZE22/RyQAD
 X-Received: from posk.svl.corp.google.com ([2620:15c:2cd:202:f13e:18cf:76e6:2dc4])
- (user=posk job=sendgmr) by 2002:a0c:fb45:: with SMTP id b5mr3470588qvq.48.1621535789760;
- Thu, 20 May 2021 11:36:29 -0700 (PDT)
-Date:   Thu, 20 May 2021 11:36:10 -0700
+ (user=posk job=sendgmr) by 2002:a0c:ee62:: with SMTP id n2mr7455095qvs.20.1621535793834;
+ Thu, 20 May 2021 11:36:33 -0700 (PDT)
+Date:   Thu, 20 May 2021 11:36:12 -0700
 In-Reply-To: <20210520183614.1227046-1-posk@google.com>
-Message-Id: <20210520183614.1227046-6-posk@google.com>
+Message-Id: <20210520183614.1227046-8-posk@google.com>
 Mime-Version: 1.0
 References: <20210520183614.1227046-1-posk@google.com>
 X-Mailer: git-send-email 2.31.1.818.g46aad6cb9e-goog
-Subject: [RFC PATCH v0.1 5/9] lib/umcg: implement UMCG core API for userspace
+Subject: [RFC PATCH v0.1 7/9] sched/umcg: add UMCG server/worker API (early RFC)
 From:   Peter Oskolkov <posk@google.com>
 To:     Peter Zijlstra <peterz@infradead.org>,
         Ingo Molnar <mingo@redhat.com>,
@@ -77,567 +77,1137 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-UMCG (= User Managed Concurrency Groups) kernel API
-is designed to be minimalistic and requires tightly
-coupled userspace code to make it easy to use.
+Implement UMCG server/worker API.
 
-Add userspace UMCG core API to achieve this goal.
+This is an early RFC patch - the code seems working, but
+more testing is needed. Gaps I plan to address before this
+is ready for a detailed review:
+
+- preemption/interrupt handling;
+- better documentation/comments;
+- tracing;
+- additional testing;
+- corner cases like abnormal process/task termination;
+- in some cases where I kill the task (umcg_segv), returning
+an error may be more appropriate.
+
+All in all, please focus more on the high-level approach
+and less on things like variable names, (doc) comments, or indentation.
 
 Signed-off-by: Peter Oskolkov <posk@google.com>
 ---
- tools/lib/umcg/.gitignore |   4 +
- tools/lib/umcg/Makefile   |  11 ++
- tools/lib/umcg/libumcg.c  | 350 ++++++++++++++++++++++++++++++++++++++
- tools/lib/umcg/libumcg.h  | 154 +++++++++++++++++
- 4 files changed, 519 insertions(+)
- create mode 100644 tools/lib/umcg/.gitignore
- create mode 100644 tools/lib/umcg/Makefile
- create mode 100644 tools/lib/umcg/libumcg.c
- create mode 100644 tools/lib/umcg/libumcg.h
+ include/linux/mm_types.h |   5 +
+ include/linux/syscalls.h |   5 +
+ kernel/fork.c            |  11 +
+ kernel/sched/core.c      |  11 +
+ kernel/sched/umcg.c      | 764 ++++++++++++++++++++++++++++++++++++++-
+ kernel/sched/umcg.h      |  54 +++
+ mm/init-mm.c             |   4 +
+ 7 files changed, 845 insertions(+), 9 deletions(-)
 
-diff --git a/tools/lib/umcg/.gitignore b/tools/lib/umcg/.gitignore
-new file mode 100644
-index 000000000000..ea55ae666041
---- /dev/null
-+++ b/tools/lib/umcg/.gitignore
-@@ -0,0 +1,4 @@
-+PDX-License-Identifier: GPL-2.0-only
-+libumcg.a
-+libumcg.o
+diff --git a/include/linux/mm_types.h b/include/linux/mm_types.h
+index 6613b26a8894..5ca7b7d55775 100644
+--- a/include/linux/mm_types.h
++++ b/include/linux/mm_types.h
+@@ -562,6 +562,11 @@ struct mm_struct {
+ #ifdef CONFIG_IOMMU_SUPPORT
+ 		u32 pasid;
+ #endif
 +
-diff --git a/tools/lib/umcg/Makefile b/tools/lib/umcg/Makefile
-new file mode 100644
-index 000000000000..fa53fd5a851a
---- /dev/null
-+++ b/tools/lib/umcg/Makefile
-@@ -0,0 +1,11 @@
-+# SPDX-License-Identifier: GPL-2.0
++#ifdef CONFIG_UMCG
++	spinlock_t umcg_lock;
++	struct list_head umcg_groups;
++#endif
+ 	} __randomize_layout;
+ 
+ 	/*
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 15de3e34ccee..2781659daaf1 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -1059,6 +1059,11 @@ asmlinkage long umcg_wait(u32 flags, const struct __kernel_timespec __user *time
+ asmlinkage long umcg_wake(u32 flags, u32 next_tid);
+ asmlinkage long umcg_swap(u32 wake_flags, u32 next_tid, u32 wait_flags,
+ 				const struct __kernel_timespec __user *timeout);
++asmlinkage long umcg_create_group(u32 api_version, u64, flags);
++asmlinkage long umcg_destroy_group(u32 group_id);
++asmlinkage long umcg_poll_worker(u32 flags, struct umcg_task __user **ut);
++asmlinkage long umcg_run_worker(u32 flags, u32 worker_tid,
++		struct umcg_task __user **ut);
+ 
+ /*
+  * Architecture-specific system calls
+diff --git a/kernel/fork.c b/kernel/fork.c
+index ace4631b5b54..3a2a7950df8e 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1026,6 +1026,10 @@ static struct mm_struct *mm_init(struct mm_struct *mm, struct task_struct *p,
+ 	seqcount_init(&mm->write_protect_seq);
+ 	mmap_init_lock(mm);
+ 	INIT_LIST_HEAD(&mm->mmlist);
++#ifdef CONFIG_UMCG
++	spin_lock_init(&mm->umcg_lock);
++	INIT_LIST_HEAD(&mm->umcg_groups);
++#endif
+ 	mm->core_state = NULL;
+ 	mm_pgtables_bytes_init(mm);
+ 	mm->map_count = 0;
+@@ -1102,6 +1106,13 @@ static inline void __mmput(struct mm_struct *mm)
+ 		list_del(&mm->mmlist);
+ 		spin_unlock(&mmlist_lock);
+ 	}
++#ifdef CONFIG_UMCG
++	if (!list_empty(&mm->umcg_groups)) {
++		spin_lock(&mm->umcg_lock);
++		list_del(&mm->umcg_groups);
++		spin_unlock(&mm->umcg_lock);
++	}
++#endif
+ 	if (mm->binfmt)
+ 		module_put(mm->binfmt->module);
+ 	mmdrop(mm);
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 462104f13c28..e657a35655b1 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -26,6 +26,7 @@
+ 
+ #include "pelt.h"
+ #include "smp.h"
++#include "umcg.h"
+ 
+ /*
+  * Export tracepoints that act as a bare tracehook (ie: have no trace event
+@@ -6012,10 +6013,20 @@ static inline void sched_submit_work(struct task_struct *tsk)
+ 	 */
+ 	if (blk_needs_flush_plug(tsk))
+ 		blk_schedule_flush_plug(tsk);
 +
-+CFLAGS += -g -I../../../usr/include/ -I../../include/
++#ifdef CONFIG_UMCG
++	if (rcu_access_pointer(tsk->umcg_task_data))
++		umcg_on_block();
++#endif
+ }
+ 
+ static void sched_update_worker(struct task_struct *tsk)
+ {
++#ifdef CONFIG_UMCG
++	if (rcu_access_pointer(tsk->umcg_task_data))
++		umcg_on_wake();
++#endif
 +
-+libumcg.a: libumcg.o
-+	ar rc libumcg.a libumcg.o
-+
-+libumcg.o: libumcg.c
-+
-+clean :
-+	rm libumcg.a libumcg.o
-diff --git a/tools/lib/umcg/libumcg.c b/tools/lib/umcg/libumcg.c
-new file mode 100644
-index 000000000000..b177fb1d4b17
---- /dev/null
-+++ b/tools/lib/umcg/libumcg.c
-@@ -0,0 +1,350 @@
-+// SPDX-License-Identifier: GPL-2.0
-+#define _GNU_SOURCE
-+#include "libumcg.h"
-+
-+#include <errno.h>
-+#include <pthread.h>
-+#include <signal.h>
-+#include <stdatomic.h>
-+#include <stdbool.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <threads.h>
-+
-+/* UMCG API version supported by this library. */
-+static const uint32_t umcg_api_version = 1;
-+
-+struct umcg_group {
-+	uint32_t group_id;
-+};
-+
-+/**
-+ * struct umcg_task_tls - per thread struct used to identify/manage UMCG tasks
-+ *
-+ * Each UMCG task requires an instance of struct umcg_task passed to
-+ * sys_umcg_register. This struct contains it, as well as several additional
-+ * fields.
-+ */
-+struct umcg_task_tls {
-+	struct umcg_task	umcg_task;
-+	umcg_tid		self;
-+	intptr_t		tag;
-+	pid_t			tid;
-+
-+} __attribute((aligned(4 * sizeof(uint64_t))));
-+
-+static thread_local struct umcg_task_tls *umcg_task_tls;
-+
-+umcg_tid umcg_get_utid(void)
+ 	if (tsk->flags & (PF_WQ_WORKER | PF_IO_WORKER)) {
+ 		if (tsk->flags & PF_WQ_WORKER)
+ 			wq_worker_running(tsk);
+diff --git a/kernel/sched/umcg.c b/kernel/sched/umcg.c
+index 2d718433c773..38cba772322d 100644
+--- a/kernel/sched/umcg.c
++++ b/kernel/sched/umcg.c
+@@ -21,6 +21,12 @@ static int __api_version(u32 requested)
+ 	return 1;
+ }
+ 
++static int umcg_segv(int res)
 +{
-+	return (umcg_tid)&umcg_task_tls;
++	force_sig(SIGSEGV);
++	return res;
 +}
 +
-+static umcg_tid umcg_task_to_utid(struct umcg_task *ut)
+ /**
+  * sys_umcg_api_version - query UMCG API versions that are supported.
+  * @api_version:          Requested API version.
+@@ -54,6 +60,78 @@ static int put_state(struct umcg_task __user *ut, u32 state)
+ 	return put_user(state, (u32 __user *)ut);
+ }
+ 
++static void umcg_lock_pair(struct task_struct *server,
++		struct task_struct *worker)
 +{
-+	if (!ut)
-+		return UMCG_NONE;
-+
-+	return ((struct umcg_task_tls *)ut)->self;
++	spin_lock(&server->alloc_lock);
++	spin_lock_nested(&worker->alloc_lock, SINGLE_DEPTH_NESTING);
 +}
 +
-+static struct umcg_task_tls *utid_to_utls(umcg_tid utid)
++static void umcg_unlock_pair(struct task_struct *server,
++		struct task_struct *worker)
 +{
-+	if (!utid || !*(struct umcg_task_tls **)utid) {
-+		fprintf(stderr, "utid_to_utls: NULL\n");
-+		/* Kill the process rather than corrupt memory. */
-+		raise(SIGKILL);
-+		return NULL;
-+	}
-+	return *(struct umcg_task_tls **)utid;
++	spin_unlock(&worker->alloc_lock);
++	spin_unlock(&server->alloc_lock);
 +}
 +
-+void umcg_set_task_tag(umcg_tid utid, intptr_t tag)
++static void umcg_detach_peer(void)
 +{
-+	utid_to_utls(utid)->tag = tag;
-+}
++	struct task_struct *server, *worker;
++	struct umcg_task_data *utd;
 +
-+intptr_t umcg_get_task_tag(umcg_tid utid)
-+{
-+	return utid_to_utls(utid)->tag;
-+}
++	rcu_read_lock();
++	task_lock(current);
++	utd = rcu_dereference(current->umcg_task_data);
 +
-+umcg_tid umcg_register_core_task(intptr_t tag)
-+{
-+	int ret;
-+
-+	if (umcg_task_tls != NULL) {
-+		errno = EINVAL;
-+		return UMCG_NONE;
++	if (!utd || !rcu_dereference(utd->peer)) {
++		task_unlock(current);
++		goto out;
 +	}
 +
-+	umcg_task_tls = malloc(sizeof(struct umcg_task_tls));
-+	if (!umcg_task_tls) {
-+		errno = ENOMEM;
-+		return UMCG_NONE;
-+	}
-+
-+	umcg_task_tls->umcg_task.state = UMCG_TASK_NONE;
-+	umcg_task_tls->self = (umcg_tid)&umcg_task_tls;
-+	umcg_task_tls->tag = tag;
-+	umcg_task_tls->tid = gettid();
-+
-+	ret = sys_umcg_register_task(umcg_api_version, UMCG_REGISTER_CORE_TASK,
-+			UMCG_NOID, &umcg_task_tls->umcg_task);
-+	if (ret) {
-+		free(umcg_task_tls);
-+		umcg_task_tls = NULL;
-+		errno = ret;
-+		return UMCG_NONE;
-+	}
-+
-+	return umcg_task_tls->self;
-+}
-+
-+int umcg_unregister_task(void)
-+{
-+	int ret;
-+
-+	if (!umcg_task_tls) {
-+		errno = EINVAL;
-+		return -1;
-+	}
-+
-+	ret = sys_umcg_unregister_task(0);
-+	if (ret) {
-+		errno = ret;
-+		return -1;
-+	}
-+
-+	free(umcg_task_tls);
-+	atomic_store_explicit(&umcg_task_tls, NULL, memory_order_seq_cst);
-+	return 0;
-+}
-+
-+/* Helper return codes. */
-+enum umcg_prepare_op_result {
-+	UMCG_OP_DONE,
-+	UMCG_OP_SYS,
-+	UMCG_OP_AGAIN,
-+	UMCG_OP_ERROR
-+};
-+
-+static enum umcg_prepare_op_result umcg_prepare_wait(void)
-+{
-+	struct umcg_task *ut;
-+	uint32_t umcg_state;
-+	int ret;
-+
-+	if (!umcg_task_tls) {
-+		errno = EINVAL;
-+		return UMCG_OP_ERROR;
-+	}
-+
-+	ut = &umcg_task_tls->umcg_task;
-+
-+	umcg_state = UMCG_TASK_RUNNING;
-+	if (atomic_compare_exchange_strong_explicit(&ut->state,
-+			&umcg_state, UMCG_TASK_RUNNABLE,
-+			memory_order_seq_cst, memory_order_seq_cst))
-+		return UMCG_OP_SYS;
-+
-+	if (umcg_state != (UMCG_TASK_RUNNING | UMCG_TF_WAKEUP_QUEUED)) {
-+		fprintf(stderr, "libumcg: unexpected state before wait: %u\n",
-+				umcg_state);
-+		errno = EINVAL;
-+		return UMCG_OP_ERROR;
-+	}
-+
-+	if (atomic_compare_exchange_strong_explicit(&ut->state,
-+			&umcg_state, UMCG_TASK_RUNNING,
-+			memory_order_seq_cst, memory_order_seq_cst)) {
-+		return UMCG_OP_DONE;
-+	}
-+
-+	/* Raced with another wait/wake? This is not supported. */
-+	fprintf(stderr, "libumcg: failed to remove the wakeup flag: %u\n",
-+			umcg_state);
-+	errno = EINVAL;
-+	return UMCG_OP_ERROR;
-+}
-+
-+static int umcg_do_wait(const struct timespec *timeout)
-+{
-+	uint32_t umcg_state;
-+	int ret;
-+
-+	do {
-+		ret = sys_umcg_wait(0, timeout);
-+		if (ret != 0 && errno != EAGAIN)
-+			return ret;
-+
-+		umcg_state = atomic_load_explicit(
-+				&umcg_task_tls->umcg_task.state,
-+				memory_order_acquire);
-+	} while (umcg_state == UMCG_TASK_RUNNABLE);
-+
-+	return 0;
-+}
-+
-+int umcg_wait(const struct timespec *timeout)
-+{
-+	switch (umcg_prepare_wait()) {
-+	case UMCG_OP_DONE:
-+		return 0;
-+	case UMCG_OP_SYS:
++	switch (utd->task_type) {
++	case UMCG_TT_SERVER:
++		server = current;
++		worker = rcu_dereference(utd->peer);
 +		break;
-+	case UMCG_OP_ERROR:
-+		return -1;
++
++	case UMCG_TT_WORKER:
++		worker = current;
++		server = rcu_dereference(utd->peer);
++		break;
++
 +	default:
-+		fprintf(stderr, "Unknown pre_op result.\n");
-+		exit(1);
-+		return -1;
++		task_unlock(current);
++		printk(KERN_WARNING "umcg_detach_peer: unexpected task type");
++		umcg_segv(0);
++		goto out;
 +	}
++	task_unlock(current);
 +
-+	return umcg_do_wait(timeout);
++	if (!server || !worker)
++		goto out;
++
++	umcg_lock_pair(server, worker);
++
++	utd = rcu_dereference(server->umcg_task_data);
++	if (WARN_ON(!utd)) {
++		umcg_segv(0);
++		goto out_pair;
++	}
++	rcu_assign_pointer(utd->peer, NULL);
++
++	utd = rcu_dereference(worker->umcg_task_data);
++	if (WARN_ON(!utd)) {
++		umcg_segv(0);
++		goto out_pair;
++	}
++	rcu_assign_pointer(utd->peer, NULL);
++
++out_pair:
++	umcg_unlock_pair(server, worker);
++out:
++	rcu_read_unlock();
 +}
 +
-+static enum umcg_prepare_op_result umcg_prepare_wake(struct umcg_task_tls *utls)
+ static int register_core_task(u32 api_version, struct umcg_task __user *umcg_task)
+ {
+ 	struct umcg_task_data *utd;
+@@ -73,6 +151,7 @@ static int register_core_task(u32 api_version, struct umcg_task __user *umcg_tas
+ 	utd->umcg_task = umcg_task;
+ 	utd->task_type = UMCG_TT_CORE;
+ 	utd->api_version = api_version;
++	RCU_INIT_POINTER(utd->peer, NULL);
+ 
+ 	if (put_state(umcg_task, UMCG_TASK_RUNNING)) {
+ 		kfree(utd);
+@@ -86,6 +165,105 @@ static int register_core_task(u32 api_version, struct umcg_task __user *umcg_tas
+ 	return 0;
+ }
+ 
++static int add_task_to_group(u32 api_version, u32 group_id,
++		struct umcg_task __user *umcg_task,
++		enum umcg_task_type task_type, u32 new_state)
 +{
-+	struct umcg_task *ut = &utls->umcg_task;
-+	uint32_t umcg_state, next_state;
++	struct mm_struct *mm = current->mm;
++	struct umcg_task_data *utd = NULL;
++	struct umcg_group *group = NULL;
++	struct umcg_group *list_entry;
++	int ret = -EINVAL;
++	u32 state;
 +
-+	next_state = UMCG_TASK_RUNNING;
-+	umcg_state = UMCG_TASK_RUNNABLE;
-+	if (atomic_compare_exchange_strong_explicit(&ut->state,
-+			&umcg_state, next_state,
-+			memory_order_seq_cst, memory_order_seq_cst))
-+		return UMCG_OP_SYS;
++	if (get_state(umcg_task, &state))
++		return -EFAULT;
 +
-+	if (umcg_state != UMCG_TASK_RUNNING) {
-+		if (umcg_state == (UMCG_TASK_RUNNING | UMCG_TF_WAKEUP_QUEUED)) {
-+			/*
-+			 * With ping-pong mutual swapping using wake/wait
-+			 * without synchronization this can happen.
-+			 */
-+			return UMCG_OP_AGAIN;
++	if (state != UMCG_TASK_NONE)
++		return -EINVAL;
++
++	if (put_state(umcg_task, new_state))
++		return -EFAULT;
++
++retry_once:
++	rcu_read_lock();
++	list_for_each_entry_rcu(list_entry, &mm->umcg_groups, list) {
++		if (list_entry->group_id == group_id) {
++			group = list_entry;
++			break;
 +		}
-+		fprintf(stderr, "libumcg: unexpected state in umcg_wake(): %u\n",
-+				umcg_state);
-+		errno = EINVAL;
-+		return UMCG_OP_ERROR;
 +	}
 +
-+	if (atomic_compare_exchange_strong_explicit(&ut->state,
-+			&umcg_state, UMCG_TASK_RUNNING | UMCG_TF_WAKEUP_QUEUED,
-+			memory_order_seq_cst, memory_order_seq_cst)) {
-+		return UMCG_OP_DONE;
++	if (!group || group->api_version != api_version)
++		goto out_rcu;
++
++	spin_lock(&group->lock);
++	if (group->nr_tasks < 0)  /* The groups is being destroyed. */
++		goto out_group;
++
++	if (!utd) {
++		utd = kzalloc(sizeof(struct umcg_task_data), GFP_NOWAIT);
++		if (!utd) {
++			spin_unlock(&group->lock);
++			rcu_read_unlock();
++
++			utd = kzalloc(sizeof(struct umcg_task_data), GFP_KERNEL);
++			if (!utd) {
++				ret = -ENOMEM;
++				goto out;
++			}
++
++			goto retry_once;
++		}
 +	}
 +
-+	if (umcg_state != UMCG_TASK_RUNNABLE) {
-+		fprintf(stderr, "libumcg: unexpected state in umcg_wake (1): %u\n",
-+				umcg_state);
-+		errno = EINVAL;
-+		return UMCG_OP_ERROR;
-+	}
++	utd->self = current;
++	utd->group = group;
++	utd->umcg_task = umcg_task;
++	utd->task_type = task_type;
++	utd->api_version = api_version;
++	RCU_INIT_POINTER(utd->peer, NULL);
 +
-+	return UMCG_OP_AGAIN;
-+}
++	INIT_LIST_HEAD(&utd->list);
++	group->nr_tasks++;
 +
-+static int umcg_do_wake_or_swap(struct umcg_task_tls *next_utls,
-+				uint64_t prev_wait_counter, bool should_wait,
-+				const struct timespec *timeout)
-+{
-+	int ret;
++	task_lock(current);
++	rcu_assign_pointer(current->umcg_task_data, utd);
++	task_unlock(current);
 +
-+again:
++	ret = 0;
 +
-+	if (should_wait)
-+		ret = sys_umcg_swap(0, next_utls->tid, 0, timeout);
++out_group:
++	spin_unlock(&group->lock);
++
++out_rcu:
++	rcu_read_unlock();
++	if (ret && utd)
++		kfree(utd);
++
++out:
++	if (ret)
++		put_state(umcg_task, UMCG_TASK_NONE);
 +	else
-+		ret = sys_umcg_wake(0, next_utls->tid);
-+
-+	if (ret && errno == EAGAIN)
-+		goto again;
++		schedule();  /* Trigger umcg_on_wake(). */
 +
 +	return ret;
 +}
 +
-+int umcg_wake(umcg_tid next)
++static int register_worker(u32 api_version, u32 group_id,
++		struct umcg_task __user *umcg_task)
 +{
-+	struct umcg_task_tls *utls = *(struct umcg_task_tls **)next;
-+	uint64_t prev_wait_counter;
-+
-+	if (!utls) {
-+		errno = EINVAL;
-+		return -1;
-+	}
-+
-+again:
-+	switch (umcg_prepare_wake(utls)) {
-+	case UMCG_OP_DONE:
-+		return 0;
-+	case UMCG_OP_SYS:
-+		break;
-+	case UMCG_OP_ERROR:
-+		return -1;
-+	case UMCG_OP_AGAIN:
-+		goto again;
-+	default:
-+		fprintf(stderr, "libumcg: unknown pre_op result.\n");
-+		exit(1);
-+		return -1;
-+	}
-+
-+	return umcg_do_wake_or_swap(utls, prev_wait_counter, false, NULL);
++	return add_task_to_group(api_version, group_id, umcg_task,
++				UMCG_TT_WORKER, UMCG_TASK_UNBLOCKED);
 +}
 +
-+int umcg_swap(umcg_tid next, const struct timespec *timeout)
++static int register_server(u32 api_version, u32 group_id,
++		struct umcg_task __user *umcg_task)
 +{
-+	struct umcg_task_tls *utls = *(struct umcg_task_tls **)next;
-+	bool should_wake, should_wait;
-+	uint64_t prev_wait_counter;
++	return add_task_to_group(api_version, group_id, umcg_task,
++				UMCG_TT_SERVER, UMCG_TASK_PROCESSING);
++}
++
+ /**
+  * sys_umcg_register_task - register the current task as a UMCG task.
+  * @api_version:       The expected/desired API version of the syscall.
+@@ -122,6 +300,10 @@ SYSCALL_DEFINE4(umcg_register_task, u32, api_version, u32, flags, u32, group_id,
+ 		if (group_id != UMCG_NOID)
+ 			return -EINVAL;
+ 		return register_core_task(api_version, umcg_task);
++	case UMCG_REGISTER_WORKER:
++		return register_worker(api_version, group_id, umcg_task);
++	case UMCG_REGISTER_SERVER:
++		return register_server(api_version, group_id, umcg_task);
+ 	default:
+ 		return -EINVAL;
+ 	}
+@@ -146,9 +328,39 @@ SYSCALL_DEFINE1(umcg_unregister_task, u32, flags)
+ 	if (!utd || flags)
+ 		goto out;
+ 
++	if (!utd->group) {
++		ret = 0;
++		goto out;
++	}
++
++	if (utd->task_type == UMCG_TT_WORKER) {
++		struct task_struct *server = rcu_dereference(utd->peer);
++
++		if (server) {
++			umcg_detach_peer();
++			if (WARN_ON(!wake_up_process(server))) {
++				umcg_segv(0);
++				goto out;
++			}
++		}
++	} else {
++		if (WARN_ON(utd->task_type != UMCG_TT_SERVER)) {
++			umcg_segv(0);
++			goto out;
++		}
++
++		umcg_detach_peer();
++	}
++
++	spin_lock(&utd->group->lock);
+ 	task_lock(current);
++
+ 	rcu_assign_pointer(current->umcg_task_data, NULL);
++
++	--utd->group->nr_tasks;
++
+ 	task_unlock(current);
++	spin_unlock(&utd->group->lock);
+ 
+ 	ret = 0;
+ 
+@@ -164,6 +376,7 @@ SYSCALL_DEFINE1(umcg_unregister_task, u32, flags)
+ static int do_context_switch(struct task_struct *next)
+ {
+ 	struct umcg_task_data *utd = rcu_access_pointer(current->umcg_task_data);
++	bool prev_wait_flag;  /* See comment in do_wait() below. */
+ 
+ 	/*
+ 	 * It is important to set_current_state(TASK_INTERRUPTIBLE) before
+@@ -173,34 +386,51 @@ static int do_context_switch(struct task_struct *next)
+ 	 */
+ 	set_current_state(TASK_INTERRUPTIBLE);
+ 
+-	WRITE_ONCE(utd->in_wait, true);
+-
++	prev_wait_flag = utd->in_wait;
++	if (!prev_wait_flag)
++		WRITE_ONCE(utd->in_wait, true);
++	
+ 	if (!try_to_wake_up(next, TASK_NORMAL, WF_CURRENT_CPU))
+ 		return -EAGAIN;
+ 
+ 	freezable_schedule();
+ 
+-	WRITE_ONCE(utd->in_wait, false);
++	if (!prev_wait_flag)
++		WRITE_ONCE(utd->in_wait, false);
+ 
+ 	if (signal_pending(current))
+ 		return -EINTR;
+ 
++	/* TODO: deal with non-fatal interrupts. */
+ 	return 0;
+ }
+ 
+ static int do_wait(void)
+ {
+ 	struct umcg_task_data *utd = rcu_access_pointer(current->umcg_task_data);
++	/*
++	 * freezable_schedule() below can recursively call do_wait() if
++	 * this is a worker that needs a server. As the wait flag is only
++	 * used by the outermost wait/wake (and swap) syscalls, modify it only
++	 * in the outermost do_wait() instead of using a counter.
++	 *
++	 * Note that the nesting level is at most two, as utd->in_workqueue
++	 * is used to prevent further nesting.
++	 */
++	bool prev_wait_flag;
+ 
+ 	if (!utd)
+ 		return -EINVAL;
+ 
+-	WRITE_ONCE(utd->in_wait, true);
++	prev_wait_flag = utd->in_wait;
++	if (!prev_wait_flag)
++		WRITE_ONCE(utd->in_wait, true);
+ 
+ 	set_current_state(TASK_INTERRUPTIBLE);
+ 	freezable_schedule();
+ 
+-	WRITE_ONCE(utd->in_wait, false);
++	if (!prev_wait_flag)
++		WRITE_ONCE(utd->in_wait, false);
+ 
+ 	if (signal_pending(current))
+ 		return -EINTR;
+@@ -214,7 +444,7 @@ static int do_wait(void)
+  * @timeout:       The absolute timeout of the wait. Not supported yet.
+  *                 Must be NULL.
+  *
+- * Sleep until woken, interrupted, or @timeout expires.
++ * Sleep until woken or @timeout expires.
+  *
+  * Return:
+  * 0           - Ok;
+@@ -229,6 +459,7 @@ SYSCALL_DEFINE2(umcg_wait, u32, flags,
+ 		const struct __kernel_timespec __user *, timeout)
+ {
+ 	struct umcg_task_data *utd;
++	struct task_struct *server = NULL;
+ 
+ 	if (flags)
+ 		return -EINVAL;
+@@ -242,8 +473,14 @@ SYSCALL_DEFINE2(umcg_wait, u32, flags,
+ 		return -EINVAL;
+ 	}
+ 
++	if (utd->task_type == UMCG_TT_WORKER)
++		server = rcu_dereference(utd->peer);
++
+ 	rcu_read_unlock();
+ 
++	if (server)
++		return do_context_switch(server);
++
+ 	return do_wait();
+ }
+ 
+@@ -252,7 +489,7 @@ SYSCALL_DEFINE2(umcg_wait, u32, flags,
+  * @flags:         Reserved.
+  * @next_tid:      The ID of the task to wake.
+  *
+- * Wake @next identified by @next_tid. @next must be either a UMCG core
++ * Wake task next identified by @next_tid. @next must be either a UMCG core
+  * task or a UMCG worker task.
+  *
+  * Return:
+@@ -265,7 +502,7 @@ SYSCALL_DEFINE2(umcg_wait, u32, flags,
+ SYSCALL_DEFINE2(umcg_wake, u32, flags, u32, next_tid)
+ {
+ 	struct umcg_task_data *next_utd;
+-	struct task_struct *next;
++	struct task_struct *next, *next_peer;
+ 	int ret = -EINVAL;
+ 
+ 	if (!next_tid)
+@@ -282,11 +519,29 @@ SYSCALL_DEFINE2(umcg_wake, u32, flags, u32, next_tid)
+ 	if (!next_utd)
+ 		goto out;
+ 
++	if (next_utd->task_type == UMCG_TT_SERVER)
++		goto out;
++
+ 	if (!READ_ONCE(next_utd->in_wait)) {
+ 		ret = -EAGAIN;
+ 		goto out;
+ 	}
+ 
++	next_peer = rcu_dereference(next_utd->peer);
++	if (next_peer) {
++		if (next_peer == current)
++			umcg_detach_peer();
++		else {
++			/*
++			 * Waking a worker with an assigned server is not
++			 * permitted, unless the waking is done by the assigned
++			 * server.
++			 */
++			umcg_segv(0);
++			goto out;
++		}
++	}
++
+ 	ret = wake_up_process(next);
+ 	put_task_struct(next);
+ 	if (ret)
+@@ -348,7 +603,7 @@ SYSCALL_DEFINE4(umcg_swap, u32, wake_flags, u32, next_tid, u32, wait_flags,
+ 	}
+ 
+ 	next_utd = rcu_dereference(next->umcg_task_data);
+-	if (!next_utd) {
++	if (!next_utd || next_utd->group != curr_utd->group) {
+ 		ret = -EINVAL;
+ 		goto out;
+ 	}
+@@ -358,6 +613,25 @@ SYSCALL_DEFINE4(umcg_swap, u32, wake_flags, u32, next_tid, u32, wait_flags,
+ 		goto out;
+ 	}
+ 
++	/* Move the server from curr to next, if appropriate. */
++	if (curr_utd->task_type == UMCG_TT_WORKER) {
++		struct task_struct *server = rcu_dereference(curr_utd->peer);
++		if (server) {
++			struct umcg_task_data *server_utd =
++				rcu_dereference(server->umcg_task_data);
++
++			if (rcu_access_pointer(next_utd->peer)) {
++				ret = -EAGAIN;
++				goto out;
++			}
++			umcg_detach_peer();
++			umcg_lock_pair(server, next);
++			rcu_assign_pointer(server_utd->peer, next);
++			rcu_assign_pointer(next_utd->peer, server);
++			umcg_unlock_pair(server, next);
++		}
++	}
++
+ 	rcu_read_unlock();
+ 
+ 	return do_context_switch(next);
+@@ -366,3 +640,475 @@ SYSCALL_DEFINE4(umcg_swap, u32, wake_flags, u32, next_tid, u32, wait_flags,
+ 	rcu_read_unlock();
+ 	return ret;
+ }
++
++/**
++ * sys_umcg_create_group - create a UMCG group
++ * @api_version:           Requested API version.
++ * @flags:                 Reserved.
++ *
++ * Return:
++ * >= 0                - the group ID
++ * -EOPNOTSUPP         - @api_version is not supported
++ * -EINVAL             - @flags is not valid
++ * -ENOMEM             - not enough memory
++ */
++SYSCALL_DEFINE2(umcg_create_group, u32, api_version, u64, flags)
++{
 +	int ret;
++	struct umcg_group *group;
++	struct umcg_group *list_entry;
++	struct mm_struct *mm = current->mm;
 +
-+	if (!utls) {
-+		errno = EINVAL;
-+		return -1;
++	if (flags)
++		return -EINVAL;
++
++	if (__api_version(api_version))
++		return -EOPNOTSUPP;
++
++	group = kzalloc(sizeof(struct umcg_group), GFP_KERNEL);
++	if (!group)
++		return -ENOMEM;
++
++	spin_lock_init(&group->lock);
++	INIT_LIST_HEAD(&group->list);
++	INIT_LIST_HEAD(&group->waiters);
++	group->flags = flags;
++	group->api_version = api_version;
++
++	spin_lock(&mm->umcg_lock);
++
++	list_for_each_entry_rcu(list_entry, &mm->umcg_groups, list) {
++		if (list_entry->group_id >= group->group_id)
++			group->group_id = list_entry->group_id + 1;
 +	}
 +
-+again:
-+	switch (umcg_prepare_wake(utls)) {
-+	case UMCG_OP_DONE:
-+		should_wake = false;
-+		break;
-+	case UMCG_OP_SYS:
-+		should_wake = true;
-+		break;
-+	case UMCG_OP_ERROR:
-+		return -1;
-+	case UMCG_OP_AGAIN:
-+		goto again;
-+	default:
-+		fprintf(stderr, "lubumcg: unknown pre_op result.\n");
-+		exit(1);
-+		return -1;
++	list_add_rcu(&mm->umcg_groups, &group->list);
++
++	ret = group->group_id;
++	spin_unlock(&mm->umcg_lock);
++
++	return ret;
++}
++
++/**
++ * sys_umcg_destroy_group - destroy a UMCG group
++ * @group_id: The ID of the group to destroy.
++ *
++ * The group must be empty, i.e. have no registered servers or workers.
++ *
++ * Return:
++ * 0       - success;
++ * -ESRCH  - group not found;
++ * -EBUSY  - the group has registered workers or servers.
++ */
++SYSCALL_DEFINE1(umcg_destroy_group, u32, group_id)
++{
++	int ret = 0;
++	struct umcg_group *group = NULL;
++	struct umcg_group *list_entry;
++	struct mm_struct *mm = current->mm;
++
++	spin_lock(&mm->umcg_lock);
++	list_for_each_entry_rcu(list_entry, &mm->umcg_groups, list) {
++		if (list_entry->group_id == group_id) {
++			group = list_entry;
++			break;
++		}
 +	}
 +
-+	switch (umcg_prepare_wait()) {
-+	case UMCG_OP_DONE:
-+		should_wait = false;
-+		break;
-+	case UMCG_OP_SYS:
-+		should_wait = true;
-+		break;
-+	case UMCG_OP_ERROR:
-+		return -1;
-+	default:
-+		fprintf(stderr, "lubumcg: unknown pre_op result.\n");
-+		exit(1);
-+		return -1;
++	if (group == NULL) {
++		ret = -ESRCH;
++		goto out;
 +	}
 +
-+	if (should_wake)
-+		return umcg_do_wake_or_swap(utls, prev_wait_counter,
-+				should_wait, timeout);
++	spin_lock(&group->lock);
 +
-+	if (should_wait)
-+		return umcg_do_wait(timeout);
++	if (group->nr_tasks > 0) {
++		ret = -EBUSY;
++		spin_unlock(&group->lock);
++		goto out;
++	}
++
++	/* Tell group rcu readers that the group is going to be deleted. */
++	group->nr_tasks = -1;
++
++	spin_unlock(&group->lock);
++
++	list_del_rcu(&group->list);
++	kfree_rcu(group, rcu);
++
++out:
++	spin_unlock(&mm->umcg_lock);
++	return ret;
++}
++
++/**
++ * sys_umcg_poll_worker - poll an UNBLOCKED worker
++ * @flags: reserved;
++ * @ut:    the control struct umcg_task of the polled worker.
++ *
++ * The current task must be a UMCG server in POLLING state; if there are
++ * UNBLOCKED workers in the server's group, take the earliest queued,
++ * mark the worker as RUNNABLE.and return.
++ *
++ * If there are no unblocked workers, the syscall waits for one to become
++ * available.
++ *
++ * Return:
++ * 0       - Ok;
++ * -EINTR  - a signal was received;
++ * -EINVAL - one of the parameters is wrong, or a precondition was not met.
++ */
++SYSCALL_DEFINE2(umcg_poll_worker, u32, flags, struct umcg_task __user **, ut)
++{
++	struct umcg_group *group;
++	struct task_struct *worker;
++	struct task_struct *server = current;
++	struct umcg_task __user *result;
++	struct umcg_task_data *worker_utd, *server_utd;
++
++	if (flags)
++		return -EINVAL;
++
++	rcu_read_lock();
++
++	server_utd = rcu_dereference(server->umcg_task_data);
++
++	if (!server_utd || server_utd->task_type != UMCG_TT_SERVER) {
++		rcu_read_unlock();
++		return -EINVAL;
++	}
++
++	umcg_detach_peer();
++
++	group = server_utd->group;
++
++	spin_lock(&group->lock);
++
++	if (group->nr_waiting_workers == 0) {  /* Queue the server. */
++		++group->nr_waiting_pollers;
++		list_add_tail(&server_utd->list, &group->waiters);
++		set_current_state(TASK_INTERRUPTIBLE);
++		spin_unlock(&group->lock);
++		rcu_read_unlock();
++
++		freezable_schedule();
++
++		rcu_read_lock();
++		server_utd = rcu_dereference(server->umcg_task_data);
++
++		if (!list_empty(&server_utd->list)) {
++			spin_lock(&group->lock);
++			list_del_init(&server_utd->list);
++			--group->nr_waiting_pollers;
++			spin_unlock(&group->lock);
++		}
++
++		if (signal_pending(current)) {
++			rcu_read_unlock();
++			return -EINTR;
++		}
++
++		worker = rcu_dereference(server_utd->peer);
++		if (worker) {
++			worker_utd = rcu_dereference(worker->umcg_task_data);
++			result = worker_utd->umcg_task;
++		} else
++			result = NULL;
++
++		rcu_read_unlock();
++
++		if (put_user(result, ut))
++			return umcg_segv(-EFAULT);
++		return 0;
++	}
++
++	/* Pick up the first worker. */
++	worker_utd = list_first_entry(&group->waiters, struct umcg_task_data,
++					list);
++	list_del_init(&worker_utd->list);
++	worker = worker_utd->self;
++	--group->nr_waiting_workers;
++
++	umcg_lock_pair(server, worker);
++	spin_unlock(&group->lock);
++
++	if (WARN_ON(rcu_access_pointer(server_utd->peer) ||
++			rcu_access_pointer(worker_utd->peer))) {
++		/* This is unexpected. */
++		rcu_read_unlock();
++		return umcg_segv(-EINVAL);
++	}
++	rcu_assign_pointer(server_utd->peer, worker);
++	rcu_assign_pointer(worker_utd->peer, current);
++
++	umcg_unlock_pair(server, worker);
++
++	result = worker_utd->umcg_task;
++	rcu_read_unlock();
++
++	if (put_state(result, UMCG_TASK_RUNNABLE))
++		return umcg_segv(-EFAULT);
++
++	if (put_user(result, ut))
++		return umcg_segv(-EFAULT);
 +
 +	return 0;
 +}
-diff --git a/tools/lib/umcg/libumcg.h b/tools/lib/umcg/libumcg.h
-new file mode 100644
-index 000000000000..31ef786d1965
---- /dev/null
-+++ b/tools/lib/umcg/libumcg.h
-@@ -0,0 +1,154 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+
-+#ifndef __LIBUMCG_H
-+#define __LIBUMCG_H
-+
-+#define _GNU_SOURCE
-+#include <errno.h>
-+#include <limits.h>
-+#include <unistd.h>
-+#include <linux/types.h>
-+#include <stdbool.h>
-+#include <stdint.h>
-+#include <syscall.h>
-+#include <time.h>
-+
-+#include <linux/umcg.h>
-+
-+static int sys_umcg_api_version(uint32_t requested_api_version, uint32_t flags)
-+{
-+	return syscall(__NR_umcg_api_version, requested_api_version, flags);
-+}
-+
-+static int sys_umcg_register_task(uint32_t api_version, uint32_t flags,
-+		uint32_t group_id, struct umcg_task *umcg_task)
-+{
-+	return syscall(__NR_umcg_register_task, api_version, flags, group_id,
-+			umcg_task);
-+}
-+
-+static int sys_umcg_unregister_task(uint32_t flags)
-+{
-+	return syscall(__NR_umcg_unregister_task, flags);
-+}
-+
-+static int sys_umcg_wait(uint32_t flags, const struct timespec *timeout)
-+{
-+	return syscall(__NR_umcg_wait, flags, timeout);
-+}
-+
-+static int sys_umcg_wake(uint32_t flags, uint32_t next_tid)
-+{
-+	return syscall(__NR_umcg_wake, flags, next_tid);
-+}
-+
-+static int sys_umcg_swap(uint32_t wake_flags, uint32_t next_tid,
-+		uint32_t wait_flags, const struct timespec *timeout)
-+{
-+	return syscall(__NR_umcg_swap, wake_flags, next_tid,
-+			wait_flags, timeout);
-+}
-+
-+typedef intptr_t umcg_tid; /* UMCG thread ID. */
-+
-+#define UMCG_NONE	(0)
 +
 +/**
-+ * umcg_get_utid - return the UMCG ID of the current thread.
++ * sys_umcg_run_worker - "run" a RUNNABLE worker as a server
++ * @flags:       reserved;
++ * @worker_tid:  tid of the worker to run;
++ * @ut:          the control struct umcg_task of the worker that blocked
++ *               during this "run".
 + *
-+ * The function always succeeds, and the returned ID is guaranteed to be
-+ * stable over the life of the thread (and multiple
-+ * umcg_register/umcg_unregister calls).
++ * The worker must be in RUNNABLE state. The server (=current task)
++ * wakes the worker and blocks; when the worker, or one of the workers
++ * in umcg_swap chain, blocks, the server is woken and the syscall returns
++ * with ut indicating the blocked worker.
 + *
-+ * The ID is NOT guaranteed to be unique over the life of the process.
-+ */
-+umcg_tid umcg_get_utid(void);
-+
-+/**
-+ * umcg_set_task_tag - add an arbitrary tag to a registered UMCG task.
-+ *
-+ * Note: non-thread-safe: the user is responsible for proper memory fencing.
-+ */
-+void umcg_set_task_tag(umcg_tid utid, intptr_t tag);
-+
-+/*
-+ * umcg_get_task_tag - get the task tag. Returns zero if none set.
-+ *
-+ * Note: non-thread-safe: the user is responsible for proper memory fencing.
-+ */
-+intptr_t umcg_get_task_tag(umcg_tid utid);
-+
-+/**
-+ * umcg_register_core_task - register the current thread as a UMCG core task
++ * If the worker exits or unregisters itself, the syscall succeeds with
++ * ut == NULL.
 + *
 + * Return:
-+ * UMCG_NONE     - an error occurred. Check errno.
-+ * != UMCG_NONE  - the ID of the thread to be used with UMCG API (guaranteed
-+ *                 to match the value returned by umcg_get_utid).
++ * 0       - Ok;
++ * -EINTR  - a signal was received;
++ * -EINVAL - one of the parameters is wrong, or a precondition was not met.
 + */
-+umcg_tid umcg_register_core_task(intptr_t tag);
++SYSCALL_DEFINE3(umcg_run_worker, u32, flags, u32, worker_tid,
++		struct umcg_task __user **, ut)
++{
++	int ret = -EINVAL;
++	struct task_struct *worker;
++	struct task_struct *server = current;
++	struct umcg_task __user *result = NULL;
++	struct umcg_task_data *worker_utd;
++	struct umcg_task_data *server_utd;
++	struct umcg_task __user *server_ut;
++	struct umcg_task __user *worker_ut;
 +
-+/**
-+ * umcg_unregister_task - unregister the current thread
-+ *
-+ * Return:
-+ * 0              - OK
-+ * -1             - the current thread is not a UMCG thread
-+ */
-+int umcg_unregister_task(void);
++	if (!ut)
++		return -EINVAL;
 +
-+/**
-+ * umcg_wait - block the current thread
-+ * @timeout:   absolute timeout (not supported at the moment)
-+ *
-+ * Blocks the current thread, which must have been registered via umcg_register,
-+ * until it is waken via umcg_wake or swapped into via umcg_swap. If the current
-+ * thread has a wakeup queued (see umcg_wake), returns zero immediately,
-+ * consuming the wakeup.
-+ *
-+ * Return:
-+ * 0         - OK, the thread was waken;
-+ * -1        - did not wake normally;
-+ *               errno:
-+ *                 EINTR: interrupted
-+ *                 EINVAL: some other error occurred
-+ */
-+int umcg_wait(const struct timespec *timeout);
++	rcu_read_lock();
++	server_utd = rcu_dereference(server->umcg_task_data);
 +
-+/**
-+ * umcg_wake - wake @next
-+ * @next:      ID of the thread to wake (IDs are returned by umcg_register).
-+ *
-+ * If @next is blocked via umcg_wait, or umcg_swap, wake it. If @next is
-+ * running, queue the wakeup, so that a future block of @next will consume
-+ * the wakeup but will not block.
-+ *
-+ * umcg_wake is non-blocking, but may retry a few times to make sure @next
-+ * has indeed woken.
-+ *
-+ * umcg_wake can queue at most one wakeup; if @next has a wakeup queued,
-+ * an error is returned.
-+ *
-+ * Return:
-+ * 0         - OK, @next has woken, or a wakeup has been queued;
-+ * -1        - an error occurred.
-+ */
-+int umcg_wake(umcg_tid next);
++	if (!server_utd || server_utd->task_type != UMCG_TT_SERVER)
++		goto out_rcu;
 +
-+/**
-+ * umcg_swap - wake @next, put the current thread to sleep
-+ * @next:      ID of the thread to wake
-+ * @timeout:   absolute timeout (not supported at the moment)
-+ *
-+ * umcg_swap is semantically equivalent to
-+ *
-+ *     int ret = umcg_wake(next);
-+ *     if (ret)
-+ *             return ret;
-+ *     return umcg_wait(timeout);
-+ *
-+ * but may do a synchronous context switch into @next on the current CPU.
-+ */
-+int umcg_swap(umcg_tid next, const struct timespec *timeout);
++	if (flags)
++		goto out_rcu;
 +
-+#endif  /* __LIBUMCG_H */
++	worker = find_get_task_by_vpid(worker_tid);
++	if (!worker) {
++		ret = -ESRCH;
++		goto out_rcu;
++	}
++
++	worker_utd = rcu_dereference(worker->umcg_task_data);
++	if (!worker_utd)
++		goto out_rcu;
++
++	if (!READ_ONCE(worker_utd->in_wait)) {
++		ret = -EAGAIN;
++		goto out_rcu;
++	}
++
++	if (server_utd->group != worker_utd->group)
++		goto out_rcu;
++
++	if (rcu_access_pointer(server_utd->peer) != worker)
++		umcg_detach_peer();
++
++	if (!rcu_access_pointer(server_utd->peer)) {
++		umcg_lock_pair(server, worker);
++		WARN_ON(worker_utd->peer);
++		rcu_assign_pointer(server_utd->peer, worker);
++		rcu_assign_pointer(worker_utd->peer, server);
++		umcg_unlock_pair(server, worker);
++	}
++
++	server_ut = server_utd->umcg_task;
++	worker_ut = server_utd->umcg_task;
++
++	rcu_read_unlock();
++
++	ret = do_context_switch(worker);
++	if (ret)
++		return ret;
++
++	rcu_read_lock();
++	worker = rcu_dereference(server_utd->peer);
++	if (worker) {
++		worker_utd = rcu_dereference(worker->umcg_task_data);
++		if (worker_utd)
++			result = worker_utd->umcg_task;
++	}
++	rcu_read_unlock();
++
++	if (put_user(result, ut))
++		return -EFAULT;
++	return 0;
++
++out_rcu:
++	rcu_read_unlock();
++	return ret;
++}
++
++void umcg_on_block(void)
++{
++	struct umcg_task_data *utd = rcu_access_pointer(current->umcg_task_data);
++	struct umcg_task __user *ut;
++	struct task_struct *server;
++	u32 state;
++
++	if (utd->task_type != UMCG_TT_WORKER || utd->in_workqueue)
++		return;
++
++	ut = utd->umcg_task;
++
++	if (get_user(state, (u32 __user *)ut)) {
++		if (signal_pending(current))
++			return;
++		umcg_segv(0);
++		return;
++	}
++
++	if (state != UMCG_TASK_RUNNING)
++		return;
++
++	state = UMCG_TASK_BLOCKED;
++	if (put_user(state, (u32 __user *)ut)) {
++		umcg_segv(0);
++		return;
++	}
++
++	rcu_read_lock();
++	server = rcu_dereference(utd->peer);
++	rcu_read_unlock();
++
++	if (server)
++		WARN_ON(!try_to_wake_up(server, TASK_NORMAL, WF_CURRENT_CPU));
++}
++
++/* Return true to return to the user, false to keep waiting. */
++static bool process_unblocked_worker(void)
++{
++	struct umcg_task_data *utd;
++	struct umcg_group *group;
++
++	rcu_read_lock();
++
++	utd = rcu_dereference(current->umcg_task_data);
++	group = utd->group;
++
++	spin_lock(&group->lock);
++	if (!list_empty(&utd->list)) {
++		/* This was a spurious wakeup or an interrupt, do nothing. */
++		spin_unlock(&group->lock);
++		rcu_read_unlock();
++		do_wait();
++		return false;
++	}
++
++	if (group->nr_waiting_pollers > 0) {  /* Wake a server. */
++		struct task_struct *server;
++		struct umcg_task_data *server_utd = list_first_entry(
++				&group->waiters, struct umcg_task_data, list);
++
++		list_del_init(&server_utd->list);
++		server = server_utd->self;
++		--group->nr_waiting_pollers;
++
++		umcg_lock_pair(server, current);
++		spin_unlock(&group->lock);
++
++		if (WARN_ON(server_utd->peer || utd->peer)) {
++			umcg_segv(0);
++			return true;
++		}
++		rcu_assign_pointer(server_utd->peer, current);
++		rcu_assign_pointer(utd->peer, server);
++
++		umcg_unlock_pair(server, current);
++		rcu_read_unlock();
++
++		if (put_state(utd->umcg_task, UMCG_TASK_RUNNABLE)) {
++			umcg_segv(0);
++			return true;
++		}
++
++		do_context_switch(server);
++		return false;
++	}
++
++	/* Add to the queue. */
++	++group->nr_waiting_workers;
++	list_add_tail(&utd->list, &group->waiters);
++	spin_unlock(&group->lock);
++	rcu_read_unlock();
++
++	do_wait();
++
++	smp_rmb();
++	if (!list_empty(&utd->list)) {
++		spin_lock(&group->lock);
++		list_del_init(&utd->list);
++		--group->nr_waiting_workers;
++		spin_unlock(&group->lock);
++	}
++
++	return false;
++}
++
++void umcg_on_wake(void)
++{
++	struct umcg_task_data *utd;
++	struct umcg_task __user *ut;
++	bool should_break = false;
++
++	/* current->umcg_task_data is modified only from current. */
++	utd = rcu_access_pointer(current->umcg_task_data);
++	if (utd->task_type != UMCG_TT_WORKER || utd->in_workqueue)
++		return;
++
++	do {
++		u32 state;
++
++		if (fatal_signal_pending(current))
++			return;
++
++		if (signal_pending(current))
++			return;
++
++		ut = utd->umcg_task;
++
++		if (get_state(ut, &state)) {
++			if (signal_pending(current))
++				return;
++			goto segv;
++		}
++
++		if (state == UMCG_TASK_RUNNING && rcu_access_pointer(utd->peer))
++			return;
++
++		if (state == UMCG_TASK_BLOCKED || state == UMCG_TASK_RUNNING) {
++			state = UMCG_TASK_UNBLOCKED;
++			if (put_state(ut, state))
++				goto segv;
++		} else if (state != UMCG_TASK_UNBLOCKED) {
++			goto segv;
++		}
++
++		utd->in_workqueue = true;
++		should_break = process_unblocked_worker();
++		utd->in_workqueue = false;
++		if (should_break)
++			return;
++
++	} while (!should_break);
++
++segv:
++	umcg_segv(0);
++}
+diff --git a/kernel/sched/umcg.h b/kernel/sched/umcg.h
+index 6791d570f622..92012a1674ab 100644
+--- a/kernel/sched/umcg.h
++++ b/kernel/sched/umcg.h
+@@ -8,6 +8,34 @@
+ #include <linux/sched.h>
+ #include <linux/umcg.h>
+ 
++struct umcg_group {
++	struct list_head list;
++	u32 group_id;     /* Never changes. */
++	u32 api_version;  /* Never changes. */
++	u64 flags;        /* Never changes. */
++
++	spinlock_t lock;
++
++	/*
++	 * One of the counters below is always zero. The non-zero counter
++	 * indicates the number of elements in @waiters below.
++	 */
++	int nr_waiting_workers;
++	int nr_waiting_pollers;
++
++	/*
++	 * The list below either contains UNBLOCKED workers waiting
++	 * for the userspace to poll or run them if nr_waiting_workers > 0,
++	 *  or polling servers waiting for unblocked workers if
++	 *  nr_waiting_pollers > 0.
++	 */
++	struct list_head waiters;
++
++	int nr_tasks;  /* The total number of tasks registered. */
++
++	struct rcu_head rcu;
++};
++
+ enum umcg_task_type {
+ 	UMCG_TT_CORE	= 1,
+ 	UMCG_TT_SERVER	= 2,
+@@ -32,11 +60,37 @@ struct umcg_task_data {
+ 	 */
+ 	u32 api_version;
+ 
++	/* NULL for core API tasks. Never changes. */
++	struct umcg_group		*group;
++
++	/*
++	 * If this is a server task, points to its assigned worker, if any;
++	 * if this is a worker task, points to its assigned server, if any.
++	 *
++	 * Protected by alloc_lock of the task owning this struct.
++	 *
++	 * Always either NULL, or the server and the worker point to each other.
++	 * Locking order: first lock the server, then the worker.
++	 *
++	 * Either the worker or the server should be the current task when
++	 * this field is changed, with the exception of sys_umcg_swap.
++	 */
++	struct task_struct __rcu	*peer;
++
++	/* Used in umcg_group.waiters. */
++	struct list_head		list;
++
++	/* Used by curr in umcg_on_block/wake to prevent nesting/recursion. */
++	bool				in_workqueue;
++
+ 	/*
+ 	 * Used by wait/wake routines to handle races. Written only by current.
+ 	 */
+ 	bool				in_wait;
+ };
+ 
++void umcg_on_block(void);
++void umcg_on_wake(void);
++
+ #endif  /* CONFIG_UMCG */
+ #endif  /* _KERNEL_SCHED_UMCG_H */
+diff --git a/mm/init-mm.c b/mm/init-mm.c
+index 153162669f80..85e4a8ecfd91 100644
+--- a/mm/init-mm.c
++++ b/mm/init-mm.c
+@@ -36,6 +36,10 @@ struct mm_struct init_mm = {
+ 	.page_table_lock =  __SPIN_LOCK_UNLOCKED(init_mm.page_table_lock),
+ 	.arg_lock	=  __SPIN_LOCK_UNLOCKED(init_mm.arg_lock),
+ 	.mmlist		= LIST_HEAD_INIT(init_mm.mmlist),
++#ifdef CONFIG_UMCG
++	.umcg_lock	= __SPIN_LOCK_UNLOCKED(init_mm.umcg_lock),
++	.umcg_groups	= LIST_HEAD_INIT(init_mm.umcg_groups),
++#endif
+ 	.user_ns	= &init_user_ns,
+ 	.cpu_bitmap	= CPU_BITS_NONE,
+ 	INIT_MM_CONTEXT(init_mm)
 -- 
 2.31.1.818.g46aad6cb9e-goog
 
