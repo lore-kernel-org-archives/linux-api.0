@@ -5,33 +5,33 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 680DEC4707A
-	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:14:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B0D17C04FF3
+	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:15:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4D876613F4
-	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:14:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8FEDB613F5
+	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:15:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230314AbhEUWQN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 21 May 2021 18:16:13 -0400
-Received: from mga09.intel.com ([134.134.136.24]:55681 "EHLO mga09.intel.com"
+        id S229826AbhEUWQY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 21 May 2021 18:16:24 -0400
+Received: from mga17.intel.com ([192.55.52.151]:65511 "EHLO mga17.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230321AbhEUWPI (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 21 May 2021 18:15:08 -0400
-IronPort-SDR: sK12sDNWfbZy4kVvMTiJ+06juY5x3jPVRB3U1VIU9+BtcPcDdKmhWmHSsyeDjhG/f7ayVznXM1
- X/g/xix31Fvw==
-X-IronPort-AV: E=McAfee;i="6200,9189,9991"; a="201618782"
+        id S230130AbhEUWPS (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 21 May 2021 18:15:18 -0400
+IronPort-SDR: ZmXJ0a/ndiix9Kf/0erxlQ+Xnrn1L3fHY9H/KuKTQXdXTAOyEdh+8RQ3pzN5KwZpoWfKQz+lV0
+ sbUZGdylfUAg==
+X-IronPort-AV: E=McAfee;i="6200,9189,9991"; a="181874429"
 X-IronPort-AV: E=Sophos;i="5.82,319,1613462400"; 
-   d="scan'208";a="201618782"
+   d="scan'208";a="181874429"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:21 -0700
-IronPort-SDR: 9grkf+SI7ppJ+5YNiyUxWQdmGXyuFHoYom/p4zvTvihQMWd68GcVfyfkZMWGVmqXfxwHXYHNwC
- ylQ1fAtfgsAw==
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:15 -0700
+IronPort-SDR: 0nI61sLnyA2sB4tdEpTwLDUPPv1FmH58By+rNyHttvLFkc7XFj8g8xpl/kV9C/4s4EuvXdw24t
+ rhrGzws1lAhw==
 X-IronPort-AV: E=Sophos;i="5.82,319,1613462400"; 
-   d="scan'208";a="441116233"
+   d="scan'208";a="441116195"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:21 -0700
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:15 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,10 +60,11 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v27 25/31] x86/cet/shstk: Introduce shadow stack token setup/verify routines
-Date:   Fri, 21 May 2021 15:12:05 -0700
-Message-Id: <20210521221211.29077-26-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
+Subject: [PATCH v27 17/31] mm: Fixup places that call pte_mkwrite() directly
+Date:   Fri, 21 May 2021 15:11:57 -0700
+Message-Id: <20210521221211.29077-18-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210521221211.29077-1-yu-cheng.yu@intel.com>
 References: <20210521221211.29077-1-yu-cheng.yu@intel.com>
@@ -73,252 +74,102 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-A shadow stack restore token marks a restore point of the shadow stack, and
-the address in a token must point directly above the token, which is within
-the same shadow stack.  This is distinctively different from other pointers
-on the shadow stack, since those pointers point to executable code area.
+When serving a page fault, maybe_mkwrite() makes a PTE writable if it is in
+a writable vma.  A shadow stack vma is writable, but its PTEs need
+_PAGE_DIRTY to be set to become writable.  For this reason, maybe_mkwrite()
+has been updated.
 
-The restore token can be used as an extra protection for signal handling.
-To deliver a signal, create a shadow stack restore token and put the token
-and the signal restorer address on the shadow stack.  In sigreturn, verify
-the token and restore from it the shadow stack pointer.
+There are a few places that call pte_mkwrite() directly, but have the
+same result as from maybe_mkwrite().  These sites need to be updated for
+shadow stack as well.  Thus, change them to maybe_mkwrite():
 
-Introduce token setup and verify routines.  Also introduce WRUSS, which is
-a kernel-mode instruction but writes directly to user shadow stack.  It is
-used to construct user signal stack as described above.
+- do_anonymous_page() and migrate_vma_insert_page() check VM_WRITE directly
+  and call pte_mkwrite(), which is the same as maybe_mkwrite().  Change
+  them to maybe_mkwrite().
+
+- In do_numa_page(), if the numa entry was writable, then pte_mkwrite()
+  is called directly.  Fix it by doing maybe_mkwrite().  Make the same
+  changes to do_huge_pmd_numa_page().
+
+- In change_pte_range(), pte_mkwrite() is called directly.  Replace it with
+  maybe_mkwrite().
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 Cc: Kees Cook <keescook@chromium.org>
 ---
-v27:
-- For shstk_check_rstor_token(), instead of an input param, use current
-  shadow stack pointer.
-- In response to comments, fix/simplify a few syntax/format issues.
-
 v25:
-- Update inline assembly syntax, use %[].
-- Change token address from (unsigned long) to (u64/u32 __user *).
-- Change -EPERM to -EFAULT.
+- Apply same changes to do_huge_pmd_numa_page() as to do_numa_page().
 
- arch/x86/include/asm/cet.h           |   7 ++
- arch/x86/include/asm/special_insns.h |  30 ++++++
- arch/x86/kernel/shstk.c              | 133 +++++++++++++++++++++++++++
- 3 files changed, 170 insertions(+)
+ mm/huge_memory.c | 2 +-
+ mm/memory.c      | 5 ++---
+ mm/migrate.c     | 3 +--
+ mm/mprotect.c    | 2 +-
+ 4 files changed, 5 insertions(+), 7 deletions(-)
 
-diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index 4314a41ab3c9..aa533700ba31 100644
---- a/arch/x86/include/asm/cet.h
-+++ b/arch/x86/include/asm/cet.h
-@@ -21,6 +21,9 @@ int shstk_alloc_thread_stack(struct task_struct *p, unsigned long clone_flags,
- 			     unsigned long stack_size);
- void shstk_free(struct task_struct *p);
- void shstk_disable(void);
-+int shstk_setup_rstor_token(bool ia32, unsigned long restorer,
-+			    unsigned long *new_ssp);
-+int shstk_check_rstor_token(bool ia32, unsigned long *new_ssp);
- #else
- static inline int shstk_setup(void) { return 0; }
- static inline int shstk_alloc_thread_stack(struct task_struct *p,
-@@ -28,6 +31,10 @@ static inline int shstk_alloc_thread_stack(struct task_struct *p,
- 					   unsigned long stack_size) { return 0; }
- static inline void shstk_free(struct task_struct *p) {}
- static inline void shstk_disable(void) {}
-+static inline int shstk_setup_rstor_token(bool ia32, unsigned long restorer,
-+					  unsigned long *new_ssp) { return 0; }
-+static inline int shstk_check_rstor_token(bool ia32,
-+					  unsigned long *new_ssp) { return 0; }
- #endif
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index e613278fe5e1..819f6c32eb5b 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -1551,7 +1551,7 @@ vm_fault_t do_huge_pmd_numa_page(struct vm_fault *vmf, pmd_t pmd)
+ 	pmd = pmd_modify(pmd, vma->vm_page_prot);
+ 	pmd = pmd_mkyoung(pmd);
+ 	if (was_writable)
+-		pmd = pmd_mkwrite(pmd);
++		pmd = maybe_pmd_mkwrite(pmd, vma);
+ 	set_pmd_at(vma->vm_mm, haddr, vmf->pmd, pmd);
+ 	update_mmu_cache_pmd(vma, vmf->address, vmf->pmd);
+ 	unlock_page(page);
+diff --git a/mm/memory.c b/mm/memory.c
+index 730daa00952b..2b6d068587cb 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -3602,8 +3602,7 @@ static vm_fault_t do_anonymous_page(struct vm_fault *vmf)
+ 	__SetPageUptodate(page);
  
- #endif /* __ASSEMBLY__ */
-diff --git a/arch/x86/include/asm/special_insns.h b/arch/x86/include/asm/special_insns.h
-index 2acd6cb62328..5b48c91fa8d4 100644
---- a/arch/x86/include/asm/special_insns.h
-+++ b/arch/x86/include/asm/special_insns.h
-@@ -234,6 +234,36 @@ static inline void clwb(volatile void *__p)
- 		: [pax] "a" (p));
- }
+ 	entry = mk_pte(page, vma->vm_page_prot);
+-	if (vma->vm_flags & VM_WRITE)
+-		entry = pte_mkwrite(pte_mkdirty(entry));
++	entry = maybe_mkwrite(pte_mkdirty(entry), vma);
  
-+#ifdef CONFIG_X86_SHADOW_STACK
-+static inline int write_user_shstk_32(u32 __user *addr, u32 val)
-+{
-+	if (WARN_ONCE(!IS_ENABLED(CONFIG_IA32_EMULATION) &&
-+		      !IS_ENABLED(CONFIG_X86_X32),
-+		      "%s used but not supported.\n", __func__)) {
-+		return -EFAULT;
-+	}
-+
-+	asm_volatile_goto("1: wrussd %[val], (%[addr])\n"
-+			  _ASM_EXTABLE(1b, %l[fail])
-+			  :: [addr] "r" (addr), [val] "r" (val)
-+			  :: fail);
-+	return 0;
-+fail:
-+	return -EFAULT;
-+}
-+
-+static inline int write_user_shstk_64(u64 __user *addr, u64 val)
-+{
-+	asm_volatile_goto("1: wrussq %[val], (%[addr])\n"
-+			  _ASM_EXTABLE(1b, %l[fail])
-+			  :: [addr] "r" (addr), [val] "r" (val)
-+			  :: fail);
-+	return 0;
-+fail:
-+	return -EFAULT;
-+}
-+#endif /* CONFIG_X86_SHADOW_STACK */
-+
- #define nop() asm volatile ("nop")
+ 	vmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd, vmf->address,
+ 			&vmf->ptl);
+@@ -4225,7 +4224,7 @@ static vm_fault_t do_numa_page(struct vm_fault *vmf)
+ 	pte = pte_modify(old_pte, vma->vm_page_prot);
+ 	pte = pte_mkyoung(pte);
+ 	if (was_writable)
+-		pte = pte_mkwrite(pte);
++		pte = maybe_mkwrite(pte, vma);
+ 	ptep_modify_prot_commit(vma, vmf->address, vmf->pte, old_pte, pte);
+ 	update_mmu_cache(vma, vmf->address, vmf->pte);
+ 	pte_unmap_unlock(vmf->pte, vmf->ptl);
+diff --git a/mm/migrate.c b/mm/migrate.c
+index b234c3f3acb7..1c307a01d995 100644
+--- a/mm/migrate.c
++++ b/mm/migrate.c
+@@ -2939,8 +2939,7 @@ static void migrate_vma_insert_page(struct migrate_vma *migrate,
+ 		}
+ 	} else {
+ 		entry = mk_pte(page, vma->vm_page_prot);
+-		if (vma->vm_flags & VM_WRITE)
+-			entry = pte_mkwrite(pte_mkdirty(entry));
++		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
+ 	}
  
- static inline void serialize(void)
-diff --git a/arch/x86/kernel/shstk.c b/arch/x86/kernel/shstk.c
-index 8e5f772181b9..61ec300c1a97 100644
---- a/arch/x86/kernel/shstk.c
-+++ b/arch/x86/kernel/shstk.c
-@@ -20,6 +20,7 @@
- #include <asm/fpu/xstate.h>
- #include <asm/fpu/types.h>
- #include <asm/cet.h>
-+#include <asm/special_insns.h>
- 
- static void start_update_msrs(void)
- {
-@@ -181,3 +182,135 @@ void shstk_disable(void)
- 
- 	shstk_free(current);
- }
-+
-+static unsigned long get_user_shstk_addr(void)
-+{
-+	struct fpu *fpu = &current->thread.fpu;
-+	unsigned long ssp = 0;
-+
-+	fpregs_lock();
-+
-+	if (fpregs_state_valid(fpu, smp_processor_id())) {
-+		rdmsrl(MSR_IA32_PL3_SSP, ssp);
-+	} else {
-+		struct cet_user_state *p;
-+
-+		p = get_xsave_addr(&fpu->state.xsave, XFEATURE_CET_USER);
-+		if (p)
-+			ssp = p->user_ssp;
-+	}
-+
-+	fpregs_unlock();
-+
-+	return ssp;
-+}
-+
-+/*
-+ * Create a restore token on the shadow stack.  A token is always 8-byte
-+ * and aligned to 8.
-+ */
-+static int create_rstor_token(bool ia32, unsigned long ssp,
-+			       unsigned long *token_addr)
-+{
-+	unsigned long addr;
-+
-+	/* Aligned to 8 is aligned to 4, so test 8 first */
-+	if ((!ia32 && !IS_ALIGNED(ssp, 8)) || !IS_ALIGNED(ssp, 4))
-+		return -EINVAL;
-+
-+	addr = ALIGN_DOWN(ssp, 8) - 8;
-+
-+	/* Is the token for 64-bit? */
-+	if (!ia32)
-+		ssp |= BIT(0);
-+
-+	if (write_user_shstk_64((u64 __user *)addr, (u64)ssp))
-+		return -EFAULT;
-+
-+	*token_addr = addr;
-+
-+	return 0;
-+}
-+
-+/*
-+ * Create a restore token on shadow stack, and then push the user-mode
-+ * function return address.
-+ */
-+int shstk_setup_rstor_token(bool ia32, unsigned long ret_addr,
-+			    unsigned long *new_ssp)
-+{
-+	struct thread_shstk *shstk = &current->thread.shstk;
-+	unsigned long ssp, token_addr;
-+	int err;
-+
-+	if (!shstk->size)
-+		return 0;
-+
-+	if (!ret_addr)
-+		return -EINVAL;
-+
-+	ssp = get_user_shstk_addr();
-+	if (!ssp)
-+		return -EINVAL;
-+
-+	err = create_rstor_token(ia32, ssp, &token_addr);
-+	if (err)
-+		return err;
-+
-+	if (ia32) {
-+		ssp = token_addr - sizeof(u32);
-+		err = write_user_shstk_32((u32 __user *)ssp, (u32)ret_addr);
-+	} else {
-+		ssp = token_addr - sizeof(u64);
-+		err = write_user_shstk_64((u64 __user *)ssp, (u64)ret_addr);
-+	}
-+
-+	if (!err)
-+		*new_ssp = ssp;
-+
-+	return err;
-+}
-+
-+/*
-+ * Verify token_addr points to a valid token, and then set *new_ssp
-+ * according to the token.
-+ */
-+int shstk_check_rstor_token(bool proc32, unsigned long *new_ssp)
-+{
-+	unsigned long token_addr;
-+	unsigned long token;
-+	bool shstk32;
-+
-+	token_addr = get_user_shstk_addr();
-+
-+	if (get_user(token, (unsigned long __user *)token_addr))
-+		return -EFAULT;
-+
-+	/* Is mode flag correct? */
-+	shstk32 = !(token & BIT(0));
-+	if (proc32 ^ shstk32)
-+		return -EINVAL;
-+
-+	/* Is busy flag set? */
-+	if (token & BIT(1))
-+		return -EINVAL;
-+
-+	/* Mask out flags */
-+	token &= ~3UL;
-+
-+	/*
-+	 * Restore address aligned?
-+	 */
-+	if ((!proc32 && !IS_ALIGNED(token, 8)) || !IS_ALIGNED(token, 4))
-+		return -EINVAL;
-+
-+	/*
-+	 * Token placed properly?
-+	 */
-+	if (((ALIGN_DOWN(token, 8) - 8) != token_addr) || token >= TASK_SIZE_MAX)
-+		return -EINVAL;
-+
-+	*new_ssp = token;
-+
-+	return 0;
-+}
+ 	ptep = pte_offset_map_lock(mm, pmdp, addr, &ptl);
+diff --git a/mm/mprotect.c b/mm/mprotect.c
+index e7a443157988..819dd14c962a 100644
+--- a/mm/mprotect.c
++++ b/mm/mprotect.c
+@@ -135,7 +135,7 @@ static unsigned long change_pte_range(struct vm_area_struct *vma, pmd_t *pmd,
+ 			if (dirty_accountable && pte_dirty(ptent) &&
+ 					(pte_soft_dirty(ptent) ||
+ 					 !(vma->vm_flags & VM_SOFTDIRTY))) {
+-				ptent = pte_mkwrite(ptent);
++				ptent = maybe_mkwrite(ptent, vma);
+ 			}
+ 			ptep_modify_prot_commit(vma, addr, pte, oldpte, ptent);
+ 			pages++;
 -- 
 2.21.0
 
