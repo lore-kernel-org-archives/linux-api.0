@@ -7,32 +7,32 @@ X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
 	SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F1242C43470
-	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 06:39:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7A615C433ED
+	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 06:41:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DA479613BD
-	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 06:39:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 568A4611AB
+	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 06:41:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231745AbhEUGlD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 21 May 2021 02:41:03 -0400
-Received: from szxga06-in.huawei.com ([45.249.212.32]:3644 "EHLO
-        szxga06-in.huawei.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233394AbhEUGjW (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 21 May 2021 02:39:22 -0400
-Received: from dggems701-chm.china.huawei.com (unknown [172.30.72.59])
-        by szxga06-in.huawei.com (SkyGuard) with ESMTP id 4FmcLM4xKxzmXTd;
-        Fri, 21 May 2021 14:35:39 +0800 (CST)
+        id S233396AbhEUGnI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 21 May 2021 02:43:08 -0400
+Received: from szxga05-in.huawei.com ([45.249.212.191]:3609 "EHLO
+        szxga05-in.huawei.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S232355AbhEUGlI (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 21 May 2021 02:41:08 -0400
+Received: from dggems706-chm.china.huawei.com (unknown [172.30.72.58])
+        by szxga05-in.huawei.com (SkyGuard) with ESMTP id 4FmcLQ2VNVzQpjW;
+        Fri, 21 May 2021 14:35:42 +0800 (CST)
 Received: from dggpemm500022.china.huawei.com (7.185.36.162) by
- dggems701-chm.china.huawei.com (10.3.19.178) with Microsoft SMTP Server
+ dggems706-chm.china.huawei.com (10.3.19.183) with Microsoft SMTP Server
  (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2176.2; Fri, 21 May 2021 14:37:56 +0800
+ 15.1.2176.2; Fri, 21 May 2021 14:39:14 +0800
 Received: from [10.174.187.155] (10.174.187.155) by
  dggpemm500022.china.huawei.com (7.185.36.162) with Microsoft SMTP Server
  (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2176.2; Fri, 21 May 2021 14:37:56 +0800
-Subject: Re: [RFC PATCH v3 4/8] vfio/type1: Pre-map more pages than requested
- in the IOPF handling
-To:     Alex Williamson <alex.williamson@redhat.com>
+ 15.1.2176.2; Fri, 21 May 2021 14:39:13 +0800
+Subject: Re: [RFC PATCH v3 7/8] vfio/type1: Add selective DMA faulting support
+To:     Alex Williamson <alex.williamson@redhat.com>,
+        Kevin Tian <kevin.tian@intel.com>
 CC:     Cornelia Huck <cohuck@redhat.com>, Will Deacon <will@kernel.org>,
         "Robin Murphy" <robin.murphy@arm.com>,
         Joerg Roedel <joro@8bytes.org>,
@@ -41,27 +41,26 @@ CC:     Cornelia Huck <cohuck@redhat.com>, Will Deacon <will@kernel.org>,
         <linux-kernel@vger.kernel.org>,
         <linux-arm-kernel@lists.infradead.org>,
         <iommu@lists.linux-foundation.org>, <linux-api@vger.kernel.org>,
-        Kevin Tian <kevin.tian@intel.com>,
         Lu Baolu <baolu.lu@linux.intel.com>, <yi.l.liu@intel.com>,
         Christoph Hellwig <hch@infradead.org>,
         Jonathan Cameron <Jonathan.Cameron@huawei.com>,
-        "Barry Song" <song.bao.hua@hisilicon.com>,
+        Barry Song <song.bao.hua@hisilicon.com>,
         <wanghaibin.wang@huawei.com>, <yuzenghui@huawei.com>
 References: <20210409034420.1799-1-lushenming@huawei.com>
- <20210409034420.1799-5-lushenming@huawei.com>
- <20210518125826.7ba38b78.alex.williamson@redhat.com>
+ <20210409034420.1799-8-lushenming@huawei.com>
+ <20210518125813.7b8a78f1.alex.williamson@redhat.com>
 From:   Shenming Lu <lushenming@huawei.com>
-Message-ID: <ba8b6039-d053-2657-ae62-deaa30f452d2@huawei.com>
-Date:   Fri, 21 May 2021 14:37:55 +0800
+Message-ID: <ee41159c-7adf-6e96-1bb2-9c735512080a@huawei.com>
+Date:   Fri, 21 May 2021 14:39:12 +0800
 User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
  Thunderbird/78.2.2
 MIME-Version: 1.0
-In-Reply-To: <20210518125826.7ba38b78.alex.williamson@redhat.com>
+In-Reply-To: <20210518125813.7b8a78f1.alex.williamson@redhat.com>
 Content-Type: text/plain; charset="utf-8"
 Content-Language: en-US
 Content-Transfer-Encoding: 7bit
 X-Originating-IP: [10.174.187.155]
-X-ClientProxiedBy: dggems701-chm.china.huawei.com (10.3.19.178) To
+X-ClientProxiedBy: dggems705-chm.china.huawei.com (10.3.19.182) To
  dggpemm500022.china.huawei.com (7.185.36.162)
 X-CFilter-Loop: Reflected
 Precedence: bulk
@@ -69,24 +68,28 @@ List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
 On 2021/5/19 2:58, Alex Williamson wrote:
-> On Fri, 9 Apr 2021 11:44:16 +0800
+> On Fri, 9 Apr 2021 11:44:19 +0800
 > Shenming Lu <lushenming@huawei.com> wrote:
 > 
->> To optimize for fewer page fault handlings, we can pre-map more pages
->> than requested at once.
->>
->> Note that IOPF_PREMAP_LEN is just an arbitrary value for now, which we
->> could try further tuning.
+>> Some devices only allow selective DMA faulting. Similar to the selective
+>> dirty page tracking, the vendor driver can call vfio_pin_pages() to
+>> indicate the non-faultable scope, we add a new struct vfio_range to
+>> record it, then when the IOPF handler receives any page request out
+>> of the scope, we can directly return with an invalid response.
 > 
-> I'd prefer that the series introduced full end-to-end functionality
-> before trying to improve performance.  The pre-map value seems
-> arbitrary here and as noted in the previous patch, the IOMMU API does
-> not guarantee unmaps of ranges smaller than the original mapping.  This
-> would need to map with single page granularity in order to guarantee
-> page granularity at the mmu notifier when the IOMMU supports
-> superpages.  Thanks,
+> Seems like this highlights a deficiency in the design, that the user
+> can't specify mappings as iopf enabled or disabled.  Also, if the
+> vendor driver has pinned pages within the range, shouldn't that prevent
+> them from faulting in the first place?  Why do we need yet more
+> tracking structures?  Pages pinned by the vendor driver need to count
+> against the user's locked memory limits regardless of iopf.  Thanks,
 
-Yeah, I will drop this patch in the current stage.
+Currently we only have a vfio_pfn struct to track the external pinned pages
+(single page granularity), so I add a vfio_range struct for efficient lookup.
+
+Yeah, by this patch, for the non-pinned scope, we can directly return INVALID,
+but for the pinned(non-faultable) scope, tracking the pinned range doesn't seem
+to help more...
 
 Thanks,
 Shenming
