@@ -2,151 +2,115 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-18.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EA938C4707A
-	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 15:00:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7A352C47076
+	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 15:08:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C5BF9613E4
-	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 15:00:25 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4C24B613AF
+	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 15:08:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233874AbhEUPBr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 21 May 2021 11:01:47 -0400
-Received: from out01.mta.xmission.com ([166.70.13.231]:53054 "EHLO
-        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232049AbhEUPBq (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 21 May 2021 11:01:46 -0400
-Received: from in01.mta.xmission.com ([166.70.13.51])
-        by out01.mta.xmission.com with esmtps  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        (Exim 4.93)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1lk6dE-000nKQ-1q; Fri, 21 May 2021 09:00:08 -0600
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95] helo=fess.xmission.com)
-        by in01.mta.xmission.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        (Exim 4.87)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1lk6dC-0003f1-Vb; Fri, 21 May 2021 09:00:07 -0600
-From:   ebiederm@xmission.com (Eric W. Biederman)
-To:     Linus Torvalds <torvalds@linux-foundation.org>
-Cc:     Arnd Bergmann <arnd@arndb.de>, Florian Weimer <fweimer@redhat.com>,
-        "David S. Miller" <davem@davemloft.net>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Ingo Molnar <mingo@kernel.org>,
+        id S237308AbhEUPJq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 21 May 2021 11:09:46 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50564 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S237299AbhEUPJp (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 21 May 2021 11:09:45 -0400
+Received: from ms.lwn.net (ms.lwn.net [IPv6:2600:3c01:e000:3a1::42])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CBF34C061574
+        for <linux-api@vger.kernel.org>; Fri, 21 May 2021 08:08:22 -0700 (PDT)
+Received: from localhost (unknown [IPv6:2601:281:8300:104d:444a:d152:279d:1dbb])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by ms.lwn.net (Postfix) with ESMTPSA id 6D149153;
+        Fri, 21 May 2021 15:08:21 +0000 (UTC)
+DKIM-Filter: OpenDKIM Filter v2.11.0 ms.lwn.net 6D149153
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=lwn.net; s=20201203;
+        t=1621609701; bh=V2vNepzONuwsPQWA23na/dx6eiWDxiiBVf3jQVQnBdM=;
+        h=From:To:Cc:Subject:In-Reply-To:References:Date:From;
+        b=C+qfue6OZlEqHcXt1khYxZ4Cz/ChTOUbztfvYb0q2eOMpt5er1SUbdzcMDE596FMN
+         Lf2Hdky4qdCaWkZi1nLRLGKEFCg2ikADuP9MlCo8T3APwnO/2gBp6eVj5D2zg0OJnl
+         3dpLZTjsvVmxkOqH2uEWUzLvtfySwUBp+u/XfqjEU0FGvL1GczFSTtlLhZquuFSJlS
+         FHDMVRLiZ4Fd5J8s73p6fJMhxHHjRam+C/SebSXWd7r6A4LBWhR3SZ/kmDOiOctnwa
+         I68x3kKw6np7AiV8MSncLpJlkhVJegHuaSTgw9/xRM92I6n9sbUG86WL+zQcbP6Oip
+         OiEl6llM6rqog==
+From:   Jonathan Corbet <corbet@lwn.net>
+To:     Peter Oskolkov <posk@google.com>
+Cc:     Peter Zijlstra <peterz@infradead.org>,
+        Ingo Molnar <mingo@redhat.com>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Peter Collingbourne <pcc@google.com>,
-        Dmitry Vyukov <dvyukov@google.com>,
-        Alexander Potapenko <glider@google.com>,
-        sparclinux <sparclinux@vger.kernel.org>,
-        linux-arch <linux-arch@vger.kernel.org>,
         Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        kasan-dev <kasan-dev@googlegroups.com>,
-        Marco Elver <elver@google.com>
-References: <YIpkvGrBFGlB5vNj@elver.google.com>
-        <m11rat9f85.fsf@fess.ebiederm.org>
-        <CAK8P3a0+uKYwL1NhY6Hvtieghba2hKYGD6hcKx5n8=4Gtt+pHA@mail.gmail.com>
-        <m15z031z0a.fsf@fess.ebiederm.org> <YIxVWkT03TqcJLY3@elver.google.com>
-        <m1zgxfs7zq.fsf_-_@fess.ebiederm.org>
-        <m1r1irpc5v.fsf@fess.ebiederm.org>
-        <CANpmjNNfiSgntiOzgMc5Y41KVAV_3VexdXCMADekbQEqSP3vqQ@mail.gmail.com>
-        <m1czuapjpx.fsf@fess.ebiederm.org>
-        <CANpmjNNyifBNdpejc6ofT6+n6FtUw-Cap_z9Z9YCevd7Wf3JYQ@mail.gmail.com>
-        <m14kfjh8et.fsf_-_@fess.ebiederm.org>
-        <m1tuni8ano.fsf_-_@fess.ebiederm.org>
-        <m1a6oxewym.fsf_-_@fess.ebiederm.org>
-Date:   Fri, 21 May 2021 09:59:53 -0500
-In-Reply-To: <m1a6oxewym.fsf_-_@fess.ebiederm.org> (Eric W. Biederman's
-        message of "Thu, 13 May 2021 23:54:57 -0500")
-Message-ID: <m1cztkyvx2.fsf_-_@fess.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
+        linux-api <linux-api@vger.kernel.org>,
+        Paul Turner <pjt@google.com>, Ben Segall <bsegall@google.com>,
+        Peter Oskolkov <posk@posk.io>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Andrei Vagin <avagin@google.com>,
+        Jim Newsome <jnewsome@torproject.org>
+Subject: Re: [RFC PATCH v0.1 0/9] UMCG early preview/RFC patchset
+In-Reply-To: <CAPNVh5eV+CtY74_JMv6_Bm5aCVBh_F9hkWLT6v3BT=H0UwodUg@mail.gmail.com>
+References: <20210520183614.1227046-1-posk@google.com>
+ <87mtspm7fe.fsf@meer.lwn.net>
+ <CAPNVh5eV+CtY74_JMv6_Bm5aCVBh_F9hkWLT6v3BT=H0UwodUg@mail.gmail.com>
+Date:   Fri, 21 May 2021 09:08:20 -0600
+Message-ID: <87eee0m8ez.fsf@meer.lwn.net>
 MIME-Version: 1.0
 Content-Type: text/plain
-X-XM-SPF: eid=1lk6dC-0003f1-Vb;;;mid=<m1cztkyvx2.fsf_-_@fess.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX19vlB2vASomz6xcEqWSw3QLQjrCqAtSYto=
-X-SA-Exim-Connect-IP: 68.227.160.95
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: [GIT PULL] siginfo: ABI fixes for v5.13-rc3
-X-SA-Exim-Version: 4.2.1 (built Thu, 05 May 2016 13:38:54 -0600)
-X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+Peter Oskolkov <posk@google.com> writes:
 
-Linus,
+> On Thu, May 20, 2021 at 2:17 PM Jonathan Corbet <corbet@lwn.net> wrote:
+>>
+>> Peter Oskolkov <posk@google.com> writes:
+>>
+>> > As indicated earlier in the FUTEX_SWAP patchset:
+>> >
+>> > https://lore.kernel.org/lkml/20200722234538.166697-1-posk@posk.io/
+>> >
+>> > "Google Fibers" is a userspace scheduling framework
+>> > used widely and successfully at Google to improve in-process workload
+>> > isolation and response latencies. We are working on open-sourcing
+>> > this framework, and UMCG (User-Managed Concurrency Groups) kernel
+>> > patches are intended as the foundation of this.
+>>
+>> So I have to ask...is there *any* documentation out there on what this
+>> is and how people are supposed to use it?  Shockingly, typing "Google
+>> fibers" into Google leads to a less than fully joyful outcome...  This
+>> won't be easy for anybody to review if they have to start by
+>> reverse-engineering what it's supposed to do.
+>
+> Hi Jonathan,
+>
+> There is this Linux Plumbers video: https://www.youtube.com/watch?v=KXuZi9aeGTw
+> And the pdf: http://pdxplumbers.osuosl.org/2013/ocw//system/presentations/1653/original/LPC%20-%20User%20Threading.pdf
+>
+> I did not reference them in the patchset because links to sites other
+> than kernel.org are strongly discouraged... I will definitely add a
+> documentation patch.
 
-Please pull the for-v5.13-rc3 branch from the git tree:
+I did look at those - but a presentation from 2013 is going to be of
+limited relevance for a 2021 patch set.  In particular, the syscall API
+appears to have evolved considerably since then.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git for-v5.13-rc3
+> Feel free to reach out to me directly or through this LKML thread if
+> you have any questions.
+>
+> Do you think a documentation patch would be useful at this point, as
+> opposed to a free-form email discussion?
 
-  HEAD: 922e3013046b79b444c87eda5baf43afae1326a8 signalfd: Remove SIL_FAULT_PERF_EVENT fields from signalfd_siginfo
+Documentation patches can help to guide that discussion; they also need
+to be reviewed as well.  So yes, I think they should be present from the
+beginning.  But then, that's the position I'm supposed to take :)  This
+is a big change to the kernel's system-call API, I don't think that
+there can be a proper discussion of that without a description of what
+you're trying to do.
 
+Thanks,
 
-During the merge window an issue with si_perf and the siginfo ABI came
-up.  The alpha and sparc siginfo structure layout had changed with the
-addition of SIGTRAP TRAP_PERF and the new field si_perf.
-
-The reason only alpha and sparc were affected is that they are the
-only architectures that use si_trapno.
-
-Looking deeper it was discovered that si_trapno is used for only
-a few select signals on alpha and sparc, and that none of the
-other _sigfault fields past si_addr are used at all.  Which means
-technically no regression on alpha and sparc.
-
-While the alignment concerns might be dismissed the abuse of
-si_errno by SIGTRAP TRAP_PERF does have the potential to cause
-regressions in existing userspace.
-
-While we still have time before userspace starts using and depending on
-the new definition siginfo for SIGTRAP TRAP_PERF this set of changes
-cleans up siginfo_t.
-
-- The si_trapno field is demoted from magic alpha and sparc status and
-  made an ordinary union member of the _sigfault member of siginfo_t.
-  Without moving it of course.
-
-- si_perf is replaced with si_perf_data and si_perf_type ending the
-  abuse of si_errno.
-
-- Unnecessary additions to signalfd_siginfo are removed.
-
-v4: https://lkml.kernel.org/r/m1a6ot5e2h.fsf_-_@fess.ebiederm.org
-v3: https://lkml.kernel.org/r/m1tuni8ano.fsf_-_@fess.ebiederm.org
-v2: https://lkml.kernel.org/r/m14kfjh8et.fsf_-_@fess.ebiederm.org
-v1: https://lkml.kernel.org/r/m1zgxfs7zq.fsf_-_@fess.ebiederm.org
-
-This version drops the tests and fine grained handling of si_trapno
-on alpha and sparc (replaced assuming si_trapno is valid for
-all but the faults that defined different data).
-
-Hopefully this is enough to not be scary as a fix for the ABI issues.
-
-Tested-by: Marco Elver <elver@google.com>
-
-Eric W. Biederman (5):
-      siginfo: Move si_trapno inside the union inside _si_fault
-      signal: Implement SIL_FAULT_TRAPNO
-      signal: Factor force_sig_perf out of perf_sigtrap
-      signal: Deliver all of the siginfo perf data in _perf
-      signalfd: Remove SIL_PERF_EVENT fields from signalfd_siginfo
-
-
- arch/m68k/kernel/signal.c                          |  3 +-
- arch/x86/kernel/signal_compat.c                    |  9 +++-
- fs/signalfd.c                                      | 23 ++++-----
- include/linux/compat.h                             | 10 ++--
- include/linux/sched/signal.h                       |  1 +
- include/linux/signal.h                             |  1 +
- include/uapi/asm-generic/siginfo.h                 | 15 +++---
- include/uapi/linux/perf_event.h                    |  2 +-
- include/uapi/linux/signalfd.h                      |  4 +-
- kernel/events/core.c                               | 11 +---
- kernel/signal.c                                    | 59 +++++++++++++---------
- .../selftests/perf_events/sigtrap_threads.c        | 14 ++---
- 12 files changed, 79 insertions(+), 73 deletions(-)
-
-Eric
+jon
