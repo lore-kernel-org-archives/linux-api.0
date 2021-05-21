@@ -5,33 +5,33 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 59029C4707E
-	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:13:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 37B9FC4707A
+	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:13:43 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 40DA9613F7
-	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:13:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1CD6861421
+	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:13:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230239AbhEUWO7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 21 May 2021 18:14:59 -0400
-Received: from mga17.intel.com ([192.55.52.151]:65513 "EHLO mga17.intel.com"
+        id S230269AbhEUWPB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 21 May 2021 18:15:01 -0400
+Received: from mga09.intel.com ([134.134.136.24]:55677 "EHLO mga09.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230000AbhEUWOl (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 21 May 2021 18:14:41 -0400
-IronPort-SDR: X0IwJEvP8FH7fJeUYqqnuUyBUemjz/1uaGertQb9GjvZhIpU4wGPRBjAjtVQQiGKoxmW0ZL9qj
- uRyw2v7/RL5A==
-X-IronPort-AV: E=McAfee;i="6200,9189,9991"; a="181874406"
+        id S230094AbhEUWOm (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 21 May 2021 18:14:42 -0400
+IronPort-SDR: 0mqObyhoNPTOzLz4Th+trVoYrGjj6W5wUvXK64VwViSsjX/lo08XMnnH5pyoI6M8vv//g7nvb6
+ fSfIyA/e8QBA==
+X-IronPort-AV: E=McAfee;i="6200,9189,9991"; a="201618771"
 X-IronPort-AV: E=Sophos;i="5.82,319,1613462400"; 
-   d="scan'208";a="181874406"
+   d="scan'208";a="201618771"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:12 -0700
-IronPort-SDR: /FKZsu36CyqK55xJQzYkpSIBCZz3fnW5LgFc7EtbWEXk+0IAldBE8KfvS8rPboGYvQ7px2UO58
- GFYD5nMe+lEQ==
+  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:17 -0700
+IronPort-SDR: 8bd7lh9NKYiTQjZUTitrmmHd/zI0AGAKB4v3xJs25TIipTb079bG84mHw4hdLZ549k4dbLjP5W
+ ny2bCZYrteXA==
 X-IronPort-AV: E=Sophos;i="5.82,319,1613462400"; 
-   d="scan'208";a="441116168"
+   d="scan'208";a="441116205"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:11 -0700
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:17 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -62,9 +62,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Haitao Huang <haitao.huang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
         "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
-Subject: [PATCH v27 12/31] x86/mm: Update ptep_set_wrprotect() and pmdp_set_wrprotect() for transition from _PAGE_DIRTY to _PAGE_COW
-Date:   Fri, 21 May 2021 15:11:52 -0700
-Message-Id: <20210521221211.29077-13-yu-cheng.yu@intel.com>
+Subject: [PATCH v27 20/31] mm: Update can_follow_write_pte() for shadow stack
+Date:   Fri, 21 May 2021 15:12:00 -0700
+Message-Id: <20210521221211.29077-21-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210521221211.29077-1-yu-cheng.yu@intel.com>
 References: <20210521221211.29077-1-yu-cheng.yu@intel.com>
@@ -74,85 +74,104 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-When Shadow Stack is introduced, [R/O + _PAGE_DIRTY] PTE is reserved for
-shadow stack.  Copy-on-write PTEs have [R/O + _PAGE_COW].
+Can_follow_write_pte() ensures a read-only page is COWed by checking the
+FOLL_COW flag, and uses pte_dirty() to validate the flag is still valid.
 
-When a PTE goes from [R/W + _PAGE_DIRTY] to [R/O + _PAGE_COW], it could
-become a transient shadow stack PTE in two cases:
+Like a writable data page, a shadow stack page is writable, and becomes
+read-only during copy-on-write, but it is always dirty.  Thus, in the
+can_follow_write_pte() check, it belongs to the writable page case and
+should be excluded from the read-only page pte_dirty() check.  Apply
+the same changes to can_follow_write_pmd().
 
-The first case is that some processors can start a write but end up seeing
-a read-only PTE by the time they get to the Dirty bit, creating a transient
-shadow stack PTE.  However, this will not occur on processors supporting
-Shadow Stack, and a TLB flush is not necessary.
-
-The second case is that when _PAGE_DIRTY is replaced with _PAGE_COW non-
-atomically, a transient shadow stack PTE can be created as a result.
-Thus, prevent that with cmpxchg.
-
-Dave Hansen, Jann Horn, Andy Lutomirski, and Peter Zijlstra provided many
-insights to the issue.  Jann Horn provided the cmpxchg solution.
+While at it, also split the long line into smaller ones.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
 Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Cc: Kees Cook <keescook@chromium.org>
 ---
- arch/x86/include/asm/pgtable.h | 36 ++++++++++++++++++++++++++++++++++
- 1 file changed, 36 insertions(+)
+v26:
+- Instead of passing vm_flags, pass down vma pointer to can_follow_write_*().
 
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index f7bc20780fee..e61ad0946212 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -1306,6 +1306,24 @@ static inline pte_t ptep_get_and_clear_full(struct mm_struct *mm,
- static inline void ptep_set_wrprotect(struct mm_struct *mm,
- 				      unsigned long addr, pte_t *ptep)
+v25:
+- Split long line into smaller ones.
+
+v24:
+- Change arch_shadow_stack_mapping() to is_shadow_stack_mapping().
+
+ mm/gup.c         | 16 ++++++++++++----
+ mm/huge_memory.c | 16 ++++++++++++----
+ 2 files changed, 24 insertions(+), 8 deletions(-)
+
+diff --git a/mm/gup.c b/mm/gup.c
+index 0697134b6a12..432ba7ccf8ae 100644
+--- a/mm/gup.c
++++ b/mm/gup.c
+@@ -438,10 +438,18 @@ static int follow_pfn_pte(struct vm_area_struct *vma, unsigned long address,
+  * FOLL_FORCE can write to even unwritable pte's, but only
+  * after we've gone through a COW cycle and they are dirty.
+  */
+-static inline bool can_follow_write_pte(pte_t pte, unsigned int flags)
++static inline bool can_follow_write_pte(pte_t pte, unsigned int flags,
++					struct vm_area_struct *vma)
  {
-+	/*
-+	 * If Shadow Stack is enabled, pte_wrprotect() moves _PAGE_DIRTY
-+	 * to _PAGE_COW (see comments at pte_wrprotect()).
-+	 * When a thread reads a RW=1, Dirty=0 PTE and before changing it
-+	 * to RW=0, Dirty=0, another thread could have written to the page
-+	 * and the PTE is RW=1, Dirty=1 now.  Use try_cmpxchg() to detect
-+	 * PTE changes and update old_pte, then try again.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		pte_t old_pte, new_pte;
-+
-+		old_pte = READ_ONCE(*ptep);
-+		do {
-+			new_pte = pte_wrprotect(old_pte);
-+		} while (!try_cmpxchg(&ptep->pte, &old_pte.pte, new_pte.pte));
-+
-+		return;
-+	}
- 	clear_bit(_PAGE_BIT_RW, (unsigned long *)&ptep->pte);
+-	return pte_write(pte) ||
+-		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte));
++	if (pte_write(pte))
++		return true;
++	if ((flags & (FOLL_FORCE | FOLL_COW)) != (FOLL_FORCE | FOLL_COW))
++		return false;
++	if (!pte_dirty(pte))
++		return false;
++	if (is_shadow_stack_mapping(vma->vm_flags))
++		return false;
++	return true;
  }
  
-@@ -1350,6 +1368,24 @@ static inline pud_t pudp_huge_get_and_clear(struct mm_struct *mm,
- static inline void pmdp_set_wrprotect(struct mm_struct *mm,
- 				      unsigned long addr, pmd_t *pmdp)
+ static struct page *follow_page_pte(struct vm_area_struct *vma,
+@@ -484,7 +492,7 @@ static struct page *follow_page_pte(struct vm_area_struct *vma,
+ 	}
+ 	if ((flags & FOLL_NUMA) && pte_protnone(pte))
+ 		goto no_page;
+-	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags)) {
++	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags, vma)) {
+ 		pte_unmap_unlock(ptep, ptl);
+ 		return NULL;
+ 	}
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 819f6c32eb5b..99352caf7188 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -1337,10 +1337,18 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
+  * FOLL_FORCE can write to even unwritable pmd's, but only
+  * after we've gone through a COW cycle and they are dirty.
+  */
+-static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags)
++static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags,
++					struct vm_area_struct *vma)
  {
-+	/*
-+	 * If Shadow Stack is enabled, pmd_wrprotect() moves _PAGE_DIRTY
-+	 * to _PAGE_COW (see comments at pmd_wrprotect()).
-+	 * When a thread reads a RW=1, Dirty=0 PMD and before changing it
-+	 * to RW=0, Dirty=0, another thread could have written to the page
-+	 * and the PMD is RW=1, Dirty=1 now.  Use try_cmpxchg() to detect
-+	 * PMD changes and update old_pmd, then try again.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		pmd_t old_pmd, new_pmd;
-+
-+		old_pmd = READ_ONCE(*pmdp);
-+		do {
-+			new_pmd = pmd_wrprotect(old_pmd);
-+		} while (!try_cmpxchg((pmdval_t *)pmdp, (pmdval_t *)&old_pmd, pmd_val(new_pmd)));
-+
-+		return;
-+	}
- 	clear_bit(_PAGE_BIT_RW, (unsigned long *)pmdp);
+-	return pmd_write(pmd) ||
+-	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) && pmd_dirty(pmd));
++	if (pmd_write(pmd))
++		return true;
++	if ((flags & (FOLL_FORCE | FOLL_COW)) != (FOLL_FORCE | FOLL_COW))
++		return false;
++	if (!pmd_dirty(pmd))
++		return false;
++	if (is_shadow_stack_mapping(vma->vm_flags))
++		return false;
++	return true;
  }
  
+ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
+@@ -1353,7 +1361,7 @@ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
+ 
+ 	assert_spin_locked(pmd_lockptr(mm, pmd));
+ 
+-	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags))
++	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags, vma))
+ 		goto out;
+ 
+ 	/* Avoid dumping huge zero page */
 -- 
 2.21.0
 
