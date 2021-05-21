@@ -5,33 +5,33 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4626CC47081
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 94502C47082
 	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:13:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2B60B613F4
+	by mail.kernel.org (Postfix) with ESMTP id 793F36140F
 	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:13:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230318AbhEUWPG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 21 May 2021 18:15:06 -0400
-Received: from mga17.intel.com ([192.55.52.151]:65516 "EHLO mga17.intel.com"
+        id S230327AbhEUWPI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 21 May 2021 18:15:08 -0400
+Received: from mga09.intel.com ([134.134.136.24]:55678 "EHLO mga09.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230105AbhEUWOm (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        id S229951AbhEUWOm (ORCPT <rfc822;linux-api@vger.kernel.org>);
         Fri, 21 May 2021 18:14:42 -0400
-IronPort-SDR: t0y+kASrJawUwv87h8QHWyY9VSWl8aRRbYrESGMRuZjHwflJdLJ6mnXCtJcRgbpBl6KPkQnfJk
- uolEEoSwtZAw==
-X-IronPort-AV: E=McAfee;i="6200,9189,9991"; a="181874413"
+IronPort-SDR: Aa9TpWdcGaHhXNomFgxR4urSDFvHhO7bvmDhmVwUGXBGav408TyB5gvz+SjBhOp/WH9oFjSz1J
+ VsitL3LHSrqg==
+X-IronPort-AV: E=McAfee;i="6200,9189,9991"; a="201618773"
 X-IronPort-AV: E=Sophos;i="5.82,319,1613462400"; 
-   d="scan'208";a="181874413"
+   d="scan'208";a="201618773"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:13 -0700
-IronPort-SDR: QPjT9bVSsNqqPMJmd9ltkN+20IU51XTKGjJMxrFFI76r1FVoAUmBH4wtbsliV/B0McmMBsbfNN
- ToJ84xczfi/g==
+  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:18 -0700
+IronPort-SDR: pFp866Wpq88ihiXAjvK+wcRVVm5I144OqqPhnh+aNGtNAFZ+A3opzOtPZD/vvzcpAbYGxaiaLf
+ cvgGZYx8gULg==
 X-IronPort-AV: E=Sophos;i="5.82,319,1613462400"; 
-   d="scan'208";a="441116172"
+   d="scan'208";a="441116208"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:12 -0700
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:17 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,11 +61,10 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        Axel Rasmussen <axelrasmussen@google.com>,
-        Peter Xu <peterx@redhat.com>
-Subject: [PATCH v27 13/31] mm: Move VM_UFFD_MINOR_BIT from 37 to 38
-Date:   Fri, 21 May 2021 15:11:53 -0700
-Message-Id: <20210521221211.29077-14-yu-cheng.yu@intel.com>
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
+Subject: [PATCH v27 21/31] mm/mprotect: Exclude shadow stack from preserve_write
+Date:   Fri, 21 May 2021 15:12:01 -0700
+Message-Id: <20210521221211.29077-22-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210521221211.29077-1-yu-cheng.yu@intel.com>
 References: <20210521221211.29077-1-yu-cheng.yu@intel.com>
@@ -75,30 +74,64 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-To introduce VM_SHADOW_STACK as VM_HIGH_ARCH_BIT (37), and make all
-VM_HIGH_ARCH_BITs stay together, move VM_UFFD_MINOR_BIT from 37 to 38.
+In change_pte_range(), when a PTE is changed for prot_numa, _PAGE_RW is
+preserved to avoid the additional write fault after the NUMA hinting fault.
+However, pte_write() now includes both normal writable and shadow stack
+(RW=0, Dirty=1) PTEs, but the latter does not have _PAGE_RW and has no need
+to preserve it.
+
+Exclude shadow stack from preserve_write test, and apply the same change to
+change_huge_pmd().
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: Axel Rasmussen <axelrasmussen@google.com>
-Cc: Peter Xu <peterx@redhat.com>
-Cc: Mike Kravetz <mike.kravetz@oracle.com>
+Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 ---
- include/linux/mm.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+v25:
+- Move is_shadow_stack_mapping() to a separate line.
 
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index c274f75efcf9..923f89b9f1b5 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -373,7 +373,7 @@ extern unsigned int kobjsize(const void *objp);
- #endif
+v24:
+- Change arch_shadow_stack_mapping() to is_shadow_stack_mapping().
+
+ mm/huge_memory.c | 7 +++++++
+ mm/mprotect.c    | 7 +++++++
+ 2 files changed, 14 insertions(+)
+
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 99352caf7188..1d414d94c69a 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -1822,6 +1822,13 @@ int change_huge_pmd(struct vm_area_struct *vma, pmd_t *pmd,
+ 		return 0;
  
- #ifdef CONFIG_HAVE_ARCH_USERFAULTFD_MINOR
--# define VM_UFFD_MINOR_BIT	37
-+# define VM_UFFD_MINOR_BIT	38
- # define VM_UFFD_MINOR		BIT(VM_UFFD_MINOR_BIT)	/* UFFD minor faults */
- #else /* !CONFIG_HAVE_ARCH_USERFAULTFD_MINOR */
- # define VM_UFFD_MINOR		VM_NONE
+ 	preserve_write = prot_numa && pmd_write(*pmd);
++
++	/*
++	 * Preserve only normal writable huge PMD, but not shadow
++	 * stack (RW=0, Dirty=1).
++	 */
++	if (is_shadow_stack_mapping(vma->vm_flags))
++		preserve_write = false;
+ 	ret = 1;
+ 
+ #ifdef CONFIG_ARCH_ENABLE_THP_MIGRATION
+diff --git a/mm/mprotect.c b/mm/mprotect.c
+index 819dd14c962a..40428e8536bb 100644
+--- a/mm/mprotect.c
++++ b/mm/mprotect.c
+@@ -77,6 +77,13 @@ static unsigned long change_pte_range(struct vm_area_struct *vma, pmd_t *pmd,
+ 			pte_t ptent;
+ 			bool preserve_write = prot_numa && pte_write(oldpte);
+ 
++			/*
++			 * Preserve only normal writable PTE, but not shadow
++			 * stack (RW=0, Dirty=1).
++			 */
++			if (is_shadow_stack_mapping(vma->vm_flags))
++				preserve_write = false;
++
+ 			/*
+ 			 * Avoid trapping faults against the zero or KSM
+ 			 * pages. See similar comment in change_huge_pmd.
 -- 
 2.21.0
 
