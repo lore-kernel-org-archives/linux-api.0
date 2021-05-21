@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0E422C4707F
-	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:14:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D6E61C4707E
+	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:14:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E4FFD61416
-	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:14:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BB247613F5
+	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:14:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230280AbhEUWQC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 21 May 2021 18:16:02 -0400
-Received: from mga17.intel.com ([192.55.52.151]:65516 "EHLO mga17.intel.com"
+        id S230519AbhEUWQF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 21 May 2021 18:16:05 -0400
+Received: from mga09.intel.com ([134.134.136.24]:55678 "EHLO mga09.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230284AbhEUWPC (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 21 May 2021 18:15:02 -0400
-IronPort-SDR: CvPbtNDmO8dWZS0Bvq2+zj3erqVZ4FUvxatIZTvfUb6CT6V3xZv6K7ChVWkzQ4jNwGMokJW87r
- h/RaaLNx//Mw==
-X-IronPort-AV: E=McAfee;i="6200,9189,9991"; a="181874426"
+        id S230297AbhEUWPF (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 21 May 2021 18:15:05 -0400
+IronPort-SDR: VTlAMrxhrOgF+yqdi0SprkaC0XPzBw/hoDLQdu5tVPfd0Ycl7gDO00zQX1ftF2YqUEYllbPotT
+ qNDSpQw3OuZw==
+X-IronPort-AV: E=McAfee;i="6200,9189,9991"; a="201618781"
 X-IronPort-AV: E=Sophos;i="5.82,319,1613462400"; 
-   d="scan'208";a="181874426"
+   d="scan'208";a="201618781"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:15 -0700
-IronPort-SDR: Of+dDb9hTap5OEQ0XFJ97KnmIuCR/08/dRnp5yxCFtZ9/M/ti8HwYJOhNZQi/d8sZIN6ymZy3y
- 9nDs90G7mpxQ==
+  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:21 -0700
+IronPort-SDR: CwBimpn+/zLdfTvID2MjnTDclOjSlGAE+6+kGPxsEY+hA9U2bmrdO8xpSpnUVbGeV0i2Ddgb6a
+ fmi/ul69javA==
 X-IronPort-AV: E=Sophos;i="5.82,319,1613462400"; 
-   d="scan'208";a="441116191"
+   d="scan'208";a="441116229"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:14 -0700
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:20 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,11 +60,10 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
-Subject: [PATCH v27 16/31] x86/mm: Update maybe_mkwrite() for shadow stack
-Date:   Fri, 21 May 2021 15:11:56 -0700
-Message-Id: <20210521221211.29077-17-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v27 24/31] x86/cet/shstk: Handle thread shadow stack
+Date:   Fri, 21 May 2021 15:12:04 -0700
+Message-Id: <20210521221211.29077-25-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210521221211.29077-1-yu-cheng.yu@intel.com>
 References: <20210521221211.29077-1-yu-cheng.yu@intel.com>
@@ -74,122 +73,197 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-When serving a page fault, maybe_mkwrite() makes a PTE writable if its vma
-has VM_WRITE.
+For clone() with CLONE_VM, except vfork, the child and the parent must have
+separate shadow stacks.  Thus, the kernel allocates, and frees on thread
+exit a new shadow stack for the child.
 
-A shadow stack vma has VM_SHADOW_STACK.  Its PTEs have _PAGE_DIRTY, but not
-_PAGE_WRITE.  In fork(), _PAGE_DIRTY is cleared to cause copy-on-write,
-and in the page fault handler, _PAGE_DIRTY is restored and the shadow stack
-page is writable again.
-
-Introduce an x86 version of maybe_mkwrite(), which sets proper PTE bits
-according to VM flags.
-
-Apply the same changes to maybe_pmd_mkwrite().
+Use stack_size passed from clone3() syscall for thread shadow stack size.
+A compat-mode thread shadow stack size is further reduced to 1/4.  This
+allows more threads to run in a 32-bit address space.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
-Cc: Kees Cook <keescook@chromium.org>
 ---
- arch/x86/include/asm/pgtable.h |  6 ++++++
- arch/x86/mm/pgtable.c          | 20 ++++++++++++++++++++
- include/linux/mm.h             |  2 ++
- mm/huge_memory.c               |  2 ++
- 4 files changed, 30 insertions(+)
+ arch/x86/include/asm/cet.h         |  5 +++
+ arch/x86/include/asm/mmu_context.h |  3 ++
+ arch/x86/kernel/process.c          | 15 +++++---
+ arch/x86/kernel/shstk.c            | 55 +++++++++++++++++++++++++++++-
+ 4 files changed, 73 insertions(+), 5 deletions(-)
 
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index e61ad0946212..996ce14d8ab4 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -308,6 +308,9 @@ static inline int pmd_trans_huge(pmd_t pmd)
- 	return (pmd_val(pmd) & (_PAGE_PSE|_PAGE_DEVMAP)) == _PAGE_PSE;
- }
+diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+index 6432baf4de1f..4314a41ab3c9 100644
+--- a/arch/x86/include/asm/cet.h
++++ b/arch/x86/include/asm/cet.h
+@@ -17,10 +17,15 @@ struct thread_shstk {
  
-+#define maybe_pmd_mkwrite maybe_pmd_mkwrite
-+extern pmd_t maybe_pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma);
-+
- #ifdef CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD
- static inline int pud_trans_huge(pud_t pud)
- {
-@@ -1686,6 +1689,9 @@ static inline bool arch_faults_on_old_pte(void)
- 	return false;
- }
- 
-+#define maybe_mkwrite maybe_mkwrite
-+extern pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma);
-+
- #endif	/* __ASSEMBLY__ */
- 
- #endif /* _ASM_X86_PGTABLE_H */
-diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
-index d27cf69e811d..702112a86c8a 100644
---- a/arch/x86/mm/pgtable.c
-+++ b/arch/x86/mm/pgtable.c
-@@ -610,6 +610,26 @@ int pmdp_clear_flush_young(struct vm_area_struct *vma,
- }
+ #ifdef CONFIG_X86_SHADOW_STACK
+ int shstk_setup(void);
++int shstk_alloc_thread_stack(struct task_struct *p, unsigned long clone_flags,
++			     unsigned long stack_size);
+ void shstk_free(struct task_struct *p);
+ void shstk_disable(void);
+ #else
+ static inline int shstk_setup(void) { return 0; }
++static inline int shstk_alloc_thread_stack(struct task_struct *p,
++					   unsigned long clone_flags,
++					   unsigned long stack_size) { return 0; }
+ static inline void shstk_free(struct task_struct *p) {}
+ static inline void shstk_disable(void) {}
  #endif
+diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
+index 27516046117a..e1dd083261a5 100644
+--- a/arch/x86/include/asm/mmu_context.h
++++ b/arch/x86/include/asm/mmu_context.h
+@@ -12,6 +12,7 @@
+ #include <asm/tlbflush.h>
+ #include <asm/paravirt.h>
+ #include <asm/debugreg.h>
++#include <asm/cet.h>
  
-+pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
+ extern atomic64_t last_mm_ctx_id;
+ 
+@@ -146,6 +147,8 @@ do {						\
+ #else
+ #define deactivate_mm(tsk, mm)			\
+ do {						\
++	if (!tsk->vfork_done)			\
++		shstk_free(tsk);		\
+ 	load_gs_index(0);			\
+ 	loadsegment(fs, 0);			\
+ } while (0)
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index 5e1f38179f49..7a583a28ddb2 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -43,6 +43,7 @@
+ #include <asm/io_bitmap.h>
+ #include <asm/proto.h>
+ #include <asm/frame.h>
++#include <asm/cet.h>
+ 
+ #include "process.h"
+ 
+@@ -104,6 +105,7 @@ void exit_thread(struct task_struct *tsk)
+ 
+ 	free_vm86(t);
+ 
++	shstk_free(tsk);
+ 	fpu__drop(fpu);
+ }
+ 
+@@ -117,8 +119,9 @@ static int set_new_tls(struct task_struct *p, unsigned long tls)
+ 		return do_set_thread_area_64(p, ARCH_SET_FS, tls);
+ }
+ 
+-int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
+-		struct task_struct *p, unsigned long tls)
++int copy_thread(unsigned long clone_flags, unsigned long sp,
++		unsigned long stack_size, struct task_struct *p,
++		unsigned long tls)
+ {
+ 	struct inactive_task_frame *frame;
+ 	struct fork_frame *fork_frame;
+@@ -158,7 +161,7 @@ int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
+ 	/* Kernel thread ? */
+ 	if (unlikely(p->flags & PF_KTHREAD)) {
+ 		memset(childregs, 0, sizeof(struct pt_regs));
+-		kthread_frame_init(frame, sp, arg);
++		kthread_frame_init(frame, sp, stack_size);
+ 		return 0;
+ 	}
+ 
+@@ -185,7 +188,7 @@ int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
+ 		 */
+ 		childregs->sp = 0;
+ 		childregs->ip = 0;
+-		kthread_frame_init(frame, sp, arg);
++		kthread_frame_init(frame, sp, stack_size);
+ 		return 0;
+ 	}
+ 
+@@ -193,6 +196,10 @@ int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
+ 	if (clone_flags & CLONE_SETTLS)
+ 		ret = set_new_tls(p, tls);
+ 
++	/* Allocate a new shadow stack for pthread */
++	if (!ret)
++		ret = shstk_alloc_thread_stack(p, clone_flags, stack_size);
++
+ 	if (!ret && unlikely(test_tsk_thread_flag(current, TIF_IO_BITMAP)))
+ 		io_bitmap_share(p);
+ 
+diff --git a/arch/x86/kernel/shstk.c b/arch/x86/kernel/shstk.c
+index 5ea2b494e9f9..8e5f772181b9 100644
+--- a/arch/x86/kernel/shstk.c
++++ b/arch/x86/kernel/shstk.c
+@@ -71,6 +71,53 @@ int shstk_setup(void)
+ 	return 0;
+ }
+ 
++int shstk_alloc_thread_stack(struct task_struct *tsk, unsigned long clone_flags,
++			     unsigned long stack_size)
 +{
-+	if (likely(vma->vm_flags & VM_WRITE))
-+		pte = pte_mkwrite(pte);
-+	else if (likely(vma->vm_flags & VM_SHADOW_STACK))
-+		pte = pte_mkwrite_shstk(pte);
-+	return pte;
++	struct thread_shstk *shstk = &tsk->thread.shstk;
++	struct cet_user_state *state;
++	unsigned long addr;
++
++	if (!stack_size)
++		return -EINVAL;
++
++	if (!shstk->size)
++		return 0;
++
++	/*
++	 * For CLONE_VM, except vfork, the child needs a separate shadow
++	 * stack.
++	 */
++	if ((clone_flags & (CLONE_VFORK | CLONE_VM)) != CLONE_VM)
++		return 0;
++
++	state = get_xsave_addr(&tsk->thread.fpu.state.xsave, XFEATURE_CET_USER);
++	if (!state)
++		return -EINVAL;
++
++	/*
++	 * Compat-mode pthreads share a limited address space.
++	 * If each function call takes an average of four slots
++	 * stack space, allocate 1/4 of stack size for shadow stack.
++	 */
++	if (in_compat_syscall())
++		stack_size /= 4;
++
++	stack_size = round_up(stack_size, PAGE_SIZE);
++	addr = alloc_shstk(stack_size);
++	if (IS_ERR_VALUE(addr)) {
++		shstk->base = 0;
++		shstk->size = 0;
++		return PTR_ERR((void *)addr);
++	}
++
++	fpu__prepare_write(&tsk->thread.fpu);
++	state->user_ssp = (u64)(addr + stack_size);
++	shstk->base = addr;
++	shstk->size = stack_size;
++	return 0;
 +}
 +
-+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-+pmd_t maybe_pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma)
-+{
-+	if (likely(vma->vm_flags & VM_WRITE))
-+		pmd = pmd_mkwrite(pmd);
-+	else if (likely(vma->vm_flags & VM_SHADOW_STACK))
-+		pmd = pmd_mkwrite_shstk(pmd);
-+	return pmd;
-+}
-+#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
-+
- /**
-  * reserve_top_address - reserves a hole in the top of kernel address space
-  * @reserve - size of hole to reserve
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 587f7399847b..1e57c2b823ed 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -1012,12 +1012,14 @@ void free_compound_page(struct page *page);
-  * pte_mkwrite.  But get_user_pages can cause write faults for mappings
-  * that do not have writing enabled, when used by access_process_vm.
-  */
-+#ifndef maybe_mkwrite
- static inline pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
+ void shstk_free(struct task_struct *tsk)
  {
- 	if (likely(vma->vm_flags & VM_WRITE))
- 		pte = pte_mkwrite(pte);
- 	return pte;
- }
-+#endif
+ 	struct thread_shstk *shstk = &tsk->thread.shstk;
+@@ -80,7 +127,13 @@ void shstk_free(struct task_struct *tsk)
+ 	    !shstk->base)
+ 		return;
  
- vm_fault_t do_set_pmd(struct vm_fault *vmf, struct page *page);
- void do_set_pte(struct vm_fault *vmf, struct page *page, unsigned long addr);
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 63ed6b25deaa..e613278fe5e1 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -479,12 +479,14 @@ static int __init setup_transparent_hugepage(char *str)
- }
- __setup("transparent_hugepage=", setup_transparent_hugepage);
+-	if (!tsk->mm)
++	/*
++	 * When fork() with CLONE_VM fails, the child (tsk) already has a
++	 * shadow stack allocated, and exit_thread() calls this function to
++	 * free it.  In this case the parent (current) and the child share
++	 * the same mm struct.
++	 */
++	if (!tsk->mm || tsk->mm != current->mm)
+ 		return;
  
-+#ifndef maybe_pmd_mkwrite
- pmd_t maybe_pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma)
- {
- 	if (likely(vma->vm_flags & VM_WRITE))
- 		pmd = pmd_mkwrite(pmd);
- 	return pmd;
- }
-+#endif
- 
- #ifdef CONFIG_MEMCG
- static inline struct deferred_split *get_deferred_split_queue(struct page *page)
+ 	while (1) {
 -- 
 2.21.0
 
