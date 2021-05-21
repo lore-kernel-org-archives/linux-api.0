@@ -5,33 +5,33 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 37B9FC4707A
-	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:13:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4626CC47081
+	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:13:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1CD6861421
-	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:13:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2B60B613F4
+	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:13:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230269AbhEUWPB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 21 May 2021 18:15:01 -0400
-Received: from mga09.intel.com ([134.134.136.24]:55677 "EHLO mga09.intel.com"
+        id S230318AbhEUWPG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 21 May 2021 18:15:06 -0400
+Received: from mga17.intel.com ([192.55.52.151]:65516 "EHLO mga17.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230094AbhEUWOm (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        id S230105AbhEUWOm (ORCPT <rfc822;linux-api@vger.kernel.org>);
         Fri, 21 May 2021 18:14:42 -0400
-IronPort-SDR: 0mqObyhoNPTOzLz4Th+trVoYrGjj6W5wUvXK64VwViSsjX/lo08XMnnH5pyoI6M8vv//g7nvb6
- fSfIyA/e8QBA==
-X-IronPort-AV: E=McAfee;i="6200,9189,9991"; a="201618771"
+IronPort-SDR: t0y+kASrJawUwv87h8QHWyY9VSWl8aRRbYrESGMRuZjHwflJdLJ6mnXCtJcRgbpBl6KPkQnfJk
+ uolEEoSwtZAw==
+X-IronPort-AV: E=McAfee;i="6200,9189,9991"; a="181874413"
 X-IronPort-AV: E=Sophos;i="5.82,319,1613462400"; 
-   d="scan'208";a="201618771"
+   d="scan'208";a="181874413"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:17 -0700
-IronPort-SDR: 8bd7lh9NKYiTQjZUTitrmmHd/zI0AGAKB4v3xJs25TIipTb079bG84mHw4hdLZ549k4dbLjP5W
- ny2bCZYrteXA==
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:13 -0700
+IronPort-SDR: QPjT9bVSsNqqPMJmd9ltkN+20IU51XTKGjJMxrFFI76r1FVoAUmBH4wtbsliV/B0McmMBsbfNN
+ ToJ84xczfi/g==
 X-IronPort-AV: E=Sophos;i="5.82,319,1613462400"; 
-   d="scan'208";a="441116205"
+   d="scan'208";a="441116172"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:17 -0700
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:12 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,10 +61,11 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
-Subject: [PATCH v27 20/31] mm: Update can_follow_write_pte() for shadow stack
-Date:   Fri, 21 May 2021 15:12:00 -0700
-Message-Id: <20210521221211.29077-21-yu-cheng.yu@intel.com>
+        Axel Rasmussen <axelrasmussen@google.com>,
+        Peter Xu <peterx@redhat.com>
+Subject: [PATCH v27 13/31] mm: Move VM_UFFD_MINOR_BIT from 37 to 38
+Date:   Fri, 21 May 2021 15:11:53 -0700
+Message-Id: <20210521221211.29077-14-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210521221211.29077-1-yu-cheng.yu@intel.com>
 References: <20210521221211.29077-1-yu-cheng.yu@intel.com>
@@ -74,104 +75,30 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Can_follow_write_pte() ensures a read-only page is COWed by checking the
-FOLL_COW flag, and uses pte_dirty() to validate the flag is still valid.
-
-Like a writable data page, a shadow stack page is writable, and becomes
-read-only during copy-on-write, but it is always dirty.  Thus, in the
-can_follow_write_pte() check, it belongs to the writable page case and
-should be excluded from the read-only page pte_dirty() check.  Apply
-the same changes to can_follow_write_pmd().
-
-While at it, also split the long line into smaller ones.
+To introduce VM_SHADOW_STACK as VM_HIGH_ARCH_BIT (37), and make all
+VM_HIGH_ARCH_BITs stay together, move VM_UFFD_MINOR_BIT from 37 to 38.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
-Cc: Kees Cook <keescook@chromium.org>
+Cc: Axel Rasmussen <axelrasmussen@google.com>
+Cc: Peter Xu <peterx@redhat.com>
+Cc: Mike Kravetz <mike.kravetz@oracle.com>
 ---
-v26:
-- Instead of passing vm_flags, pass down vma pointer to can_follow_write_*().
+ include/linux/mm.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-v25:
-- Split long line into smaller ones.
-
-v24:
-- Change arch_shadow_stack_mapping() to is_shadow_stack_mapping().
-
- mm/gup.c         | 16 ++++++++++++----
- mm/huge_memory.c | 16 ++++++++++++----
- 2 files changed, 24 insertions(+), 8 deletions(-)
-
-diff --git a/mm/gup.c b/mm/gup.c
-index 0697134b6a12..432ba7ccf8ae 100644
---- a/mm/gup.c
-+++ b/mm/gup.c
-@@ -438,10 +438,18 @@ static int follow_pfn_pte(struct vm_area_struct *vma, unsigned long address,
-  * FOLL_FORCE can write to even unwritable pte's, but only
-  * after we've gone through a COW cycle and they are dirty.
-  */
--static inline bool can_follow_write_pte(pte_t pte, unsigned int flags)
-+static inline bool can_follow_write_pte(pte_t pte, unsigned int flags,
-+					struct vm_area_struct *vma)
- {
--	return pte_write(pte) ||
--		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte));
-+	if (pte_write(pte))
-+		return true;
-+	if ((flags & (FOLL_FORCE | FOLL_COW)) != (FOLL_FORCE | FOLL_COW))
-+		return false;
-+	if (!pte_dirty(pte))
-+		return false;
-+	if (is_shadow_stack_mapping(vma->vm_flags))
-+		return false;
-+	return true;
- }
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index c274f75efcf9..923f89b9f1b5 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -373,7 +373,7 @@ extern unsigned int kobjsize(const void *objp);
+ #endif
  
- static struct page *follow_page_pte(struct vm_area_struct *vma,
-@@ -484,7 +492,7 @@ static struct page *follow_page_pte(struct vm_area_struct *vma,
- 	}
- 	if ((flags & FOLL_NUMA) && pte_protnone(pte))
- 		goto no_page;
--	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags)) {
-+	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags, vma)) {
- 		pte_unmap_unlock(ptep, ptl);
- 		return NULL;
- 	}
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 819f6c32eb5b..99352caf7188 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1337,10 +1337,18 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
-  * FOLL_FORCE can write to even unwritable pmd's, but only
-  * after we've gone through a COW cycle and they are dirty.
-  */
--static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags)
-+static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags,
-+					struct vm_area_struct *vma)
- {
--	return pmd_write(pmd) ||
--	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) && pmd_dirty(pmd));
-+	if (pmd_write(pmd))
-+		return true;
-+	if ((flags & (FOLL_FORCE | FOLL_COW)) != (FOLL_FORCE | FOLL_COW))
-+		return false;
-+	if (!pmd_dirty(pmd))
-+		return false;
-+	if (is_shadow_stack_mapping(vma->vm_flags))
-+		return false;
-+	return true;
- }
- 
- struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
-@@ -1353,7 +1361,7 @@ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
- 
- 	assert_spin_locked(pmd_lockptr(mm, pmd));
- 
--	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags))
-+	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags, vma))
- 		goto out;
- 
- 	/* Avoid dumping huge zero page */
+ #ifdef CONFIG_HAVE_ARCH_USERFAULTFD_MINOR
+-# define VM_UFFD_MINOR_BIT	37
++# define VM_UFFD_MINOR_BIT	38
+ # define VM_UFFD_MINOR		BIT(VM_UFFD_MINOR_BIT)	/* UFFD minor faults */
+ #else /* !CONFIG_HAVE_ARCH_USERFAULTFD_MINOR */
+ # define VM_UFFD_MINOR		VM_NONE
 -- 
 2.21.0
 
