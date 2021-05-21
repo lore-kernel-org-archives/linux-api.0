@@ -7,31 +7,31 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 34F6CC4707E
-	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:15:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 57C03C4707E
+	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:15:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1D5CC613FE
-	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:15:23 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3B3A1613EC
+	for <linux-api@archiver.kernel.org>; Fri, 21 May 2021 22:15:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230157AbhEUWQn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 21 May 2021 18:16:43 -0400
-Received: from mga17.intel.com ([192.55.52.151]:65513 "EHLO mga17.intel.com"
+        id S230060AbhEUWQz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 21 May 2021 18:16:55 -0400
+Received: from mga09.intel.com ([134.134.136.24]:55677 "EHLO mga09.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230232AbhEUWPs (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 21 May 2021 18:15:48 -0400
-IronPort-SDR: emiK2KvrffRTSL5PgssAtIN2evg1BQkCk057KY8stUeTm1mI86sK+jjqrKl+fUXu/JQxwJhJER
- W2UJuGrLNPCA==
-X-IronPort-AV: E=McAfee;i="6200,9189,9991"; a="181874433"
+        id S230475AbhEUWPy (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 21 May 2021 18:15:54 -0400
+IronPort-SDR: 927Xn6IUVzBqWjs79+Tblq3gecOl3oC5jiX1lkhgJq6/qAaJNN04jxX89flsVxkd1GRU/UuFIc
+ WNoQYHRt87gQ==
+X-IronPort-AV: E=McAfee;i="6200,9189,9991"; a="201618783"
 X-IronPort-AV: E=Sophos;i="5.82,319,1613462400"; 
-   d="scan'208";a="181874433"
+   d="scan'208";a="201618783"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:17 -0700
-IronPort-SDR: q1NHPN/izFWzkYWKQp3Y+3MoSE7wxaeXkPCt2kaNI2BOxv3bYQGKxb9dBpAVzrczy4uCyafs7P
- nOaUYhINbmjQ==
+  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:22 -0700
+IronPort-SDR: kUqORzsJXCeU0/KbynRZIYT21B9ro9gq6rJRPH24uWxXjqwa27vmDgH7djJaAwbi0XORyASR/e
+ YHIA3dBZCL5g==
 X-IronPort-AV: E=Sophos;i="5.82,319,1613462400"; 
-   d="scan'208";a="441116199"
+   d="scan'208";a="441116238"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:15 -0700
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 May 2021 15:13:21 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -60,11 +60,10 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
-Subject: [PATCH v27 18/31] mm: Add guard pages around a shadow stack.
-Date:   Fri, 21 May 2021 15:11:58 -0700
-Message-Id: <20210521221211.29077-19-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v27 26/31] x86/cet/shstk: Handle signals for shadow stack
+Date:   Fri, 21 May 2021 15:12:06 -0700
+Message-Id: <20210521221211.29077-27-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210521221211.29077-1-yu-cheng.yu@intel.com>
 References: <20210521221211.29077-1-yu-cheng.yu@intel.com>
@@ -74,132 +73,237 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-INCSSP(Q/D) increments shadow stack pointer and 'pops and discards' the
-first and the last elements in the range, effectively touches those memory
-areas.
+A signal handler (if not changing ucontext) returns to the restorer, and
+the restorer calls sigreturn.  Thus, when setting up a signal frame, the
+kernel:
 
-The maximum moving distance by INCSSPQ is 255 * 8 = 2040 bytes and
-255 * 4 = 1020 bytes by INCSSPD.  Both ranges are far from PAGE_SIZE.
-Thus, putting a gap page on both ends of a shadow stack prevents INCSSP,
-CALL, and RET from going beyond.
+- installs a shadow stack restore token pointing to the current shadow
+  stack address, and
+
+- installs the restorer address below the restore token.
+
+In sigreturn, the restore token is verified and shadow stack pointer is
+restored.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Cyrill Gorcunov <gorcunov@gmail.com>
+Cc: Florian Weimer <fweimer@redhat.com>
+Cc: H. Peter Anvin <hpa@zytor.com>
 Cc: Kees Cook <keescook@chromium.org>
 ---
+v27:
+- Eliminate saving shadow stack pointer to signal context.
+
 v25:
-- Move SHADOW_STACK_GUARD_GAP to arch/x86/mm/mmap.c.
+- Update commit log/comments for the sc_ext struct.
+- Use restorer address already calculated.
+- Change CONFIG_X86_CET to CONFIG_X86_SHADOW_STACK.
+- Change X86_FEATURE_CET to X86_FEATURE_SHSTK.
+- Eliminate writing to MSR_IA32_U_CET for shadow stack.
+- Change wrmsrl() to wrmsrl_safe() and handle error.
 
-v24:
-- Instead changing vm_*_gap(), create x86-specific versions.
+ arch/x86/ia32/ia32_signal.c | 25 +++++++++++++++++-----
+ arch/x86/include/asm/cet.h  |  4 ++++
+ arch/x86/kernel/shstk.c     | 42 +++++++++++++++++++++++++++++++++++++
+ arch/x86/kernel/signal.c    | 13 ++++++++++++
+ 4 files changed, 79 insertions(+), 5 deletions(-)
 
- arch/x86/include/asm/page_types.h |  7 +++++
- arch/x86/mm/mmap.c                | 46 +++++++++++++++++++++++++++++++
- include/linux/mm.h                |  4 +++
- 3 files changed, 57 insertions(+)
-
-diff --git a/arch/x86/include/asm/page_types.h b/arch/x86/include/asm/page_types.h
-index a506a411474d..e1533fdc08b4 100644
---- a/arch/x86/include/asm/page_types.h
-+++ b/arch/x86/include/asm/page_types.h
-@@ -73,6 +73,13 @@ bool pfn_range_is_mapped(unsigned long start_pfn, unsigned long end_pfn);
+diff --git a/arch/x86/ia32/ia32_signal.c b/arch/x86/ia32/ia32_signal.c
+index 5e3d9b7fd5fb..d7a30bc98e66 100644
+--- a/arch/x86/ia32/ia32_signal.c
++++ b/arch/x86/ia32/ia32_signal.c
+@@ -35,6 +35,7 @@
+ #include <asm/sigframe.h>
+ #include <asm/sighandling.h>
+ #include <asm/smap.h>
++#include <asm/cet.h>
  
- extern void initmem_init(void);
+ static inline void reload_segments(struct sigcontext_32 *sc)
+ {
+@@ -113,6 +114,10 @@ COMPAT_SYSCALL_DEFINE0(sigreturn)
  
-+#define vm_start_gap vm_start_gap
-+struct vm_area_struct;
-+extern unsigned long vm_start_gap(struct vm_area_struct *vma);
+ 	if (ia32_restore_sigcontext(regs, &frame->sc))
+ 		goto badframe;
 +
-+#define vm_end_gap vm_end_gap
-+extern unsigned long vm_end_gap(struct vm_area_struct *vma);
++	if (restore_signal_shadow_stack())
++		goto badframe;
 +
- #endif	/* !__ASSEMBLY__ */
+ 	return regs->ax;
  
- #endif	/* _ASM_X86_PAGE_DEFS_H */
-diff --git a/arch/x86/mm/mmap.c b/arch/x86/mm/mmap.c
-index f3f52c5e2fd6..81f9325084d3 100644
---- a/arch/x86/mm/mmap.c
-+++ b/arch/x86/mm/mmap.c
-@@ -250,3 +250,49 @@ bool pfn_modify_allowed(unsigned long pfn, pgprot_t prot)
- 		return false;
- 	return true;
+ badframe:
+@@ -138,6 +143,9 @@ COMPAT_SYSCALL_DEFINE0(rt_sigreturn)
+ 	if (ia32_restore_sigcontext(regs, &frame->uc.uc_mcontext))
+ 		goto badframe;
+ 
++	if (restore_signal_shadow_stack())
++		goto badframe;
++
+ 	if (compat_restore_altstack(&frame->uc.uc_stack))
+ 		goto badframe;
+ 
+@@ -262,6 +270,9 @@ int ia32_setup_frame(int sig, struct ksignal *ksig,
+ 			restorer = &frame->retcode;
+ 	}
+ 
++	if (setup_signal_shadow_stack(1, restorer))
++		return -EFAULT;
++
+ 	if (!user_access_begin(frame, sizeof(*frame)))
+ 		return -EFAULT;
+ 
+@@ -319,6 +330,15 @@ int ia32_setup_rt_frame(int sig, struct ksignal *ksig,
+ 
+ 	frame = get_sigframe(ksig, regs, sizeof(*frame), &fp);
+ 
++	if (ksig->ka.sa.sa_flags & SA_RESTORER)
++		restorer = ksig->ka.sa.sa_restorer;
++	else
++		restorer = current->mm->context.vdso +
++			vdso_image_32.sym___kernel_rt_sigreturn;
++
++	if (setup_signal_shadow_stack(1, restorer))
++		return -EFAULT;
++
+ 	if (!user_access_begin(frame, sizeof(*frame)))
+ 		return -EFAULT;
+ 
+@@ -334,11 +354,6 @@ int ia32_setup_rt_frame(int sig, struct ksignal *ksig,
+ 	unsafe_put_user(0, &frame->uc.uc_link, Efault);
+ 	unsafe_compat_save_altstack(&frame->uc.uc_stack, regs->sp, Efault);
+ 
+-	if (ksig->ka.sa.sa_flags & SA_RESTORER)
+-		restorer = ksig->ka.sa.sa_restorer;
+-	else
+-		restorer = current->mm->context.vdso +
+-			vdso_image_32.sym___kernel_rt_sigreturn;
+ 	unsafe_put_user(ptr_to_compat(restorer), &frame->pretcode, Efault);
+ 
+ 	/*
+diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+index aa533700ba31..2f7940d68ce3 100644
+--- a/arch/x86/include/asm/cet.h
++++ b/arch/x86/include/asm/cet.h
+@@ -24,6 +24,8 @@ void shstk_disable(void);
+ int shstk_setup_rstor_token(bool ia32, unsigned long restorer,
+ 			    unsigned long *new_ssp);
+ int shstk_check_rstor_token(bool ia32, unsigned long *new_ssp);
++int setup_signal_shadow_stack(int ia32, void __user *restorer);
++int restore_signal_shadow_stack(void);
+ #else
+ static inline int shstk_setup(void) { return 0; }
+ static inline int shstk_alloc_thread_stack(struct task_struct *p,
+@@ -35,6 +37,8 @@ static inline int shstk_setup_rstor_token(bool ia32, unsigned long restorer,
+ 					  unsigned long *new_ssp) { return 0; }
+ static inline int shstk_check_rstor_token(bool ia32,
+ 					  unsigned long *new_ssp) { return 0; }
++static inline int setup_signal_shadow_stack(int ia32, void __user *restorer) { return 0; }
++static inline int restore_signal_shadow_stack(void) { return 0; }
+ #endif
+ 
+ #endif /* __ASSEMBLY__ */
+diff --git a/arch/x86/kernel/shstk.c b/arch/x86/kernel/shstk.c
+index 61ec300c1a97..5ef5e99afd75 100644
+--- a/arch/x86/kernel/shstk.c
++++ b/arch/x86/kernel/shstk.c
+@@ -314,3 +314,45 @@ int shstk_check_rstor_token(bool proc32, unsigned long *new_ssp)
+ 
+ 	return 0;
  }
 +
-+/*
-+ * Shadow stack pointer is moved by CALL, RET, and INCSSP(Q/D).  INCSSPQ
-+ * moves shadow stack pointer up to 255 * 8 = ~2 KB (~1KB for INCSSPD) and
-+ * touches the first and the last element in the range, which triggers a
-+ * page fault if the range is not in a shadow stack.  Because of this,
-+ * creating 4-KB guard pages around a shadow stack prevents these
-+ * instructions from going beyond.
-+ */
-+#define SHADOW_STACK_GUARD_GAP PAGE_SIZE
-+
-+unsigned long vm_start_gap(struct vm_area_struct *vma)
++int setup_signal_shadow_stack(int ia32, void __user *restorer)
 +{
-+	unsigned long vm_start = vma->vm_start;
-+	unsigned long gap = 0;
++	struct thread_shstk *shstk = &current->thread.shstk;
++	unsigned long new_ssp;
++	int err;
 +
-+	if (vma->vm_flags & VM_GROWSDOWN)
-+		gap = stack_guard_gap;
-+	else if (vma->vm_flags & VM_SHADOW_STACK)
-+		gap = SHADOW_STACK_GUARD_GAP;
++	if (!cpu_feature_enabled(X86_FEATURE_SHSTK) || !shstk->size)
++		return 0;
 +
-+	if (gap != 0) {
-+		vm_start -= gap;
-+		if (vm_start > vma->vm_start)
-+			vm_start = 0;
-+	}
-+	return vm_start;
++	err = shstk_setup_rstor_token(ia32, (unsigned long)restorer,
++				      &new_ssp);
++	if (err)
++		return err;
++
++	start_update_msrs();
++	err = wrmsrl_safe(MSR_IA32_PL3_SSP, new_ssp);
++	end_update_msrs();
++
++	return err;
 +}
 +
-+unsigned long vm_end_gap(struct vm_area_struct *vma)
++int restore_signal_shadow_stack(void)
 +{
-+	unsigned long vm_end = vma->vm_end;
-+	unsigned long gap = 0;
++	struct thread_shstk *shstk = &current->thread.shstk;
++	int ia32 = in_ia32_syscall();
++	unsigned long new_ssp;
++	int err;
 +
-+	if (vma->vm_flags & VM_GROWSUP)
-+		gap = stack_guard_gap;
-+	else if (vma->vm_flags & VM_SHADOW_STACK)
-+		gap = SHADOW_STACK_GUARD_GAP;
++	if (!cpu_feature_enabled(X86_FEATURE_SHSTK) || !shstk->size)
++		return 0;
 +
-+	if (gap != 0) {
-+		vm_end += gap;
-+		if (vm_end < vma->vm_end)
-+			vm_end = -PAGE_SIZE;
-+	}
-+	return vm_end;
++	err = shstk_check_rstor_token(ia32, &new_ssp);
++	if (err)
++		return err;
++
++	start_update_msrs();
++	err = wrmsrl_safe(MSR_IA32_PL3_SSP, new_ssp);
++	end_update_msrs();
++
++	return err;
 +}
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 1e57c2b823ed..fd43bbcd91e2 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -2699,6 +2699,7 @@ static inline struct vm_area_struct * find_vma_intersection(struct mm_struct * m
- 	return vma;
- }
+diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
+index a06cb107c0e8..4d42debbb5ef 100644
+--- a/arch/x86/kernel/signal.c
++++ b/arch/x86/kernel/signal.c
+@@ -46,6 +46,7 @@
+ #include <asm/syscall.h>
+ #include <asm/sigframe.h>
+ #include <asm/signal.h>
++#include <asm/cet.h>
  
-+#ifndef vm_start_gap
- static inline unsigned long vm_start_gap(struct vm_area_struct *vma)
- {
- 	unsigned long vm_start = vma->vm_start;
-@@ -2710,7 +2711,9 @@ static inline unsigned long vm_start_gap(struct vm_area_struct *vma)
- 	}
- 	return vm_start;
- }
-+#endif
+ #ifdef CONFIG_X86_64
+ /*
+@@ -450,6 +451,9 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
+ 	frame = get_sigframe(&ksig->ka, regs, sizeof(struct rt_sigframe), &fp);
+ 	uc_flags = frame_uc_flags(regs);
  
-+#ifndef vm_end_gap
- static inline unsigned long vm_end_gap(struct vm_area_struct *vma)
- {
- 	unsigned long vm_end = vma->vm_end;
-@@ -2722,6 +2725,7 @@ static inline unsigned long vm_end_gap(struct vm_area_struct *vma)
- 	}
- 	return vm_end;
- }
-+#endif
++	if (setup_signal_shadow_stack(0, ksig->ka.sa.sa_restorer))
++		return -EFAULT;
++
+ 	if (!user_access_begin(frame, sizeof(*frame)))
+ 		return -EFAULT;
  
- static inline unsigned long vma_pages(struct vm_area_struct *vma)
- {
+@@ -555,6 +559,9 @@ static int x32_setup_rt_frame(struct ksignal *ksig,
+ 
+ 	uc_flags = frame_uc_flags(regs);
+ 
++	if (setup_signal_shadow_stack(0, ksig->ka.sa.sa_restorer))
++		return -EFAULT;
++
+ 	if (!user_access_begin(frame, sizeof(*frame)))
+ 		return -EFAULT;
+ 
+@@ -653,6 +660,9 @@ SYSCALL_DEFINE0(rt_sigreturn)
+ 	if (restore_sigcontext(regs, &frame->uc.uc_mcontext, uc_flags))
+ 		goto badframe;
+ 
++	if (restore_signal_shadow_stack())
++		goto badframe;
++
+ 	if (restore_altstack(&frame->uc.uc_stack))
+ 		goto badframe;
+ 
+@@ -856,6 +866,9 @@ COMPAT_SYSCALL_DEFINE0(x32_rt_sigreturn)
+ 	if (restore_sigcontext(regs, &frame->uc.uc_mcontext, uc_flags))
+ 		goto badframe;
+ 
++	if (restore_signal_shadow_stack())
++		goto badframe;
++
+ 	if (compat_restore_altstack(&frame->uc.uc_stack))
+ 		goto badframe;
+ 
 -- 
 2.21.0
 
