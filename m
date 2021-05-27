@@ -2,207 +2,152 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-6.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 63037C4707F
-	for <linux-api@archiver.kernel.org>; Thu, 27 May 2021 11:26:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D7D8AC4708A
+	for <linux-api@archiver.kernel.org>; Thu, 27 May 2021 13:06:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 36CC8613D3
-	for <linux-api@archiver.kernel.org>; Thu, 27 May 2021 11:26:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B69DB610CE
+	for <linux-api@archiver.kernel.org>; Thu, 27 May 2021 13:06:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229740AbhE0L1b (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 27 May 2021 07:27:31 -0400
-Received: from szxga08-in.huawei.com ([45.249.212.255]:2315 "EHLO
-        szxga08-in.huawei.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229640AbhE0L1b (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 27 May 2021 07:27:31 -0400
-Received: from dggeml706-chm.china.huawei.com (unknown [172.30.72.56])
-        by szxga08-in.huawei.com (SkyGuard) with ESMTP id 4FrQPD27vgz1BFRR;
-        Thu, 27 May 2021 19:21:20 +0800 (CST)
-Received: from dggpemm500022.china.huawei.com (7.185.36.162) by
- dggeml706-chm.china.huawei.com (10.3.17.144) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id
- 15.1.2176.2; Thu, 27 May 2021 19:25:55 +0800
-Received: from [10.174.185.220] (10.174.185.220) by
- dggpemm500022.china.huawei.com (7.185.36.162) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2176.2; Thu, 27 May 2021 19:25:54 +0800
-Subject: Re: [RFC PATCH v3 0/8] Add IOPF support for VFIO passthrough
-To:     Alex Williamson <alex.williamson@redhat.com>
-CC:     Cornelia Huck <cohuck@redhat.com>, Will Deacon <will@kernel.org>,
-        "Robin Murphy" <robin.murphy@arm.com>,
-        Joerg Roedel <joro@8bytes.org>,
-        "Jean-Philippe Brucker" <jean-philippe@linaro.org>,
-        Eric Auger <eric.auger@redhat.com>, <kvm@vger.kernel.org>,
-        <linux-kernel@vger.kernel.org>,
-        <linux-arm-kernel@lists.infradead.org>,
-        <iommu@lists.linux-foundation.org>, <linux-api@vger.kernel.org>,
-        Kevin Tian <kevin.tian@intel.com>,
-        Lu Baolu <baolu.lu@linux.intel.com>, <yi.l.liu@intel.com>,
-        Christoph Hellwig <hch@infradead.org>,
-        Jonathan Cameron <Jonathan.Cameron@huawei.com>,
-        "Barry Song" <song.bao.hua@hisilicon.com>,
-        <wanghaibin.wang@huawei.com>, <yuzenghui@huawei.com>
-References: <20210409034420.1799-1-lushenming@huawei.com>
- <20210518125756.4c075300.alex.williamson@redhat.com>
- <accfb404-1d7b-8d73-6fb7-50011a3e546f@huawei.com>
- <20210524161136.03e9323d@x1.home.shazbot.org>
-From:   Shenming Lu <lushenming@huawei.com>
-Message-ID: <159f0e59-b2cc-ca4b-9796-3ad134a29c1f@huawei.com>
-Date:   Thu, 27 May 2021 19:25:53 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
- Thunderbird/78.2.2
+        id S236340AbhE0NIF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 27 May 2021 09:08:05 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:39154 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S235983AbhE0NH7 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 27 May 2021 09:07:59 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1622120786;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=ULXKpUDeK1p76UZ59lVMj02cPEcED36GdHXBm75qmHc=;
+        b=cxJG9hXj5BeiUqSf/zdetBWCa76+1eqofr6JTqy7vHTggq2/ubjIUq3GvFhsBYOE32j4F0
+        19YBZ9TWo+I26ET+Gr0/Thk9FpaAZxVNgGGdWblHt53XNN6NPLqkAVC4OBWAFI8DH1K7E+
+        FHikYRcCrfYApSPsmhOoCZTW/v6zJ40=
+Received: from mail-lj1-f197.google.com (mail-lj1-f197.google.com
+ [209.85.208.197]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-600-iaWm168eOfSkq6nRACjohA-1; Thu, 27 May 2021 09:06:19 -0400
+X-MC-Unique: iaWm168eOfSkq6nRACjohA-1
+Received: by mail-lj1-f197.google.com with SMTP id f13-20020a2eb5ad0000b02900f990d6bf16so228009ljn.4
+        for <linux-api@vger.kernel.org>; Thu, 27 May 2021 06:06:18 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=ULXKpUDeK1p76UZ59lVMj02cPEcED36GdHXBm75qmHc=;
+        b=SKUn8sLAP+Bqq0DuMpz8HXuBQ0pVFy8z1YZEB1m26RfgTwzxRi8IBx6VZtSdJC8m6s
+         7/77cvLWTWZLlZfEamX4EW4sHWWTGkakOtNYjutoP/gGc3j/0Ou3qmm9CUoFUc6cgYmG
+         UaDVA0JeJKhUShgKHaAgVg+pTpblLWMT3DiSyxhIOeW8wWYAySUwYI1ktU5IMZjYfw/O
+         6dbdcnqye25OXSZr483Wc+a9bbwkf8vGFYjCsAgdkS5KCvbwSYhbeiygZhLFg46nJZvX
+         oL+MfZXgiwg+OKpTrhTyZmhZLfhfI234qZyHoz6lgHGnHPtKB7bVEno8p90ZOSaKHGaR
+         mTJQ==
+X-Gm-Message-State: AOAM532mHeHTiR4qweKtnZ/+58ddOHO0Gtt15uO2D21Yq4kjIjbZj527
+        ww/ixJwL23VzkLaYfHQU7TSPUVvqnwwNw8g0WypIcguu+6A3LqiLCpe2OOd9Sw0GGN+L7XkSmb+
+        di617ABiRFNBLXTxTWuGqj4dfTLN9K31a2GJJ
+X-Received: by 2002:a05:651c:511:: with SMTP id o17mr2571061ljp.14.1622120777514;
+        Thu, 27 May 2021 06:06:17 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJxZlraGIBVHBafxiPicFv+vN1bDWs7vAmvm5tSF3zLlOVmiHaJA9AlrZjZFdI/T3bbEWL91czd9UgOjRUHHQgQ=
+X-Received: by 2002:a05:651c:511:: with SMTP id o17mr2571013ljp.14.1622120777212;
+ Thu, 27 May 2021 06:06:17 -0700 (PDT)
 MIME-Version: 1.0
-In-Reply-To: <20210524161136.03e9323d@x1.home.shazbot.org>
-Content-Type: text/plain; charset="utf-8"
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
-X-Originating-IP: [10.174.185.220]
-X-ClientProxiedBy: dggems701-chm.china.huawei.com (10.3.19.178) To
- dggpemm500022.china.huawei.com (7.185.36.162)
-X-CFilter-Loop: Reflected
+References: <20210504092340.00006c61@intel.com> <87pmxpdr32.ffs@nanos.tec.linutronix.de>
+ <CAFki+Lkjn2VCBcLSAfQZ2PEkx-TR0Ts_jPnK9b-5ne3PUX37TQ@mail.gmail.com>
+ <87im3gewlu.ffs@nanos.tec.linutronix.de> <CAFki+L=gp10W1ygv7zdsee=BUGpx9yPAckKr7pyo=tkFJPciEg@mail.gmail.com>
+ <CAFki+L=eQoMq+mWhw_jVT-biyuDXpxbXY5nO+F6HvCtpbG9V2w@mail.gmail.com>
+ <CAFki+LkB1sk3mOv4dd1D-SoPWHOs28ZwN-PqL_6xBk=Qkm40Lw@mail.gmail.com>
+ <87zgwo9u79.ffs@nanos.tec.linutronix.de> <87wnrs9tvp.ffs@nanos.tec.linutronix.de>
+ <YK9ucRrjq+eck/G7@syu-laptop>
+In-Reply-To: <YK9ucRrjq+eck/G7@syu-laptop>
+From:   Nitesh Lal <nilal@redhat.com>
+Date:   Thu, 27 May 2021 09:06:04 -0400
+Message-ID: <CAFki+LnuharcwJy=x4Z27ixCMK1u2s2cvHh9=Bcf90rO06osEw@mail.gmail.com>
+Subject: Re: [PATCH] genirq: Provide new interfaces for affinity hints
+To:     Shung-Hsi Yu <shung-hsi.yu@suse.com>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Jesse Brandeburg <jesse.brandeburg@intel.com>,
+        Robin Murphy <robin.murphy@arm.com>,
+        Marcelo Tosatti <mtosatti@redhat.com>,
+        Ingo Molnar <mingo@kernel.org>, linux-kernel@vger.kernel.org,
+        intel-wired-lan@lists.osuosl.org, jbrandeb@kernel.org,
+        "frederic@kernel.org" <frederic@kernel.org>,
+        "juri.lelli@redhat.com" <juri.lelli@redhat.com>,
+        Alex Belits <abelits@marvell.com>,
+        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
+        "bhelgaas@google.com" <bhelgaas@google.com>,
+        "linux-pci@vger.kernel.org" <linux-pci@vger.kernel.org>,
+        "rostedt@goodmis.org" <rostedt@goodmis.org>,
+        "peterz@infradead.org" <peterz@infradead.org>,
+        "davem@davemloft.net" <davem@davemloft.net>,
+        "akpm@linux-foundation.org" <akpm@linux-foundation.org>,
+        "sfr@canb.auug.org.au" <sfr@canb.auug.org.au>,
+        "stephen@networkplumber.org" <stephen@networkplumber.org>,
+        "rppt@linux.vnet.ibm.com" <rppt@linux.vnet.ibm.com>,
+        "jinyuqi@huawei.com" <jinyuqi@huawei.com>,
+        "zhangshaokun@hisilicon.com" <zhangshaokun@hisilicon.com>,
+        netdev@vger.kernel.org, chris.friesen@windriver.com,
+        Marc Zyngier <maz@kernel.org>,
+        Neil Horman <nhorman@tuxdriver.com>, pjwaskiewicz@gmail.com
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 2021/5/25 6:11, Alex Williamson wrote:
-> On Fri, 21 May 2021 14:37:21 +0800
-> Shenming Lu <lushenming@huawei.com> wrote:
-> 
->> Hi Alex,
->>
->> On 2021/5/19 2:57, Alex Williamson wrote:
->>> On Fri, 9 Apr 2021 11:44:12 +0800
->>> Shenming Lu <lushenming@huawei.com> wrote:
->>>   
->>>> Hi,
->>>>
->>>> Requesting for your comments and suggestions. :-)
->>>>
->>>> The static pinning and mapping problem in VFIO and possible solutions
->>>> have been discussed a lot [1, 2]. One of the solutions is to add I/O
->>>> Page Fault support for VFIO devices. Different from those relatively
->>>> complicated software approaches such as presenting a vIOMMU that provides
->>>> the DMA buffer information (might include para-virtualized optimizations),
->>>> IOPF mainly depends on the hardware faulting capability, such as the PCIe
->>>> PRI extension or Arm SMMU stall model. What's more, the IOPF support in
->>>> the IOMMU driver has already been implemented in SVA [3]. So we add IOPF
->>>> support for VFIO passthrough based on the IOPF part of SVA in this series.  
->>>
->>> The SVA proposals are being reworked to make use of a new IOASID
->>> object, it's not clear to me that this shouldn't also make use of that
->>> work as it does a significant expansion of the type1 IOMMU with fault
->>> handlers that would duplicate new work using that new model.  
->>
->> It seems that the IOASID extension for guest SVA would not affect this series,
->> will we do any host-guest IOASID translation in the VFIO fault handler?
-> 
-> Surely it will, we don't currently have any IOMMU fault handling or
-> forwarding of IOMMU faults through to the vfio bus driver, both of
-> those would be included in an IOASID implementation.  I think Jason's
-> vision is to use IOASID to deprecate type1 for all use cases, so even
-> if we were to choose to implement IOPF in type1 we should agree on
-> common interfaces with IOASID.
+On Thu, May 27, 2021 at 6:03 AM Shung-Hsi Yu <shung-hsi.yu@suse.com> wrote:
+>
+> Hi,
+>
+> On Fri, May 21, 2021 at 02:03:06PM +0200, Thomas Gleixner wrote:
+> > The discussion about removing the side effect of irq_set_affinity_hint() of
+> > actually applying the cpumask (if not NULL) as affinity to the interrupt,
+> > unearthed a few unpleasantries:
+> >
+> >   1) The modular perf drivers rely on the current behaviour for the very
+> >      wrong reasons.
+> >
+> >   2) While none of the other drivers prevents user space from changing
+> >      the affinity, a cursorily inspection shows that there are at least
+> >      expectations in some drivers.
+> >
+> > #1 needs to be cleaned up anyway, so that's not a problem
+> >
+> > #2 might result in subtle regressions especially when irqbalanced (which
+> >    nowadays ignores the affinity hint) is disabled.
+> >
+> > Provide new interfaces:
+> >
+> >   irq_update_affinity_hint() - Only sets the affinity hint pointer
+> >   irq_apply_affinity_hint()  - Set the pointer and apply the affinity to
+> >                              the interrupt
+> >
+> > Make irq_set_affinity_hint() a wrapper around irq_apply_affinity_hint() and
+> > document it to be phased out.
+>
+> Is there recommended way to retrieve the CPU number that the interrupt has
+> affinity?
+>
+> Previously a driver (I'm looking at drivers/net/ethernet/amazon/ena) that
+> uses irq_set_affinity_hint() to spread out IRQ knows the corresponding CPU
+> number since they're using their own spreading scheme. Now, phasing out
+> irq_set_affinity_hint(), and thus relying on request_irq() to spread the
+> load instead, there don't seem to be a easy way to get the CPU number.
+>
 
-Yeah, the guest IOPF(L1) handling may include the host-guest IOASID translation,
-which can be placed in the IOASID layer (in fact it can be placed in many places
-such as the vfio pci driver since it don't really handle the fault event, it just
-transfers the event to the vIOMMU).
-But the host IOPF(L2) has no relationship with IOASID at all, it needs to have a
-knowledge of the vfio_dma ranges.
-Could we add the host IOPF support to type1 first (integrate it within the MAP ioctl)?
-And we may migrate the generic iommu controls (such as MAP/UNMAP...) from type1 to
-IOASID in the future (it seems to be a huge work, I will be very happy if I could
-help this)... :-)
+For drivers that don't want to rely on request_irq for spreading and want
+to force their own affinity mask can use irq_set_affinity() which is an
+exported interface now [1] and clearly indicates the purpose of the usage.
 
->  
->>>> We have measured its performance with UADK [4] (passthrough an accelerator
->>>> to a VM(1U16G)) on Hisilicon Kunpeng920 board (and compared with host SVA):
->>>>
->>>> Run hisi_sec_test...
->>>>  - with varying sending times and message lengths
->>>>  - with/without IOPF enabled (speed slowdown)
->>>>
->>>> when msg_len = 1MB (and PREMAP_LEN (in Patch 4) = 1):
->>>>             slowdown (num of faults)
->>>>  times      VFIO IOPF      host SVA
->>>>  1          63.4% (518)    82.8% (512)
->>>>  100        22.9% (1058)   47.9% (1024)
->>>>  1000       2.6% (1071)    8.5% (1024)
->>>>
->>>> when msg_len = 10MB (and PREMAP_LEN = 512):
->>>>             slowdown (num of faults)
->>>>  times      VFIO IOPF
->>>>  1          32.6% (13)
->>>>  100        3.5% (26)
->>>>  1000       1.6% (26)  
->>>
->>> It seems like this is only an example that you can make a benchmark
->>> show anything you want.  The best results would be to pre-map
->>> everything, which is what we have without this series.  What is an
->>> acceptable overhead to incur to avoid page pinning?  What if userspace
->>> had more fine grained control over which mappings were available for
->>> faulting and which were statically mapped?  I don't really see what
->>> sense the pre-mapping range makes.  If I assume the user is QEMU in a
->>> non-vIOMMU configuration, pre-mapping the beginning of each RAM section
->>> doesn't make any logical sense relative to device DMA.  
->>
->> As you said in Patch 4, we can introduce full end-to-end functionality
->> before trying to improve performance, and I will drop the pre-mapping patch
->> in the current stage...
->>
->> Is there a need that userspace wants more fine grained control over which
->> mappings are available for faulting? If so, we may evolve the MAP ioctl
->> to support for specifying the faulting range.
-> 
-> You're essentially enabling this for a vfio bus driver via patch 7/8,
-> pinning for selective DMA faulting.  How would a driver in userspace
-> make equivalent requests?  In the case of performance, the user could
-> mlock the page but they have no mechanism here to pre-fault it.  Should
-> they?
+As Thomas suggested we are still keeping irq_set_affinity_hint() as a
+wrapper until we make appropriate changes in individual drivers that use
+this API for different reasons. Please feel free to send out a patch
+for this driver once the changes are merged.
 
-Make sense.
+[1] https://lkml.org/lkml/2021/5/18/271
 
-It seems that we should additionally iommu_map the pages which are IOPF
-enabled and pinned in vfio_iommu_type1_pin_pages, and there is no need
-to add more tracking structures in Patch 7...
+-- 
+Thanks
+Nitesh
 
-> 
->> As for the overhead of IOPF, it is unavoidable if enabling on-demand paging
->> (and page faults occur almost only when first accessing), and it seems that
->> there is a large optimization space compared to CPU page faulting.
-> 
-> Yes, there's of course going to be overhead in terms of latency for the
-> page faults.  My point was more that when a host is not under memory
-> pressure we should trend towards the performance of pinned, static
-> mappings and we should be able to create arbitrarily large pre-fault
-> behavior to show that.
-
-Make sense.
-
-> But I think what we really want to enable via IOPF is density, right?
-
-density? Did you mean the proportion of the IOPF enabled mappings?
-
-> Therefore how many more assigned device guests
-> can you run on a host with IOPF?> How does the slope, plateau, and
-> inflection point of their aggregate throughput compare to static
-> pinning?  VM startup time is probably also a useful metric, ie. trading
-> device latency for startup latency.  Thanks,
-
-Yeah, these are what we have to consider and test later. :-)
-And the slope, plateau, and inflection point of the aggregate throughput
-may depend on the specific device driver's behavior (such as whether they
-reuse the DMA buffer)...
-
-Thanks,
-Shenming
-
-> 
-> Alex
-> 
-> .
-> 
