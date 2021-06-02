@@ -2,192 +2,81 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-18.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.2 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 19E40C47097
-	for <linux-api@archiver.kernel.org>; Wed,  2 Jun 2021 15:18:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7EFA1C47092
+	for <linux-api@archiver.kernel.org>; Wed,  2 Jun 2021 15:20:01 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 04F0760698
-	for <linux-api@archiver.kernel.org>; Wed,  2 Jun 2021 15:18:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6861B613D0
+	for <linux-api@archiver.kernel.org>; Wed,  2 Jun 2021 15:20:01 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232273AbhFBPU3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 2 Jun 2021 11:20:29 -0400
-Received: from smtp-out1.suse.de ([195.135.220.28]:36244 "EHLO
+        id S232350AbhFBPVn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 2 Jun 2021 11:21:43 -0400
+Received: from smtp-out1.suse.de ([195.135.220.28]:46800 "EHLO
         smtp-out1.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232222AbhFBPUY (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 2 Jun 2021 11:20:24 -0400
+        with ESMTP id S232490AbhFBPVQ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 2 Jun 2021 11:21:16 -0400
 Received: from relay2.suse.de (unknown [149.44.160.134])
-        by smtp-out1.suse.de (Postfix) with ESMTP id 207B121D3A;
-        Wed,  2 Jun 2021 15:18:40 +0000 (UTC)
+        by smtp-out1.suse.de (Postfix) with ESMTP id DB58D219B2;
+        Wed,  2 Jun 2021 15:19:32 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-        t=1622647120; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding:
+        t=1622647172; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=XhdBo6ggf9woXDOWTaM5FKPvnRt3y+Hnl57dZNPmifc=;
-        b=JrpgxiIwT3O62tpvCyZ/9n6ODqVdjkUxm5lI7UrItnF0WDIxA/UfZ6yY4TxruyLCUebAV9
-        jPhVTxuNKJXmJgfde8ZIvJm1XLfMGB/elFFT4qJrkesK2esJzqaqwjU93+e3HXmoHOjZDJ
-        tK8iVjgV8NZJpQp9igw49omCRYr2DM4=
+        bh=VmA0neGSQ6QDURkpVuR5VXTP3UMYcUDkmWxLieX+O5Y=;
+        b=brEvVEzsg3yCc0WydToqaIyaiNWQK2byOY5aQpcij2VI8sM2vkM9I1EcnKVWsSZS2ILm3U
+        a5aig50F1hC70nKjraKgZQ6jbg5TU+C3hLyla4r9LS9KkW6SXWdUlqo+C274vRLPdMa2UV
+        4nZxT86gHiVEDGXPeMrv3/H88+XLKts=
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-        s=susede2_ed25519; t=1622647120;
+        s=susede2_ed25519; t=1622647172;
         h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding:
+         mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=XhdBo6ggf9woXDOWTaM5FKPvnRt3y+Hnl57dZNPmifc=;
-        b=RGcizxSdz8Y8a3v1USs6yKD4CFZXnBs9rXOlraOBGZX0khAwWIXrcdIb2gblgkUdL+B5j5
-        g3WKA9vgaTY8SuBg==
-Received: by relay2.suse.de (Postfix, from userid 51)
-        id 0D1EEA3D35; Wed,  2 Jun 2021 15:25:59 +0000 (UTC)
+        bh=VmA0neGSQ6QDURkpVuR5VXTP3UMYcUDkmWxLieX+O5Y=;
+        b=anc6yynd6V1rw7wlLTe2MxU0w68mMApopPs4jqAOevygiE9xPLdoLzgbUPbN7Rc+SVXj1/
+        FDvKmony2eGfTWCw==
 Received: from quack2.suse.cz (unknown [10.100.200.198])
-        by relay2.suse.de (Postfix) with ESMTP id 5367BA8178;
-        Wed,  2 Jun 2021 15:15:59 +0000 (UTC)
+        by relay2.suse.de (Postfix) with ESMTP id C98C8A3BF5;
+        Wed,  2 Jun 2021 15:19:32 +0000 (UTC)
 Received: by quack2.suse.cz (Postfix, from userid 1000)
-        id 324861E0CB7; Wed,  2 Jun 2021 17:15:59 +0200 (CEST)
+        id AF11A1F2CAC; Wed,  2 Jun 2021 17:19:32 +0200 (CEST)
+Date:   Wed, 2 Jun 2021 17:19:32 +0200
 From:   Jan Kara <jack@suse.cz>
-To:     <linux-fsdevel@vger.kernel.org>
-Cc:     Christoph Hellwig <hch@infradead.org>, brauner@suse.cz,
-        <linux-api@vger.kernel.org>, Sascha Hauer <s.hauer@pengutronix.de>,
-        Jan Kara <jack@suse.cz>
-Subject: [PATCH 1/2] quota: Change quotactl_path() systcall to an fd-based one
-Date:   Wed,  2 Jun 2021 17:15:52 +0200
-Message-Id: <20210602151553.30090-2-jack@suse.cz>
-X-Mailer: git-send-email 2.26.2
-In-Reply-To: <20210602151553.30090-1-jack@suse.cz>
+To:     linux-fsdevel@vger.kernel.org
+Cc:     Christoph Hellwig <hch@infradead.org>, linux-api@vger.kernel.org,
+        Sascha Hauer <s.hauer@pengutronix.de>, Jan Kara <jack@suse.cz>,
+        Christian Brauner <christian.brauner@ubuntu.com>
+Subject: Re: [PATCH 0/2] Change quotactl_path() to an fd-based syscall
+Message-ID: <20210602151932.GB23647@quack2.suse.cz>
 References: <20210602151553.30090-1-jack@suse.cz>
 MIME-Version: 1.0
-X-Developer-Signature: v=1; a=openpgp-sha256; l=4360; h=from:subject; bh=gFdh3KL4BGWwBt/3w4JjG75x7J1bzMTbp1+z7w9rV5c=; b=owEBbQGS/pANAwAIAZydqgc/ZEDZAcsmYgBgt6CdXLp6Gr1gjRvPar1NbBYNXJM7tg81weGNA/Re hRLGRiKJATMEAAEIAB0WIQSrWdEr1p4yirVVKBycnaoHP2RA2QUCYLegnQAKCRCcnaoHP2RA2ZP8CA CLAn0H9wrHRo8uucbIzFUYL+pdj6fXsh3rR8zoL9os1/chA8AlagxbYN0W4KsvwLhcGbsjiNGyudeI OaNnsSxp6Zh0YyT0yhVwdMiPjEYp9aQeowagtPndNhDaaoOZlvRXapU8ffBvhRpgCdBqj2jibupofD NYTFWEFHTIoTCivJTSBPYTg9dAFRTJNgffXeJNnSABzMRxzvGhxEfzEyl6ZqIZ1fXrRx83j6UEsRbL 9r5FlF2JGsYm3Oi4PpzQjiwaegzQ9dEg9bohLnSKOHT1s5739b473sjplkGuLs/QKSm6xgg6gy5m6x +9K9VtuHCO8eGFxPjYYLsvpzunutQ/
-X-Developer-Key: i=jack@suse.cz; a=openpgp; fpr=93C6099A142276A28BBE35D815BC833443038D8C
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20210602151553.30090-1-jack@suse.cz>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Some users have pointed out that path-based syscalls are problematic in
-some environments and at least directory fd argument and possibly also
-resolve flags are desirable for such syscalls. Rather than
-reimplementing all details of pathname lookup and following where it may
-eventually evolve, let's go for full file descriptor based syscall
-similar to how ioctl(2) works since the beginning. Managing of quotas
-isn't performance sensitive so the extra overhead of open does not
-matter and we are able to consume O_PATH descriptors as well which makes
-open cheap anyway. Also for frequent operations (such as retrieving
-usage information for all users) we can reuse single fd and in fact get
-even better performance as well as avoiding races with possible remounts
-etc.
+On Wed 02-06-21 17:15:51, Jan Kara wrote:
+> Hello,
+> 
+> this patch series changes Sasha's quotactl_path() syscall to an fd-based one
+> quotactl_fd() syscall and enables the syscall again. The fd-based syscall was
+> chosen over the path based one because there's no real need for the path -
+> identifying filesystem to operate on by fd is perfectly fine for quotactl and
+> thus we can avoid the need to specify all the details of path lookup in the
+> quotactl_path() API (and possibly keep that uptodate with all the developments
+> in that field).
+> 
+> Patches passed some basic functional testing. Please review.
 
-Signed-off-by: Jan Kara <jack@suse.cz>
----
- fs/quota/quota.c                  | 27 ++++++++++++---------------
- include/linux/syscalls.h          |  4 ++--
- include/uapi/asm-generic/unistd.h |  4 ++--
- kernel/sys_ni.c                   |  2 +-
- 4 files changed, 17 insertions(+), 20 deletions(-)
+Sorry Christian, I've messed up your address when submitting this series...
 
-diff --git a/fs/quota/quota.c b/fs/quota/quota.c
-index 05e4bd9ab6d6..8450bb6186f4 100644
---- a/fs/quota/quota.c
-+++ b/fs/quota/quota.c
-@@ -968,31 +968,29 @@ SYSCALL_DEFINE4(quotactl, unsigned int, cmd, const char __user *, special,
- 	return ret;
- }
- 
--SYSCALL_DEFINE4(quotactl_path, unsigned int, cmd, const char __user *,
--		mountpoint, qid_t, id, void __user *, addr)
-+SYSCALL_DEFINE4(quotactl_fd, unsigned int, fd, unsigned int, cmd,
-+		qid_t, id, void __user *, addr)
- {
- 	struct super_block *sb;
--	struct path mountpath;
- 	unsigned int cmds = cmd >> SUBCMDSHIFT;
- 	unsigned int type = cmd & SUBCMDMASK;
-+	struct fd f = fdget_raw(fd);
- 	int ret;
- 
--	if (type >= MAXQUOTAS)
--		return -EINVAL;
-+	if (!f.file)
-+		return -EBADF;
- 
--	ret = user_path_at(AT_FDCWD, mountpoint,
--			     LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT, &mountpath);
--	if (ret)
--		return ret;
--
--	sb = mountpath.mnt->mnt_sb;
-+	ret = -EINVAL;
-+	if (type >= MAXQUOTAS)
-+		goto out;
- 
- 	if (quotactl_cmd_write(cmds)) {
--		ret = mnt_want_write(mountpath.mnt);
-+		ret = mnt_want_write(f.file->f_path.mnt);
- 		if (ret)
- 			goto out;
- 	}
- 
-+	sb = f.file->f_path.mnt->mnt_sb;
- 	if (quotactl_cmd_onoff(cmds))
- 		down_write(&sb->s_umount);
- 	else
-@@ -1006,9 +1004,8 @@ SYSCALL_DEFINE4(quotactl_path, unsigned int, cmd, const char __user *,
- 		up_read(&sb->s_umount);
- 
- 	if (quotactl_cmd_write(cmds))
--		mnt_drop_write(mountpath.mnt);
-+		mnt_drop_write(f.file->f_path.mnt);
- out:
--	path_put(&mountpath);
--
-+	fdput(f);
- 	return ret;
- }
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 050511e8f1f8..586128d5c3b8 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -485,8 +485,8 @@ asmlinkage long sys_pipe2(int __user *fildes, int flags);
- /* fs/quota.c */
- asmlinkage long sys_quotactl(unsigned int cmd, const char __user *special,
- 				qid_t id, void __user *addr);
--asmlinkage long sys_quotactl_path(unsigned int cmd, const char __user *mountpoint,
--				  qid_t id, void __user *addr);
-+asmlinkage long sys_quotactl_fd(unsigned int fd, unsigned int cmd, qid_t id,
-+				void __user *addr);
- 
- /* fs/readdir.c */
- asmlinkage long sys_getdents64(unsigned int fd,
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 6de5a7fc066b..f211961ce1da 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -863,8 +863,8 @@ __SYSCALL(__NR_process_madvise, sys_process_madvise)
- __SC_COMP(__NR_epoll_pwait2, sys_epoll_pwait2, compat_sys_epoll_pwait2)
- #define __NR_mount_setattr 442
- __SYSCALL(__NR_mount_setattr, sys_mount_setattr)
--#define __NR_quotactl_path 443
--__SYSCALL(__NR_quotactl_path, sys_quotactl_path)
-+#define __NR_quotactl_fd 443
-+__SYSCALL(__NR_quotactl_fd, sys_quotactl_fd)
- 
- #define __NR_landlock_create_ruleset 444
- __SYSCALL(__NR_landlock_create_ruleset, sys_landlock_create_ruleset)
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index 0ea8128468c3..dad4d994641e 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -99,7 +99,7 @@ COND_SYSCALL(flock);
- 
- /* fs/quota.c */
- COND_SYSCALL(quotactl);
--COND_SYSCALL(quotactl_path);
-+COND_SYSCALL(quotactl_fd);
- 
- /* fs/readdir.c */
- 
+								Honza
 -- 
-2.26.2
-
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
