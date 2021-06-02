@@ -2,74 +2,315 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-18.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5296FC47083
-	for <linux-api@archiver.kernel.org>; Wed,  2 Jun 2021 15:18:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B03D5C4708F
+	for <linux-api@archiver.kernel.org>; Wed,  2 Jun 2021 15:18:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 339DC6138C
-	for <linux-api@archiver.kernel.org>; Wed,  2 Jun 2021 15:18:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 95122613BF
+	for <linux-api@archiver.kernel.org>; Wed,  2 Jun 2021 15:18:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232165AbhFBPTu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 2 Jun 2021 11:19:50 -0400
-Received: from smtp-out1.suse.de ([195.135.220.28]:50218 "EHLO
-        smtp-out1.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229989AbhFBPTs (ORCPT
+        id S232158AbhFBPTt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 2 Jun 2021 11:19:49 -0400
+Received: from smtp-out2.suse.de ([195.135.220.29]:54202 "EHLO
+        smtp-out2.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S231952AbhFBPTs (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Wed, 2 Jun 2021 11:19:48 -0400
 Received: from relay2.suse.de (unknown [149.44.160.134])
-        by smtp-out1.suse.de (Postfix) with ESMTP id 303BB221A2;
-        Wed,  2 Jun 2021 15:18:04 +0000 (UTC)
+        by smtp-out2.suse.de (Postfix) with ESMTP id C4DBC1FDC6;
+        Wed,  2 Jun 2021 15:18:03 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-        t=1622647084; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:  content-transfer-encoding:content-transfer-encoding;
-        bh=zEcvJJtB5ZZ8X3Pwr4CJiFmKxs/RV46XyrbByZQvcmw=;
-        b=W3Ww4J5poIByE64fCgmyHc95Wyw35z4mRgRPLiOk4cqvsyT7tUWNXYlvX6s+V8z6ofNCV2
-        g0bK57XsIM7kY5JrnuVVdbjfahksiqc7189MK+M6uQcj2f/Yigz54+P6IJK59igA08Lo9y
-        y+e3AWuznpGWfr4Wov1z0sli1NprVUw=
+        t=1622647083; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=gj6dWuCSzujTy3LicA2z1/vTjDnYis4/WLpv1WCDvTg=;
+        b=QXTtmjxzMOakAMCjtf72HzgFWfl5MUGpZV5x5SgG/6NBaxavfexdHKiS3Isfb9Nrtj4+op
+        RKCGNIqPaRucrVKQzcF5t9f5dDmm0/sqVJMqwcb3I9nLt0QIiOzEJJgbMREKU2f1QwWYWj
+        cONk1Qpg+D0ykbogmQ91obMg1YMArLA=
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-        s=susede2_ed25519; t=1622647084;
+        s=susede2_ed25519; t=1622647083;
         h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:  content-transfer-encoding:content-transfer-encoding;
-        bh=zEcvJJtB5ZZ8X3Pwr4CJiFmKxs/RV46XyrbByZQvcmw=;
-        b=EgM3xWO6z/2DscKQOGkz/i10K1jO2LRaLUduTQyFdz5FxulhYb1LHVYqYpEoKjf6RCA1GK
-        UCd8QZ2ZvHD/WCDg==
+         mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=gj6dWuCSzujTy3LicA2z1/vTjDnYis4/WLpv1WCDvTg=;
+        b=zJNFfJGQS66hVnY+dKjR0nhp/d3m5OfMjZhcX8yhYqzCh5eofzLgLFThRHwzKStws1Sgwe
+        f7ufJ0C+8jUAG+Cg==
 Received: by relay2.suse.de (Postfix, from userid 51)
-        id 2BB72A3D80; Wed,  2 Jun 2021 15:25:59 +0000 (UTC)
+        id C054FA3C54; Wed,  2 Jun 2021 15:25:59 +0000 (UTC)
 Received: from quack2.suse.cz (unknown [10.100.200.198])
-        by relay2.suse.de (Postfix) with ESMTP id 52C40A8176;
+        by relay2.suse.de (Postfix) with ESMTP id 53420A8177;
         Wed,  2 Jun 2021 15:15:59 +0000 (UTC)
 Received: by quack2.suse.cz (Postfix, from userid 1000)
-        id 2F5631F2CAC; Wed,  2 Jun 2021 17:15:59 +0200 (CEST)
+        id 396DD1F2CB3; Wed,  2 Jun 2021 17:15:59 +0200 (CEST)
 From:   Jan Kara <jack@suse.cz>
 To:     <linux-fsdevel@vger.kernel.org>
 Cc:     Christoph Hellwig <hch@infradead.org>, brauner@suse.cz,
         <linux-api@vger.kernel.org>, Sascha Hauer <s.hauer@pengutronix.de>,
         Jan Kara <jack@suse.cz>
-Subject: [PATCH 0/2] Change quotactl_path() to an fd-based syscall
-Date:   Wed,  2 Jun 2021 17:15:51 +0200
-Message-Id: <20210602151553.30090-1-jack@suse.cz>
+Subject: [PATCH 2/2] quota: Wire up quotactl_fd syscall
+Date:   Wed,  2 Jun 2021 17:15:53 +0200
+Message-Id: <20210602151553.30090-3-jack@suse.cz>
 X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20210602151553.30090-1-jack@suse.cz>
+References: <20210602151553.30090-1-jack@suse.cz>
 MIME-Version: 1.0
-X-Developer-Signature: v=1; a=openpgp-sha256; l=577; h=from:subject; bh=RQHeSUZ+8nnut0tpFXDRWIhRsMEPE1l7gaYEIo3rNl0=; b=owEBbQGS/pANAwAIAZydqgc/ZEDZAcsmYgBgt6BpWVcA/jt1oYfBDnI31q0Bb0o/KMoZpkwUa3jK gPPGwEWJATMEAAEIAB0WIQSrWdEr1p4yirVVKBycnaoHP2RA2QUCYLegaQAKCRCcnaoHP2RA2V+lCA CP5A97MOvTgVeC1nr0NnO0QcmY91OFryXrfL/4WVhLuRcV1jCM+JQjvF0VODAF99fawsvh98mzPsGS 51Cw7R7xe+OLmjks8YQD1soFwnSFhlym3CxvOnxs1tbOWS3A46V6ZZZg10yxVBWMLeJCb+ppKBdzsA saUpfYWvsmxhFDyjDliqslME7y97xB2iH8TFyu6LuukIAAGmknsVUPIubXe8vGF3JyS4VeUK1ov2c8 y7d65GlhXWFdHZNMgiV8SHVeLO5/f1GFdnJkBWyg0gtBpCMVu0IMsVLDL83FaGACAjGLOKT0RRFIEE a/Y/Mq3pUjWlMHFRaYze3FEytUTBza
+X-Developer-Signature: v=1; a=openpgp-sha256; l=12394; h=from:subject; bh=zzroR4lZXjHnpqNq/An86dpR7vPPuIF+QR0Jr/aeeZ8=; b=owEBbQGS/pANAwAIAZydqgc/ZEDZAcsmYgBgt6Cj4ZF9XdWViy85pf9o1WQpixmSueX4w271Hs/8 hQPhsP+JATMEAAEIAB0WIQSrWdEr1p4yirVVKBycnaoHP2RA2QUCYLegowAKCRCcnaoHP2RA2ScaB/ 9EVQSgWaOLAYYGlLcSRGxlCEP4ba6stAveGJPE7vRex7xTvrulLi0rj84FvrnD+3zgBkAf6LvnrVr4 Jn/pxl3027/FGnpJJ9mNJrXYaphIPOf+9YbfwJiVvJ29UQyJHSZO2aV97tZfe2W3+WSDf+2WC4ssso jNtVie3B3U4dyeXo1qI6dIjqhLCKzb4K9gPxFDbWSgsn3xNt1gO447ugBdHJj56QTvpvRtTK89FlOm BpeNl9MgqeIsDmRoYu7srakXUYEwfbapsfFCbu8DyOeLEvJ73LqNoDLvlbYiQFVuZSsQInVEkQwBQT KNpwsOjP0s0QyXeerDdHfsk12E2WcI
 X-Developer-Key: i=jack@suse.cz; a=openpgp; fpr=93C6099A142276A28BBE35D815BC833443038D8C
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hello,
+Wire up the quotactl_fd syscall.
 
-this patch series changes Sasha's quotactl_path() syscall to an fd-based one
-quotactl_fd() syscall and enables the syscall again. The fd-based syscall was
-chosen over the path based one because there's no real need for the path -
-identifying filesystem to operate on by fd is perfectly fine for quotactl and
-thus we can avoid the need to specify all the details of path lookup in the
-quotactl_path() API (and possibly keep that uptodate with all the developments
-in that field).
+Signed-off-by: Jan Kara <jack@suse.cz>
+---
+ arch/alpha/kernel/syscalls/syscall.tbl      | 2 +-
+ arch/arm/tools/syscall.tbl                  | 2 +-
+ arch/arm64/include/asm/unistd32.h           | 3 ++-
+ arch/ia64/kernel/syscalls/syscall.tbl       | 2 +-
+ arch/m68k/kernel/syscalls/syscall.tbl       | 2 +-
+ arch/microblaze/kernel/syscalls/syscall.tbl | 2 +-
+ arch/mips/kernel/syscalls/syscall_n32.tbl   | 2 +-
+ arch/mips/kernel/syscalls/syscall_n64.tbl   | 2 +-
+ arch/mips/kernel/syscalls/syscall_o32.tbl   | 2 +-
+ arch/parisc/kernel/syscalls/syscall.tbl     | 2 +-
+ arch/powerpc/kernel/syscalls/syscall.tbl    | 2 +-
+ arch/s390/kernel/syscalls/syscall.tbl       | 2 +-
+ arch/sh/kernel/syscalls/syscall.tbl         | 2 +-
+ arch/sparc/kernel/syscalls/syscall.tbl      | 2 +-
+ arch/x86/entry/syscalls/syscall_32.tbl      | 2 +-
+ arch/x86/entry/syscalls/syscall_64.tbl      | 2 +-
+ arch/xtensa/kernel/syscalls/syscall.tbl     | 2 +-
+ 17 files changed, 18 insertions(+), 17 deletions(-)
 
-Patches passed some basic functional testing. Please review.
+diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
+index 3000a2e8ee21..a17687ed4b51 100644
+--- a/arch/alpha/kernel/syscalls/syscall.tbl
++++ b/arch/alpha/kernel/syscalls/syscall.tbl
+@@ -482,7 +482,7 @@
+ 550	common	process_madvise			sys_process_madvise
+ 551	common	epoll_pwait2			sys_epoll_pwait2
+ 552	common	mount_setattr			sys_mount_setattr
+-# 553 reserved for quotactl_path
++553	common	quotactl_fd			sys_quotactl_fd
+ 554	common	landlock_create_ruleset		sys_landlock_create_ruleset
+ 555	common	landlock_add_rule		sys_landlock_add_rule
+ 556	common	landlock_restrict_self		sys_landlock_restrict_self
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index 28e03b5fec00..c5df1179fc5d 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -456,7 +456,7 @@
+ 440	common	process_madvise			sys_process_madvise
+ 441	common	epoll_pwait2			sys_epoll_pwait2
+ 442	common	mount_setattr			sys_mount_setattr
+-# 443 reserved for quotactl_path
++443	common	quotactl_fd			sys_quotactl_fd
+ 444	common	landlock_create_ruleset		sys_landlock_create_ruleset
+ 445	common	landlock_add_rule		sys_landlock_add_rule
+ 446	common	landlock_restrict_self		sys_landlock_restrict_self
+diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
+index 5dab69d2c22b..99ffcafc736c 100644
+--- a/arch/arm64/include/asm/unistd32.h
++++ b/arch/arm64/include/asm/unistd32.h
+@@ -893,7 +893,8 @@ __SYSCALL(__NR_process_madvise, sys_process_madvise)
+ __SYSCALL(__NR_epoll_pwait2, compat_sys_epoll_pwait2)
+ #define __NR_mount_setattr 442
+ __SYSCALL(__NR_mount_setattr, sys_mount_setattr)
+-/* 443 is reserved for quotactl_path */
++#define __NR_quotactl_fd 443
++__SYSCALL(__NR_quotactl_fd, sys_quotactl_fd)
+ #define __NR_landlock_create_ruleset 444
+ __SYSCALL(__NR_landlock_create_ruleset, sys_landlock_create_ruleset)
+ #define __NR_landlock_add_rule 445
+diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
+index bb11fe4c875a..6d07742c57b8 100644
+--- a/arch/ia64/kernel/syscalls/syscall.tbl
++++ b/arch/ia64/kernel/syscalls/syscall.tbl
+@@ -363,7 +363,7 @@
+ 440	common	process_madvise			sys_process_madvise
+ 441	common	epoll_pwait2			sys_epoll_pwait2
+ 442	common	mount_setattr			sys_mount_setattr
+-# 443 reserved for quotactl_path
++443	common	quotactl_fd			sys_quotactl_fd
+ 444	common	landlock_create_ruleset		sys_landlock_create_ruleset
+ 445	common	landlock_add_rule		sys_landlock_add_rule
+ 446	common	landlock_restrict_self		sys_landlock_restrict_self
+diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
+index 79c2d24c89dd..541bc1b3a8f9 100644
+--- a/arch/m68k/kernel/syscalls/syscall.tbl
++++ b/arch/m68k/kernel/syscalls/syscall.tbl
+@@ -442,7 +442,7 @@
+ 440	common	process_madvise			sys_process_madvise
+ 441	common	epoll_pwait2			sys_epoll_pwait2
+ 442	common	mount_setattr			sys_mount_setattr
+-# 443 reserved for quotactl_path
++443	common	quotactl_fd			sys_quotactl_fd
+ 444	common	landlock_create_ruleset		sys_landlock_create_ruleset
+ 445	common	landlock_add_rule		sys_landlock_add_rule
+ 446	common	landlock_restrict_self		sys_landlock_restrict_self
+diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
+index b11395a20c20..a176faca2927 100644
+--- a/arch/microblaze/kernel/syscalls/syscall.tbl
++++ b/arch/microblaze/kernel/syscalls/syscall.tbl
+@@ -448,7 +448,7 @@
+ 440	common	process_madvise			sys_process_madvise
+ 441	common	epoll_pwait2			sys_epoll_pwait2
+ 442	common	mount_setattr			sys_mount_setattr
+-# 443 reserved for quotactl_path
++443	common	quotactl_fd			sys_quotactl_fd
+ 444	common	landlock_create_ruleset		sys_landlock_create_ruleset
+ 445	common	landlock_add_rule		sys_landlock_add_rule
+ 446	common	landlock_restrict_self		sys_landlock_restrict_self
+diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
+index 9220909526f9..c2d2e19abea8 100644
+--- a/arch/mips/kernel/syscalls/syscall_n32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
+@@ -381,7 +381,7 @@
+ 440	n32	process_madvise			sys_process_madvise
+ 441	n32	epoll_pwait2			compat_sys_epoll_pwait2
+ 442	n32	mount_setattr			sys_mount_setattr
+-# 443 reserved for quotactl_path
++443	n32	quotactl_fd			sys_quotactl_fd
+ 444	n32	landlock_create_ruleset		sys_landlock_create_ruleset
+ 445	n32	landlock_add_rule		sys_landlock_add_rule
+ 446	n32	landlock_restrict_self		sys_landlock_restrict_self
+diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
+index 9cd1c34f31b5..ac653d08b1ea 100644
+--- a/arch/mips/kernel/syscalls/syscall_n64.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
+@@ -357,7 +357,7 @@
+ 440	n64	process_madvise			sys_process_madvise
+ 441	n64	epoll_pwait2			sys_epoll_pwait2
+ 442	n64	mount_setattr			sys_mount_setattr
+-# 443 reserved for quotactl_path
++443	n64	quotactl_fd			sys_quotactl_fd
+ 444	n64	landlock_create_ruleset		sys_landlock_create_ruleset
+ 445	n64	landlock_add_rule		sys_landlock_add_rule
+ 446	n64	landlock_restrict_self		sys_landlock_restrict_self
+diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
+index d560c467a8c6..253f2cd70b6b 100644
+--- a/arch/mips/kernel/syscalls/syscall_o32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
+@@ -430,7 +430,7 @@
+ 440	o32	process_madvise			sys_process_madvise
+ 441	o32	epoll_pwait2			sys_epoll_pwait2		compat_sys_epoll_pwait2
+ 442	o32	mount_setattr			sys_mount_setattr
+-# 443 reserved for quotactl_path
++443	o32	quotactl_fd			sys_quotactl_fd
+ 444	o32	landlock_create_ruleset		sys_landlock_create_ruleset
+ 445	o32	landlock_add_rule		sys_landlock_add_rule
+ 446	o32	landlock_restrict_self		sys_landlock_restrict_self
+diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
+index aabc37f8cae3..e26187b9ab87 100644
+--- a/arch/parisc/kernel/syscalls/syscall.tbl
++++ b/arch/parisc/kernel/syscalls/syscall.tbl
+@@ -440,7 +440,7 @@
+ 440	common	process_madvise			sys_process_madvise
+ 441	common	epoll_pwait2			sys_epoll_pwait2		compat_sys_epoll_pwait2
+ 442	common	mount_setattr			sys_mount_setattr
+-# 443 reserved for quotactl_path
++443	common	quotactl_fd			sys_quotactl_fd
+ 444	common	landlock_create_ruleset		sys_landlock_create_ruleset
+ 445	common	landlock_add_rule		sys_landlock_add_rule
+ 446	common	landlock_restrict_self		sys_landlock_restrict_self
+diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
+index 8f052ff4058c..aef2a290e71a 100644
+--- a/arch/powerpc/kernel/syscalls/syscall.tbl
++++ b/arch/powerpc/kernel/syscalls/syscall.tbl
+@@ -522,7 +522,7 @@
+ 440	common	process_madvise			sys_process_madvise
+ 441	common	epoll_pwait2			sys_epoll_pwait2		compat_sys_epoll_pwait2
+ 442	common	mount_setattr			sys_mount_setattr
+-# 443 reserved for quotactl_path
++443	common	quotactl_fd			sys_quotactl_fd
+ 444	common	landlock_create_ruleset		sys_landlock_create_ruleset
+ 445	common	landlock_add_rule		sys_landlock_add_rule
+ 446	common	landlock_restrict_self		sys_landlock_restrict_self
+diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
+index 0690263df1dd..64d51ab5a8b4 100644
+--- a/arch/s390/kernel/syscalls/syscall.tbl
++++ b/arch/s390/kernel/syscalls/syscall.tbl
+@@ -445,7 +445,7 @@
+ 440  common	process_madvise		sys_process_madvise		sys_process_madvise
+ 441  common	epoll_pwait2		sys_epoll_pwait2		compat_sys_epoll_pwait2
+ 442  common	mount_setattr		sys_mount_setattr		sys_mount_setattr
+-# 443 reserved for quotactl_path
++443  common	quotactl_fd		sys_quotactl_fd			sys_quotactl_fd
+ 444  common	landlock_create_ruleset	sys_landlock_create_ruleset	sys_landlock_create_ruleset
+ 445  common	landlock_add_rule	sys_landlock_add_rule		sys_landlock_add_rule
+ 446  common	landlock_restrict_self	sys_landlock_restrict_self	sys_landlock_restrict_self
+diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
+index 0b91499ebdcf..e0a70be77d84 100644
+--- a/arch/sh/kernel/syscalls/syscall.tbl
++++ b/arch/sh/kernel/syscalls/syscall.tbl
+@@ -445,7 +445,7 @@
+ 440	common	process_madvise			sys_process_madvise
+ 441	common	epoll_pwait2			sys_epoll_pwait2
+ 442	common	mount_setattr			sys_mount_setattr
+-# 443 reserved for quotactl_path
++443	common	quotactl_fd			sys_quotactl_fd
+ 444	common	landlock_create_ruleset		sys_landlock_create_ruleset
+ 445	common	landlock_add_rule		sys_landlock_add_rule
+ 446	common	landlock_restrict_self		sys_landlock_restrict_self
+diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
+index e34cc30ef22c..603f5a821502 100644
+--- a/arch/sparc/kernel/syscalls/syscall.tbl
++++ b/arch/sparc/kernel/syscalls/syscall.tbl
+@@ -488,7 +488,7 @@
+ 440	common	process_madvise			sys_process_madvise
+ 441	common	epoll_pwait2			sys_epoll_pwait2		compat_sys_epoll_pwait2
+ 442	common	mount_setattr			sys_mount_setattr
+-# 443 reserved for quotactl_path
++443	common	quotactl_fd			sys_quotactl_fd
+ 444	common	landlock_create_ruleset		sys_landlock_create_ruleset
+ 445	common	landlock_add_rule		sys_landlock_add_rule
+ 446	common	landlock_restrict_self		sys_landlock_restrict_self
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 4bbc267fb36b..fba2f615119a 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -447,7 +447,7 @@
+ 440	i386	process_madvise		sys_process_madvise
+ 441	i386	epoll_pwait2		sys_epoll_pwait2		compat_sys_epoll_pwait2
+ 442	i386	mount_setattr		sys_mount_setattr
+-# 443 reserved for quotactl_path
++443	i386	quotactl_fd		sys_quotactl_fd
+ 444	i386	landlock_create_ruleset	sys_landlock_create_ruleset
+ 445	i386	landlock_add_rule	sys_landlock_add_rule
+ 446	i386	landlock_restrict_self	sys_landlock_restrict_self
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index ce18119ea0d0..af973e400053 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -364,7 +364,7 @@
+ 440	common	process_madvise		sys_process_madvise
+ 441	common	epoll_pwait2		sys_epoll_pwait2
+ 442	common	mount_setattr		sys_mount_setattr
+-# 443 reserved for quotactl_path
++443	common	quotactl_fd		sys_quotactl_fd
+ 444	common	landlock_create_ruleset	sys_landlock_create_ruleset
+ 445	common	landlock_add_rule	sys_landlock_add_rule
+ 446	common	landlock_restrict_self	sys_landlock_restrict_self
+diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
+index fd2f30227d96..235d67d6ceb4 100644
+--- a/arch/xtensa/kernel/syscalls/syscall.tbl
++++ b/arch/xtensa/kernel/syscalls/syscall.tbl
+@@ -413,7 +413,7 @@
+ 440	common	process_madvise			sys_process_madvise
+ 441	common	epoll_pwait2			sys_epoll_pwait2
+ 442	common	mount_setattr			sys_mount_setattr
+-# 443 reserved for quotactl_path
++443	common	quotactl_fd			sys_quotactl_fd
+ 444	common	landlock_create_ruleset		sys_landlock_create_ruleset
+ 445	common	landlock_add_rule		sys_landlock_add_rule
+ 446	common	landlock_restrict_self		sys_landlock_restrict_self
+-- 
+2.26.2
 
-								Honza
