@@ -2,220 +2,129 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-17.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 469BCC4708F
-	for <linux-api@archiver.kernel.org>; Wed,  2 Jun 2021 08:49:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4F115C47083
+	for <linux-api@archiver.kernel.org>; Wed,  2 Jun 2021 10:02:39 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2660F613D5
-	for <linux-api@archiver.kernel.org>; Wed,  2 Jun 2021 08:49:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3B8D861396
+	for <linux-api@archiver.kernel.org>; Wed,  2 Jun 2021 10:02:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230059AbhFBIul (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 2 Jun 2021 04:50:41 -0400
-Received: from mail.kernel.org ([198.145.29.99]:42662 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S232779AbhFBIul (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 2 Jun 2021 04:50:41 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPSA id AF091613D3;
-        Wed,  2 Jun 2021 08:48:57 +0000 (UTC)
-Date:   Wed, 2 Jun 2021 10:48:54 +0200
-From:   Christian Brauner <christian.brauner@ubuntu.com>
-To:     Amir Goldstein <amir73il@gmail.com>,
-        Matthew Bobrowski <repnop@google.com>
-Cc:     Jan Kara <jack@suse.cz>,
-        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>
-Subject: Re: [PATCH 0/5] Add pidfd support to the fanotify API
-Message-ID: <20210602084854.sokpeqr2wgz7ci4a@wittgenstein>
-References: <20210521104056.GG18952@quack2.suse.cz>
- <YKhDFCUWX7iU7AzM@google.com>
- <20210524084746.GB32705@quack2.suse.cz>
- <20210525103133.uctijrnffehlvjr3@wittgenstein>
- <YK2GV7hLamMpcO8i@google.com>
- <20210526180529.egrtfruccbioe7az@wittgenstein>
- <YLYT/oeBCcnbfMzE@google.com>
- <20210601114628.f3w33yyca5twgfho@wittgenstein>
- <YLcliQRh4HRGt4Mi@google.com>
- <CAOQ4uxieRQ3s5rWA55ZBDr4xm6i9vXyWx-iErMgYzGCE5nYKcA@mail.gmail.com>
+        id S229541AbhFBKEU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 2 Jun 2021 06:04:20 -0400
+Received: from lb2-smtp-cloud8.xs4all.net ([194.109.24.25]:48695 "EHLO
+        lb2-smtp-cloud8.xs4all.net" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S229995AbhFBKET (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 2 Jun 2021 06:04:19 -0400
+X-Greylist: delayed 324 seconds by postgrey-1.27 at vger.kernel.org; Wed, 02 Jun 2021 06:04:19 EDT
+Received: from cust-b5b5937f ([IPv6:fc0c:c16d:66b8:757f:c639:739b:9d66:799d])
+        by smtp-cloud8.xs4all.net with ESMTPA
+        id oNgmlUEuUIpGyoNgplPC4v; Wed, 02 Jun 2021 12:01:31 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=xs4all.nl; s=s2;
+        t=1622628091; bh=/QoizLPSJePeB4Gpm1NI058wdS+DU0b8RstN2od348s=;
+        h=Subject:To:From:Message-ID:Date:MIME-Version:Content-Type:From:
+         Subject;
+        b=mH7dGeU1bQOm8jhFRwt0LWrsIjBL8VGBOKq3A3Suy79B4LClqtrPlH5poj9pEpd60
+         BucSHkUBaYh+GpLZGMF+Q8y7ogv9HdwhMCoRCp8z0bcvII5SAFQytMed3ZulZJ8tDN
+         nWjV5K/9zYDom01k0IL/4yyLqfqA5YDElJG6fsGEdBDxAkeGLrsXoLrHQNqpyUXoq/
+         b0JJtk8WVG4s+wgvVnTSl7/IlDRprclJk2gz+SH8nCZxNTpFePD3SoKvOjZQDUWfdd
+         rAfzXmBCMunRf1LF0PmFtlU/Z+GCgz/yCc9tUQ0dqbt9Rnq/qPdURWwQNnnOYphhs4
+         RQabwTieu6BEA==
+Subject: Re: [PATCH 3/3] venus: Add a handling of QC10C compressed format
+To:     Stanimir Varbanov <stanimir.varbanov@linaro.org>,
+        linux-media@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-arm-msm@vger.kernel.org, linux-api@vger.kernel.org
+Cc:     Mauro Carvalho Chehab <mchehab@kernel.org>
+References: <20210429105815.2790770-1-stanimir.varbanov@linaro.org>
+ <20210429105815.2790770-4-stanimir.varbanov@linaro.org>
+From:   Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Message-ID: <37d5e58c-ce5b-07f8-396f-662258a9b229@xs4all.nl>
+Date:   Wed, 2 Jun 2021 12:01:27 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Firefox/78.0 Thunderbird/78.10.0
 MIME-Version: 1.0
+In-Reply-To: <20210429105815.2790770-4-stanimir.varbanov@linaro.org>
 Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <CAOQ4uxieRQ3s5rWA55ZBDr4xm6i9vXyWx-iErMgYzGCE5nYKcA@mail.gmail.com>
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
+X-CMAE-Envelope: MS4xfGuxLyx2fCMs3/3q3zvDQWlvGij9NX8sf5r/BcoO418azIXlnvl+XcZ6McUBStFeN6j+Mby/6xRVhlaGhrs32Ib55chiPxWSSQj6q/YH4edzOLEFMsVv
+ iDi3e8jMaYp29sWg8UGtS/9JFJXpe0e131/MSmp1gTSb7MkHPH/KXxY4AjtsbYRXyv5nFser0W/bTzOtLqdh0OU8mTYGgMsBzxSEBLaZfUI09DWa0CkQXaZV
+ yjohLoyiwhT3D7E2EC/dmDo6rZdIm/A7+daEX4DgoM3MoT3VEipCxF1PypPKhxQw93fHrfyeCYiPKABc0pE8pbMOU/zskYMMGNjM7xwRZYYf0AcaQnbkeZlE
+ IDGJFcnd0WrJwlgBuT50NBgCOF/PtmtuhHSS80e9dlHWO8wStiE=
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Jun 02, 2021 at 10:18:36AM +0300, Amir Goldstein wrote:
-> On Wed, Jun 2, 2021 at 9:30 AM Matthew Bobrowski <repnop@google.com> wrote:
-> >
-> > On Tue, Jun 01, 2021 at 01:46:28PM +0200, Christian Brauner wrote:
-> > > On Tue, Jun 01, 2021 at 09:03:26PM +1000, Matthew Bobrowski wrote:
-> > > > On Wed, May 26, 2021 at 08:05:29PM +0200, Christian Brauner wrote:
-> > > > > On Wed, May 26, 2021 at 09:20:55AM +1000, Matthew Bobrowski wrote:
-> > > > > > On Tue, May 25, 2021 at 12:31:33PM +0200, Christian Brauner wrote:
-> > > > > > > On Mon, May 24, 2021 at 10:47:46AM +0200, Jan Kara wrote:
-> > > > > > > > On Sat 22-05-21 09:32:36, Matthew Bobrowski wrote:
-> > > > > > > > > On Fri, May 21, 2021 at 12:40:56PM +0200, Jan Kara wrote:
-> > > > > > > > > > On Fri 21-05-21 20:15:35, Matthew Bobrowski wrote:
-> > > > > > > > > > > On Thu, May 20, 2021 at 03:55:27PM +0200, Jan Kara wrote:
-> > > > > > > > > > > There's one thing that I'd like to mention, and it's something in
-> > > > > > > > > > > regards to the overall approach we've taken that I'm not particularly
-> > > > > > > > > > > happy about and I'd like to hear all your thoughts. Basically, with
-> > > > > > > > > > > this approach the pidfd creation is done only once an event has been
-> > > > > > > > > > > queued and the notification worker wakes up and picks up the event
-> > > > > > > > > > > from the queue processes it. There's a subtle latency introduced when
-> > > > > > > > > > > taking such an approach which at times leads to pidfd creation
-> > > > > > > > > > > failures. As in, by the time pidfd_create() is called the struct pid
-> > > > > > > > > > > has already been reaped, which then results in FAN_NOPIDFD being
-> > > > > > > > > > > returned in the pidfd info record.
-> > > > > > > > > > >
-> > > > > > > > > > > Having said that, I'm wondering what the thoughts are on doing pidfd
-> > > > > > > > > > > creation earlier on i.e. in the event allocation stages? This way, the
-> > > > > > > > > > > struct pid is pinned earlier on and rather than FAN_NOPIDFD being
-> > > > > > > > > > > returned in the pidfd info record because the struct pid has been
-> > > > > > > > > > > already reaped, userspace application will atleast receive a valid
-> > > > > > > > > > > pidfd which can be used to check whether the process still exists or
-> > > > > > > > > > > not. I think it'll just set the expectation better from an API
-> > > > > > > > > > > perspective.
-> > > > > > > > > >
-> > > > > > > > > > Yes, there's this race. OTOH if FAN_NOPIDFD is returned, the listener can
-> > > > > > > > > > be sure the original process doesn't exist anymore. So is it useful to
-> > > > > > > > > > still receive pidfd of the dead process?
-> > > > > > > > >
-> > > > > > > > > Well, you're absolutely right. However, FWIW I was approaching this
-> > > > > > > > > from two different angles:
-> > > > > > > > >
-> > > > > > > > > 1) I wanted to keep the pattern in which the listener checks for the
-> > > > > > > > >    existence/recycling of the process consistent. As in, the listener
-> > > > > > > > >    would receive the pidfd, then send the pidfd a signal via
-> > > > > > > > >    pidfd_send_signal() and check for -ESRCH which clearly indicates
-> > > > > > > > >    that the target process has terminated.
-> > > > > > > > >
-> > > > > > > > > 2) I didn't want to mask failed pidfd creation because of early
-> > > > > > > > >    process termination and other possible failures behind a single
-> > > > > > > > >    FAN_NOPIDFD. IOW, if we take the -ESRCH approach above, the
-> > > > > > > > >    listener can take clear corrective branches as what's to be done
-> > > > > > > > >    next if a race is to have been detected, whereas simply returning
-> > > > > > > > >    FAN_NOPIDFD at this stage can mean multiple things.
-> > > > > > > > >
-> > > > > > > > > Now that I've written the above and keeping in mind that we'd like to
-> > > > > > > > > refrain from doing anything in the event allocation stages, perhaps we
-> > > > > > > > > could introduce a different error code for detecting early process
-> > > > > > > > > termination while attempting to construct the info record. WDYT?
-> > > > > > > >
-> > > > > > > > Sure, I wouldn't like to overengineer it but having one special fd value for
-> > > > > > > > "process doesn't exist anymore" and another for general "creating pidfd
-> > > > > > > > failed" looks OK to me.
-> > > > > > >
-> > > > > > > FAN_EPIDFD -> "creation failed"
-> > > > > > > FAN_NOPIDFD -> "no such process"
-> > > > > >
-> > > > > > Yes, I was thinking something along the lines of this...
-> > > > > >
-> > > > > > With the approach that I've proposed in this series, the pidfd
-> > > > > > creation failure trips up in pidfd_create() at the following
-> > > > > > condition:
-> > > > > >
-> > > > > >         if (!pid || !pid_has_task(pid, PIDTYPE_TGID))
-> > > > > >                  return -EINVAL;
-> > > > > >
-> > > > > > Specifically, the following check:
-> > > > > >         !pid_has_task(pid, PIDTYPE_TGID)
-> > > > > >
-> > > > > > In order to properly report either FAN_NOPIDFD/FAN_EPIDFD to
-> > > > > > userspace, AFAIK I'll have to do one of either two things to better
-> > > > > > distinguish between why the pidfd creation had failed:
-> > > > >
-> > > > > Ok, I see. You already do have a reference to a struct pid and in that
-> > > > > case we should just always return a pidfd to the caller. For
-> > > > > pidfd_open() for example we only report an error when
-> > > > > find_get_pid(<pidnr>) doesn't find a struct pid to refer to. But in your
-> > > > > case here you already have a struct pid so I think we should just keep
-> > > > > this simple and always return a pidfd to the caller and in fact do
-> > > > > burden them with figuring out that the process is gone via
-> > > > > pidfd_send_signal() instead of complicating our lives here.
-> > > >
-> > > > Ah, actually Christian... Before, I go ahead and send through the updated
-> > > > series. Given what you've mentioned above I'm working with the assumption
-> > > > that you're OK with dropping the pid_has_task() check from pidfd_create()
-> > > > [0]. Is that right?
-> > > >
-> > > > If so, I don't know how I feel about this given that pidfd_create() is now
-> > > > to be exposed to the rest of the kernel and the pidfd API, as it stands,
-> > > > doesn't support the creation of pidfds for non-thread-group leaders. I
-> > > > suppose what I don't want is other kernel subsystems, if any, thinking it's
-> > > > OK to call pidfd_create() with an arbitrary struct pid and setting the
-> > > > expectation that a fully functional pidfd will be returned.
-> > > >
-> > > > The way I see it, I think we've got two options here:
-> > > >
-> > > > 1) Leave the pid_has_task() check within pidfd_create() and perform another
-> > > >    explicit pid_has_task() check from the fanotify code before calling
-> > > >    pidfd_create(). If it returns false, we set something like FAN_NOPIDFD
-> > > >    indicating to userspace that there's no such process when the event was
-> > > >    created.
-> > > >
-> > > > 2) Scrap using pidfd_create() all together and implement a fanotify
-> > > >    specific pidfd creation wrapper which would allow for more
-> > > >    control. Something along the lines of what you've done in kernel/fork.c
-> > > >    [1]. Not the biggest fan of this idea just yet given the possibility of
-> > > >    it leading to an API drift over time.
-> > > >
-> > > > WDYT?
-> > >
-> > > Hm, why would you have to drop the pid_has_task() check again?
-> >
-> > Because of the race that I brielfy decscribed here [0]. The race exists
-> 
-> Sorry for being thich. I still don't understand what's racy about this.
-> Won't the event reader get a valid pidfd?
-> Can't the event reader verify that the pidfd points to a dead process?
-> I don't mind returning FAN_NOPIDFD for convenience, but user
-> will have to check the pidfd that it got anyway, because process
-> can die at any time between reading the event and acting on the
-> pidfd.
+On 29/04/2021 12:58, Stanimir Varbanov wrote:
+> This adds QC10C compressed pixel format in the Venus driver, and
+> make it enumeratable from v4l2 clients.
 
-(Replying to this part of the thread so we don't have to many parallel
-replies.)
+enumeratable -> possible to discover
 
-Hm, so quoting from link [0] Matthew posted so we all have some context
-here:
-"Basically, with this approach the pidfd creation is done only once an
-event has been queued and the notification worker wakes up and picks up
-the event from the queue processes it. There's a subtle latency
-introduced when taking such an approach which at times leads to pidfd
-creation failures. As in, by the time pidfd_create() is called the
-struct pid has already been reaped, which then results in FAN_NOPIDFD
-being returned in the pidfd info record."
-
-I don't think that's a race and even if I don't think that it's a
-meaningful one. So when the event is queued the process is still alive
-but when the notification is actually delivered the process is dead.
-
-And your point, Matthew, seems to be that the caller should always get a
-pidfd back even if the process has already exited _and_ been reaped,
-i.e. is dead because it was alive when the event was generated.
-
-I think that's no how it needs to work and I have a hard time seeing
-this as a good argument. What's problematic about just returning
-FAN_NOPIDFD in that case? After all the process is gone. All the caller
-can do with such a pidfd is to send it a signal and immediately realize
-that the process is gone, i.e. -ESRCH anyway.
+(or possibly 'enumerable', but I prefer the phrase suggested above)
 
 > 
-> > because we perform the pidfd creation during the notification queue
-> > processing and not in the event allocation stages (for reasons that Jan has
-> > already covered here [1]). So, tl;dr there is the case where the fanotify
-> > calls pidfd_create() and the check for pid_has_task() fails because the
-> > struct pid that we're hanging onto within an event no longer contains a
-> > task of type PIDTYPE_TGID...
-> >
-> > [0] https://www.spinics.net/lists/linux-api/msg48630.html
-> > [1] https://www.spinics.net/lists/linux-api/msg48632.html
+> Note: The QC10C format shouldn't be possible to enumerate by the
+> client if the decoded bitstream is not 10bits. This is not
+
+10bits -> 10-bits
+
+> implemented in this patch yet.
+
+Obvious question: will this be done in a later patch that is being
+prepared? Would it be better to wait until such a patch is available?
+
+Regards,
+
+	Hans
+
 > 
-> I warmly recommend that you use lore.kernel.org for archive links.
+> Signed-off-by: Stanimir Varbanov <stanimir.varbanov@linaro.org>
+> ---
+>  drivers/media/platform/qcom/venus/helpers.c | 2 ++
+>  drivers/media/platform/qcom/venus/vdec.c    | 6 +++++-
+>  2 files changed, 7 insertions(+), 1 deletion(-)
 > 
-> Thanks,
-> Amir.
+> diff --git a/drivers/media/platform/qcom/venus/helpers.c b/drivers/media/platform/qcom/venus/helpers.c
+> index 3a0b07d237a5..58bf2e0654ce 100644
+> --- a/drivers/media/platform/qcom/venus/helpers.c
+> +++ b/drivers/media/platform/qcom/venus/helpers.c
+> @@ -563,6 +563,8 @@ static u32 to_hfi_raw_fmt(u32 v4l2_fmt)
+>  		return HFI_COLOR_FORMAT_NV21;
+>  	case V4L2_PIX_FMT_QC8C:
+>  		return HFI_COLOR_FORMAT_NV12_UBWC;
+> +	case V4L2_PIX_FMT_QC10C:
+> +		return HFI_COLOR_FORMAT_YUV420_TP10_UBWC;
+>  	default:
+>  		break;
+>  	}
+> diff --git a/drivers/media/platform/qcom/venus/vdec.c b/drivers/media/platform/qcom/venus/vdec.c
+> index d4cc51fc019c..7ad8cd66b8bc 100644
+> --- a/drivers/media/platform/qcom/venus/vdec.c
+> +++ b/drivers/media/platform/qcom/venus/vdec.c
+> @@ -35,6 +35,10 @@ static const struct venus_format vdec_formats[] = {
+>  		.num_planes = 1,
+>  		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
+>  	}, {
+> +		.pixfmt = V4L2_PIX_FMT_QC10C,
+> +		.num_planes = 1,
+> +		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
+> +	},{
+>  		.pixfmt = V4L2_PIX_FMT_NV12,
+>  		.num_planes = 1,
+>  		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
+> @@ -1508,7 +1512,7 @@ static const struct hfi_inst_ops vdec_hfi_ops = {
+>  static void vdec_inst_init(struct venus_inst *inst)
+>  {
+>  	inst->hfi_codec = HFI_VIDEO_CODEC_H264;
+> -	inst->fmt_out = &vdec_formats[6];
+> +	inst->fmt_out = &vdec_formats[8];
+>  	inst->fmt_cap = &vdec_formats[0];
+>  	inst->width = frame_width_min(inst);
+>  	inst->height = ALIGN(frame_height_min(inst), 32);
+> 
+
