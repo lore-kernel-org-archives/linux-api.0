@@ -7,28 +7,28 @@ X-Spam-Status: No, score=-5.9 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4518EC4743D
-	for <linux-api@archiver.kernel.org>; Tue,  8 Jun 2021 12:34:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A4AEEC4743D
+	for <linux-api@archiver.kernel.org>; Tue,  8 Jun 2021 12:35:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 22F666135A
-	for <linux-api@archiver.kernel.org>; Tue,  8 Jun 2021 12:34:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8D40061364
+	for <linux-api@archiver.kernel.org>; Tue,  8 Jun 2021 12:35:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232656AbhFHMgR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 8 Jun 2021 08:36:17 -0400
-Received: from mail.kernel.org ([198.145.29.99]:40494 "EHLO mail.kernel.org"
+        id S232590AbhFHMhK (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 8 Jun 2021 08:37:10 -0400
+Received: from mail.kernel.org ([198.145.29.99]:41128 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S232575AbhFHMgR (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 8 Jun 2021 08:36:17 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPSA id F38C161360;
-        Tue,  8 Jun 2021 12:34:12 +0000 (UTC)
+        id S232299AbhFHMhK (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 8 Jun 2021 08:37:10 -0400
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 76D8661287;
+        Tue,  8 Jun 2021 12:35:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
-        s=korg; t=1623155653;
-        bh=xEcsZzr7bYNWUokPJaBJAWMmHii4XZV9sHm2zIUSaoY=;
+        s=korg; t=1623155717;
+        bh=lwdEMXKgFqTlkSr7IAuLTjahUJnEjsEmeso5SigE+EU=;
         h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=wwmumYLiENOZy67Fbd/aV4O5pfVLdh3WOYkxZTEtdwcpUNF8emLP99SfC3bIBKgBc
-         vfvu1W56HjoBGZSDjzNWEwkwHZSVJ1CGJDnXEGwdD+ExTrCRE72Dn/q4k8VWehQh/R
-         nLmwoFKK/M7zE5tbzEjzzFYlLSB5QC1TPdIVZEUM=
-Date:   Tue, 8 Jun 2021 14:33:42 +0200
+        b=1dpSB8VCDGZO6vMLNJ7gFQSL3ip0u5W0q98wZMDQF7NdV/tlYB3d5ELQ8S0r/HN1U
+         i84kLXEuntDYUcqGkMiWltpY2DQhLCXqYgMdXra4tlQ76fiB5NP9kI7XVhwhxn8Fhh
+         ESkoXYjWgz8r3PMAXonf4EWA5OLc3xH2hh4QAWRU=
+Date:   Tue, 8 Jun 2021 14:35:14 +0200
 From:   Greg KH <gregkh@linuxfoundation.org>
 To:     Andrey Semashev <andrey.semashev@gmail.com>
 Cc:     Nicholas Piggin <npiggin@gmail.com>,
@@ -46,7 +46,7 @@ Cc:     Nicholas Piggin <npiggin@gmail.com>,
         Steven Rostedt <rostedt@goodmis.org>, shuah@kernel.org,
         Thomas Gleixner <tglx@linutronix.de>, z.figura12@gmail.com
 Subject: Re: [PATCH v4 00/15] Add futex2 syscalls
-Message-ID: <YL9jpvHQG2wsVTsn@kroah.com>
+Message-ID: <YL9kApyE6FbG/hru@kroah.com>
 References: <1622799088.hsuspipe84.astroid@bobo.none>
  <fb85fb20-5421-b095-e68b-955afa105467@collabora.com>
  <1622853816.mokf23xgnt.astroid@bobo.none>
@@ -58,8 +58,9 @@ References: <1622799088.hsuspipe84.astroid@bobo.none>
  <YL9Q2tKLZP6GKbHW@kroah.com>
  <8fa8b7fd-58ae-9467-138d-4ff4f32f68f7@gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
 Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 In-Reply-To: <8fa8b7fd-58ae-9467-138d-4ff4f32f68f7@gmail.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
@@ -90,14 +91,35 @@ On Tue, Jun 08, 2021 at 03:06:48PM +0300, Andrey Semashev wrote:
 > If I'm not mistaken, some syscalls were dropped from kernel in the past,
 > after it was established they are no longer used. So it is not impossible,
 > though might be more difficult specifically with futex.
+> 
+> > Best of all would be if internally your "futex2" code would replace the
+> > "futex1" code so that there is no two different code bases.  That would
+> > be the only sane way forward, having 2 code bases to work with is just
+> > insane.
+> 
+> Yes, implementing futex1 in terms of futex2 internally is a possible way
+> forward. Though I'm not sure it is reasonable to require that to be done in
+> the initial futex2 submission. This requires all of the futex1 functionality
+> to implemented in futex2 from the start, which I think is too much to ask.
+> Even with some futex1 features missing, futex2 would be already very much
+> useful to users, and it is easier to implement the missing bits
+> incrementally over time.
 
-Those syscalls were all "compatible with other obsolete operating
-system" syscalls from what I remember.  You can still run binaries
-built in 1995 just fine on your system today (I have a few around here
-somewhere...)
+Then do it the other way around, as Peter points out.
 
-Thinking that you can drop futex() in the next 10+ years is very wishful
-thinking given just how slow userspace applications are ever updated,
-sorry.
+> > So what's keeping the futex2 code from doing all that futex1 does so
+> > that the futex1 code can be deleted internally?
+> 
+> I think, André will answer this, but my guess is, as stated above, this is a
+> lot of work and time while the intermediate version is already useful.
+
+useful to who?  I still do not understand what users will be needing
+this.  All I can tell is a single userspace program wants to use it, and
+that is a fork from the real project it was based on and that the
+maintainers have no plan to merge it back.
+
+So who does need/want this?
+
+thanks,
 
 greg k-h
