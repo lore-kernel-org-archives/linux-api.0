@@ -5,42 +5,42 @@ X-Spam-Level:
 X-Spam-Status: No, score=-15.9 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0ED14C48BE5
-	for <linux-api@archiver.kernel.org>; Thu, 17 Jun 2021 18:25:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DE3CDC49EA3
+	for <linux-api@archiver.kernel.org>; Thu, 17 Jun 2021 18:25:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id EE95F613AA
-	for <linux-api@archiver.kernel.org>; Thu, 17 Jun 2021 18:25:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CCB91613EC
+	for <linux-api@archiver.kernel.org>; Thu, 17 Jun 2021 18:25:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233721AbhFQS1M (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 17 Jun 2021 14:27:12 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:60369 "EHLO
+        id S233751AbhFQS1U (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 17 Jun 2021 14:27:20 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:29062 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S233634AbhFQS0d (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 17 Jun 2021 14:26:33 -0400
+        by vger.kernel.org with ESMTP id S233648AbhFQS0j (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 17 Jun 2021 14:26:39 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1623954264;
+        s=mimecast20190719; t=1623954269;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=dzl9SMlyXCGzopav/TONWaUCuHf1BrQZlwHMjgB8AS8=;
-        b=Ap+QK3uBarxI2FOU9X32Id8o/m2lxlEl0zMr6n2/kNex6+QFJTTQhZeqmUEHP0ORC+42F3
-        Wsdy3imiSYR6McBwF8qtaVdwSgDNK7co4P3B3/hTIK3sIJpGeJ6v8Xcyy3W0AMMdDSTPUx
-        4gOIzyYLdTu1pdOS/VUj1wgwBqYwkR8=
+        bh=OKZ79TMn7nNOmPGpyBhp062PBF7LikzSjmo8J8Xk8IM=;
+        b=MFPzjs+6p9ZsLuG62ecrgUhYtHa9Woybn3vAPJc4v6p4yTnqM6PDfMwXymD/WFG4oa7ke4
+        mm9OR6P4+UlK7uJPG6k6I3M/rhKIyXipxlKL9iBZhn01+W+tVMO47kGmHTvugdWKUdQYVI
+        Tvz2xME87EZAKCU7S8PPf7l0S/pqWao=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-104-Gu8BfsNbPwyyre1mfBHhxQ-1; Thu, 17 Jun 2021 14:24:21 -0400
-X-MC-Unique: Gu8BfsNbPwyyre1mfBHhxQ-1
+ us-mta-238-QhaejByGPRuUjc9v-Ng6cQ-1; Thu, 17 Jun 2021 14:24:28 -0400
+X-MC-Unique: QhaejByGPRuUjc9v-Ng6cQ-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7D683100C619;
-        Thu, 17 Jun 2021 18:24:16 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 84E12107ACF6;
+        Thu, 17 Jun 2021 18:24:23 +0000 (UTC)
 Received: from virtlab719.virt.lab.eng.bos.redhat.com (virtlab719.virt.lab.eng.bos.redhat.com [10.19.153.15])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id C965B9F64;
-        Thu, 17 Jun 2021 18:24:12 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 226EB60C05;
+        Thu, 17 Jun 2021 18:24:20 +0000 (UTC)
 From:   Nitesh Narayan Lal <nitesh@redhat.com>
 To:     linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org,
         intel-wired-lan@lists.osuosl.org, netdev@vger.kernel.org,
@@ -65,9 +65,9 @@ To:     linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org,
         luobin9@huawei.com, ajit.khaparde@broadcom.com,
         sriharsha.basavapatna@broadcom.com, somnath.kotur@broadcom.com,
         nilal@redhat.com
-Subject: [PATCH v1 09/14] ixgbe: Use irq_update_affinity_hint
-Date:   Thu, 17 Jun 2021 14:22:37 -0400
-Message-Id: <20210617182242.8637-10-nitesh@redhat.com>
+Subject: [PATCH v1 11/14] scsi: lpfc: Use irq_set_affinity
+Date:   Thu, 17 Jun 2021 14:22:39 -0400
+Message-Id: <20210617182242.8637-12-nitesh@redhat.com>
 In-Reply-To: <20210617182242.8637-1-nitesh@redhat.com>
 References: <20210617182242.8637-1-nitesh@redhat.com>
 MIME-Version: 1.0
@@ -77,53 +77,60 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The driver uses irq_set_affinity_hint() to update the affinity_hint mask
-that is consumed by the userspace to distribute the interrupts. However,
-under the hood irq_set_affinity_hint() also applies the provided cpumask
-(if not NULL) as the affinity for the given interrupt which is an
-undocumented side effect.
+The driver uses irq_set_affinity_hint to set the affinity for the lpfc
+interrupts to a mask corresponding to the local NUMA node to avoid
+performance overhead on AMD architectures.
 
-To remove this side effect irq_set_affinity_hint() has been marked
-as deprecated and new interfaces have been introduced. Hence, replace the
-irq_set_affinity_hint() with the new interface irq_update_affinity_hint()
-that only updates the affinity_hint pointer.
+However, irq_set_affinity_hint() setting the affinity is an undocumented
+side effect that this function also sets the affinity under the hood.
+To remove this side effect irq_set_affinity_hint() has been marked as
+deprecated and new interfaces have been introduced.
+
+Also, as per the commit dcaa21367938 ("scsi: lpfc: Change default IRQ model
+on AMD architectures"):
+"On AMD architecture, revert the irq allocation to the normal style
+(non-managed) and then use irq_set_affinity_hint() to set the cpu affinity
+and disable user-space rebalancing."
+we don't really need to set the affinity_hint as user-space rebalancing for
+the lpfc interrupts is not desired.
+
+Hence, replace the irq_set_affinity_hint() with irq_set_affinity() which
+only applies the affinity for the interrupts.
 
 Signed-off-by: Nitesh Narayan Lal <nitesh@redhat.com>
 ---
- drivers/net/ethernet/intel/ixgbe/ixgbe_main.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ drivers/scsi/lpfc/lpfc_init.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-diff --git a/drivers/net/ethernet/intel/ixgbe/ixgbe_main.c b/drivers/net/ethernet/intel/ixgbe/ixgbe_main.c
-index 2ac5b82676f3..b66040319bc6 100644
---- a/drivers/net/ethernet/intel/ixgbe/ixgbe_main.c
-+++ b/drivers/net/ethernet/intel/ixgbe/ixgbe_main.c
-@@ -3243,7 +3243,7 @@ static int ixgbe_request_msix_irqs(struct ixgbe_adapter *adapter)
- 		/* If Flow Director is enabled, set interrupt affinity */
- 		if (adapter->flags & IXGBE_FLAG_FDIR_HASH_CAPABLE) {
- 			/* assign the mask for this irq */
--			irq_set_affinity_hint(entry->vector,
-+			irq_update_affinity_hint(entry->vector,
- 					      &q_vector->affinity_mask);
+diff --git a/drivers/scsi/lpfc/lpfc_init.c b/drivers/scsi/lpfc/lpfc_init.c
+index 5f018d02bf56..d6e48414018d 100644
+--- a/drivers/scsi/lpfc/lpfc_init.c
++++ b/drivers/scsi/lpfc/lpfc_init.c
+@@ -11360,7 +11360,7 @@ lpfc_irq_set_aff(struct lpfc_hba_eq_hdl *eqhdl, unsigned int cpu)
+ 	cpumask_clear(&eqhdl->aff_mask);
+ 	cpumask_set_cpu(cpu, &eqhdl->aff_mask);
+ 	irq_set_status_flags(eqhdl->irq, IRQ_NO_BALANCING);
+-	irq_set_affinity_hint(eqhdl->irq, &eqhdl->aff_mask);
++	irq_set_affinity(eqhdl->irq, &eqhdl->aff_mask);
+ }
+ 
+ /**
+@@ -11649,7 +11649,6 @@ lpfc_sli4_enable_msix(struct lpfc_hba *phba)
+ 	for (--index; index >= 0; index--) {
+ 		eqhdl = lpfc_get_eq_hdl(index);
+ 		lpfc_irq_clear_aff(eqhdl);
+-		irq_set_affinity_hint(eqhdl->irq, NULL);
+ 		free_irq(eqhdl->irq, eqhdl);
+ 	}
+ 
+@@ -11810,7 +11809,6 @@ lpfc_sli4_disable_intr(struct lpfc_hba *phba)
+ 		for (index = 0; index < phba->cfg_irq_chann; index++) {
+ 			eqhdl = lpfc_get_eq_hdl(index);
+ 			lpfc_irq_clear_aff(eqhdl);
+-			irq_set_affinity_hint(eqhdl->irq, NULL);
+ 			free_irq(eqhdl->irq, eqhdl);
  		}
- 	}
-@@ -3260,7 +3260,7 @@ static int ixgbe_request_msix_irqs(struct ixgbe_adapter *adapter)
- free_queue_irqs:
- 	while (vector) {
- 		vector--;
--		irq_set_affinity_hint(adapter->msix_entries[vector].vector,
-+		irq_update_affinity_hint(adapter->msix_entries[vector].vector,
- 				      NULL);
- 		free_irq(adapter->msix_entries[vector].vector,
- 			 adapter->q_vector[vector]);
-@@ -3394,7 +3394,7 @@ static void ixgbe_free_irq(struct ixgbe_adapter *adapter)
- 			continue;
- 
- 		/* clear the affinity_mask in the IRQ descriptor */
--		irq_set_affinity_hint(entry->vector, NULL);
-+		irq_update_affinity_hint(entry->vector, NULL);
- 
- 		free_irq(entry->vector, q_vector);
- 	}
+ 	} else {
 -- 
 2.27.0
 
