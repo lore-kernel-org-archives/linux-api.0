@@ -6,24 +6,24 @@ X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED,USER_AGENT_SANE_2 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BAD13C48BDF
-	for <linux-api@archiver.kernel.org>; Fri, 18 Jun 2021 15:34:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1B2C6C48BE8
+	for <linux-api@archiver.kernel.org>; Fri, 18 Jun 2021 15:36:43 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9D38D613ED
-	for <linux-api@archiver.kernel.org>; Fri, 18 Jun 2021 15:34:58 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E1B2B61205
+	for <linux-api@archiver.kernel.org>; Fri, 18 Jun 2021 15:36:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233714AbhFRPhG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 18 Jun 2021 11:37:06 -0400
-Received: from mail.kernel.org ([198.145.29.99]:60050 "EHLO mail.kernel.org"
+        id S235553AbhFRPiv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 18 Jun 2021 11:38:51 -0400
+Received: from mail.kernel.org ([198.145.29.99]:60522 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229768AbhFRPhF (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Fri, 18 Jun 2021 11:37:05 -0400
+        id S235536AbhFRPiu (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Fri, 18 Jun 2021 11:38:50 -0400
 Received: from oasis.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 6B96961205;
-        Fri, 18 Jun 2021 15:34:54 +0000 (UTC)
-Date:   Fri, 18 Jun 2021 11:34:52 -0400
+        by mail.kernel.org (Postfix) with ESMTPSA id 5D26B610A2;
+        Fri, 18 Jun 2021 15:36:39 +0000 (UTC)
+Date:   Fri, 18 Jun 2021 11:36:37 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     Geert Uytterhoeven <geert@linux-m68k.org>
 Cc:     Matthew Wilcox <willy@infradead.org>,
@@ -43,8 +43,8 @@ Cc:     Matthew Wilcox <willy@infradead.org>,
         Linux-Arch <linux-arch@vger.kernel.org>,
         Linux API <linux-api@vger.kernel.org>
 Subject: Re: Maintainers / Kernel Summit 2021 planning kick-off
-Message-ID: <20210618113452.7ab0033e@oasis.local.home>
-In-Reply-To: <CAMuHMdWqUkfe7kdBO+eQdXHzhpygH=TivOBNqQJujyqP=wM5cw@mail.gmail.com>
+Message-ID: <20210618113637.5890bbcf@oasis.local.home>
+In-Reply-To: <20210618113452.7ab0033e@oasis.local.home>
 References: <5038827c-463f-232d-4dec-da56c71089bd@metux.net>
         <20210610182318.jrxe3avfhkqq7xqn@nitro.local>
         <YMJcdbRaQYAgI9ER@pendragon.ideasonboard.com>
@@ -57,6 +57,7 @@ References: <5038827c-463f-232d-4dec-da56c71089bd@metux.net>
         <CAMuHMdWK4NPzanF68TMVuihLFdRzxhs0EkbZdaA=BUkZo-k6QQ@mail.gmail.com>
         <YMy4UjWH565ElFtZ@casper.infradead.org>
         <CAMuHMdWqUkfe7kdBO+eQdXHzhpygH=TivOBNqQJujyqP=wM5cw@mail.gmail.com>
+        <20210618113452.7ab0033e@oasis.local.home>
 X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
@@ -65,16 +66,16 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, 18 Jun 2021 17:29:04 +0200
-Geert Uytterhoeven <geert@linux-m68k.org> wrote:
+On Fri, 18 Jun 2021 11:34:52 -0400
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-> W.r.t. the other speaker in the room, isn't that similar to the normal mic,
-> and can't that be handled at the receiving side?
-> There will be a bit more delay involved, though.
+> How many times have you been in a conference where the normal mic and
+> speaker caused a nasty feedback loop?
+> 
+> I'm not sure how well phone mics and room speakers will work.
 
-How many times have you been in a conference where the normal mic and
-speaker caused a nasty feedback loop?
-
-I'm not sure how well phone mics and room speakers will work.
+BTW, Don't take these criticisms as a rejection of your idea. I
+actually like the idea. But to implement it, we need to go through all
+the scenarios that will likely go wrong, if we want it to work.
 
 -- Steve
