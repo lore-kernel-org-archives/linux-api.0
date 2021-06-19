@@ -2,124 +2,119 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.5 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 938FCC2B9F4
-	for <linux-api@archiver.kernel.org>; Sat, 19 Jun 2021 09:35:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2206BC2B9F4
+	for <linux-api@archiver.kernel.org>; Sat, 19 Jun 2021 15:16:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 736176113C
-	for <linux-api@archiver.kernel.org>; Sat, 19 Jun 2021 09:35:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 00BBF61264
+	for <linux-api@archiver.kernel.org>; Sat, 19 Jun 2021 15:16:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230430AbhFSJhr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 19 Jun 2021 05:37:47 -0400
-Received: from pegase1.c-s.fr ([93.17.236.30]:1921 "EHLO pegase1.c-s.fr"
+        id S234540AbhFSPSi (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 19 Jun 2021 11:18:38 -0400
+Received: from gate.crashing.org ([63.228.1.57]:59443 "EHLO gate.crashing.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229521AbhFSJhr (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Sat, 19 Jun 2021 05:37:47 -0400
-Received: from localhost (mailhub3.si.c-s.fr [192.168.12.233])
-        by localhost (Postfix) with ESMTP id 4G6VyZ7271zBCrT;
-        Sat, 19 Jun 2021 11:35:34 +0200 (CEST)
-X-Virus-Scanned: amavisd-new at c-s.fr
-Received: from pegase1.c-s.fr ([192.168.12.234])
-        by localhost (pegase1.c-s.fr [127.0.0.1]) (amavisd-new, port 10024)
-        with ESMTP id RMgoAH-W2QMk; Sat, 19 Jun 2021 11:35:34 +0200 (CEST)
-Received: from messagerie.si.c-s.fr (messagerie.si.c-s.fr [192.168.25.192])
-        by pegase1.c-s.fr (Postfix) with ESMTP id 4G6VyZ5z1fzBCpZ;
-        Sat, 19 Jun 2021 11:35:34 +0200 (CEST)
-Received: from localhost (localhost [127.0.0.1])
-        by messagerie.si.c-s.fr (Postfix) with ESMTP id 8790E8B76C;
-        Sat, 19 Jun 2021 11:35:34 +0200 (CEST)
-X-Virus-Scanned: amavisd-new at c-s.fr
-Received: from messagerie.si.c-s.fr ([127.0.0.1])
-        by localhost (messagerie.si.c-s.fr [127.0.0.1]) (amavisd-new, port 10023)
-        with ESMTP id JVPRvw2P2n4I; Sat, 19 Jun 2021 11:35:34 +0200 (CEST)
-Received: from [192.168.4.90] (unknown [192.168.4.90])
-        by messagerie.si.c-s.fr (Postfix) with ESMTP id 462238B763;
-        Sat, 19 Jun 2021 11:35:33 +0200 (CEST)
-Subject: Re: [PATCH for 4.16 v7 02/11] powerpc: membarrier: Skip memory
- barrier in switch_mm()
-To:     Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc:     Ingo Molnar <mingo@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
+        id S234128AbhFSPSh (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sat, 19 Jun 2021 11:18:37 -0400
+Received: from gate.crashing.org (localhost.localdomain [127.0.0.1])
+        by gate.crashing.org (8.14.1/8.14.1) with ESMTP id 15JF26n5018966;
+        Sat, 19 Jun 2021 10:02:07 -0500
+Received: (from segher@localhost)
+        by gate.crashing.org (8.14.1/8.14.1/Submit) id 15JF2288018951;
+        Sat, 19 Jun 2021 10:02:02 -0500
+X-Authentication-Warning: gate.crashing.org: segher set sender to segher@kernel.crashing.org using -f
+Date:   Sat, 19 Jun 2021 10:02:02 -0500
+From:   Segher Boessenkool <segher@kernel.crashing.org>
+To:     Christophe Leroy <christophe.leroy@csgroup.eu>
+Cc:     Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
         maged michael <maged.michael@gmail.com>,
+        Peter Zijlstra <peterz@infradead.org>,
         Dave Watson <davejwatson@fb.com>,
         Will Deacon <will.deacon@arm.com>,
-        "Russell King, ARM Linux" <linux@armlinux.org.uk>,
-        David Sehr <sehr@google.com>,
+        Andrew Hunter <ahh@google.com>, David Sehr <sehr@google.com>,
         Paul Mackerras <paulus@samba.org>,
         "H. Peter Anvin" <hpa@zytor.com>,
         linux-arch <linux-arch@vger.kernel.org>, x86 <x86@kernel.org>,
-        Andrew Hunter <ahh@google.com>,
+        "Russell King, ARM Linux" <linux@armlinux.org.uk>,
         Greg Hackmann <ghackmann@google.com>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Ingo Molnar <mingo@redhat.com>,
         Alan Stern <stern@rowland.harvard.edu>,
         Paul <paulmck@linux.vnet.ibm.com>,
         Andrea Parri <parri.andrea@gmail.com>,
         Avi Kivity <avi@scylladb.com>,
         Boqun Feng <boqun.feng@gmail.com>,
-        linuxppc-dev <linuxppc-dev@lists.ozlabs.org>,
         Nicholas Piggin <npiggin@gmail.com>,
         Alexander Viro <viro@zeniv.linux.org.uk>,
         Andy Lutomirski <luto@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
         linux-api <linux-api@vger.kernel.org>,
         linux-kernel <linux-kernel@vger.kernel.org>,
-        Linus Torvalds <torvalds@linux-foundation.org>
-References: <20180129202020.8515-1-mathieu.desnoyers@efficios.com>
- <20180129202020.8515-3-mathieu.desnoyers@efficios.com>
- <8b200dd5-f37b-b208-82fb-2775df7bcd49@csgroup.eu>
- <2077369633.12794.1624037192994.JavaMail.zimbra@efficios.com>
-From:   Christophe Leroy <christophe.leroy@csgroup.eu>
-Message-ID: <4d2026cc-28e1-7781-fc95-e6160bd8db86@csgroup.eu>
-Date:   Sat, 19 Jun 2021 11:35:34 +0200
-User-Agent: Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:78.0) Gecko/20100101
- Thunderbird/78.11.0
-MIME-Version: 1.0
-In-Reply-To: <2077369633.12794.1624037192994.JavaMail.zimbra@efficios.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: fr
+        linuxppc-dev <linuxppc-dev@lists.ozlabs.org>
+Subject: Re: [PATCH for 4.16 v7 02/11] powerpc: membarrier: Skip memory barrier in switch_mm()
+Message-ID: <20210619150202.GZ5077@gate.crashing.org>
+References: <20180129202020.8515-1-mathieu.desnoyers@efficios.com> <20180129202020.8515-3-mathieu.desnoyers@efficios.com> <8b200dd5-f37b-b208-82fb-2775df7bcd49@csgroup.eu> <2077369633.12794.1624037192994.JavaMail.zimbra@efficios.com> <4d2026cc-28e1-7781-fc95-e6160bd8db86@csgroup.eu>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
+In-Reply-To: <4d2026cc-28e1-7781-fc95-e6160bd8db86@csgroup.eu>
+User-Agent: Mutt/1.4.2.3i
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-
-
-Le 18/06/2021 Ã  19:26, Mathieu Desnoyers a Ã©critÂ :
-> ----- On Jun 18, 2021, at 1:13 PM, Christophe Leroy christophe.leroy@csgroup.eu wrote:
-> [...]
->>
->> I don't understand all that complexity to just replace a simple
->> 'smp_mb__after_unlock_lock()'.
->>
->> #define smp_mb__after_unlock_lock()	smp_mb()
->> #define smp_mb()	barrier()
->> # define barrier() __asm__ __volatile__("": : :"memory")
->>
->>
->> Am I missing some subtility ?
+On Sat, Jun 19, 2021 at 11:35:34AM +0200, Christophe Leroy wrote:
 > 
-> On powerpc CONFIG_SMP, smp_mb() is actually defined as:
 > 
-> #define smp_mb()        __smp_mb()
-> #define __smp_mb()      mb()
-> #define mb()   __asm__ __volatile__ ("sync" : : : "memory")
+> Le 18/06/2021 à 19:26, Mathieu Desnoyers a écrit :
+> >----- On Jun 18, 2021, at 1:13 PM, Christophe Leroy 
+> >christophe.leroy@csgroup.eu wrote:
+> >[...]
+> >>
+> >>I don't understand all that complexity to just replace a simple
+> >>'smp_mb__after_unlock_lock()'.
+> >>
+> >>#define smp_mb__after_unlock_lock()	smp_mb()
+> >>#define smp_mb()	barrier()
+> >># define barrier() __asm__ __volatile__("": : :"memory")
+> >>
+> >>
+> >>Am I missing some subtility ?
+> >
+> >On powerpc CONFIG_SMP, smp_mb() is actually defined as:
+> >
+> >#define smp_mb()        __smp_mb()
+> >#define __smp_mb()      mb()
+> >#define mb()   __asm__ __volatile__ ("sync" : : : "memory")
+> >
+> >So the original motivation here was to skip a "sync" instruction whenever
+> >switching between threads which are part of the same process. But based on
+> >recent discussions, I suspect my implementation may be inaccurately doing
+> >so though.
+> >
 > 
-> So the original motivation here was to skip a "sync" instruction whenever
-> switching between threads which are part of the same process. But based on
-> recent discussions, I suspect my implementation may be inaccurately doing
-> so though.
+> I see.
 > 
+> Then, if you think a 'sync' is a concern, shouldn't we try and remove the 
+> forest of 'sync' in the I/O accessors ?
+> 
+> I can't really understand why we need all those 'sync' and 'isync' and 
+> 'twi' around the accesses whereas I/O memory is usually mapped as 'Guarded' 
+> so memory access ordering is already garantied.
+> 
+> I'm sure we'll save a lot with that.
 
-I see.
+The point of the twi in the I/O accessors was to make things easier to
+debug if the accesses fail: for the twi insn to complete the load will
+have to have completed as well.  On a correctly working system you never
+should need this (until something fails ;-) )
 
-Then, if you think a 'sync' is a concern, shouldn't we try and remove the forest of 'sync' in the 
-I/O accessors ?
+Without the twi you might need to enforce ordering in some cases still.
+The twi is a very heavy hammer, but some of that that gives us is no
+doubt actually needed.
 
-I can't really understand why we need all those 'sync' and 'isync' and 'twi' around the accesses 
-whereas I/O memory is usually mapped as 'Guarded' so memory access ordering is already garantied.
 
-I'm sure we'll save a lot with that.
-
-Christophe
+Segher
