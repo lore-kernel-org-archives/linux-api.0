@@ -3,118 +3,122 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2206BC2B9F4
-	for <linux-api@archiver.kernel.org>; Sat, 19 Jun 2021 15:16:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 12555C48BE5
+	for <linux-api@archiver.kernel.org>; Mon, 21 Jun 2021 07:11:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 00BBF61264
-	for <linux-api@archiver.kernel.org>; Sat, 19 Jun 2021 15:16:27 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E231C611C0
+	for <linux-api@archiver.kernel.org>; Mon, 21 Jun 2021 07:11:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234540AbhFSPSi (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 19 Jun 2021 11:18:38 -0400
-Received: from gate.crashing.org ([63.228.1.57]:59443 "EHLO gate.crashing.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S234128AbhFSPSh (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Sat, 19 Jun 2021 11:18:37 -0400
-Received: from gate.crashing.org (localhost.localdomain [127.0.0.1])
-        by gate.crashing.org (8.14.1/8.14.1) with ESMTP id 15JF26n5018966;
-        Sat, 19 Jun 2021 10:02:07 -0500
-Received: (from segher@localhost)
-        by gate.crashing.org (8.14.1/8.14.1/Submit) id 15JF2288018951;
-        Sat, 19 Jun 2021 10:02:02 -0500
-X-Authentication-Warning: gate.crashing.org: segher set sender to segher@kernel.crashing.org using -f
-Date:   Sat, 19 Jun 2021 10:02:02 -0500
-From:   Segher Boessenkool <segher@kernel.crashing.org>
-To:     Christophe Leroy <christophe.leroy@csgroup.eu>
-Cc:     Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        maged michael <maged.michael@gmail.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Dave Watson <davejwatson@fb.com>,
-        Will Deacon <will.deacon@arm.com>,
-        Andrew Hunter <ahh@google.com>, David Sehr <sehr@google.com>,
-        Paul Mackerras <paulus@samba.org>,
-        "H. Peter Anvin" <hpa@zytor.com>,
-        linux-arch <linux-arch@vger.kernel.org>, x86 <x86@kernel.org>,
-        "Russell King, ARM Linux" <linux@armlinux.org.uk>,
-        Greg Hackmann <ghackmann@google.com>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Ingo Molnar <mingo@redhat.com>,
-        Alan Stern <stern@rowland.harvard.edu>,
-        Paul <paulmck@linux.vnet.ibm.com>,
-        Andrea Parri <parri.andrea@gmail.com>,
-        Avi Kivity <avi@scylladb.com>,
-        Boqun Feng <boqun.feng@gmail.com>,
-        Nicholas Piggin <npiggin@gmail.com>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        Andy Lutomirski <luto@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        linux-api <linux-api@vger.kernel.org>,
-        linux-kernel <linux-kernel@vger.kernel.org>,
-        linuxppc-dev <linuxppc-dev@lists.ozlabs.org>
-Subject: Re: [PATCH for 4.16 v7 02/11] powerpc: membarrier: Skip memory barrier in switch_mm()
-Message-ID: <20210619150202.GZ5077@gate.crashing.org>
-References: <20180129202020.8515-1-mathieu.desnoyers@efficios.com> <20180129202020.8515-3-mathieu.desnoyers@efficios.com> <8b200dd5-f37b-b208-82fb-2775df7bcd49@csgroup.eu> <2077369633.12794.1624037192994.JavaMail.zimbra@efficios.com> <4d2026cc-28e1-7781-fc95-e6160bd8db86@csgroup.eu>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
+        id S229790AbhFUHNz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 21 Jun 2021 03:13:55 -0400
+Received: from relay1-d.mail.gandi.net ([217.70.183.193]:13573 "EHLO
+        relay1-d.mail.gandi.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229597AbhFUHNy (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 21 Jun 2021 03:13:54 -0400
+Received: (Authenticated sender: alex@ghiti.fr)
+        by relay1-d.mail.gandi.net (Postfix) with ESMTPSA id 437B6240008;
+        Mon, 21 Jun 2021 07:11:38 +0000 (UTC)
+Subject: Re: [PATCH] riscv: Bump COMMAND_LINE_SIZE value to 1024
+To:     Palmer Dabbelt <palmer@dabbelt.com>, macro@orcam.me.uk
+Cc:     david.abdurachmanov@gmail.com, dvyukov@google.com,
+        Paul Walmsley <paul.walmsley@sifive.com>,
+        linux-api@vger.kernel.org, linux-riscv@lists.infradead.org,
+        linux-kernel@vger.kernel.org
+References: <mhng-9e6b4607-6bea-411c-b843-916c1e0798ee@palmerdabbelt-glaptop>
+From:   Alex Ghiti <alex@ghiti.fr>
+Message-ID: <182c1d4e-a117-79d6-4dd1-8e3c8a447b4a@ghiti.fr>
+Date:   Mon, 21 Jun 2021 09:11:37 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Thunderbird/78.11.0
+MIME-Version: 1.0
+In-Reply-To: <mhng-9e6b4607-6bea-411c-b843-916c1e0798ee@palmerdabbelt-glaptop>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Language: fr
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <4d2026cc-28e1-7781-fc95-e6160bd8db86@csgroup.eu>
-User-Agent: Mutt/1.4.2.3i
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Sat, Jun 19, 2021 at 11:35:34AM +0200, Christophe Leroy wrote:
-> 
-> 
-> Le 18/06/2021 à 19:26, Mathieu Desnoyers a écrit :
-> >----- On Jun 18, 2021, at 1:13 PM, Christophe Leroy 
-> >christophe.leroy@csgroup.eu wrote:
-> >[...]
-> >>
-> >>I don't understand all that complexity to just replace a simple
-> >>'smp_mb__after_unlock_lock()'.
-> >>
-> >>#define smp_mb__after_unlock_lock()	smp_mb()
-> >>#define smp_mb()	barrier()
-> >># define barrier() __asm__ __volatile__("": : :"memory")
-> >>
-> >>
-> >>Am I missing some subtility ?
-> >
-> >On powerpc CONFIG_SMP, smp_mb() is actually defined as:
-> >
-> >#define smp_mb()        __smp_mb()
-> >#define __smp_mb()      mb()
-> >#define mb()   __asm__ __volatile__ ("sync" : : : "memory")
-> >
-> >So the original motivation here was to skip a "sync" instruction whenever
-> >switching between threads which are part of the same process. But based on
-> >recent discussions, I suspect my implementation may be inaccurately doing
-> >so though.
-> >
-> 
-> I see.
-> 
-> Then, if you think a 'sync' is a concern, shouldn't we try and remove the 
-> forest of 'sync' in the I/O accessors ?
-> 
-> I can't really understand why we need all those 'sync' and 'isync' and 
-> 'twi' around the accesses whereas I/O memory is usually mapped as 'Guarded' 
-> so memory access ordering is already garantied.
-> 
-> I'm sure we'll save a lot with that.
+Hi Palmer,
 
-The point of the twi in the I/O accessors was to make things easier to
-debug if the accesses fail: for the twi insn to complete the load will
-have to have completed as well.  On a correctly working system you never
-should need this (until something fails ;-) )
+Le 23/04/2021 à 04:57, Palmer Dabbelt a écrit :
+> On Fri, 02 Apr 2021 11:33:30 PDT (-0700), macro@orcam.me.uk wrote:
+>> On Fri, 2 Apr 2021, David Abdurachmanov wrote:
+>>
+>>> > > >  This macro is exported as a part of the user API so it must 
+>>> not depend on
+>>> > > > Kconfig.  Also changing it (rather than say adding 
+>>> COMMAND_LINE_SIZE_V2 or
+>>> > > > switching to an entirely new data object that has its dimension 
+>>> set in a
+>>> > > > different way) requires careful evaluation as external binaries 
+>>> have and
+>>> > > > will have the value it expands to compiled in, so it's a part 
+>>> of the ABI
+>>> > > > too.
+>>> > >
+>>> > > Thanks, I didn't realize this was part of the user BI.  In that 
+>>> case we
+>>> > > really can't chage it, so we'll have to sort out some other way 
+>>> do fix
+>>> > > whatever is going on.
+>>> > >
+>>> > > I've dropped this from fixes.
+>>> >
+>>> > Does increasing COMMAND_LINE_SIZE break user-space binaries? I would
+>>> > expect it to work the same way as adding new enum values, or adding
+>>> > fields at the end of versioned structs, etc.
+>>> > I would assume the old bootloaders/etc will only support up to the
+>>> > old, smaller max command line size, while the kernel will support
+>>> > larger command line size, which is fine.
+>>> > However, if something copies /proc/cmdline into a fixed-size buffer
+>>> > and expects that to work, that will break... that's quite unfortunate
+>>> > user-space code... is it what we afraid of?
+>>> >
+>>> > Alternatively, could expose the same COMMAND_LINE_SIZE, but internally
+>>> > support a larger command line?
+>>>
+>>> Looking at kernel commit history I see PowerPC switched from 512 to
+>>> 2048, and I don't see complaints about the ABI on the mailing list.
+>>>
+>>> If COMMAND_LINE_SIZE is used by user space applications and we
+>>> increase it there shouldn't be problems. I would expect things to
+>>> work, but just get truncated boot args? That is the application will
+>>> continue only to look at the initial 512 chars.
+>>
+>>  The macro is in an include/uapi header, so it's exported to the userland
+>> and a part of the user API.  I don't know what the consequences are for
+>> the RISC-V port specifically, but it has raised my attention, and I think
+>> it has to be investigated.
+>>
+>>  Perhaps it's OK to change it after all, but you'd have to go through
+>> known/potential users of this macro.  I guess there shouldn't be that 
+>> many
+>> of them.
+>>
+>>  In any case it cannot depend on Kconfig, because the userland won't have
+>> access to the configuration, and then presumably wants to handle any and
+>> all.
+> 
+> It kind of feels to me like COMMAND_LINE_SIZE shouldn't have been part 
+> of the UABI to begin with.  I sent a patch to remove it from the 
+> asm-generic UABI, let's see if anyone knows of a reason it should be UABI:
+> 
+> https://lore.kernel.org/linux-arch/20210423025545.313965-1-palmer@dabbelt.com/T/#u 
 
-Without the twi you might need to enforce ordering in some cases still.
-The twi is a very heavy hammer, but some of that that gives us is no
-doubt actually needed.
+Arnd seemed to agree with you about removing COMMAND_LINE_SIZE from the 
+UABI, any progress on your side?
 
+Thanks,
 
-Segher
+Alex
+
+> 
+> 
+> _______________________________________________
+> linux-riscv mailing list
+> linux-riscv@lists.infradead.org
+> http://lists.infradead.org/mailman/listinfo/linux-riscv
