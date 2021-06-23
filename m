@@ -2,123 +2,158 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 927A4C48BC2
-	for <linux-api@archiver.kernel.org>; Wed, 23 Jun 2021 15:33:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 90C6DC4743C
+	for <linux-api@archiver.kernel.org>; Wed, 23 Jun 2021 17:49:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7C45461185
-	for <linux-api@archiver.kernel.org>; Wed, 23 Jun 2021 15:33:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 74EB060FD9
+	for <linux-api@archiver.kernel.org>; Wed, 23 Jun 2021 17:49:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231335AbhFWPf3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 23 Jun 2021 11:35:29 -0400
-Received: from mga06.intel.com ([134.134.136.31]:41782 "EHLO mga06.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229523AbhFWPf3 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 23 Jun 2021 11:35:29 -0400
-IronPort-SDR: YMuS9nuGLxL8LLqQTiY80Up+Ob/nNJLwF02gacMPFNR6hEN3EajS2GZu+wsEx+Y5K2YxNBsRlV
- hUolKam/m/+g==
-X-IronPort-AV: E=McAfee;i="6200,9189,10024"; a="268426912"
-X-IronPort-AV: E=Sophos;i="5.83,294,1616482800"; 
-   d="scan'208";a="268426912"
-Received: from orsmga001.jf.intel.com ([10.7.209.18])
-  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 23 Jun 2021 08:32:12 -0700
-IronPort-SDR: W1HMA8i/s2rN5aZx8bk9b+9s828Sw0whd/8ZPx4tuBdvKLPElclGhCLS5piu/a0/2cKrU5dqUR
- 7NiWM0b99ejg==
-X-IronPort-AV: E=Sophos;i="5.83,294,1616482800"; 
-   d="scan'208";a="487357324"
-Received: from eagelaga-mobl.amr.corp.intel.com (HELO [10.209.43.81]) ([10.209.43.81])
-  by orsmga001-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 23 Jun 2021 08:32:12 -0700
-Subject: Re: x86 CPU features detection for applications (and AMX)
-To:     Florian Weimer <fweimer@redhat.com>, libc-alpha@sourceware.org,
-        linux-api@vger.kernel.org, x86@kernel.org,
-        linux-arch@vger.kernel.org
-Cc:     "H.J. Lu" <hjl.tools@gmail.com>
-References: <87tulo39ms.fsf@oldenburg.str.redhat.com>
-From:   Dave Hansen <dave.hansen@intel.com>
-Autocrypt: addr=dave.hansen@intel.com; keydata=
- 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
- z5cecg==
-Message-ID: <e376bcb9-cd79-7665-5859-ae808dd286f1@intel.com>
-Date:   Wed, 23 Jun 2021 08:32:09 -0700
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.10.0
+        id S229882AbhFWRwM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 23 Jun 2021 13:52:12 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48626 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229873AbhFWRwM (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Jun 2021 13:52:12 -0400
+Received: from mail-pf1-x42a.google.com (mail-pf1-x42a.google.com [IPv6:2607:f8b0:4864:20::42a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6F755C061574
+        for <linux-api@vger.kernel.org>; Wed, 23 Jun 2021 10:49:54 -0700 (PDT)
+Received: by mail-pf1-x42a.google.com with SMTP id a127so2899427pfa.10
+        for <linux-api@vger.kernel.org>; Wed, 23 Jun 2021 10:49:54 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=osandov-com.20150623.gappssmtp.com; s=20150623;
+        h=date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to;
+        bh=jM0/fuoJEp0WkWTBlwHRuxABxUrsbCLb+UOcPsZzDds=;
+        b=EaFaRZeD7LoVMH2RK8LnQujTeHrf3HShJG6nud7YS9AFM2LyWRu9nlRhgySleurNFJ
+         89k2FjZZ+1tLjbMsXkS/ooPf6M9HQvKXIL+Mkw3KYj6p6qrdud1zgNCANmADJKYVwdRV
+         1OUG3SLqBe3Agx0wbc1+xvpqElw5lbCme44rHa5Vp/0td7HOlaNOnMZlfTmpPbMnnckE
+         rJMImg/0nTszugtZPNlBOgC8iGfy2ZPaOsgYUUha/fmZIWVsk47abfZLOiXwPYnxraNd
+         689WqI6VbSTO2sMCq5cKJTIzkbW7Bj4cH2TBDNRp/EHuwq2GgDsv0Dk8s9Y16l4wKB3Q
+         dMpw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=jM0/fuoJEp0WkWTBlwHRuxABxUrsbCLb+UOcPsZzDds=;
+        b=cEVqIBqyWUvT2YqQaaKnOzdGOlbFJ60jTTjjQVAp0CddcFDtDRhf1eIaUS3GQzLAmT
+         jl7d/Cw1als0MAENpzXC6onTenb/jFlBKJDBsDgfY2scxyD6IF60Lk1e/1Fad46W3Nak
+         FJn61BTsYaHaHsBp3ps2PTL2oCW3ultPuoRJ9KBeJSwWMVt4kR83vgOlSWmHGU/tobHt
+         h5e2sNxXAE738QerLbsBaJ5GgtVJ4WA1mhwQVjeEaUY/SMkhFVasCxTpNW/vW796A8Cp
+         AxQs8uiNZmNF9Xl9RL0HWMFQXl49SQkwypJmfRP++TtuDhDat4is5sq+4ZOpH6nDmybC
+         8wXg==
+X-Gm-Message-State: AOAM531RV6HYaJ7L0D1TXzHKVIga7Zt4PmPz+79WiNzIwVSYZz8kVxmL
+        xvn6B6mm3tcqETmpjtuXmxuoPkyXENAxKw==
+X-Google-Smtp-Source: ABdhPJwY3Rc0RaMhy2jttOviNOFzcgRD+TDNWD7DvxxKGlK9I4v47H14tspEa5h2Y2zaozqhlxe6Cw==
+X-Received: by 2002:a63:f13:: with SMTP id e19mr626162pgl.112.1624470593763;
+        Wed, 23 Jun 2021 10:49:53 -0700 (PDT)
+Received: from relinquished.localdomain ([2620:10d:c090:400::5:e167])
+        by smtp.gmail.com with ESMTPSA id kk4sm4385903pjb.50.2021.06.23.10.49.52
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 23 Jun 2021 10:49:53 -0700 (PDT)
+Date:   Wed, 23 Jun 2021 10:49:51 -0700
+From:   Omar Sandoval <osandov@osandov.com>
+To:     Linus Torvalds <torvalds@linux-foundation.org>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Dave Chinner <david@fromorbit.com>
+Cc:     linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        linux-btrfs <linux-btrfs@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        Kernel Team <kernel-team@fb.com>,
+        Dave Chinner <dchinner@redhat.com>
+Subject: Re: [PATCH RESEND x3 v9 1/9] iov_iter: add copy_struct_from_iter()
+Message-ID: <YNN0P4KWH+Uj7dTE@relinquished.localdomain>
+References: <YM0Q5/unrL6MFNCb@zeniv-ca.linux.org.uk>
+ <CAHk-=wjDhxnRaO8FU-fOEAF6WeTUsvaoz0+fr1tnJvRCfAaSCQ@mail.gmail.com>
+ <YM0Zu3XopJTGMIO5@relinquished.localdomain>
+ <YM0fFnMFSFpUb63U@zeniv-ca.linux.org.uk>
+ <YM09qaP3qATwoLTJ@relinquished.localdomain>
+ <YNDem7R6Yh4Wy9po@relinquished.localdomain>
+ <CAHk-=wh+-otnW30V7BUuBLF7Dg0mYaBTpdkH90Ov=zwLQorkQw@mail.gmail.com>
+ <YND6jOrku2JDgqjt@relinquished.localdomain>
+ <YND8p7ioQRfoWTOU@relinquished.localdomain>
+ <20210622220639.GH2419729@dread.disaster.area>
 MIME-Version: 1.0
-In-Reply-To: <87tulo39ms.fsf@oldenburg.str.redhat.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20210622220639.GH2419729@dread.disaster.area>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 6/23/21 8:04 AM, Florian Weimer wrote:
-> https://www.gnu.org/software/libc/manual/html_node/X86.html
-...
-> Previously kernel developers have expressed dismay that we didn't
-> coordinate the interface with them.  This is why I want raise this now.
+On Wed, Jun 23, 2021 at 08:06:39AM +1000, Dave Chinner wrote:
+> On Mon, Jun 21, 2021 at 01:55:03PM -0700, Omar Sandoval wrote:
+> > On Mon, Jun 21, 2021 at 01:46:04PM -0700, Omar Sandoval wrote:
+> > > On Mon, Jun 21, 2021 at 12:33:17PM -0700, Linus Torvalds wrote:
+> > > > On Mon, Jun 21, 2021 at 11:46 AM Omar Sandoval <osandov@osandov.com> wrote:
+> > > > >
+> > > > > How do we get the userspace size with the encoded_iov.size approach?
+> > > > > We'd have to read the size from the iov_iter before writing to the rest
+> > > > > of the iov_iter. Is it okay to mix the iov_iter as a source and
+> > > > > destination like this? From what I can tell, it's not intended to be
+> > > > > used like this.
+> > > > 
+> > > > I guess it could work that way, but yes, it's ugly as hell. And I
+> > > > really don't want a readv() system call - that should write to the
+> > > > result buffer - to first have to read from it.
+> > > > 
+> > > > So I think the original "just make it be the first iov entry" is the
+> > > > better approach, even if Al hates it.
+> > > > 
+> > > > Although I still get the feeling that using an ioctl is the *really*
+> > > > correct way to go. That was my first reaction to the series
+> > > > originally, and I still don't see why we'd have encoded data in a
+> > > > regular read/write path.
+> > > > 
+> > > > What was the argument against ioctl's, again?
+> > > 
+> > > The suggestion came from Dave Chinner here:
+> > > https://lore.kernel.org/linux-fsdevel/20190905021012.GL7777@dread.disaster.area/
+> > > 
+> > > His objection to an ioctl was two-fold:
+> > > 
+> > > 1. This interfaces looks really similar to normal read/write, so we
+> > >    should try to use the normal read/write interface for it. Perhaps
+> > >    this trouble with iov_iter has refuted that.
+> > > 2. The last time we had Btrfs-specific ioctls that eventually became
+> > >    generic (FIDEDUPERANGE and FICLONE{,RANGE}), the generalization was
+> > >    painful. Part of the problem with clone/dedupe was that the Btrfs
+> > >    ioctls were underspecified. I think I've done a better job of
+> > >    documenting all of the semantics and corner cases for the encoded I/O
+> > >    interface (and if not, I can address this). The other part of the
+> > >    problem is that there were various sanity checks in the normal
+> > >    read/write paths that were missed or drifted out of sync in the
+> > >    ioctls. That requires some vigilance going forward. Maybe starting
+> > >    this off as a generic (not Btrfs-specific) ioctl right off the bat
+> > >    will help.
+> > > 
+> > > If we do go the ioctl route, then we also have to decide how much of
+> > > preadv2/pwritev2 it should emulate. Should it use the fd offset, or
+> > > should that be an ioctl argument? Some of the RWF_ flags would be useful
+> > > for encoded I/O, too (RWF_DSYNC, RWF_SYNC, RWF_APPEND), should it
+> > > support those? These bring us back to Dave's first point.
+> > 
+> > Oops, I dropped Dave from the Cc list at some point. Adding him back
+> > now.
+> 
+> Fair summary. The only other thing that I'd add is this is an IO
+> interface that requires issuing physical IO. So if someone wants
+> high throughput for encoded IO, we really need AIO and/or io_uring
+> support, and we get that for free if we use readv2/writev2
+> interfaces.
+> 
+> Yes, it could be an ioctl() interface, but I think that this sort of
+> functionality is exactly what extensible syscalls like
+> preadv2/pwritev2 should be used for. It's a slight variant on normal
+> IO, and that's exactly what the RWF_* flags are intended to be used
+> for - allowing interesting per-IO variant behaviour without having
+> to completely re-implemnt the IO path via custom ioctls every time
+> we want slightly different functionality...
 
-This looks basically like someone dumped a bunch of CPUID bit values and
-exposed them to applications without considering whether applications
-would ever need them.  For instance, why would an app ever care about:
-
-	PKS – Protection keys for supervisor-mode pages.
-
-And how could glibc ever give applications accurate information about
-whether PKS "is supported by the operating system"?  It just plain
-doesn't know, or at least only knows from a really weak ABI like
-/proc/cpuinfo.
-
-It also doesn't seem to tell applications what they want which is, "can
-I, the application, *use* this feature?"
-
-> PS: Is it true that there is no public mailing list for Linux
-> discussions specific to x86?
-
-Yes.  I've asked recently for something x86-related, but folks were to
-concerned what I was asking for was too specific, which was more of a
-brainstorming place to put x86-specific RFC's.
-
-	https://subspace.kernel.org/lists.linux.dev.html
+Al, Linus, what do you think? Is there a path forward for this series as
+is? I'd be happy to have this functionality merged in any form, but I do
+think that this approach with preadv2/pwritev2 using iov_len is decent
+relative to the alternatives.
