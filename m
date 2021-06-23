@@ -2,78 +2,108 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_2 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 23C14C2B9F4
-	for <linux-api@archiver.kernel.org>; Wed, 23 Jun 2021 00:15:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 44AB2C48BE5
+	for <linux-api@archiver.kernel.org>; Wed, 23 Jun 2021 15:04:38 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CB1C761351
-	for <linux-api@archiver.kernel.org>; Wed, 23 Jun 2021 00:15:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 22C7E6115A
+	for <linux-api@archiver.kernel.org>; Wed, 23 Jun 2021 15:04:38 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229769AbhFWARz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 22 Jun 2021 20:17:55 -0400
-Received: from mail.kernel.org ([198.145.29.99]:45448 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229747AbhFWARy (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Tue, 22 Jun 2021 20:17:54 -0400
-Received: from rorschach.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        id S231229AbhFWPGy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 23 Jun 2021 11:06:54 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:42935 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S229523AbhFWPGx (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Jun 2021 11:06:53 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1624460675;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=eixFFTwOGQ1ExxeugHIxMEh4+ha/qgZf+CuKnD4kIYs=;
+        b=AVGS+inwY8e2vzKlrmU4zOoGsRkao5133w3cfNgzuWgmMYnctJUZp1UhM7JXUchRNw2bWV
+        1aOiKrWPPyRuyJi1FEZ3zAy2lEKR2u0jeMBUPV8tS+1PxIAmDoGvZWjnaDFczc+VE2Cbwe
+        Nghza12BfwFLs2A6DbvoD+YPOu5wLyA=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-506-Ke3j29BRNyiqdD_P-NaYnw-1; Wed, 23 Jun 2021 11:04:32 -0400
+X-MC-Unique: Ke3j29BRNyiqdD_P-NaYnw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 6F7F560E0B;
-        Wed, 23 Jun 2021 00:15:36 +0000 (UTC)
-Date:   Tue, 22 Jun 2021 20:15:34 -0400
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     Shuah Khan <skhan@linuxfoundation.org>
-Cc:     Laurent Pinchart <laurent.pinchart@ideasonboard.com>,
-        Konstantin Ryabitsev <konstantin@linuxfoundation.org>,
-        "Enrico Weigelt, metux IT consult" <lkml@metux.net>,
-        David Hildenbrand <david@redhat.com>,
-        James Bottomley <James.Bottomley@hansenpartnership.com>,
-        Greg KH <greg@kroah.com>, Christoph Lameter <cl@gentwo.de>,
-        Theodore Ts'o <tytso@mit.edu>, Jiri Kosina <jikos@kernel.org>,
-        ksummit@lists.linux.dev, linux-kernel@vger.kernel.org,
-        linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        linux-mm@kvack.org, netdev@vger.kernel.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org
-Subject: Re: Maintainers / Kernel Summit 2021 planning kick-off
-Message-ID: <20210622201534.53d3067b@rorschach.local.home>
-In-Reply-To: <66fce207-2602-6452-9216-01ebde656bcd@linuxfoundation.org>
-References: <YK+esqGjKaPb+b/Q@kroah.com>
-        <c46dbda64558ab884af060f405e3f067112b9c8a.camel@HansenPartnership.com>
-        <b32c8672-06ee-bf68-7963-10aeabc0596c@redhat.com>
-        <5038827c-463f-232d-4dec-da56c71089bd@metux.net>
-        <20210610182318.jrxe3avfhkqq7xqn@nitro.local>
-        <YMJcdbRaQYAgI9ER@pendragon.ideasonboard.com>
-        <20210610152633.7e4a7304@oasis.local.home>
-        <37e8d1a5-7c32-8e77-bb05-f851c87a1004@linuxfoundation.org>
-        <YMyjryXiAfKgS6BY@pendragon.ideasonboard.com>
-        <ae51f636-8fb5-20b7-bbc5-37e22edb9a02@linuxfoundation.org>
-        <YNJrZIMs7RvqRBSG@pendragon.ideasonboard.com>
-        <3bfbe45c-2356-6db0-e1b8-11b7e37ae858@linuxfoundation.org>
-        <66fce207-2602-6452-9216-01ebde656bcd@linuxfoundation.org>
-X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E4FF5100CA88;
+        Wed, 23 Jun 2021 15:04:30 +0000 (UTC)
+Received: from oldenburg.str.redhat.com (ovpn-112-211.ams2.redhat.com [10.36.112.211])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 8412660C05;
+        Wed, 23 Jun 2021 15:04:29 +0000 (UTC)
+From:   Florian Weimer <fweimer@redhat.com>
+To:     libc-alpha@sourceware.org, linux-api@vger.kernel.org,
+        x86@kernel.org, linux-arch@vger.kernel.org
+Cc:     "H.J. Lu" <hjl.tools@gmail.com>
+Subject: x86 CPU features detection for applications (and AMX)
+Date:   Wed, 23 Jun 2021 17:04:27 +0200
+Message-ID: <87tulo39ms.fsf@oldenburg.str.redhat.com>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.2 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, 22 Jun 2021 17:57:11 -0600
-Shuah Khan <skhan@linuxfoundation.org> wrote:
+We have an interface in glibc to query CPU features:
 
->  Correct. It will be impossible to participate and moderate in workshop
-> > setting. We have to ask for volunteers and nominate moderators ahead of
-> > time.
-> >   
-> 
-> Subsystems could seek volunteers from other subsystems perhaps ...
+  X86-specific Facilities
+  <https://www.gnu.org/software/libc/manual/html_node/X86.html>
 
-Right, this is exactly what I was thinking. I could moderate a GPU
-subsystem, and even though I'm know for speaking, I would keep my mouth
-shut for such a session, as I'm totally clueless when it comes to the
-GPU subsystem ;-)
+CPU_FEATURE_USABLE all preconditions for a feature are met,
+HAS_CPU_FEATURE means it's in silicon but possibly dormant.
+CPU_FEATURE_USABLE is supposed to look at XCR0, AT_HWCAP2 etc. before
+enabling the relevant bit (so it cannot pass through any unknown bits).
 
--- Steve
+It turns out we screwed up in the glibc 2.33 release the absolutely
+required headers weren't actually installed:
+
+  [PATCH] x86: Install <bits/platform/x86.h> [BZ #27958]
+  <https://sourceware.org/pipermail/libc-alpha/2021-June/127215.html>
+
+Given that the magic constants aren't available in any other way, this
+feature was completely unusable, so we can perhaps revisit it and switch
+to a different approach.
+
+Previously kernel developers have expressed dismay that we didn't
+coordinate the interface with them.  This is why I want raise this now.
+
+When we designed this glibc interface, we assumed that bits would be
+static during the life-time of the process, initialized at process
+start.  That follows the model of previous x86 CPU feature enablement.
+In the background, CPU_FEATURE_USABLE/HAS_CPU_FEATURE calls a function
+which returns a pointer to eight 32-bit words, based on the index passed
+to the function (out-of-range indidces return a pointer to zeros,
+enabling forward compatibility).  The macros then use a magic constants
+that encodes he lookup index and which of those 128 bits to extract to
+find that bit, plus the feature/usable choice.  This means that we
+*could* keep this interface unchanged if the kernel gives us a way to
+read up-to-date feature state from a 256 bit area (or at least 32 bit
+word) in thread-specific data.  Similar to what we have with
+set_robust_list and rseq today.
+
+This still wouldn't cover the enable/disable side, but at least it would
+work for CPU features which are modal and come and go.  The fact that we
+tell GCC to cache the returned pointer from that internal function, but
+not that the data is immutable works to our advantage here.
+
+On the other hand, maybe there is a way to give users a better
+interface.  Obviously we want to avoid a syscall for a simple CPU
+feature check.  And we also need something to enable/disable CPU
+features.
+
+Thanks,
+Florian
+
+PS: Is it true that there is no public mailing list for Linux
+discussions specific to x86?
+
