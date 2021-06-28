@@ -2,112 +2,94 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 705ADC11F64
-	for <linux-api@archiver.kernel.org>; Mon, 28 Jun 2021 19:26:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ED819C11F64
+	for <linux-api@archiver.kernel.org>; Mon, 28 Jun 2021 19:36:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5383161C99
-	for <linux-api@archiver.kernel.org>; Mon, 28 Jun 2021 19:26:28 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D249861361
+	for <linux-api@archiver.kernel.org>; Mon, 28 Jun 2021 19:36:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236502AbhF1T2x (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 28 Jun 2021 15:28:53 -0400
-Received: from mga17.intel.com ([192.55.52.151]:65365 "EHLO mga17.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233366AbhF1T2v (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 28 Jun 2021 15:28:51 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10029"; a="188399188"
-X-IronPort-AV: E=Sophos;i="5.83,306,1616482800"; 
-   d="scan'208";a="188399188"
-Received: from orsmga006.jf.intel.com ([10.7.209.51])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 28 Jun 2021 12:26:17 -0700
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.83,306,1616482800"; 
-   d="scan'208";a="407861781"
-Received: from irsmsx605.ger.corp.intel.com ([163.33.146.138])
-  by orsmga006.jf.intel.com with ESMTP; 28 Jun 2021 12:26:15 -0700
-Received: from tjmaciei-mobl1.localnet (10.212.206.236) by
- IRSMSX605.ger.corp.intel.com (163.33.146.138) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2242.4; Mon, 28 Jun 2021 20:26:12 +0100
-From:   Thiago Macieira <thiago.macieira@intel.com>
-To:     Peter Zijlstra <peterz@infradead.org>
-CC:     <fweimer@redhat.com>,
-        "Enrico Weigelt, metux IT consult" <lkml@metux.net>,
-        <hjl.tools@gmail.com>, <libc-alpha@sourceware.org>,
-        <linux-api@vger.kernel.org>, <linux-arch@vger.kernel.org>,
-        <x86@kernel.org>
-Subject: Re: x86 CPU features detection for applications (and AMX)
-Date:   Mon, 28 Jun 2021 12:26:09 -0700
-Message-ID: <4740900.uQJRkLF2SI@tjmaciei-mobl1>
-Organization: Intel Corporation
-In-Reply-To: <20210628190816.GC13401@worktop.programming.kicks-ass.net>
-References: <22261946.eFiGugXE7Z@tjmaciei-mobl1> <7968759.t5oPhm3B3B@tjmaciei-mobl1> <20210628190816.GC13401@worktop.programming.kicks-ass.net>
+        id S236555AbhF1Tia (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 28 Jun 2021 15:38:30 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48854 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S237004AbhF1Ti3 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 28 Jun 2021 15:38:29 -0400
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1EE24C061574;
+        Mon, 28 Jun 2021 12:36:03 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=gFOuyW3wyuM/PP9zDs6kHOxY1vtd3EJQ4+qFhD6k1H8=; b=raSjpWt4jQDzFP75XKdDSen7eF
+        SQMJWt/dhtS5EpCidxC94OF31jwKvNi3kmOoRCJH6GOx5QOix6lNKN0LWYYXjMuq1dx8uga9FDp+C
+        IPiEvu3afbmclCCZTx4TcC4f+BG3R2bWtn1JgmPIJbST1JCP4w2gD1m/xrA/jaZNHGYyKkQSfkJl7
+        roXWdTUJCoo6rFs6vs94BdzQUngDDg1G1tDbfJ9xB7YJvfGHvXVkj7Y2s22ap/v5WJzd3HYv3QH7+
+        5kPldy7NmRHqXIt5BqCqoys+qAqBk+LiZGCSJkRPqvvyPHRrPSI53ziY85xEJAf+gI3F9HgGxny4f
+        2BgZE/dQ==;
+Received: from willy by casper.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1lxx0h-003NPt-84; Mon, 28 Jun 2021 19:33:43 +0000
+Date:   Mon, 28 Jun 2021 20:33:35 +0100
+From:   Matthew Wilcox <willy@infradead.org>
+To:     Peter Collingbourne <pcc@google.com>
+Cc:     John Hubbard <jhubbard@nvidia.com>,
+        "Kirill A . Shutemov" <kirill@shutemov.name>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Evgenii Stepanov <eugenis@google.com>,
+        Jann Horn <jannh@google.com>,
+        Linux ARM <linux-arm-kernel@lists.infradead.org>,
+        linux-mm@kvack.org, kernel test robot <lkp@intel.com>,
+        Linux API <linux-api@vger.kernel.org>,
+        linux-doc@vger.kernel.org
+Subject: Re: [PATCH v4] mm: introduce reference pages
+Message-ID: <YNokDwjyysHGwTy/@casper.infradead.org>
+References: <20210619092002.1791322-1-pcc@google.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="us-ascii"
-X-Originating-IP: [10.212.206.236]
-X-ClientProxiedBy: orsmsx603.amr.corp.intel.com (10.22.229.16) To
- IRSMSX605.ger.corp.intel.com (163.33.146.138)
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20210619092002.1791322-1-pcc@google.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Monday, 28 June 2021 12:08:16 PDT Peter Zijlstra wrote:
-> > Anyway, if the AMX state is a sticky "set once per process", it's likely
-> > going to get set early for every process that *may* use AMX. And this is
-> > assuming we do the library right and only set it if has AMX code at all,
-> > instead of all the time.
-> 
-> This, AFAIU. If the ifunc() resolver finds we haz AMX it can do the
-> prctl() and on success pick the AMX routine.
-> 
-> Assuming of course, that if a program links with a library that supports
-> AMX, it will actually end up using it.
+On Sat, Jun 19, 2021 at 02:20:02AM -0700, Peter Collingbourne wrote:
+> +void prep_refpage_private_data(struct refpage_private_data *priv)
+> +{
+> +	u8 *addr = page_address(priv->refpage);
+> +	u8 pattern = addr[0];
+> +	int i;
+> +
+> +	for (i = 1; i != PAGE_SIZE; ++i)
+> +		if (addr[i] != pattern)
+> +			return;
+> +
+> +	priv->optzn_kind = REFPAGE_OPTZN_PATTERN;
+> +	priv->optzn_info = pattern;
+> +}
+> +
+> +void copy_refpage(struct page *page, unsigned long addr,
+> +		  struct vm_area_struct *vma)
+> +{
+> +	struct refpage_private_data *priv = vma->vm_private_data;
+> +
+> +	if (priv->optzn_kind == REFPAGE_OPTZN_PATTERN)
+> +		memset(page_address(page), priv->optzn_info, PAGE_SIZE);
+> +	else
+> +		copy_user_highpage(page, priv->refpage, addr, vma);
+> +}
 
-That's what I meant and I agree. If it has an AMX function for *anything*, it 
-will do the arch_prctl() and enable the state, even if said function is never 
-called.
+I wonder if single-byte captures enough of the useful possibilities.
+In the kernel we have memset32() and memset64() [1] so we could support
+a larger pattern than just an 8-bit byte.  It all depends what userspace
+would find useful.
 
-This is the good case. The bad case is that it does the arch_prctl() before it 
-sees whether there is any AMX function.
-
-Do we expect that the dynamic loader will have this code? It currently 
-searches the multiple ABI levels (up to x86-64-v4 to include AVX512) and HW 
-capabilities. I can readily see AMX being one of the capabilities, if not an 
-ABI level. Though it should be trivial for it to call the arch_prctl() if and 
-only if it is about to load an ELF module that declares use of AMX and also 
-*not* load it if the syscall fails.
-
-$ LD_DEBUG=libs /lib64/ld-linux-x86-64.so.2 --inhibit-cache /bin/ls 
-      1620:     find library=librt.so.1 [0]; searching
-      1620:      search path=.....
-      1620:       trying file=/usr/lib64/glibc-hwcaps/x86-64-v4/librt.so.1
-      1620:       trying file=/usr/lib64/glibc-hwcaps/x86-64-v3/librt.so.1
-      1620:       trying file=/usr/lib64/glibc-hwcaps/x86-64-v2/librt.so.1
-      1620:       trying file=/usr/lib64/tls/haswell/avx512_1/x86_64/librt.so.
-1
-      1620:       trying file=/usr/lib64/tls/haswell/avx512_1/librt.so.1
-      1620:       trying file=/usr/lib64/tls/haswell/x86_64/librt.so.1
-      1620:       trying file=/usr/lib64/tls/haswell/librt.so.1
-      1620:       trying file=/usr/lib64/tls/avx512_1/x86_64/librt.so.1
-      1620:       trying file=/usr/lib64/tls/avx512_1/librt.so.1
-      1620:       trying file=/usr/lib64/tls/x86_64/librt.so.1
-      1620:       trying file=/usr/lib64/tls/librt.so.1
-      1620:       trying file=/usr/lib64/haswell/avx512_1/x86_64/librt.so.1
-      1620:       trying file=/usr/lib64/haswell/avx512_1/librt.so.1
-      1620:       trying file=/usr/lib64/haswell/x86_64/librt.so.1
-      1620:       trying file=/usr/lib64/haswell/librt.so.1
-      1620:       trying file=/usr/lib64/avx512_1/x86_64/librt.so.1
-      1620:       trying file=/usr/lib64/avx512_1/librt.so.1
-      1620:       trying file=/usr/lib64/x86_64/librt.so.1
-      1620:       trying file=/usr/lib64/librt.so.1
-
--- 
-Thiago Macieira - thiago.macieira (AT) intel.com
-  Software Architect - Intel DPG Cloud Engineering
-
-
-
+[1] Along with memset_p(), memset_l() and memset16() that aren't terribly
+relevant to this use case.  Although maybe memset_l() would be the right
+one to use since there probably aren't too many 32-bit apps that want
+a 64-bit pattern and memset64() might not be the fastest on a 32-bit
+kernel).
