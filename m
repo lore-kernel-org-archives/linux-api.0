@@ -2,217 +2,85 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 98F6FC11F65
-	for <linux-api@archiver.kernel.org>; Wed, 30 Jun 2021 15:36:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D7329C11F69
+	for <linux-api@archiver.kernel.org>; Wed, 30 Jun 2021 15:38:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7A75E6147D
-	for <linux-api@archiver.kernel.org>; Wed, 30 Jun 2021 15:36:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B67AE61493
+	for <linux-api@archiver.kernel.org>; Wed, 30 Jun 2021 15:38:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235843AbhF3PjV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 30 Jun 2021 11:39:21 -0400
-Received: from mga11.intel.com ([192.55.52.93]:21005 "EHLO mga11.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S235828AbhF3PjV (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 30 Jun 2021 11:39:21 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10031"; a="205360956"
-X-IronPort-AV: E=Sophos;i="5.83,312,1616482800"; 
-   d="scan'208";a="205360956"
-Received: from orsmga004.jf.intel.com ([10.7.209.38])
-  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jun 2021 08:36:49 -0700
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.83,312,1616482800"; 
-   d="scan'208";a="558333551"
-Received: from irsmsx605.ger.corp.intel.com ([163.33.146.138])
-  by orsmga004.jf.intel.com with ESMTP; 30 Jun 2021 08:36:47 -0700
-Received: from tjmaciei-mobl1.localnet (10.209.13.190) by
- IRSMSX605.ger.corp.intel.com (163.33.146.138) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2242.4; Wed, 30 Jun 2021 16:36:45 +0100
-From:   Thiago Macieira <thiago.macieira@intel.com>
-To:     <fweimer@redhat.com>,
-        "Enrico Weigelt, metux IT consult" <lkml@metux.net>
-CC:     <hjl.tools@gmail.com>, <libc-alpha@sourceware.org>,
-        <linux-api@vger.kernel.org>, <linux-arch@vger.kernel.org>,
-        <x86@kernel.org>
+        id S235845AbhF3PlY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 30 Jun 2021 11:41:24 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:49784 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S235743AbhF3PlX (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 30 Jun 2021 11:41:23 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1625067534;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=+7qb56Fa10ok2Oadr2/+uCK0Dvlj0DBDn1L4UGecR1c=;
+        b=hsswLukYjt1HG7SDY0w/5BgcfMdw7KsHcRKqROY6AUadVc6UaldLDviBFpxKzHRIUMOnBv
+        S2QE7xHcSlSfZKZMNmot0x0229I2DyzmbMiNNPYBZkepOZA2ZU0sbo3JhjvQDdru2Zh2PY
+        qjnbz7Q6G9I8ICOdsOa1LU1Ce4WYX9c=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-98-f0i0izyvMdmuVR6VOUfIgg-1; Wed, 30 Jun 2021 11:38:52 -0400
+X-MC-Unique: f0i0izyvMdmuVR6VOUfIgg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 06B2918414B4;
+        Wed, 30 Jun 2021 15:38:51 +0000 (UTC)
+Received: from oldenburg.str.redhat.com (ovpn-115-5.ams2.redhat.com [10.36.115.5])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 2EAAF1F6;
+        Wed, 30 Jun 2021 15:38:48 +0000 (UTC)
+From:   Florian Weimer <fweimer@redhat.com>
+To:     "Enrico Weigelt, metux IT consult" <lkml@metux.net>
+Cc:     Thiago Macieira <thiago.macieira@intel.com>, hjl.tools@gmail.com,
+        libc-alpha@sourceware.org, linux-api@vger.kernel.org,
+        linux-arch@vger.kernel.org, x86@kernel.org
 Subject: Re: x86 CPU features detection for applications (and AMX)
-Date:   Wed, 30 Jun 2021 08:29:14 -0700
-Message-ID: <7070437.BNXKksOFrS@tjmaciei-mobl1>
-Organization: Intel Corporation
-In-Reply-To: <e07294c9-b02a-e1c5-3620-7fae7269fdf1@metux.net>
-References: <22261946.eFiGugXE7Z@tjmaciei-mobl1> <2379132.fg5cGID6mU@tjmaciei-mobl1> <e07294c9-b02a-e1c5-3620-7fae7269fdf1@metux.net>
+References: <22261946.eFiGugXE7Z@tjmaciei-mobl1>
+        <3c5c29e2-1b52-3576-eda2-018fb1e58ff9@metux.net>
+        <2379132.fg5cGID6mU@tjmaciei-mobl1>
+        <e07294c9-b02a-e1c5-3620-7fae7269fdf1@metux.net>
+        <87pmw3ifpv.fsf@oldenburg.str.redhat.com>
+        <030f1462-2bf9-39bc-d620-6d9fbe454a27@metux.net>
+Date:   Wed, 30 Jun 2021 17:38:47 +0200
+In-Reply-To: <030f1462-2bf9-39bc-d620-6d9fbe454a27@metux.net> (Enrico
+        Weigelt's message of "Wed, 30 Jun 2021 17:16:06 +0200")
+Message-ID: <87lf6ricqg.fsf@oldenburg.str.redhat.com>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.2 (gnu/linux)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="us-ascii"
-X-Originating-IP: [10.209.13.190]
-X-ClientProxiedBy: orsmsx603.amr.corp.intel.com (10.22.229.16) To
- IRSMSX605.ger.corp.intel.com (163.33.146.138)
+Content-Type: text/plain
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wednesday, 30 June 2021 07:32:29 PDT Enrico Weigelt, metux IT consult 
-wrote:
-> What does "buy-in" mean in that context ? Some other departement ? Some
-> external developers ?
-> 
-> I tend to believe that those things should better be done by some
-> independent party, maybe GNU, FSF, etc, and cpu vendors should just
-> sponsor this work and provide necessary specs.
+* Enrico Weigelt:
 
-For me specifically, I need to identify some SW dept. that would take on the 
-responsibility for it long-term. Abandonware would serve no one.
+> On 30.06.21 16:34, Florian Weimer wrote:
+>
+>> It breaks integration with system-wide settings, such as user/group
+>> databases, host name lookup, and cryptographic policies.  In many
+>> environments, that is not really an option.
+>
+> Not necessarily, these can still be applied (and fairly simple).
+> You actually have to twist more extra knobs if to wanted those weird
+> things to happen.
 
-I wouldn't mind this were a collaborative project under the auspices of 
-freedesktop.org or similar, so long as it is cross-platform to at least macOS, 
-FreeBSD and Windows. But given that this is in Intel's interest for this 
-library to exist and make it easy for people to use our CPU features, it 
-seemed like a natural fit for Intel. And even if it isn't an Intel-owned 
-project, we probably want to be contributors.
+Sorry, this is just not true.  You cannot load system libraries such as
+NSS modules or cryptographic libraries with a custom glibc because the
+system glibc could be newer, and glibc does not provide that kind of
+compatibility (only the other way round).
 
-> Shipping precompiled binaries and linking against system libraries is
-> always a risky game. The cleanest approach here IMHO would be building
-> packages for various distros (means: using their toolchains / libs).
-> This actually isn't as work intensive as it might sound - I'm doing this
-> all the day and have a bunch of helpful tools for that.
-
-I understand, but whether it is easier and better for 99% of the cases does 
-not mean it is so for 100%. And most especially it does not guarantee that it 
-will be used for everyone. For reasons real or not, there are precompiled 
-binaries. Just see Google Chrome, for example.
-
-> Licensing with glibc also isn't a serious problem here. All you need to
-> do is be compliant with the LGPL. In short: publish all your patches to
-> glibc, offer the license and link dynamically. Already done that a
-> thousand times.
-
-We can agree it's an additional hurdle, which will likely cause people to 
-investigate a solution that doesn't require that hurdle.
-
-> Wait a minute ... how long does it take from the architectural design,
-> until the real silicon is out in the field ? I would be very surprised
-> whether the whole process in done in a much shorted time frame.
-> 
-> Note: by "much more early", I meant already at the point where the spec
-> of the new feature exists, at least on paper.
-
-I'm not going to comment on the timing of architectural decisions. But just 
-from the example I gave: in order to be ready for a late 2021 or early 2022 
-launch, we'd need to have the feature's specification published and the 
-patches accepted by December 2018. That's about 3 years lead time.
-
-How many software projects (let alone mixed software and hardware) do you know 
-that know 3 years ahead of time what they will need?
-
->  > Then there are Linux distros that do LTS every 2 years or so.
-> 
-> Why don't the few actually affected parties just upgrade their compiler
-> on their build machines when needed ?
-
-Have you tried?
-
-Besides, the whole problem here is barrier of entry. If we don't make it easy 
-for them to use the new features, they won't. And I was using this as an 
-argument for why precompiled binaries will exist: the interested parties will 
-take the pain to upgrade the compilers and other supporting software so that 
-the build even of Open Source software is the most capable one, then release 
-that binary for others who haven't. This lowers the barrier of entry 
-significantly.
-
-And this is all to justify that such a functionality shouldn't be part of 
-glibc, where it can't be used by those precompiled binaries which, for one 
-reason or another, will exist.
-
-It should be in a small, permissively-licensed library that will often get 
-statically linked into the binary in question.
-
-> > To compile the software that uses those instructions, undoubtedly. But
-> > what if I did that for you and you could simply download the binary for
-> > the library and/or plugins such that you could slot into your existing
-> > systems and CI? This could make a difference between adoption or not.
-> 
-> For me, it wouldn't, at all. I never download binaries from untrusted
-> sources. (except for forensic analysis).
-
-I understand and I am, myself, almost like you. I do have some precompiled 
-binaries (aforementioned Google Chrome), but as a rule I avoid them.
-
-But not everyone is like the two of us.
-
-> BUT: we're talking about about brand new silicon here. Why should
-> anybody - who really needs these new features - install such an ancient
-> OS on a brand new machine ?
-
-I don't know. It might be for fleet homogeneity: everything has the same SW 
-installed, facilitating maintenance. Just coming up with reasons.
-
-> > Even if they don't, the *software* that people deploy may be the same
-> > build
-> > for RHEL 7 and for a modern distro that will have a 5.14 kernel.
-> 
-> Now we're getting to the vital point: trying to make "universal"
-> binaries for verious different distros. This is something I'm strictly
-> advising against since 25 years, because with that you're putting
-> yourself into *a lot* trouble (ABI compatibility between arbitrary
-> distros or even various distro releases always had been pretty much a
-> myth, only works for some specific cases). Just don't do it, unless you
-> *really* don't have any other chance.
-
-Well, that's the point, isn't it? Are we ready to call this use-case not 
-valid, so it can't be used to support the argument of a solution that needs to 
-be deployable to old distros?
-
-> > So my point is: this shouldn't be in glibc because the glibc will not have
-> > the new system call wrappers or TLS fields.
-> 
-> Yes, I'm fully on your side here. Glibc already is overloaded with too
-> much of those kind of things that shouldn't belong in there. Actually,
-> even stuff like DNS resolving IMHO doensn't belong into libc.
-
-Thanks.
-
-(name resolving is required by POSIX to be there, so it exists in every 
-system; might as well be every libc)
-
-> My proposal would an conditional jump opcode that directly checks for
-> specific features. If this is well designed, I believe that can be
-> resolved by the cpu's internal prefetcher unit. But for that we'd also
-> need some extra task status bit so the cpu knows it is enabled for the
-> current task.
-
-That's more of a "can I use this now", instead of "can I use this ever". So 
-far, the answer to the two has been the same. Therefore, there has been no 
-need to have the functionality that you're describing.
-
-> > For most features, there isn't. You don't see us discussing
-> > AVX512VP2INTERSECT, for example. This discussion only exists because AMX
-> > requires more state to be saved during context switches and signal
-> > delivery.
-> But over all these years, new some registers have been introduced.
-> I fail to imagine how context switches can be done properly w/o also
-> saving/restoring such new registers.
-
-There have been a few small registers and state that need to be saved here and 
-there, but the biggest blocks were:
-
-- SSE state
-- AVX state
-- AVX512 state
-- AMX state
-
-The first two were small enough (and long enough ago) that the discussions 
-were small and aren't relevant today. The AVX512 state was added in the past 
-decade. And as you've seen from this thread, that is still a sticky point, and 
-that was only about 1.5 kB.
-
-However, the vast majority of CPU features do not add new context state.
-
--- 
-Thiago Macieira - thiago.macieira (AT) intel.com
-  Software Architect - Intel DPG Cloud Engineering
-
-
+Thanks,
+Florian
 
