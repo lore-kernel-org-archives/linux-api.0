@@ -2,113 +2,108 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CA90CC11F69
-	for <linux-api@archiver.kernel.org>; Wed, 30 Jun 2021 12:56:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 71BB9C11F65
+	for <linux-api@archiver.kernel.org>; Wed, 30 Jun 2021 13:59:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id ABCEB613B1
-	for <linux-api@archiver.kernel.org>; Wed, 30 Jun 2021 12:56:23 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 53EC261437
+	for <linux-api@archiver.kernel.org>; Wed, 30 Jun 2021 13:59:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234806AbhF3M6u (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 30 Jun 2021 08:58:50 -0400
-Received: from smtp-out2.suse.de ([195.135.220.29]:57004 "EHLO
-        smtp-out2.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234824AbhF3M6t (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 30 Jun 2021 08:58:49 -0400
-Received: from imap.suse.de (imap-alt.suse-dmz.suse.de [192.168.254.47])
-        (using TLSv1.2 with cipher ECDHE-ECDSA-AES128-GCM-SHA256 (128/128 bits))
-        (No client certificate requested)
-        by smtp-out2.suse.de (Postfix) with ESMTPS id 274431FE79;
-        Wed, 30 Jun 2021 12:56:19 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-        t=1625057779; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=xdQwii54mAQjoPtlBzJZA6d/rnKA0OLflwRprIEP0MY=;
-        b=GLULahH7VamboBss/Z2V3SMN2JRwOZ2rY2pDrAciiyGHEmc+ThftQraPIXuXgpPHGu7ubl
-        hjWHvAhGeC5h/zvvdCfH/7jhvgqMSSzVSO1aoK7qtoYmWQy8AMYG4ENYWa0dbzG0er2EUH
-        EcOdUboNbZ6IivkjAWM9O7yrisWIQ1Y=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-        s=susede2_ed25519; t=1625057779;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=xdQwii54mAQjoPtlBzJZA6d/rnKA0OLflwRprIEP0MY=;
-        b=prVTd2KF0wkFSsuN3EFfXFBBttALuxdHLNTzxLOQENelHuRy+4eazXzbqinkjRc7sXCAFg
-        T81d9SHcp5uEUCAA==
-Received: from imap3-int (imap-alt.suse-dmz.suse.de [192.168.254.47])
-        by imap.suse.de (Postfix) with ESMTP id 0F1B9118DD;
-        Wed, 30 Jun 2021 12:56:19 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-        t=1625057779; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=xdQwii54mAQjoPtlBzJZA6d/rnKA0OLflwRprIEP0MY=;
-        b=GLULahH7VamboBss/Z2V3SMN2JRwOZ2rY2pDrAciiyGHEmc+ThftQraPIXuXgpPHGu7ubl
-        hjWHvAhGeC5h/zvvdCfH/7jhvgqMSSzVSO1aoK7qtoYmWQy8AMYG4ENYWa0dbzG0er2EUH
-        EcOdUboNbZ6IivkjAWM9O7yrisWIQ1Y=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-        s=susede2_ed25519; t=1625057779;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=xdQwii54mAQjoPtlBzJZA6d/rnKA0OLflwRprIEP0MY=;
-        b=prVTd2KF0wkFSsuN3EFfXFBBttALuxdHLNTzxLOQENelHuRy+4eazXzbqinkjRc7sXCAFg
-        T81d9SHcp5uEUCAA==
-Received: from director2.suse.de ([192.168.254.72])
-        by imap3-int with ESMTPSA
-        id bdpOAvNp3GDUYAAALh3uQQ
-        (envelope-from <chrubis@suse.cz>); Wed, 30 Jun 2021 12:56:19 +0000
-Date:   Wed, 30 Jun 2021 14:30:45 +0200
-From:   Cyril Hrubis <chrubis@suse.cz>
-To:     "Eric W. Biederman" <ebiederm@xmission.com>
-Cc:     Michael Schmitz <schmitzmic@gmail.com>,
-        Geert Uytterhoeven <geert@linux-m68k.org>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        linux-arch <linux-arch@vger.kernel.org>,
-        Jens Axboe <axboe@kernel.dk>, Oleg Nesterov <oleg@redhat.com>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        Richard Henderson <rth@twiddle.net>,
-        Ivan Kokshaysky <ink@jurassic.park.msu.ru>,
-        Matt Turner <mattst88@gmail.com>,
-        alpha <linux-alpha@vger.kernel.org>,
-        linux-m68k <linux-m68k@lists.linux-m68k.org>,
-        Arnd Bergmann <arnd@kernel.org>, Tejun Heo <tj@kernel.org>,
-        Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org
-Subject: Re: [CFT][PATCH] exit/bdflush: Remove the deprecated bdflush system
- call
-Message-ID: <YNxj9Ydotv39vwPW@yuki>
-References: <YNULA+Ff+eB66bcP@zeniv-ca.linux.org.uk>
- <YNj4DItToR8FphxC@zeniv-ca.linux.org.uk>
- <6e283d24-7121-ae7c-d5ad-558f85858a09@gmail.com>
- <CAMuHMdXSU6_98NbC1UWTT_kmwxD=6Ha5LJxFAtbSuD=y78nASg@mail.gmail.com>
- <7ad6c3a9-b983-46a5-fc95-f961b636d3fe@gmail.com>
- <CAMuHMdUi5Ri=GmWzS8hb7dkfPyAE=HpQHg6OsKSLDse_364E=g@mail.gmail.com>
- <dbb4ca2d-a857-84f0-f167-5ad4e06aa52b@gmail.com>
- <CAMuHMdVKdZNBU-cTUY0zotA5DmtQ=dxH+iFY0_GX=4DzqpycZQ@mail.gmail.com>
- <36123b5d-daa0-6c2b-f2d4-a942f069fd54@gmail.com>
- <87sg10quue.fsf_-_@disp2133>
+        id S235746AbhF3OB2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 30 Jun 2021 10:01:28 -0400
+Received: from mga17.intel.com ([192.55.52.151]:33469 "EHLO mga17.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S234935AbhF3OAq (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 30 Jun 2021 10:00:46 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10030"; a="188729655"
+X-IronPort-AV: E=Sophos;i="5.83,312,1616482800"; 
+   d="scan'208";a="188729655"
+Received: from fmsmga006.fm.intel.com ([10.253.24.20])
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jun 2021 06:55:54 -0700
+X-IronPort-AV: E=Sophos;i="5.83,312,1616482800"; 
+   d="scan'208";a="641716350"
+Received: from vkodithy-mobl.amr.corp.intel.com (HELO [10.209.94.253]) ([10.209.94.253])
+  by fmsmga006-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jun 2021 06:55:53 -0700
+Subject: Re: Candidate Linux ABI for Intel AMX and hypothetical new related
+ features
+To:     "Enrico Weigelt, metux IT consult" <lkml@metux.net>,
+        Florian Weimer <fweimer@redhat.com>
+Cc:     Len Brown <lenb@kernel.org>, Peter Zijlstra <peterz@infradead.org>,
+        Dave Hansen via Libc-alpha <libc-alpha@sourceware.org>,
+        Dave Hansen <dave.hansen@intel.com>,
+        Rich Felker <dalias@libc.org>,
+        Linux API <linux-api@vger.kernel.org>,
+        "Bae, Chang Seok" <chang.seok.bae@intel.com>,
+        X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>,
+        Kyle Huey <me@kylehuey.com>, Borislav Petkov <bp@alien8.de>,
+        Andy Lutomirski <luto@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Keno Fischer <keno@juliacomputing.com>,
+        Willy Tarreau <w@1wt.eu>
+References: <CAJvTdKn6JHo02karEs0e5g+6SimS5VUcXKjCkX35WY+xkgAgxw@mail.gmail.com>
+ <YIMmwhEr46VPAZa4@zn.tnic>
+ <CAJvTdKnhXnynybS4eNEF_EtF26auyb-mhKLNd1D9_zvCrchZsw@mail.gmail.com>
+ <874kf11yoz.ffs@nanos.tec.linutronix.de>
+ <CAJvTdKkYp+zP_9tna6YsrOz2_nmEUDLJaL_i-SNog0m2T9wZ=Q@mail.gmail.com>
+ <87k0ntazyn.ffs@nanos.tec.linutronix.de>
+ <37833625-3e6b-5d93-cc4d-26164d06a0c6@intel.com>
+ <CAJvTdKmqzO4P9k3jqRA=dR+B7yV72hZCiyC8HGQxDKZBnXgzZQ@mail.gmail.com>
+ <9c8138eb-3956-e897-ed4e-426bf6663c11@intel.com>
+ <87pmxk87th.fsf@oldenburg.str.redhat.com>
+ <YKfIct+DhpEBbaCQ@hirez.programming.kicks-ass.net>
+ <87wnqkzklg.fsf@oldenburg.str.redhat.com>
+ <CAJvTdKkBTD62GTi=GW0+y0_1qc2JxfpfkNbXKWniWWOEmZZmUw@mail.gmail.com>
+ <93e3b500-5992-a674-18e6-445d1db7b1f0@metux.net>
+ <87tulirw5y.fsf@oldenburg.str.redhat.com>
+ <84be3cfd-e825-ae75-bbae-2bbd3360daa7@metux.net>
+From:   Arjan van de Ven <arjan@linux.intel.com>
+Message-ID: <0978e79c-33ad-c05b-3897-99334c381396@linux.intel.com>
+Date:   Wed, 30 Jun 2021 06:55:52 -0700
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <87sg10quue.fsf_-_@disp2133>
+In-Reply-To: <84be3cfd-e825-ae75-bbae-2bbd3360daa7@metux.net>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi!
-I've send a similar patch [1] a while ago when I removed bdflush tests from
-LTP.
+On 6/30/2021 5:22 AM, Enrico Weigelt, metux IT consult wrote:
+>>
+>> AMX will be shown as enabled in the hardware, but trap into the kernel
+>> on first use.  The kernel developers prefer a model where it is checked
+>> that the process has previously enabled the feature explicitly, instead
+>> relying on lazy initialization as part of the trap (as intended by the
+>> hardware design).  This means that the usual CPUID/XCR0 approach (which
+>> is reflected in the glibc feature) will not work.
+> 
+> Ah, now I'm beginning to get it:
+> 
+> * this feature needs to be initialized first, before it can be used
+> * on first use (when not initialized yet), it traps into the kernel
+> * we don't want to always initialize it at boot
+> 
+> Correct ?
 
-[1] https://lore.kernel.org/lkml/20190528101012.11402-1-chrubis@suse.cz/
+not really, the init is PER PROCESS
 
-Acked-by: Cyril Hrubis <chrubis@suse.cz>
+and then there is a per thread 8Kb state allocation that needs to be context switched/etc
+once you actually use AMX.
 
--- 
-Cyril Hrubis
-chrubis@suse.cz
+> 
+> What I'm wondering: why shall the process explicitly ask for it and
+> why isn't the initialization be done either on bootup or on first use ?
+
+the kernel needs to be able to say "no" in a graceful way, there are several scenarios
+(from the sysadmin wanting to manage power/performance/resources to outright compatibility where
+the kernel wants or needs to say "no". Most obvious example: if a process asked for an sigaltstack,
+we can't let the process use AMX since that stack will be too small most likely to hold
+the stackframe)
+
+If you do this on "first use of the instruction" there is no graceful way to say "no".
+
