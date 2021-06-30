@@ -2,130 +2,113 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AFF60C11F65
-	for <linux-api@archiver.kernel.org>; Wed, 30 Jun 2021 15:26:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7AE8EC11F65
+	for <linux-api@archiver.kernel.org>; Wed, 30 Jun 2021 15:36:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 93CAF61476
-	for <linux-api@archiver.kernel.org>; Wed, 30 Jun 2021 15:26:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6006A61477
+	for <linux-api@archiver.kernel.org>; Wed, 30 Jun 2021 15:36:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235565AbhF3P2l (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 30 Jun 2021 11:28:41 -0400
-Received: from mout.kundenserver.de ([212.227.126.133]:45803 "EHLO
-        mout.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235466AbhF3P2j (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 30 Jun 2021 11:28:39 -0400
-Received: from [192.168.1.155] ([95.114.41.241]) by mrelayeu.kundenserver.de
- (mreue011 [212.227.15.167]) with ESMTPSA (Nemesis) id
- 1MBll6-1m48P33CTE-00CCjm; Wed, 30 Jun 2021 17:25:17 +0200
-Subject: Re: Candidate Linux ABI for Intel AMX and hypothetical new related
- features
-To:     Arjan van de Ven <arjan@linux.intel.com>,
-        Florian Weimer <fweimer@redhat.com>
-Cc:     Len Brown <lenb@kernel.org>, Peter Zijlstra <peterz@infradead.org>,
-        Dave Hansen via Libc-alpha <libc-alpha@sourceware.org>,
-        Dave Hansen <dave.hansen@intel.com>,
-        Rich Felker <dalias@libc.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        "Bae, Chang Seok" <chang.seok.bae@intel.com>,
-        X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>,
-        Kyle Huey <me@kylehuey.com>, Borislav Petkov <bp@alien8.de>,
-        Andy Lutomirski <luto@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Keno Fischer <keno@juliacomputing.com>,
-        Willy Tarreau <w@1wt.eu>
-References: <CAJvTdKn6JHo02karEs0e5g+6SimS5VUcXKjCkX35WY+xkgAgxw@mail.gmail.com>
- <YIMmwhEr46VPAZa4@zn.tnic>
- <CAJvTdKnhXnynybS4eNEF_EtF26auyb-mhKLNd1D9_zvCrchZsw@mail.gmail.com>
- <874kf11yoz.ffs@nanos.tec.linutronix.de>
- <CAJvTdKkYp+zP_9tna6YsrOz2_nmEUDLJaL_i-SNog0m2T9wZ=Q@mail.gmail.com>
- <87k0ntazyn.ffs@nanos.tec.linutronix.de>
- <37833625-3e6b-5d93-cc4d-26164d06a0c6@intel.com>
- <CAJvTdKmqzO4P9k3jqRA=dR+B7yV72hZCiyC8HGQxDKZBnXgzZQ@mail.gmail.com>
- <9c8138eb-3956-e897-ed4e-426bf6663c11@intel.com>
- <87pmxk87th.fsf@oldenburg.str.redhat.com>
- <YKfIct+DhpEBbaCQ@hirez.programming.kicks-ass.net>
- <87wnqkzklg.fsf@oldenburg.str.redhat.com>
- <CAJvTdKkBTD62GTi=GW0+y0_1qc2JxfpfkNbXKWniWWOEmZZmUw@mail.gmail.com>
- <93e3b500-5992-a674-18e6-445d1db7b1f0@metux.net>
- <87tulirw5y.fsf@oldenburg.str.redhat.com>
- <84be3cfd-e825-ae75-bbae-2bbd3360daa7@metux.net>
- <0978e79c-33ad-c05b-3897-99334c381396@linux.intel.com>
-From:   "Enrico Weigelt, metux IT consult" <lkml@metux.net>
-Message-ID: <b97d754a-6173-0f7e-6e10-c3b6b7b67b54@metux.net>
-Date:   Wed, 30 Jun 2021 17:25:12 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.11.0
+        id S235466AbhF3PjR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 30 Jun 2021 11:39:17 -0400
+Received: from mga02.intel.com ([134.134.136.20]:5435 "EHLO mga02.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S235565AbhF3PjP (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Wed, 30 Jun 2021 11:39:15 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10031"; a="195524782"
+X-IronPort-AV: E=Sophos;i="5.83,312,1616482800"; 
+   d="scan'208";a="195524782"
+Received: from orsmga004.jf.intel.com ([10.7.209.38])
+  by orsmga101.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jun 2021 08:36:43 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.83,312,1616482800"; 
+   d="scan'208";a="558333537"
+Received: from irsmsx605.ger.corp.intel.com ([163.33.146.138])
+  by orsmga004.jf.intel.com with ESMTP; 30 Jun 2021 08:36:41 -0700
+Received: from tjmaciei-mobl1.localnet (10.209.13.190) by
+ IRSMSX605.ger.corp.intel.com (163.33.146.138) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2242.4; Wed, 30 Jun 2021 16:36:39 +0100
+From:   Thiago Macieira <thiago.macieira@intel.com>
+To:     Peter Zijlstra <peterz@infradead.org>,
+        "Enrico Weigelt, metux IT consult" <lkml@metux.net>
+CC:     <fweimer@redhat.com>, <hjl.tools@gmail.com>,
+        <libc-alpha@sourceware.org>, <linux-api@vger.kernel.org>,
+        <linux-arch@vger.kernel.org>, <x86@kernel.org>
+Subject: Re: x86 CPU features detection for applications (and AMX)
+Date:   Wed, 30 Jun 2021 08:36:36 -0700
+Message-ID: <4315452.lxGN7TsiT6@tjmaciei-mobl1>
+Organization: Intel Corporation
+In-Reply-To: <534d0171-2cc5-cd0a-904f-cd3c499b55af@metux.net>
+References: <22261946.eFiGugXE7Z@tjmaciei-mobl1> <YNnMsJJzI83cpnAQ@hirez.programming.kicks-ass.net> <534d0171-2cc5-cd0a-904f-cd3c499b55af@metux.net>
 MIME-Version: 1.0
-In-Reply-To: <0978e79c-33ad-c05b-3897-99334c381396@linux.intel.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: tl
-Content-Transfer-Encoding: 8bit
-X-Provags-ID: V03:K1:N2k6KoSHPHqYv9ijq9iUuhi+ucELLluWy0O7PLPYB3WQfn9oYSF
- 76ZkwrRfzkmmIqMMqfI+I1KspSG9WrWGBzUpIPsEm8WrBilyQ+lxz7LXzVcb4hkZJEGNTIJ
- jpdfrvpoopMjGH266l6Uuh1GW1yOWI0WqHDTQmKE2gKWWkOb6HaTmqgmoyjFl6BFlPtfoRJ
- iug6tmSHN1w5SyCcN926Q==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:38UN29YkGt8=:K5ic9j59y87A/7VdUJ7/hB
- TZK4Q2tEwRQ2BnedKghqj/JNdTrSPj7inZdlkhABTleusACua0O4EOn5VfBnv1AffGF2UUVwD
- QhYtWbTpu3c17peSMy+MtHyhu+sMqiJg9zPxhBLTIQOwvOiAedY/GeN42N4Pv333wBYf8+P1V
- 87psoHJjXOuJUi4n1UTa298E2ZRxvKUS2V7MKUZVilr1q6beW+Dr+YV1a0b90e5Xg6VXo6LcO
- 2AYy3AclJeTGNtMm/3Lwl8EOCofAl5o3PPOrqyJjjJD98G593+FXoUNqjBmyW2FpZ9TqC/SCc
- SX/PdzRfZsWK9qzkMeWtGEej89c+7ajhnOsToaOHV6VDWXgndWDFs3CZBY5F9i/Yz8hYayuae
- cuw7cDHmtrr006CZ5d3LEkVrMXu7XgiYcYr984RErdWfJh0gq5WdW8ti3ng7hfEzba0gzxhp6
- HJ0kHtBcojtaysGNWl9KUp270yUPPUTrCVI6SW2lQoMrr/Tnvt2Jw4y09H/Lqa3N4L3mTBo3y
- AjN5V611bSrBJ2iRao3E5atZLJnY1DJ1ZvsYJZJt6L6xPAaLajT2G0ScnNLnhGiBbcBVYj/l9
- gOpPfJ5ujvrR+WWV9uanPbo3GK9Fzuj1mIdcOvDti6vtP9yUtvf7DOvK/yjLKdp2DB97XnOeV
- XIiPbjn39ImsEdRz7P+Is/dqPklxpqk5bqbmJUwx9kqC4voZoav66yMoQo9VG7YF6cSeW5NFk
- Jss+X2DOTOQWuAN6syhtp0RX+QaaneXEY8aQQYZErpmcesDyD/BQS/oU1p6CogT8FdjcC83CL
- 7AvOCZSjIjRr6thgLOjj1HN88HmzzI37OIJvOSHhw4bswExVNbFzr4LqyTXyxhnHj5DOErC
+Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset="us-ascii"
+X-Originating-IP: [10.209.13.190]
+X-ClientProxiedBy: orsmsx603.amr.corp.intel.com (10.22.229.16) To
+ IRSMSX605.ger.corp.intel.com (163.33.146.138)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 30.06.21 15:55, Arjan van de Ven wrote:
-
->> * this feature needs to be initialized first, before it can be used
->> * on first use (when not initialized yet), it traps into the kernel
->> * we don't want to always initialize it at boot
->>
->> Correct ?
+On Wednesday, 30 June 2021 05:50:30 PDT Enrico Weigelt, metux IT consult 
+wrote:
+> > No, but because it's register state and part of XSAVE, it has immediate
+> > impact in ABI. In particular, the signal stack layout includes XSAVE (as
+> > does ptrace()).
 > 
-> not really, the init is PER PROCESS
+> OMGs, I've already suspected such sickness. I don't even dare thinking
+> about consequences for compilers and library ABIs.
+> 
+> Does anyone here know why they designed this as inline operations ? This
+> thing seems to be pretty much what typical TPUs are doing (or a subset
+> of it). Why not just adding a TPU next to the CPU on the same chip ?
 
-IIRC there had been some discussion here whether it should be done per
-thread. But now that I've learned that the major problem is saving the
-register state, I wouldn't dare thinking about how a working per-thread
-solution really would need to look like :o
+To be clear: this is a SW ABI. It has nothing to do the presence or absence of 
+other processing units in the system.
 
-(by the way: is sighandler stack per thread or per process ?)
+The moment you receive a Unix signal with SA_SIGINFO, the mcontext state needs 
+to be saved somewhere. Where would you save it? Please remember that:
 
-> the kernel needs to be able to say "no" in a graceful way, there are 
-> several scenarios
-> (from the sysadmin wanting to manage power/performance/resources to 
-> outright compatibility where
-> the kernel wants or needs to say "no". Most obvious example: if a 
-> process asked for an sigaltstack,
-> we can't let the process use AMX since that stack will be too small most 
-> likely to hold
-> the stackframe)
+- signal handlers can be called at any point in the execution, including
+  in the middle of malloc()
+- signal handlers can longjmp out of the handler back into non-handler code
+- in a multithreaded application, each thread can be handling a signal 
+  simultaneously
 
-Ah okay, when I wrote that mail, didn't know yet that so much state
-needs to be saved.
+We could have the kernel hold on to that and have a system call to extract 
+them, but that's an ABI change and I think won't work for the longjmp case.
 
+> > Userspace will have to do something like:
+> >   - check CPUID, if !AMX -> fail
+> >   - issue prctl(), if error -> fail
+> >   - issue XGETBV and check the AMX bit it set, if not -> fail
+> 
+> Can't we to this just by prctl() call ?
+> IOW: ask the kernel, who gonna say yes or no.
 
---mtx
+That's possible. The kernel can't enable an AMX state on a system without AMX.
 
+> Are there any situations where kernel says yes, but process still can't
+> use it ? Why so ?
+
+Today there is no such case that I can think of.
+
+> >   - request the signal stack size / spawn threads
+> 
+> Signal stack is separate from the usual stack, right ?
+> Why can't this all be done in one shot ?
+
+Yes, we're talking about the sigaltstack() call.
+
+What is "this all" in the sentence above?
 
 -- 
----
-Hinweis: unverschlüsselte E-Mails können leicht abgehört und manipuliert
-werden ! Für eine vertrauliche Kommunikation senden Sie bitte ihren
-GPG/PGP-Schlüssel zu.
----
-Enrico Weigelt, metux IT consult
-Free software and Linux embedded engineering
-info@metux.net -- +49-151-27565287
+Thiago Macieira - thiago.macieira (AT) intel.com
+  Software Architect - Intel DPG Cloud Engineering
+
+
+
