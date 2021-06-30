@@ -2,82 +2,148 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DCC52C11F65
-	for <linux-api@archiver.kernel.org>; Wed, 30 Jun 2021 03:58:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D4795C11F6A
+	for <linux-api@archiver.kernel.org>; Wed, 30 Jun 2021 05:10:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BA6B361D2B
-	for <linux-api@archiver.kernel.org>; Wed, 30 Jun 2021 03:58:11 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AF01B61D3C
+	for <linux-api@archiver.kernel.org>; Wed, 30 Jun 2021 05:10:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229532AbhF3EAj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 30 Jun 2021 00:00:39 -0400
-Received: from outgoing-auth-1.mit.edu ([18.9.28.11]:47548 "EHLO
-        outgoing.mit.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S229446AbhF3EAi (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 30 Jun 2021 00:00:38 -0400
-Received: from cwcc.thunk.org (pool-72-74-133-215.bstnma.fios.verizon.net [72.74.133.215])
-        (authenticated bits=0)
-        (User authenticated as tytso@ATHENA.MIT.EDU)
-        by outgoing.mit.edu (8.14.7/8.12.4) with ESMTP id 15U3vxQq002163
-        (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-        Tue, 29 Jun 2021 23:58:00 -0400
-Received: by cwcc.thunk.org (Postfix, from userid 15806)
-        id 532E915C3C8E; Tue, 29 Jun 2021 23:57:59 -0400 (EDT)
-Date:   Tue, 29 Jun 2021 23:57:59 -0400
-From:   "Theodore Ts'o" <tytso@mit.edu>
-To:     "Darrick J. Wong" <djwong@kernel.org>
-Cc:     Rob Landley <rob@landley.net>,
-        Denys Vlasenko <vda.linux@googlemail.com>,
-        David Howells <dhowells@redhat.com>,
-        Linux API <linux-api@vger.kernel.org>,
-        "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: lsattr: incorrect size for ioctl result
-Message-ID: <YNvrx+Wt0WmA+gGJ@mit.edu>
-References: <CAK1hOcO3qHFO6QOkpjnC_A4LVhwed02XxCYZvEn+8t+HnyGjZA@mail.gmail.com>
- <b1b801af-d309-829e-fd48-6487661df809@landley.net>
- <CAK1hOcMh3RK_Nd_=W-RgqhMZJh-OGY9qMDfxpALZHpxwriHgAA@mail.gmail.com>
- <9acca2fa-eaef-1a0b-ac72-6b0eab3d8a45@landley.net>
- <YNn5v7CTRsDo1mDO@mit.edu>
- <b5f013f0-7720-e6fb-f512-c1ff7114dfb6@landley.net>
- <YNs7KsXJLdPp78Q5@mit.edu>
- <20210629210422.GD13767@locust>
+        id S233354AbhF3FNV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 30 Jun 2021 01:13:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42794 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S231562AbhF3FNU (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 30 Jun 2021 01:13:20 -0400
+Received: from mail-io1-xd34.google.com (mail-io1-xd34.google.com [IPv6:2607:f8b0:4864:20::d34])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 837C3C061766;
+        Tue, 29 Jun 2021 22:10:51 -0700 (PDT)
+Received: by mail-io1-xd34.google.com with SMTP id a6so1733810ioe.0;
+        Tue, 29 Jun 2021 22:10:51 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=7TwOTgfXi+shXUX1bdywFyVD0OPq8JVzqjg9/kRcoj8=;
+        b=s02tSWDMYLUO/yPq6RDasC0+nvQ/FcjglFNR2jzgrSho317n/QGXVpDxg6Q6VLYQhn
+         k1sfTuZ7nV5ocdy/RIL2XH5sn1MCNscUL8hPo+UKonuLcH6xGP879s5/sTpchoPYkbcp
+         4oZD9H0Au+SOBUsqGN9/3ZV5mJ0kSwbiaotmrYsOwUeHd2NT8ZXvKbN8ZzbpQeYXAuwQ
+         pN2HBBWBwkbXBtJ97BSuxSNDvZuiIA7xIJnprdV8dgJ92f7pgYUln2hcSH1evb2CTkQX
+         tNW+dILeZnDZBfZt7C8Z6iu9gFZ/n4iYgGZvQUZbtbHVkirZBc0uX+xXUNWt/oTP4wWV
+         JocQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=7TwOTgfXi+shXUX1bdywFyVD0OPq8JVzqjg9/kRcoj8=;
+        b=lmBM+bjKubRtQT8/HQAt6fy+s6V7JAZhqmEoxn7YzxNOOpT8oNj8yVbdkTxlGPi3mp
+         uOST8GapMMGRfR8SYPj1IkSNXpYvf/i24GNwCQ4uSafTmVoKT44lTTydEd9cyDeb11pc
+         vji5+yTwPsddBriuZSnK60RB84UBsXmJT9zyA66NHkInz3a4Gc5dss0tXWpzlQrrL9AG
+         z1t7L2Z47D6NzBV35ixpy8Gacg3lGL7mz/1e06w5lAUsvVIw58LpfNnwVy9Sa4MbfcOc
+         jXdVC2pzmxDTuBSy+OCV58/pQpoYCOZj8omhYIJHIsHzsVgLMqDRtNVRWooQt6VljQEj
+         U6cg==
+X-Gm-Message-State: AOAM531yzVjmG549kMiz4iAR0R1HwYoQT3O52/xbA3Y9M+EbdkiOWqZ1
+        y3SGCs2yLX+OcGd6P5eRjlXfe9JTSQpIABL5+6k=
+X-Google-Smtp-Source: ABdhPJznP3KVEFn5wIPYGZmIbPCiEpltZKJL2MEuIsziN6LREOeG9QCw9NTsxtqPEuoi4Xdlj0RIvvqKpBQHrL2NrC0=
+X-Received: by 2002:a5d:8b03:: with SMTP id k3mr6439392ion.203.1625029850864;
+ Tue, 29 Jun 2021 22:10:50 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20210629210422.GD13767@locust>
+References: <20210629191035.681913-1-krisman@collabora.com>
+In-Reply-To: <20210629191035.681913-1-krisman@collabora.com>
+From:   Amir Goldstein <amir73il@gmail.com>
+Date:   Wed, 30 Jun 2021 08:10:39 +0300
+Message-ID: <CAOQ4uxgigXTtGgEC3yzt3f4HDHUiYqL7vk73v6E5LGx0OoFWHg@mail.gmail.com>
+Subject: Re: [PATCH v3 00/15] File system wide monitoring
+To:     Gabriel Krisman Bertazi <krisman@collabora.com>
+Cc:     "Darrick J. Wong" <djwong@kernel.org>,
+        Theodore Tso <tytso@mit.edu>,
+        Dave Chinner <david@fromorbit.com>, Jan Kara <jack@suse.com>,
+        David Howells <dhowells@redhat.com>,
+        Khazhismel Kumykov <khazhy@google.com>,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        Ext4 <linux-ext4@vger.kernel.org>, kernel@collabora.com,
+        Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Jun 29, 2021 at 02:04:22PM -0700, Darrick J. Wong wrote:
-> 
-> Why don't we deprecate FS_IOC_[GS]ETFLAGS and tell everyone to use
-> FS[GS]ETXATTR?  They use the same code paths and vfs helpers now.
++CC linux-api
 
-The FS_IOC_[GS]ETXATTR ioctls use struct fsxattr, which contains
-fsx_xflags.  But there are flags returned (and set) by
-FS_IOC_[GS]ETFLAGS that are not in fsx_xflags --- and vice versa, of
-course.
+On Tue, Jun 29, 2021 at 10:10 PM Gabriel Krisman Bertazi
+<krisman@collabora.com> wrote:
+>
+> Hi,
+>
+> This is the third version of the FAN_FS_ERROR patches.  The main change
+> in this version is the inode information being reported through an FID
+> record, which means it requires the group to be created with
+> FAN_REPORT_FID.  It indeed simplifies a lot the FAN_FS_ERROR patch
+> itself.
 
-That's not a problem for xfs, since fsx_xflags was originally designed
-for xfs (and so it has some xfs-specific flags such as
-FS_XFLAG_REALTIME, FS_XFLAG_RTINHERIT, FS_XFLAG_FILESTREAM,
-FS_XFLAG_COWEXTSIZE, etc.).
+I am glad that you took this path.
+Uniformity across the UAPI is important.
 
-But for other file systems, including btrfs, ext4 and f2fs, which
-utilize FS_IOC_[GS]ETFLAGS flags which are not supported by
-FS_IOC_[GS]ETXATTR's fsx_xflags.  Examples of such flags include
-FS_ENCRYPT_FL, FS_TOPDIR_FL, FS_NOCMP_FL, and FS_CASEFOLD_FL.
+>
+> This change raises the question of how we report non-inode errors.  On
+> one hand, we could omit the FID report, but then fsid would also be
+> ommited.  I chose to report these kind of errors against the root
+> inode.
+>
 
-There is also the _IO[RW] long vs int "API violation" for the
-FS_IOC_[GS]ETVERSION which isn't addressed by FS_IOC_[GS]ETATTR.
+There are other option to consider.
 
-So FS_IOC_[GS]ETATTR isn't a complete replacement/solution for these
-"problem" ioctls.  And of course, even if we were to start telling
-everyone to start using a new interface, it'll be many years before
-any transition is complete.
+To avoid special casing error events in fanotify event read code,
+it would is convenient to use a non-zero length FID, but you can
+use a 8 bytes zero buffer as NULL-FID
 
-						- Ted
+If I am not mistaken, that amounts to 64 bytes of event_len
+including the event_metadata and both records which is pretty
+nicely aligned.
+
+All 3 handle_type options below are valid options:
+1. handle_type FILEID_ROOT
+2. handle_type FILEID_INVALID
+3. handle_type FILEID_INO32_GEN (i.e. ino=0;gen=0)
+
+The advantage of option #3 is that the monitoring program
+does not need to special case the NULL_FID case when
+parsing the FID to informative user message.
+
+> The other changes in this iteration were made to attend to Amir
+> feedback.  Thank you again for your very detailed input.  It is really
+> appreciated.
+>
+> This was tested with LTP for regressions, and also using the sample on
+> the last patch, with a corrupted image.  I can publish the bad image
+> upon request.
+
+Just to set expectations, we now have an official standard for fanotify [1]
+where we require an LTP test and man page update patch before merge
+of UAPI changes.
+
+That should not stop us from continuing the review process - it's just
+a heads up, but I think that we are down to implementation details in
+the review anyway and that the UAPI (give or take root inode) is
+pretty much clear at this point, so spreading the review of UAPI to
+wider audience is not a bad idea.
+
+w.r.t man page update, I know you have created the admin-guide book,
+but it's not the same. For linux-api reviewers, reviewing the changed to
+fanotify man pages is good way to make sure we did not miss any corners.
+
+w.r.t LTP test, I don't think that using a corrupt image will be a good way
+for an LTP test. LTP tests can prepare and mount an ext4 loop image.
+Does ext4 have some debugging method to inject an error?
+Because that would be the best way IMO.
+If it doesn't, you can implement this in ext4 and use it in the test if that
+debug file exists - skip the test otherwise - it's common practice.
+
+Thanks,
+Amir.
+
+[1] https://lore.kernel.org/linux-fsdevel/YMKv1U7tNPK955ho@google.com/
