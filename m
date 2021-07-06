@@ -7,62 +7,62 @@ X-Spam-Status: No, score=-18.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
 	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CDF87C11F67
-	for <linux-api@archiver.kernel.org>; Tue,  6 Jul 2021 12:46:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ABF82C07E96
+	for <linux-api@archiver.kernel.org>; Tue,  6 Jul 2021 12:46:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BB4B061C88
-	for <linux-api@archiver.kernel.org>; Tue,  6 Jul 2021 12:46:04 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 95B9661D05
+	for <linux-api@archiver.kernel.org>; Tue,  6 Jul 2021 12:46:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239324AbhGFMsm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 6 Jul 2021 08:48:42 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33908 "EHLO
+        id S231489AbhGFMsw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 6 Jul 2021 08:48:52 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34472 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239247AbhGFMsk (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 6 Jul 2021 08:48:40 -0400
-Received: from mail-wm1-x329.google.com (mail-wm1-x329.google.com [IPv6:2a00:1450:4864:20::329])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C70BCC05BD3A
-        for <linux-api@vger.kernel.org>; Tue,  6 Jul 2021 05:41:08 -0700 (PDT)
-Received: by mail-wm1-x329.google.com with SMTP id n33so5983875wms.1
-        for <linux-api@vger.kernel.org>; Tue, 06 Jul 2021 05:41:08 -0700 (PDT)
+        with ESMTP id S240513AbhGFMsl (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 6 Jul 2021 08:48:41 -0400
+Received: from mail-wm1-x32f.google.com (mail-wm1-x32f.google.com [IPv6:2a00:1450:4864:20::32f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 57E7DC0225A7
+        for <linux-api@vger.kernel.org>; Tue,  6 Jul 2021 05:41:12 -0700 (PDT)
+Received: by mail-wm1-x32f.google.com with SMTP id n33so5984007wms.1
+        for <linux-api@vger.kernel.org>; Tue, 06 Jul 2021 05:41:12 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=linaro.org; s=google;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=+SyzOju9StSJiRZ9iNcKKAv9UQxdJlfQPJ4E1Oc7MQ0=;
-        b=URrdGVCp9ySEpG+9Y+/25CGI7NcB4VqFscKTYtl081JVonpaKzsZeph7TlfLu7uG7n
-         YBcSaDrY0AIUjvtCmGY6Luge6RIu0OZr4R5uLW9ArPDJpE67OJD2vVpSEEar70C3Ga/l
-         TPLR9DiyOI0AcCNJhUAPJFEj1MXNMsMskNSzySORWA4liooFpd+/3MaaCyNoCqb4aVB9
-         3i7REh4Vop83cgFqpgS7gUxxeEe295iNAlnjHQcnrGlD7zqk5y33tvO1tpHB/cVJaKkI
-         cmx9r9NhXoWPGxeF61POe3OvY3aC1OgadR6cv4u+xDXym7iOYHTtoBX8Af1ao6LNeEgJ
-         44xg==
+        bh=hRu/rrECnrx/6rDYLkqHGSqwS0EdaL46bywJDkHS8nI=;
+        b=A/Mi8xG/jIlYJ+6yfkfZ/NNXm7mu7DHNJaeqjA+dLchP0zt4JrHU9eIL3h+/nvEr79
+         T1rC+ILs46rmaj89/17s9Bg+OsODYSOuDRDNtkcF6rFcBoW3uKNU9YiyG2DL79HEwatj
+         7d4EVG1bqR3Dxi8vxrTYFK9aBpJIqLS1+Zi2HeiO1KXQOXJvx8P7gZm3I1ekA/rGBMn+
+         Rq8KoRCf9vd7rZk/4eWP5MBLWASDB77A1UsDSsoo7eeAnIfH6MV8UTStV1FvV9X4bb+J
+         nSHPdPYcWYbHd6lO57Bgi8cZuUSWvN5fk7B+JkXC7f+6W7u+rPkQ3pqYxNp0JKRPUKbK
+         Mmag==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=+SyzOju9StSJiRZ9iNcKKAv9UQxdJlfQPJ4E1Oc7MQ0=;
-        b=ObSW0oL5bCaIZS1D5pI5oskDmwjq1vq9gETHK3N0olr7v0fHDsgKOWcXNG5vz4g6Kw
-         PkgZ4x+uxuU493QPLOQr1itGMnFapPo2Z9GdWBoCZunYcWQn/IDBai6zwbNliaCJKu++
-         oYEMOFgltZzDX/nYt8vzGaiAt07YZmsORi5nSJnBV0wiB7hbyhwDEAJ9Exglgn8WbxZW
-         DHo13l6vzFxLZZCGH8aOMTreCxcg1z559BglNJY894Hpg4ueis+QUUAYH3bGNFkw0OML
-         ymlt2RCRMDClKEHIBYJftRZCK4ARaQoiRvuEwx1rt8msFEiJuIPgG6y+AerH6aJX7H10
-         dsHA==
-X-Gm-Message-State: AOAM531YwlS75lyPEcfC0iI6Gqe0RKRAT+oIUcg+jnjaF6Yw7ojxxY6I
-        Ghm/Ub+UnIfW14GK0w9L8/8LPg==
-X-Google-Smtp-Source: ABdhPJxZm69w2Xf+Og+odhinBhnz8eUA9o6MMxtf/sCdqPU7XNaTYUAeDleb3GUX1eY/hqcmzQhPNg==
-X-Received: by 2002:a1c:2985:: with SMTP id p127mr20480595wmp.165.1625575267353;
-        Tue, 06 Jul 2021 05:41:07 -0700 (PDT)
+        bh=hRu/rrECnrx/6rDYLkqHGSqwS0EdaL46bywJDkHS8nI=;
+        b=Zpwb5mEBt3cH3mSJoyV6nNMK+8cm6liIu/7A0AJbXnbWYruJ4E/hFw4Y8U5BmbLagN
+         zlM0aD9GcGcuayBu9JIEIUcq/PGqrVItdP3+5jFD+Mog+iGaJhuO0L7MMju0KBpPuuty
+         xolEkR6240oxjX/kEUP+HUaoSLcPW5jzjI28nSoDJWm2v+zBHvzwPftuFnryFjVkdLAG
+         7pRYRpPH1NLFyRa6IebNH4i16x0HddCXS2j1CpIfxmZqdxnhG/lWrVelhQHPPj0RQCBO
+         AyUrg/i3VuItvtqcE7mLaF5a2hY4FGhfJyFkhWLyPEce/C6bqf/RXKDzmnaau6AQ3dNu
+         QdCQ==
+X-Gm-Message-State: AOAM532LufZvQiDTk9Funn8bo2Tx8G0jUez4BRbbyQnHfn6toHPKjT/r
+        gcbwdMmNLjtFkZQ9xIOQj49gVg==
+X-Google-Smtp-Source: ABdhPJykZRhTNi+DMbVdlg1f9P6ncOKxO5R4KfG+BCmqTv5c10YAQ66qYsZy3VvRGb57i2RhvlqoLw==
+X-Received: by 2002:a05:600c:2f17:: with SMTP id r23mr168794wmn.185.1625575270808;
+        Tue, 06 Jul 2021 05:41:10 -0700 (PDT)
 Received: from localhost.localdomain (hst-221-27.medicom.bg. [84.238.221.27])
-        by smtp.gmail.com with ESMTPSA id n18sm2585979wms.3.2021.07.06.05.41.06
+        by smtp.gmail.com with ESMTPSA id n18sm2585979wms.3.2021.07.06.05.41.10
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 06 Jul 2021 05:41:07 -0700 (PDT)
+        Tue, 06 Jul 2021 05:41:10 -0700 (PDT)
 From:   Stanimir Varbanov <stanimir.varbanov@linaro.org>
 To:     linux-media@vger.kernel.org, linux-kernel@vger.kernel.org,
         linux-arm-msm@vger.kernel.org, linux-api@vger.kernel.org
 Cc:     Hans Verkuil <hverkuil-cisco@xs4all.nl>,
         Stanimir Varbanov <stanimir.varbanov@linaro.org>
-Subject: [PATCH v2 1/5] v4l: Add Qualcomm custom compressed pixel formats
-Date:   Tue,  6 Jul 2021 15:40:30 +0300
-Message-Id: <20210706124034.773503-2-stanimir.varbanov@linaro.org>
+Subject: [PATCH v2 5/5] venus: Add a handling of QC10C compressed format
+Date:   Tue,  6 Jul 2021 15:40:34 +0300
+Message-Id: <20210706124034.773503-6-stanimir.varbanov@linaro.org>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20210706124034.773503-1-stanimir.varbanov@linaro.org>
 References: <20210706124034.773503-1-stanimir.varbanov@linaro.org>
@@ -72,71 +72,113 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add custom Qualcomm raw compressed pixel formats. They are
-used in Qualcomm SoCs to optimize the interconnect bandwidth.
+This adds QC10C compressed pixel format in the Venus driver, and
+make it possible to discover from v4l2 clients.
+
+Note: The QC10C format shouldn't be possible to discpver by the
+client if the decoded bitstream is not 10-bits.
 
 Signed-off-by: Stanimir Varbanov <stanimir.varbanov@linaro.org>
 ---
- .../media/v4l/pixfmt-reserved.rst              | 18 ++++++++++++++++++
- drivers/media/v4l2-core/v4l2-ioctl.c           |  2 ++
- include/uapi/linux/videodev2.h                 |  2 ++
- 3 files changed, 22 insertions(+)
+ drivers/media/platform/qcom/venus/helpers.c | 23 ++-------------------
+ drivers/media/platform/qcom/venus/vdec.c    | 19 ++++++++++++++---
+ 2 files changed, 18 insertions(+), 24 deletions(-)
 
-diff --git a/Documentation/userspace-api/media/v4l/pixfmt-reserved.rst b/Documentation/userspace-api/media/v4l/pixfmt-reserved.rst
-index 0b879c0da713..136e9832db0c 100644
---- a/Documentation/userspace-api/media/v4l/pixfmt-reserved.rst
-+++ b/Documentation/userspace-api/media/v4l/pixfmt-reserved.rst
-@@ -260,6 +260,24 @@ please make a proposal on the linux-media mailing list.
- 	of tiles, resulting in 32-aligned resolutions for the luminance plane
- 	and 16-aligned resolutions for the chrominance plane (with 2x2
- 	subsampling).
-+    * .. _V4L2-PIX-FMT-QC08C:
+diff --git a/drivers/media/platform/qcom/venus/helpers.c b/drivers/media/platform/qcom/venus/helpers.c
+index 49d720fd9a9d..b48bf52481ba 100644
+--- a/drivers/media/platform/qcom/venus/helpers.c
++++ b/drivers/media/platform/qcom/venus/helpers.c
+@@ -563,6 +563,8 @@ static u32 to_hfi_raw_fmt(u32 v4l2_fmt)
+ 		return HFI_COLOR_FORMAT_NV21;
+ 	case V4L2_PIX_FMT_QC08C:
+ 		return HFI_COLOR_FORMAT_NV12_UBWC;
++	case V4L2_PIX_FMT_QC10C:
++		return HFI_COLOR_FORMAT_YUV420_TP10_UBWC;
+ 	default:
+ 		break;
+ 	}
+@@ -1675,27 +1677,6 @@ int venus_helper_get_out_fmts(struct venus_inst *inst, u32 v4l2_fmt,
+ 	if (!caps)
+ 		return -EINVAL;
+ 
+-	if (inst->bit_depth == VIDC_BITDEPTH_10 &&
+-	    inst->session_type == VIDC_SESSION_TYPE_DEC) {
+-		found_ubwc =
+-			find_fmt_from_caps(caps, HFI_BUFFER_OUTPUT,
+-					   HFI_COLOR_FORMAT_YUV420_TP10_UBWC);
+-		found = find_fmt_from_caps(caps, HFI_BUFFER_OUTPUT2,
+-					   HFI_COLOR_FORMAT_NV12);
+-		if (found_ubwc && found) {
+-			/*
+-			 * Hard-code DPB buffers to be 10bit UBWC and decoder
+-			 * output buffers in 8bit NV12 until V4L2 is able to
+-			 * expose compressed/tiled formats to applications.
+-			 */
+-			*out_fmt = HFI_COLOR_FORMAT_YUV420_TP10_UBWC;
+-			*out2_fmt = HFI_COLOR_FORMAT_NV12;
+-			return 0;
+-		}
+-
+-		return -EINVAL;
+-	}
+-
+ 	if (ubwc) {
+ 		ubwc_fmt = fmt | HFI_COLOR_FORMAT_UBWC_BASE;
+ 		found_ubwc = find_fmt_from_caps(caps, HFI_BUFFER_OUTPUT,
+diff --git a/drivers/media/platform/qcom/venus/vdec.c b/drivers/media/platform/qcom/venus/vdec.c
+index 989a75dc5bf0..c4d5bde860d7 100644
+--- a/drivers/media/platform/qcom/venus/vdec.c
++++ b/drivers/media/platform/qcom/venus/vdec.c
+@@ -35,6 +35,10 @@ static const struct venus_format vdec_formats[] = {
+ 		.num_planes = 1,
+ 		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
+ 	}, {
++		.pixfmt = V4L2_PIX_FMT_QC10C,
++		.num_planes = 1,
++		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
++	},{
+ 		.pixfmt = V4L2_PIX_FMT_NV12,
+ 		.num_planes = 1,
+ 		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
+@@ -114,6 +118,10 @@ find_format(struct venus_inst *inst, u32 pixfmt, u32 type)
+ 	    !venus_helper_check_format(inst, fmt[i].pixfmt))
+ 		return NULL;
+ 
++	if (V4L2_TYPE_IS_CAPTURE(type) && fmt[i].pixfmt == V4L2_PIX_FMT_QC10C &&
++	    !(inst->bit_depth == VIDC_BITDEPTH_10))
++		return NULL;
 +
-+      - ``V4L2_PIX_FMT_QC08C``
-+      - 'QC08C'
-+      - Compressed Macro-tile 8-Bit YUV420 format used by Qualcomm platforms.
-+	The used compression is lossless and it is used by various multimedia
-+	hardware blocks like GPU, display controllers, ISP and video accelerators.
-+	It contains four planes for progressive video and eight planes for
-+	interlaced video.
-+    * .. _V4L2-PIX-FMT-QC10C:
+ 	return &fmt[i];
+ }
+ 
+@@ -133,11 +141,16 @@ find_format_by_index(struct venus_inst *inst, unsigned int index, u32 type)
+ 		if (fmt[i].type != type)
+ 			continue;
+ 
+-		if (V4L2_TYPE_IS_OUTPUT(type))
++		if (V4L2_TYPE_IS_OUTPUT(type)) {
+ 			valid = venus_helper_check_codec(inst, fmt[i].pixfmt);
+-		else if (V4L2_TYPE_IS_CAPTURE(type))
++		} else if (V4L2_TYPE_IS_CAPTURE(type)) {
+ 			valid = venus_helper_check_format(inst, fmt[i].pixfmt);
+ 
++			if (fmt[i].pixfmt == V4L2_PIX_FMT_QC10C &&
++			    !(inst->bit_depth == VIDC_BITDEPTH_10))
++				valid = false;
++		}
 +
-+      - ``V4L2_PIX_FMT_QC10C``
-+      - 'QC10C'
-+      - Compressed Macro-tile 10-Bit YUV420 format used by Qualcomm platforms.
-+	The used compression is lossless and it is used by various multimedia
-+	hardware blocks like GPU, display controllers, ISP and video.
-+	It contains four planes for progressive video and eight planes for
-+	interlaced video.
- 
- .. raw:: latex
- 
-diff --git a/drivers/media/v4l2-core/v4l2-ioctl.c b/drivers/media/v4l2-core/v4l2-ioctl.c
-index 05d5db3d85e5..76d4e4ac18e8 100644
---- a/drivers/media/v4l2-core/v4l2-ioctl.c
-+++ b/drivers/media/v4l2-core/v4l2-ioctl.c
-@@ -1416,6 +1416,8 @@ static void v4l_fill_fmtdesc(struct v4l2_fmtdesc *fmt)
- 		case V4L2_PIX_FMT_S5C_UYVY_JPG:	descr = "S5C73MX interleaved UYVY/JPEG"; break;
- 		case V4L2_PIX_FMT_MT21C:	descr = "Mediatek Compressed Format"; break;
- 		case V4L2_PIX_FMT_SUNXI_TILED_NV12: descr = "Sunxi Tiled NV12 Format"; break;
-+		case V4L2_PIX_FMT_QC08C:	descr = "QCOM Compressed 8-bit Format"; break;
-+		case V4L2_PIX_FMT_QC10C:	descr = "QCOM Compressed 10-bit Format"; break;
- 		default:
- 			if (fmt->description[0])
- 				return;
-diff --git a/include/uapi/linux/videodev2.h b/include/uapi/linux/videodev2.h
-index 9260791b8438..dc1b714ccf6b 100644
---- a/include/uapi/linux/videodev2.h
-+++ b/include/uapi/linux/videodev2.h
-@@ -737,6 +737,8 @@ struct v4l2_pix_format {
- #define V4L2_PIX_FMT_SUNXI_TILED_NV12 v4l2_fourcc('S', 'T', '1', '2') /* Sunxi Tiled NV12 Format */
- #define V4L2_PIX_FMT_CNF4     v4l2_fourcc('C', 'N', 'F', '4') /* Intel 4-bit packed depth confidence information */
- #define V4L2_PIX_FMT_HI240    v4l2_fourcc('H', 'I', '2', '4') /* BTTV 8-bit dithered RGB */
-+#define V4L2_PIX_FMT_QC08C    v4l2_fourcc('Q', '0', '8', 'C') /* Qualcomm 8-bit compressed */
-+#define V4L2_PIX_FMT_QC10C    v4l2_fourcc('Q', '1', '0', 'C') /* Qualcomm 10-bit compressed */
- 
- /* 10bit raw bayer packed, 32 bytes for every 25 pixels, last LSB 6 bits unused */
- #define V4L2_PIX_FMT_IPU3_SBGGR10	v4l2_fourcc('i', 'p', '3', 'b') /* IPU3 packed 10-bit BGGR bayer */
+ 		if (k == index && valid)
+ 			break;
+ 		if (valid)
+@@ -1496,7 +1509,7 @@ static const struct hfi_inst_ops vdec_hfi_ops = {
+ static void vdec_inst_init(struct venus_inst *inst)
+ {
+ 	inst->hfi_codec = HFI_VIDEO_CODEC_H264;
+-	inst->fmt_out = &vdec_formats[7];
++	inst->fmt_out = &vdec_formats[8];
+ 	inst->fmt_cap = &vdec_formats[0];
+ 	inst->width = frame_width_min(inst);
+ 	inst->height = ALIGN(frame_height_min(inst), 32);
 -- 
 2.25.1
 
