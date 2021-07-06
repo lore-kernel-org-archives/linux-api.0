@@ -2,129 +2,99 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-18.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9FE14C07E9E
-	for <linux-api@archiver.kernel.org>; Tue,  6 Jul 2021 12:46:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 58248C07E96
+	for <linux-api@archiver.kernel.org>; Tue,  6 Jul 2021 12:57:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 89AAE61D05
-	for <linux-api@archiver.kernel.org>; Tue,  6 Jul 2021 12:46:16 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 382DF61A46
+	for <linux-api@archiver.kernel.org>; Tue,  6 Jul 2021 12:57:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237425AbhGFMsx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 6 Jul 2021 08:48:53 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34530 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S240792AbhGFMsl (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 6 Jul 2021 08:48:41 -0400
-Received: from mail-wr1-x435.google.com (mail-wr1-x435.google.com [IPv6:2a00:1450:4864:20::435])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5207DC0225A3
-        for <linux-api@vger.kernel.org>; Tue,  6 Jul 2021 05:41:11 -0700 (PDT)
-Received: by mail-wr1-x435.google.com with SMTP id t6so15977308wrm.9
-        for <linux-api@vger.kernel.org>; Tue, 06 Jul 2021 05:41:11 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google;
-        h=from:to:cc:subject:date:message-id:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=iQ3yOn/VjqEGKTdI++jjchtNRpo4xx2SRNzVvDxUg3A=;
-        b=NkKdOFgL/b5cHNIFxbGHFGF/hyb+j3sLHFwCNN/eZlDyMXf/e/BCK6o88C2Fc7Jh9G
-         UWBUXL4BheLJhdJmlYaVr+Ld0BoZsfvHAO+BX8xkA4MjNFR01MNSMNiY0IE/DoHwo+wW
-         T6tDIO7ApOlpR35YKGOMzmNHsF6ojw49fInCnUIMmgxUkLNmtSlXG0IP5aE4TEfjs7w1
-         BUVF+KRfB63HPmLB5y+MrPBtoJ7Qi8l5QrC0jMJMp1bVT7AS6kjnxiLJCom0GEGW24x+
-         NRQDUu2Cxv5yg4VJxAhOlz48yab5eEFjQsOwD+GL0AwwtSDD+BsUh2ba4NFvodtLDAoo
-         HOxQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references:mime-version:content-transfer-encoding;
-        bh=iQ3yOn/VjqEGKTdI++jjchtNRpo4xx2SRNzVvDxUg3A=;
-        b=jKVar5rbQuP6ByWOvz63ZLfeR0fkpGxrp7M5ApPcK2YY25mimuwF5HhqXrtSaPHVnO
-         zCjnPqmdoDyrn9iVXIebiRZUsdQGLMjYrIUgER6Fx7GRA5/5NhI2VNZ7PCG1g5c6ynM1
-         KB64w1aUWg/dxDrAy0MqVT6koxX7DmAB6j22SGUM3XsuB74C9t0HrUpQuRvAEmXs50eo
-         6pZe2IKZrbwJHm4iDsS2mKHpgETkRBistBttT37OYdj31LA385fMNwitYiGWSvcipyoV
-         QetfvDhaqCxC+1dtSx6Ao1XNRdnQeJmLetuLwBDkyVfqMMHLHN7nk8zgcOuqoeeWG/Zc
-         mTPg==
-X-Gm-Message-State: AOAM530HvcNssLjdi0FgUvPtx77oN95wljujWBCy45HrYrdauHVY6q91
-        Ob6lyAFx2SxnyVQ1bBM6J75bxw==
-X-Google-Smtp-Source: ABdhPJy++XUxB7OhDLu0uCfjmQhtluIZGVNcY/UIg91uyEcaL+ImrvqcUrTsPv/AyLsfxLPEL78b6g==
-X-Received: by 2002:a05:6000:18a7:: with SMTP id b7mr21762185wri.348.1625575269997;
-        Tue, 06 Jul 2021 05:41:09 -0700 (PDT)
-Received: from localhost.localdomain (hst-221-27.medicom.bg. [84.238.221.27])
-        by smtp.gmail.com with ESMTPSA id n18sm2585979wms.3.2021.07.06.05.41.08
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 06 Jul 2021 05:41:09 -0700 (PDT)
-From:   Stanimir Varbanov <stanimir.varbanov@linaro.org>
-To:     linux-media@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-arm-msm@vger.kernel.org, linux-api@vger.kernel.org
-Cc:     Hans Verkuil <hverkuil-cisco@xs4all.nl>,
-        Stanimir Varbanov <stanimir.varbanov@linaro.org>
-Subject: [PATCH v2 4/5] venus: hfi_platform: Correct supported compressed format
-Date:   Tue,  6 Jul 2021 15:40:33 +0300
-Message-Id: <20210706124034.773503-5-stanimir.varbanov@linaro.org>
-X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20210706124034.773503-1-stanimir.varbanov@linaro.org>
-References: <20210706124034.773503-1-stanimir.varbanov@linaro.org>
+        id S231543AbhGFNAa (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 6 Jul 2021 09:00:30 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:35316 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S231535AbhGFNAa (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 6 Jul 2021 09:00:30 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1625576271;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=ytlF4FE3cl9dxZ8jYCvSYMBBS99A2hZUnRZlAgau2m8=;
+        b=Iv6rY9s3PY17+8k+m1LRsV2ZBHwS/+r6x6+EA4K934AHTr0VY9KxVYbPuVoP7zXj2gfqET
+        QtH3fCpzTEL3hI2dCZtjwXMmixSnfHnq7Q+zMOjx+7q0sxDle9dkznYahy/2xeJ6H/FQTa
+        s7+nGveOQrM/4L7Iju9iiAmxamVRPB8=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-366-HM_70VIjNNaXbS_t2qk2NQ-1; Tue, 06 Jul 2021 08:57:47 -0400
+X-MC-Unique: HM_70VIjNNaXbS_t2qk2NQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 349A8100CA88;
+        Tue,  6 Jul 2021 12:57:46 +0000 (UTC)
+Received: from oldenburg.str.redhat.com (ovpn-115-5.ams2.redhat.com [10.36.115.5])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 127825D6A1;
+        Tue,  6 Jul 2021 12:57:43 +0000 (UTC)
+From:   Florian Weimer <fweimer@redhat.com>
+To:     "Enrico Weigelt, metux IT consult" <lkml@metux.net>
+Cc:     Thiago Macieira <thiago.macieira@intel.com>, hjl.tools@gmail.com,
+        libc-alpha@sourceware.org, linux-api@vger.kernel.org,
+        linux-arch@vger.kernel.org, x86@kernel.org
+Subject: Re: x86 CPU features detection for applications (and AMX)
+References: <22261946.eFiGugXE7Z@tjmaciei-mobl1>
+        <3c5c29e2-1b52-3576-eda2-018fb1e58ff9@metux.net>
+        <2379132.fg5cGID6mU@tjmaciei-mobl1>
+        <e07294c9-b02a-e1c5-3620-7fae7269fdf1@metux.net>
+        <87pmw3ifpv.fsf@oldenburg.str.redhat.com>
+        <030f1462-2bf9-39bc-d620-6d9fbe454a27@metux.net>
+        <87lf6ricqg.fsf@oldenburg.str.redhat.com>
+        <4ba30cb7-6854-0691-fad6-4ca9ce674ac2@metux.net>
+        <878s2qh2bb.fsf@oldenburg.str.redhat.com>
+        <034dcf9b-1f8c-23ee-86a6-791122bc0f8c@metux.net>
+Date:   Tue, 06 Jul 2021 14:57:42 +0200
+In-Reply-To: <034dcf9b-1f8c-23ee-86a6-791122bc0f8c@metux.net> (Enrico
+        Weigelt's message of "Thu, 1 Jul 2021 13:59:33 +0200")
+Message-ID: <87eecbfvll.fsf@oldenburg.str.redhat.com>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.2 (gnu/linux)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-In multistream mode HFI supports TP10_UBWC on output2. Correct this
-in supported formats capabilities list.
+* Enrico Weigelt:
 
-Signed-off-by: Stanimir Varbanov <stanimir.varbanov@linaro.org>
----
- drivers/media/platform/qcom/venus/hfi_platform_v4.c | 4 ++--
- drivers/media/platform/qcom/venus/hfi_platform_v6.c | 4 ++--
- 2 files changed, 4 insertions(+), 4 deletions(-)
+> On 01.07.21 10:21, Florian Weimer wrote:
+>> * Enrico Weigelt:
+>> 
+>>> And I'm repeating my previous questions: can you name some actual real
+>>> world (not hypothetical or academical) scenarios where:
+>>>
+>>> somebody really needs some binary-only application &&
+>>> needs those extra modules *into that* application &&
+>>> cannot recompile these modules into the applications's prefix &&
+>>> needs AMX in that application &&
+>>> cannot just use chroot &&
+>>> cannot put it into container ?
+>> There are no real-world scenarios yet which involve AMX, so I'm not
+>> sure
+>> what you are after with this question.
+>
+> Okay, let's take AMX out of the equation (until it actually arrives
+> in the field). How does it look like then ?
 
-diff --git a/drivers/media/platform/qcom/venus/hfi_platform_v4.c b/drivers/media/platform/qcom/venus/hfi_platform_v4.c
-index 3f7f5277a50e..e3f0a90a567b 100644
---- a/drivers/media/platform/qcom/venus/hfi_platform_v4.c
-+++ b/drivers/media/platform/qcom/venus/hfi_platform_v4.c
-@@ -55,7 +55,7 @@ static const struct hfi_plat_caps caps[] = {
- 	.fmts[3] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_NV12},
- 	.fmts[4] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_NV21},
- 	.fmts[5] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_P010},
--	.fmts[6] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_YUV420_TP10},
-+	.fmts[6] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_YUV420_TP10_UBWC},
- 	.num_fmts = 7,
- }, {
- 	.codec = HFI_VIDEO_CODEC_VP8,
-@@ -106,7 +106,7 @@ static const struct hfi_plat_caps caps[] = {
- 	.fmts[3] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_NV12},
- 	.fmts[4] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_NV21},
- 	.fmts[5] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_P010},
--	.fmts[6] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_YUV420_TP10},
-+	.fmts[6] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_YUV420_TP10_UBWC},
- 	.num_fmts = 7,
- }, {
- 	.codec = HFI_VIDEO_CODEC_MPEG2,
-diff --git a/drivers/media/platform/qcom/venus/hfi_platform_v6.c b/drivers/media/platform/qcom/venus/hfi_platform_v6.c
-index d8243b22568a..d98caa6f1011 100644
---- a/drivers/media/platform/qcom/venus/hfi_platform_v6.c
-+++ b/drivers/media/platform/qcom/venus/hfi_platform_v6.c
-@@ -55,7 +55,7 @@ static const struct hfi_plat_caps caps[] = {
- 	.fmts[3] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_NV12},
- 	.fmts[4] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_NV21},
- 	.fmts[5] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_P010},
--	.fmts[6] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_YUV420_TP10},
-+	.fmts[6] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_YUV420_TP10_UBWC},
- 	.num_fmts = 7,
- }, {
- 	.codec = HFI_VIDEO_CODEC_VP8,
-@@ -106,7 +106,7 @@ static const struct hfi_plat_caps caps[] = {
- 	.fmts[3] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_NV12},
- 	.fmts[4] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_NV21},
- 	.fmts[5] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_P010},
--	.fmts[6] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_YUV420_TP10},
-+	.fmts[6] = {HFI_BUFFER_OUTPUT2, HFI_COLOR_FORMAT_YUV420_TP10_UBWC},
- 	.num_fmts = 7,
- }, {
- 	.codec = HFI_VIDEO_CODEC_MPEG2,
--- 
-2.25.1
+We have customers that want to use name service switch (NSS) plugins in
+proprietary software and who do not want to distribute the (GNU)
+toolchain with their application.  The latter excludes
+chroot/containers.  Some applications more or less require to run
+directly on the host (e.g., if they have some system monitoring aspect).
+
+Thanks,
+Florian
 
