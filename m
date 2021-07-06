@@ -2,154 +2,148 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-18.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 26C0BC07E9B
-	for <linux-api@archiver.kernel.org>; Mon,  5 Jul 2021 13:40:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F07F1C07E96
+	for <linux-api@archiver.kernel.org>; Tue,  6 Jul 2021 12:46:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 14B28613FC
-	for <linux-api@archiver.kernel.org>; Mon,  5 Jul 2021 13:40:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D402361C94
+	for <linux-api@archiver.kernel.org>; Tue,  6 Jul 2021 12:46:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231213AbhGENnN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 5 Jul 2021 09:43:13 -0400
-Received: from mout.kundenserver.de ([217.72.192.73]:39139 "EHLO
-        mout.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231208AbhGENnM (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 5 Jul 2021 09:43:12 -0400
-Received: from mail-wr1-f53.google.com ([209.85.221.53]) by
- mrelayeu.kundenserver.de (mreue106 [213.165.67.113]) with ESMTPSA (Nemesis)
- id 1N3K9E-1l0UWe1aM6-010IjX; Mon, 05 Jul 2021 15:40:34 +0200
-Received: by mail-wr1-f53.google.com with SMTP id a8so10464501wrp.5;
-        Mon, 05 Jul 2021 06:40:34 -0700 (PDT)
-X-Gm-Message-State: AOAM5312NSuiTRLaXwtWGn3ouRkovfw5RGiLfxR7t1USIXWU7nIa8lMO
-        37VMDtuuzEb/AUW+7a4OvYLxygpymMkUG5hCX0g=
-X-Google-Smtp-Source: ABdhPJyNk0E58GdhdijG+SWnLfymVKXZ/4Aj/5fDKjXY6B+nWTKh9KhTnS5biw+IyDgpCND/EK/0PkvZ8uhiQ+fkLjc=
-X-Received: by 2002:adf:fd8e:: with SMTP id d14mr16484625wrr.361.1625492433851;
- Mon, 05 Jul 2021 06:40:33 -0700 (PDT)
+        id S240800AbhGFMsl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 6 Jul 2021 08:48:41 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34478 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S240513AbhGFMsk (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 6 Jul 2021 08:48:40 -0400
+Received: from mail-wr1-x42e.google.com (mail-wr1-x42e.google.com [IPv6:2a00:1450:4864:20::42e])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5BE69C08E89B
+        for <linux-api@vger.kernel.org>; Tue,  6 Jul 2021 05:41:10 -0700 (PDT)
+Received: by mail-wr1-x42e.google.com with SMTP id t6so15977226wrm.9
+        for <linux-api@vger.kernel.org>; Tue, 06 Jul 2021 05:41:10 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=ecjW3cRWAEIfndFoVo8BkYktDhdK0gMxQVqk7QqJZj0=;
+        b=SM3N6mKrFJk7cd4eql+zVJ3BOe/UnA9Das8uViuXyhODKR80MNDJFZJanZStMVvJpk
+         r8RRG9bUGR1fFTOmLpQbRBoumGQC63LBe2A1RnHZoQnxbQhymxtxikH2NVZsoY4MaoA9
+         sqyoZI627kQEc0sc/LrSo29XoLeoUrg028GTSrOlw9tfX7gjq6hAKf3isu4cP5toBchM
+         5AN5ISa/BOazTUMWYHirDsLIC7eNeorzOt/SWbILOMMlg7hnhp5+81/P/0pSPtK5SKxq
+         ODvrrGe6PEMpclgZrIonMs0i5Y39dLbCAkx9ztnrSgXORgpVNrOtjp/Rt2BphRhv1/C8
+         pPlQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=ecjW3cRWAEIfndFoVo8BkYktDhdK0gMxQVqk7QqJZj0=;
+        b=tuazvLbXoOVcXcnkHzRGnV/Pc+eXKiTdhCwNwk/U6NI7ICqssaoQ9RUQozzwTIOEMy
+         ot6CLVCaJgWLVaiogiWkLazcBAIsZEpV4gkj8WGPrGLUvkP5MsAwrwJmCaJAI+kSFeft
+         CJF7rtvEeKEUkJfGdRNcQXY4dpXt2vCtHfdyWNgMNWr/txAcE8qKoY2aRQM0lnpN3Mn+
+         EoU+GUeku9IFo4BOD1IVz31+EZP5S42u0cHoozHHFPejXn4QB/VvkSVPRW9dqiutUmaa
+         phsWsA2v3pW2Wd1QAt603bft1ha5N34SA9XrpQl7pfVruYcCfarAXo4XRJgFeZMl7RZl
+         jxoQ==
+X-Gm-Message-State: AOAM5338CVNbgtwv+bDtqW/tBL8XhIAmSECqPYRcf3hDtb7FWg1q/7k+
+        GQZxN+9hoWLGRmb8jWKFrcUiVw==
+X-Google-Smtp-Source: ABdhPJwimNP2WfDoa6FlJCyZjVgGRPFEyTLn9bh2f/+WRtNo2XT4WmA1hzhXwhjQrEswGe5ddxMdOQ==
+X-Received: by 2002:a5d:530f:: with SMTP id e15mr21151955wrv.217.1625575268875;
+        Tue, 06 Jul 2021 05:41:08 -0700 (PDT)
+Received: from localhost.localdomain (hst-221-27.medicom.bg. [84.238.221.27])
+        by smtp.gmail.com with ESMTPSA id n18sm2585979wms.3.2021.07.06.05.41.08
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 06 Jul 2021 05:41:08 -0700 (PDT)
+From:   Stanimir Varbanov <stanimir.varbanov@linaro.org>
+To:     linux-media@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-arm-msm@vger.kernel.org, linux-api@vger.kernel.org
+Cc:     Hans Verkuil <hverkuil-cisco@xs4all.nl>,
+        Stanimir Varbanov <stanimir.varbanov@linaro.org>
+Subject: [PATCH v2 3/5] venus: Add a handling of QC08C compressed format
+Date:   Tue,  6 Jul 2021 15:40:32 +0300
+Message-Id: <20210706124034.773503-4-stanimir.varbanov@linaro.org>
+X-Mailer: git-send-email 2.25.1
+In-Reply-To: <20210706124034.773503-1-stanimir.varbanov@linaro.org>
+References: <20210706124034.773503-1-stanimir.varbanov@linaro.org>
 MIME-Version: 1.0
-References: <linux-audit/audit-kernel/issues/131@github.com>
- <linux-audit/audit-kernel/issues/131/872191450@github.com> <YN9V/qM0mxIYXt3h@yury-ThinkPad>
-In-Reply-To: <YN9V/qM0mxIYXt3h@yury-ThinkPad>
-From:   Arnd Bergmann <arnd@arndb.de>
-Date:   Mon, 5 Jul 2021 15:40:17 +0200
-X-Gmail-Original-Message-ID: <CAK8P3a0L4YU2q6WCZviNJGzAuQniwrZDKc7w1nHMB276hZzG6Q@mail.gmail.com>
-Message-ID: <CAK8P3a0L4YU2q6WCZviNJGzAuQniwrZDKc7w1nHMB276hZzG6Q@mail.gmail.com>
-Subject: Re: [linux-audit/audit-kernel] BUG: audit_classify_syscall() fails to
- properly handle 64-bit syscalls when executing as 32-bit application on ARM (#131)
-To:     Yury Norov <yury.norov@gmail.com>
-Cc:     Catalin Marinas <catalin.marinas@arm.com>,
-        "linux-audit/audit-kernel" 
-        <reply+ADSN7RXLQ62LNLD2MK5HFHF65GIU3EVBNHHDPMBXHU@reply.github.com>,
-        "linux-audit/audit-kernel" <audit-kernel@noreply.github.com>,
-        Mention <mention@noreply.github.com>,
-        Xiongfeng Wang <wangxiongfeng2@huawei.com>,
-        Wang ShaoBo <bobo.shaobowang@huawei.com>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-arm-kernel@lists.infradead.org" 
-        <linux-arm-kernel@lists.infradead.org>,
-        "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-        "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        Adam Borowski <kilobyte@angband.pl>,
-        Alexander Graf <agraf@suse.de>,
-        Alexey Klimov <klimov.linux@gmail.com>,
-        Andreas Schwab <schwab@suse.de>,
-        Andrew Pinski <pinskia@gmail.com>,
-        Bamvor Zhangjian <bamv2005@gmail.com>,
-        Chris Metcalf <cmetcalf@mellanox.com>,
-        Christoph Muellner <christoph.muellner@theobroma-systems.com>,
-        Dave Martin <Dave.Martin@arm.com>,
-        "David S . Miller" <davem@davemloft.net>,
-        Florian Weimer <fweimer@redhat.com>,
-        Geert Uytterhoeven <geert@linux-m68k.org>,
-        Heiko Carstens <heiko.carstens@de.ibm.com>,
-        James Hogan <james.hogan@imgtec.com>,
-        James Morse <james.morse@arm.com>,
-        Joseph Myers <joseph@codesourcery.com>,
-        Lin Yongting <linyongting@huawei.com>,
-        Manuel Montezelo <manuel.montezelo@gmail.com>,
-        Mark Brown <broonie@kernel.org>,
-        Martin Schwidefsky <schwidefsky@de.ibm.com>,
-        Maxim Kuvyrkov <maxim.kuvyrkov@linaro.org>,
-        Nathan_Lynch <Nathan_Lynch@mentor.com>,
-        Philipp Tomsich <philipp.tomsich@theobroma-systems.com>,
-        Prasun Kapoor <Prasun.Kapoor@caviumnetworks.com>,
-        Ramana Radhakrishnan <ramana.gcc@googlemail.com>,
-        Steve Ellcey <sellcey@caviumnetworks.com>,
-        Szabolcs Nagy <szabolcs.nagy@arm.com>
-Content-Type: text/plain; charset="UTF-8"
-X-Provags-ID: V03:K1:4neMM1Yflvb8OYyphwzh3kNyrS00gfy3pXY+JOvgQOo2HdCol4T
- OoSWKtp+/a6zVxNFHFIlN7DKcHI4ypXElXuRdPACfRqxUnN2rR7/yOaZ/i+af3vYULyskau
- tlFH1A2oVc9mOGCnLTYa9cjuylhsGPmplEUqJDhYACYGEzCveILkTtMe2wzLnw20XPCq45t
- +UMqMDdjNldhgWu9Hm6sA==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:vwfYswzw0Fc=:IZluxWwcJlLRV+zd98tvzP
- dYsBLW5fOMQ9eSu59bQQtsUccti8o3+Dbwu0RkNUnTICiW4WNv+WjLnKZNwKS+McN1W1g26H5
- EyTSvmsSuzhSR4FckbRT6our87By9Y6ukU5W0gfqU/y8/FSqxESuu/Oe81Y0nOH1D1Jgu95uR
- RmSfMZyfi6oOSEvWBrPqXrSw6OrwZS9s4lQYTjL/dA54n/YC8esPwZ86LfCl/qtExSADszUrT
- 8lLcyzWdD9/kDMxEpxZKNITKg1JbVwaJstQTA/fqXI4MPae1r0eYC+0Znir4Uva0vJ8fhkK+r
- G7abCiUvwt/mx5nzuUNqxKISHJ9nQT2T/O6M1ZDZbgzxSlJQw4HTyBfwW7UknA9CB95rflbi0
- F1ZgX1ujXl70R1Fgg6aacJjgNdfHXvDDxFBAI2O1sWCaBFrTebEIfxdsPyXg9AKIFLmZq1owD
- WwIUsM9TdADVu/vBEmBmxigVK297HDhy21CWDor4Ctrj7oKcmJjQM/ugEo2thN4EBHV2sIRNH
- Ol2b5/F+bf2QRnEtYn4vLeCkFCz73SUz5LWzrv391IBF+EZEcTNWsk69/d6P4y999G6p8Y6JS
- eDU8Fh8FCc0iEadTpnHumeisPMDV1bsxLKCGJtTXVqlqzMAtLVztKuSlo0njZOxPL2TwLQvlQ
- g8C9x7AX0NehAiZjRQgWLYB0JdzyARnMnRHyPiKuNl/UgfqTMsR6Z8KVXhtkL2h4SoI3Pgk1Y
- GFY0nb3VDm69OtdZwpCOhBxK7eGggHAtqbVN2R62lTVe1AlzFdj23AtfnOKqCwsHL6vQkIZ1G
- uEZRMAZIrxROd0nAccYD/SJs5uDRn80ttvBOWu05VQx2EciasQwhwdkL6AOwH9oa94xhp1bqi
- y1/mahy1bG0LuzwoOILYzB0zsdEPdJI0+UZMf7BBgnKy4w1Uqy96E03IFUtJMorZXctrsqsg1
- Q7NPpC8Z+V7gzGEUI8GsmG/InCBK6cZiUaNJ5R79xCkJMhgjY4h8p
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Jul 2, 2021 at 8:07 PM Yury Norov <yury.norov@gmail.com> wrote:
-> On Thu, Jul 01, 2021 at 05:08:45AM -0700, Paul Moore wrote:
->
-> To Catalin, Arnd:
->
-> At least Marvell, Samsung, Huawei, Cisco and Weiyuchen's employer
-> actively use and develop arm64/ilp32. I receive feedback / bugrepotrs
-> on ilp32 every 4-6 month. Is that enough for you to reconsider
-> including the project into the mainline?
->
-> For me, having different versions of ILP32 is more dangerous in this
-> situation, than upstreaming the project and fixing 2-3 bugs a year.
+This adds QC08C compressed pixel format in the Venus driver, and
+make it possible to discover from v4l2 clients.
 
-I think the overall tradeoff is not that different from what it was in the
-past. Keeping it out of the tree clearly creates extra work both for you
-and the users, but reduces the overhead for everyone else, who
-can ignore that corner case. We have tried removing both x86-x32
-support and arm64 big-endian support from the kernel not that long
-ago. Both have considerably more impact on kernel maintenance than
-your aarch64-ilp32 work, and they probably even have fewer users,
-but we always ended up keeping the status quo.
+Signed-off-by: Stanimir Varbanov <stanimir.varbanov@linaro.org>
+---
+ drivers/media/platform/qcom/venus/helpers.c |  2 ++
+ drivers/media/platform/qcom/venus/vdec.c    | 18 +++++++++++++++---
+ 2 files changed, 17 insertions(+), 3 deletions(-)
 
-However, there are clearly some changes that happened over the
-past few years that may be relevant here:
+diff --git a/drivers/media/platform/qcom/venus/helpers.c b/drivers/media/platform/qcom/venus/helpers.c
+index 48da88d21ccd..49d720fd9a9d 100644
+--- a/drivers/media/platform/qcom/venus/helpers.c
++++ b/drivers/media/platform/qcom/venus/helpers.c
+@@ -561,6 +561,8 @@ static u32 to_hfi_raw_fmt(u32 v4l2_fmt)
+ 		return HFI_COLOR_FORMAT_NV12;
+ 	case V4L2_PIX_FMT_NV21:
+ 		return HFI_COLOR_FORMAT_NV21;
++	case V4L2_PIX_FMT_QC08C:
++		return HFI_COLOR_FORMAT_NV12_UBWC;
+ 	default:
+ 		break;
+ 	}
+diff --git a/drivers/media/platform/qcom/venus/vdec.c b/drivers/media/platform/qcom/venus/vdec.c
+index 198e47eb63f4..989a75dc5bf0 100644
+--- a/drivers/media/platform/qcom/venus/vdec.c
++++ b/drivers/media/platform/qcom/venus/vdec.c
+@@ -31,6 +31,10 @@
+  */
+ static const struct venus_format vdec_formats[] = {
+ 	{
++		.pixfmt = V4L2_PIX_FMT_QC08C,
++		.num_planes = 1,
++		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
++	}, {
+ 		.pixfmt = V4L2_PIX_FMT_NV12,
+ 		.num_planes = 1,
+ 		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
+@@ -106,6 +110,10 @@ find_format(struct venus_inst *inst, u32 pixfmt, u32 type)
+ 	    !venus_helper_check_codec(inst, fmt[i].pixfmt))
+ 		return NULL;
+ 
++	if (V4L2_TYPE_IS_CAPTURE(type) &&
++	    !venus_helper_check_format(inst, fmt[i].pixfmt))
++		return NULL;
++
+ 	return &fmt[i];
+ }
+ 
+@@ -124,8 +132,12 @@ find_format_by_index(struct venus_inst *inst, unsigned int index, u32 type)
+ 
+ 		if (fmt[i].type != type)
+ 			continue;
+-		valid = type != V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE ||
+-			venus_helper_check_codec(inst, fmt[i].pixfmt);
++
++		if (V4L2_TYPE_IS_OUTPUT(type))
++			valid = venus_helper_check_codec(inst, fmt[i].pixfmt);
++		else if (V4L2_TYPE_IS_CAPTURE(type))
++			valid = venus_helper_check_format(inst, fmt[i].pixfmt);
++
+ 		if (k == index && valid)
+ 			break;
+ 		if (valid)
+@@ -1484,7 +1496,7 @@ static const struct hfi_inst_ops vdec_hfi_ops = {
+ static void vdec_inst_init(struct venus_inst *inst)
+ {
+ 	inst->hfi_codec = HFI_VIDEO_CODEC_H264;
+-	inst->fmt_out = &vdec_formats[6];
++	inst->fmt_out = &vdec_formats[7];
+ 	inst->fmt_cap = &vdec_formats[0];
+ 	inst->width = frame_width_min(inst);
+ 	inst->height = ALIGN(frame_height_min(inst), 32);
+-- 
+2.25.1
 
-- The expectation in the past was that ilp32 support would eventually
-   go away as users move on to full 64-bit support. It has survived a
-   lot longer than I would have guessed, but I still find it hard to tell
-   whether this would continue. What's more important than the current
-   number of users is how many of those you expect to run linux-6.x
-   or linux-7.x with aarch64-ilp32 in the future.
-
-- Another thing that has changed is that we now have a rough timeline
-  for aarch32 support to be removed from future Arm processors. If
-  no Armv9 processors after 2022 support Aarch32 mode, we may see
-  interest in ilp32 mode go up between 2025 and 2030 when those
-  processors make it into more markets.
-
-- On the other hand, interest in not just 32-bit hardware running Linux
-  but also in 32-bit user space is already declining overall. We'll
-  probably still see some 10 to 20 years of 32-bit user space
-  deployments on (mostly) memory constrained systems, but this
-  is getting increasingly obscure as more applications run into
-  virtual memory space restrictions (3GB or 4GB typically) before
-  they exceed the available RAM. On RV64 and ARCv3, there is
-  already a conclusion that they will not support 32-bit user space,
-  neither ilp32 style on 64-bit instructions nor with hardware support
-  for RV32/ARC32 binaries. I expect the same for Loongarch.
-
-          Arnd
