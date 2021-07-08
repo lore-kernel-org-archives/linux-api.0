@@ -2,59 +2,59 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.0 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-19.0 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B2210C07E96
-	for <linux-api@archiver.kernel.org>; Thu,  8 Jul 2021 19:46:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 48930C07E99
+	for <linux-api@archiver.kernel.org>; Thu,  8 Jul 2021 19:46:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 94CAF61629
-	for <linux-api@archiver.kernel.org>; Thu,  8 Jul 2021 19:46:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2C5E161629
+	for <linux-api@archiver.kernel.org>; Thu,  8 Jul 2021 19:46:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229497AbhGHTt3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 8 Jul 2021 15:49:29 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35716 "EHLO
+        id S230339AbhGHTta (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 8 Jul 2021 15:49:30 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35736 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230120AbhGHTt0 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 8 Jul 2021 15:49:26 -0400
-Received: from mail-pg1-x52a.google.com (mail-pg1-x52a.google.com [IPv6:2607:f8b0:4864:20::52a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CA82DC06175F
-        for <linux-api@vger.kernel.org>; Thu,  8 Jul 2021 12:46:43 -0700 (PDT)
-Received: by mail-pg1-x52a.google.com with SMTP id f5so7411680pgv.3
-        for <linux-api@vger.kernel.org>; Thu, 08 Jul 2021 12:46:43 -0700 (PDT)
+        with ESMTP id S230333AbhGHTta (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 8 Jul 2021 15:49:30 -0400
+Received: from mail-pg1-x52c.google.com (mail-pg1-x52c.google.com [IPv6:2607:f8b0:4864:20::52c])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B16C4C061764
+        for <linux-api@vger.kernel.org>; Thu,  8 Jul 2021 12:46:46 -0700 (PDT)
+Received: by mail-pg1-x52c.google.com with SMTP id u14so7392553pga.11
+        for <linux-api@vger.kernel.org>; Thu, 08 Jul 2021 12:46:46 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=posk.io; s=google;
-        h=from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=P2tbsmsmlDRoopi/FhqV0EfeiFdZZDeCa4NXAauSAKU=;
-        b=H5HBKbvvGFsGCvG69k0058xJDgg/GmZN/qRcMi1l3v+cGs+9HBjFhzKOjtbJKDaKYs
-         3wldqKAthzTdW8QhASSj8wVGwOHAccaH0UAvjVNcj5ePUuQLHSkufEWBG8XoJc2AcNGL
-         /5r3fTRDdPb3fjfmmDsiEJrUMVm77ZqypuZlrrnM6AEUYnjl2ML0LvUwhxg0AqMn3eA8
-         pB17d7VbQPRzcp6nx/YDeHMIVDwruRfr2DIvoh2IE02nD9oPf1JQIC9WkXY+WPVKGs9T
-         0f48amKvo+cZ6o3VahO1UFMpONaO87UaitBfbHLa9uJ21oTAX+L9zeubE7KTMVMA5yOS
-         DwGw==
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=6vqt7xpIH7a/xgTEcLAz8+GIKMkG1FUNZJBUCT7nGtY=;
+        b=Vr8eXf1SJ75DairU2xUWHxJ+Xjp74ldga2tClDl1ZqxtKO5X0NHtCSCBgNG6adUjtJ
+         XW3qvOtf7x3gVuwPLCdZwxH3mehqniFBqlNDN3RgylLO2Gtq8rvZyThhX/hn8Z/oSlJQ
+         nOZQBm5G6XTyQE4NZN2MeOIb+LF4qz00+D7VrzbeJ8vH4f+FNq8ufGJZykHlk2gjXC/F
+         Y+sR4N7tOnxDiirhdlpmIulN5irXb8IXExpqV6mrQSDCkSd3qTbrhXNdnXY8fP8Bi/1U
+         iJVrZT9ZRduY10SRPo7mulYGBFXHSq5IykWzGuneIoR70LjAN1oIGGZ/bOsjn4kqfqSd
+         yOLA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=P2tbsmsmlDRoopi/FhqV0EfeiFdZZDeCa4NXAauSAKU=;
-        b=hJjbHcM1mKG5AbElnZK3U9fw6a67XH3KSAAxvYHodgWN1F/pGGY5FLSgIPkIXbVyh+
-         xwq6JKm6ehyefTsN3HuOrBVR1gOkeIqthCy00THmydntZsQUAxQEn+3556/IHgkj7hhT
-         izb49hempInyH/LO/D1NZuVLedSzbX+DELdpOu38gvqYDd5Bqk4bb2y46KVvk30Z2vH/
-         rn9t5nYQJJYATaaZP5lI2GspfspU8nRMmIlug+pRU49TwMGZJ0zIQQkTcpO7/Eg+Btxt
-         A0yYptWDmz7cuQ+9vMyO4BkyCc0JrDIlCuS86XI0HTK6Z7xe/xZ4MXg8zNkej58Csa5L
-         dbUg==
-X-Gm-Message-State: AOAM531qcH16ujjMm/oUWdWOoo0Xw1AruGLtLjcn2lrX1nsXYGCxSaVl
-        33OpASYGbYZ5i6D7w2qBM2/4Cw==
-X-Google-Smtp-Source: ABdhPJwLnwQKPLwG23BBbW74R66Sp9qXaZ71vgpbzvoa+uGTojieRAMl+vGnXrAuGigpZiFQGdhuDQ==
-X-Received: by 2002:a63:de18:: with SMTP id f24mr27846968pgg.112.1625773603274;
-        Thu, 08 Jul 2021 12:46:43 -0700 (PDT)
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=6vqt7xpIH7a/xgTEcLAz8+GIKMkG1FUNZJBUCT7nGtY=;
+        b=fcZjwVq8/TZGaRjQCyT8Wu0ZVnlYoXVZADSRI3bSUvvOX6YkERcwmjnHVi+mqEqZ+i
+         2YWTSxO410/F+ITKPBWNKlMGskQ8O6ppGeCEtVSy+BN6XdQXkyKKuLbmL7Z77iGflgBB
+         vs/y70BE6mI3it7IWw7Omql++lj2WQp4jSPWKXZNpw9OowN+1xCBL046RCGY1rFiym0X
+         5UhlhqTNJD8XXo7vTMz6AgvInm/KQBUPkgghv7noW5BxMChrVoGzSjVYAvWC2pt9AhwW
+         NeXj0VVV2iBvSILcEwigdt7Q2+Yvsn0BGvBjGSNi4kmc4ODtqNcWy9EaS2eN8upLsSj2
+         6qPA==
+X-Gm-Message-State: AOAM531fvzXwazZj+vydFIUFVLOuZnvWjakvtV2bqJubQJ6xIwdTzXTu
+        3/+qe0C8IgMfPxgd4SltytxVUw==
+X-Google-Smtp-Source: ABdhPJxuaEdU7+3812uyhUckuVaw/+KYl+877uUKtbONQaUxcrUxfYY/etK8JPoZOrR3jBWoWOIkNQ==
+X-Received: by 2002:a63:471b:: with SMTP id u27mr34286700pga.301.1625773606236;
+        Thu, 08 Jul 2021 12:46:46 -0700 (PDT)
 Received: from localhost.localdomain (23-118-52-46.lightspeed.sntcca.sbcglobal.net. [23.118.52.46])
-        by smtp.gmail.com with ESMTPSA id v1sm3283176pjg.19.2021.07.08.12.46.41
+        by smtp.gmail.com with ESMTPSA id v1sm3283176pjg.19.2021.07.08.12.46.44
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 08 Jul 2021 12:46:42 -0700 (PDT)
+        Thu, 08 Jul 2021 12:46:45 -0700 (PDT)
 From:   Peter Oskolkov <posk@posk.io>
 X-Google-Original-From: Peter Oskolkov <posk@google.com>
 To:     Peter Zijlstra <peterz@infradead.org>,
@@ -68,83 +68,305 @@ Cc:     Paul Turner <pjt@google.com>, Ben Segall <bsegall@google.com>,
         Andrei Vagin <avagin@google.com>,
         Jim Newsome <jnewsome@torproject.org>,
         Jann Horn <jannh@google.com>
-Subject: [RFC PATCH 0/3 v0.2] RFC: sched/UMCG
-Date:   Thu,  8 Jul 2021 12:46:35 -0700
-Message-Id: <20210708194638.128950-1-posk@google.com>
+Subject: [RFC PATCH 2/3 v0.2] sched/umcg: RFC: add userspace atomic helpers
+Date:   Thu,  8 Jul 2021 12:46:37 -0700
+Message-Id: <20210708194638.128950-3-posk@google.com>
 X-Mailer: git-send-email 2.25.1
+In-Reply-To: <20210708194638.128950-1-posk@google.com>
+References: <20210708194638.128950-1-posk@google.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This is another attempt at implementing UMCG, based on
-discussion in https://lore.kernel.org/patchwork/cover/1433967/
+Add helper functions to work atomically with userspace 32/64 bit values -
+there are some .*futex.* named helpers, but they are not exactly
+what is needed for UMCG; I haven't found what else I could use, so I
+rolled these.
 
-Most of the "why" is covered here (some details are obsolete):
-https://lore.kernel.org/patchwork/cover/1433967/#1632328
+At the moment only X86_64 is supported.
 
-At a high level, UMCG servers/workers provide the foundation
-for an M:N threading library, as described in the link above.
+Note: the helpers should probably go into arch/ somewhere; I have
+them in kernel/sched/umcg.h temporarily for convenience. Please
+let me know where I should put them and how to name them.
 
-In addition, servers without workers can be used as "basic"
-UMCG tasks if wait/wake/context-switch are the only desired
-operations.
-
-Joel Fernandes has also once mentioned that he had a use case
-for a wake+bring-the-wakee-to-the-current-CPU operation,
-so this is now also supported via UMCG_WF_CURRENT_CPU flag
-(patch 3).
-
-Patch 1: add WF_CURRENT_CPU and tweak ttwu - same as last time
-Patch 2: add X86_64 helpers to work atomically with userspace values
-Patch 3: implement UMCG kernel-side
-
-In this version of the patchset I used only userspace/TLS
-data, as suggested by Peter Zijlstra. With the exception
-of one issue (see patch 3 commit message) everything seems
-to be working great.
-
-This TLS-only approach makes the userspace code a bit more
-involved, so I'm not posting libumcg/selftests with this
-patchset to focus on the kernel side only.
-
-
-TODO:
-  - put atomic helpers from patch 2 into their proper place (unless
-    keeping them in kernel/sched/umcg.h is OK)
-  - fix the wake server issue in preempt disable block (see patch 3)
-  - implement timeout handling
-  - imlement worker preemption
-  - more testing
-  - manpages, docs, and similar
-  - attach libumbc and selftest patches
-
-
-Peter Oskolkov (3):
-  sched: add WF_CURRENT_CPU and externise ttwu
-  sched/umcg: RFC: add userspace atomic helpers
-  sched/umcg: RFC: implement UMCG syscalls
-
- arch/x86/entry/syscalls/syscall_64.tbl |   2 +
- include/linux/sched.h                  |   6 +
- include/linux/syscalls.h               |   4 +
- include/uapi/asm-generic/unistd.h      |   8 +-
- include/uapi/linux/umcg.h              | 246 +++++++++++++
- init/Kconfig                           |  10 +
- kernel/exit.c                          |   7 +
- kernel/sched/Makefile                  |   1 +
- kernel/sched/core.c                    |  20 +-
- kernel/sched/fair.c                    |   4 +
- kernel/sched/sched.h                   |  15 +-
- kernel/sched/umcg.c                    | 481 +++++++++++++++++++++++++
- kernel/sched/umcg.h                    | 271 ++++++++++++++
- kernel/sys_ni.c                        |   4 +
- 14 files changed, 1068 insertions(+), 11 deletions(-)
- create mode 100644 include/uapi/linux/umcg.h
- create mode 100644 kernel/sched/umcg.c
+Signed-off-by: Peter Oskolkov <posk@google.com>
+---
+ kernel/sched/umcg.h | 264 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 264 insertions(+)
  create mode 100644 kernel/sched/umcg.h
 
+diff --git a/kernel/sched/umcg.h b/kernel/sched/umcg.h
+new file mode 100644
+index 000000000000..aa8fb24964ed
+--- /dev/null
++++ b/kernel/sched/umcg.h
+@@ -0,0 +1,264 @@
++/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
++#ifndef _KERNEL_SCHED_UMCG_H
++#define _KERNEL_SCHED_UMCG_H
++
++#ifdef CONFIG_UMCG
++#ifdef CONFIG_X86_64
++
++#include <linux/sched.h>
++#include <linux/uaccess.h>
++#include <linux/umcg.h>
++
++#include <asm/asm.h>
++#include <linux/atomic.h>
++
++/* TODO: move atomic operations below into arch/ headers */
++static inline int umcg_atomic_cmpxchg_32(u32 *uval, u32 __user *uaddr,
++						u32 oldval, u32 newval)
++{
++	int ret = 0;
++
++	if (!user_access_begin(uaddr, sizeof(u32)))
++		return -EFAULT;
++	asm volatile("\n"
++		"1:\t" LOCK_PREFIX "cmpxchgl %4, %2\n"
++		"2:\n"
++		"\t.section .fixup, \"ax\"\n"
++		"3:\tmov     %3, %0\n"
++		"\tjmp     2b\n"
++		"\t.previous\n"
++		_ASM_EXTABLE_UA(1b, 3b)
++		: "+r" (ret), "=a" (oldval), "+m" (*uaddr)
++		: "i" (-EFAULT), "r" (newval), "1" (oldval)
++		: "memory"
++	);
++	user_access_end();
++	*uval = oldval;
++	return ret;
++}
++
++static inline int umcg_atomic_cmpxchg_64(u64 *uval, u64 __user *uaddr,
++						u64 oldval, u64 newval)
++{
++	int ret = 0;
++
++	if (!user_access_begin(uaddr, sizeof(u64)))
++		return -EFAULT;
++	asm volatile("\n"
++		"1:\t" LOCK_PREFIX "cmpxchgq %4, %2\n"
++		"2:\n"
++		"\t.section .fixup, \"ax\"\n"
++		"3:\tmov     %3, %0\n"
++		"\tjmp     2b\n"
++		"\t.previous\n"
++		_ASM_EXTABLE_UA(1b, 3b)
++		: "+r" (ret), "=a" (oldval), "+m" (*uaddr)
++		: "i" (-EFAULT), "r" (newval), "1" (oldval)
++		: "memory"
++	);
++	user_access_end();
++	*uval = oldval;
++	return ret;
++}
++
++static inline int fix_pagefault(unsigned long uaddr, bool write_fault)
++{
++	struct mm_struct *mm = current->mm;
++	int ret;
++
++	mmap_read_lock(mm);
++	ret = fixup_user_fault(mm, uaddr, write_fault ? FAULT_FLAG_WRITE : 0,
++			NULL);
++	mmap_read_unlock(mm);
++
++	return ret < 0 ? ret : 0;
++}
++
++static inline int umcg_get_user_32(u32 __user *uaddr, u32 *val)
++{
++	while (true) {
++		int ret;
++		u32 out;
++
++		pagefault_disable();
++		ret = __get_user(out, uaddr);
++		pagefault_enable();
++
++		if (!ret) {
++			*val = out;
++			return 0;
++		}
++
++		if (WARN_ONCE(ret != -EFAULT, "Unexpected error"))
++			return -EFAULT;
++
++		ret = fix_pagefault((unsigned long)uaddr, false);
++		if (ret)
++			return -EFAULT;
++	}
++}
++
++/**
++ * umcg_cmpxchg_32_user - compare_exchange 32-bit values
++ *
++ * Return:
++ * 0 - OK
++ * -EFAULT: memory access error
++ * -EAGAIN: @expected did not match; consult @prev
++ */
++static inline int umcg_cmpxchg_32_user(u32 __user *uaddr, u32 *prev, u32 val)
++{
++	while (true) {
++		int ret;
++		u32 expected = *prev;
++
++		pagefault_disable();
++		ret = umcg_atomic_cmpxchg_32(prev, uaddr, expected, val);
++		pagefault_enable();
++
++		if (!ret)
++			return *prev == expected ? 0 : -EAGAIN;
++
++		if (WARN_ONCE(ret != -EFAULT, "Unexpected error"))
++			return -EFAULT;
++
++		ret = fix_pagefault((unsigned long)uaddr, true);
++		if (ret)
++			return -EFAULT;
++	}
++}
++
++/**
++ * umcg_cmpxchg_64_user - compare_exchange 64-bit values
++ *
++ * Return:
++ * 0 - OK
++ * -EFAULT: memory access error
++ * -EAGAIN: @expected did not match; consult @prev
++ */
++static inline int umcg_cmpxchg_64_user(u64 __user *uaddr, u64 *prev, u64 val)
++{
++	while (true) {
++		int ret;
++		u64 expected = *prev;
++
++		pagefault_disable();
++		ret = umcg_atomic_cmpxchg_64(prev, uaddr, expected, val);
++		pagefault_enable();
++
++		if (!ret)
++			return *prev == expected ? 0 : -EAGAIN;
++
++		if (WARN_ONCE(ret != -EFAULT, "Unexpected error"))
++			return -EFAULT;
++
++		ret = fix_pagefault((unsigned long)uaddr, true);
++		if (ret)
++			return -EFAULT;
++	}
++}
++
++/**
++ * atomic_stack_push_user - push a node onto the stack
++ * @head - a pointer to the head of the stack;
++ * @node - a pointer to the node to push.
++ *
++ * Push a node onto a single-linked list (stack). Atomicity/correctness
++ * is guaranteed by locking the head via settings its first bit (assuming
++ * the pointer is aligned).
++ *
++ * Return: 0 on success, -EFAULT on error.
++ */
++static inline int atomic_stack_push_user(u64 __user *head, u64 __user *node)
++{
++	while (true) {
++		int ret;
++		u64 first;
++
++		smp_mb();  /* Make the read below clean. */
++		if (get_user(first, head))
++			return -EFAULT;
++
++		if (first & 1UL) {
++			cpu_relax();
++			continue;  /* first is being deleted. */
++		}
++
++		if (put_user(first, node))
++			return -EFAULT;
++		smp_mb();  /* Make the write above visible. */
++
++		ret = umcg_cmpxchg_64_user(head, &first, (u64)node);
++		if (!ret)
++			return 0;
++
++		if (ret == -EAGAIN) {
++			cpu_relax();
++			continue;
++		}
++
++		if (WARN_ONCE(ret != -EFAULT, "unexpected umcg_cmpxchg result"))
++			return -EFAULT;
++
++		return -EFAULT;
++	}
++}
++
++/**
++ * atomic_stack_pop_user - pop a node from the stack
++ * @head - a pointer to the head of the stack;
++ * @value - a pointer to where store the popped value.
++ *
++ * Pop a node from a single-linked list (stack). Atomicity/correctness
++ * is guaranteed by locking the head via settings its first bit (assuming
++ * the pointer is aligned).
++ *
++ * Note: on success, @value should be cast to (u64 __user *) if not zero.
++ *
++ * Return: 0 on success, -EFAULT on error.
++ */
++static inline int atomic_stack_pop_user(u64 __user *head, u64 *value)
++{
++	while (true) {
++		int ret;
++		u64 next, first;
++
++		smp_mb();  /* Make the read below clean. */
++		if (get_user(first, head))
++			return -EFAULT;
++
++		if (!first) {
++			*value = 0UL;
++			return 0;
++		}
++
++		if (first & 1UL) {
++			cpu_relax();
++			continue;  /* first is being deleted. */
++		}
++
++		ret = umcg_cmpxchg_64_user(head, &first, first | 1UL);
++		if (ret == -EAGAIN) {
++			cpu_relax();
++			continue;
++		}
++
++		if (ret)
++			return -EFAULT;
++
++		if (get_user(next, (u64 __user *)first))
++			return -EFAULT;
++
++		first |= 1UL;
++
++		ret = umcg_cmpxchg_64_user(head, &first, next);
++		if (ret)
++			return -EFAULT;
++
++		*value = first & ~1UL;
++		return 0;
++	}
++}
++#endif  /* CONFIG_X86_64 */
++#endif  /* CONFIG_UMCG */
++#endif  /* _KERNEL_SCHED_UMCG_H */
 --
 2.25.1
 
