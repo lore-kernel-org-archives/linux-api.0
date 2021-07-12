@@ -3,32 +3,32 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2BCB9C07E9B
-	for <linux-api@archiver.kernel.org>; Mon, 12 Jul 2021 08:11:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B45C1C11F6E
+	for <linux-api@archiver.kernel.org>; Mon, 12 Jul 2021 08:15:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0A37061961
-	for <linux-api@archiver.kernel.org>; Mon, 12 Jul 2021 08:11:08 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AB0AA6143F
+	for <linux-api@archiver.kernel.org>; Mon, 12 Jul 2021 08:15:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1343621AbhGLINx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 12 Jul 2021 04:13:53 -0400
+        id S1343878AbhGLISS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 12 Jul 2021 04:18:18 -0400
 Received: from mga17.intel.com ([192.55.52.151]:12162 "EHLO mga17.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1350271AbhGLIM3 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 12 Jul 2021 04:12:29 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10042"; a="190322219"
+        id S1349123AbhGLINs (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 12 Jul 2021 04:13:48 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10042"; a="190322254"
 X-IronPort-AV: E=Sophos;i="5.84,232,1620716400"; 
-   d="scan'208";a="190322219"
+   d="scan'208";a="190322254"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Jul 2021 01:09:40 -0700
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Jul 2021 01:09:53 -0700
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="5.84,232,1620716400"; 
-   d="scan'208";a="459109300"
+   d="scan'208";a="459109365"
 Received: from shbuild999.sh.intel.com ([10.239.146.151])
-  by orsmga008.jf.intel.com with ESMTP; 12 Jul 2021 01:09:35 -0700
+  by orsmga008.jf.intel.com with ESMTP; 12 Jul 2021 01:09:48 -0700
 From:   Feng Tang <feng.tang@intel.com>
 To:     linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>,
         Michal Hocko <mhocko@kernel.org>,
@@ -44,154 +44,54 @@ Cc:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
         Andi Kleen <ak@linux.intel.com>,
         Dan Williams <dan.j.williams@intel.com>, ying.huang@intel.com,
         Feng Tang <feng.tang@intel.com>
-Subject: [PATCH v6 0/6] Introduce multi-preference mempolicy
-Date:   Mon, 12 Jul 2021 16:09:28 +0800
-Message-Id: <1626077374-81682-1-git-send-email-feng.tang@intel.com>
+Subject: [PATCH v6 3/6] mm/mempolicy: enable page allocation for MPOL_PREFERRED_MANY for general cases
+Date:   Mon, 12 Jul 2021 16:09:31 +0800
+Message-Id: <1626077374-81682-4-git-send-email-feng.tang@intel.com>
 X-Mailer: git-send-email 2.7.4
+In-Reply-To: <1626077374-81682-1-git-send-email-feng.tang@intel.com>
+References: <1626077374-81682-1-git-send-email-feng.tang@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This patch series introduces the concept of the MPOL_PREFERRED_MANY mempolicy.
-This mempolicy mode can be used with either the set_mempolicy(2) or mbind(2)
-interfaces. Like the MPOL_PREFERRED interface, it allows an application to set a
-preference for nodes which will fulfil memory allocation requests. Unlike the
-MPOL_PREFERRED mode, it takes a set of nodes. Like the MPOL_BIND interface, it
-works over a set of nodes. Unlike MPOL_BIND, it will not cause a SIGSEGV or
-invoke the OOM killer if those preferred nodes are not available.
+From: Ben Widawsky <ben.widawsky@intel.com>
 
-Along with these patches are patches for libnuma, numactl, numademo, and memhog.
-They still need some polish, but can be found here:
-https://gitlab.com/bwidawsk/numactl/-/tree/prefer-many
-It allows new usage: `numactl -P 0,3,4`
+In order to support MPOL_PREFERRED_MANY which is used by
+set_mempolicy(2), mbind(2), enable both alloc_pages() and
+alloc_pages_vma() by using alloc_page_preferred_many().
 
-The goal of the new mode is to enable some use-cases when using tiered memory
-usage models which I've lovingly named.
-1a. The Hare - The interconnect is fast enough to meet bandwidth and latency
-requirements allowing preference to be given to all nodes with "fast" memory.
-1b. The Indiscriminate Hare - An application knows it wants fast memory (or
-perhaps slow memory), but doesn't care which node it runs on. The application
-can prefer a set of nodes and then xpu bind to the local node (cpu, accelerator,
-etc). This reverses the nodes are chosen today where the kernel attempts to use
-local memory to the CPU whenever possible. This will attempt to use the local
-accelerator to the memory.
-2. The Tortoise - The administrator (or the application itself) is aware it only
-needs slow memory, and so can prefer that.
-
-Much of this is almost achievable with the bind interface, but the bind
-interface suffers from an inability to fallback to another set of nodes if
-binding fails to all nodes in the nodemask.
-
-Like MPOL_BIND a nodemask is given. Inherently this removes ordering from the
-preference.
-
-> /* Set first two nodes as preferred in an 8 node system. */
-> const unsigned long nodes = 0x3
-> set_mempolicy(MPOL_PREFER_MANY, &nodes, 8);
-
-> /* Mimic interleave policy, but have fallback *.
-> const unsigned long nodes = 0xaa
-> set_mempolicy(MPOL_PREFER_MANY, &nodes, 8);
-
-Some internal discussion took place around the interface. There are two
-alternatives which we have discussed, plus one I stuck in:
-1. Ordered list of nodes. Currently it's believed that the added complexity is
-   nod needed for expected usecases.
-2. A flag for bind to allow falling back to other nodes. This confuses the
-   notion of binding and is less flexible than the current solution.
-3. Create flags or new modes that helps with some ordering. This offers both a
-   friendlier API as well as a solution for more customized usage. It's unknown
-   if it's worth the complexity to support this. Here is sample code for how
-   this might work:
-
-> // Prefer specific nodes for some something wacky
-> set_mempolicy(MPOL_PREFER_MANY, 0x17c, 1024);
->
-> // Default
-> set_mempolicy(MPOL_PREFER_MANY | MPOL_F_PREFER_ORDER_SOCKET, NULL, 0);
-> // which is the same as
-> set_mempolicy(MPOL_DEFAULT, NULL, 0);
->
-> // The Hare
-> set_mempolicy(MPOL_PREFER_MANY | MPOL_F_PREFER_ORDER_TYPE, NULL, 0);
->
-> // The Tortoise
-> set_mempolicy(MPOL_PREFER_MANY | MPOL_F_PREFER_ORDER_TYPE_REV, NULL, 0);
->
-> // Prefer the fast memory of the first two sockets
-> set_mempolicy(MPOL_PREFER_MANY | MPOL_F_PREFER_ORDER_TYPE, -1, 2);
->
-
-In v1, Andi Kleen brought up reusing MPOL_PREFERRED as the mode for the API.
-There wasn't consensus around this, so I've left the existing API as it was. I'm
-open to more feedback here, but my slight preference is to use a new API as it
-ensures if people are using it, they are entirely aware of what they're doing
-and not accidentally misusing the old interface. (In a similar way to how
-MPOL_LOCAL was introduced).
-
-In v1, Michal also brought up renaming this MPOL_PREFERRED_MASK. I'm equally
-fine with that change, but I hadn't heard much emphatic support for one way or
-another, so I've left that too.
-
-- Ben/Dave/Feng
-
+Signed-off-by: Ben Widawsky <ben.widawsky@intel.com>
+Signed-off-by: Feng Tang <feng.tang@intel.com>
 ---
-Changelog: 
+ mm/mempolicy.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-  Since v5:
-  * Rebased against 5.14-rc1. 
-
-  Since v4:
-  * Rebased on latest -mm tree (v5.13-rc), whose mempolicy code has
-    been refactored much since v4 submission
-  * add a dedicated alloc_page_preferred_many() (Michal Hocko)
-  * refactor and add fix to hugetlb supporting code (Michal Hocko) 
-
-  Since v3:
-  * Rebased against v5.12-rc2
-  * Drop the v3/0013 patch of creating NO_SLOWPATH gfp_mask bit
-  * Skip direct reclaim for the first allocation try for
-    MPOL_PREFERRED_MANY, which makes its semantics close to
-    existing MPOL_PREFFERRED policy
-
-  Since v2:
-  * Rebased against v5.11
-  * Fix a stack overflow related panic, and a kernel warning (Feng)
-  * Some code clearup (Feng)
-  * One RFC patch to speedup mem alloc in some case (Feng)
-
-  Since v1:
-  * Dropped patch to replace numa_node_id in some places (mhocko)
-  * Dropped all the page allocation patches in favor of new mechanism to
-    use fallbacks. (mhocko)
-  * Dropped the special snowflake preferred node algorithm (bwidawsk)
-  * If the preferred node fails, ALL nodes are rechecked instead of just
-    the non-preferred nodes.
-
-
----
-
-Ben Widawsky (3):
-  mm/mempolicy: enable page allocation for MPOL_PREFERRED_MANY for
-    general cases
-  mm/hugetlb: add support for mempolicy MPOL_PREFERRED_MANY
-  mm/mempolicy: Advertise new MPOL_PREFERRED_MANY
-
-Dave Hansen (1):
-  mm/mempolicy: Add MPOL_PREFERRED_MANY for multiple preferred nodes
-
-Feng Tang (2):
-  mm/memplicy: add page allocation function for MPOL_PREFERRED_MANY
-    policy
-  mm/mempolicy: unify the create() func for bind/interleave/prefer-many
-    policies
-
- .../admin-guide/mm/numa_memory_policy.rst          | 16 +++--
- include/uapi/linux/mempolicy.h                     |  1 +
- mm/hugetlb.c                                       | 25 ++++++++
- mm/mempolicy.c                                     | 75 +++++++++++++++++-----
- 4 files changed, 96 insertions(+), 21 deletions(-)
-
+diff --git a/mm/mempolicy.c b/mm/mempolicy.c
+index d17bf018efcc..9dce67fc9bb6 100644
+--- a/mm/mempolicy.c
++++ b/mm/mempolicy.c
+@@ -2207,6 +2207,12 @@ struct page *alloc_pages_vma(gfp_t gfp, int order, struct vm_area_struct *vma,
+ 		goto out;
+ 	}
+ 
++	if (pol->mode == MPOL_PREFERRED_MANY) {
++		page = alloc_page_preferred_many(gfp, order, pol);
++		mpol_cond_put(pol);
++		goto out;
++	}
++
+ 	if (unlikely(IS_ENABLED(CONFIG_TRANSPARENT_HUGEPAGE) && hugepage)) {
+ 		int hpage_node = node;
+ 
+@@ -2286,6 +2292,8 @@ struct page *alloc_pages(gfp_t gfp, unsigned order)
+ 	 */
+ 	if (pol->mode == MPOL_INTERLEAVE)
+ 		page = alloc_page_interleave(gfp, order, interleave_nodes(pol));
++	else if (pol->mode == MPOL_PREFERRED_MANY)
++		page = alloc_page_preferred_many(gfp, order, pol);
+ 	else
+ 		page = __alloc_pages(gfp, order,
+ 				policy_node(gfp, pol, numa_node_id()),
 -- 
 2.7.4
 
