@@ -2,135 +2,90 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.1 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 684EFC636C9
-	for <linux-api@archiver.kernel.org>; Mon, 19 Jul 2021 18:20:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 690ADC07E9D
+	for <linux-api@archiver.kernel.org>; Mon, 19 Jul 2021 18:24:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 319D6610FB
-	for <linux-api@archiver.kernel.org>; Mon, 19 Jul 2021 18:20:33 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5207C60FF1
+	for <linux-api@archiver.kernel.org>; Mon, 19 Jul 2021 18:24:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1355813AbhGSReF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 19 Jul 2021 13:34:05 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:37984 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1380485AbhGSR3S (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 19 Jul 2021 13:29:18 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1626718196;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=zD/AaGcE7EIGISn2zwz3u10joSTkCMi6Zhxs5OikZmo=;
-        b=PIDc4WsCI6alsU5IS3jnIC7uIJ42z75OBQM2CbevTDEwA3T5B8eXDryq3z04j7Z2tHZUqv
-        GUApkl4mpobJx/513Ir2DXONqboJ4SAKpeO72EInkQ1164decBdtlCUohWHd8Y46hOzOJS
-        mUb8MxSSy+ZvFJn6hkzhWA7+KtNM8d0=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-450-OX8iL4c7Mt2f8Y44nDHi2Q-1; Mon, 19 Jul 2021 14:09:55 -0400
-X-MC-Unique: OX8iL4c7Mt2f8Y44nDHi2Q-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 111D9192D785;
-        Mon, 19 Jul 2021 18:09:54 +0000 (UTC)
-Received: from virtlab719.virt.lab.eng.bos.redhat.com (virtlab719.virt.lab.eng.bos.redhat.com [10.19.153.15])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 727D7610AF;
-        Mon, 19 Jul 2021 18:09:49 +0000 (UTC)
-From:   Nitesh Narayan Lal <nitesh@redhat.com>
-To:     linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org,
-        intel-wired-lan@lists.osuosl.org, netdev@vger.kernel.org,
-        linux-api@vger.kernel.org, linux-pci@vger.kernel.org,
-        tglx@linutronix.de, jesse.brandeburg@intel.com,
-        robin.murphy@arm.com, mtosatti@redhat.com, mingo@kernel.org,
-        jbrandeb@kernel.org, frederic@kernel.org, juri.lelli@redhat.com,
-        abelits@marvell.com, bhelgaas@google.com, rostedt@goodmis.org,
-        peterz@infradead.org, davem@davemloft.net,
-        akpm@linux-foundation.org, sfr@canb.auug.org.au,
-        stephen@networkplumber.org, rppt@linux.vnet.ibm.com,
-        chris.friesen@windriver.com, maz@kernel.org, nhorman@tuxdriver.com,
-        pjwaskiewicz@gmail.com, sassmann@redhat.com, thenzl@redhat.com,
-        kashyap.desai@broadcom.com, sumit.saxena@broadcom.com,
-        shivasharan.srikanteshwara@broadcom.com,
-        sathya.prakash@broadcom.com, sreekanth.reddy@broadcom.com,
-        suganath-prabu.subramani@broadcom.com, james.smart@broadcom.com,
-        dick.kennedy@broadcom.com, jkc@redhat.com, faisal.latif@intel.com,
-        shiraz.saleem@intel.com, tariqt@nvidia.com, ahleihel@redhat.com,
-        kheib@redhat.com, borisp@nvidia.com, saeedm@nvidia.com,
-        benve@cisco.com, govind@gmx.com, jassisinghbrar@gmail.com,
-        ajit.khaparde@broadcom.com, sriharsha.basavapatna@broadcom.com,
-        somnath.kotur@broadcom.com, nilal@redhat.com,
-        tatyana.e.nikolova@intel.com, mustafa.ismail@intel.com,
-        ahs3@redhat.com, leonro@nvidia.com,
-        chandrakanth.patil@broadcom.com, bjorn.andersson@linaro.org,
-        chunkuang.hu@kernel.org, yongqiang.niu@mediatek.com,
-        baolin.wang7@gmail.com, poros@redhat.com, minlei@redhat.com,
-        emilne@redhat.com, jejb@linux.ibm.com, martin.petersen@oracle.com,
-        _govind@gmx.com, ley.foon.tan@intel.com, kabel@kernel.org,
-        viresh.kumar@linaro.org, Tushar.Khandelwal@arm.com,
-        luobin9@huawei.com
-Subject: [PATCH v4 12/14] hinic: Use irq_set_affinity_and_hint
-Date:   Mon, 19 Jul 2021 14:07:44 -0400
-Message-Id: <20210719180746.1008665-13-nitesh@redhat.com>
-In-Reply-To: <20210719180746.1008665-1-nitesh@redhat.com>
-References: <20210719180746.1008665-1-nitesh@redhat.com>
+        id S1347003AbhGSRjy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 19 Jul 2021 13:39:54 -0400
+Received: from esa.hc503-62.ca.iphmx.com ([216.71.135.51]:35849 "EHLO
+        esa.hc503-62.ca.iphmx.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1355519AbhGSRcd (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 19 Jul 2021 13:32:33 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
+  d=uwaterloo.ca; i=@uwaterloo.ca; q=dns/txt; s=default;
+  t=1626718393; x=1658254393;
+  h=subject:to:cc:references:from:message-id:date:
+   mime-version:in-reply-to:content-transfer-encoding;
+  bh=VzvZu29zOp7shLhWo6Q+hyIk6zoz9Y0UhxdZuvE/Y24=;
+  b=rEjltEZlhcSecXMOT7kJdsAPCYi0TsoeT5wXWEh/Xrsr2sv3hJAsTmzz
+   tgh94nXEvf5L95b8OEV6H4X++SFjOeofhJPyzfVJojh3H2rVmP45v7Ai1
+   DVnYrYp5wkDq114XR8c14CExwiVxVEfIT7v62op3hktrIKPESyg4VNG8+
+   M=;
+Received: from connect.uwaterloo.ca (HELO connhm04.connect.uwaterloo.ca) ([129.97.208.43])
+  by ob1.hc503-62.ca.iphmx.com with ESMTP/TLS/AES256-GCM-SHA384; 19 Jul 2021 14:13:06 -0400
+Received: from [10.42.0.123] (10.32.139.159) by connhm04.connect.uwaterloo.ca
+ (172.16.137.68) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.2176.2; Mon, 19
+ Jul 2021 14:13:05 -0400
+Subject: Re: [RFC PATCH 4/4 v0.3] sched/umcg: RFC: implement UMCG syscalls
+To:     Peter Oskolkov <posk@google.com>
+CC:     <posk@posk.io>, <avagin@google.com>, <bsegall@google.com>,
+        <jannh@google.com>, <jnewsome@torproject.org>,
+        <joel@joelfernandes.org>, <linux-api@vger.kernel.org>,
+        <linux-kernel@vger.kernel.org>, <mingo@redhat.com>,
+        <peterz@infradead.org>, <pjt@google.com>, <tglx@linutronix.de>,
+        Peter Buhr <pabuhr@uwaterloo.ca>
+References: <20210716184719.269033-5-posk@google.com>
+ <2c971806-b8f6-50b9-491f-e1ede4a33579@uwaterloo.ca>
+ <CAPNVh5cmhFEWr4bmODkDDFhV=mHLcO0DZJ432GEL=OitzPP80g@mail.gmail.com>
+From:   Thierry Delisle <tdelisle@uwaterloo.ca>
+Message-ID: <c8ea4892-51e5-0dc2-86c6-b705e8a23cde@uwaterloo.ca>
+Date:   Mon, 19 Jul 2021 14:13:05 -0400
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Thunderbird/78.11.0
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+In-Reply-To: <CAPNVh5cmhFEWr4bmODkDDFhV=mHLcO0DZJ432GEL=OitzPP80g@mail.gmail.com>
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+Content-Language: en-US
+X-Originating-IP: [10.32.139.159]
+X-ClientProxiedBy: connhm02.connect.uwaterloo.ca (172.16.137.66) To
+ connhm04.connect.uwaterloo.ca (172.16.137.68)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The driver uses irq_set_affinity_hint() to:
+ > Latency/efficiency: on worker wakeup an idle server can be picked from
+ > the list and context-switched into synchronously, on the same CPU.
+ > Using FDs and select/poll/epoll will add extra layers of abstractions;
+ > synchronous context-switches (not yet fully implemented in UMCG) will
+ > most likely be impossible. This patchset seems much more efficient and
+ > lightweight than whatever can be built on top of FDs.
 
-- Set the affinity_hint which is consumed by the userspace for
-  distributing the interrupts
+I can believe that.
 
-- Enforce affinity
+Are you planning to support separate scheduling instances within a 
+single user
+space? That is having multiple sets of server threads and workers can 
+only run
+within a specific set.
 
-As per commit 352f58b0d9f2 ("net-next/hinic: Set Rxq irq to specific cpu
-for NUMA"), the hinic driver enforces its own affinity to bind IRQs to the
-local NUMA node. However, irq_set_affinity_hint() applying the provided
-cpumask as an affinity for the interrupt is an undocumented side effect.
+I believe the problem with the idle_servers_ptr as specified is that it 
+is not
+possible to reclaim used nodes safely. I don't see any indication of which
+nodes the kernel can concurrently access and on which some memory 
+reclamation
+scheme could be based.
 
-To remove this side effect irq_set_affinity_hint() has been marked as
-deprecated and new interfaces have been introduced. Hence, replace the
-irq_set_affinity_hint() with the new interface irq_set_affinity_and_hint()
-where the provided mask needs to be applied as the affinity and
-affinity_hint pointer needs to be set and replace with
-irq_update_affinity_hint() where only affinity_hint needs to be updated.
-
-Signed-off-by: Nitesh Narayan Lal <nitesh@redhat.com>
----
- drivers/net/ethernet/huawei/hinic/hinic_rx.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/net/ethernet/huawei/hinic/hinic_rx.c b/drivers/net/ethernet/huawei/hinic/hinic_rx.c
-index fed3b6bc0d76..b33ed4d92b71 100644
---- a/drivers/net/ethernet/huawei/hinic/hinic_rx.c
-+++ b/drivers/net/ethernet/huawei/hinic/hinic_rx.c
-@@ -548,7 +548,7 @@ static int rx_request_irq(struct hinic_rxq *rxq)
- 		goto err_req_irq;
- 
- 	cpumask_set_cpu(qp->q_id % num_online_cpus(), &rq->affinity_mask);
--	err = irq_set_affinity_hint(rq->irq, &rq->affinity_mask);
-+	err = irq_set_affinity_and_hint(rq->irq, &rq->affinity_mask);
- 	if (err)
- 		goto err_irq_affinity;
- 
-@@ -565,7 +565,7 @@ static void rx_free_irq(struct hinic_rxq *rxq)
- {
- 	struct hinic_rq *rq = rxq->rq;
- 
--	irq_set_affinity_hint(rq->irq, NULL);
-+	irq_update_affinity_hint(rq->irq, NULL);
- 	free_irq(rq->irq, rxq);
- 	rx_del_napi(rxq);
- }
--- 
-2.27.0
-
+What is the benefit of having users maintain themselves a list of idle 
+servers
+rather than each servers marking themselves as 'out of work' and having the
+kernel maintain the list?
