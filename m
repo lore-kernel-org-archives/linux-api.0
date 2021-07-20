@@ -4,43 +4,43 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-17.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E9F8DC07E9B
-	for <linux-api@archiver.kernel.org>; Tue, 20 Jul 2021 23:31:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2ACCAC07E9B
+	for <linux-api@archiver.kernel.org>; Tue, 20 Jul 2021 23:31:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D0BA16023B
-	for <linux-api@archiver.kernel.org>; Tue, 20 Jul 2021 23:31:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 11607610F7
+	for <linux-api@archiver.kernel.org>; Tue, 20 Jul 2021 23:31:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236874AbhGTWu1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 20 Jul 2021 18:50:27 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:21012 "EHLO
+        id S237091AbhGTWug (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 20 Jul 2021 18:50:36 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:49374 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S236225AbhGTWrV (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 20 Jul 2021 18:47:21 -0400
+        by vger.kernel.org with ESMTP id S235656AbhGTWqf (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 20 Jul 2021 18:46:35 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1626823677;
+        s=mimecast20190719; t=1626823633;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=tEPNOxkaSwVynI5bC9ITnmbjNbhpuULp2AY9Cx1gq1w=;
-        b=a/n+JuUB5hf98u8shmXO6KWpK0DRPrjTGkueaGN8LYDmHw4aLbSo+fiQsIXcB5IbS55XNO
-        kPbn1iFRBnN6SNw4mBrZpYRDvpdkxxW0PIcFLwsSErNR/xx2ivGjp3LN1Iu6eN75tP3hOm
-        fhapB+7nWwoA/dgM2cUAi+JTd0cUZJ4=
+        bh=zuZd/erhcH5JqKd76Lbo99r5gRHYSZoylCGlNGoCcSY=;
+        b=FJIT0wQKWZrl5UPZho/U0SKV7P5ZqmcywYHQ9h8l0sAdlssUDycf3D1gaQ9W0xeppLSmyG
+        AR6y/WW235pqb6E39/0qU2w1LOjqSjUhJegs26nnYslaMxB4zAnCKOrbuLCYPbWiv47k0n
+        z4Wl84xP2ot9MN3p6mpabzRKvorO9Es=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-247-BA7Jin6zPPO1eS4usxWFSA-1; Tue, 20 Jul 2021 19:27:56 -0400
-X-MC-Unique: BA7Jin6zPPO1eS4usxWFSA-1
+ us-mta-307-6zAPg_1qOTCDfODJHYRTeQ-1; Tue, 20 Jul 2021 19:27:12 -0400
+X-MC-Unique: 6zAPg_1qOTCDfODJHYRTeQ-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 04179100C618;
-        Tue, 20 Jul 2021 23:27:55 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6166E1084F4B;
+        Tue, 20 Jul 2021 23:27:10 +0000 (UTC)
 Received: from virtlab719.virt.lab.eng.bos.redhat.com (virtlab719.virt.lab.eng.bos.redhat.com [10.19.153.15])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 6462B69CB4;
-        Tue, 20 Jul 2021 23:27:50 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id AED9669CB4;
+        Tue, 20 Jul 2021 23:27:05 +0000 (UTC)
 From:   Nitesh Narayan Lal <nitesh@redhat.com>
 To:     linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org,
         intel-wired-lan@lists.osuosl.org, netdev@vger.kernel.org,
@@ -72,9 +72,9 @@ To:     linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org,
         emilne@redhat.com, jejb@linux.ibm.com, martin.petersen@oracle.com,
         _govind@gmx.com, kabel@kernel.org, viresh.kumar@linaro.org,
         Tushar.Khandelwal@arm.com, kuba@kernel.org
-Subject: [PATCH v5 14/14] net/mlx4: Use irq_update_affinity_hint
-Date:   Tue, 20 Jul 2021 19:26:24 -0400
-Message-Id: <20210720232624.1493424-15-nitesh@redhat.com>
+Subject: [PATCH v5 06/14] RDMA/irdma: Use irq_update_affinity_hint
+Date:   Tue, 20 Jul 2021 19:26:16 -0400
+Message-Id: <20210720232624.1493424-7-nitesh@redhat.com>
 In-Reply-To: <20210720232624.1493424-1-nitesh@redhat.com>
 References: <20210720232624.1493424-1-nitesh@redhat.com>
 MIME-Version: 1.0
@@ -96,39 +96,32 @@ irq_set_affinity_hint() with the new interface irq_update_affinity_hint()
 that only updates the affinity_hint pointer.
 
 Signed-off-by: Nitesh Narayan Lal <nitesh@redhat.com>
-Reviewed-by: Leon Romanovsky <leonro@nvidia.com>
-Reviewed-by: Tariq Toukan <tariqt@nvidia.com>
 ---
- drivers/net/ethernet/mellanox/mlx4/eq.c | 8 +++-----
- 1 file changed, 3 insertions(+), 5 deletions(-)
+ drivers/infiniband/hw/irdma/hw.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/net/ethernet/mellanox/mlx4/eq.c b/drivers/net/ethernet/mellanox/mlx4/eq.c
-index 9e48509ed3b2..414e390e6b48 100644
---- a/drivers/net/ethernet/mellanox/mlx4/eq.c
-+++ b/drivers/net/ethernet/mellanox/mlx4/eq.c
-@@ -244,9 +244,9 @@ static void mlx4_set_eq_affinity_hint(struct mlx4_priv *priv, int vec)
- 	    cpumask_empty(eq->affinity_mask))
- 		return;
+diff --git a/drivers/infiniband/hw/irdma/hw.c b/drivers/infiniband/hw/irdma/hw.c
+index 7afb8a6a0526..ec8de708a4df 100644
+--- a/drivers/infiniband/hw/irdma/hw.c
++++ b/drivers/infiniband/hw/irdma/hw.c
+@@ -537,7 +537,7 @@ static void irdma_destroy_irq(struct irdma_pci_f *rf,
+ 	struct irdma_sc_dev *dev = &rf->sc_dev;
  
--	hint_err = irq_set_affinity_hint(eq->irq, eq->affinity_mask);
-+	hint_err = irq_update_affinity_hint(eq->irq, eq->affinity_mask);
- 	if (hint_err)
--		mlx4_warn(dev, "irq_set_affinity_hint failed, err %d\n", hint_err);
-+		mlx4_warn(dev, "irq_update_affinity_hint failed, err %d\n", hint_err);
+ 	dev->irq_ops->irdma_dis_irq(dev, msix_vec->idx);
+-	irq_set_affinity_hint(msix_vec->irq, NULL);
++	irq_update_affinity_hint(msix_vec->irq, NULL);
+ 	free_irq(msix_vec->irq, dev_id);
  }
- #endif
  
-@@ -1123,9 +1123,7 @@ static void mlx4_free_irqs(struct mlx4_dev *dev)
- 	for (i = 0; i < dev->caps.num_comp_vectors + 1; ++i)
- 		if (eq_table->eq[i].have_irq) {
- 			free_cpumask_var(eq_table->eq[i].affinity_mask);
--#if defined(CONFIG_SMP)
--			irq_set_affinity_hint(eq_table->eq[i].irq, NULL);
--#endif
-+			irq_update_affinity_hint(eq_table->eq[i].irq, NULL);
- 			free_irq(eq_table->eq[i].irq, eq_table->eq + i);
- 			eq_table->eq[i].have_irq = 0;
- 		}
+@@ -1087,7 +1087,7 @@ irdma_cfg_ceq_vector(struct irdma_pci_f *rf, struct irdma_ceq *iwceq,
+ 	}
+ 	cpumask_clear(&msix_vec->mask);
+ 	cpumask_set_cpu(msix_vec->cpu_affinity, &msix_vec->mask);
+-	irq_set_affinity_hint(msix_vec->irq, &msix_vec->mask);
++	irq_update_affinity_hint(msix_vec->irq, &msix_vec->mask);
+ 	if (status) {
+ 		ibdev_dbg(&rf->iwdev->ibdev, "ERR: ceq irq config fail\n");
+ 		return IRDMA_ERR_CFG;
 -- 
 2.27.0
 
