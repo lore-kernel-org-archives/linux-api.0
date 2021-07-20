@@ -7,40 +7,40 @@ X-Spam-Status: No, score=-17.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D533BC636C8
-	for <linux-api@archiver.kernel.org>; Tue, 20 Jul 2021 23:30:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 318F4C636C8
+	for <linux-api@archiver.kernel.org>; Tue, 20 Jul 2021 23:31:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BA6826120A
-	for <linux-api@archiver.kernel.org>; Tue, 20 Jul 2021 23:30:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 146F560FDA
+	for <linux-api@archiver.kernel.org>; Tue, 20 Jul 2021 23:31:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235910AbhGTWq4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 20 Jul 2021 18:46:56 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:60098 "EHLO
+        id S235131AbhGTWuR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 20 Jul 2021 18:50:17 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:38826 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S235368AbhGTWq0 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 20 Jul 2021 18:46:26 -0400
+        by vger.kernel.org with ESMTP id S236038AbhGTWrI (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 20 Jul 2021 18:47:08 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1626823624;
+        s=mimecast20190719; t=1626823660;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type:
+         to:to:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=LcUE+Ykyp7TUpfxrTLCdo1t8nVQ8beSKO1+WFe5MKv4=;
-        b=U3rM0zJD5RIK51MWsiiNrPmHXNGbRK7OWl2rtcwf2cOYs39LSyQh+RxPF+GjWZwNxkLQIC
-        yVGDJioo/t4Egq0bvvz2G/mCmk9KDlE/WlP7CqUBsrYVeCQYZ6Rr4ylIca6LITYjogFJs3
-        1mhPJU5gFxo3RrFwfMstKdUdsBtBUcY=
+        bh=mzNBCx76Oue97s85xgfDBxjBA71n2ChlEIMSiGVXCV8=;
+        b=FEH0WZk5u3zILw2oHnrYb4MvfVqhKXJH1p6jVce8bUStj2qhlHluUyKek25rcQl25peZGr
+        Vj+n29rSwPchdEnbMd6kJjOtSdKewaPFipn+yUhEzcGaLeYqFqABP2LbMa/iOwOKqpTwu8
+        w/GL8uk+zH/dAhnk5wGM38RnfWIIa4g=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-231-eI4qYkZXO2y2V6D_Ub4Jww-1; Tue, 20 Jul 2021 19:27:02 -0400
-X-MC-Unique: eI4qYkZXO2y2V6D_Ub4Jww-1
+ us-mta-165-QCP44qdSPp6J0SR3Ysz4nQ-1; Tue, 20 Jul 2021 19:27:39 -0400
+X-MC-Unique: QCP44qdSPp6J0SR3Ysz4nQ-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E9B9B8030B5;
-        Tue, 20 Jul 2021 23:27:00 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7466B100C610;
+        Tue, 20 Jul 2021 23:27:37 +0000 (UTC)
 Received: from virtlab719.virt.lab.eng.bos.redhat.com (virtlab719.virt.lab.eng.bos.redhat.com [10.19.153.15])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id D9E6369CB4;
-        Tue, 20 Jul 2021 23:26:52 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id BA57969FAD;
+        Tue, 20 Jul 2021 23:27:32 +0000 (UTC)
 From:   Nitesh Narayan Lal <nitesh@redhat.com>
 To:     linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org,
         intel-wired-lan@lists.osuosl.org, netdev@vger.kernel.org,
@@ -72,114 +72,72 @@ To:     linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org,
         emilne@redhat.com, jejb@linux.ibm.com, martin.petersen@oracle.com,
         _govind@gmx.com, kabel@kernel.org, viresh.kumar@linaro.org,
         Tushar.Khandelwal@arm.com, kuba@kernel.org
-Subject: [PATCH v5 04/14] scsi: megaraid_sas: Use irq_set_affinity_and_hint
-Date:   Tue, 20 Jul 2021 19:26:14 -0400
-Message-Id: <20210720232624.1493424-5-nitesh@redhat.com>
+Subject: [PATCH v5 11/14] scsi: lpfc: Use irq_set_affinity
+Date:   Tue, 20 Jul 2021 19:26:21 -0400
+Message-Id: <20210720232624.1493424-12-nitesh@redhat.com>
 In-Reply-To: <20210720232624.1493424-1-nitesh@redhat.com>
 References: <20210720232624.1493424-1-nitesh@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The driver uses irq_set_affinity_hint() specifically for the high IOPS
-queue interrupts for two purposes:
+The driver uses irq_set_affinity_hint to set the affinity for the lpfc
+interrupts to a mask corresponding to the local NUMA node to avoid
+performance overhead on AMD architectures.
 
-- To set the affinity_hint which is consumed by the userspace for
-  distributing the interrupts
+However, irq_set_affinity_hint() setting the affinity is an undocumented
+side effect that this function also sets the affinity under the hood.
+To remove this side effect irq_set_affinity_hint() has been marked as
+deprecated and new interfaces have been introduced.
 
-- To apply an affinity that it provides
+Also, as per the commit dcaa21367938 ("scsi: lpfc: Change default IRQ model
+on AMD architectures"):
+"On AMD architecture, revert the irq allocation to the normal style
+(non-managed) and then use irq_set_affinity_hint() to set the cpu affinity
+and disable user-space rebalancing."
+we don't really need to set the affinity_hint as user-space rebalancing for
+the lpfc interrupts is not desired.
 
-The driver enforces its own affinity to bind the high IOPS queue interrupts
-to the local NUMA node. However, irq_set_affinity_hint() applying the
-provided cpumask as an affinity for the interrupt is an undocumented side
-effect.
-
-To remove this side effect irq_set_affinity_hint() has been marked
-as deprecated and new interfaces have been introduced. Hence, replace the
-irq_set_affinity_hint() with the new interface irq_set_affinity_and_hint()
-where the provided mask needs to be applied as the affinity and
-affinity_hint pointer needs to be set and replace with
-irq_update_affinity_hint() where only affinity_hint needs to be updated.
-
-Change the megasas_set_high_iops_queue_affinity_hint function name to
-megasas_set_high_iops_queue_affinity_and_hint to clearly indicate that the
-function is setting both affinity and affinity_hint.
+Hence, replace the irq_set_affinity_hint() with irq_set_affinity() which
+only applies the affinity for the interrupts.
 
 Signed-off-by: Nitesh Narayan Lal <nitesh@redhat.com>
 ---
- drivers/scsi/megaraid/megaraid_sas_base.c | 27 +++++++++++++----------
- 1 file changed, 15 insertions(+), 12 deletions(-)
+ drivers/scsi/lpfc/lpfc_init.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-diff --git a/drivers/scsi/megaraid/megaraid_sas_base.c b/drivers/scsi/megaraid/megaraid_sas_base.c
-index ec10b2497310..836a1b13f71b 100644
---- a/drivers/scsi/megaraid/megaraid_sas_base.c
-+++ b/drivers/scsi/megaraid/megaraid_sas_base.c
-@@ -5718,7 +5718,7 @@ megasas_setup_irqs_msix(struct megasas_instance *instance, u8 is_probe)
- 				"Failed to register IRQ for vector %d.\n", i);
- 			for (j = 0; j < i; j++) {
- 				if (j < instance->low_latency_index_start)
--					irq_set_affinity_hint(
-+					irq_update_affinity_hint(
- 						pci_irq_vector(pdev, j), NULL);
- 				free_irq(pci_irq_vector(pdev, j),
- 					 &instance->irq_context[j]);
-@@ -5761,7 +5761,7 @@ megasas_destroy_irqs(struct megasas_instance *instance) {
- 	if (instance->msix_vectors)
- 		for (i = 0; i < instance->msix_vectors; i++) {
- 			if (i < instance->low_latency_index_start)
--				irq_set_affinity_hint(
-+				irq_update_affinity_hint(
- 				    pci_irq_vector(instance->pdev, i), NULL);
- 			free_irq(pci_irq_vector(instance->pdev, i),
- 				 &instance->irq_context[i]);
-@@ -5892,22 +5892,25 @@ int megasas_get_device_list(struct megasas_instance *instance)
+diff --git a/drivers/scsi/lpfc/lpfc_init.c b/drivers/scsi/lpfc/lpfc_init.c
+index 5983e05b648f..8a16bacb8c93 100644
+--- a/drivers/scsi/lpfc/lpfc_init.c
++++ b/drivers/scsi/lpfc/lpfc_init.c
+@@ -11455,7 +11455,7 @@ lpfc_irq_set_aff(struct lpfc_hba_eq_hdl *eqhdl, unsigned int cpu)
+ 	cpumask_clear(&eqhdl->aff_mask);
+ 	cpumask_set_cpu(cpu, &eqhdl->aff_mask);
+ 	irq_set_status_flags(eqhdl->irq, IRQ_NO_BALANCING);
+-	irq_set_affinity_hint(eqhdl->irq, &eqhdl->aff_mask);
++	irq_set_affinity(eqhdl->irq, &eqhdl->aff_mask);
  }
  
  /**
-- * megasas_set_high_iops_queue_affinity_hint -	Set affinity hint for high IOPS queues
-- * @instance:					Adapter soft state
-- * return:					void
-+ * megasas_set_high_iops_queue_affinity_and_hint -	Set affinity and hint
-+ *							for high IOPS queues
-+ * @instance:						Adapter soft state
-+ * return:						void
-  */
- static inline void
--megasas_set_high_iops_queue_affinity_hint(struct megasas_instance *instance)
-+megasas_set_high_iops_queue_affinity_and_hint(struct megasas_instance *instance)
- {
- 	int i;
--	int local_numa_node;
-+	unsigned int irq;
-+	const struct cpumask *mask;
- 
- 	if (instance->perf_mode == MR_BALANCED_PERF_MODE) {
--		local_numa_node = dev_to_node(&instance->pdev->dev);
-+		mask = cpumask_of_node(dev_to_node(&instance->pdev->dev));
- 
--		for (i = 0; i < instance->low_latency_index_start; i++)
--			irq_set_affinity_hint(pci_irq_vector(instance->pdev, i),
--				cpumask_of_node(local_numa_node));
-+		for (i = 0; i < instance->low_latency_index_start; i++) {
-+			irq = pci_irq_vector(instance->pdev, i);
-+			irq_set_affinity_and_hint(irq, mask);
-+		}
+@@ -11744,7 +11744,6 @@ lpfc_sli4_enable_msix(struct lpfc_hba *phba)
+ 	for (--index; index >= 0; index--) {
+ 		eqhdl = lpfc_get_eq_hdl(index);
+ 		lpfc_irq_clear_aff(eqhdl);
+-		irq_set_affinity_hint(eqhdl->irq, NULL);
+ 		free_irq(eqhdl->irq, eqhdl);
  	}
- }
  
-@@ -5996,7 +5999,7 @@ megasas_alloc_irq_vectors(struct megasas_instance *instance)
- 		instance->msix_vectors = 0;
- 
- 	if (instance->smp_affinity_enable)
--		megasas_set_high_iops_queue_affinity_hint(instance);
-+		megasas_set_high_iops_queue_affinity_and_hint(instance);
- }
- 
- /**
+@@ -11905,7 +11904,6 @@ lpfc_sli4_disable_intr(struct lpfc_hba *phba)
+ 		for (index = 0; index < phba->cfg_irq_chann; index++) {
+ 			eqhdl = lpfc_get_eq_hdl(index);
+ 			lpfc_irq_clear_aff(eqhdl);
+-			irq_set_affinity_hint(eqhdl->irq, NULL);
+ 			free_irq(eqhdl->irq, eqhdl);
+ 		}
+ 	} else {
 -- 
 2.27.0
 
