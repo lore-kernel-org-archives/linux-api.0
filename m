@@ -7,40 +7,40 @@ X-Spam-Status: No, score=-17.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 335C1C636C9
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 58219C6377A
 	for <linux-api@archiver.kernel.org>; Tue, 20 Jul 2021 23:31:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 15AB560FDA
+	by mail.kernel.org (Postfix) with ESMTP id 36FA161208
 	for <linux-api@archiver.kernel.org>; Tue, 20 Jul 2021 23:31:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235656AbhGTWuj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 20 Jul 2021 18:50:39 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:59746 "EHLO
+        id S236015AbhGTWuc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 20 Jul 2021 18:50:32 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:52498 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S235596AbhGTWqb (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 20 Jul 2021 18:46:31 -0400
+        by vger.kernel.org with ESMTP id S235967AbhGTWq6 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 20 Jul 2021 18:46:58 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1626823628;
+        s=mimecast20190719; t=1626823655;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=tDrUtUc2aE0pRbBZzR884Ce25w6F59XVVpHlm8q8sCM=;
-        b=W4Eo7aXQK21Uhrpr8vYokYpT0Bp13QJl72YDJpdDp1PqRSUbJZCnJqnUZ8xC4UET0m51oz
-        ZjBOh9jTHlxU87MZRPwoxSQ4PreI+76Q/3Xb0AOziBb1VV6W+TI8GbYZkfiQLih9An8LQZ
-        InSx+EPpl1N/mHvkQJ9wV2pvgFck1/8=
+        bh=pTIHCu/v1m6aglqrxVgqlM1EFt4mjK9q8YlegEPDsXA=;
+        b=esYGFG0n1pHBctTDDqMWIR1jvLOc5FXFuwE+PsB2c4fZzoPkX7p87FvXg4RdYjUZaZP/bI
+        hUcO+0P1VtI1/cumz4PDwF57qx51Jjt04F9q3xJvIPKin/efJjNNO23IGbpLIKKHdoMwhR
+        +ZjwlU8JfW06Z3wxBTQKiI++9Hf9hSM=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-525-YfMip2mCMymWdeyYHBSEYA-1; Tue, 20 Jul 2021 19:27:07 -0400
-X-MC-Unique: YfMip2mCMymWdeyYHBSEYA-1
+ us-mta-143-LmqW4iHAOAiYpLG32LmiJA-1; Tue, 20 Jul 2021 19:27:34 -0400
+X-MC-Unique: LmqW4iHAOAiYpLG32LmiJA-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 96350100C610;
-        Tue, 20 Jul 2021 23:27:05 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A0F69802C80;
+        Tue, 20 Jul 2021 23:27:32 +0000 (UTC)
 Received: from virtlab719.virt.lab.eng.bos.redhat.com (virtlab719.virt.lab.eng.bos.redhat.com [10.19.153.15])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 0E78F69FAD;
-        Tue, 20 Jul 2021 23:27:00 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 0345A69CB4;
+        Tue, 20 Jul 2021 23:27:27 +0000 (UTC)
 From:   Nitesh Narayan Lal <nitesh@redhat.com>
 To:     linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org,
         intel-wired-lan@lists.osuosl.org, netdev@vger.kernel.org,
@@ -72,9 +72,9 @@ To:     linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org,
         emilne@redhat.com, jejb@linux.ibm.com, martin.petersen@oracle.com,
         _govind@gmx.com, kabel@kernel.org, viresh.kumar@linaro.org,
         Tushar.Khandelwal@arm.com, kuba@kernel.org
-Subject: [PATCH v5 05/14] scsi: mpt3sas: Use irq_set_affinity_and_hint
-Date:   Tue, 20 Jul 2021 19:26:15 -0400
-Message-Id: <20210720232624.1493424-6-nitesh@redhat.com>
+Subject: [PATCH v5 10/14] mailbox: Use irq_update_affinity_hint
+Date:   Tue, 20 Jul 2021 19:26:20 -0400
+Message-Id: <20210720232624.1493424-11-nitesh@redhat.com>
 In-Reply-To: <20210720232624.1493424-1-nitesh@redhat.com>
 References: <20210720232624.1493424-1-nitesh@redhat.com>
 MIME-Version: 1.0
@@ -84,91 +84,55 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The driver uses irq_set_affinity_hint() specifically for the high IOPS
-queue interrupts for two purposes:
+The driver uses irq_set_affinity_hint() to:
 
-- To set the affinity_hint which is consumed by the userspace for
+- Set the affinity_hint which is consumed by the userspace for
   distributing the interrupts
 
-- To apply an affinity that it provides
+- Enforce affinity
 
-The driver enforces its own affinity to bind the high IOPS queue interrupts
-to the local NUMA node. However, irq_set_affinity_hint() applying the
-provided cpumask as an affinity (if not NULL) for the interrupt is an
-undocumented side effect.
+As per commit 6ac17fe8c14a ("mailbox: bcm-flexrm-mailbox: Set IRQ affinity
+hint for FlexRM ring IRQs") the latter is done to ensure that the FlexRM
+ring interrupts are evenly spread across all available CPUs. However, since
+commit a0c9259dc4e1 ("irq/matrix: Spread interrupts on allocation") the
+spreading of interrupts is dynamically performed at the time of allocation.
+Hence, there is no need for the drivers to enforce their own affinity for
+the spreading of interrupts.
 
-To remove this side effect irq_set_affinity_hint() has been marked
-as deprecated and new interfaces have been introduced. Hence, replace the
-irq_set_affinity_hint() with the new interface irq_set_affinity_and_hint()
-where the provided mask needs to be applied as the affinity and
-affinity_hint pointer needs to be set and replace with
-irq_update_affinity_hint() where only affinity_hint needs to be updated.
+Also, irq_set_affinity_hint() applying the provided cpumask as an affinity
+for the interrupt is an undocumented side effect. To remove this side
+effect irq_set_affinity_hint() has been marked as deprecated and new
+interfaces have been introduced. Hence, replace the irq_set_affinity_hint()
+with the new interface irq_update_affinity_hint() that only sets the
+affinity_hint pointer.
 
 Signed-off-by: Nitesh Narayan Lal <nitesh@redhat.com>
 ---
- drivers/scsi/mpt3sas/mpt3sas_base.c | 21 ++++++++++-----------
- 1 file changed, 10 insertions(+), 11 deletions(-)
+ drivers/mailbox/bcm-flexrm-mailbox.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/scsi/mpt3sas/mpt3sas_base.c b/drivers/scsi/mpt3sas/mpt3sas_base.c
-index c39955239d1c..c1a11962f227 100644
---- a/drivers/scsi/mpt3sas/mpt3sas_base.c
-+++ b/drivers/scsi/mpt3sas/mpt3sas_base.c
-@@ -2991,6 +2991,7 @@ _base_check_enable_msix(struct MPT3SAS_ADAPTER *ioc)
- static void
- _base_free_irq(struct MPT3SAS_ADAPTER *ioc)
- {
-+	unsigned int irq;
- 	struct adapter_reply_queue *reply_q, *next;
+diff --git a/drivers/mailbox/bcm-flexrm-mailbox.c b/drivers/mailbox/bcm-flexrm-mailbox.c
+index 78073ad1f2f1..16982c13d323 100644
+--- a/drivers/mailbox/bcm-flexrm-mailbox.c
++++ b/drivers/mailbox/bcm-flexrm-mailbox.c
+@@ -1298,7 +1298,7 @@ static int flexrm_startup(struct mbox_chan *chan)
+ 	val = (num_online_cpus() < val) ? val / num_online_cpus() : 1;
+ 	cpumask_set_cpu((ring->num / val) % num_online_cpus(),
+ 			&ring->irq_aff_hint);
+-	ret = irq_set_affinity_hint(ring->irq, &ring->irq_aff_hint);
++	ret = irq_update_affinity_hint(ring->irq, &ring->irq_aff_hint);
+ 	if (ret) {
+ 		dev_err(ring->mbox->dev,
+ 			"failed to set IRQ affinity hint for ring%d\n",
+@@ -1425,7 +1425,7 @@ static void flexrm_shutdown(struct mbox_chan *chan)
  
- 	if (list_empty(&ioc->reply_queue_list))
-@@ -2998,9 +2999,10 @@ _base_free_irq(struct MPT3SAS_ADAPTER *ioc)
- 
- 	list_for_each_entry_safe(reply_q, next, &ioc->reply_queue_list, list) {
- 		list_del(&reply_q->list);
--		if (ioc->smp_affinity_enable)
--			irq_set_affinity_hint(pci_irq_vector(ioc->pdev,
--			    reply_q->msix_index), NULL);
-+		if (ioc->smp_affinity_enable) {
-+			irq = pci_irq_vector(ioc->pdev, reply_q->msix_index);
-+			irq_update_affinity_hint(irq, NULL);
-+		}
- 		free_irq(pci_irq_vector(ioc->pdev, reply_q->msix_index),
- 			 reply_q);
- 		kfree(reply_q);
-@@ -3056,16 +3058,13 @@ _base_request_irq(struct MPT3SAS_ADAPTER *ioc, u8 index)
-  * @ioc: per adapter object
-  *
-  * The enduser would need to set the affinity via /proc/irq/#/smp_affinity
-- *
-- * It would nice if we could call irq_set_affinity, however it is not
-- * an exported symbol
-  */
- static void
- _base_assign_reply_queues(struct MPT3SAS_ADAPTER *ioc)
- {
--	unsigned int cpu, nr_cpus, nr_msix, index = 0;
-+	unsigned int cpu, nr_cpus, nr_msix, index = 0, irq;
- 	struct adapter_reply_queue *reply_q;
--	int local_numa_node;
-+	const struct cpumask *mask;
- 
- 	if (!_base_is_controller_msix_enabled(ioc))
- 		return;
-@@ -3088,11 +3087,11 @@ _base_assign_reply_queues(struct MPT3SAS_ADAPTER *ioc)
- 		 * corresponding to high iops queues.
- 		 */
- 		if (ioc->high_iops_queues) {
--			local_numa_node = dev_to_node(&ioc->pdev->dev);
-+			mask = cpumask_of_node(dev_to_node(&ioc->pdev->dev));
- 			for (index = 0; index < ioc->high_iops_queues;
- 			    index++) {
--				irq_set_affinity_hint(pci_irq_vector(ioc->pdev,
--				    index), cpumask_of_node(local_numa_node));
-+				irq = pci_irq_vector(ioc->pdev, index);
-+				irq_set_affinity_and_hint(irq, mask);
- 			}
- 		}
- 
+ 	/* Release IRQ */
+ 	if (ring->irq_requested) {
+-		irq_set_affinity_hint(ring->irq, NULL);
++		irq_update_affinity_hint(ring->irq, NULL);
+ 		free_irq(ring->irq, ring);
+ 		ring->irq_requested = false;
+ 	}
 -- 
 2.27.0
 
