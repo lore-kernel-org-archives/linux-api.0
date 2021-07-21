@@ -2,150 +2,100 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-21.6 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,FSL_HELO_FAKE,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_IN_DEF_DKIM_WL
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B1593C07E9B
-	for <linux-api@archiver.kernel.org>; Tue, 20 Jul 2021 23:42:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 821FEC07E9B
+	for <linux-api@archiver.kernel.org>; Wed, 21 Jul 2021 06:17:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8F31861001
-	for <linux-api@archiver.kernel.org>; Tue, 20 Jul 2021 23:42:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 66BB16113C
+	for <linux-api@archiver.kernel.org>; Wed, 21 Jul 2021 06:17:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231425AbhGTXBP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 20 Jul 2021 19:01:15 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:55161 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S235030AbhGTWqS (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 20 Jul 2021 18:46:18 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1626823615;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=Nhh0ybWcggmNFHzIxWUnjcT654bVMG/l5DZlZ7Mot4o=;
-        b=h9UvARjV+/P0fJHsTKYJnmJ0v7eVWhoexzR2DmySQQY7iPFLfApYrS1tQPimLKC40/6pnj
-        8cpjYIEMkgHKHQ2v/AQsdjxYDpyavG4UoewJZJJUNT9PZuRB/fcGgmSesx77/ISGQhW6Xu
-        8XqOaDlMYZv0MuQzwO7Me3UVE5M1zgU=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-229-_-xhb9uUOGux2J5_hNnWyw-1; Tue, 20 Jul 2021 19:26:54 -0400
-X-MC-Unique: _-xhb9uUOGux2J5_hNnWyw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C00EE100C610;
-        Tue, 20 Jul 2021 23:26:52 +0000 (UTC)
-Received: from virtlab719.virt.lab.eng.bos.redhat.com (virtlab719.virt.lab.eng.bos.redhat.com [10.19.153.15])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id A76B069FAD;
-        Tue, 20 Jul 2021 23:26:44 +0000 (UTC)
-From:   Nitesh Narayan Lal <nitesh@redhat.com>
-To:     linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org,
-        intel-wired-lan@lists.osuosl.org, netdev@vger.kernel.org,
-        linux-api@vger.kernel.org, linux-pci@vger.kernel.org,
-        tglx@linutronix.de, jesse.brandeburg@intel.com,
-        robin.murphy@arm.com, mtosatti@redhat.com, mingo@kernel.org,
-        jbrandeb@kernel.org, frederic@kernel.org, juri.lelli@redhat.com,
-        abelits@marvell.com, bhelgaas@google.com, rostedt@goodmis.org,
-        peterz@infradead.org, davem@davemloft.net,
-        akpm@linux-foundation.org, sfr@canb.auug.org.au,
-        stephen@networkplumber.org, rppt@linux.vnet.ibm.com,
-        chris.friesen@windriver.com, maz@kernel.org, nhorman@tuxdriver.com,
-        pjwaskiewicz@gmail.com, sassmann@redhat.com, thenzl@redhat.com,
-        kashyap.desai@broadcom.com, sumit.saxena@broadcom.com,
-        shivasharan.srikanteshwara@broadcom.com,
-        sathya.prakash@broadcom.com, sreekanth.reddy@broadcom.com,
-        suganath-prabu.subramani@broadcom.com, james.smart@broadcom.com,
-        dick.kennedy@broadcom.com, jkc@redhat.com, faisal.latif@intel.com,
-        shiraz.saleem@intel.com, tariqt@nvidia.com, ahleihel@redhat.com,
-        kheib@redhat.com, borisp@nvidia.com, saeedm@nvidia.com,
-        benve@cisco.com, govind@gmx.com, jassisinghbrar@gmail.com,
-        ajit.khaparde@broadcom.com, sriharsha.basavapatna@broadcom.com,
-        somnath.kotur@broadcom.com, nilal@redhat.com,
-        tatyana.e.nikolova@intel.com, mustafa.ismail@intel.com,
-        ahs3@redhat.com, leonro@nvidia.com,
-        chandrakanth.patil@broadcom.com, bjorn.andersson@linaro.org,
-        chunkuang.hu@kernel.org, yongqiang.niu@mediatek.com,
-        baolin.wang7@gmail.com, poros@redhat.com, minlei@redhat.com,
-        emilne@redhat.com, jejb@linux.ibm.com, martin.petersen@oracle.com,
-        _govind@gmx.com, kabel@kernel.org, viresh.kumar@linaro.org,
-        Tushar.Khandelwal@arm.com, kuba@kernel.org
-Subject: [PATCH v5 03/14] i40e: Use irq_update_affinity_hint
-Date:   Tue, 20 Jul 2021 19:26:13 -0400
-Message-Id: <20210720232624.1493424-4-nitesh@redhat.com>
-In-Reply-To: <20210720232624.1493424-1-nitesh@redhat.com>
-References: <20210720232624.1493424-1-nitesh@redhat.com>
+        id S233601AbhGUFhL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 21 Jul 2021 01:37:11 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57144 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S233254AbhGUFg7 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 21 Jul 2021 01:36:59 -0400
+Received: from mail-pj1-x1031.google.com (mail-pj1-x1031.google.com [IPv6:2607:f8b0:4864:20::1031])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B85FCC0613DB
+        for <linux-api@vger.kernel.org>; Tue, 20 Jul 2021 23:17:26 -0700 (PDT)
+Received: by mail-pj1-x1031.google.com with SMTP id gv20-20020a17090b11d4b0290173b9578f1cso415785pjb.0
+        for <linux-api@vger.kernel.org>; Tue, 20 Jul 2021 23:17:26 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20161025;
+        h=date:from:to:cc:subject:message-id:mime-version:content-disposition;
+        bh=8uCp46ImvOgWa9UyjUPDoGLTVj3tcqAJCj1XniwrNiw=;
+        b=B9IlnaRBuRNB1oSr1pJNEQidkE7pZe8zqpMHRKXNd6jcCE84xR1FHOK9neFtl8W5Jx
+         h7kWNJaJLNP0CClLcsXK7x3DqRD7VSsyMMQhrZX3fQV8SXGTTaebbsJs/Uv0xAILgN3D
+         6Ihkf62IdEbaDRoD0pAq7OF0Z+S8qEU0iJw0dHu19U2CPE96He33msgBzM4fRDzh+xzY
+         SniIS0akPTw5RvbT+ctATwAmw5EmTX9IRlaZCyHfNpVXssDwtGB7aN3Fy/bMtLHCqevI
+         seeMkLttKTEKkB7YgehaPpqvssVEnCryb9SdbbfbzExP+vXOkl3d1qpNkptuPw9HcP0k
+         lVNg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:mime-version
+         :content-disposition;
+        bh=8uCp46ImvOgWa9UyjUPDoGLTVj3tcqAJCj1XniwrNiw=;
+        b=KrxpZ4hODBw0U6TbCIh7Nbpd9EgLEm3Hi9yN3Q9zlf04cNHzuBRizYIVHeVpyFf+v3
+         FW+86N9M4oUjN9ZVDJ0HcaAeEV8qpgPzCpVL4zv4Klzf3Rs+HPITr3SrbIoL3GnE7gwZ
+         3hLgN+ZXEH8m6WjE00DMGqMmdMnyChYhuPjfhXmgwODf1OGLZOxGqnE/dJ9kY25cb7qw
+         L7wtxHK3css9spTqZK2wC1vo1UVm6geoNsRsTHmtjPCBTdnWeMXV0A72jk5BwsL3mL54
+         6NtB3AaBGFEZmJnVnJe5Vvirm5Tus7SK464jrEtCzNl6MhvOVC+BZvmetEkvfQzjqOEX
+         6ddQ==
+X-Gm-Message-State: AOAM532Fq/5fhbDjJe8wqy7eGU7W5mE7v2ic/XFLPdcal7o2crvpvybD
+        Sr+xVzWx6i4Yxpw8nIobWReefQ==
+X-Google-Smtp-Source: ABdhPJwYCRdq0WmMoZOc63NSNJYVoR/qId1AztX5GG9Kzwe/jnOzR5O7IsdEvJw3k8ol/+ciwYIXMw==
+X-Received: by 2002:a17:90b:310a:: with SMTP id gc10mr33523912pjb.173.1626848246088;
+        Tue, 20 Jul 2021 23:17:26 -0700 (PDT)
+Received: from google.com ([2401:fa00:9:211:c03c:a42a:c97a:1b7d])
+        by smtp.gmail.com with ESMTPSA id g71sm1384542pfb.139.2021.07.20.23.17.22
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 20 Jul 2021 23:17:25 -0700 (PDT)
+Date:   Wed, 21 Jul 2021 16:17:12 +1000
+From:   Matthew Bobrowski <repnop@google.com>
+To:     jack@suse.cz, amir73il@gmail.com, christian.brauner@ubuntu.com
+Cc:     linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
+Subject: [PATCH v3 0/5] Add pidfd support to the fanotify API
+Message-ID: <cover.1626845287.git.repnop@google.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The driver uses irq_set_affinity_hint() for two purposes:
+Hey Jan/Amir/Christian,
 
-- To set the affinity_hint which is consumed by the userspace for
-  distributing the interrupts
+This is an updated version of the FAN_REPORT_PIDFD series which contains
+the addressed nits from the previous review [0]. As per request, you can
+also find the draft LTP tests here [1] and man-pages update for this new
+API change here [2].
 
-- To apply an affinity that it provides for the i40e interrupts
+[0] https://lore.kernel.org/linux-fsdevel/cover.1623282854.git.repnop@google.com/
+[1] https://github.com/matthewbobrowski/ltp/commits/fanotify_pidfd_v2
+[2] https://github.com/matthewbobrowski/man-pages/commits/fanotify_pidfd_v1
 
-The latter is done to ensure that all the interrupts are evenly spread
-across all available CPUs. However, since commit a0c9259dc4e1 ("irq/matrix:
-Spread interrupts on allocation") the spreading of interrupts is
-dynamically performed at the time of allocation. Hence, there is no need
-for the drivers to enforce their own affinity for the spreading of
-interrupts.
+Matthew Bobrowski (5):
+  kernel/pid.c: remove static qualifier from pidfd_create()
+  kernel/pid.c: implement additional checks upon pidfd_create()
+    parameters
+  fanotify/fanotify_user.c: minor cosmetic adjustments to fid labels
+  fanotify/fanotify_user.c: introduce a generic info record copying
+    helper
+  fanotify: add pidfd support to the fanotify API
 
-Also, irq_set_affinity_hint() applying the provided cpumask as an affinity
-for the interrupt is an undocumented side effect. To remove this side
-effect irq_set_affinity_hint() has been marked as deprecated and new
-interfaces have been introduced. Hence, replace the irq_set_affinity_hint()
-with the new interface irq_update_affinity_hint() that only sets the
-pointer for the affinity_hint.
+ fs/notify/fanotify/fanotify_user.c | 252 ++++++++++++++++++++---------
+ include/linux/fanotify.h           |   3 +
+ include/linux/pid.h                |   1 +
+ include/uapi/linux/fanotify.h      |  13 ++
+ kernel/pid.c                       |  15 +-
+ 5 files changed, 205 insertions(+), 79 deletions(-)
 
-Signed-off-by: Nitesh Narayan Lal <nitesh@redhat.com>
-Acked-by: Jesse Brandeburg <jesse.brandeburg@intel.com>
----
- drivers/net/ethernet/intel/i40e/i40e_main.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
-
-diff --git a/drivers/net/ethernet/intel/i40e/i40e_main.c b/drivers/net/ethernet/intel/i40e/i40e_main.c
-index 861e59a350bd..e2c525a6cab3 100644
---- a/drivers/net/ethernet/intel/i40e/i40e_main.c
-+++ b/drivers/net/ethernet/intel/i40e/i40e_main.c
-@@ -3873,10 +3873,10 @@ static int i40e_vsi_request_irq_msix(struct i40e_vsi *vsi, char *basename)
- 		 *
- 		 * get_cpu_mask returns a static constant mask with
- 		 * a permanent lifetime so it's ok to pass to
--		 * irq_set_affinity_hint without making a copy.
-+		 * irq_update_affinity_hint without making a copy.
- 		 */
- 		cpu = cpumask_local_spread(q_vector->v_idx, -1);
--		irq_set_affinity_hint(irq_num, get_cpu_mask(cpu));
-+		irq_update_affinity_hint(irq_num, get_cpu_mask(cpu));
- 	}
- 
- 	vsi->irqs_ready = true;
-@@ -3887,7 +3887,7 @@ static int i40e_vsi_request_irq_msix(struct i40e_vsi *vsi, char *basename)
- 		vector--;
- 		irq_num = pf->msix_entries[base + vector].vector;
- 		irq_set_affinity_notifier(irq_num, NULL);
--		irq_set_affinity_hint(irq_num, NULL);
-+		irq_update_affinity_hint(irq_num, NULL);
- 		free_irq(irq_num, &vsi->q_vectors[vector]);
- 	}
- 	return err;
-@@ -4695,7 +4695,7 @@ static void i40e_vsi_free_irq(struct i40e_vsi *vsi)
- 			/* clear the affinity notifier in the IRQ descriptor */
- 			irq_set_affinity_notifier(irq_num, NULL);
- 			/* remove our suggested affinity mask for this IRQ */
--			irq_set_affinity_hint(irq_num, NULL);
-+			irq_update_affinity_hint(irq_num, NULL);
- 			synchronize_irq(irq_num);
- 			free_irq(irq_num, vsi->q_vectors[i]);
- 
 -- 
-2.27.0
+2.32.0.432.gabb21c7263-goog
 
+/M
