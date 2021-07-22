@@ -7,27 +7,27 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1307BC25AEC
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 47010C19F31
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id F20ED60EFF
+	by mail.kernel.org (Postfix) with ESMTP id 2193C60ED6
 	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231477AbhGVUNF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Jul 2021 16:13:05 -0400
-Received: from mga17.intel.com ([192.55.52.151]:11609 "EHLO mga17.intel.com"
+        id S231341AbhGVUNE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Jul 2021 16:13:04 -0400
+Received: from mga17.intel.com ([192.55.52.151]:11595 "EHLO mga17.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230510AbhGVUMj (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        id S230498AbhGVUMj (ORCPT <rfc822;linux-api@vger.kernel.org>);
         Thu, 22 Jul 2021 16:12:39 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="192011924"
+X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="192011900"
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="192011924"
+   d="scan'208";a="192011900"
 Received: from fmsmga003.fm.intel.com ([10.253.24.29])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:06 -0700
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:05 -0700
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="502035533"
+   d="scan'208";a="502035527"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:05 -0700
+  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:04 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -59,9 +59,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
         "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
-Subject: [PATCH v28 32/32] mm: Introduce PROT_SHADOW_STACK for shadow stack
-Date:   Thu, 22 Jul 2021 13:52:19 -0700
-Message-Id: <20210722205219.7934-33-yu-cheng.yu@intel.com>
+Subject: [PATCH v28 30/32] mm: Move arch_calc_vm_prot_bits() to arch/x86/include/asm/mman.h
+Date:   Thu, 22 Jul 2021 13:52:17 -0700
+Message-Id: <20210722205219.7934-31-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210722205219.7934-1-yu-cheng.yu@intel.com>
 References: <20210722205219.7934-1-yu-cheng.yu@intel.com>
@@ -71,137 +71,94 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-There are three possible options to create a shadow stack allocation API:
-an arch_prctl, a new syscall, or adding PROT_SHADOW_STACK to mmap() and
-mprotect().  Each has its advantages and compromises.
-
-An arch_prctl() is the least intrusive.  However, the existing x86
-arch_prctl() takes only two parameters.  Multiple parameters must be
-passed in a memory buffer.  There is a proposal to pass more parameters in
-registers [1], but no active discussion on that.
-
-A new syscall minimizes compatibility issues and offers an extensible frame
-work to other architectures, but this will likely result in some overlap of
-mmap()/mprotect().
-
-The introduction of PROT_SHADOW_STACK to mmap()/mprotect() takes advantage
-of existing APIs.  The x86-specific PROT_SHADOW_STACK is translated to
-VM_SHADOW_STACK and a shadow stack mapping is created without reinventing
-the wheel.  There are potential pitfalls though.  The most obvious one
-would be using this as a bypass to shadow stack protection.  However, the
-attacker would have to get to the syscall first.
-
-[1] https://lore.kernel.org/lkml/20200828121624.108243-1-hjl.tools@gmail.com/
+To prepare the introduction of PROT_SHADOW_STACK and be consistent with other
+architectures, move arch_vm_get_page_prot() and arch_calc_vm_prot_bits() to
+arch/x86/include/asm/mman.h.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
-Cc: Kees Cook <keescook@chromium.org>
 ---
- arch/x86/include/asm/mman.h      | 60 +++++++++++++++++++++++++++++++-
- arch/x86/include/uapi/asm/mman.h |  2 ++
- include/linux/mm.h               |  1 +
- 3 files changed, 62 insertions(+), 1 deletion(-)
+ arch/x86/include/asm/mman.h      | 30 ++++++++++++++++++++++++++++++
+ arch/x86/include/uapi/asm/mman.h | 28 +++-------------------------
+ 2 files changed, 33 insertions(+), 25 deletions(-)
+ create mode 100644 arch/x86/include/asm/mman.h
 
 diff --git a/arch/x86/include/asm/mman.h b/arch/x86/include/asm/mman.h
-index 629f6c81263a..b77933923b9a 100644
---- a/arch/x86/include/asm/mman.h
+new file mode 100644
+index 000000000000..629f6c81263a
+--- /dev/null
 +++ b/arch/x86/include/asm/mman.h
-@@ -20,11 +20,69 @@
- 		((vm_flags) & VM_PKEY_BIT2 ? _PAGE_PKEY_BIT2 : 0) |	\
- 		((vm_flags) & VM_PKEY_BIT3 ? _PAGE_PKEY_BIT3 : 0))
- 
--#define arch_calc_vm_prot_bits(prot, key) (		\
-+#define pkey_vm_prot_bits(prot, key) (			\
- 		((key) & 0x1 ? VM_PKEY_BIT0 : 0) |      \
- 		((key) & 0x2 ? VM_PKEY_BIT1 : 0) |      \
- 		((key) & 0x4 ? VM_PKEY_BIT2 : 0) |      \
- 		((key) & 0x8 ? VM_PKEY_BIT3 : 0))
-+#else
-+#define pkey_vm_prot_bits(prot, key) (0)
- #endif
- 
-+static inline unsigned long arch_calc_vm_prot_bits(unsigned long prot,
-+						   unsigned long pkey)
-+{
-+	unsigned long vm_prot_bits = pkey_vm_prot_bits(prot, pkey);
+@@ -0,0 +1,30 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _ASM_X86_MMAN_H
++#define _ASM_X86_MMAN_H
 +
-+	if (prot & PROT_SHADOW_STACK)
-+		vm_prot_bits |= VM_SHADOW_STACK;
++#include <linux/mm.h>
++#include <uapi/asm/mman.h>
 +
-+	return vm_prot_bits;
-+}
++#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
++/*
++ * Take the 4 protection key bits out of the vma->vm_flags
++ * value and turn them in to the bits that we can put in
++ * to a pte.
++ *
++ * Only override these if Protection Keys are available
++ * (which is only on 64-bit).
++ */
++#define arch_vm_get_page_prot(vm_flags)	__pgprot(	\
++		((vm_flags) & VM_PKEY_BIT0 ? _PAGE_PKEY_BIT0 : 0) |	\
++		((vm_flags) & VM_PKEY_BIT1 ? _PAGE_PKEY_BIT1 : 0) |	\
++		((vm_flags) & VM_PKEY_BIT2 ? _PAGE_PKEY_BIT2 : 0) |	\
++		((vm_flags) & VM_PKEY_BIT3 ? _PAGE_PKEY_BIT3 : 0))
 +
-+#define arch_calc_vm_prot_bits(prot, pkey) arch_calc_vm_prot_bits(prot, pkey)
++#define arch_calc_vm_prot_bits(prot, key) (		\
++		((key) & 0x1 ? VM_PKEY_BIT0 : 0) |      \
++		((key) & 0x2 ? VM_PKEY_BIT1 : 0) |      \
++		((key) & 0x4 ? VM_PKEY_BIT2 : 0) |      \
++		((key) & 0x8 ? VM_PKEY_BIT3 : 0))
++#endif
 +
-+#ifdef CONFIG_X86_SHADOW_STACK
-+static inline bool arch_validate_prot(unsigned long prot, unsigned long addr)
-+{
-+	unsigned long valid = PROT_READ | PROT_WRITE | PROT_EXEC | PROT_SEM |
-+			      PROT_SHADOW_STACK;
-+
-+	if (prot & ~valid)
-+		return false;
-+
-+	if (prot & PROT_SHADOW_STACK) {
-+		if (!current->thread.shstk.size)
-+			return false;
-+
-+		/*
-+		 * A shadow stack mapping is indirectly writable by only
-+		 * the CALL and WRUSS instructions, but not other write
-+		 * instructions).  PROT_SHADOW_STACK and PROT_WRITE are
-+		 * mutually exclusive.
-+		 */
-+		if (prot & PROT_WRITE)
-+			return false;
-+	}
-+
-+	return true;
-+}
-+
-+#define arch_validate_prot arch_validate_prot
-+
-+static inline bool arch_validate_flags(struct vm_area_struct *vma, unsigned long vm_flags)
-+{
-+	/*
-+	 * Shadow stack must be anonymous and not shared.
-+	 */
-+	if ((vm_flags & VM_SHADOW_STACK) && !vma_is_anonymous(vma))
-+		return false;
-+
-+	return true;
-+}
-+
-+#define arch_validate_flags(vma, vm_flags) arch_validate_flags(vma, vm_flags)
-+
-+#endif /* CONFIG_X86_SHADOW_STACK */
-+
- #endif /* _ASM_X86_MMAN_H */
++#endif /* _ASM_X86_MMAN_H */
 diff --git a/arch/x86/include/uapi/asm/mman.h b/arch/x86/include/uapi/asm/mman.h
-index f28fa4acaeaf..4c36b263cf0a 100644
+index d4a8d0424bfb..f28fa4acaeaf 100644
 --- a/arch/x86/include/uapi/asm/mman.h
 +++ b/arch/x86/include/uapi/asm/mman.h
-@@ -4,6 +4,8 @@
+@@ -1,31 +1,9 @@
+ /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+-#ifndef _ASM_X86_MMAN_H
+-#define _ASM_X86_MMAN_H
++#ifndef _UAPI_ASM_X86_MMAN_H
++#define _UAPI_ASM_X86_MMAN_H
  
  #define MAP_32BIT	0x40		/* only give out 32bit addresses */
  
-+#define PROT_SHADOW_STACK	0x10	/* shadow stack pages */
-+
+-#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
+-/*
+- * Take the 4 protection key bits out of the vma->vm_flags
+- * value and turn them in to the bits that we can put in
+- * to a pte.
+- *
+- * Only override these if Protection Keys are available
+- * (which is only on 64-bit).
+- */
+-#define arch_vm_get_page_prot(vm_flags)	__pgprot(	\
+-		((vm_flags) & VM_PKEY_BIT0 ? _PAGE_PKEY_BIT0 : 0) |	\
+-		((vm_flags) & VM_PKEY_BIT1 ? _PAGE_PKEY_BIT1 : 0) |	\
+-		((vm_flags) & VM_PKEY_BIT2 ? _PAGE_PKEY_BIT2 : 0) |	\
+-		((vm_flags) & VM_PKEY_BIT3 ? _PAGE_PKEY_BIT3 : 0))
+-
+-#define arch_calc_vm_prot_bits(prot, key) (		\
+-		((key) & 0x1 ? VM_PKEY_BIT0 : 0) |      \
+-		((key) & 0x2 ? VM_PKEY_BIT1 : 0) |      \
+-		((key) & 0x4 ? VM_PKEY_BIT2 : 0) |      \
+-		((key) & 0x8 ? VM_PKEY_BIT3 : 0))
+-#endif
+-
  #include <asm-generic/mman.h>
  
- #endif /* _UAPI_ASM_X86_MMAN_H */
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 07e642af59d3..041e7e8ff702 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -349,6 +349,7 @@ extern unsigned int kobjsize(const void *objp);
- 
- #if defined(CONFIG_X86)
- # define VM_PAT		VM_ARCH_1	/* PAT reserves whole VMA at once (x86) */
-+# define VM_ARCH_CLEAR	VM_SHADOW_STACK
- #elif defined(CONFIG_PPC)
- # define VM_SAO		VM_ARCH_1	/* Strong Access Ordering (powerpc) */
- #elif defined(CONFIG_PARISC)
+-#endif /* _ASM_X86_MMAN_H */
++#endif /* _UAPI_ASM_X86_MMAN_H */
 -- 
 2.21.0
 
