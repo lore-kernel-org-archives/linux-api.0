@@ -7,27 +7,27 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 44559C432BE
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0C1E5C19F32
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1A75960EE2
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E216E60EB1
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231808AbhGVUMr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Jul 2021 16:12:47 -0400
+        id S231823AbhGVUMs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Jul 2021 16:12:48 -0400
 Received: from mga07.intel.com ([134.134.136.100]:54382 "EHLO mga07.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231295AbhGVUM1 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 22 Jul 2021 16:12:27 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="275560606"
+        id S231314AbhGVUM2 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 22 Jul 2021 16:12:28 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="275560622"
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="275560606"
+   d="scan'208";a="275560622"
 Received: from fmsmga003.fm.intel.com ([10.253.24.29])
-  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:02 -0700
+  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:03 -0700
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="502035487"
+   d="scan'208";a="502035502"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:01 -0700
+  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:03 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -57,11 +57,10 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
-Subject: [PATCH v28 19/32] mm/mmap: Add shadow stack pages to memory accounting
-Date:   Thu, 22 Jul 2021 13:52:06 -0700
-Message-Id: <20210722205219.7934-20-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v28 24/32] x86/process: Change copy_thread() argument 'arg' to 'stack_size'
+Date:   Thu, 22 Jul 2021 13:52:11 -0700
+Message-Id: <20210722205219.7934-25-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210722205219.7934-1-yu-cheng.yu@intel.com>
 References: <20210722205219.7934-1-yu-cheng.yu@intel.com>
@@ -71,96 +70,49 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Account shadow stack pages to stack memory.
+The single call site of copy_thread() passes stack size in 'arg'.  To make
+this clear and in preparation of using this argument for shadow stack
+allocation, change 'arg' to 'stack_size'.  No functional changes.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
-Cc: Kees Cook <keescook@chromium.org>
 ---
-v26:
-- Remove redundant #ifdef CONFIG_MMU.
+ arch/x86/kernel/process.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
 
-v25:
-- Remove #ifdef CONFIG_ARCH_HAS_SHADOW_STACK for is_shadow_stack_mapping().
-
-v24:
-- Change arch_shadow_stack_mapping() to is_shadow_stack_mapping().
-- Change VM_SHSTK to VM_SHADOW_STACK.
-
- arch/x86/include/asm/pgtable.h | 3 +++
- arch/x86/mm/pgtable.c          | 5 +++++
- include/linux/pgtable.h        | 7 +++++++
- mm/mmap.c                      | 5 +++++
- 4 files changed, 20 insertions(+)
-
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index bfe4ea2b652d..0983a91b464c 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -1638,6 +1638,9 @@ static inline bool arch_faults_on_old_pte(void)
- #define maybe_mkwrite maybe_mkwrite
- extern pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma);
- 
-+#define is_shadow_stack_mapping is_shadow_stack_mapping
-+extern bool is_shadow_stack_mapping(vm_flags_t vm_flags);
-+
- #endif	/* __ASSEMBLY__ */
- 
- #endif /* _ASM_X86_PGTABLE_H */
-diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
-index ba449d12ec32..945f6b5a42e5 100644
---- a/arch/x86/mm/pgtable.c
-+++ b/arch/x86/mm/pgtable.c
-@@ -888,3 +888,8 @@ int pmd_free_pte_page(pmd_t *pmd, unsigned long addr)
- 
- #endif /* CONFIG_X86_64 */
- #endif	/* CONFIG_HAVE_ARCH_HUGE_VMAP */
-+
-+bool is_shadow_stack_mapping(vm_flags_t vm_flags)
-+{
-+	return vm_flags & VM_SHADOW_STACK;
-+}
-diff --git a/include/linux/pgtable.h b/include/linux/pgtable.h
-index d147480cdefc..eca0a7b80b3e 100644
---- a/include/linux/pgtable.h
-+++ b/include/linux/pgtable.h
-@@ -1508,6 +1508,13 @@ static inline bool arch_has_pfn_modify_check(void)
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index 1d9463e3096b..e6e4d8bc9023 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -116,8 +116,9 @@ static int set_new_tls(struct task_struct *p, unsigned long tls)
+ 		return do_set_thread_area_64(p, ARCH_SET_FS, tls);
  }
- #endif /* !_HAVE_ARCH_PFN_MODIFY_ALLOWED */
  
-+#ifndef is_shadow_stack_mapping
-+static inline bool is_shadow_stack_mapping(vm_flags_t vm_flags)
-+{
-+	return false;
-+}
-+#endif
-+
- /*
-  * Architecture PAGE_KERNEL_* fallbacks
-  *
-diff --git a/mm/mmap.c b/mm/mmap.c
-index ca54d36d203a..6be9ff4007ab 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
-@@ -1721,6 +1721,9 @@ static inline int accountable_mapping(struct file *file, vm_flags_t vm_flags)
- 	if (file && is_file_hugepages(file))
+-int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
+-		struct task_struct *p, unsigned long tls)
++int copy_thread(unsigned long clone_flags, unsigned long sp,
++		unsigned long stack_size, struct task_struct *p,
++		unsigned long tls)
+ {
+ 	struct inactive_task_frame *frame;
+ 	struct fork_frame *fork_frame;
+@@ -158,7 +159,7 @@ int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
+ 	if (unlikely(p->flags & PF_KTHREAD)) {
+ 		p->thread.pkru = pkru_get_init_value();
+ 		memset(childregs, 0, sizeof(struct pt_regs));
+-		kthread_frame_init(frame, sp, arg);
++		kthread_frame_init(frame, sp, stack_size);
  		return 0;
+ 	}
  
-+	if (is_shadow_stack_mapping(vm_flags))
-+		return 1;
-+
- 	return (vm_flags & (VM_NORESERVE | VM_SHARED | VM_WRITE)) == VM_WRITE;
- }
+@@ -191,7 +192,7 @@ int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
+ 		 */
+ 		childregs->sp = 0;
+ 		childregs->ip = 0;
+-		kthread_frame_init(frame, sp, arg);
++		kthread_frame_init(frame, sp, stack_size);
+ 		return 0;
+ 	}
  
-@@ -3370,6 +3373,8 @@ void vm_stat_account(struct mm_struct *mm, vm_flags_t flags, long npages)
- 		mm->stack_vm += npages;
- 	else if (is_data_mapping(flags))
- 		mm->data_vm += npages;
-+	else if (is_shadow_stack_mapping(flags))
-+		mm->stack_vm += npages;
- }
- 
- static vm_fault_t special_mapping_fault(struct vm_fault *vmf);
 -- 
 2.21.0
 
