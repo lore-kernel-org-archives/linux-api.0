@@ -2,32 +2,32 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 38CCAC4338F
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 88C2EC432BE
 	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:58:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 15B9A60F21
+	by mail.kernel.org (Postfix) with ESMTP id 67F8160F23
 	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:58:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231196AbhGVURa (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S231258AbhGVURa (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Thu, 22 Jul 2021 16:17:30 -0400
-Received: from mga03.intel.com ([134.134.136.65]:15252 "EHLO mga03.intel.com"
+Received: from mga17.intel.com ([192.55.52.151]:11982 "EHLO mga17.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230429AbhGVUR3 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        id S231140AbhGVUR3 (ORCPT <rfc822;linux-api@vger.kernel.org>);
         Thu, 22 Jul 2021 16:17:29 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="211800503"
+X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="192012889"
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="211800503"
+   d="scan'208";a="192012889"
 Received: from fmsmga007.fm.intel.com ([10.253.24.52])
-  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:58:03 -0700
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:58:04 -0700
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="433273355"
+   d="scan'208";a="433273367"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga007-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:58:03 -0700
+  by fmsmga007-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:58:04 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -57,72 +57,95 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Haitao Huang <haitao.huang@intel.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v28 00/10] Control-flow Enforcement: Indirect Branch Tracking
-Date:   Thu, 22 Jul 2021 13:57:13 -0700
-Message-Id: <20210722205723.9476-1-yu-cheng.yu@intel.com>
+Subject: [PATCH v28 04/10] x86/cet/ibt: Disable IBT for ia32
+Date:   Thu, 22 Jul 2021 13:57:17 -0700
+Message-Id: <20210722205723.9476-5-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
+In-Reply-To: <20210722205723.9476-1-yu-cheng.yu@intel.com>
+References: <20210722205723.9476-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Control-flow Enforcement (CET) is a new Intel processor feature that blocks
-return/jump-oriented programming attacks.  Details are in "Intel 64 and
-IA-32 Architectures Software Developer's Manual" [1].
+In a signal, a task's IBT status needs to be saved to the signal frame, and
+later restored in sigreturn.  For the purpose, previous versions of the
+series add a new struct to the signal frame.  However, a new signal frame
+format (or re-using a reserved space) introduces complex compatibility
+issues.
 
-This is the second part of CET and enables Indirect Branch Tracking (IBT).
-It is built on top of the shadow stack series.
+In the discussion (see link below), Andy Lutomirski proposed using a
+ucontext flag.  The approach is clean and eliminates most compatibility
+issues.
 
-Changes in v28:
-- Patch #10: Update change log and comments.
+However, a legacy IA32 signal frame does not have ucontext and cannot
+support a uc flag.  Thus,
 
-Changes in v27:
-- Use a ucontext flag to save/restore IBT status.
-- Disable IBT support for IA32.
-- Rebase to Linus tree v5.13-rc2.
+- Disable IBT for ia32.
+- In ia32 sigreturn, verify ibt is disabled.
 
-[1] Intel 64 and IA-32 Architectures Software Developer's Manual:
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Cyrill Gorcunov <gorcunov@gmail.com>
+Cc: Florian Weimer <fweimer@redhat.com>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Kees Cook <keescook@chromium.org>
+Link: https://lore.kernel.org/linux-api/f6e61dae-9805-c855-8873-7481ceb7ea79@intel.com/
+---
+ arch/x86/ia32/ia32_signal.c |  7 +++++++
+ arch/x86/include/asm/elf.h  | 13 ++++++++++++-
+ 2 files changed, 19 insertions(+), 1 deletion(-)
 
-    https://software.intel.com/en-us/download/intel-64-and-ia-32-
-    architectures-sdm-combined-volumes-1-2a-2b-2c-2d-3a-3b-3c-3d-and-4
-
-[2] Indirect Branch Tracking patches v27:
-
-    https://lore.kernel.org/r/20210521221531.30168-1-yu-cheng.yu@intel.com/
-
-H.J. Lu (3):
-  x86/cet/ibt: Update arch_prctl functions for Indirect Branch Tracking
-  x86/vdso: Insert endbr32/endbr64 to vDSO
-  x86/vdso/32: Add ENDBR to __kernel_vsyscall entry point
-
-Yu-cheng Yu (7):
-  x86/cet/ibt: Add Kconfig option for Indirect Branch Tracking
-  x86/cet/ibt: Add user-mode Indirect Branch Tracking support
-  x86/cet/ibt: Handle signals for Indirect Branch Tracking
-  x86/cet/ibt: Disable IBT for ia32
-  x86/cet/ibt: Update ELF header parsing for Indirect Branch Tracking
-  x86/vdso: Introduce ENDBR macro
-  x86/vdso: Add ENDBR to __vdso_sgx_enter_enclave
-
- arch/x86/Kconfig                         | 19 +++++
- arch/x86/entry/vdso/Makefile             |  4 +
- arch/x86/entry/vdso/vdso32/system_call.S |  2 +
- arch/x86/entry/vdso/vsgx.S               |  4 +
- arch/x86/ia32/ia32_signal.c              | 22 +++++-
- arch/x86/include/asm/cet.h               | 13 ++++
- arch/x86/include/asm/disabled-features.h |  8 +-
- arch/x86/include/asm/elf.h               | 13 +++-
- arch/x86/include/asm/vdso.h              | 20 ++++-
- arch/x86/include/uapi/asm/ucontext.h     |  5 ++
- arch/x86/kernel/Makefile                 |  1 +
- arch/x86/kernel/cet_prctl.c              |  5 ++
- arch/x86/kernel/ibt.c                    | 99 ++++++++++++++++++++++++
- arch/x86/kernel/process_64.c             |  6 ++
- arch/x86/kernel/signal.c                 |  6 ++
- 15 files changed, 221 insertions(+), 6 deletions(-)
- create mode 100644 arch/x86/kernel/ibt.c
-
+diff --git a/arch/x86/ia32/ia32_signal.c b/arch/x86/ia32/ia32_signal.c
+index 77d0fa90cc19..946039cb3150 100644
+--- a/arch/x86/ia32/ia32_signal.c
++++ b/arch/x86/ia32/ia32_signal.c
+@@ -104,6 +104,13 @@ COMPAT_SYSCALL_DEFINE0(sigreturn)
+ 	struct sigframe_ia32 __user *frame = (struct sigframe_ia32 __user *)(regs->sp-8);
+ 	sigset_t set;
+ 
++	/*
++	 * Verify legacy sigreturn does not have IBT enabled.
++	 */
++#ifdef CONFIG_X86_IBT
++	if (current->thread.shstk.ibt)
++		goto badframe;
++#endif
+ 	if (!access_ok(frame, sizeof(*frame)))
+ 		goto badframe;
+ 	if (__get_user(set.sig[0], &frame->sc.oldmask)
+diff --git a/arch/x86/include/asm/elf.h b/arch/x86/include/asm/elf.h
+index 3281a3d01bd2..cf9eeb30c00c 100644
+--- a/arch/x86/include/asm/elf.h
++++ b/arch/x86/include/asm/elf.h
+@@ -6,6 +6,7 @@
+  * ELF register definitions..
+  */
+ #include <linux/thread_info.h>
++#include <uapi/linux/elf.h>
+ 
+ #include <asm/ptrace.h>
+ #include <asm/user.h>
+@@ -403,7 +404,17 @@ struct arch_elf_state {
+ }
+ 
+ #define arch_elf_pt_proc(ehdr, phdr, elf, interp, state) (0)
+-#define arch_check_elf(ehdr, interp, interp_ehdr, state) (0)
++static inline int arch_check_elf(void *ehdr, bool interp,
++				 void *interp_ehdr,
++				 struct arch_elf_state *state)
++{
++	/*
++	 * Disable IBT for ia32
++	 */
++	if (elf_check_arch_ia32((struct elf32_hdr *)ehdr))
++		state->gnu_property &= ~GNU_PROPERTY_X86_FEATURE_1_IBT;
++	return 0;
++}
+ 
+ /* Do not change the values. See get_align_mask() */
+ enum align_flags {
 -- 
 2.21.0
 
