@@ -2,33 +2,32 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-18.9 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,
-	UNWANTED_LANGUAGE_BODY,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0BAF3C25AE6
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4BB5BC4338F
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E10E760EE2
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:33 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 32D4A60EE2
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231954AbhGVUM5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Jul 2021 16:12:57 -0400
-Received: from mga07.intel.com ([134.134.136.100]:54382 "EHLO mga07.intel.com"
+        id S231990AbhGVUM7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Jul 2021 16:12:59 -0400
+Received: from mga17.intel.com ([192.55.52.151]:11598 "EHLO mga17.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230506AbhGVUMa (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 22 Jul 2021 16:12:30 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="275560640"
+        id S231418AbhGVUMd (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 22 Jul 2021 16:12:33 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="192011906"
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="275560640"
+   d="scan'208";a="192011906"
 Received: from fmsmga003.fm.intel.com ([10.253.24.29])
-  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:04 -0700
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:05 -0700
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="502035519"
+   d="scan'208";a="502035531"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:04 -0700
+  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:05 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -59,11 +58,13 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Haitao Huang <haitao.huang@intel.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
         Catalin Marinas <catalin.marinas@arm.com>,
-        Mark Brown <broonie@kernel.org>
-Subject: [PATCH v28 28/32] ELF: Introduce arch_setup_elf_property()
-Date:   Thu, 22 Jul 2021 13:52:15 -0700
-Message-Id: <20210722205219.7934-29-yu-cheng.yu@intel.com>
+        Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        Will Deacon <will@kernel.org>
+Subject: [PATCH v28 31/32] mm: Update arch_validate_flags() to test vma anonymous
+Date:   Thu, 22 Jul 2021 13:52:18 -0700
+Message-Id: <20210722205219.7934-32-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210722205219.7934-1-yu-cheng.yu@intel.com>
 References: <20210722205219.7934-1-yu-cheng.yu@intel.com>
@@ -73,188 +74,114 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-An ELF file's .note.gnu.property indicates arch features supported by the
-file.  These features are extracted by arch_parse_elf_property() and stored
-in 'arch_elf_state'.
+When newer VM flags are being created, such as VM_MTE, it becomes necessary
+for mmap/mprotect to verify if certain flags are being applied to an
+anonymous VMA.
 
-Introduce x86 feature definitions and arch_setup_elf_property(), which
-enables such features.  The first use-case of this function is Shadow
-Stack.
+To solve this, one approach is adding a VM flag to track that MAP_ANONYMOUS
+is specified [1], and then using the flag in arch_validate_flags().
 
-ARM64 is the other arch that has ARCH_USE_GNU_PROPERTY and arch_parse_elf_
-property().  Add arch_setup_elf_property() for it.
+Another approach is passing the VMA to arch_validate_flags(), and check
+vma_is_anonymous().
+
+To prepare the introduction of PROT_SHADOW_STACK, which creates a shadow
+stack mapping and can be applied only to an anonymous VMA, update
+arch_validate_flags() to pass in the VMA.
+
+[1] commit 9f3419315f3c ("arm64: mte: Add PROT_MTE support to mmap() and mprotect()"),
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 Acked-by: Catalin Marinas <catalin.marinas@arm.com>
-Cc: Dave Martin <Dave.Martin@arm.com>
 Cc: Kees Cook <keescook@chromium.org>
-Cc: Mark Brown <broonie@kernel.org>
+Cc: Vincenzo Frascino <vincenzo.frascino@arm.com>
+Cc: Will Deacon <will@kernel.org>
 ---
-v27:
-- Make X86_64 select ARCH_USE_GNU_PROPERTY and ARCH_BINFMT_ELF_STATE and
-  remove #ifdef's.
-- Add link to x86-64-psABI document.
+ arch/arm64/include/asm/mman.h | 4 ++--
+ arch/sparc/include/asm/mman.h | 4 ++--
+ include/linux/mman.h          | 2 +-
+ mm/mmap.c                     | 2 +-
+ mm/mprotect.c                 | 2 +-
+ 5 files changed, 7 insertions(+), 7 deletions(-)
 
- arch/arm64/include/asm/elf.h |  5 +++++
- arch/x86/Kconfig             |  2 ++
- arch/x86/include/asm/elf.h   | 11 +++++++++++
- arch/x86/kernel/process_64.c | 27 +++++++++++++++++++++++++++
- fs/binfmt_elf.c              |  4 ++++
- include/linux/elf.h          |  6 ++++++
- include/uapi/linux/elf.h     | 14 ++++++++++++++
- 7 files changed, 69 insertions(+)
-
-diff --git a/arch/arm64/include/asm/elf.h b/arch/arm64/include/asm/elf.h
-index 8d1c8dcb87fd..d37bc7915935 100644
---- a/arch/arm64/include/asm/elf.h
-+++ b/arch/arm64/include/asm/elf.h
-@@ -281,6 +281,11 @@ static inline int arch_parse_elf_property(u32 type, const void *data,
- 	return 0;
+diff --git a/arch/arm64/include/asm/mman.h b/arch/arm64/include/asm/mman.h
+index e3e28f7daf62..7c45e7578f78 100644
+--- a/arch/arm64/include/asm/mman.h
++++ b/arch/arm64/include/asm/mman.h
+@@ -74,7 +74,7 @@ static inline bool arch_validate_prot(unsigned long prot,
  }
+ #define arch_validate_prot(prot, addr) arch_validate_prot(prot, addr)
  
-+static inline int arch_setup_elf_property(struct arch_elf_state *arch)
-+{
-+	return 0;
-+}
-+
- static inline int arch_elf_pt_proc(void *ehdr, void *phdr,
- 				   struct file *f, bool is_interp,
- 				   struct arch_elf_state *state)
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index de992d3408b2..7a2991457497 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -29,6 +29,7 @@ config X86_64
- 	select ARCH_HAS_SHADOW_STACK
- 	select ARCH_SUPPORTS_INT128 if CC_HAS_INT128
- 	select ARCH_USE_CMPXCHG_LOCKREF
-+	select ARCH_USE_GNU_PROPERTY
- 	select HAVE_ARCH_SOFT_DIRTY
- 	select MODULES_USE_ELF_RELA
- 	select NEED_DMA_MAP_STATE
-@@ -61,6 +62,7 @@ config X86
- 	select ACPI_LEGACY_TABLES_LOOKUP	if ACPI
- 	select ACPI_SYSTEM_POWER_STATES_SUPPORT	if ACPI
- 	select ARCH_32BIT_OFF_T			if X86_32
-+	select ARCH_BINFMT_ELF_STATE
- 	select ARCH_CLOCKSOURCE_INIT
- 	select ARCH_ENABLE_HUGEPAGE_MIGRATION if X86_64 && HUGETLB_PAGE && MIGRATION
- 	select ARCH_ENABLE_MEMORY_HOTPLUG if X86_64 || (X86_32 && HIGHMEM)
-diff --git a/arch/x86/include/asm/elf.h b/arch/x86/include/asm/elf.h
-index 29fea180a665..3281a3d01bd2 100644
---- a/arch/x86/include/asm/elf.h
-+++ b/arch/x86/include/asm/elf.h
-@@ -394,6 +394,17 @@ extern int compat_arch_setup_additional_pages(struct linux_binprm *bprm,
- 
- extern bool arch_syscall_is_vdso_sigreturn(struct pt_regs *regs);
- 
-+struct arch_elf_state {
-+	unsigned int gnu_property;
-+};
-+
-+#define INIT_ARCH_ELF_STATE {	\
-+	.gnu_property = 0,	\
-+}
-+
-+#define arch_elf_pt_proc(ehdr, phdr, elf, interp, state) (0)
-+#define arch_check_elf(ehdr, interp, interp_ehdr, state) (0)
-+
- /* Do not change the values. See get_align_mask() */
- enum align_flags {
- 	ALIGN_VA_32	= BIT(0),
-diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
-index ec0d836a13b1..4271963fdd8c 100644
---- a/arch/x86/kernel/process_64.c
-+++ b/arch/x86/kernel/process_64.c
-@@ -861,3 +861,30 @@ unsigned long KSTK_ESP(struct task_struct *task)
+-static inline bool arch_validate_flags(unsigned long vm_flags)
++static inline bool arch_validate_flags(struct vm_area_struct *vma, unsigned long vm_flags)
  {
- 	return task_pt_regs(task)->sp;
+ 	if (!system_supports_mte())
+ 		return true;
+@@ -82,6 +82,6 @@ static inline bool arch_validate_flags(unsigned long vm_flags)
+ 	/* only allow VM_MTE if VM_MTE_ALLOWED has been set previously */
+ 	return !(vm_flags & VM_MTE) || (vm_flags & VM_MTE_ALLOWED);
  }
-+
-+int arch_parse_elf_property(u32 type, const void *data, size_t datasz,
-+			    bool compat, struct arch_elf_state *state)
-+{
-+	if (type != GNU_PROPERTY_X86_FEATURE_1_AND)
-+		return 0;
-+
-+	if (datasz != sizeof(unsigned int))
-+		return -ENOEXEC;
-+
-+	state->gnu_property = *(unsigned int *)data;
-+	return 0;
-+}
-+
-+int arch_setup_elf_property(struct arch_elf_state *state)
-+{
-+	int r = 0;
-+
-+#ifdef CONFIG_X86_SHADOW_STACK
-+	memset(&current->thread.shstk, 0, sizeof(struct thread_shstk));
-+
-+	if (state->gnu_property & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
-+		r = shstk_setup();
-+#endif
-+
-+	return r;
-+}
-diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
-index 439ed81e755a..6a1936dab6b4 100644
---- a/fs/binfmt_elf.c
-+++ b/fs/binfmt_elf.c
-@@ -1248,6 +1248,10 @@ static int load_elf_binary(struct linux_binprm *bprm)
+-#define arch_validate_flags(vm_flags) arch_validate_flags(vm_flags)
++#define arch_validate_flags(vma, vm_flags) arch_validate_flags(vma, vm_flags)
  
- 	set_binfmt(&elf_format);
+ #endif /* ! __ASM_MMAN_H__ */
+diff --git a/arch/sparc/include/asm/mman.h b/arch/sparc/include/asm/mman.h
+index 274217e7ed70..0ec4975f167d 100644
+--- a/arch/sparc/include/asm/mman.h
++++ b/arch/sparc/include/asm/mman.h
+@@ -60,11 +60,11 @@ static inline int sparc_validate_prot(unsigned long prot, unsigned long addr)
+ 	return 1;
+ }
  
-+	retval = arch_setup_elf_property(&arch_state);
-+	if (retval < 0)
-+		goto out;
-+
- #ifdef ARCH_HAS_SETUP_ADDITIONAL_PAGES
- 	retval = ARCH_SETUP_ADDITIONAL_PAGES(bprm, elf_ex, !!interpreter);
- 	if (retval < 0)
-diff --git a/include/linux/elf.h b/include/linux/elf.h
-index c9a46c4e183b..be04d15e937f 100644
---- a/include/linux/elf.h
-+++ b/include/linux/elf.h
-@@ -92,9 +92,15 @@ static inline int arch_parse_elf_property(u32 type, const void *data,
+-#define arch_validate_flags(vm_flags) arch_validate_flags(vm_flags)
++#define arch_validate_flags(vma, vm_flags) arch_validate_flags(vma, vm_flags)
+ /* arch_validate_flags() - Ensure combination of flags is valid for a
+  *	VMA.
+  */
+-static inline bool arch_validate_flags(unsigned long vm_flags)
++static inline bool arch_validate_flags(struct vm_area_struct *vma, unsigned long vm_flags)
  {
- 	return 0;
+ 	/* If ADI is being enabled on this VMA, check for ADI
+ 	 * capability on the platform and ensure VMA is suitable
+diff --git a/include/linux/mman.h b/include/linux/mman.h
+index ebb09a964272..b6a9414e806c 100644
+--- a/include/linux/mman.h
++++ b/include/linux/mman.h
+@@ -116,7 +116,7 @@ static inline bool arch_validate_prot(unsigned long prot, unsigned long addr)
+  *
+  * Returns true if the VM_* flags are valid.
+  */
+-static inline bool arch_validate_flags(unsigned long flags)
++static inline bool arch_validate_flags(struct vm_area_struct *vma, unsigned long flags)
+ {
+ 	return true;
  }
-+
-+static inline int arch_setup_elf_property(struct arch_elf_state *arch)
-+{
-+	return 0;
-+}
- #else
- extern int arch_parse_elf_property(u32 type, const void *data, size_t datasz,
- 				   bool compat, struct arch_elf_state *arch);
-+extern int arch_setup_elf_property(struct arch_elf_state *arch);
- #endif
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 100db6e46831..fe7afd968087 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1853,7 +1853,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
+ 	}
  
- #ifdef CONFIG_ARCH_HAVE_ELF_PROT
-diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
-index 61bf4774b8f2..f50b3ce7bb75 100644
---- a/include/uapi/linux/elf.h
-+++ b/include/uapi/linux/elf.h
-@@ -456,4 +456,18 @@ typedef struct elf64_note {
- /* Bits for GNU_PROPERTY_AARCH64_FEATURE_1_BTI */
- #define GNU_PROPERTY_AARCH64_FEATURE_1_BTI	(1U << 0)
+ 	/* Allow architectures to sanity-check the vm_flags */
+-	if (!arch_validate_flags(vma->vm_flags)) {
++	if (!arch_validate_flags(vma, vma->vm_flags)) {
+ 		error = -EINVAL;
+ 		if (file)
+ 			goto unmap_and_free_vma;
+diff --git a/mm/mprotect.c b/mm/mprotect.c
+index 94cb799216ec..e826ecb68e3a 100644
+--- a/mm/mprotect.c
++++ b/mm/mprotect.c
+@@ -621,7 +621,7 @@ static int do_mprotect_pkey(unsigned long start, size_t len,
+ 		}
  
-+/*
-+ * See the x86 64 psABI at:
-+ * https://gitlab.com/x86-psABIs/x86-64-ABI/-/wikis/x86-64-psABI
-+ * .note.gnu.property types for x86:
-+ */
-+/* 0xc0000000 and 0xc0000001 are reserved */
-+#define GNU_PROPERTY_X86_FEATURE_1_AND		0xc0000002
-+
-+/* Bits for GNU_PROPERTY_X86_FEATURE_1_AND */
-+#define GNU_PROPERTY_X86_FEATURE_1_IBT		0x00000001
-+#define GNU_PROPERTY_X86_FEATURE_1_SHSTK	0x00000002
-+#define GNU_PROPERTY_X86_FEATURE_1_VALID (GNU_PROPERTY_X86_FEATURE_1_IBT | \
-+					   GNU_PROPERTY_X86_FEATURE_1_SHSTK)
-+
- #endif /* _UAPI_LINUX_ELF_H */
+ 		/* Allow architectures to sanity-check the new flags */
+-		if (!arch_validate_flags(newflags)) {
++		if (!arch_validate_flags(vma, newflags)) {
+ 			error = -EINVAL;
+ 			goto out;
+ 		}
 -- 
 2.21.0
 
