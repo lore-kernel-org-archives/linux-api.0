@@ -2,32 +2,32 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 47010C19F31
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 38CCAC4338F
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:58:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2193C60ED6
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:41 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 15B9A60F21
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:58:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231341AbhGVUNE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Jul 2021 16:13:04 -0400
-Received: from mga17.intel.com ([192.55.52.151]:11595 "EHLO mga17.intel.com"
+        id S231196AbhGVURa (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Jul 2021 16:17:30 -0400
+Received: from mga03.intel.com ([134.134.136.65]:15252 "EHLO mga03.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230498AbhGVUMj (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 22 Jul 2021 16:12:39 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="192011900"
+        id S230429AbhGVUR3 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 22 Jul 2021 16:17:29 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="211800503"
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="192011900"
-Received: from fmsmga003.fm.intel.com ([10.253.24.29])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:05 -0700
+   d="scan'208";a="211800503"
+Received: from fmsmga007.fm.intel.com ([10.253.24.52])
+  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:58:03 -0700
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="502035527"
+   d="scan'208";a="433273355"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:04 -0700
+  by fmsmga007-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:58:03 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -51,114 +51,78 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Peter Zijlstra <peterz@infradead.org>,
         Randy Dunlap <rdunlap@infradead.org>,
         "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
-        Vedvyas Shanbhogue <vedvyas.shanbhogue@intel.com>,
         Dave Martin <Dave.Martin@arm.com>,
         Weijiang Yang <weijiang.yang@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
-Subject: [PATCH v28 30/32] mm: Move arch_calc_vm_prot_bits() to arch/x86/include/asm/mman.h
-Date:   Thu, 22 Jul 2021 13:52:17 -0700
-Message-Id: <20210722205219.7934-31-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v28 00/10] Control-flow Enforcement: Indirect Branch Tracking
+Date:   Thu, 22 Jul 2021 13:57:13 -0700
+Message-Id: <20210722205723.9476-1-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20210722205219.7934-1-yu-cheng.yu@intel.com>
-References: <20210722205219.7934-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-To prepare the introduction of PROT_SHADOW_STACK and be consistent with other
-architectures, move arch_vm_get_page_prot() and arch_calc_vm_prot_bits() to
-arch/x86/include/asm/mman.h.
+Control-flow Enforcement (CET) is a new Intel processor feature that blocks
+return/jump-oriented programming attacks.  Details are in "Intel 64 and
+IA-32 Architectures Software Developer's Manual" [1].
 
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
-Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
----
- arch/x86/include/asm/mman.h      | 30 ++++++++++++++++++++++++++++++
- arch/x86/include/uapi/asm/mman.h | 28 +++-------------------------
- 2 files changed, 33 insertions(+), 25 deletions(-)
- create mode 100644 arch/x86/include/asm/mman.h
+This is the second part of CET and enables Indirect Branch Tracking (IBT).
+It is built on top of the shadow stack series.
 
-diff --git a/arch/x86/include/asm/mman.h b/arch/x86/include/asm/mman.h
-new file mode 100644
-index 000000000000..629f6c81263a
---- /dev/null
-+++ b/arch/x86/include/asm/mman.h
-@@ -0,0 +1,30 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+#ifndef _ASM_X86_MMAN_H
-+#define _ASM_X86_MMAN_H
-+
-+#include <linux/mm.h>
-+#include <uapi/asm/mman.h>
-+
-+#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
-+/*
-+ * Take the 4 protection key bits out of the vma->vm_flags
-+ * value and turn them in to the bits that we can put in
-+ * to a pte.
-+ *
-+ * Only override these if Protection Keys are available
-+ * (which is only on 64-bit).
-+ */
-+#define arch_vm_get_page_prot(vm_flags)	__pgprot(	\
-+		((vm_flags) & VM_PKEY_BIT0 ? _PAGE_PKEY_BIT0 : 0) |	\
-+		((vm_flags) & VM_PKEY_BIT1 ? _PAGE_PKEY_BIT1 : 0) |	\
-+		((vm_flags) & VM_PKEY_BIT2 ? _PAGE_PKEY_BIT2 : 0) |	\
-+		((vm_flags) & VM_PKEY_BIT3 ? _PAGE_PKEY_BIT3 : 0))
-+
-+#define arch_calc_vm_prot_bits(prot, key) (		\
-+		((key) & 0x1 ? VM_PKEY_BIT0 : 0) |      \
-+		((key) & 0x2 ? VM_PKEY_BIT1 : 0) |      \
-+		((key) & 0x4 ? VM_PKEY_BIT2 : 0) |      \
-+		((key) & 0x8 ? VM_PKEY_BIT3 : 0))
-+#endif
-+
-+#endif /* _ASM_X86_MMAN_H */
-diff --git a/arch/x86/include/uapi/asm/mman.h b/arch/x86/include/uapi/asm/mman.h
-index d4a8d0424bfb..f28fa4acaeaf 100644
---- a/arch/x86/include/uapi/asm/mman.h
-+++ b/arch/x86/include/uapi/asm/mman.h
-@@ -1,31 +1,9 @@
- /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
--#ifndef _ASM_X86_MMAN_H
--#define _ASM_X86_MMAN_H
-+#ifndef _UAPI_ASM_X86_MMAN_H
-+#define _UAPI_ASM_X86_MMAN_H
- 
- #define MAP_32BIT	0x40		/* only give out 32bit addresses */
- 
--#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
--/*
-- * Take the 4 protection key bits out of the vma->vm_flags
-- * value and turn them in to the bits that we can put in
-- * to a pte.
-- *
-- * Only override these if Protection Keys are available
-- * (which is only on 64-bit).
-- */
--#define arch_vm_get_page_prot(vm_flags)	__pgprot(	\
--		((vm_flags) & VM_PKEY_BIT0 ? _PAGE_PKEY_BIT0 : 0) |	\
--		((vm_flags) & VM_PKEY_BIT1 ? _PAGE_PKEY_BIT1 : 0) |	\
--		((vm_flags) & VM_PKEY_BIT2 ? _PAGE_PKEY_BIT2 : 0) |	\
--		((vm_flags) & VM_PKEY_BIT3 ? _PAGE_PKEY_BIT3 : 0))
--
--#define arch_calc_vm_prot_bits(prot, key) (		\
--		((key) & 0x1 ? VM_PKEY_BIT0 : 0) |      \
--		((key) & 0x2 ? VM_PKEY_BIT1 : 0) |      \
--		((key) & 0x4 ? VM_PKEY_BIT2 : 0) |      \
--		((key) & 0x8 ? VM_PKEY_BIT3 : 0))
--#endif
--
- #include <asm-generic/mman.h>
- 
--#endif /* _ASM_X86_MMAN_H */
-+#endif /* _UAPI_ASM_X86_MMAN_H */
+Changes in v28:
+- Patch #10: Update change log and comments.
+
+Changes in v27:
+- Use a ucontext flag to save/restore IBT status.
+- Disable IBT support for IA32.
+- Rebase to Linus tree v5.13-rc2.
+
+[1] Intel 64 and IA-32 Architectures Software Developer's Manual:
+
+    https://software.intel.com/en-us/download/intel-64-and-ia-32-
+    architectures-sdm-combined-volumes-1-2a-2b-2c-2d-3a-3b-3c-3d-and-4
+
+[2] Indirect Branch Tracking patches v27:
+
+    https://lore.kernel.org/r/20210521221531.30168-1-yu-cheng.yu@intel.com/
+
+H.J. Lu (3):
+  x86/cet/ibt: Update arch_prctl functions for Indirect Branch Tracking
+  x86/vdso: Insert endbr32/endbr64 to vDSO
+  x86/vdso/32: Add ENDBR to __kernel_vsyscall entry point
+
+Yu-cheng Yu (7):
+  x86/cet/ibt: Add Kconfig option for Indirect Branch Tracking
+  x86/cet/ibt: Add user-mode Indirect Branch Tracking support
+  x86/cet/ibt: Handle signals for Indirect Branch Tracking
+  x86/cet/ibt: Disable IBT for ia32
+  x86/cet/ibt: Update ELF header parsing for Indirect Branch Tracking
+  x86/vdso: Introduce ENDBR macro
+  x86/vdso: Add ENDBR to __vdso_sgx_enter_enclave
+
+ arch/x86/Kconfig                         | 19 +++++
+ arch/x86/entry/vdso/Makefile             |  4 +
+ arch/x86/entry/vdso/vdso32/system_call.S |  2 +
+ arch/x86/entry/vdso/vsgx.S               |  4 +
+ arch/x86/ia32/ia32_signal.c              | 22 +++++-
+ arch/x86/include/asm/cet.h               | 13 ++++
+ arch/x86/include/asm/disabled-features.h |  8 +-
+ arch/x86/include/asm/elf.h               | 13 +++-
+ arch/x86/include/asm/vdso.h              | 20 ++++-
+ arch/x86/include/uapi/asm/ucontext.h     |  5 ++
+ arch/x86/kernel/Makefile                 |  1 +
+ arch/x86/kernel/cet_prctl.c              |  5 ++
+ arch/x86/kernel/ibt.c                    | 99 ++++++++++++++++++++++++
+ arch/x86/kernel/process_64.c             |  6 ++
+ arch/x86/kernel/signal.c                 |  6 ++
+ 15 files changed, 221 insertions(+), 6 deletions(-)
+ create mode 100644 arch/x86/kernel/ibt.c
+
 -- 
 2.21.0
 
