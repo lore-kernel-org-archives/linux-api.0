@@ -5,29 +5,29 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 210DFC00143
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:58:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3B89EC19F2F
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:58:09 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id F408C60EE2
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:58:07 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 224CD60F36
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:58:09 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231344AbhGVURb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Jul 2021 16:17:31 -0400
-Received: from mga17.intel.com ([192.55.52.151]:11982 "EHLO mga17.intel.com"
+        id S230429AbhGVURc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Jul 2021 16:17:32 -0400
+Received: from mga03.intel.com ([134.134.136.65]:15252 "EHLO mga03.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231163AbhGVURa (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        id S231162AbhGVURa (ORCPT <rfc822;linux-api@vger.kernel.org>);
         Thu, 22 Jul 2021 16:17:30 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="192012890"
+X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="211800510"
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="192012890"
+   d="scan'208";a="211800510"
 Received: from fmsmga007.fm.intel.com ([10.253.24.52])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:58:04 -0700
+  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:58:03 -0700
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="433273370"
+   d="scan'208";a="433273358"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga007-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:58:04 -0700
+  by fmsmga007-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:58:03 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -57,9 +57,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Haitao Huang <haitao.huang@intel.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v28 05/10] x86/cet/ibt: Update ELF header parsing for Indirect Branch Tracking
-Date:   Thu, 22 Jul 2021 13:57:18 -0700
-Message-Id: <20210722205723.9476-6-yu-cheng.yu@intel.com>
+Subject: [PATCH v28 01/10] x86/cet/ibt: Add Kconfig option for Indirect Branch Tracking
+Date:   Thu, 22 Jul 2021 13:57:14 -0700
+Message-Id: <20210722205723.9476-2-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210722205723.9476-1-yu-cheng.yu@intel.com>
 References: <20210722205723.9476-1-yu-cheng.yu@intel.com>
@@ -69,37 +69,75 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-An ELF file's .note.gnu.property indicates features the file supports.
-The property is parsed at loading time and passed to arch_setup_elf_
-property().  Update it for Indirect Branch Tracking.
+Indirect Branch Tracking (IBT) provides protection against CALL-/JMP-
+oriented programming attacks.  It is active when the kernel has this
+feature enabled, and the processor and the application support it.
+When this feature is enabled, legacy non-IBT applications continue to
+work, but without IBT protection.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: Kees Cook <keescook@chromium.org>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
-v27:
-- Remove selecting of ARCH_USE_GNU_PROPERTY and ARCH_BINFMT_ELF_STATE,
-  since they are already selected by X86_64.
+ arch/x86/Kconfig                         | 19 +++++++++++++++++++
+ arch/x86/include/asm/disabled-features.h |  8 +++++++-
+ 2 files changed, 26 insertions(+), 1 deletion(-)
 
- arch/x86/kernel/process_64.c | 6 ++++++
- 1 file changed, 6 insertions(+)
-
-diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
-index 4271963fdd8c..4ab751a5146e 100644
---- a/arch/x86/kernel/process_64.c
-+++ b/arch/x86/kernel/process_64.c
-@@ -884,6 +884,12 @@ int arch_setup_elf_property(struct arch_elf_state *state)
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 7a2991457497..8f0bba206206 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1933,6 +1933,25 @@ config X86_SHADOW_STACK
  
- 	if (state->gnu_property & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
- 		r = shstk_setup();
+ 	  If unsure, say N.
+ 
++config X86_IBT
++	prompt "Intel Indirect Branch Tracking"
++	def_bool n
++	depends on X86_SHADOW_STACK
++	depends on $(cc-option,-fcf-protection)
++	help
++	  Indirect Branch Tracking (IBT) provides protection against
++	  CALL-/JMP-oriented programming attacks.  It is active when
++	  the kernel has this feature enabled, and the processor and
++	  the application support it.  When this feature is enabled,
++	  legacy non-IBT applications continue to work, but without
++	  IBT protection.
++	  Support for this feature is present on Tiger Lake family of
++	  processors released in 2020 or later.  Enabling this feature
++	  increases kernel text size by 3.7 KB.
++	  See Documentation/x86/intel_cet.rst for more information.
 +
-+	if (r < 0)
-+		return r;
++	  If unsure, say N.
 +
-+	if (state->gnu_property & GNU_PROPERTY_X86_FEATURE_1_IBT)
-+		r = ibt_setup();
+ config EFI
+ 	bool "EFI runtime service support"
+ 	depends on ACPI
+diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
+index b7728f7afb2b..e3a08fcd72f4 100644
+--- a/arch/x86/include/asm/disabled-features.h
++++ b/arch/x86/include/asm/disabled-features.h
+@@ -71,6 +71,12 @@
+ #define DISABLE_SHSTK	(1 << (X86_FEATURE_SHSTK & 31))
  #endif
  
- 	return r;
++#ifdef CONFIG_X86_IBT
++#define DISABLE_IBT	0
++#else
++#define DISABLE_IBT	(1 << (X86_FEATURE_IBT & 31))
++#endif
++
+ /*
+  * Make sure to add features to the correct mask
+  */
+@@ -93,7 +99,7 @@
+ #define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP| \
+ 			 DISABLE_ENQCMD|DISABLE_SHSTK)
+ #define DISABLED_MASK17	0
+-#define DISABLED_MASK18	0
++#define DISABLED_MASK18	(DISABLE_IBT)
+ #define DISABLED_MASK19	0
+ #define DISABLED_MASK_CHECK BUILD_BUG_ON_ZERO(NCAPINTS != 20)
+ 
 -- 
 2.21.0
 
