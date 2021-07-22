@@ -7,27 +7,27 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5CAF4C00142
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E14FBC00141
 	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4316E60EFD
+	by mail.kernel.org (Postfix) with ESMTP id C4DC460EE0
 	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231520AbhGVUMh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Jul 2021 16:12:37 -0400
-Received: from mga07.intel.com ([134.134.136.100]:54382 "EHLO mga07.intel.com"
+        id S231534AbhGVUMi (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Jul 2021 16:12:38 -0400
+Received: from mga07.intel.com ([134.134.136.100]:54375 "EHLO mga07.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231261AbhGVUM0 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        id S231260AbhGVUM0 (ORCPT <rfc822;linux-api@vger.kernel.org>);
         Thu, 22 Jul 2021 16:12:26 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="275560588"
+X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="275560584"
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="275560588"
+   d="scan'208";a="275560584"
 Received: from fmsmga003.fm.intel.com ([10.253.24.29])
   by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:00 -0700
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="502035458"
+   d="scan'208";a="502035449"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:00 -0700
+  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:52:59 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -58,11 +58,10 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Haitao Huang <haitao.huang@intel.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        Axel Rasmussen <axelrasmussen@google.com>,
-        Peter Xu <peterx@redhat.com>
-Subject: [PATCH v28 13/32] mm: Move VM_UFFD_MINOR_BIT from 37 to 38
-Date:   Thu, 22 Jul 2021 13:52:00 -0700
-Message-Id: <20210722205219.7934-14-yu-cheng.yu@intel.com>
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
+Subject: [PATCH v28 11/32] x86/mm: Update pte_modify for _PAGE_COW
+Date:   Thu, 22 Jul 2021 13:51:58 -0700
+Message-Id: <20210722205219.7934-12-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210722205219.7934-1-yu-cheng.yu@intel.com>
 References: <20210722205219.7934-1-yu-cheng.yu@intel.com>
@@ -72,30 +71,89 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-To introduce VM_SHADOW_STACK as VM_HIGH_ARCH_BIT (37), and make all
-VM_HIGH_ARCH_BITs stay together, move VM_UFFD_MINOR_BIT from 37 to 38.
+The read-only and Dirty PTE has been used to indicate copy-on-write pages.
+However, newer x86 processors also regard a read-only and Dirty PTE as a
+shadow stack page.  In order to separate the two, the software-defined
+_PAGE_COW is created to replace _PAGE_DIRTY for the copy-on-write case, and
+pte_*() are updated.
+
+Pte_modify() changes a PTE to 'newprot', but it doesn't use the pte_*().
+Introduce fixup_dirty_pte(), which sets a dirty PTE, based on _PAGE_RW,
+to either _PAGE_DIRTY or _PAGE_COW.
+
+Apply the same changes to pmd_modify().
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Axel Rasmussen <axelrasmussen@google.com>
-Cc: Peter Xu <peterx@redhat.com>
-Cc: Mike Kravetz <mike.kravetz@oracle.com>
+Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 ---
- include/linux/mm.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ arch/x86/include/asm/pgtable.h | 37 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
 
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 7ca22e6e694a..1d4e5012c27d 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -370,7 +370,7 @@ extern unsigned int kobjsize(const void *objp);
- #endif
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index 9f1ba76ed79a..cf7316e968df 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -771,6 +771,23 @@ static inline pmd_t pmd_mkinvalid(pmd_t pmd)
  
- #ifdef CONFIG_HAVE_ARCH_USERFAULTFD_MINOR
--# define VM_UFFD_MINOR_BIT	37
-+# define VM_UFFD_MINOR_BIT	38
- # define VM_UFFD_MINOR		BIT(VM_UFFD_MINOR_BIT)	/* UFFD minor faults */
- #else /* !CONFIG_HAVE_ARCH_USERFAULTFD_MINOR */
- # define VM_UFFD_MINOR		VM_NONE
+ static inline u64 flip_protnone_guard(u64 oldval, u64 val, u64 mask);
+ 
++static inline pteval_t fixup_dirty_pte(pteval_t pteval)
++{
++	pte_t pte = __pte(pteval);
++
++	/*
++	 * Fix up potential shadow stack page flags because the RO, Dirty
++	 * PTE is special.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		if (pte_dirty(pte)) {
++			pte = pte_mkclean(pte);
++			pte = pte_mkdirty(pte);
++		}
++	}
++	return pte_val(pte);
++}
++
+ static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
+ {
+ 	pteval_t val = pte_val(pte), oldval = val;
+@@ -781,16 +798,36 @@ static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
+ 	 */
+ 	val &= _PAGE_CHG_MASK;
+ 	val |= check_pgprot(newprot) & ~_PAGE_CHG_MASK;
++	val = fixup_dirty_pte(val);
+ 	val = flip_protnone_guard(oldval, val, PTE_PFN_MASK);
+ 	return __pte(val);
+ }
+ 
++static inline int pmd_write(pmd_t pmd);
++static inline pmdval_t fixup_dirty_pmd(pmdval_t pmdval)
++{
++	pmd_t pmd = __pmd(pmdval);
++
++	/*
++	 * Fix up potential shadow stack page flags because the RO, Dirty
++	 * PMD is special.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		if (pmd_dirty(pmd)) {
++			pmd = pmd_mkclean(pmd);
++			pmd = pmd_mkdirty(pmd);
++		}
++	}
++	return pmd_val(pmd);
++}
++
+ static inline pmd_t pmd_modify(pmd_t pmd, pgprot_t newprot)
+ {
+ 	pmdval_t val = pmd_val(pmd), oldval = val;
+ 
+ 	val &= _HPAGE_CHG_MASK;
+ 	val |= check_pgprot(newprot) & ~_HPAGE_CHG_MASK;
++	val = fixup_dirty_pmd(val);
+ 	val = flip_protnone_guard(oldval, val, PHYSICAL_PMD_PAGE_MASK);
+ 	return __pmd(val);
+ }
 -- 
 2.21.0
 
