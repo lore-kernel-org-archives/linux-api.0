@@ -7,27 +7,27 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 25085C25AE9
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1307BC25AEC
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 177CA60F36
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id F20ED60EFF
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232006AbhGVUNA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Jul 2021 16:13:00 -0400
-Received: from mga07.intel.com ([134.134.136.100]:54377 "EHLO mga07.intel.com"
+        id S231477AbhGVUNF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Jul 2021 16:13:05 -0400
+Received: from mga17.intel.com ([192.55.52.151]:11609 "EHLO mga17.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231280AbhGVUM1 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 22 Jul 2021 16:12:27 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="275560593"
+        id S230510AbhGVUMj (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 22 Jul 2021 16:12:39 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="192011924"
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="275560593"
+   d="scan'208";a="192011924"
 Received: from fmsmga003.fm.intel.com ([10.253.24.29])
-  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:01 -0700
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:06 -0700
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="502035470"
+   d="scan'208";a="502035533"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:00 -0700
+  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:05 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -59,9 +59,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
         "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
-Subject: [PATCH v28 15/32] x86/mm: Shadow Stack page fault error checking
-Date:   Thu, 22 Jul 2021 13:52:02 -0700
-Message-Id: <20210722205219.7934-16-yu-cheng.yu@intel.com>
+Subject: [PATCH v28 32/32] mm: Introduce PROT_SHADOW_STACK for shadow stack
+Date:   Thu, 22 Jul 2021 13:52:19 -0700
+Message-Id: <20210722205219.7934-33-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210722205219.7934-1-yu-cheng.yu@intel.com>
 References: <20210722205219.7934-1-yu-cheng.yu@intel.com>
@@ -71,93 +71,137 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Shadow stack accesses are those that are performed by the CPU where it
-expects to encounter a shadow stack mapping.  These accesses are performed
-implicitly by CALL/RET at the site of the shadow stack pointer.  These
-accesses are made explicitly by shadow stack management instructions like
-WRUSSQ.
+There are three possible options to create a shadow stack allocation API:
+an arch_prctl, a new syscall, or adding PROT_SHADOW_STACK to mmap() and
+mprotect().  Each has its advantages and compromises.
 
-Shadow stacks accesses to shadow-stack mapping can see faults in normal,
-valid operation just like regular accesses to regular mappings.  Shadow
-stacks need some of the same features like delayed allocation, swap and
-copy-on-write.
+An arch_prctl() is the least intrusive.  However, the existing x86
+arch_prctl() takes only two parameters.  Multiple parameters must be
+passed in a memory buffer.  There is a proposal to pass more parameters in
+registers [1], but no active discussion on that.
 
-Shadow stack accesses can also result in errors, such as when a shadow
-stack overflows, or if a shadow stack access occurs to a non-shadow-stack
-mapping.
+A new syscall minimizes compatibility issues and offers an extensible frame
+work to other architectures, but this will likely result in some overlap of
+mmap()/mprotect().
 
-In handling a shadow stack page fault, verify it occurs within a shadow
-stack mapping.  It is always an error otherwise.  For valid shadow stack
-accesses, set FAULT_FLAG_WRITE to effect copy-on-write.  Because clearing
-_PAGE_DIRTY (vs. _PAGE_RW) is used to trigger the fault, shadow stack read
-fault and shadow stack write fault are not differentiated and both are
-handled as a write access.
+The introduction of PROT_SHADOW_STACK to mmap()/mprotect() takes advantage
+of existing APIs.  The x86-specific PROT_SHADOW_STACK is translated to
+VM_SHADOW_STACK and a shadow stack mapping is created without reinventing
+the wheel.  There are potential pitfalls though.  The most obvious one
+would be using this as a bypass to shadow stack protection.  However, the
+attacker would have to get to the syscall first.
+
+[1] https://lore.kernel.org/lkml/20200828121624.108243-1-hjl.tools@gmail.com/
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
 Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Cc: Kees Cook <keescook@chromium.org>
 ---
- arch/x86/include/asm/trap_pf.h |  2 ++
- arch/x86/mm/fault.c            | 19 +++++++++++++++++++
- 2 files changed, 21 insertions(+)
+ arch/x86/include/asm/mman.h      | 60 +++++++++++++++++++++++++++++++-
+ arch/x86/include/uapi/asm/mman.h |  2 ++
+ include/linux/mm.h               |  1 +
+ 3 files changed, 62 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/include/asm/trap_pf.h b/arch/x86/include/asm/trap_pf.h
-index 10b1de500ab1..afa524325e55 100644
---- a/arch/x86/include/asm/trap_pf.h
-+++ b/arch/x86/include/asm/trap_pf.h
-@@ -11,6 +11,7 @@
-  *   bit 3 ==				1: use of reserved bit detected
-  *   bit 4 ==				1: fault was an instruction fetch
-  *   bit 5 ==				1: protection keys block access
-+ *   bit 6 ==				1: shadow stack access fault
-  *   bit 15 ==				1: SGX MMU page-fault
-  */
- enum x86_pf_error_code {
-@@ -20,6 +21,7 @@ enum x86_pf_error_code {
- 	X86_PF_RSVD	=		1 << 3,
- 	X86_PF_INSTR	=		1 << 4,
- 	X86_PF_PK	=		1 << 5,
-+	X86_PF_SHSTK	=		1 << 6,
- 	X86_PF_SGX	=		1 << 15,
- };
+diff --git a/arch/x86/include/asm/mman.h b/arch/x86/include/asm/mman.h
+index 629f6c81263a..b77933923b9a 100644
+--- a/arch/x86/include/asm/mman.h
++++ b/arch/x86/include/asm/mman.h
+@@ -20,11 +20,69 @@
+ 		((vm_flags) & VM_PKEY_BIT2 ? _PAGE_PKEY_BIT2 : 0) |	\
+ 		((vm_flags) & VM_PKEY_BIT3 ? _PAGE_PKEY_BIT3 : 0))
  
-diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
-index b2eefdefc108..ad3350297e4b 100644
---- a/arch/x86/mm/fault.c
-+++ b/arch/x86/mm/fault.c
-@@ -1100,6 +1100,17 @@ access_error(unsigned long error_code, struct vm_area_struct *vma)
- 				       (error_code & X86_PF_INSTR), foreign))
- 		return 1;
+-#define arch_calc_vm_prot_bits(prot, key) (		\
++#define pkey_vm_prot_bits(prot, key) (			\
+ 		((key) & 0x1 ? VM_PKEY_BIT0 : 0) |      \
+ 		((key) & 0x2 ? VM_PKEY_BIT1 : 0) |      \
+ 		((key) & 0x4 ? VM_PKEY_BIT2 : 0) |      \
+ 		((key) & 0x8 ? VM_PKEY_BIT3 : 0))
++#else
++#define pkey_vm_prot_bits(prot, key) (0)
+ #endif
  
-+	/*
-+	 * Verify a shadow stack access is within a shadow stack VMA.
-+	 * It is always an error otherwise.  Normal data access to a
-+	 * shadow stack area is checked in the case followed.
-+	 */
-+	if (error_code & X86_PF_SHSTK) {
-+		if (!(vma->vm_flags & VM_SHADOW_STACK))
-+			return 1;
-+		return 0;
++static inline unsigned long arch_calc_vm_prot_bits(unsigned long prot,
++						   unsigned long pkey)
++{
++	unsigned long vm_prot_bits = pkey_vm_prot_bits(prot, pkey);
++
++	if (prot & PROT_SHADOW_STACK)
++		vm_prot_bits |= VM_SHADOW_STACK;
++
++	return vm_prot_bits;
++}
++
++#define arch_calc_vm_prot_bits(prot, pkey) arch_calc_vm_prot_bits(prot, pkey)
++
++#ifdef CONFIG_X86_SHADOW_STACK
++static inline bool arch_validate_prot(unsigned long prot, unsigned long addr)
++{
++	unsigned long valid = PROT_READ | PROT_WRITE | PROT_EXEC | PROT_SEM |
++			      PROT_SHADOW_STACK;
++
++	if (prot & ~valid)
++		return false;
++
++	if (prot & PROT_SHADOW_STACK) {
++		if (!current->thread.shstk.size)
++			return false;
++
++		/*
++		 * A shadow stack mapping is indirectly writable by only
++		 * the CALL and WRUSS instructions, but not other write
++		 * instructions).  PROT_SHADOW_STACK and PROT_WRITE are
++		 * mutually exclusive.
++		 */
++		if (prot & PROT_WRITE)
++			return false;
 +	}
 +
- 	if (error_code & X86_PF_WRITE) {
- 		/* write, present and write, not present: */
- 		if (unlikely(!(vma->vm_flags & VM_WRITE)))
-@@ -1293,6 +1304,14 @@ void do_user_addr_fault(struct pt_regs *regs,
- 
- 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
- 
++	return true;
++}
++
++#define arch_validate_prot arch_validate_prot
++
++static inline bool arch_validate_flags(struct vm_area_struct *vma, unsigned long vm_flags)
++{
 +	/*
-+	 * Clearing _PAGE_DIRTY is used to detect shadow stack access.
-+	 * This method cannot distinguish shadow stack read vs. write.
-+	 * For valid shadow stack accesses, set FAULT_FLAG_WRITE to effect
-+	 * copy-on-write.
++	 * Shadow stack must be anonymous and not shared.
 +	 */
-+	if (error_code & X86_PF_SHSTK)
-+		flags |= FAULT_FLAG_WRITE;
- 	if (error_code & X86_PF_WRITE)
- 		flags |= FAULT_FLAG_WRITE;
- 	if (error_code & X86_PF_INSTR)
++	if ((vm_flags & VM_SHADOW_STACK) && !vma_is_anonymous(vma))
++		return false;
++
++	return true;
++}
++
++#define arch_validate_flags(vma, vm_flags) arch_validate_flags(vma, vm_flags)
++
++#endif /* CONFIG_X86_SHADOW_STACK */
++
+ #endif /* _ASM_X86_MMAN_H */
+diff --git a/arch/x86/include/uapi/asm/mman.h b/arch/x86/include/uapi/asm/mman.h
+index f28fa4acaeaf..4c36b263cf0a 100644
+--- a/arch/x86/include/uapi/asm/mman.h
++++ b/arch/x86/include/uapi/asm/mman.h
+@@ -4,6 +4,8 @@
+ 
+ #define MAP_32BIT	0x40		/* only give out 32bit addresses */
+ 
++#define PROT_SHADOW_STACK	0x10	/* shadow stack pages */
++
+ #include <asm-generic/mman.h>
+ 
+ #endif /* _UAPI_ASM_X86_MMAN_H */
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 07e642af59d3..041e7e8ff702 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -349,6 +349,7 @@ extern unsigned int kobjsize(const void *objp);
+ 
+ #if defined(CONFIG_X86)
+ # define VM_PAT		VM_ARCH_1	/* PAT reserves whole VMA at once (x86) */
++# define VM_ARCH_CLEAR	VM_SHADOW_STACK
+ #elif defined(CONFIG_PPC)
+ # define VM_SAO		VM_ARCH_1	/* Strong Access Ordering (powerpc) */
+ #elif defined(CONFIG_PARISC)
 -- 
 2.21.0
 
