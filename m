@@ -7,25 +7,25 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 58DF3C25AF2
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 44559C432BE
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3A96760EFE
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1A75960EE2
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231742AbhGVUMp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Jul 2021 16:12:45 -0400
-Received: from mga07.intel.com ([134.134.136.100]:54375 "EHLO mga07.intel.com"
+        id S231808AbhGVUMr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Jul 2021 16:12:47 -0400
+Received: from mga07.intel.com ([134.134.136.100]:54382 "EHLO mga07.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231289AbhGVUM1 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        id S231295AbhGVUM1 (ORCPT <rfc822;linux-api@vger.kernel.org>);
         Thu, 22 Jul 2021 16:12:27 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="275560599"
+X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="275560606"
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="275560599"
+   d="scan'208";a="275560606"
 Received: from fmsmga003.fm.intel.com ([10.253.24.29])
-  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:01 -0700
+  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:02 -0700
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="502035476"
+   d="scan'208";a="502035487"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
   by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:01 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
@@ -59,9 +59,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
         "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
-Subject: [PATCH v28 17/32] mm: Fixup places that call pte_mkwrite() directly
-Date:   Thu, 22 Jul 2021 13:52:04 -0700
-Message-Id: <20210722205219.7934-18-yu-cheng.yu@intel.com>
+Subject: [PATCH v28 19/32] mm/mmap: Add shadow stack pages to memory accounting
+Date:   Thu, 22 Jul 2021 13:52:06 -0700
+Message-Id: <20210722205219.7934-20-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210722205219.7934-1-yu-cheng.yu@intel.com>
 References: <20210722205219.7934-1-yu-cheng.yu@intel.com>
@@ -71,102 +71,96 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-When serving a page fault, maybe_mkwrite() makes a PTE writable if it is in
-a writable vma.  A shadow stack vma is writable, but its PTEs need
-_PAGE_DIRTY to be set to become writable.  For this reason, maybe_mkwrite()
-has been updated.
-
-There are a few places that call pte_mkwrite() directly, but have the
-same result as from maybe_mkwrite().  These sites need to be updated for
-shadow stack as well.  Thus, change them to maybe_mkwrite():
-
-- do_anonymous_page() and migrate_vma_insert_page() check VM_WRITE directly
-  and call pte_mkwrite(), which is the same as maybe_mkwrite().  Change
-  them to maybe_mkwrite().
-
-- In do_numa_page(), if the numa entry was writable, then pte_mkwrite()
-  is called directly.  Fix it by doing maybe_mkwrite().  Make the same
-  changes to do_huge_pmd_numa_page().
-
-- In change_pte_range(), pte_mkwrite() is called directly.  Replace it with
-  maybe_mkwrite().
+Account shadow stack pages to stack memory.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 Cc: Kees Cook <keescook@chromium.org>
 ---
+v26:
+- Remove redundant #ifdef CONFIG_MMU.
+
 v25:
-- Apply same changes to do_huge_pmd_numa_page() as to do_numa_page().
+- Remove #ifdef CONFIG_ARCH_HAS_SHADOW_STACK for is_shadow_stack_mapping().
 
- mm/huge_memory.c | 2 +-
- mm/memory.c      | 5 ++---
- mm/migrate.c     | 3 +--
- mm/mprotect.c    | 2 +-
- 4 files changed, 5 insertions(+), 7 deletions(-)
+v24:
+- Change arch_shadow_stack_mapping() to is_shadow_stack_mapping().
+- Change VM_SHSTK to VM_SHADOW_STACK.
 
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index c8dd5913884e..b9a6fc7af693 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1515,7 +1515,7 @@ vm_fault_t do_huge_pmd_numa_page(struct vm_fault *vmf)
- 	pmd = pmd_modify(oldpmd, vma->vm_page_prot);
- 	pmd = pmd_mkyoung(pmd);
- 	if (was_writable)
--		pmd = pmd_mkwrite(pmd);
-+		pmd = maybe_pmd_mkwrite(pmd, vma);
- 	set_pmd_at(vma->vm_mm, haddr, vmf->pmd, pmd);
- 	update_mmu_cache_pmd(vma, vmf->address, vmf->pmd);
- 	spin_unlock(vmf->ptl);
-diff --git a/mm/memory.c b/mm/memory.c
-index 747a01d495f2..c82a8f38fb04 100644
---- a/mm/memory.c
-+++ b/mm/memory.c
-@@ -3781,8 +3781,7 @@ static vm_fault_t do_anonymous_page(struct vm_fault *vmf)
+ arch/x86/include/asm/pgtable.h | 3 +++
+ arch/x86/mm/pgtable.c          | 5 +++++
+ include/linux/pgtable.h        | 7 +++++++
+ mm/mmap.c                      | 5 +++++
+ 4 files changed, 20 insertions(+)
+
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index bfe4ea2b652d..0983a91b464c 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -1638,6 +1638,9 @@ static inline bool arch_faults_on_old_pte(void)
+ #define maybe_mkwrite maybe_mkwrite
+ extern pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma);
  
- 	entry = mk_pte(page, vma->vm_page_prot);
- 	entry = pte_sw_mkyoung(entry);
--	if (vma->vm_flags & VM_WRITE)
--		entry = pte_mkwrite(pte_mkdirty(entry));
-+	entry = maybe_mkwrite(pte_mkdirty(entry), vma);
++#define is_shadow_stack_mapping is_shadow_stack_mapping
++extern bool is_shadow_stack_mapping(vm_flags_t vm_flags);
++
+ #endif	/* __ASSEMBLY__ */
  
- 	vmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd, vmf->address,
- 			&vmf->ptl);
-@@ -4407,7 +4406,7 @@ static vm_fault_t do_numa_page(struct vm_fault *vmf)
- 	pte = pte_modify(old_pte, vma->vm_page_prot);
- 	pte = pte_mkyoung(pte);
- 	if (was_writable)
--		pte = pte_mkwrite(pte);
-+		pte = maybe_mkwrite(pte, vma);
- 	ptep_modify_prot_commit(vma, vmf->address, vmf->pte, old_pte, pte);
- 	update_mmu_cache(vma, vmf->address, vmf->pte);
- 	pte_unmap_unlock(vmf->pte, vmf->ptl);
-diff --git a/mm/migrate.c b/mm/migrate.c
-index 34a9ad3e0a4f..f8c1ce0c187b 100644
---- a/mm/migrate.c
-+++ b/mm/migrate.c
-@@ -2794,8 +2794,7 @@ static void migrate_vma_insert_page(struct migrate_vma *migrate,
- 		}
- 	} else {
- 		entry = mk_pte(page, vma->vm_page_prot);
--		if (vma->vm_flags & VM_WRITE)
--			entry = pte_mkwrite(pte_mkdirty(entry));
-+		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
- 	}
+ #endif /* _ASM_X86_PGTABLE_H */
+diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
+index ba449d12ec32..945f6b5a42e5 100644
+--- a/arch/x86/mm/pgtable.c
++++ b/arch/x86/mm/pgtable.c
+@@ -888,3 +888,8 @@ int pmd_free_pte_page(pmd_t *pmd, unsigned long addr)
  
- 	ptep = pte_offset_map_lock(mm, pmdp, addr, &ptl);
-diff --git a/mm/mprotect.c b/mm/mprotect.c
-index 883e2cc85cad..9b424f2fd3a9 100644
---- a/mm/mprotect.c
-+++ b/mm/mprotect.c
-@@ -135,7 +135,7 @@ static unsigned long change_pte_range(struct vm_area_struct *vma, pmd_t *pmd,
- 			if (dirty_accountable && pte_dirty(ptent) &&
- 					(pte_soft_dirty(ptent) ||
- 					 !(vma->vm_flags & VM_SOFTDIRTY))) {
--				ptent = pte_mkwrite(ptent);
-+				ptent = maybe_mkwrite(ptent, vma);
- 			}
- 			ptep_modify_prot_commit(vma, addr, pte, oldpte, ptent);
- 			pages++;
+ #endif /* CONFIG_X86_64 */
+ #endif	/* CONFIG_HAVE_ARCH_HUGE_VMAP */
++
++bool is_shadow_stack_mapping(vm_flags_t vm_flags)
++{
++	return vm_flags & VM_SHADOW_STACK;
++}
+diff --git a/include/linux/pgtable.h b/include/linux/pgtable.h
+index d147480cdefc..eca0a7b80b3e 100644
+--- a/include/linux/pgtable.h
++++ b/include/linux/pgtable.h
+@@ -1508,6 +1508,13 @@ static inline bool arch_has_pfn_modify_check(void)
+ }
+ #endif /* !_HAVE_ARCH_PFN_MODIFY_ALLOWED */
+ 
++#ifndef is_shadow_stack_mapping
++static inline bool is_shadow_stack_mapping(vm_flags_t vm_flags)
++{
++	return false;
++}
++#endif
++
+ /*
+  * Architecture PAGE_KERNEL_* fallbacks
+  *
+diff --git a/mm/mmap.c b/mm/mmap.c
+index ca54d36d203a..6be9ff4007ab 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1721,6 +1721,9 @@ static inline int accountable_mapping(struct file *file, vm_flags_t vm_flags)
+ 	if (file && is_file_hugepages(file))
+ 		return 0;
+ 
++	if (is_shadow_stack_mapping(vm_flags))
++		return 1;
++
+ 	return (vm_flags & (VM_NORESERVE | VM_SHARED | VM_WRITE)) == VM_WRITE;
+ }
+ 
+@@ -3370,6 +3373,8 @@ void vm_stat_account(struct mm_struct *mm, vm_flags_t flags, long npages)
+ 		mm->stack_vm += npages;
+ 	else if (is_data_mapping(flags))
+ 		mm->data_vm += npages;
++	else if (is_shadow_stack_mapping(flags))
++		mm->stack_vm += npages;
+ }
+ 
+ static vm_fault_t special_mapping_fault(struct vm_fault *vmf);
 -- 
 2.21.0
 
