@@ -2,32 +2,32 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 37559C4338F
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:52:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D84DBC4320A
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 10B3A60EC0
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:52:59 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BE4AA60EB2
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230526AbhGVUMX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Jul 2021 16:12:23 -0400
-Received: from mga06.intel.com ([134.134.136.31]:22178 "EHLO mga06.intel.com"
+        id S231201AbhGVUMZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Jul 2021 16:12:25 -0400
+Received: from mga11.intel.com ([192.55.52.93]:13273 "EHLO mga11.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230506AbhGVUMX (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        id S230510AbhGVUMX (ORCPT <rfc822;linux-api@vger.kernel.org>);
         Thu, 22 Jul 2021 16:12:23 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="272854668"
+X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="208627940"
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="272854668"
+   d="scan'208";a="208627940"
 Received: from fmsmga003.fm.intel.com ([10.253.24.29])
-  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:52:57 -0700
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:52:58 -0700
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="502035406"
+   d="scan'208";a="502035421"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:52:56 -0700
+  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:52:57 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -58,170 +58,85 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Haitao Huang <haitao.huang@intel.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v28 00/32] Control-flow Enforcement: Shadow Stack
-Date:   Thu, 22 Jul 2021 13:51:47 -0700
-Message-Id: <20210722205219.7934-1-yu-cheng.yu@intel.com>
+Subject: [PATCH v28 04/32] x86/cpufeatures: Introduce CPU setup and option parsing for CET
+Date:   Thu, 22 Jul 2021 13:51:51 -0700
+Message-Id: <20210722205219.7934-5-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
+In-Reply-To: <20210722205219.7934-1-yu-cheng.yu@intel.com>
+References: <20210722205219.7934-1-yu-cheng.yu@intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Control-flow Enforcement (CET) is a new Intel processor feature that blocks
-return/jump-oriented programming attacks.  Details are in "Intel 64 and
-IA-32 Architectures Software Developer's Manual" [1].
+Introduce CPU setup and boot option parsing for CET features.
 
-CET can protect applications and the kernel.  This series enables only
-application-level protection, and has three parts:
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: Kees Cook <keescook@chromium.org>
+---
+v25:
+- Remove software-defined X86_FEATURE_CET.
 
-  - Shadow stack [2],
-  - Indirect branch tracking, and
-  - Selftests [3].
+v24:
+- Update #ifdef placement to reflect Kconfig changes of splitting shadow stack and ibt.
 
-Linux distributions with CET are available now, and Intel processors with CET
-are already on the market.  It would be nice if CET support can be accepted
-into the kernel.
+ arch/x86/include/uapi/asm/processor-flags.h |  2 ++
+ arch/x86/kernel/cpu/common.c                | 14 ++++++++++++++
+ 2 files changed, 16 insertions(+)
 
-Changes in v28:
-- Rebase to Linus tree v5.14-rc2.
-- Patch #1: Update Document to indicate no-user-shstk also disables IBT.
-- Patch #23: Update shstk_setup() with wrmsrl_safe().  Update return value.
-- Patch #25: Split out copy_thread() changes.  Add support for old clone().
-  Add comments.
-- Add comments for get_xsave_addr() (Patch #25, #26).
-
-Changes in v27:
-- Eliminate signal context extension structure.  Simplify signal handling.
-- Add a new patch to move VM_UFFD_MINOR_BIT to 38.
-- Smaller changes are in each patch's log.
-- Rebase to Linus tree v5.13-rc2.
-
-[1] Intel 64 and IA-32 Architectures Software Developer's Manual:
-
-    https://software.intel.com/en-us/download/intel-64-and-ia-32-
-    architectures-sdm-combined-volumes-1-2a-2b-2c-2d-3a-3b-3c-3d-and-4
-
-[2] Shadow Stack patches v27:
-
-    https://lore.kernel.org/r/20210521221211.29077-1-yu-cheng.yu@intel.com/
-
-[3] I am holding off the selftests changes and working to get Reviewed-by's.
-    The earlier version of the selftests patches:
-
-    https://lkml.kernel.org/r/20200521211720.20236-1-yu-cheng.yu@intel.com/
-
-[4] The kernel ptrace patch is tested with an Intel-internal updated GDB.
-    I am holding off the kernel ptrace patch to re-test it with my earlier
-    patch for fixing regset holes.
-
-Yu-cheng Yu (32):
-  Documentation/x86: Add CET description
-  x86/cet/shstk: Add Kconfig option for Shadow Stack
-  x86/cpufeatures: Add CET CPU feature flags for Control-flow
-    Enforcement Technology (CET)
-  x86/cpufeatures: Introduce CPU setup and option parsing for CET
-  x86/fpu/xstate: Introduce CET MSR and XSAVES supervisor states
-  x86/cet: Add control-protection fault handler
-  x86/mm: Remove _PAGE_DIRTY from kernel RO pages
-  x86/mm: Move pmd_write(), pud_write() up in the file
-  x86/mm: Introduce _PAGE_COW
-  drm/i915/gvt: Change _PAGE_DIRTY to _PAGE_DIRTY_BITS
-  x86/mm: Update pte_modify for _PAGE_COW
-  x86/mm: Update ptep_set_wrprotect() and pmdp_set_wrprotect() for
-    transition from _PAGE_DIRTY to _PAGE_COW
-  mm: Move VM_UFFD_MINOR_BIT from 37 to 38
-  mm: Introduce VM_SHADOW_STACK for shadow stack memory
-  x86/mm: Shadow Stack page fault error checking
-  x86/mm: Update maybe_mkwrite() for shadow stack
-  mm: Fixup places that call pte_mkwrite() directly
-  mm: Add guard pages around a shadow stack.
-  mm/mmap: Add shadow stack pages to memory accounting
-  mm: Update can_follow_write_pte() for shadow stack
-  mm/mprotect: Exclude shadow stack from preserve_write
-  mm: Re-introduce vm_flags to do_mmap()
-  x86/cet/shstk: Add user-mode shadow stack support
-  x86/process: Change copy_thread() argument 'arg' to 'stack_size'
-  x86/cet/shstk: Handle thread shadow stack
-  x86/cet/shstk: Introduce shadow stack token setup/verify routines
-  x86/cet/shstk: Handle signals for shadow stack
-  ELF: Introduce arch_setup_elf_property()
-  x86/cet/shstk: Add arch_prctl functions for shadow stack
-  mm: Move arch_calc_vm_prot_bits() to arch/x86/include/asm/mman.h
-  mm: Update arch_validate_flags() to test vma anonymous
-  mm: Introduce PROT_SHADOW_STACK for shadow stack
-
- .../admin-guide/kernel-parameters.txt         |   7 +
- Documentation/filesystems/proc.rst            |   1 +
- Documentation/x86/index.rst                   |   1 +
- Documentation/x86/intel_cet.rst               | 139 +++++++
- arch/arm64/include/asm/elf.h                  |   5 +
- arch/arm64/include/asm/mman.h                 |   4 +-
- arch/sparc/include/asm/mman.h                 |   4 +-
- arch/x86/Kconfig                              |  24 ++
- arch/x86/Kconfig.assembler                    |   5 +
- arch/x86/ia32/ia32_signal.c                   |  25 +-
- arch/x86/include/asm/cet.h                    |  53 +++
- arch/x86/include/asm/cpufeatures.h            |   2 +
- arch/x86/include/asm/disabled-features.h      |   8 +-
- arch/x86/include/asm/elf.h                    |  11 +
- arch/x86/include/asm/fpu/types.h              |  23 +-
- arch/x86/include/asm/fpu/xstate.h             |   6 +-
- arch/x86/include/asm/idtentry.h               |   4 +
- arch/x86/include/asm/mman.h                   |  88 ++++
- arch/x86/include/asm/mmu_context.h            |   3 +
- arch/x86/include/asm/msr-index.h              |  19 +
- arch/x86/include/asm/page_types.h             |   7 +
- arch/x86/include/asm/pgtable.h                | 300 ++++++++++++--
- arch/x86/include/asm/pgtable_types.h          |  48 ++-
- arch/x86/include/asm/processor.h              |   5 +
- arch/x86/include/asm/special_insns.h          |  30 ++
- arch/x86/include/asm/trap_pf.h                |   2 +
- arch/x86/include/uapi/asm/mman.h              |  28 +-
- arch/x86/include/uapi/asm/prctl.h             |   4 +
- arch/x86/include/uapi/asm/processor-flags.h   |   2 +
- arch/x86/kernel/Makefile                      |   2 +
- arch/x86/kernel/cet_prctl.c                   |  60 +++
- arch/x86/kernel/cpu/common.c                  |  14 +
- arch/x86/kernel/cpu/cpuid-deps.c              |   2 +
- arch/x86/kernel/fpu/xstate.c                  |  11 +-
- arch/x86/kernel/idt.c                         |   4 +
- arch/x86/kernel/process.c                     |  21 +-
- arch/x86/kernel/process_64.c                  |  27 ++
- arch/x86/kernel/shstk.c                       | 375 ++++++++++++++++++
- arch/x86/kernel/signal.c                      |  13 +
- arch/x86/kernel/signal_compat.c               |   2 +-
- arch/x86/kernel/traps.c                       |  63 +++
- arch/x86/mm/fault.c                           |  19 +
- arch/x86/mm/mmap.c                            |  48 +++
- arch/x86/mm/pat/set_memory.c                  |   2 +-
- arch/x86/mm/pgtable.c                         |  25 ++
- drivers/gpu/drm/i915/gvt/gtt.c                |   2 +-
- fs/aio.c                                      |   2 +-
- fs/binfmt_elf.c                               |   4 +
- fs/proc/task_mmu.c                            |   3 +
- include/linux/elf.h                           |   6 +
- include/linux/mm.h                            |  20 +-
- include/linux/mman.h                          |   2 +-
- include/linux/pgtable.h                       |   7 +
- include/uapi/asm-generic/siginfo.h            |   3 +-
- include/uapi/linux/elf.h                      |  14 +
- ipc/shm.c                                     |   2 +-
- mm/gup.c                                      |  16 +-
- mm/huge_memory.c                              |  27 +-
- mm/memory.c                                   |   5 +-
- mm/migrate.c                                  |   3 +-
- mm/mmap.c                                     |  17 +-
- mm/mprotect.c                                 |  11 +-
- mm/nommu.c                                    |   4 +-
- mm/util.c                                     |   2 +-
- 64 files changed, 1581 insertions(+), 115 deletions(-)
- create mode 100644 Documentation/x86/intel_cet.rst
- create mode 100644 arch/x86/include/asm/cet.h
- create mode 100644 arch/x86/include/asm/mman.h
- create mode 100644 arch/x86/kernel/cet_prctl.c
- create mode 100644 arch/x86/kernel/shstk.c
-
+diff --git a/arch/x86/include/uapi/asm/processor-flags.h b/arch/x86/include/uapi/asm/processor-flags.h
+index bcba3c643e63..a8df907e8017 100644
+--- a/arch/x86/include/uapi/asm/processor-flags.h
++++ b/arch/x86/include/uapi/asm/processor-flags.h
+@@ -130,6 +130,8 @@
+ #define X86_CR4_SMAP		_BITUL(X86_CR4_SMAP_BIT)
+ #define X86_CR4_PKE_BIT		22 /* enable Protection Keys support */
+ #define X86_CR4_PKE		_BITUL(X86_CR4_PKE_BIT)
++#define X86_CR4_CET_BIT		23 /* enable Control-flow Enforcement */
++#define X86_CR4_CET		_BITUL(X86_CR4_CET_BIT)
+ 
+ /*
+  * x86-64 Task Priority Register, CR8
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index 64b805bd6a54..714dd97870ba 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -505,6 +505,14 @@ static __init int setup_disable_pku(char *arg)
+ __setup("nopku", setup_disable_pku);
+ #endif /* CONFIG_X86_64 */
+ 
++static __always_inline void setup_cet(struct cpuinfo_x86 *c)
++{
++	if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
++		return;
++
++	cr4_set_bits(X86_CR4_CET);
++}
++
+ /*
+  * Some CPU features depend on higher CPUID levels, which may not always
+  * be available due to CPUID level capping or broken virtualization
+@@ -1249,6 +1257,11 @@ static void __init cpu_parse_early_param(void)
+ 	if (cmdline_find_option_bool(boot_command_line, "noxsaves"))
+ 		setup_clear_cpu_cap(X86_FEATURE_XSAVES);
+ 
++	if (cmdline_find_option_bool(boot_command_line, "no_user_shstk"))
++		setup_clear_cpu_cap(X86_FEATURE_SHSTK);
++	if (cmdline_find_option_bool(boot_command_line, "no_user_ibt"))
++		setup_clear_cpu_cap(X86_FEATURE_IBT);
++
+ 	arglen = cmdline_find_option(boot_command_line, "clearcpuid", arg, sizeof(arg));
+ 	if (arglen <= 0)
+ 		return;
+@@ -1590,6 +1603,7 @@ static void identify_cpu(struct cpuinfo_x86 *c)
+ 
+ 	x86_init_rdrand(c);
+ 	setup_pku(c);
++	setup_cet(c);
+ 
+ 	/*
+ 	 * Clear/Set all flags overridden by options, need do it
 -- 
 2.21.0
 
