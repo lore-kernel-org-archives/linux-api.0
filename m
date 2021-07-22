@@ -7,27 +7,27 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2E185C19F41
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 34DC7C3F6A3
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 10E6E60F23
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:33 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1971560F10
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:53:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231934AbhGVUMz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Jul 2021 16:12:55 -0400
-Received: from mga07.intel.com ([134.134.136.100]:54383 "EHLO mga07.intel.com"
+        id S231974AbhGVUM6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Jul 2021 16:12:58 -0400
+Received: from mga17.intel.com ([192.55.52.151]:11595 "EHLO mga17.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231331AbhGVUMa (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 22 Jul 2021 16:12:30 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="275560632"
+        id S231387AbhGVUMd (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 22 Jul 2021 16:12:33 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="192011892"
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="275560632"
+   d="scan'208";a="192011892"
 Received: from fmsmga003.fm.intel.com ([10.253.24.29])
-  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:04 -0700
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:05 -0700
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="502035516"
+   d="scan'208";a="502035525"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:03 -0700
+  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:53:04 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -58,9 +58,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Haitao Huang <haitao.huang@intel.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v28 27/32] x86/cet/shstk: Handle signals for shadow stack
-Date:   Thu, 22 Jul 2021 13:52:14 -0700
-Message-Id: <20210722205219.7934-28-yu-cheng.yu@intel.com>
+Subject: [PATCH v28 29/32] x86/cet/shstk: Add arch_prctl functions for shadow stack
+Date:   Thu, 22 Jul 2021 13:52:16 -0700
+Message-Id: <20210722205219.7934-30-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210722205219.7934-1-yu-cheng.yu@intel.com>
 References: <20210722205219.7934-1-yu-cheng.yu@intel.com>
@@ -70,237 +70,178 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-A signal handler (if not changing ucontext) returns to the restorer, and
-the restorer calls sigreturn.  Thus, when setting up a signal frame, the
-kernel:
+arch_prctl(ARCH_X86_CET_STATUS, u64 *args)
+    Get CET feature status.
 
-- installs a shadow stack restore token pointing to the current shadow
-  stack address, and
+    The parameter 'args' is a pointer to a user buffer.  The kernel returns
+    the following information:
 
-- installs the restorer address below the restore token.
+    *args = shadow stack/IBT status
+    *(args + 1) = shadow stack base address
+    *(args + 2) = shadow stack size
 
-In sigreturn, the restore token is verified and shadow stack pointer is
-restored.
+    32-bit binaries use the same interface, but only lower 32-bits of each
+    item.
+
+arch_prctl(ARCH_X86_CET_DISABLE, unsigned int features)
+    Disable CET features specified in 'features'.  Return -EPERM if CET is
+    locked.
+
+arch_prctl(ARCH_X86_CET_LOCK)
+    Lock in CET features.
+
+Also change do_arch_prctl_common()'s parameter 'cpuid_enabled' to
+'arg2', as it is now also passed to prctl_cet().
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Cyrill Gorcunov <gorcunov@gmail.com>
-Cc: Florian Weimer <fweimer@redhat.com>
-Cc: H. Peter Anvin <hpa@zytor.com>
-Cc: Kees Cook <keescook@chromium.org>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
-v27:
-- Eliminate saving shadow stack pointer to signal context.
+ arch/x86/include/asm/cet.h        |  7 ++++
+ arch/x86/include/uapi/asm/prctl.h |  4 +++
+ arch/x86/kernel/Makefile          |  1 +
+ arch/x86/kernel/cet_prctl.c       | 60 +++++++++++++++++++++++++++++++
+ arch/x86/kernel/process.c         |  6 ++--
+ 5 files changed, 75 insertions(+), 3 deletions(-)
+ create mode 100644 arch/x86/kernel/cet_prctl.c
 
-v25:
-- Update commit log/comments for the sc_ext struct.
-- Use restorer address already calculated.
-- Change CONFIG_X86_CET to CONFIG_X86_SHADOW_STACK.
-- Change X86_FEATURE_CET to X86_FEATURE_SHSTK.
-- Eliminate writing to MSR_IA32_U_CET for shadow stack.
-- Change wrmsrl() to wrmsrl_safe() and handle error.
-
- arch/x86/ia32/ia32_signal.c | 25 +++++++++++++++++-----
- arch/x86/include/asm/cet.h  |  4 ++++
- arch/x86/kernel/shstk.c     | 42 +++++++++++++++++++++++++++++++++++++
- arch/x86/kernel/signal.c    | 13 ++++++++++++
- 4 files changed, 79 insertions(+), 5 deletions(-)
-
-diff --git a/arch/x86/ia32/ia32_signal.c b/arch/x86/ia32/ia32_signal.c
-index 5e3d9b7fd5fb..d7a30bc98e66 100644
---- a/arch/x86/ia32/ia32_signal.c
-+++ b/arch/x86/ia32/ia32_signal.c
-@@ -35,6 +35,7 @@
- #include <asm/sigframe.h>
- #include <asm/sighandling.h>
- #include <asm/smap.h>
-+#include <asm/cet.h>
- 
- static inline void reload_segments(struct sigcontext_32 *sc)
- {
-@@ -113,6 +114,10 @@ COMPAT_SYSCALL_DEFINE0(sigreturn)
- 
- 	if (ia32_restore_sigcontext(regs, &frame->sc))
- 		goto badframe;
-+
-+	if (restore_signal_shadow_stack())
-+		goto badframe;
-+
- 	return regs->ax;
- 
- badframe:
-@@ -138,6 +143,9 @@ COMPAT_SYSCALL_DEFINE0(rt_sigreturn)
- 	if (ia32_restore_sigcontext(regs, &frame->uc.uc_mcontext))
- 		goto badframe;
- 
-+	if (restore_signal_shadow_stack())
-+		goto badframe;
-+
- 	if (compat_restore_altstack(&frame->uc.uc_stack))
- 		goto badframe;
- 
-@@ -262,6 +270,9 @@ int ia32_setup_frame(int sig, struct ksignal *ksig,
- 			restorer = &frame->retcode;
- 	}
- 
-+	if (setup_signal_shadow_stack(1, restorer))
-+		return -EFAULT;
-+
- 	if (!user_access_begin(frame, sizeof(*frame)))
- 		return -EFAULT;
- 
-@@ -319,6 +330,15 @@ int ia32_setup_rt_frame(int sig, struct ksignal *ksig,
- 
- 	frame = get_sigframe(ksig, regs, sizeof(*frame), &fp);
- 
-+	if (ksig->ka.sa.sa_flags & SA_RESTORER)
-+		restorer = ksig->ka.sa.sa_restorer;
-+	else
-+		restorer = current->mm->context.vdso +
-+			vdso_image_32.sym___kernel_rt_sigreturn;
-+
-+	if (setup_signal_shadow_stack(1, restorer))
-+		return -EFAULT;
-+
- 	if (!user_access_begin(frame, sizeof(*frame)))
- 		return -EFAULT;
- 
-@@ -334,11 +354,6 @@ int ia32_setup_rt_frame(int sig, struct ksignal *ksig,
- 	unsafe_put_user(0, &frame->uc.uc_link, Efault);
- 	unsafe_compat_save_altstack(&frame->uc.uc_stack, regs->sp, Efault);
- 
--	if (ksig->ka.sa.sa_flags & SA_RESTORER)
--		restorer = ksig->ka.sa.sa_restorer;
--	else
--		restorer = current->mm->context.vdso +
--			vdso_image_32.sym___kernel_rt_sigreturn;
- 	unsafe_put_user(ptr_to_compat(restorer), &frame->pretcode, Efault);
- 
- 	/*
 diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index aa533700ba31..2f7940d68ce3 100644
+index 2f7940d68ce3..c76a85fbd59f 100644
 --- a/arch/x86/include/asm/cet.h
 +++ b/arch/x86/include/asm/cet.h
-@@ -24,6 +24,8 @@ void shstk_disable(void);
- int shstk_setup_rstor_token(bool ia32, unsigned long restorer,
- 			    unsigned long *new_ssp);
- int shstk_check_rstor_token(bool ia32, unsigned long *new_ssp);
-+int setup_signal_shadow_stack(int ia32, void __user *restorer);
-+int restore_signal_shadow_stack(void);
- #else
- static inline int shstk_setup(void) { return 0; }
- static inline int shstk_alloc_thread_stack(struct task_struct *p,
-@@ -35,6 +37,8 @@ static inline int shstk_setup_rstor_token(bool ia32, unsigned long restorer,
- 					  unsigned long *new_ssp) { return 0; }
- static inline int shstk_check_rstor_token(bool ia32,
- 					  unsigned long *new_ssp) { return 0; }
-+static inline int setup_signal_shadow_stack(int ia32, void __user *restorer) { return 0; }
-+static inline int restore_signal_shadow_stack(void) { return 0; }
+@@ -13,6 +13,7 @@ struct task_struct;
+ struct thread_shstk {
+ 	u64	base;
+ 	u64	size;
++	u64	locked:1;
+ };
+ 
+ #ifdef CONFIG_X86_SHADOW_STACK
+@@ -41,6 +42,12 @@ static inline int setup_signal_shadow_stack(int ia32, void __user *restorer) { r
+ static inline int restore_signal_shadow_stack(void) { return 0; }
  #endif
  
++#ifdef CONFIG_X86_SHADOW_STACK
++int prctl_cet(int option, u64 arg2);
++#else
++static inline int prctl_cet(int option, u64 arg2) { return -EINVAL; }
++#endif
++
  #endif /* __ASSEMBLY__ */
-diff --git a/arch/x86/kernel/shstk.c b/arch/x86/kernel/shstk.c
-index 89c7da3cdb92..b3d64cfa28eb 100644
---- a/arch/x86/kernel/shstk.c
-+++ b/arch/x86/kernel/shstk.c
-@@ -331,3 +331,45 @@ int shstk_check_rstor_token(bool proc32, unsigned long *new_ssp)
  
- 	return 0;
- }
+ #endif /* _ASM_X86_CET_H */
+diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
+index 5a6aac9fa41f..9245bf629120 100644
+--- a/arch/x86/include/uapi/asm/prctl.h
++++ b/arch/x86/include/uapi/asm/prctl.h
+@@ -14,4 +14,8 @@
+ #define ARCH_MAP_VDSO_32	0x2002
+ #define ARCH_MAP_VDSO_64	0x2003
+ 
++#define ARCH_X86_CET_STATUS		0x3001
++#define ARCH_X86_CET_DISABLE		0x3002
++#define ARCH_X86_CET_LOCK		0x3003
 +
-+int setup_signal_shadow_stack(int ia32, void __user *restorer)
-+{
-+	struct thread_shstk *shstk = &current->thread.shstk;
-+	unsigned long new_ssp;
-+	int err;
+ #endif /* _ASM_X86_PRCTL_H */
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index 9e064845e497..39e826b5cabd 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -151,6 +151,7 @@ obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
+ 
+ obj-$(CONFIG_AMD_MEM_ENCRYPT)		+= sev.o
+ obj-$(CONFIG_X86_SHADOW_STACK)		+= shstk.o
++obj-$(CONFIG_X86_SHADOW_STACK)		+= shstk.o cet_prctl.o
+ ###
+ # 64 bit specific files
+ ifeq ($(CONFIG_X86_64),y)
+diff --git a/arch/x86/kernel/cet_prctl.c b/arch/x86/kernel/cet_prctl.c
+new file mode 100644
+index 000000000000..b426d200e070
+--- /dev/null
++++ b/arch/x86/kernel/cet_prctl.c
+@@ -0,0 +1,60 @@
++// SPDX-License-Identifier: GPL-2.0
 +
-+	if (!cpu_feature_enabled(X86_FEATURE_SHSTK) || !shstk->size)
-+		return 0;
-+
-+	err = shstk_setup_rstor_token(ia32, (unsigned long)restorer,
-+				      &new_ssp);
-+	if (err)
-+		return err;
-+
-+	start_update_msrs();
-+	err = wrmsrl_safe(MSR_IA32_PL3_SSP, new_ssp);
-+	end_update_msrs();
-+
-+	return err;
-+}
-+
-+int restore_signal_shadow_stack(void)
-+{
-+	struct thread_shstk *shstk = &current->thread.shstk;
-+	int ia32 = in_ia32_syscall();
-+	unsigned long new_ssp;
-+	int err;
-+
-+	if (!cpu_feature_enabled(X86_FEATURE_SHSTK) || !shstk->size)
-+		return 0;
-+
-+	err = shstk_check_rstor_token(ia32, &new_ssp);
-+	if (err)
-+		return err;
-+
-+	start_update_msrs();
-+	err = wrmsrl_safe(MSR_IA32_PL3_SSP, new_ssp);
-+	end_update_msrs();
-+
-+	return err;
-+}
-diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
-index f4d21e470083..661e46803b84 100644
---- a/arch/x86/kernel/signal.c
-+++ b/arch/x86/kernel/signal.c
-@@ -46,6 +46,7 @@
- #include <asm/syscall.h>
- #include <asm/sigframe.h>
- #include <asm/signal.h>
++#include <linux/errno.h>
++#include <linux/uaccess.h>
++#include <linux/prctl.h>
++#include <linux/compat.h>
++#include <linux/mman.h>
++#include <linux/elfcore.h>
++#include <linux/processor.h>
++#include <asm/prctl.h>
 +#include <asm/cet.h>
- 
- #ifdef CONFIG_X86_64
- /*
-@@ -471,6 +472,9 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
- 	frame = get_sigframe(&ksig->ka, regs, sizeof(struct rt_sigframe), &fp);
- 	uc_flags = frame_uc_flags(regs);
- 
-+	if (setup_signal_shadow_stack(0, ksig->ka.sa.sa_restorer))
-+		return -EFAULT;
 +
- 	if (!user_access_begin(frame, sizeof(*frame)))
- 		return -EFAULT;
- 
-@@ -576,6 +580,9 @@ static int x32_setup_rt_frame(struct ksignal *ksig,
- 
- 	uc_flags = frame_uc_flags(regs);
- 
-+	if (setup_signal_shadow_stack(0, ksig->ka.sa.sa_restorer))
-+		return -EFAULT;
++/* See Documentation/x86/intel_cet.rst. */
 +
- 	if (!user_access_begin(frame, sizeof(*frame)))
- 		return -EFAULT;
- 
-@@ -674,6 +681,9 @@ SYSCALL_DEFINE0(rt_sigreturn)
- 	if (restore_sigcontext(regs, &frame->uc.uc_mcontext, uc_flags))
- 		goto badframe;
- 
-+	if (restore_signal_shadow_stack())
-+		goto badframe;
++static int cet_copy_status_to_user(struct thread_shstk *shstk, u64 __user *ubuf)
++{
++	u64 buf[3] = {};
 +
- 	if (restore_altstack(&frame->uc.uc_stack))
- 		goto badframe;
- 
-@@ -932,6 +942,9 @@ COMPAT_SYSCALL_DEFINE0(x32_rt_sigreturn)
- 	if (restore_sigcontext(regs, &frame->uc.uc_mcontext, uc_flags))
- 		goto badframe;
- 
-+	if (restore_signal_shadow_stack())
-+		goto badframe;
++	if (shstk->size) {
++		buf[0] |= GNU_PROPERTY_X86_FEATURE_1_SHSTK;
++		buf[1] = shstk->base;
++		buf[2] = shstk->size;
++	}
 +
- 	if (compat_restore_altstack(&frame->uc.uc_stack))
- 		goto badframe;
++	return copy_to_user(ubuf, buf, sizeof(buf));
++}
++
++int prctl_cet(int option, u64 arg2)
++{
++	struct thread_shstk *shstk;
++
++	if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
++		return -ENOTSUPP;
++
++	shstk = &current->thread.shstk;
++
++	if (option == ARCH_X86_CET_STATUS)
++		return cet_copy_status_to_user(shstk, (u64 __user *)arg2);
++
++	switch (option) {
++	case ARCH_X86_CET_DISABLE:
++		if (shstk->locked)
++			return -EPERM;
++
++		if (arg2 & ~GNU_PROPERTY_X86_FEATURE_1_VALID)
++			return -EINVAL;
++		if (arg2 & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
++			shstk_disable();
++		return 0;
++
++	case ARCH_X86_CET_LOCK:
++		if (arg2)
++			return -EINVAL;
++		shstk->locked = 1;
++		return 0;
++
++	default:
++		return -ENOSYS;
++	}
++}
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index bade6a594d63..7d8ccebdcab1 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -1006,14 +1006,14 @@ unsigned long get_wchan(struct task_struct *p)
+ }
  
+ long do_arch_prctl_common(struct task_struct *task, int option,
+-			  unsigned long cpuid_enabled)
++			  unsigned long arg2)
+ {
+ 	switch (option) {
+ 	case ARCH_GET_CPUID:
+ 		return get_cpuid_mode();
+ 	case ARCH_SET_CPUID:
+-		return set_cpuid_mode(task, cpuid_enabled);
++		return set_cpuid_mode(task, arg2);
+ 	}
+ 
+-	return -EINVAL;
++	return prctl_cet(option, arg2);
+ }
 -- 
 2.21.0
 
