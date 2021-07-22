@@ -5,29 +5,29 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8DDB7C19F2E
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:58:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9FD18C19F32
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:58:11 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 63E3860F35
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:58:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 802D860EB5
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jul 2021 20:58:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231529AbhGVURd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Jul 2021 16:17:33 -0400
-Received: from mga03.intel.com ([134.134.136.65]:15252 "EHLO mga03.intel.com"
+        id S231601AbhGVURe (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Jul 2021 16:17:34 -0400
+Received: from mga07.intel.com ([134.134.136.100]:54784 "EHLO mga07.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231239AbhGVURa (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 22 Jul 2021 16:17:30 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="211800514"
+        id S231281AbhGVURb (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Thu, 22 Jul 2021 16:17:31 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10053"; a="275561713"
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="211800514"
+   d="scan'208";a="275561713"
 Received: from fmsmga007.fm.intel.com ([10.253.24.52])
-  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:58:04 -0700
+  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:58:05 -0700
 X-IronPort-AV: E=Sophos;i="5.84,262,1620716400"; 
-   d="scan'208";a="433273360"
+   d="scan'208";a="433273374"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga007-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:58:03 -0700
+  by fmsmga007-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jul 2021 13:58:04 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -57,9 +57,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Haitao Huang <haitao.huang@intel.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v28 02/10] x86/cet/ibt: Add user-mode Indirect Branch Tracking support
-Date:   Thu, 22 Jul 2021 13:57:15 -0700
-Message-Id: <20210722205723.9476-3-yu-cheng.yu@intel.com>
+Subject: [PATCH v28 06/10] x86/cet/ibt: Update arch_prctl functions for Indirect Branch Tracking
+Date:   Thu, 22 Jul 2021 13:57:19 -0700
+Message-Id: <20210722205723.9476-7-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210722205723.9476-1-yu-cheng.yu@intel.com>
 References: <20210722205723.9476-1-yu-cheng.yu@intel.com>
@@ -69,130 +69,41 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Introduce user-mode Indirect Branch Tracking (IBT) support.  Add routines
-for the setup/disable of IBT.
+From: "H.J. Lu" <hjl.tools@gmail.com>
 
+Update ARCH_X86_CET_STATUS and ARCH_X86_CET_DISABLE for Indirect Branch
+Tracking.
+
+Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: Kees Cook <keescook@chromium.org>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
-v28:
-- When IBT feature is not present, make ibt_setup() return success,
-  since this is a setup function, and if IBT feature is not present there
-  is no need for setup.
+ arch/x86/kernel/cet_prctl.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-v27:
-- Change struct thread_shstk: ibt_enabled to ibt.
-- Create a helper for set/clear bits of MSR_IA32_U_CET.
-
- arch/x86/include/asm/cet.h |  9 ++++++
- arch/x86/kernel/Makefile   |  1 +
- arch/x86/kernel/ibt.c      | 58 ++++++++++++++++++++++++++++++++++++++
- 3 files changed, 68 insertions(+)
- create mode 100644 arch/x86/kernel/ibt.c
-
-diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index c76a85fbd59f..3dfca29a7c0b 100644
---- a/arch/x86/include/asm/cet.h
-+++ b/arch/x86/include/asm/cet.h
-@@ -14,6 +14,7 @@ struct thread_shstk {
- 	u64	base;
- 	u64	size;
- 	u64	locked:1;
-+	u64	ibt:1;
- };
+diff --git a/arch/x86/kernel/cet_prctl.c b/arch/x86/kernel/cet_prctl.c
+index b426d200e070..bd3c80d402e7 100644
+--- a/arch/x86/kernel/cet_prctl.c
++++ b/arch/x86/kernel/cet_prctl.c
+@@ -22,6 +22,9 @@ static int cet_copy_status_to_user(struct thread_shstk *shstk, u64 __user *ubuf)
+ 		buf[2] = shstk->size;
+ 	}
  
- #ifdef CONFIG_X86_SHADOW_STACK
-@@ -42,6 +43,14 @@ static inline int setup_signal_shadow_stack(int ia32, void __user *restorer) { r
- static inline int restore_signal_shadow_stack(void) { return 0; }
- #endif
++	if (shstk->ibt)
++		buf[0] |= GNU_PROPERTY_X86_FEATURE_1_IBT;
++
+ 	return copy_to_user(ubuf, buf, sizeof(buf));
+ }
  
-+#ifdef CONFIG_X86_IBT
-+int ibt_setup(void);
-+void ibt_disable(void);
-+#else
-+static inline int ibt_setup(void) { return 0; }
-+static inline void ibt_disable(void) {}
-+#endif
-+
- #ifdef CONFIG_X86_SHADOW_STACK
- int prctl_cet(int option, u64 arg2);
- #else
-diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
-index 39e826b5cabd..cce07a920fec 100644
---- a/arch/x86/kernel/Makefile
-+++ b/arch/x86/kernel/Makefile
-@@ -152,6 +152,7 @@ obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
- obj-$(CONFIG_AMD_MEM_ENCRYPT)		+= sev.o
- obj-$(CONFIG_X86_SHADOW_STACK)		+= shstk.o
- obj-$(CONFIG_X86_SHADOW_STACK)		+= shstk.o cet_prctl.o
-+obj-$(CONFIG_X86_IBT)			+= ibt.o
- ###
- # 64 bit specific files
- ifeq ($(CONFIG_X86_64),y)
-diff --git a/arch/x86/kernel/ibt.c b/arch/x86/kernel/ibt.c
-new file mode 100644
-index 000000000000..4ab7af33b274
---- /dev/null
-+++ b/arch/x86/kernel/ibt.c
-@@ -0,0 +1,58 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * ibt.c - Intel Indirect Branch Tracking support
-+ *
-+ * Copyright (c) 2021, Intel Corporation.
-+ * Yu-cheng Yu <yu-cheng.yu@intel.com>
-+ */
-+
-+#include <linux/user.h>
-+#include <asm/fpu/internal.h>
-+#include <asm/fpu/xstate.h>
-+#include <asm/fpu/types.h>
-+#include <asm/msr.h>
-+#include <asm/cet.h>
-+
-+static int ibt_set_clear_msr_bits(u64 set, u64 clear)
-+{
-+	u64 msr;
-+	int r;
-+
-+	fpregs_lock();
-+
-+	if (test_thread_flag(TIF_NEED_FPU_LOAD))
-+		fpregs_restore_userregs();
-+
-+	r = rdmsrl_safe(MSR_IA32_U_CET, &msr);
-+	if (!r) {
-+		msr = (msr & ~clear) | set;
-+		r = wrmsrl_safe(MSR_IA32_U_CET, msr);
-+	}
-+
-+	fpregs_unlock();
-+
-+	return r;
-+}
-+
-+int ibt_setup(void)
-+{
-+	int r;
-+
-+	if (!cpu_feature_enabled(X86_FEATURE_IBT))
-+		return 0;
-+
-+	r = ibt_set_clear_msr_bits(CET_ENDBR_EN | CET_NO_TRACK_EN, 0);
-+	if (!r)
-+		current->thread.shstk.ibt = 1;
-+
-+	return r;
-+}
-+
-+void ibt_disable(void)
-+{
-+	if (!current->thread.shstk.ibt)
-+		return;
-+
-+	ibt_set_clear_msr_bits(0, CET_ENDBR_EN);
-+	current->thread.shstk.ibt = 0;
-+}
+@@ -46,6 +49,8 @@ int prctl_cet(int option, u64 arg2)
+ 			return -EINVAL;
+ 		if (arg2 & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
+ 			shstk_disable();
++		if (arg2 & GNU_PROPERTY_X86_FEATURE_1_IBT)
++			ibt_disable();
+ 		return 0;
+ 
+ 	case ARCH_X86_CET_LOCK:
 -- 
 2.21.0
 
