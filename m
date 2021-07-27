@@ -2,198 +2,181 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-20.4 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,FSL_HELO_FAKE,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_IN_DEF_DKIM_WL
+X-Spam-Status: No, score=-19.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C1DBFC4338F
-	for <linux-api@archiver.kernel.org>; Tue, 27 Jul 2021 12:57:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4D40EC432BE
+	for <linux-api@archiver.kernel.org>; Tue, 27 Jul 2021 14:50:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A2CAB610E9
-	for <linux-api@archiver.kernel.org>; Tue, 27 Jul 2021 12:57:54 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 35B7161B28
+	for <linux-api@archiver.kernel.org>; Tue, 27 Jul 2021 14:50:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236507AbhG0M5x (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 27 Jul 2021 08:57:53 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54804 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232039AbhG0M5v (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 27 Jul 2021 08:57:51 -0400
-Received: from mail-pj1-x1030.google.com (mail-pj1-x1030.google.com [IPv6:2607:f8b0:4864:20::1030])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 67528C061757
-        for <linux-api@vger.kernel.org>; Tue, 27 Jul 2021 05:57:50 -0700 (PDT)
-Received: by mail-pj1-x1030.google.com with SMTP id e2-20020a17090a4a02b029016f3020d867so4709455pjh.3
-        for <linux-api@vger.kernel.org>; Tue, 27 Jul 2021 05:57:50 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20161025;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=+OLe4SwBjD3Geveq3gUDmMMou2dUigqaRFQxgLA7Ezk=;
-        b=QSHIwZzUgPD2aHYSt5mb+1L8fBEQhacAJ7ZZuQ84aRa7gl3nBmKm3ReBjI4TzrlzaA
-         +I303AH1H1KlcVC6LIi97rJZTzCvf/w0abGqkvMEqB7Mc0hfU7+j8XiIO2p6TE/ProMv
-         hugmB2GMlbKeZ186yHV2xknYU1ffhqrVhzsuJQGXHPSrbtTj5PzyThbJ0IOK773IzZtU
-         j3NUQSdfmCxPdi7vTgmXQBiBptOJrIqwK+5+ox1i4aljLznMG0vsGeISfu0tMcsqqH85
-         AmlcMaDYVsbwCEyVMI8QT3JTd7dRbPsMV41LutqApx9Z2gO9Ki8ZIUaIxwbTHVhL7/9+
-         CNhw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=+OLe4SwBjD3Geveq3gUDmMMou2dUigqaRFQxgLA7Ezk=;
-        b=gaNjmkUcKHtKBbL6gGWrIxFR6NwJWcuJOItpLjNQJS+nwEXWr96Flf1HUKapfbaH0D
-         XsjEGliowx5oBPll/aIo8iO4jMyNzuhEEDXqbNPovrzlrV5CZrsQla8jV9EjjkGlsLhe
-         jWdtB/JImODInfz3gFdt/0ZZzcvINV49BwGFcIGth7YoMbFUEhKkdNstQJL7irQ5U6to
-         6/4mnk8rm405VX5H8ppURhtY1ULhPJsTN6uR9aYk9dfhL8g6BNyqUGkxsprLD5NAv7iX
-         pNRW8FudCvN1yTe7QS7PQQcZEo2++Dw18yZQon/s69PowQtsRqX2KkZK+ubiWKWYv8HJ
-         Kr8Q==
-X-Gm-Message-State: AOAM531kT/n5nVeEsp11HB90Zck2ZCDgYfhXAgSfpe4By57KJLjJUCmQ
-        T7vWLnyJs0J8jZCMWe9UGF4yoA==
-X-Google-Smtp-Source: ABdhPJwFPlVfauZjy+10jsZ+iisjwQLAANVlBKN5kkwy+6GgSXjIrLx6kl1kcpGRCtitAhDHA9r7Lw==
-X-Received: by 2002:a17:902:868b:b029:12b:84f8:d916 with SMTP id g11-20020a170902868bb029012b84f8d916mr18770845plo.75.1627390668985;
-        Tue, 27 Jul 2021 05:57:48 -0700 (PDT)
-Received: from google.com ([2401:fa00:9:211:c654:968d:5171:3855])
-        by smtp.gmail.com with ESMTPSA id o2sm3853542pfp.28.2021.07.27.05.57.46
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 27 Jul 2021 05:57:48 -0700 (PDT)
-Date:   Tue, 27 Jul 2021 22:57:37 +1000
-From:   Matthew Bobrowski <repnop@google.com>
-To:     Amir Goldstein <amir73il@gmail.com>
-Cc:     Jan Kara <jack@suse.cz>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>
-Subject: Re: [PATCH v3 4/5] fanotify/fanotify_user.c: introduce a generic
- info record copying helper
-Message-ID: <YQACwX4i1UjWqtfZ@google.com>
-References: <cover.1626845287.git.repnop@google.com>
- <5ac9237ed6f055613c817eb1b9eedcaf1e53d4e6.1626845288.git.repnop@google.com>
- <CAOQ4uxj8jzdT4uKzE7hFDo=KwiyH+E0GHbHpToWRpFZ+zX3fhw@mail.gmail.com>
- <CAOQ4uxhnCk+FXK_e_GA=jC_0HWO+3ZdwHSi=zCa2Kpb0NDxBSg@mail.gmail.com>
+        id S232432AbhG0OuO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 27 Jul 2021 10:50:14 -0400
+Received: from mail.kernel.org ([198.145.29.99]:36020 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S236881AbhG0Ott (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 27 Jul 2021 10:49:49 -0400
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 190B261AFF;
+        Tue, 27 Jul 2021 14:49:19 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1627397365;
+        bh=czPyPIxu2PTKCugBK9YtQzlToUphKkxEXLs4PNmX7jg=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+        b=S5U4Sw6RZr+k+Bx+qsSik83rWJ1gJ3J+Xnjocua3sMYzOKHbVYjQfC9+EelM8p+bs
+         4yYTcFQ7ggj7/9L/nDbgjY7ayt505P/zljlokLVPofqFMQrEvNVfoW9HMuU4TqA0Co
+         TdN+v3mbVV1heJZaRF5cU7QERPA97113HBKPcg2JvNFknquwsyW9tlVacdjnIMqXSX
+         giQafSwRthQmNq0eRh7VJskmn2tjqTQ0Upx5ScJFTxOr6ZLAaYFUTQjrmyn933A70S
+         74C6f/8vRnm4eN8EXBJeJORsy9hMmPFHVQgiyP9SqQifHV6cf8WoTCKh6RQ+RTwTdh
+         dqfKPOvYSQEWw==
+From:   Arnd Bergmann <arnd@kernel.org>
+To:     Andrew Morton <akpm@linux-foundation.org>
+Cc:     Arnd Bergmann <arnd@arndb.de>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will@kernel.org>,
+        Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
+        "James E.J. Bottomley" <James.Bottomley@HansenPartnership.com>,
+        Helge Deller <deller@gmx.de>,
+        Michael Ellerman <mpe@ellerman.id.au>,
+        Benjamin Herrenschmidt <benh@kernel.crashing.org>,
+        Paul Mackerras <paulus@samba.org>,
+        Heiko Carstens <hca@linux.ibm.com>,
+        Vasily Gorbik <gor@linux.ibm.com>,
+        Christian Borntraeger <borntraeger@de.ibm.com>,
+        "David S. Miller" <davem@davemloft.net>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        "Eric W. Biederman" <ebiederm@xmission.com>,
+        Christoph Hellwig <hch@infradead.org>,
+        Feng Tang <feng.tang@intel.com>,
+        linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
+        linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org,
+        linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org,
+        sparclinux@vger.kernel.org, linux-arch@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-mm@kvack.org
+Subject: [PATCH v5 1/6] kexec: move locking into do_kexec_load
+Date:   Tue, 27 Jul 2021 16:48:54 +0200
+Message-Id: <20210727144859.4150043-2-arnd@kernel.org>
+X-Mailer: git-send-email 2.29.2
+In-Reply-To: <20210727144859.4150043-1-arnd@kernel.org>
+References: <20210727144859.4150043-1-arnd@kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <CAOQ4uxhnCk+FXK_e_GA=jC_0HWO+3ZdwHSi=zCa2Kpb0NDxBSg@mail.gmail.com>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Jul 27, 2021 at 11:16:33AM +0300, Amir Goldstein wrote:
-> On Wed, Jul 21, 2021 at 9:35 AM Amir Goldstein <amir73il@gmail.com> wrote:
-> >
-> > On Wed, Jul 21, 2021 at 9:18 AM Matthew Bobrowski <repnop@google.com> wrote:
-> > >
-> > > The copy_info_records_to_user() helper allows for the separation of
-> > > info record copying routines/conditionals from copy_event_to_user(),
-> > > which reduces the overall clutter within this function. This becomes
-> > > especially true as we start introducing additional info records in the
-> > > future i.e. struct fanotify_event_info_pidfd. On success, this helper
-> > > returns the total amount of bytes that have been copied into the user
-> > > supplied buffer and on error, a negative value is returned to the
-> > > caller.
-> > >
-> > > The newly defined macro FANOTIFY_INFO_MODES can be used to obtain info
-> > > record types that have been enabled for a specific notification
-> > > group. This macro becomes useful in the subsequent patch when the
-> > > FAN_REPORT_PIDFD initialization flag is introduced.
-> > >
-> > > Signed-off-by: Matthew Bobrowski <repnop@google.com>
-> > Reviewed-by: Amir Goldstein <amir73il@gmail.com>
-> >
-> > > ---
-> > >  fs/notify/fanotify/fanotify_user.c | 155 ++++++++++++++++-------------
-> > >  include/linux/fanotify.h           |   2 +
-> > >  2 files changed, 90 insertions(+), 67 deletions(-)
-> > >
-> > > diff --git a/fs/notify/fanotify/fanotify_user.c b/fs/notify/fanotify/fanotify_user.c
-> > > index 182fea255376..d19f70b2c24c 100644
-> > > --- a/fs/notify/fanotify/fanotify_user.c
-> > > +++ b/fs/notify/fanotify/fanotify_user.c
-> > > @@ -173,7 +173,7 @@ static struct fanotify_event *get_one_event(struct fsnotify_group *group,
-> > >         size_t event_size = FAN_EVENT_METADATA_LEN;
-> > >         struct fanotify_event *event = NULL;
-> > >         struct fsnotify_event *fsn_event;
-> > > -       unsigned int fid_mode = FAN_GROUP_FLAG(group, FANOTIFY_FID_BITS);
-> > > +       unsigned int info_mode = FAN_GROUP_FLAG(group, FANOTIFY_INFO_MODES);
-> > >
-> > >         pr_debug("%s: group=%p count=%zd\n", __func__, group, count);
-> > >
-> > > @@ -183,8 +183,8 @@ static struct fanotify_event *get_one_event(struct fsnotify_group *group,
-> > >                 goto out;
-> > >
-> > >         event = FANOTIFY_E(fsn_event);
-> > > -       if (fid_mode)
-> > > -               event_size += fanotify_event_info_len(fid_mode, event);
-> > > +       if (info_mode)
-> > > +               event_size += fanotify_event_info_len(info_mode, event);
-> > >
-> > >         if (event_size > count) {
-> > >                 event = ERR_PTR(-EINVAL);
-> > > @@ -401,6 +401,86 @@ static int copy_fid_info_to_user(__kernel_fsid_t *fsid, struct fanotify_fh *fh,
-> > >         return info_len;
-> > >  }
-> > >
-> > > +static int copy_info_records_to_user(struct fanotify_event *event,
-> > > +                                    struct fanotify_info *info,
-> > > +                                    unsigned int info_mode,
-> > > +                                    char __user *buf, size_t count)
-> > > +{
-> > > +       int ret, total_bytes = 0, info_type = 0;
-> > > +       unsigned int fid_mode = info_mode & FANOTIFY_FID_BITS;
-> > > +
-> > > +       /*
-> > > +        * Event info records order is as follows: dir fid + name, child fid.
-> > > +        */
-> > > +       if (fanotify_event_dir_fh_len(event)) {
-> > > +               info_type = info->name_len ? FAN_EVENT_INFO_TYPE_DFID_NAME :
-> > > +                                            FAN_EVENT_INFO_TYPE_DFID;
-> > > +               ret = copy_fid_info_to_user(fanotify_event_fsid(event),
-> > > +                                           fanotify_info_dir_fh(info),
-> > > +                                           info_type,
-> > > +                                           fanotify_info_name(info),
-> > > +                                           info->name_len, buf, count);
-> > > +               if (ret < 0)
-> > > +                       return ret;
-> > > +
-> > > +               buf += ret;
-> > > +               count -= ret;
-> > > +               total_bytes += ret;
-> > > +       }
-> > > +
-> > > +       if (fanotify_event_object_fh_len(event)) {
-> > > +               const char *dot = NULL;
-> > > +               int dot_len = 0;
-> > > +
-> > > +               if (fid_mode == FAN_REPORT_FID || info_type) {
-> > > +                       /*
-> > > +                        * With only group flag FAN_REPORT_FID only type FID is
-> > > +                        * reported. Second info record type is always FID.
-> > > +                        */
-> > > +                       info_type = FAN_EVENT_INFO_TYPE_FID;
-> > > +               } else if ((fid_mode & FAN_REPORT_NAME) &&
-> > > +                          (event->mask & FAN_ONDIR)) {
-> > > +                       /*
-> > > +                        * With group flag FAN_REPORT_NAME, if name was not
-> > > +                        * recorded in an event on a directory, report the name
-> > > +                        * "." with info type DFID_NAME.
-> > > +                        */
-> > > +                       info_type = FAN_EVENT_INFO_TYPE_DFID_NAME;
-> > > +                       dot = ".";
-> > > +                       dot_len = 1;
-> > > +               } else if ((event->mask & ALL_FSNOTIFY_DIRENT_EVENTS) ||
-> > > +                          (event->mask & FAN_ONDIR)) {
-> > > +                       /*
-> > > +                        * With group flag FAN_REPORT_DIR_FID, a single info
-> > > +                        * record has type DFID for directory entry
-> > > +                        * modificatio\ n event and for event on a directory.
-> 
-> Just notices this typo in the copied comment:
-> modificatio\ n
-> 
-> And for the next posting, please remove the mention of fanotify_user.c from
-> the commit title - it adds no information and clutters the git oneline log.
-> This concerns patch 3/5 as well. It does NOT concern the kernel/pid.c patches.
+From: Arnd Bergmann <arnd@arndb.de>
 
-Noted.
+The locking is the same between the native and compat version of
+sys_kexec_load(), so it can be done in the common implementation
+to reduce duplication.
 
-/M
+Co-developed-by: Eric Biederman <ebiederm@xmission.com>
+Co-developed-by: Christoph Hellwig <hch@infradead.org>
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ kernel/kexec.c | 44 ++++++++++++++++----------------------------
+ 1 file changed, 16 insertions(+), 28 deletions(-)
+
+diff --git a/kernel/kexec.c b/kernel/kexec.c
+index c82c6c06f051..9c7aef8f4bb6 100644
+--- a/kernel/kexec.c
++++ b/kernel/kexec.c
+@@ -110,6 +110,17 @@ static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
+ 	unsigned long i;
+ 	int ret;
+ 
++	/*
++	 * Because we write directly to the reserved memory region when loading
++	 * crash kernels we need a mutex here to prevent multiple crash kernels
++	 * from attempting to load simultaneously, and to prevent a crash kernel
++	 * from loading over the top of a in use crash kernel.
++	 *
++	 * KISS: always take the mutex.
++	 */
++	if (!mutex_trylock(&kexec_mutex))
++		return -EBUSY;
++
+ 	if (flags & KEXEC_ON_CRASH) {
+ 		dest_image = &kexec_crash_image;
+ 		if (kexec_crash_image)
+@@ -121,7 +132,8 @@ static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
+ 	if (nr_segments == 0) {
+ 		/* Uninstall image */
+ 		kimage_free(xchg(dest_image, NULL));
+-		return 0;
++		ret = 0;
++		goto out_unlock;
+ 	}
+ 	if (flags & KEXEC_ON_CRASH) {
+ 		/*
+@@ -134,7 +146,7 @@ static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
+ 
+ 	ret = kimage_alloc_init(&image, entry, nr_segments, segments, flags);
+ 	if (ret)
+-		return ret;
++		goto out_unlock;
+ 
+ 	if (flags & KEXEC_PRESERVE_CONTEXT)
+ 		image->preserve_context = 1;
+@@ -171,6 +183,8 @@ static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
+ 		arch_kexec_protect_crashkres();
+ 
+ 	kimage_free(image);
++out_unlock:
++	mutex_unlock(&kexec_mutex);
+ 	return ret;
+ }
+ 
+@@ -247,21 +261,8 @@ SYSCALL_DEFINE4(kexec_load, unsigned long, entry, unsigned long, nr_segments,
+ 		((flags & KEXEC_ARCH_MASK) != KEXEC_ARCH_DEFAULT))
+ 		return -EINVAL;
+ 
+-	/* Because we write directly to the reserved memory
+-	 * region when loading crash kernels we need a mutex here to
+-	 * prevent multiple crash  kernels from attempting to load
+-	 * simultaneously, and to prevent a crash kernel from loading
+-	 * over the top of a in use crash kernel.
+-	 *
+-	 * KISS: always take the mutex.
+-	 */
+-	if (!mutex_trylock(&kexec_mutex))
+-		return -EBUSY;
+-
+ 	result = do_kexec_load(entry, nr_segments, segments, flags);
+ 
+-	mutex_unlock(&kexec_mutex);
+-
+ 	return result;
+ }
+ 
+@@ -301,21 +302,8 @@ COMPAT_SYSCALL_DEFINE4(kexec_load, compat_ulong_t, entry,
+ 			return -EFAULT;
+ 	}
+ 
+-	/* Because we write directly to the reserved memory
+-	 * region when loading crash kernels we need a mutex here to
+-	 * prevent multiple crash  kernels from attempting to load
+-	 * simultaneously, and to prevent a crash kernel from loading
+-	 * over the top of a in use crash kernel.
+-	 *
+-	 * KISS: always take the mutex.
+-	 */
+-	if (!mutex_trylock(&kexec_mutex))
+-		return -EBUSY;
+-
+ 	result = do_kexec_load(entry, nr_segments, ksegments, flags);
+ 
+-	mutex_unlock(&kexec_mutex);
+-
+ 	return result;
+ }
+ #endif
+-- 
+2.29.2
+
