@@ -2,137 +2,128 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no
+X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CC5ADC4338F
-	for <linux-api@archiver.kernel.org>; Wed, 28 Jul 2021 10:16:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 13E16C4338F
+	for <linux-api@archiver.kernel.org>; Wed, 28 Jul 2021 12:31:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A5A4C60524
-	for <linux-api@archiver.kernel.org>; Wed, 28 Jul 2021 10:16:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EFCBE60F59
+	for <linux-api@archiver.kernel.org>; Wed, 28 Jul 2021 12:31:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235417AbhG1KQN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 28 Jul 2021 06:16:13 -0400
-Received: from lb2-smtp-cloud8.xs4all.net ([194.109.24.25]:45907 "EHLO
-        lb2-smtp-cloud8.xs4all.net" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S232530AbhG1KQM (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 28 Jul 2021 06:16:12 -0400
-Received: from cust-b5b5937f ([IPv6:fc0c:c16d:66b8:757f:c639:739b:9d66:799d])
-        by smtp-cloud8.xs4all.net with ESMTPA
-        id 8gUnmHE1pXTlc8gUomT1hI; Wed, 28 Jul 2021 12:09:02 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=xs4all.nl; s=s2;
-        t=1627466942; bh=B9otj4mTwZ5yKZQb2cJmJ4bo3dRknjXAAxnwqgQ/oWo=;
-        h=Subject:To:From:Message-ID:Date:MIME-Version:Content-Type:From:
-         Subject;
-        b=W63fDKPAKLsy0R/GF7TqR95zO8o7BaLi6mpz8W+BdwmA3HMNinM9YlgYC1RlGHj2p
-         eme+YFub0PJIWH6/88EhJ5BFyx0lcakW4CenKdCYGPyZAu9OpzRZQ3PN6tiatth9hG
-         OioWMk1c4pVWadGXJupc1739lA47sxxu95JScP+QDwADHdGpor7KucvVjpgYkwK0QZ
-         kjbF502F+NMYfzoke5wC9zQUji96TKuukklpBs/VxmyyTPAAmiXLXiwY42uW0oIIAy
-         QUVmFVDzmZXeoWrdJPbEptT0XB190muGKII2o/PwrMDBbehdzjoKoWvfVrxJVXwaw6
-         h88phcQKrh0nQ==
-Subject: Re: [PATCH v2 1/5] v4l: Add Qualcomm custom compressed pixel formats
-To:     Stanimir Varbanov <stanimir.varbanov@linaro.org>,
-        linux-media@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-arm-msm@vger.kernel.org, linux-api@vger.kernel.org
-References: <20210706124034.773503-1-stanimir.varbanov@linaro.org>
- <20210706124034.773503-2-stanimir.varbanov@linaro.org>
-From:   Hans Verkuil <hverkuil-cisco@xs4all.nl>
-Message-ID: <d7d9cfe3-86b6-f17c-7742-e0965c8b9899@xs4all.nl>
-Date:   Wed, 28 Jul 2021 12:09:01 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.11.0
+        id S234938AbhG1MbH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 28 Jul 2021 08:31:07 -0400
+Received: from smtp-out1.suse.de ([195.135.220.28]:48438 "EHLO
+        smtp-out1.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S234881AbhG1MbG (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 28 Jul 2021 08:31:06 -0400
+Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
+        by smtp-out1.suse.de (Postfix) with ESMTP id 6277922314;
+        Wed, 28 Jul 2021 12:31:04 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+        t=1627475464; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=npMFGiRKpe9E2NAzxS4y+5J6eprtxsqTY9vAsITRMUg=;
+        b=grWfSWG5enS6L02jqEBUn/cVF8gY3gQ3BR/4ugX8P8YwDZw4VnyA+reyvLfcyqIgY4MIpT
+        0MJ3wYrCYgUP+x91sRjSi6f5dMTVuwsiNqWRFiTLidGMb7HGnVyjgfrQgLS49ehsYtzyir
+        CmoaE91Mp8qa0YNxL6qXl30SHvYJJHE=
+Received: from suse.cz (unknown [10.100.201.86])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by relay2.suse.de (Postfix) with ESMTPS id 1EE79A3B81;
+        Wed, 28 Jul 2021 12:31:04 +0000 (UTC)
+Date:   Wed, 28 Jul 2021 14:31:03 +0200
+From:   Michal Hocko <mhocko@suse.com>
+To:     Feng Tang <feng.tang@intel.com>
+Cc:     linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>,
+        David Rientjes <rientjes@google.com>,
+        Dave Hansen <dave.hansen@intel.com>,
+        Ben Widawsky <ben.widawsky@intel.com>,
+        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        Andrea Arcangeli <aarcange@redhat.com>,
+        Mel Gorman <mgorman@techsingularity.net>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Andi Kleen <ak@linux.intel.com>,
+        Dan Williams <dan.j.williams@intel.com>, ying.huang@intel.com,
+        Dave Hansen <dave.hansen@linux.intel.com>
+Subject: Re: [PATCH v6 1/6] mm/mempolicy: Add MPOL_PREFERRED_MANY for
+ multiple preferred nodes
+Message-ID: <YQFOB4UDK+dNZeOV@dhcp22.suse.cz>
+References: <1626077374-81682-1-git-send-email-feng.tang@intel.com>
+ <1626077374-81682-2-git-send-email-feng.tang@intel.com>
 MIME-Version: 1.0
-In-Reply-To: <20210706124034.773503-2-stanimir.varbanov@linaro.org>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
-X-CMAE-Envelope: MS4xfE71IJhejUAZuBMqYXPw0GBAeILn9m7yIuoKU5vAq78VYvV2PoYuhCUMmByWYdvWTzyEe1zFpEsvlOgfU2ZRXrrFW6sqh59a52nrSo8PP7IBa+EZfL5a
- FQzJ9WwNYZxCesTwNbh3/M2uggWmY+s65Cm4KgZ25i3G7XK2mNWGHOBnlyWZorO3r6gyRKCLsAd4UXLBXttUODQQLvjiypMqUYhnxK7KF6GUDT449zV+PYoo
- 6FbXRaXoON+cztIP8cWF9XaBPO68ZT4nj7pm743MI1FTh9zDvbbg331G80hTi/uapAnFN7I60c+sOLgwG2rCvm2ZUwOR187Wnw2jwUPUeYZTzF2KaFxcJ7I7
- 8DR8EhK/AiS2hS3uoySjBXAa6Mqm9fIB09Ti2Syogh4Q+05veIa4aFpUMJDttSUsU0BHLHvXDzaVKvjliyLugcDbQthtObN78Dk2DYlmGvp5s1WwOcI=
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <1626077374-81682-2-git-send-email-feng.tang@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 06/07/2021 14:40, Stanimir Varbanov wrote:
-> Add custom Qualcomm raw compressed pixel formats. They are
-> used in Qualcomm SoCs to optimize the interconnect bandwidth.
-> 
-> Signed-off-by: Stanimir Varbanov <stanimir.varbanov@linaro.org>
-> ---
->  .../media/v4l/pixfmt-reserved.rst              | 18 ++++++++++++++++++
->  drivers/media/v4l2-core/v4l2-ioctl.c           |  2 ++
->  include/uapi/linux/videodev2.h                 |  2 ++
->  3 files changed, 22 insertions(+)
-> 
-> diff --git a/Documentation/userspace-api/media/v4l/pixfmt-reserved.rst b/Documentation/userspace-api/media/v4l/pixfmt-reserved.rst
-> index 0b879c0da713..136e9832db0c 100644
-> --- a/Documentation/userspace-api/media/v4l/pixfmt-reserved.rst
-> +++ b/Documentation/userspace-api/media/v4l/pixfmt-reserved.rst
-> @@ -260,6 +260,24 @@ please make a proposal on the linux-media mailing list.
->  	of tiles, resulting in 32-aligned resolutions for the luminance plane
->  	and 16-aligned resolutions for the chrominance plane (with 2x2
->  	subsampling).
-> +    * .. _V4L2-PIX-FMT-QC08C:
-> +
-> +      - ``V4L2_PIX_FMT_QC08C``
-> +      - 'QC08C'
-> +      - Compressed Macro-tile 8-Bit YUV420 format used by Qualcomm platforms.
-> +	The used compression is lossless and it is used by various multimedia
-> +	hardware blocks like GPU, display controllers, ISP and video accelerators.
-> +	It contains four planes for progressive video and eight planes for
-> +	interlaced video.
-> +    * .. _V4L2-PIX-FMT-QC10C:
-> +
-> +      - ``V4L2_PIX_FMT_QC10C``
-> +      - 'QC10C'
-> +      - Compressed Macro-tile 10-Bit YUV420 format used by Qualcomm platforms.
-> +	The used compression is lossless and it is used by various multimedia
-> +	hardware blocks like GPU, display controllers, ISP and video.
-> +	It contains four planes for progressive video and eight planes for
-> +	interlaced video.
+[Sorry for a late review]
 
-These two formats are opaque formats? Or is it something that userspace can
-decode as well with the help of a datasheet or something similar?
+On Mon 12-07-21 16:09:29, Feng Tang wrote:
+[...]
+> @@ -1887,7 +1909,8 @@ nodemask_t *policy_nodemask(gfp_t gfp, struct mempolicy *policy)
+>  /* Return the node id preferred by the given mempolicy, or the given id */
+>  static int policy_node(gfp_t gfp, struct mempolicy *policy, int nd)
+>  {
+> -	if (policy->mode == MPOL_PREFERRED) {
+> +	if (policy->mode == MPOL_PREFERRED ||
+> +	    policy->mode == MPOL_PREFERRED_MANY) {
+>  		nd = first_node(policy->nodes);
+>  	} else {
+>  		/*
 
-If it is opaque (as I expect it is), then please add the phrase:
-'It is an opaque intermediate format.'
+Do we really want to have the preferred node to be always the first node
+in the node mask? Shouldn't that strive for a locality as well? Existing
+callers already prefer numa_node_id() - aka local node - and I belive we
+shouldn't just throw that away here.
 
-Regards,
-
-	Hans
-
+> @@ -1931,6 +1954,7 @@ unsigned int mempolicy_slab_node(void)
 >  
->  .. raw:: latex
->  
-> diff --git a/drivers/media/v4l2-core/v4l2-ioctl.c b/drivers/media/v4l2-core/v4l2-ioctl.c
-> index 05d5db3d85e5..76d4e4ac18e8 100644
-> --- a/drivers/media/v4l2-core/v4l2-ioctl.c
-> +++ b/drivers/media/v4l2-core/v4l2-ioctl.c
-> @@ -1416,6 +1416,8 @@ static void v4l_fill_fmtdesc(struct v4l2_fmtdesc *fmt)
->  		case V4L2_PIX_FMT_S5C_UYVY_JPG:	descr = "S5C73MX interleaved UYVY/JPEG"; break;
->  		case V4L2_PIX_FMT_MT21C:	descr = "Mediatek Compressed Format"; break;
->  		case V4L2_PIX_FMT_SUNXI_TILED_NV12: descr = "Sunxi Tiled NV12 Format"; break;
-> +		case V4L2_PIX_FMT_QC08C:	descr = "QCOM Compressed 8-bit Format"; break;
-> +		case V4L2_PIX_FMT_QC10C:	descr = "QCOM Compressed 10-bit Format"; break;
->  		default:
->  			if (fmt->description[0])
->  				return;
-> diff --git a/include/uapi/linux/videodev2.h b/include/uapi/linux/videodev2.h
-> index 9260791b8438..dc1b714ccf6b 100644
-> --- a/include/uapi/linux/videodev2.h
-> +++ b/include/uapi/linux/videodev2.h
-> @@ -737,6 +737,8 @@ struct v4l2_pix_format {
->  #define V4L2_PIX_FMT_SUNXI_TILED_NV12 v4l2_fourcc('S', 'T', '1', '2') /* Sunxi Tiled NV12 Format */
->  #define V4L2_PIX_FMT_CNF4     v4l2_fourcc('C', 'N', 'F', '4') /* Intel 4-bit packed depth confidence information */
->  #define V4L2_PIX_FMT_HI240    v4l2_fourcc('H', 'I', '2', '4') /* BTTV 8-bit dithered RGB */
-> +#define V4L2_PIX_FMT_QC08C    v4l2_fourcc('Q', '0', '8', 'C') /* Qualcomm 8-bit compressed */
-> +#define V4L2_PIX_FMT_QC10C    v4l2_fourcc('Q', '1', '0', 'C') /* Qualcomm 10-bit compressed */
->  
->  /* 10bit raw bayer packed, 32 bytes for every 25 pixels, last LSB 6 bits unused */
->  #define V4L2_PIX_FMT_IPU3_SBGGR10	v4l2_fourcc('i', 'p', '3', 'b') /* IPU3 packed 10-bit BGGR bayer */
-> 
+>  	switch (policy->mode) {
+>  	case MPOL_PREFERRED:
+> +	case MPOL_PREFERRED_MANY:
+>  		return first_node(policy->nodes);
 
+Similarly here but I am not really familiar with the slab numa code
+enough to have strong opinions here.
+
+> @@ -2173,10 +2198,12 @@ struct page *alloc_pages_vma(gfp_t gfp, int order, struct vm_area_struct *vma,
+>  		 * node and don't fall back to other nodes, as the cost of
+>  		 * remote accesses would likely offset THP benefits.
+>  		 *
+> -		 * If the policy is interleave, or does not allow the current
+> -		 * node in its nodemask, we allocate the standard way.
+> +		 * If the policy is interleave or multiple preferred nodes, or
+> +		 * does not allow the current node in its nodemask, we allocate
+> +		 * the standard way.
+>  		 */
+> -		if (pol->mode == MPOL_PREFERRED)
+> +		if ((pol->mode == MPOL_PREFERRED ||
+> +		     pol->mode == MPOL_PREFERRED_MANY))
+>  			hpage_node = first_node(pol->nodes);
+
+Same here.
+
+> @@ -2451,6 +2479,9 @@ int mpol_misplaced(struct page *page, struct vm_area_struct *vma, unsigned long
+>  		break;
+>  
+>  	case MPOL_PREFERRED:
+> +	case MPOL_PREFERRED_MANY:
+> +		if (node_isset(curnid, pol->nodes))
+> +			goto out;
+>  		polnid = first_node(pol->nodes);
+>  		break;
+
+I do not follow what is the point of using first_node here. Either the
+node is in the mask or it is misplaced. What are you trying to achieve
+here?
+-- 
+Michal Hocko
+SUSE Labs
