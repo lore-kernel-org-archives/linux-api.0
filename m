@@ -2,189 +2,111 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C2CFFC4338F
-	for <linux-api@archiver.kernel.org>; Wed, 28 Jul 2021 16:11:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F3CC9C432BE
+	for <linux-api@archiver.kernel.org>; Wed, 28 Jul 2021 16:12:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B03CB60234
-	for <linux-api@archiver.kernel.org>; Wed, 28 Jul 2021 16:11:11 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D792960EE6
+	for <linux-api@archiver.kernel.org>; Wed, 28 Jul 2021 16:12:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229843AbhG1QLJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 28 Jul 2021 12:11:09 -0400
-Received: from out02.mta.xmission.com ([166.70.13.232]:47446 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237456AbhG1QKf (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 28 Jul 2021 12:10:35 -0400
-Received: from in01.mta.xmission.com ([166.70.13.51]:32964)
-        by out02.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-        (Exim 4.93)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1m8m8G-007CzP-LA; Wed, 28 Jul 2021 10:10:09 -0600
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95]:41378 helo=email.xmission.com)
-        by in01.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-        (Exim 4.93)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1m8m8C-00A9Pq-J2; Wed, 28 Jul 2021 10:10:08 -0600
-From:   ebiederm@xmission.com (Eric W. Biederman)
-To:     Arnd Bergmann <arnd@kernel.org>
-Cc:     Andrew Morton <akpm@linux-foundation.org>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Will Deacon <will@kernel.org>,
-        Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
-        "James E.J. Bottomley" <James.Bottomley@HansenPartnership.com>,
-        Helge Deller <deller@gmx.de>,
-        Michael Ellerman <mpe@ellerman.id.au>,
-        Benjamin Herrenschmidt <benh@kernel.crashing.org>,
-        Paul Mackerras <paulus@samba.org>,
-        Heiko Carstens <hca@linux.ibm.com>,
-        Vasily Gorbik <gor@linux.ibm.com>,
-        Christian Borntraeger <borntraeger@de.ibm.com>,
-        "David S. Miller" <davem@davemloft.net>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
-        x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Christoph Hellwig <hch@infradead.org>,
-        Feng Tang <feng.tang@intel.com>,
-        linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
-        linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org,
-        linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org,
-        sparclinux@vger.kernel.org, linux-arch@vger.kernel.org,
-        linux-api@vger.kernel.org, linux-mm@kvack.org
-References: <20210727144859.4150043-1-arnd@kernel.org>
-        <20210727144859.4150043-2-arnd@kernel.org>
-Date:   Wed, 28 Jul 2021 11:09:22 -0500
-In-Reply-To: <20210727144859.4150043-2-arnd@kernel.org> (Arnd Bergmann's
-        message of "Tue, 27 Jul 2021 16:48:54 +0200")
-Message-ID: <87eebifmj1.fsf@disp2133>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
+        id S231232AbhG1QM1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 28 Jul 2021 12:12:27 -0400
+Received: from smtp-out1.suse.de ([195.135.220.28]:53932 "EHLO
+        smtp-out1.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229843AbhG1QMZ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 28 Jul 2021 12:12:25 -0400
+Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
+        by smtp-out1.suse.de (Postfix) with ESMTP id 9CA6022293;
+        Wed, 28 Jul 2021 16:12:22 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+        t=1627488742; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=6kUdjHN6ZjAAS2wKnuZpa+CixfoM+bec+V6sZbEG0aY=;
+        b=F5G7Fy1PiHzByYDhfZhAuEj0eq33weXQWYYHoWaXZljXsEGWRtFb9hPj1Y++L77G8HYrsP
+        eJFFzDkHoe8nfV2fj49HDWBDJboTS4xf4RpwUQSxMPe9MtejYLBskR5ywVQwyx4k9l/4of
+        t4DgnRXpGxfbXFeJhix3Yw85jaBquB0=
+Received: from suse.cz (unknown [10.100.201.86])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by relay2.suse.de (Postfix) with ESMTPS id 21E03A3B83;
+        Wed, 28 Jul 2021 16:12:22 +0000 (UTC)
+Date:   Wed, 28 Jul 2021 18:12:21 +0200
+From:   Michal Hocko <mhocko@suse.com>
+To:     Feng Tang <feng.tang@intel.com>
+Cc:     linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>,
+        David Rientjes <rientjes@google.com>,
+        Dave Hansen <dave.hansen@intel.com>,
+        Ben Widawsky <ben.widawsky@intel.com>,
+        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        Andrea Arcangeli <aarcange@redhat.com>,
+        Mel Gorman <mgorman@techsingularity.net>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Andi Kleen <ak@linux.intel.com>,
+        Dan Williams <dan.j.williams@intel.com>, ying.huang@intel.com,
+        Dave Hansen <dave.hansen@linux.intel.com>
+Subject: Re: [PATCH v6 1/6] mm/mempolicy: Add MPOL_PREFERRED_MANY for
+ multiple preferred nodes
+Message-ID: <YQGB5cB5NlgOuNIN@dhcp22.suse.cz>
+References: <1626077374-81682-1-git-send-email-feng.tang@intel.com>
+ <1626077374-81682-2-git-send-email-feng.tang@intel.com>
+ <YQFOB4UDK+dNZeOV@dhcp22.suse.cz>
+ <20210728141156.GC43486@shbuild999.sh.intel.com>
 MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1m8m8C-00A9Pq-J2;;;mid=<87eebifmj1.fsf@disp2133>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX18xroipV9CATxhuOK1ETEIbw3EWCZZa/6o=
-X-SA-Exim-Connect-IP: 68.227.160.95
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: Re: [PATCH v5 1/6] kexec: move locking into do_kexec_load
-X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
-X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20210728141156.GC43486@shbuild999.sh.intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Arnd Bergmann <arnd@kernel.org> writes:
+On Wed 28-07-21 22:11:56, Feng Tang wrote:
+> On Wed, Jul 28, 2021 at 02:31:03PM +0200, Michal Hocko wrote:
+> > [Sorry for a late review]
+> 
+> Not at all. Thank you for all your reviews and suggestions from v1
+> to v6!
+> 
+> > On Mon 12-07-21 16:09:29, Feng Tang wrote:
+> > [...]
+> > > @@ -1887,7 +1909,8 @@ nodemask_t *policy_nodemask(gfp_t gfp, struct mempolicy *policy)
+> > >  /* Return the node id preferred by the given mempolicy, or the given id */
+> > >  static int policy_node(gfp_t gfp, struct mempolicy *policy, int nd)
+> > >  {
+> > > -	if (policy->mode == MPOL_PREFERRED) {
+> > > +	if (policy->mode == MPOL_PREFERRED ||
+> > > +	    policy->mode == MPOL_PREFERRED_MANY) {
+> > >  		nd = first_node(policy->nodes);
+> > >  	} else {
+> > >  		/*
+> > 
+> > Do we really want to have the preferred node to be always the first node
+> > in the node mask? Shouldn't that strive for a locality as well? Existing
+> > callers already prefer numa_node_id() - aka local node - and I belive we
+> > shouldn't just throw that away here.
+>  
+> I think it's about the difference of 'local' and 'prefer/perfer-many'
+> policy. There are different kinds of memory HW: HBM(High Bandwidth
+> Memory), normal DRAM, PMEM (Persistent Memory), which have different
+> price, bandwidth, speed etc. A platform may have two, or all three of
+> these types, and there are real use case which want memory comes
+> 'preferred' node/nodes than the local node.
+> 
+> And good point for 'local node', if the 'prefer-many' policy's
+> nodemask has local node set, we should pick it han this
+> 'first_node', and the same semantic also applies to the other
+> several places you pointed out. Or do I misunderstand you point?
 
-> From: Arnd Bergmann <arnd@arndb.de>
->
-> The locking is the same between the native and compat version of
-> sys_kexec_load(), so it can be done in the common implementation
-> to reduce duplication.
-
-Acked-by: "Eric W. Biederman" <ebiederm@xmission.com>
-
->
-> Co-developed-by: Eric Biederman <ebiederm@xmission.com>
-> Co-developed-by: Christoph Hellwig <hch@infradead.org>
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-> ---
->  kernel/kexec.c | 44 ++++++++++++++++----------------------------
->  1 file changed, 16 insertions(+), 28 deletions(-)
->
-> diff --git a/kernel/kexec.c b/kernel/kexec.c
-> index c82c6c06f051..9c7aef8f4bb6 100644
-> --- a/kernel/kexec.c
-> +++ b/kernel/kexec.c
-> @@ -110,6 +110,17 @@ static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
->  	unsigned long i;
->  	int ret;
->  
-> +	/*
-> +	 * Because we write directly to the reserved memory region when loading
-> +	 * crash kernels we need a mutex here to prevent multiple crash kernels
-> +	 * from attempting to load simultaneously, and to prevent a crash kernel
-> +	 * from loading over the top of a in use crash kernel.
-> +	 *
-> +	 * KISS: always take the mutex.
-> +	 */
-> +	if (!mutex_trylock(&kexec_mutex))
-> +		return -EBUSY;
-> +
->  	if (flags & KEXEC_ON_CRASH) {
->  		dest_image = &kexec_crash_image;
->  		if (kexec_crash_image)
-> @@ -121,7 +132,8 @@ static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
->  	if (nr_segments == 0) {
->  		/* Uninstall image */
->  		kimage_free(xchg(dest_image, NULL));
-> -		return 0;
-> +		ret = 0;
-> +		goto out_unlock;
->  	}
->  	if (flags & KEXEC_ON_CRASH) {
->  		/*
-> @@ -134,7 +146,7 @@ static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
->  
->  	ret = kimage_alloc_init(&image, entry, nr_segments, segments, flags);
->  	if (ret)
-> -		return ret;
-> +		goto out_unlock;
->  
->  	if (flags & KEXEC_PRESERVE_CONTEXT)
->  		image->preserve_context = 1;
-> @@ -171,6 +183,8 @@ static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
->  		arch_kexec_protect_crashkres();
->  
->  	kimage_free(image);
-> +out_unlock:
-> +	mutex_unlock(&kexec_mutex);
->  	return ret;
->  }
->  
-> @@ -247,21 +261,8 @@ SYSCALL_DEFINE4(kexec_load, unsigned long, entry, unsigned long, nr_segments,
->  		((flags & KEXEC_ARCH_MASK) != KEXEC_ARCH_DEFAULT))
->  		return -EINVAL;
->  
-> -	/* Because we write directly to the reserved memory
-> -	 * region when loading crash kernels we need a mutex here to
-> -	 * prevent multiple crash  kernels from attempting to load
-> -	 * simultaneously, and to prevent a crash kernel from loading
-> -	 * over the top of a in use crash kernel.
-> -	 *
-> -	 * KISS: always take the mutex.
-> -	 */
-> -	if (!mutex_trylock(&kexec_mutex))
-> -		return -EBUSY;
-> -
->  	result = do_kexec_load(entry, nr_segments, segments, flags);
->  
-> -	mutex_unlock(&kexec_mutex);
-> -
->  	return result;
->  }
->  
-> @@ -301,21 +302,8 @@ COMPAT_SYSCALL_DEFINE4(kexec_load, compat_ulong_t, entry,
->  			return -EFAULT;
->  	}
->  
-> -	/* Because we write directly to the reserved memory
-> -	 * region when loading crash kernels we need a mutex here to
-> -	 * prevent multiple crash  kernels from attempting to load
-> -	 * simultaneously, and to prevent a crash kernel from loading
-> -	 * over the top of a in use crash kernel.
-> -	 *
-> -	 * KISS: always take the mutex.
-> -	 */
-> -	if (!mutex_trylock(&kexec_mutex))
-> -		return -EBUSY;
-> -
->  	result = do_kexec_load(entry, nr_segments, ksegments, flags);
->  
-> -	mutex_unlock(&kexec_mutex);
-> -
->  	return result;
->  }
->  #endif
+Yeah. Essentially what I am trying to tell is that for
+MPOL_PREFERRED_MANY you simply want to return the given node without any
+alternation. That node will be used for the fallback zonelist and the
+nodemask would make sure we won't get out of the policy.
+-- 
+Michal Hocko
+SUSE Labs
