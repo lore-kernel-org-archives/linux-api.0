@@ -2,124 +2,225 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.2 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
-	autolearn=ham autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E5E2BC4338F
-	for <linux-api@archiver.kernel.org>; Wed, 28 Jul 2021 15:25:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 250D9C4320E
+	for <linux-api@archiver.kernel.org>; Wed, 28 Jul 2021 16:10:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CACD560BD3
-	for <linux-api@archiver.kernel.org>; Wed, 28 Jul 2021 15:25:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0FF5D60187
+	for <linux-api@archiver.kernel.org>; Wed, 28 Jul 2021 16:10:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235555AbhG1PZN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 28 Jul 2021 11:25:13 -0400
-Received: from mga11.intel.com ([192.55.52.93]:33565 "EHLO mga11.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S235457AbhG1PZN (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 28 Jul 2021 11:25:13 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10059"; a="209575485"
-X-IronPort-AV: E=Sophos;i="5.84,276,1620716400"; 
-   d="scan'208";a="209575485"
-Received: from fmsmga003.fm.intel.com ([10.253.24.29])
-  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 28 Jul 2021 08:25:11 -0700
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.84,276,1620716400"; 
-   d="scan'208";a="506511592"
-Received: from shbuild999.sh.intel.com (HELO localhost) ([10.239.146.151])
-  by FMSMGA003.fm.intel.com with ESMTP; 28 Jul 2021 08:25:07 -0700
-Date:   Wed, 28 Jul 2021 23:25:07 +0800
-From:   Feng Tang <feng.tang@intel.com>
-To:     Michal Hocko <mhocko@suse.com>
-Cc:     "linux-mm@kvack.org" <linux-mm@kvack.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        David Rientjes <rientjes@google.com>,
-        "Hansen, Dave" <dave.hansen@intel.com>,
-        "Widawsky, Ben" <ben.widawsky@intel.com>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        Andrea Arcangeli <aarcange@redhat.com>,
-        Mel Gorman <mgorman@techsingularity.net>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        Vlastimil Babka <vbabka@suse.cz>,
-        Andi Kleen <ak@linux.intel.com>,
-        "Williams, Dan J" <dan.j.williams@intel.com>,
-        "Huang, Ying" <ying.huang@intel.com>
-Subject: Re: [PATCH v6 2/6] mm/memplicy: add page allocation function for
- MPOL_PREFERRED_MANY policy
-Message-ID: <20210728152507.GE43486@shbuild999.sh.intel.com>
-References: <1626077374-81682-1-git-send-email-feng.tang@intel.com>
- <1626077374-81682-3-git-send-email-feng.tang@intel.com>
- <YQFQsnSt/DaWoQHV@dhcp22.suse.cz>
- <20210728151810.GD43486@shbuild999.sh.intel.com>
+        id S231232AbhG1QK4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 28 Jul 2021 12:10:56 -0400
+Received: from out03.mta.xmission.com ([166.70.13.233]:38752 "EHLO
+        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S237464AbhG1QKu (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 28 Jul 2021 12:10:50 -0400
+Received: from in01.mta.xmission.com ([166.70.13.51]:43296)
+        by out03.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1m8m8j-00HGYH-Fq; Wed, 28 Jul 2021 10:10:37 -0600
+Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95]:41390 helo=email.xmission.com)
+        by in01.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1m8m8a-00AA3v-G4; Wed, 28 Jul 2021 10:10:31 -0600
+From:   ebiederm@xmission.com (Eric W. Biederman)
+To:     Arnd Bergmann <arnd@kernel.org>
+Cc:     Andrew Morton <akpm@linux-foundation.org>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will@kernel.org>,
+        Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
+        "James E.J. Bottomley" <James.Bottomley@HansenPartnership.com>,
+        Helge Deller <deller@gmx.de>,
+        Michael Ellerman <mpe@ellerman.id.au>,
+        Benjamin Herrenschmidt <benh@kernel.crashing.org>,
+        Paul Mackerras <paulus@samba.org>,
+        Heiko Carstens <hca@linux.ibm.com>,
+        Vasily Gorbik <gor@linux.ibm.com>,
+        Christian Borntraeger <borntraeger@de.ibm.com>,
+        "David S. Miller" <davem@davemloft.net>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Christoph Hellwig <hch@infradead.org>,
+        Feng Tang <feng.tang@intel.com>,
+        linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
+        linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org,
+        linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org,
+        sparclinux@vger.kernel.org, linux-arch@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-mm@kvack.org
+References: <20210727144859.4150043-1-arnd@kernel.org>
+        <20210727144859.4150043-3-arnd@kernel.org>
+Date:   Wed, 28 Jul 2021 11:10:20 -0500
+In-Reply-To: <20210727144859.4150043-3-arnd@kernel.org> (Arnd Bergmann's
+        message of "Tue, 27 Jul 2021 16:48:55 +0200")
+Message-ID: <87a6m6fmhf.fsf@disp2133>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20210728151810.GD43486@shbuild999.sh.intel.com>
-User-Agent: Mutt/1.5.24 (2015-08-30)
+Content-Type: text/plain
+X-XM-SPF: eid=1m8m8a-00AA3v-G4;;;mid=<87a6m6fmhf.fsf@disp2133>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX18jESHy/qa/BMuMj4KVyetONWlkP5WqcQ8=
+X-SA-Exim-Connect-IP: 68.227.160.95
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: Re: [PATCH v5 2/6] kexec: avoid compat_alloc_user_space
+X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
+X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Jul 28, 2021 at 11:18:10PM +0800, Tang, Feng wrote:
-> On Wed, Jul 28, 2021 at 02:42:26PM +0200, Michal Hocko wrote:
-> > On Mon 12-07-21 16:09:30, Feng Tang wrote:
-> > > The semantics of MPOL_PREFERRED_MANY is similar to MPOL_PREFERRED,
-> > > that it will first try to allocate memory from the preferred node(s),
-> > > and fallback to all nodes in system when first try fails.
-> > > 
-> > > Add a dedicated function for it just like 'interleave' policy.
-> > > 
-> > > Link: https://lore.kernel.org/r/20200630212517.308045-9-ben.widawsky@intel.com
-> > > Suggested-by: Michal Hocko <mhocko@suse.com>
-> > > Co-developed-by: Ben Widawsky <ben.widawsky@intel.com>
-> > > Signed-off-by: Ben Widawsky <ben.widawsky@intel.com>
-> > > Signed-off-by: Feng Tang <feng.tang@intel.com>
-> > 
-> > It would be better to squash this together with the actual user of the
-> > function added by the next patch.
+Arnd Bergmann <arnd@kernel.org> writes:
+
+> From: Arnd Bergmann <arnd@arndb.de>
+>
+> kimage_alloc_init() expects a __user pointer, so compat_sys_kexec_load()
+> uses compat_alloc_user_space() to convert the layout and put it back
+> onto the user space caller stack.
+>
+> Moving the user space access into the syscall handler directly actually
+> makes the code simpler, as the conversion for compat mode can now be
+> done on kernel memory.
+
+Acked-by: "Eric W. Biederman" <ebiederm@xmission.com>
+
+>
+> Co-developed-by: Eric Biederman <ebiederm@xmission.com>
+> Co-developed-by: Christoph Hellwig <hch@infradead.org>
+> Link: https://lore.kernel.org/lkml/YPbtsU4GX6PL7%2F42@infradead.org/
+> Link: https://lore.kernel.org/lkml/m1y2cbzmnw.fsf@fess.ebiederm.org/
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+> ---
+>  kernel/kexec.c | 61 +++++++++++++++++++++-----------------------------
+>  1 file changed, 25 insertions(+), 36 deletions(-)
+>
+> diff --git a/kernel/kexec.c b/kernel/kexec.c
+> index 9c7aef8f4bb6..b5e40f069768 100644
+> --- a/kernel/kexec.c
+> +++ b/kernel/kexec.c
+> @@ -19,26 +19,9 @@
 >  
-> Ok, will do
-> 
-> > > ---
-> > >  mm/mempolicy.c | 19 +++++++++++++++++++
-> > >  1 file changed, 19 insertions(+)
-> > > 
-> > > diff --git a/mm/mempolicy.c b/mm/mempolicy.c
-> > > index 17b5800b7dcc..d17bf018efcc 100644
-> > > --- a/mm/mempolicy.c
-> > > +++ b/mm/mempolicy.c
-> > > @@ -2153,6 +2153,25 @@ static struct page *alloc_page_interleave(gfp_t gfp, unsigned order,
-> > >  	return page;
-> > >  }
-> > >  
-> > > +static struct page *alloc_page_preferred_many(gfp_t gfp, unsigned int order,
-> > > +						struct mempolicy *pol)
-> > 
-> > We likely want a node parameter to know which one we want to start with
-> > for locality. Callers should use policy_node for that.
+>  #include "kexec_internal.h"
 >  
-> Yes, locality should be considered, something like this?
-> 
-> 	int pnid, lnid = numa_node_id();
-> 
-> 	if (is_nodeset(lnid, &pol->nodes))
-> 		pnid = local_nid;
-> 	else
-> 		pnid = first_node(pol->nodes);
-
-One further thought is, if local node is not in the nodemask,
-should we compare the distance of all the nodes in nodemask
-to the local node and chose the shortest? 
-
-Thanks,
-Feng
-
-> 	page = __alloc_pages(((gfp | __GFP_NOWARN) & ~__GFP_DIRECT_RECLAIM),
-> 				order, pnid, &pol->nodes);
-> 	if (!page)
-> 		page = __alloc_pages(gfp, order, lnid, NULL);
-> 	return page;
-> 
+> -static int copy_user_segment_list(struct kimage *image,
+> -				  unsigned long nr_segments,
+> -				  struct kexec_segment __user *segments)
+> -{
+> -	int ret;
+> -	size_t segment_bytes;
+> -
+> -	/* Read in the segments */
+> -	image->nr_segments = nr_segments;
+> -	segment_bytes = nr_segments * sizeof(*segments);
+> -	ret = copy_from_user(image->segment, segments, segment_bytes);
+> -	if (ret)
+> -		ret = -EFAULT;
+> -
+> -	return ret;
+> -}
+> -
+>  static int kimage_alloc_init(struct kimage **rimage, unsigned long entry,
+>  			     unsigned long nr_segments,
+> -			     struct kexec_segment __user *segments,
+> +			     struct kexec_segment *segments,
+>  			     unsigned long flags)
+>  {
+>  	int ret;
+> @@ -58,10 +41,8 @@ static int kimage_alloc_init(struct kimage **rimage, unsigned long entry,
+>  		return -ENOMEM;
+>  
+>  	image->start = entry;
+> -
+> -	ret = copy_user_segment_list(image, nr_segments, segments);
+> -	if (ret)
+> -		goto out_free_image;
+> +	image->nr_segments = nr_segments;
+> +	memcpy(image->segment, segments, nr_segments * sizeof(*segments));
+>  
+>  	if (kexec_on_panic) {
+>  		/* Enable special crash kernel control page alloc policy. */
+> @@ -104,7 +85,7 @@ static int kimage_alloc_init(struct kimage **rimage, unsigned long entry,
+>  }
+>  
+>  static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
+> -		struct kexec_segment __user *segments, unsigned long flags)
+> +		struct kexec_segment *segments, unsigned long flags)
+>  {
+>  	struct kimage **dest_image, *image;
+>  	unsigned long i;
+> @@ -250,7 +231,8 @@ static inline int kexec_load_check(unsigned long nr_segments,
+>  SYSCALL_DEFINE4(kexec_load, unsigned long, entry, unsigned long, nr_segments,
+>  		struct kexec_segment __user *, segments, unsigned long, flags)
+>  {
+> -	int result;
+> +	struct kexec_segment *ksegments;
+> +	unsigned long result;
+>  
+>  	result = kexec_load_check(nr_segments, flags);
+>  	if (result)
+> @@ -261,7 +243,12 @@ SYSCALL_DEFINE4(kexec_load, unsigned long, entry, unsigned long, nr_segments,
+>  		((flags & KEXEC_ARCH_MASK) != KEXEC_ARCH_DEFAULT))
+>  		return -EINVAL;
+>  
+> -	result = do_kexec_load(entry, nr_segments, segments, flags);
+> +	ksegments = memdup_user(segments, nr_segments * sizeof(ksegments[0]));
+> +	if (IS_ERR(ksegments))
+> +		return PTR_ERR(ksegments);
+> +
+> +	result = do_kexec_load(entry, nr_segments, ksegments, flags);
+> +	kfree(ksegments);
+>  
+>  	return result;
+>  }
+> @@ -273,7 +260,7 @@ COMPAT_SYSCALL_DEFINE4(kexec_load, compat_ulong_t, entry,
+>  		       compat_ulong_t, flags)
+>  {
+>  	struct compat_kexec_segment in;
+> -	struct kexec_segment out, __user *ksegments;
+> +	struct kexec_segment *ksegments;
+>  	unsigned long i, result;
+>  
+>  	result = kexec_load_check(nr_segments, flags);
+> @@ -286,24 +273,26 @@ COMPAT_SYSCALL_DEFINE4(kexec_load, compat_ulong_t, entry,
+>  	if ((flags & KEXEC_ARCH_MASK) == KEXEC_ARCH_DEFAULT)
+>  		return -EINVAL;
+>  
+> -	ksegments = compat_alloc_user_space(nr_segments * sizeof(out));
+> +	ksegments = kmalloc_array(nr_segments, sizeof(ksegments[0]),
+> +			GFP_KERNEL);
+> +	if (!ksegments)
+> +		return -ENOMEM;
+> +
+>  	for (i = 0; i < nr_segments; i++) {
+>  		result = copy_from_user(&in, &segments[i], sizeof(in));
+>  		if (result)
+> -			return -EFAULT;
+> +			goto fail;
+>  
+> -		out.buf   = compat_ptr(in.buf);
+> -		out.bufsz = in.bufsz;
+> -		out.mem   = in.mem;
+> -		out.memsz = in.memsz;
+> -
+> -		result = copy_to_user(&ksegments[i], &out, sizeof(out));
+> -		if (result)
+> -			return -EFAULT;
+> +		ksegments[i].buf   = compat_ptr(in.buf);
+> +		ksegments[i].bufsz = in.bufsz;
+> +		ksegments[i].mem   = in.mem;
+> +		ksegments[i].memsz = in.memsz;
+>  	}
+>  
+>  	result = do_kexec_load(entry, nr_segments, ksegments, flags);
+>  
+> +fail:
+> +	kfree(ksegments);
+>  	return result;
+>  }
+>  #endif
