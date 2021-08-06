@@ -2,145 +2,134 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4DDE6C4338F
-	for <linux-api@archiver.kernel.org>; Fri,  6 Aug 2021 13:35:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0FD73C4320A
+	for <linux-api@archiver.kernel.org>; Fri,  6 Aug 2021 15:52:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1E3BB601FD
-	for <linux-api@archiver.kernel.org>; Fri,  6 Aug 2021 13:35:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E151E60F0F
+	for <linux-api@archiver.kernel.org>; Fri,  6 Aug 2021 15:52:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S243927AbhHFNgK (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 6 Aug 2021 09:36:10 -0400
-Received: from smtp-out1.suse.de ([195.135.220.28]:51718 "EHLO
-        smtp-out1.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233838AbhHFNgI (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 6 Aug 2021 09:36:08 -0400
-Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
-        by smtp-out1.suse.de (Postfix) with ESMTP id 1290A21F91;
-        Fri,  6 Aug 2021 13:35:52 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-        t=1628256952; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
+        id S244830AbhHFPw3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 6 Aug 2021 11:52:29 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:33154 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S244777AbhHFPw2 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 6 Aug 2021 11:52:28 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1628265132;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=yE3Uk/UgQFDJwZHbh1+RL0Led8QeXNn8UlO09LuvY6U=;
-        b=fiYr6g9t/DoJEyJF5CFB7zTZUyIAEfgvQ/bWOoomvQ4cGuOm9BM6a2tDqReI/4GvbSMXuZ
-        hXyEDfPhJC34DRxbHFUjvKgZaGd/Qk9KAGxh6nbL2qjiWAsY6XnWHy2GyolEy2kSm8Ydtg
-        6yYynAI7nKqmXwjrE37BErnSRIGMhnc=
-Received: from suse.cz (unknown [10.100.201.86])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by relay2.suse.de (Postfix) with ESMTPS id D35C5A3B8A;
-        Fri,  6 Aug 2021 13:35:51 +0000 (UTC)
-Date:   Fri, 6 Aug 2021 15:35:48 +0200
-From:   Michal Hocko <mhocko@suse.com>
-To:     Feng Tang <feng.tang@intel.com>
-Cc:     linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>,
-        David Rientjes <rientjes@google.com>,
-        Dave Hansen <dave.hansen@intel.com>,
-        Ben Widawsky <ben.widawsky@intel.com>,
-        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        Andrea Arcangeli <aarcange@redhat.com>,
-        Mel Gorman <mgorman@techsingularity.net>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        Vlastimil Babka <vbabka@suse.cz>,
-        Andi Kleen <ak@linux.intel.com>,
-        Dan Williams <dan.j.williams@intel.com>, ying.huang@intel.com
-Subject: Re: [PATCH v7 3/5] mm/hugetlb: add support for mempolicy
- MPOL_PREFERRED_MANY
-Message-ID: <YQ06tNiDEsvl8004@dhcp22.suse.cz>
-References: <1627970362-61305-1-git-send-email-feng.tang@intel.com>
- <1627970362-61305-4-git-send-email-feng.tang@intel.com>
+        bh=ocgP4yowhB/EUlnSIxuQMOG6kjLjSAHTmb8OYmd4EOQ=;
+        b=Kr6m1tpPchjzWu25UwcCdoz89ETW1+vRd7RRMfRNYX4nGIxHvllkR0L2F5v5mFFixMHvUc
+        JVeauVsbuSHqa0uzlJC2AqY9UW8RYUadGgK6czeLNAlX6KJLtbiOUdtYD6YYzQW2FzzXX8
+        dM9TF6Z098Bd+L/N5iDlu/5sscf8AAw=
+Received: from mail-lj1-f198.google.com (mail-lj1-f198.google.com
+ [209.85.208.198]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-569-S-BNs8foM8mtMHLDh25-NA-1; Fri, 06 Aug 2021 11:52:11 -0400
+X-MC-Unique: S-BNs8foM8mtMHLDh25-NA-1
+Received: by mail-lj1-f198.google.com with SMTP id c23-20020a2e9d970000b0290196925bc674so1506726ljj.10
+        for <linux-api@vger.kernel.org>; Fri, 06 Aug 2021 08:52:11 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=ocgP4yowhB/EUlnSIxuQMOG6kjLjSAHTmb8OYmd4EOQ=;
+        b=QyFQaHjFPhTy3pXJnjfgwFprXsqRwkcp0aK0HsSUMWib7gSE4rPx6rTI9/+AJe1IEV
+         KUSGK8qNa2LZjWonTZBxoCcv2dDhMAFCLDP77Cmlpm1S7IuW2AxqsxA7u/HYTtJ+aytb
+         E3GlpYXpSYhVtvOD1Fz42aZL3UYwwhJz4rt9dif6RtqH8ozyDwaAV8cEe1QTToAkyfJV
+         X+AdrYBtGqj1F+ixQNc+YCw5bVYhqHewp9tWDcwa0vAwI0+lG0S1ADuBzj/7n0JrkBeF
+         WdL9C7neuvfNgPMKj0S2gAZckLFq9CdrYfX/gYxzu/Aka7+alQNISBydHznkv1SNIw9u
+         kOEA==
+X-Gm-Message-State: AOAM532ECrsP2UdXxAiMCZiGsRoGOyBO4cx8eSLm3ya9qMT+Ib8rK8D2
+        6L3UNt6mAxNA1aTu9Y68qT2NBV1dsOnwnnGc3cq4KxyKQxaymBsElqleF9fuvTcfi6/IqvfgY02
+        xk+gXdmwfrwMNpmFiq1EzfD4OmxWtqjI12PQ6
+X-Received: by 2002:ac2:446d:: with SMTP id y13mr8071792lfl.632.1628265129891;
+        Fri, 06 Aug 2021 08:52:09 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJz9NmyUDGHNtqA5+JG3Fj8AovGBdtXdP/uo+X1AK+D5LYRCKOEMar1/c1smD31PF3dDW/0pEabI/MsAyUK/eQ0=
+X-Received: by 2002:ac2:446d:: with SMTP id y13mr8071774lfl.632.1628265129728;
+ Fri, 06 Aug 2021 08:52:09 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <1627970362-61305-4-git-send-email-feng.tang@intel.com>
+References: <20210720232624.1493424-1-nitesh@redhat.com> <20210720232624.1493424-2-nitesh@redhat.com>
+In-Reply-To: <20210720232624.1493424-2-nitesh@redhat.com>
+From:   Ming Lei <ming.lei@redhat.com>
+Date:   Fri, 6 Aug 2021 23:51:58 +0800
+Message-ID: <CAFj5m9+9asdQOCRHb0tZ=XSD-sOj+RLEDVEAObN81Z9y1JcgQg@mail.gmail.com>
+Subject: Re: [PATCH v5 01/14] genirq: Provide new interfaces for affinity hints
+To:     Nitesh Narayan Lal <nitesh@redhat.com>
+Cc:     linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org,
+        intel-wired-lan@lists.osuosl.org, netdev@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-pci@vger.kernel.org,
+        tglx@linutronix.de, jesse.brandeburg@intel.com,
+        Robin Murphy <robin.murphy@arm.com>, mtosatti@redhat.com,
+        mingo@kernel.org, jbrandeb@kernel.org, frederic@kernel.org,
+        juri.lelli@redhat.com, abelits@marvell.com, bhelgaas@google.com,
+        rostedt@goodmis.org, peterz@infradead.org, davem@davemloft.net,
+        akpm@linux-foundation.org, sfr@canb.auug.org.au,
+        stephen@networkplumber.org, rppt@linux.vnet.ibm.com,
+        chris.friesen@windriver.com, maz@kernel.org, nhorman@tuxdriver.com,
+        pjwaskiewicz@gmail.com, sassmann@redhat.com, thenzl@redhat.com,
+        Kashyap Desai <kashyap.desai@broadcom.com>,
+        sumit.saxena@broadcom.com, shivasharan.srikanteshwara@broadcom.com,
+        sathya.prakash@broadcom.com, sreekanth.reddy@broadcom.com,
+        suganath-prabu.subramani@broadcom.com,
+        James Smart <james.smart@broadcom.com>,
+        dick.kennedy@broadcom.com, jkc@redhat.com, faisal.latif@intel.com,
+        shiraz.saleem@intel.com, tariqt@nvidia.com, ahleihel@redhat.com,
+        kheib@redhat.com, borisp@nvidia.com, saeedm@nvidia.com,
+        benve@cisco.com, govind@gmx.com, jassisinghbrar@gmail.com,
+        ajit.khaparde@broadcom.com, sriharsha.basavapatna@broadcom.com,
+        somnath.kotur@broadcom.com, nilal@redhat.com,
+        tatyana.e.nikolova@intel.com, mustafa.ismail@intel.com,
+        ahs3@redhat.com, leonro@nvidia.com,
+        chandrakanth.patil@broadcom.com, bjorn.andersson@linaro.org,
+        chunkuang.hu@kernel.org, yongqiang.niu@mediatek.com,
+        baolin.wang7@gmail.com, poros@redhat.com,
+        Ewan Milne <emilne@redhat.com>, jejb@linux.ibm.com,
+        "Martin K. Petersen" <martin.petersen@oracle.com>, _govind@gmx.com,
+        kabel@kernel.org, viresh.kumar@linaro.org,
+        Tushar.Khandelwal@arm.com, kuba@kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue 03-08-21 13:59:20, Feng Tang wrote:
-> From: Ben Widawsky <ben.widawsky@intel.com>
-> 
-> Implement the missing huge page allocation functionality while obeying
-> the preferred node semantics. This is similar to the implementation
-> for general page allocation, as it uses a fallback mechanism to try
-> multiple preferred nodes first, and then all other nodes.
-> 
-> [akpm: fix compling issue when merging with other hugetlb patch]
-> [Thanks to 0day bot for catching the missing #ifdef CONFIG_NUMA issue]
-> Link: https://lore.kernel.org/r/20200630212517.308045-12-ben.widawsky@intel.com
-> Suggested-by: Michal Hocko <mhocko@suse.com>
-> Signed-off-by: Ben Widawsky <ben.widawsky@intel.com>
-> Co-developed-by: Feng Tang <feng.tang@intel.com>
-> Signed-off-by: Feng Tang <feng.tang@intel.com>
+On Wed, Jul 21, 2021 at 7:26 AM Nitesh Narayan Lal <nitesh@redhat.com> wrote:
+>
+> From: Thomas Gleixner <tglx@linutronix.de>
+>
+> The discussion about removing the side effect of irq_set_affinity_hint() of
+> actually applying the cpumask (if not NULL) as affinity to the interrupt,
+> unearthed a few unpleasantries:
+>
+>   1) The modular perf drivers rely on the current behaviour for the very
+>      wrong reasons.
+>
+>   2) While none of the other drivers prevents user space from changing
+>      the affinity, a cursorily inspection shows that there are at least
+>      expectations in some drivers.
+>
+> #1 needs to be cleaned up anyway, so that's not a problem
+>
+> #2 might result in subtle regressions especially when irqbalanced (which
+>    nowadays ignores the affinity hint) is disabled.
+>
+> Provide new interfaces:
+>
+>   irq_update_affinity_hint()  - Only sets the affinity hint pointer
+>   irq_set_affinity_and_hint() - Set the pointer and apply the affinity to
+>                                 the interrupt
+>
+> Make irq_set_affinity_hint() a wrapper around irq_apply_affinity_hint() and
+> document it to be phased out.
+>
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> Signed-off-by: Nitesh Narayan Lal <nitesh@redhat.com>
+> Link: https://lore.kernel.org/r/20210501021832.743094-1-jesse.brandeburg@intel.com
 
-ifdefery is just ugly as hell. One way to get rid of that would be to
-provide a mpol_is_preferred_many() wrapper and hide the CONFIG_NUMA in
-mempolicy.h. I haven't checked but this might help to remove some other
-ifdefery as well.
+Reviewed-by: Ming Lei <ming.lei@redhat.com>
 
-I especially dislike the label hidden in the ifdef. You can get rid of
-that by checking the page for NULL.
-
-> ---
->  mm/hugetlb.c | 28 ++++++++++++++++++++++++++++
->  1 file changed, 28 insertions(+)
-> 
-> diff --git a/mm/hugetlb.c b/mm/hugetlb.c
-> index 95714fb28150..9279f6d478d9 100644
-> --- a/mm/hugetlb.c
-> +++ b/mm/hugetlb.c
-> @@ -1166,7 +1166,20 @@ static struct page *dequeue_huge_page_vma(struct hstate *h,
->  
->  	gfp_mask = htlb_alloc_mask(h);
->  	nid = huge_node(vma, address, gfp_mask, &mpol, &nodemask);
-> +#ifdef CONFIG_NUMA
-> +	if (mpol->mode == MPOL_PREFERRED_MANY) {
-> +		page = dequeue_huge_page_nodemask(h, gfp_mask, nid, nodemask);
-> +		if (page)
-> +			goto check_reserve;
-> +		/* Fallback to all nodes */
-> +		nodemask = NULL;
-> +	}
-> +#endif
->  	page = dequeue_huge_page_nodemask(h, gfp_mask, nid, nodemask);
-> +
-> +#ifdef CONFIG_NUMA
-> +check_reserve:
-> +#endif
->  	if (page && !avoid_reserve && vma_has_reserves(vma, chg)) {
->  		SetHPageRestoreReserve(page);
->  		h->resv_huge_pages--;
-> @@ -2147,6 +2160,21 @@ struct page *alloc_buddy_huge_page_with_mpol(struct hstate *h,
->  	nodemask_t *nodemask;
->  
->  	nid = huge_node(vma, addr, gfp_mask, &mpol, &nodemask);
-> +#ifdef CONFIG_NUMA
-> +	if (mpol->mode == MPOL_PREFERRED_MANY) {
-> +		gfp_t gfp = gfp_mask | __GFP_NOWARN;
-> +
-> +		gfp &=  ~(__GFP_DIRECT_RECLAIM | __GFP_NOFAIL);
-> +		page = alloc_surplus_huge_page(h, gfp, nid, nodemask, false);
-> +		if (page) {
-> +			mpol_cond_put(mpol);
-> +			return page;
-> +		}
-> +
-> +		/* Fallback to all nodes */
-> +		nodemask = NULL;
-> +	}
-> +#endif
->  	page = alloc_surplus_huge_page(h, gfp_mask, nid, nodemask, false);
->  	mpol_cond_put(mpol);
->  
-> -- 
-> 2.14.1
-
--- 
-Michal Hocko
-SUSE Labs
