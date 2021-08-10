@@ -2,96 +2,96 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.2 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
-	autolearn=ham autolearn_force=no version=3.4.0
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 05013C4338F
-	for <linux-api@archiver.kernel.org>; Tue, 10 Aug 2021 11:33:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 04AE3C4338F
+	for <linux-api@archiver.kernel.org>; Tue, 10 Aug 2021 14:12:58 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D37F560EC0
-	for <linux-api@archiver.kernel.org>; Tue, 10 Aug 2021 11:33:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D799460F94
+	for <linux-api@archiver.kernel.org>; Tue, 10 Aug 2021 14:12:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238353AbhHJLeN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 10 Aug 2021 07:34:13 -0400
-Received: from smtp-out2.suse.de ([195.135.220.29]:34604 "EHLO
-        smtp-out2.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237365AbhHJLeM (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 10 Aug 2021 07:34:12 -0400
-Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
-        by smtp-out2.suse.de (Postfix) with ESMTP id 83AB92009E;
-        Tue, 10 Aug 2021 11:33:49 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-        t=1628595229; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
+        id S237799AbhHJONS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 10 Aug 2021 10:13:18 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60458 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S240580AbhHJONS (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 10 Aug 2021 10:13:18 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id ECEBFC0613C1;
+        Tue, 10 Aug 2021 07:12:55 -0700 (PDT)
+From:   Thomas Gleixner <tglx@linutronix.de>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1628604774;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=aGHQoxFgLxzrAyVEvKxaCUt+s4AACK8ClH0C6z1y2uQ=;
-        b=pH0mWjcf96HRpsrC0a3PRfKNZs7kdyxtskfolLcI6rf9pr+zfzBfIz9plCDNYwGkcYnswp
-        ks9Tft/MSU7VIQTSAFn27rgeZtGYll2jna2JfyFUdXTKtE0ejTfkdYnL/2skVPYErK0+Ev
-        wyoarCd5/DZqId/b2VdC5s/X4NoCij8=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-        s=susede2_ed25519; t=1628595229;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
+        bh=TiJmA3POi9FctASNMfUPbhLh0CEUmHRjBKpCXOyY61A=;
+        b=xw6VoRMG1YZcz3aozL3rahY9dAgQCn2l2vSKWQ7AJbhWgF1WEQElAieDb5A4aNl7402Qsz
+        18wBjGzofgKkIqVGF+Am6JDlxKcY14fJ3VnQ7kCgJ/LW5gmusLivzK/5hG4ULV1FCkbt32
+        ASnzYiElDNcoKLgD5q2H3d3Ikg1jC2+5R0TKlTcc1vHHCD1QCr/MduHydq3d01zGmQP+ml
+        UprbxgVqN/3BuDNKcJNe3ICWt4W27vwS1AJ7rptufqF+2dXIm5bfE0QsnPIXt/os19v67K
+        FSFbIsYZDqDc6z8mH42Q/O0UpznkQmgwfK66EF8aptdUuausjNFyFXHySKiPXg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1628604774;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=aGHQoxFgLxzrAyVEvKxaCUt+s4AACK8ClH0C6z1y2uQ=;
-        b=8OTIdUaUUGFf7+DABViXEEcLQx9Q1vS7HVep007te9+/iNfhrMPajU+ElZb4MN9mH6ZfG8
-        Mi3WcL/hc4FeUMAA==
-Received: from quack2.suse.cz (unknown [10.100.224.230])
-        by relay2.suse.de (Postfix) with ESMTP id 5192FA3BAF;
-        Tue, 10 Aug 2021 11:33:49 +0000 (UTC)
-Received: by quack2.suse.cz (Postfix, from userid 1000)
-        id F19F41F2AC2; Tue, 10 Aug 2021 13:33:48 +0200 (CEST)
-Date:   Tue, 10 Aug 2021 13:33:48 +0200
-From:   Jan Kara <jack@suse.cz>
-To:     Matthew Bobrowski <repnop@google.com>
-Cc:     jack@suse.cz, amir73il@gmail.com, christian.brauner@ubuntu.com,
-        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: Re: [PATCH v4 0/5] Add pidfd support to the fanotify API
-Message-ID: <20210810113348.GE18722@quack2.suse.cz>
-References: <cover.1628398044.git.repnop@google.com>
+        bh=TiJmA3POi9FctASNMfUPbhLh0CEUmHRjBKpCXOyY61A=;
+        b=GQvIEL30+f0CmUBjLBwLCPb4AcR0xsmoX9poarHYh0pPPFV7tZGOlFa5JPgHk3z0qSKufX
+        HAUHoYCIkXRo0NDA==
+To:     Shung-Hsi Yu <shung-hsi.yu@suse.com>, linux-kernel@vger.kernel.org,
+        linux-api@vger.kernel.org, netdev@vger.kernel.org,
+        linux-pci@vger.kernel.org
+Cc:     Peter Zijlstra <peterz@infradead.org>,
+        Jesse Brandeburg <jesse.brandeburg@intel.com>,
+        Nitesh Lal <nilal@redhat.com>
+Subject: Re: [RFC] genirq: Add effective CPU index retrieving interface
+In-Reply-To: <YL3LrgAzMNI2hp5i@syu-laptop>
+References: <YL3LrgAzMNI2hp5i@syu-laptop>
+Date:   Tue, 10 Aug 2021 16:12:53 +0200
+Message-ID: <874kbxs80q.ffs@tglx>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <cover.1628398044.git.repnop@google.com>
-User-Agent: Mutt/1.10.1 (2018-07-13)
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hello Matthew!
+On Mon, Jun 07 2021 at 15:33, Shung-Hsi Yu wrote:
+> Most driver's IRQ spreading scheme is naive compared to the IRQ spreading
+> scheme introduced since IRQ subsystem rework, so it better to rely
+> request_irq() to spread IRQ out.
+>
+> However, drivers that care about performance enough also tends to try
+> allocating memory on the same NUMA node on which the IRQ handler will run.
+> For such driver to rely on request_irq() for IRQ spreading, we also need to
+> provide an interface to retrieve the CPU index after calling
+> request_irq().
 
-On Sun 08-08-21 15:23:59, Matthew Bobrowski wrote:
-> This is V5 of the FAN_REPORT_PIDFD patch series. It contains the minor
-> comment/commit description fixes that were picked up by Amir in the
-> last series review [0, 1].
-> 
-> LTP tests for this API change can be found here [2]. Man page updates
-> for this change can be found here [3].
-> 
-> [0] https://lore.kernel.org/linux-fsdevel/CAOQ4uxhnCk+FXK_e_GA=jC_0HWO+3ZdwHSi=zCa2Kpb0NDxBSg@mail.gmail.com/
-> [1] https://lore.kernel.org/linux-fsdevel/CAOQ4uxgO3oViTSFZ0zs6brrHrmw362r1C9SQ7g6=XgRwyrzMuw@mail.gmail.com/
-> [2] https://github.com/matthewbobrowski/ltp/tree/fanotify_pidfd_v2
-> [3] https://github.com/matthewbobrowski/man-pages/tree/fanotify_pidfd_v1
-> 
-> Matthew Bobrowski (5):
->   kernel/pid.c: remove static qualifier from pidfd_create()
->   kernel/pid.c: implement additional checks upon pidfd_create()
->     parameters
->   fanotify: minor cosmetic adjustments to fid labels
->   fanotify: introduce a generic info record copying helper
->   fanotify: add pidfd support to the fanotify API
+So if you are interested in the resulting NUMA node, then why exposing a
+random CPU out of the affinity mask instead of exposing a function to
+retrieve the NUMA node?
+  
+> +/**
+> + * irq_get_effective_cpu - Retrieve the effective CPU index
+> + * @irq:	Target interrupt to retrieve effective CPU index
+> + *
+> + * When the effective affinity cpumask has multiple CPU toggled, it just
+> + * returns the first CPU in the cpumask.
+> + */
+> +int irq_get_effective_cpu(unsigned int irq)
+> +{
+> +	struct irq_data *data = irq_get_irq_data(irq);
 
-Thanks! I've pulled the series into my tree. Note that your fanotify21 LTP
-testcase is broken with the current kernel because 'ino' entry got added to
-fdinfo. I think having to understand all possible keys that can occur in
-fdinfo is too fragile. I understand why you want to do that but I guess the
-test would be too faulty to be practical. So I'd just ignore unknown keys
-in fdinfo for that test.
+This can be NULL.
 
-								Honza
+> +	struct cpumask *m;
+> +
+> +	m = irq_data_get_effective_affinity_mask(data);
+> +	return cpumask_first(m);
+> +}
 
--- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+Thanks,
+
+        tglx
