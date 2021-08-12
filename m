@@ -2,73 +2,35 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7945EC4338F
-	for <linux-api@archiver.kernel.org>; Thu, 12 Aug 2021 18:21:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9327FC4338F
+	for <linux-api@archiver.kernel.org>; Thu, 12 Aug 2021 18:47:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 535FD61077
-	for <linux-api@archiver.kernel.org>; Thu, 12 Aug 2021 18:21:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7BDA76104F
+	for <linux-api@archiver.kernel.org>; Thu, 12 Aug 2021 18:47:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232800AbhHLSWQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 12 Aug 2021 14:22:16 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46274 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232063AbhHLSWQ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 12 Aug 2021 14:22:16 -0400
-Received: from mail-lj1-x22c.google.com (mail-lj1-x22c.google.com [IPv6:2a00:1450:4864:20::22c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 58BD2C061756
-        for <linux-api@vger.kernel.org>; Thu, 12 Aug 2021 11:21:50 -0700 (PDT)
-Received: by mail-lj1-x22c.google.com with SMTP id h2so11850042lji.6
-        for <linux-api@vger.kernel.org>; Thu, 12 Aug 2021 11:21:50 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linux-foundation.org; s=google;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=IkXJUR2wo/lfdijzxf9i2+gB15K2x3AMKk03NvuHrAg=;
-        b=DgletMF3GIx03R+Prc+kYYByk45jic0DRscnKADZUoHI1P+YyPtvtoPTQ7QnJ7IPQd
-         SXOSwOUdkx2aiZaMFMOp1dhadasdgIRxU7GtFMCT7AGdEYsSqpb/znDsiIrZCbOQNfg4
-         VzUm5rt2KFFchQnCpyiuGLbfU1kLNH4SQV4x0=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=IkXJUR2wo/lfdijzxf9i2+gB15K2x3AMKk03NvuHrAg=;
-        b=mS/iu+W0uXXSxsRZWxqiJb8lCNcSqYe22ewo+pJemFSih+8QImknmskohkuNytgwkM
-         fOIIqaRf6r0J31kn/sKd/rRtKFzHe2UGmq/4MwkQrtwG100xpwY4+1C2b9i65kjTKNzQ
-         zGV/lzLLTrEb12VuD+gxcNsegWNvsEgcMFlIavR7BFT5WLOd8DI8QoOZTb8mADU8k7dN
-         4F6Tnulgd9VE1HWTNPPW8SBpuDQcU8syjS8fn/XSdY3NRfglXRL94cKD1UrQDMwsj1vl
-         XmxKxfprcRMXzc5BqNoYXy6TceUDru7N8eWCeJWJxsOyLusvgGFzEKSyODbLdnApBAHb
-         5Ezw==
-X-Gm-Message-State: AOAM533cLj4MCAa93yKyKKlD93SuBzXSYN+9YcojtbSQLlL04BlfoU/W
-        w95D5dS1KUKqJiYTDxYCL6WTHXX9XgnMtIShTjY=
-X-Google-Smtp-Source: ABdhPJwgHChE//Tq7mI1SAwkDtvK5vN7gnawv1YAe3a2AiTA5zF0b6SfboTKs8FI8uRo85WXk2wqTw==
-X-Received: by 2002:a2e:a5c6:: with SMTP id n6mr3877704ljp.204.1628792508597;
-        Thu, 12 Aug 2021 11:21:48 -0700 (PDT)
-Received: from mail-lj1-f178.google.com (mail-lj1-f178.google.com. [209.85.208.178])
-        by smtp.gmail.com with ESMTPSA id f12sm330378lft.294.2021.08.12.11.21.47
-        for <linux-api@vger.kernel.org>
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 12 Aug 2021 11:21:47 -0700 (PDT)
-Received: by mail-lj1-f178.google.com with SMTP id h9so11820335ljq.8
-        for <linux-api@vger.kernel.org>; Thu, 12 Aug 2021 11:21:47 -0700 (PDT)
-X-Received: by 2002:a2e:944c:: with SMTP id o12mr3785844ljh.411.1628792497006;
- Thu, 12 Aug 2021 11:21:37 -0700 (PDT)
-MIME-Version: 1.0
-References: <20210812084348.6521-1-david@redhat.com> <87o8a2d0wf.fsf@disp2133>
- <60db2e61-6b00-44fa-b718-e4361fcc238c@www.fastmail.com> <87lf56bllc.fsf@disp2133>
- <87lf56edgz.fsf@oldenburg.str.redhat.com>
-In-Reply-To: <87lf56edgz.fsf@oldenburg.str.redhat.com>
-From:   Linus Torvalds <torvalds@linux-foundation.org>
-Date:   Thu, 12 Aug 2021 08:21:20 -1000
-X-Gmail-Original-Message-ID: <CAHk-=wifW=eDZdOdydRTmupzzJj=6A+Z5dLFrjM3Hfmxj6DfyA@mail.gmail.com>
-Message-ID: <CAHk-=wifW=eDZdOdydRTmupzzJj=6A+Z5dLFrjM3Hfmxj6DfyA@mail.gmail.com>
-Subject: Re: [PATCH v1 0/7] Remove in-tree usage of MAP_DENYWRITE
-To:     Florian Weimer <fweimer@redhat.com>
-Cc:     "Eric W. Biederman" <ebiederm@xmission.com>,
-        Andy Lutomirski <luto@kernel.org>,
+        id S229821AbhHLSsQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 12 Aug 2021 14:48:16 -0400
+Received: from out03.mta.xmission.com ([166.70.13.233]:35356 "EHLO
+        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229648AbhHLSsP (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 12 Aug 2021 14:48:15 -0400
+Received: from in02.mta.xmission.com ([166.70.13.52]:49668)
+        by out03.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1mEFjy-00CfWJ-Ec; Thu, 12 Aug 2021 12:47:42 -0600
+Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95]:44640 helo=email.xmission.com)
+        by in02.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1mEFjx-00BaoL-09; Thu, 12 Aug 2021 12:47:42 -0600
+From:   ebiederm@xmission.com (Eric W. Biederman)
+To:     Linus Torvalds <torvalds@linux-foundation.org>
+Cc:     Andy Lutomirski <luto@kernel.org>,
         David Hildenbrand <david@redhat.com>,
         Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
         Andrew Morton <akpm@linux-foundation.org>,
@@ -78,7 +40,7 @@ Cc:     "Eric W. Biederman" <ebiederm@xmission.com>,
         Al Viro <viro@zeniv.linux.org.uk>,
         Alexey Dobriyan <adobriyan@gmail.com>,
         Steven Rostedt <rostedt@goodmis.org>,
-        "Peter Zijlstra (Intel)" <peterz@infradead.org>,
+        "Peter Zijlstra \(Intel\)" <peterz@infradead.org>,
         Arnaldo Carvalho de Melo <acme@kernel.org>,
         Mark Rutland <mark.rutland@arm.com>,
         Alexander Shishkin <alexander.shishkin@linux.intel.com>,
@@ -97,7 +59,7 @@ Cc:     "Eric W. Biederman" <ebiederm@xmission.com>,
         Chinwen Chang <chinwen.chang@mediatek.com>,
         Michel Lespinasse <walken@google.com>,
         Catalin Marinas <catalin.marinas@arm.com>,
-        "Matthew Wilcox (Oracle)" <willy@infradead.org>,
+        "Matthew Wilcox \(Oracle\)" <willy@infradead.org>,
         Huang Ying <ying.huang@intel.com>,
         Jann Horn <jannh@google.com>, Feng Tang <feng.tang@intel.com>,
         Kevin Brodsky <Kevin.Brodsky@arm.com>,
@@ -119,31 +81,113 @@ Cc:     "Eric W. Biederman" <ebiederm@xmission.com>,
         Michal Hocko <mhocko@suse.com>,
         Miklos Szeredi <miklos@szeredi.hu>,
         Chengguang Xu <cgxu519@mykernel.net>,
-        =?UTF-8?Q?Christian_K=C3=B6nig?= <ckoenig.leichtzumerken@gmail.com>,
-        linux-unionfs@vger.kernel.org,
+        Christian =?utf-8?Q?K=C3=B6nig?= 
+        <ckoenig.leichtzumerken@gmail.com>, linux-unionfs@vger.kernel.org,
         Linux API <linux-api@vger.kernel.org>,
-        "the arch/x86 maintainers" <x86@kernel.org>,
+        "the arch\/x86 maintainers" <x86@kernel.org>,
         linux-fsdevel <linux-fsdevel@vger.kernel.org>,
         Linux-MM <linux-mm@kvack.org>
-Content-Type: text/plain; charset="UTF-8"
+References: <20210812084348.6521-1-david@redhat.com> <87o8a2d0wf.fsf@disp2133>
+        <60db2e61-6b00-44fa-b718-e4361fcc238c@www.fastmail.com>
+        <87lf56bllc.fsf@disp2133>
+        <CAHk-=wgru1UAm3kAKSOdnbewPXQMOxYkq9PnAsRadAC6pXCCMQ@mail.gmail.com>
+Date:   Thu, 12 Aug 2021 13:47:02 -0500
+In-Reply-To: <CAHk-=wgru1UAm3kAKSOdnbewPXQMOxYkq9PnAsRadAC6pXCCMQ@mail.gmail.com>
+        (Linus Torvalds's message of "Thu, 12 Aug 2021 08:10:28 -1000")
+Message-ID: <87eeay8pqx.fsf@disp2133>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
+MIME-Version: 1.0
+Content-Type: text/plain
+X-XM-SPF: eid=1mEFjx-00BaoL-09;;;mid=<87eeay8pqx.fsf@disp2133>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1/+xgQs/isxhAMff4xgeqSG4YWINDOzo/I=
+X-SA-Exim-Connect-IP: 68.227.160.95
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: Re: [PATCH v1 0/7] Remove in-tree usage of MAP_DENYWRITE
+X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
+X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Aug 12, 2021 at 8:16 AM Florian Weimer <fweimer@redhat.com> wrote:
+Linus Torvalds <torvalds@linux-foundation.org> writes:
+
+> On Thu, Aug 12, 2021 at 7:48 AM Eric W. Biederman <ebiederm@xmission.com> wrote:
+>>
+>> Given that MAP_PRIVATE for shared libraries is our strategy for handling
+>> writes to shared libraries perhaps we just need to use MAP_POPULATE or a
+>> new related flag (perhaps MAP_PRIVATE_NOW)
 >
-> I think this is called MAP_COPY:
+> No. That would be horrible for the usual bloated GUI libraries. It
+> might help some (dynamic page faults are not cheap either), but it
+> would hurt a lot.
+
+I wasn't aiming so much at the MAP_POPULATE part but something that
+would trigger cow from writes to the file.  I see code that is close but
+I don't see any code in the kernel that would implement that currently.
+
+Upon reflection I think it will always be difficult to trigger cow from
+the file write side of the kernel as code that would cow the page in
+the page cache would cause problems with writable mmaps.
+
+> This is definitely a "if you overwrite a system library while it's
+> being used, you get to keep both pieces" situation.
 >
->   <https://www.gnu.org/software/hurd/glibc/mmap.html>
+> The kernel ETXTBUSY thing is purely a courtesy feature, and as people
+> have noticed it only really works for the main executable because of
+> various reasons. It's not something user space should even rely on,
+> it's more of a "ok, you're doing something incredibly stupid, and
+> we'll help you avoid shooting yourself in the foot when we notice".
+>
+> Any distro should make sure their upgrade tools don't just
+> truncate/write to random libraries executables.
 
-Please don't even consider the crazy notions that GNU Hurd did.
+Yes.  I am trying to come up with advice on how userspace
+implementations can implement their tools to use other mechanisms that
+solve the overwriting shared libaries and executables problem that
+are not broken by design.
 
-It's a fundamental design mistake. The Hurd VM was horrendous, and
-MAP_COPY was a prime example of the kinds of horrors it had.
+For a little bit the way Florian Weirmer was talking and the fact that
+uselib uses MAP_PRIVATE had me thinking that somehow MAP_PRIVATE could
+be part of the solution.  I have now looked into the implementation of
+MAP_PRIVATE and I since we don't perform the cow on filesystem writes
+MAP_PRIVATE absolutely can not be part of the solution we recommend to
+userspace.
 
-I'm not sure how much of the mis-designs were due to Hurd, and how
-much of it due to Mach 3. But please don't point to Hurd VM
-documentation except possibly to warn people. We want people to
-_forget_ those mistakes, not repeat them.
+So today the best advice I can give to userspace is to mark their
+executables and shared libraries as read-only and immutable.  Otherwise
+a change to the executable file can change what is mapped into memory.
+MAP_PRIVATE does not help.
 
-          Linus
+> And if they do, it's really not a kernel issue.
+
+What is a kernel issue is giving people good advice on how to use kernel
+features to solve real world problems.  I have seen the write to a
+mapped exectuable/shared lib problem, and Florian has seen it.  So while
+rare the problem is real and a pain to debug.
+
+> This patch series basically takes this very historical error return,
+> and simplifies and clarifies the implementation, and in the process
+> might change some very subtle corner case (unmapping the original
+> executable entirely?). I hope (and think) it wouldn't matter exactly
+> because this is a "courtesy error" rather than anything that a sane
+> setup would _depend_ on, but hey, insane setups clearly exist.
+
+Oh yes.
+
+I very much agree that the design of this patchset is perfectly fine.
+
+I also see that MAP_DENYWRITE is unfortunately broken by design.  I
+vaguely remember the discussion when MAP_DENYWRITE was made a noop
+because of the denial-of-service aspect of MAP_DENYWRITE.
+
+I very much agree that we should strongly encourage userspace not
+to write to mmaped files.
+
+As I am learning with my two year old, it helps to give a constructive
+suggestion of alternative behavior instead of just saying no.
+Florian reported that there remains a problem in userspace. So I am
+coming up with a constructive suggestion.  My apologies for going off
+into the weeds for a moment.
+
+Eric
+
