@@ -2,70 +2,48 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 033D8C4338F
-	for <linux-api@archiver.kernel.org>; Thu, 12 Aug 2021 18:02:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A1EC4C4338F
+	for <linux-api@archiver.kernel.org>; Thu, 12 Aug 2021 18:16:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D2EE261019
-	for <linux-api@archiver.kernel.org>; Thu, 12 Aug 2021 18:02:11 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7C1256103A
+	for <linux-api@archiver.kernel.org>; Thu, 12 Aug 2021 18:16:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236059AbhHLSCd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 12 Aug 2021 14:02:33 -0400
-Received: from mail.kernel.org ([198.145.29.99]:58740 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S235453AbhHLSCb (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 12 Aug 2021 14:02:31 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPSA id E8CE960FED;
-        Thu, 12 Aug 2021 18:02:04 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1628791325;
-        bh=SHuQM+8f293Vwgu1Bf0Mq+SZ5B7X8I7/R4G6PeUiInk=;
-        h=In-Reply-To:References:Date:From:To:Cc:Subject:From;
-        b=V3vwAR50GFwnBdbOarqwagm6WuhzDnUThFl/bYs0aCl4BkOVABJU10aoQdVYLBjzP
-         Fou+e6DvAnpAX44FAhDd03cxzdlPWs1XCsGLsX5lUVmMa4jrhTa7T1514dd6n2IGzC
-         XOvSqL9L6N8q0ayOLd/5PyU2vpeItvrJsTl0r+G8uGECXlYOWMg09kERbT5Q8UxLGu
-         ES+aVcZgdXozhIs+hjZ857vWXMxTS9nPggXKtJXpMEoNsESuCoBNHQYxbxAE5UtTOO
-         V8WSqo+Y7y81KBbyMfsY84knZ1/HYAQnjwJdnplM4PUrfpZjls5FYJzy0SFVAiOZtN
-         m4xU5dDmF6qbQ==
-Received: from compute6.internal (compute6.nyi.internal [10.202.2.46])
-        by mailauth.nyi.internal (Postfix) with ESMTP id 1862527C0054;
-        Thu, 12 Aug 2021 14:02:04 -0400 (EDT)
-Received: from imap2 ([10.202.2.52])
-  by compute6.internal (MEProxy); Thu, 12 Aug 2021 14:02:04 -0400
-X-ME-Sender: <xms:GmIVYVzYYgvfcvfNB0VCsfDlOZxnCO77cAVASZJTxZ3qGDaheD686g>
-    <xme:GmIVYVTjPiy6o8ZKVjcZlENb1sgoyVs-lHjb4WqJYkNQI8qtyeEqSbjvcXnStnBoL
-    oAptp5foCrM8m47MqE>
-X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvtddrkeefgdduudelucetufdoteggodetrfdotf
-    fvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdfqfgfvpdfurfetoffkrfgpnffqhgen
-    uceurghilhhouhhtmecufedttdenucesvcftvggtihhpihgvnhhtshculddquddttddmne
-    cujfgurhepofgfggfkjghffffhvffutgesthdtredtreertdenucfhrhhomhepfdetnhgu
-    hicunfhuthhomhhirhhskhhifdcuoehluhhtoheskhgvrhhnvghlrdhorhhgqeenucggtf
-    frrghtthgvrhhnpedthfehtedtvdetvdetudfgueeuhfdtudegvdelveelfedvteelfffg
-    fedvkeegfeenucevlhhushhtvghrufhiiigvpedtnecurfgrrhgrmhepmhgrihhlfhhroh
-    hmpegrnhguhidomhgvshhmthhprghuthhhphgvrhhsohhnrghlihhthidqudduiedukeeh
-    ieefvddqvdeifeduieeitdekqdhluhhtoheppehkvghrnhgvlhdrohhrgheslhhinhhugi
-    drlhhuthhordhush
-X-ME-Proxy: <xmx:GmIVYfWa1LdQSMmC0ycsXX_oKXx-UfeqHSKifJDScJ5D9TLPNYKx9A>
-    <xmx:GmIVYXiEfd0PNUBWEmGnpcU9AUJkxBaImjzwOQ2hooQ8S3JQxId-AA>
-    <xmx:GmIVYXD7WH4b1FflQJJymrhLD0KZTimFwbJ44wwcilKFCw7j4Aqz-g>
-    <xmx:HGIVYZDqNy7RP2OYJ2Y-oR6lM2S547b3fbPLPc4iC67aYL4Ajobz6A>
-Received: by mailuser.nyi.internal (Postfix, from userid 501)
-        id 1614CA038A7; Thu, 12 Aug 2021 14:02:02 -0400 (EDT)
-X-Mailer: MessagingEngine.com Webmail Interface
-User-Agent: Cyrus-JMAP/3.5.0-alpha0-554-g53a5f93b7d-fm-20210809.002-g53a5f93b
-Mime-Version: 1.0
-Message-Id: <9fed831a-b311-4a23-8f3a-eb7ddff9b102@www.fastmail.com>
-In-Reply-To: <87lf56bllc.fsf@disp2133>
-References: <20210812084348.6521-1-david@redhat.com> <87o8a2d0wf.fsf@disp2133>
- <60db2e61-6b00-44fa-b718-e4361fcc238c@www.fastmail.com>
- <87lf56bllc.fsf@disp2133>
-Date:   Thu, 12 Aug 2021 11:01:36 -0700
-From:   "Andy Lutomirski" <luto@kernel.org>
-To:     "Eric W. Biederman" <ebiederm@xmission.com>
-Cc:     "David Hildenbrand" <david@redhat.com>,
+        id S237464AbhHLSQb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 12 Aug 2021 14:16:31 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:48373 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S236984AbhHLSQb (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 12 Aug 2021 14:16:31 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1628792165;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=S+E4q/M54NKHA7t+0+yZiG5e1rXRHCWENhzfTmuDkeE=;
+        b=EcbWKQGf9e0LexLu83WWLma+sJ5qn9WKcE+zoHcRfip06dYtvrfW0ccwsquYkDIxuefCvN
+        0ZFZDhCwyqQcKt8CsrSiuQIa83cMfPkQITuLC/r9jXSho1MK1fVUU7TPmm1FJ5DhnGvE34
+        fWQtv5VGwS7kQJoEgFbtyp5oYsgfoSA=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-410-gDhWt0HiO3W_TydA5ZQu8w-1; Thu, 12 Aug 2021 14:16:04 -0400
+X-MC-Unique: gDhWt0HiO3W_TydA5ZQu8w-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3A87080124F;
+        Thu, 12 Aug 2021 18:16:03 +0000 (UTC)
+Received: from oldenburg.str.redhat.com (unknown [10.39.194.2])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id BB15D1017CE5;
+        Thu, 12 Aug 2021 18:15:42 +0000 (UTC)
+From:   Florian Weimer <fweimer@redhat.com>
+To:     ebiederm@xmission.com (Eric W. Biederman)
+Cc:     "Andy Lutomirski" <luto@kernel.org>,
+        "David Hildenbrand" <david@redhat.com>,
         "Linux Kernel Mailing List" <linux-kernel@vger.kernel.org>,
         "Linus Torvalds" <torvalds@linux-foundation.org>,
         "Andrew Morton" <akpm@linux-foundation.org>,
@@ -116,39 +94,53 @@ Cc:     "David Hildenbrand" <david@redhat.com>,
         "Michal Hocko" <mhocko@suse.com>,
         "Miklos Szeredi" <miklos@szeredi.hu>,
         "Chengguang Xu" <cgxu519@mykernel.net>,
-        =?UTF-8?Q?Christian_K=C3=B6nig?= <ckoenig.leichtzumerken@gmail.com>,
-        linux-unionfs@vger.kernel.org,
+        Christian =?utf-8?Q?K=C3=B6nig?= 
+        <ckoenig.leichtzumerken@gmail.com>, linux-unionfs@vger.kernel.org,
         "Linux API" <linux-api@vger.kernel.org>,
         "the arch/x86 maintainers" <x86@kernel.org>,
         linux-fsdevel@vger.kernel.org, linux-mm@kvack.org
 Subject: Re: [PATCH v1 0/7] Remove in-tree usage of MAP_DENYWRITE
+References: <20210812084348.6521-1-david@redhat.com> <87o8a2d0wf.fsf@disp2133>
+        <60db2e61-6b00-44fa-b718-e4361fcc238c@www.fastmail.com>
+        <87lf56bllc.fsf@disp2133>
+Date:   Thu, 12 Aug 2021 20:15:40 +0200
+In-Reply-To: <87lf56bllc.fsf@disp2133> (Eric W. Biederman's message of "Thu,
+        12 Aug 2021 12:48:31 -0500")
+Message-ID: <87lf56edgz.fsf@oldenburg.str.redhat.com>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.2 (gnu/linux)
+MIME-Version: 1.0
 Content-Type: text/plain
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+* Eric W. Biederman:
 
-
-On Thu, Aug 12, 2021, at 10:48 AM, Eric W. Biederman wrote:
-> "Andy Lutomirski" <luto@kernel.org> writes:
-
-> I had a blind spot, and Florian Weimer made a very reasonable request.
-> Apparently userspace for shared libraires uses MAP_PRIVATE.
-> 
-> So we almost don't care if the library is overwritten.  We loose some
-> efficiency and apparently there are some corner cases like the library
-> being extended past the end of the exiting file that are problematic.
-> 
 > Given that MAP_PRIVATE for shared libraries is our strategy for handling
 > writes to shared libraries perhaps we just need to use MAP_POPULATE or a
 > new related flag (perhaps MAP_PRIVATE_NOW) that just makes certain that
 > everything mapped from the executable is guaranteed to be visible from
 > the time of the mmap, and any changes from the filesystem side after
 > that are guaranteed to cause a copy on write.
-> 
-> Once we get that figured out we could consider getting rid of deny-write
-> entirely.
 
-Are all of the CoW bits in good enough shape for this to work without just immediately CoWing the whole file?  In principle, write(2) to a file should be able to notice that it needs to CoW some pages, but I doubt that this actually works.
+I think this is called MAP_COPY:
 
---Andy
+  <https://www.gnu.org/software/hurd/glibc/mmap.html>
+
+If we could get that functionality, we would certainly use it in the
+glibc dynamic loader.  And it's not just dynamic loaders that would
+benefit.
+
+But I assume there are some rather thorny issues around semantics.  If
+the changed areas of the file are in the page cache already, everything
+is okay.  But if parts of the file are changed or discarded that are
+not, they would have to be read in first, which is rather awkward.
+
+That's why I suggested the signal for all future accesses.  It seems
+more tractable and addresses the largest issue (the difficulty of
+figuring out why some processes crash occasionally).
+
+Thanks,
+Florian
+
