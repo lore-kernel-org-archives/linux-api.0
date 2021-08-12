@@ -7,21 +7,24 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,URIBL_BLOCKED,
 	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 21425C43216
-	for <linux-api@archiver.kernel.org>; Thu, 12 Aug 2021 21:40:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 09E6FC4338F
+	for <linux-api@archiver.kernel.org>; Thu, 12 Aug 2021 21:40:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0997F610A4
-	for <linux-api@archiver.kernel.org>; Thu, 12 Aug 2021 21:40:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E461960EB2
+	for <linux-api@archiver.kernel.org>; Thu, 12 Aug 2021 21:40:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237478AbhHLVlR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 12 Aug 2021 17:41:17 -0400
-Received: from bhuna.collabora.co.uk ([46.235.227.227]:45696 "EHLO
-        bhuna.collabora.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237425AbhHLVlR (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 12 Aug 2021 17:41:17 -0400
+        id S237425AbhHLVlV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 12 Aug 2021 17:41:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35368 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S237705AbhHLVlV (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 12 Aug 2021 17:41:21 -0400
+Received: from bhuna.collabora.co.uk (bhuna.collabora.co.uk [IPv6:2a00:1098:0:82:1000:25:2eeb:e3e3])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B01FFC061756;
+        Thu, 12 Aug 2021 14:40:55 -0700 (PDT)
 Received: from [127.0.0.1] (localhost [127.0.0.1])
         (Authenticated sender: krisman)
-        with ESMTPSA id 043B31F44207
+        with ESMTPSA id 5E80B1F44207
 From:   Gabriel Krisman Bertazi <krisman@collabora.com>
 To:     amir73il@gmail.com, jack@suse.com
 Cc:     linux-api@vger.kernel.org, linux-ext4@vger.kernel.org,
@@ -30,9 +33,9 @@ Cc:     linux-api@vger.kernel.org, linux-ext4@vger.kernel.org,
         djwong@kernel.org, repnop@google.com,
         Gabriel Krisman Bertazi <krisman@collabora.com>,
         kernel@collabora.com, Jan Kara <jack@suse.cz>
-Subject: [PATCH v6 06/21] inotify: Don't force FS_IN_IGNORED
-Date:   Thu, 12 Aug 2021 17:39:55 -0400
-Message-Id: <20210812214010.3197279-7-krisman@collabora.com>
+Subject: [PATCH v6 07/21] fsnotify: Add helper to detect overflow_event
+Date:   Thu, 12 Aug 2021 17:39:56 -0400
+Message-Id: <20210812214010.3197279-8-krisman@collabora.com>
 X-Mailer: git-send-email 2.32.0
 In-Reply-To: <20210812214010.3197279-1-krisman@collabora.com>
 References: <20210812214010.3197279-1-krisman@collabora.com>
@@ -42,42 +45,48 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-According to Amir:
-
-"FS_IN_IGNORED is completely internal to inotify and there is no need
-to set it in i_fsnotify_mask at all, so if we remove the bit from the
-output of inotify_arg_to_mask() no functionality will change and we will
-be able to overload the event bit for FS_ERROR."
-
-This is done in preparation to overload FS_ERROR with the notification
-mechanism in fanotify.
+Similarly to fanotify_is_perm_event and friends, provide a helper
+predicate to say whether a mask is of an overflow event.
 
 Suggested-by: Amir Goldstein <amir73il@gmail.com>
 Reviewed-by: Amir Goldstein <amir73il@gmail.com>
 Reviewed-by: Jan Kara <jack@suse.cz>
 Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
 ---
- fs/notify/inotify/inotify_user.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ fs/notify/fanotify/fanotify.h    | 3 ++-
+ include/linux/fsnotify_backend.h | 5 +++++
+ 2 files changed, 7 insertions(+), 1 deletion(-)
 
-diff --git a/fs/notify/inotify/inotify_user.c b/fs/notify/inotify/inotify_user.c
-index 98f61b31745a..4d17be6dd58d 100644
---- a/fs/notify/inotify/inotify_user.c
-+++ b/fs/notify/inotify/inotify_user.c
-@@ -89,10 +89,10 @@ static inline __u32 inotify_arg_to_mask(struct inode *inode, u32 arg)
- 	__u32 mask;
+diff --git a/fs/notify/fanotify/fanotify.h b/fs/notify/fanotify/fanotify.h
+index 3b11dd03df59..b3ab620822c2 100644
+--- a/fs/notify/fanotify/fanotify.h
++++ b/fs/notify/fanotify/fanotify.h
+@@ -335,7 +335,8 @@ static inline struct path *fanotify_event_path(struct fanotify_event *event)
+  */
+ static inline bool fanotify_is_hashed_event(u32 mask)
+ {
+-	return !fanotify_is_perm_event(mask) && !(mask & FS_Q_OVERFLOW);
++	return !(fanotify_is_perm_event(mask) ||
++		 fsnotify_is_overflow_event(mask));
+ }
  
- 	/*
--	 * Everything should accept their own ignored and should receive events
--	 * when the inode is unmounted.  All directories care about children.
-+	 * Everything should receive events when the inode is unmounted.
-+	 * All directories care about children.
- 	 */
--	mask = (FS_IN_IGNORED | FS_UNMOUNT);
-+	mask = (FS_UNMOUNT);
- 	if (S_ISDIR(inode->i_mode))
- 		mask |= FS_EVENT_ON_CHILD;
+ static inline unsigned int fanotify_event_hash_bucket(
+diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
+index ae1bd9f06808..cb75fb6d130a 100644
+--- a/include/linux/fsnotify_backend.h
++++ b/include/linux/fsnotify_backend.h
+@@ -506,6 +506,11 @@ static inline void fsnotify_queue_overflow(struct fsnotify_group *group)
+ 	fsnotify_add_event(group, group->overflow_event, NULL, NULL);
+ }
  
++static inline bool fsnotify_is_overflow_event(u32 mask)
++{
++	return mask & FS_Q_OVERFLOW;
++}
++
+ static inline bool fsnotify_notify_queue_is_empty(struct fsnotify_group *group)
+ {
+ 	assert_spin_locked(&group->notification_lock);
 -- 
 2.32.0
 
