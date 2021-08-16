@@ -2,153 +2,125 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,FSL_HELO_FAKE,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SPF_HELO_NONE,SPF_PASS,USER_IN_DEF_DKIM_WL autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 48FF0C432BE
-	for <linux-api@archiver.kernel.org>; Sat, 14 Aug 2021 19:52:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 71BE7C4338F
+	for <linux-api@archiver.kernel.org>; Mon, 16 Aug 2021 05:03:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3063960C3E
-	for <linux-api@archiver.kernel.org>; Sat, 14 Aug 2021 19:52:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4E144619E5
+	for <linux-api@archiver.kernel.org>; Mon, 16 Aug 2021 05:03:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231135AbhHNTwl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 14 Aug 2021 15:52:41 -0400
-Received: from eu-smtp-delivery-151.mimecast.com ([185.58.86.151]:34608 "EHLO
-        eu-smtp-delivery-151.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S232197AbhHNTwj (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 14 Aug 2021 15:52:39 -0400
-Received: from AcuMS.aculab.com (156.67.243.121 [156.67.243.121]) (Using
- TLS) by relay.mimecast.com with ESMTP id
- uk-mta-41-zR9RdrimPfW8ySEk10pv2Q-1; Sat, 14 Aug 2021 20:52:05 +0100
-X-MC-Unique: zR9RdrimPfW8ySEk10pv2Q-1
-Received: from AcuMS.Aculab.com (fd9f:af1c:a25b:0:994c:f5c2:35d6:9b65) by
- AcuMS.aculab.com (fd9f:af1c:a25b:0:994c:f5c2:35d6:9b65) with Microsoft SMTP
- Server (TLS) id 15.0.1497.23; Sat, 14 Aug 2021 20:52:02 +0100
-Received: from AcuMS.Aculab.com ([fe80::994c:f5c2:35d6:9b65]) by
- AcuMS.aculab.com ([fe80::994c:f5c2:35d6:9b65%12]) with mapi id
- 15.00.1497.023; Sat, 14 Aug 2021 20:52:02 +0100
-From:   David Laight <David.Laight@ACULAB.COM>
-To:     'Linus Torvalds' <torvalds@linux-foundation.org>,
-        Andy Lutomirski <luto@kernel.org>
-CC:     "Eric W. Biederman" <ebiederm@xmission.com>,
-        David Hildenbrand <david@redhat.com>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
-        "H. Peter Anvin" <hpa@zytor.com>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Alexey Dobriyan <adobriyan@gmail.com>,
-        "Steven Rostedt" <rostedt@goodmis.org>,
-        "Peter Zijlstra (Intel)" <peterz@infradead.org>,
-        Arnaldo Carvalho de Melo <acme@kernel.org>,
-        "Mark Rutland" <mark.rutland@arm.com>,
-        Alexander Shishkin <alexander.shishkin@linux.intel.com>,
-        Jiri Olsa <jolsa@redhat.com>,
-        "Namhyung Kim" <namhyung@kernel.org>,
-        Petr Mladek <pmladek@suse.com>,
-        Sergey Senozhatsky <sergey.senozhatsky@gmail.com>,
-        Andy Shevchenko <andriy.shevchenko@linux.intel.com>,
-        Rasmus Villemoes <linux@rasmusvillemoes.dk>,
-        Kees Cook <keescook@chromium.org>,
-        Greg Ungerer <gerg@linux-m68k.org>,
-        Geert Uytterhoeven <geert@linux-m68k.org>,
-        "Mike Rapoport" <rppt@kernel.org>,
-        Vlastimil Babka <vbabka@suse.cz>,
-        "Vincenzo Frascino" <vincenzo.frascino@arm.com>,
-        Chinwen Chang <chinwen.chang@mediatek.com>,
-        Michel Lespinasse <walken@google.com>,
-        "Catalin Marinas" <catalin.marinas@arm.com>,
-        "Matthew Wilcox (Oracle)" <willy@infradead.org>,
-        Huang Ying <ying.huang@intel.com>,
-        Jann Horn <jannh@google.com>, Feng Tang <feng.tang@intel.com>,
-        Kevin Brodsky <Kevin.Brodsky@arm.com>,
-        Michael Ellerman <mpe@ellerman.id.au>,
-        "Shawn Anastasio" <shawn@anastas.io>,
-        Steven Price <steven.price@arm.com>,
-        "Nicholas Piggin" <npiggin@gmail.com>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        Jens Axboe <axboe@kernel.dk>,
-        Gabriel Krisman Bertazi <krisman@collabora.com>,
-        Peter Xu <peterx@redhat.com>,
-        Suren Baghdasaryan <surenb@google.com>,
-        Shakeel Butt <shakeelb@google.com>,
-        Marco Elver <elver@google.com>,
-        Daniel Jordan <daniel.m.jordan@oracle.com>,
-        "Nicolas Viennot" <Nicolas.Viennot@twosigma.com>,
-        Thomas Cedeno <thomascedeno@google.com>,
-        Collin Fijalkovich <cfijalkovich@google.com>,
-        Michal Hocko <mhocko@suse.com>,
-        Miklos Szeredi <miklos@szeredi.hu>,
-        Chengguang Xu <cgxu519@mykernel.net>,
-        =?utf-8?B?Q2hyaXN0aWFuIEvDtm5pZw==?= 
-        <ckoenig.leichtzumerken@gmail.com>,
-        "linux-unionfs@vger.kernel.org" <linux-unionfs@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        "the arch/x86 maintainers" <x86@kernel.org>,
-        "<linux-fsdevel@vger.kernel.org>" <linux-fsdevel@vger.kernel.org>,
-        Linux-MM <linux-mm@kvack.org>,
-        "Florian Weimer" <fweimer@redhat.com>,
-        Michael Kerrisk <mtk.manpages@gmail.com>
-Subject: RE: [PATCH v1 0/7] Remove in-tree usage of MAP_DENYWRITE
-Thread-Topic: [PATCH v1 0/7] Remove in-tree usage of MAP_DENYWRITE
-Thread-Index: AQHXj6qO2FP1eIrarUmjR9CxLZPkE6txIhrAgAEMnaiAATj0kA==
-Date:   Sat, 14 Aug 2021 19:52:02 +0000
-Message-ID: <bff636739a5141b0a9ee0c8da734b707@AcuMS.aculab.com>
-References: <20210812084348.6521-1-david@redhat.com> <87o8a2d0wf.fsf@disp2133>
- <60db2e61-6b00-44fa-b718-e4361fcc238c@www.fastmail.com>
- <87lf56bllc.fsf@disp2133>
- <CAHk-=wgru1UAm3kAKSOdnbewPXQMOxYkq9PnAsRadAC6pXCCMQ@mail.gmail.com>
- <87eeay8pqx.fsf@disp2133> <5b0d7c1e73ca43ef9ce6665fec6c4d7e@AcuMS.aculab.com>
- <87h7ft2j68.fsf@disp2133>
- <CAHk-=whmXTiGUzVrTP=mOPQrg-XOi3R-45hC4dQOqW4JmZdFUQ@mail.gmail.com>
- <b629cda1-becd-4725-b16c-13208ff478d3@www.fastmail.com>
- <CAHk-=wiJ0u33h2CXAO4b271Diik=z4jRt64=Gt6YV2jV4ef27g@mail.gmail.com>
-In-Reply-To: <CAHk-=wiJ0u33h2CXAO4b271Diik=z4jRt64=Gt6YV2jV4ef27g@mail.gmail.com>
-Accept-Language: en-GB, en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-ms-exchange-transport-fromentityheader: Hosted
-x-originating-ip: [10.202.205.107]
+        id S229616AbhHPFEG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 16 Aug 2021 01:04:06 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47220 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229523AbhHPFEF (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 16 Aug 2021 01:04:05 -0400
+Received: from mail-pj1-x102c.google.com (mail-pj1-x102c.google.com [IPv6:2607:f8b0:4864:20::102c])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 276D5C061764
+        for <linux-api@vger.kernel.org>; Sun, 15 Aug 2021 22:03:35 -0700 (PDT)
+Received: by mail-pj1-x102c.google.com with SMTP id w14so24564213pjh.5
+        for <linux-api@vger.kernel.org>; Sun, 15 Aug 2021 22:03:35 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20161025;
+        h=date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to;
+        bh=G0FDtIMfLpNbCJZ4VkpckuNvikaSN4A0fZUcwO8aW2A=;
+        b=BVbolKMQAGpnV4kZ03/DYFBiVkcmZagBmMd6aKH4qcEe6J/uZf/bXIGHdUzERNkwov
+         Ap3dcmIlCPYD8qG3tvlB84YPU6IxvEN/Ljphq706feNaE5ghpW7i4+2KFC62rUclFYge
+         KQe3uMV9gSnVjbxv1FdKYuaCAHxIJtKto2enO9K2Gy4Txd42629+CKhTDhS/9ARvPciB
+         aW1NGPDb/kJhl2HqFVInjUlQiMlXYJbJAmBh2WSh8yIpqR0Bj23s02tGkUx2UxjuoOdJ
+         4kizOGczBnAA1O+7pDp45yhd7QFE6yN2R+BzXIJpWqKzJ640v4DDKekBj+f7MpJ1kD2X
+         yVkw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=G0FDtIMfLpNbCJZ4VkpckuNvikaSN4A0fZUcwO8aW2A=;
+        b=DTeslKf6RDN15s+Uq4uJuzv88ju01Twm6Czbdp0NioTBC30NBCVHEhYZk6EMHqz9WP
+         voasEnLDsB/jrNmvgrDttYwXScpRl8tHhvy0+hfkd8W8PetIf3PTO0kPGJJPJV0vrWEB
+         EOQ61rwac1rQx+iKIao6BbDMUeM7zamr6OFfJbsRlEXfEbdDFEZjzTgBJ2/pKhaznyN3
+         fNf5VizxyQnzQvPR/GmFpTAF8IHIltKl0ktWocVgb9RxVX0JqaU2O90QILA87L8btLcQ
+         ENVqf/4EEODXf0n7v8/GAd4x9hnSRHYzNsbC5IZu+lXOsHc1mhW8NFi4QLOOgjZH0aBK
+         z5/Q==
+X-Gm-Message-State: AOAM532FyPljtSC5XH5SUWQW38a3dBHIOakfA2UoTzzeRk1/tA3CvvTp
+        wq+0ZS3lmhQQqW09FMErlk6bqpJbzHEWzQ==
+X-Google-Smtp-Source: ABdhPJx8/Nxjzkjug91UFk98u1oZB05hYYWjCYLRAs6aTq2Fd/zBm9w+iu4VTz8AEA9ULOWY+bHWPA==
+X-Received: by 2002:a65:670f:: with SMTP id u15mr14148221pgf.205.1629090214334;
+        Sun, 15 Aug 2021 22:03:34 -0700 (PDT)
+Received: from google.com ([2401:fa00:9:211:2d6c:8736:2020:8925])
+        by smtp.gmail.com with ESMTPSA id u62sm9942538pfb.19.2021.08.15.22.03.31
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sun, 15 Aug 2021 22:03:33 -0700 (PDT)
+Date:   Mon, 16 Aug 2021 15:03:19 +1000
+From:   Matthew Bobrowski <repnop@google.com>
+To:     Jan Kara <jack@suse.cz>
+Cc:     amir73il@gmail.com, christian.brauner@ubuntu.com,
+        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
+Subject: Re: [PATCH v4 0/5] Add pidfd support to the fanotify API
+Message-ID: <YRnxl1wKImPQSUpy@google.com>
+References: <cover.1628398044.git.repnop@google.com>
+ <20210810113348.GE18722@quack2.suse.cz>
+ <YRMmYWHSno/IGhTN@google.com>
 MIME-Version: 1.0
-Authentication-Results: relay.mimecast.com;
-        auth=pass smtp.auth=C51A453 smtp.mailfrom=david.laight@aculab.com
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: aculab.com
-Content-Language: en-US
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <YRMmYWHSno/IGhTN@google.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-RnJvbTogTGludXMgVG9ydmFsZHMNCj4gU2VudDogMTQgQXVndXN0IDIwMjEgMDE6NTUNCj4gDQo+
-IE9uIEZyaSwgQXVnIDEzLCAyMDIxIGF0IDI6NDkgUE0gQW5keSBMdXRvbWlyc2tpIDxsdXRvQGtl
-cm5lbC5vcmc+IHdyb3RlOg0KPiA+DQo+ID4gSeKAmWxsIGJpdGUuICBIb3cgYWJvdXQgd2UgYXR0
-YWNrIHRoaXMgaW4gdGhlIG9wcG9zaXRlIGRpcmVjdGlvbjogcmVtb3ZlIHRoZSBkZW55IHdyaXRl
-IG1lY2hhbmlzbQ0KPiBlbnRpcmVseS4NCj4gDQo+IEkgdGhpbmsgdGhhdCB3b3VsZCBiZSBvaywg
-ZXhjZXB0IEkgY2FuIHNlZSBzb21lYm9keSByZWx5aW5nIG9uIGl0Lg0KPiANCj4gSXQncyBicm9r
-ZW4sIGl0J3Mgc3R1cGlkLCBidXQgd2UndmUgZG9uZSB0aGF0IEVUWFRCVVNZIGZvciBhIF9sb29u
-Z18gdGltZS4NCg0KSSB0aGluayBFVFhUQlVTWSBwcmVkYXRlcyBMaW51eCBpdHNlbGYuDQpCdXQg
-SSBjYW4ndCByZW1lbWJlciB3aGV0aGVyIHRoZSBlbGYgdmVyc2lvbnMgb2Ygc3Vub3Mgb3Igc3Zy
-NA0KaW1wbGVtZW50ZWQgaXQgZm9yIHNoYXJlZCBsaWJyYXJpZXMuDQpJIGRvbid0IHJlbWVtYmVy
-IGhpdHRpbmcgaXQsIHNvIHRoZXkgbWF5IG5vdCBoYXZlLg0KDQpJJ20gYWN0dWFsbHkgc3VycHJp
-c2VkIGl0IGlhIGFuIG1tYXAoKSBmbGFnIHJhdGhlciB0aGFuIGFuIG9wZW4oKSBvbmUuDQpCZWlu
-ZyBhYmxlIHRvIG9wZW4gYSBmaWxlIGFuZCBndWFyYW50ZWUgaXQgY2FuJ3QgYmUgY2hhbmdlZCBz
-ZWVtcyBhIHNhbmUgaWRlYS4NCkFuZCBub3QganVzdCBmb3IgcHJvZ3JhbXMvbGlicmFyaWVzLg0K
-DQpCeSB0aGUgc291bmQgb2YgaXQgJ2ltbXV0YWJsZScgaXMgbm8gdXNlLg0KWW91IG5lZWQgdG8g
-YmUgYWJsZSB0byB1bmxpbmsgdGhlIGZpbGUgLSBvdGhlcndpc2UgeW91IGdldCBpbnRvIHRoZQ0K
-d2luZG93J3MgZmlhc2NvIG9mIG5vdCBiZWluZyBhYmxlIHRvIHVwZGF0ZSB3aXRob3V0IDE3IHJl
-Ym9vdHMuDQoNCkZXSVcgTUFQX0NPUFkgd291bGQgb25seSBuZWVkIHRvIHRha2Ugb25lIGNvcHkg
-b2YgdGhlIHBhZ2UgLSBhbGwgdGhlDQp1c2VycyBjb3VsZCBzaGFyZSB0aGUgc2FtZSBwYWdlIChi
-YWNrZWQgYnkgYSBzaW5nbGUgcGFnZSBvZiBzd2FwKS4NCk5vdCB0aGF0IEknbSBzdWdnZXN0aW5n
-IGl0IGlzIGEgZ29vZCBpZGVhIGF0IGFsbC4NCg0KSSBkbyB3b25kZXIgYWJvdXQgL3Byb2Mvc2Vs
-Zi9leGUgdGhvdWdoLg0KSXQgZ2F2ZSB0aGUgTmV0QlNEIExpbnV4IGVtdWxhdGlvbiBhIHRlcnJp
-YmxlIHByb2JsZW0uDQpCZWluZyBhYmxlIHRvIG9wZW4gdGhlIGlub2RlIG9mIHRoZSBwcm9ncmFt
-IGlzIGZpbmUuDQpUaGUgcHJvYmxlbSBpcyB0aGUgd2hhdCByZWFkbGluaygpIHJldHVybnMgLSBp
-dCBpcyBiYXNpY2FsbHkgc3RhbGUuDQpJZiBhIHByb2dyYW0gb3BlbiB0aGUgbGluayBjb250ZW50
-cyBpdCBjb3VsZCBnZXQgYW55dGhpbmcgYXQgYWxsLg0KDQoJRGF2aWQNCg0KLQ0KUmVnaXN0ZXJl
-ZCBBZGRyZXNzIExha2VzaWRlLCBCcmFtbGV5IFJvYWQsIE1vdW50IEZhcm0sIE1pbHRvbiBLZXlu
-ZXMsIE1LMSAxUFQsIFVLDQpSZWdpc3RyYXRpb24gTm86IDEzOTczODYgKFdhbGVzKQ0K
+Hey Jan,
 
+On Wed, Aug 11, 2021 at 11:22:41AM +1000, Matthew Bobrowski wrote:
+> On Tue, Aug 10, 2021 at 01:33:48PM +0200, Jan Kara wrote:
+> > Hello Matthew!
+> > 
+> > On Sun 08-08-21 15:23:59, Matthew Bobrowski wrote:
+> > > This is V5 of the FAN_REPORT_PIDFD patch series. It contains the minor
+> > > comment/commit description fixes that were picked up by Amir in the
+> > > last series review [0, 1].
+> > > 
+> > > LTP tests for this API change can be found here [2]. Man page updates
+> > > for this change can be found here [3].
+> > > 
+> > > [0] https://lore.kernel.org/linux-fsdevel/CAOQ4uxhnCk+FXK_e_GA=jC_0HWO+3ZdwHSi=zCa2Kpb0NDxBSg@mail.gmail.com/
+> > > [1] https://lore.kernel.org/linux-fsdevel/CAOQ4uxgO3oViTSFZ0zs6brrHrmw362r1C9SQ7g6=XgRwyrzMuw@mail.gmail.com/
+> > > [2] https://github.com/matthewbobrowski/ltp/tree/fanotify_pidfd_v2
+> > > [3] https://github.com/matthewbobrowski/man-pages/tree/fanotify_pidfd_v1
+> > > 
+> > > Matthew Bobrowski (5):
+> > >   kernel/pid.c: remove static qualifier from pidfd_create()
+> > >   kernel/pid.c: implement additional checks upon pidfd_create()
+> > >     parameters
+> > >   fanotify: minor cosmetic adjustments to fid labels
+> > >   fanotify: introduce a generic info record copying helper
+> > >   fanotify: add pidfd support to the fanotify API
+> > 
+> > Thanks! I've pulled the series into my tree. Note that your fanotify21 LTP
+> > testcase is broken with the current kernel because 'ino' entry got added to
+> > fdinfo. I think having to understand all possible keys that can occur in
+> > fdinfo is too fragile. I understand why you want to do that but I guess the
+> > test would be too faulty to be practical. So I'd just ignore unknown keys
+> > in fdinfo for that test.
+> 
+> Excellent, for merging these changes!
+> 
+> In regards to the LTP test (fanotify21), at the time of writing I had also
+> shared a similar thought in the sense that it was too fragile, but wrongly
+> so I weighed up my decision based on the likelihood and frequency of fields
+> being changed/added to fdinfo. I was very wrong...
+> 
+> Anyway, I will fix it so that any "unknown" fields are ignored.
+
+FWIW, I've dropped that last else statement in the
+parse_pidfd_fdinfo_line() helper in LTP fanotify21. An updated branch has
+been pushed here [0].
+
+[0] https://github.com/matthewbobrowski/ltp/commits/fanotify_pidfd_v3
+
+/M
