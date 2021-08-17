@@ -2,291 +2,338 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+X-Spam-Status: No, score=-19.2 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,MSGID_FROM_MTA_HEADER,NICE_REPLY_A,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E48D4C4338F
-	for <linux-api@archiver.kernel.org>; Tue, 17 Aug 2021 10:08:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 50EEDC432BE
+	for <linux-api@archiver.kernel.org>; Tue, 17 Aug 2021 11:01:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C3CBE60F41
-	for <linux-api@archiver.kernel.org>; Tue, 17 Aug 2021 10:08:30 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2F18260560
+	for <linux-api@archiver.kernel.org>; Tue, 17 Aug 2021 11:01:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236201AbhHQKI4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 17 Aug 2021 06:08:56 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52772 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234593AbhHQKIw (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 17 Aug 2021 06:08:52 -0400
-Received: from mail-il1-x12d.google.com (mail-il1-x12d.google.com [IPv6:2607:f8b0:4864:20::12d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 79686C061764;
-        Tue, 17 Aug 2021 03:08:18 -0700 (PDT)
-Received: by mail-il1-x12d.google.com with SMTP id h18so21575845ilc.5;
-        Tue, 17 Aug 2021 03:08:18 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=NOFCDOixLJY6DwFBePJH88H6/uMJRgdjY55vjUZoo48=;
-        b=hoAJ/OkcphMR4GHR50YVWJok6t2Niw1p6DDijPvd5/GgHtcDj0jlzYXp49525ouIJe
-         jaBtEBYw78wcDIRJ6n3xKm/rkyzsyAvQwUD5LBXsjSgsYm28/G5S/TtCCcBVl51riUXQ
-         YOo80WhlKuGwR9AChmWeRlYxvB7kq6A8vrVpgM3f2y9x8vHtuNGJYoSFiSTXKKRYnPOG
-         pKsi1QQZ7Rjl2wtzBVLFE/3/l2oMj7/mBQe5r6rFID2qmumsbK1SuZ+Mh09Qcu161ffH
-         iiNq/03UcrHUBGIZds8AnaEjwhnuwR1QfWiq5KXc2l+NHZNJHLK5Yqdfk7PHwsMu6cVB
-         TiCA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=NOFCDOixLJY6DwFBePJH88H6/uMJRgdjY55vjUZoo48=;
-        b=JtCm8XeqlHfR/LjUf7brkW+hPiXGEn9LAQ/BWCWC6KxFwpRn2Cyanw2ZrCHXYONQlf
-         EzZlS23wsggArbQ58Uxxbw4aGdWPchzoaZhS7nzYCbPtuxvYW687tI/vcDMc+BHHZmsK
-         iFWNVovHbfhUewtFa27LTcrkeQX43/SWux9VG+yMnifKW6AQhl3WCCluWD9w8/XqzQnW
-         CFyfuivYDT9lCx1IrFwEoQdvUK9H7WvLcV3IIC6WHhfICcJ5k8nGhVaj7wBHPpqQ/thl
-         NqPYb3OSjFhcYHEWWPm4MW/DPku3oTvA/pzQblHvIe635qy95C3blE/A04Bxciz1Xxgy
-         +kxA==
-X-Gm-Message-State: AOAM532eBLpla0cQZzu8u/9geby7lg8OCbn5fIbGzLO4+TOFr7w7PJ5F
-        ZspihokZEbbygDQP+wIFyebhoozWYvmKx6qkMUo=
-X-Google-Smtp-Source: ABdhPJx3s7hVoptraNTTEsNt+0hGavUpuIBZ5hNibbEEGmh3AJQJee5XNa3h9CSQI3nTTv/9NaCZ+/OorF0p48A69Uc=
-X-Received: by 2002:a92:cd0a:: with SMTP id z10mr1801660iln.137.1629194897821;
- Tue, 17 Aug 2021 03:08:17 -0700 (PDT)
-MIME-Version: 1.0
-References: <20210812214010.3197279-1-krisman@collabora.com>
- <20210812214010.3197279-19-krisman@collabora.com> <20210816214103.GA12664@magnolia>
- <20210817090538.GA26181@quack2.suse.cz>
-In-Reply-To: <20210817090538.GA26181@quack2.suse.cz>
-From:   Amir Goldstein <amir73il@gmail.com>
-Date:   Tue, 17 Aug 2021 13:08:06 +0300
-Message-ID: <CAOQ4uxgdJpovZ-zzJkLOdQ=YYF3ta46m0_jrt0QFSdJ9GdXR=g@mail.gmail.com>
-Subject: Re: [PATCH v6 18/21] fanotify: Emit generic error info type for error event
-To:     Jan Kara <jack@suse.cz>
-Cc:     "Darrick J. Wong" <djwong@kernel.org>,
+        id S239690AbhHQLCH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 17 Aug 2021 07:02:07 -0400
+Received: from mail-co1nam11on2077.outbound.protection.outlook.com ([40.107.220.77]:50657
+        "EHLO NAM11-CO1-obe.outbound.protection.outlook.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S236704AbhHQLCD (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 17 Aug 2021 07:02:03 -0400
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=TEGFGht/4Oe+sjWgbUh1nZ9ckHeccps989epLX7BkyeRqb4MYxCnAckOgkASxf9nLWhM6SsBYI0H5AJNWb09Ur/AtC5GY+xFywwF6i7mjjHIfFXTaO93MbIMIH9sZcGAAIXhMcHxPyU1+vlTGpbcuRen9IPRHkoRhv1+8NQuCXKMc99k3wt7fky8ZSEs529hiq4pitQwL3502QS4wdlZLgZooyyOkIXxYuaSedMIN+AAjPp3W+meN1nBDvYboAIWtrUQGCzB0dR16DcgGtIXufV/xmHDS1tjOdmin2e7pJ4m50xBRo9GJJTjIv0EFItY/J0w0nvb9D8wWJrQsSlOAA==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=5DZr5bHdaCjQcs0FIrwXy5nB9FnSjr8ZMgpaKdcNu5s=;
+ b=VsyRpe3NymNzES+zEiLabKvi8eW1fOf8xPtoGAX7K3z30LD9HLPTIXv3CDGnzKAi70RR1RstkMy7FVnUVnTUXRoRvGXEFXbfsZ2dKY2DihgZEKXfQWR5eRkbtIkhhVQYXkwcwlA4mDCcsOya554YvtBwrJllA48DVo79jd0RZ1QCy39diTx+NnfOJoaN66N+2zjl38HUVAGWCmAa+cIpzeppkYpoSVLn8rFsyvdTbIyAaYwUsqu5wRMXsLmgJtHALBSxAUQugTOdUrjxMTj9EXSA9x+JpT85n2N1RHpZrqLvbAdGSzv7iTNDmWmq/ZU5IJQy6hqW5nYScra0+c6WOQ==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=amd.com; dmarc=pass action=none header.from=amd.com; dkim=pass
+ header.d=amd.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=amd.com; s=selector1;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=5DZr5bHdaCjQcs0FIrwXy5nB9FnSjr8ZMgpaKdcNu5s=;
+ b=DKfYafA94NPUVQJN4xgveTJwxYo6C6bqYJFXN071fIrV/sc1m0aLLKbbAjJOUTSnIFJUAA+HzPE1gS2tUwMNjuk1aRIB5DcjahU7XtRWyB7T+7gko7lIfadViVojD8ZdUIMcTpqj5L0nVmBQRGTXqQT2RJFmUkErZSHnqZf30SY=
+Authentication-Results: kvack.org; dkim=none (message not signed)
+ header.d=none;kvack.org; dmarc=none action=none header.from=amd.com;
+Received: from MN2PR12MB3775.namprd12.prod.outlook.com (2603:10b6:208:159::19)
+ by BL0PR12MB2483.namprd12.prod.outlook.com (2603:10b6:207:4c::26) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4415.14; Tue, 17 Aug
+ 2021 11:01:26 +0000
+Received: from MN2PR12MB3775.namprd12.prod.outlook.com
+ ([fe80::dce2:96e5:aba2:66fe]) by MN2PR12MB3775.namprd12.prod.outlook.com
+ ([fe80::dce2:96e5:aba2:66fe%6]) with mapi id 15.20.4415.024; Tue, 17 Aug 2021
+ 11:01:26 +0000
+Subject: Re: [PATCH v2 0/7] Remove in-tree usage of MAP_DENYWRITE
+To:     David Hildenbrand <david@redhat.com>, linux-kernel@vger.kernel.org
+Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        "H. Peter Anvin" <hpa@zytor.com>,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        Alexey Dobriyan <adobriyan@gmail.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Arnaldo Carvalho de Melo <acme@kernel.org>,
+        Mark Rutland <mark.rutland@arm.com>,
+        Alexander Shishkin <alexander.shishkin@linux.intel.com>,
+        Jiri Olsa <jolsa@redhat.com>,
+        Namhyung Kim <namhyung@kernel.org>,
+        Petr Mladek <pmladek@suse.com>,
+        Sergey Senozhatsky <sergey.senozhatsky@gmail.com>,
+        Andy Shevchenko <andriy.shevchenko@linux.intel.com>,
+        Rasmus Villemoes <linux@rasmusvillemoes.dk>,
+        Kees Cook <keescook@chromium.org>,
+        "Eric W. Biederman" <ebiederm@xmission.com>,
+        Greg Ungerer <gerg@linux-m68k.org>,
+        Geert Uytterhoeven <geert@linux-m68k.org>,
+        Mike Rapoport <rppt@kernel.org>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        Chinwen Chang <chinwen.chang@mediatek.com>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        "Matthew Wilcox (Oracle)" <willy@infradead.org>,
+        Huang Ying <ying.huang@intel.com>,
+        Jann Horn <jannh@google.com>, Feng Tang <feng.tang@intel.com>,
+        Kevin Brodsky <Kevin.Brodsky@arm.com>,
+        Michael Ellerman <mpe@ellerman.id.au>,
+        Shawn Anastasio <shawn@anastas.io>,
+        Steven Price <steven.price@arm.com>,
+        Nicholas Piggin <npiggin@gmail.com>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Jens Axboe <axboe@kernel.dk>,
         Gabriel Krisman Bertazi <krisman@collabora.com>,
-        Jan Kara <jack@suse.com>,
-        Linux API <linux-api@vger.kernel.org>,
-        Ext4 <linux-ext4@vger.kernel.org>,
-        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-        Khazhismel Kumykov <khazhy@google.com>,
-        David Howells <dhowells@redhat.com>,
-        Dave Chinner <david@fromorbit.com>,
-        Theodore Tso <tytso@mit.edu>,
-        Matthew Bobrowski <repnop@google.com>, kernel@collabora.com
-Content-Type: text/plain; charset="UTF-8"
+        Peter Xu <peterx@redhat.com>,
+        Suren Baghdasaryan <surenb@google.com>,
+        Shakeel Butt <shakeelb@google.com>,
+        Marco Elver <elver@google.com>,
+        Daniel Jordan <daniel.m.jordan@oracle.com>,
+        Nicolas Viennot <Nicolas.Viennot@twosigma.com>,
+        Thomas Cedeno <thomascedeno@google.com>,
+        Michal Hocko <mhocko@suse.com>,
+        Miklos Szeredi <miklos@szeredi.hu>,
+        Chengguang Xu <cgxu519@mykernel.net>,
+        Florian Weimer <fweimer@redhat.com>,
+        David Laight <David.Laight@ACULAB.COM>,
+        linux-unionfs@vger.kernel.org, linux-api@vger.kernel.org,
+        x86@kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org
+References: <20210816194840.42769-1-david@redhat.com>
+From:   =?UTF-8?Q?Christian_K=c3=b6nig?= <christian.koenig@amd.com>
+Message-ID: <6e64c3ea-b9c9-decb-36fa-fad713414833@amd.com>
+Date:   Tue, 17 Aug 2021 13:01:12 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Thunderbird/78.11.0
+In-Reply-To: <20210816194840.42769-1-david@redhat.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+Content-Language: en-US
+X-ClientProxiedBy: FR0P281CA0007.DEUP281.PROD.OUTLOOK.COM
+ (2603:10a6:d10:15::12) To MN2PR12MB3775.namprd12.prod.outlook.com
+ (2603:10b6:208:159::19)
+MIME-Version: 1.0
+X-MS-Exchange-MessageSentRepresentingType: 1
+Received: from [IPv6:2a02:908:1252:fb60:5ed8:be6b:d062:84f3] (2a02:908:1252:fb60:5ed8:be6b:d062:84f3) by FR0P281CA0007.DEUP281.PROD.OUTLOOK.COM (2603:10a6:d10:15::12) with Microsoft SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4436.9 via Frontend Transport; Tue, 17 Aug 2021 11:01:18 +0000
+X-MS-PublicTrafficType: Email
+X-MS-Office365-Filtering-Correlation-Id: cd259ed7-e3f1-40c3-b648-08d9616e5bcc
+X-MS-TrafficTypeDiagnostic: BL0PR12MB2483:
+X-Microsoft-Antispam-PRVS: <BL0PR12MB248352C9A663538177F13FA683FE9@BL0PR12MB2483.namprd12.prod.outlook.com>
+X-MS-Oob-TLC-OOBClassifiers: OLM:10000;
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0;
+X-Microsoft-Antispam-Message-Info: pFGeXhge8AgHqKGwahujYplowvXDD/mb6Nx2F1jBNYEQewrwkD59TXhQcOEY7lnHP1dcv0+0g7DZ+/j0i70rW6xc723gDOSLWxBEYUs48fphs+s2zjlCmUYEUjDdrSL4eqpjUmcQurO2DwXlQIgtzZ9iGJZtOxg8rjHOfRl2gUIP7SnUXoO84VIaRiusQ1WAJdhLDoJBU638DcaL5QCc8tPPW6/2nI7V0z5SqCj0E6I6XivloZimgqJeOHafyqDz3dqY62qEIMROCMGIYibHHRB1tW3tIIKDB1thqciIjUM72h3BY7YfbVjFZNRqpDXtkGo9M/qnVS2+iuTcNyLIESqfPqbNZDLxCHAiZhH4mtE1lnMjDnw5tTmkVYnMYBPK1fcPuWSHq9ufWXPkYtaax6qGKI/HqTWbF/EgtqtrEzW3UnxZAfZtoUdSBWmFUe2A2eow4k9GE/imdwaWQNFYK/AZlqVGSyZblCWwYz8x2Bqln9gUw0sTF/6hGcpULvuHMBR516QdWRASmSq0Dh9YFiwWSOhiEIFwHR0OdTN3yXOXJUA+ID6JQAY6H9p//8tXMwk+E/53NqXPnxnFBu15+Yc7XxtvRx9GeeUTEoEPSltZZFcUKgrr3pO0fgDECW74Z8rcE9ZpifZmh15PaTWVpr/yR30V/lu6Ay+0nX2zBm4AlSWrRYjeyETEO54u/ruhwmF9A8GO6aY+eFB6giSOiY96/RGsHl0aKFW4I/1puIyjkT34eNKWHFbv8bKRPFyUJOHgqaRtz8gQWAQuBNXr/kNo/RZ0ES/08jo0TaxKF8vpu7Li6j5qedY+/fs8O6Uuo1y9gwf8F/yd/bbgJ7ep9MnhUnuaqwUF2PNEM0grwvU=
+X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:MN2PR12MB3775.namprd12.prod.outlook.com;PTR:;CAT:NONE;SFS:(4636009)(366004)(66574015)(54906003)(7416002)(7406005)(7366002)(2906002)(66556008)(66476007)(2616005)(508600001)(86362001)(5660300002)(316002)(83380400001)(4326008)(966005)(36756003)(66946007)(31696002)(8936002)(6666004)(6486002)(38100700002)(186003)(31686004)(8676002)(45980500001)(43740500002);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: =?utf-8?B?L1NnU0thTjJ5ZUh3dTlCU3FjblRwR3Y5ZmNFSGdKZm5aWHFSQ1ZDL2pnN25u?=
+ =?utf-8?B?SjFXZzlEZ3ZMbnRlaGZIUFZqV01YOFd6ZHpVWWI0a1lFS25Qb3RYMVE3UXBY?=
+ =?utf-8?B?YyszaG5wcEVlMkwvSVJzWCtTNlpNazI1SEc4K2FWdHdHcGV1ZmdZTlB3dXpJ?=
+ =?utf-8?B?L0xkZXVQOTduMjZCelJ5N3d2Y2NUaEZ2Y25rL1JUOTZ6Mzd1WERET2xSR1Uv?=
+ =?utf-8?B?SExtVUhSL1h6ZTBwMlMwSzdyMkRmMFBRd21lV2Mxb0VpK09FVHdnM21lb0E2?=
+ =?utf-8?B?U09XeXg2eUMycnYzTHlGRkFmNFF4U0Nsb1BNMGlrNXRxcmRMNDBPVll3UWhX?=
+ =?utf-8?B?aTRWbkp1cDh6TnI0WThJNndpdkZUbjZ1Y3FNR1lUV2U3VG4rNFJ6d1pRbzZm?=
+ =?utf-8?B?eVQ2UlgyYTZ2RVdFNWJyR3Y3ZzdxZWxJME5vajE3RFdrNWcyU0J1NnduM08r?=
+ =?utf-8?B?MnJrVTJMS29pS1NpaDloQmpkcVgvbXhvMlBKc0pJNGtjS2lmcnpCbFY1L2Rh?=
+ =?utf-8?B?cHcrS1o5bHZYcFk0OUdDbWM3OWNLY1h0cXFhSGI3bnBNNXRNRW5RRjJ2aTBr?=
+ =?utf-8?B?M3Zva0Jpdzh2Ry9oa0NvTFpDbEMzaGYzNEFYUWx6OUhOYVJrbll0RkVlWGh1?=
+ =?utf-8?B?U3FENUZqT0JZdU9yRitEYTFVRU1pZzZLTjJNUllKenNoY2VpZjRWZC8vL3Mz?=
+ =?utf-8?B?UmFzT0N5Yy9mRWErNFE5bmd3SDNVejlMMXgxb0U0L2NRYk0zVWZ6cmZieEdN?=
+ =?utf-8?B?SmxTOHdsTkZFU2doSkROc1FQYjIzeDRwTVdJNm1kSHJ1czJVT0dEWkxDSWJI?=
+ =?utf-8?B?aTc4aWwybldrR1Zka2hlVllHc3hDQ25zSGhEeXlTSE5mT3RMTC92VENteUI0?=
+ =?utf-8?B?dWk3VUlaaXUwNlBKR0Frcmw4ejd0bVNJbXdhY1lDdnRqVEg4azYvL2xBMFFV?=
+ =?utf-8?B?VzQxNitqa0pNdTJRWnJVNkJPM3AreUxCMWFBRU5hbjF3YUc5ZkswZkIydFVh?=
+ =?utf-8?B?ZGZ0WXo1M2o1Y1p0Vk1vSHJRT0JCcTVybFdDOG43ZE1HREdmcHVTaGdUSzJJ?=
+ =?utf-8?B?WW04L25GOVZGcVVxcllXQndlSjgrNWVOV3JoWmlIaStnbGtVUmRrckZYVlpy?=
+ =?utf-8?B?Q2lxM0VFelo1RWVIVUFHVUtza0hOdWxTaXJiRGIwWVdoU1VYa3pwU1NOem04?=
+ =?utf-8?B?RzZIelNuVGhzNXAzNGNVQkc2RmVBVXk2MitlK29BLzJLbHp2M0d0TXJ6Y2pU?=
+ =?utf-8?B?OTNYWVVzVjEyTURUa2doUjlBUk1rSldvSkIwanpnakR6UXMyMnhHM2E4QXNj?=
+ =?utf-8?B?Y1dvN3h1WjhmNmN6VHNOaXJUeEUyZXl6V3FUODIyeHNyRlBodWd0N3p5VS81?=
+ =?utf-8?B?aFhVRTZFaU03c3p5U0dsc2NXZ1I0ZDkxUDEvVVhkVTZGTllJVWpBRHFtTW4v?=
+ =?utf-8?B?eHNRVGFsMUpKb0cwSi91eW42cUg2Si83VXRKenRRUEZERTNZRzR5c2JCK3Ra?=
+ =?utf-8?B?V1JLWllOUktMM0lRREczMGVGb1pmV0NMQ1J2WFhKUk9hMVFmY2NhTzhCYjNk?=
+ =?utf-8?B?NE5tcVpNVmhRcHpzSlN4TitCT1NoQVBsdC9nQUthRHI4REFQVVlKTW02MG9y?=
+ =?utf-8?B?em9uMkFJNk5nYksyZ0h4QWxydUpqS3RIQ2R3Z1RYM0FnK0JKTHhnZ3Jrcy8x?=
+ =?utf-8?B?NDhXZTVTcVFhY0Qvck03QkN6UHYxSWp1S0NSNWczMDlmTjdVWUZGdEVQM1Iw?=
+ =?utf-8?B?YjFIRTQxbWpTaVlIdXJ4WjFyaFpWVFFBRHN6cGlhV296ZnpvR3N2TnplY3FY?=
+ =?utf-8?B?NmtBS3V5UkN5N25hSTNMMlZwcDB5YzVOczQxbVRUczlaWWc1V0NYRUs0RVVL?=
+ =?utf-8?Q?0RL4G4Tn/ilaS?=
+X-OriginatorOrg: amd.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: cd259ed7-e3f1-40c3-b648-08d9616e5bcc
+X-MS-Exchange-CrossTenant-AuthSource: MN2PR12MB3775.namprd12.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 17 Aug 2021 11:01:26.7833
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 3dd8961f-e488-4e60-8e11-a82d994e183d
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: /SAQ76fh03rHHvJts8JqUrv40OkLCuF8rN+y72lPFB9n/BQVBHvRFi7DEP5HE3Nb
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: BL0PR12MB2483
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Aug 17, 2021 at 12:05 PM Jan Kara <jack@suse.cz> wrote:
+Am 16.08.21 um 21:48 schrieb David Hildenbrand:
+> This series removes all in-tree usage of MAP_DENYWRITE from the kernel
+> and removes VM_DENYWRITE. We stopped supporting MAP_DENYWRITE for
+> user space applications a while ago because of the chance for DoS.
+> The last renaming user is binfmt binary loading during exec and
+> legacy library loading via uselib().
 >
-> On Mon 16-08-21 14:41:03, Darrick J. Wong wrote:
-> > On Thu, Aug 12, 2021 at 05:40:07PM -0400, Gabriel Krisman Bertazi wrote:
-> > > The Error info type is a record sent to users on FAN_FS_ERROR events
-> > > documenting the type of error.  It also carries an error count,
-> > > documenting how many errors were observed since the last reporting.
-> > >
-> > > Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
-> > >
-> > > ---
-> > > Changes since v5:
-> > >   - Move error code here
-> > > ---
-> > >  fs/notify/fanotify/fanotify.c      |  1 +
-> > >  fs/notify/fanotify/fanotify.h      |  1 +
-> > >  fs/notify/fanotify/fanotify_user.c | 36 ++++++++++++++++++++++++++++++
-> > >  include/uapi/linux/fanotify.h      |  7 ++++++
-> > >  4 files changed, 45 insertions(+)
-> >
-> > <snip>
-> >
-> > > diff --git a/include/uapi/linux/fanotify.h b/include/uapi/linux/fanotify.h
-> > > index 16402037fc7a..80040a92e9d9 100644
-> > > --- a/include/uapi/linux/fanotify.h
-> > > +++ b/include/uapi/linux/fanotify.h
-> > > @@ -124,6 +124,7 @@ struct fanotify_event_metadata {
-> > >  #define FAN_EVENT_INFO_TYPE_FID            1
-> > >  #define FAN_EVENT_INFO_TYPE_DFID_NAME      2
-> > >  #define FAN_EVENT_INFO_TYPE_DFID   3
-> > > +#define FAN_EVENT_INFO_TYPE_ERROR  4
-> > >
-> > >  /* Variable length info record following event metadata */
-> > >  struct fanotify_event_info_header {
-> > > @@ -149,6 +150,12 @@ struct fanotify_event_info_fid {
-> > >     unsigned char handle[0];
-> > >  };
-> > >
-> > > +struct fanotify_event_info_error {
-> > > +   struct fanotify_event_info_header hdr;
-> > > +   __s32 error;
-> > > +   __u32 error_count;
-> > > +};
-> >
-> > My apologies for not having time to review this patchset since it was
-> > redesigned to use fanotify.  Someday it would be helpful to be able to
-> > export more detailed error reports from XFS, but as I'm not ready to
-> > move forward and write that today, I'll try to avoid derailling this at
-> > the last minute.
+> With this change, MAP_DENYWRITE is effectively ignored throughout the
+> kernel. Although the net change is small (well, we actually add code and
+> comments), I think the cleanup in mmap() is quite nice.
 >
-> I think we are not quite there and tweaking the passed structure is easy
-> enough so no worries. Eventually, passing some filesystem-specific blob
-> together with the event was the plan AFAIR. You're right now is a good
-> moment to think how exactly we want that passed.
+> There are some (minor) user-visible changes with this series:
+> 1. We no longer deny write access to shared libaries loaded via legacy
+>     uselib(); this behavior matches modern user space e.g., via dlopen().
+> 2. We no longer deny write access to the elf interpreter after exec
+>     completed, treating it just like shared libraries (which it often is).
+> 3. We always deny write access to the file linked via /proc/pid/exe:
+>     sys_prctl(PR_SET_MM_MAP/EXE_FILE) will fail if write access to the file
+>     cannot be denied, and write access to the file will remain denied
+>     until the link is effectivel gone (exec, termination,
+>     sys_prctl(PR_SET_MM_MAP/EXE_FILE)) -- just as if exec'ing the file.
 >
-> > Eventually, XFS might want to be able to report errors in file data,
-> > file metadata, allocation group metadata, and whole-filesystem metadata.
-> > Userspace can already gather reports from XFS about corruptions reported
-> > by the online fsck code (see xfs_health.c).
+> There is a related problem [2] with overlayfs, that should at least partly
+> be tackled by this series. I don't quite understand the interaction of
+> overlayfs and deny_write_access()/allow_write_access() at exec time:
 >
-> Yes, although note that the current plan is that we currently have only one
-> error event queue, others are just added to error_count until the event is
-> fetched by userspace (on the grounds that the first error is usually the
-> most meaningful, the others are usually just cascading problems). But I'm
-> not sure if this scheme would be suitable for online fsck usecase since we
-> may discard even valid independent errors this way.
+> If we end up denying write access to the wrong file and not to the
+> realfile, that would be fundamentally broken. We would have to reroute
+> our deny_write_access()/ allow_write_access() calls for the exec file to
+> the realfile -- but I leave figuring out the details to overlayfs guys, as
+> that would be a related but different issue.
 >
-> > I /think/ we could subclass the file error structure that you've
-> > provided like so:
-> >
-> > struct fanotify_event_info_xfs_filesystem_error {
-> >       struct fanotify_event_info_error        base;
-> >
-> >       __u32 magic; /* 0x58465342 to identify xfs */
-> >       __u32 type; /* quotas, realtime bitmap, etc. */
-> > };
-> >
-> > struct fanotify_event_info_xfs_perag_error {
-> >       struct fanotify_event_info_error        base;
-> >
-> >       __u32 magic; /* 0x58465342 to identify xfs */
-> >       __u32 type; /* agf, agi, agfl, bno btree, ino btree, etc. */
-> >       __u32 agno; /* allocation group number */
-> > };
-> >
-> > struct fanotify_event_info_xfs_file_error {
-> >       struct fanotify_event_info_error        base;
-> >
-> >       __u32 magic; /* 0x58465342 to identify xfs */
-> >       __u32 type; /* extent map, dir, attr, etc. */
-> >       __u64 offset; /* file data offset, if applicable */
-> >       __u64 length; /* file data length, if applicable */
-> > };
-> >
-> > (A real XFS implementation might have one structure with the type code
-> > providing for a tagged union or something; I split it into three
-> > separate structs here to avoid confusing things.)
+> There was a lengthy discussion in [3] whether to remove deny_write_access()
+> completely; however, if we decide to go that way, it would ideally be done
+> on top, because it could be that some applications even rely on the current
+> behavior.
 >
-> The structure of fanotify event as passed to userspace generally is:
+> v1 -> v2:
+> - "kernel/fork: factor out replacing the current MM exe_file"
+> -- Call the function "replace_mm_exe_file()" instead
+> -- Add some doc, similar to set_mm_exe_file()
+> -- Update patch subject/description
+> - "kernel/fork: always deny write access to current MM exe_file"
+> -- Introduce dup_mm_exe_file()
+> -- Make set_mm_exe_file() return an error to make the code easier to
+>     grasp.
+> -- Improve comments
+> - Added ACKs
+> - Mention "sys_prctl(PR_SET_MM_MAP/EXE_FILE)" everywhere instead of
+>    only "sys_prctl(PR_SET_MM_EXE_FILE)".
 >
-> struct fanotify_event_metadata {
->         __u32 event_len;
->         __u8 vers;
->         __u8 reserved;
->         __u16 metadata_len;
->         __aligned_u64 mask;
->         __s32 fd;
->         __s32 pid;
-> };
->
-> If event_len is > sizeof(struct fanotify_event_metadata), userspace is
-> expected to look for struct fanotify_event_info_header after struct
-> fanotify_event_metadata. struct fanotify_event_info_header looks like:
->
-> struct fanotify_event_info_header {
->         __u8 info_type;
->         __u8 pad;
->         __u16 len;
-> };
->
-> Again if the end of this info (defined by 'len') is smaller than
-> 'event_len', there is next header with next payload of data. So for example
-> error event will have:
->
-> struct fanotify_event_metadata
-> struct fanotify_event_info_error
-> struct fanotify_event_info_fid
->
-> Now either we could add fs specific blob into fanotify_event_info_error
-> (but then it would be good to add 'magic' to fanotify_event_info_error now
-> and define that if 'len' is larger, fs-specific blob follows after fixed
-> data) or we can add another info type FAN_EVENT_INFO_TYPE_ERROR_FS_DATA
-> (i.e., attach another structure into the event) which would contain the
-> 'magic' and then blob of data. I don't have strong preference.
->
-> > I have three questions at this point:
-> >
-> > 1) What's the maximum size of a fanotify event structure?  None of these
-> > structures exceed 36 bytes, which I hope will fit in whatever size
-> > constraints?
->
-> Whole event must fit into 4G, each event info needs to fit in 64k. At least
-> these are the limits of the interface. Practically, it would be difficult
-> and inefficient to manipulate such huge events...
->
+> RFC -> v1:
+> - "binfmt: remove in-tree usage of MAP_DENYWRITE"
+> -- Add a note that this should fix part of a problem with overlayfs
 
-Just keep in mind that the current scheme pre-allocates the single event slot
-on fanotify_mark() time and (I think) we agreed to pre-allocate
-sizeof(fsnotify_error_event) + MAX_HDNALE_SZ.
-If filesystems would want to store some variable length fs specific info,
-a future implementation will have to take that into account.
+This is unfortunately way beyond my understanding of the fs layer to 
+actually review this.
 
-> > 2) If a program written for today's notification events sees a
-> > fanotify_event_info_header from future-XFS with a header length that is
-> > larger than FANOTIFY_INFO_ERROR_LEN, will it be able to react
-> > appropriately?  Which is to say, ignore it on the grounds that the
-> > length is unexpectedly large?
->
-> That is the expected behavior :). But I guess separate info type for
-> fs-specific blob might be more foolproof in this sense - when parsing
-> events, you are expected to just skip info_types you don't understand
-> (based on 'len' and 'type' in the common header) and generally different
-> events have different sets of infos attached to them so you mostly have to
-> implement this logic to be able to process events.
->
-> > It /looks/ like this is the case; really I'm just fishing around here
-> > to make sure nothing in the design of /this/ patchset would make it Very
-> > Difficult(tm) to add more information later.
-> >
-> > 3) Once we let filesystem implementations create their own extended
-> > error notifications, should we have a "u32 magic" to aid in decoding?
-> > Or even add it to fanotify_event_info_error now?
->
-> If we go via the 'separate info type' route, then the magic can go into
-> that structure and there's no great use for 'magic' in
-> fanotify_event_info_error.
+But from the ten mile high view it looks like a really nice cleanup to 
+me and makes my live in the DRM subsystem much easier.
 
-My 0.02$:
-With current patch set, filesystem reports error using:
-fsnotify_sb_error(sb, inode, error)
-
-The optional @inode argument is encoded to a filesystem opaque
-blob using  exportfs_encode_inode_fh(), recorded in the event
-as a blob and reported to userspace as a blob.
-
-If filesystem would like to report a different type of opaque blob
-(e.g. xfs_perag_info), the interface should be extended to:
-fsnotify_sb_error(sb, inode, error, info, info_len)
-and the 'separate info type' route seems like the best and most natural
-way to deal with the case of information that is only emitted from
-a specific filesystem with a specific feature enabled (online fsck).
-
-IOW, there is no need for fanotify_event_info_xfs_perag_error
-in fanotify UAPI if you ask me.
-
-Regarding 'magic' in fanotify_event_info_error, I also don't see the
-need for that, because the event already has fsid which can be
-used to identify the filesystem in question.
-
-Keep in mind that the value of handle_type inside struct file_handle
-inside struct fanotify_event_info_fid is not a universal classifier.
-Specifically, the type 0x81 means "XFS_FILEID_INO64_GEN"
-only in the context of XFS and it can mean something else in the
-context of another type of filesystem.
-
-If we add a new info record fanotify_event_info_fs_private
-it could even be an alias to fanotify_event_info_fid with the only
-difference that the handle[0] member is not expected to be
-struct file_handle, but some other fs private struct.
+Feel free to add a Acked-by: Christian König <christian.koenig@amd.com> 
+to the series.
 
 Thanks,
-Amir.
+Christian.
+
+>
+> [1] https://lore.kernel.org/r/20210423131640.20080-1-david@redhat.com/
+> [2] https://lore.kernel.org/r/YNHXzBgzRrZu1MrD@miu.piliscsaba.redhat.com/
+> [3] https://lkml.kernel.org/r/20210812084348.6521-1-david@redhat.com
+>
+> Cc: Linus Torvalds <torvalds@linux-foundation.org>
+> Cc: Andrew Morton <akpm@linux-foundation.org>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> Cc: Ingo Molnar <mingo@redhat.com>
+> Cc: Borislav Petkov <bp@alien8.de>
+> Cc: "H. Peter Anvin" <hpa@zytor.com>
+> Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+> Cc: Alexey Dobriyan <adobriyan@gmail.com>
+> Cc: Steven Rostedt <rostedt@goodmis.org>
+> Cc: Peter Zijlstra <peterz@infradead.org>
+> Cc: Arnaldo Carvalho de Melo <acme@kernel.org>
+> Cc: Mark Rutland <mark.rutland@arm.com>
+> Cc: Alexander Shishkin <alexander.shishkin@linux.intel.com>
+> Cc: Jiri Olsa <jolsa@redhat.com>
+> Cc: Namhyung Kim <namhyung@kernel.org>
+> Cc: Petr Mladek <pmladek@suse.com>
+> Cc: Sergey Senozhatsky <sergey.senozhatsky@gmail.com>
+> Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+> Cc: Rasmus Villemoes <linux@rasmusvillemoes.dk>
+> Cc: Kees Cook <keescook@chromium.org>
+> Cc: "Eric W. Biederman" <ebiederm@xmission.com>
+> Cc: Greg Ungerer <gerg@linux-m68k.org>
+> Cc: Geert Uytterhoeven <geert@linux-m68k.org>
+> Cc: Mike Rapoport <rppt@kernel.org>
+> Cc: Vlastimil Babka <vbabka@suse.cz>
+> Cc: Vincenzo Frascino <vincenzo.frascino@arm.com>
+> Cc: Chinwen Chang <chinwen.chang@mediatek.com>
+> Cc: Catalin Marinas <catalin.marinas@arm.com>
+> Cc: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+> Cc: Huang Ying <ying.huang@intel.com>
+> Cc: Jann Horn <jannh@google.com>
+> Cc: Feng Tang <feng.tang@intel.com>
+> Cc: Kevin Brodsky <Kevin.Brodsky@arm.com>
+> Cc: Michael Ellerman <mpe@ellerman.id.au>
+> Cc: Shawn Anastasio <shawn@anastas.io>
+> Cc: Steven Price <steven.price@arm.com>
+> Cc: Nicholas Piggin <npiggin@gmail.com>
+> Cc: Christian Brauner <christian.brauner@ubuntu.com>
+> Cc: Jens Axboe <axboe@kernel.dk>
+> Cc: Gabriel Krisman Bertazi <krisman@collabora.com>
+> Cc: Peter Xu <peterx@redhat.com>
+> Cc: Suren Baghdasaryan <surenb@google.com>
+> Cc: Shakeel Butt <shakeelb@google.com>
+> Cc: Marco Elver <elver@google.com>
+> Cc: Daniel Jordan <daniel.m.jordan@oracle.com>
+> Cc: Nicolas Viennot <Nicolas.Viennot@twosigma.com>
+> Cc: Thomas Cedeno <thomascedeno@google.com>
+> Cc: Michal Hocko <mhocko@suse.com>
+> Cc: Miklos Szeredi <miklos@szeredi.hu>
+> Cc: Chengguang Xu <cgxu519@mykernel.net>
+> Cc: "Christian König" <ckoenig.leichtzumerken@gmail.com>
+> Cc: Florian Weimer <fweimer@redhat.com>
+> Cc: Al Viro <viro@zeniv.linux.org.uk>
+> Cc: David Laight <David.Laight@ACULAB.COM>
+> Cc: linux-unionfs@vger.kernel.org
+> Cc: linux-api@vger.kernel.org
+> Cc: x86@kernel.org
+> Cc: linux-fsdevel@vger.kernel.org
+> Cc: linux-mm@kvack.org
+>
+> David Hildenbrand (7):
+>    binfmt: don't use MAP_DENYWRITE when loading shared libraries via
+>      uselib()
+>    kernel/fork: factor out replacing the current MM exe_file
+>    kernel/fork: always deny write access to current MM exe_file
+>    binfmt: remove in-tree usage of MAP_DENYWRITE
+>    mm: remove VM_DENYWRITE
+>    mm: ignore MAP_DENYWRITE in ksys_mmap_pgoff()
+>    fs: update documentation of get_write_access() and friends
+>
+>   arch/x86/ia32/ia32_aout.c      |  8 ++-
+>   fs/binfmt_aout.c               |  7 ++-
+>   fs/binfmt_elf.c                |  6 +--
+>   fs/binfmt_elf_fdpic.c          |  2 +-
+>   fs/exec.c                      |  4 +-
+>   fs/proc/task_mmu.c             |  1 -
+>   include/linux/fs.h             | 19 ++++---
+>   include/linux/mm.h             |  4 +-
+>   include/linux/mman.h           |  4 +-
+>   include/trace/events/mmflags.h |  1 -
+>   kernel/events/core.c           |  2 -
+>   kernel/fork.c                  | 95 ++++++++++++++++++++++++++++++----
+>   kernel/sys.c                   | 33 +-----------
+>   lib/test_printf.c              |  5 +-
+>   mm/mmap.c                      | 29 ++---------
+>   mm/nommu.c                     |  2 -
+>   16 files changed, 119 insertions(+), 103 deletions(-)
+>
+>
+> base-commit: 7c60610d476766e128cc4284bb6349732cbd6606
+
