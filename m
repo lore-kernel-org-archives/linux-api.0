@@ -2,207 +2,162 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AE7A1C4338F
-	for <linux-api@archiver.kernel.org>; Thu, 19 Aug 2021 03:58:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8FFCDC4320A
+	for <linux-api@archiver.kernel.org>; Thu, 19 Aug 2021 13:57:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 890106112D
-	for <linux-api@archiver.kernel.org>; Thu, 19 Aug 2021 03:58:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7341C608FE
+	for <linux-api@archiver.kernel.org>; Thu, 19 Aug 2021 13:57:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236007AbhHSD70 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 18 Aug 2021 23:59:26 -0400
-Received: from mail.kernel.org ([198.145.29.99]:46662 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S235893AbhHSD70 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Wed, 18 Aug 2021 23:59:26 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 4475C610CB;
-        Thu, 19 Aug 2021 03:58:50 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1629345530;
-        bh=It3UWJT/EISjJbSXJOa9YOZrmo0c8cMi/Z71oauhW1o=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=B8YJS3s9/SG4ffD2pUndnBEUmZ/rGTKk143b5aSWLidLDRfF3rRHrbS3sG/KdLFoe
-         fO2i8I4B/tdR+nOAn50qXcduL736ue0ayVwSLKnC/382wpgRKNX5yQDev19DIoX1a+
-         UwlH6klunOX5kQtDhqsLRRIrl+3915OVPlaZ7Y9f2us1VPtcFk+i63959XJXFvw/M5
-         QRlP2OK4MdbEHUVxd7bTwXjGnxQc6dfcZsNPZBIVoWma/HKUPKgOERVOqcosqqCvTZ
-         s+IKizsl4Qz4slLXVbqbopf3vCpQcnfx6wBx7Iyx2br0qroybo7gYnk7e+GEniPSC5
-         7Q1M+zJjI5SCg==
-Date:   Wed, 18 Aug 2021 20:58:49 -0700
-From:   "Darrick J. Wong" <djwong@kernel.org>
-To:     Jan Kara <jack@suse.cz>
-Cc:     Amir Goldstein <amir73il@gmail.com>,
+        id S238488AbhHSN6b convert rfc822-to-8bit (ORCPT
+        <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 19 Aug 2021 09:58:31 -0400
+Received: from out01.mta.xmission.com ([166.70.13.231]:59828 "EHLO
+        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S240200AbhHSN6X (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Aug 2021 09:58:23 -0400
+Received: from in02.mta.xmission.com ([166.70.13.52]:57326)
+        by out01.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1mGiY4-000ia2-O6; Thu, 19 Aug 2021 07:57:36 -0600
+Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95]:52186 helo=email.xmission.com)
+        by in02.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1mGiY3-00AqBr-Kq; Thu, 19 Aug 2021 07:57:36 -0600
+From:   ebiederm@xmission.com (Eric W. Biederman)
+To:     bfields@fieldses.org (J. Bruce Fields)
+Cc:     Andy Lutomirski <luto@kernel.org>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        David Laight <David.Laight@aculab.com>,
+        David Hildenbrand <david@redhat.com>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        "H. Peter Anvin" <hpa@zytor.com>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Alexey Dobriyan <adobriyan@gmail.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        "Peter Zijlstra \(Intel\)" <peterz@infradead.org>,
+        Arnaldo Carvalho de Melo <acme@kernel.org>,
+        Mark Rutland <mark.rutland@arm.com>,
+        Alexander Shishkin <alexander.shishkin@linux.intel.com>,
+        Jiri Olsa <jolsa@redhat.com>,
+        Namhyung Kim <namhyung@kernel.org>,
+        Petr Mladek <pmladek@suse.com>,
+        Sergey Senozhatsky <sergey.senozhatsky@gmail.com>,
+        Andy Shevchenko <andriy.shevchenko@linux.intel.com>,
+        Rasmus Villemoes <linux@rasmusvillemoes.dk>,
+        Kees Cook <keescook@chromium.org>,
+        Greg Ungerer <gerg@linux-m68k.org>,
+        Geert Uytterhoeven <geert@linux-m68k.org>,
+        Mike Rapoport <rppt@kernel.org>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        Chinwen Chang <chinwen.chang@mediatek.com>,
+        Michel Lespinasse <walken@google.com>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        "Matthew Wilcox \(Oracle\)" <willy@infradead.org>,
+        Huang Ying <ying.huang@intel.com>,
+        Jann Horn <jannh@google.com>, Feng Tang <feng.tang@intel.com>,
+        Kevin Brodsky <Kevin.Brodsky@arm.com>,
+        Michael Ellerman <mpe@ellerman.id.au>,
+        Shawn Anastasio <shawn@anastas.io>,
+        Steven Price <steven.price@arm.com>,
+        Nicholas Piggin <npiggin@gmail.com>,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Jens Axboe <axboe@kernel.dk>,
         Gabriel Krisman Bertazi <krisman@collabora.com>,
-        Jan Kara <jack@suse.com>,
+        Peter Xu <peterx@redhat.com>,
+        Suren Baghdasaryan <surenb@google.com>,
+        Shakeel Butt <shakeelb@google.com>,
+        Marco Elver <elver@google.com>,
+        Daniel Jordan <daniel.m.jordan@oracle.com>,
+        Nicolas Viennot <Nicolas.Viennot@twosigma.com>,
+        Thomas Cedeno <thomascedeno@google.com>,
+        Collin Fijalkovich <cfijalkovich@google.com>,
+        Michal Hocko <mhocko@suse.com>,
+        Miklos Szeredi <miklos@szeredi.hu>,
+        Chengguang Xu <cgxu519@mykernel.net>,
+        Christian =?utf-8?Q?K=C3=B6nig?= 
+        <ckoenig.leichtzumerken@gmail.com>,
+        "linux-unionfs\@vger.kernel.org" <linux-unionfs@vger.kernel.org>,
         Linux API <linux-api@vger.kernel.org>,
-        Ext4 <linux-ext4@vger.kernel.org>,
-        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-        Khazhismel Kumykov <khazhy@google.com>,
-        David Howells <dhowells@redhat.com>,
-        Dave Chinner <david@fromorbit.com>,
-        Theodore Tso <tytso@mit.edu>,
-        Matthew Bobrowski <repnop@google.com>, kernel@collabora.com
-Subject: Re: [PATCH v6 18/21] fanotify: Emit generic error info type for
- error event
-Message-ID: <20210819035849.GA12586@magnolia>
-References: <20210812214010.3197279-1-krisman@collabora.com>
- <20210812214010.3197279-19-krisman@collabora.com>
- <20210816214103.GA12664@magnolia>
- <20210817090538.GA26181@quack2.suse.cz>
- <CAOQ4uxgdJpovZ-zzJkLOdQ=YYF3ta46m0_jrt0QFSdJ9GdXR=g@mail.gmail.com>
- <20210818001632.GD12664@magnolia>
- <CAOQ4uxhccRchiajjje3C20UOKwxQUapu=RYPsM1Y0uTnS81Vew@mail.gmail.com>
- <20210818095818.GA28119@quack2.suse.cz>
+        the arch/x86 maintainers <x86@kernel.org>,
+        "\<linux-fsdevel\@vger.kernel.org\>" <linux-fsdevel@vger.kernel.org>,
+        Linux-MM <linux-mm@kvack.org>,
+        Florian Weimer <fweimer@redhat.com>,
+        Michael Kerrisk <mtk.manpages@gmail.com>
+References: <20210812084348.6521-1-david@redhat.com> <87o8a2d0wf.fsf@disp2133>
+        <60db2e61-6b00-44fa-b718-e4361fcc238c@www.fastmail.com>
+        <87lf56bllc.fsf@disp2133>
+        <CAHk-=wgru1UAm3kAKSOdnbewPXQMOxYkq9PnAsRadAC6pXCCMQ@mail.gmail.com>
+        <87eeay8pqx.fsf@disp2133>
+        <5b0d7c1e73ca43ef9ce6665fec6c4d7e@AcuMS.aculab.com>
+        <87h7ft2j68.fsf@disp2133>
+        <CAHk-=whmXTiGUzVrTP=mOPQrg-XOi3R-45hC4dQOqW4JmZdFUQ@mail.gmail.com>
+        <b629cda1-becd-4725-b16c-13208ff478d3@www.fastmail.com>
+        <20210818154217.GB24115@fieldses.org>
+Date:   Thu, 19 Aug 2021 08:56:52 -0500
+In-Reply-To: <20210818154217.GB24115@fieldses.org> (J. Bruce Fields's message
+        of "Wed, 18 Aug 2021 11:42:17 -0400")
+Message-ID: <87bl5tv8pn.fsf@disp2133>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <20210818095818.GA28119@quack2.suse.cz>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+X-XM-SPF: eid=1mGiY3-00AqBr-Kq;;;mid=<87bl5tv8pn.fsf@disp2133>;;;hst=in02.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1+peADQdS13oBRstgvxG3nqTM38ZOsjU00=
+X-SA-Exim-Connect-IP: 68.227.160.95
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: Re: [PATCH v1 0/7] Remove in-tree usage of MAP_DENYWRITE
+X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
+X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Aug 18, 2021 at 11:58:18AM +0200, Jan Kara wrote:
-> On Wed 18-08-21 06:24:26, Amir Goldstein wrote:
-> > [...]
-> > 
-> > > > Just keep in mind that the current scheme pre-allocates the single event slot
-> > > > on fanotify_mark() time and (I think) we agreed to pre-allocate
-> > > > sizeof(fsnotify_error_event) + MAX_HDNALE_SZ.
-> > > > If filesystems would want to store some variable length fs specific info,
-> > > > a future implementation will have to take that into account.
-> > >
-> > > <nod> I /think/ for the fs and AG metadata we could preallocate these,
-> > > so long as fsnotify doesn't free them out from under us.
-> > 
-> > fs won't get notified when the event is freed, so fsnotify must
-> > take ownership on the data structure.
-> > I was thinking more along the lines of limiting maximum size for fs
-> > specific info and pre-allocating that size for the event.
-> 
-> Agreed. If there's a sensible upperbound than preallocating this inside
-> fsnotify is likely the least problematic solution.
-> 
-> > > For inodes...
-> > > there are many more of those, so they'd have to be allocated
-> > > dynamically.
-> > 
-> > The current scheme is that the size of the queue for error events
-> > is one and the single slot is pre-allocated.
-> > The reason for pre-allocate is that the assumption is that fsnotify_error()
-> > could be called from contexts where memory allocation would be
-> > inconvenient.
-> > Therefore, we can store the encoded file handle of the first erroneous
-> > inode, but we do not store any more events until user read this
-> > one event.
-> 
-> Right. OTOH I can imagine allowing GFP_NOFS allocations in the error
-> context. At least for ext4 it would be workable (after all ext4 manages to
-> lock & modify superblock in its error handlers, GFP_NOFS allocation isn't
-> harder). But then if events are dynamically allocated there's still the
-> inconvenient question what are you going to do if you need to report fs
-> error and you hit ENOMEM. Just not sending the notification may have nasty
-> consequences and in the world of containerization and virtualization
-> tightly packed machines where ENOMEM happens aren't that unlikely. It is
-> just difficult to make assumptions about filesystems overall so we decided
-> to be better safe and preallocate the event.
-> 
-> Or, we could leave the allocation troubles for the filesystem and
-> fsnotify_sb_error() would be passed already allocated event (this way
-> attaching of fs-specific blobs to the event is handled as well) which it
-> would just queue. Plus we'd need to provide some helper to fill in generic
-> part of the event...
-> 
-> The disadvantage is that if there are filesystems / callsites needing
-> preallocated events, it would be painful for them. OTOH current two users -
-> ext4 & xfs - can handle allocation in the error path AFAIU.
-> 
-> Thinking about this some more, maybe we could have event preallocated (like
-> a "rescue event"). Normally we would dynamically allocate (or get passed
-> from fs) the event and only if the allocation fails, we would queue the
-> rescue event to indicate to listeners that something bad happened, there
-> was error but we could not fully report it.
+bfields@fieldses.org (J. Bruce Fields) writes:
 
-Yes.
+> On Fri, Aug 13, 2021 at 05:49:19PM -0700, Andy Lutomirski wrote:
+>> Iâ€™ll bite.  How about we attack this in the opposite direction: remove
+>> the deny write mechanism entirely.
+>
+> For what it's worth, Windows has open flags that allow denying read or
+> write opens.  They also made their way into the NFSv4 protocol, but
+> knfsd enforces them only against other NFSv4 clients.  Last I checked,
+> Samba attempted to emulate them using flock (and there's a comment to
+> that effect on the flock syscall in fs/locks.c).  I don't know what Wine
+> does.
+>
+> Pavel Shilovsky posted flags adding O_DENY* flags years ago:
+>
+> 	https://lwn.net/Articles/581005/
+>
+> I keep thinking I should look back at those some day but will probably
+> never get to it.
+>
+> I've no idea how Windows applications use them, though I'm told it's
+> common.
 
-> But then, even if we'd go for dynamic event allocation by default, we need
-> to efficiently merge events since some fs failures (e.g. resulting in
-> journal abort in ext4) lead to basically all operations with the filesystem
-> to fail and that could easily swamp the notification system with useless
-> events.
+I don't know in any detail.  I just have this memory of not being able
+to open or do anything with a file on windows while any application has
+it open.
 
-Hm.  Going out on a limb, I would guess that the majority of fs error
-flood events happen if the storage fails catastrophically.  Assuming
-that a catastrophic failure will quickly take the filesystem offline, I
-would say that for XFS we should probably send one last "and then we
-died" event and stop reporting after that.
+We limit mandatory locks to filesystems that have the proper mount flag
+and files that are sgid but are not executable.  Reusing that limit we
+could probably allow such a behavior in Linux without causing chaos.
 
-> Current system with preallocated event nicely handles this
-> situation, it is questionable how to extend it for online fsck usecase
-> where we need to queue more than one event (but even there probably needs
-> to be some sensible upper-bound). I'll think about it...
+Without being very strict about which files can participate I can just
+imagine someone hiding their presence by not allowing other applications
+the ability to write to utmp or a log file.
 
-At least for XFS, I was figuring that xfs_scrub errors wouldn't be
-reported via fsnotify since the repair tool is already running anyway.
+In the windows world where everything evolved with those kinds of
+restrictions it is probably fine (although super annoying).
 
-> > > Hmm.  For handling accumulated errors, can we still access the
-> > > fanotify_event_info_* object once we've handed it to fanotify?  If the
-> > > user hasn't picked up the event yet, it might be acceptable to set more
-> > > bits in the type mask and bump the error count.  In other words, every
-> > > time userspace actually reads the event, it'll get the latest error
-> > > state.  I /think/ that's where the design of this patchset is going,
-> > > right?
-> > 
-> > Sort of.
-> > fsnotify does have a concept of "merging" new event with an event
-> > already in queue.
-> > 
-> > With most fsnotify events, merge only happens if the info related
-> > to the new event (e.g. sb,inode) is the same as that off the queued
-> > event and the "merge" is only in the event mask
-> > (e.g. FS_OPEN|FS_CLOSE).
-> > 
-> > However, the current scheme for "merge" of an FS_ERROR event is only
-> > bumping err_count, even if the new reported error or inode do not
-> > match the error/inode in the queued event.
-> > 
-> > If we define error event subtypes (e.g. FS_ERROR_WRITEBACK,
-> > FS_ERROR_METADATA), then the error event could contain
-> > a field for subtype mask and user could read the subtype mask
-> > along with the accumulated error count, but this cannot be
-> > done by providing the filesystem access to modify an internal
-> > fsnotify event, so those have to be generic UAPI defined subtypes.
-> > 
-> > If you think that would be useful, then we may want to consider
-> > reserving the subtype mask field in fanotify_event_info_error in
-> > advance.
-> 
-> It depends on what exactly Darrick has in mind but I suspect we'd need a
-> fs-specific merge helper that would look at fs-specific blobs in the event
-> and decide whether events can be merged or not, possibly also handling the
-> merge by updating the blob.
-
-Yes.  If the filesystem itself were allowed to manage the lifespan of
-the fsnotify error event object then this would be trivial -- we'll own
-the object, keep it updated as needed, and fsnotify can copy the
-contents to userspace whenever convenient.
-
-(This might be a naïve view of fsnotify...)
-
-> From the POV of fsnotify that would probably
-> mean merge callback in the event itself. But I guess this needs more
-> details from Darrick and maybe we don't need to decide this at this moment
-> since nobody is close to the point of having code needing to pass fs-blobs
-> with events.
-
-<nod> We ... probably don't need to decide this now.
-
---D
-
-> 
-> 								Honza
-> -- 
-> Jan Kara <jack@suse.com>
-> SUSE Labs, CR
+Eric
