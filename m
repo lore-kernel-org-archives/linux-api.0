@@ -5,27 +5,27 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2449BC19F35
-	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:16:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 55A08C432BE
+	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:17:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0F748610A1
-	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:16:58 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4729460FA0
+	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:17:16 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238804AbhH3SRs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 30 Aug 2021 14:17:48 -0400
+        id S238871AbhH3SSF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 30 Aug 2021 14:18:05 -0400
 Received: from mga18.intel.com ([134.134.136.126]:43858 "EHLO mga18.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S238565AbhH3SRO (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 30 Aug 2021 14:17:14 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10092"; a="205460079"
+        id S238549AbhH3SRM (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 30 Aug 2021 14:17:12 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10092"; a="205460073"
 X-IronPort-AV: E=Sophos;i="5.84,364,1620716400"; 
-   d="scan'208";a="205460079"
+   d="scan'208";a="205460073"
 Received: from fmsmga003.fm.intel.com ([10.253.24.29])
   by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:18 -0700
 X-IronPort-AV: E=Sophos;i="5.84,364,1620716400"; 
-   d="scan'208";a="530533306"
+   d="scan'208";a="530533299"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
   by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:18 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
@@ -58,9 +58,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
         "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
-Subject: [PATCH v30 14/32] mm: Introduce VM_SHADOW_STACK for shadow stack memory
-Date:   Mon, 30 Aug 2021 11:15:10 -0700
-Message-Id: <20210830181528.1569-15-yu-cheng.yu@intel.com>
+Subject: [PATCH v30 12/32] x86/mm: Update ptep_set_wrprotect() and pmdp_set_wrprotect() for transition from _PAGE_DIRTY to _PAGE_COW
+Date:   Mon, 30 Aug 2021 11:15:08 -0700
+Message-Id: <20210830181528.1569-13-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210830181528.1569-1-yu-cheng.yu@intel.com>
 References: <20210830181528.1569-1-yu-cheng.yu@intel.com>
@@ -70,91 +70,90 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-A shadow stack PTE must be read-only and have _PAGE_DIRTY set.  However,
-read-only and Dirty PTEs also exist for copy-on-write (COW) pages.  These
-two cases are handled differently for page faults.  Introduce
-VM_SHADOW_STACK to track shadow stack VMAs.
+When Shadow Stack is introduced, [R/O + _PAGE_DIRTY] PTE is reserved for
+shadow stack.  Copy-on-write PTEs have [R/O + _PAGE_COW].
+
+When a PTE goes from [R/W + _PAGE_DIRTY] to [R/O + _PAGE_COW], it could
+become a transient shadow stack PTE in two cases:
+
+The first case is that some processors can start a write but end up seeing
+a read-only PTE by the time they get to the Dirty bit, creating a transient
+shadow stack PTE.  However, this will not occur on processors supporting
+Shadow Stack, and a TLB flush is not necessary.
+
+The second case is that when _PAGE_DIRTY is replaced with _PAGE_COW non-
+atomically, a transient shadow stack PTE can be created as a result.
+Thus, prevent that with cmpxchg.
+
+Dave Hansen, Jann Horn, Andy Lutomirski, and Peter Zijlstra provided many
+insights to the issue.  Jann Horn provided the cmpxchg solution.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
-Cc: Kees Cook <keescook@chromium.org>
 ---
- Documentation/filesystems/proc.rst | 1 +
- arch/x86/mm/mmap.c                 | 2 ++
- fs/proc/task_mmu.c                 | 3 +++
- include/linux/mm.h                 | 8 ++++++++
- 4 files changed, 14 insertions(+)
+v30:
+- Replace (pmdval_t) cast with CONFIG_PGTABLE_LEVELES > 2 (Borislav Petkov).
+---
+ arch/x86/include/asm/pgtable.h | 38 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
 
-diff --git a/Documentation/filesystems/proc.rst b/Documentation/filesystems/proc.rst
-index 042c418f4090..3473f1aa7e89 100644
---- a/Documentation/filesystems/proc.rst
-+++ b/Documentation/filesystems/proc.rst
-@@ -553,6 +553,7 @@ encoded manner. The codes are the following:
-     mt    arm64 MTE allocation tags are enabled
-     um    userfaultfd missing tracking
-     uw    userfaultfd wr-protect tracking
-+    ss    shadow stack page
-     ==    =======================================
- 
- Note that there is no guarantee that every flag and associated mnemonic will
-diff --git a/arch/x86/mm/mmap.c b/arch/x86/mm/mmap.c
-index c90c20904a60..f3f52c5e2fd6 100644
---- a/arch/x86/mm/mmap.c
-+++ b/arch/x86/mm/mmap.c
-@@ -165,6 +165,8 @@ unsigned long get_mmap_base(int is_legacy)
- 
- const char *arch_vma_name(struct vm_area_struct *vma)
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index cf7316e968df..7c0542997790 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -1278,6 +1278,24 @@ static inline pte_t ptep_get_and_clear_full(struct mm_struct *mm,
+ static inline void ptep_set_wrprotect(struct mm_struct *mm,
+ 				      unsigned long addr, pte_t *ptep)
  {
-+	if (vma->vm_flags & VM_SHADOW_STACK)
-+		return "[shadow stack]";
- 	return NULL;
++	/*
++	 * If Shadow Stack is enabled, pte_wrprotect() moves _PAGE_DIRTY
++	 * to _PAGE_COW (see comments at pte_wrprotect()).
++	 * When a thread reads a RW=1, Dirty=0 PTE and before changing it
++	 * to RW=0, Dirty=0, another thread could have written to the page
++	 * and the PTE is RW=1, Dirty=1 now.  Use try_cmpxchg() to detect
++	 * PTE changes and update old_pte, then try again.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		pte_t old_pte, new_pte;
++
++		old_pte = READ_ONCE(*ptep);
++		do {
++			new_pte = pte_wrprotect(old_pte);
++		} while (!try_cmpxchg(&ptep->pte, &old_pte.pte, new_pte.pte));
++
++		return;
++	}
+ 	clear_bit(_PAGE_BIT_RW, (unsigned long *)&ptep->pte);
  }
  
-diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-index eb97468dfe4c..d8b2414e47ee 100644
---- a/fs/proc/task_mmu.c
-+++ b/fs/proc/task_mmu.c
-@@ -662,6 +662,9 @@ static void show_smap_vma_flags(struct seq_file *m, struct vm_area_struct *vma)
- #ifdef CONFIG_HAVE_ARCH_USERFAULTFD_MINOR
- 		[ilog2(VM_UFFD_MINOR)]	= "ui",
- #endif /* CONFIG_HAVE_ARCH_USERFAULTFD_MINOR */
-+#ifdef CONFIG_ARCH_HAS_SHADOW_STACK
-+		[ilog2(VM_SHADOW_STACK)] = "ss",
-+#endif
- 	};
- 	size_t i;
- 
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 1d4e5012c27d..4a9985e50819 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -319,11 +319,13 @@ extern unsigned int kobjsize(const void *objp);
- #define VM_HIGH_ARCH_BIT_2	34	/* bit only usable on 64-bit architectures */
- #define VM_HIGH_ARCH_BIT_3	35	/* bit only usable on 64-bit architectures */
- #define VM_HIGH_ARCH_BIT_4	36	/* bit only usable on 64-bit architectures */
-+#define VM_HIGH_ARCH_BIT_5	37	/* bit only usable on 64-bit architectures */
- #define VM_HIGH_ARCH_0	BIT(VM_HIGH_ARCH_BIT_0)
- #define VM_HIGH_ARCH_1	BIT(VM_HIGH_ARCH_BIT_1)
- #define VM_HIGH_ARCH_2	BIT(VM_HIGH_ARCH_BIT_2)
- #define VM_HIGH_ARCH_3	BIT(VM_HIGH_ARCH_BIT_3)
- #define VM_HIGH_ARCH_4	BIT(VM_HIGH_ARCH_BIT_4)
-+#define VM_HIGH_ARCH_5	BIT(VM_HIGH_ARCH_BIT_5)
- #endif /* CONFIG_ARCH_USES_HIGH_VMA_FLAGS */
- 
- #ifdef CONFIG_ARCH_HAS_PKEYS
-@@ -339,6 +341,12 @@ extern unsigned int kobjsize(const void *objp);
- #endif
- #endif /* CONFIG_ARCH_HAS_PKEYS */
- 
-+#ifdef CONFIG_X86_SHADOW_STACK
-+# define VM_SHADOW_STACK	VM_HIGH_ARCH_5
-+#else
-+# define VM_SHADOW_STACK	VM_NONE
-+#endif
+@@ -1322,6 +1340,26 @@ static inline pud_t pudp_huge_get_and_clear(struct mm_struct *mm,
+ static inline void pmdp_set_wrprotect(struct mm_struct *mm,
+ 				      unsigned long addr, pmd_t *pmdp)
+ {
++#if CONFIG_PGTABLE_LEVELS > 2
++	/*
++	 * If Shadow Stack is enabled, pmd_wrprotect() moves _PAGE_DIRTY
++	 * to _PAGE_COW (see comments at pmd_wrprotect()).
++	 * When a thread reads a RW=1, Dirty=0 PMD and before changing it
++	 * to RW=0, Dirty=0, another thread could have written to the page
++	 * and the PMD is RW=1, Dirty=1 now.  Use try_cmpxchg() to detect
++	 * PMD changes and update old_pmd, then try again.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		pmd_t old_pmd, new_pmd;
 +
- #if defined(CONFIG_X86)
- # define VM_PAT		VM_ARCH_1	/* PAT reserves whole VMA at once (x86) */
- #elif defined(CONFIG_PPC)
++		old_pmd = READ_ONCE(*pmdp);
++		do {
++			new_pmd = pmd_wrprotect(old_pmd);
++		} while (!try_cmpxchg(&pmdp->pmd, &old_pmd.pmd, new_pmd.pmd));
++
++		return;
++	}
++#endif
+ 	clear_bit(_PAGE_BIT_RW, (unsigned long *)pmdp);
+ }
+ 
 -- 
 2.21.0
 
