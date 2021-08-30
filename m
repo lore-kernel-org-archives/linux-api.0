@@ -7,27 +7,27 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B2C1DC25AF0
-	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:16:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F1291C19F38
+	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:16:26 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A015760232
-	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:16:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D105960FE8
+	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:16:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238594AbhH3SRQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 30 Aug 2021 14:17:16 -0400
-Received: from mga18.intel.com ([134.134.136.126]:43858 "EHLO mga18.intel.com"
+        id S238624AbhH3SRT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 30 Aug 2021 14:17:19 -0400
+Received: from mga18.intel.com ([134.134.136.126]:43870 "EHLO mga18.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S238561AbhH3SRN (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 30 Aug 2021 14:17:13 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10092"; a="205460076"
+        id S238585AbhH3SRP (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 30 Aug 2021 14:17:15 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10092"; a="205460083"
 X-IronPort-AV: E=Sophos;i="5.84,364,1620716400"; 
-   d="scan'208";a="205460076"
+   d="scan'208";a="205460083"
 Received: from fmsmga003.fm.intel.com ([10.253.24.29])
-  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:18 -0700
+  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:19 -0700
 X-IronPort-AV: E=Sophos;i="5.84,364,1620716400"; 
-   d="scan'208";a="530533302"
+   d="scan'208";a="530533315"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:18 -0700
+  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:19 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -57,11 +57,10 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Haitao Huang <haitao.huang@intel.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        Axel Rasmussen <axelrasmussen@google.com>,
-        Peter Xu <peterx@redhat.com>
-Subject: [PATCH v30 13/32] mm: Move VM_UFFD_MINOR_BIT from 37 to 38
-Date:   Mon, 30 Aug 2021 11:15:09 -0700
-Message-Id: <20210830181528.1569-14-yu-cheng.yu@intel.com>
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
+Subject: [PATCH v30 16/32] x86/mm: Update maybe_mkwrite() for shadow stack
+Date:   Mon, 30 Aug 2021 11:15:12 -0700
+Message-Id: <20210830181528.1569-17-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210830181528.1569-1-yu-cheng.yu@intel.com>
 References: <20210830181528.1569-1-yu-cheng.yu@intel.com>
@@ -71,30 +70,125 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-To introduce VM_SHADOW_STACK as VM_HIGH_ARCH_BIT (37), and make all
-VM_HIGH_ARCH_BITs stay together, move VM_UFFD_MINOR_BIT from 37 to 38.
+When serving a page fault, maybe_mkwrite() makes a PTE writable if its vma
+has VM_WRITE.
+
+A shadow stack vma has VM_SHADOW_STACK.  Its PTEs have _PAGE_DIRTY, but not
+_PAGE_WRITE.  In fork(), _PAGE_DIRTY is cleared to cause copy-on-write,
+and in the page fault handler, _PAGE_DIRTY is restored and the shadow stack
+page is writable again.
+
+Introduce an x86 version of maybe_mkwrite(), which sets proper PTE bits
+according to VM flags.
+
+Apply the same changes to maybe_pmd_mkwrite().
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Axel Rasmussen <axelrasmussen@google.com>
-Cc: Peter Xu <peterx@redhat.com>
-Cc: Mike Kravetz <mike.kravetz@oracle.com>
+Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Cc: Kees Cook <keescook@chromium.org>
 ---
- include/linux/mm.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+v29:
+- Remove likely()'s.
+---
+ arch/x86/include/asm/pgtable.h |  6 ++++++
+ arch/x86/mm/pgtable.c          | 20 ++++++++++++++++++++
+ include/linux/mm.h             |  2 ++
+ mm/huge_memory.c               |  2 ++
+ 4 files changed, 30 insertions(+)
 
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 7ca22e6e694a..1d4e5012c27d 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -370,7 +370,7 @@ extern unsigned int kobjsize(const void *objp);
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index 7c0542997790..8dee420e382e 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -280,6 +280,9 @@ static inline int pmd_trans_huge(pmd_t pmd)
+ 	return (pmd_val(pmd) & (_PAGE_PSE|_PAGE_DEVMAP)) == _PAGE_PSE;
+ }
+ 
++#define maybe_pmd_mkwrite maybe_pmd_mkwrite
++extern pmd_t maybe_pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma);
++
+ #ifdef CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD
+ static inline int pud_trans_huge(pud_t pud)
+ {
+@@ -1634,6 +1637,9 @@ static inline bool arch_faults_on_old_pte(void)
+ 	return false;
+ }
+ 
++#define maybe_mkwrite maybe_mkwrite
++extern pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma);
++
+ #endif	/* __ASSEMBLY__ */
+ 
+ #endif /* _ASM_X86_PGTABLE_H */
+diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
+index 3481b35cb4ec..c22c8e9c37e8 100644
+--- a/arch/x86/mm/pgtable.c
++++ b/arch/x86/mm/pgtable.c
+@@ -610,6 +610,26 @@ int pmdp_clear_flush_young(struct vm_area_struct *vma,
+ }
  #endif
  
- #ifdef CONFIG_HAVE_ARCH_USERFAULTFD_MINOR
--# define VM_UFFD_MINOR_BIT	37
-+# define VM_UFFD_MINOR_BIT	38
- # define VM_UFFD_MINOR		BIT(VM_UFFD_MINOR_BIT)	/* UFFD minor faults */
- #else /* !CONFIG_HAVE_ARCH_USERFAULTFD_MINOR */
- # define VM_UFFD_MINOR		VM_NONE
++pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
++{
++	if (vma->vm_flags & VM_WRITE)
++		pte = pte_mkwrite(pte);
++	else if (vma->vm_flags & VM_SHADOW_STACK)
++		pte = pte_mkwrite_shstk(pte);
++	return pte;
++}
++
++#ifdef CONFIG_TRANSPARENT_HUGEPAGE
++pmd_t maybe_pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma)
++{
++	if (vma->vm_flags & VM_WRITE)
++		pmd = pmd_mkwrite(pmd);
++	else if (vma->vm_flags & VM_SHADOW_STACK)
++		pmd = pmd_mkwrite_shstk(pmd);
++	return pmd;
++}
++#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
++
+ /**
+  * reserve_top_address - reserves a hole in the top of kernel address space
+  * @reserve - size of hole to reserve
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 4a9985e50819..4548f75cef14 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -1015,12 +1015,14 @@ void free_compound_page(struct page *page);
+  * pte_mkwrite.  But get_user_pages can cause write faults for mappings
+  * that do not have writing enabled, when used by access_process_vm.
+  */
++#ifndef maybe_mkwrite
+ static inline pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
+ {
+ 	if (likely(vma->vm_flags & VM_WRITE))
+ 		pte = pte_mkwrite(pte);
+ 	return pte;
+ }
++#endif
+ 
+ vm_fault_t do_set_pmd(struct vm_fault *vmf, struct page *page);
+ void do_set_pte(struct vm_fault *vmf, struct page *page, unsigned long addr);
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index afff3ac87067..c8dd5913884e 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -491,12 +491,14 @@ static int __init setup_transparent_hugepage(char *str)
+ }
+ __setup("transparent_hugepage=", setup_transparent_hugepage);
+ 
++#ifndef maybe_pmd_mkwrite
+ pmd_t maybe_pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma)
+ {
+ 	if (likely(vma->vm_flags & VM_WRITE))
+ 		pmd = pmd_mkwrite(pmd);
+ 	return pmd;
+ }
++#endif
+ 
+ #ifdef CONFIG_MEMCG
+ static inline struct deferred_split *get_deferred_split_queue(struct page *page)
 -- 
 2.21.0
 
