@@ -7,27 +7,27 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2A25DC432BE
-	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:17:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 25436C43214
+	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:17:45 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1104560FD9
-	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:17:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 14FE061053
+	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:17:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238616AbhH3SSb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 30 Aug 2021 14:18:31 -0400
-Received: from mga18.intel.com ([134.134.136.126]:43867 "EHLO mga18.intel.com"
+        id S238526AbhH3SRL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 30 Aug 2021 14:17:11 -0400
+Received: from mga06.intel.com ([134.134.136.31]:23984 "EHLO mga06.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S238586AbhH3SRm (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 30 Aug 2021 14:17:42 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10092"; a="205460117"
+        id S238150AbhH3SRK (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 30 Aug 2021 14:17:10 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10092"; a="279339841"
 X-IronPort-AV: E=Sophos;i="5.84,364,1620716400"; 
-   d="scan'208";a="205460117"
+   d="scan'208";a="279339841"
 Received: from fmsmga003.fm.intel.com ([10.253.24.29])
-  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:22 -0700
+  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:15 -0700
 X-IronPort-AV: E=Sophos;i="5.84,364,1620716400"; 
-   d="scan'208";a="530533360"
+   d="scan'208";a="530533251"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:22 -0700
+  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:15 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -57,9 +57,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Haitao Huang <haitao.huang@intel.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v30 27/32] x86/cet/shstk: Handle signals for shadow stack
-Date:   Mon, 30 Aug 2021 11:15:23 -0700
-Message-Id: <20210830181528.1569-28-yu-cheng.yu@intel.com>
+Subject: [PATCH v30 01/32] Documentation/x86: Add CET description
+Date:   Mon, 30 Aug 2021 11:14:57 -0700
+Message-Id: <20210830181528.1569-2-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210830181528.1569-1-yu-cheng.yu@intel.com>
 References: <20210830181528.1569-1-yu-cheng.yu@intel.com>
@@ -69,237 +69,193 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-A signal handler (if not changing ucontext) returns to the restorer, and
-the restorer calls sigreturn.  Thus, when setting up a signal frame, the
-kernel:
-
-- installs a shadow stack restore token pointing to the current shadow
-  stack address, and
-
-- installs the restorer address below the restore token.
-
-In sigreturn, the restore token is verified and shadow stack pointer is
-restored.
+Explain no_user_shstk/no_user_ibt kernel parameters, and introduce a new
+document on Control-flow Enforcement Technology (CET).
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Cyrill Gorcunov <gorcunov@gmail.com>
-Cc: Florian Weimer <fweimer@redhat.com>
-Cc: H. Peter Anvin <hpa@zytor.com>
 Cc: Kees Cook <keescook@chromium.org>
 ---
-v27:
-- Eliminate saving shadow stack pointer to signal context.
+ .../admin-guide/kernel-parameters.txt         |   7 +
+ Documentation/x86/index.rst                   |   1 +
+ Documentation/x86/intel_cet.rst               | 139 ++++++++++++++++++
+ 3 files changed, 147 insertions(+)
+ create mode 100644 Documentation/x86/intel_cet.rst
 
-v25:
-- Update commit log/comments for the sc_ext struct.
-- Use restorer address already calculated.
-- Change CONFIG_X86_CET to CONFIG_X86_SHADOW_STACK.
-- Change X86_FEATURE_CET to X86_FEATURE_SHSTK.
-- Eliminate writing to MSR_IA32_U_CET for shadow stack.
-- Change wrmsrl() to wrmsrl_safe() and handle error.
----
- arch/x86/ia32/ia32_signal.c | 25 +++++++++++++++++-----
- arch/x86/include/asm/cet.h  |  4 ++++
- arch/x86/kernel/shstk.c     | 42 +++++++++++++++++++++++++++++++++++++
- arch/x86/kernel/signal.c    | 13 ++++++++++++
- 4 files changed, 79 insertions(+), 5 deletions(-)
-
-diff --git a/arch/x86/ia32/ia32_signal.c b/arch/x86/ia32/ia32_signal.c
-index 5e3d9b7fd5fb..d7a30bc98e66 100644
---- a/arch/x86/ia32/ia32_signal.c
-+++ b/arch/x86/ia32/ia32_signal.c
-@@ -35,6 +35,7 @@
- #include <asm/sigframe.h>
- #include <asm/sighandling.h>
- #include <asm/smap.h>
-+#include <asm/cet.h>
+diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
+index bdb22006f713..3bc1a917dfef 100644
+--- a/Documentation/admin-guide/kernel-parameters.txt
++++ b/Documentation/admin-guide/kernel-parameters.txt
+@@ -3319,6 +3319,13 @@
+ 			noexec=on: enable non-executable mappings (default)
+ 			noexec=off: disable non-executable mappings
  
- static inline void reload_segments(struct sigcontext_32 *sc)
- {
-@@ -113,6 +114,10 @@ COMPAT_SYSCALL_DEFINE0(sigreturn)
- 
- 	if (ia32_restore_sigcontext(regs, &frame->sc))
- 		goto badframe;
++	no_user_shstk	[X86-64] Disable Shadow Stack for user-mode
++			applications.  Disabling shadow stack also disables
++			IBT.
 +
-+	if (restore_signal_shadow_stack())
-+		goto badframe;
++	no_user_ibt	[X86-64] Disable Indirect Branch Tracking for user-mode
++			applications.
 +
- 	return regs->ax;
- 
- badframe:
-@@ -138,6 +143,9 @@ COMPAT_SYSCALL_DEFINE0(rt_sigreturn)
- 	if (ia32_restore_sigcontext(regs, &frame->uc.uc_mcontext))
- 		goto badframe;
- 
-+	if (restore_signal_shadow_stack())
-+		goto badframe;
+ 	nosmap		[X86,PPC]
+ 			Disable SMAP (Supervisor Mode Access Prevention)
+ 			even if it is supported by processor.
+diff --git a/Documentation/x86/index.rst b/Documentation/x86/index.rst
+index 383048396336..c863c5ceb923 100644
+--- a/Documentation/x86/index.rst
++++ b/Documentation/x86/index.rst
+@@ -21,6 +21,7 @@ x86-specific Documentation
+    tlb
+    mtrr
+    pat
++   intel_cet
+    intel-iommu
+    intel_txt
+    amd-memory-encryption
+diff --git a/Documentation/x86/intel_cet.rst b/Documentation/x86/intel_cet.rst
+new file mode 100644
+index 000000000000..104583353fb9
+--- /dev/null
++++ b/Documentation/x86/intel_cet.rst
+@@ -0,0 +1,139 @@
++.. SPDX-License-Identifier: GPL-2.0
 +
- 	if (compat_restore_altstack(&frame->uc.uc_stack))
- 		goto badframe;
- 
-@@ -262,6 +270,9 @@ int ia32_setup_frame(int sig, struct ksignal *ksig,
- 			restorer = &frame->retcode;
- 	}
- 
-+	if (setup_signal_shadow_stack(1, restorer))
-+		return -EFAULT;
++=========================================
++Control-flow Enforcement Technology (CET)
++=========================================
 +
- 	if (!user_access_begin(frame, sizeof(*frame)))
- 		return -EFAULT;
- 
-@@ -319,6 +330,15 @@ int ia32_setup_rt_frame(int sig, struct ksignal *ksig,
- 
- 	frame = get_sigframe(ksig, regs, sizeof(*frame), &fp);
- 
-+	if (ksig->ka.sa.sa_flags & SA_RESTORER)
-+		restorer = ksig->ka.sa.sa_restorer;
-+	else
-+		restorer = current->mm->context.vdso +
-+			vdso_image_32.sym___kernel_rt_sigreturn;
++[1] Overview
++============
 +
-+	if (setup_signal_shadow_stack(1, restorer))
-+		return -EFAULT;
++Control-flow Enforcement Technology (CET) is an Intel processor feature
++that provides protection against return/jump-oriented programming (ROP)
++attacks.  It can be set up to protect both applications and the kernel.
++Only user-mode protection is implemented in the 64-bit kernel, including
++shadow stack support for running legacy 32-bit applications.  IBT is not
++supported for 32-bit applications.
 +
- 	if (!user_access_begin(frame, sizeof(*frame)))
- 		return -EFAULT;
- 
-@@ -334,11 +354,6 @@ int ia32_setup_rt_frame(int sig, struct ksignal *ksig,
- 	unsafe_put_user(0, &frame->uc.uc_link, Efault);
- 	unsafe_compat_save_altstack(&frame->uc.uc_stack, regs->sp, Efault);
- 
--	if (ksig->ka.sa.sa_flags & SA_RESTORER)
--		restorer = ksig->ka.sa.sa_restorer;
--	else
--		restorer = current->mm->context.vdso +
--			vdso_image_32.sym___kernel_rt_sigreturn;
- 	unsafe_put_user(ptr_to_compat(restorer), &frame->pretcode, Efault);
- 
- 	/*
-diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index e6c85a6f7cec..90e84a45b80d 100644
---- a/arch/x86/include/asm/cet.h
-+++ b/arch/x86/include/asm/cet.h
-@@ -21,6 +21,8 @@ void shstk_disable(void);
- int shstk_setup_rstor_token(bool proc32, unsigned long restorer,
- 			    unsigned long *new_ssp);
- int shstk_check_rstor_token(bool proc32, unsigned long *new_ssp);
-+int setup_signal_shadow_stack(int proc32, void __user *restorer);
-+int restore_signal_shadow_stack(void);
- #else
- static inline int shstk_setup(void) { return 0; }
- static inline int shstk_alloc_thread_stack(struct task_struct *p,
-@@ -32,6 +34,8 @@ static inline int shstk_setup_rstor_token(bool proc32, unsigned long restorer,
- 					  unsigned long *new_ssp) { return 0; }
- static inline int shstk_check_rstor_token(bool proc32,
- 					  unsigned long *new_ssp) { return 0; }
-+static inline int setup_signal_shadow_stack(int proc32, void __user *restorer) { return 0; }
-+static inline int restore_signal_shadow_stack(void) { return 0; }
- #endif
- 
- #endif /* __ASSEMBLY__ */
-diff --git a/arch/x86/kernel/shstk.c b/arch/x86/kernel/shstk.c
-index 986a2b4b4b0b..31b012f65502 100644
---- a/arch/x86/kernel/shstk.c
-+++ b/arch/x86/kernel/shstk.c
-@@ -332,3 +332,45 @@ int shstk_check_rstor_token(bool proc32, unsigned long *new_ssp)
- 
- 	return 0;
- }
++CET introduces Shadow Stack and Indirect Branch Tracking.  Shadow stack is
++a secondary stack allocated from memory and cannot be directly modified by
++applications.  When executing a CALL instruction, the processor pushes the
++return address to both the normal stack and the shadow stack.  Upon
++function return, the processor pops the shadow stack copy and compares it
++to the normal stack copy.  If the two differ, the processor raises a
++control-protection fault.  Indirect branch tracking verifies indirect
++CALL/JMP targets are intended as marked by the compiler with 'ENDBR'
++opcodes.
 +
-+int setup_signal_shadow_stack(int proc32, void __user *restorer)
-+{
-+	struct thread_shstk *shstk = &current->thread.shstk;
-+	unsigned long new_ssp;
-+	int err;
++There are two Kconfig options:
 +
-+	if (!cpu_feature_enabled(X86_FEATURE_SHSTK) || !shstk->size)
-+		return 0;
++    X86_SHADOW_STACK, and X86_IBT.
 +
-+	err = shstk_setup_rstor_token(proc32, (unsigned long)restorer,
-+				      &new_ssp);
-+	if (err)
-+		return err;
++To build a CET-enabled kernel, Binutils v2.31 and GCC v8.1 or LLVM v10.0.1
++or later are required.  To build a CET-enabled application, GLIBC v2.28 or
++later is also required.
 +
-+	start_update_msrs();
-+	err = wrmsrl_safe(MSR_IA32_PL3_SSP, new_ssp);
-+	end_update_msrs();
++There are two command-line options for disabling CET features::
 +
-+	return err;
-+}
++    no_user_shstk - disables user shadow stack, and
++    no_user_ibt   - disables user indirect branch tracking.
 +
-+int restore_signal_shadow_stack(void)
-+{
-+	struct thread_shstk *shstk = &current->thread.shstk;
-+	int proc32 = in_ia32_syscall();
-+	unsigned long new_ssp;
-+	int err;
++    Note: Disabling shadow stack also disables IBT.
 +
-+	if (!cpu_feature_enabled(X86_FEATURE_SHSTK) || !shstk->size)
-+		return 0;
++At run time, /proc/cpuinfo shows CET features if the processor supports
++CET.
 +
-+	err = shstk_check_rstor_token(proc32, &new_ssp);
-+	if (err)
-+		return err;
++[2] Application Enabling
++========================
 +
-+	start_update_msrs();
-+	err = wrmsrl_safe(MSR_IA32_PL3_SSP, new_ssp);
-+	end_update_msrs();
++An application's CET capability is marked in its ELF header and can be
++verified from readelf/llvm-readelf output:
 +
-+	return err;
-+}
-diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
-index f4d21e470083..661e46803b84 100644
---- a/arch/x86/kernel/signal.c
-+++ b/arch/x86/kernel/signal.c
-@@ -46,6 +46,7 @@
- #include <asm/syscall.h>
- #include <asm/sigframe.h>
- #include <asm/signal.h>
-+#include <asm/cet.h>
- 
- #ifdef CONFIG_X86_64
- /*
-@@ -471,6 +472,9 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
- 	frame = get_sigframe(&ksig->ka, regs, sizeof(struct rt_sigframe), &fp);
- 	uc_flags = frame_uc_flags(regs);
- 
-+	if (setup_signal_shadow_stack(0, ksig->ka.sa.sa_restorer))
-+		return -EFAULT;
++    readelf -n <application> | grep -a SHSTK
++        properties: x86 feature: IBT, SHSTK
 +
- 	if (!user_access_begin(frame, sizeof(*frame)))
- 		return -EFAULT;
- 
-@@ -576,6 +580,9 @@ static int x32_setup_rt_frame(struct ksignal *ksig,
- 
- 	uc_flags = frame_uc_flags(regs);
- 
-+	if (setup_signal_shadow_stack(0, ksig->ka.sa.sa_restorer))
-+		return -EFAULT;
++If an application supports CET and is statically linked, it will run with
++CET protection.  If the application needs any shared libraries, the loader
++checks all dependencies and enables CET when all requirements are met.
 +
- 	if (!user_access_begin(frame, sizeof(*frame)))
- 		return -EFAULT;
- 
-@@ -674,6 +681,9 @@ SYSCALL_DEFINE0(rt_sigreturn)
- 	if (restore_sigcontext(regs, &frame->uc.uc_mcontext, uc_flags))
- 		goto badframe;
- 
-+	if (restore_signal_shadow_stack())
-+		goto badframe;
++[3] Backward Compatibility
++==========================
 +
- 	if (restore_altstack(&frame->uc.uc_stack))
- 		goto badframe;
- 
-@@ -932,6 +942,9 @@ COMPAT_SYSCALL_DEFINE0(x32_rt_sigreturn)
- 	if (restore_sigcontext(regs, &frame->uc.uc_mcontext, uc_flags))
- 		goto badframe;
- 
-+	if (restore_signal_shadow_stack())
-+		goto badframe;
++GLIBC provides a few CET tunables via the GLIBC_TUNABLES environment
++variable:
 +
- 	if (compat_restore_altstack(&frame->uc.uc_stack))
- 		goto badframe;
- 
++GLIBC_TUNABLES=glibc.tune.hwcaps=-SHSTK,-IBT
++    Turn off SHSTK/IBT.
++
++GLIBC_TUNABLES=glibc.tune.x86_shstk=<on, permissive>
++    This controls how dlopen() handles SHSTK legacy libraries::
++
++        on         - continue with SHSTK enabled;
++        permissive - continue with SHSTK off.
++
++Details can be found in the GLIBC manual pages.
++
++[4] CET arch_prctl()'s
++======================
++
++Several arch_prctl()'s have been added for CET:
++
++arch_prctl(ARCH_X86_CET_STATUS, u64 *addr)
++    Return CET feature status.
++
++    The parameter 'addr' is a pointer to a user buffer.
++    On returning to the caller, the kernel fills the following
++    information::
++
++        *addr       = shadow stack/indirect branch tracking status
++        *(addr + 1) = shadow stack base address
++        *(addr + 2) = shadow stack size
++
++arch_prctl(ARCH_X86_CET_DISABLE, unsigned int features)
++    Disable shadow stack and/or indirect branch tracking as specified in
++    'features'.  Return -EPERM if CET is locked.
++
++arch_prctl(ARCH_X86_CET_LOCK)
++    Lock in all CET features.  They cannot be turned off afterwards.
++
++Note:
++  There is no CET-enabling arch_prctl function.  By design, CET is enabled
++  automatically if the binary and the system can support it.
++
++[5] The implementation of the Shadow Stack
++==========================================
++
++Shadow Stack size
++-----------------
++
++A task's shadow stack is allocated from memory to a fixed size of
++MIN(RLIMIT_STACK, 4 GB).  In other words, the shadow stack is allocated to
++the maximum size of the normal stack, but capped to 4 GB.  However,
++a compat-mode application's address space is smaller, each of its thread's
++shadow stack size is MIN(1/4 RLIMIT_STACK, 4 GB).
++
++Signal
++------
++
++The main program and its signal handlers use the same shadow stack.
++Because the shadow stack stores only return addresses, a large shadow
++stack covers the condition that both the program stack and the signal
++alternate stack run out.
++
++The kernel creates a restore token for the shadow stack restoring address
++and verifies that token when restoring from the signal handler.
++
++Fork
++----
++
++The shadow stack's vma has VM_SHADOW_STACK flag set; its PTEs are required
++to be read-only and dirty.  When a shadow stack PTE is not RO and dirty, a
++shadow access triggers a page fault with the shadow stack access bit set
++in the page fault error code.
++
++When a task forks a child, its shadow stack PTEs are copied and both the
++parent's and the child's shadow stack PTEs are cleared of the dirty bit.
++Upon the next shadow stack access, the resulting shadow stack page fault
++is handled by page copy/re-use.
++
++When a pthread child is created, the kernel allocates a new shadow stack
++for the new thread.
 -- 
 2.21.0
 
