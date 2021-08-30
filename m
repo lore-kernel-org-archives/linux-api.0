@@ -5,29 +5,29 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 401DDC4320E
-	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:23:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 72A1CC41537
+	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:23:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 26C2060243
-	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:23:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5104E60243
+	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:23:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238658AbhH3SY3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 30 Aug 2021 14:24:29 -0400
-Received: from mga12.intel.com ([192.55.52.136]:62711 "EHLO mga12.intel.com"
+        id S238453AbhH3SY2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 30 Aug 2021 14:24:28 -0400
+Received: from mga06.intel.com ([134.134.136.31]:24492 "EHLO mga06.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S238644AbhH3SYJ (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 30 Aug 2021 14:24:09 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10092"; a="197891455"
+        id S238538AbhH3SYF (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 30 Aug 2021 14:24:05 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10092"; a="279340865"
 X-IronPort-AV: E=Sophos;i="5.84,364,1620716400"; 
-   d="scan'208";a="197891455"
+   d="scan'208";a="279340865"
 Received: from fmsmga002.fm.intel.com ([10.253.24.26])
-  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:23:10 -0700
+  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:23:10 -0700
 X-IronPort-AV: E=Sophos;i="5.84,364,1620716400"; 
-   d="scan'208";a="540650956"
+   d="scan'208";a="540650963"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga002-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:23:09 -0700
+  by fmsmga002-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:23:10 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -57,9 +57,9 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Haitao Huang <haitao.huang@intel.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v30 05/10] x86/cet/ibt: Update ELF header parsing for Indirect Branch Tracking
-Date:   Mon, 30 Aug 2021 11:22:16 -0700
-Message-Id: <20210830182221.3535-6-yu-cheng.yu@intel.com>
+Subject: [PATCH v30 07/10] x86/vdso: Insert endbr32/endbr64 to vDSO
+Date:   Mon, 30 Aug 2021 11:22:18 -0700
+Message-Id: <20210830182221.3535-8-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210830182221.3535-1-yu-cheng.yu@intel.com>
 References: <20210830182221.3535-1-yu-cheng.yu@intel.com>
@@ -69,37 +69,35 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-An ELF file's .note.gnu.property indicates features the file supports.
-The property is parsed at loading time and passed to arch_setup_elf_
-property().  Update it for Indirect Branch Tracking.
+From: "H.J. Lu" <hjl.tools@gmail.com>
 
+When Indirect Branch Tracking (IBT) is enabled, vDSO entry points need
+ENDBR32/ENDBR64 as first instructions.  Kconfig X86_IBT verifies compiler's
+-fcf-protection support.  Update vDso Makefile to enable it.
+
+Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: Kees Cook <keescook@chromium.org>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: Andy Lutomirski <luto@kernel.org>
 ---
-v27:
-- Remove selecting of ARCH_USE_GNU_PROPERTY and ARCH_BINFMT_ELF_STATE,
-  since they are already selected by X86_64.
----
- arch/x86/kernel/process_64.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ arch/x86/entry/vdso/Makefile | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
-index 4271963fdd8c..4ab751a5146e 100644
---- a/arch/x86/kernel/process_64.c
-+++ b/arch/x86/kernel/process_64.c
-@@ -884,6 +884,12 @@ int arch_setup_elf_property(struct arch_elf_state *state)
+diff --git a/arch/x86/entry/vdso/Makefile b/arch/x86/entry/vdso/Makefile
+index 05c4abc2fdfd..a773a5f03b63 100644
+--- a/arch/x86/entry/vdso/Makefile
++++ b/arch/x86/entry/vdso/Makefile
+@@ -93,6 +93,10 @@ endif
  
- 	if (state->gnu_property & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
- 		r = shstk_setup();
-+
-+	if (r < 0)
-+		return r;
-+
-+	if (state->gnu_property & GNU_PROPERTY_X86_FEATURE_1_IBT)
-+		r = ibt_setup();
- #endif
+ $(vobjs): KBUILD_CFLAGS := $(filter-out $(CC_FLAGS_LTO) $(GCC_PLUGINS_CFLAGS) $(RETPOLINE_CFLAGS),$(KBUILD_CFLAGS)) $(CFL)
  
- 	return r;
++ifdef CONFIG_X86_IBT
++$(vobjs) $(vobjs32): KBUILD_CFLAGS += -fcf-protection=branch
++endif
++
+ #
+ # vDSO code runs in userspace and -pg doesn't help with profiling anyway.
+ #
 -- 
 2.21.0
 
