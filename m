@@ -5,29 +5,29 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1C614C25AEB
-	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:16:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 38A1AC4320A
+	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:16:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0A83360FD9
-	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:16:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 18C3C60F9E
+	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:16:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238741AbhH3SRj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 30 Aug 2021 14:17:39 -0400
-Received: from mga18.intel.com ([134.134.136.126]:43867 "EHLO mga18.intel.com"
+        id S238722AbhH3SRh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 30 Aug 2021 14:17:37 -0400
+Received: from mga18.intel.com ([134.134.136.126]:43858 "EHLO mga18.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S238514AbhH3SRS (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 30 Aug 2021 14:17:18 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10092"; a="205460087"
+        id S238635AbhH3SRU (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 30 Aug 2021 14:17:20 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10092"; a="205460102"
 X-IronPort-AV: E=Sophos;i="5.84,364,1620716400"; 
-   d="scan'208";a="205460087"
+   d="scan'208";a="205460102"
 Received: from fmsmga003.fm.intel.com ([10.253.24.29])
-  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:20 -0700
+  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:21 -0700
 X-IronPort-AV: E=Sophos;i="5.84,364,1620716400"; 
-   d="scan'208";a="530533323"
+   d="scan'208";a="530533339"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:19 -0700
+  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:20 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -56,11 +56,10 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
-Subject: [PATCH v30 18/32] mm: Add guard pages around a shadow stack.
-Date:   Mon, 30 Aug 2021 11:15:14 -0700
-Message-Id: <20210830181528.1569-19-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v30 23/32] x86/cet/shstk: Add user-mode shadow stack support
+Date:   Mon, 30 Aug 2021 11:15:19 -0700
+Message-Id: <20210830181528.1569-24-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210830181528.1569-1-yu-cheng.yu@intel.com>
 References: <20210830181528.1569-1-yu-cheng.yu@intel.com>
@@ -70,132 +69,243 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-INCSSP(Q/D) increments shadow stack pointer and 'pops and discards' the
-first and the last elements in the range, effectively touches those memory
-areas.
-
-The maximum moving distance by INCSSPQ is 255 * 8 = 2040 bytes and
-255 * 4 = 1020 bytes by INCSSPD.  Both ranges are far from PAGE_SIZE.
-Thus, putting a gap page on both ends of a shadow stack prevents INCSSP,
-CALL, and RET from going beyond.
+Introduce basic shadow stack enabling/disabling/allocation routines.
+A task's shadow stack is allocated from memory with VM_SHADOW_STACK flag
+and has a fixed size of min(RLIMIT_STACK, 4GB).
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 Cc: Kees Cook <keescook@chromium.org>
 ---
-v25:
-- Move SHADOW_STACK_GUARD_GAP to arch/x86/mm/mmap.c.
+v30:
+- Remove superfluous comments for struct thread_shstk.
+- Replace 'populate' with 'unused'.
 
-v24:
-- Instead changing vm_*_gap(), create x86-specific versions.
+v28:
+- Update shstk_setup() with wrmsrl_safe(), returns success when shadow
+  stack feature is not present (since this is a setup function).
+
+v27:
+- Change 'struct cet_status' to 'struct thread_shstk', and change member
+  types from unsigned long to u64.
+- Re-order local variables in reverse order of length.
+- WARN_ON_ONCE() when vm_munmap() fails.
 ---
- arch/x86/include/asm/page_types.h |  7 +++++
- arch/x86/mm/mmap.c                | 46 +++++++++++++++++++++++++++++++
- include/linux/mm.h                |  4 +++
- 3 files changed, 57 insertions(+)
+ arch/x86/include/asm/cet.h       |  27 +++++++
+ arch/x86/include/asm/processor.h |   5 ++
+ arch/x86/kernel/Makefile         |   1 +
+ arch/x86/kernel/shstk.c          | 134 +++++++++++++++++++++++++++++++
+ 4 files changed, 167 insertions(+)
+ create mode 100644 arch/x86/include/asm/cet.h
+ create mode 100644 arch/x86/kernel/shstk.c
 
-diff --git a/arch/x86/include/asm/page_types.h b/arch/x86/include/asm/page_types.h
-index a506a411474d..e1533fdc08b4 100644
---- a/arch/x86/include/asm/page_types.h
-+++ b/arch/x86/include/asm/page_types.h
-@@ -73,6 +73,13 @@ bool pfn_range_is_mapped(unsigned long start_pfn, unsigned long end_pfn);
- 
- extern void initmem_init(void);
- 
-+#define vm_start_gap vm_start_gap
-+struct vm_area_struct;
-+extern unsigned long vm_start_gap(struct vm_area_struct *vma);
+diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+new file mode 100644
+index 000000000000..9dce4914d03d
+--- /dev/null
++++ b/arch/x86/include/asm/cet.h
+@@ -0,0 +1,27 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _ASM_X86_CET_H
++#define _ASM_X86_CET_H
 +
-+#define vm_end_gap vm_end_gap
-+extern unsigned long vm_end_gap(struct vm_area_struct *vma);
++#ifndef __ASSEMBLY__
++#include <linux/types.h>
 +
- #endif	/* !__ASSEMBLY__ */
++struct task_struct;
++
++struct thread_shstk {
++	u64	base;
++	u64	size;
++};
++
++#ifdef CONFIG_X86_SHADOW_STACK
++int shstk_setup(void);
++void shstk_free(struct task_struct *p);
++void shstk_disable(void);
++#else
++static inline int shstk_setup(void) { return 0; }
++static inline void shstk_free(struct task_struct *p) {}
++static inline void shstk_disable(void) {}
++#endif
++
++#endif /* __ASSEMBLY__ */
++
++#endif /* _ASM_X86_CET_H */
+diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+index f3020c54e2cb..10497634b7a4 100644
+--- a/arch/x86/include/asm/processor.h
++++ b/arch/x86/include/asm/processor.h
+@@ -27,6 +27,7 @@ struct vm86;
+ #include <asm/unwind_hints.h>
+ #include <asm/vmxfeatures.h>
+ #include <asm/vdso/processor.h>
++#include <asm/cet.h>
  
- #endif	/* _ASM_X86_PAGE_DEFS_H */
-diff --git a/arch/x86/mm/mmap.c b/arch/x86/mm/mmap.c
-index f3f52c5e2fd6..81f9325084d3 100644
---- a/arch/x86/mm/mmap.c
-+++ b/arch/x86/mm/mmap.c
-@@ -250,3 +250,49 @@ bool pfn_modify_allowed(unsigned long pfn, pgprot_t prot)
- 		return false;
- 	return true;
- }
+ #include <linux/personality.h>
+ #include <linux/cache.h>
+@@ -527,6 +528,10 @@ struct thread_struct {
+ 	 */
+ 	u32			pkru;
+ 
++#ifdef CONFIG_X86_SHADOW_STACK
++	struct thread_shstk	shstk;
++#endif
 +
+ 	/* Floating point and extended processor state */
+ 	struct fpu		fpu;
+ 	/*
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index 3e625c61f008..9e064845e497 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -150,6 +150,7 @@ obj-$(CONFIG_UNWINDER_FRAME_POINTER)	+= unwind_frame.o
+ obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
+ 
+ obj-$(CONFIG_AMD_MEM_ENCRYPT)		+= sev.o
++obj-$(CONFIG_X86_SHADOW_STACK)		+= shstk.o
+ ###
+ # 64 bit specific files
+ ifeq ($(CONFIG_X86_64),y)
+diff --git a/arch/x86/kernel/shstk.c b/arch/x86/kernel/shstk.c
+new file mode 100644
+index 000000000000..583dd3fa8c3f
+--- /dev/null
++++ b/arch/x86/kernel/shstk.c
+@@ -0,0 +1,134 @@
++// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Shadow stack pointer is moved by CALL, RET, and INCSSP(Q/D).  INCSSPQ
-+ * moves shadow stack pointer up to 255 * 8 = ~2 KB (~1KB for INCSSPD) and
-+ * touches the first and the last element in the range, which triggers a
-+ * page fault if the range is not in a shadow stack.  Because of this,
-+ * creating 4-KB guard pages around a shadow stack prevents these
-+ * instructions from going beyond.
++ * shstk.c - Intel shadow stack support
++ *
++ * Copyright (c) 2021, Intel Corporation.
++ * Yu-cheng Yu <yu-cheng.yu@intel.com>
 + */
-+#define SHADOW_STACK_GUARD_GAP PAGE_SIZE
 +
-+unsigned long vm_start_gap(struct vm_area_struct *vma)
++#include <linux/types.h>
++#include <linux/mm.h>
++#include <linux/mman.h>
++#include <linux/slab.h>
++#include <linux/uaccess.h>
++#include <linux/sched/signal.h>
++#include <linux/compat.h>
++#include <linux/sizes.h>
++#include <linux/user.h>
++#include <asm/msr.h>
++#include <asm/fpu/internal.h>
++#include <asm/fpu/xstate.h>
++#include <asm/fpu/types.h>
++#include <asm/cet.h>
++
++static void start_update_msrs(void)
 +{
-+	unsigned long vm_start = vma->vm_start;
-+	unsigned long gap = 0;
-+
-+	if (vma->vm_flags & VM_GROWSDOWN)
-+		gap = stack_guard_gap;
-+	else if (vma->vm_flags & VM_SHADOW_STACK)
-+		gap = SHADOW_STACK_GUARD_GAP;
-+
-+	if (gap != 0) {
-+		vm_start -= gap;
-+		if (vm_start > vma->vm_start)
-+			vm_start = 0;
-+	}
-+	return vm_start;
++	fpregs_lock();
++	if (test_thread_flag(TIF_NEED_FPU_LOAD))
++		fpregs_restore_userregs();
 +}
 +
-+unsigned long vm_end_gap(struct vm_area_struct *vma)
++static void end_update_msrs(void)
 +{
-+	unsigned long vm_end = vma->vm_end;
-+	unsigned long gap = 0;
-+
-+	if (vma->vm_flags & VM_GROWSUP)
-+		gap = stack_guard_gap;
-+	else if (vma->vm_flags & VM_SHADOW_STACK)
-+		gap = SHADOW_STACK_GUARD_GAP;
-+
-+	if (gap != 0) {
-+		vm_end += gap;
-+		if (vm_end < vma->vm_end)
-+			vm_end = -PAGE_SIZE;
-+	}
-+	return vm_end;
++	fpregs_unlock();
 +}
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 4548f75cef14..354f38d21eed 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -2729,6 +2729,7 @@ struct vm_area_struct *vma_lookup(struct mm_struct *mm, unsigned long addr)
- 	return vma;
- }
- 
-+#ifndef vm_start_gap
- static inline unsigned long vm_start_gap(struct vm_area_struct *vma)
- {
- 	unsigned long vm_start = vma->vm_start;
-@@ -2740,7 +2741,9 @@ static inline unsigned long vm_start_gap(struct vm_area_struct *vma)
- 	}
- 	return vm_start;
- }
-+#endif
- 
-+#ifndef vm_end_gap
- static inline unsigned long vm_end_gap(struct vm_area_struct *vma)
- {
- 	unsigned long vm_end = vma->vm_end;
-@@ -2752,6 +2755,7 @@ static inline unsigned long vm_end_gap(struct vm_area_struct *vma)
- 	}
- 	return vm_end;
- }
-+#endif
- 
- static inline unsigned long vma_pages(struct vm_area_struct *vma)
- {
++
++static unsigned long alloc_shstk(unsigned long size)
++{
++	int flags = MAP_ANONYMOUS | MAP_PRIVATE;
++	struct mm_struct *mm = current->mm;
++	unsigned long addr, unused;
++
++	mmap_write_lock(mm);
++	addr = do_mmap(NULL, 0, size, PROT_READ, flags, VM_SHADOW_STACK, 0,
++		       &unused, NULL);
++	mmap_write_unlock(mm);
++
++	return addr;
++}
++
++int shstk_setup(void)
++{
++	struct thread_shstk *shstk = &current->thread.shstk;
++	unsigned long addr, size;
++	int err;
++
++	if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
++		return 0;
++
++	size = round_up(min_t(unsigned long long, rlimit(RLIMIT_STACK), SZ_4G), PAGE_SIZE);
++	addr = alloc_shstk(size);
++	if (IS_ERR_VALUE(addr))
++		return PTR_ERR((void *)addr);
++
++	start_update_msrs();
++	err = wrmsrl_safe(MSR_IA32_PL3_SSP, addr + size);
++	if (!err)
++		wrmsrl_safe(MSR_IA32_U_CET, CET_SHSTK_EN);
++	end_update_msrs();
++
++	if (!err) {
++		shstk->base = addr;
++		shstk->size = size;
++	}
++
++	return err;
++}
++
++void shstk_free(struct task_struct *tsk)
++{
++	struct thread_shstk *shstk = &tsk->thread.shstk;
++
++	if (!cpu_feature_enabled(X86_FEATURE_SHSTK) ||
++	    !shstk->size ||
++	    !shstk->base)
++		return;
++
++	if (!tsk->mm)
++		return;
++
++	while (1) {
++		int r;
++
++		r = vm_munmap(shstk->base, shstk->size);
++
++		/*
++		 * vm_munmap() returns -EINTR when mmap_lock is held by
++		 * something else, and that lock should not be held for a
++		 * long time.  Retry it for the case.
++		 */
++		if (r == -EINTR) {
++			cond_resched();
++			continue;
++		}
++
++		/*
++		 * For all other types of vm_munmap() failure, either the
++		 * system is out of memory or there is bug.
++		 */
++		WARN_ON_ONCE(r);
++		break;
++	}
++
++	shstk->base = 0;
++	shstk->size = 0;
++}
++
++void shstk_disable(void)
++{
++	struct thread_shstk *shstk = &current->thread.shstk;
++	u64 msr_val;
++
++	if (!cpu_feature_enabled(X86_FEATURE_SHSTK) ||
++	    !shstk->size ||
++	    !shstk->base)
++		return;
++
++	start_update_msrs();
++	rdmsrl(MSR_IA32_U_CET, msr_val);
++	wrmsrl(MSR_IA32_U_CET, msr_val & ~CET_SHSTK_EN);
++	wrmsrl(MSR_IA32_PL3_SSP, 0);
++	end_update_msrs();
++
++	shstk_free(current);
++}
 -- 
 2.21.0
 
