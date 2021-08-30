@@ -5,29 +5,29 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 457C7C19F38
-	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:23:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 105D4C19F3A
+	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:23:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2E17860243
+	by mail.kernel.org (Postfix) with ESMTP id ED21F61057
 	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:23:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238570AbhH3SY0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 30 Aug 2021 14:24:26 -0400
-Received: from mga06.intel.com ([134.134.136.31]:24492 "EHLO mga06.intel.com"
+        id S238865AbhH3SYX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 30 Aug 2021 14:24:23 -0400
+Received: from mga05.intel.com ([192.55.52.43]:57612 "EHLO mga05.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S238583AbhH3SYH (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 30 Aug 2021 14:24:07 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10092"; a="279340866"
+        id S238530AbhH3SYF (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 30 Aug 2021 14:24:05 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10092"; a="303905713"
 X-IronPort-AV: E=Sophos;i="5.84,364,1620716400"; 
-   d="scan'208";a="279340866"
+   d="scan'208";a="303905713"
 Received: from fmsmga002.fm.intel.com ([10.253.24.26])
-  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:23:11 -0700
+  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:23:09 -0700
 X-IronPort-AV: E=Sophos;i="5.84,364,1620716400"; 
-   d="scan'208";a="540650965"
+   d="scan'208";a="540650954"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga002-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:23:10 -0700
+  by fmsmga002-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:23:09 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -56,11 +56,10 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        Jarkko Sakkinen <jarkko@kernel.org>
-Subject: [PATCH v30 08/10] x86/vdso: Introduce ENDBR macro
-Date:   Mon, 30 Aug 2021 11:22:19 -0700
-Message-Id: <20210830182221.3535-9-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v30 04/10] x86/cet/ibt: Disable IBT for ia32
+Date:   Mon, 30 Aug 2021 11:22:15 -0700
+Message-Id: <20210830182221.3535-5-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210830182221.3535-1-yu-cheng.yu@intel.com>
 References: <20210830182221.3535-1-yu-cheng.yu@intel.com>
@@ -70,58 +69,83 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-ENDBR is a special new instruction for the Indirect Branch Tracking (IBT)
-component of CET.  IBT prevents attacks by ensuring that (most) indirect
-branches and function calls may only land at ENDBR instructions.  Branches
-that don't follow the rules will result in control flow (#CF) exceptions.
+In a signal, a task's IBT status needs to be saved to the signal frame, and
+later restored in sigreturn.  For the purpose, previous versions of the
+series add a new struct to the signal frame.  However, a new signal frame
+format (or re-using a reserved space) introduces complex compatibility
+issues.
 
-ENDBR is a noop when IBT is unsupported or disabled.  Most ENDBR
-instructions are inserted automatically by the compiler, but branch
-targets written in assembly must have ENDBR added manually.
+In the discussion (see link below), Andy Lutomirski proposed using a
+ucontext flag.  The approach is clean and eliminates most compatibility
+issues.
 
-Introduce ENDBR64/ENDBR32 macros.
+However, a legacy IA32 signal frame does not have ucontext and cannot
+support a uc flag.  Thus,
+
+- Disable IBT for ia32.
+- In ia32 sigreturn, verify ibt is disabled.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Borislav Petkov <bp@alien8.de>
-Cc: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: Jarkko Sakkinen <jarkko@kernel.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
+Acked-by: Andy Lutomirski <luto@kernel.org>
+Cc: Cyrill Gorcunov <gorcunov@gmail.com>
+Cc: Florian Weimer <fweimer@redhat.com>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Kees Cook <keescook@chromium.org>
+Link: https://lore.kernel.org/linux-api/f6e61dae-9805-c855-8873-7481ceb7ea79@intel.com/
 ---
- arch/x86/include/asm/vdso.h | 20 +++++++++++++++++++-
- 1 file changed, 19 insertions(+), 1 deletion(-)
+ arch/x86/ia32/ia32_signal.c |  7 +++++++
+ arch/x86/include/asm/elf.h  | 13 ++++++++++++-
+ 2 files changed, 19 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/include/asm/vdso.h b/arch/x86/include/asm/vdso.h
-index 98aa103eb4ab..97358246e4c7 100644
---- a/arch/x86/include/asm/vdso.h
-+++ b/arch/x86/include/asm/vdso.h
-@@ -52,6 +52,24 @@ extern int map_vdso_once(const struct vdso_image *image, unsigned long addr);
- extern bool fixup_vdso_exception(struct pt_regs *regs, int trapnr,
- 				 unsigned long error_code,
- 				 unsigned long fault_addr);
--#endif /* __ASSEMBLER__ */
-+#else /* __ASSEMBLER__ */
-+
-+/*
-+ * ENDBR is an instruction for the Indirect Branch Tracking (IBT) component
-+ * of CET.  IBT prevents attacks by ensuring that (most) indirect branches
-+ * function calls may only land at ENDBR instructions.  Branches that don't
-+ * follow the rules will result in control flow (#CF) exceptions.
-+ * ENDBR is a noop when IBT is unsupported or disabled.  Most ENDBR
-+ * instructions are inserted automatically by the compiler, but branch
-+ * targets written in assembly must have ENDBR added manually.
-+ */
-+#ifdef CONFIG_X86_IBT
-+#define ENDBR64 endbr64
-+#define ENDBR32 endbr32
-+#else
-+#define ENDBR64
-+#define ENDBR32
-+#endif
+diff --git a/arch/x86/ia32/ia32_signal.c b/arch/x86/ia32/ia32_signal.c
+index 77d0fa90cc19..946039cb3150 100644
+--- a/arch/x86/ia32/ia32_signal.c
++++ b/arch/x86/ia32/ia32_signal.c
+@@ -104,6 +104,13 @@ COMPAT_SYSCALL_DEFINE0(sigreturn)
+ 	struct sigframe_ia32 __user *frame = (struct sigframe_ia32 __user *)(regs->sp-8);
+ 	sigset_t set;
  
-+#endif /* __ASSEMBLER__ */
- #endif /* _ASM_X86_VDSO_H */
++	/*
++	 * Verify legacy sigreturn does not have IBT enabled.
++	 */
++#ifdef CONFIG_X86_IBT
++	if (current->thread.shstk.ibt)
++		goto badframe;
++#endif
+ 	if (!access_ok(frame, sizeof(*frame)))
+ 		goto badframe;
+ 	if (__get_user(set.sig[0], &frame->sc.oldmask)
+diff --git a/arch/x86/include/asm/elf.h b/arch/x86/include/asm/elf.h
+index 3281a3d01bd2..cf9eeb30c00c 100644
+--- a/arch/x86/include/asm/elf.h
++++ b/arch/x86/include/asm/elf.h
+@@ -6,6 +6,7 @@
+  * ELF register definitions..
+  */
+ #include <linux/thread_info.h>
++#include <uapi/linux/elf.h>
+ 
+ #include <asm/ptrace.h>
+ #include <asm/user.h>
+@@ -403,7 +404,17 @@ struct arch_elf_state {
+ }
+ 
+ #define arch_elf_pt_proc(ehdr, phdr, elf, interp, state) (0)
+-#define arch_check_elf(ehdr, interp, interp_ehdr, state) (0)
++static inline int arch_check_elf(void *ehdr, bool interp,
++				 void *interp_ehdr,
++				 struct arch_elf_state *state)
++{
++	/*
++	 * Disable IBT for ia32
++	 */
++	if (elf_check_arch_ia32((struct elf32_hdr *)ehdr))
++		state->gnu_property &= ~GNU_PROPERTY_X86_FEATURE_1_IBT;
++	return 0;
++}
+ 
+ /* Do not change the values. See get_align_mask() */
+ enum align_flags {
 -- 
 2.21.0
 
