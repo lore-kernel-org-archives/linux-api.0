@@ -2,32 +2,33 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-18.9 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,
+	UNWANTED_LANGUAGE_BODY,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D0532C4320E
-	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:17:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F072DC4320A
+	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:17:37 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BB6BC60F57
-	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:17:36 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D653660F57
+	for <linux-api@archiver.kernel.org>; Mon, 30 Aug 2021 18:17:37 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238449AbhH3SSY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 30 Aug 2021 14:18:24 -0400
-Received: from mga18.intel.com ([134.134.136.126]:43858 "EHLO mga18.intel.com"
+        id S238536AbhH3SS2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 30 Aug 2021 14:18:28 -0400
+Received: from mga18.intel.com ([134.134.136.126]:43870 "EHLO mga18.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S238694AbhH3SR2 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 30 Aug 2021 14:17:28 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10092"; a="205460115"
+        id S238752AbhH3SRn (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 30 Aug 2021 14:17:43 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10092"; a="205460120"
 X-IronPort-AV: E=Sophos;i="5.84,364,1620716400"; 
-   d="scan'208";a="205460115"
+   d="scan'208";a="205460120"
 Received: from fmsmga003.fm.intel.com ([10.253.24.29])
   by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:22 -0700
 X-IronPort-AV: E=Sophos;i="5.84,364,1620716400"; 
-   d="scan'208";a="530533355"
+   d="scan'208";a="530533364"
 Received: from yyu32-desk.sc.intel.com ([143.183.136.146])
-  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:21 -0700
+  by fmsmga003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Aug 2021 11:16:22 -0700
 From:   Yu-cheng Yu <yu-cheng.yu@intel.com>
 To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -56,10 +57,12 @@ To:     x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
         Pengfei Xu <pengfei.xu@intel.com>,
         Haitao Huang <haitao.huang@intel.com>,
         Rick P Edgecombe <rick.p.edgecombe@intel.com>
-Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v30 26/32] x86/cet/shstk: Introduce shadow stack token setup/verify routines
-Date:   Mon, 30 Aug 2021 11:15:22 -0700
-Message-Id: <20210830181528.1569-27-yu-cheng.yu@intel.com>
+Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Mark Brown <broonie@kernel.org>
+Subject: [PATCH v30 28/32] ELF: Introduce arch_setup_elf_property()
+Date:   Mon, 30 Aug 2021 11:15:24 -0700
+Message-Id: <20210830181528.1569-29-yu-cheng.yu@intel.com>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20210830181528.1569-1-yu-cheng.yu@intel.com>
 References: <20210830181528.1569-1-yu-cheng.yu@intel.com>
@@ -69,266 +72,188 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-A shadow stack restore token marks a restore point of the shadow stack, and
-the address in a token must point directly above the token, which is within
-the same shadow stack.  This is distinctively different from other pointers
-on the shadow stack, since those pointers point to executable code area.
+An ELF file's .note.gnu.property indicates arch features supported by the
+file.  These features are extracted by arch_parse_elf_property() and stored
+in 'arch_elf_state'.
 
-Introduce token setup and verify routines.  Also introduce WRUSS, which is
-a kernel-mode instruction but writes directly to user shadow stack.  It is
-used to construct user signal stack as described above.
+Introduce x86 feature definitions and arch_setup_elf_property(), which
+enables such features.  The first use-case of this function is Shadow
+Stack.
+
+ARM64 is the other arch that has ARCH_USE_GNU_PROPERTY and arch_parse_elf_
+property().  Add arch_setup_elf_property() for it.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Acked-by: Catalin Marinas <catalin.marinas@arm.com>
+Cc: Dave Martin <Dave.Martin@arm.com>
 Cc: Kees Cook <keescook@chromium.org>
+Cc: Mark Brown <broonie@kernel.org>
 ---
-v30:
-- Update commit log, remove description about signals.
-- Update various comments.
-- Remove variable 'ssp' init and adjust return value accordingly.
-- Check get_user_shstk_addr() return value.
-- Replace 'ia32' with 'proc32'.
-
-v29:
-- Update comments for the use of get_xsave_addr().
-
-v28:
-- Add comments for get_xsave_addr().
-
 v27:
-- For shstk_check_rstor_token(), instead of an input param, use current
-  shadow stack pointer.
-- In response to comments, fix/simplify a few syntax/format issues.
-
-v25:
-- Update inline assembly syntax, use %[].
-- Change token address from (unsigned long) to (u64/u32 __user *).
-- Change -EPERM to -EFAULT.
+- Make X86_64 select ARCH_USE_GNU_PROPERTY and ARCH_BINFMT_ELF_STATE and
+  remove #ifdef's.
+- Add link to x86-64-psABI document.
 ---
- arch/x86/include/asm/cet.h           |   7 ++
- arch/x86/include/asm/special_insns.h |  30 ++++++
- arch/x86/kernel/shstk.c              | 139 +++++++++++++++++++++++++++
- 3 files changed, 176 insertions(+)
+ arch/arm64/include/asm/elf.h |  5 +++++
+ arch/x86/Kconfig             |  2 ++
+ arch/x86/include/asm/elf.h   | 11 +++++++++++
+ arch/x86/kernel/process_64.c | 27 +++++++++++++++++++++++++++
+ fs/binfmt_elf.c              |  4 ++++
+ include/linux/elf.h          |  6 ++++++
+ include/uapi/linux/elf.h     | 14 ++++++++++++++
+ 7 files changed, 69 insertions(+)
 
-diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index cae76b8241b0..e6c85a6f7cec 100644
---- a/arch/x86/include/asm/cet.h
-+++ b/arch/x86/include/asm/cet.h
-@@ -18,6 +18,9 @@ int shstk_alloc_thread_stack(struct task_struct *p, unsigned long clone_flags,
- 			     unsigned long stack_size);
- void shstk_free(struct task_struct *p);
- void shstk_disable(void);
-+int shstk_setup_rstor_token(bool proc32, unsigned long restorer,
-+			    unsigned long *new_ssp);
-+int shstk_check_rstor_token(bool proc32, unsigned long *new_ssp);
- #else
- static inline int shstk_setup(void) { return 0; }
- static inline int shstk_alloc_thread_stack(struct task_struct *p,
-@@ -25,6 +28,10 @@ static inline int shstk_alloc_thread_stack(struct task_struct *p,
- 					   unsigned long stack_size) { return 0; }
- static inline void shstk_free(struct task_struct *p) {}
- static inline void shstk_disable(void) {}
-+static inline int shstk_setup_rstor_token(bool proc32, unsigned long restorer,
-+					  unsigned long *new_ssp) { return 0; }
-+static inline int shstk_check_rstor_token(bool proc32,
-+					  unsigned long *new_ssp) { return 0; }
- #endif
- 
- #endif /* __ASSEMBLY__ */
-diff --git a/arch/x86/include/asm/special_insns.h b/arch/x86/include/asm/special_insns.h
-index f3fbb84ff8a7..c6df3773b44c 100644
---- a/arch/x86/include/asm/special_insns.h
-+++ b/arch/x86/include/asm/special_insns.h
-@@ -222,6 +222,36 @@ static inline void clwb(volatile void *__p)
- 		: [pax] "a" (p));
+diff --git a/arch/arm64/include/asm/elf.h b/arch/arm64/include/asm/elf.h
+index 8d1c8dcb87fd..d37bc7915935 100644
+--- a/arch/arm64/include/asm/elf.h
++++ b/arch/arm64/include/asm/elf.h
+@@ -281,6 +281,11 @@ static inline int arch_parse_elf_property(u32 type, const void *data,
+ 	return 0;
  }
  
-+#ifdef CONFIG_X86_SHADOW_STACK
-+static inline int write_user_shstk_32(u32 __user *addr, u32 val)
++static inline int arch_setup_elf_property(struct arch_elf_state *arch)
 +{
-+	if (WARN_ONCE(!IS_ENABLED(CONFIG_IA32_EMULATION) &&
-+		      !IS_ENABLED(CONFIG_X86_X32),
-+		      "%s used but not supported.\n", __func__)) {
-+		return -EFAULT;
-+	}
-+
-+	asm_volatile_goto("1: wrussd %[val], (%[addr])\n"
-+			  _ASM_EXTABLE(1b, %l[fail])
-+			  :: [addr] "r" (addr), [val] "r" (val)
-+			  :: fail);
 +	return 0;
-+fail:
-+	return -EFAULT;
 +}
 +
-+static inline int write_user_shstk_64(u64 __user *addr, u64 val)
-+{
-+	asm_volatile_goto("1: wrussq %[val], (%[addr])\n"
-+			  _ASM_EXTABLE(1b, %l[fail])
-+			  :: [addr] "r" (addr), [val] "r" (val)
-+			  :: fail);
-+	return 0;
-+fail:
-+	return -EFAULT;
-+}
-+#endif /* CONFIG_X86_SHADOW_STACK */
+ static inline int arch_elf_pt_proc(void *ehdr, void *phdr,
+ 				   struct file *f, bool is_interp,
+ 				   struct arch_elf_state *state)
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index cb0405ccf858..34692f02118c 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -29,6 +29,7 @@ config X86_64
+ 	select ARCH_HAS_SHADOW_STACK
+ 	select ARCH_SUPPORTS_INT128 if CC_HAS_INT128
+ 	select ARCH_USE_CMPXCHG_LOCKREF
++	select ARCH_USE_GNU_PROPERTY
+ 	select HAVE_ARCH_SOFT_DIRTY
+ 	select MODULES_USE_ELF_RELA
+ 	select NEED_DMA_MAP_STATE
+@@ -61,6 +62,7 @@ config X86
+ 	select ACPI_LEGACY_TABLES_LOOKUP	if ACPI
+ 	select ACPI_SYSTEM_POWER_STATES_SUPPORT	if ACPI
+ 	select ARCH_32BIT_OFF_T			if X86_32
++	select ARCH_BINFMT_ELF_STATE
+ 	select ARCH_CLOCKSOURCE_INIT
+ 	select ARCH_ENABLE_HUGEPAGE_MIGRATION if X86_64 && HUGETLB_PAGE && MIGRATION
+ 	select ARCH_ENABLE_MEMORY_HOTPLUG if X86_64 || (X86_32 && HIGHMEM)
+diff --git a/arch/x86/include/asm/elf.h b/arch/x86/include/asm/elf.h
+index 29fea180a665..3281a3d01bd2 100644
+--- a/arch/x86/include/asm/elf.h
++++ b/arch/x86/include/asm/elf.h
+@@ -394,6 +394,17 @@ extern int compat_arch_setup_additional_pages(struct linux_binprm *bprm,
+ 
+ extern bool arch_syscall_is_vdso_sigreturn(struct pt_regs *regs);
+ 
++struct arch_elf_state {
++	unsigned int gnu_property;
++};
 +
- #define nop() asm volatile ("nop")
- 
- static inline void serialize(void)
-diff --git a/arch/x86/kernel/shstk.c b/arch/x86/kernel/shstk.c
-index ee80ed0316da..986a2b4b4b0b 100644
---- a/arch/x86/kernel/shstk.c
-+++ b/arch/x86/kernel/shstk.c
-@@ -20,6 +20,7 @@
- #include <asm/fpu/xstate.h>
- #include <asm/fpu/types.h>
- #include <asm/cet.h>
-+#include <asm/special_insns.h>
- 
- static void start_update_msrs(void)
++#define INIT_ARCH_ELF_STATE {	\
++	.gnu_property = 0,	\
++}
++
++#define arch_elf_pt_proc(ehdr, phdr, elf, interp, state) (0)
++#define arch_check_elf(ehdr, interp, interp_ehdr, state) (0)
++
+ /* Do not change the values. See get_align_mask() */
+ enum align_flags {
+ 	ALIGN_VA_32	= BIT(0),
+diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
+index ec0d836a13b1..4271963fdd8c 100644
+--- a/arch/x86/kernel/process_64.c
++++ b/arch/x86/kernel/process_64.c
+@@ -861,3 +861,30 @@ unsigned long KSTK_ESP(struct task_struct *task)
  {
-@@ -193,3 +194,141 @@ void shstk_disable(void)
- 
- 	shstk_free(current);
+ 	return task_pt_regs(task)->sp;
  }
 +
-+static unsigned long get_user_shstk_addr(void)
++int arch_parse_elf_property(u32 type, const void *data, size_t datasz,
++			    bool compat, struct arch_elf_state *state)
 +{
-+	struct fpu *fpu = &current->thread.fpu;
-+	unsigned long ssp;
-+
-+	fpregs_lock();
-+
-+	if (fpregs_state_valid(fpu, smp_processor_id())) {
-+		rdmsrl(MSR_IA32_PL3_SSP, ssp);
-+	} else {
-+		struct cet_user_state *p;
-+
-+		/*
-+		 * When the xstates are valid and get_xsave_addr() of
-+		 * XFEAUTRE_CET_USER returns null, the feature is in init
-+		 * state.  This can happen when shadow stack is enabled,
-+		 * but the shadow stack component in memory is corrupted.
-+		 */
-+		p = get_xsave_addr(&fpu->state.xsave, XFEATURE_CET_USER);
-+		if (p)
-+			ssp = p->user_ssp;
-+		else
-+			ssp = 0;
-+	}
-+
-+	fpregs_unlock();
-+
-+	return ssp;
-+}
-+
-+/*
-+ * Create a restore token on the shadow stack.  A token is always 8-byte
-+ * and aligned to 8.
-+ */
-+static int create_rstor_token(bool proc32, unsigned long ssp,
-+			       unsigned long *token_addr)
-+{
-+	unsigned long addr;
-+
-+	/* Aligned to 8 is aligned to 4, so test 8 first */
-+	if ((!proc32 && !IS_ALIGNED(ssp, 8)) || !IS_ALIGNED(ssp, 4))
-+		return -EINVAL;
-+
-+	addr = ALIGN_DOWN(ssp, 8) - 8;
-+
-+	/* Is the token for 64-bit? */
-+	if (!proc32)
-+		ssp |= BIT(0);
-+
-+	if (write_user_shstk_64((u64 __user *)addr, (u64)ssp))
-+		return -EFAULT;
-+
-+	*token_addr = addr;
-+
-+	return 0;
-+}
-+
-+/*
-+ * Create a restore token on shadow stack, and then push the user-mode
-+ * function return address.
-+ */
-+int shstk_setup_rstor_token(bool proc32, unsigned long ret_addr,
-+			    unsigned long *new_ssp)
-+{
-+	struct thread_shstk *shstk = &current->thread.shstk;
-+	unsigned long ssp, token_addr;
-+	int err;
-+
-+	if (!shstk->size)
++	if (type != GNU_PROPERTY_X86_FEATURE_1_AND)
 +		return 0;
 +
-+	if (!ret_addr)
-+		return -EINVAL;
++	if (datasz != sizeof(unsigned int))
++		return -ENOEXEC;
 +
-+	ssp = get_user_shstk_addr();
-+	if (!ssp)
-+		return -EINVAL;
-+
-+	err = create_rstor_token(proc32, ssp, &token_addr);
-+	if (err)
-+		return err;
-+
-+	if (proc32) {
-+		ssp = token_addr - sizeof(u32);
-+		err = write_user_shstk_32((u32 __user *)ssp, (u32)ret_addr);
-+	} else {
-+		ssp = token_addr - sizeof(u64);
-+		err = write_user_shstk_64((u64 __user *)ssp, (u64)ret_addr);
-+	}
-+
-+	if (!err)
-+		*new_ssp = ssp;
-+
-+	return err;
-+}
-+
-+/*
-+ * Verify the user shadow stack has a valid token on it, and then set
-+ * *new_ssp according to the token.
-+ */
-+int shstk_check_rstor_token(bool proc32, unsigned long *new_ssp)
-+{
-+	unsigned long token_addr;
-+	unsigned long token;
-+	bool shstk32;
-+
-+	token_addr = get_user_shstk_addr();
-+	if (!token_addr)
-+		return -EINVAL;
-+
-+	if (get_user(token, (unsigned long __user *)token_addr))
-+		return -EFAULT;
-+
-+	/* Is mode flag correct? */
-+	shstk32 = !(token & BIT(0));
-+	if (proc32 ^ shstk32)
-+		return -EINVAL;
-+
-+	/* Is busy flag set? */
-+	if (token & BIT(1))
-+		return -EINVAL;
-+
-+	/* Mask out flags */
-+	token &= ~3UL;
-+
-+	/* Restore address aligned? */
-+	if ((!proc32 && !IS_ALIGNED(token, 8)) || !IS_ALIGNED(token, 4))
-+		return -EINVAL;
-+
-+	/* Token placed properly? */
-+	if (((ALIGN_DOWN(token, 8) - 8) != token_addr) || token >= TASK_SIZE_MAX)
-+		return -EINVAL;
-+
-+	*new_ssp = token;
-+
++	state->gnu_property = *(unsigned int *)data;
 +	return 0;
 +}
++
++int arch_setup_elf_property(struct arch_elf_state *state)
++{
++	int r = 0;
++
++#ifdef CONFIG_X86_SHADOW_STACK
++	memset(&current->thread.shstk, 0, sizeof(struct thread_shstk));
++
++	if (state->gnu_property & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
++		r = shstk_setup();
++#endif
++
++	return r;
++}
+diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
+index 439ed81e755a..6a1936dab6b4 100644
+--- a/fs/binfmt_elf.c
++++ b/fs/binfmt_elf.c
+@@ -1248,6 +1248,10 @@ static int load_elf_binary(struct linux_binprm *bprm)
+ 
+ 	set_binfmt(&elf_format);
+ 
++	retval = arch_setup_elf_property(&arch_state);
++	if (retval < 0)
++		goto out;
++
+ #ifdef ARCH_HAS_SETUP_ADDITIONAL_PAGES
+ 	retval = ARCH_SETUP_ADDITIONAL_PAGES(bprm, elf_ex, !!interpreter);
+ 	if (retval < 0)
+diff --git a/include/linux/elf.h b/include/linux/elf.h
+index c9a46c4e183b..be04d15e937f 100644
+--- a/include/linux/elf.h
++++ b/include/linux/elf.h
+@@ -92,9 +92,15 @@ static inline int arch_parse_elf_property(u32 type, const void *data,
+ {
+ 	return 0;
+ }
++
++static inline int arch_setup_elf_property(struct arch_elf_state *arch)
++{
++	return 0;
++}
+ #else
+ extern int arch_parse_elf_property(u32 type, const void *data, size_t datasz,
+ 				   bool compat, struct arch_elf_state *arch);
++extern int arch_setup_elf_property(struct arch_elf_state *arch);
+ #endif
+ 
+ #ifdef CONFIG_ARCH_HAVE_ELF_PROT
+diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
+index 61bf4774b8f2..f50b3ce7bb75 100644
+--- a/include/uapi/linux/elf.h
++++ b/include/uapi/linux/elf.h
+@@ -456,4 +456,18 @@ typedef struct elf64_note {
+ /* Bits for GNU_PROPERTY_AARCH64_FEATURE_1_BTI */
+ #define GNU_PROPERTY_AARCH64_FEATURE_1_BTI	(1U << 0)
+ 
++/*
++ * See the x86 64 psABI at:
++ * https://gitlab.com/x86-psABIs/x86-64-ABI/-/wikis/x86-64-psABI
++ * .note.gnu.property types for x86:
++ */
++/* 0xc0000000 and 0xc0000001 are reserved */
++#define GNU_PROPERTY_X86_FEATURE_1_AND		0xc0000002
++
++/* Bits for GNU_PROPERTY_X86_FEATURE_1_AND */
++#define GNU_PROPERTY_X86_FEATURE_1_IBT		0x00000001
++#define GNU_PROPERTY_X86_FEATURE_1_SHSTK	0x00000002
++#define GNU_PROPERTY_X86_FEATURE_1_VALID (GNU_PROPERTY_X86_FEATURE_1_IBT | \
++					   GNU_PROPERTY_X86_FEATURE_1_SHSTK)
++
+ #endif /* _UAPI_LINUX_ELF_H */
 -- 
 2.21.0
 
