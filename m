@@ -2,67 +2,66 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
-	version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0ED6BC4320E
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B13FCC4320A
 	for <linux-api@archiver.kernel.org>; Wed,  1 Sep 2021 17:01:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E354F61058
-	for <linux-api@archiver.kernel.org>; Wed,  1 Sep 2021 17:01:41 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9EE9B61053
+	for <linux-api@archiver.kernel.org>; Wed,  1 Sep 2021 17:01:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1345562AbhIARCf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 1 Sep 2021 13:02:35 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36910 "EHLO
+        id S1345578AbhIARCg (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 1 Sep 2021 13:02:36 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36928 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1344927AbhIARCb (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 1 Sep 2021 13:02:31 -0400
-Received: from mail-pl1-x630.google.com (mail-pl1-x630.google.com [IPv6:2607:f8b0:4864:20::630])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6CEE5C0613D9
-        for <linux-api@vger.kernel.org>; Wed,  1 Sep 2021 10:01:34 -0700 (PDT)
-Received: by mail-pl1-x630.google.com with SMTP id bg1so20770plb.13
-        for <linux-api@vger.kernel.org>; Wed, 01 Sep 2021 10:01:34 -0700 (PDT)
+        with ESMTP id S1345571AbhIARCe (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 1 Sep 2021 13:02:34 -0400
+Received: from mail-pj1-x1034.google.com (mail-pj1-x1034.google.com [IPv6:2607:f8b0:4864:20::1034])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 58363C061575
+        for <linux-api@vger.kernel.org>; Wed,  1 Sep 2021 10:01:37 -0700 (PDT)
+Received: by mail-pj1-x1034.google.com with SMTP id d5so27572pjx.2
+        for <linux-api@vger.kernel.org>; Wed, 01 Sep 2021 10:01:37 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=osandov-com.20150623.gappssmtp.com; s=20150623;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=FIgQo2oChc5R9ppNZcJsRQLeVNqUYk5rwuirJqcFYn4=;
-        b=DEye6PY7EhEUN4hCjtn8yscatJN7C0oEm9KAVclR4YfZdsKuwitR/yvLDWK8qDOfFl
-         FhM5uSBwJko+7ZooqqMnGtTPAEN8unD9GuIfvDfQqMW5ubz83Os37ajcaeToAFqObAKq
-         UHduoQ53WRNYYhNdQZcq9lAIDgVvwTtyf90NAzPqUbNmcSrFmHY80cERhX7wBtRVxGcg
-         FRDAawZM8urAI+OBnMVxDRhTDNkjQ3MxSYDI8SBQhtyynMscbS2XyRYj1+zA5a4omxNX
-         ya0xPbwYovpLg1jSxcQz8znMlHKjVLjzae1XTbRot9+CdXn0Th9N9+WNrWMatcxj0w0+
-         bnqg==
+        bh=3H6GGHfxUDBMQigp8UiruGfgUK504wWqU5E2BEFOsKU=;
+        b=F/7k6ymJ6G/Tn53Iz8Wo3deFr5nffIyPlpcD1tQbTYq4emt/yGR2LFFwM1BqIohfq9
+         pHXUh72QcwzFS/iNK+Vk8KRfZU3o91xovx++spj4/sMKFCW3KL6Cop2/nm9A0TH8QXJm
+         NjOLerQ6O9O6KEjAbkmiqNSmq0Ex5/66/b+m24P6nOsgQVhAupoKFyfJLXgSAJHRUboM
+         LeB+mglF9vZGVvLV7Er8jyMfk0ZdFEbIakZvjKp80BEBCO/EVDxXf2Klokz5KFRsUV3y
+         5HioT+rK/8G54ChVoICFKFJXgCIxlWs8jajBCI/2EbKKu5VDSW2ktUVMhBO0iuwnnT3u
+         p2DQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=FIgQo2oChc5R9ppNZcJsRQLeVNqUYk5rwuirJqcFYn4=;
-        b=G8bP5LLun9fu8PoA7WljSwcaUCe4AO7gr8lIi7mehk3CzuTYW6TqViZPomj4XFT05B
-         SOmWG5mC+I03+HcaxkvSBH+DXpqVrPqeTicdsLq6pAof2DiEqI5tdheLhebR4cRVxlMj
-         Anvbh2meRuvC611nfamzzNneWeA9+1oOKta9j4PP+/Zdg8uho6+LP3+Pbp9HV/p1CiaR
-         uWY+yGnPprz9pVwvVcz7DysU0+e+2RBiyPk+V+WdHFOED7+L9nfqo1oEN58yalgpJM1D
-         7a/BCAxk8NCdCz7rBgMoT2m1615xxazfJGP4lWSxXhbAAshr5eYyczOBmPgKtSrHW4f0
-         tEtA==
-X-Gm-Message-State: AOAM533QcxjKiGwlR6ApWnaHHdCNw+aS23LeqWrYhCNNgebNdhD6OnAr
-        LGAn9gCxz32kgRDC3v4GdSUwDrLeeHDtHQ==
-X-Google-Smtp-Source: ABdhPJysZC+9JH5/mXJxiJk1/4qKhDhj4oS4zDVUe1SxvC7TS4gP85j1tl+wl8r/JNCZohQziZCK0w==
-X-Received: by 2002:a17:90a:560a:: with SMTP id r10mr417848pjf.86.1630515693937;
-        Wed, 01 Sep 2021 10:01:33 -0700 (PDT)
+        bh=3H6GGHfxUDBMQigp8UiruGfgUK504wWqU5E2BEFOsKU=;
+        b=FTt6DScsbswNQFdk4hz0clov9Z6u4+PUvOE6D+QpTFkW+NqdQ9a8hNUr+v5UsJ09mH
+         7jfj9XEZrx967xX1B0Ff46F5avMFV/jcOxZoHkpr0bueBVEcMINq/Fyf/nY77zXs9riq
+         RKPGs8+4UALeLfKU0RjQcLIUvWMlge3q0ASwanLu/15EcC8vh+wPXWOXEQ8rJj8zu1VU
+         TpfMbWFhxDvAk5Z25UyF+oYXSbNPe1FVYR5LfuXKt4VxKQUKQj/O/EVPSCOOC9b9JSlb
+         rkeZyLmZ5zyo2/p0ivHfZigd8ITD1RAYyk+s/ACSDGetlQ5f8vsXcNGSqFNlDKt3LRO0
+         71gw==
+X-Gm-Message-State: AOAM5331eA3oySMyfwBF6H/eZgAIdnrsZHT2/IaKi8c4JOHObzolmBUV
+        fJHALrInnSJhuoGbaEhOHc7Pdi3feZxqXA==
+X-Google-Smtp-Source: ABdhPJwJtwDvnRj8Gaa/zSEZkHQaPg7RfQ7VLQlFadZiki2RvRpqS9XhdkwMmJgbljAppYFG++0y4A==
+X-Received: by 2002:a17:90a:49:: with SMTP id 9mr403452pjb.80.1630515696775;
+        Wed, 01 Sep 2021 10:01:36 -0700 (PDT)
 Received: from relinquished.tfbnw.net ([2620:10d:c090:400::5:a2b2])
-        by smtp.gmail.com with ESMTPSA id y7sm58642pff.206.2021.09.01.10.01.32
+        by smtp.gmail.com with ESMTPSA id y7sm58642pff.206.2021.09.01.10.01.35
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 01 Sep 2021 10:01:33 -0700 (PDT)
+        Wed, 01 Sep 2021 10:01:36 -0700 (PDT)
 From:   Omar Sandoval <osandov@osandov.com>
 To:     linux-btrfs@vger.kernel.org
 Cc:     kernel-team@fb.com, linux-fsdevel@vger.kernel.org,
         linux-api@vger.kernel.org
-Subject: [PATCH v11 05/14] btrfs: support different disk extent size for delalloc
-Date:   Wed,  1 Sep 2021 10:01:00 -0700
-Message-Id: <84ca9be547a19b69c276942bd99b03da833530dd.1630514529.git.osandov@fb.com>
+Subject: [PATCH v11 07/14] btrfs: add definitions + documentation for encoded I/O ioctls
+Date:   Wed,  1 Sep 2021 10:01:02 -0700
+Message-Id: <5d861feadc7b8e029e6006489179f62bc7594d4e.1630514529.git.osandov@fb.com>
 X-Mailer: git-send-email 2.33.0
 In-Reply-To: <cover.1630514529.git.osandov@fb.com>
 References: <cover.1630514529.git.osandov@fb.com>
@@ -74,145 +73,166 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-Currently, we always reserve the same extent size in the file and extent
-size on disk for delalloc because the former is the worst case for the
-latter. For RWF_ENCODED writes, we know the exact size of the extent on
-disk, which may be less than or greater than (for bookends) the size in
-the file. Add a disk_num_bytes parameter to
-btrfs_delalloc_reserve_metadata() so that we can reserve the correct
-amount of csum bytes. No functional change.
+In order to allow sending and receiving compressed data without
+decompressing it, we need an interface to write pre-compressed data
+directly to the filesystem and the matching interface to read compressed
+data without decompressing it. This adds the definitions for ioctls to
+do that and detailed explanations of how to use them.
 
-Reviewed-by: Nikolay Borisov <nborisov@suse.com>
-Reviewed-by: Josef Bacik <josef@toxicpanda.com>
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- fs/btrfs/ctree.h          |  3 ++-
- fs/btrfs/delalloc-space.c | 18 ++++++++++--------
- fs/btrfs/file.c           |  3 ++-
- fs/btrfs/inode.c          |  2 +-
- fs/btrfs/relocation.c     |  2 +-
- 5 files changed, 16 insertions(+), 12 deletions(-)
+ include/uapi/linux/btrfs.h | 132 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 132 insertions(+)
 
-diff --git a/fs/btrfs/ctree.h b/fs/btrfs/ctree.h
-index 8ea383cac13b..b95ec5fb68d5 100644
---- a/fs/btrfs/ctree.h
-+++ b/fs/btrfs/ctree.h
-@@ -2802,7 +2802,8 @@ void btrfs_subvolume_release_metadata(struct btrfs_root *root,
- 				      struct btrfs_block_rsv *rsv);
- void btrfs_delalloc_release_extents(struct btrfs_inode *inode, u64 num_bytes);
+diff --git a/include/uapi/linux/btrfs.h b/include/uapi/linux/btrfs.h
+index d7d3cfead056..95da52955894 100644
+--- a/include/uapi/linux/btrfs.h
++++ b/include/uapi/linux/btrfs.h
+@@ -861,6 +861,134 @@ struct btrfs_ioctl_get_subvol_rootref_args {
+ 		__u8 align[7];
+ };
  
--int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes);
-+int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes,
-+				    u64 disk_num_bytes);
- u64 btrfs_account_ro_block_groups_free_space(struct btrfs_space_info *sinfo);
- int btrfs_error_unpin_extent_range(struct btrfs_fs_info *fs_info,
- 				   u64 start, u64 end);
-diff --git a/fs/btrfs/delalloc-space.c b/fs/btrfs/delalloc-space.c
-index 2059d1504149..143650004991 100644
---- a/fs/btrfs/delalloc-space.c
-+++ b/fs/btrfs/delalloc-space.c
-@@ -267,11 +267,11 @@ static void btrfs_calculate_inode_block_rsv_size(struct btrfs_fs_info *fs_info,
- }
++/*
++ * Data and metadata for an encoded read or write.
++ *
++ * Encoded I/O bypasses any encoding automatically done by the filesystem (e.g.,
++ * compression). This can be used to read the compressed contents of a file or
++ * write pre-compressed data directly to a file.
++ *
++ * BTRFS_IOC_ENCODED_READ and BTRFS_IOC_ENCODED_WRITE are essentially
++ * preadv/pwritev with additional metadata about how the data is encoded and the
++ * size of the unencoded data.
++ *
++ * BTRFS_IOC_ENCODED_READ fills the given iovecs with the encoded data, fills
++ * the metadata fields, and returns the size of the encoded data. It reads one
++ * extent per call. It can also read data which is not encoded.
++ *
++ * BTRFS_IOC_ENCODED_WRITE uses the metadata fields, writes the encoded data
++ * from the iovecs, and returns the size of the encoded data. Note that the
++ * encoded data is not validated when it is written; if it is not valid (e.g.,
++ * it cannot be decompressed), then a subsequent read may return an error.
++ *
++ * Since the filesystem page cache contains decoded data, encoded I/O bypasses
++ * the page cache. Encoded I/O requires CAP_SYS_ADMIN.
++ */
++struct btrfs_ioctl_encoded_io_args {
++	/* Input parameters for both reads and writes. */
++
++	/*
++	 * iovecs containing encoded data.
++	 *
++	 * For reads, if the size of the encoded data is larger than the sum of
++	 * iov[n].iov_len for 0 <= n < iovcnt, then the ioctl fails with
++	 * ENOBUFS.
++	 *
++	 * For writes, the size of the encoded data is the sum of iov[n].iov_len
++	 * for 0 <= n < iovcnt. This must be less than 128 KiB (this limit may
++	 * increase in the future). This must also be less than or equal to
++	 * unencoded_len.
++	 */
++	const struct iovec __user *iov;
++	/* Number of iovecs. */
++	unsigned long iovcnt;
++	/*
++	 * Offset in file.
++	 *
++	 * For writes, must be aligned to the sector size of the filesystem.
++	 */
++	__s64 offset;
++	/* Currently must be zero. */
++	__u64 flags;
++
++	/*
++	 * For reads, the following members are filled in with the metadata for
++	 * the encoded data.
++	 * For writes, the following members must be set to the metadata for the
++	 * encoded data.
++	 */
++
++	/*
++	 * Length of the data in the file.
++	 *
++	 * Must be less than or equal to unencoded_len - unencoded_offset. For
++	 * writes, must be aligned to the sector size of the filesystem unless
++	 * the data ends at or beyond the current end of the file.
++	 */
++	__u64 len;
++	/*
++	 * Length of the unencoded (i.e., decrypted and decompressed) data.
++	 *
++	 * For writes, must be no more than 128 KiB (this limit may increase in
++	 * the future). If the unencoded data is actually longer than
++	 * unencoded_len, then it is truncated; if it is shorter, then it is
++	 * extended with zeroes.
++	 */
++	__u64 unencoded_len;
++	/*
++	 * Offset from the first byte of the unencoded data to the first byte of
++	 * logical data in the file.
++	 *
++	 * Must be less than unencoded_len.
++	 */
++	__u64 unencoded_offset;
++	/*
++	 * BTRFS_ENCODED_IO_COMPRESSION_* type.
++	 *
++	 * For writes, must not be BTRFS_ENCODED_IO_COMPRESSION_NONE.
++	 */
++	__u32 compression;
++	/* Currently always BTRFS_ENCODED_IO_ENCRYPTION_NONE. */
++	__u32 encryption;
++	/*
++	 * Reserved for future expansion.
++	 *
++	 * For reads, always returned as zero. Users should check for non-zero
++	 * bytes. If there are any, then the kernel has a newer version of this
++	 * structure with additional information that the user definition is
++	 * missing.
++	 *
++	 * For writes, must be zeroed.
++	 */
++	__u8 reserved[32];
++};
++
++/* Data is not compressed. */
++#define BTRFS_ENCODED_IO_COMPRESSION_NONE 0
++/* Data is compressed as a single zlib stream. */
++#define BTRFS_ENCODED_IO_COMPRESSION_ZLIB 1
++/*
++ * Data is compressed as a single zstd frame with the windowLog compression
++ * parameter set to no more than 17.
++ */
++#define BTRFS_ENCODED_IO_COMPRESSION_ZSTD 2
++/*
++ * Data is compressed page by page (using the page size indicated by the name of
++ * the constant) with LZO1X and wrapped in the format documented in
++ * fs/btrfs/lzo.c. For writes, the compression page size must match the
++ * filesystem page size.
++ */
++#define BTRFS_ENCODED_IO_COMPRESSION_LZO_4K 3
++#define BTRFS_ENCODED_IO_COMPRESSION_LZO_8K 4
++#define BTRFS_ENCODED_IO_COMPRESSION_LZO_16K 5
++#define BTRFS_ENCODED_IO_COMPRESSION_LZO_32K 6
++#define BTRFS_ENCODED_IO_COMPRESSION_LZO_64K 7
++#define BTRFS_ENCODED_IO_COMPRESSION_TYPES 8
++
++/* Data is not encrypted. */
++#define BTRFS_ENCODED_IO_ENCRYPTION_NONE 0
++#define BTRFS_ENCODED_IO_ENCRYPTION_TYPES 1
++
+ /* Error codes as returned by the kernel */
+ enum btrfs_err_code {
+ 	BTRFS_ERROR_DEV_RAID1_MIN_NOT_MET = 1,
+@@ -989,5 +1117,9 @@ enum btrfs_err_code {
+ 				struct btrfs_ioctl_ino_lookup_user_args)
+ #define BTRFS_IOC_SNAP_DESTROY_V2 _IOW(BTRFS_IOCTL_MAGIC, 63, \
+ 				struct btrfs_ioctl_vol_args_v2)
++#define BTRFS_IOC_ENCODED_READ _IOR(BTRFS_IOCTL_MAGIC, 64, \
++				    struct btrfs_ioctl_encoded_io_args)
++#define BTRFS_IOC_ENCODED_WRITE _IOW(BTRFS_IOCTL_MAGIC, 64, \
++				     struct btrfs_ioctl_encoded_io_args)
  
- static void calc_inode_reservations(struct btrfs_fs_info *fs_info,
--				    u64 num_bytes, u64 *meta_reserve,
--				    u64 *qgroup_reserve)
-+				    u64 num_bytes, u64 disk_num_bytes,
-+				    u64 *meta_reserve, u64 *qgroup_reserve)
- {
- 	u64 nr_extents = count_max_extents(num_bytes);
--	u64 csum_leaves = btrfs_csum_bytes_to_leaves(fs_info, num_bytes);
-+	u64 csum_leaves = btrfs_csum_bytes_to_leaves(fs_info, disk_num_bytes);
- 	u64 inode_update = btrfs_calc_metadata_size(fs_info, 1);
- 
- 	*meta_reserve = btrfs_calc_insert_metadata_size(fs_info,
-@@ -285,7 +285,8 @@ static void calc_inode_reservations(struct btrfs_fs_info *fs_info,
- 	*qgroup_reserve = nr_extents * fs_info->nodesize;
- }
- 
--int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes)
-+int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes,
-+				    u64 disk_num_bytes)
- {
- 	struct btrfs_root *root = inode->root;
- 	struct btrfs_fs_info *fs_info = root->fs_info;
-@@ -315,6 +316,7 @@ int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes)
- 	}
- 
- 	num_bytes = ALIGN(num_bytes, fs_info->sectorsize);
-+	disk_num_bytes = ALIGN(disk_num_bytes, fs_info->sectorsize);
- 
- 	/*
- 	 * We always want to do it this way, every other way is wrong and ends
-@@ -326,8 +328,8 @@ int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes)
- 	 * everything out and try again, which is bad.  This way we just
- 	 * over-reserve slightly, and clean up the mess when we are done.
- 	 */
--	calc_inode_reservations(fs_info, num_bytes, &meta_reserve,
--				&qgroup_reserve);
-+	calc_inode_reservations(fs_info, num_bytes, disk_num_bytes,
-+				&meta_reserve, &qgroup_reserve);
- 	ret = btrfs_qgroup_reserve_meta_prealloc(root, qgroup_reserve, true);
- 	if (ret)
- 		return ret;
-@@ -346,7 +348,7 @@ int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes)
- 	spin_lock(&inode->lock);
- 	nr_extents = count_max_extents(num_bytes);
- 	btrfs_mod_outstanding_extents(inode, nr_extents);
--	inode->csum_bytes += num_bytes;
-+	inode->csum_bytes += disk_num_bytes;
- 	btrfs_calculate_inode_block_rsv_size(fs_info, inode);
- 	spin_unlock(&inode->lock);
- 
-@@ -451,7 +453,7 @@ int btrfs_delalloc_reserve_space(struct btrfs_inode *inode,
- 	ret = btrfs_check_data_free_space(inode, reserved, start, len);
- 	if (ret < 0)
- 		return ret;
--	ret = btrfs_delalloc_reserve_metadata(inode, len);
-+	ret = btrfs_delalloc_reserve_metadata(inode, len, len);
- 	if (ret < 0)
- 		btrfs_free_reserved_data_space(inode, *reserved, start, len);
- 	return ret;
-diff --git a/fs/btrfs/file.c b/fs/btrfs/file.c
-index 7ff577005d0f..6f9cb8baffd2 100644
---- a/fs/btrfs/file.c
-+++ b/fs/btrfs/file.c
-@@ -1741,7 +1741,8 @@ static noinline ssize_t btrfs_buffered_write(struct kiocb *iocb,
- 					 fs_info->sectorsize);
- 		WARN_ON(reserve_bytes == 0);
- 		ret = btrfs_delalloc_reserve_metadata(BTRFS_I(inode),
--				reserve_bytes);
-+						      reserve_bytes,
-+						      reserve_bytes);
- 		if (ret) {
- 			if (!only_release_metadata)
- 				btrfs_free_reserved_data_space(BTRFS_I(inode),
-diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
-index a85c1050ae95..6aad4b641d5c 100644
---- a/fs/btrfs/inode.c
-+++ b/fs/btrfs/inode.c
-@@ -5043,7 +5043,7 @@ int btrfs_truncate_block(struct btrfs_inode *inode, loff_t from, loff_t len,
- 			goto out;
- 		}
- 	}
--	ret = btrfs_delalloc_reserve_metadata(inode, blocksize);
-+	ret = btrfs_delalloc_reserve_metadata(inode, blocksize, blocksize);
- 	if (ret < 0) {
- 		if (!only_release_metadata)
- 			btrfs_free_reserved_data_space(inode, data_reserved,
-diff --git a/fs/btrfs/relocation.c b/fs/btrfs/relocation.c
-index 63d2b22cf438..879fa0ea465c 100644
---- a/fs/btrfs/relocation.c
-+++ b/fs/btrfs/relocation.c
-@@ -3017,7 +3017,7 @@ static int relocate_one_page(struct inode *inode, struct file_ra_state *ra,
- 
- 		/* Reserve metadata for this range */
- 		ret = btrfs_delalloc_reserve_metadata(BTRFS_I(inode),
--						      clamped_len);
-+						      clamped_len, clamped_len);
- 		if (ret)
- 			goto release_page;
- 
+ #endif /* _UAPI_LINUX_BTRFS_H */
 -- 
 2.33.0
 
