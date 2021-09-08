@@ -2,164 +2,129 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 35FD3C433F5
-	for <linux-api@archiver.kernel.org>; Sun,  5 Sep 2021 19:08:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3AECCC433F5
+	for <linux-api@archiver.kernel.org>; Wed,  8 Sep 2021 18:49:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0CCE061102
-	for <linux-api@archiver.kernel.org>; Sun,  5 Sep 2021 19:08:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 151AE61078
+	for <linux-api@archiver.kernel.org>; Wed,  8 Sep 2021 18:49:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238147AbhIETJR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 5 Sep 2021 15:09:17 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:52338 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S238393AbhIETI7 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 5 Sep 2021 15:08:59 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1630868873;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=GBTVYvl6r/DGTmkrkWcHeYmKn9Wnjnzo76ZSWSpnbek=;
-        b=PeqfpFtOcgYLHpImbilspXx7NNcD9AFdc1+vbYZSW8XLdVNXxdpUyIBE6a8Jd//2ySrAW3
-        A3Rarm2+FChvFF82fOeq1qd0qcEaGVFxiA7bu3YZinBh2cKjqLW0qR2oAdLuSd4aERoPN5
-        DrpsC4lYjcWWoLLXHz6HAA10siuMJ7o=
-Received: from mail-wm1-f71.google.com (mail-wm1-f71.google.com
- [209.85.128.71]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-555-WHfTkxzAPlWsN9yUPgqy6A-1; Sun, 05 Sep 2021 15:07:52 -0400
-X-MC-Unique: WHfTkxzAPlWsN9yUPgqy6A-1
-Received: by mail-wm1-f71.google.com with SMTP id x125-20020a1c3183000000b002e73f079eefso2911357wmx.0
-        for <linux-api@vger.kernel.org>; Sun, 05 Sep 2021 12:07:52 -0700 (PDT)
+        id S1348289AbhIHSuU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 8 Sep 2021 14:50:20 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34724 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1348265AbhIHSuU (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 8 Sep 2021 14:50:20 -0400
+Received: from mail-pl1-x62f.google.com (mail-pl1-x62f.google.com [IPv6:2607:f8b0:4864:20::62f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BFA76C061757
+        for <linux-api@vger.kernel.org>; Wed,  8 Sep 2021 11:49:11 -0700 (PDT)
+Received: by mail-pl1-x62f.google.com with SMTP id u1so1876890plq.5
+        for <linux-api@vger.kernel.org>; Wed, 08 Sep 2021 11:49:11 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=posk.io; s=google;
+        h=from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=4F7KTw8b2Sf/F6Hrpsu9jZkL1CByiMkGRka7IEfpAvo=;
+        b=CVM0ZsEFfRAM8aDm30mklDPrHdVrbL1OWZZ2IV1+rairSkLVMUYPkOX3QgoL0ZO9Hd
+         xPcwsTnZhYx2o0sR0hqvwYIV0w95Md1hxC2f0CY2UWAFWTdzrJUgGPe5bSFmDJV67WnN
+         nsuSJyCtApbrtdUVYUkttjzIQkw1y/TaMuVC+OJbBRdcALt7A1YK8PETbwr+xnyJ0uZN
+         caZcJOSKqkJDcie41UOARgjpriY4+dM/RNYNMBzjxI5W34Ar41vHGXxt3PnCK3yAjv0f
+         1Fti90DYOgZLwc1Td5xRrrjM1EjAwz/rCRFMXOldWsSEMQRDJZSBp3roCjygD4Qb1e6N
+         7Rjg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:subject:to:cc:references:from:organization
-         :message-id:date:user-agent:mime-version:in-reply-to
-         :content-language:content-transfer-encoding;
-        bh=GBTVYvl6r/DGTmkrkWcHeYmKn9Wnjnzo76ZSWSpnbek=;
-        b=ZZ+iLJRl66TywXxlNKP1XjKHUed3JGrBX+Yn5CHcA7ORzoFSXmk29CHzajtTae8Xtb
-         LQjfRedCQZUnuCHJbCQgdJ/oIUkGGQpJxUING9m7TdI6n/3DUKY4IijB5xPEDDCDZVSo
-         Wtp89krlI3OB53gVk6Q//juSSAp3oWZ5QO8pU0V2MNH9tJPeZs+CcvmlacpBB8KM90l+
-         X8y/hR28TAUtqKNccaBpK/dk7iYP3K5Pj+WUgj+skNICtkIrVr8KAXZY7UtnoQeD+Iyg
-         ezJnSXauUWpVpKAk1iEc7IT5T9a5U+9tAGwCVnxyJLICqHnK3dqjGojLRVib4kDNWkqg
-         KN3Q==
-X-Gm-Message-State: AOAM533qdK2swrEGsKsid7HhdsrIWrmKg8WIWvK9P3nK8fxzl+Rgp+kX
-        cCwk7F6csLrmGyttHf7dyIMRQcl+aQq106cq3F1wqAsyblcNwm/ISEqJocmBjpNMuem2NLDKcmP
-        xiOTAGvmPouFd6s2YDvQD
-X-Received: by 2002:adf:916f:: with SMTP id j102mr9428593wrj.422.1630868871732;
-        Sun, 05 Sep 2021 12:07:51 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJwJKpXpbX8Zx9j1c0iF75tnA3gLF7m6WMhftI7dZFfieFpkJUATagtI6L+4VC8O/dknnYxpxg==
-X-Received: by 2002:adf:916f:: with SMTP id j102mr9428550wrj.422.1630868871507;
-        Sun, 05 Sep 2021 12:07:51 -0700 (PDT)
-Received: from [192.168.3.132] (p5b0c6f04.dip0.t-ipconnect.de. [91.12.111.4])
-        by smtp.gmail.com with ESMTPSA id i20sm5300193wml.37.2021.09.05.12.07.48
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Sun, 05 Sep 2021 12:07:51 -0700 (PDT)
-Subject: Re: [PATCH v2 1/7] binfmt: don't use MAP_DENYWRITE when loading
- shared libraries via uselib()
-To:     Linus Torvalds <torvalds@linux-foundation.org>,
-        Guenter Roeck <linux@roeck-us.net>
-Cc:     Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=4F7KTw8b2Sf/F6Hrpsu9jZkL1CByiMkGRka7IEfpAvo=;
+        b=Zu0Xx6FIquwRvPHmFzLVgK6LrU1RJ3kyHy0nRYXGK4kJFHP1AY3J94tCPRu0liXABj
+         psdF6yvFNzoLTDHD87GJeSOUfeH0axTQxyvXxHpeCjrZa5ucTbDCJ1pUvjzSqx+jBsC2
+         TZ4JzB9WuJR9ml2W5DAwOHvX+bHXmIabjmuiczDR1AAF0hyiEj3TzJB+4UukTX0dwY0g
+         qvl7iMpxXuP8mnaNeFX/F4hrLrdeu14lGjx88fEyAG7+acrEuZ9ge7buPuycDtbjlINT
+         aEuUPjxnJDTA99jdOZpvkicQFuO8F0PY582mQJ2/3sWJHl+LqzmZt3lmfPXV3vVS/W0K
+         kRmw==
+X-Gm-Message-State: AOAM533T4gVuqAJQHQlMunZPbzdGYxqM80vHsJmSzTIkDHLqSNx42Vbh
+        75DtequbWDME4mctLbFknY/s7Q==
+X-Google-Smtp-Source: ABdhPJw54XuyRRZD2yO7LGO0G8d4TUd37AWQHtqJ+drdy/wFj8Vw0VR8DCK+/KfvLS4jzLN/yfqLUQ==
+X-Received: by 2002:a17:90a:3ec4:: with SMTP id k62mr5795759pjc.32.1631126951276;
+        Wed, 08 Sep 2021 11:49:11 -0700 (PDT)
+Received: from posk-g1.lan (23-118-52-46.lightspeed.sntcca.sbcglobal.net. [23.118.52.46])
+        by smtp.gmail.com with ESMTPSA id m64sm3645640pga.55.2021.09.08.11.49.10
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 08 Sep 2021 11:49:11 -0700 (PDT)
+From:   Peter Oskolkov <posk@posk.io>
+X-Google-Original-From: Peter Oskolkov <posk@google.com>
+To:     Peter Zijlstra <peterz@infradead.org>,
+        Ingo Molnar <mingo@redhat.com>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
-        "H. Peter Anvin" <hpa@zytor.com>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        Alexey Dobriyan <adobriyan@gmail.com>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Arnaldo Carvalho de Melo <acme@kernel.org>,
-        Mark Rutland <mark.rutland@arm.com>,
-        Alexander Shishkin <alexander.shishkin@linux.intel.com>,
-        Jiri Olsa <jolsa@redhat.com>,
-        Namhyung Kim <namhyung@kernel.org>,
-        Petr Mladek <pmladek@suse.com>,
-        Sergey Senozhatsky <sergey.senozhatsky@gmail.com>,
-        Andy Shevchenko <andriy.shevchenko@linux.intel.com>,
-        Rasmus Villemoes <linux@rasmusvillemoes.dk>,
-        Kees Cook <keescook@chromium.org>,
-        "Eric W. Biederman" <ebiederm@xmission.com>,
-        Greg Ungerer <gerg@linux-m68k.org>,
-        Geert Uytterhoeven <geert@linux-m68k.org>,
-        Mike Rapoport <rppt@kernel.org>,
-        Vlastimil Babka <vbabka@suse.cz>,
-        Vincenzo Frascino <vincenzo.frascino@arm.com>,
-        Chinwen Chang <chinwen.chang@mediatek.com>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        "Matthew Wilcox (Oracle)" <willy@infradead.org>,
-        Huang Ying <ying.huang@intel.com>,
-        Jann Horn <jannh@google.com>, Feng Tang <feng.tang@intel.com>,
-        Kevin Brodsky <Kevin.Brodsky@arm.com>,
-        Michael Ellerman <mpe@ellerman.id.au>,
-        Shawn Anastasio <shawn@anastas.io>,
-        Steven Price <steven.price@arm.com>,
-        Nicholas Piggin <npiggin@gmail.com>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        Jens Axboe <axboe@kernel.dk>,
-        Gabriel Krisman Bertazi <krisman@collabora.com>,
-        Peter Xu <peterx@redhat.com>,
-        Suren Baghdasaryan <surenb@google.com>,
-        Shakeel Butt <shakeelb@google.com>,
-        Marco Elver <elver@google.com>,
-        Daniel Jordan <daniel.m.jordan@oracle.com>,
-        Nicolas Viennot <Nicolas.Viennot@twosigma.com>,
-        Thomas Cedeno <thomascedeno@google.com>,
-        Michal Hocko <mhocko@suse.com>,
-        Miklos Szeredi <miklos@szeredi.hu>,
-        Chengguang Xu <cgxu519@mykernel.net>,
-        =?UTF-8?Q?Christian_K=c3=b6nig?= <ckoenig.leichtzumerken@gmail.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        David Laight <David.Laight@aculab.com>,
-        linux-unionfs@vger.kernel.org,
-        Linux API <linux-api@vger.kernel.org>,
-        the arch/x86 maintainers <x86@kernel.org>,
-        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-        Linux-MM <linux-mm@kvack.org>
-References: <20210816194840.42769-1-david@redhat.com>
- <20210816194840.42769-2-david@redhat.com>
- <20210905153229.GA3019909@roeck-us.net>
- <CAHk-=whO-dnNxz5H8yfnGsNxrDHu-TVQq-X-VwhoDyWu3Lgnyg@mail.gmail.com>
-From:   David Hildenbrand <david@redhat.com>
-Organization: Red Hat
-Message-ID: <77b36c45-773b-3cb8-fa18-45f0914c3090@redhat.com>
-Date:   Sun, 5 Sep 2021 21:07:48 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.11.0
+        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc:     Paul Turner <pjt@google.com>, Ben Segall <bsegall@google.com>,
+        Peter Oskolkov <posk@google.com>,
+        Peter Oskolkov <posk@posk.io>,
+        Andrei Vagin <avagin@google.com>, Jann Horn <jannh@google.com>,
+        Thierry Delisle <tdelisle@uwaterloo.ca>
+Subject: [PATCH 0/4 v0.5] sched/umcg: RFC UMCG patchset
+Date:   Wed,  8 Sep 2021 11:49:01 -0700
+Message-Id: <20210908184905.163787-1-posk@google.com>
+X-Mailer: git-send-email 2.25.1
 MIME-Version: 1.0
-In-Reply-To: <CAHk-=whO-dnNxz5H8yfnGsNxrDHu-TVQq-X-VwhoDyWu3Lgnyg@mail.gmail.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 05.09.21 19:17, Linus Torvalds wrote:
-> On Sun, Sep 5, 2021 at 8:32 AM Guenter Roeck <linux@roeck-us.net> wrote:
->>
->> Guess someone didn't care compile testing their code. This is now in
->> mainline.
-> 
-> To be fair, a.out is disabled pretty much on all relevant platforms these days.
+This is an update on v0.4:
+https://lore.kernel.org/lkml/20210801200617.623745-1-posk@google.com/
 
-Yes, and it seems like it was disabled in all configs I used. (I did not 
-compile all-yes configs; usually my stuff goes via -mm where it will end 
-up in -next for a while ... this one was special)
+Key changes:
 
-> 
-> Only alpha and m68k left, I think.
-> 
-> I applied the obvious patch from Geert.
+v0.3 => v0.4:
+- made idle workers list logic simpler
+- only one idle server tracking
+- removed two fields from struct umcg_task
+- added timeout handling
+- added worker preemption
+- added a doc patch that now documents the syscalls and state
+  transitions.
 
-Thanks Linus!
+v0.4 => v0.5:
+- refactored idle workers list management, as suggested by
+  Thierry Delisle here:
+  https://lore.kernel.org/lkml/3530714d-125b-e0f5-45b2-72695e2fc4ee@uwaterloo.ca/
 
+I will now clean up libumcg (userspace) and selftests and post them
+in a follow-up patchset.
 
--- 
-Thanks,
+Peter Oskolkov (4):
+  sched/umcg: add WF_CURRENT_CPU and externise ttwu
+  sched/umcg: RFC: add userspace atomic helpers
+  sched/umcg: RFC: implement UMCG syscalls
+  sched/umcg: add Documentation/userspace-api/umcg.rst
 
-David / dhildenb
+ Documentation/userspace-api/umcg.rst   | 546 ++++++++++++++++++++++
+ arch/x86/entry/syscalls/syscall_64.tbl |   2 +
+ include/linux/sched.h                  |   6 +
+ include/linux/syscalls.h               |   4 +
+ include/uapi/asm-generic/unistd.h      |   8 +-
+ include/uapi/linux/umcg.h              | 114 +++++
+ init/Kconfig                           |  10 +
+ kernel/exit.c                          |   7 +
+ kernel/sched/Makefile                  |   1 +
+ kernel/sched/core.c                    |  20 +-
+ kernel/sched/fair.c                    |   4 +
+ kernel/sched/sched.h                   |  15 +-
+ kernel/sched/umcg.c                    | 618 +++++++++++++++++++++++++
+ kernel/sched/umcg.h                    | 325 +++++++++++++
+ kernel/sys_ni.c                        |   4 +
+ 15 files changed, 1673 insertions(+), 11 deletions(-)
+ create mode 100644 Documentation/userspace-api/umcg.rst
+ create mode 100644 include/uapi/linux/umcg.h
+ create mode 100644 kernel/sched/umcg.c
+ create mode 100644 kernel/sched/umcg.h
+
+--
+2.25.1
 
