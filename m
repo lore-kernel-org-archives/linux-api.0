@@ -2,274 +2,380 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MSGID_FROM_MTA_HEADER,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-18.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,MSGID_FROM_MTA_HEADER,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3871AC433F5
-	for <linux-api@archiver.kernel.org>; Thu,  9 Sep 2021 00:02:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9AF27C433FE
+	for <linux-api@archiver.kernel.org>; Thu,  9 Sep 2021 00:02:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 114ED6108B
-	for <linux-api@archiver.kernel.org>; Thu,  9 Sep 2021 00:02:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8400D61074
+	for <linux-api@archiver.kernel.org>; Thu,  9 Sep 2021 00:02:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1347801AbhIIAD5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 8 Sep 2021 20:03:57 -0400
-Received: from mx0b-00069f02.pphosted.com ([205.220.177.32]:65534 "EHLO
+        id S236059AbhIIAEA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 8 Sep 2021 20:04:00 -0400
+Received: from mx0b-00069f02.pphosted.com ([205.220.177.32]:3948 "EHLO
         mx0b-00069f02.pphosted.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S236059AbhIIAD5 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 8 Sep 2021 20:03:57 -0400
-Received: from pps.filterd (m0246632.ppops.net [127.0.0.1])
-        by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id 188LUsVL031111;
-        Thu, 9 Sep 2021 00:02:47 GMT
+        by vger.kernel.org with ESMTP id S1347884AbhIIAD7 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 8 Sep 2021 20:03:59 -0400
+Received: from pps.filterd (m0246631.ppops.net [127.0.0.1])
+        by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id 188LPmWb025837;
+        Thu, 9 Sep 2021 00:02:49 GMT
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=from : to : cc :
- subject : date : message-id : content-type : mime-version;
- s=corp-2021-07-09; bh=7lhhCiiXq+cfxiOxhHdRjF0shwkv9w9F2QKtC0iEFg4=;
- b=BGtPT5HdI+rD6B6IuA+BWkztgH6VYWDWg8HQWtD7u9Q+VQFjq3UrY0rTsQIdJwl/U4Br
- xNIryYh1SwY5TwXaXbga6iOkrSmXsLgvtnEIPlqZBB8nNttCvH/dpILlCTDRh0xUTglL
- mlRrpaTXpTAHJ3TgIwFggRivO+eIj8iRZGKblsOJ4S5XiL+5apGvEr0w+en4AUfFtT/y
- g9qp03Fen3u2T4t1sR6PhrZArtg5ttNHFXX1MwqfuVBBq2tQoL79fIPmivne9euw6zz9
- 8KmCj5YLaUUxhCsLsMN44zeBRrSdOyTY6CGZgjR3u6DVhI0Wj4js9EqsQEI98vrBbD2M RA== 
+ subject : date : message-id : in-reply-to : references : content-type :
+ mime-version; s=corp-2021-07-09;
+ bh=MKsGW3YNtdCT3n76iLsj/+P0SaF9vTCcqb6gTdBfnuE=;
+ b=T7qt+ffZm7/P0Iky/kj5vi2cGpJzUlyDDIlvz4sUIKpXPM/CgkelrKKNnyS+GZ+deusP
+ 2K2LGNeaW2OjSYhcES1jkQL+OygEUmJx/N1/im0aU7Mh1iAnwMaubdZk+AqotyfPmrl8
+ IJo3x3mePHMmGjK3VlvSqZ4LCQZ53cP3YPSa6ZRcy9YD9ZzYVypHc4bkED8CkCE/BF8f
+ FZh1z8ExLxofLV8zFqpucNR5f7gK4dDD6xhTJXWCvKyl3y2FHMfc+a982wcGhjTXcs4m
+ EAa62WrXWjFPquE54WdUoI0cpM5+SZNflvTf4jBtJfJlszQjnkMKt6kuBkt0t6ymVQJv Mg== 
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=from : to : cc :
- subject : date : message-id : content-type : mime-version;
- s=corp-2020-01-29; bh=7lhhCiiXq+cfxiOxhHdRjF0shwkv9w9F2QKtC0iEFg4=;
- b=Et+dlUWQgUZT8Yy8+tpSriVBB0D62t/+j3bcOl83crakqhYuR4Vzauu+m89gPveYAwx2
- 86NPh6CtfG2NPInOWOpIuyWC0Mk8O+RGjwrphnQC70fGsqbGuxFz7vCPIwhRe137+6Qd
- jtsevAHLmGMCG+wn5rGahiMiGMmZTGcN9ram9TGrQsx+NpibzarMA87YsqLicCjeFSAE
- xdiiTDVJy3Z7cx0sRDEYhQs3wTTRNMd8iWM1+6T6lSLHXrzQF8MExKC60GrXOW2kXN4i
- VPCqlbAJNEw40rgs8irSANYnnx0o7Q/Iu7l5cPGwNAq/fwGh3vrx1qTHRxjWfYWrdXdz 4g== 
-Received: from userp3030.oracle.com (userp3030.oracle.com [156.151.31.80])
-        by mx0b-00069f02.pphosted.com with ESMTP id 3axcw6cgw7-1
+ subject : date : message-id : in-reply-to : references : content-type :
+ mime-version; s=corp-2020-01-29;
+ bh=MKsGW3YNtdCT3n76iLsj/+P0SaF9vTCcqb6gTdBfnuE=;
+ b=m6ePZwoFjFczn7Kn+IKID9HXY5u3aHGPRSo+Jl3gSKDS0T6+tDlY7aC6Kh8bb6Ib4uWw
+ Knhzk9je/Hx4i9hh28ZvP/cogVT+qeUc5R4gAHeiQ7G/F/wUKMJWrKo+DVm/Zm7tzzOW
+ xrM+1KSWrBYos1WapQFPkt0ksKW1nS6StwBV1xX4eR3FTv75FreHtIGd901jV8jpW9be
+ sR+fhyYS+RygsmeQZJ4AQRwTYt6T3W2tBicS9SemjSUHNd6+/ViLfIeSIo6YuoD22OBo
+ 1c1IPx+UTuzXwne2ijadXiUMI1GBvuIpd9V8BJefVscQ/nbCU25oDvG5pmWITgT2fJkf Yw== 
+Received: from aserp3020.oracle.com (aserp3020.oracle.com [141.146.126.70])
+        by mx0b-00069f02.pphosted.com with ESMTP id 3axd44vfke-1
         (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-        Thu, 09 Sep 2021 00:02:46 +0000
-Received: from pps.filterd (userp3030.oracle.com [127.0.0.1])
-        by userp3030.oracle.com (8.16.0.42/8.16.0.42) with SMTP id 18900sUW066616;
-        Thu, 9 Sep 2021 00:02:45 GMT
-Received: from nam12-mw2-obe.outbound.protection.outlook.com (mail-mw2nam12lp2045.outbound.protection.outlook.com [104.47.66.45])
-        by userp3030.oracle.com with ESMTP id 3axcq24yse-1
+        Thu, 09 Sep 2021 00:02:49 +0000
+Received: from pps.filterd (aserp3020.oracle.com [127.0.0.1])
+        by aserp3020.oracle.com (8.16.0.42/8.16.0.42) with SMTP id 189005DK111123;
+        Thu, 9 Sep 2021 00:02:48 GMT
+Received: from nam12-mw2-obe.outbound.protection.outlook.com (mail-mw2nam12lp2046.outbound.protection.outlook.com [104.47.66.46])
+        by aserp3020.oracle.com with ESMTP id 3axcpmy4x4-1
         (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-        Thu, 09 Sep 2021 00:02:45 +0000
+        Thu, 09 Sep 2021 00:02:48 +0000
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=AuMBkk8h3/bRse0hEGed3CXnnaTAkIbVNqT9HP2jnZaa8WcmDewz/WOHKeIjexeDRUk0ntLvcT2/czBocwqQ4w2dRBaahz8lEWljl5BukACDZA5u3Yy52hljLHFJ8yxfD3ThlUNizBDwI/5B16Y7piKazwl5spc32AhgRYEn+Pn9KZCTaLJ5yzQ/f6MkL6z0afwt7QmhxIPDgE9Uz0B72OUmRE55nFvwtN/dwd08dmbG05iwF22oYZ639ErBy1/FeuEawL3mVNriwSAIoSqeO25t1q/9F8Z4rYFuuqq7M7wTlhH1M8Gi6TsnbEaxm97dIilGCHWMh5QB2ndw1hBuBA==
+ b=SDlxRqedwP0n0f1cPIVAq3T2QHc2Sx7xP9t4Nfj2ZdhnQQuNrq17+CjBHjCDWikxBBHvQOOK6BZ3Hw4Sxm6c5MHGMj7vj0ACwvimiFWOi/++Q6t4LrnTrJDU3xonestp1gmNF1qFVFeydeBRcBAOBGib/qYElKzOZqXzo8IctjwoSLQOI1j4ov75etBzLC+gz1F+o1bSH+JRthsM/atDit5dPL2F+K+zfmz3ntAzKhoJat8URSFagnXWEUkr6uTUIK3AMSlStOq7j/9R2jfiK1SOHtBq8M9cTgpXu8+jPzR6KA6A0EIrgDY56vWkxgXTl5U4/0CDdqsfSSFfiIyf+g==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector9901; h=From:Date:Subject:Message-ID:Content-Type:MIME-Version;
- bh=7lhhCiiXq+cfxiOxhHdRjF0shwkv9w9F2QKtC0iEFg4=;
- b=lmCZYbEOv+tFPm205xuuZAMd928wjz1ZLmGvt1n1xd3ff5aKlJWRtzufzY69PZIjyOKfkTHVmWuPcgDxCTtromugYPg7f5FYHTe1GqM0IgJEMmwWAdKPgwv5Mz79hGFAJvOyiTHj4sumf4TxMkFrtCxsWj35ZDVPxGxycHqyVwZxscwatx3cmULRYr1ZpA5dWLDNiCnNU6cbJ8k/wDABRx6QiNTm1JTVlJEp+POPIXFH2Mb23c/46/WxCYDXXuGgrY5V8sQnjIW8GdEH/s7iQGtQ2Y6c5ZjyzuA/Z2WBNoGyfVZp14MUoCemi8TeUuFIi2qe8gOK97cIN7qXvlzwFQ==
+ bh=MKsGW3YNtdCT3n76iLsj/+P0SaF9vTCcqb6gTdBfnuE=;
+ b=oYOe66mwyTBG6vhZNjQqucRc8QR6/PQXP4nuHld6daSUhjwV4KJKnWLCiNRJL3UPM5JoFHaMKG3qU1OAGJUuwiqBAu/Ey3INajMHYqcv+nhs7wqvsUhzrHUUXfoWqHIRfTzOC+ahigGvQILZTSrsY+n9yZq81enKn+QxzfBJ33L4nFGjp9sOpP54f1CCsRDWDnahYX1px1Yfwcij4Q01vogT0tO+R5Yq4gp3Xj0U89pWyssdGVh53dX6CvLxNJkD7yPMYDXepHDJn26gN27/W6B2iWkNGQtqHqoA99nzxTTuXVQyHZ6oVD+Eu7t7yTqnKBSC5Nq+Aj5ftBG8OKANig==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
  smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
  dkim=pass header.d=oracle.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=7lhhCiiXq+cfxiOxhHdRjF0shwkv9w9F2QKtC0iEFg4=;
- b=X+/YlVp2VI59R/mMfhQjecOinurvGydhUSD4crjKGEqw2jPpHE7vQCrPckdxZ4x0MM4BkCuNwYgMQUGqgSN8QOne2dgf6YaIXXI+0XbN0QE/mhAb7LiM7Kmy4dpDV6F3+mhHWJbmulk+PUbakii7FiMHNqj8q06VdZlDUA3luk8=
+ bh=MKsGW3YNtdCT3n76iLsj/+P0SaF9vTCcqb6gTdBfnuE=;
+ b=Ba4xOVa6evWIalA4oUKJXwdeILYYInRchMdLc+jxDhxsP1sm3vtZnVrIMyerAyTwxOx6Uv4g2ExPus9FLRaNSxUnAV311SH8/F8xK6ztpLIIRVArkTlUNl+t6a1zExVULzCcy56gFpTQFrgFqnF7CXReMRaQPN472zoH4yJtRbA=
 Authentication-Results: vger.kernel.org; dkim=none (message not signed)
  header.d=none;vger.kernel.org; dmarc=none action=none header.from=oracle.com;
 Received: from BYAPR10MB2629.namprd10.prod.outlook.com (2603:10b6:a02:b7::24)
  by SJ0PR10MB5472.namprd10.prod.outlook.com (2603:10b6:a03:303::17) with
  Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4478.19; Thu, 9 Sep
- 2021 00:02:43 +0000
+ 2021 00:02:46 +0000
 Received: from BYAPR10MB2629.namprd10.prod.outlook.com
  ([fe80::c9c2:64d4:c67f:6837]) by BYAPR10MB2629.namprd10.prod.outlook.com
  ([fe80::c9c2:64d4:c67f:6837%7]) with mapi id 15.20.4478.025; Thu, 9 Sep 2021
- 00:02:43 +0000
+ 00:02:46 +0000
 From:   Prakash Sangappa <prakash.sangappa@oracle.com>
 To:     --to=linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 Cc:     mingo@redhat.com, prakash.sangappa@oracle.com
-Subject: [RESEND RFC PATCH 0/3] Provide fast access to thread specific data
-Date:   Wed,  8 Sep 2021 17:10:22 -0700
-Message-Id: <1631146225-13387-1-git-send-email-prakash.sangappa@oracle.com>
+Subject: [RESEND RFC PATCH 2/3] Publish tasks's scheduler stats thru the shared structure
+Date:   Wed,  8 Sep 2021 17:10:24 -0700
+Message-Id: <1631146225-13387-3-git-send-email-prakash.sangappa@oracle.com>
 X-Mailer: git-send-email 2.7.4
+In-Reply-To: <1631146225-13387-1-git-send-email-prakash.sangappa@oracle.com>
+References: <1631146225-13387-1-git-send-email-prakash.sangappa@oracle.com>
 Content-Type: text/plain
 X-ClientProxiedBy: SN7PR04CA0025.namprd04.prod.outlook.com
  (2603:10b6:806:f2::30) To BYAPR10MB2629.namprd10.prod.outlook.com
  (2603:10b6:a02:b7::24)
 MIME-Version: 1.0
-Received: from pp-ThinkCentre-M82.us.oracle.com (2606:b400:8024:1010::13d2) by SN7PR04CA0025.namprd04.prod.outlook.com (2603:10b6:806:f2::30) with Microsoft SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256) id 15.20.4500.14 via Frontend Transport; Thu, 9 Sep 2021 00:02:42 +0000
+Received: from pp-ThinkCentre-M82.us.oracle.com (2606:b400:8024:1010::13d2) by SN7PR04CA0025.namprd04.prod.outlook.com (2603:10b6:806:f2::30) with Microsoft SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256) id 15.20.4500.14 via Frontend Transport; Thu, 9 Sep 2021 00:02:45 +0000
 X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: 357212f5-9842-4cd0-0133-08d97325256f
+X-MS-Office365-Filtering-Correlation-Id: 81135b2c-bc79-48ca-1637-08d97325275f
 X-MS-TrafficTypeDiagnostic: SJ0PR10MB5472:
 X-MS-Exchange-Transport-Forked: True
-X-Microsoft-Antispam-PRVS: <SJ0PR10MB54725D67F2B3DAC3676AB08AE4D59@SJ0PR10MB5472.namprd10.prod.outlook.com>
-X-MS-Oob-TLC-OOBClassifiers: OLM:8882;
+X-Microsoft-Antispam-PRVS: <SJ0PR10MB54722CD3D1773F1EB1A51CB7E4D59@SJ0PR10MB5472.namprd10.prod.outlook.com>
+X-MS-Oob-TLC-OOBClassifiers: OLM:9508;
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam: BCL:0;
-X-Microsoft-Antispam-Message-Info: 8x2ac3BkBHxusxp8xQ/7Hi7zDzGvjzXB+wx+NuB1tfVLEDSkQr047o7zsQf9UWEiFAbHgJ4iiI13KeqWVXb3CYbuact+y/Is62wCjfiuhmP6Ghlp6+zH8ifsk/v+ztgEteli501hDK6UhEcCmdTe8b7f9sKs5i/65XfEW0A7LXVTmD+r62yMWlaJ70amw8mEQfayQ5v0pE3dNKa0VEd5J3VUFMRlsuvi9ncmrvwHajLoR39ySLIUQZQUEpvz1Ki5jb0f/I9B6Gq85aV1c/Iflnl9A3BFse2kpj4NMloMeLcBB/ICWu1rV0SAPTK39SyW5DsG/zIGjwumWVJylxl2BHepBqJEj8pxvAd1AxKeL9kzhK5LCIBBpyZ3wPaGdZwKNWDClCHaZZG+duo0/6sW9Y4hEEt6TYPVpV6X+5GU8U1+b1TxACaoDn0RjZuSGUkryFlSVxSmPmScsiuzGmYLBGTo+ilYWV9agVMIjNMGJZ3v3jw5HeEmATfAZGIYwt3kXRbZ8WKMcsLDCJ/gyaxs9Da9kY/Uh5GNZZDOKcY8BJJ4T/AlzsJ4AlKwlnqmo2rI4tOIDNOYTQtWVtEoMXEBJI9q5T9D62LmhInLMZ3XAu/NccYpTeP6lpRrnHjmutPXTfBvlJcp5K2KJxpje/lYmA==
+X-Microsoft-Antispam-Message-Info: lTCYYvQoJDFXHIJ57PyUxTGccv+KQyAGym//0tFz1t5o8P+Lh+zXEviUSCfvDQziCt7G2xaRUiG+/1Sf6EM1QzeSLFb9Evs73VgvOOO9IY5atz71fuvMne6EwosM0wUA/WZoyHhFWtZM1PzlEeqHswNMa3/O1a49HNXjX3Gl94McCIrdJNK2Hu/VN9OBwPYFaVNMrfXO/cxXuqefaiF5yJ7rKDbFrOqgBgEQPGaEC1m/y4IMsGm4Kco3ctLDHiUhpyVJN50NEjUzefFFMsI7GwOlY9mLOnFsUPwTzfDPangJU6ifh9P8OMHW7FGfN8Gp3GC69d9cG2IlVuXAjLeONhgpYtrfXHgpNvcILmyRPMRUt0AcaF/hJiLwv+yEPfn6BF8jaXSQOPv9ChTZbEbhbnawDRBEJopQIdb3YyhLc8Rsl8ImC1oNlw8/gyeTdzeZRs6CXj97u1w8LJ09WkiEhPGgESuqBjOEEipTJJj1hiYoxtEe/Ta+d/fDkVaLO2exDdhvFNEqpZZpLUMIQRGFQyKr1tXmahVXbDkFSgW/weE18dYkCyj7xlHgq5sH8cuBXAmIfZ0p4c4XCMruUL2lkz3crPXXF6CTI/emZLBLEqWjOu61gbOSrbX4MDtVaRoiSyv8C6hiH+Koql2GFs1+Ag==
 X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:BYAPR10MB2629.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(396003)(346002)(39860400002)(366004)(136003)(376002)(66476007)(36756003)(2906002)(186003)(83380400001)(107886003)(38100700002)(478600001)(44832011)(2616005)(66556008)(4326008)(66946007)(8936002)(86362001)(6486002)(8676002)(6666004)(316002)(7696005)(52116002)(5660300002);DIR:OUT;SFP:1101;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?FmAb9W9pNZFnnr5ufG404/wbTfZXwphCB6ppNXF6iqjjEzJ2Mqflwums90/l?=
- =?us-ascii?Q?I7tX6K2Hq3gPlkUCgCyppV/ncsFjjGCxXv3G7LyW38O+DZ4ytQf8yNRAJlKG?=
- =?us-ascii?Q?5oQlh2kTrc/dIHaegGefio3YQ8yLrjrblCpwJXfg6w1XXtg28vX4jleL5Zzz?=
- =?us-ascii?Q?43ywNSSx8mzIDvW/Ec5JoAr1h/Yj/BrG3IA3e5ULk2nIPihFEnQTvUTW4Jpn?=
- =?us-ascii?Q?Uq/oQP1vgK+86OS4TZIDntK/kUSETyQoQ21w6j987Ev4SZleZzC0dUE/7cT4?=
- =?us-ascii?Q?4ODJzBH4bgoxQ++RCmxu+QF2N59XL+yjDtUDgqsWBtm4q6W69HcZ/gZzXGfr?=
- =?us-ascii?Q?CgfVp03xXbhAYJMlU9Hw/A4eVYSveCgq4gTJTZ4Wod/g7mm1MvoLtAFcyFD8?=
- =?us-ascii?Q?TnQCxgCk40gvrBVpYv2WAvCT84mHU2TVlz1cq+MSnUkQwzHzfi6jPPrdVNVO?=
- =?us-ascii?Q?OZlRaK+V8O0V4Tefb7vmuz7uj4dZPEZ4DfzWlwtHYew+P5YDu6mN+hqJEprr?=
- =?us-ascii?Q?4hyyx9ROF7loo4NnYTzisNdwiFdQrXUf9AIZiARGInvV9nWgSnYCZZ13wRiE?=
- =?us-ascii?Q?RPeTjx00hHg77ay78vaiNsSMZ23CbMIsJOwW3pcsp+K0nROZroc+mUKYeXB7?=
- =?us-ascii?Q?UJrDT1ftRd7brpNZi1kjGh68H8vcGxQu2H8eMepkJwYInXEKgEfg/12gNLZb?=
- =?us-ascii?Q?BLUW65Q6Ph73vbVIVzdUmkJD5z3vKjxM+7LtJI6lYfAL1ZS0EaZTzQHvmW9X?=
- =?us-ascii?Q?RVSI3zcufri6EQu+lkPevSJo84jfGXKB8PGXj1to4DlxWS2jiYNSOo4Q+05L?=
- =?us-ascii?Q?5VpPONI4UWdWP1SK3KcMV4VhS4yBbofBr/srIfelsvCNOOy1lWazQlGdkjUf?=
- =?us-ascii?Q?AnVnoHZApIvdK/IN4L3CBCA0lJGxjrvjono6TVkWVfqLfcGxzJb690j637fN?=
- =?us-ascii?Q?NyPCHmtUrQ6D8oR4On320xm8N19k7BtqgwTu+hhqKnz2JLkNpxN/rs6mN0wW?=
- =?us-ascii?Q?7xQjCPHcQ25dJTge15i/sAl6lVj8Ua7NdJAkNc3kML91eXJVlu8Vwbk1SBIB?=
- =?us-ascii?Q?QRYjmOHnrDVBIZqCMNMr6VSwdQaR6cdQbduxGvpIeIQxRJboVRB2fdAkmW7U?=
- =?us-ascii?Q?YzUl97Me08/3x0DAMyWIyQrQZGElpYKojo5uQgasjSeoUYiCGytCqT6BqY8E?=
- =?us-ascii?Q?ls22bVtAn49C1hDd3eQT3L9EU6y1wNWj52+XrfYRqUIJCKUqLFzdiP24+N3i?=
- =?us-ascii?Q?dRdGhTlMthDawg7FYKFTBaG0pQ58oQrjEIIp0Bfhx/ttHG/P/XMmoGdfNjJw?=
- =?us-ascii?Q?F4Qbi+VEk1cd0/BBNvDCJAwjnpF/B1UpbNN2N+eKSthIhw=3D=3D?=
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?pV2ZcEIyQGAwfyVbsynt96In0YoiedBUrPo5vLJthlKiGGRUOACNs4rOeVUh?=
+ =?us-ascii?Q?1//sAHaFA1Uvn0SHVn0c+PSAxzWrK/pH6XrBj0JDi1tPN/DK9hGqDTDK7u1K?=
+ =?us-ascii?Q?oGnvfPshDoaM55TdXY0f/UNLjFXEdb/pb0cgATKam3CHEVpfWyJ9qo++Wnww?=
+ =?us-ascii?Q?HhM0yMPvTWBmlyje3ckmIY9A/jf28si6rC7RFTRxzKoBZXQ4mG7TI69iuMcG?=
+ =?us-ascii?Q?/qg8qKdsXGJNHulqHPKIqw/UL5huYk3oeFG/TDqE3JQVrKZpBNr4AsI3t84s?=
+ =?us-ascii?Q?a1h414ZUKs6WAvf0E47L4EffQUOkIUaK5cW0FzB1K4ah2GrLsfhNLXrbuspo?=
+ =?us-ascii?Q?3nOsPNYgiWJAboFZBscbAnv+NQpEnp7zWMBdkWuYW7g8W3ddTb4UGof6qJiI?=
+ =?us-ascii?Q?nhR1ozXyiQoIUz+CmbfRWZcBklhYqh5QZAkV/z0MJs+Y4EE0eNPYIbcMOorp?=
+ =?us-ascii?Q?Qt8S9V2j1LVrYXoA6MQ0OsiXaIN1a8uCXr35E1vx6WKT3TJ3PH+ahY7CEgtN?=
+ =?us-ascii?Q?wdWOEbcOplVBH2sfqt6BPaJq9UpbNSnW3ZAT7wMC+vuhE+/mSr72jdHbk3xD?=
+ =?us-ascii?Q?BhmG6d9W88zAc33Z5Wle/XHen/v/JtqwWaTlz9S5iXoZk/nu31meJSjYDHId?=
+ =?us-ascii?Q?F10/2aUDeVDCCpn6W+NrOoGPlW3JZEkmYEAFQ0mct6lI7q1tCYm4wVBsHMRD?=
+ =?us-ascii?Q?oZPoQjDvtMJJqWDxNg+wEN1gHgCsnMBntGQ0ad0taelfZ0WzSG/NAY0VlLAp?=
+ =?us-ascii?Q?fGUqJOmW6nFD9Z5CKqyUJy/ZLQlZGFhbPPa4G2KTeP15B7/jvOosYEFy0tDf?=
+ =?us-ascii?Q?1wPAJdinE7vuULy8Bvf//6eVI6lgM1nyygKn73PjKGoUOk4tYnG2/UJ2GSDG?=
+ =?us-ascii?Q?5YzTBt6UiuMCl6lXBc4z34KUNrdvNYMTkDCMAh2TuwXeqKlGAdNgPmEIkjPx?=
+ =?us-ascii?Q?+Fbmm0Gw1Xz/WMKsSsSnLNW3hnI66COXUcFRk3+zUe8mf1mFlKlQ++mjRIbd?=
+ =?us-ascii?Q?9zW6Z1Vj+J+TLAH3GDhiF6LPDsyiMMDwoG2n0nZlAPsUL1w8xVvc0CGxITO6?=
+ =?us-ascii?Q?j6XA+qRW7/aqSvSt95v/4bB1keQ/jvWblJswFqjBf+kGLhzNQobmniTKucCw?=
+ =?us-ascii?Q?fHgX76e6rrMmCczEqFU6j0DuTNMWQvdRaVe3rLt8rNgV0bW9kJQb5DHsxr0V?=
+ =?us-ascii?Q?gf63dn2N2c7ZbQnWy0BWr8/u/CTLUzttmGB8x/T47o2VIOmt8dQvBaTJHWm3?=
+ =?us-ascii?Q?X1iJjct3ZPeRlI9blQgIZquKPJ34TXOu3sUASclm19dounkaJbXPh8XLL93k?=
+ =?us-ascii?Q?RsEl/alQ96H3jzPuazgtlKMqLyNNkCYQ+TCB9IpwavU86g=3D=3D?=
 X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 357212f5-9842-4cd0-0133-08d97325256f
+X-MS-Exchange-CrossTenant-Network-Message-Id: 81135b2c-bc79-48ca-1637-08d97325275f
 X-MS-Exchange-CrossTenant-AuthSource: BYAPR10MB2629.namprd10.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 09 Sep 2021 00:02:43.3788
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 09 Sep 2021 00:02:46.4161
  (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: lSJNBR9Repni1XOh3UK6wholHoSilX256gJVPuPqlK3RjZ/QK8DSf5GIJtlasCrNV4cB3h8zGDvLx2GY98b/7uDFmj0Iyoq8nxlT0deypSw=
+X-MS-Exchange-CrossTenant-UserPrincipalName: NWq7y89xyiap5aU82tEqjbkAMY21H8IIlAmErvOqbmpwGibtLsijU2QAmnqq5oW52CbOji0sOxEWbNvvIPqDp6qb0eBHLl3Cv1x3+8vb3Uk=
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: SJ0PR10MB5472
 X-Proofpoint-Virus-Version: vendor=nai engine=6300 definitions=10101 signatures=668682
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 phishscore=0 adultscore=0
- malwarescore=0 mlxscore=0 spamscore=0 bulkscore=0 mlxlogscore=999
- suspectscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 bulkscore=0 suspectscore=0
+ malwarescore=0 spamscore=0 mlxscore=0 phishscore=0 mlxlogscore=999
+ adultscore=0 classifier=spam adjust=0 reason=mlx scancount=1
  engine=8.12.0-2109030001 definitions=main-2109080150
-X-Proofpoint-GUID: pWnpNQ4w5E7pFMj9d3hWAfkgVxFaCRSj
-X-Proofpoint-ORIG-GUID: pWnpNQ4w5E7pFMj9d3hWAfkgVxFaCRSj
+X-Proofpoint-GUID: 4a2PPRYjBKXQzvkg75pUHbEScxU0YMyM
+X-Proofpoint-ORIG-GUID: 4a2PPRYjBKXQzvkg75pUHbEScxU0YMyM
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Resending RFC. This patchset is not final. I am looking for feedback on
-this proposal to share thread specific data for us in latency sensitive
-codepath.
+Define a 'struct task_schedstat' which contains members corresponding to
+scheduler stats that are currently available thru /proc/pid/tasks/pid
+/schedstats. Update scheduler stats in this structure in kernel at the
+same time stats in the 'struct task_struct' are updated. Add a
+TASK_SCHEDSTAT option to task_getshared system call to request these per
+thread scheduler stats thru the shared structure.
 
-(patchset based on v5.14-rc7)
-
-Cover letter previously sent:
-----------------------------
-
-Some applications, like a Databases require reading thread specific stats
-frequently from the kernel in latency sensitive codepath. The overhead of
-reading stats from kernel using system call affects performance.
-One use case is reading thread's scheduler stats from /proc schedstat file
-(/proc/pid/schedstat) to collect time spent by a thread executing on the
-cpu(sum_exec_runtime), time blocked waiting on runq(run_delay). These
-scheduler stats, read several times per transaction in latency-sensitive
-codepath, are used to measure time taken by DB operations.
-
-This patch proposes to introduce a mechanism for kernel to share thread
-stats thru a per thread shared structure shared between userspace and
-kernel. The per thread shared structure is allocated on a page shared
-mapped between user space and kernel, which will provide a way for fast
-communication between user and kernel. Kernel publishes stats in this
-shared structure. Application thread can read from it in user space
-without requiring system calls.
-
-Similarly, there can be other use cases for such shared structure
-mechanism.
-
-Introduce 'off cpu' time:
-
-The time spent executing on a cpu(sum_exec_runtime) by a thread,
-currently available thru thread's schedstat file, can be shared thru
-the shared structure mentioned above. However, when a thread is running 
-on the cpu, this time gets updated periodically, can take upto 1ms or
-more as part of scheduler tick processing. If the application has to 
-measure cpu time consumed across some DB operations, using
-'sum_exec_runtime' will not be accurate. To address this the proposal
-is to introduce a thread's 'off cpu' time, which is measured at context
-switch, similar to time on runq(ie run_delay in schedstat file) is and
-should be more accurate. With that the application can determine cpu time
-consumed by taking the elapsed time and subtracting off cpu time. The
-off cpu time will be made available thru the shared structure along with
-the other schedstats from /proc/pid/schedstat file.
-
-The elapsed time itself can be measured using clock_gettime, which is
-vdso optimized and would be fast. The schedstats(runq time & off cpu time)
-published in the shared structure will be accumulated time, same as what
-is available thru schedstat file, all in units of nanoseconds. The
-application would take the difference of the values from before and after
-the operation for measurement.
-
-Preliminary results from a simple cached read Database workload shows
-performance benefit, when the database uses shared struct for reading
-stats vs reading from /proc directly.
-
-Implementation:
-
-A new system call is added to request use of shared structure by a user
-thread. Kernel will allocate page(s), shared mapped with user space in
-which per-thread shared structures will be allocated. These structures
-are padded to 128 bytes. This will contain struct members or nested
-structures corresponding to supported stats, like the thread's schedstats,
-published by the kernel for user space consumption. More struct members
-can be added as new feature support is implemented. Multiple such shared
-structures will be allocated from a page(upto 32 per 4k page) and avoid
-having to allocate one page per thread of a process. Although, will need
-optimizing for locality. Additional pages will be allocated as needed to
-accommodate more threads requesting use of shared structures. Aim is to
-not expose the layout of the shared structure itself to the application,
-which will allow future enhancements/changes without affecting the
-existing APIs.
-
-The system call will return a pointer(user space mapped address) to the per
-thread shared structure members. Application would save this per thread
-pointer in a TLS variable and reference it.
-
-The system call is of the form.
-int task_getshared(int option, int flags, void __user *uaddr)
-
-// Currently only TASK_SCHEDSTAT option is supported - returns pointer
-// to struct task_schedstat. The struct task_schedstat is nested within
-// the shared structure.
-
-struct task_schedstat {
-        volatile u64    sum_exec_runtime;
-        volatile u64    run_delay;
-        volatile u64    pcount;
-        volatile u64    off_cpu;
-};
-
-Usage:
-
-__thread struct task_schedstat *ts;
-task_getshared(TASK_SCHEDSTAT, 0, &ts);
-
-Subsequently the stats are accessed using the 'ts' pointer by the thread
-
-Prakash Sangappa (3):
-  Introduce per thread user-kernel shared structure
-  Publish tasks's scheduler stats thru the shared structure
-  Introduce task's 'off cpu' time
-
- arch/x86/entry/syscalls/syscall_32.tbl |   1 +
- arch/x86/entry/syscalls/syscall_64.tbl |   1 +
- include/linux/mm_types.h               |   2 +
- include/linux/sched.h                  |   9 +
- include/linux/syscalls.h               |   2 +
- include/linux/task_shared.h            |  92 ++++++++++
- include/uapi/asm-generic/unistd.h      |   5 +-
- include/uapi/linux/task_shared.h       |  23 +++
- kernel/fork.c                          |   7 +
- kernel/sched/deadline.c                |   1 +
- kernel/sched/fair.c                    |   1 +
- kernel/sched/rt.c                      |   1 +
- kernel/sched/sched.h                   |   1 +
- kernel/sched/stats.h                   |  55 ++++--
- kernel/sched/stop_task.c               |   1 +
- kernel/sys_ni.c                        |   3 +
- mm/Makefile                            |   2 +-
- mm/task_shared.c                       | 314 +++++++++++++++++++++++++++++++++
- 18 files changed, 501 insertions(+), 20 deletions(-)
- create mode 100644 include/linux/task_shared.h
+Signed-off-by: Prakash Sangappa <prakash.sangappa@oracle.com>
+---
+ include/linux/task_shared.h      | 35 ++++++++++++++++++++++++++++++++++-
+ include/uapi/linux/task_shared.h | 22 ++++++++++++++++++++++
+ kernel/sched/deadline.c          |  1 +
+ kernel/sched/fair.c              |  1 +
+ kernel/sched/rt.c                |  1 +
+ kernel/sched/sched.h             |  1 +
+ kernel/sched/stats.h             |  3 +++
+ kernel/sched/stop_task.c         |  1 +
+ mm/task_shared.c                 | 13 +++++++++++++
+ 9 files changed, 77 insertions(+), 1 deletion(-)
  create mode 100644 include/uapi/linux/task_shared.h
- create mode 100644 mm/task_shared.c
 
+diff --git a/include/linux/task_shared.h b/include/linux/task_shared.h
+index de17849..62793e4 100644
+--- a/include/linux/task_shared.h
++++ b/include/linux/task_shared.h
+@@ -3,6 +3,7 @@
+ #define	__TASK_SHARED_H__
+ 
+ #include <linux/mm_types.h>
++#include <uapi/linux/task_shared.h>
+ 
+ /*
+  * Track user-kernel shared pages referred by mm_struct
+@@ -18,7 +19,7 @@ struct ushared_pages {
+  * fast communication.
+  */
+ struct task_ushared {
+-	long version;
++	struct task_schedstat ts;
+ };
+ 
+ /*
+@@ -52,6 +53,38 @@ struct task_ushrd_struct {
+ 	struct ushared_pg *upg;
+ };
+ 
++
++#ifdef CONFIG_SCHED_INFO
++
++#define task_update_exec_runtime(t)					\
++	do {								\
++		struct task_ushrd_struct *shrdp = t->task_ushrd;	\
++		if (shrdp != NULL && shrdp->kaddr != NULL)		\
++			shrdp->kaddr->ts.sum_exec_runtime =		\
++				 t->se.sum_exec_runtime;		\
++	} while (0)
++
++#define task_update_runq_stat(t, p)					\
++	do {								\
++		struct task_ushrd_struct *shrdp = t->task_ushrd;	\
++		if (shrdp != NULL && shrdp->kaddr != NULL) {		\
++			shrdp->kaddr->ts.run_delay =			\
++				 t->sched_info.run_delay;		\
++			if (p) {					\
++				shrdp->kaddr->ts.pcount =		\
++					 t->sched_info.pcount;		\
++			}						\
++		}							\
++	} while (0)
++#else
++
++#define task_update_exec_runtime(t)	do { } while (0)
++#define task_update_runq_stat(t, p)	do { } while (0)
++
++#endif
++
++
++
+ extern void task_ushared_free(struct task_struct *t);
+ extern void mm_ushared_clear(struct mm_struct *mm);
+ #endif /* __TASK_SHARED_H__ */
+diff --git a/include/uapi/linux/task_shared.h b/include/uapi/linux/task_shared.h
+new file mode 100644
+index 0000000..06a8522
+--- /dev/null
++++ b/include/uapi/linux/task_shared.h
+@@ -0,0 +1,22 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++#ifndef LINUX_TASK_SHARED_H
++#define LINUX_TASK_SHARED_H
++
++/*
++ * Per task user-kernel mapped structure for faster communication.
++ */
++
++/*
++ * Following is the option to request struct task_schedstats shared structure,
++ * in which kernel shares the task's exec time and time on run queue & number
++ * of times it was scheduled to run on a cpu. Requires kernel with
++ * CONFIG_SCHED_INFO enabled.
++ */
++#define TASK_SCHEDSTAT 1
++
++struct task_schedstat {
++	volatile u64	sum_exec_runtime;
++	volatile u64	run_delay;
++	volatile u64	pcount;
++};
++#endif
+diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
+index aaacd6c..189c74c 100644
+--- a/kernel/sched/deadline.c
++++ b/kernel/sched/deadline.c
+@@ -1270,6 +1270,7 @@ static void update_curr_dl(struct rq *rq)
+ 
+ 	curr->se.sum_exec_runtime += delta_exec;
+ 	account_group_exec_runtime(curr, delta_exec);
++	task_update_exec_runtime(curr);
+ 
+ 	curr->se.exec_start = now;
+ 	cgroup_account_cputime(curr, delta_exec);
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index 44c4520..cbd182b 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -817,6 +817,7 @@ static void update_curr(struct cfs_rq *cfs_rq)
+ 	if (entity_is_task(curr)) {
+ 		struct task_struct *curtask = task_of(curr);
+ 
++		task_update_exec_runtime(curtask);
+ 		trace_sched_stat_runtime(curtask, delta_exec, curr->vruntime);
+ 		cgroup_account_cputime(curtask, delta_exec);
+ 		account_group_exec_runtime(curtask, delta_exec);
+diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+index 3daf42a..61082fc 100644
+--- a/kernel/sched/rt.c
++++ b/kernel/sched/rt.c
+@@ -1014,6 +1014,7 @@ static void update_curr_rt(struct rq *rq)
+ 
+ 	curr->se.sum_exec_runtime += delta_exec;
+ 	account_group_exec_runtime(curr, delta_exec);
++	task_update_exec_runtime(curr);
+ 
+ 	curr->se.exec_start = now;
+ 	cgroup_account_cputime(curr, delta_exec);
+diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
+index 14a41a2..4ebbd8f 100644
+--- a/kernel/sched/sched.h
++++ b/kernel/sched/sched.h
+@@ -67,6 +67,7 @@
+ #include <linux/syscalls.h>
+ #include <linux/task_work.h>
+ #include <linux/tsacct_kern.h>
++#include <linux/task_shared.h>
+ 
+ #include <asm/tlb.h>
+ 
+diff --git a/kernel/sched/stats.h b/kernel/sched/stats.h
+index d8f8eb0..6b2d69c 100644
+--- a/kernel/sched/stats.h
++++ b/kernel/sched/stats.h
+@@ -1,6 +1,7 @@
+ /* SPDX-License-Identifier: GPL-2.0 */
+ 
+ #ifdef CONFIG_SCHEDSTATS
++#include <linux/task_shared.h>
+ 
+ /*
+  * Expects runqueue lock to be held for atomicity of update
+@@ -166,6 +167,7 @@ static inline void sched_info_dequeue(struct rq *rq, struct task_struct *t)
+ 	delta = rq_clock(rq) - t->sched_info.last_queued;
+ 	t->sched_info.last_queued = 0;
+ 	t->sched_info.run_delay += delta;
++	task_update_runq_stat(t, 0);
+ 
+ 	rq_sched_info_dequeue(rq, delta);
+ }
+@@ -188,6 +190,7 @@ static void sched_info_arrive(struct rq *rq, struct task_struct *t)
+ 	t->sched_info.run_delay += delta;
+ 	t->sched_info.last_arrival = now;
+ 	t->sched_info.pcount++;
++	task_update_runq_stat(t, 1);
+ 
+ 	rq_sched_info_arrive(rq, delta);
+ }
+diff --git a/kernel/sched/stop_task.c b/kernel/sched/stop_task.c
+index f988ebe..7b9b60f 100644
+--- a/kernel/sched/stop_task.c
++++ b/kernel/sched/stop_task.c
+@@ -82,6 +82,7 @@ static void put_prev_task_stop(struct rq *rq, struct task_struct *prev)
+ 			max(curr->se.statistics.exec_max, delta_exec));
+ 
+ 	curr->se.sum_exec_runtime += delta_exec;
++	task_update_exec_runtime(curr);
+ 	account_group_exec_runtime(curr, delta_exec);
+ 
+ 	curr->se.exec_start = rq_clock_task(rq);
+diff --git a/mm/task_shared.c b/mm/task_shared.c
+index 3ec5eb6..7169ccd 100644
+--- a/mm/task_shared.c
++++ b/mm/task_shared.c
+@@ -275,6 +275,14 @@ static long task_getshared(u64 opt, u64 flags, void __user *uaddr)
+ {
+ 	struct task_ushrd_struct *ushrd = current->task_ushrd;
+ 
++	/* Currently only TASK_SCHEDSTAT supported */
++#ifdef CONFIG_SCHED_INFO
++	if (opt != TASK_SCHEDSTAT)
++		return (-EINVAL);
++#else
++	return (-EOPNOTSUPP);
++#endif
++
+ 	/* We have address, return. */
+ 	if (ushrd != NULL && ushrd->upg != NULL) {
+ 		if (copy_to_user(uaddr, &ushrd->uaddr,
+@@ -286,6 +294,11 @@ static long task_getshared(u64 opt, u64 flags, void __user *uaddr)
+ 	task_ushared_alloc();
+ 	ushrd = current->task_ushrd;
+ 	if (ushrd != NULL && ushrd->upg != NULL) {
++		if (opt == TASK_SCHEDSTAT) {
++			/* init current values */
++			task_update_exec_runtime(current);
++			task_update_runq_stat(current, 1);
++		}
+ 		if (copy_to_user(uaddr, &ushrd->uaddr,
+ 			sizeof(struct task_ushared *)))
+ 			return (-EFAULT);
 -- 
 2.7.4
 
