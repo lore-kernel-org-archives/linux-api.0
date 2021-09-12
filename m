@@ -2,116 +2,133 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.3 required=3.0 tests=BAYES_00,DKIMWL_WL_MED,
+X-Spam-Status: No, score=-17.6 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_IN_DEF_DKIM_WL autolearn=no
-	autolearn_force=no version=3.4.0
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 686B1C433EF
-	for <linux-api@archiver.kernel.org>; Fri, 10 Sep 2021 19:36:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 41AE1C433FE
+	for <linux-api@archiver.kernel.org>; Sun, 12 Sep 2021 12:22:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 38844611B0
-	for <linux-api@archiver.kernel.org>; Fri, 10 Sep 2021 19:36:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 11BB961213
+	for <linux-api@archiver.kernel.org>; Sun, 12 Sep 2021 12:22:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232070AbhIJTh6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 10 Sep 2021 15:37:58 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42418 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230489AbhIJTh6 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 10 Sep 2021 15:37:58 -0400
-Received: from mail-lj1-x22f.google.com (mail-lj1-x22f.google.com [IPv6:2a00:1450:4864:20::22f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 88126C061756
-        for <linux-api@vger.kernel.org>; Fri, 10 Sep 2021 12:36:46 -0700 (PDT)
-Received: by mail-lj1-x22f.google.com with SMTP id f2so4941224ljn.1
-        for <linux-api@vger.kernel.org>; Fri, 10 Sep 2021 12:36:46 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc:content-transfer-encoding;
-        bh=MxYG3oQ5GLJLXh/udMSbpNxO67lymB3pYR+6ivwJVGg=;
-        b=dIPk8+MOkoDL8UzaYpVPnebIT6lPLIhM+Km0cGozYUcAd6riuY8F9aJqNnl6Yi+K3c
-         HsErue62OffPI5GMJJZPwCOFZXc4Y2qKNvOe3wSQj2V10FG1Xwh8Le7NluHOADKniwCY
-         OsBMcnJRzrsqLO4CWZAvNQ68gto8r+vXHA2qWU0sS9dAqb0ca8qdK1VAuZpkBdPryBg/
-         31JB9aRX9oQS+KG7+rOBKNP9GFliGzO/ml9W3CjF+JFLP9Ho37ucySjuWtbpFRiQll6O
-         kWD0506kUXdjErMVRqILnaCFrI0CFSoMMp6ivDGKwbiommTvlfP6tmxFu4SJA/OLcmTQ
-         7lEA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc:content-transfer-encoding;
-        bh=MxYG3oQ5GLJLXh/udMSbpNxO67lymB3pYR+6ivwJVGg=;
-        b=xeRcSwR7MwjTMKgGLW05uR3JaxfKRYhCYf7/aRhhA9BxtvYTMJThxQF3BEs/DikvuN
-         GSq35YPNPaSjki/KejICwA3QW6srVcNjkvSAcaBFQNiy7v+yLwpueITakLW4ffIbCc7K
-         k6QZWlA6lNzOlQ/w+FqtjqeSntI4s2uw3gKg2ZIT+rJEH8IOxALTktliIvfsv4UFrvTE
-         laGWR8gitdIAWGmcVCAi80mN3lmnt8zTdsKTgxg4/SVdYab2tvk4je+7Zz0yP6NgZ21k
-         4M0uE7u46OoGie0wK6EJ/dXZwSNHEoxcP3JC7Z5IF3ekCabb8aCUuOC0aaSPbhvD34F+
-         RjvA==
-X-Gm-Message-State: AOAM530y1pb14GWrwC2HQv5uancWyL0Q5Khi7X/v+7pa9jzWcVVxyMkm
-        AoRTBs7gWAUzIDVbNQOB1SQuYdNG5KOy1M92VoDGlw==
-X-Google-Smtp-Source: ABdhPJz4+6T/K0xrvvEKNssVnq2g5qLgSxrRWwEYdgoA26xREhTizSjUO4EsmmbODXakmfL1ktnU4MSev+fdJw0f7wA=
-X-Received: by 2002:a2e:1556:: with SMTP id 22mr5235455ljv.253.1631302604595;
- Fri, 10 Sep 2021 12:36:44 -0700 (PDT)
+        id S235166AbhILMYG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 12 Sep 2021 08:24:06 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.129.124]:40731 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S235044AbhILMYE (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 12 Sep 2021 08:24:04 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1631449370;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=1/mMQELQZiMz9Q+GRXiU0TewWb3BVRJlK3Wk36Ex13w=;
+        b=eujqOcCpAt84J6zZrmDUQE808QSNkE1H7etfuWTr5iQ43T/aAIzrlkpjA6lg0w9NhSJzOH
+        /Anr4iBWenGcxiNyehnB94neK8S6M2potw1wEpDD+4xoWDJ1mPpRn9EF5dRJtX1MzIzSXx
+        zi6bGO71WddUg8OddnynZ+hkH8Vu9ZM=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-49-4_Gw31TEPTCz6B7C99489Q-1; Sun, 12 Sep 2021 08:22:46 -0400
+X-MC-Unique: 4_Gw31TEPTCz6B7C99489Q-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C997410059CF;
+        Sun, 12 Sep 2021 12:22:43 +0000 (UTC)
+Received: from asgard.redhat.com (unknown [10.36.110.4])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 7E2FD5C25A;
+        Sun, 12 Sep 2021 12:22:36 +0000 (UTC)
+Date:   Sun, 12 Sep 2021 14:22:34 +0200
+From:   Eugene Syromiatnikov <esyr@redhat.com>
+To:     Steffen Klassert <steffen.klassert@secunet.com>,
+        Herbert Xu <herbert@gondor.apana.org.au>,
+        "David S. Miller" <davem@davemloft.net>,
+        Antony Antony <antony.antony@secunet.com>,
+        Christian Langrock <christian.langrock@secunet.com>,
+        Nicolas Dichtel <nicolas.dichtel@6wind.com>
+Cc:     selinux@vger.kernel.org, Paul Moore <paul@paul-moore.com>,
+        Stephen Smalley <stephen.smalley.work@gmail.com>,
+        Eric Paris <eparis@parisplace.org>, netdev@vger.kernel.org,
+        linux-kernel@vger.kernel.org, "Dmitry V. Levin" <ldv@strace.io>,
+        linux-api@vger.kernel.org
+Subject: [PATCH v2] include/uapi/linux/xfrm.h: Fix XFRM_MSG_MAPPING ABI
+ breakage
+Message-ID: <20210912122234.GA22469@asgard.redhat.com>
 MIME-Version: 1.0
-References: <1631147036-13597-1-git-send-email-prakash.sangappa@oracle.com>
- <CAFTs51VDUPWu=r9d=ThABc-Z6wCwTOC+jKDCq=Jk8Pfid61xyQ@mail.gmail.com>
- <CAPNVh5dsN0LPHg6TJ_MO2XKtpTEe0n4Y6+HjwERJPSrb2J0cbg@mail.gmail.com>
- <3591AC6D-45D2-476A-80B1-46BFA1742602@oracle.com> <CAPNVh5fMUQCa37iprcAykgkHzY5Rj8DSiwtZBU6FbnzjOv8ciw@mail.gmail.com>
- <CAG48ez1sPjPYePmXTgtFbaj6_0yY0Z_bGw+apwO_zTV-qwftSA@mail.gmail.com>
-In-Reply-To: <CAG48ez1sPjPYePmXTgtFbaj6_0yY0Z_bGw+apwO_zTV-qwftSA@mail.gmail.com>
-From:   Peter Oskolkov <posk@google.com>
-Date:   Fri, 10 Sep 2021 12:36:33 -0700
-Message-ID: <CAPNVh5fP-QnziX7NpYqKv+0Ha8-prhvTHiCbUB0jx+_P36QUGg@mail.gmail.com>
-Subject: Re: [RESEND RFC PATCH 0/3] Provide fast access to thread specific data
-To:     Jann Horn <jannh@google.com>
-Cc:     Prakash Sangappa <prakash.sangappa@oracle.com>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        linux-api <linux-api@vger.kernel.org>,
-        Ingo Molnar <mingo@redhat.com>, Paul Turner <pjt@google.com>,
-        Peter Oskolkov <posk@posk.io>,
-        Peter Zijlstra <peterz@infradead.org>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Sep 10, 2021 at 12:12 PM Jann Horn <jannh@google.com> wrote:
->
-> On Fri, Sep 10, 2021 at 6:28 PM Peter Oskolkov <posk@google.com> wrote:
-> > On Fri, Sep 10, 2021 at 9:13 AM Prakash Sangappa
-> > <prakash.sangappa@oracle.com> wrote:
-> > > > Do you think your sys_task_getshared can be tweaked to return an
-> > > > arbitrarily-sized block of memory (subject to overall constraints)
-> > > > rather than a fixed number of "options"?
-> > >
-> > > I suppose it could. How big of a size? We don=E2=80=99t want to hold =
-on to
-> > > arbitrarily large  amount of pinned memory. The preference would
-> > > be for the kernel to decide what is going to be shared based on
-> > > what functionality/data sharing is supported. In that sense the size
-> > > is pre defined not something the userspace/application can ask.
-> >
-> > There could be a sysctl or some other mechanism that limits the amount
-> > of memory pinned per mm (or per task). Having "options" hardcoded for
-> > such a generally useful feature seems limiting...
->
-> That seems like it'll just create trouble a few years down the line
-> when the arbitrarily-chosen limit that nobody is monitoring blows up
-> in someone's production environment.
->
-> If this area is used for specific per-thread items, then the kernel
-> should be able to enforce that you only allocate as much space as is
-> needed for all threads of the process (based on the maximum number
-> that have ever been running in parallel in the process), right? Which
-> would probably work best if the kernel managed those allocations.
+Commit 2d151d39073a ("xfrm: Add possibility to set the default to block
+if we have no policy") broke ABI by changing the value of the XFRM_MSG_MAPPING
+enum item, thus also evading the build-time check
+in security/selinux/nlmsgtab.c:selinux_nlmsg_lookup for presence of proper
+security permission checks in nlmsg_xfrm_perms.  Fix it by placing
+XFRM_MSG_SETDEFAULT/XFRM_MSG_GETDEFAULT to the end of the enum, right before
+__XFRM_MSG_MAX, and updating the nlmsg_xfrm_perms accordingly.
 
-This sounds, again, as if the kernel should be aware of the kind of
-items being allocated; having a more generic mechanism of allocating
-pinned memory for the userspace to use at its discretion would be more
-generally useful, I think. But how then the kernel/system should be
-protected from a buggy or malicious process trying to grab too much?
+Fixes: 2d151d39073a ("xfrm: Add possibility to set the default to block if we have no policy")
+References: https://lore.kernel.org/netdev/20210901151402.GA2557@altlinux.org/
+Signed-off-by: Eugene Syromiatnikov <esyr@redhat.com>
+---
+v2:
+ - Updated SELinux nlmsg_xfrm_perms permissions table and selinux_nlmsg_lookup
+   build-time check accordingly.
 
-One option would be to have a generic in-kernel mechanism for this,
-but expose it to the userspace via domain-specific syscalls that do
-the accounting you hint at. This sounds a bit like an over-engineered
-solution, though...
+v1: https://lore.kernel.org/lkml/20210901153407.GA20446@asgard.redhat.com/
+---
+ include/uapi/linux/xfrm.h   | 6 +++---
+ security/selinux/nlmsgtab.c | 4 +++-
+ 2 files changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/include/uapi/linux/xfrm.h b/include/uapi/linux/xfrm.h
+index b96c1ea..26f456b1 100644
+--- a/include/uapi/linux/xfrm.h
++++ b/include/uapi/linux/xfrm.h
+@@ -213,13 +213,13 @@ enum {
+ 	XFRM_MSG_GETSPDINFO,
+ #define XFRM_MSG_GETSPDINFO XFRM_MSG_GETSPDINFO
+ 
++	XFRM_MSG_MAPPING,
++#define XFRM_MSG_MAPPING XFRM_MSG_MAPPING
++
+ 	XFRM_MSG_SETDEFAULT,
+ #define XFRM_MSG_SETDEFAULT XFRM_MSG_SETDEFAULT
+ 	XFRM_MSG_GETDEFAULT,
+ #define XFRM_MSG_GETDEFAULT XFRM_MSG_GETDEFAULT
+-
+-	XFRM_MSG_MAPPING,
+-#define XFRM_MSG_MAPPING XFRM_MSG_MAPPING
+ 	__XFRM_MSG_MAX
+ };
+ #define XFRM_MSG_MAX (__XFRM_MSG_MAX - 1)
+diff --git a/security/selinux/nlmsgtab.c b/security/selinux/nlmsgtab.c
+index d59276f..94ea2a8 100644
+--- a/security/selinux/nlmsgtab.c
++++ b/security/selinux/nlmsgtab.c
+@@ -126,6 +126,8 @@ static const struct nlmsg_perm nlmsg_xfrm_perms[] =
+ 	{ XFRM_MSG_NEWSPDINFO,	NETLINK_XFRM_SOCKET__NLMSG_WRITE },
+ 	{ XFRM_MSG_GETSPDINFO,	NETLINK_XFRM_SOCKET__NLMSG_READ  },
+ 	{ XFRM_MSG_MAPPING,	NETLINK_XFRM_SOCKET__NLMSG_READ  },
++	{ XFRM_MSG_SETDEFAULT,	NETLINK_XFRM_SOCKET__NLMSG_WRITE },
++	{ XFRM_MSG_GETDEFAULT,	NETLINK_XFRM_SOCKET__NLMSG_READ  },
+ };
+ 
+ static const struct nlmsg_perm nlmsg_audit_perms[] =
+@@ -189,7 +191,7 @@ int selinux_nlmsg_lookup(u16 sclass, u16 nlmsg_type, u32 *perm)
+ 		 * structures at the top of this file with the new mappings
+ 		 * before updating the BUILD_BUG_ON() macro!
+ 		 */
+-		BUILD_BUG_ON(XFRM_MSG_MAX != XFRM_MSG_MAPPING);
++		BUILD_BUG_ON(XFRM_MSG_MAX != XFRM_MSG_GETDEFAULT);
+ 		err = nlmsg_perm(nlmsg_type, perm, nlmsg_xfrm_perms,
+ 				 sizeof(nlmsg_xfrm_perms));
+ 		break;
+-- 
+2.1.4
+
