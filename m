@@ -5,30 +5,30 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0707DC433F5
-	for <linux-api@archiver.kernel.org>; Mon, 13 Sep 2021 20:04:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CCBD5C43219
+	for <linux-api@archiver.kernel.org>; Mon, 13 Sep 2021 20:05:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E7C456108B
-	for <linux-api@archiver.kernel.org>; Mon, 13 Sep 2021 20:04:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BD090610A6
+	for <linux-api@archiver.kernel.org>; Mon, 13 Sep 2021 20:05:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1348036AbhIMUGL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 13 Sep 2021 16:06:11 -0400
-Received: from mga03.intel.com ([134.134.136.65]:19216 "EHLO mga03.intel.com"
+        id S1348154AbhIMUGd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 13 Sep 2021 16:06:33 -0400
+Received: from mga05.intel.com ([192.55.52.43]:38697 "EHLO mga05.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1347866AbhIMUFx (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Mon, 13 Sep 2021 16:05:53 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10106"; a="221830808"
+        id S1347974AbhIMUGH (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Mon, 13 Sep 2021 16:06:07 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10106"; a="307336390"
 X-IronPort-AV: E=Sophos;i="5.85,290,1624345200"; 
-   d="scan'208";a="221830808"
+   d="scan'208";a="307336390"
 Received: from fmsmga007.fm.intel.com ([10.253.24.52])
-  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 13 Sep 2021 13:04:34 -0700
+  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 13 Sep 2021 13:04:36 -0700
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="5.85,290,1624345200"; 
-   d="scan'208";a="469643943"
+   d="scan'208";a="469643935"
 Received: from sohilbuildbox.sc.intel.com (HELO localhost.localdomain) ([172.25.110.4])
-  by fmsmga007.fm.intel.com with ESMTP; 13 Sep 2021 13:04:33 -0700
+  by fmsmga007.fm.intel.com with ESMTP; 13 Sep 2021 13:04:32 -0700
 From:   Sohil Mehta <sohil.mehta@intel.com>
 To:     x86@kernel.org
 Cc:     Sohil Mehta <sohil.mehta@intel.com>,
@@ -53,9 +53,9 @@ Cc:     Sohil Mehta <sohil.mehta@intel.com>,
         Ramesh Thomas <ramesh.thomas@intel.com>,
         linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
         linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org
-Subject: [RFC PATCH 13/13] selftests/x86: Add basic tests for User IPI
-Date:   Mon, 13 Sep 2021 13:01:32 -0700
-Message-Id: <20210913200132.3396598-14-sohil.mehta@intel.com>
+Subject: [RFC PATCH 11/13] x86/uintr: Introduce uintr_wait() syscall
+Date:   Mon, 13 Sep 2021 13:01:30 -0700
+Message-Id: <20210913200132.3396598-12-sohil.mehta@intel.com>
 X-Mailer: git-send-email 2.33.0
 In-Reply-To: <20210913200132.3396598-1-sohil.mehta@intel.com>
 References: <20210913200132.3396598-1-sohil.mehta@intel.com>
@@ -65,208 +65,354 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Include 2 basic tests for receiving a User IPI:
-1. Receiver is spinning in userspace.
-2. Receiver is blocked in the kernel.
+Add a new system call to allow applications to block in the kernel and
+wait for user interrupts.
 
-The selftests need gcc with 'muintr' support to compile.
+<The current implementation doesn't support waking up from other
+blocking system calls like sleep(), read(), epoll(), etc.
 
-GCC 11 (recently released) has support for this.
+uintr_wait() is a placeholder syscall while we decide on that
+behaviour.>
+
+When the application makes this syscall the notification vector is
+switched to a new kernel vector. Any new SENDUIPI will invoke the kernel
+interrupt which is then used to wake up the process.
+
+Currently, the task wait list is global one. To make the implementation
+scalable there is a need to move to a distributed per-cpu wait list.
 
 Signed-off-by: Sohil Mehta <sohil.mehta@intel.com>
 ---
- tools/testing/selftests/x86/Makefile |  10 ++
- tools/testing/selftests/x86/uintr.c  | 147 +++++++++++++++++++++++++++
- 2 files changed, 157 insertions(+)
- create mode 100644 tools/testing/selftests/x86/uintr.c
+ arch/x86/include/asm/hardirq.h     |  1 +
+ arch/x86/include/asm/idtentry.h    |  1 +
+ arch/x86/include/asm/irq_vectors.h |  3 +-
+ arch/x86/include/asm/uintr.h       | 22 +++++++
+ arch/x86/kernel/idt.c              |  1 +
+ arch/x86/kernel/irq.c              | 18 ++++++
+ arch/x86/kernel/uintr_core.c       | 94 ++++++++++++++++++++++++------
+ arch/x86/kernel/uintr_fd.c         | 15 +++++
+ 8 files changed, 136 insertions(+), 19 deletions(-)
 
-diff --git a/tools/testing/selftests/x86/Makefile b/tools/testing/selftests/x86/Makefile
-index b4142cd1c5c2..38588221b09e 100644
---- a/tools/testing/selftests/x86/Makefile
-+++ b/tools/testing/selftests/x86/Makefile
-@@ -9,6 +9,7 @@ UNAME_M := $(shell uname -m)
- CAN_BUILD_I386 := $(shell ./check_cc.sh $(CC) trivial_32bit_program.c -m32)
- CAN_BUILD_X86_64 := $(shell ./check_cc.sh $(CC) trivial_64bit_program.c)
- CAN_BUILD_WITH_NOPIE := $(shell ./check_cc.sh $(CC) trivial_program.c -no-pie)
-+CAN_BUILD_UINTR := $(shell ./check_cc.sh $(CC) trivial_64bit_program.c -muintr)
+diff --git a/arch/x86/include/asm/hardirq.h b/arch/x86/include/asm/hardirq.h
+index 279afc01f1ac..a4623fdb65a1 100644
+--- a/arch/x86/include/asm/hardirq.h
++++ b/arch/x86/include/asm/hardirq.h
+@@ -22,6 +22,7 @@ typedef struct {
+ #endif
+ #ifdef CONFIG_X86_USER_INTERRUPTS
+ 	unsigned int uintr_spurious_count;
++	unsigned int uintr_kernel_notifications;
+ #endif
+ 	unsigned int x86_platform_ipis;	/* arch dependent */
+ 	unsigned int apic_perf_irqs;
+diff --git a/arch/x86/include/asm/idtentry.h b/arch/x86/include/asm/idtentry.h
+index 5929a6f9eeee..0ac7ef592283 100644
+--- a/arch/x86/include/asm/idtentry.h
++++ b/arch/x86/include/asm/idtentry.h
+@@ -673,6 +673,7 @@ DECLARE_IDTENTRY_SYSVEC(POSTED_INTR_NESTED_VECTOR,	sysvec_kvm_posted_intr_nested
  
- TARGETS_C_BOTHBITS := single_step_syscall sysret_ss_attrs syscall_nt test_mremap_vdso \
- 			check_initial_reg_state sigreturn iopl ioperm \
-@@ -19,6 +20,11 @@ TARGETS_C_32BIT_ONLY := entry_from_vm86 test_syscall_vdso unwind_vdso \
- 			vdso_restorer
- TARGETS_C_64BIT_ONLY := fsgsbase sysret_rip syscall_numbering \
- 			corrupt_xstate_header
-+
-+ifeq ($(CAN_BUILD_UINTR),1)
-+TARGETS_C_64BIT_ONLY := $(TARGETS_C_64BIT_ONLY) uintr
-+endif
-+
- # Some selftests require 32bit support enabled also on 64bit systems
- TARGETS_C_32BIT_NEEDED := ldt_gdt ptrace_syscall
+ #ifdef CONFIG_X86_USER_INTERRUPTS
+ DECLARE_IDTENTRY_SYSVEC(UINTR_NOTIFICATION_VECTOR,	sysvec_uintr_spurious_interrupt);
++DECLARE_IDTENTRY_SYSVEC(UINTR_KERNEL_VECTOR,		sysvec_uintr_kernel_notification);
+ #endif
  
-@@ -41,6 +47,10 @@ ifeq ($(CAN_BUILD_WITH_NOPIE),1)
- CFLAGS += -no-pie
- endif
+ #if IS_ENABLED(CONFIG_HYPERV)
+diff --git a/arch/x86/include/asm/irq_vectors.h b/arch/x86/include/asm/irq_vectors.h
+index d26faa504931..1d289b3ee0da 100644
+--- a/arch/x86/include/asm/irq_vectors.h
++++ b/arch/x86/include/asm/irq_vectors.h
+@@ -106,8 +106,9 @@
  
-+ifeq ($(CAN_BUILD_UINTR),1)
-+CFLAGS += -muintr
-+endif
+ /* Vector for User interrupt notifications */
+ #define UINTR_NOTIFICATION_VECTOR       0xec
++#define UINTR_KERNEL_VECTOR		0xeb
+ 
+-#define LOCAL_TIMER_VECTOR		0xeb
++#define LOCAL_TIMER_VECTOR		0xea
+ 
+ #define NR_VECTORS			 256
+ 
+diff --git a/arch/x86/include/asm/uintr.h b/arch/x86/include/asm/uintr.h
+index ef3521dd7fb9..64113ef523ca 100644
+--- a/arch/x86/include/asm/uintr.h
++++ b/arch/x86/include/asm/uintr.h
+@@ -4,11 +4,29 @@
+ 
+ #ifdef CONFIG_X86_USER_INTERRUPTS
+ 
++/* User Posted Interrupt Descriptor (UPID) */
++struct uintr_upid {
++	struct {
++		u8 status;	/* bit 0: ON, bit 1: SN, bit 2-7: reserved */
++		u8 reserved1;	/* Reserved */
++		u8 nv;		/* Notification vector */
++		u8 reserved2;	/* Reserved */
++		u32 ndst;	/* Notification destination */
++	} nc __packed;		/* Notification control */
++	u64 puir;		/* Posted user interrupt requests */
++} __aligned(64);
 +
- define gen-target-rule-32
- $(1) $(1)_32: $(OUTPUT)/$(1)_32
- .PHONY: $(1) $(1)_32
-diff --git a/tools/testing/selftests/x86/uintr.c b/tools/testing/selftests/x86/uintr.c
-new file mode 100644
-index 000000000000..61a53526f2fa
---- /dev/null
-+++ b/tools/testing/selftests/x86/uintr.c
-@@ -0,0 +1,147 @@
-+// SPDX-License-Identifier: GPL-2.0-only
++/* UPID Notification control status */
++#define UPID_ON		0x0	/* Outstanding notification */
++#define UPID_SN		0x1	/* Suppressed notification */
++
+ struct uintr_upid_ctx {
++	struct list_head node;
+ 	struct task_struct *task;	/* Receiver task */
+ 	struct uintr_upid *upid;
+ 	refcount_t refs;
+ 	bool receiver_active;		/* Flag for UPID being mapped to a receiver */
++	bool waiting;
+ };
+ 
+ struct uintr_receiver_info {
+@@ -43,11 +61,15 @@ void uintr_free(struct task_struct *task);
+ void switch_uintr_prepare(struct task_struct *prev);
+ void switch_uintr_return(void);
+ 
++int uintr_receiver_wait(void);
++void uintr_wake_up_process(void);
++
+ #else /* !CONFIG_X86_USER_INTERRUPTS */
+ 
+ static inline void uintr_free(struct task_struct *task) {}
+ static inline void switch_uintr_prepare(struct task_struct *prev) {}
+ static inline void switch_uintr_return(void) {}
++static inline void uintr_wake_up_process(void) {}
+ 
+ #endif /* CONFIG_X86_USER_INTERRUPTS */
+ 
+diff --git a/arch/x86/kernel/idt.c b/arch/x86/kernel/idt.c
+index d8c45e0728f0..8d4fd7509523 100644
+--- a/arch/x86/kernel/idt.c
++++ b/arch/x86/kernel/idt.c
+@@ -149,6 +149,7 @@ static const __initconst struct idt_data apic_idts[] = {
+ # endif
+ #ifdef CONFIG_X86_USER_INTERRUPTS
+ 	INTG(UINTR_NOTIFICATION_VECTOR,		asm_sysvec_uintr_spurious_interrupt),
++	INTG(UINTR_KERNEL_VECTOR,		asm_sysvec_uintr_kernel_notification),
+ #endif
+ # ifdef CONFIG_IRQ_WORK
+ 	INTG(IRQ_WORK_VECTOR,			asm_sysvec_irq_work),
+diff --git a/arch/x86/kernel/irq.c b/arch/x86/kernel/irq.c
+index e3c35668c7c5..22349f5c301b 100644
+--- a/arch/x86/kernel/irq.c
++++ b/arch/x86/kernel/irq.c
+@@ -22,6 +22,7 @@
+ #include <asm/desc.h>
+ #include <asm/traps.h>
+ #include <asm/thermal.h>
++#include <asm/uintr.h>
+ 
+ #define CREATE_TRACE_POINTS
+ #include <asm/trace/irq_vectors.h>
+@@ -187,6 +188,11 @@ int arch_show_interrupts(struct seq_file *p, int prec)
+ 	for_each_online_cpu(j)
+ 		seq_printf(p, "%10u ", irq_stats(j)->uintr_spurious_count);
+ 	seq_puts(p, "  User-interrupt spurious event\n");
++
++	seq_printf(p, "%*s: ", prec, "UKN");
++	for_each_online_cpu(j)
++		seq_printf(p, "%10u ", irq_stats(j)->uintr_kernel_notifications);
++	seq_puts(p, "  User-interrupt kernel notification event\n");
+ #endif
+ 	return 0;
+ }
+@@ -356,6 +362,18 @@ DEFINE_IDTENTRY_SYSVEC_SIMPLE(sysvec_uintr_spurious_interrupt)
+ 	ack_APIC_irq();
+ 	inc_irq_stat(uintr_spurious_count);
+ }
++
 +/*
-+ * Copyright (c) 2020, Intel Corporation.
-+ *
-+ * Sohil Mehta <sohil.mehta@intel.com>
++ * Handler for UINTR_KERNEL_VECTOR.
 + */
-+#define _GNU_SOURCE
-+#include <syscall.h>
-+#include <stdio.h>
-+#include <unistd.h>
-+#include <x86gprintrin.h>
-+#include <pthread.h>
-+#include <stdlib.h>
-+
-+#ifndef __x86_64__
-+# error This test is 64-bit only
-+#endif
-+
-+#ifndef __NR_uintr_register_handler
-+#define __NR_uintr_register_handler	449
-+#define __NR_uintr_unregister_handler	450
-+#define __NR_uintr_create_fd		451
-+#define __NR_uintr_register_sender	452
-+#define __NR_uintr_unregister_sender	453
-+#define __NR_uintr_wait			454
-+#endif
-+
-+#define uintr_register_handler(handler, flags)	syscall(__NR_uintr_register_handler, handler, flags)
-+#define uintr_unregister_handler(flags)		syscall(__NR_uintr_unregister_handler, flags)
-+#define uintr_create_fd(vector, flags)		syscall(__NR_uintr_create_fd, vector, flags)
-+#define uintr_register_sender(fd, flags)	syscall(__NR_uintr_register_sender, fd, flags)
-+#define uintr_unregister_sender(fd, flags)	syscall(__NR_uintr_unregister_sender, fd, flags)
-+#define uintr_wait(flags)			syscall(__NR_uintr_wait, flags)
-+
-+unsigned long uintr_received;
-+unsigned int uintr_fd;
-+
-+void __attribute__((interrupt))__attribute__((target("general-regs-only", "inline-all-stringops")))
-+uintr_handler(struct __uintr_frame *ui_frame,
-+	      unsigned long long vector)
++DEFINE_IDTENTRY_SYSVEC(sysvec_uintr_kernel_notification)
 +{
-+	uintr_received = 1;
++	/* TODO: Add entry-exit tracepoints */
++	ack_APIC_irq();
++	inc_irq_stat(uintr_kernel_notifications);
++
++	uintr_wake_up_process();
++}
+ #endif
+ 
+ 
+diff --git a/arch/x86/kernel/uintr_core.c b/arch/x86/kernel/uintr_core.c
+index 8f331c5fe0cf..4e5545e6d903 100644
+--- a/arch/x86/kernel/uintr_core.c
++++ b/arch/x86/kernel/uintr_core.c
+@@ -28,22 +28,6 @@
+ #define UINTR_MAX_UITT_NR 256
+ #define UINTR_MAX_UVEC_NR 64
+ 
+-/* User Posted Interrupt Descriptor (UPID) */
+-struct uintr_upid {
+-	struct {
+-		u8 status;	/* bit 0: ON, bit 1: SN, bit 2-7: reserved */
+-		u8 reserved1;	/* Reserved */
+-		u8 nv;		/* Notification vector */
+-		u8 reserved2;	/* Reserved */
+-		u32 ndst;	/* Notification destination */
+-	} nc __packed;		/* Notification control */
+-	u64 puir;		/* Posted user interrupt requests */
+-} __aligned(64);
+-
+-/* UPID Notification control status */
+-#define UPID_ON		0x0	/* Outstanding notification */
+-#define UPID_SN		0x1	/* Suppressed notification */
+-
+ struct uintr_receiver {
+ 	struct uintr_upid_ctx *upid_ctx;
+ 	u64 uvec_mask;	/* track active vector per bit */
+@@ -70,6 +54,10 @@ struct uintr_sender {
+ 	u64 uitt_mask[BITS_TO_U64(UINTR_MAX_UITT_NR)];
+ };
+ 
++/* TODO: To remove the global lock, move to a per-cpu wait list. */
++static DEFINE_SPINLOCK(uintr_wait_lock);
++static struct list_head uintr_wait_list = LIST_HEAD_INIT(uintr_wait_list);
++
+ inline bool uintr_arch_enabled(void)
+ {
+ 	return static_cpu_has(X86_FEATURE_UINTR);
+@@ -80,6 +68,12 @@ static inline bool is_uintr_receiver(struct task_struct *t)
+ 	return !!t->thread.ui_recv;
+ }
+ 
++/* Always make sure task is_uintr_receiver() before calling */
++static inline bool is_uintr_waiting(struct task_struct *t)
++{
++	return t->thread.ui_recv->upid_ctx->waiting;
 +}
 +
-+void receiver_setup_interrupt(void)
+ static inline bool is_uintr_sender(struct task_struct *t)
+ {
+ 	return !!t->thread.ui_send;
+@@ -151,6 +145,7 @@ static struct uintr_upid_ctx *alloc_upid(void)
+ 	refcount_set(&upid_ctx->refs, 1);
+ 	upid_ctx->task = get_task_struct(current);
+ 	upid_ctx->receiver_active = true;
++	upid_ctx->waiting = false;
+ 
+ 	return upid_ctx;
+ }
+@@ -494,6 +489,68 @@ int do_uintr_register_sender(struct uintr_receiver_info *r_info,
+ 	return 0;
+ }
+ 
++int uintr_receiver_wait(void)
 +{
-+	int vector = 0;
-+	int ret;
++	struct uintr_upid_ctx *upid_ctx;
++	unsigned long flags;
 +
-+	/* Register interrupt handler */
-+	if (uintr_register_handler(uintr_handler, 0)) {
-+		printf("[FAIL]\tInterrupt handler register error\n");
-+		exit(EXIT_FAILURE);
++	if (!is_uintr_receiver(current))
++		return -EOPNOTSUPP;
++
++	upid_ctx = current->thread.ui_recv->upid_ctx;
++	upid_ctx->upid->nc.nv = UINTR_KERNEL_VECTOR;
++	upid_ctx->waiting = true;
++	spin_lock_irqsave(&uintr_wait_lock, flags);
++	list_add(&upid_ctx->node, &uintr_wait_list);
++	spin_unlock_irqrestore(&uintr_wait_lock, flags);
++
++	set_current_state(TASK_INTERRUPTIBLE);
++	schedule();
++
++	return -EINTR;
++}
++
++/*
++ * Runs in interrupt context.
++ * Scan through all UPIDs to check if any interrupt is on going.
++ */
++void uintr_wake_up_process(void)
++{
++	struct uintr_upid_ctx *upid_ctx, *tmp;
++	unsigned long flags;
++
++	spin_lock_irqsave(&uintr_wait_lock, flags);
++	list_for_each_entry_safe(upid_ctx, tmp, &uintr_wait_list, node) {
++		if (test_bit(UPID_ON, (unsigned long *)&upid_ctx->upid->nc.status)) {
++			set_bit(UPID_SN, (unsigned long *)&upid_ctx->upid->nc.status);
++			upid_ctx->upid->nc.nv = UINTR_NOTIFICATION_VECTOR;
++			upid_ctx->waiting = false;
++			wake_up_process(upid_ctx->task);
++			list_del(&upid_ctx->node);
++		}
 +	}
++	spin_unlock_irqrestore(&uintr_wait_lock, flags);
++}
 +
-+	/* Create uintr_fd */
-+	ret = uintr_create_fd(vector, 0);
-+	if (ret < 0) {
-+		printf("[FAIL]\tInterrupt vector registration error\n");
-+		exit(EXIT_FAILURE);
++/* Called when task is unregistering/exiting */
++static void uintr_remove_task_wait(struct task_struct *task)
++{
++	struct uintr_upid_ctx *upid_ctx, *tmp;
++	unsigned long flags;
++
++	spin_lock_irqsave(&uintr_wait_lock, flags);
++	list_for_each_entry_safe(upid_ctx, tmp, &uintr_wait_list, node) {
++		if (upid_ctx->task == task) {
++			pr_debug("wait: Removing task %d from wait\n",
++				 upid_ctx->task->pid);
++			upid_ctx->upid->nc.nv = UINTR_NOTIFICATION_VECTOR;
++			upid_ctx->waiting = false;
++			list_del(&upid_ctx->node);
++		}
 +	}
-+
-+	uintr_fd = ret;
++	spin_unlock_irqrestore(&uintr_wait_lock, flags);
 +}
 +
-+void *sender_thread(void *arg)
+ int do_uintr_unregister_handler(void)
+ {
+ 	struct task_struct *t = current;
+@@ -548,7 +605,7 @@ int do_uintr_unregister_handler(void)
+ 	 * based on this UPID.
+ 	 */
+ 	set_bit(UPID_SN, (unsigned long *)&ui_recv->upid_ctx->upid->nc.status);
+-
++	uintr_remove_task_wait(t);
+ 	put_upid_ref(ui_recv->upid_ctx);
+ 	kfree(ui_recv);
+ 	t->thread.ui_recv = NULL;
+@@ -684,7 +741,7 @@ void switch_uintr_prepare(struct task_struct *prev)
+ {
+ 	struct uintr_upid *upid;
+ 
+-	if (is_uintr_receiver(prev)) {
++	if (is_uintr_receiver(prev) && !is_uintr_waiting(prev)) {
+ 		upid = prev->thread.ui_recv->upid_ctx->upid;
+ 		set_bit(UPID_SN, (unsigned long *)&upid->nc.status);
+ 	}
+@@ -806,6 +863,7 @@ void uintr_free(struct task_struct *t)
+ 		 * generated based on this UPID.
+ 		 */
+ 		set_bit(UPID_SN, (unsigned long *)&ui_recv->upid_ctx->upid->nc.status);
++		uintr_remove_task_wait(t);
+ 		ui_recv->upid_ctx->receiver_active = false;
+ 		put_upid_ref(ui_recv->upid_ctx);
+ 		kfree(ui_recv);
+diff --git a/arch/x86/kernel/uintr_fd.c b/arch/x86/kernel/uintr_fd.c
+index 3c82c032c0b9..a7e55d98c0c7 100644
+--- a/arch/x86/kernel/uintr_fd.c
++++ b/arch/x86/kernel/uintr_fd.c
+@@ -283,3 +283,18 @@ SYSCALL_DEFINE2(uintr_unregister_sender, int, uintrfd, unsigned int, flags)
+ 	fdput(f);
+ 	return ret;
+ }
++
++/*
++ * sys_uintr_wait - Wait for a user interrupt
++ */
++SYSCALL_DEFINE1(uintr_wait, unsigned int, flags)
 +{
-+	long sleep_usec = (long)arg;
-+	int uipi_index;
++	if (!uintr_arch_enabled())
++		return -EOPNOTSUPP;
 +
-+	uipi_index = uintr_register_sender(uintr_fd, 0);
-+	if (uipi_index < 0) {
-+		printf("[FAIL]\tSender register error\n");
-+		return NULL;
-+	}
++	if (flags)
++		return -EINVAL;
 +
-+	/* Sleep before sending IPI to allow the receiver to block in the kernel */
-+	if (sleep_usec)
-+		usleep(sleep_usec);
-+
-+	printf("\tother thread: sending IPI\n");
-+	_senduipi(uipi_index);
-+
-+	uintr_unregister_sender(uintr_fd, 0);
-+
-+	return NULL;
-+}
-+
-+static inline void cpu_relax(void)
-+{
-+	asm volatile("rep; nop" ::: "memory");
-+}
-+
-+void test_base_ipi(void)
-+{
-+	pthread_t pt;
-+
-+	uintr_received = 0;
-+	if (pthread_create(&pt, NULL, &sender_thread, NULL)) {
-+		printf("[FAIL]\tError creating sender thread\n");
-+		return;
-+	}
-+
-+	printf("[RUN]\tSpin in userspace (waiting for interrupts)\n");
-+	// Keep spinning until interrupt received
-+	while (!uintr_received)
-+		cpu_relax();
-+
-+	printf("[OK]\tUser interrupt received\n");
-+}
-+
-+void test_blocking_ipi(void)
-+{
-+	pthread_t pt;
-+	long sleep_usec;
-+
-+	uintr_received = 0;
-+	sleep_usec = 1000;
-+	if (pthread_create(&pt, NULL, &sender_thread, (void *)sleep_usec)) {
-+		printf("[FAIL]\tError creating sender thread\n");
-+		return;
-+	}
-+
-+	printf("[RUN]\tBlock in the kernel (waiting for interrupts)\n");
-+	uintr_wait(0);
-+	if (uintr_received)
-+		printf("[OK]\tUser interrupt received\n");
-+	else
-+		printf("[FAIL]\tUser interrupt not received\n");
-+}
-+
-+int main(int argc, char *argv[])
-+{
-+	receiver_setup_interrupt();
-+
-+	/* Enable interrupts */
-+	_stui();
-+
-+	test_base_ipi();
-+
-+	test_blocking_ipi();
-+
-+	close(uintr_fd);
-+	uintr_unregister_handler(0);
-+
-+	exit(EXIT_SUCCESS);
++	/* TODO: Add a timeout option */
++	return uintr_receiver_wait();
 +}
 -- 
 2.33.0
