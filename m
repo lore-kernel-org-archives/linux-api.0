@@ -7,28 +7,28 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 040DAC433EF
-	for <linux-api@archiver.kernel.org>; Mon, 13 Sep 2021 20:04:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0707DC433F5
+	for <linux-api@archiver.kernel.org>; Mon, 13 Sep 2021 20:04:58 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E85B36108B
-	for <linux-api@archiver.kernel.org>; Mon, 13 Sep 2021 20:04:56 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E7C456108B
+	for <linux-api@archiver.kernel.org>; Mon, 13 Sep 2021 20:04:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1348006AbhIMUGK (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 13 Sep 2021 16:06:10 -0400
-Received: from mga05.intel.com ([192.55.52.43]:38692 "EHLO mga05.intel.com"
+        id S1348036AbhIMUGL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 13 Sep 2021 16:06:11 -0400
+Received: from mga03.intel.com ([134.134.136.65]:19216 "EHLO mga03.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1347852AbhIMUFx (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        id S1347866AbhIMUFx (ORCPT <rfc822;linux-api@vger.kernel.org>);
         Mon, 13 Sep 2021 16:05:53 -0400
-X-IronPort-AV: E=McAfee;i="6200,9189,10106"; a="307336380"
+X-IronPort-AV: E=McAfee;i="6200,9189,10106"; a="221830808"
 X-IronPort-AV: E=Sophos;i="5.85,290,1624345200"; 
-   d="scan'208";a="307336380"
+   d="scan'208";a="221830808"
 Received: from fmsmga007.fm.intel.com ([10.253.24.52])
-  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 13 Sep 2021 13:04:32 -0700
+  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 13 Sep 2021 13:04:34 -0700
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="5.85,290,1624345200"; 
-   d="scan'208";a="469643925"
+   d="scan'208";a="469643943"
 Received: from sohilbuildbox.sc.intel.com (HELO localhost.localdomain) ([172.25.110.4])
-  by fmsmga007.fm.intel.com with ESMTP; 13 Sep 2021 13:04:31 -0700
+  by fmsmga007.fm.intel.com with ESMTP; 13 Sep 2021 13:04:33 -0700
 From:   Sohil Mehta <sohil.mehta@intel.com>
 To:     x86@kernel.org
 Cc:     Sohil Mehta <sohil.mehta@intel.com>,
@@ -53,9 +53,9 @@ Cc:     Sohil Mehta <sohil.mehta@intel.com>,
         Ramesh Thomas <ramesh.thomas@intel.com>,
         linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
         linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org
-Subject: [RFC PATCH 08/13] x86/process/64: Clean up uintr task fork and exit paths
-Date:   Mon, 13 Sep 2021 13:01:27 -0700
-Message-Id: <20210913200132.3396598-9-sohil.mehta@intel.com>
+Subject: [RFC PATCH 13/13] selftests/x86: Add basic tests for User IPI
+Date:   Mon, 13 Sep 2021 13:01:32 -0700
+Message-Id: <20210913200132.3396598-14-sohil.mehta@intel.com>
 X-Mailer: git-send-email 2.33.0
 In-Reply-To: <20210913200132.3396598-1-sohil.mehta@intel.com>
 References: <20210913200132.3396598-1-sohil.mehta@intel.com>
@@ -65,167 +65,208 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The user interrupt MSRs and the user interrupt state is task specific.
-During task fork and exit clear the task state, clear the MSRs and
-dereference the shared resources.
+Include 2 basic tests for receiving a User IPI:
+1. Receiver is spinning in userspace.
+2. Receiver is blocked in the kernel.
 
-Some of the memory resources like the UPID are referenced in the file
-descriptor and could be in use while the uintr_fd is still valid.
-Instead of freeing up  the UPID just dereference it.  Eventually when
-every user releases the reference the memory resource will be freed up.
+The selftests need gcc with 'muintr' support to compile.
 
-Signed-off-by: Jacob Pan <jacob.jun.pan@linux.intel.com>
+GCC 11 (recently released) has support for this.
+
 Signed-off-by: Sohil Mehta <sohil.mehta@intel.com>
 ---
- arch/x86/include/asm/uintr.h |  3 ++
- arch/x86/kernel/fpu/core.c   |  9 ++++++
- arch/x86/kernel/process.c    |  9 ++++++
- arch/x86/kernel/uintr_core.c | 55 ++++++++++++++++++++++++++++++++++++
- 4 files changed, 76 insertions(+)
+ tools/testing/selftests/x86/Makefile |  10 ++
+ tools/testing/selftests/x86/uintr.c  | 147 +++++++++++++++++++++++++++
+ 2 files changed, 157 insertions(+)
+ create mode 100644 tools/testing/selftests/x86/uintr.c
 
-diff --git a/arch/x86/include/asm/uintr.h b/arch/x86/include/asm/uintr.h
-index f7ccb67014b8..cef4dd81d40e 100644
---- a/arch/x86/include/asm/uintr.h
-+++ b/arch/x86/include/asm/uintr.h
-@@ -8,12 +8,15 @@ bool uintr_arch_enabled(void);
- int do_uintr_register_handler(u64 handler);
- int do_uintr_unregister_handler(void);
+diff --git a/tools/testing/selftests/x86/Makefile b/tools/testing/selftests/x86/Makefile
+index b4142cd1c5c2..38588221b09e 100644
+--- a/tools/testing/selftests/x86/Makefile
++++ b/tools/testing/selftests/x86/Makefile
+@@ -9,6 +9,7 @@ UNAME_M := $(shell uname -m)
+ CAN_BUILD_I386 := $(shell ./check_cc.sh $(CC) trivial_32bit_program.c -m32)
+ CAN_BUILD_X86_64 := $(shell ./check_cc.sh $(CC) trivial_64bit_program.c)
+ CAN_BUILD_WITH_NOPIE := $(shell ./check_cc.sh $(CC) trivial_program.c -no-pie)
++CAN_BUILD_UINTR := $(shell ./check_cc.sh $(CC) trivial_64bit_program.c -muintr)
  
-+void uintr_free(struct task_struct *task);
+ TARGETS_C_BOTHBITS := single_step_syscall sysret_ss_attrs syscall_nt test_mremap_vdso \
+ 			check_initial_reg_state sigreturn iopl ioperm \
+@@ -19,6 +20,11 @@ TARGETS_C_32BIT_ONLY := entry_from_vm86 test_syscall_vdso unwind_vdso \
+ 			vdso_restorer
+ TARGETS_C_64BIT_ONLY := fsgsbase sysret_rip syscall_numbering \
+ 			corrupt_xstate_header
 +
- /* TODO: Inline the context switch related functions */
- void switch_uintr_prepare(struct task_struct *prev);
- void switch_uintr_return(void);
- 
- #else /* !CONFIG_X86_USER_INTERRUPTS */
- 
-+static inline void uintr_free(struct task_struct *task) {}
- static inline void switch_uintr_prepare(struct task_struct *prev) {}
- static inline void switch_uintr_return(void) {}
- 
-diff --git a/arch/x86/kernel/fpu/core.c b/arch/x86/kernel/fpu/core.c
-index e30588bf7ce9..c0a54f7aaa2a 100644
---- a/arch/x86/kernel/fpu/core.c
-+++ b/arch/x86/kernel/fpu/core.c
-@@ -260,6 +260,7 @@ int fpu_clone(struct task_struct *dst)
- {
- 	struct fpu *src_fpu = &current->thread.fpu;
- 	struct fpu *dst_fpu = &dst->thread.fpu;
-+	struct uintr_state *uintr_state;
- 
- 	/* The new task's FPU state cannot be valid in the hardware. */
- 	dst_fpu->last_cpu = -1;
-@@ -284,6 +285,14 @@ int fpu_clone(struct task_struct *dst)
- 
- 	else
- 		save_fpregs_to_fpstate(dst_fpu);
++ifeq ($(CAN_BUILD_UINTR),1)
++TARGETS_C_64BIT_ONLY := $(TARGETS_C_64BIT_ONLY) uintr
++endif
 +
-+	/* UINTR state is not expected to be inherited (in the current design). */
-+	if (static_cpu_has(X86_FEATURE_UINTR)) {
-+		uintr_state = get_xsave_addr(&dst_fpu->state.xsave, XFEATURE_UINTR);
-+		if (uintr_state)
-+			memset(uintr_state, 0, sizeof(*uintr_state));
-+	}
-+
- 	fpregs_unlock();
+ # Some selftests require 32bit support enabled also on 64bit systems
+ TARGETS_C_32BIT_NEEDED := ldt_gdt ptrace_syscall
  
- 	set_tsk_thread_flag(dst, TIF_NEED_FPU_LOAD);
-diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
-index 1d9463e3096b..83677f76bd7b 100644
---- a/arch/x86/kernel/process.c
-+++ b/arch/x86/kernel/process.c
-@@ -26,6 +26,7 @@
- #include <linux/elf-randomize.h>
- #include <trace/events/power.h>
- #include <linux/hw_breakpoint.h>
-+#include <asm/uintr.h>
- #include <asm/cpu.h>
- #include <asm/apic.h>
- #include <linux/uaccess.h>
-@@ -87,6 +88,12 @@ int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src)
- #ifdef CONFIG_VM86
- 	dst->thread.vm86 = NULL;
- #endif
+@@ -41,6 +47,10 @@ ifeq ($(CAN_BUILD_WITH_NOPIE),1)
+ CFLAGS += -no-pie
+ endif
+ 
++ifeq ($(CAN_BUILD_UINTR),1)
++CFLAGS += -muintr
++endif
 +
-+#ifdef CONFIG_X86_USER_INTERRUPTS
-+	/* User Interrupt state is unique for each task */
-+	dst->thread.ui_recv = NULL;
+ define gen-target-rule-32
+ $(1) $(1)_32: $(OUTPUT)/$(1)_32
+ .PHONY: $(1) $(1)_32
+diff --git a/tools/testing/selftests/x86/uintr.c b/tools/testing/selftests/x86/uintr.c
+new file mode 100644
+index 000000000000..61a53526f2fa
+--- /dev/null
++++ b/tools/testing/selftests/x86/uintr.c
+@@ -0,0 +1,147 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright (c) 2020, Intel Corporation.
++ *
++ * Sohil Mehta <sohil.mehta@intel.com>
++ */
++#define _GNU_SOURCE
++#include <syscall.h>
++#include <stdio.h>
++#include <unistd.h>
++#include <x86gprintrin.h>
++#include <pthread.h>
++#include <stdlib.h>
++
++#ifndef __x86_64__
++# error This test is 64-bit only
 +#endif
 +
- 	return fpu_clone(dst);
- }
- 
-@@ -103,6 +110,8 @@ void exit_thread(struct task_struct *tsk)
- 
- 	free_vm86(t);
- 
-+	uintr_free(tsk);
++#ifndef __NR_uintr_register_handler
++#define __NR_uintr_register_handler	449
++#define __NR_uintr_unregister_handler	450
++#define __NR_uintr_create_fd		451
++#define __NR_uintr_register_sender	452
++#define __NR_uintr_unregister_sender	453
++#define __NR_uintr_wait			454
++#endif
 +
- 	fpu__drop(fpu);
- }
- 
-diff --git a/arch/x86/kernel/uintr_core.c b/arch/x86/kernel/uintr_core.c
-index 7a29888050ad..a2a13f890139 100644
---- a/arch/x86/kernel/uintr_core.c
-+++ b/arch/x86/kernel/uintr_core.c
-@@ -313,3 +313,58 @@ void switch_uintr_return(void)
- 			apic->send_IPI_self(UINTR_NOTIFICATION_VECTOR);
- 	}
- }
++#define uintr_register_handler(handler, flags)	syscall(__NR_uintr_register_handler, handler, flags)
++#define uintr_unregister_handler(flags)		syscall(__NR_uintr_unregister_handler, flags)
++#define uintr_create_fd(vector, flags)		syscall(__NR_uintr_create_fd, vector, flags)
++#define uintr_register_sender(fd, flags)	syscall(__NR_uintr_register_sender, fd, flags)
++#define uintr_unregister_sender(fd, flags)	syscall(__NR_uintr_unregister_sender, fd, flags)
++#define uintr_wait(flags)			syscall(__NR_uintr_wait, flags)
 +
-+/*
-+ * This should only be called from exit_thread().
-+ * exit_thread() can happen in current context when the current thread is
-+ * exiting or it can happen for a new thread that is being created.
-+ * For new threads is_uintr_receiver() should fail.
-+ */
-+void uintr_free(struct task_struct *t)
++unsigned long uintr_received;
++unsigned int uintr_fd;
++
++void __attribute__((interrupt))__attribute__((target("general-regs-only", "inline-all-stringops")))
++uintr_handler(struct __uintr_frame *ui_frame,
++	      unsigned long long vector)
 +{
-+	struct uintr_receiver *ui_recv;
-+	struct fpu *fpu;
++	uintr_received = 1;
++}
 +
-+	if (!static_cpu_has(X86_FEATURE_UINTR) || !is_uintr_receiver(t))
-+		return;
++void receiver_setup_interrupt(void)
++{
++	int vector = 0;
++	int ret;
 +
-+	if (WARN_ON_ONCE(t != current))
-+		return;
-+
-+	fpu = &t->thread.fpu;
-+
-+	fpregs_lock();
-+
-+	if (fpregs_state_valid(fpu, smp_processor_id())) {
-+		wrmsrl(MSR_IA32_UINTR_MISC, 0ULL);
-+		wrmsrl(MSR_IA32_UINTR_PD, 0ULL);
-+		wrmsrl(MSR_IA32_UINTR_RR, 0ULL);
-+		wrmsrl(MSR_IA32_UINTR_STACKADJUST, 0ULL);
-+		wrmsrl(MSR_IA32_UINTR_HANDLER, 0ULL);
-+	} else {
-+		struct uintr_state *p;
-+
-+		p = get_xsave_addr(&fpu->state.xsave, XFEATURE_UINTR);
-+		if (p) {
-+			p->handler = 0;
-+			p->uirr = 0;
-+			p->upid_addr = 0;
-+			p->stack_adjust = 0;
-+			p->uinv = 0;
-+		}
++	/* Register interrupt handler */
++	if (uintr_register_handler(uintr_handler, 0)) {
++		printf("[FAIL]\tInterrupt handler register error\n");
++		exit(EXIT_FAILURE);
 +	}
 +
-+	/* Check: Can a thread be context switched while it is exiting? */
-+	ui_recv = t->thread.ui_recv;
++	/* Create uintr_fd */
++	ret = uintr_create_fd(vector, 0);
++	if (ret < 0) {
++		printf("[FAIL]\tInterrupt vector registration error\n");
++		exit(EXIT_FAILURE);
++	}
 +
-+	/*
-+	 * Suppress notifications so that no further interrupts are
-+	 * generated based on this UPID.
-+	 */
-+	set_bit(UPID_SN, (unsigned long *)&ui_recv->upid_ctx->upid->nc.status);
-+	put_upid_ref(ui_recv->upid_ctx);
-+	kfree(ui_recv);
-+	t->thread.ui_recv = NULL;
++	uintr_fd = ret;
++}
 +
-+	fpregs_unlock();
++void *sender_thread(void *arg)
++{
++	long sleep_usec = (long)arg;
++	int uipi_index;
++
++	uipi_index = uintr_register_sender(uintr_fd, 0);
++	if (uipi_index < 0) {
++		printf("[FAIL]\tSender register error\n");
++		return NULL;
++	}
++
++	/* Sleep before sending IPI to allow the receiver to block in the kernel */
++	if (sleep_usec)
++		usleep(sleep_usec);
++
++	printf("\tother thread: sending IPI\n");
++	_senduipi(uipi_index);
++
++	uintr_unregister_sender(uintr_fd, 0);
++
++	return NULL;
++}
++
++static inline void cpu_relax(void)
++{
++	asm volatile("rep; nop" ::: "memory");
++}
++
++void test_base_ipi(void)
++{
++	pthread_t pt;
++
++	uintr_received = 0;
++	if (pthread_create(&pt, NULL, &sender_thread, NULL)) {
++		printf("[FAIL]\tError creating sender thread\n");
++		return;
++	}
++
++	printf("[RUN]\tSpin in userspace (waiting for interrupts)\n");
++	// Keep spinning until interrupt received
++	while (!uintr_received)
++		cpu_relax();
++
++	printf("[OK]\tUser interrupt received\n");
++}
++
++void test_blocking_ipi(void)
++{
++	pthread_t pt;
++	long sleep_usec;
++
++	uintr_received = 0;
++	sleep_usec = 1000;
++	if (pthread_create(&pt, NULL, &sender_thread, (void *)sleep_usec)) {
++		printf("[FAIL]\tError creating sender thread\n");
++		return;
++	}
++
++	printf("[RUN]\tBlock in the kernel (waiting for interrupts)\n");
++	uintr_wait(0);
++	if (uintr_received)
++		printf("[OK]\tUser interrupt received\n");
++	else
++		printf("[FAIL]\tUser interrupt not received\n");
++}
++
++int main(int argc, char *argv[])
++{
++	receiver_setup_interrupt();
++
++	/* Enable interrupts */
++	_stui();
++
++	test_base_ipi();
++
++	test_blocking_ipi();
++
++	close(uintr_fd);
++	uintr_unregister_handler(0);
++
++	exit(EXIT_SUCCESS);
 +}
 -- 
 2.33.0
