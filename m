@@ -7,45 +7,45 @@ X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CFA03C433F5
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E7A4CC4332F
 	for <linux-api@archiver.kernel.org>; Wed, 15 Sep 2021 14:18:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B049F6113E
+	by mail.kernel.org (Postfix) with ESMTP id CCA29610E9
 	for <linux-api@archiver.kernel.org>; Wed, 15 Sep 2021 14:18:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237905AbhIOOTY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S237911AbhIOOTY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Wed, 15 Sep 2021 10:19:24 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57162 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57164 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236295AbhIOOTJ (ORCPT
+        with ESMTP id S236956AbhIOOTJ (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Wed, 15 Sep 2021 10:19:09 -0400
 Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4DD89C061767;
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 537CFC061768;
         Wed, 15 Sep 2021 07:17:50 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=desiato.20200630; h=Content-Type:MIME-Version:References:
         Subject:Cc:To:From:Date:Message-ID:Sender:Reply-To:Content-Transfer-Encoding:
         Content-ID:Content-Description:In-Reply-To;
-        bh=VrroTDTwM4RqFgB0GaKTnqAE2sLybUVZaM8+76ZHCJ8=; b=K9HGLVhlEHla6KwuXqDyxV790F
-        BbimmY2aZWN4rwv2XRXzfjdNDtvFTllVFrMBXXYjWcipgEp+/F0wEAOg9As10qh+wXKHvLM/vqMRd
-        KoNbC9JpU63zJvC0WMi6VSjul3VUwb0KST3/rz+Yhko1GsmbhFPT8RStpj3nTSsXpAAaTtOtxEonw
-        1T2mLZV79J8fshQlXvJ8NwOF7mgzXGTo6zHyy7zBzLuyTcqQTF6sIv3OycYp5xX2PNvtc3NOLueko
-        aQToFjU4lez1fC7AicfH9SHVrkx29Q42vtL7qblYgUlGoDnaSeutUkOlFeq0thxYo+ZI6Tf9FkFv5
-        UVi7E++Q==;
+        bh=2TouwGuRosA9M+9D83wcAihUaqIUcvjdUETwCQK0SrQ=; b=FNfz8knk9pY6xgl97qulwEy0wK
+        ayFHYUWmeUY4U9+fF0ksuj/iONIFJuGhvWg8HS1abts7242tOkoTmQBpr0fX8XVhntQBCcVLqlKCE
+        fSEjzmpWykUjTWvKuXOib/O8puDTnWxVyqZiMo9yZElQ1/fvsq/Ahw+eVVK0e2X5hlBaO3fX75Kvx
+        6k//GXgx3zav8oDm6Kc0ABcHntqA5D7GUXsvrRdOY8Mh1QDGxr9v+Rs8dt2zQuCPbMr14+i1LTgMx
+        gF1GKkgFLiZ33BKADt7rEjO1sk9Ah+PYKNVd9e+RApIlXhmGoSzZNEyqxMgySb0bc3/HyCfEWY/dl
+        t0FXIhOg==;
 Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=noisy.programming.kicks-ass.net)
         by desiato.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1mQVj9-003PTt-Fl; Wed, 15 Sep 2021 14:17:31 +0000
+        id 1mQVj8-003PTm-L9; Wed, 15 Sep 2021 14:17:30 +0000
 Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
          key-exchange X25519 server-signature RSA-PSS (2048 bits))
         (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 188A7300772;
-        Wed, 15 Sep 2021 16:17:30 +0200 (CEST)
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 2C2703005DD;
+        Wed, 15 Sep 2021 16:17:29 +0200 (CEST)
 Received: by hirez.programming.kicks-ass.net (Postfix, from userid 0)
-        id F1FD2234E53A4; Wed, 15 Sep 2021 16:17:28 +0200 (CEST)
-Message-ID: <20210915141524.985747253@infradead.org>
+        id E9DA8234E53A2; Wed, 15 Sep 2021 16:17:28 +0200 (CEST)
+Message-ID: <20210915141524.864163835@infradead.org>
 User-Agent: quilt/0.66
-Date:   Wed, 15 Sep 2021 16:07:16 +0200
+Date:   Wed, 15 Sep 2021 16:07:14 +0200
 From:   Peter Zijlstra <peterz@infradead.org>
 To:     andrealmeid@collabora.com, tglx@linutronix.de, mingo@redhat.com,
         dvhart@infradead.org, rostedt@goodmis.org, bigeasy@linutronix.de
@@ -53,7 +53,7 @@ Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
         kernel@collabora.com, krisman@collabora.com,
         linux-api@vger.kernel.org, libc-alpha@sourceware.org,
         mtk.manpages@gmail.com, dave@stgolabs.net, arnd@arndb.de
-Subject: [PATCH 06/20] futex: Rename __unqueue_futex()
+Subject: [PATCH 04/20] futex: Rename futex_wait_queue_me()
 References: <20210915140710.596174479@infradead.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -62,74 +62,58 @@ List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
 In order to prepare introducing these symbols into the global
-namespace; rename:
+namespace; rename them:
 
-  s/__unqueue_futex/__futex_unqueue/g
+  s/futex_wait_queue_me/futex_wait_queue/g
 
 Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
 ---
- kernel/futex/core.c |   14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ kernel/futex/core.c |   10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
 --- a/kernel/futex/core.c
 +++ b/kernel/futex/core.c
-@@ -1470,12 +1470,12 @@ static int futex_lock_pi_atomic(u32 __us
+@@ -2787,12 +2787,12 @@ static int fixup_owner(u32 __user *uaddr
  }
  
  /**
-- * __unqueue_futex() - Remove the futex_q from its futex_hash_bucket
-+ * __futex_unqueue() - Remove the futex_q from its futex_hash_bucket
-  * @q:	The futex_q to unqueue
-  *
-  * The q->lock_ptr must not be NULL and must be held by the caller.
+- * futex_wait_queue_me() - futex_queue() and wait for wakeup, timeout, or signal
++ * futex_wait_queue() - futex_queue() and wait for wakeup, timeout, or signal
+  * @hb:		the futex hash bucket, must be locked by the caller
+  * @q:		the futex_q to queue up on
+  * @timeout:	the prepared hrtimer_sleeper, or null for no timeout
   */
--static void __unqueue_futex(struct futex_q *q)
-+static void __futex_unqueue(struct futex_q *q)
+-static void futex_wait_queue_me(struct futex_hash_bucket *hb, struct futex_q *q,
++static void futex_wait_queue(struct futex_hash_bucket *hb, struct futex_q *q,
+ 				struct hrtimer_sleeper *timeout)
  {
- 	struct futex_hash_bucket *hb;
- 
-@@ -1502,13 +1502,13 @@ static void mark_wake_futex(struct wake_
- 		return;
- 
- 	get_task_struct(p);
--	__unqueue_futex(q);
-+	__futex_unqueue(q);
  	/*
- 	 * The waiting task can free the futex_q as soon as q->lock_ptr = NULL
- 	 * is written, without taking any locks. This is possible in the event
- 	 * of a spurious wakeup, for example. A memory barrier is required here
- 	 * to prevent the following store to lock_ptr from getting ahead of the
--	 * plist_del in __unqueue_futex().
-+	 * plist_del in __futex_unqueue().
- 	 */
- 	smp_store_release(&q->lock_ptr, NULL);
+@@ -2919,7 +2919,7 @@ int futex_wait(u32 __user *uaddr, unsign
+ 		goto out;
  
-@@ -1958,7 +1958,7 @@ void requeue_pi_wake_futex(struct futex_
- {
- 	q->key = *key;
+ 	/* futex_queue and wait for wakeup, timeout, or a signal. */
+-	futex_wait_queue_me(hb, &q, to);
++	futex_wait_queue(hb, &q, to);
  
--	__unqueue_futex(q);
-+	__futex_unqueue(q);
+ 	/* If we were woken (and unqueued), we succeeded, whatever. */
+ 	ret = 0;
+@@ -3347,7 +3347,7 @@ int handle_early_requeue_pi_wakeup(struc
+  * without one, the pi logic would not know which task to boost/deboost, if
+  * there was a need to.
+  *
+- * We call schedule in futex_wait_queue_me() when we enqueue and return there
++ * We call schedule in futex_wait_queue() when we enqueue and return there
+  * via the following--
+  * 1) wakeup on uaddr2 after an atomic lock acquisition by futex_requeue()
+  * 2) wakeup on uaddr2 after a requeue
+@@ -3427,7 +3427,7 @@ int futex_wait_requeue_pi(u32 __user *ua
+ 	}
  
- 	WARN_ON(!q->rt_waiter);
- 	q->rt_waiter = NULL;
-@@ -2522,7 +2522,7 @@ static int futex_unqueue(struct futex_q
- 			spin_unlock(lock_ptr);
- 			goto retry;
- 		}
--		__unqueue_futex(q);
-+		__futex_unqueue(q);
+ 	/* Queue the futex_q, drop the hb lock, wait for wakeup. */
+-	futex_wait_queue_me(hb, &q, to);
++	futex_wait_queue(hb, &q, to);
  
- 		BUG_ON(q->pi_state);
- 
-@@ -2539,7 +2539,7 @@ static int futex_unqueue(struct futex_q
-  */
- static void futex_unqueue_pi(struct futex_q *q)
- {
--	__unqueue_futex(q);
-+	__futex_unqueue(q);
- 
- 	BUG_ON(!q->pi_state);
- 	put_pi_state(q->pi_state);
+ 	switch (futex_requeue_pi_wakeup_sync(&q)) {
+ 	case Q_REQUEUE_PI_IGNORE:
 
 
