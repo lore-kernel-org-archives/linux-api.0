@@ -2,50 +2,49 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 894A5C433EF
-	for <linux-api@archiver.kernel.org>; Wed, 15 Sep 2021 14:17:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9045CC433FE
+	for <linux-api@archiver.kernel.org>; Wed, 15 Sep 2021 14:18:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 63FEA6113E
-	for <linux-api@archiver.kernel.org>; Wed, 15 Sep 2021 14:17:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 73D0761216
+	for <linux-api@archiver.kernel.org>; Wed, 15 Sep 2021 14:18:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237369AbhIOOTJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 15 Sep 2021 10:19:09 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57156 "EHLO
+        id S237734AbhIOOTK (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 15 Sep 2021 10:19:10 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57158 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233745AbhIOOTJ (ORCPT
+        with ESMTP id S234460AbhIOOTJ (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Wed, 15 Sep 2021 10:19:09 -0400
 Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3C9C0C061575;
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 42931C061764;
         Wed, 15 Sep 2021 07:17:50 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=desiato.20200630; h=Content-Type:MIME-Version:References:
-        Subject:Cc:To:From:Date:Message-ID:Sender:Reply-To:Content-Transfer-Encoding:
-        Content-ID:Content-Description:In-Reply-To;
-        bh=gayeFQoleCUQQDyuBnh7LSK/9+UPW6t+X7Htmku3f4s=; b=IGempERyvTUsrrMrQ6GphB7W/w
-        oEEhJ8n2eRrMEkiiTF5j2hJd4dzqEhAkqxLLQNckHWliIa07cwkRdtvZ96t786h4D9/r0MlFyRdeV
-        Z0mZBu6AImaWeK/mo20cPZW2IXZzh1Xgagqz5FLMnDYlxFnd5DQrFk7kK5PAUKuMctwVuVuv6Tjyp
-        WcJ2EJNyzMbqqkJh25oh0HbiyJDu/Kq0AYRyKYl072GU5AMeIhdQwM8TXy13HqwI9FcmrTeJMJCK9
-        J23Pq0NkvVxXvXH5FoP4p4YIM44CDznZnIZjxzJ4arg1DfCAKTjEEcEVXDDnjcRffDYIf81y40g16
-        fUwL8EOw==;
+        d=infradead.org; s=desiato.20200630; h=Subject:Cc:To:From:Date:Message-ID:
+        Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
+        Content-ID:Content-Description:In-Reply-To:References;
+        bh=bQi/c1b91PkaK1AxrCeWpy0hqeqegZIFrdVaK/kwyPM=; b=ocfZekIQPd26L2rGc0GsSdaWpF
+        9bbsu5/KrHjuACm/QnHzxoAxsAKhuiLMFHwfeTos1px0epWiQi32XEjJKROQSS/zVLSEiAqvNKarn
+        LD5g+oCNXYgyhzDQSw2ck5NafxnYjkSt9rSZN7ZkxcZDAlEX6Qqxadfv71nf0U7zOaazwy8LaeHBd
+        jK4x4kBo3ZzflMiQriJuBE+TTL8Hg04t1KTYbQUybYhaEciYbNmMSSh4V/4v6077TgKBB11QTFZJ6
+        +Ba15v9AQg50+ygXUH8Ks+EMhZghqOyK5sPjK1K1IALkCi+Snu7pNVKGPxDpgUMg2y6VrK5FylW2+
+        gizFXXyw==;
 Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=noisy.programming.kicks-ass.net)
         by desiato.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1mQVjA-003PU3-9t; Wed, 15 Sep 2021 14:17:32 +0000
+        id 1mQVj8-003PTk-K8; Wed, 15 Sep 2021 14:17:30 +0000
 Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
          key-exchange X25519 server-signature RSA-PSS (2048 bits))
         (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 2A093300C80;
-        Wed, 15 Sep 2021 16:17:30 +0200 (CEST)
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 2399A30003A;
+        Wed, 15 Sep 2021 16:17:28 +0200 (CEST)
 Received: by hirez.programming.kicks-ass.net (Postfix, from userid 0)
-        id 2F2D028B2AEB3; Wed, 15 Sep 2021 16:17:29 +0200 (CEST)
-Message-ID: <20210915141525.556892413@infradead.org>
+        id D8B1B20D149B0; Wed, 15 Sep 2021 16:17:28 +0200 (CEST)
+Message-ID: <20210915140710.596174479@infradead.org>
 User-Agent: quilt/0.66
-Date:   Wed, 15 Sep 2021 16:07:25 +0200
+Date:   Wed, 15 Sep 2021 16:07:10 +0200
 From:   Peter Zijlstra <peterz@infradead.org>
 To:     andrealmeid@collabora.com, tglx@linutronix.de, mingo@redhat.com,
         dvhart@infradead.org, rostedt@goodmis.org, bigeasy@linutronix.de
@@ -53,42 +52,19 @@ Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
         kernel@collabora.com, krisman@collabora.com,
         linux-api@vger.kernel.org, libc-alpha@sourceware.org,
         mtk.manpages@gmail.com, dave@stgolabs.net, arnd@arndb.de
-Subject: [PATCH 15/20] futex: Simplify double_lock_hb()
-References: <20210915140710.596174479@infradead.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Subject: [PATCH 00/20] futex: splitup and waitv syscall
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+Hi,
 
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
----
- kernel/futex/futex.h |   14 ++++++--------
- 1 file changed, 6 insertions(+), 8 deletions(-)
+Neither Thomas nor myself much liked that futex2.c nor do we think that CONFIG_
+symbol makes much sense.
 
---- a/kernel/futex/futex.h
-+++ b/kernel/futex/futex.h
-@@ -316,14 +316,12 @@ extern void futex_q_unlock(struct futex_
- static inline void
- double_lock_hb(struct futex_hash_bucket *hb1, struct futex_hash_bucket *hb2)
- {
--	if (hb1 <= hb2) {
--		spin_lock(&hb1->lock);
--		if (hb1 < hb2)
--			spin_lock_nested(&hb2->lock, SINGLE_DEPTH_NESTING);
--	} else { /* hb1 > hb2 */
--		spin_lock(&hb2->lock);
--		spin_lock_nested(&hb1->lock, SINGLE_DEPTH_NESTING);
--	}
-+	if (hb1 > hb2)
-+		swap(hb1, hb2);
-+
-+	spin_lock(&hb1->lock);
-+	if (hb1 != hb2)
-+		spin_lock_nested(&hb2->lock, SINGLE_DEPTH_NESTING);
- }
- 
- static inline void
+However, futex.c is a wee bit long and splitting it up makes sense. So I've
+taken the liberty to replace your initial patch with 15 of my own and then
+rebased the remaining patches on top of that.
 
+Thomas, does something like this work for you?
 
