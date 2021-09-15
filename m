@@ -7,45 +7,45 @@ X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 87133C433EF
-	for <linux-api@archiver.kernel.org>; Wed, 15 Sep 2021 14:18:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CFA03C433F5
+	for <linux-api@archiver.kernel.org>; Wed, 15 Sep 2021 14:18:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 667A361164
-	for <linux-api@archiver.kernel.org>; Wed, 15 Sep 2021 14:18:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B049F6113E
+	for <linux-api@archiver.kernel.org>; Wed, 15 Sep 2021 14:18:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237544AbhIOOTJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 15 Sep 2021 10:19:09 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57154 "EHLO
+        id S237905AbhIOOTY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 15 Sep 2021 10:19:24 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57162 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233741AbhIOOTJ (ORCPT
+        with ESMTP id S236295AbhIOOTJ (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Wed, 15 Sep 2021 10:19:09 -0400
 Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 35723C061574;
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4DD89C061767;
         Wed, 15 Sep 2021 07:17:50 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=desiato.20200630; h=Content-Type:MIME-Version:References:
         Subject:Cc:To:From:Date:Message-ID:Sender:Reply-To:Content-Transfer-Encoding:
         Content-ID:Content-Description:In-Reply-To;
-        bh=XVTaItUwwiwVPQZFKaYPr1aE3Ule5wEbSeKl7J22dC4=; b=TxYA4m9tIn+UD4/uXbYHgF4gXh
-        B5ybfYKijFfHlUx3iok2lcBGUeu4X7wJzpwx2fJFUFgj0MFFb2SbPlX9HtF/qxg1lGXPVVpsq4DRy
-        tHvMDvwhqyXsV9WOxKAm3Pjm6EkmgCiOUm8TC0XA9NqK1TjXGqOH+ILXArYFOev7UKnXhTXXwtC0/
-        xbS68G5Oj8lO+qMdKz1b6zi4SqGY1ToXB3J4jVa4UaMMXzVSEAIWDMcTUVn/WkcLRbyowfHYz2HoI
-        cuQpr3ZMxcEOlBPdetjtu017hlkMP6X1hR4PFhxTqiUNimDJq2MbJwgK1feO2v4fJe489lHtOasB8
-        UTUC2sfw==;
+        bh=VrroTDTwM4RqFgB0GaKTnqAE2sLybUVZaM8+76ZHCJ8=; b=K9HGLVhlEHla6KwuXqDyxV790F
+        BbimmY2aZWN4rwv2XRXzfjdNDtvFTllVFrMBXXYjWcipgEp+/F0wEAOg9As10qh+wXKHvLM/vqMRd
+        KoNbC9JpU63zJvC0WMi6VSjul3VUwb0KST3/rz+Yhko1GsmbhFPT8RStpj3nTSsXpAAaTtOtxEonw
+        1T2mLZV79J8fshQlXvJ8NwOF7mgzXGTo6zHyy7zBzLuyTcqQTF6sIv3OycYp5xX2PNvtc3NOLueko
+        aQToFjU4lez1fC7AicfH9SHVrkx29Q42vtL7qblYgUlGoDnaSeutUkOlFeq0thxYo+ZI6Tf9FkFv5
+        UVi7E++Q==;
 Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=noisy.programming.kicks-ass.net)
         by desiato.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1mQVj8-003PTl-K9; Wed, 15 Sep 2021 14:17:30 +0000
+        id 1mQVj9-003PTt-Fl; Wed, 15 Sep 2021 14:17:31 +0000
 Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
          key-exchange X25519 server-signature RSA-PSS (2048 bits))
         (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 25E0430041D;
-        Wed, 15 Sep 2021 16:17:29 +0200 (CEST)
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 188A7300772;
+        Wed, 15 Sep 2021 16:17:30 +0200 (CEST)
 Received: by hirez.programming.kicks-ass.net (Postfix, from userid 0)
-        id E5B9F234E53A1; Wed, 15 Sep 2021 16:17:28 +0200 (CEST)
-Message-ID: <20210915141524.802405966@infradead.org>
+        id F1FD2234E53A4; Wed, 15 Sep 2021 16:17:28 +0200 (CEST)
+Message-ID: <20210915141524.985747253@infradead.org>
 User-Agent: quilt/0.66
-Date:   Wed, 15 Sep 2021 16:07:13 +0200
+Date:   Wed, 15 Sep 2021 16:07:16 +0200
 From:   Peter Zijlstra <peterz@infradead.org>
 To:     andrealmeid@collabora.com, tglx@linutronix.de, mingo@redhat.com,
         dvhart@infradead.org, rostedt@goodmis.org, bigeasy@linutronix.de
@@ -53,7 +53,7 @@ Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
         kernel@collabora.com, krisman@collabora.com,
         linux-api@vger.kernel.org, libc-alpha@sourceware.org,
         mtk.manpages@gmail.com, dave@stgolabs.net, arnd@arndb.de
-Subject: [PATCH 03/20] futex: Rename {,__}{,un}queue_me()
+Subject: [PATCH 06/20] futex: Rename __unqueue_futex()
 References: <20210915140710.596174479@infradead.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -62,181 +62,74 @@ List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
 In order to prepare introducing these symbols into the global
-namespace; rename them:
+namespace; rename:
 
-  s/\<\(__\)*\(un\)*queue_me/\1futex_\2queue/g
+  s/__unqueue_futex/__futex_unqueue/g
 
 Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
 ---
- kernel/futex/core.c |   46 +++++++++++++++++++++++-----------------------
- 1 file changed, 23 insertions(+), 23 deletions(-)
+ kernel/futex/core.c |   14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
 --- a/kernel/futex/core.c
 +++ b/kernel/futex/core.c
-@@ -190,7 +190,7 @@ struct futex_pi_state {
-  * the second.
-  *
-  * PI futexes are typically woken before they are removed from the hash list via
-- * the rt_mutex code. See unqueue_me_pi().
-+ * the rt_mutex code. See futex_unqueue_pi().
-  */
- struct futex_q {
- 	struct plist_node list;
-@@ -260,7 +260,7 @@ enum {
- };
- 
- static const struct futex_q futex_q_init = {
--	/* list gets initialized in queue_me()*/
-+	/* list gets initialized in futex_queue()*/
- 	.key		= FUTEX_KEY_INIT,
- 	.bitset		= FUTEX_BITSET_MATCH_ANY,
- 	.requeue_state	= ATOMIC_INIT(Q_REQUEUE_PI_NONE),
-@@ -1047,7 +1047,7 @@ static int attach_to_pi_state(u32 __user
- 	/*
- 	 * We get here with hb->lock held, and having found a
- 	 * futex_top_waiter(). This means that futex_lock_pi() of said futex_q
--	 * has dropped the hb->lock in between queue_me() and unqueue_me_pi(),
-+	 * has dropped the hb->lock in between futex_queue() and futex_unqueue_pi(),
- 	 * which in turn means that futex_lock_pi() still has a reference on
- 	 * our pi_state.
- 	 *
-@@ -2421,7 +2421,7 @@ static inline struct futex_hash_bucket *
- 	 * Increment the counter before taking the lock so that
- 	 * a potential waker won't miss a to-be-slept task that is
- 	 * waiting for the spinlock. This is safe as all queue_lock()
--	 * users end up calling queue_me(). Similarly, for housekeeping,
-+	 * users end up calling futex_queue(). Similarly, for housekeeping,
- 	 * decrement the counter at queue_unlock() when some error has
- 	 * occurred and we don't end up adding the task to the list.
- 	 */
-@@ -2441,7 +2441,7 @@ queue_unlock(struct futex_hash_bucket *h
- 	hb_waiters_dec(hb);
- }
- 
--static inline void __queue_me(struct futex_q *q, struct futex_hash_bucket *hb)
-+static inline void __futex_queue(struct futex_q *q, struct futex_hash_bucket *hb)
- {
- 	int prio;
- 
-@@ -2461,36 +2461,36 @@ static inline void __queue_me(struct fut
+@@ -1470,12 +1470,12 @@ static int futex_lock_pi_atomic(u32 __us
  }
  
  /**
-- * queue_me() - Enqueue the futex_q on the futex_hash_bucket
-+ * futex_queue() - Enqueue the futex_q on the futex_hash_bucket
-  * @q:	The futex_q to enqueue
-  * @hb:	The destination hash bucket
-  *
-  * The hb->lock must be held by the caller, and is released here. A call to
-- * queue_me() is typically paired with exactly one call to unqueue_me().  The
-- * exceptions involve the PI related operations, which may use unqueue_me_pi()
-+ * futex_queue() is typically paired with exactly one call to futex_unqueue().  The
-+ * exceptions involve the PI related operations, which may use futex_unqueue_pi()
-  * or nothing if the unqueue is done as part of the wake process and the unqueue
-  * state is implicit in the state of woken task (see futex_wait_requeue_pi() for
-  * an example).
-  */
--static inline void queue_me(struct futex_q *q, struct futex_hash_bucket *hb)
-+static inline void futex_queue(struct futex_q *q, struct futex_hash_bucket *hb)
- 	__releases(&hb->lock)
- {
--	__queue_me(q, hb);
-+	__futex_queue(q, hb);
- 	spin_unlock(&hb->lock);
- }
- 
- /**
-- * unqueue_me() - Remove the futex_q from its futex_hash_bucket
-+ * futex_unqueue() - Remove the futex_q from its futex_hash_bucket
+- * __unqueue_futex() - Remove the futex_q from its futex_hash_bucket
++ * __futex_unqueue() - Remove the futex_q from its futex_hash_bucket
   * @q:	The futex_q to unqueue
   *
-- * The q->lock_ptr must not be held by the caller. A call to unqueue_me() must
-- * be paired with exactly one earlier call to queue_me().
-+ * The q->lock_ptr must not be held by the caller. A call to futex_unqueue() must
-+ * be paired with exactly one earlier call to futex_queue().
-  *
-  * Return:
-  *  - 1 - if the futex_q was still queued (and we removed unqueued it);
-  *  - 0 - if the futex_q was already removed by the waking thread
+  * The q->lock_ptr must not be NULL and must be held by the caller.
   */
--static int unqueue_me(struct futex_q *q)
-+static int futex_unqueue(struct futex_q *q)
+-static void __unqueue_futex(struct futex_q *q)
++static void __futex_unqueue(struct futex_q *q)
  {
- 	spinlock_t *lock_ptr;
- 	int ret = 0;
-@@ -2537,7 +2537,7 @@ static int unqueue_me(struct futex_q *q)
-  * PI futexes can not be requeued and must remove themselves from the
-  * hash bucket. The hash bucket lock (i.e. lock_ptr) is held.
+ 	struct futex_hash_bucket *hb;
+ 
+@@ -1502,13 +1502,13 @@ static void mark_wake_futex(struct wake_
+ 		return;
+ 
+ 	get_task_struct(p);
+-	__unqueue_futex(q);
++	__futex_unqueue(q);
+ 	/*
+ 	 * The waiting task can free the futex_q as soon as q->lock_ptr = NULL
+ 	 * is written, without taking any locks. This is possible in the event
+ 	 * of a spurious wakeup, for example. A memory barrier is required here
+ 	 * to prevent the following store to lock_ptr from getting ahead of the
+-	 * plist_del in __unqueue_futex().
++	 * plist_del in __futex_unqueue().
+ 	 */
+ 	smp_store_release(&q->lock_ptr, NULL);
+ 
+@@ -1958,7 +1958,7 @@ void requeue_pi_wake_futex(struct futex_
+ {
+ 	q->key = *key;
+ 
+-	__unqueue_futex(q);
++	__futex_unqueue(q);
+ 
+ 	WARN_ON(!q->rt_waiter);
+ 	q->rt_waiter = NULL;
+@@ -2522,7 +2522,7 @@ static int futex_unqueue(struct futex_q
+ 			spin_unlock(lock_ptr);
+ 			goto retry;
+ 		}
+-		__unqueue_futex(q);
++		__futex_unqueue(q);
+ 
+ 		BUG_ON(q->pi_state);
+ 
+@@ -2539,7 +2539,7 @@ static int futex_unqueue(struct futex_q
   */
--static void unqueue_me_pi(struct futex_q *q)
-+static void futex_unqueue_pi(struct futex_q *q)
+ static void futex_unqueue_pi(struct futex_q *q)
  {
- 	__unqueue_futex(q);
+-	__unqueue_futex(q);
++	__futex_unqueue(q);
  
-@@ -2787,7 +2787,7 @@ static int fixup_owner(u32 __user *uaddr
- }
- 
- /**
-- * futex_wait_queue_me() - queue_me() and wait for wakeup, timeout, or signal
-+ * futex_wait_queue_me() - futex_queue() and wait for wakeup, timeout, or signal
-  * @hb:		the futex hash bucket, must be locked by the caller
-  * @q:		the futex_q to queue up on
-  * @timeout:	the prepared hrtimer_sleeper, or null for no timeout
-@@ -2798,11 +2798,11 @@ static void futex_wait_queue_me(struct f
- 	/*
- 	 * The task state is guaranteed to be set before another task can
- 	 * wake it. set_current_state() is implemented using smp_store_mb() and
--	 * queue_me() calls spin_unlock() upon completion, both serializing
-+	 * futex_queue() calls spin_unlock() upon completion, both serializing
- 	 * access to the hash list and forcing another memory barrier.
- 	 */
- 	set_current_state(TASK_INTERRUPTIBLE);
--	queue_me(q, hb);
-+	futex_queue(q, hb);
- 
- 	/* Arm the timer */
- 	if (timeout)
-@@ -2918,12 +2918,12 @@ int futex_wait(u32 __user *uaddr, unsign
- 	if (ret)
- 		goto out;
- 
--	/* queue_me and wait for wakeup, timeout, or a signal. */
-+	/* futex_queue and wait for wakeup, timeout, or a signal. */
- 	futex_wait_queue_me(hb, &q, to);
- 
- 	/* If we were woken (and unqueued), we succeeded, whatever. */
- 	ret = 0;
--	if (!unqueue_me(&q))
-+	if (!futex_unqueue(&q))
- 		goto out;
- 	ret = -ETIMEDOUT;
- 	if (to && !to->task)
-@@ -3049,7 +3049,7 @@ int futex_lock_pi(u32 __user *uaddr, uns
- 	/*
- 	 * Only actually queue now that the atomic ops are done:
- 	 */
--	__queue_me(&q, hb);
-+	__futex_queue(&q, hb);
- 
- 	if (trylock) {
- 		ret = rt_mutex_futex_trylock(&q.pi_state->pi_mutex);
-@@ -3121,7 +3121,7 @@ int futex_lock_pi(u32 __user *uaddr, uns
- 	if (res)
- 		ret = (res < 0) ? res : 0;
- 
--	unqueue_me_pi(&q);
-+	futex_unqueue_pi(&q);
- 	spin_unlock(q.lock_ptr);
- 	goto out;
- 
-@@ -3479,7 +3479,7 @@ int futex_wait_requeue_pi(u32 __user *ua
- 		if (res)
- 			ret = (res < 0) ? res : 0;
- 
--		unqueue_me_pi(&q);
-+		futex_unqueue_pi(&q);
- 		spin_unlock(q.lock_ptr);
- 
- 		if (ret == -EINTR) {
+ 	BUG_ON(!q->pi_state);
+ 	put_pi_state(q->pi_state);
 
 
