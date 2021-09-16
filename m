@@ -2,85 +2,110 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C390C433EF
-	for <linux-api@archiver.kernel.org>; Wed, 15 Sep 2021 19:12:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 831CEC433EF
+	for <linux-api@archiver.kernel.org>; Thu, 16 Sep 2021 04:10:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 789E460FDA
-	for <linux-api@archiver.kernel.org>; Wed, 15 Sep 2021 19:12:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5923F6103E
+	for <linux-api@archiver.kernel.org>; Thu, 16 Sep 2021 04:10:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231331AbhIOTNz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 15 Sep 2021 15:13:55 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41132 "EHLO
+        id S229521AbhIPELw convert rfc822-to-8bit (ORCPT
+        <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 16 Sep 2021 00:11:52 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47950 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230230AbhIOTNz (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 15 Sep 2021 15:13:55 -0400
-Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4B3DFC061574;
-        Wed, 15 Sep 2021 12:12:35 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=desiato.20200630; h=In-Reply-To:Content-Type:MIME-Version:
-        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=FhF5ZEUfgtRm0W8Km2DWenQUkdHHR5Cd4JcveZESDfQ=; b=VHRzgjaQjFEk4mLIFinoi1c2Sk
-        GmyHxKZnMqs6KiQsGqEHuig15rcLVGccWq4rMoxdzfv7CInmVLrKhxIjxONTQfD8Ms9uGxK2iJa9q
-        i4chkJ9DbDCZ84rNuXjUoKAFfRt7jKmfLj4j1O/DYumJ95cAfk7d5qTQH3eWugN4/JJasXjUBGIPO
-        3gs3/n2LCoe2qvDlpTYNrK2/ZnEpF7cT4bFfTptjw5CtS7EFNx6RKk5xyyaYq6Lu/cN/Or1wbPdF7
-        Xiw7n917xLS293xtCWDVK8djzZwuLEysQti/wEj42oH3qoaAgPoZPbBQgc72Ez97tVkMIHWh3TrtJ
-        n+I2kzZQ==;
-Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=worktop.programming.kicks-ass.net)
-        by desiato.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1mQaIa-003STh-1v; Wed, 15 Sep 2021 19:11:01 +0000
-Received: by worktop.programming.kicks-ass.net (Postfix, from userid 1000)
-        id F3B419811C0; Wed, 15 Sep 2021 21:10:23 +0200 (CEST)
-Date:   Wed, 15 Sep 2021 21:10:23 +0200
-From:   Peter Zijlstra <peterz@infradead.org>
-To:     Andy Lutomirski <luto@kernel.org>
-Cc:     Jann Horn <jannh@google.com>, Peter Oskolkov <posk@google.com>,
-        Peter Oskolkov <posk@posk.io>, Ingo Molnar <mingo@redhat.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        Paul Turner <pjt@google.com>, Ben Segall <bsegall@google.com>,
-        Andrei Vagin <avagin@google.com>,
-        Thierry Delisle <tdelisle@uwaterloo.ca>
-Subject: Re: [PATCH 2/4 v0.5] sched/umcg: RFC: add userspace atomic helpers
-Message-ID: <20210915191023.GF4323@worktop.programming.kicks-ass.net>
-References: <20210908184905.163787-1-posk@google.com>
- <20210908184905.163787-3-posk@google.com>
- <CAG48ez2LyLNkH4iVbeKJUuH=oh57WECkKYCW+G9mtheoh7Fsvg@mail.gmail.com>
- <CAPNVh5eaW7r_Nv-wHEyxQiFkXngmONwPyZSFvtTEhk3TxJ+iMA@mail.gmail.com>
- <CAG48ez0mgCXpXnqAUsa0TcFBPjrid-74Gj=xG8HZqj2n+OPoKw@mail.gmail.com>
- <d656e605-4f89-4ea2-8baf-f7786f0630d9@www.fastmail.com>
- <YUDlzxLjNsW+oYGC@hirez.programming.kicks-ass.net>
- <f6fdecfe-963d-4669-ae05-1d7192467a19@www.fastmail.com>
- <YUIUWs9pIfHh51lP@hirez.programming.kicks-ass.net>
- <CALCETrUnnHN0dyx02ewuRu=_TZ+cD=HaEzNs34ADNbWps1tTBw@mail.gmail.com>
+        with ESMTP id S229463AbhIPELv (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 16 Sep 2021 00:11:51 -0400
+Received: from bhuna.collabora.co.uk (bhuna.collabora.co.uk [IPv6:2a00:1098:0:82:1000:25:2eeb:e3e3])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A0530C061574;
+        Wed, 15 Sep 2021 21:10:31 -0700 (PDT)
+Received: from localhost (unknown [IPv6:2a00:5f00:102:0:f4d2:afff:fe2b:18b5])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        (Authenticated sender: krisman)
+        by bhuna.collabora.co.uk (Postfix) with ESMTPSA id 161211F435AC;
+        Thu, 16 Sep 2021 05:10:28 +0100 (BST)
+From:   Gabriel Krisman Bertazi <krisman@collabora.com>
+To:     =?utf-8?Q?Andr=C3=A9?= Almeida <andrealmeid@collabora.com>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Darren Hart <dvhart@infradead.org>,
+        linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        kernel@collabora.com, linux-api@vger.kernel.org,
+        libc-alpha@sourceware.org, mtk.manpages@gmail.com,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v3 2/6] futex2: Implement vectorized wait
+Organization: Collabora
+References: <20210913175249.81074-1-andrealmeid@collabora.com>
+        <20210913175249.81074-3-andrealmeid@collabora.com>
+        <875yv4ge83.fsf@collabora.com>
+        <58536544-e032-1954-ce30-d131869dc95e@collabora.com>
+Date:   Thu, 16 Sep 2021 00:10:25 -0400
+In-Reply-To: <58536544-e032-1954-ce30-d131869dc95e@collabora.com>
+ (=?utf-8?Q?=22Andr=C3=A9?=
+        Almeida"'s message of "Tue, 14 Sep 2021 14:18:58 -0300")
+Message-ID: <8735q5dutq.fsf@collabora.com>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <CALCETrUnnHN0dyx02ewuRu=_TZ+cD=HaEzNs34ADNbWps1tTBw@mail.gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Sep 15, 2021 at 09:50:41AM -0700, Andy Lutomirski wrote:
-> What's the precise problem?  The code would be roughly:
-> 
-> if (try_pin_the_page) {
->   write it;
->   unpin;
-> } else {
->   do nothing -- .fault will fill in the correct contents.
-> }
-> 
-> The time this takes is nondeterministic, but it's bounded and short.
+André Almeida <andrealmeid@collabora.com> writes:
 
-You can't do this from sched_submit_work(), you might already hold
-mmap_sem. Hence the suggestion to, for UMCG registered threads, pin the
-page(s) on syscall-enter and unpin on either schedule() or
-syscall-return.
+>>> +/**
+>>> + * struct futex_waitv - A waiter for vectorized wait
+>>> + * @val:	Expected value at uaddr
+>>> + * @uaddr:	User address to wait on
+>>> + * @flags:	Flags for this waiter
+>>> + * @__reserved:	Reserved member to preserve data alignment. Should be 0.
+>>> + */
+>>> +struct futex_waitv {
+>>> +	__u64 val;
+>>> +	__u64 uaddr;
+>>> +	__u32 flags;
+>>> +	__u32 __reserved;
+>>> +};
+>> 
+>> why force uaddr  to be __u64, even for 32-bit?  uaddr could be a (void*) for
+>> all we care, no?  Also, by adding a reserved field, you are wasting 32
+>> bits even on 32-bit architectures.
+>> 
+>
+> We do that to make the structure layout compatible with both entry
+> points, remove the need for special cast and duplicated code, as
+> suggested by Thomas and Arnd:
+>
+> https://lore.kernel.org/lkml/87v94310gm.ffs@tglx/
+>
+> https://lore.kernel.org/lkml/CAK8P3a0MO1qJLRkCH8KrZ3+=L66KOsMRmcbrUvYdMoKykdKoyQ@mail.gmail.com/
 
+I find this weird.  I'm not even juts talking about compat, but even on
+native 32-bit. But also, 32 applications on 64, which is a big use
+case for games.
+
+The structure is mandating a 64 bit uaddr field and has an unnecessary
+pad.  You are wasting 20% of the space, which is gonna be elements of a
+vector coming from user space.  Worst case, you are doing copy_from_user
+of an extra 1k bytes in the critical path of futex_waitv for no good
+reason.
+
+Also, if I understand correctly, Arnd suggestion, at least, was to have
+two parser functions and a single syscall entry point, that would do the
+translation:
+
+if (in_compat_syscall())
+   futex_parse_waitv_compat(futexv, waiters, nr_futexes);
+else
+   futex_parse_waitv(futexv, waiters, nr_futexes);
+
+-- 
+Gabriel Krisman Bertazi
