@@ -2,137 +2,459 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CD719C433F5
-	for <linux-api@archiver.kernel.org>; Sun, 19 Sep 2021 14:37:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C31BEC433EF
+	for <linux-api@archiver.kernel.org>; Sun, 19 Sep 2021 18:25:58 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A1AEB61244
-	for <linux-api@archiver.kernel.org>; Sun, 19 Sep 2021 14:37:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AFC0960FED
+	for <linux-api@archiver.kernel.org>; Sun, 19 Sep 2021 18:25:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232143AbhISOi5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 19 Sep 2021 10:38:57 -0400
-Received: from mail.kernel.org ([198.145.29.99]:40762 "EHLO mail.kernel.org"
+        id S230503AbhISS1T (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 19 Sep 2021 14:27:19 -0400
+Received: from out0.migadu.com ([94.23.1.103]:49328 "EHLO out0.migadu.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231588AbhISOiz (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Sun, 19 Sep 2021 10:38:55 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 9D57961242
-        for <linux-api@vger.kernel.org>; Sun, 19 Sep 2021 14:37:30 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1632062250;
-        bh=AnYWqh/Vn9lcDJVwlA4yA3xeryd+o1zHbhYrO7Kfiis=;
-        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-        b=sLHBa0n86nsmPAjPNSixgBM0imzft4t65tN0cQjdoOlSAJXK20zZeZBMpZTVYKXBL
-         jqUGd4XeOUqVnO4iy+NlvQLR9NeN2UVJTN2MS09AmhN52LyCsIFj+w77pOgPzELx/2
-         +Nw8UN/YZD4oFpkQvpjLraS0OAyfc9H4TMMHYi7jrwhQoJe2t2UZ1kBT8jVQLpWNc5
-         9uhAaM4SDO0kYR3g5s1LI3vZqFAbLcZiZpWcxbD9k/KlmDwXbBnUmr/cEJcf2cvISu
-         AXhicw6HHP3kxAh3+LbGHbgHMOT6QIKQ4vKftkXvrNkDHuYdVnG96+1doPGtX6SpRa
-         9bpipiVj8CyXQ==
-Received: by mail-ed1-f44.google.com with SMTP id bx4so5424212edb.4
-        for <linux-api@vger.kernel.org>; Sun, 19 Sep 2021 07:37:30 -0700 (PDT)
-X-Gm-Message-State: AOAM5318X4l6yt2sXMRmySz/8SAll5e5AHXAPdasmvwGj4V6pIOfwAmA
-        Kx0Yj67L4wryoj2Ks7gSY9XNWSAVNlFj8znOOnkchQ==
-X-Google-Smtp-Source: ABdhPJxABpLS5hC6VSG1+CEFmVFgpUScWaiJ/5Ab/CVzOBt6wC0yxp0QbgR+/bsxTeVfo/JUbtWLDXhXfxZD5kq2GUY=
-X-Received: by 2002:a17:906:32cf:: with SMTP id k15mr23665867ejk.68.1632062249221;
- Sun, 19 Sep 2021 07:37:29 -0700 (PDT)
+        id S231201AbhISS0R (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sun, 19 Sep 2021 14:26:17 -0400
+Date:   Mon, 20 Sep 2021 02:25:40 +0800
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+        t=1632075890;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=4C3lEksWVzl3mg3d/cunricm5QlTEZMFKSvIlQVBpWg=;
+        b=abCZfzG1VbVqBys9KEt3lv8KP3u5+1lAc83bNzesSPxEKQhpLFl5guFeE0vxXiHcn4yoIz
+        zP7ZcCFzNq2lyoqBGmIT3qx0+/WAoQqfnvib+59/418J64BIXGscD5I8FYJbjhu9amHWt+
+        vIFiBZ0E1j/F4XxPS+xcj8Q5/FUl9OA=
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From:   Tao Zhou <tao.zhou@linux.dev>
+To:     Peter Oskolkov <posk@posk.io>
+Cc:     Peter Zijlstra <peterz@infradead.org>,
+        Ingo Molnar <mingo@redhat.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        Paul Turner <pjt@google.com>, Ben Segall <bsegall@google.com>,
+        Peter Oskolkov <posk@google.com>,
+        Andrei Vagin <avagin@google.com>, Jann Horn <jannh@google.com>,
+        Thierry Delisle <tdelisle@uwaterloo.ca>,
+        Tao Zhou <tao.zhou@linux.dev>
+Subject: Re: [PATCH 2/5 v0.6] sched/umcg: RFC: add userspace atomic helpers
+Message-ID: <YUeApJQ6AiFcy1+Z@geo.homenetwork>
+References: <20210917180323.278250-1-posk@google.com>
+ <20210917180323.278250-3-posk@google.com>
 MIME-Version: 1.0
-References: <705fde50-37a6-49ed-b9c2-c9107cd88189@t-8ch.de>
- <CALCETrUM0cko=5ki-Dd402DNFU2TmgnJTz_vfrsaofkGD-1kmA@mail.gmail.com>
- <20210916092719.v4pkhhugdiq7ytcp@wittgenstein> <2ebf1a9d-77d5-472b-a99a-b141654725da@www.fastmail.com>
- <6eff0e8a-4965-437d-9273-1d9d73892e1a@t-8ch.de>
-In-Reply-To: <6eff0e8a-4965-437d-9273-1d9d73892e1a@t-8ch.de>
-From:   Andy Lutomirski <luto@kernel.org>
-Date:   Sun, 19 Sep 2021 07:37:16 -0700
-X-Gmail-Original-Message-ID: <CALCETrWA1TBvbknH1Jzt=newTd4sHzNFm0RPuRxazjuRQRsR7w@mail.gmail.com>
-Message-ID: <CALCETrWA1TBvbknH1Jzt=newTd4sHzNFm0RPuRxazjuRQRsR7w@mail.gmail.com>
-Subject: Re: [RFC] Expose request_module via syscall
-To:     =?UTF-8?Q?Thomas_Wei=C3=9Fschuh?= <thomas@t-8ch.de>
-Cc:     Andy Lutomirski <luto@kernel.org>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        Linux API <linux-api@vger.kernel.org>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        Luis Chamberlain <mcgrof@kernel.org>,
-        Jessica Yu <jeyu@kernel.org>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20210917180323.278250-3-posk@google.com>
+X-Migadu-Flow: FLOW_OUT
+X-Migadu-Auth-User: tao.zhou@linux.dev
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Sun, Sep 19, 2021 at 12:56 AM Thomas Wei=C3=9Fschuh <thomas@t-8ch.de> wr=
-ote:
->
-> On 2021-09-18T11:47-0700, Andy Lutomirski wrote:
-> > On Thu, Sep 16, 2021, at 2:27 AM, Christian Brauner wrote:
-> > > On Wed, Sep 15, 2021 at 09:47:25AM -0700, Andy Lutomirski wrote:
-> > > > On Wed, Sep 15, 2021 at 8:50 AM Thomas Wei=C3=9Fschuh <thomas@t-8ch=
-.de> wrote:
-> > > > >
-> > > > > Hi,
-> > > > >
-> > > > > I would like to propose a new syscall that exposes the functional=
-ity of
-> > > > > request_module() to userspace.
-> > > > >
-> > > > > Propsed signature: request_module(char *module_name, char **args,=
- int flags);
-> > > > > Where args and flags have to be NULL and 0 for the time being.
-> > > > >
-> > > > > Rationale:
-> > > > >
-> > > > > We are using nested, privileged containers which are loading kern=
-el modules.
-> > > > > Currently we have to always pass around the contents of /lib/modu=
-les from the
-> > > > > root namespace which contains the modules.
-> > > > > (Also the containers need to have userspace components for module=
-loading
-> > > > > installed)
-> > > > >
-> > > > > The syscall would remove the need for this bookkeeping work.
-> > > >
-> > > > I feel like I'm missing something, and I don't understand the purpo=
-se
-> > > > of this syscall.  Wouldn't the right solution be for the container =
-to
-> > > > have a stub module loader (maybe doable with a special /sbin/modpro=
-be
-> > > > or maybe a kernel patch would be needed, depending on the exact use
-> > > > case) and have the stub call out to the container manager to reques=
-t
-> > > > the module?  The container manager would check its security policy =
-and
-> > > > load the module or not load it as appropriate.
-> > >
-> > > I don't see the need for a syscall like this yet either.
-> > >
-> > > This should be the job of the container manager. modprobe just calls =
-the
-> > > init_module() syscall, right?
-> >
-> > Not quite so simple. modprobe parses things in /lib/modules and maybe /=
-etc to decide what init_module() calls to do.
-> >
-> > But I admit I=E2=80=99m a bit confused.  What exactly is the container =
-doing that causes the container=E2=80=99s copy of modprobe to be called?
->
-> The container is running an instance of the docker daemon in swarm mode.
-> That needs the "ip_vs" module (amongst others) and explicitly tries to lo=
-ad it
-> via modprobe.
->
+On Fri, Sep 17, 2021 at 11:03:20AM -0700, Peter Oskolkov wrote:
 
-Do you mean it literally invokes /sbin/modprobe?  If so, hooking this
-at /sbin/modprobe and calling out to the container manager seems like
-a decent solution.
+> Add helper functions to work atomically with userspace 32/64 bit values -
+> there are some .*futex.* named helpers, but they are not exactly
+> what is needed for UMCG; I haven't found what else I could use, so I
+> rolled these.
+> 
+> At the moment only X86_64 is supported.
+> 
+> Note: the helpers should probably go into arch/ somewhere; I have
+> them in kernel/sched/umcg_uaccess.h temporarily for convenience. Please
+> let me know where I should put them.
+> 
+> Changelog:
+> v0.5->v0.6:
+>  - replaced mmap_read_lock with mmap_read_lock_killable in fix_pagefault();
+>  - fix_pagefault now validates proper uaddr alignment;
+>  - renamed umcg.h to umcg_uaccess.h;
+> v0.4->v0.5:
+>  - added xchg_user_** helpers;
+> v0.3->v0.4:
+>  - added put_user_nosleep;
+>  - removed linked list/stack operations patch;
+> v0.2->v0.3:
+>  - renamed and refactored the helpers a bit, as described above;
+>  - moved linked list/stack operations into a separate patch.
+> 
+> Signed-off-by: Peter Oskolkov <posk@google.com>
+> ---
+>  kernel/sched/umcg_uaccess.h | 344 ++++++++++++++++++++++++++++++++++++
+>  1 file changed, 344 insertions(+)
+>  create mode 100644 kernel/sched/umcg_uaccess.h
+> 
+> diff --git a/kernel/sched/umcg_uaccess.h b/kernel/sched/umcg_uaccess.h
+> new file mode 100644
+> index 000000000000..e4ead8d2fd62
+> --- /dev/null
+> +++ b/kernel/sched/umcg_uaccess.h
+> @@ -0,0 +1,344 @@
+> +/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+> +#ifndef _KERNEL_SCHED_UMCG_UACCESS_H
+> +#define _KERNEL_SCHED_UMCG_UACCESS_H
+> +
+> +#ifdef CONFIG_X86_64
+> +
+> +#include <linux/uaccess.h>
+> +
+> +#include <asm/asm.h>
+> +#include <linux/atomic.h>
+> +#include <asm/uaccess.h>
+> +
+> +/* TODO: move atomic operations below into arch/ headers */
+> +static inline int __try_cmpxchg_user_32(u32 *uval, u32 __user *uaddr,
+> +						u32 oldval, u32 newval)
+> +{
+> +	int ret = 0;
+> +
+> +	asm volatile("\n"
+> +		"1:\t" LOCK_PREFIX "cmpxchgl %4, %2\n"
+> +		"2:\n"
+> +		"\t.section .fixup, \"ax\"\n"
+> +		"3:\tmov     %3, %0\n"
+> +		"\tjmp     2b\n"
+> +		"\t.previous\n"
+> +		_ASM_EXTABLE_UA(1b, 3b)
+> +		: "+r" (ret), "=a" (oldval), "+m" (*uaddr)
+> +		: "i" (-EFAULT), "r" (newval), "1" (oldval)
+> +		: "memory"
+> +	);
+> +	*uval = oldval;
+> +	return ret;
+> +}
+> +
+> +static inline int __try_cmpxchg_user_64(u64 *uval, u64 __user *uaddr,
+> +						u64 oldval, u64 newval)
+> +{
+> +	int ret = 0;
+> +
+> +	asm volatile("\n"
+> +		"1:\t" LOCK_PREFIX "cmpxchgq %4, %2\n"
+> +		"2:\n"
+> +		"\t.section .fixup, \"ax\"\n"
+> +		"3:\tmov     %3, %0\n"
+> +		"\tjmp     2b\n"
+> +		"\t.previous\n"
+> +		_ASM_EXTABLE_UA(1b, 3b)
+> +		: "+r" (ret), "=a" (oldval), "+m" (*uaddr)
+> +		: "i" (-EFAULT), "r" (newval), "1" (oldval)
+> +		: "memory"
+> +	);
+> +	*uval = oldval;
+> +	return ret;
+> +}
+> +
+> +static inline int fix_pagefault(unsigned long uaddr, bool write_fault, int bytes)
+> +{
+> +	struct mm_struct *mm = current->mm;
+> +	int ret;
+> +
+> +	/* Validate proper alignment. */
+> +	if (uaddr % bytes)
+> +		return -EINVAL;
+> +
+> +	if (mmap_read_lock_killable(mm))
+> +		return -EINTR;
+> +	ret = fixup_user_fault(mm, uaddr, write_fault ? FAULT_FLAG_WRITE : 0,
+> +			NULL);
+> +	mmap_read_unlock(mm);
+> +
+> +	return ret < 0 ? ret : 0;
+> +}
+> +
+> +/**
+> + * cmpxchg_32_user_nosleep - compare_exchange 32-bit values
+      ^^^^^^^^^^^^^^^^^^^^^^^
+Need to be consistent with the function name below.
 
-> > > If so the seccomp notifier can be used to intercept this system call =
-for
-> > > the container and verify the module against an allowlist similar to h=
-ow
-> > > we currently handle mount.
-> > >
-> > > Christian
-> > >
+> + * Return:
+> + * 0 - OK
+> + * -EFAULT: memory access error
+> + * -EAGAIN: @expected did not match; consult @prev
+> + */
+> +static inline int cmpxchg_user_32_nosleep(u32 __user *uaddr, u32 *old, u32 new)
+> +{
+> +	int ret = -EFAULT;
+> +	u32 __old = *old;
+> +
+> +	if (unlikely(!access_ok(uaddr, sizeof(*uaddr))))
+> +		return -EFAULT;
+> +
+> +	pagefault_disable();
+> +
+> +	__uaccess_begin_nospec();
+> +	ret = __try_cmpxchg_user_32(old, uaddr, __old, new);
+> +	user_access_end();
+> +
+> +	if (!ret)
+> +		ret =  *old == __old ? 0 : -EAGAIN;
+> +
+> +	pagefault_enable();
+> +	return ret;
+> +}
+> +
+> +/**
+> + * cmpxchg_64_user_nosleep - compare_exchange 64-bit values
+      ^^^^^^^^^^^^^^^^^^^^^^^
+Ditto.
+
+> + * Return:
+> + * 0 - OK
+> + * -EFAULT: memory access error
+> + * -EAGAIN: @expected did not match; consult @prev
+> + */
+> +static inline int cmpxchg_user_64_nosleep(u64 __user *uaddr, u64 *old, u64 new)
+> +{
+> +	int ret = -EFAULT;
+> +	u64 __old = *old;
+> +
+> +	if (unlikely(!access_ok(uaddr, sizeof(*uaddr))))
+> +		return -EFAULT;
+> +
+> +	pagefault_disable();
+> +
+> +	__uaccess_begin_nospec();
+> +	ret = __try_cmpxchg_user_64(old, uaddr, __old, new);
+> +	user_access_end();
+> +
+> +	if (!ret)
+> +		ret =  *old == __old ? 0 : -EAGAIN;
+> +
+> +	pagefault_enable();
+> +
+> +	return ret;
+> +}
+> +
+> +/**
+> + * cmpxchg_32_user - compare_exchange 32-bit values
+      ^^^^^^^^^^^^^^^
+Ditto.
+
+> + * Return:
+> + * 0 - OK
+> + * -EFAULT: memory access error
+> + * -EAGAIN: @expected did not match; consult @prev
+> + */
+> +static inline int cmpxchg_user_32(u32 __user *uaddr, u32 *old, u32 new)
+> +{
+> +	int ret = -EFAULT;
+> +	u32 __old = *old;
+> +
+> +	if (unlikely(!access_ok(uaddr, sizeof(*uaddr))))
+> +		return -EFAULT;
+> +
+> +	pagefault_disable();
+> +
+> +	while (true) {
+> +		__uaccess_begin_nospec();
+> +		ret = __try_cmpxchg_user_32(old, uaddr, __old, new);
+> +		user_access_end();
+> +
+> +		if (!ret) {
+> +			ret =  *old == __old ? 0 : -EAGAIN;
+> +			break;
+> +		}
+> +
+> +		if (fix_pagefault((unsigned long)uaddr, true, sizeof(*uaddr)) < 0)
+> +			break;
+> +	}
+> +
+> +	pagefault_enable();
+> +	return ret;
+> +}
+> +
+> +/**
+> + * cmpxchg_64_user - compare_exchange 64-bit values
+      ^^^^^^^^^^^^^^^
+Ditto.
+
+> + * Return:
+> + * 0 - OK
+> + * -EFAULT: memory access error
+> + * -EAGAIN: @expected did not match; consult @prev
+> + */
+> +static inline int cmpxchg_user_64(u64 __user *uaddr, u64 *old, u64 new)
+> +{
+> +	int ret = -EFAULT;
+> +	u64 __old = *old;
+> +
+> +	if (unlikely(!access_ok(uaddr, sizeof(*uaddr))))
+> +		return -EFAULT;
+> +
+> +	pagefault_disable();
+> +
+> +	while (true) {
+> +		__uaccess_begin_nospec();
+> +		ret = __try_cmpxchg_user_64(old, uaddr, __old, new);
+> +		user_access_end();
+> +
+> +		if (!ret) {
+> +			ret =  *old == __old ? 0 : -EAGAIN;
+> +			break;
+> +		}
+> +
+> +		if (fix_pagefault((unsigned long)uaddr, true, sizeof(*uaddr)) < 0)
+> +			break;
+> +	}
+> +
+> +	pagefault_enable();
+> +
+> +	return ret;
+> +}
+> +
+> +static inline int __try_xchg_user_32(u32 *oval, u32 __user *uaddr, u32 newval)
+> +{
+> +	u32 oldval = 0;
+> +	int ret = 0;
+> +
+> +	asm volatile("\n"
+> +		"1:\txchgl %0, %2\n"
+> +		"2:\n"
+> +		"\t.section .fixup, \"ax\"\n"
+> +		"3:\tmov     %3, %0\n"
+> +		"\tjmp     2b\n"
+> +		"\t.previous\n"
+> +		_ASM_EXTABLE_UA(1b, 3b)
+> +		: "=r" (oldval), "=r" (ret), "+m" (*uaddr)
+> +		: "i" (-EFAULT), "0" (newval), "1" (0)
+> +	);
+> +
+> +	if (ret)
+> +		return ret;
+> +
+> +	*oval = oldval;
+> +	return 0;
+> +}
+> +
+> +static inline int __try_xchg_user_64(u64 *oval, u64 __user *uaddr, u64 newval)
+> +{
+> +	u64 oldval = 0;
+> +	int ret = 0;
+> +
+> +	asm volatile("\n"
+> +		"1:\txchgq %0, %2\n"
+> +		"2:\n"
+> +		"\t.section .fixup, \"ax\"\n"
+> +		"3:\tmov     %3, %0\n"
+> +		"\tjmp     2b\n"
+> +		"\t.previous\n"
+> +		_ASM_EXTABLE_UA(1b, 3b)
+> +		: "=r" (oldval), "=r" (ret), "+m" (*uaddr)
+> +		: "i" (-EFAULT), "0" (newval), "1" (0)
+> +	);
+> +
+> +	if (ret)
+> +		return ret;
+> +
+> +	*oval = oldval;
+> +	return 0;
+> +}
+> +
+> +/**
+> + * xchg_32_user - atomically exchange 64-bit values
+      ^^^^^^^^^^^^
+Ditto.
+
+> + * Return:
+> + * 0 - OK
+> + * -EFAULT: memory access error
+> + */
+> +static inline int xchg_user_32(u32 __user *uaddr, u32 *val)
+> +{
+> +	int ret = -EFAULT;
+> +
+> +	if (unlikely(!access_ok(uaddr, sizeof(*uaddr))))
+> +		return -EFAULT;
+> +
+> +	pagefault_disable();
+> +
+> +	while (true) {
+> +
+> +		__uaccess_begin_nospec();
+> +		ret = __try_xchg_user_32(val, uaddr, *val);
+> +		user_access_end();
+> +
+> +		if (!ret)
+> +			break;
+> +
+> +		if (fix_pagefault((unsigned long)uaddr, true, sizeof(*uaddr)) < 0)
+> +			break;
+> +	}
+> +
+> +	pagefault_enable();
+> +
+> +	return ret;
+> +}
+> +
+> +/**
+> + * xchg_64_user - atomically exchange 64-bit values
+      ^^^^^^^^^^^^
+Ditto.
+
+> + * Return:
+> + * 0 - OK
+> + * -EFAULT: memory access error
+> + */
+> +static inline int xchg_user_64(u64 __user *uaddr, u64 *val)
+> +{
+> +	int ret = -EFAULT;
+> +
+> +	if (unlikely(!access_ok(uaddr, sizeof(*uaddr))))
+> +		return -EFAULT;
+> +
+> +	pagefault_disable();
+> +
+> +	while (true) {
+> +
+> +		__uaccess_begin_nospec();
+> +		ret = __try_xchg_user_64(val, uaddr, *val);
+> +		user_access_end();
+> +
+> +		if (!ret)
+> +			break;
+> +
+> +		if (fix_pagefault((unsigned long)uaddr, true, sizeof(*uaddr)) < 0)
+> +			break;
+> +	}
+> +
+> +	pagefault_enable();
+> +
+> +	return ret;
+> +}
+> +
+> +/**
+> + * get_user_nosleep - get user value without sleeping.
+> + *
+> + * get_user() might sleep and therefore cannot be used in preempt-disabled
+> + * regions.
+> + */
+> +#define get_user_nosleep(out, uaddr)			\
+> +({							\
+> +	int ret = -EFAULT;				\
+> +							\
+> +	if (access_ok((uaddr), sizeof(*(uaddr)))) {	\
+> +		pagefault_disable();			\
+> +							\
+> +		if (!__get_user((out), (uaddr)))	\
+> +			ret = 0;			\
+> +							\
+> +		pagefault_enable();			\
+> +	}						\
+> +	ret;						\
+> +})
+> +
+> +#endif  /* CONFIG_X86_64 */
+> +#endif  /* _KERNEL_SCHED_UMCG_UACCESS_H */
+> --
+> 2.25.1
+> 
+
+
+
+Thanks,
+Tao
