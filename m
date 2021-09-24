@@ -2,48 +2,52 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7FD53C433EF
-	for <linux-api@archiver.kernel.org>; Fri, 24 Sep 2021 00:09:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 57D6AC433EF
+	for <linux-api@archiver.kernel.org>; Fri, 24 Sep 2021 00:09:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5ABDA61241
-	for <linux-api@archiver.kernel.org>; Fri, 24 Sep 2021 00:09:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3E29661241
+	for <linux-api@archiver.kernel.org>; Fri, 24 Sep 2021 00:09:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236458AbhIXAKl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 23 Sep 2021 20:10:41 -0400
-Received: from out02.mta.xmission.com ([166.70.13.232]:33528 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232143AbhIXAKl (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 23 Sep 2021 20:10:41 -0400
-Received: from in01.mta.xmission.com ([166.70.13.51]:52332)
-        by out02.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        id S243621AbhIXALS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 23 Sep 2021 20:11:18 -0400
+Received: from out03.mta.xmission.com ([166.70.13.233]:58428 "EHLO
+        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S243629AbhIXALP (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 23 Sep 2021 20:11:15 -0400
+Received: from in01.mta.xmission.com ([166.70.13.51]:60332)
+        by out03.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1mTYm3-007ju0-D3; Thu, 23 Sep 2021 18:09:07 -0600
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95]:57218 helo=email.xmission.com)
+        id 1mTYmc-00Bu71-0m; Thu, 23 Sep 2021 18:09:42 -0600
+Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95]:57242 helo=email.xmission.com)
         by in01.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1mTYm2-00EloX-6M; Thu, 23 Sep 2021 18:09:06 -0600
+        id 1mTYma-00Elu0-WF; Thu, 23 Sep 2021 18:09:41 -0600
 From:   ebiederm@xmission.com (Eric W. Biederman)
 To:     <linux-kernel@vger.kernel.org>
 Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
         Oleg Nesterov <oleg@redhat.com>,
         Al Viro <viro@ZenIV.linux.org.uk>, <linux-api@vger.kernel.org>,
         Kees Cook <keescook@chromium.org>
-Date:   Thu, 23 Sep 2021 19:08:09 -0500
-Message-ID: <87v92qx2c6.fsf@disp2133>
+References: <87v92qx2c6.fsf@disp2133>
+Date:   Thu, 23 Sep 2021 19:09:34 -0500
+In-Reply-To: <87v92qx2c6.fsf@disp2133> (Eric W. Biederman's message of "Thu,
+        23 Sep 2021 19:08:09 -0500")
+Message-ID: <87pmsyx29t.fsf@disp2133>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
-X-XM-SPF: eid=1mTYm2-00EloX-6M;;;mid=<87v92qx2c6.fsf@disp2133>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1/MWEGFo8SfpHSHDGwehupHY+XVRmEIGZo=
+X-XM-SPF: eid=1mTYma-00Elu0-WF;;;mid=<87pmsyx29t.fsf@disp2133>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX18P1JJkHBKk3bU181Jm9KWv8/ycafLugo8=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: [PATCH 0/6] per signal_struct coredumps
+Subject: [PATCH 1/6] signal: Remove the bogus sigkill_pending in ptrace_stop
 X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
 X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Precedence: bulk
@@ -51,54 +55,74 @@ List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
 
-Current coredumps are mixed up with the exit code, the signal handling
-code and with the ptrace code in was they are much more complicated than
-necessary and difficult to follow.
+The existence of sigkill_pending is a little silly as it is
+functionally a duplicate of fatal_signal_pending that is used in
+exactly one place.
 
-This series of changes starts with ptrace_stop and cleans it up,
-making it easier to follow what is happening in ptrace_stop.
-Then cleans up the exec interactions with coredumps.
-Then cleans up the coredump interactions with exit.
-Then the coredump interactions with the signal handling code is clean
-up.
+Checking for pending fatal signals and returning early in ptrace_stop
+is actively harmful.  It casues the ptrace_stop called by
+ptrace_signal to return early before setting current->exit_code.
+Later when ptrace_signal reads the signal number from
+current->exit_code is undefined, making it unpredictable what will
+happen.
 
-The first and last changes are bug fixes for minor bugs.
+Instead rely on the fact that schedule will not sleep if there is a
+pending signal that can awaken a task.
 
-I believe the fact that vfork followed by execve can kill the process
-the called vfork if exec fails is sufficient justification to change
-the userspace visible behavior.
+Removing the explict sigkill_pending test fixes fixes ptrace_signal
+when ptrace_stop does not stop because current->exit_code is always
+set to to signr.
 
-In previous conversations it was suggested that some of these cleanups
-did not stand on their own.  I think I have managed to organize things
-so all of their patches stand on their own.
+Cc: stable@vger.kernel.org
+Fixes: 3d749b9e676b ("ptrace: simplify ptrace_stop()->sigkill_pending() path")
+Fixes: 1a669c2f16d4 ("Add arch_ptrace_stop")
+Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+---
+ kernel/signal.c | 18 ++++--------------
+ 1 file changed, 4 insertions(+), 14 deletions(-)
 
-Which means that if for some reason the last change needs to be reverted
-we can still keep the gains from the other changes.
+diff --git a/kernel/signal.c b/kernel/signal.c
+index 952741f6d0f9..9f2dc9cf3208 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -2182,15 +2182,6 @@ static inline bool may_ptrace_stop(void)
+ 	return true;
+ }
+ 
+-/*
+- * Return non-zero if there is a SIGKILL that should be waking us up.
+- * Called with the siglock held.
+- */
+-static bool sigkill_pending(struct task_struct *tsk)
+-{
+-	return sigismember(&tsk->pending.signal, SIGKILL) ||
+-	       sigismember(&tsk->signal->shared_pending.signal, SIGKILL);
+-}
+ 
+ /*
+  * This must be called with current->sighand->siglock held.
+@@ -2217,17 +2208,16 @@ static void ptrace_stop(int exit_code, int why, int clear_code, kernel_siginfo_t
+ 		 * calling arch_ptrace_stop, so we must release it now.
+ 		 * To preserve proper semantics, we must do this before
+ 		 * any signal bookkeeping like checking group_stop_count.
+-		 * Meanwhile, a SIGKILL could come in before we retake the
+-		 * siglock.  That must prevent us from sleeping in TASK_TRACED.
+-		 * So after regaining the lock, we must check for SIGKILL.
+ 		 */
+ 		spin_unlock_irq(&current->sighand->siglock);
+ 		arch_ptrace_stop(exit_code, info);
+ 		spin_lock_irq(&current->sighand->siglock);
+-		if (sigkill_pending(current))
+-			return;
+ 	}
+ 
++	/*
++	 * schedule() will not sleep if there is a pending signal that
++	 * can awaken the task.
++	 */
+ 	set_special_state(TASK_TRACED);
+ 
+ 	/*
+-- 
+2.20.1
 
-
-Eric W. Biederman (6):
-      signal: Remove the bogus sigkill_pending in ptrace_stop
-      ptrace: Remove the unnecessary arguments from arch_ptrace_stop
-      exec: Check for a pending fatal signal instead of core_state
-      exit: Factor coredump_exit_mm out of exit_mm
-      coredump:  Don't perform any cleanups before dumping core
-      coredump: Limit coredumps to a single thread group
-
- arch/ia64/include/asm/ptrace.h  |  4 +-
- arch/sparc/include/asm/ptrace.h |  8 ++--
- fs/binfmt_elf.c                 |  4 +-
- fs/binfmt_elf_fdpic.c           |  2 +-
- fs/coredump.c                   | 88 ++++++-----------------------------------
- fs/exec.c                       | 14 +++----
- fs/proc/array.c                 |  6 +--
- include/linux/mm_types.h        | 13 ------
- include/linux/ptrace.h          | 22 +++++------
- include/linux/sched.h           |  1 +
- include/linux/sched/signal.h    | 13 ++++++
- kernel/exit.c                   | 76 +++++++++++++++++++----------------
- kernel/fork.c                   |  4 +-
- kernel/signal.c                 | 49 ++++-------------------
- mm/oom_kill.c                   |  6 +--
- 15 files changed, 104 insertions(+), 206 deletions(-)
-
-Eric
