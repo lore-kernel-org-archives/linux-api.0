@@ -2,122 +2,103 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 076F5C433EF
-	for <linux-api@archiver.kernel.org>; Fri, 24 Sep 2021 00:05:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7FD53C433EF
+	for <linux-api@archiver.kernel.org>; Fri, 24 Sep 2021 00:09:10 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CD7BE61260
-	for <linux-api@archiver.kernel.org>; Fri, 24 Sep 2021 00:05:54 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5ABDA61241
+	for <linux-api@archiver.kernel.org>; Fri, 24 Sep 2021 00:09:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S243602AbhIXAHZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 23 Sep 2021 20:07:25 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39780 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232143AbhIXAHZ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 23 Sep 2021 20:07:25 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 43736C061574;
-        Thu, 23 Sep 2021 17:05:53 -0700 (PDT)
-From:   Thomas Gleixner <tglx@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1632441951;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=oY8EuJiYEKvkUjpvE7Y5S4ag1Dg/um8EAc+9e8mXoRw=;
-        b=xA8c8+gHSrJKHkvWZ2jPU2Ndt91Zzd/URXlXCRD1wTNrq15B+kSlp/1PY15x+diOt9PkKa
-        8INdgMX1p0OPg9fU5X/uXNW/ymZfXrCkWJ1eqoWTfsJHn9Bt4/qUpBNCHSEPHEewfc1pkd
-        w3OwUUH/TZHUz+JHeHqFVW5STwVDVNnYUSvFLC/TnYkwUa3skd0R4Bt/6NlFWfYoHN63h3
-        oV0sNk9YJOTc1rSHhyQAq/oQJX7XjCpGd1Y/veBDuDI7TZvhZCW2/n6zF3HMeYUM+gcOkF
-        s0eUtwJ2T/BeY2KtS7n2eEZXWW35leUit4hlpCK9w87Fw3DB80dUmX3LvtYHUw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1632441951;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=oY8EuJiYEKvkUjpvE7Y5S4ag1Dg/um8EAc+9e8mXoRw=;
-        b=07PjkRSxh+DGScz1Vj7xjE/dEP53ru2E9F94RJcbaZBEI//uuNfyU2zFv+/LfcIOldKwZN
-        vnMpzG8GyE8K2pAA==
-To:     Greg KH <gregkh@linuxfoundation.org>,
-        Sohil Mehta <sohil.mehta@intel.com>
-Cc:     x86@kernel.org, Tony Luck <tony.luck@intel.com>,
-        Dave Hansen <dave.hansen@intel.com>,
-        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
-        "H . Peter Anvin" <hpa@zytor.com>,
-        Andy Lutomirski <luto@kernel.org>,
-        Jens Axboe <axboe@kernel.dk>,
-        Christian Brauner <christian@brauner.io>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Shuah Khan <shuah@kernel.org>, Arnd Bergmann <arnd@arndb.de>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Ashok Raj <ashok.raj@intel.com>,
-        Jacob Pan <jacob.jun.pan@linux.intel.com>,
-        Gayatri Kammela <gayatri.kammela@intel.com>,
-        Zeng Guang <guang.zeng@intel.com>,
-        Dan Williams <dan.j.williams@intel.com>,
-        Randy E Witt <randy.e.witt@intel.com>,
-        Ravi V Shankar <ravi.v.shankar@intel.com>,
-        Ramesh Thomas <ramesh.thomas@intel.com>,
-        linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org
-Subject: Re: [RFC PATCH 06/13] x86/uintr: Introduce uintr receiver syscalls
-In-Reply-To: <YUxyZuJoK87OeGlw@kroah.com>
-References: <20210913200132.3396598-1-sohil.mehta@intel.com>
- <20210913200132.3396598-7-sohil.mehta@intel.com>
- <YUxyZuJoK87OeGlw@kroah.com>
-Date:   Fri, 24 Sep 2021 02:05:51 +0200
-Message-ID: <87a6k2g7mo.ffs@tglx>
+        id S236458AbhIXAKl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 23 Sep 2021 20:10:41 -0400
+Received: from out02.mta.xmission.com ([166.70.13.232]:33528 "EHLO
+        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S232143AbhIXAKl (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 23 Sep 2021 20:10:41 -0400
+Received: from in01.mta.xmission.com ([166.70.13.51]:52332)
+        by out02.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1mTYm3-007ju0-D3; Thu, 23 Sep 2021 18:09:07 -0600
+Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95]:57218 helo=email.xmission.com)
+        by in01.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1mTYm2-00EloX-6M; Thu, 23 Sep 2021 18:09:06 -0600
+From:   ebiederm@xmission.com (Eric W. Biederman)
+To:     <linux-kernel@vger.kernel.org>
+Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
+        Oleg Nesterov <oleg@redhat.com>,
+        Al Viro <viro@ZenIV.linux.org.uk>, <linux-api@vger.kernel.org>,
+        Kees Cook <keescook@chromium.org>
+Date:   Thu, 23 Sep 2021 19:08:09 -0500
+Message-ID: <87v92qx2c6.fsf@disp2133>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
+X-XM-SPF: eid=1mTYm2-00EloX-6M;;;mid=<87v92qx2c6.fsf@disp2133>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1/MWEGFo8SfpHSHDGwehupHY+XVRmEIGZo=
+X-SA-Exim-Connect-IP: 68.227.160.95
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: [PATCH 0/6] per signal_struct coredumps
+X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
+X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Sep 23 2021 at 14:26, Greg KH wrote:
-> On Mon, Sep 13, 2021 at 01:01:25PM -0700, Sohil Mehta wrote:
->> +SYSCALL_DEFINE2(uintr_register_handler, u64 __user *, handler, unsigned int, flags)
->> +{
->> +	int ret;
->> +
->> +	if (!uintr_arch_enabled())
->> +		return -EOPNOTSUPP;
->> +
->> +	if (flags)
->> +		return -EINVAL;
->> +
->> +	/* TODO: Validate the handler address */
->> +	if (!handler)
->> +		return -EFAULT;
->
-> Um, that's a pretty big "TODO" here.
->
-> How are you going to define what is, and what is not, an allowed
-> "handler"?
 
-The requirement is obviously that this is a valid user space address,
-but that's so hard to validate that it needs to be done later.
+Current coredumps are mixed up with the exit code, the signal handling
+code and with the ptrace code in was they are much more complicated than
+necessary and difficult to follow.
 
-At least the documentation claims that a non user space address should
-result in a #GP on delivery. Whether that holds in all corner cases (see
-the spurious handling muck) is a different question and might come back
-to us later through a channel which we hate with a passion :)
+This series of changes starts with ptrace_stop and cleans it up,
+making it easier to follow what is happening in ptrace_stop.
+Then cleans up the exec interactions with coredumps.
+Then cleans up the coredump interactions with exit.
+Then the coredump interactions with the signal handling code is clean
+up.
 
-> I'm sure the security people would like to get involved here, as well as
-> the auditing people.  Have you talked with them about their requirements
-> for this type of stuff?
+The first and last changes are bug fixes for minor bugs.
 
-The handler is strictly a user space address and user space is generally
-allowed to shoot itself into the foot. If the address is bogus then this
-will resolve into inaccessible, not-mapped or not exectuable space and
-the application can keep the pieces.
+I believe the fact that vfork followed by execve can kill the process
+the called vfork if exec fails is sufficient justification to change
+the userspace visible behavior.
 
-Whether the hardware handles the resulting exception correctly is a
-different question, but that can't be prevented by any sanity check on
-the address at registration time.
+In previous conversations it was suggested that some of these cleanups
+did not stand on their own.  I think I have managed to organize things
+so all of their patches stand on their own.
 
-Thanks,
+Which means that if for some reason the last change needs to be reverted
+we can still keep the gains from the other changes.
 
-        tglx
+
+Eric W. Biederman (6):
+      signal: Remove the bogus sigkill_pending in ptrace_stop
+      ptrace: Remove the unnecessary arguments from arch_ptrace_stop
+      exec: Check for a pending fatal signal instead of core_state
+      exit: Factor coredump_exit_mm out of exit_mm
+      coredump:  Don't perform any cleanups before dumping core
+      coredump: Limit coredumps to a single thread group
+
+ arch/ia64/include/asm/ptrace.h  |  4 +-
+ arch/sparc/include/asm/ptrace.h |  8 ++--
+ fs/binfmt_elf.c                 |  4 +-
+ fs/binfmt_elf_fdpic.c           |  2 +-
+ fs/coredump.c                   | 88 ++++++-----------------------------------
+ fs/exec.c                       | 14 +++----
+ fs/proc/array.c                 |  6 +--
+ include/linux/mm_types.h        | 13 ------
+ include/linux/ptrace.h          | 22 +++++------
+ include/linux/sched.h           |  1 +
+ include/linux/sched/signal.h    | 13 ++++++
+ kernel/exit.c                   | 76 +++++++++++++++++++----------------
+ kernel/fork.c                   |  4 +-
+ kernel/signal.c                 | 49 ++++-------------------
+ mm/oom_kill.c                   |  6 +--
+ 15 files changed, 104 insertions(+), 206 deletions(-)
+
+Eric
