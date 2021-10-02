@@ -2,183 +2,356 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 57BEBC433FE
-	for <linux-api@archiver.kernel.org>; Fri,  1 Oct 2021 23:04:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EE065C433EF
+	for <linux-api@archiver.kernel.org>; Sat,  2 Oct 2021 17:50:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3C48D61AF8
-	for <linux-api@archiver.kernel.org>; Fri,  1 Oct 2021 23:04:42 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CF57D61B00
+	for <linux-api@archiver.kernel.org>; Sat,  2 Oct 2021 17:50:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231245AbhJAXGW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 1 Oct 2021 19:06:22 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60390 "EHLO
+        id S233633AbhJBRwF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 2 Oct 2021 13:52:05 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52406 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230433AbhJAXGP (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 1 Oct 2021 19:06:15 -0400
-Received: from mail-pg1-x533.google.com (mail-pg1-x533.google.com [IPv6:2607:f8b0:4864:20::533])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5DD6BC06177F
-        for <linux-api@vger.kernel.org>; Fri,  1 Oct 2021 16:04:30 -0700 (PDT)
-Received: by mail-pg1-x533.google.com with SMTP id 75so10732164pga.3
-        for <linux-api@vger.kernel.org>; Fri, 01 Oct 2021 16:04:30 -0700 (PDT)
+        with ESMTP id S232043AbhJBRwF (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 2 Oct 2021 13:52:05 -0400
+Received: from mail-wr1-x434.google.com (mail-wr1-x434.google.com [IPv6:2a00:1450:4864:20::434])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 212CDC0613EC;
+        Sat,  2 Oct 2021 10:50:19 -0700 (PDT)
+Received: by mail-wr1-x434.google.com with SMTP id t8so21129694wri.1;
+        Sat, 02 Oct 2021 10:50:18 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=amacapital-net.20210112.gappssmtp.com; s=20210112;
-        h=content-transfer-encoding:from:mime-version:subject:date:message-id
-         :references:cc:in-reply-to:to;
-        bh=aN3ZAgmq2n3pSx/30jOE16PQorFF/7eTuuFBp43eiXY=;
-        b=IYOscUxVH70MZ++sZ08gw+G5qC2G9A4KaPrK30xx7iUzUYOkrtaWLex6rPowT2oJkM
-         Zs3AdyB7IydSyAi7JHeMI8UIMlGaybdg3gme2syp0Pw0iS8EWOvZwU4UIHN1RhCVp/Pb
-         uDKBfTpbl/2BBoNnH5nRwt5DZPLdF0hSHju+XZbCbvh/ZPIPGFgr5ru+0C4tkB++XXwC
-         wxv6P1o08gPYcbU6IkL9La9335csYmGKevZQeOXjXQSAZQ5FOLMiYB15Nkl0VPCq5ikY
-         U1NiMfvwVphEDGR2OFr7cbEf7c+QmF+wKwFDrBjU7hWZVvskT0wdAGG7nAOnF8qWRlOC
-         558w==
+        d=gmail.com; s=20210112;
+        h=subject:to:cc:references:from:message-id:date:user-agent
+         :mime-version:in-reply-to:content-language:content-transfer-encoding;
+        bh=2jp3PD3TWJltHW7N2psGrVeTnjVF/lo5/Ceegyd14Cg=;
+        b=jSQkqnOD0aOEkfzKF1sorxRDER5LyobJkTBdYciuA2yJn1neYQa2yRvFCL/LrEnuTV
+         V1Msk6ZYFoWPWacrBpp6DVnTsXeKi+x6kAt/PEYy4GtAHepChlwlo9zqGfh0PNE5QQSi
+         z/avcKHxXVVT1k6YViMJb+3LJWj9DRr2pWrUNnOwoDDatasPaqLcB3SOZPuEVnMo0yi4
+         smnLsfsDnJeU74ydouII2CBekzlf9g8PBEdj0r3WMZOrezsot/shbhVw5HoRiB2I6nWT
+         W6vkAb02hkFUT9fSboR+sp1I1vZsCLmZkWI0XClkiuYUUPokWjyicKmvGsN/+UEAYiub
+         Sb2w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:content-transfer-encoding:from:mime-version
-         :subject:date:message-id:references:cc:in-reply-to:to;
-        bh=aN3ZAgmq2n3pSx/30jOE16PQorFF/7eTuuFBp43eiXY=;
-        b=4Qa8W2ByjCH+rLB7w00WRIX18Sj4pZ6xuBoB4vCgn9qmto4Ez6uVT2DJRrcuqkpbxn
-         ARAbPps6MfSK0lMlx/MGQHl5C/KJWErmfbeApvO9HJx0smweygjUUer0gNfSUX3WLNHK
-         e8h76xoRIGg4xxYQMJQUMDKtfK1bynWUd00EwBSdEdPoYCXQtuLV3A8CHpcKvqF3K8Ea
-         eKxilpHizmWNitq7pMoiMHOKptf7FweNPU/Q2fF0+fHVi5egmhhHiWuSJTHPZJj7wHci
-         4dNYnQCqdvSQ5mkJPMxv/nOXK43VbBnLHo3d3pyGuniDoQyZnrAnfztUPnz7OX0geOGw
-         SWbg==
-X-Gm-Message-State: AOAM533POEzijg/sf/QTzu+w4Gn0ZM2UUiqsB+TLG3v0oVjenXrymxs2
-        1GoPVCnTzHC9wlciGVBv+jrQrw==
-X-Google-Smtp-Source: ABdhPJxL8yNIwuo3JLDLT5vfWMMddN1ZLyW6uqopzbArWmPz3RzI4hnI0N6zXbN/slfHyY3vDWH1SQ==
-X-Received: by 2002:a63:2cce:: with SMTP id s197mr492444pgs.45.1633129469671;
-        Fri, 01 Oct 2021 16:04:29 -0700 (PDT)
-Received: from smtpclient.apple ([2600:1010:b06f:1961:6102:acf1:515f:f327])
-        by smtp.gmail.com with ESMTPSA id w20sm504149pfc.80.2021.10.01.16.04.28
+        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
+         :user-agent:mime-version:in-reply-to:content-language
+         :content-transfer-encoding;
+        bh=2jp3PD3TWJltHW7N2psGrVeTnjVF/lo5/Ceegyd14Cg=;
+        b=jGQKdtaZeQ1l6eZdTASwlSeKNbE/XCXLxUSyuwj0LhOHa4A5cwaDqxADOkhFWJpT3r
+         BOvk4fqUjEo8qhs7GXYLCn51eFduGVC7qTEUyVO0kFo36u6gvUa2ux+NwORe6R4fOYex
+         8RSbHYK6S9qHq9m5s/eTBdekm//BVC//G5FHgJwWOmQFSWXq/UGQtzJxdjYmfHwerr/F
+         E95Zh3sS7YJxOuInTDic4v6/NL3iiG0m03tFn8u/7lcKrJbp/4u5/lIyVdQWGPVKl7op
+         rjQxof5JjaWf296/OarC2H6ZKLVoIfxDTEkH0dRC6/kfu7gM0tjDQPuigugu10WV9ax9
+         qriw==
+X-Gm-Message-State: AOAM5338isNmN5T8MGnCBCMoTt1QG8MUXgQhr1rm9UZ6RmlukmQusXaU
+        /7wp+zPiRpVwuwfBY/IwWiQ=
+X-Google-Smtp-Source: ABdhPJw9cN/ebImyYYNw9xaaX4Kpr0s/Zd1EvBH6dCc731v/UOGSERtIAL5L1TPzNDG2c/0BnMOL7Q==
+X-Received: by 2002:adf:8919:: with SMTP id s25mr4475713wrs.185.1633197017664;
+        Sat, 02 Oct 2021 10:50:17 -0700 (PDT)
+Received: from [10.8.0.30] ([195.53.121.100])
+        by smtp.gmail.com with ESMTPSA id o8sm2292686wme.38.2021.10.02.10.50.16
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 01 Oct 2021 16:04:29 -0700 (PDT)
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-From:   Andy Lutomirski <luto@amacapital.net>
-Mime-Version: 1.0 (1.0)
-Subject: Re: [RFC PATCH 11/13] x86/uintr: Introduce uintr_wait() syscall
-Date:   Fri, 1 Oct 2021 16:04:27 -0700
-Message-Id: <266EFCFB-D0B6-4922-8538-AA3D1146C588@amacapital.net>
-References: <875yug4eos.ffs@tglx>
-Cc:     Andy Lutomirski <luto@kernel.org>,
-        Sohil Mehta <sohil.mehta@intel.com>,
-        the arch/x86 maintainers <x86@kernel.org>,
-        Tony Luck <tony.luck@intel.com>,
-        Dave Hansen <dave.hansen@intel.com>,
-        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
-        "H. Peter Anvin" <hpa@zytor.com>, Jens Axboe <axboe@kernel.dk>,
-        Christian Brauner <christian@brauner.io>,
-        "Peter Zijlstra (Intel)" <peterz@infradead.org>,
-        Shuah Khan <shuah@kernel.org>, Arnd Bergmann <arnd@arndb.de>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Raj Ashok <ashok.raj@intel.com>,
-        Jacob Pan <jacob.jun.pan@linux.intel.com>,
-        Gayatri Kammela <gayatri.kammela@intel.com>,
-        Zeng Guang <guang.zeng@intel.com>,
-        "Williams, Dan J" <dan.j.williams@intel.com>,
-        Randy E Witt <randy.e.witt@intel.com>,
-        "Shankar, Ravi V" <ravi.v.shankar@intel.com>,
-        Ramesh Thomas <ramesh.thomas@intel.com>,
-        Linux API <linux-api@vger.kernel.org>,
-        linux-arch@vger.kernel.org,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        linux-kselftest@vger.kernel.org
-In-Reply-To: <875yug4eos.ffs@tglx>
-To:     Thomas Gleixner <tglx@linutronix.de>
-X-Mailer: iPhone Mail (19A346)
+        Sat, 02 Oct 2021 10:50:17 -0700 (PDT)
+Subject: Re: [PATCH v3] madvise.2: Document MADV_POPULATE_READ and
+ MADV_POPULATE_WRITE
+To:     David Hildenbrand <david@redhat.com>, linux-man@vger.kernel.org
+Cc:     Pankaj Gupta <pankaj.gupta@ionos.com>,
+        Michael Kerrisk <mtk.manpages@gmail.com>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Michal Hocko <mhocko@suse.com>,
+        Oscar Salvador <osalvador@suse.de>,
+        Jann Horn <jannh@google.com>, Mike Rapoport <rppt@kernel.org>,
+        Linux API <linux-api@vger.kernel.org>, linux-mm@kvack.org
+References: <20210823120645.8223-1-david@redhat.com>
+ <50357269-d227-5fda-a450-c47b035b9586@redhat.com>
+From:   "Alejandro Colomar (man-pages)" <alx.manpages@gmail.com>
+Message-ID: <0e9e04f4-e14e-e2b7-7672-75e919778b0a@gmail.com>
+Date:   Sat, 2 Oct 2021 19:50:15 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Thunderbird/78.13.0
+MIME-Version: 1.0
+In-Reply-To: <50357269-d227-5fda-a450-c47b035b9586@redhat.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+Hi David,
+
+On 9/28/21 6:34 PM, David Hildenbrand wrote:
+> On 23.08.21 14:06, David Hildenbrand wrote:
+>> MADV_POPULATE_READ and MADV_POPULATE_WRITE have been merged into
+>> upstream Linux via commit 4ca9b3859dac ("mm/madvise: introduce
+>> MADV_POPULATE_(READ|WRITE) to prefault page tables"), part of v5.14-rc1.
+>>
+>> Further, commit eb2faa513c24 ("mm/madvise: report SIGBUS as -EFAULT for
+>> MADV_POPULATE_(READ|WRITE)"), part of v5.14-rc6, made sure that SIGBUS is
+>> converted to -EFAULT instead of -EINVAL.
+>>
+>> Let's document the behavior and error conditions of these new madvise()
+>> options.
+>>
+>> Acked-by: Pankaj Gupta <pankaj.gupta@ionos.com>
+>> Cc: Alejandro Colomar <alx.manpages@gmail.com>
+>> Cc: Michael Kerrisk <mtk.manpages@gmail.com>
+>> Cc: Andrew Morton <akpm@linux-foundation.org>
+>> Cc: Michal Hocko <mhocko@suse.com>
+>> Cc: Oscar Salvador <osalvador@suse.de>
+>> Cc: Jann Horn <jannh@google.com>
+>> Cc: Mike Rapoport <rppt@kernel.org>
+>> Cc: Linux API <linux-api@vger.kernel.org>
+>> Cc: linux-mm@kvack.org
+>> Signed-off-by: David Hildenbrand <david@redhat.com>
+>> ---
+
+Patch applied.
+
+Thanks,
+
+Alex
+
+>>
+>> v2 -> v3:
+>> - Refine what "populating readable/writable" means
+>> - Compare each version with MAP_POPULATE and give an example use case
+>> - Reword SIGBUS handling
+>> - Reword comment regarding special mappings and also add memfd_secret(2)
+>> - Reference MADV_HWPOISON when talking about HW poisoned pages
+>> - Minor cosmetic fixes
+>>
+>> v1 -> v2:
+>> - Use semantic newlines in all cases
+>> - Add two missing "
+>> - Document -EFAULT handling
+>> - Rephrase some parts to make it more generic: VM_PFNMAP and VM_IO are 
+>> only
+>>    examples for special mappings
+>>
+>> ---
+>>   man2/madvise.2 | 156 +++++++++++++++++++++++++++++++++++++++++++++++++
+>>   1 file changed, 156 insertions(+)
+>>
+>> diff --git a/man2/madvise.2 b/man2/madvise.2
+>> index f1f384c0c..37f6dd6fa 100644
+>> --- a/man2/madvise.2
+>> +++ b/man2/madvise.2
+>> @@ -469,6 +469,106 @@ If a page is file-backed and dirty, it will be 
+>> written back to the backing
+>>   storage.
+>>   The advice might be ignored for some pages in the range when it is not
+>>   applicable.
+>> +.TP
+>> +.BR MADV_POPULATE_READ " (since Linux 5.14)"
+>> +"Populate (prefault) page tables readable,
+>> +faulting in all pages in the range just as if manually reading from 
+>> each page;
+>> +however,
+>> +avoid the actual memory access that would have been performed after 
+>> handling
+>> +the fault.
+>> +.IP
+>> +In contrast to
+>> +.BR MAP_POPULATE ,
+>> +.B MADV_POPULATE_READ
+>> +does not hide errors,
+>> +can be applied to (parts of) existing mappings and will always populate
+>> +(prefault) page tables readable.
+>> +One example use case is prefaulting a file mapping,
+>> +reading all file content from disk;
+>> +however,
+>> +pages won't be dirtied and consequently won't have to be written back 
+>> to disk
+>> +when evicting the pages from memory.
+>> +.IP
+>> +Depending on the underlying mapping,
+>> +map the shared zeropage,
+>> +preallocate memory or read the underlying file;
+>> +files with holes might or might not preallocate blocks.
+>> +If populating fails,
+>> +a
+>> +.B SIGBUS
+>> +signal is not generated; instead, an error is returned.
+>> +.IP
+>> +If
+>> +.B MADV_POPULATE_READ
+>> +succeeds,
+>> +all page tables have been populated (prefaulted) readable once.
+>> +If
+>> +.B MADV_POPULATE_READ
+>> +fails,
+>> +some page tables might have been populated.
+>> +.IP
+>> +.B MADV_POPULATE_READ
+>> +cannot be applied to mappings without read permissions
+>> +and special mappings,
+>> +for example,
+>> +mappings marked with kernel-internal flags such as
+>> +.B VM_PFNMAP
+>> +or
+>> +.BR VM_IO ,
+>> +or secret memory regions created using
+>> +.BR memfd_secret(2) .
+>> +.IP
+>> +Note that with
+>> +.BR MADV_POPULATE_READ ,
+>> +the process can be killed at any moment when the system runs out of 
+>> memory.
+>> +.TP
+>> +.BR MADV_POPULATE_WRITE " (since Linux 5.14)"
+>> +Populate (prefault) page tables writable,
+>> +faulting in all pages in the range just as if manually writing to each
+>> +each page;
+>> +however,
+>> +avoid the actual memory access that would have been performed after 
+>> handling
+>> +the fault.
+>> +.IP
+>> +In contrast to
+>> +.BR MAP_POPULATE ,
+>> +MADV_POPULATE_WRITE does not hide errors,
+>> +can be applied to (parts of) existing mappings and will always populate
+>> +(prefault) page tables writable.
+>> +One example use case is preallocating memory,
+>> +breaking any CoW (Copy on Write).
+>> +.IP
+>> +Depending on the underlying mapping,
+>> +preallocate memory or read the underlying file;
+>> +files with holes will preallocate blocks.
+>> +If populating fails,
+>> +a
+>> +.B SIGBUS
+>> +signal is not generated; instead, an error is returned.
+>> +.IP
+>> +If
+>> +.B MADV_POPULATE_WRITE
+>> +succeeds,
+>> +all page tables have been populated (prefaulted) writable once.
+>> +If
+>> +.B MADV_POPULATE_WRITE
+>> +fails,
+>> +some page tables might have been populated.
+>> +.IP
+>> +.B MADV_POPULATE_WRITE
+>> +cannot be applied to mappings without write permissions
+>> +and special mappings,
+>> +for example,
+>> +mappings marked with kernel-internal flags such as
+>> +.B VM_PFNMAP
+>> +or
+>> +.BR VM_IO ,
+>> +or secret memory regions created using
+>> +.BR memfd_secret(2) .
+>> +.IP
+>> +Note that with
+>> +.BR MADV_POPULATE_WRITE ,
+>> +the process can be killed at any moment when the system runs out of 
+>> memory.
+>>   .SH RETURN VALUE
+>>   On success,
+>>   .BR madvise ()
+>> @@ -490,6 +590,22 @@ A kernel resource was temporarily unavailable.
+>>   .B EBADF
+>>   The map exists, but the area maps something that isn't a file.
+>>   .TP
+>> +.B EFAULT
+>> +.I advice
+>> +is
+>> +.B MADV_POPULATE_READ
+>> +or
+>> +.BR MADV_POPULATE_WRITE ,
+>> +and populating (prefaulting) page tables failed because a
+>> +.B SIGBUS
+>> +would have been generated on actual memory access and the reason is 
+>> not a
+>> +HW poisoned page
+>> +(HW poisoned pages can,
+>> +for example,
+>> +be created using the
+>> +.B MADV_HWPOISON
+>> +flag described elsewhere in this page).
+>> +.TP
+>>   .B EINVAL
+>>   .I addr
+>>   is not page-aligned or
+>> @@ -533,6 +649,22 @@ or
+>>   .BR VM_PFNMAP
+>>   ranges.
+>>   .TP
+>> +.B EINVAL
+>> +.I advice
+>> +is
+>> +.B MADV_POPULATE_READ
+>> +or
+>> +.BR MADV_POPULATE_WRITE ,
+>> +but the specified address range includes ranges with insufficient 
+>> permissions
+>> +or special mappings,
+>> +for example,
+>> +mappings marked with kernel-internal flags such a
+>> +.B VM_IO
+>> +or
+>> +.BR VM_PFNMAP ,
+>> +or secret memory regions created using
+>> +.BR memfd_secret(2) .
+>> +.TP
+>>   .B EIO
+>>   (for
+>>   .BR MADV_WILLNEED )
+>> @@ -548,6 +680,15 @@ Not enough memory: paging in failed.
+>>   Addresses in the specified range are not currently
+>>   mapped, or are outside the address space of the process.
+>>   .TP
+>> +.B ENOMEM
+>> +.I advice
+>> +is
+>> +.B MADV_POPULATE_READ
+>> +or
+>> +.BR MADV_POPULATE_WRITE ,
+>> +and populating (prefaulting) page tables failed because there was not 
+>> enough
+>> +memory.
+>> +.TP
+>>   .B EPERM
+>>   .I advice
+>>   is
+>> @@ -555,6 +696,20 @@ is
+>>   but the caller does not have the
+>>   .B CAP_SYS_ADMIN
+>>   capability.
+>> +.TP
+>> +.B EHWPOISON
+>> +.I advice
+>> +is
+>> +.B MADV_POPULATE_READ
+>> +or
+>> +.BR MADV_POPULATE_WRITE ,
+>> +and populating (prefaulting) page tables failed because a HW poisoned 
+>> page
+>> +(HW poisoned pages can,
+>> +for example,
+>> +be created using the
+>> +.B MADV_HWPOISON
+>> +flag described elsewhere in this page)
+>> +was encountered.
+>>   .SH VERSIONS
+>>   Since Linux 3.18,
+>>   .\" commit d3ac21cacc24790eb45d735769f35753f5b56ceb
+>> @@ -602,6 +757,7 @@ from the system call, as it should).
+>>   .\" function first appeared in 4.4BSD.
+>>   .SH SEE ALSO
+>>   .BR getrlimit (2),
+>> +.BR memfd_secret(2),
+>>   .BR mincore (2),
+>>   .BR mmap (2),
+>>   .BR mprotect (2),
+>>
+> 
+> Gentle ping.
+> 
 
 
-> On Oct 1, 2021, at 2:29 PM, Thomas Gleixner <tglx@linutronix.de> wrote:
->=20
-> =EF=BB=BFOn Fri, Oct 01 2021 at 08:13, Andy Lutomirski wrote:
->=20
->>> On Fri, Oct 1, 2021, at 2:56 AM, Thomas Gleixner wrote:
->>> On Thu, Sep 30 2021 at 21:41, Andy Lutomirski wrote:
->>>>> On Thu, Sep 30, 2021, at 5:01 PM, Thomas Gleixner wrote:
->>>=20
->>>> Now that I read the docs some more, I'm seriously concerned about this
->>>> XSAVE design.  XSAVES with UINTR is destructive -- it clears UINV.  If
->>>> we actually use this, then the whole last_cpu "preserve the state in
->>>> registers" optimization goes out the window.  So does anything that
->>>> happens to assume that merely saving the state doesn't destroy it on
->>>> respectable modern CPUs XRSTORS will #GP if you XRSTORS twice, which
->>>> makes me nervous and would need a serious audit of our XRSTORS paths.
->>>=20
->>> I have no idea what you are fantasizing about. You can XRSTORS five
->>> times in a row as long as your XSTATE memory image is correct.
->>=20
->> I'm just reading TFM, which is some kind of dystopian fantasy.
->>=20
->> 11.8.2.4 XRSTORS
->>=20
->> Before restoring the user-interrupt state component, XRSTORS verifies
->> that UINV is 0. If it is not, XRSTORS causes a general-protection
->> fault (#GP) before loading any part of the user-interrupt state
->> component. (UINV is IA32_UINTR_MISC[39:32]; XRSTORS does not check the
->> contents of the remainder of that MSR.)
->=20
-> Duh. I was staring at the SDM and searching for a hint. Stupid me!
->=20
->> So if UINV is set in the memory image and you XRSTORS five times in a
->> row, the first one will work assuming UINV was zero.  The second one
->> will #GP.
->=20
-> Yes. I can see what you mean now :)
->=20
->> 11.8.2.3 XSAVES
->> After saving the user-interrupt state component, XSAVES clears UINV. (UIN=
-V is IA32_UINTR_MISC[39:32];
->> XSAVES does not modify the remainder of that MSR.)
->>=20
->> So if we're running a UPID-enabled user task and we switch to a kernel
->> thread, we do XSAVES and UINV is cleared.  Then we switch back to the
->> same task and don't do XRSTORS (or otherwise write IA32_UINTR_MISC)
->> and UINV is still clear.
->=20
-> Yes, that has to be mopped up on the way to user space.
->=20
->> And we had better clear UINV when running a kernel thread because the
->> UPID might get freed or the kernel thread might do some CPL3
->> shenanigans (via EFI, perhaps? I don't know if any firmwares actually
->> do this).
->=20
-> Right. That's what happens already with the current pile.
->=20
->> So all this seems to put UINV into the "independent" category of
->> feature along with LBR.  And the 512-byte wastes from extra copies of
->> the legacy area and the loss of the XMODIFIED optimization will just
->> be collateral damage.
->=20
-> So we'd end up with two XSAVES on context switch. We can simply do:
->=20
->        XSAVES();
->        fpu.state.xtsate.uintr.uinv =3D 0;
-
-Could work. As long as UINV is armed, RR can change at any time (maybe just w=
-hen IF=3D1? The manual is unclear).  But the first XSAVES disarms UINV, so m=
-aybe this won=E2=80=99t confuse any callers.
-
->=20
-> which allows to do as many XRSTORS in a row as we want. Only the final
-> one on the way to user space will have to restore the real vector if the
-> register state is not valid:
->=20
->       if (fpu_state_valid()) {
->            if (needs_uinv(current)
->               wrmsrl(UINV, vector);
->       } else {
->            if (needs_uinv(current)
->               fpu.state.xtsate.uintr.uinv =3D vector;
->            XRSTORS();
->       }
->=20
-> Hmm?
-
-I like it better than anything else I=E2=80=99ve seen.
-
->=20
-> Thanks,
->=20
->        tglx=20
+-- 
+Alejandro Colomar
+Linux man-pages comaintainer; https://www.kernel.org/doc/man-pages/
+http://www.alejandro-colomar.es/
