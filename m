@@ -2,356 +2,162 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EE065C433EF
-	for <linux-api@archiver.kernel.org>; Sat,  2 Oct 2021 17:50:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8C823C4332F
+	for <linux-api@archiver.kernel.org>; Tue,  5 Oct 2021 15:05:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CF57D61B00
-	for <linux-api@archiver.kernel.org>; Sat,  2 Oct 2021 17:50:20 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 73FE461501
+	for <linux-api@archiver.kernel.org>; Tue,  5 Oct 2021 15:05:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233633AbhJBRwF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 2 Oct 2021 13:52:05 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52406 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232043AbhJBRwF (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 2 Oct 2021 13:52:05 -0400
-Received: from mail-wr1-x434.google.com (mail-wr1-x434.google.com [IPv6:2a00:1450:4864:20::434])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 212CDC0613EC;
-        Sat,  2 Oct 2021 10:50:19 -0700 (PDT)
-Received: by mail-wr1-x434.google.com with SMTP id t8so21129694wri.1;
-        Sat, 02 Oct 2021 10:50:18 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=subject:to:cc:references:from:message-id:date:user-agent
-         :mime-version:in-reply-to:content-language:content-transfer-encoding;
-        bh=2jp3PD3TWJltHW7N2psGrVeTnjVF/lo5/Ceegyd14Cg=;
-        b=jSQkqnOD0aOEkfzKF1sorxRDER5LyobJkTBdYciuA2yJn1neYQa2yRvFCL/LrEnuTV
-         V1Msk6ZYFoWPWacrBpp6DVnTsXeKi+x6kAt/PEYy4GtAHepChlwlo9zqGfh0PNE5QQSi
-         z/avcKHxXVVT1k6YViMJb+3LJWj9DRr2pWrUNnOwoDDatasPaqLcB3SOZPuEVnMo0yi4
-         smnLsfsDnJeU74ydouII2CBekzlf9g8PBEdj0r3WMZOrezsot/shbhVw5HoRiB2I6nWT
-         W6vkAb02hkFUT9fSboR+sp1I1vZsCLmZkWI0XClkiuYUUPokWjyicKmvGsN/+UEAYiub
-         Sb2w==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-language
-         :content-transfer-encoding;
-        bh=2jp3PD3TWJltHW7N2psGrVeTnjVF/lo5/Ceegyd14Cg=;
-        b=jGQKdtaZeQ1l6eZdTASwlSeKNbE/XCXLxUSyuwj0LhOHa4A5cwaDqxADOkhFWJpT3r
-         BOvk4fqUjEo8qhs7GXYLCn51eFduGVC7qTEUyVO0kFo36u6gvUa2ux+NwORe6R4fOYex
-         8RSbHYK6S9qHq9m5s/eTBdekm//BVC//G5FHgJwWOmQFSWXq/UGQtzJxdjYmfHwerr/F
-         E95Zh3sS7YJxOuInTDic4v6/NL3iiG0m03tFn8u/7lcKrJbp/4u5/lIyVdQWGPVKl7op
-         rjQxof5JjaWf296/OarC2H6ZKLVoIfxDTEkH0dRC6/kfu7gM0tjDQPuigugu10WV9ax9
-         qriw==
-X-Gm-Message-State: AOAM5338isNmN5T8MGnCBCMoTt1QG8MUXgQhr1rm9UZ6RmlukmQusXaU
-        /7wp+zPiRpVwuwfBY/IwWiQ=
-X-Google-Smtp-Source: ABdhPJw9cN/ebImyYYNw9xaaX4Kpr0s/Zd1EvBH6dCc731v/UOGSERtIAL5L1TPzNDG2c/0BnMOL7Q==
-X-Received: by 2002:adf:8919:: with SMTP id s25mr4475713wrs.185.1633197017664;
-        Sat, 02 Oct 2021 10:50:17 -0700 (PDT)
-Received: from [10.8.0.30] ([195.53.121.100])
-        by smtp.gmail.com with ESMTPSA id o8sm2292686wme.38.2021.10.02.10.50.16
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Sat, 02 Oct 2021 10:50:17 -0700 (PDT)
-Subject: Re: [PATCH v3] madvise.2: Document MADV_POPULATE_READ and
- MADV_POPULATE_WRITE
-To:     David Hildenbrand <david@redhat.com>, linux-man@vger.kernel.org
-Cc:     Pankaj Gupta <pankaj.gupta@ionos.com>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Michal Hocko <mhocko@suse.com>,
-        Oscar Salvador <osalvador@suse.de>,
-        Jann Horn <jannh@google.com>, Mike Rapoport <rppt@kernel.org>,
-        Linux API <linux-api@vger.kernel.org>, linux-mm@kvack.org
-References: <20210823120645.8223-1-david@redhat.com>
- <50357269-d227-5fda-a450-c47b035b9586@redhat.com>
-From:   "Alejandro Colomar (man-pages)" <alx.manpages@gmail.com>
-Message-ID: <0e9e04f4-e14e-e2b7-7672-75e919778b0a@gmail.com>
-Date:   Sat, 2 Oct 2021 19:50:15 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.13.0
+        id S235208AbhJEPHb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 5 Oct 2021 11:07:31 -0400
+Received: from mga11.intel.com ([192.55.52.93]:35661 "EHLO mga11.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S235022AbhJEPHb (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Tue, 5 Oct 2021 11:07:31 -0400
+X-IronPort-AV: E=McAfee;i="6200,9189,10128"; a="223169434"
+X-IronPort-AV: E=Sophos;i="5.85,349,1624345200"; 
+   d="scan'208";a="223169434"
+Received: from fmsmga008.fm.intel.com ([10.253.24.58])
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 05 Oct 2021 07:26:24 -0700
+X-IronPort-AV: E=Sophos;i="5.85,349,1624345200"; 
+   d="scan'208";a="523793505"
+Received: from ftbalow-mobl.amr.corp.intel.com (HELO [10.212.210.174]) ([10.212.210.174])
+  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 05 Oct 2021 07:26:22 -0700
+Subject: Re: [PATCH v30 01/32] Documentation/x86: Add CET description
+To:     Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org,
+        "H. Peter Anvin" <hpa@zytor.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-doc@vger.kernel.org, linux-mm@kvack.org,
+        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andy Lutomirski <luto@kernel.org>,
+        Balbir Singh <bsingharora@gmail.com>,
+        Borislav Petkov <bp@alien8.de>,
+        Cyrill Gorcunov <gorcunov@gmail.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Eugene Syromiatnikov <esyr@redhat.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Nadav Amit <nadav.amit@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        "Ravi V. Shankar" <ravi.v.shankar@intel.com>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Weijiang Yang <weijiang.yang@intel.com>,
+        Pengfei Xu <pengfei.xu@intel.com>,
+        Haitao Huang <haitao.huang@intel.com>,
+        Rick P Edgecombe <rick.p.edgecombe@intel.com>
+References: <20210830181528.1569-1-yu-cheng.yu@intel.com>
+ <20210830181528.1569-2-yu-cheng.yu@intel.com>
+From:   Dave Hansen <dave.hansen@intel.com>
+Autocrypt: addr=dave.hansen@intel.com; keydata=
+ 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
+ z5cecg==
+Message-ID: <e1f8debd-3097-a283-413a-1a54f79a579c@intel.com>
+Date:   Tue, 5 Oct 2021 07:26:22 -0700
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.10.0
 MIME-Version: 1.0
-In-Reply-To: <50357269-d227-5fda-a450-c47b035b9586@redhat.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
+In-Reply-To: <20210830181528.1569-2-yu-cheng.yu@intel.com>
+Content-Type: text/plain; charset=utf-8
 Content-Language: en-US
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi David,
+On 8/30/21 11:14 AM, Yu-cheng Yu wrote:
+> diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
+> index bdb22006f713..3bc1a917dfef 100644
+> --- a/Documentation/admin-guide/kernel-parameters.txt
+> +++ b/Documentation/admin-guide/kernel-parameters.txt
+> @@ -3319,6 +3319,13 @@
+>  			noexec=on: enable non-executable mappings (default)
+>  			noexec=off: disable non-executable mappings
+>  
+> +	no_user_shstk	[X86-64] Disable Shadow Stack for user-mode
+> +			applications.  Disabling shadow stack also disables
+> +			IBT.
+> +
+> +	no_user_ibt	[X86-64] Disable Indirect Branch Tracking for user-mode
+> +			applications.
+> +
+>  	nosmap		[X86,PPC]
+>  			Disable SMAP (Supervisor Mode Access Prevention)
+>  			even if it is supported by processor.
 
-On 9/28/21 6:34 PM, David Hildenbrand wrote:
-> On 23.08.21 14:06, David Hildenbrand wrote:
->> MADV_POPULATE_READ and MADV_POPULATE_WRITE have been merged into
->> upstream Linux via commit 4ca9b3859dac ("mm/madvise: introduce
->> MADV_POPULATE_(READ|WRITE) to prefault page tables"), part of v5.14-rc1.
->>
->> Further, commit eb2faa513c24 ("mm/madvise: report SIGBUS as -EFAULT for
->> MADV_POPULATE_(READ|WRITE)"), part of v5.14-rc6, made sure that SIGBUS is
->> converted to -EFAULT instead of -EINVAL.
->>
->> Let's document the behavior and error conditions of these new madvise()
->> options.
->>
->> Acked-by: Pankaj Gupta <pankaj.gupta@ionos.com>
->> Cc: Alejandro Colomar <alx.manpages@gmail.com>
->> Cc: Michael Kerrisk <mtk.manpages@gmail.com>
->> Cc: Andrew Morton <akpm@linux-foundation.org>
->> Cc: Michal Hocko <mhocko@suse.com>
->> Cc: Oscar Salvador <osalvador@suse.de>
->> Cc: Jann Horn <jannh@google.com>
->> Cc: Mike Rapoport <rppt@kernel.org>
->> Cc: Linux API <linux-api@vger.kernel.org>
->> Cc: linux-mm@kvack.org
->> Signed-off-by: David Hildenbrand <david@redhat.com>
->> ---
-
-Patch applied.
-
-Thanks,
-
-Alex
-
->>
->> v2 -> v3:
->> - Refine what "populating readable/writable" means
->> - Compare each version with MAP_POPULATE and give an example use case
->> - Reword SIGBUS handling
->> - Reword comment regarding special mappings and also add memfd_secret(2)
->> - Reference MADV_HWPOISON when talking about HW poisoned pages
->> - Minor cosmetic fixes
->>
->> v1 -> v2:
->> - Use semantic newlines in all cases
->> - Add two missing "
->> - Document -EFAULT handling
->> - Rephrase some parts to make it more generic: VM_PFNMAP and VM_IO are 
->> only
->>    examples for special mappings
->>
->> ---
->>   man2/madvise.2 | 156 +++++++++++++++++++++++++++++++++++++++++++++++++
->>   1 file changed, 156 insertions(+)
->>
->> diff --git a/man2/madvise.2 b/man2/madvise.2
->> index f1f384c0c..37f6dd6fa 100644
->> --- a/man2/madvise.2
->> +++ b/man2/madvise.2
->> @@ -469,6 +469,106 @@ If a page is file-backed and dirty, it will be 
->> written back to the backing
->>   storage.
->>   The advice might be ignored for some pages in the range when it is not
->>   applicable.
->> +.TP
->> +.BR MADV_POPULATE_READ " (since Linux 5.14)"
->> +"Populate (prefault) page tables readable,
->> +faulting in all pages in the range just as if manually reading from 
->> each page;
->> +however,
->> +avoid the actual memory access that would have been performed after 
->> handling
->> +the fault.
->> +.IP
->> +In contrast to
->> +.BR MAP_POPULATE ,
->> +.B MADV_POPULATE_READ
->> +does not hide errors,
->> +can be applied to (parts of) existing mappings and will always populate
->> +(prefault) page tables readable.
->> +One example use case is prefaulting a file mapping,
->> +reading all file content from disk;
->> +however,
->> +pages won't be dirtied and consequently won't have to be written back 
->> to disk
->> +when evicting the pages from memory.
->> +.IP
->> +Depending on the underlying mapping,
->> +map the shared zeropage,
->> +preallocate memory or read the underlying file;
->> +files with holes might or might not preallocate blocks.
->> +If populating fails,
->> +a
->> +.B SIGBUS
->> +signal is not generated; instead, an error is returned.
->> +.IP
->> +If
->> +.B MADV_POPULATE_READ
->> +succeeds,
->> +all page tables have been populated (prefaulted) readable once.
->> +If
->> +.B MADV_POPULATE_READ
->> +fails,
->> +some page tables might have been populated.
->> +.IP
->> +.B MADV_POPULATE_READ
->> +cannot be applied to mappings without read permissions
->> +and special mappings,
->> +for example,
->> +mappings marked with kernel-internal flags such as
->> +.B VM_PFNMAP
->> +or
->> +.BR VM_IO ,
->> +or secret memory regions created using
->> +.BR memfd_secret(2) .
->> +.IP
->> +Note that with
->> +.BR MADV_POPULATE_READ ,
->> +the process can be killed at any moment when the system runs out of 
->> memory.
->> +.TP
->> +.BR MADV_POPULATE_WRITE " (since Linux 5.14)"
->> +Populate (prefault) page tables writable,
->> +faulting in all pages in the range just as if manually writing to each
->> +each page;
->> +however,
->> +avoid the actual memory access that would have been performed after 
->> handling
->> +the fault.
->> +.IP
->> +In contrast to
->> +.BR MAP_POPULATE ,
->> +MADV_POPULATE_WRITE does not hide errors,
->> +can be applied to (parts of) existing mappings and will always populate
->> +(prefault) page tables writable.
->> +One example use case is preallocating memory,
->> +breaking any CoW (Copy on Write).
->> +.IP
->> +Depending on the underlying mapping,
->> +preallocate memory or read the underlying file;
->> +files with holes will preallocate blocks.
->> +If populating fails,
->> +a
->> +.B SIGBUS
->> +signal is not generated; instead, an error is returned.
->> +.IP
->> +If
->> +.B MADV_POPULATE_WRITE
->> +succeeds,
->> +all page tables have been populated (prefaulted) writable once.
->> +If
->> +.B MADV_POPULATE_WRITE
->> +fails,
->> +some page tables might have been populated.
->> +.IP
->> +.B MADV_POPULATE_WRITE
->> +cannot be applied to mappings without write permissions
->> +and special mappings,
->> +for example,
->> +mappings marked with kernel-internal flags such as
->> +.B VM_PFNMAP
->> +or
->> +.BR VM_IO ,
->> +or secret memory regions created using
->> +.BR memfd_secret(2) .
->> +.IP
->> +Note that with
->> +.BR MADV_POPULATE_WRITE ,
->> +the process can be killed at any moment when the system runs out of 
->> memory.
->>   .SH RETURN VALUE
->>   On success,
->>   .BR madvise ()
->> @@ -490,6 +590,22 @@ A kernel resource was temporarily unavailable.
->>   .B EBADF
->>   The map exists, but the area maps something that isn't a file.
->>   .TP
->> +.B EFAULT
->> +.I advice
->> +is
->> +.B MADV_POPULATE_READ
->> +or
->> +.BR MADV_POPULATE_WRITE ,
->> +and populating (prefaulting) page tables failed because a
->> +.B SIGBUS
->> +would have been generated on actual memory access and the reason is 
->> not a
->> +HW poisoned page
->> +(HW poisoned pages can,
->> +for example,
->> +be created using the
->> +.B MADV_HWPOISON
->> +flag described elsewhere in this page).
->> +.TP
->>   .B EINVAL
->>   .I addr
->>   is not page-aligned or
->> @@ -533,6 +649,22 @@ or
->>   .BR VM_PFNMAP
->>   ranges.
->>   .TP
->> +.B EINVAL
->> +.I advice
->> +is
->> +.B MADV_POPULATE_READ
->> +or
->> +.BR MADV_POPULATE_WRITE ,
->> +but the specified address range includes ranges with insufficient 
->> permissions
->> +or special mappings,
->> +for example,
->> +mappings marked with kernel-internal flags such a
->> +.B VM_IO
->> +or
->> +.BR VM_PFNMAP ,
->> +or secret memory regions created using
->> +.BR memfd_secret(2) .
->> +.TP
->>   .B EIO
->>   (for
->>   .BR MADV_WILLNEED )
->> @@ -548,6 +680,15 @@ Not enough memory: paging in failed.
->>   Addresses in the specified range are not currently
->>   mapped, or are outside the address space of the process.
->>   .TP
->> +.B ENOMEM
->> +.I advice
->> +is
->> +.B MADV_POPULATE_READ
->> +or
->> +.BR MADV_POPULATE_WRITE ,
->> +and populating (prefaulting) page tables failed because there was not 
->> enough
->> +memory.
->> +.TP
->>   .B EPERM
->>   .I advice
->>   is
->> @@ -555,6 +696,20 @@ is
->>   but the caller does not have the
->>   .B CAP_SYS_ADMIN
->>   capability.
->> +.TP
->> +.B EHWPOISON
->> +.I advice
->> +is
->> +.B MADV_POPULATE_READ
->> +or
->> +.BR MADV_POPULATE_WRITE ,
->> +and populating (prefaulting) page tables failed because a HW poisoned 
->> page
->> +(HW poisoned pages can,
->> +for example,
->> +be created using the
->> +.B MADV_HWPOISON
->> +flag described elsewhere in this page)
->> +was encountered.
->>   .SH VERSIONS
->>   Since Linux 3.18,
->>   .\" commit d3ac21cacc24790eb45d735769f35753f5b56ceb
->> @@ -602,6 +757,7 @@ from the system call, as it should).
->>   .\" function first appeared in 4.4BSD.
->>   .SH SEE ALSO
->>   .BR getrlimit (2),
->> +.BR memfd_secret(2),
->>   .BR mincore (2),
->>   .BR mmap (2),
->>   .BR mprotect (2),
->>
-> 
-> Gentle ping.
-> 
+Please add this documentation in the patch that *implements* the
+command-line options.
 
 
--- 
-Alejandro Colomar
-Linux man-pages comaintainer; https://www.kernel.org/doc/man-pages/
-http://www.alejandro-colomar.es/
+> +++ b/Documentation/x86/intel_cet.rst
+> @@ -0,0 +1,139 @@
+> +.. SPDX-License-Identifier: GPL-2.0
+> +
+> +=========================================
+> +Control-flow Enforcement Technology (CET)
+> +=========================================
+> +
+> +[1] Overview
+> +============
+> +
+> +Control-flow Enforcement Technology (CET) is an Intel processor feature
+> +that provides protection against return/jump-oriented programming (ROP)
+> +attacks.  It can be set up to protect both applications and the kernel.
+> +Only user-mode protection is implemented in the 64-bit kernel, including
+> +shadow stack support for running legacy 32-bit applications.  IBT is not
+> +supported for 32-bit applications.
+> +
+> +CET introduces Shadow Stack and Indirect Branch Tracking.
+...
+
+This is a *bit* confusing now.  AMD's manual describes shadow stacks,
+but does not mention IBT.
+
+We should probably consider whether "intel_cet.rst" is the best filename
+for this.
