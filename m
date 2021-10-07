@@ -2,104 +2,128 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 466FEC433F5
-	for <linux-api@archiver.kernel.org>; Wed,  6 Oct 2021 22:03:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8AF37C433F5
+	for <linux-api@archiver.kernel.org>; Thu,  7 Oct 2021 09:09:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1D5A1610A1
-	for <linux-api@archiver.kernel.org>; Wed,  6 Oct 2021 22:03:23 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6458C610A0
+	for <linux-api@archiver.kernel.org>; Thu,  7 Oct 2021 09:09:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239784AbhJFWFO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 6 Oct 2021 18:05:14 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59142 "EHLO
+        id S232500AbhJGJK6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 7 Oct 2021 05:10:58 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37880 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239729AbhJFWFO (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 6 Oct 2021 18:05:14 -0400
-Received: from mail-pg1-x530.google.com (mail-pg1-x530.google.com [IPv6:2607:f8b0:4864:20::530])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C0B1AC061762
-        for <linux-api@vger.kernel.org>; Wed,  6 Oct 2021 15:03:21 -0700 (PDT)
-Received: by mail-pg1-x530.google.com with SMTP id a73so3765401pge.0
-        for <linux-api@vger.kernel.org>; Wed, 06 Oct 2021 15:03:21 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:content-transfer-encoding:in-reply-to;
-        bh=S8r+rc6bFIU7cXArQnf6Qtpwv2FoCGPsccPj2q+K1zk=;
-        b=BlcpB5NSeXXefPepERXjr0jUHlucP3qusHB3fY//2ntWT4PaA2nle9ET0X3AI1HmEH
-         feGtjzF6zI0ZgP3SazGlzI7XQsy/joCst2lDK+wX83vnR+9++PDS05+ZQtLJy+cp0Zww
-         49ZwkdVQHaEFSC8vTVzcnAqC2r7EwFKG1KnMo=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:content-transfer-encoding
-         :in-reply-to;
-        bh=S8r+rc6bFIU7cXArQnf6Qtpwv2FoCGPsccPj2q+K1zk=;
-        b=bRC6XDGrD214ADWWNNSm4uR/PpKzW2MV1Px5hHcv0a15FSyOf7Vpa26sV8BvYUPre7
-         MUIP6+BhUCsaZx9NB5n/L/FG2vkRpxK3h2TX2NB1JbvUV0qlDvjP6gE3RYEqoQhMlVkW
-         cP5H98ucrJctwSbpc8lQ1soC9x3ApDxozr/c1+q6jEEdY9/27BpQt8w8AAe7jpNkdrdh
-         iRLoGGgzTbtJKAoTM5/8WpCC1n4AjvvoT3v/n2uCX9nK3g6MEh0kA+CFh+kHe7O4j+mb
-         cpb9Ri3R1pQBmaAmmzKOvX+J7j5vu8N5qqnx//efsT6wn0L+Ktpvg+65ooCwSSq9bG4Q
-         dsGA==
-X-Gm-Message-State: AOAM530+F2PZHE6uE0v5eZRu8P3+jwWorfBt+79AsEW6b6nnU6qL2zu8
-        wAWIN6jRRCNNe0cpQ2ACUccCUg==
-X-Google-Smtp-Source: ABdhPJzouFSoNpCm18n4Iwn3EUMcJjerfXPUN9YpUneFa6F70rdyCB8CBylaxKHlD/YEVHoOYPZFMQ==
-X-Received: by 2002:a63:e651:: with SMTP id p17mr420929pgj.66.1633557801181;
-        Wed, 06 Oct 2021 15:03:21 -0700 (PDT)
-Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id k17sm2947437pff.214.2021.10.06.15.03.20
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 06 Oct 2021 15:03:20 -0700 (PDT)
-Date:   Wed, 6 Oct 2021 15:03:19 -0700
-From:   Kees Cook <keescook@chromium.org>
-To:     =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
-Cc:     bauen1 <j2468h@googlemail.com>, akpm@linux-foundation.org,
-        arnd@arndb.de, casey@schaufler-ca.com,
-        christian.brauner@ubuntu.com, christian@python.org, corbet@lwn.net,
-        cyphar@cyphar.com, deven.desai@linux.microsoft.com,
-        dvyukov@google.com, ebiggers@kernel.org, ericchiang@google.com,
-        fweimer@redhat.com, geert@linux-m68k.org, jack@suse.cz,
-        jannh@google.com, jmorris@namei.org,
-        kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org,
-        linux-kernel@vger.kernel.org,
-        linux-security-module@vger.kernel.org, luto@kernel.org,
-        madvenka@linux.microsoft.com, mjg59@google.com,
-        mszeredi@redhat.com, mtk.manpages@gmail.com,
-        nramas@linux.microsoft.com, philippe.trebuchet@ssi.gouv.fr,
-        scottsh@microsoft.com, sean.j.christopherson@intel.com,
-        sgrubb@redhat.com, shuah@kernel.org, steve.dower@python.org,
-        thibaut.sautereau@clip-os.org, vincent.strubel@ssi.gouv.fr,
-        viro@zeniv.linux.org.uk, willy@infradead.org, zohar@linux.ibm.com
-Subject: Re: [PATCH v12 0/3] Add trusted_for(2) (was O_MAYEXEC)
-Message-ID: <202110061500.B8F821C@keescook>
-References: <20201203173118.379271-1-mic@digikod.net>
- <d3b0da18-d0f6-3f72-d3ab-6cf19acae6eb@gmail.com>
- <2a4cf50c-7e79-75d1-7907-8218e669f7fa@digikod.net>
+        with ESMTP id S231661AbhJGJK4 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 7 Oct 2021 05:10:56 -0400
+Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6573CC061746;
+        Thu,  7 Oct 2021 02:09:03 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=desiato.20200630; h=In-Reply-To:Content-Transfer-Encoding:
+        Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:
+        Sender:Reply-To:Content-ID:Content-Description;
+        bh=Y5xMk8StgC57MyBQhfGnYcEdOD5+0ggmDgCWfSVFI3g=; b=Eucoetdp2M0/xpchTWen3ZtRVB
+        kxQH5aB2Eqe2IZHL0TQg82/FgvAA1hMr5ZAKC9WjWRz7hCS7wR9l9S0B406gRcTtfuekLhx4ROKyf
+        P76bJUFvhRXzLgZTV5vFvqOkU94RskhT0QMKPOp8rq7FyAadipK7m9w3FtfTQFaNESqjsAcMQsPxV
+        4W9qBQBeV+dE85uHjTgR3Vd7HRRr3vsjnvqxHXKqgq7s+Ak0BjPm9TOZH17IkM5VmF+gBguegR5u5
+        cyQeR/kZZLH1qQfO7Qf+c/7UaRG8OtHR6qSGYdCp8YNF66UdUDyjdtoj9evs459Drh7Fdmj28aJMf
+        oEkBPq/g==;
+Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=worktop.programming.kicks-ass.net)
+        by desiato.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1mYPOI-008RlV-HZ; Thu, 07 Oct 2021 09:08:38 +0000
+Received: by worktop.programming.kicks-ass.net (Postfix, from userid 1000)
+        id 1125498623C; Thu,  7 Oct 2021 11:08:38 +0200 (CEST)
+Date:   Thu, 7 Oct 2021 11:08:37 +0200
+From:   Peter Zijlstra <peterz@infradead.org>
+To:     Zack Weinberg <zack@owlfolio.org>
+Cc:     libc-alpha@sourceware.org,
+        =?iso-8859-1?Q?Andr=E9?= Almeida <andrealmeid@collabora.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>,
+        Darren Hart <dvhart@infradead.org>,
+        linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        kernel@collabora.com, krisman@collabora.com,
+        linux-api@vger.kernel.org, mtk.manpages@gmail.com,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v2 16/22] futex: Implement sys_futex_waitv()
+Message-ID: <20211007090837.GQ174703@worktop.programming.kicks-ass.net>
+References: <20210923171111.300673-1-andrealmeid@collabora.com>
+ <20210923171111.300673-17-andrealmeid@collabora.com>
+ <20211006115022.GH174703@worktop.programming.kicks-ass.net>
+ <47b13460-27a4-474c-879b-ed1c668e5923@www.fastmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <2a4cf50c-7e79-75d1-7907-8218e669f7fa@digikod.net>
+In-Reply-To: <47b13460-27a4-474c-879b-ed1c668e5923@www.fastmail.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Apr 09, 2021 at 07:15:42PM +0200, Mickaël Salaün wrote:
-> There was no new reviews, probably because the FS maintainers were busy,
-> and I was focused on Landlock (which is now in -next), but I plan to
-> send a new patch series for trusted_for(2) soon.
 
-Hi!
+Hi Zack,
 
-Did this ever happen? It looks like it's in good shape, and I think it's
-a nice building block for userspace to have. Are you able to rebase and
-re-send this?
+Please use reply-all; I've restored the Cc's
 
-I've tended to aim these things at akpm if Al gets busy. (And since
-you've had past review from Al, that should be hopefully sufficient.)
+On Wed, Oct 06, 2021 at 09:48:43AM -0400, Zack Weinberg wrote:
+> On Wed, Oct 6, 2021, at 7:50 AM, Peter Zijlstra wrote:
+> > On Thu, Sep 23, 2021 at 02:11:05PM -0300, AndrÃ© Almeida wrote:
+> >> Returns the array index of one of the awakened futexes. Thereâ€™s no given
+> >> information of how many were awakened, or any particular attribute of it
+> >> (if itâ€™s the first awakened, if it is of the smaller index...).
+> >
+> > As per some native speakers on IRC, awaken isn't the right word. I've
+> > changed it like the below.
+> 
+> "woken" and "awoken" are also not the right word (my brain flags both
+> as spelling errors).  Suggestions below:
+> 
+> > - * Returns the array index of one of the awaken futexes. There's no given
+> > - * information of how many were awakened, or any particular attribute of it (if
+> > - * it's the first awakened, if it is of the smaller index...).
+> > + * Returns the array index of one of the woken futexes. There's no given
+> > + * information of how many were woken, or any particular attribute of it (if
+> > + * it's the first woken, if it is of the smaller index...).
+> 
+> "awakened" was the correct word in all three places here.  The
+> sentences are awkward, I might suggest
 
-Thanks for chasing this!
+Afaict it's a bit of a mess. I googled the thing and there's apparently
+2 verbs with identical meaning but different inflections:
 
--Kees
+  awake (irregular): awake, awoke (awaked), awoken (awaken)
+  awaken (regular):  awaken, awakened, awakened.
 
--- 
-Kees Cook
+Now the thing is, the futex operation is FUTEX_WAKE, not FUTEX_AWAKEN,
+therefore I think we should be going with the first (irregular) verb,
+which then gets me 'woken'.
+
+( also, 'awaked' gets me the mental image of a hillbilly, but that might
+  just be me -- the forms were all suggested by meriam-webster:
+
+  https://www.merriam-webster.com/words-at-play/usage-awaken-awoken-awakened
+
+  for further confusion also see:
+
+  https://www.grammar.com/awake-awaken-wake-waken
+)
+
+> # Returns the array index of one of the awakened futexes.
+> # No further information is provided: any number of other
+> # futexes may also have been awakened by the same event, and
+> # if more than one futex was awakened, the returned index may
+> # refer to any one of them.  (It is not necessarily the futex
+> # with the smallest index, nor the one most recently awakened,
+> # nor ...)
+
+Aside of the whole wake mess, I do like that better, let me go make that
+happen.
+
+> > -	 * absorb any awake events, which cannot be done before the
+> > +	 * loose any wake events, which cannot be done before the
+> 
+> 'wake events' is correct here, but you introduced an unrelated error:
+> 'loose' is the opposite of 'tight', you want 'lose' with only one O.
+
+I shall forever make that mistake :-(
