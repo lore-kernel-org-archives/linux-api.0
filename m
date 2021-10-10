@@ -2,54 +2,27 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 41F8BC433EF
-	for <linux-api@archiver.kernel.org>; Fri,  8 Oct 2021 22:47:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3DABDC433EF
+	for <linux-api@archiver.kernel.org>; Sun, 10 Oct 2021 14:21:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2467460FE8
-	for <linux-api@archiver.kernel.org>; Fri,  8 Oct 2021 22:47:41 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 084D56109E
+	for <linux-api@archiver.kernel.org>; Sun, 10 Oct 2021 14:21:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S243647AbhJHWtg (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 8 Oct 2021 18:49:36 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49274 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231941AbhJHWtf (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 8 Oct 2021 18:49:35 -0400
-Received: from mail-pf1-x435.google.com (mail-pf1-x435.google.com [IPv6:2607:f8b0:4864:20::435])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9E86BC061765
-        for <linux-api@vger.kernel.org>; Fri,  8 Oct 2021 15:47:39 -0700 (PDT)
-Received: by mail-pf1-x435.google.com with SMTP id c29so9361740pfp.2
-        for <linux-api@vger.kernel.org>; Fri, 08 Oct 2021 15:47:39 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:content-transfer-encoding:in-reply-to;
-        bh=IDL1dGbYQGd5Z4n8MbIk3dyJApzaVNleP7ehAou5XC4=;
-        b=k/DtfYhTXoNzDDeSt76IrPgiHKVbJzl+yCmhiVP/k9h8OwZ+VHDbs2A9FEOSncQ6Nu
-         c0oNPpuSA0nexNb/AGdFb+q1kORF6YZCNXJNkA0aiLO369TZ7sk5ShzhZMZeTnhRLb7A
-         UNQpET4n7Z7KsW9liWrD/WoMIMHK7Ci23ktRY=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:content-transfer-encoding
-         :in-reply-to;
-        bh=IDL1dGbYQGd5Z4n8MbIk3dyJApzaVNleP7ehAou5XC4=;
-        b=8FLh64WxZXD4iuS848upd3DW3TfcYggd1d1hJcNsfpZuDkppP0Jslv3mvb+yzxmsvp
-         oDTw/X9BPqX/4dOtFUWXPbl6yy/u8Q0B4k0PFCv9J1xW/M99YA1Lj9crWAKCa85zILyi
-         YcaRp5xBxBmsedknuB3kXwsdJBQY1mBso4zKpFTH8azsCPar5UffSDiIyIeb+AE0N8ZJ
-         s60TrRJXjeKU7ZLBmiM/Wxf0gUQSqUQTCCQuoXR0tc57XpeUV1eDqIkxvDm2U6klA0b+
-         72GXXJLCwV2Ynz5qyoQpPtB8n+BaNa4mvHD1PY4awX5t+YG3GOpTVjN28jVfYhp7V8/r
-         mYJw==
-X-Gm-Message-State: AOAM530RfG5wED6qjgRa2q/k9hLPv4xXOIM2MvDYG/To1znI8gNnAYS3
-        yj24L6tZME0sB4RUugaiUHJCDw==
-X-Google-Smtp-Source: ABdhPJwvnmLJjnp89CGi8tOitxi5+0+62XoRbPGjNi0V+bAyRDLPPpqmm4mrkramzCbREIT8ipI6YQ==
-X-Received: by 2002:a05:6a00:1944:b0:438:d002:6e35 with SMTP id s4-20020a056a00194400b00438d0026e35mr12543299pfk.20.1633733258954;
-        Fri, 08 Oct 2021 15:47:38 -0700 (PDT)
-Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id k17sm295225pff.214.2021.10.08.15.47.38
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 08 Oct 2021 15:47:38 -0700 (PDT)
-Date:   Fri, 8 Oct 2021 15:47:37 -0700
-From:   Kees Cook <keescook@chromium.org>
+        id S232517AbhJJOXc convert rfc822-to-8bit (ORCPT
+        <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 10 Oct 2021 10:23:32 -0400
+Received: from albireo.enyo.de ([37.24.231.21]:55530 "EHLO albireo.enyo.de"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S231846AbhJJOXc (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sun, 10 Oct 2021 10:23:32 -0400
+X-Greylist: delayed 628 seconds by postgrey-1.27 at vger.kernel.org; Sun, 10 Oct 2021 10:23:31 EDT
+Received: from [172.17.203.2] (port=48075 helo=deneb.enyo.de)
+        by albireo.enyo.de ([172.17.140.2]) with esmtps (TLS1.3:ECDHE_RSA_AES_256_GCM_SHA384:256)
+        id 1mZZWh-0005qE-Ez; Sun, 10 Oct 2021 14:10:07 +0000
+Received: from fw by deneb.enyo.de with local (Exim 4.94.2)
+        (envelope-from <fw@deneb.enyo.de>)
+        id 1mZZWh-0006hy-5Z; Sun, 10 Oct 2021 16:10:07 +0200
+From:   Florian Weimer <fw@deneb.enyo.de>
 To:     =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
 Cc:     Al Viro <viro@zeniv.linux.org.uk>,
         Andrew Morton <akpm@linux-foundation.org>,
@@ -63,10 +36,10 @@ Cc:     Al Viro <viro@zeniv.linux.org.uk>,
         Dmitry Vyukov <dvyukov@google.com>,
         Eric Biggers <ebiggers@kernel.org>,
         Eric Chiang <ericchiang@google.com>,
-        Florian Weimer <fweimer@redhat.com>,
         Geert Uytterhoeven <geert@linux-m68k.org>,
         James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>,
         Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
         Lakshmi Ramasubramanian <nramas@linux.microsoft.com>,
         "Madhavan T . Venkataraman" <madvenka@linux.microsoft.com>,
         Matthew Garrett <mjg59@google.com>,
@@ -84,28 +57,50 @@ Cc:     Al Viro <viro@zeniv.linux.org.uk>,
         Vincent Strubel <vincent.strubel@ssi.gouv.fr>,
         kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
         linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
-Subject: Re: [PATCH v14 0/3] Add trusted_for(2) (was O_MAYEXEC)
-Message-ID: <202110081545.8D8C2980@keescook>
+        linux-kernel@vger.kernel.org,
+        linux-security-module@vger.kernel.org,
+        =?iso-8859-1?Q?Micka=EBl_Sala=FC?= =?iso-8859-1?Q?n?= 
+        <mic@linux.microsoft.com>
+Subject: Re: [PATCH v14 1/3] fs: Add trusted_for(2) syscall implementation
+ and related sysctl
 References: <20211008104840.1733385-1-mic@digikod.net>
+        <20211008104840.1733385-2-mic@digikod.net>
+Date:   Sun, 10 Oct 2021 16:10:07 +0200
+In-Reply-To: <20211008104840.1733385-2-mic@digikod.net>
+ (=?iso-8859-1?Q?=22Micka=EBl_Sala=FCn=22's?=
+        message of "Fri, 8 Oct 2021 12:48:38 +0200")
+Message-ID: <87tuhpynr4.fsf@mid.deneb.enyo.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <20211008104840.1733385-1-mic@digikod.net>
+Content-Transfer-Encoding: 8BIT
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Oct 08, 2021 at 12:48:37PM +0200, Mickaël Salaün wrote:
-> This patch series is mainly a rebase on v5.15-rc4 with some cosmetic
-> changes suggested by Kees Cook.  Andrew, can you please consider to
-> merge this into your tree?
+* Mickaël Salaün:
 
-Thanks for staying on this series! This is a good step in the right
-direction for finally plugging the "interpreter" noexec hole. I'm pretty
-sure Chrome OS will immediately use this as they've been carrying
-similar functionality for a long time.
+> Being able to restrict execution also enables to protect the kernel by
+> restricting arbitrary syscalls that an attacker could perform with a
+> crafted binary or certain script languages.  It also improves multilevel
+> isolation by reducing the ability of an attacker to use side channels
+> with specific code.  These restrictions can natively be enforced for ELF
+> binaries (with the noexec mount option) but require this kernel
+> extension to properly handle scripts (e.g. Python, Perl).  To get a
+> consistent execution policy, additional memory restrictions should also
+> be enforced (e.g. thanks to SELinux).
 
--- 
-Kees Cook
+One example I have come across recently is that code which can be
+safely loaded as a Perl module is definitely not a no-op as a shell
+script: it downloads code and executes it, apparently over an
+untrusted network connection and without signature checking.
+
+Maybe in the IMA world, the expectation is that such ambiguous code
+would not be signed in the first place, but general-purpose
+distributions are heading in a different direction with
+across-the-board signing:
+
+  Signed RPM Contents
+  <https://fedoraproject.org/wiki/Changes/Signed_RPM_Contents>
+
+So I wonder if we need additional context information for a potential
+LSM to identify the intended use case.
