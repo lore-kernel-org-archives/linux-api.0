@@ -2,27 +2,27 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B7997C4332F
-	for <linux-api@archiver.kernel.org>; Mon, 25 Oct 2021 20:09:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 80C29C433FE
+	for <linux-api@archiver.kernel.org>; Mon, 25 Oct 2021 20:09:44 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A335C60C4A
-	for <linux-api@archiver.kernel.org>; Mon, 25 Oct 2021 20:09:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6C4DC60C4A
+	for <linux-api@archiver.kernel.org>; Mon, 25 Oct 2021 20:09:44 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237474AbhJYUME (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 25 Oct 2021 16:12:04 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33430 "EHLO
+        id S237520AbhJYUMF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 25 Oct 2021 16:12:05 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33342 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237251AbhJYULq (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 25 Oct 2021 16:11:46 -0400
+        with ESMTP id S234883AbhJYULr (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 25 Oct 2021 16:11:47 -0400
 Received: from bhuna.collabora.co.uk (bhuna.collabora.co.uk [IPv6:2a00:1098:0:82:1000:25:2eeb:e3e3])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5F3C8C04A411;
-        Mon, 25 Oct 2021 12:30:12 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C2DEAC04A414;
+        Mon, 25 Oct 2021 12:30:13 -0700 (PDT)
 Received: from localhost (unknown [IPv6:2804:14c:124:8a08::1002])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
         (Authenticated sender: krisman)
-        by bhuna.collabora.co.uk (Postfix) with ESMTPSA id ECA781F433DE;
-        Mon, 25 Oct 2021 20:29:48 +0100 (BST)
+        by bhuna.collabora.co.uk (Postfix) with ESMTPSA id 98BD21F433B0;
+        Mon, 25 Oct 2021 20:30:08 +0100 (BST)
 From:   Gabriel Krisman Bertazi <krisman@collabora.com>
 To:     amir73il@gmail.com, jack@suse.com
 Cc:     djwong@kernel.org, tytso@mit.edu, david@fromorbit.com,
@@ -31,9 +31,9 @@ Cc:     djwong@kernel.org, tytso@mit.edu, david@fromorbit.com,
         linux-ext4@vger.kernel.org,
         Gabriel Krisman Bertazi <krisman@collabora.com>,
         kernel@collabora.com, Jan Kara <jack@suse.cz>
-Subject: [PATCH v9 17/31] fsnotify: Support FS_ERROR event type
-Date:   Mon, 25 Oct 2021 16:27:32 -0300
-Message-Id: <20211025192746.66445-18-krisman@collabora.com>
+Subject: [PATCH v9 20/31] fanotify: Support enqueueing of error events
+Date:   Mon, 25 Oct 2021 16:27:35 -0300
+Message-Id: <20211025192746.66445-21-krisman@collabora.com>
 X-Mailer: git-send-email 2.33.0
 In-Reply-To: <20211025192746.66445-1-krisman@collabora.com>
 References: <20211025192746.66445-1-krisman@collabora.com>
@@ -43,129 +43,117 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Expose a new type of fsnotify event for filesystems to report errors for
-userspace monitoring tools.  fanotify will send this type of
-notification for FAN_FS_ERROR events.  This also introduce a helper for
-generating the new event.
+Once an error event is triggered, enqueue it in the notification group,
+similarly to what is done for other events.  FAN_FS_ERROR is not
+handled specially, since the memory is now handled by a preallocated
+mempool.
 
-Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+For now, make the event unhashed.  A future patch implements merging of
+this kind of event.
+
 Reviewed-by: Jan Kara <jack@suse.cz>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
 Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
 
 ---
-Changes since v6:
-  - Add fsnotify_data_error_report
-
-Changes since v5:
-  - pass sb inside data field (jan)
-Changes since v3:
-  - Squash patch ("fsnotify: Introduce helpers to send error_events")
-  - Drop reviewed-bys!
-
-Changes since v2:
-  - FAN_ERROR->FAN_FS_ERROR (Amir)
-
-Changes since v1:
-  - Overload FS_ERROR with FS_IN_IGNORED
-  - Implement support for this type on fsnotify_data_inode (Amir)
+Changes since v7:
+  - WARN_ON -> WARN_ON_ONCE (Amir)
 ---
- include/linux/fsnotify.h         | 13 +++++++++++++
- include/linux/fsnotify_backend.h | 32 +++++++++++++++++++++++++++++++-
- 2 files changed, 44 insertions(+), 1 deletion(-)
+ fs/notify/fanotify/fanotify.c | 35 +++++++++++++++++++++++++++++++++++
+ fs/notify/fanotify/fanotify.h |  6 ++++++
+ 2 files changed, 41 insertions(+)
 
-diff --git a/include/linux/fsnotify.h b/include/linux/fsnotify.h
-index 1e5f7435a4b5..787545e87eeb 100644
---- a/include/linux/fsnotify.h
-+++ b/include/linux/fsnotify.h
-@@ -339,4 +339,17 @@ static inline void fsnotify_change(struct dentry *dentry, unsigned int ia_valid)
- 		fsnotify_dentry(dentry, mask);
+diff --git a/fs/notify/fanotify/fanotify.c b/fs/notify/fanotify/fanotify.c
+index 01d68dfc74aa..1f195c95dfcd 100644
+--- a/fs/notify/fanotify/fanotify.c
++++ b/fs/notify/fanotify/fanotify.c
+@@ -574,6 +574,27 @@ static struct fanotify_event *fanotify_alloc_name_event(struct inode *id,
+ 	return &fne->fae;
  }
  
-+static inline int fsnotify_sb_error(struct super_block *sb, struct inode *inode,
-+				    int error)
++static struct fanotify_event *fanotify_alloc_error_event(
++						struct fsnotify_group *group,
++						__kernel_fsid_t *fsid,
++						const void *data, int data_type)
 +{
-+	struct fs_error_report report = {
-+		.error = error,
-+		.inode = inode,
-+		.sb = sb,
-+	};
++	struct fs_error_report *report =
++			fsnotify_data_error_report(data, data_type);
++	struct fanotify_error_event *fee;
 +
-+	return fsnotify(FS_ERROR, &report, FSNOTIFY_EVENT_ERROR,
-+			NULL, NULL, NULL, 0);
-+}
-+
- #endif	/* _LINUX_FS_NOTIFY_H */
-diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
-index 3a7c31436182..00dbaafbcf95 100644
---- a/include/linux/fsnotify_backend.h
-+++ b/include/linux/fsnotify_backend.h
-@@ -42,6 +42,12 @@
- 
- #define FS_UNMOUNT		0x00002000	/* inode on umount fs */
- #define FS_Q_OVERFLOW		0x00004000	/* Event queued overflowed */
-+#define FS_ERROR		0x00008000	/* Filesystem Error (fanotify) */
-+
-+/*
-+ * FS_IN_IGNORED overloads FS_ERROR.  It is only used internally by inotify
-+ * which does not support FS_ERROR.
-+ */
- #define FS_IN_IGNORED		0x00008000	/* last inotify event here */
- 
- #define FS_OPEN_PERM		0x00010000	/* open event in an permission hook */
-@@ -95,7 +101,8 @@
- #define ALL_FSNOTIFY_EVENTS (ALL_FSNOTIFY_DIRENT_EVENTS | \
- 			     FS_EVENTS_POSS_ON_CHILD | \
- 			     FS_DELETE_SELF | FS_MOVE_SELF | FS_DN_RENAME | \
--			     FS_UNMOUNT | FS_Q_OVERFLOW | FS_IN_IGNORED)
-+			     FS_UNMOUNT | FS_Q_OVERFLOW | FS_IN_IGNORED | \
-+			     FS_ERROR)
- 
- /* Extra flags that may be reported with event or control handling of events */
- #define ALL_FSNOTIFY_FLAGS  (FS_EXCL_UNLINK | FS_ISDIR | FS_IN_ONESHOT | \
-@@ -250,6 +257,13 @@ enum fsnotify_data_type {
- 	FSNOTIFY_EVENT_PATH,
- 	FSNOTIFY_EVENT_INODE,
- 	FSNOTIFY_EVENT_DENTRY,
-+	FSNOTIFY_EVENT_ERROR,
-+};
-+
-+struct fs_error_report {
-+	int error;
-+	struct inode *inode;
-+	struct super_block *sb;
- };
- 
- static inline struct inode *fsnotify_data_inode(const void *data, int data_type)
-@@ -261,6 +275,8 @@ static inline struct inode *fsnotify_data_inode(const void *data, int data_type)
- 		return d_inode(data);
- 	case FSNOTIFY_EVENT_PATH:
- 		return d_inode(((const struct path *)data)->dentry);
-+	case FSNOTIFY_EVENT_ERROR:
-+		return ((struct fs_error_report *)data)->inode;
- 	default:
- 		return NULL;
- 	}
-@@ -300,6 +316,20 @@ static inline struct super_block *fsnotify_data_sb(const void *data,
- 		return ((struct dentry *)data)->d_sb;
- 	case FSNOTIFY_EVENT_PATH:
- 		return ((const struct path *)data)->dentry->d_sb;
-+	case FSNOTIFY_EVENT_ERROR:
-+		return ((struct fs_error_report *) data)->sb;
-+	default:
++	if (WARN_ON_ONCE(!report))
 +		return NULL;
-+	}
++
++	fee = mempool_alloc(&group->fanotify_data.error_events_pool, GFP_NOFS);
++	if (!fee)
++		return NULL;
++
++	fee->fae.type = FANOTIFY_EVENT_TYPE_FS_ERROR;
++
++	return &fee->fae;
 +}
 +
-+static inline struct fs_error_report *fsnotify_data_error_report(
-+							const void *data,
-+							int data_type)
+ static struct fanotify_event *fanotify_alloc_event(struct fsnotify_group *group,
+ 						   u32 mask, const void *data,
+ 						   int data_type, struct inode *dir,
+@@ -641,6 +662,9 @@ static struct fanotify_event *fanotify_alloc_event(struct fsnotify_group *group,
+ 
+ 	if (fanotify_is_perm_event(mask)) {
+ 		event = fanotify_alloc_perm_event(path, gfp);
++	} else if (fanotify_is_error_event(mask)) {
++		event = fanotify_alloc_error_event(group, fsid, data,
++						   data_type);
+ 	} else if (name_event && (file_name || child)) {
+ 		event = fanotify_alloc_name_event(id, fsid, file_name, child,
+ 						  &hash, gfp);
+@@ -850,6 +874,14 @@ static void fanotify_free_name_event(struct fanotify_event *event)
+ 	kfree(FANOTIFY_NE(event));
+ }
+ 
++static void fanotify_free_error_event(struct fsnotify_group *group,
++				      struct fanotify_event *event)
 +{
-+	switch (data_type) {
-+	case FSNOTIFY_EVENT_ERROR:
-+		return (struct fs_error_report *) data;
++	struct fanotify_error_event *fee = FANOTIFY_EE(event);
++
++	mempool_free(fee, &group->fanotify_data.error_events_pool);
++}
++
+ static void fanotify_free_event(struct fsnotify_group *group,
+ 				struct fsnotify_event *fsn_event)
+ {
+@@ -873,6 +905,9 @@ static void fanotify_free_event(struct fsnotify_group *group,
+ 	case FANOTIFY_EVENT_TYPE_OVERFLOW:
+ 		kfree(event);
+ 		break;
++	case FANOTIFY_EVENT_TYPE_FS_ERROR:
++		fanotify_free_error_event(group, event);
++		break;
  	default:
- 		return NULL;
+ 		WARN_ON_ONCE(1);
  	}
+diff --git a/fs/notify/fanotify/fanotify.h b/fs/notify/fanotify/fanotify.h
+index a577e87fac2b..ebef952481fa 100644
+--- a/fs/notify/fanotify/fanotify.h
++++ b/fs/notify/fanotify/fanotify.h
+@@ -298,6 +298,11 @@ static inline struct fanotify_event *FANOTIFY_E(struct fsnotify_event *fse)
+ 	return container_of(fse, struct fanotify_event, fse);
+ }
+ 
++static inline bool fanotify_is_error_event(u32 mask)
++{
++	return mask & FAN_FS_ERROR;
++}
++
+ static inline bool fanotify_event_has_path(struct fanotify_event *event)
+ {
+ 	return event->type == FANOTIFY_EVENT_TYPE_PATH ||
+@@ -327,6 +332,7 @@ static inline struct path *fanotify_event_path(struct fanotify_event *event)
+ static inline bool fanotify_is_hashed_event(u32 mask)
+ {
+ 	return !(fanotify_is_perm_event(mask) ||
++		 fanotify_is_error_event(mask) ||
+ 		 fsnotify_is_overflow_event(mask));
+ }
+ 
 -- 
 2.33.0
 
