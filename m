@@ -2,24 +2,24 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 007F6C4332F
-	for <linux-api@archiver.kernel.org>; Mon, 25 Oct 2021 19:34:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 66DF3C433F5
+	for <linux-api@archiver.kernel.org>; Mon, 25 Oct 2021 19:34:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DD3AE604DA
-	for <linux-api@archiver.kernel.org>; Mon, 25 Oct 2021 19:34:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4EB1F61154
+	for <linux-api@archiver.kernel.org>; Mon, 25 Oct 2021 19:34:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236337AbhJYTgc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 25 Oct 2021 15:36:32 -0400
-Received: from bhuna.collabora.co.uk ([46.235.227.227]:58614 "EHLO
+        id S235317AbhJYTgd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 25 Oct 2021 15:36:33 -0400
+Received: from bhuna.collabora.co.uk ([46.235.227.227]:58640 "EHLO
         bhuna.collabora.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235787AbhJYTcc (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 25 Oct 2021 15:32:32 -0400
+        with ESMTP id S235636AbhJYTcf (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 25 Oct 2021 15:32:35 -0400
 Received: from localhost (unknown [IPv6:2804:14c:124:8a08::1002])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
         (Authenticated sender: krisman)
-        by bhuna.collabora.co.uk (Postfix) with ESMTPSA id 1431C1F41CDE;
-        Mon, 25 Oct 2021 20:29:23 +0100 (BST)
+        by bhuna.collabora.co.uk (Postfix) with ESMTPSA id 1E6141F433E1;
+        Mon, 25 Oct 2021 20:29:54 +0100 (BST)
 From:   Gabriel Krisman Bertazi <krisman@collabora.com>
 To:     amir73il@gmail.com, jack@suse.com
 Cc:     djwong@kernel.org, tytso@mit.edu, david@fromorbit.com,
@@ -28,9 +28,9 @@ Cc:     djwong@kernel.org, tytso@mit.edu, david@fromorbit.com,
         linux-ext4@vger.kernel.org,
         Gabriel Krisman Bertazi <krisman@collabora.com>,
         kernel@collabora.com, Jan Kara <jack@suse.cz>
-Subject: [PATCH v9 13/31] fanotify: Support null inode event in fanotify_dfid_inode
-Date:   Mon, 25 Oct 2021 16:27:28 -0300
-Message-Id: <20211025192746.66445-14-krisman@collabora.com>
+Subject: [PATCH v9 18/31] fanotify: Reserve UAPI bits for FAN_FS_ERROR
+Date:   Mon, 25 Oct 2021 16:27:33 -0300
+Message-Id: <20211025192746.66445-19-krisman@collabora.com>
 X-Mailer: git-send-email 2.33.0
 In-Reply-To: <20211025192746.66445-1-krisman@collabora.com>
 References: <20211025192746.66445-1-krisman@collabora.com>
@@ -40,31 +40,42 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-FAN_FS_ERROR doesn't support DFID, but this function is still called for
-every event.  The problem is that it is not capable of handling null
-inodes, which now can happen in case of superblock error events.  For
-this case, just returning dir will be enough.
+FAN_FS_ERROR allows reporting of event type FS_ERROR to userspace, which
+is a mechanism to report file system wide problems via fanotify.  This
+commit preallocate userspace visible bits to match the FS_ERROR event.
 
-Reviewed-by: Amir Goldstein <amir73il@gmail.com>
 Reviewed-by: Jan Kara <jack@suse.cz>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
 Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
 ---
- fs/notify/fanotify/fanotify.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ fs/notify/fanotify/fanotify.c | 1 +
+ include/uapi/linux/fanotify.h | 1 +
+ 2 files changed, 2 insertions(+)
 
 diff --git a/fs/notify/fanotify/fanotify.c b/fs/notify/fanotify/fanotify.c
-index c620b4f6fe12..397ee623ff1e 100644
+index c64d61b673ca..8f152445d75c 100644
 --- a/fs/notify/fanotify/fanotify.c
 +++ b/fs/notify/fanotify/fanotify.c
-@@ -452,7 +452,7 @@ static struct inode *fanotify_dfid_inode(u32 event_mask, const void *data,
- 	if (event_mask & ALL_FSNOTIFY_DIRENT_EVENTS)
- 		return dir;
+@@ -752,6 +752,7 @@ static int fanotify_handle_event(struct fsnotify_group *group, u32 mask,
+ 	BUILD_BUG_ON(FAN_ONDIR != FS_ISDIR);
+ 	BUILD_BUG_ON(FAN_OPEN_EXEC != FS_OPEN_EXEC);
+ 	BUILD_BUG_ON(FAN_OPEN_EXEC_PERM != FS_OPEN_EXEC_PERM);
++	BUILD_BUG_ON(FAN_FS_ERROR != FS_ERROR);
  
--	if (S_ISDIR(inode->i_mode))
-+	if (inode && S_ISDIR(inode->i_mode))
- 		return inode;
+ 	BUILD_BUG_ON(HWEIGHT32(ALL_FANOTIFY_EVENT_BITS) != 19);
  
- 	return dir;
+diff --git a/include/uapi/linux/fanotify.h b/include/uapi/linux/fanotify.h
+index 64553df9d735..2990731ddc8b 100644
+--- a/include/uapi/linux/fanotify.h
++++ b/include/uapi/linux/fanotify.h
+@@ -20,6 +20,7 @@
+ #define FAN_OPEN_EXEC		0x00001000	/* File was opened for exec */
+ 
+ #define FAN_Q_OVERFLOW		0x00004000	/* Event queued overflowed */
++#define FAN_FS_ERROR		0x00008000	/* Filesystem error */
+ 
+ #define FAN_OPEN_PERM		0x00010000	/* File open in perm check */
+ #define FAN_ACCESS_PERM		0x00020000	/* File accessed in perm check */
 -- 
 2.33.0
 
