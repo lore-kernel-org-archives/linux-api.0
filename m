@@ -2,24 +2,24 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 59E6FC433EF
-	for <linux-api@archiver.kernel.org>; Mon, 25 Oct 2021 19:34:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CA497C433F5
+	for <linux-api@archiver.kernel.org>; Mon, 25 Oct 2021 19:34:17 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3FF0A6115C
-	for <linux-api@archiver.kernel.org>; Mon, 25 Oct 2021 19:34:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AE17261156
+	for <linux-api@archiver.kernel.org>; Mon, 25 Oct 2021 19:34:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233110AbhJYTgd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 25 Oct 2021 15:36:33 -0400
-Received: from bhuna.collabora.co.uk ([46.235.227.227]:58632 "EHLO
+        id S235787AbhJYTgh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 25 Oct 2021 15:36:37 -0400
+Received: from bhuna.collabora.co.uk ([46.235.227.227]:58648 "EHLO
         bhuna.collabora.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235751AbhJYTce (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 25 Oct 2021 15:32:34 -0400
+        with ESMTP id S235755AbhJYTcj (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 25 Oct 2021 15:32:39 -0400
 Received: from localhost (unknown [IPv6:2804:14c:124:8a08::1002])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
         (Authenticated sender: krisman)
-        by bhuna.collabora.co.uk (Postfix) with ESMTPSA id 5A6471F433CD;
-        Mon, 25 Oct 2021 20:29:36 +0100 (BST)
+        by bhuna.collabora.co.uk (Postfix) with ESMTPSA id 30E891F41B51;
+        Mon, 25 Oct 2021 20:30:14 +0100 (BST)
 From:   Gabriel Krisman Bertazi <krisman@collabora.com>
 To:     amir73il@gmail.com, jack@suse.com
 Cc:     djwong@kernel.org, tytso@mit.edu, david@fromorbit.com,
@@ -28,9 +28,9 @@ Cc:     djwong@kernel.org, tytso@mit.edu, david@fromorbit.com,
         linux-ext4@vger.kernel.org,
         Gabriel Krisman Bertazi <krisman@collabora.com>,
         kernel@collabora.com, Jan Kara <jack@suse.cz>
-Subject: [PATCH v9 15/31] fanotify: Encode empty file handle when no inode is provided
-Date:   Mon, 25 Oct 2021 16:27:30 -0300
-Message-Id: <20211025192746.66445-16-krisman@collabora.com>
+Subject: [PATCH v9 21/31] fanotify: Support merging of error events
+Date:   Mon, 25 Oct 2021 16:27:36 -0300
+Message-Id: <20211025192746.66445-22-krisman@collabora.com>
 X-Mailer: git-send-email 2.33.0
 In-Reply-To: <20211025192746.66445-1-krisman@collabora.com>
 References: <20211025192746.66445-1-krisman@collabora.com>
@@ -40,57 +40,118 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Instead of failing, encode an invalid file handle in fanotify_encode_fh
-if no inode is provided.  This bogus file handle will be reported by
-FAN_FS_ERROR for non-inode errors.
+Error events (FAN_FS_ERROR) against the same file system can be merged
+by simply iterating the error count.  The hash is taken from the fsid,
+without considering the FH.  This means that only the first error object
+is reported.
 
 Reviewed-by: Amir Goldstein <amir73il@gmail.com>
 Reviewed-by: Jan Kara <jack@suse.cz>
 Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
 
 ---
-Changes since v6:
-  - Use FILEID_ROOT as the internal value (jan)
-  - Create an empty FH (jan)
-
-Changes since v5:
-  - Preserve flags initialization (jan)
-  - Add BUILD_BUG_ON (amir)
-  - Require minimum of FANOTIFY_NULL_FH_LEN for fh_len(amir)
-  - Improve comment to explain the null FH length (jan)
-  - Simplify logic
+Changes since v7:
+  - Move fee->fsid assignment here (Amir)
+  - Open code error event merge logic in fanotify_merge (Jan)
 ---
- fs/notify/fanotify/fanotify.c | 9 ++++++++-
- 1 file changed, 8 insertions(+), 1 deletion(-)
+ fs/notify/fanotify/fanotify.c | 26 ++++++++++++++++++++++++--
+ fs/notify/fanotify/fanotify.h |  4 +++-
+ 2 files changed, 27 insertions(+), 3 deletions(-)
 
 diff --git a/fs/notify/fanotify/fanotify.c b/fs/notify/fanotify/fanotify.c
-index ec84fee7ad01..c64d61b673ca 100644
+index 1f195c95dfcd..cedcb1546804 100644
 --- a/fs/notify/fanotify/fanotify.c
 +++ b/fs/notify/fanotify/fanotify.c
-@@ -370,8 +370,14 @@ static int fanotify_encode_fh(struct fanotify_fh *fh, struct inode *inode,
- 	fh->type = FILEID_ROOT;
- 	fh->len = 0;
- 	fh->flags = 0;
+@@ -111,6 +111,16 @@ static bool fanotify_name_event_equal(struct fanotify_name_event *fne1,
+ 	return fanotify_info_equal(info1, info2);
+ }
+ 
++static bool fanotify_error_event_equal(struct fanotify_error_event *fee1,
++				       struct fanotify_error_event *fee2)
++{
++	/* Error events against the same file system are always merged. */
++	if (!fanotify_fsid_equal(&fee1->fsid, &fee2->fsid))
++		return false;
 +
-+	/*
-+	 * Invalid FHs are used by FAN_FS_ERROR for errors not
-+	 * linked to any inode. The f_handle won't be reported
-+	 * back to userspace.
-+	 */
- 	if (!inode)
--		return 0;
-+		goto out;
++	return true;
++}
++
+ static bool fanotify_should_merge(struct fanotify_event *old,
+ 				  struct fanotify_event *new)
+ {
+@@ -141,6 +151,9 @@ static bool fanotify_should_merge(struct fanotify_event *old,
+ 	case FANOTIFY_EVENT_TYPE_FID_NAME:
+ 		return fanotify_name_event_equal(FANOTIFY_NE(old),
+ 						 FANOTIFY_NE(new));
++	case FANOTIFY_EVENT_TYPE_FS_ERROR:
++		return fanotify_error_event_equal(FANOTIFY_EE(old),
++						  FANOTIFY_EE(new));
+ 	default:
+ 		WARN_ON_ONCE(1);
+ 	}
+@@ -176,6 +189,10 @@ static int fanotify_merge(struct fsnotify_group *group,
+ 			break;
+ 		if (fanotify_should_merge(old, new)) {
+ 			old->mask |= new->mask;
++
++			if (fanotify_is_error_event(old->mask))
++				FANOTIFY_EE(old)->err_count++;
++
+ 			return 1;
+ 		}
+ 	}
+@@ -577,7 +594,8 @@ static struct fanotify_event *fanotify_alloc_name_event(struct inode *id,
+ static struct fanotify_event *fanotify_alloc_error_event(
+ 						struct fsnotify_group *group,
+ 						__kernel_fsid_t *fsid,
+-						const void *data, int data_type)
++						const void *data, int data_type,
++						unsigned int *hash)
+ {
+ 	struct fs_error_report *report =
+ 			fsnotify_data_error_report(data, data_type);
+@@ -591,6 +609,10 @@ static struct fanotify_event *fanotify_alloc_error_event(
+ 		return NULL;
  
- 	/*
- 	 * !gpf means preallocated variable size fh, but fh_len could
-@@ -403,6 +409,7 @@ static int fanotify_encode_fh(struct fanotify_fh *fh, struct inode *inode,
- 	fh->type = type;
- 	fh->len = fh_len;
+ 	fee->fae.type = FANOTIFY_EVENT_TYPE_FS_ERROR;
++	fee->err_count = 1;
++	fee->fsid = *fsid;
++
++	*hash ^= fanotify_hash_fsid(fsid);
  
-+out:
- 	/*
- 	 * Mix fh into event merge key.  Hash might be NULL in case of
- 	 * unhashed FID events (i.e. FAN_FS_ERROR).
+ 	return &fee->fae;
+ }
+@@ -664,7 +686,7 @@ static struct fanotify_event *fanotify_alloc_event(struct fsnotify_group *group,
+ 		event = fanotify_alloc_perm_event(path, gfp);
+ 	} else if (fanotify_is_error_event(mask)) {
+ 		event = fanotify_alloc_error_event(group, fsid, data,
+-						   data_type);
++						   data_type, &hash);
+ 	} else if (name_event && (file_name || child)) {
+ 		event = fanotify_alloc_name_event(id, fsid, file_name, child,
+ 						  &hash, gfp);
+diff --git a/fs/notify/fanotify/fanotify.h b/fs/notify/fanotify/fanotify.h
+index ebef952481fa..2b032b79d5b0 100644
+--- a/fs/notify/fanotify/fanotify.h
++++ b/fs/notify/fanotify/fanotify.h
+@@ -199,6 +199,9 @@ FANOTIFY_NE(struct fanotify_event *event)
+ 
+ struct fanotify_error_event {
+ 	struct fanotify_event fae;
++	u32 err_count; /* Suppressed errors count */
++
++	__kernel_fsid_t fsid; /* FSID this error refers to. */
+ };
+ 
+ static inline struct fanotify_error_event *
+@@ -332,7 +335,6 @@ static inline struct path *fanotify_event_path(struct fanotify_event *event)
+ static inline bool fanotify_is_hashed_event(u32 mask)
+ {
+ 	return !(fanotify_is_perm_event(mask) ||
+-		 fanotify_is_error_event(mask) ||
+ 		 fsnotify_is_overflow_event(mask));
+ }
+ 
 -- 
 2.33.0
 
