@@ -2,24 +2,24 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7DCC5C433F5
-	for <linux-api@archiver.kernel.org>; Mon, 25 Oct 2021 19:34:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4F17FC433FE
+	for <linux-api@archiver.kernel.org>; Mon, 25 Oct 2021 19:34:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 69FD56115A
-	for <linux-api@archiver.kernel.org>; Mon, 25 Oct 2021 19:34:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 361AC610C9
+	for <linux-api@archiver.kernel.org>; Mon, 25 Oct 2021 19:34:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235398AbhJYTgl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 25 Oct 2021 15:36:41 -0400
-Received: from bhuna.collabora.co.uk ([46.235.227.227]:58738 "EHLO
+        id S236672AbhJYTgt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 25 Oct 2021 15:36:49 -0400
+Received: from bhuna.collabora.co.uk ([46.235.227.227]:58816 "EHLO
         bhuna.collabora.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236028AbhJYTdM (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 25 Oct 2021 15:33:12 -0400
+        with ESMTP id S236128AbhJYTdh (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 25 Oct 2021 15:33:37 -0400
 Received: from localhost (unknown [IPv6:2804:14c:124:8a08::1002])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
         (Authenticated sender: krisman)
-        by bhuna.collabora.co.uk (Postfix) with ESMTPSA id 57E401F433DC;
-        Mon, 25 Oct 2021 20:30:48 +0100 (BST)
+        by bhuna.collabora.co.uk (Postfix) with ESMTPSA id 6D2681F43463;
+        Mon, 25 Oct 2021 20:31:13 +0100 (BST)
 From:   Gabriel Krisman Bertazi <krisman@collabora.com>
 To:     amir73il@gmail.com, jack@suse.com
 Cc:     djwong@kernel.org, tytso@mit.edu, david@fromorbit.com,
@@ -28,9 +28,9 @@ Cc:     djwong@kernel.org, tytso@mit.edu, david@fromorbit.com,
         linux-ext4@vger.kernel.org,
         Gabriel Krisman Bertazi <krisman@collabora.com>,
         kernel@collabora.com, Jan Kara <jack@suse.cz>
-Subject: [PATCH v9 26/31] fanotify: Report fid info for file related file system errors
-Date:   Mon, 25 Oct 2021 16:27:41 -0300
-Message-Id: <20211025192746.66445-27-krisman@collabora.com>
+Subject: [PATCH v9 30/31] samples: Add fs error monitoring example
+Date:   Mon, 25 Oct 2021 16:27:45 -0300
+Message-Id: <20211025192746.66445-31-krisman@collabora.com>
 X-Mailer: git-send-email 2.33.0
 In-Reply-To: <20211025192746.66445-1-krisman@collabora.com>
 References: <20211025192746.66445-1-krisman@collabora.com>
@@ -40,96 +40,219 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Plumb the pieces to add a FID report to error records.  Since all error
-event memory must be pre-allocated, we pre-allocate the maximum file
-handle size possible, such that it should always fit.
-
-For errors that don't expose a file handle report it with an invalid
-FID.
+Introduce an example of a FAN_FS_ERROR fanotify user to track filesystem
+errors.
 
 Reviewed-by: Amir Goldstein <amir73il@gmail.com>
 Reviewed-by: Jan Kara <jack@suse.cz>
 Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
 
 ---
-Changes since v8:
-  - Drop comment (Amir)
-  - Move report dereference till after null check (jan)
-  - Move has_object_fh hunk to earlier patch (jan)
-Changes since v7:
-  - Move WARN_ON to separate patch (Amir)
-  - Avoid duplication in the structure definition (Amir)
-Changes since v6:
-  - pass fsid from handle_events
-Changes since v5:
-  - Use preallocated MAX_HANDLE_SZ FH buffer
-  - Report superblock errors with a zerolength INVALID FID (jan, amir)
----
- fs/notify/fanotify/fanotify.c | 11 +++++++++++
- fs/notify/fanotify/fanotify.h |  6 ++++++
- 2 files changed, 17 insertions(+)
+Changes since v4:
+  - Protect file_handle defines with ifdef guards
 
-diff --git a/fs/notify/fanotify/fanotify.c b/fs/notify/fanotify/fanotify.c
-index 45df610debbe..465f07e70e6d 100644
---- a/fs/notify/fanotify/fanotify.c
-+++ b/fs/notify/fanotify/fanotify.c
-@@ -609,7 +609,9 @@ static struct fanotify_event *fanotify_alloc_error_event(
- {
- 	struct fs_error_report *report =
- 			fsnotify_data_error_report(data, data_type);
-+	struct inode *inode;
- 	struct fanotify_error_event *fee;
-+	int fh_len;
+Changes since v1:
+  - minor fixes
+---
+ samples/Kconfig               |   9 +++
+ samples/Makefile              |   1 +
+ samples/fanotify/Makefile     |   5 ++
+ samples/fanotify/fs-monitor.c | 142 ++++++++++++++++++++++++++++++++++
+ 4 files changed, 157 insertions(+)
+ create mode 100644 samples/fanotify/Makefile
+ create mode 100644 samples/fanotify/fs-monitor.c
+
+diff --git a/samples/Kconfig b/samples/Kconfig
+index b0503ef058d3..88353b8eac0b 100644
+--- a/samples/Kconfig
++++ b/samples/Kconfig
+@@ -120,6 +120,15 @@ config SAMPLE_CONNECTOR
+ 	  with it.
+ 	  See also Documentation/driver-api/connector.rst
  
- 	if (WARN_ON_ONCE(!report))
- 		return NULL;
-@@ -622,6 +624,15 @@ static struct fanotify_event *fanotify_alloc_error_event(
- 	fee->err_count = 1;
- 	fee->fsid = *fsid;
- 
-+	inode = report->inode;
-+	fh_len = fanotify_encode_fh_len(inode);
++config SAMPLE_FANOTIFY_ERROR
++	bool "Build fanotify error monitoring sample"
++	depends on FANOTIFY
++	help
++	  When enabled, this builds an example code that uses the
++	  FAN_FS_ERROR fanotify mechanism to monitor filesystem
++	  errors.
++	  See also Documentation/admin-guide/filesystem-monitoring.rst.
 +
-+	/* Bad fh_len. Fallback to using an invalid fh. Should never happen. */
-+	if (!fh_len && inode)
-+		inode = NULL;
+ config SAMPLE_HIDRAW
+ 	bool "hidraw sample"
+ 	depends on CC_CAN_LINK && HEADERS_INSTALL
+diff --git a/samples/Makefile b/samples/Makefile
+index 087e0988ccc5..931a81847c48 100644
+--- a/samples/Makefile
++++ b/samples/Makefile
+@@ -5,6 +5,7 @@ subdir-$(CONFIG_SAMPLE_AUXDISPLAY)	+= auxdisplay
+ subdir-$(CONFIG_SAMPLE_ANDROID_BINDERFS) += binderfs
+ obj-$(CONFIG_SAMPLE_CONFIGFS)		+= configfs/
+ obj-$(CONFIG_SAMPLE_CONNECTOR)		+= connector/
++obj-$(CONFIG_SAMPLE_FANOTIFY_ERROR)	+= fanotify/
+ subdir-$(CONFIG_SAMPLE_HIDRAW)		+= hidraw
+ obj-$(CONFIG_SAMPLE_HW_BREAKPOINT)	+= hw_breakpoint/
+ obj-$(CONFIG_SAMPLE_KDB)		+= kdb/
+diff --git a/samples/fanotify/Makefile b/samples/fanotify/Makefile
+new file mode 100644
+index 000000000000..e20db1bdde3b
+--- /dev/null
++++ b/samples/fanotify/Makefile
+@@ -0,0 +1,5 @@
++# SPDX-License-Identifier: GPL-2.0-only
++userprogs-always-y += fs-monitor
 +
-+	fanotify_encode_fh(&fee->object_fh, inode, fh_len, NULL, 0);
++userccflags += -I usr/include -Wall
 +
- 	*hash ^= fanotify_hash_fsid(fsid);
- 
- 	return &fee->fae;
-diff --git a/fs/notify/fanotify/fanotify.h b/fs/notify/fanotify/fanotify.h
-index f51ab6e556e8..edd7587adcc5 100644
---- a/fs/notify/fanotify/fanotify.h
-+++ b/fs/notify/fanotify/fanotify.h
-@@ -208,6 +208,8 @@ struct fanotify_error_event {
- 	u32 err_count; /* Suppressed errors count */
- 
- 	__kernel_fsid_t fsid; /* FSID this error refers to. */
+diff --git a/samples/fanotify/fs-monitor.c b/samples/fanotify/fs-monitor.c
+new file mode 100644
+index 000000000000..a0e44cd31e6f
+--- /dev/null
++++ b/samples/fanotify/fs-monitor.c
+@@ -0,0 +1,142 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright 2021, Collabora Ltd.
++ */
 +
-+	FANOTIFY_INLINE_FH(object_fh, MAX_HANDLE_SZ);
- };
- 
- static inline struct fanotify_error_event *
-@@ -222,6 +224,8 @@ static inline __kernel_fsid_t *fanotify_event_fsid(struct fanotify_event *event)
- 		return &FANOTIFY_FE(event)->fsid;
- 	else if (event->type == FANOTIFY_EVENT_TYPE_FID_NAME)
- 		return &FANOTIFY_NE(event)->fsid;
-+	else if (event->type == FANOTIFY_EVENT_TYPE_FS_ERROR)
-+		return &FANOTIFY_EE(event)->fsid;
- 	else
- 		return NULL;
- }
-@@ -233,6 +237,8 @@ static inline struct fanotify_fh *fanotify_event_object_fh(
- 		return &FANOTIFY_FE(event)->object_fh;
- 	else if (event->type == FANOTIFY_EVENT_TYPE_FID_NAME)
- 		return fanotify_info_file_fh(&FANOTIFY_NE(event)->info);
-+	else if (event->type == FANOTIFY_EVENT_TYPE_FS_ERROR)
-+		return &FANOTIFY_EE(event)->object_fh;
- 	else
- 		return NULL;
- }
++#define _GNU_SOURCE
++#include <errno.h>
++#include <err.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <fcntl.h>
++#include <sys/fanotify.h>
++#include <sys/types.h>
++#include <unistd.h>
++#include <sys/types.h>
++
++#ifndef FAN_FS_ERROR
++#define FAN_FS_ERROR		0x00008000
++#define FAN_EVENT_INFO_TYPE_ERROR	5
++
++struct fanotify_event_info_error {
++	struct fanotify_event_info_header hdr;
++	__s32 error;
++	__u32 error_count;
++};
++#endif
++
++#ifndef FILEID_INO32_GEN
++#define FILEID_INO32_GEN	1
++#endif
++
++#ifndef FILEID_INVALID
++#define	FILEID_INVALID		0xff
++#endif
++
++static void print_fh(struct file_handle *fh)
++{
++	int i;
++	uint32_t *h = (uint32_t *) fh->f_handle;
++
++	printf("\tfh: ");
++	for (i = 0; i < fh->handle_bytes; i++)
++		printf("%hhx", fh->f_handle[i]);
++	printf("\n");
++
++	printf("\tdecoded fh: ");
++	if (fh->handle_type == FILEID_INO32_GEN)
++		printf("inode=%u gen=%u\n", h[0], h[1]);
++	else if (fh->handle_type == FILEID_INVALID && !fh->handle_bytes)
++		printf("Type %d (Superblock error)\n", fh->handle_type);
++	else
++		printf("Type %d (Unknown)\n", fh->handle_type);
++
++}
++
++static void handle_notifications(char *buffer, int len)
++{
++	struct fanotify_event_metadata *event =
++		(struct fanotify_event_metadata *) buffer;
++	struct fanotify_event_info_header *info;
++	struct fanotify_event_info_error *err;
++	struct fanotify_event_info_fid *fid;
++	int off;
++
++	for (; FAN_EVENT_OK(event, len); event = FAN_EVENT_NEXT(event, len)) {
++
++		if (event->mask != FAN_FS_ERROR) {
++			printf("unexpected FAN MARK: %llx\n", event->mask);
++			goto next_event;
++		}
++
++		if (event->fd != FAN_NOFD) {
++			printf("Unexpected fd (!= FAN_NOFD)\n");
++			goto next_event;
++		}
++
++		printf("FAN_FS_ERROR (len=%d)\n", event->event_len);
++
++		for (off = sizeof(*event) ; off < event->event_len;
++		     off += info->len) {
++			info = (struct fanotify_event_info_header *)
++				((char *) event + off);
++
++			switch (info->info_type) {
++			case FAN_EVENT_INFO_TYPE_ERROR:
++				err = (struct fanotify_event_info_error *) info;
++
++				printf("\tGeneric Error Record: len=%d\n",
++				       err->hdr.len);
++				printf("\terror: %d\n", err->error);
++				printf("\terror_count: %d\n", err->error_count);
++				break;
++
++			case FAN_EVENT_INFO_TYPE_FID:
++				fid = (struct fanotify_event_info_fid *) info;
++
++				printf("\tfsid: %x%x\n",
++				       fid->fsid.val[0], fid->fsid.val[1]);
++				print_fh((struct file_handle *) &fid->handle);
++				break;
++
++			default:
++				printf("\tUnknown info type=%d len=%d:\n",
++				       info->info_type, info->len);
++			}
++		}
++next_event:
++		printf("---\n\n");
++	}
++}
++
++int main(int argc, char **argv)
++{
++	int fd;
++
++	char buffer[BUFSIZ];
++
++	if (argc < 2) {
++		printf("Missing path argument\n");
++		return 1;
++	}
++
++	fd = fanotify_init(FAN_CLASS_NOTIF|FAN_REPORT_FID, O_RDONLY);
++	if (fd < 0)
++		errx(1, "fanotify_init");
++
++	if (fanotify_mark(fd, FAN_MARK_ADD|FAN_MARK_FILESYSTEM,
++			  FAN_FS_ERROR, AT_FDCWD, argv[1])) {
++		errx(1, "fanotify_mark");
++	}
++
++	while (1) {
++		int n = read(fd, buffer, BUFSIZ);
++
++		if (n < 0)
++			errx(1, "read");
++
++		handle_notifications(buffer, n);
++	}
++
++	return 0;
++}
 -- 
 2.33.0
 
