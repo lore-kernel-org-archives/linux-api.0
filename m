@@ -2,54 +2,54 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 46DC1C43217
-	for <linux-api@archiver.kernel.org>; Thu,  4 Nov 2021 19:58:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 29163C433F5
+	for <linux-api@archiver.kernel.org>; Thu,  4 Nov 2021 19:58:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 27B4461241
-	for <linux-api@archiver.kernel.org>; Thu,  4 Nov 2021 19:58:19 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0A130601FA
+	for <linux-api@archiver.kernel.org>; Thu,  4 Nov 2021 19:58:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232110AbhKDUA4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 4 Nov 2021 16:00:56 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34416 "EHLO
+        id S232098AbhKDUBS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 4 Nov 2021 16:01:18 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34438 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232045AbhKDUAx (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 4 Nov 2021 16:00:53 -0400
-Received: from mail-pg1-x52b.google.com (mail-pg1-x52b.google.com [IPv6:2607:f8b0:4864:20::52b])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 541A5C061203
-        for <linux-api@vger.kernel.org>; Thu,  4 Nov 2021 12:58:15 -0700 (PDT)
-Received: by mail-pg1-x52b.google.com with SMTP id q126so2431160pgq.13
-        for <linux-api@vger.kernel.org>; Thu, 04 Nov 2021 12:58:15 -0700 (PDT)
+        with ESMTP id S232103AbhKDUA4 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 4 Nov 2021 16:00:56 -0400
+Received: from mail-pl1-x629.google.com (mail-pl1-x629.google.com [IPv6:2607:f8b0:4864:20::629])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 95657C06120C
+        for <linux-api@vger.kernel.org>; Thu,  4 Nov 2021 12:58:17 -0700 (PDT)
+Received: by mail-pl1-x629.google.com with SMTP id p18so9009845plf.13
+        for <linux-api@vger.kernel.org>; Thu, 04 Nov 2021 12:58:17 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=posk.io; s=google;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=KmFQXKZcthHpKrqihBqeBtVNKdo1paLla9rrtvaUCuk=;
-        b=ZAGi0Gm8PTC3pHI/Y0sX40Po0Xosv0JfgaMAGiY7LhQFI6llZASnYof1KPFpVt8Tlk
-         M5SofVeyFRCCF90hTxW1RCS6CvR5grBh14sG2WWB2A/YsmQECpSm9Qc5JzvUYpla5eMD
-         OHNvNgPJ2KsKM1n7LReKoquk+xFNXpuJIRqhEp8BtY0ucT7KGsKMOtXBXlaMQikojIoB
-         KZRz4YjiJsqTxkoNsIuBcVq6c1tURgcLaUH+yrPky+YbM3CfokRVbMc8Mv4BP1ouM+r0
-         YctnE0LGX+CC+o2fkLXffsvaDtbhJ7AXUNJbsdKyEgjF3QxP0jpQ+OQN0b0PG5ZoS0Oi
-         ssdg==
+        bh=B00tJn5rnYuWYSpk3zTcunA3N+4r514ND/7t0xIcXv8=;
+        b=ShUZ5B1XhwuMGvWWFnCKj17Or2bjFt5ogDB9XoG9JFtn1ISgGtznB2xI6DRyqrr5v5
+         mPD4HFYlq977Z59e6v1Qc7nitUg+LOkql47m+x20o7hxvvKcVclX0gYXPITTh5gnPaC3
+         GMaobeg7HRkPgrx3DJwLT7wzdvWluSJC0eg9niStV9/rhZVjPWpFZ1TgN/42ImhSfU5r
+         txina07rQXhpCyXKtyTrd/B9zvb5V8Iv9P7YGxGG4LLWKVnvIaE2HxPFXdW9qvyJ/BwC
+         AR2xNNKq9I6/zrEx7TVgFp3sdCktqfQbAFzEdjXjP4HIKYwFQE8YkEtoloYkRI1htCHp
+         qSnQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=KmFQXKZcthHpKrqihBqeBtVNKdo1paLla9rrtvaUCuk=;
-        b=FmbngOrAQmw16p9akLxFTpDG9zFydyy0YmuYqp1J8AhM+YJCSpCqYpCcTrD5Z5ORMa
-         yYDwwu+cie55Ajy1lztfQjgkZPQsxaFC4Pv9S1FPm28ujsRQQaB2jq0dQvifuH7aX+Sb
-         ZMUlFW9DipTm4YRlMcsZI2+EXHprOCEuYFgt9EWmp4wtPEghU9zSSReq3X0ABIoe3BVh
-         DBHI0kcsGaAFwlMb7FeBAt/XBJff/d3kJjHdkAqRRSC8KioMYDH1pmRZwV0ZaBwFjd0g
-         1sen9rdfsxoi9wKAoWs9Xuemt/Lm2nx1u/tDtMmPJpipN6JgWW775UhmrlA3/KKP6Vuk
-         eaAg==
-X-Gm-Message-State: AOAM5334mm1ky/n1qNK6WHak9wT+1brxakwuRPS0aBeI8wg5jma+HOoX
-        Tu0Wp7D/crQs+Zo86IhAOhCjkA==
-X-Google-Smtp-Source: ABdhPJzON6ZaCRIk8tbQxp7Y44opXusxhDMm9W7my3/yaAR1Vo+SlFF8IltxM8mGv2SdrXoOT9asOA==
-X-Received: by 2002:a63:f84a:: with SMTP id v10mr30364678pgj.332.1636055894107;
-        Thu, 04 Nov 2021 12:58:14 -0700 (PDT)
+        bh=B00tJn5rnYuWYSpk3zTcunA3N+4r514ND/7t0xIcXv8=;
+        b=FpQUXUWZz13r0VpqknvZyMiEsBmpxLiyjClL9D6Z3ZoUEGChy8qGKfCyiCW+mxXJlt
+         XfT9h8qZiLV9HsJEhI8tn/fxIAt78GAp/h5L3c/ETnrd4XfYpUk9rVUlZTgpLTejivzr
+         y1hQhIM4UVsNu7TqHRCW0VqUnBPCbV4fBl3HYEbldFZAgp2HFB6zaLOp7pkfUU0+SowJ
+         /v1pZtuRK9IeXaieO3Rytc0QE+bP5NGpeXTI0KI1WV5sGlIg4Z7LKX5NAs2mV0OTC53R
+         wkfeOcF/7PHhCDHjISk+bUIl4ReSPwS8AP3hpv7Zi6FinYq1j3w9fVe4D34VjWjjKqBh
+         7teQ==
+X-Gm-Message-State: AOAM530BU//d4rR1Af4VSmaMgjKjVrPkG6LI8sMsDPm58mJTcqfjpSv6
+        n2RYB7G95XGedDHHUds/OeHquQ==
+X-Google-Smtp-Source: ABdhPJw6DxvrsZ+nRqV0+hsU0V3j2lz0cnHEyutLBt7+C5pF4D98c+1BT8Lv6cuBHJKavnKvym5W1w==
+X-Received: by 2002:a17:903:2291:b0:142:b53:6e08 with SMTP id b17-20020a170903229100b001420b536e08mr18969482plh.10.1636055896673;
+        Thu, 04 Nov 2021 12:58:16 -0700 (PDT)
 Received: from posk-g1.lan (23-118-52-46.lightspeed.sntcca.sbcglobal.net. [23.118.52.46])
-        by smtp.gmail.com with ESMTPSA id w185sm5487853pfb.38.2021.11.04.12.58.13
+        by smtp.gmail.com with ESMTPSA id w185sm5487853pfb.38.2021.11.04.12.58.15
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 04 Nov 2021 12:58:13 -0700 (PDT)
+        Thu, 04 Nov 2021 12:58:16 -0700 (PDT)
 From:   Peter Oskolkov <posk@posk.io>
 X-Google-Original-From: Peter Oskolkov <posk@google.com>
 To:     Peter Zijlstra <peterz@infradead.org>,
@@ -64,9 +64,9 @@ Cc:     Paul Turner <pjt@google.com>, Ben Segall <bsegall@google.com>,
         Peter Oskolkov <posk@posk.io>,
         Andrei Vagin <avagin@google.com>, Jann Horn <jannh@google.com>,
         Thierry Delisle <tdelisle@uwaterloo.ca>
-Subject: [PATCH v0.8 4/6] sched/umcg, lib/umcg: implement libumcg
-Date:   Thu,  4 Nov 2021 12:58:02 -0700
-Message-Id: <20211104195804.83240-5-posk@google.com>
+Subject: [PATCH v0.8 6/6] sched/umcg, lib/umcg: add tools/lib/umcg/libumcg.txt
+Date:   Thu,  4 Nov 2021 12:58:04 -0700
+Message-Id: <20211104195804.83240-7-posk@google.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20211104195804.83240-1-posk@google.com>
 References: <20211104195804.83240-1-posk@google.com>
@@ -76,1612 +76,458 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Implement libumcg in tools/lib/umcg. Define higher-level UMCG
-API that hides kernel-level UMCG API intricacies.
-
-As a higher-level API, libumcg makes subtle changes to server/worker
-interactions, compared to the kernel UMCG API, and introduces
-the following new concepts:
-
-- UMCG Group: a collection of servers and workers in a process
-  that can interact with each other; UMCG groups are useful to
-  partition servers and workers within a process in order to, for
-  example, affine work to specific NUMA nodes;
-- UMCG basic tasks: these are UMCG servers, from the kernel point
-  of view; they do not interact with UMCG workers and thus
-  do not need in UMCG groups; used for cooperative wait/wake/swap
-  operations.
-
-The main difference of server/worker interaction in libumcg
-vs the kernel-side UMCG API is that a wakeup can be queued:
-if umcg_wake() is called on a RUNNING UMCG task, the fact is
-recorded (in the userspace), and when the task calls umcg_wait()
-or umcg_swap(), the wakeup is consumed and the task is not
-marked IDLE.
-
-Libumcg exports the following API:
-        umcg_enabled()
-        umcg_get_utid()
-        umcg_set_task_tag()
-        umcg_get_task_tag()
-        umcg_create_group()
-        umcg_destroy_group()
-        umcg_register_basic_task()
-        umcg_register_worker()
-        umcg_register_server()
-        umcg_unregister_task()
-        umcg_wait()
-        umcg_wake()
-        umcg_swap()
-        umcg_get_idle_worker()
-        umcg_run_worker()
-        umcg_preempt_worker()
-        umcg_get_time_ns()
-
-See tools/lib/umcg/libumcg.txt for details.
-
-Notes:
-- this is still somewhat work-in-progress: while the kernel side
-  code has been more or less stable over the last couple of months,
-  the userspace side of things is less so;
-- while libumcg is intended to be the main/primary/only direct user
-  of the kernel UMCG API, at the moment the implementation is more
-  geared more towards testing and correctness than live production
-  usage, with a lot of asserts and similar development helpers;
-- I have a number of umcg selftests that I plan to clean up and
-  post shortly.
+Document libumcg.
 
 Signed-off-by: Peter Oskolkov <posk@google.com>
 ---
- tools/lib/umcg/.gitignore |    4 +
- tools/lib/umcg/Makefile   |   11 +
- tools/lib/umcg/libumcg.c  | 1201 +++++++++++++++++++++++++++++++++++++
- tools/lib/umcg/libumcg.h  |  299 +++++++++
- 4 files changed, 1515 insertions(+)
- create mode 100644 tools/lib/umcg/.gitignore
- create mode 100644 tools/lib/umcg/Makefile
- create mode 100644 tools/lib/umcg/libumcg.c
- create mode 100644 tools/lib/umcg/libumcg.h
+ tools/lib/umcg/libumcg.txt | 438 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 438 insertions(+)
+ create mode 100644 tools/lib/umcg/libumcg.txt
 
-diff --git a/tools/lib/umcg/.gitignore b/tools/lib/umcg/.gitignore
+diff --git a/tools/lib/umcg/libumcg.txt b/tools/lib/umcg/libumcg.txt
 new file mode 100644
-index 000000000000..ea55ae666041
+index 000000000000..06f509bf5341
 --- /dev/null
-+++ b/tools/lib/umcg/.gitignore
-@@ -0,0 +1,4 @@
-+PDX-License-Identifier: GPL-2.0-only
-+libumcg.a
-+libumcg.o
-+
-diff --git a/tools/lib/umcg/Makefile b/tools/lib/umcg/Makefile
-new file mode 100644
-index 000000000000..ea4439d44917
---- /dev/null
-+++ b/tools/lib/umcg/Makefile
-@@ -0,0 +1,11 @@
-+# SPDX-License-Identifier: GPL-2.0
-+
-+CFLAGS += -g -I../../include/ -I../../../usr/include/
-+
-+libumcg.a: libumcg.o
-+	ar rc libumcg.a libumcg.o
-+
-+libumcg.o: libumcg.c
-+
-+clean :
-+	rm libumcg.a libumcg.o
-diff --git a/tools/lib/umcg/libumcg.c b/tools/lib/umcg/libumcg.c
-new file mode 100644
-index 000000000000..b5317024fc0d
---- /dev/null
-+++ b/tools/lib/umcg/libumcg.c
-@@ -0,0 +1,1201 @@
-+// SPDX-License-Identifier: GPL-2.0
-+#define _GNU_SOURCE
-+#include "libumcg.h"
-+
-+#include <assert.h>
-+#include <errno.h>
-+#include <pthread.h>
-+#include <signal.h>
-+#include <stdatomic.h>
-+#include <stdbool.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <threads.h>
-+#include <time.h>
-+
-+#include <linux/kernel.h>
-+
-+static int sys_umcg_ctl(uint32_t flags, struct umcg_task *umcg_task)
-+{
-+	return syscall(__NR_umcg_ctl, flags, umcg_task);
-+}
-+
-+static int sys_umcg_wait(uint32_t flags, uint64_t abs_timeout)
-+{
-+	return syscall(__NR_umcg_wait, flags, abs_timeout);
-+}
-+
-+bool umcg_enabled(void)
-+{
-+	int ret = sys_umcg_ctl(UMCG_CTL_REGISTER, NULL);
-+
-+	if (ret && errno == EINVAL)
-+		return true;
-+
-+	return false;
-+}
-+
-+uint64_t umcg_get_time_ns(void)
-+{
-+	struct timespec ts;
-+
-+	if (clock_gettime(CLOCK_REALTIME, &ts)) {
-+		fprintf(stderr, "clock_gettime failed\n");
-+		abort();
-+	}
-+
-+	return ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
-+}
-+
-+struct umcg_task_tls;
-+
-+/**
-+ * struct umcg_group - describes UMCG group.
-+ *
-+ * See tools/lib/umcg/libumcg.txt for detals.
-+ */
-+struct umcg_group {
-+	/**
-+	 * @idle_workers_head: points to the kernel-side list of idle
-+	 *                     workers, i.e. the address of this field
-+	 *                     is passed to the kernel in
-+	 *                     struct umcg_task.idle_workers_ptr.
-+	 */
-+	uint64_t		idle_workers_head;
-+
-+	/**
-+	 * @nr_tasks: the number of tasks (servers and workers) registered
-+	 *            in this group.
-+	 */
-+	uint64_t		nr_tasks;
-+
-+	/**
-+	 * @idle_worker_lock: protects @idle_workers below.
-+	 */
-+	pthread_spinlock_t	idle_worker_lock;
-+
-+	/**
-+	 * @idle_server_lock: protects @idle_servers below.
-+	 */
-+	pthread_spinlock_t	idle_server_lock;
-+
-+	/**
-+	 * @idle_workers: points to the userspace-side list of idle workers.
-+	 *
-+	 * When a server polls for an idle worker via umcg_poll_worker(),
-+	 * the server first consults @idle_workers; if the list is empty,
-+	 * the value of the variable is swapped with @idle_workers_head.
-+	 */
-+	uint64_t		*idle_workers;
-+
-+	/**
-+	 * @idle_servers: points to the userspace-side list of idle servers.
-+	 *
-+	 * When a server polls for an idle worker via umcg_poll_worker(),
-+	 * and none is available, the server is added to the list and blocks
-+	 * via sys_umcg_wait().
-+	 */
-+	struct umcg_task_tls	*idle_servers;
-+
-+	/**
-+	 * @idle_server_tid: the TID of one of the idle servers.
-+	 *
-+	 * The address of this field is passed to the kernel in
-+	 * struct umct_task.idle_server_tid_ptr.
-+	 */
-+	uint32_t		idle_server_tid;
-+} __attribute((aligned(8)));
-+
-+/**
-+ * struct umcg_task_tls - per thread struct used to identify/manage UMCG tasks
-+ *
-+ * Each UMCG task requires an instance of struct umcg_task passed to
-+ * sys_umcg_ctl. This struct contains it, as well as several additional
-+ * fields useful for the userspace UMCG API.
-+ *
-+ * The alignment is driven by the alignment of struct umcg_task.
-+ */
-+struct umcg_task_tls {
-+	struct umcg_task	umcg_task;
-+	struct umcg_group	*group;  /* read only */
-+	umcg_tid		peer;    /* server or worker or UMCG_NONE */
-+	umcg_tid		self;    /* read only */
-+	intptr_t		tag;
-+	pid_t			tid;     /* read only */
-+	bool			worker;  /* read only */
-+
-+	struct umcg_task_tls	*next;   /* used in group->idle_servers */
-+} __attribute((aligned(8 * sizeof(uint64_t))));
-+
-+static thread_local struct umcg_task_tls *umcg_task_tls;
-+
-+umcg_tid umcg_get_utid(void)
-+{
-+	return (umcg_tid)&umcg_task_tls;
-+}
-+
-+static struct umcg_task_tls *utid_to_utls(umcg_tid utid)
-+{
-+	assert(utid != UMCG_NONE);
-+	return *(struct umcg_task_tls **)utid;
-+}
-+
-+uint64_t umcg_get_task_state(umcg_tid task)
-+{
-+	struct umcg_task_tls *utls = utid_to_utls(task);
-+	uint64_t state;
-+
-+	if (!utls)
-+		return UMCG_TASK_NONE;
-+
-+	state = atomic_load_explicit(&utls->umcg_task.state_ts, memory_order_acquire);
-+	return state & UMCG_TASK_STATE_MASK_FULL;
-+}
-+
-+/* Update the state variable, set new timestamp. */
-+static bool umcg_update_state(uint64_t *state, uint64_t *prev, uint64_t next)
-+{
-+	uint64_t prev_ts = (*prev) >> (64 - UMCG_STATE_TIMESTAMP_BITS);
-+	struct timespec now;
-+	uint64_t next_ts;
-+	int res;
-+
-+	/*
-+	 * clock_gettime(CLOCK_MONOTONIC, ...) takes less than 20ns on a
-+	 * typical Intel processor on average, even when run concurrently,
-+	 * so the overhead is low enough for most applications.
-+	 *
-+	 * If this is still too high, `next_ts = prev_ts + 1` should work
-+	 * as well. The only real requirement is that the "timestamps" are
-+	 * uniqueue per thread within a reasonable time frame.
-+	 */
-+	res = clock_gettime(CLOCK_MONOTONIC, &now);
-+	assert(!res);
-+	next_ts = (now.tv_sec * NSEC_PER_SEC + now.tv_nsec) >>
-+		UMCG_STATE_TIMESTAMP_GRANULARITY;
-+
-+	/* Cut higher order bits. */
-+	next_ts &= ((1ULL << UMCG_STATE_TIMESTAMP_BITS) - 1);
-+
-+	if (next_ts == prev_ts)
-+		++next_ts;
-+
-+#ifndef NDEBUG
-+	if (prev_ts > next_ts) {
-+		fprintf(stderr, "%s: time goes back: prev_ts: %lu "
-+				"next_ts: %lu diff: %lu\n", __func__,
-+				prev_ts, next_ts, prev_ts - next_ts);
-+	}
-+#endif
-+
-+	/* Remove old timestamp, if any. */
-+	next &= ((1ULL << (64 - UMCG_STATE_TIMESTAMP_BITS)) - 1);
-+
-+	/* Set the new timestamp. */
-+	next |= (next_ts << (64 - UMCG_STATE_TIMESTAMP_BITS));
-+
-+	/*
-+	 * TODO: review whether memory order below can be weakened to
-+	 * memory_order_acq_rel for success and memory_order_acquire for
-+	 * failure.
-+	 */
-+	return atomic_compare_exchange_strong_explicit(state, prev, next,
-+			memory_order_seq_cst, memory_order_seq_cst);
-+}
-+
-+static bool umcg_worker_in_idle_queue(umcg_tid worker)
-+{
-+	struct umcg_task_tls *worker_utls = utid_to_utls(worker);
-+	struct umcg_task *worker_ut = &worker_utls->umcg_task;
-+
-+	assert(worker_utls->worker);
-+
-+	return (uint64_t)&worker_utls->group->idle_workers_head !=
-+		atomic_load_explicit(&worker_ut->idle_workers_ptr,
-+					memory_order_acquire);
-+}
-+
-+void umcg_set_task_tag(umcg_tid utid, intptr_t tag)
-+{
-+	utid_to_utls(utid)->tag = tag;
-+}
-+
-+intptr_t umcg_get_task_tag(umcg_tid utid)
-+{
-+	return utid_to_utls(utid)->tag;
-+}
-+
-+static bool try_task_lock(struct umcg_task_tls *task, uint64_t expected_state,
-+				uint64_t new_state)
-+{
-+	uint64_t next;
-+	uint64_t prev = atomic_load_explicit(&task->umcg_task.state_ts,
-+				memory_order_acquire);
-+
-+	if (prev & UMCG_TF_LOCKED)
-+		return false;
-+
-+	if ((prev & UMCG_TASK_STATE_MASK) != expected_state)
-+		return false;
-+
-+	next = (prev & ~UMCG_TASK_STATE_MASK) | new_state | UMCG_TF_LOCKED;
-+	return umcg_update_state(&task->umcg_task.state_ts, &prev, next);
-+}
-+
-+static void task_lock(struct umcg_task_tls *task, uint64_t expected_state,
-+			uint64_t new_state)
-+{
-+	int loop_counter = 0;
-+
-+	while (!try_task_lock(task, expected_state, new_state))
-+		assert(++loop_counter < 1000 * 1000 * 100);
-+}
-+
-+static void task_unlock(struct umcg_task_tls *task, uint64_t expected_state,
-+		uint64_t new_state)
-+{
-+	bool ok;
-+	uint64_t next;
-+	uint64_t prev = atomic_load_explicit(&task->umcg_task.state_ts,
-+					memory_order_acquire);
-+
-+	next = ((prev & ~UMCG_TASK_STATE_MASK_FULL) | new_state) & ~UMCG_TF_LOCKED;
-+	assert(next != prev);
-+	assert((prev & UMCG_TASK_STATE_MASK_FULL & ~UMCG_TF_LOCKED) == expected_state);
-+
-+	ok = umcg_update_state(&task->umcg_task.state_ts, &prev, next);
-+	assert(ok);
-+}
-+
-+umcg_tid umcg_register_basic_task(intptr_t tag)
-+{
-+	int ret;
-+
-+	if (umcg_task_tls != NULL) {
-+		errno = EINVAL;
-+		return UMCG_NONE;
-+	}
-+
-+	umcg_task_tls = malloc(sizeof(struct umcg_task_tls));
-+	if (!umcg_task_tls) {
-+		errno = ENOMEM;
-+		return UMCG_NONE;
-+	}
-+	memset(umcg_task_tls, 0, sizeof(struct umcg_task_tls));
-+
-+	umcg_task_tls->umcg_task.state_ts = UMCG_TASK_RUNNING;
-+	umcg_task_tls->self = (umcg_tid)&umcg_task_tls;
-+	umcg_task_tls->tag = tag;
-+	umcg_task_tls->tid = gettid();
-+
-+	ret = sys_umcg_ctl(UMCG_CTL_REGISTER, &umcg_task_tls->umcg_task);
-+	if (ret) {
-+		free(umcg_task_tls);
-+		umcg_task_tls = NULL;
-+		errno = ret;
-+		return UMCG_NONE;
-+	}
-+
-+	return umcg_task_tls->self;
-+}
-+
-+static umcg_tid umcg_register_task_in_group(umcg_t group_id, intptr_t tag,
-+						bool server)
-+{
-+	int ret;
-+	uint32_t self_tid;
-+	struct umcg_group *group;
-+	struct umcg_task_tls *curr;
-+
-+	if (group_id == UMCG_NONE) {
-+		errno = EINVAL;
-+		return UMCG_NONE;
-+	}
-+
-+	if (umcg_task_tls != NULL) {
-+		errno = EINVAL;
-+		return UMCG_NONE;
-+	}
-+
-+	group = (struct umcg_group *)group_id;
-+
-+	curr = malloc(sizeof(struct umcg_task_tls));
-+	if (!curr) {
-+		errno = ENOMEM;
-+		return UMCG_NONE;
-+	}
-+	memset(curr, 0, sizeof(struct umcg_task_tls));
-+
-+	self_tid = gettid();
-+	curr->umcg_task.state_ts = server ? UMCG_TASK_RUNNING : UMCG_TASK_BLOCKED;
-+	curr->umcg_task.idle_server_tid_ptr = server ? 0UL :
-+		(uint64_t)&group->idle_server_tid;
-+	curr->umcg_task.idle_workers_ptr =
-+		(uint64_t)&group->idle_workers_head;
-+	curr->group = group;
-+	curr->tag = tag;
-+	curr->tid = self_tid;
-+	curr->self = (umcg_tid)&umcg_task_tls;
-+	curr->worker = !server;
-+
-+	/*
-+	 * Need to set umcg_task_tls before registering, as a server
-+	 * may pick up this worker immediately, and use @self.
-+	 */
-+	atomic_store_explicit(&umcg_task_tls, curr, memory_order_release);
-+
-+	ret = sys_umcg_ctl(server ? UMCG_CTL_REGISTER :
-+					UMCG_CTL_REGISTER | UMCG_CTL_WORKER,
-+				&curr->umcg_task);
-+	if (ret) {
-+		free(curr);
-+		errno = ret;
-+		atomic_store_explicit(&umcg_task_tls, NULL, memory_order_release);
-+		return UMCG_NONE;
-+	}
-+
-+	atomic_fetch_add_explicit(&group->nr_tasks, 1, memory_order_relaxed);
-+
-+	return umcg_task_tls->self;
-+}
-+
-+umcg_tid umcg_register_worker(umcg_t group_id, intptr_t tag)
-+{
-+	return umcg_register_task_in_group(group_id, tag, false);
-+}
-+
-+umcg_tid umcg_register_server(umcg_t group_id, intptr_t tag)
-+{
-+	return umcg_register_task_in_group(group_id, tag, true);
-+}
-+
-+int umcg_unregister_task(void)
-+{
-+	int ret;
-+
-+	if (!umcg_task_tls) {
-+		errno = EINVAL;
-+		return -1;
-+	}
-+
-+	/* If this is a worker, wake the server. */
-+	if (umcg_task_tls->worker) {
-+		struct umcg_task_tls *curr = umcg_task_tls;
-+		struct umcg_task_tls *utls_server;
-+
-+		task_lock(curr, UMCG_TASK_RUNNING, UMCG_TASK_IDLE);
-+		utls_server = utid_to_utls(curr->peer);
-+		assert(utls_server->tid == atomic_load_explicit(
-+					&curr->umcg_task.next_tid,
-+					memory_order_acquire));
-+		curr->peer = UMCG_NONE;
-+		atomic_store_explicit(&curr->umcg_task.next_tid, 0,
-+				memory_order_release);
-+
-+		utls_server->peer = UMCG_NONE;
-+		atomic_store_explicit(&utls_server->umcg_task.next_tid, 0,
-+					memory_order_release);
-+
-+		/* Keep the worker locked to avoid needing the server. */
-+		if (utls_server) {
-+			curr->worker = false;  /* umcg_wake tries to lock */
-+			ret = umcg_wake(utls_server->self, false);
-+			assert(!ret || errno == ESRCH);
-+		}
-+	}
-+
-+	ret = sys_umcg_ctl(UMCG_CTL_UNREGISTER, NULL);
-+	if (ret) {
-+		errno = ret;
-+		return -1;
-+	}
-+
-+	if (umcg_task_tls->group)
-+		atomic_fetch_sub_explicit(&umcg_task_tls->group->nr_tasks, 1,
-+						memory_order_relaxed);
-+
-+	free(umcg_task_tls);
-+	atomic_store_explicit(&umcg_task_tls, NULL, memory_order_release);
-+	return 0;
-+}
-+
-+/* Helper return codes. */
-+enum umcg_prepare_op_result {
-+	UMCG_OP_DONE,
-+	UMCG_OP_SYS,
-+	UMCG_OP_AGAIN,
-+	UMCG_OP_ERROR
-+};
-+
-+static enum umcg_prepare_op_result umcg_prepare_wait_may_lock(void)
-+{
-+	struct umcg_task *ut;
-+	uint64_t prev_state, next_state;
-+
-+	if (!umcg_task_tls) {
-+		errno = EINVAL;
-+		return UMCG_OP_ERROR;
-+	}
-+
-+	ut = &umcg_task_tls->umcg_task;
-+
-+	prev_state = atomic_load_explicit(&ut->state_ts, memory_order_acquire);
-+	next_state = umcg_task_tls->worker ?
-+		UMCG_TASK_IDLE | UMCG_TF_LOCKED | UMCG_UTF_WORKER_IN_WAIT :
-+		UMCG_TASK_IDLE;
-+	if (((prev_state & UMCG_TASK_STATE_MASK_FULL) == UMCG_TASK_RUNNING) &&
-+		umcg_update_state(&ut->state_ts, &prev_state, next_state))
-+		return UMCG_OP_SYS;
-+
-+	if ((prev_state & UMCG_TASK_STATE_MASK_FULL) !=
-+			(UMCG_TASK_RUNNING | UMCG_UTF_WAKEUP_QUEUED)) {
-+#ifndef NDEBUG
-+		fprintf(stderr, "libumcg: unexpected state before wait: %lu\n",
-+				prev_state);
-+		assert(false);
-+#endif
-+		errno = EINVAL;
-+		return UMCG_OP_ERROR;
-+	}
-+
-+	if (umcg_update_state(&ut->state_ts, &prev_state, UMCG_TASK_RUNNING))
-+		return UMCG_OP_DONE;
-+
-+#ifndef NDEBUG
-+	/* Raced with another wait/wake? This is not supported. */
-+	fprintf(stderr, "libumcg: failed to remove the wakeup flag: %lu\n",
-+			prev_state);
-+	assert(false);
-+#endif
-+	errno = EINVAL;
-+	return UMCG_OP_ERROR;
-+}
-+
-+/* Always return -1 because the user needs to see ETIMEDOUT in errno */
-+static int handle_timedout(void)
-+{
-+	struct umcg_task *ut = &umcg_task_tls->umcg_task;
-+	uint64_t umcg_state;
-+
-+retry:
-+	/* Restore RUNNING state if the task is still IDLE. */
-+	umcg_state = atomic_load_explicit(&ut->state_ts,
-+			memory_order_acquire);
-+	if ((umcg_state & UMCG_TASK_STATE_MASK) == UMCG_TASK_RUNNING)
-+		return -1;
-+
-+	assert((umcg_state & UMCG_TASK_STATE_MASK) == UMCG_TASK_IDLE);
-+
-+	if (umcg_update_state(&ut->state_ts, &umcg_state, UMCG_TASK_RUNNING))
-+		return -1;
-+
-+	/* A wakeup could have been queued. */
-+	goto retry;
-+}
-+
-+static int umcg_do_wait(uint64_t timeout)
-+{
-+	struct umcg_task *ut = &umcg_task_tls->umcg_task;
-+	uint32_t flags = 0;
-+
-+	/* If this is a worker, need to change the state of the server. */
-+	if (umcg_task_tls->worker &&
-+			atomic_load_explicit(&ut->next_tid, memory_order_acquire)) {
-+		bool ok;
-+		struct umcg_task *server_ut =
-+			&utid_to_utls(umcg_task_tls->peer)->umcg_task;
-+		uint64_t server_state = atomic_load_explicit(&server_ut->state_ts,
-+				memory_order_acquire);
-+
-+		assert((server_state & UMCG_TASK_STATE_MASK_FULL) == UMCG_TASK_IDLE);
-+		ok = umcg_update_state(&server_ut->state_ts,
-+				&server_state, UMCG_TASK_RUNNING);
-+		assert(ok);
-+	} else if (!umcg_task_tls->worker)
-+		atomic_store_explicit(&ut->next_tid, 0, memory_order_release);
-+
-+	do {
-+		uint64_t umcg_state;
-+		int ret;
-+
-+		ret = sys_umcg_wait(flags, timeout);
-+		if (!ret)
-+			return 0;
-+
-+		if (ret && errno == EINTR) {
-+			umcg_state = atomic_load_explicit(&ut->state_ts,
-+					memory_order_acquire) & UMCG_TASK_STATE_MASK;
-+			if (umcg_state == UMCG_TASK_RUNNING)
-+				return 0;
-+			continue;
-+		}
-+
-+		if (errno == ETIMEDOUT)
-+			return handle_timedout();
-+
-+		return -1;
-+	} while (true);
-+}
-+
-+int umcg_wait(uint64_t timeout)
-+{
-+	switch (umcg_prepare_wait_may_lock()) {
-+	case UMCG_OP_DONE:
-+		return 0;
-+	case UMCG_OP_SYS:
-+		break;
-+	case UMCG_OP_ERROR:
-+		return -1;
-+	default:
-+		assert(false);
-+		return -1;
-+	}
-+
-+	return umcg_do_wait(timeout);
-+}
-+
-+static void enqueue_idle_worker(struct umcg_task_tls *utls)
-+{
-+	struct umcg_task *ut = &utls->umcg_task;
-+	uint64_t *node = &ut->idle_workers_ptr;
-+	uint64_t head = *node;
-+	uint64_t *head_ptr = (uint64_t *)head;
-+	uint64_t first = (uint64_t)node;
-+
-+	assert(utls->worker);
-+	assert(&utls->group->idle_workers_head == head_ptr);
-+
-+	/* Mark the worker as pending. */
-+	atomic_store_explicit(node, UMCG_IDLE_NODE_PENDING, memory_order_release);
-+
-+	/* Make the head point to the worker. */
-+	first = atomic_exchange_explicit(head_ptr, first, memory_order_acq_rel);
-+
-+	/* Make the worker point to the previous head. */
-+	atomic_store_explicit(node, first, memory_order_release);
-+}
-+
-+static enum umcg_prepare_op_result umcg_prepare_wake_may_lock(
-+		struct umcg_task_tls *next_utls, bool for_swap)
-+{
-+	struct umcg_task *next_ut = &next_utls->umcg_task;
-+	uint64_t curr_state, next_state;
-+	enum umcg_prepare_op_result result = UMCG_OP_DONE;
-+	bool enqueue_worker = false;
-+
-+	curr_state = atomic_load_explicit(&next_ut->state_ts, memory_order_acquire);
-+
-+	if (curr_state & (UMCG_TF_LOCKED | UMCG_UTF_WAKEUP_QUEUED))
-+		return UMCG_OP_AGAIN;
-+
-+	/* Start with RUNNING tasks. */
-+	if ((curr_state & UMCG_TASK_STATE_MASK_FULL) == UMCG_TASK_RUNNING)
-+		next_state = UMCG_TASK_RUNNING | UMCG_UTF_WAKEUP_QUEUED;
-+	else if (curr_state & UMCG_UTF_WORKER_IN_WAIT) {
-+		/* Next, check workers in wait. */
-+		assert(next_utls->worker);
-+		assert((curr_state & UMCG_TASK_STATE_MASK) == UMCG_TASK_IDLE);
-+
-+		if (for_swap) {
-+			next_state = UMCG_TASK_RUNNING;
-+			result = UMCG_OP_SYS;
-+		} else {
-+			next_state = UMCG_TASK_IDLE;
-+			enqueue_worker = true;
-+		}
-+	} else if ((curr_state & UMCG_TASK_STATE_MASK_FULL) == UMCG_TASK_IDLE) {
-+		/* Next, check IDLE tasks. */
-+		if (next_utls->worker) {
-+			if (for_swap) {
-+				next_state = UMCG_TASK_RUNNING | UMCG_TF_LOCKED;
-+				result = UMCG_OP_SYS;
-+			} else {
-+				return UMCG_OP_AGAIN;
-+			}
-+		} else {
-+			atomic_store_explicit(&next_utls->umcg_task.next_tid,
-+						0, memory_order_release);
-+			next_state = UMCG_TASK_RUNNING;
-+			result = UMCG_OP_SYS;
-+		}
-+	} else {
-+		/* Finally, deal with BLOCKED workers. */
-+		assert((curr_state & UMCG_TASK_STATE_MASK) == UMCG_TASK_BLOCKED);
-+		assert(next_utls->worker);
-+
-+		return UMCG_OP_AGAIN;
-+	}
-+
-+	if (umcg_update_state(&next_ut->state_ts, &curr_state, next_state)) {
-+		if (enqueue_worker)
-+			enqueue_idle_worker(next_utls);
-+		return result;
-+	}
-+
-+	return UMCG_OP_AGAIN;
-+}
-+
-+static int umcg_do_wake_or_swap(uint32_t next_tid, bool should_wait,
-+				uint64_t timeout, bool wf_current_cpu,
-+				struct umcg_task_tls *next_utls)
-+{
-+	struct umcg_task *ut;
-+	uint32_t flags = 0;
-+	uint32_t server_tid = 0;
-+	int ret;
-+
-+	/* wf_current_cpu is possible in wake-only scenarios. */
-+	assert(!should_wait || !wf_current_cpu);
-+	assert(umcg_task_tls != NULL);
-+
-+	ut = &umcg_task_tls->umcg_task;
-+
-+	/*
-+	 * This is a worker waking another task: lock it so that next_tid
-+	 * is not interpreted as a server if this worker pagefaults.
-+	 */
-+	if (umcg_task_tls->worker && !should_wait) {
-+		server_tid = atomic_load_explicit(&ut->next_tid,
-+				memory_order_acquire);
-+		assert(server_tid);
-+		assert(utid_to_utls(umcg_task_tls->peer)->tid == server_tid);
-+		task_lock(umcg_task_tls, UMCG_TASK_RUNNING, UMCG_TASK_IDLE);
-+	}
-+
-+	atomic_store_explicit(&ut->next_tid, next_tid, memory_order_release);
-+
-+	if (!should_wait)
-+		flags |= UMCG_WAIT_WAKE_ONLY;
-+	if (wf_current_cpu)
-+		flags |= UMCG_WAIT_WF_CURRENT_CPU;
-+
-+	if (next_utls && next_utls->worker)
-+		task_unlock(next_utls, UMCG_TASK_RUNNING, UMCG_TASK_RUNNING);
-+	ret = sys_umcg_wait(flags, should_wait ? timeout : 0);
-+
-+	/* If we locked this worker, unlock it. */
-+	if (server_tid) {
-+		atomic_store_explicit(&ut->next_tid, server_tid,
-+				memory_order_release);
-+		task_unlock(umcg_task_tls, UMCG_TASK_IDLE, UMCG_TASK_RUNNING);
-+	}
-+
-+	if (ret && errno == ETIMEDOUT)
-+		return handle_timedout();
-+
-+	return ret;
-+}
-+
-+int umcg_wake(umcg_tid next, bool wf_current_cpu)
-+{
-+	struct umcg_task_tls *utls = utid_to_utls(next);
-+	uint64_t loop_counter = 0;
-+
-+	if (!utls) {
-+		errno = EINVAL;
-+		return -1;
-+	}
-+
-+again:
-+	assert(++loop_counter < (1ULL << 31));
-+	switch (umcg_prepare_wake_may_lock(utls, false /* for_swap */)) {
-+	case UMCG_OP_DONE:
-+		return 0;
-+	case UMCG_OP_SYS:
-+		break;
-+	case UMCG_OP_ERROR:
-+		return -1;
-+	case UMCG_OP_AGAIN:
-+		goto again;
-+	default:
-+		assert(false);
-+		return -1;
-+	}
-+
-+	return umcg_do_wake_or_swap(utls->tid, false, 0, wf_current_cpu, utls);
-+}
-+
-+static void transfer_server_locked(struct umcg_task_tls *next)
-+{
-+	struct umcg_task_tls *curr = umcg_task_tls;
-+	struct umcg_task_tls *server = utid_to_utls(curr->peer);
-+
-+	atomic_thread_fence(memory_order_acquire);
-+	assert(curr->worker);
-+	assert(next->worker);
-+	assert(curr->peer != UMCG_NONE);
-+	assert(next->peer == UMCG_NONE);
-+
-+	next->peer = curr->peer;
-+	curr->peer = UMCG_NONE;
-+	next->umcg_task.next_tid = curr->umcg_task.next_tid;
-+	curr->umcg_task.next_tid = 0;
-+
-+	server->peer = next->self;
-+	server->umcg_task.next_tid = next->tid;
-+	atomic_thread_fence(memory_order_release);
-+}
-+
-+int umcg_swap(umcg_tid next, uint64_t timeout)
-+{
-+	struct umcg_task_tls *utls = utid_to_utls(next);
-+	bool should_wake, should_wait;
-+	uint64_t loop_counter = 0;
-+
-+	assert(umcg_task_tls);
-+
-+again:
-+	assert(++loop_counter < (1ULL << 31));
-+	switch (umcg_prepare_wake_may_lock(utls, true /* for_swap */)) {
-+	case UMCG_OP_DONE:
-+		should_wake = false;
-+		break;
-+	case UMCG_OP_SYS:
-+		should_wake = true;
-+		break;
-+	case UMCG_OP_ERROR:
-+		return -1;
-+	case UMCG_OP_AGAIN:
-+		goto again;
-+	default:
-+		assert(false);
-+	}
-+
-+	switch (umcg_prepare_wait_may_lock()) {
-+	case UMCG_OP_DONE:
-+		should_wait = false;
-+		break;
-+	case UMCG_OP_SYS:
-+		should_wait = true;
-+		break;
-+	case UMCG_OP_ERROR:
-+		return -1;
-+	default:
-+		assert(false);
-+	}
-+
-+	if (should_wait && should_wake && umcg_task_tls->worker)
-+		transfer_server_locked(utls);
-+
-+	if (should_wake)
-+		return umcg_do_wake_or_swap(utls->tid, should_wait, timeout,
-+				false, utls);
-+
-+	if (should_wait)
-+		return umcg_do_wait(timeout);
-+
-+	return 0;
-+}
-+
-+/* A noop SIGUSR1 handler, used in worker preemption. */
-+static void sigusr_handler(int signum)
-+{
-+}
-+
-+umcg_t umcg_create_group(uint32_t flags)
-+{
-+	struct umcg_group *group;
-+	int res;
-+
-+	if (flags && flags != UMCG_GROUP_ENABLE_PREEMPTION) {
-+		errno = EINVAL;
-+		return UMCG_NONE;
-+	}
-+
-+	group = malloc(sizeof(struct umcg_group));
-+	if (!group) {
-+		errno = ENOMEM;
-+		return UMCG_NONE;
-+	}
-+
-+	memset(group, 0, sizeof(*group));
-+
-+	res = pthread_spin_init(&group->idle_worker_lock, PTHREAD_PROCESS_PRIVATE);
-+	if (res) {
-+		errno = res;
-+		goto error;
-+	}
-+
-+	res = pthread_spin_init(&group->idle_server_lock, PTHREAD_PROCESS_PRIVATE);
-+	if (res) {
-+		errno = res;
-+		res = pthread_spin_destroy(&group->idle_worker_lock);
-+		assert(!res);
-+		goto error;
-+	}
-+
-+	if (flags & UMCG_GROUP_ENABLE_PREEMPTION) {
-+		if (SIG_ERR == signal(SIGUSR1, sigusr_handler)) {
-+			res = pthread_spin_destroy(&group->idle_worker_lock);
-+			assert(!res);
-+			res = pthread_spin_destroy(&group->idle_server_lock);
-+			assert(!res);
-+			goto error;
-+		}
-+	}
-+
-+	return (intptr_t)group;
-+
-+error:
-+	free(group);
-+	return UMCG_NONE;
-+}
-+
-+int umcg_destroy_group(umcg_t umcg)
-+{
-+	int res;
-+	struct umcg_group *group = (struct umcg_group *)umcg;
-+
-+	if (atomic_load_explicit(&group->nr_tasks, memory_order_acquire)) {
-+		errno = EBUSY;
-+		return -1;
-+	}
-+
-+	res = pthread_spin_destroy(&group->idle_worker_lock);
-+	assert(!res);
-+	res = pthread_spin_destroy(&group->idle_server_lock);
-+	assert(!res);
-+
-+	free(group);
-+	return 0;
-+}
-+
-+static void detach_worker(void)
-+{
-+	struct umcg_task_tls *server_utls = umcg_task_tls;
-+	struct umcg_task_tls *worker_utls;
-+
-+	assert(server_utls->group != NULL);
-+
-+	atomic_thread_fence(memory_order_acquire);
-+	if (!server_utls->peer)
-+		return;
-+
-+	worker_utls = utid_to_utls(server_utls->peer);
-+	assert(server_utls->peer == worker_utls->self);
-+	assert(worker_utls->peer == server_utls->self);
-+
-+	umcg_task_tls->umcg_task.next_tid = 0;
-+	worker_utls->umcg_task.next_tid = 0;
-+	worker_utls->peer = UMCG_NONE;
-+	server_utls->peer = UMCG_NONE;
-+
-+	atomic_thread_fence(memory_order_release);
-+}
-+
-+umcg_tid umcg_run_worker(umcg_tid worker)
-+{
-+	struct umcg_task_tls *worker_utls = utid_to_utls(worker);
-+	struct umcg_task_tls *server_utls = umcg_task_tls;
-+	struct umcg_task *server_ut = &umcg_task_tls->umcg_task;
-+	struct umcg_task *worker_ut;
-+	uint64_t curr_state, next_state;
-+	int ret;
-+	bool ok;
-+
-+	assert(server_utls->group != NULL);
-+	assert(server_utls->group == worker_utls->group);
-+	assert(worker_utls->worker);
-+
-+	atomic_thread_fence(memory_order_acquire);
-+	assert(server_utls->peer == UMCG_NONE);
-+	assert(worker_utls->peer == UMCG_NONE);
-+
-+	worker_ut = &worker_utls->umcg_task;
-+
-+	assert(!umcg_worker_in_idle_queue(worker));
-+
-+	/*
-+	 * Mark the server IDLE before marking the worker RUNNING: preemption
-+	 * can happen immediately after the worker is marked RUNNING.
-+	 */
-+	curr_state = atomic_load_explicit(&server_ut->state_ts,
-+			memory_order_acquire);
-+	assert((curr_state & UMCG_TASK_STATE_MASK_FULL) == UMCG_TASK_RUNNING);
-+	ok = umcg_update_state(&server_ut->state_ts, &curr_state, UMCG_TASK_IDLE);
-+	assert(ok);
-+
-+	/* Lock the worker in preparation to run it. */
-+	curr_state = atomic_load_explicit(&worker_ut->state_ts,
-+			memory_order_acquire);
-+	assert((curr_state & UMCG_TASK_STATE_MASK) == UMCG_TASK_IDLE);
-+	assert(!(curr_state & UMCG_TF_LOCKED));
-+	next_state = curr_state & UMCG_UTF_WAKEUP_QUEUED ?
-+		UMCG_TASK_RUNNING | UMCG_UTF_WAKEUP_QUEUED :
-+		UMCG_TASK_RUNNING;
-+	ok = umcg_update_state(&worker_ut->state_ts, &curr_state,
-+			next_state | UMCG_TF_LOCKED);
-+
-+	assert(ok);
-+
-+	/* Attach the server to the worker. */
-+	atomic_thread_fence(memory_order_acquire);
-+	server_ut->next_tid = worker_utls->tid;
-+	worker_ut->next_tid = server_utls->tid;
-+	worker_utls->peer = server_utls->self;
-+	server_utls->peer = worker;
-+
-+	atomic_thread_fence(memory_order_release);
-+	task_unlock(worker_utls, next_state, next_state);
-+
-+	ret = sys_umcg_wait(0, 0);
-+
-+	atomic_thread_fence(memory_order_acquire);
-+	if (!server_utls->peer) {
-+		assert(server_ut->next_tid == 0);
-+		/*
-+		 * The worker woke early due to umcg_state change
-+		 * and unregistered/exited.
-+		 */
-+		assert(!ret || errno == ESRCH);
-+		errno = 0;
-+		return UMCG_NONE;
-+	}
-+
-+	assert(!ret);
-+
-+	/* Detach the server from the worker. */
-+	worker_utls = utid_to_utls(server_utls->peer);
-+	detach_worker();
-+
-+	return worker_utls->self;
-+}
-+
-+int umcg_preempt_worker(umcg_tid worker)
-+{
-+	struct umcg_task_tls *worker_utls = utid_to_utls(worker);
-+	struct umcg_task *worker_ut = &worker_utls->umcg_task;
-+	uint32_t worker_tid = worker_utls->tid;
-+	uint64_t curr_state;
-+	int ret;
-+
-+	curr_state = atomic_load_explicit(&worker_ut->state_ts,
-+			memory_order_acquire);
-+	if ((curr_state & UMCG_TASK_STATE_MASK_FULL) != UMCG_TASK_RUNNING) {
-+		errno = EAGAIN;
-+		return -1;
-+	}
-+
-+	if (!umcg_update_state(&worker_ut->state_ts, &curr_state,
-+			UMCG_TASK_RUNNING | UMCG_TF_PREEMPTED)) {
-+		errno = EAGAIN;
-+		return -1;
-+	}
-+
-+	/*
-+	 * It is possible that this thread is descheduled here, the worker
-+	 * pagefaults, wakes up, and then exits; in this case tgkill() below
-+	 * will fail with errno == ESRCH.
-+	 */
-+	ret = tgkill(getpid(), worker_tid, SIGUSR1);
-+	assert(!ret || errno == ESRCH);
-+	return 0;
-+}
-+
-+static void wake_idle_server(void)
-+{
-+	struct umcg_group *group = umcg_task_tls->group;
-+	int res;
-+
-+	res = pthread_spin_lock(&group->idle_server_lock);
-+	assert(!res);
-+
-+	if (group->idle_servers) {
-+		struct umcg_task_tls *server = group->idle_servers;
-+
-+		group->idle_servers = server->next;
-+		server->next = NULL;
-+
-+		assert((atomic_load_explicit(&server->umcg_task.state_ts,
-+						memory_order_acquire) &
-+					UMCG_TASK_STATE_MASK_FULL) == UMCG_TASK_IDLE);
-+
-+		res = umcg_wake(server->self, false);
-+		assert(!res);
-+	}
-+
-+	res = pthread_spin_unlock(&group->idle_server_lock);
-+	assert(!res);
-+}
-+
-+static umcg_tid get_idle_worker(void)
-+{
-+	struct umcg_group *group = umcg_task_tls->group;
-+	umcg_tid result = UMCG_NONE;
-+	uint64_t *head;
-+	int res;
-+
-+	res = pthread_spin_lock(&group->idle_worker_lock);
-+	assert(!res);
-+
-+	head = group->idle_workers;
-+
-+once_again:
-+	/* First, check the userspace idle worker list. */
-+	if (head) {
-+		uint64_t next;
-+		struct umcg_task *worker;
-+		struct umcg_task_tls *worker_utls;
-+
-+		worker = container_of(head, struct umcg_task, idle_workers_ptr);
-+		worker_utls = container_of(worker, struct umcg_task_tls, umcg_task);
-+
-+		/* Spin while the worker is pending. */
-+		do {
-+			next = atomic_load_explicit(head, memory_order_acquire);
-+		} while (next == UMCG_IDLE_NODE_PENDING);
-+
-+		/* Wait for the worker's server to detach in umcg_run_worker(). */
-+		while (atomic_load_explicit(&worker_utls->peer,
-+						memory_order_relaxed))
-+			;
-+
-+		/* Pull the worker out of the idle worker list. */
-+		group->idle_workers = (uint64_t *)next;
-+		atomic_store_explicit(&worker->idle_workers_ptr,
-+				(uint64_t)&group->idle_workers_head,
-+				memory_order_release);
-+
-+		if (next)
-+			wake_idle_server();
-+
-+		result = worker_utls->self;
-+		goto out;
-+	}
-+
-+	/*
-+	 * Get the kernel's idle worker list.
-+	 *
-+	 * TODO: review whether memory order below can be weakened to
-+	 * memory_order_acq_rel.
-+	 */
-+	head = (uint64_t *)atomic_exchange_explicit(&group->idle_workers_head,
-+			0ULL, memory_order_seq_cst);
-+
-+	if (!head)
-+		goto out;
-+
-+	group->idle_workers = head;
-+	goto once_again;
-+
-+out:
-+	res = pthread_spin_unlock(&group->idle_worker_lock);
-+	assert(!res);
-+
-+	return result;
-+}
-+
-+static void enqueue_idle_server(void)
-+{
-+	struct umcg_task_tls *server = umcg_task_tls;
-+	struct umcg_group *group = server->group;
-+	int res;
-+
-+	res = pthread_spin_lock(&group->idle_server_lock);
-+	assert(!res);
-+
-+	assert(server->next == NULL);
-+	assert((atomic_load_explicit(&server->umcg_task.state_ts,
-+					memory_order_acquire) &
-+				UMCG_TASK_STATE_MASK_FULL) == UMCG_TASK_IDLE);
-+
-+	server->next = group->idle_servers;
-+	group->idle_servers = server;
-+
-+	res = pthread_spin_unlock(&group->idle_server_lock);
-+	assert(!res);
-+}
-+
-+static umcg_tid idle_server_wait(void)
-+{
-+	struct umcg_task_tls *server_utls = umcg_task_tls;
-+	struct umcg_task *server_ut = &umcg_task_tls->umcg_task;
-+	uint32_t server_tid = server_utls->tid;
-+	struct umcg_group *group = umcg_task_tls->group;
-+	umcg_tid worker;
-+	uint32_t prev = 0ULL;
-+	uint64_t state;
-+	bool ok;
-+
-+	state = atomic_load_explicit(&server_ut->state_ts, memory_order_acquire);
-+	assert((state & UMCG_TASK_STATE_MASK_FULL) == UMCG_TASK_RUNNING);
-+	ok = umcg_update_state(&server_ut->state_ts, &state, UMCG_TASK_IDLE);
-+	assert(ok);
-+
-+	/*
-+	 * Try to become THE idle server that the kernel will wake.
-+	 *
-+	 * TODO: review whether memory order below can be weakened to
-+	 * memory_order_acq_rel for success and memory_order_acquire
-+	 * for failure.
-+	 */
-+	ok = atomic_compare_exchange_strong_explicit(&group->idle_server_tid,
-+			&prev, server_tid,
-+			memory_order_seq_cst, memory_order_seq_cst);
-+
-+	if (!ok) {
-+		assert(prev != server_tid);
-+		enqueue_idle_server();
-+		umcg_do_wait(0);
-+		assert(server_utls->next == NULL);
-+
-+		return UMCG_NONE;
-+	}
-+
-+	/* We need to ensure no idle workers enqueued before going to sleep. */
-+	worker = get_idle_worker();
-+
-+	if (worker) {
-+		state = atomic_load_explicit(&server_ut->state_ts,
-+				memory_order_acquire);
-+		if ((state & UMCG_TASK_STATE_MASK_FULL) != UMCG_TASK_RUNNING) {
-+			ok = umcg_update_state(&server_ut->state_ts, &state,
-+					UMCG_TASK_RUNNING);
-+			assert(ok || ((state & UMCG_TASK_STATE_MASK_FULL) ==
-+						UMCG_TASK_RUNNING));
-+		}
-+	} else
-+		umcg_do_wait(0);
-+
-+	/*
-+	 * If the server calls umcg_get_idle_worker() in a loop, the worker
-+	 * that pulled the server at step N (and thus zeroed idle_server_tid)
-+	 * may wake the server at step N+1 without cleaning idle_server_tid,
-+	 * so the server needs to clean idle_server_tid in case this happens.
-+	 *
-+	 * TODO: review whether memory order below can be weakened to
-+	 * memory_order_acq_rel for success and memory_order_acquire
-+	 * for failure.
-+	 */
-+	prev = server_tid;
-+	ok = atomic_compare_exchange_strong_explicit(
-+				&group->idle_server_tid, &prev, 0UL,
-+				memory_order_seq_cst, memory_order_seq_cst);
-+	assert(ok || (prev != server_tid));
-+	return worker;
-+}
-+
-+umcg_tid umcg_get_idle_worker(bool wait)
-+{
-+	umcg_tid result = UMCG_NONE;
-+
-+	assert(umcg_task_tls->peer == UMCG_NONE);
-+	assert((atomic_load_explicit(&umcg_task_tls->umcg_task.state_ts,
-+				memory_order_acquire) & UMCG_TASK_STATE_MASK_FULL) ==
-+			UMCG_TASK_RUNNING);
-+
-+	do {
-+		result = get_idle_worker();
-+
-+		if (result || !wait)
-+			break;
-+
-+		result = idle_server_wait();
-+	} while (!result);
-+
-+	assert((atomic_load_explicit(&umcg_task_tls->umcg_task.state_ts,
-+				memory_order_acquire) & UMCG_TASK_STATE_MASK_FULL) ==
-+			UMCG_TASK_RUNNING);
-+	return result;
-+}
-diff --git a/tools/lib/umcg/libumcg.h b/tools/lib/umcg/libumcg.h
-new file mode 100644
-index 000000000000..8d97d4032667
---- /dev/null
-+++ b/tools/lib/umcg/libumcg.h
-@@ -0,0 +1,299 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+
-+#ifndef __LIBUMCG_H
-+#define __LIBUMCG_H
-+
-+#define _GNU_SOURCE
-+#include <errno.h>
-+#include <limits.h>
-+#include <unistd.h>
-+#include <linux/types.h>
-+#include <stdbool.h>
-+#include <stdint.h>
-+#include <syscall.h>
-+#include <time.h>
-+
-+#include <linux/umcg.h>
-+
-+/*
-+ * UMCG: User Managed Concurrency Groups.
-+ *
-+ * LIBUMCG provides userspace UMCG API that hides some of the intricacies
-+ * of sys_umcg_ctl() and sys_umcg_wait() syscalls.
-+ *
-+ * Note that this API is still quite low level and is designed as
-+ * a toolkit for building higher-level userspace schedulers.
-+ *
-+ * See tools/lib/umcg/libumcg.txt for detals.
-+ */
-+
-+typedef intptr_t umcg_t;   /* UMCG group ID. */
-+typedef intptr_t umcg_tid; /* UMCG thread ID. */
-+
-+#define UMCG_NONE	(0)
-+
-+/**
-+ * umcg_enabled - indicates whether UMCG syscalls are available.
-+ */
-+bool umcg_enabled(void);
-+
-+/**
-+ * umcg_get_utid - return the UMCG ID of the current thread.
-+ *
-+ * The function always succeeds, and the returned ID is guaranteed to be
-+ * stable over the life of the thread.
-+ *
-+ * The ID is NOT guaranteed to be unique over the life of the process.
-+ */
-+umcg_tid umcg_get_utid(void);
-+
-+/**
-+ * umcg_set_task_tag - add an arbitrary tag to a registered UMCG task.
-+ *
-+ * Note: not-thread-safe: the user is responsible for proper memory fencing.
-+ */
-+void umcg_set_task_tag(umcg_tid utid, intptr_t tag);
-+
-+/**
-+ * umcg_get_task_tag - get the task tag. Returns zero if none set.
-+ *
-+ * Note: not-thread-safe: the user is responsible for proper memory fencing.
-+ */
-+intptr_t umcg_get_task_tag(umcg_tid utid);
-+
-+/**
-+ * enum umcg_create_group_flag - flags to pass to umcg_create_group
-+ * @UMCG_GROUP_ENABLE_PREEMPTION: enable worker preemption.
-+ *
-+ * See tools/lib/libumcg.txt for detals.
-+ */
-+enum umcg_create_group_flag {
-+	UMCG_GROUP_ENABLE_PREEMPTION	= 1
-+};
-+
-+/**
-+ * umcg_create_group - create a UMCG group
-+ * @flags:             a combination of values from enum umcg_create_group_flag
-+ *
-+ * See tools/lib/libumcg.txt for detals.
-+ *
-+ * Return:
-+ * UMCG_NONE     - an error occurred. Check errno.
-+ * != UMCG_NONE  - the ID of the group, to be used in e.g. umcg_register.
-+ */
-+umcg_t umcg_create_group(uint32_t flags);
-+
-+/**
-+ * umcg_destroy_group - destroy a UMCG group
-+ * @umcg:               ID of the group to destroy
-+ *
-+ * The group must be empty (no server or worker threads).
-+ *
-+ * Return:
-+ * 0            - Ok
-+ * -1           - an error occurred. Check errno.
-+ *                errno == EAGAIN: the group has server or worker threads
-+ */
-+int umcg_destroy_group(umcg_t umcg);
-+
-+/**
-+ * umcg_register_basic_task - register the current thread as a UMCG basic task
-+ * @tag:          An arbitrary tag to be associated with the task.
-+ *
-+ * See tools/lib/libumcg.txt for detals.
-+ *
-+ * Return:
-+ * UMCG_NONE     - an error occurred. Check errno.
-+ * != UMCG_NONE  - the ID of the thread to be used with UMCG API (guaranteed
-+ *                 to match the value returned by umcg_get_utid).
-+ */
-+umcg_tid umcg_register_basic_task(intptr_t tag);
-+
-+/**
-+ * umcg_register_worker - register the current thread as a UMCG worker
-+ * @group_id:      The ID of the UMCG group the thread should join;
-+ * @tag:           an arbitrary tag to be associated with the task.
-+ *
-+ * Return:
-+ * UMCG_NONE     - an error occurred. Check errno.
-+ * != UMCG_NONE  - the ID of the thread to be used with UMCG API (guaranteed
-+ *                 to match the value returned by umcg_get_utid).
-+ */
-+umcg_tid umcg_register_worker(umcg_t group_id, intptr_t tag);
-+
-+/**
-+ * umcg_register_server - register the current thread as a UMCG server
-+ * @group_id:      The ID of the UMCG group the thread should join;
-+ * @tag:           an arbitrary tag to be associated with the task.
-+ *
-+ * Return:
-+ * UMCG_NONE     - an error occurred. Check errno.
-+ * != UMCG_NONE  - the ID of the thread to be used with UMCG API (guaranteed
-+ *                 to match the value returned by umcg_get_utid).
-+ */
-+umcg_tid umcg_register_server(umcg_t group_id, intptr_t tag);
-+
-+/**
-+ * umcg_unregister_task - unregister the current thread.
-+ *
-+ * Return:
-+ * 0              - OK
-+ * -1             - the current thread is not a UMCG thread
-+ */
-+int umcg_unregister_task(void);
-+
-+/**
-+ * umcg_wait - block the current thread
-+ * @timeout:   absolute timeout in nanoseconds
-+ *
-+ * Blocks the current thread, which must have been registered via umcg_register,
-+ * until it is waken via umcg_wake or swapped into via umcg_swap. If the current
-+ * thread has a wakeup queued (see umcg_wake), returns zero immediately,
-+ * consuming the wakeup.
-+ *
-+ * Return:
-+ * 0         - OK, the thread was waken;
-+ * -1        - did not wake normally;
-+ *               errno:
-+ *                 EINTR: interrupted
-+ *                 EINVAL: some other error occurred
-+ */
-+int umcg_wait(uint64_t timeout);
-+
-+/**
-+ * umcg_wake - wake @next; non-blocking.
-+ * @next:            ID of the thread to wake;
-+ * @wf_current_cpu:  an advisory hint indicating that the current thread
-+ *                   is going to block in the immediate future and that
-+ *                   the wakee should be woken on the current CPU;
-+ *
-+ * If @next is blocked via umcg_wait or umcg_swap, wake it if @next is
-+ * a server or a basic task; if @next is a worker, it will be queued
-+ * in the idle worker list. If @next is running, queue the wakeup,
-+ * so that a future block of @next will consume the wakeup and will not block.
-+ *
-+ * umcg_wake can queue at most one wakeup; if waking or queueing a wakeup
-+ * is not possible, umcg_wake will SPIN.
-+ *
-+ * See tools/lib/umcg/libumcg.txt for detals.
-+ *
-+ * Return:
-+ * 0         - OK, @next has woken, or a wakeup has been queued;
-+ * -1        - an error occurred.
-+ */
-+int umcg_wake(umcg_tid next, bool wf_current_cpu);
-+
-+/**
-+ * umcg_swap - wake @next, put the current thread to sleep
-+ * @next:      ID of the thread to wake
-+ * @timeout:   absolute timeout in ns
-+ *
-+ * umcg_swap is semantically equivalent to
-+ *
-+ *     int ret = umcg_wake(next, true);
-+ *     if (ret)
-+ *             return ret;
-+ *     return umcg_wait(timeout);
-+ *
-+ * but may do a synchronous context switch into @next on the current CPU.
-+ *
-+ * Note: if @next is a worker, it must be IDLE, but not in the idle worker list.
-+ * See tools/lib/umcg/libumcg.txt for detals.
-+ */
-+int umcg_swap(umcg_tid next, u64 timeout);
-+
-+/**
-+ * umcg_get_idle_worker - get an idle worker, if available
-+ * @wait: if true, block until an idle worker becomes available
-+ *
-+ * The current thread must be a UMCG server. If there is a list/queue of
-+ * waiting IDLE workers in the server's group, umcg_get_idle_worker
-+ * picks one; if there are no IDLE workers, the current thread sleeps in
-+ * the idle server queue if @wait is true.
-+ *
-+ * Note: servers waiting for idle workers must NOT be woken via umcg_wake(),
-+ *       as this will leave them in inconsistent state.
-+ *
-+ * See tools/lib/umcg/libumcg.txt for detals.
-+ *
-+ * Return:
-+ * UMCG_NONE         - an error occurred; check errno;
-+ * != UMCG_NONE      - a RUNNABLE worker.
-+ */
-+umcg_tid umcg_get_idle_worker(bool wait);
-+
-+/**
-+ * umcg_run_worker - run @worker as a UMCG server
-+ * @worker:          the ID of a RUNNABLE worker to run
-+ *
-+ * The current thread must be a UMCG "server".
-+ *
-+ * See tools/lib/umcg/libumcg.txt for detals.
-+ *
-+ * Return:
-+ * UMCG_NONE    - if errno == 0, the last worker the server was running
-+ *                unregistered itself; if errno != 0, an error occurred
-+ * != UMCG_NONE - the ID of the last worker the server was running before
-+ *                the worker was blocked or preempted.
-+ */
-+umcg_tid umcg_run_worker(umcg_tid worker);
-+
-+/**
-+ * umcg_preempt_worker - preempt a RUNNING worker.
-+ * @worker:          the ID of a RUNNING worker to preempt.
-+ *
-+ * See tools/lib/umcg/libumcg.txt for detals.
-+ *
-+ * Return:
-+ * 0        - Ok;
-+ * -1       - an error occurred; check errno and `man tgkill()`. In addition
-+ *            to tgkill() errors, EAGAIN is also returned if the worker
-+ *            is not in RUNNING state (in this case tgkill() was not called).
-+ */
-+int umcg_preempt_worker(umcg_tid worker);
-+
-+/**
-+ * umcg_get_task_state - return the UMCG state of @task, including state
-+ * flags, without the timestamp.
-+ *
-+ * Note that in most situations the state value can be changed at any time
-+ * by a concurrent thread, so this function is exposed for debugging/testing
-+ * purposes only.
-+ */
-+uint64_t umcg_get_task_state(umcg_tid task);
-+
-+#ifndef NSEC_PER_SEC
-+#define NSEC_PER_SEC	1000000000L
-+#endif
-+
-+/**
-+ * umcg_get_time_ns - returns the absolute current time in nanoseconds.
-+ *
-+ * The function uses CLOCK_MONOTONIC; the returned value can be used
-+ * to set absolute timeouts for umcg_wait() and umcg_swap().
-+ */
-+uint64_t umcg_get_time_ns(void);
-+
-+/**
-+ * UMCG userspace-only task state flag: wakeup queued.
-+ *
-+ * see umcg_wake() above.
-+ */
-+#define UMCG_UTF_WAKEUP_QUEUED	(1ULL << 17)
-+
-+/**
-+ * UMCG userspace-only task state flag: worker in sys_umcg_wait().
-+ *
-+ * IDLE workers can be in two substates:
-+ * - waiting in sys_umcg_wait(): in this case UTF_WORKER_IN_WAIT flag is set;
-+ * - waiting in the idle worker list: in this case the flag is not set.
-+ *
-+ * If the worker is IDLE in sys_umcg_wait, umcg_wake() clears the flag
-+ * and adds the worker to the idle worker list.
-+ *
-+ * If the worker is IDLE in the idle worker list, umcg_wake() sets
-+ * the wakeup queued flag.
-+ */
-+#define UMCG_UTF_WORKER_IN_WAIT	(1ULL << 16)
-+
-+#endif  /* __LIBUMCG_H */
++++ b/tools/lib/umcg/libumcg.txt
+@@ -0,0 +1,438 @@
++LIBUMCG API (USERSPACE)
++
++User Managed Concurrency Groups (UMCG) is an M:N threading
++subsystem/toolkit that lets user space application developers implement
++in-process user space schedulers.
++
++See Documentation/userspace-api/umcg.txt for UMCG API (kernel), as opposed
++to LIBUMCG API described here. The first three subsections are the
++same in both documents.
++
++
++CONTENTS
++
++    WHY? HETEROGENEOUS IN-PROCESS WORKLOADS
++    REQUIREMENTS
++    WHY THE TWO APIS: UMCG (KERNEL) AND LIBUMCG (USERSPACE)?
++    LIBUMCG API (USERSPACE)
++        SERVERS
++        WORKERS
++        BASIC UMCG TASKS
++    LIBUMCG API
++        umcg_t
++        umcg_tid
++        UMCG_NONE
++        umcg_enabled()
++        umcg_get_utid()
++        umcg_set_task_tag()
++        umcg_get_task_tag()
++        umcg_create_group()
++        umcg_destroy_group()
++        umcg_register_basic_task()
++        umcg_register_worker()
++        umcg_register_server()
++        umcg_unregister_task()
++        umcg_wait()
++        umcg_wake()
++        umcg_swap()
++        umcg_get_idle_worker()
++        umcg_run_worker()
++        umcg_preempt_worker()
++        umcg_get_time_ns()
++
++
++WHY? HETEROGENEOUS IN-PROCESS WORKLOADS
++
++Linux kernel's CFS scheduler is designed for the "common" use case, with
++efficiency/throughput in mind. Work isolation and workloads of different
++"urgency" are addressed by tools such as cgroups, CPU affinity, priorities,
++etc., which are difficult or impossible to efficiently use in-process.
++
++For example, a single DBMS process may receive tens of thousands requests
++per second; some of these requests may have strong response latency
++requirements as they serve live user requests (e.g. login authentication);
++some of these requests may not care much about latency but must be served
++within a certain time period (e.g. an hourly aggregate usage report); some
++of these requests are to be served only on a best-effort basis and can be
++NACKed under high load (e.g. an exploratory research/hypothesis testing
++workload).
++
++Beyond different work item latency/throughput requirements as outlined
++above, the DBMS may need to provide certain guarantees to different users;
++for example, user A may "reserve" 1 CPU for their high-priority/low-latency
++requests, 2 CPUs for mid-level throughput workloads, and be allowed to send
++as many best-effort requests as possible, which may or may not be served,
++depending on the DBMS load. Besides, the best-effort work, started when the
++load was low, may need to be delayed if suddenly a large amount of
++higher-priority work arrives. With hundreds or thousands of users like
++this, it is very difficult to guarantee the application's responsiveness
++using standard Linux tools while maintaining high CPU utilization.
++
++Gaming is another use case: some in-process work must be completed before a
++certain deadline dictated by frame rendering schedule, while other work
++items can be delayed; some work may need to be cancelled/discarded because
++the deadline has passed; etc.
++
++User Managed Concurrency Groups is an M:N threading toolkit that allows
++constructing user space schedulers designed to efficiently manage
++heterogeneous in-process workloads described above while maintaining high
++CPU utilization (95%+).
++
++
++REQUIREMENTS
++
++One relatively established way to design high-efficiency, low-latency
++systems is to split all work into small on-cpu work items, with
++asynchronous I/O and continuations, all executed on a thread pool with the
++number of threads not exceeding the number of available CPUs. Although this
++approach works, it is quite difficult to develop and maintain such a
++system, as, for example, small continuations are difficult to piece
++together when debugging. Besides, such asynchronous callback-based systems
++tend to be somewhat cache-inefficient, as continuations can get scheduled
++on any CPU regardless of cache locality.
++
++M:N threading and cooperative user space scheduling enables controlled CPU
++usage (minimal OS preemption), synchronous coding style, and better cache
++locality.
++
++Specifically:
++
++* a variable/fluctuating number M of "application" threads should be
++  "scheduled over" a relatively fixed number N of "kernel" threads, where
++  N is less than or equal to the number of CPUs available;
++* only those application threads that are attached to kernel threads are
++  scheduled "on CPU";
++* application threads should be able to cooperatively yield to each other;
++* when an application thread blocks in kernel (e.g. in I/O), this becomes
++  a scheduling event ("block") that the userspace scheduler should be able
++  to efficiently detect, and reassign a waiting application thread to the
++  freeded "kernel" thread;
++* when a blocked application thread wakes (e.g. its I/O operation
++  completes), this event ("wake") should also be detectable by the
++  userspace scheduler, which should be able to either quickly dispatch the
++  newly woken thread to an idle "kernel" thread or, if all "kernel"
++  threads are busy, put it in the waiting queue;
++* in addition to the above, it would be extremely useful for a separate
++  in-process "watchdog" facility to be able to monitor the state of each
++  of the M+N threads, and to intervene in case of runaway workloads
++  (interrupt/preempt).
++
++
++WHY THE TWO APIS: UMCG (KERNEL) AND LIBUMCG (USERSPACE)?
++
++UMCG syscalls, sys_umcg_ctl() and sys_umcg_wait(), are designed to make
++the kernel-side UMCG implementation as lightweight as possible. LIBUMCG,
++on the other hand, is designed to expose the key abstractions to users
++in a much more usable, higher-level way.
++
++See Documentation/userspace-api/umcg.txt for more details on
++UMCG API (kernel).
++
++Please note that LIBUMCG API is itself a rather low-level API intended
++to be used to construct higher-level userspace schedulers.
++
++Note: to avoid confusion, in this document "UMCG servers/workers" refer
++UMCG tasks when considered in the context of the kernel UMCG API (syscalls),
++while "LIBUMCG servers/workers" refer to the same tasks when considered
++in the context of the userspace LIBUMC API outlined below. When the
++distinction is not important, "UMCG servers/workers" is used generically.
++
++
++LIBUMCG API (USERSPACE)
++
++Based on the requrements above, LIBUMCG API (userspace) is build around the
++following ideas:
++
++* UMCG server: a thread representing "kernel threads", or CPUs from
++  the requirements above;
++* UMCG worker: a thread representing "application threads", to be
++  scheduled over servers;
++* UMCG group: a collection of servers and workers that can interact with
++  each other; a single process may contain several UMCG groups (e.g. a
++  group per NUMA node);
++* a set of functions (API) that allows workers to be "scheduled" over
++  servers and to interact with one another cooperatively.
++
++
++LIBUMCG SERVERS
++
++When a thread is registered as a server, it behaves like any other normal
++thread.
++
++Servers can interact with other servers in the same UMCG group:
++
++* servers can voluntarily suspend their execution by calling umcg_wait();
++* servers can wake other servers by calling umcg_wake();
++* servers can context-switch between each other by calling umcg_swap().
++
++Servers can also interact with workers in their UMCG group:
++
++* servers can schedule ("run") workers in their place by calling
++  umcg_run_worker(); when the worker blocks, the function returns;
++* servers can query for workers that finished their blocking operations
++  by calling umcg_get_idle_worker();
++* servers can force running workers into idle state and have the
++  servers running those workers to wakeup by calling umcg_preempt_worker().
++
++
++LIBUMCG WORKERS
++
++A worker cannot be running without having a server associated with it, so
++when a task is first registered as a worker, it is blocked until a server
++"runs" it (new workers are added to the idle worker list).
++
++Workers can interact with other workers in their UMCG group:
++
++* workers can voluntarily suspend their execution by calling umcg_wait();
++* workers can wake other workers by calling umcg_wake();
++* workers can context-switch between each other by calling umcg_swap().
++
++
++LIBUMCG BASIC UMCG TASKS
++
++If the application is only interested in server-to-server interactions,
++it does not need to create a UMCG group and may register a server as a
++"basic UMCG task". Same umcg_[wait|wake|swap] functions are available.
++
++
++LIBUMCG API: umcg_t
++
++umcg_t is an opaque pointer indicating a UMCG group.
++
++
++LIBUMCG API: umcg_tid
++
++umcg_tid is an opaque pointer indicating a UMCG task (a basic task,
++a server, or a worker).
++
++
++LIBUMCG API: UMCG_NONE
++
++UMCG_NONE holds a NULL value for variables of type umcg_t or umcg_tid.
++
++
++LIBUMCG API: umcg_enabled()
++
++bool umcg_enabled(void) - returns true if the running kernel exposes
++                          UMCG kernel API (sys_umcg_ctl and sys_umcg_wait).
++
++
++LIBUMCG API: umcg_get_utid
++
++umcg_tid umcg_get_utid(void) - returns the umcg_tid value identifying
++                               the current thread as a UMCG task. The value
++                               is guaranteed to be stable over the life
++                               of the thread, but may be reused between
++                               different threads (it is a pointer to a TLS
++                               variable).
++
++
++LIBUMCG API: umg_set_task_tag()
++
++void umcg_set_task_tag(umcg_tid utid, intptr_t tag) - a helper function
++                       used to associate an arbitrary user-provided value
++                       with a umcg task/thread.
++
++
++LIBUMCG API: umcg_get_task_tag()
++
++intptr_t umcg_get_task_tag(umcg_tid utid) - returns a previously set
++                           task tag, or zero.
++
++
++LIBUMCG API: umcg_create_group()
++
++umcg_t umcg_create_group(uint32_t flags) - create a UMCG group.
++
++    UMCG servers and workers at LIBUMCG level must belong to the same UMCG
++    group to interact; note that this is different from UMCG kernel API,
++    where servers and workers can all interact within the same process.
++
++    UMCG groups are used to partition UMCG tasks (servers and workers) within
++    a process, e.g. to allow NUMA-aware scheduling.
++
++
++LIBUMCG API: umcg_destroy_group()
++
++int umcg_destroy_group(umcg_t umcg) - destroy a UMCG group. The group must
++                       be empty, i.e. all its servers and workers must have
++                       unregistered.
++
++
++LIBUMCG API: umcg_register_basic_task()
++
++umcg_tid umcg_register_basic_task(intptr_t tag) - register the current
++                                  thread as a basic LIBUMCG task.
++
++    Basic LIBUMCG tasks do not belong to UMCG groups, and thus cannot
++    interact with LIBUMCG workers.
++
++    At the kernel level basic LIBUMCG tasks are servers.
++
++
++LIBUMCG API: umcg_register_worker()
++
++umcg_tid umcg_register_worker(umcg_t group_id, intptr_t tag) - register
++                              the current thread as a LIBUMCG worker in a group.
++
++    LIBUMCG workers, once registered, can forget about being UMCG workers,
++    as the only difference vs "normal" threads is that now workers are
++    scheduled not by the kernel, but by servers in their UMCG group, which
++    happens "transparently" to UMCG workers.
++
++    LIBUMCG workers may call umcg_[wait|wake|swap] to cooperatively share
++    workload with other LIBUMCG workers in the same group.
++
++    Note: at the moment UMCG workers, once registered, cannnot receive
++    non-fatal signals.
++
++
++LIBUMCG API: umcg_register_server()
++
++umcg_tid umcg_register_server(umcg_t group_id, intptr_t tag) - register
++                              the current thread as a LIBUMCG server in a group.
++
++    LIBUMCG servers schedule LIBUMCG workers in the same group via
++        umcg_get_idle_worker(), umcg_run_worker(), and umcg_preempt_worker().
++        See descriptions of these functions below for more details.
++
++
++LIBUMCG API: umcg_unregister_task()
++
++int umcg_unregister_task(void) - unregister the current thread as a UMCG task.
++
++   A thread can be only one type of a UMCG task at a time. Once unregistered,
++   a thread can register again as a different UMCG task type, in the same
++   or a different group.
++
++
++LIBUMCG API: umcg_wait()
++
++int umcg_wait(uint64_t timeout) - block the current UMCG task until
++              the timeout expires or it is woken via umcg_wake() or umcg_swap().
++
++    All UMCG task types can call umcg_wait().
++
++
++LIBUMCG API: umcg_wake()
++
++int umcg_wake(umcg_tid next, bool wf_current_cpu) - wake a UMCG task.
++
++    Wake a umcg task if it is blocked as a result of calling umcg_wait() or
++    umcg_swap(). If @next is NOT blocked in umcg_wait() or umcg_swap(),
++    it will be marked as "wakeup queued"; when @next calls umcg_wait() or
++    umcg_swap() later, the "wakeup queued" flag will be removed and
++    the function will not block.
++
++    Only one wakeup can be queued per task, so calling umcg_wake for
++    a task with a wakeup queued will spin (in the userspace) until the
++    wakeup flag is cleared.
++
++    If @next is a worker blocked in umcg_wait(), the worker is added
++    to the idle workers list so that it will the be picked up by
++    umcg_get_idle_worker().
++
++    Note that "wakeup queued" is a purely LIBUMCG (userspace) concept:
++    the kernel (UMCG kernel API) is unaware of it.
++
++
++LIBUMCG API: umcg_swap()
++
++int umcg_swap(umcg_tid next, u64 timeout) - block the current task; wake @next.
++
++    umcg_swap() can be used for server-to-server or worker-to-worker
++    context switches, but NOT server-to-worker or worker-to-server.
++    If a server wants to context switch with a worker, the server
++    should call umcg_run_worker(). If a worker wants to context switch
++    to its server, it should call umcg_wait().
++
++    In server-to-server context switches, the switching-out server
++    is RUNNING; the switching-in server can either be IDLE or RUNNING.
++    If the switching-in server is running, it will have a wakeup queued.
++    If the switching-out server has a wakeup queued, umcg_swap() will
++    consume the wakeup.
++
++    In worker-to-worker context switches, the "normal" behavior is that
++    the RUNNING switching-out worker becomes IDLE, its server is
++    transferred to the IDLE switching-in worker, and the switching-in
++    worker becomes RUNNING.
++
++    The switching-in worker MUST NOT be in the idle worker list: it
++    can either be in umcg_wait(), or pulled out of the idle worker list
++    previously.
++
++    Same wakeup-queued rules apply to swapping workers as they apply
++    to swapping servers.
++
++    Note that while with servers umcg_swap() is technically equivalent
++    to { umcg_wake(); umcg_wait(); }, with possible on-cpu optimizations,
++    with workers there is a difference, as umcg_swap() will RUN an
++    idle worker, while umcg_wake() will add it to the idle worker list.
++
++    This difference, however, is transparent for workers: workers
++    engaging is cooperative scheduling via wait/wake/swap will observe
++    exactly the same behavior as if they were servers or basic UMCG tasks.
++
++
++LIBUMCG API: umcg_get_idle_worker()
++
++umcg_tid umcg_get_idle_worker(bool wait) - get an idle worker from
++                                           the idle worker list.
++
++    Servers can query for unblocked workers by calling umcg_get_idle_worker().
++
++    There are two idle worker lists per UMCG group; the kernel-side list,
++    as described in Documentation/userspace-api/umcg.txt, and the
++    userspace-side list. umcg_get_idle_worker() first checks the userspace
++    list and, if it is not empty, returns the first available idle worker,
++    removing it from the list.
++
++    If the userspace list is empty, the function swaps it with the kernel-side
++    list of empty workers, and then checks the userspace list again.
++
++    If @wait is true, the function blocks if there are no idle workers
++    available. The server will be added to the group's idle server list.
++    The server may also be pointed at by struct umcg_task.idle_server_tid_ptr.
++
++    It is safe to call umcg_get_idle_worker() concurrently.
++
++
++LIBUMCG API: umcg_run_worker()
++
++umcg_tid umcg_run_worker(umcg_tid worker) - run the worker.
++
++    Servers "run" workers by calling umcg_run_worker(). @worker must be
++    IDLE, and must NOT be in the idle worker list. I.e. a server may
++    run a worker that is blocked in umcg_wait() either if umcg_wake()
++    has NOT been called on the @worker, or if umcg_wake() HAD been
++    called, and the worker then was returned via umcg_get_idle_worker().
++
++    umcg_run_worker() will block; if the worker the server is running
++    swaps with another worker, the server will get reassigned to that
++    new worker.
++
++    When the worker the server is running blocks, umcg_run_worker returns
++    the worker's umcg_tid, or UMCG_NONE if the worker unregisters.
++
++
++LIBUMCG API: umcg_preempt_worker()
++
++int umcg_preempt_worker(umcg_tid worker) - preempt a RUNNING worker.
++
++    The function interrupgs a RUNNING worker and wakes its server. If
++    the worker is not RUNNING (i.e. BLOCKED or IDLE), the function
++    returns an error with errno set to EAGAIN.
++
++    The group the worker belongs to must be created with
++    UMCG_GROUP_ENABLE_PREEMPTION flag set.
++
++    The function may be called from any thread in the process that
++    @worker belongs to.
++
++
++LIBUMCG API: umcg_get_time_ns()
++
++uint64_t umcg_get_time_ns(void) - return the current absolute time.
++
++    This function can be used to calculate the absolute timeouts passed
++    to umcg_wait() and umcg_swap().
 --
 2.25.1
 
