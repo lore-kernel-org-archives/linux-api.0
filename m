@@ -2,153 +2,120 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A5DD0C433EF
-	for <linux-api@archiver.kernel.org>; Tue, 23 Nov 2021 05:45:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7A2D6C433EF
+	for <linux-api@archiver.kernel.org>; Tue, 23 Nov 2021 09:13:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231564AbhKWFsI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 23 Nov 2021 00:48:08 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55338 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229471AbhKWFsH (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 23 Nov 2021 00:48:07 -0500
-Received: from mail-il1-x12e.google.com (mail-il1-x12e.google.com [IPv6:2607:f8b0:4864:20::12e])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 57889C061574;
-        Mon, 22 Nov 2021 21:45:00 -0800 (PST)
-Received: by mail-il1-x12e.google.com with SMTP id j7so13210444ilk.13;
-        Mon, 22 Nov 2021 21:45:00 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc:content-transfer-encoding;
-        bh=5hsIcQcnvyDWXD3QyyHaUUo4fAVQ+szFlIF7sIqfyyM=;
-        b=Id0y4YXJOOoknFyUbQsif0apMa5fgtmG8XmCEXOHrXS6DKuschmyk1vPx/oZorbVpx
-         h56YqinmeHWYA/7Xu5ofwpDdYQ+rn8ypf/KzEAz30OeR2SFdtbNfIi+jFAwHM/iLEMe6
-         anbjmcPBWLqMd+wFn3D1vA4Mlo1o+fqb6DLOwbBpwrCHPf7LIOZ+KtFZd6TaQYb/hPOB
-         k9RuCHOhDcFaYJhmL6J/M+hqgA5OnNafBLT6lfPXJ90BX6aJ4qPvohaa0TgIwyfJzlJq
-         HM/f+rdgxnhad6XWa6Z5lIOzW5683lgEA8zIfr/KKPd1rl3htrhP7LKEGBPg14eR5R/E
-         IesQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc:content-transfer-encoding;
-        bh=5hsIcQcnvyDWXD3QyyHaUUo4fAVQ+szFlIF7sIqfyyM=;
-        b=MDtk3bt4xGa51eF0jkrr3bfUn9Zrof4XQd5NY8cbiIduPm+NZzhqayO9LjRUSBFoQy
-         42cg0+XvisyRSm899Q4wOSTAD2U5ey9NTNATjG85nWIBy2jfacJ0kGigjKMWVeSLOhqB
-         15aoHs96a4MhXhlq5tu3C8m9eK50aodcBNjAdtlFNhlCj6+a0S/zpXFc3epCxu3niQGi
-         GzthBy2n5gkxN7GUEAGYICxxF/XKesd8u3dPJfDbkkkYSzQXLZUtZ6icsRFGeFbFF3F5
-         Ja9DPKOknBv8uUsNCCZjBoM0MyhVtDKJqm2b6poWvxYI/TfSweeU02PBPGaC5UUBDSPf
-         V9bg==
-X-Gm-Message-State: AOAM5304N5yJSh0o0JzlA/VfCWMMiiEPD5dvQut+jj8bVspA44LQnFtN
-        dP9KTTn4SY7lXMj/ESz1BRlC2yd1LGX/Qnhb0R0=
-X-Google-Smtp-Source: ABdhPJxVTJkrfk3BaKxB4NLltIBR9EgWGZQqg6GxOmdcQwWkXkketZe9gkMv35HKjOgZxNFdp3nL+E5uoiN6WD9ko2M=
-X-Received: by 2002:a92:cda2:: with SMTP id g2mr3404478ild.46.1637646299779;
- Mon, 22 Nov 2021 21:44:59 -0800 (PST)
-MIME-Version: 1.0
-References: <20211021055408.4006408-1-alistair.francis@opensource.wdc.com>
- <1e24268a-fd6a-10cd-cb1d-c479bb2f930f@collabora.com> <CAK8P3a2R=e7we11Gi2zTVwFYrEt9Di6Bgzi9xtjMAX9BZex7Cw@mail.gmail.com>
-In-Reply-To: <CAK8P3a2R=e7we11Gi2zTVwFYrEt9Di6Bgzi9xtjMAX9BZex7Cw@mail.gmail.com>
-From:   Alistair Francis <alistair23@gmail.com>
-Date:   Tue, 23 Nov 2021 15:44:33 +1000
-Message-ID: <CAKmqyKNKmJrNf-enEFSnNEy6tPvawrjptF9SuhX=L-14ba2etw@mail.gmail.com>
-Subject: Re: [PATCH v2] uapi: futex: Add a futex syscall
+        id S231739AbhKWJQT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 23 Nov 2021 04:16:19 -0500
+Received: from smtp-out1.suse.de ([195.135.220.28]:44244 "EHLO
+        smtp-out1.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S235219AbhKWJQS (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 23 Nov 2021 04:16:18 -0500
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by smtp-out1.suse.de (Postfix) with ESMTPS id D5E4521709;
+        Tue, 23 Nov 2021 09:13:09 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+        t=1637658789; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=lTMkFzzS/iQ1UTdPJDo4VfG+cYsQ7qvYb44dbmTy1I4=;
+        b=RyKQwgj/Saeq7dYXOT1Xv81yD1LVdPtxakF+YhsMAI23Cf17DNmMcj8Fr1TXdvoKA8yt5v
+        X8pxEBLKyT8v7BRb1hxeIg0aufeuOsN630emCfhg5wv7RQiilW1c4J47Wo1Z5XyOqX7s9G
+        EuMkzLy9xj9EXDEBibM1MVL/tlmok64=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+        s=susede2_ed25519; t=1637658789;
+        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=lTMkFzzS/iQ1UTdPJDo4VfG+cYsQ7qvYb44dbmTy1I4=;
+        b=q/V53TWlUucuq6/PU2saOecZPm4M0I1G61OFFXTjvOTpqL4qKQszT5OJDIMQP+d0Irwwgb
+        hXqTAKawGM+2RpDw==
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id C1E8913DA3;
+        Tue, 23 Nov 2021 09:13:09 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+        by imap2.suse-dmz.suse.de with ESMTPSA
+        id sznMLaWwnGF/DgAAMHmgww
+        (envelope-from <chrubis@suse.cz>); Tue, 23 Nov 2021 09:13:09 +0000
+Date:   Tue, 23 Nov 2021 10:14:15 +0100
+From:   Cyril Hrubis <chrubis@suse.cz>
 To:     Arnd Bergmann <arnd@arndb.de>
-Cc:     =?UTF-8?Q?Andr=C3=A9_Almeida?= <andrealmeid@collabora.com>,
-        Alistair Francis <alistair.francis@opensource.wdc.com>,
-        Alistair Francis <alistair.francis@wdc.com>,
+Cc:     Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
         Linux API <linux-api@vger.kernel.org>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        "H. Peter Anvin" <hpa@zytor.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Darren Hart <dvhart@infradead.org>,
-        Davidlohr Bueso <dave@stgolabs.net>,
-        Ingo Molnar <mingo@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+        LTP List <ltp@lists.linux.it>,
+        GNU C Library <libc-alpha@sourceware.org>,
+        linux-arch <linux-arch@vger.kernel.org>
+Subject: Re: [PATCH] uapi: Make __{u,s}64 match {u,}int64_t in userspace
+Message-ID: <YZyw56flmdQnBIuh@yuki>
+References: <YZvIlz7J6vOEY+Xu@yuki>
+ <CAK8P3a0x5Bw7=0ng-s+KsUywqJYa0tk9cSWmZhx+cZRBOR87ZA@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CAK8P3a0x5Bw7=0ng-s+KsUywqJYa0tk9cSWmZhx+cZRBOR87ZA@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Oct 26, 2021 at 3:33 AM Arnd Bergmann <arnd@arndb.de> wrote:
->
-> On Mon, Oct 25, 2021 at 6:33 PM Andr=C3=A9 Almeida <andrealmeid@collabora=
-.com> wrote:
-> > =C3=80s 02:54 de 21/10/21, Alistair Francis escreveu:
-> > > From: Alistair Francis <alistair.francis@wdc.com>
->
-> > > +#if defined(__NR_futex)
-> > > +     if (sizeof(*timeout) =3D=3D sizeof(struct __kernel_old_timespec=
-))
-> > > +             return syscall(__NR_futex, uaddr, op, val, timeout, uad=
-dr2, val3);
-> > > +
-> > > +     if (timeout && timeout->tv_sec =3D=3D (long)timeout->tv_sec) {
-> > > +             struct __kernel_old_timespec ts32;
-> > > +
-> > > +             ts32.tv_sec =3D (__kernel_long_t) timeout->tv_sec;> +  =
-           ts32.tv_nsec =3D (__kernel_long_t) timeout->tv_nsec;
-> > > +
-> > > +             return syscall(__NR_futex, uaddr, op, val, &ts32, uaddr=
-2, val3);
-> > > +     } else if (!timeout) {
-> > > +             return syscall(__NR_futex, uaddr, op, val, NULL, uaddr2=
-, val3);
-> > > +     }
-> > > +#endif
-> >
-> > If I read this part right, you will always use ts32 for __NR_futex. I
-> > know that it can be misleading, but __NR_futex uses ts64 in 64-bit
-> > archs, so they shouldn't be converted to ts32 in those cases.
->
-> __kernel_old_timespec is the correct type for sys_futex() on all
-> architectures.
->
-> Maybe name the local variable 'ts' or 'ts_old' instead of 'ts32' then?
->
-> > > +{
-> > > +#if defined(__NR_futex_time64)
-> > > +     int ret =3D  syscall(__NR_futex_time64, uaddr, op, val, nr_requ=
-eue, uaddr2, val3);
-> > > +
-> > > +     if (ret =3D=3D 0 || errno !=3D ENOSYS)
-> > > +             return ret;
-> > > +#endif
-> > > +
-> > > +#if defined(__NR_futex)
-> > > +     return syscall(__NR_futex, uaddr, op, val, nr_requeue, uaddr2, =
-val3);
-> > > +#endif
-> > > +
-> > > +     errno =3D ENOSYS;
-> > > +     return -1;
-> > > +}
-> > > +
-> > > +#endif /* _UAPI_LINUX_FUTEX_SYSCALL_H */
-> > >
-> >
-> > Sorry if this question was already asked but I didn't find it in the
-> > thread: Should we go with wrappers for the most common op? Like:
-> >
-> > __kernel_futex_wait(volatile uint32_t *uaddr, uint32_t val, struct
-> > timespec *timeout)
-> >
-> > __kernel_futex_wake(volatile uint32_t *uaddr, uint32_t nr_wake)
->
-> I had suggested having just a single function definition here, but having=
- one
-> per argument type seems reasonable as well. Having one definition
-> per futex_op value would also be possible, but in that case I suppose
-> we need all 13 of them, not just two.
+Hi!
+> > +#include <asm/bitsperlong.h>
+> > +
+> >  /*
+> > - * int-ll64 is used everywhere now.
+> > + * int-ll64 is used everywhere in kernel now.
+> >   */
+> > -#include <asm-generic/int-ll64.h>
+> > +#if __BITS_PER_LONG == 64 && !defined(__KERNEL__)
+> > +# include <asm-generic/int-l64.h>
+> > +#else
+> > +# include <asm-generic/int-ll64.h>
+> > +#endif
+> 
+> I don't think this is correct on all 64-bit architectures, as far as I
+> remember the
+> definition can use either 'long' or 'long long' depending on the user space
+> toolchain.
 
-Sorry I have taken so long to look at this again. I have addressed
-your other comments.
+As far as I can tell the userspace bits/types.h does exactly the same
+check in order to define uint64_t and int64_t, i.e.:
 
-I don't have a strong preference here. I do like that by having a
-generic __kernel_futex_syscall_timeout() it should be easier to
-convert existing uses of SYSCALL() to the new function (the requeue is
-it's own thing anyway).
+#if __WORDSIZE == 64
+typedef signed long int __int64_t;
+typedef unsigned long int __uint64_t;
+#else
+__extension__ typedef signed long long int __int64_t;
+__extension__ typedef unsigned long long int __uint64_t;
+#endif
 
-Alistair
+The macro __WORDSIZE is defined per architecture, and it looks like the
+defintions in glibc sources in bits/wordsize.h match the uapi
+asm/bitsperlong.h. But I may have missed something, the code in glibc is
+not exactly easy to read.
 
+> Out of the ten supported 64-bit architectures, there are four that already
+> use asm-generic/int-l64.h conditionally, and six that don't, and I
+> think at least
+> some of those are intentional.
 >
->         Arnd
+> I think it would be safer to do this one architecture at a time to make
+> sure this doesn't regress on those that require the int-ll64.h version.
+
+I'm still trying to understand what exactly can go wrong here. As long
+as __BITS_PER_LONG is correctly defined the __u64 and __s64 will be
+correctly sized as well. The only visible change is that one 'long' is
+dropped from the type when it's not needed.
+
+> There should also be a check for __SANE_USERSPACE_TYPES__
+> to let userspace ask for the ll64 version everywhere.
+
+That one is easy to fix at least.
+
+-- 
+Cyril Hrubis
+chrubis@suse.cz
