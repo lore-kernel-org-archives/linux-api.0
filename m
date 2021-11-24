@@ -2,55 +2,55 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4B66DC433F5
-	for <linux-api@archiver.kernel.org>; Wed, 24 Nov 2021 14:33:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6B80EC433F5
+	for <linux-api@archiver.kernel.org>; Wed, 24 Nov 2021 14:34:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1355878AbhKXOgM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 24 Nov 2021 09:36:12 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48960 "EHLO
+        id S1350561AbhKXOhL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 24 Nov 2021 09:37:11 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48410 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1355902AbhKXOgI (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 24 Nov 2021 09:36:08 -0500
-Received: from mail-qv1-xf2e.google.com (mail-qv1-xf2e.google.com [IPv6:2607:f8b0:4864:20::f2e])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BFA92C1A3ADA
-        for <linux-api@vger.kernel.org>; Wed, 24 Nov 2021 05:23:55 -0800 (PST)
-Received: by mail-qv1-xf2e.google.com with SMTP id g1so1746017qvd.2
-        for <linux-api@vger.kernel.org>; Wed, 24 Nov 2021 05:23:55 -0800 (PST)
+        with ESMTP id S1356391AbhKXOhH (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 24 Nov 2021 09:37:07 -0500
+Received: from mail-qk1-x734.google.com (mail-qk1-x734.google.com [IPv6:2607:f8b0:4864:20::734])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B9A50C0FD23F
+        for <linux-api@vger.kernel.org>; Wed, 24 Nov 2021 05:28:43 -0800 (PST)
+Received: by mail-qk1-x734.google.com with SMTP id d2so2728138qki.12
+        for <linux-api@vger.kernel.org>; Wed, 24 Nov 2021 05:28:43 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=ziepe.ca; s=google;
         h=date:from:to:cc:subject:message-id:references:mime-version
          :content-disposition:in-reply-to;
-        bh=vR5X7aTiFOOVGN8Rdr9twInRzNQE68Jn7eaS79KF5JI=;
-        b=Ql2jamGTDoo7tRUYmapHPNuQGI2EBH53GGT10ws9BRT9mp46w8Q3WwC3bQcPjeyJUb
-         bDlBo8Chiuh50ahwDix4xn/QkQqNYaECP7iHe7aFuqQ+GnbXtLePsHEQYi8iJLbO8jqG
-         NeYdwLTquLM5mylQwGgCeaeQkp0LBt1Yn1Rqo+zq6gwOGYUG9Po4+HaTCnO+dQNQOo9u
-         /H7S4tZq/gdk39EiB3cmL6+u0dGvJcgyz0lJGS50HCetT00czUmh7PpLQWvPGx6Qxi6k
-         OC/IM/Z8a6CY0jkeVQY6DjARa3DtW+KgCl9Ll6TBgitPiQ0pysSPg1B/wYFjftVk3MfZ
-         N+lA==
+        bh=WyqwKxdhohLsMuEIkCIlIATDPwH2TE1WlLTF/w/br8k=;
+        b=GY9jyrWtFmcfvg6YIZNtW3Ix56uPG0xBVjVBcS/e4b+IChdZQLov+cmAbydRjXM3yK
+         dHqLCM4rjxEAvDa+geMY6fxngSihcj9pL3VNCzuR1hT2jWo5QsWYH9RlQrq2L4nnidQh
+         XOxKUJHwJcXJbqOHxX+l82Y2bfwOjGCrUMU1BOEJ2KfwQAZTFwflMfFjmrSyvviuzm8Q
+         xUsy2MvOhJP30pa+dsEHvTeYDv5XDY39bOfetq9mDFqGd/vTEEynw9MabZ2vI0zwMFRj
+         Hc3Z61Jzb66T2sLxHgq8fcJUihzG27C2dDAa/isljx+kSgCfURy3AiR0rbrqrhGC8DyQ
+         TOWQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:date:from:to:cc:subject:message-id:references
          :mime-version:content-disposition:in-reply-to;
-        bh=vR5X7aTiFOOVGN8Rdr9twInRzNQE68Jn7eaS79KF5JI=;
-        b=1UAZjTum3Khl1/Hx1jhbT3UV/X/VvwcsjxjmEX2QvhzN7oQ+6DFao6Z7h7rM3k6Fl5
-         GAt9hhiY9KVUqVLqZkw8CET1Mmrece0PtcsvIPuKE5m30IBpCA5nedq9HB9iBoP6t+M+
-         4qELeAZ09g+iuxHoaMKAhVT8S7RhMjMFCFjABSM8u8H2GZUofzMyrUpdlcKQgDCnEEOv
-         9lLW7Qglu8CUJ+Y5wLHzc85eIuBcDW0Xl2IJ4cJuZ5xYk0lI/GlS8ZBplHTKdhjAmdkr
-         XBPfHwyAYJ/M77QM4pG7tTEOdfV4lFJcTHqEZQ/cu0/hgb1uSP/mUksM6Pm9rPixsRm4
-         wBWA==
-X-Gm-Message-State: AOAM531PxPOeDiAiCzGzyUDwKohmntULXd6oORoZyXEA7r7rySscxCmg
-        +mCMhA4Fc2yR/f+tRXXpzVJqOA==
-X-Google-Smtp-Source: ABdhPJwIkO/hSHdrvxMNPMQTiV33oMboBFQ2VKpVaquqdmUVNR+JyQZWlHq5jUxy9L7WR3iB7jccJg==
-X-Received: by 2002:ad4:576a:: with SMTP id r10mr7232232qvx.5.1637760234949;
-        Wed, 24 Nov 2021 05:23:54 -0800 (PST)
+        bh=WyqwKxdhohLsMuEIkCIlIATDPwH2TE1WlLTF/w/br8k=;
+        b=AAZ6ls8nYC1KOrxw7LOoaWNZpb8lPbp7bR3GBvIJ691C5kSCnU8gynpywNfJBc6XRX
+         /NnT0e7uAhzK6H/7MOk1vUOtIIZokfduZ3cmEg1rz1GHcbVpgf7nClLhMROkPwi764Hs
+         4waERFksb5cbvD5+xdBvXzTdR44U5wDvN5LmbbTj4X1YlZkNHjCXvHFaOJ8rhXVpCqAx
+         PYsivapyWs5ecUkUXNZO3B702TXI0UDcCVuivj31dqtYsEheIjEDepJD/NxiGosdKN7C
+         pOIDJoW3uEfjK1CGTvudSNlZAB/aJIJLg6qpKNZp5r2V49kNDS+HtXSFtCoosXqW0caA
+         55GA==
+X-Gm-Message-State: AOAM532mXgfcYuV4yO3wyOFGt7QiBnNrRCMAJ5tZxDIQLVeObBCneB5o
+        gAAYt72hdrdbbwaSCGXMc4sJvA==
+X-Google-Smtp-Source: ABdhPJzGbKoVCbaPnqn5zJtUXwEpBDGfjaVJvcoC28XnE+g7caK/5ACu2Wb/+0Qf51NE8Rb35L0EjA==
+X-Received: by 2002:a05:620a:2ef:: with SMTP id a15mr5877836qko.95.1637760522983;
+        Wed, 24 Nov 2021 05:28:42 -0800 (PST)
 Received: from ziepe.ca (hlfxns017vw-142-162-113-129.dhcp-dynamic.fibreop.ns.bellaliant.net. [142.162.113.129])
-        by smtp.gmail.com with ESMTPSA id u7sm8522541qkp.17.2021.11.24.05.23.54
+        by smtp.gmail.com with ESMTPSA id u11sm7819305qko.33.2021.11.24.05.28.42
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 24 Nov 2021 05:23:54 -0800 (PST)
+        Wed, 24 Nov 2021 05:28:42 -0800 (PST)
 Received: from jgg by mlx with local (Exim 4.94)
         (envelope-from <jgg@ziepe.ca>)
-        id 1mpsFd-0011Ar-RE; Wed, 24 Nov 2021 09:23:53 -0400
-Date:   Wed, 24 Nov 2021 09:23:53 -0400
+        id 1mpsKI-0011GP-1M; Wed, 24 Nov 2021 09:28:42 -0400
+Date:   Wed, 24 Nov 2021 09:28:42 -0400
 From:   Jason Gunthorpe <jgg@ziepe.ca>
 To:     David Hildenbrand <david@redhat.com>
 Cc:     Vlastimil Babka <vbabka@suse.cz>, Jens Axboe <axboe@kernel.dk>,
@@ -62,10 +62,8 @@ Cc:     Vlastimil Babka <vbabka@suse.cz>, Jens Axboe <axboe@kernel.dk>,
         io_uring Mailing List <io-uring@vger.kernel.org>,
         Pavel Begunkov <asml.silence@gmail.com>, linux-mm@kvack.org
 Subject: Re: [PATCH] Increase default MLOCK_LIMIT to 8 MiB
-Message-ID: <20211124132353.GG5112@ziepe.ca>
-References: <ca96bb88-295c-ccad-ed2f-abc585cb4904@kernel.dk>
- <5f998bb7-7b5d-9253-2337-b1d9ea59c796@redhat.com>
- <20211123132523.GA5112@ziepe.ca>
+Message-ID: <20211124132842.GH5112@ziepe.ca>
+References: <20211123132523.GA5112@ziepe.ca>
  <10ccf01b-f13a-d626-beba-cbee70770cf1@redhat.com>
  <20211123140709.GB5112@ziepe.ca>
  <e4d7d211-5d62-df89-8f94-e49385286f1f@redhat.com>
@@ -73,40 +71,34 @@ References: <ca96bb88-295c-ccad-ed2f-abc585cb4904@kernel.dk>
  <dd92a69a-6d09-93a1-4f50-5020f5cc59d0@suse.cz>
  <20211123235953.GF5112@ziepe.ca>
  <2adca04f-92e1-5f99-6094-5fac66a22a77@redhat.com>
+ <20211124132353.GG5112@ziepe.ca>
+ <cca0229e-e53e-bceb-e215-327b6401f256@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <2adca04f-92e1-5f99-6094-5fac66a22a77@redhat.com>
+In-Reply-To: <cca0229e-e53e-bceb-e215-327b6401f256@redhat.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Nov 24, 2021 at 09:57:32AM +0100, David Hildenbrand wrote:
+On Wed, Nov 24, 2021 at 02:25:09PM +0100, David Hildenbrand wrote:
+> On 24.11.21 14:23, Jason Gunthorpe wrote:
+> > On Wed, Nov 24, 2021 at 09:57:32AM +0100, David Hildenbrand wrote:
+> > 
+> >> Unfortunately it will only be a band aid AFAIU. I can rewrite my
+> >> reproducer fairly easily to pin the whole 2M range first, pin a second
+> >> time only a single page, and then unpin the 2M range, resulting in the
+> >> very same way to block THP. (I can block some THP less because I always
+> >> need the possibility to memlock 2M first, though).
+> > 
+> > Oh!
+> > 
+> > The issue is GUP always pins an entire compound, no matter how little
+> > the user requests.
+> 
+> That's a different issue. I make sure to split the compound page before
+> pinning anything :)
 
-> Unfortunately it will only be a band aid AFAIU. I can rewrite my
-> reproducer fairly easily to pin the whole 2M range first, pin a second
-> time only a single page, and then unpin the 2M range, resulting in the
-> very same way to block THP. (I can block some THP less because I always
-> need the possibility to memlock 2M first, though).
-
-Oh!
-
-The issue is GUP always pins an entire compound, no matter how little
-the user requests.
-
-However, when all the GUP callers do mlock accounting they have no
-idea how much memory GUP actually pinned and only account mlock on 4K
-chunks.
-
-This is the bug your test is showing - using this accounting error the
-user can significantly blow past their mlock limit by having GUP pin
-2M chunks and then mlock accounting for only 4k chunks.
-
-It is a super obnoxious bug to fix, but still just a bug and not some
-inherent defect in FOLL_LONGTERM.
-
-It also says the MLOCK_LIMIT really needs to always be > 1 THP
-otherwise even a single 4K page may be unpinnable with correct
-accounting.
+?? Where is that done in GUP?
 
 Jason
