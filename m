@@ -2,283 +2,107 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3A891C433EF
-	for <linux-api@archiver.kernel.org>; Wed, 24 Nov 2021 14:46:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3697AC433F5
+	for <linux-api@archiver.kernel.org>; Wed, 24 Nov 2021 15:34:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1353289AbhKXOtx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 24 Nov 2021 09:49:53 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51898 "EHLO
+        id S233880AbhKXPhU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 24 Nov 2021 10:37:20 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35082 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1357550AbhKXOtt (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 24 Nov 2021 09:49:49 -0500
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 08D5EC09B191;
-        Wed, 24 Nov 2021 06:32:15 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=h4YHaXfc797c+fVdtCihmNRDbAha4Heg3KAGVDLIC8M=; b=pCbg2g70GO+I8eMvWx0LNFsReQ
-        O0xE6GqUW+VOujs25DS9deR1gdD5Nc35A3QKdzM+I2eSRu2c7KGk9jZdnTmylU4yqln/SdrJVGnAK
-        NpVu3wvlFxniiOllAG2Sg+tFus+48isqYtGsGhHuwawEgkWyzgnkpFHgxxiWxvXeN8lAofHqmbrRb
-        JMuqarkvYGEYhvaD5drtQy+uISMzywp6EZ9PToIYyLxzJGPpD+2J9d5RwntLOtqZ4qLsjdFrDdH1/
-        KrzDx9Kl1heNvTYPB74QAZvOQtBpFe5Mn1ZHsOpcZbIgPWYHXkmgv0jLP8uG5m/DZLJOr4ORFvcrZ
-        5d3vn2mQ==;
-Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=noisy.programming.kicks-ass.net)
-        by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1mptJX-002912-35; Wed, 24 Nov 2021 14:31:59 +0000
-Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (2048 bits))
-        (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 54CD2300230;
-        Wed, 24 Nov 2021 15:31:58 +0100 (CET)
-Received: by hirez.programming.kicks-ass.net (Postfix, from userid 1000)
-        id 39A52203C25B1; Wed, 24 Nov 2021 15:31:58 +0100 (CET)
-Date:   Wed, 24 Nov 2021 15:31:58 +0100
-From:   Peter Zijlstra <peterz@infradead.org>
-To:     Peter Oskolkov <posk@posk.io>
-Cc:     Ingo Molnar <mingo@redhat.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
+        with ESMTP id S241228AbhKXPhU (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 24 Nov 2021 10:37:20 -0500
+Received: from mail-qv1-xf2c.google.com (mail-qv1-xf2c.google.com [IPv6:2607:f8b0:4864:20::f2c])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C31B6C06173E
+        for <linux-api@vger.kernel.org>; Wed, 24 Nov 2021 07:34:10 -0800 (PST)
+Received: by mail-qv1-xf2c.google.com with SMTP id v2so2005253qve.11
+        for <linux-api@vger.kernel.org>; Wed, 24 Nov 2021 07:34:10 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=ziepe.ca; s=google;
+        h=date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to;
+        bh=jewS1/U+Uwx2MsMSvVTsbDbxDhtWEO2xK/fTTXK8uck=;
+        b=WzvFRKZ061/KNaexoESH+Gbb4RgMMBXdqHhbtVDCJUWaGKS0bnX4c6P4VO4hkjahGS
+         /3zHBhDb+rJ4bQfUU/5o0p7g5Oq4oHvasOY5UeFTNeegJ14CkGmQ0rO3rB12VPpaJpFR
+         gChu8p5mtj04YG1x5v/Js2Wxkzh4Wbj7B3fohbz2UoOYCEyU/TDOBZLuXavFMULGkfTJ
+         GjZzuFZNy3a1tQgtuifVOgbMoqA9TPXpZeM+Et1sowb/lyMJrVJ9CxBCNCSSNl79GP0A
+         zTttDgOQkS2aqHt73ydZLqX6ZPRNdxo6YgMiQtSBwlqc06vXom0vpQ6CnRifIvQ6aw7l
+         EeRQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=jewS1/U+Uwx2MsMSvVTsbDbxDhtWEO2xK/fTTXK8uck=;
+        b=RJM5/TFktsVrB7rNs4rCL35j3sWoabo9Diev5FQr1wWgi0wS9PdQxjWeDe3EEvzFIr
+         ziCpNs7t2tPx5hsi9Dqzrr1Vo7QHxJOjsVQ5vQtCfJGfuEr4bQORtiu/+APaOyOax51B
+         5N0iLEh2vtdmbrBbZjTQxFD6C9GxLq85Hlafs2ibxfyC/nb/7qWXQvRKNY7LW4ANaW3g
+         0YO5uwB6CSoIzksqmU+rBwPPFbalrYGigGlywzQyP8eBGOlgy92okGulKmJIR0AM9qYw
+         lXN7W7p5mso6j1oaWk92YH3mUjfUNLjblpRoW0Rn6uV3YIEcPBkkRSNjGFGRodWfAnbU
+         f77w==
+X-Gm-Message-State: AOAM530cidb9sd7rgP1w9iyNSHm6tdrVaVImaOcSAj5NCAMHeMEl33+O
+        b0XATZl3S7MZ7SV9RA32zSSH8iC+TzFjDg==
+X-Google-Smtp-Source: ABdhPJxZDhSiT7D5AMdmLtkaSczYkt5IgUp2uFeWHEYmNkWlb9JcYltzAKN/FqypiDM3IlbZxasu5A==
+X-Received: by 2002:ad4:5dea:: with SMTP id jn10mr8349179qvb.17.1637768049952;
+        Wed, 24 Nov 2021 07:34:09 -0800 (PST)
+Received: from ziepe.ca (hlfxns017vw-142-162-113-129.dhcp-dynamic.fibreop.ns.bellaliant.net. [142.162.113.129])
+        by smtp.gmail.com with ESMTPSA id l22sm42040qtj.68.2021.11.24.07.34.06
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 24 Nov 2021 07:34:06 -0800 (PST)
+Received: from jgg by mlx with local (Exim 4.94)
+        (envelope-from <jgg@ziepe.ca>)
+        id 1mpuHd-0013L9-Or; Wed, 24 Nov 2021 11:34:05 -0400
+Date:   Wed, 24 Nov 2021 11:34:05 -0400
+From:   Jason Gunthorpe <jgg@ziepe.ca>
+To:     David Hildenbrand <david@redhat.com>
+Cc:     Vlastimil Babka <vbabka@suse.cz>, Jens Axboe <axboe@kernel.dk>,
+        Andrew Dona-Couch <andrew@donacou.ch>,
         Andrew Morton <akpm@linux-foundation.org>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Andy Lutomirski <luto@kernel.org>, linux-mm@kvack.org,
+        Drew DeVault <sir@cmpwn.com>,
+        Ammar Faizi <ammarfaizi2@gnuweeb.org>,
         linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        Paul Turner <pjt@google.com>, Ben Segall <bsegall@google.com>,
-        Peter Oskolkov <posk@google.com>,
-        Andrei Vagin <avagin@google.com>, Jann Horn <jannh@google.com>,
-        Thierry Delisle <tdelisle@uwaterloo.ca>
-Subject: Re: [PATCH v0.9.1 2/6] mm, x86/uaccess: add userspace atomic helpers
-Message-ID: <YZ5M3gm5v5qXCpUW@hirez.programming.kicks-ass.net>
-References: <20211122211327.5931-1-posk@google.com>
- <20211122211327.5931-3-posk@google.com>
+        io_uring Mailing List <io-uring@vger.kernel.org>,
+        Pavel Begunkov <asml.silence@gmail.com>, linux-mm@kvack.org
+Subject: Re: [PATCH] Increase default MLOCK_LIMIT to 8 MiB
+Message-ID: <20211124153405.GJ5112@ziepe.ca>
+References: <20211123170056.GC5112@ziepe.ca>
+ <dd92a69a-6d09-93a1-4f50-5020f5cc59d0@suse.cz>
+ <20211123235953.GF5112@ziepe.ca>
+ <2adca04f-92e1-5f99-6094-5fac66a22a77@redhat.com>
+ <20211124132353.GG5112@ziepe.ca>
+ <cca0229e-e53e-bceb-e215-327b6401f256@redhat.com>
+ <20211124132842.GH5112@ziepe.ca>
+ <eab5aeba-e064-9f3e-fbc3-f73cd299de83@redhat.com>
+ <20211124134812.GI5112@ziepe.ca>
+ <2cdbebb9-4c57-7839-71ab-166cae168c74@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20211122211327.5931-3-posk@google.com>
+In-Reply-To: <2cdbebb9-4c57-7839-71ab-166cae168c74@redhat.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Nov 22, 2021 at 01:13:23PM -0800, Peter Oskolkov wrote:
+On Wed, Nov 24, 2021 at 03:14:00PM +0100, David Hildenbrand wrote:
 
-> +static inline int __try_cmpxchg_user_32(u32 *uval, u32 __user *uaddr,
-> +						u32 oldval, u32 newval)
+> I'm not aware of any where you can fragment 50% of all pageblocks in the
+> system as an unprivileged user essentially consuming almost no memory
+> and essentially staying inside well-defined memlock limits. But sure if
+> there are "many" people will be able to come up with at least one
+> comparable thing. I'll be happy to learn.
 
-That's a 'try_cmpxchg' function but *NOT* the try_cmpxchg semantics,
-please don't do that, fixed in the below.
+If the concern is that THP's can be DOS'd then any avenue that renders
+the system out of THPs is a DOS attack vector. Including all the
+normal workloads that people run and already complain that THPs get
+exhausted.
 
-> +int cmpxchg_user_64(u64 __user *uaddr, u64 *curr_val, u64 new_val)
-> +{
-> +	int ret = -EFAULT;
-> +	u64 __old = *curr_val;
-> +
-> +	/* Validate proper alignment. */
-> +	if (unlikely(((unsigned long)uaddr % sizeof(*uaddr)) ||
-> +			((unsigned long)curr_val % sizeof(*curr_val))))
-> +		return -EINVAL;
-> +
-> +	if (unlikely(!access_ok(uaddr, sizeof(*uaddr))))
-> +		return -EFAULT;
-> +
-> +	pagefault_disable();
-> +
-> +	while (true) {
-> +		ret = -EFAULT;
-> +		if (!user_access_begin(uaddr, sizeof(*uaddr)))
-> +			break;
-> +
-> +		ret = __try_cmpxchg_user_64(curr_val, uaddr, __old, new_val);
-> +		user_access_end();
-> +
-> +		if (!ret) {
-> +			ret =  *curr_val == __old ? 0 : -EAGAIN;
-> +			break;
-> +		}
-> +
-> +		if (fix_pagefault((unsigned long)uaddr, true, sizeof(*uaddr)) < 0)
-> +			break;
-> +	}
-> +
-> +	pagefault_enable();
-> +	return ret;
-> +}
+A hostile userspace can only quicken this process.
 
-Please, just read what you wrote. This scored *really* high on the
-WTF'o'meter.
+> My position that FOLL_LONGTERM for unprivileged users is a strong no-go
+> stands as it is.
 
-That is aside of:
+As this basically excludes long standing pre-existing things like
+RDMA, XDP, io_uring, and more I don't think this can be the general
+answer for mm, sorry.
 
- - that user_access_begin() includes access_ok().
- - the fact that having SMAP *inside* a cmpxchg loop is ridiculous.
- - that you write cmpxchg inside a loop, but it isn't actually a cmpxchg-loop.
+Sure, lets stop now since I don't think we can agree.
 
-No the real problem is:
-
- - you *DISABLE* pagefaults
- - you force the exception handler
- - you manually fix up the fault
-
-while you could've just done the op and let the fault handler do it's
-thing, that whole function is pointless.
-
-
-
-So as a penance for not having looked at this before I wrote you the
-replacement. The asm-goto-output variant isn't actually compile tested,
-but the old complicated thing is. Also, I'm >.< close to merging the
-series that kills .fixup for x86, but the fixup (pun intended) should be
-trivial.
-
-Usage can be gleaned from the bigger patch I send you in reply to 0/ but
-TL;DR:
-
-	if (!user_access_begin(uptr, sizeof(u64)))
-		return -EFAULT;
-
-	unsafe_get_user(old, uptr, Efault);
-	do {
-		new = func(old);
-	} while (!__try_cmpxchg_user(uptr, &old, new, Efault));
-
-	user_access_end();
-
-	return 0;
-
-Efault:
-	user_access_end();
-	return -EFAULT;
-
-
-Then if called within pagefault_disable(), it'll get -EFAULT more, if
-called without it, it'll just take the fault and try to fix it up if at
-all possible.
-
-
----
-diff --git a/arch/x86/include/asm/uaccess.h b/arch/x86/include/asm/uaccess.h
-index 33a68407def3..909c48083c4f 100644
---- a/arch/x86/include/asm/uaccess.h
-+++ b/arch/x86/include/asm/uaccess.h
-@@ -341,6 +341,37 @@ do {									\
- 		     : [umem] "m" (__m(addr))				\
- 		     : : label)
- 
-+#define __try_cmpxchg_user_asm(itype, _ptr, _pold, _new, label)	({	\
-+	bool success;							\
-+	__typeof__(_ptr) _old = (__typeof__(_ptr))(_pold);		\
-+	__typeof__(*(_ptr)) __old = *_old;				\
-+	__typeof__(*(_ptr)) __new = (_new);				\
-+	asm_volatile_goto("\n"						\
-+		     "1: " LOCK_PREFIX "cmpxchg"itype" %[new], %[ptr]\n"\
-+		     _ASM_EXTABLE_UA(1b, %l[label])			\
-+		     : CC_OUT(z) (success),				\
-+		       [ptr] "+m" (*_ptr),				\
-+		       [old] "+a" (__old)				\
-+		     : [new] "r" (__new)				\
-+		     : "memory", "cc"					\
-+		     : label);						\
-+	if (unlikely(!success))						\
-+		*_old = __old;						\
-+	likely(success);					})
-+
-+
-+#define __xchg_user_asm(itype, _ptr, _val, label)	({		\
-+	__typeof__(*(_ptr)) __ret = (_val);				\
-+	asm_volatile_goto("\n"						\
-+			"1: " LOCK_PREFIX "xchg"itype" %[var], %[ptr]\n"\
-+			_ASM_EXTABLE_UA(1b, %l[label])			\
-+			: [var] "+r" (__ret).				\
-+			  [ptr] "+m" (*(_ptr))				\
-+			:						\
-+			: "memory", "cc"				\
-+			: label);					\
-+	__ret;						})
-+
- #else // !CONFIG_CC_HAS_ASM_GOTO_OUTPUT
- 
- #ifdef CONFIG_X86_32
-@@ -411,8 +442,83 @@ do {									\
- 		     : [umem] "m" (__m(addr)),				\
- 		       [efault] "i" (-EFAULT), "0" (err))
- 
-+#define __try_cmpxchg_user_asm(itype, _ptr, _pold, _new, label)	({	\
-+	int __err = 0;							\
-+	bool success;							\
-+	__typeof__(_ptr) _old = (__typeof__(_ptr))(_pold);		\
-+	__typeof__(*(_ptr)) __old = *_old;				\
-+	__typeof__(*(_ptr)) __new = (_new);				\
-+	asm volatile("\n"						\
-+		     "1: " LOCK_PREFIX "cmpxchg"itype" %[new], %[ptr]\n"\
-+		     CC_SET(z)						\
-+		     "2:\n"						\
-+		     ".pushsection .fixup,\"ax\"\n"			\
-+		     "3:	mov %[efault], %[errout]\n"		\
-+		     "		jmp 2b\n"				\
-+		     ".popsection\n"					\
-+		     _ASM_EXTABLE_UA(1b, 3b)				\
-+		     : CC_OUT(z) (success),				\
-+		       [errout] "+r" (__err),				\
-+		       [ptr] "+m" (*_ptr),				\
-+		       [old] "+a" (__old)				\
-+		     : [new] "r" (__new),				\
-+		       [efault] "i" (-EFAULT)				\
-+		     : "memory", "cc");					\
-+	if (unlikely(__err))						\
-+		goto label;						\
-+	if (unlikely(!success))						\
-+		*_old = __old;						\
-+	likely(success);					})
-+
-+#define __xchg_user_asm(itype, _ptr, _val, label)	({		\
-+	int __err = 0;							\
-+	__typeof__(*(_ptr)) __ret = (_val);				\
-+	asm volatile("\n"						\
-+		     "1: " LOCK_PREFIX "xchg"itype" %[var], %[ptr]\n"	\
-+		     "2:\n"						\
-+		     ".pushsection .fixup,\"ax\"\n"			\
-+		     "3:	mov %[efault], %[errout]\n"		\
-+		     "		jmp 2b\n"				\
-+		     ".popsection\n"					\
-+		     _ASM_EXTABLE_UA(1b, 3b)				\
-+		     : [ptr] "+m" (*(_ptr)),				\
-+		       [var] "+r" (__ret),				\
-+		       [errout] "+r" (__err)				\
-+		     : [efault] "i" (-EFAULT)				\
-+		     : "memory", "cc");					\
-+	if (unlikely(__err))						\
-+		goto label;						\
-+	__ret;						})
-+
- #endif // CONFIG_CC_HAS_ASM_GOTO_OUTPUT
- 
-+extern void __try_cmpxchg_user_wrong_size(void);
-+extern void __xchg_user_wrong_size(void);
-+
-+#define __try_cmpxchg_user(_ptr, _oldp, _nval, _label) ({		\
-+	__typeof__(*(_ptr)) __ret;					\
-+	switch (sizeof(__ret)) {					\
-+	case 4:	__ret = __try_cmpxchg_user_asm("l", (_ptr), (_oldp),	\
-+					       (_nval), _label);	\
-+		break;							\
-+	case 8:	__ret = __try_cmpxchg_user_asm("q", (_ptr), (_oldp),	\
-+					       (_nval), _label);	\
-+		break;							\
-+	default: __try_cmpxchg_user_wrong_size();			\
-+	}								\
-+	__ret;						})
-+
-+#define __xchg_user(_ptr, _nval, _label)		({		\
-+	__typeof__(*(_ptr)) __ret;					\
-+	switch (sizeof(__ret)) {					\
-+	case 4: __ret = __xchg_user_asm("l", (_ptr), (_nval), _label);	\
-+		break;							\
-+	case 8: __ret = __xchg_user_asm("q", (_ptr), (_nval), _label);	\
-+		break;							\
-+	default: __xchg_user_wrong_size();				\
-+	}								\
-+	__ret;						})
-+
- /* FIXME: this hack is definitely wrong -AK */
- struct __large_struct { unsigned long buf[100]; };
- #define __m(x) (*(struct __large_struct __user *)(x))
+Jason
