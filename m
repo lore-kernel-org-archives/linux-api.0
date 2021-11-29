@@ -2,148 +2,143 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 100D8C433FE
-	for <linux-api@archiver.kernel.org>; Mon, 29 Nov 2021 20:06:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5041EC433EF
+	for <linux-api@archiver.kernel.org>; Mon, 29 Nov 2021 22:04:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1352388AbhK2UKN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 29 Nov 2021 15:10:13 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55342 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1353754AbhK2UIM (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 29 Nov 2021 15:08:12 -0500
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E988DC08EB3F;
-        Mon, 29 Nov 2021 08:41:19 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=eKkC6UpK6/i7D2lpHs7XjnCCf7VNK2fmwFzMjXdfzOg=; b=EvbI7SflETvKwufLzieMY/7xfL
-        yJtGckfqPeJBLcrSvfQAOee1z5IdIfs/PBBSJxjRdD9uGwaP0LW1L5Win9jipF+NC4CZuvxjFMtC+
-        Jet1S67q5LZYYXYsR0MTmKdEVgyhD5D/YBoaxcOiyod45/vbdoxVZ+8pA8vxmqYcs778bJ6pqgFW/
-        TSBDefx/HG04bFTu7ERo0YVwYhGPXLSSWN9WHbLZXsgo8x3uLyCzpOhjlLIjbuoxbJYReJj1w9THY
-        o50XNOFd3t2t7HE9EbKY/I8/QTa0OU7nr/qwRrgJJzVmMu0ZAKEjjQfbpPdmraGj9uE5EQB/HnCj+
-        QWLWHW2A==;
-Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=noisy.programming.kicks-ass.net)
-        by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1mrjiE-008Lwz-7E; Mon, 29 Nov 2021 16:41:07 +0000
-Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (2048 bits))
-        (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 94810300235;
-        Mon, 29 Nov 2021 17:41:05 +0100 (CET)
-Received: by hirez.programming.kicks-ass.net (Postfix, from userid 1000)
-        id 779342B2FEA16; Mon, 29 Nov 2021 17:41:05 +0100 (CET)
-Date:   Mon, 29 Nov 2021 17:41:05 +0100
-From:   Peter Zijlstra <peterz@infradead.org>
-To:     Peter Oskolkov <posk@posk.io>
-Cc:     Ingo Molnar <mingo@redhat.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Andrew Morton <akpm@linux-foundation.org>,
+        id S232377AbhK2WHk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 29 Nov 2021 17:07:40 -0500
+Received: from ams.source.kernel.org ([145.40.68.75]:50444 "EHLO
+        ams.source.kernel.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S232740AbhK2WFi (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 29 Nov 2021 17:05:38 -0500
+Received: from mail.kernel.org (unknown [198.145.29.99])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by ams.source.kernel.org (Postfix) with ESMTPS id 2F0D6B81630
+        for <linux-api@vger.kernel.org>; Mon, 29 Nov 2021 22:02:19 +0000 (UTC)
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 1F8976023B;
+        Mon, 29 Nov 2021 22:02:17 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linux-foundation.org;
+        s=korg; t=1638223337;
+        bh=ez5xBqgP4xioj9P3KggOcm53sTo1oiCCfuOT52CzGp8=;
+        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+        b=CtuZfGIeBal7t5KeSad31YgVbEd4aQd0DTyf6/KaWGZTxInAVilRgLm/gnqTU8HNs
+         djvpDZlEDAwgNCT0JdB492YLfn1pyFdq3uW3toWb8vjeZnceSkau/KiVN8WrIPtvT5
+         Yvk9QaAdRsmZxzWu21ZWYVvHvr3iXIKFLF6Zxgyg=
+Date:   Mon, 29 Nov 2021 14:02:15 -0800
+From:   Andrew Morton <akpm@linux-foundation.org>
+To:     "Aneesh Kumar K.V" <aneesh.kumar@linux.ibm.com>
+Cc:     linux-mm@kvack.org, Ben Widawsky <ben.widawsky@intel.com>,
         Dave Hansen <dave.hansen@linux.intel.com>,
-        Andy Lutomirski <luto@kernel.org>,
-        Linux Memory Management List <linux-mm@kvack.org>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        linux-api@vger.kernel.org, Paul Turner <pjt@google.com>,
-        Ben Segall <bsegall@google.com>,
-        Peter Oskolkov <posk@google.com>,
-        Andrei Vagin <avagin@google.com>, Jann Horn <jannh@google.com>,
-        Thierry Delisle <tdelisle@uwaterloo.ca>
-Subject: Re: [PATCH v0.9.1 3/6] sched/umcg: implement UMCG syscalls
-Message-ID: <YaUCoe07Wl9Stlch@hirez.programming.kicks-ass.net>
-References: <20211122211327.5931-1-posk@google.com>
- <20211122211327.5931-4-posk@google.com>
- <20211124200822.GF721624@worktop.programming.kicks-ass.net>
- <CAFTs51Uka8VRCHuGidw7mRwATufp87U6S8SWUVod_kU-h6T3ew@mail.gmail.com>
- <YaEUts3RbOLyvAjl@hirez.programming.kicks-ass.net>
- <CAFTs51XnN+N74i1XHvRUAUWd04-Fs9uV6ouXo=CQSQs8MaEM5A@mail.gmail.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <CAFTs51XnN+N74i1XHvRUAUWd04-Fs9uV6ouXo=CQSQs8MaEM5A@mail.gmail.com>
+        Feng Tang <feng.tang@intel.com>,
+        Michal Hocko <mhocko@kernel.org>,
+        Andrea Arcangeli <aarcange@redhat.com>,
+        Mel Gorman <mgorman@techsingularity.net>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Andi Kleen <ak@linux.intel.com>,
+        Dan Williams <dan.j.williams@intel.com>,
+        Huang Ying <ying.huang@intel.com>, linux-api@vger.kernel.org
+Subject: Re: [PATCH v5 2/3] mm/mempolicy: add set_mempolicy_home_node
+ syscall
+Message-Id: <20211129140215.11b7cf9f1034a7fe7017768c@linux-foundation.org>
+In-Reply-To: <20211116064238.727454-3-aneesh.kumar@linux.ibm.com>
+References: <20211116064238.727454-1-aneesh.kumar@linux.ibm.com>
+        <20211116064238.727454-3-aneesh.kumar@linux.ibm.com>
+X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.31; x86_64-pc-linux-gnu)
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Sun, Nov 28, 2021 at 04:29:11PM -0800, Peter Oskolkov wrote:
+On Tue, 16 Nov 2021 12:12:37 +0530 "Aneesh Kumar K.V" <aneesh.kumar@linux.ibm.com> wrote:
 
-> wait_wake_only is not needed if you have both next_tid and server_tid,
-> as your patch has. In my version of the patch, next_tid is the same as
-> server_tid, so the flag is needed to indicate to the kernel that
-> next_tid is the wakee, not the server.
+> This syscall can be used to set a home node for the MPOL_BIND
+> and MPOL_PREFERRED_MANY memory policy. Users should use this
+> syscall after setting up a memory policy for the specified range
+> as shown below.
+> 
+> mbind(p, nr_pages * page_size, MPOL_BIND, new_nodes->maskp,
+> 	    new_nodes->size + 1, 0);
+> sys_set_mempolicy_home_node((unsigned long)p, nr_pages * page_size,
+> 				  home_node, 0);
+> 
+> The syscall allows specifying a home node/preferred node from which kernel
+> will fulfill memory allocation requests first.
+> 
+> For address range with MPOL_BIND memory policy, if nodemask specifies more
+> than one node, page allocations will come from the node in the nodemask
+> with sufficient free memory that is closest to the home node/preferred node.
+> 
+> For MPOL_PREFERRED_MANY if the nodemask specifies more than one node,
+> page allocation will come from the node in the nodemask with sufficient
+> free memory that is closest to the home node/preferred node. If there is
+> not enough memory in all the nodes specified in the nodemask, the allocation
+> will be attempted from the closest numa node to the home node in the system.
+> 
+> This helps applications to hint at a memory allocation preference node
+> and fallback to _only_ a set of nodes if the memory is not available
+> on the preferred node.  Fallback allocation is attempted from the node which is
+> nearest to the preferred node.
+> 
+> This helps applications to have control on memory allocation numa nodes and
+> avoids default fallback to slow memory NUMA nodes. For example a system with
+> NUMA nodes 1,2 and 3 with DRAM memory and 10, 11 and 12 of slow memory
+> 
+>  new_nodes = numa_bitmask_alloc(nr_nodes);
+> 
+>  numa_bitmask_setbit(new_nodes, 1);
+>  numa_bitmask_setbit(new_nodes, 2);
+>  numa_bitmask_setbit(new_nodes, 3);
+> 
+>  p = mmap(NULL, nr_pages * page_size, protflag, mapflag, -1, 0);
+>  mbind(p, nr_pages * page_size, MPOL_BIND, new_nodes->maskp,  new_nodes->size + 1, 0);
+> 
+>  sys_set_mempolicy_home_node(p, nr_pages * page_size, 2, 0);
+> 
+> This will allocate from nodes closer to node 2 and will make sure kernel will
+> only allocate from nodes 1, 2 and3. Memory will not be allocated from slow memory
+> nodes 10, 11 and 12
+> 
+> With MPOL_PREFERRED_MANY on the other hand will first try to allocate from the
+> closest node to node 2 from the node list 1, 2 and 3. If those nodes don't have
+> enough memory, kernel will allocate from slow memory node 10, 11 and 12 which
+> ever is closer to node 2.
+> 
+> ...
+>
+> @@ -1477,6 +1478,60 @@ static long kernel_mbind(unsigned long start, unsigned long len,
+>  	return do_mbind(start, len, lmode, mode_flags, &nodes, flags);
+>  }
+>  
+> +SYSCALL_DEFINE4(set_mempolicy_home_node, unsigned long, start, unsigned long, len,
+> +		unsigned long, home_node, unsigned long, flags)
+> +{
+> +	struct mm_struct *mm = current->mm;
+> +	struct vm_area_struct *vma;
+> +	struct mempolicy *new;
+> +	unsigned long vmstart;
+> +	unsigned long vmend;
+> +	unsigned long end;
+> +	int err = -ENOENT;
+> +
+> +	if (start & ~PAGE_MASK)
+> +		return -EINVAL;
+> +	/*
+> +	 * flags is used for future extension if any.
+> +	 */
+> +	if (flags != 0)
+> +		return -EINVAL;
+> +
+> +	if (!node_online(home_node))
+> +		return -EINVAL;
 
-Ah, okay.
-
-> re: (idle_)server_tid_ptr: it seems that you assume that blocked
-> workers keep their servers, while in my patch they "lose them" once
-> they block, and so there should be a global idle server pointer to
-> wake the server in my scheme (if there is an idle one). The main
-> difference is that in my approach a server has only a single, running,
-> worker assigned to it, while in your approach it can have a number of
-> blocked/idle workers to take care of as well.
-
-Correct; I've been thinking in analogues of the way we schedule CPUs.
-Each CPU has a ready/run queue along with the current task.
-fundamentally the RUNNABLE tasks need to go somewhere when all servers
-are busy. So at that point the previous server is as good a place as
-any.
-
-Now, I sympathise with a blocked task not having a relation; I often
-argue this same, since we have wakeup balancing etc. And I've not really
-thought about how to best do wakeup-balancing, also see below.
-
-> The main difference between our approaches, as I see it: in my
-> approach if a worker is running, its server is sleeping, period. If we
-> have N servers, and N running workers, there are no servers to wake
-> when a previously blocked worker finishes its blocking op. In your
-> approach, it seems that N servers have each a bunch of workers
-> pointing at them, and a single worker running. If a previously blocked
-> worker wakes up, it wakes the server it was assigned to previously,
-
-Right; it does that. It can check the ::state of it's current task,
-possibly set TF_PREEMPT or just go back to sleep.
-
-> and so now we have more than N physical tasks/threads running: N
-> workers and the woken server. This is not ideal: if the process is
-> affined to only N CPUs, that means a worker will be preempted to let
-> the woken server run, which is somewhat against the goal of letting
-> the workers run more or less uninterrupted. This is not deal breaking,
-> but maybe something to keep in mind.
-
-I suppose it's easy enough to make this behaviour configurable though;
-simply enqueue and not wake.... Hmm.. how would this worker know if the
-server was 'busy' or not? The whole 'current' thing is a user-space
-construct. I suppose that's what your pointer was for? Puts an actual
-idle server in there, if there is one. Let me ponder that a bit.
-
-However, do note this whole scheme fundamentally has some of that, the
-moment the syscall unblocks until sys_exit is 'unmanaged' runtime for
-all tasks, they can consume however much time the syscall needs there.
-
-Also, timeout on sys_umcg_wait() gets you the exact same situation (or
-worse, multiple running workers).
-
-> Another big concern I have is that you removed UMCG_TF_LOCKED. I
-
-OOh yes, I forgot to mention that. I couldn't figure out what it was
-supposed to do.
-
-> definitely needed it to guard workers during "sched work" in the
-> userspace in my approach. I'm not sure if the flag is absolutely
-> needed with your approach, but most likely it is - the kernel-side
-> scheduler does lock tasks and runqueues and disables interrupts and
-> migrations and other things so that the scheduling logic is not
-> hijacked by concurrent stuff. Why do you assume that the userspace
-> scheduling code does not need similar protections?
-
-I've not yet come across a case where this is needed. Migration for
-instance is possible when RUNNABLE, simply write ::server_tid before
-::state. Userspace just needs to make sure who actually owns the task,
-but it can do that outside of this state.
-
-But like I said; I've not yet done the userspace part (and I lost most
-of today trying to install a new machine), so perhaps I'll run into it
-soon enough.
+What's the thinking here?  The node can later be offlined and the
+kernel takes no action to reset home nodes, so why not permit setting a
+presently-offline node as the home node?  Checking here seems rather
+arbitrary?
 
 
