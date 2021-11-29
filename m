@@ -2,101 +2,85 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4A904C433F5
-	for <linux-api@archiver.kernel.org>; Mon, 29 Nov 2021 22:16:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E8CC0C433F5
+	for <linux-api@archiver.kernel.org>; Mon, 29 Nov 2021 22:29:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234170AbhK2WUH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 29 Nov 2021 17:20:07 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56662 "EHLO
+        id S231156AbhK2Wcf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 29 Nov 2021 17:32:35 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60646 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234200AbhK2WSI (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 29 Nov 2021 17:18:08 -0500
-Received: from mail-il1-x135.google.com (mail-il1-x135.google.com [IPv6:2607:f8b0:4864:20::135])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D2AAFC052933;
-        Mon, 29 Nov 2021 11:12:29 -0800 (PST)
-Received: by mail-il1-x135.google.com with SMTP id m5so18516666ilh.11;
-        Mon, 29 Nov 2021 11:12:29 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=4a7oBUxp83d4F7/GXAe9SjMLAHoJcQKmu6hyXTlCwds=;
-        b=a4LrfTUVENBGyIlKt1CrHgX8udUHuoaGeZsZu5z3AdXh8gWn1zJwoemtgQ6731Z86V
-         n1xxEz4rDEqXvojdf2Tsv7JnDexj9WQYvKXX+xsckI8xY0HAdT94/GM0xoqCz1CNiX6C
-         zihDbv3VtjSVX3EqXRTfDaccWhZujitGZz4BeapUMje9yLqHITthqJPbfx4TF0pdSBum
-         ZOGm+7V7Q1GK45ijP33f7klQyO8TtN16hYZPAQuc9K0EPqP2sSsiUXVh1si2jHIIYoWx
-         15ltGlZ9XRhOA0Mu0JvI3WXGAuctF+dnSzFNKg2GJ59miUnXTn1DlIvK7TvsNf8SI1+U
-         LS3Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=4a7oBUxp83d4F7/GXAe9SjMLAHoJcQKmu6hyXTlCwds=;
-        b=0Yi72pUu+y3WTNljyCo3+v3ho5pRf2X9JmQuYC3IrwixlQOAKBUpHlAhdg6jg8n+od
-         PZuziD/ZE756GT4Fqqh/mXKONvuuouXl2uvLm84EmShok2d4PoSToMtG2HQAC0zu9Q3j
-         i70U2WMOGzU78ShLYVCiPXJnwVEP6uSRvcCJxIcwm0oeIejtJtVkPF6Hmqo9w4x3KIoX
-         1kbKaHsiavM6fNJCuLBz9PJf3NndoNyhfldKwW30TSizO2FNElE2XX2yOd14q6mMpdfg
-         N+9OlWA6UcdQzqjfuoJE0J5/lAsQcm+Jq6yhtoyWraq5MP1YZmdpBTNfJTIJklirZKxA
-         U1cw==
-X-Gm-Message-State: AOAM5319VvF9IuepcJoZ4Odh8KnwSbuAbbUnVPsLESK3u+bnHgwRqK9w
-        wEh5367/7sL7WFkjUKdyrW8htoXD9vSlVhsrB//+LD0u
-X-Google-Smtp-Source: ABdhPJwGjkUK27Bmivk+PeedOlQhOHceK/+iW2ainthRulbC4BrWnAb5YItstXAk0fKNuwyJD0npw2/QgN/xcYYm/sw=
-X-Received: by 2002:a05:6e02:1ba8:: with SMTP id n8mr48485335ili.254.1638213149275;
- Mon, 29 Nov 2021 11:12:29 -0800 (PST)
+        with ESMTP id S229977AbhK2WcW (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 29 Nov 2021 17:32:22 -0500
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 33CB0C08EB57;
+        Mon, 29 Nov 2021 14:22:58 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=P+7rLpDmI0GB1uveawAKeTOyJh4WuhEPHuwGYT+nYA8=; b=TwmRukm9ui9hBITy8IFXrg6u+n
+        pEYD+1yhOiTaaD/zRtr0G6JNDxz7aFt1dRouS3jONa0pV8lY369lo1UwDcuXjvWJwqOF8Ow5AwXrR
+        vwqWZBre13UBT3muF3jwPbLaG5zmJa7J84p9xVISbAJxl+Q1Q7ic05yXJ1SKP67wdjXBB3IP+wiYd
+        O8l8+Od6JPMkyTeGywiiTjGEjQmeYRCU5X40brTQi9cTBsff8ImI4ViGbcuv1kueyZ+UJU7+sw9U2
+        B7fGvtXxRc5rXHPKgvCfFpM1fzT+8zPrgafOyIzBv5qZtrCZAAitFJyDCRGg9/w9wAku3ZzJ2Mkxd
+        C2Cdyv8w==;
+Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=worktop.programming.kicks-ass.net)
+        by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1mrp2q-009SwH-6B; Mon, 29 Nov 2021 22:22:45 +0000
+Received: by worktop.programming.kicks-ass.net (Postfix, from userid 1000)
+        id 1826D98675D; Mon, 29 Nov 2021 23:22:44 +0100 (CET)
+Date:   Mon, 29 Nov 2021 23:22:43 +0100
+From:   Peter Zijlstra <peterz@infradead.org>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     Peter Oskolkov <posk@posk.io>, Ingo Molnar <mingo@redhat.com>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Andy Lutomirski <luto@kernel.org>, linux-mm@kvack.org,
+        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        Paul Turner <pjt@google.com>, Ben Segall <bsegall@google.com>,
+        Peter Oskolkov <posk@google.com>,
+        Andrei Vagin <avagin@google.com>, Jann Horn <jannh@google.com>,
+        Thierry Delisle <tdelisle@uwaterloo.ca>
+Subject: Re: [PATCH v0.9.1 3/6] sched/umcg: implement UMCG syscalls
+Message-ID: <20211129222243.GR721624@worktop.programming.kicks-ass.net>
+References: <20211122211327.5931-1-posk@google.com>
+ <20211122211327.5931-4-posk@google.com>
+ <20211124211927.GG721624@worktop.programming.kicks-ass.net>
+ <877dcuhbbe.ffs@tglx>
+ <YaFXDYm7s7A6HDTG@hirez.programming.kicks-ass.net>
+ <87r1ayd3as.ffs@tglx>
 MIME-Version: 1.0
-References: <20211119071738.1348957-1-amir73il@gmail.com> <20211126152841.GK13004@quack2.suse.cz>
-In-Reply-To: <20211126152841.GK13004@quack2.suse.cz>
-From:   Amir Goldstein <amir73il@gmail.com>
-Date:   Mon, 29 Nov 2021 21:12:17 +0200
-Message-ID: <CAOQ4uxhRv=2q3K89QG3T=Xne4PLUpN_sh8R=+PZETUa9GEJt-A@mail.gmail.com>
-Subject: Re: [PATCH v2 0/9] Extend fanotify dirent events
-To:     Jan Kara <jack@suse.cz>
-Cc:     Matthew Bobrowski <mbobrowski@mbobrowski.org>,
-        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <87r1ayd3as.ffs@tglx>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Nov 26, 2021 at 5:28 PM Jan Kara <jack@suse.cz> wrote:
->
-> Hi Amir!
->
-> On Fri 19-11-21 09:17:29, Amir Goldstein wrote:
-> > This is the 2nd version of FAN_REPORT_TARGET_FID patches [1].
-> >
-> > In the first version, extra info records about new and old parent+name
-> > were added to FAN_MOVED_FROM event.  This version uses a new event
-> > FAN_RENAME instead, to report those extra info records.
-> > The new FAN_RENAME event was designed as a replacement for the
-> > "inotify way" of joining the MOVED_FROM/MOVED_TO events using a cookie.
-> >
-> > FAN_RENAME event differs from MOVED_FROM/MOVED_TO events in several ways:
-> > 1) The information about old/new names is provided in a single event
-> > 2) When added to the ignored mask of a directory, FAN_RENAME is not
-> >    reported for renames to and from that directory
-> >
-> > The group flag FAN_REPORT_TARGET_FID adds an extra info record of
-> > the child fid to all the dirent events, including FAN_REANME.
-> > It is independent of the FAN_RENAME changes and implemented in the
-> > first patch, so it can be picked regardless of the FAN_RENAME patches.
-> >
-> > Patches [2] and LTP test [3] are available on my github.
-> > A man page draft will be provided later on.
->
-> I've read through the series and I had just two small comments. I was also
-> slightly wondering whether instead of feeding the two directories for
-> FS_RENAME into OBJ_TYPE_PARENT and OBJ_TYPE_INODE we should not create
-> another iter_info type OBJ_TYPE_INODE2 as using OBJ_TYPE_PARENT is somewhat
-> error prone (you have to get the ordering of conditions right so that you
-> catch FS_RENAME e.g. before some code decides event should be discarded
-> because it is parent event without child watching). But I have not fully
-> decided whether the result is going to be worth it so I'm just mentioning
-> it as a possible future cleanup.
+On Mon, Nov 29, 2021 at 11:07:07PM +0100, Thomas Gleixner wrote:
+> On Fri, Nov 26 2021 at 22:52, Peter Zijlstra wrote:
 
-I managed to use ITER_TYPE_INODE2 pretty easily after a cleanup that
-splits OBJ_TYPE enum from ITER_TYPE enum.
+> The size is the same, i.e. 1 bit per nanosecond :)
 
-Thanks,
-Amir.
+:-)
+
+> > The only time that's relevant though is when you're going to mix these
+> > timestamps with CLOCK_THREAD_CPUTIME_ID, which might just be
+> > interesting.
+> 
+> Uuurg. If you want to go towards CLOCK_THREAD_CPUTIME_ID, that's going
+> to be really nasty. Actually you can sleep on that clock, but that's a
+> completely different universe. If anything like that is desired then we
+> need to rewrite that posix CPU timer muck completely with all the bells
+> and whistels and race conditions attached to it. *Shudder*
+
+Oh, I wasn't thinking anything as terrible as that. Sleeping on that
+clock is fundamentally daft since it doesn't run when thats is
+sleeping, consider trying to sleep on your own runtime :-)
+
+I was only considering combining THREAD_CPUTIME timestamps with the
+UMCG timestamps to compute how much unmanaged time there was, or other
+such things.
+
+Anyway, lets forget I bought this up and assume that for practical
+purposes all [ns] are of equal length.
