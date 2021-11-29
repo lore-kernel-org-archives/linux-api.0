@@ -2,143 +2,101 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5041EC433EF
-	for <linux-api@archiver.kernel.org>; Mon, 29 Nov 2021 22:04:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4A904C433F5
+	for <linux-api@archiver.kernel.org>; Mon, 29 Nov 2021 22:16:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232377AbhK2WHk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 29 Nov 2021 17:07:40 -0500
-Received: from ams.source.kernel.org ([145.40.68.75]:50444 "EHLO
-        ams.source.kernel.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232740AbhK2WFi (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 29 Nov 2021 17:05:38 -0500
-Received: from mail.kernel.org (unknown [198.145.29.99])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id 2F0D6B81630
-        for <linux-api@vger.kernel.org>; Mon, 29 Nov 2021 22:02:19 +0000 (UTC)
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 1F8976023B;
-        Mon, 29 Nov 2021 22:02:17 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linux-foundation.org;
-        s=korg; t=1638223337;
-        bh=ez5xBqgP4xioj9P3KggOcm53sTo1oiCCfuOT52CzGp8=;
-        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-        b=CtuZfGIeBal7t5KeSad31YgVbEd4aQd0DTyf6/KaWGZTxInAVilRgLm/gnqTU8HNs
-         djvpDZlEDAwgNCT0JdB492YLfn1pyFdq3uW3toWb8vjeZnceSkau/KiVN8WrIPtvT5
-         Yvk9QaAdRsmZxzWu21ZWYVvHvr3iXIKFLF6Zxgyg=
-Date:   Mon, 29 Nov 2021 14:02:15 -0800
-From:   Andrew Morton <akpm@linux-foundation.org>
-To:     "Aneesh Kumar K.V" <aneesh.kumar@linux.ibm.com>
-Cc:     linux-mm@kvack.org, Ben Widawsky <ben.widawsky@intel.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Feng Tang <feng.tang@intel.com>,
-        Michal Hocko <mhocko@kernel.org>,
-        Andrea Arcangeli <aarcange@redhat.com>,
-        Mel Gorman <mgorman@techsingularity.net>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        Vlastimil Babka <vbabka@suse.cz>,
-        Andi Kleen <ak@linux.intel.com>,
-        Dan Williams <dan.j.williams@intel.com>,
-        Huang Ying <ying.huang@intel.com>, linux-api@vger.kernel.org
-Subject: Re: [PATCH v5 2/3] mm/mempolicy: add set_mempolicy_home_node
- syscall
-Message-Id: <20211129140215.11b7cf9f1034a7fe7017768c@linux-foundation.org>
-In-Reply-To: <20211116064238.727454-3-aneesh.kumar@linux.ibm.com>
-References: <20211116064238.727454-1-aneesh.kumar@linux.ibm.com>
-        <20211116064238.727454-3-aneesh.kumar@linux.ibm.com>
-X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.31; x86_64-pc-linux-gnu)
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+        id S234170AbhK2WUH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 29 Nov 2021 17:20:07 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56662 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S234200AbhK2WSI (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 29 Nov 2021 17:18:08 -0500
+Received: from mail-il1-x135.google.com (mail-il1-x135.google.com [IPv6:2607:f8b0:4864:20::135])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D2AAFC052933;
+        Mon, 29 Nov 2021 11:12:29 -0800 (PST)
+Received: by mail-il1-x135.google.com with SMTP id m5so18516666ilh.11;
+        Mon, 29 Nov 2021 11:12:29 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=4a7oBUxp83d4F7/GXAe9SjMLAHoJcQKmu6hyXTlCwds=;
+        b=a4LrfTUVENBGyIlKt1CrHgX8udUHuoaGeZsZu5z3AdXh8gWn1zJwoemtgQ6731Z86V
+         n1xxEz4rDEqXvojdf2Tsv7JnDexj9WQYvKXX+xsckI8xY0HAdT94/GM0xoqCz1CNiX6C
+         zihDbv3VtjSVX3EqXRTfDaccWhZujitGZz4BeapUMje9yLqHITthqJPbfx4TF0pdSBum
+         ZOGm+7V7Q1GK45ijP33f7klQyO8TtN16hYZPAQuc9K0EPqP2sSsiUXVh1si2jHIIYoWx
+         15ltGlZ9XRhOA0Mu0JvI3WXGAuctF+dnSzFNKg2GJ59miUnXTn1DlIvK7TvsNf8SI1+U
+         LS3Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=4a7oBUxp83d4F7/GXAe9SjMLAHoJcQKmu6hyXTlCwds=;
+        b=0Yi72pUu+y3WTNljyCo3+v3ho5pRf2X9JmQuYC3IrwixlQOAKBUpHlAhdg6jg8n+od
+         PZuziD/ZE756GT4Fqqh/mXKONvuuouXl2uvLm84EmShok2d4PoSToMtG2HQAC0zu9Q3j
+         i70U2WMOGzU78ShLYVCiPXJnwVEP6uSRvcCJxIcwm0oeIejtJtVkPF6Hmqo9w4x3KIoX
+         1kbKaHsiavM6fNJCuLBz9PJf3NndoNyhfldKwW30TSizO2FNElE2XX2yOd14q6mMpdfg
+         N+9OlWA6UcdQzqjfuoJE0J5/lAsQcm+Jq6yhtoyWraq5MP1YZmdpBTNfJTIJklirZKxA
+         U1cw==
+X-Gm-Message-State: AOAM5319VvF9IuepcJoZ4Odh8KnwSbuAbbUnVPsLESK3u+bnHgwRqK9w
+        wEh5367/7sL7WFkjUKdyrW8htoXD9vSlVhsrB//+LD0u
+X-Google-Smtp-Source: ABdhPJwGjkUK27Bmivk+PeedOlQhOHceK/+iW2ainthRulbC4BrWnAb5YItstXAk0fKNuwyJD0npw2/QgN/xcYYm/sw=
+X-Received: by 2002:a05:6e02:1ba8:: with SMTP id n8mr48485335ili.254.1638213149275;
+ Mon, 29 Nov 2021 11:12:29 -0800 (PST)
+MIME-Version: 1.0
+References: <20211119071738.1348957-1-amir73il@gmail.com> <20211126152841.GK13004@quack2.suse.cz>
+In-Reply-To: <20211126152841.GK13004@quack2.suse.cz>
+From:   Amir Goldstein <amir73il@gmail.com>
+Date:   Mon, 29 Nov 2021 21:12:17 +0200
+Message-ID: <CAOQ4uxhRv=2q3K89QG3T=Xne4PLUpN_sh8R=+PZETUa9GEJt-A@mail.gmail.com>
+Subject: Re: [PATCH v2 0/9] Extend fanotify dirent events
+To:     Jan Kara <jack@suse.cz>
+Cc:     Matthew Bobrowski <mbobrowski@mbobrowski.org>,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, 16 Nov 2021 12:12:37 +0530 "Aneesh Kumar K.V" <aneesh.kumar@linux.ibm.com> wrote:
-
-> This syscall can be used to set a home node for the MPOL_BIND
-> and MPOL_PREFERRED_MANY memory policy. Users should use this
-> syscall after setting up a memory policy for the specified range
-> as shown below.
-> 
-> mbind(p, nr_pages * page_size, MPOL_BIND, new_nodes->maskp,
-> 	    new_nodes->size + 1, 0);
-> sys_set_mempolicy_home_node((unsigned long)p, nr_pages * page_size,
-> 				  home_node, 0);
-> 
-> The syscall allows specifying a home node/preferred node from which kernel
-> will fulfill memory allocation requests first.
-> 
-> For address range with MPOL_BIND memory policy, if nodemask specifies more
-> than one node, page allocations will come from the node in the nodemask
-> with sufficient free memory that is closest to the home node/preferred node.
-> 
-> For MPOL_PREFERRED_MANY if the nodemask specifies more than one node,
-> page allocation will come from the node in the nodemask with sufficient
-> free memory that is closest to the home node/preferred node. If there is
-> not enough memory in all the nodes specified in the nodemask, the allocation
-> will be attempted from the closest numa node to the home node in the system.
-> 
-> This helps applications to hint at a memory allocation preference node
-> and fallback to _only_ a set of nodes if the memory is not available
-> on the preferred node.  Fallback allocation is attempted from the node which is
-> nearest to the preferred node.
-> 
-> This helps applications to have control on memory allocation numa nodes and
-> avoids default fallback to slow memory NUMA nodes. For example a system with
-> NUMA nodes 1,2 and 3 with DRAM memory and 10, 11 and 12 of slow memory
-> 
->  new_nodes = numa_bitmask_alloc(nr_nodes);
-> 
->  numa_bitmask_setbit(new_nodes, 1);
->  numa_bitmask_setbit(new_nodes, 2);
->  numa_bitmask_setbit(new_nodes, 3);
-> 
->  p = mmap(NULL, nr_pages * page_size, protflag, mapflag, -1, 0);
->  mbind(p, nr_pages * page_size, MPOL_BIND, new_nodes->maskp,  new_nodes->size + 1, 0);
-> 
->  sys_set_mempolicy_home_node(p, nr_pages * page_size, 2, 0);
-> 
-> This will allocate from nodes closer to node 2 and will make sure kernel will
-> only allocate from nodes 1, 2 and3. Memory will not be allocated from slow memory
-> nodes 10, 11 and 12
-> 
-> With MPOL_PREFERRED_MANY on the other hand will first try to allocate from the
-> closest node to node 2 from the node list 1, 2 and 3. If those nodes don't have
-> enough memory, kernel will allocate from slow memory node 10, 11 and 12 which
-> ever is closer to node 2.
-> 
-> ...
+On Fri, Nov 26, 2021 at 5:28 PM Jan Kara <jack@suse.cz> wrote:
 >
-> @@ -1477,6 +1478,60 @@ static long kernel_mbind(unsigned long start, unsigned long len,
->  	return do_mbind(start, len, lmode, mode_flags, &nodes, flags);
->  }
->  
-> +SYSCALL_DEFINE4(set_mempolicy_home_node, unsigned long, start, unsigned long, len,
-> +		unsigned long, home_node, unsigned long, flags)
-> +{
-> +	struct mm_struct *mm = current->mm;
-> +	struct vm_area_struct *vma;
-> +	struct mempolicy *new;
-> +	unsigned long vmstart;
-> +	unsigned long vmend;
-> +	unsigned long end;
-> +	int err = -ENOENT;
-> +
-> +	if (start & ~PAGE_MASK)
-> +		return -EINVAL;
-> +	/*
-> +	 * flags is used for future extension if any.
-> +	 */
-> +	if (flags != 0)
-> +		return -EINVAL;
-> +
-> +	if (!node_online(home_node))
-> +		return -EINVAL;
+> Hi Amir!
+>
+> On Fri 19-11-21 09:17:29, Amir Goldstein wrote:
+> > This is the 2nd version of FAN_REPORT_TARGET_FID patches [1].
+> >
+> > In the first version, extra info records about new and old parent+name
+> > were added to FAN_MOVED_FROM event.  This version uses a new event
+> > FAN_RENAME instead, to report those extra info records.
+> > The new FAN_RENAME event was designed as a replacement for the
+> > "inotify way" of joining the MOVED_FROM/MOVED_TO events using a cookie.
+> >
+> > FAN_RENAME event differs from MOVED_FROM/MOVED_TO events in several ways:
+> > 1) The information about old/new names is provided in a single event
+> > 2) When added to the ignored mask of a directory, FAN_RENAME is not
+> >    reported for renames to and from that directory
+> >
+> > The group flag FAN_REPORT_TARGET_FID adds an extra info record of
+> > the child fid to all the dirent events, including FAN_REANME.
+> > It is independent of the FAN_RENAME changes and implemented in the
+> > first patch, so it can be picked regardless of the FAN_RENAME patches.
+> >
+> > Patches [2] and LTP test [3] are available on my github.
+> > A man page draft will be provided later on.
+>
+> I've read through the series and I had just two small comments. I was also
+> slightly wondering whether instead of feeding the two directories for
+> FS_RENAME into OBJ_TYPE_PARENT and OBJ_TYPE_INODE we should not create
+> another iter_info type OBJ_TYPE_INODE2 as using OBJ_TYPE_PARENT is somewhat
+> error prone (you have to get the ordering of conditions right so that you
+> catch FS_RENAME e.g. before some code decides event should be discarded
+> because it is parent event without child watching). But I have not fully
+> decided whether the result is going to be worth it so I'm just mentioning
+> it as a possible future cleanup.
 
-What's the thinking here?  The node can later be offlined and the
-kernel takes no action to reset home nodes, so why not permit setting a
-presently-offline node as the home node?  Checking here seems rather
-arbitrary?
+I managed to use ITER_TYPE_INODE2 pretty easily after a cleanup that
+splits OBJ_TYPE enum from ITER_TYPE enum.
 
-
+Thanks,
+Amir.
