@@ -2,85 +2,114 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E8CC0C433F5
-	for <linux-api@archiver.kernel.org>; Mon, 29 Nov 2021 22:29:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BAEEAC433EF
+	for <linux-api@archiver.kernel.org>; Mon, 29 Nov 2021 22:29:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231156AbhK2Wcf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 29 Nov 2021 17:32:35 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60646 "EHLO
+        id S231209AbhK2Wc7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 29 Nov 2021 17:32:59 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60738 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229977AbhK2WcW (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 29 Nov 2021 17:32:22 -0500
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 33CB0C08EB57;
-        Mon, 29 Nov 2021 14:22:58 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=P+7rLpDmI0GB1uveawAKeTOyJh4WuhEPHuwGYT+nYA8=; b=TwmRukm9ui9hBITy8IFXrg6u+n
-        pEYD+1yhOiTaaD/zRtr0G6JNDxz7aFt1dRouS3jONa0pV8lY369lo1UwDcuXjvWJwqOF8Ow5AwXrR
-        vwqWZBre13UBT3muF3jwPbLaG5zmJa7J84p9xVISbAJxl+Q1Q7ic05yXJ1SKP67wdjXBB3IP+wiYd
-        O8l8+Od6JPMkyTeGywiiTjGEjQmeYRCU5X40brTQi9cTBsff8ImI4ViGbcuv1kueyZ+UJU7+sw9U2
-        B7fGvtXxRc5rXHPKgvCfFpM1fzT+8zPrgafOyIzBv5qZtrCZAAitFJyDCRGg9/w9wAku3ZzJ2Mkxd
-        C2Cdyv8w==;
-Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=worktop.programming.kicks-ass.net)
-        by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1mrp2q-009SwH-6B; Mon, 29 Nov 2021 22:22:45 +0000
-Received: by worktop.programming.kicks-ass.net (Postfix, from userid 1000)
-        id 1826D98675D; Mon, 29 Nov 2021 23:22:44 +0100 (CET)
-Date:   Mon, 29 Nov 2021 23:22:43 +0100
-From:   Peter Zijlstra <peterz@infradead.org>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     Peter Oskolkov <posk@posk.io>, Ingo Molnar <mingo@redhat.com>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Andy Lutomirski <luto@kernel.org>, linux-mm@kvack.org,
-        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        Paul Turner <pjt@google.com>, Ben Segall <bsegall@google.com>,
-        Peter Oskolkov <posk@google.com>,
-        Andrei Vagin <avagin@google.com>, Jann Horn <jannh@google.com>,
-        Thierry Delisle <tdelisle@uwaterloo.ca>
-Subject: Re: [PATCH v0.9.1 3/6] sched/umcg: implement UMCG syscalls
-Message-ID: <20211129222243.GR721624@worktop.programming.kicks-ass.net>
-References: <20211122211327.5931-1-posk@google.com>
- <20211122211327.5931-4-posk@google.com>
- <20211124211927.GG721624@worktop.programming.kicks-ass.net>
- <877dcuhbbe.ffs@tglx>
- <YaFXDYm7s7A6HDTG@hirez.programming.kicks-ass.net>
- <87r1ayd3as.ffs@tglx>
+        with ESMTP id S231562AbhK2Wcu (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 29 Nov 2021 17:32:50 -0500
+Received: from mail-wr1-x430.google.com (mail-wr1-x430.google.com [IPv6:2a00:1450:4864:20::430])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E2A1AC06FD44;
+        Mon, 29 Nov 2021 12:15:41 -0800 (PST)
+Received: by mail-wr1-x430.google.com with SMTP id c4so39386255wrd.9;
+        Mon, 29 Nov 2021 12:15:41 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=AUyW9/bu808KughF8jMY+xgu/5CCJPBOxJx/5UdnFQU=;
+        b=K2z+8261JxjPHqFAkOmRN0j0FdyCPUSiJCUVsRsymL2kYzmr9Yask0TMrCIFWnfgUi
+         58CqxJED0ch+/kVyn1vxCtUSL3CAYhYucVLTSS/CXhmdZZlSX2NB8ZPM85ErG86GAr/3
+         wPdA00828OqtqsiTy0We4U2gxxhmlNDmY6TFDXRLsJmWIZXp8i9pcJNLV4zAGHeC/S18
+         fLTn31mvE5fE+4yV6T/QfZZ/1/QwOSjReGa/xHMwyAjkor+u9VEJYMnMwM1e3nK444Gz
+         hPKiST+v22nEYGm3hNQP1TGH0sOpL57Yasp9dnCXymOM7OsoP1d/oX+xlRYfAIKCy5Je
+         M/Uw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=AUyW9/bu808KughF8jMY+xgu/5CCJPBOxJx/5UdnFQU=;
+        b=q6uWfy36SdolaxtMVQpFwdtA3kgw9SeWn1yKXMlbjIqjdanWqGle+YkoNeW1oYJW8L
+         vLrUS07OOAIsNE7CR0t4p1iduoqMiHZESDDwya4GliOT5cGXthgEYdhiRNe2KBcORtx2
+         maMn1r6fF16MFGarS5TVLK5GoYY3SPSNZEZaEQ1ZvWNEHdxU7rapzs10s2X7WskbRebU
+         NEnV8XWCKQsgftjeMbsdywNrx+0dQuCcziYBmXcgZA08iC1baeLuQp6rZE8IhMA6aLAj
+         1s+W5Cb5VmaGrgK7l57Is9d6iAGXkICcKDjCzhbQx4oL5r3lAAaadJPraoHAuIN84QaG
+         U42A==
+X-Gm-Message-State: AOAM532noFB+zI9EuaZ6LEsHuvlSx3TIp33mzjCS2xQAB+ZZsV5iXzI9
+        jFolS13v2jyv4sSeDDtVUVc=
+X-Google-Smtp-Source: ABdhPJxZ2XN8R27xeLEJD+fBlb83DwJg2jEoZGuojOJWyPaArj18t0RXp5sEmO5wsbEPJtH0sBCovg==
+X-Received: by 2002:a5d:54cf:: with SMTP id x15mr37985959wrv.30.1638216940391;
+        Mon, 29 Nov 2021 12:15:40 -0800 (PST)
+Received: from localhost.localdomain ([82.114.45.86])
+        by smtp.gmail.com with ESMTPSA id m14sm19791830wrp.28.2021.11.29.12.15.39
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 29 Nov 2021 12:15:39 -0800 (PST)
+From:   Amir Goldstein <amir73il@gmail.com>
+To:     Jan Kara <jack@suse.cz>
+Cc:     Matthew Bobrowski <mbobrowski@mbobrowski.org>,
+        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
+Subject: [PATCH v3 00/11] Extend fanotify dirent events
+Date:   Mon, 29 Nov 2021 22:15:26 +0200
+Message-Id: <20211129201537.1932819-1-amir73il@gmail.com>
+X-Mailer: git-send-email 2.33.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <87r1ayd3as.ffs@tglx>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Nov 29, 2021 at 11:07:07PM +0100, Thomas Gleixner wrote:
-> On Fri, Nov 26 2021 at 22:52, Peter Zijlstra wrote:
+Jan,
 
-> The size is the same, i.e. 1 bit per nanosecond :)
+This is the 3rd version of patches to add FAN_REPORT_TARGET_FID group
+flag and FAN_RENAME event.
 
-:-)
+Patches [1] LTP test [2] and man page draft [3] are available on my
+github.
 
-> > The only time that's relevant though is when you're going to mix these
-> > timestamps with CLOCK_THREAD_CPUTIME_ID, which might just be
-> > interesting.
-> 
-> Uuurg. If you want to go towards CLOCK_THREAD_CPUTIME_ID, that's going
-> to be really nasty. Actually you can sleep on that clock, but that's a
-> completely different universe. If anything like that is desired then we
-> need to rewrite that posix CPU timer muck completely with all the bells
-> and whistels and race conditions attached to it. *Shudder*
+Thanks,
+Amir.
 
-Oh, I wasn't thinking anything as terrible as that. Sleeping on that
-clock is fundamentally daft since it doesn't run when thats is
-sleeping, consider trying to sleep on your own runtime :-)
+[1] https://github.com/amir73il/linux/commits/fan_rename-v3
+[2] https://github.com/amir73il/ltp/commits/fan_rename
+[2] https://github.com/amir73il/man-pages/commits/fan_rename
 
-I was only considering combining THREAD_CPUTIME timestamps with the
-UMCG timestamps to compute how much unmanaged time there was, or other
-such things.
+Changes since v2:
+- Rebase on v5.16-rc3
+- Separate mark iterator type from object type enum
+- Use dedicated iter type for 2nd dir
+- Use iter type report mask to indicate if old and/or new
+  dir are watching FAN_RENAME
 
-Anyway, lets forget I bought this up and assume that for practical
-purposes all [ns] are of equal length.
+Amir Goldstein (11):
+  fsnotify: clarify object type argument
+  fsnotify: separate mark iterator type from object type enum
+  fanotify: introduce group flag FAN_REPORT_TARGET_FID
+  fsnotify: generate FS_RENAME event with rich information
+  fanotify: use macros to get the offset to fanotify_info buffer
+  fanotify: use helpers to parcel fanotify_info buffer
+  fanotify: support secondary dir fh and name in fanotify_info
+  fanotify: record old and new parent and name in FAN_RENAME event
+  fanotify: record either old name new name or both for FAN_RENAME
+  fanotify: report old and/or new parent+name in FAN_RENAME event
+  fanotify: wire up FAN_RENAME event
+
+ fs/notify/dnotify/dnotify.c        |   2 +-
+ fs/notify/fanotify/fanotify.c      | 213 ++++++++++++++++++++++-------
+ fs/notify/fanotify/fanotify.h      | 142 +++++++++++++++++--
+ fs/notify/fanotify/fanotify_user.c |  82 +++++++++--
+ fs/notify/fsnotify.c               |  53 ++++---
+ fs/notify/group.c                  |   2 +-
+ fs/notify/mark.c                   |  31 +++--
+ include/linux/dnotify.h            |   2 +-
+ include/linux/fanotify.h           |   5 +-
+ include/linux/fsnotify.h           |   9 +-
+ include/linux/fsnotify_backend.h   |  74 +++++-----
+ include/uapi/linux/fanotify.h      |  12 ++
+ 12 files changed, 485 insertions(+), 142 deletions(-)
+
+-- 
+2.33.1
+
