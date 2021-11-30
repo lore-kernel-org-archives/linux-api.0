@@ -2,131 +2,111 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5E567C433F5
-	for <linux-api@archiver.kernel.org>; Mon, 29 Nov 2021 23:39:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DD716C433F5
+	for <linux-api@archiver.kernel.org>; Tue, 30 Nov 2021 04:05:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230395AbhK2XnH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 29 Nov 2021 18:43:07 -0500
-Received: from mail-ua1-f43.google.com ([209.85.222.43]:37817 "EHLO
-        mail-ua1-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229794AbhK2XnG (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 29 Nov 2021 18:43:06 -0500
-Received: by mail-ua1-f43.google.com with SMTP id o1so37641945uap.4
-        for <linux-api@vger.kernel.org>; Mon, 29 Nov 2021 15:39:48 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=posk.io; s=google;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=c7M8bjVkZS4Crx9n4ZGGz1oMJSYLhjEhdQ0JNSPjlt8=;
-        b=V35tdCUBBDMXJ7fCiyIuqsXXPU6QrRaT/GWOg2xVg1xzv9E5BFQ9W2UkyjwlXj2KaF
-         9XkB2/ifBLIKQUxvo4amGtjsEPf6PcquFjfc2/JGz/0Qgawp9Sh6ArGxEZP/v8fX1dbx
-         NghpiQwCtWy/9xielIZZzVDQxmEpglv71V4Rmy99Al84IfweaGcbTjztI6rz3ObcRPqS
-         nbCpI/ai5Ewqm6hXwvWFy7quXey5FxlQCjOQZGWm6l89751vvnW4xp0VivyHXIo3mCcQ
-         MCZtlRJQIATPZXw8FG4Q+fMEtxyP8IswiZlyChOMOMiFNLul2jtLwfedipIcZBH5OvP4
-         Iqlg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=c7M8bjVkZS4Crx9n4ZGGz1oMJSYLhjEhdQ0JNSPjlt8=;
-        b=Cty5iEKgX1O+wMxS6PNol8zO3GhVAl5kV7XU91Xtw+4R2rHzvzwV7Ftqh2HMSuyqhP
-         ayQvawTvo0C69R48AyGu4Op4Gh2FdD1v10qyfEt0hKW42mx9R5LyrkGKxvhjF537RLo+
-         pcQh4zWKtsz0HE3XGFpZfVvIQ6xhA8gJNndnT4fDFRgjEnFpdXL2NJZNZUou/hbQqMTZ
-         oBOLZDTIoDGltqJ8riU8US0NECmDkXgmJ8bFNfsva/sIaBq1WVRSjyeJZjVdNgk378jm
-         UF6UE6J79i77v1iEQxsfzbok8r8JYIIMRlSdItxXzaWqA+7aSx+xBUqOwCNBp+DqdQ/r
-         q+3g==
-X-Gm-Message-State: AOAM531y1CReEDqttCSAlZOCdDFYUaVu+6K3BbEYP0pzRlWaAy0Gencb
-        Gb+aUqN9dkkO9aF7oln/K6lsSSlj8UuFCqCREFURbA==
-X-Google-Smtp-Source: ABdhPJyQvp4x5bByQwLpBEygbxk1oCfNM99yBAAEpPNfSg1xfZNjK+9yDN/dWx3ThizfuvtRLx8gzzf2dPwNKXRRRVI=
-X-Received: by 2002:a9f:218c:: with SMTP id 12mr51476140uac.71.1638229128058;
- Mon, 29 Nov 2021 15:38:48 -0800 (PST)
+        id S238078AbhK3EIn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 29 Nov 2021 23:08:43 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53102 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S230427AbhK3EIm (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 29 Nov 2021 23:08:42 -0500
+Received: from ams.source.kernel.org (ams.source.kernel.org [IPv6:2604:1380:4601:e00::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 61076C061574;
+        Mon, 29 Nov 2021 20:05:24 -0800 (PST)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by ams.source.kernel.org (Postfix) with ESMTPS id 2516DB811FF;
+        Tue, 30 Nov 2021 04:05:23 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id A9180C53FC1;
+        Tue, 30 Nov 2021 04:05:21 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1638245121;
+        bh=a1liu2Lo3sMfRhCcP9f3gWfgoXAydt5G60CI7Sx/zkI=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+        b=EUR9YgE8gOCFkseE2T9VubdkQlpzKqiCFRjZhcDlQ0ajPbaD2bYnY9Lmk63AZCJcw
+         KqpoGKRUwVGuU+eFvEhp44poaIzAR/wl0xODYqy1BmRaLZlXAzDLFGMYqQ2WU9A/mu
+         pIkSNRvWYGAPGNSZ0y5spllEimYnzwa08wYwtfC+pNi2cBiIuLqMHbRPesTNAQ8cEh
+         OhJZqXlGYIm0Iu/kaWdQRUE0bmk3qESF4pTijllTvnPXNxxhotag/kYP0pFkw58TMv
+         20ONYzB2fXvOHl/cY+L8YivHKBCynSc87nEpvvJFLKYwTg9dr0ESMyuZys+VjVmU3z
+         IdV7YhScBC9BA==
+From:   Eric Biggers <ebiggers@kernel.org>
+To:     linux-block@vger.kernel.org
+Cc:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-scsi@vger.kernel.org, linux-mmc@vger.kernel.org,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Bart Van Assche <bvanassche@acm.org>
+Subject: [PATCH v2 1/3] block: simplify calling convention of elv_unregister_queue()
+Date:   Mon, 29 Nov 2021 20:03:04 -0800
+Message-Id: <20211130040306.148925-2-ebiggers@kernel.org>
+X-Mailer: git-send-email 2.34.1
+In-Reply-To: <20211130040306.148925-1-ebiggers@kernel.org>
+References: <20211130040306.148925-1-ebiggers@kernel.org>
 MIME-Version: 1.0
-References: <20211122211327.5931-1-posk@google.com> <20211122211327.5931-4-posk@google.com>
- <20211124200822.GF721624@worktop.programming.kicks-ass.net>
- <CAFTs51Uka8VRCHuGidw7mRwATufp87U6S8SWUVod_kU-h6T3ew@mail.gmail.com>
- <YaEUts3RbOLyvAjl@hirez.programming.kicks-ass.net> <CAFTs51XnN+N74i1XHvRUAUWd04-Fs9uV6ouXo=CQSQs8MaEM5A@mail.gmail.com>
- <YaUCoe07Wl9Stlch@hirez.programming.kicks-ass.net> <CAFTs51UzR=m6+vcjTCNOGwGu3ZwB5GMrg+cSQy2ecvCWxhZvEQ@mail.gmail.com>
- <20211129210841.GO721624@worktop.programming.kicks-ass.net>
-In-Reply-To: <20211129210841.GO721624@worktop.programming.kicks-ass.net>
-From:   Peter Oskolkov <posk@posk.io>
-Date:   Mon, 29 Nov 2021 15:38:38 -0800
-Message-ID: <CAFTs51XyGDNj89+FCn4HZqMHuenjQu2wqTOW8ow4hSUbdGrGhw@mail.gmail.com>
-Subject: Re: [PATCH v0.9.1 3/6] sched/umcg: implement UMCG syscalls
-To:     Peter Zijlstra <peterz@infradead.org>
-Cc:     Ingo Molnar <mingo@redhat.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Andy Lutomirski <luto@kernel.org>,
-        Linux Memory Management List <linux-mm@kvack.org>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        linux-api@vger.kernel.org, Paul Turner <pjt@google.com>,
-        Ben Segall <bsegall@google.com>,
-        Peter Oskolkov <posk@google.com>,
-        Andrei Vagin <avagin@google.com>, Jann Horn <jannh@google.com>,
-        Thierry Delisle <tdelisle@uwaterloo.ca>
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Nov 29, 2021 at 1:08 PM Peter Zijlstra <peterz@infradead.org> wrote:
-[...]
-> > > > Another big concern I have is that you removed UMCG_TF_LOCKED. I
-> > >
-> > > OOh yes, I forgot to mention that. I couldn't figure out what it was
-> > > supposed to do.
-[...]
->
-> So then A does:
->
->         A::next_tid = C.tid;
->         sys_umcg_wait();
->
-> Which will:
->
->         pin(A);
->         pin(S0);
->
->         cmpxchg(A::state, RUNNING, RUNNABLE);
+From: Eric Biggers <ebiggers@google.com>
 
-Hmm.... That's another difference between your patch and mine: my
-approach was "the side that initiates the change updates the state".
-So in my code the userspace changes the current task's state RUNNING
-=> RUNNABLE and the next task's state, or the server's state, RUNNABLE
-=> RUNNING before calling sys_umcg_wait(). The kernel changed worker
-states to BLOCKED/RUNNABLE during block/wake detection, and marked
-servers RUNNING when waking them during block/wake detection; but all
-applicable state changes for sys_umcg_wait() happen in the userspace.
+Make elv_unregister_queue() a no-op if q->elevator is NULL or is not
+registered.
 
-The reasoning behind this approach was:
-- do in kernel only that which cannot be done in the userspace, to
-make the kernel code smaller/simpler
-- similar to how futexes work: futex_wait does not change the futex
-value to the desired value, but just checks whether the futex value
-matches the desired value
-- similar to how futexes work, concurrent state changes can happen in
-the userspace without calling into the kernel at all
-    for example:
-        - (a): worker A goes to sleep into sys_umcg_wait()
-        - (b): worker B wants to context switch into worker A "a moment" later
-        - due to preemption/interrupts/pagefaults/whatnot, (b) happens
-in reality before (a)
-    in my patchset, the situation above happily resolves in the
-userspace so that worker A keeps running without ever calling
-sys_umcg_wait().
+This simplifies the existing callers, as well as the future caller in
+the error path of blk_register_queue().
 
-Again, I don't think this is deal breaking, and your approach will
-work, just a bit less efficiently in some cases :)
+Also don't bother checking whether q is NULL, since it never is.
 
-I'm still not sure we can live without UMCG_TF_LOCKED. What if worker
-A transfers its server to worker B that A intends to context switch
-into, and then worker A pagefaults or gets interrupted before calling
-sys_umcg_wait()? The server will be woken up and will see that it is
-assigned to worker B; now what? If worker A is "locked" before the
-whole thing starts, the pagefault/interrupt will not trigger
-block/wake detection, worker A will keep RUNNING for all intended
-purposes, and eventually will call sys_umcg_wait() as it had
-intended...
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+---
+ block/blk-sysfs.c | 3 +--
+ block/elevator.c  | 8 ++++----
+ 2 files changed, 5 insertions(+), 6 deletions(-)
 
-[...]
+diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+index 4622da4bb9927..91d3805a6ec6b 100644
+--- a/block/blk-sysfs.c
++++ b/block/blk-sysfs.c
+@@ -957,8 +957,7 @@ void blk_unregister_queue(struct gendisk *disk)
+ 	blk_trace_remove_sysfs(disk_to_dev(disk));
+ 
+ 	mutex_lock(&q->sysfs_lock);
+-	if (q->elevator)
+-		elv_unregister_queue(q);
++	elv_unregister_queue(q);
+ 	disk_unregister_independent_access_ranges(disk);
+ 	mutex_unlock(&q->sysfs_lock);
+ 	mutex_unlock(&q->sysfs_dir_lock);
+diff --git a/block/elevator.c b/block/elevator.c
+index ec98aed39c4f5..b062c5bc10b9a 100644
+--- a/block/elevator.c
++++ b/block/elevator.c
+@@ -516,9 +516,11 @@ int elv_register_queue(struct request_queue *q, bool uevent)
+ 
+ void elv_unregister_queue(struct request_queue *q)
+ {
++	struct elevator_queue *e = q->elevator;
++
+ 	lockdep_assert_held(&q->sysfs_lock);
+ 
+-	if (q) {
++	if (e && e->registered) {
+ 		struct elevator_queue *e = q->elevator;
+ 
+ 		kobject_uevent(&e->kobj, KOBJ_REMOVE);
+@@ -593,9 +595,7 @@ int elevator_switch_mq(struct request_queue *q,
+ 	lockdep_assert_held(&q->sysfs_lock);
+ 
+ 	if (q->elevator) {
+-		if (q->elevator->registered)
+-			elv_unregister_queue(q);
+-
++		elv_unregister_queue(q);
+ 		ioc_clear_queue(q);
+ 		blk_mq_sched_free_rqs(q);
+ 		elevator_exit(q);
+-- 
+2.34.1
+
