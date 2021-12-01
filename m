@@ -2,30 +2,63 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AF4C8C433F5
-	for <linux-api@archiver.kernel.org>; Wed,  1 Dec 2021 09:22:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2186EC433EF
+	for <linux-api@archiver.kernel.org>; Wed,  1 Dec 2021 13:18:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230048AbhLAJZn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 1 Dec 2021 04:25:43 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59954 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233437AbhLAJZm (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 1 Dec 2021 04:25:42 -0500
-Received: from smtp-42ac.mail.infomaniak.ch (smtp-42ac.mail.infomaniak.ch [IPv6:2001:1600:4:17::42ac])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C0737C061574
-        for <linux-api@vger.kernel.org>; Wed,  1 Dec 2021 01:22:21 -0800 (PST)
-Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
-        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4J3ts80dGnzMqdLy;
-        Wed,  1 Dec 2021 10:22:20 +0100 (CET)
-Received: from ns3096276.ip-94-23-54.eu (unknown [23.97.221.149])
-        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4J3ts25XFnzlhKSV;
-        Wed,  1 Dec 2021 10:22:14 +0100 (CET)
-Message-ID: <4a88f95b-d54d-ad70-fb49-e3c3f1d097f2@digikod.net>
-Date:   Wed, 1 Dec 2021 10:23:42 +0100
-MIME-Version: 1.0
-User-Agent: 
-Content-Language: en-US
-To:     Florian Weimer <fweimer@redhat.com>
+        id S244848AbhLANVu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 1 Dec 2021 08:21:50 -0500
+Received: from mx0a-001b2d01.pphosted.com ([148.163.156.1]:58864 "EHLO
+        mx0a-001b2d01.pphosted.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S234027AbhLANVt (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 1 Dec 2021 08:21:49 -0500
+Received: from pps.filterd (m0098410.ppops.net [127.0.0.1])
+        by mx0a-001b2d01.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id 1B1CmnDu017582;
+        Wed, 1 Dec 2021 13:15:08 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=message-id : subject :
+ from : to : cc : date : in-reply-to : references : content-type :
+ content-transfer-encoding : mime-version; s=pp1;
+ bh=o7MU5ZEW3BlvRrPu95u+FYlzxn/o3dCRZhGlSHuRGvs=;
+ b=EQbqU93mjERx4tytUgOTiHfb/lGWvW4J+OdQxiFYvTJWsC9Vey7ux6eqqUnHWQJ9Ai9O
+ g/wRbQgnAFsSFPnc/XoUuIDZj3ekriraPETjJ4J/tSi9r8nwllxlrbPqJ8zVxHppZBDL
+ AjKLO5zZgQy3InnVnUXy7CNWjK2EBI0vc0oKVOLOBTOwzzJZXQ9coo5EZlDugBy5CfTj
+ OdpSsG5IWScTeMLAZdSB/JScFrGrYBr3uDP6LU/V48PKwScFi+wmMEIFqjX1lHcEGhIB
+ YgRfaMkqpNiilRRfjr/frM0L9e4sThP4RLpWDxEZqzygsR49fInvTUDAOPZIUyOf1U3I aw== 
+Received: from pps.reinject (localhost [127.0.0.1])
+        by mx0a-001b2d01.pphosted.com with ESMTP id 3cp9cqrhvt-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+        Wed, 01 Dec 2021 13:15:08 +0000
+Received: from m0098410.ppops.net (m0098410.ppops.net [127.0.0.1])
+        by pps.reinject (8.16.0.43/8.16.0.43) with SMTP id 1B1CsDlt010900;
+        Wed, 1 Dec 2021 13:15:07 GMT
+Received: from ppma06fra.de.ibm.com (48.49.7a9f.ip4.static.sl-reverse.com [159.122.73.72])
+        by mx0a-001b2d01.pphosted.com with ESMTP id 3cp9cqrhu4-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+        Wed, 01 Dec 2021 13:15:06 +0000
+Received: from pps.filterd (ppma06fra.de.ibm.com [127.0.0.1])
+        by ppma06fra.de.ibm.com (8.16.1.2/8.16.1.2) with SMTP id 1B1DD03i022753;
+        Wed, 1 Dec 2021 13:15:03 GMT
+Received: from b06cxnps3075.portsmouth.uk.ibm.com (d06relay10.portsmouth.uk.ibm.com [9.149.109.195])
+        by ppma06fra.de.ibm.com with ESMTP id 3ckbxk04ak-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+        Wed, 01 Dec 2021 13:15:03 +0000
+Received: from d06av25.portsmouth.uk.ibm.com (d06av25.portsmouth.uk.ibm.com [9.149.105.61])
+        by b06cxnps3075.portsmouth.uk.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 1B1DF0xY23789982
+        (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+        Wed, 1 Dec 2021 13:15:00 GMT
+Received: from d06av25.portsmouth.uk.ibm.com (unknown [127.0.0.1])
+        by IMSVA (Postfix) with ESMTP id 3D8BF11C050;
+        Wed,  1 Dec 2021 13:15:00 +0000 (GMT)
+Received: from d06av25.portsmouth.uk.ibm.com (unknown [127.0.0.1])
+        by IMSVA (Postfix) with ESMTP id E98D511C05B;
+        Wed,  1 Dec 2021 13:14:54 +0000 (GMT)
+Received: from sig-9-65-78-183.ibm.com (unknown [9.65.78.183])
+        by d06av25.portsmouth.uk.ibm.com (Postfix) with ESMTP;
+        Wed,  1 Dec 2021 13:14:54 +0000 (GMT)
+Message-ID: <e91d238422f8df139acf84cc2df6ddb4fd300b87.camel@linux.ibm.com>
+Subject: Re: [PATCH v17 0/3] Add trusted_for(2) (was O_MAYEXEC)
+From:   Mimi Zohar <zohar@linux.ibm.com>
+To:     =?ISO-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>,
+        Florian Weimer <fweimer@redhat.com>
 Cc:     Al Viro <viro@zeniv.linux.org.uk>,
         Andrew Morton <akpm@linux-foundation.org>,
         Alejandro Colomar <alx.manpages@gmail.com>,
@@ -48,9 +81,8 @@ Cc:     Al Viro <viro@zeniv.linux.org.uk>,
         Matthew Garrett <mjg59@google.com>,
         Matthew Wilcox <willy@infradead.org>,
         Miklos Szeredi <mszeredi@redhat.com>,
-        Mimi Zohar <zohar@linux.ibm.com>,
         Paul Moore <paul@paul-moore.com>,
-        =?UTF-8?Q?Philippe_Tr=c3=a9buchet?= 
+        Philippe =?ISO-8859-1?Q?Tr=E9buchet?= 
         <philippe.trebuchet@ssi.gouv.fr>,
         Scott Shell <scottsh@microsoft.com>,
         Shuah Khan <shuah@kernel.org>,
@@ -62,89 +94,76 @@ Cc:     Al Viro <viro@zeniv.linux.org.uk>,
         kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
         linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org,
         linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
+Date:   Wed, 01 Dec 2021 08:14:54 -0500
+In-Reply-To: <4a88f95b-d54d-ad70-fb49-e3c3f1d097f2@digikod.net>
 References: <20211115185304.198460-1-mic@digikod.net>
- <87sfvd8k4c.fsf@oldenburg.str.redhat.com>
-From:   =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [PATCH v17 0/3] Add trusted_for(2) (was O_MAYEXEC)
-In-Reply-To: <87sfvd8k4c.fsf@oldenburg.str.redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
+         <87sfvd8k4c.fsf@oldenburg.str.redhat.com>
+         <4a88f95b-d54d-ad70-fb49-e3c3f1d097f2@digikod.net>
+Content-Type: text/plain; charset="UTF-8"
+X-Mailer: Evolution 3.28.5 (3.28.5-16.el8) 
+X-TM-AS-GCONF: 00
+X-Proofpoint-ORIG-GUID: 4_DbnL0LEYui2lYeqbE8yT4i3z_a1Jb2
+X-Proofpoint-GUID: 9Log-g6aWaMUBg8JjxhDYCR2BbjEsiMa
 Content-Transfer-Encoding: 8bit
+X-Proofpoint-UnRewURL: 0 URL was un-rewritten
+MIME-Version: 1.0
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.205,Aquarius:18.0.790,Hydra:6.0.425,FMLib:17.0.607.475
+ definitions=2021-11-30_10,2021-12-01_01,2020-04-07_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 spamscore=0 malwarescore=0
+ adultscore=0 lowpriorityscore=0 mlxscore=0 priorityscore=1501
+ mlxlogscore=999 impostorscore=0 bulkscore=0 phishscore=0 clxscore=1011
+ suspectscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.12.0-2110150000 definitions=main-2112010076
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+On Wed, 2021-12-01 at 10:23 +0100, Mickaël Salaün wrote:
+> On 30/11/2021 21:27, Florian Weimer wrote:
+> > * Mickaël Salaün:
+> > 
+> >> Primary goal of trusted_for(2)
+> >> ==============================
+> >>
+> >> This new syscall enables user space to ask the kernel: is this file
+> >> descriptor's content trusted to be used for this purpose?  The set of
+> >> usage currently only contains execution, but other may follow (e.g.
+> >> configuration, sensitive data).  If the kernel identifies the file
+> >> descriptor as trustworthy for this usage, user space should then take
+> >> this information into account.  The "execution" usage means that the
+> >> content of the file descriptor is trusted according to the system policy
+> >> to be executed by user space, which means that it interprets the content
+> >> or (try to) maps it as executable memory.
+> > 
+> > I sketched my ideas about “IMA gadgets” here:
+> > 
+> >    IMA gadgets
+> >    <https://www.openwall.com/lists/oss-security/2021/11/30/1>
+> > 
+> > I still don't think the proposed trusted_for interface is sufficient.
+> > The example I gave is a Perl module that does nothing (on its own) when
+> > loaded as a Perl module (although you probably don't want to sign it
+> > anyway, given what it implements), but triggers an unwanted action when
+> > sourced (using .) as a shell script.
+> 
+> The fact that IMA doesn't cover all metadata, file names nor the file 
+> hierarchies is well known and the solution can be implemented with 
+> dm-verity (which has its own drawbacks).
 
-On 30/11/2021 21:27, Florian Weimer wrote:
-> * Mickaël Salaün:
-> 
->> Primary goal of trusted_for(2)
->> ==============================
->>
->> This new syscall enables user space to ask the kernel: is this file
->> descriptor's content trusted to be used for this purpose?  The set of
->> usage currently only contains execution, but other may follow (e.g.
->> configuration, sensitive data).  If the kernel identifies the file
->> descriptor as trustworthy for this usage, user space should then take
->> this information into account.  The "execution" usage means that the
->> content of the file descriptor is trusted according to the system policy
->> to be executed by user space, which means that it interprets the content
->> or (try to) maps it as executable memory.
-> 
-> I sketched my ideas about “IMA gadgets” here:
-> 
->    IMA gadgets
->    <https://www.openwall.com/lists/oss-security/2021/11/30/1>
-> 
-> I still don't think the proposed trusted_for interface is sufficient.
-> The example I gave is a Perl module that does nothing (on its own) when
-> loaded as a Perl module (although you probably don't want to sign it
-> anyway, given what it implements), but triggers an unwanted action when
-> sourced (using .) as a shell script.
+Thanks, Mickaël, for responding.  I'll go even farther and say that IMA
+wasn't ever meant to protect file metadata.  Another option is EVM,
+which addresses some, but not all of the issues.
 
-The fact that IMA doesn't cover all metadata, file names nor the file 
-hierarchies is well known and the solution can be implemented with 
-dm-verity (which has its own drawbacks).
+thanks,
 
-trusted_for is a tool for interpreters to enforce a security policy 
-centralized by the kernel. The kind of file confusion attacks you are 
-talking about should be addressed by a system policy. If the mount point 
-options are not enough to express such policy, then we need to rely on 
-IMA, SELinux or IPE to reduce the scope of legitimate mapping between 
-scripts and interpreters.
-
-> 
->> @usage identifies the user space usage intended for @fd: only
->> TRUSTED_FOR_EXECUTION for now, but trusted_for_usage could be extended
->> to identify other usages (e.g. configuration, sensitive data).
-> 
-> We would need TRUSTED_FOR_EXECUTION_BY_BASH,
-> TRUSTED_FOR_EXECUTION_BY_PERL, etc.  I'm not sure that actually works.
-
-Well, this doesn't scale and that is the reason trusted_for usage is 
-more generic. The kernel already has all the information required to 
-identify scripts and interpreters types. We don't need to make the user 
-space interface more complex by listing all types. The kernel only miss 
-the semantic of how the intrepreter wants to interpret files, and that 
-is the purpose of trusted_for. LSMs are designed to define complex 
-policies and trusted_for enables them to extend such policies.
+Mimi
 
 > 
-> Caller process context does not work because we have this confusion
-> internally between glibc's own use (for the dynamic linker
-> configuration), and for loading programs/shared objects (there seems to
-> be a corner case where you can execute arbitrary code even without
-> executable mappings in the ELF object), and the script interpreter
-> itself (the primary target for trusted_for).
+> trusted_for is a tool for interpreters to enforce a security policy 
+> centralized by the kernel. The kind of file confusion attacks you are 
+> talking about should be addressed by a system policy. If the mount point 
+> options are not enough to express such policy, then we need to rely on 
+> IMA, SELinux or IPE to reduce the scope of legitimate mapping between 
+> scripts and interpreters.
 
-The current use case for trusted_for is script interpreters, but we can 
-extend the trusted_for_usage enum with new usages like TRUSTED_FOR_LINK 
-and others. I'm not convinced glibc should be treated differently than 
-other executable code that want to load a shared library, but it is a 
-discussion we can have when trusted_for will be in mainline and someone 
-will propose a new usage. ;)
-
-> 
-> But for generating auditing events, trusted_for seems is probably quite
-> helpful.
-
-Indeed, it enables to add semantic to audit events.
