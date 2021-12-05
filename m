@@ -2,133 +2,310 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ECC5DC433EF
-	for <linux-api@archiver.kernel.org>; Fri,  3 Dec 2021 12:54:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2FE74C433EF
+	for <linux-api@archiver.kernel.org>; Sun,  5 Dec 2021 23:43:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1380962AbhLCM5q (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 3 Dec 2021 07:57:46 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59322 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1380953AbhLCM5p (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 3 Dec 2021 07:57:45 -0500
-Received: from mail-wr1-x434.google.com (mail-wr1-x434.google.com [IPv6:2a00:1450:4864:20::434])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 80832C06173E;
-        Fri,  3 Dec 2021 04:54:21 -0800 (PST)
-Received: by mail-wr1-x434.google.com with SMTP id d9so5555984wrw.4;
-        Fri, 03 Dec 2021 04:54:21 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=message-id:date:mime-version:user-agent:subject:content-language:to
-         :cc:references:from:in-reply-to:content-transfer-encoding;
-        bh=M29EUicDRNc21LwZ/GYwswFr7ylJnq6+9wpg0/9AZO8=;
-        b=FoBKm5BewmXcIyykMn+POmO0ZC5EFzD8XchEJpxKnVGZ2xez9VQE5HVYHmiSZ4emck
-         HSYQjT6j5IDy6Yn+HqwIUneNe/yO77iK/NDreBPXZ9Gyiy9+KIYc1j5cEz/eI1oqLM/N
-         AlmPWLOjkuQYu2X166a/6/ogEOKOmVr3/Kx22zyvZ3g/8U4I/8ogDilbSmmI1sxXdXuC
-         0+C9X4hLcowYS6GjBu8AC3Dm6sFjAcgA5ldagKmfHccg1nICX092yI5gJ2ArXSbCRL4L
-         GD6u09FdZ9fYGrM1pkqLRqRG7SrQ6L6biQTJ1Lf5evjeKSfTEBcp2fZmyddLINY2JF7X
-         FIEA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
-         :content-language:to:cc:references:from:in-reply-to
-         :content-transfer-encoding;
-        bh=M29EUicDRNc21LwZ/GYwswFr7ylJnq6+9wpg0/9AZO8=;
-        b=zvNwhmuAOaNTXUo5XuwALeQmCDz4t/AfeVcSjWGleTpAAnv8Ord8hIHewybNdSzJYq
-         qsXqWsohnECDRJ8CSeXhH4LjHyF0y5Dluo2l5cfc6yEX/UN1ixjnLed/RitDIgbZzmQa
-         G+w1tjfOFVZGgedXIslVNtNa3U+q/NJk4mZBJwf7UyRNYD9BpnkiluRX5diJgniV3Dxa
-         BGetptiWI16am/ME/6pNBXEBUsRMw80SPikKMZ6DruInIjGoGIzCT0QbjRwdeIra0gxH
-         lPENuNqZwr1xgZrJb+DHAL3iPr1MR+SzMQ3n1q+VqNq7tCSuoqvGbr8/N2iulIzZitUw
-         CEBw==
-X-Gm-Message-State: AOAM530KPJOXui0AAfbHFEtYA24O/59C/iCXUIWo3N26LkR/zE6BsO6E
-        E5dZM0SVBi6+sxVeBguC4ZDVJblBxi6ZVA==
-X-Google-Smtp-Source: ABdhPJxCcHfpP6/ls4pjRE3J3PBUm2yjHM3aCu1AlP68mHE7HmJUXTBzqWbgL9wMas377UObF7VxlQ==
-X-Received: by 2002:a05:6000:cd:: with SMTP id q13mr21507618wrx.488.1638536059799;
-        Fri, 03 Dec 2021 04:54:19 -0800 (PST)
-Received: from [10.168.10.170] ([170.253.36.171])
-        by smtp.gmail.com with ESMTPSA id m7sm2472292wml.38.2021.12.03.04.54.18
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 03 Dec 2021 04:54:19 -0800 (PST)
-Message-ID: <7d3c34ab-41c1-f9b7-43cc-21a18fa61c27@gmail.com>
-Date:   Fri, 3 Dec 2021 13:54:17 +0100
+        id S231430AbhLEXrT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 5 Dec 2021 18:47:19 -0500
+Received: from mga03.intel.com ([134.134.136.65]:38124 "EHLO mga03.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S229567AbhLEXrS (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sun, 5 Dec 2021 18:47:18 -0500
+X-IronPort-AV: E=McAfee;i="6200,9189,10189"; a="237159110"
+X-IronPort-AV: E=Sophos;i="5.87,290,1631602800"; 
+   d="scan'208";a="237159110"
+Received: from orsmga003.jf.intel.com ([10.7.209.27])
+  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 05 Dec 2021 15:43:50 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.87,290,1631602800"; 
+   d="scan'208";a="460644315"
+Received: from lkp-server02.sh.intel.com (HELO 9e1e9f9b3bcb) ([10.239.97.151])
+  by orsmga003.jf.intel.com with ESMTP; 05 Dec 2021 15:43:47 -0800
+Received: from kbuild by 9e1e9f9b3bcb with local (Exim 4.92)
+        (envelope-from <lkp@intel.com>)
+        id 1mu1AY-000Kbt-8q; Sun, 05 Dec 2021 23:43:46 +0000
+Date:   Mon, 6 Dec 2021 07:42:47 +0800
+From:   kernel test robot <lkp@intel.com>
+To:     akpm@linux-foundation.org, aarcange@redhat.com, ak@linux.intel.com,
+        aneesh.kumar@linux.ibm.com, ben.widawsky@intel.com,
+        dan.j.williams@intel.com, dave.hansen@linux.intel.com,
+        feng.tang@intel.com, linux-api@vger.kernel.org,
+        mgorman@techsingularity.net, mhocko@kernel.org
+Cc:     llvm@lists.linux.dev, kbuild-all@lists.01.org
+Subject: Re: + mm-mempolicy-wire-up-syscall-set_mempolicy_home_node.patch
+ added to -mm tree
+Message-ID: <202112060718.JbZsyJcP-lkp@intel.com>
+References: <20211202225542.A2LkS8Bho%akpm@linux-foundation.org>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.3.0
-Subject: Re: [PATCH] uapi: Make __{u,s}64 match {u,}int64_t in userspace
-Content-Language: en-US
-To:     Adhemerval Zanella <adhemerval.zanella@linaro.org>,
-        Zack Weinberg <zack@owlfolio.org>,
-        Rich Felker <dalias@libc.org>
-Cc:     linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
-        libc-alpha@sourceware.org, linux-kernel@vger.kernel.org,
-        ltp@lists.linux.it
-References: <YZvIlz7J6vOEY+Xu@yuki>
- <c5993ee9-1b5d-4469-9c0e-8d4e0fbd575a@www.fastmail.com>
- <20211202153422.GH7074@brightrain.aerifal.cx>
- <20211202232954.GI7074@brightrain.aerifal.cx>
- <855a47d1-a89c-bbc8-7ddd-b89104c6138a@linaro.org>
- <9d24f699-386a-4881-b09a-ebd747310187@www.fastmail.com>
- <0864bd62-7a93-106d-8a36-23dd72a7ab58@linaro.org>
-From:   "Alejandro Colomar (man-pages)" <alx.manpages@gmail.com>
-In-Reply-To: <0864bd62-7a93-106d-8a36-23dd72a7ab58@linaro.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20211202225542.A2LkS8Bho%akpm@linux-foundation.org>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 12/3/21 13:32, Adhemerval Zanella via Libc-alpha wrote:
->>>>> We (musl) don't have an equivalent header or __-prefixed versions of
->>>>> these types.
->>>>>
->>>>> FWIW I don't think stdint.h exposes anything that would be problematic
->>>>> alongside arbitrary use of kernel headers.
+Hi,
 
->>>>
->>>> Also, per glibc's bits/types.h:
->>>>
->>>> /*
->>>>   * Never include this file directly; use <sys/types.h> instead.
->>>>   */
->>>>
->>>> it's not permitted (not supported usage) to #include <bits/types.h>.
->>>> So I think the above patch is wrong for glibc too. As I understand it,
->>>> this is general policy for bits/* -- they're only intended to work as
->>>> included by the libc system headers, not directly by something else.
->>>
->>> You are right, the idea is to allow glibc to create and remove internal headers.
->>
->> As a general rule yes, but we could make a deal that some specific bits headers are permanent API for use by things like this. They probably should be less of a dumping ground than bits/types.h though.
-> 
-> I really don't think adding such constraints really would improve the project
-> in long term, we already have issues about the need to support some internal
-> symbols that were exported by accident.
-> 
+I love your patch! Perhaps something to improve:
 
-I think there are a few headers that should be safe to include from the 
-kernel.
+[auto build test WARNING on arm64/for-next/core]
+[also build test WARNING on deller-parisc/for-next linus/master v5.16-rc3]
+[cannot apply to geert-m68k/for-next powerpc/next s390/features arnd-asm-generic/master tip/x86/asm davem-sparc/master next-20211203]
+[If your patch is applied to the wrong git tree, kindly drop us a note.
+And when submitting patch, we suggest to use '--base' as documented in
+https://git-scm.com/docs/git-format-patch]
 
-Could anyone foresee any problem that could arise by including any of 
-the following headers in kernel code?:
+url:    https://github.com/0day-ci/linux/commits/akpm-linux-foundation-org/mm-mempolicy-wire-up-syscall-set_mempolicy_home_node-patch-added-to-mm-tree/20211203-065847
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-next/core
+config: arm64-randconfig-r025-20211203 (https://download.01.org/0day-ci/archive/20211206/202112060718.JbZsyJcP-lkp@intel.com/config)
+compiler: clang version 14.0.0 (https://github.com/llvm/llvm-project 1e328b06c15273edf4a40a27ca24931b5efb3a87)
+reproduce (this is a W=1 build):
+        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
+        chmod +x ~/bin/make.cross
+        # install arm64 cross compiling tool for clang build
+        # apt-get install binutils-aarch64-linux-gnu
+        # https://github.com/0day-ci/linux/commit/d7bb34dec7840474ed1ad87136b47eb1ea0c8bee
+        git remote add linux-review https://github.com/0day-ci/linux
+        git fetch --no-tags linux-review akpm-linux-foundation-org/mm-mempolicy-wire-up-syscall-set_mempolicy_home_node-patch-added-to-mm-tree/20211203-065847
+        git checkout d7bb34dec7840474ed1ad87136b47eb1ea0c8bee
+        # save the config file to linux build tree
+        mkdir build_dir
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=clang make.cross W=1 O=build_dir ARCH=arm64 SHELL=/bin/bash
 
-<stdint.h>
-<stddef.h>
+If you fix the issue, kindly add following tag as appropriate
+Reported-by: kernel test robot <lkp@intel.com>
 
-They are the intended interface, and they only provide macros and types 
-but not functions, and there should be no need to require libcs to 
-define another identical stable interface.  If there's an existing 
-program that would break by including any of those in uapi headers, I'm 
-curious to see that program.
+All warnings (new ones prefixed by >>):
 
-Of course, the kernel already defined some of the macros defined there, 
-but the solution would be easy:  remove the redefinitions, since they 
-should be defined to equivalent code (e.g., offsetof(), NULL; although 
-these are from <stddef.h>, which for this change would be unnecessary, 
-but if <stdint.h> can be used within the kernel, a next step could be to 
-rely on libc <stddef.h>)
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                                  ^
+   <scratch space>:161:1: note: expanded from here
+   __arm64_sys_process_madvise
+   ^
+   kernel/sys_ni.c:292:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
+   arch/arm64/include/asm/syscall_wrapper.h:76:13: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                      ^
+   kernel/sys_ni.c:293:1: warning: no previous prototype for function '__arm64_sys_process_mrelease' [-Wmissing-prototypes]
+   COND_SYSCALL(process_mrelease);
+   ^
+   arch/arm64/include/asm/syscall_wrapper.h:76:25: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                                  ^
+   <scratch space>:162:1: note: expanded from here
+   __arm64_sys_process_mrelease
+   ^
+   kernel/sys_ni.c:293:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
+   arch/arm64/include/asm/syscall_wrapper.h:76:13: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                      ^
+   kernel/sys_ni.c:294:1: warning: no previous prototype for function '__arm64_sys_remap_file_pages' [-Wmissing-prototypes]
+   COND_SYSCALL(remap_file_pages);
+   ^
+   arch/arm64/include/asm/syscall_wrapper.h:76:25: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                                  ^
+   <scratch space>:163:1: note: expanded from here
+   __arm64_sys_remap_file_pages
+   ^
+   kernel/sys_ni.c:294:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
+   arch/arm64/include/asm/syscall_wrapper.h:76:13: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                      ^
+   kernel/sys_ni.c:295:1: warning: no previous prototype for function '__arm64_sys_mbind' [-Wmissing-prototypes]
+   COND_SYSCALL(mbind);
+   ^
+   arch/arm64/include/asm/syscall_wrapper.h:76:25: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                                  ^
+   <scratch space>:164:1: note: expanded from here
+   __arm64_sys_mbind
+   ^
+   kernel/sys_ni.c:295:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
+   arch/arm64/include/asm/syscall_wrapper.h:76:13: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                      ^
+   kernel/sys_ni.c:296:1: warning: no previous prototype for function '__arm64_sys_get_mempolicy' [-Wmissing-prototypes]
+   COND_SYSCALL(get_mempolicy);
+   ^
+   arch/arm64/include/asm/syscall_wrapper.h:76:25: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                                  ^
+   <scratch space>:165:1: note: expanded from here
+   __arm64_sys_get_mempolicy
+   ^
+   kernel/sys_ni.c:296:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
+   arch/arm64/include/asm/syscall_wrapper.h:76:13: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                      ^
+   kernel/sys_ni.c:297:1: warning: no previous prototype for function '__arm64_sys_set_mempolicy' [-Wmissing-prototypes]
+   COND_SYSCALL(set_mempolicy);
+   ^
+   arch/arm64/include/asm/syscall_wrapper.h:76:25: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                                  ^
+   <scratch space>:166:1: note: expanded from here
+   __arm64_sys_set_mempolicy
+   ^
+   kernel/sys_ni.c:297:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
+   arch/arm64/include/asm/syscall_wrapper.h:76:13: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                      ^
+   kernel/sys_ni.c:298:1: warning: no previous prototype for function '__arm64_sys_migrate_pages' [-Wmissing-prototypes]
+   COND_SYSCALL(migrate_pages);
+   ^
+   arch/arm64/include/asm/syscall_wrapper.h:76:25: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                                  ^
+   <scratch space>:167:1: note: expanded from here
+   __arm64_sys_migrate_pages
+   ^
+   kernel/sys_ni.c:298:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
+   arch/arm64/include/asm/syscall_wrapper.h:76:13: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                      ^
+   kernel/sys_ni.c:299:1: warning: no previous prototype for function '__arm64_sys_move_pages' [-Wmissing-prototypes]
+   COND_SYSCALL(move_pages);
+   ^
+   arch/arm64/include/asm/syscall_wrapper.h:76:25: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                                  ^
+   <scratch space>:168:1: note: expanded from here
+   __arm64_sys_move_pages
+   ^
+   kernel/sys_ni.c:299:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
+   arch/arm64/include/asm/syscall_wrapper.h:76:13: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                      ^
+>> kernel/sys_ni.c:300:1: warning: no previous prototype for function '__arm64_sys_set_mempolicy_home_node' [-Wmissing-prototypes]
+   COND_SYSCALL(set_mempolicy_home_node);
+   ^
+   arch/arm64/include/asm/syscall_wrapper.h:76:25: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                                  ^
+   <scratch space>:169:1: note: expanded from here
+   __arm64_sys_set_mempolicy_home_node
+   ^
+   kernel/sys_ni.c:300:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
+   arch/arm64/include/asm/syscall_wrapper.h:76:13: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                      ^
+   kernel/sys_ni.c:302:1: warning: no previous prototype for function '__arm64_sys_perf_event_open' [-Wmissing-prototypes]
+   COND_SYSCALL(perf_event_open);
+   ^
+   arch/arm64/include/asm/syscall_wrapper.h:76:25: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                                  ^
+   <scratch space>:170:1: note: expanded from here
+   __arm64_sys_perf_event_open
+   ^
+   kernel/sys_ni.c:302:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
+   arch/arm64/include/asm/syscall_wrapper.h:76:13: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                      ^
+   kernel/sys_ni.c:303:1: warning: no previous prototype for function '__arm64_sys_accept4' [-Wmissing-prototypes]
+   COND_SYSCALL(accept4);
+   ^
+   arch/arm64/include/asm/syscall_wrapper.h:76:25: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                                  ^
+   <scratch space>:171:1: note: expanded from here
+   __arm64_sys_accept4
+   ^
+   kernel/sys_ni.c:303:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
+   arch/arm64/include/asm/syscall_wrapper.h:76:13: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                      ^
+   kernel/sys_ni.c:304:1: warning: no previous prototype for function '__arm64_sys_recvmmsg' [-Wmissing-prototypes]
+   COND_SYSCALL(recvmmsg);
+   ^
+   arch/arm64/include/asm/syscall_wrapper.h:76:25: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                                  ^
+   <scratch space>:172:1: note: expanded from here
+   __arm64_sys_recvmmsg
+   ^
+   kernel/sys_ni.c:304:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
+   arch/arm64/include/asm/syscall_wrapper.h:76:13: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                      ^
+   kernel/sys_ni.c:305:1: warning: no previous prototype for function '__arm64_sys_recvmmsg_time32' [-Wmissing-prototypes]
+   COND_SYSCALL(recvmmsg_time32);
+   ^
+   arch/arm64/include/asm/syscall_wrapper.h:76:25: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                                  ^
+   <scratch space>:173:1: note: expanded from here
+   __arm64_sys_recvmmsg_time32
+   ^
+   kernel/sys_ni.c:305:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
+   arch/arm64/include/asm/syscall_wrapper.h:76:13: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                      ^
+   kernel/sys_ni.c:306:1: warning: no previous prototype for function '__arm64_compat_sys_recvmmsg_time32' [-Wmissing-prototypes]
+   COND_SYSCALL_COMPAT(recvmmsg_time32);
+   ^
+   arch/arm64/include/asm/syscall_wrapper.h:41:25: note: expanded from macro 'COND_SYSCALL_COMPAT'
+           asmlinkage long __weak __arm64_compat_sys_##name(const struct pt_regs *regs)    \
+                                  ^
+   <scratch space>:174:1: note: expanded from here
+   __arm64_compat_sys_recvmmsg_time32
+   ^
+   kernel/sys_ni.c:306:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
+   arch/arm64/include/asm/syscall_wrapper.h:41:13: note: expanded from macro 'COND_SYSCALL_COMPAT'
+           asmlinkage long __weak __arm64_compat_sys_##name(const struct pt_regs *regs)    \
+                      ^
+   kernel/sys_ni.c:307:1: warning: no previous prototype for function '__arm64_compat_sys_recvmmsg_time64' [-Wmissing-prototypes]
+   COND_SYSCALL_COMPAT(recvmmsg_time64);
+   ^
+   arch/arm64/include/asm/syscall_wrapper.h:41:25: note: expanded from macro 'COND_SYSCALL_COMPAT'
+           asmlinkage long __weak __arm64_compat_sys_##name(const struct pt_regs *regs)    \
+                                  ^
+   <scratch space>:2:1: note: expanded from here
+   __arm64_compat_sys_recvmmsg_time64
+   ^
+   kernel/sys_ni.c:307:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
+   arch/arm64/include/asm/syscall_wrapper.h:41:13: note: expanded from macro 'COND_SYSCALL_COMPAT'
+           asmlinkage long __weak __arm64_compat_sys_##name(const struct pt_regs *regs)    \
+                      ^
+   kernel/sys_ni.c:314:1: warning: no previous prototype for function '__arm64_sys_fanotify_init' [-Wmissing-prototypes]
+   COND_SYSCALL(fanotify_init);
+   ^
+   arch/arm64/include/asm/syscall_wrapper.h:76:25: note: expanded from macro 'COND_SYSCALL'
+           asmlinkage long __weak __arm64_sys_##name(const struct pt_regs *regs)   \
+                                  ^
+   <scratch space>:3:1: note: expanded from here
+   __arm64_sys_fanotify_init
+   ^
+   kernel/sys_ni.c:314:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
 
-Thanks,
-Alex
 
--- 
-Alejandro Colomar
-Linux man-pages comaintainer; http://www.kernel.org/doc/man-pages/
+vim +/__arm64_sys_set_mempolicy_home_node +300 kernel/sys_ni.c
+
+   280	
+   281	/* mm/, CONFIG_MMU only */
+   282	COND_SYSCALL(swapon);
+   283	COND_SYSCALL(swapoff);
+   284	COND_SYSCALL(mprotect);
+   285	COND_SYSCALL(msync);
+   286	COND_SYSCALL(mlock);
+   287	COND_SYSCALL(munlock);
+   288	COND_SYSCALL(mlockall);
+   289	COND_SYSCALL(munlockall);
+   290	COND_SYSCALL(mincore);
+   291	COND_SYSCALL(madvise);
+   292	COND_SYSCALL(process_madvise);
+   293	COND_SYSCALL(process_mrelease);
+   294	COND_SYSCALL(remap_file_pages);
+   295	COND_SYSCALL(mbind);
+   296	COND_SYSCALL(get_mempolicy);
+   297	COND_SYSCALL(set_mempolicy);
+   298	COND_SYSCALL(migrate_pages);
+   299	COND_SYSCALL(move_pages);
+ > 300	COND_SYSCALL(set_mempolicy_home_node);
+   301	
+
+---
+0-DAY CI Kernel Test Service, Intel Corporation
+https://lists.01.org/hyperkitty/list/kbuild-all@lists.01.org
