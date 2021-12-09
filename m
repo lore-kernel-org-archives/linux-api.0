@@ -2,90 +2,70 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A31A0C433EF
-	for <linux-api@archiver.kernel.org>; Wed,  8 Dec 2021 15:32:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2089EC433EF
+	for <linux-api@archiver.kernel.org>; Thu,  9 Dec 2021 19:00:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233452AbhLHPgD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 8 Dec 2021 10:36:03 -0500
-Received: from smtp-out2.suse.de ([195.135.220.29]:60126 "EHLO
-        smtp-out2.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233264AbhLHPgD (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 8 Dec 2021 10:36:03 -0500
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by smtp-out2.suse.de (Postfix) with ESMTPS id CBB8E1FD2A;
-        Wed,  8 Dec 2021 15:32:29 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-        t=1638977549; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=6VNz+rbMG4FKJ01MyWRZjmX8ICbIRHGfA3fPOOQX6vk=;
-        b=lQmxOHPqIImGvYgUFoj/iKM+12qOie5JvMtoB4akJ2qZmCHmYbpTXL1pvnWqKwkORVb1aC
-        iybWxH9xZOdHCV+A18n0UDr++hxRn356Fzb1GqFlIPDcphqBBuHc+IbeowMYndmGnjy+zO
-        VXh4Y/0OKAdpEJBC2Q0SYA38L3Jw06s=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-        s=susede2_ed25519; t=1638977549;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=6VNz+rbMG4FKJ01MyWRZjmX8ICbIRHGfA3fPOOQX6vk=;
-        b=WT1UpZk6WMHwKNVbBEX+hLKKuM7l5DRaCdSSlLONT9RxyDh2ke5UNv4X9z6Hk6yl5we44/
-        fPRHxkB4QtYWO5Aw==
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 6619913F90;
-        Wed,  8 Dec 2021 15:32:29 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-        by imap2.suse-dmz.suse.de with ESMTPSA
-        id quQdFw3QsGE3VAAAMHmgww
-        (envelope-from <chrubis@suse.cz>); Wed, 08 Dec 2021 15:32:29 +0000
-Date:   Wed, 8 Dec 2021 16:33:47 +0100
-From:   Cyril Hrubis <chrubis@suse.cz>
-To:     David Howells <dhowells@redhat.com>
-Cc:     Zack Weinberg <zack@owlfolio.org>, Arnd Bergmann <arnd@arndb.de>,
-        "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>,
-        libc-alpha@sourceware.org,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        David Laight <David.Laight@aculab.com>,
-        "ltp@lists.linux.it" <ltp@lists.linux.it>
-Subject: Re: [PATCH] uapi: Make __{u,s}64 match {u,}int64_t in userspace
-Message-ID: <YbDQW6uakG3XD8jV@yuki>
-References: <b8d6f890-e5aa-44bf-8a55-5998efa05967@www.fastmail.com>
- <YZvIlz7J6vOEY+Xu@yuki>
- <1618289.1637686052@warthog.procyon.org.uk>
- <ff8fc4470c8f45678e546cafe9980eff@AcuMS.aculab.com>
- <YaTAffbvzxGGsVIv@yuki>
- <CAK8P3a1Rvf_+qmQ5pyDeKweVOFM_GoOKnG4HA3Ffs6LeVuoDhA@mail.gmail.com>
- <913509.1638457313@warthog.procyon.org.uk>
+        id S229910AbhLITDy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 9 Dec 2021 14:03:54 -0500
+Received: from mail-pl1-f177.google.com ([209.85.214.177]:33581 "EHLO
+        mail-pl1-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229693AbhLITDy (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 9 Dec 2021 14:03:54 -0500
+Received: by mail-pl1-f177.google.com with SMTP id y7so4642088plp.0;
+        Thu, 09 Dec 2021 11:00:20 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
+         :user-agent:mime-version:in-reply-to:content-language
+         :content-transfer-encoding;
+        bh=Y5WLCqS4oNc0B1PWaXC9NLJsjv2DgMhZyXGdTfRBzWA=;
+        b=LyW0qtm5fHCIOCDe7nPNj5ZjkFLZqqwz/5bRzOoGpVBWHJn4c03s9zMoNKxOtawmtN
+         ZbmFQgSkFIdXM4I/xYbhYixNXnXgrajeJ0J1RkPPdzq1Y/UePnpmKZUqRGtTorvVS0tE
+         kAKTvZJpuKHSCdblRK17DP1vtkUtyNrgvKgQdZ7UVhlGo+PfE5wfXKijoj+rZ7YsMs/d
+         Ojl7cqcYWzHHkh+TBq0/QF1256cnMo8RjpTrkBsHiKsYhe3VWtZu9lieJKbZkBxqZqJ+
+         zTF00mBmZDCS1p9z0pGeBhfUVw514Z2M6oQhhR1tnedRc1WB0C8KdDecGPi7U54qJr++
+         h5OQ==
+X-Gm-Message-State: AOAM531+6PTZtOhxgakZZAXrjjHsmC0NFiAUghEfHDckpkYFxlF9aok3
+        q5e9dk5sUKUzsbaNBYcxuMY=
+X-Google-Smtp-Source: ABdhPJyRCWX4C0QwOJfqX18IofvfAJ4UX5G4Sj9+JeujP7WTbWENzrXr2tworBPXvHqHktjeVgu94A==
+X-Received: by 2002:a17:903:22c4:b0:141:deda:a744 with SMTP id y4-20020a17090322c400b00141dedaa744mr70258352plg.25.1639076420392;
+        Thu, 09 Dec 2021 11:00:20 -0800 (PST)
+Received: from ?IPv6:2620:0:1000:2514:4f5b:f494:7264:b4d4? ([2620:0:1000:2514:4f5b:f494:7264:b4d4])
+        by smtp.gmail.com with ESMTPSA id h8sm359669pgj.26.2021.12.09.11.00.18
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 09 Dec 2021 11:00:19 -0800 (PST)
+Subject: Re: [PATCH v3 1/3] block: simplify calling convention of
+ elv_unregister_queue()
+To:     Eric Biggers <ebiggers@kernel.org>, linux-block@vger.kernel.org
+Cc:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-scsi@vger.kernel.org, linux-mmc@vger.kernel.org,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Hannes Reinecke <hare@suse.de>
+References: <20211208013534.136590-1-ebiggers@kernel.org>
+ <20211208013534.136590-2-ebiggers@kernel.org>
+From:   Bart Van Assche <bvanassche@acm.org>
+Message-ID: <ddb37191-c838-2c45-6a9e-a8eb02d18e8b@acm.org>
+Date:   Thu, 9 Dec 2021 11:00:17 -0800
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Thunderbird/78.14.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <913509.1638457313@warthog.procyon.org.uk>
+In-Reply-To: <20211208013534.136590-2-ebiggers@kernel.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi!
-> > I could be persuaded otherwise with an example of a program for which
-> > changing __s64 from 'long long' to 'long' would break *binary* backward
-> > compatibility, or similarly for __u64.
+On 12/7/21 5:35 PM, Eric Biggers wrote:
+> From: Eric Biggers <ebiggers@google.com>
 > 
-> C++ could break.
+> Make elv_unregister_queue() a no-op if q->elevator is NULL or is not
+> registered.
+> 
+> This simplifies the existing callers, as well as the future caller in
+> the error path of blk_register_queue().
+> 
+> Also don't bother checking whether q is NULL, since it never is.
 
-Thinking of this again we can detect C++ as well so it can be safely
-enabled just for C with:
-
-#if !defined(__KERNEL__) && !defined(__cplusplus) && __BITSPERLONG == 64
-# include <asm-generic/int-l64.h>
-#else
-# include <asm-generic/int-ll64.h>
-#endif
-
--- 
-Cyril Hrubis
-chrubis@suse.cz
+Reviewed-by: Bart Van Assche <bvanassche@acm.org>
