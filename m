@@ -2,85 +2,147 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BF1F9C433F5
-	for <linux-api@archiver.kernel.org>; Mon, 13 Dec 2021 22:51:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 329DBC433EF
+	for <linux-api@archiver.kernel.org>; Mon, 13 Dec 2021 22:54:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S243946AbhLMWvG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 13 Dec 2021 17:51:06 -0500
-Received: from out01.mta.xmission.com ([166.70.13.231]:41038 "EHLO
+        id S241004AbhLMWyj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 13 Dec 2021 17:54:39 -0500
+Received: from out01.mta.xmission.com ([166.70.13.231]:41766 "EHLO
         out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S243945AbhLMWvF (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 13 Dec 2021 17:51:05 -0500
-Received: from in01.mta.xmission.com ([166.70.13.51]:45234)
+        with ESMTP id S234858AbhLMWyj (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 13 Dec 2021 17:54:39 -0500
+Received: from in01.mta.xmission.com ([166.70.13.51]:50848)
         by out01.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1mwu9w-0081F3-BK; Mon, 13 Dec 2021 15:51:04 -0700
-Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95]:60372 helo=email.froward.int.ebiederm.org.xmission.com)
+        id 1mwuDO-0081VN-Fo; Mon, 13 Dec 2021 15:54:38 -0700
+Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95]:60446 helo=localhost.localdomain)
         by in01.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1mwu9v-007pJx-7N; Mon, 13 Dec 2021 15:51:03 -0700
-From:   ebiederm@xmission.com (Eric W. Biederman)
-To:     <linux-kernel@vger.kernel.org>
-Cc:     <linux-arch@vger.kernel.org>,
+        id 1mwuDM-007pqT-O1; Mon, 13 Dec 2021 15:54:37 -0700
+From:   "Eric W. Biederman" <ebiederm@xmission.com>
+To:     linux-kernel@vger.kernel.org
+Cc:     linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
         Linus Torvalds <torvalds@linux-foundation.org>,
         Alexey Gladkov <legion@kernel.org>,
         Kyle Huey <me@kylehuey.com>, Oleg Nesterov <oleg@redhat.com>,
         Kees Cook <keescook@chromium.org>,
-        Al Viro <viro@ZenIV.linux.org.uk>, <linux-api@vger.kernel.org>
+        Al Viro <viro@ZenIV.linux.org.uk>,
+        "Eric W. Biederman" <ebiederm@xmission.com>
+Date:   Mon, 13 Dec 2021 16:53:43 -0600
+Message-Id: <20211213225350.27481-1-ebiederm@xmission.com>
+X-Mailer: git-send-email 2.20.1
+In-Reply-To: <87a6ha4zsd.fsf@email.froward.int.ebiederm.org>
 References: <87a6ha4zsd.fsf@email.froward.int.ebiederm.org>
-Date:   Mon, 13 Dec 2021 16:50:56 -0600
-In-Reply-To: <87a6ha4zsd.fsf@email.froward.int.ebiederm.org> (Eric
-        W. Biederman's message of "Wed, 08 Dec 2021 14:17:22 -0600")
-Message-ID: <87bl1kunjj.fsf@email.froward.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1mwu9v-007pJx-7N;;;mid=<87bl1kunjj.fsf@email.froward.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1/ldPosCXFTTNb6Bl3CGqPIXoijxcUBdx4=
+Content-Transfer-Encoding: 8bit
+X-XM-SPF: eid=1mwuDM-007pqT-O1;;;mid=<20211213225350.27481-1-ebiederm@xmission.com>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX18pUOSfvGBp64spbGP02g+7gJN2dUHx05o=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: [PATCH 0/8] signal: Cleanup of the signal->flags
+Subject: [PATCH 1/8] signal: Make SIGKILL during coredumps an explicit special case
 X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
 X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+Simplify the code that allows SIGKILL during coredumps to terminate
+the coredump.  As far as I can tell I have avoided breaking it
+by dumb luck.
 
-The special case of SIGKILL during coredumps is very fragile today and
-while reading through the code I realized I have almost broken it twice.
-So this simplifies that special case, removes SIGNAL_GROUP_COREDUMP
-which has become unnecessary with the addition of signal->core_state,
-and this removes the helper signal_group_exit which is misnamed and
-is not used properly.
+Historically with all of the other threads stopping in exit_mm the
+wants_signal loop in complete_signal would find the dumper task and
+then complete_signal would wake the dumper task with signal_wake_up.
 
-If you squint very hard there might be a user space visible difference
-in behavior somewhere but I don't think there is one in practice.
+After moving the coredump_task_exit above the setting of PF_EXITING in
+commit 92307383082d ("coredump: Don't perform any cleanups before
+dumping core") wants_signal will consider all of the threads in a
+multi-threaded process for waking up, not just the core dumping task.
 
-These patches are on top of:
-https://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git/ signal-for-v5.17
+Luckily complete_signal short circuits SIGKILL during a coredump marks
+every thread with SIGKILL and signal_wake_up.  This code is arguably
+buggy however as it tries to skip creating a group exit when is already
+present, and it fails that a coredump is in progress.
 
-After these patches have been reviewed it is my plan to apply them to my
-signal-for-v5.17 branch.
+Ever since commit 06af8679449d ("coredump: Limit what can interrupt
+coredumps") was added dump_interrupted needs not just TIF_SIGPENDING
+set on the dumper task but also SIGKILL set in it's pending bitmap.
+This means that if the code is ever fixed not to short-circuit and
+kill a process after it has already been killed the special case
+for SIGKILL during a coredump will be broken.
 
-Eric W. Biederman (8):
-      signal: Make SIGKILL during coredumps an explicit special case
-      signal: Drop signals received after a fatal signal has been processed
-      signal: Have the oom killer detect coredumps using signal->core_state
-      signal: During coredumps set SIGNAL_GROUP_EXIT in zap_process
-      signal: Remove SIGNAL_GROUP_COREDUMP
-      coredump: Stop setting signal->group_exit_task
-      signal: Rename group_exit_task group_exec_task
-      signal: Remove the helper signal_group_exit
+Sort all of this out by making the coredump special case more special,
+and perform all of the work in prepare_signal and leave the rest of
+the signal delivery path out of it.
 
- fs/coredump.c                | 20 +++++++++-----------
- fs/exec.c                    | 10 +++++-----
- include/linux/sched/signal.h | 18 +++---------------
- kernel/exit.c                | 12 ++++++++----
- kernel/signal.c              | 24 ++++++++++++++++--------
- mm/oom_kill.c                |  2 +-
- 6 files changed, 42 insertions(+), 44 deletions(-)
+In prepare_signal when the process coredumping is sent SIGKILL find
+the task performing the coredump and use sigaddset and signal_wake_up
+to ensure that task reports fatal_signal_pending.
 
-Eric
+Return false from prepare_signal to tell the rest of the signal
+delivery path to ignore the signal.
+
+Update wait_for_dump_helpers to perform a wait_event_killable wait
+so that if signal_pending gets set spuriously the wait will not
+be interrupted unless fatal_signal_pending is true.
+
+I have tested this and verified I did not break SIGKILL during
+coredumps by accident (before or after this change).  I actually
+thought I had and I had to figure out what I had misread that kept
+SIGKILL during coredumps working.
+
+Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+---
+ fs/coredump.c   |  4 ++--
+ kernel/signal.c | 11 +++++++++--
+ 2 files changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/fs/coredump.c b/fs/coredump.c
+index a6b3c196cdef..7b91fb32dbb8 100644
+--- a/fs/coredump.c
++++ b/fs/coredump.c
+@@ -448,7 +448,7 @@ static void coredump_finish(bool core_dumped)
+ static bool dump_interrupted(void)
+ {
+ 	/*
+-	 * SIGKILL or freezing() interrupt the coredumping. Perhaps we
++	 * SIGKILL or freezing() interrupted the coredumping. Perhaps we
+ 	 * can do try_to_freeze() and check __fatal_signal_pending(),
+ 	 * but then we need to teach dump_write() to restart and clear
+ 	 * TIF_SIGPENDING.
+@@ -471,7 +471,7 @@ static void wait_for_dump_helpers(struct file *file)
+ 	 * We actually want wait_event_freezable() but then we need
+ 	 * to clear TIF_SIGPENDING and improve dump_interrupted().
+ 	 */
+-	wait_event_interruptible(pipe->rd_wait, pipe->readers == 1);
++	wait_event_killable(pipe->rd_wait, pipe->readers == 1);
+ 
+ 	pipe_lock(pipe);
+ 	pipe->readers--;
+diff --git a/kernel/signal.c b/kernel/signal.c
+index 8272cac5f429..7e305a8ec7c2 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -907,8 +907,15 @@ static bool prepare_signal(int sig, struct task_struct *p, bool force)
+ 	sigset_t flush;
+ 
+ 	if (signal->flags & (SIGNAL_GROUP_EXIT | SIGNAL_GROUP_COREDUMP)) {
+-		if (!(signal->flags & SIGNAL_GROUP_EXIT))
+-			return sig == SIGKILL;
++		struct core_state *core_state = signal->core_state;
++		if (core_state) {
++			if (sig == SIGKILL) {
++				struct task_struct *dumper = core_state->dumper.task;
++				sigaddset(&dumper->pending.signal, SIGKILL);
++				signal_wake_up(dumper, 1);
++			}
++			return false;
++		}
+ 		/*
+ 		 * The process is in the middle of dying, nothing to do.
+ 		 */
+-- 
+2.29.2
+
