@@ -2,25 +2,25 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 329DBC433EF
-	for <linux-api@archiver.kernel.org>; Mon, 13 Dec 2021 22:54:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 25A77C433EF
+	for <linux-api@archiver.kernel.org>; Mon, 13 Dec 2021 22:54:44 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S241004AbhLMWyj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 13 Dec 2021 17:54:39 -0500
-Received: from out01.mta.xmission.com ([166.70.13.231]:41766 "EHLO
+        id S243975AbhLMWym (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 13 Dec 2021 17:54:42 -0500
+Received: from out01.mta.xmission.com ([166.70.13.231]:41786 "EHLO
         out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234858AbhLMWyj (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 13 Dec 2021 17:54:39 -0500
-Received: from in01.mta.xmission.com ([166.70.13.51]:50848)
+        with ESMTP id S234858AbhLMWyl (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 13 Dec 2021 17:54:41 -0500
+Received: from in01.mta.xmission.com ([166.70.13.51]:50904)
         by out01.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1mwuDO-0081VN-Fo; Mon, 13 Dec 2021 15:54:38 -0700
+        id 1mwuDQ-0081Vk-QH; Mon, 13 Dec 2021 15:54:40 -0700
 Received: from ip68-227-160-95.om.om.cox.net ([68.227.160.95]:60446 helo=localhost.localdomain)
         by in01.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1mwuDM-007pqT-O1; Mon, 13 Dec 2021 15:54:37 -0700
+        id 1mwuDP-007pqT-NN; Mon, 13 Dec 2021 15:54:40 -0700
 From:   "Eric W. Biederman" <ebiederm@xmission.com>
 To:     linux-kernel@vger.kernel.org
 Cc:     linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
@@ -30,119 +30,95 @@ Cc:     linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
         Kees Cook <keescook@chromium.org>,
         Al Viro <viro@ZenIV.linux.org.uk>,
         "Eric W. Biederman" <ebiederm@xmission.com>
-Date:   Mon, 13 Dec 2021 16:53:43 -0600
-Message-Id: <20211213225350.27481-1-ebiederm@xmission.com>
+Date:   Mon, 13 Dec 2021 16:53:44 -0600
+Message-Id: <20211213225350.27481-2-ebiederm@xmission.com>
 X-Mailer: git-send-email 2.20.1
 In-Reply-To: <87a6ha4zsd.fsf@email.froward.int.ebiederm.org>
 References: <87a6ha4zsd.fsf@email.froward.int.ebiederm.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-XM-SPF: eid=1mwuDM-007pqT-O1;;;mid=<20211213225350.27481-1-ebiederm@xmission.com>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX18pUOSfvGBp64spbGP02g+7gJN2dUHx05o=
+X-XM-SPF: eid=1mwuDP-007pqT-NN;;;mid=<20211213225350.27481-2-ebiederm@xmission.com>;;;hst=in01.mta.xmission.com;;;ip=68.227.160.95;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1+c92wFPwUv8392NprGtfCDOlVLwBLUWmE=
 X-SA-Exim-Connect-IP: 68.227.160.95
 X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: [PATCH 1/8] signal: Make SIGKILL during coredumps an explicit special case
+Subject: [PATCH 2/8] signal: Drop signals received after a fatal signal has been processed
 X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
 X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Simplify the code that allows SIGKILL during coredumps to terminate
-the coredump.  As far as I can tell I have avoided breaking it
-by dumb luck.
+In 403bad72b67d ("coredump: only SIGKILL should interrupt the
+coredumping task") Oleg modified the kernel to drop all signals that
+come in during a coredump except SIGKILL, and suggested that it might
+be a good idea to generalize that to other cases after the process has
+received a fatal signal.
 
-Historically with all of the other threads stopping in exit_mm the
-wants_signal loop in complete_signal would find the dumper task and
-then complete_signal would wake the dumper task with signal_wake_up.
+Semantically it does not make sense to perform any signal delivery
+after the process has already been killed.
 
-After moving the coredump_task_exit above the setting of PF_EXITING in
-commit 92307383082d ("coredump: Don't perform any cleanups before
-dumping core") wants_signal will consider all of the threads in a
-multi-threaded process for waking up, not just the core dumping task.
+When a signal is sent while a process is dying today the signal is
+placed in the signal queue by __send_signal and a single task of the
+process is woken up with signal_wake_up, if there are any tasks that
+have not set PF_EXITING.
 
-Luckily complete_signal short circuits SIGKILL during a coredump marks
-every thread with SIGKILL and signal_wake_up.  This code is arguably
-buggy however as it tries to skip creating a group exit when is already
-present, and it fails that a coredump is in progress.
+Take things one step farther and have prepare_signal report that all
+signals that come after a process has been killed should be ignored.
+While retaining the historical exception of allowing SIGKILL to
+interrupt coredumps.
 
-Ever since commit 06af8679449d ("coredump: Limit what can interrupt
-coredumps") was added dump_interrupted needs not just TIF_SIGPENDING
-set on the dumper task but also SIGKILL set in it's pending bitmap.
-This means that if the code is ever fixed not to short-circuit and
-kill a process after it has already been killed the special case
-for SIGKILL during a coredump will be broken.
+Remove the SIGNAL_GROUP_EXIT test from complete_signal, as it is no
+longer possible for signal processing to reach complete_signal when
+SIGNAL_GROUP_EXIT is true.
 
-Sort all of this out by making the coredump special case more special,
-and perform all of the work in prepare_signal and leave the rest of
-the signal delivery path out of it.
-
-In prepare_signal when the process coredumping is sent SIGKILL find
-the task performing the coredump and use sigaddset and signal_wake_up
-to ensure that task reports fatal_signal_pending.
-
-Return false from prepare_signal to tell the rest of the signal
-delivery path to ignore the signal.
-
-Update wait_for_dump_helpers to perform a wait_event_killable wait
-so that if signal_pending gets set spuriously the wait will not
-be interrupted unless fatal_signal_pending is true.
-
-I have tested this and verified I did not break SIGKILL during
-coredumps by accident (before or after this change).  I actually
-thought I had and I had to figure out what I had misread that kept
-SIGKILL during coredumps working.
+Update the comment in fs/coredump.c to make it clear coredumps are
+special in being able to receive SIGKILL.
 
 Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- fs/coredump.c   |  4 ++--
- kernel/signal.c | 11 +++++++++--
- 2 files changed, 11 insertions(+), 4 deletions(-)
+ fs/coredump.c   | 2 +-
+ kernel/signal.c | 5 ++---
+ 2 files changed, 3 insertions(+), 4 deletions(-)
 
 diff --git a/fs/coredump.c b/fs/coredump.c
-index a6b3c196cdef..7b91fb32dbb8 100644
+index 7b91fb32dbb8..a9c25f20118f 100644
 --- a/fs/coredump.c
 +++ b/fs/coredump.c
-@@ -448,7 +448,7 @@ static void coredump_finish(bool core_dumped)
- static bool dump_interrupted(void)
- {
- 	/*
--	 * SIGKILL or freezing() interrupt the coredumping. Perhaps we
-+	 * SIGKILL or freezing() interrupted the coredumping. Perhaps we
- 	 * can do try_to_freeze() and check __fatal_signal_pending(),
- 	 * but then we need to teach dump_write() to restart and clear
- 	 * TIF_SIGPENDING.
-@@ -471,7 +471,7 @@ static void wait_for_dump_helpers(struct file *file)
- 	 * We actually want wait_event_freezable() but then we need
- 	 * to clear TIF_SIGPENDING and improve dump_interrupted().
- 	 */
--	wait_event_interruptible(pipe->rd_wait, pipe->readers == 1);
-+	wait_event_killable(pipe->rd_wait, pipe->readers == 1);
+@@ -352,7 +352,7 @@ static int zap_process(struct task_struct *start, int exit_code, int flags)
+ 	struct task_struct *t;
+ 	int nr = 0;
  
- 	pipe_lock(pipe);
- 	pipe->readers--;
+-	/* ignore all signals except SIGKILL, see prepare_signal() */
++	/* Allow SIGKILL, see prepare_signal() */
+ 	start->signal->flags = SIGNAL_GROUP_COREDUMP | flags;
+ 	start->signal->group_exit_code = exit_code;
+ 	start->signal->group_stop_count = 0;
 diff --git a/kernel/signal.c b/kernel/signal.c
-index 8272cac5f429..7e305a8ec7c2 100644
+index 7e305a8ec7c2..cdccbacac685 100644
 --- a/kernel/signal.c
 +++ b/kernel/signal.c
-@@ -907,8 +907,15 @@ static bool prepare_signal(int sig, struct task_struct *p, bool force)
- 	sigset_t flush;
- 
- 	if (signal->flags & (SIGNAL_GROUP_EXIT | SIGNAL_GROUP_COREDUMP)) {
--		if (!(signal->flags & SIGNAL_GROUP_EXIT))
--			return sig == SIGKILL;
-+		struct core_state *core_state = signal->core_state;
-+		if (core_state) {
-+			if (sig == SIGKILL) {
-+				struct task_struct *dumper = core_state->dumper.task;
-+				sigaddset(&dumper->pending.signal, SIGKILL);
-+				signal_wake_up(dumper, 1);
-+			}
-+			return false;
-+		}
+@@ -914,11 +914,11 @@ static bool prepare_signal(int sig, struct task_struct *p, bool force)
+ 				sigaddset(&dumper->pending.signal, SIGKILL);
+ 				signal_wake_up(dumper, 1);
+ 			}
+-			return false;
+ 		}
  		/*
- 		 * The process is in the middle of dying, nothing to do.
+-		 * The process is in the middle of dying, nothing to do.
++		 * The process is in the middle of dying, drop the signal.
  		 */
++		return false;
+ 	} else if (sig_kernel_stop(sig)) {
+ 		/*
+ 		 * This is a stop signal.  Remove SIGCONT from all queues.
+@@ -1039,7 +1039,6 @@ static void complete_signal(int sig, struct task_struct *p, enum pid_type type)
+ 	 * then start taking the whole group down immediately.
+ 	 */
+ 	if (sig_fatal(p, sig) &&
+-	    !(signal->flags & SIGNAL_GROUP_EXIT) &&
+ 	    !sigismember(&t->real_blocked, sig) &&
+ 	    (sig == SIGKILL || !p->ptrace)) {
+ 		/*
 -- 
 2.29.2
 
