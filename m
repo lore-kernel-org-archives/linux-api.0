@@ -2,145 +2,407 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C7C53C433EF
-	for <linux-api@archiver.kernel.org>; Tue, 14 Dec 2021 20:55:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 898CFC433F5
+	for <linux-api@archiver.kernel.org>; Tue, 14 Dec 2021 21:00:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237706AbhLNUzy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 14 Dec 2021 15:55:54 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38224 "EHLO
+        id S237729AbhLNVAj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 14 Dec 2021 16:00:39 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39342 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232607AbhLNUzv (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 14 Dec 2021 15:55:51 -0500
-Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 340E3C06173F;
-        Tue, 14 Dec 2021 12:55:51 -0800 (PST)
+        with ESMTP id S230382AbhLNVAi (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 14 Dec 2021 16:00:38 -0500
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6DCA3C061574;
+        Tue, 14 Dec 2021 13:00:38 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=desiato.20200630; h=Content-Type:MIME-Version:References:
-        Subject:Cc:To:From:Date:Message-ID:Sender:Reply-To:Content-Transfer-Encoding:
-        Content-ID:Content-Description:In-Reply-To;
-        bh=swKTX+/dDYjpw7SeCk1grDkyLsyfJ8yjDiBYXZ0a5Go=; b=NzPoFdMRruFxd9EwblR+CMFDH5
-        l6b0qd3evLy0X8fFSLXpPRiYiTPn94PaQE8/1kucRB5jkYa905AIV+vozhaL5IvuSUSMTat3cq8zq
-        ykx7/Uytj3yTxZdCs1mR95x/bq/GBPeLeziJuKLvrC/fXayLNDUzVtdqlRQ4L4LI1FFReGXwt8FCZ
-        /KG4pkSpdGWiKLi5YEZcq7VtnEotmeiINBkpE6OuT8GjtxTJ1zjk8OZYd0lfPQphha0dBIkybcEIy
-        Fu/gpXtZ9/gmGPzHSgDxSlGZnsnAOeanmUTkunfp34aJlrQc7pwvM/ZOyTBtCjUzaJM9pz+HUzJ3D
-        ZLtk7yrw==;
-Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=noisy.programming.kicks-ass.net)
-        by desiato.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1mxEpW-001NMu-N7; Tue, 14 Dec 2021 20:55:22 +0000
-Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (4096 bits))
-        (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 56C36300380;
-        Tue, 14 Dec 2021 21:55:20 +0100 (CET)
-Received: by hirez.programming.kicks-ass.net (Postfix, from userid 0)
-        id 12A08200D4309; Tue, 14 Dec 2021 21:55:20 +0100 (CET)
-Message-ID: <20211214205358.643980924@infradead.org>
-User-Agent: quilt/0.66
-Date:   Tue, 14 Dec 2021 21:44:47 +0100
+        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=02vHHiKz0gT5jyRJmlmc/3dByU2JhzQMiKH2ELlSE50=; b=MyP+dV0kBQGp26VdnA1YyssEtT
+        zXH1KQmM6Ki+ffqbOhL5XZA4qBND4++sGgq00SEyxTxV0GmJDOvZKdjawkanhCRNZkX5Y0p4LgT8r
+        D9qRNVc3o110ds3GIljIdxpEGPxczxnOKElc1Z/nCuFj8ExYduRc0GgFTCWmjj4jIRnpEmg1nq1wv
+        SM9CnqNe08EBJjuwyTETVYdoPil5VNUz7/QQxn44FLCkXoSfI1g6YIzVpZuQw6adzo7uU+21zlnDo
+        HuzQPtlElaDW9/hRGa9IiD6Mh67hh3A42RGxhC1UlYYspJrdWxt/CUnwS1zd8OYbn+3hrxL6G+aP0
+        oxAxacvA==;
+Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=worktop.programming.kicks-ass.net)
+        by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1mxEuH-00E4cB-7j; Tue, 14 Dec 2021 21:00:18 +0000
+Received: by worktop.programming.kicks-ass.net (Postfix, from userid 1000)
+        id 0BA11984C61; Tue, 14 Dec 2021 22:00:17 +0100 (CET)
+Date:   Tue, 14 Dec 2021 22:00:16 +0100
 From:   Peter Zijlstra <peterz@infradead.org>
 To:     mingo@redhat.com, tglx@linutronix.de, juri.lelli@redhat.com,
         vincent.guittot@linaro.org, dietmar.eggemann@arm.com,
         rostedt@goodmis.org, bsegall@google.com, mgorman@suse.de,
         bristot@redhat.com
 Cc:     linux-kernel@vger.kernel.org, linux-mm@kvack.org,
-        linux-api@vger.kernel.org, x86@kernel.org, peterz@infradead.org,
-        pjt@google.com, posk@google.com, avagin@google.com,
-        jannh@google.com, tdelisle@uwaterloo.ca, posk@posk.io
-Subject: [RFC][PATCH 2/3] x86/uaccess: Implement unsafe_try_cmpxchg_user()
+        linux-api@vger.kernel.org, x86@kernel.org, pjt@google.com,
+        posk@google.com, avagin@google.com, jannh@google.com,
+        tdelisle@uwaterloo.ca, posk@posk.io
+Subject: Re: [RFC][PATCH 0/3] sched: User Managed Concurrency Groups
+Message-ID: <20211214210016.GD16608@worktop.programming.kicks-ass.net>
 References: <20211214204445.665580974@infradead.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20211214204445.665580974@infradead.org>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Do try_cmpxchg() loops on userspace addresses.
+On Tue, Dec 14, 2021 at 09:44:45PM +0100, Peter Zijlstra wrote:
+> I'll post my test-hack as a reply, but basically it does co-operative and
+> preemptive UP-like user scheduling.
 
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+It's pretty rough, but seems to work. Defaults to co-operative and
+switches to preemptive when ran with an (any!) argument.
+
 ---
- arch/x86/include/asm/uaccess.h |   57 +++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 57 insertions(+)
+// gcc -Itools/include/ -o umcg umcg.c -lpthread
 
---- a/arch/x86/include/asm/uaccess.h
-+++ b/arch/x86/include/asm/uaccess.h
-@@ -342,6 +342,24 @@ do {									\
- 		     : [umem] "m" (__m(addr))				\
- 		     : : label)
- 
-+#define __try_cmpxchg_user_asm(itype, _ptr, _pold, _new, label)	({	\
-+	bool success;							\
-+	__typeof__(_ptr) _old = (__typeof__(_ptr))(_pold);		\
-+	__typeof__(*(_ptr)) __old = *_old;				\
-+	__typeof__(*(_ptr)) __new = (_new);				\
-+	asm_volatile_goto("\n"						\
-+		     "1: " LOCK_PREFIX "cmpxchg"itype" %[new], %[ptr]\n"\
-+		     _ASM_EXTABLE_UA(1b, %l[label])			\
-+		     : CC_OUT(z) (success),				\
-+		       [ptr] "+m" (*_ptr),				\
-+		       [old] "+a" (__old)				\
-+		     : [new] "r" (__new)				\
-+		     : "memory", "cc"					\
-+		     : label);						\
-+	if (unlikely(!success))						\
-+		*_old = __old;						\
-+	likely(success);					})
-+
- #else // !CONFIG_CC_HAS_ASM_GOTO_OUTPUT
- 
- #ifdef CONFIG_X86_32
-@@ -407,6 +425,30 @@ do {									\
- 		     : [umem] "m" (__m(addr)),				\
- 		       "0" (err))
- 
-+#define __try_cmpxchg_user_asm(itype, _ptr, _pold, _new, label)	({	\
-+	int __err = 0;							\
-+	bool success;							\
-+	__typeof__(_ptr) _old = (__typeof__(_ptr))(_pold);		\
-+	__typeof__(*(_ptr)) __old = *_old;				\
-+	__typeof__(*(_ptr)) __new = (_new);				\
-+	asm volatile("\n"						\
-+		     "1: " LOCK_PREFIX "cmpxchg"itype" %[new], %[ptr]\n"\
-+		     CC_SET(z)						\
-+		     "2:\n"						\
-+		     _ASM_EXTABLE_TYPE_REG(1b, 2b, EX_TYPE_EFAULT_REG,	\
-+					   %[errout])			\
-+		     : CC_OUT(z) (success),				\
-+		       [errout] "+r" (__err),				\
-+		       [ptr] "+m" (*_ptr),				\
-+		       [old] "+a" (__old)				\
-+		     : [new] "r" (__new)				\
-+		     : "memory", "cc");					\
-+	if (unlikely(__err))						\
-+		goto label;						\
-+	if (unlikely(!success))						\
-+		*_old = __old;						\
-+	likely(success);					})
-+
- #endif // CONFIG_CC_HAS_ASM_GOTO_OUTPUT
- 
- /* FIXME: this hack is definitely wrong -AK */
-@@ -501,6 +543,21 @@ do {										\
- } while (0)
- #endif // CONFIG_CC_HAS_ASM_GOTO_OUTPUT
- 
-+extern void __try_cmpxchg_user_wrong_size(void);
-+
-+#define unsafe_try_cmpxchg_user(_ptr, _oldp, _nval, _label) ({		\
-+	__typeof__(*(_ptr)) __ret;					\
-+	switch (sizeof(__ret)) {					\
-+	case 4:	__ret = __try_cmpxchg_user_asm("l", (_ptr), (_oldp),	\
-+					       (_nval), _label);	\
-+		break;							\
-+	case 8:	__ret = __try_cmpxchg_user_asm("q", (_ptr), (_oldp),	\
-+					       (_nval), _label);	\
-+		break;							\
-+	default: __try_cmpxchg_user_wrong_size();			\
-+	}								\
-+	__ret;						})
-+
- /*
-  * We want the unsafe accessors to always be inlined and use
-  * the error labels - thus the macro games.
+#define _GNU_SOURCE
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
 
+#ifndef __NR_umcg_ctl
+#define __NR_umcg_ctl  450
+#define __NR_umcg_wait 451
+#define __NR_umcg_kick 452
+#endif
+
+#include <linux/list.h>
+#include "include/uapi/linux/umcg.h"
+
+/* syscall wrappers */
+
+static inline int
+sys_umcg_ctl(u32 flags, struct umcg_task *self, clockid_t which_clock)
+{
+	return syscall(__NR_umcg_ctl, flags, self, which_clock);
+}
+
+static inline int
+sys_umcg_wait(u32 flags, u64 timo)
+{
+	return syscall(__NR_umcg_wait, flags, timo);
+}
+
+static inline int
+sys_umcg_kick(u32 flags, pid_t tid)
+{
+	return syscall(__NR_umcg_kick, flags, tid);
+}
+
+/* the 'foo' scheduler */
+
+struct foo_task {
+	struct umcg_task	task;
+	struct list_head	node;
+	pid_t			tid;
+};
+
+struct foo_server {
+	struct umcg_task	task;
+	struct list_head	node;
+	pid_t			tid;
+	struct foo_task		*cur;
+};
+
+void foo_add(struct foo_server *server, struct umcg_task *t)
+{
+	struct foo_task *foo = container_of(t, struct foo_task, task);
+
+	t->runnable_workers_ptr = 0ULL;
+	list_add_tail(&foo->node, &server->node);
+}
+
+struct foo_task *foo_pick_next(struct foo_server *server)
+{
+	struct foo_task *first = NULL;
+
+	if (list_empty(&server->node))
+		return first;
+
+	first = list_first_entry(&server->node, struct foo_task, node);
+	list_del(&first->node);
+	return first;
+}
+
+#define NSEC_PER_SEC 1000000000ULL
+
+u64 foo_time(void)
+{
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return (unsigned long long)ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
+}
+
+void foo_yield(struct umcg_task *self)
+{
+	self->state = UMCG_TASK_RUNNABLE | UMCG_TF_COND_WAIT;
+	sys_umcg_wait(0, 0);
+}
+
+#define TICK_NSEC NSEC_PER_SEC
+
+volatile bool foo_preemptible = false;
+
+/* our workers */
+
+/* always running worker */
+void *worker_fn0(void *arg)
+{
+	struct foo_server *server = arg;
+	struct foo_task task = { };
+	unsigned long i;
+	int ret;
+
+	task.tid = gettid();
+	task.task.server_tid = server->tid;
+	task.task.state = UMCG_TASK_BLOCKED;
+
+	printf("A == %d\n", gettid());
+
+	ret = sys_umcg_ctl(UMCG_CTL_REGISTER|UMCG_CTL_WORKER, &task.task, CLOCK_MONOTONIC);
+	if (ret) {
+		perror("umcg_ctl(A): ");
+		exit(-1);
+	}
+
+	for (;;) {
+		int x = i++;
+
+		if (!(x % 1000000)) {
+			putchar('.');
+			fflush(stdout);
+		}
+
+		/* co-operative or preemptible */
+		if (!foo_preemptible && !(x % 10000000))
+			foo_yield(&task.task);
+	}
+
+	return NULL;
+}
+
+/* event driven worker */
+void *worker_fn1(void *arg)
+{
+	struct foo_server *server = arg;
+	struct foo_task task = { };
+	int ret;
+
+	task.tid = gettid();
+	task.task.server_tid = server->tid;
+	task.task.state = UMCG_TASK_BLOCKED;
+
+	printf("B == %d\n", gettid());
+
+	ret = sys_umcg_ctl(UMCG_CTL_REGISTER|UMCG_CTL_WORKER, &task.task, CLOCK_MONOTONIC);
+	if (ret) {
+		perror("umcg_ctl(B): ");
+		exit(-1);
+	}
+
+	for (;;) {
+		printf("B\n");
+		fflush(stdout);
+
+		sleep(2);
+	}
+
+	return NULL;
+}
+
+void *worker_fn2(void *arg)
+{
+	struct foo_server *server = arg;
+	struct foo_task task = { };
+	int ret;
+
+	task.tid = gettid();
+	task.task.server_tid = server->tid;
+	task.task.state = UMCG_TASK_BLOCKED;
+
+	printf("C == %d\n", gettid());
+
+	ret = sys_umcg_ctl(UMCG_CTL_REGISTER|UMCG_CTL_WORKER, &task.task, CLOCK_MONOTONIC);
+	if (ret) {
+		perror("umcg_ctl(C): ");
+		exit(-1);
+	}
+
+	for (;;) {
+		printf("C\n");
+		fflush(stdout);
+
+		sleep(3);
+	}
+
+	return NULL;
+}
+
+/* the server */
+
+int main(int argc, char **argv)
+{
+	struct umcg_task *runnable_ptr, *next;
+	struct foo_server server = { };
+	pthread_t worker[3];
+	u64 timeout = 0;
+	int ret;
+
+	printf("server == %d\n", gettid());
+	fflush(stdout);
+
+	server.tid = gettid();
+	INIT_LIST_HEAD(&server.node);
+	server.task.server_tid = gettid();
+	server.task.state = UMCG_TASK_RUNNING;
+
+	ret = sys_umcg_ctl(UMCG_CTL_REGISTER, &server.task, CLOCK_MONOTONIC);
+	if (ret) {
+		perror("umcg_ctl: ");
+		exit(-1);
+	}
+
+	pthread_create(&worker[0], NULL, worker_fn0, &server);
+	pthread_create(&worker[1], NULL, worker_fn1, &server);
+	pthread_create(&worker[2], NULL, worker_fn2, &server);
+
+	if (argc > 1) {
+		foo_preemptible = true;
+		/*
+		 * setup preemption tick
+		 */
+		timeout = foo_time() + TICK_NSEC;
+	}
+
+	for (;;) {
+		/*
+		 * Mark the server as runnable first, so we can detect
+		 * additions to the runnable list after we read it.
+		 */
+		server.task.state = UMCG_TASK_RUNNABLE | UMCG_TF_COND_WAIT;
+
+		/*
+		 * comsume the runnable notification list and add
+		 * the tasks to our local runqueue.
+		 */
+		runnable_ptr = (void*)__atomic_exchange_n(&server.task.runnable_workers_ptr,
+						   NULL, __ATOMIC_SEQ_CST);
+		while (runnable_ptr) {
+			next = (void *)runnable_ptr->runnable_workers_ptr;
+			foo_add(&server, runnable_ptr);
+			runnable_ptr = next;
+		}
+
+		/*
+		 * If we've got a current running task, the server might have
+		 * gotten a 'spurious' wakeup to pick up new runnable tasks.
+		 *
+		 * In this case, don't pick a new task (possible
+		 * wakeup-preemption point, not implemented here).
+		 *
+		 * Note: even tough this RUNNING test is racy, if it blocks
+		 * after we'll get a RUNNABLE notification which will clear our
+		 * RUNNABLE state and sys_umcg_wait() will -EAGAIN.
+		 */
+		if (server.cur && server.cur->task.state == UMCG_TASK_RUNNING) {
+			/*
+			 * Assert ::next_tid is clear, it should have been
+			 * consumed.
+			 */
+			if (server.task.next_tid) {
+				printf("current running, but still have next_tid\n");
+				exit(-1);
+			}
+
+			putchar('x');
+			fflush(stdout);
+		} else {
+			/*
+			 * Pick the next task...
+			 */
+			server.cur = foo_pick_next(&server);
+			server.task.next_tid = server.cur ? server.cur->tid : 0;
+
+			printf("pick: %d\n", server.task.next_tid);
+			fflush(stdout);
+		}
+
+		/*
+		 * And switch...
+		 */
+		ret = sys_umcg_wait(0, timeout);
+
+		/*
+		 * If we did set ::next_tid but it hasn't been consumed by the
+		 * syscall due to failure, make sure to put the task back on
+		 * the runqueue, lest we leak it.
+		 */
+		if (server.task.next_tid) {
+			foo_add(&server, &server.cur->task);
+			server.cur = NULL;
+			server.task.next_tid = 0;
+		}
+
+		if (!ret)
+			continue;
+
+		switch (errno) {
+			case EAGAIN:
+				/*
+				 * Got a wakeup, try again.
+				 */
+				continue;
+
+			case ETIMEDOUT:
+				/*
+				 * timeout: drive preemption
+				 */
+				putchar('t');
+				fflush(stdout);
+
+				/*
+				 * Next tick..
+				 */
+				timeout += TICK_NSEC;
+
+				/*
+				 * If we have a current, cmpxchg set TF_PREEMPT and on success
+				 * send it a signal to kick it into the kernel such that
+				 * it might re-report itself runnable.
+				 */
+				if (server.cur) {
+					struct foo_task *t = server.cur;
+					u32 val = UMCG_TASK_RUNNING;
+					u32 new = UMCG_TASK_RUNNING | UMCG_TF_PREEMPT;
+
+					if (__atomic_compare_exchange_n(&t->task.state, &val, new,
+								false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+						sys_umcg_kick(0, t->tid);
+					}
+				}
+				/*
+				 * Either way around, if the cmpxchg
+				 * failed the task will have blocked
+				 * and we should re-start the loop.
+				 */
+				continue;
+
+			default:
+				printf("errno: %d\n", errno);
+				perror("wait:");
+				exit(-1);
+		}
+	}
+
+	return 0;
+}
 
