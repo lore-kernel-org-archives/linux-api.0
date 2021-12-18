@@ -2,24 +2,23 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A4C21C433EF
-	for <linux-api@archiver.kernel.org>; Sat, 18 Dec 2021 09:37:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9242FC433FE
+	for <linux-api@archiver.kernel.org>; Sat, 18 Dec 2021 09:37:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232526AbhLRJhF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S232474AbhLRJhF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Sat, 18 Dec 2021 04:37:05 -0500
-Received: from users203.phy.heteml.jp ([157.7.189.222]:34058 "EHLO
+Received: from users203.phy.heteml.jp ([157.7.189.222]:34056 "EHLO
         users203.phy.heteml.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232474AbhLRJhF (ORCPT
+        with ESMTP id S232525AbhLRJhF (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Sat, 18 Dec 2021 04:37:05 -0500
-X-Greylist: delayed 484 seconds by postgrey-1.27 at vger.kernel.org; Sat, 18 Dec 2021 04:37:05 EST
 Received: by users203.phy.heteml.jp (Postfix, from userid 995)
-        id 83FBA403BC4B; Sat, 18 Dec 2021 18:28:59 +0900 (JST)
+        id 390D8403BC4C; Sat, 18 Dec 2021 18:29:02 +0900 (JST)
 To:     linux-api@vger.kernel.org
 Subject: =?UTF-8?B?44CQQURlTGlja+OAkSDjgYrllY/jgYTlkIjjgo/jgZvjgYLjgorjgYw=?=  =?UTF-8?B?44Go44GG44GU44GW44GE44G+44GZ?=
 X-PHP-Originating-Script: 44555:class-phpmailer.php
-Date:   Sat, 18 Dec 2021 09:28:59 +0000
+Date:   Sat, 18 Dec 2021 09:29:01 +0000
 From:   ADeLick <info@adelick.com>
-Message-ID: <74cf5a27a5e82961b103f769352f13bf@adelick.com>
+Message-ID: <7ca1227326886b2e29ddd7828f895da5@adelick.com>
 X-Mailer: PHPMailer 5.2.22 (https://github.com/PHPMailer/PHPMailer)
 X-WPCF7-Content-Type: text/plain
 MIME-Version: 1.0
