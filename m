@@ -2,247 +2,200 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DA093C433F5
-	for <linux-api@archiver.kernel.org>; Fri,  7 Jan 2022 04:10:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3D7A0C433F5
+	for <linux-api@archiver.kernel.org>; Fri,  7 Jan 2022 16:58:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231960AbiAGEKK (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 6 Jan 2022 23:10:10 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46912 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231232AbiAGEKK (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 6 Jan 2022 23:10:10 -0500
-X-Greylist: delayed 1310 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 06 Jan 2022 20:10:09 PST
-Received: from zeniv-ca.linux.org.uk (zeniv-ca.linux.org.uk [IPv6:2607:5300:60:148a::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 96A17C061245
-        for <linux-api@vger.kernel.org>; Thu,  6 Jan 2022 20:10:09 -0800 (PST)
-Received: from viro by zeniv-ca.linux.org.uk with local (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1n5gEj-000GL6-71; Fri, 07 Jan 2022 03:48:17 +0000
-Date:   Fri, 7 Jan 2022 03:48:17 +0000
-From:   Al Viro <viro@zeniv.linux.org.uk>
-To:     "Eric W. Biederman" <ebiederm@xmission.com>
-Cc:     linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Oleg Nesterov <oleg@redhat.com>,
-        Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org
-Subject: Re: [PATCH 01/17] exit: Remove profile_task_exit & profile_munmap
-Message-ID: <Yde4AcAxTziaVies@zeniv-ca.linux.org.uk>
-References: <87r19opkx1.fsf_-_@email.froward.int.ebiederm.org>
- <20220103213312.9144-1-ebiederm@xmission.com>
+        id S240055AbiAGQ61 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 7 Jan 2022 11:58:27 -0500
+Received: from smtp-out1.suse.de ([195.135.220.28]:42218 "EHLO
+        smtp-out1.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S240182AbiAGQ60 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 7 Jan 2022 11:58:26 -0500
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by smtp-out1.suse.de (Postfix) with ESMTPS id CD55A212C9;
+        Fri,  7 Jan 2022 16:58:24 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+        t=1641574704; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=H8FQTxCSaXobv79wKMviWdxMIyZK3K1KzS8f/6eUeio=;
+        b=Vj7Pn1v9b6e2yk3AO2G3XAA6rYAbLOJ1TtblVWH0NW18+yh5L4oafKVVCpbNmuEH+KaABF
+        89jEE4DtBwthjOsXBSQ+y/JA1dLCARXSW29swHQxGyj9x/++TcF+mWu4BM9fN7zwTZkpfg
+        bha1DVjmRMGw3kc4ZxOqwzyj33acxWE=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+        s=susede2_ed25519; t=1641574704;
+        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=H8FQTxCSaXobv79wKMviWdxMIyZK3K1KzS8f/6eUeio=;
+        b=eHP7GlMOpEhfkAKy7wMaJH0n0Stew7ZEGmsS2l1i1rHiGX54sBR/6qZuGRMSjevRWVAlTG
+        ZXQuxaHReWWa6KAg==
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 8CC9713D21;
+        Fri,  7 Jan 2022 16:58:24 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+        by imap2.suse-dmz.suse.de with ESMTPSA
+        id mfKfITBx2GECOwAAMHmgww
+        (envelope-from <vbabka@suse.cz>); Fri, 07 Jan 2022 16:58:24 +0000
+Message-ID: <91d662f1-baf6-1114-f237-a66ebc164009@suse.cz>
+Date:   Fri, 7 Jan 2022 17:58:24 +0100
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20220103213312.9144-1-ebiederm@xmission.com>
-Sender: Al Viro <viro@ftp.linux.org.uk>
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.4.1
+Subject: Re: [PATCH] sysinfo: include availram field in sysinfo struct
+Content-Language: en-US
+To:     Pintu Agarwal <pintu.ping@gmail.com>,
+        Christian Brauner <christian.brauner@ubuntu.com>
+Cc:     Cyrill Gorcunov <gorcunov@gmail.com>,
+        Pintu Kumar <quic_pintu@quicinc.com>,
+        open list <linux-kernel@vger.kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        linux-mm <linux-mm@kvack.org>, ebiederm@xmission.com,
+        sfr@canb.auug.org.au, legion@kernel.org, sashal@kernel.org,
+        chris.hyser@oracle.com, ccross@google.com, pcc@google.com,
+        dave@stgolabs.net, caoxiaofeng@yulong.com, david@redhat.com,
+        Linux API <linux-api@vger.kernel.org>
+References: <1641483250-18839-1-git-send-email-quic_pintu@quicinc.com>
+ <YdcUttZWaqYQpR1K@grain>
+ <CAOuPNLifYFPU4Gt2+1sOSsYNNLQq7U2aGVaYknrhaMc-CVx8vg@mail.gmail.com>
+ <Ydcmk+WaBWKlLkAw@grain> <20220107120451.z2eqru2tm5mlhla3@wittgenstein>
+ <CAOuPNLiJZu_HJQ+Hf5BJOgmT+v7DT96VLkiXrfx0MJQrkD3rSw@mail.gmail.com>
+From:   Vlastimil Babka <vbabka@suse.cz>
+In-Reply-To: <CAOuPNLiJZu_HJQ+Hf5BJOgmT+v7DT96VLkiXrfx0MJQrkD3rSw@mail.gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Jan 03, 2022 at 03:32:56PM -0600, Eric W. Biederman wrote:
-> When I say remove I mean remove.  All profile_task_exit and
-> profile_munmap do is call a blocking notifier chain.  The helpers
-> profile_task_register and profile_task_unregister are not called
-> anywhere in the tree.  Which means this is all dead code.
+CC linux-api
+
+On 1/7/22 14:44, Pintu Agarwal wrote:
+> On Fri, 7 Jan 2022 at 17:35, Christian Brauner
+> <christian.brauner@ubuntu.com> wrote:
+>>
+>> On Thu, Jan 06, 2022 at 08:27:47PM +0300, Cyrill Gorcunov wrote:
+>> > On Thu, Jan 06, 2022 at 10:19:55PM +0530, Pintu Agarwal wrote:
+>> > > > > diff --git a/include/uapi/linux/sysinfo.h b/include/uapi/linux/sysinfo.h
+>> > > > > index 435d5c2..6e77e90 100644
+>> > > > > --- a/include/uapi/linux/sysinfo.h
+>> > > > > +++ b/include/uapi/linux/sysinfo.h
+>> > > > > @@ -12,6 +12,7 @@ struct sysinfo {
+>> > > > >       __kernel_ulong_t freeram;       /* Available memory size */
+>> > > > >       __kernel_ulong_t sharedram;     /* Amount of shared memory */
+>> > > > >       __kernel_ulong_t bufferram;     /* Memory used by buffers */
+>> > > > > +     __kernel_ulong_t availram;      /* Memory available for allocation */
+>> > > > >       __kernel_ulong_t totalswap;     /* Total swap space size */
+>> > > > >       __kernel_ulong_t freeswap;      /* swap space still available */
+>> > > > >       __u16 procs;                    /* Number of current processes */
+>> > > >
+>> > > > Hi! Sorry, but I don't understand -- the sysinfo structure seems to
+>> > > > be part of user API, no? Don't we break it up here?
+>> > >
+>> > > Yes, the corresponding user space header /usr/include/linux/sysinfo.h
+>> > > also needs to be updated.
+>> > > When we generate the kernel header it will be updated automatically.
+>> >
+>> > Wait. The userspace may pass old structure here, and in result we
+>> > return incorrect layout which won't match old one, no? Old binary
+>> > code has no clue about this header update.
+>>
+>> Yes, that won't work as done.
+>>
+>> If we want to do this it needs to be done at the end of the struct right
+>> before the padding field and the newly added field substracted from the
+>> padding. (Not the preferred way to do it these days for new structs.)
+>>
+>> A new kernel can then pass in the struct with the newly added field and
+>> an old kernel can just fill the struct in as usual. New kernel will
+>> update the field with the correct value.
+>>
+>> But there's a catch depending on the type of value.
+>> The problem with these types of extensions is that you'll often need
+>> indicators to and from the kernel whether the extension is supported.
+>>
+>> Consider an extension where 0 is a valid value meaning "this resource is
+>> completely used". Since the kernel and userspace always agree on the
+>> size of the struct the kernel will zero the whole struct. So if in your
+>> newly added field 0 is a valid value you can't differentiate between 0
+>> as a valid value indicating that your resource isn't available and 0 as
+>> the kernel not supporting your extension.
+>>
+>> Other APIs solve this and similar problems by having a request mask and
+>> a return mask.  Userspace fills in what values it wants reported in the
+>> request mask and kernel sets the supported flags in the return mask.
+>> This way you can differentiate between the two (see statx).
+>>
+>> If the 0 example is not a concern or acceptable for userspace it's
+>> probably fine. But you need to document that having 0 returned can mean
+>> both things.
+>>
+>> Or, you select a value different from 0 (-1?) that you can use to
+>> indicate to userspace that the resource is used up so 0 can just mean
+>> "kernel doesn't support this extension".
 > 
-> So remove the dead code and make it easier to read do_exit.
+> Thanks all for your inputs.
+> As Eric suggested in other thread (pasting here for reference):
+> {
+>> Before the padding and you should reduce the size of the padding by the
+>> size of your new field.
+> 
+>>> Also, I could not understand what this is for ?
+>>> Do we need to update this since sture is changed ?
+> 
+>> In general padding like that is so new fields can be added.  The
+>> comment about libc5 makes me a wonder a bit, but I expect libc5 just
+>> added the padding in it's copy of the structure that it exported to
+>> userspace many many years ago so that new fields could be added.
+> 
+>> Eric
+> }
+> 
+> I made the changes like below and this seems to work even with older user space.
+> I mean earlier, when I ran "free" command it was giving "stack
+> smashing..." error,
+> but now the "free" command (which comes as part of busybox) works fine
+> even without recompiling with the updated header.
+> 
+> These are the header changes for quick look:
+> {{{
+> diff --git a/include/uapi/linux/sysinfo.h b/include/uapi/linux/sysinfo.h
+> index 6e77e90..fe84c6a 100644
+> --- a/include/uapi/linux/sysinfo.h
+> +++ b/include/uapi/linux/sysinfo.h
+> @@ -12,7 +12,6 @@ struct sysinfo {
+>         __kernel_ulong_t freeram;       /* Available memory size */
+>         __kernel_ulong_t sharedram;     /* Amount of shared memory */
+>         __kernel_ulong_t bufferram;     /* Memory used by buffers */
+> -       __kernel_ulong_t availram;      /* Memory available for allocation */
+>         __kernel_ulong_t totalswap;     /* Total swap space size */
+>         __kernel_ulong_t freeswap;      /* swap space still available */
+>         __u16 procs;                    /* Number of current processes */
+> @@ -20,7 +19,8 @@ struct sysinfo {
+>         __kernel_ulong_t totalhigh;     /* Total high memory size */
+>         __kernel_ulong_t freehigh;      /* Available high memory size */
+>         __u32 mem_unit;                 /* Memory unit size in bytes */
+> -       char _f[20-2*sizeof(__kernel_ulong_t)-sizeof(__u32)];   /*
+> Padding: libc5 uses this.. */
+> +       __kernel_ulong_t availram;      /* Memory available for allocation */
+> +       char _f[20-3*sizeof(__kernel_ulong_t)-sizeof(__u32)];   /*
+> Padding: libc5 uses this.. */
+>  };
+> }}}
+> 
+> If this is fine, I will push the new patch set.
 
-How about doing the same to profile_handoff_task() and
-task_handoff_register()/task_handoff_unregister(),
-while we are at it?  Combined diff would be this:
+Please CC linux-api@vger.kernel.org on the new posting.
 
-diff --git a/include/linux/profile.h b/include/linux/profile.h
-index fd18ca96f5574..6aa64730298a0 100644
---- a/include/linux/profile.h
-+++ b/include/linux/profile.h
-@@ -31,11 +31,6 @@ static inline int create_proc_profile(void)
- }
- #endif
- 
--enum profile_type {
--	PROFILE_TASK_EXIT,
--	PROFILE_MUNMAP
--};
--
- #ifdef CONFIG_PROFILING
- 
- extern int prof_on __read_mostly;
-@@ -63,26 +58,6 @@ static inline void profile_hit(int type, void *ip)
- 		profile_hits(type, ip, 1);
- }
- 
--struct task_struct;
--struct mm_struct;
--
--/* task is in do_exit() */
--void profile_task_exit(struct task_struct * task);
--
--/* task is dead, free task struct ? Returns 1 if
-- * the task was taken, 0 if the task should be freed.
-- */
--int profile_handoff_task(struct task_struct * task);
--
--/* sys_munmap */
--void profile_munmap(unsigned long addr);
--
--int task_handoff_register(struct notifier_block * n);
--int task_handoff_unregister(struct notifier_block * n);
--
--int profile_event_register(enum profile_type, struct notifier_block * n);
--int profile_event_unregister(enum profile_type, struct notifier_block * n);
--
- #else
- 
- #define prof_on 0
-@@ -107,30 +82,6 @@ static inline void profile_hit(int type, void *ip)
- 	return;
- }
- 
--static inline int task_handoff_register(struct notifier_block * n)
--{
--	return -ENOSYS;
--}
--
--static inline int task_handoff_unregister(struct notifier_block * n)
--{
--	return -ENOSYS;
--}
--
--static inline int profile_event_register(enum profile_type t, struct notifier_block * n)
--{
--	return -ENOSYS;
--}
--
--static inline int profile_event_unregister(enum profile_type t, struct notifier_block * n)
--{
--	return -ENOSYS;
--}
--
--#define profile_task_exit(a) do { } while (0)
--#define profile_handoff_task(a) (0)
--#define profile_munmap(a) do { } while (0)
--
- #endif /* CONFIG_PROFILING */
- 
- #endif /* _LINUX_PROFILE_H */
-diff --git a/kernel/exit.c b/kernel/exit.c
-index f702a6a63686e..5086a5e9d02de 100644
---- a/kernel/exit.c
-+++ b/kernel/exit.c
-@@ -765,7 +765,6 @@ void __noreturn do_exit(long code)
- 		preempt_count_set(PREEMPT_ENABLED);
- 	}
- 
--	profile_task_exit(tsk);
- 	kcov_task_exit(tsk);
- 
- 	coredump_task_exit(tsk);
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 3244cc56b697d..496c0b6c8cb83 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -754,9 +754,7 @@ void __put_task_struct(struct task_struct *tsk)
- 	delayacct_tsk_free(tsk);
- 	put_signal_struct(tsk->signal);
- 	sched_core_free(tsk);
--
--	if (!profile_handoff_task(tsk))
--		free_task(tsk);
-+	free_task(tsk);
- }
- EXPORT_SYMBOL_GPL(__put_task_struct);
- 
-diff --git a/kernel/profile.c b/kernel/profile.c
-index eb9c7f0f5ac52..37640a0bd8a3c 100644
---- a/kernel/profile.c
-+++ b/kernel/profile.c
-@@ -133,79 +133,6 @@ int __ref profile_init(void)
- 	return -ENOMEM;
- }
- 
--/* Profile event notifications */
--
--static BLOCKING_NOTIFIER_HEAD(task_exit_notifier);
--static ATOMIC_NOTIFIER_HEAD(task_free_notifier);
--static BLOCKING_NOTIFIER_HEAD(munmap_notifier);
--
--void profile_task_exit(struct task_struct *task)
--{
--	blocking_notifier_call_chain(&task_exit_notifier, 0, task);
--}
--
--int profile_handoff_task(struct task_struct *task)
--{
--	int ret;
--	ret = atomic_notifier_call_chain(&task_free_notifier, 0, task);
--	return (ret == NOTIFY_OK) ? 1 : 0;
--}
--
--void profile_munmap(unsigned long addr)
--{
--	blocking_notifier_call_chain(&munmap_notifier, 0, (void *)addr);
--}
--
--int task_handoff_register(struct notifier_block *n)
--{
--	return atomic_notifier_chain_register(&task_free_notifier, n);
--}
--EXPORT_SYMBOL_GPL(task_handoff_register);
--
--int task_handoff_unregister(struct notifier_block *n)
--{
--	return atomic_notifier_chain_unregister(&task_free_notifier, n);
--}
--EXPORT_SYMBOL_GPL(task_handoff_unregister);
--
--int profile_event_register(enum profile_type type, struct notifier_block *n)
--{
--	int err = -EINVAL;
--
--	switch (type) {
--	case PROFILE_TASK_EXIT:
--		err = blocking_notifier_chain_register(
--				&task_exit_notifier, n);
--		break;
--	case PROFILE_MUNMAP:
--		err = blocking_notifier_chain_register(
--				&munmap_notifier, n);
--		break;
--	}
--
--	return err;
--}
--EXPORT_SYMBOL_GPL(profile_event_register);
--
--int profile_event_unregister(enum profile_type type, struct notifier_block *n)
--{
--	int err = -EINVAL;
--
--	switch (type) {
--	case PROFILE_TASK_EXIT:
--		err = blocking_notifier_chain_unregister(
--				&task_exit_notifier, n);
--		break;
--	case PROFILE_MUNMAP:
--		err = blocking_notifier_chain_unregister(
--				&munmap_notifier, n);
--		break;
--	}
--
--	return err;
--}
--EXPORT_SYMBOL_GPL(profile_event_unregister);
--
- #if defined(CONFIG_SMP) && defined(CONFIG_PROC_FS)
- /*
-  * Each cpu has a pair of open-addressed hashtables for pending
-diff --git a/mm/mmap.c b/mm/mmap.c
-index bfb0ea164a90a..70318c2a47c39 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
-@@ -2928,7 +2928,6 @@ EXPORT_SYMBOL(vm_munmap);
- SYSCALL_DEFINE2(munmap, unsigned long, addr, size_t, len)
- {
- 	addr = untagged_addr(addr);
--	profile_munmap(addr);
- 	return __vm_munmap(addr, len, true);
- }
- 
+> Thanks,
+> Pintu
+> 
+
