@@ -2,148 +2,176 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 58B32C4332F
-	for <linux-api@archiver.kernel.org>; Sat,  8 Jan 2022 01:33:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8FC3EC433EF
+	for <linux-api@archiver.kernel.org>; Sat,  8 Jan 2022 16:11:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229741AbiAHBdf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 7 Jan 2022 20:33:35 -0500
-Received: from mail.efficios.com ([167.114.26.124]:55518 "EHLO
-        mail.efficios.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232608AbiAHBde (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 7 Jan 2022 20:33:34 -0500
-Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id E1C5937D26C;
-        Fri,  7 Jan 2022 20:33:33 -0500 (EST)
-Received: from mail.efficios.com ([127.0.0.1])
-        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
-        with ESMTP id CueKu7_PTaPK; Fri,  7 Jan 2022 20:33:33 -0500 (EST)
-Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id 9E6C937D605;
-        Fri,  7 Jan 2022 20:33:33 -0500 (EST)
-DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 9E6C937D605
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
-        s=default; t=1641605613;
-        bh=zs3mrnBsLhYeroMuTKJk/TqjMUFWWyfhrso2Mz8iNoA=;
-        h=Date:From:To:Message-ID:MIME-Version;
-        b=WovgtdjXG2SapFxa0fdwh+l8XMT/+8rzdYyjN3vv2uAarbqs2Vf69K6HoLwusZZ31
-         kVlp9glMrv1c1XtLR5P8pHdJEaTAedzQGFNrOxT3Da9tFzh13V4W87NpTboEpU85s0
-         1JcLVYmqoGoG7dNCKiXAy/Tq/FP1zwWW8/Yt1cCQ6fcx3cMlA+db9d5fUxcRJAVZqQ
-         AKe9kJDKXf5HpG+N8KcMlHu86B+QJod7pNrm40OsXlhi/maYdm9aT6PLEERLmpQP+J
-         MaySh/jEjqGRwjNeElmS234Y+iHtmNVWZ/Dqo355UaGWNbKghvoMwyeo/iIgY8qemL
-         Xox9vSZb/Hmwg==
-X-Virus-Scanned: amavisd-new at efficios.com
-Received: from mail.efficios.com ([127.0.0.1])
-        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
-        with ESMTP id 7o2BUmHlX3FV; Fri,  7 Jan 2022 20:33:33 -0500 (EST)
-Received: from mail03.efficios.com (mail03.efficios.com [167.114.26.124])
-        by mail.efficios.com (Postfix) with ESMTP id 8DF3237D604;
-        Fri,  7 Jan 2022 20:33:33 -0500 (EST)
-Date:   Fri, 7 Jan 2022 20:33:33 -0500 (EST)
-From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-To:     David Laight <David.Laight@ACULAB.COM>
-Cc:     Florian Weimer <fw@deneb.enyo.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        linux-kernel <linux-kernel@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        paulmck <paulmck@kernel.org>, Boqun Feng <boqun.feng@gmail.com>,
-        "H. Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>,
-        linux-api <linux-api@vger.kernel.org>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        carlos <carlos@redhat.com>
-Message-ID: <1752185722.14562.1641605613561.JavaMail.zimbra@efficios.com>
-In-Reply-To: <333385690.14559.1641604090435.JavaMail.zimbra@efficios.com>
-References: <20220107170302.8325-1-mathieu.desnoyers@efficios.com> <87a6g7ny0j.fsf@mid.deneb.enyo.de> <1968088162.13310.1641584935813.JavaMail.zimbra@efficios.com> <1300078200.13848.1641590867024.JavaMail.zimbra@efficios.com> <701ff3888b3f42f4a6a1dded84b79078@AcuMS.aculab.com> <333385690.14559.1641604090435.JavaMail.zimbra@efficios.com>
-Subject: Re: [RFC PATCH] rseq: x86: implement abort-at-ip extension
+        id S234641AbiAHQLZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 8 Jan 2022 11:11:25 -0500
+Received: from out03.mta.xmission.com ([166.70.13.233]:41062 "EHLO
+        out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S231570AbiAHQLY (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 8 Jan 2022 11:11:24 -0500
+Received: from in02.mta.xmission.com ([166.70.13.52]:38896)
+        by out03.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1n6EJP-006Z0x-Dw; Sat, 08 Jan 2022 09:11:23 -0700
+Received: from ip68-110-24-146.om.om.cox.net ([68.110.24.146]:56388 helo=email.froward.int.ebiederm.org.xmission.com)
+        by in02.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1n6EJN-005O1Q-9H; Sat, 08 Jan 2022 09:11:23 -0700
+From:   "Eric W. Biederman" <ebiederm@xmission.com>
+To:     Al Viro <viro@zeniv.linux.org.uk>
+Cc:     linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Oleg Nesterov <oleg@redhat.com>,
+        Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org
+References: <87r19opkx1.fsf_-_@email.froward.int.ebiederm.org>
+        <20220103213312.9144-1-ebiederm@xmission.com>
+        <Yde4AcAxTziaVies@zeniv-ca.linux.org.uk>
+Date:   Sat, 08 Jan 2022 10:10:47 -0600
+In-Reply-To: <Yde4AcAxTziaVies@zeniv-ca.linux.org.uk> (Al Viro's message of
+        "Fri, 7 Jan 2022 03:48:17 +0000")
+Message-ID: <87fspyw6m0.fsf@email.froward.int.ebiederm.org>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-X-Originating-IP: [167.114.26.124]
-X-Mailer: Zimbra 8.8.15_GA_4180 (ZimbraWebClient - FF95 (Linux)/8.8.15_GA_4177)
-Thread-Topic: rseq: x86: implement abort-at-ip extension
-Thread-Index: AdgEFboSAErst/O1Thaz4M9J8smUeRwcvnzKreT/0YI=
+Content-Type: text/plain
+X-XM-SPF: eid=1n6EJN-005O1Q-9H;;;mid=<87fspyw6m0.fsf@email.froward.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.110.24.146;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX182nURwXFuPeTjj8mAvBySwd2YvfiPV/Q4=
+X-SA-Exim-Connect-IP: 68.110.24.146
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: Re: [PATCH 01/17] exit: Remove profile_task_exit & profile_munmap
+X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
+X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
------ On Jan 7, 2022, at 8:08 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+Al Viro <viro@zeniv.linux.org.uk> writes:
 
-> ----- On Jan 7, 2022, at 5:27 PM, David Laight David.Laight@ACULAB.COM wrote:
-> 
->>> That being said, there might be an architecture agnostic alternative available.
->>> On abort of a RSEQ_CS_FLAG_ABORT_AT_IP critical section, we could let the kernel
->>> decrement/increment the stack pointer to make room for a pointer (depending if
->>> the
->>> stack grows down or up). It would then store the abort-at-ip value at the top of
->>> stack.
+> On Mon, Jan 03, 2022 at 03:32:56PM -0600, Eric W. Biederman wrote:
+>> When I say remove I mean remove.  All profile_task_exit and
+>> profile_munmap do is call a blocking notifier chain.  The helpers
+>> profile_task_register and profile_task_unregister are not called
+>> anywhere in the tree.  Which means this is all dead code.
 >> 
->> Stack redzone in a leaf function?
-> 
-> Good point!
-> 
-> For x86-64 for instance, which has a redzone of 128 bytes, there are a few
-> alternatives.
-> On abort:
-> 
-> Approach A) Move the stack pointer as little as possible
-> 
->   1. On abort in kernel:
->   1.1 Subtract 8 bytes from the stack pointer
->   1.2 Store the abort-at-ip value at stack pointer - 128
->   2. In abort handler (userspace)
->   2.1 user-space knows that it can find the abort-at-ip value at stack pointer -
->   128
->   2.2 after using that value, the abort handler needs to add 8 bytes to the stack
->   pointer
-> 
-> Approach B) Move the stack pointer to skip the entire redzone
-> 
->   1. On abort in kernel:
->   1.1 Subtract 128 bytes from the stack pointer
->   1.2 Store the abort-at-ip value at stack pointer - 8 (basically within a new red
->   zone)
->   2. In abort handler (userspace)
->   2.1 user-space knows that it can find the abort-at-ip value at stack pointer - 8
->   2.2 after using that value, the abort handler needs to add 128 bytes to the
->   stack pointer
+>> So remove the dead code and make it easier to read do_exit.
+>
+> How about doing the same to profile_handoff_task() and
+> task_handoff_register()/task_handoff_unregister(),
+> while we are at it?  Combined diff would be this:
 
-Or approach C)
+A very good idea.  I have added this incremental patch to my queue.
 
-  1. On abort in kernel:
-  1.1 Subtract 136 bytes from the stack pointer
-  1.2 Store the abort-at-ip value at stack pointer
-  2. In abort handler (userspace)
-  2.1 user-space knows that it can find the abort-at-ip value at stack pointer, so
-      it can pop it from the stack
-  2.2 after popping that value, the abort handler needs to add 128 bytes to the stack pointer
+Eric
 
-So far, approach C seems to be the most elegant IMHO.
+From: "Eric W. Biederman" <ebiederm@xmission.com>
+Date: Sat, 8 Jan 2022 10:03:24 -0600
+Subject: [PATCH] exit: Remove profile_handoff_task
 
-Thanks,
+All profile_handoff_task does is notify the task_free_notifier chain.
+The helpers task_handoff_register and task_handoff_unregister are used
+to add and delete entries from that chain and are never called.
 
-Mathieu
+So remove the dead code and make it much easier to read and reason
+about __put_task_struct.
 
+Suggested-by: Al Viro <viro@zeniv.linux.org.uk>
+Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+---
+ include/linux/profile.h | 19 -------------------
+ kernel/fork.c           |  4 +---
+ kernel/profile.c        | 23 -----------------------
+ 3 files changed, 1 insertion(+), 45 deletions(-)
 
-> 
-> I suspect both approaches should work.
-> 
-> Any preference or other ideas ?
-> 
-> Thanks,
-> 
-> Mathieu
-> 
->> 
->> -
->> Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT,
->> UK
->> Registration No: 1397386 (Wales)
-> 
-> --
-> Mathieu Desnoyers
-> EfficiOS Inc.
-> http://www.efficios.com
-
+diff --git a/include/linux/profile.h b/include/linux/profile.h
+index f7eb2b57d890..11db1ec516e2 100644
+--- a/include/linux/profile.h
++++ b/include/linux/profile.h
+@@ -61,14 +61,6 @@ static inline void profile_hit(int type, void *ip)
+ struct task_struct;
+ struct mm_struct;
+ 
+-/* task is dead, free task struct ? Returns 1 if
+- * the task was taken, 0 if the task should be freed.
+- */
+-int profile_handoff_task(struct task_struct * task);
+-
+-int task_handoff_register(struct notifier_block * n);
+-int task_handoff_unregister(struct notifier_block * n);
+-
+ #else
+ 
+ #define prof_on 0
+@@ -93,17 +85,6 @@ static inline void profile_hit(int type, void *ip)
+ 	return;
+ }
+ 
+-static inline int task_handoff_register(struct notifier_block * n)
+-{
+-	return -ENOSYS;
+-}
+-
+-static inline int task_handoff_unregister(struct notifier_block * n)
+-{
+-	return -ENOSYS;
+-}
+-
+-#define profile_handoff_task(a) (0)
+ 
+ #endif /* CONFIG_PROFILING */
+ 
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 6f0293cb29c9..494539ecb6d3 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -754,9 +754,7 @@ void __put_task_struct(struct task_struct *tsk)
+ 	delayacct_tsk_free(tsk);
+ 	put_signal_struct(tsk->signal);
+ 	sched_core_free(tsk);
+-
+-	if (!profile_handoff_task(tsk))
+-		free_task(tsk);
++	free_task(tsk);
+ }
+ EXPORT_SYMBOL_GPL(__put_task_struct);
+ 
+diff --git a/kernel/profile.c b/kernel/profile.c
+index 9355cc934a96..37640a0bd8a3 100644
+--- a/kernel/profile.c
++++ b/kernel/profile.c
+@@ -133,29 +133,6 @@ int __ref profile_init(void)
+ 	return -ENOMEM;
+ }
+ 
+-/* Profile event notifications */
+-
+-static ATOMIC_NOTIFIER_HEAD(task_free_notifier);
+-
+-int profile_handoff_task(struct task_struct *task)
+-{
+-	int ret;
+-	ret = atomic_notifier_call_chain(&task_free_notifier, 0, task);
+-	return (ret == NOTIFY_OK) ? 1 : 0;
+-}
+-
+-int task_handoff_register(struct notifier_block *n)
+-{
+-	return atomic_notifier_chain_register(&task_free_notifier, n);
+-}
+-EXPORT_SYMBOL_GPL(task_handoff_register);
+-
+-int task_handoff_unregister(struct notifier_block *n)
+-{
+-	return atomic_notifier_chain_unregister(&task_free_notifier, n);
+-}
+-EXPORT_SYMBOL_GPL(task_handoff_unregister);
+-
+ #if defined(CONFIG_SMP) && defined(CONFIG_PROC_FS)
+ /*
+  * Each cpu has a pair of open-addressed hashtables for pending
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+2.29.2
+
+
