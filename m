@@ -2,89 +2,80 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 67E46C4332F
-	for <linux-api@archiver.kernel.org>; Mon, 10 Jan 2022 21:18:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C0949C433FE
+	for <linux-api@archiver.kernel.org>; Mon, 10 Jan 2022 23:24:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1343864AbiAJVSa (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 10 Jan 2022 16:18:30 -0500
-Received: from out02.mta.xmission.com ([166.70.13.232]:57638 "EHLO
-        out02.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S240782AbiAJVS2 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 10 Jan 2022 16:18:28 -0500
-Received: from in01.mta.xmission.com ([166.70.13.51]:50624)
-        by out02.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-        (Exim 4.93)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1n723e-004JIM-N4; Mon, 10 Jan 2022 14:18:26 -0700
-Received: from ip68-110-24-146.om.om.cox.net ([68.110.24.146]:55924 helo=email.froward.int.ebiederm.org.xmission.com)
-        by in01.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-        (Exim 4.93)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1n723d-006ley-N9; Mon, 10 Jan 2022 14:18:26 -0700
-From:   "Eric W. Biederman" <ebiederm@xmission.com>
-To:     Al Viro <viro@zeniv.linux.org.uk>
-Cc:     Geert Uytterhoeven <geert@linux-m68k.org>,
+        id S245344AbiAJXY0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 10 Jan 2022 18:24:26 -0500
+Received: from cloud48395.mywhc.ca ([173.209.37.211]:38012 "EHLO
+        cloud48395.mywhc.ca" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S241114AbiAJXYZ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 10 Jan 2022 18:24:25 -0500
+X-Greylist: delayed 1453 seconds by postgrey-1.27 at vger.kernel.org; Mon, 10 Jan 2022 18:24:25 EST
+Received: from modemcable064.203-130-66.mc.videotron.ca ([66.130.203.64]:43128 helo=[192.168.1.179])
+        by cloud48395.mywhc.ca with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.94.2)
+        (envelope-from <olivier@trillion01.com>)
+        id 1n73e5-0003XM-9d; Mon, 10 Jan 2022 18:00:09 -0500
+Message-ID: <57dfc87c7dd5a2f9f9841bba1185336016595ef7.camel@trillion01.com>
+Subject: Re: [PATCH 1/8] signal: Make SIGKILL during coredumps an explicit
+ special case
+From:   Olivier Langlois <olivier@trillion01.com>
+To:     "Eric W. Biederman" <ebiederm@xmission.com>,
+        Heiko Carstens <hca@linux.ibm.com>
+Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
         Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        Linux-Arch <linux-arch@vger.kernel.org>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Oleg Nesterov <oleg@redhat.com>,
-        Kees Cook <keescook@chromium.org>,
+        "<linux-arch@vger.kernel.org>" <linux-arch@vger.kernel.org>,
         Linux API <linux-api@vger.kernel.org>,
-        Michael Schmitz <schmitzmic@gmail.com>,
-        linux-m68k <linux-m68k@lists.linux-m68k.org>
-References: <87r19opkx1.fsf_-_@email.froward.int.ebiederm.org>
-        <20220103213312.9144-8-ebiederm@xmission.com>
-        <CAMuHMdWsNBjOJh0QEx9sppA9x3WoL8H2icqukNqECFhOPremjw@mail.gmail.com>
-        <YdxcszwEslyQJSuF@zeniv-ca.linux.org.uk>
-        <CAMuHMdX9nhUQe_jeQCUtXeQgcQ5MBiHpPiRexh86EssoHNtJ3Q@mail.gmail.com>
-        <YdyZEAWKVTVnq2ef@zeniv-ca.linux.org.uk>
-Date:   Mon, 10 Jan 2022 15:18:18 -0600
-In-Reply-To: <YdyZEAWKVTVnq2ef@zeniv-ca.linux.org.uk> (Al Viro's message of
-        "Mon, 10 Jan 2022 20:37:36 +0000")
-Message-ID: <87zgo3thlx.fsf@email.froward.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
+        Alexey Gladkov <legion@kernel.org>,
+        Kyle Huey <me@kylehuey.com>, Oleg Nesterov <oleg@redhat.com>,
+        Kees Cook <keescook@chromium.org>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Jens Axboe <axboe@kernel.dk>,
+        Pavel Begunkov <asml.silence@gmail.com>
+Date:   Mon, 10 Jan 2022 18:00:07 -0500
+In-Reply-To: <87o84juwhg.fsf@email.froward.int.ebiederm.org>
+References: <87a6ha4zsd.fsf@email.froward.int.ebiederm.org>
+         <20211213225350.27481-1-ebiederm@xmission.com>
+         <CAHk-=wiS2P+p9VJXV_fWd5ntashbA0QVzJx15rTnWOCAAVJU_Q@mail.gmail.com>
+         <87sfu3b7wm.fsf@email.froward.int.ebiederm.org> <YdniQob7w5hTwB1v@osiris>
+         <87ilurwjju.fsf@email.froward.int.ebiederm.org>
+         <87o84juwhg.fsf@email.froward.int.ebiederm.org>
+Organization: Trillion01 Inc
+Content-Type: text/plain; charset="ISO-8859-1"
+User-Agent: Evolution 3.42.2 
 MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1n723d-006ley-N9;;;mid=<87zgo3thlx.fsf@email.froward.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.110.24.146;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX185tqCdbMXD+YaCSV+3dCINElFLxfX3dJs=
-X-SA-Exim-Connect-IP: 68.110.24.146
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: Re: [PATCH 08/17] ptrace/m68k: Stop open coding ptrace_report_syscall
-X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
-X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
+Content-Transfer-Encoding: 8bit
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - cloud48395.mywhc.ca
+X-AntiAbuse: Original Domain - vger.kernel.org
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - trillion01.com
+X-Get-Message-Sender-Via: cloud48395.mywhc.ca: authenticated_id: olivier@trillion01.com
+X-Authenticated-Sender: cloud48395.mywhc.ca: olivier@trillion01.com
+X-Source: 
+X-Source-Args: 
+X-Source-Dir: 
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Al Viro <viro@zeniv.linux.org.uk> writes:
+On Mon, 2022-01-10 at 15:11 -0600, Eric W. Biederman wrote:
+> 
+> 
+> I have been able to confirm that changing wait_event_interruptible to
+> wait_event_killable was the culprit.  Something about the way
+> systemd-coredump handles coredumps is not compatible with
+> wait_event_killable.
 
-> On Mon, Jan 10, 2022 at 06:54:57PM +0100, Geert Uytterhoeven wrote:
->
->> In fact Michael did so in "[PATCH v7 1/2] m68k/kernel - wire up
->> syscall_trace_enter/leave for m68k"[1], but that's still stuck...
->> 
->> [1] https://lore.kernel.org/r/1624924520-17567-2-git-send-email-schmitzmic@gmail.com/
->
-> Looks sane, but I'd split it in two - switch to calling syscall_trace_{enter,leave}
-> and then handling the return values...
->
-> The former would keep the current behaviour (modulo reporting enter vs. leave
-> via PTRACE_GETEVENTMSG), the latter would allow syscall number change by tracer
-> and/or handling of seccomp/audit/whatnot.
->
-> For exit+signal work the former would suffice, and IMO it would be a good idea
-> to put that one into a shared branch to be pulled both by seccomp and by signal
-> series.  Would reduce the conflicts...
->
-> Objections?
+This is my experience too that systemd-coredump is doing something
+unexpected. When I tested the patch:
+https://lore.kernel.org/lkml/cover.1629655338.git.olivier@trillion01.com/
 
-I have the version that Geert ack'ed queued up for v5.17 in my
-signal-for-v5.17 branch, along with a couple others prior fixes in this
-series of changes where it was clear they were just obviously correct
-bug fixes.  No need to delay the removal of profiling bits for example.
+to make sure that the patch worked, sending coredumps to systemd-
+coredump was making systemd-coredump, well, core dump... Not very
+useful...
 
-I would love to see the m68k perform syscall_trace_{enter,leave} but
-just getting as far as ptrace_report_syscall will be enough to avoid any
-dependencies on my side.
+Sending the dumps through a pipe to anything else than systemd-coredump
+was working fine.
 
-Eric
