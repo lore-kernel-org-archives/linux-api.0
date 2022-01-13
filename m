@@ -2,102 +2,113 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A5EBDC433EF
-	for <linux-api@archiver.kernel.org>; Thu, 13 Jan 2022 22:00:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 896F5C433FE
+	for <linux-api@archiver.kernel.org>; Thu, 13 Jan 2022 23:40:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234961AbiAMWAS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 13 Jan 2022 17:00:18 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:41545 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S235088AbiAMWAR (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 13 Jan 2022 17:00:17 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1642111217;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=iYMosw5qYefWLA9YPdhAGhJH1W9UqqKjH99qcPpNMYc=;
-        b=PCXlZgqWbM6Ss5FDmEZLq5+deYDjBe1spLV44g5tm0EyigO1HwMsVXznPAY0iLs1vdh2C8
-        mpZc1jiIMVcxHPEGEnzZawjP/m9evS38xi8XCI8WIzX23Ih84wVGHAPwpBpqckluHkZzUm
-        RFQj86RhFz/bT0l1FI5w7V+2jkMfB9w=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-56-w9wVhzADN9q-FApepbjLOg-1; Thu, 13 Jan 2022 17:00:14 -0500
-X-MC-Unique: w9wVhzADN9q-FApepbjLOg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 305738042E0;
-        Thu, 13 Jan 2022 22:00:12 +0000 (UTC)
-Received: from oldenburg.str.redhat.com (unknown [10.39.192.49])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id 1ABD35BE37;
-        Thu, 13 Jan 2022 22:00:08 +0000 (UTC)
-From:   Florian Weimer <fweimer@redhat.com>
-To:     Andy Lutomirski <luto@kernel.org>
-Cc:     linux-arch@vger.kernel.org, Linux API <linux-api@vger.kernel.org>,
-        linux-x86_64@vger.kernel.org, kernel-hardening@lists.openwall.com,
-        linux-mm@kvack.org, the arch/x86 maintainers <x86@kernel.org>,
-        musl@lists.openwall.com, libc-alpha@sourceware.org,
-        linux-kernel@vger.kernel.org, Dave Hansen <dave.hansen@intel.com>,
-        Kees Cook <keescook@chromium.org>,
-        Andrei Vagin <avagin@gmail.com>
-Subject: Re: [PATCH v3 2/3] selftests/x86/Makefile: Support per-target
- $(LIBS) configuration
-References: <3a1c8280967b491bf6917a18fbff6c9b52e8df24.1641398395.git.fweimer@redhat.com>
-        <54ae0e1f8928160c1c4120263ea21c8133aa3ec4.1641398395.git.fweimer@redhat.com>
-        <034075bd-aac5-9b97-6d09-02d9dd658a0b@kernel.org>
-Date:   Thu, 13 Jan 2022 23:00:07 +0100
-In-Reply-To: <034075bd-aac5-9b97-6d09-02d9dd658a0b@kernel.org> (Andy
-        Lutomirski's message of "Thu, 13 Jan 2022 13:31:58 -0800")
-Message-ID: <87lezjxpnc.fsf@oldenburg.str.redhat.com>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.2 (gnu/linux)
-MIME-Version: 1.0
-Content-Type: text/plain
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+        id S232009AbiAMXkE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 13 Jan 2022 18:40:04 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47998 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229902AbiAMXkD (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 13 Jan 2022 18:40:03 -0500
+Received: from mail-yb1-xb49.google.com (mail-yb1-xb49.google.com [IPv6:2607:f8b0:4864:20::b49])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 44242C061574
+        for <linux-api@vger.kernel.org>; Thu, 13 Jan 2022 15:40:03 -0800 (PST)
+Received: by mail-yb1-xb49.google.com with SMTP id y10-20020a2586ca000000b006116aaeeee6so14461221ybm.21
+        for <linux-api@vger.kernel.org>; Thu, 13 Jan 2022 15:40:03 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20210112;
+        h=date:message-id:mime-version:subject:from:to:cc;
+        bh=L3L608G8dLCC2M7zwc9YsP4GPhXeQWfVU2hcffF/nIQ=;
+        b=tOOMnMmr4EweDOpVrMetgQw/nTj7tdLM9/og1CME1sbHCa1RgGMrZItNHCVmzxO9JA
+         oAQCNeizO7OM953sQhxt34uuWWkRupyiEA9o4dRBAIE/XNL6E/in4N1Nfv67kjDfErwU
+         /+Bi6mP5vtQtHVsPjPlGUeg3x6+avIiKSyDHtHs1MgYNPlQMRyhtGit4nOsYapDMWv2v
+         3PKITVR6WCP5SQ8sxWF9LehDb6ke9/6EWNX2bK52ZGp/BAF3Bf4b2p1+3Pl1jqpYLmN5
+         jphiRLI+Tr3+S0ei7PvlutokPwDMhatv0ww+2g8esIMuVsWEPxY3rDNqtWQjdES/C6e4
+         /clg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:date:message-id:mime-version:subject:from:to:cc;
+        bh=L3L608G8dLCC2M7zwc9YsP4GPhXeQWfVU2hcffF/nIQ=;
+        b=KARzmtm16sg9CrEI4yKLHcVwiYQiW4UU0NNhYieG1X7v5MVVqEfu7pJj3mPwKP3gW2
+         OcMHmr5KptD1/+DXuU2ib2OG51KIC/IKSaKIBCnd1QcthSwmqdbGXYFTKegyMiIM/Gi+
+         2E5iRDitUjzkzWadD9ehe7z556RQKtC7CImu1CCu0p69/R+LyEfPiJwRr6ENpmyUEeTR
+         KOgwKmg7vPl1clevt763TTpj2mGSdorUICpaMVVATsxvtNUXZjwnTvVGJEH4DUvoMMl/
+         5BM1H88iZsQquZZEzmPNqCxmuksDk/Fzjf2bnfYhg/2O2oXTJj0MnpO0OTDP3CyUq8Jw
+         uSoQ==
+X-Gm-Message-State: AOAM532uNjH1x/deobiRrULJNmi1g+gqLdwMLtNrogGGeCvldWoRYF7L
+        KvOP9N5Z+p0XuAb5Rj4IFTDk38ZK
+X-Google-Smtp-Source: ABdhPJwd13mNuiyAq/bOxfawkAKuzEBTlexflryVlvN15dLvMviu88qazdMu0oVcevG2zyvWfwkli6lA
+X-Received: from posk.svl.corp.google.com ([2620:15c:2cd:202:c548:e79f:8954:121f])
+ (user=posk job=sendgmr) by 2002:a05:6902:1504:: with SMTP id
+ q4mr9994403ybu.375.1642117201723; Thu, 13 Jan 2022 15:40:01 -0800 (PST)
+Date:   Thu, 13 Jan 2022 15:39:35 -0800
+Message-Id: <20220113233940.3608440-1-posk@google.com>
+Mime-Version: 1.0
+X-Mailer: git-send-email 2.34.1.703.g22d0c6ccf7-goog
+Subject: [RFC PATCH v2 0/5] User Managed Concurrency Groups
+From:   Peter Oskolkov <posk@google.com>
+To:     Peter Zijlstra <peterz@infradead.org>, mingo@redhat.com,
+        tglx@linutronix.de, juri.lelli@redhat.com,
+        vincent.guittot@linaro.org, dietmar.eggemann@arm.com,
+        rostedt@goodmis.org, bsegall@google.com, mgorman@suse.de,
+        bristot@redhat.com
+Cc:     linux-kernel@vger.kernel.org, linux-mm@kvack.org,
+        linux-api@vger.kernel.org, x86@kernel.org, pjt@google.com,
+        posk@google.com, avagin@google.com, jannh@google.com,
+        tdelisle@uwaterloo.ca, posk@posk.io
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-* Andy Lutomirski:
+This adds two small patches on top of peterz@'s RFC from
+https://lore.kernel.org/lkml/20211214204445.665580974@infradead.org/
 
-> On 1/5/22 08:03, Florian Weimer wrote:
->> And avoid compiling PCHs by accident.
->> 
->
-> The patch seems fine, but I can't make heads or tails of the
-> $SUBJECT. Can you help me?
 
-What about this?
+The new patches are not fully tested - I'm still working on it.
+I'll post another patch shortly that adds worker timeouts in
+sys_umcg_wait().
 
-selftests/x86/Makefile: Set linked libraries using $(LIBS)
+Sending this out just to break the silence and to assess if the
+approach I'm taking here is not strongly NACKed.
 
-I guess that it's possible to use make features to set this per target
-isn't important.
 
-Thanks,
-Florian
+Peter Oskolkov (3):
+  sched/umcg: add WF_CURRENT_CPU and externise ttwu
+  sched: UMCG: add a blocked worker list
+  sched: UMCG: allow to sys_umcg_kick UMCG servers
 
->> Signed-off-by: Florian Weimer <fweimer@redhat.com>
->> ---
->> v3: Patch split out.
->>   tools/testing/selftests/x86/Makefile | 6 ++++--
->>   1 file changed, 4 insertions(+), 2 deletions(-)
->> diff --git a/tools/testing/selftests/x86/Makefile
->> b/tools/testing/selftests/x86/Makefile
->> index 8a1f62ab3c8e..0993d12f2c38 100644
->> --- a/tools/testing/selftests/x86/Makefile
->> +++ b/tools/testing/selftests/x86/Makefile
->> @@ -72,10 +72,12 @@ all_64: $(BINARIES_64)
->>   EXTRA_CLEAN := $(BINARIES_32) $(BINARIES_64)
->>     $(BINARIES_32): $(OUTPUT)/%_32: %.c helpers.h
->> -	$(CC) -m32 -o $@ $(CFLAGS) $(EXTRA_CFLAGS) $^ -lrt -ldl -lm
->> +	$(CC) -m32 -o $@ $(CFLAGS) $(EXTRA_CFLAGS) $(filter-out %.h, $^) \
->> +		$(or $(LIBS), -lrt -ldl -lm)
->>     $(BINARIES_64): $(OUTPUT)/%_64: %.c helpers.h
->> -	$(CC) -m64 -o $@ $(CFLAGS) $(EXTRA_CFLAGS) $^ -lrt -ldl
->> +	$(CC) -m64 -o $@ $(CFLAGS) $(EXTRA_CFLAGS) $(filter-out %.h, $^) \
->> +		$(or $(LIBS), -lrt -ldl -lm)
->>     # x86_64 users should be encouraged to install 32-bit libraries
->>   ifeq ($(CAN_BUILD_I386)$(CAN_BUILD_X86_64),01)
+Peter Zijlstra (2):
+  x86/uaccess: Implement unsafe_try_cmpxchg_user()
+  sched: User Mode Concurency Groups
+
+ arch/x86/Kconfig                       |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |   3 +
+ arch/x86/include/asm/thread_info.h     |   2 +
+ arch/x86/include/asm/uaccess.h         |  57 ++
+ fs/exec.c                              |   1 +
+ include/linux/entry-common.h           |   6 +
+ include/linux/sched.h                  |  86 +++
+ include/linux/syscalls.h               |   4 +
+ include/linux/thread_info.h            |   2 +
+ include/uapi/asm-generic/unistd.h      |   9 +-
+ include/uapi/linux/umcg.h              | 161 +++++
+ init/Kconfig                           |  15 +
+ kernel/entry/common.c                  |  18 +-
+ kernel/exit.c                          |   5 +
+ kernel/sched/Makefile                  |   1 +
+ kernel/sched/core.c                    |  12 +-
+ kernel/sched/fair.c                    |   4 +
+ kernel/sched/sched.h                   |  15 +-
+ kernel/sched/umcg.c                    | 913 +++++++++++++++++++++++++
+ kernel/sys_ni.c                        |   5 +
+ 20 files changed, 1305 insertions(+), 15 deletions(-)
+ create mode 100644 include/uapi/linux/umcg.h
+ create mode 100644 kernel/sched/umcg.c
+
+
+base-commit: 85538cc07d6b6dcffc1df64a22308fcb05ecddf4
+-- 
+2.34.1.703.g22d0c6ccf7-goog
 
