@@ -2,283 +2,134 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 36435C433F5
-	for <linux-api@archiver.kernel.org>; Thu, 13 Jan 2022 23:40:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 69A7DC433FE
+	for <linux-api@archiver.kernel.org>; Fri, 14 Jan 2022 02:34:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238274AbiAMXkP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 13 Jan 2022 18:40:15 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48054 "EHLO
+        id S234029AbiANCey (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 13 Jan 2022 21:34:54 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58406 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238275AbiAMXkM (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 13 Jan 2022 18:40:12 -0500
-Received: from mail-yb1-xb49.google.com (mail-yb1-xb49.google.com [IPv6:2607:f8b0:4864:20::b49])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 95004C06173E
-        for <linux-api@vger.kernel.org>; Thu, 13 Jan 2022 15:40:12 -0800 (PST)
-Received: by mail-yb1-xb49.google.com with SMTP id s13-20020a252c0d000000b00611786a6925so14819238ybs.8
-        for <linux-api@vger.kernel.org>; Thu, 13 Jan 2022 15:40:12 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20210112;
-        h=date:in-reply-to:message-id:mime-version:references:subject:from:to
-         :cc;
-        bh=YdkUhGD3Iw8REOsXxzkZNQvRpBA0TpGdto6DpzxEJRg=;
-        b=ORGfGaPEFsUSNA0jZJilt9MO5ZkL0WdXS1qQdDMZyRFpxcaJLOwoB+DYnMu2MD2jRp
-         uIMLWn80XBvk5DhFNo1JzkEwq9sLDvSYxSnl6QyJgAfO81eWtMamzfTCBD6yxOMUjwNA
-         U38HIm2ZMNLaUn99dFFMaiKQg+OhiNmcKlHs11QVVfv5oikYdoLeih2dGj834SxO79Pn
-         32JTberZyPXDarVU3BpbRI8v6f1A4ypNLZQWCtEB5qk23bHaYdIFp62EoYNuRvAvP5vQ
-         6Au5qLAGNUJzqhUxo3loWqdwVWExFXv/xRxN28MNY81dAVX0Lb+L6xhTtCIBOezgbRPz
-         utIw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:date:in-reply-to:message-id:mime-version
-         :references:subject:from:to:cc;
-        bh=YdkUhGD3Iw8REOsXxzkZNQvRpBA0TpGdto6DpzxEJRg=;
-        b=3e+a2r/oD+F3olxNRLVI6dm8FKYnFobForRpo312LuR4gwR/fULSb3xTaUREZAo7i6
-         KXvgIl/AbyQmpyKWJKCz2FFaMq2n9DddcTqqSSQ/QIjDS2dhmZsYoqqyOy2QGj/VBhEa
-         qxfVkYclCdMGjfNoRpaO8q+d0ihQo2EPJrwGxYgDza4VTQ/g9rWYutjYD90TyDYfrVwP
-         1fCCqE0TB8NNmc6+m/UXKLdCFUNhNdw2YEzCaHznJ//5PtDLp+ILU954XZKl7yDqwyiD
-         2pjnTIJ54FIpLka5Xo4+2LezfG/fYfeiCtY4hyPZcn7QEzoH6neCr8auJqnh4klrJmlb
-         YmBw==
-X-Gm-Message-State: AOAM5315RKdpIwjcszUKFqhGcGU65fNjkJPa3aoWp4288S7y9M6dKw9C
-        /WuTzmNL0vORgSJHMXtCekIYCDx1
-X-Google-Smtp-Source: ABdhPJwCLoMbHJSrjZMXL0ZEp89iLsIjFRdgS8B2JuN0BJhbUCJOe3cmeUEwht7rvQGqGaxkCnPhOXJz
-X-Received: from posk.svl.corp.google.com ([2620:15c:2cd:202:c548:e79f:8954:121f])
- (user=posk job=sendgmr) by 2002:a05:6902:8f:: with SMTP id
- h15mr8334544ybs.95.1642117211781; Thu, 13 Jan 2022 15:40:11 -0800 (PST)
-Date:   Thu, 13 Jan 2022 15:39:39 -0800
-In-Reply-To: <20220113233940.3608440-1-posk@google.com>
-Message-Id: <20220113233940.3608440-5-posk@google.com>
+        with ESMTP id S238779AbiANCex (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 13 Jan 2022 21:34:53 -0500
+Received: from ams.source.kernel.org (ams.source.kernel.org [IPv6:2604:1380:4601:e00::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 38193C061574
+        for <linux-api@vger.kernel.org>; Thu, 13 Jan 2022 18:34:53 -0800 (PST)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by ams.source.kernel.org (Postfix) with ESMTPS id E142CB823EC
+        for <linux-api@vger.kernel.org>; Fri, 14 Jan 2022 02:34:51 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id B79D9C36AED;
+        Fri, 14 Jan 2022 02:34:49 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1642127690;
+        bh=1zycz2e46vXoUD4sZJQiVQh6Wt3eKK/5paZ5/M+Am9k=;
+        h=In-Reply-To:References:Date:From:To:Cc:Subject:From;
+        b=EoCfiU2jgjQfdrsiRLL4qry/kpJj+bEZ7S+J4ipvnWI6vyHd6mrARwMKEbU01Na3X
+         mDLRSIWU1DSKjE7iRLjiecfJvsd2NFV/B4xBO668n9/bczVcsL5Ysrwu8LNzpdE2h6
+         JkU5VhFGRLL2qiNEgNo46CG85+osyXeTwc47k5ZbN+AZEgirzkXzIfq65BDP3q9+AF
+         Ps8WQdmrgJQZ1oBXyIyle/4L14Y/iZ1CkU7+wZanJpyK77f8LnFC9kAVpL/aGesQ9U
+         qmMfqNq1gGoaECfDNenA6jpGOQJ4fhpTJ1qp6IXq/DIq9ZiOp1DY7l+Y+KqW94JlHB
+         GwvbWA/EpYLMg==
+Received: from compute5.internal (compute5.nyi.internal [10.202.2.45])
+        by mailauth.nyi.internal (Postfix) with ESMTP id 6150427C0054;
+        Thu, 13 Jan 2022 21:34:48 -0500 (EST)
+Received: from imap48 ([10.202.2.98])
+  by compute5.internal (MEProxy); Thu, 13 Jan 2022 21:34:48 -0500
+X-ME-Sender: <xms:R-HgYYKeqp_Pf6vT461iO_w1CsQPy2fiKC1xl0b8ZhdO4cxRvKR17Q>
+    <xme:R-HgYYJl3GkF7zK7kuKktneJDAEpwQSU2XN_cj0XvMGVb47hyrjG67z1BcOhh_Osf
+    gt80WUE-yN9G8hFz_w>
+X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvvddrtdeggdegkecutefuodetggdotefrodftvf
+    curfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfghnecu
+    uegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmdenuc
+    fjughrpefofgggkfgjfhffhffvufgtsehttdertderredtnecuhfhrohhmpedftehnugih
+    ucfnuhhtohhmihhrshhkihdfuceolhhuthhosehkvghrnhgvlhdrohhrgheqnecuggftrf
+    grthhtvghrnhephfegffegkeefkedvffehleehgfeileeutdfhieegkeeuheegvdektdet
+    fffhtedvnecuffhomhgrihhnpehouhhtrdhtohholhhsnecuvehluhhsthgvrhfuihiivg
+    eptdenucfrrghrrghmpehmrghilhhfrhhomheprghnugihodhmvghsmhhtphgruhhthhhp
+    vghrshhonhgrlhhithihqdduudeiudekheeifedvqddvieefudeiiedtkedqlhhuthhope
+    epkhgvrhhnvghlrdhorhhgsehlihhnuhigrdhluhhtohdruhhs
+X-ME-Proxy: <xmx:R-HgYYtcQl2oyw4bWnOw_izI-NxIW2JF6wL7D2aa6bQVdO0t58aQ4A>
+    <xmx:R-HgYVa1bXNSWpCOtIxItKMJGQsJO_cMiPMiEEMgeR5bi_Pf2K2cUQ>
+    <xmx:R-HgYfY9LbILUfGpQFrFlnJpDFm0Dej8dSCDyRk2roSmwkYf7C0d8Q>
+    <xmx:SOHgYcQ513uXepiIzysiDcFz4JVeK6o1sHQuKIrL4lWIDlEtkHvdyodkBP8>
+Received: by mailuser.nyi.internal (Postfix, from userid 501)
+        id B567B21E0073; Thu, 13 Jan 2022 21:34:47 -0500 (EST)
+X-Mailer: MessagingEngine.com Webmail Interface
+User-Agent: Cyrus-JMAP/3.5.0-alpha0-4569-g891f756243-fm-20220111.001-g891f7562
 Mime-Version: 1.0
-References: <20220113233940.3608440-1-posk@google.com>
-X-Mailer: git-send-email 2.34.1.703.g22d0c6ccf7-goog
-Subject: [RFC PATCH v2 4/5] sched: UMCG: add a blocked worker list
-From:   Peter Oskolkov <posk@google.com>
-To:     Peter Zijlstra <peterz@infradead.org>, mingo@redhat.com,
-        tglx@linutronix.de, juri.lelli@redhat.com,
-        vincent.guittot@linaro.org, dietmar.eggemann@arm.com,
-        rostedt@goodmis.org, bsegall@google.com, mgorman@suse.de,
-        bristot@redhat.com
-Cc:     linux-kernel@vger.kernel.org, linux-mm@kvack.org,
-        linux-api@vger.kernel.org, x86@kernel.org, pjt@google.com,
-        posk@google.com, avagin@google.com, jannh@google.com,
-        tdelisle@uwaterloo.ca, posk@posk.io
-Content-Type: text/plain; charset="UTF-8"
+Message-Id: <5a4f01f4-cd16-47dd-880b-dcfb7ec5daeb@www.fastmail.com>
+In-Reply-To: <87lezjxpnc.fsf@oldenburg.str.redhat.com>
+References: <3a1c8280967b491bf6917a18fbff6c9b52e8df24.1641398395.git.fweimer@redhat.com>
+ <54ae0e1f8928160c1c4120263ea21c8133aa3ec4.1641398395.git.fweimer@redhat.com>
+ <034075bd-aac5-9b97-6d09-02d9dd658a0b@kernel.org>
+ <87lezjxpnc.fsf@oldenburg.str.redhat.com>
+Date:   Thu, 13 Jan 2022 18:34:20 -0800
+From:   "Andy Lutomirski" <luto@kernel.org>
+To:     "Florian Weimer" <fweimer@redhat.com>
+Cc:     linux-arch@vger.kernel.org,
+        "Linux API" <linux-api@vger.kernel.org>,
+        linux-x86_64@vger.kernel.org, kernel-hardening@lists.openwall.com,
+        linux-mm@kvack.org, "the arch/x86 maintainers" <x86@kernel.org>,
+        musl@lists.openwall.com,
+        "Dave Hansen via Libc-alpha" <libc-alpha@sourceware.org>,
+        "Linux Kernel Mailing List" <linux-kernel@vger.kernel.org>,
+        "Dave Hansen" <dave.hansen@intel.com>,
+        "Kees Cook" <keescook@chromium.org>,
+        "Andrei Vagin" <avagin@gmail.com>
+Subject: Re: [PATCH v3 2/3] selftests/x86/Makefile: Support per-target $(LIBS)
+ configuration
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The original idea of a UMCG server was that it was used as a proxy
-for a CPU, so if a worker associated with the server is RUNNING,
-the server itself is never ever was allowed to be RUNNING as well;
-when umcg_wait() returned for a server, it meant that its worker
-became BLOCKED.
+On Thu, Jan 13, 2022, at 2:00 PM, Florian Weimer wrote:
+> * Andy Lutomirski:
+>
+>> On 1/5/22 08:03, Florian Weimer wrote:
+>>> And avoid compiling PCHs by accident.
+>>> 
+>>
+>> The patch seems fine, but I can't make heads or tails of the
+>> $SUBJECT. Can you help me?
+>
+> What about this?
+>
+> selftests/x86/Makefile: Set linked libraries using $(LIBS)
+>
+> I guess that it's possible to use make features to set this per target
+> isn't important.
 
-In the new (old?) "per server runqueues" model implemented in
-the previous patch in this patchset, servers are woken when
-a previously blocked worker on their runqueue finishes its blocking
-operation, even if the currently RUNNING worker continues running.
+I think that's actually important -- it's nice to explain to make dummies (e.g. me) what the purpose is is.  I assume it's so that a given test can override the libraries.  Also, you've conflated two different changes into one patch: removal of .h and addition of LIBS.
 
-As now a server may run while a worker assigned to it is running,
-the original idea of having at most a single worker RUNNING per
-server, as a means to control the number of running workers, is
-not really enforced, and the server, woken by a worker
-doing BLOCKED=>RUNNABLE transition, may then call sys_umcg_wait()
-with a second/third/etc. worker to run.
+--Andy
 
-Support this scenario by adding a blocked worker list:
-when a worker transitions RUNNING=>BLOCKED, not only its server
-is woken, but the worker is also added to the blocked worker list
-of its server.
 
-This change introduces the following benefits:
-- block detection how behaves similarly to wake detection;
-  without this patch worker wakeups added wakees to the list
-  and woke the server, while worker blocks only woke the server
-  without adding blocked workers to a list, forcing servers
-  to explicitly check worker's state;
-- if the blocked worker woke sufficiently quickly, the server
-  woken on the block event would observe its worker now as
-  RUNNABLE, so the block event had to be inferred rather than
-  explicitly signalled by the worker being added to the blocked
-  worker list;
-- it is now possible for a single server to control several
-  RUNNING workers, which makes writing userspace schedulers
-  simpler for smaller processes that do not need to scale beyond
-  one "server";
-- if the userspace wants to keep at most a single RUNNING worker
-  per server, and have multiple servers with their own runqueues,
-  this model is also naturally supported here.
 
-So this change basically decouples block/wake detection from
-M:N threading in the sense that the number of servers is now
-does not have to be M or N, but is more driven by the scalability
-needs of the userspace application.
-
-Why keep this server/worker model at all then, and not use
-something like io_uring to deliver block/wake events to the
-userspace? The main benefit of this model is that servers
-are woken synchronously on-cpu when an event happens, while
-io_uring is more of an asynchronous event framework, so latencies
-in this model are potentially better.
-
-In addition, "multiple runqueues" type of scheduling is much easier
-to implement with this method than with io_uring.
-
-Signed-off-by: Peter Oskolkov <posk@google.com>
----
- include/uapi/linux/umcg.h | 10 ++++-
- kernel/sched/umcg.c       | 90 ++++++++++++++++++++++++++++-----------
- 2 files changed, 75 insertions(+), 25 deletions(-)
-
-diff --git a/include/uapi/linux/umcg.h b/include/uapi/linux/umcg.h
-index a994bbb062d5..93fccb44283b 100644
---- a/include/uapi/linux/umcg.h
-+++ b/include/uapi/linux/umcg.h
-@@ -116,6 +116,14 @@ struct umcg_task {
- 	__u64	blocked_ts;			/*   w */
- 	__u64   runnable_ts;			/*   w */
- 
-+	/**
-+	 * @blocked_workers_ptr: a single-linked list of blocked workers.
-+	 *
-+	 * Readable/writable by both the kernel and the userspace: the
-+	 * kernel adds items to the list, userspace removes them.
-+	 */
-+	__u64	blocked_workers_ptr;		/* r/w */
-+
- 	/**
- 	 * @runnable_workers_ptr: a single-linked list of runnable workers.
- 	 *
-@@ -124,7 +132,7 @@ struct umcg_task {
- 	 */
- 	__u64	runnable_workers_ptr;		/* r/w */
- 
--	__u64	__zero[3];
-+	__u64	__zero[2];
- 
- } __attribute__((packed, aligned(UMCG_TASK_ALIGN)));
- 
-diff --git a/kernel/sched/umcg.c b/kernel/sched/umcg.c
-index 9a8755045285..b85dec6b82e4 100644
---- a/kernel/sched/umcg.c
-+++ b/kernel/sched/umcg.c
-@@ -343,6 +343,67 @@ static int umcg_wake(struct task_struct *tsk)
- 	return umcg_wake_server(tsk);
- }
- 
-+/*
-+ * Enqueue @tsk on it's server's blocked or runnable list
-+ *
-+ * Must be called in umcg_pin_pages() context, relies on tsk->umcg_server.
-+ *
-+ * cmpxchg based single linked list add such that list integrity is never
-+ * violated.  Userspace *MUST* remove it from the list before changing ->state.
-+ * As such, we must change state to BLOCKED or RUNNABLE before enqueue.
-+ *
-+ * Returns:
-+ *   0: success
-+ *   -EFAULT
-+ */
-+static int umcg_enqueue_worker(struct task_struct *tsk, bool blocked)
-+{
-+	struct umcg_task __user *server = tsk->umcg_server_task;
-+	struct umcg_task __user *self = tsk->umcg_task;
-+	u64 self_ptr = (unsigned long)self;
-+	u64 first_ptr;
-+
-+	/*
-+	 * umcg_pin_pages() did access_ok() on both pointers, use self here
-+	 * only because __user_access_begin() isn't available in generic code.
-+	 */
-+	if (!user_access_begin(self, sizeof(*self)))
-+		return -EFAULT;
-+
-+	unsafe_get_user(first_ptr, blocked ? &server->blocked_workers_ptr :
-+			&server->runnable_workers_ptr, Efault);
-+	do {
-+		unsafe_put_user(first_ptr, blocked ? &self->blocked_workers_ptr :
-+				&self->runnable_workers_ptr, Efault);
-+	} while (!unsafe_try_cmpxchg_user(blocked ? &server->blocked_workers_ptr :
-+				&server->runnable_workers_ptr, &first_ptr, self_ptr, Efault));
-+
-+	user_access_end();
-+	return 0;
-+
-+Efault:
-+	user_access_end();
-+	return -EFAULT;
-+}
-+
-+/*
-+ * Enqueue @tsk on it's server's blocked list
-+ *
-+ * Must be called in umcg_pin_pages() context, relies on tsk->umcg_server.
-+ *
-+ * cmpxchg based single linked list add such that list integrity is never
-+ * violated.  Userspace *MUST* remove it from the list before changing ->state.
-+ * As such, we must change state to BLOCKED before enqueue.
-+ *
-+ * Returns:
-+ *   0: success
-+ *   -EFAULT
-+ */
-+static int umcg_enqueue_blocked(struct task_struct *tsk)
-+{
-+	return umcg_enqueue_worker(tsk, true /* blocked */);
-+}
-+
- /* pre-schedule() */
- void umcg_wq_worker_sleeping(struct task_struct *tsk)
- {
-@@ -357,6 +418,9 @@ void umcg_wq_worker_sleeping(struct task_struct *tsk)
- 	if (umcg_update_state(tsk, self, UMCG_TASK_RUNNING, UMCG_TASK_BLOCKED))
- 		UMCG_DIE_PF("state");
- 
-+	if (umcg_enqueue_blocked(tsk))
-+		UMCG_DIE_PF("enqueue");
-+
- 	if (umcg_wake(tsk))
- 		UMCG_DIE_PF("wake");
- 
-@@ -390,29 +454,7 @@ void umcg_wq_worker_running(struct task_struct *tsk)
-  */
- static int umcg_enqueue_runnable(struct task_struct *tsk)
- {
--	struct umcg_task __user *server = tsk->umcg_server_task;
--	struct umcg_task __user *self = tsk->umcg_task;
--	u64 self_ptr = (unsigned long)self;
--	u64 first_ptr;
--
--	/*
--	 * umcg_pin_pages() did access_ok() on both pointers, use self here
--	 * only because __user_access_begin() isn't available in generic code.
--	 */
--	if (!user_access_begin(self, sizeof(*self)))
--		return -EFAULT;
--
--	unsafe_get_user(first_ptr, &server->runnable_workers_ptr, Efault);
--	do {
--		unsafe_put_user(first_ptr, &self->runnable_workers_ptr, Efault);
--	} while (!unsafe_try_cmpxchg_user(&server->runnable_workers_ptr, &first_ptr, self_ptr, Efault));
--
--	user_access_end();
--	return 0;
--
--Efault:
--	user_access_end();
--	return -EFAULT;
-+	return umcg_enqueue_worker(tsk, false /* !blocked */);
- }
- 
- /*
-@@ -821,7 +863,7 @@ SYSCALL_DEFINE3(umcg_ctl, u32, flags, struct umcg_task __user *, self, clockid_t
- 	if (copy_from_user(&ut, self, sizeof(ut)))
- 		return -EFAULT;
- 
--	if (ut.next_tid || ut.__hole[0] || ut.__zero[0] || ut.__zero[1] || ut.__zero[2])
-+	if (ut.next_tid || ut.__hole[0] || ut.__zero[0] || ut.__zero[1])
- 		return -EINVAL;
- 
- 	rcu_read_lock();
--- 
-2.34.1.703.g22d0c6ccf7-goog
-
+>
+> Thanks,
+> Florian
+>
+>>> Signed-off-by: Florian Weimer <fweimer@redhat.com>
+>>> ---
+>>> v3: Patch split out.
+>>>   tools/testing/selftests/x86/Makefile | 6 ++++--
+>>>   1 file changed, 4 insertions(+), 2 deletions(-)
+>>> diff --git a/tools/testing/selftests/x86/Makefile
+>>> b/tools/testing/selftests/x86/Makefile
+>>> index 8a1f62ab3c8e..0993d12f2c38 100644
+>>> --- a/tools/testing/selftests/x86/Makefile
+>>> +++ b/tools/testing/selftests/x86/Makefile
+>>> @@ -72,10 +72,12 @@ all_64: $(BINARIES_64)
+>>>   EXTRA_CLEAN := $(BINARIES_32) $(BINARIES_64)
+>>>     $(BINARIES_32): $(OUTPUT)/%_32: %.c helpers.h
+>>> -	$(CC) -m32 -o $@ $(CFLAGS) $(EXTRA_CFLAGS) $^ -lrt -ldl -lm
+>>> +	$(CC) -m32 -o $@ $(CFLAGS) $(EXTRA_CFLAGS) $(filter-out %.h, $^) \
+>>> +		$(or $(LIBS), -lrt -ldl -lm)
+>>>     $(BINARIES_64): $(OUTPUT)/%_64: %.c helpers.h
+>>> -	$(CC) -m64 -o $@ $(CFLAGS) $(EXTRA_CFLAGS) $^ -lrt -ldl
+>>> +	$(CC) -m64 -o $@ $(CFLAGS) $(EXTRA_CFLAGS) $(filter-out %.h, $^) \
+>>> +		$(or $(LIBS), -lrt -ldl -lm)
+>>>     # x86_64 users should be encouraged to install 32-bit libraries
+>>>   ifeq ($(CAN_BUILD_I386)$(CAN_BUILD_X86_64),01)
