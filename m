@@ -2,110 +2,146 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 36720C433F5
-	for <linux-api@archiver.kernel.org>; Mon, 17 Jan 2022 18:47:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B9133C433EF
+	for <linux-api@archiver.kernel.org>; Mon, 17 Jan 2022 19:13:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233767AbiAQSq7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 17 Jan 2022 13:46:59 -0500
-Received: from out03.mta.xmission.com ([166.70.13.233]:59742 "EHLO
+        id S235673AbiAQTND convert rfc822-to-8bit (ORCPT
+        <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 17 Jan 2022 14:13:03 -0500
+Received: from out03.mta.xmission.com ([166.70.13.233]:36248 "EHLO
         out03.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230519AbiAQSq6 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 17 Jan 2022 13:46:58 -0500
-Received: from in01.mta.xmission.com ([166.70.13.51]:45246)
+        with ESMTP id S229843AbiAQTNC (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 17 Jan 2022 14:13:02 -0500
+Received: from in01.mta.xmission.com ([166.70.13.51]:36580)
         by out03.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1n9X1s-005F9h-PW; Mon, 17 Jan 2022 11:46:57 -0700
-Received: from ip68-110-24-146.om.om.cox.net ([68.110.24.146]:49256 helo=email.froward.int.ebiederm.org.xmission.com)
+        id 1n9XR6-005Hxc-78; Mon, 17 Jan 2022 12:13:00 -0700
+Received: from ip68-110-24-146.om.om.cox.net ([68.110.24.146]:50160 helo=email.froward.int.ebiederm.org.xmission.com)
         by in01.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1n9X1r-003jNu-BN; Mon, 17 Jan 2022 11:46:56 -0700
+        id 1n9XR4-003obi-4V; Mon, 17 Jan 2022 12:12:59 -0700
 From:   "Eric W. Biederman" <ebiederm@xmission.com>
-To:     Olivier Langlois <olivier@trillion01.com>
-Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
-        Heiko Carstens <hca@linux.ibm.com>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        "<linux-arch@vger.kernel.org>" <linux-arch@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        Alexey Gladkov <legion@kernel.org>,
-        Kyle Huey <me@kylehuey.com>, Oleg Nesterov <oleg@redhat.com>,
+To:     Valentin Schneider <valentin.schneider@arm.com>
+Cc:     linux-kernel@vger.kernel.org,
+        Uwe =?utf-8?Q?Kleine-K=C3=B6nig?= 
+        <u.kleine-koenig@pengutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Abhijeet Dharmapurikar <adharmap@quicinc.com>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
         Kees Cook <keescook@chromium.org>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Jens Axboe <axboe@kernel.dk>,
-        Pavel Begunkov <asml.silence@gmail.com>
-References: <87a6ha4zsd.fsf@email.froward.int.ebiederm.org>
-        <20211213225350.27481-1-ebiederm@xmission.com>
-        <CAHk-=wiS2P+p9VJXV_fWd5ntashbA0QVzJx15rTnWOCAAVJU_Q@mail.gmail.com>
-        <87sfu3b7wm.fsf@email.froward.int.ebiederm.org>
-        <YdniQob7w5hTwB1v@osiris>
-        <87ilurwjju.fsf@email.froward.int.ebiederm.org>
-        <87o84juwhg.fsf@email.froward.int.ebiederm.org>
-        <57dfc87c7dd5a2f9f9841bba1185336016595ef7.camel@trillion01.com>
-        <87lezmrxlq.fsf@email.froward.int.ebiederm.org>
-        <87mtk2qf5s.fsf@email.froward.int.ebiederm.org>
-        <CAHk-=wjZ=aFzFb0BkxVEbN3o6a53R8Gq4hHnEZVCmpDKs3_FCw@mail.gmail.com>
-        <87h7a5kgan.fsf@email.froward.int.ebiederm.org>
-        <991211d94c6dc0ad3501cd9f830cdee916b982b3.camel@trillion01.com>
-        <87ee56e43r.fsf@email.froward.int.ebiederm.org>
-Date:   Mon, 17 Jan 2022 12:46:48 -0600
-In-Reply-To: <87ee56e43r.fsf@email.froward.int.ebiederm.org> (Eric
-        W. Biederman's message of "Mon, 17 Jan 2022 10:09:28 -0600")
-Message-ID: <87v8yi8ajr.fsf_-_@email.froward.int.ebiederm.org>
+        Andrew Morton <akpm@linux-foundation.org>,
+        Alexey Gladkov <legion@kernel.org>,
+        "Kenta.Tada@sony.com" <Kenta.Tada@sony.com>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        Ed Tsai <ed.tsai@mediatek.com>, <linux-api@vger.kernel.org>
+References: <20220117164633.322550-1-valentin.schneider@arm.com>
+        <20220117164633.322550-3-valentin.schneider@arm.com>
+Date:   Mon, 17 Jan 2022 13:12:51 -0600
+In-Reply-To: <20220117164633.322550-3-valentin.schneider@arm.com> (Valentin
+        Schneider's message of "Mon, 17 Jan 2022 16:46:33 +0000")
+Message-ID: <878rve89cc.fsf@email.froward.int.ebiederm.org>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1n9X1r-003jNu-BN;;;mid=<87v8yi8ajr.fsf_-_@email.froward.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.110.24.146;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1/YV6/Vvn8jXg8frZWqyokYAqL1kRlGwVk=
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+X-XM-SPF: eid=1n9XR4-003obi-4V;;;mid=<878rve89cc.fsf@email.froward.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.110.24.146;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1+D0K6w9aeqH3OVlfZDgUzFAGkad9h1nAw=
 X-SA-Exim-Connect-IP: 68.110.24.146
 X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: io_uring truncating coredumps
+Subject: Re: [PATCH v2 2/2] sched/tracing: Add TASK_RTLOCK_WAIT to TASK_REPORT
 X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
 X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+Valentin Schneider <valentin.schneider@arm.com> writes:
 
-Subject updated to reflect the current discussion.
+> TASK_RTLOCK_WAIT currently isn't part of TASK_REPORT, thus a task blocking
+> on an rtlock will appear as having a task state == 0, IOW TASK_RUNNING.
+>
+> The actual state is saved in p->saved_state, but reading it after reading
+> p->__state has a few issues:
+> o that could still be TASK_RUNNING in the case of e.g. rt_spin_lock
+> o ttwu_state_match() might have changed that to TASK_RUNNING
+>
+> Add TASK_RTLOCK_WAIT to TASK_REPORT.
+>
+> Reported-by: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+> Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
+> Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
+> Reviewed-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+>  fs/proc/array.c              |  3 ++-
+>  include/linux/sched.h        | 17 +++++++++--------
+>  include/trace/events/sched.h |  1 +
+>  3 files changed, 12 insertions(+), 9 deletions(-)
+>
+> diff --git a/fs/proc/array.c b/fs/proc/array.c
+> index ff869a66b34e..f4cae65529a6 100644
+> --- a/fs/proc/array.c
+> +++ b/fs/proc/array.c
+> @@ -128,9 +128,10 @@ static const char * const task_state_array[] = {
+>  	"X (dead)",		/* 0x10 */
+>  	"Z (zombie)",		/* 0x20 */
+>  	"P (parked)",		/* 0x40 */
+> +	"L (rt-locked)",        /* 0x80 */
+>  
+>  	/* states beyond TASK_REPORT: */
+> -	"I (idle)",		/* 0x80 */
+> +	"I (idle)",		/* 0x100 */
+>  };
 
-> Linus Torvalds <torvalds@linux-foundation.org> writes:
+I think this is at least possibly an ABI break.  I have a vague memory
+that userspace is not ready being reported new task states.  Which is
+why we encode some of our states the way we do.
 
-> But I really think it's wrong.
+Maybe it was just someone being very conservative.
+
+Still if you are going to add new states to userspace and risk breaking
+them can you do some basic analysis and report what ps and similar
+programs do.
+
+Simply changing userspace without even mentioning that you are changing
+the userspace output of proc looks dangerous indeed.
+
+Looking in the history commit 74e37200de8e ("proc: cleanup/simplify
+get_task_state/task_state_array") seems to best document the concern
+that userspace does not know how to handle new states.
+
+The fact we have had a parked state for quite a few years despite that
+concern seems to argue it is possible to extend the states.  Or perhaps
+it just argues that parked states are rare enough it does not matter.
+
+It is definitely the case that the ps manpage documents the possible
+states and as such they could be a part of anyone's shell scripts.
+
+From the ps man page:
+>        Here are the different values that the s, stat and state output
+>        specifiers (header "STAT" or "S") will display to describe the
+>        state of a process:
 > 
-> You're trying to work around a problem the wrong way around. If a task
-> is dead, and is dumping core, then signals just shouldn't matter in
-> the first place, and thus the whole "TASK_INTERRUPTIBLE vs
-> TASK_UNINTERRUPTIBLE" really shouldn't be an issue. The fact that it
-> is an issue means there's something wrong in signaling, not in the
-> pipe code.
+>                D    uninterruptible sleep (usually IO)
+>                I    Idle kernel thread
+>                R    running or runnable (on run queue)
+>                S    interruptible sleep (waiting for an event to complete)
+>                T    stopped by job control signal
+>                t    stopped by debugger during the tracing
+>                W    paging (not valid since the 2.6.xx kernel)
+>                X    dead (should never be seen)
+>                Z    defunct ("zombie") process, terminated but not reaped by its parent
 > 
-> So I really think that's where the fix should be - on the signal delivery side.
 
-Thinking about it from the perspective of not delivering the wake-ups
-fixing io_uring and coredumps in a non-hacky way looks comparatively
-simple.  The function task_work_add just needs to not wake anything up
-after a process has started dying.
-
-Something like the patch below.
-
-The only tricky part I can see is making certain there are not any races
-between task_work_add and do_coredump depending on task_work_add not
-causing signal_pending to return true.
-
-diff --git a/kernel/task_work.c b/kernel/task_work.c
-index fad745c59234..5f941e377268 100644
---- a/kernel/task_work.c
-+++ b/kernel/task_work.c
-@@ -44,6 +44,9 @@ int task_work_add(struct task_struct *task, struct callback_head *work,
- 		work->next = head;
- 	} while (cmpxchg(&task->task_works, head, work) != head);
- 
-+	if (notify && (task->signal->flags & SIGNAL_GROUP_EXIT))
-+		return 0;
-+
- 	switch (notify) {
- 	case TWA_NONE:
- 		break;
+So it looks like a change that adds to the number of states in the
+kernel should update the ps man page as well.
 
 Eric
