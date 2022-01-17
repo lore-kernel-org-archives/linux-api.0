@@ -2,89 +2,140 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 94F92C433EF
-	for <linux-api@archiver.kernel.org>; Mon, 17 Jan 2022 13:05:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A88BFC433F5
+	for <linux-api@archiver.kernel.org>; Mon, 17 Jan 2022 15:56:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240050AbiAQNFU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 17 Jan 2022 08:05:20 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47342 "EHLO
+        id S240719AbiAQP4d (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 17 Jan 2022 10:56:33 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58332 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234253AbiAQNFT (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 17 Jan 2022 08:05:19 -0500
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1D65BC061574;
-        Mon, 17 Jan 2022 05:05:19 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=okXnBIihNJ45zjlOgVaV9HIZ4gTPr/ksjRMtNE9fq8A=; b=loMPvfhzX0Y2aCcY8FmyxPWYmv
-        ra70tAkSHGlVnnENkpYDo41jNZOdowzu1iBT8Ud+sM4P5s0MCs7LriwvrzyUaugGV1d3iBS4T4/wr
-        1eCZPth/HiaKLbdOqeG7fJFvQD9ek/SCCjyW+ZwRhuJs02N3UI80H1KmocLVE5LK7xNc+LWy7Fb3Z
-        B+mQPZpOK9l/3Sa9DoO6FvxXeJI2rSQEYceR1FHe+Y6tR4tEDP9XjYpQUhiAuIjVho7iaEw4kU0Lm
-        4+Ob2BRbptQZNdbtIQlUZMnCqrYn7D8n9ZRCc7ZxtRn0YN623Al6xsfFPaM3iPX2TkJZrfRHpAyvZ
-        Njv6XwBg==;
-Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=noisy.programming.kicks-ass.net)
-        by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1n9Rgu-008DFh-Cp; Mon, 17 Jan 2022 13:04:56 +0000
-Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (4096 bits))
-        (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 70B7C300237;
-        Mon, 17 Jan 2022 14:04:54 +0100 (CET)
-Received: by hirez.programming.kicks-ass.net (Postfix, from userid 1000)
-        id 27F832D675215; Mon, 17 Jan 2022 14:04:54 +0100 (CET)
-Date:   Mon, 17 Jan 2022 14:04:54 +0100
-From:   Peter Zijlstra <peterz@infradead.org>
-To:     Peter Oskolkov <posk@posk.io>
-Cc:     mingo@redhat.com, tglx@linutronix.de, juri.lelli@redhat.com,
-        vincent.guittot@linaro.org, dietmar.eggemann@arm.com,
-        rostedt@goodmis.org, bsegall@google.com, mgorman@suse.de,
-        bristot@redhat.com, linux-kernel@vger.kernel.org,
-        linux-mm@kvack.org, linux-api@vger.kernel.org, x86@kernel.org,
-        pjt@google.com, posk@google.com, avagin@google.com,
-        jannh@google.com, tdelisle@uwaterloo.ca
-Subject: Re: [RFC][PATCH 3/3] sched: User Mode Concurency Groups
-Message-ID: <YeVpdj/OP+qfAztn@hirez.programming.kicks-ass.net>
-References: <20211214204445.665580974@infradead.org>
- <20211214205358.701701555@infradead.org>
- <20211221171900.GA580323@dev-hv>
+        with ESMTP id S240690AbiAQP4b (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 17 Jan 2022 10:56:31 -0500
+Received: from mail-wm1-x332.google.com (mail-wm1-x332.google.com [IPv6:2a00:1450:4864:20::332])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AA0EEC06173E
+        for <linux-api@vger.kernel.org>; Mon, 17 Jan 2022 07:56:30 -0800 (PST)
+Received: by mail-wm1-x332.google.com with SMTP id f141-20020a1c1f93000000b003497aec3f86so541080wmf.3
+        for <linux-api@vger.kernel.org>; Mon, 17 Jan 2022 07:56:30 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=u9C5eDXIt2JgC7f+jIHCQcIVT6TGBlNH+TmJyzYUodM=;
+        b=OdCqkOj4K90mnj5dm3duSXPek6dgVb5LEjJtgmAXFsCUstfgZIgkL28sB2bwtDwXwe
+         8MT82sm2vqzLK1lIFNm6bJ7PC6OZu1ZFmMLhFHmmukgix4slEwRllFRqMjMxi3s1Uo+f
+         82hUfVR/C/tCPoQTs7BYoinPllnplmOYAMF4AUTjDetX21Nd582emqILyXL1qkseUbrF
+         H/QIH82XBqjLjjKXjo1KvE1Phmb3UzPrdkPCRE00FY+a2Q2IDDBKI3Pqg2deh52M1lRr
+         HbAaBx8QB9PJoF5FbNYvQWUCN/6fGzZ3v+i4Qt47J/iukCylWgKGgf2y8BK9ZeiEDn46
+         0B+A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=u9C5eDXIt2JgC7f+jIHCQcIVT6TGBlNH+TmJyzYUodM=;
+        b=veOeVGAtqDX1QQO4s2Mx3ZcHPmTXtB2RKv5wuAAc53ccFVJF1CS0rrZ0svLz1zl8iZ
+         UNNAiOozNcV1x2zwEvfLD8V84XxDBY3O0aISbudm8PEuWQRVPZ3WYNqeAT0gLhZMN9Gh
+         +dm6AgtalWmoDpSnzqDWMxLrWKy4hlO9F+5jSNZtGkJdP9UJfsnVUPBuRCed2/U5XLEj
+         mqh4X51yq51Dafpk3iNorV6Z1ZeAW6l3WZKjC7cbcaIk5HGs1rJ8JpVCsaiewqWRKwDK
+         +gdhXowVf0f7RbwL5b9hoFsChQOaAf6pnwM4KtXn+9J9aaH1Wy1l/nqozqAZswLuT3J6
+         04cA==
+X-Gm-Message-State: AOAM530qankbpiDlkVaWQF64ek+ZGp2RT2u/nPQEnq1DBiad/umTM1kb
+        n4RNUVlnhRdW0NBZKIjjb5eNxQ==
+X-Google-Smtp-Source: ABdhPJyNrlg1CEHuchAifM/k9e7/o2NvgG+Y4sNgoOIRDRpbH99Avz/yXfx9+SWEEVnGDqHJz/Oh0Q==
+X-Received: by 2002:a5d:4c4d:: with SMTP id n13mr20277570wrt.641.1642434989257;
+        Mon, 17 Jan 2022 07:56:29 -0800 (PST)
+Received: from localhost.localdomain (hst-221-60.medicom.bg. [84.238.221.60])
+        by smtp.gmail.com with ESMTPSA id i82sm15542900wma.23.2022.01.17.07.56.28
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 17 Jan 2022 07:56:28 -0800 (PST)
+From:   Stanimir Varbanov <stanimir.varbanov@linaro.org>
+To:     linux-media@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc:     hverkuil-cisco@xs4all.nl,
+        Stanimir Varbanov <stanimir.varbanov@linaro.org>
+Subject: [PATCH v3 3/6] venus: Add a handling of QC08C compressed format
+Date:   Mon, 17 Jan 2022 17:55:56 +0200
+Message-Id: <20220117155559.234026-4-stanimir.varbanov@linaro.org>
+X-Mailer: git-send-email 2.25.1
+In-Reply-To: <20220117155559.234026-1-stanimir.varbanov@linaro.org>
+References: <20220117155559.234026-1-stanimir.varbanov@linaro.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20211221171900.GA580323@dev-hv>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Dec 21, 2021 at 05:19:00PM +0000, Peter Oskolkov wrote:
-> On Tue, Dec 14, 2021 at 09:44:48PM +0100, Peter Zijlstra wrote:
-> > +static struct task_struct *umcg_get_task(u32 tid)
-> > +{
-> > +	struct task_struct *tsk = NULL;
-> > +
-> > +	if (tid) {
-> > +		rcu_read_lock();
-> > +		tsk = find_task_by_vpid(tid);
-> > +		if (tsk && current->mm == tsk->mm && tsk->umcg_task)
-> 
-> This essentially limits all operations to a single mm/process.
-> Fine for now, but a fast remote context switch is also a valid use
-> case. It is not directly related to userspace scheduling, so I'm
-> just mentioning it here. Maybe server-to-server cross-process
-> context switches should be allowed for the same user/cgroup? (Again,
-> this is for later to consider).
+This adds QC08C compressed pixel format in the Venus driver, and
+make it possible to discover from v4l2 clients.
 
-Doing cross-address-space UMCG will be a massive effort, too much
-(pretty much everything) in this implementation assumes things are
-directly addressable.
+Signed-off-by: Stanimir Varbanov <stanimir.varbanov@linaro.org>
+---
+ drivers/media/platform/qcom/venus/helpers.c |  2 ++
+ drivers/media/platform/qcom/venus/vdec.c    | 18 +++++++++++++++---
+ 2 files changed, 17 insertions(+), 3 deletions(-)
 
-> > +			get_task_struct(tsk);
-> > +		else
-> > +			tsk = NULL;
-> > +		rcu_read_unlock();
-> > +	}
-> > +
-> > +	return tsk;
-> > +}
+diff --git a/drivers/media/platform/qcom/venus/helpers.c b/drivers/media/platform/qcom/venus/helpers.c
+index a5464385a716..adbfa4fbe139 100644
+--- a/drivers/media/platform/qcom/venus/helpers.c
++++ b/drivers/media/platform/qcom/venus/helpers.c
+@@ -592,6 +592,8 @@ static u32 to_hfi_raw_fmt(u32 v4l2_fmt)
+ 		return HFI_COLOR_FORMAT_NV12;
+ 	case V4L2_PIX_FMT_NV21:
+ 		return HFI_COLOR_FORMAT_NV21;
++	case V4L2_PIX_FMT_QC08C:
++		return HFI_COLOR_FORMAT_NV12_UBWC;
+ 	default:
+ 		break;
+ 	}
+diff --git a/drivers/media/platform/qcom/venus/vdec.c b/drivers/media/platform/qcom/venus/vdec.c
+index 91da3f509724..eb02e45a512b 100644
+--- a/drivers/media/platform/qcom/venus/vdec.c
++++ b/drivers/media/platform/qcom/venus/vdec.c
+@@ -31,6 +31,10 @@
+  */
+ static const struct venus_format vdec_formats[] = {
+ 	{
++		.pixfmt = V4L2_PIX_FMT_QC08C,
++		.num_planes = 1,
++		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
++	}, {
+ 		.pixfmt = V4L2_PIX_FMT_NV12,
+ 		.num_planes = 1,
+ 		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
+@@ -106,6 +110,10 @@ find_format(struct venus_inst *inst, u32 pixfmt, u32 type)
+ 	    !venus_helper_check_codec(inst, fmt[i].pixfmt))
+ 		return NULL;
+ 
++	if (V4L2_TYPE_IS_CAPTURE(type) &&
++	    !venus_helper_check_format(inst, fmt[i].pixfmt))
++		return NULL;
++
+ 	return &fmt[i];
+ }
+ 
+@@ -124,8 +132,12 @@ find_format_by_index(struct venus_inst *inst, unsigned int index, u32 type)
+ 
+ 		if (fmt[i].type != type)
+ 			continue;
+-		valid = type != V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE ||
+-			venus_helper_check_codec(inst, fmt[i].pixfmt);
++
++		if (V4L2_TYPE_IS_OUTPUT(type))
++			valid = venus_helper_check_codec(inst, fmt[i].pixfmt);
++		else if (V4L2_TYPE_IS_CAPTURE(type))
++			valid = venus_helper_check_format(inst, fmt[i].pixfmt);
++
+ 		if (k == index && valid)
+ 			break;
+ 		if (valid)
+@@ -1525,7 +1537,7 @@ static const struct hfi_inst_ops vdec_hfi_ops = {
+ static void vdec_inst_init(struct venus_inst *inst)
+ {
+ 	inst->hfi_codec = HFI_VIDEO_CODEC_H264;
+-	inst->fmt_out = &vdec_formats[6];
++	inst->fmt_out = &vdec_formats[7];
+ 	inst->fmt_cap = &vdec_formats[0];
+ 	inst->width = frame_width_min(inst);
+ 	inst->height = ALIGN(frame_height_min(inst), 32);
+-- 
+2.25.1
+
