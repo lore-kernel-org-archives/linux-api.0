@@ -2,214 +2,145 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0E871C433F5
-	for <linux-api@archiver.kernel.org>; Tue, 18 Jan 2022 10:09:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2A343C43217
+	for <linux-api@archiver.kernel.org>; Tue, 18 Jan 2022 16:15:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236842AbiARKJk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 18 Jan 2022 05:09:40 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53376 "EHLO
+        id S231566AbiARQPr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 18 Jan 2022 11:15:47 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51776 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236740AbiARKJj (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Jan 2022 05:09:39 -0500
-Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 92E56C061574;
-        Tue, 18 Jan 2022 02:09:39 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=desiato.20200630; h=In-Reply-To:Content-Type:MIME-Version:
-        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=6liHV220LfGQeWf071bjFsGALMPq/vYxp0KoDb2bAPg=; b=X95i51/UoNNANKjeTBR7ERQns7
-        QlLg7W0vZ5FAr1yS2MRBl4RfUQOb7emPoMo5T/dGgwkGOuIrf3uuUUq8F/hyw07kKgbPt4FKyzo/b
-        i8Pn/HtfLVxIPK5695SPrCqlpHuFXg3eip260qaowYybDL8NEVSX0m2tLacEji9tW3nVhsXsnDeuh
-        3VY6Uy5rvgWyFNznB7FXJBENJW0CSkghxYyCFF9rc+H2WtjVNGeZUVAcOhcL+6HL5qUF4J+6IW0f1
-        F0flVobdSwfXAITesV0Zv6ZRLBHQoqu6TpxQWUdILbCHsKNkIZAOSK3ZOhvV4eEFRTUNC3aFsUvxQ
-        Ao38qRCA==;
-Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=noisy.programming.kicks-ass.net)
-        by desiato.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1n9lQQ-001pCt-FO; Tue, 18 Jan 2022 10:09:14 +0000
-Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-        (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 9DC0C300252;
-        Tue, 18 Jan 2022 11:09:11 +0100 (CET)
-Received: by hirez.programming.kicks-ass.net (Postfix, from userid 1000)
-        id 531D1212E9D8D; Tue, 18 Jan 2022 11:09:11 +0100 (CET)
-Date:   Tue, 18 Jan 2022 11:09:11 +0100
-From:   Peter Zijlstra <peterz@infradead.org>
-To:     Peter Oskolkov <posk@posk.io>
-Cc:     mingo@redhat.com, tglx@linutronix.de, juri.lelli@redhat.com,
-        vincent.guittot@linaro.org, dietmar.eggemann@arm.com,
-        rostedt@goodmis.org, bsegall@google.com, mgorman@suse.de,
-        bristot@redhat.com, linux-kernel@vger.kernel.org,
-        linux-mm@kvack.org, linux-api@vger.kernel.org, x86@kernel.org,
-        pjt@google.com, posk@google.com, avagin@google.com,
-        jannh@google.com, tdelisle@uwaterloo.ca
-Subject: Re: [RFC][PATCH 3/3] sched: User Mode Concurency Groups
-Message-ID: <YeaRx9oDp08ABvyU@hirez.programming.kicks-ass.net>
-References: <20211214204445.665580974@infradead.org>
- <20211214205358.701701555@infradead.org>
- <20211221171900.GA580323@dev-hv>
- <YeGEM7TP3tekBVEh@hirez.programming.kicks-ass.net>
+        with ESMTP id S1347843AbiARQOI (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 18 Jan 2022 11:14:08 -0500
+Received: from mail-wm1-x336.google.com (mail-wm1-x336.google.com [IPv6:2a00:1450:4864:20::336])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5295FC061401;
+        Tue, 18 Jan 2022 08:12:32 -0800 (PST)
+Received: by mail-wm1-x336.google.com with SMTP id q9-20020a7bce89000000b00349e697f2fbso7130868wmj.0;
+        Tue, 18 Jan 2022 08:12:32 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=Krm5uyz9TkCVOdM6IRP/tp33k9YUzt1fxsTNdw5NfEw=;
+        b=KA9qDwiChE5WC5y/z8sx1fIYwcOJidks7V9x+KmnagPHsG/nangXyPC3+rMOFMxiG2
+         ba1U24ByRXFbXcM2BPRH8q10tMqXd/SE3zLPY4vLmSr1dht5Hl5QAbq5uW7cBldbYOyd
+         KctbVzA3zk8oUtacvgfhQhSlGI8KrWCEL5/Ov1dM8hvydrW6ai3lhzQtK83R9ttUHqiL
+         +sXBFT6cUIOjHBZxKnetfudtQXdy/CW1udxChPQokhurcwURo5fx8oT/Zqqysw6BIDva
+         o9xoqpbbMxvpnLJSeVBIPbhcW6mbOucfiC6+juCQZfdXMZKsIxEs0ynuJGXNuzsT4mXh
+         BBUA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=Krm5uyz9TkCVOdM6IRP/tp33k9YUzt1fxsTNdw5NfEw=;
+        b=13GWTjrGu/OUDjwPeQCmV8nBZ8Fe3fCZmTYP7DaXjcC099U6cQaLgFVsQeTiSKbEfV
+         4yKbD6CJsmdXjON7OZjhlFqUuZh1aavB4HtSFpKVjMdfckdbIKuPjiuGp+M004E82pGN
+         sSmMiFNIIjJo4E5FPHv/AYRsjmVBoX0PiT3VwUbx3HsoGu2luIcXREDT05dyz4H0aQQa
+         qjs1YSTSVVmBbS95V8gQ2V6U19tdQu429Q8IPbgs5LletNzK8knokzLw/LFpDTUOMUVo
+         LJDaQw/Gms63Gcmoa7ITMFskLYGkGAfrppGTj7tUHAYyKYFk+6USvtjYC1GxQpwlkCOy
+         HR1A==
+X-Gm-Message-State: AOAM530G/1TSyx/2BAIHtWsZn9Eiojscg7ZPMwU+I2Ql7lgkevB7+zhE
+        Cs4zXDk08ENBLREyp0gBDtixYJcQEPgU2vZiKALlSp2n
+X-Google-Smtp-Source: ABdhPJxZIYhkFdiZT/A6fnYqp1GLnjJj7ZtJQYuN9lfydv7zQ4SqlsycyamGHxs7L0u+wVdYcHjoii0Dp7pIpJ75ZNY=
+X-Received: by 2002:a7b:cdf7:: with SMTP id p23mr25280266wmj.151.1642522350903;
+ Tue, 18 Jan 2022 08:12:30 -0800 (PST)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <YeGEM7TP3tekBVEh@hirez.programming.kicks-ass.net>
+References: <20220117155559.234026-1-stanimir.varbanov@linaro.org> <20220117155559.234026-2-stanimir.varbanov@linaro.org>
+In-Reply-To: <20220117155559.234026-2-stanimir.varbanov@linaro.org>
+From:   Rob Clark <robdclark@gmail.com>
+Date:   Tue, 18 Jan 2022 08:12:27 -0800
+Message-ID: <CAF6AEGuB2drN-qt8TicP0pLYbKQLt2vEhLt+xSND7tVoOiNEQQ@mail.gmail.com>
+Subject: Re: [PATCH v3 1/6] v4l: Add Qualcomm custom compressed pixel formats
+To:     Stanimir Varbanov <stanimir.varbanov@linaro.org>
+Cc:     "open list:DMA BUFFER SHARING FRAMEWORK" 
+        <linux-media@vger.kernel.org>,
+        linux-arm-msm <linux-arm-msm@vger.kernel.org>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        linux-api@vger.kernel.org, hverkuil-cisco@xs4all.nl,
+        Rob Clark <robdclark@chromium.org>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Jan 14, 2022 at 03:09:55PM +0100, Peter Zijlstra wrote:
-> On Tue, Dec 21, 2021 at 05:19:00PM +0000, Peter Oskolkov wrote:
+On Mon, Jan 17, 2022 at 6:36 PM Stanimir Varbanov
+<stanimir.varbanov@linaro.org> wrote:
+>
+> Add custom Qualcomm raw compressed pixel formats. They are
+> used in Qualcomm SoCs to optimize the interconnect bandwidth.
+>
+> Signed-off-by: Stanimir Varbanov <stanimir.varbanov@linaro.org>
+> ---
+>  .../media/v4l/pixfmt-reserved.rst             | 19 +++++++++++++++++++
+>  drivers/media/v4l2-core/v4l2-ioctl.c          |  2 ++
+>  include/uapi/linux/videodev2.h                |  2 ++
+>  3 files changed, 23 insertions(+)
+>
+> diff --git a/Documentation/userspace-api/media/v4l/pixfmt-reserved.rst b/Documentation/userspace-api/media/v4l/pixfmt-reserved.rst
+> index 2f2133b4cd9c..929bd0dc0ba3 100644
+> --- a/Documentation/userspace-api/media/v4l/pixfmt-reserved.rst
+> +++ b/Documentation/userspace-api/media/v4l/pixfmt-reserved.rst
+> @@ -245,6 +245,25 @@ please make a proposal on the linux-media mailing list.
+>        - Non-compressed, tiled two-planar format used by Mediatek MT8183.
+>         This is an opaque intermediate format and the MDP3 hardware can be
+>         used to convert it to other formats.
+> +    * .. _V4L2-PIX-FMT-QC08C:
+> +
+> +      - ``V4L2_PIX_FMT_QC08C``
+> +      - 'QC08C'
+> +      - Compressed Macro-tile 8-Bit YUV420 format used by Qualcomm platforms.
+> +        It is an opaque intermediate format. The used compression is lossless
+> +        and it is used by various multimedia hardware blocks like GPU, display
+> +        controllers, ISP and video accelerators.
+> +        It contains four planes for progressive video and eight planes for
+> +        interlaced video.
 
-> > What does worry me is that in this wakeup the server calls sys_umcg_wait()
-> > with another worker in next_tid, so now the server will have two
-> > workers running: the current kernel API seems to allow this to happen.
-> > In my patchset the invariant that no more than one worker running
-> > per server was enforced by the kernel.
-> 
-> So one of the things I've started, but didn't finished, is to forward
-> port the Proxy-Execution patches to a current kernel and play with the
-> PE+UMCG interaction.
-> 
-> Thinking about that interaction I've ran into that exact problem.
-> 
-> The 'nice' solution is to actually block the worker, but that's also the
-> slow solution :/
-> 
-> The other solution seems to be to keep kernel state; track the current
-> worker associated with the server. I haven't (so far) done that due to
-> my futex trauma.
-> 
-> So yes, the current API can be used to do the wrong thing, but the
-> kernel doesn't care and you get to keep the pieces in userspace. And I
-> much prefer user pieces over kernel pieces.
+I guess QC08C is the same thing as NV12+UBWC?  Note that on the GPU
+side, NV12+UBWC is treated as two planes, we program the hw with the
+address of the start of UBWC data and the hw calculates the offset to
+pixel data for the plane.  So the UBWC and pixel data are not actually
+independent planes.
 
-So I think I came up with a 3rd option; since the TID range is 30 bits
-(per FUTEX_TID_MASK) we have those same two top bits to play with.
+BR,
+-R
 
-So we write into server::next_tid the tid of the worker we want to wake;
-and we currently have it cleared such that we can distinguish between
-the case where sys_umcg_wait() returned an error before or after waking
-it.
-
-However; we can use one of the 2 remaining bits to indicate the worker
-is woken, let's say bit 31. This then has server::next_tid always
-containing the current tid, even when the server has a 'spurious' wakeup
-for other things.
-
-Then all we need to do is modify the state check when the bit is set to
-ensure we don't wake the worker again if we race sys_umcg_wait() with a
-worker blocking.
-
-A bit like this, I suppose... (incompete patch in that it relies on a
-whole pile of local changes that might or might not live).
-
---- a/include/uapi/linux/umcg.h
-+++ b/include/uapi/linux/umcg.h
-@@ -94,6 +94,8 @@ struct umcg_task {
- 	 */
- 	__u32	state;				/* r/w */
- 
-+#define UMCG_TID_RUNNING	0x80000000U
-+#define UMCG_TID_MASK		0x3fffffffU
- 	/**
- 	 * @next_tid: the TID of the UMCG task that should be context-switched
- 	 *            into in sys_umcg_wait(). Can be zero, in which case
---- a/kernel/sched/umcg.c
-+++ b/kernel/sched/umcg.c
-@@ -20,7 +20,7 @@ static struct task_struct *umcg_get_task
- 
- 	if (tid) {
- 		rcu_read_lock();
--		tsk = find_task_by_vpid(tid);
-+		tsk = find_task_by_vpid(tid & UMCG_TID_MASK);
- 		if (tsk && current->mm == tsk->mm && tsk->umcg_task)
- 			get_task_struct(tsk);
- 		else
-@@ -289,27 +291,6 @@ static int umcg_wake_task(struct task_st
- 	return 0;
- }
- 
--static int umcg_wake_next(struct task_struct *tsk)
--{
--	int ret = umcg_wake_task(tsk->umcg_next, tsk->umcg_next_task);
--	if (ret)
--		return ret;
--
--	/*
--	 * If userspace sets umcg_task::next_tid, it needs to remove
--	 * that task from the ready-queue to avoid another server
--	 * selecting it. However, that also means it needs to put it
--	 * back in case it went unused.
--	 *
--	 * By clearing the field on use, userspace can detect this case
--	 * and DTRT.
--	 */
--	if (put_user(0u, &tsk->umcg_task->next_tid))
--		return -EFAULT;
--
--	return 0;
--}
--
- static int umcg_wake_server(struct task_struct *tsk)
- {
- 	int ret = umcg_wake_task(tsk->umcg_server, tsk->umcg_server_task);
-@@ -637,6 +599,48 @@ SYSCALL_DEFINE2(umcg_kick, u32, flags, p
- 	return 0;
- }
- 
-+static int umcg_wake_next(struct task_struct *tsk, struct umcg_task __user *self)
-+{
-+	struct umcg_task __user *next_task;
-+	struct task_struct *next;
-+	u32 next_tid, state;
-+	int ret;
-+
-+	if (get_user(next_tid, &self->next_tid))
-+		return -EFAULT;
-+
-+	next = umcg_get_task(next_tid);
-+	if (!next)
-+		return -ESRCH;
-+
-+	next_task = READ_ONCE(next->umcg_task);
-+
-+	if (next_tid & UMCG_TID_RUNNING) {
-+		ret = -EFAULT;
-+		if (get_user(state, &next_task->state))
-+			goto put_next;
-+
-+		ret = 0;
-+		if ((state & UMCG_TASK_MASK) != UMCG_TASK_RUNNING)
-+			ret = -EAGAIN;
-+
-+	} else {
-+		ret = umcg_wake_task(next, next_task);
-+		if (ret)
-+			goto put_next;
-+
-+		ret = -EFAULT;
-+		if (put_user(next_tid | UMCG_TID_RUNNING, &self->next_tid))
-+			goto put_next;
-+
-+		ret = 0;
-+	}
-+
-+put_next:
-+	put_task_struct(next);
-+	return ret;
-+}
-+
- /**
-  * sys_umcg_wait: transfer running context
-  *
-
-
-And once we have this, we can add sanity checks that server::next_tid is
-what it should be for ever worker moving away from RUNNING state (which
-depends on the assumption that all threads are in the same PID
-namespace).
-
-
-Does this make sense?
+> +    * .. _V4L2-PIX-FMT-QC10C:
+> +
+> +      - ``V4L2_PIX_FMT_QC10C``
+> +      - 'QC10C'
+> +      - Compressed Macro-tile 10-Bit YUV420 format used by Qualcomm platforms.
+> +        It is an opaque intermediate format. The used compression is lossless
+> +        and it is used by various multimedia hardware blocks like GPU, display
+> +        controllers, ISP and video accelerators.
+> +        It contains four planes for progressive video.
+>
+>  .. raw:: latex
+>
+> diff --git a/drivers/media/v4l2-core/v4l2-ioctl.c b/drivers/media/v4l2-core/v4l2-ioctl.c
+> index 9ac557b8e146..1b6462f9ad7e 100644
+> --- a/drivers/media/v4l2-core/v4l2-ioctl.c
+> +++ b/drivers/media/v4l2-core/v4l2-ioctl.c
+> @@ -1437,6 +1437,8 @@ static void v4l_fill_fmtdesc(struct v4l2_fmtdesc *fmt)
+>                 case V4L2_PIX_FMT_SE401:        descr = "GSPCA SE401"; break;
+>                 case V4L2_PIX_FMT_S5C_UYVY_JPG: descr = "S5C73MX interleaved UYVY/JPEG"; break;
+>                 case V4L2_PIX_FMT_MT21C:        descr = "Mediatek Compressed Format"; break;
+> +               case V4L2_PIX_FMT_QC08C:        descr = "QCOM Compressed 8-bit Format"; break;
+> +               case V4L2_PIX_FMT_QC10C:        descr = "QCOM Compressed 10-bit Format"; break;
+>                 default:
+>                         if (fmt->description[0])
+>                                 return;
+> diff --git a/include/uapi/linux/videodev2.h b/include/uapi/linux/videodev2.h
+> index df8b9c486ba1..e710903185bd 100644
+> --- a/include/uapi/linux/videodev2.h
+> +++ b/include/uapi/linux/videodev2.h
+> @@ -744,6 +744,8 @@ struct v4l2_pix_format {
+>  #define V4L2_PIX_FMT_INZI     v4l2_fourcc('I', 'N', 'Z', 'I') /* Intel Planar Greyscale 10-bit and Depth 16-bit */
+>  #define V4L2_PIX_FMT_CNF4     v4l2_fourcc('C', 'N', 'F', '4') /* Intel 4-bit packed depth confidence information */
+>  #define V4L2_PIX_FMT_HI240    v4l2_fourcc('H', 'I', '2', '4') /* BTTV 8-bit dithered RGB */
+> +#define V4L2_PIX_FMT_QC08C    v4l2_fourcc('Q', '0', '8', 'C') /* Qualcomm 8-bit compressed */
+> +#define V4L2_PIX_FMT_QC10C    v4l2_fourcc('Q', '1', '0', 'C') /* Qualcomm 10-bit compressed */
+>
+>  /* 10bit raw bayer packed, 32 bytes for every 25 pixels, last LSB 6 bits unused */
+>  #define V4L2_PIX_FMT_IPU3_SBGGR10      v4l2_fourcc('i', 'p', '3', 'b') /* IPU3 packed 10-bit BGGR bayer */
+> --
+> 2.25.1
+>
