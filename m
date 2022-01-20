@@ -2,128 +2,69 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E86C7C433EF
-	for <linux-api@archiver.kernel.org>; Wed, 19 Jan 2022 19:13:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 38788C433EF
+	for <linux-api@archiver.kernel.org>; Thu, 20 Jan 2022 10:37:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235812AbiASTNx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 19 Jan 2022 14:13:53 -0500
-Received: from out01.mta.xmission.com ([166.70.13.231]:35552 "EHLO
-        out01.mta.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230121AbiASTNx (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 19 Jan 2022 14:13:53 -0500
-Received: from in02.mta.xmission.com ([166.70.13.52]:46500)
-        by out01.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-        (Exim 4.93)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1nAGP0-004pU3-MY; Wed, 19 Jan 2022 12:13:50 -0700
-Received: from ip68-110-24-146.om.om.cox.net ([68.110.24.146]:45716 helo=email.froward.int.ebiederm.org.xmission.com)
-        by in02.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-        (Exim 4.93)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1nAGOz-006ccZ-Aj; Wed, 19 Jan 2022 12:13:50 -0700
-From:   "Eric W. Biederman" <ebiederm@xmission.com>
-To:     Valentin Schneider <valentin.schneider@arm.com>
-Cc:     linux-kernel@vger.kernel.org,
-        Uwe =?utf-8?Q?Kleine-K=C3=B6nig?= 
-        <u.kleine-koenig@pengutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Abhijeet Dharmapurikar <adharmap@quicinc.com>,
-        Dietmar Eggemann <dietmar.eggemann@arm.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        Vincent Guittot <vincent.guittot@linaro.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Kees Cook <keescook@chromium.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Alexey Gladkov <legion@kernel.org>,
-        "Kenta.Tada@sony.com" <Kenta.Tada@sony.com>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        Ed Tsai <ed.tsai@mediatek.com>, linux-api@vger.kernel.org
-References: <20220117164633.322550-1-valentin.schneider@arm.com>
-        <20220117164633.322550-3-valentin.schneider@arm.com>
-        <878rve89cc.fsf@email.froward.int.ebiederm.org>
-        <878rvd6jgu.mognet@arm.com>
-        <87h7a06hkr.fsf@email.froward.int.ebiederm.org>
-        <875yqf7eq4.mognet@arm.com>
-Date:   Wed, 19 Jan 2022 13:13:42 -0600
-In-Reply-To: <875yqf7eq4.mognet@arm.com> (Valentin Schneider's message of
-        "Wed, 19 Jan 2022 18:38:43 +0000")
-Message-ID: <87fspj7d3t.fsf@email.froward.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
+        id S1376263AbiATKhs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 20 Jan 2022 05:37:48 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34916 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S241959AbiATKhs (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 20 Jan 2022 05:37:48 -0500
+Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2F983C061574;
+        Thu, 20 Jan 2022 02:37:48 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=desiato.20200630; h=In-Reply-To:Content-Type:MIME-Version:
+        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=IPCG7u59l6g4gQfA7/kz26XOwQYj1kTGYtvG8ISDhgk=; b=Akv/koBNrr3moj2wsPZFQCOwVS
+        IU+JXc/VRE1FDa90VZfM8su2uTNUv4TkPxWnaahpiY+xeAv79xFB55Mx7rX9K5nAiYfc+eNfAmiSg
+        hTVLfiOdWn/4mdFWVbtEWAgBlWF2oviic1+frRSQKwWu8hXjl0TdStm5f9m6zBXMntdQBrKBaT0BC
+        BpTpRP3zE1UmycEz0bYQqioC+7HXSEFHEzQHDGrD6AuZlngTzQYAv8fUnKPNj3fcJkTKJ7pxHrFle
+        E0UVt9wm4D4YEydthRAQDU463abbfxg+DkWU2cKVZIiywHEPAYMCKBpNA1Duy1pS1MaJgjPG+W4ye
+        PN6MERiA==;
+Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=noisy.programming.kicks-ass.net)
+        by desiato.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1nAUoZ-002Gvy-Ho; Thu, 20 Jan 2022 10:37:11 +0000
+Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+        (Client did not present a certificate)
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 929B03002F1;
+        Thu, 20 Jan 2022 11:37:08 +0100 (CET)
+Received: by hirez.programming.kicks-ass.net (Postfix, from userid 1000)
+        id 6803421417389; Thu, 20 Jan 2022 11:37:08 +0100 (CET)
+Date:   Thu, 20 Jan 2022 11:37:08 +0100
+From:   Peter Zijlstra <peterz@infradead.org>
+To:     Peter Oskolkov <posk@google.com>
+Cc:     Peter Oskolkov <posk@posk.io>, mingo@redhat.com,
+        tglx@linutronix.de, juri.lelli@redhat.com,
+        vincent.guittot@linaro.org, dietmar.eggemann@arm.com,
+        rostedt@goodmis.org, bsegall@google.com, mgorman@suse.de,
+        bristot@redhat.com, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, linux-api@vger.kernel.org, x86@kernel.org,
+        pjt@google.com, avagin@google.com, jannh@google.com,
+        tdelisle@uwaterloo.ca
+Subject: Re: [RFC][PATCH 3/3] sched: User Mode Concurency Groups
+Message-ID: <Yek7VNT2GsTfZsCD@hirez.programming.kicks-ass.net>
+References: <20211214204445.665580974@infradead.org>
+ <20211214205358.701701555@infradead.org>
+ <20211221171900.GA580323@dev-hv>
+ <YeGEM7TP3tekBVEh@hirez.programming.kicks-ass.net>
+ <YeaRx9oDp08ABvyU@hirez.programming.kicks-ass.net>
+ <CAPNVh5cdGiDqut90kUo-HXyya6Nbz_CjuUObYXfprgDhQHnUmg@mail.gmail.com>
+ <YefTCk4to5YzO8AB@hirez.programming.kicks-ass.net>
+ <CAPNVh5dccb59Dj5Aeo3AybS+EiHix+-U7wgm8AakPqL3zdTQtQ@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1nAGOz-006ccZ-Aj;;;mid=<87fspj7d3t.fsf@email.froward.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.110.24.146;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1+oSM1ZuUDl1IfWlCLn1yiB3bjw4dARZ6s=
-X-SA-Exim-Connect-IP: 68.110.24.146
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: Re: [PATCH v2 2/2] sched/tracing: Add TASK_RTLOCK_WAIT to TASK_REPORT
-X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
-X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CAPNVh5dccb59Dj5Aeo3AybS+EiHix+-U7wgm8AakPqL3zdTQtQ@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Valentin Schneider <valentin.schneider@arm.com> writes:
+On Wed, Jan 19, 2022 at 09:52:30AM -0800, Peter Oskolkov wrote:
+> Could you, please, post an updated RFC when you have a chance? Thanks!
 
-> On 18/01/22 12:10, Eric W. Biederman wrote:
->> Valentin Schneider <valentin.schneider@arm.com> writes:
->>>
->>> Alternatively, TASK_RTLOCK_WAIT could be masqueraded as
->>> TASK_(UN)INTERRUPTIBLE when reported to userspace - it is actually somewhat
->>> similar, unlike TASK_IDLE vs TASK_UNINTERRUPTIBLE for instance. The
->>> handling in get_task_state() will be fugly, but it might be preferable over
->>> exposing a detail userspace might not need to be made aware of?
->>
->> Right.
->>
->> Frequently I have seen people do a cost/benefit analysis.
->>
->> If the benefit is enough, and tracking down the userspace programs that
->> need to be verified to work with the change is inexpensive enough the
->> change is made.  Always keeping in mind that if something was missed and
->> the change causes a regression the change will need to be reverted.
->>
->> If there is little benefit or the cost to track down userspace is great
->> enough the work is put in to hide the change from userspace.  Just
->> because it is too much trouble to expose it to userspace.
->>
->> I honestly don't have any kind of sense about how hard it is to verify
->> that a userspace regression won't result from a change like this.  I
->> just know that the question needs to be asked.
->>
->
-> I see it as: does it actually make sense to expose a new state? All the
-> information this is conveying is: "this task took a lock that is
-> substituted by a sleepable lock under PREEMPT_RT". Now that you brought
-> this up, I don't really see much value in this vs just conveying that the
-> task is sleeping on a lock, i.e. just report the same as if it had gone
-> through rt_mutex_lock(), aka:
-
-That seems reasonable to me.
-
-Eric
-
->
-> ---
-> diff --git a/include/linux/sched.h b/include/linux/sched.h
-> index d00837d12b9d..ac7b3eef4a61 100644
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -1626,6 +1626,14 @@ static inline unsigned int __task_state_index(unsigned int tsk_state,
->  	if (tsk_state == TASK_IDLE)
->  		state = TASK_REPORT_IDLE;
->  
-> +	/*
-> +	 * We're lying here, but rather than expose a completely new task state
-> +	 * to userspace, we can make this appear as if the task had gone through
-> +	 * a regular rt_mutex_lock() call.
-> +	 */
-> +	if (tsk_state == TASK_RTLOCK_WAIT)
-> +		state = TASK_UNINTERRUPTIBLE;
-> +
->  	return fls(state);
->  }
->  
+I was working on that, I'll try and get it done today.
