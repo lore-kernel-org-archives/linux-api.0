@@ -2,42 +2,42 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6DA04C433F5
-	for <linux-api@archiver.kernel.org>; Thu, 20 Jan 2022 16:09:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4F499C433EF
+	for <linux-api@archiver.kernel.org>; Thu, 20 Jan 2022 16:09:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1376855AbiATQJQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 20 Jan 2022 11:09:16 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55624 "EHLO
+        id S1376869AbiATQJV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 20 Jan 2022 11:09:21 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55644 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1347042AbiATQJQ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 20 Jan 2022 11:09:16 -0500
+        with ESMTP id S1376871AbiATQJV (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 20 Jan 2022 11:09:21 -0500
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 53EAEC061574;
-        Thu, 20 Jan 2022 08:09:16 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D4C7EC06161C;
+        Thu, 20 Jan 2022 08:09:20 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Type:MIME-Version:References:
         Subject:Cc:To:From:Date:Message-ID:Sender:Reply-To:Content-Transfer-Encoding:
         Content-ID:Content-Description:In-Reply-To;
-        bh=P7lCKswW2dVYa2ibcKWxMvFcXeaAwTyHA88lMKA84Q0=; b=v7q1B2c2V4kGj/vOH2Qdqb5AKJ
-        76RBDZVgd7MjqInz8C+SyL+O21TLFjpBnB9bDU/iIQKKOTGFfhHqTFJQeo46nd2QuEF5OuO1/5Q5P
-        IGmCd8OOQR8jn8YWkYEHjoXkIRAz84a4V+M3tRHG8NcV0UYLjLBXBK5Pi5eozySrqtnGkVsHvGYlh
-        ziR8vby2lcAhDf3TwpHJdzZYUaiSL6rXPgAHcBf9/eGxduU9+ombCT4go8+vnMznRoTnlU5IuWXjU
-        qFuD1HIRpWpXIj8zQxq2sy+iM4gdh9HCQxCeLbZ5kJc34VhIVjrACnOK+XK3wWkXotFLdOqNnbMsD
-        k4D9FEiA==;
+        bh=EoDxyQ5zZysrQvDvpMfLfzo72oIZBXHd0US2ONa2HeA=; b=W1SVLlfvjNw49kXCVDmtetyoaS
+        OG+8byKA4715c6elpDeg/wbgm2JC/zo7QUicqBrAPY18AucDUsIPaejraLM+kinfTCi+Oy/nrq1nB
+        coeVbNKzbbYmNiCZYcpH1ImI++ddYe9xcdLN4UlzHnVWZXohkh02tngtvToDLBNP9evE8x2UHbfes
+        enX3GMeI9dM98zKvAjPR1fhnWoh38cS/0SFtme7+OX8UxGhwCuO54bExgJD6BTwe3/sfkUg+PZW6u
+        P/PX2PB5wC0M3U3g69k6+o8e0/fSscsm3z+6IdIkq/bL+/sJPEneccGnxzruBHfvje2Fd+OPVQjP0
+        cr0tEZWQ==;
 Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=noisy.programming.kicks-ass.net)
         by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1nAZza-00EQ4H-3u; Thu, 20 Jan 2022 16:08:54 +0000
+        id 1nAZza-00EQ4F-3H; Thu, 20 Jan 2022 16:08:54 +0000
 Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+         key-exchange X25519 server-signature RSA-PSS (4096 bits))
         (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id BB9AC3004AD;
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id B763C300222;
         Thu, 20 Jan 2022 17:08:51 +0100 (CET)
 Received: by hirez.programming.kicks-ass.net (Postfix, from userid 0)
-        id 8F83120291FE3; Thu, 20 Jan 2022 17:08:51 +0100 (CET)
-Message-ID: <20220120160822.666778608@infradead.org>
+        id 9A08120280188; Thu, 20 Jan 2022 17:08:51 +0100 (CET)
+Message-ID: <20220120160822.790430899@infradead.org>
 User-Agent: quilt/0.66
-Date:   Thu, 20 Jan 2022 16:55:18 +0100
+Date:   Thu, 20 Jan 2022 16:55:20 +0100
 From:   Peter Zijlstra <peterz@infradead.org>
 To:     mingo@redhat.com, tglx@linutronix.de, juri.lelli@redhat.com,
         vincent.guittot@linaro.org, dietmar.eggemann@arm.com,
@@ -48,7 +48,7 @@ Cc:     linux-kernel@vger.kernel.org, linux-mm@kvack.org,
         pjt@google.com, posk@google.com, avagin@google.com,
         jannh@google.com, tdelisle@uwaterloo.ca, mark.rutland@arm.com,
         posk@posk.io
-Subject: [RFC][PATCH v2 1/5] mm: Avoid unmapping pinned pages
+Subject: [RFC][PATCH v2 3/5] sched/umcg: add WF_CURRENT_CPU and externise ttwu
 References: <20220120155517.066795336@infradead.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -56,68 +56,81 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add a guarantee for Anon pages that pin_user_page*() ensures the
-user-mapping of these pages stay preserved. In order to ensure this
-all rmap users have been audited:
+From: Peter Oskolkov <posk@posk.io>
 
- vmscan:	already fails eviction due to page_maybe_dma_pinned()
+Add WF_CURRENT_CPU wake flag that advices the scheduler to
+move the wakee to the current CPU. This is useful for fast on-CPU
+context switching use cases such as UMCG.
 
- migrate:	migration will fail on pinned pages due to
-		expected_page_refs() not matching, however that is
-		*after* try_to_migrate() has already destroyed the
-		user mapping of these pages. Add an early exit for
-		this case.
+In addition, make ttwu external rather than static so that
+the flag could be passed to it from outside of sched/core.c.
 
- numa-balance:	as per the above, pinned pages cannot be migrated,
-		however numa balancing scanning will happily PROT_NONE
-		them to get usage information on these pages. Avoid
-		this for pinned pages.
-
-None of the other rmap users (damon,page-idle,mlock,..) unmap the
-page, they mostly just muck about with reference,dirty flags etc.
-
-This same guarantee cannot be provided for Shared (file) pages due to
-dirty page tracking.
-
+Signed-off-by: Peter Oskolkov <posk@google.com>
 Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Link: https://lkml.kernel.org/r/20211122211327.5931-2-posk@google.com
 ---
- mm/migrate.c  |   10 +++++++++-
- mm/mprotect.c |    6 ++++++
- 2 files changed, 15 insertions(+), 1 deletion(-)
+ kernel/sched/core.c  |    3 +--
+ kernel/sched/fair.c  |    4 ++++
+ kernel/sched/sched.h |   17 ++++++++++-------
+ 3 files changed, 15 insertions(+), 9 deletions(-)
 
---- a/mm/migrate.c
-+++ b/mm/migrate.c
-@@ -1472,7 +1472,15 @@ int migrate_pages(struct list_head *from
- 			nr_subpages = thp_nr_pages(page);
- 			cond_resched();
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -3980,8 +3980,7 @@ bool ttwu_state_match(struct task_struct
+  * Return: %true if @p->state changes (an actual wakeup was done),
+  *	   %false otherwise.
+  */
+-static int
+-try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
++int try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
+ {
+ 	unsigned long flags;
+ 	int cpu, success = 0;
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -6838,6 +6838,10 @@ select_task_rq_fair(struct task_struct *
+ 	if (wake_flags & WF_TTWU) {
+ 		record_wakee(p);
  
--			if (PageHuge(page))
-+			/*
-+			 * If the page has a pin then expected_page_refs() will
-+			 * not match and the whole migration will fail later
-+			 * anyway, fail early and preserve the mappings.
-+			 */
-+			if (page_maybe_dma_pinned(page))
-+				rc = -EAGAIN;
++		if ((wake_flags & WF_CURRENT_CPU) &&
++		    cpumask_test_cpu(cpu, p->cpus_ptr))
++			return cpu;
 +
-+			else if (PageHuge(page))
- 				rc = unmap_and_move_huge_page(get_new_page,
- 						put_new_page, private, page,
- 						pass > 2, mode, reason,
---- a/mm/mprotect.c
-+++ b/mm/mprotect.c
-@@ -106,6 +106,12 @@ static unsigned long change_pte_range(st
- 					continue;
+ 		if (sched_energy_enabled()) {
+ 			new_cpu = find_energy_efficient_cpu(p, prev_cpu);
+ 			if (new_cpu >= 0)
+--- a/kernel/sched/sched.h
++++ b/kernel/sched/sched.h
+@@ -2052,13 +2052,14 @@ static inline int task_on_rq_migrating(s
+ }
  
- 				/*
-+				 * Can't migrate pinned pages, avoid touching them.
-+				 */
-+				if (page_maybe_dma_pinned(page))
-+					continue;
+ /* Wake flags. The first three directly map to some SD flag value */
+-#define WF_EXEC     0x02 /* Wakeup after exec; maps to SD_BALANCE_EXEC */
+-#define WF_FORK     0x04 /* Wakeup after fork; maps to SD_BALANCE_FORK */
+-#define WF_TTWU     0x08 /* Wakeup;            maps to SD_BALANCE_WAKE */
+-
+-#define WF_SYNC     0x10 /* Waker goes to sleep after wakeup */
+-#define WF_MIGRATED 0x20 /* Internal use, task got migrated */
+-#define WF_ON_CPU   0x40 /* Wakee is on_cpu */
++#define WF_EXEC         0x02 /* Wakeup after exec; maps to SD_BALANCE_EXEC */
++#define WF_FORK         0x04 /* Wakeup after fork; maps to SD_BALANCE_FORK */
++#define WF_TTWU         0x08 /* Wakeup;            maps to SD_BALANCE_WAKE */
 +
-+				/*
- 				 * Don't mess with PTEs if page is already on the node
- 				 * a single-threaded process is running on.
- 				 */
++#define WF_SYNC         0x10 /* Waker goes to sleep after wakeup */
++#define WF_MIGRATED     0x20 /* Internal use, task got migrated */
++#define WF_ON_CPU       0x40 /* Wakee is on_cpu */
++#define WF_CURRENT_CPU  0x80 /* Prefer to move the wakee to the current CPU. */
+ 
+ #ifdef CONFIG_SMP
+ static_assert(WF_EXEC == SD_BALANCE_EXEC);
+@@ -3112,6 +3113,8 @@ static inline bool is_per_cpu_kthread(st
+ extern void swake_up_all_locked(struct swait_queue_head *q);
+ extern void __prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait);
+ 
++extern int try_to_wake_up(struct task_struct *tsk, unsigned int state, int wake_flags);
++
+ #ifdef CONFIG_PREEMPT_DYNAMIC
+ extern int preempt_dynamic_mode;
+ extern int sched_dynamic_mode(const char *str);
 
 
