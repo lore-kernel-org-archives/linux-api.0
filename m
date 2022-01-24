@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 68EC9C433EF
-	for <linux-api@archiver.kernel.org>; Mon, 24 Jan 2022 17:13:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 71853C43217
+	for <linux-api@archiver.kernel.org>; Mon, 24 Jan 2022 17:13:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S244341AbiAXRNk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S244348AbiAXRNk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Mon, 24 Jan 2022 12:13:40 -0500
-Received: from mail.efficios.com ([167.114.26.124]:47754 "EHLO
+Received: from mail.efficios.com ([167.114.26.124]:47818 "EHLO
         mail.efficios.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S244230AbiAXRNK (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 24 Jan 2022 12:13:10 -0500
+        with ESMTP id S244248AbiAXRNM (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 24 Jan 2022 12:13:12 -0500
 Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id D0270344E6F;
-        Mon, 24 Jan 2022 12:13:09 -0500 (EST)
+        by mail.efficios.com (Postfix) with ESMTP id 8BFCF345199;
+        Mon, 24 Jan 2022 12:13:11 -0500 (EST)
 Received: from mail.efficios.com ([127.0.0.1])
         by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
-        with ESMTP id cTraT4cMbncE; Mon, 24 Jan 2022 12:13:09 -0500 (EST)
+        with ESMTP id zb7k1dT-3TH1; Mon, 24 Jan 2022 12:13:10 -0500 (EST)
 Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id 53169344FB2;
+        by mail.efficios.com (Postfix) with ESMTP id 77E42345059;
         Mon, 24 Jan 2022 12:13:05 -0500 (EST)
-DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 53169344FB2
+DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 77E42345059
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
         s=default; t=1643044385;
-        bh=eyFkpEeN+fSVaadwC10SdwC07euc6yJa9T2vRvyrfRA=;
+        bh=G0tWQ7Ot+jRNS69Wi8kPuuBpjKSPM+6/3Cceh+reZcc=;
         h=From:To:Date:Message-Id;
-        b=iBZcO7fV+wFcTgbYSLtZNi6cYmdoja5KAxlfz1wJGVdOCl0LbXR2WDMNObVkJHgvU
-         tsQET92+eAsg2CwPxk1fSul/d2ttug7bJSSlniMr1WZa728jLqwmCu1Dcuw0Vm90Ot
-         WyCq18yDKpvsHsy3J+MxDB25VcOgVwWY3997/6h3pLz50UGHlrStlrLgtzODUD4hcy
-         Y+AcBAtZbjW4um0G+xmkPAUX70OJ3CWQO08sVxbrHtF6A5ZLPoIfGBneUhxEYx4ZlF
-         3IKiYF0xA1Ptn+VuzGm12Zb1vKZl7hYo92jtC1plj2zA/cX+kq2m4T9YmClhw8Gela
-         ooS+xwXGjSa1A==
+        b=BXze5+HRNnQ6o+E6dWBnBsWlOgW6HowmSnxJWd8CK0YYVCgMlXtstC+38N9SdIbnz
+         aNw9tS9L9KPtMn+MypU3eV4CLZ0MTMBdHJ5UiuqbQ3fMm9Aq0qCygRrplUnrNoDAJ8
+         E3rqx66fSs6saAbmmi4Xb9TazfxYNgaYwub6pCxDL/XVwF6cqLfqMYdGw8J/AElYKS
+         SU6BF3pZeAVyNg//8Rtw1mem1frjaZLctQ+R6ywXAiqgpks0m5HbCo7L+Jl1RMhbCM
+         kOoJ6TlrZ4I9U7tst+zJzLuVxtvbce+R643Ux6krGUXDbL+OmuMKFdYgP8f+TH/Xpa
+         bix3JaeXL3FRA==
 X-Virus-Scanned: amavisd-new at efficios.com
 Received: from mail.efficios.com ([127.0.0.1])
         by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
-        with ESMTP id gkJRfIg9vnpb; Mon, 24 Jan 2022 12:13:05 -0500 (EST)
+        with ESMTP id 7UGw_FGyl9q3; Mon, 24 Jan 2022 12:13:05 -0500 (EST)
 Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by mail.efficios.com (Postfix) with ESMTPSA id 6E33A345211;
+        by mail.efficios.com (Postfix) with ESMTPSA id E09CF3450BD;
         Mon, 24 Jan 2022 12:13:03 -0500 (EST)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Thomas Gleixner <tglx@linutronix.de>
@@ -48,9 +48,9 @@ Cc:     linux-kernel@vger.kernel.org,
         linux-api@vger.kernel.org, Shuah Khan <shuah@kernel.org>,
         linux-kselftest@vger.kernel.org,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH 06/15] selftests/rseq: Introduce thread pointer getters
-Date:   Mon, 24 Jan 2022 12:12:44 -0500
-Message-Id: <20220124171253.22072-7-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH 08/15] selftests/rseq: Fix ppc32: wrong rseq_cs 32-bit field pointer on big endian
+Date:   Mon, 24 Jan 2022 12:12:46 -0500
+Message-Id: <20220124171253.22072-9-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20220124171253.22072-1-mathieu.desnoyers@efficios.com>
 References: <20220124171253.22072-1-mathieu.desnoyers@efficios.com>
@@ -58,166 +58,382 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This is done in preparation for the selftest uplift to become compatible
-with glibc-2.35.
+ppc32 incorrectly uses padding as rseq_cs pointer field. Fix this by
+using the rseq_cs.arch.ptr field.
 
-glibc-2.35 exposes the rseq per-thread data in the TCB, accessible
-at an offset from the thread pointer.
-
-The toolchains do not implement accessing the thread pointer on all
-architectures. Provide thread pointer getters for ppc and x86 which
-lack (or lacked until recently) toolchain support.
+Use this field across all architectures.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 ---
- .../rseq/rseq-generic-thread-pointer.h        | 25 ++++++++++++
- .../selftests/rseq/rseq-ppc-thread-pointer.h  | 30 ++++++++++++++
- .../selftests/rseq/rseq-thread-pointer.h      | 19 +++++++++
- .../selftests/rseq/rseq-x86-thread-pointer.h  | 40 +++++++++++++++++++
- 4 files changed, 114 insertions(+)
- create mode 100644 tools/testing/selftests/rseq/rseq-generic-thread-pointer.h
- create mode 100644 tools/testing/selftests/rseq/rseq-ppc-thread-pointer.h
- create mode 100644 tools/testing/selftests/rseq/rseq-thread-pointer.h
- create mode 100644 tools/testing/selftests/rseq/rseq-x86-thread-pointer.h
+ tools/testing/selftests/rseq/rseq-arm.h   | 16 ++++++++--------
+ tools/testing/selftests/rseq/rseq-arm64.h | 16 ++++++++--------
+ tools/testing/selftests/rseq/rseq-mips.h  | 16 ++++++++--------
+ tools/testing/selftests/rseq/rseq-ppc.h   | 16 ++++++++--------
+ tools/testing/selftests/rseq/rseq-s390.h  | 12 ++++++------
+ 5 files changed, 38 insertions(+), 38 deletions(-)
 
-diff --git a/tools/testing/selftests/rseq/rseq-generic-thread-pointer.h b/tools/testing/selftests/rseq/rseq-generic-thread-pointer.h
-new file mode 100644
-index 000000000000..38c584661571
---- /dev/null
-+++ b/tools/testing/selftests/rseq/rseq-generic-thread-pointer.h
-@@ -0,0 +1,25 @@
-+/* SPDX-License-Identifier: LGPL-2.1-only OR MIT */
-+/*
-+ * rseq-generic-thread-pointer.h
-+ *
-+ * (C) Copyright 2021 - Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-+ */
-+
-+#ifndef _RSEQ_GENERIC_THREAD_POINTER
-+#define _RSEQ_GENERIC_THREAD_POINTER
-+
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
-+
-+/* Use gcc builtin thread pointer. */
-+static inline void *rseq_thread_pointer(void)
-+{
-+	return __builtin_thread_pointer();
-+}
-+
-+#ifdef __cplusplus
-+}
-+#endif
-+
-+#endif
-diff --git a/tools/testing/selftests/rseq/rseq-ppc-thread-pointer.h b/tools/testing/selftests/rseq/rseq-ppc-thread-pointer.h
-new file mode 100644
-index 000000000000..263eee84fb76
---- /dev/null
-+++ b/tools/testing/selftests/rseq/rseq-ppc-thread-pointer.h
-@@ -0,0 +1,30 @@
-+/* SPDX-License-Identifier: LGPL-2.1-only OR MIT */
-+/*
-+ * rseq-ppc-thread-pointer.h
-+ *
-+ * (C) Copyright 2021 - Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-+ */
-+
-+#ifndef _RSEQ_PPC_THREAD_POINTER
-+#define _RSEQ_PPC_THREAD_POINTER
-+
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
-+
-+static inline void *rseq_thread_pointer(void)
-+{
-+#ifdef __powerpc64__
-+	register void *__result asm ("r13");
-+#else
-+	register void *__result asm ("r2");
-+#endif
-+	asm ("" : "=r" (__result));
-+	return __result;
-+}
-+
-+#ifdef __cplusplus
-+}
-+#endif
-+
-+#endif
-diff --git a/tools/testing/selftests/rseq/rseq-thread-pointer.h b/tools/testing/selftests/rseq/rseq-thread-pointer.h
-new file mode 100644
-index 000000000000..977c25d758b2
---- /dev/null
-+++ b/tools/testing/selftests/rseq/rseq-thread-pointer.h
-@@ -0,0 +1,19 @@
-+/* SPDX-License-Identifier: LGPL-2.1-only OR MIT */
-+/*
-+ * rseq-thread-pointer.h
-+ *
-+ * (C) Copyright 2021 - Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-+ */
-+
-+#ifndef _RSEQ_THREAD_POINTER
-+#define _RSEQ_THREAD_POINTER
-+
-+#if defined(__x86_64__) || defined(__i386__)
-+#include "rseq-x86-thread-pointer.h"
-+#elif defined(__PPC__)
-+#include "rseq-ppc-thread-pointer.h"
-+#else
-+#include "rseq-generic-thread-pointer.h"
-+#endif
-+
-+#endif
-diff --git a/tools/testing/selftests/rseq/rseq-x86-thread-pointer.h b/tools/testing/selftests/rseq/rseq-x86-thread-pointer.h
-new file mode 100644
-index 000000000000..d3133587d996
---- /dev/null
-+++ b/tools/testing/selftests/rseq/rseq-x86-thread-pointer.h
-@@ -0,0 +1,40 @@
-+/* SPDX-License-Identifier: LGPL-2.1-only OR MIT */
-+/*
-+ * rseq-x86-thread-pointer.h
-+ *
-+ * (C) Copyright 2021 - Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-+ */
-+
-+#ifndef _RSEQ_X86_THREAD_POINTER
-+#define _RSEQ_X86_THREAD_POINTER
-+
-+#include <features.h>
-+
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
-+
-+#if __GNUC_PREREQ (11, 1)
-+static inline void *rseq_thread_pointer(void)
-+{
-+	return __builtin_thread_pointer();
-+}
-+#else
-+static inline void *rseq_thread_pointer(void)
-+{
-+	void *__result;
-+
-+# ifdef __x86_64__
-+	__asm__ ("mov %%fs:0, %0" : "=r" (__result));
-+# else
-+	__asm__ ("mov %%gs:0, %0" : "=r" (__result));
-+# endif
-+	return __result;
-+}
-+#endif /* !GCC 11 */
-+
-+#ifdef __cplusplus
-+}
-+#endif
-+
-+#endif
+diff --git a/tools/testing/selftests/rseq/rseq-arm.h b/tools/testing/selftests/rseq/rseq-arm.h
+index 6716540e17c6..5f567b3b40f2 100644
+--- a/tools/testing/selftests/rseq/rseq-arm.h
++++ b/tools/testing/selftests/rseq/rseq-arm.h
+@@ -186,7 +186,7 @@ int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  [v]			"m" (*v),
+ 		  [expect]		"r" (expect),
+ 		  [newv]		"r" (newv)
+@@ -256,7 +256,7 @@ int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [expectnot]		"r" (expectnot),
+@@ -317,7 +317,7 @@ int rseq_addv(intptr_t *v, intptr_t count, int cpu)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  [v]			"m" (*v),
+ 		  [count]		"Ir" (count)
+ 		  RSEQ_INJECT_INPUT
+@@ -382,7 +382,7 @@ int rseq_cmpeqv_trystorev_storev(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* try store input */
+ 		  [v2]			"m" (*v2),
+ 		  [newv2]		"r" (newv2),
+@@ -458,7 +458,7 @@ int rseq_cmpeqv_trystorev_storev_release(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* try store input */
+ 		  [v2]			"m" (*v2),
+ 		  [newv2]		"r" (newv2),
+@@ -538,7 +538,7 @@ int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* cmp2 input */
+ 		  [v2]			"m" (*v2),
+ 		  [expect2]		"r" (expect2),
+@@ -658,7 +658,7 @@ int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [expect]		"r" (expect),
+@@ -783,7 +783,7 @@ int rseq_cmpeqv_trymemcpy_storev_release(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [expect]		"r" (expect),
+diff --git a/tools/testing/selftests/rseq/rseq-arm64.h b/tools/testing/selftests/rseq/rseq-arm64.h
+index b9d9b3aa6e9b..d0f2b7feee94 100644
+--- a/tools/testing/selftests/rseq/rseq-arm64.h
++++ b/tools/testing/selftests/rseq/rseq-arm64.h
+@@ -231,7 +231,7 @@ int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"Qo" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  [v]			"Qo" (*v),
+ 		  [expect]		"r" (expect),
+ 		  [newv]		"r" (newv)
+@@ -288,7 +288,7 @@ int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"Qo" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  [v]			"Qo" (*v),
+ 		  [expectnot]		"r" (expectnot),
+ 		  [load]		"Qo" (*load),
+@@ -338,7 +338,7 @@ int rseq_addv(intptr_t *v, intptr_t count, int cpu)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"Qo" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  [v]			"Qo" (*v),
+ 		  [count]		"r" (count)
+ 		  RSEQ_INJECT_INPUT
+@@ -389,7 +389,7 @@ int rseq_cmpeqv_trystorev_storev(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"Qo" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  [expect]		"r" (expect),
+ 		  [v]			"Qo" (*v),
+ 		  [newv]		"r" (newv),
+@@ -448,7 +448,7 @@ int rseq_cmpeqv_trystorev_storev_release(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"Qo" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  [expect]		"r" (expect),
+ 		  [v]			"Qo" (*v),
+ 		  [newv]		"r" (newv),
+@@ -509,7 +509,7 @@ int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"Qo" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  [v]			"Qo" (*v),
+ 		  [expect]		"r" (expect),
+ 		  [v2]			"Qo" (*v2),
+@@ -570,7 +570,7 @@ int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"Qo" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  [expect]		"r" (expect),
+ 		  [v]			"Qo" (*v),
+ 		  [newv]		"r" (newv),
+@@ -630,7 +630,7 @@ int rseq_cmpeqv_trymemcpy_storev_release(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"Qo" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  [expect]		"r" (expect),
+ 		  [v]			"Qo" (*v),
+ 		  [newv]		"r" (newv),
+diff --git a/tools/testing/selftests/rseq/rseq-mips.h b/tools/testing/selftests/rseq/rseq-mips.h
+index 2b1f5bd95268..6df54273825d 100644
+--- a/tools/testing/selftests/rseq/rseq-mips.h
++++ b/tools/testing/selftests/rseq/rseq-mips.h
+@@ -191,7 +191,7 @@ int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  [v]			"m" (*v),
+ 		  [expect]		"r" (expect),
+ 		  [newv]		"r" (newv)
+@@ -259,7 +259,7 @@ int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [expectnot]		"r" (expectnot),
+@@ -320,7 +320,7 @@ int rseq_addv(intptr_t *v, intptr_t count, int cpu)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  [v]			"m" (*v),
+ 		  [count]		"Ir" (count)
+ 		  RSEQ_INJECT_INPUT
+@@ -383,7 +383,7 @@ int rseq_cmpeqv_trystorev_storev(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* try store input */
+ 		  [v2]			"m" (*v2),
+ 		  [newv2]		"r" (newv2),
+@@ -457,7 +457,7 @@ int rseq_cmpeqv_trystorev_storev_release(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* try store input */
+ 		  [v2]			"m" (*v2),
+ 		  [newv2]		"r" (newv2),
+@@ -533,7 +533,7 @@ int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* cmp2 input */
+ 		  [v2]			"m" (*v2),
+ 		  [expect2]		"r" (expect2),
+@@ -650,7 +650,7 @@ int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [expect]		"r" (expect),
+@@ -772,7 +772,7 @@ int rseq_cmpeqv_trymemcpy_storev_release(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [expect]		"r" (expect),
+diff --git a/tools/testing/selftests/rseq/rseq-ppc.h b/tools/testing/selftests/rseq/rseq-ppc.h
+index 2e6b7572ba08..c4ba1375285d 100644
+--- a/tools/testing/selftests/rseq/rseq-ppc.h
++++ b/tools/testing/selftests/rseq/rseq-ppc.h
+@@ -236,7 +236,7 @@ int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  [v]			"m" (*v),
+ 		  [expect]		"r" (expect),
+ 		  [newv]		"r" (newv)
+@@ -302,7 +302,7 @@ int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [expectnot]		"r" (expectnot),
+@@ -360,7 +360,7 @@ int rseq_addv(intptr_t *v, intptr_t count, int cpu)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [count]		"r" (count)
+@@ -420,7 +420,7 @@ int rseq_cmpeqv_trystorev_storev(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* try store input */
+ 		  [v2]			"m" (*v2),
+ 		  [newv2]		"r" (newv2),
+@@ -490,7 +490,7 @@ int rseq_cmpeqv_trystorev_storev_release(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* try store input */
+ 		  [v2]			"m" (*v2),
+ 		  [newv2]		"r" (newv2),
+@@ -561,7 +561,7 @@ int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* cmp2 input */
+ 		  [v2]			"m" (*v2),
+ 		  [expect2]		"r" (expect2),
+@@ -636,7 +636,7 @@ int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [expect]		"r" (expect),
+@@ -712,7 +712,7 @@ int rseq_cmpeqv_trymemcpy_storev_release(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [expect]		"r" (expect),
+diff --git a/tools/testing/selftests/rseq/rseq-s390.h b/tools/testing/selftests/rseq/rseq-s390.h
+index b906e044d2a3..9927021f8bd0 100644
+--- a/tools/testing/selftests/rseq/rseq-s390.h
++++ b/tools/testing/selftests/rseq/rseq-s390.h
+@@ -166,7 +166,7 @@ int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  [v]			"m" (*v),
+ 		  [expect]		"r" (expect),
+ 		  [newv]		"r" (newv)
+@@ -234,7 +234,7 @@ int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [expectnot]		"r" (expectnot),
+@@ -289,7 +289,7 @@ int rseq_addv(intptr_t *v, intptr_t count, int cpu)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [count]		"r" (count)
+@@ -348,7 +348,7 @@ int rseq_cmpeqv_trystorev_storev(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* try store input */
+ 		  [v2]			"m" (*v2),
+ 		  [newv2]		"r" (newv2),
+@@ -427,7 +427,7 @@ int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* cmp2 input */
+ 		  [v2]			"m" (*v2),
+ 		  [expect2]		"r" (expect2),
+@@ -535,7 +535,7 @@ int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+ 		  [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
+-		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs),
++		  [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [expect]		"r" (expect),
 -- 
 2.17.1
 
