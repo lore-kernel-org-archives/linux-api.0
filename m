@@ -2,42 +2,42 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BA039C433EF
-	for <linux-api@archiver.kernel.org>; Mon, 24 Jan 2022 17:13:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C8A2BC4321E
+	for <linux-api@archiver.kernel.org>; Mon, 24 Jan 2022 17:13:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S244117AbiAXRND (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 24 Jan 2022 12:13:03 -0500
-Received: from mail.efficios.com ([167.114.26.124]:47534 "EHLO
+        id S244199AbiAXRNF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 24 Jan 2022 12:13:05 -0500
+Received: from mail.efficios.com ([167.114.26.124]:47596 "EHLO
         mail.efficios.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S241330AbiAXRND (ORCPT
+        with ESMTP id S241310AbiAXRND (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Mon, 24 Jan 2022 12:13:03 -0500
 Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id 85E4834510B;
-        Mon, 24 Jan 2022 12:13:02 -0500 (EST)
+        by mail.efficios.com (Postfix) with ESMTP id 2179E344C4C;
+        Mon, 24 Jan 2022 12:13:03 -0500 (EST)
 Received: from mail.efficios.com ([127.0.0.1])
         by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
-        with ESMTP id zLtCHEblF7-H; Mon, 24 Jan 2022 12:13:02 -0500 (EST)
+        with ESMTP id i_Qbh5zGsKtg; Mon, 24 Jan 2022 12:13:02 -0500 (EST)
 Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id 0774F344CCA;
+        by mail.efficios.com (Postfix) with ESMTP id E52D6344E5A;
         Mon, 24 Jan 2022 12:13:02 -0500 (EST)
-DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 0774F344CCA
+DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com E52D6344E5A
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
         s=default; t=1643044382;
-        bh=pwRIv4rPPqHaq4ss6KLwBKrB6pKid4L8cUtlJHoIJn0=;
+        bh=nncvokTdjsee5tzKxA/veggGUZZ9ULSWsY7QtAMw1Bc=;
         h=From:To:Date:Message-Id;
-        b=Y6gGY37X5scSphKgS7ve01tm7PYjMtlO+WFAghqkA2+nh0TzELYi4VbXdWtD8Wf4S
-         BnxjQpk5CyB5IIcEHjNwzUgHQ1sIoAByjtQi9qP9d6+BvZCExTUSn1BVa/g0pYg8B1
-         031LIWFzhB3OaetlAU50AQvRxbZRH/K/OW9mFBkncFEQkxo2hjZ+v9sWLkazs2Eb0I
-         tE7bCNUcKQf0mqvs0DG01kTqb2FhzDNp1qQEHRTDeWZqO/HXHQig+s39xPOo3+Lk0J
-         KaAWqqWb6Fzswe1vfHlkaCH1bzmGm7oVgOMoF0gYVtqKJSuA4fMi+ACCPvw425dUDg
-         E4JyyHV3w/DVw==
+        b=YBsfZz9ovMERNBF6xx73c3StbzBJSefxNX4J+13TvpaTNkPFE+yAeIl0+RLJ8fydf
+         nzdSeDX55Y5pYQe6kV6iMnRHCbnc15dv+lsmXV5XLrh9/tWgbUYK5Nc/sJhXtTk17s
+         1Fjn1yzDzlQUw8S7dJjxeZrV58kpqj31dqRLGwznJaOapBHOSxcpYaXV/gZZ8nxYPX
+         QhgUKd0AqvbeHQPYzGQTBRW1N3r8+WP3h3LpwfbB8o3n4E4hTvYW8svNsTCTyfhHCY
+         T5I/jsWBbPMVGQFCasa91p8JA18DCOxNdVEcXP2Z4QMnB6iF7M2CB2g35kNS+8HljU
+         +sC9CXPNpvAXQ==
 X-Virus-Scanned: amavisd-new at efficios.com
 Received: from mail.efficios.com ([127.0.0.1])
         by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
-        with ESMTP id wa59DO4LSHYQ; Mon, 24 Jan 2022 12:13:01 -0500 (EST)
+        with ESMTP id BpyIa_w9x8Fj; Mon, 24 Jan 2022 12:13:02 -0500 (EST)
 Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by mail.efficios.com (Postfix) with ESMTPSA id A1BCF344CC9;
-        Mon, 24 Jan 2022 12:13:01 -0500 (EST)
+        by mail.efficios.com (Postfix) with ESMTPSA id AA6D03450BB;
+        Mon, 24 Jan 2022 12:13:02 -0500 (EST)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Thomas Gleixner <tglx@linutronix.de>
 Cc:     linux-kernel@vger.kernel.org,
@@ -48,82 +48,36 @@ Cc:     linux-kernel@vger.kernel.org,
         linux-api@vger.kernel.org, Shuah Khan <shuah@kernel.org>,
         linux-kselftest@vger.kernel.org,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH 00/15] rseq uapi and selftest updates
-Date:   Mon, 24 Jan 2022 12:12:38 -0500
-Message-Id: <20220124171253.22072-1-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH 03/15] selftests/rseq: Remove useless assignment to cpu variable
+Date:   Mon, 24 Jan 2022 12:12:41 -0500
+Message-Id: <20220124171253.22072-4-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.17.1
+In-Reply-To: <20220124171253.22072-1-mathieu.desnoyers@efficios.com>
+References: <20220124171253.22072-1-mathieu.desnoyers@efficios.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Update the rseq selftests to adapt to the userspace ABI chosen by glibc
-(will be released in February 2022). Provide a fallback implementation
-to work with older glibc as well.
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+---
+ tools/testing/selftests/rseq/param_test.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-Remove broken 32-bit little/big endian accessor fields in rseq uapi.
-
-Integrate various fixes gathered from librseq, including work-around for
-known gcc and clang compiler bugs with asm goto.
-
-The uplift to glibc's userspace ABI means we can now use %fs/%gs segment
-selectors directly in the inline assembler for accesses to the rseq
-thread area on x86.
-
-Feedback is welcome,
-
-Thanks,
-
-Mathieu
-
-Mathieu Desnoyers (15):
-  selftests/rseq: introduce own copy of rseq uapi header
-  rseq: Remove broken uapi field layout on 32-bit little endian
-  selftests/rseq: Remove useless assignment to cpu variable
-  selftests/rseq: Remove volatile from __rseq_abi
-  selftests/rseq: Introduce rseq_get_abi() helper
-  selftests/rseq: Introduce thread pointer getters
-  selftests/rseq: Uplift rseq selftests for compatibility with
-    glibc-2.35
-  selftests/rseq: Fix ppc32: wrong rseq_cs 32-bit field pointer on big
-    endian
-  selftests/rseq: Fix ppc32 missing instruction selection "u" and "x"
-    for load/store
-  selftests/rseq: Fix ppc32 offsets by using long rather than off_t
-  selftests/rseq: Fix warnings about #if checks of undefined tokens
-  selftests/rseq: Remove arm/mips asm goto compiler work-around
-  selftests/rseq: Fix: work-around asm goto compiler bugs
-  selftests/rseq: x86-64: use %fs segment selector for accessing rseq
-    thread area
-  selftests/rseq: x86-32: use %gs segment selector for accessing rseq
-    thread area
-
- include/uapi/linux/rseq.h                     |  17 +-
- tools/testing/selftests/rseq/Makefile         |   2 +-
- .../selftests/rseq/basic_percpu_ops_test.c    |   2 +-
- tools/testing/selftests/rseq/compiler.h       |  30 +++
- tools/testing/selftests/rseq/param_test.c     |   8 +-
- tools/testing/selftests/rseq/rseq-abi.h       | 151 +++++++++++++
- tools/testing/selftests/rseq/rseq-arm.h       | 110 +++++-----
- tools/testing/selftests/rseq/rseq-arm64.h     |  79 +++++--
- .../rseq/rseq-generic-thread-pointer.h        |  25 +++
- tools/testing/selftests/rseq/rseq-mips.h      |  71 ++-----
- .../selftests/rseq/rseq-ppc-thread-pointer.h  |  30 +++
- tools/testing/selftests/rseq/rseq-ppc.h       | 128 +++++++----
- tools/testing/selftests/rseq/rseq-s390.h      |  55 +++--
- tools/testing/selftests/rseq/rseq-skip.h      |   2 +-
- .../selftests/rseq/rseq-thread-pointer.h      |  19 ++
- .../selftests/rseq/rseq-x86-thread-pointer.h  |  40 ++++
- tools/testing/selftests/rseq/rseq-x86.h       | 200 ++++++++++++------
- tools/testing/selftests/rseq/rseq.c           | 163 +++++++-------
- tools/testing/selftests/rseq/rseq.h           |  29 ++-
- 19 files changed, 793 insertions(+), 368 deletions(-)
- create mode 100644 tools/testing/selftests/rseq/compiler.h
- create mode 100644 tools/testing/selftests/rseq/rseq-abi.h
- create mode 100644 tools/testing/selftests/rseq/rseq-generic-thread-pointer.h
- create mode 100644 tools/testing/selftests/rseq/rseq-ppc-thread-pointer.h
- create mode 100644 tools/testing/selftests/rseq/rseq-thread-pointer.h
- create mode 100644 tools/testing/selftests/rseq/rseq-x86-thread-pointer.h
-
+diff --git a/tools/testing/selftests/rseq/param_test.c b/tools/testing/selftests/rseq/param_test.c
+index 699ad5f93c34..cc2cfc1da938 100644
+--- a/tools/testing/selftests/rseq/param_test.c
++++ b/tools/testing/selftests/rseq/param_test.c
+@@ -368,9 +368,7 @@ void *test_percpu_spinlock_thread(void *arg)
+ 		abort();
+ 	reps = thread_data->reps;
+ 	for (i = 0; i < reps; i++) {
+-		int cpu = rseq_cpu_start();
+-
+-		cpu = rseq_this_cpu_lock(&data->lock);
++		int cpu = rseq_this_cpu_lock(&data->lock);
+ 		data->c[cpu].count++;
+ 		rseq_percpu_unlock(&data->lock, cpu);
+ #ifndef BENCHMARK
 -- 
 2.17.1
 
