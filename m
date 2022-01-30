@@ -2,37 +2,37 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E5F65C35275
-	for <linux-api@archiver.kernel.org>; Sun, 30 Jan 2022 21:22:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 18155C35276
+	for <linux-api@archiver.kernel.org>; Sun, 30 Jan 2022 21:22:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1356532AbiA3VWB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 30 Jan 2022 16:22:01 -0500
-Received: from mga06.intel.com ([134.134.136.31]:52015 "EHLO mga06.intel.com"
+        id S1356518AbiA3VV7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 30 Jan 2022 16:21:59 -0500
+Received: from mga06.intel.com ([134.134.136.31]:52029 "EHLO mga06.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1356500AbiA3VV6 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Sun, 30 Jan 2022 16:21:58 -0500
+        id S1356477AbiA3VV4 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sun, 30 Jan 2022 16:21:56 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1643577718; x=1675113718;
+  t=1643577716; x=1675113716;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=jMzw65MKfqq52oVnmq5qfAZv3M9YR8fJMyeeTLiS5eo=;
-  b=cum+Pm8eXAKvWbw1zCV4gZjc5rUHQnB21mFBAyv11K7mm8g63WjH2nj5
-   Hotbv+5IJkjszH1keB6OIZ14var2V1TSuvZxgunDQ2BHK6aJeDViQzxoL
-   opXRyGZb8kWaPd33HDFItnsYwrgN8QuGKMdHsNXTHUzQFfu3VFvQPcNG5
-   ENv95JXnySwRMhtAhjoDO2dBkXiUgOR15Pggwlcpt1Pfg6MSBCVB73DLm
-   Y8kqck1wReR7sUCGqEZBbEK4EgNJphc9GP5n/BglUZ7vcU7mmcyosAr1Q
-   vthH9uuBHTZdR4EDjiiCo9FVm7nVRIvfIvIGwwUfOzZhYim7JlWjAx5Cv
-   A==;
-X-IronPort-AV: E=McAfee;i="6200,9189,10243"; a="308104930"
+  bh=oKgQSRP9S/kqW3HSqD2DF7a0CZx0ho0AcrTJmlbuSJk=;
+  b=OoB5wgpcPEv5ssTOO89fn0qldMkY+FjjH0COjGx+Bza4QAEjJ46P1Ycj
+   ROdF9DA5uTNiurg/mQ1GnXqGk9StnAcZb8aeH5Q7bN4xGzMmJNusv+H3a
+   fkPAyfgxE+esUGTsWIz//woiij93BFS8QzuVd++i6ZynYGopVCymAPkGh
+   +KmNEUATQ/9Y9ZFxI/sw2CMmHC0VWBLL9I2AcJmbQvAF5iLJOVf9Lmya1
+   4NKVP9Co+YrzlQAB5vxwBm3eAz8okvR28vHWrO/UpEHGF3G4LNOycCEp0
+   Jv+DQw3JwfmpJNwThuyonUnOB6Zyma5cuFPtnKi1m3h3ECleChdcev8qJ
+   g==;
+X-IronPort-AV: E=McAfee;i="6200,9189,10243"; a="308104910"
 X-IronPort-AV: E=Sophos;i="5.88,329,1635231600"; 
-   d="scan'208";a="308104930"
+   d="scan'208";a="308104910"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jan 2022 13:21:57 -0800
+  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jan 2022 13:21:52 -0800
 X-IronPort-AV: E=Sophos;i="5.88,329,1635231600"; 
-   d="scan'208";a="536856781"
+   d="scan'208";a="536856724"
 Received: from avmallar-mobl1.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.209.123.171])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jan 2022 13:21:56 -0800
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jan 2022 13:21:51 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -62,9 +62,9 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         joao.moreira@intel.com, John Allen <john.allen@amd.com>,
         kcc@google.com, eranian@google.com
 Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH 14/35] mm: Introduce VM_SHADOW_STACK for shadow stack memory
-Date:   Sun, 30 Jan 2022 13:18:17 -0800
-Message-Id: <20220130211838.8382-15-rick.p.edgecombe@intel.com>
+Subject: [PATCH 08/35] x86/mm: Move pmd_write(), pud_write() up in the file
+Date:   Sun, 30 Jan 2022 13:18:11 -0800
+Message-Id: <20220130211838.8382-9-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20220130211838.8382-1-rick.p.edgecombe@intel.com>
 References: <20220130211838.8382-1-rick.p.edgecombe@intel.com>
@@ -74,92 +74,66 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 
-A shadow stack PTE must be read-only and have _PAGE_DIRTY set.  However,
-read-only and Dirty PTEs also exist for copy-on-write (COW) pages.  These
-two cases are handled differently for page faults.  Introduce
-VM_SHADOW_STACK to track shadow stack VMAs.
+To prepare the introduction of _PAGE_COW, move pmd_write() and
+pud_write() up in the file, so that they can be used by other
+helpers below.  No functional changes.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
-Cc: Kees Cook <keescook@chromium.org>
 ---
- Documentation/filesystems/proc.rst | 1 +
- arch/x86/mm/mmap.c                 | 2 ++
- fs/proc/task_mmu.c                 | 3 +++
- include/linux/mm.h                 | 8 ++++++++
- 4 files changed, 14 insertions(+)
+ arch/x86/include/asm/pgtable.h | 24 ++++++++++++------------
+ 1 file changed, 12 insertions(+), 12 deletions(-)
 
-diff --git a/Documentation/filesystems/proc.rst b/Documentation/filesystems/proc.rst
-index 061744c436d9..3f8c0fbb9cb3 100644
---- a/Documentation/filesystems/proc.rst
-+++ b/Documentation/filesystems/proc.rst
-@@ -555,6 +555,7 @@ encoded manner. The codes are the following:
-     mt    arm64 MTE allocation tags are enabled
-     um    userfaultfd missing tracking
-     uw    userfaultfd wr-protect tracking
-+    ss    shadow stack page
-     ==    =======================================
- 
- Note that there is no guarantee that every flag and associated mnemonic will
-diff --git a/arch/x86/mm/mmap.c b/arch/x86/mm/mmap.c
-index c90c20904a60..f3f52c5e2fd6 100644
---- a/arch/x86/mm/mmap.c
-+++ b/arch/x86/mm/mmap.c
-@@ -165,6 +165,8 @@ unsigned long get_mmap_base(int is_legacy)
- 
- const char *arch_vma_name(struct vm_area_struct *vma)
- {
-+	if (vma->vm_flags & VM_SHADOW_STACK)
-+		return "[shadow stack]";
- 	return NULL;
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index 8a9432fb3802..aff5e489ff17 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -158,6 +158,18 @@ static inline int pte_write(pte_t pte)
+ 	return pte_flags(pte) & _PAGE_RW;
  }
  
-diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-index 18f8c3acbb85..78d9b0fd2aee 100644
---- a/fs/proc/task_mmu.c
-+++ b/fs/proc/task_mmu.c
-@@ -679,6 +679,9 @@ static void show_smap_vma_flags(struct seq_file *m, struct vm_area_struct *vma)
- #ifdef CONFIG_HAVE_ARCH_USERFAULTFD_MINOR
- 		[ilog2(VM_UFFD_MINOR)]	= "ui",
- #endif /* CONFIG_HAVE_ARCH_USERFAULTFD_MINOR */
-+#ifdef CONFIG_ARCH_HAS_SHADOW_STACK
-+		[ilog2(VM_SHADOW_STACK)] = "ss",
-+#endif
- 	};
- 	size_t i;
- 
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 2e74c0ab6d25..311c6018d503 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -308,11 +308,13 @@ extern unsigned int kobjsize(const void *objp);
- #define VM_HIGH_ARCH_BIT_2	34	/* bit only usable on 64-bit architectures */
- #define VM_HIGH_ARCH_BIT_3	35	/* bit only usable on 64-bit architectures */
- #define VM_HIGH_ARCH_BIT_4	36	/* bit only usable on 64-bit architectures */
-+#define VM_HIGH_ARCH_BIT_5	37	/* bit only usable on 64-bit architectures */
- #define VM_HIGH_ARCH_0	BIT(VM_HIGH_ARCH_BIT_0)
- #define VM_HIGH_ARCH_1	BIT(VM_HIGH_ARCH_BIT_1)
- #define VM_HIGH_ARCH_2	BIT(VM_HIGH_ARCH_BIT_2)
- #define VM_HIGH_ARCH_3	BIT(VM_HIGH_ARCH_BIT_3)
- #define VM_HIGH_ARCH_4	BIT(VM_HIGH_ARCH_BIT_4)
-+#define VM_HIGH_ARCH_5	BIT(VM_HIGH_ARCH_BIT_5)
- #endif /* CONFIG_ARCH_USES_HIGH_VMA_FLAGS */
- 
- #ifdef CONFIG_ARCH_HAS_PKEYS
-@@ -328,6 +330,12 @@ extern unsigned int kobjsize(const void *objp);
- #endif
- #endif /* CONFIG_ARCH_HAS_PKEYS */
- 
-+#ifdef CONFIG_X86_SHADOW_STACK
-+# define VM_SHADOW_STACK	VM_HIGH_ARCH_5
-+#else
-+# define VM_SHADOW_STACK	VM_NONE
-+#endif
++#define pmd_write pmd_write
++static inline int pmd_write(pmd_t pmd)
++{
++	return pmd_flags(pmd) & _PAGE_RW;
++}
 +
- #if defined(CONFIG_X86)
- # define VM_PAT		VM_ARCH_1	/* PAT reserves whole VMA at once (x86) */
- #elif defined(CONFIG_PPC)
++#define pud_write pud_write
++static inline int pud_write(pud_t pud)
++{
++	return pud_flags(pud) & _PAGE_RW;
++}
++
+ static inline int pte_huge(pte_t pte)
+ {
+ 	return pte_flags(pte) & _PAGE_PSE;
+@@ -1116,12 +1128,6 @@ extern int pmdp_clear_flush_young(struct vm_area_struct *vma,
+ 				  unsigned long address, pmd_t *pmdp);
+ 
+ 
+-#define pmd_write pmd_write
+-static inline int pmd_write(pmd_t pmd)
+-{
+-	return pmd_flags(pmd) & _PAGE_RW;
+-}
+-
+ #define __HAVE_ARCH_PMDP_HUGE_GET_AND_CLEAR
+ static inline pmd_t pmdp_huge_get_and_clear(struct mm_struct *mm, unsigned long addr,
+ 				       pmd_t *pmdp)
+@@ -1151,12 +1157,6 @@ static inline void pmdp_set_wrprotect(struct mm_struct *mm,
+ 	clear_bit(_PAGE_BIT_RW, (unsigned long *)pmdp);
+ }
+ 
+-#define pud_write pud_write
+-static inline int pud_write(pud_t pud)
+-{
+-	return pud_flags(pud) & _PAGE_RW;
+-}
+-
+ #ifndef pmdp_establish
+ #define pmdp_establish pmdp_establish
+ static inline pmd_t pmdp_establish(struct vm_area_struct *vma,
 -- 
 2.17.1
 
