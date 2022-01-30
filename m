@@ -2,37 +2,37 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6D772C433FE
-	for <linux-api@archiver.kernel.org>; Sun, 30 Jan 2022 21:26:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B5589C4332F
+	for <linux-api@archiver.kernel.org>; Sun, 30 Jan 2022 21:26:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1357009AbiA3V0E (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 30 Jan 2022 16:26:04 -0500
-Received: from mga06.intel.com ([134.134.136.31]:52047 "EHLO mga06.intel.com"
+        id S1356890AbiA3V0I (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 30 Jan 2022 16:26:08 -0500
+Received: from mga06.intel.com ([134.134.136.31]:52048 "EHLO mga06.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1356508AbiA3VZe (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Sun, 30 Jan 2022 16:25:34 -0500
+        id S1356933AbiA3VYV (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sun, 30 Jan 2022 16:24:21 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1643577934; x=1675113934;
+  t=1643577861; x=1675113861;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=AKky5ODZPWXr+Y60awjhLEp8vC5Ov5UFi7xn02fKIeA=;
-  b=W4j/1Hzj27wxvyBkudBZA4TdOp0FgHefSNV/4Bia556bFFAH/eSutVG7
-   pK3SiuGIyf15XK0l0+7wk5ir+uRiUf46of/biRyQ80sAWCsJ02L+pQgHf
-   IicxXAzOnhu4ekvg2QycepLBLtIVExNP7yz24tnooLF+wwfCvXsJaOEE+
-   OmUFMAeBdB0FJ5ZZBvbEPptghU1sDjAVFQTB4VC6AIXmrhLipvqVRg2J/
-   Oh/OiVt26QzzHOjs9XQ1/CWId1OzKn+3MZCk7ZG/dUbw7Xf0j4S/srR1n
-   P3eo99kSJ4XJtIiDuCzRNBdMYO0ABMv8xYcCO/6gNGRbPNN92/AziQfLB
-   w==;
-X-IronPort-AV: E=McAfee;i="6200,9189,10243"; a="308104974"
+  bh=IJv3bcwNym+ue5ES2C0XMwMTBK04UF1ldHp0VsVFE1E=;
+  b=oEesWLWTvf1NRortqptmF869smrGW3s7xRGRs/R3/6goKAl4lEvk7tE0
+   B4z9qeXr3okAs2CasejlCWl00c0YrO2CTK3L7u90sfZQ4S7tTZfEwBG0f
+   jJRjhyLkUpVBuUhIiQRi+6RH/BozGgiQltL3IFvSf+oi1h6whmw9HU4hJ
+   WSnUUKU6xlA8SO+1qs4bCgnaJUrkd0+vXBryYKVZhGCBpsb9YO35iOY4j
+   s32Go/Lu/PYFdcszKp9AqPdRKPoD/z/cuhH2XQZirRcVH9o44vkg5En7u
+   A+UJ+Ix3KvIeLllFsZxV0KcshVCTaInSz6Kk8fN9N2dIwmSbmg4supjvL
+   g==;
+X-IronPort-AV: E=McAfee;i="6200,9189,10243"; a="308104965"
 X-IronPort-AV: E=Sophos;i="5.88,329,1635231600"; 
-   d="scan'208";a="308104974"
+   d="scan'208";a="308104965"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jan 2022 13:22:08 -0800
+  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jan 2022 13:22:05 -0800
 X-IronPort-AV: E=Sophos;i="5.88,329,1635231600"; 
-   d="scan'208";a="536856924"
+   d="scan'208";a="536856881"
 Received: from avmallar-mobl1.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.209.123.171])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jan 2022 13:22:07 -0800
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jan 2022 13:22:04 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,10 +61,11 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
         joao.moreira@intel.com, John Allen <john.allen@amd.com>,
         kcc@google.com, eranian@google.com
-Cc:     rick.p.edgecombe@intel.com
-Subject: [PATCH 27/35] x86/fpu: Add unsafe xsave buffer helpers
-Date:   Sun, 30 Jan 2022 13:18:30 -0800
-Message-Id: <20220130211838.8382-28-rick.p.edgecombe@intel.com>
+Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>,
+        Andrew Morton <akpm@linux-foundation.org>
+Subject: [PATCH 24/35] mm: Re-introduce vm_flags to do_mmap()
+Date:   Sun, 30 Jan 2022 13:18:27 -0800
+Message-Id: <20220130211838.8382-25-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20220130211838.8382-1-rick.p.edgecombe@intel.com>
 References: <20220130211838.8382-1-rick.p.edgecombe@intel.com>
@@ -72,94 +73,152 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-CET will need to modify the xsave buffer of a new FPU that was just
-created in the process of copying a thread. In this case the normal
-helpers will not work, because they operate on the current thread's FPU.
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 
-So add unsafe helpers to allow for this kind of modification. Make the
-unsafe helpers operate on the MSR like the safe helpers for symmetry and
-to avoid exposing the underling xsave structures. Don't add a read
-helper because it is not needed at this time.
+There was no more caller passing vm_flags to do_mmap(), and vm_flags was
+removed from the function's input by:
 
+    commit 45e55300f114 ("mm: remove unnecessary wrapper function do_mmap_pgoff()").
+
+There is a new user now.  Shadow stack allocation passes VM_SHADOW_STACK to
+do_mmap().  Thus, re-introduce vm_flags to do_mmap().
+
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Peter Collingbourne <pcc@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: linux-mm@kvack.org
 ---
- arch/x86/include/asm/fpu/api.h |  9 ++++++---
- arch/x86/kernel/fpu/xstate.c   | 27 ++++++++++++++++++++++-----
- 2 files changed, 28 insertions(+), 8 deletions(-)
+ fs/aio.c           |  2 +-
+ include/linux/mm.h |  3 ++-
+ ipc/shm.c          |  2 +-
+ mm/mmap.c          | 10 +++++-----
+ mm/nommu.c         |  4 ++--
+ mm/util.c          |  2 +-
+ 6 files changed, 12 insertions(+), 11 deletions(-)
 
-diff --git a/arch/x86/include/asm/fpu/api.h b/arch/x86/include/asm/fpu/api.h
-index 6aec27984b62..5cb557b9d118 100644
---- a/arch/x86/include/asm/fpu/api.h
-+++ b/arch/x86/include/asm/fpu/api.h
-@@ -167,7 +167,10 @@ extern long fpu_xstate_prctl(struct task_struct *tsk, int option, unsigned long
+diff --git a/fs/aio.c b/fs/aio.c
+index 4ceba13a7db0..a24618e0e3fc 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -554,7 +554,7 @@ static int aio_setup_ring(struct kioctx *ctx, unsigned int nr_events)
  
- void *start_update_xsave_msrs(int xfeature_nr);
- void end_update_xsave_msrs(void);
--int xsave_rdmsrl(void *state, unsigned int msr, unsigned long long *p);
--int xsave_wrmsrl(void *state, u32 msr, u64 val);
--int xsave_set_clear_bits_msrl(void *state, u32 msr, u64 set, u64 clear);
-+int xsave_rdmsrl(void *xstate, unsigned int msr, unsigned long long *p);
-+int xsave_wrmsrl(void *xstate, u32 msr, u64 val);
-+int xsave_set_clear_bits_msrl(void *xstate, u32 msr, u64 set, u64 clear);
-+
-+void *get_xsave_buffer_unsafe(struct fpu *fpu, int xfeature_nr);
-+int xsave_wrmsrl_unsafe(void *xstate, u32 msr, u64 val);
- #endif /* _ASM_X86_FPU_API_H */
-diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
-index 25b1b0c417fd..71b08026474c 100644
---- a/arch/x86/kernel/fpu/xstate.c
-+++ b/arch/x86/kernel/fpu/xstate.c
-@@ -1881,6 +1881,17 @@ static u64 *__get_xsave_member(void *xstate, u32 msr)
+ 	ctx->mmap_base = do_mmap(ctx->aio_ring_file, 0, ctx->mmap_size,
+ 				 PROT_READ | PROT_WRITE,
+-				 MAP_SHARED, 0, &unused, NULL);
++				 MAP_SHARED, 0, 0, &unused, NULL);
+ 	mmap_write_unlock(mm);
+ 	if (IS_ERR((void *)ctx->mmap_base)) {
+ 		ctx->mmap_size = 0;
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index e125358d7f75..481e1271409f 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -2689,7 +2689,8 @@ extern unsigned long mmap_region(struct file *file, unsigned long addr,
+ 	struct list_head *uf);
+ extern unsigned long do_mmap(struct file *file, unsigned long addr,
+ 	unsigned long len, unsigned long prot, unsigned long flags,
+-	unsigned long pgoff, unsigned long *populate, struct list_head *uf);
++	vm_flags_t vm_flags, unsigned long pgoff, unsigned long *populate,
++	struct list_head *uf);
+ extern int __do_munmap(struct mm_struct *, unsigned long, size_t,
+ 		       struct list_head *uf, bool downgrade);
+ extern int do_munmap(struct mm_struct *, unsigned long, size_t,
+diff --git a/ipc/shm.c b/ipc/shm.c
+index b3048ebd5c31..f236b3e14ec4 100644
+--- a/ipc/shm.c
++++ b/ipc/shm.c
+@@ -1646,7 +1646,7 @@ long do_shmat(int shmid, char __user *shmaddr, int shmflg,
+ 			goto invalid;
  	}
- }
  
-+/*
-+ * Operate on the xsave buffer directly. It makes no gaurantees that the
-+ * buffer will stay valid now or in the futre. This function is pretty
-+ * much only useful when the caller knows the fpu's thread can't be
-+ * scheduled or otherwise operated on concurrently.
-+ */
-+void *get_xsave_buffer_unsafe(struct fpu *fpu, int xfeature_nr)
-+{
-+	return get_xsave_addr(&fpu->fpstate->regs.xsave, xfeature_nr);
-+}
-+
- /*
-  * Return a pointer to the xstate for the feature if it should be used, or NULL
-  * if the MSRs should be written to directly. To do this safely, using the
-@@ -1971,14 +1982,11 @@ int xsave_rdmsrl(void *xstate, unsigned int msr, unsigned long long *p)
- 	return 0;
- }
- 
--int xsave_wrmsrl(void *xstate, u32 msr, u64 val)
-+
-+int xsave_wrmsrl_unsafe(void *xstate, u32 msr, u64 val)
+-	addr = do_mmap(file, addr, size, prot, flags, 0, &populate, NULL);
++	addr = do_mmap(file, addr, size, prot, flags, 0, 0, &populate, NULL);
+ 	*raddr = addr;
+ 	err = 0;
+ 	if (IS_ERR_VALUE(addr))
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 9bab326332af..9c82a1b02cfc 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1410,11 +1410,11 @@ static inline bool file_mmap_ok(struct file *file, struct inode *inode,
+  */
+ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 			unsigned long len, unsigned long prot,
+-			unsigned long flags, unsigned long pgoff,
+-			unsigned long *populate, struct list_head *uf)
++			unsigned long flags, vm_flags_t vm_flags,
++			unsigned long pgoff, unsigned long *populate,
++			struct list_head *uf)
  {
- 	u64 *member_ptr;
+ 	struct mm_struct *mm = current->mm;
+-	vm_flags_t vm_flags;
+ 	int pkey = 0;
  
--	__xsave_msrl_prepare_write();
--	if (!xstate)
--		return wrmsrl_safe(msr, val);
--
- 	member_ptr = __get_xsave_member(xstate, msr);
- 	if (!member_ptr)
- 		return 1;
-@@ -1988,6 +1996,15 @@ int xsave_wrmsrl(void *xstate, u32 msr, u64 val)
- 	return 0;
- }
+ 	*populate = 0;
+@@ -1474,7 +1474,7 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 	 * to. we assume access permissions have been handled by the open
+ 	 * of the memory object, so we don't do any here.
+ 	 */
+-	vm_flags = calc_vm_prot_bits(prot, pkey) | calc_vm_flag_bits(flags) |
++	vm_flags |= calc_vm_prot_bits(prot, pkey) | calc_vm_flag_bits(flags) |
+ 			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
  
-+int xsave_wrmsrl(void *xstate, u32 msr, u64 val)
-+{
-+	__xsave_msrl_prepare_write();
-+	if (!xstate)
-+		return wrmsrl_safe(msr, val);
-+
-+	return xsave_wrmsrl_unsafe(xstate, msr, val);
-+}
-+
- int xsave_set_clear_bits_msrl(void *xstate, u32 msr, u64 set, u64 clear)
- {
- 	u64 val, new_val;
+ 	if (flags & MAP_LOCKED)
+@@ -3011,7 +3011,7 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
+ 
+ 	file = get_file(vma->vm_file);
+ 	ret = do_mmap(vma->vm_file, start, size,
+-			prot, flags, pgoff, &populate, NULL);
++			prot, flags, 0, pgoff, &populate, NULL);
+ 	fput(file);
+ out:
+ 	mmap_write_unlock(mm);
+diff --git a/mm/nommu.c b/mm/nommu.c
+index 55a9e48a7a02..a6e0243cd69b 100644
+--- a/mm/nommu.c
++++ b/mm/nommu.c
+@@ -1057,6 +1057,7 @@ unsigned long do_mmap(struct file *file,
+ 			unsigned long len,
+ 			unsigned long prot,
+ 			unsigned long flags,
++			vm_flags_t vm_flags,
+ 			unsigned long pgoff,
+ 			unsigned long *populate,
+ 			struct list_head *uf)
+@@ -1064,7 +1065,6 @@ unsigned long do_mmap(struct file *file,
+ 	struct vm_area_struct *vma;
+ 	struct vm_region *region;
+ 	struct rb_node *rb;
+-	vm_flags_t vm_flags;
+ 	unsigned long capabilities, result;
+ 	int ret;
+ 
+@@ -1083,7 +1083,7 @@ unsigned long do_mmap(struct file *file,
+ 
+ 	/* we've determined that we can make the mapping, now translate what we
+ 	 * now know into VMA flags */
+-	vm_flags = determine_vm_flags(file, prot, flags, capabilities);
++	vm_flags |= determine_vm_flags(file, prot, flags, capabilities);
+ 
+ 	/* we're going to need to record the mapping */
+ 	region = kmem_cache_zalloc(vm_region_jar, GFP_KERNEL);
+diff --git a/mm/util.c b/mm/util.c
+index 7e43369064c8..d419821364cc 100644
+--- a/mm/util.c
++++ b/mm/util.c
+@@ -516,7 +516,7 @@ unsigned long vm_mmap_pgoff(struct file *file, unsigned long addr,
+ 	if (!ret) {
+ 		if (mmap_write_lock_killable(mm))
+ 			return -EINTR;
+-		ret = do_mmap(file, addr, len, prot, flag, pgoff, &populate,
++		ret = do_mmap(file, addr, len, prot, flag, 0, pgoff, &populate,
+ 			      &uf);
+ 		mmap_write_unlock(mm);
+ 		userfaultfd_unmap_complete(mm, &uf);
 -- 
 2.17.1
 
