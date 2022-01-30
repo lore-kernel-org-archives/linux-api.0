@@ -2,37 +2,37 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CD5CAC35273
-	for <linux-api@archiver.kernel.org>; Sun, 30 Jan 2022 21:22:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 06331C35274
+	for <linux-api@archiver.kernel.org>; Sun, 30 Jan 2022 21:22:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1356524AbiA3VWA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 30 Jan 2022 16:22:00 -0500
+        id S1356540AbiA3VWB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 30 Jan 2022 16:22:01 -0500
 Received: from mga06.intel.com ([134.134.136.31]:52029 "EHLO mga06.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1356487AbiA3VV5 (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Sun, 30 Jan 2022 16:21:57 -0500
+        id S1356498AbiA3VV6 (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sun, 30 Jan 2022 16:21:58 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1643577717; x=1675113717;
+  t=1643577718; x=1675113718;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=HHh4lkLfyu0d0fqFw9G2b577iSJVRa+u0pjug6+8QXs=;
-  b=amZqJmuLHKZtS2FgwRnWB0MfOwEq1+9sd3lO13l9Cbt6syHJjKjCftZA
-   oREnnzqWUMipU0FI+QUrv7nAWnFSWxA25qzi5LHsKOWpK0pZcYwBOWOLA
-   oI6WORC8v35qhSqXqVs+pzdGOE7Ai59tLd+YCPCMWpUdLAwlrrqjnyyZC
-   EFxAHRU/cQUpSS/cEbE8qnDS+CJ2h/IxXmhXJxA7xVxVJAhKbUdcRmrk/
-   nRQAWC3+Xr7SqwkdgKYTtcBZMcv5RGzeCPE5EpY6VnVVG+CZhdPSSOPKL
-   7hS5lOGj9VL/nFwSIXuwZ01iYAxh8qc25tplYgttCKMt0XzFSx0VLmd9Q
-   w==;
-X-IronPort-AV: E=McAfee;i="6200,9189,10243"; a="308104918"
+  bh=QfQ3gnydDk43tc7xRks6jpks+dE4z+Vv7IsUEppemXA=;
+  b=M83wa1/o1T12qpgh+d/uQbSRpsb96rrdY41Fkda/+uSA9RaSq3c4My18
+   PGRLt/GGD7sOTiNlxz18KaotTqLCn9PrPO9aOa/TsYnhb9E2a9w0sClDK
+   bUvJH8BONOt0I4lNQF7XHJabZbk7z7M/AuxsSNDG3Qd0cKjzrcfFXSsv0
+   2+IF9igJotEfeUca+1amqdfEdUMW1q0jdUhoDf0dzRAsq1HhJJ0sjiDxN
+   4aXQ0RTcynfMqPK1LUHVJZbIrIXZ8vdoGSNbXj2IUCg9d3aMDBxUgs9GY
+   STi6y9iwiSGjnMn1ktW9oP30q0a4iX4zuDm/S1+0aoIaZgi7DzEajewhy
+   Q==;
+X-IronPort-AV: E=McAfee;i="6200,9189,10243"; a="308104927"
 X-IronPort-AV: E=Sophos;i="5.88,329,1635231600"; 
-   d="scan'208";a="308104918"
+   d="scan'208";a="308104927"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jan 2022 13:21:55 -0800
+  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jan 2022 13:21:56 -0800
 X-IronPort-AV: E=Sophos;i="5.88,329,1635231600"; 
-   d="scan'208";a="536856751"
+   d="scan'208";a="536856770"
 Received: from avmallar-mobl1.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.209.123.171])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jan 2022 13:21:54 -0800
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jan 2022 13:21:55 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,10 +61,11 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
         joao.moreira@intel.com, John Allen <john.allen@amd.com>,
         kcc@google.com, eranian@google.com
-Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH 11/35] x86/mm: Update pte_modify for _PAGE_COW
-Date:   Sun, 30 Jan 2022 13:18:14 -0800
-Message-Id: <20220130211838.8382-12-rick.p.edgecombe@intel.com>
+Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>,
+        Peter Xu <peterx@redhat.com>
+Subject: [PATCH 13/35] mm: Move VM_UFFD_MINOR_BIT from 37 to 38
+Date:   Sun, 30 Jan 2022 13:18:16 -0800
+Message-Id: <20220130211838.8382-14-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20220130211838.8382-1-rick.p.edgecombe@intel.com>
 References: <20220130211838.8382-1-rick.p.edgecombe@intel.com>
@@ -74,90 +75,31 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 
-The read-only and Dirty PTE has been used to indicate copy-on-write pages.
-However, newer x86 processors also regard a read-only and Dirty PTE as a
-shadow stack page.  In order to separate the two, the software-defined
-_PAGE_COW is created to replace _PAGE_DIRTY for the copy-on-write case, and
-pte_*() are updated.
-
-Pte_modify() changes a PTE to 'newprot', but it doesn't use the pte_*().
-Introduce fixup_dirty_pte(), which sets a dirty PTE, based on _PAGE_RW,
-to either _PAGE_DIRTY or _PAGE_COW.
-
-Apply the same changes to pmd_modify().
+To introduce VM_SHADOW_STACK as VM_HIGH_ARCH_BIT (37), and make all
+VM_HIGH_ARCH_BITs stay together, move VM_UFFD_MINOR_BIT from 37 to 38.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Reviewed-by: Axel Rasmussen <axelrasmussen@google.com>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
+Cc: Peter Xu <peterx@redhat.com>
+Cc: Mike Kravetz <mike.kravetz@oracle.com>
 ---
- arch/x86/include/asm/pgtable.h | 37 ++++++++++++++++++++++++++++++++++
- 1 file changed, 37 insertions(+)
+ include/linux/mm.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index a4a75e78a934..5c3886f6ccda 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -773,6 +773,23 @@ static inline pmd_t pmd_mkinvalid(pmd_t pmd)
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index e1a84b1e6787..2e74c0ab6d25 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -359,7 +359,7 @@ extern unsigned int kobjsize(const void *objp);
+ #endif
  
- static inline u64 flip_protnone_guard(u64 oldval, u64 val, u64 mask);
- 
-+static inline pteval_t fixup_dirty_pte(pteval_t pteval)
-+{
-+	pte_t pte = __pte(pteval);
-+
-+	/*
-+	 * Fix up potential shadow stack page flags because the RO, Dirty
-+	 * PTE is special.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		if (pte_dirty(pte)) {
-+			pte = pte_mkclean(pte);
-+			pte = pte_mkdirty(pte);
-+		}
-+	}
-+	return pte_val(pte);
-+}
-+
- static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
- {
- 	pteval_t val = pte_val(pte), oldval = val;
-@@ -783,16 +800,36 @@ static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
- 	 */
- 	val &= _PAGE_CHG_MASK;
- 	val |= check_pgprot(newprot) & ~_PAGE_CHG_MASK;
-+	val = fixup_dirty_pte(val);
- 	val = flip_protnone_guard(oldval, val, PTE_PFN_MASK);
- 	return __pte(val);
- }
- 
-+static inline int pmd_write(pmd_t pmd);
-+static inline pmdval_t fixup_dirty_pmd(pmdval_t pmdval)
-+{
-+	pmd_t pmd = __pmd(pmdval);
-+
-+	/*
-+	 * Fix up potential shadow stack page flags because the RO, Dirty
-+	 * PMD is special.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		if (pmd_dirty(pmd)) {
-+			pmd = pmd_mkclean(pmd);
-+			pmd = pmd_mkdirty(pmd);
-+		}
-+	}
-+	return pmd_val(pmd);
-+}
-+
- static inline pmd_t pmd_modify(pmd_t pmd, pgprot_t newprot)
- {
- 	pmdval_t val = pmd_val(pmd), oldval = val;
- 
- 	val &= _HPAGE_CHG_MASK;
- 	val |= check_pgprot(newprot) & ~_HPAGE_CHG_MASK;
-+	val = fixup_dirty_pmd(val);
- 	val = flip_protnone_guard(oldval, val, PHYSICAL_PMD_PAGE_MASK);
- 	return __pmd(val);
- }
+ #ifdef CONFIG_HAVE_ARCH_USERFAULTFD_MINOR
+-# define VM_UFFD_MINOR_BIT	37
++# define VM_UFFD_MINOR_BIT	38
+ # define VM_UFFD_MINOR		BIT(VM_UFFD_MINOR_BIT)	/* UFFD minor faults */
+ #else /* !CONFIG_HAVE_ARCH_USERFAULTFD_MINOR */
+ # define VM_UFFD_MINOR		VM_NONE
 -- 
 2.17.1
 
