@@ -2,37 +2,37 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B5589C4332F
-	for <linux-api@archiver.kernel.org>; Sun, 30 Jan 2022 21:26:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 402C6C4332F
+	for <linux-api@archiver.kernel.org>; Sun, 30 Jan 2022 21:26:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1356890AbiA3V0I (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 30 Jan 2022 16:26:08 -0500
+        id S1357031AbiA3V0Q (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 30 Jan 2022 16:26:16 -0500
 Received: from mga06.intel.com ([134.134.136.31]:52048 "EHLO mga06.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1356933AbiA3VYV (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Sun, 30 Jan 2022 16:24:21 -0500
+        id S1356883AbiA3VZf (ORCPT <rfc822;linux-api@vger.kernel.org>);
+        Sun, 30 Jan 2022 16:25:35 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1643577861; x=1675113861;
+  t=1643577935; x=1675113935;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=IJv3bcwNym+ue5ES2C0XMwMTBK04UF1ldHp0VsVFE1E=;
-  b=oEesWLWTvf1NRortqptmF869smrGW3s7xRGRs/R3/6goKAl4lEvk7tE0
-   B4z9qeXr3okAs2CasejlCWl00c0YrO2CTK3L7u90sfZQ4S7tTZfEwBG0f
-   jJRjhyLkUpVBuUhIiQRi+6RH/BozGgiQltL3IFvSf+oi1h6whmw9HU4hJ
-   WSnUUKU6xlA8SO+1qs4bCgnaJUrkd0+vXBryYKVZhGCBpsb9YO35iOY4j
-   s32Go/Lu/PYFdcszKp9AqPdRKPoD/z/cuhH2XQZirRcVH9o44vkg5En7u
-   A+UJ+Ix3KvIeLllFsZxV0KcshVCTaInSz6Kk8fN9N2dIwmSbmg4supjvL
-   g==;
-X-IronPort-AV: E=McAfee;i="6200,9189,10243"; a="308104965"
+  bh=fNETiia0npgO2OFNbSIMbUM/Mgq6q17fU9ocx82tnFk=;
+  b=ZVOa90XmSBlZ9Ui1B25XGMbRIKIPmFa2YS4L2BmVXIivS2ymigLbgo57
+   wWCi1OLUY7xbt/z+dD/+R538kUTfWdqkZHkkgBHXGruMV1smir/eEBxvg
+   pQrJ3C7nUTyd/3tTkNaiNvHbCcn+nfo7yvD9ipTiJGSv7myvwLtIqEgJ1
+   sZTa4M4YLEC3Jpjn54zygkyIrYyBIprMBo4vr22ug6fcfZevOq7a1zpoi
+   oeBTid+1+qGi1FlrHELYfSniCoT+MhvYYDg9MQEe9tjNBe01iwmKAzP7/
+   e/BqogKcIzXqXtYeO4Z8mB5G9cNovSkWycUUWGfyzNBxahIJfVG2nfh10
+   A==;
+X-IronPort-AV: E=McAfee;i="6200,9189,10243"; a="308104979"
 X-IronPort-AV: E=Sophos;i="5.88,329,1635231600"; 
-   d="scan'208";a="308104965"
+   d="scan'208";a="308104979"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jan 2022 13:22:05 -0800
+  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jan 2022 13:22:09 -0800
 X-IronPort-AV: E=Sophos;i="5.88,329,1635231600"; 
-   d="scan'208";a="536856881"
+   d="scan'208";a="536856940"
 Received: from avmallar-mobl1.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.209.123.171])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jan 2022 13:22:04 -0800
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jan 2022 13:22:08 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -61,11 +61,10 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
         joao.moreira@intel.com, John Allen <john.allen@amd.com>,
         kcc@google.com, eranian@google.com
-Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        Andrew Morton <akpm@linux-foundation.org>
-Subject: [PATCH 24/35] mm: Re-introduce vm_flags to do_mmap()
-Date:   Sun, 30 Jan 2022 13:18:27 -0800
-Message-Id: <20220130211838.8382-25-rick.p.edgecombe@intel.com>
+Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH 28/35] x86/cet/shstk: Handle thread shadow stack
+Date:   Sun, 30 Jan 2022 13:18:31 -0800
+Message-Id: <20220130211838.8382-29-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20220130211838.8382-1-rick.p.edgecombe@intel.com>
 References: <20220130211838.8382-1-rick.p.edgecombe@intel.com>
@@ -75,150 +74,226 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 
-There was no more caller passing vm_flags to do_mmap(), and vm_flags was
-removed from the function's input by:
+When a process is duplicated, but the child shares the address space with
+the parent, there is potential for the threads sharing a single stack to
+cause conflicts for each other. In the normal non-cet case this is handled
+in two ways.
 
-    commit 45e55300f114 ("mm: remove unnecessary wrapper function do_mmap_pgoff()").
+With regular CLONE_VM a new stack is provided by userspace such that the
+parent and child have different stacks.
 
-There is a new user now.  Shadow stack allocation passes VM_SHADOW_STACK to
-do_mmap().  Thus, re-introduce vm_flags to do_mmap().
+For vfork, the parent is suspended until the child exits. So as long as
+the child doesn't return from the vfork()/CLONE_VFORK calling function and
+sticks to a limited set of operations, the parent and child can share the
+same stack.
+
+For shadow stack, these scenarios present similar sharing problems. For the
+CLONE_VM case, the child and the parent must have separate shadow stacks.
+Instead of changing clone to take a shadow stack, have the kernel just
+allocate one and switch to it.
+
+Use stack_size passed from clone3() syscall for thread shadow stack size. A
+compat-mode thread shadow stack size is further reduced to 1/4. This
+allows more threads to run in a 32-bit address space. The clone() does not
+pass stack_size, which was added to clone3(). In that case, use
+RLIMIT_STACK size and cap to 4 GB.
+
+For shadow stack enabled vfork(), the parent and child can share the same
+shadow stack, like they can share a normal stack. Since the parent is
+suspended until the child terminates, the child will not interfere with
+the parent while executing as long as it doesn't return from the vfork()
+and overwrite up the shadow stack. The child can safely overwrite down
+the shadow stack, as the parent can just overwrite this later. So CET does
+not add any additional limitations for vfork().
+
+Userspace implementing posix vfork() can actually prevent the child from
+returning from the vfork() calling function, using CET. Glibc does this
+by adjusting the shadow stack pointer in the child, so that the child
+receives a #CP if it tries to return from vfork() calling function.
+
+Free the shadow stack on thread exit by doing it in mm_release(). Skip
+this when exiting a vfork() child since the stack is shared in the
+parent.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Peter Collingbourne <pcc@google.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
-Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Oleg Nesterov <oleg@redhat.com>
-Cc: linux-mm@kvack.org
 ---
- fs/aio.c           |  2 +-
- include/linux/mm.h |  3 ++-
- ipc/shm.c          |  2 +-
- mm/mmap.c          | 10 +++++-----
- mm/nommu.c         |  4 ++--
- mm/util.c          |  2 +-
- 6 files changed, 12 insertions(+), 11 deletions(-)
 
-diff --git a/fs/aio.c b/fs/aio.c
-index 4ceba13a7db0..a24618e0e3fc 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -554,7 +554,7 @@ static int aio_setup_ring(struct kioctx *ctx, unsigned int nr_events)
+v1:
+ - Expand commit log.
+ - Add more comments.
+ - Switch to xsave helpers.
+
+Yu-cheng v30:
+ - Update comments about clone()/clone3(). (Borislav Petkov)
+
+Yu-cheng v29:
+ - WARN_ON_ONCE() when get_xsave_addr() returns NULL, and update comments.
+   (Dave Hansen)
+
+Yu-cheng v28:
+ - Split out copy_thread() argument name changes to a new patch.
+ - Add compatibility for earlier clone(), which does not pass stack_size.
+ - Add comment for get_xsave_addr(), explain the handling of null return
+   value.
+
+ arch/x86/include/asm/cet.h         |  5 +++
+ arch/x86/include/asm/mmu_context.h |  2 +
+ arch/x86/kernel/process.c          |  6 +++
+ arch/x86/kernel/shstk.c            | 68 +++++++++++++++++++++++++++++-
+ 4 files changed, 80 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+index de90e4ae083a..63ee8b45080d 100644
+--- a/arch/x86/include/asm/cet.h
++++ b/arch/x86/include/asm/cet.h
+@@ -14,11 +14,16 @@ struct thread_shstk {
  
- 	ctx->mmap_base = do_mmap(ctx->aio_ring_file, 0, ctx->mmap_size,
- 				 PROT_READ | PROT_WRITE,
--				 MAP_SHARED, 0, &unused, NULL);
-+				 MAP_SHARED, 0, 0, &unused, NULL);
- 	mmap_write_unlock(mm);
- 	if (IS_ERR((void *)ctx->mmap_base)) {
- 		ctx->mmap_size = 0;
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index e125358d7f75..481e1271409f 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -2689,7 +2689,8 @@ extern unsigned long mmap_region(struct file *file, unsigned long addr,
- 	struct list_head *uf);
- extern unsigned long do_mmap(struct file *file, unsigned long addr,
- 	unsigned long len, unsigned long prot, unsigned long flags,
--	unsigned long pgoff, unsigned long *populate, struct list_head *uf);
-+	vm_flags_t vm_flags, unsigned long pgoff, unsigned long *populate,
-+	struct list_head *uf);
- extern int __do_munmap(struct mm_struct *, unsigned long, size_t,
- 		       struct list_head *uf, bool downgrade);
- extern int do_munmap(struct mm_struct *, unsigned long, size_t,
-diff --git a/ipc/shm.c b/ipc/shm.c
-index b3048ebd5c31..f236b3e14ec4 100644
---- a/ipc/shm.c
-+++ b/ipc/shm.c
-@@ -1646,7 +1646,7 @@ long do_shmat(int shmid, char __user *shmaddr, int shmflg,
- 			goto invalid;
- 	}
+ #ifdef CONFIG_X86_SHADOW_STACK
+ int shstk_setup(void);
++int shstk_alloc_thread_stack(struct task_struct *p, unsigned long clone_flags,
++			     unsigned long stack_size);
+ void shstk_free(struct task_struct *p);
+ int shstk_disable(void);
+ void reset_thread_shstk(void);
+ #else
+ static inline void shstk_setup(void) {}
++static inline int shstk_alloc_thread_stack(struct task_struct *p,
++					   unsigned long clone_flags,
++					   unsigned long stack_size) { return 0; }
+ static inline void shstk_free(struct task_struct *p) {}
+ static inline void shstk_disable(void) {}
+ static inline void reset_thread_shstk(void) {}
+diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
+index 27516046117a..8e721d2c45d5 100644
+--- a/arch/x86/include/asm/mmu_context.h
++++ b/arch/x86/include/asm/mmu_context.h
+@@ -146,6 +146,8 @@ do {						\
+ #else
+ #define deactivate_mm(tsk, mm)			\
+ do {						\
++	if (!tsk->vfork_done)			\
++		shstk_free(tsk);		\
+ 	load_gs_index(0);			\
+ 	loadsegment(fs, 0);			\
+ } while (0)
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index 82a816178e7f..0fbcf33255fa 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -46,6 +46,7 @@
+ #include <asm/proto.h>
+ #include <asm/frame.h>
+ #include <asm/unwind.h>
++#include <asm/cet.h>
  
--	addr = do_mmap(file, addr, size, prot, flags, 0, &populate, NULL);
-+	addr = do_mmap(file, addr, size, prot, flags, 0, 0, &populate, NULL);
- 	*raddr = addr;
- 	err = 0;
- 	if (IS_ERR_VALUE(addr))
-diff --git a/mm/mmap.c b/mm/mmap.c
-index 9bab326332af..9c82a1b02cfc 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
-@@ -1410,11 +1410,11 @@ static inline bool file_mmap_ok(struct file *file, struct inode *inode,
-  */
- unsigned long do_mmap(struct file *file, unsigned long addr,
- 			unsigned long len, unsigned long prot,
--			unsigned long flags, unsigned long pgoff,
--			unsigned long *populate, struct list_head *uf)
-+			unsigned long flags, vm_flags_t vm_flags,
-+			unsigned long pgoff, unsigned long *populate,
-+			struct list_head *uf)
+ #include "process.h"
+ 
+@@ -117,6 +118,7 @@ void exit_thread(struct task_struct *tsk)
+ 
+ 	free_vm86(t);
+ 
++	shstk_free(tsk);
+ 	fpu__drop(fpu);
+ }
+ 
+@@ -217,6 +219,10 @@ int copy_thread(unsigned long clone_flags, unsigned long sp,
+ 	if (clone_flags & CLONE_SETTLS)
+ 		ret = set_new_tls(p, tls);
+ 
++	/* Allocate a new shadow stack for pthread */
++	if (!ret)
++		ret = shstk_alloc_thread_stack(p, clone_flags, stack_size);
++
+ 	if (!ret && unlikely(test_tsk_thread_flag(current, TIF_IO_BITMAP)))
+ 		io_bitmap_share(p);
+ 
+diff --git a/arch/x86/kernel/shstk.c b/arch/x86/kernel/shstk.c
+index 4e8686ed885f..358f24e806cc 100644
+--- a/arch/x86/kernel/shstk.c
++++ b/arch/x86/kernel/shstk.c
+@@ -106,6 +106,66 @@ void reset_thread_shstk(void)
+ 	memset(&current->thread.shstk, 0, sizeof(struct thread_shstk));
+ }
+ 
++int shstk_alloc_thread_stack(struct task_struct *tsk, unsigned long clone_flags,
++			     unsigned long stack_size)
++{
++	struct thread_shstk *shstk = &tsk->thread.shstk;
++	unsigned long addr;
++	void *xstate;
++
++	/*
++	 * If shadow stack is not enabled on the new thread, skip any
++	 * switch to a new shadow stack.
++	 */
++	if (!shstk->size)
++		return 0;
++
++	/*
++	 * clone() does not pass stack_size, which was added to clone3().
++	 * Use RLIMIT_STACK and cap to 4 GB.
++	 */
++	if (!stack_size)
++		stack_size = min_t(unsigned long long, rlimit(RLIMIT_STACK), SZ_4G);
++
++	/*
++	 * For CLONE_VM, except vfork, the child needs a separate shadow
++	 * stack.
++	 */
++	if ((clone_flags & (CLONE_VFORK | CLONE_VM)) != CLONE_VM)
++		return 0;
++
++
++	/*
++	 * Compat-mode pthreads share a limited address space.
++	 * If each function call takes an average of four slots
++	 * stack space, allocate 1/4 of stack size for shadow stack.
++	 */
++	if (in_compat_syscall())
++		stack_size /= 4;
++
++	/*
++	 * 'tsk' is configured with a shadow stack and the fpu.state is
++	 * up to date since it was just copied from the parent.  There
++	 * must be a valid non-init CET state location in the buffer.
++	 */
++	xstate = get_xsave_buffer_unsafe(&tsk->thread.fpu, XFEATURE_CET_USER);
++	if (WARN_ON_ONCE(!xstate))
++		return -EINVAL;
++
++	stack_size = PAGE_ALIGN(stack_size);
++	addr = alloc_shstk(stack_size);
++	if (IS_ERR_VALUE(addr)) {
++		shstk->base = 0;
++		shstk->size = 0;
++		return PTR_ERR((void *)addr);
++	}
++
++	xsave_wrmsrl_unsafe(xstate, MSR_IA32_PL3_SSP, (u64)(addr + stack_size));
++	shstk->base = addr;
++	shstk->size = stack_size;
++	return 0;
++}
++
+ void shstk_free(struct task_struct *tsk)
  {
- 	struct mm_struct *mm = current->mm;
--	vm_flags_t vm_flags;
- 	int pkey = 0;
+ 	struct thread_shstk *shstk = &tsk->thread.shstk;
+@@ -115,7 +175,13 @@ void shstk_free(struct task_struct *tsk)
+ 	    !shstk->base)
+ 		return;
  
- 	*populate = 0;
-@@ -1474,7 +1474,7 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
- 	 * to. we assume access permissions have been handled by the open
- 	 * of the memory object, so we don't do any here.
- 	 */
--	vm_flags = calc_vm_prot_bits(prot, pkey) | calc_vm_flag_bits(flags) |
-+	vm_flags |= calc_vm_prot_bits(prot, pkey) | calc_vm_flag_bits(flags) |
- 			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
+-	if (!tsk->mm)
++	/*
++	 * When fork() with CLONE_VM fails, the child (tsk) already has a
++	 * shadow stack allocated, and exit_thread() calls this function to
++	 * free it.  In this case the parent (current) and the child share
++	 * the same mm struct.
++	 */
++	if (!tsk->mm || tsk->mm != current->mm)
+ 		return;
  
- 	if (flags & MAP_LOCKED)
-@@ -3011,7 +3011,7 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
- 
- 	file = get_file(vma->vm_file);
- 	ret = do_mmap(vma->vm_file, start, size,
--			prot, flags, pgoff, &populate, NULL);
-+			prot, flags, 0, pgoff, &populate, NULL);
- 	fput(file);
- out:
- 	mmap_write_unlock(mm);
-diff --git a/mm/nommu.c b/mm/nommu.c
-index 55a9e48a7a02..a6e0243cd69b 100644
---- a/mm/nommu.c
-+++ b/mm/nommu.c
-@@ -1057,6 +1057,7 @@ unsigned long do_mmap(struct file *file,
- 			unsigned long len,
- 			unsigned long prot,
- 			unsigned long flags,
-+			vm_flags_t vm_flags,
- 			unsigned long pgoff,
- 			unsigned long *populate,
- 			struct list_head *uf)
-@@ -1064,7 +1065,6 @@ unsigned long do_mmap(struct file *file,
- 	struct vm_area_struct *vma;
- 	struct vm_region *region;
- 	struct rb_node *rb;
--	vm_flags_t vm_flags;
- 	unsigned long capabilities, result;
- 	int ret;
- 
-@@ -1083,7 +1083,7 @@ unsigned long do_mmap(struct file *file,
- 
- 	/* we've determined that we can make the mapping, now translate what we
- 	 * now know into VMA flags */
--	vm_flags = determine_vm_flags(file, prot, flags, capabilities);
-+	vm_flags |= determine_vm_flags(file, prot, flags, capabilities);
- 
- 	/* we're going to need to record the mapping */
- 	region = kmem_cache_zalloc(vm_region_jar, GFP_KERNEL);
-diff --git a/mm/util.c b/mm/util.c
-index 7e43369064c8..d419821364cc 100644
---- a/mm/util.c
-+++ b/mm/util.c
-@@ -516,7 +516,7 @@ unsigned long vm_mmap_pgoff(struct file *file, unsigned long addr,
- 	if (!ret) {
- 		if (mmap_write_lock_killable(mm))
- 			return -EINTR;
--		ret = do_mmap(file, addr, len, prot, flag, pgoff, &populate,
-+		ret = do_mmap(file, addr, len, prot, flag, 0, pgoff, &populate,
- 			      &uf);
- 		mmap_write_unlock(mm);
- 		userfaultfd_unmap_complete(mm, &uf);
+ 	unmap_shadow_stack(shstk->base, shstk->size);
 -- 
 2.17.1
 
