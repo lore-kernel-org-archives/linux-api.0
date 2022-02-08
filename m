@@ -2,42 +2,42 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9A90FC43219
-	for <linux-api@archiver.kernel.org>; Tue,  8 Feb 2022 01:06:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DE921C433F5
+	for <linux-api@archiver.kernel.org>; Tue,  8 Feb 2022 01:09:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S241829AbiBHBF1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 7 Feb 2022 20:05:27 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41412 "EHLO
+        id S1344049AbiBHBJs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 7 Feb 2022 20:09:48 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37120 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S245717AbiBGX2Z (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 7 Feb 2022 18:28:25 -0500
-Received: from mga04.intel.com (mga04.intel.com [192.55.52.120])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 17393C0612A4;
-        Mon,  7 Feb 2022 15:28:24 -0800 (PST)
+        with ESMTP id S245032AbiBHBH5 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 7 Feb 2022 20:07:57 -0500
+Received: from mga14.intel.com (mga14.intel.com [192.55.52.115])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 649BDC03FEC1;
+        Mon,  7 Feb 2022 17:05:56 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1644276504; x=1675812504;
+  t=1644282356; x=1675818356;
   h=message-id:date:mime-version:to:cc:references:from:
    subject:in-reply-to:content-transfer-encoding;
-  bh=HOtSxOsxsg3P8RM3tbFgDc9I3beqaq6pdDO0U9LNiiQ=;
-  b=lWU/SvhkCVjNdveIr1NuCqmwF/eSttiPX952/qx5g4JhipzxopX0JKO3
-   90v4g9LL3kGkvVZo9jNiPzZkmHVar2OI0W8TwhfbhU50QxLwNB6wlaOnS
-   7+9TO/rqVFBYkJxBDq1IneeA6XJ/eFVTPjn4DEc7CG+tVPQOZRv1746Bx
-   W2GgAndlFCVSVr8eCMwzGsWcNapjpwDigkxM3vS6SNkBulUynW2Mj3NJw
-   HDX4WPz79+sXYxlMB3Oygu/gfSJoOhmNw8gNs1J4hHIjP4zjC2wjVpP7E
-   +k3dDnHy9eF1w69x9m+aycGGgpWuOG9nZnRs4Xqp4eSvACqvH4yQKCIvw
-   Q==;
-X-IronPort-AV: E=McAfee;i="6200,9189,10251"; a="247665155"
+  bh=RmcEBt/Tc2ZNpDmtkpC+8Teoj0FX4XdvKx/tePya/LE=;
+  b=YLpuo49U9T6Ttv5z0xswjk4u7YO65Spj6T72/14AXFJOV96rsF8h4OOq
+   r1C2V9NBZe7L0KmxMZXISIhXwz88ob1Pz32j9gWVswLrP7FqvpaLl5AE5
+   ws/t9L10lUV8MMj1N1NnwcIxiNHkoF8oAFvbsNtugzAXlhbUv3BOcs1m6
+   6enJYR5citXhk4B77AOG9hm6/uV+436wO9YVDxlyagVfYmNb8tj+izWxC
+   y/w/ho/7SmQKOPzJFA8kW26aMUywsTtZBShR6z2SeDdQCXhGq5QwdpJnm
+   sJx2tOhRN4CapO+FdQw8LGHZey+F1Q717MzQrndiZJNHYnlacp8CqrGkp
+   g==;
+X-IronPort-AV: E=McAfee;i="6200,9189,10251"; a="249053192"
 X-IronPort-AV: E=Sophos;i="5.88,351,1635231600"; 
-   d="scan'208";a="247665155"
+   d="scan'208";a="249053192"
 Received: from orsmga007.jf.intel.com ([10.7.209.58])
-  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 07 Feb 2022 15:28:23 -0800
+  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 07 Feb 2022 17:05:54 -0800
 X-IronPort-AV: E=Sophos;i="5.88,351,1635231600"; 
-   d="scan'208";a="525319051"
+   d="scan'208";a="525348020"
 Received: from hgrunes-mobl1.amr.corp.intel.com (HELO [10.251.3.57]) ([10.251.3.57])
-  by orsmga007-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 07 Feb 2022 15:28:22 -0800
-Message-ID: <9ad0f7f7-e034-eb6d-eee4-1e977123efe7@intel.com>
-Date:   Mon, 7 Feb 2022 15:28:19 -0800
+  by orsmga007-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 07 Feb 2022 17:05:53 -0800
+Message-ID: <9b6878b0-433e-b52a-caa1-aa306595c51a@intel.com>
+Date:   Mon, 7 Feb 2022 17:05:50 -0800
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
  Thunderbird/91.5.0
@@ -72,11 +72,10 @@ To:     Rick Edgecombe <rick.p.edgecombe@intel.com>, x86@kernel.org,
         kcc@google.com, eranian@google.com
 Cc:     Yu-cheng Yu <yu-cheng.yu@intel.com>
 References: <20220130211838.8382-1-rick.p.edgecombe@intel.com>
- <20220130211838.8382-6-rick.p.edgecombe@intel.com>
+ <20220130211838.8382-10-rick.p.edgecombe@intel.com>
 From:   Dave Hansen <dave.hansen@intel.com>
-Subject: Re: [PATCH 05/35] x86/fpu/xstate: Introduce CET MSR and XSAVES
- supervisor states
-In-Reply-To: <20220130211838.8382-6-rick.p.edgecombe@intel.com>
+Subject: Re: [PATCH 09/35] x86/mm: Introduce _PAGE_COW
+In-Reply-To: <20220130211838.8382-10-rick.p.edgecombe@intel.com>
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 Precedence: bulk
@@ -86,198 +85,401 @@ X-Mailing-List: linux-api@vger.kernel.org
 On 1/30/22 13:18, Rick Edgecombe wrote:
 > From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 > 
-> Control-flow Enforcement Technology (CET) introduces these MSRs:
+> There is essentially no room left in the x86 hardware PTEs on some OSes
+> (not Linux).  That left the hardware architects looking for a way to
+> represent a new memory type (shadow stack) within the existing bits.
+> They chose to repurpose a lightly-used state: Write=0, Dirty=1.
 > 
->     MSR_IA32_U_CET (user-mode CET settings),
->     MSR_IA32_PL3_SSP (user-mode shadow stack pointer),
+> The reason it's lightly used is that Dirty=1 is normally set by hardware
+> and cannot normally be set by hardware on a Write=0 PTE.  Software must
+> normally be involved to create one of these PTEs, so software can simply
+> opt to not create them.
+
+This is kinda skipping over something important:
+
+	The reason it's lightly used is that Dirty=1 is normally set
+	_before_ a write.  A write with a Write=0 PTE would typically
+	only generate a fault, not set Dirty=1.  Hardware can (rarely)
+	both set Write=1 *and* generate the fault, resulting in a
+	Dirty=0,Write=1 PTE.  Hardware which supports shadow stacks
+	will no longer exhibit this oddity.
+
+> In places where Linux normally creates Write=0, Dirty=1, it can use the
+> software-defined _PAGE_COW in place of the hardware _PAGE_DIRTY.  In other
+> words, whenever Linux needs to create Write=0, Dirty=1, it instead creates
+> Write=0, Cow=1, except for shadow stack, which is Write=0, Dirty=1.  This
+> clearly separates shadow stack from other data, and results in the
+> following:
+
+Following _what_...  What are these?  I think they're PTE states.  Best
+to say that.
+
+> (a) A modified, copy-on-write (COW) page: (Write=0, Cow=1)
+
+Could you give an example of this?  Would this be a typical anonymous
+page which was Write=1,Dirty=1, then historically made Write=0,Dirty=1
+at fork()?
+
+> (b) A R/O page that has been COW'ed: (Write=0, Cow=1)
+>     The user page is in a R/O VMA, and get_user_pages() needs a writable
+>     copy.  The page fault handler creates a copy of the page and sets
+>     the new copy's PTE as Write=0 and Cow=1.
+> (c) A shadow stack PTE: (Write=0, Dirty=1)
+> (d) A shared shadow stack PTE: (Write=0, Cow=1)
+>     When a shadow stack page is being shared among processes (this happens
+>     at fork()), its PTE is made Dirty=0, so the next shadow stack access
+>     causes a fault, and the page is duplicated and Dirty=1 is set again.
+>     This is the COW equivalent for shadow stack pages, even though it's
+>     copy-on-access rather than copy-on-write.
+
+Just like code, it's also nice to format these in a way which allows
+them to be visually compared, trivially.  So, let's expand all the bits
+and vertically align everything.  To break this down a bit, we have two
+old states:
+
+[a] (Write=0, Dirty=0, Cow=1)
+[b] (Write=0, Dirty=0, Cow=1)
+
+And two new ones:
+
+[c] (Write=0, Dirty=1, Cow=0)
+[d] (Write=0, Dirty=0, Cow=1)
+
+That makes me wonder what the difference is between [a] and [b] and why
+they are separate.  Is their handling different?  How are those two
+states differentiated?
+
+> (e) A page where the processor observed a Write=1 PTE, started a write, set
+>     Dirty=1, but then observed a Write=0 PTE.  That's possible today, but
+>     will not happen on processors that support shadow stack.
+
+This left me wondering how you are going to detangle the mess where PTEs
+look like shadow-stack PTEs on non-shadow-stack hardware.  Could you
+cover that here?
+
+You can shorten that above bullet to this to help make the space:
+
+	(e) (Write=0, Dirty=1, Cow=0) PTE created when a processor
+	    without shadow stack support set Dirty=1.
+
+
+> Define _PAGE_COW and update pte_*() helpers and apply the same changes to
+> pmd and pud.
 > 
->     MSR_IA32_PL0_SSP (kernel-mode shadow stack pointer),
->     MSR_IA32_PL1_SSP (Privilege Level 1 shadow stack pointer),
->     MSR_IA32_PL2_SSP (Privilege Level 2 shadow stack pointer),
->     MSR_IA32_S_CET (kernel-mode CET settings),
->     MSR_IA32_INT_SSP_TAB (exception shadow stack table).
+> After this, there are six free bits left in the 64-bit PTE, and no more
+> free bits in the 32-bit PTE (except for PAE) and Shadow Stack is not
+> implemented for the 32-bit kernel.
 
-To be honest, I'm not sure this is very valuable.  It's *VERY* close to
-the exact information in the structure definitions.  It's also not
-obviously related to XSAVE.  It's more of the "what" this patch does
-than the "why".  Good changelogs talk about "why".
+Just say:
 
-> The two user-mode MSRs belong to XFEATURE_CET_USER.  The first three of
-> kernel-mode MSRs belong to XFEATURE_CET_KERNEL.  Both XSAVES states are
-> supervisor states.  This means that there is no direct, unprivileged access
-> to these states, making it harder for an attacker to subvert CET.
+	There are six bits left available to software in the 64-bit PTE
+	after consuming a bit for _PAGE_COW.  No space is consumed in
+	32-bit kernels because shadow stacks are not enabled there.
 
-Forgive me while I go into changelog lecture mode for a moment.
+There's no need to rub it in that 32-bit is out of space.
 
-I was constantly looking up at the list of MSRs and trying to reconcile
-them with this paragraph.  Imagine if you had started out this changelog
-by saying:
+> -static inline int pte_dirty(pte_t pte)
+> +static inline bool pte_dirty(pte_t pte)
+>  {
+> -	return pte_flags(pte) & _PAGE_DIRTY;
+> +	/*
+> +	 * A dirty PTE has Dirty=1 or Cow=1.
+> +	 */
 
-	Shadow stack register state can be managed with XSAVE.  The
-	registers can logically be separated into two groups:
+I don't really like that comment because "Cow" isn't anywhere to be found.
 
-		* Registers controlling user-mode operation
-		* Registers controlling kernel-mode operation
-
-	The architecture has two new XSAVE state components: one for
-	each group of registers.  This _lets_ an OS manage them
-	separately if it chooses.  Linux chooses to ... <explain the
-	design choice here, or why we don't care yet>.
-
-	Both XSAVE state components are supervisor states, even the
-	state controlling user-mode operation.  This is a departure from
-	earlier features like protection keys where the PKRU state is
-	a normal user (non-supervisor) state.  Having the user state be	
-	supervisor-managed ensures there is no direct, unprivileged
-	access to it, making it harder for an attacker to subvert CET.
-
-Also, IBT gunk is in here too, right?  Let's at least *mention* that in
-the changelog.
-
-...
->  /* All supervisor states including supported and unsupported states. */
->  #define XFEATURE_MASK_SUPERVISOR_ALL (XFEATURE_MASK_SUPERVISOR_SUPPORTED | \
-> diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
-> index 3faf0f97edb1..0ee77ce4c753 100644
-> --- a/arch/x86/include/asm/msr-index.h
-> +++ b/arch/x86/include/asm/msr-index.h
-> @@ -362,6 +362,26 @@
->  
->  
->  #define MSR_CORE_PERF_LIMIT_REASONS	0x00000690
+> +	return pte_flags(pte) & _PAGE_DIRTY_BITS;
+> +}
 > +
-> +/* Control-flow Enforcement Technology MSRs */
-> +#define MSR_IA32_U_CET			0x000006a0 /* user mode cet setting */
-> +#define MSR_IA32_S_CET			0x000006a2 /* kernel mode cet setting */
-> +#define CET_SHSTK_EN			BIT_ULL(0)
-> +#define CET_WRSS_EN			BIT_ULL(1)
-> +#define CET_ENDBR_EN			BIT_ULL(2)
-> +#define CET_LEG_IW_EN			BIT_ULL(3)
-> +#define CET_NO_TRACK_EN			BIT_ULL(4)
-> +#define CET_SUPPRESS_DISABLE		BIT_ULL(5)
-> +#define CET_RESERVED			(BIT_ULL(6) | BIT_ULL(7) | BIT_ULL(8) | BIT_ULL(9))
-
-Would GENMASK_ULL() look any nicer here?  I guess it's pretty clear
-as-is that bits 6->9 are reserved.
-
-> +#define CET_SUPPRESS			BIT_ULL(10)
-> +#define CET_WAIT_ENDBR			BIT_ULL(11)
-
-Are those bit fields common for both registers?  It might be worth a
-comment to mention that.
-
-> +#define MSR_IA32_PL0_SSP		0x000006a4 /* kernel shadow stack pointer */
-> +#define MSR_IA32_PL1_SSP		0x000006a5 /* ring-1 shadow stack pointer */
-> +#define MSR_IA32_PL2_SSP		0x000006a6 /* ring-2 shadow stack pointer */
-
-Are PL1/2 ever used in this implementation?  If not, let's axe these
-definitions.
-
-> +#define MSR_IA32_PL3_SSP		0x000006a7 /* user shadow stack pointer */
-> +#define MSR_IA32_INT_SSP_TAB		0x000006a8 /* exception shadow stack table */
+> +static inline bool pte_shstk(pte_t pte)
+> +{
+> +	if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
+> +		return false;
 > +
->  #define MSR_GFX_PERF_LIMIT_REASONS	0x000006B0
->  #define MSR_RING_PERF_LIMIT_REASONS	0x000006B1
->  
-> diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
-> index 02b3ddaf4f75..44397202762b 100644
-> --- a/arch/x86/kernel/fpu/xstate.c
-> +++ b/arch/x86/kernel/fpu/xstate.c
-> @@ -50,6 +50,8 @@ static const char *xfeature_names[] =
->  	"Processor Trace (unused)"	,
->  	"Protection Keys User registers",
->  	"PASID state",
-> +	"Control-flow User registers"	,
-> +	"Control-flow Kernel registers"	,
->  	"unknown xstate feature"	,
->  	"unknown xstate feature"	,
->  	"unknown xstate feature"	,
-> @@ -73,6 +75,8 @@ static unsigned short xsave_cpuid_features[] __initdata = {
->  	[XFEATURE_PT_UNIMPLEMENTED_SO_FAR]	= X86_FEATURE_INTEL_PT,
->  	[XFEATURE_PKRU]				= X86_FEATURE_PKU,
->  	[XFEATURE_PASID]			= X86_FEATURE_ENQCMD,
-> +	[XFEATURE_CET_USER]			= X86_FEATURE_SHSTK,
-> +	[XFEATURE_CET_KERNEL]			= X86_FEATURE_SHSTK,
->  	[XFEATURE_XTILE_CFG]			= X86_FEATURE_AMX_TILE,
->  	[XFEATURE_XTILE_DATA]			= X86_FEATURE_AMX_TILE,
->  };
-> @@ -250,6 +254,8 @@ static void __init print_xstate_features(void)
->  	print_xstate_feature(XFEATURE_MASK_Hi16_ZMM);
->  	print_xstate_feature(XFEATURE_MASK_PKRU);
->  	print_xstate_feature(XFEATURE_MASK_PASID);
-> +	print_xstate_feature(XFEATURE_MASK_CET_USER);
-> +	print_xstate_feature(XFEATURE_MASK_CET_KERNEL);
->  	print_xstate_feature(XFEATURE_MASK_XTILE_CFG);
->  	print_xstate_feature(XFEATURE_MASK_XTILE_DATA);
+> +	return (pte_flags(pte) & (_PAGE_RW | _PAGE_DIRTY)) == _PAGE_DIRTY;
 >  }
-> @@ -405,6 +411,7 @@ static __init void os_xrstor_booting(struct xregs_state *xstate)
->  	 XFEATURE_MASK_BNDREGS |		\
->  	 XFEATURE_MASK_BNDCSR |			\
->  	 XFEATURE_MASK_PASID |			\
-> +	 XFEATURE_MASK_CET_USER |		\
->  	 XFEATURE_MASK_XTILE)
 >  
->  /*
-> @@ -621,6 +628,8 @@ static bool __init check_xstate_against_struct(int nr)
->  	XCHECK_SZ(sz, nr, XFEATURE_PKRU,      struct pkru_state);
->  	XCHECK_SZ(sz, nr, XFEATURE_PASID,     struct ia32_pasid_state);
->  	XCHECK_SZ(sz, nr, XFEATURE_XTILE_CFG, struct xtile_cfg);
-> +	XCHECK_SZ(sz, nr, XFEATURE_CET_USER,   struct cet_user_state);
-> +	XCHECK_SZ(sz, nr, XFEATURE_CET_KERNEL, struct cet_kernel_state);
+>  static inline int pte_young(pte_t pte)
+> @@ -133,9 +144,20 @@ static inline int pte_young(pte_t pte)
+>  	return pte_flags(pte) & _PAGE_ACCESSED;
+>  }
 >  
->  	/* The tile data size varies between implementations. */
->  	if (nr == XFEATURE_XTILE_DATA)
-> @@ -634,7 +643,9 @@ static bool __init check_xstate_against_struct(int nr)
->  	if ((nr < XFEATURE_YMM) ||
->  	    (nr >= XFEATURE_MAX) ||
->  	    (nr == XFEATURE_PT_UNIMPLEMENTED_SO_FAR) ||
-> -	    ((nr >= XFEATURE_RSRVD_COMP_11) && (nr <= XFEATURE_RSRVD_COMP_16))) {
-> +	    (nr == XFEATURE_RSRVD_COMP_13) ||
-> +	    (nr == XFEATURE_RSRVD_COMP_14) ||
-> +	    (nr == XFEATURE_RSRVD_COMP_16)) {
->  		WARN_ONCE(1, "no structure for xstate: %d\n", nr);
->  		XSTATE_WARN_ON(1);
->  		return false;
+> -static inline int pmd_dirty(pmd_t pmd)
+> +static inline bool pmd_dirty(pmd_t pmd)
+>  {
+> -	return pmd_flags(pmd) & _PAGE_DIRTY;
+> +	/*
+> +	 * A dirty PMD has Dirty=1 or Cow=1.
+> +	 */
+> +	return pmd_flags(pmd) & _PAGE_DIRTY_BITS;
+> +}
+> +
+> +static inline bool pmd_shstk(pmd_t pmd)
+> +{
+> +	if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
+> +		return false;
+> +
+> +	return (pmd_flags(pmd) & (_PAGE_RW | _PAGE_DIRTY)) == _PAGE_DIRTY;
+>  }
+>  
+>  static inline int pmd_young(pmd_t pmd)
+> @@ -143,9 +165,12 @@ static inline int pmd_young(pmd_t pmd)
+>  	return pmd_flags(pmd) & _PAGE_ACCESSED;
+>  }
+>  
+> -static inline int pud_dirty(pud_t pud)
+> +static inline bool pud_dirty(pud_t pud)
+>  {
+> -	return pud_flags(pud) & _PAGE_DIRTY;
+> +	/*
+> +	 * A dirty PUD has Dirty=1 or Cow=1.
+> +	 */
+> +	return pud_flags(pud) & _PAGE_DIRTY_BITS;
+>  }
+>  
+>  static inline int pud_young(pud_t pud)
+> @@ -155,13 +180,23 @@ static inline int pud_young(pud_t pud)
+>  
+>  static inline int pte_write(pte_t pte)
+>  {
+> -	return pte_flags(pte) & _PAGE_RW;
+> +	/*
+> +	 * Shadow stack pages are always writable - but not by normal
+> +	 * instructions, and only by shadow stack operations.  Therefore,
+> +	 * the W=0,D=1 test with pte_shstk().
+> +	 */
 
-That if() is getting unweildy.  While I generally despise macros
-implicitly modifying variables, this might be worth it.  We could have a
-local function variable:
+I think that comment is off a bit.  It's not really connected to the
+code.  We don't, for instance need to know what the bit combination is
+inside pte_shstk().  Further, it's a bit mean to talk about "W" in the
+comment and _PAGE_RW in the code.  How about:
 
-	bool feature_checked = false;
+	/*
+	 * Shadow stack pages are logically writable, but do not have
+	 * _PAGE_RW.  Check for them separately from _PAGE_RW itself.
+	 */
 
-and then muck with it in the macro:
+> +	return (pte_flags(pte) & _PAGE_RW) || pte_shstk(pte);
+>  }
+>  
+>  #define pmd_write pmd_write
+>  static inline int pmd_write(pmd_t pmd)
+>  {
+> -	return pmd_flags(pmd) & _PAGE_RW;
+> +	/*
+> +	 * Shadow stack pages are always writable - but not by normal
+> +	 * instructions, and only by shadow stack operations.  Therefore,
+> +	 * the W=0,D=1 test with pmd_shstk().
+> +	 */
+> +	return (pmd_flags(pmd) & _PAGE_RW) || pmd_shstk(pmd);
+>  }
 
-#define XCHECK_SZ(sz, nr, nr_macro, __struct) do {
-	if (nr == nr_macro)) {
-		feature_checked = true;
-		if (WARN_ONCE(sz != sizeof(__struct), ... ) {
-			__xstate_dump_leaves();
-		}
-        }
-} while (0)
+Ditto on the comment.  Please copy the pte_write() one here too.
 
-Then the if() just makes sure the feature was checked instead of
-checking for reserved features explicitly.  We could also do:
+>  
+>  #define pud_write pud_write
+> @@ -299,6 +334,24 @@ static inline pte_t pte_clear_flags(pte_t pte, pteval_t clear)
+>  	return native_make_pte(v & ~clear);
+>  }
+>  
+> +static inline pte_t pte_mkcow(pte_t pte)
+> +{
+> +	if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
+> +		return pte;
+> +
+> +	pte = pte_clear_flags(pte, _PAGE_DIRTY);
+> +	return pte_set_flags(pte, _PAGE_COW);
+> +}
+> +
+> +static inline pte_t pte_clear_cow(pte_t pte)
+> +{
+> +	if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
+> +		return pte;
+> +
+> +	pte = pte_set_flags(pte, _PAGE_DIRTY);
+> +	return pte_clear_flags(pte, _PAGE_COW);
+> +}
 
-	bool c = false;
+I think we need to say *SOMETHING* about the X86_FEATURE_SHSTK and
+_PAGE_COW connection here.  Otherwise they look like two random features
+that are interacting in an unknown way.
 
-	...
+Maybe even something this simple:
 
-        c |= XCHECK_SZ(sz, nr, XFEATURE_YMM,       struct ymmh_struct);
-        c |= XCHECK_SZ(sz, nr, XFEATURE_BNDREGS,   struct ...
-        c |= XCHECK_SZ(sz, nr, XFEATURE_BNDCSR,    struct ...
-	...
+/*
+ * _PAGE_COW is unnecessary on !X86_FEATURE_SHSTK kernels.
+ * See the _PAGE_COW definition for more details.
+ */
 
-but that starts to run into 80 columns.  Those are both nice because
-they mean you don't have to maintain a list of reserved features in the
-code.  Another option would be to define a:
+Also, the manipulation of _PAGE_DIRTY is not clear here.  It's obvious
+why we have to:
 
-bool xfeature_is_reserved(int nr)
-{
-	switch (nr) {
-		case XFEATURE_RSRVD_COMP_13:
-		...
+	pte_clear_flags(pte, _PAGE_COW);
 
-so the if() looks nicer and won't grow; the function will grow instead.
+in a function called pte_clear_cow() but, again, how does _PAGE_DIRTY fit?
 
-Either way, I think this needs some refactoring.
+>  #ifdef CONFIG_HAVE_ARCH_USERFAULTFD_WP
+>  static inline int pte_uffd_wp(pte_t pte)
+>  {
+> @@ -318,7 +371,7 @@ static inline pte_t pte_clear_uffd_wp(pte_t pte)
+>  
+>  static inline pte_t pte_mkclean(pte_t pte)
+>  {
+> -	return pte_clear_flags(pte, _PAGE_DIRTY);
+> +	return pte_clear_flags(pte, _PAGE_DIRTY_BITS);
+>  }
+>  
+>  static inline pte_t pte_mkold(pte_t pte)
+> @@ -328,7 +381,16 @@ static inline pte_t pte_mkold(pte_t pte)
+>  
+>  static inline pte_t pte_wrprotect(pte_t pte)
+>  {
+> -	return pte_clear_flags(pte, _PAGE_RW);
+> +	pte = pte_clear_flags(pte, _PAGE_RW);
+> +
+> +	/*
+> +	 * Blindly clearing _PAGE_RW might accidentally create
+> +	 * a shadow stack PTE (RW=0, Dirty=1).  Move the hardware
+
+Could you grep this series and try to be consistent about the formatting
+here?  (Not that I've been perfect in this regard either).  I think we
+have at least:
+
+	Write=X,Dirty=Y
+	W=X,D=Y
+	RW=X,Dirty=Y
+
+> +	 * dirty value to the software bit.
+> +	 */
+> +	if (pte_dirty(pte))
+> +		pte = pte_mkcow(pte);
+> +	return pte;
+>  }
+
+One of my logical checks for this is "does it all go away when this is
+compiled out".  Because of this:
+
++static inline pte_t pte_mkcow(pte_t pte)
++{
++       if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
++               return pte;
+...
+
+the answer is yes!  So, this looks good to me.  Just thought I'd share a
+bit of my thought process.
+
+>  static inline pte_t pte_mkexec(pte_t pte)
+> @@ -338,7 +400,18 @@ static inline pte_t pte_mkexec(pte_t pte)
+>  
+>  static inline pte_t pte_mkdirty(pte_t pte)
+>  {
+> -	return pte_set_flags(pte, _PAGE_DIRTY | _PAGE_SOFT_DIRTY);
+> +	pteval_t dirty = _PAGE_DIRTY;
+> +
+> +	/* Avoid creating (HW)Dirty=1, Write=0 PTEs */
+
+The "(HW)" thing doesn't make a lot of sense any longer.  I think we had
+a set of HWDirty and SWDirty bits, but SWDirty ended up being morphed
+over to _PAGE_COW.
+
+> +	if (cpu_feature_enabled(X86_FEATURE_SHSTK) && !pte_write(pte))
+> +		dirty = _PAGE_COW;
+> +
+> +	return pte_set_flags(pte, dirty | _PAGE_SOFT_DIRTY);
+> +}
+> +
+> +static inline pte_t pte_mkwrite_shstk(pte_t pte)
+> +{
+> +	return pte_clear_cow(pte);
+>  }
+
+This one is a bit of black magic.  This is taking a PTE from
+(presumably) states [c]->[d] from earlier in the changelog.
+
+	Write=0,Dirty=0,Cow=1
+to
+	Write=0,Dirty=1,Cow=0
+
+It's hard to wrap my head around how clearing a software bit (from the
+naming) will make this PTE writable.
+
+There's either something wrong with the naming, or something wrong with
+my mental model of what "COW clearing" is.
+
+>  static inline pte_t pte_mkyoung(pte_t pte)
+> @@ -348,7 +421,12 @@ static inline pte_t pte_mkyoung(pte_t pte)
+>  
+>  static inline pte_t pte_mkwrite(pte_t pte)
+>  {
+> -	return pte_set_flags(pte, _PAGE_RW);
+> +	pte = pte_set_flags(pte, _PAGE_RW);
+> +
+> +	if (pte_dirty(pte))
+> +		pte = pte_clear_cow(pte);
+> +
+> +	return pte;
+>  }
+
+Along the same lines as the last few comments, this leaves me wondering
+why a pte_dirty() can't also be a "COW PTE".
+
+... <snipping the pmd/pud copies> ...
+>  #ifdef CONFIG_HAVE_ARCH_SOFT_DIRTY
+> diff --git a/arch/x86/include/asm/pgtable_types.h b/arch/x86/include/asm/pgtable_types.h
+> index 3781a79b6388..1bfab70ff9ac 100644
+> --- a/arch/x86/include/asm/pgtable_types.h
+> +++ b/arch/x86/include/asm/pgtable_types.h
+> @@ -21,7 +21,8 @@
+>  #define _PAGE_BIT_SOFTW2	10	/* " */
+>  #define _PAGE_BIT_SOFTW3	11	/* " */
+>  #define _PAGE_BIT_PAT_LARGE	12	/* On 2MB or 1GB pages */
+> -#define _PAGE_BIT_SOFTW4	58	/* available for programmer */
+> +#define _PAGE_BIT_SOFTW4	57	/* available for programmer */
+> +#define _PAGE_BIT_SOFTW5	58	/* available for programmer */
+>  #define _PAGE_BIT_PKEY_BIT0	59	/* Protection Keys, bit 1/4 */
+>  #define _PAGE_BIT_PKEY_BIT1	60	/* Protection Keys, bit 2/4 */
+>  #define _PAGE_BIT_PKEY_BIT2	61	/* Protection Keys, bit 3/4 */
+> @@ -34,6 +35,15 @@
+>  #define _PAGE_BIT_SOFT_DIRTY	_PAGE_BIT_SOFTW3 /* software dirty tracking */
+>  #define _PAGE_BIT_DEVMAP	_PAGE_BIT_SOFTW4
+>  
+> +/*
+> + * Indicates a copy-on-write page.
+> + */
+> +#ifdef CONFIG_X86_SHADOW_STACK
+> +#define _PAGE_BIT_COW		_PAGE_BIT_SOFTW5 /* copy-on-write */
+> +#else
+> +#define _PAGE_BIT_COW		0
+> +#endif
+> +
+>  /* If _PAGE_BIT_PRESENT is clear, we use these: */
+>  /* - if the user mapped it with PROT_NONE; pte_present gives true */
+>  #define _PAGE_BIT_PROTNONE	_PAGE_BIT_GLOBAL
+> @@ -115,6 +125,36 @@
+>  #define _PAGE_DEVMAP	(_AT(pteval_t, 0))
+>  #endif
+>  
+> +/*
+> + * The hardware requires shadow stack to be read-only and Dirty.
+> + * _PAGE_COW is a software-only bit used to separate copy-on-write PTEs
+> + * from shadow stack PTEs:
+> + * (a) A modified, copy-on-write (COW) page: (Write=0, Cow=1)
+> + * (b) A R/O page that has been COW'ed: (Write=0, Cow=1)
+> + *     The user page is in a R/O VMA, and get_user_pages() needs a
+> + *     writable copy.  The page fault handler creates a copy of the page
+> + *     and sets the new copy's PTE as Write=0, Cow=1.
+> + * (c) A shadow stack PTE: (Write=0, Dirty=1)
+> + * (d) A shared (copy-on-access) shadow stack PTE: (Write=0, Cow=1)
+> + *     When a shadow stack page is being shared among processes (this
+> + *     happens at fork()), its PTE is cleared of _PAGE_DIRTY, so the next
+> + *     shadow stack access causes a fault, and the page is duplicated and
+> + *     _PAGE_DIRTY is set again.  This is the COW equivalent for shadow
+> + *     stack pages, even though it's copy-on-access rather than
+> + *     copy-on-write.
+> + * (e) A page where the processor observed a Write=1 PTE, started a write,
+> + *     set Dirty=1, but then observed a Write=0 PTE (changed by another
+> + *     thread).  That's possible today, but will not happen on processors
+> + *     that support shadow stack.
+
+This info, again, is great.  Let's keep it, but please do reformat it
+like the changelog version to make the bit states easier to grok.
