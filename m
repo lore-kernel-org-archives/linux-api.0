@@ -2,64 +2,53 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BDDABC433EF
-	for <linux-api@archiver.kernel.org>; Mon, 14 Feb 2022 21:01:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DC378C433FE
+	for <linux-api@archiver.kernel.org>; Mon, 14 Feb 2022 21:01:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229502AbiBNVBR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 14 Feb 2022 16:01:17 -0500
-Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:36308 "EHLO
+        id S229913AbiBNVBT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 14 Feb 2022 16:01:19 -0500
+Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:36480 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229960AbiBNVBP (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 14 Feb 2022 16:01:15 -0500
-Received: from mail-ej1-x62e.google.com (mail-ej1-x62e.google.com [IPv6:2a00:1450:4864:20::62e])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 911697A9A0
-        for <linux-api@vger.kernel.org>; Mon, 14 Feb 2022 13:01:06 -0800 (PST)
-Received: by mail-ej1-x62e.google.com with SMTP id jg20so15044973ejc.3
-        for <linux-api@vger.kernel.org>; Mon, 14 Feb 2022 13:01:06 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linux-foundation.org; s=google;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=dgwPr3jWEXZiHeYJRBUfKrH3C5wLRAnP7Z6R5s1EJ5U=;
-        b=ZcumWtnhggjMFDUHhywZOsPSWocj5WFiFD4wxX4meGi3Jv+FEek8bAx8wm544tPFuD
-         FZMy/4sQc4BwvneObDdXEv1mNtlI8GPACMt1JW8whp1hkRcRU1/uCicaO7g7UXSaSO+q
-         JQ0jz81cHBjFl3QlKdIkLJ7hR07DlS4kmaNNI=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=dgwPr3jWEXZiHeYJRBUfKrH3C5wLRAnP7Z6R5s1EJ5U=;
-        b=PIygysQPZTfPBVPydwQEAq/eQWoEC55DFJj+NErQ7lv3EqTDqxBebyQDM/O6MqWrTn
-         /zQcIQg/2E2RVIhkd25OuXQ6/a4FC/r2LXv284RVexOMoFNRhEHxTx9Y0NKU3Hbzx4RX
-         nfsQXAOjA6A+Twfw2zE2GR5R/jGyq01puq57NJ73mgvVCTAwgHeaBcFaclsS6MuCcTPW
-         vMASQPpXdJLYFkpFyLimgII57cJxaOJvJfJm+CftX0hFj0KultIbWU2EVOq56TtPvA4q
-         vyhRF4PM5+PCXQFbwjIIZJOFMMz5by7zOrzeawEQF8vgabzISm0Y8iyWtE6RseN9LD8n
-         NIwg==
-X-Gm-Message-State: AOAM533FE1t3RceI2pToFYfnKyRFMnzaphh7/EW8+Yjy/ZbX0j5nhsR6
-        BK34DzclZPyyR13M9wxmtLOO4vrZw1qZ8vADYv0=
-X-Google-Smtp-Source: ABdhPJzXEksyy2qisr9Av79wn3eC2MVrTJaT6xvpYbnGO43vlDMuPXMa3OVTLTpH1NIE6xNLi+edOw==
-X-Received: by 2002:ac2:5e6f:: with SMTP id a15mr480836lfr.213.1644868892711;
-        Mon, 14 Feb 2022 12:01:32 -0800 (PST)
-Received: from mail-lj1-f182.google.com (mail-lj1-f182.google.com. [209.85.208.182])
-        by smtp.gmail.com with ESMTPSA id y11sm3991063ljj.69.2022.02.14.12.01.21
-        for <linux-api@vger.kernel.org>
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 14 Feb 2022 12:01:32 -0800 (PST)
-Received: by mail-lj1-f182.google.com with SMTP id t14so23768268ljh.8
-        for <linux-api@vger.kernel.org>; Mon, 14 Feb 2022 12:01:21 -0800 (PST)
-X-Received: by 2002:a2e:a231:: with SMTP id i17mr205093ljm.443.1644868881602;
- Mon, 14 Feb 2022 12:01:21 -0800 (PST)
+        with ESMTP id S229452AbiBNVBS (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 14 Feb 2022 16:01:18 -0500
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6ABAA7A9A0;
+        Mon, 14 Feb 2022 13:01:09 -0800 (PST)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id 85B276114B;
+        Mon, 14 Feb 2022 19:46:10 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id EB7E9C36AE5;
+        Mon, 14 Feb 2022 19:46:09 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1644867970;
+        bh=kZ0Ha+ZttRWbRYErkpKyuJC1dyK+QrO2i6Uu5KgHMvM=;
+        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+        b=Y0tFdEItPyIpX9Q57aljIliTeAqJEjfsGhV5sRnV7cHDKUAHBtZxnjnJQ0aG/E0DY
+         ntmMdawRiR6T8SjqmJRkg+eiX9WIai06zkYCR7faiov+1eO6KA28Xd0WJ3G4HzZ7Ki
+         PswrJdfwevWrM+GcXzzieldjGJJj+F38X56atyYmYHaGjvacQFUxk+Q3y53FA51+T8
+         ZklKna1hQALqex7ucGzH+u+kKR6+AMMF6Gi34rWhxaWoueN0V5gBdQpdknscuvJdj6
+         4dVyfkX9O/n11Gjix37hL+YmaFTxTy2u9mOy0+3ugdzfzd4uf88HSfSBljtkByDhnd
+         ubPSK5lCMcVZQ==
+Received: by mail-wr1-f41.google.com with SMTP id u1so14852926wrg.11;
+        Mon, 14 Feb 2022 11:46:09 -0800 (PST)
+X-Gm-Message-State: AOAM530+hUo7NYph3CoxZKeAS43/bo2W3QPt8WJJKe7U6Fn0KDR5F9k4
+        RArsrLOi1yqH17m35h1qJUJXZtctpKBtOdHzC0c=
+X-Google-Smtp-Source: ABdhPJyfeYwWpAfp1t9O1z8BIiteD6oMiQUhUFLNHvAQyjgPbxD0FyJauHtAzbL5TNr8UyIGWRM1U9VPuoeyXIyyYo0=
+X-Received: by 2002:adf:f6ce:: with SMTP id y14mr445399wrp.219.1644867968239;
+ Mon, 14 Feb 2022 11:46:08 -0800 (PST)
 MIME-Version: 1.0
 References: <20220214163452.1568807-1-arnd@kernel.org> <20220214163452.1568807-5-arnd@kernel.org>
- <YgqLFYqIqkIsNC92@infradead.org> <CAK8P3a1F3JaYaJPy9bSCG1+YV6EN05PE0DbwpD_GT1qRwFSJ-w@mail.gmail.com>
-In-Reply-To: <CAK8P3a1F3JaYaJPy9bSCG1+YV6EN05PE0DbwpD_GT1qRwFSJ-w@mail.gmail.com>
-From:   Linus Torvalds <torvalds@linux-foundation.org>
-Date:   Mon, 14 Feb 2022 12:01:05 -0800
-X-Gmail-Original-Message-ID: <CAHk-=whq6_Nh3cB3FieP481VcRyCu69X3=wO1yLHGmcZEj69SA@mail.gmail.com>
-Message-ID: <CAHk-=whq6_Nh3cB3FieP481VcRyCu69X3=wO1yLHGmcZEj69SA@mail.gmail.com>
+ <YgqLFYqIqkIsNC92@infradead.org>
+In-Reply-To: <YgqLFYqIqkIsNC92@infradead.org>
+From:   Arnd Bergmann <arnd@kernel.org>
+Date:   Mon, 14 Feb 2022 20:45:52 +0100
+X-Gmail-Original-Message-ID: <CAK8P3a1F3JaYaJPy9bSCG1+YV6EN05PE0DbwpD_GT1qRwFSJ-w@mail.gmail.com>
+Message-ID: <CAK8P3a1F3JaYaJPy9bSCG1+YV6EN05PE0DbwpD_GT1qRwFSJ-w@mail.gmail.com>
 Subject: Re: [PATCH 04/14] x86: use more conventional access_ok() definition
-To:     Arnd Bergmann <arnd@kernel.org>
-Cc:     Christoph Hellwig <hch@infradead.org>,
+To:     Christoph Hellwig <hch@infradead.org>
+Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
         Christoph Hellwig <hch@lst.de>,
         linux-arch <linux-arch@vger.kernel.org>,
         Linux-MM <linux-mm@kvack.org>,
@@ -112,26 +101,21 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Feb 14, 2022 at 11:46 AM Arnd Bergmann <arnd@kernel.org> wrote:
+On Mon, Feb 14, 2022 at 6:02 PM Christoph Hellwig <hch@infradead.org> wrote:
 >
-> As Al pointed out, they turned out to be necessary on sparc64, but the only
-> definitions are on sparc64 and x86, so it's possible that they serve a similar
-> purpose here, in which case changing the limit from TASK_SIZE to
-> TASK_SIZE_MAX is probably wrong as well.
+> On Mon, Feb 14, 2022 at 05:34:42PM +0100, Arnd Bergmann wrote:
+> > +#define __range_not_ok(addr, size, limit)    (!__access_ok(addr, size))
+> > +#define __chk_range_not_ok(addr, size, limit)        (!__access_ok((void __user *)addr, size))
+>
+> Can we just kill these off insted of letting themm obsfucate the code?
 
-x86-64 has always(*) used TASK_SIZE_MAX for access_ok(), and the
-get_user() assembler implementation does the same.
+As Al pointed out, they turned out to be necessary on sparc64, but the only
+definitions are on sparc64 and x86, so it's possible that they serve a similar
+purpose here, in which case changing the limit from TASK_SIZE to
+TASK_SIZE_MAX is probably wrong as well.
 
-I think any __range_not_ok() users that use TASK_SIZE are entirely
-historical, and should be just fixed.
+So either I need to revert the original definition as I did on sparc64, or
+they can be removed completely. Hopefully Al or the x86 maintainers
+can clarify.
 
-                 Linus
-
-(*) And by "always" I mean "as far back as I bothered to go". In the
-2.6.12 git import, we had
-
-    #define USER_DS          MAKE_MM_SEG(PAGE_OFFSET)
-
-so the user access limit was actually not really TASK_SIZE_MAX at all,
-but the beginning of the kernel mapping, which on x86-64 is much much
-higher.
+         Arnd
