@@ -2,31 +2,31 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B1F90C4332F
-	for <linux-api@archiver.kernel.org>; Mon, 14 Feb 2022 17:02:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B8F37C41535
+	for <linux-api@archiver.kernel.org>; Mon, 14 Feb 2022 17:02:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237884AbiBNRC0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 14 Feb 2022 12:02:26 -0500
-Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:39960 "EHLO
+        id S1354071AbiBNRDA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 14 Feb 2022 12:03:00 -0500
+Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:40192 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1354071AbiBNRCZ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 14 Feb 2022 12:02:25 -0500
+        with ESMTP id S1356069AbiBNRDA (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 14 Feb 2022 12:03:00 -0500
 Received: from bombadil.infradead.org (bombadil.infradead.org [IPv6:2607:7c80:54:e::133])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1E7B165168;
-        Mon, 14 Feb 2022 09:02:18 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 288E66514D;
+        Mon, 14 Feb 2022 09:02:52 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
         :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
         Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=sdZnUMzq4+z5JAUxazcphNdGaICd1jOM0lzfsOlGGP4=; b=ilmpEja/277DxKyEOCWtwolukQ
-        TPjFvPd+06Duh+vtGjhRV7kysY6QfnRhDUQM2LPMmQJPp0CcDS7ZITxDjyFmd5QuKSeULHTzQv/dY
-        64hhQASYsNjqn2sxQ8pG09hu68ESlQPBP+ZUUGQuXU+5Zf2NM0DQ50AjfVah1yfzmf28PCovqXoHo
-        BshQ9GNqU4Vd+l0inCSwLOM/Kv9mqXQWM0bcy2OkcRImPWSvuzdM6R2QSbW7WDXWrev49VJC5rIfa
-        zjELqfCR0DFOQ+1CmCyyesRY7ojy5sRUvp347Q343uxXWWK10wDz2za7INHW8lBnzV6aVrB5MveY8
-        5H/+OeNA==;
+        bh=l2WBiCb5duYJRA9nKpihqrJOH1Qjg6utSrFiu8qAdtc=; b=QlojU+/FbZdIPV2CfVg0g9FlaD
+        X9kD9i79czFm+XrIeETqIBZWp7KUAm9gvK8opnry/mfeikiv8qulZrrIaoXhzvURd/9eHLViQwxv5
+        LXc/98qskY802/1wdBsFyrYTQ+nvdvOcj9mkxEJaE5tu86xQ3mVdrUG3zLa6PvZZs/wj4/RphKMgX
+        Aw4bQl2nwAmM1vfC+2xAC6FWvZxY0AyRmh3Vm08qT5mHqejiG45EXR3L32AXhzoztk3bs49LY+vd9
+        B71zul4Ag63ikl89BxppR2RYdf6sfYunHxkkekkdUEP6CO/3vpDXnf6oETlru/9IYq/AaSIK3lD//
+        3fbzMB6w==;
 Received: from hch by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1nJejt-00GFoH-Dz; Mon, 14 Feb 2022 17:02:13 +0000
-Date:   Mon, 14 Feb 2022 09:02:13 -0800
+        id 1nJekS-00GG7B-B1; Mon, 14 Feb 2022 17:02:48 +0000
+Date:   Mon, 14 Feb 2022 09:02:48 -0800
 From:   Christoph Hellwig <hch@infradead.org>
 To:     Arnd Bergmann <arnd@kernel.org>
 Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
@@ -51,21 +51,19 @@ Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
         linux-mips@vger.kernel.org, dinguyen@kernel.org,
         ebiederm@xmission.com, richard@nod.at, akpm@linux-foundation.org,
         linuxppc-dev@lists.ozlabs.org, davem@davemloft.net
-Subject: Re: [PATCH 04/14] x86: use more conventional access_ok() definition
-Message-ID: <YgqLFYqIqkIsNC92@infradead.org>
+Subject: Re: [PATCH 05/14] uaccess: add generic __{get,put}_kernel_nofault
+Message-ID: <YgqLONpDAru08JBZ@infradead.org>
 References: <20220214163452.1568807-1-arnd@kernel.org>
- <20220214163452.1568807-5-arnd@kernel.org>
+ <20220214163452.1568807-6-arnd@kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20220214163452.1568807-5-arnd@kernel.org>
+In-Reply-To: <20220214163452.1568807-6-arnd@kernel.org>
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Feb 14, 2022 at 05:34:42PM +0100, Arnd Bergmann wrote:
-> +#define __range_not_ok(addr, size, limit)	(!__access_ok(addr, size))
-> +#define __chk_range_not_ok(addr, size, limit)	(!__access_ok((void __user *)addr, size))
+Looks good,
 
-Can we just kill these off insted of letting themm obsfucate the code?
+Reviewed-by: Christoph Hellwig <hch@lst.de>
