@@ -2,35 +2,35 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 45C22C35276
-	for <linux-api@archiver.kernel.org>; Mon, 14 Feb 2022 16:37:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 97F5DC35278
+	for <linux-api@archiver.kernel.org>; Mon, 14 Feb 2022 16:37:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234823AbiBNQhl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 14 Feb 2022 11:37:41 -0500
-Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:43788 "EHLO
+        id S1356572AbiBNQhp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 14 Feb 2022 11:37:45 -0500
+Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:43224 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237032AbiBNQhJ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 14 Feb 2022 11:37:09 -0500
+        with ESMTP id S1356578AbiBNQh2 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 14 Feb 2022 11:37:28 -0500
 Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 73FAE6517D;
-        Mon, 14 Feb 2022 08:36:53 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 76F536515C;
+        Mon, 14 Feb 2022 08:37:14 -0800 (PST)
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id 11168614E2;
-        Mon, 14 Feb 2022 16:36:53 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id A67DEC340F1;
-        Mon, 14 Feb 2022 16:36:42 +0000 (UTC)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id 11F4E61503;
+        Mon, 14 Feb 2022 16:37:14 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9EC10C340F2;
+        Mon, 14 Feb 2022 16:37:03 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1644856612;
-        bh=XYviTV8III28kBrCQmsfuK51xOc09ZOif7iEHrUTuIg=;
+        s=k20201202; t=1644856633;
+        bh=xPmHkcOVS/yITVJeEntOUBw+xw68iqOnYa2twIOtXYc=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=JVfOMM7vTqw4XdpMNlrmm2jS83mfS0hYdjkQzrKj6vrH9+Dvn0L42AdShO8RRf9Zt
-         dCgJRVDvimHn/Uhy8K6/LoOqKmFRoenKTwmfXsum/yC+2647Q4iFanRlWF3K/xS92S
-         gCEmlRiZlTgkTyjEKX3J6/tBJHCW3fBRdNZcGJninmBDlMLvinDaCzw9S7lbmfV8Yj
-         asCqU2GVX1KEmy6ol6Y4c8F7ub3PAxvrL7Bv3Yonu/G0OWA7/HKZkm9UtkPubPBkfM
-         dXhuOWxE8SbyX8yNCneVJdVo8zXW4C1x2+08uIEcESmpPYEb+YIs98IFRoa3DME4D0
-         G0ya2TSp8tVbQ==
+        b=Mrqn5vxFjvUagN2pKvxkJBJGliaoy6MP0jFoyX87gnr3XzjUW97zOF2byukzKb7wT
+         E7NJtDKT5zv31VRqv+qj0too8+wx5sD0RyH+MTT+msOF1jPOFyDDNvVoSgFUoy9QLD
+         t5Lsiozlst1R3n+nWulzcvj+OboDpu885ft5vvuvmiKpyr9q37jLxwtuRMARpqWsIO
+         GBpyEJ9KSTjS3eJz1YtPZ5AEx/LAzduOaPtX9npuQqJUzyrgXxlnqYD2lkogyB5K3z
+         8L8gKn2P4XZBENc6TnX7Y3RkjeTuj5E4MW+PVjIdx+wEaJHxpbaxGjuVjNKLr8MOwo
+         NPAYqCu6fVtxg==
 From:   Arnd Bergmann <arnd@kernel.org>
 To:     Linus Torvalds <torvalds@linux-foundation.org>,
         Christoph Hellwig <hch@lst.de>, linux-arch@vger.kernel.org,
@@ -54,9 +54,9 @@ Cc:     linux@armlinux.org.uk, will@kernel.org, guoren@kernel.org,
         linux-s390@vger.kernel.org, linux-sh@vger.kernel.org,
         sparclinux@vger.kernel.org, linux-um@lists.infradead.org,
         linux-xtensa@linux-xtensa.org
-Subject: [PATCH 06/14] mips: use simpler access_ok()
-Date:   Mon, 14 Feb 2022 17:34:44 +0100
-Message-Id: <20220214163452.1568807-7-arnd@kernel.org>
+Subject: [PATCH 08/14] arm64: simplify access_ok()
+Date:   Mon, 14 Feb 2022 17:34:46 +0100
+Message-Id: <20220214163452.1568807-9-arnd@kernel.org>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20220214163452.1568807-1-arnd@kernel.org>
 References: <20220214163452.1568807-1-arnd@kernel.org>
@@ -68,76 +68,75 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Arnd Bergmann <arnd@arndb.de>
 
-Before unifying the mips version of __access_ok() with the generic
-code, this converts it to the same algorithm. This is a change in
-behavior on mips64, as now address in the user segment, the lower
-2^62 bytes, is taken to be valid, relying on a page fault for
-addresses that are within that segment but not valid on that CPU.
+arm64 has an inline asm implementation of access_ok() that is derived from
+the 32-bit arm version and optimized for the case that both the limit and
+the size are variable. With set_fs() gone, the limit is always constant,
+and the size usually is as well, so just using the default implementation
+reduces the check into a comparison against a constant that can be
+scheduled by the compiler.
 
-The new version should be the most effecient way to do this, but
-it gets rid of the special handling for size=0 that most other
-architectures ignore as well.
+On a defconfig build, this saves over 28KB of .text.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- arch/mips/include/asm/uaccess.h | 22 ++++------------------
- 1 file changed, 4 insertions(+), 18 deletions(-)
+ arch/arm64/include/asm/uaccess.h | 28 +++++-----------------------
+ 1 file changed, 5 insertions(+), 23 deletions(-)
 
-diff --git a/arch/mips/include/asm/uaccess.h b/arch/mips/include/asm/uaccess.h
-index db9a8e002b62..d7c89dc3426c 100644
---- a/arch/mips/include/asm/uaccess.h
-+++ b/arch/mips/include/asm/uaccess.h
-@@ -19,6 +19,7 @@
- #ifdef CONFIG_32BIT
+diff --git a/arch/arm64/include/asm/uaccess.h b/arch/arm64/include/asm/uaccess.h
+index 357f7bd9c981..e8dce0cc5eaa 100644
+--- a/arch/arm64/include/asm/uaccess.h
++++ b/arch/arm64/include/asm/uaccess.h
+@@ -26,6 +26,8 @@
+ #include <asm/memory.h>
+ #include <asm/extable.h>
  
- #define __UA_LIMIT 0x80000000UL
-+#define TASK_SIZE_MAX	__UA_LIMIT
- 
- #define __UA_ADDR	".word"
- #define __UA_LA		"la"
-@@ -33,6 +34,7 @@
- extern u64 __ua_limit;
- 
- #define __UA_LIMIT	__ua_limit
-+#define TASK_SIZE_MAX	XKSSEG
- 
- #define __UA_ADDR	".dword"
- #define __UA_LA		"dla"
-@@ -42,22 +44,6 @@ extern u64 __ua_limit;
- 
- #endif /* CONFIG_64BIT */
- 
--/*
-- * Is a address valid? This does a straightforward calculation rather
-- * than tests.
-- *
-- * Address valid if:
-- *  - "addr" doesn't have any high-bits set
-- *  - AND "size" doesn't have any high-bits set
-- *  - AND "addr+size" doesn't have any high-bits set
-- *  - OR we are in kernel mode.
-- *
-- * __ua_size() is a trick to avoid runtime checking of positive constant
-- * sizes; for those we already know at compile time that the size is ok.
-- */
--#define __ua_size(size)							\
--	((__builtin_constant_p(size) && (signed long) (size) > 0) ? 0 : (size))
--
++static inline int __access_ok(const void __user *ptr, unsigned long size);
++
  /*
-  * access_ok: - Checks if a user space pointer is valid
-  * @addr: User space pointer to start of block to check
-@@ -79,9 +65,9 @@ extern u64 __ua_limit;
- static inline int __access_ok(const void __user *p, unsigned long size)
+  * Test whether a block of memory is a valid user space address.
+  * Returns 1 if the range is valid, 0 otherwise.
+@@ -33,10 +35,8 @@
+  * This is equivalent to the following test:
+  * (u65)addr + (u65)size <= (u65)TASK_SIZE_MAX
+  */
+-static inline unsigned long __access_ok(const void __user *addr, unsigned long size)
++static inline int access_ok(const void __user *addr, unsigned long size)
  {
- 	unsigned long addr = (unsigned long)p;
--	unsigned long end = addr + size - !!size;
-+	unsigned long limit = TASK_SIZE_MAX;
+-	unsigned long ret, limit = TASK_SIZE_MAX - 1;
+-
+ 	/*
+ 	 * Asynchronous I/O running in a kernel thread does not have the
+ 	 * TIF_TAGGED_ADDR flag of the process owning the mm, so always untag
+@@ -46,27 +46,9 @@ static inline unsigned long __access_ok(const void __user *addr, unsigned long s
+ 	    (current->flags & PF_KTHREAD || test_thread_flag(TIF_TAGGED_ADDR)))
+ 		addr = untagged_addr(addr);
  
--	return (__UA_LIMIT & (addr | end | __ua_size(size))) == 0;
-+	return (size <= limit) && (addr <= (limit - size));
+-	__chk_user_ptr(addr);
+-	asm volatile(
+-	// A + B <= C + 1 for all A,B,C, in four easy steps:
+-	// 1: X = A + B; X' = X % 2^64
+-	"	adds	%0, %3, %2\n"
+-	// 2: Set C = 0 if X > 2^64, to guarantee X' > C in step 4
+-	"	csel	%1, xzr, %1, hi\n"
+-	// 3: Set X' = ~0 if X >= 2^64. For X == 2^64, this decrements X'
+-	//    to compensate for the carry flag being set in step 4. For
+-	//    X > 2^64, X' merely has to remain nonzero, which it does.
+-	"	csinv	%0, %0, xzr, cc\n"
+-	// 4: For X < 2^64, this gives us X' - C - 1 <= 0, where the -1
+-	//    comes from the carry in being clear. Otherwise, we are
+-	//    testing X' - C == 0, subject to the previous adjustments.
+-	"	sbcs	xzr, %0, %1\n"
+-	"	cset	%0, ls\n"
+-	: "=&r" (ret), "+r" (limit) : "Ir" (size), "0" (addr) : "cc");
+-
+-	return ret;
++	return likely(__access_ok(addr, size));
  }
+-#define __access_ok __access_ok
++#define access_ok access_ok
  
- #define access_ok(addr, size)					\
+ #include <asm-generic/access_ok.h>
+ 
 -- 
 2.29.2
 
