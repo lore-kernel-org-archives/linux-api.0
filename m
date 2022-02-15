@@ -2,21 +2,21 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 21BF6C4332F
-	for <linux-api@archiver.kernel.org>; Tue, 15 Feb 2022 00:32:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 66D08C433F5
+	for <linux-api@archiver.kernel.org>; Tue, 15 Feb 2022 00:37:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230321AbiBOAcL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 14 Feb 2022 19:32:11 -0500
-Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:37382 "EHLO
+        id S232057AbiBOAhz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 14 Feb 2022 19:37:55 -0500
+Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:42582 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230245AbiBOAcK (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 14 Feb 2022 19:32:10 -0500
+        with ESMTP id S230376AbiBOAhz (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 14 Feb 2022 19:37:55 -0500
 Received: from zeniv-ca.linux.org.uk (zeniv-ca.linux.org.uk [IPv6:2607:5300:60:148a::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7BCA1119F27;
-        Mon, 14 Feb 2022 16:32:01 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7889512D21B;
+        Mon, 14 Feb 2022 16:37:46 -0800 (PST)
 Received: from viro by zeniv-ca.linux.org.uk with local (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1nJll2-001pbW-H6; Tue, 15 Feb 2022 00:31:52 +0000
-Date:   Tue, 15 Feb 2022 00:31:52 +0000
+        id 1nJlqf-001pf0-Dy; Tue, 15 Feb 2022 00:37:41 +0000
+Date:   Tue, 15 Feb 2022 00:37:41 +0000
 From:   Al Viro <viro@zeniv.linux.org.uk>
 To:     Arnd Bergmann <arnd@kernel.org>
 Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
@@ -40,34 +40,64 @@ Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
         linux-s390@vger.kernel.org, linux-sh@vger.kernel.org,
         sparclinux@vger.kernel.org, linux-um@lists.infradead.org,
         linux-xtensa@linux-xtensa.org
-Subject: Re: [PATCH 05/14] uaccess: add generic __{get,put}_kernel_nofault
-Message-ID: <Ygr0eAA+ZR1eX0wb@zeniv-ca.linux.org.uk>
+Subject: Re: [PATCH 09/14] m68k: drop custom __access_ok()
+Message-ID: <Ygr11RGjj3C9uAUg@zeniv-ca.linux.org.uk>
 References: <20220214163452.1568807-1-arnd@kernel.org>
- <20220214163452.1568807-6-arnd@kernel.org>
+ <20220214163452.1568807-10-arnd@kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20220214163452.1568807-6-arnd@kernel.org>
+In-Reply-To: <20220214163452.1568807-10-arnd@kernel.org>
 Sender: Al Viro <viro@ftp.linux.org.uk>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Feb 14, 2022 at 05:34:43PM +0100, Arnd Bergmann wrote:
+On Mon, Feb 14, 2022 at 05:34:47PM +0100, Arnd Bergmann wrote:
 > From: Arnd Bergmann <arnd@arndb.de>
 > 
-> All architectures that don't provide __{get,put}_kernel_nofault() yet
-> can implement this on top of __{get,put}_user.
+> While most m68k platforms use separate address spaces for user
+> and kernel space, at least coldfire does not, and the other
+> ones have a TASK_SIZE that is less than the entire 4GB address
+> range.
 > 
-> Add a generic version that lets everything use the normal
-> copy_{from,to}_kernel_nofault() code based on these, removing the last
-> use of get_fs()/set_fs() from architecture-independent code.
+> Using the generic implementation of __access_ok() stops coldfire
+> user space from trivially accessing kernel memory, and is probably
+> the right thing elsewhere for consistency as well.
 
-I'd put the list of those architectures (AFAICS, that's alpha, ia64,
-microblaze, nds32, nios2, openrisc, sh, sparc32, xtensa) into commit
-message - it's not that hard to find out, but...
+Perhaps simply wrap that sucker into #ifdef CONFIG_CPU_HAS_ADDRESS_SPACES
+(and trim the comment down to "coldfire and 68000 will pick generic
+variant")?
 
-And AFAICS, you've missed nios2 - see
-#define __put_user(x, ptr) put_user(x, ptr)
-in there.  nds32 oddities are dealt with earlier in the series, this
-one is not...
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+> ---
+>  arch/m68k/include/asm/uaccess.h | 13 -------------
+>  1 file changed, 13 deletions(-)
+> 
+> diff --git a/arch/m68k/include/asm/uaccess.h b/arch/m68k/include/asm/uaccess.h
+> index d6bb5720365a..64914872a5c9 100644
+> --- a/arch/m68k/include/asm/uaccess.h
+> +++ b/arch/m68k/include/asm/uaccess.h
+> @@ -10,19 +10,6 @@
+>  #include <linux/compiler.h>
+>  #include <linux/types.h>
+>  #include <asm/extable.h>
+> -
+> -/* We let the MMU do all checking */
+> -static inline int __access_ok(const void __user *addr,
+> -			    unsigned long size)
+> -{
+> -	/*
+> -	 * XXX: for !CONFIG_CPU_HAS_ADDRESS_SPACES this really needs to check
+> -	 * for TASK_SIZE!
+> -	 * Removing this helper is probably sufficient.
+> -	 */
+> -	return 1;
+> -}
+> -#define __access_ok __access_ok
+>  #include <asm-generic/access_ok.h>
+>  
+>  /*
+> -- 
+> 2.29.2
+> 
