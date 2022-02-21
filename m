@@ -2,25 +2,24 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3C825C433F5
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F08EFC433FE
 	for <linux-api@archiver.kernel.org>; Mon, 21 Feb 2022 15:52:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1379677AbiBUPxQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 21 Feb 2022 10:53:16 -0500
-Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:53698 "EHLO
+        id S232501AbiBUPxR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 21 Feb 2022 10:53:17 -0500
+Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:53702 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232501AbiBUPxP (ORCPT
+        with ESMTP id S235546AbiBUPxP (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Mon, 21 Feb 2022 10:53:15 -0500
-X-Greylist: delayed 568 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Mon, 21 Feb 2022 07:52:51 PST
-Received: from smtp-bc09.mail.infomaniak.ch (smtp-bc09.mail.infomaniak.ch [45.157.188.9])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6627626542
+Received: from smtp-8fab.mail.infomaniak.ch (smtp-8fab.mail.infomaniak.ch [IPv6:2001:1600:3:17::8fab])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6695626545
         for <linux-api@vger.kernel.org>; Mon, 21 Feb 2022 07:52:51 -0800 (PST)
 Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4K2RQx6PqBzMqBHW;
-        Mon, 21 Feb 2022 16:43:21 +0100 (CET)
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4K2RQv3tJKzMqBYZ;
+        Mon, 21 Feb 2022 16:43:19 +0100 (CET)
 Received: from localhost (unknown [23.97.221.149])
-        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4K2RQx4nTWzlhMCN;
-        Mon, 21 Feb 2022 16:43:21 +0100 (CET)
+        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4K2RQv2Bs5zlhMCD;
+        Mon, 21 Feb 2022 16:43:19 +0100 (CET)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     James Morris <jmorris@namei.org>,
         "Serge E . Hallyn" <serge@hallyn.com>
@@ -35,9 +34,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         linux-kernel@vger.kernel.org,
         linux-security-module@vger.kernel.org,
         =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@linux.microsoft.com>
-Subject: [PATCH v1 7/7] selftest/landlock: Fully test file rename with "remove" access
-Date:   Mon, 21 Feb 2022 16:53:11 +0100
-Message-Id: <20220221155311.166278-8-mic@digikod.net>
+Subject: [PATCH v1 3/7] selftest/landlock: Make tests build with old libc
+Date:   Mon, 21 Feb 2022 16:53:07 +0100
+Message-Id: <20220221155311.166278-4-mic@digikod.net>
 X-Mailer: git-send-email 2.35.1
 In-Reply-To: <20220221155311.166278-1-mic@digikod.net>
 References: <20220221155311.166278-1-mic@digikod.net>
@@ -50,77 +49,89 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Mickaël Salaün <mic@linux.microsoft.com>
 
-These tests were missing to check the check_access_path() call with all
-combinations of maybe_remove(old_dentry) and maybe_remove(new_dentry).
+Replace SYS_<syscall> with __NR_<syscall>.  Using the __NR_<syscall>
+notation, provided by UAPI, is useful to build tests on systems without
+the SYS_<syscall> definitions.
 
-Extend layout1/link with a new complementary test.
+Replace SYS_pivot_root with __NR_pivot_root, and SYS_move_mount with
+__NR_move_mount.
+
+Define renameat2() and RENAME_EXCHANGE if they are unknown to old build
+systems.
 
 Cc: Shuah Khan <shuah@kernel.org>
 Signed-off-by: Mickaël Salaün <mic@linux.microsoft.com>
-Link: https://lore.kernel.org/r/20220221155311.166278-8-mic@digikod.net
+Link: https://lore.kernel.org/r/20220221155311.166278-4-mic@digikod.net
 ---
- tools/testing/selftests/landlock/fs_test.c | 16 +++++++++++++++-
- 1 file changed, 15 insertions(+), 1 deletion(-)
+ tools/testing/selftests/landlock/fs_test.c | 23 +++++++++++++++++-----
+ 1 file changed, 18 insertions(+), 5 deletions(-)
 
 diff --git a/tools/testing/selftests/landlock/fs_test.c b/tools/testing/selftests/landlock/fs_test.c
-index 3736253c9582..62b88406419d 100644
+index 10c9a1e4ebd9..699cda25a12a 100644
 --- a/tools/testing/selftests/landlock/fs_test.c
 +++ b/tools/testing/selftests/landlock/fs_test.c
-@@ -1640,11 +1640,14 @@ TEST_F_FORK(layout1, link)
+@@ -22,6 +22,19 @@
  
- 	ASSERT_EQ(-1, link(file2_s1d1, file1_s1d1));
- 	ASSERT_EQ(EACCES, errno);
+ #include "common.h"
+ 
++#ifndef renameat2
++int renameat2(int olddirfd, const char *oldpath, int newdirfd,
++		const char *newpath, unsigned int flags)
++{
++	return syscall(__NR_renameat2, olddirfd, oldpath, newdirfd, newpath,
++			flags);
++}
++#endif
 +
- 	/* Denies linking because of reparenting. */
- 	ASSERT_EQ(-1, link(file1_s2d1, file1_s1d2));
- 	ASSERT_EQ(EXDEV, errno);
- 	ASSERT_EQ(-1, link(file2_s1d2, file1_s1d3));
- 	ASSERT_EQ(EXDEV, errno);
-+	ASSERT_EQ(-1, link(file2_s1d3, file1_s1d2));
-+	ASSERT_EQ(EXDEV, errno);
++#ifndef RENAME_EXCHANGE
++#define RENAME_EXCHANGE		(1 << 1)
++#endif
++
+ #define TMP_DIR		"tmp"
+ #define BINARY_PATH	"./true"
  
- 	ASSERT_EQ(0, link(file2_s1d2, file1_s1d2));
- 	ASSERT_EQ(0, link(file2_s1d3, file1_s1d3));
-@@ -1668,7 +1671,6 @@ TEST_F_FORK(layout1, rename_file)
+@@ -1249,7 +1262,7 @@ TEST_F_FORK(layout1, rule_inside_mount_ns)
+ 	int ruleset_fd;
  
+ 	set_cap(_metadata, CAP_SYS_ADMIN);
+-	ASSERT_EQ(0, syscall(SYS_pivot_root, dir_s3d2, dir_s3d3)) {
++	ASSERT_EQ(0, syscall(__NR_pivot_root, dir_s3d2, dir_s3d3)) {
+ 		TH_LOG("Failed to pivot root: %s", strerror(errno));
+ 	};
+ 	ASSERT_EQ(0, chdir("/"));
+@@ -1282,7 +1295,7 @@ TEST_F_FORK(layout1, mount_and_pivot)
+ 	set_cap(_metadata, CAP_SYS_ADMIN);
+ 	ASSERT_EQ(-1, mount(NULL, dir_s3d2, NULL, MS_RDONLY, NULL));
+ 	ASSERT_EQ(EPERM, errno);
+-	ASSERT_EQ(-1, syscall(SYS_pivot_root, dir_s3d2, dir_s3d3));
++	ASSERT_EQ(-1, syscall(__NR_pivot_root, dir_s3d2, dir_s3d3));
+ 	ASSERT_EQ(EPERM, errno);
+ 	clear_cap(_metadata, CAP_SYS_ADMIN);
+ }
+@@ -1301,12 +1314,12 @@ TEST_F_FORK(layout1, move_mount)
  	ASSERT_LE(0, ruleset_fd);
  
--	ASSERT_EQ(0, unlink(file1_s1d1));
- 	ASSERT_EQ(0, unlink(file1_s1d2));
+ 	set_cap(_metadata, CAP_SYS_ADMIN);
+-	ASSERT_EQ(0, syscall(SYS_move_mount, AT_FDCWD, dir_s3d2, AT_FDCWD,
++	ASSERT_EQ(0, syscall(__NR_move_mount, AT_FDCWD, dir_s3d2, AT_FDCWD,
+ 				dir_s1d2, 0)) {
+ 		TH_LOG("Failed to move mount: %s", strerror(errno));
+ 	}
  
- 	enforce_ruleset(_metadata, ruleset_fd);
-@@ -1704,9 +1706,15 @@ TEST_F_FORK(layout1, rename_file)
- 	ASSERT_EQ(-1, renameat2(AT_FDCWD, dir_s2d2, AT_FDCWD, file1_s2d1,
- 				RENAME_EXCHANGE));
- 	ASSERT_EQ(EACCES, errno);
-+	/* Checks that file1_s2d1 cannot be removed (instead of ENOTDIR). */
-+	ASSERT_EQ(-1, rename(dir_s2d2, file1_s2d1));
-+	ASSERT_EQ(EACCES, errno);
- 	ASSERT_EQ(-1, renameat2(AT_FDCWD, file1_s2d1, AT_FDCWD, dir_s2d2,
- 				RENAME_EXCHANGE));
- 	ASSERT_EQ(EACCES, errno);
-+	/* Checks that file1_s1d1 cannot be removed (instead of EISDIR). */
-+	ASSERT_EQ(-1, rename(file1_s1d1, dir_s1d2));
-+	ASSERT_EQ(EACCES, errno);
+-	ASSERT_EQ(0, syscall(SYS_move_mount, AT_FDCWD, dir_s1d2, AT_FDCWD,
++	ASSERT_EQ(0, syscall(__NR_move_mount, AT_FDCWD, dir_s1d2, AT_FDCWD,
+ 				dir_s3d2, 0));
+ 	clear_cap(_metadata, CAP_SYS_ADMIN);
  
- 	/* Renames files with different parents. */
- 	ASSERT_EQ(-1, rename(file1_s2d2, file1_s1d2));
-@@ -1769,9 +1777,15 @@ TEST_F_FORK(layout1, rename_dir)
- 	ASSERT_EQ(-1, renameat2(AT_FDCWD, dir_s1d1, AT_FDCWD, dir_s2d1,
- 				RENAME_EXCHANGE));
- 	ASSERT_EQ(EACCES, errno);
-+	/* Checks that dir_s1d2 cannot be removed (instead of ENOTDIR). */
-+	ASSERT_EQ(-1, rename(dir_s1d2, file1_s1d1));
-+	ASSERT_EQ(EACCES, errno);
- 	ASSERT_EQ(-1, renameat2(AT_FDCWD, file1_s1d1, AT_FDCWD, dir_s1d2,
- 				RENAME_EXCHANGE));
- 	ASSERT_EQ(EACCES, errno);
-+	/* Checks that dir_s1d2 cannot be removed (instead of EISDIR). */
-+	ASSERT_EQ(-1, rename(file1_s1d1, dir_s1d2));
-+	ASSERT_EQ(EACCES, errno);
+@@ -1314,7 +1327,7 @@ TEST_F_FORK(layout1, move_mount)
+ 	ASSERT_EQ(0, close(ruleset_fd));
  
- 	/*
- 	 * Exchanges and renames directory to the same parent, which allows
+ 	set_cap(_metadata, CAP_SYS_ADMIN);
+-	ASSERT_EQ(-1, syscall(SYS_move_mount, AT_FDCWD, dir_s3d2, AT_FDCWD,
++	ASSERT_EQ(-1, syscall(__NR_move_mount, AT_FDCWD, dir_s3d2, AT_FDCWD,
+ 				dir_s1d2, 0));
+ 	ASSERT_EQ(EPERM, errno);
+ 	clear_cap(_metadata, CAP_SYS_ADMIN);
 -- 
 2.35.1
 
