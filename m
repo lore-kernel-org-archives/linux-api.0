@@ -2,24 +2,24 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AF220C4332F
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 52EB3C433EF
 	for <linux-api@archiver.kernel.org>; Mon, 21 Feb 2022 15:52:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1379586AbiBUPxS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 21 Feb 2022 10:53:18 -0500
-Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:53706 "EHLO
+        id S235546AbiBUPxR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 21 Feb 2022 10:53:17 -0500
+Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:53708 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1379555AbiBUPxP (ORCPT
+        with ESMTP id S1379586AbiBUPxP (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Mon, 21 Feb 2022 10:53:15 -0500
-Received: from smtp-bc0f.mail.infomaniak.ch (smtp-bc0f.mail.infomaniak.ch [IPv6:2001:1600:3:17::bc0f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 96E6B26547
+Received: from smtp-8fa9.mail.infomaniak.ch (smtp-8fa9.mail.infomaniak.ch [IPv6:2001:1600:3:17::8fa9])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B7AAA26548
         for <linux-api@vger.kernel.org>; Mon, 21 Feb 2022 07:52:51 -0800 (PST)
 Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4K2RQt32hnzMqC3X;
-        Mon, 21 Feb 2022 16:43:18 +0100 (CET)
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4K2RQw1BKKzMptrW;
+        Mon, 21 Feb 2022 16:43:20 +0100 (CET)
 Received: from localhost (unknown [23.97.221.149])
-        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4K2RQt0P1xzlhMBj;
-        Mon, 21 Feb 2022 16:43:18 +0100 (CET)
+        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4K2RQv6CdXzlhMCD;
+        Mon, 21 Feb 2022 16:43:19 +0100 (CET)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     James Morris <jmorris@namei.org>,
         "Serge E . Hallyn" <serge@hallyn.com>
@@ -34,9 +34,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         linux-kernel@vger.kernel.org,
         linux-security-module@vger.kernel.org,
         =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@linux.microsoft.com>
-Subject: [PATCH v1 1/7] landlock: Fix landlock_add_rule(2) documentation
-Date:   Mon, 21 Feb 2022 16:53:05 +0100
-Message-Id: <20220221155311.166278-2-mic@digikod.net>
+Subject: [PATCH v1 4/7] selftest/landlock: Extend tests for minimal valid attribute size
+Date:   Mon, 21 Feb 2022 16:53:08 +0100
+Message-Id: <20220221155311.166278-5-mic@digikod.net>
 X-Mailer: git-send-email 2.35.1
 In-Reply-To: <20220221155311.166278-1-mic@digikod.net>
 References: <20220221155311.166278-1-mic@digikod.net>
@@ -49,54 +49,39 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Mickaël Salaün <mic@linux.microsoft.com>
 
-It is not mandatory to pass a file descriptor obtained with the O_PATH
-flag.  Also, replace rule's accesses with ruleset's accesses.
+This might be useful when the struct landlock_ruleset_attr will get more
+fields.
 
+Cc: Shuah Khan <shuah@kernel.org>
 Signed-off-by: Mickaël Salaün <mic@linux.microsoft.com>
-Link: https://lore.kernel.org/r/20220221155311.166278-2-mic@digikod.net
+Link: https://lore.kernel.org/r/20220221155311.166278-5-mic@digikod.net
 ---
- include/uapi/linux/landlock.h | 5 +++--
- security/landlock/syscalls.c  | 7 +++----
- 2 files changed, 6 insertions(+), 6 deletions(-)
+ tools/testing/selftests/landlock/base_test.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/include/uapi/linux/landlock.h b/include/uapi/linux/landlock.h
-index b3d952067f59..c0390e318a65 100644
---- a/include/uapi/linux/landlock.h
-+++ b/include/uapi/linux/landlock.h
-@@ -60,8 +60,9 @@ struct landlock_path_beneath_attr {
- 	 */
- 	__u64 allowed_access;
- 	/**
--	 * @parent_fd: File descriptor, open with ``O_PATH``, which identifies
--	 * the parent directory of a file hierarchy, or just a file.
-+	 * @parent_fd: File descriptor, preferably opened with ``O_PATH``,
-+	 * which identifies the parent directory of a file hierarchy, or just a
-+	 * file.
- 	 */
- 	__s32 parent_fd;
- 	/*
-diff --git a/security/landlock/syscalls.c b/security/landlock/syscalls.c
-index 32396962f04d..fd4b24022a06 100644
---- a/security/landlock/syscalls.c
-+++ b/security/landlock/syscalls.c
-@@ -290,14 +290,13 @@ static int get_path_from_fd(const s32 fd, struct path *const path)
-  *
-  * - EOPNOTSUPP: Landlock is supported by the kernel but disabled at boot time;
-  * - EINVAL: @flags is not 0, or inconsistent access in the rule (i.e.
-- *   &landlock_path_beneath_attr.allowed_access is not a subset of the rule's
-- *   accesses);
-+ *   &landlock_path_beneath_attr.allowed_access is not a subset of the
-+ *   ruleset handled accesses);
-  * - ENOMSG: Empty accesses (e.g. &landlock_path_beneath_attr.allowed_access);
-  * - EBADF: @ruleset_fd is not a file descriptor for the current thread, or a
-  *   member of @rule_attr is not a file descriptor as expected;
-  * - EBADFD: @ruleset_fd is not a ruleset file descriptor, or a member of
-- *   @rule_attr is not the expected file descriptor type (e.g. file open
-- *   without O_PATH);
-+ *   @rule_attr is not the expected file descriptor type;
-  * - EPERM: @ruleset_fd has no write access to the underlying ruleset;
-  * - EFAULT: @rule_attr inconsistency.
-  */
+diff --git a/tools/testing/selftests/landlock/base_test.c b/tools/testing/selftests/landlock/base_test.c
+index ca40abe9daa8..38fa1e0dfa33 100644
+--- a/tools/testing/selftests/landlock/base_test.c
++++ b/tools/testing/selftests/landlock/base_test.c
+@@ -34,6 +34,8 @@ TEST(inconsistent_attr) {
+ 	ASSERT_EQ(EINVAL, errno);
+ 	ASSERT_EQ(-1, landlock_create_ruleset(ruleset_attr, 1, 0));
+ 	ASSERT_EQ(EINVAL, errno);
++	ASSERT_EQ(-1, landlock_create_ruleset(ruleset_attr, 7, 0));
++	ASSERT_EQ(EINVAL, errno);
+ 
+ 	ASSERT_EQ(-1, landlock_create_ruleset(NULL, 1, 0));
+ 	/* The size if less than sizeof(struct landlock_attr_enforce). */
+@@ -46,6 +48,9 @@ TEST(inconsistent_attr) {
+ 	ASSERT_EQ(-1, landlock_create_ruleset(ruleset_attr, page_size + 1, 0));
+ 	ASSERT_EQ(E2BIG, errno);
+ 
++	/* Checks minimal valid attribute size. */
++	ASSERT_EQ(-1, landlock_create_ruleset(ruleset_attr, 8, 0));
++	ASSERT_EQ(ENOMSG, errno);
+ 	ASSERT_EQ(-1, landlock_create_ruleset(ruleset_attr,
+ 				sizeof(struct landlock_ruleset_attr), 0));
+ 	ASSERT_EQ(ENOMSG, errno);
 -- 
 2.35.1
 
