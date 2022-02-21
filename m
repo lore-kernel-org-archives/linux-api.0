@@ -2,24 +2,25 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F08EFC433FE
-	for <linux-api@archiver.kernel.org>; Mon, 21 Feb 2022 15:52:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F0468C43219
+	for <linux-api@archiver.kernel.org>; Mon, 21 Feb 2022 15:52:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232501AbiBUPxR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 21 Feb 2022 10:53:17 -0500
-Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:53702 "EHLO
+        id S1379555AbiBUPxS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 21 Feb 2022 10:53:18 -0500
+Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:53700 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235546AbiBUPxP (ORCPT
+        with ESMTP id S233542AbiBUPxP (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Mon, 21 Feb 2022 10:53:15 -0500
-Received: from smtp-8fab.mail.infomaniak.ch (smtp-8fab.mail.infomaniak.ch [IPv6:2001:1600:3:17::8fab])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6695626545
+X-Greylist: delayed 571 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Mon, 21 Feb 2022 07:52:51 PST
+Received: from smtp-8fa9.mail.infomaniak.ch (smtp-8fa9.mail.infomaniak.ch [IPv6:2001:1600:3:17::8fa9])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6658F26544
         for <linux-api@vger.kernel.org>; Mon, 21 Feb 2022 07:52:51 -0800 (PST)
 Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4K2RQv3tJKzMqBYZ;
-        Mon, 21 Feb 2022 16:43:19 +0100 (CET)
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4K2RQx2KwzzMqF1t;
+        Mon, 21 Feb 2022 16:43:21 +0100 (CET)
 Received: from localhost (unknown [23.97.221.149])
-        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4K2RQv2Bs5zlhMCD;
-        Mon, 21 Feb 2022 16:43:19 +0100 (CET)
+        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4K2RQx0Wf1zlhMCT;
+        Mon, 21 Feb 2022 16:43:21 +0100 (CET)
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     James Morris <jmorris@namei.org>,
         "Serge E . Hallyn" <serge@hallyn.com>
@@ -34,9 +35,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         linux-kernel@vger.kernel.org,
         linux-security-module@vger.kernel.org,
         =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@linux.microsoft.com>
-Subject: [PATCH v1 3/7] selftest/landlock: Make tests build with old libc
-Date:   Mon, 21 Feb 2022 16:53:07 +0100
-Message-Id: <20220221155311.166278-4-mic@digikod.net>
+Subject: [PATCH v1 6/7] selftest/landlock: Extend access right tests to directories
+Date:   Mon, 21 Feb 2022 16:53:10 +0100
+Message-Id: <20220221155311.166278-7-mic@digikod.net>
 X-Mailer: git-send-email 2.35.1
 In-Reply-To: <20220221155311.166278-1-mic@digikod.net>
 References: <20220221155311.166278-1-mic@digikod.net>
@@ -49,89 +50,76 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Mickaël Salaün <mic@linux.microsoft.com>
 
-Replace SYS_<syscall> with __NR_<syscall>.  Using the __NR_<syscall>
-notation, provided by UAPI, is useful to build tests on systems without
-the SYS_<syscall> definitions.
+Make sure that all filesystem access rights can be tied to directories.
 
-Replace SYS_pivot_root with __NR_pivot_root, and SYS_move_mount with
-__NR_move_mount.
-
-Define renameat2() and RENAME_EXCHANGE if they are unknown to old build
-systems.
+Rename layout1/file_access_rights to layout1/file_and_dir_access_rights
+to reflect this change.
 
 Cc: Shuah Khan <shuah@kernel.org>
 Signed-off-by: Mickaël Salaün <mic@linux.microsoft.com>
-Link: https://lore.kernel.org/r/20220221155311.166278-4-mic@digikod.net
+Link: https://lore.kernel.org/r/20220221155311.166278-7-mic@digikod.net
 ---
- tools/testing/selftests/landlock/fs_test.c | 23 +++++++++++++++++-----
- 1 file changed, 18 insertions(+), 5 deletions(-)
+ tools/testing/selftests/landlock/fs_test.c | 29 ++++++++++++++++------
+ 1 file changed, 21 insertions(+), 8 deletions(-)
 
 diff --git a/tools/testing/selftests/landlock/fs_test.c b/tools/testing/selftests/landlock/fs_test.c
-index 10c9a1e4ebd9..699cda25a12a 100644
+index 5506472a46ce..3736253c9582 100644
 --- a/tools/testing/selftests/landlock/fs_test.c
 +++ b/tools/testing/selftests/landlock/fs_test.c
-@@ -22,6 +22,19 @@
+@@ -409,11 +409,12 @@ TEST_F_FORK(layout1, inval)
+ 	LANDLOCK_ACCESS_FS_MAKE_BLOCK | \
+ 	ACCESS_LAST)
  
- #include "common.h"
- 
-+#ifndef renameat2
-+int renameat2(int olddirfd, const char *oldpath, int newdirfd,
-+		const char *newpath, unsigned int flags)
-+{
-+	return syscall(__NR_renameat2, olddirfd, oldpath, newdirfd, newpath,
-+			flags);
-+}
-+#endif
-+
-+#ifndef RENAME_EXCHANGE
-+#define RENAME_EXCHANGE		(1 << 1)
-+#endif
-+
- #define TMP_DIR		"tmp"
- #define BINARY_PATH	"./true"
- 
-@@ -1249,7 +1262,7 @@ TEST_F_FORK(layout1, rule_inside_mount_ns)
- 	int ruleset_fd;
- 
- 	set_cap(_metadata, CAP_SYS_ADMIN);
--	ASSERT_EQ(0, syscall(SYS_pivot_root, dir_s3d2, dir_s3d3)) {
-+	ASSERT_EQ(0, syscall(__NR_pivot_root, dir_s3d2, dir_s3d3)) {
- 		TH_LOG("Failed to pivot root: %s", strerror(errno));
+-TEST_F_FORK(layout1, file_access_rights)
++TEST_F_FORK(layout1, file_and_dir_access_rights)
+ {
+ 	__u64 access;
+ 	int err;
+-	struct landlock_path_beneath_attr path_beneath = {};
++	struct landlock_path_beneath_attr path_beneath_file = {},
++					  path_beneath_dir = {};
+ 	struct landlock_ruleset_attr ruleset_attr = {
+ 		.handled_access_fs = ACCESS_ALL,
  	};
- 	ASSERT_EQ(0, chdir("/"));
-@@ -1282,7 +1295,7 @@ TEST_F_FORK(layout1, mount_and_pivot)
- 	set_cap(_metadata, CAP_SYS_ADMIN);
- 	ASSERT_EQ(-1, mount(NULL, dir_s3d2, NULL, MS_RDONLY, NULL));
- 	ASSERT_EQ(EPERM, errno);
--	ASSERT_EQ(-1, syscall(SYS_pivot_root, dir_s3d2, dir_s3d3));
-+	ASSERT_EQ(-1, syscall(__NR_pivot_root, dir_s3d2, dir_s3d3));
- 	ASSERT_EQ(EPERM, errno);
- 	clear_cap(_metadata, CAP_SYS_ADMIN);
- }
-@@ -1301,12 +1314,12 @@ TEST_F_FORK(layout1, move_mount)
+@@ -423,20 +424,32 @@ TEST_F_FORK(layout1, file_access_rights)
  	ASSERT_LE(0, ruleset_fd);
  
- 	set_cap(_metadata, CAP_SYS_ADMIN);
--	ASSERT_EQ(0, syscall(SYS_move_mount, AT_FDCWD, dir_s3d2, AT_FDCWD,
-+	ASSERT_EQ(0, syscall(__NR_move_mount, AT_FDCWD, dir_s3d2, AT_FDCWD,
- 				dir_s1d2, 0)) {
- 		TH_LOG("Failed to move mount: %s", strerror(errno));
+ 	/* Tests access rights for files. */
+-	path_beneath.parent_fd = open(file1_s1d2, O_PATH | O_CLOEXEC);
+-	ASSERT_LE(0, path_beneath.parent_fd);
++	path_beneath_file.parent_fd = open(file1_s1d2, O_PATH | O_CLOEXEC);
++	ASSERT_LE(0, path_beneath_file.parent_fd);
++
++	/* Tests access rights for directories. */
++	path_beneath_dir.parent_fd = open(dir_s1d2, O_PATH | O_DIRECTORY |
++			O_CLOEXEC);
++	ASSERT_LE(0, path_beneath_dir.parent_fd);
++
+ 	for (access = 1; access <= ACCESS_LAST; access <<= 1) {
+-		path_beneath.allowed_access = access;
++		path_beneath_dir.allowed_access = access;
++		ASSERT_EQ(0, landlock_add_rule(ruleset_fd, LANDLOCK_RULE_PATH_BENEATH,
++				&path_beneath_dir, 0));
++
++		path_beneath_file.allowed_access = access;
+ 		err = landlock_add_rule(ruleset_fd, LANDLOCK_RULE_PATH_BENEATH,
+-				&path_beneath, 0);
+-		if ((access | ACCESS_FILE) == ACCESS_FILE) {
++				&path_beneath_file, 0);
++		if (access & ACCESS_FILE) {
+ 			ASSERT_EQ(0, err);
+ 		} else {
+ 			ASSERT_EQ(-1, err);
+ 			ASSERT_EQ(EINVAL, errno);
+ 		}
  	}
+-	ASSERT_EQ(0, close(path_beneath.parent_fd));
++	ASSERT_EQ(0, close(path_beneath_file.parent_fd));
++	ASSERT_EQ(0, close(path_beneath_dir.parent_fd));
++	ASSERT_EQ(0, close(ruleset_fd));
+ }
  
--	ASSERT_EQ(0, syscall(SYS_move_mount, AT_FDCWD, dir_s1d2, AT_FDCWD,
-+	ASSERT_EQ(0, syscall(__NR_move_mount, AT_FDCWD, dir_s1d2, AT_FDCWD,
- 				dir_s3d2, 0));
- 	clear_cap(_metadata, CAP_SYS_ADMIN);
- 
-@@ -1314,7 +1327,7 @@ TEST_F_FORK(layout1, move_mount)
- 	ASSERT_EQ(0, close(ruleset_fd));
- 
- 	set_cap(_metadata, CAP_SYS_ADMIN);
--	ASSERT_EQ(-1, syscall(SYS_move_mount, AT_FDCWD, dir_s3d2, AT_FDCWD,
-+	ASSERT_EQ(-1, syscall(__NR_move_mount, AT_FDCWD, dir_s3d2, AT_FDCWD,
- 				dir_s1d2, 0));
- 	ASSERT_EQ(EPERM, errno);
- 	clear_cap(_metadata, CAP_SYS_ADMIN);
+ TEST_F_FORK(layout1, unknown_access_rights)
 -- 
 2.35.1
 
