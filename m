@@ -2,161 +2,187 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C084AC433FE
-	for <linux-api@archiver.kernel.org>; Wed, 23 Feb 2022 23:31:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AD42FC433FE
+	for <linux-api@archiver.kernel.org>; Thu, 24 Feb 2022 01:32:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S244815AbiBWXbe (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 23 Feb 2022 18:31:34 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52426 "EHLO
+        id S229581AbiBXBd0 convert rfc822-to-8bit (ORCPT
+        <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 23 Feb 2022 20:33:26 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37730 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S243948AbiBWXbc (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Feb 2022 18:31:32 -0500
-Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C8D58583B6;
-        Wed, 23 Feb 2022 15:31:03 -0800 (PST)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id 71131B81878;
-        Wed, 23 Feb 2022 23:31:02 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 62A8BC340E7;
-        Wed, 23 Feb 2022 23:30:56 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1645659061;
-        bh=lqCEQ++vi7cgL8SGDqvu6VRtg8aruPJlQBSjPBXBFVM=;
-        h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-        b=sbRe9FkUPCxCGG5QhSpQFHALisL4a0h67bCxhSLbAt1nLiwP1yIOk1Uj7FSa6KCb5
-         weBLktMX2iJ1azUVoI5qzyIPsB248hdzJqK4FY8iQs4ijX9ClxGFEG4dPQ2t94Tu+v
-         xnm83JKO7FsjVlGtupBZVZ1sGqkMArGtNnLjnEwqgMRRugYsRTn+yfOLhixpTMveFC
-         hFyJk7dTbBRw3IsZy86rcTOonVkHxoMQs0BGW96T4vsXyVidvkbPH0uwFh8RFITz5K
-         oD3k8dsNBCQPOLOspB8IOHbjF16KCCmPClOP9aOj20bxN2gTg9NdvWcdAxevymW0xQ
-         hD4A1zZdc89kw==
-Message-ID: <c6f461f1-1dd9-aec1-2c85-a3eda478a1be@kernel.org>
-Date:   Wed, 23 Feb 2022 17:30:53 -0600
+        with ESMTP id S229575AbiBXBdZ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Feb 2022 20:33:25 -0500
+Received: from out03.mta.xmission.com (out03.mta.xmission.com [166.70.13.233])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 90B5449CB4;
+        Wed, 23 Feb 2022 17:32:52 -0800 (PST)
+Received: from in01.mta.xmission.com ([166.70.13.51]:35060)
+        by out03.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1nN2zx-00AMnv-Jv; Wed, 23 Feb 2022 18:32:49 -0700
+Received: from ip68-227-174-4.om.om.cox.net ([68.227.174.4]:53688 helo=email.froward.int.ebiederm.org.xmission.com)
+        by in01.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1nN2zw-00EDEm-Bb; Wed, 23 Feb 2022 18:32:49 -0700
+From:   "Eric W. Biederman" <ebiederm@xmission.com>
+To:     Linus Torvalds <linus@torvalds.org>
+Cc:     Linux API <linux-api@vger.kernel.org>,
+        Etienne Dechamps <etienne@edechamps.fr>,
+        Alexey Gladkov <legion@kernel.org>,
+        Kees Cook <keescook@chromium.org>,
+        Shuah Khan <shuah@kernel.org>,
+        Christian Brauner <brauner@kernel.org>,
+        Solar Designer <solar@openwall.com>,
+        Ran Xiaokai <ran.xiaokai@zte.com.cn>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        "open list:KERNEL SELFTEST FRAMEWORK" 
+        <linux-kselftest@vger.kernel.org>,
+        Linux Containers <containers@lists.linux-foundation.org>,
+        Michal =?utf-8?Q?Koutn=C3=BD?= <mkoutny@suse.com>,
+        Security Officers <security@kernel.org>,
+        Neil Brown <neilb@cse.unsw.edu.au>, NeilBrown <neilb@suse.de>,
+        "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>,
+        Andy Lutomirski <luto@kernel.org>, Willy Tarreau <w@1wt.eu>
+In-Reply-To: <CAHk-=wjX3VK8QRMDUWwigCTKdHJt0ESXh0Hy5HNaXf7YkEdCAA@mail.gmail.com>
+        (Linus Torvalds's message of "Wed, 23 Feb 2022 11:50:38 -0800")
+References: <20220207121800.5079-1-mkoutny@suse.com>
+        <e9589141-cfeb-90cd-2d0e-83a62787239a@edechamps.fr>
+        <20220215101150.GD21589@blackbody.suse.cz>
+        <87zgmi5rhm.fsf@email.froward.int.ebiederm.org>
+        <87fso91n0v.fsf_-_@email.froward.int.ebiederm.org>
+        <CAHk-=wjX3VK8QRMDUWwigCTKdHJt0ESXh0Hy5HNaXf7YkEdCAA@mail.gmail.com>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
+Date:   Wed, 23 Feb 2022 19:32:41 -0600
+Message-ID: <87ee3toxqe.fsf@email.froward.int.ebiederm.org>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.5.0
-Subject: Re: [PATCH v2 07/18] nios2: drop access_ok() check from __put_user()
-Content-Language: en-US
-To:     Arnd Bergmann <arnd@kernel.org>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Christoph Hellwig <hch@lst.de>, linux-arch@vger.kernel.org,
-        linux-mm@kvack.org, linux-api@vger.kernel.org, arnd@arndb.de,
-        linux-kernel@vger.kernel.org, viro@zeniv.linux.org.uk
-Cc:     linux@armlinux.org.uk, will@kernel.org, guoren@kernel.org,
-        bcain@codeaurora.org, geert@linux-m68k.org, monstr@monstr.eu,
-        tsbogend@alpha.franken.de, nickhu@andestech.com,
-        green.hu@gmail.com, shorne@gmail.com, deller@gmx.de,
-        mpe@ellerman.id.au, peterz@infradead.org, mingo@redhat.com,
-        mark.rutland@arm.com, hca@linux.ibm.com, dalias@libc.org,
-        davem@davemloft.net, richard@nod.at, x86@kernel.org,
-        jcmvbkbc@gmail.com, ebiederm@xmission.com,
-        akpm@linux-foundation.org, ardb@kernel.org,
-        linux-alpha@vger.kernel.org, linux-snps-arc@lists.infradead.org,
-        linux-csky@vger.kernel.org, linux-hexagon@vger.kernel.org,
-        linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org,
-        linux-mips@vger.kernel.org, openrisc@lists.librecores.org,
-        linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org,
-        linux-riscv@lists.infradead.org, linux-s390@vger.kernel.org,
-        linux-sh@vger.kernel.org, sparclinux@vger.kernel.org,
-        linux-um@lists.infradead.org, linux-xtensa@linux-xtensa.org
-References: <20220216131332.1489939-1-arnd@kernel.org>
- <20220216131332.1489939-8-arnd@kernel.org>
-From:   Dinh Nguyen <dinguyen@kernel.org>
-In-Reply-To: <20220216131332.1489939-8-arnd@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+X-XM-SPF: eid=1nN2zw-00EDEm-Bb;;;mid=<87ee3toxqe.fsf@email.froward.int.ebiederm.org>;;;hst=in01.mta.xmission.com;;;ip=68.227.174.4;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1+jQZBwXH9ZWGkbzMxdKBeobm1bR1k1t1k=
+X-SA-Exim-Connect-IP: 68.227.174.4
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: Re: How should rlimits, suid exec, and capabilities interact?
+X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
+X-SA-Exim-Scanned: Yes (on in01.mta.xmission.com)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
 
+Linus Torvalds <linus@torvalds.org> writes:
 
-On 2/16/22 07:13, Arnd Bergmann wrote:
-> From: Arnd Bergmann <arnd@arndb.de>
-> 
-> Unlike other architectures, the nios2 version of __put_user() has an
-> extra check for access_ok(), preventing it from being used to implement
-> __put_kernel_nofault().
-> 
-> Split up put_user() along the same lines as __get_user()/get_user()
-> 
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-> ---
->   arch/nios2/include/asm/uaccess.h | 56 +++++++++++++++++++-------------
->   1 file changed, 33 insertions(+), 23 deletions(-)
-> 
-> diff --git a/arch/nios2/include/asm/uaccess.h b/arch/nios2/include/asm/uaccess.h
-> index ca9285a915ef..a5cbe07cf0da 100644
-> --- a/arch/nios2/include/asm/uaccess.h
-> +++ b/arch/nios2/include/asm/uaccess.h
-> @@ -167,34 +167,44 @@ do {									\
->   	: "r" (val), "r" (ptr), "i" (-EFAULT));				\
->   }
->   
-> -#define put_user(x, ptr)						\
-> +#define __put_user_common(__pu_val, __pu_ptr)				\
->   ({									\
->   	long __pu_err = -EFAULT;					\
-> -	__typeof__(*(ptr)) __user *__pu_ptr = (ptr);			\
-> -	__typeof__(*(ptr)) __pu_val = (__typeof(*ptr))(x);		\
-> -	if (access_ok(__pu_ptr, sizeof(*__pu_ptr))) {	\
-> -		switch (sizeof(*__pu_ptr)) {				\
-> -		case 1:							\
-> -			__put_user_asm(__pu_val, "stb", __pu_ptr, __pu_err); \
-> -			break;						\
-> -		case 2:							\
-> -			__put_user_asm(__pu_val, "sth", __pu_ptr, __pu_err); \
-> -			break;						\
-> -		case 4:							\
-> -			__put_user_asm(__pu_val, "stw", __pu_ptr, __pu_err); \
-> -			break;						\
-> -		default:						\
-> -			/* XXX: This looks wrong... */			\
-> -			__pu_err = 0;					\
-> -			if (copy_to_user(__pu_ptr, &(__pu_val),		\
-> -				sizeof(*__pu_ptr)))			\
-> -				__pu_err = -EFAULT;			\
-> -			break;						\
-> -		}							\
-> +	switch (sizeof(*__pu_ptr)) {					\
-> +	case 1:								\
-> +		__put_user_asm(__pu_val, "stb", __pu_ptr, __pu_err);	\
-> +		break;							\
-> +	case 2:								\
-> +		__put_user_asm(__pu_val, "sth", __pu_ptr, __pu_err);	\
-> +		break;							\
-> +	case 4:								\
-> +		__put_user_asm(__pu_val, "stw", __pu_ptr, __pu_err);	\
-> +		break;							\
-> +	default:							\
-> +		/* XXX: This looks wrong... */				\
-> +		__pu_err = 0;						\
-> +		if (__copy_to_user(__pu_ptr, &(__pu_val),		\
-> +			sizeof(*__pu_ptr)))				\
-> +			__pu_err = -EFAULT;				\
-> +		break;							\
->   	}								\
->   	__pu_err;							\
->   })
->   
-> -#define __put_user(x, ptr) put_user(x, ptr)
-> +#define __put_user(x, ptr)						\
-> +({									\
-> +	__auto_type __pu_ptr = (ptr);					\
-> +	typeof(*__pu_ptr) __pu_val = (typeof(*__pu_ptr))(x);		\
-> +	__put_user_common(__pu_val, __pu_ptr);				\
-> +})
-> +
-> +#define put_user(x, ptr)						\
-> +({									\
-> +	__auto_type __pu_ptr = (ptr);					\
-> +	typeof(*__pu_ptr) __pu_val = (typeof(*__pu_ptr))(x);		\
-> +	access_ok(__pu_ptr, sizeof(*__pu_ptr)) ?			\
-> +		__put_user_common(__pu_val, __pu_ptr) :			\
-> +		-EFAULT;						\
-> +})
->   
->   #endif /* _ASM_NIOS2_UACCESS_H */
+> Basic rule: it's better to be too lenient than to be too strict.
 
-Acked-by: Dinh Nguyen <dinguyen@kernel.org>
+Thank you.  With that guideline I can explore the space of what is
+possible.
+
+Question: Running a suid program today charges the activity of that
+program to the user who ran that program, not to the user the program
+runs as.  Does anyone see a problem with charging the user the program
+runs as?
+
+The reason I want to change which user is charged with a process
+(besides it making more sense in my head) is so that
+"capable(CAP_SYS_RESOURCE)" can be used instead of the magic incantation
+"(cred->user == INIT_USER)".
+
+Today "capable(CAP_SYS_RESOURCE)" with respect to RLIMIT_NPROC is
+effectively meaningless for suid programs because the of the mismatch of
+charging the real user with the effective users credentials.
+
+An accidental experiment happened in v5.14-rc1 in July when the ucount
+rlimit code was merged.  It was only this last week when after Michal
+Koutný discovered the discrepancy through code inspection I merged a
+bug fix because the code was not preserving the existing behavior as
+intended.
+
+
+This behavior has existed in some form since Linux v1.0 when per user
+process limits were added.
+
+The original code in v1.0 was:
+> static int find_empty_process(void)
+> {
+>        int free_task;
+>        int i, tasks_free;
+>        int this_user_tasks;
+> 
+> repeat:
+>        if ((++last_pid) & 0xffff8000)
+>                last_pid=1;
+>        this_user_tasks = 0;
+>        tasks_free = 0;
+>        free_task = -EAGAIN;
+>        i = NR_TASKS;
+>        while (--i > 0) {
+>                if (!task[i]) {
+>                        free_task = i;
+>                        tasks_free++;
+>                        continue;
+>                }
+>                if (task[i]->uid == current->uid)
+>                        this_user_tasks++;
+>                if (task[i]->pid == last_pid || task[i]->pgrp == last_pid ||
+>                    task[i]->session == last_pid)
+>                        goto repeat;
+>        }
+>        if (tasks_free <= MIN_TASKS_LEFT_FOR_ROOT ||
+>            this_user_tasks > MAX_TASKS_PER_USER)
+>                if (current->uid)
+>                        return -EAGAIN;
+>        return free_task;
+> }
+
+Having tracked the use of real uid in limits back this far my guess
+is that it was an accident of the implementation and real uid vs
+effective uid had not be considered.
+
+Does anyone know if choosing the real uid vs the effective uid for
+accounting a users processes was a deliberate decision anywhere in the
+history of Linux?
+
+
+
+Linus you were talking about making it possible to login as I think a
+non-root user to be able to use sudo and kill a fork bomb.
+
+The counter case is apache having a dedicated user for running
+cgi-scripts and using RLIMIT_NPROC to limit how many of those processes
+can exist.  Unless I am misunderstanding something that looks exactly
+like your login as non-root so you can run sudo to kill a fork-bomb.
+
+A comment from an in-process cleanup patch explains this as best I can:
+         /*
+         * In general rlimits are only enforced when a new resource
+         * is acquired.  That would be during fork for RLIMIT_NPROC.
+         * That is insufficient for RLIMIT_NPROC as many attributes of
+         * a new process must be set between fork and exec.
+         *
+         * A case where this matter is when apache runs forks a process
+         * and calls setuid to run cgi-scripts as a different user.
+         * Generating those processes through a code sequence like:
+         *
+         *      fork()
+ 	 *	setrlimit(RLIMIT_NPROC, ...)         
+         *      execve()  -- suid wrapper
+         *      setuid()
+         *      execve()  -- cgi script
+         *
+         * The cgi-scripts are unlikely to fork on their own so unless
+         * RLIMIT_NPROC is checked after the user change and before
+         * the cgi-script starts, RLIMIT_NPROC simply will not be enforced
+         * for the cgi-scripts.
+         *
+         * So the code tracks if between fork and exec if an operation
+         * occurs that could cause the RLIMIT_NPROC check to fail.  If
+         * such an operation has happened re-check RLIMIT_NPROC.
+         */
+
+
+Answered-Question: I was trying to ask if anyone knows of a reason why
+we can't just sanitize the rlimits of the process during suid exec?
+Linus your guideline would appear to allow that behavior.  Unfortunately
+that looks like it would break current usage of apache suexec.
+
+Eric
