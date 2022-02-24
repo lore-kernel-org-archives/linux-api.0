@@ -2,32 +2,33 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ADC50C433EF
-	for <linux-api@archiver.kernel.org>; Thu, 24 Feb 2022 02:16:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C6FB2C433F5
+	for <linux-api@archiver.kernel.org>; Thu, 24 Feb 2022 03:00:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230029AbiBXCRD convert rfc822-to-8bit (ORCPT
-        <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 23 Feb 2022 21:17:03 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41442 "EHLO
+        id S230239AbiBXDBY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 23 Feb 2022 22:01:24 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43450 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229985AbiBXCRC (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Feb 2022 21:17:02 -0500
-Received: from out01.mta.xmission.com (out01.mta.xmission.com [166.70.13.231])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AC6B02BB0A;
-        Wed, 23 Feb 2022 18:16:33 -0800 (PST)
-Received: from in02.mta.xmission.com ([166.70.13.52]:33614)
-        by out01.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-        (Exim 4.93)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1nN2rs-00GJkb-1D; Wed, 23 Feb 2022 18:24:28 -0700
-Received: from ip68-227-174-4.om.om.cox.net ([68.227.174.4]:53352 helo=email.froward.int.ebiederm.org.xmission.com)
-        by in02.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-        (Exim 4.93)
-        (envelope-from <ebiederm@xmission.com>)
-        id 1nN2rq-0044iM-PT; Wed, 23 Feb 2022 18:24:27 -0700
-From:   "Eric W. Biederman" <ebiederm@xmission.com>
-To:     Linus Torvalds <linus@torvalds.org>
-Cc:     Linux API <linux-api@vger.kernel.org>,
+        with ESMTP id S230231AbiBXDBX (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Feb 2022 22:01:23 -0500
+Received: from eu-smtp-delivery-151.mimecast.com (eu-smtp-delivery-151.mimecast.com [185.58.85.151])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 8BCC422F94F
+        for <linux-api@vger.kernel.org>; Wed, 23 Feb 2022 19:00:53 -0800 (PST)
+Received: from AcuMS.aculab.com (156.67.243.121 [156.67.243.121]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384) id
+ uk-mta-44-yyNQcIKYMxqH48R7GhAS7Q-1; Thu, 24 Feb 2022 03:00:50 +0000
+X-MC-Unique: yyNQcIKYMxqH48R7GhAS7Q-1
+Received: from AcuMS.Aculab.com (fd9f:af1c:a25b:0:994c:f5c2:35d6:9b65) by
+ AcuMS.aculab.com (fd9f:af1c:a25b:0:994c:f5c2:35d6:9b65) with Microsoft SMTP
+ Server (TLS) id 15.0.1497.28; Thu, 24 Feb 2022 03:00:49 +0000
+Received: from AcuMS.Aculab.com ([fe80::994c:f5c2:35d6:9b65]) by
+ AcuMS.aculab.com ([fe80::994c:f5c2:35d6:9b65%12]) with mapi id
+ 15.00.1497.028; Thu, 24 Feb 2022 03:00:49 +0000
+From:   David Laight <David.Laight@ACULAB.COM>
+To:     'Linus Torvalds' <linus@torvalds.org>,
+        "Eric W. Biederman" <ebiederm@xmission.com>
+CC:     Linux API <linux-api@vger.kernel.org>,
         Etienne Dechamps <etienne@edechamps.fr>,
         Alexey Gladkov <legion@kernel.org>,
         Kees Cook <keescook@chromium.org>,
@@ -39,142 +40,101 @@ Cc:     Linux API <linux-api@vger.kernel.org>,
         "open list:KERNEL SELFTEST FRAMEWORK" 
         <linux-kselftest@vger.kernel.org>,
         Linux Containers <containers@lists.linux-foundation.org>,
-        Michal =?utf-8?Q?Koutn=C3=BD?= <mkoutny@suse.com>,
+        =?utf-8?B?TWljaGFsIEtvdXRuw70=?= <mkoutny@suse.com>,
         Security Officers <security@kernel.org>,
         Neil Brown <neilb@cse.unsw.edu.au>, NeilBrown <neilb@suse.de>,
         "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>,
         Andy Lutomirski <luto@kernel.org>, Willy Tarreau <w@1wt.eu>
+Subject: RE: How should rlimits, suid exec, and capabilities interact?
+Thread-Topic: How should rlimits, suid exec, and capabilities interact?
+Thread-Index: AQHYKR/SYXKB0CHhEUmLHiXZZydx7ayh8HMA
+Date:   Thu, 24 Feb 2022 03:00:49 +0000
+Message-ID: <a56fcc390a374b4da628ea55eb5dd6cc@AcuMS.aculab.com>
 References: <20220207121800.5079-1-mkoutny@suse.com>
-        <e9589141-cfeb-90cd-2d0e-83a62787239a@edechamps.fr>
-        <20220215101150.GD21589@blackbody.suse.cz>
-        <87zgmi5rhm.fsf@email.froward.int.ebiederm.org>
-        <87fso91n0v.fsf_-_@email.froward.int.ebiederm.org>
-        <CAHk-=wjX3VK8QRMDUWwigCTKdHJt0ESXh0Hy5HNaXf7YkEdCAA@mail.gmail.com>
-Date:   Wed, 23 Feb 2022 19:24:19 -0600
-In-Reply-To: <CAHk-=wjX3VK8QRMDUWwigCTKdHJt0ESXh0Hy5HNaXf7YkEdCAA@mail.gmail.com>
-        (Linus Torvalds's message of "Wed, 23 Feb 2022 11:50:38 -0800")
-Message-ID: <878ru1qcos.fsf@email.froward.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
+ <e9589141-cfeb-90cd-2d0e-83a62787239a@edechamps.fr>
+ <20220215101150.GD21589@blackbody.suse.cz>
+ <87zgmi5rhm.fsf@email.froward.int.ebiederm.org>
+ <87fso91n0v.fsf_-_@email.froward.int.ebiederm.org>
+ <CAHk-=wjX3VK8QRMDUWwigCTKdHJt0ESXh0Hy5HNaXf7YkEdCAA@mail.gmail.com>
+ <878ru1qcos.fsf@email.froward.int.ebiederm.org>
+ <CAHk-=wgW8+vmqhx4t+uFiZL==8Ac5VWTqCm_oshA0e47B73qPw@mail.gmail.com>
+In-Reply-To: <CAHk-=wgW8+vmqhx4t+uFiZL==8Ac5VWTqCm_oshA0e47B73qPw@mail.gmail.com>
+Accept-Language: en-GB, en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-ms-exchange-transport-fromentityheader: Hosted
+x-originating-ip: [10.202.205.107]
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-X-XM-SPF: eid=1nN2rq-0044iM-PT;;;mid=<878ru1qcos.fsf@email.froward.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.174.4;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1/U781PhiDNIl7q7MwB3lIxUeSfdkrvwaY=
-X-SA-Exim-Connect-IP: 68.227.174.4
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-Subject: Re: How should rlimits, suid exec, and capabilities interact?
-X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
-X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
+Authentication-Results: relay.mimecast.com;
+        auth=pass smtp.auth=C51A453 smtp.mailfrom=david.laight@aculab.com
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: aculab.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: base64
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+RnJvbTogTGludXMgVG9ydmFsZHMNCj4gU2VudDogMjQgRmVicnVhcnkgMjAyMiAwMTo0Mg0KPiAN
+Cj4gT24gV2VkLCBGZWIgMjMsIDIwMjIgYXQgNToyNCBQTSBFcmljIFcuIEJpZWRlcm1hbiA8ZWJp
+ZWRlcm1AeG1pc3Npb24uY29tPiB3cm90ZToNCj4gPg0KPiA+IFF1ZXN0aW9uOiBSdW5uaW5nIGEg
+c3VpZCBwcm9ncmFtIHRvZGF5IGNoYXJnZXMgdGhlIGFjdGl2aXR5IG9mIHRoYXQNCj4gPiBwcm9n
+cmFtIHRvIHRoZSB1c2VyIHdobyByYW4gdGhhdCBwcm9ncmFtLCBub3QgdG8gdGhlIHVzZXIgdGhl
+IHByb2dyYW0NCj4gPiBydW5zIGFzLiAgRG9lcyBhbnlvbmUgc2VlIGEgcHJvYmxlbSB3aXRoIGNo
+YXJnaW5nIHRoZSB1c2VyIHRoZSBwcm9ncmFtDQo+ID4gcnVucyBhcz8NCj4gDQo+IFNvIEkgdGhp
+bmsgdGhhdCB0aGVyZSdzIGFjdHVhbGx5IHR3byBpbmRlcGVuZGVudCBpc3N1ZXMgd2l0aCBsaW1p
+dHMNCj4gd2hlbiB5b3UgaGF2ZSBzaXR1YXRpb25zIGxpa2UgdGhpcyB3aGVyZSB0aGUgYWN0dWFs
+IHVzZXIgbWlnaHQgYmUNCj4gYW1iaWd1b3VzLg0KPiANCj4gIC0gdGhlICJ3aG8gdG8gY2hhcmdl
+IiBxdWVzdGlvbg0KPiANCj4gIC0gdGhlICJob3cgZG8gd2UgKmNoZWNrKiB0aGUgbGltaXQiIHF1
+ZXN0aW9uDQo+IA0KPiBhbmQgaG9uZXN0bHksIEkgdGhpbmsgdGhhdCB3aGVuIGl0IGNvbWVzIHRv
+IHN1aWQgYmluYXJpZXMsIHRoZSBmaXJzdA0KPiBxdWVzdGlvbiBpcyBmdW5kYW1lbnRhbGx5IGFt
+YmlndW91cywgYmVjYXVzZSBpdCBhbG1vc3QgY2VydGFpbmx5DQo+IGRlcGVuZHMgb24gdGhlIHVz
+ZXIuDQoNCkRvZXNuJ3QgdGhlIHJsaW1pdCBjaGVjayBoYXBwZW4gZHVyaW5nIHRoZSBmb3JrLg0K
+QXQgd2hpY2ggdGltZSB5b3UgZG9uJ3Qga25vdyB0aGF0IGEgc3VpZCBleGVjIG1pZ2h0IGZvbGxv
+dz8NCg0KVGhlIHByb2JsZW0gd2l0aCBjaGFuZ2luZyB0aGUgdWlkIGlzIHRoYXQgd2hlbiB0aGUg
+cHJvY2VzcyBleGl0cw0KeW91IG5lZWQgdG8gInVuY2hhcmdlIiB0aGUgY29ycmVjdCB1aWQuDQpT
+byBlaXRoZXIgeW91IG5lZWQgdG8gcmVtZW1iZXIgdGhlIG9yaWdpbmFsIHVpZCBvciBzZXR1aWQN
+CmhhcyB0byB0cmFuc2ZlciB0aGUgY2hhcmdlICh3aGljaGV2ZXIgdWlkIGlzIHVzZWQpLg0KSWYg
+eW91IHRyYW5zZmVyIHRoZSBjaGFyZ2UgdGhlbiB0aGUgc2V0dWlkIHN5c3RlbSBjYWxsIGNhbid0
+IGZhaWwuDQpCdXQgYSBsYXRlciBleGVjIGNhbiBmYWlsLg0KDQpBbnkgY2hlY2sgd2lsbCBhbHdh
+eXMgYmUgZG9uZSBhZ2FpbnN0IHRoZSBwcm9jZXNzJ3Mgb3duIHJsaW1pdCB2YWx1ZS4NClNldCB0
+aGF0IHRvIHplcm8gYW5kIGZvcmsgc2hvdWxkIGZhaWwgcmVnYXJkbGVzcyBvZiB3aGljaCB1aWQn
+cw0KcHJvY2VzcyBjb3VudCBpcyBjaGVja2VkLg0KDQpOb3cgYSBub3JtYWwgc3VpZCBwcm9ncmFt
+IG9ubHkgY2hhbmdlcyB0aGUgZWZmZWN0aXZlIHVpZC4NClNvIGtlZXBpbmcgdGhlIHByb2Nlc3Mg
+Y2hhcmdlZCBhZ2FpbnN0IHRoZSByZWFsIHVpZCBtYWtlcyBzZW5zZS4NCg0KSWYgYSBwcm9jZXNz
+IGNoYW5nZXMgaXRzIHJlYWwgdWlkIHlvdSBjb3VsZCBjaGFuZ2UgdGhlIGNoYXJnZWQgdWlkDQpi
+dXQgeW91IGNhbid0IGVycm9yIGlmIG92ZXIgdGhlIHJsaW1pdCB2YWx1ZS4NCk9UT0ggZHVyaW5n
+IGEgbGF0ZXIgZXhlYyB5b3UgY2FuIHRlc3QgdGhpbmdzIGFuZCBleGVjIGNhbiBmYWlsLg0KDQpB
+dCBsZWFzdCBvbmUgdW5peCBJJ3ZlIHVzZWQgaGFzIHRocmVlIHVpZHMgZm9yIGVhY2ggcHJvY2Vz
+cy4NClRoZSAncmVhbCB1aWQnLCAnZWZmZWN0aXZlIHVpZCcgYW5kICdzYXZlZCBieSBleGVjIHVp
+ZCcuDQpJIHN1c3BlY3QgdGhlIHByb2Nlc3MgaXMgYWx3YXlzICJjaGFyZ2VkIiBhZ2FpbnN0IHRo
+ZSBsYXR0ZXIuDQpJIHRoaW5rIHRoYXQgZXhlYyBjb21wYXJlcyB0aGUgJ3JlYWwnIGFuZCAnc2F2
+ZWQgYnkgZXhlYycgdWlkcw0KYW5kLCBpZiBkaWZmZXJlbnQsIG1vdmVzIHRoZSBjaGFyZ2UgdG8g
+dGhlIHJlYWwgdWlkICh3aGljaCB3aWxsDQpjaGVjayBybGltaXQpIHRoZW4gc2V0cyB0aGUgJ3Nh
+dmVkIGJ5IGV4ZWMgdWlkJyB0byB0aGUgcmVhbCB1aWQuDQoNClNvIGFuIGV4ZWMgYWZ0ZXIgYSBz
+ZXR1aWQoKSBjYW4gYmUgYWxsb3dlZCB0byBmYWlsIGlmIHRoZSByZWFsIHVzZXINCmhhcyB0b28g
+bWFueSBwcm9jZXNzZXMuDQpCdXQgaW4gYWxsIG90aGVyIGNhc2VzIGV4ZWMganVzdCB3b3JrcyBy
+ZWdhcmRsZXNzIG9mIHRoZSBwcm9jZXNzDQpjb3VudCBmb3IgYW55IHVzZXIuDQoNCj4gDQo+IFdo
+aWNoIHRvIG1lIGltcGxpZXMgdGhhdCB0aGVyZSBwcm9iYWJseSBpc24ndCBhbiBhbnN3ZXIgdGhh
+dCBpcyBhbHdheXMNCj4gcmlnaHQsIGFuZCB0aGF0IHdoYXQgeW91IHNob3VsZCBsb29rIGF0IGlz
+IHRoYXQgc2Vjb25kIG9wdGlvbi4NCj4gDQo+IFNvIEkgd291bGQgYWN0dWFsbHkgc3VnZ2VzdCB0
+aGF0IHRoZSAiZXhlY3V0ZSBhIHN1aWQgYmluYXJ5IiBzaG91bGQNCj4gY2hhcmdlIHRoZSByZWFs
+IHVzZXIsIGJ1dCAqYmVjYXVzZSogaXQgaXMgc3VpZCwgaXQgc2hvdWxkIHRoZW4gbm90DQo+IGNo
+ZWNrIHRoZSBsaW1pdCAob3IsIHBlcmhhcHMsIHNob3VsZCBjaGVjayB0aGUgaGFyZCBsaW1pdD8p
+Lg0KPiANCj4gWW91IGhhdmUgdG8gY2hhcmdlIHNvbWVib2R5LCBidXQgYXQgdGhhdCBwb2ludCBp
+dCdzIGEgYml0IGFtYmlndW91cw0KPiB3aGV0aGVyIGl0IHNob3VsZCBiZSBhbGxvd2VkLg0KPiAN
+Cj4gRXhhY3RseSBzbyB0aGF0IGlmIHlvdSdyZSBvdmVyIGEgcHJvY2VzcyBsaW1pdCAob3Igc29t
+ZXRoaW5nIHNpbWlsYXIgLQ0KPiB0aGluayAidG9vIG1hbnkgZmlsZXMgb3BlbiIgb3Igd2hhdGV2
+ZXIgYmVjYXVzZSB5b3Ugc2NyZXdlZCB1cCBhbmQNCj4gb3BlbmVkIGV2ZXJ5dGhpbmcpIHlvdSBj
+b3VsZCBzdGlsbCBsb2cgaW4gYXMgeW91cnNlbGYgKHNzaC9sb2dpbg0KPiBjaGFyZ2VzIHNvbWUg
+YWRtaW4gdGhpbmcsIHdoaWNoIHByb2JhYmx5IGhhcyBoaWdoIGxpbWl0cyBvciBpcw0KPiB1bmxp
+bWl0ZWQpLCBhbmQgaG9wZWZ1bGx5IGdldCBzaGVsbCBhY2Nlc3MsIGFuZCB0aGVuIGJlIGFibGUg
+dG8gImV4ZWMNCj4gc3VkbyIgdG8gYWN0dWFsbHkgZ2V0IGFkbWluIGFjY2VzcyB0aGF0IHNob3Vs
+ZCBiZSBkaXNhYmxlZCBmcm9tIHRoZQ0KPiBuZXR3b3JrLg0KDQpZb3UgdXN1YWxseSBoYXZlIHRv
+IHVzZSAncnNoIG1hY2hpbmUgc2ggLWknIHRvIGF2b2lkIHRoZSBzaGVsbA0KcnVubmluZyBhbGwg
+aXRzIHN0YXJ0dXAgc2NyaXB0cy4NCkJ1dCBJIGRvdWJ0IHRoYXQgd2lsbCBnZXQgeW91IHBhc3Qg
+YSBmb3JrIGJvbWIuDQoNCglEYXZpZA0KDQotDQpSZWdpc3RlcmVkIEFkZHJlc3MgTGFrZXNpZGUs
+IEJyYW1sZXkgUm9hZCwgTW91bnQgRmFybSwgTWlsdG9uIEtleW5lcywgTUsxIDFQVCwgVUsNClJl
+Z2lzdHJhdGlvbiBObzogMTM5NzM4NiAoV2FsZXMpDQo=
 
-Linus Torvalds <linus@torvalds.org> writes:
-
-> Basic rule: it's better to be too lenient than to be too strict.
-
-Thank you.  With that guideline I can explore the space of what is
-possible.
-
-Question: Running a suid program today charges the activity of that
-program to the user who ran that program, not to the user the program
-runs as.  Does anyone see a problem with charging the user the program
-runs as?
-
-The reason I want to change who is charged with a process (besides it
-making more sense in my head) is so that capable(CAP_SYS_RESOURCE) can
-be used instead of the magic incantation (cred->user == INIT_USER).
-
-An accidental experiment happened in v5.14-rc1 in July when the ucount
-rlimit code was merged.  It was only this last week when after Michal
-Koutný discovered the discrepency through code inspect a bug fix was
-merged.
-
-This changes the behavior that has existed in some form since Linux v1.0
-when per user process limits were added.
-
-The original code in v1.0 looked like:
-> static int find_empty_process(void)
-> {
->        int free_task;
->        int i, tasks_free;
->        int this_user_tasks;
-> 
-> repeat:
->        if ((++last_pid) & 0xffff8000)
->                last_pid=1;
->        this_user_tasks = 0;
->        tasks_free = 0;
->        free_task = -EAGAIN;
->        i = NR_TASKS;
->        while (--i > 0) {
->                if (!task[i]) {
->                        free_task = i;
->                        tasks_free++;
->                        continue;
->                }
->                if (task[i]->uid == current->uid)
->                        this_user_tasks++;
->                if (task[i]->pid == last_pid || task[i]->pgrp == last_pid ||
->                    task[i]->session == last_pid)
->                        goto repeat;
->        }
->        if (tasks_free <= MIN_TASKS_LEFT_FOR_ROOT ||
->            this_user_tasks > MAX_TASKS_PER_USER)
->                if (current->uid)
->                        return -EAGAIN;
->        return free_task;
-> }
-
-Having tracked the use of real uid in limits back this far my guess
-is that it was an accident of the implementation and real uid vs
-effective uid had not be considered.
-
-Does anyone know if choosing the real uid was a deliberate decision
-anywhere in the history of Linux?
-
-
-
-Linus you were talking about making it possible to login as I think a
-non-root user to be able to use sudo and kill a fork bomb.
-
-The counter case is apache having a dedicated user for running
-cgi-scripts and using RLIMIT_NPROC to limit how many of those processes
-can exist.  Unless I am misunderstanding something that looks exactly
-like your login as non-root so you can run sudo to kill a fork-bomb.
-
-A comment from an in-process cleanup patch explains this as best I can:
-         /*
-         * In general rlimits are only enforced when a new resource
-         * is acquired.  That would be during fork for RLIMIT_NPROC.
-         * That is insufficient for RLIMIT_NPROC as many attributes of
-         * a new process must be set between fork and exec.
-         *
-         * A case where this matter is when apache runs forks a process
-         * and calls setuid to run cgi-scripts as a different user.
-         * Generating those processes through a code sequence like:
-         *
-         *      fork()
- 	 *	setrlimit(RLIMIT_NPROC, ...)         
-         *      execve()  -- suid wrapper
-         *      setuid()
-         *      execve()  -- cgi script
-         *
-         * The cgi-scripts are unlikely to fork on their own so unless
-         * RLIMIT_NPROC is checked after the user change and before
-         * the cgi-script starts, RLIMIT_NPROC simply will not be enforced
-         * for the cgi-scripts.
-         *
-         * So the code tracks if between fork and exec if an operation
-         * occurs that could cause the RLIMIT_NPROC check to fail.  If
-         * such an operation has happened re-check RLIMIT_NPROC.
-         */
-
-
-Answered-Question: I was trying to ask if anyone knows of a reason why
-we can't just sanitize the rlimits of the process during suid exec?
-Linus your guideline would appear to allow that behavior.  Unfortunately
-that looks like it would break current usage of apache suexec.
-
-Eric
