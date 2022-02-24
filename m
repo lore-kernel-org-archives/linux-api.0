@@ -2,28 +2,29 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E180DC433F5
-	for <linux-api@archiver.kernel.org>; Thu, 24 Feb 2022 02:12:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ADC50C433EF
+	for <linux-api@archiver.kernel.org>; Thu, 24 Feb 2022 02:16:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229984AbiBXCMt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 23 Feb 2022 21:12:49 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51182 "EHLO
+        id S230029AbiBXCRD convert rfc822-to-8bit (ORCPT
+        <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 23 Feb 2022 21:17:03 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41442 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230004AbiBXCMs (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Feb 2022 21:12:48 -0500
-Received: from out02.mta.xmission.com (out02.mta.xmission.com [166.70.13.232])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9CEEA3916D;
-        Wed, 23 Feb 2022 18:12:19 -0800 (PST)
-Received: from in02.mta.xmission.com ([166.70.13.52]:34822)
-        by out02.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        with ESMTP id S229985AbiBXCRC (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Feb 2022 21:17:02 -0500
+Received: from out01.mta.xmission.com (out01.mta.xmission.com [166.70.13.231])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AC6B02BB0A;
+        Wed, 23 Feb 2022 18:16:33 -0800 (PST)
+Received: from in02.mta.xmission.com ([166.70.13.52]:33614)
+        by out01.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1nN3c8-002aaK-8v; Wed, 23 Feb 2022 19:12:16 -0700
-Received: from ip68-227-174-4.om.om.cox.net ([68.227.174.4]:55298 helo=email.froward.int.ebiederm.org.xmission.com)
+        id 1nN2rs-00GJkb-1D; Wed, 23 Feb 2022 18:24:28 -0700
+Received: from ip68-227-174-4.om.om.cox.net ([68.227.174.4]:53352 helo=email.froward.int.ebiederm.org.xmission.com)
         by in02.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         (Exim 4.93)
         (envelope-from <ebiederm@xmission.com>)
-        id 1nN3c5-004B4F-Hm; Wed, 23 Feb 2022 19:12:15 -0700
+        id 1nN2rq-0044iM-PT; Wed, 23 Feb 2022 18:24:27 -0700
 From:   "Eric W. Biederman" <ebiederm@xmission.com>
 To:     Linus Torvalds <linus@torvalds.org>
 Cc:     Linux API <linux-api@vger.kernel.org>,
@@ -49,17 +50,16 @@ References: <20220207121800.5079-1-mkoutny@suse.com>
         <87zgmi5rhm.fsf@email.froward.int.ebiederm.org>
         <87fso91n0v.fsf_-_@email.froward.int.ebiederm.org>
         <CAHk-=wjX3VK8QRMDUWwigCTKdHJt0ESXh0Hy5HNaXf7YkEdCAA@mail.gmail.com>
-        <878ru1qcos.fsf@email.froward.int.ebiederm.org>
-        <CAHk-=wgW8+vmqhx4t+uFiZL==8Ac5VWTqCm_oshA0e47B73qPw@mail.gmail.com>
-Date:   Wed, 23 Feb 2022 20:12:06 -0600
-In-Reply-To: <CAHk-=wgW8+vmqhx4t+uFiZL==8Ac5VWTqCm_oshA0e47B73qPw@mail.gmail.com>
-        (Linus Torvalds's message of "Wed, 23 Feb 2022 17:41:41 -0800")
-Message-ID: <87tucpko7d.fsf@email.froward.int.ebiederm.org>
+Date:   Wed, 23 Feb 2022 19:24:19 -0600
+In-Reply-To: <CAHk-=wjX3VK8QRMDUWwigCTKdHJt0ESXh0Hy5HNaXf7YkEdCAA@mail.gmail.com>
+        (Linus Torvalds's message of "Wed, 23 Feb 2022 11:50:38 -0800")
+Message-ID: <878ru1qcos.fsf@email.froward.int.ebiederm.org>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1nN3c5-004B4F-Hm;;;mid=<87tucpko7d.fsf@email.froward.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.174.4;;;frm=ebiederm@xmission.com;;;spf=neutral
-X-XM-AID: U2FsdGVkX1+sXMjClQeoUPAVF231IDl3vRQn66Dcwoc=
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+X-XM-SPF: eid=1nN2rq-0044iM-PT;;;mid=<878ru1qcos.fsf@email.froward.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.174.4;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX1/U781PhiDNIl7q7MwB3lIxUeSfdkrvwaY=
 X-SA-Exim-Connect-IP: 68.227.174.4
 X-SA-Exim-Mail-From: ebiederm@xmission.com
 Subject: Re: How should rlimits, suid exec, and capabilities interact?
@@ -69,108 +69,112 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+
 Linus Torvalds <linus@torvalds.org> writes:
 
-> On Wed, Feb 23, 2022 at 5:24 PM Eric W. Biederman <ebiederm@xmission.com> wrote:
->>
->> Question: Running a suid program today charges the activity of that
->> program to the user who ran that program, not to the user the program
->> runs as.  Does anyone see a problem with charging the user the program
->> runs as?
->
-> So I think that there's actually two independent issues with limits
-> when you have situations like this where the actual user might be
-> ambiguous.
->
->  - the "who to charge" question
->
->  - the "how do we *check* the limit" question
->
-> and honestly, I think that when it comes to suid binaries, the first
-> question is fundamentally ambiguous, because it almost certainly
-> depends on the user.
->
-> Which to me implies that there probably isn't an answer that is always
-> right, and that what you should look at is that second option.
->
-> So I would actually suggest that the "execute a suid binary" should
-> charge the real user, but *because* it is suid, it should then not
-> check the limit (or, perhaps, should check the hard limit?).
->
-> You have to charge somebody, but at that point it's a bit ambiguous
-> whether it should be allowed.
->
-> Exactly so that if you're over a process limit (or something similar -
-> think "too many files open" or whatever because you screwed up and
-> opened everything) you could still log in as yourself (ssh/login
-> charges some admin thing, which probably has high limits or is
-> unlimited), and hopefully get shell access, and then be able to "exec
-> sudo" to actually get admin access that should be disabled from the
-> network.
->
-> The above is just one (traditional) example of a fork/open bomb case
-> where a user isn't really able to no longer function as himself, but
-> wants to fix things (maybe the user has another terminal open, but
-> then he can hopefully use a shell-buiiltin 'kill' instead).
->
-> And I'm not saying it's "the thing that needs to work". I'm more
-> making up an example.
->
-> So I'm only saying that the above actually has two examples to the two
-> sides of the coin: "login" lowering privileges to a user that may be
-> over some limit - and succeeding despite that - and 'suid' succeeding
-> despite the original user perhaps being over-committed.
->
-> So it's intended exactly as an example of "picking the new or the old
-> user would be wrong in either case if you check limits at the
-> transition point".
->
-> Hmm?
+> Basic rule: it's better to be too lenient than to be too strict.
 
-That doesn't really clarify anything for me.  We have two checks one in
-fork and one in exec and you seem to be talking about the check in exec.
+Thank you.  With that guideline I can explore the space of what is
+possible.
 
-The check I have problems with for a suid executable is the check in
-fork.  If the new process is accounted to the previous user and we use
-the permissions of the effective user for checking it that does not make
-sense to me.
+Question: Running a suid program today charges the activity of that
+program to the user who ran that program, not to the user the program
+runs as.  Does anyone see a problem with charging the user the program
+runs as?
 
-If we can sort out that the check in fork.  I think I have clarity about
-the other cases.
+The reason I want to change who is charged with a process (besides it
+making more sense in my head) is so that capable(CAP_SYS_RESOURCE) can
+be used instead of the magic incantation (cred->user == INIT_USER).
+
+An accidental experiment happened in v5.14-rc1 in July when the ucount
+rlimit code was merged.  It was only this last week when after Michal
+Koutný discovered the discrepency through code inspect a bug fix was
+merged.
+
+This changes the behavior that has existed in some form since Linux v1.0
+when per user process limits were added.
+
+The original code in v1.0 looked like:
+> static int find_empty_process(void)
+> {
+>        int free_task;
+>        int i, tasks_free;
+>        int this_user_tasks;
+> 
+> repeat:
+>        if ((++last_pid) & 0xffff8000)
+>                last_pid=1;
+>        this_user_tasks = 0;
+>        tasks_free = 0;
+>        free_task = -EAGAIN;
+>        i = NR_TASKS;
+>        while (--i > 0) {
+>                if (!task[i]) {
+>                        free_task = i;
+>                        tasks_free++;
+>                        continue;
+>                }
+>                if (task[i]->uid == current->uid)
+>                        this_user_tasks++;
+>                if (task[i]->pid == last_pid || task[i]->pgrp == last_pid ||
+>                    task[i]->session == last_pid)
+>                        goto repeat;
+>        }
+>        if (tasks_free <= MIN_TASKS_LEFT_FOR_ROOT ||
+>            this_user_tasks > MAX_TASKS_PER_USER)
+>                if (current->uid)
+>                        return -EAGAIN;
+>        return free_task;
+> }
+
+Having tracked the use of real uid in limits back this far my guess
+is that it was an accident of the implementation and real uid vs
+effective uid had not be considered.
+
+Does anyone know if choosing the real uid was a deliberate decision
+anywhere in the history of Linux?
 
 
 
+Linus you were talking about making it possible to login as I think a
+non-root user to be able to use sudo and kill a fork bomb.
 
-The check in exec while clumsy and needing cleaning up seems to make
-sense to me.  We have a transition that starts with fork and ends with
-exec and has operations like setuid in between.  If something like
-setuid() is called before exec we check in exec.
+The counter case is apache having a dedicated user for running
+cgi-scripts and using RLIMIT_NPROC to limit how many of those processes
+can exist.  Unless I am misunderstanding something that looks exactly
+like your login as non-root so you can run sudo to kill a fork-bomb.
 
-The case the check in exec is aimed at supporting are processes spawned
-from a parent that have a different user (than the parent) and will
-never call fork again.   Those processes would be fundamentally immune
-to RLIMIT_NPROC if we don't check somewhere besides fork.  There is
-existing code in apache to use RLIMIT_NPROC this way.
+A comment from an in-process cleanup patch explains this as best I can:
+         /*
+         * In general rlimits are only enforced when a new resource
+         * is acquired.  That would be during fork for RLIMIT_NPROC.
+         * That is insufficient for RLIMIT_NPROC as many attributes of
+         * a new process must be set between fork and exec.
+         *
+         * A case where this matter is when apache runs forks a process
+         * and calls setuid to run cgi-scripts as a different user.
+         * Generating those processes through a code sequence like:
+         *
+         *      fork()
+ 	 *	setrlimit(RLIMIT_NPROC, ...)         
+         *      execve()  -- suid wrapper
+         *      setuid()
+         *      execve()  -- cgi script
+         *
+         * The cgi-scripts are unlikely to fork on their own so unless
+         * RLIMIT_NPROC is checked after the user change and before
+         * the cgi-script starts, RLIMIT_NPROC simply will not be enforced
+         * for the cgi-scripts.
+         *
+         * So the code tracks if between fork and exec if an operation
+         * occurs that could cause the RLIMIT_NPROC check to fail.  If
+         * such an operation has happened re-check RLIMIT_NPROC.
+         */
 
 
-
-For your login case I have no problems with it in principle.  In
-practice I think you have to login as root to deal with a fork bomb that
-hits RLIMIT_NPROC and does not die gracefully.
-
-What I don't see about your login example is how it is practically
-different from the apache cgi script case, that the code has supported
-for 20 years, and that would be a regression if stopped supporting.
-
-If we want to stop supporting that case we can just remove all of the
-RLIMIT_NPROC tests everywhere except for fork, a nice cleanup.
-
-
-
-
-That still leaves me with mismatched effective vs real uid checks in
-fork when the effective and real uids don't match.  Which means testing
-for root with "capable(CAP_SYS_ADMIN)" does not work.  Which today is
-make the code a bit of a challenge to understand and work with.
+Answered-Question: I was trying to ask if anyone knows of a reason why
+we can't just sanitize the rlimits of the process during suid exec?
+Linus your guideline would appear to allow that behavior.  Unfortunately
+that looks like it would break current usage of apache suexec.
 
 Eric
