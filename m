@@ -2,279 +2,99 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 14B62C433FE
-	for <linux-api@archiver.kernel.org>; Wed,  2 Mar 2022 09:58:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 05EE2C433F5
+	for <linux-api@archiver.kernel.org>; Wed,  2 Mar 2022 20:43:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240761AbiCBJ6m (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 2 Mar 2022 04:58:42 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47708 "EHLO
+        id S244116AbiCBUoV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 2 Mar 2022 15:44:21 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41894 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S240798AbiCBJ6L (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 2 Mar 2022 04:58:11 -0500
-Received: from mga02.intel.com (mga02.intel.com [134.134.136.20])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B64D0BDE41;
-        Wed,  2 Mar 2022 01:57:19 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1646215039; x=1677751039;
-  h=from:to:cc:subject:date:message-id:in-reply-to:
-   references:mime-version:content-transfer-encoding;
-  bh=VVGdFbQA5dpTmH1Oi8imwujW6M34G1DuUPJxrfXUWac=;
-  b=dUJKeVCEss+KIYUuBxj/U2E91CJk4EQBdgVwdxdCiUH7IxQfuWD7ciBE
-   7CTSyFgpqzbdVXtLW0mcWNq7J8kRPZ18sBOU0ZUXVEmY2ky0rSw9aMlH6
-   S+dPvdcG7dZgST+UeOaYlEf1g296G0Vox4JkeCC4li8fuF3CgPIOBtxRO
-   tcjGWlRvmtCknvVFzT5EmYFYRxjoKHyKE6Z6TPvG/mUAx5FK1VGd47s2w
-   CAO8N0OKnJMehp6YSj03+QefFnWqLPSLcHb84M/Kz2WIHu6zeZlrts2Tr
-   +bOCE5qMaBYaM5ifYiinoASp/vYfJoEIOQ6pKOsJRY6pMTMTC0FWz2kNF
-   A==;
-X-IronPort-AV: E=McAfee;i="6200,9189,10273"; a="240777082"
-X-IronPort-AV: E=Sophos;i="5.90,148,1643702400"; 
-   d="scan'208";a="240777082"
-Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by orsmga101.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Mar 2022 01:57:19 -0800
-X-IronPort-AV: E=Sophos;i="5.90,148,1643702400"; 
-   d="scan'208";a="551182160"
-Received: from abotoi-mobl2.ger.corp.intel.com (HELO ijarvine-MOBL2.ger.corp.intel.com) ([10.251.218.48])
-  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Mar 2022 01:57:12 -0800
-From:   =?UTF-8?q?Ilpo=20J=C3=A4rvinen?= <ilpo.jarvinen@linux.intel.com>
-To:     linux-serial@vger.kernel.org, Jiri Slaby <jirislaby@kernel.org>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc:     linux-kernel@vger.kernel.org, Lukas Wunner <lukas@wunner.de>,
-        Johan Hovold <johan@kernel.org>,
-        Andy Shevchenko <andriy.shevchenko@linux.intel.com>,
-        Heikki Krogerus <heikki.krogerus@linux.intel.com>,
-        =?UTF-8?q?Ilpo=20J=C3=A4rvinen?= <ilpo.jarvinen@linux.intel.com>,
-        linux-api@vger.kernel.org, Richard Henderson <rth@twiddle.net>,
-        Ivan Kokshaysky <ink@jurassic.park.msu.ru>,
-        Matt Turner <mattst88@gmail.com>, linux-alpha@vger.kernel.org,
-        Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
-        linux-mips@vger.kernel.org,
-        "James E.J. Bottomley" <James.Bottomley@HansenPartnership.com>,
-        Helge Deller <deller@gmx.de>, linux-parisc@vger.kernel.org,
-        Michael Ellerman <mpe@ellerman.id.au>,
-        Benjamin Herrenschmidt <benh@kernel.crashing.org>,
-        Paul Mackerras <paulus@samba.org>,
-        linuxppc-dev@lists.ozlabs.org,
-        "David S. Miller" <davem@davemloft.net>,
-        sparclinux@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>,
-        linux-arch@vger.kernel.org, linux-usb@vger.kernel.org
-Subject: [RFC PATCH 5/7] serial: termbits: ADDRB to indicate 9th bit addressing mode
-Date:   Wed,  2 Mar 2022 11:56:04 +0200
-Message-Id: <20220302095606.14818-6-ilpo.jarvinen@linux.intel.com>
-X-Mailer: git-send-email 2.30.2
-In-Reply-To: <20220302095606.14818-1-ilpo.jarvinen@linux.intel.com>
-References: <20220302095606.14818-1-ilpo.jarvinen@linux.intel.com>
+        with ESMTP id S231127AbiCBUoV (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 2 Mar 2022 15:44:21 -0500
+Received: from mail-pj1-f41.google.com (mail-pj1-f41.google.com [209.85.216.41])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 77BFA36B6A;
+        Wed,  2 Mar 2022 12:43:37 -0800 (PST)
+Received: by mail-pj1-f41.google.com with SMTP id gj15-20020a17090b108f00b001bef86c67c1so2753935pjb.3;
+        Wed, 02 Mar 2022 12:43:37 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=lgYOR0NAjV43r8oYaHMPMronWC+T+uvO+TYbc9ZRf2U=;
+        b=Do7KuqMBP/y4oIXCc27REEmmeyXsQ6BpAC2gB6U/LVB2ZNfh4Nh9GmKMZPuFes/YLC
+         pHO8uQOYa/PKUaJhi3WDoHy8KcCkLkLZgvHOBnNnqfRzrGEz20DRVGbHUkIIRZWGQeu8
+         fzyZDAGiKgkuRZ2dtHZaLS6JzPV4zMF/sygEzbeF+6zvqGtxSzRIEZTFhRfQBIlE7RJF
+         9F9iFyjiuHKY1F/mE/XWWByHSumXeQHnLjkI2CPFr/t/5PwZpfOtCNX2x1/qW/0/t33L
+         A8k649uAPfZ972Tlr0KQCNp6qHYmmsl+UT0hXzwKmpD7N/O9s7bQ4EvEGLeMaLL2z9NI
+         jZIw==
+X-Gm-Message-State: AOAM532wr43A/92deLW2TbooI5zAFm1jwDp3LLIoYzl5q46w9sHMXH0W
+        tTkJFtYz6r/mm07TRtQWbFcqdUTLcF4=
+X-Google-Smtp-Source: ABdhPJyaNbmqlyYCF0pLP/kU5mYs6ZZtG6sJ6Lt4AcJ3790H8g6EdnWM4bXzhCMZArL+GVOyY1Rd0w==
+X-Received: by 2002:a17:902:d50b:b0:151:94d9:eeaf with SMTP id b11-20020a170902d50b00b0015194d9eeafmr5879371plg.133.1646253816786;
+        Wed, 02 Mar 2022 12:43:36 -0800 (PST)
+Received: from garbanzo (136-24-173-63.cab.webpass.net. [136.24.173.63])
+        by smtp.gmail.com with ESMTPSA id k4-20020a17090a910400b001bd171c7fd4sm5933510pjo.25.2022.03.02.12.43.34
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 02 Mar 2022 12:43:35 -0800 (PST)
+Date:   Wed, 2 Mar 2022 12:43:32 -0800
+From:   Luis Chamberlain <mcgrof@kernel.org>
+To:     "hch@infradead.org" <hch@infradead.org>
+Cc:     Kanchan Joshi <joshiiitr@gmail.com>,
+        Damien Le Moal <Damien.LeMoal@wdc.com>,
+        Jens Axboe <axboe@kernel.dk>,
+        Pavel Begunkov <asml.silence@gmail.com>,
+        Kanchan Joshi <joshi.k@samsung.com>,
+        "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>,
+        "bcrl@kvack.org" <bcrl@kvack.org>,
+        Matthew Wilcox <willy@infradead.org>,
+        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "linux-aio@kvack.org" <linux-aio@kvack.org>,
+        "io-uring@vger.kernel.org" <io-uring@vger.kernel.org>,
+        "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
+        SelvaKumar S <selvakuma.s1@samsung.com>,
+        Nitesh Shetty <nj.shetty@samsung.com>,
+        Javier Gonzalez <javier.gonz@samsung.com>,
+        Johannes Thumshirn <Johannes.Thumshirn@wdc.com>,
+        Naohiro Aota <Naohiro.Aota@wdc.com>,
+        Adam Manzanares <a.manzanares@samsung.com>,
+        "Remzi H. Arpaci-Dusseau" <remzi@cs.wisc.edu>
+Subject: Re: [PATCH v4 6/6] io_uring: add support for zone-append
+Message-ID: <20220302204332.dgstbjcpzgiurn5t@garbanzo>
+References: <MWHPR04MB375863C20C1EF2CB27E62703E74E0@MWHPR04MB3758.namprd04.prod.outlook.com>
+ <20200731091416.GA29634@infradead.org>
+ <MWHPR04MB37586D39CA389296CE0252A4E74E0@MWHPR04MB3758.namprd04.prod.outlook.com>
+ <20200731094135.GA4104@infradead.org>
+ <MWHPR04MB3758A4B2967DB1FABAAD9265E74E0@MWHPR04MB3758.namprd04.prod.outlook.com>
+ <20200731125110.GA11500@infradead.org>
+ <CY4PR04MB37517D633920E4D31AC6EA0DE74B0@CY4PR04MB3751.namprd04.prod.outlook.com>
+ <20200814081411.GA16943@infradead.org>
+ <CA+1E3r+WXC_MK5Zf2OZEv17ddJDjtXbhpRFoeDns4F341xMhow@mail.gmail.com>
+ <20200908151801.GA16742@infradead.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20200908151801.GA16742@infradead.org>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add ADDRB to termbits to indicate 9th bit addressing mode.
-This change is necessary for supporting devices with RS485
-multipoint addressing [*]. A later patch in the patch series
-adds support for Synopsys Designware UART capable for 9th bit
-addressing mode. In this mode, 9th bit is used to indicate an
-address (byte) within the communication line. The 9th bit
-addressing mode is selected using ADDRB introduced by an earlier
-patch.
+On Tue, Sep 08, 2020 at 04:18:01PM +0100, hch@infradead.org wrote:
+> On Mon, Sep 07, 2020 at 12:31:42PM +0530, Kanchan Joshi wrote:
+> > But there are use-cases which benefit from supporting zone-append on
+> > raw block-dev path.
+> > Certain user-space log-structured/cow FS/DB will use the device that
+> > way. Aerospike is one example.
+> > Pass-through is synchronous, and we lose the ability to use io-uring.
+> 
+> So use zonefs, which is designed exactly for that use case.
 
-[*] Technically, RS485 is just an electronic spec and does not
-itself specify the 9th bit addressing mode but 9th bit seems
-at least "semi-standard" way to do addressing with RS485.
+Using zonefs to test append alone can introduce a slight overhead with
+the VFS if we want to do something such as just testing any hot path
+with append and the block layer. If we want to live with that, that's
+fine!
 
-Cc: linux-api@vger.kernel.org
-Cc: Richard Henderson <rth@twiddle.net>
-Cc: Ivan Kokshaysky <ink@jurassic.park.msu.ru>
-Cc: Matt Turner <mattst88@gmail.com>
-Cc: linux-alpha@vger.kernel.org
-Cc: Thomas Bogendoerfer <tsbogend@alpha.franken.de>
-Cc: linux-mips@vger.kernel.org
-Cc: "James E.J. Bottomley" <James.Bottomley@HansenPartnership.com>
-Cc: Helge Deller <deller@gmx.de>
-Cc: linux-parisc@vger.kernel.org
-Cc: Michael Ellerman <mpe@ellerman.id.au>
-Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-Cc: Paul Mackerras <paulus@samba.org>
-Cc: linuxppc-dev@lists.ozlabs.org
-Cc: "David S. Miller" <davem@davemloft.net>
-Cc: sparclinux@vger.kernel.org
-Cc: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-arch@vger.kernel.org
-Cc: linux-usb@vger.kernel.org
-Signed-off-by: Ilpo Järvinen <ilpo.jarvinen@linux.intel.com>
----
- arch/alpha/include/uapi/asm/termbits.h   | 1 +
- arch/mips/include/uapi/asm/termbits.h    | 1 +
- arch/parisc/include/uapi/asm/termbits.h  | 1 +
- arch/powerpc/include/uapi/asm/termbits.h | 1 +
- arch/sparc/include/uapi/asm/termbits.h   | 1 +
- drivers/tty/amiserial.c                  | 6 +++++-
- drivers/tty/moxa.c                       | 1 +
- drivers/tty/mxser.c                      | 1 +
- drivers/tty/serial/serial_core.c         | 2 ++
- drivers/tty/tty_ioctl.c                  | 2 ++
- drivers/usb/serial/usb-serial.c          | 5 +++--
- include/uapi/asm-generic/termbits.h      | 1 +
- 12 files changed, 20 insertions(+), 3 deletions(-)
+Just saying.
 
-diff --git a/arch/alpha/include/uapi/asm/termbits.h b/arch/alpha/include/uapi/asm/termbits.h
-index 4575ba34a0ea..285169c794ec 100644
---- a/arch/alpha/include/uapi/asm/termbits.h
-+++ b/arch/alpha/include/uapi/asm/termbits.h
-@@ -180,6 +180,7 @@ struct ktermios {
- #define HUPCL	00040000
- 
- #define CLOCAL	00100000
-+#define ADDRB	010000000		/* address bit */
- #define CMSPAR	  010000000000		/* mark or space (stick) parity */
- #define CRTSCTS	  020000000000		/* flow control */
- 
-diff --git a/arch/mips/include/uapi/asm/termbits.h b/arch/mips/include/uapi/asm/termbits.h
-index dfeffba729b7..e7ea31cfec78 100644
---- a/arch/mips/include/uapi/asm/termbits.h
-+++ b/arch/mips/include/uapi/asm/termbits.h
-@@ -181,6 +181,7 @@ struct ktermios {
- #define	 B3000000 0010015
- #define	 B3500000 0010016
- #define	 B4000000 0010017
-+#define ADDRB	  0020000	/* address bit */
- #define CIBAUD	  002003600000	/* input baud rate */
- #define CMSPAR	  010000000000	/* mark or space (stick) parity */
- #define CRTSCTS	  020000000000	/* flow control */
-diff --git a/arch/parisc/include/uapi/asm/termbits.h b/arch/parisc/include/uapi/asm/termbits.h
-index 40e920f8d683..629be061f5d5 100644
---- a/arch/parisc/include/uapi/asm/termbits.h
-+++ b/arch/parisc/include/uapi/asm/termbits.h
-@@ -158,6 +158,7 @@ struct ktermios {
- #define  B3000000 0010015
- #define  B3500000 0010016
- #define  B4000000 0010017
-+#define ADDRB	  0020000		/* address bit */
- #define CIBAUD    002003600000		/* input baud rate */
- #define CMSPAR    010000000000          /* mark or space (stick) parity */
- #define CRTSCTS   020000000000          /* flow control */
-diff --git a/arch/powerpc/include/uapi/asm/termbits.h b/arch/powerpc/include/uapi/asm/termbits.h
-index ed18bc61f63d..1b778ac562a4 100644
---- a/arch/powerpc/include/uapi/asm/termbits.h
-+++ b/arch/powerpc/include/uapi/asm/termbits.h
-@@ -171,6 +171,7 @@ struct ktermios {
- #define HUPCL	00040000
- 
- #define CLOCAL	00100000
-+#define ADDRB	00200000		/* address bit */
- #define CMSPAR	  010000000000		/* mark or space (stick) parity */
- #define CRTSCTS	  020000000000		/* flow control */
- 
-diff --git a/arch/sparc/include/uapi/asm/termbits.h b/arch/sparc/include/uapi/asm/termbits.h
-index ce5ad5d0f105..4ad60c4acf65 100644
---- a/arch/sparc/include/uapi/asm/termbits.h
-+++ b/arch/sparc/include/uapi/asm/termbits.h
-@@ -200,6 +200,7 @@ struct ktermios {
- #define B3000000  0x00001011
- #define B3500000  0x00001012
- #define B4000000  0x00001013  */
-+#define ADDRB	  0x00002000  /* address bit */
- #define CIBAUD	  0x100f0000  /* input baud rate (not used) */
- #define CMSPAR	  0x40000000  /* mark or space (stick) parity */
- #define CRTSCTS	  0x80000000  /* flow control */
-diff --git a/drivers/tty/amiserial.c b/drivers/tty/amiserial.c
-index 533d02b38e02..3ca97007bd6e 100644
---- a/drivers/tty/amiserial.c
-+++ b/drivers/tty/amiserial.c
-@@ -1175,7 +1175,11 @@ static void rs_set_termios(struct tty_struct *tty, struct ktermios *old_termios)
- {
- 	struct serial_state *info = tty->driver_data;
- 	unsigned long flags;
--	unsigned int cflag = tty->termios.c_cflag;
-+	unsigned int cflag;
-+
-+	tty->termios.c_cflag &= ~ADDRB;
-+
-+	cflag = tty->termios.c_cflag;
- 
- 	change_speed(tty, info, old_termios);
- 
-diff --git a/drivers/tty/moxa.c b/drivers/tty/moxa.c
-index f3c72ab1476c..07cd88152d58 100644
---- a/drivers/tty/moxa.c
-+++ b/drivers/tty/moxa.c
-@@ -2050,6 +2050,7 @@ static int MoxaPortSetTermio(struct moxa_port *port, struct ktermios *termio,
- 
- 	ofsAddr = port->tableAddr;
- 
-+	termio->c_cflag &= ~ADDRB;
- 	mode = termio->c_cflag & CSIZE;
- 	if (mode == CS5)
- 		mode = MX_CS5;
-diff --git a/drivers/tty/mxser.c b/drivers/tty/mxser.c
-index 836c9eca2946..220676363a07 100644
---- a/drivers/tty/mxser.c
-+++ b/drivers/tty/mxser.c
-@@ -577,6 +577,7 @@ static void mxser_change_speed(struct tty_struct *tty, struct ktermios *old_term
- 	struct mxser_port *info = tty->driver_data;
- 	unsigned cflag, cval;
- 
-+	tty->termios.c_cflag &= ~ADDRB;
- 	cflag = tty->termios.c_cflag;
- 
- 	if (mxser_set_baud(tty, tty_get_baud_rate(tty))) {
-diff --git a/drivers/tty/serial/serial_core.c b/drivers/tty/serial/serial_core.c
-index 846192a7b4bf..8ab88293c917 100644
---- a/drivers/tty/serial/serial_core.c
-+++ b/drivers/tty/serial/serial_core.c
-@@ -1489,6 +1489,8 @@ static void uart_set_termios(struct tty_struct *tty,
- 		goto out;
- 	}
- 
-+	tty->termios.c_cflag &= ~ADDRB;
-+
- 	uart_change_speed(tty, state, old_termios);
- 	/* reload cflag from termios; port driver may have overridden flags */
- 	cflag = tty->termios.c_cflag;
-diff --git a/drivers/tty/tty_ioctl.c b/drivers/tty/tty_ioctl.c
-index 63181925ec1a..934037d78868 100644
---- a/drivers/tty/tty_ioctl.c
-+++ b/drivers/tty/tty_ioctl.c
-@@ -319,6 +319,8 @@ unsigned char tty_get_frame_size(unsigned int cflag)
- 		bits++;
- 	if (cflag & PARENB)
- 		bits++;
-+	if (cflag & ADDRB)
-+		bits++;
- 
- 	return bits;
- }
-diff --git a/drivers/usb/serial/usb-serial.c b/drivers/usb/serial/usb-serial.c
-index 24101bd7fcad..44b73aea80bb 100644
---- a/drivers/usb/serial/usb-serial.c
-+++ b/drivers/usb/serial/usb-serial.c
-@@ -525,9 +525,10 @@ static void serial_set_termios(struct tty_struct *tty, struct ktermios *old)
- 
- 	dev_dbg(&port->dev, "%s\n", __func__);
- 
--	if (port->serial->type->set_termios)
-+	if (port->serial->type->set_termios) {
-+		tty->termios.c_cflag &= ~ADDRB;
- 		port->serial->type->set_termios(tty, port, old);
--	else
-+	} else
- 		tty_termios_copy_hw(&tty->termios, old);
- }
- 
-diff --git a/include/uapi/asm-generic/termbits.h b/include/uapi/asm-generic/termbits.h
-index 2fbaf9ae89dd..5f5228329d45 100644
---- a/include/uapi/asm-generic/termbits.h
-+++ b/include/uapi/asm-generic/termbits.h
-@@ -157,6 +157,7 @@ struct ktermios {
- #define  B3000000 0010015
- #define  B3500000 0010016
- #define  B4000000 0010017
-+#define ADDRB     0020000	/* address bit */
- #define CIBAUD	  002003600000	/* input baud rate */
- #define CMSPAR	  010000000000	/* mark or space (stick) parity */
- #define CRTSCTS	  020000000000	/* flow control */
--- 
-2.30.2
-
+  Luis
