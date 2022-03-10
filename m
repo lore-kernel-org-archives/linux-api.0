@@ -2,46 +2,31 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2B027C4332F
-	for <linux-api@archiver.kernel.org>; Thu, 10 Mar 2022 14:14:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 496EDC433EF
+	for <linux-api@archiver.kernel.org>; Thu, 10 Mar 2022 23:08:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233885AbiCJOP1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 10 Mar 2022 09:15:27 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52280 "EHLO
+        id S1344516AbiCJXJf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 10 Mar 2022 18:09:35 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51364 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S243104AbiCJOOl (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 10 Mar 2022 09:14:41 -0500
-Received: from mga12.intel.com (mga12.intel.com [192.55.52.136])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 316851390F8;
-        Thu, 10 Mar 2022 06:11:56 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1646921516; x=1678457516;
-  h=from:to:cc:subject:date:message-id:in-reply-to:
-   references;
-  bh=XcUkjLL+YpWw11P834waxgWm/NgeT+vT/ACdu5U5CAo=;
-  b=F/sUjSpCuWk97h0sO46fD8jRuA5FWxvDd7aR3R7NaO1nE+jWvZXr0D6X
-   7wV4dJPL83+hSaW5X+NXupMONaBK+cElKsWFL+e8KgMo050tAAXng81hQ
-   lF8vP+Q/dzgF4dcZBWpHsqRa8oGrIPlmFkBhAM+2KckfcgAMk7+7kE5I0
-   Oizkr9EPNs4pC1KYrd8PnQNMf6493I9na6tX9HBAV1LjccSeiGQ6luqTj
-   ha3tiaEZDTNZK2PaAFfwJaX9xTmZeEBA5np1QiG01hLK02CewHfNNmUOW
-   7vDoveF13QNAwosp2COiEYa9HBK2oj0CUjxpSmqVBGccZjPPJ5y4ieCqP
-   w==;
-X-IronPort-AV: E=McAfee;i="6200,9189,10281"; a="235206263"
-X-IronPort-AV: E=Sophos;i="5.90,170,1643702400"; 
-   d="scan'208";a="235206263"
-Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Mar 2022 06:11:21 -0800
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.90,170,1643702400"; 
-   d="scan'208";a="554655270"
-Received: from chaop.bj.intel.com ([10.240.192.101])
-  by orsmga008.jf.intel.com with ESMTP; 10 Mar 2022 06:11:12 -0800
-From:   Chao Peng <chao.p.peng@linux.intel.com>
-To:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
+        with ESMTP id S232714AbiCJXJe (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 10 Mar 2022 18:09:34 -0500
+Received: from mail105.syd.optusnet.com.au (mail105.syd.optusnet.com.au [211.29.132.249])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id DE6F8119F3E;
+        Thu, 10 Mar 2022 15:08:32 -0800 (PST)
+Received: from dread.disaster.area (pa49-186-150-27.pa.vic.optusnet.com.au [49.186.150.27])
+        by mail105.syd.optusnet.com.au (Postfix) with ESMTPS id 73D1310E29AA;
+        Fri, 11 Mar 2022 10:08:23 +1100 (AEDT)
+Received: from dave by dread.disaster.area with local (Exim 4.92.3)
+        (envelope-from <david@fromorbit.com>)
+        id 1nSRtO-003xhf-9L; Fri, 11 Mar 2022 10:08:22 +1100
+Date:   Fri, 11 Mar 2022 10:08:22 +1100
+From:   Dave Chinner <david@fromorbit.com>
+To:     Chao Peng <chao.p.peng@linux.intel.com>
+Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
         linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
-        linux-api@vger.kernel.org, qemu-devel@nongnu.org
-Cc:     Paolo Bonzini <pbonzini@redhat.com>,
+        linux-api@vger.kernel.org, qemu-devel@nongnu.org,
+        Paolo Bonzini <pbonzini@redhat.com>,
         Jonathan Corbet <corbet@lwn.net>,
         Sean Christopherson <seanjc@google.com>,
         Vitaly Kuznetsov <vkuznets@redhat.com>,
@@ -61,49 +46,105 @@ Cc:     Paolo Bonzini <pbonzini@redhat.com>,
         Vlastimil Babka <vbabka@suse.cz>,
         Vishal Annapurve <vannapurve@google.com>,
         Yu Zhang <yu.c.zhang@linux.intel.com>,
-        Chao Peng <chao.p.peng@linux.intel.com>,
         "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
         luto@kernel.org, jun.nakajima@intel.com, dave.hansen@intel.com,
         ak@linux.intel.com, david@redhat.com
-Subject: [PATCH v5 13/13] memfd_create.2: Describe MFD_INACCESSIBLE flag
-Date:   Thu, 10 Mar 2022 22:09:11 +0800
-Message-Id: <20220310140911.50924-14-chao.p.peng@linux.intel.com>
-X-Mailer: git-send-email 2.17.1
-In-Reply-To: <20220310140911.50924-1-chao.p.peng@linux.intel.com>
+Subject: Re: [PATCH v5 03/13] mm/shmem: Support memfile_notifier
+Message-ID: <20220310230822.GO661808@dread.disaster.area>
 References: <20220310140911.50924-1-chao.p.peng@linux.intel.com>
+ <20220310140911.50924-4-chao.p.peng@linux.intel.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20220310140911.50924-4-chao.p.peng@linux.intel.com>
+X-Optus-CM-Score: 0
+X-Optus-CM-Analysis: v=2.4 cv=deDjYVbe c=1 sm=1 tr=0 ts=622a84f0
+        a=sPqof0Mm7fxWrhYUF33ZaQ==:117 a=sPqof0Mm7fxWrhYUF33ZaQ==:17
+        a=kj9zAlcOel0A:10 a=o8Y5sQTvuykA:10 a=QyXUC8HyAAAA:8 a=7-415B0cAAAA:8
+        a=RCrhQ6IY2R1Uy-UsxHgA:9 a=CjuIK1q_8ugA:10 a=biEYGPWJfzWAr4FL6Ov7:22
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Signed-off-by: Chao Peng <chao.p.peng@linux.intel.com>
----
- man2/memfd_create.2 | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
+On Thu, Mar 10, 2022 at 10:09:01PM +0800, Chao Peng wrote:
+> From: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+> 
+> It maintains a memfile_notifier list in shmem_inode_info structure and
+> implements memfile_pfn_ops callbacks defined by memfile_notifier. It
+> then exposes them to memfile_notifier via
+> shmem_get_memfile_notifier_info.
+> 
+> We use SGP_NOALLOC in shmem_get_lock_pfn since the pages should be
+> allocated by userspace for private memory. If there is no pages
+> allocated at the offset then error should be returned so KVM knows that
+> the memory is not private memory.
+> 
+> Signed-off-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+> Signed-off-by: Chao Peng <chao.p.peng@linux.intel.com>
+> ---
+>  include/linux/shmem_fs.h |  4 +++
+>  mm/shmem.c               | 76 ++++++++++++++++++++++++++++++++++++++++
+>  2 files changed, 80 insertions(+)
+> 
+> diff --git a/include/linux/shmem_fs.h b/include/linux/shmem_fs.h
+> index 2dde843f28ef..7bb16f2d2825 100644
+> --- a/include/linux/shmem_fs.h
+> +++ b/include/linux/shmem_fs.h
+> @@ -9,6 +9,7 @@
+>  #include <linux/percpu_counter.h>
+>  #include <linux/xattr.h>
+>  #include <linux/fs_parser.h>
+> +#include <linux/memfile_notifier.h>
+>  
+>  /* inode in-kernel data */
+>  
+> @@ -28,6 +29,9 @@ struct shmem_inode_info {
+>  	struct simple_xattrs	xattrs;		/* list of xattrs */
+>  	atomic_t		stop_eviction;	/* hold when working on inode */
+>  	unsigned int		xflags;		/* shmem extended flags */
+> +#ifdef CONFIG_MEMFILE_NOTIFIER
+> +	struct memfile_notifier_list memfile_notifiers;
+> +#endif
+>  	struct inode		vfs_inode;
+>  };
+>  
+> diff --git a/mm/shmem.c b/mm/shmem.c
+> index 9b31a7056009..7b43e274c9a2 100644
+> --- a/mm/shmem.c
+> +++ b/mm/shmem.c
+> @@ -903,6 +903,28 @@ static struct folio *shmem_get_partial_folio(struct inode *inode, pgoff_t index)
+>  	return page ? page_folio(page) : NULL;
+>  }
+>  
+> +static void notify_fallocate(struct inode *inode, pgoff_t start, pgoff_t end)
+> +{
+> +#ifdef CONFIG_MEMFILE_NOTIFIER
+> +	struct shmem_inode_info *info = SHMEM_I(inode);
+> +
+> +	memfile_notifier_fallocate(&info->memfile_notifiers, start, end);
+> +#endif
+> +}
 
-diff --git a/man2/memfd_create.2 b/man2/memfd_create.2
-index 89e9c4136..2698222ae 100644
---- a/man2/memfd_create.2
-+++ b/man2/memfd_create.2
-@@ -101,6 +101,19 @@ meaning that no other seals can be set on the file.
- .\" FIXME Why is the MFD_ALLOW_SEALING behavior not simply the default?
- .\" Is it worth adding some text explaining this?
- .TP
-+.BR MFD_INACCESSIBLE
-+Disallow userspace access through ordinary MMU accesses via
-+.BR read (2),
-+.BR write (2)
-+and
-+.BR mmap (2).
-+The file size cannot be changed once initialized.
-+This flag cannot coexist with
-+.B MFD_ALLOW_SEALING
-+and when this flag is set, the initial set of seals will be
-+.B F_SEAL_SEAL,
-+meaning that no other seals can be set on the file.
-+.TP
- .BR MFD_HUGETLB " (since Linux 4.14)"
- .\" commit 749df87bd7bee5a79cef073f5d032ddb2b211de8
- The anonymous file will be created in the hugetlbfs filesystem using
+*notify_populate(), not fallocate.  This is a notification that a
+range has been populated, not that the fallocate() syscall was run
+to populate the backing store of a file.
+
+i.e.  fallocate is the name of a userspace filesystem API that can
+be used to manipulate the backing store of a file in various ways.
+It can both populate and punch away the backing store of a file, and
+some operations that fallocate() can run will do both (e.g.
+FALLOC_FL_ZERO_RANGE) and so could generate both
+notify_invalidate() and a notify_populate() events.
+
+Hence "fallocate" as an internal mm namespace or operation does not
+belong anywhere in core MM infrastructure - it should never get used
+anywhere other than the VFS/filesystem layers that implement the
+fallocate() syscall or use it directly.
+
+Cheers,
+
+Dave.
+
 -- 
-2.17.1
-
+Dave Chinner
+david@fromorbit.com
