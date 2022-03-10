@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8225DC433F5
-	for <linux-api@archiver.kernel.org>; Thu, 10 Mar 2022 14:13:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B82C9C433F5
+	for <linux-api@archiver.kernel.org>; Thu, 10 Mar 2022 14:13:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S242939AbiCJOOK (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 10 Mar 2022 09:14:10 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50554 "EHLO
+        id S242903AbiCJOOf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 10 Mar 2022 09:14:35 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52048 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S243043AbiCJONj (ORCPT
+        with ESMTP id S243055AbiCJONj (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Thu, 10 Mar 2022 09:13:39 -0500
 Received: from mga02.intel.com (mga02.intel.com [134.134.136.20])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 33BB9158781;
-        Thu, 10 Mar 2022 06:11:34 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6F9869A9B5;
+        Thu, 10 Mar 2022 06:11:37 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1646921494; x=1678457494;
+  t=1646921497; x=1678457497;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=/0lWU+5EyoSjlOB1k9o55wX3sxsJiR5VJJRuHs8r7qY=;
-  b=kiYvPnW9Gj7SQrP24WbI06ECFPfV2PqyoFFes50+7S86EZlVoYo7g0Jx
-   jYL0+D2UIylthTW7Aw3zTuAs5o660VG2VDDGcDryyAfhXmhIgvJdPAl8A
-   aJojElt2ht3053BNck435zMaBVB5t/QxOWfBb0sZdduj+iEuH0TMcdlRo
-   dVbqlVuSo/9IqGNcc3okXn3h5UMvLItMzfvWTn2Scq/5Nr52PKDo1uC9W
-   P6etffT2Y22yZqN30E3aWg1ihKLdCQ/qKLfi8FDaxZ1vWTc164ge7T8NK
-   qcBa8KAk/DXSfNwUsgYLGdAYpV2XN25Ht9BQivzLaDSplSTk2a1R8hdO+
-   A==;
-X-IronPort-AV: E=McAfee;i="6200,9189,10281"; a="242702683"
+  bh=UDNf/tndP7AKz2Uk9JPtbsxmn9QkdDXr+UJSlA/azbE=;
+  b=O+YpcDiy1oXurDZKsyZVFJGI1pPv7DnewXMpBYDVw6YIyq1s4VN9+Ncc
+   wLm5S4V1j2GC0AG8q8eP9PaWBn+4LP5wzVddndRBxK7h66QOH/txLZYZH
+   4i+DB0Jr5DEQjEhdE5xoR681vqcHUFE4UXS9i/axp+bLcPo2kQ6X032dK
+   GONoT3dk4umm9NRp53s+Wrm46e32mqEKPyiTosJCI/N7dvOge5C9gmnZR
+   I+8FraorLY6y5PKl6V8F1aoT5MgdKpxunySqL3sPEkvY80DJJ1ZQwDwgb
+   tQqxsp1ui5yJB3K7Kz1AGxZoujLjAwWqKqGfZQ34aad4tDkYw/7SD4FiR
+   w==;
+X-IronPort-AV: E=McAfee;i="6200,9189,10281"; a="242702811"
 X-IronPort-AV: E=Sophos;i="5.90,170,1643702400"; 
-   d="scan'208";a="242702683"
+   d="scan'208";a="242702811"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by orsmga101.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Mar 2022 06:10:40 -0800
+  by orsmga101.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Mar 2022 06:11:05 -0800
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="5.90,170,1643702400"; 
-   d="scan'208";a="554655084"
+   d="scan'208";a="554655204"
 Received: from chaop.bj.intel.com ([10.240.192.101])
-  by orsmga008.jf.intel.com with ESMTP; 10 Mar 2022 06:10:32 -0800
+  by orsmga008.jf.intel.com with ESMTP; 10 Mar 2022 06:10:56 -0800
 From:   Chao Peng <chao.p.peng@linux.intel.com>
 To:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
         linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
@@ -65,9 +65,9 @@ Cc:     Paolo Bonzini <pbonzini@redhat.com>,
         "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
         luto@kernel.org, jun.nakajima@intel.com, dave.hansen@intel.com,
         ak@linux.intel.com, david@redhat.com
-Subject: [PATCH v5 08/13] KVM: Use memfile_pfn_ops to obtain pfn for private pages
-Date:   Thu, 10 Mar 2022 22:09:06 +0800
-Message-Id: <20220310140911.50924-9-chao.p.peng@linux.intel.com>
+Subject: [PATCH v5 11/13] KVM: Zap existing KVM mappings when pages changed in the private fd
+Date:   Thu, 10 Mar 2022 22:09:09 +0800
+Message-Id: <20220310140911.50924-12-chao.p.peng@linux.intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20220310140911.50924-1-chao.p.peng@linux.intel.com>
 References: <20220310140911.50924-1-chao.p.peng@linux.intel.com>
@@ -75,100 +75,103 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Private pages are not mmap-ed into userspace so can not reply on
-get_user_pages() to obtain the pfn. Instead we add a memfile_pfn_ops
-pointer pfn_ops in each private memslot and use it to obtain the pfn
-for a gfn. To do that, KVM should convert the gfn to the offset into
-the fd and then call get_lock_pfn callback. Once KVM completes its job
-it should call put_unlock_pfn to unlock the pfn. Note the pfn(page) is
-locked between get_lock_pfn/put_unlock_pfn to ensure pfn is valid when
-KVM uses it to establish the mapping in the secondary MMU page table.
+KVM gets notified when memory pages changed in the memory backing store.
+When userspace allocates the memory with fallocate() or frees memory
+with fallocate(FALLOC_FL_PUNCH_HOLE), memory backing store calls into
+KVM fallocate/invalidate callbacks respectively. To ensure KVM never
+maps both the private and shared variants of a GPA into the guest, in
+the fallocate callback, we should zap the existing shared mapping and
+in the invalidate callback we should zap the existing private mapping.
 
-The pfn_ops is initialized via memfile_register_notifier from the memory
-backing store that provided the private_fd.
+In the callbacks, KVM firstly converts the offset range into the
+gfn_range and then calls existing kvm_unmap_gfn_range() which will zap
+the shared or private mapping. Both callbacks pass in a memslot
+reference but we need 'kvm' so add a reference in memslot structure.
 
 Signed-off-by: Yu Zhang <yu.c.zhang@linux.intel.com>
 Signed-off-by: Chao Peng <chao.p.peng@linux.intel.com>
 ---
- arch/x86/kvm/Kconfig     |  1 +
- include/linux/kvm_host.h | 33 +++++++++++++++++++++++++++++++++
- 2 files changed, 34 insertions(+)
+ include/linux/kvm_host.h |  3 ++-
+ virt/kvm/kvm_main.c      | 36 ++++++++++++++++++++++++++++++++++++
+ 2 files changed, 38 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/kvm/Kconfig b/arch/x86/kvm/Kconfig
-index e3cbd7706136..ca7b2a6a452a 100644
---- a/arch/x86/kvm/Kconfig
-+++ b/arch/x86/kvm/Kconfig
-@@ -48,6 +48,7 @@ config KVM
- 	select SRCU
- 	select INTERVAL_TREE
- 	select HAVE_KVM_PM_NOTIFIER if PM
-+	select MEMFILE_NOTIFIER
- 	help
- 	  Support hosting fully virtualized guest machines using hardware
- 	  virtualization extensions.  You will need a fairly recent
 diff --git a/include/linux/kvm_host.h b/include/linux/kvm_host.h
-index c92c70174248..6e1d770d6bf8 100644
+index 9b175aeca63f..186b9b981a65 100644
 --- a/include/linux/kvm_host.h
 +++ b/include/linux/kvm_host.h
-@@ -44,6 +44,7 @@
+@@ -236,7 +236,7 @@ bool kvm_setup_async_pf(struct kvm_vcpu *vcpu, gpa_t cr2_or_gpa,
+ int kvm_async_pf_wakeup_all(struct kvm_vcpu *vcpu);
+ #endif
  
- #include <asm/kvm_host.h>
- #include <linux/kvm_dirty_ring.h>
-+#include <linux/memfile_notifier.h>
- 
- #ifndef KVM_MAX_VCPU_IDS
- #define KVM_MAX_VCPU_IDS KVM_MAX_VCPUS
-@@ -565,6 +566,7 @@ struct kvm_memory_slot {
- 	u16 as_id;
- 	struct file *private_file;
+-#ifdef KVM_ARCH_WANT_MMU_NOTIFIER
++#if defined(KVM_ARCH_WANT_MMU_NOTIFIER) || defined(CONFIG_MEMFILE_NOTIFIER)
+ struct kvm_gfn_range {
+ 	struct kvm_memory_slot *slot;
+ 	gfn_t start;
+@@ -568,6 +568,7 @@ struct kvm_memory_slot {
  	loff_t private_offset;
-+	struct memfile_pfn_ops *pfn_ops;
+ 	struct memfile_pfn_ops *pfn_ops;
+ 	struct memfile_notifier notifier;
++	struct kvm *kvm;
  };
  
  static inline bool kvm_slot_is_private(const struct kvm_memory_slot *slot)
-@@ -915,6 +917,7 @@ static inline void kvm_irqfd_exit(void)
- {
- }
- #endif
-+
- int kvm_init(void *opaque, unsigned vcpu_size, unsigned vcpu_align,
- 		  struct module *module);
- void kvm_exit(void);
-@@ -2217,4 +2220,34 @@ static inline void kvm_handle_signal_exit(struct kvm_vcpu *vcpu)
- /* Max number of entries allowed for each kvm dirty ring */
- #define  KVM_DIRTY_RING_MAX_ENTRIES  65536
+diff --git a/virt/kvm/kvm_main.c b/virt/kvm/kvm_main.c
+index 67349421eae3..52319f49d58a 100644
+--- a/virt/kvm/kvm_main.c
++++ b/virt/kvm/kvm_main.c
+@@ -841,8 +841,43 @@ static int kvm_init_mmu_notifier(struct kvm *kvm)
+ #endif /* CONFIG_MMU_NOTIFIER && KVM_ARCH_WANT_MMU_NOTIFIER */
  
-+#ifdef CONFIG_MEMFILE_NOTIFIER
-+static inline long kvm_memfile_get_pfn(struct kvm_memory_slot *slot, gfn_t gfn,
-+				       int *order)
+ #ifdef CONFIG_MEMFILE_NOTIFIER
++static void kvm_memfile_notifier_handler(struct memfile_notifier *notifier,
++					 pgoff_t start, pgoff_t end)
 +{
-+	pgoff_t index = gfn - slot->base_gfn +
-+			(slot->private_offset >> PAGE_SHIFT);
++	int idx;
++	struct kvm_memory_slot *slot = container_of(notifier,
++						    struct kvm_memory_slot,
++						    notifier);
++	struct kvm_gfn_range gfn_range = {
++		.slot		= slot,
++		.start		= start - (slot->private_offset >> PAGE_SHIFT),
++		.end		= end - (slot->private_offset >> PAGE_SHIFT),
++		.may_block 	= true,
++	};
++	struct kvm *kvm = slot->kvm;
 +
-+	return slot->pfn_ops->get_lock_pfn(file_inode(slot->private_file),
-+					   index, order);
++	gfn_range.start = max(gfn_range.start, slot->base_gfn);
++	gfn_range.end = min(gfn_range.end, slot->base_gfn + slot->npages);
++
++	if (gfn_range.start >= gfn_range.end)
++		return;
++
++	idx = srcu_read_lock(&kvm->srcu);
++	KVM_MMU_LOCK(kvm);
++	kvm_unmap_gfn_range(kvm, &gfn_range);
++	kvm_flush_remote_tlbs(kvm);
++	KVM_MMU_UNLOCK(kvm);
++	srcu_read_unlock(&kvm->srcu, idx);
 +}
 +
-+static inline void kvm_memfile_put_pfn(struct kvm_memory_slot *slot,
-+				       kvm_pfn_t pfn)
-+{
-+	slot->pfn_ops->put_unlock_pfn(pfn);
-+}
++static struct memfile_notifier_ops kvm_memfile_notifier_ops = {
++	.invalidate = kvm_memfile_notifier_handler,
++	.fallocate = kvm_memfile_notifier_handler,
++};
 +
-+#else
-+static inline long kvm_memfile_get_pfn(struct kvm_memory_slot *slot, gfn_t gfn,
-+				       int *order)
-+{
-+	return -1;
-+}
-+
-+static inline void kvm_memfile_put_pfn(struct kvm_memory_slot *slot,
-+				       kvm_pfn_t pfn)
-+{
-+}
-+#endif /* CONFIG_MEMFILE_NOTIFIER */
-+
- #endif
+ static inline int kvm_memfile_register(struct kvm_memory_slot *slot)
+ {
++	slot->notifier.ops = &kvm_memfile_notifier_ops;
+ 	return memfile_register_notifier(file_inode(slot->private_file),
+ 					 &slot->notifier,
+ 					 &slot->pfn_ops);
+@@ -1963,6 +1998,7 @@ int __kvm_set_memory_region(struct kvm *kvm,
+ 	new->private_file = file;
+ 	new->private_offset = mem->flags & KVM_MEM_PRIVATE ?
+ 			      region_ext->private_offset : 0;
++	new->kvm = kvm;
+ 
+ 	r = kvm_set_memslot(kvm, old, new, change);
+ 	if (!r)
 -- 
 2.17.1
 
