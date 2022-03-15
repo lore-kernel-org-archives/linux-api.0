@@ -2,175 +2,82 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1B2E2C433EF
-	for <linux-api@archiver.kernel.org>; Fri, 11 Mar 2022 08:42:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 48F29C433F5
+	for <linux-api@archiver.kernel.org>; Tue, 15 Mar 2022 23:19:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229882AbiCKInl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 11 Mar 2022 03:43:41 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42406 "EHLO
+        id S236985AbiCOXUW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 15 Mar 2022 19:20:22 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33942 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238414AbiCKInk (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 11 Mar 2022 03:43:40 -0500
-Received: from mga05.intel.com (mga05.intel.com [192.55.52.43])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6D3B73B3F4;
-        Fri, 11 Mar 2022 00:42:37 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1646988157; x=1678524157;
-  h=date:from:to:cc:subject:message-id:reply-to:references:
-   mime-version:in-reply-to;
-  bh=rnnCy0Hbi4uhBKWJV93SLPhz7c/vwnMymNdqjK9CGiI=;
-  b=TSElsKllxlM6Vbk/Yu5miqQ82L2dxUe/dDgksMB0D2EdOXf8XYk2WkEj
-   myfQNcCnR6zYAGT12LUIKb8v3YV9o/90cR3BDbuXEH+LX9DqDeVD32A1M
-   8rNxfacfmDOdjrJiizTANRs3sG23rLUpT9TSd9jxsx1ZO2+pX2Kxy+Cq8
-   nNPz0jbwJzTVG/OayqiycDDw3+vZOaAntqGF4w+S4wRM1YExYLl09AMQ6
-   vkqLelSenko/TAyf/FG1Ngp00gfmzfLgYgD4beHN9Op/lpMch9ZLhABxN
-   u1g/19eSh9AuGotby4eBXtAboRcwbyLK/1dgRkKnzlZJtpeEgILjBNmVD
-   A==;
-X-IronPort-AV: E=McAfee;i="6200,9189,10282"; a="341958572"
-X-IronPort-AV: E=Sophos;i="5.90,173,1643702400"; 
-   d="scan'208";a="341958572"
-Received: from orsmga007.jf.intel.com ([10.7.209.58])
-  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 11 Mar 2022 00:42:35 -0800
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.90,173,1643702400"; 
-   d="scan'208";a="538926645"
-Received: from chaop.bj.intel.com (HELO localhost) ([10.240.192.101])
-  by orsmga007.jf.intel.com with ESMTP; 11 Mar 2022 00:42:24 -0800
-Date:   Fri, 11 Mar 2022 16:42:08 +0800
-From:   Chao Peng <chao.p.peng@linux.intel.com>
-To:     Dave Chinner <david@fromorbit.com>
-Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
-        linux-api@vger.kernel.org, qemu-devel@nongnu.org,
-        Paolo Bonzini <pbonzini@redhat.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Sean Christopherson <seanjc@google.com>,
-        Vitaly Kuznetsov <vkuznets@redhat.com>,
-        Wanpeng Li <wanpengli@tencent.com>,
-        Jim Mattson <jmattson@google.com>,
-        Joerg Roedel <joro@8bytes.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
-        x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
-        Hugh Dickins <hughd@google.com>,
-        Jeff Layton <jlayton@kernel.org>,
-        "J . Bruce Fields" <bfields@fieldses.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Mike Rapoport <rppt@kernel.org>,
-        Steven Price <steven.price@arm.com>,
-        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
-        Vlastimil Babka <vbabka@suse.cz>,
-        Vishal Annapurve <vannapurve@google.com>,
-        Yu Zhang <yu.c.zhang@linux.intel.com>,
-        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
-        luto@kernel.org, jun.nakajima@intel.com, dave.hansen@intel.com,
-        ak@linux.intel.com, david@redhat.com
-Subject: Re: [PATCH v5 03/13] mm/shmem: Support memfile_notifier
-Message-ID: <20220311084208.GB56193@chaop.bj.intel.com>
-Reply-To: Chao Peng <chao.p.peng@linux.intel.com>
-References: <20220310140911.50924-1-chao.p.peng@linux.intel.com>
- <20220310140911.50924-4-chao.p.peng@linux.intel.com>
- <20220310230822.GO661808@dread.disaster.area>
+        with ESMTP id S1352542AbiCOXUV (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 15 Mar 2022 19:20:21 -0400
+Received: from out03.mta.xmission.com (out03.mta.xmission.com [166.70.13.233])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B80902B1AD;
+        Tue, 15 Mar 2022 16:19:08 -0700 (PDT)
+Received: from in02.mta.xmission.com ([166.70.13.52]:49304)
+        by out03.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1nUGRX-000gSW-46; Tue, 15 Mar 2022 17:19:07 -0600
+Received: from ip68-227-174-4.om.om.cox.net ([68.227.174.4]:37848 helo=email.froward.int.ebiederm.org.xmission.com)
+        by in02.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <ebiederm@xmission.com>)
+        id 1nUGRW-00EYhW-AA; Tue, 15 Mar 2022 17:19:06 -0600
+From:   "Eric W. Biederman" <ebiederm@xmission.com>
+To:     <linux-kernel@vger.kernel.org>
+Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
+        Alexey Gladkov <legion@kernel.org>,
+        Kyle Huey <me@kylehuey.com>, Oleg Nesterov <oleg@redhat.com>,
+        Kees Cook <keescook@chromium.org>,
+        Al Viro <viro@ZenIV.linux.org.uk>, <linux-api@vger.kernel.org>,
+        Jens Axboe <axboe@kernel.dk>
+References: <87a6ha4zsd.fsf@email.froward.int.ebiederm.org>
+        <87bl1kunjj.fsf@email.froward.int.ebiederm.org>
+        <87r19opkx1.fsf_-_@email.froward.int.ebiederm.org>
+        <87o82gdlu9.fsf_-_@email.froward.int.ebiederm.org>
+Date:   Tue, 15 Mar 2022 18:18:59 -0500
+In-Reply-To: <87o82gdlu9.fsf_-_@email.froward.int.ebiederm.org> (Eric
+        W. Biederman's message of "Tue, 08 Mar 2022 18:13:34 -0600")
+Message-ID: <87tubyx0rg.fsf_-_@email.froward.int.ebiederm.org>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20220310230822.GO661808@dread.disaster.area>
-User-Agent: Mutt/1.9.4 (2018-02-28)
+Content-Type: text/plain
+X-XM-SPF: eid=1nUGRW-00EYhW-AA;;;mid=<87tubyx0rg.fsf_-_@email.froward.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.174.4;;;frm=ebiederm@xmission.com;;;spf=neutral
+X-XM-AID: U2FsdGVkX18q0QTOMQzEBUR9felhWzseChKcq8/iNIs=
+X-SA-Exim-Connect-IP: 68.227.174.4
+X-SA-Exim-Mail-From: ebiederm@xmission.com
+Subject: [PATCH 0/2] ptrace: Making the ptrace changes atomic
+X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
+X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Mar 11, 2022 at 10:08:22AM +1100, Dave Chinner wrote:
-> On Thu, Mar 10, 2022 at 10:09:01PM +0800, Chao Peng wrote:
-> > From: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
-> > 
-> > It maintains a memfile_notifier list in shmem_inode_info structure and
-> > implements memfile_pfn_ops callbacks defined by memfile_notifier. It
-> > then exposes them to memfile_notifier via
-> > shmem_get_memfile_notifier_info.
-> > 
-> > We use SGP_NOALLOC in shmem_get_lock_pfn since the pages should be
-> > allocated by userspace for private memory. If there is no pages
-> > allocated at the offset then error should be returned so KVM knows that
-> > the memory is not private memory.
-> > 
-> > Signed-off-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
-> > Signed-off-by: Chao Peng <chao.p.peng@linux.intel.com>
-> > ---
-> >  include/linux/shmem_fs.h |  4 +++
-> >  mm/shmem.c               | 76 ++++++++++++++++++++++++++++++++++++++++
-> >  2 files changed, 80 insertions(+)
-> > 
-> > diff --git a/include/linux/shmem_fs.h b/include/linux/shmem_fs.h
-> > index 2dde843f28ef..7bb16f2d2825 100644
-> > --- a/include/linux/shmem_fs.h
-> > +++ b/include/linux/shmem_fs.h
-> > @@ -9,6 +9,7 @@
-> >  #include <linux/percpu_counter.h>
-> >  #include <linux/xattr.h>
-> >  #include <linux/fs_parser.h>
-> > +#include <linux/memfile_notifier.h>
-> >  
-> >  /* inode in-kernel data */
-> >  
-> > @@ -28,6 +29,9 @@ struct shmem_inode_info {
-> >  	struct simple_xattrs	xattrs;		/* list of xattrs */
-> >  	atomic_t		stop_eviction;	/* hold when working on inode */
-> >  	unsigned int		xflags;		/* shmem extended flags */
-> > +#ifdef CONFIG_MEMFILE_NOTIFIER
-> > +	struct memfile_notifier_list memfile_notifiers;
-> > +#endif
-> >  	struct inode		vfs_inode;
-> >  };
-> >  
-> > diff --git a/mm/shmem.c b/mm/shmem.c
-> > index 9b31a7056009..7b43e274c9a2 100644
-> > --- a/mm/shmem.c
-> > +++ b/mm/shmem.c
-> > @@ -903,6 +903,28 @@ static struct folio *shmem_get_partial_folio(struct inode *inode, pgoff_t index)
-> >  	return page ? page_folio(page) : NULL;
-> >  }
-> >  
-> > +static void notify_fallocate(struct inode *inode, pgoff_t start, pgoff_t end)
-> > +{
-> > +#ifdef CONFIG_MEMFILE_NOTIFIER
-> > +	struct shmem_inode_info *info = SHMEM_I(inode);
-> > +
-> > +	memfile_notifier_fallocate(&info->memfile_notifiers, start, end);
-> > +#endif
-> > +}
-> 
-> *notify_populate(), not fallocate.  This is a notification that a
-> range has been populated, not that the fallocate() syscall was run
-> to populate the backing store of a file.
-> 
-> i.e.  fallocate is the name of a userspace filesystem API that can
-> be used to manipulate the backing store of a file in various ways.
-> It can both populate and punch away the backing store of a file, and
-> some operations that fallocate() can run will do both (e.g.
-> FALLOC_FL_ZERO_RANGE) and so could generate both
-> notify_invalidate() and a notify_populate() events.
 
-Yes, I fully agreed fallocate syscall has both populating and hole
-punching semantics so notify_fallocate can be misleading since we
-actually mean populate here.
+While working on cleaning up the exit path it have had occasion to look
+at what guarantees are provided for setting and reading the fields that
+are provided in task_struct for ptraces.  Namely exit_code,
+ptrace_message, and last_siginfo. It turns out as the ptrace interface
+in the kernel was extended in the kernel the old existing interfaces
+in the kernel were just wrapped and not properly updated to handle
+the new functionality.  This lead to races and inconsistencies.
 
-> 
-> Hence "fallocate" as an internal mm namespace or operation does not
-> belong anywhere in core MM infrastructure - it should never get used
-> anywhere other than the VFS/filesystem layers that implement the
-> fallocate() syscall or use it directly.
+This fixes the reason for the races and inconsistencies by moving the
+work of maintaining the ptrace fields into ptrace_stop.
 
-Will use your suggestion through the series where applied. Thanks for
-your suggestion.
+The inconsistency that results in some ptrace_stop points continuing
+with a signal while others will not I have left alone as it appears to
+be part of our userspace ABI, and changing that risks breaking
+userspace.
 
-Chao
-> 
-> Cheers,
-> 
-> Dave.
-> 
-> -- 
-> Dave Chinner
-> david@fromorbit.com
+Eric W. Biederman (2):
+      ptrace: Move setting/clearing ptrace_message into ptrace_stop
+      ptrace: Return the signal to continue with from ptrace_stop
+
+ include/linux/ptrace.h      | 17 +++++++----------
+ include/uapi/linux/ptrace.h |  2 +-
+ kernel/signal.c             | 40 ++++++++++++++++++++++++----------------
+ 3 files changed, 32 insertions(+), 27 deletions(-)
+
+Eric
