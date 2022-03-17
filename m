@@ -2,43 +2,43 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 28BD8C433FE
-	for <linux-api@archiver.kernel.org>; Thu, 17 Mar 2022 17:47:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 76865C433FE
+	for <linux-api@archiver.kernel.org>; Thu, 17 Mar 2022 18:09:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237065AbiCQRsV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 17 Mar 2022 13:48:21 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58470 "EHLO
+        id S237183AbiCQSKW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 17 Mar 2022 14:10:22 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47614 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237094AbiCQRsS (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 17 Mar 2022 13:48:18 -0400
+        with ESMTP id S237195AbiCQSKV (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 17 Mar 2022 14:10:21 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 45391205952
-        for <linux-api@vger.kernel.org>; Thu, 17 Mar 2022 10:46:58 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id B852F132EA4
+        for <linux-api@vger.kernel.org>; Thu, 17 Mar 2022 11:09:03 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1647539217;
+        s=mimecast20190719; t=1647540542;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=TSju7HUI+LaKZ4xnPb9CmLb83y1fN66XS6ap4ycu7PM=;
-        b=AW37m/aYqKNpT60n2zpFWrrrQwZv79E+JVGl4sKvJZVuYinbE0O3eMn2FPfZvRuVWBglRD
-        ed6nXKZr8OaO/+ig9xhRJIPRaJeK3OHX/wrxB26q+sMQ4HXGP/3yxuMwhMfp7AfO6Yg/Nr
-        QjxVIkwRIezG3NNY85a16Fm6PscJopU=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+        bh=qyvEicvZsthPeXhIK1mEJ7p6TnH+7Rc2hbOq6UcgGIo=;
+        b=HpXsfStQwQDbszyuqxXTyNMjAd/IpeQT7Tn0/LgPdCM0o3Ojf//U7HdaN6ZQVTA0TYJPko
+        ZKekIHwEWSTfCX/hcGpMFTuvxDoq9kkn2HyaXEIHq/d3tapZq3XOMHR+kN/1vuaz2oZ9yw
+        3Efj8gQBgh7FtX5k8jLLaaVbVzVB07M=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-416-2CRTTnGSPaKpBp8b3QXeBA-1; Thu, 17 Mar 2022 13:46:53 -0400
-X-MC-Unique: 2CRTTnGSPaKpBp8b3QXeBA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-100-mhvfhfvMOraTaGW7IL9Elw-1; Thu, 17 Mar 2022 14:09:01 -0400
+X-MC-Unique: mhvfhfvMOraTaGW7IL9Elw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D2AFE1066694;
-        Thu, 17 Mar 2022 17:46:52 +0000 (UTC)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DA1F31C05152;
+        Thu, 17 Mar 2022 18:09:00 +0000 (UTC)
 Received: from dhcp-27-174.brq.redhat.com (unknown [10.40.192.69])
-        by smtp.corp.redhat.com (Postfix) with SMTP id B7A3E2D479;
-        Thu, 17 Mar 2022 17:46:50 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with SMTP id 98AA140FF40F;
+        Thu, 17 Mar 2022 18:08:58 +0000 (UTC)
 Received: by dhcp-27-174.brq.redhat.com (nbSMTP-1.00) for uid 1000
-        oleg@redhat.com; Thu, 17 Mar 2022 18:46:52 +0100 (CET)
-Date:   Thu, 17 Mar 2022 18:46:49 +0100
+        oleg@redhat.com; Thu, 17 Mar 2022 19:09:00 +0100 (CET)
+Date:   Thu, 17 Mar 2022 19:08:57 +0100
 From:   Oleg Nesterov <oleg@redhat.com>
 To:     "Eric W. Biederman" <ebiederm@xmission.com>
 Cc:     linux-kernel@vger.kernel.org,
@@ -47,35 +47,66 @@ Cc:     linux-kernel@vger.kernel.org,
         Kyle Huey <me@kylehuey.com>, Kees Cook <keescook@chromium.org>,
         Al Viro <viro@ZenIV.linux.org.uk>, linux-api@vger.kernel.org,
         Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 1/2] ptrace: Move setting/clearing ptrace_message into
+Subject: Re: [PATCH 2/2] ptrace: Return the signal to continue with from
  ptrace_stop
-Message-ID: <20220317174648.GA13318@redhat.com>
+Message-ID: <20220317180856.GB13318@redhat.com>
 References: <87a6ha4zsd.fsf@email.froward.int.ebiederm.org>
  <87bl1kunjj.fsf@email.froward.int.ebiederm.org>
  <87r19opkx1.fsf_-_@email.froward.int.ebiederm.org>
  <87o82gdlu9.fsf_-_@email.froward.int.ebiederm.org>
  <87tubyx0rg.fsf_-_@email.froward.int.ebiederm.org>
- <87bky67qfv.fsf_-_@email.froward.int.ebiederm.org>
+ <875yoe7qdp.fsf_-_@email.froward.int.ebiederm.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <87bky67qfv.fsf_-_@email.froward.int.ebiederm.org>
+In-Reply-To: <875yoe7qdp.fsf_-_@email.froward.int.ebiederm.org>
 User-Agent: Mutt/1.5.24 (2015-08-30)
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+Not sure I understand this patch, I can't apply it. I guess I need to
+clone your tree first, will do later.
+
+Just one question right now,
+
 On 03/15, Eric W. Biederman wrote:
 >
-> there are places
-> that set ptrace_message and don't clear it, and places that never set
-> it.
+> +static int ptrace_stop(int exit_code, int why, int clear_code,
+>  			unsigned long message, kernel_siginfo_t *info)
+>  	__releases(&current->sighand->siglock)
+>  	__acquires(&current->sighand->siglock)
+>  {
+>  	bool gstop_done = false;
+> +	bool read_code = true;
+>  
+>  	if (arch_ptrace_stop_needed()) {
+>  		/*
+> @@ -2305,8 +2307,9 @@ static void ptrace_stop(int exit_code, int why, int clear_code,
+>  
+>  		/* tasklist protects us from ptrace_freeze_traced() */
+>  		__set_current_state(TASK_RUNNING);
+> +		read_code = false;
+>  		if (clear_code)
+> -			current->exit_code = 0;
+> +			exit_code = 0;
+>  		read_unlock(&tasklist_lock);
+>  	}
+>  
+> @@ -2316,8 +2319,10 @@ static void ptrace_stop(int exit_code, int why, int clear_code,
+>  	 * any signal-sending on another CPU that wants to examine it.
+>  	 */
+>  	spin_lock_irq(&current->sighand->siglock);
+> +	if (read_code) exit_code = current->exit_code;
 
-Yes, I too never understood this.
+style ;)
 
-So I obviously like this change. The only problem (as usual) is that we
-can never know if something depends on this old (and strange) behaviour.
+>  	current->last_siginfo = NULL;
+>  	current->ptrace_message = 0;
+> +	current->exit_code = 0;
 
-Acked-by: Oleg Nesterov <oleg@redhat.com>
+OK, I like it... but can't we remove the ugly "int clear_code" arg?
+
+Oleg.
 
