@@ -2,108 +2,62 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6346AC433EF
-	for <linux-api@archiver.kernel.org>; Sun, 27 Mar 2022 21:03:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3A57FC433F5
+	for <linux-api@archiver.kernel.org>; Mon, 28 Mar 2022 07:52:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231824AbiC0VFJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 27 Mar 2022 17:05:09 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60420 "EHLO
+        id S231208AbiC1HyX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 28 Mar 2022 03:54:23 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59724 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229878AbiC0VFH (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 27 Mar 2022 17:05:07 -0400
-Received: from mail105.syd.optusnet.com.au (mail105.syd.optusnet.com.au [211.29.132.249])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 7A94D496BA;
-        Sun, 27 Mar 2022 14:03:27 -0700 (PDT)
-Received: from dread.disaster.area (pa49-186-150-27.pa.vic.optusnet.com.au [49.186.150.27])
-        by mail105.syd.optusnet.com.au (Postfix) with ESMTPS id B445B10E6855;
-        Mon, 28 Mar 2022 08:03:20 +1100 (AEDT)
-Received: from dave by dread.disaster.area with local (Exim 4.92.3)
-        (envelope-from <david@fromorbit.com>)
-        id 1nYa2h-00AeCQ-BD; Mon, 28 Mar 2022 08:03:19 +1100
-Date:   Mon, 28 Mar 2022 08:03:19 +1100
-From:   Dave Chinner <david@fromorbit.com>
-To:     Trond Myklebust <trondmy@hammerspace.com>
-Cc:     "miklos@szeredi.hu" <miklos@szeredi.hu>,
-        "raven@themaw.net" <raven@themaw.net>,
-        "kzak@redhat.com" <kzak@redhat.com>,
-        "dhowells@redhat.com" <dhowells@redhat.com>,
-        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-security-module@vger.kernel.org" 
-        <linux-security-module@vger.kernel.org>,
-        "mszeredi@redhat.com" <mszeredi@redhat.com>,
-        "torvalds@linux-foundation.org" <torvalds@linux-foundation.org>,
-        "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>,
-        "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>,
-        "amir73il@gmail.com" <amir73il@gmail.com>,
-        "christian@brauner.io" <christian@brauner.io>,
-        "James.Bottomley@hansenpartnership.com" 
-        <James.Bottomley@hansenpartnership.com>
-Subject: Re: [RFC PATCH] getvalues(2) prototype
-Message-ID: <20220327210319.GM1609613@dread.disaster.area>
-References: <20220322192712.709170-1-mszeredi@redhat.com>
- <20220323225843.GI1609613@dread.disaster.area>
- <CAJfpegv6PmZ_RXipBs9UEjv_WfEUtTDE1uNZq+9fBkCzWPvXkw@mail.gmail.com>
- <20220324203116.GJ1609613@dread.disaster.area>
- <5d5c170949a5c4e2e4b8ef8949e5cdc5110eeabf.camel@hammerspace.com>
+        with ESMTP id S238968AbiC1HyW (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 28 Mar 2022 03:54:22 -0400
+X-Greylist: delayed 312 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Mon, 28 Mar 2022 00:52:42 PDT
+Received: from mail.ourpartnership.pl (mail.ourpartnership.pl [80.211.82.238])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4BBB852E5D
+        for <linux-api@vger.kernel.org>; Mon, 28 Mar 2022 00:52:42 -0700 (PDT)
+Received: by mail.ourpartnership.pl (Postfix, from userid 1001)
+        id 32347620E8; Mon, 28 Mar 2022 08:46:39 +0100 (BST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=ourpartnership.pl;
+        s=mail; t=1648453648;
+        bh=M1ZVeu3q6Upppe+FUx/3rgI7MKJXh389NZDbgCK1SX4=;
+        h=Date:From:To:Subject:From;
+        b=V/Pbtj/CpFIQ9bj/INFB60c3zaDVhvxVl1f9e97q5oRGzV4HzzEffuAzsu9QXS77R
+         M81oWE4lEF39UwIA4f6oVw//3eD/e05y69av4c2W67WLOugY/iKuouUSWOWjz5vt5w
+         DcVEYI48wLM3n2PrXwNuEDKEbmZr3i/t2BJCYjXDt1ZrfHn1ORM9PEweas0ajzqPeY
+         33gJti5mgZ8A1fuynskqhslunjhaZR4XjUzuUheZ2DjsXNmZmjF9lFfbMvIEe1RtIQ
+         ZD6ZNa+m2iGmAxRcbWpbOPvnstl2UgWZYv1XENIx7ydfzzPIT90j8WJhdtkvJ39D9R
+         NNusNy0oBnchA==
+Received: by mail.ourpartnership.pl for <linux-api@vger.kernel.org>; Mon, 28 Mar 2022 07:46:04 GMT
+Message-ID: <20220328074501-0.1.9.2aqv.0.28penknoc4@ourpartnership.pl>
+Date:   Mon, 28 Mar 2022 07:46:04 GMT
+From:   =?UTF-8?Q? "Arkadiusz_Soko=C5=82owski" ?= 
+        <arkadiusz.sokolowski@ourpartnership.pl>
+To:     <linux-api@vger.kernel.org>
+Subject: Koszty instalacji fotowoltaicznej
+X-Mailer: mail.ourpartnership.pl
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <5d5c170949a5c4e2e4b8ef8949e5cdc5110eeabf.camel@hammerspace.com>
-X-Optus-CM-Score: 0
-X-Optus-CM-Analysis: v=2.4 cv=deDjYVbe c=1 sm=1 tr=0 ts=6240d11d
-        a=sPqof0Mm7fxWrhYUF33ZaQ==:117 a=sPqof0Mm7fxWrhYUF33ZaQ==:17
-        a=8nJEP1OIZ-IA:10 a=o8Y5sQTvuykA:10 a=7-415B0cAAAA:8
-        a=SMe7BH-ruLLs_FX_YN0A:9 a=wPNLvfGTeEIA:10 a=biEYGPWJfzWAr4FL6Ov7:22
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Mar 25, 2022 at 04:42:27PM +0000, Trond Myklebust wrote:
-> On Fri, 2022-03-25 at 07:31 +1100, Dave Chinner wrote:
-> > > and anyway the point of a
-> > > hierarchical namespace is to be able to list nodes on each level. 
-> > > We
-> > > can use getxattr() for this purpose, just like getvalues() does in
-> > > the
-> > > above example.
-> > 
-> > Yup, and like Casey suggests, you could implement a generic
-> > getvalues()-like user library on top of it so users don't even need
-> > to know where and how the values are located or retrieved.
-> > 
-> > The other advantage of an xattr interface is that is also provides a
-> > symmetrical API for -changing- values. No need for some special
-> > configfs or configfd thingy for setting parameters - just change the
-> > value of the parameter or mount option with a simple setxattr call.
-> > That retains the simplicity of proc and sysfs attributes in that you
-> > can change them just by writing a new value to the file....
-> 
-> The downsides are, however, that the current interface provides little
-> in the way of atomicity if you want to read or write to multiple
-> attributes at the same time. Something like a backup program might want
-> to be able to atomically retrieve the ctime when it is backing up the
-> attributes.
+Dzie=C5=84 dobry,
 
-I assumed that batched updates were implied and understood after
-my earlier comments about XFS_IOC_ATTRMULTI_BY_HANDLE as used
-by xfsdump/restore for the past 20+ years.
+stworzyli=C5=9Bmy specjaln=C4=85 ofert=C4=99 dla firm, na kompleksow=C4=85=
+ obs=C5=82ug=C4=99 inwestycji w fotowoltaik=C4=99. =20
 
-> Also, when setting attributes, I'd like to avoid multiple syscalls when
-> I'm changing multiple related attributes.
->
-> IOW: Adding a batching interface that is akin to what Miklos was
-> proposing would be a helpful change if we want to go down this path.
+Specjalizujemy si=C4=99 w zakresie doboru, monta=C5=BCu i serwisie instal=
+acji fotowoltaicznych, dysponujemy najnowocze=C5=9Bniejszymi rozwi=C4=85z=
+ania, kt=C3=B3re zapewni=C4=85 Pa=C5=84stwu oczekiwane rezultaty.
 
-Yup, that's exactly what XFS_IOC_ATTRMULTI_BY_HANDLE provides and
-I'm assuming that would also be provided by whatever formalised
-generic syscall API we come up with here...
+Mo=C5=BCemy przygotowa=C4=87 dla Pa=C5=84stwa wst=C4=99pn=C4=85 kalkulacj=
+=C4=99 i przeanalizowa=C4=87 efekty mo=C5=BCliwe do osi=C4=85gni=C4=99cia=
+=2E
 
-Cheers,
+Czy s=C4=85 Pa=C5=84stwo otwarci na wst=C4=99pn=C4=85 rozmow=C4=99 w tym =
+temacie?
 
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+
+Pozdrawiam
+Arkadiusz Soko=C5=82owski
