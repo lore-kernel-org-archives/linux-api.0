@@ -2,132 +2,67 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 53938C433FE
-	for <linux-api@archiver.kernel.org>; Fri,  1 Apr 2022 19:57:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 737AEC433EF
+	for <linux-api@archiver.kernel.org>; Mon,  4 Apr 2022 08:17:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1351279AbiDAT7K (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 1 Apr 2022 15:59:10 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59960 "EHLO
+        id S241206AbiDDITB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 4 Apr 2022 04:19:01 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43486 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1351155AbiDAT7J (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 1 Apr 2022 15:59:09 -0400
-Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id ACEA5208247
-        for <linux-api@vger.kernel.org>; Fri,  1 Apr 2022 12:57:19 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id 50995B8263F
-        for <linux-api@vger.kernel.org>; Fri,  1 Apr 2022 19:57:18 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id A59D5C340EC;
-        Fri,  1 Apr 2022 19:57:15 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1648843037;
-        bh=g4Or6vlnQ5XPFOlbOvyFGMvehoU1w6Tr33vBEF06cv4=;
-        h=In-Reply-To:References:Date:From:To:Cc:Subject:From;
-        b=GWYEiatTd0puo8OWjdTnvzhD0fqOooLc45FBSvZvwWVJO0d7EeeWb7thOkDE9yU4M
-         qdpbQjkm5xWZ3+HhSx+x+app7Ra5/Y5/yT1V2OqgOnG1WGEZtOIM9s7nTOfNiy8YNF
-         UwgJ6bpbTCDwqtKrp1g2/I9pa1ubHMS6aMn8NS2pKQ/izgre+Txlykqnq6z297cM5D
-         E7zxkRjiJfPTByunh5ufN7VuyuwCFwrixkLnSol7daxGimb+kgvxHAzT4QV1Yz88XC
-         0Ekd1pD7YBwCMxJOeK+13kkmI/lBS9CAP7JFHrQHA1Gz9VlYYcmW7CE+zPHQfr1lPC
-         tuiQhwWMuYKgw==
-Received: from compute2.internal (compute2.nyi.internal [10.202.2.46])
-        by mailauth.nyi.internal (Postfix) with ESMTP id 4990827C0054;
-        Fri,  1 Apr 2022 15:57:14 -0400 (EDT)
-Received: from imap48 ([10.202.2.98])
-  by compute2.internal (MEProxy); Fri, 01 Apr 2022 15:57:14 -0400
-X-ME-Sender: <xms:GFlHYiRokfAQEOXS3JGVQ8fGEt9aARJbPyMM3ymgS2p4KiiRM0LYyA>
-    <xme:GFlHYnzLn5LXF0Y7iJiXJZD1GYvvbWvvTWmoH3r3L8GGKqyKyHXaxNm38fZUMC73C
-    sBCFRvt0e5DrZ7B_zg>
-X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvvddrudeiiedgudegfecutefuodetggdotefrod
-    ftvfcurfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfgh
-    necuuegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmd
-    enucfjughrpefofgggkfgjfhffhffvufgtsehttdertderredtnecuhfhrohhmpedftehn
-    ugihucfnuhhtohhmihhrshhkihdfuceolhhuthhosehkvghrnhgvlhdrohhrgheqnecugg
-    ftrfgrthhtvghrnheptdfhheettddvtedvtedugfeuuefhtddugedvleevleefvdetleff
-    gfefvdekgeefnecuvehluhhsthgvrhfuihiivgeptdenucfrrghrrghmpehmrghilhhfrh
-    homheprghnugihodhmvghsmhhtphgruhhthhhpvghrshhonhgrlhhithihqdduudeiudek
-    heeifedvqddvieefudeiiedtkedqlhhuthhopeepkhgvrhhnvghlrdhorhhgsehlihhnuh
-    igrdhluhhtohdruhhs
-X-ME-Proxy: <xmx:GFlHYv1jixSdphTgcgBt4k3ApxFLLREmwzVtH2R4FpXJdYAzolT8DQ>
-    <xmx:GFlHYuBMTtOSj8Tvkpa1ZxH5VAnOs_iojIWHPKc2ofrldE_VY-TwKg>
-    <xmx:GFlHYri_K6w69VmxOC5PmjtQo9sfLoKQOJBISmJk3ApiuCpGFiiQXA>
-    <xmx:GllHYkBzqd9lROHtGLpI27JhxgidDn8BgzezBQqjYAPE7wh_2Gh2xg>
-Received: by mailuser.nyi.internal (Postfix, from userid 501)
-        id 39BD021E0073; Fri,  1 Apr 2022 15:57:12 -0400 (EDT)
-X-Mailer: MessagingEngine.com Webmail Interface
-User-Agent: Cyrus-JMAP/3.7.0-alpha0-382-g88b93171a9-fm-20220330.001-g88b93171
-Mime-Version: 1.0
-Message-Id: <83fd55f8-cd42-4588-9bf6-199cbce70f33@www.fastmail.com>
-In-Reply-To: <YkcTTY4YjQs5BRhE@google.com>
-References: <20220310140911.50924-1-chao.p.peng@linux.intel.com>
- <YjyS6A0o4JASQK+B@google.com> <YkHspg+YzOsbUaCf@google.com>
- <YkH32nx+YsJuUbmZ@google.com> <YkIFW25WgV2WIQHb@google.com>
- <YkM7eHCHEBe5NkNH@google.com> <88620519-029e-342b-0a85-ce2a20eaf41b@arm.com>
- <YkQzfjgTQaDd2E2T@google.com> <YkSaUQX89ZEojsQb@google.com>
- <80aad2f9-9612-4e87-a27a-755d3fa97c92@www.fastmail.com>
- <YkcTTY4YjQs5BRhE@google.com>
-Date:   Fri, 01 Apr 2022 12:56:50 -0700
-From:   "Andy Lutomirski" <luto@kernel.org>
-To:     "Quentin Perret" <qperret@google.com>
-Cc:     "Sean Christopherson" <seanjc@google.com>,
-        "Steven Price" <steven.price@arm.com>,
-        "Chao Peng" <chao.p.peng@linux.intel.com>,
-        "kvm list" <kvm@vger.kernel.org>,
-        "Linux Kernel Mailing List" <linux-kernel@vger.kernel.org>,
-        linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
-        "Linux API" <linux-api@vger.kernel.org>, qemu-devel@nongnu.org,
-        "Paolo Bonzini" <pbonzini@redhat.com>,
-        "Jonathan Corbet" <corbet@lwn.net>,
-        "Vitaly Kuznetsov" <vkuznets@redhat.com>,
-        "Wanpeng Li" <wanpengli@tencent.com>,
-        "Jim Mattson" <jmattson@google.com>,
-        "Joerg Roedel" <joro@8bytes.org>,
-        "Thomas Gleixner" <tglx@linutronix.de>,
-        "Ingo Molnar" <mingo@redhat.com>, "Borislav Petkov" <bp@alien8.de>,
-        "the arch/x86 maintainers" <x86@kernel.org>,
-        "H. Peter Anvin" <hpa@zytor.com>,
-        "Hugh Dickins" <hughd@google.com>,
-        "Jeff Layton" <jlayton@kernel.org>,
-        "J . Bruce Fields" <bfields@fieldses.org>,
-        "Andrew Morton" <akpm@linux-foundation.org>,
-        "Mike Rapoport" <rppt@kernel.org>,
-        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
-        "Vlastimil Babka" <vbabka@suse.cz>,
-        "Vishal Annapurve" <vannapurve@google.com>,
-        "Yu Zhang" <yu.c.zhang@linux.intel.com>,
-        "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>,
-        "Nakajima, Jun" <jun.nakajima@intel.com>,
-        "Dave Hansen" <dave.hansen@intel.com>,
-        "Andi Kleen" <ak@linux.intel.com>,
-        "David Hildenbrand" <david@redhat.com>,
-        "Marc Zyngier" <maz@kernel.org>, "Will Deacon" <will@kernel.org>
-Subject: Re: [PATCH v5 00/13] KVM: mm: fd-based approach for supporting KVM guest
- private memory
-Content-Type: text/plain
+        with ESMTP id S237801AbiDDITB (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 4 Apr 2022 04:19:01 -0400
+X-Greylist: delayed 476 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Mon, 04 Apr 2022 01:17:05 PDT
+Received: from mail.coredeal.pl (mail.coredeal.pl [51.75.73.133])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BCA6E3525F
+        for <linux-api@vger.kernel.org>; Mon,  4 Apr 2022 01:17:05 -0700 (PDT)
+Received: by mail.coredeal.pl (Postfix, from userid 1002)
+        id 61D9CA39F5; Mon,  4 Apr 2022 08:06:04 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=coredeal.pl; s=mail;
+        t=1649059639; bh=9KGuIG62LgzC9aYmjKxzocuYLRCVghXg6v9Q1q2LHec=;
+        h=Date:From:To:Subject:From;
+        b=U8tvyoALoyb4MEhFh4SfuJKMIB5EChDKS2baGVzv7OkQro16TJJcMqdFgWjKaahQe
+         r3YRwT2GqHPiFWjFmw858aVQRhvK9snaVPErE5ZAnFT3/2qjZiB4dqjNsBVVSqM7n0
+         L3fMcPJz16Y39oWHOOxPnSXuzRBqUdKDOnig1i+toziN5eW+YTGQGm5Tp/IJljGSr2
+         NHwisSXIirX/akhkG3EiQ634Ctu7vwytRPE9Q+Nda/kGDh6PmMqe36actddPVp4TwF
+         tVYimkPhox2LJItGtlio4SqfutBf1os5bVA1f7xJPMZqf2wyECOv+YebZrwYhkp1Xn
+         GQKQjH5XJQeTA==
+Received: by mail.coredeal.pl for <linux-api@vger.kernel.org>; Mon,  4 Apr 2022 08:05:41 GMT
+Message-ID: <20220404064500-0.1.2c.c7ue.0.sr3o4ykndw@coredeal.pl>
+Date:   Mon,  4 Apr 2022 08:05:41 GMT
+From:   "Krzysztof Maj" <krzysztof.maj@coredeal.pl>
+To:     <linux-api@vger.kernel.org>
+Subject: Biznesowy angielski
+X-Mailer: mail.coredeal.pl
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Apr 1, 2022, at 7:59 AM, Quentin Perret wrote:
-> On Thursday 31 Mar 2022 at 09:04:56 (-0700), Andy Lutomirski wrote:
+Dzie=C5=84 dobry,=20
+
+czy rozwa=C5=BCali Pa=C5=84stwo rozw=C3=B3j kwalifikacji j=C4=99zykowych =
+swoich pracownik=C3=B3w?
+
+Opracowali=C5=9Bmy kursy j=C4=99zykowe dla r=C3=B3=C5=BCnych bran=C5=BC, =
+w kt=C3=B3rych koncentrujemy si=C4=99 na podniesieniu poziomu s=C5=82owni=
+ctwa i jako=C5=9Bci komunikacji wykorzystuj=C4=85c autorsk=C4=85 metod=C4=
+=99, stworzon=C4=85 specjalnie dla wymagaj=C4=85cego biznesu.=20
+
+Niestandardowy kurs on-line, dopasowany do profilu firmy i obszar=C3=B3w =
+=C5=9Bwiadczonych us=C5=82ug, w szybkim czasie przyniesie efekty, kt=C3=B3=
+re zwi=C4=99ksz=C4=85 komfort i jako=C5=9B=C4=87 pracy, rozwijaj=C4=85c m=
+o=C5=BCliwo=C5=9Bci biznesowe.=20
+
+Zdalne szkolenie j=C4=99zykowe to m.in. zaj=C4=99cia z native speakerami,=
+ kt=C3=B3re w szybkim czasie naucz=C4=85 pracownik=C3=B3w rozmawia=C4=87 =
+za pomoc=C4=85 jasnego i zwi=C4=99z=C5=82ego j=C4=99zyka Business English=
+=2E
+
+Czy m=C3=B3g=C5=82bym przedstawi=C4=87 wi=C4=99cej szczeg=C3=B3=C5=82=C3=B3=
+w i opowiedzie=C4=87 jak dzia=C5=82amy?=20
 
 
-> To answer your original question about memory 'conversion', the key
-> thing is that the pKVM hypervisor controls the stage-2 page-tables for
-> everyone in the system, all guests as well as the host. As such, a page
-> 'conversion' is nothing more than a permission change in the relevant
-> page-tables.
->
-
-So I can see two different ways to approach this.
-
-One is that you split the whole address space in half and, just like SEV and TDX, allocate one bit to indicate the shared/private status of a page.  This makes it work a lot like SEV and TDX.
-
-The other is to have shared and private pages be distinguished only by their hypercall history and the (protected) page tables.  This saves some address space and some page table allocations, but it opens some cans of worms too.  In particular, the guest and the hypervisor need to coordinate, in a way that the guest can trust, to ensure that the guest's idea of which pages are private match the host's.  This model seems a bit harder to support nicely with the private memory fd model, but not necessarily impossible.
-
-Also, what are you trying to accomplish by having the host userspace mmap private pages?  Is the idea that multiple guest could share the same page until such time as one of them tries to write to it?  That would be kind of like having a third kind of memory that's visible to host and guests but is read-only for everyone.  TDX and SEV can't support this at all (a private page belongs to one guest and one guest only, at least in SEV and in the current TDX SEAM spec).  I imagine that this could be supported with private memory fds with some care without mmap, though -- the host could still populate the page with memcpy.  Or I suppose a memslot could support using MAP_PRIVATE fds and have approximately the right semantics.
-
---Andy
-
-
+Pozdrawiam
+Krzysztof Maj
