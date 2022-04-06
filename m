@@ -2,54 +2,54 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B03F8C43217
-	for <linux-api@archiver.kernel.org>; Wed,  6 Apr 2022 04:01:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C6D92C433F5
+	for <linux-api@archiver.kernel.org>; Wed,  6 Apr 2022 14:23:01 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237465AbiDFEAP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 6 Apr 2022 00:00:15 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46672 "EHLO
+        id S234733AbiDFOY7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 6 Apr 2022 10:24:59 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51086 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1573157AbiDESF1 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 5 Apr 2022 14:05:27 -0400
-Received: from mail-pl1-x62e.google.com (mail-pl1-x62e.google.com [IPv6:2607:f8b0:4864:20::62e])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C0515EEA73
-        for <linux-api@vger.kernel.org>; Tue,  5 Apr 2022 11:03:27 -0700 (PDT)
-Received: by mail-pl1-x62e.google.com with SMTP id o20so5814581pla.13
-        for <linux-api@vger.kernel.org>; Tue, 05 Apr 2022 11:03:27 -0700 (PDT)
+        with ESMTP id S234763AbiDFOYe (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 6 Apr 2022 10:24:34 -0400
+Received: from mail-ej1-x636.google.com (mail-ej1-x636.google.com [IPv6:2a00:1450:4864:20::636])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 80B3C4967BC
+        for <linux-api@vger.kernel.org>; Wed,  6 Apr 2022 03:34:21 -0700 (PDT)
+Received: by mail-ej1-x636.google.com with SMTP id a6so3437817ejk.0
+        for <linux-api@vger.kernel.org>; Wed, 06 Apr 2022 03:34:21 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=google.com; s=20210112;
         h=date:from:to:cc:subject:message-id:references:mime-version
          :content-disposition:in-reply-to;
-        bh=U3PyY0pRKQhXeOMKJejZ2jWEMHgtC5U/1t6Griz2ZtE=;
-        b=KGXUBKKkDKDhZlvZKiQELbSWKwFyjZ9pqbjywy++hvUawyC+vx+Kiwb6Gb6jEV0Wuc
-         giwl5qnSM5u8wdE1F5+llR4K2Ticwza1m/ioW1C0ItJqonPtmvm5nhpHrTL3N6QT1Rl3
-         Wtn49OopVnhw8g8P+PKXrUXFRKcYdC8fjuouVVIXctNCy1B+qGpT4pX2jNYpbQ1t2mP6
-         xMe4g7fYtlOfWMZCvSnpCUHEZXd84dkEWXSH6ZD1YzTcBCMO32gius56GNlGsSmncOvV
-         KQlOe+jigYhK1S2TKkrRmuV21s9fTFFu+nLTpzm/DTIX7AvACXAolik1vLnEB78gFwNe
-         bYpg==
+        bh=iTXPlXz9Zr5EQou03o/EzBtB8wT2GGE1Oxj4KHnssrs=;
+        b=ayqp+jO7yOZ05GUhmKmLMJU9illW53IQuWYj97Bq0h7OEyqmw3078v9FFmpHAsDAsX
+         spKmsJURhryre2eQUlppZX9/HUMI+W6eoOizaX7iehhukxIce2QAtRFltzvot97mqi5g
+         wkzLHd/GXAJerFP3q1x2xzOele+vfbjGw1VTYhqxLnyW66oK1u7wRDE72iuiN53gsanI
+         rXtjHuLiferpfP6GaXR+e/2+55LTuT8kg2k0SD2i6I/8Spe3SQIHjv+mc1I1GC7cM2Bn
+         lfPpqaubm9GgEOe61Moi+rdCo7ZOQ3yLidHpWgZcNsZorkDZClOB35C15vOMByW5gWia
+         Ohgw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:date:from:to:cc:subject:message-id:references
          :mime-version:content-disposition:in-reply-to;
-        bh=U3PyY0pRKQhXeOMKJejZ2jWEMHgtC5U/1t6Griz2ZtE=;
-        b=eqlASryOwfM9VIumS0TOvuGtMqtV95L9ebu9UhaQrQdieqS0leD30g4xOZEeij3eIQ
-         T9x5lbuXb0OqMkt1kfqcWHoR6r4eyC6DNPCm/5nwGJ1hte9A4NaHih4orpmZ7cZBr+Hy
-         kCTrVPC1LTPK1CQmOuUMOvlXay3szp+gmS+sauK85/hdxRUB6Tcfw4ohFFhsyregVsOc
-         Jp+b9euN/UbEyBOXPEmKMmtaHB2JaPMav+mMAZYFu7Dak9EdRg8Lq7UOs5PfXVvmtCPU
-         DnC9QJ2cHPunMglhgg294njvESjbTSHPtkhXy4AlvBAgJlmZg2jVFPL1VOOvBj7sFZrE
-         b2Xw==
-X-Gm-Message-State: AOAM532SrqMpBADH05/t/hjk/nkO4Q4xHGiCWPa2xc3B8gjO56LW9m2H
-        /PT2EzwIxrxZPjaX3JXhIfeRtg==
-X-Google-Smtp-Source: ABdhPJyStH5/Nz6FqwbLd9JjuWL5wIJ/TCBBrc+CUyEhlKkOsXFCG0zdV80i6DTnhSTJUvObFVL14A==
-X-Received: by 2002:a17:903:288:b0:156:a6b5:80d4 with SMTP id j8-20020a170903028800b00156a6b580d4mr4934454plr.98.1649181806567;
-        Tue, 05 Apr 2022 11:03:26 -0700 (PDT)
-Received: from google.com (157.214.185.35.bc.googleusercontent.com. [35.185.214.157])
-        by smtp.gmail.com with ESMTPSA id d21-20020a056a0024d500b004fb0e7c7c3bsm17524046pfv.161.2022.04.05.11.03.25
+        bh=iTXPlXz9Zr5EQou03o/EzBtB8wT2GGE1Oxj4KHnssrs=;
+        b=J8rYnuhN6ZxMqoR36Rt9gyxrT7UDSnxZeD68k6pv4pZzT6/6wCUzyx7yk2KegQOJLi
+         5dbBzHdRFWj64VYJGaJiWDmusTws+5asaXRB3ek2y3dn2ODaZ6gZmQnptxxYzcTdxGN6
+         S4SYmicqU9jAMovRuFA+G4BNr64mfhYA4haletrKOr1nxYc3BC7t7wrUx33rlwBlQf/i
+         MOETsNl4JDMkg941abVCcf2oJiVF2XJoK4JVgnYQYVezMLRdjYBqNznCrO/SmzDp0nDc
+         6hPuohzmQrG/yjLw9XRQHZZ5mLdNqNc6kqIYYyY9HRvrtu29LAlNun4cu0Jr+M0GJDGm
+         N+Wg==
+X-Gm-Message-State: AOAM532a9z4/9TktR8neaZhy5r6J0Tl3YLBj39Sf+ZO4ZcJXHccdkTl0
+        L6Vr6Z9Bxk8KB4OHUe2XjnXQc1+3LAt08g==
+X-Google-Smtp-Source: ABdhPJx9uNXrv9QkGvgAJYDqUioNGXqvB3w7Wp/JIXcWJjl7z4UKv44fp6VMiLyGHlZ2RnmerugK6g==
+X-Received: by 2002:a17:907:3f02:b0:6e7:7172:4437 with SMTP id hq2-20020a1709073f0200b006e771724437mr7358942ejc.361.1649241258989;
+        Wed, 06 Apr 2022 03:34:18 -0700 (PDT)
+Received: from google.com (30.171.91.34.bc.googleusercontent.com. [34.91.171.30])
+        by smtp.gmail.com with ESMTPSA id x3-20020a50d9c3000000b0041c8ce4bcd7sm6543091edj.63.2022.04.06.03.34.18
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 05 Apr 2022 11:03:25 -0700 (PDT)
-Date:   Tue, 5 Apr 2022 18:03:21 +0000
-From:   Sean Christopherson <seanjc@google.com>
-To:     Quentin Perret <qperret@google.com>
+        Wed, 06 Apr 2022 03:34:18 -0700 (PDT)
+Date:   Wed, 6 Apr 2022 10:34:15 +0000
+From:   Quentin Perret <qperret@google.com>
+To:     Sean Christopherson <seanjc@google.com>
 Cc:     Andy Lutomirski <luto@kernel.org>,
         Steven Price <steven.price@arm.com>,
         Chao Peng <chao.p.peng@linux.intel.com>,
@@ -83,9 +83,8 @@ Cc:     Andy Lutomirski <luto@kernel.org>,
         Marc Zyngier <maz@kernel.org>, Will Deacon <will@kernel.org>
 Subject: Re: [PATCH v5 00/13] KVM: mm: fd-based approach for supporting KVM
  guest private memory
-Message-ID: <YkyEaYiL0BrDYcZv@google.com>
-References: <88620519-029e-342b-0a85-ce2a20eaf41b@arm.com>
- <YkQzfjgTQaDd2E2T@google.com>
+Message-ID: <Yk1spw4zIxR73VX8@google.com>
+References: <YkQzfjgTQaDd2E2T@google.com>
  <YkSaUQX89ZEojsQb@google.com>
  <80aad2f9-9612-4e87-a27a-755d3fa97c92@www.fastmail.com>
  <YkcTTY4YjQs5BRhE@google.com>
@@ -94,106 +93,65 @@ References: <88620519-029e-342b-0a85-ce2a20eaf41b@arm.com>
  <Ykslo2eo2eRXrpFR@google.com>
  <eefc3c74-acca-419c-8947-726ce2458446@www.fastmail.com>
  <Ykwbqv90C7+8K+Ao@google.com>
+ <YkyEaYiL0BrDYcZv@google.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <Ykwbqv90C7+8K+Ao@google.com>
+In-Reply-To: <YkyEaYiL0BrDYcZv@google.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Apr 05, 2022, Quentin Perret wrote:
-> On Monday 04 Apr 2022 at 15:04:17 (-0700), Andy Lutomirski wrote:
-> > >>  - it can be very useful for protected VMs to do shared=>private
-> > >>    conversions. Think of a VM receiving some data from the host in a
-> > >>    shared buffer, and then it wants to operate on that buffer without
-> > >>    risking to leak confidential informations in a transient state. In
-> > >>    that case the most logical thing to do is to convert the buffer back
-> > >>    to private, do whatever needs to be done on that buffer (decrypting a
-> > >>    frame, ...), and then share it back with the host to consume it;
-> > >
-> > > If performance is a motivation, why would the guest want to do two
-> > > conversions instead of just doing internal memcpy() to/from a private
-> > > page?  I would be quite surprised if multiple exits and TLB shootdowns is
-> > > actually faster, especially at any kind of scale where zapping stage-2
-> > > PTEs will cause lock contention and IPIs.
+On Tuesday 05 Apr 2022 at 18:03:21 (+0000), Sean Christopherson wrote:
+> On Tue, Apr 05, 2022, Quentin Perret wrote:
+> > On Monday 04 Apr 2022 at 15:04:17 (-0700), Andy Lutomirski wrote:
+> > > >>  - it can be very useful for protected VMs to do shared=>private
+> > > >>    conversions. Think of a VM receiving some data from the host in a
+> > > >>    shared buffer, and then it wants to operate on that buffer without
+> > > >>    risking to leak confidential informations in a transient state. In
+> > > >>    that case the most logical thing to do is to convert the buffer back
+> > > >>    to private, do whatever needs to be done on that buffer (decrypting a
+> > > >>    frame, ...), and then share it back with the host to consume it;
+> > > >
+> > > > If performance is a motivation, why would the guest want to do two
+> > > > conversions instead of just doing internal memcpy() to/from a private
+> > > > page?  I would be quite surprised if multiple exits and TLB shootdowns is
+> > > > actually faster, especially at any kind of scale where zapping stage-2
+> > > > PTEs will cause lock contention and IPIs.
+> > > 
+> > > I don't know the numbers or all the details, but this is arm64, which is a
+> > > rather better architecture than x86 in this regard.  So maybe it's not so
+> > > bad, at least in very simple cases, ignoring all implementation details.
+> > > (But see below.)  Also the systems in question tend to have fewer CPUs than
+> > > some of the massive x86 systems out there.
 > > 
-> > I don't know the numbers or all the details, but this is arm64, which is a
-> > rather better architecture than x86 in this regard.  So maybe it's not so
-> > bad, at least in very simple cases, ignoring all implementation details.
-> > (But see below.)  Also the systems in question tend to have fewer CPUs than
-> > some of the massive x86 systems out there.
+> > Yep. I can try and do some measurements if that's really necessary, but
+> > I'm really convinced the cost of the TLBI for the shared->private
+> > conversion is going to be significantly smaller than the cost of memcpy
+> > the buffer twice in the guest for us.
 > 
-> Yep. I can try and do some measurements if that's really necessary, but
-> I'm really convinced the cost of the TLBI for the shared->private
-> conversion is going to be significantly smaller than the cost of memcpy
-> the buffer twice in the guest for us.
+> It's not just the TLB shootdown, the VM-Exits aren't free.
 
-It's not just the TLB shootdown, the VM-Exits aren't free.   And barring non-trivial
-improvements to KVM's MMU, e.g. sharding of mmu_lock, modifying the page tables will
-block all other updates and MMU operations.  Taking mmu_lock for read, should arm64
-ever convert to a rwlock, is not an option because KVM needs to block other
-conversions to avoid races.
+Ack, but we can at least work on the rest (number of exits, locking, ...).
+The cost of the memcpy and the TLBI are really incompressible.
 
-Hmm, though batching multiple pages into a single request would mitigate most of
-the overhead.
+> And barring non-trivial
+> improvements to KVM's MMU, e.g. sharding of mmu_lock, modifying the page tables will
+> block all other updates and MMU operations.  Taking mmu_lock for read, should arm64
+> ever convert to a rwlock, is not an option because KVM needs to block other
+> conversions to avoid races.
 
-> There are variations of that idea: e.g. allow userspace to mmap the
-> entire private fd but w/o taking a reference on pages mapped with
-> PROT_NONE. And then the VMM can use mprotect() in response to
-> share/unshare requests. I think Marc liked that idea as it keeps the
-> userspace API closer to normal KVM -- there actually is a
-> straightforward gpa->hva relation. Not sure how much that would impact
-> the implementation at this point.
-> 
-> For the shared=>private conversion, this would be something like so:
-> 
->  - the guest issues a hypercall to unshare a page;
-> 
->  - the hypervisor forwards the request to the host;
-> 
->  - the host kernel forwards the request to userspace;
-> 
->  - userspace then munmap()s the shared page;
-> 
->  - KVM then tries to take a reference to the page. If it succeeds, it
->    re-enters the guest with a flag of some sort saying that the share
->    succeeded, and the hypervisor will adjust pgtables accordingly. If
->    KVM failed to take a reference, it flags this and the hypervisor will
->    be responsible for communicating that back to the guest. This means
->    the guest must handle failures (possibly fatal).
-> 
-> (There are probably many ways in which we can optimize this, e.g. by
-> having the host proactively munmap() pages it no longer needs so that
-> the unshare hypercall from the guest doesn't need to exit all the way
-> back to host userspace.)
+FWIW the host mmu_lock isn't all that useful for pKVM. The host doesn't
+have _any_ control over guest page-tables, and the hypervisor can't
+safely rely on the host for locking, so we have hypervisor-level
+synchronization.
 
-...
+> Hmm, though batching multiple pages into a single request would mitigate most of
+> the overhead.
 
-> > Maybe there could be a special mode for the private memory fds in which
-> > specific pages are marked as "managed by this fd but actually shared".
-> > pread() and pwrite() would work on those pages, but not mmap().  (Or maybe
-> > mmap() but the resulting mappings would not permit GUP.)
+Yep, there are a few tricks we can play to make this fairly efficient in
+the most common cases. And fine-grain locking at EL2 is really high up
+on the todo list :-)
 
-Unless I misunderstand what you intend by pread()/pwrite(), I think we'd need to
-allow mmap(), otherwise e.g. uaccess from the kernel wouldn't work.
-
-> > And transitioning them would be a special operation on the fd that is
-> > specific to pKVM and wouldn't work on TDX or SEV.
-
-To keep things feature agnostic (IMO, baking TDX vs SEV vs pKVM info into private-fd
-is a really bad idea), this could be handled by adding a flag and/or callback into
-the notifier/client stating whether or not it supports mapping a private-fd, and then
-mapping would be allowed if and only if all consumers support/allow mapping.
-
-> > Hmm.  Sean and Chao, are we making a bit of a mistake by making these fds
-> > technology-agnostic?  That is, would we want to distinguish between a TDX
-> > backing fd, a SEV backing fd, a software-based backing fd, etc?  API-wise
-> > this could work by requiring the fd to be bound to a KVM VM instance and
-> > possibly even configured a bit before any other operations would be
-> > allowed.
-
-I really don't want to distinguish between between each exact feature, but I've
-no objection to adding flags/callbacks to track specific properties of the
-downstream consumers, e.g. "can this memory be accessed by userspace" is a fine
-abstraction.  It also scales to multiple consumers (see above).
+Thanks,
+Quentin
