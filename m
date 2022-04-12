@@ -2,49 +2,50 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2811DC433EF
-	for <linux-api@archiver.kernel.org>; Tue, 12 Apr 2022 13:12:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D6844C43217
+	for <linux-api@archiver.kernel.org>; Tue, 12 Apr 2022 13:20:09 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1355216AbiDLNOw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 12 Apr 2022 09:14:52 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58866 "EHLO
+        id S1356045AbiDLNWY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 12 Apr 2022 09:22:24 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56734 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1355781AbiDLNNW (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 12 Apr 2022 09:13:22 -0400
-Received: from mga14.intel.com (mga14.intel.com [192.55.52.115])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 08DA0121;
-        Tue, 12 Apr 2022 05:56:36 -0700 (PDT)
+        with ESMTP id S1353308AbiDLNWR (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 12 Apr 2022 09:22:17 -0400
+Received: from mga07.intel.com (mga07.intel.com [134.134.136.100])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E8A03197;
+        Tue, 12 Apr 2022 06:11:46 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1649768195; x=1681304195;
+  t=1649769107; x=1681305107;
   h=date:from:to:cc:subject:message-id:reply-to:references:
    mime-version:in-reply-to;
-  bh=C6dk3/dvShTsf13TiSzcqE0mSsR+MyMx9FW9JNjPSEc=;
-  b=IlQ+qM+lSvXREDyZPdFJBADUBmzYaIoxpNzHab0Z2DnLdct/2m/90irC
-   T3C91766te3/JbiSOaWHTxGgiBR+dbB2ZUIv75+GX8Q9uOtPqehJcELRi
-   ARAbqT7/u8THH5Jd+E6OQSy6zhBD81NFmhDIZiLiH8TPDV1FXF/SLUwDk
-   MfrCYmCXqsVfs1Elz9DOYPoaC5oaz29SrDT1rvMGrrF5LvxsK2zfleAnv
-   mjc0MAbGz5Gastm6/WIzBh6KkboqCW9ELhvI8eZ0wuClZm5spftwXXZR5
-   aJdjDx80Dp8vMC+Ybr5Cl71mqip+QKG8kC97PmKxxjlVs+0F6lGiYxJGb
+  bh=1KeYAHX9pm/ikMj2hiQRjLWmiTvrzP7m01hIo3GA0o4=;
+  b=KGHDBbMLXzD9MPjEkX4buLEjDU0DefdekSPdtciqBC5tPWYIkqGEkYfV
+   w/YZX/Rr3jIofpjzOcnUQHpWxYQSq7nxpg99oHs0KSkogUOfTPaaSc0MC
+   v/15udPsm8BVy4LfrKBEXuCTQiN4hsPTcAuz91atDTR5Al/TtpX6xlsYR
+   kekgpISrPOPMt/udhH6vkTq6UAOC+ppyr9lauaTTzCrGiP+o7mtS7zk6O
+   MFLySurcDSkkSfXOaHliXJXmPB8N2SlrPTWRhafkJ7ZjOVLmBky0um3Ha
+   bTDVfQxOFHf/oHHiOQm+urrJGL9XU8ywR/XIkKTZO+EyzhcLvlFTeYmTU
    w==;
-X-IronPort-AV: E=McAfee;i="6400,9594,10314"; a="262547300"
+X-IronPort-AV: E=McAfee;i="6400,9594,10314"; a="325279839"
 X-IronPort-AV: E=Sophos;i="5.90,253,1643702400"; 
-   d="scan'208";a="262547300"
+   d="scan'208";a="325279839"
 Received: from fmsmga001.fm.intel.com ([10.253.24.23])
-  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Apr 2022 05:56:35 -0700
+  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Apr 2022 06:11:46 -0700
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="5.90,253,1643702400"; 
-   d="scan'208";a="699824982"
+   d="scan'208";a="699828702"
 Received: from chaop.bj.intel.com (HELO localhost) ([10.240.192.101])
-  by fmsmga001.fm.intel.com with ESMTP; 12 Apr 2022 05:56:28 -0700
-Date:   Tue, 12 Apr 2022 20:56:18 +0800
+  by fmsmga001.fm.intel.com with ESMTP; 12 Apr 2022 06:11:38 -0700
+Date:   Tue, 12 Apr 2022 21:11:28 +0800
 From:   Chao Peng <chao.p.peng@linux.intel.com>
-To:     Sean Christopherson <seanjc@google.com>
+To:     "Kirill A. Shutemov" <kirill@shutemov.name>
 Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
         linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
         linux-api@vger.kernel.org, qemu-devel@nongnu.org,
         Paolo Bonzini <pbonzini@redhat.com>,
         Jonathan Corbet <corbet@lwn.net>,
+        Sean Christopherson <seanjc@google.com>,
         Vitaly Kuznetsov <vkuznets@redhat.com>,
         Wanpeng Li <wanpengli@tencent.com>,
         Jim Mattson <jmattson@google.com>,
@@ -65,141 +66,88 @@ Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
         "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
         luto@kernel.org, jun.nakajima@intel.com, dave.hansen@intel.com,
         ak@linux.intel.com, david@redhat.com
-Subject: Re: [PATCH v5 12/13] KVM: Expose KVM_MEM_PRIVATE
-Message-ID: <20220412125618.GC8013@chaop.bj.intel.com>
+Subject: Re: [PATCH v5 01/13] mm/memfd: Introduce MFD_INACCESSIBLE flag
+Message-ID: <20220412131128.GE8013@chaop.bj.intel.com>
 Reply-To: Chao Peng <chao.p.peng@linux.intel.com>
 References: <20220310140911.50924-1-chao.p.peng@linux.intel.com>
- <20220310140911.50924-13-chao.p.peng@linux.intel.com>
- <YkNaPLVLk/pO0zjr@google.com>
+ <20220310140911.50924-2-chao.p.peng@linux.intel.com>
+ <20220411151023.4nx34pxyg5amj44m@box.shutemov.name>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <YkNaPLVLk/pO0zjr@google.com>
+In-Reply-To: <20220411151023.4nx34pxyg5amj44m@box.shutemov.name>
 User-Agent: Mutt/1.9.4 (2018-02-28)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Mar 29, 2022 at 07:13:00PM +0000, Sean Christopherson wrote:
-> On Thu, Mar 10, 2022, Chao Peng wrote:
-> > KVM_MEM_PRIVATE is not exposed by default but architecture code can turn
-> > on it by implementing kvm_arch_private_memory_supported().
+On Mon, Apr 11, 2022 at 06:10:23PM +0300, Kirill A. Shutemov wrote:
+> On Thu, Mar 10, 2022 at 10:08:59PM +0800, Chao Peng wrote:
+> > From: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
 > > 
-> > Signed-off-by: Yu Zhang <yu.c.zhang@linux.intel.com>
+> > Introduce a new memfd_create() flag indicating the content of the
+> > created memfd is inaccessible from userspace through ordinary MMU
+> > access (e.g., read/write/mmap). However, the file content can be
+> > accessed via a different mechanism (e.g. KVM MMU) indirectly.
+> > 
+> > It provides semantics required for KVM guest private memory support
+> > that a file descriptor with this flag set is going to be used as the
+> > source of guest memory in confidential computing environments such
+> > as Intel TDX/AMD SEV but may not be accessible from host userspace.
+> > 
+> > Since page migration/swapping is not yet supported for such usages
+> > so these pages are currently marked as UNMOVABLE and UNEVICTABLE
+> > which makes them behave like long-term pinned pages.
+> > 
+> > The flag can not coexist with MFD_ALLOW_SEALING, future sealing is
+> > also impossible for a memfd created with this flag.
+> > 
+> > At this time only shmem implements this flag.
+> > 
+> > Signed-off-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 > > Signed-off-by: Chao Peng <chao.p.peng@linux.intel.com>
 > > ---
-> >  include/linux/kvm_host.h |  1 +
-> >  virt/kvm/kvm_main.c      | 24 +++++++++++++++++++-----
-> >  2 files changed, 20 insertions(+), 5 deletions(-)
+> >  include/linux/shmem_fs.h   |  7 +++++
+> >  include/uapi/linux/memfd.h |  1 +
+> >  mm/memfd.c                 | 26 +++++++++++++++--
+> >  mm/shmem.c                 | 57 ++++++++++++++++++++++++++++++++++++++
+> >  4 files changed, 88 insertions(+), 3 deletions(-)
 > > 
-> > diff --git a/include/linux/kvm_host.h b/include/linux/kvm_host.h
-> > index 186b9b981a65..0150e952a131 100644
-> > --- a/include/linux/kvm_host.h
-> > +++ b/include/linux/kvm_host.h
-> > @@ -1432,6 +1432,7 @@ bool kvm_arch_dy_has_pending_interrupt(struct kvm_vcpu *vcpu);
-> >  int kvm_arch_post_init_vm(struct kvm *kvm);
-> >  void kvm_arch_pre_destroy_vm(struct kvm *kvm);
-> >  int kvm_arch_create_vm_debugfs(struct kvm *kvm);
-> > +bool kvm_arch_private_memory_supported(struct kvm *kvm);
+> > diff --git a/include/linux/shmem_fs.h b/include/linux/shmem_fs.h
+> > index e65b80ed09e7..2dde843f28ef 100644
+> > --- a/include/linux/shmem_fs.h
+> > +++ b/include/linux/shmem_fs.h
+> > @@ -12,6 +12,9 @@
 > >  
-> >  #ifndef __KVM_HAVE_ARCH_VM_ALLOC
-> >  /*
-> > diff --git a/virt/kvm/kvm_main.c b/virt/kvm/kvm_main.c
-> > index 52319f49d58a..df5311755a40 100644
-> > --- a/virt/kvm/kvm_main.c
-> > +++ b/virt/kvm/kvm_main.c
-> > @@ -1485,10 +1485,19 @@ static void kvm_replace_memslot(struct kvm *kvm,
-> >  	}
-> >  }
+> >  /* inode in-kernel data */
 > >  
-> > -static int check_memory_region_flags(const struct kvm_userspace_memory_region *mem)
-> > +bool __weak kvm_arch_private_memory_supported(struct kvm *kvm)
-> > +{
-> > +	return false;
-> > +}
+> > +/* shmem extended flags */
+> > +#define SHM_F_INACCESSIBLE	0x0001  /* prevent ordinary MMU access (e.g. read/write/mmap) to file content */
 > > +
-> > +static int check_memory_region_flags(struct kvm *kvm,
-> > +				const struct kvm_userspace_memory_region *mem)
-> >  {
-> >  	u32 valid_flags = KVM_MEM_LOG_DIRTY_PAGES;
+> >  struct shmem_inode_info {
+> >  	spinlock_t		lock;
+> >  	unsigned int		seals;		/* shmem seals */
+> > @@ -24,6 +27,7 @@ struct shmem_inode_info {
+> >  	struct shared_policy	policy;		/* NUMA memory alloc policy */
+> >  	struct simple_xattrs	xattrs;		/* list of xattrs */
+> >  	atomic_t		stop_eviction;	/* hold when working on inode */
+> > +	unsigned int		xflags;		/* shmem extended flags */
+> >  	struct inode		vfs_inode;
+> >  };
 > >  
-> > +	if (kvm_arch_private_memory_supported(kvm))
-> > +		valid_flags |= KVM_MEM_PRIVATE;
-> > +
-> >  #ifdef __KVM_HAVE_READONLY_MEM
-> >  	valid_flags |= KVM_MEM_READONLY;
-> >  #endif
-> > @@ -1900,7 +1909,7 @@ int __kvm_set_memory_region(struct kvm *kvm,
-> >  	int as_id, id;
-> >  	int r;
-> >  
-> > -	r = check_memory_region_flags(mem);
-> > +	r = check_memory_region_flags(kvm, mem);
-> >  	if (r)
-> >  		return r;
-> >  
-> > @@ -1913,10 +1922,12 @@ int __kvm_set_memory_region(struct kvm *kvm,
-> >  		return -EINVAL;
-> >  	if (mem->guest_phys_addr & (PAGE_SIZE - 1))
-> >  		return -EINVAL;
-> > -	/* We can read the guest memory with __xxx_user() later on. */
-> >  	if ((mem->userspace_addr & (PAGE_SIZE - 1)) ||
-> > -	    (mem->userspace_addr != untagged_addr(mem->userspace_addr)) ||
-> > -	     !access_ok((void __user *)(unsigned long)mem->userspace_addr,
-> > +	    (mem->userspace_addr != untagged_addr(mem->userspace_addr)))
-> > +		return -EINVAL;
-> > +	/* We can read the guest memory with __xxx_user() later on. */
-> > +	if (!(mem->flags & KVM_MEM_PRIVATE) &&
-> > +	    !access_ok((void __user *)(unsigned long)mem->userspace_addr,
 > 
-> This should sanity check private_offset for private memslots.  At a bare minimum,
-> wrapping should be disallowed.
+> AFAICS, only two bits of 'flags' are used. And that's very strange that
+> VM_ flags are used for the purpose. My guess that someone was lazy to
+> introduce new constants for this.
+> 
+> I think we should fix this: introduce SHM_F_LOCKED and SHM_F_NORESERVE
+> alongside with SHM_F_INACCESSIBLE and stuff them all into info->flags.
+> It also makes shmem_file_setup_xflags() go away.
 
-Will add this.
-
-> 
-> >  			mem->memory_size))
-> >  		return -EINVAL;
-> >  	if (as_id >= KVM_ADDRESS_SPACE_NUM || id >= KVM_MEM_SLOTS_NUM)
-> > @@ -1957,6 +1968,9 @@ int __kvm_set_memory_region(struct kvm *kvm,
-> >  		if ((kvm->nr_memslot_pages + npages) < kvm->nr_memslot_pages)
-> >  			return -EINVAL;
-> >  	} else { /* Modify an existing slot. */
-> > +		/* Private memslots are immutable, they can only be deleted. */
-> > +		if (mem->flags & KVM_MEM_PRIVATE)
-> > +			return -EINVAL;
-> 
-> These sanity checks belong in "KVM: Register private memslot to memory backing store",
-> e.g. that patch is "broken" without the immutability restriction.  It's somewhat moot
-> because the code is unreachable, but it makes reviewing confusing/difficult.
-> 
-> But rather than move the sanity checks back, I think I'd prefer to pull all of patch 10
-> here.  I think it also makes sense to drop "KVM: Use memfile_pfn_ops to obtain pfn for
-> private pages" and add the pointer in "struct kvm_memory_slot" in patch "KVM: Extend the
-> memslot to support fd-based private memory", with the use of the ops folded into
-> "KVM: Handle page fault for private memory".  Adding code to KVM and KVM-x86 in a single
-> patch is ok, and overall makes things easier to review because the new helpers have a
-> user right away, especially since there will be #ifdeffery.
-> 
-> I.e. end up with something like:
-> 
->   mm: Introduce memfile_notifier
->   mm/shmem: Restrict MFD_INACCESSIBLE memory against RLIMIT_MEMLOCK
->   KVM: Extend the memslot to support fd-based private memory
->   KVM: Use kvm_userspace_memory_region_ext
->   KVM: Add KVM_EXIT_MEMORY_ERROR exit
->   KVM: Handle page fault for private memory
->   KVM: Register private memslot to memory backing store
->   KVM: Zap existing KVM mappings when pages changed in the private fd
->   KVM: Enable and expose KVM_MEM_PRIVATE
-
-Thanks for the suggestion. That makes sense.
+Did a quick search and sounds we only use SHM_F_LOCKED/SHM_F_NORESERVE and
+that definitely don't have to be VM_ flags.
 
 Chao
 > 
-> >  		if ((mem->userspace_addr != old->userspace_addr) ||
-> >  		    (npages != old->npages) ||
-> >  		    ((mem->flags ^ old->flags) & KVM_MEM_READONLY))
-> > -- 
-> > 2.17.1
-> > 
+> -- 
+>  Kirill A. Shutemov
