@@ -2,149 +2,116 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B556DC43219
-	for <linux-api@archiver.kernel.org>; Tue, 12 Apr 2022 23:24:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A5C60C433FE
+	for <linux-api@archiver.kernel.org>; Wed, 13 Apr 2022 09:15:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230061AbiDLX0x (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 12 Apr 2022 19:26:53 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39406 "EHLO
+        id S234310AbiDMJSN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 13 Apr 2022 05:18:13 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56948 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229978AbiDLX00 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 12 Apr 2022 19:26:26 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 90202D1116;
-        Tue, 12 Apr 2022 15:12:33 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id B6F8661C52;
-        Tue, 12 Apr 2022 21:28:17 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id B0DBCC385A8;
-        Tue, 12 Apr 2022 21:28:15 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1649798897;
-        bh=7S+oixBL7sX4olcPvEogXh1CnNUMKSWXUwyI+LxpXRE=;
-        h=In-Reply-To:References:Date:From:To:Cc:Subject:From;
-        b=CAGsdI4ZHk2F+ErTvb3t2uQzv3t8jcZI8xsMTJXlIIvstFIxbcvncYpWK2dm/yzMA
-         KJ+bYVMGMWsPTjseKom0Lv/KT0IolargXjST2kw55L6AtY6+LKELBzGvw04Q+aiZvN
-         WuwHfd5/qXc1cDzapxHwzy/JXsoWmrK7ImmLECiOnY6nDNyxOXikQ9Og3eNNh90Od/
-         7XxQgQSuKG77V6untVxa475/hTA/xhRyUqsCb66fWKB1WA1hi02v0dUPnZUWZ3laf6
-         0rzfcb+BODF9xtN0YO2/PjxiVnelSOPY7JPaVtHzAqggJE8sm5ckqPEZq997WZRBSM
-         W34CVRYhpepTQ==
-Received: from compute2.internal (compute2.nyi.internal [10.202.2.46])
-        by mailauth.nyi.internal (Postfix) with ESMTP id 7946527C0054;
-        Tue, 12 Apr 2022 17:28:14 -0400 (EDT)
-Received: from imap48 ([10.202.2.98])
-  by compute2.internal (MEProxy); Tue, 12 Apr 2022 17:28:14 -0400
-X-ME-Sender: <xms:7O5VYs8lwj5MdavzExLyZhrEgbyrMiXO1_DykQcKY2g__StryccvLg>
-    <xme:7O5VYksvbMuraQrcmnb8o2HTVmPudvAs7MmppnApRRSbRQMEWGcVhYJ_I038GcBsW
-    oGC0DG9AcdNarZgApI>
-X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvvddrudekkedgudeitdcutefuodetggdotefrod
-    ftvfcurfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfgh
-    necuuegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmd
-    enucfjughrpefofgggkfgjfhffhffvufgtsehttdertderredtnecuhfhrohhmpedftehn
-    ugihucfnuhhtohhmihhrshhkihdfuceolhhuthhosehkvghrnhgvlhdrohhrgheqnecugg
-    ftrfgrthhtvghrnheptdfhheettddvtedvtedugfeuuefhtddugedvleevleefvdetleff
-    gfefvdekgeefnecuvehluhhsthgvrhfuihiivgeptdenucfrrghrrghmpehmrghilhhfrh
-    homheprghnugihodhmvghsmhhtphgruhhthhhpvghrshhonhgrlhhithihqdduudeiudek
-    heeifedvqddvieefudeiiedtkedqlhhuthhopeepkhgvrhhnvghlrdhorhhgsehlihhnuh
-    igrdhluhhtohdruhhs
-X-ME-Proxy: <xmx:7O5VYiDdEWrfajiYcqB6p9FGUWaxorJ-LkXsFLirb2kvXcFcs9_BxA>
-    <xmx:7O5VYsdSqRSo04iR81u4yMDTPrY70kYHKZ8P32NVv-cia2RpB69IFQ>
-    <xmx:7O5VYhPNLgqdnPVunYupFyg9opu97sHVHE74yrryNGsN3ZjS8OKsMA>
-    <xmx:7u5VYouNmHo5xGvWKYHuRhvQVKHXleE35LAx2SW8yLyHvIsfA3MUUA>
-Received: by mailuser.nyi.internal (Postfix, from userid 501)
-        id 8882521E0073; Tue, 12 Apr 2022 17:28:12 -0400 (EDT)
-X-Mailer: MessagingEngine.com Webmail Interface
-User-Agent: Cyrus-JMAP/3.7.0-alpha0-386-g4174665229-fm-20220406.001-g41746652
-Mime-Version: 1.0
-Message-Id: <6f44ddf9-6755-4120-be8b-7a62f0abc0e0@www.fastmail.com>
-In-Reply-To: <20220412143636.GG64706@ziepe.ca>
+        with ESMTP id S234324AbiDMJSM (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 13 Apr 2022 05:18:12 -0400
+Received: from mga11.intel.com (mga11.intel.com [192.55.52.93])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4D34A245B6;
+        Wed, 13 Apr 2022 02:15:51 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1649841351; x=1681377351;
+  h=date:from:to:cc:subject:message-id:reply-to:references:
+   mime-version:in-reply-to;
+  bh=Qyg9qkfEOmRnd7ecWKODTY6fNCX00KNJAm/6F+S5OvQ=;
+  b=I8ypfzxbm0qwuSXuFG30iRhXH9mb0FjfoKFFb/P3h0hxXkAWUKgsUU9P
+   Jfi9yb+ddRDoH5iZ3QnhFkHB9Uz3zzYxETClclLkGdUF2/6QzFXpjxTZL
+   glOtAp9hTQ3C/cnMaKnMup0faGNBjbG25qU/KDFC/yhfDswniV1D2hlDm
+   OI4nxbp7vW/7iQmk4DkGTbmejeeRpvKCdwgiLGHeaVcC82SLInFiXoG98
+   4XaGa1yZ+tA0mjriZzJk10W88znaXn4bP7lFIfRhUmYvoflZN1RMfYsmW
+   u5qgqOoMd0WwqaJsam7d/JO3Cvrmv1tcFCR3wEpT435we3DXKyEc6wiea
+   g==;
+X-IronPort-AV: E=McAfee;i="6400,9594,10315"; a="260213830"
+X-IronPort-AV: E=Sophos;i="5.90,256,1643702400"; 
+   d="scan'208";a="260213830"
+Received: from fmsmga001.fm.intel.com ([10.253.24.23])
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 13 Apr 2022 02:15:51 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.90,256,1643702400"; 
+   d="scan'208";a="700175232"
+Received: from chaop.bj.intel.com (HELO localhost) ([10.240.192.101])
+  by fmsmga001.fm.intel.com with ESMTP; 13 Apr 2022 02:15:43 -0700
+Date:   Wed, 13 Apr 2022 17:15:33 +0800
+From:   Chao Peng <chao.p.peng@linux.intel.com>
+To:     "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc:     Sean Christopherson <seanjc@google.com>, kvm@vger.kernel.org,
+        linux-kernel@vger.kernel.org, linux-mm@kvack.org,
+        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org,
+        qemu-devel@nongnu.org, Paolo Bonzini <pbonzini@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Vitaly Kuznetsov <vkuznets@redhat.com>,
+        Wanpeng Li <wanpengli@tencent.com>,
+        Jim Mattson <jmattson@google.com>,
+        Joerg Roedel <joro@8bytes.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
+        Hugh Dickins <hughd@google.com>,
+        Jeff Layton <jlayton@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Mike Rapoport <rppt@kernel.org>,
+        Steven Price <steven.price@arm.com>,
+        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Vishal Annapurve <vannapurve@google.com>,
+        Yu Zhang <yu.c.zhang@linux.intel.com>,
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
+        luto@kernel.org, jun.nakajima@intel.com, dave.hansen@intel.com,
+        ak@linux.intel.com, david@redhat.com
+Subject: Re: [PATCH v5 04/13] mm/shmem: Restrict MFD_INACCESSIBLE memory
+ against RLIMIT_MEMLOCK
+Message-ID: <20220413091533.GC10041@chaop.bj.intel.com>
+Reply-To: Chao Peng <chao.p.peng@linux.intel.com>
 References: <20220310140911.50924-1-chao.p.peng@linux.intel.com>
  <20220310140911.50924-5-chao.p.peng@linux.intel.com>
  <Yk8L0CwKpTrv3Rg3@google.com>
- <02e18c90-196e-409e-b2ac-822aceea8891@www.fastmail.com>
- <YlB3Z8fqJ+67a2Ck@google.com>
- <7ab689e7-e04d-5693-f899-d2d785b09892@redhat.com>
- <20220412143636.GG64706@ziepe.ca>
-Date:   Tue, 12 Apr 2022 14:27:52 -0700
-From:   "Andy Lutomirski" <luto@kernel.org>
-To:     "Jason Gunthorpe" <jgg@ziepe.ca>,
-        "David Hildenbrand" <david@redhat.com>
-Cc:     "Sean Christopherson" <seanjc@google.com>,
-        "Chao Peng" <chao.p.peng@linux.intel.com>,
-        "kvm list" <kvm@vger.kernel.org>,
-        "Linux Kernel Mailing List" <linux-kernel@vger.kernel.org>,
-        linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
-        "Linux API" <linux-api@vger.kernel.org>, qemu-devel@nongnu.org,
-        "Paolo Bonzini" <pbonzini@redhat.com>,
-        "Jonathan Corbet" <corbet@lwn.net>,
-        "Vitaly Kuznetsov" <vkuznets@redhat.com>,
-        "Wanpeng Li" <wanpengli@tencent.com>,
-        "Jim Mattson" <jmattson@google.com>,
-        "Joerg Roedel" <joro@8bytes.org>,
-        "Thomas Gleixner" <tglx@linutronix.de>,
-        "Ingo Molnar" <mingo@redhat.com>, "Borislav Petkov" <bp@alien8.de>,
-        "the arch/x86 maintainers" <x86@kernel.org>,
-        "H. Peter Anvin" <hpa@zytor.com>,
-        "Hugh Dickins" <hughd@google.com>,
-        "Jeff Layton" <jlayton@kernel.org>,
-        "J . Bruce Fields" <bfields@fieldses.org>,
-        "Andrew Morton" <akpm@linux-foundation.org>,
-        "Mike Rapoport" <rppt@kernel.org>,
-        "Steven Price" <steven.price@arm.com>,
-        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
-        "Vlastimil Babka" <vbabka@suse.cz>,
-        "Vishal Annapurve" <vannapurve@google.com>,
-        "Yu Zhang" <yu.c.zhang@linux.intel.com>,
-        "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>,
-        "Nakajima, Jun" <jun.nakajima@intel.com>,
-        "Dave Hansen" <dave.hansen@intel.com>,
-        "Andi Kleen" <ak@linux.intel.com>,
-        "Eric W. Biederman" <ebiederm@xmission.com>,
-        "Linux API" <linux-api@vger.kernel.org>
-Subject: Re: [PATCH v5 04/13] mm/shmem: Restrict MFD_INACCESSIBLE memory against
- RLIMIT_MEMLOCK
-Content-Type: text/plain
+ <20220411153233.54ljmi7zgqovhgsn@box.shutemov.name>
+ <20220412133925.GG8013@chaop.bj.intel.com>
+ <20220412192821.xliop57sblvjx4t4@box.shutemov.name>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20220412192821.xliop57sblvjx4t4@box.shutemov.name>
+User-Agent: Mutt/1.9.4 (2018-02-28)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Apr 12, 2022, at 7:36 AM, Jason Gunthorpe wrote:
-> On Fri, Apr 08, 2022 at 08:54:02PM +0200, David Hildenbrand wrote:
->
->> RLIMIT_MEMLOCK was the obvious candidate, but as we discovered int he
->> past already with secretmem, it's not 100% that good of a fit (unmovable
->> is worth than mlocked). But it gets the job done for now at least.
->
-> No, it doesn't. There are too many different interpretations how
-> MELOCK is supposed to work
->
-> eg VFIO accounts per-process so hostile users can just fork to go past
-> it.
->
-> RDMA is per-process but uses a different counter, so you can double up
->
-> iouring is per-user and users a 3rd counter, so it can triple up on
-> the above two
->
->> So I'm open for alternative to limit the amount of unmovable memory we
->> might allocate for user space, and then we could convert seretmem as well.
->
-> I think it has to be cgroup based considering where we are now :\
->
+On Tue, Apr 12, 2022 at 10:28:21PM +0300, Kirill A. Shutemov wrote:
+> On Tue, Apr 12, 2022 at 09:39:25PM +0800, Chao Peng wrote:
+> > On Mon, Apr 11, 2022 at 06:32:33PM +0300, Kirill A. Shutemov wrote:
+> > > On Thu, Apr 07, 2022 at 04:05:36PM +0000, Sean Christopherson wrote:
+> > > > Hmm, shmem_writepage() already handles SHM_F_INACCESSIBLE by rejecting the swap, so
+> > > > maybe it's just the page migration path that needs to be updated?
+> > > 
+> > > My early version prevented migration with -ENOTSUPP for
+> > > address_space_operations::migratepage().
+> > > 
+> > > What's wrong with that approach?
+> > 
+> > I previously thought migratepage will not be called since we already
+> > marked the pages as UNMOVABLE, sounds not correct?
+> 
+> Do you mean missing __GFP_MOVABLE?
 
-So this is another situation where the actual backend (TDX, SEV, pKVM, pure software) makes a difference -- depending on exactly what backend we're using, the memory may not be unmoveable.  It might even be swappable (in the potentially distant future).
+Yes.
 
-Anyway, here's a concrete proposal, with a bit of handwaving:
+> I can be wrong, but I don't see that it
+> direclty affects if the page is migratable. It is a hint to page allocator
+> to group unmovable pages to separate page block and impove availablity of
+> higher order pages this way. Page allocator tries to allocate unmovable
+> pages from pages blocks that already have unmovable pages.
 
-We add new cgroup limits:
+OK, thanks.
 
-memory.unmoveable
-memory.locked
-
-These can be set to an actual number or they can be set to the special value ROOT_CAP.  If they're set to ROOT_CAP, then anyone in the cgroup with capable(CAP_SYS_RESOURCE) (i.e. the global capability) can allocate movable or locked memory with this (and potentially other) new APIs.  If it's 0, then they can't.  If it's another value, then the memory can be allocated, charged to the cgroup, up to the limit, with no particular capability needed.  The default at boot is ROOT_CAP.  Anyone who wants to configure it differently is free to do so.  This avoids introducing a DoS, makes it easy to run tests without configuring cgroup, and lets serious users set up their cgroups.
-
-Nothing is charge per mm.
-
-To make this fully sensible, we need to know what the backend is for the private memory before allocating any so that we can charge it accordingly.
+Chao
+> 
+> -- 
+>  Kirill A. Shutemov
