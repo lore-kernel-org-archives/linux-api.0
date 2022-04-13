@@ -2,56 +2,149 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 05804C433FE
-	for <linux-api@archiver.kernel.org>; Wed, 13 Apr 2022 09:47:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EE685C433EF
+	for <linux-api@archiver.kernel.org>; Wed, 13 Apr 2022 16:25:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234697AbiDMJuE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 13 Apr 2022 05:50:04 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53890 "EHLO
+        id S232908AbiDMQ1s (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 13 Apr 2022 12:27:48 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50072 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234765AbiDMJtk (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 13 Apr 2022 05:49:40 -0400
-Received: from mail.growthmindset24.pl (mail.growthmindset24.pl [212.237.36.120])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E420956C36
-        for <linux-api@vger.kernel.org>; Wed, 13 Apr 2022 02:47:13 -0700 (PDT)
-Received: by mail.growthmindset24.pl (Postfix, from userid 1001)
-        id C9681884D6; Tue, 12 Apr 2022 08:52:40 +0100 (BST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=growthmindset24.pl;
-        s=mail; t=1649750070;
-        bh=FDuFY3XQoq0gMX1b2gxgT7Py2p4Sxl0PJZYZ4NVaPho=;
-        h=Date:From:To:Subject:From;
-        b=zUanW/fvzCdcNjZVKLm65GjReinbsISJDh9yeeIMZftzNx5GQVptpNRpzUbUNqtHf
-         EYiqwQSdIPPaJMWwta8jMDpzrt72Pwg/0P1y7Hz8qXs4oqmqi4LN213qc3R1f15GSr
-         Fq7S1fDUWEG2wsFyEcJIicB8wzoosIIChzMv7cnWCPVS5Oz6wVVbmTmzPc8aIfZ145
-         uzZYQfQTTGIaxxsWd6sM7oJcSepjDZR2OB4FMTrKqz57vuFUGA2aZ5El7eUlw/hWRn
-         jrACsHdlF747BKksDgj5dWQpEMhtRvFSi7RkK2jmg44qSpWd7z6aWSSa7ZISlfVyy9
-         vJd/19nNpynAw==
-Received: by mail.growthmindset24.pl for <linux-api@vger.kernel.org>; Tue, 12 Apr 2022 07:50:49 GMT
-Message-ID: <20220412073001-0.1.2w.d7by.0.oo6p324yfg@growthmindset24.pl>
-Date:   Tue, 12 Apr 2022 07:50:49 GMT
-From:   =?UTF-8?Q? "Przemys=C5=82aw_Wr=C3=B3blewski" ?= 
-        <przemyslaw.wroblewski@growthmindset24.pl>
-To:     <linux-api@vger.kernel.org>
-Subject: Wycena paneli fotowoltaicznych
-X-Mailer: mail.growthmindset24.pl
+        with ESMTP id S236867AbiDMQ10 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 13 Apr 2022 12:27:26 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 4C8954AE3D
+        for <linux-api@vger.kernel.org>; Wed, 13 Apr 2022 09:25:02 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1649867101;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=RgEcoM6U2AWPf465Xahivshzo2kZbOX7C4c0ahKp1Dw=;
+        b=Eplmut0vF4DlV6c+zkqOtHlqzpvGJ3v8k5+lbRl4yV4OIA9iFxRyXwgYXzb6KlsVO9QzW3
+        nl7HxNwJgX3oOvsp23Un2bK8WEuOBeDieMudWOsbppTnuMOa3/mJXAO8o3AjJSCeWGDNZi
+        qjYkdrvIe6mRigEbiz/xC4dFVOxgsL0=
+Received: from mail-wm1-f70.google.com (mail-wm1-f70.google.com
+ [209.85.128.70]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-332-R5juHkslMS-cef7b5Uc68A-1; Wed, 13 Apr 2022 12:25:00 -0400
+X-MC-Unique: R5juHkslMS-cef7b5Uc68A-1
+Received: by mail-wm1-f70.google.com with SMTP id c125-20020a1c3583000000b0038e3f6e871aso1087304wma.8
+        for <linux-api@vger.kernel.org>; Wed, 13 Apr 2022 09:24:59 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
+         :content-language:to:cc:references:from:organization:in-reply-to
+         :content-transfer-encoding;
+        bh=RgEcoM6U2AWPf465Xahivshzo2kZbOX7C4c0ahKp1Dw=;
+        b=k2kmlpg7o8nlPabd51TGeHYDPouYRx/4WSFVdqZchujXBB+Wx7Ks0G65gTyrQGPml8
+         tgJ79VgSS8uaDXYQMEO/GXSc4cX+9woHnTvikBP7m7NPfwZXaiNBvDwnk3k/ax3GrV3f
+         Kb2QRSs3XpmNHIW3G/gvD8eGASnTwCqB2BTQLWb4+lM8/y+/QugulUtOeT7Ht2Ywuhe6
+         8wM8bWXVxMIPHDmhxFX2eInN7fz0sPSh9kJVJLRR5G7wmOsh94M4h+Var8V4VlzvF30K
+         b818bIUHuentd1UBDsDKdpqdhC2epdLufTh5/4ewuShOjKFhhplLozS9EM/mO5SjerKn
+         EHPw==
+X-Gm-Message-State: AOAM531ajdhX4sujj37GGbnYKBoIBl4rcWj+NiUtC94fmpIYZ8YxIWDc
+        J8Mv67KFHzQnmYZlSQdyQqNa/C4DEoawxbZLWDqNqGBYgafOIrQGRlbxiaXj4AJhP09fRFW9Cxe
+        K1zUjIa0JuGCM1/eAfpBE
+X-Received: by 2002:a05:600c:3c8f:b0:38e:4e47:3e95 with SMTP id bg15-20020a05600c3c8f00b0038e4e473e95mr9076147wmb.173.1649867098880;
+        Wed, 13 Apr 2022 09:24:58 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJwylTIzzqJtz5EFX+MPmIPe9ZuRAk8yMJ3/juBgt0JzCyKFOBhzlfQN6ejdx28PKvB0mUKO0g==
+X-Received: by 2002:a05:600c:3c8f:b0:38e:4e47:3e95 with SMTP id bg15-20020a05600c3c8f00b0038e4e473e95mr9076112wmb.173.1649867098647;
+        Wed, 13 Apr 2022 09:24:58 -0700 (PDT)
+Received: from ?IPV6:2003:cb:c704:5800:1078:ebb9:e2c3:ea8c? (p200300cbc70458001078ebb9e2c3ea8c.dip0.t-ipconnect.de. [2003:cb:c704:5800:1078:ebb9:e2c3:ea8c])
+        by smtp.gmail.com with ESMTPSA id n7-20020a5d5987000000b00207891050d4sm16274621wri.46.2022.04.13.09.24.56
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 13 Apr 2022 09:24:58 -0700 (PDT)
+Message-ID: <1686fd2d-d9c3-ec12-32df-8c4c5ae26b08@redhat.com>
+Date:   Wed, 13 Apr 2022 18:24:56 +0200
 MIME-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.6.2
+Subject: Re: [PATCH v5 04/13] mm/shmem: Restrict MFD_INACCESSIBLE memory
+ against RLIMIT_MEMLOCK
+Content-Language: en-US
+To:     Jason Gunthorpe <jgg@ziepe.ca>
+Cc:     Sean Christopherson <seanjc@google.com>,
+        Andy Lutomirski <luto@kernel.org>,
+        Chao Peng <chao.p.peng@linux.intel.com>,
+        kvm list <kvm@vger.kernel.org>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
+        Linux API <linux-api@vger.kernel.org>, qemu-devel@nongnu.org,
+        Paolo Bonzini <pbonzini@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Vitaly Kuznetsov <vkuznets@redhat.com>,
+        Wanpeng Li <wanpengli@tencent.com>,
+        Jim Mattson <jmattson@google.com>,
+        Joerg Roedel <joro@8bytes.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        the arch/x86 maintainers <x86@kernel.org>,
+        "H. Peter Anvin" <hpa@zytor.com>, Hugh Dickins <hughd@google.com>,
+        Jeff Layton <jlayton@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Mike Rapoport <rppt@kernel.org>,
+        Steven Price <steven.price@arm.com>,
+        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Vishal Annapurve <vannapurve@google.com>,
+        Yu Zhang <yu.c.zhang@linux.intel.com>,
+        "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>,
+        "Nakajima, Jun" <jun.nakajima@intel.com>,
+        Dave Hansen <dave.hansen@intel.com>,
+        Andi Kleen <ak@linux.intel.com>
+References: <20220310140911.50924-1-chao.p.peng@linux.intel.com>
+ <20220310140911.50924-5-chao.p.peng@linux.intel.com>
+ <Yk8L0CwKpTrv3Rg3@google.com>
+ <02e18c90-196e-409e-b2ac-822aceea8891@www.fastmail.com>
+ <YlB3Z8fqJ+67a2Ck@google.com>
+ <7ab689e7-e04d-5693-f899-d2d785b09892@redhat.com>
+ <20220412143636.GG64706@ziepe.ca>
+From:   David Hildenbrand <david@redhat.com>
+Organization: Red Hat
+In-Reply-To: <20220412143636.GG64706@ziepe.ca>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Dzie=C5=84 dobry,
+On 12.04.22 16:36, Jason Gunthorpe wrote:
+> On Fri, Apr 08, 2022 at 08:54:02PM +0200, David Hildenbrand wrote:
+> 
+>> RLIMIT_MEMLOCK was the obvious candidate, but as we discovered int he
+>> past already with secretmem, it's not 100% that good of a fit (unmovable
+>> is worth than mlocked). But it gets the job done for now at least.
+> 
+> No, it doesn't. There are too many different interpretations how
+> MELOCK is supposed to work
+> 
+> eg VFIO accounts per-process so hostile users can just fork to go past
+> it.
+> 
+> RDMA is per-process but uses a different counter, so you can double up
+> 
+> iouring is per-user and users a 3rd counter, so it can triple up on
+> the above two
 
-dostrzegam mo=C5=BCliwo=C5=9B=C4=87 wsp=C3=B3=C5=82pracy z Pa=C5=84stwa f=
-irm=C4=85.
+Thanks for that summary, very helpful.
 
-=C5=9Awiadczymy kompleksow=C4=85 obs=C5=82ug=C4=99 inwestycji w fotowolta=
-ik=C4=99, kt=C3=B3ra obni=C5=BCa koszty energii elektrycznej nawet o 90%.
+> 
+>> So I'm open for alternative to limit the amount of unmovable memory we
+>> might allocate for user space, and then we could convert seretmem as well.
+> 
+> I think it has to be cgroup based considering where we are now :\
 
-Czy s=C4=85 Pa=C5=84stwo zainteresowani weryfikacj=C4=85 wst=C4=99pnych p=
-ropozycji?
+Most probably. I think the important lessons we learned are that
+
+* mlocked != unmovable.
+* RLIMIT_MEMLOCK should most probably never have been abused for
+  unmovable memory (especially, long-term pinning)
 
 
-Pozdrawiam,
-Przemys=C5=82aw Wr=C3=B3blewski
+-- 
+Thanks,
+
+David / dhildenb
+
