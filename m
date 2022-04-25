@@ -2,103 +2,114 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 33F1CC433F5
-	for <linux-api@archiver.kernel.org>; Mon, 25 Apr 2022 08:49:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2AE59C433EF
+	for <linux-api@archiver.kernel.org>; Mon, 25 Apr 2022 11:16:38 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238323AbiDYIw6 convert rfc822-to-8bit (ORCPT
-        <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 25 Apr 2022 04:52:58 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42414 "EHLO
+        id S241649AbiDYLT2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 25 Apr 2022 07:19:28 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55852 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235825AbiDYIw5 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 25 Apr 2022 04:52:57 -0400
-Received: from mout.kundenserver.de (mout.kundenserver.de [212.227.126.135])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 61AADB1888;
-        Mon, 25 Apr 2022 01:49:54 -0700 (PDT)
-Received: from mail-wm1-f53.google.com ([209.85.128.53]) by
- mrelayeu.kundenserver.de (mreue009 [213.165.67.97]) with ESMTPSA (Nemesis) id
- 1Ml6i4-1oAWSa3GV2-00lXOo; Mon, 25 Apr 2022 10:49:52 +0200
-Received: by mail-wm1-f53.google.com with SMTP id q20so8830299wmq.1;
-        Mon, 25 Apr 2022 01:49:52 -0700 (PDT)
-X-Gm-Message-State: AOAM533GogKGJ857zi7cqT1tBhDCnJI99in9rszKdBW6z/wQ3o6GvAox
-        eXpUkLLZ/9WGyR9O3SDxl3lQv0kKwxG8lYAr8wA=
-X-Google-Smtp-Source: ABdhPJznBo55D1o0+WIRuh7wr97I06MCGT/Bj0IN0lqL0hSs0OuVvnsKvU+rzU5QmLcLYLe1/6Wmmx7p2/jDZLH/xxI=
-X-Received: by 2002:a05:600c:25c5:b0:38f:f0b9:4c8c with SMTP id
- 5-20020a05600c25c500b0038ff0b94c8cmr16117479wml.20.1650876592353; Mon, 25 Apr
- 2022 01:49:52 -0700 (PDT)
+        with ESMTP id S241656AbiDYLTT (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 25 Apr 2022 07:19:19 -0400
+Received: from mga05.intel.com (mga05.intel.com [192.55.52.43])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E60C83C73B;
+        Mon, 25 Apr 2022 04:16:15 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1650885375; x=1682421375;
+  h=date:from:to:cc:subject:in-reply-to:message-id:
+   references:mime-version;
+  bh=sJR1mNOe8X7WozLkgEphU67J123KZXsLcL2Bkf/+MWk=;
+  b=M/7xH+RlfHD5b1id0Y5ZZaLKMdoULHJAhdfKDZREO7Uvxs2iyP6Yy7Aw
+   MeG/jSOe+c/2T0MDUBHlGYSqy5c4zKuiwmA/w8Q4uET/ViyR87MlLICzo
+   23HPvlYGuAquhZHw8M9eN8BipM30otbQXUXKISMpbNJC1MHm5HUYONJy2
+   qJUbUJI/rEule6txZoDifCQX4BLufzSRbgqcAT/3UTo7QVAWs1QBX37QI
+   JD3Tsdty6jYdL3WVQ7keJVKPBj1o8AKjfr9HZ/Zz4fgjFVo4ER0bJR1gB
+   g32RwN71jWx3y8ICB5j+9l7SrArYedPN2JxaWiLEbm0hI6Zta1YkDQPml
+   w==;
+X-IronPort-AV: E=McAfee;i="6400,9594,10327"; a="351666298"
+X-IronPort-AV: E=Sophos;i="5.90,287,1643702400"; 
+   d="scan'208";a="351666298"
+Received: from orsmga008.jf.intel.com ([10.7.209.65])
+  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Apr 2022 04:16:15 -0700
+X-IronPort-AV: E=Sophos;i="5.90,287,1643702400"; 
+   d="scan'208";a="579233422"
+Received: from yfriedgu-mobl.ger.corp.intel.com ([10.251.216.185])
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 25 Apr 2022 04:16:11 -0700
+Date:   Mon, 25 Apr 2022 14:16:06 +0300 (EEST)
+From:   =?ISO-8859-15?Q?Ilpo_J=E4rvinen?= <ilpo.jarvinen@linux.intel.com>
+To:     Vicente Bergas <vicencb@gmail.com>
+cc:     Andy Shevchenko <andriy.shevchenko@linux.intel.com>,
+        giulio.benetti@micronovasrl.com,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        heikki.krogerus@linux.intel.com,
+        =?ISO-8859-15?Q?Heiko_St=FCbner?= <heiko@sntech.de>,
+        jirislaby@kernel.org, johan@kernel.org, linux-api@vger.kernel.org,
+        linux-serial <linux-serial@vger.kernel.org>,
+        Lukas Wunner <lukas@wunner.de>,
+        =?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?= 
+        <u.kleine-koenig@pengutronix.de>
+Subject: Re: [PATCH v3 00/12] Add RS485 support to DW UART
+In-Reply-To: <CAAMcf8DQcArMRqL-uYUt-aUT-LaETn4a7+wjqeet15cFQuy3uQ@mail.gmail.com>
+Message-ID: <12b796f6-faf4-dec8-772f-6eda784af493@linux.intel.com>
+References: <20220411083321.9131-1-ilpo.jarvinen@linux.intel.com> <20220421153626.120494-1-vicencb@gmail.com> <388d773-5c21-dfc9-40b1-7f2a060154d@linux.intel.com> <184ccf6c-e1db-8a64-24e0-f045a9d88751@linux.intel.com>
+ <CAAMcf8DQcArMRqL-uYUt-aUT-LaETn4a7+wjqeet15cFQuy3uQ@mail.gmail.com>
 MIME-Version: 1.0
-References: <20220422151725.1336997-1-mailhol.vincent@wanadoo.fr>
- <YmXMiTXEvFXZ/swU@dev-arch.thelio-3990X> <CAMZ6Rq+3XOze01dZZRTe+V44N2uo5J_=rtd9bKH7d7Fq9sNxVw@mail.gmail.com>
- <CAK8P3a31WAyh_vLqNwvv2GMcZ8SQp7gC=OV8c=Nc9pBtOSR8-g@mail.gmail.com> <CAMZ6RqL8G4uVn--Y5pBC+_c9Ex3Sjf8OJuVRwkVFFPwWd_ezLQ@mail.gmail.com>
-In-Reply-To: <CAMZ6RqL8G4uVn--Y5pBC+_c9Ex3Sjf8OJuVRwkVFFPwWd_ezLQ@mail.gmail.com>
-From:   Arnd Bergmann <arnd@arndb.de>
-Date:   Mon, 25 Apr 2022 10:49:36 +0200
-X-Gmail-Original-Message-ID: <CAK8P3a1_XoyjOPQ0ghku_QUjUL5V6BK9kSNUXoQj2RYaA=JxFg@mail.gmail.com>
-Message-ID: <CAK8P3a1_XoyjOPQ0ghku_QUjUL5V6BK9kSNUXoQj2RYaA=JxFg@mail.gmail.com>
-Subject: Re: [PATCH] checksyscalls: ignore -Wunused-macros
-To:     Vincent MAILHOL <mailhol.vincent@wanadoo.fr>
-Cc:     Arnd Bergmann <arnd@arndb.de>,
-        Nathan Chancellor <nathan@kernel.org>,
-        Nick Desaulniers <ndesaulniers@google.com>,
-        Tom Rix <trix@redhat.com>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        clang-built-linux <llvm@lists.linux.dev>,
-        Linux API <linux-api@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
-X-Provags-ID: V03:K1:YnibiRNyIgeuI2nPVLClsnhP1828FAbmVUYeoPkiNrTa8wA+aCl
- 6nzkkwwCK5ra4jSO7yof9xi3ag8OBY0xP5UmorHgQsejui3M9qi3murGQaZFx/Mg2kGKXHq
- FPp3V1OHPtZbC7El9/GdWOZ+P1nSrAIqMoxlf2oErQQKh0McIDvYWRYQ4ekb5/5J01PdiXZ
- Ye1OtdgWjHzcSyzU6COLg==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:etjVTRUMtNY=:8cGRRh6scKpqNjfImdGj3i
- g+ZFj0No7LeBfPC67hzJbwkxVfMshswEBhgLUO4slSJQiXYB1DEi6eT2/qsqIWEnGBQrgO2R7
- LifyBz0oqLavS2KzlAF3bCy73b/s+/27PO3mk2+zc+Oxfo7qg2azx7n3yS+xb3FRzeZbOZhya
- ivvzL3J/xylS5rS8IbqUAvrJ9EmfShRzWWqgyzcdGY+O+z9HXlqXn/IY+QZFzaUd4SNtZ7adu
- H1yPXH64w1wEya33VsrnWUNDvUuAaeQPxar2UeHROM6j8veInZY+5CKE2OUS+IoO2pEmrre6/
- 3q9oICfw7ubdw6Ur7GL9WuR9idFrSiNGG02qhObVaSIwZb6WaZkGt0OGGzVwVo7Onwdb+3OYc
- qc5VXwRXZYyZgzSoM2PcFClSl4+sD+ddqPDQwPhr2V3YU3CoS6Iso0qMpZYciuyG3vDWgjpzr
- Vs/Cyi9F6lSDwgLMFBZdoTIxwAMWW5LmZ9Y6/+4aAbaPIUyC7QcqDo4WPFphSfQiMrpJExoEQ
- VcQ5jokFi6lMeSlPkZmQQeGU0MqPwG9aiS5Jo43oqrtY+2ulyT84SMts6WK0NZ1k03n2GTFh0
- LwGjgh3Yzr/D3Gj/BNgaHXB2qEX/V33xfv8gPC1oyEMCL2bl0JED4J20Dz+2uLmWW4yYubmU0
- /P+xgXZW2jd0nbn0sElVaHX0uM40jvaS9B5WwgIM0MY2f2MpScUU0w0VloDmCtK3oYvPAYto4
- YvSnHaGXQji3ociDCFODER4kmqhvG5y50UJmSSIXJ25HkMT/Qbxu7Gcfe3bEdambM6+TUdJTf
- yovSdyNhvk2gDEoTKwnHy2XIq8BXy1ixZj3euLHFjUYMO7Wo1k=
+Content-Type: multipart/mixed; boundary="8323329-69205849-1650885375=:1634"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Apr 25, 2022 at 9:42 AM Vincent MAILHOL
-<mailhol.vincent@wanadoo.fr> wrote:
-> On Mon. 25 Apr 2022 at 15:50, Arnd Bergmann <arnd@arndb.de> wrote:
-> > On Mon, Apr 25, 2022 at 8:17 AM Vincent MAILHOL> <mailhol.vincent@wanadoo.fr> wrote:
-> > > When I run W=2, I want to only see the warnings of the file I am
-> > > working on. So I find it useful to fix the W=2 warnings which
-> > > show up when building other files to not get spammed by
-> > > irrelevant issues and to simplify the triage.
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+--8323329-69205849-1650885375=:1634
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+
+On Sun, 24 Apr 2022, Vicente Bergas wrote:
+
+> Hi Ilpo, thank you for your quick reply with a solution!
+> 
+> On Fri, Apr 22, 2022 at 3:07 PM Ilpo Järvinen
+> <ilpo.jarvinen@linux.intel.com> wrote:
+> >
+> > On Fri, 22 Apr 2022, Ilpo Järvinen wrote:
+> >
+> > > On Thu, 21 Apr 2022, Vicente Bergas wrote:
 > > >
-> > > My initial message lacked the rationale. I will add additional
-> > > explanations in the v2 of this patch.
+> > > > 1.- rs485_stop_tx is never called because there are no interrupts.
+> > > > I worked around this by disabling DMA:
+> > >
+> > > I'll need to look into this.
 > >
-> > I agree this is worth fixing if we want to make W=2 have any meaning at all.
+> > 8250 DMA tx complete path lacks calls to normal 8250 stop handling and
+> > I think it probably also assumes too much from dmaengine's completion
+> > callback. ...It also seems bit early to call serial8250_rpm_put_tx from
+> > there(?).
 > >
-> > Your approach is probably fine. We could try to improve this by comparing
-> > against the list from include/uapi/asm-generic/unistd.h instead of the i386
-> > list. I suppose that would involve rewriting the script into a simpler one,
-> > but I'm not sure if anyone has an interest in working on this.
->
-> If someone wants to do it, great, but I do not have the
-> confidence to do it myself so I hope you will forgive me for
-> taking a pass here.
+> > This patch allowed em485_start/stop_tx to be called in my tests:
+> > [PATCH 1/1] serial: 8250: use THRE & __stop_tx also with DMA
+> 
+> I confirm that this patch fixes the issue when DMA is enabled.
+> 
+> I also confirm that your other patch
+> > +                       stop_delay = p->port.frame_time + DIV_ROUND_UP(p->port.frame_time, 7);
+> fixes the issue with RTS/DriverEnable deassertion time.
+> I've tested it again at 19200e1 and now RTS is deasserted
+> approximately at the same time as the end of the stop bit.
+> Please, note the "e" for even parity bit, that extra bit after the
+> data byte might have an impact on this timings.
 
-Sure, no worries.
+Great, thanks again for testing.
 
-> Another alternative I considered was to only call
-> checksyscalls.sh when doing a 'make all'. This way, we keep the
-> warning but people won’t be spammed when building sub projects
-> because the script would not be executed.
+I don't think that parity "e" makes the calculations incorrect as parity 
+bit should be taken into account in tty_get_frame_size(). My guess is it's 
+more about whether THRE might get asserted already during the stop bit or 
+only after the stop bit has been fully sent.
 
-Right, I like that as well, one less thing to be done for every
-iterative make as well. The syscall table really doesn't change
-all that much that this needs to be run by most developers.
 
-      Arnd
+-- 
+ i.
+
+--8323329-69205849-1650885375=:1634--
