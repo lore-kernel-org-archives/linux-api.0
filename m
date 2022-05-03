@@ -2,268 +2,213 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DDC74C433F5
-	for <linux-api@archiver.kernel.org>; Sat, 30 Apr 2022 13:52:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8FCCCC433FE
+	for <linux-api@archiver.kernel.org>; Tue,  3 May 2022 11:12:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229844AbiD3Nzb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 30 Apr 2022 09:55:31 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39404 "EHLO
+        id S234610AbiECLP5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 3 May 2022 07:15:57 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52980 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S242217AbiD3Nz3 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 30 Apr 2022 09:55:29 -0400
-Received: from JPN01-TYC-obe.outbound.protection.outlook.com (mail-tycjpn01on2094.outbound.protection.outlook.com [40.107.114.94])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B34A566F8D;
-        Sat, 30 Apr 2022 06:52:04 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=KghrvQLNxii+iamwaWTbjeLd9v/9zKihCISJA+idyi/1y1bR3qJiRBUOHAQ/oMbZ+8am3/t4Jn7HOKyBk2bnRSxJQ0sXZvaYbOoNyeTwO39vpg50zSyGOdReHsb/2IaX/YmexLy5wV5yo8Lo8Ymvge91mGeqUhCw5mLvCBt+dzqgTatJkAiU6zrobVZoiMgcrWtov9joX4QENEeAWMw+2RI84N33os94vpD4159cJCtyvCxUP9y2kEwXEDqZtMsP9FOgq/8bmmqmu47qCyDBqKdeo8a1tnP/pCy0WIUZTM6gnA7hcKxeI2PDwBCMiFsPIAAfvTs5F6k74+mEymymCA==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=znMOr2UdiYf9gJM+5XymrfVPvk8Y0cGGp54ZuT9/7b0=;
- b=Zir4eW09ZPBuTPxf/+tZCk27OZVIKUHX+Gl4m2Ub4WDpoMqdUOlMfx6EmlrL0IB+RUlnaj7s3rTKUx3E8/BcmMiEDLS2vRjlaRJXb8qhbvVeRigV0hVeHgxSLD1y5nwpfD+WBDc/x5FcOoHkB5pzY4hjR+NtngKFEkU2QwxlnNNj3dZp18fCGvAvvU6TvowUYAO1RkJnetezh9NO4A0P666jCf+42vjm0pyZCQleAilM9UMwC2DSeS9SvJzNj9TyYNV246hZrx9cl0F6icujhYQBUiuu7v2BC6TZP/CtcDCpifIoihOtSUkXD6nx057/kTQVpRRUVUzSsV07kQABTA==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=zenithal.me; dmarc=pass action=none header.from=zenithal.me;
- dkim=pass header.d=zenithal.me; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=zenithal.me;
- s=selector1;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=znMOr2UdiYf9gJM+5XymrfVPvk8Y0cGGp54ZuT9/7b0=;
- b=PBhhYaDb0eF3k404rRcE/0juTtbtfa67E7xz44CJ3Cc1AKiBm7VENKgoToVgbiyinEsu08WhWf/DCyKrhK72gGsaMp0Kx/xo6avQfaEJsZNr44PIS0uCdPMS67s31B27lM5/22fdLGX/YsuLGpGYwppvs2SUaLNL4uMkdwt370s=
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=zenithal.me;
-Received: from TYCP286MB1393.JPNP286.PROD.OUTLOOK.COM (2603:1096:400:c0::6) by
- OSZP286MB1559.JPNP286.PROD.OUTLOOK.COM (2603:1096:604:1b4::10) with Microsoft
- SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.20.5206.14; Sat, 30 Apr 2022 13:52:03 +0000
-Received: from TYCP286MB1393.JPNP286.PROD.OUTLOOK.COM
- ([fe80::bd99:5c83:e2dc:a8f7]) by TYCP286MB1393.JPNP286.PROD.OUTLOOK.COM
- ([fe80::bd99:5c83:e2dc:a8f7%6]) with mapi id 15.20.5206.012; Sat, 30 Apr 2022
- 13:52:03 +0000
-Date:   Sat, 30 Apr 2022 21:51:56 +0800
-From:   "Hongren (Zenithal) Zheng" <i@zenithal.me>
-To:     Palmer Dabbelt <palmer@dabbelt.com>,
-        Paul Walmsley <paul.walmsley@sifive.com>,
-        Albert Ou <aou@eecs.berkeley.edu>
-Cc:     Atish Patra <atishp@rivosinc.com>,
-        Anup Patel <anup@brainfault.org>,
-        Eric Biederman <ebiederm@xmission.com>,
-        Kees Cook <keescook@chromium.org>, linux-mm@kvack.org,
-        linux-riscv@lists.infradead.org, linux-kernel@vger.kernel.org,
-        linux-api@vger.kernel.org,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        linux-man@vger.kernel.org, Jiatai He <jiatai2021@iscas.ac.cn>
-Subject: [PATCH 3/3] RISC-V: HWCAP: parse Bitmanip/Scalar Crypto HWCAP from DT
-Message-ID: <Ym0+/JZ7zAGtSP8B@Sun>
-References: <Ym0+Erz5DEnB78vu@Sun>
+        with ESMTP id S233271AbiECLP4 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 3 May 2022 07:15:56 -0400
+Received: from mail-ej1-x62b.google.com (mail-ej1-x62b.google.com [IPv6:2a00:1450:4864:20::62b])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D898834659
+        for <linux-api@vger.kernel.org>; Tue,  3 May 2022 04:12:23 -0700 (PDT)
+Received: by mail-ej1-x62b.google.com with SMTP id l18so32727398ejc.7
+        for <linux-api@vger.kernel.org>; Tue, 03 May 2022 04:12:23 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20210112;
+        h=date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to;
+        bh=oFqiHnRl1AV5CwVvzFn8cPS0OwpSBHpXeStUM3laFbc=;
+        b=rgEPWEyb2782i+En/M1Gr9kW1acyISu99grDdKpqBvvPNsWCOiP+G46tw+T/g/PWac
+         0j/1IRgAx1LslBRX9J7N7iLrm3mcHMi7hhyzdYB5+ng2Ys2TT210cess3fl+KH+LXswP
+         YnUJ5G4gbXRsTmJeogARhIPFKX4YLURoQ/zauliX7py64FVLF0q/j/9nemRIgKYrxfRF
+         50bDBKtO24eHHvWVd0drvStgCLuh456LYRrNwiecHIdJqORZ5ymDAyfLWlif7S9+FR0S
+         sOpckw/TLRFb1sQNpj7W3yH7GGX6IflG6OTh0++C8FJ+iysRYy2A8JK6ATCEZuqV/FRP
+         J1cA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=oFqiHnRl1AV5CwVvzFn8cPS0OwpSBHpXeStUM3laFbc=;
+        b=D+KLXj7wpUgL/3+B420MBSEcEy12km/0Ir91KTiHhbztvs/0wAaPNU17gy0G9VRPJE
+         4vbZFAkfWhcQtDEU+yxKRX/EFJEBLhbMrpmhuSPZd9Qzcpz8sqnYSI4gH0Tls3TiJQjy
+         k6cVK+GgebDhD2zpoKxouO2Zd7EwzNBv2hPWPE5AS0Z3yQeQwizEm2R07OKTwIBFLdYA
+         Fu66BE1hFgK5MrJUTBgfjE5VicUTYBCMAwW2ZCsnuj4mtMAObccVLiJ+y9bSFEsVXTAC
+         xdjt7G3ZjskzzSQEz5pBTOF8F58a/63d/PJvcNpEMoklF+jyLrfwM0FTr7DZCo7zq7wB
+         yiLA==
+X-Gm-Message-State: AOAM530gx5t3ZfuiyvY1bawNLTgqc8B9TTaXV6Azwg3n8ik7zr61UVuo
+        S4bMmsEyJxVEq8/6W4uDhQjHOg==
+X-Google-Smtp-Source: ABdhPJw97PYd30DNDpPNsRrpJXojPvheV9UWZoSzYNANOpCBRVYdFYA4fTJtujnPpl7vcUfHD29C2Q==
+X-Received: by 2002:a17:907:6e04:b0:6e0:95c0:47b8 with SMTP id sd4-20020a1709076e0400b006e095c047b8mr15127269ejc.483.1651576342075;
+        Tue, 03 May 2022 04:12:22 -0700 (PDT)
+Received: from google.com (30.171.91.34.bc.googleusercontent.com. [34.91.171.30])
+        by smtp.gmail.com with ESMTPSA id l24-20020a056402029800b0042617ba63a7sm7817960edv.49.2022.05.03.04.12.21
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 03 May 2022 04:12:21 -0700 (PDT)
+Date:   Tue, 3 May 2022 11:12:18 +0000
+From:   Quentin Perret <qperret@google.com>
+To:     Chao Peng <chao.p.peng@linux.intel.com>
+Cc:     Andy Lutomirski <luto@kernel.org>,
+        Sean Christopherson <seanjc@google.com>,
+        Steven Price <steven.price@arm.com>,
+        kvm list <kvm@vger.kernel.org>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
+        Linux API <linux-api@vger.kernel.org>, qemu-devel@nongnu.org,
+        Paolo Bonzini <pbonzini@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Vitaly Kuznetsov <vkuznets@redhat.com>,
+        Wanpeng Li <wanpengli@tencent.com>,
+        Jim Mattson <jmattson@google.com>,
+        Joerg Roedel <joro@8bytes.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        the arch/x86 maintainers <x86@kernel.org>,
+        "H. Peter Anvin" <hpa@zytor.com>, Hugh Dickins <hughd@google.com>,
+        Jeff Layton <jlayton@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Mike Rapoport <rppt@kernel.org>,
+        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Vishal Annapurve <vannapurve@google.com>,
+        Yu Zhang <yu.c.zhang@linux.intel.com>,
+        "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>,
+        "Nakajima, Jun" <jun.nakajima@intel.com>,
+        Dave Hansen <dave.hansen@intel.com>,
+        Andi Kleen <ak@linux.intel.com>,
+        David Hildenbrand <david@redhat.com>,
+        Marc Zyngier <maz@kernel.org>, Will Deacon <will@kernel.org>,
+        Michael Roth <michael.roth@amd.com>
+Subject: Re: [PATCH v5 00/13] KVM: mm: fd-based approach for supporting KVM
+ guest private memory
+Message-ID: <YnEOEmf4We1aeLcT@google.com>
+References: <YksIQYdG41v3KWkr@google.com>
+ <Ykslo2eo2eRXrpFR@google.com>
+ <eefc3c74-acca-419c-8947-726ce2458446@www.fastmail.com>
+ <Ykwbqv90C7+8K+Ao@google.com>
+ <YkyEaYiL0BrDYcZv@google.com>
+ <20220422105612.GB61987@chaop.bj.intel.com>
+ <3b99f157-0f30-4b30-8399-dd659250ab8d@www.fastmail.com>
+ <20220425134051.GA175928@chaop.bj.intel.com>
+ <27616b2f-1eff-42ff-91e0-047f531639ea@www.fastmail.com>
+ <20220428122952.GA10508@chaop.bj.intel.com>
+MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <Ym0+Erz5DEnB78vu@Sun>
-X-Operating-System: Linux Sun 5.15.26
-X-Mailer: Mutt 2.2.1 (2022-02-19)
-X-ClientProxiedBy: BY3PR10CA0020.namprd10.prod.outlook.com
- (2603:10b6:a03:255::25) To TYCP286MB1393.JPNP286.PROD.OUTLOOK.COM
- (2603:1096:400:c0::6)
-MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: 4ce7e4b6-3c7e-492b-1c0d-08da2ab09aec
-X-MS-TrafficTypeDiagnostic: OSZP286MB1559:EE_
-X-Microsoft-Antispam-PRVS: <OSZP286MB1559D0F1AE9514966C10ECF4BCFF9@OSZP286MB1559.JPNP286.PROD.OUTLOOK.COM>
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;
-X-Microsoft-Antispam-Message-Info: u1PWH6LI3AUJ/ISh+zr1YIz1iTFTSbX8Frrba6ldIv64XendKguQI2jlSIVi6UXojBz6Hfuku4bnw61+Cl1hXkRX68/SWU60OtuHbXSFqnRHiirrSD5nKDIh/hGdQ8ANDZNDq719o3GiWvekTpdk2AHqfK6bIFZbAW8SflPj1WpkNPGG55GL929iesvIkzGSzq5xtyIoa90/0DmoUwhcA/FFqMBuM5A1pjrcBnept1QKReuj8rT36ToX10OJ/aAQ2GGaM4SBk6uBlt8UboKWuxI8qnBtJSIVVYi2GozB40bUpgBAKXIPtCwNNtQ8vc+qlP3FkwfG3dLY9GeyyIv/5zhEky81xgljU3ArtwnxwFFMjss1GgztC4H0P4Z2SCoilboXgCsm4o3+baM1rKpCAb9ytyjD4c6gDLlCq8GvcIISkEiruOQ0pzwDgfNQlGJf4zJHqE1cAnjSZNlCrRSknyTSA6J7SLDFLy3qUbtXGBOzzGsmWEa65/Dhnq7Guonziqgu0vFvCfSGX9JMgZsa1Zhm+ppIXAbFBL0eghzhRkEcU5RvzvVGYWEefbtXl4VqWuJ9bpG6I4P67bxKPouAPtK4gkKTFYfdq5IJzzAPvtVE9WQdtB296J0lc5R2fa7DCwCfMNzJ9DCZvxWQKuYtGKvRiMBJlyKXXANYGPceRIgpwyEd6V4095fp6tfh96Xw
-X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:TYCP286MB1393.JPNP286.PROD.OUTLOOK.COM;PTR:;CAT:NONE;SFS:(13230001)(7916004)(136003)(396003)(366004)(39830400003)(346002)(376002)(6486002)(6666004)(6512007)(86362001)(52116002)(33716001)(6506007)(9686003)(508600001)(110136005)(186003)(38100700002)(83380400001)(786003)(54906003)(316002)(8936002)(5660300002)(7416002)(2906002)(4326008)(66946007)(66556008)(66476007)(8676002)(49092004);DIR:OUT;SFP:1102;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?gf7EKPLrinSb73O2QJcwrxYqnGDKSUkYPWq+s8e4KNDSENcwT/ZnqM/hGxV4?=
- =?us-ascii?Q?yU2dAbds7GLUxJG4ZNm7veAsMDABMu9Yv2aXmXx4wg/Ix4mZYPFDUpNwlnAp?=
- =?us-ascii?Q?BsU1C7DBZH9f1WEbIzlDjJEU9KLRpUKnwL95zLg8W8E9HpfuPK2rGTorxz75?=
- =?us-ascii?Q?gFQAdfyjcD1yCl3jh0ddo1+ZxT4Q2mpsKDNWi79q10FGBvkNgOsQV3csOuJ/?=
- =?us-ascii?Q?HZJU308PLjjWj19WFWK72Gpp/zP1acJU8Mc9tU2zaP89Ui3J9HIh+4WeXeuG?=
- =?us-ascii?Q?wJXynt2W9phtIUjmdSARZO2YZnr/Qtvr1X2uF6OLp05viWPBd5akkIuIpXdv?=
- =?us-ascii?Q?JXpN8a8UbrkKtXqdwB2rPWXsU5/KIC70h0YQ7ffr7HtXMMsTRVU0TwLFPqdv?=
- =?us-ascii?Q?thiOZ27HCSelyESK+2SbCkhuv1HPTKbZD/YxbbzKz7yncjxm9mvackMfnT/4?=
- =?us-ascii?Q?ellkvBji4tmlkHx0Uf49/zbb2dOUQXuwnppRWALcEGdcuUjwDBQkbOCQDHhM?=
- =?us-ascii?Q?NJyVP/phafZV4mwkxIjfZ22mSuOy5JA6p95tIXaOsTMCdn5WPZvgAdkhHlHS?=
- =?us-ascii?Q?qk2fQ7fkhJZKfVA3bWGVvF9X9atDZ/xQSFWiNVNtLb6RgMQaCK6+PCynDnB7?=
- =?us-ascii?Q?RNPmiqME2CEESLqBcF0+2NM2x9EdigWl4iMm2aimbDlswPNlh2P6IHDaGyPU?=
- =?us-ascii?Q?4YNgt42mpBPHhlHho3TIwAroeWkP2c7tDmogVMsOnvXY8lFQParNompZq7nZ?=
- =?us-ascii?Q?R9VYve2Wzq8LGFy68+JsBTOXTBhuc4Y5nCO6NhL/GLiTXppIc4lYtae0Jxlp?=
- =?us-ascii?Q?Skp4P6+gYxqmpUzCoCrepdX60yUMjycVARW/h6DGG/0he0q8LVqmPSgvSyAt?=
- =?us-ascii?Q?IFDM34sBNf5ayy4gYSmkRGpaZFusIRGizTMmqsPtpQP+tBQNzUIxQAz3h6ty?=
- =?us-ascii?Q?16Pyqo1GRnmmc8jG8ZbVnj/qj/zw1kQQrJ2hijkOhW4xi1E+JLuoG12gLhgE?=
- =?us-ascii?Q?qZAz5/Fd6J9/UFr8WI6fQ8o4qLWBUwDQvCcpXtfb3L0dlXpbvXzDClFOsGzd?=
- =?us-ascii?Q?DMPmaGuzcfih0FxKvvzsqUgITv43tnRSPnNhtSbyBOjv+uwzYiwybtubTZ4n?=
- =?us-ascii?Q?+UToLpXD8P/FKnoUGD6HpnJf6JF06qaUJiwY3aPu40Nc9j9ErV/zSG3YSATA?=
- =?us-ascii?Q?1h+02Dr95vbyD0wCSBICB2GPFdniFST8kDLv7x3f03sKmBlfYQ4YAHH2QznL?=
- =?us-ascii?Q?UI6VqhZboW1gV27LB+8Jlbjh2c1ZnUhPw/GkC0GDrgV2LDNjg0uHQTQXgLWg?=
- =?us-ascii?Q?rvfqhOFCzIR6wqknQ8ljYp1VAwGt2JJZNLQHLpG9SeLB0Jtb0YBhEJsQzHgW?=
- =?us-ascii?Q?H/KY5Zbq/cOqeEMsseAVLMoMnKJgBlt82VWT/xuowLfVPvV2dny6ZILOBfar?=
- =?us-ascii?Q?7izLl/5KooWzdtS8RSmKK0wdDZIL3PnsXIC0650bhyQK37bOG9/vdkA/Qm6D?=
- =?us-ascii?Q?2FfwhtgQG1gGUXSDKm+wHEA9sJ4fsyuEjq7tbeDfEPA9qBjbmrjRxpnN3u0f?=
- =?us-ascii?Q?CXXz2xggvjMqbeG6eqeZ5JGDy84XT2OHaXNWTukmDGxDAzfB4X3Lr7VI2Q1+?=
- =?us-ascii?Q?dfJN+CH+JJalDxHanCAxjSc10az6xI4cL6j3hd4wsFqp55/4GHbn3Y6EIOTW?=
- =?us-ascii?Q?wMwnYaEQiRuO8m1rXEqwiCPHMte/asmEPN9C5Ibw5xy4rf2he1nG9pVUhSzJ?=
- =?us-ascii?Q?Ew4JFuLO0w=3D=3D?=
-X-OriginatorOrg: zenithal.me
-X-MS-Exchange-CrossTenant-Network-Message-Id: 4ce7e4b6-3c7e-492b-1c0d-08da2ab09aec
-X-MS-Exchange-CrossTenant-AuthSource: TYCP286MB1393.JPNP286.PROD.OUTLOOK.COM
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 30 Apr 2022 13:52:03.0777
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 436d481c-43b1-4418-8d7f-84c1e4887cf0
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: Xy6yQLp3Bo4yJ0lX8uAuHMm+YJ6ZyvWLEpEcSeLS9sT7dBZqs3MI2buGGCDbXqFC
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: OSZP286MB1559
+In-Reply-To: <20220428122952.GA10508@chaop.bj.intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-One viable way to detect Zb/Zk HWCAP is from the DT binding.
-No matter how the "M" mode things change, this way can
-always be an auxiliary way to detect it.
+On Thursday 28 Apr 2022 at 20:29:52 (+0800), Chao Peng wrote:
+> 
+> + Michael in case he has comment from SEV side.
+> 
+> On Mon, Apr 25, 2022 at 07:52:38AM -0700, Andy Lutomirski wrote:
+> > 
+> > 
+> > On Mon, Apr 25, 2022, at 6:40 AM, Chao Peng wrote:
+> > > On Sun, Apr 24, 2022 at 09:59:37AM -0700, Andy Lutomirski wrote:
+> > >> 
+> > 
+> > >> 
+> > >> 2. Bind the memfile to a VM (or at least to a VM technology).  Now it's in the initial state appropriate for that VM.
+> > >> 
+> > >> For TDX, this completely bypasses the cases where the data is prepopulated and TDX can't handle it cleanly.  For SEV, it bypasses a situation in which data might be written to the memory before we find out whether that data will be unreclaimable or unmovable.
+> > >
+> > > This sounds a more strict rule to avoid semantics unclear.
+> > >
+> > > So userspace needs to know what excatly happens for a 'bind' operation.
+> > > This is different when binds to different technologies. E.g. for SEV, it
+> > > may imply after this call, the memfile can be accessed (through mmap or
+> > > what ever) from userspace, while for current TDX this should be not allowed.
+> > 
+> > I think this is actually a good thing.  While SEV, TDX, pKVM, etc achieve similar goals and have broadly similar ways of achieving them, they really are different, and having userspace be aware of the differences seems okay to me.
+> > 
+> > (Although I don't think that allowing userspace to mmap SEV shared pages is particularly wise -- it will result in faults or cache incoherence depending on the variant of SEV in use.)
+> > 
+> > >
+> > > And I feel we still need a third flow/operation to indicate the
+> > > completion of the initialization on the memfile before the guest's 
+> > > first-time launch. SEV needs to check previous mmap-ed areas are munmap-ed
+> > > and prevent future userspace access. After this point, then the memfile
+> > > becomes truely private fd.
+> > 
+> > Even that is technology-dependent.  For TDX, this operation doesn't really exist.  For SEV, I'm not sure (I haven't read the specs in nearly enough detail).  For pKVM, I guess it does exist and isn't quite the same as a shared->private conversion.
+> > 
+> > Maybe this could be generalized a bit as an operation "measure and make private" that would be supported by the technologies for which it's useful.
+> 
+> Then I think we need callback instead of static flag field. Backing
+> store implements this callback and consumers change the flags
+> dynamically with this callback. This implements kind of state machine
+> flow.
+> 
+> > 
+> > 
+> > >
+> > >> 
+> > >> 
+> > >> ----------------------------------------------
+> > >> 
+> > >> Now I have a question, since I don't think anyone has really answered it: how does this all work with SEV- or pKVM-like technologies in which private and shared pages share the same address space?  I sounds like you're proposing to have a big memfile that contains private and shared pages and to use that same memfile as pages are converted back and forth.  IO and even real physical DMA could be done on that memfile.  Am I understanding correctly?
+> > >
+> > > For TDX case, and probably SEV as well, this memfile contains private memory
+> > > only. But this design at least makes it possible for usage cases like
+> > > pKVM which wants both private/shared memory in the same memfile and rely
+> > > on other ways like mmap/munmap or mprotect to toggle private/shared instead
+> > > of fallocate/hole punching.
+> > 
+> > Hmm.  Then we still need some way to get KVM to generate the correct SEV pagetables.  For TDX, there are private memslots and shared memslots, and they can overlap.  If they overlap and both contain valid pages at the same address, then the results may not be what the guest-side ABI expects, but everything will work.  So, when a single logical guest page transitions between shared and private, no change to the memslots is needed.  For SEV, this is not the case: everything is in one set of pagetables, and there isn't a natural way to resolve overlaps.
+> 
+> I don't see SEV has problem. Note for all the cases, both private/shared
+> memory are in the same memslot. For a given GPA, if there is no private
+> page, then shared page will be used to establish KVM pagetables, so this
+> can guarantee there is no overlaps.
+> 
+> > 
+> > If the memslot code becomes efficient enough, then the memslots could be fragmented.  Or the memfile could support private and shared data in the same memslot.  And if pKVM does this, I don't see why SEV couldn't also do it and hopefully reuse the same code.
+> 
+> For pKVM, that might be the case. For SEV, I don't think we require
+> private/shared data in the same memfile. The same model that works for
+> TDX should also work for SEV. Or maybe I misunderstood something here?
+> 
+> > 
+> > >
+> > >> 
+> > >> If so, I think this makes sense, but I'm wondering if the actual memslot setup should be different.  For TDX, private memory lives in a logically separate memslot space.  For SEV and pKVM, it doesn't.  I assume the API can reflect this straightforwardly.
+> > >
+> > > I believe so. The flow should be similar but we do need pass different
+> > > flags during the 'bind' to the backing store for different usages. That
+> > > should be some new flags for pKVM but the callbacks (API here) between
+> > > memfile_notifile and its consumers can be reused.
+> > 
+> > And also some different flag in the operation that installs the fd as a memslot?
+> > 
+> > >
+> > >> 
+> > >> And the corresponding TDX question: is the intent still that shared pages aren't allowed at all in a TDX memfile?  If so, that would be the most direct mapping to what the hardware actually does.
+> > >
+> > > Exactly. TDX will still use fallocate/hole punching to turn on/off the
+> > > private page. Once off, the traditional shared page will become
+> > > effective in KVM.
+> > 
+> > Works for me.
+> > 
+> > For what it's worth, I still think it should be fine to land all the TDX memfile bits upstream as long as we're confident that SEV, pKVM, etc can be added on without issues.
+> > 
+> > I think we can increase confidence in this by either getting one other technology's maintainers to get far enough along in the design to be confident
+> 
+> AFAICS, SEV shouldn't have any problem, But would like to see AMD people
+> can comment. For pKVM, definitely need more work, but isn't totally
+> undoable. Also would be good if pKVM people can comment.
 
-Note that QEMU currently has "zba/zbb/zbc/zbs" in their device tree
-riscv,isa
+Merging things incrementally sounds good to me if we can indeed get some
+time to make sure it'll be a workable solution for other technologies.
+I'm happy to prototype a pKVM extension to the proposed series to see if
+there are any major blockers.
 
-This also fixes the isa2hwcap way as using unsigned char
-for long extension is not viable. Note that the tolower function
-ensures functionality. For other no-hwcap extension (e.g. h, s, u),
-or ("|") with 0 has no effect on hwcap.
-
-Tested-by: Jiatai He <jiatai2021@iscas.ac.cn>
-Signed-off-by: Hongren (Zenithal) Zheng <i@zenithal.me>
----
- arch/riscv/include/asm/elf.h   |  2 ++
- arch/riscv/include/asm/hwcap.h |  2 ++
- arch/riscv/kernel/cpufeature.c | 46 ++++++++++++++++++++++++++--------
- 3 files changed, 40 insertions(+), 10 deletions(-)
-
-diff --git a/arch/riscv/include/asm/elf.h b/arch/riscv/include/asm/elf.h
-index f53c40026c7a..c6a4d8d2a241 100644
---- a/arch/riscv/include/asm/elf.h
-+++ b/arch/riscv/include/asm/elf.h
-@@ -51,7 +51,9 @@
-  * but it's not easy, and we've already done it here.
-  */
- #define ELF_HWCAP	(elf_hwcap)
-+#define ELF_HWCAP2	(elf_hwcap2)
- extern unsigned long elf_hwcap;
-+extern unsigned long elf_hwcap2;
- 
- /*
-  * This yields a string that ld.so will use to load implementation
-diff --git a/arch/riscv/include/asm/hwcap.h b/arch/riscv/include/asm/hwcap.h
-index 199eda39e0b8..357b0481f1d0 100644
---- a/arch/riscv/include/asm/hwcap.h
-+++ b/arch/riscv/include/asm/hwcap.h
-@@ -17,12 +17,14 @@
-  * instruction set this cpu supports.
-  */
- #define ELF_HWCAP		(elf_hwcap)
-+#define ELF_HWCAP2		(elf_hwcap2)
- 
- enum {
- 	CAP_HWCAP = 1,
- };
- 
- extern unsigned long elf_hwcap;
-+extern unsigned long elf_hwcap2;
- 
- #define RISCV_ISA_EXT_a		('a' - 'a')
- #define RISCV_ISA_EXT_c		('c' - 'a')
-diff --git a/arch/riscv/kernel/cpufeature.c b/arch/riscv/kernel/cpufeature.c
-index 10f9daf3734e..f3a033bb51f5 100644
---- a/arch/riscv/kernel/cpufeature.c
-+++ b/arch/riscv/kernel/cpufeature.c
-@@ -17,6 +17,7 @@
- #define NUM_ALPHA_EXTS ('z' - 'a' + 1)
- 
- unsigned long elf_hwcap __read_mostly;
-+unsigned long elf_hwcap2 __read_mostly;
- 
- /* Host ISA bitmap */
- static DECLARE_BITMAP(riscv_isa, RISCV_ISA_EXT_MAX) __read_mostly;
-@@ -68,21 +69,39 @@ void __init riscv_fill_hwcap(void)
- 	const char *isa;
- 	char print_str[NUM_ALPHA_EXTS + 1];
- 	int i, j;
--	static unsigned long isa2hwcap[256] = {0};
-+	static unsigned long isa2hwcap[RISCV_ISA_EXT_MAX] = {0};
- 
--	isa2hwcap['i'] = isa2hwcap['I'] = COMPAT_HWCAP_ISA_I;
--	isa2hwcap['m'] = isa2hwcap['M'] = COMPAT_HWCAP_ISA_M;
--	isa2hwcap['a'] = isa2hwcap['A'] = COMPAT_HWCAP_ISA_A;
--	isa2hwcap['f'] = isa2hwcap['F'] = COMPAT_HWCAP_ISA_F;
--	isa2hwcap['d'] = isa2hwcap['D'] = COMPAT_HWCAP_ISA_D;
--	isa2hwcap['c'] = isa2hwcap['C'] = COMPAT_HWCAP_ISA_C;
-+	/* HWCAP */
-+	isa2hwcap[RISCV_ISA_EXT_i] = COMPAT_HWCAP_ISA_I;
-+	isa2hwcap[RISCV_ISA_EXT_m] = COMPAT_HWCAP_ISA_M;
-+	isa2hwcap[RISCV_ISA_EXT_a] = COMPAT_HWCAP_ISA_A;
-+	isa2hwcap[RISCV_ISA_EXT_f] = COMPAT_HWCAP_ISA_F;
-+	isa2hwcap[RISCV_ISA_EXT_d] = COMPAT_HWCAP_ISA_D;
-+	isa2hwcap[RISCV_ISA_EXT_c] = COMPAT_HWCAP_ISA_C;
-+	/* HWCAP2 */
-+	isa2hwcap[RISCV_ISA_EXT_ZBA  ] = COMPAT_HWCAP2_ISA_ZBA;
-+	isa2hwcap[RISCV_ISA_EXT_ZBB  ] = COMPAT_HWCAP2_ISA_ZBB;
-+	isa2hwcap[RISCV_ISA_EXT_ZBC  ] = COMPAT_HWCAP2_ISA_ZBC;
-+	isa2hwcap[RISCV_ISA_EXT_ZBS  ] = COMPAT_HWCAP2_ISA_ZBS;
-+	isa2hwcap[RISCV_ISA_EXT_ZBKB ] = COMPAT_HWCAP2_ISA_ZBKB;
-+	isa2hwcap[RISCV_ISA_EXT_ZBKC ] = COMPAT_HWCAP2_ISA_ZBKC;
-+	isa2hwcap[RISCV_ISA_EXT_ZBKX ] = COMPAT_HWCAP2_ISA_ZBKX;
-+	isa2hwcap[RISCV_ISA_EXT_ZKNE ] = COMPAT_HWCAP2_ISA_ZKND;
-+	isa2hwcap[RISCV_ISA_EXT_ZKND ] = COMPAT_HWCAP2_ISA_ZKNE;
-+	isa2hwcap[RISCV_ISA_EXT_ZKNH ] = COMPAT_HWCAP2_ISA_ZKNH;
-+	isa2hwcap[RISCV_ISA_EXT_ZKSED] = COMPAT_HWCAP2_ISA_ZKSED;
-+	isa2hwcap[RISCV_ISA_EXT_ZKSH ] = COMPAT_HWCAP2_ISA_ZKSH;
-+	isa2hwcap[RISCV_ISA_EXT_ZKR  ] = COMPAT_HWCAP2_ISA_ZKR;
-+	isa2hwcap[RISCV_ISA_EXT_ZKT  ] = COMPAT_HWCAP2_ISA_ZKT;
- 
- 	elf_hwcap = 0;
-+	elf_hwcap2 = 0;
- 
- 	bitmap_zero(riscv_isa, RISCV_ISA_EXT_MAX);
- 
- 	for_each_of_cpu_node(node) {
- 		unsigned long this_hwcap = 0;
-+		unsigned long this_hwcap2 = 0;
- 		DECLARE_BITMAP(this_isa, RISCV_ISA_EXT_MAX);
- 		const char *temp;
- 
-@@ -181,15 +200,17 @@ void __init riscv_fill_hwcap(void)
- #define SET_ISA_EXT_MAP(name, bit)						\
- 			do {							\
- 				if ((ext_end - ext == sizeof(name) - 1) &&	\
--				     !memcmp(ext, name, sizeof(name) - 1))	\
-+				     !memcmp(ext, name, sizeof(name) - 1)) {	\
-+					this_hwcap2 |= isa2hwcap[bit];		\
- 					set_bit(bit, this_isa);			\
-+				}						\
- 			} while (false)						\
- 
- 			if (unlikely(ext_err))
- 				continue;
- 			if (!ext_long) {
--				this_hwcap |= isa2hwcap[(unsigned char)(*ext)];
--				set_bit(*ext - 'a', this_isa);
-+				this_hwcap |= isa2hwcap[tolower(*ext) - 'a'];
-+				set_bit(tolower(*ext) - 'a', this_isa);
- 			} else {
- 				SET_ISA_EXT_MAP("sscofpmf", RISCV_ISA_EXT_SSCOFPMF);
- 				SET_ISA_EXT_MAP("zba"     , RISCV_ISA_EXT_ZBA     );
-@@ -239,6 +260,11 @@ void __init riscv_fill_hwcap(void)
- 		else
- 			elf_hwcap = this_hwcap;
- 
-+		if (elf_hwcap2)
-+			elf_hwcap2 &= this_hwcap2;
-+		else
-+			elf_hwcap2 = this_hwcap2;
-+
- 		if (bitmap_weight(riscv_isa, RISCV_ISA_EXT_MAX))
- 			bitmap_and(riscv_isa, riscv_isa, this_isa, RISCV_ISA_EXT_MAX);
- 		else
--- 
-2.35.1
-
+Thanks,
+Quentin
