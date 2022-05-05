@@ -2,135 +2,115 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 81F84C433FE
-	for <linux-api@archiver.kernel.org>; Wed,  4 May 2022 14:22:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3F2DCC43219
+	for <linux-api@archiver.kernel.org>; Thu,  5 May 2022 08:56:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1351058AbiEDO00 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 4 May 2022 10:26:26 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41260 "EHLO
+        id S1350955AbiEEJAP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 5 May 2022 05:00:15 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40866 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238025AbiEDO0Z (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 4 May 2022 10:26:25 -0400
-Received: from mail-qv1-xf2b.google.com (mail-qv1-xf2b.google.com [IPv6:2607:f8b0:4864:20::f2b])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9999A2019D;
-        Wed,  4 May 2022 07:22:49 -0700 (PDT)
-Received: by mail-qv1-xf2b.google.com with SMTP id jt15so930600qvb.8;
-        Wed, 04 May 2022 07:22:49 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=JOJe8EFexHCJl/2Bc6RO8FsgtVtMHIZENqTmuqDEE2I=;
-        b=R+I1KpWncwM37jcDvaWaBIuoT9NF2QuLZPr3IjIF3/+9wYNZpMUCmWM4I8X+wd0R+j
-         4jCa+JKhojklqTV34Vg8ws3Oj4dt2uZ3xeqEHypoOH7pgSfZiWXKgAtZrCNR8OV5iOr9
-         N7Z9D3bLQTIAL14ZgAhrx9teDv5uV/2WjOwbkygKqUE6TcMQeMUXn1WQtyfO4RP0psnV
-         pTyNZ8JD/FOYiPBRQW9RN9KF0Q7I6RcCX8WLgk5BMVpfM/StWJDN+IIJXZKLDNqbHRJx
-         9mj1bVojs2UukUKW8UG5Xm5x0UKWCBJUxqN2XI2jMIuU0oaHoqazZWigbqbZ6h2kF7HO
-         u8CA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=JOJe8EFexHCJl/2Bc6RO8FsgtVtMHIZENqTmuqDEE2I=;
-        b=TrHsyD4Ex1gOrU53MOICf+G9y9zhcO0bChKTomw5a+cNtgNZTkzfMmaleA754KI8CU
-         W+7HTW92QUzltdD9SztzV6K0LDD34MYF2v6CgD0jw5oah3eRfJyZSATGuEKCczY3X6ak
-         SlfAzsJhW/HIngoWbatqeYD/oiVs7P1AcNc/luB+NrxxcSwfeA9fQZ72GjV1SQO4ngIy
-         eMamI+HldtmeTfVlqORWuafRjqbs+EpWiW0QRIbt6pa0QMTyPPbI7VB7oLXdOBQ0jA/g
-         Zvt/z9KhyqsEAIOcgV/ComeWKR0n11jG57praE3qi+EFDHTOuf6PjiMdr/DPIBsUushQ
-         adHQ==
-X-Gm-Message-State: AOAM531snmsNWPQRxsxwWcVcwOAlef24Qm0xTmPRGH9t2bcWUSUcPeI2
-        VuNIXi6O2jN618dTJrTaakiT1LrOZKS+SL3fvzs=
-X-Google-Smtp-Source: ABdhPJwSLcDDkqI8PXeUJie+v61GcNmYEMGXjvyoA5jowaY5/ifSkN39Q1mNINDyd/sv/G2PmFUQ5nrtxbNGknZIn08=
-X-Received: by 2002:a05:6214:1cc4:b0:435:35c3:f0f1 with SMTP id
- g4-20020a0562141cc400b0043535c3f0f1mr17657763qvd.0.1651674168694; Wed, 04 May
- 2022 07:22:48 -0700 (PDT)
-MIME-Version: 1.0
-References: <YnEeuw6fd1A8usjj@miu.piliscsaba.redhat.com> <20220503224305.GF1360180@dread.disaster.area>
- <CAJfpegt_p2Tg+Tr34PtKSXvTyTJdTTwALMPRVE8KK2NmNVZhEg@mail.gmail.com>
-In-Reply-To: <CAJfpegt_p2Tg+Tr34PtKSXvTyTJdTTwALMPRVE8KK2NmNVZhEg@mail.gmail.com>
-From:   Amir Goldstein <amir73il@gmail.com>
-Date:   Wed, 4 May 2022 17:22:37 +0300
-Message-ID: <CAOQ4uxhALMgZeFHpPhu8oshrBzBjHcV-vTpFO=b-MeQ3OsQ6Ug@mail.gmail.com>
-Subject: Re: [RFC PATCH] getting misc stats/attributes via xattr API
-To:     Miklos Szeredi <miklos@szeredi.hu>
-Cc:     Dave Chinner <david@fromorbit.com>,
-        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-        "Theodore Ts'o" <tytso@mit.edu>, Karel Zak <kzak@redhat.com>,
-        Greg KH <gregkh@linuxfoundation.org>,
-        Christian Brauner <brauner@kernel.org>,
-        linux-kernel <linux-kernel@vger.kernel.org>,
+        with ESMTP id S1350979AbiEEJAO (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 5 May 2022 05:00:14 -0400
+Received: from mga11.intel.com (mga11.intel.com [192.55.52.93])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1891A4AE22;
+        Thu,  5 May 2022 01:56:35 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1651740995; x=1683276995;
+  h=date:from:to:cc:subject:in-reply-to:message-id:
+   references:mime-version;
+  bh=FXK7ar2tfCe3b0G5EJOLZVnb+48+yJ1/UsODDRlXrb0=;
+  b=TL9dK+sKuTs6J0DgMzsfeBUR4jmf6zNYt5CTNWxnsUW7Y+Yne877rIoM
+   xUP1nsYvgGP3tnaMlTVLBkUovoj3xVSpJns89RrCfLPcbNTWj8otudnmz
+   /R2c43hrY14NffVCxIB3folmTGOPsqhAJUFrs4IbcM/GU/ELZzMQaEUiC
+   078hGn7Qe+IpQLE9AimcQg7K8PHs9A6yrD42Mn+aeFpurhd7gXHNDXhYG
+   GgAM6pnIcXlThqaMkMsvHy4mfBmSJ0uCLBohnK7aQcBmr1p1WVJJ6lM76
+   8vgSxRkvBMssZ+N8G8dZBfcZisHAj8tkh5AR4m9Of0shAiVvBDt5Jar7Q
+   A==;
+X-IronPort-AV: E=McAfee;i="6400,9594,10337"; a="265642312"
+X-IronPort-AV: E=Sophos;i="5.91,200,1647327600"; 
+   d="scan'208";a="265642312"
+Received: from orsmga008.jf.intel.com ([10.7.209.65])
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 05 May 2022 01:56:26 -0700
+X-IronPort-AV: E=Sophos;i="5.91,200,1647327600"; 
+   d="scan'208";a="585219605"
+Received: from tpaatola-mobl1.ger.corp.intel.com ([10.251.220.83])
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 05 May 2022 01:56:20 -0700
+Date:   Thu, 5 May 2022 11:56:15 +0300 (EEST)
+From:   =?ISO-8859-15?Q?Ilpo_J=E4rvinen?= <ilpo.jarvinen@linux.intel.com>
+To:     Arnd Bergmann <arnd@arndb.de>
+cc:     Greg KH <gregkh@linuxfoundation.org>,
+        linux-serial <linux-serial@vger.kernel.org>,
+        Jiri Slaby <jirislaby@kernel.org>,
         Linux API <linux-api@vger.kernel.org>,
-        linux-man <linux-man@vger.kernel.org>,
-        LSM <linux-security-module@vger.kernel.org>,
-        Ian Kent <raven@themaw.net>,
-        David Howells <dhowells@redhat.com>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Christian Brauner <christian@brauner.io>,
-        James Bottomley <James.Bottomley@hansenpartnership.com>
-Content-Type: text/plain; charset="UTF-8"
+        Ivan Kokshaysky <ink@jurassic.park.msu.ru>,
+        Matt Turner <mattst88@gmail.com>,
+        alpha <linux-alpha@vger.kernel.org>,
+        Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
+        "open list:BROADCOM NVRAM DRIVER" <linux-mips@vger.kernel.org>,
+        "James E.J. Bottomley" <James.Bottomley@hansenpartnership.com>,
+        Helge Deller <deller@gmx.de>,
+        Parisc List <linux-parisc@vger.kernel.org>,
+        Michael Ellerman <mpe@ellerman.id.au>,
+        Benjamin Herrenschmidt <benh@kernel.crashing.org>,
+        Paul Mackerras <paulus@samba.org>,
+        linuxppc-dev <linuxppc-dev@lists.ozlabs.org>,
+        linux-arch <linux-arch@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+Subject: Re: [PATCH 1/1] termbits: Convert octal defines to hex
+In-Reply-To: <CAK8P3a33b4KvsGayDV7fXte0+1FzCJp_J60d8LuZO3P+i1NUEg@mail.gmail.com>
+Message-ID: <386eed36-94f7-8acb-926f-99c74d55915f@linux.intel.com>
+References: <2c8c96f-a12f-aadc-18ac-34c1d371929c@linux.intel.com> <CAK8P3a0hy8Ras7pwF9rJADtCAfeV49K7GWkftJnzqeGiQ6j-zA@mail.gmail.com> <ca39c741-8d15-33c0-7bd6-635778cc436@linux.intel.com>
+ <CAK8P3a33b4KvsGayDV7fXte0+1FzCJp_J60d8LuZO3P+i1NUEg@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="8323329-878121235-1651740985=:1544"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, May 4, 2022 at 10:18 AM Miklos Szeredi <miklos@szeredi.hu> wrote:
->
-> On Wed, 4 May 2022 at 00:43, Dave Chinner <david@fromorbit.com> wrote:
->
-> > "values" is a very generic name - probably should end up being
-> > something more descriptive of the functionality is provides,
-> > especially if the header file is going to be dumped in
-> > include/linux/. I don't really have a good suggestion at the moment,
-> > though.
->
-> The obvious ones are stat and attr, which are taken already.   Info is
-> probably too generic as well.
->
-> Ideas are welcome.
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-I was thinking of "properties".
+--8323329-878121235-1651740985=:1544
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
->
+On Wed, 4 May 2022, Arnd Bergmann wrote:
+
+> On Wed, May 4, 2022 at 10:33 AM Ilpo Järvinen
+> <ilpo.jarvinen@linux.intel.com> wrote:
+> > On Wed, 4 May 2022, Arnd Bergmann wrote:
+> > > On Wed, May 4, 2022 at 9:20 AM Ilpo Järvinen <ilpo.jarvinen@linux.intel.com> wrote:
+> > > >
+> > > After applying the patch locally, I still see a bunch of whitespace
+> > > differences in the
+> > > changed lines if I run
+> > >
+> > > vimdiff arch/*/include/uapi/asm/termbits.h include/uapi/asm-generic/termbits.h
+> > >
+> > > I think this mostly because you left the sparc version alone (it already
+> > > uses hex constants), but it may be nice to edit this a little more to
+> > > make the actual differences stick out more.
 > >
-> > ....
-> >
-> > > +
-> > > +enum {
-> > > +     VAL_MNT_INFO,
-> > > +};
-> > > +
-> > > +static struct val_desc val_mnt_group[] = {
-> > > +     { VD_NAME("info"),              .idx = VAL_MNT_INFO             },
-> > > +     { }
-> > > +};
-> > ....
-> > > +
-> > > +
-> > > +static struct val_desc val_toplevel_group[] = {
-> > > +     { VD_NAME("mnt:"),      .get = val_mnt_get,     },
-> > > +     { VD_NAME("mntns:"),    .get = val_mntns_get,   },
-> > > +     { },
-> > > +};
-> >
-> > I know this is an early POC, my main question is how do you
-> > envisiage this table driven structure being extended down from just
-> > the mount into the filesystem so we can expose filesystem specific
-> > information that isn't covered by generic interfaces like statx?
->
-> I was thinking of adding a i_op callback.   The details are a bit
-> fuzzy, since the vfs and the fs would have to work together when
-> listing the attributes and possibly also when retrieving the attribute
-> itself (think mount options).
->
+> > I took a look on further harmonizing, however, it turned out to be not
+> > that simple. This is basically the pipeline I use to further cleanup the
+> > differences and remove comments if you want to play yourself, just remove
+> > stages from the tail to get the intermediate datas (gawk is required for
+> > --non-decimal-data):
+> 
+> I've played around with it some more to adjust the number of leading
+> zeroes and the type of whitespace. This is what I ended up with on top
+> of your patch: https://pastebin.com/raw/pkDPaKN1
+> 
+> Feel free to fold it into yours.
 
-No, please do not think mount options :)
-Please think of an interface that does not mix vfs and fs properties.
+Ok thanks. With that it seems to go a bit beyond octal to hex conversion 
+so I'll make a series out of it. The series will also introduce 
+include/uapi/asm-generic/termbits-common.h for the most obvious 
+intersection.
 
-Sure, with mount(2) you can mix fs and vfs options, but with the new interface
-they should be clearly separated for set and get if possible.
 
-":mnt:info" key to get the effective mount options (as in /proc/$$/mountinfo)
-does not contradict that, because it can be read only.
+-- 
+ i.
 
-Thanks,
-Amir.
+--8323329-878121235-1651740985=:1544--
