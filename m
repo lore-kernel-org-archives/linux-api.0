@@ -2,32 +2,32 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E582AC433F5
-	for <linux-api@archiver.kernel.org>; Fri,  6 May 2022 16:13:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1948AC4332F
+	for <linux-api@archiver.kernel.org>; Fri,  6 May 2022 16:13:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1443702AbiEFQRb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S1443744AbiEFQRb (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Fri, 6 May 2022 12:17:31 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52076 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50580 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1443816AbiEFQRU (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 6 May 2022 12:17:20 -0400
+        with ESMTP id S1443813AbiEFQRT (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 6 May 2022 12:17:19 -0400
 X-Greylist: delayed 336 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Fri, 06 May 2022 09:12:38 PDT
-Received: from smtp-8faf.mail.infomaniak.ch (smtp-8faf.mail.infomaniak.ch [83.166.143.175])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8404D712CB
+Received: from smtp-42af.mail.infomaniak.ch (smtp-42af.mail.infomaniak.ch [84.16.66.175])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2F9AA703F5
         for <linux-api@vger.kernel.org>; Fri,  6 May 2022 09:12:38 -0700 (PDT)
-Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4KvwS73nFSzMr2Zd;
-        Fri,  6 May 2022 18:07:03 +0200 (CEST)
+Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4KvwS53fnKzMqwT0;
+        Fri,  6 May 2022 18:07:01 +0200 (CEST)
 Received: from localhost (unknown [23.97.221.149])
-        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4KvwS71F6PzlhMBg;
-        Fri,  6 May 2022 18:07:03 +0200 (CEST)
+        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4KvwS522HJzlhSLv;
+        Fri,  6 May 2022 18:07:01 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=digikod.net;
-        s=20191114; t=1651853223;
-        bh=8r9fKQQr9e9xPmuZNKivpJH5l0oI/VFqJDOLmqdf8pw=;
+        s=20191114; t=1651853221;
+        bh=vvi6q1Rd/gDcGS5JNMP6tyQE4jRuIgqkCRlVkN+I8tU=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=ykEJrNNDfpAns8GXWSiIcIwOJK5cJ/U2iYpnvLRClUaZYuenzngvEh3/62oUzrFlU
-         +FxTfAW5f262AF2Yu1IBGmsfmccIRgp1AhAt+cd47+Rdu69g9a6teRtsopzv2Wm6DQ
-         MLnHuBk8nHv6QjHXvLME13lOfkViXknBZyDTOSt4=
+        b=MDJBE3OAkxTtgM4XDYMHwNHpuNz+3ubYzZt7MltMMi0q72Eicei8lrhAZJsy3i776
+         Jtk2sRTk9s+PD5iqVzsuUptTe1GEUbLp+LTdSwky5Mzdd1Rsgna8izrUm9nwi8ifRf
+         oGGG9LBZu8TPiEc5gBhVa8fn0yM7p8PEpQKVwDx4=
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     James Morris <jmorris@namei.org>,
         "Serge E . Hallyn" <serge@hallyn.com>
@@ -40,9 +40,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         Paul Moore <paul@paul-moore.com>,
         Shuah Khan <shuah@kernel.org>, linux-api@vger.kernel.org,
         linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
-Subject: [PATCH v2 09/10] landlock: Change landlock_restrict_self(2) check ordering
-Date:   Fri,  6 May 2022 18:08:19 +0200
-Message-Id: <20220506160820.524344-10-mic@digikod.net>
+Subject: [PATCH v2 06/10] selftests/landlock: Fully test file rename with "remove" access
+Date:   Fri,  6 May 2022 18:08:16 +0200
+Message-Id: <20220506160820.524344-7-mic@digikod.net>
 In-Reply-To: <20220506160820.524344-1-mic@digikod.net>
 References: <20220506160820.524344-1-mic@digikod.net>
 MIME-Version: 1.0
@@ -52,115 +52,125 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-According to the Landlock goal to be a security feature available to
-unprivileges processes, it makes more sense to first check for
-no_new_privs before checking anything else (i.e. syscall arguments).
+These tests were missing to check the check_access_path() call with all
+combinations of maybe_remove(old_dentry) and maybe_remove(new_dentry).
 
-Merge inval_fd_enforce and unpriv_enforce_without_no_new_privs tests
-into the new restrict_self_checks_ordering.  This is similar to the
-previous commit checking other syscalls.
+Extend layout1.link with a new complementary test and check that
+REMOVE_FILE is not required to link a file.
 
+Cc: Shuah Khan <shuah@kernel.org>
 Signed-off-by: Mickaël Salaün <mic@digikod.net>
-Link: https://lore.kernel.org/r/20220506160820.524344-10-mic@digikod.net
+Link: https://lore.kernel.org/r/20220506160820.524344-7-mic@digikod.net
 ---
 
 Changes since v1:
-* New patch.
+* Extend layout1.link with a second rule layer to check that REMOVE_FILE
+  is not required to link a file.
+* Format with clang-format and rebase.
 ---
- security/landlock/syscalls.c                 |  8 ++--
- tools/testing/selftests/landlock/base_test.c | 47 +++++++++++++++-----
- 2 files changed, 41 insertions(+), 14 deletions(-)
+ tools/testing/selftests/landlock/fs_test.c | 41 +++++++++++++++++++---
+ 1 file changed, 37 insertions(+), 4 deletions(-)
 
-diff --git a/security/landlock/syscalls.c b/security/landlock/syscalls.c
-index a7396220c9d4..507d43827afe 100644
---- a/security/landlock/syscalls.c
-+++ b/security/landlock/syscalls.c
-@@ -405,10 +405,6 @@ SYSCALL_DEFINE2(landlock_restrict_self, const int, ruleset_fd, const __u32,
- 	if (!landlock_initialized)
- 		return -EOPNOTSUPP;
+diff --git a/tools/testing/selftests/landlock/fs_test.c b/tools/testing/selftests/landlock/fs_test.c
+index 75f9358512df..9165f6adf7b9 100644
+--- a/tools/testing/selftests/landlock/fs_test.c
++++ b/tools/testing/selftests/landlock/fs_test.c
+@@ -1659,15 +1659,21 @@ TEST_F_FORK(layout1, execute)
  
--	/* No flag for now. */
--	if (flags)
--		return -EINVAL;
--
- 	/*
- 	 * Similar checks as for seccomp(2), except that an -EPERM may be
- 	 * returned.
-@@ -417,6 +413,10 @@ SYSCALL_DEFINE2(landlock_restrict_self, const int, ruleset_fd, const __u32,
- 	    !ns_capable_noaudit(current_user_ns(), CAP_SYS_ADMIN))
- 		return -EPERM;
- 
-+	/* No flag for now. */
-+	if (flags)
-+		return -EINVAL;
-+
- 	/* Gets and checks the ruleset. */
- 	ruleset = get_ruleset_from_fd(ruleset_fd, FMODE_CAN_READ);
- 	if (IS_ERR(ruleset))
-diff --git a/tools/testing/selftests/landlock/base_test.c b/tools/testing/selftests/landlock/base_test.c
-index 18b779471dcb..21fb33581419 100644
---- a/tools/testing/selftests/landlock/base_test.c
-+++ b/tools/testing/selftests/landlock/base_test.c
-@@ -168,22 +168,49 @@ TEST(add_rule_checks_ordering)
- 	ASSERT_EQ(0, close(ruleset_fd));
- }
- 
--TEST(inval_fd_enforce)
-+/* Tests ordering of syscall argument and permission checks. */
-+TEST(restrict_self_checks_ordering)
+ TEST_F_FORK(layout1, link)
  {
-+	const struct landlock_ruleset_attr ruleset_attr = {
-+		.handled_access_fs = LANDLOCK_ACCESS_FS_EXECUTE,
+-	const struct rule rules[] = {
++	const struct rule layer1[] = {
+ 		{
+ 			.path = dir_s1d2,
+ 			.access = LANDLOCK_ACCESS_FS_MAKE_REG,
+ 		},
+ 		{},
+ 	};
+-	const int ruleset_fd =
+-		create_ruleset(_metadata, rules[0].access, rules);
++	const struct rule layer2[] = {
++		{
++			.path = dir_s1d3,
++			.access = LANDLOCK_ACCESS_FS_REMOVE_FILE,
++		},
++		{},
 +	};
-+	struct landlock_path_beneath_attr path_beneath_attr = {
-+		.allowed_access = LANDLOCK_ACCESS_FS_EXECUTE,
-+		.parent_fd = -1,
-+	};
-+	const int ruleset_fd =
-+		landlock_create_ruleset(&ruleset_attr, sizeof(ruleset_attr), 0);
++	int ruleset_fd = create_ruleset(_metadata, layer1[0].access, layer1);
+ 
+ 	ASSERT_LE(0, ruleset_fd);
+ 
+@@ -1680,14 +1686,30 @@ TEST_F_FORK(layout1, link)
+ 
+ 	ASSERT_EQ(-1, link(file2_s1d1, file1_s1d1));
+ 	ASSERT_EQ(EACCES, errno);
 +
+ 	/* Denies linking because of reparenting. */
+ 	ASSERT_EQ(-1, link(file1_s2d1, file1_s1d2));
+ 	ASSERT_EQ(EXDEV, errno);
+ 	ASSERT_EQ(-1, link(file2_s1d2, file1_s1d3));
+ 	ASSERT_EQ(EXDEV, errno);
++	ASSERT_EQ(-1, link(file2_s1d3, file1_s1d2));
++	ASSERT_EQ(EXDEV, errno);
+ 
+ 	ASSERT_EQ(0, link(file2_s1d2, file1_s1d2));
+ 	ASSERT_EQ(0, link(file2_s1d3, file1_s1d3));
++
++	/* Prepares for next unlinks. */
++	ASSERT_EQ(0, unlink(file2_s1d2));
++	ASSERT_EQ(0, unlink(file2_s1d3));
++
++	ruleset_fd = create_ruleset(_metadata, layer2[0].access, layer2);
 +	ASSERT_LE(0, ruleset_fd);
-+	path_beneath_attr.parent_fd =
-+		open("/tmp", O_PATH | O_NOFOLLOW | O_DIRECTORY | O_CLOEXEC);
-+	ASSERT_LE(0, path_beneath_attr.parent_fd);
-+	ASSERT_EQ(0, landlock_add_rule(ruleset_fd, LANDLOCK_RULE_PATH_BENEATH,
-+				       &path_beneath_attr, 0));
-+	ASSERT_EQ(0, close(path_beneath_attr.parent_fd));
-+
-+	/* Checks unprivileged enforcement without no_new_privs. */
-+	drop_caps(_metadata);
-+	ASSERT_EQ(-1, landlock_restrict_self(-1, -1));
-+	ASSERT_EQ(EPERM, errno);
-+	ASSERT_EQ(-1, landlock_restrict_self(-1, 0));
-+	ASSERT_EQ(EPERM, errno);
-+	ASSERT_EQ(-1, landlock_restrict_self(ruleset_fd, 0));
-+	ASSERT_EQ(EPERM, errno);
-+
- 	ASSERT_EQ(0, prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0));
- 
-+	/* Checks invalid flags. */
-+	ASSERT_EQ(-1, landlock_restrict_self(-1, -1));
-+	ASSERT_EQ(EINVAL, errno);
-+
-+	/* Checks invalid ruleset FD. */
- 	ASSERT_EQ(-1, landlock_restrict_self(-1, 0));
- 	ASSERT_EQ(EBADF, errno);
--}
--
--TEST(unpriv_enforce_without_no_new_privs)
--{
--	int err;
- 
--	drop_caps(_metadata);
--	err = landlock_restrict_self(-1, 0);
--	ASSERT_EQ(EPERM, errno);
--	ASSERT_EQ(err, -1);
-+	/* Checks valid call. */
-+	ASSERT_EQ(0, landlock_restrict_self(ruleset_fd, 0));
++	enforce_ruleset(_metadata, ruleset_fd);
 +	ASSERT_EQ(0, close(ruleset_fd));
++
++	/* Checks that linkind doesn't require the ability to delete a file. */
++	ASSERT_EQ(0, link(file1_s1d2, file2_s1d2));
++	ASSERT_EQ(0, link(file1_s1d3, file2_s1d3));
  }
  
- TEST(ruleset_fd_io)
+ TEST_F_FORK(layout1, rename_file)
+@@ -1708,7 +1730,6 @@ TEST_F_FORK(layout1, rename_file)
+ 
+ 	ASSERT_LE(0, ruleset_fd);
+ 
+-	ASSERT_EQ(0, unlink(file1_s1d1));
+ 	ASSERT_EQ(0, unlink(file1_s1d2));
+ 
+ 	enforce_ruleset(_metadata, ruleset_fd);
+@@ -1744,9 +1765,15 @@ TEST_F_FORK(layout1, rename_file)
+ 	ASSERT_EQ(-1, renameat2(AT_FDCWD, dir_s2d2, AT_FDCWD, file1_s2d1,
+ 				RENAME_EXCHANGE));
+ 	ASSERT_EQ(EACCES, errno);
++	/* Checks that file1_s2d1 cannot be removed (instead of ENOTDIR). */
++	ASSERT_EQ(-1, rename(dir_s2d2, file1_s2d1));
++	ASSERT_EQ(EACCES, errno);
+ 	ASSERT_EQ(-1, renameat2(AT_FDCWD, file1_s2d1, AT_FDCWD, dir_s2d2,
+ 				RENAME_EXCHANGE));
+ 	ASSERT_EQ(EACCES, errno);
++	/* Checks that file1_s1d1 cannot be removed (instead of EISDIR). */
++	ASSERT_EQ(-1, rename(file1_s1d1, dir_s1d2));
++	ASSERT_EQ(EACCES, errno);
+ 
+ 	/* Renames files with different parents. */
+ 	ASSERT_EQ(-1, rename(file1_s2d2, file1_s1d2));
+@@ -1809,9 +1836,15 @@ TEST_F_FORK(layout1, rename_dir)
+ 	ASSERT_EQ(-1, renameat2(AT_FDCWD, dir_s1d1, AT_FDCWD, dir_s2d1,
+ 				RENAME_EXCHANGE));
+ 	ASSERT_EQ(EACCES, errno);
++	/* Checks that dir_s1d2 cannot be removed (instead of ENOTDIR). */
++	ASSERT_EQ(-1, rename(dir_s1d2, file1_s1d1));
++	ASSERT_EQ(EACCES, errno);
+ 	ASSERT_EQ(-1, renameat2(AT_FDCWD, file1_s1d1, AT_FDCWD, dir_s1d2,
+ 				RENAME_EXCHANGE));
+ 	ASSERT_EQ(EACCES, errno);
++	/* Checks that dir_s1d2 cannot be removed (instead of EISDIR). */
++	ASSERT_EQ(-1, rename(file1_s1d1, dir_s1d2));
++	ASSERT_EQ(EACCES, errno);
+ 
+ 	/*
+ 	 * Exchanges and renames directory to the same parent, which allows
 -- 
 2.35.1
 
