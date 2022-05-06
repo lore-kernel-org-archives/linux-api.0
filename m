@@ -2,104 +2,179 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3C429C433F5
-	for <linux-api@archiver.kernel.org>; Fri,  6 May 2022 16:13:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2B2DCC433EF
+	for <linux-api@archiver.kernel.org>; Fri,  6 May 2022 17:01:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S244902AbiEFQRf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 6 May 2022 12:17:35 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51036 "EHLO
+        id S1444060AbiEFREs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 6 May 2022 13:04:48 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39414 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1443769AbiEFQRU (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 6 May 2022 12:17:20 -0400
-X-Greylist: delayed 339 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Fri, 06 May 2022 09:12:38 PDT
-Received: from smtp-42af.mail.infomaniak.ch (smtp-42af.mail.infomaniak.ch [IPv6:2001:1600:3:17::42af])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 921CC712ED
-        for <linux-api@vger.kernel.org>; Fri,  6 May 2022 09:12:38 -0700 (PDT)
-Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4KvwS22VjzzMqwSb;
-        Fri,  6 May 2022 18:06:58 +0200 (CEST)
-Received: from localhost (unknown [23.97.221.149])
-        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4KvwS20gxszlhSLv;
-        Fri,  6 May 2022 18:06:58 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=digikod.net;
-        s=20191114; t=1651853218;
-        bh=yivXrqwHOjEJuB5JO2dFkVkVifT0vIdSPlaZ68dxcTE=;
-        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=mvtnmkxj8G1I3mF9KjXpG4pgD7uoCILsZIPoo5A7yu4bfGGeLBSKir4P1G2+Bug/W
-         PHN2E38FCKMoMVLe7wIYjF2pABAeE9nCUAece9ecWukrrw27RRIc5wcPMLuZSNxcT0
-         Grtvtx+sJ/JoLha/UImCZLqdx93NLKZlkj+qVEo4=
-From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
-To:     James Morris <jmorris@namei.org>,
-        "Serge E . Hallyn" <serge@hallyn.com>
-Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
-        Jann Horn <jannh@google.com>,
-        Kees Cook <keescook@chromium.org>,
-        Konstantin Meskhidze <konstantin.meskhidze@huawei.com>,
-        Nathan Chancellor <nathan@kernel.org>,
-        Nick Desaulniers <ndesaulniers@google.com>,
-        Paul Moore <paul@paul-moore.com>,
-        Shuah Khan <shuah@kernel.org>, linux-api@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
-Subject: [PATCH v2 01/10] landlock: Fix landlock_add_rule(2) documentation
-Date:   Fri,  6 May 2022 18:08:11 +0200
-Message-Id: <20220506160820.524344-2-mic@digikod.net>
-In-Reply-To: <20220506160820.524344-1-mic@digikod.net>
-References: <20220506160820.524344-1-mic@digikod.net>
+        with ESMTP id S1444041AbiEFREm (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 6 May 2022 13:04:42 -0400
+X-Greylist: delayed 92 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Fri, 06 May 2022 10:00:59 PDT
+Received: from wrqvvpzp.outbound-mail.sendgrid.net (wrqvvpzp.outbound-mail.sendgrid.net [149.72.131.227])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 139134474F
+        for <linux-api@vger.kernel.org>; Fri,  6 May 2022 10:00:58 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=catern.com;
+        h=from:subject:in-reply-to:references:mime-version:to:cc:content-type:
+        content-transfer-encoding;
+        s=s1; bh=0kv8Y+pw6sAthOMznHqH5eVjKXOt00qV9e4yFDnt+Es=;
+        b=JyGuBIUDLSg4VXtCtO+PrvbRjlHlYCWKmbwjPwbfXPEBx5aN/PKoexTCq249YbDPbeWO
+        PtA9yI37NUqajl8TtUDOxJPsJZPdoZc0f4BOyHJFEAs0+N9Tgzn7WSTF6w34GdGlRK3ob2
+        5p/SWiyqSLmOjpS6RNmfIFjcrKAJPbAI5SKDW6vMnhbSFhV/CQEh9vYF+z8JcFodjYuKWY
+        Y00pZ52/0HprIoV4nG7CtUVXPI8/E0+l+HHsNgm+dbPZspoWc6fj/dS8vHormThs86lRO9
+        07IIi4OMbFj5tYdnOsI2sPYXUvofIHnKPSQZGiy7cDj541Uwh0WpDUk6w5w4AhyA==
+Received: by filterdrecv-77df7bffc9-b2j5p with SMTP id filterdrecv-77df7bffc9-b2j5p-1-627553ED-5E
+        2022-05-06 16:59:25.839025366 +0000 UTC m=+2574812.774299640
+Received: from earth.catern.com (unknown)
+        by geopod-ismtpd-2-2 (SG)
+        with ESMTP
+        id lPNwAp36QO6WuhyWBDuI8g
+        Fri, 06 May 2022 16:59:25.688 +0000 (UTC)
+X-Comment: SPF check N/A for local connections - client-ip=::1; helo=localhost; envelope-from=sbaugh@catern.com; receiver=<UNKNOWN> 
+Received: from localhost (localhost [IPv6:::1])
+        by earth.catern.com (Postfix) with ESMTPSA id 966DA60040;
+        Fri,  6 May 2022 12:59:24 -0400 (EDT)
+From:   Spencer Baugh <sbaugh@catern.com>
+Subject: Re: Explicitly defining the userspace API
+In-Reply-To: <YmA/jFztk5GkjIr2@kroah.com>
+References: <874k2nhgtg.fsf@catern.com> <YmA/jFztk5GkjIr2@kroah.com>
+Date:   Fri, 06 May 2022 16:59:25 +0000 (UTC)
+Message-ID: <87levefvgz.fsf@catern.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+X-SG-EID: =?us-ascii?Q?GW3oCMoYnalRiojMOuLzE6x2H5kORXvlCdz1UwQVRMVT4fbh9ODEfCogOe74cO?=
+ =?us-ascii?Q?rI4e0V+MFZgakz9Re5a6=2FCgloGF35IKSfipc2eg?=
+ =?us-ascii?Q?gco3jvfFNeZBoapduVGgMA+K=2F4SfxXcosVfTDgq?=
+ =?us-ascii?Q?NVbZkA6JzG4eHrV1fet9KMsG2zjt1m2G+4sLeKk?=
+ =?us-ascii?Q?x2qi8H6etKTBXIJh5tDAnZ87rv1pt8ITWJ9K4go?=
+ =?us-ascii?Q?mo7BdnsZvqPx+pTGwHnmm9qs87IFdA3LPG7J4H?=
+To:     Greg KH <gregkh@linuxfoundation.org>
+Cc:     linux-api@vger.kernel.org, linux-kernel@vger.kernel.org,
+        marcin@juszkiewicz.com.pl, torvalds@linux-foundation.org,
+        arnd@arndb.de
+X-Entity-ID: d/0VcHixlS0t7iB1YKCv4Q==
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-It is not mandatory to pass a file descriptor obtained with the O_PATH
-flag.  Also, replace rule's accesses with ruleset's accesses.
+Greg KH <gregkh@linuxfoundation.org> writes:
+> On Wed, Apr 20, 2022 at 04:15:25PM +0000, Spencer Baugh wrote:
+>> 
+>> Linux guarantees the stability of its userspace API, but the API
+>> itself is only informally described, primarily with English prose.  I
+>> want to add an explicit, authoritative machine-readable definition of
+>> the Linux userspace API.
+>> 
+>> As background, in a conventional libc like glibc, read(2) calls the
+>> Linux system call read, passing arguments in an architecture-specific
+>> way according to the specific details of read.
+>> 
+>> The details of these syscalls are at best documented in manpages, and
+>> often defined only by the implementation.  Anyone else who wants to
+>> work with a syscall, in any way, needs to duplicate all those details.
+>> 
+>> So the most basic definition of the API would just represent the
+>> information already present in SYSCALL_DEFINE macros: the C types of
+>> arguments and return values.  More usefully, it would describe the
+>> formats of those arguments and return values: that the first argument
+>> to read is a file descriptor rather than an arbitrary integer, and
+>> what flags are valid in the flags argument of openat, and that open
+>> returns a file descriptor.  A step beyond that would be describing, in
+>> some limited way, the effects of syscalls; for example, that read
+>> writes into the passed buffer the number of bytes that it returned.
+>
+> So how would you define read() in this format in a way that has not
+> already been attempted in the past?
 
-Signed-off-by: Mickaël Salaün <mic@digikod.net>
-Link: https://lore.kernel.org/r/20220506160820.524344-2-mic@digikod.net
----
- include/uapi/linux/landlock.h | 5 +++--
- security/landlock/syscalls.c  | 7 +++----
- 2 files changed, 6 insertions(+), 6 deletions(-)
+I don't know about any attempts at doing this in the past (other than
+what's already been mentioned in this thread - e.g. SYSCALL_DEFINE),
+what do you have in mind?
 
-diff --git a/include/uapi/linux/landlock.h b/include/uapi/linux/landlock.h
-index 15c31abb0d76..21c8d58283c9 100644
---- a/include/uapi/linux/landlock.h
-+++ b/include/uapi/linux/landlock.h
-@@ -62,8 +62,9 @@ struct landlock_path_beneath_attr {
- 	 */
- 	__u64 allowed_access;
- 	/**
--	 * @parent_fd: File descriptor, open with ``O_PATH``, which identifies
--	 * the parent directory of a file hierarchy, or just a file.
-+	 * @parent_fd: File descriptor, preferably opened with ``O_PATH``,
-+	 * which identifies the parent directory of a file hierarchy, or just a
-+	 * file.
- 	 */
- 	__s32 parent_fd;
- 	/*
-diff --git a/security/landlock/syscalls.c b/security/landlock/syscalls.c
-index 2fde978bf8ca..7edc1d50e2bf 100644
---- a/security/landlock/syscalls.c
-+++ b/security/landlock/syscalls.c
-@@ -292,14 +292,13 @@ static int get_path_from_fd(const s32 fd, struct path *const path)
-  *
-  * - EOPNOTSUPP: Landlock is supported by the kernel but disabled at boot time;
-  * - EINVAL: @flags is not 0, or inconsistent access in the rule (i.e.
-- *   &landlock_path_beneath_attr.allowed_access is not a subset of the rule's
-- *   accesses);
-+ *   &landlock_path_beneath_attr.allowed_access is not a subset of the
-+ *   ruleset handled accesses);
-  * - ENOMSG: Empty accesses (e.g. &landlock_path_beneath_attr.allowed_access);
-  * - EBADF: @ruleset_fd is not a file descriptor for the current thread, or a
-  *   member of @rule_attr is not a file descriptor as expected;
-  * - EBADFD: @ruleset_fd is not a ruleset file descriptor, or a member of
-- *   @rule_attr is not the expected file descriptor type (e.g. file open
-- *   without O_PATH);
-+ *   @rule_attr is not the expected file descriptor type;
-  * - EPERM: @ruleset_fd has no write access to the underlying ruleset;
-  * - EFAULT: @rule_attr inconsistency.
-  */
--- 
-2.35.1
+> How are you going to define a format that explains functionality in a
+> way that is not just the implementation in the end?
 
+Lots of information can be expressed just with more specific types on
+the function signature, even with regular C types.  No need to expose
+the implementation in any way.
+
+For example, accept4's signature is:
+
+SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
+		int __user *, upeer_addrlen, int, flags)
+
+Here, fd and flags are the same type and have nothing to distinguish
+them.  But, purely as an example, not suggesting exactly this, but one
+could have:
+
+typedef int user_fd_t;
+typedef int accept_flags_t;
+
+SYSCALL_DEFINE4(accept4, user_fd_t, fd, struct sockaddr __user *, upeer_sockaddr,
+		int __user *, upeer_addrlen, accept_flags_t, flags)
+
+Then a user could parse this SYSCALL_DEFINE and know that fd and flags
+have different types with different possible valid values. user_fd_t
+would be used by many different syscalls, accept_flags_t just by this.
+
+With just this, the user of this information would still need to know
+what user_fd and accept_flags are.  The next step would be describing
+the valid values for accept_flags.  Unfortunately that's not something
+that the C type system alone can express, but again purely as an
+example, but one could have something like:
+
+FLAGS_DEFINE(accept_flags, int,
+  SOCK_CLOEXEC,
+  SOCK_NONBLOCK)
+
+Then a user could parse this FLAGS_DEFINE and know what the range of
+valid values for accept_flags_t is.  This could also be used in the
+kernel; for example, FLAGS_DEFINE could generate an accept_flags_valid
+function, usable in accept4 as:
+
+if (!accept_flags_valid(flags))
+	return -EINVAL;
+
+As for describing the buffer-writing behavior of read like I mentioned
+before, here's a sketch of what that maybe could look like.  The current
+signature of read is:
+
+SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
+
+One could imagine adding a type to the return value and changing this to
+something like:
+
+#define bytes_written_or_error(written_buffer) int
+#define writable_user_buf(size_of_buffer) char __user *
+
+SYSCALL_DEFINE3_RET(bytes_written_or_error(buf),
+                    read, unsigned int, fd,
+                    writable_user_buf(count), buf, size_t, count)
+
+A user could parse this and know at least partially how read uses the
+passed-in buffer, without having to look at the implementation.
+
+Just for the sake of mentioning it, one could also imagine static
+analysis which checks the kernel implementation against these
+more-detailed types, which could catch bugs.  But I'm not necessarily
+proposing doing that - this is useful on its own even if it's not
+checked by static analysis.
+
+>> One step in this direction is Documentation/ABI, which specifies the
+>> stability guarantees for different userspace APIs in a semi-formal
+>> way.  But it doesn't specify the actual content of those APIs, and it
+>> doesn't cover individual syscalls at all.
+>
+> The content is described in Documentation/ABI/ entries, where do you see
+> that missing?
+
+I meant that it doesn't describe the content of the APIs in a
+machine-readable way.  (It's still very useful of course!)
+
+> And you are correct, that place does not describe syscalls, or other
+> user/kernel interfaces that predate sysfs.
+>
+> good luck!
+
+Thank you!
