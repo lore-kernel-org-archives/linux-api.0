@@ -2,31 +2,31 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7F9ACC43217
-	for <linux-api@archiver.kernel.org>; Fri,  6 May 2022 16:13:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 08DBAC433EF
+	for <linux-api@archiver.kernel.org>; Fri,  6 May 2022 16:13:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1443706AbiEFQRc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S1443633AbiEFQRc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Fri, 6 May 2022 12:17:32 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51926 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52082 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1443820AbiEFQRU (ORCPT
+        with ESMTP id S1443815AbiEFQRU (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Fri, 6 May 2022 12:17:20 -0400
-Received: from smtp-190b.mail.infomaniak.ch (smtp-190b.mail.infomaniak.ch [IPv6:2001:1600:3:17::190b])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 92678712EE
+Received: from smtp-bc0f.mail.infomaniak.ch (smtp-bc0f.mail.infomaniak.ch [IPv6:2001:1600:3:17::bc0f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0C829712F4
         for <linux-api@vger.kernel.org>; Fri,  6 May 2022 09:12:38 -0700 (PDT)
-Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4KvwS34MJqzMqwSp;
-        Fri,  6 May 2022 18:06:59 +0200 (CEST)
+Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4KvwS81Q89zMqpn1;
+        Fri,  6 May 2022 18:07:04 +0200 (CEST)
 Received: from localhost (unknown [23.97.221.149])
-        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4KvwS32l31zlhMBg;
-        Fri,  6 May 2022 18:06:59 +0200 (CEST)
+        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4KvwS76b8czlhSM9;
+        Fri,  6 May 2022 18:07:03 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=digikod.net;
-        s=20191114; t=1651853219;
-        bh=vG2/gV61tHlvAQI7l0YN0fWRhamXraC0NU13ogkNew8=;
+        s=20191114; t=1651853224;
+        bh=02n97EaILIuqTsXFx/oybn/WrgtfMPsX5MAhsYFLVdg=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=Os1dbOKVHJH6OgKRepFmxVJILBwJPunGoO4Sy2WNKH97mrfPsTIEzcFH0Mjwxim/b
-         ksMkkR91Slkhru/HYTxEEQsa4Jjkfq4yjv1XJf+malOmArZ5xsgrEzb7hzs5Ytbyzy
-         wQ+jzsaT8LzH9u2AffxJbHLUdk/e4veUFpIHyEB8=
+        b=mB7DYV/SYQehyM22hGE2FaNyE+qytirrVLYuOtA5/fmNG0tvMKL0uif/XtLt46KL+
+         qHRWNjpk5l4uTjLOaCMbVlf3BrBO22WfN+zWuHa0tCo+ZjfUUVEMqP+/UVF4dMfEm8
+         u7gBJc2rs1hhrslip4BwNssnXAtdCN+Q8g0+Ur3U=
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     James Morris <jmorris@namei.org>,
         "Serge E . Hallyn" <serge@hallyn.com>
@@ -39,9 +39,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         Paul Moore <paul@paul-moore.com>,
         Shuah Khan <shuah@kernel.org>, linux-api@vger.kernel.org,
         linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
-Subject: [PATCH v2 03/10] selftests/landlock: Extend tests for minimal valid attribute size
-Date:   Fri,  6 May 2022 18:08:13 +0200
-Message-Id: <20220506160820.524344-4-mic@digikod.net>
+Subject: [PATCH v2 10/10] selftests/landlock: Test landlock_create_ruleset(2) argument check ordering
+Date:   Fri,  6 May 2022 18:08:20 +0200
+Message-Id: <20220506160820.524344-11-mic@digikod.net>
 In-Reply-To: <20220506160820.524344-1-mic@digikod.net>
 References: <20220506160820.524344-1-mic@digikod.net>
 MIME-Version: 1.0
@@ -51,43 +51,71 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This might be useful when the struct landlock_ruleset_attr will get more
-fields.
+Add inval_create_ruleset_arguments, extension of
+inval_create_ruleset_flags, to also check error ordering for
+landlock_create_ruleset(2).
 
-Cc: Shuah Khan <shuah@kernel.org>
+This is similar to the previous commit checking landlock_add_rule(2).
+
+Test coverage for security/landlock is 94.4% of 504 lines accorging to
+gcc/gcov-11.
+
 Signed-off-by: Mickaël Salaün <mic@digikod.net>
-Link: https://lore.kernel.org/r/20220506160820.524344-4-mic@digikod.net
+Link: https://lore.kernel.org/r/20220506160820.524344-11-mic@digikod.net
 ---
 
 Changes since v1:
-* Format with clang-format and rebase.
+* New patch.
 ---
- tools/testing/selftests/landlock/base_test.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ tools/testing/selftests/landlock/base_test.c | 21 +++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
 
 diff --git a/tools/testing/selftests/landlock/base_test.c b/tools/testing/selftests/landlock/base_test.c
-index 3faeae4233a4..be9b937256ac 100644
+index 21fb33581419..35f64832b869 100644
 --- a/tools/testing/selftests/landlock/base_test.c
 +++ b/tools/testing/selftests/landlock/base_test.c
-@@ -35,6 +35,8 @@ TEST(inconsistent_attr)
+@@ -97,14 +97,17 @@ TEST(abi_version)
  	ASSERT_EQ(EINVAL, errno);
- 	ASSERT_EQ(-1, landlock_create_ruleset(ruleset_attr, 1, 0));
+ }
+ 
+-TEST(inval_create_ruleset_flags)
++/* Tests ordering of syscall argument checks. */
++TEST(create_ruleset_checks_ordering)
+ {
+ 	const int last_flag = LANDLOCK_CREATE_RULESET_VERSION;
+ 	const int invalid_flag = last_flag << 1;
++	int ruleset_fd;
+ 	const struct landlock_ruleset_attr ruleset_attr = {
+ 		.handled_access_fs = LANDLOCK_ACCESS_FS_READ_FILE,
+ 	};
+ 
++	/* Checks priority for invalid flags. */
+ 	ASSERT_EQ(-1, landlock_create_ruleset(NULL, 0, invalid_flag));
  	ASSERT_EQ(EINVAL, errno);
-+	ASSERT_EQ(-1, landlock_create_ruleset(ruleset_attr, 7, 0));
+ 
+@@ -119,6 +122,22 @@ TEST(inval_create_ruleset_flags)
+ 		  landlock_create_ruleset(&ruleset_attr, sizeof(ruleset_attr),
+ 					  invalid_flag));
+ 	ASSERT_EQ(EINVAL, errno);
++
++	/* Checks too big ruleset_attr size. */
++	ASSERT_EQ(-1, landlock_create_ruleset(&ruleset_attr, -1, 0));
++	ASSERT_EQ(E2BIG, errno);
++
++	/* Checks too small ruleset_attr size. */
++	ASSERT_EQ(-1, landlock_create_ruleset(&ruleset_attr, 0, 0));
 +	ASSERT_EQ(EINVAL, errno);
++	ASSERT_EQ(-1, landlock_create_ruleset(&ruleset_attr, 1, 0));
++	ASSERT_EQ(EINVAL, errno);
++
++	/* Checks valid call. */
++	ruleset_fd =
++		landlock_create_ruleset(&ruleset_attr, sizeof(ruleset_attr), 0);
++	ASSERT_LE(0, ruleset_fd);
++	ASSERT_EQ(0, close(ruleset_fd));
+ }
  
- 	ASSERT_EQ(-1, landlock_create_ruleset(NULL, 1, 0));
- 	/* The size if less than sizeof(struct landlock_attr_enforce). */
-@@ -47,6 +49,9 @@ TEST(inconsistent_attr)
- 	ASSERT_EQ(-1, landlock_create_ruleset(ruleset_attr, page_size + 1, 0));
- 	ASSERT_EQ(E2BIG, errno);
- 
-+	/* Checks minimal valid attribute size. */
-+	ASSERT_EQ(-1, landlock_create_ruleset(ruleset_attr, 8, 0));
-+	ASSERT_EQ(ENOMSG, errno);
- 	ASSERT_EQ(-1, landlock_create_ruleset(
- 			      ruleset_attr,
- 			      sizeof(struct landlock_ruleset_attr), 0));
+ /* Tests ordering of syscall argument checks. */
 -- 
 2.35.1
 
