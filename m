@@ -2,32 +2,31 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E11DC433EF
-	for <linux-api@archiver.kernel.org>; Fri,  6 May 2022 16:13:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 80A0CC433FE
+	for <linux-api@archiver.kernel.org>; Fri,  6 May 2022 16:13:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1443720AbiEFQR3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 6 May 2022 12:17:29 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51950 "EHLO
+        id S1443701AbiEFQRa (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 6 May 2022 12:17:30 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51042 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1443821AbiEFQRU (ORCPT
+        with ESMTP id S1443819AbiEFQRU (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Fri, 6 May 2022 12:17:20 -0400
-X-Greylist: delayed 337 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Fri, 06 May 2022 09:12:38 PDT
-Received: from smtp-bc0d.mail.infomaniak.ch (smtp-bc0d.mail.infomaniak.ch [45.157.188.13])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D3ADC712F3
-        for <linux-api@vger.kernel.org>; Fri,  6 May 2022 09:12:38 -0700 (PDT)
-Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4KvwS614zDzMr2ZM;
-        Fri,  6 May 2022 18:07:02 +0200 (CEST)
+Received: from smtp-bc0f.mail.infomaniak.ch (smtp-bc0f.mail.infomaniak.ch [IPv6:2001:1600:3:17::bc0f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 352A9712F7
+        for <linux-api@vger.kernel.org>; Fri,  6 May 2022 09:12:39 -0700 (PDT)
+Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4KvwS14sS9zMqpmv;
+        Fri,  6 May 2022 18:06:57 +0200 (CEST)
 Received: from localhost (unknown [23.97.221.149])
-        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4KvwS56LXXzlhSLv;
-        Fri,  6 May 2022 18:07:01 +0200 (CEST)
+        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4KvwS05F2nzlhMBg;
+        Fri,  6 May 2022 18:06:56 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=digikod.net;
-        s=20191114; t=1651853222;
-        bh=dfWnbGeiA92nwD0xKSnL0FFW806dIXnZ0eXS42gWyfg=;
-        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=YpQTjwImym8FVPNGcOTV8mnqLDBdkgEDQ5FYmCrqhU490BRMLeKr1sieqafXMJraG
-         +NAkI1BH93Ugx/ZSymSFlnAS2RJBEOqWQp2PJgWU8fuijl8akO4jYEXssIqAFwY9eY
-         EOrfWUqAVDUGIffd0iGHWqFp34ZlHN78s9KWpzAQ=
+        s=20191114; t=1651853217;
+        bh=+g6nltvqYNf1CZKZic5eqqeCIzlw7XGV0BEiW9ZEQ80=;
+        h=From:To:Cc:Subject:Date:From;
+        b=Z2fF1yW2U0IXfjgHxAffPLaWEtBpl7E9tuO99BpdDQsBtPy3tYzbF7JvW1ckSMkwT
+         S158RLiD1+HeLu/ewGy2lH2+VoVjfCK4Kc9B3HUT3LIq4fbLKT+PrS8cLL+IhNZssy
+         3D+ddN+4+RpU+hMlGtCKQFrdvfh0069sREXUGhKg=
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     James Morris <jmorris@namei.org>,
         "Serge E . Hallyn" <serge@hallyn.com>
@@ -40,11 +39,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         Paul Moore <paul@paul-moore.com>,
         Shuah Khan <shuah@kernel.org>, linux-api@vger.kernel.org,
         linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
-Subject: [PATCH v2 07/10] selftests/landlock: Add tests for O_PATH
-Date:   Fri,  6 May 2022 18:08:17 +0200
-Message-Id: <20220506160820.524344-8-mic@digikod.net>
-In-Reply-To: <20220506160820.524344-1-mic@digikod.net>
-References: <20220506160820.524344-1-mic@digikod.net>
+Subject: [PATCH v2 00/10] Minor Landlock fixes and new tests
+Date:   Fri,  6 May 2022 18:08:10 +0200
+Message-Id: <20220506160820.524344-1-mic@digikod.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -52,50 +49,56 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The O_PATH flag is currently not handled by Landlock.  Let's make sure
-this behavior will remain consistent with the same ruleset over time.
+Hi,
 
-Cc: Shuah Khan <shuah@kernel.org>
-Signed-off-by: Mickaël Salaün <mic@digikod.net>
-Link: https://lore.kernel.org/r/20220506160820.524344-8-mic@digikod.net
----
+This series contains some minor code and documentation fixes.  There is
+also some miscellaneous new tests to improve coverage and that may help
+for future access types (e.g. networking).
 
-Changes since v1:
-* New patch.
----
- tools/testing/selftests/landlock/fs_test.c | 10 ++++++++--
- 1 file changed, 8 insertions(+), 2 deletions(-)
+The important new patches are the last three ones.  They change the
+landlock_add_rule(2) and landlock_restrict_self(2) check orderings to
+make them more consistent according to future Landlock rule types (e.g.
+networking).
 
-diff --git a/tools/testing/selftests/landlock/fs_test.c b/tools/testing/selftests/landlock/fs_test.c
-index 9165f6adf7b9..a8f54c4462eb 100644
---- a/tools/testing/selftests/landlock/fs_test.c
-+++ b/tools/testing/selftests/landlock/fs_test.c
-@@ -654,17 +654,23 @@ TEST_F_FORK(layout1, effective_access)
- 	enforce_ruleset(_metadata, ruleset_fd);
- 	ASSERT_EQ(0, close(ruleset_fd));
- 
--	/* Tests on a directory. */
-+	/* Tests on a directory (with or without O_PATH). */
- 	ASSERT_EQ(EACCES, test_open("/", O_RDONLY));
-+	ASSERT_EQ(0, test_open("/", O_RDONLY | O_PATH));
- 	ASSERT_EQ(EACCES, test_open(dir_s1d1, O_RDONLY));
-+	ASSERT_EQ(0, test_open(dir_s1d1, O_RDONLY | O_PATH));
- 	ASSERT_EQ(EACCES, test_open(file1_s1d1, O_RDONLY));
-+	ASSERT_EQ(0, test_open(file1_s1d1, O_RDONLY | O_PATH));
-+
- 	ASSERT_EQ(0, test_open(dir_s1d2, O_RDONLY));
- 	ASSERT_EQ(0, test_open(file1_s1d2, O_RDONLY));
- 	ASSERT_EQ(0, test_open(dir_s1d3, O_RDONLY));
- 	ASSERT_EQ(0, test_open(file1_s1d3, O_RDONLY));
- 
--	/* Tests on a file. */
-+	/* Tests on a file (with or without O_PATH). */
- 	ASSERT_EQ(EACCES, test_open(dir_s2d2, O_RDONLY));
-+	ASSERT_EQ(0, test_open(dir_s2d2, O_RDONLY | O_PATH));
-+
- 	ASSERT_EQ(0, test_open(file1_s2d2, O_RDONLY));
- 
- 	/* Checks effective read and write actions. */
+As suggested by Alejandro Colomar [1], I removed the
+landlock_add_rule(2) signature fix.  I added a new patch to test O_PATH
+behavior.
+
+Test coverage for security/landlock was 94.4% of 500 lines, and it is
+now 94.4% of 504 lines according to gcc/gcov-11.
+
+I also fixed some typos and formatted the code with clang-format.  This
+series can be applied on top of
+https://lore.kernel.org/r/20220506160513.523257-1-mic@digikod.net
+
+[1] https://lore.kernel.org/r/ae52c028-05c7-c22e-fc47-d97ee4a2f6c7@gmail.com
+
+Previous version:
+https://lore.kernel.org/r/20220221155311.166278-1-mic@digikod.net
+
+Regards,
+
+Mickaël Salaün (10):
+  landlock: Fix landlock_add_rule(2) documentation
+  selftests/landlock: Make tests build with old libc
+  selftests/landlock: Extend tests for minimal valid attribute size
+  selftests/landlock: Add tests for unknown access rights
+  selftests/landlock: Extend access right tests to directories
+  selftests/landlock: Fully test file rename with "remove" access
+  selftests/landlock: Add tests for O_PATH
+  landlock: Change landlock_add_rule(2) argument check ordering
+  landlock: Change landlock_restrict_self(2) check ordering
+  selftests/landlock: Test landlock_create_ruleset(2) argument check
+    ordering
+
+ include/uapi/linux/landlock.h                |   5 +-
+ security/landlock/syscalls.c                 |  37 +++---
+ tools/testing/selftests/landlock/base_test.c | 107 +++++++++++++++--
+ tools/testing/selftests/landlock/fs_test.c   | 120 ++++++++++++++++---
+ 4 files changed, 218 insertions(+), 51 deletions(-)
+
+
+base-commit: 763c5dc0e990fbd803c3c2b1ae832366ab7d207f
 -- 
 2.35.1
 
