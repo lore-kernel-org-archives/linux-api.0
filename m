@@ -2,31 +2,31 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F2616C43219
-	for <linux-api@archiver.kernel.org>; Fri,  6 May 2022 16:13:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AC47DC4332F
+	for <linux-api@archiver.kernel.org>; Fri,  6 May 2022 16:13:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1384412AbiEFQRd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 6 May 2022 12:17:33 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51946 "EHLO
+        id S1390587AbiEFQRe (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 6 May 2022 12:17:34 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50218 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1443818AbiEFQRU (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 6 May 2022 12:17:20 -0400
-Received: from smtp-bc0f.mail.infomaniak.ch (smtp-bc0f.mail.infomaniak.ch [IPv6:2001:1600:3:17::bc0f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0CAF1712F5
-        for <linux-api@vger.kernel.org>; Fri,  6 May 2022 09:12:38 -0700 (PDT)
-Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
-        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4KvwS41jJtzMr2ZJ;
-        Fri,  6 May 2022 18:07:00 +0200 (CEST)
+        with ESMTP id S1443824AbiEFQRV (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 6 May 2022 12:17:21 -0400
+Received: from smtp-1909.mail.infomaniak.ch (smtp-1909.mail.infomaniak.ch [IPv6:2001:1600:3:17::1909])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 543B4712FA
+        for <linux-api@vger.kernel.org>; Fri,  6 May 2022 09:12:39 -0700 (PDT)
+Received: from smtp-2-0000.mail.infomaniak.ch (unknown [10.5.36.107])
+        by smtp-2-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4KvwS274v7zMqwTF;
+        Fri,  6 May 2022 18:06:58 +0200 (CEST)
 Received: from localhost (unknown [23.97.221.149])
-        by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4KvwS36zpTzlhMC1;
-        Fri,  6 May 2022 18:06:59 +0200 (CEST)
+        by smtp-2-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4KvwS25C3nzlhSM0;
+        Fri,  6 May 2022 18:06:58 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=digikod.net;
-        s=20191114; t=1651853220;
-        bh=kL99cMtumD1QSIju+JYUr1ezJx54p7MQnxDHvS0ug5o=;
+        s=20191114; t=1651853218;
+        bh=AduYp70JJClX3H7fyrnMjxM4mEDJGdCPkPgFeSVZSNA=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=K7yCdbhtnjRe+nxPNSrDCHTy9c7mQejcD3NxaH0m24ixTY2jesKdu4jlM9gqw6y9A
-         kvHQR81mVeCaee/gP/xcdmCOXwKTZ3wfamX9O6Z2uZCyIsbdXaIRPfzQhPQ5eURt+O
-         FQ4QVth19fHjMTsFAGQFXPRi+b8KzQWeQ1b5nv9c=
+        b=HRd2e9dcc/zmgOBEtzRIDeZBAr5LsAg51vKVCdAxvFxawfnEEI/4+c+ZvIgVIPiWO
+         3vD53c/qHsyb8ic9wA7Jk+fAHcKxN8UNjIJ8ChmeFR5FrXtELeUD3kZXw5nZMYAijr
+         0VTnvXkGjcXaYaOziNVosPxzxfzQb8Qo8A0iaLsI=
 From:   =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To:     James Morris <jmorris@namei.org>,
         "Serge E . Hallyn" <serge@hallyn.com>
@@ -39,9 +39,9 @@ Cc:     =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
         Paul Moore <paul@paul-moore.com>,
         Shuah Khan <shuah@kernel.org>, linux-api@vger.kernel.org,
         linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
-Subject: [PATCH v2 04/10] selftests/landlock: Add tests for unknown access rights
-Date:   Fri,  6 May 2022 18:08:14 +0200
-Message-Id: <20220506160820.524344-5-mic@digikod.net>
+Subject: [PATCH v2 02/10] selftests/landlock: Make tests build with old libc
+Date:   Fri,  6 May 2022 18:08:12 +0200
+Message-Id: <20220506160820.524344-3-mic@digikod.net>
 In-Reply-To: <20220506160820.524344-1-mic@digikod.net>
 References: <20220506160820.524344-1-mic@digikod.net>
 MIME-Version: 1.0
@@ -51,46 +51,94 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Make sure that trying to use unknown access rights returns an error.
+Replace SYS_<syscall> with __NR_<syscall>.  Using the __NR_<syscall>
+notation, provided by UAPI, is useful to build tests on systems without
+the SYS_<syscall> definitions.
+
+Replace SYS_pivot_root with __NR_pivot_root, and SYS_move_mount with
+__NR_move_mount.
+
+Define renameat2() and RENAME_EXCHANGE if they are unknown to old build
+systems.
 
 Cc: Shuah Khan <shuah@kernel.org>
 Signed-off-by: Mickaël Salaün <mic@digikod.net>
-Link: https://lore.kernel.org/r/20220506160820.524344-5-mic@digikod.net
+Link: https://lore.kernel.org/r/20220506160820.524344-3-mic@digikod.net
 ---
 
 Changes since v1:
 * Format with clang-format and rebase.
 ---
- tools/testing/selftests/landlock/fs_test.c | 16 ++++++++++++++++
- 1 file changed, 16 insertions(+)
+ tools/testing/selftests/landlock/fs_test.c | 23 +++++++++++++++++-----
+ 1 file changed, 18 insertions(+), 5 deletions(-)
 
 diff --git a/tools/testing/selftests/landlock/fs_test.c b/tools/testing/selftests/landlock/fs_test.c
-index cc7fa7b17578..f293b7e2a1a7 100644
+index 28b01cb30c78..cc7fa7b17578 100644
 --- a/tools/testing/selftests/landlock/fs_test.c
 +++ b/tools/testing/selftests/landlock/fs_test.c
-@@ -448,6 +448,22 @@ TEST_F_FORK(layout1, file_access_rights)
- 	ASSERT_EQ(0, close(path_beneath.parent_fd));
- }
+@@ -22,6 +22,19 @@
  
-+TEST_F_FORK(layout1, unknown_access_rights)
+ #include "common.h"
+ 
++#ifndef renameat2
++int renameat2(int olddirfd, const char *oldpath, int newdirfd,
++	      const char *newpath, unsigned int flags)
 +{
-+	__u64 access_mask;
-+
-+	for (access_mask = 1ULL << 63; access_mask != ACCESS_LAST;
-+	     access_mask >>= 1) {
-+		struct landlock_ruleset_attr ruleset_attr = {
-+			.handled_access_fs = access_mask,
-+		};
-+
-+		ASSERT_EQ(-1, landlock_create_ruleset(&ruleset_attr,
-+						      sizeof(ruleset_attr), 0));
-+		ASSERT_EQ(EINVAL, errno);
-+	}
++	return syscall(__NR_renameat2, olddirfd, oldpath, newdirfd, newpath,
++		       flags);
 +}
++#endif
 +
- static void add_path_beneath(struct __test_metadata *const _metadata,
- 			     const int ruleset_fd, const __u64 allowed_access,
- 			     const char *const path)
++#ifndef RENAME_EXCHANGE
++#define RENAME_EXCHANGE (1 << 1)
++#endif
++
+ #define TMP_DIR "tmp"
+ #define BINARY_PATH "./true"
+ 
+@@ -1279,7 +1292,7 @@ TEST_F_FORK(layout1, rule_inside_mount_ns)
+ 	int ruleset_fd;
+ 
+ 	set_cap(_metadata, CAP_SYS_ADMIN);
+-	ASSERT_EQ(0, syscall(SYS_pivot_root, dir_s3d2, dir_s3d3))
++	ASSERT_EQ(0, syscall(__NR_pivot_root, dir_s3d2, dir_s3d3))
+ 	{
+ 		TH_LOG("Failed to pivot root: %s", strerror(errno));
+ 	};
+@@ -1313,7 +1326,7 @@ TEST_F_FORK(layout1, mount_and_pivot)
+ 	set_cap(_metadata, CAP_SYS_ADMIN);
+ 	ASSERT_EQ(-1, mount(NULL, dir_s3d2, NULL, MS_RDONLY, NULL));
+ 	ASSERT_EQ(EPERM, errno);
+-	ASSERT_EQ(-1, syscall(SYS_pivot_root, dir_s3d2, dir_s3d3));
++	ASSERT_EQ(-1, syscall(__NR_pivot_root, dir_s3d2, dir_s3d3));
+ 	ASSERT_EQ(EPERM, errno);
+ 	clear_cap(_metadata, CAP_SYS_ADMIN);
+ }
+@@ -1332,13 +1345,13 @@ TEST_F_FORK(layout1, move_mount)
+ 	ASSERT_LE(0, ruleset_fd);
+ 
+ 	set_cap(_metadata, CAP_SYS_ADMIN);
+-	ASSERT_EQ(0, syscall(SYS_move_mount, AT_FDCWD, dir_s3d2, AT_FDCWD,
++	ASSERT_EQ(0, syscall(__NR_move_mount, AT_FDCWD, dir_s3d2, AT_FDCWD,
+ 			     dir_s1d2, 0))
+ 	{
+ 		TH_LOG("Failed to move mount: %s", strerror(errno));
+ 	}
+ 
+-	ASSERT_EQ(0, syscall(SYS_move_mount, AT_FDCWD, dir_s1d2, AT_FDCWD,
++	ASSERT_EQ(0, syscall(__NR_move_mount, AT_FDCWD, dir_s1d2, AT_FDCWD,
+ 			     dir_s3d2, 0));
+ 	clear_cap(_metadata, CAP_SYS_ADMIN);
+ 
+@@ -1346,7 +1359,7 @@ TEST_F_FORK(layout1, move_mount)
+ 	ASSERT_EQ(0, close(ruleset_fd));
+ 
+ 	set_cap(_metadata, CAP_SYS_ADMIN);
+-	ASSERT_EQ(-1, syscall(SYS_move_mount, AT_FDCWD, dir_s3d2, AT_FDCWD,
++	ASSERT_EQ(-1, syscall(__NR_move_mount, AT_FDCWD, dir_s3d2, AT_FDCWD,
+ 			      dir_s1d2, 0));
+ 	ASSERT_EQ(EPERM, errno);
+ 	clear_cap(_metadata, CAP_SYS_ADMIN);
 -- 
 2.35.1
 
