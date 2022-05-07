@@ -2,179 +2,134 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2B2DCC433EF
-	for <linux-api@archiver.kernel.org>; Fri,  6 May 2022 17:01:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EC90EC433FE
+	for <linux-api@archiver.kernel.org>; Sat,  7 May 2022 00:32:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1444060AbiEFREs (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 6 May 2022 13:04:48 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39414 "EHLO
+        id S1445082AbiEGAfz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 6 May 2022 20:35:55 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43154 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1444041AbiEFREm (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 6 May 2022 13:04:42 -0400
-X-Greylist: delayed 92 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Fri, 06 May 2022 10:00:59 PDT
-Received: from wrqvvpzp.outbound-mail.sendgrid.net (wrqvvpzp.outbound-mail.sendgrid.net [149.72.131.227])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 139134474F
-        for <linux-api@vger.kernel.org>; Fri,  6 May 2022 10:00:58 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=catern.com;
-        h=from:subject:in-reply-to:references:mime-version:to:cc:content-type:
-        content-transfer-encoding;
-        s=s1; bh=0kv8Y+pw6sAthOMznHqH5eVjKXOt00qV9e4yFDnt+Es=;
-        b=JyGuBIUDLSg4VXtCtO+PrvbRjlHlYCWKmbwjPwbfXPEBx5aN/PKoexTCq249YbDPbeWO
-        PtA9yI37NUqajl8TtUDOxJPsJZPdoZc0f4BOyHJFEAs0+N9Tgzn7WSTF6w34GdGlRK3ob2
-        5p/SWiyqSLmOjpS6RNmfIFjcrKAJPbAI5SKDW6vMnhbSFhV/CQEh9vYF+z8JcFodjYuKWY
-        Y00pZ52/0HprIoV4nG7CtUVXPI8/E0+l+HHsNgm+dbPZspoWc6fj/dS8vHormThs86lRO9
-        07IIi4OMbFj5tYdnOsI2sPYXUvofIHnKPSQZGiy7cDj541Uwh0WpDUk6w5w4AhyA==
-Received: by filterdrecv-77df7bffc9-b2j5p with SMTP id filterdrecv-77df7bffc9-b2j5p-1-627553ED-5E
-        2022-05-06 16:59:25.839025366 +0000 UTC m=+2574812.774299640
-Received: from earth.catern.com (unknown)
-        by geopod-ismtpd-2-2 (SG)
-        with ESMTP
-        id lPNwAp36QO6WuhyWBDuI8g
-        Fri, 06 May 2022 16:59:25.688 +0000 (UTC)
-X-Comment: SPF check N/A for local connections - client-ip=::1; helo=localhost; envelope-from=sbaugh@catern.com; receiver=<UNKNOWN> 
-Received: from localhost (localhost [IPv6:::1])
-        by earth.catern.com (Postfix) with ESMTPSA id 966DA60040;
-        Fri,  6 May 2022 12:59:24 -0400 (EDT)
-From:   Spencer Baugh <sbaugh@catern.com>
-Subject: Re: Explicitly defining the userspace API
-In-Reply-To: <YmA/jFztk5GkjIr2@kroah.com>
-References: <874k2nhgtg.fsf@catern.com> <YmA/jFztk5GkjIr2@kroah.com>
-Date:   Fri, 06 May 2022 16:59:25 +0000 (UTC)
-Message-ID: <87levefvgz.fsf@catern.com>
+        with ESMTP id S1445071AbiEGAfw (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 6 May 2022 20:35:52 -0400
+Received: from mail104.syd.optusnet.com.au (mail104.syd.optusnet.com.au [211.29.132.246])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id AC6586543F;
+        Fri,  6 May 2022 17:32:07 -0700 (PDT)
+Received: from dread.disaster.area (pa49-181-2-147.pa.nsw.optusnet.com.au [49.181.2.147])
+        by mail104.syd.optusnet.com.au (Postfix) with ESMTPS id C2F1A5344B9;
+        Sat,  7 May 2022 10:32:02 +1000 (AEST)
+Received: from dave by dread.disaster.area with local (Exim 4.92.3)
+        (envelope-from <david@fromorbit.com>)
+        id 1nn8Ma-008ucI-Uc; Sat, 07 May 2022 10:32:00 +1000
+Date:   Sat, 7 May 2022 10:32:00 +1000
+From:   Dave Chinner <david@fromorbit.com>
+To:     tytso <tytso@mit.edu>
+Cc:     Miklos Szeredi <miklos@szeredi.hu>, linux-fsdevel@vger.kernel.org,
+        Karel Zak <kzak@redhat.com>,
+        Greg KH <gregkh@linuxfoundation.org>,
+        Christian Brauner <brauner@kernel.org>,
+        linux-kernel@vger.kernel.org,
+        Linux API <linux-api@vger.kernel.org>,
+        linux-man <linux-man@vger.kernel.org>,
+        LSM <linux-security-module@vger.kernel.org>,
+        Ian Kent <raven@themaw.net>,
+        David Howells <dhowells@redhat.com>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Christian Brauner <christian@brauner.io>,
+        Amir Goldstein <amir73il@gmail.com>,
+        James Bottomley <James.Bottomley@hansenpartnership.com>
+Subject: Re: [RFC PATCH] getting misc stats/attributes via xattr API
+Message-ID: <20220507003200.GM1949718@dread.disaster.area>
+References: <YnEeuw6fd1A8usjj@miu.piliscsaba.redhat.com>
+ <YnRf5CNN2yNKVu0B@mit.edu>
 MIME-Version: 1.0
-X-SG-EID: =?us-ascii?Q?GW3oCMoYnalRiojMOuLzE6x2H5kORXvlCdz1UwQVRMVT4fbh9ODEfCogOe74cO?=
- =?us-ascii?Q?rI4e0V+MFZgakz9Re5a6=2FCgloGF35IKSfipc2eg?=
- =?us-ascii?Q?gco3jvfFNeZBoapduVGgMA+K=2F4SfxXcosVfTDgq?=
- =?us-ascii?Q?NVbZkA6JzG4eHrV1fet9KMsG2zjt1m2G+4sLeKk?=
- =?us-ascii?Q?x2qi8H6etKTBXIJh5tDAnZ87rv1pt8ITWJ9K4go?=
- =?us-ascii?Q?mo7BdnsZvqPx+pTGwHnmm9qs87IFdA3LPG7J4H?=
-To:     Greg KH <gregkh@linuxfoundation.org>
-Cc:     linux-api@vger.kernel.org, linux-kernel@vger.kernel.org,
-        marcin@juszkiewicz.com.pl, torvalds@linux-foundation.org,
-        arnd@arndb.de
-X-Entity-ID: d/0VcHixlS0t7iB1YKCv4Q==
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+In-Reply-To: <YnRf5CNN2yNKVu0B@mit.edu>
+X-Optus-CM-Score: 0
+X-Optus-CM-Analysis: v=2.4 cv=VuxAv86n c=1 sm=1 tr=0 ts=6275be06
+        a=ivVLWpVy4j68lT4lJFbQgw==:117 a=ivVLWpVy4j68lT4lJFbQgw==:17
+        a=kj9zAlcOel0A:10 a=oZkIemNP1mAA:10 a=7-415B0cAAAA:8
+        a=6tRzxmq33S4bAUIDdMMA:9 a=CjuIK1q_8ugA:10 a=biEYGPWJfzWAr4FL6Ov7:22
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Greg KH <gregkh@linuxfoundation.org> writes:
-> On Wed, Apr 20, 2022 at 04:15:25PM +0000, Spencer Baugh wrote:
->> 
->> Linux guarantees the stability of its userspace API, but the API
->> itself is only informally described, primarily with English prose.  I
->> want to add an explicit, authoritative machine-readable definition of
->> the Linux userspace API.
->> 
->> As background, in a conventional libc like glibc, read(2) calls the
->> Linux system call read, passing arguments in an architecture-specific
->> way according to the specific details of read.
->> 
->> The details of these syscalls are at best documented in manpages, and
->> often defined only by the implementation.  Anyone else who wants to
->> work with a syscall, in any way, needs to duplicate all those details.
->> 
->> So the most basic definition of the API would just represent the
->> information already present in SYSCALL_DEFINE macros: the C types of
->> arguments and return values.  More usefully, it would describe the
->> formats of those arguments and return values: that the first argument
->> to read is a file descriptor rather than an arbitrary integer, and
->> what flags are valid in the flags argument of openat, and that open
->> returns a file descriptor.  A step beyond that would be describing, in
->> some limited way, the effects of syscalls; for example, that read
->> writes into the passed buffer the number of bytes that it returned.
->
-> So how would you define read() in this format in a way that has not
-> already been attempted in the past?
+On Thu, May 05, 2022 at 04:38:12PM -0700, tytso wrote:
+> On Tue, May 03, 2022 at 02:23:23PM +0200, Miklos Szeredi wrote:
+> > 
+> > : - root
+> > bar - an attribute
+> > foo: - a folder (can contain attributes and/or folders)
+> > 
+> > The contents of a folder is represented by a null separated list of names.
+> > 
+> > Examples:
+> > 
+> > $ getfattr -etext -n ":" .
+> > # file: .
+> > :="mnt:\000mntns:"
+> 
+> In your example, does it matter what "." is?  It looks like in some
+> cases, it makes no difference at all, and in other cases, like this,
+> '.' *does* matter:
+> 
+> > $ getfattr -etext -n ":mnt:info" .
+> > # file: .
+> > :mnt:info="21 1 254:0 / / rw,relatime - ext4 /dev/root rw\012"
+> 
+> Is that right?
+> 
+> > $ getfattr -etext -n ":mntns:" .
+> > # file: .
+> > :mntns:="21:\00022:\00024:\00025:\00023:\00026:\00027:\00028:\00029:\00030:\00031:"
+> 
+> What is this returning?  All possible mount name spaces?  Or all of
+> the mount spaces where '.' happens to exist?
+> 
+> Also, using the null character means that we can't really use shell
+> scripts calling getfattr.
 
-I don't know about any attempts at doing this in the past (other than
-what's already been mentioned in this thread - e.g. SYSCALL_DEFINE),
-what do you have in mind?
+Yeah, it should be returning an attr per namespace, not an attr
+whose value contains all the valid namespaces.
 
-> How are you going to define a format that explains functionality in a
-> way that is not just the implementation in the end?
+i.e. if the next level of the heirachy is 21, 22, 24, .... we should
+be seeing a listing of multiple attributes with naming like:
 
-Lots of information can be expressed just with more specific types on
-the function signature, even with regular C types.  No need to expose
-the implementation in any way.
+:mntns:21:
+:mntns:22:
+:mntns:24:
+....
 
-For example, accept4's signature is:
+rather than an attribute whose value contains the names of the
+attrbiutes in the next layer of the heirarchy. Then we can just
+pull the namespace we want and feed it directly to:
 
-SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
-		int __user *, upeer_addrlen, int, flags)
+$ getfattr -n ":mntns:21:"
 
-Here, fd and flags are the same type and have nothing to distinguish
-them.  But, purely as an example, not suggesting exactly this, but one
-could have:
+and we get a list of all the attributes available for that
+namespace...
 
-typedef int user_fd_t;
-typedef int accept_flags_t;
+> I understand that the problem is that in
+> some cases, you might want to return a pathname, and NULL is the only
+> character which is guaranteed not to show up in a pathname.  However,
+> it makes parsing the returned value in a shell script exciting.
 
-SYSCALL_DEFINE4(accept4, user_fd_t, fd, struct sockaddr __user *, upeer_sockaddr,
-		int __user *, upeer_addrlen, accept_flags_t, flags)
+We shouldn't be returning the names of children in an attribute
+value. We have a syscall API for doing this that - listxattr() will
+iterate attribute names just like a directory does with readdir()
+via listxattr(). IOWs, we should not need to encode the next layer
+of child attribute names into the value of the parent attribute - if
+we do a listxattr on a parent that has children, return the list of
+child names as individual attribute names....
 
-Then a user could parse this SYSCALL_DEFINE and know that fd and flags
-have different types with different possible valid values. user_fd_t
-would be used by many different syscalls, accept_flags_t just by this.
+(Yes, I know listxattr null separates the attribute names - it's a
+godawful kernel API - but that's not the programmatic interface
+we should expose at the shell script level.)
 
-With just this, the user of this information would still need to know
-what user_fd and accept_flags are.  The next step would be describing
-the valid values for accept_flags.  Unfortunately that's not something
-that the C type system alone can express, but again purely as an
-example, but one could have something like:
+Cheers,
 
-FLAGS_DEFINE(accept_flags, int,
-  SOCK_CLOEXEC,
-  SOCK_NONBLOCK)
-
-Then a user could parse this FLAGS_DEFINE and know what the range of
-valid values for accept_flags_t is.  This could also be used in the
-kernel; for example, FLAGS_DEFINE could generate an accept_flags_valid
-function, usable in accept4 as:
-
-if (!accept_flags_valid(flags))
-	return -EINVAL;
-
-As for describing the buffer-writing behavior of read like I mentioned
-before, here's a sketch of what that maybe could look like.  The current
-signature of read is:
-
-SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
-
-One could imagine adding a type to the return value and changing this to
-something like:
-
-#define bytes_written_or_error(written_buffer) int
-#define writable_user_buf(size_of_buffer) char __user *
-
-SYSCALL_DEFINE3_RET(bytes_written_or_error(buf),
-                    read, unsigned int, fd,
-                    writable_user_buf(count), buf, size_t, count)
-
-A user could parse this and know at least partially how read uses the
-passed-in buffer, without having to look at the implementation.
-
-Just for the sake of mentioning it, one could also imagine static
-analysis which checks the kernel implementation against these
-more-detailed types, which could catch bugs.  But I'm not necessarily
-proposing doing that - this is useful on its own even if it's not
-checked by static analysis.
-
->> One step in this direction is Documentation/ABI, which specifies the
->> stability guarantees for different userspace APIs in a semi-formal
->> way.  But it doesn't specify the actual content of those APIs, and it
->> doesn't cover individual syscalls at all.
->
-> The content is described in Documentation/ABI/ entries, where do you see
-> that missing?
-
-I meant that it doesn't describe the content of the APIs in a
-machine-readable way.  (It's still very useful of course!)
-
-> And you are correct, that place does not describe syscalls, or other
-> user/kernel interfaces that predate sysfs.
->
-> good luck!
-
-Thank you!
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
