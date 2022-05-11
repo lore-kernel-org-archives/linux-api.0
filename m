@@ -2,163 +2,93 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 89EDCC433F5
-	for <linux-api@archiver.kernel.org>; Wed, 11 May 2022 18:54:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3954AC433FE
+	for <linux-api@archiver.kernel.org>; Wed, 11 May 2022 21:12:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S242790AbiEKSym (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 11 May 2022 14:54:42 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54104 "EHLO
+        id S1348057AbiEKVMl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 11 May 2022 17:12:41 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48140 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232115AbiEKSym (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 11 May 2022 14:54:42 -0400
-Received: from mail-qv1-xf34.google.com (mail-qv1-xf34.google.com [IPv6:2607:f8b0:4864:20::f34])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 141141FD86E;
-        Wed, 11 May 2022 11:54:41 -0700 (PDT)
-Received: by mail-qv1-xf34.google.com with SMTP id kk28so2766060qvb.3;
-        Wed, 11 May 2022 11:54:41 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=+LxdUKX99jhfa5s0+IuZGD3X6A7IS8PJuDjuEfLK+f0=;
-        b=bBk0WndcC79iIOJVGislC1gFOlMn9191qToLtc9QQhfgBrD2lOQnIVa++hAR/TIW4O
-         cZ8RrvbnkDJ6phgx46NW6WKSRoQpvL+kr2YHgZsNuIhmMvZxyNH4HrNJkAmjBZBgL9GW
-         KZI1jCRv2YB3RF4PIRNhWY4znM0PJqM3fFN+5BziDZuJY5FYuXGGb51W3bH5VMDS3x/J
-         oXlMM1SPLwGGt7Rw9h0XII6bRYJRJGt1rrUxAtlGnex++mz/nfetQdHjuES1hDk9QQjI
-         9yB1Lz8L5NFOAerewXTmSZlBlcrNesn23uTtGkAPOPxUyuOAd0DneHM4uL+ZGifU3VA/
-         YhYg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=+LxdUKX99jhfa5s0+IuZGD3X6A7IS8PJuDjuEfLK+f0=;
-        b=ogBSrYrdPGRstb9wg9dnmnq17tkJOuL4T4eOQxq+md/sq4WybvaLHr7FVq5clONF7p
-         9TFkW9Ic/yhwpoIsaqdyDqgKPTt3fx9omDfduoCYCQS0Pr0NMO6FN9OouxNIgsEnmIo/
-         FYYrVBQdynRkmK2e+vSeZG976535aIq3XMT7lQogzRvJffKjYrT6zzlfvDvvfIp0NZvg
-         1O0kpLC0DQpYHfKU8Hk2/xKDRBZQYfbNbTeG3v/vJvhLdSUJ40LsyglSaD+NCacQhLmf
-         iorbqVjorrLTJxM2FSPskbK2Xyf6m9LfmFdCsbTOPHjkn5aRnTRKDe2FhwC5/BRxkG2L
-         Jr9g==
-X-Gm-Message-State: AOAM531vI7Qd9sySsC0iKXg4knUDMfpSQRGTYoEHFqKxNIG0JHoWVYaw
-        c5Vyw8a5NqjBXdOpE9oiXSpOqXw8twWPnaq2bu4=
-X-Google-Smtp-Source: ABdhPJwN42lTlRomfW86X+KUNkzMnmsw0bv5H/5/9TqQA5XYBIHQbOZrRhXsD3aPelPyGicNPnvfj5SBvFiOtqSBLgU=
-X-Received: by 2002:a05:6214:29e9:b0:45a:c341:baaf with SMTP id
- jv9-20020a05621429e900b0045ac341baafmr23570833qvb.77.1652295280186; Wed, 11
- May 2022 11:54:40 -0700 (PDT)
-MIME-Version: 1.0
-References: <YnOmG2DvSpvvOEOQ@google.com> <20220505112217.zvzbzhjgmoz7lr6w@quack3.lan>
- <CAOQ4uxhJFEoV0X8uunNaYjdKpsFj6nUtcNFBx8d3oqodDO_iYA@mail.gmail.com>
- <20220505133057.zm5t6vumc4xdcnsg@quack3.lan> <YnRhVgu6JKNinarh@google.com>
- <CAOQ4uxi9Jps3BGiSYWWvQdNeb+QPA9kSo_BDRCC2jfPSGWdx_w@mail.gmail.com>
- <20220506100636.k2lm22ztxpyaw373@quack3.lan> <CAOQ4uxjEcbjRoObAUfSS3RHVJY7EiW8tJSo1geNtbgQbcTOM+A@mail.gmail.com>
- <20220511175231.d7re3p4tyn55claf@quack3.lan>
-In-Reply-To: <20220511175231.d7re3p4tyn55claf@quack3.lan>
-From:   Amir Goldstein <amir73il@gmail.com>
-Date:   Wed, 11 May 2022 21:54:27 +0300
-Message-ID: <CAOQ4uxivwvUqu+4f5SKjH7YgdLZTjpq0EDohJ9UWsZsW2J5rwg@mail.gmail.com>
-Subject: Re: Fanotify API - Tracking File Movement
-To:     Jan Kara <jack@suse.cz>
-Cc:     Matthew Bobrowski <repnop@google.com>,
+        with ESMTP id S1348041AbiEKVMj (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 11 May 2022 17:12:39 -0400
+Received: from brightrain.aerifal.cx (brightrain.aerifal.cx [216.12.86.13])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 276201DAFA7
+        for <linux-api@vger.kernel.org>; Wed, 11 May 2022 14:12:34 -0700 (PDT)
+Date:   Wed, 11 May 2022 17:12:32 -0400
+From:   Rich Felker <dalias@libc.org>
+To:     Arnd Bergmann <arnd@arndb.de>
+Cc:     Christian Brauner <brauner@kernel.org>,
+        Huacai Chen <chenhuacai@gmail.com>,
+        Huacai Chen <chenhuacai@loongson.cn>,
+        Andy Lutomirski <luto@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        David Airlie <airlied@linux.ie>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        linux-arch <linux-arch@vger.kernel.org>,
+        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        Xuefeng Li <lixuefeng@loongson.cn>,
+        Yanteng Si <siyanteng@loongson.cn>,
+        Guo Ren <guoren@kernel.org>, Xuerui Wang <kernel@xen0n.name>,
+        Jiaxun Yang <jiaxun.yang@flygoat.com>,
         Linux API <linux-api@vger.kernel.org>,
-        linux-fsdevel <linux-fsdevel@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+        GNU C Library <libc-alpha@sourceware.org>,
+        musl@lists.openwall.com
+Subject: Re: [musl] Re: [PATCH V9 13/24] LoongArch: Add system call support
+Message-ID: <20220511211231.GG7074@brightrain.aerifal.cx>
+References: <20220430090518.3127980-1-chenhuacai@loongson.cn>
+ <20220430090518.3127980-14-chenhuacai@loongson.cn>
+ <CAK8P3a0A9dW4mwJ6JHDiJxizL7vWfr4r4c5KhbjtAY0sWbZJVA@mail.gmail.com>
+ <CAAhV-H4te_+AS69viO4eBz=abBUm5oQ6AfoY1Cb+nOCZyyeMdA@mail.gmail.com>
+ <CAK8P3a0DqQcApv8aa2dgBS5At=tEkN7cnaskoUeXDi2-Bu9Rnw@mail.gmail.com>
+ <20220507121104.7soocpgoqkvwv3gc@wittgenstein>
+ <20220509100058.vmrgn5fkk3ayt63v@wittgenstein>
+ <CAK8P3a0zmPbMNsS11aUGiAADyjOEueNUXQ8QZtVxr48M3pwAkQ@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CAK8P3a0zmPbMNsS11aUGiAADyjOEueNUXQ8QZtVxr48M3pwAkQ@mail.gmail.com>
+User-Agent: Mutt/1.5.21 (2010-09-15)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-> > @@ -491,19 +491,31 @@ int fsnotify(__u32 mask, const void *data, int data_type, struct inode *dir,
-> >       if (!inode) {
-> >               /* Dirent event - report on TYPE_INODE to dir */
-> >               inode = dir;
-> > -             /* For FS_RENAME, inode is old_dir and inode2 is new_dir */
-> > -             if (mask & FS_RENAME) {
-> > -                     moved = fsnotify_data_dentry(data, data_type);
-> > -                     inode2 = moved->d_parent->d_inode;
-> > -                     inode2_type = FSNOTIFY_ITER_TYPE_INODE2;
-> > -             }
-> > +     } else if (mask & FS_RENAME) {
-> > +             /* For FS_RENAME, dir1 is old_dir and dir2 is new_dir */
-> > +             moved = fsnotify_data_dentry(data, data_type);
-> > +             dir1 = moved->d_parent->d_inode;
-> > +             dir2 = dir;
-> > +             if (dir1->i_fsnotify_marks || dir2->i_fsnotify_marks)
-> > +                     dir1_type = FSNOTIFY_ITER_TYPE_OLD_DIR;
-> > +             /*
-> > +              * Send FS_RENAME to groups watching the moved inode itself
-> > +              * only if the moved inode is a non-dir.
-> > +              * Sending FS_RENAME to a moved watched directory would be
-> > +              * confusing and FS_MOVE_SELF provided enough information to
-> > +              * track the movements of a watched directory.
-> > +              */
-> > +             if (mask & FS_ISDIR)
-> > +                     inode = NULL;
->
-> So I agree that sending FS_RENAME to a directory when the directory itself
-> moves is confusing. But then it makes me wonder whether it would not be
-> more logical if we extended FS_MOVE_SELF rather than FS_RENAME. Currently
-> FS_MOVE_SELF is an inode event but we could expand it to provide new parent
-> directory to priviledged listeners (and even old directory if we wanted).
-> But I guess the concern is that we'd have to introduce a group flag for
-> this to make sure things are backward compatible, whereas with FAN_RENAME
-> we could mostly get away without a feature flag?
->
+On Wed, May 11, 2022 at 09:11:56AM +0200, Arnd Bergmann wrote:
+> On Mon, May 9, 2022 at 12:00 PM Christian Brauner <brauner@kernel.org> wrote:
+> .....
+> > I can try and move a poc for this up the todo list.
+> >
+> > Without an approach like this certain sandboxes will fallback to
+> > ENOSYSing system calls they can't filter. This is a generic problem
+> > though with clone3() being one promiment example.
+> 
+> Thank you for the detailed reply. It sounds to me like this will eventually have
+> to get solved anyway, so we could move ahead without clone() on loongarch,
+> and just not have support for Chrome until this is fully solved.
+> 
+> As both the glibc and musl ports are being proposed for inclusion right
+> now, we should try to come to a decision so the libc ports can adjust if
+> necessary. Adding both mailing lists to Cc here, the discussion is archived
+> at [1].
+> 
+>          Arnd
+> 
+> [1] https://lore.kernel.org/linux-arch/20220509100058.vmrgn5fkk3ayt63v@wittgenstein/
 
-This thought has crossed my mind.
-There are several issues with extending FS_MOVE_SELF besides the one
-that you mentioned.
-1. It is not needed for tracking movement of dir - the only reason we need to
-    extend rename/create/delete for non-dir is because fid alone is not enough
-    to find the moved inode new location
-2. While we could extend FS_MOVE_SELF, we cannot extend FS_DELETE_SELF
-    (and there is no FS_CREATE_SELF), so it is better to extend all the
-    dirent events and not any self events
-3. But the nock-out argument is the one that you wrote - we can (ab)use
-    FAN_ERPORT_TARGET_FID as the backward compat barrier for changing
-    the behavior of dirent events and it would almost look like we had
-thought about
-    this in advance ;)
+Having read about the seccomp issue, I think it's a very strong
+argument that __NR_clone should be kept permanently for all future
+archs. Otherwise, at least AIUI, it's impossible to seccomp-sandbox
+multithreaded programs (since you can't allow the creation of threads
+without also allowing other unwanted use of clone3). It sounds like
+there's some interest in extending seccomp to allow filtering of
+argument blocks like clone3 uses, but some of what I read about was
+checksum-based (thus a weak hardening measure at best, not a hard
+privilege boundary) and even if something is eventually created that
+works, it won't be available right away, and it won't be nearly as
+easy to use as just allowing thread-creating clone syscalls on
+existing archs.
 
-> > diff --git a/include/linux/fsnotify.h b/include/linux/fsnotify.h
-> > index bb8467cd11ae..75f1048443a5 100644
-> > --- a/include/linux/fsnotify.h
-> > +++ b/include/linux/fsnotify.h
-> > @@ -28,18 +28,19 @@
-> >   */
-> >  static inline int fsnotify_name(__u32 mask, const void *data, int data_type,
-> >                               struct inode *dir, const struct qstr *name,
-> > -                             u32 cookie)
-> > +                             struct inode *inode, u32 cookie)
->
-> So you add 'inode' argument to fsnotify_name() but never actually use it?
-> The only place where inode would be non-NULL is changed to use fsnotify()
-> directly...
-
-My bad, I wasn't going to extend fsnotify_name(), but then I thought of the
-FAN_CREATE/FAN_DELETE case, so I wanted to make this more obvious
-in the code that dirent events should be reported to the child inode,
-but I forget
-to use the extended fsnotify_name() for FAN_RENAME and left it using fsnotify().
-
->
-> Also I'm not sure why you pass the inode for rename event now when the same
-> inode is passed as 'dentry' in data? I feel like I'm missing something
-> here.
-
-The semantics of @inode argument vs. fsnotify_data_inode() are hard to
-remember, but we documented them in fsnotify().
-
-The meaning of @inode is that an event should be reported to @inode if inode
-has a mark. Surely, one of the reasons for this distinction was fsnotify_name()
-which carries the child inode information, but was not traditionally reported
-to the child inode mark.
-
-So when I pass positive @inode with FS_RENAME that is all it takes to
-report the event on a watching child inode. The only needed minor change in
-fsnotify() logic was to move if (mask & FS_RENAME) outside of if (!inode) {}.
-All the rest is just tidying up the code.
-
-If we are going to change fsnotify_name() then we need to see if there are
-any other cases left where @inode is NULL and fsnotify_data_inode() is positive
-(I didn't check) If not, then we may be able to drop the @inode argument.
-
-Thanks,
-Amir.
+Rich
