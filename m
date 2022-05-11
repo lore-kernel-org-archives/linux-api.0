@@ -2,205 +2,101 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B4D6CC433FE
-	for <linux-api@archiver.kernel.org>; Wed, 11 May 2022 00:42:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7A137C4332F
+	for <linux-api@archiver.kernel.org>; Wed, 11 May 2022 07:12:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233105AbiEKAmI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 10 May 2022 20:42:08 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40162 "EHLO
+        id S242676AbiEKHMU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 11 May 2022 03:12:20 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59858 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229795AbiEKAmH (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 10 May 2022 20:42:07 -0400
-Received: from mail104.syd.optusnet.com.au (mail104.syd.optusnet.com.au [211.29.132.246])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 686591B57AA;
-        Tue, 10 May 2022 17:42:06 -0700 (PDT)
-Received: from dread.disaster.area (pa49-181-2-147.pa.nsw.optusnet.com.au [49.181.2.147])
-        by mail104.syd.optusnet.com.au (Postfix) with ESMTPS id 2B7C25345BC;
-        Wed, 11 May 2022 10:42:02 +1000 (AEST)
-Received: from dave by dread.disaster.area with local (Exim 4.92.3)
-        (envelope-from <david@fromorbit.com>)
-        id 1noaQS-00AUmR-E4; Wed, 11 May 2022 10:42:00 +1000
-Date:   Wed, 11 May 2022 10:42:00 +1000
-From:   Dave Chinner <david@fromorbit.com>
-To:     Christian Brauner <brauner@kernel.org>
-Cc:     Miklos Szeredi <miklos@szeredi.hu>, linux-fsdevel@vger.kernel.org,
-        Theodore Ts'o <tytso@mit.edu>, Karel Zak <kzak@redhat.com>,
-        Greg KH <gregkh@linuxfoundation.org>,
-        linux-kernel@vger.kernel.org,
-        Linux API <linux-api@vger.kernel.org>,
-        linux-man <linux-man@vger.kernel.org>,
-        LSM <linux-security-module@vger.kernel.org>,
-        Ian Kent <raven@themaw.net>,
-        David Howells <dhowells@redhat.com>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Christian Brauner <christian@brauner.io>,
-        Amir Goldstein <amir73il@gmail.com>,
-        James Bottomley <James.Bottomley@hansenpartnership.com>
-Subject: Re: [RFC PATCH] getting misc stats/attributes via xattr API
-Message-ID: <20220511004200.GE2306852@dread.disaster.area>
-References: <YnEeuw6fd1A8usjj@miu.piliscsaba.redhat.com>
- <20220509124815.vb7d2xj5idhb2wq6@wittgenstein>
- <20220510005533.GA2306852@dread.disaster.area>
- <20220510124033.lobf33hxey4quza3@wittgenstein>
+        with ESMTP id S241146AbiEKHMT (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 11 May 2022 03:12:19 -0400
+Received: from mout.kundenserver.de (mout.kundenserver.de [212.227.126.133])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CE1A937BF4;
+        Wed, 11 May 2022 00:12:16 -0700 (PDT)
+Received: from mail-yw1-f173.google.com ([209.85.128.173]) by
+ mrelayeu.kundenserver.de (mreue009 [213.165.67.97]) with ESMTPSA (Nemesis) id
+ 1MQ5nE-1nSdOY4ADY-00M1t3; Wed, 11 May 2022 09:12:15 +0200
+Received: by mail-yw1-f173.google.com with SMTP id 00721157ae682-2ec42eae76bso10110447b3.10;
+        Wed, 11 May 2022 00:12:14 -0700 (PDT)
+X-Gm-Message-State: AOAM531Yn5XBTNE76A/FAw858em/l1XxmWfE5s7uVKGn+RmOjT0HQ1iQ
+        3Pj/Ok9Yspvw1GvHCwtCfUJzPtUgKpAvDf54JM0=
+X-Google-Smtp-Source: ABdhPJwX01FoB2ZgXBUIcOIxtA7Ea99HJs3NHFXbjQPgP93qP8mFm4KZw803sVc8TjQKsX7r+vkKlUYg6sohAwed5NE=
+X-Received: by 2002:a81:1697:0:b0:2fa:32f9:78c8 with SMTP id
+ 145-20020a811697000000b002fa32f978c8mr23526553yww.135.1652253133436; Wed, 11
+ May 2022 00:12:13 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20220510124033.lobf33hxey4quza3@wittgenstein>
-X-Optus-CM-Score: 0
-X-Optus-CM-Analysis: v=2.4 cv=e9dl9Yl/ c=1 sm=1 tr=0 ts=627b065d
-        a=ivVLWpVy4j68lT4lJFbQgw==:117 a=ivVLWpVy4j68lT4lJFbQgw==:17
-        a=kj9zAlcOel0A:10 a=oZkIemNP1mAA:10 a=7-415B0cAAAA:8
-        a=-VcIyIBGfY_eVRxBFnQA:9 a=CjuIK1q_8ugA:10 a=biEYGPWJfzWAr4FL6Ov7:22
+References: <20220430090518.3127980-1-chenhuacai@loongson.cn>
+ <20220430090518.3127980-14-chenhuacai@loongson.cn> <CAK8P3a0A9dW4mwJ6JHDiJxizL7vWfr4r4c5KhbjtAY0sWbZJVA@mail.gmail.com>
+ <CAAhV-H4te_+AS69viO4eBz=abBUm5oQ6AfoY1Cb+nOCZyyeMdA@mail.gmail.com>
+ <CAK8P3a0DqQcApv8aa2dgBS5At=tEkN7cnaskoUeXDi2-Bu9Rnw@mail.gmail.com>
+ <20220507121104.7soocpgoqkvwv3gc@wittgenstein> <20220509100058.vmrgn5fkk3ayt63v@wittgenstein>
+In-Reply-To: <20220509100058.vmrgn5fkk3ayt63v@wittgenstein>
+From:   Arnd Bergmann <arnd@arndb.de>
+Date:   Wed, 11 May 2022 09:11:56 +0200
+X-Gmail-Original-Message-ID: <CAK8P3a0zmPbMNsS11aUGiAADyjOEueNUXQ8QZtVxr48M3pwAkQ@mail.gmail.com>
+Message-ID: <CAK8P3a0zmPbMNsS11aUGiAADyjOEueNUXQ8QZtVxr48M3pwAkQ@mail.gmail.com>
+Subject: Re: [PATCH V9 13/24] LoongArch: Add system call support
+To:     Christian Brauner <brauner@kernel.org>
+Cc:     Arnd Bergmann <arnd@arndb.de>, Huacai Chen <chenhuacai@gmail.com>,
+        Huacai Chen <chenhuacai@loongson.cn>,
+        Andy Lutomirski <luto@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        David Airlie <airlied@linux.ie>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        linux-arch <linux-arch@vger.kernel.org>,
+        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        Xuefeng Li <lixuefeng@loongson.cn>,
+        Yanteng Si <siyanteng@loongson.cn>,
+        Guo Ren <guoren@kernel.org>, Xuerui Wang <kernel@xen0n.name>,
+        Jiaxun Yang <jiaxun.yang@flygoat.com>,
+        Linux API <linux-api@vger.kernel.org>,
+        GNU C Library <libc-alpha@sourceware.org>,
+        musl@lists.openwall.com
+Content-Type: text/plain; charset="UTF-8"
+X-Provags-ID: V03:K1:yxwXvBeurszM3x+5iTkoGSd4Qxz4mpEWhesN486kJBN+frXxvrQ
+ mO+187/GlEbR/dArx11jPA06OyFudERdbWlPkc80hs3Rc9nTNKdl/dmhxceP57YKY9k7bA8
+ rQbUDhxIsA1SIB+q0iGzpuQC9TNxNlkaELdcCZJu9W+hKSpLNFU/qbm4tErTlEswh8mpSO6
+ 3MrqZbgc6/PYFGOYWaGgA==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:sHKp8A96in0=:tGBsVkUkcIot84lHAsJyee
+ K3a1+e7tgwdaZR7rYmO9kvpvfzui14t9Bi/37YDUGMHR1JnGQqEYkTlT12ZYZ+etwb2ufrmnD
+ wTRyVkJtD4Ff1dvrj24M21W6huvEyn7zrVG1qOtKbdsz6Bb3iI1oEu03LMr6dUDd6Uj1P/UVR
+ 7CWmS5SvJUB4eF39OvgNITThNuCZ8r5V1FSBhqBmD5S5BQJ4jrCDX0QBah6xxtMoR0LtouCln
+ Uz6vXON60kQn/MY18EChsZzEd1J8ApnFKhaz3PTSXHoaI45TSaVDLUvLObzPmt+bMkQ1EAlaq
+ kvSkMoWgpTIngZsNOYsgBlrunIjsf39uDpH8FFtWCODPGJAfnRZSadc4U1R5N2xCyQ+4ZZZMf
+ UjsO7yXWsQcIIVSfalYAXTwsjF8glIONDlTX2C6ZF6aYT+cWW7v/CzPyx/FnJbyjbMawGpAVA
+ v4cJvZg+wmNJlvQw5RG/n9PfK9gCMdrwLcT7OKvXuwGAQbP3Nbb6pTsLhFu6o4heNbtPXCIlF
+ +h1dkrMqEx0WxuVzgjhhEHSlVKspPbiHhVD9TNvHwDfiT3sb2Vmev6viQ1pkVPfPxg79/KX7u
+ JQ3poUxYPRzYBR3fjqg7f49EQ+HOJ22+kelBT2fTJZl1f6kXreud2iexbtwTqG6Zrzwe2JRHX
+ JuE2eVNTvHvx8/q3GAXGFyThcXmFOx37m00IolpiuURHeSVEqCn0UOgh7FABeIt+TO4WMBzgL
+ abLWrs4OJQOo6Nqglhb83F+Wof371VbWMryjaIbuff4Uck1FuOTmoFCqdWCXaCCz0lMQ+A0Da
+ u87erz+MObZcLjfIwTIKXn+q+fAO5jiQ4s1qgNWJKUxpiFhCyirT0bYNPkf8tGezETgN1ahfd
+ VjWAdQomAmy98W14T4yg==
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, May 10, 2022 at 02:40:33PM +0200, Christian Brauner wrote:
-> On Tue, May 10, 2022 at 10:55:33AM +1000, Dave Chinner wrote:
-> > On Mon, May 09, 2022 at 02:48:15PM +0200, Christian Brauner wrote:
-> > > On Tue, May 03, 2022 at 02:23:23PM +0200, Miklos Szeredi wrote:
-> > >   I really think users would love to have an interfact where they can
-> > >   get a struct with binary info back.
-> > 
-> > No. Not for kernel informational interfaces. We have ioctls and
-> 
-> That feels like semantics. statx is in all sensible readings of the
-> words a kernel informational interface.
+On Mon, May 9, 2022 at 12:00 PM Christian Brauner <brauner@kernel.org> wrote:
+....
+> I can try and move a poc for this up the todo list.
+>
+> Without an approach like this certain sandboxes will fallback to
+> ENOSYSing system calls they can't filter. This is a generic problem
+> though with clone3() being one promiment example.
 
-statx is an special purpose binary syscall interface for returning
-inode specific information, it's not an abstract, generic
-informational interface.
+Thank you for the detailed reply. It sounds to me like this will eventually have
+to get solved anyway, so we could move ahead without clone() on loongarch,
+and just not have support for Chrome until this is fully solved.
 
-> I'm really looking at this from the perspective of someone who uses
-> these interfaces regularly in userspace and a text-based interface for
-> very basic information such as detailed information about a mount is
-> cumbersome. I know people like to "counter" with "parsing strings is
-> easy" but it remains a giant pain for userspace; at least for basic
-> info.
+As both the glibc and musl ports are being proposed for inclusion right
+now, we should try to come to a decision so the libc ports can adjust if
+necessary. Adding both mailing lists to Cc here, the discussion is archived
+at [1].
 
-As I said last reply, you are making all the same arguements against
-text based information interfaces that were made against proc and
-sysfs a long long time again. they weren't convincing a couple of
-decades ago, and there aren't really convincing now. Text-based
-key/value data is hard to screw up in the long run, binary
-interfaces have a habit of biting hard whenever the contents of
-the binary structure needs to change...
+         Arnd
 
-> > >   Imho, xattrs are a bit like a wonky version of streams already (One of
-> > >   the reasons I find them quite unpleasant.). Making mount and other
-> > >   information retrievable directly through the getxattr() interface will
-> > >   turn them into a full-on streams implementation imho. I'd prefer not
-> > >   to do that (Which is another reason I'd prefer at least a separate
-> > >   system call.).
-> > 
-> > And that's a total misunderstanding of what xattrs are.
-> > 
-> > Alternate data streams are just {file,offset} based data streams
-> > accessed via ithe same read/write() mechanisms as the primary data
-> > stream.
-> 
-> That's why I said "wonky". But I'm not going to argue this point. I
-> think you by necessity have wider historical context on these things
-> that I lack. But I don't find it unreasonable to also see them as an
-> additional information channel.
-> 
-> Sure, they are a generic key=value store for anything _in principle_. In
-> practice however xattrs are very much perceived and used as information
-> storage on files, a metadata side-channel if you will.
-
-That's how *you* perceive them, not how everyone perceives them.
-
-> All I'm claiming here is that it will confuse the living hell out of
-> users if the getxattr() api suddenly is used not to just set and get
-> information associated with inodes but to also provides filesystem or
-> mount information.
-
-Why would it confuse people? The xattr namespace is already well
-known to be heirarchical and context dependent based on the intial
-name prefix (user, security, btrfs, trusted, etc). i.e. if you don't
-know that the context the xattr acts on is determined by the initial
-name prefix, then you need to read the xattr(7) man page again:
-
-Extended attribute namespaces
-
-	Attribute  names  are  null-terminated  strings.   The
-	attribute name is always specified in the fully qualified
-	namespace.attribute form, for example, user.mime_type,
-	trusted.md5sum, system.posix_acl_access, or
-	security.selinux.
-
-	The namespace mechanism is used to define different classes
-	of extended attributes.  These different classes exist for
-	several reasons;  for  example, the permissions and
-	capabilities required for manipulating extended attributes
-	of one namespace may differ to another.
-
-	Currently,  the  security, system, trusted, and user
-	extended attribute classes are defined as described below.
-	Additional classes may be added in the future.
-
-> That's a totally a totally differnet type of information. Sure, it may
-> fit well in the key=value scheme because the xattr key=value _interface_
-> is generic but that's a very technical argument.
-
-Yet adding a new xattr namespace for a new class of information that
-is associated the mount that the path/inode/fd is associated with is
-exactly what the xattr namespaces are intended to allow. And it is
-clearly documented that new classes "may be added in the future".
-
-I just don't see where the confusion would come from...
-
-> 
-> I'm looking at this from the experience of a user of the API for a
-> moment and in code they'd do in one place:
-> 
-> getxattr('/super/special/binary', "security.capability", ...);
-> 
-> and then in another place they do:
-> 
-> getxattr('/path/to/some/mount', "mntns:info", ...);
-> 
-> that is just flatout confusing.
-
-Why? Both are getting different classes of key/value information
-that is specific to the given path. Just because on is on-disk and
-the other is ephemeral doesn't make it in any way confusing. This is
-exactly what xattr namesapces are intended to support...
-
-> > Xattrs provide an *atomic key-value object store API*, not an offset
-> > based data stream API. They are completely different beasts,
-> > intended for completely different purposes. ADS are redundant when you
-> > have directories and files, whilst an atomic key-value store is
-> > something completely different.
-> > 
-> > You do realise we have an independent, scalable, ACID compliant
-> > key-value object store in every inode in an XFS filesystem, right?
-> 
-> So far this was a really mail with good background information but I'm
-> struggling to make sense of what that last sentence is trying to tell
-> me. :)
-
-That people in the past have built large scale data storage
-applications that use XFS inodes as key based object stores, not as
-a offset based data stream. Who needs atomic write() functionality
-when you have ACID set and replace operations for named objects?
-
-The reality is that modern filesystems are really just btree based
-object stores with high performance transaction engines overlaid
-with a POSIX wrapper. And in the case of xattrs, we effectively
-expose that btree based key-value database functionality directly to
-userspace....
-
-Stop thinking like xattrs are some useless metadata side channel,
-and start thinking of them as an atomic object store that stores and
-retreives millions of small (< 1/2 the filesystem block size) named
-objects far space effciently than a directory structure full of
-small files indexed by object hash.
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+[1] https://lore.kernel.org/linux-arch/20220509100058.vmrgn5fkk3ayt63v@wittgenstein/
