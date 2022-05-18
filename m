@@ -2,102 +2,106 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1A1EBC433F5
-	for <linux-api@archiver.kernel.org>; Wed, 18 May 2022 14:32:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 77204C433FE
+	for <linux-api@archiver.kernel.org>; Wed, 18 May 2022 23:53:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238617AbiEROcI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 18 May 2022 10:32:08 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37548 "EHLO
+        id S231552AbiERXxd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 18 May 2022 19:53:33 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54848 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238567AbiEROcH (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 18 May 2022 10:32:07 -0400
-Received: from mail-lf1-x136.google.com (mail-lf1-x136.google.com [IPv6:2a00:1450:4864:20::136])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 809ED13C34F
-        for <linux-api@vger.kernel.org>; Wed, 18 May 2022 07:32:04 -0700 (PDT)
-Received: by mail-lf1-x136.google.com with SMTP id t25so3972089lfg.7
-        for <linux-api@vger.kernel.org>; Wed, 18 May 2022 07:32:04 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=/o8jxVzJHrKnQPYDyUAFY3NEjQoX1p3FxNxyj6gs2jo=;
-        b=bXqsD/5OKiD06afoIxdd1RhVMAV2zjqVL4xb7Xr54EBlsylyb9Wkk1QlqHJEdwHgRE
-         9rwcacTUnE/upPhQpvGq9LsbYdhP1B9Bg72S/dRXj8nEpgd7l0ZM+ujjwQxRRGnkFcGD
-         mNXhIoVNgPnHoTQr7WuMD+i4pUl5aQ0jSHN0u7D3UsVKfBPHYVPkjTTa3oY7IHad2pHE
-         Gx6+UTsexYvbkSkzn/wNS9wqQlDv3pNBNfgBiyADqiu3vrBwdAqtfCsPDdb8omg337qz
-         gNQesHwQLsKQ06lU3wT9xijpTl3I4rwKTbq2eOFC0euMekwhzEfSDPYlk0zGcWLSBpvD
-         KEMg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=/o8jxVzJHrKnQPYDyUAFY3NEjQoX1p3FxNxyj6gs2jo=;
-        b=vvrtD+24+PPCduHYTzW8dKYh+rXE+zzlKVJ8wBmN7ah4McpjXkJraWA2Wv988Lu4I3
-         c0RVbTGasmGDqgmYdwY/9fJ38gVCfzPaGXMZ/dgqemmkg9XNImtK1F7MlLE2Dsc2xllv
-         S1Kr8R6CexLidXunKcJWKtxodR2aumrO+l4x1fpNShwbXmQW7Qj1bqLZbZr6LTMIpS/P
-         F1OXMHp3HUSc+u+Zem/r6niMFtbAN7pLOdlpSbV212KIDIcaqmkzarnTznpcbJmoMlI4
-         CGOW/IQFBEa+7snrDr0OXdekiWkqbwsvEKrdq476f88JeNoEF/Hf3boA+w1um4gFwy+d
-         +gxw==
-X-Gm-Message-State: AOAM530nnroI5yDKM3XO5zgXSj8YgIhJxr+ff3p8kJKw35F585UEIOH6
-        LwpR9LluS3iUzFXlhuwtJlg5bowYVUt2CU3Lw2wiiQ==
-X-Google-Smtp-Source: ABdhPJwvHhNIm1ioaXivr1UG6rcLmkD8H6VcQUQxqzau9d3Y7/VhluB9oHhC+sEH5vKG0dLaXf6ExZQK4mJaVcn1YIw=
-X-Received: by 2002:a05:6512:260d:b0:445:c06e:8242 with SMTP id
- bt13-20020a056512260d00b00445c06e8242mr19938085lfb.157.1652884322270; Wed, 18
- May 2022 07:32:02 -0700 (PDT)
+        with ESMTP id S229925AbiERXxd (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 18 May 2022 19:53:33 -0400
+Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B3B4860A96;
+        Wed, 18 May 2022 16:53:31 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by ams.source.kernel.org (Postfix) with ESMTPS id 26E76B81C03;
+        Wed, 18 May 2022 23:53:30 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 76052C385A9;
+        Wed, 18 May 2022 23:53:28 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1652918008;
+        bh=urChUY7g9muzenao6Op/35xCF3MRcXpVDil5q1s0Oy4=;
+        h=From:To:Cc:Subject:Date:From;
+        b=OV61lWEayn3LYEHqqYjdbT4rDnSYkojA/uBcYiviKrLQosTqoljlBxdyQuag4D38t
+         QD3252d92imOW+XVDTj0qjrOJ+PoJ1FHyjBnZPYlsp6uvQj29AfMW/W9l/rAHYKyz1
+         EIhGcaMmM0JN4aG/HcXCFiYrX6jbcm36zLqiheYnoEV/n8g93nWWuHGTHlbljGZIyW
+         DwtikEg30uOxeLh6dEvCADQkuEKd5jCOvDNzz3suRYVpoI0hAgf8LBxjbIdG8fLEMv
+         52a1BO/Ce+DjZrrYEzZcYdQZR3Zhx1bno/f/yNbVWXKZAiVyJNYG5rA6eoaqmksXog
+         K4HSm1NvPH8FA==
+From:   Eric Biggers <ebiggers@kernel.org>
+To:     linux-fsdevel@vger.kernel.org
+Cc:     linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
+        linux-xfs@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-fscrypt@vger.kernel.org, linux-block@vger.kernel.org,
+        linux-kernel@vger.kernel.org, Keith Busch <kbusch@kernel.org>
+Subject: [RFC PATCH v2 0/7] make statx() return I/O alignment information
+Date:   Wed, 18 May 2022 16:50:04 -0700
+Message-Id: <20220518235011.153058-1-ebiggers@kernel.org>
+X-Mailer: git-send-email 2.36.1
 MIME-Version: 1.0
-References: <20220517092701.1662641-1-xu.xin16@zte.com.cn>
-In-Reply-To: <20220517092701.1662641-1-xu.xin16@zte.com.cn>
-From:   Jann Horn <jannh@google.com>
-Date:   Wed, 18 May 2022 16:31:26 +0200
-Message-ID: <CAG48ez0riS60zcA9CC9rUDV=kLS0326Rr23OKv1_RHaTkOOj7A@mail.gmail.com>
-Subject: Re: [PATCH] mm/ksm: introduce ksm_enabled for each process
-To:     cgel.zte@gmail.com
-Cc:     akpm@linux-foundation.org, ammarfaizi2@gnuweeb.org,
-        oleksandr@natalenko.name, willy@infradead.org, linux-mm@kvack.org,
-        corbet@lwn.net, linux-kernel@vger.kernel.org,
-        xu xin <xu.xin16@zte.com.cn>,
-        Yang Yang <yang.yang29@zte.com.cn>,
-        Ran Xiaokai <ran.xiaokai@zte.com.cn>,
-        wangyong <wang.yong12@zte.com.cn>,
-        Yunkai Zhang <zhang.yunkai@zte.com.cn>,
-        Jiang Xuexin <jiang.xuexin@zte.com.cn>,
-        Michal Hocko <mhocko@suse.com>,
-        Hugh Dickins <hughd@google.com>,
-        Linux API <linux-api@vger.kernel.org>,
-        Daniel Gruss <daniel.gruss@iaik.tugraz.at>
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, May 17, 2022 at 11:27 AM <cgel.zte@gmail.com> wrote:
-> For now, if we want to use KSM to merge pages of some apps, we have to
-> explicitly call madvise() in application code, which means installed
-> apps on OS needs to be uninstall and source code needs to be modified.
-> It is very inconvenient because sometimes users or app developers are not
-> willing to modify their app source codes for any reasons.
+This patchset makes the statx() system call return I/O alignment
+information, roughly following the design that was suggested at
+https://lore.kernel.org/linux-fsdevel/20220120071215.123274-1-ebiggers@kernel.org/T/#u
 
-As a sidenote: If you're going to enable KSM on your devices, I hope
-you're aware that KSM significantly reduces security -
-when cloud providers were using KSM, there were a bunch of papers that
-abused it for attacks. In particular, KSM inherently creates
-significant information leaks, because an attacker can determine
-whether a memory page with specific content exists in other apps
-through timing side channels. In the worst case, this could lead to an
-attacker being able to steal things like authentication tokens out of
-other apps.
+This feature solves two problems: (a) it allows userspace to determine
+when a file supports direct I/O, and with what alignment restrictions;
+and (b) it allows userspace to determine the optimum I/O alignment for a
+file.  For more details, see patch 1.
 
-If you see significant memory savings from enabling KSM, it might be a
-good idea to look into where exactly those savings are coming from,
-and look into whether there is a better way to reduce memory
-utilization that doesn't rely on comparing entire pages against each
-other.
+This is an RFC.  I'd greatly appreciate any feedback on the UAPI, as
+that obviously needs to be gotten right from the beginning.  E.g., does
+the proposed set of fields make sense?  Am I including the right
+information in stx_offset_align_optimal?
 
-See https://arxiv.org/pdf/2111.08553.pdf for a recent research paper
-that shows that memory deduplication can even make it possible to
-remotely (!) leak memory contents out of a machine, over the internet.
+Patch 1 adds the VFS support for STATX_IOALIGN.  The remaining patches
+wire it up to ext4 and f2fs.  Support for other filesystems can be added
+later.  We could also support this on block device files; however, since
+block device nodes have different inodes from the block devices
+themselves, it wouldn't apply to statx("/dev/$foo") but rather just to
+'fd = open("/dev/foo"); statx(fd)'.  I'm unsure how useful that would be.
 
-(On top of that, KSM can also make it easier to pull off Rowhammer
-attacks in some contexts -
-see https://www.usenix.org/system/files/conference/usenixsecurity16/sec16_paper_razavi.pdf
-.)
+Note, f2fs has one corner case where DIO reads are allowed but not DIO
+writes.  The proposed statx fields can't represent this.  My proposal
+(patch 5) is to just eliminate this case, as it seems much too weird.
+But I'd appreciate any feedback on that part.
+
+This patchset applies to v5.18-rc7.
+
+No changes since v1, which I sent a few months ago; I'm resending this
+because people seem interested in it again
+(https://lore.kernel.org/r/20220518171131.3525293-1-kbusch@fb.com).
+
+Eric Biggers (7):
+  statx: add I/O alignment information
+  fscrypt: change fscrypt_dio_supported() to prepare for STATX_IOALIGN
+  ext4: support STATX_IOALIGN
+  f2fs: move f2fs_force_buffered_io() into file.c
+  f2fs: don't allow DIO reads but not DIO writes
+  f2fs: simplify f2fs_force_buffered_io()
+  f2fs: support STATX_IOALIGN
+
+ fs/crypto/inline_crypt.c  | 48 +++++++++++++++---------------
+ fs/ext4/ext4.h            |  1 +
+ fs/ext4/file.c            | 10 +++----
+ fs/ext4/inode.c           | 31 ++++++++++++++++++++
+ fs/f2fs/f2fs.h            | 45 -----------------------------
+ fs/f2fs/file.c            | 61 ++++++++++++++++++++++++++++++++++++++-
+ fs/stat.c                 |  3 ++
+ include/linux/fscrypt.h   |  7 ++---
+ include/linux/stat.h      |  3 ++
+ include/uapi/linux/stat.h |  9 ++++--
+ 10 files changed, 136 insertions(+), 82 deletions(-)
+
+
+base-commit: 42226c989789d8da4af1de0c31070c96726d990c
+-- 
+2.36.1
+
