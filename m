@@ -2,44 +2,44 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A3985C38162
-	for <linux-api@archiver.kernel.org>; Wed, 18 May 2022 23:53:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 54A18C4167B
+	for <linux-api@archiver.kernel.org>; Wed, 18 May 2022 23:53:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231660AbiERXxh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 18 May 2022 19:53:37 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54978 "EHLO
+        id S231715AbiERXxj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 18 May 2022 19:53:39 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54982 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231576AbiERXxe (ORCPT
+        with ESMTP id S231578AbiERXxe (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Wed, 18 May 2022 19:53:34 -0400
-Received: from ams.source.kernel.org (ams.source.kernel.org [IPv6:2604:1380:4601:e00::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E4D5C9D064;
-        Wed, 18 May 2022 16:53:32 -0700 (PDT)
+Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 34A8AA0D26;
+        Wed, 18 May 2022 16:53:33 -0700 (PDT)
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id 5D06FB80D0D;
+        by ams.source.kernel.org (Postfix) with ESMTPS id CC079B8225B;
         Wed, 18 May 2022 23:53:31 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D7CC5C34115;
-        Wed, 18 May 2022 23:53:29 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 390EFC34117;
+        Wed, 18 May 2022 23:53:31 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1652918010;
-        bh=3gpH8eYoou3dU+J4Tjf9kz5T3WXmPsEc2RTNKPm5Bms=;
+        s=k20201202; t=1652918011;
+        bh=JB6LW3h19xqQuARtC/JCk4kDuw5IA+Arc9Txbr7avBA=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=ItJevShOiBn0DpXopfgMGN2yyeoJx+oDtkgTlFYL/qG4o/UbPIt0O5bKQ/rlo89xp
-         eSip0ZbldHm5WXJm7c5r2O7gIxik+6N6WNthX0IbTzbteIQ/xSOgbyO/wcLk1ewuhQ
-         q3ABdGQYYRhEhq5xTiqzs5pVcLYMYoG44gNOLV4biTeOMt+cSfBK79kwGHnUWxs1Ag
-         nVxo3WfQ+y9xzHEFgm9bMCyLbF5YPbm5mS5IDTHMbanuAzAnoLnEiPTtNZgegxxzfI
-         F+FhYwTu/AbjmZGV62hDe9n+YwzqTADmozb20jDWR3VFyvFP7b2HLUDC+b3Out6Ldq
-         pMYET0MKTNtbQ==
+        b=RurWipI6Wf2z7f+35oosk8f484SsrCnSUj3Qu8ZIYKS+Lo6hPCpdBdU2PAghokXJ6
+         1mkFiBa7QUFCSCgsa/CIO8YHnShL5ssiWhnKwm0g1FH9tKv5SWrPsE4WAjTzVLXXW2
+         eTXrwwxSThz/fFGsUdcLv0GmZw+58moDBc76xzppXK2i/hQVT3CtoY96pmRgKHzEKb
+         5RymFDzAC1YOAbbg1fiTXxMEaBaG+X7eVAxmJixZRdSkwkQP/+iXW2GCfNDzyTYLRb
+         SEv4VIHE465Koq5R3t2X9qYMxpLxRPyE0JP57YB90yAXuhUUBou0gI1hCI1CQABoN0
+         LmUB0/x27PG/w==
 From:   Eric Biggers <ebiggers@kernel.org>
 To:     linux-fsdevel@vger.kernel.org
 Cc:     linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
         linux-xfs@vger.kernel.org, linux-api@vger.kernel.org,
         linux-fscrypt@vger.kernel.org, linux-block@vger.kernel.org,
         linux-kernel@vger.kernel.org, Keith Busch <kbusch@kernel.org>
-Subject: [RFC PATCH v2 3/7] ext4: support STATX_IOALIGN
-Date:   Wed, 18 May 2022 16:50:07 -0700
-Message-Id: <20220518235011.153058-4-ebiggers@kernel.org>
+Subject: [RFC PATCH v2 6/7] f2fs: simplify f2fs_force_buffered_io()
+Date:   Wed, 18 May 2022 16:50:10 -0700
+Message-Id: <20220518235011.153058-7-ebiggers@kernel.org>
 X-Mailer: git-send-email 2.36.1
 In-Reply-To: <20220518235011.153058-1-ebiggers@kernel.org>
 References: <20220518235011.153058-1-ebiggers@kernel.org>
@@ -51,105 +51,66 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-Add support for STATX_IOALIGN to ext4, so that I/O alignment information
-is exposed to userspace in a consistent and easy-to-use way.
+f2fs only allows direct I/O that is aligned to the filesystem block
+size.  Given that fact, simplify f2fs_force_buffered_io() by removing
+the redundant call to block_unaligned_IO().
+
+This makes it easier to reuse this code for STATX_IOALIGN.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- fs/ext4/ext4.h  |  1 +
- fs/ext4/file.c  | 15 ++++-----------
- fs/ext4/inode.c | 31 +++++++++++++++++++++++++++++++
- 3 files changed, 36 insertions(+), 11 deletions(-)
+ fs/f2fs/file.c | 24 ++++--------------------
+ 1 file changed, 4 insertions(+), 20 deletions(-)
 
-diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index a743b1e3b89ec..7c43428901632 100644
---- a/fs/ext4/ext4.h
-+++ b/fs/ext4/ext4.h
-@@ -3020,6 +3020,7 @@ extern struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
- extern int  ext4_write_inode(struct inode *, struct writeback_control *);
- extern int  ext4_setattr(struct user_namespace *, struct dentry *,
- 			 struct iattr *);
-+extern u32  ext4_dio_alignment(struct inode *inode);
- extern int  ext4_getattr(struct user_namespace *, const struct path *,
- 			 struct kstat *, u32, unsigned int);
- extern void ext4_evict_inode(struct inode *);
-diff --git a/fs/ext4/file.c b/fs/ext4/file.c
-index de153b508b20a..ba2271e5287b2 100644
---- a/fs/ext4/file.c
-+++ b/fs/ext4/file.c
-@@ -39,19 +39,12 @@
- static bool ext4_dio_supported(struct kiocb *iocb, struct iov_iter *iter)
- {
- 	struct inode *inode = file_inode(iocb->ki_filp);
-+	u32 dio_align = ext4_dio_alignment(inode);
+diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+index 68947fe16ea35..c32f7722ba6b0 100644
+--- a/fs/f2fs/file.c
++++ b/fs/f2fs/file.c
+@@ -807,19 +807,7 @@ int f2fs_truncate(struct inode *inode)
+ 	return 0;
+ }
  
--	if (IS_ENCRYPTED(inode)) {
--		if (!fscrypt_dio_supported(inode))
--			return false;
--		if (!IS_ALIGNED(iocb->ki_pos | iov_iter_alignment(iter),
--				i_blocksize(inode)))
--			return false;
+-static int block_unaligned_IO(struct inode *inode, struct kiocb *iocb,
+-			      struct iov_iter *iter)
+-{
+-	unsigned int i_blkbits = READ_ONCE(inode->i_blkbits);
+-	unsigned int blocksize_mask = (1 << i_blkbits) - 1;
+-	loff_t offset = iocb->ki_pos;
+-	unsigned long align = offset | iov_iter_alignment(iter);
+-
+-	return align & blocksize_mask;
+-}
+-
+-static inline bool f2fs_force_buffered_io(struct inode *inode,
+-				struct kiocb *iocb, struct iov_iter *iter)
++static bool f2fs_force_buffered_io(struct inode *inode)
+ {
+ 	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+ 
+@@ -839,12 +827,8 @@ static inline bool f2fs_force_buffered_io(struct inode *inode,
+ 	 */
+ 	if (f2fs_sb_has_blkzoned(sbi))
+ 		return true;
+-	if (f2fs_lfs_mode(sbi)) {
+-		if (block_unaligned_IO(inode, iocb, iter))
+-			return true;
+-		if (F2FS_IO_ALIGNED(sbi))
+-			return true;
 -	}
--	if (fsverity_active(inode))
--		return false;
--	if (ext4_should_journal_data(inode))
-+	if (!dio_align)
- 		return false;
--	if (ext4_has_inline_data(inode))
-+	if (dio_align > bdev_logical_block_size(inode->i_sb->s_bdev) &&
-+	    !IS_ALIGNED(iocb->ki_pos | iov_iter_alignment(iter), dio_align))
- 		return false;
- 	return true;
- }
-diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index 646ece9b3455f..5af2598aa170d 100644
---- a/fs/ext4/inode.c
-+++ b/fs/ext4/inode.c
-@@ -5533,6 +5533,22 @@ int ext4_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
- 	return error;
- }
++	if (f2fs_lfs_mode(sbi) && F2FS_IO_ALIGNED(sbi))
++		return true;
+ 	if (is_sbi_flag_set(F2FS_I_SB(inode), SBI_CP_DISABLED))
+ 		return true;
  
-+u32 ext4_dio_alignment(struct inode *inode)
-+{
-+	if (fsverity_active(inode))
-+		return 0;
-+	if (ext4_should_journal_data(inode))
-+		return 0;
-+	if (ext4_has_inline_data(inode))
-+		return 0;
-+	if (IS_ENCRYPTED(inode)) {
-+		if (!fscrypt_dio_supported(inode))
-+			return 0;
-+		return i_blocksize(inode);
-+	}
-+	return bdev_logical_block_size(inode->i_sb->s_bdev);
-+}
-+
- int ext4_getattr(struct user_namespace *mnt_userns, const struct path *path,
- 		 struct kstat *stat, u32 request_mask, unsigned int query_flags)
- {
-@@ -5548,6 +5564,21 @@ int ext4_getattr(struct user_namespace *mnt_userns, const struct path *path,
- 		stat->btime.tv_nsec = ei->i_crtime.tv_nsec;
- 	}
+@@ -4283,7 +4267,7 @@ static bool f2fs_should_use_dio(struct inode *inode, struct kiocb *iocb,
+ 	if (!(iocb->ki_flags & IOCB_DIRECT))
+ 		return false;
  
-+	/*
-+	 * Return the I/O alignment information if requested.  We only return
-+	 * this information when requested, since on encrypted files it might
-+	 * take a fair bit of work to get if the file wasn't opened recently.
-+	 */
-+	if ((request_mask & STATX_IOALIGN) && S_ISREG(inode->i_mode)) {
-+		u32 dio_align = ext4_dio_alignment(inode);
-+		unsigned int io_opt = bdev_io_opt(inode->i_sb->s_bdev);
-+
-+		stat->result_mask |= STATX_IOALIGN;
-+		stat->mem_align_dio = dio_align;
-+		stat->offset_align_dio = dio_align;
-+		stat->offset_align_optimal = max(io_opt, i_blocksize(inode));
-+	}
-+
- 	flags = ei->i_flags & EXT4_FL_USER_VISIBLE;
- 	if (flags & EXT4_APPEND_FL)
- 		stat->attributes |= STATX_ATTR_APPEND;
+-	if (f2fs_force_buffered_io(inode, iocb, iter))
++	if (f2fs_force_buffered_io(inode))
+ 		return false;
+ 
+ 	/*
 -- 
 2.36.1
 
