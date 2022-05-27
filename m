@@ -2,61 +2,41 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2C7EEC433F5
-	for <linux-api@archiver.kernel.org>; Tue, 24 May 2022 10:16:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2C470C433F5
+	for <linux-api@archiver.kernel.org>; Fri, 27 May 2022 02:24:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229543AbiEXKQM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 24 May 2022 06:16:12 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59072 "EHLO
+        id S234510AbiE0CYY convert rfc822-to-8bit (ORCPT
+        <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 26 May 2022 22:24:24 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50146 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235858AbiEXKQL (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 24 May 2022 06:16:11 -0400
-X-Greylist: delayed 2221 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Tue, 24 May 2022 03:16:10 PDT
-Received: from box.indicandustries.com (hwsrv-970840.hostwindsdns.com [IPv6:2607:5501:3000:21a5::2])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 85CD213F07
-        for <linux-api@vger.kernel.org>; Tue, 24 May 2022 03:16:09 -0700 (PDT)
-Received: from authenticated-user (box.indicandustries.com [104.168.149.109])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by box.indicandustries.com (Postfix) with ESMTPSA id 234A5108168
-        for <linux-api@vger.kernel.org>; Tue, 24 May 2022 03:25:11 -0600 (MDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-        d=box.indicandustries.com; s=mail; t=1653384312;
-        bh=V6VCn7WEbqHjVVQ20/+SYu6rwS1WmTHcxX88g+j430s=;
-        h=Reply-To:From:To:Subject:Date:From;
-        b=RLlepTCCiuyv8R9HCzjLpzton7bSlr2N+WA+gN/FvVmmiLci2pAV6J8+eGPYghIlj
-         VOBgAOFkEuG3p731gzDHglhOQWtUqjNuhjwFcHvvMCNjxZHJtFCc+F7OJnewxxp40t
-         XeRJMl5g0OmDAGcFWgAVEFfKBdRo1hOpMCoSBki2XEQ+dvtrXn45UUBPZY6Llwnhj5
-         eg5zJKAWYGSH38JziG1/Uj+l4gLL88OdpZPQz8lb3Y/ww05AroXMDNZ8szkAB4DKeP
-         XD7BgY3uMB7kX7PCqwGxJ7LYVnlB/2VHxWqiCW575Cn5BPPlxNh38rgHxPC3SUH55V
-         DnT0n/gEUHp+w==
-Reply-To: amjalia90@gmail.com
-From:   amjad.ali@box.indicandustries.com
+        with ESMTP id S230281AbiE0CYX (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 26 May 2022 22:24:23 -0400
+X-Greylist: delayed 599 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 26 May 2022 19:24:21 PDT
+Received: from gozar.rockhopper.tech (unknown [107.23.74.220])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 9052FE27BC
+        for <linux-api@vger.kernel.org>; Thu, 26 May 2022 19:24:21 -0700 (PDT)
+Received: from EC2AMAZ-9F5NHHP ([127.0.0.1]) by gozar.rockhopper.tech with
+ MailEnable ESMTP; Thu, 26 May 2022 22:14:20 -0400
+Date:   Thu, 26 May 2022 22:14:20 -0400 (EDT)
+From:   info@alternativebenefitplans.com
 To:     linux-api@vger.kernel.org
-Subject: Hello Sir, I seek your urgent consideration.
-Date:   24 May 2022 11:25:10 +0200
-Message-ID: <20220524112510.0AC4C6D9B70423A2@box.indicandustries.com>
+Message-ID: <1150190968.261376.1653617660769@localhost>
+Subject: Confirmation
 MIME-Version: 1.0
-Content-Type: text/plain;
-        charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+X-Mailer: ColdFusion 2021 Application Server
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hello,
 
-Greetings? I am Amjad. I work with a leading Bio Firm.  Due to=20
-the setbacks of the pandemic, my company has opened a bid in=20
-search of new suppliers for basic raw materials needed in=20
-production.
 
-I am seeking a representative=C2=A0as I am a staff, I can not be=20
-involved directly. It may not be your area of work but the=20
-profits are great and I will guide you through. I have already=20
-sourced a local supplier for this. I only need a reliable=20
-representative.
+Dear 💘 All the girls from next door are here with their cams! Visit Cam: https://wondergirl22.page.link/29hQ?x8u 💘,
 
-Please get back to me so I can explain this in full.
+We have received your request. 
+                 
+A representative of Alternative Benefit Plans will be in contact with you as soon as possible.
 
-Amjad
+Thank you for your interest.
