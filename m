@@ -2,178 +2,136 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 10080C4332F
-	for <linux-api@archiver.kernel.org>; Mon, 30 May 2022 13:41:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0389AC433EF
+	for <linux-api@archiver.kernel.org>; Tue, 31 May 2022 12:00:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237322AbiE3Njt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 30 May 2022 09:39:49 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57128 "EHLO
+        id S1343957AbiEaMAJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 31 May 2022 08:00:09 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56340 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238150AbiE3NgI (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 30 May 2022 09:36:08 -0400
-Received: from mga04.intel.com (mga04.intel.com [192.55.52.120])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 74894985AF;
-        Mon, 30 May 2022 06:29:51 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1653917391; x=1685453391;
-  h=date:from:to:cc:subject:message-id:reply-to:references:
-   mime-version:in-reply-to;
-  bh=I21a6ClKGB+lq1NfhYRQ0tz6+Os23OEzwGczNY+MKwY=;
-  b=HpvNlcVINhWSmF2Khe79cHcXMHlqq8MD2pq5h//KORGzneoTvxjrwGOC
-   lUFqvSjakeEsFY4cAqT5ep1vHYaIhzrACuH9QR96Wdzi74dG2pH9neXJJ
-   1EPbdyEkxENjnVyAtmRK1ruUw1XeLGarOY1IgXCkVoEYe6HgjbKQ+JRPU
-   HxL/PtL7Kb8/ckE1FPkj7mmMHx5BUNKbGGYAfrPI1wjQRDKvGxs2DStk2
-   niuShl40ewrDrlfLvWcZMus1mGjAgSmYHUAlA+3IIhnFcklnQEyH17o2f
-   ZAc2tldND5vrR2yrGUFOwiHujWmUsLDqS6GT4Jrjc+JyP0GmKqQmEWixg
-   w==;
-X-IronPort-AV: E=McAfee;i="6400,9594,10362"; a="273813992"
-X-IronPort-AV: E=Sophos;i="5.91,263,1647327600"; 
-   d="scan'208";a="273813992"
-Received: from orsmga003.jf.intel.com ([10.7.209.27])
-  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 May 2022 06:29:49 -0700
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.91,263,1647327600"; 
-   d="scan'208";a="529175229"
-Received: from chaop.bj.intel.com (HELO localhost) ([10.240.192.101])
-  by orsmga003.jf.intel.com with ESMTP; 30 May 2022 06:29:39 -0700
-Date:   Mon, 30 May 2022 21:26:13 +0800
-From:   Chao Peng <chao.p.peng@linux.intel.com>
-To:     Sean Christopherson <seanjc@google.com>
-Cc:     Andy Lutomirski <luto@kernel.org>, kvm@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-mm@kvack.org,
-        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-doc@vger.kernel.org, qemu-devel@nongnu.org,
-        Paolo Bonzini <pbonzini@redhat.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Vitaly Kuznetsov <vkuznets@redhat.com>,
-        Wanpeng Li <wanpengli@tencent.com>,
-        Jim Mattson <jmattson@google.com>,
-        Joerg Roedel <joro@8bytes.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
-        x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
-        Hugh Dickins <hughd@google.com>,
-        Jeff Layton <jlayton@kernel.org>,
-        "J . Bruce Fields" <bfields@fieldses.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Mike Rapoport <rppt@kernel.org>,
-        Steven Price <steven.price@arm.com>,
-        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
-        Vlastimil Babka <vbabka@suse.cz>,
-        Vishal Annapurve <vannapurve@google.com>,
-        Yu Zhang <yu.c.zhang@linux.intel.com>,
-        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
-        jun.nakajima@intel.com, dave.hansen@intel.com, ak@linux.intel.com,
-        david@redhat.com, aarcange@redhat.com, ddutile@redhat.com,
-        dhildenb@redhat.com, Quentin Perret <qperret@google.com>,
-        Michael Roth <michael.roth@amd.com>, mhocko@suse.com
-Subject: Re: [PATCH v6 4/8] KVM: Extend the memslot to support fd-based
- private memory
-Message-ID: <20220530132613.GA1200843@chaop.bj.intel.com>
-Reply-To: Chao Peng <chao.p.peng@linux.intel.com>
-References: <20220519153713.819591-1-chao.p.peng@linux.intel.com>
- <20220519153713.819591-5-chao.p.peng@linux.intel.com>
- <8840b360-cdb2-244c-bfb6-9a0e7306c188@kernel.org>
- <YofeZps9YXgtP3f1@google.com>
- <20220523132154.GA947536@chaop.bj.intel.com>
- <YoumuHUmgM6TH20S@google.com>
+        with ESMTP id S1344022AbiEaL77 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 31 May 2022 07:59:59 -0400
+Received: from sin.source.kernel.org (sin.source.kernel.org [IPv6:2604:1380:40e1:4800::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 56E514B876;
+        Tue, 31 May 2022 04:59:57 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by sin.source.kernel.org (Postfix) with ESMTPS id C6DBFCE0E9F;
+        Tue, 31 May 2022 11:59:55 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2BAAAC385A9;
+        Tue, 31 May 2022 11:59:44 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1653998394;
+        bh=7Lbe2zyNQ0rV/hxwT06A/1O3dq6x6sIy9gX8/rG0xtw=;
+        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+        b=Tmy2IrqB7ccOQs5HHqYf6TgLGfnXAIJZtPc+/nGbbCvo8aX1LEZimBe88wqFy9V+C
+         uvtv6axBqQslJIEcqCmHaJugkFIWb+Z1TGJf0qmIzfM29u5W8NMrAAmC8ktgIpl75E
+         gcrEmiqK0XFNQKuFpsGTYvYggWUWTxW87kTg+bDnnxhtC5uR2wiybPoB/pGb0zaA8x
+         i+jCSOkZjgQgg9JGDLRgGwvKGGOSuZ8dg7B5XT3N41k+vwPDtPOWUa8GUiBlAGdxy4
+         tonA882Bd2BjYe9bNLmfo/ws8UnfaLAUVImqoIdDISbcSTFxR642KkhZQ769WLFSed
+         swLqoEFb/vljQ==
+Date:   Tue, 31 May 2022 14:59:37 +0300
+From:   Mike Rapoport <rppt@kernel.org>
+To:     "H.J. Lu" <hjl.tools@gmail.com>
+Cc:     Andy Lutomirski <luto@kernel.org>,
+        "Edgecombe, Rick P" <rick.p.edgecombe@intel.com>,
+        "bsingharora@gmail.com" <bsingharora@gmail.com>,
+        "hpa@zytor.com" <hpa@zytor.com>,
+        "Syromiatnikov, Eugene" <esyr@redhat.com>,
+        "peterz@infradead.org" <peterz@infradead.org>,
+        "rdunlap@infradead.org" <rdunlap@infradead.org>,
+        "keescook@chromium.org" <keescook@chromium.org>,
+        "0x7f454c46@gmail.com" <0x7f454c46@gmail.com>,
+        "Eranian, Stephane" <eranian@google.com>,
+        "kirill.shutemov@linux.intel.com" <kirill.shutemov@linux.intel.com>,
+        "dave.hansen@linux.intel.com" <dave.hansen@linux.intel.com>,
+        "linux-mm@kvack.org" <linux-mm@kvack.org>,
+        "adrian@lisas.de" <adrian@lisas.de>,
+        "fweimer@redhat.com" <fweimer@redhat.com>,
+        "nadav.amit@gmail.com" <nadav.amit@gmail.com>,
+        "jannh@google.com" <jannh@google.com>,
+        "avagin@gmail.com" <avagin@gmail.com>,
+        "kcc@google.com" <kcc@google.com>,
+        "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>,
+        "pavel@ucw.cz" <pavel@ucw.cz>, "oleg@redhat.com" <oleg@redhat.com>,
+        "bp@alien8.de" <bp@alien8.de>,
+        "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
+        "arnd@arndb.de" <arnd@arndb.de>,
+        "Moreira, Joao" <joao.moreira@intel.com>,
+        "tglx@linutronix.de" <tglx@linutronix.de>,
+        "mike.kravetz@oracle.com" <mike.kravetz@oracle.com>,
+        "x86@kernel.org" <x86@kernel.org>,
+        "Yang, Weijiang" <weijiang.yang@intel.com>,
+        "dave.martin@arm.com" <dave.martin@arm.com>,
+        "john.allen@amd.com" <john.allen@amd.com>,
+        "mingo@redhat.com" <mingo@redhat.com>,
+        "Hansen, Dave" <dave.hansen@intel.com>,
+        "corbet@lwn.net" <corbet@lwn.net>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "gorcunov@gmail.com" <gorcunov@gmail.com>,
+        "Shankar, Ravi V" <ravi.v.shankar@intel.com>,
+        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Subject: Re: [PATCH 00/35] Shadow stacks for userspace
+Message-ID: <YpYDKVjMEYVlV6Ya@kernel.org>
+References: <Yh0wIMjFdDl8vaNM@kernel.org>
+ <5a792e77-0072-4ded-9f89-e7fcc7f7a1d6@www.fastmail.com>
+ <Yh0+9cFyAfnsXqxI@kernel.org>
+ <05df964f-552e-402e-981c-a8bea11c555c@www.fastmail.com>
+ <YiEZyTT/UBFZd6Am@kernel.org>
+ <CALCETrWacW8SC2tpPxQSaLtxsOXfXHueyuwLcXpNF4aG-0ZvhA@mail.gmail.com>
+ <fb7d6e4da58ae77be2c6321ee3f3487485b2886c.camel@intel.com>
+ <40a3500c-835a-60b0-15bf-40c6622ad013@kernel.org>
+ <YiZVbPwlgSFnhadv@kernel.org>
+ <CAMe9rOrSLPKdL2gL=yx84zrs-u6ch1AVvjk3oqUe3thR5ZD=dQ@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <YoumuHUmgM6TH20S@google.com>
+In-Reply-To: <CAMe9rOrSLPKdL2gL=yx84zrs-u6ch1AVvjk3oqUe3thR5ZD=dQ@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, May 23, 2022 at 03:22:32PM +0000, Sean Christopherson wrote:
-> On Mon, May 23, 2022, Chao Peng wrote:
-> > On Fri, May 20, 2022 at 06:31:02PM +0000, Sean Christopherson wrote:
-> > > On Fri, May 20, 2022, Andy Lutomirski wrote:
-> > > > The alternative would be to have some kind of separate table or bitmap (part
-> > > > of the memslot?) that tells KVM whether a GPA should map to the fd.
-> > > > 
-> > > > What do you all think?
-> > > 
-> > > My original proposal was to have expolicit shared vs. private memslots, and punch
-> > > holes in KVM's memslots on conversion, but due to the way KVM (and userspace)
-> > > handle memslot updates, conversions would be painfully slow.  That's how we ended
-> > > up with the current propsoal.
-> > > 
-> > > But a dedicated KVM ioctl() to add/remove shared ranges would be easy to implement
-> > > and wouldn't necessarily even need to interact with the memslots.  It could be a
-> > > consumer of memslots, e.g. if we wanted to disallow registering regions without an
-> > > associated memslot, but I think we'd want to avoid even that because things will
-> > > get messy during memslot updates, e.g. if dirty logging is toggled or a shared
-> > > memory region is temporarily removed then we wouldn't want to destroy the tracking.
-> > 
-> > Even we don't tight that to memslots, that info can only be effective
-> > for private memslot, right? Setting this ioctl to memory ranges defined
-> > in a traditional non-private memslots just makes no sense, I guess we can
-> > comment that in the API document.
-> 
-> Hrm, applying it universally would be funky, e.g. emulated MMIO would need to be
-> declared "shared".  But, applying it selectively would arguably be worse, e.g.
-> letting userspace map memory into the guest as shared for a region that's registered
-> as private...
-> 
-> On option to that mess would be to make memory shared by default, and so userspace
-> must declare regions that are private.  Then there's no weirdness with emulated MMIO
-> or "legacy" memslots.
-> 
-> On page fault, KVM does a lookup to see if the GPA is shared or private.  If the
-> GPA is private, but there is no memslot or the memslot doesn't have a private fd,
-> KVM exits to userspace.  If there's a memslot with a private fd, the shared/private
-> flag is used to resolve the 
-> 
-> And to handle the ioctl(), KVM can use kvm_zap_gfn_range(), which will bump the
-> notifier sequence, i.e. force the page fault to retry if the GPA may have been
-> (un)registered between checking the type and acquiring mmu_lock.
+Hi all,
 
-Yeah, that makes sense.
-
+On Mon, Mar 07, 2022 at 11:07:01AM -0800, H.J. Lu wrote:
+> On Mon, Mar 7, 2022 at 10:57 AM Mike Rapoport <rppt@kernel.org> wrote:
+> >
+> > On Fri, Mar 04, 2022 at 11:13:19AM -0800, Andy Lutomirski wrote:
+> > > On 3/3/22 17:30, Edgecombe, Rick P wrote:
 > 
-> > > I don't think we'd want to use a bitmap, e.g. for a well-behaved guest, XArray
-> > > should be far more efficient.
-> > 
-> > What about the mis-behaved guest? I don't want to design for the worst
-> > case, but people may raise concern on the attack from such guest.
+> Here is the CET ptrace patch on CET 5.16 kernel branch:
 > 
-> That's why cgroups exist.  E.g. a malicious/broken L1 can similarly abuse nested
-> EPT/NPT to generate a large number of shadow page tables.
+> https://github.com/hjl-tools/linux/commit/3a43ec29ddac56f87807161b5aeafa80f632363d
 
-I havn't seen we had that in KVM. Is there any plan/discussion to add that?
+It took me a while, but at last I have a version of CRIU that knows how to
+handle shadow stack. For the shadow stack manipulation during dump and for
+the creation of the sigframe for sigreturn I used the CET ptrace patch for
+5.16 (thanks H.J).
 
-> 
-> > > One benefit to explicitly tracking this in KVM is that it might be useful for
-> > > software-only protected VMs, e.g. KVM could mark a region in the XArray as "pending"
-> > > based on guest hypercalls to share/unshare memory, and then complete the transaction
-> > > when userspace invokes the ioctl() to complete the share/unshare.
-> > 
-> > OK, then this can be another field of states/flags/attributes. Let me
-> > dig up certain level of details:
-> > 
-> > First, introduce below KVM ioctl
-> > 
-> > KVM_SET_MEMORY_ATTR
-> 
-> Actually, if the semantics are that userspace declares memory as private, then we
-> can reuse KVM_MEMORY_ENCRYPT_REG_REGION and KVM_MEMORY_ENCRYPT_UNREG_REGION.  It'd
-> be a little gross because we'd need to slightly redefine the semantics for TDX, SNP,
-> and software-protected VM types, e.g. the ioctls() currently require a pre-exisitng
-> memslot.  But I think it'd work...
+For the restore I had to add two modifications to the kernel APIs on top of
+this version of the shadow stack series:
 
-These existing ioctls looks good for TDX and probably SNP as well. For
-softrware-protected VM types, it may not be enough. Maybe for the first
-step we can reuse this for all hardware based solutions and invent new
-interface when software-protected solution gets really supported.
+* add address parameter to map_shadow_stack() so that it'll call mmap()
+with MAP_FIXED if the address is requested. This is required to restore the
+shadow stack at the same address as it was at dump time.
 
-There is semantics difference for fd-based private memory. Current above
-two ioctls() use userspace addreess(hva) while for fd-based it should be
-fd+offset, and probably it's better to use gpa in this case. Then we
-will need change existing semantics and break backward-compatibility.
+* add ability to unlock shadow stack features using ptrace. This is
+required because the current glibc (or at least in the version I used for
+tests) locks shadow stack state when it loads a program. This locking means
+that a process will either have shadow stack disabled without an ability to
+enable it or it will have shadow stack enabled with WRSS disabled and
+again, there is no way to re-enable WRSS. With that, ptrace looked like the
+most sensible interface to interfere with the shadow stack locking.
 
-Chao
+I've pushed the kernel modifications here:
 
-> 
-> I'll think more on this...
+https://git.kernel.org/pub/scm/linux/kernel/git/rppt/linux.git/log/?h=cet/kvm
+
+and CRIU modifications here:
+
+https://github.com/rppt/criu/tree/cet/v0.1
+
+-- 
+Sincerely yours,
+Mike.
