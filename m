@@ -2,199 +2,137 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4DFA7C43334
-	for <linux-api@archiver.kernel.org>; Thu,  2 Jun 2022 10:41:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F179CCCA473
+	for <linux-api@archiver.kernel.org>; Mon,  6 Jun 2022 20:10:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232198AbiFBKlU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 2 Jun 2022 06:41:20 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56710 "EHLO
+        id S233146AbiFFUKL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 6 Jun 2022 16:10:11 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44308 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232717AbiFBKlS (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 2 Jun 2022 06:41:18 -0400
-Received: from ams.source.kernel.org (ams.source.kernel.org [IPv6:2604:1380:4601:e00::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EEFEE2B194B;
-        Thu,  2 Jun 2022 03:41:16 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id 7B820B80DAF;
-        Thu,  2 Jun 2022 10:41:15 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id C25D1C385A5;
-        Thu,  2 Jun 2022 10:41:10 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1654166474;
-        bh=QjUiVyKZNsZkKxCa1CLkhlWoj32OkZtXUL2hEbSq5To=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=FTG5+aDnmbwhXJwH72p6338p68jxKp6xoWgm2zpfxEoP8YIs0J566s2gzPhUOEW+i
-         D6CMaBW6wumkAwZElzLiqvibA0qYBi1xYoLOSKexLQmSycbskXKhd+rV/Ve0nRXe08
-         1hRippsHY3jPQZszwobu3qaPIRgWFLAfvf7x8s9ZNpYg/KowbNWA3yrHRH26jKcguM
-         ieHSieHZaWtTu3+o1k50sj/lxo5lA3Rnq3QqI2VZs0a4+MNCfMY+Cvo2UVz3/ghI1/
-         LDA/fWcRsSmeOM8SPAHljfQl59DWtJpy7KcQaDw0IlS86Z/w2GogyWYTtGzqoF4WQS
-         KLd98FLRlHIQA==
-Date:   Thu, 2 Jun 2022 12:41:07 +0200
-From:   Christian Brauner <brauner@kernel.org>
-To:     Kees Cook <keescook@chromium.org>
-Cc:     Jan Kiszka <jan.kiszka@siemens.com>,
-        "Serge E. Hallyn" <serge@hallyn.com>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Laurent Vivier <laurent@vivier.eu>,
-        linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>,
-        Sargun Dhillon <sargun@sargun.me>,
-        Jann Horn <jannh@google.com>,
-        Henning Schild <henning.schild@siemens.com>,
-        Andrei Vagin <avagin@gmail.com>,
-        Matthew Bobrowski <repnop@google.com>,
-        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        containers@lists.linux.dev,
-        Christian Brauner <christian.brauner@ubuntu.com>
-Subject: Re: [PATCH v2 2/2] binfmt_misc: enable sandboxed mounts
-Message-ID: <20220602104107.6b3d3udhslvhg6ew@wittgenstein>
-References: <20211216112659.310979-1-brauner@kernel.org>
- <20211216112659.310979-2-brauner@kernel.org>
- <20211226133140.GA8064@mail.hallyn.com>
- <0e817424-51db-fe0b-a00e-ac7933e8ac1d@siemens.com>
- <20220530081358.b3tvgvo63mq5o2oo@wittgenstein>
- <202205311219.725ED1C69@keescook>
+        with ESMTP id S233102AbiFFUKF (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 6 Jun 2022 16:10:05 -0400
+Received: from mail-pf1-x434.google.com (mail-pf1-x434.google.com [IPv6:2607:f8b0:4864:20::434])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3DA9A12D1CF
+        for <linux-api@vger.kernel.org>; Mon,  6 Jun 2022 13:10:02 -0700 (PDT)
+Received: by mail-pf1-x434.google.com with SMTP id 187so13570388pfu.9
+        for <linux-api@vger.kernel.org>; Mon, 06 Jun 2022 13:10:02 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20210112;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=oQFpDXi6bD7+wKzTyAPy27GXXUSscdFak0V6JCay3LM=;
+        b=Lt8bn1CKv27NBAN2LZ6a3kjXi7zTNT9n5YC6qdlDRRz27wSGX169ro34tJXroQ4ylw
+         9Wh5AtBkZYrRJCB6VOaJC0MlhiSdzn1C4PqwPfP5C2UQ58ClSnY1eORDsS+jz9o2IDri
+         ni9cn1KDaMb5LTVmi0K48gTlOfkMsvw04FEVxngHWMm311dg/8tSsLNw8NZngXEjzLdm
+         MRj2v0erbTuphncL4y5iv8ZG1Wuu7I1voO3ifQtd6JmL8xCnR4egkVJv67k8mCcsucuy
+         B7Vorowmpt94+GNwzICo6EQEcNJyTDkVWQJuYGl9kQjzC8CdwmuVUJOWPEVPDexxdgNI
+         LvRQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=oQFpDXi6bD7+wKzTyAPy27GXXUSscdFak0V6JCay3LM=;
+        b=Wrh3heoksGhNMhc8xhyKSOxNquNEUsreODfd0VSTT76HVIZCcwvnqEIwqMmtMcomu3
+         1bg/0ixMiQCpu9l7lftUHZWkliVMSSFO+BYFg4Z4UZVP/QiHI5YId4O2s1i6ZPeMsrH9
+         rbPZ6ydpnulx+eKSjUhAC81DCv3KSc/LHmu1VmggPCTmRFEiPVxVA38XItJvBTPsB2wu
+         OD8nu+h7RhXtH0rrj420i7OBwFmKCaC1N+qwRtYt5Egh7RQBkiXtrsRuFe03ZgBQPp1u
+         DyGRGHTHKk+mxb+uqbNsdCjF8rcsXQNpgW+mRPNdeSfyqBmwKBnXqMJFzF6FnbcPLN5i
+         zQwg==
+X-Gm-Message-State: AOAM530bxk44p+gVqnJRRjiC2ox0w6UxQNPnhXat4TCvrKbbLGklEECZ
+        lL4CSrQZ2O+Y5sfjhtNs0MNonU28F4so+/zxUjdrug==
+X-Google-Smtp-Source: ABdhPJz71kp7wjsXPjRB2ML7eIa2fwB82eNGfeI62OXeQw8INa+MLyq06Q2ncMec3mjRtswZPQ72CnuvPkBz4ir4YOc=
+X-Received: by 2002:a63:69c2:0:b0:3fa:78b5:d991 with SMTP id
+ e185-20020a6369c2000000b003fa78b5d991mr23043411pgc.40.1654546201400; Mon, 06
+ Jun 2022 13:10:01 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <202205311219.725ED1C69@keescook>
+References: <20220519153713.819591-1-chao.p.peng@linux.intel.com>
+In-Reply-To: <20220519153713.819591-1-chao.p.peng@linux.intel.com>
+From:   Vishal Annapurve <vannapurve@google.com>
+Date:   Mon, 6 Jun 2022 13:09:50 -0700
+Message-ID: <CAGtprH_83CEC0U-cBR2FzHsxbwbGn0QJ87WFNOEet8sineOcbQ@mail.gmail.com>
+Subject: Re: [PATCH v6 0/8] KVM: mm: fd-based approach for supporting KVM
+ guest private memory
+To:     Chao Peng <chao.p.peng@linux.intel.com>
+Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
+        qemu-devel@nongnu.org, Paolo Bonzini <pbonzini@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Sean Christopherson <seanjc@google.com>,
+        Vitaly Kuznetsov <vkuznets@redhat.com>,
+        Wanpeng Li <wanpengli@tencent.com>,
+        Jim Mattson <jmattson@google.com>,
+        Joerg Roedel <joro@8bytes.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
+        Hugh Dickins <hughd@google.com>,
+        Jeff Layton <jlayton@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Mike Rapoport <rppt@kernel.org>,
+        Steven Price <steven.price@arm.com>,
+        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Yu Zhang <yu.c.zhang@linux.intel.com>,
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
+        Andy Lutomirski <luto@kernel.org>,
+        Jun Nakajima <jun.nakajima@intel.com>, dave.hansen@intel.com,
+        ak@linux.intel.com, david@redhat.com, aarcange@redhat.com,
+        ddutile@redhat.com, dhildenb@redhat.com,
+        Quentin Perret <qperret@google.com>,
+        Michael Roth <michael.roth@amd.com>, mhocko@suse.com
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, May 31, 2022 at 12:24:37PM -0700, Kees Cook wrote:
-> On Mon, May 30, 2022 at 10:13:58AM +0200, Christian Brauner wrote:
-> > On Sun, May 29, 2022 at 09:35:40PM +0200, Jan Kiszka wrote:
-> > > On 26.12.21 14:31, Serge E. Hallyn wrote:
-> > > > On Thu, Dec 16, 2021 at 12:26:59PM +0100, Christian Brauner wrote:
-> > > >> From: Christian Brauner <christian.brauner@ubuntu.com>
-> > > >>
-> > > >> Enable unprivileged sandboxes to create their own binfmt_misc mounts.
-> > > >> This is based on Laurent's work in [1] but has been significantly
-> > > >> reworked to fix various issues we identified in earlier versions.
-> > > >>
-> > > >> While binfmt_misc can currently only be mounted in the initial user
-> > > >> namespace, binary types registered in this binfmt_misc instance are
-> > > >> available to all sandboxes (Either by having them installed in the
-> > > >> sandbox or by registering the binary type with the F flag causing the
-> > > >> interpreter to be opened right away). So binfmt_misc binary types are
-> > > >> already delegated to sandboxes implicitly.
-> > > >>
-> > > >> However, while a sandbox has access to all registered binary types in
-> > > >> binfmt_misc a sandbox cannot currently register its own binary types
-> > > >> in binfmt_misc. This has prevented various use-cases some of which were
-> > > >> already outlined in [1] but we have a range of issues associated with
-> > > >> this (cf. [3]-[5] below which are just a small sample).
-> > > >>
-> > > >> Extend binfmt_misc to be mountable in non-initial user namespaces.
-> > > >> Similar to other filesystem such as nfsd, mqueue, and sunrpc we use
-> > > >> keyed superblock management. The key determines whether we need to
-> > > >> create a new superblock or can reuse an already existing one. We use the
-> > > >> user namespace of the mount as key. This means a new binfmt_misc
-> > > >> superblock is created once per user namespace creation. Subsequent
-> > > >> mounts of binfmt_misc in the same user namespace will mount the same
-> > > >> binfmt_misc instance. We explicitly do not create a new binfmt_misc
-> > > >> superblock on every binfmt_misc mount as the semantics for
-> > > >> load_misc_binary() line up with the keying model. This also allows us to
-> > > >> retrieve the relevant binfmt_misc instance based on the caller's user
-> > > >> namespace which can be done in a simple (bounded to 32 levels) loop.
-> > > >>
-> > > >> Similar to the current binfmt_misc semantics allowing access to the
-> > > >> binary types in the initial binfmt_misc instance we do allow sandboxes
-> > > >> access to their parent's binfmt_misc mounts if they do not have created
-> > > >> a separate binfmt_misc instance.
-> > > >>
-> > > >> Overall, this will unblock the use-cases mentioned below and in general
-> > > >> will also allow to support and harden execution of another
-> > > >> architecture's binaries in tight sandboxes. For instance, using the
-> > > >> unshare binary it possible to start a chroot of another architecture and
-> > > >> configure the binfmt_misc interpreter without being root to run the
-> > > >> binaries in this chroot and without requiring the host to modify its
-> > > >> binary type handlers.
-> > > >>
-> > > >> Henning had already posted a few experiments in the cover letter at [1].
-> > > >> But here's an additional example where an unprivileged container
-> > > >> registers qemu-user-static binary handlers for various binary types in
-> > > >> its separate binfmt_misc mount and is then seamlessly able to start
-> > > >> containers with a different architecture without affecting the host:
-> > > >>
-> > > >> root    [lxc monitor] /var/snap/lxd/common/lxd/containers f1
-> > > >> 1000000  \_ /sbin/init
-> > > >> 1000000      \_ /lib/systemd/systemd-journald
-> > > >> 1000000      \_ /lib/systemd/systemd-udevd
-> > > >> 1000100      \_ /lib/systemd/systemd-networkd
-> > > >> 1000101      \_ /lib/systemd/systemd-resolved
-> > > >> 1000000      \_ /usr/sbin/cron -f
-> > > >> 1000103      \_ /usr/bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only
-> > > >> 1000000      \_ /usr/bin/python3 /usr/bin/networkd-dispatcher --run-startup-triggers
-> > > >> 1000104      \_ /usr/sbin/rsyslogd -n -iNONE
-> > > >> 1000000      \_ /lib/systemd/systemd-logind
-> > > >> 1000000      \_ /sbin/agetty -o -p -- \u --noclear --keep-baud console 115200,38400,9600 vt220
-> > > >> 1000107      \_ dnsmasq --conf-file=/dev/null -u lxc-dnsmasq --strict-order --bind-interfaces --pid-file=/run/lxc/dnsmasq.pid --liste
-> > > >> 1000000      \_ [lxc monitor] /var/lib/lxc f1-s390x
-> > > >> 1100000          \_ /usr/bin/qemu-s390x-static /sbin/init
-> > > >> 1100000              \_ /usr/bin/qemu-s390x-static /lib/systemd/systemd-journald
-> > > >> 1100000              \_ /usr/bin/qemu-s390x-static /usr/sbin/cron -f
-> > > >> 1100103              \_ /usr/bin/qemu-s390x-static /usr/bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-ac
-> > > >> 1100000              \_ /usr/bin/qemu-s390x-static /usr/bin/python3 /usr/bin/networkd-dispatcher --run-startup-triggers
-> > > >> 1100104              \_ /usr/bin/qemu-s390x-static /usr/sbin/rsyslogd -n -iNONE
-> > > >> 1100000              \_ /usr/bin/qemu-s390x-static /lib/systemd/systemd-logind
-> > > >> 1100000              \_ /usr/bin/qemu-s390x-static /sbin/agetty -o -p -- \u --noclear --keep-baud console 115200,38400,9600 vt220
-> > > >> 1100000              \_ /usr/bin/qemu-s390x-static /sbin/agetty -o -p -- \u --noclear --keep-baud pts/0 115200,38400,9600 vt220
-> > > >> 1100000              \_ /usr/bin/qemu-s390x-static /sbin/agetty -o -p -- \u --noclear --keep-baud pts/1 115200,38400,9600 vt220
-> > > >> 1100000              \_ /usr/bin/qemu-s390x-static /sbin/agetty -o -p -- \u --noclear --keep-baud pts/2 115200,38400,9600 vt220
-> > > >> 1100000              \_ /usr/bin/qemu-s390x-static /sbin/agetty -o -p -- \u --noclear --keep-baud pts/3 115200,38400,9600 vt220
-> > > >> 1100000              \_ /usr/bin/qemu-s390x-static /lib/systemd/systemd-udevd
-> > > >>
-> > > >> [1]: https://lore.kernel.org/all/20191216091220.465626-1-laurent@vivier.eu
-> > > >> [2]: https://discuss.linuxcontainers.org/t/binfmt-misc-permission-denied
-> > > >> [3]: https://discuss.linuxcontainers.org/t/lxd-binfmt-support-for-qemu-static-interpreters
-> > > >> [4]: https://discuss.linuxcontainers.org/t/3-1-0-binfmt-support-service-in-unprivileged-guest-requires-write-access-on-hosts-proc-sys-fs-binfmt-misc
-> > > >> [5]: https://discuss.linuxcontainers.org/t/qemu-user-static-not-working-4-11
-> > > >>
-> > > >> Link: https://lore.kernel.org/r/20191216091220.465626-2-laurent@vivier.eu (origin)
-> > > >> Link: https://lore.kernel.org/r/20211028103114.2849140-2-brauner@kernel.org (v1)
-> > > >> Cc: Sargun Dhillon <sargun@sargun.me>
-> > > >> Cc: Serge Hallyn <serge@hallyn.com>
-> > > > 
-> > > > (one typo below)
-> > > > 
-> > > > Acked-by: Serge Hallyn <serge@hallyn.com>
-> > > > 
-> > > 
-> > > What happened to this afterwards? Any remaining issues?
-> > 
-> > Not that we know. I plan to queue this up for 5.20.
-> 
-> Hello!
-> 
-> Thanks for the thread-ping -- I hadn't had a chance to read through this
-> before, but since it's touching binfmt, it popped up on my radar. :)
-> 
-> I like it overall, though I'd rather see it split up more (there's
-> some refactoring built into the patches that would be nice to split out
-> just to make review easier), but since others have already reviewed it,
-> that's probably overkill.
-> 
-> I'd really like to see some self-tests for this, though. Especially
+>
+> Private memory map/unmap and conversion
+> ---------------------------------------
+> Userspace's map/unmap operations are done by fallocate() ioctl on the
+> backing store fd.
+>   - map: default fallocate() with mode=0.
+>   - unmap: fallocate() with FALLOC_FL_PUNCH_HOLE.
+> The map/unmap will trigger above memfile_notifier_ops to let KVM map/unmap
+> secondary MMU page tables.
+>
+....
+>    QEMU: https://github.com/chao-p/qemu/tree/privmem-v6
+>
+> An example QEMU command line for TDX test:
+> -object tdx-guest,id=tdx \
+> -object memory-backend-memfd-private,id=ram1,size=2G \
+> -machine q35,kvm-type=tdx,pic=no,kernel_irqchip=split,memory-encryption=tdx,memory-backend=ram1
+>
 
-Yeah, I had started writing them but decoupled the upstreaming. Imho,
-you can start queueing this up. I'd like this to have very long exposure
-in -next. I'll follow up with selftests in the next weeks. (I'm out for
-a conference this week.)
+There should be more discussion around double allocation scenarios
+when using the private fd approach. A malicious guest or buggy
+userspace VMM can cause physical memory getting allocated for both
+shared (memory accessible from host) and private fds backing the guest
+memory.
+Userspace VMM will need to unback the shared guest memory while
+handling the conversion from shared to private in order to prevent
+double allocation even with malicious guests or bugs in userspace VMM.
 
-> around the cred logic changes and the namespace fallback logic. I'd like
-> to explicitly document and test what the expectations are around the
-> mounts, etc.
-> 
-> Finally, I'd prefer this went via the execve tree.
+Options to unback shared guest memory seem to be:
+1) madvise(.., MADV_DONTNEED/MADV_REMOVE) - This option won't stop
+kernel from backing the shared memory on subsequent write accesses
+2) fallocate(..., FALLOC_FL_PUNCH_HOLE...) - For file backed shared
+guest memory, this option still is similar to madvice since this would
+still allow shared memory to get backed on write accesses
+3) munmap - This would give away the contiguous virtual memory region
+reservation with holes in the guest backing memory, which might make
+guest memory management difficult.
+4) mprotect(... PROT_NONE) - This would keep the virtual memory
+address range backing the guest memory preserved
 
-I mentioned this yesterday to you but just so there's a paper trail:
-The series and this iteration preceeds the maintainer entry. That's the
-only reason this originally wasn't aimed at that tree when the series
-was sent. You've been in Cc from the start though. :)
-I'd like to step up and maintain the binfmt_misc fs going forward. There
-are other tweaks it could use.
+ram_block_discard_range_fd from reference implementation:
+https://github.com/chao-p/qemu/tree/privmem-v6 seems to be relying on
+fallocate/madvise.
 
-Christian
+Any thoughts/suggestions around better ways to unback the shared
+memory in order to avoid double allocation scenarios?
+
+Regards,
+Vishal
