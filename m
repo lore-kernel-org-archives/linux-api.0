@@ -2,51 +2,55 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A35F4C43334
-	for <linux-api@archiver.kernel.org>; Fri, 10 Jun 2022 23:36:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 76B7ACCA47B
+	for <linux-api@archiver.kernel.org>; Fri, 10 Jun 2022 23:36:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1350100AbiFJXgV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 10 Jun 2022 19:36:21 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57492 "EHLO
+        id S1350982AbiFJXg3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 10 Jun 2022 19:36:29 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60338 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1350236AbiFJXgJ (ORCPT
+        with ESMTP id S1350281AbiFJXgJ (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Fri, 10 Jun 2022 19:36:09 -0400
-Received: from mga17.intel.com (mga17.intel.com [192.55.52.151])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0F583289F25;
+Received: from mga18.intel.com (mga18.intel.com [134.134.136.126])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 192DF289F3B;
         Fri, 10 Jun 2022 16:35:42 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
   t=1654904142; x=1686440142;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references:mime-version:content-transfer-encoding;
-  bh=XfSsZjEZ1l0M6Je8ux0RlvZeHHKfZHKU8L8K8HX1yVc=;
-  b=KLIDghy+2mwQ4ZQ1m6ILXDXs+ttds2s6KsWK39jGuLDWkNl2IjGrBWNu
-   6or3H8zeWVHBcnrgo0J3OUcu8wObuDWE01Ms9E70jk6fTjkGgZ8nsJE5Z
-   eziUBFuY6oc4Gm1Zhu8BFSJDdAH9Anz7A4pb41PCtBIWF8ztJjdGuxmvN
-   BJbT7jIaAb+4JZquAsd+mSth/6HHZFBszgf/xbVcy+QYHoI8HxMBPf29k
-   jQtAFb/wn7WmuTiGi/8Yivi6fY+JFv9awj6fzZadP2Hglo8dfXd1B6XCt
-   UbF3q4Zw8ksqQ/nEsrA481oFn7Qcpp8hbqLwubT5bw8w1xcoOVhQa/dU5
-   A==;
-X-IronPort-AV: E=McAfee;i="6400,9594,10374"; a="258214176"
+  bh=E0S7lAVxIGr1gPnTIVSUeXKWXCH1YKeQN7klBTJ1vLE=;
+  b=SLkQeM+pzRu2w6WHLXLIPXUyfpd/IZBNY8zP+UUugK5G2QgOb6HXm463
+   /zO0Kb1raDEMVliWzx2FKTNhkXDJtLs+FxMtwpjA3RTENpS/lamKWZbSS
+   d3PySVvG/KICqkQv4hip0mJ8MxJvmHeNNqCq4jOAqRsVn/ZXPVL4QU99i
+   HTAZ8CQSQOZhu48IJwqiA9HtVLP3KGDUaAsUcNY51qLoWY/L6V73dTgBj
+   GxIc6oujwAf7URbM5lEhIOWiEaAEM1bc87vEfIMc2Iei79PvOC2bU5F0p
+   SNDn2/2xmSg/Z/JNPSVpKa2gkVr1QsXosjJ2TNL+FwFzahfmNn916XytE
+   g==;
+X-IronPort-AV: E=McAfee;i="6400,9594,10374"; a="260896457"
 X-IronPort-AV: E=Sophos;i="5.91,291,1647327600"; 
-   d="scan'208";a="258214176"
-Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Jun 2022 16:35:41 -0700
+   d="scan'208";a="260896457"
+Received: from fmsmga005.fm.intel.com ([10.253.24.32])
+  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Jun 2022 16:35:40 -0700
 X-IronPort-AV: E=Sophos;i="5.91,291,1647327600"; 
-   d="scan'208";a="760716868"
+   d="scan'208";a="909166943"
 Received: from pleung-mobl1.amr.corp.intel.com (HELO localhost) ([10.212.33.34])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Jun 2022 16:35:41 -0700
+  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Jun 2022 16:35:40 -0700
 From:   ira.weiny@intel.com
 To:     linux-api@vger.kernel.org
-Cc:     Ira Weiny <ira.weiny@intel.com>,
+Cc:     Ira Weiny <ira.weiny@intel.com>, ahaas@chromium.org,
+        clemensb@chromium.org, gdeepti@chromium.org,
+        jkummerow@chromium.org, manoskouk@chromium.org,
+        thibaudm@chromium.org, Florian Weimer <fweimer@redhat.com>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Sohil Mehta <sohil.mehta@intel.com>,
         Dave Hansen <dave.hansen@linux.intel.com>,
-        "Aneesh Kumar K . V" <aneesh.kumar@linux.ibm.com>,
-        Sohil Mehta <sohil.mehta@intel.com>, x86@kernel.org,
+        "Aneesh Kumar K . V" <aneesh.kumar@linux.ibm.com>, x86@kernel.org,
         linuxppc-dev@lists.ozlabs.org, linux-kernel@vger.kernel.org,
         linux-mm@kvack.org, linux-kselftest@vger.kernel.org
-Subject: [RFC PATCH 6/6] pkeys: Change mm_pkey_free() to void
-Date:   Fri, 10 Jun 2022 16:35:33 -0700
-Message-Id: <20220610233533.3649584-7-ira.weiny@intel.com>
+Subject: [RFC PATCH 5/6] pkeys: Up level pkey_free() checks
+Date:   Fri, 10 Jun 2022 16:35:32 -0700
+Message-Id: <20220610233533.3649584-6-ira.weiny@intel.com>
 X-Mailer: git-send-email 2.35.1
 In-Reply-To: <20220610233533.3649584-1-ira.weiny@intel.com>
 References: <20220610233533.3649584-1-ira.weiny@intel.com>
@@ -58,86 +62,92 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Ira Weiny <ira.weiny@intel.com>
 
-Now that the pkey arch support is no longer checked in mm_pkey_free()
-there is no reason to have it return int.
+x86 is missing a hardware check for pkey support in pkey_free().  While
+the net result is the same (-EINVAL returned), pkey_free() has well
+defined behavior which will be easier to maintain in one place.
 
-Change the return value to void.
+For powerpc the return code is -1 rather than -EINVAL.  This changes
+that behavior slightly but this is very unlikely to break any user
+space.
 
+Lift the checks for pkey_free() to the core mm code and ensure
+consistency with returning -EINVAL.
+
+Cc: ahaas@chromium.org
+Cc: clemensb@chromium.org
+Cc: gdeepti@chromium.org
+Cc: jkummerow@chromium.org
+Cc: manoskouk@chromium.org
+Cc: thibaudm@chromium.org
+Cc: Florian Weimer <fweimer@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-api@vger.kernel.org
+Cc: Sohil Mehta <sohil.mehta@intel.com>
 Cc: Dave Hansen <dave.hansen@linux.intel.com>
 Cc: Aneesh Kumar K.V <aneesh.kumar@linux.ibm.com>
-Suggested-by: Sohil Mehta <sohil.mehta@intel.com>
 Signed-off-by: Ira Weiny <ira.weiny@intel.com>
+
 ---
- arch/powerpc/include/asm/pkeys.h | 4 +---
- arch/x86/include/asm/pkeys.h     | 4 +---
- include/linux/pkeys.h            | 5 +----
- mm/mprotect.c                    | 6 ++++--
- 4 files changed, 7 insertions(+), 12 deletions(-)
+Thanks to Sohil for suggesting I mention the powerpc return value in the
+commit message.
+
+Also Sohil suggested changing mm_pkey_free() from int to void.  This is
+added as a separate patch with his suggested by.
+---
+ arch/powerpc/include/asm/pkeys.h | 6 ------
+ arch/x86/include/asm/pkeys.h     | 3 ---
+ mm/mprotect.c                    | 8 ++++++--
+ 3 files changed, 6 insertions(+), 11 deletions(-)
 
 diff --git a/arch/powerpc/include/asm/pkeys.h b/arch/powerpc/include/asm/pkeys.h
-index e96aa91f817b..4d01a48ab941 100644
+index 2c8351248793..e96aa91f817b 100644
 --- a/arch/powerpc/include/asm/pkeys.h
 +++ b/arch/powerpc/include/asm/pkeys.h
-@@ -105,11 +105,9 @@ static inline int mm_pkey_alloc(struct mm_struct *mm)
- 	return ret;
- }
+@@ -107,12 +107,6 @@ static inline int mm_pkey_alloc(struct mm_struct *mm)
  
--static inline int mm_pkey_free(struct mm_struct *mm, int pkey)
-+static inline void mm_pkey_free(struct mm_struct *mm, int pkey)
+ static inline int mm_pkey_free(struct mm_struct *mm, int pkey)
  {
- 	__mm_pkey_free(mm, pkey);
+-	if (!mmu_has_feature(MMU_FTR_PKEY))
+-		return -1;
 -
--	return 0;
- }
+-	if (!mm_pkey_is_allocated(mm, pkey))
+-		return -EINVAL;
+-
+ 	__mm_pkey_free(mm, pkey);
  
- /*
+ 	return 0;
 diff --git a/arch/x86/include/asm/pkeys.h b/arch/x86/include/asm/pkeys.h
-index da02737cc4d1..1f408f46fa9a 100644
+index 2e6c04d8a45b..da02737cc4d1 100644
 --- a/arch/x86/include/asm/pkeys.h
 +++ b/arch/x86/include/asm/pkeys.h
-@@ -105,11 +105,9 @@ int mm_pkey_alloc(struct mm_struct *mm)
- }
- 
+@@ -107,9 +107,6 @@ int mm_pkey_alloc(struct mm_struct *mm)
  static inline
--int mm_pkey_free(struct mm_struct *mm, int pkey)
-+void mm_pkey_free(struct mm_struct *mm, int pkey)
+ int mm_pkey_free(struct mm_struct *mm, int pkey)
  {
- 	mm_set_pkey_free(mm, pkey);
+-	if (!mm_pkey_is_allocated(mm, pkey))
+-		return -EINVAL;
 -
--	return 0;
- }
+ 	mm_set_pkey_free(mm, pkey);
  
- static inline int vma_pkey(struct vm_area_struct *vma)
-diff --git a/include/linux/pkeys.h b/include/linux/pkeys.h
-index 86be8bf27b41..bf98c50a3437 100644
---- a/include/linux/pkeys.h
-+++ b/include/linux/pkeys.h
-@@ -30,10 +30,7 @@ static inline int mm_pkey_alloc(struct mm_struct *mm)
- 	return -1;
- }
- 
--static inline int mm_pkey_free(struct mm_struct *mm, int pkey)
--{
--	return -EINVAL;
--}
-+static inline void mm_pkey_free(struct mm_struct *mm, int pkey) { }
- 
- static inline int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
- 			unsigned long init_val)
+ 	return 0;
 diff --git a/mm/mprotect.c b/mm/mprotect.c
-index 41458e729c27..e872bdd2e228 100644
+index 56d35de33725..41458e729c27 100644
 --- a/mm/mprotect.c
 +++ b/mm/mprotect.c
-@@ -809,8 +809,10 @@ SYSCALL_DEFINE1(pkey_free, int, pkey)
- 		return ret;
+@@ -803,10 +803,14 @@ SYSCALL_DEFINE2(pkey_alloc, unsigned long, flags, unsigned long, init_val)
+ 
+ SYSCALL_DEFINE1(pkey_free, int, pkey)
+ {
+-	int ret;
++	int ret = -EINVAL;
++
++	if (!arch_pkeys_enabled())
++		return ret;
  
  	mmap_write_lock(current->mm);
--	if (mm_pkey_is_allocated(current->mm, pkey))
--		ret = mm_pkey_free(current->mm, pkey);
-+	if (mm_pkey_is_allocated(current->mm, pkey)) {
-+		mm_pkey_free(current->mm, pkey);
-+		ret = 0;
-+	}
+-	ret = mm_pkey_free(current->mm, pkey);
++	if (mm_pkey_is_allocated(current->mm, pkey))
++		ret = mm_pkey_free(current->mm, pkey);
  	mmap_write_unlock(current->mm);
  
  	/*
