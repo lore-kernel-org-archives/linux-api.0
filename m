@@ -2,129 +2,72 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4AEDDCCA47C
-	for <linux-api@archiver.kernel.org>; Thu, 16 Jun 2022 05:49:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AE857C433EF
+	for <linux-api@archiver.kernel.org>; Thu, 16 Jun 2022 06:07:23 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1347826AbiFPFtE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 16 Jun 2022 01:49:04 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41232 "EHLO
+        id S1358749AbiFPGHV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 16 Jun 2022 02:07:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54120 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229739AbiFPFtD (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 16 Jun 2022 01:49:03 -0400
-Received: from mail-ej1-f42.google.com (mail-ej1-f42.google.com [209.85.218.42])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B845D5B8A1;
-        Wed, 15 Jun 2022 22:49:02 -0700 (PDT)
-Received: by mail-ej1-f42.google.com with SMTP id o7so763669eja.1;
-        Wed, 15 Jun 2022 22:49:02 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
-         :content-language:to:cc:references:from:in-reply-to
-         :content-transfer-encoding;
-        bh=2aLyJ9nuinCimwT80iv0uqjCDdiMiOsD8JMaFZPN2jc=;
-        b=CIPD1irzWymApegaoxjvjur2zymqxzi+2U9LT8OmeXGJ5W+NlMI0Kv/A9zx+AC3plA
-         /vn09chL3OAjfdeefRrTJvrgQzVRpEzNTrT8ownlfWMyEKbKPBInODVEWbtKZ+kDmnQK
-         XC0xDsH27sgdYT9rLZqncw7eGMmfAbrV4hgyjqiC4Y2tRQNT9AQfnWDfW6+g+M7aiFOc
-         YGvARglA+ntIlD0bFnrVgs3njRoVB38Q1Gg2hCZK+69PctfIkk0dmyCc53KN10GqGZMy
-         lKb6KopYrZuibrcrP7/V6vhqX788BFoLZgiaiiKOpfV6EgToaK4ztsp5qtkef+h9/nd6
-         rl7g==
-X-Gm-Message-State: AJIora92Oof4jrA3z1Ev+S9MkroX/j55QOsjTCTuD/e+kWVEKWIsSUit
-        Ck5M+ltALW/0CdJ+xLdHZMo=
-X-Google-Smtp-Source: AGRyM1vjlFZPdL9JPMwyXIXYk6FbCyEkJJLFrBU67z3e6uvGzso9Ey7SC1Ab+KqVljeIIbn1GiDVLA==
-X-Received: by 2002:a17:906:74d1:b0:712:2293:8f41 with SMTP id z17-20020a17090674d100b0071222938f41mr2896433ejl.495.1655358541178;
-        Wed, 15 Jun 2022 22:49:01 -0700 (PDT)
-Received: from ?IPV6:2a0b:e7c0:0:107::70f? ([2a0b:e7c0:0:107::70f])
-        by smtp.gmail.com with ESMTPSA id c26-20020a170906171a00b006fed9a0eb17sm305138eje.187.2022.06.15.22.48.59
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 15 Jun 2022 22:49:00 -0700 (PDT)
-Message-ID: <c0996d75-070e-21e6-eb51-a10a358dbb46@kernel.org>
-Date:   Thu, 16 Jun 2022 07:48:58 +0200
+        with ESMTP id S1358907AbiFPGHT (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 16 Jun 2022 02:07:19 -0400
+Received: from bombadil.infradead.org (bombadil.infradead.org [IPv6:2607:7c80:54:3::133])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C06E8CCE;
+        Wed, 15 Jun 2022 23:07:18 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+        :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=lQ1idLnL2UCMJjEJnkwsAGfziMzzcuwKz3HZqhqoSgY=; b=YpAt3w8FxJkqvgT9iUxi24xofx
+        8+MvlP+t2PLJClmbzMh18BN6ZwDbMmncgLTl17zD+v64zcQMphUoIRaaPqzZ9Kcpf+7tyKKylosSd
+        OBn0bXQZGwNn1yI7B/kUkJqGiMJWwXuRRwgQUA3cJpfiVH00RtuJeKBV1dYTiGYoxczXS8RI9iqPE
+        IKx0AVVX9KzBGe6L7/GrOI+YrFxVeLneipAWwETP8dgETplOiFEcQKIPl+aG6wgIFJdwWuEWPkEWf
+        I0c4yVCYAk3jbyZnzK9cGmY24O5LW7GYL7W6PZ6EU+ypD46A/EQ820J0qw64K/4/XVRxXZkCVCaTN
+        vOIrX+fA==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1o1iez-000gG0-HX; Thu, 16 Jun 2022 06:07:17 +0000
+Date:   Wed, 15 Jun 2022 23:07:17 -0700
+From:   Christoph Hellwig <hch@infradead.org>
+To:     Eric Biggers <ebiggers@kernel.org>
+Cc:     Christoph Hellwig <hch@infradead.org>,
+        Dave Chinner <david@fromorbit.com>,
+        "Darrick J. Wong" <djwong@kernel.org>,
+        linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
+        linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-fscrypt@vger.kernel.org,
+        linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Keith Busch <kbusch@kernel.org>
+Subject: Re: [RFC PATCH v2 1/7] statx: add I/O alignment information
+Message-ID: <YqrIlVtI85zF9qyO@infradead.org>
+References: <20220518235011.153058-1-ebiggers@kernel.org>
+ <20220518235011.153058-2-ebiggers@kernel.org>
+ <YobNXbYnhBiqniTH@magnolia>
+ <20220520032739.GB1098723@dread.disaster.area>
+ <YqgbuDbdH2OLcbC7@sol.localdomain>
+ <YqnapOLvHDmX/3py@infradead.org>
+ <YqpzqZQgu0Zz+vW1@sol.localdomain>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.10.0
-Subject: Re: [PATCH v7 5/6] serial: Support for RS-485 multipoint addresses
-Content-Language: en-US
-To:     =?UTF-8?Q?Ilpo_J=c3=a4rvinen?= <ilpo.jarvinen@linux.intel.com>,
-        Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Cc:     linux-serial <linux-serial@vger.kernel.org>,
-        Greg KH <gregkh@linuxfoundation.org>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Arnd Bergmann <arnd@arndb.de>, linux-doc@vger.kernel.org,
-        LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org,
-        Lukas Wunner <lukas@wunner.de>,
-        =?UTF-8?Q?Uwe_Kleine-K=c3=b6nig?= <u.kleine-koenig@pengutronix.de>,
-        Lino Sanfilippo <LinoSanfilippo@gmx.de>,
-        linux-api@vger.kernel.org
-References: <20220615124829.34516-1-ilpo.jarvinen@linux.intel.com>
- <20220615124829.34516-6-ilpo.jarvinen@linux.intel.com>
- <Yqno+b/+W2RP8rnh@smile.fi.intel.com>
- <ae5c2e50-1a19-7a8f-7dbf-d7ef84128be6@linux.intel.com>
-From:   Jiri Slaby <jirislaby@kernel.org>
-In-Reply-To: <ae5c2e50-1a19-7a8f-7dbf-d7ef84128be6@linux.intel.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <YqpzqZQgu0Zz+vW1@sol.localdomain>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 16. 06. 22, 7:04, Ilpo Järvinen wrote:
-> On Wed, 15 Jun 2022, Andy Shevchenko wrote:
-> 
->> On Wed, Jun 15, 2022 at 03:48:28PM +0300, Ilpo Järvinen wrote:
->>> Add support for RS-485 multipoint addressing using 9th bit [*]. The
->>> addressing mode is configured through .rs485_config().
->>>
->>> ADDRB in termios indicates 9th bit addressing mode is enabled. In this
->>> mode, 9th bit is used to indicate an address (byte) within the
->>> communication line. ADDRB can only be enabled/disabled through
->>> .rs485_config() that is also responsible for setting the destination and
->>> receiver (filter) addresses.
->>>
->>> [*] Technically, RS485 is just an electronic spec and does not itself
->>> specify the 9th bit addressing mode but 9th bit seems at least
->>> "semi-standard" way to do addressing with RS485.
->>>
->>> Cc: Arnd Bergmann <arnd@arndb.de>
->>> Cc: Jonathan Corbet <corbet@lwn.net>
->>> Cc: linux-api@vger.kernel.org
->>> Cc: linux-doc@vger.kernel.org
->>> Cc: linux-kernel@vger.kernel.org
->>> Cc: linux-arch@vger.kernel.org
->>
->> Hmm... In order to reduce commit messages you can move these Cc:s after the
->> cutter line ('---').
-> 
-> Ok, although the toolchain I use didn't support preserving --- content
-> so I had to create hack to preserve them, hopefully nothing backfires due
-> to the hack. :-)
-> 
->>> -	__u32	padding[5];		/* Memory is cheap, new structs
->>> -					   are a royal PITA .. */
->>> +	__u8	addr_recv;
->>> +	__u8	addr_dest;
->>> +	__u8	padding[2 + 4 * sizeof(__u32)];		/* Memory is cheap, new structs
->>> +							 * are a royal PITA .. */
->>
->> I'm not sure it's an equivalent. I would leave u32 members  untouched, so
->> something like
->>
->> 	__u8	addr_recv;
->> 	__u8	addr_dest;
->> 	__u8	padding0[2];		/* Memory is cheap, new structs
->> 	__u32	padding1[4];		 * are a royal PITA .. */
->>
->> And repeating about `pahole` tool which may be useful here to check for ABI
->> potential changes.
-> 
-> I cannot take __u32 padding[] away like that, this is an uapi header.
+On Wed, Jun 15, 2022 at 05:04:57PM -0700, Eric Biggers wrote:
+> One more thing.  I'm trying to add support for STATX_DIOALIGN on block devices.
+> Unfortunately I don't think it is going to work, at all, since the inode is for
+> the device node and not the block device itself.  This is true even after the
+> file is opened (I previously thought that at least that case would work).
 
-Yeah, but it's padding after all. I would personally break it for 
-example as Andy suggests (if pahole shows no differences in size on both 
-32/64 bit) and wait if something breaks. To be honest, I'd not expect 
-anyone to touch it. And if someone does, we would fix it somehow and 
-they should too...
+For an open file the block device inode is pointed to by
+file->f_mapping->host.
 
-thanks,
--- 
-js
-suse labs
+> Were you expecting that this would work on block devices?  It seems they will
+> need a different API -- a new BLK* ioctl, or files in /sys/block/$dev/queue.
+
+blkdev_get_no_open on inode->i_rdev gets you the block device, which
+then has bdev->bd_inode point to the underlying block device, although
+for a block device those limit probably would be retrieved not from
+the inode but the gendisk / request_queue anyway.
