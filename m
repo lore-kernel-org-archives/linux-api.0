@@ -2,161 +2,118 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8EDB0C43334
-	for <linux-api@archiver.kernel.org>; Thu, 16 Jun 2022 07:54:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A7920CCA47E
+	for <linux-api@archiver.kernel.org>; Thu, 16 Jun 2022 13:24:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229817AbiFPHyF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 16 Jun 2022 03:54:05 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43892 "EHLO
+        id S230063AbiFPNYR (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 16 Jun 2022 09:24:17 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58576 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1359398AbiFPHyE (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 16 Jun 2022 03:54:04 -0400
-Received: from mga07.intel.com (mga07.intel.com [134.134.136.100])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 069B558E44;
-        Thu, 16 Jun 2022 00:54:03 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1655366043; x=1686902043;
-  h=date:from:to:cc:subject:in-reply-to:message-id:
-   references:mime-version:content-id;
-  bh=eVrD4xANVA1qmWE7aHLjyWwagcA1Yxkv/BMYL/OgcAk=;
-  b=Q9iUx2tDrqqwKmipEwswTd7RSnNb4zFKqL/JVZUSoQLsLfz154okByel
-   vZuY26G8lyUO9OzlHv3kf499jwNfD4GgCbRoq9fIl1QEd7+TeunMdBIIt
-   P8ft/XcyrT45sneZGdoeirVUKrdpLR05LroyOAZqdFSogZ971iaYm3chE
-   pQI+6dIWMQDuYxhiQaZri58tWRfGlSo1GjHaBsC+crfJLqsFwPN3sCwpP
-   xNTWc04euJ17ZdcXd8atts2/rdr6LEieen0Cb0449KoCe6I7jaqqcap+e
-   D1ObzZNNRddq4jAQHky02adEiIENqDTll6sJ/HXSaOHQydlzgPdTC70dC
-   Q==;
-X-IronPort-AV: E=McAfee;i="6400,9594,10379"; a="343150292"
-X-IronPort-AV: E=Sophos;i="5.91,304,1647327600"; 
-   d="scan'208";a="343150292"
-Received: from fmsmga008.fm.intel.com ([10.253.24.58])
-  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Jun 2022 00:54:02 -0700
-X-IronPort-AV: E=Sophos;i="5.91,304,1647327600"; 
-   d="scan'208";a="641423577"
-Received: from mngueron-mobl1.amr.corp.intel.com ([10.252.60.248])
-  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Jun 2022 00:53:58 -0700
-Date:   Thu, 16 Jun 2022 10:53:56 +0300 (EEST)
-From:   =?ISO-8859-15?Q?Ilpo_J=E4rvinen?= <ilpo.jarvinen@linux.intel.com>
-To:     Jiri Slaby <jirislaby@kernel.org>,
-        Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-cc:     linux-serial <linux-serial@vger.kernel.org>,
-        Greg KH <gregkh@linuxfoundation.org>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Arnd Bergmann <arnd@arndb.de>, linux-doc@vger.kernel.org,
-        LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org,
-        Lukas Wunner <lukas@wunner.de>,
-        =?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?= 
-        <u.kleine-koenig@pengutronix.de>,
-        Lino Sanfilippo <LinoSanfilippo@gmx.de>,
-        linux-api@vger.kernel.org
-Subject: Re: [PATCH v7 5/6] serial: Support for RS-485 multipoint addresses
-In-Reply-To: <c0996d75-070e-21e6-eb51-a10a358dbb46@kernel.org>
-Message-ID: <accefd7-6fbf-b1f1-f467-5eaab0dac051@linux.intel.com>
-References: <20220615124829.34516-1-ilpo.jarvinen@linux.intel.com> <20220615124829.34516-6-ilpo.jarvinen@linux.intel.com> <Yqno+b/+W2RP8rnh@smile.fi.intel.com> <ae5c2e50-1a19-7a8f-7dbf-d7ef84128be6@linux.intel.com>
- <c0996d75-070e-21e6-eb51-a10a358dbb46@kernel.org>
+        with ESMTP id S229740AbiFPNYR (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 16 Jun 2022 09:24:17 -0400
+Received: from hi1smtp01.de.adit-jv.com (smtp1.de.adit-jv.com [93.241.18.167])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A5F8033EB6;
+        Thu, 16 Jun 2022 06:24:15 -0700 (PDT)
+Received: from hi2exch02.adit-jv.com (hi2exch02.adit-jv.com [10.72.92.28])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by hi1smtp01.de.adit-jv.com (Postfix) with ESMTPS id 56957520290;
+        Thu, 16 Jun 2022 15:24:13 +0200 (CEST)
+Received: from lxhi-065 (10.72.94.14) by hi2exch02.adit-jv.com (10.72.92.28)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.1.2308.27; Thu, 16 Jun
+ 2022 15:24:12 +0200
+Date:   Thu, 16 Jun 2022 15:24:08 +0200
+From:   Eugeniu Rosca <erosca@de.adit-jv.com>
+To:     Masahiro Yamada <masahiroy@kernel.org>
+CC:     <viro@zeniv.linux.org.uk>, <linux-security-module@vger.kernel.org>,
+        Roberto Sassu <roberto.sassu@huawei.com>,
+        <linux-integrity@vger.kernel.org>, <initramfs@vger.kernel.org>,
+        <linux-api@vger.kernel.org>, <linux-fsdevel@vger.kernel.org>,
+        <linux-kernel@vger.kernel.org>, <bug-cpio@gnu.org>,
+        <zohar@linux.vnet.ibm.com>, <silviu.vlasceanu@huawei.com>,
+        <dmitry.kasatkin@huawei.com>, <takondra@cisco.com>,
+        <kamensky@cisco.com>, <hpa@zytor.com>, <arnd@arndb.de>,
+        <rob@landley.net>, <james.w.mcmechan@gmail.com>,
+        <niveditas98@gmail.com>, Eugeniu Rosca <erosca@de.adit-jv.com>,
+        Eugeniu Rosca <roscaeugeniu@gmail.com>
+Subject: Re: [PATCH v4 0/3] initramfs: add support for xattrs in the initial
+ ram disk
+Message-ID: <20220616132408.GA4018@lxhi-065>
+References: <20190523121803.21638-1-roberto.sassu@huawei.com>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; BOUNDARY="8323329-963945969-1655365386=:1693"
-Content-ID: <7d41d27a-51c6-841d-b65b-8d75c7e6a73@linux.intel.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Disposition: inline
+In-Reply-To: <20190523121803.21638-1-roberto.sassu@huawei.com>
+User-Agent: Mutt/1.5.24 (2015-08-30)
+X-Originating-IP: [10.72.94.14]
+X-ClientProxiedBy: hi2exch02.adit-jv.com (10.72.92.28) To
+ hi2exch02.adit-jv.com (10.72.92.28)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Dear Yamada-san,
 
---8323329-963945969-1655365386=:1693
-Content-Type: text/plain; CHARSET=ISO-8859-15
-Content-Transfer-Encoding: 8BIT
-Content-ID: <dc1423b6-d575-966b-f087-4525e26fcc5f@linux.intel.com>
-
-On Thu, 16 Jun 2022, Jiri Slaby wrote:
-
-> On 16. 06. 22, 7:04, Ilpo Järvinen wrote:
-> > On Wed, 15 Jun 2022, Andy Shevchenko wrote:
-> > 
-> > > On Wed, Jun 15, 2022 at 03:48:28PM +0300, Ilpo Järvinen wrote:
-> > > > Add support for RS-485 multipoint addressing using 9th bit [*]. The
-> > > > addressing mode is configured through .rs485_config().
-> > > > 
-> > > > ADDRB in termios indicates 9th bit addressing mode is enabled. In this
-> > > > mode, 9th bit is used to indicate an address (byte) within the
-> > > > communication line. ADDRB can only be enabled/disabled through
-> > > > .rs485_config() that is also responsible for setting the destination and
-> > > > receiver (filter) addresses.
-> > > > 
-> > > > [*] Technically, RS485 is just an electronic spec and does not itself
-> > > > specify the 9th bit addressing mode but 9th bit seems at least
-> > > > "semi-standard" way to do addressing with RS485.
-> > > > 
-> > > > Cc: Arnd Bergmann <arnd@arndb.de>
-> > > > Cc: Jonathan Corbet <corbet@lwn.net>
-> > > > Cc: linux-api@vger.kernel.org
-> > > > Cc: linux-doc@vger.kernel.org
-> > > > Cc: linux-kernel@vger.kernel.org
-> > > > Cc: linux-arch@vger.kernel.org
-> > > 
-> > > Hmm... In order to reduce commit messages you can move these Cc:s after
-> > > the
-> > > cutter line ('---').
-> > 
-> > Ok, although the toolchain I use didn't support preserving --- content
-> > so I had to create hack to preserve them, hopefully nothing backfires due
-> > to the hack. :-)
-> > 
-> > > > -	__u32	padding[5];		/* Memory is cheap, new structs
-> > > > -					   are a royal PITA .. */
-> > > > +	__u8	addr_recv;
-> > > > +	__u8	addr_dest;
-> > > > +	__u8	padding[2 + 4 * sizeof(__u32)];		/* Memory is cheap,
-> > > > new structs
-> > > > +							 * are a royal PITA ..
-> > > > */
-> > > 
-> > > I'm not sure it's an equivalent. I would leave u32 members  untouched, so
-> > > something like
-> > > 
-> > > 	__u8	addr_recv;
-> > > 	__u8	addr_dest;
-> > > 	__u8	padding0[2];		/* Memory is cheap, new structs
-> > > 	__u32	padding1[4];		 * are a royal PITA .. */
-> > > 
-> > > And repeating about `pahole` tool which may be useful here to check for
-> > > ABI
-> > > potential changes.
-> > 
-> > I cannot take __u32 padding[] away like that, this is an uapi header.
+On Do, Mai 23, 2019 at 02:18:00 +0200, Roberto Sassu wrote:
+> This patch set aims at solving the following use case: appraise files from
+> the initial ram disk. To do that, IMA checks the signature/hash from the
+> security.ima xattr. Unfortunately, this use case cannot be implemented
+> currently, as the CPIO format does not support xattrs.
 > 
-> Yeah, but it's padding after all. I would personally break it for example as
-> Andy suggests (if pahole shows no differences in size on both 32/64 bit) and
-> wait if something breaks. To be honest, I'd not expect anyone to touch it. And
-> if someone does, we would fix it somehow and they should too...
+> This proposal consists in including file metadata as additional files named
+> METADATA!!!, for each file added to the ram disk. The CPIO parser in the
+> kernel recognizes these special files from the file name, and calls the
+> appropriate parser to add metadata to the previously extracted file. It has
+> been proposed to use bit 17:16 of the file mode as a way to recognize files
+> with metadata, but both the kernel and the cpio tool declare the file mode
+> as unsigned short.
+> 
+> The difference from v2, v3 (https://lkml.org/lkml/2019/5/9/230,
+> https://lkml.org/lkml/2019/5/17/466) is that file metadata are stored in
+> separate files instead of a single file. Given that files with metadata
+> must immediately follow the files metadata will be added to, image
+> generators have to be modified in this version.
+> 
+> The difference from v1 (https://lkml.org/lkml/2018/11/22/1182) is that
+> all files have the same name. The file metadata are added to is always the
+> previous one, and the image generator in user space will make sure that
+> files are in the correct sequence.
+> 
+> The difference with another proposal
+> (https://lore.kernel.org/patchwork/cover/888071/) is that xattrs can be
+> included in an image without changing the image format. Files with metadata
+> will appear as regular files. It will be task of the parser in the kernel
+> to process them.
+> 
+> This patch set extends the format of data defined in patch 9/15 of the last
+> proposal. It adds header version and type, so that new formats can be
+> defined and arbitrary metadata types can be processed.
+> 
+> The changes introduced by this patch set don't cause any compatibility
+> issue: kernels without the metadata parser simply extract the special files
+> and don't process metadata; kernels with the metadata parser don't process
+> metadata if the special files are not included in the image.
+> 
+> >From the kernel space perspective, backporting this functionality to older
+> kernels should be very easy. It is sufficient to add two calls to the new
+> function do_process_metadata() in do_copy(), and to check the file name in
+> do_name(). From the user space perspective, unlike the previous version of
+> the patch set, it is required to modify the image generators in order to
+> include metadata as separate files.
 
-I realized there are plenty of anonymous unions already in include/uapi/ 
-so I think I can keep padding[5] too:
+Since this patch series most likely falls under your jurisdiction and
+also given your recent commits [*] in the same area, I am curious if
+there are any early signs which would prevent your final acceptance
+and would potentially result in a no-Go?
 
-        union {
-                /* v1 */
-                __u32   padding[5];             /* Memory is cheap, new structs are a pain */
+Can we have an early confirmation that, upon rebasing and handling of
+all the review comments, you would be willing to accept the patches?
 
-                /* v2 (adds addressing mode fields) */
-                struct {
-                        __u8    addr_recv;
-                        __u8    addr_dest;
-                        __u8    padding0[2];
-                        __u32   padding1[4];
-                };
-        };
+[*] Most recent commits touching usr/gen_initramfs.sh
+https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=7168965ec7b10b8a2c7dea1f82f1ebadf44d64ba
+https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=65e00e04e5aea34b256814cfa21b32e3b94a2402
+https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=469e87e89fd61de804bd29f6dd0380a399b567a7
 
-I'll just skip manual pahole step and add a few BUILD_BUG_ON()s and use 
-our build bot to do a quick check over all archs it builds for, that gives 
-much better confidence on it being ok:
-
-	BUILD_BUG_ON(((&rs485.delay_rts_after_send) + 1) != &rs485.padding[0]);
-	BUILD_BUG_ON(&rs485.padding[1] != &rs485.padding1[0]);
-	BUILD_BUG_ON(sizeof(rs485) != ((u8 *)(&rs485.padding[4]) - ((u8 *)&rs485.flags) + sizeof(__u32)));
-
-
--- 
- i.
---8323329-963945969-1655365386=:1693--
+Thanks,
+Eugeniu.
