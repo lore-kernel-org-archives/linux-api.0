@@ -2,44 +2,44 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CC3F9C43334
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ED53CCCA47A
 	for <linux-api@archiver.kernel.org>; Thu, 16 Jun 2022 20:18:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1378473AbiFPUS0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 16 Jun 2022 16:18:26 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59856 "EHLO
+        id S1378460AbiFPUSZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 16 Jun 2022 16:18:25 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59836 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S245332AbiFPUSU (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 16 Jun 2022 16:18:20 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 776BE3585B;
+        with ESMTP id S1378359AbiFPUST (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 16 Jun 2022 16:18:19 -0400
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 34CD334BAC;
         Thu, 16 Jun 2022 13:18:18 -0700 (PDT)
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id D963D61DBF;
+        by dfw.source.kernel.org (Postfix) with ESMTPS id 6D5AC61DBA;
         Thu, 16 Jun 2022 20:18:17 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 69BF7C341C6;
-        Thu, 16 Jun 2022 20:18:17 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 970CAC341C7;
+        Thu, 16 Jun 2022 20:18:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1655410697;
-        bh=YB3H0eP+bq4tdjh6wOG3YtQsw/WbRpJHmQN03tzgLw8=;
+        s=k20201202; t=1655410696;
+        bh=wpwosW4eHH6Fw12lkcoZt/x92SHG+lIGe2xLCvF09SI=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=G738p0TMyDWt0e6trNPG+dB0KLlBCyRwBvLqIZ8Nuyj+G49kC8lRumdjhubfT/kOr
-         jeYn01pHPF87lJkZ2uk8dQ/Q3opB3khw6umyDkfkxQqBXqtVGm3sqPY4Q6P/81EO0m
-         3Whtsu5ECR4LCexsZ/MQ9Jy2ii1jRqMahe+08NKepynxPyL0jDyQlvrSzQ+RJs49il
-         v8QKnHRH1faFtoGDpF/X/S0P2OFkIyir8Y38fdukImFvo7DGESaWqvlY6UBq26mqdx
-         5o6IEQAcK0NkhL3fXoFG3MrrbZhHm4p2dGRh2Yo+PN6f8MfeNSIKRVmNCB2m5EmMJi
-         ZLYfarptileBA==
+        b=fyhPvWCMjg7XHUuUrxvjwwn1koaM3dckK7kdu1HDuQ83/GRZqVB1pqSig3j5pHm1m
+         p1SEOMtlf0guG7E2cTO7jRMBqq6IpBOZERCH/DEvvqbksyYXaQ+xPGI46IxdZZwZqu
+         CNHEcBXTaW72MB6mkFHZ7Ji60TOzsvajBTHnn43NR8yLDkYFVTlLnf9L5QysgZruYg
+         tP6E1s24gwws7wZ2KKjX/RasU2C+6rMAmgXKySfQwVgel4ixHguQWC/CorB9E9M+6e
+         IQZ6HeHWEBzfwYlAuSHtPwENvrTai7yfRuzk0DzfX3vPxpiAXlGDoQWelEtoG/Fuzk
+         vpyLEYinDsP6A==
 From:   Eric Biggers <ebiggers@kernel.org>
 To:     linux-fsdevel@vger.kernel.org
 Cc:     linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
         linux-xfs@vger.kernel.org, linux-api@vger.kernel.org,
         linux-fscrypt@vger.kernel.org, linux-block@vger.kernel.org,
         linux-kernel@vger.kernel.org, Keith Busch <kbusch@kernel.org>
-Subject: [PATCH v3 6/8] f2fs: don't allow DIO reads but not DIO writes
-Date:   Thu, 16 Jun 2022 13:15:04 -0700
-Message-Id: <20220616201506.124209-7-ebiggers@kernel.org>
+Subject: [PATCH v3 4/8] ext4: support STATX_DIOALIGN
+Date:   Thu, 16 Jun 2022 13:15:02 -0700
+Message-Id: <20220616201506.124209-5-ebiggers@kernel.org>
 X-Mailer: git-send-email 2.36.1
 In-Reply-To: <20220616201506.124209-1-ebiggers@kernel.org>
 References: <20220616201506.124209-1-ebiggers@kernel.org>
@@ -51,40 +51,103 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-Currently, if an f2fs filesystem is mounted with the mode=lfs and
-io_bits mount options, DIO reads are allowed but DIO writes are not.
-Allowing DIO reads but not DIO writes is an unusual restriction, which
-is likely to be surprising to applications, namely any application that
-both reads and writes from a file (using O_DIRECT).  This behavior is
-also incompatible with the proposed STATX_DIOALIGN extension to statx.
-Given this, let's drop the support for DIO reads in this configuration.
+Add support for STATX_DIOALIGN to ext4, so that direct I/O alignment
+restrictions are exposed to userspace in a generic way.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- fs/f2fs/file.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ fs/ext4/ext4.h  |  1 +
+ fs/ext4/file.c  | 15 ++++-----------
+ fs/ext4/inode.c | 29 +++++++++++++++++++++++++++++
+ 3 files changed, 34 insertions(+), 11 deletions(-)
 
-diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index 5e5c97fccfb4e..ad0212848a1ab 100644
---- a/fs/f2fs/file.c
-+++ b/fs/f2fs/file.c
-@@ -823,7 +823,6 @@ static inline bool f2fs_force_buffered_io(struct inode *inode,
- 				struct kiocb *iocb, struct iov_iter *iter)
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index 75b8d81b24692..68e964394e917 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -2968,6 +2968,7 @@ extern struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
+ extern int  ext4_write_inode(struct inode *, struct writeback_control *);
+ extern int  ext4_setattr(struct user_namespace *, struct dentry *,
+ 			 struct iattr *);
++extern u32  ext4_dio_alignment(struct inode *inode);
+ extern int  ext4_getattr(struct user_namespace *, const struct path *,
+ 			 struct kstat *, u32, unsigned int);
+ extern void ext4_evict_inode(struct inode *);
+diff --git a/fs/ext4/file.c b/fs/ext4/file.c
+index 26d7426208970..ecede6b01b7f0 100644
+--- a/fs/ext4/file.c
++++ b/fs/ext4/file.c
+@@ -39,19 +39,12 @@
+ static bool ext4_dio_supported(struct kiocb *iocb, struct iov_iter *iter)
  {
- 	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
--	int rw = iov_iter_rw(iter);
+ 	struct inode *inode = file_inode(iocb->ki_filp);
++	u32 dio_align = ext4_dio_alignment(inode);
  
- 	if (!fscrypt_dio_supported(inode))
- 		return true;
-@@ -841,7 +840,7 @@ static inline bool f2fs_force_buffered_io(struct inode *inode,
- 	 */
- 	if (f2fs_sb_has_blkzoned(sbi))
- 		return true;
--	if (f2fs_lfs_mode(sbi) && (rw == WRITE)) {
-+	if (f2fs_lfs_mode(sbi)) {
- 		if (block_unaligned_IO(inode, iocb, iter))
- 			return true;
- 		if (F2FS_IO_ALIGNED(sbi))
+-	if (IS_ENCRYPTED(inode)) {
+-		if (!fscrypt_dio_supported(inode))
+-			return false;
+-		if (!IS_ALIGNED(iocb->ki_pos | iov_iter_alignment(iter),
+-				i_blocksize(inode)))
+-			return false;
+-	}
+-	if (fsverity_active(inode))
+-		return false;
+-	if (ext4_should_journal_data(inode))
++	if (!dio_align)
+ 		return false;
+-	if (ext4_has_inline_data(inode))
++	if (dio_align > bdev_logical_block_size(inode->i_sb->s_bdev) &&
++	    !IS_ALIGNED(iocb->ki_pos | iov_iter_alignment(iter), dio_align))
+ 		return false;
+ 	return true;
+ }
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 3dce7d058985b..78180c98f3847 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -5536,6 +5536,22 @@ int ext4_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
+ 	return error;
+ }
+ 
++u32 ext4_dio_alignment(struct inode *inode)
++{
++	if (fsverity_active(inode))
++		return 0;
++	if (ext4_should_journal_data(inode))
++		return 0;
++	if (ext4_has_inline_data(inode))
++		return 0;
++	if (IS_ENCRYPTED(inode)) {
++		if (!fscrypt_dio_supported(inode))
++			return 0;
++		return i_blocksize(inode);
++	}
++	return bdev_logical_block_size(inode->i_sb->s_bdev);
++}
++
+ int ext4_getattr(struct user_namespace *mnt_userns, const struct path *path,
+ 		 struct kstat *stat, u32 request_mask, unsigned int query_flags)
+ {
+@@ -5551,6 +5567,19 @@ int ext4_getattr(struct user_namespace *mnt_userns, const struct path *path,
+ 		stat->btime.tv_nsec = ei->i_crtime.tv_nsec;
+ 	}
+ 
++	/*
++	 * Return the DIO alignment restrictions if requested.  We only return
++	 * this information when requested, since on encrypted files it might
++	 * take a fair bit of work to get if the file wasn't opened recently.
++	 */
++	if ((request_mask & STATX_DIOALIGN) && S_ISREG(inode->i_mode)) {
++		u32 dio_align = ext4_dio_alignment(inode);
++
++		stat->result_mask |= STATX_DIOALIGN;
++		stat->dio_mem_align = dio_align;
++		stat->dio_offset_align = dio_align;
++	}
++
+ 	flags = ei->i_flags & EXT4_FL_USER_VISIBLE;
+ 	if (flags & EXT4_APPEND_FL)
+ 		stat->attributes |= STATX_ATTR_APPEND;
 -- 
 2.36.1
 
