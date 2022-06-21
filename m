@@ -2,103 +2,103 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C29B4C43334
-	for <linux-api@archiver.kernel.org>; Tue, 21 Jun 2022 09:07:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7B2E8C43334
+	for <linux-api@archiver.kernel.org>; Tue, 21 Jun 2022 10:22:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1348338AbiFUJHu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 21 Jun 2022 05:07:50 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51932 "EHLO
+        id S1347062AbiFUKW1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 21 Jun 2022 06:22:27 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55012 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1348086AbiFUJHt (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 21 Jun 2022 05:07:49 -0400
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 49E08186D0;
-        Tue, 21 Jun 2022 02:07:48 -0700 (PDT)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by smtp-out2.suse.de (Postfix) with ESMTPS id 055391FADF;
-        Tue, 21 Jun 2022 09:07:47 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id D895613A88;
-        Tue, 21 Jun 2022 09:07:46 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-        by imap2.suse-dmz.suse.de with ESMTPSA
-        id qOaSMmKKsWKFHAAAMHmgww
-        (envelope-from <chrubis@suse.cz>); Tue, 21 Jun 2022 09:07:46 +0000
-From:   Cyril Hrubis <metan@ucw.cz>
-To:     linux-kernel@vger.kernel.org
-Cc:     linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
-        libc-alpha@sourceware.org, arnd@arndb.de, ltp@lists.linux.it,
-        David.Laight@aculab.com, zack@owlfolio.org, dhowells@redhat.com,
-        Cyril Hrubis <chrubis@suse.cz>
-Subject: [PATCH v2] uapi: Make __{u,s}64 match {u,}int64_t in userspace
-Date:   Tue, 21 Jun 2022 11:09:51 +0200
-Message-Id: <20220621090951.29911-1-metan@ucw.cz>
-X-Mailer: git-send-email 2.35.1
+        with ESMTP id S229497AbiFUKWZ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 21 Jun 2022 06:22:25 -0400
+Received: from mail-wr1-x42c.google.com (mail-wr1-x42c.google.com [IPv6:2a00:1450:4864:20::42c])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D38242899F;
+        Tue, 21 Jun 2022 03:22:22 -0700 (PDT)
+Received: by mail-wr1-x42c.google.com with SMTP id g4so18206620wrh.11;
+        Tue, 21 Jun 2022 03:22:22 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=nFKOWnxfMAvpfuR5nZvfo/PJZQyBNJd8pSCg3peeMzU=;
+        b=PS1CvUmfj+YgU/b5s3RHKMSGeq25FnBJ908QsNFw9En7udzmO5KWpI87Fxrz7cBCP2
+         M2b9eOiapgceBX3JBUOGXwsuO368zVhC/SL8YP/Op3i6NFfG1zDNg/KwAHfdkbJmI2lb
+         O+ogXD9IU1W5rytIxgWHMlX/2SofhA841OyaEHNBnT2edKBa9lD5y45EXkzgmoOu7YYQ
+         PvBlHX+7wd63wZAmEW021ZnD8kGY2023HmEU9Yr4wF58bJsOGCCw+v7sV8JCZWq1y6WD
+         5VT3LCPDRZ1Np+Dy8RyNwiTdDogQ+c7VvDkGUrqtUuJEwv1zdV3FmofzDfOUD9BUnNNX
+         7K7A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=nFKOWnxfMAvpfuR5nZvfo/PJZQyBNJd8pSCg3peeMzU=;
+        b=NFuh6s89PwucEuKCVjuhWx06tW8JJ+On9dQxo0l433T1jQsZgC4uWWKYwITxf1ZXzl
+         ETX85mualIgunL6Udk+DOE4I279YbpiCeI8H6AeefWo48WNmwgacFZbY4erp1gy1XkzK
+         t81XfoHzTQ5+qJPwuXhMrr8y5uytXJmH1J3kj6GTAZlS/9LpdXhk/Y8rMur+yQJVj5Fh
+         P3c7e816JBRC9JgGa3AcCq3I08fyytOl5rJVfs0jIoUfr5UQfHTSEmKqWycryqRSvFIm
+         YPLbe2CkFjoV7L3F9LveS6vsIPY7BYZpqLPNC5si7+acaqj8VELwApkTt9D6oh7OWgqF
+         CTJA==
+X-Gm-Message-State: AJIora8cVlaD80yc6Dmgf7vtLeHqMe8hVbT4k7NoKK4tXnjbR4TG4tel
+        Q07Mm2ueGAo7Frifqgho1DDa2SOZnNX9phZJSZFasHaLgig=
+X-Google-Smtp-Source: AGRyM1uvf4LHU1HU49uZEE55Xvve6Ulm83LVZnbey7RZpGVfRK8TyarjNw9QuE1f9s0fM3kEJoVkyDixZGpKfisVAJQ=
+X-Received: by 2002:adf:e0c3:0:b0:21a:39f3:e6f6 with SMTP id
+ m3-20020adfe0c3000000b0021a39f3e6f6mr23433295wri.98.1655806941204; Tue, 21
+ Jun 2022 03:22:21 -0700 (PDT)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <CAMZm_C=o-rc4a+u_8-pFJtmL_2drwczASMRTqszamrks5Zm_OA@mail.gmail.com>
+ <CAG48ez2PVMs-CeLoZtvPq2EeQqOg05mm3AuvEE_pr9Sog0O5og@mail.gmail.com>
+ <CAMZm_CmW7pHwfEfCQfXRJPiHOjeGviQunfwxY_1ejrihKab5rA@mail.gmail.com> <CAG48ez2OcfTQ4SRbY89uHDJG6QujSfChaO4B3=zgGpj=9J8bdA@mail.gmail.com>
+In-Reply-To: <CAG48ez2OcfTQ4SRbY89uHDJG6QujSfChaO4B3=zgGpj=9J8bdA@mail.gmail.com>
+From:   Federico Di Pierro <nierro92@gmail.com>
+Date:   Tue, 21 Jun 2022 12:22:10 +0200
+Message-ID: <CAMZm_C=5sNVxB6vE83zcrhv+b0JhYT9hL8i4o_6rwRuwm_ggVg@mail.gmail.com>
+Subject: Re: pgprot_encrypted macro is broken
+To:     Jann Horn <jannh@google.com>
+Cc:     Linux API <linux-api@vger.kernel.org>,
+        kernel list <linux-kernel@vger.kernel.org>,
+        Tom Lendacky <thomas.lendacky@amd.com>,
+        "the arch/x86 maintainers" <x86@kernel.org>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Cyril Hrubis <chrubis@suse.cz>
+Hi!
 
-This changes the __u64 and __s64 in userspace on 64bit platforms from
-long long (unsigned) int to just long (unsigned) int in order to match
-the uint64_t and int64_t size in userspace.
+Thank you very much for your hints and for your time!
+I solved the issue and I agree that we should not have used that macro
+in the first place.
 
-This allows us to use the kernel structure definitions in userspace.
+Again, thank you very much for your help,
+Regards
+Federico
 
-For example we can use PRIu64 and PRId64 modifiers in printf() to print
-structure membere. Morever with this there would be no need to redefine
-these structures in an libc implementations as it is done now.
-
-Consider for example the newly added statx() syscall. If we use the
-header from uapi we will get warnings when attempting to print it's
-members as:
-
-	printf("%" PRIu64 "\n", stx.stx_size);
-
-We get:
-
-	warning: format '%lu' expects argument of type 'long unsigned int',
-	         but argument 5 has type '__u64' {aka 'long long unsigned int'}
-
-Signed-off-by: Cyril Hrubis <chrubis@suse.cz>
----
- include/uapi/asm-generic/types.h | 11 +++++++++--
- 1 file changed, 9 insertions(+), 2 deletions(-)
-
-v2: Make sure we do not break C++ applications
-
-diff --git a/include/uapi/asm-generic/types.h b/include/uapi/asm-generic/types.h
-index dfaa50d99d8f..11e468a39d1e 100644
---- a/include/uapi/asm-generic/types.h
-+++ b/include/uapi/asm-generic/types.h
-@@ -1,9 +1,16 @@
- /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
- #ifndef _ASM_GENERIC_TYPES_H
- #define _ASM_GENERIC_TYPES_H
-+
-+#include <asm/bitsperlong.h>
-+
- /*
-- * int-ll64 is used everywhere now.
-+ * int-ll64 is used everywhere in kernel now.
-  */
--#include <asm-generic/int-ll64.h>
-+#if !defined(__KERNEL__) && !defined(__cplusplus) && __BITSPERLONG == 64
-+# include <asm-generic/int-l64.h>
-+#else
-+# include <asm-generic/int-ll64.h>
-+#endif
- 
- #endif /* _ASM_GENERIC_TYPES_H */
--- 
-2.35.1
-
+Il giorno lun 20 giu 2022 alle ore 13:32 Jann Horn <jannh@google.com>
+ha scritto:
+>
+> On Mon, Jun 20, 2022 at 9:39 AM Federico Di Pierro <nierro92@gmail.com> wrote:
+> > > Why does your driver need to use that macro? pgprot_encrypted() is
+> > > mostly only directly used by core kernel code, not by drivers... and
+> > > if memory encryption is enabled, almost all memory mappings created by
+> > > the kernel should be marked as encrypted automatically.
+> >
+> > This is interesting; i don't really know the history behind our piece
+> > of code; as far as i understand,
+> > we have a shared ring buffer with userspace, onto which we push tracing events,
+> > and we must mark it as encrypted when
+> > the kmod runs on an AMD SME enabled kernel to allow userspace to grab sane data.
+> >
+> > This is the commit that introduced the change (if you wish to give it a look):
+> > https://github.com/falcosecurity/libs/commit/0333501cf429c045c61aaf5909812156f090786e
+> >
+> > Do you see any workaround not involving `pgprot_encrypted` ?
+>
+> If you do have to use remap_pfn_range() to map normal kernel memory,
+> then you might want to use vma->vm_page_prot instead, like a few other
+> places in the kernel do.
+>
+> (Alternatively you might want to use remap_vmalloc_range() to map
+> vmalloc pages into userspace, but note that that has very different
+> semantics - I believe that installs a normal page reference rather
+> than a raw PFN reference, so that would permit get_user_pages() calls
+> on the range.)
