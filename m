@@ -2,236 +2,155 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5E65FC433EF
-	for <linux-api@archiver.kernel.org>; Wed, 22 Jun 2022 03:06:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4F10CCCA483
+	for <linux-api@archiver.kernel.org>; Wed, 22 Jun 2022 15:54:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S241780AbiFVDGh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 21 Jun 2022 23:06:37 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36630 "EHLO
+        id S1356156AbiFVPy1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 22 Jun 2022 11:54:27 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53808 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232810AbiFVDGg (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 21 Jun 2022 23:06:36 -0400
-X-Greylist: delayed 542 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Tue, 21 Jun 2022 20:06:34 PDT
-Received: from mout-p-202.mailbox.org (mout-p-202.mailbox.org [80.241.56.172])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B38C62E095;
-        Tue, 21 Jun 2022 20:06:34 -0700 (PDT)
-Received: from smtp102.mailbox.org (smtp102.mailbox.org [10.196.197.102])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange ECDHE (P-384) server-signature RSA-PSS (4096 bits) server-digest SHA256)
-        (No client certificate requested)
-        by mout-p-202.mailbox.org (Postfix) with ESMTPS id 4LSSjK3s6tz9sSl;
-        Wed, 22 Jun 2022 04:57:25 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=cyphar.com; s=MBO0001;
-        t=1655866645;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+        with ESMTP id S1359763AbiFVPxf (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 22 Jun 2022 11:53:35 -0400
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7F3A1CE35;
+        Wed, 22 Jun 2022 08:53:03 -0700 (PDT)
+Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
+        by smtp-out1.suse.de (Postfix) with ESMTP id C8E3721C10;
+        Wed, 22 Jun 2022 15:52:51 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+        t=1655913171; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=gN8TCIVEGUrtLmOK4r2NY1SONlCas7fWKHtUkH7eQEo=;
-        b=AO2ygye5tn7a1ew/el2eVI94NEpUVIew/Jln7IoLM8Aj6gmzpe7jdMCD+JhobMU2NoARxo
-        vOghCDAPNFinOsf4X4OdOj248pjwWoCPxigaIqg32VVfy816J5onRYWuzaNs/3Qt8jRfHU
-        Fm+ujbgnxYvBvatExgqFzb4XK3NEzY3sF/YHwcC3/IZaIXcZNth5dquVC3T5MnQU6gbncR
-        k5OUNN+xt06fE0j/9mf/yEQFnJZiAF4DIGMD1jK+F3mopkggcuIQ+gn2ys5PsZ9nTE3XBc
-        CIkReBzYEEwPqB2RMetxkImAqy2ZFBH6BjtUAqGQcWbrS9PU/4oGLU8ZuzYo4g==
-Date:   Wed, 22 Jun 2022 12:57:15 +1000
-From:   Aleksa Sarai <cyphar@cyphar.com>
+        bh=NDybUhlXPjzwC9jJdp7b3hPv6c4lM2q2OAfx4WizXnA=;
+        b=Wmai+dySOWNDIipW1Y7gI+/dPR0+umcTZBXqpN7VAqRxN+PiwoocAKri6YujpvHq1RDgps
+        iOEB4tzTK4fJle9rmXKHa82yo+j9JGv8yCkBIU57jxjGYsHCo3JCGXcYZxbyDhUkxavZbD
+        BuD2j2grPHbqv5djdDwsQ9CzWy4Qu3Q=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+        s=susede2_ed25519; t=1655913171;
+        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=NDybUhlXPjzwC9jJdp7b3hPv6c4lM2q2OAfx4WizXnA=;
+        b=WzvECKr9CIhOps9NeTBzRzHRtMk1wf7/Xeg3RbmR0pIVXNjVZKJal4oRIcO5xokXfOZlA5
+        Uz4IaDVwO89NiCBA==
+Received: from quack3.suse.cz (unknown [10.100.224.230])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by relay2.suse.de (Postfix) with ESMTPS id B6D572C141;
+        Wed, 22 Jun 2022 15:52:51 +0000 (UTC)
+Received: by quack3.suse.cz (Postfix, from userid 1000)
+        id 5F308A062B; Wed, 22 Jun 2022 17:52:48 +0200 (CEST)
+Date:   Wed, 22 Jun 2022 17:52:48 +0200
+From:   Jan Kara <jack@suse.cz>
 To:     Amir Goldstein <amir73il@gmail.com>
-Cc:     Christian Brauner <brauner@kernel.org>,
-        Christian =?utf-8?B?R8O2dHRzY2hl?= <cgzones@googlemail.com>,
-        SElinux list <selinux@vger.kernel.org>,
-        Miklos Szeredi <mszeredi@redhat.com>,
-        Linux API <linux-api@vger.kernel.org>,
-        linux-man <linux-man@vger.kernel.org>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-        linux-kernel <linux-kernel@vger.kernel.org>
-Subject: Re: [RFC PATCH] f*xattr: allow O_PATH descriptors
-Message-ID: <20220622025715.upflevvao3ttaekj@senku>
-References: <20220607153139.35588-1-cgzones@googlemail.com>
- <20220608112728.b4xrdppxqmyqmtwf@wittgenstein>
- <CAOQ4uxipD6khNUYuZT80WUa0KOMdyyP0ia55uhmeRCLj4NBicg@mail.gmail.com>
- <20220608124808.uylo5lntzfgxxmns@wittgenstein>
- <CAOQ4uxjP7kC95ou56wabVhQcc2vkNcD-8usYhLhbLOoJZ-jkOw@mail.gmail.com>
- <20220618031805.nmgiuapuqeblm3ba@senku>
- <CAOQ4uxg6QLJ26pX8emXmUvq6jDDEH_Qq=Z4RPUK-jGLsZpHzfg@mail.gmail.com>
- <20220620060741.3clikqadotq2p5ja@senku>
- <CAOQ4uxhq8HVoM=6O_H-uowv65m6tLAPUj2a_r3-CWpiX-48MoQ@mail.gmail.com>
+Cc:     Jan Kara <jack@suse.cz>, Matthew Bobrowski <repnop@google.com>,
+        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
+Subject: Re: [PATCH 1/2] fanotify: prepare for setting event flags in ignore
+ mask
+Message-ID: <20220622155248.d6oywn3rkurbijs6@quack3.lan>
+References: <20220620134551.2066847-1-amir73il@gmail.com>
+ <20220620134551.2066847-2-amir73il@gmail.com>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-        protocol="application/pgp-signature"; boundary="3qxnax3ppvxdjkcd"
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <CAOQ4uxhq8HVoM=6O_H-uowv65m6tLAPUj2a_r3-CWpiX-48MoQ@mail.gmail.com>
+In-Reply-To: <20220620134551.2066847-2-amir73il@gmail.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+On Mon 20-06-22 16:45:50, Amir Goldstein wrote:
+> Setting flags FAN_ONDIR FAN_EVENT_ON_CHILD in ignore mask has no effect.
+> The FAN_EVENT_ON_CHILD flag in mask implicitly applies to ignore mask and
+> ignore mask is always implicitly applied to events on directories.
+> 
+> Define a mark flag that replaces this legacy behavior with logic of
+> applying the ignore mask according to event flags in ignore mask.
+> 
+> Implement the new logic to prepare for supporting an ignore mask that
+> ignores events on children and ignore mask that does not ignore events
+> on directories.
+> 
+> To emphasize the change in terminology, also rename ignored_mask mark
+> member to ignore_mask and use accessor to get only ignored events or
+> events and flags.
+> 
+> This change in terminology finally aligns with the "ignore mask"
+> language in man pages and in most of the comments.
+> 
+> Signed-off-by: Amir Goldstein <amir73il@gmail.com>
 
---3qxnax3ppvxdjkcd
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Looks mostly good to me. Just one question / suggestion: You are
+introducing helpers fsnotify_ignore_mask() and fsnotify_ignored_events().
+So shouldn't we be using these helpers as much as possible throughout the
+code? Because in several places I had to check the code around whether
+using mark->ignore_mask directly is actually fine. In particular:
 
-On 2022-06-20, Amir Goldstein <amir73il@gmail.com> wrote:
-> > > > The goal would be that the semantics of fooat(<fd>, AT_EMPTY_PATH) =
-and
-> > > > foo(/proc/self/fd/<fd>) should always be identical, and the current
-> > > > semantics of /proc/self/fd/<fd> are too leaky so we shouldn't always
-> > > > assume that keeping them makes sense (the most obvious example is b=
-eing
-> > > > able to do tricks to open /proc/$pid/exe as O_RDWR).
-> > >
-> > > Please make a note that I have applications relying on current magic =
-symlink
-> > > semantics w.r.t setxattr() and other metadata operations, and the lib=
-selinux
-> > > commit linked from the patch commit message proves that magic symlink
-> > > semantics are used in the wild, so it is not likely that those semant=
-ics could
-> > > be changed, unless userspace breakage could be justified by fixing a =
-serious
-> > > security issue (i.e. open /proc/$pid/exe as O_RDWR).
-> >
-> > Agreed. We also use magiclinks for similar TOCTOU-protection purposes in
-> > runc (as does lxc) as well as in libpathrs so I'm aware we need to be
-> > careful about changing existing behaviours. I would prefer to have the
-> > default be as restrictive as possible, but naturally back-compat is
-> > more important.
-> >
-> > > > I suspect that the long-term solution would be to have more upgrade
-> > > > masks so that userspace can opt-in to not allowing any kind of
-> > > > (metadata) write access through a particular file descriptor. You're
-> > > > quite right that we have several metadata write AT_EMPTY_PATH APIs,=
- and
-> > > > so we can't retroactively block /everything/ but we should try to c=
-ome
-> > > > up with less leaky rules by default if it won't break userspace.
-> > >
-> > > Ok, let me try to say this in my own words using an example to see th=
-at
-> > > we are all on the same page:
-> > >
-> > > - lsetxattr(PATH_TO_FILE,..) has inherent TOCTOU races
-> > > - fsetxattr(fd,...) is not applicable for symbolic links
-> >
-> > While I agree with Christian's concerns about making O_PATH descriptors
-> > more leaky, if userspace already relies on this through /proc/self/fd/$x
-> > then there's not much we can do about it other than having an opt-out
-> > available in openat2(2). Having the option to disable this stuff to
-> > avoid making O_PATH descriptors less safe as a mechanism for passing
-> > around "capability-less" file handles should make most people happy
-> > (with the note that ideally we would not be *adding* capabilities to
-> > O_PATH we don't need to).
-> >
-> > > - setxattr("/proc/self/fd/<fd>",...) is the current API to avoid TOCT=
-OU races
-> > >   when setting xattr on symbolic links
-> > > - setxattrat(o_path_fd, "", ..., AT_EMPTY_PATH) is proposed as a the
-> > >   "new API" for setting xattr on symlinks (and special files)
-> >
-> > If this is a usecase we need to support then we may as well just re-use
-> > fsetxattr() since it's basically an *at(2) syscall already (and I don't
-> > see why we'd want to split up the capabilities between two similar
-> > *at(2)-like syscalls). Though this does come with the above caveats that
-> > we need to have the opt-outs available if we're going to enshrine this
-> > as intentional part of the ABI.
->=20
->=20
-> Christian preferred that new functionality be added with a new API
-> and I agree that this is nicer and more explicit.
+> @@ -315,19 +316,23 @@ static u32 fanotify_group_event_mask(struct fsnotify_group *group,
+>  			return 0;
+>  	} else if (!(fid_mode & FAN_REPORT_FID)) {
+>  		/* Do we have a directory inode to report? */
+> -		if (!dir && !(event_mask & FS_ISDIR))
+> +		if (!dir && !ondir)
+>  			return 0;
+>  	}
+>  
+>  	fsnotify_foreach_iter_mark_type(iter_info, mark, type) {
+> -		/* Apply ignore mask regardless of mark's ISDIR flag */
+> -		marks_ignored_mask |= mark->ignored_mask;
+> +		/*
+> +		 * Apply ignore mask depending on whether FAN_ONDIR flag in
+> +		 * ignore mask should be checked to ignore events on dirs.
+> +		 */
+> +		if (!ondir || fsnotify_ignore_mask(mark) & FAN_ONDIR)
+> +			marks_ignore_mask |= mark->ignore_mask;
+>  
+>  		/*
+>  		 * If the event is on dir and this mark doesn't care about
+>  		 * events on dir, don't send it!
+>  		 */
+> -		if (event_mask & FS_ISDIR && !(mark->mask & FS_ISDIR))
+> +		if (ondir && !(mark->mask & FAN_ONDIR))
+>  			continue;
+>  
+>  		marks_mask |= mark->mask;
 
-Fair enough -- I misread the man page, setxattrat(2) makes more sense.
+So for example here I'm wondering whether a helper should not be used...
 
-> The bigger question IMO is, whether fsomething() should stay identical
-> to somethingat(,,,AT_EMPTY_PATH). I don't think that it should.
->=20
-> To me, open(path,O_PATH)+somethingat(,,,AT_EMPTY_PATH) is identical
-> to something(path) - it just breaks the path resolution and operation to =
-two
-> distinguished steps.
->=20
-> fsomething() was traditionally used for "really" open fds, so if we don't=
- need
-> to, we better not relax it further by allowing O_PATH, but that's just one
-> opinion.
+> @@ -336,7 +341,7 @@ static u32 fanotify_group_event_mask(struct fsnotify_group *group,
+>  		*match_mask |= 1U << type;
+>  	}
+>  
+> -	test_mask = event_mask & marks_mask & ~marks_ignored_mask;
+> +	test_mask = event_mask & marks_mask & ~marks_ignore_mask;
 
-Yeah, you're right -- it would be better to not muddle the two (even
-though they are conceptually very similar).
+Especially because here if say FAN_EVENT_ON_CHILD becomes a part of
+marks_ignore_mask it can result in clearing this flag in the returned
+'mask' which is likely not what we want if there are some events left
+unignored in the 'mask'?
+  
+> @@ -344,14 +344,16 @@ static int send_to_group(__u32 mask, const void *data, int data_type,
+>  	fsnotify_foreach_iter_mark_type(iter_info, mark, type) {
+>  		group = mark->group;
+>  		marks_mask |= mark->mask;
+> -		marks_ignored_mask |= mark->ignored_mask;
+> +		if (!(mask & FS_ISDIR) ||
+> +		    (fsnotify_ignore_mask(mark) & FS_ISDIR))
+> +			marks_ignore_mask |= mark->ignore_mask;
+>  	}
+>  
+> -	pr_debug("%s: group=%p mask=%x marks_mask=%x marks_ignored_mask=%x data=%p data_type=%d dir=%p cookie=%d\n",
+> -		 __func__, group, mask, marks_mask, marks_ignored_mask,
+> +	pr_debug("%s: group=%p mask=%x marks_mask=%x marks_ignore_mask=%x data=%p data_type=%d dir=%p cookie=%d\n",
+> +		 __func__, group, mask, marks_mask, marks_ignore_mask,
+>  		 data, data_type, dir, cookie);
+>  
+> -	if (!(test_mask & marks_mask & ~marks_ignored_mask))
+> +	if (!(test_mask & marks_mask & ~marks_ignore_mask))
+>  		return 0;
 
-> > > - The new API is going to be more strict than the old magic symlink A=
-PI
-> > > - *If* it turns out to not break user applications, old API can also =
-become
-> > >   more strict to align with new API (unlikely the case for setxattr())
-> > > - This will allow sandboxed containers to opt-out of the "old API", by
-> > >   restricting access to /proc/self/fd and to implement more fine grai=
-ned
-> > >   control over which metadata operations are allowed on an O_PATH fd
-> > >
-> > > Did I understand the plan correctly?
-> >
-> > Yup, except I don't think we need setxattrat(2).
-> >
-> > > Do you agree with me that the plan to keep AT_EMPTY_PATH and magic
-> > > symlink semantics may not be realistic?
-> >
-> > To clarify -- my view is that if any current /proc/self/fd/$n semantic
-> > needs to be maintained then I would prefer that the proc-less method of
-> > doing it (such as through AT_EMPTY_PATH et al) would have the same
-> > capability and semantics. There are some cases where the current
-> > /proc/self/fd/$n semantics need to be fixed (such as the /proc/$pid/exe
-> > example) and in that case the proc-less semantics also need to be made
-> > safe.
-> >
-> > While I would like us to restrict O_PATH as much as possible, if
-> > userspace already depends on certain behaviour then we may not be able
-> > to do much about it. Having an opt-out would be very important since
-> > enshrining these leaky behaviours (which seem to have been overlooked)
-> > means we need to consider how userspace can opt out of them.
-> >
-> > Unfortunately, it should be noted that due to the "magical" nature of
-> > nd_jump_link(), I'm not sure how happy Al Viro will be with the kinds of
-> > restrictions necessary. Even my current (quite limited) upgrade-mask
-> > patchset has to do a fair bit of work to unify the semantics of
-> > magic-links and openat(O_EMPTYPATH) -- expanding this to all *at(2)
-> > syscalls might be quite painful. (There are also several handfuls of
-> > semantic questions which need to be answered about magic-link modes and
-> > whether for other *at(2) operations we may need even more complicated
-> > rules or even a re-thinking of my current approach.)
->=20
-> The question remains, regarding the $SUBJECT patch,
-> is it fair to block it and deprive libselinux of a non buggy API
-> until such time that all the details around masking O_PATH fds
-> will be made clear and the new API implemented?
->=20
-> There is no guarantee this will ever happen, so it does not seem
-> reasonable to me.
->=20
-> To be a reasonable reaction to the currently broken API is
-> to either accept the patch as is or request that setxattrat()
-> will be added to provide the new functionality.
+And I'm wondering about similar things here...
 
-Since the current functionality cannot be retroactively disabled as it
-is being used already through /proc/self/fd/$n, adding
-*xattrat(AT_EMPTY_PATH) doesn't really change what is currently possible
-by userspace.
-
-I would say we should add *xattrat(2) and then we can add an upgrade
-mask blocking it (and other operations) later.
-
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
-
---3qxnax3ppvxdjkcd
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iHUEABYKAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCYrKFCwAKCRCdlLljIbnQ
-EkHDAQDcWDPHXJjqAjGAzNYq6SVS0yjL41QqWacGXvPb66FPFAEAusaYO6iZOP4M
-oEYAPDOwguXO7T12FYXSzG8yX6V54QE=
-=QX0d
------END PGP SIGNATURE-----
-
---3qxnax3ppvxdjkcd--
+								Honza
+-- 
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
