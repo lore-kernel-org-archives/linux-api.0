@@ -2,58 +2,58 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E0A36CCA47C
-	for <linux-api@archiver.kernel.org>; Wed, 29 Jun 2022 14:42:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3749EC43334
+	for <linux-api@archiver.kernel.org>; Wed, 29 Jun 2022 14:42:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231748AbiF2Om0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 29 Jun 2022 10:42:26 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47854 "EHLO
+        id S233575AbiF2Om1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 29 Jun 2022 10:42:27 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47820 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233632AbiF2OmW (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 29 Jun 2022 10:42:22 -0400
-Received: from mail-wm1-x336.google.com (mail-wm1-x336.google.com [IPv6:2a00:1450:4864:20::336])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 689DF38190;
-        Wed, 29 Jun 2022 07:42:21 -0700 (PDT)
-Received: by mail-wm1-x336.google.com with SMTP id o19-20020a05600c4fd300b003a0489f414cso6200855wmq.4;
-        Wed, 29 Jun 2022 07:42:21 -0700 (PDT)
+        with ESMTP id S232873AbiF2OmU (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 29 Jun 2022 10:42:20 -0400
+Received: from mail-wr1-x436.google.com (mail-wr1-x436.google.com [IPv6:2a00:1450:4864:20::436])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E8AE938190;
+        Wed, 29 Jun 2022 07:42:18 -0700 (PDT)
+Received: by mail-wr1-x436.google.com with SMTP id v14so22804262wra.5;
+        Wed, 29 Jun 2022 07:42:18 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=IG8l5XqsblqCtDe1AQxpeaU2s01EyDafscahOiuPeoE=;
-        b=SkpW5am6z6TVyyIph7DFhEzVSD3L+QYaqR0AlPGJt2yhhWW6jfCqYEgpTI3WcgA/he
-         U5HE+jZsZTuYKWyTiyd5PZMKxY8vOGtC3MDW6QVfVJ1UhLQSYucNfR5rL1xt7JtlYHvY
-         pt+DXUxoX8NjbiHzsJxgLCwFRM5l3IP2fNvZiDvK9uV7+jxqrTMvzwb7fJBIuIXIA2E7
-         /9dLg9QtF5ysyqQQthvLmwX8QMgH35UbcJXSMikzVPtUb8zUJwOSX9q92WsG8LJHu3Rk
-         0BgmrIbWGa3k5M4+vdlQqA1LsoWFsTwNAkOqZgnexMfzaW7iTlHK10FNH9BFtISrficu
-         TTiw==
+        bh=sBmdR31lITbnXi4dWozOL9aFFSNyRKsnIRTUmH6suRw=;
+        b=Y1pxYvGuFwE6EUVKxTuNXSRxIQ5i/fnHcSK6Vsgd55pVHLE7n5oyUuO2qRgqy2vcAo
+         E0rjz0CTqqXdBZTtXYMwkRhSl5tT30t03KFaPcQf63nQdUzUOZoEaqUOGoDyQ8yC5WpH
+         cqOffZwrXIe8SnmR1O3juePtqP+nFdIwPG0cSsg3+X0jfFlxWy0/1FvX+a49Ggk7NFFO
+         ub+7oDv+0HoeFCgi+Th36Fm8nL+JA8sbR36TsrS/Ajk0RyBwuiGNHllbUkKSLCnGY68R
+         pWXRHqtffpuV7Y7VRFTYMP6PtULkZSi2PHGK484CHnu7Y32Lp2X7oDwMjej3YwGctix1
+         8yPQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=IG8l5XqsblqCtDe1AQxpeaU2s01EyDafscahOiuPeoE=;
-        b=Yi0sFb2Z2mrzZdTf+of9Do2fIATqXefdCS0cEIuwPIfC6Z/+UvHyasW2oXLDotwIDV
-         1QdZ8+86BVO7s3RGDJXIN/cmQAgJn7iedAI+pHARWRI8UAGnG27PDee+aeGsfTe0rvCY
-         +fXF3nLkxdso3GZ2hRxndVywIIlws8vqOdzprg3eBGxNVk1aRJXKjXI3BlNNW2HmCrRK
-         18CuPKYStN1LGF9QqYbXv0sceDjb54j/ReWNDiltl/rgYd+fi565661xKlQDSMNpp6Fg
-         Kcne8hhkNirXn081HeNRnNWN3NrXJxnZrBUrOU/9AKCtf5QaQOhPCu3Qp2DWiGe1GE32
-         dl7Q==
-X-Gm-Message-State: AJIora+1WQhLBk5f9LzV6qxwjdqTDi7/9pXWqhpfnbxoJ3zQs4WV2xij
-        UoD+UGooKytSycY8LVpP+QU=
-X-Google-Smtp-Source: AGRyM1tIXAVTzJDt9psAdKiybZ3eaU90zfvYkAd35J4OudWLtxLNi6GLeMMlCmZC01jHR9aofp/2LQ==
-X-Received: by 2002:a05:600c:274b:b0:3a0:47e8:ca85 with SMTP id 11-20020a05600c274b00b003a047e8ca85mr6235914wmw.156.1656513739936;
-        Wed, 29 Jun 2022 07:42:19 -0700 (PDT)
+        bh=sBmdR31lITbnXi4dWozOL9aFFSNyRKsnIRTUmH6suRw=;
+        b=cKrfMfWk0dFbpiWXd3V1lzOwzUrHqQCJeh/aINcpFMPyfr+Y/28JhtXW6gP1SAr2yJ
+         jZ+RQd5Gl+x76naE5WN5QsLjmnoWXw1BZ1700W7fOB4q9mTxZSX7ar1hYAyus8WY/S15
+         jrobjiUVozVubCu4usS+emFx1XKxLDw778s6GgFhAE7boRZzpNKkCfiV+8HanVyuu+3I
+         nriX72zqRTkdV5cvRWB/5LKJWjd3mKxtTXKTY6Pny61KN008+Vz8rGpzElqxWiOtkp8N
+         RRTdZy2ro3tbEq11gaRCzqT0KO3brRZSTWe7x36wrXoBh+ulO/sZCpuF0HnkUDyhuyFy
+         8IeA==
+X-Gm-Message-State: AJIora/Se+tgofraMWF9aidzB8X97wgEQ4wmbOg16tRbB1XB55MEZRPz
+        kkvezESVbcjxPwAQqqLEfAFzxQuFRyo=
+X-Google-Smtp-Source: AGRyM1tNSWfoZpNJi+mVopZQZ1xRSUqXRRHXRJtD1JRE7e8i6OoQDjY7uYvzVAwcJVJzLtUNTqfSkw==
+X-Received: by 2002:a05:6000:1a8b:b0:219:af0c:ddf8 with SMTP id f11-20020a0560001a8b00b00219af0cddf8mr3356324wry.142.1656513737193;
+        Wed, 29 Jun 2022 07:42:17 -0700 (PDT)
 Received: from localhost.localdomain ([77.137.66.49])
-        by smtp.gmail.com with ESMTPSA id e17-20020a05600c4e5100b0039c747a1e8fsm3562085wmq.7.2022.06.29.07.42.18
+        by smtp.gmail.com with ESMTPSA id e17-20020a05600c4e5100b0039c747a1e8fsm3562085wmq.7.2022.06.29.07.42.16
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 29 Jun 2022 07:42:19 -0700 (PDT)
+        Wed, 29 Jun 2022 07:42:16 -0700 (PDT)
 From:   Amir Goldstein <amir73il@gmail.com>
 To:     Jan Kara <jack@suse.cz>
 Cc:     Matthew Bobrowski <repnop@google.com>,
         linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: [PATCH v3 3/3] fanotify: introduce FAN_MARK_IGNORE
-Date:   Wed, 29 Jun 2022 17:42:10 +0300
-Message-Id: <20220629144210.2983229-4-amir73il@gmail.com>
+Subject: [PATCH v3 1/3] fanotify: prepare for setting event flags in ignore mask
+Date:   Wed, 29 Jun 2022 17:42:08 +0300
+Message-Id: <20220629144210.2983229-2-amir73il@gmail.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20220629144210.2983229-1-amir73il@gmail.com>
 References: <20220629144210.2983229-1-amir73il@gmail.com>
@@ -63,263 +63,389 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This flag is a new way to configure ignore mask which allows adding and
-removing the event flags FAN_ONDIR and FAN_EVENT_ON_CHILD in ignore mask.
+Setting flags FAN_ONDIR FAN_EVENT_ON_CHILD in ignore mask has no effect.
+The FAN_EVENT_ON_CHILD flag in mask implicitly applies to ignore mask and
+ignore mask is always implicitly applied to events on directories.
 
-The legacy FAN_MARK_IGNORED_MASK flag would always ignore events on
-directories and would ignore events on children depending on whether
-the FAN_EVENT_ON_CHILD flag was set in the (non ignored) mask.
+Define a mark flag that replaces this legacy behavior with logic of
+applying the ignore mask according to event flags in ignore mask.
 
-FAN_MARK_IGNORE can be used to ignore events on children without setting
-FAN_EVENT_ON_CHILD in the mark's mask and will not ignore events on
-directories unconditionally, only when FAN_ONDIR is set in ignore mask.
+Implement the new logic to prepare for supporting an ignore mask that
+ignores events on children and ignore mask that does not ignore events
+on directories.
 
-The new behavior is non-downgradable.  After calling fanotify_mark() with
-FAN_MARK_IGNORE once, calling fanotify_mark() with FAN_MARK_IGNORED_MASK
-on the same object will return EEXIST error.
+To emphasize the change in terminology, also rename ignored_mask mark
+member to ignore_mask and use accessors to get only the effective
+ignored events or the ignored events and flags.
 
-Setting the event flags with FAN_MARK_IGNORE on a non-dir inode mark
-has no meaning and will return ENOTDIR error.
-
-The meaning of FAN_MARK_IGNORED_SURV_MODIFY is preserved with the new
-FAN_MARK_IGNORE flag, but with a few semantic differences:
-
-1. FAN_MARK_IGNORED_SURV_MODIFY is required for filesystem and mount
-   marks and on an inode mark on a directory. Omitting this flag
-   will return EINVAL or EISDIR error.
-
-2. An ignore mask on a non-directory inode that survives modify could
-   never be downgraded to an ignore mask that does not survive modify.
-   With new FAN_MARK_IGNORE semantics we make that rule explicit -
-   trying to update a surviving ignore mask without the flag
-   FAN_MARK_IGNORED_SURV_MODIFY will return EEXIST error.
-
-The conveniene macro FAN_MARK_IGNORE_SURV is added for
-(FAN_MARK_IGNORE | FAN_MARK_IGNORED_SURV_MODIFY), because the
-common case should use short constant names.
+This change in terminology finally aligns with the "ignore mask"
+language in man pages and in most of the comments.
 
 Signed-off-by: Amir Goldstein <amir73il@gmail.com>
 ---
- fs/notify/fanotify/fanotify.h      |  2 +
- fs/notify/fanotify/fanotify_user.c | 63 +++++++++++++++++++++++++-----
- include/linux/fanotify.h           |  5 ++-
- include/uapi/linux/fanotify.h      |  8 ++++
- 4 files changed, 67 insertions(+), 11 deletions(-)
+ fs/notify/fanotify/fanotify.c      | 19 ++++---
+ fs/notify/fanotify/fanotify_user.c | 21 ++++---
+ fs/notify/fdinfo.c                 |  6 +-
+ fs/notify/fsnotify.c               | 21 ++++---
+ include/linux/fsnotify_backend.h   | 89 ++++++++++++++++++++++++++++--
+ 5 files changed, 121 insertions(+), 35 deletions(-)
 
-diff --git a/fs/notify/fanotify/fanotify.h b/fs/notify/fanotify/fanotify.h
-index 80e0ec95b113..c54d0b404373 100644
---- a/fs/notify/fanotify/fanotify.h
-+++ b/fs/notify/fanotify/fanotify.h
-@@ -499,6 +499,8 @@ static inline unsigned int fanotify_mark_user_flags(struct fsnotify_mark *mark)
- 		mflags |= FAN_MARK_IGNORED_SURV_MODIFY;
- 	if (mark->flags & FSNOTIFY_MARK_FLAG_NO_IREF)
- 		mflags |= FAN_MARK_EVICTABLE;
-+	if (mark->flags & FSNOTIFY_MARK_FLAG_IGNORE_FLAGS)
-+		mflags |= FAN_MARK_IGNORE;
+diff --git a/fs/notify/fanotify/fanotify.c b/fs/notify/fanotify/fanotify.c
+index 4f897e109547..cd7d09a569ff 100644
+--- a/fs/notify/fanotify/fanotify.c
++++ b/fs/notify/fanotify/fanotify.c
+@@ -295,12 +295,13 @@ static u32 fanotify_group_event_mask(struct fsnotify_group *group,
+ 				     const void *data, int data_type,
+ 				     struct inode *dir)
+ {
+-	__u32 marks_mask = 0, marks_ignored_mask = 0;
++	__u32 marks_mask = 0, marks_ignore_mask = 0;
+ 	__u32 test_mask, user_mask = FANOTIFY_OUTGOING_EVENTS |
+ 				     FANOTIFY_EVENT_FLAGS;
+ 	const struct path *path = fsnotify_data_path(data, data_type);
+ 	unsigned int fid_mode = FAN_GROUP_FLAG(group, FANOTIFY_FID_BITS);
+ 	struct fsnotify_mark *mark;
++	bool ondir = event_mask & FAN_ONDIR;
+ 	int type;
  
- 	return mflags;
- }
+ 	pr_debug("%s: report_mask=%x mask=%x data=%p data_type=%d\n",
+@@ -315,19 +316,21 @@ static u32 fanotify_group_event_mask(struct fsnotify_group *group,
+ 			return 0;
+ 	} else if (!(fid_mode & FAN_REPORT_FID)) {
+ 		/* Do we have a directory inode to report? */
+-		if (!dir && !(event_mask & FS_ISDIR))
++		if (!dir && !ondir)
+ 			return 0;
+ 	}
+ 
+ 	fsnotify_foreach_iter_mark_type(iter_info, mark, type) {
+-		/* Apply ignore mask regardless of mark's ISDIR flag */
+-		marks_ignored_mask |= mark->ignored_mask;
++		/*
++		 * Apply ignore mask depending on event flags in ignore mask.
++		 */
++		marks_ignore_mask |=
++			fsnotify_effective_ignore_mask(mark, ondir, type);
+ 
+ 		/*
+-		 * If the event is on dir and this mark doesn't care about
+-		 * events on dir, don't send it!
++		 * Send the event depending on event flags in mark mask.
+ 		 */
+-		if (event_mask & FS_ISDIR && !(mark->mask & FS_ISDIR))
++		if (!fsnotify_mask_applicable(mark->mask, ondir, type))
+ 			continue;
+ 
+ 		marks_mask |= mark->mask;
+@@ -336,7 +339,7 @@ static u32 fanotify_group_event_mask(struct fsnotify_group *group,
+ 		*match_mask |= 1U << type;
+ 	}
+ 
+-	test_mask = event_mask & marks_mask & ~marks_ignored_mask;
++	test_mask = event_mask & marks_mask & ~marks_ignore_mask;
+ 
+ 	/*
+ 	 * For dirent modification events (create/delete/move) that do not carry
 diff --git a/fs/notify/fanotify/fanotify_user.c b/fs/notify/fanotify/fanotify_user.c
-index 6781d46cd37c..006be1ca048a 100644
+index b08ce0d821a7..a9eea037fee9 100644
 --- a/fs/notify/fanotify/fanotify_user.c
 +++ b/fs/notify/fanotify/fanotify_user.c
-@@ -1009,7 +1009,7 @@ static __u32 fanotify_mark_remove_from_mask(struct fsnotify_mark *fsn_mark,
- 	mask &= ~umask;
- 	spin_lock(&fsn_mark->lock);
- 	oldmask = fsnotify_calc_mask(fsn_mark);
--	if (!(flags & FAN_MARK_IGNORED_MASK)) {
-+	if (!(flags & FANOTIFY_MARK_IGNORE_BITS)) {
+@@ -1012,7 +1012,7 @@ static __u32 fanotify_mark_remove_from_mask(struct fsnotify_mark *fsn_mark,
+ 	if (!(flags & FAN_MARK_IGNORED_MASK)) {
  		fsn_mark->mask &= ~mask;
  	} else {
- 		fsn_mark->ignore_mask &= ~mask;
-@@ -1085,15 +1085,24 @@ static bool fanotify_mark_update_flags(struct fsnotify_mark *fsn_mark,
- 				       unsigned int fan_flags)
- {
- 	bool want_iref = !(fan_flags & FAN_MARK_EVICTABLE);
-+	unsigned int ignore = fan_flags & FANOTIFY_MARK_IGNORE_BITS;
- 	bool recalc = false;
+-		fsn_mark->ignored_mask &= ~mask;
++		fsn_mark->ignore_mask &= ~mask;
+ 	}
+ 	newmask = fsnotify_calc_mask(fsn_mark);
+ 	/*
+@@ -1021,7 +1021,7 @@ static __u32 fanotify_mark_remove_from_mask(struct fsnotify_mark *fsn_mark,
+ 	 * changes to the mask.
+ 	 * Destroy mark when only umask bits remain.
+ 	 */
+-	*destroy = !((fsn_mark->mask | fsn_mark->ignored_mask) & ~umask);
++	*destroy = !((fsn_mark->mask | fsn_mark->ignore_mask) & ~umask);
+ 	spin_unlock(&fsn_mark->lock);
  
-+	/*
-+	 * When using FAN_MARK_IGNORE for the first time, mark starts using
-+	 * independent event flags in ignore mask.  After that, trying to
-+	 * update the ignore mask with the old FAN_MARK_IGNORED_MASK API
-+	 * will result in EEXIST error.
-+	 */
-+	if (ignore == FAN_MARK_IGNORE)
-+		fsn_mark->flags |= FSNOTIFY_MARK_FLAG_IGNORE_FLAGS;
-+
+ 	return oldmask & ~newmask;
+@@ -1090,7 +1090,7 @@ static bool fanotify_mark_update_flags(struct fsnotify_mark *fsn_mark,
  	/*
  	 * Setting FAN_MARK_IGNORED_SURV_MODIFY for the first time may lead to
  	 * the removal of the FS_MODIFY bit in calculated mask if it was set
- 	 * because of an ignore mask that is now going to survive FS_MODIFY.
+-	 * because of an ignored mask that is now going to survive FS_MODIFY.
++	 * because of an ignore mask that is now going to survive FS_MODIFY.
  	 */
--	if ((fan_flags & FAN_MARK_IGNORED_MASK) &&
--	    (fan_flags & FAN_MARK_IGNORED_SURV_MODIFY) &&
-+	if (ignore && (fan_flags & FAN_MARK_IGNORED_SURV_MODIFY) &&
- 	    !(fsn_mark->flags & FSNOTIFY_MARK_FLAG_IGNORED_SURV_MODIFY)) {
- 		fsn_mark->flags |= FSNOTIFY_MARK_FLAG_IGNORED_SURV_MODIFY;
- 		if (!(fsn_mark->mask & FS_MODIFY))
-@@ -1120,7 +1129,7 @@ static bool fanotify_mark_add_to_mask(struct fsnotify_mark *fsn_mark,
- 	bool recalc;
- 
- 	spin_lock(&fsn_mark->lock);
--	if (!(fan_flags & FAN_MARK_IGNORED_MASK))
-+	if (!(fan_flags & FANOTIFY_MARK_IGNORE_BITS))
+ 	if ((fan_flags & FAN_MARK_IGNORED_MASK) &&
+ 	    (fan_flags & FAN_MARK_IGNORED_SURV_MODIFY) &&
+@@ -1123,7 +1123,7 @@ static bool fanotify_mark_add_to_mask(struct fsnotify_mark *fsn_mark,
+ 	if (!(fan_flags & FAN_MARK_IGNORED_MASK))
  		fsn_mark->mask |= mask;
  	else
- 		fsn_mark->ignore_mask |= mask;
-@@ -1197,6 +1206,24 @@ static int fanotify_may_update_existing_mark(struct fsnotify_mark *fsn_mark,
- 	    !(fsn_mark->flags & FSNOTIFY_MARK_FLAG_NO_IREF))
- 		return -EEXIST;
+-		fsn_mark->ignored_mask |= mask;
++		fsn_mark->ignore_mask |= mask;
  
-+	/*
-+	 * New ignore mask semantics cannot be downgraded to old semantics.
-+	 */
-+	if (fan_flags & FAN_MARK_IGNORED_MASK &&
-+	    fsn_mark->flags & FSNOTIFY_MARK_FLAG_IGNORE_FLAGS)
-+		return -EEXIST;
-+
-+	/*
-+	 * An ignore mask that survives modify could never be downgraded to not
-+	 * survive modify.  With new FAN_MARK_IGNORE semantics we make that rule
-+	 * explicit and return an error when trying to update the ignore mask
-+	 * without the original FAN_MARK_IGNORED_SURV_MODIFY value.
-+	 */
-+	if (fan_flags & FAN_MARK_IGNORE &&
-+	    !(fan_flags & FAN_MARK_IGNORED_SURV_MODIFY) &&
-+	    fsn_mark->flags & FSNOTIFY_MARK_FLAG_IGNORED_SURV_MODIFY)
-+		return -EEXIST;
-+
- 	return 0;
- }
- 
-@@ -1231,7 +1258,8 @@ static int fanotify_add_mark(struct fsnotify_group *group,
- 	 * Error events are pre-allocated per group, only if strictly
- 	 * needed (i.e. FAN_FS_ERROR was requested).
- 	 */
--	if (!(fan_flags & FAN_MARK_IGNORED_MASK) && (mask & FAN_FS_ERROR)) {
-+	if (!(fan_flags & FANOTIFY_MARK_IGNORE_BITS) &&
-+	    (mask & FAN_FS_ERROR)) {
- 		ret = fanotify_group_init_error_pool(group);
- 		if (ret)
- 			goto out;
-@@ -1275,7 +1303,7 @@ static int fanotify_add_inode_mark(struct fsnotify_group *group,
- 	 * an ignore mask, unless that ignore mask is supposed to survive
- 	 * modification changes anyway.
- 	 */
--	if ((flags & FAN_MARK_IGNORED_MASK) &&
-+	if ((flags & FANOTIFY_MARK_IGNORE_BITS) &&
- 	    !(flags & FAN_MARK_IGNORED_SURV_MODIFY) &&
- 	    inode_is_open_for_write(inode))
- 		return 0;
-@@ -1531,7 +1559,8 @@ static int fanotify_events_supported(struct fsnotify_group *group,
- 	unsigned int mark_type = flags & FANOTIFY_MARK_TYPE_BITS;
- 	/* Strict validation of events in non-dir inode mask with v5.17+ APIs */
- 	bool strict_dir_events = FAN_GROUP_FLAG(group, FAN_REPORT_TARGET_FID) ||
--				 (mask & FAN_RENAME);
-+				 (mask & FAN_RENAME) ||
-+				 (flags & FAN_MARK_IGNORE);
+ 	recalc = fsnotify_calc_mask(fsn_mark) &
+ 		~fsnotify_conn_mask(fsn_mark->connector);
+@@ -1261,7 +1261,7 @@ static int fanotify_add_inode_mark(struct fsnotify_group *group,
  
  	/*
- 	 * Some filesystems such as 'proc' acquire unusual locks when opening
-@@ -1569,7 +1598,7 @@ static int do_fanotify_mark(int fanotify_fd, unsigned int flags, __u64 mask,
+ 	 * If some other task has this inode open for write we should not add
+-	 * an ignored mark, unless that ignored mark is supposed to survive
++	 * an ignore mask, unless that ignore mask is supposed to survive
+ 	 * modification changes anyway.
+ 	 */
+ 	if ((flags & FAN_MARK_IGNORED_MASK) &&
+@@ -1557,7 +1557,7 @@ static int do_fanotify_mark(int fanotify_fd, unsigned int flags, __u64 mask,
+ 	__kernel_fsid_t __fsid, *fsid = NULL;
  	u32 valid_mask = FANOTIFY_EVENTS | FANOTIFY_EVENT_FLAGS;
  	unsigned int mark_type = flags & FANOTIFY_MARK_TYPE_BITS;
- 	unsigned int mark_cmd = flags & FANOTIFY_MARK_CMD_BITS;
--	bool ignore = flags & FAN_MARK_IGNORED_MASK;
-+	unsigned int ignore = flags & FANOTIFY_MARK_IGNORE_BITS;
+-	bool ignored = flags & FAN_MARK_IGNORED_MASK;
++	bool ignore = flags & FAN_MARK_IGNORED_MASK;
  	unsigned int obj_type, fid_mode;
  	u32 umask = 0;
  	int ret;
-@@ -1618,12 +1647,19 @@ static int do_fanotify_mark(int fanotify_fd, unsigned int flags, __u64 mask,
+@@ -1606,8 +1606,11 @@ static int do_fanotify_mark(int fanotify_fd, unsigned int flags, __u64 mask,
  	if (mask & ~valid_mask)
  		return -EINVAL;
  
-+
-+	/* We don't allow FAN_MARK_IGNORE & FAN_MARK_IGNORED_MASK together */
-+	if (ignore == (FAN_MARK_IGNORE | FAN_MARK_IGNORED_MASK))
-+		return -EINVAL;
-+
- 	/*
- 	 * Event flags (FAN_ONDIR, FAN_EVENT_ON_CHILD) have no effect with
- 	 * FAN_MARK_IGNORED_MASK.
- 	 */
--	if (ignore)
-+	if (ignore == FAN_MARK_IGNORED_MASK) {
+-	/* Event flags (ONDIR, ON_CHILD) are meaningless in ignored mask */
+-	if (ignored)
++	/*
++	 * Event flags (FAN_ONDIR, FAN_EVENT_ON_CHILD) have no effect with
++	 * FAN_MARK_IGNORED_MASK.
++	 */
++	if (ignore)
  		mask &= ~FANOTIFY_EVENT_FLAGS;
-+		umask = FANOTIFY_EVENT_FLAGS;
-+	}
  
  	f = fdget(fanotify_fd);
- 	if (unlikely(!f.file))
-@@ -1727,6 +1763,13 @@ static int do_fanotify_mark(int fanotify_fd, unsigned int flags, __u64 mask,
- 	else
- 		mnt = path.mnt;
+@@ -1721,7 +1724,7 @@ static int do_fanotify_mark(int fanotify_fd, unsigned int flags, __u64 mask,
+ 		 * events with parent/name info for non-directory.
+ 		 */
+ 		if ((fid_mode & FAN_REPORT_DIR_FID) &&
+-		    (flags & FAN_MARK_ADD) && !ignored)
++		    (flags & FAN_MARK_ADD) && !ignore)
+ 			mask |= FAN_EVENT_ON_CHILD;
+ 	}
  
-+	ret = mnt ? -EINVAL : -EISDIR;
-+	/* FAN_MARK_IGNORE requires SURV_MODIFY for sb/mount/dir marks */
-+	if (mark_cmd == FAN_MARK_ADD && ignore == FAN_MARK_IGNORE &&
-+	    (mnt || S_ISDIR(inode->i_mode)) &&
-+	    !(flags & FAN_MARK_IGNORED_SURV_MODIFY))
-+		goto path_put_and_out;
-+
- 	/* Mask out FAN_EVENT_ON_CHILD flag for sb/mount/non-dir marks */
- 	if (mnt || !S_ISDIR(inode->i_mode)) {
- 		mask &= ~FAN_EVENT_ON_CHILD;
-@@ -1819,7 +1862,7 @@ static int __init fanotify_user_setup(void)
+diff --git a/fs/notify/fdinfo.c b/fs/notify/fdinfo.c
+index 59fb40abe33d..55081ae3a6ec 100644
+--- a/fs/notify/fdinfo.c
++++ b/fs/notify/fdinfo.c
+@@ -113,7 +113,7 @@ static void fanotify_fdinfo(struct seq_file *m, struct fsnotify_mark *mark)
+ 			return;
+ 		seq_printf(m, "fanotify ino:%lx sdev:%x mflags:%x mask:%x ignored_mask:%x ",
+ 			   inode->i_ino, inode->i_sb->s_dev,
+-			   mflags, mark->mask, mark->ignored_mask);
++			   mflags, mark->mask, mark->ignore_mask);
+ 		show_mark_fhandle(m, inode);
+ 		seq_putc(m, '\n');
+ 		iput(inode);
+@@ -121,12 +121,12 @@ static void fanotify_fdinfo(struct seq_file *m, struct fsnotify_mark *mark)
+ 		struct mount *mnt = fsnotify_conn_mount(mark->connector);
  
- 	BUILD_BUG_ON(FANOTIFY_INIT_FLAGS & FANOTIFY_INTERNAL_GROUP_FLAGS);
- 	BUILD_BUG_ON(HWEIGHT32(FANOTIFY_INIT_FLAGS) != 12);
--	BUILD_BUG_ON(HWEIGHT32(FANOTIFY_MARK_FLAGS) != 10);
-+	BUILD_BUG_ON(HWEIGHT32(FANOTIFY_MARK_FLAGS) != 11);
+ 		seq_printf(m, "fanotify mnt_id:%x mflags:%x mask:%x ignored_mask:%x\n",
+-			   mnt->mnt_id, mflags, mark->mask, mark->ignored_mask);
++			   mnt->mnt_id, mflags, mark->mask, mark->ignore_mask);
+ 	} else if (mark->connector->type == FSNOTIFY_OBJ_TYPE_SB) {
+ 		struct super_block *sb = fsnotify_conn_sb(mark->connector);
  
- 	fanotify_mark_cache = KMEM_CACHE(fsnotify_mark,
- 					 SLAB_PANIC|SLAB_ACCOUNT);
-diff --git a/include/linux/fanotify.h b/include/linux/fanotify.h
-index a7207f092fd1..8ad743def6f3 100644
---- a/include/linux/fanotify.h
-+++ b/include/linux/fanotify.h
-@@ -62,11 +62,14 @@
- #define FANOTIFY_MARK_CMD_BITS	(FAN_MARK_ADD | FAN_MARK_REMOVE | \
- 				 FAN_MARK_FLUSH)
+ 		seq_printf(m, "fanotify sdev:%x mflags:%x mask:%x ignored_mask:%x\n",
+-			   sb->s_dev, mflags, mark->mask, mark->ignored_mask);
++			   sb->s_dev, mflags, mark->mask, mark->ignore_mask);
+ 	}
+ }
  
-+#define FANOTIFY_MARK_IGNORE_BITS (FAN_MARK_IGNORED_MASK | \
-+				   FAN_MARK_IGNORE)
-+
- #define FANOTIFY_MARK_FLAGS	(FANOTIFY_MARK_TYPE_BITS | \
- 				 FANOTIFY_MARK_CMD_BITS | \
-+				 FANOTIFY_MARK_IGNORE_BITS | \
- 				 FAN_MARK_DONT_FOLLOW | \
- 				 FAN_MARK_ONLYDIR | \
--				 FAN_MARK_IGNORED_MASK | \
- 				 FAN_MARK_IGNORED_SURV_MODIFY | \
- 				 FAN_MARK_EVICTABLE)
+diff --git a/fs/notify/fsnotify.c b/fs/notify/fsnotify.c
+index 0b3e74935cb4..8687562df2e3 100644
+--- a/fs/notify/fsnotify.c
++++ b/fs/notify/fsnotify.c
+@@ -324,7 +324,8 @@ static int send_to_group(__u32 mask, const void *data, int data_type,
+ 	struct fsnotify_group *group = NULL;
+ 	__u32 test_mask = (mask & ALL_FSNOTIFY_EVENTS);
+ 	__u32 marks_mask = 0;
+-	__u32 marks_ignored_mask = 0;
++	__u32 marks_ignore_mask = 0;
++	bool is_dir = mask & FS_ISDIR;
+ 	struct fsnotify_mark *mark;
+ 	int type;
  
-diff --git a/include/uapi/linux/fanotify.h b/include/uapi/linux/fanotify.h
-index f1f89132d60e..d8536d77fea1 100644
---- a/include/uapi/linux/fanotify.h
-+++ b/include/uapi/linux/fanotify.h
-@@ -83,12 +83,20 @@
- #define FAN_MARK_FLUSH		0x00000080
- /* FAN_MARK_FILESYSTEM is	0x00000100 */
- #define FAN_MARK_EVICTABLE	0x00000200
-+/* This bit is mutually exclusive with FAN_MARK_IGNORED_MASK bit */
-+#define FAN_MARK_IGNORE		0x00000400
+@@ -336,7 +337,7 @@ static int send_to_group(__u32 mask, const void *data, int data_type,
+ 		fsnotify_foreach_iter_mark_type(iter_info, mark, type) {
+ 			if (!(mark->flags &
+ 			      FSNOTIFY_MARK_FLAG_IGNORED_SURV_MODIFY))
+-				mark->ignored_mask = 0;
++				mark->ignore_mask = 0;
+ 		}
+ 	}
  
- /* These are NOT bitwise flags.  Both bits can be used togther.  */
- #define FAN_MARK_INODE		0x00000000
- #define FAN_MARK_MOUNT		0x00000010
- #define FAN_MARK_FILESYSTEM	0x00000100
+@@ -344,14 +345,15 @@ static int send_to_group(__u32 mask, const void *data, int data_type,
+ 	fsnotify_foreach_iter_mark_type(iter_info, mark, type) {
+ 		group = mark->group;
+ 		marks_mask |= mark->mask;
+-		marks_ignored_mask |= mark->ignored_mask;
++		marks_ignore_mask |=
++			fsnotify_effective_ignore_mask(mark, is_dir, type);
+ 	}
  
+-	pr_debug("%s: group=%p mask=%x marks_mask=%x marks_ignored_mask=%x data=%p data_type=%d dir=%p cookie=%d\n",
+-		 __func__, group, mask, marks_mask, marks_ignored_mask,
++	pr_debug("%s: group=%p mask=%x marks_mask=%x marks_ignore_mask=%x data=%p data_type=%d dir=%p cookie=%d\n",
++		 __func__, group, mask, marks_mask, marks_ignore_mask,
+ 		 data, data_type, dir, cookie);
+ 
+-	if (!(test_mask & marks_mask & ~marks_ignored_mask))
++	if (!(test_mask & marks_mask & ~marks_ignore_mask))
+ 		return 0;
+ 
+ 	if (group->ops->handle_event) {
+@@ -423,7 +425,8 @@ static bool fsnotify_iter_select_report_types(
+ 			 * But is *this mark* watching children?
+ 			 */
+ 			if (type == FSNOTIFY_ITER_TYPE_PARENT &&
+-			    !(mark->mask & FS_EVENT_ON_CHILD))
++			    !(mark->mask & FS_EVENT_ON_CHILD) &&
++			    !(fsnotify_ignore_mask(mark) & FS_EVENT_ON_CHILD))
+ 				continue;
+ 
+ 			fsnotify_iter_set_report_type(iter_info, type);
+@@ -532,8 +535,8 @@ int fsnotify(__u32 mask, const void *data, int data_type, struct inode *dir,
+ 
+ 
+ 	/*
+-	 * If this is a modify event we may need to clear some ignored masks.
+-	 * In that case, the object with ignored masks will have the FS_MODIFY
++	 * If this is a modify event we may need to clear some ignore masks.
++	 * In that case, the object with ignore masks will have the FS_MODIFY
+ 	 * event in its mask.
+ 	 * Otherwise, return if none of the marks care about this type of event.
+ 	 */
+diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
+index 9560734759fa..a7d605d49a84 100644
+--- a/include/linux/fsnotify_backend.h
++++ b/include/linux/fsnotify_backend.h
+@@ -518,8 +518,8 @@ struct fsnotify_mark {
+ 	struct hlist_node obj_list;
+ 	/* Head of list of marks for an object [mark ref] */
+ 	struct fsnotify_mark_connector *connector;
+-	/* Events types to ignore [mark->lock, group->mark_mutex] */
+-	__u32 ignored_mask;
++	/* Events types and flags to ignore [mark->lock, group->mark_mutex] */
++	__u32 ignore_mask;
+ 	/* General fsnotify mark flags */
+ #define FSNOTIFY_MARK_FLAG_ALIVE		0x0001
+ #define FSNOTIFY_MARK_FLAG_ATTACHED		0x0002
+@@ -529,6 +529,7 @@ struct fsnotify_mark {
+ 	/* fanotify mark flags */
+ #define FSNOTIFY_MARK_FLAG_IGNORED_SURV_MODIFY	0x0100
+ #define FSNOTIFY_MARK_FLAG_NO_IREF		0x0200
++#define FSNOTIFY_MARK_FLAG_IGNORE_FLAGS		0x0400
+ 	unsigned int flags;		/* flags [mark->lock] */
+ };
+ 
+@@ -655,15 +656,91 @@ extern void fsnotify_remove_queued_event(struct fsnotify_group *group,
+ 
+ /* functions used to manipulate the marks attached to inodes */
+ 
+-/* Get mask for calculating object interest taking ignored mask into account */
 +/*
-+ * Convenience macro - FAN_MARK_IGNORE requires FAN_MARK_IGNORED_SURV_MODIFY
-+ * for non-inode mark types.
++ * Canonical "ignore mask" including event flags.
++ *
++ * Note the subtle semantic difference from the legacy ->ignored_mask.
++ * ->ignored_mask traditionally only meant which events should be ignored,
++ * while ->ignore_mask also includes flags regarding the type of objects on
++ * which events should be ignored.
 + */
-+#define FAN_MARK_IGNORE_SURV	(FAN_MARK_IGNORE | FAN_MARK_IGNORED_SURV_MODIFY)
++static inline __u32 fsnotify_ignore_mask(struct fsnotify_mark *mark)
++{
++	__u32 ignore_mask = mark->ignore_mask;
 +
- /* Deprecated - do not use this in programs and do not add new flags here! */
- #define FAN_ALL_MARK_FLAGS	(FAN_MARK_ADD |\
- 				 FAN_MARK_REMOVE |\
++	/* The event flags in ignore mask take effect */
++	if (mark->flags & FSNOTIFY_MARK_FLAG_IGNORE_FLAGS)
++		return ignore_mask;
++
++	/*
++	 * Legacy behavior:
++	 * - Always ignore events on dir
++	 * - Ignore events on child if parent is watching children
++	 */
++	ignore_mask |= FS_ISDIR;
++	ignore_mask &= ~FS_EVENT_ON_CHILD;
++	ignore_mask |= mark->mask & FS_EVENT_ON_CHILD;
++
++	return ignore_mask;
++}
++
++/* Legacy ignored_mask - only event types to ignore */
++static inline __u32 fsnotify_ignored_events(struct fsnotify_mark *mark)
++{
++	return mark->ignore_mask & ALL_FSNOTIFY_EVENTS;
++}
++
++/*
++ * Check if mask (or ignore mask) should be applied depending if victim is a
++ * directory and whether it is reported to a watching parent.
++ */
++static inline bool fsnotify_mask_applicable(__u32 mask, bool is_dir,
++					    int iter_type)
++{
++	/* Should mask be applied to a directory? */
++	if (is_dir && !(mask & FS_ISDIR))
++		return false;
++
++	/* Should mask be applied to a child? */
++	if (iter_type == FSNOTIFY_ITER_TYPE_PARENT &&
++	    !(mask & FS_EVENT_ON_CHILD))
++		return false;
++
++	return true;
++}
++
++/*
++ * Effective ignore mask taking into account if event victim is a
++ * directory and whether it is reported to a watching parent.
++ */
++static inline __u32 fsnotify_effective_ignore_mask(struct fsnotify_mark *mark,
++						   bool is_dir, int iter_type)
++{
++	__u32 ignore_mask = fsnotify_ignored_events(mark);
++
++	if (!ignore_mask)
++		return 0;
++
++	/* For non-dir and non-child, no need to consult the event flags */
++	if (!is_dir && iter_type != FSNOTIFY_ITER_TYPE_PARENT)
++		return ignore_mask;
++
++	ignore_mask = fsnotify_ignore_mask(mark);
++	if (!fsnotify_mask_applicable(ignore_mask, is_dir, iter_type))
++		return 0;
++
++	return ignore_mask & ALL_FSNOTIFY_EVENTS;
++}
++
++/* Get mask for calculating object interest taking ignore mask into account */
+ static inline __u32 fsnotify_calc_mask(struct fsnotify_mark *mark)
+ {
+ 	__u32 mask = mark->mask;
+ 
+-	if (!mark->ignored_mask)
++	if (!fsnotify_ignored_events(mark))
+ 		return mask;
+ 
+-	/* Interest in FS_MODIFY may be needed for clearing ignored mask */
++	/* Interest in FS_MODIFY may be needed for clearing ignore mask */
+ 	if (!(mark->flags & FSNOTIFY_MARK_FLAG_IGNORED_SURV_MODIFY))
+ 		mask |= FS_MODIFY;
+ 
+@@ -671,7 +748,7 @@ static inline __u32 fsnotify_calc_mask(struct fsnotify_mark *mark)
+ 	 * If mark is interested in ignoring events on children, the object must
+ 	 * show interest in those events for fsnotify_parent() to notice it.
+ 	 */
+-	return mask | (mark->ignored_mask & ALL_FSNOTIFY_EVENTS);
++	return mask | mark->ignore_mask;
+ }
+ 
+ /* Get mask of events for a list of marks */
 -- 
 2.25.1
 
