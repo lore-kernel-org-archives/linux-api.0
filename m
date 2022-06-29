@@ -2,122 +2,189 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DCD6BC433EF
-	for <linux-api@archiver.kernel.org>; Wed, 29 Jun 2022 10:09:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A6A12C43334
+	for <linux-api@archiver.kernel.org>; Wed, 29 Jun 2022 14:42:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230140AbiF2KJ2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 29 Jun 2022 06:09:28 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53382 "EHLO
+        id S231230AbiF2OmZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 29 Jun 2022 10:42:25 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47834 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229777AbiF2KJ1 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 29 Jun 2022 06:09:27 -0400
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CDF541CFEE;
-        Wed, 29 Jun 2022 03:09:26 -0700 (PDT)
-Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
-        by smtp-out1.suse.de (Postfix) with ESMTP id 1D6682204C;
-        Wed, 29 Jun 2022 10:09:25 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-        t=1656497365; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=8J44nym0dyAwhq0nK9KESAeqsoUvdq6frY1Sy5q0KXY=;
-        b=es7UlIf0YzuDdbIxxkXpikEX5FuSqSRf6SojQOYd8mlxGQZzFxVVbvMXzq/gAaczeiXJua
-        zfKr9pGLpbM/vScb5BZ7n2XMlhLM9KquysmOGix3AM3ZmiDGdoKSYXu+hyzLyzfH3P37P5
-        fPphRTDaPhRSznUWXRV33T9ln6IxjCA=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-        s=susede2_ed25519; t=1656497365;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=8J44nym0dyAwhq0nK9KESAeqsoUvdq6frY1Sy5q0KXY=;
-        b=QkuDbnfLwxWgqszpioFQvKlwPdGRVXj7xGeYoqPeu7NYGryzUsxIXemzFbgWsPKY/hL+AO
-        KnOtHw+A7SXGhVCw==
-Received: from quack3.suse.cz (unknown [10.100.224.230])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by relay2.suse.de (Postfix) with ESMTPS id 096CD2C141;
-        Wed, 29 Jun 2022 10:09:25 +0000 (UTC)
-Received: by quack3.suse.cz (Postfix, from userid 1000)
-        id B4C71A062F; Wed, 29 Jun 2022 12:09:24 +0200 (CEST)
-Date:   Wed, 29 Jun 2022 12:09:24 +0200
-From:   Jan Kara <jack@suse.cz>
-To:     Amir Goldstein <amir73il@gmail.com>
-Cc:     Jan Kara <jack@suse.cz>, Matthew Bobrowski <repnop@google.com>,
-        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>
-Subject: Re: [PATCH] fanotify: refine the validation checks on non-dir inode
- mask
-Message-ID: <20220629100924.kvr6rbaanudmennh@quack3>
-References: <20220627174719.2838175-1-amir73il@gmail.com>
- <20220628092725.mfwvdu4sk72jov5x@quack3>
- <CAOQ4uxj4EFTrMHfVY=wFt9aAJakNVQA6_Vq-y-b7yvB0tEDsiQ@mail.gmail.com>
+        with ESMTP id S233575AbiF2OmV (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 29 Jun 2022 10:42:21 -0400
+Received: from mail-wr1-x42a.google.com (mail-wr1-x42a.google.com [IPv6:2a00:1450:4864:20::42a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 371C239148;
+        Wed, 29 Jun 2022 07:42:20 -0700 (PDT)
+Received: by mail-wr1-x42a.google.com with SMTP id n1so22788359wrg.12;
+        Wed, 29 Jun 2022 07:42:20 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=qTefUEs3d/k59ba09os1wAXR8cwC15Sw8uQiUoB441k=;
+        b=KwJQvL5kQPgTYdiy0m8WHjtFF2Tz1mBsMU1r0iKWYqWVIlsEi6jUwXwIMnNbgexhxz
+         n9BqIMjK7FX16lr2F0QJKVAapYPY9LWy4jUwaj0vV19T/KX6MLTRqvxMe7eTwZVH9egP
+         kahMsN4jhGxkZskf0xBYf2PZznuKePs1vBd3s/qoYfW4ZtzWfdETfvbspPrZLP/cFtdU
+         4nU2qY0QpvUK/2kyeiORtfQvqBmvh+b3Pv1LQQCkVhHXrymD9FWjnD8uP2f3oI7AnTf7
+         ZkfiniQXZhRVkZDyMkcv2OFjP4GK2AIbP0k8s910IoHlPGwdVzWyidohzBgTEHAty6UY
+         rgSg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=qTefUEs3d/k59ba09os1wAXR8cwC15Sw8uQiUoB441k=;
+        b=6kiEENdaFj5WVslV9gTgEBXyE0Hmc3265pC84/3PV6ZeYiP/xrQVFeUGu6HCBserhM
+         1rEBqXoXJphRboIrH/tBSj8kETxRfxd2kVQmDhG2SdrvYANrk8ysjfBqHVOtlDIpStWf
+         dTa5Tqq1bYo7Spaz9ae4qtkD23EF2rdvx1Q2X1UivmgrtTMGMao1ubnl0Kj+COtw4AVX
+         Ztyzs3YoFZHhciLL0PZEXGGMFUhGr4aiokbwYRSTo/klDkU9UJAvcf0gdMzY1/s6LBms
+         KztD4VXEQbCqP2bcFLRjUb3LRKJ0zKq2J25BIbZZIJ05j7R7uQQZWj4t+uSD4RyenaHe
+         nULQ==
+X-Gm-Message-State: AJIora9zHHpBsnBjffhCgcEBu5jPTndoLWzAt6QZ0ScHZ05o0mfSyo8S
+        J8VhH6Vp9Kjkg6VMEAQcRY0=
+X-Google-Smtp-Source: AGRyM1tKVomHmnUnX3b1kDYrcRCMpchb825hVHSHILW306Daeb6jwO5GaamNzOBzKfT7Pq+Waw00mQ==
+X-Received: by 2002:a05:6000:3c6:b0:21b:9d00:db29 with SMTP id b6-20020a05600003c600b0021b9d00db29mr3641748wrg.338.1656513738694;
+        Wed, 29 Jun 2022 07:42:18 -0700 (PDT)
+Received: from localhost.localdomain ([77.137.66.49])
+        by smtp.gmail.com with ESMTPSA id e17-20020a05600c4e5100b0039c747a1e8fsm3562085wmq.7.2022.06.29.07.42.17
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 29 Jun 2022 07:42:18 -0700 (PDT)
+From:   Amir Goldstein <amir73il@gmail.com>
+To:     Jan Kara <jack@suse.cz>
+Cc:     Matthew Bobrowski <repnop@google.com>,
+        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
+Subject: [PATCH v3 2/3] fanotify: cleanups for fanotify_mark() input validations
+Date:   Wed, 29 Jun 2022 17:42:09 +0300
+Message-Id: <20220629144210.2983229-3-amir73il@gmail.com>
+X-Mailer: git-send-email 2.25.1
+In-Reply-To: <20220629144210.2983229-1-amir73il@gmail.com>
+References: <20220629144210.2983229-1-amir73il@gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <CAOQ4uxj4EFTrMHfVY=wFt9aAJakNVQA6_Vq-y-b7yvB0tEDsiQ@mail.gmail.com>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue 28-06-22 20:22:28, Amir Goldstein wrote:
-> On Tue, Jun 28, 2022 at 12:27 PM Jan Kara <jack@suse.cz> wrote:
-> >
-> > On Mon 27-06-22 20:47:19, Amir Goldstein wrote:
-> > > Commit ceaf69f8eadc ("fanotify: do not allow setting dirent events in
-> > > mask of non-dir") added restrictions about setting dirent events in the
-> > > mask of a non-dir inode mark, which does not make any sense.
-> > >
-> > > For backward compatibility, these restictions were added only to new
-> > > (v5.17+) APIs.
-> > >
-> > > It also does not make any sense to set the flags FAN_EVENT_ON_CHILD or
-> > > FAN_ONDIR in the mask of a non-dir inode.  Add these flags to the
-> > > dir-only restriction of the new APIs as well.
-> > >
-> > > Move the check of the dir-only flags for new APIs into the helper
-> > > fanotify_events_supported(), which is only called for FAN_MARK_ADD,
-> > > because there is no need to error on an attempt to remove the dir-only
-> > > flags from non-dir inode.
-> > >
-> > > Fixes: ceaf69f8eadc ("fanotify: do not allow setting dirent events in mask of non-dir")
-> > > Link: https://lore.kernel.org/linux-fsdevel/20220627113224.kr2725conevh53u4@quack3.lan/
-> > > Signed-off-by: Amir Goldstein <amir73il@gmail.com>
-> >
-> > Thanks! I've taken the patch to my tree.
-> >
-> >                                                                 Honza
-> >
-> > > [1] https://github.com/amir73il/ltp/commits/fan_enotdir
-> > > [2] https://github.com/amir73il/man-pages/commits/fanotify_target_fid
-> 
-> Mathew and Jan,
-> 
-> Please let me know if I can keep your RVB on the man page patch for
-> FAN_REPORT_TARGET_FID linked above.
-> 
-> The only change is an update to the ENOTDIR section which ends up like this:
-> 
->        ENOTDIR
->               flags contains FAN_MARK_ONLYDIR, and dirfd and pathname
-> do not specify a directory.
-> 
->        ENOTDIR
->               mask contains FAN_RENAME, and dirfd and pathname do not
-> specify a directory.
-> 
->        ENOTDIR
->               flags  contains FAN_MARK_IGNORE, or the fanotify group
-> was initialized with
->               flag FAN_REPORT_TARGET_FID, and mask contains directory
-> entry modification
->               events (e.g., FAN_CREATE, FAN_DELETE), or directory event flags
->               (e.g., FAN_ONDIR, FAN_EVENT_ON_CHILD),
->               and dirfd and pathname do not specify a directory.
+Create helper fanotify_may_update_existing_mark() for checking for
+conflicts between existing mark flags and fanotify_mark() flags.
 
-Looks good to me. Thanks!
+Use variable mark_cmd to make the checks for mark command bits
+cleaner.
 
-								Honza
+Signed-off-by: Amir Goldstein <amir73il@gmail.com>
+---
+ fs/notify/fanotify/fanotify_user.c | 30 +++++++++++++++++++++---------
+ include/linux/fanotify.h           |  9 +++++----
+ 2 files changed, 26 insertions(+), 13 deletions(-)
+
+diff --git a/fs/notify/fanotify/fanotify_user.c b/fs/notify/fanotify/fanotify_user.c
+index a9eea037fee9..6781d46cd37c 100644
+--- a/fs/notify/fanotify/fanotify_user.c
++++ b/fs/notify/fanotify/fanotify_user.c
+@@ -1187,6 +1187,19 @@ static int fanotify_group_init_error_pool(struct fsnotify_group *group)
+ 					 sizeof(struct fanotify_error_event));
+ }
+ 
++static int fanotify_may_update_existing_mark(struct fsnotify_mark *fsn_mark,
++					      unsigned int fan_flags)
++{
++	/*
++	 * Non evictable mark cannot be downgraded to evictable mark.
++	 */
++	if (fan_flags & FAN_MARK_EVICTABLE &&
++	    !(fsn_mark->flags & FSNOTIFY_MARK_FLAG_NO_IREF))
++		return -EEXIST;
++
++	return 0;
++}
++
+ static int fanotify_add_mark(struct fsnotify_group *group,
+ 			     fsnotify_connp_t *connp, unsigned int obj_type,
+ 			     __u32 mask, unsigned int fan_flags,
+@@ -1208,13 +1221,11 @@ static int fanotify_add_mark(struct fsnotify_group *group,
+ 	}
+ 
+ 	/*
+-	 * Non evictable mark cannot be downgraded to evictable mark.
++	 * Check if requested mark flags conflict with an existing mark flags.
+ 	 */
+-	if (fan_flags & FAN_MARK_EVICTABLE &&
+-	    !(fsn_mark->flags & FSNOTIFY_MARK_FLAG_NO_IREF)) {
+-		ret = -EEXIST;
++	ret = fanotify_may_update_existing_mark(fsn_mark, fan_flags);
++	if (ret)
+ 		goto out;
+-	}
+ 
+ 	/*
+ 	 * Error events are pre-allocated per group, only if strictly
+@@ -1557,6 +1568,7 @@ static int do_fanotify_mark(int fanotify_fd, unsigned int flags, __u64 mask,
+ 	__kernel_fsid_t __fsid, *fsid = NULL;
+ 	u32 valid_mask = FANOTIFY_EVENTS | FANOTIFY_EVENT_FLAGS;
+ 	unsigned int mark_type = flags & FANOTIFY_MARK_TYPE_BITS;
++	unsigned int mark_cmd = flags & FANOTIFY_MARK_CMD_BITS;
+ 	bool ignore = flags & FAN_MARK_IGNORED_MASK;
+ 	unsigned int obj_type, fid_mode;
+ 	u32 umask = 0;
+@@ -1586,7 +1598,7 @@ static int do_fanotify_mark(int fanotify_fd, unsigned int flags, __u64 mask,
+ 		return -EINVAL;
+ 	}
+ 
+-	switch (flags & (FAN_MARK_ADD | FAN_MARK_REMOVE | FAN_MARK_FLUSH)) {
++	switch (mark_cmd) {
+ 	case FAN_MARK_ADD:
+ 	case FAN_MARK_REMOVE:
+ 		if (!mask)
+@@ -1675,7 +1687,7 @@ static int do_fanotify_mark(int fanotify_fd, unsigned int flags, __u64 mask,
+ 	if (mask & FAN_RENAME && !(fid_mode & FAN_REPORT_NAME))
+ 		goto fput_and_out;
+ 
+-	if (flags & FAN_MARK_FLUSH) {
++	if (mark_cmd == FAN_MARK_FLUSH) {
+ 		ret = 0;
+ 		if (mark_type == FAN_MARK_MOUNT)
+ 			fsnotify_clear_vfsmount_marks_by_group(group);
+@@ -1691,7 +1703,7 @@ static int do_fanotify_mark(int fanotify_fd, unsigned int flags, __u64 mask,
+ 	if (ret)
+ 		goto fput_and_out;
+ 
+-	if (flags & FAN_MARK_ADD) {
++	if (mark_cmd == FAN_MARK_ADD) {
+ 		ret = fanotify_events_supported(group, &path, mask, flags);
+ 		if (ret)
+ 			goto path_put_and_out;
+@@ -1729,7 +1741,7 @@ static int do_fanotify_mark(int fanotify_fd, unsigned int flags, __u64 mask,
+ 	}
+ 
+ 	/* create/update an inode mark */
+-	switch (flags & (FAN_MARK_ADD | FAN_MARK_REMOVE)) {
++	switch (mark_cmd) {
+ 	case FAN_MARK_ADD:
+ 		if (mark_type == FAN_MARK_MOUNT)
+ 			ret = fanotify_add_vfsmount_mark(group, mnt, mask,
+diff --git a/include/linux/fanotify.h b/include/linux/fanotify.h
+index e517dbcf74ed..a7207f092fd1 100644
+--- a/include/linux/fanotify.h
++++ b/include/linux/fanotify.h
+@@ -59,15 +59,16 @@
+ #define FANOTIFY_MARK_TYPE_BITS	(FAN_MARK_INODE | FAN_MARK_MOUNT | \
+ 				 FAN_MARK_FILESYSTEM)
+ 
++#define FANOTIFY_MARK_CMD_BITS	(FAN_MARK_ADD | FAN_MARK_REMOVE | \
++				 FAN_MARK_FLUSH)
++
+ #define FANOTIFY_MARK_FLAGS	(FANOTIFY_MARK_TYPE_BITS | \
+-				 FAN_MARK_ADD | \
+-				 FAN_MARK_REMOVE | \
++				 FANOTIFY_MARK_CMD_BITS | \
+ 				 FAN_MARK_DONT_FOLLOW | \
+ 				 FAN_MARK_ONLYDIR | \
+ 				 FAN_MARK_IGNORED_MASK | \
+ 				 FAN_MARK_IGNORED_SURV_MODIFY | \
+-				 FAN_MARK_EVICTABLE | \
+-				 FAN_MARK_FLUSH)
++				 FAN_MARK_EVICTABLE)
+ 
+ /*
+  * Events that can be reported with data type FSNOTIFY_EVENT_PATH.
 -- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+2.25.1
+
