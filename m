@@ -2,42 +2,35 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 410B0C433EF
-	for <linux-api@archiver.kernel.org>; Mon, 18 Jul 2022 18:39:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5658CC43334
+	for <linux-api@archiver.kernel.org>; Tue, 19 Jul 2022 06:55:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235701AbiGRSjr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 18 Jul 2022 14:39:47 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40904 "EHLO
+        id S232255AbiGSGz4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 19 Jul 2022 02:55:56 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60736 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230451AbiGRSjr (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 18 Jul 2022 14:39:47 -0400
-X-Greylist: delayed 3601 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Mon, 18 Jul 2022 11:39:45 PDT
-Received: from esa3.mentor.iphmx.com (esa3.mentor.iphmx.com [68.232.137.180])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id ECD922CDF8
-        for <linux-api@vger.kernel.org>; Mon, 18 Jul 2022 11:39:45 -0700 (PDT)
-X-IronPort-AV: E=Sophos;i="5.92,281,1650960000"; 
-   d="scan'208";a="79810792"
-Received: from orw-gwy-01-in.mentorg.com ([192.94.38.165])
-  by esa3.mentor.iphmx.com with ESMTP; 18 Jul 2022 08:36:16 -0800
-IronPort-SDR: RTjfIgzc+dEN6kC/wiahZ34aDq4N/lz4wt2gOaf3gyvKgbBgy7GQpdrAGz0TSAiEUWi+ya5Unr
- gmkYsvQK+ohtMCEWFgUOpyY66f9X39W1vVK02qBI1H5onSYK75Pc/1vMoVCUJxGv33IMPq9bQ2
- oVXSpXODQ6Og1foDv+s8GFj50phjddzVPBJt2HR23rxJmXRZiaFdLlzC1jNdr2lwwmR5DNHLGX
- AK5/7yyQ++vhwU/PHSyXdo4u6nIwJuPb8F93oY3w+emM9L4h04z8oSkrSns1WQE8vNYUpZYkVK
- UJM=
-Message-ID: <032ade35-6eb8-d698-ac44-aa45d46752dd@mentor.com>
-Date:   Mon, 18 Jul 2022 17:36:06 +0100
-MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.11.0
-Subject: Re: [PATCH v4 0/3] initramfs: add support for xattrs in the initial
- ram disk
-Content-Language: en-GB
-To:     Eugeniu Rosca <erosca@de.adit-jv.com>,
-        Roberto Sassu <roberto.sassu@huawei.com>
+        with ESMTP id S230001AbiGSGzz (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Jul 2022 02:55:55 -0400
+Received: from frasgout.his.huawei.com (frasgout.his.huawei.com [185.176.79.56])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B045822BF4;
+        Mon, 18 Jul 2022 23:55:53 -0700 (PDT)
+Received: from fraeml702-chm.china.huawei.com (unknown [172.18.147.201])
+        by frasgout.his.huawei.com (SkyGuard) with ESMTP id 4Ln8f42K0Wz6J65C;
+        Tue, 19 Jul 2022 14:52:28 +0800 (CST)
+Received: from fraeml714-chm.china.huawei.com (10.206.15.33) by
+ fraeml702-chm.china.huawei.com (10.206.15.51) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id
+ 15.1.2375.24; Tue, 19 Jul 2022 08:55:50 +0200
+Received: from fraeml714-chm.china.huawei.com ([10.206.15.33]) by
+ fraeml714-chm.china.huawei.com ([10.206.15.33]) with mapi id 15.01.2375.024;
+ Tue, 19 Jul 2022 08:55:50 +0200
+From:   Roberto Sassu <roberto.sassu@huawei.com>
+To:     Jim Baxter <jim_baxter@mentor.com>,
+        Eugeniu Rosca <erosca@de.adit-jv.com>
 CC:     Rob Landley <rob@landley.net>, "hpa@zytor.com" <hpa@zytor.com>,
-        Masahiro Yamada <masahiroy@kernel.org>,
+        "Masahiro Yamada" <masahiroy@kernel.org>,
         Arvind Sankar <nivedita@alum.mit.edu>,
-        Mimi Zohar <zohar@linux.ibm.com>,
+        "Mimi Zohar" <zohar@linux.ibm.com>,
         "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>,
         "linux-security-module@vger.kernel.org" 
         <linux-security-module@vger.kernel.org>,
@@ -57,6 +50,13 @@ CC:     Rob Landley <rob@landley.net>, "hpa@zytor.com" <hpa@zytor.com>,
         "linux-kbuild@vger.kernel.org" <linux-kbuild@vger.kernel.org>,
         Dirk Behme <dirk.behme@de.bosch.com>,
         Eugeniu Rosca <roscaeugeniu@gmail.com>
+Subject: RE: [PATCH v4 0/3] initramfs: add support for xattrs in the initial
+ ram disk
+Thread-Topic: [PATCH v4 0/3] initramfs: add support for xattrs in the initial
+ ram disk
+Thread-Index: AQHYe+tsPH1HC/8x8Uq7oovD5MPpKK1G5r2QgAG+ywCAACILEIAHUz4AgDRUxQCAACKFgP//9y0AgAD3swA=
+Date:   Tue, 19 Jul 2022 06:55:50 +0000
+Message-ID: <8e6a723874644449be99fcebb0905058@huawei.com>
 References: <33cfb804-6a17-39f0-92b7-01d54e9c452d@huawei.com>
  <1561909199.3985.33.camel@linux.ibm.com>
  <45164486-782f-a442-e442-6f56f9299c66@huawei.com>
@@ -68,75 +68,49 @@ References: <33cfb804-6a17-39f0-92b7-01d54e9c452d@huawei.com>
  <20220610153336.GA8881@lxhi-065>
  <4bc349a59e4042f7831b1190914851fe@huawei.com>
  <20220615092712.GA4068@lxhi-065>
-From:   Jim Baxter <jim_baxter@mentor.com>
-Organization: Siemens Digital Industries Software
-In-Reply-To: <20220615092712.GA4068@lxhi-065>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-X-Originating-IP: [137.202.0.90]
-X-ClientProxiedBy: svr-ies-mbx-13.mgc.mentorg.com (139.181.222.13) To
- svr-ies-mbx-12.mgc.mentorg.com (139.181.222.12)
+ <032ade35-6eb8-d698-ac44-aa45d46752dd@mentor.com>
+ <f82d4961986547b28b6de066219ad08b@huawei.com>
+ <737ddf72-05f4-a47e-c901-fec5b1dfa7a6@mentor.com>
+In-Reply-To: <737ddf72-05f4-a47e-c901-fec5b1dfa7a6@mentor.com>
+Accept-Language: en-US
+Content-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-originating-ip: [10.221.98.153]
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+MIME-Version: 1.0
+X-CFilter-Loop: Reflected
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 15/06/2022 10:27, Eugeniu Rosca wrote:
-> Hello Roberto,
-> 
-> On Fr, Jun 10, 2022 at 03:38:24 +0000, Roberto Sassu wrote:
->> I would be happy to address the remaining concerns, or take more
->> suggestions, and then develop a new version of the patch set.
-> I face a number of conflicts when I try to rebase the latest openEuler
-> commits against vanilla master (v5.19-rc2). Do you think it is possible
-> to submit the rebased version to ML?
-> 
-> In addition, I can also see some open/unresolved points from Mimi [*].
-> Did you by chance find some mutual agreement offline or do you think
-> they would still potentially need some attention?
-> 
-> Maybe we can resume the discussion once you submit the rebased series?
-> 
-> Many thanks and looking forward to it.
-> 
-> [*] Potentially comments which deserve a reply/clarification/resolution
-> 
-> https://lore.kernel.org/lkml/1561985652.4049.24.camel@linux.ibm.com/#t
-> https://lore.kernel.org/lkml/1561908456.3985.23.camel@linux.ibm.com/
-> 
-> BR, Eugeniu.
-> 
-
-
-Hello,
-
-I have been testing these patches and do not see the xattr information when
-trying to retrieve it within the initramfs, do you have an example of how
-you tested this originally?
-
-
-So far I have set the xattr in the rootfs before creating the cpio file like this:
-$ setfattr -n user.comment -v "this is a comment" test.txt
-If I access the data here it works:
-$ getfattr test.txt 
-# file: test.txt
-user.comment
-
-
-Then I package it and try to verify it with this command:
-$getfattr /test.txt
-
-Which returns to the command line without the data.
-
-
-
-I believe the cpio is working because I see the file /METADATA\!\!\! in
-the target root filesystem, which shows the following when viewed with cat -e:
-00000028^A^Auser.comment^@this is a comment
-
-This matches the data I fed in at the start, so I believe the data is being
-transferred correctly but I am accessioning it with the wrong tools.
-
-Thank you for any help.
-
-Best regards,
-Jim
+PiBGcm9tOiBKaW0gQmF4dGVyIFttYWlsdG86amltX2JheHRlckBtZW50b3IuY29tXQ0KPiBTZW50
+OiBNb25kYXksIEp1bHkgMTgsIDIwMjIgODowOCBQTQ0KPiANCj4gDQo+IA0KPiBCZXN0IHJlZ2Fy
+ZHMsDQo+IA0KPiAqSmltIEJheHRlcioNCj4gDQo+IFNpZW1lbnMgRGlnaXRhbCBJbmR1c3RyaWVz
+IFNvZnR3YXJlDQo+IEF1dG9tb3RpdmUgQnVzaW5lc3MgVW5pdA0KPiBESSBTVyBTVFMgQUJVDQo+
+IFVLDQo+IFRlbC46ICs0NCAoMTYxKSA5MjYtMTY1Ng0KPiBtYWlsdG86amltLmJheHRlckBzaWVt
+ZW5zLmNvbSA8bWFpbHRvOmppbS5iYXh0ZXJAc2llbWVucy5jb20+DQo+IHN3LnNpZW1lbnMuY29t
+IDxodHRwczovL3N3LnNpZW1lbnMuY29tLz4NCj4gDQo+IE9uIDE4LzA3LzIwMjIgMTc6NDksIFJv
+YmVydG8gU2Fzc3Ugd3JvdGU6DQo+ID4+IEZyb206IEppbSBCYXh0ZXIgW21haWx0bzpqaW1fYmF4
+dGVyQG1lbnRvci5jb21dDQo+ID4+IFNlbnQ6IE1vbmRheSwgSnVseSAxOCwgMjAyMiA2OjM2IFBN
+DQo+ID4+DQo+ID4+DQo+ID4+IEhlbGxvLA0KPiA+Pg0KPiA+PiBJIGhhdmUgYmVlbiB0ZXN0aW5n
+IHRoZXNlIHBhdGNoZXMgYW5kIGRvIG5vdCBzZWUgdGhlIHhhdHRyIGluZm9ybWF0aW9uIHdoZW4N
+Cj4gPj4gdHJ5aW5nIHRvIHJldHJpZXZlIGl0IHdpdGhpbiB0aGUgaW5pdHJhbWZzLCBkbyB5b3Ug
+aGF2ZSBhbiBleGFtcGxlIG9mIGhvdw0KPiA+PiB5b3UgdGVzdGVkIHRoaXMgb3JpZ2luYWxseT8N
+Cj4gPg0KPiA+IEhpIEppbSwgYWxsDQo+ID4NCj4gPiBhcG9sb2dpZXMsIEkgZGlkbid0IGZpbmQg
+eWV0IHRoZSB0aW1lIHRvIGxvb2sgYXQgdGhpcy4NCj4gDQo+IEhlbGxvIFJvYmVydG8sDQo+IA0K
+PiBUaGFuayB5b3UgZm9yIHlvdXIgcmVzcG9uc2UsIEkgY2FuIHdhaXQgdW50aWwgeW91IGhhdmUg
+bG9va2VkIGF0IHRoZSBwYXRjaGVzLA0KPiBJIGFza2VkIHRoZSBxdWVzdGlvbiB0byBtYWtlIHN1
+cmUgaXQgd2FzIG5vdCBzb21ldGhpbmcgd3JvbmcgaW4gbXkNCj4gY29uZmlndXJhdGlvbi4NCj4g
+DQo+ID4NCj4gPiBVaG0sIEkgZ3Vlc3MgdGhpcyBjb3VsZCBiZSBzb2x2ZWQgd2l0aDoNCj4gPg0K
+PiA+IGh0dHBzOi8vZ2l0aHViLmNvbS9vcGVuZXVsZXItDQo+IG1pcnJvci9rZXJuZWwvY29tbWl0
+LzE4YTUwMmY3ZTNiMWRlN2I5YmEwYzcwODk2Y2UwOGVlMTNkMDUyZGENCj4gPg0KPiA+IGFuZCBh
+ZGRpbmcgaW5pdHJhbXRtcGZzIHRvIHRoZSBrZXJuZWwgY29tbWFuZCBsaW5lLiBZb3UgYXJlDQo+
+ID4gcHJvYmFibHkgdXNpbmcgcmFtZnMsIHdoaWNoIGRvZXMgbm90IGhhdmUgeGF0dHIgc3VwcG9y
+dC4NCj4gPg0KPiANCj4gDQo+IFRoYW5rIHlvdSwgSSBoYXZlIHRlc3RlZCB0aGF0IHBhdGNoIGJ1
+dCB0aGUgcHJvYmxlbSByZW1haW5lZC4gSGVyZSBpcyBteQ0KPiBjb21tYW5kIGxpbmUsIEkgd29u
+ZGVyIGlmIHRoZXJlIGlzIHNvbWV0aGluZyB3cm9uZy4NCj4gDQo+IEtlcm5lbCBjb21tYW5kIGxp
+bmU6IHJ3IHJvb3Rmc3R5cGU9aW5pdHJhbXRtcGZzIHJvb3Q9L2Rldi9yYW0wDQo+IGluaXRyZD0w
+eDUwMDAwMDAwMCByb290d2FpdA0KDQpJdCBpcyBqdXN0IGluaXRyYW10bXBmcywgd2l0aG91dCBy
+b290ZnN0eXBlPS4NCg0KUm9iZXJ0bw0K
