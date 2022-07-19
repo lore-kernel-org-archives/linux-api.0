@@ -2,124 +2,223 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BA1E7C43334
-	for <linux-api@archiver.kernel.org>; Tue, 19 Jul 2022 17:06:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6E852C433EF
+	for <linux-api@archiver.kernel.org>; Tue, 19 Jul 2022 23:41:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238049AbiGSRGi (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 19 Jul 2022 13:06:38 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59604 "EHLO
+        id S235061AbiGSXlj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 19 Jul 2022 19:41:39 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56956 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237893AbiGSRG1 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Jul 2022 13:06:27 -0400
-Received: from mga18.intel.com (mga18.intel.com [134.134.136.126])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6BEF94D17A;
-        Tue, 19 Jul 2022 10:06:26 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1658250386; x=1689786386;
-  h=date:from:to:cc:subject:message-id:references:
-   mime-version:in-reply-to;
-  bh=dsJls4KRRqMsihgdj/1B2WwrHafjlZ5+4bCu3VElhgw=;
-  b=i8Uxk9eJt+mLzlH1CQmYRq0Aj3IQY4UG+tzANUzPBCdtkVQX0bzfE0Jk
-   awM50SF+nbO7eCtmiHrWadRMlWaWKu8wCNx+xtAiMadhz/8l7bjXIn6qy
-   8zWWk7tgFfldln/mzuK1QYioTTjlvub9aHUr8sWBbMDf1XVCDghynaz0C
-   GANxO6pw1bw0kTwpVdPqB7q23w1e7epQ4RmSUEIV+Ri3ibj7Kj6TvjAJI
-   3yxMSFG8UECDjyzpkrRd7yk5c4yHmQQUeNQqumpv+A580jgGvo4ReyYgY
-   Cswvo2EAlMf2xyyZk3yL/QrkTCrlRMEagKDBNBu8btyYnCnhel+eFBMaC
-   A==;
-X-IronPort-AV: E=McAfee;i="6400,9594,10413"; a="269570882"
-X-IronPort-AV: E=Sophos;i="5.92,284,1650956400"; 
-   d="scan'208";a="269570882"
-Received: from fmsmga004.fm.intel.com ([10.253.24.48])
-  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jul 2022 10:06:24 -0700
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.92,284,1650956400"; 
-   d="scan'208";a="665514274"
-Received: from lkp-server02.sh.intel.com (HELO ff137eb26ff1) ([10.239.97.151])
-  by fmsmga004.fm.intel.com with ESMTP; 19 Jul 2022 10:06:22 -0700
-Received: from kbuild by ff137eb26ff1 with local (Exim 4.95)
-        (envelope-from <lkp@intel.com>)
-        id 1oDqft-0005qE-ME;
-        Tue, 19 Jul 2022 17:06:21 +0000
-Date:   Wed, 20 Jul 2022 01:05:45 +0800
-From:   kernel test robot <lkp@intel.com>
-To:     Jeremy Bongio <bongiojp@gmail.com>, Ted Tso <tytso@mit.edu>
-Cc:     llvm@lists.linux.dev, kbuild-all@lists.01.org,
-        linux-ext4@vger.kernel.org, linux-api@vger.kernel.org,
+        with ESMTP id S232291AbiGSXlj (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Jul 2022 19:41:39 -0400
+Received: from mail-pl1-x629.google.com (mail-pl1-x629.google.com [IPv6:2607:f8b0:4864:20::629])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5D7104D17C;
+        Tue, 19 Jul 2022 16:41:38 -0700 (PDT)
+Received: by mail-pl1-x629.google.com with SMTP id p8so3628555plq.13;
+        Tue, 19 Jul 2022 16:41:38 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=PqsR5Qa41uqsmBSwrGwuBGBYHH2ruR9RmWHJJrYHuuw=;
+        b=Cm3VoniwbPwxVmYtpDACUHbb+TC1ngFQZjr2AVqXutU05iMZG+Y2QnuITneZhJXqm1
+         dpukrVAgu1e7Li/UzuJ2qD+FiofXucgeDuCrChnp7AnDjpQnQh3OpEa+HST2QJQPG9in
+         4NptzAmJaq/zVgR+1SFppTKqAElLWfoT7Id8sLoR9N1HDOXtZpRhkPqfOyl0L2tLoyee
+         iY54ayQtBx6BDrbTdU9mjzQid+mPFu53xjMsomrpb0NXMQUuNNvuh1tHeYN46t0NVj5+
+         52gBbu24jGKQflICTKKHV3c/zg5zFOHfnYBDrnw6lJpMnAaA+axT7fdzMRth8I2V/5dF
+         KnUA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=PqsR5Qa41uqsmBSwrGwuBGBYHH2ruR9RmWHJJrYHuuw=;
+        b=VXYYzeiVNVqhJ7QrN8CgcRhUcBlMMeBWwAZ9KVglAXPEMIs7R6WTI1CKohWhrWprOE
+         BdbWGoADc+ZgsJhnxNSNjNCBJeqLFXw3o4m/0DvlT+kyqnrX+OyzEsKMhegRvo2O1EF0
+         PiJGlup0PnDduZvUSmY+/ASHEXH5E2hb5OWeTMbSHKLkZ4x1Oo0g7KKps+sh1LDIH1j1
+         TuRpH11KlFBOAjxPdkHqODnsIGtI4uBDiJDGIBTcGlKbknOL0uibNmkTfMxIlEz5RwLE
+         TCGAqKGFqlT4YiquhzPBUPkq8Y2p60y4H5/QWF4RMqrVzGtXnwobNDzAAfOokKyXJm/2
+         SOiA==
+X-Gm-Message-State: AJIora/ys+aoItPsLbKsM8MWNFI12vtUCqHxc6rPrzHZmlVMrOsuEifQ
+        +x0j5S1ltoq4UED0Ck/UiAOXlD59l5UKMg==
+X-Google-Smtp-Source: AGRyM1ul9g2AM6xEXtrh38YKk/niq2P7kj2874xrO8q5T5qlbwx87fUqcA4buHJWN1LNKyr7OesT7A==
+X-Received: by 2002:a17:902:f546:b0:16b:e4c7:671b with SMTP id h6-20020a170902f54600b0016be4c7671bmr36069613plf.129.1658274097670;
+        Tue, 19 Jul 2022 16:41:37 -0700 (PDT)
+Received: from jbongio9100214.corp.google.com ([2620:0:102f:1:c88e:7520:969d:1265])
+        by smtp.googlemail.com with ESMTPSA id w3-20020a626203000000b005253bf1e4d0sm11900379pfb.24.2022.07.19.16.41.36
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 19 Jul 2022 16:41:37 -0700 (PDT)
+From:   Jeremy Bongio <bongiojp@gmail.com>
+To:     Ted Tso <tytso@mit.edu>
+Cc:     linux-ext4@vger.kernel.org, linux-api@vger.kernel.org,
         linux-fsdevel@vger.kernel.org, Jeremy Bongio <bongiojp@gmail.com>
-Subject: Re: [PATCH v3] Add ioctls to get/set the ext4 superblock uuid.
-Message-ID: <202207200113.9R6VYmdT-lkp@intel.com>
-References: <20220719065551.154132-1-bongiojp@gmail.com>
+Subject: [PATCH v4] Add ioctls to get/set the ext4 superblock uuid.
+Date:   Tue, 19 Jul 2022 16:41:31 -0700
+Message-Id: <20220719234131.235187-1-bongiojp@gmail.com>
+X-Mailer: git-send-email 2.37.0.170.g444d1eabd0-goog
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20220719065551.154132-1-bongiojp@gmail.com>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi Jeremy,
+This fixes a race between changing the ext4 superblock uuid and operations
+like mounting, resizing, changing features, etc.
 
-Thank you for the patch! Perhaps something to improve:
+Reviewed-by: Theodore Ts'o <tytso@mit.edu>
+Signed-off-by: Jeremy Bongio <bongiojp@gmail.com>
+---
 
-[auto build test WARNING on tytso-ext4/dev]
-[also build test WARNING on linus/master v5.19-rc7 next-20220719]
-[If your patch is applied to the wrong git tree, kindly drop us a note.
-And when submitting patch, we suggest to use '--base' as documented in
-https://git-scm.com/docs/git-format-patch#_base_tree_information]
+Changes in v4:
+Removed unused variable.
 
-url:    https://github.com/intel-lab-lkp/linux/commits/Jeremy-Bongio/Add-ioctls-to-get-set-the-ext4-superblock-uuid/20220719-145724
-base:   https://git.kernel.org/pub/scm/linux/kernel/git/tytso/ext4.git dev
-config: i386-randconfig-a005-20220718 (https://download.01.org/0day-ci/archive/20220720/202207200113.9R6VYmdT-lkp@intel.com/config)
-compiler: clang version 15.0.0 (https://github.com/llvm/llvm-project fa0c7639e91fa1cd0cf2ff0445a1634a90fe850a)
-reproduce (this is a W=1 build):
-        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
-        chmod +x ~/bin/make.cross
-        # https://github.com/intel-lab-lkp/linux/commit/d53b0a271606a7f5c7b0f1a1f3fec9a34e771205
-        git remote add linux-review https://github.com/intel-lab-lkp/linux
-        git fetch --no-tags linux-review Jeremy-Bongio/Add-ioctls-to-get-set-the-ext4-superblock-uuid/20220719-145724
-        git checkout d53b0a271606a7f5c7b0f1a1f3fec9a34e771205
-        # save the config file
-        mkdir build_dir && cp config build_dir/.config
-        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=clang make.cross W=1 O=build_dir ARCH=i386 SHELL=/bin/bash
+ fs/ext4/ext4.h  | 11 +++++++
+ fs/ext4/ioctl.c | 76 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 87 insertions(+)
 
-If you fix the issue, kindly add following tag where applicable
-Reported-by: kernel test robot <lkp@intel.com>
-
-All warnings (new ones prefixed by >>):
-
->> fs/ext4/ioctl.c:1149:6: warning: unused variable 'ret' [-Wunused-variable]
-           int ret = 0;
-               ^
-   1 warning generated.
-
-
-vim +/ret +1149 fs/ext4/ioctl.c
-
-  1145	
-  1146	static int ext4_ioctl_getuuid(struct ext4_sb_info *sbi,
-  1147				struct fsuuid __user *ufsuuid)
-  1148	{
-> 1149		int ret = 0;
-  1150		struct fsuuid fsuuid;
-  1151		__u8 uuid[UUID_SIZE];
-  1152	
-  1153		if (copy_from_user(&fsuuid, ufsuuid, sizeof(fsuuid)))
-  1154			return -EFAULT;
-  1155	
-  1156		if (fsuuid.fsu_len != UUID_SIZE || fsuuid.fsu_flags != 0)
-  1157			return -EINVAL;
-  1158	
-  1159		lock_buffer(sbi->s_sbh);
-  1160		memcpy(uuid, sbi->s_es->s_uuid, UUID_SIZE);
-  1161		unlock_buffer(sbi->s_sbh);
-  1162	
-  1163		if (copy_to_user(&ufsuuid->fsu_uuid[0], uuid, UUID_SIZE))
-  1164			return -EFAULT;
-  1165		return 0;
-  1166	}
-  1167	
-
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index 75b8d81b2469..b760d669a1ca 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -724,6 +724,8 @@ enum {
+ #define EXT4_IOC_GETSTATE		_IOW('f', 41, __u32)
+ #define EXT4_IOC_GET_ES_CACHE		_IOWR('f', 42, struct fiemap)
+ #define EXT4_IOC_CHECKPOINT		_IOW('f', 43, __u32)
++#define EXT4_IOC_GETFSUUID		_IOR('f', 44, struct fsuuid)
++#define EXT4_IOC_SETFSUUID		_IOW('f', 44, struct fsuuid)
+ 
+ #define EXT4_IOC_SHUTDOWN _IOR ('X', 125, __u32)
+ 
+@@ -753,6 +755,15 @@ enum {
+ 						EXT4_IOC_CHECKPOINT_FLAG_ZEROOUT | \
+ 						EXT4_IOC_CHECKPOINT_FLAG_DRY_RUN)
+ 
++/*
++ * Structure for EXT4_IOC_GETFSUUID/EXT4_IOC_SETFSUUID
++ */
++struct fsuuid {
++	__u32       fsu_len;
++	__u32       fsu_flags;
++	__u8        fsu_uuid[];
++};
++
+ #if defined(__KERNEL__) && defined(CONFIG_COMPAT)
+ /*
+  * ioctl commands in 32 bit emulation
+diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
+index cb01c1da0f9d..2c4c3eedfb7b 100644
+--- a/fs/ext4/ioctl.c
++++ b/fs/ext4/ioctl.c
+@@ -20,6 +20,7 @@
+ #include <linux/delay.h>
+ #include <linux/iversion.h>
+ #include <linux/fileattr.h>
++#include <linux/uuid.h>
+ #include "ext4_jbd2.h"
+ #include "ext4.h"
+ #include <linux/fsmap.h>
+@@ -41,6 +42,15 @@ static void ext4_sb_setlabel(struct ext4_super_block *es, const void *arg)
+ 	memcpy(es->s_volume_name, (char *)arg, EXT4_LABEL_MAX);
+ }
+ 
++/*
++ * Superblock modification callback function for changing file system
++ * UUID.
++ */
++static void ext4_sb_setuuid(struct ext4_super_block *es, const void *arg)
++{
++	memcpy(es->s_uuid, (__u8 *)arg, UUID_SIZE);
++}
++
+ static
+ int ext4_update_primary_sb(struct super_block *sb, handle_t *handle,
+ 			   ext4_update_sb_callback func,
+@@ -1131,6 +1141,66 @@ static int ext4_ioctl_getlabel(struct ext4_sb_info *sbi, char __user *user_label
+ 	return 0;
+ }
+ 
++static int ext4_ioctl_getuuid(struct ext4_sb_info *sbi,
++			struct fsuuid __user *ufsuuid)
++{
++	struct fsuuid fsuuid;
++	__u8 uuid[UUID_SIZE];
++
++	if (copy_from_user(&fsuuid, ufsuuid, sizeof(fsuuid)))
++		return -EFAULT;
++
++	if (fsuuid.fsu_len != UUID_SIZE || fsuuid.fsu_flags != 0)
++		return -EINVAL;
++
++	lock_buffer(sbi->s_sbh);
++	memcpy(uuid, sbi->s_es->s_uuid, UUID_SIZE);
++	unlock_buffer(sbi->s_sbh);
++
++	if (copy_to_user(&ufsuuid->fsu_uuid[0], uuid, UUID_SIZE))
++		return -EFAULT;
++	return 0;
++}
++
++static int ext4_ioctl_setuuid(struct file *filp,
++			const struct fsuuid __user *ufsuuid)
++{
++	int ret = 0;
++	struct super_block *sb = file_inode(filp)->i_sb;
++	struct fsuuid fsuuid;
++	__u8 uuid[UUID_SIZE];
++
++	if (!capable(CAP_SYS_ADMIN))
++		return -EPERM;
++
++	/*
++	 * If any checksums (group descriptors or metadata) are being used
++	 * then the checksum seed feature is required to change the UUID.
++	 */
++	if (((ext4_has_feature_gdt_csum(sb) || ext4_has_metadata_csum(sb))
++			&& !ext4_has_feature_csum_seed(sb))
++		|| ext4_has_feature_stable_inodes(sb))
++		return -EOPNOTSUPP;
++
++	if (copy_from_user(&fsuuid, ufsuuid, sizeof(fsuuid)))
++		return -EFAULT;
++
++	if (fsuuid.fsu_len != UUID_SIZE || fsuuid.fsu_flags != 0)
++		return -EINVAL;
++
++	if (copy_from_user(uuid, &ufsuuid->fsu_uuid[0], UUID_SIZE))
++		return -EFAULT;
++
++	ret = mnt_want_write_file(filp);
++	if (ret)
++		return ret;
++
++	ret = ext4_update_superblocks_fn(sb, ext4_sb_setuuid, &uuid);
++	mnt_drop_write_file(filp);
++
++	return ret;
++}
++
+ static long __ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ {
+ 	struct inode *inode = file_inode(filp);
+@@ -1509,6 +1579,10 @@ static long __ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 		return ext4_ioctl_setlabel(filp,
+ 					   (const void __user *)arg);
+ 
++	case EXT4_IOC_GETFSUUID:
++		return ext4_ioctl_getuuid(EXT4_SB(sb), (void __user *)arg);
++	case EXT4_IOC_SETFSUUID:
++		return ext4_ioctl_setuuid(filp, (const void __user *)arg);
+ 	default:
+ 		return -ENOTTY;
+ 	}
+@@ -1586,6 +1660,8 @@ long ext4_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 	case EXT4_IOC_CHECKPOINT:
+ 	case FS_IOC_GETFSLABEL:
+ 	case FS_IOC_SETFSLABEL:
++	case EXT4_IOC_GETFSUUID:
++	case EXT4_IOC_SETFSUUID:
+ 		break;
+ 	default:
+ 		return -ENOIOCTLCMD;
 -- 
-0-DAY CI Kernel Test Service
-https://01.org/lkp
+2.37.0.170.g444d1eabd0-goog
+
