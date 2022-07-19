@@ -2,136 +2,129 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CD9D6C43334
-	for <linux-api@archiver.kernel.org>; Tue, 19 Jul 2022 13:36:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EA2F3C43334
+	for <linux-api@archiver.kernel.org>; Tue, 19 Jul 2022 14:23:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234410AbiGSNg0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 19 Jul 2022 09:36:26 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40350 "EHLO
+        id S238358AbiGSOXq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 19 Jul 2022 10:23:46 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40924 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238385AbiGSNgP (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Jul 2022 09:36:15 -0400
-Received: from outgoing.mit.edu (outgoing-auth-1.mit.edu [18.9.28.11])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7D4A659258;
-        Tue, 19 Jul 2022 05:51:05 -0700 (PDT)
-Received: from cwcc.thunk.org (pool-173-48-118-63.bstnma.fios.verizon.net [173.48.118.63])
-        (authenticated bits=0)
-        (User authenticated as tytso@ATHENA.MIT.EDU)
-        by outgoing.mit.edu (8.14.7/8.12.4) with ESMTP id 26JCoxkA026760
-        (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-        Tue, 19 Jul 2022 08:50:59 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mit.edu; s=outgoing;
-        t=1658235060; bh=GYUat2R3yPsKAwD3MsZ21EEQ34Qz8Au2by9MurkA7ho=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To;
-        b=PLRkMVjqwkoWFTm133zDvtIVBqWVOYV4UaWYxvQgoXaGBoWsLmDOQigtbCdr+EoqP
-         Uxq2XnUIUtOPnlvojjR+V5zEiX2KxvtHXqNUy8m229654By36Awiim4FPH5Q+N5ono
-         nsJRfuH/7SulBrAfuDi47NjEt8Pc5Ahf5tlWHQvfRSkh3WUqntVabgrNN5PEx4OqSw
-         AbRupZMEgbV8cFRJcu2knodKUTLugoOJO/5jeQGO0mo8Z63sEonMB3kteAxDenks7H
-         9zUuh4vId9ylQ4Cb76vHKAb+Ool2g7njEUG/kUouCcx1aOcnVRvXzf9IFkaTOUoydu
-         /VxsaisIclSQw==
-Received: by cwcc.thunk.org (Postfix, from userid 15806)
-        id C2DDC15C00E4; Tue, 19 Jul 2022 08:50:58 -0400 (EDT)
-Date:   Tue, 19 Jul 2022 08:50:58 -0400
-From:   "Theodore Ts'o" <tytso@mit.edu>
-To:     Arnd Bergmann <arnd@arndb.de>
-Cc:     Jeremy Bongio <bongiojp@gmail.com>,
-        Ext4 Developers List <linux-ext4@vger.kernel.org>,
-        Linux API <linux-api@vger.kernel.org>,
-        Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>
-Subject: Re: [PATCH v3] Add ioctls to get/set the ext4 superblock uuid.
-Message-ID: <YtaosutXNdSvgwvP@mit.edu>
-References: <20220719065551.154132-1-bongiojp@gmail.com>
- <CAK8P3a17LZNXDW9r3ixfMg_c-vtqqT51MCLEsyF4Loh8VfDw7w@mail.gmail.com>
+        with ESMTP id S237847AbiGSOXf (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Jul 2022 10:23:35 -0400
+Received: from mga05.intel.com (mga05.intel.com [192.55.52.43])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 41B884A827;
+        Tue, 19 Jul 2022 07:07:48 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1658239668; x=1689775668;
+  h=date:from:to:cc:subject:message-id:reply-to:references:
+   mime-version:in-reply-to;
+  bh=s/ctDqIUvL1W3W833+ijczZqODZpeij+xtTHe7CbsGA=;
+  b=Qpc41EnI47Md+JYEFKBoFHgDbLChp4ozVQ+o3b28x/R7LRwMvjwsTDgZ
+   o74z8HXPr2/s27TivsTDCcekUZeFDotpNsrCovlkjf/OJGBCRBMj/d/J3
+   JIa1O3jl7FPctWGdzzLAS4M0QgxqmUdseESaRadp3vXN+1WWxu39wpD7O
+   Z6Gn4Okss77FqJXdggECtt68zCek1+BB+eB1G4/XkKswq1KDI+5aNUiY0
+   Tmi0pPwomgOcV8c2Ns3+b0QMukQOLUWaigT8p4BQimYEWlZvPYwGLmlSa
+   r35SH76eDgxkmPPliVOPQeYInyziY35rNKAYCiX1ACCpgTF7PgWssIGbH
+   Q==;
+X-IronPort-AV: E=McAfee;i="6400,9594,10412"; a="372801075"
+X-IronPort-AV: E=Sophos;i="5.92,284,1650956400"; 
+   d="scan'208";a="372801075"
+Received: from fmsmga008.fm.intel.com ([10.253.24.58])
+  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jul 2022 07:07:48 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.92,284,1650956400"; 
+   d="scan'208";a="655774698"
+Received: from chaop.bj.intel.com (HELO localhost) ([10.240.193.75])
+  by fmsmga008.fm.intel.com with ESMTP; 19 Jul 2022 07:07:38 -0700
+Date:   Tue, 19 Jul 2022 22:02:48 +0800
+From:   Chao Peng <chao.p.peng@linux.intel.com>
+To:     Sean Christopherson <seanjc@google.com>
+Cc:     "Gupta, Pankaj" <pankaj.gupta@amd.com>, kvm@vger.kernel.org,
+        linux-kernel@vger.kernel.org, linux-mm@kvack.org,
+        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-doc@vger.kernel.org, qemu-devel@nongnu.org,
+        linux-kselftest@vger.kernel.org,
+        Paolo Bonzini <pbonzini@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Vitaly Kuznetsov <vkuznets@redhat.com>,
+        Wanpeng Li <wanpengli@tencent.com>,
+        Jim Mattson <jmattson@google.com>,
+        Joerg Roedel <joro@8bytes.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
+        Hugh Dickins <hughd@google.com>,
+        Jeff Layton <jlayton@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Shuah Khan <shuah@kernel.org>, Mike Rapoport <rppt@kernel.org>,
+        Steven Price <steven.price@arm.com>,
+        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Vishal Annapurve <vannapurve@google.com>,
+        Yu Zhang <yu.c.zhang@linux.intel.com>,
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
+        luto@kernel.org, jun.nakajima@intel.com, dave.hansen@intel.com,
+        ak@linux.intel.com, david@redhat.com, aarcange@redhat.com,
+        ddutile@redhat.com, dhildenb@redhat.com,
+        Quentin Perret <qperret@google.com>,
+        Michael Roth <michael.roth@amd.com>, mhocko@suse.com,
+        Muchun Song <songmuchun@bytedance.com>
+Subject: Re: [PATCH v7 07/14] KVM: Use gfn instead of hva for
+ mmu_notifier_retry
+Message-ID: <20220719140248.GA84005@chaop.bj.intel.com>
+Reply-To: Chao Peng <chao.p.peng@linux.intel.com>
+References: <20220706082016.2603916-1-chao.p.peng@linux.intel.com>
+ <20220706082016.2603916-8-chao.p.peng@linux.intel.com>
+ <d480a850-601b-cda2-b671-04d839c98429@amd.com>
+ <20220718132950.GA38104@chaop.bj.intel.com>
+ <YtV7qpYZoT6jIKHQ@google.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <CAK8P3a17LZNXDW9r3ixfMg_c-vtqqT51MCLEsyF4Loh8VfDw7w@mail.gmail.com>
+In-Reply-To: <YtV7qpYZoT6jIKHQ@google.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Jul 19, 2022 at 09:30:23AM +0200, Arnd Bergmann wrote:
-> On Tue, Jul 19, 2022 at 8:55 AM Jeremy Bongio <bongiojp@gmail.com> wrote:
-> > This pair of ioctls may be implemented in more filesystems in the future,
-> > namely XFS.
-> >
+On Mon, Jul 18, 2022 at 03:26:34PM +0000, Sean Christopherson wrote:
+> On Mon, Jul 18, 2022, Chao Peng wrote:
+> > On Fri, Jul 15, 2022 at 01:36:15PM +0200, Gupta, Pankaj wrote:
+> > > > Currently in mmu_notifier validate path, hva range is recorded and then
+> > > > checked in the mmu_notifier_retry_hva() from page fault path. However
+> > > > for the to be introduced private memory, a page fault may not have a hva
+> > > 
+> > > As this patch appeared in v7, just wondering did you see an actual bug
+> > > because of it? And not having corresponding 'hva' occurs only with private
+> > > memory because its not mapped to host userspace?
+> > 
+> > The addressed problem is not new in this version, previous versions I
+> > also had code to handle it (just in different way). But the problem is:
+> > mmu_notifier/memfile_notifier may be in the progress of invalidating a
+> > pfn that obtained earlier in the page fault handler, when happens, we
+> > should retry the fault. In v6 I used global mmu_notifier_retry() for
+> > memfile_notifier but that can block unrelated mmu_notifer invalidation
+> > which has hva range specified.
+> > 
+> > Sean gave a comment at https://lkml.org/lkml/2022/6/17/1001 to separate
+> > memfile_notifier from mmu_notifier but during the implementation I
+> > realized we actually can reuse the same code for shared and private
+> > memory if both using gpa range and that can simplify the code handling
+> > in kvm_zap_gfn_range and some other code (e.g. we don't need two
+> > versions for memfile_notifier/mmu_notifier).
 > 
-> > +++ b/fs/ext4/ext4.h
-> > @@ -724,6 +724,8 @@ enum {
-> > +#define EXT4_IOC_GETFSUUID             _IOR('f', 44, struct fsuuid)
-> > +#define EXT4_IOC_SETFSUUID             _IOW('f', 44, struct fsuuid)
+> This should work, though I'm undecided as to whether or not it's a good idea.  KVM
+> allows aliasing multiple gfns to a single hva, and so using the gfn could result
+> in a much larger range being rejected given the simplistic algorithm for handling
+> multiple ranges in kvm_inc_notifier_count().  But I assume such aliasing is uncommon,
+> so I'm not sure it's worth optimizing for.
+
+That can be a real problem for current v7 code, __kvm_handle_hva_range()
+loops all possible gfn_range for a given hva_range but the
+on_lock/on_unlock is invoked only once, this should work for hva_range,
+but not gfn_range since we can have multiple of them.
+
 > 
-> The implementation looks good to me, but maybe it should be defined in
-> the UAPI headers in a filesystem-independent way? Having it in a private
-> header means it will not be available to portable user programs, and will
-> be hidden from tools like strace that parse the uapi headers to find
-> ioctl definitions.
-
-The plan is that when another file system implements it, we'll promote
-this to be a include/uapi/linux/fs.h.  For e2fsprogs, we've always
-hard-coded the ioctl definitions as a default, because we don't want
-to be tied to having the correct version for the kernel header files
---- I consider it important that there aren't variences in what kind
-of functionality you get if you build e2fsprogs on RHEL vs Fedora vs
-Debian Stable.  And at least initially, the primary consumer of the
-ioctl will be tune2fs.
-
-As to why we define things first in the file system header, part of
-this is due to some interesting dynamics around bike-shedding.  It is
-perceived that there are times when the bike-shed brigade comes up in
-full force, giving conflicting demands, and generally preventing
-forward progress, and so one of the reasons why file system developers
-often want to define things first a file-system dependent way is as a
-safety value so that we can blow past "unreasonable" demands.  This
-recently came up in a LSF/MM discussion where Kent Overstreet proposed
-a new "ioctl" mechanism which promised that all ioctls would go
-through the full strict syscall ABI review and that there be no way to
-bypass it --- and in his view, this was considered a feature, and not
-a bug.  Interestingly, after this LSF/MM discussion, a certain major
-file system maintainer (not myself) stated in a hallway coversation
-that due to unreasonable bike-sheeding, he was planning on bypassing
-the whole review process and just defining in an fs-dependent ioctl in
-an fs-specific header file because he was so f***** frustrated by the
-process.
-
-Of course, for every unreasonable bike-shedding, there are cases like
-the dedup ioctl which has recently observed that the interface was
-terrible, and it *should* have gone through more careful review before
-making it be a user-visible interface that multiple file systems now
-have to deal with.
-
-At this point, my personal "Via Media" approach to this is to send the
-patches for full review to all of the usual places, so we *can* get
-the benefits of interfave review.  However, if things go pear-shaped,
-since the ioctl's are defined as fs-specific I can pull the "I'm the
-XXX fs maintainer" card, and just include it in my next pull request
-to Linus.
-
-If ioctl has a reasonable interface, then other file system
-maintainers can choose to adopt it, at which point we promote it to be
-an fs-independent ioctl.  Or maybe they'll define their own
-fs-depedent ioctl, and we iterate in that way, using a market-forces
-dynamics ala how we have independent Linux distributions which compete
-with one another to provide a better use experience, as opposed to a
-single One True Userspace under the authority of the NetBSD or FreeBSD
-core team.
-
-It's not a perfect mechanism, but given that we don't have something
-like an Architectural Review Board with appeals up to some management
-chain if said ARB becomes obstructive (which is how things might work
-in a corporate environment), it's the best approach I've been able to
-come up with.
-
-						- Ted
-
-P.S.  BTW, this isn't a problem which is unique to system calls, but
-new file system icotls seem to be defined much more often than system
-calls.  Whether that's because we naturally need many more of these
-interfaces, many of which are used by primarily by the XXX-fsprogs
-utilities, or because it's an escape hatch when the system call review
-process is perceived, correctly, or incorrectly, in too heavy-weight
-and prone to bike-shedding, is certainly a debatable point.  But
-perhaps this is more of a Maintainer's Summit topic, although I don't
-think there really is a good solution other than "sometimes, someone
-in a position of power, whether it's Linus or a fs maintainer, has to
-be able to use an escape hatch when the process goes sideways.
+> > Adding gpa range for private memory invalidation also relieves the
+> > above blocking issue between private memory page fault and mmu_notifier.
