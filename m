@@ -2,35 +2,35 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7DC95C3F6B0
-	for <linux-api@archiver.kernel.org>; Tue, 26 Jul 2022 16:21:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7EEA9C04A68
+	for <linux-api@archiver.kernel.org>; Tue, 26 Jul 2022 16:23:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239425AbiGZQVt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 26 Jul 2022 12:21:49 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36218 "EHLO
+        id S239451AbiGZQXC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 26 Jul 2022 12:23:02 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36234 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239403AbiGZQVl (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 26 Jul 2022 12:21:41 -0400
+        with ESMTP id S239395AbiGZQVT (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 26 Jul 2022 12:21:19 -0400
 Received: from madras.collabora.co.uk (madras.collabora.co.uk [46.235.227.172])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 50B4D27171;
-        Tue, 26 Jul 2022 09:21:40 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 085D127164;
+        Tue, 26 Jul 2022 09:21:18 -0700 (PDT)
 Received: from localhost.localdomain (unknown [203.135.47.243])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
          key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
         (No client certificate requested)
         (Authenticated sender: usama.anjum)
-        by madras.collabora.co.uk (Postfix) with ESMTPSA id 7894D6601B1C;
-        Tue, 26 Jul 2022 17:21:28 +0100 (BST)
+        by madras.collabora.co.uk (Postfix) with ESMTPSA id 9DE8C6601B11;
+        Tue, 26 Jul 2022 17:21:06 +0100 (BST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=collabora.com;
-        s=mail; t=1658852499;
-        bh=TmWomaer23vw+1UBA3al27F9ID8ZyZsnkETWciuw1wo=;
+        s=mail; t=1658852476;
+        bh=YSZMWQRUF0OddQkVSeNEz2FybOLoLuH7kG5PHiHYpXM=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=JYxDiXjFw2RkNWx91Wt51o8qc6YV+mR0wWrLTDbpoFMfe3Sm/04uV2+UuB+HZoPki
-         0LpF4pUQRsSnI+7DxtjBwuPAeLwCQ/qyDdaclFKJ+bERTYT+YUt2uei5lSfeFGo3TF
-         T4yPY5Sd28kVEHpcexgG1LJBXgG8JhGY1FeA0KN/RJeEN0o81WkQMhaeSf4Uf3gAc0
-         YHeoRBk07uMeOULuahJ+RXY1EBsZwQy+wZa7CouuePJB5SJwdBkw2m+n8DWOZSQR2T
-         o7PzSRNNsh1HW9C4vc1+RVy3KIWCebD4CKYXChyycV98zy8R/GX0c102u7g5xE7uPa
-         Bq/+E/YbB7zqQ==
+        b=VYdF24VsfkRAH0MPDnmat/nZqLHLpelG6HOTA6a8B5WawqZUKpJ1AMNaRWIIHyWxC
+         Rpd4d5c/YyEuiSHkvnHB+jGyGduuf7tYosM9g0r3heiaOA/0vFDtJ6WmeEEPrfZFe4
+         BRgUFmAUcvLpFCbteXmVMcFdaMrLUipwyMBlWmNoYgR4KMUHdaGdVch7sqWYqS0ilA
+         fr0+D/GjydldqOJLLgD+tlifyqlL2xIhxpeccXU91mfryWIMMVKTNlf1JcvtUTBFNt
+         MrTYqp7FS3hHiPXiutyAfbpuc/PER6JCkJ/TKT24g9Ytlf4fCkEn8lZE/z2iquccSN
+         YZqJN1NxAR2Gg==
 From:   Muhammad Usama Anjum <usama.anjum@collabora.com>
 To:     Jonathan Corbet <corbet@lwn.net>,
         Andy Lutomirski <luto@kernel.org>,
@@ -59,9 +59,9 @@ To:     Jonathan Corbet <corbet@lwn.net>,
         krisman@collabora.com
 Cc:     Muhammad Usama Anjum <usama.anjum@collabora.com>,
         kernel@collabora.com
-Subject: [PATCH 5/5] mm: add process_memwatch syscall documentation
-Date:   Tue, 26 Jul 2022 21:18:54 +0500
-Message-Id: <20220726161854.276359-6-usama.anjum@collabora.com>
+Subject: [PATCH 3/5] mm: wire up process_memwatch syscall for x86
+Date:   Tue, 26 Jul 2022 21:18:52 +0500
+Message-Id: <20220726161854.276359-4-usama.anjum@collabora.com>
 X-Mailer: git-send-email 2.30.2
 In-Reply-To: <20220726161854.276359-1-usama.anjum@collabora.com>
 References: <20220726161854.276359-1-usama.anjum@collabora.com>
@@ -71,79 +71,119 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add the syscall with explanation of the operations.
+Wire up syscall entry point for both i386 and x86_64 architectures.
 
 Signed-off-by: Muhammad Usama Anjum <usama.anjum@collabora.com>
 ---
- Documentation/admin-guide/mm/soft-dirty.rst | 48 ++++++++++++++++++++-
- 1 file changed, 47 insertions(+), 1 deletion(-)
+ arch/x86/entry/syscalls/syscall_32.tbl            | 1 +
+ arch/x86/entry/syscalls/syscall_64.tbl            | 1 +
+ include/linux/syscalls.h                          | 3 ++-
+ include/uapi/asm-generic/unistd.h                 | 5 ++++-
+ kernel/sys_ni.c                                   | 1 +
+ tools/include/uapi/asm-generic/unistd.h           | 5 ++++-
+ tools/perf/arch/x86/entry/syscalls/syscall_64.tbl | 1 +
+ 7 files changed, 14 insertions(+), 3 deletions(-)
 
-diff --git a/Documentation/admin-guide/mm/soft-dirty.rst b/Documentation/admin-guide/mm/soft-dirty.rst
-index cb0cfd6672fa..030d75658010 100644
---- a/Documentation/admin-guide/mm/soft-dirty.rst
-+++ b/Documentation/admin-guide/mm/soft-dirty.rst
-@@ -5,7 +5,12 @@ Soft-Dirty PTEs
- ===============
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 320480a8db4f..601d33909880 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -455,3 +455,4 @@
+ 448	i386	process_mrelease	sys_process_mrelease
+ 449	i386	futex_waitv		sys_futex_waitv
+ 450	i386	set_mempolicy_home_node		sys_set_mempolicy_home_node
++451	i386	process_memwatch	sys_process_memwatch
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index c84d12608cd2..3bddea588ce7 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -372,6 +372,7 @@
+ 448	common	process_mrelease	sys_process_mrelease
+ 449	common	futex_waitv		sys_futex_waitv
+ 450	common	set_mempolicy_home_node	sys_set_mempolicy_home_node
++451	common	process_memwatch	sys_process_memwatch
  
- The soft-dirty is a bit on a PTE which helps to track which pages a task
--writes to. In order to do this tracking one should
-+writes to.
-+
-+Using Proc FS
-+-------------
-+
-+In order to do this tracking one should
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index a34b0f9a9972..efa240510e4c 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -939,7 +939,6 @@ asmlinkage long sys_move_pages(pid_t pid, unsigned long nr_pages,
+ 				const int __user *nodes,
+ 				int __user *status,
+ 				int flags);
+-
+ asmlinkage long sys_rt_tgsigqueueinfo(pid_t tgid, pid_t  pid, int sig,
+ 		siginfo_t __user *uinfo);
+ asmlinkage long sys_perf_event_open(
+@@ -1056,6 +1055,8 @@ asmlinkage long sys_memfd_secret(unsigned int flags);
+ asmlinkage long sys_set_mempolicy_home_node(unsigned long start, unsigned long len,
+ 					    unsigned long home_node,
+ 					    unsigned long flags);
++asmlinkage long sys_process_memwatch(int pidfd, void __user *addr, int len,
++				     unsigned int flags, loff_t __user *vec, int vec_len);
  
-   1. Clear soft-dirty bits from the task's PTEs.
+ /*
+  * Architecture-specific system calls
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 45fa180cc56a..805a8d5cf0c4 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -886,8 +886,11 @@ __SYSCALL(__NR_futex_waitv, sys_futex_waitv)
+ #define __NR_set_mempolicy_home_node 450
+ __SYSCALL(__NR_set_mempolicy_home_node, sys_set_mempolicy_home_node)
  
-@@ -20,6 +25,47 @@ writes to. In order to do this tracking one should
-      64-bit qword is the soft-dirty one. If set, the respective PTE was
-      written to since step 1.
++#define __NR_process_memwatch 451
++__SC_COMP(__NR_process_memwatch, sys_process_memwatch, compat_sys_process_memwatch)
++
+ #undef __NR_syscalls
+-#define __NR_syscalls 451
++#define __NR_syscalls 452
  
-+Using System Call
-+-----------------
-+
-+process_memwatch system call can be used to find the dirty pages.::
-+
-+	long process_memwatch(int pidfd, unsigned long start, int len,
-+			      unsigned int flags, void *vec, int vec_len);
-+
-+The pidfd specifies the pidfd of process whose memory needs to be watched.
-+The calling process must have PTRACE_MODE_ATTACH_FSCREDS capabilities over
-+the process whose pidfd has been specified. It can be zero which means that
-+the process wants to watch its own memory. The operation is determined by
-+flags. The start argument must be a multiple of the system page size. The
-+len argument need not be a multiple of the page size, but since the
-+information is returned for the whole pages, len is effectively rounded
-+up to the next multiple of the page size.
-+
-+The vec is output array in which the offsets of the pages are returned.
-+Offset is calculated from start address. User lets the kernel know about the
-+size of the vec by passing size in vec_len. The system call returns when the
-+whole range has been searched or vec is completely filled. The whole range
-+isn't cleared if vec fills up completely.
-+
-+The flags argument specifies the operation to be performed. The MEMWATCH_SD_GET
-+and MEMWATCH_SD_CLEAR operations can be used separately or together to perform
-+MEMWATCH_SD_GET and MEMWATCH_SD_CLEAR atomically as one operation.::
-+
-+	MEMWATCH_SD_GET
-+		Get the page offsets which are soft dirty.
-+
-+	MEMWATCH_SD_CLEAR
-+		Clear the pages which are soft dirty.
-+
-+	MEMWATCH_SD_NO_REUSED_REGIONS
-+		This optional flag can be specified in combination with other flags.
-+		VM_SOFTDIRTY is ignored for the VMAs for performances reasons. This
-+		flag shows only those pages dirty which have been written to by the
-+		user. All new allocations aren't returned to be dirty.
-+
-+Explanation
-+-----------
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index a492f159624f..74f31317481a 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -298,6 +298,7 @@ COND_SYSCALL(set_mempolicy);
+ COND_SYSCALL(migrate_pages);
+ COND_SYSCALL(move_pages);
+ COND_SYSCALL(set_mempolicy_home_node);
++COND_SYSCALL(process_memwatch);
  
- Internally, to do this tracking, the writable bit is cleared from PTEs
- when the soft-dirty bit is cleared. So, after this, when the task tries to
+ COND_SYSCALL(perf_event_open);
+ COND_SYSCALL(accept4);
+diff --git a/tools/include/uapi/asm-generic/unistd.h b/tools/include/uapi/asm-generic/unistd.h
+index 45fa180cc56a..805a8d5cf0c4 100644
+--- a/tools/include/uapi/asm-generic/unistd.h
++++ b/tools/include/uapi/asm-generic/unistd.h
+@@ -886,8 +886,11 @@ __SYSCALL(__NR_futex_waitv, sys_futex_waitv)
+ #define __NR_set_mempolicy_home_node 450
+ __SYSCALL(__NR_set_mempolicy_home_node, sys_set_mempolicy_home_node)
+ 
++#define __NR_process_memwatch 451
++__SC_COMP(__NR_process_memwatch, sys_process_memwatch, compat_sys_process_memwatch)
++
+ #undef __NR_syscalls
+-#define __NR_syscalls 451
++#define __NR_syscalls 452
+ 
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
+index c84d12608cd2..3bddea588ce7 100644
+--- a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -372,6 +372,7 @@
+ 448	common	process_mrelease	sys_process_mrelease
+ 449	common	futex_waitv		sys_futex_waitv
+ 450	common	set_mempolicy_home_node	sys_set_mempolicy_home_node
++451	common	process_memwatch	sys_process_memwatch
+ 
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
 -- 
 2.30.2
 
