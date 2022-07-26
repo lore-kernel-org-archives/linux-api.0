@@ -2,35 +2,35 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 49E43C04A68
-	for <linux-api@archiver.kernel.org>; Tue, 26 Jul 2022 16:21:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C5876C00140
+	for <linux-api@archiver.kernel.org>; Tue, 26 Jul 2022 16:21:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239374AbiGZQVS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 26 Jul 2022 12:21:18 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36072 "EHLO
+        id S239350AbiGZQVk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 26 Jul 2022 12:21:40 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36218 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239322AbiGZQVI (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 26 Jul 2022 12:21:08 -0400
+        with ESMTP id S239434AbiGZQVf (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 26 Jul 2022 12:21:35 -0400
 Received: from madras.collabora.co.uk (madras.collabora.co.uk [46.235.227.172])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DF16727171;
-        Tue, 26 Jul 2022 09:21:06 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1CC7E2D1C3;
+        Tue, 26 Jul 2022 09:21:29 -0700 (PDT)
 Received: from localhost.localdomain (unknown [203.135.47.243])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
          key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
         (No client certificate requested)
         (Authenticated sender: usama.anjum)
-        by madras.collabora.co.uk (Postfix) with ESMTPSA id B07F96601967;
-        Tue, 26 Jul 2022 17:20:54 +0100 (BST)
+        by madras.collabora.co.uk (Postfix) with ESMTPSA id 6AA656601B12;
+        Tue, 26 Jul 2022 17:21:17 +0100 (BST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=collabora.com;
-        s=mail; t=1658852465;
-        bh=s6eqXFSk6GZEoo/gcU7nGfRgAO8upesyCU6wcU5FTRY=;
+        s=mail; t=1658852487;
+        bh=VRHwVG5nMSenCpzvP39FS74oypjt6/ob2F3QwRpbs00=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=oWOW0yfY+fyhwjzIf9jeBedeg2FkBZ2QYDN0yyceKZGGy9yc9gTtgTDNBLI1cQzqp
-         V2Rg96D7b/kLJfPs3jCkgQqUppHkLuYyZ8HeegcgGfCBmECyjvcllWUrpjj1RYghb2
-         mPQ6oVoLoBt4WkFlC2lrX+0D/uUs2QE7tWE2q9dVHwblbo1R4LpmmlFBj31sPW+x69
-         qxB5E1eyfdPjhtg0ffGmglaXK6TIzFiOoXuP+DXZ42za/ih2ztHq56o5Dzrbaga2sy
-         LQIpirxwZuZl7QxEgdiQeU24/ikR72RKWA/enkxpIQ3ISlaOUKu75GkNEac+ok9jsd
-         qZEGKbTPexd+Q==
+        b=RzzzgPagAmgOFVwSpt0CnS3YVmbe9PDVbteju1u+4gdGMUhL+/UXV6v9KuvDcrhIV
+         EVQyfl0WERM6QxiYOOwYV7cOmD0B0pzmPuGxfJH1eKeFJlw+jWwyyeex+sZHj6Tduw
+         M+Ct+VjduWKGBp8IoERAhhldgK+jm62tU/Z7TucicildKjW4ewufxOVZ35WVB9kLrO
+         sh0ynbgl5yqiCselxf0z9NOb2cxgY5Qua/ZiI5TLUoA54C80UC0J7pVg3Q8bs5zbqW
+         SxdeOAHpy3x52qSTWwd8L/ohrRqV92ybvNSflhqZrx+QKvm7OpQlzC3IKotys6Qmxi
+         L2ZtkwuYs7a2Q==
 From:   Muhammad Usama Anjum <usama.anjum@collabora.com>
 To:     Jonathan Corbet <corbet@lwn.net>,
         Andy Lutomirski <luto@kernel.org>,
@@ -59,429 +59,748 @@ To:     Jonathan Corbet <corbet@lwn.net>,
         krisman@collabora.com
 Cc:     Muhammad Usama Anjum <usama.anjum@collabora.com>,
         kernel@collabora.com
-Subject: [PATCH 2/5] mm: Implement process_memwatch syscall
-Date:   Tue, 26 Jul 2022 21:18:51 +0500
-Message-Id: <20220726161854.276359-3-usama.anjum@collabora.com>
+Subject: [PATCH 4/5] selftests: vm: add process_memwatch syscall tests
+Date:   Tue, 26 Jul 2022 21:18:53 +0500
+Message-Id: <20220726161854.276359-5-usama.anjum@collabora.com>
 X-Mailer: git-send-email 2.30.2
 In-Reply-To: <20220726161854.276359-1-usama.anjum@collabora.com>
 References: <20220726161854.276359-1-usama.anjum@collabora.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This syscall can be used to watch the process's memory and perform
-atomic operations which aren't possible through procfs. Two operations
-have been implemented. MEMWATCH_SD_GET is used to get the soft dirty
-pages. MEMWATCH_SD_CLEAR clears the soft dirty bit from dirty pages.
-MEMWATCH_SD_IGNORE_VMA can be specified to ignore VMA dirty flags.
-These operations can be used collectively in one operation as well.
-
-NAME
-       process_memwatch - get process's memory information
-
-SYNOPSIS
-       #include <linux/memwatch.h>   /* Definition of MEMWATCH_*
-constants */
-
-       long process_memwatch(int pidfd, unsigned long start, int len,
-                             unsigned int flags, void *vec,
-                             int vec_len);
-
-       Note:  Glibc does not provide a wrapper for this system call;
-       call it using syscall(2).
-
-DESCRIPTION
-       process_memwatch() system call is  used  to  get  information
-       about the memory of the process.
-
-   Arguments
-       pidfd specifies the pidfd of process whose memory needs to be
-       watched. The calling process must have PTRACE_MODE_ATTACH_FS‐
-       CREDS  capabilities  over  the  process  whose pidfd has been
-       specified.  It can be zero which means that the process wants
-       to  watch  its  own  memory.  The  operation is determined by
-       flags.  The start argument must be a multiple of  the  system
-       page  size.  The  len  argument need not be a multiple of the
-       page size, but since the  information  is  returned  for  the
-       whole pages, len is effectively rounded up to the next multi‐
-       ple of the page size.
-
-       vec is an output array in which the offsets of the pages  are
-       returned.  Offset is calculated from start address. User lets
-       the kernel know about the size of the vec by passing size  in
-       vec_len.   The  system  call returns when the whole range has
-       been searched or vec is completely filled.  The  whole  range
-       isn't cleared if vec fills up completely.
-
-   Operations
-       The  flags  argument specifies the operation to be performed.
-       The MEMWATCH_SD_GET and MEMWATCH_SD_CLEAR operations  can  be
-       used  separately  or  together to perform MEMWATCH_SD_GET and
-       MEMWATCH_SD_CLEAR atomically as one operation.
-
-       MEMWATCH_SD_GET
-              Get the page offsets which are soft dirty.
-
-       MEMWATCH_SD_CLEAR
-              Clear the pages which are soft dirty.
-
-       MEMWATCH_SD_NO_REUSED_REGIONS
-              This optional flag can  be  specified  in  combination
-              with other flags. VM_SOFTDIRTY is ignored for the VMAs
-              for performance reasons. This flag  shows  only  those
-              pages  dirty  which  have been written by the user ex‐
-              plicitly. All new allocations are not be  returned  as
-              dirty.
-
-RETURN VALUE
-       The  0  or  positive  value  is returned on success. Positive
-       value when returned shows the number of dirty pages filled in
-       vec.    In   the   event  of  an  error  (and  assuming  that
-       process_memwatch() was invoked via  syscall(2)),  all  opera‐
-       tions return -1 and set errno to indicate the error.
-
-ERRORS
-       EINVAL invalid arguments.
-
-       ESRCH  Cannot access the process.
-
-       EIO    I/O error.
-
-This is based on a patch from Gabriel Krisman Bertazi.
+Several unit tests and functionality tests are included.
 
 Signed-off-by: Muhammad Usama Anjum <usama.anjum@collabora.com>
 ---
- include/uapi/linux/memwatch.h |  12 ++
- mm/Makefile                   |   2 +-
- mm/memwatch.c                 | 285 ++++++++++++++++++++++++++++++++++
- 3 files changed, 298 insertions(+), 1 deletion(-)
- create mode 100644 include/uapi/linux/memwatch.h
- create mode 100644 mm/memwatch.c
+TAP version 13
+1..44
+ok 1 sanity_tests no flag specified
+ok 2 sanity_tests wrong flag specified
+ok 3 sanity_tests mixture of correct and wrong flags
+ok 4 sanity_tests wrong pidfd
+ok 5 sanity_tests pidfd of process with over which no capabilities
+ok 6 sanity_tests Clear area with larger vec size
+ok 7 Page testing: all new pages must be soft dirty
+ok 8 Page testing: all pages must not be soft dirty
+ok 9 Page testing: all pages dirty other than first and the last one
+ok 10 Page testing: only middle page dirty
+ok 11 Page testing: only two middle pages dirty
+ok 12 Page testing: only get 2 dirty pages and clear them as well
+ok 13 Page testing: Range clear only
+ok 14 Large Page testing: all new pages must be soft dirty
+ok 15 Large Page testing: all pages must not be soft dirty
+ok 16 Large Page testing: all pages dirty other than first and the last one
+ok 17 Large Page testing: only middle page dirty
+ok 18 Large Page testing: only two middle pages dirty
+ok 19 Large Page testing: only get 2 dirty pages and clear them as well
+ok 20 Large Page testing: Range clear only
+ok 21 Huge page testing: all new pages must be soft dirty
+ok 22 Huge page testing: all pages must not be soft dirty
+ok 23 Huge page testing: all pages dirty other than first and the last one
+ok 24 Huge page testing: only middle page dirty
+ok 25 Huge page testing: only two middle pages dirty
+ok 26 Huge page testing: only get 2 dirty pages and clear them as well
+ok 27 Huge page testing: Range clear only
+ok 28 Performance Page testing: page isn't dirty
+ok 29 Performance Page testing: all pages must not be soft dirty
+ok 30 Performance Page testing: all pages dirty other than first and the last one
+ok 31 Performance Page testing: only middle page dirty
+ok 32 Performance Page testing: only two middle pages dirty
+ok 33 Performance Page testing: only get 2 dirty pages and clear them as well
+ok 34 Performance Page testing: Range clear only
+ok 35 hpage_unit_tests all new huge page must be dirty
+ok 36 hpage_unit_tests all the huge page must not be dirty
+ok 37 hpage_unit_tests all the huge page must be dirty and clear
+ok 38 hpage_unit_tests only middle page dirty
+ok 39 hpage_unit_tests clear first half of huge page
+ok 40 hpage_unit_tests clear first half of huge page with limited buffer
+ok 41 hpage_unit_tests clear second half huge page
+ok 42 unmapped_region_tests Get dirty pages
+ok 43 unmapped_region_tests Get dirty pages
+ok 44 Test test_simple
+ # Totals: pass:44 fail:0 xfail:0 xpass:0 skip:0 error:0
+---
+ tools/testing/selftests/vm/.gitignore      |   1 +
+ tools/testing/selftests/vm/Makefile        |   2 +
+ tools/testing/selftests/vm/memwatch_test.c | 635 +++++++++++++++++++++
+ 3 files changed, 638 insertions(+)
+ create mode 100644 tools/testing/selftests/vm/memwatch_test.c
 
-diff --git a/include/uapi/linux/memwatch.h b/include/uapi/linux/memwatch.h
-new file mode 100644
-index 000000000000..7e86ffdc10f5
---- /dev/null
-+++ b/include/uapi/linux/memwatch.h
-@@ -0,0 +1,12 @@
-+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-+
-+#ifndef _MEMWATCH_H
-+#define _MEMWATCH_H
-+
-+/* memwatch operations */
-+#define MEMWATCH_SD_GET			0x1
-+#define MEMWATCH_SD_CLEAR		0x2
-+#define MEMWATCH_SD_NO_REUSED_REGIONS	0x4
-+
-+#endif
-+
-diff --git a/mm/Makefile b/mm/Makefile
-index 8083fa85a348..aa72e4ced1f3 100644
---- a/mm/Makefile
-+++ b/mm/Makefile
-@@ -37,7 +37,7 @@ CFLAGS_init-mm.o += $(call cc-disable-warning, override-init)
- CFLAGS_init-mm.o += $(call cc-disable-warning, initializer-overrides)
+diff --git a/tools/testing/selftests/vm/.gitignore b/tools/testing/selftests/vm/.gitignore
+index 31e5eea2a9b9..462cff7e23bb 100644
+--- a/tools/testing/selftests/vm/.gitignore
++++ b/tools/testing/selftests/vm/.gitignore
+@@ -14,6 +14,7 @@ mlock2-tests
+ mrelease_test
+ mremap_dontunmap
+ mremap_test
++memwatch_test
+ on-fault-limit
+ transhuge-stress
+ protection_keys
+diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selftests/vm/Makefile
+index d9fa6a9ea584..65b8c94b104d 100644
+--- a/tools/testing/selftests/vm/Makefile
++++ b/tools/testing/selftests/vm/Makefile
+@@ -41,6 +41,7 @@ TEST_GEN_FILES += map_fixed_noreplace
+ TEST_GEN_FILES += map_hugetlb
+ TEST_GEN_FILES += map_populate
+ TEST_GEN_FILES += memfd_secret
++TEST_GEN_PROGS += memwatch_test
+ TEST_GEN_FILES += migration
+ TEST_GEN_FILES += mlock-random-test
+ TEST_GEN_FILES += mlock2-tests
+@@ -98,6 +99,7 @@ TEST_FILES += va_128TBswitch.sh
+ include ../lib.mk
  
- mmu-y			:= nommu.o
--mmu-$(CONFIG_MMU)	:= highmem.o memory.o mincore.o \
-+mmu-$(CONFIG_MMU)	:= highmem.o memory.o memwatch.o mincore.o \
- 			   mlock.o mmap.o mmu_gather.o mprotect.o mremap.o \
- 			   msync.o page_vma_mapped.o pagewalk.o \
- 			   pgtable-generic.o rmap.o vmalloc.o
-diff --git a/mm/memwatch.c b/mm/memwatch.c
+ $(OUTPUT)/madv_populate: vm_util.c
++$(OUTPUT)/memwatch_test: vm_util.c
+ $(OUTPUT)/soft-dirty: vm_util.c
+ $(OUTPUT)/split_huge_page_test: vm_util.c
+ 
+diff --git a/tools/testing/selftests/vm/memwatch_test.c b/tools/testing/selftests/vm/memwatch_test.c
 new file mode 100644
-index 000000000000..9be09bc431d2
+index 000000000000..a109eff5d807
 --- /dev/null
-+++ b/mm/memwatch.c
-@@ -0,0 +1,285 @@
++++ b/tools/testing/selftests/vm/memwatch_test.c
+@@ -0,0 +1,635 @@
 +// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright 2020 Collabora Ltd.
-+ */
-+#include <linux/pagewalk.h>
-+#include <linux/vmalloc.h>
-+#include <linux/syscalls.h>
-+#include <asm/tlb.h>
-+#include <asm/tlbflush.h>
-+#include <linux/sched/mm.h>
-+#include <linux/mm_inline.h>
-+#include <uapi/linux/memwatch.h>
-+#include <uapi/asm-generic/errno-base.h>
-+#include <linux/compat.h>
-+#include <linux/minmax.h>
++#include <stdio.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <string.h>
++#include <sys/mman.h>
++#include <errno.h>
++#include <malloc.h>
++#include <asm-generic/unistd.h>
++#include <linux/memwatch.h>
++#include "vm_util.h"
++#include "../kselftest.h"
++#include <linux/types.h>
 +
-+#ifdef CONFIG_MEM_SOFT_DIRTY
-+#define MEMWATCH_SD_OPS_MASK (MEMWATCH_SD_GET | MEMWATCH_SD_CLEAR | \
-+			      MEMWATCH_SD_NO_REUSED_REGIONS)
++#define TEST_ITERATIONS 10000
 +
-+struct memwatch_sd_private {
-+	unsigned long start;
-+	unsigned int flags;
-+	unsigned int index;
-+	unsigned int vec_len;
-+	unsigned long *vec;
-+};
-+
-+static int memwatch_pmd_entry(pmd_t *pmd, unsigned long addr,
-+			      unsigned long end, struct mm_walk *walk)
++static long process_memwatch(pid_t pidfd, void *start, int len,
++			     unsigned int flags, loff_t *vec, int vec_len)
 +{
-+	struct memwatch_sd_private *p = walk->private;
-+	struct vm_area_struct *vma = walk->vma;
-+	unsigned long start = addr;
-+	spinlock_t *ptl;
-+	pte_t *pte;
-+	int dirty;
-+	bool dirty_vma = (p->flags & MEMWATCH_SD_NO_REUSED_REGIONS) ? 0 :
-+			 (vma->vm_flags & VM_SOFTDIRTY);
++	return syscall(__NR_process_memwatch, pidfd, start, len, flags, vec, vec_len);
++}
 +
-+	end = min(end, walk->vma->vm_end);
-+	ptl = pmd_trans_huge_lock(pmd, vma);
-+	if (ptl) {
-+		if (dirty_vma || check_soft_dirty_pmd(vma, addr, pmd, false)) {
-+			/*
-+			 * Break huge page into small pages if operation needs to be performed is
-+			 * on a portion of the huge page or the return buffer cannot store complete
-+			 * data. Then process this PMD as having normal pages.
-+			 */
-+			if (((p->flags & MEMWATCH_SD_CLEAR) && (end - addr < HPAGE_SIZE)) ||
-+			    ((p->flags & MEMWATCH_SD_GET) &&
-+			     (p->index + HPAGE_SIZE/PAGE_SIZE > p->vec_len))) {
-+				spin_unlock(ptl);
-+				split_huge_pmd(vma, pmd, addr);
-+				goto process_pages;
-+			} else {
-+				dirty = check_soft_dirty_pmd(vma, addr, pmd,
-+							     p->flags & MEMWATCH_SD_CLEAR);
-+				if ((p->flags & MEMWATCH_SD_GET) && (dirty_vma || dirty)) {
-+					for (; addr != end && p->index < p->vec_len;
-+					     addr += PAGE_SIZE)
-+						p->vec[p->index++] = addr - p->start;
-+				}
-+			}
-+		}
-+		spin_unlock(ptl);
-+		return 0;
-+	}
++int sanity_tests(int page_size)
++{
++	char *mem;
++	int mem_size, vec_size, ret;
++	loff_t *vec;
 +
-+process_pages:
-+	if (pmd_trans_unstable(pmd))
-+		return 0;
++	/* 1. wrong operation */
++	vec_size = 100;
++	mem_size = page_size;
 +
-+	pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
-+	for (; addr != end; pte++, addr += PAGE_SIZE) {
-+		dirty = check_soft_dirty(vma, addr, pte, p->flags & MEMWATCH_SD_CLEAR);
++	vec = malloc(sizeof(loff_t) * vec_size);
++	mem = mmap(NULL, mem_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
++	if (!mem || !vec)
++		ksft_exit_fail_msg("error nomem\n");
 +
-+		if ((p->flags & MEMWATCH_SD_GET) && (dirty_vma || dirty)) {
-+			p->vec[p->index++] = addr - p->start;
-+			WARN_ON(p->index > p->vec_len);
-+		}
-+	}
-+	pte_unmap_unlock(pte - 1, ptl);
-+	cond_resched();
++	ksft_test_result(process_memwatch(0, mem, mem_size, 0, vec, vec_size) < 0,
++			 "%s no flag specified\n", __func__);
++	ksft_test_result(process_memwatch(0, mem, mem_size, 0x01000000, vec, vec_size) < 0,
++			 "%s wrong flag specified\n", __func__);
++	ksft_test_result(process_memwatch(0, mem, mem_size, MEMWATCH_SD_GET | 0xFF,
++			 vec, vec_size) < 0,
++			 "%s mixture of correct and wrong flags\n", __func__);
++	ksft_test_result(process_memwatch(-1, mem, mem_size, MEMWATCH_SD_GET, vec, vec_size) < 0,
++			 "%s wrong pidfd\n", __func__);
++	ksft_test_result(process_memwatch(1, mem, mem_size, MEMWATCH_SD_GET, vec, vec_size) < 0,
++			 "%s pidfd of process with over which no capabilities\n", __func__);
 +
-+	if (p->flags & MEMWATCH_SD_CLEAR)
-+		flush_tlb_mm_range(vma->vm_mm, start, end, PAGE_SHIFT, false);
++	/* 2. Clear area with larger vec size */
++	ret = process_memwatch(0, mem, mem_size, MEMWATCH_SD_GET | MEMWATCH_SD_CLEAR,
++				  vec, vec_size);
++	ksft_test_result(ret >= 0, "%s Clear area with larger vec size\n", __func__);
 +
++	free(vec);
++	munmap(mem, mem_size);
 +	return 0;
 +}
 +
-+static int memwatch_pte_hole(unsigned long addr, unsigned long end, int depth,
-+			     struct mm_walk *walk)
++void *gethugepage(int map_size)
 +{
-+	struct memwatch_sd_private *p = walk->private;
-+	struct vm_area_struct *vma = walk->vma;
-+
-+	if (p->flags & MEMWATCH_SD_NO_REUSED_REGIONS)
-+		return 0;
-+
-+	if (vma && (vma->vm_flags & VM_SOFTDIRTY) && (p->flags & MEMWATCH_SD_GET)) {
-+		for (; addr != end && p->index < p->vec_len; addr += PAGE_SIZE)
-+			p->vec[p->index++] = addr - p->start;
-+	}
-+
-+	return 0;
-+}
-+
-+static int memwatch_pre_vma(unsigned long start, unsigned long end, struct mm_walk *walk)
-+{
-+	struct memwatch_sd_private *p = walk->private;
-+	struct vm_area_struct *vma = walk->vma;
 +	int ret;
-+	unsigned long end_cut = end;
++	char *map;
++	size_t hpage_len = read_pmd_pagesize();
 +
-+	if (p->flags & MEMWATCH_SD_NO_REUSED_REGIONS)
++	map = memalign(hpage_len, map_size);
++	if (!map)
++		ksft_exit_fail_msg("memalign failed %d %s\n", errno, strerror(errno));
++
++	ret = madvise(map, map_size, MADV_HUGEPAGE);
++	if (ret)
++		ksft_exit_fail_msg("madvise failed %d %d %s\n", ret, errno, strerror(errno));
++
++	memset(map, 0, map_size);
++
++	if (check_huge(map))
++		return map;
++
++	free(map);
++	return NULL;
++
++}
++
++int hpage_unit_tests(int page_size)
++{
++	char *map;
++	int i, ret;
++	size_t hpage_len = read_pmd_pagesize();
++	size_t num_pages = 1;
++	int map_size = hpage_len * num_pages;
++	int vec_size = map_size/page_size;
++	loff_t *vec, *vec2;
++
++	vec = malloc(sizeof(loff_t) * vec_size);
++	vec2 = malloc(sizeof(loff_t) * vec_size);
++	if (!vec || !vec2)
++		ksft_exit_fail_msg("malloc failed\n");
++
++	map = gethugepage(map_size);
++	if (map) {
++		// 1. all new huge page must be dirty
++		ret = process_memwatch(0, map, map_size, MEMWATCH_SD_GET | MEMWATCH_SD_CLEAR,
++				       vec, vec_size);
++		if (ret < 0)
++			ksft_exit_fail_msg("error %d %d %s\n", ret, errno, strerror(errno));
++
++		for (i = 0; i < vec_size; i++)
++			if (vec[i] != i * page_size)
++				break;
++
++		ksft_test_result(i == vec_size, "%s all new huge page must be dirty\n", __func__);
++
++		// 2. all the huge page must not be dirty
++		ret = process_memwatch(0, map, map_size, MEMWATCH_SD_GET,
++				       vec, vec_size);
++		if (ret < 0)
++			ksft_exit_fail_msg("error %d %d %s\n", ret, errno, strerror(errno));
++
++		ksft_test_result(ret == 0, "%s all the huge page must not be dirty\n", __func__);
++
++		// 3. all the huge page must be dirty and clear dirty as well
++		memset(map, -1, map_size);
++		ret = process_memwatch(0, map, map_size, MEMWATCH_SD_GET | MEMWATCH_SD_CLEAR,
++				       vec, vec_size);
++		if (ret < 0)
++			ksft_exit_fail_msg("error %d %d %s\n", ret, errno, strerror(errno));
++
++		for (i = 0; i < vec_size; i++)
++			if (vec[i] != i * page_size)
++				break;
++
++		ksft_test_result(ret == vec_size && i == vec_size,
++				 "%s all the huge page must be dirty and clear\n", __func__);
++
++		// 4. only middle page dirty
++		free(map);
++		map = gethugepage(map_size);
++		clear_softdirty();
++		map[vec_size/2 * page_size]++;
++
++		ret = process_memwatch(0, map, map_size, MEMWATCH_SD_GET, vec, vec_size);
++		if (ret < 0)
++			ksft_exit_fail_msg("error %d %d %s\n", ret, errno, strerror(errno));
++
++		for (i = 0; i < vec_size; i++) {
++			if (vec[i] == vec_size/2 * page_size)
++				break;
++		}
++		ksft_test_result(vec[i] == vec_size/2 * page_size,
++				 "%s only middle page dirty\n", __func__);
++
++		free(map);
++	} else {
++		ksft_test_result_skip("all new huge page must be dirty\n");
++		ksft_test_result_skip("all the huge page must not be dirty\n");
++		ksft_test_result_skip("all the huge page must be dirty and clear\n");
++		ksft_test_result_skip("only middle page dirty\n");
++	}
++
++	// 5. clear first half of huge page
++	map = gethugepage(map_size);
++	if (map) {
++		ret = process_memwatch(0, map, map_size/2, MEMWATCH_SD_CLEAR, NULL, 0);
++		if (ret < 0)
++			ksft_exit_fail_msg("error %d %d %s\n", ret, errno, strerror(errno));
++
++		ret = process_memwatch(0, map, map_size, MEMWATCH_SD_GET, vec, vec_size);
++		if (ret < 0)
++			ksft_exit_fail_msg("error %d %d %s\n", ret, errno, strerror(errno));
++
++		for (i = 0; i < vec_size/2; i++)
++			if (vec[i] != (i + vec_size/2) * page_size)
++				break;
++
++		ksft_test_result(i == vec_size/2 && ret == vec_size/2,
++				 "%s clear first half of huge page\n", __func__);
++		free(map);
++	} else {
++		ksft_test_result_skip("clear first half of huge page\n");
++	}
++
++	// 6. clear first half of huge page with limited buffer
++	map = gethugepage(map_size);
++	if (map) {
++		ret = process_memwatch(0, map, map_size, MEMWATCH_SD_CLEAR | MEMWATCH_SD_GET,
++				       vec, vec_size/2);
++		if (ret < 0)
++			ksft_exit_fail_msg("error %d %d %s\n", ret, errno, strerror(errno));
++
++		ret = process_memwatch(0, map, map_size, MEMWATCH_SD_GET, vec, vec_size);
++		if (ret < 0)
++			ksft_exit_fail_msg("error %d %d %s\n", ret, errno, strerror(errno));
++
++		for (i = 0; i < vec_size/2; i++)
++			if (vec[i] != (i + vec_size/2) * page_size)
++				break;
++
++		ksft_test_result(i == vec_size/2 && ret == vec_size/2,
++				 "%s clear first half of huge page with limited buffer\n",
++				 __func__);
++		free(map);
++	} else {
++		ksft_test_result_skip("clear first half of huge page with limited buffer\n");
++	}
++
++	// 7. clear second half of huge page
++	map = gethugepage(map_size);
++	if (map) {
++		memset(map, -1, map_size);
++		ret = process_memwatch(0, map + map_size/2, map_size/2, MEMWATCH_SD_CLEAR, NULL, 0);
++		if (ret < 0)
++			ksft_exit_fail_msg("error %d %d %s\n", ret, errno, strerror(errno));
++
++		ret = process_memwatch(0, map, map_size, MEMWATCH_SD_GET, vec, vec_size);
++		if (ret < 0)
++			ksft_exit_fail_msg("error %d %d %s\n", ret, errno, strerror(errno));
++
++		for (i = 0; i < vec_size/2; i++)
++			if (vec[i] != i * page_size)
++				break;
++
++		ksft_test_result(i == vec_size/2, "%s clear second half huge page\n", __func__);
++		free(map);
++	} else {
++		ksft_test_result_skip("clear second half huge page\n");
++	}
++
++	free(vec);
++	free(vec2);
++	return 0;
++}
++
++int base_tests(char *prefix, char *mem, int mem_size, int page_size, int skip)
++{
++	int vec_size, i, j, ret, dirty_pages, dirty_pages2;
++	loff_t *vec, *vec2;
++
++	if (skip) {
++		ksft_test_result_skip("%s all new pages must be soft dirty\n", prefix);
++		ksft_test_result_skip("%s all pages must not be soft dirty\n", prefix);
++		ksft_test_result_skip("%s all pages dirty other than first and the last one\n",
++				      prefix);
++		ksft_test_result_skip("%s only middle page dirty\n", prefix);
++		ksft_test_result_skip("%s only two middle pages dirty\n", prefix);
++		ksft_test_result_skip("%s only get 2 dirty pages and clear them as well\n", prefix);
++		ksft_test_result_skip("%s Range clear only\n", prefix);
 +		return 0;
-+
-+	if ((p->flags & MEMWATCH_SD_CLEAR) && (vma->vm_flags & VM_SOFTDIRTY)) {
-+		if (vma->vm_start < start) {
-+			ret = split_vma(vma->vm_mm, vma, start, 1);
-+			if (ret)
-+				return ret;
-+		}
-+
-+		if (p->flags & MEMWATCH_SD_GET)
-+			end_cut = min(start + p->vec_len * PAGE_SIZE, end);
-+
-+		if (vma->vm_end > end_cut) {
-+			ret = split_vma(vma->vm_mm, vma, end_cut, 0);
-+			if (ret)
-+				return ret;
-+		}
 +	}
 +
-+	return 0;
-+}
++	vec_size = mem_size/page_size;
++	vec = malloc(sizeof(loff_t) * vec_size);
++	vec2 = malloc(sizeof(loff_t) * vec_size);
 +
-+static void memwatch_post_vma(struct mm_walk *walk)
-+{
-+	struct memwatch_sd_private *p = walk->private;
-+	struct vm_area_struct *vma = walk->vma;
++	/* 1. all new pages must be soft dirty and clear the range for next test */
++	dirty_pages = process_memwatch(0, mem, mem_size, MEMWATCH_SD_GET | MEMWATCH_SD_CLEAR,
++				       vec, vec_size - 2);
++	if (dirty_pages < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages, errno, strerror(errno));
 +
-+	if (p->flags & MEMWATCH_SD_NO_REUSED_REGIONS)
-+		return;
++	dirty_pages2 = process_memwatch(0, mem, mem_size, MEMWATCH_SD_GET | MEMWATCH_SD_CLEAR,
++					vec2, vec_size);
++	if (dirty_pages2 < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages2, errno, strerror(errno));
 +
-+	if ((p->flags & MEMWATCH_SD_CLEAR) && (vma->vm_flags & VM_SOFTDIRTY)) {
-+		vma->vm_flags &= ~VM_SOFTDIRTY;
-+		vma_set_page_prot(vma);
-+	}
-+}
++	for (i = 0; i < dirty_pages; i++)
++		if (vec[i] != i * page_size)
++			break;
++	for (j = 0; j < dirty_pages2; j++)
++		if (vec2[j] != (j + vec_size - 2) * page_size)
++			break;
 +
-+static int memwatch_pmd_test_walk(unsigned long start, unsigned long end,
-+				  struct mm_walk *walk)
-+{
-+	struct memwatch_sd_private *p = walk->private;
-+	struct vm_area_struct *vma = walk->vma;
++	ksft_test_result(dirty_pages == vec_size - 2 && i == dirty_pages &&
++			 dirty_pages2 == 2 && j == dirty_pages2,
++			 "%s all new pages must be soft dirty\n", prefix);
 +
-+	if ((p->flags & MEMWATCH_SD_GET) && (p->index == p->vec_len))
-+		return -1;
++	// 2. all pages must not be soft dirty
++	dirty_pages = process_memwatch(0, mem, mem_size, MEMWATCH_SD_GET, vec, vec_size);
++	if (dirty_pages < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages, errno, strerror(errno));
 +
-+	if (vma->vm_flags & VM_PFNMAP)
-+		return 1;
++	ksft_test_result(dirty_pages == 0, "%s all pages must not be soft dirty\n", prefix);
 +
-+	return 0;
-+}
++	// 3. all pages dirty other than first and the last one
++	memset(mem + page_size, -1, (mem_size - 2 * page_size));
 +
-+static const struct mm_walk_ops memwatch_ops = {
-+	.test_walk = memwatch_pmd_test_walk,
-+	.pre_vma = memwatch_pre_vma,
-+	.pmd_entry = memwatch_pmd_entry,
-+	.pte_hole = memwatch_pte_hole,
-+	.post_vma = memwatch_post_vma,
-+};
++	dirty_pages = process_memwatch(0, mem, mem_size, MEMWATCH_SD_GET, vec, vec_size);
++	if (dirty_pages < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages, errno, strerror(errno));
 +
-+static long do_process_memwatch(int pidfd, void __user *start_addr, int len,
-+				unsigned int flags, loff_t __user *vec, int vec_len)
-+{
-+	struct memwatch_sd_private watch;
-+	struct mmu_notifier_range range;
-+	unsigned long start, end;
-+	struct task_struct *task;
-+	struct mm_struct *mm;
-+	unsigned int f_flags;
-+	int ret;
-+
-+	start = (unsigned long)untagged_addr(start_addr);
-+	if ((!IS_ALIGNED(start, PAGE_SIZE)) || !access_ok((void __user *)start, len))
-+		return -EINVAL;
-+
-+	if ((flags == 0) || (flags == MEMWATCH_SD_NO_REUSED_REGIONS) ||
-+	    (flags & ~MEMWATCH_SD_OPS_MASK))
-+		return -EINVAL;
-+
-+	if ((flags & MEMWATCH_SD_GET) && ((vec_len == 0) || (!vec) ||
-+	    !access_ok(vec, vec_len)))
-+		return -EINVAL;
-+
-+	end = start + len;
-+	watch.start = start;
-+	watch.flags = flags;
-+	watch.index = 0;
-+	watch.vec_len = vec_len;
-+
-+	if (pidfd) {
-+		task = pidfd_get_task(pidfd, &f_flags);
-+		if (IS_ERR(task))
-+			return PTR_ERR(task);
-+	} else {
-+		task = current;
++	for (i = 0; i < dirty_pages; i++) {
++		if (vec[i] != (i + 1) * page_size)
++			break;
 +	}
 +
-+	if (flags & MEMWATCH_SD_GET) {
-+		watch.vec = vzalloc(vec_len * sizeof(loff_t));
-+		if (!watch.vec) {
-+			ret = -ENOMEM;
-+			goto put_task;
-+		}
++	ksft_test_result(dirty_pages == vec_size - 2 && i == vec_size - 2,
++			 "%s all pages dirty other than first and the last one\n", prefix);
++
++	// 4. only middle page dirty
++	clear_softdirty();
++	mem[vec_size/2 * page_size]++;
++
++	dirty_pages = process_memwatch(0, mem, mem_size, MEMWATCH_SD_GET, vec, vec_size);
++	if (dirty_pages < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages, errno, strerror(errno));
++
++	for (i = 0; i < vec_size; i++) {
++		if (vec[i] == vec_size/2 * page_size)
++			break;
 +	}
++	ksft_test_result(vec[i] == vec_size/2 * page_size,
++			 "%s only middle page dirty\n", prefix);
 +
-+	mm = mm_access(task, PTRACE_MODE_ATTACH_FSCREDS);
-+	if (IS_ERR_OR_NULL(mm)) {
-+		ret = mm ? PTR_ERR(mm) : -ESRCH;
-+		goto free_watch;
-+	}
++	// 5. only two middle pages dirty and walk over only middle pages
++	clear_softdirty();
++	mem[vec_size/2 * page_size]++;
++	mem[(vec_size/2 + 1) * page_size]++;
 +
-+	if (flags & MEMWATCH_SD_CLEAR) {
-+		mmap_write_lock(mm);
++	dirty_pages = process_memwatch(0, &mem[vec_size/2 * page_size], 2 * page_size,
++			       MEMWATCH_SD_GET, vec, vec_size);
++	if (dirty_pages < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages, errno, strerror(errno));
 +
-+		mmu_notifier_range_init(&range, MMU_NOTIFY_SOFT_DIRTY, 0, NULL,
-+					mm, start, end);
-+		mmu_notifier_invalidate_range_start(&range);
-+		inc_tlb_flush_pending(mm);
-+	} else {
-+		mmap_read_lock(mm);
-+	}
++	ksft_test_result(dirty_pages == 2 && vec[0] == 0 && vec[1] == page_size,
++			 "%s only two middle pages dirty\n", prefix);
 +
-+	ret = walk_page_range(mm, start, end, &memwatch_ops, &watch);
++	/* 6. only get 2 dirty pages and clear them as well */
++	memset(mem, -1, mem_size);
 +
-+	if (flags & MEMWATCH_SD_CLEAR) {
-+		mmu_notifier_invalidate_range_end(&range);
-+		dec_tlb_flush_pending(mm);
-+
-+		mmap_write_unlock(mm);
-+	} else {
-+		mmap_read_unlock(mm);
-+	}
-+
-+	mmput(mm);
-+
++	/* get and clear second and third pages */
++	ret = process_memwatch(0, mem + page_size, 2 * page_size,
++			       MEMWATCH_SD_GET | MEMWATCH_SD_CLEAR, vec, 2);
 +	if (ret < 0)
-+		goto free_watch;
++		ksft_exit_fail_msg("error %d %d %s\n", ret, errno, strerror(errno));
 +
-+	if (flags & MEMWATCH_SD_GET) {
-+		ret = copy_to_user(vec, watch.vec, watch.index * sizeof(loff_t));
-+		if (ret) {
-+			ret = -EIO;
-+			goto free_watch;
-+		}
-+		ret = watch.index;
-+	} else {
-+		ret = 0;
++	dirty_pages = process_memwatch(0, mem, mem_size, MEMWATCH_SD_GET,
++			       vec2, vec_size);
++	if (dirty_pages < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages, errno, strerror(errno));
++
++	for (i = 0; i < vec_size - 2; i++) {
++		if (i == 0 && (vec[i] != 0 || vec2[i] != 0))
++			break;
++		else if (i == 1 && (vec[i] != page_size || vec2[i] != (i + 2) * page_size))
++			break;
++		else if (i > 1 && (vec2[i] != (i + 2) * page_size))
++			break;
 +	}
 +
-+free_watch:
-+	if (flags & MEMWATCH_SD_GET)
-+		vfree(watch.vec);
-+put_task:
-+	if (pidfd)
-+		put_task_struct(task);
++	ksft_test_result(dirty_pages == vec_size - 2 && i == vec_size - 2,
++			 "%s only get 2 dirty pages and clear them as well\n", prefix);
++	/* 7. Range clear only */
++	memset(mem, -1, mem_size);
++	dirty_pages = process_memwatch(0, mem, mem_size, MEMWATCH_SD_CLEAR, NULL, 0);
++	if (dirty_pages < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages, errno, strerror(errno));
 +
-+	return ret;
++	dirty_pages2 = process_memwatch(0, mem, mem_size, MEMWATCH_SD_GET, vec, vec_size);
++	if (dirty_pages2 < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages2, errno, strerror(errno));
++
++	ksft_test_result(dirty_pages == 0 && dirty_pages2 == 0, "%s Range clear only\n",
++			 prefix);
++
++	free(vec);
++	free(vec2);
++	return 0;
 +}
-+#endif
 +
-+SYSCALL_DEFINE6(process_memwatch, int, pidfd, void __user*, start,
-+		int, len, unsigned int, flags, loff_t __user *, vec, int, vec_len)
++int performance_base_tests(char *prefix, char *mem, int mem_size, int page_size, int skip)
 +{
-+	int ret = -EPERM;
++	int vec_size, i, ret, dirty_pages, dirty_pages2;
++	loff_t *vec, *vec2;
 +
-+#ifdef CONFIG_MEM_SOFT_DIRTY
-+	ret = do_process_memwatch(pidfd, start, len, flags, vec, vec_len);
-+#endif
-+	return ret;
++	if (skip) {
++		ksft_test_result_skip("%s all new pages must be soft dirty\n", prefix);
++		ksft_test_result_skip("%s all pages must not be soft dirty\n", prefix);
++		ksft_test_result_skip("%s all pages dirty other than first and the last one\n",
++				      prefix);
++		ksft_test_result_skip("%s only middle page dirty\n", prefix);
++		ksft_test_result_skip("%s only two middle pages dirty\n", prefix);
++		ksft_test_result_skip("%s only get 2 dirty pages and clear them as well\n", prefix);
++		ksft_test_result_skip("%s Range clear only\n", prefix);
++		return 0;
++	}
++
++	vec_size = mem_size/page_size;
++	vec = malloc(sizeof(loff_t) * vec_size);
++	vec2 = malloc(sizeof(loff_t) * vec_size);
++
++	/* 1. all new pages must be soft dirty and clear the range for next test */
++	dirty_pages = process_memwatch(0, mem, mem_size,
++				       MEMWATCH_SD_GET | MEMWATCH_SD_CLEAR |
++				       MEMWATCH_SD_NO_REUSED_REGIONS,
++				       vec, vec_size - 2);
++	if (dirty_pages < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages, errno, strerror(errno));
++
++	dirty_pages2 = process_memwatch(0, mem, mem_size,
++					MEMWATCH_SD_GET | MEMWATCH_SD_CLEAR |
++					MEMWATCH_SD_NO_REUSED_REGIONS,
++					vec2, vec_size);
++	if (dirty_pages2 < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages2, errno, strerror(errno));
++
++	ksft_test_result(dirty_pages == 0 && dirty_pages2 == 0,
++			 "%s page isn't dirty\n", prefix);
++
++	// 2. all pages must not be soft dirty
++	dirty_pages = process_memwatch(0, mem, mem_size,
++				       MEMWATCH_SD_GET | MEMWATCH_SD_NO_REUSED_REGIONS,
++				       vec, vec_size);
++	if (dirty_pages < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages, errno, strerror(errno));
++
++	ksft_test_result(dirty_pages == 0, "%s all pages must not be soft dirty\n", prefix);
++
++	// 3. all pages dirty other than first and the last one
++	memset(mem + page_size, -1, (mem_size - 2 * page_size));
++
++	dirty_pages = process_memwatch(0, mem, mem_size,
++				       MEMWATCH_SD_GET | MEMWATCH_SD_NO_REUSED_REGIONS,
++				       vec, vec_size);
++	if (dirty_pages < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages, errno, strerror(errno));
++
++	for (i = 0; i < dirty_pages; i++) {
++		if (vec[i] != (i + 1) * page_size)
++			break;
++	}
++
++	ksft_test_result(dirty_pages == vec_size - 2 && i == vec_size - 2,
++			 "%s all pages dirty other than first and the last one\n", prefix);
++
++	// 4. only middle page dirty
++	clear_softdirty();
++	mem[vec_size/2 * page_size]++;
++
++	dirty_pages = process_memwatch(0, mem, mem_size,
++				       MEMWATCH_SD_GET | MEMWATCH_SD_NO_REUSED_REGIONS,
++				       vec, vec_size);
++	if (dirty_pages < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages, errno, strerror(errno));
++
++	for (i = 0; i < vec_size; i++) {
++		if (vec[i] == vec_size/2 * page_size)
++			break;
++	}
++	ksft_test_result(vec[i] == vec_size/2 * page_size,
++			 "%s only middle page dirty\n", prefix);
++
++	// 5. only two middle pages dirty and walk over only middle pages
++	clear_softdirty();
++	mem[vec_size/2 * page_size]++;
++	mem[(vec_size/2 + 1) * page_size]++;
++
++	dirty_pages = process_memwatch(0, &mem[vec_size/2 * page_size], 2 * page_size,
++				       MEMWATCH_SD_GET | MEMWATCH_SD_NO_REUSED_REGIONS,
++				       vec, vec_size);
++	if (dirty_pages < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages, errno, strerror(errno));
++
++	ksft_test_result(dirty_pages == 2 && vec[0] == 0 && vec[1] == page_size,
++			 "%s only two middle pages dirty\n", prefix);
++
++	/* 6. only get 2 dirty pages and clear them as well */
++	memset(mem, -1, mem_size);
++
++	/* get and clear second and third pages */
++	ret = process_memwatch(0, mem + page_size, 2 * page_size,
++			       MEMWATCH_SD_GET | MEMWATCH_SD_CLEAR | MEMWATCH_SD_NO_REUSED_REGIONS,
++			       vec, 2);
++	if (ret < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", ret, errno, strerror(errno));
++
++	dirty_pages = process_memwatch(0, mem, mem_size,
++				       MEMWATCH_SD_GET | MEMWATCH_SD_NO_REUSED_REGIONS,
++				       vec2, vec_size);
++	if (dirty_pages < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages, errno, strerror(errno));
++
++	for (i = 0; i < vec_size - 2; i++) {
++		if (i == 0 && (vec[i] != 0 || vec2[i] != 0))
++			break;
++		else if (i == 1 && (vec[i] != page_size || vec2[i] != (i + 2) * page_size))
++			break;
++		else if (i > 1 && (vec2[i] != (i + 2) * page_size))
++			break;
++	}
++
++	ksft_test_result(dirty_pages == vec_size - 2 && i == vec_size - 2,
++			 "%s only get 2 dirty pages and clear them as well\n", prefix);
++	/* 7. Range clear only */
++	memset(mem, -1, mem_size);
++	dirty_pages = process_memwatch(0, mem, mem_size,
++				       MEMWATCH_SD_CLEAR | MEMWATCH_SD_NO_REUSED_REGIONS,
++				       NULL, 0);
++	if (dirty_pages < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages, errno, strerror(errno));
++
++	dirty_pages2 = process_memwatch(0, mem, mem_size,
++					MEMWATCH_SD_GET | MEMWATCH_SD_NO_REUSED_REGIONS,
++					vec, vec_size);
++	if (dirty_pages2 < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages2, errno, strerror(errno));
++
++	ksft_test_result(dirty_pages == 0 && dirty_pages2 == 0, "%s Range clear only\n",
++			 prefix);
++
++	free(vec);
++	free(vec2);
++	return 0;
++}
++
++int unmapped_region_tests(int page_size)
++{
++	void *start = (void *)0x10000000;
++	int dirty_pages, len = 0x00040000;
++	int vec_size = len / page_size;
++	loff_t *vec = malloc(sizeof(loff_t) * vec_size);
++
++	/* 1. Get dirty pages */
++	dirty_pages = process_memwatch(0, start, len, MEMWATCH_SD_GET, vec, vec_size);
++	if (dirty_pages < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages, errno, strerror(errno));
++
++	ksft_test_result(dirty_pages >= 0, "%s Get dirty pages\n", __func__);
++
++	/* 2. Clear dirty bit of whole address space */
++	dirty_pages = process_memwatch(0, 0, 0x7FFFFFFF, MEMWATCH_SD_CLEAR, NULL, 0);
++	if (dirty_pages < 0)
++		ksft_exit_fail_msg("error %d %d %s\n", dirty_pages, errno, strerror(errno));
++
++	ksft_test_result(dirty_pages == 0, "%s Get dirty pages\n", __func__);
++
++	free(vec);
++	return 0;
++}
++
++static void test_simple(int page_size)
++{
++	int i;
++	char *map;
++	loff_t *vec = NULL;
++
++	map = aligned_alloc(page_size, page_size);
++	if (!map)
++		ksft_exit_fail_msg("mmap failed\n");
++
++	clear_softdirty();
++
++	for (i = 0 ; i < TEST_ITERATIONS; i++) {
++		if (process_memwatch(0, map, page_size, MEMWATCH_SD_GET, vec, 1) == 1) {
++			ksft_print_msg("dirty bit was 1, but should be 0 (i=%d)\n", i);
++			break;
++		}
++
++		clear_softdirty();
++		// Write something to the page to get the dirty bit enabled on the page
++		map[0]++;
++
++		if (process_memwatch(0, map, page_size, MEMWATCH_SD_GET, vec, 1) == 0) {
++			ksft_print_msg("dirty bit was 0, but should be 1 (i=%d)\n", i);
++			break;
++		}
++
++		clear_softdirty();
++	}
++	free(map);
++
++	ksft_test_result(i == TEST_ITERATIONS, "Test %s\n", __func__);
++}
++
++int main(int argc, char **argv)
++{
++	int page_size = getpagesize();
++	size_t hpage_len = read_pmd_pagesize();
++	char *mem, *map;
++	int mem_size;
++
++	ksft_print_header();
++	ksft_set_plan(44);
++
++	/* 1. Sanity testing */
++	sanity_tests(page_size);
++
++	/* 2. Normal page testing */
++	mem_size = 10 * page_size;
++	mem = mmap(NULL, mem_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
++	if (!mem)
++		ksft_exit_fail_msg("error nomem\n");
++
++	base_tests("Page testing:", mem, mem_size, page_size, 0);
++
++	munmap(mem, mem_size);
++
++	/* 3. Large page testing */
++	mem_size = 512 * 10 * page_size;
++	mem = mmap(NULL, mem_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
++	if (!mem)
++		ksft_exit_fail_msg("error nomem\n");
++
++	base_tests("Large Page testing:", mem, mem_size, page_size, 0);
++
++	munmap(mem, mem_size);
++
++	/* 4. Huge page testing */
++	map = gethugepage(hpage_len);
++	if (check_huge(map))
++		base_tests("Huge page testing:", map, hpage_len, page_size, 0);
++	else
++		base_tests("Huge page testing:", NULL, 0, 0, 1);
++
++	free(map);
++
++	/* 5. Normal page testing */
++	mem_size = 10 * page_size;
++	mem = mmap(NULL, mem_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
++	if (!mem)
++		ksft_exit_fail_msg("error nomem\n");
++
++	performance_base_tests("Performance Page testing:", mem, mem_size, page_size, 0);
++
++	munmap(mem, mem_size);
++
++	/* 6. Huge page tests */
++	hpage_unit_tests(page_size);
++
++	/* 7. Unmapped address test */
++	unmapped_region_tests(page_size);
++
++	/* 8. Iterative test */
++	test_simple(page_size);
++
++	return ksft_exit_pass();
 +}
 -- 
 2.30.2
