@@ -2,188 +2,168 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7EEA9C04A68
-	for <linux-api@archiver.kernel.org>; Tue, 26 Jul 2022 16:23:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 35EE9C00140
+	for <linux-api@archiver.kernel.org>; Tue, 26 Jul 2022 19:11:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239451AbiGZQXC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 26 Jul 2022 12:23:02 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36234 "EHLO
+        id S232951AbiGZTK7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 26 Jul 2022 15:10:59 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44586 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239395AbiGZQVT (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 26 Jul 2022 12:21:19 -0400
-Received: from madras.collabora.co.uk (madras.collabora.co.uk [46.235.227.172])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 085D127164;
-        Tue, 26 Jul 2022 09:21:18 -0700 (PDT)
-Received: from localhost.localdomain (unknown [203.135.47.243])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-        (No client certificate requested)
-        (Authenticated sender: usama.anjum)
-        by madras.collabora.co.uk (Postfix) with ESMTPSA id 9DE8C6601B11;
-        Tue, 26 Jul 2022 17:21:06 +0100 (BST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=collabora.com;
-        s=mail; t=1658852476;
-        bh=YSZMWQRUF0OddQkVSeNEz2FybOLoLuH7kG5PHiHYpXM=;
-        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=VYdF24VsfkRAH0MPDnmat/nZqLHLpelG6HOTA6a8B5WawqZUKpJ1AMNaRWIIHyWxC
-         Rpd4d5c/YyEuiSHkvnHB+jGyGduuf7tYosM9g0r3heiaOA/0vFDtJ6WmeEEPrfZFe4
-         BRgUFmAUcvLpFCbteXmVMcFdaMrLUipwyMBlWmNoYgR4KMUHdaGdVch7sqWYqS0ilA
-         fr0+D/GjydldqOJLLgD+tlifyqlL2xIhxpeccXU91mfryWIMMVKTNlf1JcvtUTBFNt
-         MrTYqp7FS3hHiPXiutyAfbpuc/PER6JCkJ/TKT24g9Ytlf4fCkEn8lZE/z2iquccSN
-         YZqJN1NxAR2Gg==
-From:   Muhammad Usama Anjum <usama.anjum@collabora.com>
-To:     Jonathan Corbet <corbet@lwn.net>,
-        Andy Lutomirski <luto@kernel.org>,
+        with ESMTP id S239750AbiGZTK6 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 26 Jul 2022 15:10:58 -0400
+Received: from mail.efficios.com (mail.efficios.com [167.114.26.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D7A572C13E;
+        Tue, 26 Jul 2022 12:10:56 -0700 (PDT)
+Received: from localhost (localhost [127.0.0.1])
+        by mail.efficios.com (Postfix) with ESMTP id A7BEA440A5A;
+        Tue, 26 Jul 2022 15:10:55 -0400 (EDT)
+Received: from mail.efficios.com ([127.0.0.1])
+        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
+        with ESMTP id Re7W2pLa6O7j; Tue, 26 Jul 2022 15:10:55 -0400 (EDT)
+Received: from localhost (localhost [127.0.0.1])
+        by mail.efficios.com (Postfix) with ESMTP id 3F7044407F1;
+        Tue, 26 Jul 2022 15:10:55 -0400 (EDT)
+DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 3F7044407F1
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
+        s=default; t=1658862655;
+        bh=P0Jm8sAa/mrVBp/6VFgZCxx378vjOndqqAOWx+aDPbU=;
+        h=Date:From:To:Message-ID:MIME-Version;
+        b=a99k/XYmoPmrZXRbMD5KV4tR3u2lKCLrERtZX6p5K32C/QJhwMhdr9RGJg1aLj+dU
+         W75olxaKy5Z0pmh1DaaZdJOP9wy4FO0d9OrhnpT0qZ+N8wkx/+FZi58hr4yOS6wbBH
+         IIGlPSzibaHXH2deXlRpP3YcbYELcuZmV+EzBhWE7ijsAD88PT6QgpZrCG9sYwxWc5
+         hCrj7V7/Ohi8aVHdY+smwQ7uYouABVudlNFmer3VP/rPy8yndxWzVSX3dOgF6KTQm+
+         njzfwlOrTcdDn1d0Yx3DVI7IkRzVeJNoVDD9L+3h6e0YRTNsBwNOZNKE4c129BmHfH
+         3Wro93uZ9j69w==
+X-Virus-Scanned: amavisd-new at efficios.com
+Received: from mail.efficios.com ([127.0.0.1])
+        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
+        with ESMTP id QxTQ8MLNlQw0; Tue, 26 Jul 2022 15:10:55 -0400 (EDT)
+Received: from mail03.efficios.com (mail03.efficios.com [167.114.26.124])
+        by mail.efficios.com (Postfix) with ESMTP id 2F0E8440D00;
+        Tue, 26 Jul 2022 15:10:55 -0400 (EDT)
+Date:   Tue, 26 Jul 2022 15:10:55 -0400 (EDT)
+From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To:     Peter Zijlstra <peterz@infradead.org>
+Cc:     linux-kernel <linux-kernel@vger.kernel.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        x86@kernel.org (maintainer:X86 ARCHITECTURE (32-BIT AND 64-BIT)),
-        "H. Peter Anvin" <hpa@zytor.com>, Arnd Bergmann <arnd@arndb.de>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Arnaldo Carvalho de Melo <acme@kernel.org>,
-        Mark Rutland <mark.rutland@arm.com>,
-        Alexander Shishkin <alexander.shishkin@linux.intel.com>,
-        Jiri Olsa <jolsa@kernel.org>,
-        Namhyung Kim <namhyung@kernel.org>,
-        Shuah Khan <shuah@kernel.org>,
-        linux-doc@vger.kernel.org (open list:DOCUMENTATION),
-        linux-kernel@vger.kernel.org (open list),
-        linux-fsdevel@vger.kernel.org (open list:PROC FILESYSTEM),
-        linux-api@vger.kernel.org (open list:ABI/API),
-        linux-arch@vger.kernel.org (open list:GENERIC INCLUDE/ASM HEADER FILES),
-        linux-mm@kvack.org (open list:MEMORY MANAGEMENT),
-        linux-perf-users@vger.kernel.org (open list:PERFORMANCE EVENTS
-        SUBSYSTEM),
-        linux-kselftest@vger.kernel.org (open list:KERNEL SELFTEST FRAMEWORK),
-        krisman@collabora.com
-Cc:     Muhammad Usama Anjum <usama.anjum@collabora.com>,
-        kernel@collabora.com
-Subject: [PATCH 3/5] mm: wire up process_memwatch syscall for x86
-Date:   Tue, 26 Jul 2022 21:18:52 +0500
-Message-Id: <20220726161854.276359-4-usama.anjum@collabora.com>
-X-Mailer: git-send-email 2.30.2
-In-Reply-To: <20220726161854.276359-1-usama.anjum@collabora.com>
-References: <20220726161854.276359-1-usama.anjum@collabora.com>
+        "Paul E . McKenney" <paulmck@kernel.org>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        "H. Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>,
+        linux-api <linux-api@vger.kernel.org>,
+        Peter Oskolkov <posk@posk.io>
+Message-ID: <790910676.83207.1658862655138.JavaMail.zimbra@efficios.com>
+In-Reply-To: <20220622194617.1155957-1-mathieu.desnoyers@efficios.com>
+References: <20220622194617.1155957-1-mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH 1/2] rseq: Deprecate RSEQ_CS_FLAG_NO_RESTART_ON_* flags
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+X-Originating-IP: [167.114.26.124]
+X-Mailer: Zimbra 8.8.15_GA_4304 (ZimbraWebClient - FF100 (Linux)/8.8.15_GA_4304)
+Thread-Topic: rseq: Deprecate RSEQ_CS_FLAG_NO_RESTART_ON_* flags
+Thread-Index: okUY3mzxLKojq7TSqc3xEuNzQtQsig==
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Wire up syscall entry point for both i386 and x86_64 architectures.
+----- On Jun 22, 2022, at 3:46 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
 
-Signed-off-by: Muhammad Usama Anjum <usama.anjum@collabora.com>
----
- arch/x86/entry/syscalls/syscall_32.tbl            | 1 +
- arch/x86/entry/syscalls/syscall_64.tbl            | 1 +
- include/linux/syscalls.h                          | 3 ++-
- include/uapi/asm-generic/unistd.h                 | 5 ++++-
- kernel/sys_ni.c                                   | 1 +
- tools/include/uapi/asm-generic/unistd.h           | 5 ++++-
- tools/perf/arch/x86/entry/syscalls/syscall_64.tbl | 1 +
- 7 files changed, 14 insertions(+), 3 deletions(-)
+> The pretty much unused RSEQ_CS_FLAG_NO_RESTART_ON_* flags introduce
+> complexity in rseq, and are subtly buggy [1]. Solving those issues
+> requires introducing additional complexity in the rseq implementation
+> for each supported architecture.
+> 
+> Considering that it complexifies the rseq ABI, I am proposing that we
+> deprecate those flags. [2]
+> 
+> So far there appears to be consensus from maintainers of user-space
+> projects impacted by this feature that its removal would be a welcome
+> simplification. [3]
+> 
+> The deprecation approach proposed here is to issue WARN_ON_ONCE() when
+> encountering those flags and kill the offending process with sigsegv.
+> This should allow us to quickly identify whether anyone yells at us for
+> removing this.
 
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 320480a8db4f..601d33909880 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -455,3 +455,4 @@
- 448	i386	process_mrelease	sys_process_mrelease
- 449	i386	futex_waitv		sys_futex_waitv
- 450	i386	set_mempolicy_home_node		sys_set_mempolicy_home_node
-+451	i386	process_memwatch	sys_process_memwatch
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index c84d12608cd2..3bddea588ce7 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -372,6 +372,7 @@
- 448	common	process_mrelease	sys_process_mrelease
- 449	common	futex_waitv		sys_futex_waitv
- 450	common	set_mempolicy_home_node	sys_set_mempolicy_home_node
-+451	common	process_memwatch	sys_process_memwatch
- 
- #
- # Due to a historical design error, certain syscalls are numbered differently
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index a34b0f9a9972..efa240510e4c 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -939,7 +939,6 @@ asmlinkage long sys_move_pages(pid_t pid, unsigned long nr_pages,
- 				const int __user *nodes,
- 				int __user *status,
- 				int flags);
--
- asmlinkage long sys_rt_tgsigqueueinfo(pid_t tgid, pid_t  pid, int sig,
- 		siginfo_t __user *uinfo);
- asmlinkage long sys_perf_event_open(
-@@ -1056,6 +1055,8 @@ asmlinkage long sys_memfd_secret(unsigned int flags);
- asmlinkage long sys_set_mempolicy_home_node(unsigned long start, unsigned long len,
- 					    unsigned long home_node,
- 					    unsigned long flags);
-+asmlinkage long sys_process_memwatch(int pidfd, void __user *addr, int len,
-+				     unsigned int flags, loff_t __user *vec, int vec_len);
- 
- /*
-  * Architecture-specific system calls
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 45fa180cc56a..805a8d5cf0c4 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -886,8 +886,11 @@ __SYSCALL(__NR_futex_waitv, sys_futex_waitv)
- #define __NR_set_mempolicy_home_node 450
- __SYSCALL(__NR_set_mempolicy_home_node, sys_set_mempolicy_home_node)
- 
-+#define __NR_process_memwatch 451
-+__SC_COMP(__NR_process_memwatch, sys_process_memwatch, compat_sys_process_memwatch)
-+
- #undef __NR_syscalls
--#define __NR_syscalls 451
-+#define __NR_syscalls 452
- 
- /*
-  * 32 bit systems traditionally used different
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index a492f159624f..74f31317481a 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -298,6 +298,7 @@ COND_SYSCALL(set_mempolicy);
- COND_SYSCALL(migrate_pages);
- COND_SYSCALL(move_pages);
- COND_SYSCALL(set_mempolicy_home_node);
-+COND_SYSCALL(process_memwatch);
- 
- COND_SYSCALL(perf_event_open);
- COND_SYSCALL(accept4);
-diff --git a/tools/include/uapi/asm-generic/unistd.h b/tools/include/uapi/asm-generic/unistd.h
-index 45fa180cc56a..805a8d5cf0c4 100644
---- a/tools/include/uapi/asm-generic/unistd.h
-+++ b/tools/include/uapi/asm-generic/unistd.h
-@@ -886,8 +886,11 @@ __SYSCALL(__NR_futex_waitv, sys_futex_waitv)
- #define __NR_set_mempolicy_home_node 450
- __SYSCALL(__NR_set_mempolicy_home_node, sys_set_mempolicy_home_node)
- 
-+#define __NR_process_memwatch 451
-+__SC_COMP(__NR_process_memwatch, sys_process_memwatch, compat_sys_process_memwatch)
-+
- #undef __NR_syscalls
--#define __NR_syscalls 451
-+#define __NR_syscalls 452
- 
- /*
-  * 32 bit systems traditionally used different
-diff --git a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-index c84d12608cd2..3bddea588ce7 100644
---- a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -372,6 +372,7 @@
- 448	common	process_mrelease	sys_process_mrelease
- 449	common	futex_waitv		sys_futex_waitv
- 450	common	set_mempolicy_home_node	sys_set_mempolicy_home_node
-+451	common	process_memwatch	sys_process_memwatch
- 
- #
- # Due to a historical design error, certain syscalls are numbered differently
+Hi Peter, would you consider pulling this patch through the tip tree ?
+
+Thanks,
+
+Mathieu
+
+> 
+> Link:
+> https://lore.kernel.org/lkml/20220618182515.95831-1-minhquangbui99@gmail.com/
+> [1]
+> Link:
+> https://lore.kernel.org/lkml/258546133.12151.1655739550814.JavaMail.zimbra@efficios.com/
+> [2]
+> Link:
+> https://lore.kernel.org/lkml/87pmj1enjh.fsf@email.froward.int.ebiederm.org/ [3]
+> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+> ---
+> kernel/rseq.c | 23 ++++++++---------------
+> 1 file changed, 8 insertions(+), 15 deletions(-)
+> 
+> diff --git a/kernel/rseq.c b/kernel/rseq.c
+> index 97ac20b4f738..81d7dc80787b 100644
+> --- a/kernel/rseq.c
+> +++ b/kernel/rseq.c
+> @@ -18,8 +18,9 @@
+> #define CREATE_TRACE_POINTS
+> #include <trace/events/rseq.h>
+> 
+> -#define RSEQ_CS_PREEMPT_MIGRATE_FLAGS (RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE | \
+> -				       RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT)
+> +#define RSEQ_CS_NO_RESTART_FLAGS (RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT | \
+> +				  RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL | \
+> +				  RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE)
+> 
+> /*
+>  *
+> @@ -175,23 +176,15 @@ static int rseq_need_restart(struct task_struct *t, u32
+> cs_flags)
+> 	u32 flags, event_mask;
+> 	int ret;
+> 
+> +	if (WARN_ON_ONCE(cs_flags & RSEQ_CS_NO_RESTART_FLAGS))
+> +		return -EINVAL;
+> +
+> 	/* Get thread flags. */
+> 	ret = get_user(flags, &t->rseq->flags);
+> 	if (ret)
+> 		return ret;
+> 
+> -	/* Take critical section flags into account. */
+> -	flags |= cs_flags;
+> -
+> -	/*
+> -	 * Restart on signal can only be inhibited when restart on
+> -	 * preempt and restart on migrate are inhibited too. Otherwise,
+> -	 * a preempted signal handler could fail to restart the prior
+> -	 * execution context on sigreturn.
+> -	 */
+> -	if (unlikely((flags & RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL) &&
+> -		     (flags & RSEQ_CS_PREEMPT_MIGRATE_FLAGS) !=
+> -		     RSEQ_CS_PREEMPT_MIGRATE_FLAGS))
+> +	if (WARN_ON_ONCE(flags & RSEQ_CS_NO_RESTART_FLAGS))
+> 		return -EINVAL;
+> 
+> 	/*
+> @@ -203,7 +196,7 @@ static int rseq_need_restart(struct task_struct *t, u32
+> cs_flags)
+> 	t->rseq_event_mask = 0;
+> 	preempt_enable();
+> 
+> -	return !!(event_mask & ~flags);
+> +	return !!event_mask;
+> }
+> 
+> static int clear_rseq_cs(struct task_struct *t)
+> --
+> 2.30.2
+
 -- 
-2.30.2
-
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
