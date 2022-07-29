@@ -2,152 +2,114 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 51C11C19F29
-	for <linux-api@archiver.kernel.org>; Fri, 29 Jul 2022 10:38:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ECEF7C04A68
+	for <linux-api@archiver.kernel.org>; Fri, 29 Jul 2022 19:02:23 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235562AbiG2KiB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 29 Jul 2022 06:38:01 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34720 "EHLO
+        id S238189AbiG2TCW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 29 Jul 2022 15:02:22 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50466 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235421AbiG2KiA (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 29 Jul 2022 06:38:00 -0400
-Received: from esa2.mentor.iphmx.com (esa2.mentor.iphmx.com [68.232.141.98])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C3DE38238A;
-        Fri, 29 Jul 2022 03:37:58 -0700 (PDT)
-X-IronPort-AV: E=Sophos;i="5.93,201,1654588800"; 
-   d="scan'208";a="80469973"
-Received: from orw-gwy-01-in.mentorg.com ([192.94.38.165])
-  by esa2.mentor.iphmx.com with ESMTP; 29 Jul 2022 02:37:57 -0800
-IronPort-SDR: qPRhArPH6ZfwOvrGboF1DO33OGLMQs0xHIKjcfXqY8Lk27NI4sJNrioLfb4O/zeu75QM7acBJx
- RUiWkZqPSTWojbH0H0gXzxy/AL+nvHb00tFrOLkYnz/RHKwpAFa5g0qG3soTRxC8QbfLqoSHZk
- wsjD87724I0ya8BQw7zoawEfU6OQAUebQgZEiBN7/k3LcVgLyKE/KE0Am/W2zUJ6Nf1J6hiQhb
- AHY6i8npVGsz+kLBnTR84kSvUca7daDXzQ9R7oRw907kjBH87faV4+/VQ35izCe2TiLYq2O+Cp
- xwo=
-Message-ID: <d6af7f7e-7f8c-a6a7-7a09-84928fd69774@mentor.com>
-Date:   Fri, 29 Jul 2022 11:37:49 +0100
+        with ESMTP id S238300AbiG2TCS (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 29 Jul 2022 15:02:18 -0400
+Received: from mail-pj1-x102a.google.com (mail-pj1-x102a.google.com [IPv6:2607:f8b0:4864:20::102a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7FAEE50041
+        for <linux-api@vger.kernel.org>; Fri, 29 Jul 2022 12:02:17 -0700 (PDT)
+Received: by mail-pj1-x102a.google.com with SMTP id 15-20020a17090a098f00b001f305b453feso9260927pjo.1
+        for <linux-api@vger.kernel.org>; Fri, 29 Jul 2022 12:02:17 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20210112;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc;
+        bh=LkO9SgTZ2fPl2HYX0gFonlaXjyZgw7WltwbfzzP2PWU=;
+        b=LcCMO/BfHtLr67gbUfFYeZ2DnL0Qe15D/zjxvFdRRh7VmNk7LN5oMsc24VO/GmbV/U
+         PuV6l97/eHoUtKDyH52SVtPAZ87OnqBus/o63uyQuFgufZzCyq9XsxfOUYAdERS1Jgqd
+         Z8e1N8bqzr0z8QDItDcXKcyyEaabrG/16s5zoaP1WRFBF4Ue7XuTf8xaQCPaAoBgg974
+         KUIBiMYBx36eqSObwBq4p2WXddbpg1bPZ34gDbt+XQiuHO4akXNCCqBoLF/FeCnzUG2i
+         XE9mksL3i7ZMYBmA4SOK8RBlplgWMUQ4wTuOLsTMqyyIK0ibz34Lq8CE9D2iQAq/i5AS
+         iEgQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc;
+        bh=LkO9SgTZ2fPl2HYX0gFonlaXjyZgw7WltwbfzzP2PWU=;
+        b=aW+2d9gKSJ2iI+C3Oc9SW3wdsbadVTmwlBAmK3Zft7Vb2ZES81qJrzKZjVHx+7r3KP
+         VF3pGjn/R7omEs8TQMqo9+aNVAkLtXGra0dx/U/nW+JzZF1WphW9KfR9u/HGUEQAiGGY
+         eNjhHFhb2c5UI/8KPqJmeHybi01imq+/ZfcIAdtCsMlFovZnB1wqvLrUfLIo+EFZCcrA
+         dYkqoJ+rbQRugZrN29jeuZt3ftxj72bLJ2mPiIIM+wWI4h8qm/lvBbiv4dfDTAGVe6jp
+         L/zfxbdiPrNYO8RCCQibmhZwQ4D1gjM9eExuZQvj1QUhqQBqykBv49fqvi9k0Mxy9isp
+         rZMw==
+X-Gm-Message-State: ACgBeo0oX8ldL9emV+vHfzCD3zVQBb+RjFyuUbLqgBau/ImJXH+bITy2
+        Jhw1bHUgQtCWcNfBFrEPJrgg7w==
+X-Google-Smtp-Source: AA6agR6iqcQsub1nBR7JRnM5qfcyEbknlTLsOfU5kvnAs7e7vtoc0LC7cubgKQlDwv2I4efPq2wL9Q==
+X-Received: by 2002:a17:90a:2ec5:b0:1f2:ea66:c832 with SMTP id h5-20020a17090a2ec500b001f2ea66c832mr6318473pjs.31.1659121336897;
+        Fri, 29 Jul 2022 12:02:16 -0700 (PDT)
+Received: from google.com (7.104.168.34.bc.googleusercontent.com. [34.168.104.7])
+        by smtp.gmail.com with ESMTPSA id n16-20020a170902e55000b0016d5cf36ff8sm4042180plf.274.2022.07.29.12.02.16
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 29 Jul 2022 12:02:16 -0700 (PDT)
+Date:   Fri, 29 Jul 2022 19:02:12 +0000
+From:   Sean Christopherson <seanjc@google.com>
+To:     Chao Peng <chao.p.peng@linux.intel.com>
+Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
+        qemu-devel@nongnu.org, linux-kselftest@vger.kernel.org,
+        Paolo Bonzini <pbonzini@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Vitaly Kuznetsov <vkuznets@redhat.com>,
+        Wanpeng Li <wanpengli@tencent.com>,
+        Jim Mattson <jmattson@google.com>,
+        Joerg Roedel <joro@8bytes.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
+        Hugh Dickins <hughd@google.com>,
+        Jeff Layton <jlayton@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Shuah Khan <shuah@kernel.org>, Mike Rapoport <rppt@kernel.org>,
+        Steven Price <steven.price@arm.com>,
+        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Vishal Annapurve <vannapurve@google.com>,
+        Yu Zhang <yu.c.zhang@linux.intel.com>,
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
+        luto@kernel.org, jun.nakajima@intel.com, dave.hansen@intel.com,
+        ak@linux.intel.com, david@redhat.com, aarcange@redhat.com,
+        ddutile@redhat.com, dhildenb@redhat.com,
+        Quentin Perret <qperret@google.com>,
+        Michael Roth <michael.roth@amd.com>, mhocko@suse.com,
+        Muchun Song <songmuchun@bytedance.com>
+Subject: Re: [PATCH v7 08/14] KVM: Rename mmu_notifier_*
+Message-ID: <YuQutJAhKWcsrrYl@google.com>
+References: <20220706082016.2603916-1-chao.p.peng@linux.intel.com>
+ <20220706082016.2603916-9-chao.p.peng@linux.intel.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.11.0
-Subject: Re: [PATCH v4 0/3] initramfs: add support for xattrs in the initial
- ram disk
-Content-Language: en-GB
-To:     Roberto Sassu <roberto.sassu@huawei.com>,
-        Eugeniu Rosca <erosca@de.adit-jv.com>
-CC:     Rob Landley <rob@landley.net>, "hpa@zytor.com" <hpa@zytor.com>,
-        Masahiro Yamada <masahiroy@kernel.org>,
-        Arvind Sankar <nivedita@alum.mit.edu>,
-        Mimi Zohar <zohar@linux.ibm.com>,
-        "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>,
-        "linux-security-module@vger.kernel.org" 
-        <linux-security-module@vger.kernel.org>,
-        "linux-integrity@vger.kernel.org" <linux-integrity@vger.kernel.org>,
-        "initramfs@vger.kernel.org" <initramfs@vger.kernel.org>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "bug-cpio@gnu.org" <bug-cpio@gnu.org>,
-        "zohar@linux.vnet.ibm.com" <zohar@linux.vnet.ibm.com>,
-        Silviu Vlasceanu <Silviu.Vlasceanu@huawei.com>,
-        Dmitry Kasatkin <dmitry.kasatkin@huawei.com>,
-        "takondra@cisco.com" <takondra@cisco.com>,
-        "kamensky@cisco.com" <kamensky@cisco.com>,
-        "arnd@arndb.de" <arnd@arndb.de>,
-        "james.w.mcmechan@gmail.com" <james.w.mcmechan@gmail.com>,
-        "linux-kbuild@vger.kernel.org" <linux-kbuild@vger.kernel.org>,
-        Dirk Behme <dirk.behme@de.bosch.com>,
-        Eugeniu Rosca <roscaeugeniu@gmail.com>
-References: <33cfb804-6a17-39f0-92b7-01d54e9c452d@huawei.com>
- <1561909199.3985.33.camel@linux.ibm.com>
- <45164486-782f-a442-e442-6f56f9299c66@huawei.com>
- <1561991485.4067.14.camel@linux.ibm.com>
- <f85ed711-f583-51cd-34e2-80018a592280@huawei.com>
- <0c17bf9e-9b0b-b067-cf18-24516315b682@huawei.com>
- <20220609102627.GA3922@lxhi-065>
- <21b3aeab20554a30b9796b82cc58e55b@huawei.com>
- <20220610153336.GA8881@lxhi-065>
- <4bc349a59e4042f7831b1190914851fe@huawei.com>
- <20220615092712.GA4068@lxhi-065>
- <032ade35-6eb8-d698-ac44-aa45d46752dd@mentor.com>
- <f82d4961986547b28b6de066219ad08b@huawei.com>
- <737ddf72-05f4-a47e-c901-fec5b1dfa7a6@mentor.com>
- <8e6a723874644449be99fcebb0905058@huawei.com>
-From:   Jim Baxter <jim_baxter@mentor.com>
-Organization: Siemens Digital Industries Software
-In-Reply-To: <8e6a723874644449be99fcebb0905058@huawei.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-X-Originating-IP: [137.202.0.90]
-X-ClientProxiedBy: svr-ies-mbx-09.mgc.mentorg.com (139.181.222.9) To
- svr-ies-mbx-12.mgc.mentorg.com (139.181.222.12)
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20220706082016.2603916-9-chao.p.peng@linux.intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
+On Wed, Jul 06, 2022, Chao Peng wrote:
+> The sync mechanism between mmu_notifier and page fault handler employs
+> fields mmu_notifier_seq/count and mmu_notifier_range_start/end. For the
+> to be added private memory, there is the same mechanism needed but not
+> rely on mmu_notifier (It uses new introduced memfile_notifier). This
+> patch renames the existing fields and related helper functions to a
+> neutral name mmu_updating_* so private memory can reuse.
 
-On 19/07/2022 07:55, Roberto Sassu wrote:
->> From: Jim Baxter [mailto:jim_baxter@mentor.com]
->> Sent: Monday, July 18, 2022 8:08 PM
->>
->>
->>
->> Best regards,
->>
->> *Jim Baxter*
->>
->> Siemens Digital Industries Software
->> Automotive Business Unit
->> DI SW STS ABU
->> UK
->> Tel.: +44 (161) 926-1656
->> mailto:jim.baxter@siemens.com <mailto:jim.baxter@siemens.com>
->> sw.siemens.com <https://sw.siemens.com/>
->>
->> On 18/07/2022 17:49, Roberto Sassu wrote:
->>>> From: Jim Baxter [mailto:jim_baxter@mentor.com]
->>>> Sent: Monday, July 18, 2022 6:36 PM
->>>>
->>>>
->>>> Hello,
->>>>
->>>> I have been testing these patches and do not see the xattr information when
->>>> trying to retrieve it within the initramfs, do you have an example of how
->>>> you tested this originally?
->>>
->>> Hi Jim, all
->>>
->>> apologies, I didn't find yet the time to look at this.
->>
->> Hello Roberto,
->>
->> Thank you for your response, I can wait until you have looked at the patches,
->> I asked the question to make sure it was not something wrong in my
->> configuration.
->>
->>>
->>> Uhm, I guess this could be solved with:
->>>
->>> https://github.com/openeuler-
->> mirror/kernel/commit/18a502f7e3b1de7b9ba0c70896ce08ee13d052da
->>>
->>> and adding initramtmpfs to the kernel command line. You are
->>> probably using ramfs, which does not have xattr support.
->>>
+mmu_updating_* is too broad of a term, e.g. page faults and many other operations
+also update the mmu.  Although the name most definitely came from the mmu_notifier,
+it's not completely inaccurate for other sources, e.g. KVM's MMU is still being
+notified of something, even if the source is not the actual mmu_notifier.
 
-Can I clarify which filesystem type is supported with this patch series?
-Is it tmpfs or perhaps a ramdisk?
+If we really want a different name, I'd vote for nomenclature that captures the
+invalidation aspect, which is really what the variables are all trackng, e.g.
 
+  mmu_invalidate_seq
+  mmu_invalidate_in_progress
+  mmu_invalidate_range_start
+  mmu_invalidate_range_end
 
->>
->>
->> Thank you, I have tested that patch but the problem remained. Here is my
->> command line, I wonder if there is something wrong.
->>
->> Kernel command line: rw rootfstype=initramtmpfs root=/dev/ram0
->> initrd=0x500000000 rootwait
-> 
-> It is just initramtmpfs, without rootfstype=.
-> 
-> Roberto
-
-Best regards,
-Jim
