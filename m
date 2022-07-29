@@ -2,114 +2,131 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ECEF7C04A68
-	for <linux-api@archiver.kernel.org>; Fri, 29 Jul 2022 19:02:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D1F7EC00144
+	for <linux-api@archiver.kernel.org>; Fri, 29 Jul 2022 19:02:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238189AbiG2TCW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 29 Jul 2022 15:02:22 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50466 "EHLO
+        id S238429AbiG2TCp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 29 Jul 2022 15:02:45 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50868 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238300AbiG2TCS (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 29 Jul 2022 15:02:18 -0400
-Received: from mail-pj1-x102a.google.com (mail-pj1-x102a.google.com [IPv6:2607:f8b0:4864:20::102a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7FAEE50041
-        for <linux-api@vger.kernel.org>; Fri, 29 Jul 2022 12:02:17 -0700 (PDT)
-Received: by mail-pj1-x102a.google.com with SMTP id 15-20020a17090a098f00b001f305b453feso9260927pjo.1
-        for <linux-api@vger.kernel.org>; Fri, 29 Jul 2022 12:02:17 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20210112;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc;
-        bh=LkO9SgTZ2fPl2HYX0gFonlaXjyZgw7WltwbfzzP2PWU=;
-        b=LcCMO/BfHtLr67gbUfFYeZ2DnL0Qe15D/zjxvFdRRh7VmNk7LN5oMsc24VO/GmbV/U
-         PuV6l97/eHoUtKDyH52SVtPAZ87OnqBus/o63uyQuFgufZzCyq9XsxfOUYAdERS1Jgqd
-         Z8e1N8bqzr0z8QDItDcXKcyyEaabrG/16s5zoaP1WRFBF4Ue7XuTf8xaQCPaAoBgg974
-         KUIBiMYBx36eqSObwBq4p2WXddbpg1bPZ34gDbt+XQiuHO4akXNCCqBoLF/FeCnzUG2i
-         XE9mksL3i7ZMYBmA4SOK8RBlplgWMUQ4wTuOLsTMqyyIK0ibz34Lq8CE9D2iQAq/i5AS
-         iEgQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc;
-        bh=LkO9SgTZ2fPl2HYX0gFonlaXjyZgw7WltwbfzzP2PWU=;
-        b=aW+2d9gKSJ2iI+C3Oc9SW3wdsbadVTmwlBAmK3Zft7Vb2ZES81qJrzKZjVHx+7r3KP
-         VF3pGjn/R7omEs8TQMqo9+aNVAkLtXGra0dx/U/nW+JzZF1WphW9KfR9u/HGUEQAiGGY
-         eNjhHFhb2c5UI/8KPqJmeHybi01imq+/ZfcIAdtCsMlFovZnB1wqvLrUfLIo+EFZCcrA
-         dYkqoJ+rbQRugZrN29jeuZt3ftxj72bLJ2mPiIIM+wWI4h8qm/lvBbiv4dfDTAGVe6jp
-         L/zfxbdiPrNYO8RCCQibmhZwQ4D1gjM9eExuZQvj1QUhqQBqykBv49fqvi9k0Mxy9isp
-         rZMw==
-X-Gm-Message-State: ACgBeo0oX8ldL9emV+vHfzCD3zVQBb+RjFyuUbLqgBau/ImJXH+bITy2
-        Jhw1bHUgQtCWcNfBFrEPJrgg7w==
-X-Google-Smtp-Source: AA6agR6iqcQsub1nBR7JRnM5qfcyEbknlTLsOfU5kvnAs7e7vtoc0LC7cubgKQlDwv2I4efPq2wL9Q==
-X-Received: by 2002:a17:90a:2ec5:b0:1f2:ea66:c832 with SMTP id h5-20020a17090a2ec500b001f2ea66c832mr6318473pjs.31.1659121336897;
-        Fri, 29 Jul 2022 12:02:16 -0700 (PDT)
-Received: from google.com (7.104.168.34.bc.googleusercontent.com. [34.168.104.7])
-        by smtp.gmail.com with ESMTPSA id n16-20020a170902e55000b0016d5cf36ff8sm4042180plf.274.2022.07.29.12.02.16
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 29 Jul 2022 12:02:16 -0700 (PDT)
-Date:   Fri, 29 Jul 2022 19:02:12 +0000
-From:   Sean Christopherson <seanjc@google.com>
-To:     Chao Peng <chao.p.peng@linux.intel.com>
-Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
-        linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
-        qemu-devel@nongnu.org, linux-kselftest@vger.kernel.org,
-        Paolo Bonzini <pbonzini@redhat.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Vitaly Kuznetsov <vkuznets@redhat.com>,
-        Wanpeng Li <wanpengli@tencent.com>,
-        Jim Mattson <jmattson@google.com>,
-        Joerg Roedel <joro@8bytes.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
-        x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
-        Hugh Dickins <hughd@google.com>,
-        Jeff Layton <jlayton@kernel.org>,
-        "J . Bruce Fields" <bfields@fieldses.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Shuah Khan <shuah@kernel.org>, Mike Rapoport <rppt@kernel.org>,
-        Steven Price <steven.price@arm.com>,
-        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
-        Vlastimil Babka <vbabka@suse.cz>,
-        Vishal Annapurve <vannapurve@google.com>,
-        Yu Zhang <yu.c.zhang@linux.intel.com>,
-        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
-        luto@kernel.org, jun.nakajima@intel.com, dave.hansen@intel.com,
-        ak@linux.intel.com, david@redhat.com, aarcange@redhat.com,
-        ddutile@redhat.com, dhildenb@redhat.com,
-        Quentin Perret <qperret@google.com>,
-        Michael Roth <michael.roth@amd.com>, mhocko@suse.com,
-        Muchun Song <songmuchun@bytedance.com>
-Subject: Re: [PATCH v7 08/14] KVM: Rename mmu_notifier_*
-Message-ID: <YuQutJAhKWcsrrYl@google.com>
-References: <20220706082016.2603916-1-chao.p.peng@linux.intel.com>
- <20220706082016.2603916-9-chao.p.peng@linux.intel.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20220706082016.2603916-9-chao.p.peng@linux.intel.com>
+        with ESMTP id S238394AbiG2TCo (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 29 Jul 2022 15:02:44 -0400
+Received: from mail.efficios.com (mail.efficios.com [167.114.26.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E3EFB86C29;
+        Fri, 29 Jul 2022 12:02:42 -0700 (PDT)
+Received: from localhost (localhost [127.0.0.1])
+        by mail.efficios.com (Postfix) with ESMTP id 85E853187FD;
+        Fri, 29 Jul 2022 15:02:41 -0400 (EDT)
+Received: from mail.efficios.com ([127.0.0.1])
+        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
+        with ESMTP id lZRNnGx2Vadg; Fri, 29 Jul 2022 15:02:41 -0400 (EDT)
+Received: from localhost (localhost [127.0.0.1])
+        by mail.efficios.com (Postfix) with ESMTP id 42463318C62;
+        Fri, 29 Jul 2022 15:02:41 -0400 (EDT)
+DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 42463318C62
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
+        s=default; t=1659121361;
+        bh=pVzuqM3AzOqHAueSPhwC/tpBjnInPIjAGgyb3P8mKbE=;
+        h=From:To:Date:Message-Id;
+        b=IWLUHNDa0ARHMb0upK8yadGFtdj49z9UG0xmbIbC3OZctpFsK9jQeUQJLi25zfV5n
+         YrqP5FavcxqA+m5qRbSPtxH7dOZQz4x36xaw/KKR0+BVfSlxN3Cbg67R+PiKU56+PR
+         aJZFePL0f8L7eXD4Y3AWZ1wytZWUnJjoMTYEM8yqDeYL2HPqzUeNOrvZihE73bwUfb
+         djZS3FEOtEde+5jgVvylgieA14T3LMEuqNv2zadE3+4b3V8mbjM9vgipKATLD9K01i
+         H/wQq9sUX/JXg6o0V7VrMtPvW98KyTLndWizxf816+nh9M900CIMdW/GWVIKQgeErB
+         UpqWb2RUT6fSg==
+X-Virus-Scanned: amavisd-new at efficios.com
+Received: from mail.efficios.com ([127.0.0.1])
+        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
+        with ESMTP id jmNhjaRfoRE9; Fri, 29 Jul 2022 15:02:41 -0400 (EDT)
+Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
+        by mail.efficios.com (Postfix) with ESMTPSA id E6044318F87;
+        Fri, 29 Jul 2022 15:02:40 -0400 (EDT)
+From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To:     Peter Zijlstra <peterz@infradead.org>
+Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
+        "Paul E . McKenney" <paulmck@kernel.org>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>,
+        linux-api@vger.kernel.org,
+        Christian Brauner <christian.brauner@ubuntu.com>,
+        Florian Weimer <fw@deneb.enyo.de>, David.Laight@ACULAB.COM,
+        carlos@redhat.com, Peter Oskolkov <posk@posk.io>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [PATCH v3 01/23] rseq: Introduce feature size and alignment ELF auxiliary vector entries
+Date:   Fri, 29 Jul 2022 15:02:03 -0400
+Message-Id: <20220729190225.12726-2-mathieu.desnoyers@efficios.com>
+X-Mailer: git-send-email 2.17.1
+In-Reply-To: <20220729190225.12726-1-mathieu.desnoyers@efficios.com>
+References: <20220729190225.12726-1-mathieu.desnoyers@efficios.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Jul 06, 2022, Chao Peng wrote:
-> The sync mechanism between mmu_notifier and page fault handler employs
-> fields mmu_notifier_seq/count and mmu_notifier_range_start/end. For the
-> to be added private memory, there is the same mechanism needed but not
-> rely on mmu_notifier (It uses new introduced memfile_notifier). This
-> patch renames the existing fields and related helper functions to a
-> neutral name mmu_updating_* so private memory can reuse.
+Export the rseq feature size supported by the kernel as well as the
+required allocation alignment for the rseq per-thread area to user-space
+through ELF auxiliary vector entries.
 
-mmu_updating_* is too broad of a term, e.g. page faults and many other operations
-also update the mmu.  Although the name most definitely came from the mmu_notifier,
-it's not completely inaccurate for other sources, e.g. KVM's MMU is still being
-notified of something, even if the source is not the actual mmu_notifier.
+This is part of the extensible rseq ABI.
 
-If we really want a different name, I'd vote for nomenclature that captures the
-invalidation aspect, which is really what the variables are all trackng, e.g.
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+---
+ fs/binfmt_elf.c             | 5 +++++
+ include/uapi/linux/auxvec.h | 2 ++
+ include/uapi/linux/rseq.h   | 5 +++++
+ 3 files changed, 12 insertions(+)
 
-  mmu_invalidate_seq
-  mmu_invalidate_in_progress
-  mmu_invalidate_range_start
-  mmu_invalidate_range_end
+diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
+index 63c7ebb0da89..04fca1e4cbd2 100644
+--- a/fs/binfmt_elf.c
++++ b/fs/binfmt_elf.c
+@@ -46,6 +46,7 @@
+ #include <linux/cred.h>
+ #include <linux/dax.h>
+ #include <linux/uaccess.h>
++#include <linux/rseq.h>
+ #include <asm/param.h>
+ #include <asm/page.h>
+ 
+@@ -288,6 +289,10 @@ create_elf_tables(struct linux_binprm *bprm, const struct elfhdr *exec,
+ 	if (bprm->have_execfd) {
+ 		NEW_AUX_ENT(AT_EXECFD, bprm->execfd);
+ 	}
++#ifdef CONFIG_RSEQ
++	NEW_AUX_ENT(AT_RSEQ_FEATURE_SIZE, offsetof(struct rseq, end));
++	NEW_AUX_ENT(AT_RSEQ_ALIGN, __alignof__(struct rseq));
++#endif
+ #undef NEW_AUX_ENT
+ 	/* AT_NULL is zero; clear the rest too */
+ 	memset(elf_info, 0, (char *)mm->saved_auxv +
+diff --git a/include/uapi/linux/auxvec.h b/include/uapi/linux/auxvec.h
+index c7e502bf5a6f..6991c4b8ab18 100644
+--- a/include/uapi/linux/auxvec.h
++++ b/include/uapi/linux/auxvec.h
+@@ -30,6 +30,8 @@
+ 				 * differ from AT_PLATFORM. */
+ #define AT_RANDOM 25	/* address of 16 random bytes */
+ #define AT_HWCAP2 26	/* extension of AT_HWCAP */
++#define AT_RSEQ_FEATURE_SIZE	27	/* rseq supported feature size */
++#define AT_RSEQ_ALIGN		28	/* rseq allocation alignment */
+ 
+ #define AT_EXECFN  31	/* filename of program */
+ 
+diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
+index 77ee207623a9..05d3c4cdeb40 100644
+--- a/include/uapi/linux/rseq.h
++++ b/include/uapi/linux/rseq.h
+@@ -130,6 +130,11 @@ struct rseq {
+ 	 *     this thread.
+ 	 */
+ 	__u32 flags;
++
++	/*
++	 * Flexible array member at end of structure, after last feature field.
++	 */
++	char end[];
+ } __attribute__((aligned(4 * sizeof(__u64))));
+ 
+ #endif /* _UAPI_LINUX_RSEQ_H */
+-- 
+2.17.1
 
