@@ -2,45 +2,45 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6ED7CC04A68
-	for <linux-api@archiver.kernel.org>; Fri, 29 Jul 2022 19:03:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 723BEC19F2D
+	for <linux-api@archiver.kernel.org>; Fri, 29 Jul 2022 19:03:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237395AbiG2TDB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 29 Jul 2022 15:03:01 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51112 "EHLO
+        id S233409AbiG2TDD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 29 Jul 2022 15:03:03 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51218 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238577AbiG2TCy (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 29 Jul 2022 15:02:54 -0400
+        with ESMTP id S238597AbiG2TC5 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 29 Jul 2022 15:02:57 -0400
 Received: from mail.efficios.com (mail.efficios.com [167.114.26.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4C18D88E0B;
-        Fri, 29 Jul 2022 12:02:49 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 43FD188E29;
+        Fri, 29 Jul 2022 12:02:50 -0700 (PDT)
 Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id 3847B318DCB;
-        Fri, 29 Jul 2022 15:02:48 -0400 (EDT)
+        by mail.efficios.com (Postfix) with ESMTP id 055D431901A;
+        Fri, 29 Jul 2022 15:02:49 -0400 (EDT)
 Received: from mail.efficios.com ([127.0.0.1])
         by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
-        with ESMTP id WCN-K7vRmKAZ; Fri, 29 Jul 2022 15:02:47 -0400 (EDT)
+        with ESMTP id uCippXD8KXZi; Fri, 29 Jul 2022 15:02:48 -0400 (EDT)
 Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id 97639318DC4;
-        Fri, 29 Jul 2022 15:02:44 -0400 (EDT)
-DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 97639318DC4
+        by mail.efficios.com (Postfix) with ESMTP id 35903318E98;
+        Fri, 29 Jul 2022 15:02:45 -0400 (EDT)
+DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com 35903318E98
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
-        s=default; t=1659121364;
-        bh=H1BI137TQVD0IUIV2Akwp3DX/CDXZ2SZLX9a456H6tM=;
+        s=default; t=1659121365;
+        bh=SlksVcAEQwHXv/2n1z59vggbF/JR7rR40IRrV+e+NmA=;
         h=From:To:Date:Message-Id;
-        b=uVb6XYNWUDjIIcjcFprb8OWL25iatpTSi/XbLIGX4C0DJnmzzvok/710No7TnmIA5
-         IcCNESSSsv2ESuvBDAp2Gpw3sfVI/e7v5N3sNAvJ3fqlP3rQ9wlm6dFy729YI8Y40X
-         8JLTRqzoy7lAHNcs4doL6WTFJ3el/UnDc9K49WkC29N+OYZLTw2ih6NG1cgxp3jrR8
-         XNfSweydw6XTzz678vt4BLDT+TNRqnSUiXF9ksnmjM3EqyEEkMK3guimlBMcP9a+b4
-         gRUwIn1ivvymg9T2rUbiTJe4O6HJKLqcUjnjb1uG4qJ+IlH2rdnrYlXjgoh9uJ+Vwt
-         FlHTAa85MaRXg==
+        b=dom/woOiwwNfE+wiiNMkWguctUUrw2JryzhuC7UabwX1Tw1LbQRRc3xehozmHcJvs
+         xwqFcp8epyeqhH107olHOwiMsyC+DH8Dm8jKJMspgHs9KkdFjAF0+8ohR68j7GwwAF
+         TtsveO+8pvg6X4qIN5htU+ZsFQlJv7MOUh08Ac2LBOX4ft9xjI7hyCsi/erlJ0WBr1
+         aJcwmLZT2QIeiubqVO6RkjXmVTDHnXtYW8UG0no7fBYbwzveVjaXnCRiDRQIFRnJoH
+         gO9GxbMMVPqIXNNenl11ThtU3OC9sReD4cyvUXJEorzT7WluUA61B30cNLjk6TTxUM
+         pUfOpPLBUobBw==
 X-Virus-Scanned: amavisd-new at efficios.com
 Received: from mail.efficios.com ([127.0.0.1])
         by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
-        with ESMTP id 8xRFzbItOyLY; Fri, 29 Jul 2022 15:02:44 -0400 (EDT)
+        with ESMTP id V-BhCphR6MiV; Fri, 29 Jul 2022 15:02:45 -0400 (EDT)
 Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by mail.efficios.com (Postfix) with ESMTPSA id 7A370318F0C;
-        Fri, 29 Jul 2022 15:02:42 -0400 (EDT)
+        by mail.efficios.com (Postfix) with ESMTPSA id E4E0A318E1A;
+        Fri, 29 Jul 2022 15:02:43 -0400 (EDT)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Peter Zijlstra <peterz@infradead.org>
 Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
@@ -52,9 +52,9 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         Florian Weimer <fw@deneb.enyo.de>, David.Laight@ACULAB.COM,
         carlos@redhat.com, Peter Oskolkov <posk@posk.io>,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH v3 06/23] lib: invert _find_next_bit source arguments
-Date:   Fri, 29 Jul 2022 15:02:08 -0400
-Message-Id: <20220729190225.12726-7-mathieu.desnoyers@efficios.com>
+Subject: [PATCH v3 10/23] rseq: extend struct rseq with per memory space vcpu id
+Date:   Fri, 29 Jul 2022 15:02:12 -0400
+Message-Id: <20220729190225.12726-11-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20220729190225.12726-1-mathieu.desnoyers@efficios.com>
 References: <20220729190225.12726-1-mathieu.desnoyers@efficios.com>
@@ -62,218 +62,78 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Apply bit-invert operations before the AND operation in _find_next_bit.
-Allows AND operations on combined bitmasks in which we search either for
-one or zero, e.g.: find first bit which is both zero in one bitmask AND
-one in the second bitmask.
-
-The existing use for find first zero bit does not use the second
-argument, so whether the inversion is performed before or after the AND
-operator does not matter.
+If a memory space has fewer threads than cores, or is limited to run on
+few cores concurrently through sched affinity or cgroup cpusets, the
+virtual cpu ids will be values close to 0, thus allowing efficient use
+of user-space memory for per-cpu data structures.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 ---
- include/linux/find.h       | 13 +++++++------
- lib/find_bit.c             | 17 ++++++++---------
- tools/include/linux/find.h |  9 +++++----
- tools/lib/find_bit.c       | 17 ++++++++---------
- 4 files changed, 28 insertions(+), 28 deletions(-)
+ include/uapi/linux/rseq.h |  9 +++++++++
+ kernel/rseq.c             | 10 +++++++++-
+ 2 files changed, 18 insertions(+), 1 deletion(-)
 
-diff --git a/include/linux/find.h b/include/linux/find.h
-index 5bb6db213bcb..41941cb9cad7 100644
---- a/include/linux/find.h
-+++ b/include/linux/find.h
-@@ -10,7 +10,8 @@
+diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
+index 1cb90a435c5c..77a136586ac6 100644
+--- a/include/uapi/linux/rseq.h
++++ b/include/uapi/linux/rseq.h
+@@ -139,6 +139,15 @@ struct rseq {
+ 	 */
+ 	__u32 node_id;
  
- extern unsigned long _find_next_bit(const unsigned long *addr1,
- 		const unsigned long *addr2, unsigned long nbits,
--		unsigned long start, unsigned long invert, unsigned long le);
-+		unsigned long start, unsigned long invert_src1,
-+		unsigned long src2, unsigned long le);
- extern unsigned long _find_first_bit(const unsigned long *addr, unsigned long size);
- extern unsigned long _find_first_and_bit(const unsigned long *addr1,
- 					 const unsigned long *addr2, unsigned long size);
-@@ -41,7 +42,7 @@ unsigned long find_next_bit(const unsigned long *addr, unsigned long size,
- 		return val ? __ffs(val) : size;
- 	}
++	/*
++	 * Restartable sequences vm_vcpu_id field. Updated by the kernel. Read by
++	 * user-space with single-copy atomicity semantics. This field should
++	 * only be read by the thread which registered this data structure.
++	 * Aligned on 32-bit. Contains the current thread's virtual CPU ID
++	 * (allocated uniquely within a memory space).
++	 */
++	__u32 vm_vcpu_id;
++
+ 	/*
+ 	 * Flexible array member at end of structure, after last feature field.
+ 	 */
+diff --git a/kernel/rseq.c b/kernel/rseq.c
+index cb7d8a5afc82..1b00339c341b 100644
+--- a/kernel/rseq.c
++++ b/kernel/rseq.c
+@@ -89,12 +89,14 @@ static int rseq_update_cpu_node_id(struct task_struct *t)
+ 	struct rseq __user *rseq = t->rseq;
+ 	u32 cpu_id = raw_smp_processor_id();
+ 	u32 node_id = cpu_to_node(cpu_id);
++	u32 vm_vcpu_id = task_mm_vcpu_id(t);
  
--	return _find_next_bit(addr, NULL, size, offset, 0UL, 0);
-+	return _find_next_bit(addr, NULL, size, offset, 0UL, 0UL, 0);
- }
- #endif
+ 	if (!user_write_access_begin(rseq, t->rseq_len))
+ 		goto efault;
+ 	unsafe_put_user(cpu_id, &rseq->cpu_id_start, efault_end);
+ 	unsafe_put_user(cpu_id, &rseq->cpu_id, efault_end);
+ 	unsafe_put_user(node_id, &rseq->node_id, efault_end);
++	unsafe_put_user(vm_vcpu_id, &rseq->vm_vcpu_id, efault_end);
+ 	/*
+ 	 * Additional feature fields added after ORIG_RSEQ_SIZE
+ 	 * need to be conditionally updated only if
+@@ -112,7 +114,8 @@ static int rseq_update_cpu_node_id(struct task_struct *t)
  
-@@ -71,7 +72,7 @@ unsigned long find_next_and_bit(const unsigned long *addr1,
- 		return val ? __ffs(val) : size;
- 	}
- 
--	return _find_next_bit(addr1, addr2, size, offset, 0UL, 0);
-+	return _find_next_bit(addr1, addr2, size, offset, 0UL, 0UL, 0);
- }
- #endif
- 
-@@ -99,7 +100,7 @@ unsigned long find_next_zero_bit(const unsigned long *addr, unsigned long size,
- 		return val == ~0UL ? size : ffz(val);
- 	}
- 
--	return _find_next_bit(addr, NULL, size, offset, ~0UL, 0);
-+	return _find_next_bit(addr, NULL, size, offset, ~0UL, 0UL, 0);
- }
- #endif
- 
-@@ -247,7 +248,7 @@ unsigned long find_next_zero_bit_le(const void *addr, unsigned
- 		return val == ~0UL ? size : ffz(val);
- 	}
- 
--	return _find_next_bit(addr, NULL, size, offset, ~0UL, 1);
-+	return _find_next_bit(addr, NULL, size, offset, ~0UL, 0UL, 1);
- }
- #endif
- 
-@@ -266,7 +267,7 @@ unsigned long find_next_bit_le(const void *addr, unsigned
- 		return val ? __ffs(val) : size;
- 	}
- 
--	return _find_next_bit(addr, NULL, size, offset, 0UL, 1);
-+	return _find_next_bit(addr, NULL, size, offset, 0UL, 0UL, 1);
- }
- #endif
- 
-diff --git a/lib/find_bit.c b/lib/find_bit.c
-index 1b8e4b2a9cba..73e78565e691 100644
---- a/lib/find_bit.c
-+++ b/lib/find_bit.c
-@@ -25,23 +25,23 @@
- /*
-  * This is a common helper function for find_next_bit, find_next_zero_bit, and
-  * find_next_and_bit. The differences are:
-- *  - The "invert" argument, which is XORed with each fetched word before
-- *    searching it for one bits.
-+ *  - The "invert_src1" and "invert_src2" arguments, which are XORed to
-+ *    each source word before applying the 'and' operator.
-  *  - The optional "addr2", which is anded with "addr1" if present.
-  */
- unsigned long _find_next_bit(const unsigned long *addr1,
- 		const unsigned long *addr2, unsigned long nbits,
--		unsigned long start, unsigned long invert, unsigned long le)
-+		unsigned long start, unsigned long invert_src1,
-+		unsigned long invert_src2, unsigned long le)
+ static int rseq_reset_rseq_cpu_node_id(struct task_struct *t)
  {
- 	unsigned long tmp, mask;
+-	u32 cpu_id_start = 0, cpu_id = RSEQ_CPU_ID_UNINITIALIZED, node_id = 0;
++	u32 cpu_id_start = 0, cpu_id = RSEQ_CPU_ID_UNINITIALIZED, node_id = 0,
++	    vm_vcpu_id = 0;
  
- 	if (unlikely(start >= nbits))
- 		return nbits;
- 
--	tmp = addr1[start / BITS_PER_LONG];
-+	tmp = addr1[start / BITS_PER_LONG] ^ invert_src1;
- 	if (addr2)
--		tmp &= addr2[start / BITS_PER_LONG];
--	tmp ^= invert;
-+		tmp &= addr2[start / BITS_PER_LONG] ^ invert_src2;
- 
- 	/* Handle 1st word. */
- 	mask = BITMAP_FIRST_WORD_MASK(start);
-@@ -57,10 +57,9 @@ unsigned long _find_next_bit(const unsigned long *addr1,
- 		if (start >= nbits)
- 			return nbits;
- 
--		tmp = addr1[start / BITS_PER_LONG];
-+		tmp = addr1[start / BITS_PER_LONG] ^ invert_src1;
- 		if (addr2)
--			tmp &= addr2[start / BITS_PER_LONG];
--		tmp ^= invert;
-+			tmp &= addr2[start / BITS_PER_LONG] ^ invert_src2;
- 	}
- 
- 	if (le)
-diff --git a/tools/include/linux/find.h b/tools/include/linux/find.h
-index 47e2bd6c5174..5ab0c95086ad 100644
---- a/tools/include/linux/find.h
-+++ b/tools/include/linux/find.h
-@@ -10,7 +10,8 @@
- 
- extern unsigned long _find_next_bit(const unsigned long *addr1,
- 		const unsigned long *addr2, unsigned long nbits,
--		unsigned long start, unsigned long invert, unsigned long le);
-+		unsigned long start, unsigned long invert_src1,
-+		unsigned long src2, unsigned long le);
- extern unsigned long _find_first_bit(const unsigned long *addr, unsigned long size);
- extern unsigned long _find_first_and_bit(const unsigned long *addr1,
- 					 const unsigned long *addr2, unsigned long size);
-@@ -41,7 +42,7 @@ unsigned long find_next_bit(const unsigned long *addr, unsigned long size,
- 		return val ? __ffs(val) : size;
- 	}
- 
--	return _find_next_bit(addr, NULL, size, offset, 0UL, 0);
-+	return _find_next_bit(addr, NULL, size, offset, 0UL, 0UL, 0);
- }
- #endif
- 
-@@ -71,7 +72,7 @@ unsigned long find_next_and_bit(const unsigned long *addr1,
- 		return val ? __ffs(val) : size;
- 	}
- 
--	return _find_next_bit(addr1, addr2, size, offset, 0UL, 0);
-+	return _find_next_bit(addr1, addr2, size, offset, 0UL, 0UL, 0);
- }
- #endif
- 
-@@ -99,7 +100,7 @@ unsigned long find_next_zero_bit(const unsigned long *addr, unsigned long size,
- 		return val == ~0UL ? size : ffz(val);
- 	}
- 
--	return _find_next_bit(addr, NULL, size, offset, ~0UL, 0);
-+	return _find_next_bit(addr, NULL, size, offset, ~0UL, 0UL, 0);
- }
- #endif
- 
-diff --git a/tools/lib/find_bit.c b/tools/lib/find_bit.c
-index ba4b8d94e004..4176232de7f9 100644
---- a/tools/lib/find_bit.c
-+++ b/tools/lib/find_bit.c
-@@ -24,13 +24,14 @@
- /*
-  * This is a common helper function for find_next_bit, find_next_zero_bit, and
-  * find_next_and_bit. The differences are:
-- *  - The "invert" argument, which is XORed with each fetched word before
-- *    searching it for one bits.
-+ *  - The "invert_src1" and "invert_src2" arguments, which are XORed to
-+ *    each source word before applying the 'and' operator.
-  *  - The optional "addr2", which is anded with "addr1" if present.
-  */
- unsigned long _find_next_bit(const unsigned long *addr1,
- 		const unsigned long *addr2, unsigned long nbits,
--		unsigned long start, unsigned long invert, unsigned long le)
-+		unsigned long start, unsigned long invert_src1,
-+		unsigned long invert_src2, unsigned long le)
- {
- 	unsigned long tmp, mask;
- 	(void) le;
-@@ -38,10 +39,9 @@ unsigned long _find_next_bit(const unsigned long *addr1,
- 	if (unlikely(start >= nbits))
- 		return nbits;
- 
--	tmp = addr1[start / BITS_PER_LONG];
-+	tmp = addr1[start / BITS_PER_LONG] ^ invert_src1;
- 	if (addr2)
--		tmp &= addr2[start / BITS_PER_LONG];
--	tmp ^= invert;
-+		tmp &= addr2[start / BITS_PER_LONG] ^ invert_src2;
- 
- 	/* Handle 1st word. */
- 	mask = BITMAP_FIRST_WORD_MASK(start);
-@@ -64,10 +64,9 @@ unsigned long _find_next_bit(const unsigned long *addr1,
- 		if (start >= nbits)
- 			return nbits;
- 
--		tmp = addr1[start / BITS_PER_LONG];
-+		tmp = addr1[start / BITS_PER_LONG] ^ invert_src1;
- 		if (addr2)
--			tmp &= addr2[start / BITS_PER_LONG];
--		tmp ^= invert;
-+			tmp &= addr2[start / BITS_PER_LONG] ^ invert_src2;
- 	}
- 
- #if (0)
+ 	/*
+ 	 * Reset cpu_id_start to its initial state (0).
+@@ -131,6 +134,11 @@ static int rseq_reset_rseq_cpu_node_id(struct task_struct *t)
+ 	 */
+ 	if (put_user(node_id, &t->rseq->node_id))
+ 		return -EFAULT;
++	/*
++	 * Reset vm_vcpu_id to its initial state (0).
++	 */
++	if (put_user(vm_vcpu_id, &t->rseq->vm_vcpu_id))
++		return -EFAULT;
+ 	/*
+ 	 * Additional feature fields added after ORIG_RSEQ_SIZE
+ 	 * need to be conditionally reset only if
 -- 
 2.17.1
 
