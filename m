@@ -2,88 +2,145 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B8531C00140
-	for <linux-api@archiver.kernel.org>; Wed, 10 Aug 2022 09:26:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7CFD1C25B08
+	for <linux-api@archiver.kernel.org>; Wed, 10 Aug 2022 09:27:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232060AbiHJJ0n (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 10 Aug 2022 05:26:43 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53184 "EHLO
+        id S231461AbiHJJ1l (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 10 Aug 2022 05:27:41 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54004 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232066AbiHJJ0m (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 10 Aug 2022 05:26:42 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id C4C5F60539
-        for <linux-api@vger.kernel.org>; Wed, 10 Aug 2022 02:26:37 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1660123596;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=REovcAc0irul9Otc+DHjiNYKhgyWXaWXdC+TCEPnc/U=;
-        b=IFu79W3O9X4h8A0hQntdnluZjtYEYAINmzoLY69O10ZQ+uC0mcyxG0sSUfR7bECdl78MKs
-        6nOV+BPZnNiyfbWo8VPTPJ2rsora3RzjzgKUDb3DuNBELkJqWIXY/rX6ELhIyXq4dZJRR6
-        nkqclZc+h6GVALpFmPHhoPBji1qIXpU=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-638-V-viqhV2OyKPRUEj6RfDPg-1; Wed, 10 Aug 2022 05:26:33 -0400
-X-MC-Unique: V-viqhV2OyKPRUEj6RfDPg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7707118A6585;
-        Wed, 10 Aug 2022 09:26:33 +0000 (UTC)
-Received: from oldenburg.str.redhat.com (unknown [10.39.192.75])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id 2352A400DFD7;
-        Wed, 10 Aug 2022 09:26:31 +0000 (UTC)
-From:   Florian Weimer <fweimer@redhat.com>
-To:     David Howells <dhowells@redhat.com>
-Cc:     linux-fsdevel@vger.kernel.org, Ian Kent <raven@themaw.net>,
-        Alexander Viro <viro@zeniv.linux.org.uk>,
-        Christian Brauner <christian@brauner.io>,
-        linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [RFC][PATCH] uapi: Remove the inclusion of linux/mount.h from
- uapi/linux/fs.h
-References: <163410.1659964655@warthog.procyon.org.uk>
-Date:   Wed, 10 Aug 2022 11:26:30 +0200
-In-Reply-To: <163410.1659964655@warthog.procyon.org.uk> (David Howells's
-        message of "Mon, 08 Aug 2022 14:17:35 +0100")
-Message-ID: <87zggce9fd.fsf@oldenburg.str.redhat.com>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.2 (gnu/linux)
+        with ESMTP id S232058AbiHJJ13 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 10 Aug 2022 05:27:29 -0400
+Received: from mga07.intel.com (mga07.intel.com [134.134.136.100])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D7D146B648;
+        Wed, 10 Aug 2022 02:27:28 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1660123648; x=1691659648;
+  h=date:from:to:cc:subject:message-id:reply-to:references:
+   mime-version:in-reply-to;
+  bh=tUwaauJkG9H9jpzDjix3eFFhcAHzm8fbdGUPBBoncrI=;
+  b=MM/P6jH6MliPsW0XXGQm0jiy++NWrykY/WTFdl9Jc01IEBqiretP+fpQ
+   hGaRBEoOnUMsSrlpa429LIp4kagMjmbHkXqdNP0P84rpcs/wph62NHWD9
+   bktQIKk8sgWerQVShl45PjvqXGSr/oqob9WglaqCXg4c98TufQXDLATBo
+   x9C0jCWj+ez5wC/+mTvfm5XWwbwwlY5nrbjPIW2DeB6iTBzaz3rWjEV6c
+   7jig7dUo/O+dreymwVjaqrLVay40KDxh9ROFzZ1p0xycaL7hcD8dFjyz1
+   5v/vxjgMEMc3AL7I6FurcDlLHgdgSe2Y/D2lJfcOQAO6uTX8/xx/6KS+j
+   g==;
+X-IronPort-AV: E=McAfee;i="6400,9594,10434"; a="355042407"
+X-IronPort-AV: E=Sophos;i="5.93,226,1654585200"; 
+   d="scan'208";a="355042407"
+Received: from fmsmga008.fm.intel.com ([10.253.24.58])
+  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Aug 2022 02:27:28 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.93,226,1654585200"; 
+   d="scan'208";a="664820289"
+Received: from chaop.bj.intel.com (HELO localhost) ([10.240.193.75])
+  by fmsmga008.fm.intel.com with ESMTP; 10 Aug 2022 02:27:17 -0700
+Date:   Wed, 10 Aug 2022 17:22:32 +0800
+From:   Chao Peng <chao.p.peng@linux.intel.com>
+To:     David Hildenbrand <david@redhat.com>
+Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
+        qemu-devel@nongnu.org, linux-kselftest@vger.kernel.org,
+        Paolo Bonzini <pbonzini@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Sean Christopherson <seanjc@google.com>,
+        Vitaly Kuznetsov <vkuznets@redhat.com>,
+        Wanpeng Li <wanpengli@tencent.com>,
+        Jim Mattson <jmattson@google.com>,
+        Joerg Roedel <joro@8bytes.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
+        Hugh Dickins <hughd@google.com>,
+        Jeff Layton <jlayton@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Shuah Khan <shuah@kernel.org>, Mike Rapoport <rppt@kernel.org>,
+        Steven Price <steven.price@arm.com>,
+        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Vishal Annapurve <vannapurve@google.com>,
+        Yu Zhang <yu.c.zhang@linux.intel.com>,
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
+        luto@kernel.org, jun.nakajima@intel.com, dave.hansen@intel.com,
+        ak@linux.intel.com, aarcange@redhat.com, ddutile@redhat.com,
+        dhildenb@redhat.com, Quentin Perret <qperret@google.com>,
+        Michael Roth <michael.roth@amd.com>, mhocko@suse.com,
+        Muchun Song <songmuchun@bytedance.com>
+Subject: Re: [PATCH v7 03/14] mm: Introduce memfile_notifier
+Message-ID: <20220810092232.GC862421@chaop.bj.intel.com>
+Reply-To: Chao Peng <chao.p.peng@linux.intel.com>
+References: <20220706082016.2603916-1-chao.p.peng@linux.intel.com>
+ <20220706082016.2603916-4-chao.p.peng@linux.intel.com>
+ <13394075-fca0-6f2b-92a2-f1291fcec9a3@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <13394075-fca0-6f2b-92a2-f1291fcec9a3@redhat.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-* David Howells:
+On Fri, Aug 05, 2022 at 03:22:58PM +0200, David Hildenbrand wrote:
+> On 06.07.22 10:20, Chao Peng wrote:
+> > This patch introduces memfile_notifier facility so existing memory file
+> > subsystems (e.g. tmpfs/hugetlbfs) can provide memory pages to allow a
+> > third kernel component to make use of memory bookmarked in the memory
+> > file and gets notified when the pages in the memory file become
+> > invalidated.
+> 
+> Stupid question, but why is this called "memfile_notifier" and not
+> "memfd_notifier". We're only dealing with memfd's after all ... which
+> are anonymous files essentially. Or what am I missing? Are there any
+> other plans for fs than plain memfd support that I am not aware of?
 
-> We're seeing issues in autofs and xfstests whereby linux/mount.h (the UAPI
-> version) as included indirectly by linux/fs.h is conflicting with
-> sys/mount.h (there's a struct and an enum).
->
-> Would it be possible to just remove the #include from linux/fs.h (as patch
-> below) and rely on those hopefully few things that need mount flags that don't
-> use the glibc header for them working around it by configuration?
+There were some discussions on this in v3.
+  https://lkml.org/lkml/2021/12/28/484
+Sean commented it's OK to abstract it from memfd but he also wants the
+kAPI (name) should not bind to memfd to make room for future non-memfd
+usages.
 
-Wasn't <linux/mount.h> split from <linux/fs.h> relatively recently, and
-userspace is probably using <linux/fs.h> to get the mount flag
-definitions?
+> 
+> > 
+> > It will be used for KVM to use a file descriptor as the guest memory
+> > backing store and KVM will use this memfile_notifier interface to
+> > interact with memory file subsystems. In the future there might be other
+> > consumers (e.g. VFIO with encrypted device memory).
+> > 
+> > It consists below components:
+> >  - memfile_backing_store: Each supported memory file subsystem can be
+> >    implemented as a memory backing store which bookmarks memory and
+> >    provides callbacks for other kernel systems (memfile_notifier
+> >    consumers) to interact with.
+> >  - memfile_notifier: memfile_notifier consumers defines callbacks and
+> >    associate them to a file using memfile_register_notifier().
+> >  - memfile_node: A memfile_node is associated with the file (inode) from
+> >    the backing store and includes feature flags and a list of registered
+> >    memfile_notifier for notifying.
+> > 
+> > In KVM usages, userspace is in charge of guest memory lifecycle: it first
+> > allocates pages in memory backing store and then passes the fd to KVM and
+> > lets KVM register memory slot to memory backing store via
+> > memfile_register_notifier.
+> 
+> Can we add documentation/description in any form how the different
+> functions exposed in linux/memfile_notifier.h are supposed to be used?
 
-In retrospect, it would have been better to add the new fsmount stuff to
-a separate header file, so that we could include that easily from
-<sys/mount.h> on the glibc side.  Adhemerval posted a glibc patch to
-fake that (for recent compilers):
+Yeah, code comments can be added.
 
-  [PATCH] linux: Fix sys/mount.h usage with kernel headers
-  <https://sourceware.org/pipermail/libc-alpha/2022-August/141316.html>
+> 
+> Staring at memfile_node_set_flags() and memfile_notifier_invalidate()
+> it's not immediately clear to me who's supposed to call that and under
+> which conditions.
 
-I think it should work reliably, so that's probably the direction we are
-going to move in.
+I will also amend the commit message.
 
-We'll backport this to 2.36, and distributions will pick it up.
-
-Thanks,
-Florian
-
+Chao
+> 
+> -- 
+> Thanks,
+> 
+> David / dhildenb
