@@ -2,148 +2,134 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 61D37C25B06
-	for <linux-api@archiver.kernel.org>; Wed, 10 Aug 2022 10:05:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B9E12C3F6B0
+	for <linux-api@archiver.kernel.org>; Wed, 10 Aug 2022 13:02:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231564AbiHJKFv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 10 Aug 2022 06:05:51 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40242 "EHLO
+        id S232398AbiHJNCD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 10 Aug 2022 09:02:03 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60216 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231508AbiHJKFu (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 10 Aug 2022 06:05:50 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 3382E56BB1
-        for <linux-api@vger.kernel.org>; Wed, 10 Aug 2022 03:05:49 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1660125948;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=83RYZm97KNj9NYPWWYz4fzmlCpq267m27613RMfC+Pg=;
-        b=LlRwtIO5hEf/lhLDTY3im+gy5alxiK3P+LTcsrT1Zj44x1wZ7EJmCZ6TbQfNlg0s6QsjE/
-        DxWPyk87Of4qemhyO8V5kxsUyuRfy07k5C0VTWjDRvEDU2tXgk/S77tJ/yFXNeILLc2Bkq
-        t7b8p/AZXVya4eQtRfWggIgFJJUSxRI=
-Received: from mail-wm1-f71.google.com (mail-wm1-f71.google.com
- [209.85.128.71]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-581-5Jg6E84ZOdiIg6XhqFOa9g-1; Wed, 10 Aug 2022 06:05:45 -0400
-X-MC-Unique: 5Jg6E84ZOdiIg6XhqFOa9g-1
-Received: by mail-wm1-f71.google.com with SMTP id m4-20020a7bce04000000b003a386063752so416099wmc.1
-        for <linux-api@vger.kernel.org>; Wed, 10 Aug 2022 03:05:45 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=content-transfer-encoding:in-reply-to:subject:organization:from
-         :references:cc:to:content-language:user-agent:mime-version:date
-         :message-id:x-gm-message-state:from:to:cc;
-        bh=83RYZm97KNj9NYPWWYz4fzmlCpq267m27613RMfC+Pg=;
-        b=O+JzOPl7zzmZYtB2zscoeGgAMdiEbPOYM/Q1kqpoXnQJ8EABnhG9nQAr5kdvKvVX8e
-         8oTi3Iw9DYgjA+t+zoxJbWkL8mL/otI3UGQjOjJliM745MQsLzDL1gQLHc2UFWP5ombD
-         CX2sOqARpb/ZJrjUJP0FFkXWfp95DW1lN8aB6KzHM+760Tz3b/A4ZStTiBLXivakKoJn
-         6TToH7012B+evzzv3bQ4+QezWhWGLobtsflis35sq2ifROFSojTfZuufToRCl3rxf/M2
-         iGRZ+/BvCRLp5KCoGZhRvjiVIdfgSNcZKEoO1aQJg5plrBEZR0yiLtSCJtKSYO0Tjsl4
-         8pPA==
-X-Gm-Message-State: ACgBeo25BDhihS0ShjjlghkaMp7Ld52JK+naN8bOQ3n4CKh7hQ+LHt05
-        iwIOSZfaTtkorqwPFj6fKPxV8ZkZ74AGDGfLpeClQBlbwgDPOym9HY5r87mYGOvK95vGPHwEeYu
-        JDiFaY9hgjUt64i5/wZ00
-X-Received: by 2002:a5d:64ae:0:b0:220:6c4c:5a60 with SMTP id m14-20020a5d64ae000000b002206c4c5a60mr17058821wrp.636.1660125944506;
-        Wed, 10 Aug 2022 03:05:44 -0700 (PDT)
-X-Google-Smtp-Source: AA6agR5i72uisBNMVtDIvVDVfSxV1hzWrZROoCbvcTeBej4J7CIdnSDFuFoSBTJk3opG5+sXP+xgow==
-X-Received: by 2002:a5d:64ae:0:b0:220:6c4c:5a60 with SMTP id m14-20020a5d64ae000000b002206c4c5a60mr17058769wrp.636.1660125944245;
-        Wed, 10 Aug 2022 03:05:44 -0700 (PDT)
-Received: from ?IPV6:2003:cb:c707:1600:a3ce:b459:ef57:7b93? (p200300cbc7071600a3ceb459ef577b93.dip0.t-ipconnect.de. [2003:cb:c707:1600:a3ce:b459:ef57:7b93])
-        by smtp.gmail.com with ESMTPSA id t188-20020a1c46c5000000b003a327f19bf9sm1793951wma.14.2022.08.10.03.05.42
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 10 Aug 2022 03:05:43 -0700 (PDT)
-Message-ID: <00f1aa03-bc82-ffce-569b-e2d5c459992c@redhat.com>
-Date:   Wed, 10 Aug 2022 12:05:42 +0200
+        with ESMTP id S232446AbiHJNBe (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 10 Aug 2022 09:01:34 -0400
+Received: from out3-smtp.messagingengine.com (out3-smtp.messagingengine.com [66.111.4.27])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E6AF761B0F;
+        Wed, 10 Aug 2022 06:01:33 -0700 (PDT)
+Received: from compute1.internal (compute1.nyi.internal [10.202.2.41])
+        by mailout.nyi.internal (Postfix) with ESMTP id 3E50E5C0358;
+        Wed, 10 Aug 2022 09:01:32 -0400 (EDT)
+Received: from mailfrontend2 ([10.202.2.163])
+  by compute1.internal (MEProxy); Wed, 10 Aug 2022 09:01:32 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=themaw.net; h=cc
+        :cc:content-transfer-encoding:content-type:date:date:from:from
+        :in-reply-to:in-reply-to:message-id:mime-version:references
+        :reply-to:sender:subject:subject:to:to; s=fm3; t=1660136492; x=
+        1660222892; bh=D2dDj1/YvO3PoXFbhxtyDvrJjuK0U5n+THc//8l/nSg=; b=0
+        uEws4l4g6w2vrXp4GfCdWCnTh+CSrYDl4BIH9cfZm8TNqDt0C1F4/kQu0PjMlz/7
+        IPok/mc8SanD4aZtIwfFt3wz2LHUZHri/bel2AmR1Prp9nlTkTF6qmPVN0tIj/SG
+        AfDJZIQi/OtqscaGUmTWTXaL5dG5bm8QhmTP5cvPLeVGBHXnrd6OuRALPdmLZh0P
+        391bvUHNo4eiljos5XQkZkKDPqPNvYRQ7wUkPdLCjbDv2+IbqC85GVUeNyErpJJl
+        Xi5ccgqV8fBFhUdrjhrfRsKvfLDnbr+zSzq/FQyQOZoqf7NVUUjgMvKqO13XQ9Lt
+        V53LdIwYZE1PGG+9FgXmg==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
+        messagingengine.com; h=cc:cc:content-transfer-encoding
+        :content-type:date:date:feedback-id:feedback-id:from:from
+        :in-reply-to:in-reply-to:message-id:mime-version:references
+        :reply-to:sender:subject:subject:to:to:x-me-proxy:x-me-proxy
+        :x-me-sender:x-me-sender:x-sasl-enc; s=fm1; t=1660136492; x=
+        1660222892; bh=D2dDj1/YvO3PoXFbhxtyDvrJjuK0U5n+THc//8l/nSg=; b=g
+        4PUnbuBsbuWyDlmRz2cl0jHM/Wz9W+AAacy4xwFeYEc7jLDtN4vqJfBrNQvPBg+U
+        sY+nbk3DIt8+312Frgxpo5/eh0pZPP0UD4YIRuWX+vyTew6o8ohjY3wbA8F7WD/4
+        zVNvmYG1ldBGhPRo+DJx/GazOdXyvRtuvR9PUM86q4SoybRXO3yu2xuT86kgeiOZ
+        +nLUeLICLrWZ/MA7NQLAdZ8LqfDRUKkal0QJhULVY3dYUG/Vl6WeDoqfDVDanteq
+        o93PFZ8iw+tAFheEtKPh+kjKUtwONChc1p5w/P8cdILsF5vFYUAcltY0hTM2gHKL
+        PcviV0zo6aBwQ7dSp/n7w==
+X-ME-Sender: <xms:K6zzYgaufmFQYN3G-XE3GD_vN0bwiRO7qVkN-7J17C4m-ECwAF-3mA>
+    <xme:K6zzYraYxzysb-4EsfTXXjMDMY0mKilEmSyoJfChHtgKlkxJitcAAAyZvnFn1wjKy
+    V_hf6iZuIsn>
+X-ME-Received: <xmr:K6zzYq_hV8cfHgpYJ6ceTOAWwdug0m5PGJ7AYoOtsfGjkd4S1UUHhQcSgtIkrFVyScAdWozwAS1-XhSHVQ0PJvovtPIO8-mAKQhyK7RMb71iJgYeYlm2>
+X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvfedrvdegvddgheejucetufdoteggodetrfdotf
+    fvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdfqfgfvpdfurfetoffkrfgpnffqhgen
+    uceurghilhhouhhtmecufedttdenucesvcftvggtihhpihgvnhhtshculddquddttddmne
+    cujfgurhepkfffgggfuffvvehfhfgjtgfgsehtjeertddtfeejnecuhfhrohhmpefkrghn
+    ucfmvghnthcuoehrrghvvghnsehthhgvmhgrfidrnhgvtheqnecuggftrfgrthhtvghrnh
+    epgeevhedvleejleevkeduvdfgtefgtdfgffevtdetudekteekheeluddthfdtleehnecu
+    ffhomhgrihhnpehsohhurhgtvgifrghrvgdrohhrghenucevlhhushhtvghrufhiiigvpe
+    dtnecurfgrrhgrmhepmhgrihhlfhhrohhmpehrrghvvghnsehthhgvmhgrfidrnhgvth
+X-ME-Proxy: <xmx:K6zzYqq9Zeku69vjGyL7qCQ8y-siPza__UiByZwdf1sH727kGsR_sA>
+    <xmx:K6zzYrpBtEloIhq5qRx6uVC9MvBI9Bs9Pdmml3lfQfUOmueKype-Fw>
+    <xmx:K6zzYoS0K7lSIZ-quO3NK8tJ9UPkIejLJ1CbewJieP-GkVbetvyABg>
+    <xmx:LKzzYsnReg1zR2o7eA9WFra5rnD8htQ9ljHUtQvVHnPniq_-dR8abg>
+Feedback-ID: i31e841b0:Fastmail
+Received: by mail.messagingengine.com (Postfix) with ESMTPA; Wed,
+ 10 Aug 2022 09:01:28 -0400 (EDT)
+Message-ID: <3364aae7-9247-21aa-9ea4-36348462df4c@themaw.net>
+Date:   Wed, 10 Aug 2022 21:01:26 +0800
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
  Thunderbird/91.11.0
+Subject: Re: [RFC][PATCH] uapi: Remove the inclusion of linux/mount.h from
+ uapi/linux/fs.h
 Content-Language: en-US
-To:     Chao Peng <chao.p.peng@linux.intel.com>
-Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
-        linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
-        qemu-devel@nongnu.org, linux-kselftest@vger.kernel.org,
-        Paolo Bonzini <pbonzini@redhat.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Sean Christopherson <seanjc@google.com>,
-        Vitaly Kuznetsov <vkuznets@redhat.com>,
-        Wanpeng Li <wanpengli@tencent.com>,
-        Jim Mattson <jmattson@google.com>,
-        Joerg Roedel <joro@8bytes.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
-        x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
-        Hugh Dickins <hughd@google.com>,
-        Jeff Layton <jlayton@kernel.org>,
-        "J . Bruce Fields" <bfields@fieldses.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Shuah Khan <shuah@kernel.org>, Mike Rapoport <rppt@kernel.org>,
-        Steven Price <steven.price@arm.com>,
-        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
-        Vlastimil Babka <vbabka@suse.cz>,
-        Vishal Annapurve <vannapurve@google.com>,
-        Yu Zhang <yu.c.zhang@linux.intel.com>,
-        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
-        luto@kernel.org, jun.nakajima@intel.com, dave.hansen@intel.com,
-        ak@linux.intel.com, aarcange@redhat.com, ddutile@redhat.com,
-        dhildenb@redhat.com, Quentin Perret <qperret@google.com>,
-        Michael Roth <michael.roth@amd.com>, mhocko@suse.com,
-        Muchun Song <songmuchun@bytedance.com>
-References: <20220706082016.2603916-1-chao.p.peng@linux.intel.com>
- <20220706082016.2603916-4-chao.p.peng@linux.intel.com>
- <13394075-fca0-6f2b-92a2-f1291fcec9a3@redhat.com>
- <20220810092232.GC862421@chaop.bj.intel.com>
-From:   David Hildenbrand <david@redhat.com>
-Organization: Red Hat
-Subject: Re: [PATCH v7 03/14] mm: Introduce memfile_notifier
-In-Reply-To: <20220810092232.GC862421@chaop.bj.intel.com>
-Content-Type: text/plain; charset=UTF-8
+To:     Florian Weimer <fweimer@redhat.com>,
+        David Howells <dhowells@redhat.com>
+Cc:     linux-fsdevel@vger.kernel.org,
+        Alexander Viro <viro@zeniv.linux.org.uk>,
+        Christian Brauner <christian@brauner.io>,
+        linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+References: <163410.1659964655@warthog.procyon.org.uk>
+ <87zggce9fd.fsf@oldenburg.str.redhat.com>
+From:   Ian Kent <raven@themaw.net>
+In-Reply-To: <87zggce9fd.fsf@oldenburg.str.redhat.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 10.08.22 11:22, Chao Peng wrote:
-> On Fri, Aug 05, 2022 at 03:22:58PM +0200, David Hildenbrand wrote:
->> On 06.07.22 10:20, Chao Peng wrote:
->>> This patch introduces memfile_notifier facility so existing memory file
->>> subsystems (e.g. tmpfs/hugetlbfs) can provide memory pages to allow a
->>> third kernel component to make use of memory bookmarked in the memory
->>> file and gets notified when the pages in the memory file become
->>> invalidated.
+On 10/8/22 17:26, Florian Weimer wrote:
+> * David Howells:
+>
+>> We're seeing issues in autofs and xfstests whereby linux/mount.h (the UAPI
+>> version) as included indirectly by linux/fs.h is conflicting with
+>> sys/mount.h (there's a struct and an enum).
 >>
->> Stupid question, but why is this called "memfile_notifier" and not
->> "memfd_notifier". We're only dealing with memfd's after all ... which
->> are anonymous files essentially. Or what am I missing? Are there any
->> other plans for fs than plain memfd support that I am not aware of?
-> 
-> There were some discussions on this in v3.
->   https://lkml.org/lkml/2021/12/28/484
-> Sean commented it's OK to abstract it from memfd but he also wants the
-> kAPI (name) should not bind to memfd to make room for future non-memfd
-> usages.
+>> Would it be possible to just remove the #include from linux/fs.h (as patch
+>> below) and rely on those hopefully few things that need mount flags that don't
+>> use the glibc header for them working around it by configuration?
+> Wasn't <linux/mount.h> split from <linux/fs.h> relatively recently, and
+> userspace is probably using <linux/fs.h> to get the mount flag
+> definitions?
 
-Sorry, but how is "memfile" any better? memfd abstracted to memfile?! :)
+Not sure myself but this is in the user space kernel includes
 
-I understand Sean's suggestion about abstracting, but if the new name
-makes it harder to grasp and there isn't really an alternative to memfd
-in sight, I'm not so sure I enjoy the tried abstraction here.
+and sys/mount.h has pretty much what linux/mount.h has plus a
 
-Otherwise we'd have to get creative now and discuss something like
-"file_population_notifer" or "mapping_population_notifer" and I am not
-sure that our time is well spent doing so right now.
+few function declarations. It's almost a complete duplication.
 
-... as this is kernel-internal, we can always adjust the name as we
-please later, once we *actually* now what the abstraction should be.
-Until then I'd suggest to KIS and soft-glue this to memfd.
 
-Or am I missing something important?
+The reality is that the enum declaration could be changed to
 
--- 
-Thanks,
+#defines (not a preferred approach) which leaves only the
 
-David / dhildenb
+struct mount_attr which is the difficult one to resolve.
+
+
+>
+> In retrospect, it would have been better to add the new fsmount stuff to
+> a separate header file, so that we could include that easily from
+> <sys/mount.h> on the glibc side.  Adhemerval posted a glibc patch to
+> fake that (for recent compilers):
+>
+>    [PATCH] linux: Fix sys/mount.h usage with kernel headers
+>    <https://sourceware.org/pipermail/libc-alpha/2022-August/141316.html>
+>
+> I think it should work reliably, so that's probably the direction we are
+> going to move in.
+
+Looked a lot more complicated than I thought it could be, enough
+
+that I can't say if it will work so I'll take your word for it.
+
+
+Ian
 
