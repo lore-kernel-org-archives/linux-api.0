@@ -2,67 +2,150 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 70A9BC00140
-	for <linux-api@archiver.kernel.org>; Wed, 10 Aug 2022 13:43:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 54979C25B07
+	for <linux-api@archiver.kernel.org>; Wed, 10 Aug 2022 14:39:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231786AbiHJNm7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 10 Aug 2022 09:42:59 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53506 "EHLO
+        id S232525AbiHJOiz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 10 Aug 2022 10:38:55 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49248 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230000AbiHJNm6 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 10 Aug 2022 09:42:58 -0400
-X-Greylist: delayed 11770 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Wed, 10 Aug 2022 06:42:55 PDT
-Received: from jtproperties.de (unknown [107.189.7.27])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A712067147
-        for <linux-api@vger.kernel.org>; Wed, 10 Aug 2022 06:42:55 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=concordrope.com; s=default; h=Content-Transfer-Encoding:Content-Type:
-        MIME-Version:Message-ID:Reply-To:From:Date:Subject:To:Sender:Cc:Content-ID:
-        Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
-        :Resent-Message-ID:In-Reply-To:References:List-Id:List-Help:List-Unsubscribe:
-        List-Subscribe:List-Post:List-Owner:List-Archive;
-        bh=kJvJlHwe2qBNcYnyy1xAp/L5UJ0PM9sbMQdKhKDS/HE=; b=AKkN6T3dybs/vhS3qtu3NhbAvo
-        PVEckVAv7oPiytmb0WhL39h78eAV23sCbLcGs34UgRFTuJrFolwkHr1WxrSjlDUnewtCFDmK0V7C8
-        QGZEeAWYChMXvt07Zly8RH4RZkyipAofzOX/Qz2bfDQxRF1kPHn7IgI+nepNbkWozGb5sNTlPHdqM
-        CzfTDZq3HNmneUpl40WOAgWd59MGZPKlpNjO2iPOZmsVZMvg68sLsqUUIEnyO54KvAEzIFrbgr5TX
-        G36Wlltq9Cz5Ze9pOAFXOX8gC2f2Ba/LbPw+NuMnts66XvQcMTGlGyocE9+OoREJMwrFNXZud9Xk0
-        jjMMO/gw==;
-Received: from jtprope5 by lu-shared04.cpanelplatform.com with local (Exim 4.95)
-        (envelope-from <jtprope5@lu-shared04.cpanelplatform.com>)
-        id 1oLivD-00HLYc-Oz
-        for linux-api@vger.kernel.org;
-        Wed, 10 Aug 2022 12:26:43 +0200
-To:     linux-api@vger.kernel.org
-Subject: =?us-ascii?Q?Concord_Ropes_"In_der_Stadt_Bad_Homburg_vor_der?=  =?us-ascii?Q?_Hohe_wurden_mehr_als_837_Menschen_Millionare"?=
-X-PHP-Script: concordrope.com/index.php for 156.146.63.147
-X-PHP-Filename: /home/jtprope5/concordrope.com/index.php REMOTE_ADDR: 156.146.63.147
-Date:   Wed, 10 Aug 2022 10:26:43 +0000
-From:   Concord Ropes <support@concordrope.com>
-Reply-To: support@concordrope.com
-Message-ID: <Zpk1qg024ckx8WI2p5V1ZO7zcxx2IE8H6TZ5GPds9o@concordrope.com>
-X-Mailer: PHPMailer 6.5.3 (https://github.com/PHPMailer/PHPMailer)
+        with ESMTP id S232647AbiHJOiu (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 10 Aug 2022 10:38:50 -0400
+Received: from mail-pj1-x102f.google.com (mail-pj1-x102f.google.com [IPv6:2607:f8b0:4864:20::102f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 45C4950184
+        for <linux-api@vger.kernel.org>; Wed, 10 Aug 2022 07:38:48 -0700 (PDT)
+Received: by mail-pj1-x102f.google.com with SMTP id a8so14929570pjg.5
+        for <linux-api@vger.kernel.org>; Wed, 10 Aug 2022 07:38:48 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20210112;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc;
+        bh=Ypn04yBcDr+ITRCaJvIIISj7ZAHB/5ZItGV+XVBLIJA=;
+        b=Ib7E12JPGES3Yh+/p5apucZMNbtgTR05tdzqgOSPvuWuFN40kpN7Y2iwzMoGGvkAZp
+         2k6pDQ5Dx3ZoMZNesLC3dNSPLtDlj6mFmyXD/hvHO01hHIZDaQ/OR4FrBHZGfdNO21hw
+         c0Xp2gA8KqMlXerNeIQmKwkXlI8cJezWd5Q2pb36QkpOhC2IVatzB9PBUsADaiqPqXP2
+         sLaur3TZOTh5i5zvWHRfjklZ2CiHLPAi2y2CsipxjSxRi1GYU+xZki37dsLL1ac5Lqxt
+         CFqKYU6lzhVRJu4rIj89PYEW8X9BB+MXX2MHW1+4lVn1QpHvQgzsA9lEsg8UN0bQzIeg
+         NyJg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc;
+        bh=Ypn04yBcDr+ITRCaJvIIISj7ZAHB/5ZItGV+XVBLIJA=;
+        b=L7ego9rKr21P+qCCPYm0BuWynK5cNDDIy5GNeiOXRVOD9EJ2Hk0yGOdqi4NDd46m4N
+         VRPL5Oo7/ByKet+rpimzk19nXpluScBuiunCMXglSHD+7Zu+ZHvyfUFfyZ5EB+Weee7a
+         bMKHaa6Z+bgSk/bbkOOknwfD5QGbe4jBA3a+Kt6l1o68PG4tsSakZnN8tWsC6KMYrpNs
+         +UbJkGHhuAY0Nogb/lWBgk7oUiYJ6TsnXoHHF0jmivOHvdVLU1S8OvBmN6jeHnWIKE7R
+         BIvjq12rtLGU8R/t/iViL0C4BRkrD87pZ5yyrvE0dyY7ZMsx5McxDPVGhykOdP4oRKi3
+         C+8Q==
+X-Gm-Message-State: ACgBeo1mRDi9JBdcHb74rIvMQBrvTLOZw2lPBFh+WFlN2gQHQtONBloh
+        IaTPd7EQ2R5xN6VXEfyVTC0lJA==
+X-Google-Smtp-Source: AA6agR4Cvm3nfmT646uuzkbDloN+L+b0YWWySRf26lyByFiwirk1nGGGgDmPcfMs3KzFCTJQbDMGGw==
+X-Received: by 2002:a17:90b:4c0f:b0:1f5:179a:28df with SMTP id na15-20020a17090b4c0f00b001f5179a28dfmr4088508pjb.42.1660142327422;
+        Wed, 10 Aug 2022 07:38:47 -0700 (PDT)
+Received: from google.com (7.104.168.34.bc.googleusercontent.com. [34.168.104.7])
+        by smtp.gmail.com with ESMTPSA id z125-20020a623383000000b0052c92329115sm2033721pfz.218.2022.08.10.07.38.46
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 10 Aug 2022 07:38:47 -0700 (PDT)
+Date:   Wed, 10 Aug 2022 14:38:43 +0000
+From:   Sean Christopherson <seanjc@google.com>
+To:     David Hildenbrand <david@redhat.com>
+Cc:     Chao Peng <chao.p.peng@linux.intel.com>, kvm@vger.kernel.org,
+        linux-kernel@vger.kernel.org, linux-mm@kvack.org,
+        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-doc@vger.kernel.org, qemu-devel@nongnu.org,
+        linux-kselftest@vger.kernel.org,
+        Paolo Bonzini <pbonzini@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Vitaly Kuznetsov <vkuznets@redhat.com>,
+        Wanpeng Li <wanpengli@tencent.com>,
+        Jim Mattson <jmattson@google.com>,
+        Joerg Roedel <joro@8bytes.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
+        Hugh Dickins <hughd@google.com>,
+        Jeff Layton <jlayton@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Shuah Khan <shuah@kernel.org>, Mike Rapoport <rppt@kernel.org>,
+        Steven Price <steven.price@arm.com>,
+        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Vishal Annapurve <vannapurve@google.com>,
+        Yu Zhang <yu.c.zhang@linux.intel.com>,
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
+        luto@kernel.org, jun.nakajima@intel.com, dave.hansen@intel.com,
+        ak@linux.intel.com, aarcange@redhat.com, ddutile@redhat.com,
+        dhildenb@redhat.com, Quentin Perret <qperret@google.com>,
+        Michael Roth <michael.roth@amd.com>, mhocko@suse.com,
+        Muchun Song <songmuchun@bytedance.com>,
+        Will Deacon <will@kernel.org>
+Subject: Re: [PATCH v7 03/14] mm: Introduce memfile_notifier
+Message-ID: <YvPC87FMgF7uac7z@google.com>
+References: <20220706082016.2603916-1-chao.p.peng@linux.intel.com>
+ <20220706082016.2603916-4-chao.p.peng@linux.intel.com>
+ <13394075-fca0-6f2b-92a2-f1291fcec9a3@redhat.com>
+ <20220810092232.GC862421@chaop.bj.intel.com>
+ <00f1aa03-bc82-ffce-569b-e2d5c459992c@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
-X-AntiAbuse: Primary Hostname - lu-shared04.cpanelplatform.com
-X-AntiAbuse: Original Domain - vger.kernel.org
-X-AntiAbuse: Originator/Caller UID/GID - [1485 993] / [47 12]
-X-AntiAbuse: Sender Address Domain - lu-shared04.cpanelplatform.com
-X-Get-Message-Sender-Via: lu-shared04.cpanelplatform.com: authenticated_id: jtprope5/from_h
-X-Authenticated-Sender: lu-shared04.cpanelplatform.com: support@concordrope.com
-X-Source: 
-X-Source-Args: 
-X-Source-Dir: 
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <00f1aa03-bc82-ffce-569b-e2d5c459992c@redhat.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Thank you for contacting us. We received your query and will be responding as soon as possible.
++Will
 
-Message Body:
-FINANZKRISE KANN SIE REICH MACHEN! https://telegra.ph/Passives-Einkommen-und-7500000-Euro-auf-KryptowГ¤hrung-392431-08-09
+On Wed, Aug 10, 2022, David Hildenbrand wrote:
+> On 10.08.22 11:22, Chao Peng wrote:
+> > On Fri, Aug 05, 2022 at 03:22:58PM +0200, David Hildenbrand wrote:
+> >> On 06.07.22 10:20, Chao Peng wrote:
+> >>> This patch introduces memfile_notifier facility so existing memory file
+> >>> subsystems (e.g. tmpfs/hugetlbfs) can provide memory pages to allow a
+> >>> third kernel component to make use of memory bookmarked in the memory
+> >>> file and gets notified when the pages in the memory file become
+> >>> invalidated.
+> >>
+> >> Stupid question, but why is this called "memfile_notifier" and not
+> >> "memfd_notifier". We're only dealing with memfd's after all ... which
+> >> are anonymous files essentially. Or what am I missing? Are there any
+> >> other plans for fs than plain memfd support that I am not aware of?
+> > 
+> > There were some discussions on this in v3.
+> >   https://lkml.org/lkml/2021/12/28/484
+> > Sean commented it's OK to abstract it from memfd but he also wants the
+> > kAPI (name) should not bind to memfd to make room for future non-memfd
+> > usages.
+> 
+> Sorry, but how is "memfile" any better? memfd abstracted to memfile?! :)
 
--- 
-This is an automated e-mail was sent from Concord Ropes (http://concordrope.com)
+FWIW, I don't really like the memfile name either.
 
+> I understand Sean's suggestion about abstracting, but if the new name
+> makes it harder to grasp and there isn't really an alternative to memfd
+> in sight, I'm not so sure I enjoy the tried abstraction here.
+
+ARM's pKVM implementation is potentially (hopefully) going to switch to this API
+(as a consumer) sooner than later.  If they anticipate being able to use memfd,
+then there's unlikely to be a second backing type any time soon.
+
+Quentin, Will?
+ 
+> Otherwise we'd have to get creative now and discuss something like
+> "file_population_notifer" or "mapping_population_notifer" and I am not
+> sure that our time is well spent doing so right now.
+> 
+> ... as this is kernel-internal, we can always adjust the name as we
+> please later, once we *actually* now what the abstraction should be.
+> Until then I'd suggest to KIS and soft-glue this to memfd.
+> 
+> Or am I missing something important?
+
+I don't think you're missing anything.  I'd still prefer a name that doesn't couple
+KVM to memfd, but it's not a sticking point, and I've never been able to come up
+with a better name...
+
+With a little bit of cleverness I think we can keep the coupling in KVM to a
+minimum, which is what I really care about.
