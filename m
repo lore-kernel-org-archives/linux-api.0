@@ -2,149 +2,67 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3A2CFC25B0C
-	for <linux-api@archiver.kernel.org>; Wed, 10 Aug 2022 13:27:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 70A9BC00140
+	for <linux-api@archiver.kernel.org>; Wed, 10 Aug 2022 13:43:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232649AbiHJN1w (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 10 Aug 2022 09:27:52 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34766 "EHLO
+        id S231786AbiHJNm7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 10 Aug 2022 09:42:59 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53506 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232691AbiHJN1k (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 10 Aug 2022 09:27:40 -0400
-Received: from mail.efficios.com (mail.efficios.com [167.114.26.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3495E31DE5;
-        Wed, 10 Aug 2022 06:27:39 -0700 (PDT)
-Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id 2E83643EE6D;
-        Wed, 10 Aug 2022 09:27:38 -0400 (EDT)
-Received: from mail.efficios.com ([127.0.0.1])
-        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10032)
-        with ESMTP id MJib_laXykSn; Wed, 10 Aug 2022 09:27:37 -0400 (EDT)
-Received: from localhost (localhost [127.0.0.1])
-        by mail.efficios.com (Postfix) with ESMTP id AC46643F1C7;
-        Wed, 10 Aug 2022 09:27:37 -0400 (EDT)
-DKIM-Filter: OpenDKIM Filter v2.10.3 mail.efficios.com AC46643F1C7
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=efficios.com;
-        s=default; t=1660138057;
-        bh=NPRedLsPVS59v5tcpWRZeGzk9PUOEhDQ6s4F/doEc0M=;
-        h=Date:From:To:Message-ID:MIME-Version;
-        b=Fs6t9Ze7hq023TBFz39CV5kXBR8TA6pz8xaD4rsZ48R78lc1jaocA4Tvx+rnuqYuH
-         rRqudIHuZM1znPL/2JZVNSHPMqs6xRTmUS8nfitOx0vFsDCbI3xke3tLhX+s0O90n2
-         tP8lWAgJeA6dza8zST5I6f6K/e0v30KTJLZOccZZ7m4XfcrYIz4yo/zATAlYN3EIRS
-         h0Vm3YRVIIqNWpVyAJmfGA11zxEH01GEOOZ/nKZYFBcgyjV9/ub5MVb8+a87Hxgj0f
-         C9jl5I0Cq/eEvp1OGb1yA+Zjq7oLlapO1FxC6Ws2ZA5sy/5RA+KuEbw4cQR4EmwTQc
-         2/SNldCF9kYOQ==
-X-Virus-Scanned: amavisd-new at efficios.com
-Received: from mail.efficios.com ([127.0.0.1])
-        by localhost (mail03.efficios.com [127.0.0.1]) (amavisd-new, port 10026)
-        with ESMTP id Mw2fUtflSjGQ; Wed, 10 Aug 2022 09:27:37 -0400 (EDT)
-Received: from mail03.efficios.com (mail03.efficios.com [167.114.26.124])
-        by mail.efficios.com (Postfix) with ESMTP id 9232B43F30C;
-        Wed, 10 Aug 2022 09:27:37 -0400 (EDT)
-Date:   Wed, 10 Aug 2022 09:27:37 -0400 (EDT)
-From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-To:     Florian Weimer <fweimer@redhat.com>
-Cc:     Peter Zijlstra <peterz@infradead.org>,
-        linux-kernel <linux-kernel@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        "Paul E . McKenney" <paulmck@kernel.org>,
-        Boqun Feng <boqun.feng@gmail.com>,
-        "H. Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>,
-        linux-api <linux-api@vger.kernel.org>,
-        Christian Brauner <christian.brauner@ubuntu.com>,
-        David Laight <David.Laight@ACULAB.COM>,
-        carlos <carlos@redhat.com>, Peter Oskolkov <posk@posk.io>
-Message-ID: <10664496.447.1660138057500.JavaMail.zimbra@efficios.com>
-In-Reply-To: <8735e4hajt.fsf@oldenburg.str.redhat.com>
-References: <20220729190225.12726-1-mathieu.desnoyers@efficios.com> <20220729190225.12726-3-mathieu.desnoyers@efficios.com> <8735e4hajt.fsf@oldenburg.str.redhat.com>
-Subject: Re: [PATCH v3 02/23] rseq: Introduce extensible rseq ABI
+        with ESMTP id S230000AbiHJNm6 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 10 Aug 2022 09:42:58 -0400
+X-Greylist: delayed 11770 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Wed, 10 Aug 2022 06:42:55 PDT
+Received: from jtproperties.de (unknown [107.189.7.27])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A712067147
+        for <linux-api@vger.kernel.org>; Wed, 10 Aug 2022 06:42:55 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=concordrope.com; s=default; h=Content-Transfer-Encoding:Content-Type:
+        MIME-Version:Message-ID:Reply-To:From:Date:Subject:To:Sender:Cc:Content-ID:
+        Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+        :Resent-Message-ID:In-Reply-To:References:List-Id:List-Help:List-Unsubscribe:
+        List-Subscribe:List-Post:List-Owner:List-Archive;
+        bh=kJvJlHwe2qBNcYnyy1xAp/L5UJ0PM9sbMQdKhKDS/HE=; b=AKkN6T3dybs/vhS3qtu3NhbAvo
+        PVEckVAv7oPiytmb0WhL39h78eAV23sCbLcGs34UgRFTuJrFolwkHr1WxrSjlDUnewtCFDmK0V7C8
+        QGZEeAWYChMXvt07Zly8RH4RZkyipAofzOX/Qz2bfDQxRF1kPHn7IgI+nepNbkWozGb5sNTlPHdqM
+        CzfTDZq3HNmneUpl40WOAgWd59MGZPKlpNjO2iPOZmsVZMvg68sLsqUUIEnyO54KvAEzIFrbgr5TX
+        G36Wlltq9Cz5Ze9pOAFXOX8gC2f2Ba/LbPw+NuMnts66XvQcMTGlGyocE9+OoREJMwrFNXZud9Xk0
+        jjMMO/gw==;
+Received: from jtprope5 by lu-shared04.cpanelplatform.com with local (Exim 4.95)
+        (envelope-from <jtprope5@lu-shared04.cpanelplatform.com>)
+        id 1oLivD-00HLYc-Oz
+        for linux-api@vger.kernel.org;
+        Wed, 10 Aug 2022 12:26:43 +0200
+To:     linux-api@vger.kernel.org
+Subject: =?us-ascii?Q?Concord_Ropes_"In_der_Stadt_Bad_Homburg_vor_der?=  =?us-ascii?Q?_Hohe_wurden_mehr_als_837_Menschen_Millionare"?=
+X-PHP-Script: concordrope.com/index.php for 156.146.63.147
+X-PHP-Filename: /home/jtprope5/concordrope.com/index.php REMOTE_ADDR: 156.146.63.147
+Date:   Wed, 10 Aug 2022 10:26:43 +0000
+From:   Concord Ropes <support@concordrope.com>
+Reply-To: support@concordrope.com
+Message-ID: <Zpk1qg024ckx8WI2p5V1ZO7zcxx2IE8H6TZ5GPds9o@concordrope.com>
+X-Mailer: PHPMailer 6.5.3 (https://github.com/PHPMailer/PHPMailer)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-X-Originating-IP: [167.114.26.124]
-X-Mailer: Zimbra 8.8.15_GA_4372 (ZimbraWebClient - FF103 (Linux)/8.8.15_GA_4372)
-Thread-Topic: rseq: Introduce extensible rseq ABI
-Thread-Index: ubZeGluYZawXefnGZNHU0cuZYToYsw==
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - lu-shared04.cpanelplatform.com
+X-AntiAbuse: Original Domain - vger.kernel.org
+X-AntiAbuse: Originator/Caller UID/GID - [1485 993] / [47 12]
+X-AntiAbuse: Sender Address Domain - lu-shared04.cpanelplatform.com
+X-Get-Message-Sender-Via: lu-shared04.cpanelplatform.com: authenticated_id: jtprope5/from_h
+X-Authenticated-Sender: lu-shared04.cpanelplatform.com: support@concordrope.com
+X-Source: 
+X-Source-Args: 
+X-Source-Dir: 
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
------ On Aug 10, 2022, at 2:33 AM, Florian Weimer fweimer@redhat.com wrote:
+Thank you for contacting us. We received your query and will be responding as soon as possible.
 
-> * Mathieu Desnoyers:
-> 
->> Introduce the extensible rseq ABI, where the feature size supported by
->> the kernel and the required alignment are communicated to user-space
->> through ELF auxiliary vectors.
->>
->> This allows user-space to call rseq registration with a rseq_len of
->> either 32 bytes for the original struct rseq size (which includes
->> padding), or larger.
->>
->> If rseq_len is larger than 32 bytes, then it must be large enough to
->> contain the feature size communicated to user-space through ELF
->> auxiliary vectors.
-> 
-> I don't think this works with the glibc extension mechanism because
-> __rseq_size does not change until the padding is exhausted.
-
-In order to deal with this existing discrepancy between feature-set vs
-size, the proposed extension scheme would require that glibc expose a new
-__rseq_feature_size, which would give us:
-
-/*
- * Size of the registered rseq area. 0 if the registration was
- * unsuccessful.
- */
-unsigned int __rseq_size = -1U;
-
-/* Flags used during rseq registration.  */
-unsigned int __rseq_flags;
-
-/*
- * rseq feature size supported by the kernel. 0 if the registration was
- * unsuccessful.
- */
-unsigned int __rseq_feature_size = -1U;
-
-> I think you'll need to add the suggested flags to the auxiliary vector,
-> and then we can use that during registration and also communicate these
-> flags via __rseq_flags.
-
-For the struct rseq extension, with the "__rseq_feature_size" symbol
-I don't think we need to suggest rseq registration flags through
-auxiliary vectors.
-
-However, the kernel could provide the set of "supported flags" which
-can be passed as rseq flags argument through auxiliary vectors. Is
-that what you have in mind ?
-
-This can be useful to ensure we don't require userspace to rely on
-rseq returning -1, errno=-EINVAL to detect supported feature flags.
-
-> 
-> Size and alignment can be stored in a single auxiliary vector entry.
-
-getauxval returns a single "unsigned long". I'm not sure how to extract
-size and alignment other than using bitwise operations. Is that what you
-have in mind ? Are there other auxval entries that use this kind of
-bitwise scheme ?
-
-And by "size", do you mean "supported feature size" or "allocation size" ?
-Because the allocation size will be typically aligned to the next power of
-two, but not the "supported feature size". AFAIU though, the kernel only
-needs to express the supported feature size and the allocation alignment
-through auxv. The rest can be figured out from userspace.
-
-Thanks,
-
-Mathieu
-
-> 
-> Thanks,
-> Florian
+Message Body:
+FINANZKRISE KANN SIE REICH MACHEN! https://telegra.ph/Passives-Einkommen-und-7500000-Euro-auf-KryptowГ¤hrung-392431-08-09
 
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+This is an automated e-mail was sent from Concord Ropes (http://concordrope.com)
+
