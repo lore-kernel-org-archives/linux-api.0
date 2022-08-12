@@ -2,57 +2,56 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5B7C2C25B06
-	for <linux-api@archiver.kernel.org>; Fri, 12 Aug 2022 01:29:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 21702C25B06
+	for <linux-api@archiver.kernel.org>; Fri, 12 Aug 2022 01:29:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235684AbiHLB3Q (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 11 Aug 2022 21:29:16 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41838 "EHLO
+        id S230006AbiHLB3T (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 11 Aug 2022 21:29:19 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41858 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230006AbiHLB3Q (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 11 Aug 2022 21:29:16 -0400
-Received: from mail-pj1-x104a.google.com (mail-pj1-x104a.google.com [IPv6:2607:f8b0:4864:20::104a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D16EB9BB5E
-        for <linux-api@vger.kernel.org>; Thu, 11 Aug 2022 18:29:14 -0700 (PDT)
-Received: by mail-pj1-x104a.google.com with SMTP id jx17-20020a17090b46d100b001f33b230098so9256155pjb.7
-        for <linux-api@vger.kernel.org>; Thu, 11 Aug 2022 18:29:14 -0700 (PDT)
+        with ESMTP id S235753AbiHLB3S (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 11 Aug 2022 21:29:18 -0400
+Received: from mail-pl1-x649.google.com (mail-pl1-x649.google.com [IPv6:2607:f8b0:4864:20::649])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9D2EF9BB5E
+        for <linux-api@vger.kernel.org>; Thu, 11 Aug 2022 18:29:17 -0700 (PDT)
+Received: by mail-pl1-x649.google.com with SMTP id k13-20020a170902c40d00b0016f90eba744so11796329plk.22
+        for <linux-api@vger.kernel.org>; Thu, 11 Aug 2022 18:29:17 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=google.com; s=20210112;
         h=cc:to:from:subject:references:mime-version:message-id:in-reply-to
          :date:from:to:cc;
-        bh=D+0/ITQwVbItb/OQYiw4XC83AjMLteP3+8N2xJTlJLM=;
-        b=JxIJCzYb4mqrXGnra1dLEIm/ZgGM4ezcWBnJd0BPhnAVnf4tubR1FM1HOwi6lXF8b0
-         YyH11+U5hlCuW7KotDYIkd3TtlK2N45WNofPGDxKmqD48KicxtC6WEsODSAGkaqOF3XJ
-         fX+OYpxq8bORNmlGIyz/7acJ8OU696zip1NhD/ptYoKzqbO1Wr7dtqs8AqjaXTQE8EQh
-         4fNMmdGHGGF0QihvgwppmgIC3/xbUtBElv5rWa6OHAyAz0Ic9R7maYJJlBSRvbGRPXzz
-         ZX338W3+2nx5B9Amh0yZeM2AFgsA2jfgF4ufFSscgMnCZOh7CKP+bXA2+M/OfgPCOeaa
-         33Jg==
+        bh=jDF7dMpuWYOG8UKbkC4L3SFnWIZkMKf/Zh805z9oCHM=;
+        b=Y3m0BXocyTl5mEsD5PBF9KTfAs6zkewRsQcGgZ9G1OOwLy3gLvfQj9VfsVAc7wz72e
+         ydOzFFic3cRGCVb1iGqZCMtbFmGqWET3LA9QWNfvpkz2iZrmwOWMHpunueEynkmKSlGu
+         THaXRbc7XRPI64byuEAB89HA2pP8zcnh56dOLpZyhbmWnbu2itvGkmIZe7ZM9iFtX2d5
+         3IF2Ct6/oDXtVyrOx5t3TSiaLtA1kRiXuBbXqlkcaXHuwz1kVH3VIBAckiy8ThYiNrDX
+         cyo6S9p1Mg3po6Fi71ZWkJe2XO+Wq+xlcXXHFoOlOwZTSgElfL4HQumahkElurSL8ot2
+         BiuA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=cc:to:from:subject:references:mime-version:message-id:in-reply-to
          :date:x-gm-message-state:from:to:cc;
-        bh=D+0/ITQwVbItb/OQYiw4XC83AjMLteP3+8N2xJTlJLM=;
-        b=taRQBg6mvwqBW5AEhUA5BcR4emF13dL2UFhyAMmKVFsCSEJR+cen+f9GYSHpfYkZbN
-         4QLQnStbUCPwbZTUqY22yw+gzuhZja9aDp3oJA8MYFIZM3Oy/ETkrDeVndFVJ5MtJ3YR
-         /n9pRiZfI7fK9pxMcGzoyXtiVsOWnHvGdWzVrOyCap5VvNvnXQ05yI0Fyg38szYJNzmt
-         xzJxYZD7BM+mqfjT6zdg0DUn6/D+SUn7K4q8AFXEFZh6pClX51gug9f6J2/9WgzqfV7Z
-         MnWHovqubghwcdR451TMPz5drThGhlZt2Wg7sSL8j1CaT8nx6AIcwbjTiiVPK3oIV/JF
-         cnaQ==
-X-Gm-Message-State: ACgBeo1At5zhFlCkQNpZwdRWMFVRpeGi+RY+c7S7OHAEVjYFkYI3O9km
-        b1YvGZqTKaeQj2briAEuVAr1VTfTG9Vm
-X-Google-Smtp-Source: AA6agR7zHRajCDohYZv9JxhzN9Yk3zD3QF7QSD8xFWdUETseqcvu4alImf31npPy5xjvP5q7sC7NitUEyedo
+        bh=jDF7dMpuWYOG8UKbkC4L3SFnWIZkMKf/Zh805z9oCHM=;
+        b=rGs+W88o3wvIRVpKPQaurERVAGCGArhq0GztKi/k2SXmQlaW/o1P2eV2jHDu7thtRg
+         Zn7MpNuoXjhxGIraRSKJ5ZVoecBXLF7n7gSk6t2U1vLZ77fVsiw9OyxAECfEi+AZUbe5
+         NMCGZSHp+M6RdRh3K0qt1BtbYHRnCTal2pjZd/hzxLgZ329sGu97sSq+283s6ImM2yfv
+         qYF90O/DkUn22zgDWYPeZINUFsmBvzwP3W1eG8mPjzHwzDKNm/hMS3JF3cHUYkGnUGtw
+         kUphdIOZdts1ZPJN2vyHgd+yg58QDj4iOTgeM9Eu8DJoC3kawgCfoHPiraPaCdYEjKyE
+         bveQ==
+X-Gm-Message-State: ACgBeo1zlp3MpMGwaoRxZyKJD74VOARrFngea592Dk9ikBuTOebGhh4W
+        FoGnOCTlbaUiIyEnPi6CRgRuYdy58cLf
+X-Google-Smtp-Source: AA6agR7Ae2xcZcviGvVh4A3ONRePNnbNXtCAzLeHWqQ7v/7hQD/l9nlG+rPbSV20jYVNytWNAursmG1w3FFl
 X-Received: from zokeefe3.c.googlers.com ([fda3:e722:ac3:cc00:7f:e700:c0a8:1b6])
- (user=zokeefe job=sendgmr) by 2002:a17:90b:4aca:b0:1f4:ea26:f589 with SMTP id
- mh10-20020a17090b4aca00b001f4ea26f589mr11221304pjb.142.1660267754356; Thu, 11
- Aug 2022 18:29:14 -0700 (PDT)
-Date:   Thu, 11 Aug 2022 18:28:36 -0700
+ (user=zokeefe job=sendgmr) by 2002:a17:902:8f8a:b0:16f:975e:7c6e with SMTP id
+ z10-20020a1709028f8a00b0016f975e7c6emr1873309plo.136.1660267757160; Thu, 11
+ Aug 2022 18:29:17 -0700 (PDT)
+Date:   Thu, 11 Aug 2022 18:28:38 -0700
 In-Reply-To: <20220812012843.3948330-1-zokeefe@google.com>
-Message-Id: <20220812012843.3948330-3-zokeefe@google.com>
+Message-Id: <20220812012843.3948330-5-zokeefe@google.com>
 Mime-Version: 1.0
 References: <20220812012843.3948330-1-zokeefe@google.com>
 X-Mailer: git-send-email 2.37.1.559.g78731f0fdb-goog
-Subject: [PATCH mm-unstable 2/9] mm/khugepaged: attempt to map
- file/shmem-backed pte-mapped THPs by pmds
+Subject: [PATCH mm-unstable 4/9] mm/khugepaged: add tracepoint to hpage_collapse_scan_file()
 From:   "Zach O'Keefe" <zokeefe@google.com>
 To:     linux-mm@kvack.org
 Cc:     Andrew Morton <akpm@linux-foundation.org>,
@@ -81,160 +80,77 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The main benefit of THPs are that they can be mapped at the pmd level,
-increasing the likelihood of TLB hit and spending less cycles in page
-table walks.  pte-mapped hugepages - that is - hugepage-aligned compound
-pages of order HPAGE_PMD_ORDER - although being contiguous in physical
-memory, don't have this advantage.  In fact, one could argue they are
-detrimental to system performance overall since they occupy a precious
-hugepage-aligned/sized region of physical memory that could otherwise
-be used more effectively.  Additionally, pte-mapped hugepages can be the
-cheapest memory to collapse for khugepaged since no new hugepage
-allocation or copying of memory contents is necessary - we only need to
-update the mapping page tables.
-
-In the anonymous collapse path, we are able to collapse pte-mapped
-hugepages (albeit, perhaps suboptimally), but the file/shmem path makes no
-effort when compound pages (of any order) are encountered.
-
-Identify pte-mapped hugepages in the file/shmem collapse path.  In
-khugepaged context, attempt to update page tables mapping this hugepage.
-Note that these collapses still count towards the
-/sys/kernel/mm/transparent_hugepage/khugepaged/pages_collapsed counter, and
-if the pte-mapped hugepage was also mapped into multiple process' address
-spaces, could be incremented for each page table update.  Since we
-increment the counter when a pte-mapped hugepage is successfully added to
-the list of to-collapse pte-mapped THPs, it's possible that we never
-actually update the page table either.  This is different from how
-file/shmem pages_collapsed accounting works today where only a successful
-page cache update is counted (it's also possible here that no page tables
-are actually changed).  Though it incurs some slop, this is preferred to
-either not accounting for the event at all, or plumbing through data in
-struct mm_slot on whether to account for the collapse or not.
-
-Note that work still needs to be done to support arbitrary compound
-pages, and that this should all be converted to using folios.
+Add huge_memory:trace_mm_khugepaged_scan_file tracepoint to
+hpage_collapse_scan_file() analogously to hpage_collapse_scan_pmd().
+While this change is targeted at debugging MADV_COLLAPSE pathway, the
+"mm_khugepaged" prefix is retained for symmetry with
+huge_memory:trace_mm_khugepaged_scan_pmd, which retains it's legacy name
+to prevent changing kernel ABI as much as possible.
 
 Signed-off-by: Zach O'Keefe <zokeefe@google.com>
 ---
- include/trace/events/huge_memory.h |  1 +
- mm/khugepaged.c                    | 43 +++++++++++++++++++++++++-----
- 2 files changed, 38 insertions(+), 6 deletions(-)
+ include/trace/events/huge_memory.h | 34 ++++++++++++++++++++++++++++++
+ mm/khugepaged.c                    |  3 ++-
+ 2 files changed, 36 insertions(+), 1 deletion(-)
 
 diff --git a/include/trace/events/huge_memory.h b/include/trace/events/huge_memory.h
-index 55392bf30a03..fbbb25494d60 100644
+index a8db658e99e9..1d2dd88dc3c4 100644
 --- a/include/trace/events/huge_memory.h
 +++ b/include/trace/events/huge_memory.h
-@@ -17,6 +17,7 @@
- 	EM( SCAN_EXCEED_SHARED_PTE,	"exceed_shared_pte")		\
- 	EM( SCAN_PTE_NON_PRESENT,	"pte_non_present")		\
- 	EM( SCAN_PTE_UFFD_WP,		"pte_uffd_wp")			\
-+	EM( SCAN_PTE_MAPPED_HUGEPAGE,	"pte_mapped_hugepage")		\
- 	EM( SCAN_PAGE_RO,		"no_writable_page")		\
- 	EM( SCAN_LACK_REFERENCED_PAGE,	"lack_referenced_page")		\
- 	EM( SCAN_PAGE_NULL,		"page_null")			\
+@@ -169,5 +169,39 @@ TRACE_EVENT(mm_collapse_huge_page_swapin,
+ 		__entry->ret)
+ );
+ 
++TRACE_EVENT(mm_khugepaged_scan_file,
++
++	TP_PROTO(struct mm_struct *mm, struct page *page, const char *filename,
++		 int present, int swap, int result),
++
++	TP_ARGS(mm, page, filename, present, swap, result),
++
++	TP_STRUCT__entry(
++		__field(struct mm_struct *, mm)
++		__field(unsigned long, pfn)
++		__string(filename, filename)
++		__field(int, present)
++		__field(int, swap)
++		__field(int, result)
++	),
++
++	TP_fast_assign(
++		__entry->mm = mm;
++		__entry->pfn = page ? page_to_pfn(page) : -1;
++		__assign_str(filename, filename);
++		__entry->present = present;
++		__entry->swap = swap;
++		__entry->result = result;
++	),
++
++	TP_printk("mm=%p, scan_pfn=0x%lx, filename=%s, present=%d, swap=%d, result=%s",
++		__entry->mm,
++		__entry->pfn,
++		__get_str(filename),
++		__entry->present,
++		__entry->swap,
++		__print_symbolic(__entry->result, SCAN_STATUS))
++);
++
+ #endif /* __HUGE_MEMORY_H */
+ #include <trace/define_trace.h>
 diff --git a/mm/khugepaged.c b/mm/khugepaged.c
-index 3e64105398c3..8165a1fc42dd 100644
+index f89c60ef8382..5710c4f4925f 100644
 --- a/mm/khugepaged.c
 +++ b/mm/khugepaged.c
-@@ -34,6 +34,7 @@ enum scan_result {
- 	SCAN_EXCEED_SHARED_PTE,
- 	SCAN_PTE_NON_PRESENT,
- 	SCAN_PTE_UFFD_WP,
-+	SCAN_PTE_MAPPED_HUGEPAGE,
- 	SCAN_PAGE_RO,
- 	SCAN_LACK_REFERENCED_PAGE,
- 	SCAN_PAGE_NULL,
-@@ -1349,18 +1350,22 @@ static void collect_mm_slot(struct mm_slot *mm_slot)
-  * Notify khugepaged that given addr of the mm is pte-mapped THP. Then
-  * khugepaged should try to collapse the page table.
-  */
--static void khugepaged_add_pte_mapped_thp(struct mm_struct *mm,
-+static bool khugepaged_add_pte_mapped_thp(struct mm_struct *mm,
- 					  unsigned long addr)
- {
- 	struct mm_slot *mm_slot;
-+	bool ret = false;
+@@ -2173,7 +2173,8 @@ static int hpage_collapse_scan_file(struct mm_struct *mm, unsigned long addr,
+ 		}
+ 	}
  
- 	VM_BUG_ON(addr & ~HPAGE_PMD_MASK);
- 
- 	spin_lock(&khugepaged_mm_lock);
- 	mm_slot = get_mm_slot(mm);
--	if (likely(mm_slot && mm_slot->nr_pte_mapped_thp < MAX_PTE_MAPPED_THP))
-+	if (likely(mm_slot && mm_slot->nr_pte_mapped_thp < MAX_PTE_MAPPED_THP)) {
- 		mm_slot->pte_mapped_thp[mm_slot->nr_pte_mapped_thp++] = addr;
-+		ret = true;
-+	}
- 	spin_unlock(&khugepaged_mm_lock);
-+	return ret;
+-	/* TODO: tracepoints */
++	trace_mm_khugepaged_scan_file(mm, page, file->f_path.dentry->d_iname,
++				      present, swap, result);
+ 	return result;
  }
- 
- static void collapse_and_free_pmd(struct mm_struct *mm, struct vm_area_struct *vma,
-@@ -1397,9 +1402,16 @@ void collapse_pte_mapped_thp(struct mm_struct *mm, unsigned long addr)
- 	pte_t *start_pte, *pte;
- 	pmd_t *pmd;
- 	spinlock_t *ptl;
--	int count = 0;
-+	int count = 0, result = SCAN_FAIL;
- 	int i;
- 
-+	mmap_assert_write_locked(mm);
-+
-+	/* Fast check before locking page if already PMD-mapped  */
-+	result = find_pmd_or_thp_or_none(mm, haddr, &pmd);
-+	if (result != SCAN_SUCCEED)
-+		return;
-+
- 	if (!vma || !vma->vm_file ||
- 	    !range_in_vma(vma, haddr, haddr + HPAGE_PMD_SIZE))
- 		return;
-@@ -1748,7 +1760,11 @@ static int collapse_file(struct mm_struct *mm, struct file *file,
- 		 * we locked the first page, then a THP might be there already.
- 		 */
- 		if (PageTransCompound(page)) {
--			result = SCAN_PAGE_COMPOUND;
-+			result = compound_order(page) == HPAGE_PMD_ORDER &&
-+					index == start
-+					/* Maybe PMD-mapped */
-+					? SCAN_PTE_MAPPED_HUGEPAGE
-+					: SCAN_PAGE_COMPOUND;
- 			goto out_unlock;
- 		}
- 
-@@ -1986,7 +2002,11 @@ static int khugepaged_scan_file(struct mm_struct *mm, struct file *file,
- 		 * into a PMD sized page
- 		 */
- 		if (PageTransCompound(page)) {
--			result = SCAN_PAGE_COMPOUND;
-+			result = compound_order(page) == HPAGE_PMD_ORDER &&
-+					xas.xa_index == start
-+					/* Maybe PMD-mapped */
-+					? SCAN_PTE_MAPPED_HUGEPAGE
-+					: SCAN_PAGE_COMPOUND;
- 			break;
- 		}
- 
-@@ -2132,8 +2152,19 @@ static unsigned int khugepaged_scan_mm_slot(unsigned int pages, int *result,
- 								  &mmap_locked,
- 								  cc);
- 			}
--			if (*result == SCAN_SUCCEED)
-+			switch (*result) {
-+			case SCAN_PTE_MAPPED_HUGEPAGE:
-+				if (!khugepaged_add_pte_mapped_thp(mm,
-+								   khugepaged_scan.address))
-+					break;
-+				fallthrough;
-+			case SCAN_SUCCEED:
- 				++khugepaged_pages_collapsed;
-+				break;
-+			default:
-+				break;
-+			}
-+
- 			/* move to next address */
- 			khugepaged_scan.address += HPAGE_PMD_SIZE;
- 			progress += HPAGE_PMD_NR;
+ #else
 -- 
 2.37.1.559.g78731f0fdb-goog
 
