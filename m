@@ -2,119 +2,108 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E8B73C32771
-	for <linux-api@archiver.kernel.org>; Tue, 16 Aug 2022 10:29:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7059CC32772
+	for <linux-api@archiver.kernel.org>; Tue, 16 Aug 2022 10:39:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234634AbiHPK3h (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 16 Aug 2022 06:29:37 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51474 "EHLO
+        id S234941AbiHPKjB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 16 Aug 2022 06:39:01 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44452 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234402AbiHPK3A (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 16 Aug 2022 06:29:00 -0400
-Received: from mail104.syd.optusnet.com.au (mail104.syd.optusnet.com.au [211.29.132.246])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id D01D65E309;
-        Tue, 16 Aug 2022 02:03:14 -0700 (PDT)
-Received: from dread.disaster.area (pa49-181-52-176.pa.nsw.optusnet.com.au [49.181.52.176])
-        by mail104.syd.optusnet.com.au (Postfix) with ESMTPS id 7B45B62D403;
-        Tue, 16 Aug 2022 19:03:13 +1000 (AEST)
-Received: from dave by dread.disaster.area with local (Exim 4.92.3)
-        (envelope-from <david@fromorbit.com>)
-        id 1oNsTg-00Dk22-Ca; Tue, 16 Aug 2022 19:03:12 +1000
-Date:   Tue, 16 Aug 2022 19:03:12 +1000
-From:   Dave Chinner <david@fromorbit.com>
-To:     Eric Biggers <ebiggers@kernel.org>
-Cc:     Jaegeuk Kim <jaegeuk@kernel.org>, linux-fsdevel@vger.kernel.org,
-        linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
-        linux-xfs@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-fscrypt@vger.kernel.org, linux-block@vger.kernel.org,
-        linux-kernel@vger.kernel.org, Keith Busch <kbusch@kernel.org>
-Subject: Re: [PATCH v4 6/9] f2fs: don't allow DIO reads but not DIO writes
-Message-ID: <20220816090312.GU3600936@dread.disaster.area>
-References: <20220722071228.146690-1-ebiggers@kernel.org>
- <20220722071228.146690-7-ebiggers@kernel.org>
- <YtyoF89iOg8gs7hj@google.com>
- <Yt7dCcG0ns85QqJe@sol.localdomain>
- <YuXyKh8Zvr56rR4R@google.com>
- <YvrrEcw4E+rpDLwM@sol.localdomain>
+        with ESMTP id S234819AbiHPKit (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 16 Aug 2022 06:38:49 -0400
+Received: from out3-smtp.messagingengine.com (out3-smtp.messagingengine.com [66.111.4.27])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 30BF92B27A;
+        Tue, 16 Aug 2022 02:21:06 -0700 (PDT)
+Received: from compute3.internal (compute3.nyi.internal [10.202.2.43])
+        by mailout.nyi.internal (Postfix) with ESMTP id 8D2305C00A0;
+        Tue, 16 Aug 2022 05:21:04 -0400 (EDT)
+Received: from mailfrontend2 ([10.202.2.163])
+  by compute3.internal (MEProxy); Tue, 16 Aug 2022 05:21:04 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kroah.com; h=cc
+        :cc:content-type:date:date:from:from:in-reply-to:in-reply-to
+        :message-id:mime-version:references:reply-to:sender:subject
+        :subject:to:to; s=fm1; t=1660641664; x=1660728064; bh=OhMgZX7auI
+        gkuBlZmd1o5pXnydvmuutKuznb643+nMc=; b=xfxXIimP3vKiA76KqsYsv4Bkat
+        kSxGJqmiXPRBmc8729AnI4/OqKgSI5WloA2b27nl/Y0B9iQRu4UVWqdwYjLPSmbh
+        X4tAZDPKXkD0RyBq7fm069/5aceGNkl1HMXJhJ1BN9wghNhyHNx89INwVJl3ldzU
+        NscFrG/Ja+weLLcvQU4hOJxUu4+8ApiKoxB7J4+f/Tdz0cquvNLGU/VedpgfrG75
+        lQIlpqNdEONfxa3Z18WBL/9VQjUcHJADXHvZLYIetxqIw88GEDl11eMJdV3r3iRa
+        a/jmbb4OFAh4+GW068nhEEv10nXtqzH0/rBpf5WI2j1q9x2HWAjDnP3xGeMg==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
+        messagingengine.com; h=cc:cc:content-type:date:date:feedback-id
+        :feedback-id:from:from:in-reply-to:in-reply-to:message-id
+        :mime-version:references:reply-to:sender:subject:subject:to:to
+        :x-me-proxy:x-me-proxy:x-me-sender:x-me-sender:x-sasl-enc; s=
+        fm1; t=1660641664; x=1660728064; bh=OhMgZX7auIgkuBlZmd1o5pXnydvm
+        uutKuznb643+nMc=; b=NRYAcG7uxWwgU7F3BWUESvVCTM7SP5pGEFkQjOorYyYu
+        FHLDot5AzJo260CjVoA/KpJH3h9ZrcJj9sdgn/leIrm1AAINVmJ5UCZXt001H+WJ
+        I/67P8234bFJm8XrfYNJwF7CF4BrJlCfSwOgW0/Xwp8iL0SBoo5bDtWgL01Wu//C
+        qEC3HXOpUXGWozg9MXvwf+K5/mHXGGvc2kywwVXPuuGPvto1NhAJIzyq0YryfEVR
+        KQvyCtxKlGc5SNezdDlai+AuGpgTSouuHLHPgbdDGtefEoW1HxUvow4pAjdAXFCY
+        q2gZf+HjpMVJkS1p9Mv5v42mefDkIBMm6OCBmqEBNA==
+X-ME-Sender: <xms:gGH7YsMIAa2ZAO31iEYHDCkOKDZzQkEPIzP6en-_q6FnT7mnC9vDNg>
+    <xme:gGH7Yi8JCg1Y1SbrzdhrkirkPQnRCJjo2aldeDEcjEYwAYscD4G7Zuibou4tXUo8D
+    fkw4dkY3WwdCA>
+X-ME-Received: <xmr:gGH7YjR7OsJMGgznXdW2UiaSNoWZ3YHE1v3r8Ny1ASZ8tL2AuASgNQ7-nj6AI7vJzj9L0kzLGpjzhPO4wUVmR9Jy8db6uO29>
+X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvfedrvdehgedgudeiucetufdoteggodetrfdotf
+    fvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdfqfgfvpdfurfetoffkrfgpnffqhgen
+    uceurghilhhouhhtmecufedttdenucesvcftvggtihhpihgvnhhtshculddquddttddmne
+    cujfgurhepfffhvfevuffkfhggtggujgesthdtredttddtvdenucfhrhhomhepifhrvghg
+    ucfmjfcuoehgrhgvgheskhhrohgrhhdrtghomheqnecuggftrfgrthhtvghrnhepheegvd
+    evvdeljeeugfdtudduhfekledtiefhveejkeejuefhtdeufefhgfehkeetnecuvehluhhs
+    thgvrhfuihiivgeptdenucfrrghrrghmpehmrghilhhfrhhomhepghhrvghgsehkrhhorg
+    hhrdgtohhm
+X-ME-Proxy: <xmx:gGH7YkuZai49G-Wdcq-XoV26iwjsouwhdkKXs7FSOBa0A7Jn6klz0g>
+    <xmx:gGH7YkdrhCBj4b30ZzAhenBVddm6p4Il4i_v57Dxj_TTzrqUXDX_Qg>
+    <xmx:gGH7Yo0THskVFE2VOQ7H49GxUJXdRfGIf09ODhMtxm5qyM8qtc_GHw>
+    <xmx:gGH7YlVdCBeqKhfGkBNvVfd2FqJHBetDDsKCsgwZM0Adqqyv244nCg>
+Feedback-ID: i787e41f1:Fastmail
+Received: by mail.messagingengine.com (Postfix) with ESMTPA; Tue,
+ 16 Aug 2022 05:21:03 -0400 (EDT)
+Date:   Tue, 16 Aug 2022 11:21:01 +0200
+From:   Greg KH <greg@kroah.com>
+To:     Jiaxun Yang <jiaxun.yang@flygoat.com>
+Cc:     linux-mips@vger.kernel.org, linux-kernel@vger.kernel.org,
+        tsbogend@alpha.franken.de, linux-api@vger.kernel.org,
+        f.fainelli@gmail.com
+Subject: Re: [PATCH v4] MIPS: Expose prid and globalnumber to sysfs
+Message-ID: <YvthfQUfv0TiO/bK@kroah.com>
+References: <20220816091258.9571-1-jiaxun.yang@flygoat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <YvrrEcw4E+rpDLwM@sol.localdomain>
-X-Optus-CM-Score: 0
-X-Optus-CM-Analysis: v=2.4 cv=e9dl9Yl/ c=1 sm=1 tr=0 ts=62fb5d51
-        a=O3n/kZ8kT9QBBO3sWHYIyw==:117 a=O3n/kZ8kT9QBBO3sWHYIyw==:17
-        a=kj9zAlcOel0A:10 a=biHskzXt2R4A:10 a=1XWaLZrsAAAA:8 a=7-415B0cAAAA:8
-        a=0f_GdJSvYQN_4D2ffm4A:9 a=CjuIK1q_8ugA:10 a=biEYGPWJfzWAr4FL6Ov7:22
+In-Reply-To: <20220816091258.9571-1-jiaxun.yang@flygoat.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Aug 15, 2022 at 05:55:45PM -0700, Eric Biggers wrote:
-> On Sat, Jul 30, 2022 at 08:08:26PM -0700, Jaegeuk Kim wrote:
-> > On 07/25, Eric Biggers wrote:
-> > > On Sat, Jul 23, 2022 at 07:01:59PM -0700, Jaegeuk Kim wrote:
-> > > > On 07/22, Eric Biggers wrote:
-> > > > > From: Eric Biggers <ebiggers@google.com>
-> > > > > 
-> > > > > Currently, if an f2fs filesystem is mounted with the mode=lfs and
-> > > > > io_bits mount options, DIO reads are allowed but DIO writes are not.
-> > > > > Allowing DIO reads but not DIO writes is an unusual restriction, which
-> > > > > is likely to be surprising to applications, namely any application that
-> > > > > both reads and writes from a file (using O_DIRECT).  This behavior is
-> > > > > also incompatible with the proposed STATX_DIOALIGN extension to statx.
-> > > > > Given this, let's drop the support for DIO reads in this configuration.
-> > > > 
-> > > > IIRC, we allowed DIO reads since applications complained a lower performance.
-> > > > So, I'm afraid this change will make another confusion to users. Could
-> > > > you please apply the new bahavior only for STATX_DIOALIGN?
-> > > > 
-> > > 
-> > > Well, the issue is that the proposed STATX_DIOALIGN fields cannot represent this
-> > > weird case where DIO reads are allowed but not DIO writes.  So the question is
-> > > whether this case actually matters, in which case we should make STATX_DIOALIGN
-> > > distinguish between DIO reads and DIO writes, or whether it's some odd edge case
-> > > that doesn't really matter, in which case we could just fix it or make
-> > > STATX_DIOALIGN report that DIO is unsupported.  I was hoping that you had some
-> > > insight here.  What sort of applications want DIO reads but not DIO writes?
-> > > Is this common at all?
-> > 
-> > I think there's no specific application to use the LFS mode at this
-> > moment, but I'd like to allow DIO read for zoned device which will be
-> > used for Android devices.
-> > 
+On Tue, Aug 16, 2022 at 09:12:58AM +0000, Jiaxun Yang wrote:
+> Some application would like to know precise model and rev of processor
+> to do errata workaround or optimization.
 > 
-> So if the zoned device feature becomes widely adopted, then STATX_DIOALIGN will
-> be useless on all Android devices?  That sounds undesirable.  Are you sure that
-> supporting DIO reads but not DIO writes actually works?  Does it not cause
-> problems for existing applications?
-
-What purpose does DIO in only one direction actually serve? All it
-means is that we're forcibly mixing buffered and direct IO to the
-same file and that simply never ends well from a data coherency POV.
-
-Hence I'd suggest that mixing DIO reads and buffered writes like
-this ends up exposing uses to the worst of both worlds - all of the
-problems with none of the benefits...
-
-> What we need to do is make a decision about whether this means we should build
-> in a stx_dio_direction field (indicating no support / readonly support /
-> writeonly support / readwrite support) into the API from the beginning.  If we
-> don't do that, then I don't think we could simply add such a field later, as the
-> statx_dio_*_align fields will have already been assigned their meaning.  I think
-> we'd instead have to "duplicate" the API, with STATX_DIOROALIGN and
-> statx_dio_ro_*_align fields.  That seems uglier than building a directional
-> indicator into the API from the beginning.  On the other hand, requiring all
-> programs to check stx_dio_direction would add complexity to using the API.
+> Expose them in sysfs as:
+> /sys/devices/system/cpu/cpuX/regs/identification/prid
+> /sys/devices/system/cpu/cpuX/regs/identification/globalnumber
 > 
-> Any thoughts on this?
+> Reusing AArch64 CPU registers directory.
+> 
+> Signed-off-by: Jiaxun Yang <jiaxun.yang@flygoat.com>
+> ---
+> v2: Drop static qualifier for kobj (gregkh)
+> v3: Use kzalloc to allocate struct cpuregs.
+>     note: When Greg mentioned about static I was thinking about
+>     static qualifier of percpu variable. After reading documents
+>     again it turns out kobjs should be allocated at runtime. Arm64's
+>     cpuinfo kobj is also on a percpu variable... I guess that was a
+>     intentional use?
+> v4: Properly handle err of kobj creation. (gregkh)
 
-Decide whether partial, single direction DIO serves a useful purpose
-before trying to work out what is needed in the API to indicate that
-this sort of crazy will be supported....
+Nothing was fixed :(
 
-Cheers,
+Again, please read the documentation for the kobject calls you are
+making as it explains how to properly handle errors being returned from
+them, and what you need to call if that happens.
 
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+thanks,
+
+greg k-h
