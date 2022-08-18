@@ -2,77 +2,61 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AB76CC25B08
-	for <linux-api@archiver.kernel.org>; Thu, 18 Aug 2022 00:00:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5E63AC32773
+	for <linux-api@archiver.kernel.org>; Thu, 18 Aug 2022 05:40:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S242232AbiHRAAz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 17 Aug 2022 20:00:55 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56272 "EHLO
+        id S231696AbiHRFkl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 18 Aug 2022 01:40:41 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47860 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S242209AbiHRAAx (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 17 Aug 2022 20:00:53 -0400
-X-Greylist: delayed 603 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Wed, 17 Aug 2022 17:00:52 PDT
-Received: from new1-smtp.messagingengine.com (new1-smtp.messagingengine.com [66.111.4.221])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C5D2496FC2;
-        Wed, 17 Aug 2022 17:00:52 -0700 (PDT)
-Received: from compute2.internal (compute2.nyi.internal [10.202.2.46])
-        by mailnew.nyi.internal (Postfix) with ESMTP id 7B68B580556;
-        Wed, 17 Aug 2022 19:41:25 -0400 (EDT)
-Received: from mailfrontend1 ([10.202.2.162])
-  by compute2.internal (MEProxy); Wed, 17 Aug 2022 19:41:25 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=shutemov.name;
-         h=cc:cc:content-type:date:date:from:from:in-reply-to
-        :in-reply-to:message-id:mime-version:references:reply-to:sender
-        :subject:subject:to:to; s=fm2; t=1660779685; x=1660786885; bh=NI
-        aAYd9poCwuCaReO0KiItjGT5b3278AiQgPlMaoGH8=; b=PuKLpG0lACFDSWgEO8
-        rwPWX4M0HQpSuEdYRtGzQptcaolkieS2EgsFIwpoZyncFWpZckNeFIzIIYOqO8zc
-        9BpZgvlyinTevkQRn/C/ka6JMZsh8Ts9cHQWdeYq9ybnuk1SQZpubaUGZQB9t1lM
-        qk4rSx6j+tUOfRKOd3g94hTTtthwjyy2FqigUkFALmNMXV3xaGruqjoeP5+34xuk
-        J1Cinr4a4qem9KNGhx+lzwXQAr8UJisToeNsfhj8HLQwy0xeOfa5U42VQCIa7k9W
-        qZ8iK9otGm9LKKwttomxp7Dv3pSQF6Et1ZTaIBSz7M8flKM1wmlzQBaAB4PFaBIk
-        k9IQ==
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
-        messagingengine.com; h=cc:cc:content-type:date:date:feedback-id
-        :feedback-id:from:from:in-reply-to:in-reply-to:message-id
-        :mime-version:references:reply-to:sender:subject:subject:to:to
-        :x-me-proxy:x-me-proxy:x-me-sender:x-me-sender:x-sasl-enc; s=
-        fm1; t=1660779685; x=1660786885; bh=NIaAYd9poCwuCaReO0KiItjGT5b3
-        278AiQgPlMaoGH8=; b=WGuGDaggU/a6pga7pL9w3WYTfRF/tux3G1kX0A3mQjNG
-        OC+VxEFGbO+smOA+p7iGMZ3GoMIsMcaWl3/NDeaFMGDz77QMAzUSQkUiUmCGJkRW
-        xHDUodL0TH5AF7G//emEtkunMR0IZ4l2d7XmME00+CIEmSs0g9HkS3qnHI4slsRN
-        HLEINl4PWiLW8DvpQUTe/0aF8/PdVhKDH0qkmMtKQaNXy1O+iZNm5MWAKX+BYowx
-        KuXbnGKaeKu5x2AZgYGthwUdYmgJrzE5cQQyW5v4ZXRMkJgZP9HwjqtkEwDmOL4I
-        VHlt+Z4I/oeTtr+VVKyUXBqBYFKb61xw+pnbo22rNA==
-X-ME-Sender: <xms:pHz9YkXNQXrutmOXLT8qKC8bAkDrafNZwTbHHUvk4uGruAWRz8lSXw>
-    <xme:pHz9YomAAobQndykgGisfSvrEaUbnwRxPnhjaRnRKcy7rwe8iA--U-9p8AJVY1ht3
-    CHYDQX82TnQfowOqrY>
-X-ME-Received: <xmr:pHz9YoYoOJJ3U6PUwRm1npi6IHWY-81B3GDPi_Hh-Sh04EiF8v9DMalIOFzMmXc0odStsA>
-X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvfedrvdehjedgvdehucetufdoteggodetrfdotf
-    fvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdfqfgfvpdfurfetoffkrfgpnffqhgen
-    uceurghilhhouhhtmecufedttdenucesvcftvggtihhpihgvnhhtshculddquddttddmne
-    cujfgurhepfffhvfevuffkfhggtggujgesthdttddttddtvdenucfhrhhomhepfdfmihhr
-    ihhllhcutedrucfuhhhuthgvmhhovhdfuceokhhirhhilhhlsehshhhuthgvmhhovhdrnh
-    grmhgvqeenucggtffrrghtthgvrhhnpefhieeghfdtfeehtdeftdehgfehuddtvdeuheet
-    tddtheejueekjeegueeivdektdenucevlhhushhtvghrufhiiigvpedtnecurfgrrhgrmh
-    epmhgrihhlfhhrohhmpehkihhrihhllhesshhhuhhtvghmohhvrdhnrghmvg
-X-ME-Proxy: <xmx:pHz9YjURvYrPk7ln2G6y5jzbE1QNYYzGLgRztyxiICy4kfvUbUjaNg>
-    <xmx:pHz9Yum1Ff9XGpoiOlx7NWmi_AWkZcUFRDXkPoeuriI3uxXSxr406w>
-    <xmx:pHz9YodmYF_t-pLZ3YNAgjRYP3doKC47u2BG16XkOANkKS6FtmEg2Q>
-    <xmx:pXz9YoADMoiV4yerQswAA91U22gwFiEMHVgZT94HO2C4gO2O9zUMXQ>
-Feedback-ID: ie3994620:Fastmail
-Received: by mail.messagingengine.com (Postfix) with ESMTPA; Wed,
- 17 Aug 2022 19:41:23 -0400 (EDT)
-Received: by box.shutemov.name (Postfix, from userid 1000)
-        id E5075104A77; Thu, 18 Aug 2022 02:41:20 +0300 (+03)
-Date:   Thu, 18 Aug 2022 02:41:20 +0300
-From:   "Kirill A. Shutemov" <kirill@shutemov.name>
-To:     Paolo Bonzini <pbonzini@redhat.com>
-Cc:     David Hildenbrand <david@redhat.com>,
-        Chao Peng <chao.p.peng@linux.intel.com>, kvm@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-mm@kvack.org,
-        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-doc@vger.kernel.org, qemu-devel@nongnu.org,
-        linux-kselftest@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>,
+        with ESMTP id S243095AbiHRFkg (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 18 Aug 2022 01:40:36 -0400
+Received: from mail-qt1-x82e.google.com (mail-qt1-x82e.google.com [IPv6:2607:f8b0:4864:20::82e])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EE73C73927
+        for <linux-api@vger.kernel.org>; Wed, 17 Aug 2022 22:40:34 -0700 (PDT)
+Received: by mail-qt1-x82e.google.com with SMTP id h21so440078qta.3
+        for <linux-api@vger.kernel.org>; Wed, 17 Aug 2022 22:40:34 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20210112;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:from:to:cc;
+        bh=c4YN6O08AaYBNToE2Um1itfC+MNp00Kd+ydM+T0W7ko=;
+        b=IZg9hsqi4ssQ7fuSUIn7+iozROcN5MvemR4pWibTfFN+hfgd52YevwqpQv+32PXVtk
+         tMKwa30Shd3IsjRcMLHYaAnJfl/UHy6ihTpMO5jxCGTVmCK8t9Q/fI2uh+GiuGiPBmQT
+         hK2VF/OtxMLDbC/ytFlCkss/tfpwYlp5+ZwaMpzIEC+P6HlTmxeljMnHhkBQPeC4di9d
+         T2u0GkCtVLOLm6jsVJ/3uxGfDAAj5JLx6gR6GsoWNUhw61Zp1rHlGIeQeHfYiVPTdajB
+         O6i+/DSqdHmANKvtofbV85bdjkpgDV6mKg5DiLTieyv2rXLbetaIRb7kxG6T1BLHQnBp
+         SkEQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc;
+        bh=c4YN6O08AaYBNToE2Um1itfC+MNp00Kd+ydM+T0W7ko=;
+        b=zH4YCkbPSvDEgknj+HkFdQmy+kEue4buCEinUhAkXUqo0nqtDegInGxFpoIG58iXf4
+         gZNMnM3SCyT8BK2tcQd7HvWCSbp3iGlT3aDccnpB0mW2NBwHO0vYhEfQsiNujowBnoop
+         5FQ0VDJvYoX4oUnqPC/gYuoTpEQgpCJD/Vr1xMzIVPWhe6vnfZcaFAgU1XinDZn6P6yl
+         8l6H7PTm3mSL9cPAJgCzHfxDkLTwa8+AM34jid0XlsqMrQG81Mz978KWnHvNdnvjf+UG
+         z+oqot3qzCoBe7+sRm0U/hmMi3qBT22ScaT+HdKUK7jKYDPZ5Eco+wIN7Pm9DJ6+h88J
+         bSiw==
+X-Gm-Message-State: ACgBeo1eQTQp78sqtV/FZiym9OO4D3CJez3H7KqJehGNxFjwNUiE4gOz
+        iuc/supsWoS2r2vxzLA/cgqmJw==
+X-Google-Smtp-Source: AA6agR4Fw98jiMqwiSkyP6cz6JD/D6jUG7NFWUxowXwEedXtNOOsMzX1sD0rCuxeyRSGmm1fcXkVkw==
+X-Received: by 2002:a05:622a:1745:b0:343:5e40:47b1 with SMTP id l5-20020a05622a174500b003435e4047b1mr1310585qtk.120.1660801233516;
+        Wed, 17 Aug 2022 22:40:33 -0700 (PDT)
+Received: from ripple.attlocal.net (172-10-233-147.lightspeed.sntcca.sbcglobal.net. [172.10.233.147])
+        by smtp.gmail.com with ESMTPSA id m1-20020a05620a290100b006b95f832aebsm787055qkp.96.2022.08.17.22.40.29
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 17 Aug 2022 22:40:33 -0700 (PDT)
+Date:   Wed, 17 Aug 2022 22:40:12 -0700 (PDT)
+From:   Hugh Dickins <hughd@google.com>
+X-X-Sender: hugh@ripple.anvils
+To:     Chao Peng <chao.p.peng@linux.intel.com>
+cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
+        qemu-devel@nongnu.org, linux-kselftest@vger.kernel.org,
+        Paolo Bonzini <pbonzini@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
         Sean Christopherson <seanjc@google.com>,
         Vitaly Kuznetsov <vkuznets@redhat.com>,
         Wanpeng Li <wanpengli@tencent.com>,
@@ -93,47 +77,87 @@ Cc:     David Hildenbrand <david@redhat.com>,
         Yu Zhang <yu.c.zhang@linux.intel.com>,
         "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
         luto@kernel.org, jun.nakajima@intel.com, dave.hansen@intel.com,
-        ak@linux.intel.com, aarcange@redhat.com, ddutile@redhat.com,
-        dhildenb@redhat.com, Quentin Perret <qperret@google.com>,
+        ak@linux.intel.com, david@redhat.com, aarcange@redhat.com,
+        ddutile@redhat.com, dhildenb@redhat.com,
+        Quentin Perret <qperret@google.com>,
         Michael Roth <michael.roth@amd.com>, mhocko@suse.com,
-        Muchun Song <songmuchun@bytedance.com>
-Subject: Re: [PATCH v7 01/14] mm: Add F_SEAL_AUTO_ALLOCATE seal to memfd
-Message-ID: <20220817234120.mw2j3cgshmuyo2vw@box.shutemov.name>
+        Muchun Song <songmuchun@bytedance.com>,
+        "Gupta, Pankaj" <pankaj.gupta@amd.com>
+Subject: Re: [PATCH v7 00/14] KVM: mm: fd-based approach for supporting KVM
+ guest private memory
+In-Reply-To: <20220706082016.2603916-1-chao.p.peng@linux.intel.com>
+Message-ID: <ff5c5b97-acdf-9745-ebe5-c6609dd6322e@google.com>
 References: <20220706082016.2603916-1-chao.p.peng@linux.intel.com>
- <20220706082016.2603916-2-chao.p.peng@linux.intel.com>
- <f39c4f63-a511-4beb-b3a4-66589ddb5475@redhat.com>
- <472207cf-ff71-563b-7b66-0c7bea9ea8ad@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <472207cf-ff71-563b-7b66-0c7bea9ea8ad@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Aug 05, 2022 at 07:55:38PM +0200, Paolo Bonzini wrote:
-> On 7/21/22 11:44, David Hildenbrand wrote:
-> > 
-> > Also, I*think*  you can place pages via userfaultfd into shmem. Not
-> > sure if that would count "auto alloc", but it would certainly bypass
-> > fallocate().
-> 
-> Yeah, userfaultfd_register would probably have to forbid this for
-> F_SEAL_AUTO_ALLOCATE vmas.  Maybe the memfile_node can be reused for this,
-> adding a new MEMFILE_F_NO_AUTO_ALLOCATE flags?  Then userfault_register
-> would do something like memfile_node_get_flags(vma->vm_file) and check the
-> result.
+On Wed, 6 Jul 2022, Chao Peng wrote:
+> This is the v7 of this series which tries to implement the fd-based KVM
+> guest private memory.
 
-I donno, memory allocation with userfaultfd looks pretty intentional to
-me. Why would F_SEAL_AUTO_ALLOCATE prevent it?
+Here at last are my reluctant thoughts on this patchset.
 
-Maybe we would need it in the future for post-copy migration or something?
+fd-based approach for supporting KVM guest private memory: fine.
 
-Or existing practises around userfaultfd touch memory randomly and
-therefore incompatible with F_SEAL_AUTO_ALLOCATE intent?
+Use or abuse of memfd and shmem.c: mistaken.
 
-Note, that userfaultfd is only relevant for shared memory as it requires
-VMA which we don't have for MFD_INACCESSIBLE.
+memfd_create() was an excellent way to put together the initial prototype.
 
--- 
-  Kiryl Shutsemau / Kirill A. Shutemov
+But since then, TDX in particular has forced an effort into preventing
+(by flags, seals, notifiers) almost everything that makes it shmem/tmpfs.
+
+Are any of the shmem.c mods useful to existing users of shmem.c? No.
+Is MFD_INACCESSIBLE useful or comprehensible to memfd_create() users? No.
+
+What use do you have for a filesystem here?  Almost none.
+IIUC, what you want is an fd through which QEMU can allocate kernel
+memory, selectively free that memory, and communicate fd+offset+length
+to KVM.  And perhaps an interface to initialize a little of that memory
+from a template (presumably copied from a real file on disk somewhere).
+
+You don't need shmem.c or a filesystem for that!
+
+If your memory could be swapped, that would be enough of a good reason
+to make use of shmem.c: but it cannot be swapped; and although there
+are some references in the mailthreads to it perhaps being swappable
+in future, I get the impression that will not happen soon if ever.
+
+If your memory could be migrated, that would be some reason to use
+filesystem page cache (because page migration happens to understand
+that type of memory): but it cannot be migrated.
+
+Some of these impressions may come from earlier iterations of the
+patchset (v7 looks better in several ways than v5).  I am probably
+underestimating the extent to which you have taken on board other
+usages beyond TDX and SEV private memory, and rightly want to serve
+them all with similar interfaces: perhaps there is enough justification
+for shmem there, but I don't see it.  There was mention of userfaultfd
+in one link: does that provide the justification for using shmem?
+
+I'm afraid of the special demands you may make of memory allocation
+later on - surprised that huge pages are not mentioned already;
+gigantic contiguous extents? secretmem removed from direct map?
+
+Here's what I would prefer, and imagine much easier for you to maintain;
+but I'm no system designer, and may be misunderstanding throughout.
+
+QEMU gets fd from opening /dev/kvm_something, uses ioctls (or perhaps
+the fallocate syscall interface itself) to allocate and free the memory,
+ioctl for initializing some of it too.  KVM in control of whether that
+fd can be read or written or mmap'ed or whatever, no need to prevent it
+in shmem.c, no need for flags, seals, notifications to and fro because
+KVM is already in control and knows the history.  If shmem actually has
+value, call into it underneath - somewhat like SysV SHM, and /dev/zero
+mmap, and i915/gem make use of it underneath.  If shmem has nothing to
+add, just allocate and free kernel memory directly, recorded in your
+own xarray.
+
+With that /dev/kvm_something subject to access controls and LSMs -
+which I cannot find for memfd_create().  Full marks for including the
+MFD_INACCESSIBLE manpage update, and for Cc'ing linux-api: but I'd
+have expected some doubts from that direction already.
+
+Hugh
