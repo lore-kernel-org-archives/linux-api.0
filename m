@@ -2,133 +2,130 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 32149C28D13
-	for <linux-api@archiver.kernel.org>; Sat, 20 Aug 2022 00:34:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1AB35C28D13
+	for <linux-api@archiver.kernel.org>; Sun, 21 Aug 2022 05:16:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S245377AbiHTAeN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 19 Aug 2022 20:34:13 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39026 "EHLO
+        id S229903AbiHUFQB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 21 Aug 2022 01:16:01 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52962 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S245489AbiHTAd4 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 19 Aug 2022 20:33:56 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9F8ED13E33;
-        Fri, 19 Aug 2022 17:33:39 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id 2CD9E61900;
-        Sat, 20 Aug 2022 00:33:39 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 46A39C433D7;
-        Sat, 20 Aug 2022 00:33:38 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1660955618;
-        bh=2UioO3jIqUCggDOliY/3dPwIKxowKS7N1pNMvwgRRJY=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=p7YXCiqntWaRVlaJVs0qsv0/0okcSkkBv5tX156c0hQa69FiHuFAOuyU2H14/uhPh
-         qkFkQqxM4QZW8Uk24/T8GgmF1hsH9T7n23yOG11yBTTC78vlPfWfsuoSmR6p/47Zwd
-         S7rQFXLxLwXMyC84969EnRkhQDcVdOTnKURgs1tJrEqikdWe3N0un1XrVFCRdz704n
-         Ievfd5LYGzKFanXasRnR0PNi5+gnbYVmn2sZlUsswTIJIYEs4ag4Vyn/LqgZa4kkcK
-         eAom2kY4OTnmNb9mf0PNZqubwgxSrHGt6gCL1UeiAtkbhFzyiP5LLMH88dZk/owdi9
-         YbUQ3xISxHF3Q==
-Date:   Fri, 19 Aug 2022 17:33:36 -0700
-From:   Eric Biggers <ebiggers@kernel.org>
-To:     Jaegeuk Kim <jaegeuk@kernel.org>
-Cc:     linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
-        linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
-        linux-api@vger.kernel.org, linux-fscrypt@vger.kernel.org,
-        linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Keith Busch <kbusch@kernel.org>
-Subject: Re: [PATCH v4 6/9] f2fs: don't allow DIO reads but not DIO writes
-Message-ID: <YwAr4MKgnjljdXiA@sol.localdomain>
-References: <20220722071228.146690-1-ebiggers@kernel.org>
- <20220722071228.146690-7-ebiggers@kernel.org>
- <YtyoF89iOg8gs7hj@google.com>
- <Yt7dCcG0ns85QqJe@sol.localdomain>
- <YuXyKh8Zvr56rR4R@google.com>
- <YvrrEcw4E+rpDLwM@sol.localdomain>
- <YwAlbsorBsshkxfU@google.com>
+        with ESMTP id S230158AbiHUFP7 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 21 Aug 2022 01:15:59 -0400
+Received: from mail-qk1-x733.google.com (mail-qk1-x733.google.com [IPv6:2607:f8b0:4864:20::733])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AA1AD24BEF
+        for <linux-api@vger.kernel.org>; Sat, 20 Aug 2022 22:15:55 -0700 (PDT)
+Received: by mail-qk1-x733.google.com with SMTP id m5so5889047qkk.1
+        for <linux-api@vger.kernel.org>; Sat, 20 Aug 2022 22:15:55 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20210112;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:from:to:cc;
+        bh=ICbJbu994zVr5Xs1z95aw5HWEa26kaUMyLqHNb1JBhY=;
+        b=PN7QnVx2jBrgPHqyqwc/bGpaE8KQadBOlUYLB6T+dOoTpwUJFZfkh7+JVXHp8AIDdn
+         aHVqAoV2ZwSdEszZ8lrHjiDGK+3Uii266yrUQ3R+HEjiDpKwO+93234VMS0VxIslm3a2
+         GnKw+ulrN3ttL/lmXtLFPyG1MFfOBD03JI5VIL8VtHlzN+J13QiCn0MqBcDQjVUJ2yxu
+         YXyfDyjsbE5tLakbt0uihPXt6VtlTnTU8qek0GTcV92IjJUEcnKUo2hYjjstnq3Z/sjr
+         QdiFfxuMoiaHkH94kHcVhCTjcWUnNDlAi3dffLlojPKp6NroKfJZsJrztnzru2HRTkKk
+         WHgQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc;
+        bh=ICbJbu994zVr5Xs1z95aw5HWEa26kaUMyLqHNb1JBhY=;
+        b=Ukg7eJRTOp8wE+2W/MkNlSGJ/HONAtUaGhXKtUA0ms8j9+Ty64OwI94Dg1I/G/eRsd
+         u19pecLc5vP2A4I3FYnICUnmjA6YjCjQaa1F6r+eScZT+adCy+vojppfdwMvXJVe4+Cg
+         6YMQt3q0PRfgDPz94nlfBL3lKofBpMzK+9hYRnfpvunTW+gJug/ufdTkDbdduEw7S444
+         KizwE1ziu/mLkm/0bihkKKgeJWrWleD6UaC/v4bvmcTMKg9TxeRRaxnTwnToS3LaUhbW
+         6OnyzZq/KcowDngNkuYjAagE59HbugK0XBgeog5imgvGfhyjrYUNQtG99d111kFhyV8Q
+         075A==
+X-Gm-Message-State: ACgBeo2sbsunY7Ic+H5ad1rRezxw+qfgD6O64n6VnzLT28kBgb2nS5cX
+        TdupSf1FDC/OLOE2IkOGCFXj3Q==
+X-Google-Smtp-Source: AA6agR68yl2fr8PEnDujhC7M2MHll9zueDCXCVVuM/SRsb8w23zlYBdOQcq71uTGZEOLB6PPe+MzJQ==
+X-Received: by 2002:a05:620a:70a:b0:6b6:1997:b7f2 with SMTP id 10-20020a05620a070a00b006b61997b7f2mr9605948qkc.417.1661058954697;
+        Sat, 20 Aug 2022 22:15:54 -0700 (PDT)
+Received: from ripple.attlocal.net (172-10-233-147.lightspeed.sntcca.sbcglobal.net. [172.10.233.147])
+        by smtp.gmail.com with ESMTPSA id s11-20020a05620a0bcb00b006bb9125363fsm7972537qki.121.2022.08.20.22.15.49
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 20 Aug 2022 22:15:53 -0700 (PDT)
+Date:   Sat, 20 Aug 2022 22:15:32 -0700 (PDT)
+From:   Hugh Dickins <hughd@google.com>
+X-X-Sender: hugh@ripple.anvils
+To:     "Kirill A. Shutemov" <kirill@shutemov.name>
+cc:     Hugh Dickins <hughd@google.com>,
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
+        Chao Peng <chao.p.peng@linux.intel.com>, kvm@vger.kernel.org,
+        linux-kernel@vger.kernel.org, linux-mm@kvack.org,
+        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-doc@vger.kernel.org, qemu-devel@nongnu.org,
+        linux-kselftest@vger.kernel.org,
+        Paolo Bonzini <pbonzini@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Sean Christopherson <seanjc@google.com>,
+        Vitaly Kuznetsov <vkuznets@redhat.com>,
+        Wanpeng Li <wanpengli@tencent.com>,
+        Jim Mattson <jmattson@google.com>,
+        Joerg Roedel <joro@8bytes.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
+        Jeff Layton <jlayton@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Shuah Khan <shuah@kernel.org>, Mike Rapoport <rppt@kernel.org>,
+        Steven Price <steven.price@arm.com>,
+        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Vishal Annapurve <vannapurve@google.com>,
+        Yu Zhang <yu.c.zhang@linux.intel.com>, luto@kernel.org,
+        jun.nakajima@intel.com, dave.hansen@intel.com, ak@linux.intel.com,
+        david@redhat.com, aarcange@redhat.com, ddutile@redhat.com,
+        dhildenb@redhat.com, Quentin Perret <qperret@google.com>,
+        Michael Roth <michael.roth@amd.com>, mhocko@suse.com,
+        Muchun Song <songmuchun@bytedance.com>,
+        "Gupta, Pankaj" <pankaj.gupta@amd.com>
+Subject: Re: [PATCH v7 00/14] KVM: mm: fd-based approach for supporting KVM
+ guest private memory
+In-Reply-To: <20220820002700.6yflrxklmpsavdzi@box.shutemov.name>
+Message-ID: <c194262b-b634-4baf-abf0-dc727e8f1d7@google.com>
+References: <20220706082016.2603916-1-chao.p.peng@linux.intel.com> <ff5c5b97-acdf-9745-ebe5-c6609dd6322e@google.com> <20220818132421.6xmjqduempmxnnu2@box> <c6ccbb96-5849-2e2f-3b49-4ea711af525d@google.com> <20220820002700.6yflrxklmpsavdzi@box.shutemov.name>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <YwAlbsorBsshkxfU@google.com>
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Aug 19, 2022 at 05:06:06PM -0700, Jaegeuk Kim wrote:
-> On 08/15, Eric Biggers wrote:
-> > On Sat, Jul 30, 2022 at 08:08:26PM -0700, Jaegeuk Kim wrote:
-> > > On 07/25, Eric Biggers wrote:
-> > > > On Sat, Jul 23, 2022 at 07:01:59PM -0700, Jaegeuk Kim wrote:
-> > > > > On 07/22, Eric Biggers wrote:
-> > > > > > From: Eric Biggers <ebiggers@google.com>
-> > > > > > 
-> > > > > > Currently, if an f2fs filesystem is mounted with the mode=lfs and
-> > > > > > io_bits mount options, DIO reads are allowed but DIO writes are not.
-> > > > > > Allowing DIO reads but not DIO writes is an unusual restriction, which
-> > > > > > is likely to be surprising to applications, namely any application that
-> > > > > > both reads and writes from a file (using O_DIRECT).  This behavior is
-> > > > > > also incompatible with the proposed STATX_DIOALIGN extension to statx.
-> > > > > > Given this, let's drop the support for DIO reads in this configuration.
-> > > > > 
-> > > > > IIRC, we allowed DIO reads since applications complained a lower performance.
-> > > > > So, I'm afraid this change will make another confusion to users. Could
-> > > > > you please apply the new bahavior only for STATX_DIOALIGN?
-> > > > > 
-> > > > 
-> > > > Well, the issue is that the proposed STATX_DIOALIGN fields cannot represent this
-> > > > weird case where DIO reads are allowed but not DIO writes.  So the question is
-> > > > whether this case actually matters, in which case we should make STATX_DIOALIGN
-> > > > distinguish between DIO reads and DIO writes, or whether it's some odd edge case
-> > > > that doesn't really matter, in which case we could just fix it or make
-> > > > STATX_DIOALIGN report that DIO is unsupported.  I was hoping that you had some
-> > > > insight here.  What sort of applications want DIO reads but not DIO writes?
-> > > > Is this common at all?
-> > > 
-> > > I think there's no specific application to use the LFS mode at this
-> > > moment, but I'd like to allow DIO read for zoned device which will be
-> > > used for Android devices.
-> > > 
-> > 
-> > So if the zoned device feature becomes widely adopted, then STATX_DIOALIGN will
-> > be useless on all Android devices?  That sounds undesirable. 
+On Sat, 20 Aug 2022, Kirill A. Shutemov wrote:
 > 
-> Do you have a plan to adopt STATX_DIOALIGN in android?
+> Yes, INACCESSIBLE is increase of complexity which you do not want to deal
+> with in shmem.c. It get it.
 
-Nothing specific, but statx() is among the system calls that are supported by
-Android's libc and that apps are allowed to use.  So STATX_DIOALIGN would become
-available as well.  I'd prefer if it actually worked properly if apps, or
-Android system components, do actually try to use it (or need to use it)...
+It's not so much that INACCESSIBLE increases the complexity of
+memfd/shmem/tmpfs, as that it is completely foreign to it.
 
-> > What we need to do is make a decision about whether this means we should build
-> > in a stx_dio_direction field (indicating no support / readonly support /
-> > writeonly support / readwrite support) into the API from the beginning.  If we
-> > don't do that, then I don't think we could simply add such a field later, as the
-> > statx_dio_*_align fields will have already been assigned their meaning.  I think
-> > we'd instead have to "duplicate" the API, with STATX_DIOROALIGN and
-> > statx_dio_ro_*_align fields.  That seems uglier than building a directional
-> > indicator into the API from the beginning.  On the other hand, requiring all
-> > programs to check stx_dio_direction would add complexity to using the API.
-> > 
-> > Any thoughts on this?
+And by handling all those foreign needs at the KVM end (where you
+can be sure that the mem attached to the fd is INACCESSIBLE because
+you have given nobody access to it - no handshaking with 3rd party
+required).
+
 > 
-> I haven't seen the details of the implementation tho, why not supporting it
-> only if filesystem has the same DIO RW policy?
+> I will try next week to rework it as shim to top of shmem. Does it work
+> for you?
 
-As I've mentioned, we could of course make STATX_DIOALIGN report that DIO is
-unsupported when the DIO support is read-only.
+Yes, please do, thanks.  It's a compromise between us: the initial TDX
+case has no justification to use shmem at all, but doing it that way
+will help you with some of the infrastructure, and will probably be
+easiest for KVM to extend to other more relaxed fd cases later.
 
-The thing that confuses me based on the responses so far is that there seem to
-be two camps of people: (1) people who really want STATX_DIOALIGN, and who don't
-think that read-only DIO support should exist so they don't want STATX_DIOALIGN
-to support it; and (2) people who feel that read-only DIO support is perfectly
-reasonable and useful, and who don't care whether STATX_DIOALIGN supports it
-because they don't care about STATX_DIOALIGN in the first place.
+> 
+> But I think it is wrong to throw it over the fence to KVM folks and say it
+> is your problem. Core MM has to manage it.
 
-While both camps seem to agree that STATX_DIOALIGN shouldn't support read-only
-DIO, it is for totally contradictory reasons, so it's not very convincing.  We
-should ensure that we have rock-solid reasoning before committing to a new UAPI
-that will have to be permanently supported...
+We disagree on who is throwing over the fence to whom :)
 
-- Eric
+Core MM should manage the core MM parts and KVM should manage the KVM
+parts.  What makes this rather different from most driver usage of MM,
+is that KVM seems likely to use a great proportion of memory this way.
+With great memory usage comes great responsibility: I don't think
+all those flags and seals and notifiers let KVM escape from that.
+
+Hugh
