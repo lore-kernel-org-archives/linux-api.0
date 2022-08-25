@@ -2,68 +2,62 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4C308C04AA5
-	for <linux-api@archiver.kernel.org>; Thu, 25 Aug 2022 07:27:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1834BC32774
+	for <linux-api@archiver.kernel.org>; Thu, 25 Aug 2022 07:44:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235803AbiHYH1v (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 25 Aug 2022 03:27:51 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48048 "EHLO
+        id S237075AbiHYHos (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 25 Aug 2022 03:44:48 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39594 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235518AbiHYH1s (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 25 Aug 2022 03:27:48 -0400
-Received: from mail-ej1-x632.google.com (mail-ej1-x632.google.com [IPv6:2a00:1450:4864:20::632])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C4863606AB
-        for <linux-api@vger.kernel.org>; Thu, 25 Aug 2022 00:27:47 -0700 (PDT)
-Received: by mail-ej1-x632.google.com with SMTP id kk26so8127356ejc.11
-        for <linux-api@vger.kernel.org>; Thu, 25 Aug 2022 00:27:47 -0700 (PDT)
+        with ESMTP id S236001AbiHYHoq (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 25 Aug 2022 03:44:46 -0400
+Received: from mail-wr1-x42c.google.com (mail-wr1-x42c.google.com [IPv6:2a00:1450:4864:20::42c])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 90721B56;
+        Thu, 25 Aug 2022 00:44:44 -0700 (PDT)
+Received: by mail-wr1-x42c.google.com with SMTP id h5so22681943wru.7;
+        Thu, 25 Aug 2022 00:44:44 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linux-foundation.org; s=google;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc;
-        bh=/oj50hsl8kbfl2r5TD7WwWtw83gdRut5PdToYGpC4Ik=;
-        b=Goy06y0aydlFdewFjaQoeuV6+94AF3G4Kd5MnBCFsRmAguUDtmTDpQb6gSDsC8v858
-         O/sDYoTbg6PSw67ijrEnRK2ZAHwB9YaQefNZl+U/92XlmmBmO0tImfXBiXc6OEXrm0Mk
-         aFgclEQ/Wy3ZKJgW2dVbRAOlKaWpWn3UCrdcw=
+        d=gmail.com; s=20210112;
+        h=in-reply-to:from:references:cc:to:content-language:subject
+         :user-agent:mime-version:date:message-id:from:to:cc;
+        bh=wC/4RLU+RSv1yOJdyK6gxSuOHheohaUMXWv7iLpvLTw=;
+        b=J/EW2qUgE6EsfmDr37qTiiK/b09kuO4UaVm01/UGo8ApuKbjHBvnJOP5YDmAlz0xoV
+         bNZFQ1f+K1gEeJeCATlbj88sgQLQ4XDj/rPo7nKlJYXQESn7L0z/kOHgcsKrGRk75tk0
+         /q8J4hUXZvi8jmxOGfH9VLPV4V6VhXlUgIhm6v3jImhqLKZU0GABJnnX5gaps29mH1Jx
+         +DTSbAQzlvv36oMz5XGPza/xreBb/rSF/sq9puv9iWyB2umpBMEhBGk2baKepJZjdomo
+         S31LXLNPVbiHA491lpS2JFzPKpEFXOc/G/NxQfSExpzLPYCgEQcfi0PE/Nt+lrOwHr1i
+         kIUw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc;
-        bh=/oj50hsl8kbfl2r5TD7WwWtw83gdRut5PdToYGpC4Ik=;
-        b=GUZz1RmF4w+iw1quJRRzdBdoqy3vPeuxY2JQorm8tRxMSk0qqU0jJfrrHh7MM8L67+
-         dFzLuCla+ZjKOfR9R24s52WbLqjNR7DQ9r9PYTmNTa4BgPywe8dTQq5KR97Jt6h/Za39
-         41nEtWaJlC75I7Yx1E9vULYgLtNVhaL/VcCD1UDLN+MOgN1FSZQuRpnqovwDUzlBNr1G
-         U/4Zo0rVGwAeS3ulG17zZtPGKcxm8zy2FWtIYZl8qrckpxwc/zCN3UunXuJE/3GCpShw
-         2mpfqZFrjpR14Vs3+xRDMD+RNAA5cbZalZELitHbKjywmdmgL1Au4lwG/bqK6Vw7SWt/
-         8rUw==
-X-Gm-Message-State: ACgBeo33g6Vb0KZV+W1Y+ttwcbXWmU4zVrJk8kNK+fpOSrzxcxRwAkZz
-        qKFbCfHO5fSSKNUhpqD4lVUGq0FY8nzMaeT1Mzg=
-X-Google-Smtp-Source: AA6agR7GXeuD18cPzN2q87T0CmUd9szl3Rv7IgtRpKqfOnoZ9/+R+zrVOVae25TDl8EdNaOdFlejzA==
-X-Received: by 2002:a17:907:9625:b0:730:ad62:9c86 with SMTP id gb37-20020a170907962500b00730ad629c86mr1519802ejc.281.1661412465956;
-        Thu, 25 Aug 2022 00:27:45 -0700 (PDT)
-Received: from mail-wr1-f54.google.com (mail-wr1-f54.google.com. [209.85.221.54])
-        by smtp.gmail.com with ESMTPSA id s21-20020aa7c555000000b00447bac04bf1sm447043edr.18.2022.08.25.00.27.43
-        for <linux-api@vger.kernel.org>
+        h=in-reply-to:from:references:cc:to:content-language:subject
+         :user-agent:mime-version:date:message-id:x-gm-message-state:from:to
+         :cc;
+        bh=wC/4RLU+RSv1yOJdyK6gxSuOHheohaUMXWv7iLpvLTw=;
+        b=j/G5JEr8RSypFZVPsauVK/ob0eTMmO2t6OlNvSO7dLhW2isiMamKhWbX1u4x0q/W45
+         BCqE7nvisCsryLx3+oJ+S3wpB/dJyFMhloA3dpcHXevhj91YTrkpDqdI8ZkEXNXEeG9B
+         HKRevSvmIsBareEFzso8yVKeNQ4hlgAzlapDtqQJ5OksbBbSYEj1weaARYyAnONTqWhD
+         58+Nn19mlKFu/UcHHswIoUu2f8NGJnjFhJAFLIIgeICY8fUzKpOHAWBrUaVxjfAtjqc2
+         VeTnO+f+MlbhYG3pYLU66gGdw2e47JuS5pg/nhXZztu02pL1EwwwrgdrRSOjnm2XoDBW
+         z7bQ==
+X-Gm-Message-State: ACgBeo3W183Iup7GDRMGh9Hx31yVOGFI8/XkyUa4gWbEQxXcm93ns1sk
+        5zFWnXLPkLPU+nvbMRbNI0I=
+X-Google-Smtp-Source: AA6agR4liPS4m0VwftnqI1zyp7dcDCnEDhCZBguka0OoLvzAcgzKK4g0L2W6cD+goCqPlqFFN/qBpw==
+X-Received: by 2002:a05:6000:1863:b0:220:6d5f:deb5 with SMTP id d3-20020a056000186300b002206d5fdeb5mr1357239wri.470.1661413483045;
+        Thu, 25 Aug 2022 00:44:43 -0700 (PDT)
+Received: from [192.168.0.160] ([170.253.36.171])
+        by smtp.gmail.com with ESMTPSA id m10-20020a5d624a000000b0021e6c52c921sm22323326wrv.54.2022.08.25.00.44.41
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 25 Aug 2022 00:27:44 -0700 (PDT)
-Received: by mail-wr1-f54.google.com with SMTP id h24so23443602wrb.8
-        for <linux-api@vger.kernel.org>; Thu, 25 Aug 2022 00:27:43 -0700 (PDT)
-X-Received: by 2002:a5d:6248:0:b0:222:cd3b:94c8 with SMTP id
- m8-20020a5d6248000000b00222cd3b94c8mr1385724wrv.97.1661412462666; Thu, 25 Aug
- 2022 00:27:42 -0700 (PDT)
+        Thu, 25 Aug 2022 00:44:42 -0700 (PDT)
+Message-ID: <609e1161-87ee-bb48-d14c-dc444ddff754@gmail.com>
+Date:   Thu, 25 Aug 2022 09:44:40 +0200
 MIME-Version: 1.0
-References: <20210423230609.13519-1-alx.manpages@gmail.com>
- <20220824185505.56382-1-alx.manpages@gmail.com> <CAADnVQKiEVL9zRtN4WY2+cTD2b3b3buV8BQb83yQw13pWq4OGQ@mail.gmail.com>
- <c06008bc-0c13-12f1-df85-3814b74e47f9@gmail.com> <YwcPQ987poRYjfoL@kroah.com> <87ilmgddui.fsf@oldenburg.str.redhat.com>
-In-Reply-To: <87ilmgddui.fsf@oldenburg.str.redhat.com>
-From:   Linus Torvalds <torvalds@linux-foundation.org>
-Date:   Thu, 25 Aug 2022 00:27:26 -0700
-X-Gmail-Original-Message-ID: <CAHk-=whsETo4kc2Ec1Nf4HQY5vKYmRi9et243kyqN4E-=PgKJw@mail.gmail.com>
-Message-ID: <CAHk-=whsETo4kc2Ec1Nf4HQY5vKYmRi9et243kyqN4E-=PgKJw@mail.gmail.com>
-Subject: Re: [PATCH v3] Many pages: Document fixed-width types with ISO C naming
-To:     Florian Weimer <fweimer@redhat.com>
-Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Alejandro Colomar <alx.manpages@gmail.com>,
-        Alexei Starovoitov <alexei.starovoitov@gmail.com>,
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.1.2
+Subject: Re: [PATCH v3] Many pages: Document fixed-width types with ISO C
+ naming
+Content-Language: en-US
+To:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc:     Alexei Starovoitov <alexei.starovoitov@gmail.com>,
         Alex Colomar <alx@kernel.org>,
         Alexei Starovoitov <ast@kernel.org>,
         linux-man <linux-man@vger.kernel.org>,
@@ -76,133 +70,124 @@ Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         linux-arch <linux-arch@vger.kernel.org>,
         David Laight <David.Laight@aculab.com>,
         Joseph Myers <joseph@codesourcery.com>,
+        Florian Weimer <fweimer@redhat.com>,
         Cyril Hrubis <chrubis@suse.cz>,
         David Howells <dhowells@redhat.com>,
         Arnd Bergmann <arnd@arndb.de>, Rich Felker <dalias@libc.org>,
         Adhemerval Zanella <adhemerval.zanella@linaro.org>,
-        Michael Kerrisk <mtk.manpages@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
+        Michael Kerrisk <mtk.manpages@gmail.com>,
+        Linus Torvalds <torvalds@linux-foundation.org>
+References: <20210423230609.13519-1-alx.manpages@gmail.com>
+ <20220824185505.56382-1-alx.manpages@gmail.com>
+ <CAADnVQKiEVL9zRtN4WY2+cTD2b3b3buV8BQb83yQw13pWq4OGQ@mail.gmail.com>
+ <c06008bc-0c13-12f1-df85-3814b74e47f9@gmail.com> <YwcPQ987poRYjfoL@kroah.com>
+From:   Alejandro Colomar <alx.manpages@gmail.com>
+In-Reply-To: <YwcPQ987poRYjfoL@kroah.com>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+ protocol="application/pgp-signature";
+ boundary="------------zJ1090FtbG0AYqeP3v4clyBt"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Aug 24, 2022 at 11:41 PM Florian Weimer <fweimer@redhat.com> wrote:
->
-> The justifications brought forward are just regurgitating previous
-> misinformation.  If you do that, it's hard to take you seriously.
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--------------zJ1090FtbG0AYqeP3v4clyBt
+Content-Type: multipart/mixed; boundary="------------jA7pwEBe3xNF2bE9WQsw4Bye";
+ protected-headers="v1"
+From: Alejandro Colomar <alx.manpages@gmail.com>
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Alexei Starovoitov <alexei.starovoitov@gmail.com>,
+ Alex Colomar <alx@kernel.org>, Alexei Starovoitov <ast@kernel.org>,
+ linux-man <linux-man@vger.kernel.org>, Daniel Borkmann
+ <daniel@iogearbox.net>, Zack Weinberg <zackw@panix.com>,
+ LKML <linux-kernel@vger.kernel.org>, glibc <libc-alpha@sourceware.org>,
+ GCC <gcc-patches@gcc.gnu.org>, bpf <bpf@vger.kernel.org>,
+ LTP List <ltp@lists.linux.it>, Linux API <linux-api@vger.kernel.org>,
+ linux-arch <linux-arch@vger.kernel.org>,
+ David Laight <David.Laight@aculab.com>,
+ Joseph Myers <joseph@codesourcery.com>, Florian Weimer <fweimer@redhat.com>,
+ Cyril Hrubis <chrubis@suse.cz>, David Howells <dhowells@redhat.com>,
+ Arnd Bergmann <arnd@arndb.de>, Rich Felker <dalias@libc.org>,
+ Adhemerval Zanella <adhemerval.zanella@linaro.org>,
+ Michael Kerrisk <mtk.manpages@gmail.com>,
+ Linus Torvalds <torvalds@linux-foundation.org>
+Message-ID: <609e1161-87ee-bb48-d14c-dc444ddff754@gmail.com>
+Subject: Re: [PATCH v3] Many pages: Document fixed-width types with ISO C
+ naming
+References: <20210423230609.13519-1-alx.manpages@gmail.com>
+ <20220824185505.56382-1-alx.manpages@gmail.com>
+ <CAADnVQKiEVL9zRtN4WY2+cTD2b3b3buV8BQb83yQw13pWq4OGQ@mail.gmail.com>
+ <c06008bc-0c13-12f1-df85-3814b74e47f9@gmail.com> <YwcPQ987poRYjfoL@kroah.com>
+In-Reply-To: <YwcPQ987poRYjfoL@kroah.com>
 
-Pot, meet kettle.
+--------------jA7pwEBe3xNF2bE9WQsw4Bye
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: base64
 
-> There is actually a good reason for using __u64: it's always based on
-> long long, so the format strings are no longer architecture-specific,
-[..]
+SGkgR3JlZywNCg0KT24gOC8yNS8yMiAwNzo1NywgR3JlZyBLcm9haC1IYXJ0bWFuIHdyb3Rl
+Og0KPiBPbiBUaHUsIEF1ZyAyNSwgMjAyMiBhdCAwMTozNjoxMEFNICswMjAwLCBBbGVqYW5k
+cm8gQ29sb21hciB3cm90ZToNCj4+IEJ1dCBmcm9tIHlvdXIgc2lkZSB3aGF0IGRvIHdlIGhh
+dmU/ICBKdXN0IGRpcmVjdCBOQUtzIHdpdGhvdXQgbXVjaA0KPj4gZXhwbGFuYXRpb24uICBU
+aGUgb25seSBvbmUgd2hvIGdhdmUgc29tZSBleHBsYW5hdGlvbiB3YXMgR3JlZywgYW5kIGhl
+DQo+PiB2YWd1ZWx5IHBvaW50ZWQgdG8gTGludXMncyBjb21tZW50cyBhYm91dCBpdCBpbiB0
+aGUgcGFzdCwgd2l0aCBubyBwcmVjaXNlDQo+PiBwb2ludGVyIHRvIGl0LiAgSSBpbnZlc3Rp
+Z2F0ZWQgYSBsb3QgYmVmb3JlIHYyLCBhbmQgY291bGQgbm90IGZpbmQgYW55dGhpbmcNCj4+
+IHN0cm9uZyBlbm91Z2ggdG8gcmVjb21tZW5kIHVzaW5nIGtlcm5lbCB0eXBlcyBpbiB1c2Vy
+IHNwYWNlLCBzbyBJIHB1c2hlZCB2MiwNCj4+IGFuZCB0aGUgZGlzY3Vzc2lvbiB3YXMga2Vw
+dC4NCj4gDQo+IFNvIGRlc3BpdGUgbWUgc2F5aW5nIHRoYXQgInRoaXMgaXMgbm90IG9rIiwg
+YW5kIG1hbnkgb3RoZXIgbWFpbnRhaW5lcnMNCj4gc2F5aW5nICJ0aGlzIGlzIG5vdCBvayIs
+IHlvdSBhcHBsaWVkIGEgcGF0Y2ggd2l0aCBvdXIgb2JqZWN0aW9ucyBvbiBpdD8NCj4gVGhh
+dCBpcyB2ZXJ5IG9kZCBhbmQgYSBiaXQgcnVkZS4NCj4gDQo+PiBJIHdvdWxkIGxpa2UgdGhh
+dCBpZiB5b3Ugc3RpbGwgb3Bwb3NlIHRvIHRoZSBwYXRjaCwgYXQgbGVhc3Qgd2VyZSBhYmxl
+IHRvDQo+PiBwcm92aWRlIHNvbWUgZmFjdHMgdG8gdGhpcyBkaXNjdXNzaW9uLg0KPiANCj4g
+VGhlIGZhY3QgaXMgdGhhdCB0aGUga2VybmVsIGNhbiBub3QgdXNlIHRoZSBuYW1lc3BhY2Ug
+dGhhdCB1c2Vyc3BhY2UgaGFzDQo+IHdpdGggSVNPIEMgbmFtZXMuICBJdCdzIHRoYXQgc2lt
+cGxlIGFzIHRoZSBJU08gc3RhbmRhcmQgZG9lcyBOT1QNCj4gZGVzY3JpYmUgdGhlIHZhcmlh
+YmxlIHR5cGVzIGZvciBhbiBBQkkgdGhhdCBjYW4gY3Jvc3MgdGhlIHVzZXIva2VybmVsDQo+
+IGJvdW5kcnkuDQoNCkkgdW5kZXJzdGFuZCB0aGF0LiAgQnV0IHVzZXItc3BhY2UgcHJvZ3Jh
+bXMgYXJlIGFsbG93ZWQgdG8gdXNlIHRoZSANCnN0YW5kYXJkIHR5cGVzIHdoZW4gY2FsbGlu
+ZyBhIHN5c2NhbGwgdGhhdCByZWFsbHkgdXNlcyBrZXJuZWwgdHlwZXMuDQoNCklNSE8sIGl0
+IHNob3VsZCBiZSBpcnJlbGV2YW50IGZvciB0aGUgdXNlciBob3cgdGhlIGtlcm5lbCBkZWNp
+ZGVzIHRvIA0KY2FsbCBhIDY0LWJpdCB1bnNpZ25lZCBpbnRlZ2VyLCByaWdodD8NCg0KT3Ig
+ZG8geW91IG1lYW4gdGhhdCBzb21lIG9mIHRoZSBwYWdlcyBJIG1vZGlmaWVkDQoNCj4gDQo+
+IFdvcmsgd2l0aCB0aGUgSVNPIEMgc3RhbmRhcmQgaWYgeW91IHdpc2ggdG8gZG9jdW1lbnQg
+c3VjaCB0eXBlIHVzYWdlLA0KPiBhbmQgZ2V0IGl0IGFwcHJvdmVkIGFuZCB0aGVuIHdlIHdv
+dWxkIGJlIHdpbGxpbmcgdG8gY29uc2lkZXIgc3VjaCBhDQo+IGNoYW5nZS4gIEJ1dCB1bnRp
+bCB0aGVuLCB3ZSBoYXZlIHRvIHN0aWNrIHRvIG91ciB2YXJpYWJsZSBuYW1lIHR5cGVzLA0K
+PiBqdXN0IGxpa2UgYWxsIG90aGVyIG9wZXJhdGluZyBzeXN0ZW1zIGhhdmUgdG8gKHdlIGFy
+ZSBub3QgYWxvbmUgaGVyZS4pDQo+IA0KPiBQbGVhc2UgcmV2ZXJ0IHlvdXIgY2hhbmdlLg0K
+DQpUaGFua3MgZm9yIGFza2luZyBuaWNlbHkuDQoNClNpbmNlIHRoZXJlJ3Mgb25nb2luZyBk
+aXNjdXNzaW9uLCBhbmQgSSBkb24ndCB3YW50IHRvIG1ha2UgaXQgbG9vayBsaWtlIA0KaWdu
+b3JpbmcgaXQsIEkndmUgcmV2ZXJ0ZWQgdGhlIHBhdGNoIGZvciBub3cuICBJZiBJIGFwcGx5
+IGl0IGFnYWluLCBJIA0KaG9wZSB0aGF0IGl0IHdpbGwgYmUgd2l0aCBzb21lIG1vcmUgY29u
+c2Vuc3VzLCBhcyBJJ3ZlIGFsd2F5cyB0cmllZCB0byANCmRvLiAgU29ycnkgaWYgSSB3YXMg
+YSBiaXQgaXJhc2NpYmxlIHllc3RlcmRheS4gIFNoaXQgaGFwcGVucy4NCg0KVEw7RFI6ICBQ
+YXRjaCByZXZlcnRlZDsgYXNraW5nIG5pY2VseSB3b3Jrcy4gPSkNCg0KPiANCj4gZ3JlZyBr
+LWgNCg0KQ2hlZXJzLA0KDQpBbGV4DQoNCi0tIA0KQWxlamFuZHJvIENvbG9tYXINCjxodHRw
+Oi8vd3d3LmFsZWphbmRyby1jb2xvbWFyLmVzLz4NCg==
 
-That's a small detail that yes, we've tried to avoid the absolute
-humongous mess that the C standard library has with their horrendous
-'PRId*' mess, but honestly, it's just a tiny detail.
+--------------jA7pwEBe3xNF2bE9WQsw4Bye--
 
-The real issue is that we want to be able to control our own types,
-and our own names, and in the process have sometimes been able to
-standardize on types that makes it easier to just not have to deal
-with "oh, somebody picked 'int' on this architecture, and 'long' on
-this other, and they are both 32-bit types".
+--------------zJ1090FtbG0AYqeP3v4clyBt
+Content-Type: application/pgp-signature; name="OpenPGP_signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="OpenPGP_signature"
 
-We still have to deal with that for '[s]size_t', but that's such a
-standard legacy type that thankfully we have the whole '%zu/%zd' thing
-for that.
+-----BEGIN PGP SIGNATURE-----
 
-And yes, sometimes we screw up even *though* we were the ones that
-picked the types, and we've had pointless differences where '__u64'
-could be 'unsigned long' on a 64-bit architecture, and 'unsigned long
-long' on a 32-bit one, and then we were able to fix our own little
-broken type system exactly because it was *OUR* little type system.
+iQIzBAEBCgAdFiEE6jqH8KTroDDkXfJAnowa+77/2zIFAmMHKGgACgkQnowa+77/
+2zJEJQ/9FY6MaZmaY08xPFzcQI0lzOthVD+nM9owcPC1btI+64mBesCWxhU8fdLL
+pcD/KerUrSxZclEs1T9vtm/2wuUU4aRWygJ3Z333VmuH16YKmzIizeSRlzzRaHs7
+PfnhLxo6/PtoJyV93a4BDiehSXcWxNz87eEld9ld541mdnhL3Espz1QE6zNdf1vn
+1mJ7ZDE3kqCaKFdQ4Kw2rREmCHsKJO/QH4U8jEg9oV/jRbuJltIWyC28oyFjSio3
+XUQY0lHzuppxj0tXbmCyZPJFdm8qYNAxVZlWWBcnyFs+t2gPMqBVQCltcZPYxzGF
+BdeUgusdSLVK6Hn67czyDjsm6s8wgEp6325xOX6ogcSvd6lO1E/anwS17p5NuqCD
+OhjSma6wKi+1VDjFQ5iFD4TGu0KSqgHMcWlCvTq5V7RjbJwIgZrLfpy6Pe0LS88C
+1GjrdFU5BjYtd1leXUOWzkORk/uw0nXOANiFsbWy06mFu9FCPKhWMry7ctiZX5yi
+Ubk62LWLwu1GbrJb+AP22kli5+HdHODYHBElbwbr77wLOdlU9gJWR9qaw1F+1lDm
+kQ2UsM4t9jTYjntl/iRSx07WHtLIgM/8vhKNLfmvhwX3dqvnPiOwCffjET9H12jE
+XyNgUj3iCTND5dcSl6bK+nX/AIpOQlnCqxDewmdgHFtUC3NrX3M=
+=GgGK
+-----END PGP SIGNATURE-----
 
-So you are correct that then in the specific case of '__u64' we have
-been able to simply just standardize on 'unsigned long long' and make
-printf strings simpler.
-
-But you are wrong to think that that is somehow a special thing.
-
-It's not.
-
-It's very much all the same thing: we have types *we* control, and
-thanks to that we can do them the way *we* need them done, and can fix
-them when we made a silly mistake.
-
-In other words, it's the whole *point* of not ever using 'stdint.h' at
-all for those things.
-
-(It's also about avoiding the kinds of unholy things that happen in
-system header files. Have you ever *looked* at them? Christ. The
-amount of absolute crap you get from including <stdint.h> in user
-space is scary)
-
-> You cannot avoid using certain ISO C names with current GCC or Clang,
-> however hard you try.
-
-You  are now the one who is regurgitating complete mis-information.
-
-You do it so prettily, and with such weasel-wording, that I know you
-must be knowingly threading that fine line between "actively
-misleading" but trying to avoid "outright lying"..
-
-You say "certain ISO C names" to try to make it sound as if this was
-at all relevant to things like "uint32_t" and friends.
-
-But deep down, you know you're basically lying by omission.
-
-Because it's true that we have to know and care about things like
-'size_t', which comes up for all the basic string.h functions.
-
-So yes, we have a very small set of types that we make sure matches
-the compiler notion of said types, and we carefully use things like
-
-    typedef __kernel_ulong_t __kernel_size_t;
-
-and then we have our own 'stdarg.h which uses
-
-    typedef __builtin_va_list va_list;
-
-that is explicitly the one that the compiler exposes with those double
-underscores exactly because even the compiler can't expose the
-"standard" name due to namespace issues.
-
-And no, NONE OF THOSE ARE USABLE IN THE UAPI HEADERS!
-
-And equally importantly, none of those have *anything* to do with the
-'uint32_t' kind of names.
-
-The fact that yes, we care about what the compiler thinks "size_t" is
-(because we do want the compiler to do memset() for us) has absolutely
-*NOTHING* to do with uint32_t and <stdint.h>.
-
-And I'm pretty sure you knew that, but you tried to make it sound like
-they were somehow all in the same boat.
-
-And yes, some drivers tend to actually use 'uint32_t' in the kernel,
-and we allow it, but they cannot be used by user interfaces. So a uapi
-file really *really* shouldn't ever use them.
-
-And no, we don't use "-ffreestanding" and friends - we actually have
-occasionally wanted and tried to do so just to make the boundary lines
-clearer, but then that will make gcc no longer do sane things for
-'memcpy()'' and friends, so it's kind of a balancing act.
-
-> <stdarg.h>, <stddef.h>, <stdint.h> are compiler-provided headers that
-> are designed to be safe to use for bare-metal contexts (like in
-> kernels).  Avoiding them is not necessary per se.
-
-We explicitly avoid them all.
-
-We historically used stdarg.h and stddef.h (but never stdint.h -
-there's absolutely _zero_ upside), but it was always a slight pain.
-
-So we simply bake our own, exactly because it's simply less painful
-than having to deal with possible system-provided ones.
-
-People do odd compiler things with host compilers, bad or odd
-installations of cross-build environments, it's just not worth the
-pain to deal with the "system header files" when they just don't
-provide any real value.
-
-                        Linus
+--------------zJ1090FtbG0AYqeP3v4clyBt--
