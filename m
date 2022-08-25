@@ -2,178 +2,162 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8A1B0C6498F
-	for <linux-api@archiver.kernel.org>; Thu, 25 Aug 2022 07:48:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BFA7FC28D13
+	for <linux-api@archiver.kernel.org>; Thu, 25 Aug 2022 07:49:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238515AbiHYHsj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 25 Aug 2022 03:48:39 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44600 "EHLO
+        id S236070AbiHYHt3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 25 Aug 2022 03:49:29 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45260 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233537AbiHYHsi (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 25 Aug 2022 03:48:38 -0400
-Received: from mail-wm1-x32d.google.com (mail-wm1-x32d.google.com [IPv6:2a00:1450:4864:20::32d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8289EA00DA;
-        Thu, 25 Aug 2022 00:48:37 -0700 (PDT)
-Received: by mail-wm1-x32d.google.com with SMTP id d5so9847259wms.5;
-        Thu, 25 Aug 2022 00:48:37 -0700 (PDT)
+        with ESMTP id S233353AbiHYHt2 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 25 Aug 2022 03:49:28 -0400
+Received: from mail-ej1-x62a.google.com (mail-ej1-x62a.google.com [IPv6:2a00:1450:4864:20::62a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D04C6A0333
+        for <linux-api@vger.kernel.org>; Thu, 25 Aug 2022 00:49:26 -0700 (PDT)
+Received: by mail-ej1-x62a.google.com with SMTP id lx1so1480738ejb.12
+        for <linux-api@vger.kernel.org>; Thu, 25 Aug 2022 00:49:26 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=in-reply-to:from:references:cc:to:content-language:subject
-         :user-agent:mime-version:date:message-id:from:to:cc;
-        bh=wFHKNvRv5PBwAwuMo1YPzYcvo3soaxcTbTqwj/BjF6Q=;
-        b=eNjRiFq4Xilg9VUGwqlaKUu2Gpqet0HoEaDzseTRKUMidMt19pUlMtFV+OjzZWRx3k
-         h5295WZUln5RYUMpPhIFhLu/eqgCM25de6u/4XR4KtEVjABkT3DiCurxseYtvXOAXTZ7
-         CCDoZP/Ecb/hV0xjVx1CYK5cxa33ntzI4qjHgiM/m/lf/XhyweLIyGisgXTCfc+7b6mh
-         QRZg8vazwDBxbbj/t6O1ecEkW/1+qhSCP7s/+hJOrh/WodYaixnxPfpD1wA1OoshUeeP
-         YDfv2VH6jsjWmL36LfhUX//0KhBcQCqCsLIwQfu/nkXKeP9v8yMz3Ad4XLXoqVIv4fpK
-         JYcQ==
+        d=linux-foundation.org; s=google;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc;
+        bh=pTSOf4yZBT6vxC8cWVxq54me3auAZtvDfhz2BczVtgE=;
+        b=Ig6BLIDsaP7fwO4f2tblxSV8D0IEZ23t5746evH4pnH6oehSyZT/w7P79opUL+FnmK
+         po3y3tMhPtweDHchzB18ityI3jwyATZyGSAP0WrqhvTn5ohd5US0JPEFOAGmxSk5vacw
+         sKRqdCKWOUSMVwQEX9dCud+27HCTh3lUtbqk4=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=in-reply-to:from:references:cc:to:content-language:subject
-         :user-agent:mime-version:date:message-id:x-gm-message-state:from:to
-         :cc;
-        bh=wFHKNvRv5PBwAwuMo1YPzYcvo3soaxcTbTqwj/BjF6Q=;
-        b=m0pGgDz4raHO0uci34TFoOcXactCpld9o0SSRw1D0AdFyiCFRDXEgGLQLev1QKyuMG
-         322XNcTtGxzsz7YL6tPSiDeQekonn9SMTdKWl7zd9k8rV/8NEWRDTQFx2dXFy8EkW09c
-         y3AO/gXoCRy5AIVtV20BF72eJywCUa1AxQwHBbT1ls6ym8yZsBQfgtsE0iYGuT148Pxg
-         AiNL/V3X/HeKUcttfPNSufC9yE3rIYMX6I8eBHIPRifOLVX9n740OTIvU/lQLYywRZsB
-         bIFXKXfyevlZDGDGeFwO5x//asIXi3IADiMcENQBFNUv/mgORllvt8L9ZqFK2iTBISrn
-         EhYg==
-X-Gm-Message-State: ACgBeo27AMkMmLaqvLkHnGbDEED04ih93vf2yS9VqW6ZKYvNPPsKcvUA
-        NolG49bB8cFr2PXTaYFL3+OkkT4mydE=
-X-Google-Smtp-Source: AA6agR6qz2wI4mvAT5RNQTo1r7ZQO1aq29t/HGAgCl55GcT+/3w5SW33w0b82w8zm/niEqs1mtbQAA==
-X-Received: by 2002:a05:600c:4f92:b0:3a5:f545:a6ce with SMTP id n18-20020a05600c4f9200b003a5f545a6cemr7079190wmq.149.1661413716082;
-        Thu, 25 Aug 2022 00:48:36 -0700 (PDT)
-Received: from [192.168.0.160] ([170.253.36.171])
-        by smtp.gmail.com with ESMTPSA id j19-20020a05600c1c1300b003a5537bb2besm4666408wms.25.2022.08.25.00.48.34
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc;
+        bh=pTSOf4yZBT6vxC8cWVxq54me3auAZtvDfhz2BczVtgE=;
+        b=H3OyAEQrsgqTYp6oGgqdbhR1Ayo3YBQ8v7iaCfGHr2MzNR+6XIHhltrbvA1Eizct46
+         oLf+Os1nxE1+Z4G7+7wR4v4LTlTWQlSUppxyJVqBxSa3QmyB+mQndB/J/0kszLjofUfX
+         2nLqoSr2lWTunY+P4lTAwicvKdw5t/9JljxXv6k2lFY0QCoqLwusDz+FvekfmMEwq/RY
+         /yUm2k7yXZ3R6Kn5ktAPM3eHdmfSXDjBseyaVmWLpq24cR7BVvh4WjY/4n4fgxU8j665
+         78yPpegtVJDi6N8wOVn/GlWvLVo9xSixWLrFlCrax//zioHklDONkyF0z/NacgRusDt1
+         LOMQ==
+X-Gm-Message-State: ACgBeo0/bgCWsqBYtfvvJel+B0S1DoMCbOK2X1vvWhnkh8JhrAqObLG0
+        pELa+tU66iv6SIJSWBMU8mRbRvbQN+NQNZDLJI0=
+X-Google-Smtp-Source: AA6agR5Bu39SBwCvITSwLFN4LryQcrBW2Zd5xMXS7Zd/YPxpIphqq8+8MFDxp8p4n2rQBefuSpL3UQ==
+X-Received: by 2002:a17:907:2722:b0:731:2aeb:7942 with SMTP id d2-20020a170907272200b007312aeb7942mr1630693ejl.734.1661413765036;
+        Thu, 25 Aug 2022 00:49:25 -0700 (PDT)
+Received: from mail-wm1-f44.google.com (mail-wm1-f44.google.com. [209.85.128.44])
+        by smtp.gmail.com with ESMTPSA id r9-20020a170906280900b0073d6d6e698bsm2031443ejc.187.2022.08.25.00.49.24
+        for <linux-api@vger.kernel.org>
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 25 Aug 2022 00:48:35 -0700 (PDT)
-Message-ID: <017d77b8-8be3-a0a8-ce2e-17c7b6a16758@gmail.com>
-Date:   Thu, 25 Aug 2022 09:48:33 +0200
+        Thu, 25 Aug 2022 00:49:24 -0700 (PDT)
+Received: by mail-wm1-f44.google.com with SMTP id k18-20020a05600c0b5200b003a5dab49d0bso2061222wmr.3
+        for <linux-api@vger.kernel.org>; Thu, 25 Aug 2022 00:49:24 -0700 (PDT)
+X-Received: by 2002:a7b:c399:0:b0:3a5:f3fb:85e0 with SMTP id
+ s25-20020a7bc399000000b003a5f3fb85e0mr1402129wmj.38.1661413369950; Thu, 25
+ Aug 2022 00:42:49 -0700 (PDT)
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.1.2
-Subject: Re: [PATCH v3] Many pages: Document fixed-width types with ISO C
- naming
-Content-Language: en-US
-To:     Xi Ruoyao <xry111@xry111.site>,
-        Linus Torvalds <torvalds@linux-foundation.org>
-Cc:     linux-man <linux-man@vger.kernel.org>,
-        Rich Felker <dalias@libc.org>,
-        Alexei Starovoitov <ast@kernel.org>,
-        David Howells <dhowells@redhat.com>,
-        Alexei Starovoitov <alexei.starovoitov@gmail.com>,
-        Joseph Myers <joseph@codesourcery.com>,
-        linux-arch <linux-arch@vger.kernel.org>,
-        Zack Weinberg <zackw@panix.com>,
-        Daniel Borkmann <daniel@iogearbox.net>,
-        Alex Colomar <alx@kernel.org>,
-        Michael Kerrisk <mtk.manpages@gmail.com>,
-        Cyril Hrubis <chrubis@suse.cz>, Arnd Bergmann <arnd@arndb.de>,
-        GCC <gcc-patches@gcc.gnu.org>, LTP List <ltp@lists.linux.it>,
-        Florian Weimer <fweimer@redhat.com>,
-        glibc <libc-alpha@sourceware.org>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        David Laight <David.Laight@aculab.com>,
-        Linux API <linux-api@vger.kernel.org>,
-        bpf <bpf@vger.kernel.org>
 References: <20210423230609.13519-1-alx.manpages@gmail.com>
- <20220824185505.56382-1-alx.manpages@gmail.com>
- <CAADnVQKiEVL9zRtN4WY2+cTD2b3b3buV8BQb83yQw13pWq4OGQ@mail.gmail.com>
- <c06008bc-0c13-12f1-df85-3814b74e47f9@gmail.com>
- <CAHk-=whfft=qpCiQ=mkaCz+X1MEfGK5hpUWYoM5zWK=2EQMwyw@mail.gmail.com>
+ <20220824185505.56382-1-alx.manpages@gmail.com> <CAADnVQKiEVL9zRtN4WY2+cTD2b3b3buV8BQb83yQw13pWq4OGQ@mail.gmail.com>
+ <c06008bc-0c13-12f1-df85-3814b74e47f9@gmail.com> <CAHk-=whfft=qpCiQ=mkaCz+X1MEfGK5hpUWYoM5zWK=2EQMwyw@mail.gmail.com>
  <20d93962-538c-d2c9-1696-a1bdbffa87f8@gmail.com>
- <5a3ce36a284fe988694d2e75117aca5f9af66194.camel@xry111.site>
-From:   Alejandro Colomar <alx.manpages@gmail.com>
-In-Reply-To: <5a3ce36a284fe988694d2e75117aca5f9af66194.camel@xry111.site>
-Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature";
- boundary="------------2tq1iQrZNr8SAH4XDeC6pnO1"
+In-Reply-To: <20d93962-538c-d2c9-1696-a1bdbffa87f8@gmail.com>
+From:   Linus Torvalds <torvalds@linux-foundation.org>
+Date:   Thu, 25 Aug 2022 00:42:32 -0700
+X-Gmail-Original-Message-ID: <CAHk-=wgSx8O0=p18C1aQuH4Gw7xmKujBKMEiSitCA7oG2h6WLg@mail.gmail.com>
+Message-ID: <CAHk-=wgSx8O0=p18C1aQuH4Gw7xmKujBKMEiSitCA7oG2h6WLg@mail.gmail.com>
+Subject: Re: [PATCH v3] Many pages: Document fixed-width types with ISO C naming
+To:     Alejandro Colomar <alx.manpages@gmail.com>
+Cc:     Alexei Starovoitov <alexei.starovoitov@gmail.com>,
+        Alex Colomar <alx@kernel.org>,
+        Alexei Starovoitov <ast@kernel.org>,
+        linux-man <linux-man@vger.kernel.org>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Daniel Borkmann <daniel@iogearbox.net>,
+        Zack Weinberg <zackw@panix.com>,
+        LKML <linux-kernel@vger.kernel.org>,
+        glibc <libc-alpha@sourceware.org>, GCC <gcc-patches@gcc.gnu.org>,
+        bpf <bpf@vger.kernel.org>, LTP List <ltp@lists.linux.it>,
+        Linux API <linux-api@vger.kernel.org>,
+        linux-arch <linux-arch@vger.kernel.org>,
+        David Laight <David.Laight@aculab.com>,
+        Joseph Myers <joseph@codesourcery.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        Cyril Hrubis <chrubis@suse.cz>,
+        David Howells <dhowells@redhat.com>,
+        Arnd Bergmann <arnd@arndb.de>, Rich Felker <dalias@libc.org>,
+        Adhemerval Zanella <adhemerval.zanella@linaro.org>,
+        Michael Kerrisk <mtk.manpages@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---------------2tq1iQrZNr8SAH4XDeC6pnO1
-Content-Type: multipart/mixed; boundary="------------OsCfbhS1YqB1OqxDNlsqMg2N";
- protected-headers="v1"
-From: Alejandro Colomar <alx.manpages@gmail.com>
-To: Xi Ruoyao <xry111@xry111.site>,
- Linus Torvalds <torvalds@linux-foundation.org>
-Cc: linux-man <linux-man@vger.kernel.org>, Rich Felker <dalias@libc.org>,
- Alexei Starovoitov <ast@kernel.org>, David Howells <dhowells@redhat.com>,
- Alexei Starovoitov <alexei.starovoitov@gmail.com>,
- Joseph Myers <joseph@codesourcery.com>,
- linux-arch <linux-arch@vger.kernel.org>, Zack Weinberg <zackw@panix.com>,
- Daniel Borkmann <daniel@iogearbox.net>, Alex Colomar <alx@kernel.org>,
- Michael Kerrisk <mtk.manpages@gmail.com>, Cyril Hrubis <chrubis@suse.cz>,
- Arnd Bergmann <arnd@arndb.de>, GCC <gcc-patches@gcc.gnu.org>,
- LTP List <ltp@lists.linux.it>, Florian Weimer <fweimer@redhat.com>,
- glibc <libc-alpha@sourceware.org>,
- Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
- LKML <linux-kernel@vger.kernel.org>, David Laight <David.Laight@aculab.com>,
- Linux API <linux-api@vger.kernel.org>, bpf <bpf@vger.kernel.org>
-Message-ID: <017d77b8-8be3-a0a8-ce2e-17c7b6a16758@gmail.com>
-Subject: Re: [PATCH v3] Many pages: Document fixed-width types with ISO C
- naming
-References: <20210423230609.13519-1-alx.manpages@gmail.com>
- <20220824185505.56382-1-alx.manpages@gmail.com>
- <CAADnVQKiEVL9zRtN4WY2+cTD2b3b3buV8BQb83yQw13pWq4OGQ@mail.gmail.com>
- <c06008bc-0c13-12f1-df85-3814b74e47f9@gmail.com>
- <CAHk-=whfft=qpCiQ=mkaCz+X1MEfGK5hpUWYoM5zWK=2EQMwyw@mail.gmail.com>
- <20d93962-538c-d2c9-1696-a1bdbffa87f8@gmail.com>
- <5a3ce36a284fe988694d2e75117aca5f9af66194.camel@xry111.site>
-In-Reply-To: <5a3ce36a284fe988694d2e75117aca5f9af66194.camel@xry111.site>
+On Thu, Aug 25, 2022 at 12:20 AM Alejandro Colomar
+<alx.manpages@gmail.com> wrote:
+>
+> This patch is not about kernel, but about the section 2 and 3 manual
+> pages, which are directed towards user-space readers most of the time.
 
---------------OsCfbhS1YqB1OqxDNlsqMg2N
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: base64
+They are about the types to the kernel interfaces. Those types that
+the kernel defines and exposes.
 
-SGkgWGksDQoNCk9uIDgvMjUvMjIgMDk6MjgsIFhpIFJ1b3lhbyB3cm90ZToNCj4gT24gVGh1
-LCAyMDIyLTA4LTI1IGF0IDA5OjIwICswMjAwLCBBbGVqYW5kcm8gQ29sb21hciB2aWEgR2Nj
-LXBhdGNoZXMNCj4gd3JvdGU6DQo+PiBJIGRvbid0IGtub3cgZm9yIHN1cmUsIGFuZCBJIG5l
-dmVyIHByZXRlbmRlZCB0byBzYXkgb3RoZXJ3aXNlLsKgIEJ1dCB3aGF0DQo+PiBJTUhPIHRo
-ZSBrZXJuZWwgY291bGQgZG8gaXMgdG8gbWFrZSB0aGUgdHlwZXMgY29tcGF0aWJsZSwgYnkg
-dHlwZWRlZmluZw0KPj4gdG8gdGhlIHNhbWUgZnVuZGFtZW50YWwgdHlwZXMgKGkuZS4sIGxv
-bmcgb3IgbG9uZyBsb25nKSB0aGF0IHVzZXItc3BhY2UNCj4+IHR5cGVzIGRvLg0KPiANCj4g
-SW4gdXNlci1zcGFjZSB0aGluZ3MgYXJlIGFscmVhZHkgaW5jb25zaXN0ZW50IGFzIHdlIGhh
-dmUgbXVsdGlwbGUgbGliYw0KPiBpbXBsZW1lbnRhdGlvbnMuICBUZWxsaW5nIGV2ZXJ5IGxp
-YmMgaW1wbGVtZW50YXRpb24gdG8gc3luYyB0aGVpcg0KPiB0eXBlZGVmIHcvbyBhIFdHMTQg
-ZGVjaXNpb24gd2lsbCBvbmx5IGNhdXNlICJhZ2dyZXNzaXZlIGRpc2N1c3Npb24iIChmYXIN
-Cj4gbW9yZSBhZ2dyZXNzaXZlIHRoYW4gdGhpcyB0aHJlYWQsIEknZCBzYXkpLg0KPiANCj4g
-SWYgaW50NjRfdCBldGMuIHdlcmUgZGVmaW5lZCBhcyBidWlsdGluIHR5cGVzIHNpbmNlIGVw
-b2NoLCB0aGluZ3Mgd291bGQNCj4gYmUgYSBsb3QgZWFzaWVyLiAgQnV0IHdlIGNhbid0IGNo
-YW5nZSBoaXN0b3J5Lg0KDQpUaGlzIHdvdWxkIGJlIGdyZWF0LiAgSSBtZWFuLCB0aGUgZnVu
-ZGFtZW50YWwgdHlwZXMgc2hvdWxkIGJlIHU4LCB1MTYsIA0KLi4uIGFuZCBpbnQsIGxvbmcs
-IC4uLiB0eXBlZGVmcyBmb3IgdGhlc2UsIGFuZCBub3QgdGhlIG90aGVyIHdheSBhcm91bmQs
-IA0KaWYgdGhlIGxhbmd1YWdlIHdhcyBkZXNpZ25lZCB0b2RheS4NCg0KTWF5YmUgR0NDIGNv
-dWxkIGNvbnNpZGVyIHNvbWV0aGluZyBsaWtlIHRoYXQuDQoNCkNoZWVycywNCg0KQWxleA0K
-DQotLSANCkFsZWphbmRybyBDb2xvbWFyDQo8aHR0cDovL3d3dy5hbGVqYW5kcm8tY29sb21h
-ci5lcy8+DQo=
+And the kernel type in question looks like this:
 
---------------OsCfbhS1YqB1OqxDNlsqMg2N--
+        struct { /* anonymous struct used by BPF_PROG_LOAD command */
+                __u32           prog_type;      /* one of enum bpf_prog_type */
+                __u32           insn_cnt;
+                __aligned_u64   insns;
+                __aligned_u64   license;
 
---------------2tq1iQrZNr8SAH4XDeC6pnO1
-Content-Type: application/pgp-signature; name="OpenPGP_signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="OpenPGP_signature"
+because the kernel UAPI header wants to
 
------BEGIN PGP SIGNATURE-----
+ (a) work whether or not <stdint.h> was included
 
-iQIzBAEBCgAdFiEE6jqH8KTroDDkXfJAnowa+77/2zIFAmMHKVEACgkQnowa+77/
-2zLf/w//TGoaIMTn8K9jSsuXnyT12yLhySkI4g9lpuxSg5In1va2aYdE+FxmYy7j
-aLYURQ69jURkCL4XLTvvVj3Adfter1t3/G7+EeiuJ6yF/J8nb8nzLVvvh2S5L5RK
-79TESSnqgAqtZwFJqxeHfGBOLR7FSFjvVagRH+hALtUdowp5fQ+BsPGjvtBnyX5+
-Jd36n7cN+tPCc6tfzVWWO8d4XTv9jOVqxhz9aiJjwULHqGFwea67x302daCMirQE
-MxAauUo83+jCTwF0Sf7II4PWdfYukfsj2tUQLf7KSa3/3lWJptg2DEkaPzbLkvWA
-4YlSNtr4mb87Q30UDCoK4W9QPK3bkROirz2hJC3snIMHanoBNWKqFkXhx3huM8HF
-/UNidcqnYEd2SH7vWMIJNWQNQe1d8FSAJDEP7f7/0zamusLt2V66CTLgSwnfVOJM
-l6gNR2Q6QBEnLqmXLuZ2UQrwVn9NUHqqYeL3CXs90GLVCXIRZ8qWkNFG+ZXKnwhO
-lCPIxlQw+CrJo9As8kmkT/j8XKKNZ+0FmGtPsqlvby4Hj8+helZAGwLY3fFBj5iP
-hwGLmg2pMSxt4zolCc0AoMO54yctNxJjxdoSrzlTf828lOHYlnVZxtai68yZkxK1
-xXrF9toPzGkMRaTvDDrIO2kijs9gS2DV2q81CgOss1fPhAt5xe8=
-=AeSD
------END PGP SIGNATURE-----
+ (b) doesn't want to include <stdint.h> so as to not pollute the namespace
 
---------------2tq1iQrZNr8SAH4XDeC6pnO1--
+ (c) actually wants to use our special types
+
+I quoted a few more fields for that (c) reason: we've had a long
+history of getting the user space API wrong due to strange alignment
+issues, where 32-bit and 64-bit targets had different alignment for
+types. So then we ended up with various compat structures to translate
+from one to the other because they had all the same fields, but
+different padding.
+
+This happened a few times with the DRM people, and they finally got
+tired of it, and started using that "__aligned_u64" type, which is
+just the same old __u64, but explicitly aligned to its natural
+alignment.
+
+So these are the members that the interface actually uses.
+
+If you document those members, wouldn't it be good to have that
+documentation be actually accurate?
+
+Honestly, I don't think it makes a *huge* amount of difference, but
+documentation that doesn't actually match the source of the
+documentation will just confuse somebody in the end. Somebody will go
+"that's not right", and maybe even change the structure definitions to
+match the documentation.
+
+Which would be wrong.
+
+Now, you don't have to take the kernel uapi headers. We *try* to make
+those usable as-is, but hey, there has been problems in the past, and
+it's not necessarily wrong to take the kernel header and then munge it
+to be "appropriate" for user space.
+
+So I guess you can just make your own structures with the names and
+syntax you want, and say "these are *my* header files, and *my*
+documentation for them".
+
+That's fine. But I'm not surprised if the kernel maintainer then goes
+"no, that's not the interface I agreed to" if only because it's a pain
+to verify that you got it all right. Maybe it was all trivial and
+automated and there can be no errors, but it's still a "why is there a
+different copy of this complicated interface".
+
+If you really want to describe things to people, wouldn't it be nicer
+to just say "there's a 32-bit unsigned 'prog_type' member" and leave
+it at that?
+
+Do you really want to enforce your opinion of what is prettier on the
+maintainer that wrote that thing, and then argue with him when he
+doesn't agree?
+
+                  Linus
