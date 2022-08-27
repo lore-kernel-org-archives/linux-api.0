@@ -2,131 +2,120 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D311FC6FA69
-	for <linux-api@archiver.kernel.org>; Sat, 27 Aug 2022 07:01:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6A2A6C6FA89
+	for <linux-api@archiver.kernel.org>; Sat, 27 Aug 2022 07:01:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232943AbiH0HBh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 27 Aug 2022 03:01:37 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54218 "EHLO
+        id S232956AbiH0HBi (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 27 Aug 2022 03:01:38 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54228 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230499AbiH0HBe (ORCPT
+        with ESMTP id S231880AbiH0HBe (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Sat, 27 Aug 2022 03:01:34 -0400
-Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B9C788E9A5;
-        Sat, 27 Aug 2022 00:01:32 -0700 (PDT)
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F414E8FD49;
+        Sat, 27 Aug 2022 00:01:33 -0700 (PDT)
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id 78011B80EB0;
-        Sat, 27 Aug 2022 07:01:31 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id CEACEC433C1;
-        Sat, 27 Aug 2022 07:01:29 +0000 (UTC)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id 8ADAC610A4;
+        Sat, 27 Aug 2022 07:01:33 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id A5FB4C433B5;
+        Sat, 27 Aug 2022 07:01:32 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1661583690;
-        bh=TD/VF5KHXD4wRG8Pr+H+EfaARgN73usGJgQBXXdf6qM=;
-        h=From:To:Cc:Subject:Date:From;
-        b=LWAceR3fhWYIDpnV9qqfOwOsgBjiLxafwZdx0ifwtHygtEzCeOTClFwZD/Q2YfBW7
-         YPwl6lS4PhtvirZ8wp8caBSWY+mMIrSihflRr5bozhXZ5FK/PrU5FrIybPCGIXMjdH
-         NLO2WO7PqCl+GYNxdjD0iXQmDmLF+2mMX0U/9Gz/r5eeXGdC6GxSbYNWyQaePi90hO
-         J/qqblaICEwrvm0aWoDR+ropylNWmjuUSB4cM6fYqQS9BM1W0FRXtkr145+AZIC0uO
-         VGSXaLiZabc1a9wD+g1cJ5gA5UmWKC6cQh9TW50atN2cCEtx/FUHMyWbtRid75dM6H
-         aO8BLnX612WYQ==
+        s=k20201202; t=1661583692;
+        bh=8UZ3nfyjvR/tlY+3mxGCVsnHwuM9TQPRtN/Xaf4/Y3k=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+        b=Ow3GS9VpEWEwaBcfZsOmQP3mhfwpOEhyaxUiMt1sumBXKJzOjeWFbPUm+P0JSfHsg
+         VtA6vPA/q4JLRxmxt2pGM5L693TcfBzdpgRm/EFZ1NZhJ6lfmYUel8pwvNZoifkQds
+         JXuuBeZheUzAFx5xwRSEwfEQO8LFPmen2nLAipWnVExDTkuoBDj8j0a1B0MO0mG8SF
+         xmekiN4n+XelAPcJSWJRL6/k2QglePYbdIO7cyDRxuiPHYT1b7K6GPDXEhkT1VFn56
+         wEi6KFndg39w3zleKkYb/RGdzMpBQZtBoqG0/n6XWum3PyNszMiwFUD4a4geFjHMfC
+         C3oDVdTYXnQ1g==
 From:   Eric Biggers <ebiggers@kernel.org>
 To:     linux-fsdevel@vger.kernel.org
 Cc:     linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
         linux-xfs@vger.kernel.org, linux-api@vger.kernel.org,
         linux-fscrypt@vger.kernel.org, linux-block@vger.kernel.org,
         linux-kernel@vger.kernel.org, Keith Busch <kbusch@kernel.org>
-Subject: [PATCH v5 0/8] make statx() return DIO alignment information
-Date:   Fri, 26 Aug 2022 23:58:43 -0700
-Message-Id: <20220827065851.135710-1-ebiggers@kernel.org>
+Subject: [PATCH v5 6/8] f2fs: simplify f2fs_force_buffered_io()
+Date:   Fri, 26 Aug 2022 23:58:49 -0700
+Message-Id: <20220827065851.135710-7-ebiggers@kernel.org>
 X-Mailer: git-send-email 2.37.2
+In-Reply-To: <20220827065851.135710-1-ebiggers@kernel.org>
+References: <20220827065851.135710-1-ebiggers@kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This patchset makes the statx() system call return direct I/O (DIO)
-alignment information.  This allows userspace to easily determine
-whether a file supports DIO, and if so with what alignment restrictions.
+From: Eric Biggers <ebiggers@google.com>
 
-Patch 1 adds the basic VFS support for STATX_DIOALIGN.  Patch 2 wires it
-up for all block device files.  The remaining patches wire it up for
-regular files on ext4, f2fs, and xfs.  Support for regular files on
-other filesystems can be added later.
+f2fs only allows direct I/O that is aligned to the filesystem block
+size.  Given that fact, simplify f2fs_force_buffered_io() by removing
+the redundant call to block_unaligned_IO().
 
-I've also written a man-pages patch, which I sent separately:
-https://lore.kernel.org/r/20220722074229.148925-1-ebiggers@kernel.org
+This makes it easier to reuse this code for STATX_DIOALIGN.
 
-Note, f2fs has a corner case where DIO reads are allowed but not DIO
-writes.  The proposed statx fields can't represent this.  The current
-proposal just reports that DIO is unsupported in this case.
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+---
+ fs/f2fs/file.c | 27 +++++----------------------
+ 1 file changed, 5 insertions(+), 22 deletions(-)
 
-This patchset applies to v6.0-rc2.
-
-Changed in v5:
-   - Accounted for the DIO changes in 6.0 by setting dio_mem_align to
-     the DMA alignment instead of the logical block size where needed.
-
-   - Dropped the patch "f2fs: don't allow DIO reads but not DIO writes".
-
-   - Added some Reviewed-by and Acked-by tags.
-
-Changed in v4:
-   - Added xfs support.
-
-   - Moved the helper function for block devices into block/bdev.c.
-   
-   - Adjusted the ext4 patch to not introduce a bug where misaligned DIO
-     starts being allowed on encrypted files when it gets combined with
-     the patch "iomap: add support for dma aligned direct-io" that is
-     queued in the block tree for 5.20.
-
-   - Made a simplification in fscrypt_dio_supported().
-
-Changed in v3:
-   - Dropped the stx_offset_align_optimal field, since its purpose
-     wasn't clearly distinguished from the existing stx_blksize.
-
-   - Renamed STATX_IOALIGN to STATX_DIOALIGN, to reflect the new focus
-     on DIO only.
-
-   - Similarly, renamed stx_{mem,offset}_align_dio to
-     stx_dio_{mem,offset}_align, to reflect the new focus on DIO only.
-
-   - Wired up STATX_DIOALIGN on block device files.
-
-Changed in v2:
-   - No changes.
-
-Eric Biggers (8):
-  statx: add direct I/O alignment information
-  vfs: support STATX_DIOALIGN on block devices
-  fscrypt: change fscrypt_dio_supported() to prepare for STATX_DIOALIGN
-  ext4: support STATX_DIOALIGN
-  f2fs: move f2fs_force_buffered_io() into file.c
-  f2fs: simplify f2fs_force_buffered_io()
-  f2fs: support STATX_DIOALIGN
-  xfs: support STATX_DIOALIGN
-
- block/bdev.c              | 23 ++++++++++++++++++
- fs/crypto/inline_crypt.c  | 49 +++++++++++++++++++--------------------
- fs/ext4/ext4.h            |  1 +
- fs/ext4/file.c            | 37 ++++++++++++++++++++---------
- fs/ext4/inode.c           | 37 +++++++++++++++++++++++++++++
- fs/f2fs/f2fs.h            | 40 --------------------------------
- fs/f2fs/file.c            | 43 +++++++++++++++++++++++++++++++++-
- fs/stat.c                 | 14 +++++++++++
- fs/xfs/xfs_iops.c         | 10 ++++++++
- include/linux/blkdev.h    |  4 ++++
- include/linux/fscrypt.h   |  7 ++----
- include/linux/stat.h      |  2 ++
- include/uapi/linux/stat.h |  4 +++-
- 13 files changed, 188 insertions(+), 83 deletions(-)
-
-
-base-commit: 1c23f9e627a7b412978b4e852793c5e3c3efc555
+diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+index 8a9455bf956f16..8e11311db21060 100644
+--- a/fs/f2fs/file.c
++++ b/fs/f2fs/file.c
+@@ -808,22 +808,9 @@ int f2fs_truncate(struct inode *inode)
+ 	return 0;
+ }
+ 
+-static int block_unaligned_IO(struct inode *inode, struct kiocb *iocb,
+-			      struct iov_iter *iter)
+-{
+-	unsigned int i_blkbits = READ_ONCE(inode->i_blkbits);
+-	unsigned int blocksize_mask = (1 << i_blkbits) - 1;
+-	loff_t offset = iocb->ki_pos;
+-	unsigned long align = offset | iov_iter_alignment(iter);
+-
+-	return align & blocksize_mask;
+-}
+-
+-static bool f2fs_force_buffered_io(struct inode *inode,
+-				   struct kiocb *iocb, struct iov_iter *iter)
++static bool f2fs_force_buffered_io(struct inode *inode, int rw)
+ {
+ 	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+-	int rw = iov_iter_rw(iter);
+ 
+ 	if (!fscrypt_dio_supported(inode))
+ 		return true;
+@@ -836,13 +823,9 @@ static bool f2fs_force_buffered_io(struct inode *inode,
+ 	if (f2fs_is_multi_device(sbi) && !sbi->aligned_blksize)
+ 		return true;
+ 
+-	if (f2fs_lfs_mode(sbi) && (rw == WRITE)) {
+-		if (block_unaligned_IO(inode, iocb, iter))
+-			return true;
+-		if (F2FS_IO_ALIGNED(sbi))
+-			return true;
+-	}
+-	if (is_sbi_flag_set(F2FS_I_SB(inode), SBI_CP_DISABLED))
++	if (f2fs_lfs_mode(sbi) && rw == WRITE && F2FS_IO_ALIGNED(sbi))
++		return true;
++	if (is_sbi_flag_set(sbi, SBI_CP_DISABLED))
+ 		return true;
+ 
+ 	return false;
+@@ -4222,7 +4205,7 @@ static bool f2fs_should_use_dio(struct inode *inode, struct kiocb *iocb,
+ 	if (!(iocb->ki_flags & IOCB_DIRECT))
+ 		return false;
+ 
+-	if (f2fs_force_buffered_io(inode, iocb, iter))
++	if (f2fs_force_buffered_io(inode, iov_iter_rw(iter)))
+ 		return false;
+ 
+ 	/*
 -- 
 2.37.2
 
