@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 82352C6FA8A
-	for <linux-api@archiver.kernel.org>; Thu, 15 Sep 2022 14:34:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F1912C6FA89
+	for <linux-api@archiver.kernel.org>; Thu, 15 Sep 2022 14:35:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230228AbiIOOeq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 15 Sep 2022 10:34:46 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49438 "EHLO
+        id S230154AbiIOOfE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 15 Sep 2022 10:35:04 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49320 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230094AbiIOOeY (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 15 Sep 2022 10:34:24 -0400
-Received: from mga18.intel.com (mga18.intel.com [134.134.136.126])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 170C29D645;
-        Thu, 15 Sep 2022 07:34:23 -0700 (PDT)
+        with ESMTP id S230143AbiIOOen (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 15 Sep 2022 10:34:43 -0400
+Received: from mga12.intel.com (mga12.intel.com [192.55.52.136])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DE30FFD;
+        Thu, 15 Sep 2022 07:34:26 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1663252463; x=1694788463;
-  h=from:to:cc:subject:date:message-id:in-reply-to:
-   references:mime-version:content-transfer-encoding;
-  bh=xFjpOSgDyAg++QDCr6PaiUiP56dtKDXT/2+Tctlc03w=;
-  b=fKZosvp/JJ1fVE48KtBbSLcu1XpE3DhDgnVBfvVhvKC14vRJFgQOvt9I
-   AuNeTvHAWgCDsrUQ9Hxtj/qQsY38/bg/BNRgxVQOLGSucN6P4Og5qdxgN
-   CuEvxxT1XcfORW68cU43QeKwCECU99izeJiouCoPnHuhnOhi+ZxP9T5B6
-   VNn9uVcChjhVjAOSlurbaR4U8Ih6/hLpisgzrZlYmUBXZ0yb/gpgkYH5e
-   e6RV3XQ6tYfCE4vm3DZns5WdptmDqsLioYaI34BH5vMhKEZtzject5Jyg
-   RZ/4usZG0i/s0fmS1MZgdWBpm3LoAB48+dvh7p2W2d6kQn/2ANa9Ccxdl
-   w==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10470"; a="281759252"
+  t=1663252466; x=1694788466;
+  h=from:to:cc:subject:date:message-id:mime-version:
+   content-transfer-encoding;
+  bh=ki7gTNXhfVnHCe1rkeDjQttXYp0nJgWH1gx/Z4CHDjQ=;
+  b=GXmNn3RT3+We2A/ezm6DRntz7gUpPsOjMwxxdsWK8CKSsCj6vcZRP+dk
+   YyoLIfPt/arxXLsvAsryYYzLB4TQvRz0QPaqvUlaUixtvxiQbleKE7a85
+   pqdpL7SLekpe30vCbI8ksAFWimszHq2i9gQFMkQ4tYsIO3MrDmPfFJwKV
+   vnaeUgvuecPlJHJfQ5qXtBpDiaNQBdrEo/3TVutwTKWG9oKBtDPAEdqnJ
+   eoBF4vVEJrgW+z5CsHtQ3BnemSBNZxTPcAY98EnXekS8Z9pO+fI5MLESZ
+   SPuN9nBXbtvag6A1XuFIsVm0x24pEdU4gTmOvgAjtcUo9cSFMRQ9+Npxd
+   g==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10470"; a="278458275"
 X-IronPort-AV: E=Sophos;i="5.93,318,1654585200"; 
-   d="scan'208";a="281759252"
+   d="scan'208";a="278458275"
 Received: from fmsmga005.fm.intel.com ([10.253.24.32])
-  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Sep 2022 07:34:22 -0700
+  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Sep 2022 07:34:02 -0700
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="5.93,318,1654585200"; 
-   d="scan'208";a="945976960"
+   d="scan'208";a="945976865"
 Received: from chaop.bj.intel.com ([10.240.193.75])
-  by fmsmga005.fm.intel.com with ESMTP; 15 Sep 2022 07:34:12 -0700
+  by fmsmga005.fm.intel.com with ESMTP; 15 Sep 2022 07:33:52 -0700
 From:   Chao Peng <chao.p.peng@linux.intel.com>
 To:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
         linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
@@ -70,351 +70,252 @@ Cc:     Paolo Bonzini <pbonzini@redhat.com>,
         Quentin Perret <qperret@google.com>,
         Michael Roth <michael.roth@amd.com>, mhocko@suse.com,
         Muchun Song <songmuchun@bytedance.com>, wei.w.wang@intel.com
-Subject: [PATCH v8 2/8] KVM: Extend the memslot to support fd-based private memory
-Date:   Thu, 15 Sep 2022 22:29:07 +0800
-Message-Id: <20220915142913.2213336-3-chao.p.peng@linux.intel.com>
+Subject: [PATCH v8 0/8] KVM: mm: fd-based approach for supporting KVM
+Date:   Thu, 15 Sep 2022 22:29:05 +0800
+Message-Id: <20220915142913.2213336-1-chao.p.peng@linux.intel.com>
 X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20220915142913.2213336-1-chao.p.peng@linux.intel.com>
-References: <20220915142913.2213336-1-chao.p.peng@linux.intel.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-In memory encryption usage, guest memory may be encrypted with special
-key and can be accessed only by the VM itself. We call such memory
-private memory. It's valueless and sometimes can cause problem to allow
-userspace to access guest private memory. This patch extends the KVM
-memslot definition so that guest private memory can be provided though
-an inaccessible_notifier enlightened file descriptor (fd), without being
-mmaped into userspace.
+This patch series implements KVM guest private memory for confidential
+computing scenarios like Intel TDX[1]. If a TDX host accesses
+TDX-protected guest memory, machine check can happen which can further
+crash the running host system, this is terrible for multi-tenant
+configurations. The host accesses include those from KVM userspace like
+QEMU. This series addresses KVM userspace induced crash by introducing
+new mm and KVM interfaces so KVM userspace can still manage guest memory
+via a fd-based approach, but it can never access the guest memory
+content.
 
-This new extension, indicated by the new flag KVM_MEM_PRIVATE, adds two
-additional KVM memslot fields private_fd/private_offset to allow
-userspace to specify that guest private memory provided from the
-private_fd and guest_phys_addr mapped at the private_offset of the
-private_fd, spanning a range of memory_size.
+The patch series touches both core mm and KVM code. I appreciate
+Andrew/Hugh and Paolo/Sean can review and pick these patches. Any other
+reviews are always welcome.
+  - 01: mm change, target for mm tree
+  - 02-08: KVM change, target for KVM tree
 
-The extended memslot can still have the userspace_addr(hva). When use, a
-single memslot can maintain both private memory through private
-fd(private_fd/private_offset) and shared memory through
-hva(userspace_addr). Whether the private or shared part is visible to
-guest is maintained by other KVM code.
+Given KVM is the only current user for the mm part, I have chatted with
+Paolo and he is OK to merge the mm change through KVM tree, but
+reviewed-by/acked-by is still expected from the mm people.
 
-Since there is no userspace mapping for private fd so we cannot
-get_user_pages() to get the pfn in KVM, instead we add a new
-inaccessible_notifier in the internal memslot structure and rely on it
-to get pfn by interacting with the memory file systems.
+The patches have been verified in Intel TDX environment, but Vishal has
+done an excellent work on the selftests[4] which are dedicated for this
+series, making it possible to test this series without innovative
+hardware and fancy steps of building a VM environment. See Test section
+below for more info.
 
-Together with the change, a new config HAVE_KVM_PRIVATE_MEM is added and
-right now it is selected on X86_64 for Intel TDX usage.
+Comparing to previous version, this version redesigned mm part code and
+excluded F_SEAL_AUTO_ALLOCATE and man page changes from this series. See
+Changelog section below for more info.
 
-To make code maintenance easy, internally we use a binary compatible
-alias struct kvm_user_mem_region to handle both the normal and the
-'_ext' variants.
 
-Co-developed-by: Yu Zhang <yu.c.zhang@linux.intel.com>
-Signed-off-by: Yu Zhang <yu.c.zhang@linux.intel.com>
-Signed-off-by: Chao Peng <chao.p.peng@linux.intel.com>
----
- Documentation/virt/kvm/api.rst | 38 +++++++++++++++++++++-----
- arch/x86/kvm/Kconfig           |  1 +
- arch/x86/kvm/x86.c             |  2 +-
- include/linux/kvm_host.h       | 13 +++++++--
- include/uapi/linux/kvm.h       | 28 +++++++++++++++++++
- virt/kvm/Kconfig               |  3 +++
- virt/kvm/kvm_main.c            | 49 ++++++++++++++++++++++++++++------
- 7 files changed, 116 insertions(+), 18 deletions(-)
+Introduction
+============
+KVM userspace being able to crash the host is horrible. Under current
+KVM architecture, all guest memory is inherently accessible from KVM
+userspace and is exposed to the mentioned crash issue. The goal of this
+series is to provide a solution to align mm and KVM, on a userspace
+inaccessible approach of exposing guest memory. 
 
-diff --git a/Documentation/virt/kvm/api.rst b/Documentation/virt/kvm/api.rst
-index abd7c32126ce..c1fac1e9f820 100644
---- a/Documentation/virt/kvm/api.rst
-+++ b/Documentation/virt/kvm/api.rst
-@@ -1319,7 +1319,7 @@ yet and must be cleared on entry.
- :Capability: KVM_CAP_USER_MEMORY
- :Architectures: all
- :Type: vm ioctl
--:Parameters: struct kvm_userspace_memory_region (in)
-+:Parameters: struct kvm_userspace_memory_region(_ext) (in)
- :Returns: 0 on success, -1 on error
- 
- ::
-@@ -1332,9 +1332,18 @@ yet and must be cleared on entry.
- 	__u64 userspace_addr; /* start of the userspace allocated memory */
-   };
- 
-+  struct kvm_userspace_memory_region_ext {
-+	struct kvm_userspace_memory_region region;
-+	__u64 private_offset;
-+	__u32 private_fd;
-+	__u32 pad1;
-+	__u64 pad2[14];
-+  };
-+
-   /* for kvm_memory_region::flags */
-   #define KVM_MEM_LOG_DIRTY_PAGES	(1UL << 0)
-   #define KVM_MEM_READONLY	(1UL << 1)
-+  #define KVM_MEM_PRIVATE		(1UL << 2)
- 
- This ioctl allows the user to create, modify or delete a guest physical
- memory slot.  Bits 0-15 of "slot" specify the slot id and this value
-@@ -1365,12 +1374,27 @@ It is recommended that the lower 21 bits of guest_phys_addr and userspace_addr
- be identical.  This allows large pages in the guest to be backed by large
- pages in the host.
- 
--The flags field supports two flags: KVM_MEM_LOG_DIRTY_PAGES and
--KVM_MEM_READONLY.  The former can be set to instruct KVM to keep track of
--writes to memory within the slot.  See KVM_GET_DIRTY_LOG ioctl to know how to
--use it.  The latter can be set, if KVM_CAP_READONLY_MEM capability allows it,
--to make a new slot read-only.  In this case, writes to this memory will be
--posted to userspace as KVM_EXIT_MMIO exits.
-+kvm_userspace_memory_region_ext includes all the kvm_userspace_memory_region
-+fields. It also includes additional fields for some specific features. See
-+below description of flags field for more information. It's recommended to use
-+kvm_userspace_memory_region_ext in new userspace code.
-+
-+The flags field supports below flags:
-+
-+- KVM_MEM_LOG_DIRTY_PAGES can be set to instruct KVM to keep track of writes to
-+  memory within the slot.  See KVM_GET_DIRTY_LOG ioctl to know how to use it.
-+
-+- KVM_MEM_READONLY can be set, if KVM_CAP_READONLY_MEM capability allows it, to
-+  make a new slot read-only.  In this case, writes to this memory will be posted
-+  to userspace as KVM_EXIT_MMIO exits.
-+
-+- KVM_MEM_PRIVATE can be set to indicate a new slot has private memory backed by
-+  a file descirptor(fd) and the content of the private memory is invisible to
-+  userspace. In this case, userspace should use private_fd/private_offset in
-+  kvm_userspace_memory_region_ext to instruct KVM to provide private memory to
-+  guest. Userspace should guarantee not to map the same pfn indicated by
-+  private_fd/private_offset to different gfns with multiple memslots. Failed to
-+  do this may result undefined behavior.
- 
- When the KVM_CAP_SYNC_MMU capability is available, changes in the backing of
- the memory region are automatically reflected into the guest.  For example, an
-diff --git a/arch/x86/kvm/Kconfig b/arch/x86/kvm/Kconfig
-index e3cbd7706136..31db64ec0b33 100644
---- a/arch/x86/kvm/Kconfig
-+++ b/arch/x86/kvm/Kconfig
-@@ -48,6 +48,7 @@ config KVM
- 	select SRCU
- 	select INTERVAL_TREE
- 	select HAVE_KVM_PM_NOTIFIER if PM
-+	select HAVE_KVM_PRIVATE_MEM if X86_64
- 	help
- 	  Support hosting fully virtualized guest machines using hardware
- 	  virtualization extensions.  You will need a fairly recent
-diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index d7374d768296..081f62ccc9a1 100644
---- a/arch/x86/kvm/x86.c
-+++ b/arch/x86/kvm/x86.c
-@@ -12183,7 +12183,7 @@ void __user * __x86_set_memory_region(struct kvm *kvm, int id, gpa_t gpa,
- 	}
- 
- 	for (i = 0; i < KVM_ADDRESS_SPACE_NUM; i++) {
--		struct kvm_userspace_memory_region m;
-+		struct kvm_user_mem_region m;
- 
- 		m.slot = id | (i << 16);
- 		m.flags = 0;
-diff --git a/include/linux/kvm_host.h b/include/linux/kvm_host.h
-index f4519d3689e1..eac1787b899b 100644
---- a/include/linux/kvm_host.h
-+++ b/include/linux/kvm_host.h
-@@ -44,6 +44,7 @@
- 
- #include <asm/kvm_host.h>
- #include <linux/kvm_dirty_ring.h>
-+#include <linux/memfd.h>
- 
- #ifndef KVM_MAX_VCPU_IDS
- #define KVM_MAX_VCPU_IDS KVM_MAX_VCPUS
-@@ -576,8 +577,16 @@ struct kvm_memory_slot {
- 	u32 flags;
- 	short id;
- 	u16 as_id;
-+	struct file *private_file;
-+	loff_t private_offset;
-+	struct inaccessible_notifier notifier;
- };
- 
-+static inline bool kvm_slot_can_be_private(const struct kvm_memory_slot *slot)
-+{
-+	return slot && (slot->flags & KVM_MEM_PRIVATE);
-+}
-+
- static inline bool kvm_slot_dirty_track_enabled(const struct kvm_memory_slot *slot)
- {
- 	return slot->flags & KVM_MEM_LOG_DIRTY_PAGES;
-@@ -1104,9 +1113,9 @@ enum kvm_mr_change {
- };
- 
- int kvm_set_memory_region(struct kvm *kvm,
--			  const struct kvm_userspace_memory_region *mem);
-+			  const struct kvm_user_mem_region *mem);
- int __kvm_set_memory_region(struct kvm *kvm,
--			    const struct kvm_userspace_memory_region *mem);
-+			    const struct kvm_user_mem_region *mem);
- void kvm_arch_free_memslot(struct kvm *kvm, struct kvm_memory_slot *slot);
- void kvm_arch_memslots_updated(struct kvm *kvm, u64 gen);
- int kvm_arch_prepare_memory_region(struct kvm *kvm,
-diff --git a/include/uapi/linux/kvm.h b/include/uapi/linux/kvm.h
-index eed0315a77a6..3ef462fb3b2a 100644
---- a/include/uapi/linux/kvm.h
-+++ b/include/uapi/linux/kvm.h
-@@ -103,6 +103,33 @@ struct kvm_userspace_memory_region {
- 	__u64 userspace_addr; /* start of the userspace allocated memory */
- };
- 
-+struct kvm_userspace_memory_region_ext {
-+	struct kvm_userspace_memory_region region;
-+	__u64 private_offset;
-+	__u32 private_fd;
-+	__u32 pad1;
-+	__u64 pad2[14];
-+};
-+
-+#ifdef __KERNEL__
-+/*
-+ * kvm_user_mem_region is a kernel-only alias of kvm_userspace_memory_region_ext
-+ * that "unpacks" kvm_userspace_memory_region so that KVM can directly access
-+ * all fields from the top-level "extended" region.
-+ */
-+struct kvm_user_mem_region {
-+	__u32 slot;
-+	__u32 flags;
-+	__u64 guest_phys_addr;
-+	__u64 memory_size;
-+	__u64 userspace_addr;
-+	__u64 private_offset;
-+	__u32 private_fd;
-+	__u32 pad1;
-+	__u64 pad2[14];
-+};
-+#endif
-+
- /*
-  * The bit 0 ~ bit 15 of kvm_memory_region::flags are visible for userspace,
-  * other bits are reserved for kvm internal use which are defined in
-@@ -110,6 +137,7 @@ struct kvm_userspace_memory_region {
-  */
- #define KVM_MEM_LOG_DIRTY_PAGES	(1UL << 0)
- #define KVM_MEM_READONLY	(1UL << 1)
-+#define KVM_MEM_PRIVATE		(1UL << 2)
- 
- /* for KVM_IRQ_LINE */
- struct kvm_irq_level {
-diff --git a/virt/kvm/Kconfig b/virt/kvm/Kconfig
-index a8c5c9f06b3c..ccaff13cc5b8 100644
---- a/virt/kvm/Kconfig
-+++ b/virt/kvm/Kconfig
-@@ -72,3 +72,6 @@ config KVM_XFER_TO_GUEST_WORK
- 
- config HAVE_KVM_PM_NOTIFIER
-        bool
-+
-+config HAVE_KVM_PRIVATE_MEM
-+       bool
-diff --git a/virt/kvm/kvm_main.c b/virt/kvm/kvm_main.c
-index 584a5bab3af3..12dc0dc57b06 100644
---- a/virt/kvm/kvm_main.c
-+++ b/virt/kvm/kvm_main.c
-@@ -1526,7 +1526,7 @@ static void kvm_replace_memslot(struct kvm *kvm,
- 	}
- }
- 
--static int check_memory_region_flags(const struct kvm_userspace_memory_region *mem)
-+static int check_memory_region_flags(const struct kvm_user_mem_region *mem)
- {
- 	u32 valid_flags = KVM_MEM_LOG_DIRTY_PAGES;
- 
-@@ -1920,7 +1920,7 @@ static bool kvm_check_memslot_overlap(struct kvm_memslots *slots, int id,
-  * Must be called holding kvm->slots_lock for write.
-  */
- int __kvm_set_memory_region(struct kvm *kvm,
--			    const struct kvm_userspace_memory_region *mem)
-+			    const struct kvm_user_mem_region *mem)
- {
- 	struct kvm_memory_slot *old, *new;
- 	struct kvm_memslots *slots;
-@@ -2024,7 +2024,7 @@ int __kvm_set_memory_region(struct kvm *kvm,
- EXPORT_SYMBOL_GPL(__kvm_set_memory_region);
- 
- int kvm_set_memory_region(struct kvm *kvm,
--			  const struct kvm_userspace_memory_region *mem)
-+			  const struct kvm_user_mem_region *mem)
- {
- 	int r;
- 
-@@ -2036,7 +2036,7 @@ int kvm_set_memory_region(struct kvm *kvm,
- EXPORT_SYMBOL_GPL(kvm_set_memory_region);
- 
- static int kvm_vm_ioctl_set_memory_region(struct kvm *kvm,
--					  struct kvm_userspace_memory_region *mem)
-+					  struct kvm_user_mem_region *mem)
- {
- 	if ((u16)mem->slot >= KVM_USER_MEM_SLOTS)
- 		return -EINVAL;
-@@ -4622,6 +4622,33 @@ static int kvm_vm_ioctl_get_stats_fd(struct kvm *kvm)
- 	return fd;
- }
- 
-+#define SANITY_CHECK_MEM_REGION_FIELD(field)					\
-+do {										\
-+	BUILD_BUG_ON(offsetof(struct kvm_user_mem_region, field) !=		\
-+		     offsetof(struct kvm_userspace_memory_region, field));	\
-+	BUILD_BUG_ON(sizeof_field(struct kvm_user_mem_region, field) !=		\
-+		     sizeof_field(struct kvm_userspace_memory_region, field));	\
-+} while (0)
-+
-+#define SANITY_CHECK_MEM_REGION_EXT_FIELD(field)					\
-+do {											\
-+	BUILD_BUG_ON(offsetof(struct kvm_user_mem_region, field) !=			\
-+		     offsetof(struct kvm_userspace_memory_region_ext, field));		\
-+	BUILD_BUG_ON(sizeof_field(struct kvm_user_mem_region, field) !=			\
-+		     sizeof_field(struct kvm_userspace_memory_region_ext, field));	\
-+} while (0)
-+
-+static void kvm_sanity_check_user_mem_region_alias(void)
-+{
-+	SANITY_CHECK_MEM_REGION_FIELD(slot);
-+	SANITY_CHECK_MEM_REGION_FIELD(flags);
-+	SANITY_CHECK_MEM_REGION_FIELD(guest_phys_addr);
-+	SANITY_CHECK_MEM_REGION_FIELD(memory_size);
-+	SANITY_CHECK_MEM_REGION_FIELD(userspace_addr);
-+	SANITY_CHECK_MEM_REGION_EXT_FIELD(private_offset);
-+	SANITY_CHECK_MEM_REGION_EXT_FIELD(private_fd);
-+}
-+
- static long kvm_vm_ioctl(struct file *filp,
- 			   unsigned int ioctl, unsigned long arg)
- {
-@@ -4645,14 +4672,20 @@ static long kvm_vm_ioctl(struct file *filp,
- 		break;
- 	}
- 	case KVM_SET_USER_MEMORY_REGION: {
--		struct kvm_userspace_memory_region kvm_userspace_mem;
-+		struct kvm_user_mem_region mem;
-+		unsigned long size = sizeof(struct kvm_userspace_memory_region);
-+
-+		kvm_sanity_check_user_mem_region_alias();
- 
- 		r = -EFAULT;
--		if (copy_from_user(&kvm_userspace_mem, argp,
--						sizeof(kvm_userspace_mem)))
-+		if (copy_from_user(&mem, argp, size);
-+			goto out;
-+
-+		r = -EINVAL;
-+		if (mem.flags & KVM_MEM_PRIVATE)
- 			goto out;
- 
--		r = kvm_vm_ioctl_set_memory_region(kvm, &kvm_userspace_mem);
-+		r = kvm_vm_ioctl_set_memory_region(kvm, &mem);
- 		break;
- 	}
- 	case KVM_GET_DIRTY_LOG: {
+Normally, KVM populates secondary page table (e.g. EPT) by using a host
+virtual address (hva) from core mm page table (e.g. x86 userspace page
+table). This requires guest memory being mmaped into KVM userspace, but
+this is also the source where the mentioned crash issue can happen. In
+theory, apart from those 'shared' memory for device emulation etc, guest
+memory doesn't have to be mmaped into KVM userspace.
+
+This series introduces fd-based guest memory which will not be mmaped
+into KVM userspace. KVM populates secondary page table by using a
+fd/offset pair backed by a memory file system. The fd can be created
+from a supported memory filesystem like tmpfs/hugetlbfs and KVM can
+directly interact with them with newly introduced in-kernel interface,
+therefore remove the KVM userspace from the path of accessing/mmaping
+the guest memory. 
+
+Kirill had a patch [2] to address the same issue in a different way. It
+tracks guest encrypted memory at the 'struct page' level and relies on
+HWPOISON to reject the userspace access. The patch has been discussed in
+several online and offline threads and resulted in a design document [3]
+which is also the original proposal for this series. Later this patch
+series evolved as more comments received in community but the major
+concepts in [3] still hold true so recommend reading.
+
+The patch series may also be useful for other usages, for example, pure
+software approach may use it to harden itself against unintentional
+access to guest memory. This series is designed with these usages in
+mind but doesn't have code directly support them and extension might be
+needed.
+
+
+mm change
+=========
+Introduces a new userspace MFD_INACCESSIBLE flag for memfd_create() so
+that the memory fd created with this flag cannot read(), write() or
+mmap() etc via normal MMU operations and the only way to use it is
+passing it to a third kernel module like KVM and relying on it to
+access the fd through the newly added inaccessible_memfd kernel
+interface. The inaccessible_memfd interface bridges the memory file
+subsystems (e.g.tmpfs/hugetlbfs) and their users (KVM in this case) and
+provides bi-directional communication between them. 
+
+
+KVM change
+==========
+Extends the KVM memslot to provide guest private (encrypted) memory from
+a fd. With this extension, a single memslot can maintain both private
+memory through private fd (private_fd/private_offset) and shared
+(unencrypted) memory through userspace mmaped host virtual address
+(userspace_addr). For a particular guest page, the corresponding page in
+KVM memslot can be only either private or shared and only one of the
+shared/private parts of the memslot is visible to guest.
+
+Introduces new KVM_EXIT_MEMORY_FAULT exit to allow userspace to get the
+chance on decision-making for shared <-> private memory conversion. The
+exit can be an implicit conversion in KVM page fault handler or an
+explicit conversion from guest OS.
+
+Extends existing SEV ioctls KVM_MEMORY_ENCRYPT_{UN,}REG_REGION to
+convert a guest page between private <-> shared. The data saved in these
+ioctls tells the truth whether a guest page is private or shared and
+this information will be used in KVM page fault handler to decide
+whether the private or the shared part of the memslot is visible to
+guest.
+
+
+Test
+====
+Ran two kinds of tests:
+  - Selftests [4] from Vishal and VM boot tests in non-TDX environment
+    Code also in below repo: https://github.com/chao-p/linux/tree/privmem-v8
+
+  - Functional tests in TDX capable environment
+    Tested the new functionalities in TDX environment. Code repos:
+    Linux: https://github.com/chao-p/linux/tree/privmem-v8-tdx
+    QEMU: https://github.com/chao-p/qemu/tree/privmem-v8
+
+    An example QEMU command line for TDX test:
+    -object tdx-guest,id=tdx,debug=off,sept-ve-disable=off \
+    -machine confidential-guest-support=tdx \
+    -object memory-backend-memfd-private,id=ram1,size=${mem} \
+    -machine memory-backend=ram1
+
+
+TODO
+====
+  - Page accounting and limiting for encrypted memory
+  - hugetlbfs support
+
+
+Changelog
+=========
+v8:
+  - mm: redesign mm part by introducing a shim layer(inaccessible_memfd)
+    in memfd to avoid touch the memory file systems directly.
+  - mm: exclude F_SEAL_AUTO_ALLOCATE as it is for shared memory and
+    cause confusion in this series, will send out separately.
+  - doc: exclude the man page change, it's not kernel patch and will
+    send out separately.
+  - KVM: adapt to use the new mm inaccessible_memfd interface.
+  - KVM: update lpage_info when setting mem_attr_array to support
+    large page.
+  - KVM: change from xa_store_range to xa_store for mem_attr_array due
+    to xa_store_range overrides all entries which is not intended
+    behavior for us.
+  - KVM: refine the mmu_invalidate_retry_gfn mechanism for private page.
+  - KVM: reorganize KVM_MEMORY_ENCRYPT_{UN,}REG_REGION and private page
+    handling code suggested by Sean.
+v7:
+  - mm: introduce F_SEAL_AUTO_ALLOCATE to avoid double allocation.
+  - KVM: use KVM_MEMORY_ENCRYPT_{UN,}REG_REGION to record
+    private/shared info.
+  - KVM: use similar sync mechanism between zap/page fault paths as
+    mmu_notifier for memfile_notifier based invalidation.
+v6:
+  - mm: introduce MEMFILE_F_* flags into memfile_node to allow checking
+    feature consistence among all memfile_notifier users and get rid of
+    internal flags like SHM_F_INACCESSIBLE.
+  - mm: make pfn_ops callbacks being members of memfile_backing_store
+    and then refer to it directly in memfile_notifier.
+  - mm: remove backing store unregister.
+  - mm: remove RLIMIT_MEMLOCK based memory accounting and limiting.
+  - KVM: reorganize patch sequence for page fault handling and private
+    memory enabling.
+v5:
+  - Add man page for MFD_INACCESSIBLE flag and improve KVM API do for
+    the new memslot extensions.
+  - mm: introduce memfile_{un}register_backing_store to allow memory
+    backing store to register/unregister it from memfile_notifier.
+  - mm: remove F_SEAL_INACCESSIBLE, use in-kernel flag
+    (SHM_F_INACCESSIBLE for shmem) instead. 
+  - mm: add memory accounting and limiting (RLIMIT_MEMLOCK based) for
+    MFD_INACCESSIBLE memory.
+  - KVM: remove the overlap check for mapping the same file+offset into
+    multiple gfns due to perf consideration, warned in document.
+v4:
+  - mm: rename memfd_ops to memfile_notifier and separate it from
+    memfd.c to standalone memfile-notifier.c.
+  - KVM: move pfn_ops to per-memslot scope from per-vm scope and allow
+    registering multiple memslots to the same memory backing store.
+  - KVM: add a 'kvm' reference in memslot so that we can recover kvm in
+    memfile_notifier handlers.
+  - KVM: add 'private_' prefix for the new fields in memslot.
+  - KVM: reshape the 'type' to 'flag' for kvm_memory_exit
+v3:
+  - Remove 'RFC' prefix.
+  - Fix race condition between memfile_notifier handlers and kvm destroy.
+  - mm: introduce MFD_INACCESSIBLE flag for memfd_create() to force
+    setting F_SEAL_INACCESSIBLE when the fd is created.
+  - KVM: add the shared part of the memslot back to make private/shared
+    pages live in one memslot.
+
+Reference
+=========
+[1] Intel TDX:
+https://www.intel.com/content/www/us/en/developer/articles/technical/intel-trust-domain-extensions.html
+[2] Kirill's implementation:
+https://lore.kernel.org/all/20210416154106.23721-1-kirill.shutemov@linux.intel.com/T/ 
+[3] Original design proposal:
+https://lore.kernel.org/all/20210824005248.200037-1-seanjc@google.com/  
+[4] Selftest:
+https://lore.kernel.org/all/20220819174659.2427983-1-vannapurve@google.com/ 
+
+
+Chao Peng (7):
+  KVM: Extend the memslot to support fd-based private memory
+  KVM: Add KVM_EXIT_MEMORY_FAULT exit
+  KVM: Use gfn instead of hva for mmu_notifier_retry
+  KVM: Register/unregister the guest private memory regions
+  KVM: Update lpage info when private/shared memory are mixed
+  KVM: Handle page fault for private memory
+  KVM: Enable and expose KVM_MEM_PRIVATE
+
+Kirill A. Shutemov (1):
+  mm/memfd: Introduce userspace inaccessible memfd
+
+ Documentation/virt/kvm/api.rst  |  78 +++++++--
+ arch/x86/include/asm/kvm_host.h |   9 +
+ arch/x86/kvm/Kconfig            |   1 +
+ arch/x86/kvm/mmu.h              |   2 -
+ arch/x86/kvm/mmu/mmu.c          | 175 +++++++++++++++++++-
+ arch/x86/kvm/mmu/mmu_internal.h |  18 ++
+ arch/x86/kvm/mmu/mmutrace.h     |   1 +
+ arch/x86/kvm/x86.c              |   4 +-
+ include/linux/kvm_host.h        |  86 ++++++++--
+ include/linux/memfd.h           |  24 +++
+ include/uapi/linux/kvm.h        |  37 +++++
+ include/uapi/linux/magic.h      |   1 +
+ include/uapi/linux/memfd.h      |   1 +
+ mm/Makefile                     |   2 +-
+ mm/memfd.c                      |  25 ++-
+ mm/memfd_inaccessible.c         | 219 +++++++++++++++++++++++++
+ virt/kvm/Kconfig                |   3 +
+ virt/kvm/kvm_main.c             | 282 +++++++++++++++++++++++++++++---
+ 18 files changed, 912 insertions(+), 56 deletions(-)
+ create mode 100644 mm/memfd_inaccessible.c
+
+base-commit: 372d07084593dc7a399bf9bee815711b1fb1bcf2
 -- 
 2.25.1
 
