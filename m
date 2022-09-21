@@ -2,25 +2,26 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 601CDC6FA82
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AE9C4ECAAD8
 	for <linux-api@archiver.kernel.org>; Wed, 21 Sep 2022 19:38:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229794AbiIUTiD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S229877AbiIUTiD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Wed, 21 Sep 2022 15:38:03 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47538 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47546 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229563AbiIUTiC (ORCPT
+        with ESMTP id S229578AbiIUTiC (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Wed, 21 Sep 2022 15:38:02 -0400
+X-Greylist: delayed 770 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Wed, 21 Sep 2022 12:38:00 PDT
 Received: from barracuda.ebox.ca (barracuda.ebox.ca [96.127.255.19])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 31FDB9E2DF
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3205E9E2F3
         for <linux-api@vger.kernel.org>; Wed, 21 Sep 2022 12:37:59 -0700 (PDT)
-X-ASG-Debug-ID: 1663788303-0c856e13fd3500a0001-wjuz9g
-Received: from smtp.ebox.ca (smtp.ebox.ca [96.127.255.82]) by barracuda.ebox.ca with ESMTP id vKxaDsCJ59XdehvH (version=TLSv1 cipher=AES128-SHA bits=128 verify=NO); Wed, 21 Sep 2022 15:25:03 -0400 (EDT)
+X-ASG-Debug-ID: 1663788304-0c856e13fd3500c0001-wjuz9g
+Received: from smtp.ebox.ca (smtp.ebox.ca [96.127.255.82]) by barracuda.ebox.ca with ESMTP id 7NwNW7ODnS8we0ux (version=TLSv1 cipher=AES128-SHA bits=128 verify=NO); Wed, 21 Sep 2022 15:25:04 -0400 (EDT)
 X-Barracuda-Envelope-From: mathieu.desnoyers@efficios.com
 X-Barracuda-RBL-Trusted-Forwarder: 96.127.255.82
 Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by smtp.ebox.ca (Postfix) with ESMTP id 4B86D441D64;
-        Wed, 21 Sep 2022 15:25:03 -0400 (EDT)
+        by smtp.ebox.ca (Postfix) with ESMTP id 1B1DB441D65;
+        Wed, 21 Sep 2022 15:25:04 -0400 (EDT)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 X-Barracuda-RBL-IP: 192.222.180.24
 X-Barracuda-Effective-Source-IP: 192-222-180-24.qc.cable.ebox.net[192.222.180.24]
@@ -35,21 +36,21 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         carlos@redhat.com, Peter Oskolkov <posk@posk.io>,
         Alexander Mikhalitsyn <alexander@mihalicyn.com>,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH v4 01/25] rseq: Introduce feature size and alignment ELF auxiliary vector entries
-Date:   Wed, 21 Sep 2022 15:24:30 -0400
-X-ASG-Orig-Subj: [RFC PATCH v4 01/25] rseq: Introduce feature size and alignment ELF auxiliary vector entries
-Message-Id: <20220921192454.231662-2-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH v4 04/25] selftests/rseq: Use ELF auxiliary vector for extensible rseq
+Date:   Wed, 21 Sep 2022 15:24:33 -0400
+X-ASG-Orig-Subj: [RFC PATCH v4 04/25] selftests/rseq: Use ELF auxiliary vector for extensible rseq
+Message-Id: <20220921192454.231662-5-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20220921192454.231662-1-mathieu.desnoyers@efficios.com>
 References: <20220921192454.231662-1-mathieu.desnoyers@efficios.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Barracuda-Connect: smtp.ebox.ca[96.127.255.82]
-X-Barracuda-Start-Time: 1663788303
+X-Barracuda-Start-Time: 1663788304
 X-Barracuda-Encrypted: AES128-SHA
 X-Barracuda-URL: https://96.127.255.19:443/cgi-mod/mark.cgi
 X-Virus-Scanned: by bsmtpd at ebox.ca
-X-Barracuda-Scan-Msg-Size: 2197
+X-Barracuda-Scan-Msg-Size: 6186
 X-Barracuda-BRTS-Status: 1
 X-Barracuda-Spam-Score: 0.50
 X-Barracuda-Spam-Status: No, SCORE=0.50 using global scores of TAG_LEVEL=1000.0 QUARANTINE_LEVEL=1000.0 KILL_LEVEL=5.0 tests=BSF_RULE7568M
@@ -62,60 +63,21 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Export the rseq feature size supported by the kernel as well as the
-required allocation alignment for the rseq per-thread area to user-space
-through ELF auxiliary vector entries.
-
-This is part of the extensible rseq ABI.
+Use the ELF auxiliary vector AT_RSEQ_FEATURE_SIZE to detect the RSEQ
+features supported by the kernel.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 ---
- fs/binfmt_elf.c             | 5 +++++
- include/uapi/linux/auxvec.h | 2 ++
- include/uapi/linux/rseq.h   | 5 +++++
- 3 files changed, 12 insertions(+)
+ tools/testing/selftests/rseq/rseq-abi.h |  5 ++
+ tools/testing/selftests/rseq/rseq.c     | 68 ++++++++++++++++++++++---
+ tools/testing/selftests/rseq/rseq.h     | 18 +++++--
+ 3 files changed, 79 insertions(+), 12 deletions(-)
 
-diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
-index 63c7ebb0da89..04fca1e4cbd2 100644
---- a/fs/binfmt_elf.c
-+++ b/fs/binfmt_elf.c
-@@ -46,6 +46,7 @@
- #include <linux/cred.h>
- #include <linux/dax.h>
- #include <linux/uaccess.h>
-+#include <linux/rseq.h>
- #include <asm/param.h>
- #include <asm/page.h>
- 
-@@ -288,6 +289,10 @@ create_elf_tables(struct linux_binprm *bprm, const struct elfhdr *exec,
- 	if (bprm->have_execfd) {
- 		NEW_AUX_ENT(AT_EXECFD, bprm->execfd);
- 	}
-+#ifdef CONFIG_RSEQ
-+	NEW_AUX_ENT(AT_RSEQ_FEATURE_SIZE, offsetof(struct rseq, end));
-+	NEW_AUX_ENT(AT_RSEQ_ALIGN, __alignof__(struct rseq));
-+#endif
- #undef NEW_AUX_ENT
- 	/* AT_NULL is zero; clear the rest too */
- 	memset(elf_info, 0, (char *)mm->saved_auxv +
-diff --git a/include/uapi/linux/auxvec.h b/include/uapi/linux/auxvec.h
-index c7e502bf5a6f..6991c4b8ab18 100644
---- a/include/uapi/linux/auxvec.h
-+++ b/include/uapi/linux/auxvec.h
-@@ -30,6 +30,8 @@
- 				 * differ from AT_PLATFORM. */
- #define AT_RANDOM 25	/* address of 16 random bytes */
- #define AT_HWCAP2 26	/* extension of AT_HWCAP */
-+#define AT_RSEQ_FEATURE_SIZE	27	/* rseq supported feature size */
-+#define AT_RSEQ_ALIGN		28	/* rseq allocation alignment */
- 
- #define AT_EXECFN  31	/* filename of program */
- 
-diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
-index 77ee207623a9..05d3c4cdeb40 100644
---- a/include/uapi/linux/rseq.h
-+++ b/include/uapi/linux/rseq.h
-@@ -130,6 +130,11 @@ struct rseq {
+diff --git a/tools/testing/selftests/rseq/rseq-abi.h b/tools/testing/selftests/rseq/rseq-abi.h
+index a8c44d9af71f..00ac846d85b0 100644
+--- a/tools/testing/selftests/rseq/rseq-abi.h
++++ b/tools/testing/selftests/rseq/rseq-abi.h
+@@ -146,6 +146,11 @@ struct rseq_abi {
  	 *     this thread.
  	 */
  	__u32 flags;
@@ -126,7 +88,178 @@ index 77ee207623a9..05d3c4cdeb40 100644
 +	char end[];
  } __attribute__((aligned(4 * sizeof(__u64))));
  
- #endif /* _UAPI_LINUX_RSEQ_H */
+ #endif /* _RSEQ_ABI_H */
+diff --git a/tools/testing/selftests/rseq/rseq.c b/tools/testing/selftests/rseq/rseq.c
+index 986b9458efb2..20ea536d1012 100644
+--- a/tools/testing/selftests/rseq/rseq.c
++++ b/tools/testing/selftests/rseq/rseq.c
+@@ -28,6 +28,8 @@
+ #include <limits.h>
+ #include <dlfcn.h>
+ #include <stddef.h>
++#include <sys/auxv.h>
++#include <linux/auxvec.h>
+ 
+ #include "../kselftest.h"
+ #include "rseq.h"
+@@ -36,20 +38,38 @@ static const ptrdiff_t *libc_rseq_offset_p;
+ static const unsigned int *libc_rseq_size_p;
+ static const unsigned int *libc_rseq_flags_p;
+ 
+-/* Offset from the thread pointer to the rseq area.  */
++/* Offset from the thread pointer to the rseq area. */
+ ptrdiff_t rseq_offset;
+ 
+-/* Size of the registered rseq area.  0 if the registration was
+-   unsuccessful.  */
++/*
++ * Size of the registered rseq area. 0 if the registration was
++ * unsuccessful.
++ */
+ unsigned int rseq_size = -1U;
+ 
+ /* Flags used during rseq registration.  */
+ unsigned int rseq_flags;
+ 
++/*
++ * rseq feature size supported by the kernel. 0 if the registration was
++ * unsuccessful.
++ */
++unsigned int rseq_feature_size = -1U;
++
+ static int rseq_ownership;
++static int rseq_reg_success;	/* At least one rseq registration has succeded. */
++
++/* Allocate a large area for the TLS. */
++#define RSEQ_THREAD_AREA_ALLOC_SIZE	1024
++
++/* Original struct rseq feature size is 20 bytes. */
++#define ORIG_RSEQ_FEATURE_SIZE		20
++
++/* Orignal struct rseq allocation size is 32 bytes. */
++#define ORIG_RSEQ_ALLOC_SIZE		32
+ 
+ static
+-__thread struct rseq_abi __rseq_abi __attribute__((tls_model("initial-exec"))) = {
++__thread struct rseq_abi __rseq_abi __attribute__((tls_model("initial-exec"), aligned(RSEQ_THREAD_AREA_ALLOC_SIZE))) = {
+ 	.cpu_id = RSEQ_ABI_CPU_ID_UNINITIALIZED,
+ };
+ 
+@@ -84,10 +104,18 @@ int rseq_register_current_thread(void)
+ 		/* Treat libc's ownership as a successful registration. */
+ 		return 0;
+ 	}
+-	rc = sys_rseq(&__rseq_abi, sizeof(struct rseq_abi), 0, RSEQ_SIG);
+-	if (rc)
++	rc = sys_rseq(&__rseq_abi, rseq_size, 0, RSEQ_SIG);
++	if (rc) {
++		if (RSEQ_READ_ONCE(rseq_reg_success)) {
++			/* Incoherent success/failure within process. */
++			abort();
++		}
++		rseq_size = 0;
++		rseq_feature_size = 0;
+ 		return -1;
++	}
+ 	assert(rseq_current_cpu_raw() >= 0);
++	RSEQ_WRITE_ONCE(rseq_reg_success, 1);
+ 	return 0;
+ }
+ 
+@@ -99,12 +127,28 @@ int rseq_unregister_current_thread(void)
+ 		/* Treat libc's ownership as a successful unregistration. */
+ 		return 0;
+ 	}
+-	rc = sys_rseq(&__rseq_abi, sizeof(struct rseq_abi), RSEQ_ABI_FLAG_UNREGISTER, RSEQ_SIG);
++	rc = sys_rseq(&__rseq_abi, rseq_size, RSEQ_ABI_FLAG_UNREGISTER, RSEQ_SIG);
+ 	if (rc)
+ 		return -1;
+ 	return 0;
+ }
+ 
++static
++unsigned int get_rseq_feature_size(void)
++{
++	unsigned long auxv_rseq_feature_size, auxv_rseq_align;
++
++	auxv_rseq_align = getauxval(AT_RSEQ_ALIGN);
++	assert(!auxv_rseq_align || auxv_rseq_align <= RSEQ_THREAD_AREA_ALLOC_SIZE);
++
++	auxv_rseq_feature_size = getauxval(AT_RSEQ_FEATURE_SIZE);
++	assert(!auxv_rseq_feature_size || auxv_rseq_feature_size <= RSEQ_THREAD_AREA_ALLOC_SIZE);
++	if (auxv_rseq_feature_size)
++		return auxv_rseq_feature_size;
++	else
++		return ORIG_RSEQ_FEATURE_SIZE;
++}
++
+ static __attribute__((constructor))
+ void rseq_init(void)
+ {
+@@ -116,14 +160,21 @@ void rseq_init(void)
+ 		rseq_offset = *libc_rseq_offset_p;
+ 		rseq_size = *libc_rseq_size_p;
+ 		rseq_flags = *libc_rseq_flags_p;
++		rseq_feature_size = get_rseq_feature_size();
++		if (rseq_feature_size > rseq_size)
++			rseq_feature_size = rseq_size;
+ 		return;
+ 	}
+ 	if (!rseq_available())
+ 		return;
+ 	rseq_ownership = 1;
+ 	rseq_offset = (void *)&__rseq_abi - rseq_thread_pointer();
+-	rseq_size = sizeof(struct rseq_abi);
+ 	rseq_flags = 0;
++	rseq_feature_size = get_rseq_feature_size();
++	if (rseq_feature_size == ORIG_RSEQ_FEATURE_SIZE)
++		rseq_size = ORIG_RSEQ_ALLOC_SIZE;
++	else
++		rseq_size = RSEQ_THREAD_AREA_ALLOC_SIZE;
+ }
+ 
+ static __attribute__((destructor))
+@@ -133,6 +184,7 @@ void rseq_exit(void)
+ 		return;
+ 	rseq_offset = 0;
+ 	rseq_size = -1U;
++	rseq_feature_size = -1U;
+ 	rseq_ownership = 0;
+ }
+ 
+diff --git a/tools/testing/selftests/rseq/rseq.h b/tools/testing/selftests/rseq/rseq.h
+index 6f7513384bf5..95adc1e1b0db 100644
+--- a/tools/testing/selftests/rseq/rseq.h
++++ b/tools/testing/selftests/rseq/rseq.h
+@@ -47,14 +47,24 @@
+ 
+ #include "rseq-thread-pointer.h"
+ 
+-/* Offset from the thread pointer to the rseq area.  */
++/* Offset from the thread pointer to the rseq area. */
+ extern ptrdiff_t rseq_offset;
+-/* Size of the registered rseq area.  0 if the registration was
+-   unsuccessful.  */
++
++/*
++ * Size of the registered rseq area. 0 if the registration was
++ * unsuccessful.
++ */
+ extern unsigned int rseq_size;
+-/* Flags used during rseq registration.  */
++
++/* Flags used during rseq registration. */
+ extern unsigned int rseq_flags;
+ 
++/*
++ * rseq feature size supported by the kernel. 0 if the registration was
++ * unsuccessful.
++ */
++extern unsigned int rseq_feature_size;
++
+ static inline struct rseq_abi *rseq_get_abi(void)
+ {
+ 	return (struct rseq_abi *) ((uintptr_t) rseq_thread_pointer() + rseq_offset);
 -- 
 2.25.1
 
