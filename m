@@ -2,25 +2,25 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A1F9AC6FA8B
-	for <linux-api@archiver.kernel.org>; Wed, 21 Sep 2022 19:38:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 16890C6FA82
+	for <linux-api@archiver.kernel.org>; Wed, 21 Sep 2022 19:38:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229630AbiIUTiF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 21 Sep 2022 15:38:05 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47560 "EHLO
+        id S229566AbiIUTiH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 21 Sep 2022 15:38:07 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47566 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229731AbiIUTiC (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 21 Sep 2022 15:38:02 -0400
+        with ESMTP id S229968AbiIUTiE (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 21 Sep 2022 15:38:04 -0400
 Received: from barracuda.ebox.ca (barracuda.ebox.ca [96.127.255.19])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 31F539E2DB
-        for <linux-api@vger.kernel.org>; Wed, 21 Sep 2022 12:37:59 -0700 (PDT)
-X-ASG-Debug-ID: 1663788304-0c856e13ff350110001-wjuz9g
-Received: from smtp.ebox.ca (smtp.ebox.ca [96.127.255.82]) by barracuda.ebox.ca with ESMTP id oIpGGs1dELv0oOMb (version=TLSv1 cipher=AES128-SHA bits=128 verify=NO); Wed, 21 Sep 2022 15:25:04 -0400 (EDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 626CA9E2F5
+        for <linux-api@vger.kernel.org>; Wed, 21 Sep 2022 12:38:03 -0700 (PDT)
+X-ASG-Debug-ID: 1663788304-0c856e13fd3500b0001-wjuz9g
+Received: from smtp.ebox.ca (smtp.ebox.ca [96.127.255.82]) by barracuda.ebox.ca with ESMTP id aZdMqmgKmcu83HdZ (version=TLSv1 cipher=AES128-SHA bits=128 verify=NO); Wed, 21 Sep 2022 15:25:04 -0400 (EDT)
 X-Barracuda-Envelope-From: mathieu.desnoyers@efficios.com
 X-Barracuda-RBL-Trusted-Forwarder: 96.127.255.82
 Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by smtp.ebox.ca (Postfix) with ESMTP id 5E540441D66;
-        Wed, 21 Sep 2022 15:25:04 -0400 (EDT)
+        by smtp.ebox.ca (Postfix) with ESMTP id CC0C5441D66;
+        Wed, 21 Sep 2022 15:25:03 -0400 (EDT)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 X-Barracuda-RBL-IP: 192.222.180.24
 X-Barracuda-Effective-Source-IP: 192-222-180-24.qc.cable.ebox.net[192.222.180.24]
@@ -35,10 +35,10 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         carlos@redhat.com, Peter Oskolkov <posk@posk.io>,
         Alexander Mikhalitsyn <alexander@mihalicyn.com>,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH v4 05/25] selftests/rseq: Implement rseq numa node id field selftest
-Date:   Wed, 21 Sep 2022 15:24:34 -0400
-X-ASG-Orig-Subj: [RFC PATCH v4 05/25] selftests/rseq: Implement rseq numa node id field selftest
-Message-Id: <20220921192454.231662-6-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH v4 03/25] rseq: Extend struct rseq with numa node id
+Date:   Wed, 21 Sep 2022 15:24:32 -0400
+X-ASG-Orig-Subj: [RFC PATCH v4 03/25] rseq: Extend struct rseq with numa node id
+Message-Id: <20220921192454.231662-4-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20220921192454.231662-1-mathieu.desnoyers@efficios.com>
 References: <20220921192454.231662-1-mathieu.desnoyers@efficios.com>
@@ -48,58 +48,65 @@ X-Barracuda-Connect: smtp.ebox.ca[96.127.255.82]
 X-Barracuda-Start-Time: 1663788304
 X-Barracuda-Encrypted: AES128-SHA
 X-Barracuda-URL: https://96.127.255.19:443/cgi-mod/mark.cgi
-X-Virus-Scanned: by bsmtpd at ebox.ca
-X-Barracuda-Scan-Msg-Size: 4464
 X-Barracuda-BRTS-Status: 1
-X-Barracuda-Spam-Score: 0.50
-X-Barracuda-Spam-Status: No, SCORE=0.50 using global scores of TAG_LEVEL=1000.0 QUARANTINE_LEVEL=1000.0 KILL_LEVEL=5.0 tests=BSF_RULE7568M
+X-Virus-Scanned: by bsmtpd at ebox.ca
+X-Barracuda-Scan-Msg-Size: 4206
+X-Barracuda-Spam-Score: 0.00
+X-Barracuda-Spam-Status: No, SCORE=0.00 using global scores of TAG_LEVEL=1000.0 QUARANTINE_LEVEL=1000.0 KILL_LEVEL=5.0 tests=
 X-Barracuda-Spam-Report: Code version 3.2, rules version 3.2.3.100943
         Rule breakdown below
          pts rule name              description
         ---- ---------------------- --------------------------------------------------
-        0.50 BSF_RULE7568M          Custom Rule 7568M
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Test the NUMA node id extension rseq field. Compare it against the value
-returned by the getcpu(2) system call while pinned on a specific core.
+Adding the NUMA node id to struct rseq is a straightforward thing to do,
+and a good way to figure out if anything in the user-space ecosystem
+prevents extending struct rseq.
+
+This NUMA node id field allows memory allocators such as tcmalloc to
+take advantage of fast access to the current NUMA node id to perform
+NUMA-aware memory allocation.
+
+It can also be useful for implementing fast-paths for NUMA-aware
+user-space mutexes.
+
+It also allows implementing getcpu(2) purely in user-space.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 ---
- tools/testing/selftests/rseq/basic_test.c |  4 ++++
- tools/testing/selftests/rseq/rseq-abi.h   |  8 +++++++
- tools/testing/selftests/rseq/rseq.c       | 18 +++++++++++++++
- tools/testing/selftests/rseq/rseq.h       | 28 +++++++++++++++++++++++
- 4 files changed, 58 insertions(+)
+ include/trace/events/rseq.h |  4 +++-
+ include/uapi/linux/rseq.h   |  8 ++++++++
+ kernel/rseq.c               | 19 +++++++++++++------
+ 3 files changed, 24 insertions(+), 7 deletions(-)
 
-diff --git a/tools/testing/selftests/rseq/basic_test.c b/tools/testing/selftests/rseq/basic_test.c
-index d8efbfb89193..295eea16466f 100644
---- a/tools/testing/selftests/rseq/basic_test.c
-+++ b/tools/testing/selftests/rseq/basic_test.c
-@@ -22,6 +22,8 @@ void test_cpu_pointer(void)
- 	CPU_ZERO(&test_affinity);
- 	for (i = 0; i < CPU_SETSIZE; i++) {
- 		if (CPU_ISSET(i, &affinity)) {
-+			int node;
-+
- 			CPU_SET(i, &test_affinity);
- 			sched_setaffinity(0, sizeof(test_affinity),
- 					&test_affinity);
-@@ -29,6 +31,8 @@ void test_cpu_pointer(void)
- 			assert(rseq_current_cpu() == i);
- 			assert(rseq_current_cpu_raw() == i);
- 			assert(rseq_cpu_start() == i);
-+			node = rseq_fallback_current_node();
-+			assert(rseq_current_node_id() == node);
- 			CPU_CLR(i, &test_affinity);
- 		}
- 	}
-diff --git a/tools/testing/selftests/rseq/rseq-abi.h b/tools/testing/selftests/rseq/rseq-abi.h
-index 00ac846d85b0..a1faa9162d52 100644
---- a/tools/testing/selftests/rseq/rseq-abi.h
-+++ b/tools/testing/selftests/rseq/rseq-abi.h
-@@ -147,6 +147,14 @@ struct rseq_abi {
+diff --git a/include/trace/events/rseq.h b/include/trace/events/rseq.h
+index a04a64bc1a00..6bd442697354 100644
+--- a/include/trace/events/rseq.h
++++ b/include/trace/events/rseq.h
+@@ -16,13 +16,15 @@ TRACE_EVENT(rseq_update,
+ 
+ 	TP_STRUCT__entry(
+ 		__field(s32, cpu_id)
++		__field(s32, node_id)
+ 	),
+ 
+ 	TP_fast_assign(
+ 		__entry->cpu_id = raw_smp_processor_id();
++		__entry->node_id = cpu_to_node(raw_smp_processor_id());
+ 	),
+ 
+-	TP_printk("cpu_id=%d", __entry->cpu_id)
++	TP_printk("cpu_id=%d node_id=%d", __entry->cpu_id, __entry->node_id)
+ );
+ 
+ TRACE_EVENT(rseq_ip_fixup,
+diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
+index 05d3c4cdeb40..1cb90a435c5c 100644
+--- a/include/uapi/linux/rseq.h
++++ b/include/uapi/linux/rseq.h
+@@ -131,6 +131,14 @@ struct rseq {
  	 */
  	__u32 flags;
  
@@ -114,92 +121,72 @@ index 00ac846d85b0..a1faa9162d52 100644
  	/*
  	 * Flexible array member at end of structure, after last feature field.
  	 */
-diff --git a/tools/testing/selftests/rseq/rseq.c b/tools/testing/selftests/rseq/rseq.c
-index 20ea536d1012..0a96c3c779cd 100644
---- a/tools/testing/selftests/rseq/rseq.c
-+++ b/tools/testing/selftests/rseq/rseq.c
-@@ -79,6 +79,11 @@ static int sys_rseq(struct rseq_abi *rseq_abi, uint32_t rseq_len,
- 	return syscall(__NR_rseq, rseq_abi, rseq_len, flags, sig);
- }
- 
-+static int sys_getcpu(unsigned *cpu, unsigned *node)
-+{
-+	return syscall(__NR_getcpu, cpu, node, NULL);
-+}
-+
- int rseq_available(void)
- {
- 	int rc;
-@@ -199,3 +204,16 @@ int32_t rseq_fallback_current_cpu(void)
- 	}
- 	return cpu;
- }
-+
-+int32_t rseq_fallback_current_node(void)
-+{
-+	uint32_t cpu_id, node_id;
-+	int ret;
-+
-+	ret = sys_getcpu(&cpu_id, &node_id);
-+	if (ret) {
-+		perror("sys_getcpu()");
-+		return ret;
-+	}
-+	return (int32_t) node_id;
-+}
-diff --git a/tools/testing/selftests/rseq/rseq.h b/tools/testing/selftests/rseq/rseq.h
-index 95adc1e1b0db..fd17d0e54a1b 100644
---- a/tools/testing/selftests/rseq/rseq.h
-+++ b/tools/testing/selftests/rseq/rseq.h
-@@ -20,6 +20,15 @@
- #include "rseq-abi.h"
- #include "compiler.h"
- 
-+#ifndef rseq_sizeof_field
-+#define rseq_sizeof_field(TYPE, MEMBER) sizeof((((TYPE *)0)->MEMBER))
-+#endif
-+
-+#ifndef rseq_offsetofend
-+#define rseq_offsetofend(TYPE, MEMBER) \
-+	(offsetof(TYPE, MEMBER)	+ rseq_sizeof_field(TYPE, MEMBER))
-+#endif
-+
- /*
-  * Empty code injection macros, override when testing.
-  * It is important to consider that the ASM injection macros need to be
-@@ -128,6 +137,11 @@ int rseq_unregister_current_thread(void);
+diff --git a/kernel/rseq.c b/kernel/rseq.c
+index 46dc5c2ce2b7..cb7d8a5afc82 100644
+--- a/kernel/rseq.c
++++ b/kernel/rseq.c
+@@ -84,15 +84,17 @@
+  *   F1. <failure>
   */
- int32_t rseq_fallback_current_cpu(void);
  
-+/*
-+ * Restartable sequence fallback for reading the current node number.
-+ */
-+int32_t rseq_fallback_current_node(void);
-+
- /*
-  * Values returned can be either the current CPU number, -1 (rseq is
-  * uninitialized), or -2 (rseq initialization has failed).
-@@ -163,6 +177,20 @@ static inline uint32_t rseq_current_cpu(void)
- 	return cpu;
+-static int rseq_update_cpu_id(struct task_struct *t)
++static int rseq_update_cpu_node_id(struct task_struct *t)
+ {
+-	u32 cpu_id = raw_smp_processor_id();
+ 	struct rseq __user *rseq = t->rseq;
++	u32 cpu_id = raw_smp_processor_id();
++	u32 node_id = cpu_to_node(cpu_id);
+ 
+ 	if (!user_write_access_begin(rseq, t->rseq_len))
+ 		goto efault;
+ 	unsafe_put_user(cpu_id, &rseq->cpu_id_start, efault_end);
+ 	unsafe_put_user(cpu_id, &rseq->cpu_id, efault_end);
++	unsafe_put_user(node_id, &rseq->node_id, efault_end);
+ 	/*
+ 	 * Additional feature fields added after ORIG_RSEQ_SIZE
+ 	 * need to be conditionally updated only if
+@@ -108,9 +110,9 @@ static int rseq_update_cpu_id(struct task_struct *t)
+ 	return -EFAULT;
  }
  
-+static inline bool rseq_node_id_available(void)
-+{
-+	return (int) rseq_feature_size >= rseq_offsetofend(struct rseq_abi, node_id);
-+}
-+
-+/*
-+ * Current NUMA node number.
-+ */
-+static inline uint32_t rseq_current_node_id(void)
-+{
-+	assert(rseq_node_id_available());
-+	return RSEQ_ACCESS_ONCE(rseq_get_abi()->node_id);
-+}
-+
- static inline void rseq_clear_rseq_cs(void)
+-static int rseq_reset_rseq_cpu_id(struct task_struct *t)
++static int rseq_reset_rseq_cpu_node_id(struct task_struct *t)
  {
- 	RSEQ_WRITE_ONCE(rseq_get_abi()->rseq_cs.arch.ptr, 0);
+-	u32 cpu_id_start = 0, cpu_id = RSEQ_CPU_ID_UNINITIALIZED;
++	u32 cpu_id_start = 0, cpu_id = RSEQ_CPU_ID_UNINITIALIZED, node_id = 0;
+ 
+ 	/*
+ 	 * Reset cpu_id_start to its initial state (0).
+@@ -124,6 +126,11 @@ static int rseq_reset_rseq_cpu_id(struct task_struct *t)
+ 	 */
+ 	if (put_user(cpu_id, &t->rseq->cpu_id))
+ 		return -EFAULT;
++	/*
++	 * Reset node_id to its initial state (0).
++	 */
++	if (put_user(node_id, &t->rseq->node_id))
++		return -EFAULT;
+ 	/*
+ 	 * Additional feature fields added after ORIG_RSEQ_SIZE
+ 	 * need to be conditionally reset only if
+@@ -306,7 +313,7 @@ void __rseq_handle_notify_resume(struct ksignal *ksig, struct pt_regs *regs)
+ 		if (unlikely(ret < 0))
+ 			goto error;
+ 	}
+-	if (unlikely(rseq_update_cpu_id(t)))
++	if (unlikely(rseq_update_cpu_node_id(t)))
+ 		goto error;
+ 	return;
+ 
+@@ -353,7 +360,7 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
+ 			return -EINVAL;
+ 		if (current->rseq_sig != sig)
+ 			return -EPERM;
+-		ret = rseq_reset_rseq_cpu_id(current);
++		ret = rseq_reset_rseq_cpu_node_id(current);
+ 		if (ret)
+ 			return ret;
+ 		current->rseq = NULL;
 -- 
 2.25.1
 
