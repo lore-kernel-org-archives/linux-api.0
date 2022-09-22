@@ -2,31 +2,32 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CC54FC54EE9
-	for <linux-api@archiver.kernel.org>; Thu, 22 Sep 2022 11:05:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E164FC6FA92
+	for <linux-api@archiver.kernel.org>; Thu, 22 Sep 2022 11:05:23 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231177AbiIVLFV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Sep 2022 07:05:21 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39902 "EHLO
+        id S229788AbiIVLFX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Sep 2022 07:05:23 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39898 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230164AbiIVLFT (ORCPT
+        with ESMTP id S230265AbiIVLFT (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Thu, 22 Sep 2022 07:05:19 -0400
-Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 68A6BD5890;
+X-Greylist: delayed 329 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 22 Sep 2022 04:05:15 PDT
+Received: from smtpout.efficios.com (smtpout.efficios.com [IPv6:2607:5300:203:5aae::31e5])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6897BD5774;
         Thu, 22 Sep 2022 04:05:14 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1663844382;
-        bh=9PF0WUXMXJr4ttYYrn5/dDzZ2ytq5f5D8QAghnmoM+c=;
-        h=From:To:Cc:Subject:Date:From;
-        b=jNyaRej48gUWXI8j9oE4gbDoTTzz4+7KxYjeoUwxGWNpaZiXQ3Te4w6uPATKKimEg
-         EB6EYgxwxZoxMq38DbQ22Q8zDOIy3rTSQXQuxchxJhJASIm2KaIL+4tTARnyxHORjG
-         nJL2P9rnXyukJA7k/it47FSjm0s/SEMrzgmhkBd84oUK6OphEe8Adomi9+FFGU51sO
-         u6zh5MC8Z6ogM3+D9Br+GiJ03ntOJXu8lWMK9jvhfHRtuQJ1t/WJrKPdeTcLLfaEin
-         whIj5NzRPgp2ceXYlFgyyvAlwoMm3anqUVieM7Eb1DliWebkPdC7LVw1TQGBG/Qfe2
-         +ZTlwKjs0uvRQ==
+        s=smtpout1; t=1663844383;
+        bh=YAwP6DkbOJBcsKrzPF8S0oe3UEgm+Ijtk/YzWr+PCjk=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+        b=ZJ5ivquivigWWu39pheY6F4yr9fpiOhMVmEYNkfcuoW86qbcYxpJGkmr4hcBd2rmX
+         TcQJQ0jdMF1G2hLnNFeFU0y7BUIN16XK2LIs8r1sjy9jBFAuLw9WiJPEb1dfA9srWa
+         cmsPiB/teQZN8NfzNGzj2iuYIM+zujtyTKdrICN6anY9Q0IRk2hjsdluV7DN23V8PX
+         nRB7gwsKDQFYdRHQCiujCOvEUIk7ebf9yuwQDF44//SlikJEpsTmBtYeaTwiMfM5ek
+         Un8lz5HIWnGomdm3G0lXyoeroPOGVpjZIrCUQZN8T7Mr+ht7Pxus2J/7rA4JFESHeW
+         0kukeqUdhL3Mw==
 Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4MYC3L0tXczNlJ;
-        Thu, 22 Sep 2022 06:59:42 -0400 (EDT)
+        by smtpout.efficios.com (Postfix) with ESMTPSA id 4MYC3M0qNMzNF8;
+        Thu, 22 Sep 2022 06:59:43 -0400 (EDT)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Peter Zijlstra <peterz@infradead.org>
 Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
@@ -38,123 +39,144 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         carlos@redhat.com, Peter Oskolkov <posk@posk.io>,
         Alexander Mikhalitsyn <alexander@mihalicyn.com>,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH v4 00/25] RSEQ node id and virtual cpu id extensions
-Date:   Thu, 22 Sep 2022 06:59:15 -0400
-Message-Id: <20220922105941.237830-1-mathieu.desnoyers@efficios.com>
+Subject: [PATCH v4 03/25] rseq: Extend struct rseq with numa node id
+Date:   Thu, 22 Sep 2022 06:59:18 -0400
+Message-Id: <20220922105941.237830-4-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.25.1
+In-Reply-To: <20220922105941.237830-1-mathieu.desnoyers@efficios.com>
+References: <20220922105941.237830-1-mathieu.desnoyers@efficios.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Extend the rseq ABI to expose a NUMA node ID and a vm_vcpu_id field.
+Adding the NUMA node id to struct rseq is a straightforward thing to do,
+and a good way to figure out if anything in the user-space ecosystem
+prevents extending struct rseq.
 
-The NUMA node ID field allows implementing a faster getcpu(2) in libc.
+This NUMA node id field allows memory allocators such as tcmalloc to
+take advantage of fast access to the current NUMA node id to perform
+NUMA-aware memory allocation.
 
-The virtual cpu id allows ideal scaling (down or up) of user-space
-per-cpu data structures. The virtual cpu ids allocated within a memory
-space are tracked by the scheduler, which takes into account the number
-of concurrently running threads, thus implicitly considering the number
-of threads, the cpu affinity, the cpusets applying to those threads, and
-the number of logical cores on the system.
+It can also be useful for implementing fast-paths for NUMA-aware
+user-space mutexes.
 
-This series is based on the v5.19 tag.
+It also allows implementing getcpu(2) purely in user-space.
 
-Thanks,
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+---
+ include/trace/events/rseq.h |  4 +++-
+ include/uapi/linux/rseq.h   |  8 ++++++++
+ kernel/rseq.c               | 19 +++++++++++++------
+ 3 files changed, 24 insertions(+), 7 deletions(-)
 
-Mathieu
-
-Mathieu Desnoyers (25):
-  rseq: Introduce feature size and alignment ELF auxiliary vector
-    entries
-  rseq: Introduce extensible rseq ABI
-  rseq: Extend struct rseq with numa node id
-  selftests/rseq: Use ELF auxiliary vector for extensible rseq
-  selftests/rseq: Implement rseq numa node id field selftest
-  lib: Invert _find_next_bit source arguments
-  lib: Implement find_{first,next}_{zero,one}_and_zero_bit
-  cpumask: Implement cpumask_{first,next}_{zero,one}_and_zero
-  sched: Introduce per memory space current virtual cpu id
-  rseq: Extend struct rseq with per memory space vcpu id
-  selftests/rseq: Remove RSEQ_SKIP_FASTPATH code
-  selftests/rseq: Implement rseq vm_vcpu_id field support
-  selftests/rseq: x86: Template memory ordering and percpu access mode
-  selftests/rseq: arm: Template memory ordering and percpu access mode
-  selftests/rseq: arm64: Template memory ordering and percpu access mode
-  selftests/rseq: mips: Template memory ordering and percpu access mode
-  selftests/rseq: ppc: Template memory ordering and percpu access mode
-  selftests/rseq: s390: Template memory ordering and percpu access mode
-  selftests/rseq: riscv: Template memory ordering and percpu access mode
-  selftests/rseq: Implement basic percpu ops vm_vcpu_id test
-  selftests/rseq: Implement parametrized vm_vcpu_id test
-  selftests/rseq: x86: Implement rseq_load_u32_u32
-  selftests/rseq: Implement numa node id vs vm_vcpu_id invariant test
-  selftests/rseq: parametrized test: Report/abort on negative cpu id
-  tracing/rseq: Add mm_vcpu_id field to rseq_update
-
- fs/binfmt_elf.c                               |    5 +
- fs/exec.c                                     |    6 +
- include/linux/cpumask.h                       |   86 ++
- include/linux/find.h                          |  123 +-
- include/linux/mm.h                            |   25 +
- include/linux/mm_types.h                      |  110 +-
- include/linux/sched.h                         |    9 +
- include/trace/events/rseq.h                   |    7 +-
- include/uapi/linux/auxvec.h                   |    2 +
- include/uapi/linux/rseq.h                     |   22 +
- init/Kconfig                                  |    4 +
- kernel/fork.c                                 |   11 +-
- kernel/ptrace.c                               |    2 +-
- kernel/rseq.c                                 |   61 +-
- kernel/sched/core.c                           |   49 +
- kernel/sched/sched.h                          |  166 +++
- kernel/signal.c                               |    2 +
- lib/find_bit.c                                |   17 +-
- tools/include/linux/find.h                    |    9 +-
- tools/lib/find_bit.c                          |   17 +-
- tools/testing/selftests/rseq/.gitignore       |    5 +
- tools/testing/selftests/rseq/Makefile         |   20 +-
- .../testing/selftests/rseq/basic_numa_test.c  |  117 ++
- .../selftests/rseq/basic_percpu_ops_test.c    |   46 +-
- tools/testing/selftests/rseq/basic_test.c     |    4 +
- tools/testing/selftests/rseq/compiler.h       |    6 +
- tools/testing/selftests/rseq/param_test.c     |  157 ++-
- tools/testing/selftests/rseq/rseq-abi.h       |   22 +
- tools/testing/selftests/rseq/rseq-arm-bits.h  |  505 +++++++
- tools/testing/selftests/rseq/rseq-arm.h       |  701 +---------
- .../testing/selftests/rseq/rseq-arm64-bits.h  |  392 ++++++
- tools/testing/selftests/rseq/rseq-arm64.h     |  520 +------
- .../testing/selftests/rseq/rseq-bits-reset.h  |   10 +
- .../selftests/rseq/rseq-bits-template.h       |   39 +
- tools/testing/selftests/rseq/rseq-mips-bits.h |  462 +++++++
- tools/testing/selftests/rseq/rseq-mips.h      |  646 +--------
- tools/testing/selftests/rseq/rseq-ppc-bits.h  |  454 +++++++
- tools/testing/selftests/rseq/rseq-ppc.h       |  617 +--------
- .../testing/selftests/rseq/rseq-riscv-bits.h  |  410 ++++++
- tools/testing/selftests/rseq/rseq-riscv.h     |  529 +-------
- tools/testing/selftests/rseq/rseq-s390-bits.h |  474 +++++++
- tools/testing/selftests/rseq/rseq-s390.h      |  495 +------
- tools/testing/selftests/rseq/rseq-skip.h      |   65 -
- tools/testing/selftests/rseq/rseq-x86-bits.h  | 1036 ++++++++++++++
- tools/testing/selftests/rseq/rseq-x86.h       | 1193 +----------------
- tools/testing/selftests/rseq/rseq.c           |   86 +-
- tools/testing/selftests/rseq/rseq.h           |  229 +++-
- .../testing/selftests/rseq/run_param_test.sh  |    5 +
- 48 files changed, 5286 insertions(+), 4692 deletions(-)
- create mode 100644 tools/testing/selftests/rseq/basic_numa_test.c
- create mode 100644 tools/testing/selftests/rseq/rseq-arm-bits.h
- create mode 100644 tools/testing/selftests/rseq/rseq-arm64-bits.h
- create mode 100644 tools/testing/selftests/rseq/rseq-bits-reset.h
- create mode 100644 tools/testing/selftests/rseq/rseq-bits-template.h
- create mode 100644 tools/testing/selftests/rseq/rseq-mips-bits.h
- create mode 100644 tools/testing/selftests/rseq/rseq-ppc-bits.h
- create mode 100644 tools/testing/selftests/rseq/rseq-riscv-bits.h
- create mode 100644 tools/testing/selftests/rseq/rseq-s390-bits.h
- delete mode 100644 tools/testing/selftests/rseq/rseq-skip.h
- create mode 100644 tools/testing/selftests/rseq/rseq-x86-bits.h
-
+diff --git a/include/trace/events/rseq.h b/include/trace/events/rseq.h
+index a04a64bc1a00..6bd442697354 100644
+--- a/include/trace/events/rseq.h
++++ b/include/trace/events/rseq.h
+@@ -16,13 +16,15 @@ TRACE_EVENT(rseq_update,
+ 
+ 	TP_STRUCT__entry(
+ 		__field(s32, cpu_id)
++		__field(s32, node_id)
+ 	),
+ 
+ 	TP_fast_assign(
+ 		__entry->cpu_id = raw_smp_processor_id();
++		__entry->node_id = cpu_to_node(raw_smp_processor_id());
+ 	),
+ 
+-	TP_printk("cpu_id=%d", __entry->cpu_id)
++	TP_printk("cpu_id=%d node_id=%d", __entry->cpu_id, __entry->node_id)
+ );
+ 
+ TRACE_EVENT(rseq_ip_fixup,
+diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
+index 05d3c4cdeb40..1cb90a435c5c 100644
+--- a/include/uapi/linux/rseq.h
++++ b/include/uapi/linux/rseq.h
+@@ -131,6 +131,14 @@ struct rseq {
+ 	 */
+ 	__u32 flags;
+ 
++	/*
++	 * Restartable sequences node_id field. Updated by the kernel. Read by
++	 * user-space with single-copy atomicity semantics. This field should
++	 * only be read by the thread which registered this data structure.
++	 * Aligned on 32-bit. Contains the current NUMA node ID.
++	 */
++	__u32 node_id;
++
+ 	/*
+ 	 * Flexible array member at end of structure, after last feature field.
+ 	 */
+diff --git a/kernel/rseq.c b/kernel/rseq.c
+index 46dc5c2ce2b7..cb7d8a5afc82 100644
+--- a/kernel/rseq.c
++++ b/kernel/rseq.c
+@@ -84,15 +84,17 @@
+  *   F1. <failure>
+  */
+ 
+-static int rseq_update_cpu_id(struct task_struct *t)
++static int rseq_update_cpu_node_id(struct task_struct *t)
+ {
+-	u32 cpu_id = raw_smp_processor_id();
+ 	struct rseq __user *rseq = t->rseq;
++	u32 cpu_id = raw_smp_processor_id();
++	u32 node_id = cpu_to_node(cpu_id);
+ 
+ 	if (!user_write_access_begin(rseq, t->rseq_len))
+ 		goto efault;
+ 	unsafe_put_user(cpu_id, &rseq->cpu_id_start, efault_end);
+ 	unsafe_put_user(cpu_id, &rseq->cpu_id, efault_end);
++	unsafe_put_user(node_id, &rseq->node_id, efault_end);
+ 	/*
+ 	 * Additional feature fields added after ORIG_RSEQ_SIZE
+ 	 * need to be conditionally updated only if
+@@ -108,9 +110,9 @@ static int rseq_update_cpu_id(struct task_struct *t)
+ 	return -EFAULT;
+ }
+ 
+-static int rseq_reset_rseq_cpu_id(struct task_struct *t)
++static int rseq_reset_rseq_cpu_node_id(struct task_struct *t)
+ {
+-	u32 cpu_id_start = 0, cpu_id = RSEQ_CPU_ID_UNINITIALIZED;
++	u32 cpu_id_start = 0, cpu_id = RSEQ_CPU_ID_UNINITIALIZED, node_id = 0;
+ 
+ 	/*
+ 	 * Reset cpu_id_start to its initial state (0).
+@@ -124,6 +126,11 @@ static int rseq_reset_rseq_cpu_id(struct task_struct *t)
+ 	 */
+ 	if (put_user(cpu_id, &t->rseq->cpu_id))
+ 		return -EFAULT;
++	/*
++	 * Reset node_id to its initial state (0).
++	 */
++	if (put_user(node_id, &t->rseq->node_id))
++		return -EFAULT;
+ 	/*
+ 	 * Additional feature fields added after ORIG_RSEQ_SIZE
+ 	 * need to be conditionally reset only if
+@@ -306,7 +313,7 @@ void __rseq_handle_notify_resume(struct ksignal *ksig, struct pt_regs *regs)
+ 		if (unlikely(ret < 0))
+ 			goto error;
+ 	}
+-	if (unlikely(rseq_update_cpu_id(t)))
++	if (unlikely(rseq_update_cpu_node_id(t)))
+ 		goto error;
+ 	return;
+ 
+@@ -353,7 +360,7 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
+ 			return -EINVAL;
+ 		if (current->rseq_sig != sig)
+ 			return -EPERM;
+-		ret = rseq_reset_rseq_cpu_id(current);
++		ret = rseq_reset_rseq_cpu_node_id(current);
+ 		if (ret)
+ 			return ret;
+ 		current->rseq = NULL;
 -- 
 2.25.1
 
