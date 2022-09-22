@@ -2,31 +2,31 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4A995C6FA82
-	for <linux-api@archiver.kernel.org>; Thu, 22 Sep 2022 11:05:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0A237C6FA86
+	for <linux-api@archiver.kernel.org>; Thu, 22 Sep 2022 11:05:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229590AbiIVLFZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Sep 2022 07:05:25 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40090 "EHLO
+        id S230450AbiIVLF0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Sep 2022 07:05:26 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40096 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230124AbiIVLFX (ORCPT
+        with ESMTP id S230419AbiIVLFX (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Thu, 22 Sep 2022 07:05:23 -0400
-Received: from smtpout.efficios.com (smtpout.efficios.com [IPv6:2607:5300:203:5aae::31e5])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A5929D5774;
+Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A5960D5776;
         Thu, 22 Sep 2022 04:05:20 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1663844385;
-        bh=V6ifN+Z2o32dRDK/qtc0ACzB5XZyKPg7n5MP45xnYvs=;
+        s=smtpout1; t=1663844382;
+        bh=3FQzak7NFQCeQ17sM6xyWBPLJooy+CEjUwRxboNNo2U=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=mAEHpdA8SUNY4mLBFqOS5l/P1ElKgbZJIN0BMXJAkOqYsMoKJgfFM8xXN72qtLUqp
-         mpzU/ydZLQMX4VAQ2rH4YWDUQ1vS3aMCOdNrAzqM8QhhkV3Dhb07Q/pyUYuQkXn0d6
-         tPh5VCmzismoft78jzhijBqzoQJfdIAlTqyotTeX4Pvq2TymYgFwb1iiEWitZQu0Xs
-         5/pWjGbC+03Z0fpDuXensXeD+zki6dtIXPKHAFo0HdL0w9fYjY8y8m3Q5wz+HYMuu7
-         xEBPE0lnJsDZQAE+oqKVvW32f/7/xUQPBKji4X2YOYPGUf7N706fx7OOpz5CroJc2D
-         LToRXCFiJWg0A==
+        b=X+/AbbML2/P0quyAJOv6FkyBz9aZksNSvQzjsfyfY11DV7G6AO+/jMRcaoOAixu3h
+         4Rvo2+dCvbyx47fwJNBoEz3xP7P+IYQn5qnKAFEF/5siZ0R7HOnhooLH6nTyP0Q4av
+         P3E7FFGSfYZpcFqsUNpk26qX6awghy/8QS6LL4KetWWxZ7UjSO+ZG2yBsu8tsEToC/
+         x+gTwrH1YE7j0k+t/Vbi7NZfxpEb9tN5VSJPyyUblxZUBn0D34EU9doL5YsjPpSj2C
+         3PDNZgaJc2YHBhVft1bcFw8cBSzUBCQZn8D3/I+eLq/uGZmfxjPsI1DfRHO/gsk7fN
+         fM6Joea+Ixd4w==
 Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4MYC3P3SPdzNNF;
-        Thu, 22 Sep 2022 06:59:45 -0400 (EDT)
+        by smtpout.efficios.com (Postfix) with ESMTPSA id 4MYC3L3KNkzNL5;
+        Thu, 22 Sep 2022 06:59:42 -0400 (EDT)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Peter Zijlstra <peterz@infradead.org>
 Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
@@ -38,9 +38,9 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         carlos@redhat.com, Peter Oskolkov <posk@posk.io>,
         Alexander Mikhalitsyn <alexander@mihalicyn.com>,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH v4 10/25] rseq: Extend struct rseq with per memory space vcpu id
-Date:   Thu, 22 Sep 2022 06:59:25 -0400
-Message-Id: <20220922105941.237830-11-mathieu.desnoyers@efficios.com>
+Subject: [PATCH v4 01/25] rseq: Introduce feature size and alignment ELF auxiliary vector entries
+Date:   Thu, 22 Sep 2022 06:59:16 -0400
+Message-Id: <20220922105941.237830-2-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20220922105941.237830-1-mathieu.desnoyers@efficios.com>
 References: <20220922105941.237830-1-mathieu.desnoyers@efficios.com>
@@ -50,79 +50,71 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-If a memory space has fewer threads than cores, or is limited to run on
-few cores concurrently through sched affinity or cgroup cpusets, the
-virtual cpu ids will be values close to 0, thus allowing efficient use
-of user-space memory for per-cpu data structures.
+Export the rseq feature size supported by the kernel as well as the
+required allocation alignment for the rseq per-thread area to user-space
+through ELF auxiliary vector entries.
+
+This is part of the extensible rseq ABI.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 ---
- include/uapi/linux/rseq.h |  9 +++++++++
- kernel/rseq.c             | 11 ++++++++++-
- 2 files changed, 19 insertions(+), 1 deletion(-)
+ fs/binfmt_elf.c             | 5 +++++
+ include/uapi/linux/auxvec.h | 2 ++
+ include/uapi/linux/rseq.h   | 5 +++++
+ 3 files changed, 12 insertions(+)
 
+diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
+index 63c7ebb0da89..04fca1e4cbd2 100644
+--- a/fs/binfmt_elf.c
++++ b/fs/binfmt_elf.c
+@@ -46,6 +46,7 @@
+ #include <linux/cred.h>
+ #include <linux/dax.h>
+ #include <linux/uaccess.h>
++#include <linux/rseq.h>
+ #include <asm/param.h>
+ #include <asm/page.h>
+ 
+@@ -288,6 +289,10 @@ create_elf_tables(struct linux_binprm *bprm, const struct elfhdr *exec,
+ 	if (bprm->have_execfd) {
+ 		NEW_AUX_ENT(AT_EXECFD, bprm->execfd);
+ 	}
++#ifdef CONFIG_RSEQ
++	NEW_AUX_ENT(AT_RSEQ_FEATURE_SIZE, offsetof(struct rseq, end));
++	NEW_AUX_ENT(AT_RSEQ_ALIGN, __alignof__(struct rseq));
++#endif
+ #undef NEW_AUX_ENT
+ 	/* AT_NULL is zero; clear the rest too */
+ 	memset(elf_info, 0, (char *)mm->saved_auxv +
+diff --git a/include/uapi/linux/auxvec.h b/include/uapi/linux/auxvec.h
+index c7e502bf5a6f..6991c4b8ab18 100644
+--- a/include/uapi/linux/auxvec.h
++++ b/include/uapi/linux/auxvec.h
+@@ -30,6 +30,8 @@
+ 				 * differ from AT_PLATFORM. */
+ #define AT_RANDOM 25	/* address of 16 random bytes */
+ #define AT_HWCAP2 26	/* extension of AT_HWCAP */
++#define AT_RSEQ_FEATURE_SIZE	27	/* rseq supported feature size */
++#define AT_RSEQ_ALIGN		28	/* rseq allocation alignment */
+ 
+ #define AT_EXECFN  31	/* filename of program */
+ 
 diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
-index 1cb90a435c5c..77a136586ac6 100644
+index 77ee207623a9..05d3c4cdeb40 100644
 --- a/include/uapi/linux/rseq.h
 +++ b/include/uapi/linux/rseq.h
-@@ -139,6 +139,15 @@ struct rseq {
+@@ -130,6 +130,11 @@ struct rseq {
+ 	 *     this thread.
  	 */
- 	__u32 node_id;
- 
-+	/*
-+	 * Restartable sequences vm_vcpu_id field. Updated by the kernel. Read by
-+	 * user-space with single-copy atomicity semantics. This field should
-+	 * only be read by the thread which registered this data structure.
-+	 * Aligned on 32-bit. Contains the current thread's virtual CPU ID
-+	 * (allocated uniquely within a memory space).
-+	 */
-+	__u32 vm_vcpu_id;
+ 	__u32 flags;
 +
- 	/*
- 	 * Flexible array member at end of structure, after last feature field.
- 	 */
-diff --git a/kernel/rseq.c b/kernel/rseq.c
-index cb7d8a5afc82..1e37662df433 100644
---- a/kernel/rseq.c
-+++ b/kernel/rseq.c
-@@ -89,12 +89,15 @@ static int rseq_update_cpu_node_id(struct task_struct *t)
- 	struct rseq __user *rseq = t->rseq;
- 	u32 cpu_id = raw_smp_processor_id();
- 	u32 node_id = cpu_to_node(cpu_id);
-+	u32 vm_vcpu_id = task_mm_vcpu_id(t);
- 
-+	WARN_ON_ONCE((int) vm_vcpu_id < 0);
- 	if (!user_write_access_begin(rseq, t->rseq_len))
- 		goto efault;
- 	unsafe_put_user(cpu_id, &rseq->cpu_id_start, efault_end);
- 	unsafe_put_user(cpu_id, &rseq->cpu_id, efault_end);
- 	unsafe_put_user(node_id, &rseq->node_id, efault_end);
-+	unsafe_put_user(vm_vcpu_id, &rseq->vm_vcpu_id, efault_end);
- 	/*
- 	 * Additional feature fields added after ORIG_RSEQ_SIZE
- 	 * need to be conditionally updated only if
-@@ -112,7 +115,8 @@ static int rseq_update_cpu_node_id(struct task_struct *t)
- 
- static int rseq_reset_rseq_cpu_node_id(struct task_struct *t)
- {
--	u32 cpu_id_start = 0, cpu_id = RSEQ_CPU_ID_UNINITIALIZED, node_id = 0;
-+	u32 cpu_id_start = 0, cpu_id = RSEQ_CPU_ID_UNINITIALIZED, node_id = 0,
-+	    vm_vcpu_id = 0;
- 
- 	/*
- 	 * Reset cpu_id_start to its initial state (0).
-@@ -131,6 +135,11 @@ static int rseq_reset_rseq_cpu_node_id(struct task_struct *t)
- 	 */
- 	if (put_user(node_id, &t->rseq->node_id))
- 		return -EFAULT;
 +	/*
-+	 * Reset vm_vcpu_id to its initial state (0).
++	 * Flexible array member at end of structure, after last feature field.
 +	 */
-+	if (put_user(vm_vcpu_id, &t->rseq->vm_vcpu_id))
-+		return -EFAULT;
- 	/*
- 	 * Additional feature fields added after ORIG_RSEQ_SIZE
- 	 * need to be conditionally reset only if
++	char end[];
+ } __attribute__((aligned(4 * sizeof(__u64))));
+ 
+ #endif /* _UAPI_LINUX_RSEQ_H */
 -- 
 2.25.1
 
