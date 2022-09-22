@@ -2,31 +2,31 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 663DFC6FA91
-	for <linux-api@archiver.kernel.org>; Thu, 22 Sep 2022 11:05:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CC54FC54EE9
+	for <linux-api@archiver.kernel.org>; Thu, 22 Sep 2022 11:05:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229736AbiIVLFW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Sep 2022 07:05:22 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39900 "EHLO
+        id S231177AbiIVLFV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Sep 2022 07:05:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39902 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230200AbiIVLFT (ORCPT
+        with ESMTP id S230164AbiIVLFT (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Thu, 22 Sep 2022 07:05:19 -0400
 Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 68A34D5776;
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 68A6BD5890;
         Thu, 22 Sep 2022 04:05:14 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1663844385;
-        bh=G7nQnVsC34L6BXYJjaOh5p1rpxLyYjvhnfFLcfQJn88=;
-        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=ISZ0aV5qeyurF0urqswF6ZFx16t+H93xj50z/loLEUQc+3IhphL/hqwCXQAhjBwxk
-         r75IXDyCMhDBGHOFBgmDRIVzkgf7QkEmFVxRyKOHbBRAF2sJs3bYVQAhmBq0LY6nWs
-         FwwB85+qNxoJ5Woyt3llWPoAfxCu/gBlmCYbF8O468ghAs+/x4MX2zGBDvJ6vPzebq
-         hAYd7FedMGCKqGx7EjtrRibSEqFqrG/kL02Qb6G3n3tuOyzE7KnWIKZ8BmXMIHiKZm
-         EjzoThOlnRL5LVB9zzL0awElYCAJFuDbbRIT3RV2hNZkk6fk3W13LAAcRrmJGXMBwl
-         xJzjRSGOdDzNw==
+        s=smtpout1; t=1663844382;
+        bh=9PF0WUXMXJr4ttYYrn5/dDzZ2ytq5f5D8QAghnmoM+c=;
+        h=From:To:Cc:Subject:Date:From;
+        b=jNyaRej48gUWXI8j9oE4gbDoTTzz4+7KxYjeoUwxGWNpaZiXQ3Te4w6uPATKKimEg
+         EB6EYgxwxZoxMq38DbQ22Q8zDOIy3rTSQXQuxchxJhJASIm2KaIL+4tTARnyxHORjG
+         nJL2P9rnXyukJA7k/it47FSjm0s/SEMrzgmhkBd84oUK6OphEe8Adomi9+FFGU51sO
+         u6zh5MC8Z6ogM3+D9Br+GiJ03ntOJXu8lWMK9jvhfHRtuQJ1t/WJrKPdeTcLLfaEin
+         whIj5NzRPgp2ceXYlFgyyvAlwoMm3anqUVieM7Eb1DliWebkPdC7LVw1TQGBG/Qfe2
+         +ZTlwKjs0uvRQ==
 Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4MYC3N5pr4zNnd;
-        Thu, 22 Sep 2022 06:59:44 -0400 (EDT)
+        by smtpout.efficios.com (Postfix) with ESMTPSA id 4MYC3L0tXczNlJ;
+        Thu, 22 Sep 2022 06:59:42 -0400 (EDT)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Peter Zijlstra <peterz@infradead.org>
 Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
@@ -38,147 +38,123 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         carlos@redhat.com, Peter Oskolkov <posk@posk.io>,
         Alexander Mikhalitsyn <alexander@mihalicyn.com>,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH v4 08/25] cpumask: Implement cpumask_{first,next}_{zero,one}_and_zero
-Date:   Thu, 22 Sep 2022 06:59:23 -0400
-Message-Id: <20220922105941.237830-9-mathieu.desnoyers@efficios.com>
+Subject: [PATCH v4 00/25] RSEQ node id and virtual cpu id extensions
+Date:   Thu, 22 Sep 2022 06:59:15 -0400
+Message-Id: <20220922105941.237830-1-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20220922105941.237830-1-mathieu.desnoyers@efficios.com>
-References: <20220922105941.237830-1-mathieu.desnoyers@efficios.com>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Allow finding the first or next bit within two input cpumasks which is
-either:
+Extend the rseq ABI to expose a NUMA node ID and a vm_vcpu_id field.
 
-- both zero and zero,
-- respectively one and zero.
+The NUMA node ID field allows implementing a faster getcpu(2) in libc.
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
----
- include/linux/cpumask.h | 86 +++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 86 insertions(+)
+The virtual cpu id allows ideal scaling (down or up) of user-space
+per-cpu data structures. The virtual cpu ids allocated within a memory
+space are tracked by the scheduler, which takes into account the number
+of concurrently running threads, thus implicitly considering the number
+of threads, the cpu affinity, the cpusets applying to those threads, and
+the number of logical cores on the system.
 
-diff --git a/include/linux/cpumask.h b/include/linux/cpumask.h
-index fe29ac7cc469..0f5c3e47423f 100644
---- a/include/linux/cpumask.h
-+++ b/include/linux/cpumask.h
-@@ -134,6 +134,18 @@ static inline unsigned int cpumask_first_and(const struct cpumask *srcp1,
- 	return 0;
- }
- 
-+static inline unsigned int cpumask_first_one_and_zero(const struct cpumask *srcp1,
-+					     const struct cpumask *srcp2)
-+{
-+	return 0;
-+}
-+
-+static inline unsigned int cpumask_first_zero_and_zero(const struct cpumask *srcp1,
-+					     const struct cpumask *srcp2)
-+{
-+	return 0;
-+}
-+
- static inline unsigned int cpumask_last(const struct cpumask *srcp)
- {
- 	return 0;
-@@ -157,6 +169,20 @@ static inline unsigned int cpumask_next_and(int n,
- 	return n+1;
- }
- 
-+static inline unsigned int cpumask_next_one_and_zero(int n,
-+					     const struct cpumask *srcp1,
-+					     const struct cpumask *srcp2)
-+{
-+	return n+1;
-+}
-+
-+static inline unsigned int cpumask_next_zero_and_zero(int n,
-+					     const struct cpumask *srcp1,
-+					     const struct cpumask *srcp2)
-+{
-+	return n+1;
-+}
-+
- static inline unsigned int cpumask_next_wrap(int n, const struct cpumask *mask,
- 					     int start, bool wrap)
- {
-@@ -230,6 +256,32 @@ unsigned int cpumask_first_and(const struct cpumask *srcp1, const struct cpumask
- 	return find_first_and_bit(cpumask_bits(srcp1), cpumask_bits(srcp2), nr_cpumask_bits);
- }
- 
-+/**
-+ * cpumask_first_one_and_zero - return the first cpu from *srcp1 & ~*srcp2
-+ * @src1p: the first input
-+ * @src2p: the second input
-+ *
-+ * Returns >= nr_cpu_ids if no cpus match in both.
-+ */
-+static inline
-+unsigned int cpumask_first_one_and_zero(const struct cpumask *srcp1, const struct cpumask *srcp2)
-+{
-+	return find_first_one_and_zero_bit(cpumask_bits(srcp1), cpumask_bits(srcp2), nr_cpumask_bits);
-+}
-+
-+/**
-+ * cpumask_first_zero_and_zero - return the first cpu from ~*srcp1 & ~*srcp2
-+ * @src1p: the first input
-+ * @src2p: the second input
-+ *
-+ * Returns >= nr_cpu_ids if no cpus match in both.
-+ */
-+static inline
-+unsigned int cpumask_first_zero_and_zero(const struct cpumask *srcp1, const struct cpumask *srcp2)
-+{
-+	return find_first_zero_and_zero_bit(cpumask_bits(srcp1), cpumask_bits(srcp2), nr_cpumask_bits);
-+}
-+
- /**
-  * cpumask_last - get the last CPU in a cpumask
-  * @srcp:	- the cpumask pointer
-@@ -258,6 +310,40 @@ static inline unsigned int cpumask_next_zero(int n, const struct cpumask *srcp)
- 	return find_next_zero_bit(cpumask_bits(srcp), nr_cpumask_bits, n+1);
- }
- 
-+/**
-+ * cpumask_next_one_and_zero - return the next cpu from *srcp1 & ~*srcp2
-+ * @n: the cpu prior to the place to search (ie. return will be > @n)
-+ * @src1p: the first input
-+ * @src2p: the second input
-+ *
-+ * Returns >= nr_cpu_ids if no cpus match in both.
-+ */
-+static inline
-+unsigned int cpumask_next_one_and_zero(int n, const struct cpumask *srcp1, const struct cpumask *srcp2)
-+{
-+	/* -1 is a legal arg here. */
-+	if (n != -1)
-+		cpumask_check(n);
-+	return find_next_one_and_zero_bit(cpumask_bits(srcp1), cpumask_bits(srcp2), nr_cpumask_bits, n+1);
-+}
-+
-+/**
-+ * cpumask_next_zero_and_zero - return the next cpu from ~*srcp1 & ~*srcp2
-+ * @n: the cpu prior to the place to search (ie. return will be > @n)
-+ * @src1p: the first input
-+ * @src2p: the second input
-+ *
-+ * Returns >= nr_cpu_ids if no cpus match in both.
-+ */
-+static inline
-+unsigned int cpumask_next_zero_and_zero(int n, const struct cpumask *srcp1, const struct cpumask *srcp2)
-+{
-+	/* -1 is a legal arg here. */
-+	if (n != -1)
-+		cpumask_check(n);
-+	return find_next_zero_and_zero_bit(cpumask_bits(srcp1), cpumask_bits(srcp2), nr_cpumask_bits, n+1);
-+}
-+
- int __pure cpumask_next_and(int n, const struct cpumask *, const struct cpumask *);
- int __pure cpumask_any_but(const struct cpumask *mask, unsigned int cpu);
- unsigned int cpumask_local_spread(unsigned int i, int node);
+This series is based on the v5.19 tag.
+
+Thanks,
+
+Mathieu
+
+Mathieu Desnoyers (25):
+  rseq: Introduce feature size and alignment ELF auxiliary vector
+    entries
+  rseq: Introduce extensible rseq ABI
+  rseq: Extend struct rseq with numa node id
+  selftests/rseq: Use ELF auxiliary vector for extensible rseq
+  selftests/rseq: Implement rseq numa node id field selftest
+  lib: Invert _find_next_bit source arguments
+  lib: Implement find_{first,next}_{zero,one}_and_zero_bit
+  cpumask: Implement cpumask_{first,next}_{zero,one}_and_zero
+  sched: Introduce per memory space current virtual cpu id
+  rseq: Extend struct rseq with per memory space vcpu id
+  selftests/rseq: Remove RSEQ_SKIP_FASTPATH code
+  selftests/rseq: Implement rseq vm_vcpu_id field support
+  selftests/rseq: x86: Template memory ordering and percpu access mode
+  selftests/rseq: arm: Template memory ordering and percpu access mode
+  selftests/rseq: arm64: Template memory ordering and percpu access mode
+  selftests/rseq: mips: Template memory ordering and percpu access mode
+  selftests/rseq: ppc: Template memory ordering and percpu access mode
+  selftests/rseq: s390: Template memory ordering and percpu access mode
+  selftests/rseq: riscv: Template memory ordering and percpu access mode
+  selftests/rseq: Implement basic percpu ops vm_vcpu_id test
+  selftests/rseq: Implement parametrized vm_vcpu_id test
+  selftests/rseq: x86: Implement rseq_load_u32_u32
+  selftests/rseq: Implement numa node id vs vm_vcpu_id invariant test
+  selftests/rseq: parametrized test: Report/abort on negative cpu id
+  tracing/rseq: Add mm_vcpu_id field to rseq_update
+
+ fs/binfmt_elf.c                               |    5 +
+ fs/exec.c                                     |    6 +
+ include/linux/cpumask.h                       |   86 ++
+ include/linux/find.h                          |  123 +-
+ include/linux/mm.h                            |   25 +
+ include/linux/mm_types.h                      |  110 +-
+ include/linux/sched.h                         |    9 +
+ include/trace/events/rseq.h                   |    7 +-
+ include/uapi/linux/auxvec.h                   |    2 +
+ include/uapi/linux/rseq.h                     |   22 +
+ init/Kconfig                                  |    4 +
+ kernel/fork.c                                 |   11 +-
+ kernel/ptrace.c                               |    2 +-
+ kernel/rseq.c                                 |   61 +-
+ kernel/sched/core.c                           |   49 +
+ kernel/sched/sched.h                          |  166 +++
+ kernel/signal.c                               |    2 +
+ lib/find_bit.c                                |   17 +-
+ tools/include/linux/find.h                    |    9 +-
+ tools/lib/find_bit.c                          |   17 +-
+ tools/testing/selftests/rseq/.gitignore       |    5 +
+ tools/testing/selftests/rseq/Makefile         |   20 +-
+ .../testing/selftests/rseq/basic_numa_test.c  |  117 ++
+ .../selftests/rseq/basic_percpu_ops_test.c    |   46 +-
+ tools/testing/selftests/rseq/basic_test.c     |    4 +
+ tools/testing/selftests/rseq/compiler.h       |    6 +
+ tools/testing/selftests/rseq/param_test.c     |  157 ++-
+ tools/testing/selftests/rseq/rseq-abi.h       |   22 +
+ tools/testing/selftests/rseq/rseq-arm-bits.h  |  505 +++++++
+ tools/testing/selftests/rseq/rseq-arm.h       |  701 +---------
+ .../testing/selftests/rseq/rseq-arm64-bits.h  |  392 ++++++
+ tools/testing/selftests/rseq/rseq-arm64.h     |  520 +------
+ .../testing/selftests/rseq/rseq-bits-reset.h  |   10 +
+ .../selftests/rseq/rseq-bits-template.h       |   39 +
+ tools/testing/selftests/rseq/rseq-mips-bits.h |  462 +++++++
+ tools/testing/selftests/rseq/rseq-mips.h      |  646 +--------
+ tools/testing/selftests/rseq/rseq-ppc-bits.h  |  454 +++++++
+ tools/testing/selftests/rseq/rseq-ppc.h       |  617 +--------
+ .../testing/selftests/rseq/rseq-riscv-bits.h  |  410 ++++++
+ tools/testing/selftests/rseq/rseq-riscv.h     |  529 +-------
+ tools/testing/selftests/rseq/rseq-s390-bits.h |  474 +++++++
+ tools/testing/selftests/rseq/rseq-s390.h      |  495 +------
+ tools/testing/selftests/rseq/rseq-skip.h      |   65 -
+ tools/testing/selftests/rseq/rseq-x86-bits.h  | 1036 ++++++++++++++
+ tools/testing/selftests/rseq/rseq-x86.h       | 1193 +----------------
+ tools/testing/selftests/rseq/rseq.c           |   86 +-
+ tools/testing/selftests/rseq/rseq.h           |  229 +++-
+ .../testing/selftests/rseq/run_param_test.sh  |    5 +
+ 48 files changed, 5286 insertions(+), 4692 deletions(-)
+ create mode 100644 tools/testing/selftests/rseq/basic_numa_test.c
+ create mode 100644 tools/testing/selftests/rseq/rseq-arm-bits.h
+ create mode 100644 tools/testing/selftests/rseq/rseq-arm64-bits.h
+ create mode 100644 tools/testing/selftests/rseq/rseq-bits-reset.h
+ create mode 100644 tools/testing/selftests/rseq/rseq-bits-template.h
+ create mode 100644 tools/testing/selftests/rseq/rseq-mips-bits.h
+ create mode 100644 tools/testing/selftests/rseq/rseq-ppc-bits.h
+ create mode 100644 tools/testing/selftests/rseq/rseq-riscv-bits.h
+ create mode 100644 tools/testing/selftests/rseq/rseq-s390-bits.h
+ delete mode 100644 tools/testing/selftests/rseq/rseq-skip.h
+ create mode 100644 tools/testing/selftests/rseq/rseq-x86-bits.h
+
 -- 
 2.25.1
 
