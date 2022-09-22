@@ -2,31 +2,31 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 92A82C6FA86
-	for <linux-api@archiver.kernel.org>; Thu, 22 Sep 2022 11:10:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 72E51C54EE9
+	for <linux-api@archiver.kernel.org>; Thu, 22 Sep 2022 11:10:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229461AbiIVLK1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Sep 2022 07:10:27 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49204 "EHLO
+        id S230125AbiIVLK2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Sep 2022 07:10:28 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49188 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229887AbiIVLKX (ORCPT
+        with ESMTP id S229794AbiIVLKX (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Thu, 22 Sep 2022 07:10:23 -0400
 Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8F86454661;
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 67A9A82847;
         Thu, 22 Sep 2022 04:10:14 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1663844385;
-        bh=xDvG695uXRFQo+ozZW1AMh8pOrZLNYQaeWGlwSiIshs=;
+        s=smtpout1; t=1663844390;
+        bh=auYa1ovFBxwlVOdXyzsFpmIYfU5xGGlhNbAcVl/hNjc=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=FHRpQECeGwdfVDBgM4PZm+olBWtXEk7v6zcpQxzyp0lUGlHQ33Ba4XmG5TIXcIyqV
-         iXZzQjy1l21kjjTePwFwzdCsNDktDbq1Xq8iYIrgm39pfsCeVtG/rtsqVl+np5sYlb
-         n5+n29AdGlliCqQvL+7++xxB2xwLVLpXb7mYefDItNmCwMWLpF9/yDqutzdqoLFmsM
-         kdQ4vj32dfV042Z5y0YF996A7TNcCvFZ3Eb1aeUVzjOgQhTrx446I1s/pfqtiEms5H
-         xHMMrRPfoW19TQfHcpPRyRd7fY+yFYb+YWSEJTHGya5UsNX9kGiObjH9vQTuuwWzTy
-         PkBzlmtrZWhsw==
+        b=dlJJYxHvcDOI6mg01Q8sibUpT2402tJzKIWl4LQiUp+0p+7A3q88PgnfFLZh5Jr4e
+         srA56z864iNpnNzLwkACMh9NhYjCGn2GJZyt8fUH0+wVV9RL6XQKoac/YFKXK8wimj
+         PQLlYONoaHiiFaeWjc9AIgkCqlZDivj7oRbXkVszk74WWMsXBDti9gbO3QPmT/lbQl
+         YP7eovCUN7/mtl5iEuMu+ZwXt9+ywy4Et/uf0pmWk3vSuecCaXDWg2ACeCh6pbh5LV
+         Cf8ZxLVEAXLOmdYgFZwg5/NdtI1BYY/xkOGBVcXFBCHum51gIA55OPVw/mLl/vcWiO
+         kywcts2RaXPxQ==
 Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4MYC3P1153zNND;
-        Thu, 22 Sep 2022 06:59:45 -0400 (EDT)
+        by smtpout.efficios.com (Postfix) with ESMTPSA id 4MYC3T5kGJzNbx;
+        Thu, 22 Sep 2022 06:59:49 -0400 (EDT)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Peter Zijlstra <peterz@infradead.org>
 Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
@@ -38,654 +38,413 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         carlos@redhat.com, Peter Oskolkov <posk@posk.io>,
         Alexander Mikhalitsyn <alexander@mihalicyn.com>,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH v4 09/25] sched: Introduce per memory space current virtual cpu id
-Date:   Thu, 22 Sep 2022 06:59:24 -0400
-Message-Id: <20220922105941.237830-10-mathieu.desnoyers@efficios.com>
+Subject: [PATCH v4 21/25] selftests/rseq: Implement parametrized vm_vcpu_id test
+Date:   Thu, 22 Sep 2022 06:59:36 -0400
+Message-Id: <20220922105941.237830-22-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20220922105941.237830-1-mathieu.desnoyers@efficios.com>
 References: <20220922105941.237830-1-mathieu.desnoyers@efficios.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This feature allows the scheduler to expose a current virtual cpu id
-to user-space. This virtual cpu id is within the possible cpus range,
-and is temporarily (and uniquely) assigned while threads are actively
-running within a memory space. If a memory space has fewer threads than
-cores, or is limited to run on few cores concurrently through sched
-affinity or cgroup cpusets, the virtual cpu ids will be values close
-to 0, thus allowing efficient use of user-space memory for per-cpu
-data structures.
+Adapt to the rseq.h API changes introduced by commits
+"selftests/rseq: <arch>: Template memory ordering and percpu access mode".
 
-The vcpu_ids are NUMA-aware. On NUMA systems, when a vcpu_id is observed
-by user-space to be associated with a NUMA node, it is guaranteed to
-never change NUMA node unless a kernel-level NUMA configuration change
-happens.
-
-This feature is meant to be exposed by a new rseq thread area field.
-
-The primary purpose of this feature is to do the heavy-lifting needed
-by memory allocators to allow them to use per-cpu data structures
-efficiently in the following situations:
-
-- Single-threaded applications,
-- Multi-threaded applications on large systems (many cores) with limited
-  cpu affinity mask,
-- Multi-threaded applications on large systems (many cores) with
-  restricted cgroup cpuset per container,
-- Processes using memory from many NUMA nodes.
-
-One of the key concern from scheduler maintainers is the overhead
-associated with additional spin locks or atomic operations in the
-scheduler fast-path. This is why the following optimization is
-implemented.
-
-On context switch between threads belonging to the same memory space,
-transfer the mm_vcpu_id from prev to next without any atomic ops. This
-takes care of use-cases involving frequent context switch between
-threads belonging to the same memory space.
-
-Additional optimizations can be done if the spin locks added when
-context switching between threads belonging to different processes end
-up being a performance bottleneck. Those are left out of this patch
-though. A performance impact would have to be clearly demonstrated to
-justify the added complexity.
-
-The credit goes to Paul Turner (Google) for the vcpu_id idea. This
-feature is implemented based on the discussions with Paul Turner and
-Peter Oskolkov (Google), but I took the liberty to implement scheduler
-fast-path optimizations and my own NUMA-awareness scheme. The rumor has
-it that Google have been running a rseq vcpu_id extension internally at
-Google in production for a year. The tcmalloc source code indeed has
-comments hinting at a vcpu_id prototype extension to the rseq system
-call [1].
-
-The following benchmarks do not show any significant overhead added to
-the scheduler context switch by this feature:
-
-* perf bench sched messaging (process)
-
-Baseline:                    86.5±0.3 ms
-With mm_vcpu_id:             86.7±2.6 ms
-
-* perf bench sched messaging (threaded)
-
-Baseline:                    84.3±3.0 ms
-With mm_vcpu_id:             84.7±2.6 ms
-
-* hackbench (process)
-
-Baseline:                    82.9±2.7 ms
-With mm_vcpu_id:             82.9±2.9 ms
-
-* hackbench (threaded)
-
-Baseline:                    85.2±2.6 ms
-With mm_vcpu_id:             84.4±2.9 ms
-
-[1] https://github.com/google/tcmalloc/blob/master/tcmalloc/internal/linux_syscall_support.h#L26
+Build a new param_test_vm_vcpu_id, param_test_vm_vcpu_id_benchmark, and
+param_test_vm_vcpu_id_compare_twice executables to test the new
+"vm_vcpu_id" rseq field.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 ---
-Changes since v3:
-- Remove per-runqueue vcpu id cache optimization.
-- Remove single-threaded process optimization.
-- Introduce spinlock to protect vcpu id bitmaps.
----
- fs/exec.c                |   6 ++
- include/linux/mm.h       |  25 ++++++
- include/linux/mm_types.h | 110 +++++++++++++++++++++++++-
- include/linux/sched.h    |   5 ++
- init/Kconfig             |   4 +
- kernel/fork.c            |  11 ++-
- kernel/sched/core.c      |  49 ++++++++++++
- kernel/sched/sched.h     | 166 +++++++++++++++++++++++++++++++++++++++
- kernel/signal.c          |   2 +
- 9 files changed, 376 insertions(+), 2 deletions(-)
+ tools/testing/selftests/rseq/.gitignore       |   3 +
+ tools/testing/selftests/rseq/Makefile         |  15 +-
+ tools/testing/selftests/rseq/param_test.c     | 148 ++++++++++++------
+ .../testing/selftests/rseq/run_param_test.sh  |   5 +
+ 4 files changed, 122 insertions(+), 49 deletions(-)
 
-diff --git a/fs/exec.c b/fs/exec.c
-index 778123259e42..e42f76509f36 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -1015,6 +1015,9 @@ static int exec_mmap(struct mm_struct *mm)
- 	active_mm = tsk->active_mm;
- 	tsk->active_mm = mm;
- 	tsk->mm = mm;
-+	mm_init_vcpu_lock(mm);
-+	mm_init_vcpumask(mm);
-+	mm_init_node_vcpumask(mm);
- 	/*
- 	 * This prevents preemption while active_mm is being loaded and
- 	 * it and mm are being updated, which could cause problems for
-@@ -1809,6 +1812,7 @@ static int bprm_execve(struct linux_binprm *bprm,
+diff --git a/tools/testing/selftests/rseq/.gitignore b/tools/testing/selftests/rseq/.gitignore
+index 5a7e5acc628c..db5c1a124c6c 100644
+--- a/tools/testing/selftests/rseq/.gitignore
++++ b/tools/testing/selftests/rseq/.gitignore
+@@ -6,3 +6,6 @@ basic_rseq_op_test
+ param_test
+ param_test_benchmark
+ param_test_compare_twice
++param_test_vm_vcpu_id
++param_test_vm_vcpu_id_benchmark
++param_test_vm_vcpu_id_compare_twice
+diff --git a/tools/testing/selftests/rseq/Makefile b/tools/testing/selftests/rseq/Makefile
+index 4210c135e621..3eec8e166385 100644
+--- a/tools/testing/selftests/rseq/Makefile
++++ b/tools/testing/selftests/rseq/Makefile
+@@ -13,7 +13,8 @@ LDLIBS += -lpthread -ldl
+ OVERRIDE_TARGETS = 1
  
- 	check_unsafe_exec(bprm);
- 	current->in_execve = 1;
-+	sched_vcpu_before_execve(current);
+ TEST_GEN_PROGS = basic_test basic_percpu_ops_test basic_percpu_ops_vm_vcpu_id_test param_test \
+-		param_test_benchmark param_test_compare_twice
++		param_test_benchmark param_test_compare_twice param_test_vm_vcpu_id \
++		param_test_vm_vcpu_id_benchmark param_test_vm_vcpu_id_compare_twice
  
- 	file = do_open_execat(fd, filename, flags);
- 	retval = PTR_ERR(file);
-@@ -1839,6 +1843,7 @@ static int bprm_execve(struct linux_binprm *bprm,
- 	if (retval < 0)
- 		goto out;
+ TEST_GEN_PROGS_EXTENDED = librseq.so
  
-+	sched_vcpu_after_execve(current);
- 	/* execve succeeded */
- 	current->fs->in_exec = 0;
- 	current->in_execve = 0;
-@@ -1858,6 +1863,7 @@ static int bprm_execve(struct linux_binprm *bprm,
- 		force_fatal_sig(SIGSEGV);
- 
- out_unmark:
-+	sched_vcpu_after_execve(current);
- 	current->fs->in_exec = 0;
- 	current->in_execve = 0;
- 
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 7898e29bcfb5..61b8b2e9bac3 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -3447,4 +3447,29 @@ madvise_set_anon_name(struct mm_struct *mm, unsigned long start,
-  */
- #define  ZAP_FLAG_DROP_MARKER        ((__force zap_flags_t) BIT(0))
- 
-+#ifdef CONFIG_SCHED_MM_VCPU
-+void sched_vcpu_before_execve(struct task_struct *t);
-+void sched_vcpu_after_execve(struct task_struct *t);
-+void sched_vcpu_fork(struct task_struct *t);
-+void sched_vcpu_exit_signals(struct task_struct *t);
-+static inline int task_mm_vcpu_id(struct task_struct *t)
-+{
-+	return t->mm_vcpu;
-+}
-+#else
-+static inline void sched_vcpu_before_execve(struct task_struct *t) { }
-+static inline void sched_vcpu_after_execve(struct task_struct *t) { }
-+static inline void sched_vcpu_fork(struct task_struct *t) { }
-+static inline void sched_vcpu_exit_signals(struct task_struct *t) { }
-+static inline int task_mm_vcpu_id(struct task_struct *t)
-+{
-+	/*
-+	 * Use the processor id as a fall-back when the mm vcpu feature is
-+	 * disabled. This provides functional per-cpu data structure accesses
-+	 * in user-space, althrough it won't provide the memory usage benefits.
-+	 */
-+	return raw_smp_processor_id();
-+}
-+#endif
+@@ -39,3 +40,15 @@ $(OUTPUT)/param_test_benchmark: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
+ $(OUTPUT)/param_test_compare_twice: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
+ 					rseq.h rseq-*.h
+ 	$(CC) $(CFLAGS) -DRSEQ_COMPARE_TWICE $< $(LDLIBS) -lrseq -o $@
 +
- #endif /* _LINUX_MM_H */
-diff --git a/include/linux/mm_types.h b/include/linux/mm_types.h
-index c29ab4c0cd5c..a85b17a290fd 100644
---- a/include/linux/mm_types.h
-+++ b/include/linux/mm_types.h
-@@ -17,6 +17,7 @@
- #include <linux/page-flags-layout.h>
- #include <linux/workqueue.h>
- #include <linux/seqlock.h>
-+#include <linux/nodemask.h>
++$(OUTPUT)/param_test_vm_vcpu_id: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
++					rseq.h rseq-*.h
++	$(CC) $(CFLAGS) -DBUILDOPT_RSEQ_PERCPU_VM_VCPU_ID $< $(LDLIBS) -lrseq -o $@
++
++$(OUTPUT)/param_test_vm_vcpu_id_benchmark: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
++					rseq.h rseq-*.h
++	$(CC) $(CFLAGS) -DBUILDOPT_RSEQ_PERCPU_VM_VCPU_ID -DBENCHMARK $< $(LDLIBS) -lrseq -o $@
++
++$(OUTPUT)/param_test_vm_vcpu_id_compare_twice: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
++					rseq.h rseq-*.h
++	$(CC) $(CFLAGS) -DBUILDOPT_RSEQ_PERCPU_VM_VCPU_ID -DRSEQ_COMPARE_TWICE $< $(LDLIBS) -lrseq -o $@
+diff --git a/tools/testing/selftests/rseq/param_test.c b/tools/testing/selftests/rseq/param_test.c
+index 9869369a8607..f3687a90ec0c 100644
+--- a/tools/testing/selftests/rseq/param_test.c
++++ b/tools/testing/selftests/rseq/param_test.c
+@@ -16,6 +16,7 @@
+ #include <signal.h>
+ #include <errno.h>
+ #include <stddef.h>
++#include <stdbool.h>
  
- #include <asm/mmu.h>
- 
-@@ -528,7 +529,19 @@ struct mm_struct {
- 		 * &struct mm_struct is freed.
- 		 */
- 		atomic_t mm_count;
--
-+#ifdef CONFIG_SCHED_MM_VCPU
-+		/**
-+		 * @vcpu_lock: Protect vcpu_id bitmap updates vs lookups.
-+		 *
-+		 * Prevent situations where updates to the vcpu_id bitmap
-+		 * happen concurrently with lookups. Those can lead to
-+		 * situations where a lookup cannot find a free bit simply
-+		 * because it was unlucky enough to load, non-atomically,
-+		 * bitmap words as they were being concurrently updated by the
-+		 * updaters.
-+		 */
-+		spinlock_t vcpu_lock;
-+#endif
- #ifdef CONFIG_MMU
- 		atomic_long_t pgtables_bytes;	/* PTE page table pages */
- #endif
-@@ -693,6 +706,101 @@ static inline cpumask_t *mm_cpumask(struct mm_struct *mm)
- 	return (struct cpumask *)&mm->cpu_bitmap;
- }
- 
-+#ifdef CONFIG_SCHED_MM_VCPU
-+/* Future-safe accessor for struct mm_struct's vcpu_mask. */
-+static inline cpumask_t *mm_vcpumask(struct mm_struct *mm)
-+{
-+	unsigned long vcpu_bitmap = (unsigned long)mm;
-+
-+	vcpu_bitmap += offsetof(struct mm_struct, cpu_bitmap);
-+	/* Skip cpu_bitmap */
-+	vcpu_bitmap += cpumask_size();
-+	return (struct cpumask *)vcpu_bitmap;
-+}
-+
-+static inline void mm_init_vcpumask(struct mm_struct *mm)
-+{
-+	cpumask_clear(mm_vcpumask(mm));
-+}
-+
-+static inline unsigned int mm_vcpumask_size(void)
-+{
-+	return cpumask_size();
-+}
-+
-+#else
-+static inline cpumask_t *mm_vcpumask(struct mm_struct *mm)
-+{
-+	return NULL;
-+}
-+
-+static inline void mm_init_vcpumask(struct mm_struct *mm) { }
-+
-+static inline unsigned int mm_vcpumask_size(void)
-+{
-+	return 0;
-+}
-+#endif
-+
-+#if defined(CONFIG_SCHED_MM_VCPU) && defined(CONFIG_NUMA)
-+/*
-+ * Layout of node vcpumasks:
-+ * - node_alloc vcpumask:        cpumask tracking which vcpu_id were
-+ *                               allocated (across nodes) in this
-+ *                               memory space.
-+ * - node vcpumask[nr_node_ids]: per-node cpumask tracking which vcpu_id
-+ *                               were allocated in this memory space.
-+ */
-+static inline cpumask_t *mm_node_alloc_vcpumask(struct mm_struct *mm)
-+{
-+	unsigned long vcpu_bitmap = (unsigned long)mm_vcpumask(mm);
-+
-+	/* Skip mm_vcpumask */
-+	vcpu_bitmap += cpumask_size();
-+	return (struct cpumask *)vcpu_bitmap;
-+}
-+
-+static inline cpumask_t *mm_node_vcpumask(struct mm_struct *mm, unsigned int node)
-+{
-+	unsigned long vcpu_bitmap = (unsigned long)mm_node_alloc_vcpumask(mm);
-+
-+	/* Skip node alloc vcpumask */
-+	vcpu_bitmap += cpumask_size();
-+	vcpu_bitmap += node * cpumask_size();
-+	return (struct cpumask *)vcpu_bitmap;
-+}
-+
-+static inline void mm_init_node_vcpumask(struct mm_struct *mm)
-+{
-+	unsigned int node;
-+
-+	if (num_possible_nodes() == 1)
-+		return;
-+	cpumask_clear(mm_node_alloc_vcpumask(mm));
-+	for (node = 0; node < nr_node_ids; node++)
-+		cpumask_clear(mm_node_vcpumask(mm, node));
-+}
-+
-+static inline void mm_init_vcpu_lock(struct mm_struct *mm)
-+{
-+	spin_lock_init(&mm->vcpu_lock);
-+}
-+
-+static inline unsigned int mm_node_vcpumask_size(void)
-+{
-+	if (num_possible_nodes() == 1)
-+		return 0;
-+	return (nr_node_ids + 1) * cpumask_size();
-+}
-+#else
-+static inline void mm_init_node_vcpumask(struct mm_struct *mm) { }
-+static inline void mm_init_vcpu_lock(struct mm_struct *mm) { }
-+static inline unsigned int mm_node_vcpumask_size(void)
-+{
-+	return 0;
-+}
-+#endif
-+
- struct mmu_gather;
- extern void tlb_gather_mmu(struct mmu_gather *tlb, struct mm_struct *mm);
- extern void tlb_gather_mmu_fullmm(struct mmu_gather *tlb, struct mm_struct *mm);
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 6a80ce113d0e..9a2322c51b12 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1300,6 +1300,11 @@ struct task_struct {
- 	unsigned long rseq_event_mask;
- #endif
- 
-+#ifdef CONFIG_SCHED_MM_VCPU
-+	int				mm_vcpu;	/* Current vcpu in mm */
-+	int				mm_vcpu_active;	/* Whether vcpu bitmap is active */
-+#endif
-+
- 	struct tlbflush_unmap_batch	tlb_ubc;
- 
- 	union {
-diff --git a/init/Kconfig b/init/Kconfig
-index c7900e8975f1..c0e830670b74 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -1027,6 +1027,10 @@ config RT_GROUP_SCHED
- 
- endif #CGROUP_SCHED
- 
-+config SCHED_MM_VCPU
-+	def_bool y
-+	depends on SMP && RSEQ
-+
- config UCLAMP_TASK_GROUP
- 	bool "Utilization clamping per group of tasks"
- 	depends on CGROUP_SCHED
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 9d44f2d46c69..11bcca0ca25c 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -1049,6 +1049,10 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
- 	tsk->reported_split_lock = 0;
- #endif
- 
-+#ifdef CONFIG_SCHED_MM_VCPU
-+	tsk->mm_vcpu = 0;
-+	tsk->mm_vcpu_active = 0;
-+#endif
- 	return tsk;
- 
- free_stack:
-@@ -1152,6 +1156,9 @@ static struct mm_struct *mm_init(struct mm_struct *mm, struct task_struct *p,
- 		goto fail_nocontext;
- 
- 	mm->user_ns = get_user_ns(user_ns);
-+	mm_init_vcpu_lock(mm);
-+	mm_init_vcpumask(mm);
-+	mm_init_node_vcpumask(mm);
- 	return mm;
- 
- fail_nocontext:
-@@ -1580,6 +1587,7 @@ static int copy_mm(unsigned long clone_flags, struct task_struct *tsk)
- 
- 	tsk->mm = mm;
- 	tsk->active_mm = mm;
-+	sched_vcpu_fork(tsk);
- 	return 0;
- }
- 
-@@ -3018,7 +3026,8 @@ void __init proc_caches_init(void)
- 	 * dynamically sized based on the maximum CPU number this system
- 	 * can have, taking hotplug into account (nr_cpu_ids).
- 	 */
--	mm_size = sizeof(struct mm_struct) + cpumask_size();
-+	mm_size = sizeof(struct mm_struct) + cpumask_size() + mm_vcpumask_size() +
-+		  mm_node_vcpumask_size();
- 
- 	mm_cachep = kmem_cache_create_usercopy("mm_struct",
- 			mm_size, ARCH_MIN_MMSTRUCT_ALIGN,
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index da0bf6fe9ecd..402a68761a2b 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -4955,6 +4955,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
- 	sched_info_switch(rq, prev, next);
- 	perf_event_task_sched_out(prev, next);
- 	rseq_preempt(prev);
-+	switch_mm_vcpu(prev, next);
- 	fire_sched_out_preempt_notifiers(prev, next);
- 	kmap_local_sched_out();
- 	prepare_task(next);
-@@ -11161,3 +11162,51 @@ void call_trace_sched_update_nr_running(struct rq *rq, int count)
+ static inline pid_t rseq_gettid(void)
  {
-         trace_sched_update_nr_running_tp(rq, count);
+@@ -36,7 +37,7 @@ static int opt_modulo, verbose;
+ 
+ static int opt_yield, opt_signal, opt_sleep,
+ 		opt_disable_rseq, opt_threads = 200,
+-		opt_disable_mod = 0, opt_test = 's', opt_mb = 0;
++		opt_disable_mod = 0, opt_test = 's';
+ 
+ static long long opt_reps = 5000;
+ 
+@@ -264,6 +265,63 @@ unsigned int yield_mod_cnt, nr_abort;
+ 
+ #include "rseq.h"
+ 
++static enum rseq_mo opt_mo = RSEQ_MO_RELAXED;
++
++#ifdef RSEQ_ARCH_HAS_OFFSET_DEREF_ADDV
++#define TEST_MEMBARRIER
++
++static int sys_membarrier(int cmd, int flags, int cpu_id)
++{
++	return syscall(__NR_membarrier, cmd, flags, cpu_id);
++}
++#endif
++
++#ifdef BUILDOPT_RSEQ_PERCPU_VM_VCPU_ID
++# define RSEQ_PERCPU	RSEQ_PERCPU_VM_VCPU_ID
++static
++int get_current_cpu_id(void)
++{
++	return rseq_current_vm_vcpu_id();
++}
++static
++bool rseq_validate_cpu_id(void)
++{
++	return rseq_vm_vcpu_id_available();
++}
++# ifdef TEST_MEMBARRIER
++/*
++ * Membarrier does not currently support targeting a vm_vcpu_id, so
++ * issue the barrier on all cpus.
++ */
++static
++int rseq_membarrier_expedited(int cpu)
++{
++	return sys_membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED_RSEQ,
++			      0, 0);
++}
++# endif /* TEST_MEMBARRIER */
++#else
++# define RSEQ_PERCPU	RSEQ_PERCPU_CPU_ID
++static
++int get_current_cpu_id(void)
++{
++	return rseq_cpu_start();
++}
++static
++bool rseq_validate_cpu_id(void)
++{
++	return rseq_current_cpu_raw() >= 0;
++}
++# ifdef TEST_MEMBARRIER
++static
++int rseq_membarrier_expedited(int cpu)
++{
++	return sys_membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED_RSEQ,
++			      MEMBARRIER_CMD_FLAG_CPU, cpu);
++}
++# endif /* TEST_MEMBARRIER */
++#endif
++
+ struct percpu_lock_entry {
+ 	intptr_t v;
+ } __attribute__((aligned(128)));
+@@ -351,8 +409,9 @@ static int rseq_this_cpu_lock(struct percpu_lock *lock)
+ 	for (;;) {
+ 		int ret;
+ 
+-		cpu = rseq_cpu_start();
+-		ret = rseq_cmpeqv_storev(&lock->c[cpu].v,
++		cpu = get_current_cpu_id();
++		ret = rseq_cmpeqv_storev(RSEQ_MO_RELAXED, RSEQ_PERCPU,
++					 &lock->c[cpu].v,
+ 					 0, 1, cpu);
+ 		if (rseq_likely(!ret))
+ 			break;
+@@ -469,8 +528,9 @@ void *test_percpu_inc_thread(void *arg)
+ 		do {
+ 			int cpu;
+ 
+-			cpu = rseq_cpu_start();
+-			ret = rseq_addv(&data->c[cpu].count, 1, cpu);
++			cpu = get_current_cpu_id();
++			ret = rseq_addv(RSEQ_MO_RELAXED, RSEQ_PERCPU,
++					&data->c[cpu].count, 1, cpu);
+ 		} while (rseq_unlikely(ret));
+ #ifndef BENCHMARK
+ 		if (i != 0 && !(i % (reps / 10)))
+@@ -539,13 +599,14 @@ void this_cpu_list_push(struct percpu_list *list,
+ 		intptr_t *targetptr, newval, expect;
+ 		int ret;
+ 
+-		cpu = rseq_cpu_start();
++		cpu = get_current_cpu_id();
+ 		/* Load list->c[cpu].head with single-copy atomicity. */
+ 		expect = (intptr_t)RSEQ_READ_ONCE(list->c[cpu].head);
+ 		newval = (intptr_t)node;
+ 		targetptr = (intptr_t *)&list->c[cpu].head;
+ 		node->next = (struct percpu_list_node *)expect;
+-		ret = rseq_cmpeqv_storev(targetptr, expect, newval, cpu);
++		ret = rseq_cmpeqv_storev(RSEQ_MO_RELAXED, RSEQ_PERCPU,
++					 targetptr, expect, newval, cpu);
+ 		if (rseq_likely(!ret))
+ 			break;
+ 		/* Retry if comparison fails or rseq aborts. */
+@@ -571,13 +632,14 @@ struct percpu_list_node *this_cpu_list_pop(struct percpu_list *list,
+ 		long offset;
+ 		int ret;
+ 
+-		cpu = rseq_cpu_start();
++		cpu = get_current_cpu_id();
+ 		targetptr = (intptr_t *)&list->c[cpu].head;
+ 		expectnot = (intptr_t)NULL;
+ 		offset = offsetof(struct percpu_list_node, next);
+ 		load = (intptr_t *)&head;
+-		ret = rseq_cmpnev_storeoffp_load(targetptr, expectnot,
+-						   offset, load, cpu);
++		ret = rseq_cmpnev_storeoffp_load(RSEQ_MO_RELAXED, RSEQ_PERCPU,
++						 targetptr, expectnot,
++						 offset, load, cpu);
+ 		if (rseq_likely(!ret)) {
+ 			node = head;
+ 			break;
+@@ -715,7 +777,7 @@ bool this_cpu_buffer_push(struct percpu_buffer *buffer,
+ 		intptr_t offset;
+ 		int ret;
+ 
+-		cpu = rseq_cpu_start();
++		cpu = get_current_cpu_id();
+ 		offset = RSEQ_READ_ONCE(buffer->c[cpu].offset);
+ 		if (offset == buffer->c[cpu].buflen)
+ 			break;
+@@ -723,14 +785,9 @@ bool this_cpu_buffer_push(struct percpu_buffer *buffer,
+ 		targetptr_spec = (intptr_t *)&buffer->c[cpu].array[offset];
+ 		newval_final = offset + 1;
+ 		targetptr_final = &buffer->c[cpu].offset;
+-		if (opt_mb)
+-			ret = rseq_cmpeqv_trystorev_storev_release(
+-				targetptr_final, offset, targetptr_spec,
+-				newval_spec, newval_final, cpu);
+-		else
+-			ret = rseq_cmpeqv_trystorev_storev(targetptr_final,
+-				offset, targetptr_spec, newval_spec,
+-				newval_final, cpu);
++		ret = rseq_cmpeqv_trystorev_storev(opt_mo, RSEQ_PERCPU,
++			targetptr_final, offset, targetptr_spec,
++			newval_spec, newval_final, cpu);
+ 		if (rseq_likely(!ret)) {
+ 			result = true;
+ 			break;
+@@ -753,7 +810,7 @@ struct percpu_buffer_node *this_cpu_buffer_pop(struct percpu_buffer *buffer,
+ 		intptr_t offset;
+ 		int ret;
+ 
+-		cpu = rseq_cpu_start();
++		cpu = get_current_cpu_id();
+ 		/* Load offset with single-copy atomicity. */
+ 		offset = RSEQ_READ_ONCE(buffer->c[cpu].offset);
+ 		if (offset == 0) {
+@@ -763,7 +820,8 @@ struct percpu_buffer_node *this_cpu_buffer_pop(struct percpu_buffer *buffer,
+ 		head = RSEQ_READ_ONCE(buffer->c[cpu].array[offset - 1]);
+ 		newval = offset - 1;
+ 		targetptr = (intptr_t *)&buffer->c[cpu].offset;
+-		ret = rseq_cmpeqv_cmpeqv_storev(targetptr, offset,
++		ret = rseq_cmpeqv_cmpeqv_storev(RSEQ_MO_RELAXED, RSEQ_PERCPU,
++			targetptr, offset,
+ 			(intptr_t *)&buffer->c[cpu].array[offset - 1],
+ 			(intptr_t)head, newval, cpu);
+ 		if (rseq_likely(!ret))
+@@ -920,7 +978,7 @@ bool this_cpu_memcpy_buffer_push(struct percpu_memcpy_buffer *buffer,
+ 		size_t copylen;
+ 		int ret;
+ 
+-		cpu = rseq_cpu_start();
++		cpu = get_current_cpu_id();
+ 		/* Load offset with single-copy atomicity. */
+ 		offset = RSEQ_READ_ONCE(buffer->c[cpu].offset);
+ 		if (offset == buffer->c[cpu].buflen)
+@@ -931,15 +989,11 @@ bool this_cpu_memcpy_buffer_push(struct percpu_memcpy_buffer *buffer,
+ 		copylen = sizeof(item);
+ 		newval_final = offset + 1;
+ 		targetptr_final = &buffer->c[cpu].offset;
+-		if (opt_mb)
+-			ret = rseq_cmpeqv_trymemcpy_storev_release(
+-				targetptr_final, offset,
+-				destptr, srcptr, copylen,
+-				newval_final, cpu);
+-		else
+-			ret = rseq_cmpeqv_trymemcpy_storev(targetptr_final,
+-				offset, destptr, srcptr, copylen,
+-				newval_final, cpu);
++		ret = rseq_cmpeqv_trymemcpy_storev(
++			opt_mo, RSEQ_PERCPU,
++			targetptr_final, offset,
++			destptr, srcptr, copylen,
++			newval_final, cpu);
+ 		if (rseq_likely(!ret)) {
+ 			result = true;
+ 			break;
+@@ -964,7 +1018,7 @@ bool this_cpu_memcpy_buffer_pop(struct percpu_memcpy_buffer *buffer,
+ 		size_t copylen;
+ 		int ret;
+ 
+-		cpu = rseq_cpu_start();
++		cpu = get_current_cpu_id();
+ 		/* Load offset with single-copy atomicity. */
+ 		offset = RSEQ_READ_ONCE(buffer->c[cpu].offset);
+ 		if (offset == 0)
+@@ -975,8 +1029,8 @@ bool this_cpu_memcpy_buffer_pop(struct percpu_memcpy_buffer *buffer,
+ 		copylen = sizeof(*item);
+ 		newval_final = offset - 1;
+ 		targetptr_final = &buffer->c[cpu].offset;
+-		ret = rseq_cmpeqv_trymemcpy_storev(targetptr_final,
+-			offset, destptr, srcptr, copylen,
++		ret = rseq_cmpeqv_trymemcpy_storev(RSEQ_MO_RELAXED, RSEQ_PERCPU,
++			targetptr_final, offset, destptr, srcptr, copylen,
+ 			newval_final, cpu);
+ 		if (rseq_likely(!ret)) {
+ 			result = true;
+@@ -1151,7 +1205,7 @@ static int set_signal_handler(void)
  }
-+
-+#ifdef CONFIG_SCHED_MM_VCPU
-+void sched_vcpu_exit_signals(struct task_struct *t)
-+{
-+	struct mm_struct *mm = t->mm;
-+
-+	if (!mm)
-+		return;
-+	preempt_disable();
-+	mm_vcpu_put(mm, t->mm_vcpu);
-+	t->mm_vcpu = -1;
-+	t->mm_vcpu_active = 0;
-+	preempt_enable();
-+}
-+
-+void sched_vcpu_before_execve(struct task_struct *t)
-+{
-+	struct mm_struct *mm = t->mm;
-+
-+	if (!mm)
-+		return;
-+	preempt_disable();
-+	mm_vcpu_put(mm, t->mm_vcpu);
-+	t->mm_vcpu = -1;
-+	t->mm_vcpu_active = 0;
-+	preempt_enable();
-+}
-+
-+void sched_vcpu_after_execve(struct task_struct *t)
-+{
-+	struct mm_struct *mm = t->mm;
-+
-+	WARN_ON_ONCE((t->flags & PF_KTHREAD) || !t->mm);
-+
-+	preempt_disable();
-+	t->mm_vcpu = mm_vcpu_get(mm);
-+	t->mm_vcpu_active = 1;
-+	preempt_enable();
-+	rseq_set_notify_resume(t);
-+}
-+
-+void sched_vcpu_fork(struct task_struct *t)
-+{
-+	WARN_ON_ONCE((t->flags & PF_KTHREAD) || !t->mm);
-+	t->mm_vcpu = -1;
-+	t->mm_vcpu_active = 1;
-+}
-+#endif
-diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 47b89a0fc6e5..59c51fd4367a 100644
---- a/kernel/sched/sched.h
-+++ b/kernel/sched/sched.h
-@@ -3116,4 +3116,170 @@ extern int sched_dynamic_mode(const char *str);
- extern void sched_dynamic_update(int mode);
- #endif
  
-+#ifdef CONFIG_SCHED_MM_VCPU
-+static inline int __mm_vcpu_get_single_node(struct mm_struct *mm)
-+{
-+	struct cpumask *cpumask;
-+	int vcpu;
-+
-+	cpumask = mm_vcpumask(mm);
-+	vcpu = cpumask_first_zero(cpumask);
-+	if (vcpu >= nr_cpu_ids)
-+		return -1;
-+	__cpumask_set_cpu(vcpu, cpumask);
-+	return vcpu;
-+}
-+
-+#ifdef CONFIG_NUMA
-+static inline bool mm_node_vcpumask_test_cpu(struct mm_struct *mm, int vcpu_id)
-+{
-+	if (num_possible_nodes() == 1)
-+		return true;
-+	return cpumask_test_cpu(vcpu_id, mm_node_vcpumask(mm, numa_node_id()));
-+}
-+
-+static inline int __mm_vcpu_get(struct mm_struct *mm)
-+{
-+	struct cpumask *cpumask = mm_vcpumask(mm),
-+		       *node_cpumask = mm_node_vcpumask(mm, numa_node_id()),
-+		       *node_alloc_cpumask = mm_node_alloc_vcpumask(mm);
-+	unsigned int node;
-+	int vcpu;
-+
-+	if (num_possible_nodes() == 1)
-+		return __mm_vcpu_get_single_node(mm);
-+
-+	/*
-+	 * Try to reserve lowest available vcpu number within those already
-+	 * reserved for this NUMA node.
-+	 */
-+	vcpu = cpumask_first_one_and_zero(node_cpumask, cpumask);
-+	if (vcpu >= nr_cpu_ids)
-+		goto alloc_numa;
-+	__cpumask_set_cpu(vcpu, cpumask);
-+	goto end;
-+
-+alloc_numa:
-+	/*
-+	 * Try to reserve lowest available vcpu number within those not already
-+	 * allocated for numa nodes.
-+	 */
-+	vcpu = cpumask_first_zero_and_zero(node_alloc_cpumask, cpumask);
-+	if (vcpu >= nr_cpu_ids)
-+		goto numa_update;
-+	__cpumask_set_cpu(vcpu, cpumask);
-+	__cpumask_set_cpu(vcpu, node_cpumask);
-+	__cpumask_set_cpu(vcpu, node_alloc_cpumask);
-+	goto end;
-+
-+numa_update:
-+	/*
-+	 * NUMA node id configuration changed for at least one CPU in the system.
-+	 * We need to steal a currently unused vcpu_id from an overprovisioned
-+	 * node for our current node. Userspace must handle the fact that the
-+	 * node id associated with this vcpu_id may change due to node ID
-+	 * reconfiguration.
-+	 *
-+	 * Count how many possible cpus are attached to each (other) node id,
-+	 * and compare this with the per-mm node vcpumask cpu count. Find one
-+	 * which has too many cpus in its mask to steal from.
-+	 */
-+	for (node = 0; node < nr_node_ids; node++) {
-+		struct cpumask *iter_cpumask;
-+
-+		if (node == numa_node_id())
-+			continue;
-+		iter_cpumask = mm_node_vcpumask(mm, node);
-+		if (nr_cpus_node(node) < cpumask_weight(iter_cpumask)) {
-+			/* Try to steal from this node. */
-+			vcpu = cpumask_first_one_and_zero(iter_cpumask, cpumask);
-+			if (vcpu >= nr_cpu_ids)
-+				goto steal_fail;
-+			__cpumask_set_cpu(vcpu, cpumask);
-+			__cpumask_clear_cpu(vcpu, iter_cpumask);
-+			__cpumask_set_cpu(vcpu, node_cpumask);
-+			goto end;
-+		}
-+	}
-+
-+steal_fail:
-+	/*
-+	 * Our attempt at gracefully stealing a vcpu_id from another
-+	 * overprovisioned NUMA node failed. Fallback to grabbing the first
-+	 * available vcpu_id.
-+	 */
-+	vcpu = cpumask_first_zero(cpumask);
-+	if (vcpu >= nr_cpu_ids)
-+		return -1;
-+	__cpumask_set_cpu(vcpu, cpumask);
-+	/* Steal vcpu from its numa node mask. */
-+	for (node = 0; node < nr_node_ids; node++) {
-+		struct cpumask *iter_cpumask;
-+
-+		if (node == numa_node_id())
-+			continue;
-+		iter_cpumask = mm_node_vcpumask(mm, node);
-+		if (cpumask_test_cpu(vcpu, iter_cpumask)) {
-+			__cpumask_clear_cpu(vcpu, iter_cpumask);
-+			break;
-+		}
-+	}
-+	__cpumask_set_cpu(vcpu, node_cpumask);
-+end:
-+	return vcpu;
-+}
-+
-+#else
-+static inline bool mm_node_vcpumask_test_cpu(struct mm_struct *mm, int vcpu_id)
-+{
-+	return true;
-+}
-+static inline int __mm_vcpu_get(struct mm_struct *mm)
-+{
-+	return __mm_vcpu_get_single_node(mm);
-+}
-+#endif
-+
-+static inline void mm_vcpu_put(struct mm_struct *mm, int vcpu)
-+{
-+	if (vcpu < 0)
-+		return;
-+	spin_lock(&mm->vcpu_lock);
-+	__cpumask_clear_cpu(vcpu, mm_vcpumask(mm));
-+	spin_unlock(&mm->vcpu_lock);
-+}
-+
-+static inline int mm_vcpu_get(struct mm_struct *mm)
-+{
-+	int ret;
-+
-+	spin_lock(&mm->vcpu_lock);
-+	ret = __mm_vcpu_get(mm);
-+	spin_unlock(&mm->vcpu_lock);
-+	return ret;
-+}
-+
-+static inline void switch_mm_vcpu(struct task_struct *prev, struct task_struct *next)
-+{
-+	if (prev->mm_vcpu_active) {
-+		if (next->mm_vcpu_active && next->mm == prev->mm) {
-+			/*
-+			 * Context switch between threads in same mm, hand over
-+			 * the mm_vcpu from prev to next.
-+			 */
-+			next->mm_vcpu = prev->mm_vcpu;
-+			prev->mm_vcpu = -1;
-+			return;
-+		}
-+		mm_vcpu_put(prev->mm, prev->mm_vcpu);
-+		prev->mm_vcpu = -1;
-+	}
-+	if (next->mm_vcpu_active)
-+		next->mm_vcpu = mm_vcpu_get(next->mm);
-+}
-+
-+#else
-+static inline void switch_mm_vcpu(struct task_struct *prev, struct task_struct *next) { }
-+#endif
-+
- #endif /* _KERNEL_SCHED_SCHED_H */
-diff --git a/kernel/signal.c b/kernel/signal.c
-index 6f86fda5e432..85611c50a0c7 100644
---- a/kernel/signal.c
-+++ b/kernel/signal.c
-@@ -2949,6 +2949,7 @@ void exit_signals(struct task_struct *tsk)
- 	cgroup_threadgroup_change_begin(tsk);
+ /* Test MEMBARRIER_CMD_PRIVATE_RESTART_RSEQ_ON_CPU membarrier command. */
+-#ifdef RSEQ_ARCH_HAS_OFFSET_DEREF_ADDV
++#ifdef TEST_MEMBARRIER
+ struct test_membarrier_thread_args {
+ 	int stop;
+ 	intptr_t percpu_list_ptr;
+@@ -1178,9 +1232,10 @@ void *test_membarrier_worker_thread(void *arg)
+ 		int ret;
  
- 	if (thread_group_empty(tsk) || (tsk->signal->flags & SIGNAL_GROUP_EXIT)) {
-+		sched_vcpu_exit_signals(tsk);
- 		tsk->flags |= PF_EXITING;
- 		cgroup_threadgroup_change_end(tsk);
- 		return;
-@@ -2959,6 +2960,7 @@ void exit_signals(struct task_struct *tsk)
- 	 * From now this task is not visible for group-wide signals,
- 	 * see wants_signal(), do_signal_stop().
- 	 */
-+	sched_vcpu_exit_signals(tsk);
- 	tsk->flags |= PF_EXITING;
+ 		do {
+-			int cpu = rseq_cpu_start();
++			int cpu = get_current_cpu_id();
  
- 	cgroup_threadgroup_change_end(tsk);
+-			ret = rseq_offset_deref_addv(&args->percpu_list_ptr,
++			ret = rseq_offset_deref_addv(RSEQ_MO_RELAXED, RSEQ_PERCPU,
++				&args->percpu_list_ptr,
+ 				sizeof(struct percpu_list_entry) * cpu, 1, cpu);
+ 		} while (rseq_unlikely(ret));
+ 	}
+@@ -1217,11 +1272,6 @@ void test_membarrier_free_percpu_list(struct percpu_list *list)
+ 		free(list->c[i].head);
+ }
+ 
+-static int sys_membarrier(int cmd, int flags, int cpu_id)
+-{
+-	return syscall(__NR_membarrier, cmd, flags, cpu_id);
+-}
+-
+ /*
+  * The manager thread swaps per-cpu lists that worker threads see,
+  * and validates that there are no unexpected modifications.
+@@ -1260,8 +1310,7 @@ void *test_membarrier_manager_thread(void *arg)
+ 
+ 		/* Make list_b "active". */
+ 		atomic_store(&args->percpu_list_ptr, (intptr_t)&list_b);
+-		if (sys_membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED_RSEQ,
+-					MEMBARRIER_CMD_FLAG_CPU, cpu_a) &&
++		if (rseq_membarrier_expedited(cpu_a) &&
+ 				errno != ENXIO /* missing CPU */) {
+ 			perror("sys_membarrier");
+ 			abort();
+@@ -1284,8 +1333,7 @@ void *test_membarrier_manager_thread(void *arg)
+ 
+ 		/* Make list_a "active". */
+ 		atomic_store(&args->percpu_list_ptr, (intptr_t)&list_a);
+-		if (sys_membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED_RSEQ,
+-					MEMBARRIER_CMD_FLAG_CPU, cpu_b) &&
++		if (rseq_membarrier_expedited(cpu_b) &&
+ 				errno != ENXIO /* missing CPU*/) {
+ 			perror("sys_membarrier");
+ 			abort();
+@@ -1356,7 +1404,7 @@ void test_membarrier(void)
+ 		abort();
+ 	}
+ }
+-#else /* RSEQ_ARCH_HAS_OFFSET_DEREF_ADDV */
++#else /* TEST_MEMBARRIER */
+ void test_membarrier(void)
+ {
+ 	fprintf(stderr, "rseq_offset_deref_addv is not implemented on this architecture. "
+@@ -1513,7 +1561,7 @@ int main(int argc, char **argv)
+ 			verbose = 1;
+ 			break;
+ 		case 'M':
+-			opt_mb = 1;
++			opt_mo = RSEQ_MO_RELEASE;
+ 			break;
+ 		default:
+ 			show_usage(argc, argv);
+@@ -1533,6 +1581,10 @@ int main(int argc, char **argv)
+ 
+ 	if (!opt_disable_rseq && rseq_register_current_thread())
+ 		goto error;
++	if (!opt_disable_rseq && !rseq_validate_cpu_id()) {
++		fprintf(stderr, "Error: cpu id getter unavailable\n");
++		goto error;
++	}
+ 	switch (opt_test) {
+ 	case 's':
+ 		printf_verbose("spinlock\n");
+diff --git a/tools/testing/selftests/rseq/run_param_test.sh b/tools/testing/selftests/rseq/run_param_test.sh
+index f51bc83c9e41..11b5424e8b78 100755
+--- a/tools/testing/selftests/rseq/run_param_test.sh
++++ b/tools/testing/selftests/rseq/run_param_test.sh
+@@ -42,6 +42,11 @@ function do_tests()
+ 		./param_test ${TEST_LIST[$i]} -r ${REPS} -t ${NR_THREADS} ${@} ${EXTRA_ARGS} || exit 1
+ 		echo "Running compare-twice test ${TEST_NAME[$i]}"
+ 		./param_test_compare_twice ${TEST_LIST[$i]} -r ${REPS} -t ${NR_THREADS} ${@} ${EXTRA_ARGS} || exit 1
++
++		echo "Running vm vcpu_id test ${TEST_NAME[$i]}"
++		./param_test_vm_vcpu_id ${TEST_LIST[$i]} -r ${REPS} -t ${NR_THREADS} ${@} ${EXTRA_ARGS} || exit 1
++		echo "Running vm vcpu_id compare-twice test ${TEST_NAME[$i]}"
++		./param_test_vm_vcpu_id_compare_twice ${TEST_LIST[$i]} -r ${REPS} -t ${NR_THREADS} ${@} ${EXTRA_ARGS} || exit 1
+ 		let "i++"
+ 	done
+ }
 -- 
 2.25.1
 
