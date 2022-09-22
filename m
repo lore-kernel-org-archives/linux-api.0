@@ -2,31 +2,31 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 660BCC6FA86
-	for <linux-api@archiver.kernel.org>; Thu, 22 Sep 2022 11:05:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 663DFC6FA91
+	for <linux-api@archiver.kernel.org>; Thu, 22 Sep 2022 11:05:23 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230371AbiIVLFU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Sep 2022 07:05:20 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39884 "EHLO
+        id S229736AbiIVLFW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Sep 2022 07:05:22 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39900 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229590AbiIVLFT (ORCPT
+        with ESMTP id S230200AbiIVLFT (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Thu, 22 Sep 2022 07:05:19 -0400
-Received: from smtpout.efficios.com (smtpout.efficios.com [IPv6:2607:5300:203:5aae::31e5])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 688FCD5771;
+Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 68A34D5776;
         Thu, 22 Sep 2022 04:05:14 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1663844384;
-        bh=30MDzSPWeYsik5//qRMCmapvRuvmo3VsSYarW7XMEug=;
+        s=smtpout1; t=1663844385;
+        bh=G7nQnVsC34L6BXYJjaOh5p1rpxLyYjvhnfFLcfQJn88=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=LO9vmyVPVxgKRLeQrKvYA3iW9qRELUvbmlZD3u3B0qud2DG9HtCT1ok+wxCtPm/qb
-         ff3OEEkOKwW+IDJ5pg38cwYoEU81zN6HVnf4vU6P8fc3iqyVz9Hclj7Ibjd8oL+nWv
-         VpgbtlCOmm1i+Nd1YcqSwbuv2tL2g/FPvmt/Jy+F5rc1ESDaTzDGymaQcKf8bqeyfj
-         PfOaiI5PZpSkzg4YDflRCOxYJuoak1Od7x6taklsot5+l2/f1NifwmOy8EffuHXfeX
-         BaS5VY6nhalf3KtY/UQhl23o02KaRNo+OqovBrfRVHzC898tC8zSItwTvqgsV/WtL4
-         29KsaT70CGMvA==
+        b=ISZ0aV5qeyurF0urqswF6ZFx16t+H93xj50z/loLEUQc+3IhphL/hqwCXQAhjBwxk
+         r75IXDyCMhDBGHOFBgmDRIVzkgf7QkEmFVxRyKOHbBRAF2sJs3bYVQAhmBq0LY6nWs
+         FwwB85+qNxoJ5Woyt3llWPoAfxCu/gBlmCYbF8O468ghAs+/x4MX2zGBDvJ6vPzebq
+         hAYd7FedMGCKqGx7EjtrRibSEqFqrG/kL02Qb6G3n3tuOyzE7KnWIKZ8BmXMIHiKZm
+         EjzoThOlnRL5LVB9zzL0awElYCAJFuDbbRIT3RV2hNZkk6fk3W13LAAcRrmJGXMBwl
+         xJzjRSGOdDzNw==
 Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4MYC3M5bmjzNlK;
-        Thu, 22 Sep 2022 06:59:43 -0400 (EDT)
+        by smtpout.efficios.com (Postfix) with ESMTPSA id 4MYC3N5pr4zNnd;
+        Thu, 22 Sep 2022 06:59:44 -0400 (EDT)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Peter Zijlstra <peterz@infradead.org>
 Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
@@ -38,9 +38,9 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         carlos@redhat.com, Peter Oskolkov <posk@posk.io>,
         Alexander Mikhalitsyn <alexander@mihalicyn.com>,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH v4 05/25] selftests/rseq: Implement rseq numa node id field selftest
-Date:   Thu, 22 Sep 2022 06:59:20 -0400
-Message-Id: <20220922105941.237830-6-mathieu.desnoyers@efficios.com>
+Subject: [PATCH v4 08/25] cpumask: Implement cpumask_{first,next}_{zero,one}_and_zero
+Date:   Thu, 22 Sep 2022 06:59:23 -0400
+Message-Id: <20220922105941.237830-9-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20220922105941.237830-1-mathieu.desnoyers@efficios.com>
 References: <20220922105941.237830-1-mathieu.desnoyers@efficios.com>
@@ -50,144 +50,135 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Test the NUMA node id extension rseq field. Compare it against the value
-returned by the getcpu(2) system call while pinned on a specific core.
+Allow finding the first or next bit within two input cpumasks which is
+either:
+
+- both zero and zero,
+- respectively one and zero.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 ---
- tools/testing/selftests/rseq/basic_test.c |  4 ++++
- tools/testing/selftests/rseq/rseq-abi.h   |  8 +++++++
- tools/testing/selftests/rseq/rseq.c       | 18 +++++++++++++++
- tools/testing/selftests/rseq/rseq.h       | 28 +++++++++++++++++++++++
- 4 files changed, 58 insertions(+)
+ include/linux/cpumask.h | 86 +++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 86 insertions(+)
 
-diff --git a/tools/testing/selftests/rseq/basic_test.c b/tools/testing/selftests/rseq/basic_test.c
-index d8efbfb89193..295eea16466f 100644
---- a/tools/testing/selftests/rseq/basic_test.c
-+++ b/tools/testing/selftests/rseq/basic_test.c
-@@ -22,6 +22,8 @@ void test_cpu_pointer(void)
- 	CPU_ZERO(&test_affinity);
- 	for (i = 0; i < CPU_SETSIZE; i++) {
- 		if (CPU_ISSET(i, &affinity)) {
-+			int node;
-+
- 			CPU_SET(i, &test_affinity);
- 			sched_setaffinity(0, sizeof(test_affinity),
- 					&test_affinity);
-@@ -29,6 +31,8 @@ void test_cpu_pointer(void)
- 			assert(rseq_current_cpu() == i);
- 			assert(rseq_current_cpu_raw() == i);
- 			assert(rseq_cpu_start() == i);
-+			node = rseq_fallback_current_node();
-+			assert(rseq_current_node_id() == node);
- 			CPU_CLR(i, &test_affinity);
- 		}
- 	}
-diff --git a/tools/testing/selftests/rseq/rseq-abi.h b/tools/testing/selftests/rseq/rseq-abi.h
-index 00ac846d85b0..a1faa9162d52 100644
---- a/tools/testing/selftests/rseq/rseq-abi.h
-+++ b/tools/testing/selftests/rseq/rseq-abi.h
-@@ -147,6 +147,14 @@ struct rseq_abi {
- 	 */
- 	__u32 flags;
- 
-+	/*
-+	 * Restartable sequences node_id field. Updated by the kernel. Read by
-+	 * user-space with single-copy atomicity semantics. This field should
-+	 * only be read by the thread which registered this data structure.
-+	 * Aligned on 32-bit. Contains the current NUMA node ID.
-+	 */
-+	__u32 node_id;
-+
- 	/*
- 	 * Flexible array member at end of structure, after last feature field.
- 	 */
-diff --git a/tools/testing/selftests/rseq/rseq.c b/tools/testing/selftests/rseq/rseq.c
-index 20ea536d1012..0a96c3c779cd 100644
---- a/tools/testing/selftests/rseq/rseq.c
-+++ b/tools/testing/selftests/rseq/rseq.c
-@@ -79,6 +79,11 @@ static int sys_rseq(struct rseq_abi *rseq_abi, uint32_t rseq_len,
- 	return syscall(__NR_rseq, rseq_abi, rseq_len, flags, sig);
+diff --git a/include/linux/cpumask.h b/include/linux/cpumask.h
+index fe29ac7cc469..0f5c3e47423f 100644
+--- a/include/linux/cpumask.h
++++ b/include/linux/cpumask.h
+@@ -134,6 +134,18 @@ static inline unsigned int cpumask_first_and(const struct cpumask *srcp1,
+ 	return 0;
  }
  
-+static int sys_getcpu(unsigned *cpu, unsigned *node)
++static inline unsigned int cpumask_first_one_and_zero(const struct cpumask *srcp1,
++					     const struct cpumask *srcp2)
 +{
-+	return syscall(__NR_getcpu, cpu, node, NULL);
++	return 0;
 +}
 +
- int rseq_available(void)
++static inline unsigned int cpumask_first_zero_and_zero(const struct cpumask *srcp1,
++					     const struct cpumask *srcp2)
++{
++	return 0;
++}
++
+ static inline unsigned int cpumask_last(const struct cpumask *srcp)
  {
- 	int rc;
-@@ -199,3 +204,16 @@ int32_t rseq_fallback_current_cpu(void)
- 	}
- 	return cpu;
- }
-+
-+int32_t rseq_fallback_current_node(void)
-+{
-+	uint32_t cpu_id, node_id;
-+	int ret;
-+
-+	ret = sys_getcpu(&cpu_id, &node_id);
-+	if (ret) {
-+		perror("sys_getcpu()");
-+		return ret;
-+	}
-+	return (int32_t) node_id;
-+}
-diff --git a/tools/testing/selftests/rseq/rseq.h b/tools/testing/selftests/rseq/rseq.h
-index 95adc1e1b0db..fd17d0e54a1b 100644
---- a/tools/testing/selftests/rseq/rseq.h
-+++ b/tools/testing/selftests/rseq/rseq.h
-@@ -20,6 +20,15 @@
- #include "rseq-abi.h"
- #include "compiler.h"
- 
-+#ifndef rseq_sizeof_field
-+#define rseq_sizeof_field(TYPE, MEMBER) sizeof((((TYPE *)0)->MEMBER))
-+#endif
-+
-+#ifndef rseq_offsetofend
-+#define rseq_offsetofend(TYPE, MEMBER) \
-+	(offsetof(TYPE, MEMBER)	+ rseq_sizeof_field(TYPE, MEMBER))
-+#endif
-+
- /*
-  * Empty code injection macros, override when testing.
-  * It is important to consider that the ASM injection macros need to be
-@@ -128,6 +137,11 @@ int rseq_unregister_current_thread(void);
-  */
- int32_t rseq_fallback_current_cpu(void);
- 
-+/*
-+ * Restartable sequence fallback for reading the current node number.
-+ */
-+int32_t rseq_fallback_current_node(void);
-+
- /*
-  * Values returned can be either the current CPU number, -1 (rseq is
-  * uninitialized), or -2 (rseq initialization has failed).
-@@ -163,6 +177,20 @@ static inline uint32_t rseq_current_cpu(void)
- 	return cpu;
+ 	return 0;
+@@ -157,6 +169,20 @@ static inline unsigned int cpumask_next_and(int n,
+ 	return n+1;
  }
  
-+static inline bool rseq_node_id_available(void)
++static inline unsigned int cpumask_next_one_and_zero(int n,
++					     const struct cpumask *srcp1,
++					     const struct cpumask *srcp2)
 +{
-+	return (int) rseq_feature_size >= rseq_offsetofend(struct rseq_abi, node_id);
++	return n+1;
 +}
 +
-+/*
-+ * Current NUMA node number.
-+ */
-+static inline uint32_t rseq_current_node_id(void)
++static inline unsigned int cpumask_next_zero_and_zero(int n,
++					     const struct cpumask *srcp1,
++					     const struct cpumask *srcp2)
 +{
-+	assert(rseq_node_id_available());
-+	return RSEQ_ACCESS_ONCE(rseq_get_abi()->node_id);
++	return n+1;
 +}
 +
- static inline void rseq_clear_rseq_cs(void)
+ static inline unsigned int cpumask_next_wrap(int n, const struct cpumask *mask,
+ 					     int start, bool wrap)
  {
- 	RSEQ_WRITE_ONCE(rseq_get_abi()->rseq_cs.arch.ptr, 0);
+@@ -230,6 +256,32 @@ unsigned int cpumask_first_and(const struct cpumask *srcp1, const struct cpumask
+ 	return find_first_and_bit(cpumask_bits(srcp1), cpumask_bits(srcp2), nr_cpumask_bits);
+ }
+ 
++/**
++ * cpumask_first_one_and_zero - return the first cpu from *srcp1 & ~*srcp2
++ * @src1p: the first input
++ * @src2p: the second input
++ *
++ * Returns >= nr_cpu_ids if no cpus match in both.
++ */
++static inline
++unsigned int cpumask_first_one_and_zero(const struct cpumask *srcp1, const struct cpumask *srcp2)
++{
++	return find_first_one_and_zero_bit(cpumask_bits(srcp1), cpumask_bits(srcp2), nr_cpumask_bits);
++}
++
++/**
++ * cpumask_first_zero_and_zero - return the first cpu from ~*srcp1 & ~*srcp2
++ * @src1p: the first input
++ * @src2p: the second input
++ *
++ * Returns >= nr_cpu_ids if no cpus match in both.
++ */
++static inline
++unsigned int cpumask_first_zero_and_zero(const struct cpumask *srcp1, const struct cpumask *srcp2)
++{
++	return find_first_zero_and_zero_bit(cpumask_bits(srcp1), cpumask_bits(srcp2), nr_cpumask_bits);
++}
++
+ /**
+  * cpumask_last - get the last CPU in a cpumask
+  * @srcp:	- the cpumask pointer
+@@ -258,6 +310,40 @@ static inline unsigned int cpumask_next_zero(int n, const struct cpumask *srcp)
+ 	return find_next_zero_bit(cpumask_bits(srcp), nr_cpumask_bits, n+1);
+ }
+ 
++/**
++ * cpumask_next_one_and_zero - return the next cpu from *srcp1 & ~*srcp2
++ * @n: the cpu prior to the place to search (ie. return will be > @n)
++ * @src1p: the first input
++ * @src2p: the second input
++ *
++ * Returns >= nr_cpu_ids if no cpus match in both.
++ */
++static inline
++unsigned int cpumask_next_one_and_zero(int n, const struct cpumask *srcp1, const struct cpumask *srcp2)
++{
++	/* -1 is a legal arg here. */
++	if (n != -1)
++		cpumask_check(n);
++	return find_next_one_and_zero_bit(cpumask_bits(srcp1), cpumask_bits(srcp2), nr_cpumask_bits, n+1);
++}
++
++/**
++ * cpumask_next_zero_and_zero - return the next cpu from ~*srcp1 & ~*srcp2
++ * @n: the cpu prior to the place to search (ie. return will be > @n)
++ * @src1p: the first input
++ * @src2p: the second input
++ *
++ * Returns >= nr_cpu_ids if no cpus match in both.
++ */
++static inline
++unsigned int cpumask_next_zero_and_zero(int n, const struct cpumask *srcp1, const struct cpumask *srcp2)
++{
++	/* -1 is a legal arg here. */
++	if (n != -1)
++		cpumask_check(n);
++	return find_next_zero_and_zero_bit(cpumask_bits(srcp1), cpumask_bits(srcp2), nr_cpumask_bits, n+1);
++}
++
+ int __pure cpumask_next_and(int n, const struct cpumask *, const struct cpumask *);
+ int __pure cpumask_any_but(const struct cpumask *mask, unsigned int cpu);
+ unsigned int cpumask_local_spread(unsigned int i, int node);
 -- 
 2.25.1
 
