@@ -2,36 +2,50 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 18FE1C433F5
-	for <linux-api@archiver.kernel.org>; Thu, 29 Sep 2022 16:06:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 29311C433FE
+	for <linux-api@archiver.kernel.org>; Thu, 29 Sep 2022 16:11:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235646AbiI2QGr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 29 Sep 2022 12:06:47 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59388 "EHLO
+        id S234737AbiI2QLp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 29 Sep 2022 12:11:45 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45142 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234951AbiI2QGq (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 29 Sep 2022 12:06:46 -0400
-Received: from foss.arm.com (foss.arm.com [217.140.110.172])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 3056713E21;
-        Thu, 29 Sep 2022 09:06:45 -0700 (PDT)
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id A205C15BF;
-        Thu, 29 Sep 2022 09:06:51 -0700 (PDT)
-Received: from FVFF77S0Q05N (unknown [10.57.81.100])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 5C9E83F792;
-        Thu, 29 Sep 2022 09:06:43 -0700 (PDT)
-Date:   Thu, 29 Sep 2022 17:06:40 +0100
-From:   Mark Rutland <mark.rutland@arm.com>
+        with ESMTP id S235817AbiI2QLn (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 29 Sep 2022 12:11:43 -0400
+Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3CB831D263F;
+        Thu, 29 Sep 2022 09:11:39 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by ams.source.kernel.org (Postfix) with ESMTPS id A8F61B8250D;
+        Thu, 29 Sep 2022 16:11:37 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5DD9EC433C1;
+        Thu, 29 Sep 2022 16:11:36 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1664467896;
+        bh=T46nJceimKE9OXE9XXYp3BCVN62useGX/MPlv+uPvwg=;
+        h=Date:From:To:Cc:Subject:Reply-To:References:In-Reply-To:From;
+        b=XpZQ84ep0vb4hu6MLoTcVdobUp0opmbRUTJrvDzfJKR3Av8frq9206eAucNvBbKno
+         Kc3fySH6Lz6LVqekX8o8A6pScRwe/Jh08SHbI0ncFyG3wK1al2eLaPtjeL286vffyc
+         eYpKfmdwpUYu3/8TIpF3CDJ/DRfrwJUp9sVpZPdQ2l6bukNCX3JUA8ChLW5zBZ+46u
+         6Y9OswXDQx+dxVlFhjaB4q364oDytE3f08Ur+dDlp82CAMSCqgf3JoV6fRc4RikJB7
+         JObp9aprvSDXf6QNffVhlvLTdmMvDmMQdlIGSZxRszE5Y9xm91k+pdJL+W11zbjxuc
+         r7O/aQ8PifFmQ==
+Received: by paulmck-ThinkPad-P17-Gen-1.home (Postfix, from userid 1000)
+        id 08D005C0AC7; Thu, 29 Sep 2022 09:11:36 -0700 (PDT)
+Date:   Thu, 29 Sep 2022 09:11:36 -0700
+From:   "Paul E. McKenney" <paulmck@kernel.org>
 To:     Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 Cc:     Peter Zijlstra <peterz@infradead.org>,
         linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-        "Paul E . McKenney" <paulmck@kernel.org>,
         Boqun Feng <boqun.feng@gmail.com>,
         "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>,
-        linux-api@vger.kernel.org, Peter Oskolkov <posk@posk.io>
+        linux-api@vger.kernel.org, Peter Oskolkov <posk@posk.io>,
+        Mark Rutland <mark.rutland@arm.com>
 Subject: Re: [RFC PATCH] rseq: Use pr_warn_once() when deprecated/unknown ABI
  flags are encountered
-Message-ID: <YzXCkDJg8vEYqwJH@FVFF77S0Q05N>
+Message-ID: <20220929161136.GK4196@paulmck-ThinkPad-P17-Gen-1>
+Reply-To: paulmck@kernel.org
 References: <20220929141227.205343-1-mathieu.desnoyers@efficios.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -57,16 +71,7 @@ On Thu, Sep 29, 2022 at 10:12:27AM -0400, Mathieu Desnoyers wrote:
 > Reported-by: Mark Rutland <mark.rutland@arm.com>
 > Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 
-Thanks for this!
-
-I've set off a Syzkaller run with this applied, and I'll be able to tell you in
-a day or two whether that's made it possible to spot anything more interesting.
-
-Regardless, I think this is a good change, so FWIW:
-
-Acked-by: Mark Rutland <mark.rutland@arm.com>
-
-Mark.
+Acked-by: Paul E. McKenney <paulmck@kernel.org>
 
 > ---
 >  kernel/rseq.c | 19 +++++++++++++++++--
