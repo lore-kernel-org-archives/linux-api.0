@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6F200C4332F
-	for <linux-api@archiver.kernel.org>; Thu, 29 Sep 2022 22:34:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 10C4AC433F5
+	for <linux-api@archiver.kernel.org>; Thu, 29 Sep 2022 22:34:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230168AbiI2WeC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 29 Sep 2022 18:34:02 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53722 "EHLO
+        id S230121AbiI2WeM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 29 Sep 2022 18:34:12 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59366 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229754AbiI2WdA (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 29 Sep 2022 18:33:00 -0400
-Received: from mga18.intel.com (mga18.intel.com [134.134.136.126])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7F84BA6C16;
-        Thu, 29 Sep 2022 15:30:59 -0700 (PDT)
+        with ESMTP id S229644AbiI2WdN (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 29 Sep 2022 18:33:13 -0400
+Received: from mga03.intel.com (mga03.intel.com [134.134.136.65])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7EABF2FFDA;
+        Thu, 29 Sep 2022 15:31:04 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1664490660; x=1696026660;
+  t=1664490665; x=1696026665;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=HEoICz/7FChfhD1X/KoxDXONV3hJ7PY4eGyUJG+8lDI=;
-  b=X/FdhvmOPqn0W16yYR15aQTp+S+IV6aZKGBaPyqvU/lLHMIUK5FeXd9+
-   60ysdvJFhCM6pXhvbFaiYlpa6KWB6JWpyVFy9FhaERO4iF9+D51tH5CuX
-   59Ol/dkKOtKbNYjCil5udRCuDyalCHPmBOkB6E0B6/TLB/8FMsJ80thhS
-   9FIlLn064HP+TG0T/no65cjbdiX00DWdEpfzMtvCAP4rOvMcew5figX8Y
-   CNmVdeb6tK0fV5g3e46YEE0PDT2uVOsMHYE8DovmFZJPY8Ha8iP3J5oFI
-   tie3gG1ocbSfg2rH+Kfup3q8zY1tt2KIznx58FU0Cs5geLmNVi0QksnWc
-   Q==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="285181991"
+  bh=vKTf+AsczWlZQi59ytE2TWI1uBC+j04xvFTJcZyikik=;
+  b=fIDnnP7aIYpDjeRs5e3b1mdarsKX4eYjWVlMJskz5T9Ql00/6eHlSR57
+   Ui4HtXMUwAFSeTADqmJtPHChhie84ySSdljZa4GIHD/r4dCwc2BZl2IBP
+   MjGjFhV0vDxH8iml9HRdoyqkUseWcjEYfaSPLH5QS8j7ytY+UzgMoyNLp
+   +6yS9/8CWPDLR49mIAJw/4cjM3qkCbm9Kva+dv50LPV4TcIhRAOdxbpcD
+   9zegRcoGiRXazW4eeUd8DiTL0dw+EOIiWNrxDMf8F8afSSS6dF9DxTOSt
+   OnGQO7Q/Q1aOYCPsDpQ9VCydD4frfd0Okp3vKQRKLgTTRPCqiLnMC5TLF
+   g==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="303531418"
 X-IronPort-AV: E=Sophos;i="5.93,356,1654585200"; 
-   d="scan'208";a="285181991"
+   d="scan'208";a="303531418"
 Received: from fmsmga004.fm.intel.com ([10.253.24.48])
-  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:30:26 -0700
-X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="691016264"
+  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:30:12 -0700
+X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="691016195"
 X-IronPort-AV: E=Sophos;i="5.93,356,1654585200"; 
-   d="scan'208";a="691016264"
+   d="scan'208";a="691016195"
 Received: from sergungo-mobl.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.251.25.88])
-  by fmsmga004-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:30:24 -0700
+  by fmsmga004-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:30:10 -0700
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -65,10 +65,11 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         joao.moreira@intel.com, John Allen <john.allen@amd.com>,
         kcc@google.com, eranian@google.com, rppt@kernel.org,
         jamorris@linux.microsoft.com, dethoma@microsoft.com
-Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v2 20/39] mm/mprotect: Exclude shadow stack from preserve_write
-Date:   Thu, 29 Sep 2022 15:29:17 -0700
-Message-Id: <20220929222936.14584-21-rick.p.edgecombe@intel.com>
+Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>,
+        Peter Xu <peterx@redhat.com>
+Subject: [PATCH v2 13/39] mm: Move VM_UFFD_MINOR_BIT from 37 to 38
+Date:   Thu, 29 Sep 2022 15:29:10 -0700
+Message-Id: <20220929222936.14584-14-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20220929222936.14584-1-rick.p.edgecombe@intel.com>
 References: <20220929222936.14584-1-rick.p.edgecombe@intel.com>
@@ -78,67 +79,31 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 
-In change_pte_range(), when a PTE is changed for prot_numa, _PAGE_RW is
-preserved to avoid the additional write fault after the NUMA hinting fault.
-However, pte_write() now includes both normal writable and shadow stack
-(Write=0, Dirty=1) PTEs, but the latter does not have _PAGE_RW and has no
-need to preserve it.
-
-Exclude shadow stack from preserve_write test, and apply the same change to
-change_huge_pmd().
+To introduce VM_SHADOW_STACK as VM_HIGH_ARCH_BIT (37), and make all
+VM_HIGH_ARCH_BITs stay together, move VM_UFFD_MINOR_BIT from 37 to 38.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Reviewed-by: Axel Rasmussen <axelrasmussen@google.com>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
-
+Cc: Peter Xu <peterx@redhat.com>
+Cc: Mike Kravetz <mike.kravetz@oracle.com>
 ---
+ include/linux/mm.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Yu-cheng v25:
- - Move is_shadow_stack_mapping() to a separate line.
-
-Yu-cheng v24:
- - Change arch_shadow_stack_mapping() to is_shadow_stack_mapping().
-
- mm/huge_memory.c | 7 +++++++
- mm/mprotect.c    | 7 +++++++
- 2 files changed, 14 insertions(+)
-
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 11fc69eb4717..492c4f190f55 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1800,6 +1800,13 @@ int change_huge_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
- 		return 0;
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 21f8b27bd9fd..be80fc827212 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -365,7 +365,7 @@ extern unsigned int kobjsize(const void *objp);
+ #endif
  
- 	preserve_write = prot_numa && pmd_write(*pmd);
-+
-+	/*
-+	 * Preserve only normal writable huge PMD, but not shadow
-+	 * stack (RW=0, Dirty=1).
-+	 */
-+	if (vma->vm_flags & VM_SHADOW_STACK)
-+		preserve_write = false;
- 	ret = 1;
- 
- #ifdef CONFIG_ARCH_ENABLE_THP_MIGRATION
-diff --git a/mm/mprotect.c b/mm/mprotect.c
-index bc6bddd156ca..983206529dce 100644
---- a/mm/mprotect.c
-+++ b/mm/mprotect.c
-@@ -114,6 +114,13 @@ static unsigned long change_pte_range(struct mmu_gather *tlb,
- 			pte_t ptent;
- 			bool preserve_write = prot_numa && pte_write(oldpte);
- 
-+			/*
-+			 * Preserve only normal writable PTE, but not shadow
-+			 * stack (RW=0, Dirty=1).
-+			 */
-+			if (vma->vm_flags & VM_SHADOW_STACK)
-+				preserve_write = false;
-+
- 			/*
- 			 * Avoid trapping faults against the zero or KSM
- 			 * pages. See similar comment in change_huge_pmd.
+ #ifdef CONFIG_HAVE_ARCH_USERFAULTFD_MINOR
+-# define VM_UFFD_MINOR_BIT	37
++# define VM_UFFD_MINOR_BIT	38
+ # define VM_UFFD_MINOR		BIT(VM_UFFD_MINOR_BIT)	/* UFFD minor faults */
+ #else /* !CONFIG_HAVE_ARCH_USERFAULTFD_MINOR */
+ # define VM_UFFD_MINOR		VM_NONE
 -- 
 2.17.1
 
