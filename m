@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4E943C433FE
-	for <linux-api@archiver.kernel.org>; Thu, 29 Sep 2022 22:36:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D12FEC433F5
+	for <linux-api@archiver.kernel.org>; Thu, 29 Sep 2022 22:36:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230222AbiI2Wg3 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 29 Sep 2022 18:36:29 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53872 "EHLO
+        id S230230AbiI2Wgt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 29 Sep 2022 18:36:49 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48934 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230178AbiI2WfY (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 29 Sep 2022 18:35:24 -0400
+        with ESMTP id S230131AbiI2WgB (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 29 Sep 2022 18:36:01 -0400
 Received: from mga18.intel.com (mga18.intel.com [134.134.136.126])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 11EEE1DB54D;
-        Thu, 29 Sep 2022 15:31:48 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AA6E61D73E3;
+        Thu, 29 Sep 2022 15:32:01 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1664490709; x=1696026709;
+  t=1664490721; x=1696026721;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=SiBonWtkwMqX0JsNUovdDLOqqHtXkkKku/WhNLKvM50=;
-  b=MM7XxBAvYp+uLQRzN92VCjDWqaKi5mdpdF8SFo+cBDFcqoE6kTKWxi6o
-   G8sRqK154fY3j0G5mYj9dA72t8/a9hO/apDtxTaRYCTAbKaioC33vD6Qw
-   Qc2RNDnwyGz5i5ka2XjI5axabn1fBNAaG2iGykflMU9SPJEyVkw61por0
-   usqZ2B8V9DREd4fKlbk4so2fQcRK3jc+2FuNERq8vp7JX+wrlDkv8ytcq
-   vtPYtZSCBAg41vYgD/SwnGW+RCMDKt9wmgHNlE17a7INyWmQJH7JRIPwZ
-   vDBZiq1lmfQ+LN506LdCS4HXdkBQZgRRWDirzyUhKgTzI4381rC6NEt7x
-   A==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="285182109"
+  bh=1ROr10PWtEQqZbu33f8bK3mcr7CnDfijyx9zzPA3SPo=;
+  b=aorq02zuFyDcVhGLZccD7TL6jrcmXb17+IB3TlqPcqkI6CLsqjKNfJmn
+   vklYN58QC/+4+X3iCmT7x6de0ZF7YWoO/qbbZCM6mLtmndCN0TlEFdQOu
+   A/xRvtqXSRVDtwpz+JcTsnaqILj8228/jQLsWwL8QDcsDZvnM23jKzoBn
+   uCIgMPhd1mK3tA1Vhujiku3IxiOYDmcj663/HB96rGqcW4+W5EuQFKuUN
+   9jrrAaNPVFIlUSw9dkbsUHZadA/Uw04HZ9mAxDshorAjhFK/UPS0ao7Dz
+   hdIkRz1EXQ0XdFv0CZp6QF4JsPl85s2uLT3wkqMAEvZ9Ppmh/GKB0UumS
+   g==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="285182132"
 X-IronPort-AV: E=Sophos;i="5.93,356,1654585200"; 
-   d="scan'208";a="285182109"
+   d="scan'208";a="285182132"
 Received: from fmsmga004.fm.intel.com ([10.253.24.48])
-  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:30:47 -0700
-X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="691016342"
+  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:30:52 -0700
+X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="691016353"
 X-IronPort-AV: E=Sophos;i="5.93,356,1654585200"; 
-   d="scan'208";a="691016342"
+   d="scan'208";a="691016353"
 Received: from sergungo-mobl.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.251.25.88])
-  by fmsmga004-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:30:46 -0700
+  by fmsmga004-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:30:49 -0700
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -66,9 +66,9 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         kcc@google.com, eranian@google.com, rppt@kernel.org,
         jamorris@linux.microsoft.com, dethoma@microsoft.com
 Cc:     rick.p.edgecombe@intel.com
-Subject: [PATCH v2 29/39] x86/cet/shstk: Support wrss for userspace
-Date:   Thu, 29 Sep 2022 15:29:26 -0700
-Message-Id: <20220929222936.14584-30-rick.p.edgecombe@intel.com>
+Subject: [PATCH v2 31/39] x86/cet/shstk: Wire in CET interface
+Date:   Thu, 29 Sep 2022 15:29:28 -0700
+Message-Id: <20220929222936.14584-32-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20220929222936.14584-1-rick.p.edgecombe@intel.com>
 References: <20220929222936.14584-1-rick.p.edgecombe@intel.com>
@@ -76,124 +76,41 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-For the current shadow stack implementation, shadow stacks contents easily
-be arbitrarily provisioned with data. This property helps apps protect
-themselves better, but also restricts any potential apps that may want to
-do exotic things at the expense of a little security.
-
-The x86 shadow stack feature introduces a new instruction, wrss, which
-can be enabled to write directly to shadow stack permissioned memory from
-userspace. Allow it to get enabled via the prctl interface.
-
-Only enable the userspace wrss instruction, which allows writes to
-userspace shadow stacks from userspace. Do not allow it to be enabled
-independently of shadow stack, as HW does not support using WRSS when
-shadow stack is disabled.
-
-From a fault handler perspective, WRSS will behave very similar to WRUSS,
-which is treated like a user access from a #PF err code perspective.
+The kernel now has the main CET functionality to support applications.
+Wire in the WRSS and shadow stack enable/disable functions into the
+existing CET API skeleton.
 
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
 
 ---
 
 v2:
- - Add some commit log verbiage from (Dave Hansen)
+ - Split from other patches
 
-v1:
- - New patch.
+ arch/x86/kernel/shstk.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
- arch/x86/include/asm/cet.h        |  2 ++
- arch/x86/include/uapi/asm/prctl.h |  1 +
- arch/x86/kernel/shstk.c           | 34 +++++++++++++++++++++++++++++--
- 3 files changed, 35 insertions(+), 2 deletions(-)
-
-diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index 8c6fab9f402a..edf681d4843a 100644
---- a/arch/x86/include/asm/cet.h
-+++ b/arch/x86/include/asm/cet.h
-@@ -25,6 +25,7 @@ int shstk_disable(void);
- void reset_thread_shstk(void);
- int setup_signal_shadow_stack(struct ksignal *ksig);
- int restore_signal_shadow_stack(void);
-+int wrss_control(bool enable);
- #else
- static inline long cet_prctl(struct task_struct *task, int option,
- 		      unsigned long features) { return -EINVAL; }
-@@ -38,6 +39,7 @@ static inline int shstk_disable(void) { return -EOPNOTSUPP; }
- static inline void reset_thread_shstk(void) {}
- static inline int setup_signal_shadow_stack(struct ksignal *ksig) { return 0; }
- static inline int restore_signal_shadow_stack(void) { return 0; }
-+static inline int wrss_control(bool enable) { return -EOPNOTSUPP; }
- #endif /* CONFIG_X86_SHADOW_STACK */
- 
- #endif /* __ASSEMBLY__ */
-diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
-index 41af3a8c4fa4..d811f0c5fc4f 100644
---- a/arch/x86/include/uapi/asm/prctl.h
-+++ b/arch/x86/include/uapi/asm/prctl.h
-@@ -27,5 +27,6 @@
- #define ARCH_CET_LOCK			0x4003
- 
- #define CET_SHSTK			0x1
-+#define CET_WRSS			0x2
- 
- #endif /* _ASM_X86_PRCTL_H */
 diff --git a/arch/x86/kernel/shstk.c b/arch/x86/kernel/shstk.c
-index 873830d63adc..fc64a04366aa 100644
+index fc64a04366aa..0efec02dbe6b 100644
 --- a/arch/x86/kernel/shstk.c
 +++ b/arch/x86/kernel/shstk.c
-@@ -386,6 +386,36 @@ void shstk_free(struct task_struct *tsk)
- 	unmap_shadow_stack(shstk->base, shstk->size);
- }
+@@ -477,9 +477,17 @@ long cet_prctl(struct task_struct *task, int option, unsigned long features)
+ 		return -EINVAL;
  
-+int wrss_control(bool enable)
-+{
-+	if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
-+		return -EOPNOTSUPP;
-+
-+	/*
-+	 * Only enable wrss if shadow stack is enabled. If shadow stack is not
-+	 * enabled, wrss will already be disabled, so don't bother clearing it
-+	 * when disabling.
-+	 */
-+	if (!feature_enabled(CET_SHSTK))
-+		return -EPERM;
-+
-+	/* Already enabled/disabled? */
-+	if (feature_enabled(CET_WRSS) == enable)
-+		return 0;
-+
-+	fpu_lock_and_load();
-+	if (enable) {
-+		set_clr_bits_msrl(MSR_IA32_U_CET, CET_WRSS_EN, 0);
-+		feature_set(CET_WRSS);
-+	} else {
-+		set_clr_bits_msrl(MSR_IA32_U_CET, 0, CET_WRSS_EN);
-+		feature_clr(CET_WRSS);
-+	}
-+	fpregs_unlock();
-+
-+	return 0;
-+}
-+
- int shstk_disable(void)
- {
- 	if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
-@@ -397,12 +427,12 @@ int shstk_disable(void)
+ 	if (option == ARCH_CET_DISABLE) {
++		if (features & CET_WRSS)
++			return wrss_control(false);
++		if (features & CET_SHSTK)
++			return shstk_disable();
+ 		return -EINVAL;
+ 	}
  
- 	fpu_lock_and_load();
- 	/* Disable WRSS too when disabling shadow stack */
--	set_clr_bits_msrl(MSR_IA32_U_CET, 0, CET_SHSTK_EN);
-+	set_clr_bits_msrl(MSR_IA32_U_CET, 0, CET_SHSTK_EN | CET_WRSS_EN);
- 	wrmsrl(MSR_IA32_PL3_SSP, 0);
- 	fpregs_unlock();
- 
- 	shstk_free(current);
--	feature_clr(CET_SHSTK);
-+	feature_clr(CET_SHSTK | CET_WRSS);
- 
- 	return 0;
+ 	/* Handle ARCH_CET_ENABLE */
++	if (features & CET_SHSTK)
++		return shstk_setup();
++	if (features & CET_WRSS)
++		return wrss_control(true);
+ 	return -EINVAL;
  }
 -- 
 2.17.1
