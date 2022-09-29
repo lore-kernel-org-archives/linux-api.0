@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D2300C433F5
-	for <linux-api@archiver.kernel.org>; Thu, 29 Sep 2022 22:33:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6F200C4332F
+	for <linux-api@archiver.kernel.org>; Thu, 29 Sep 2022 22:34:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230165AbiI2Wdj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 29 Sep 2022 18:33:39 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53622 "EHLO
+        id S230168AbiI2WeC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 29 Sep 2022 18:34:02 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53722 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229472AbiI2Wcl (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 29 Sep 2022 18:32:41 -0400
-Received: from mga03.intel.com (mga03.intel.com [134.134.136.65])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2EDD3A027F;
-        Thu, 29 Sep 2022 15:30:56 -0700 (PDT)
+        with ESMTP id S229754AbiI2WdA (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 29 Sep 2022 18:33:00 -0400
+Received: from mga18.intel.com (mga18.intel.com [134.134.136.126])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7F84BA6C16;
+        Thu, 29 Sep 2022 15:30:59 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1664490656; x=1696026656;
+  t=1664490660; x=1696026660;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=eV9GA8OUMVYJDpffX6i9+4mzKnfsWlOOmYPUr5qRV9M=;
-  b=HIz69FRlddDWnW/mvhS/MTup8kGquW+ClKQoWFX6MO0zW1DQjkrTItwX
-   mEUk+i+uRDNRkoAnuMIQ52ptMfvOVji5jeQVBCGRl1gfQO25qX8QdJK4F
-   +e+btP1d6xmyHT5/YDGF6o3Nw/k5ztFLvuhuVGACWcO7fooDhoGocVYEK
-   /myJYdtCsGVv7PC4jYU3ic+G4LT4xJbggY0KoDhQug4nsPuj3W09MktKN
-   fu2Fkt/4yrPZvBi4x59qzgYb5IMS8uExW+HUvjHWzaaqrScDgLaIMyWRv
-   wWt0VZwI16AjsVDugp0EUDFYpZ1g/e3ibXarWJHaIjTOYV5WubYEBZHKz
-   g==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="303531410"
+  bh=HEoICz/7FChfhD1X/KoxDXONV3hJ7PY4eGyUJG+8lDI=;
+  b=X/FdhvmOPqn0W16yYR15aQTp+S+IV6aZKGBaPyqvU/lLHMIUK5FeXd9+
+   60ysdvJFhCM6pXhvbFaiYlpa6KWB6JWpyVFy9FhaERO4iF9+D51tH5CuX
+   59Ol/dkKOtKbNYjCil5udRCuDyalCHPmBOkB6E0B6/TLB/8FMsJ80thhS
+   9FIlLn064HP+TG0T/no65cjbdiX00DWdEpfzMtvCAP4rOvMcew5figX8Y
+   CNmVdeb6tK0fV5g3e46YEE0PDT2uVOsMHYE8DovmFZJPY8Ha8iP3J5oFI
+   tie3gG1ocbSfg2rH+Kfup3q8zY1tt2KIznx58FU0Cs5geLmNVi0QksnWc
+   Q==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="285181991"
 X-IronPort-AV: E=Sophos;i="5.93,356,1654585200"; 
-   d="scan'208";a="303531410"
+   d="scan'208";a="285181991"
 Received: from fmsmga004.fm.intel.com ([10.253.24.48])
-  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:30:10 -0700
-X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="691016186"
+  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:30:26 -0700
+X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="691016264"
 X-IronPort-AV: E=Sophos;i="5.93,356,1654585200"; 
-   d="scan'208";a="691016186"
+   d="scan'208";a="691016264"
 Received: from sergungo-mobl.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.251.25.88])
-  by fmsmga004-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:30:08 -0700
+  by fmsmga004-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:30:24 -0700
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -66,9 +66,9 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         kcc@google.com, eranian@google.com, rppt@kernel.org,
         jamorris@linux.microsoft.com, dethoma@microsoft.com
 Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v2 12/39] x86/mm: Update ptep_set_wrprotect() and pmdp_set_wrprotect() for transition from _PAGE_DIRTY to _PAGE_COW
-Date:   Thu, 29 Sep 2022 15:29:09 -0700
-Message-Id: <20220929222936.14584-13-rick.p.edgecombe@intel.com>
+Subject: [PATCH v2 20/39] mm/mprotect: Exclude shadow stack from preserve_write
+Date:   Thu, 29 Sep 2022 15:29:17 -0700
+Message-Id: <20220929222936.14584-21-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20220929222936.14584-1-rick.p.edgecombe@intel.com>
 References: <20220929222936.14584-1-rick.p.edgecombe@intel.com>
@@ -78,96 +78,67 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 
-When Shadow Stack is in use, Write=0,Dirty=1 PTE are reserved for shadow
-stack. Copy-on-write PTes then have Write=0,Cow=1.
+In change_pte_range(), when a PTE is changed for prot_numa, _PAGE_RW is
+preserved to avoid the additional write fault after the NUMA hinting fault.
+However, pte_write() now includes both normal writable and shadow stack
+(Write=0, Dirty=1) PTEs, but the latter does not have _PAGE_RW and has no
+need to preserve it.
 
-When a PTE goes from Write=1,Dirty=1 to Write=0,Cow=1, it could
-become a transient shadow stack PTE in two cases:
-
-The first case is that some processors can start a write but end up seeing
-a Write=0 PTE by the time they get to the Dirty bit, creating a transient
-shadow stack PTE. However, this will not occur on processors supporting
-Shadow Stack, and a TLB flush is not necessary.
-
-The second case is that when _PAGE_DIRTY is replaced with _PAGE_COW non-
-atomically, a transient shadow stack PTE can be created as a result.
-Thus, prevent that with cmpxchg.
-
-Dave Hansen, Jann Horn, Andy Lutomirski, and Peter Zijlstra provided many
-insights to the issue.  Jann Horn provided the cmpxchg solution.
+Exclude shadow stack from preserve_write test, and apply the same change to
+change_huge_pmd().
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Co-developed-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
+Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
 
 ---
 
-v2:
- - Compile out some code due to clang build error
- - Clarify commit log (dhansen)
- - Normalize PTE bit descriptions between patches (dhansen)
- - Update comment with text from (dhansen)
+Yu-cheng v25:
+ - Move is_shadow_stack_mapping() to a separate line.
 
-Yu-cheng v30:
- - Replace (pmdval_t) cast with CONFIG_PGTABLE_LEVELES > 2 (Borislav Petkov).
+Yu-cheng v24:
+ - Change arch_shadow_stack_mapping() to is_shadow_stack_mapping().
 
- arch/x86/include/asm/pgtable.h | 36 ++++++++++++++++++++++++++++++++++
- 1 file changed, 36 insertions(+)
+ mm/huge_memory.c | 7 +++++++
+ mm/mprotect.c    | 7 +++++++
+ 2 files changed, 14 insertions(+)
 
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index 2f2963429f48..58c7bf9d7392 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -1287,6 +1287,23 @@ static inline pte_t ptep_get_and_clear_full(struct mm_struct *mm,
- static inline void ptep_set_wrprotect(struct mm_struct *mm,
- 				      unsigned long addr, pte_t *ptep)
- {
-+#ifdef CONFIG_X86_SHADOW_STACK
-+	/*
-+	 * Avoid accidentally creating shadow stack PTEs
-+	 * (Write=0,Dirty=1).  Use cmpxchg() to prevent races with
-+	 * the hardware setting Dirty=1.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		pte_t old_pte, new_pte;
-+
-+		old_pte = READ_ONCE(*ptep);
-+		do {
-+			new_pte = pte_wrprotect(old_pte);
-+		} while (!try_cmpxchg(&ptep->pte, &old_pte.pte, new_pte.pte));
-+
-+		return;
-+	}
-+#endif
- 	clear_bit(_PAGE_BIT_RW, (unsigned long *)&ptep->pte);
- }
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 11fc69eb4717..492c4f190f55 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -1800,6 +1800,13 @@ int change_huge_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
+ 		return 0;
  
-@@ -1339,6 +1356,25 @@ static inline pud_t pudp_huge_get_and_clear(struct mm_struct *mm,
- static inline void pmdp_set_wrprotect(struct mm_struct *mm,
- 				      unsigned long addr, pmd_t *pmdp)
- {
-+#ifdef CONFIG_X86_SHADOW_STACK
+ 	preserve_write = prot_numa && pmd_write(*pmd);
++
 +	/*
-+	 * If Shadow Stack is enabled, pmd_wrprotect() moves _PAGE_DIRTY
-+	 * to _PAGE_COW (see comments at pmd_wrprotect()).
-+	 * When a thread reads a RW=1, Dirty=0 PMD and before changing it
-+	 * to RW=0, Dirty=0, another thread could have written to the page
-+	 * and the PMD is RW=1, Dirty=1 now.
++	 * Preserve only normal writable huge PMD, but not shadow
++	 * stack (RW=0, Dirty=1).
 +	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		pmd_t old_pmd, new_pmd;
-+
-+		old_pmd = READ_ONCE(*pmdp);
-+		do {
-+			new_pmd = pmd_wrprotect(old_pmd);
-+		} while (!try_cmpxchg(&pmdp->pmd, &old_pmd.pmd, new_pmd.pmd));
-+
-+		return;
-+	}
-+#endif
- 	clear_bit(_PAGE_BIT_RW, (unsigned long *)pmdp);
- }
++	if (vma->vm_flags & VM_SHADOW_STACK)
++		preserve_write = false;
+ 	ret = 1;
  
+ #ifdef CONFIG_ARCH_ENABLE_THP_MIGRATION
+diff --git a/mm/mprotect.c b/mm/mprotect.c
+index bc6bddd156ca..983206529dce 100644
+--- a/mm/mprotect.c
++++ b/mm/mprotect.c
+@@ -114,6 +114,13 @@ static unsigned long change_pte_range(struct mmu_gather *tlb,
+ 			pte_t ptent;
+ 			bool preserve_write = prot_numa && pte_write(oldpte);
+ 
++			/*
++			 * Preserve only normal writable PTE, but not shadow
++			 * stack (RW=0, Dirty=1).
++			 */
++			if (vma->vm_flags & VM_SHADOW_STACK)
++				preserve_write = false;
++
+ 			/*
+ 			 * Avoid trapping faults against the zero or KSM
+ 			 * pages. See similar comment in change_huge_pmd.
 -- 
 2.17.1
 
