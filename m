@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 01BBFC433F5
-	for <linux-api@archiver.kernel.org>; Thu, 29 Sep 2022 22:30:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B819AC4167B
+	for <linux-api@archiver.kernel.org>; Thu, 29 Sep 2022 22:30:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229992AbiI2WaT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 29 Sep 2022 18:30:19 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49702 "EHLO
+        id S230009AbiI2WaY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 29 Sep 2022 18:30:24 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50454 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229621AbiI2W35 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 29 Sep 2022 18:29:57 -0400
+        with ESMTP id S229941AbiI2WaG (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 29 Sep 2022 18:30:06 -0400
 Received: from mga03.intel.com (mga03.intel.com [134.134.136.65])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 164181F2FE;
-        Thu, 29 Sep 2022 15:29:56 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2AFAA20BE3;
+        Thu, 29 Sep 2022 15:29:59 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1664490596; x=1696026596;
+  t=1664490599; x=1696026599;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=aQ5z6eOsVvFJ2Mg3fViTs1TwTvR0tJtyuBHvl8Ak6H4=;
-  b=TZpiebivFzsDhzr7GB9vvHEpdJY5FVN+tJX1n3GGp450G/NUKnszi0n3
-   EZcs9T3P4A1+b1alZjePgBi6hOgIA9AdBAWA3oHtGDCsl763zhN0be66g
-   Po0uOQlPbvwd2HlNHfktS/ngM71LSyvJIdeBT+p0+FQMkiCD31pj7bd8c
-   2jlIdvF8IYtq1M2wQmesQZO56CGfw7Oilh0sutlv3A2PfzAnn4ELGXhed
-   Y1/bnTaGrjgseoqGN2NO+yyHgdokbeKMAyyxJmAaQpQgFoAhtlrxY33FE
-   8EjdCD43wCosSgsYtvYxB4ZNpKgivLWwzGwM5ymsLAT+8qUGZ1nB2zYyY
-   A==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="303531331"
+  bh=FoZEd4RgFgbf1YU6s4vPiaf1vvw8efRraUc3vBPTh/I=;
+  b=fALFX7lfUgF6PPXF1H6UgQykmKwMutzxeKh/zxPdort5fp0ZaTTCHREk
+   bTpMmez4uqabJuCQ94RF8sKFl2ZFt3G15vXgKzmwufPCEG4NdShbivj8d
+   auVdJ6FQPrwc17jnF6WQszfi5fgp3N4RLGZ/xxt1KAw1BH+iKy2mYEQjK
+   AzBhKmnXMkMdZuF0qUAt7TofZ/tGiuVBNyz/b0gpUnZHtrWaYItFd7iMy
+   60NUdGspiboITdmLCuiOtlgJceKrML8JjWfj9ubQ/YIfUvgYE1MMyBSJY
+   /P1uIZBdeEVynjGCEXTWe5sMKeB9G1kwxWPj25PCWhGiYlJ8QMsMijyu1
+   Q==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="303531343"
 X-IronPort-AV: E=Sophos;i="5.93,356,1654585200"; 
-   d="scan'208";a="303531331"
+   d="scan'208";a="303531343"
 Received: from fmsmga004.fm.intel.com ([10.253.24.48])
-  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:29:55 -0700
-X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="691016087"
+  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:29:58 -0700
+X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="691016103"
 X-IronPort-AV: E=Sophos;i="5.93,356,1654585200"; 
-   d="scan'208";a="691016087"
+   d="scan'208";a="691016103"
 Received: from sergungo-mobl.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.251.25.88])
-  by fmsmga004-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:29:52 -0700
+  by fmsmga004-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:29:56 -0700
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -65,10 +65,10 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         joao.moreira@intel.com, John Allen <john.allen@amd.com>,
         kcc@google.com, eranian@google.com, rppt@kernel.org,
         jamorris@linux.microsoft.com, dethoma@microsoft.com
-Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v2 04/39] x86/cpufeatures: Enable CET CR4 bit for shadow stack
-Date:   Thu, 29 Sep 2022 15:29:01 -0700
-Message-Id: <20220929222936.14584-5-rick.p.edgecombe@intel.com>
+Cc:     rick.p.edgecombe@intel.com
+Subject: [PATCH v2 06/39] x86/fpu: Add helper for modifying xstate
+Date:   Thu, 29 Sep 2022 15:29:03 -0700
+Message-Id: <20220929222936.14584-7-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20220929222936.14584-1-rick.p.edgecombe@intel.com>
 References: <20220929222936.14584-1-rick.p.edgecombe@intel.com>
@@ -76,103 +76,92 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Just like user xfeatures, supervisor xfeatures can be active in the
+registers or present in the task FPU buffer. If the registers are
+active, the registers can be modified directly. If the registers are
+not active, the modification must be performed on the task FPU buffer.
 
-Utilizing CET features requires a CR4 bit to be enabled as well as bits
-to be set in CET MSRs. Setting the CR4 bit does two things:
- 1. Enables the usage of WRUSS instruction, which the kernel can use to
-    write to userspace shadow stacks.
- 2. Allows those individual aspects of CET to be enabled later via the MSR.
- 3. Allows CET to be enabled in guests
+When the state is not active, the kernel could perform modifications
+directly to the buffer. But in order for it to do that, it needs
+to know where in the buffer the specific state it wants to modify is
+located. Doing this is not robust against optimizations that compact
+the FPU buffer, as each access would require computing where in the
+buffer it is.
 
-While future patches will allow the MSR values to be saved and restored
-per task, the CR4 bit will allow for WRUSS to be used regardless of if a
-tasks CET MSRs have been restored.
+The easiest way to modify supervisor xfeature data is to force restore
+the registers and write directly to the MSRs. Often times this is just fine
+anyway as the registers need to be restored before returning to userspace.
+Do this for now, leaving buffer writing optimizations for the future.
 
-Kernel IBT already enables the CET CR4 bit when it detects IBT HW support
-and is configured with kernel IBT. However future patches that enable
-userspace shadow stack support will need the bit set as well. So change
-the logic to enable it in either case.
+Add a new function fpregs_lock_and_load() that can simultaneously call
+fpregs_lock() and do this restore. Also perform some extra sanity
+checks in this function since this will be used in non-fpu focused code.
 
-Clear MSR_IA32_U_CET in cet_disable() so that it can't live to see
-userspace in a new kexec-ed kernel that has CR4.CET set from kernel IBT.
-
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Co-developed-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
+Suggested-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
-Cc: Kees Cook <keescook@chromium.org>
 
 ---
 
 v2:
- - In the shadow stack case, go back to only setting CR4.CET if the
-   kernel is compiled with user shadow stack support.
- - Clear MSR_IA32_U_CET as well. (PeterZ)
-
-KVM refresh:
- - Set CR4.CET if SHSTK or IBT are supported by HW, so that KVM can
-   support CET even if IBT is disabled.
- - Drop no_user_shstk (Dave Hansen)
- - Elaborate on what the CR4 bit does in the commit log
- - Integrate with Kernel IBT logic
+ - Drop optimization of writing directly the buffer, and change API
+   accordingly.
+ - fpregs_lock_and_load() suggested by tglx
+ - Some commit log verbiage from dhansen
 
 v1:
- - Moved kernel-parameters.txt changes here from patch 1.
+ - New patch.
 
-Yu-cheng v25:
- - Remove software-defined X86_FEATURE_CET.
+ arch/x86/include/asm/fpu/api.h |  6 ++++++
+ arch/x86/kernel/fpu/core.c     | 19 +++++++++++++++++++
+ 2 files changed, 25 insertions(+)
 
- arch/x86/kernel/cpu/common.c | 22 ++++++++++++++++------
- 1 file changed, 16 insertions(+), 6 deletions(-)
-
-diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
-index 3e508f239098..d7415bb556b2 100644
---- a/arch/x86/kernel/cpu/common.c
-+++ b/arch/x86/kernel/cpu/common.c
-@@ -598,16 +598,21 @@ __noendbr void ibt_restore(u64 save)
- 
- static __always_inline void setup_cet(struct cpuinfo_x86 *c)
- {
--	u64 msr = CET_ENDBR_EN;
-+	bool kernel_ibt = HAS_KERNEL_IBT && cpu_feature_enabled(X86_FEATURE_IBT);
-+	bool user_shstk = IS_ENABLED(CONFIG_X86_SHADOW_STACK) &&
-+			  cpu_feature_enabled(X86_FEATURE_SHSTK);
-+	u64 msr = 0;
- 
--	if (!HAS_KERNEL_IBT ||
--	    !cpu_feature_enabled(X86_FEATURE_IBT))
-+	if (!kernel_ibt && !user_shstk)
- 		return;
- 
-+	if (kernel_ibt)
-+		msr = CET_ENDBR_EN;
-+
- 	wrmsrl(MSR_IA32_S_CET, msr);
- 	cr4_set_bits(X86_CR4_CET);
- 
--	if (!ibt_selftest()) {
-+	if (kernel_ibt && !ibt_selftest()) {
- 		pr_err("IBT selftest: Failed!\n");
- 		setup_clear_cpu_cap(X86_FEATURE_IBT);
- 		return;
-@@ -616,10 +621,15 @@ static __always_inline void setup_cet(struct cpuinfo_x86 *c)
- 
- __noendbr void cet_disable(void)
- {
--	if (cpu_feature_enabled(X86_FEATURE_IBT))
--		wrmsrl(MSR_IA32_S_CET, 0);
-+	if (!(cpu_feature_enabled(X86_FEATURE_IBT) ||
-+	      cpu_feature_enabled(X86_FEATURE_SHSTK)))
-+		return;
-+
-+	wrmsrl(MSR_IA32_S_CET, 0);
-+	wrmsrl(MSR_IA32_U_CET, 0);
+diff --git a/arch/x86/include/asm/fpu/api.h b/arch/x86/include/asm/fpu/api.h
+index 503a577814b2..3a86ee18ae99 100644
+--- a/arch/x86/include/asm/fpu/api.h
++++ b/arch/x86/include/asm/fpu/api.h
+@@ -82,6 +82,12 @@ static inline void fpregs_unlock(void)
+ 		preempt_enable();
  }
  
++/*
++ * Lock and load the fpu state into the registers, if they are not already
++ * loaded.
++ */
++void fpu_lock_and_load(void);
 +
+ #ifdef CONFIG_X86_DEBUG_FPU
+ extern void fpregs_assert_state_consistent(void);
+ #else
+diff --git a/arch/x86/kernel/fpu/core.c b/arch/x86/kernel/fpu/core.c
+index 3b28c5b25e12..778d3054ccc7 100644
+--- a/arch/x86/kernel/fpu/core.c
++++ b/arch/x86/kernel/fpu/core.c
+@@ -756,6 +756,25 @@ void switch_fpu_return(void)
+ }
+ EXPORT_SYMBOL_GPL(switch_fpu_return);
+ 
++void fpu_lock_and_load(void)
++{
++	/*
++	 * fpregs_lock() only disables preemption (mostly). So modifing state
++	 * in an interrupt could screw up some in progress fpregs operation,
++	 * but appear to work. Warn about it.
++	 */
++	WARN_ON_ONCE(!irq_fpu_usable());
++	WARN_ON_ONCE(current->flags & PF_KTHREAD);
++
++	fpregs_lock();
++
++	fpregs_assert_state_consistent();
++
++	if (test_thread_flag(TIF_NEED_FPU_LOAD))
++		fpregs_restore_userregs();
++}
++EXPORT_SYMBOL_GPL(fpu_lock_and_load);
++
+ #ifdef CONFIG_X86_DEBUG_FPU
  /*
-  * Some CPU features depend on higher CPUID levels, which may not always
-  * be available due to CPUID level capping or broken virtualization
+  * If current FPU state according to its tracking (loaded FPU context on this
 -- 
 2.17.1
 
