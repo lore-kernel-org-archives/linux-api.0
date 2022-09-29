@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 41378C433F5
-	for <linux-api@archiver.kernel.org>; Thu, 29 Sep 2022 22:33:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B61EEC433F5
+	for <linux-api@archiver.kernel.org>; Thu, 29 Sep 2022 22:33:38 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230139AbiI2WdU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 29 Sep 2022 18:33:20 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51796 "EHLO
+        id S230146AbiI2Wdh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 29 Sep 2022 18:33:37 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52656 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229945AbiI2Wce (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 29 Sep 2022 18:32:34 -0400
-Received: from mga18.intel.com (mga18.intel.com [134.134.136.126])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 93C3E9568D;
-        Thu, 29 Sep 2022 15:30:53 -0700 (PDT)
+        with ESMTP id S229694AbiI2Wcj (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 29 Sep 2022 18:32:39 -0400
+Received: from mga03.intel.com (mga03.intel.com [134.134.136.65])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2EF58A0317;
+        Thu, 29 Sep 2022 15:30:56 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1664490654; x=1696026654;
+  t=1664490656; x=1696026656;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=6n6cAgUq+fer3NSIP02jyEcIyWW6Zs7Gr4LVaF52ejw=;
-  b=Ai8qVhrCek3zGUrt/fiaC7Zx0jGN/H32g6r/TuMLg5enzHFcrG0rTb3C
-   IFwpgvCOUf3/gYmBEKrLXtldwGYX9vKeoak9MEXN0C9F7wmWC9FkqJrxJ
-   IDnBqoq/P2DGHaHf7cJjY18FrpA3NC/yXSXl8I4CSc5kMxWKip04hP6QJ
-   uK4kCJIlyV0G9i+DICF3JKfuV1sNrAc7XB2P1Zi8JkyhAjiw/tlHQh3ak
-   FbvnIA7nSverimBPxJumKnLYrhzmcLcUybgz3kg02N1q6cd8ddkH4FnJq
-   oRHJ8vN1OJr5Ed0iwcJNwAL65gFMCKlH1vufjagqbv+QUvJEqCv+fCvj3
+  bh=9UWqqA5zjHhGRdDkC9YrucJaLkwFDjky53Grbijfra4=;
+  b=izG0hZTumiT6niFgCl0c6eK4m8ok7Zz1+F53GGP4Tm5f7CYvKPAuGpr7
+   hQOxmpQI0XRuGKSALDm/YPQfgYXHcS/TfiEBT4c7QDHm6BTyIjhVXJ7pj
+   C0JlKsgwBjka4StcAOeGHSZrkP5C4afsbir/NfXfsRD08Xou5dCH6C3H8
+   SUumAhQCf8s5cDt1uyvghRfi3Bg13E7FbEnmV95zc+GkPquIX9F1fGIk1
+   KXZahgMgfqSadqGUHQhFTmNOh+QocU/dVglRwEAS1llGvkib8x9E2wIfa
+   QimQBI5JIGgCJJQjw+DQp7LpdAZ7R9cLJfL2CBaZfrKrzUsBR0QwCo2l3
    w==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="285181979"
+X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="303531396"
 X-IronPort-AV: E=Sophos;i="5.93,356,1654585200"; 
-   d="scan'208";a="285181979"
+   d="scan'208";a="303531396"
 Received: from fmsmga004.fm.intel.com ([10.253.24.48])
-  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:30:25 -0700
-X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="691016248"
+  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:30:08 -0700
+X-IronPort-AV: E=McAfee;i="6500,9779,10485"; a="691016179"
 X-IronPort-AV: E=Sophos;i="5.93,356,1654585200"; 
-   d="scan'208";a="691016248"
+   d="scan'208";a="691016179"
 Received: from sergungo-mobl.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.251.25.88])
-  by fmsmga004-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:30:22 -0700
+  by fmsmga004-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Sep 2022 15:30:06 -0700
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -66,9 +66,9 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         kcc@google.com, eranian@google.com, rppt@kernel.org,
         jamorris@linux.microsoft.com, dethoma@microsoft.com
 Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v2 19/39] mm/mmap: Add shadow stack pages to memory accounting
-Date:   Thu, 29 Sep 2022 15:29:16 -0700
-Message-Id: <20220929222936.14584-20-rick.p.edgecombe@intel.com>
+Subject: [PATCH v2 11/39] x86/mm: Update pte_modify for _PAGE_COW
+Date:   Thu, 29 Sep 2022 15:29:08 -0700
+Message-Id: <20220929222936.14584-12-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20220929222936.14584-1-rick.p.edgecombe@intel.com>
 References: <20220929222936.14584-1-rick.p.edgecombe@intel.com>
@@ -78,51 +78,102 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 
-Account shadow stack pages to stack memory.
+The Write=0,Dirty=1 PTE has been used to indicate copy-on-write pages.
+However, newer x86 processors also regard a Write=0,Dirty=1 PTE as a
+shadow stack page. In order to separate the two, the software-defined
+_PAGE_DIRTY is changed to _PAGE_COW for the copy-on-write case, and
+pte_*() are updated to do this.
+
+pte_modify() takes a "raw" pgprot_t which was not necessarily created
+with any of the existing PTE bit helpers. That means that it can return a
+pte_t with Write=0,Dirty=1, a shadow stack PTE, when it did not intend to
+create one.
+
+However pte_modify() changes a PTE to 'newprot', but it doesn't use the
+pte_*(). Modify it to also move _PAGE_DIRTY to _PAGE_COW. Apply the same
+changes to pmd_modify().
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Co-developed-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
-Cc: Kees Cook <keescook@chromium.org>
 
 ---
 
 v2:
- - Remove is_shadow_stack_mapping() and just change it to directly bitwise
-   and VM_SHADOW_STACK.
+ - Update commit log with text and suggestions from (Dave Hansen)
+ - Drop fixup_dirty_pte() in favor of clearing the HW dirty bit along
+   with the _PAGE_CHG_MASK masking, then calling pte_mkdirty() (Dave
+   Hansen)
 
-Yu-cheng v26:
- - Remove redundant #ifdef CONFIG_MMU.
+ arch/x86/include/asm/pgtable.h | 41 +++++++++++++++++++++++++++++-----
+ 1 file changed, 35 insertions(+), 6 deletions(-)
 
-Yu-cheng v25:
- - Remove #ifdef CONFIG_ARCH_HAS_SHADOW_STACK for is_shadow_stack_mapping().
-
- mm/mmap.c | 5 +++++
- 1 file changed, 5 insertions(+)
-
-diff --git a/mm/mmap.c b/mm/mmap.c
-index f0d2e9143bd0..8569ef09614c 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
-@@ -1682,6 +1682,9 @@ static inline int accountable_mapping(struct file *file, vm_flags_t vm_flags)
- 	if (file && is_file_hugepages(file))
- 		return 0;
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index ad201dae7316..2f2963429f48 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -790,26 +790,55 @@ static inline u64 flip_protnone_guard(u64 oldval, u64 val, u64 mask);
  
-+	if (vm_flags & VM_SHADOW_STACK)
-+		return 1;
+ static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
+ {
++	pteval_t _page_chg_mask_no_dirty = _PAGE_CHG_MASK & ~_PAGE_DIRTY;
+ 	pteval_t val = pte_val(pte), oldval = val;
++	pte_t pte_result;
+ 
+ 	/*
+ 	 * Chop off the NX bit (if present), and add the NX portion of
+ 	 * the newprot (if present):
+ 	 */
+-	val &= _PAGE_CHG_MASK;
+-	val |= check_pgprot(newprot) & ~_PAGE_CHG_MASK;
++	val &= _page_chg_mask_no_dirty;
++	val |= check_pgprot(newprot) & ~_page_chg_mask_no_dirty;
+ 	val = flip_protnone_guard(oldval, val, PTE_PFN_MASK);
+-	return __pte(val);
 +
- 	return (vm_flags & (VM_NORESERVE | VM_SHARED | VM_WRITE)) == VM_WRITE;
++	pte_result = __pte(val);
++
++	/*
++	 * Dirty bit is not preserved above so it can be done
++	 * in a special way for the shadow stack case, where it
++	 * needs to set _PAGE_COW. pte_mkdirty() will do this in
++	 * the case of shadow stack.
++	 */
++	if (pte_dirty(pte))
++		pte_result = pte_mkdirty(pte_result);
++
++	return pte_result;
  }
  
-@@ -3289,6 +3292,8 @@ void vm_stat_account(struct mm_struct *mm, vm_flags_t flags, long npages)
- 		mm->exec_vm += npages;
- 	else if (is_stack_mapping(flags))
- 		mm->stack_vm += npages;
-+	else if (flags & VM_SHADOW_STACK)
-+		mm->stack_vm += npages;
- 	else if (is_data_mapping(flags))
- 		mm->data_vm += npages;
+ static inline pmd_t pmd_modify(pmd_t pmd, pgprot_t newprot)
+ {
++	pteval_t _hpage_chg_mask_no_dirty = _HPAGE_CHG_MASK & ~_PAGE_DIRTY;
+ 	pmdval_t val = pmd_val(pmd), oldval = val;
++	pmd_t pmd_result;
+ 
+-	val &= _HPAGE_CHG_MASK;
+-	val |= check_pgprot(newprot) & ~_HPAGE_CHG_MASK;
++	val &= _hpage_chg_mask_no_dirty;
++	val |= check_pgprot(newprot) & ~_hpage_chg_mask_no_dirty;
+ 	val = flip_protnone_guard(oldval, val, PHYSICAL_PMD_PAGE_MASK);
+-	return __pmd(val);
++
++
++	pmd_result = __pmd(val);
++
++	/*
++	 * Dirty bit is not preserved above so it can be done
++	 * specially for the shadow stack case. It needs to move
++	 * the HW dirty bit to the software COW bit. Set in the
++	 * result if it was set in the original value.
++	 */
++	if (pmd_dirty(pmd))
++		pmd_result = pmd_mkdirty(pmd_result);
++
++	return pmd_result;
  }
+ 
+ /*
 -- 
 2.17.1
 
