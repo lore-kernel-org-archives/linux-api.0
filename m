@@ -2,49 +2,49 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B9EE5C433FE
-	for <linux-api@archiver.kernel.org>; Mon,  3 Oct 2022 17:18:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 55A14C433FE
+	for <linux-api@archiver.kernel.org>; Mon,  3 Oct 2022 17:25:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229661AbiJCRSP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 3 Oct 2022 13:18:15 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49086 "EHLO
+        id S229804AbiJCRZy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 3 Oct 2022 13:25:54 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36034 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229545AbiJCRSO (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 3 Oct 2022 13:18:14 -0400
-Received: from mail-pl1-x633.google.com (mail-pl1-x633.google.com [IPv6:2607:f8b0:4864:20::633])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 387E7F35
-        for <linux-api@vger.kernel.org>; Mon,  3 Oct 2022 10:18:12 -0700 (PDT)
-Received: by mail-pl1-x633.google.com with SMTP id b2so5370304plc.7
-        for <linux-api@vger.kernel.org>; Mon, 03 Oct 2022 10:18:12 -0700 (PDT)
+        with ESMTP id S229819AbiJCRZl (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 3 Oct 2022 13:25:41 -0400
+Received: from mail-pf1-x431.google.com (mail-pf1-x431.google.com [IPv6:2607:f8b0:4864:20::431])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6788324953
+        for <linux-api@vger.kernel.org>; Mon,  3 Oct 2022 10:25:30 -0700 (PDT)
+Received: by mail-pf1-x431.google.com with SMTP id f140so5516308pfa.1
+        for <linux-api@vger.kernel.org>; Mon, 03 Oct 2022 10:25:30 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=chromium.org; s=google;
         h=in-reply-to:content-disposition:mime-version:references:message-id
          :subject:cc:to:from:date:from:to:cc:subject:date;
-        bh=DUSAgm1tGARrhgAa+YXJyBkN7A5KbivkL+1rvMQ+tQc=;
-        b=Of4O9so7/tSkTzAhtAmZ+McsJYDlbXtDFPfPIaWqeHQqx0dNBvuOCri5UaoKbaXhOK
-         y6gXjMlY2as/UO/bCo3kBsjsJP7fvzviBg59V2TvtA70FIIFvHZxrHXgb8EaKe3XjuwU
-         Wg6HcGRQExXlzVGqQhNLlqWLYTLYRjlajnCQU=
+        bh=Eh36TVWrbcXNFU55d3swU5YqNSMVT4Ta89oIyEc6Y9o=;
+        b=N7a4hDzZn46LbJVuATRGzyfB6RwBF1mOFM0mklRAl7TOVEUSyocBhaLpJnm051gBwo
+         fle2M9WiGXJs4C0aMaeXdJVPGYdhaA0bN+SEtbeksodSvWRca7Hc6Jm5fvUYvibggxIm
+         F1xjrOQoSSvpcfL5mAvzxnJFDl+JRTHNY+Tvo=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=in-reply-to:content-disposition:mime-version:references:message-id
          :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date;
-        bh=DUSAgm1tGARrhgAa+YXJyBkN7A5KbivkL+1rvMQ+tQc=;
-        b=3rClbKDkSnfOSfQsuou6LcbBww1RCzBEB4gNV/OlkeuRrSXwN6pUGUTtxgAXarW1VE
-         20z3WTX8tBHmUHwIl8bnAubZCpFmwVtRDwUsgi2eoCBal+SWYGnfF4cPv9tjteqQmsOm
-         P0s8oQPlCPAN0xEELf1cz+gp5HKPbn55i0epgCSBzD1NGngYbOMU/ciMyHazQibP9GpI
-         IYjgUoB++rk7EtVTjwHHNO6dm+zkC4G0isk7vmqkZlIZz04Q5nClOomYiKwB/vQu9M6Z
-         Ziqf9auQbxpG6inXCYOlpIJECuqkpGlv5VkXBpyWXwCWyPJ4Mt9DeUKFiQ21nVNS+1DG
-         zn5A==
-X-Gm-Message-State: ACrzQf3emnuK/ve2HCy5xgsElyyT7WNyvi3C6uP0ICSDUY0t7Cr3bsos
-        2sH37lXpeCDJVVVnMf2uEyj0Fw==
-X-Google-Smtp-Source: AMsMyM6gix+5GlV36V2qSUzA6hoZQ8rkNTODSa4bi8qPDTOaiRU0xMg3oXO3dVq8uVOs01K5lS8u7w==
-X-Received: by 2002:a17:90b:1648:b0:203:c8d3:99b0 with SMTP id il8-20020a17090b164800b00203c8d399b0mr13356266pjb.54.1664817491587;
-        Mon, 03 Oct 2022 10:18:11 -0700 (PDT)
+        bh=Eh36TVWrbcXNFU55d3swU5YqNSMVT4Ta89oIyEc6Y9o=;
+        b=SM/Nq8zb8ldch9a6QfDpLARz1hWrrisaFXwog01UIFuUMuVzEXYCtNdY9eqSynqWqM
+         IEDoiOcjuIfjGCt9PbSzGOOyb/zetopmaaWELjGZ4doDFce4E2ltEI12JJ7PgpOTTAvT
+         OfTqU6Jzqe0alKVpO/ZsgKfi0ZfLwUqhOjlGJ6pyk2g8tTdvCHJy4bdbWRzIozkMXJHI
+         hkKql1ovRLuxY/F4c+cYXE0/C/oTkeJur19YUqakduZGwxFlWR8seKOcQaCnSZT0S4fL
+         vKh5dYK8ad8Oshac5s5BnxrxBeJRywb8E9tOXl3xFI4RsCphUC8oAzBebY49GDYaQLoD
+         bDyA==
+X-Gm-Message-State: ACrzQf2grwGaKtD1yR6banVrWwEvB+4/m+aw0jjCmSUHktT+pIu3zw52
+        zd5qNDp5zNjQuxJPsg8rjvmxuw==
+X-Google-Smtp-Source: AMsMyM7i2rD0qIEnUie8bKeDsdhqownDwDDyMyGPDS32Fdy80LrPI3HEbwUHGAjdWNZFLZFsk60kDw==
+X-Received: by 2002:a63:2a81:0:b0:43c:5fa6:1546 with SMTP id q123-20020a632a81000000b0043c5fa61546mr19683775pgq.43.1664817930407;
+        Mon, 03 Oct 2022 10:25:30 -0700 (PDT)
 Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-        by smtp.gmail.com with ESMTPSA id o17-20020a639a11000000b0043ba3d6ea3fsm7069554pge.54.2022.10.03.10.18.10
+        by smtp.gmail.com with ESMTPSA id i65-20020a626d44000000b0055f1db26b3csm5611281pfc.37.2022.10.03.10.25.29
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 03 Oct 2022 10:18:10 -0700 (PDT)
-Date:   Mon, 3 Oct 2022 10:18:09 -0700
+        Mon, 03 Oct 2022 10:25:29 -0700 (PDT)
+Date:   Mon, 3 Oct 2022 10:25:28 -0700
 From:   Kees Cook <keescook@chromium.org>
 To:     Rick Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
@@ -74,107 +74,112 @@ Cc:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         kcc@google.com, eranian@google.com, rppt@kernel.org,
         jamorris@linux.microsoft.com, dethoma@microsoft.com,
         Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [PATCH v2 01/39] Documentation/x86: Add CET description
-Message-ID: <202210031006.02C79ED58@keescook>
+Subject: Re: [PATCH v2 02/39] x86/cet/shstk: Add Kconfig option for Shadow
+ Stack
+Message-ID: <202210031020.0E93C75F9@keescook>
 References: <20220929222936.14584-1-rick.p.edgecombe@intel.com>
- <20220929222936.14584-2-rick.p.edgecombe@intel.com>
+ <20220929222936.14584-3-rick.p.edgecombe@intel.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20220929222936.14584-2-rick.p.edgecombe@intel.com>
+In-Reply-To: <20220929222936.14584-3-rick.p.edgecombe@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Sep 29, 2022 at 03:28:58PM -0700, Rick Edgecombe wrote:
-> [...]
-> +Overview
-> +========
+On Thu, Sep 29, 2022 at 03:28:59PM -0700, Rick Edgecombe wrote:
+> From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> 
+> Shadow Stack provides protection against function return address
+> corruption. It is active when the processor supports it, the kernel has
+> CONFIG_X86_SHADOW_STACK enabled, and the application is built for the
+> feature. This is only implemented for the 64-bit kernel. When it is
+> enabled, legacy non-Shadow Stack applications continue to work, but without
+> protection.
+> 
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> Co-developed-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
+> Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
+> Cc: Kees Cook <keescook@chromium.org>
+> 
+> ---
+> 
+> v2:
+>  - Remove already wrong kernel size increase info (tlgx)
+>  - Change prompt to remove "Intel" (tglx)
+>  - Update line about what CPUs are supported (Dave)
+> 
+> Yu-cheng v25:
+>  - Remove X86_CET and use X86_SHADOW_STACK directly.
+> 
+> Yu-cheng v24:
+>  - Update for the splitting X86_CET to X86_SHADOW_STACK and X86_IBT.
+> 
+>  arch/x86/Kconfig           | 18 ++++++++++++++++++
+>  arch/x86/Kconfig.assembler |  5 +++++
+>  2 files changed, 23 insertions(+)
+> 
+> diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+> index f9920f1341c8..b68eb75887b8 100644
+> --- a/arch/x86/Kconfig
+> +++ b/arch/x86/Kconfig
+> @@ -26,6 +26,7 @@ config X86_64
+>  	depends on 64BIT
+>  	# Options that are inherently 64-bit kernel only:
+>  	select ARCH_HAS_GIGANTIC_PAGE
+> +	select ARCH_HAS_SHADOW_STACK
+>  	select ARCH_SUPPORTS_INT128 if CC_HAS_INT128
+>  	select ARCH_USE_CMPXCHG_LOCKREF
+>  	select HAVE_ARCH_SOFT_DIRTY
+> @@ -1936,6 +1937,23 @@ config X86_SGX
+>  
+>  	  If unsure, say N.
+>  
+> +config ARCH_HAS_SHADOW_STACK
+> +	def_bool n
 > +
-> +Control-flow Enforcement Technology (CET) is term referring to several
-> +related x86 processor features that provides protection against control
-> +flow hijacking attacks. The HW feature itself can be set up to protect
-> +both applications and the kernel. Only user-mode protection is implemented
-> +in the 64-bit kernel.
+> +config X86_SHADOW_STACK
+> +	prompt "X86 Shadow Stack"
+> +	def_bool n
 
-This likely needs rewording, since it's not strictly true any more:
-IBT is supported in kernel-mode now (CONFIG_X86_IBT).
+I hope we can switch this to "default y" soon, given it's a hardware
+feature that is disabled at runtime when not available.
 
-> +CET introduces Shadow Stack and Indirect Branch Tracking. Shadow stack is
-> +a secondary stack allocated from memory and cannot be directly modified by
-> +applications. When executing a CALL instruction, the processor pushes the
-> +return address to both the normal stack and the shadow stack. Upon
-> +function return, the processor pops the shadow stack copy and compares it
-> +to the normal stack copy. If the two differ, the processor raises a
-> +control-protection fault. Indirect branch tracking verifies indirect
-> +CALL/JMP targets are intended as marked by the compiler with 'ENDBR'
-> +opcodes. Not all CPU's have both Shadow Stack and Indirect Branch Tracking
-> +and only Shadow Stack is currently supported in the kernel.
+> +	depends on ARCH_HAS_SHADOW_STACK
+
+Doesn't this depend on AS_WRUSS too?
+
+> +	select ARCH_USES_HIGH_VMA_FLAGS
+> +	help
+> +	  Shadow Stack protection is a hardware feature that detects function
+> +	  return address corruption. Today the kernel's support is limited to
+> +	  virtualizing it in KVM guests.
 > +
-> +The Kconfig options is X86_SHADOW_STACK, and it can be disabled with
-> +the kernel parameter clearcpuid, like this: "clearcpuid=shstk".
+> +	  CPUs supporting shadow stacks were first released in 2020.
 > +
-> +To build a CET-enabled kernel, Binutils v2.31 and GCC v8.1 or LLVM v10.0.1
-> +or later are required. To build a CET-enabled application, GLIBC v2.28 or
-> +later is also required.
+> +	  If unsure, say N.
 > +
-> +At run time, /proc/cpuinfo shows CET features if the processor supports
-> +CET.
-
-Maybe call them out by name: shstk ibt
-
-> +CET arch_prctl()'s
-> +==================
+>  config EFI
+>  	bool "EFI runtime service support"
+>  	depends on ACPI
+> diff --git a/arch/x86/Kconfig.assembler b/arch/x86/Kconfig.assembler
+> index 26b8c08e2fc4..00c79dd93651 100644
+> --- a/arch/x86/Kconfig.assembler
+> +++ b/arch/x86/Kconfig.assembler
+> @@ -19,3 +19,8 @@ config AS_TPAUSE
+>  	def_bool $(as-instr,tpause %ecx)
+>  	help
+>  	  Supported by binutils >= 2.31.1 and LLVM integrated assembler >= V7
 > +
-> +Elf features should be enabled by the loader using the below arch_prctl's.
-> +
-> +arch_prctl(ARCH_CET_ENABLE, unsigned int feature)
-> +    Enable a single feature specified in 'feature'. Can only operate on
-> +    one feature at a time.
+> +config AS_WRUSS
+> +	def_bool $(as-instr,wrussq %rax$(comma)(%rbx))
+> +	help
+> +	  Supported by binutils >= 2.31 and LLVM integrated assembler
 
-Does this mean only 1 bit out of the 32 may be specified?
+Otherwise, I don't see anything else using OCNFIG_AS_WRUSS:
 
-> +
-> +arch_prctl(ARCH_CET_DISABLE, unsigned int feature)
-> +    Disable features specified in 'feature'. Can only operate on
-> +    one feature at a time.
-> +
-> +arch_prctl(ARCH_CET_LOCK, unsigned int features)
-> +    Lock in features at their current enabled or disabled status.
-
-How is the "features" argument processed here?
-
-> [...]
-> +Proc status
-> +===========
-> +To check if an application is actually running with shadow stack, the
-> +user can read the /proc/$PID/arch_status. It will report "wrss" or
-> +"shstk" depending on what is enabled.
-
-TIL about "arch_status". :) Why is this a separate file? "status" is
-already has unique field names.
-
-> +Fork
-> +----
-> +
-> +The shadow stack's vma has VM_SHADOW_STACK flag set; its PTEs are required
-> +to be read-only and dirty. When a shadow stack PTE is not RO and dirty, a
-> +shadow access triggers a page fault with the shadow stack access bit set
-> +in the page fault error code.
-> +
-> +When a task forks a child, its shadow stack PTEs are copied and both the
-> +parent's and the child's shadow stack PTEs are cleared of the dirty bit.
-> +Upon the next shadow stack access, the resulting shadow stack page fault
-> +is handled by page copy/re-use.
-> +
-> +When a pthread child is created, the kernel allocates a new shadow stack
-> +for the new thread.
-
-Perhaps speak to the ASLR characteristics of the shstk here?
-
-Also, it seems if there is a "Fork" section, there should be an "Exec"
-section? I suspect it would be short: shstk is disabled when execve() is
-called and must be re-enabled from userspace, yes?
+$ git grep AS_WRUSS
+arch/x86/Kconfig.assembler:config AS_WRUSS
 
 -Kees
 
