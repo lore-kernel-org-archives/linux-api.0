@@ -2,196 +2,75 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 13937C433F5
-	for <linux-api@archiver.kernel.org>; Tue, 11 Oct 2022 14:22:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 486C4C433F5
+	for <linux-api@archiver.kernel.org>; Tue, 11 Oct 2022 15:24:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229614AbiJKOWK (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 11 Oct 2022 10:22:10 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37764 "EHLO
+        id S229942AbiJKPYf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 11 Oct 2022 11:24:35 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60330 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229538AbiJKOWJ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 11 Oct 2022 10:22:09 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 293E91D67E;
-        Tue, 11 Oct 2022 07:22:08 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        with ESMTP id S230254AbiJKPYQ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 11 Oct 2022 11:24:16 -0400
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [IPv6:2001:67c:2178:6::1d])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5269FD57C0;
+        Tue, 11 Oct 2022 08:15:38 -0700 (PDT)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
         (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id A59FC6119E;
-        Tue, 11 Oct 2022 14:22:07 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id AE813C433D6;
-        Tue, 11 Oct 2022 14:22:06 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
-        s=korg; t=1665498127;
-        bh=UnTADQlb1c9sMBi6JfkWaS5g/Z+SghRtz6zwEjj/c/c=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=MGtgzeVxQqEOw4QNbLspA4olIz6C7JwyqfbtZxRJG0BUivMG16gJ62068dBmONy06
-         xjPvGfwZzKd7CZSQiTMwGdaxoVjWfnViwMCrzKYDxqIOJ6SdcQtb7dlT2TLcDvKBuw
-         sdk7vi8CEpz6qoQUHjH94ASMTO2htEn4G9bNy84g=
-Date:   Tue, 11 Oct 2022 16:22:50 +0200
-From:   Greg KH <gregkh@linuxfoundation.org>
-To:     Jiaxun Yang <jiaxun.yang@flygoat.com>
-Cc:     linux-mips@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tsbogend@alpha.franken.de, linux-api@vger.kernel.org,
-        f.fainelli@gmail.com
-Subject: Re: [PATCH v6] MIPS: Expose prid and globalnumber to sysfs
-Message-ID: <Y0V8OlvdqADjCS9I@kroah.com>
-References: <20221011110951.93404-1-jiaxun.yang@flygoat.com>
+        by smtp-out2.suse.de (Postfix) with ESMTPS id 0D84A20121;
+        Tue, 11 Oct 2022 15:00:16 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+        t=1665500416; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=RO0FO74ctDC9cFYZEDLiw7BGFiXGuRuOlnU9ALUUx4Q=;
+        b=UdX58LtbOBVnHrZvPxzq+OnrT4JBCxyKX7In8GNplrTy13057zqHjS17NhVXO+X6uvxB+F
+        yWFaRqu7LeV7MI2FHa89kpRAGRakFbDpECYhA7UBIDylrvfmtmTE9wEJI6mhsWJfIxmD+O
+        f+rcsieq2uSRQGfJSh//Jbj6k19Qu2A=
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id C78AC139ED;
+        Tue, 11 Oct 2022 15:00:15 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+        by imap2.suse-dmz.suse.de with ESMTPSA
+        id fuh0LP+ERWNxSQAAMHmgww
+        (envelope-from <mhocko@suse.com>); Tue, 11 Oct 2022 15:00:15 +0000
+Date:   Tue, 11 Oct 2022 17:00:14 +0200
+From:   Michal Hocko <mhocko@suse.com>
+To:     Frank van der Linden <fvdl@google.com>
+Cc:     Zhongkun He <hezhongkun.hzk@bytedance.com>, corbet@lwn.net,
+        akpm@linux-foundation.org, linux-mm@kvack.org,
+        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-doc@vger.kernel.org, wuyun.abel@bytedance.com
+Subject: Re: [RFC] mm: add new syscall pidfd_set_mempolicy()
+Message-ID: <Y0WE/lEiNvl2ljo1@dhcp22.suse.cz>
+References: <20221010094842.4123037-1-hezhongkun.hzk@bytedance.com>
+ <CAPTztWYTGOb8ZQzfgThqJn+fyi4ZB8=JQQZi5_rUoDhdftKtvg@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20221011110951.93404-1-jiaxun.yang@flygoat.com>
+In-Reply-To: <CAPTztWYTGOb8ZQzfgThqJn+fyi4ZB8=JQQZi5_rUoDhdftKtvg@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Oct 11, 2022 at 12:09:51PM +0100, Jiaxun Yang wrote:
-> Some application would like to know precise model and rev of processor
-> to do errata workaround or optimization.
-> 
-> Expose them in sysfs as:
-> /sys/devices/system/cpu/cpuX/regs/identification/prid
-> /sys/devices/system/cpu/cpuX/regs/identification/globalnumber
-> 
-> Reusing AArch64 CPU registers directory.
-> 
-> Signed-off-by: Jiaxun Yang <jiaxun.yang@flygoat.com>
-> ---
-> v2: Drop static qualifier for kobj (gregkh)
-> v3: Use kzalloc to allocate struct cpuregs.
->     note: When Greg mentioned about static I was thinking about
->     static qualifier of percpu variable. After reading documents
->     again it turns out kobjs should be allocated at runtime. Arm64's
->     cpuinfo kobj is also on a percpu variable... I guess that was a
->     intentional use?
-> v4: Properly handle err of kobj creation. (gregkh)
-> v5: Drop invalid kfree
-> v6: Correct offline routine, use kobject_put
-> ---
->  .../ABI/testing/sysfs-devices-system-cpu      |  9 ++
->  arch/mips/kernel/topology.c                   | 97 +++++++++++++++++++
->  2 files changed, 106 insertions(+)
-> 
-> diff --git a/Documentation/ABI/testing/sysfs-devices-system-cpu b/Documentation/ABI/testing/sysfs-devices-system-cpu
-> index 5bf61881f012..9dea45ad5a22 100644
-> --- a/Documentation/ABI/testing/sysfs-devices-system-cpu
-> +++ b/Documentation/ABI/testing/sysfs-devices-system-cpu
-> @@ -512,6 +512,15 @@ Description:	information about CPUs heterogeneity.
->  
->  		cpu_capacity: capacity of cpuX.
->  
-> +What:		/sys/devices/system/cpu/cpuX/regs/identification/prid
-> +		/sys/devices/system/cpu/cpuX/regs/identification/globalnumber
-> +Date:		October 2022
-> +Contact:	Linux MIPS Kernel Mailing list <linux-mips@vger.kernel.org>
-> +Description:	MIPS CPU registers
-> +
-> +		'identification' directory exposes the Processor ID and Global Number
-> +		registers for identifying model and revision of the CPU.
-> +
->  What:		/sys/devices/system/cpu/vulnerabilities
->  		/sys/devices/system/cpu/vulnerabilities/meltdown
->  		/sys/devices/system/cpu/vulnerabilities/spectre_v1
-> diff --git a/arch/mips/kernel/topology.c b/arch/mips/kernel/topology.c
-> index 9429d85a4703..85588ffd6bac 100644
-> --- a/arch/mips/kernel/topology.c
-> +++ b/arch/mips/kernel/topology.c
-> @@ -5,6 +5,8 @@
->  #include <linux/node.h>
->  #include <linux/nodemask.h>
->  #include <linux/percpu.h>
-> +#include <linux/seq_file.h>
-> +#include <linux/smp.h>
->  
->  static DEFINE_PER_CPU(struct cpu, cpu_devices);
->  
-> @@ -26,3 +28,98 @@ static int __init topology_init(void)
->  }
->  
->  subsys_initcall(topology_init);
-> +
-> +static struct kobj_type cpuregs_kobj_type = {
-> +	.sysfs_ops = &kobj_sysfs_ops,
-> +};
-> +
-> +struct cpureg {
-> +	struct kobject kobj;
-> +	struct cpuinfo_mips *info;
-> +};
-> +static DEFINE_PER_CPU(struct cpureg *, cpuregs);
-> +
-> +#define kobj_to_cpureg(kobj)	container_of(kobj, struct cpureg, kobj)
-> +#define CPUREGS_ATTR_RO(_name, _field)						\
-> +	static ssize_t _name##_show(struct kobject *kobj,			\
-> +			struct kobj_attribute *attr, char *buf)			\
-> +	{									\
-> +		struct cpuinfo_mips *info = kobj_to_cpureg(kobj)->info;		\
-> +										\
-> +		return sysfs_emit(buf, "0x%08x\n", info->_field);	\
-> +	}									\
-> +	static struct kobj_attribute cpuregs_attr_##_name = __ATTR_RO(_name)
-> +
-> +CPUREGS_ATTR_RO(prid, processor_id);
-> +CPUREGS_ATTR_RO(globalnumber, globalnumber);
-> +
-> +static struct attribute *cpuregs_id_attrs[] = {
-> +	&cpuregs_attr_prid.attr,
-> +	&cpuregs_attr_globalnumber.attr,
-> +	NULL
-> +};
-> +
-> +static const struct attribute_group cpuregs_attr_group = {
-> +	.attrs = cpuregs_id_attrs,
-> +	.name = "identification"
-> +};
-> +
-> +static int cpuregs_cpu_online(unsigned int cpu)
-> +{
-> +	int rc;
-> +	struct device *dev;
-> +	struct cpureg *reg;
-> +
-> +	dev = get_cpu_device(cpu);
-> +	if (!dev) {
-> +		rc = -ENODEV;
-> +		goto out;
-> +	}
-> +	reg = kzalloc(sizeof(struct cpureg), GFP_KERNEL);
-> +	if (!reg) {
-> +		rc = -ENOMEM;
-> +		goto out;
-> +	}
-> +	reg->info = &cpu_data[cpu];
-> +
-> +	rc = kobject_init_and_add(&reg->kobj, &cpuregs_kobj_type,
-> +					&dev->kobj, "regs");
-> +	if (rc)
-> +		goto out_kobj;
-> +	rc = sysfs_create_group(&reg->kobj, &cpuregs_attr_group);
-> +	if (rc)
-> +		goto out_kobj;
-> +
-> +	return 0;
-> +out_kobj:
-> +	kobject_put(&reg->kobj);
-> +out:
-> +	return rc;
-> +}
-> +
-> +static int cpuregs_cpu_offline(unsigned int cpu)
-> +{
-> +	struct cpureg *reg = per_cpu(cpuregs, cpu);
-> +
-> +	if (!reg)
-> +		return -ENODEV;
-> +	sysfs_remove_group(&reg->kobj, &cpuregs_attr_group);
-> +	kobject_put(&reg->kobj);
+On Mon 10-10-22 09:22:13, Frank van der Linden wrote:
+> For consistency with process_madvise(), I would suggest calling it
+> process_set_mempolicy.
 
-You did not test this code :(
+This operation has per-thread rather than per-process semantic so I do
+not think your proposed naming is better.
 
-Please do so, and also exercise the cpu-remove path and fix up all the
-errors that happen there.
+> Other than that, this makes sense. To complete
+> the set, perhaps a process_mbind() should be added as well. What do
+> you think?
 
-thanks,
-
-greg k-h
+Is there any real usecase for this interface? How is the caller supposed
+to make per-range decisions without a very involved coordination with
+the target process?
+-- 
+Michal Hocko
+SUSE Labs
