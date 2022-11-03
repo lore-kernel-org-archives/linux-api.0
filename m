@@ -2,30 +2,30 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2CEF0C4332F
-	for <linux-api@archiver.kernel.org>; Thu,  3 Nov 2022 20:05:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B02BEC4167B
+	for <linux-api@archiver.kernel.org>; Thu,  3 Nov 2022 20:05:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230426AbiKCUFA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 3 Nov 2022 16:05:00 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54546 "EHLO
+        id S231174AbiKCUFB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 3 Nov 2022 16:05:01 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54548 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230370AbiKCUE6 (ORCPT
+        with ESMTP id S229871AbiKCUE6 (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Thu, 3 Nov 2022 16:04:58 -0400
-Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8C8D720341;
-        Thu,  3 Nov 2022 13:04:56 -0700 (PDT)
+Received: from smtpout.efficios.com (smtpout.efficios.com [IPv6:2607:5300:203:5aae::31e5])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4F83020350;
+        Thu,  3 Nov 2022 13:04:57 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1667505895;
-        bh=3FQzak7NFQCeQ17sM6xyWBPLJooy+CEjUwRxboNNo2U=;
+        s=smtpout1; t=1667505896;
+        bh=lLWUz3oaCIo40YA9zK1pHfVsPRrbvzXT6T+kSxRkqXo=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=dAmf0mXn5RkJ3x6/KHkopdNJXvvg2iobvcOjLiAfAsqWc/33JXzDgWwpOQqfJWfbf
-         oGyzaCqlz2ksF+qFWZnjm6wKXPg8OtJtbLDp4o+Em1BaqgM7MbIhddYe0O/NwPiVJe
-         N0I2On7stcX1xBs9vX45gnhiZBSeeOdpwxOYQT7j9kGxU0WbusCImSkt7P6KS9dmCh
-         ZDvT7OH7QoTUfVQY329rInsldiBI7wXmRcf+M2P2ziYG98jQlFUHBcLz7DjlpeYFDQ
-         YIQPjSg6SXXzqcbpur378S0JQ1CpRZjlRSXFSl98bKi6/IrGplV5pgk1IR+5d/5uNk
-         oxDOghXPopc0Q==
+        b=ubLqjhI10lXFzAqnlrB9XT+fqLy1QM4xOZ0w9dm7K5VXt1ZF7jCY6USaXxtgWTMSB
+         cCb+jzPC4dg6lgA/jcRzS5ZPHdrLNuL6hKMQ8Je5tVvw989OE1dKnJwsi8Nfjz2ms2
+         ME5KryeUvmP8xKA38tL6EEK5w3U9h5EDOWngST9XEbClSQEQcOHBk2/FlGSizEWbwK
+         KPw3B7YRVlzzzr8j0HM/VRyo62j2L5t0wfqHKjnZiqBlOyrWV1BDOUhcROqes1Y1Tb
+         LLNXoOzqSlFYnNVIJ5kpX5prW2H95xRGruQTTrYMi4ify+zzHis0i2lYfemuR3S2MW
+         CQJwnq2ENhBrw==
 Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4N3F93273NzfW5;
+        by smtpout.efficios.com (Postfix) with ESMTPSA id 4N3F9404TWzg2k;
         Thu,  3 Nov 2022 16:04:55 -0400 (EDT)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Peter Zijlstra <peterz@infradead.org>
@@ -39,9 +39,9 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         Alexander Mikhalitsyn <alexander@mihalicyn.com>,
         Chris Kennelly <ckennelly@google.com>,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH v5 01/24] rseq: Introduce feature size and alignment ELF auxiliary vector entries
-Date:   Thu,  3 Nov 2022 16:03:36 -0400
-Message-Id: <20221103200359.328736-2-mathieu.desnoyers@efficios.com>
+Subject: [PATCH v5 03/24] rseq: Extend struct rseq with numa node id
+Date:   Thu,  3 Nov 2022 16:03:38 -0400
+Message-Id: <20221103200359.328736-4-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20221103200359.328736-1-mathieu.desnoyers@efficios.com>
 References: <20221103200359.328736-1-mathieu.desnoyers@efficios.com>
@@ -51,71 +51,136 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Export the rseq feature size supported by the kernel as well as the
-required allocation alignment for the rseq per-thread area to user-space
-through ELF auxiliary vector entries.
+Adding the NUMA node id to struct rseq is a straightforward thing to do,
+and a good way to figure out if anything in the user-space ecosystem
+prevents extending struct rseq.
 
-This is part of the extensible rseq ABI.
+This NUMA node id field allows memory allocators such as tcmalloc to
+take advantage of fast access to the current NUMA node id to perform
+NUMA-aware memory allocation.
+
+It can also be useful for implementing fast-paths for NUMA-aware
+user-space mutexes.
+
+It also allows implementing getcpu(2) purely in user-space.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 ---
- fs/binfmt_elf.c             | 5 +++++
- include/uapi/linux/auxvec.h | 2 ++
- include/uapi/linux/rseq.h   | 5 +++++
- 3 files changed, 12 insertions(+)
+Changes since v4:
+- Use __entry->cpu_id as argument for cpu_to_node() in the rseq_update
+  tracepoint.
+---
+ include/trace/events/rseq.h |  4 +++-
+ include/uapi/linux/rseq.h   |  8 ++++++++
+ kernel/rseq.c               | 19 +++++++++++++------
+ 3 files changed, 24 insertions(+), 7 deletions(-)
 
-diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
-index 63c7ebb0da89..04fca1e4cbd2 100644
---- a/fs/binfmt_elf.c
-+++ b/fs/binfmt_elf.c
-@@ -46,6 +46,7 @@
- #include <linux/cred.h>
- #include <linux/dax.h>
- #include <linux/uaccess.h>
-+#include <linux/rseq.h>
- #include <asm/param.h>
- #include <asm/page.h>
+diff --git a/include/trace/events/rseq.h b/include/trace/events/rseq.h
+index a04a64bc1a00..dde7a359b4ef 100644
+--- a/include/trace/events/rseq.h
++++ b/include/trace/events/rseq.h
+@@ -16,13 +16,15 @@ TRACE_EVENT(rseq_update,
  
-@@ -288,6 +289,10 @@ create_elf_tables(struct linux_binprm *bprm, const struct elfhdr *exec,
- 	if (bprm->have_execfd) {
- 		NEW_AUX_ENT(AT_EXECFD, bprm->execfd);
- 	}
-+#ifdef CONFIG_RSEQ
-+	NEW_AUX_ENT(AT_RSEQ_FEATURE_SIZE, offsetof(struct rseq, end));
-+	NEW_AUX_ENT(AT_RSEQ_ALIGN, __alignof__(struct rseq));
-+#endif
- #undef NEW_AUX_ENT
- 	/* AT_NULL is zero; clear the rest too */
- 	memset(elf_info, 0, (char *)mm->saved_auxv +
-diff --git a/include/uapi/linux/auxvec.h b/include/uapi/linux/auxvec.h
-index c7e502bf5a6f..6991c4b8ab18 100644
---- a/include/uapi/linux/auxvec.h
-+++ b/include/uapi/linux/auxvec.h
-@@ -30,6 +30,8 @@
- 				 * differ from AT_PLATFORM. */
- #define AT_RANDOM 25	/* address of 16 random bytes */
- #define AT_HWCAP2 26	/* extension of AT_HWCAP */
-+#define AT_RSEQ_FEATURE_SIZE	27	/* rseq supported feature size */
-+#define AT_RSEQ_ALIGN		28	/* rseq allocation alignment */
+ 	TP_STRUCT__entry(
+ 		__field(s32, cpu_id)
++		__field(s32, node_id)
+ 	),
  
- #define AT_EXECFN  31	/* filename of program */
+ 	TP_fast_assign(
+ 		__entry->cpu_id = raw_smp_processor_id();
++		__entry->node_id = cpu_to_node(__entry->cpu_id);
+ 	),
  
+-	TP_printk("cpu_id=%d", __entry->cpu_id)
++	TP_printk("cpu_id=%d node_id=%d", __entry->cpu_id, __entry->node_id)
+ );
+ 
+ TRACE_EVENT(rseq_ip_fixup,
 diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
-index 77ee207623a9..05d3c4cdeb40 100644
+index 05d3c4cdeb40..1cb90a435c5c 100644
 --- a/include/uapi/linux/rseq.h
 +++ b/include/uapi/linux/rseq.h
-@@ -130,6 +130,11 @@ struct rseq {
- 	 *     this thread.
+@@ -131,6 +131,14 @@ struct rseq {
  	 */
  	__u32 flags;
-+
-+	/*
-+	 * Flexible array member at end of structure, after last feature field.
-+	 */
-+	char end[];
- } __attribute__((aligned(4 * sizeof(__u64))));
  
- #endif /* _UAPI_LINUX_RSEQ_H */
++	/*
++	 * Restartable sequences node_id field. Updated by the kernel. Read by
++	 * user-space with single-copy atomicity semantics. This field should
++	 * only be read by the thread which registered this data structure.
++	 * Aligned on 32-bit. Contains the current NUMA node ID.
++	 */
++	__u32 node_id;
++
+ 	/*
+ 	 * Flexible array member at end of structure, after last feature field.
+ 	 */
+diff --git a/kernel/rseq.c b/kernel/rseq.c
+index c1058b3f10ac..e21ad8929958 100644
+--- a/kernel/rseq.c
++++ b/kernel/rseq.c
+@@ -85,15 +85,17 @@
+  *   F1. <failure>
+  */
+ 
+-static int rseq_update_cpu_id(struct task_struct *t)
++static int rseq_update_cpu_node_id(struct task_struct *t)
+ {
+-	u32 cpu_id = raw_smp_processor_id();
+ 	struct rseq __user *rseq = t->rseq;
++	u32 cpu_id = raw_smp_processor_id();
++	u32 node_id = cpu_to_node(cpu_id);
+ 
+ 	if (!user_write_access_begin(rseq, t->rseq_len))
+ 		goto efault;
+ 	unsafe_put_user(cpu_id, &rseq->cpu_id_start, efault_end);
+ 	unsafe_put_user(cpu_id, &rseq->cpu_id, efault_end);
++	unsafe_put_user(node_id, &rseq->node_id, efault_end);
+ 	/*
+ 	 * Additional feature fields added after ORIG_RSEQ_SIZE
+ 	 * need to be conditionally updated only if
+@@ -109,9 +111,9 @@ static int rseq_update_cpu_id(struct task_struct *t)
+ 	return -EFAULT;
+ }
+ 
+-static int rseq_reset_rseq_cpu_id(struct task_struct *t)
++static int rseq_reset_rseq_cpu_node_id(struct task_struct *t)
+ {
+-	u32 cpu_id_start = 0, cpu_id = RSEQ_CPU_ID_UNINITIALIZED;
++	u32 cpu_id_start = 0, cpu_id = RSEQ_CPU_ID_UNINITIALIZED, node_id = 0;
+ 
+ 	/*
+ 	 * Reset cpu_id_start to its initial state (0).
+@@ -125,6 +127,11 @@ static int rseq_reset_rseq_cpu_id(struct task_struct *t)
+ 	 */
+ 	if (put_user(cpu_id, &t->rseq->cpu_id))
+ 		return -EFAULT;
++	/*
++	 * Reset node_id to its initial state (0).
++	 */
++	if (put_user(node_id, &t->rseq->node_id))
++		return -EFAULT;
+ 	/*
+ 	 * Additional feature fields added after ORIG_RSEQ_SIZE
+ 	 * need to be conditionally reset only if
+@@ -299,7 +306,7 @@ void __rseq_handle_notify_resume(struct ksignal *ksig, struct pt_regs *regs)
+ 		if (unlikely(ret < 0))
+ 			goto error;
+ 	}
+-	if (unlikely(rseq_update_cpu_id(t)))
++	if (unlikely(rseq_update_cpu_node_id(t)))
+ 		goto error;
+ 	return;
+ 
+@@ -346,7 +353,7 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
+ 			return -EINVAL;
+ 		if (current->rseq_sig != sig)
+ 			return -EPERM;
+-		ret = rseq_reset_rseq_cpu_id(current);
++		ret = rseq_reset_rseq_cpu_node_id(current);
+ 		if (ret)
+ 			return ret;
+ 		current->rseq = NULL;
 -- 
 2.25.1
 
